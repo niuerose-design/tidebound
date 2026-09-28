@@ -167,6 +167,8 @@ export type State = {
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
     growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number } | null;
+    /** 마지막으로 자동 진행(낚시·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
+    runEnd?: { reason: string; turn: number } | null;
     tide: number;
     abyssBest: number;
     shopSerial: number;

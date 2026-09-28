@@ -3630,3 +3630,54 @@ strong,b {
 .region-research b { white-space: nowrap; }
 .section-title .region-research { margin-top: 0; text-align: right; }
 @media (max-width: 700px) { .book-claim-all { flex-wrap: wrap; } .book-claim-all > button { width: 100%; } .section-title .region-research { text-align: left; } }
+/* v20.9 능력치 원인별 상세보기 */
+.derived-grid > .stat-breakdown { border-bottom: 1px solid var(--border); padding: 14px 0; }
+.derived-grid > .stat-breakdown.wide { grid-column: 1 / -1; }
+.stat-breakdown > summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
+.stat-breakdown > summary::-webkit-details-marker { display: none; }
+.stat-breakdown-chevron { margin-left: 4px; vertical-align: -1px; color: #6f8a8c; transition: transform .15s; }
+.stat-breakdown[open] .stat-breakdown-chevron { transform: rotate(180deg); }
+.stat-breakdown ul { list-style: none; margin: 10px 0 0; padding: 8px 10px; background: #0f2227; border-radius: 5px; display: grid; gap: 4px; }
+.stat-breakdown li { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: #96b0b3; }
+.stat-breakdown li b { font-weight: 500; color: #d4e0d6; font-variant-numeric: tabular-nums; }
+.stat-breakdown .stat-breakdown-total { border-top: 1px solid var(--border); padding-top: 5px; margin-top: 2px; }
+.stat-breakdown .stat-breakdown-total b { color: var(--gold); }
+.stat-breakdown-hint { margin-top: 10px; }
+/* v20.9 스킬 상태 구분: 습득 / 다른 직업 사용 / 장착, 성장 구성 */
+.skill-state-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px; }
+.skill-state-row > span { display: flex; flex-direction: column; gap: 2px; font-size: 12px; padding: 6px 8px; border-radius: 5px; border: 1px solid var(--border); color: #7f9a9c; line-height: 1.35; }
+.skill-state-row small { font-size: 10px; color: #6f8a8c; }
+.skill-state-row .on { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
+.skill-state-row .warn { color: #e3c28d; border-color: #6d5a3f; background: #2c2618; }
+.skill-growth-split { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: #c9d6cf; margin-bottom: 8px; }
+.skill-growth-split > span { display: flex; flex-direction: column; }
+.skill-growth-split small { font-size: 10px; color: #7f9a9c; }
+.skill-growth-split .total { margin-left: auto; text-align: right; color: var(--gold); }
+.skill-growth-split em { font-style: normal; font-size: 10px; color: #7f9a9c; }
+/* v20.9 직업: 현재 / 전직 가능 / 조건 미달 구분, 부족한 조건 우선 */
+.job-status { font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 4px; margin-left: 8px; vertical-align: 2px; border: 1px solid var(--border); }
+.job-status.current { color: var(--gold); border-color: #6d5a3f; }
+.job-status.ready { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
+.job-status.locked { color: #e39b8d; border-color: #6d433f; }
+.job-missing span { color: #e3b0a4; border-color: #6d433f; }
+.job-met-fold { margin-top: 8px; font-size: 12px; }
+.job-met-fold summary { cursor: pointer; color: #8faead; }
+.job-met-fold .requirements { margin-top: 6px; }
+.job-node-state { margin-left: auto; font-size: 10px; padding: 1px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+.job-node-state.ready { color: #b6e0cc; background: #13302a; }
+.job-node-state.locked { color: #e3b0a4; background: #2e1d1a; }
+/* v20.9 던전: 최초 보상과 반복 보상 분리 */
+.reward-split { display: grid; gap: 10px; margin-top: 12px; }
+.reward-group > small { display: block; font-size: 11px; color: #8faead; margin-bottom: 6px; }
+.reward-group.first > small { color: #d6b879; }
+.reward-group .rewards { margin-top: 0; }
+.reward-group .rewards .claimed { opacity: .55; text-decoration: line-through; text-decoration-thickness: 1px; }
+/* v20.9 자동 진행 상태 */
+.auto-run-status dl { display: grid; gap: 7px; margin: 0; font-size: 13px; }
+.auto-run-status dl > div { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
+.auto-run-status dt { color: var(--muted); font-size: 12px; }
+.auto-run-status dd { margin: 0; color: #d4e0d6; line-height: 1.5; }
+.auto-run-state { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.auto-run-state.on { color: #b6e0cc; background: #13302a; }
+.auto-run-state.off { color: #e3c28d; background: #2c2618; }
+.auto-run-status { margin-bottom: 18px; }

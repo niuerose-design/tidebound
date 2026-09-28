@@ -8,10 +8,11 @@ import { SKILLS } from '@/game/data/skills';
 import { FISH, STAGES, SWARM_UNLOCK } from '@/game/data/world';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
-import { ATTRIBUTES, PROGRESSION, STAT_LABELS, CORE_STATS, DETAIL_STATS, RATING_STATS, statDisplay } from '@/game/data/progression';
+import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, statDisplay } from '@/game/data/progression';
 import { attributes, apCapacity, apUsed, completedRegions, itemKey } from '@/game/systems/progression';
+import { StatBreakdown } from './stat-breakdown';
 import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
-import { stats, dropRate, mastery, goldMultiplier, hitChance, expMultiplier } from '@/game/systems/stats';
+import { type StatTrace, stats, dropRate, mastery, goldMultiplier, hitChance, expMultiplier } from '@/game/systems/stats';
 import { profile, scaledEnemyStats } from '@/game/data/encounters';
 import { Heading, SlotIcon } from './shared';
 type Props = {
@@ -44,7 +45,7 @@ function Reset({ title, description, disabled, onConfirm, label }: {
     </AlertDialog>;
 }
 export function Character({ s, send, busy }: Props) {
-    const a = stats(s), v = attributes(s);
+    const trace: StatTrace = {}, a = stats(s, trace), v = attributes(s);
     return <>
     <Heading eyebrow="CHARACTER BUILD" title="어떤 낚시꾼이 될 것인가" description="기본 능력치는 전직 조건과 전투 특성을 함께 결정합니다. 레벨마다 4포인트를 직접 배분하세요.">
     <Reset title="능력치를 재분배할까요?" description="투자한 포인트를 전부 돌려받습니다. 전직 해금 기록은 유지되며 체력·마나는 새 최대값을 초과할 수 없습니다." disabled={busy || s.running} onConfirm={() => send({ type: 'resetAttributes' })} label="무료 재분배"/>
@@ -80,14 +81,9 @@ export function Character({ s, send, busy }: Props) {
     <h2>최종 전투 능력치</h2>
     <span>직업·장비·스킬 포함</span>
     </div>
-    <div className="derived-grid">{CORE_STATS.map(key => <div key={key} className={['hp', 'speed', 'crit'].includes(key) ? 'wide' : undefined}>
-        <span>{STAT_LABELS[key]}{RATING_STATS.has(key) ? ' 수치' : ''}</span>
-        <strong>{statDisplay(key, a[key])}</strong>
-        </div>)}</div>
-    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key !== 'harmony' || s.job === 'allRounder' || s.skills.includes('harmonicWeight')).map(key => <div key={key}>
-        <span>{STAT_LABELS[key]}</span>
-        <strong>{statDisplay(key, a[key])}</strong>
-        </div>)}</div></details>
+    <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace} wide={['hp', 'speed', 'crit'].includes(key)}/>)}</div>
+    <p className="footnote stat-breakdown-hint">능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
+    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key !== 'harmony' || s.job === 'allRounder' || s.skills.includes('harmonicWeight')).map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>)}</div></details>
     <div className="derived-summary">
     <span>장비 드롭 확률<strong>{(dropRate(s) * 100).toFixed(1)}%</strong>
     </span>

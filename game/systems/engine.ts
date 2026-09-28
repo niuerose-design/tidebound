@@ -204,9 +204,12 @@ function reward(s: State, rng: () => number) {
             s.dungeon = null;
             s.running = false;
             if (repeat) continueRepeat(s, d.id, repeat);
+            else endRun(s, `${d.name} 정복 · 1회 도전 완료로 멈춤`);
         }
     }
 }
+/** 자동 진행 종료·전환 사유를 남깁니다(표시 전용). */
+function endRun(s: State, reason: string) { s.runEnd = { reason, turn: s.turn }; }
 /** 반복 설정 문자열: 'once' | 'fail' | 숫자(총 도전 횟수) | 'deeper:N'(무한 심연, 현재 최고 깊이 + N층까지). */
 export function parseRepeat(s: State, id: string, value?: string): { left: number | null; until?: number } | undefined {
     if (!value || value === 'once' || value === '1') return undefined;
@@ -247,6 +250,7 @@ function continueRepeat(s: State, id: string, repeat: { left: number | null; unt
         return;
     }
     s.running = true;
+    endRun(s, `${d.name} 반복 종료 · ${reached ? `목표 ${repeat.until}층 도달` : !allowed ? '입장 조건 미달' : '설정한 횟수 완료'} → 자동 낚시로 전환`);
     addLog(s, `${d.name} 반복 도전 종료${reached ? ` · 목표 ${repeat.until}층 도달` : ''} · 낚시터에서 자동 낚시를 이어갑니다.`);
 }
 export function tick(s: State, rng = Math.random) {
@@ -294,6 +298,7 @@ export function tick(s: State, rng = Math.random) {
         addLog(s, '물고기를 놓쳤습니다. 잠시 회복합니다.');
         if (s.dungeon) {
             const repeating = !!s.dungeon.repeat;
+            endRun(s, `${DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 낚시로 전환' : ' · 멈춤'}`);
             s.dungeon = null;
             s.running = repeating;
             addLog(s, repeating ? '던전 도전에 실패했습니다. 반복 도전을 멈추고 낚시터에서 자동 낚시를 이어갑니다.' : '던전 도전에 실패했습니다. 손실 없이 다시 도전할 수 있습니다.');
@@ -359,6 +364,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             break;
         case 'pause':
             s.running = false;
+            endRun(s, '직접 멈춤');
             addLog(s, '낚시를 잠시 멈췄습니다.');
             break;
         case 'specialize': {
@@ -425,6 +431,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             s.dungeon = null;
             s.enemy = null;
             s.running = false;
+            endRun(s, '던전 귀환');
             addLog(s, '던전에서 귀환했습니다.');
             break;
         case 'job': {
@@ -445,6 +452,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
                 s.playerStun = 0;
                 s.cooldowns = {};
                 s.lastTick = now;
+                endRun(s, fromDungeon ? '전직으로 던전 정리 · 멈춤' : '전직으로 전투 정리 · 멈춤');
                 addLog(s, fromDungeon ? '전직을 위해 진행 중인 던전을 보상 없이 정리하고 귀환했습니다.' : '전직을 위해 진행 중인 전투를 정리했습니다. 현재 입질은 사라집니다.');
             }
             s.job = id;

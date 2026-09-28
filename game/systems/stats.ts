@@ -10,22 +10,55 @@ import { attributes, effectiveSkill, completedRegions, canUse, skillMastery, ski
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, speed: 10, mana: 40, manaRegen: 3, penetration: 0, lifesteal: 0, ...a }; }
 export function mastery(s: State) { return Object.values(s.book).reduce((a, n) => a + BALANCE.bookMilestones.filter(m => n >= m).length, 0); }
-export function stats(s: State): CombatStats {
+/** 능력치 증가 원인. 능력치 화면의 상세보기가 이 순서로 보여줍니다. */
+export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', 'research', 'book', 'equipment', 'limit'] as const;
+export type StatSource = typeof STAT_SOURCES[number];
+export const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '진주 연구', book: '도감', equipment: '장비', limit: '상한·정수 처리' };
+/** 원인별 증감 기록. factor는 배율로 적용된 경우의 배율입니다. */
+export type StatTrace = Partial<Record<keyof CombatStats, { source: StatSource; delta: number; factor?: number }[]>>;
+/**
+ * 최종 전투 능력치. trace를 넘기면 각 단계의 증감을 원인별로 기록합니다.
+ * 기록 여부와 관계없이 계산 순서와 결과는 같습니다(덧셈·곱셈 순서 유지).
+ */
+export function stats(s: State, trace?: StatTrace): CombatStats {
     const j = JOBS.find(j => j.id === s.job) || JOBS[0], v = attributes(s), m = mastery(s), regions = completedRegions(s).length;
-    const a: CombatStats = { expBonus: permanentExpBonus(s) + (j.expBonus || 0), goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, hp: BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel + v.vit * 9 + regions * 20,
-        attack: BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel + m + v.str * 2,
-        magic: 10 + (s.level - 1) * 3 + v.int * 2.4 + m,
-        defense: BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel + v.vit * .6 + v.str * .25,
-        resist: 3 + (s.level - 1) * .7 + v.wis * 1.2,
-        crit: BALANCE.baseCrit + j.crit + v.luk * .003, critDamage: BALANCE.critMultiplier + v.luk * .005,
-        accuracy: .92 + v.dex * .004, evasion: v.dex * .002, speed: 10 + v.dex * .5, mana: 30 + v.wis * 3 + v.int, manaRegen: 2 + v.wis * .15, penetration: 0, lifesteal: 0, harmony: harmonyPower(s) };
+    const rec = (k: keyof CombatStats, source: StatSource, delta: number, factor?: number) => {
+        if (trace && delta) (trace[k] ||= []).push(factor === undefined ? { source, delta } : { source, delta, factor });
+    };
+    const a = { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, hp: 0, attack: 0, magic: 0, defense: 0, resist: 0, crit: 0, critDamage: 0, accuracy: 0, evasion: 0, speed: 0, mana: 0, manaRegen: 0, penetration: 0, lifesteal: 0, harmony: 0 } as CombatStats;
+    const set = (k: keyof CombatStats, source: StatSource, n: number) => { a[k] = n; rec(k, source, n); };
+    const add = (k: keyof CombatStats, source: StatSource, n: number) => { a[k] += n; rec(k, source, n); };
+    /** 곱셈은 원래 식처럼 한 번에 적용하고, 증감은 원인별 배율 비율로 나눠 기록합니다. */
+    const mul = (k: keyof CombatStats, parts: [StatSource, number][]) => {
+        const before = a[k], f = parts.reduce((x, [, n]) => x * n, 1);
+        a[k] *= f;
+        if (!trace) return;
+        let running = before;
+        for (const [source, n] of parts) { const next = running * n; rec(k, source, next - running, n); running = next; }
+    };
+    set('expBonus', 'rebirth', permanentExpBonus(s)); add('expBonus', 'job', j.expBonus || 0);
+    for (const k of ['goldBonus', 'dropBonus', 'rebirthBonus', 'dungeonGoldBonus', 'penetration', 'lifesteal'] as const) a[k] = 0;
+    set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * 9); add('hp', 'book', regions * 20);
+    set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'book', m); add('attack', 'attributes', v.str * 2);
+    set('magic', 'base', 10 + (s.level - 1) * 3); add('magic', 'attributes', v.int * 2.4); add('magic', 'book', m);
+    set('defense', 'base', BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel); add('defense', 'attributes', v.vit * .6); add('defense', 'attributes', v.str * .25);
+    set('resist', 'base', 3 + (s.level - 1) * .7); add('resist', 'attributes', v.wis * 1.2);
+    set('crit', 'base', BALANCE.baseCrit); add('crit', 'job', j.crit); add('crit', 'attributes', v.luk * .003);
+    set('critDamage', 'base', BALANCE.critMultiplier); add('critDamage', 'attributes', v.luk * .005);
+    set('accuracy', 'base', .92); add('accuracy', 'attributes', v.dex * .004);
+    set('evasion', 'attributes', v.dex * .002);
+    set('speed', 'base', 10); add('speed', 'attributes', v.dex * .5);
+    set('mana', 'base', 30); add('mana', 'attributes', v.wis * 3); add('mana', 'attributes', v.int);
+    set('manaRegen', 'base', 2); add('manaRegen', 'attributes', v.wis * .15);
+    set('harmony', 'attributes', harmonyPower(s));
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * .002;
-    a.rebirthBonus = s.permanent.pearl || 0;
-    a.dungeonGoldBonus = (s.permanent.dungeon || 0) * .08;
+    rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * .002);
+    set('rebirthBonus', 'research', s.permanent.pearl || 0);
+    set('dungeonGoldBonus', 'research', (s.permanent.dungeon || 0) * .08);
     for (const item of Object.values(s.equipment)) {
         if (item)
             for (const [key, n] of Object.entries(itemStats(item)))
-                a[key as keyof Stats] += n;
+                add(key as keyof CombatStats, 'equipment', n);
     }
     for (const id of s.skills) {
         if (!canUse(s, id))
@@ -34,34 +67,35 @@ export function stats(s: State): CombatStats {
         if (sk?.bonus) {
             const bonus = effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id), undefined, s.skillPractice[id] || 0).bonus!;
             for (const [key, n] of Object.entries(bonus))
-                a[key as keyof Stats] += n;
+                add(key as keyof CombatStats, 'skills', n);
         }
         if (sk) {
             const masteryBonus = skillMasteryRewards(sk, s.learned[id] || 1, skillMastery(s, id)).bonus;
             for (const [key, n] of Object.entries(masteryBonus))
-                a[key as keyof Stats] += n;
+                add(key as keyof CombatStats, 'skills', n);
         }
     }
     for (const [key, n] of Object.entries(j.penalties || {}))
-        a[key as keyof Stats] += n;
+        add(key as keyof CombatStats, 'job', n);
     const mastered = (s.jobMastery?.[s.job] || 0) >= jobMasteryTarget(j);
     const mult = (n: number) => jobCombatMultiplier(j, n, mastered);
-    a.hp *= mult(j.hp) * (1 + (s.permanent.hp || 0) * .08);
-    a.attack *= mult(j.attack) * (1 + (s.permanent.attack || 0) * .05);
-    a.magic *= mult(j.magic) * (1 + (s.permanent.attack || 0) * .05);
-    a.defense *= mult(j.defense);
-    a.resist *= mult(j.resist);
+    mul('hp', [['job', mult(j.hp)], ['research', 1 + (s.permanent.hp || 0) * .08]]);
+    mul('attack', [['job', mult(j.attack)], ['research', 1 + (s.permanent.attack || 0) * .05]]);
+    mul('magic', [['job', mult(j.magic)], ['research', 1 + (s.permanent.attack || 0) * .05]]);
+    mul('defense', [['job', mult(j.defense)]]);
+    mul('resist', [['job', mult(j.resist)]]);
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));
     const memory = rebirthMemory(s.rebirths) * (1 + dedication * .04);
-    for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) a[key] *= memory;
-    a.defense *= 1 + (s.permanent.guard || 0) * .03;
-    a.resist *= 1 + (s.permanent.guard || 0) * .03;
+    for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(key, [['rebirth', memory]]);
+    mul('defense', [['research', 1 + (s.permanent.guard || 0) * .03]]);
+    mul('resist', [['research', 1 + (s.permanent.guard || 0) * .03]]);
+    const limit = (k: keyof CombatStats, n: number) => { const before = a[k]; a[k] = n; rec(k, 'limit', n - before); };
     for (const k of ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'speed'] as (keyof CombatStats)[])
-        a[k] = Math.max(k === 'hp' || k === 'speed' ? 1 : 0, Math.floor(a[k]));
-    a.crit = Math.min(.6, a.crit);
-    a.evasion = evasionRating(a.evasion);
-    a.penetration = Math.min(.6, a.penetration);
-    a.lifesteal = Math.min(.3, a.lifesteal);
+        limit(k, Math.max(k === 'hp' || k === 'speed' ? 1 : 0, Math.floor(a[k])));
+    limit('crit', Math.min(.6, a.crit));
+    limit('evasion', evasionRating(a.evasion));
+    limit('penetration', Math.min(.6, a.penetration));
+    limit('lifesteal', Math.min(.3, a.lifesteal));
     return a;
 }
 export function dropRate(s: State) { return Math.min(.6, BALANCE.dropChance + attributes(s).luk * .001 + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + (stats(s).dropBonus || 0)); }

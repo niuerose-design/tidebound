@@ -28,7 +28,8 @@ export function Guide() {
         <section className="help-section">
             <div className="section-title"><h2><Target size={19}/> 능력치</h2><span>기본치 + 레벨 성장 + 직접 배분. 최종 수치에는 직업·장비·스킬이 더해집니다.</span></div>
             <div className="help-stat-grid">{ATTRIBUTES.map(a => <article className="panel help-stat-card" key={a.id}><strong>{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
-            <p className="footnote">능력치 화면은 체력 → 물리·마법 공격 → 물리·마법 방어 → 속도 → 명중·회피 → 치명타 순서로 핵심만 보여주고, 나머지는 ‘상세 능력치’에 있습니다. 확률·보너스는 %, 치명 피해는 배율(×), 명중·회피는 수치로 표시합니다.</p>
+            <p className="footnote">능력치 화면은 체력 → 물리·마법 공격 → 물리·마법 방어 → 속도 → 명중·회피 → 치명타 순서로 핵심만 보여주고, 나머지는 ‘상세 능력치’에 있습니다. 확률·보너스는 %, 치명 피해는 배율(×), 명중·회피는 수치로 표시합니다. 능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
+            <p className="footnote help-notation"><b>표기 규칙</b> +10%: 원래 값에 비율로 더해지는 보너스(같은 종류끼리 합산) · +1%p: 확률 자체에 더하는 절대 증가(20% → 21%) · ×1.2: 다른 보너스와 곱해지는 배율 · 1.2만: 큰 수의 줄임 표기(정확한 값은 숫자에 마우스를 올리면 표시).</p>
         </section>
         <section className="help-section">
             <div className="section-title"><h2><Swords size={19}/> 한 턴의 전투 순서</h2><span>속도가 높은 쪽이 먼저 행동합니다.</span></div>

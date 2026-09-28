@@ -153,7 +153,9 @@ export function jobRequirements(s: State, j: Job) {
             list.push({ label: `${JOBS.find(x => x.id === j.parent)?.name} 숙련 ${j.mastery}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery });
         for (const [jobId, mastery] of Object.entries(j.requiresJobMastery || {})) {
             const job = JOBS.find(x => x.id === jobId);
-            list.push({ label: `${job?.name || jobId} 숙련 ${mastery}`, met: (s.jobMastery?.[jobId] || 0) >= mastery });
+            // 선행 직업과 같은 조건이면 한 번만 표시합니다(판정은 같음).
+            if (!(jobId === j.parent && mastery === j.mastery))
+                list.push({ label: `${job?.name || jobId} 숙련 ${mastery}`, met: (s.jobMastery?.[jobId] || 0) >= mastery });
         }
         for (const [skillId, mastery] of Object.entries(j.requiresSkillMastery || {})) {
             const skill = SKILLS.find(x => x.id === skillId), milestones = masteryMilestonesFor(skill), target = milestones[Math.max(0, mastery - 1)] || milestones[milestones.length - 1];

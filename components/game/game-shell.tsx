@@ -1,5 +1,6 @@
 'use client';
 import { GrowthGoals } from './growth-goals';
+import { AutoRunStatus } from './auto-run';
 import { useEffect, useState } from 'react';
 import { Anchor, ArrowRight, BookOpen, Check, ChevronRight, ClipboardList, Coins, Compass, Fish, Heart, HelpCircle, Lock, Map, Pause, Play, RefreshCw, Settings2, Shield, ShoppingBag, Sparkles, Swords, Target, Trophy, Users, Waves, Zap } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toaster, toast } from 'sonner';
 import { useGame } from './use-game';
-import { Heading, Meter, SkillIcon, SlotIcon, format } from './shared';
+import { Heading, Meter, SkillIcon, SlotIcon, format, Num } from './shared';
 import { Stages, Dungeons, Inventory, Skills, Classes, Rebirth, Collection, Rankings } from './panels';
 import { STAGES, DUNGEONS, FISH, SWARM_SIZES, SWARM_UNLOCK, swarmAttackMultiplier } from '@/game/data/world';
 import { activeSwarm, swarmUnlocked } from '@/game/systems/meta';
@@ -195,6 +196,7 @@ function BattleRail({ s, busy, send, setView }: {
     const battleLogs = s.logs.filter(log => log.type === 'battle').slice(-9).reverse();
     const dungeons = [...DUNGEONS].sort((a, b) => a.level - b.level);
     return <aside className="battle-utility-rail" aria-label="전투 보조 패널">
+    <AutoRunStatus s={s}/>
     <section className="panel battle-rail-panel battle-feed">
     <div className="section-title"><h2><Swords size={15}/> 전투 기록</h2><span className="micro">LIVE</span></div>
     <div className="battle-feed-list" role="log" aria-label="최근 전투 메시지">
@@ -254,7 +256,7 @@ function BattleV2({ s, busy, send, setView, saved, settings, setSettings, name, 
     <div className="battle-hud" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
     <div className="battle-character-column"><Player s={s} busy={busy} send={send} setView={setView}/></div>
     <div className="battle-console">
-    <div className="session-metrics"><div><Fish/><span>누적 포획<strong>{format(s.kills)} <small>마리</small></strong></span></div><div><BookOpen/><span>발견한 물고기<strong>{Object.keys(s.book).length} <small>/ {FISH.length}종</small></strong></span></div><div><Compass/><span>탐험 중인 지역<strong>{d ? '던전' : `0${STAGES.indexOf(st) + 1}`} <small>{d ? `${s.dungeon!.wave + 1} / ${d.fish.length}` : '낚시터'}</small></strong></span></div><div className="session-currency gold"><Coins/><span>보유 골드<strong>{format(s.gold)} <small>G</small></strong></span></div><div className="session-currency pearl"><Sparkles/><span>보유 진주<strong>{format(s.pearls)} <small>개</small></strong></span></div></div>
+    <div className="session-metrics"><div><Fish/><span>누적 포획<strong><Num n={s.kills}/> <small>마리</small></strong></span></div><div><BookOpen/><span>발견한 물고기<strong>{Object.keys(s.book).length} <small>/ {FISH.length}종</small></strong></span></div><div><Compass/><span>탐험 중인 지역<strong>{d ? '던전' : `0${STAGES.indexOf(st) + 1}`} <small>{d ? `${s.dungeon!.wave + 1} / ${d.fish.length}` : '낚시터'}</small></strong></span></div><div className="session-currency gold"><Coins/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div><div className="session-currency pearl"><Sparkles/><span>보유 진주<strong><Num n={s.pearls}/> <small>개</small></strong></span></div></div>
     <TideSelector s={s} send={send} busy={busy}/>
     <div className="battle-target-strip"><span><Target size={15}/> 집중 사냥</span><Tabs value={s.target || 'all'} onValueChange={id => send({ type: 'target', id })}><TabsList><TabsTrigger value="all" disabled={busy || !!s.dungeon}>무작위</TabsTrigger>{st.fish.map(id => <TabsTrigger value={id} key={id} disabled={busy || !!s.dungeon}>{FISH.find(f => f.id === id)?.name}</TabsTrigger>)}</TabsList></Tabs>{s.target && !s.dungeon && <div className="swarm-picker" title="도감을 완성한 어종은 무리 전체를 체력 ×N인 한 개체로 상대할 수 있습니다. 규모에 따라 적 공격이 강해지고, 처치하면 마리 수만큼 보상을 받습니다."><span>무리</span>{SWARM_SIZES.map(n => { const open = swarmUnlocked(s, s.target!, n); return <button key={n} className={swarmNow === n ? 'primary' : 'secondary'} disabled={busy || !open} title={open ? `×${n}` : `${FISH.find(f => f.id === s.target)?.name} ${SWARM_UNLOCK[n].toLocaleString()}마리 포획 시 해금`} onClick={() => send({ type: 'swarm', id: String(n) })}>×{n}</button>; })}</div>}</div>
     <div className="battle-opponent-strip"><div className="opponent-card player-opponent"><span className="eyebrow">MY FISHER</span><div className="combatant-name"><strong>{s.name}</strong><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label={`HP ${Math.ceil(s.hp)} / ${playerStats.hp}`}/><PlayerHitEffect effect={combatFx}/></div><small>속도 {playerStats.speed} · 명중 수치 {statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', playerStats.evasion || 0)}</small></div><div className="opponent-vs"><Swords size={17}/><strong>VS</strong><small>{s.running ? 'AUTO' : 'READY'}</small></div><div className="opponent-card enemy-opponent"><span className="eyebrow">{enemy?.boss ? 'BOSS ENCOUNTER' : 'CURRENT CATCH'}{enemy?.swarm ? ` · 무리 ×${enemy.swarm}` : ''}</span><div className="combatant-name"><strong>{enemy?.name || '다음 입질을 기다리는 중'}</strong>{enemy && <StatusBadges effects={enemy.effects} stun={enemy.stun} recent={combatFx} target="enemy"/>}</div><div className="player-hp-anchor"><Meter value={enemy?.hp || 0} max={enemy?.maxHp || 1} label={enemy ? `HP ${Math.ceil(enemy.hp)} / ${enemy.maxHp}` : 'READY'} color="enemy"/><CombatBarEffect effect={combatFx} target="enemy"/></div><small>{enemy ? `${profile(enemy.id).name} · 속도 ${enemyStats?.speed || 0}${!s.dungeon && s.tide ? ` · 해역 난이도 ${s.tide} 적용` : ''}${s.dungeon?.depth ? ` · 심연 ${s.dungeon.depth}층` : ''}${enemy.swarm ? ` · 무리 공격 ×${swarmAttackMultiplier(enemy.swarm).toFixed(2)}` : ''}` : st.description}</small></div></div>
