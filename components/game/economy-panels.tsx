@@ -1,7 +1,7 @@
 'use client';
 import { GrowthGoals } from './growth-goals';
 import { useState } from 'react';
-import { Sparkles, Coins, RefreshCw, ArrowUp, ShoppingBag } from 'lucide-react';
+import { Sparkles, Coins, RefreshCw, ShoppingBag } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import type { State, Action, Item, Stats } from '@/game/types';
