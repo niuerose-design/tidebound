@@ -3561,7 +3561,8 @@ strong,b {
 .book-block .book-swarm { display: block; font-size: 11px; color: var(--muted); margin-top: 6px; }
 .book-matchup { margin-top: 6px; }
 .book-matchup small { color: var(--muted); }
-.rebirth-three { grid-template-columns: repeat(3, 1fr); }
+.rebirth-three { grid-template-columns: repeat(3, 1fr); margin-top: 18px; }
+.derived-grid > .wide { grid-column: 1 / -1; }
 .ledger-gain li { display: flex; flex-direction: column; gap: 2px; }
 .ledger-gain li small { color: var(--muted); font-size: 12px; }
 .help-rule dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 10px 0 0; font-size: 14px; }

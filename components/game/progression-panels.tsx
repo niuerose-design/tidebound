@@ -79,7 +79,7 @@ export function Character({ s, send, busy }: Props) {
     <h2>최종 전투 능력치</h2>
     <span>직업·장비·스킬 포함</span>
     </div>
-    <div className="derived-grid">{CORE_STATS.map(key => <div key={key}>
+    <div className="derived-grid">{CORE_STATS.map(key => <div key={key} className={['hp', 'speed', 'crit'].includes(key) ? 'wide' : undefined}>
         <span>{STAT_LABELS[key]}{RATING_STATS.has(key) ? ' 수치' : ''}</span>
         <strong>{statDisplay(key, a[key])}</strong>
         </div>)}</div>
