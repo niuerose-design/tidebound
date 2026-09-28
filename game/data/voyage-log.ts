@@ -1,0 +1,25 @@
+/** 항해 기록: 처음 겪는 순간에 한 번만 해금되는 짧은 기록. 보상은 없고 환생 후에도 유지됩니다. */
+export type VoyageEntry = { id: string; title: string; text: string; group: '해역' | '던전' | '환생' | '심연' };
+export const VOYAGE_LOG: VoyageEntry[] = [
+    { id: 'stage:brook', group: '해역', title: '여명의 시냇가', text: '첫 찌가 가라앉았다. 이 물줄기가 바다까지 이어진다는 걸 아직은 모른다.' },
+    { id: 'stage:bay', group: '해역', title: '푸른 조개 만', text: '짠내가 처음으로 코끝에 닿았다. 조개껍데기 사이로 날카로운 비늘이 번뜩인다.' },
+    { id: 'stage:reef', group: '해역', title: '붉은 산호초', text: '산호는 아름답고, 그 그늘의 포식자는 더 아름답다. 한눈을 팔면 줄이 끊긴다.' },
+    { id: 'stage:kelp', group: '해역', title: '속삭이는 해초림', text: '해초가 흔들릴 때마다 누군가 이름을 부르는 것 같았다. 대답하지 않기로 했다.' },
+    { id: 'stage:wreck', group: '해역', title: '망각의 난파선', text: '녹슨 갑판 위에 아직 감기지 않은 낚싯줄이 있다. 주인은 끝내 돌아오지 않았다.' },
+    { id: 'stage:volcanic', group: '해역', title: '검은 화산수역', text: '물이 끓는 소리를 처음 들었다. 이곳의 물고기는 불씨를 삼키고 자란다.' },
+    { id: 'stage:trench', group: '해역', title: '검은 해구', text: '빛이 닿지 않는 곳에서 거대한 심장 소리가 올라온다. 배 밑창이 함께 떨린다.' },
+    { id: 'stage:moon', group: '해역', title: '달빛의 심연', text: '한 번의 삶을 넘어서야 보이는 바다. 수면에 비친 달이 둘이다.' },
+    { id: 'stage:starfall', group: '해역', title: '별비의 외해', text: '별이 떨어진 자리마다 물이 빛난다. 여기서 태어난 것들은 이름이 없다.' },
+    { id: 'dungeon:grotto', group: '던전', title: '조수의 동굴 정복', text: '밀물이 들기 전에 빠져나왔다. 동굴 벽에 내 이름을 처음으로 새겼다.' },
+    { id: 'dungeon:kelpCatacomb', group: '던전', title: '해초 묘실 정복', text: '잘라도 자라는 머리를 끝내 멈췄다. 탐험선의 항해일지는 여기서 끊겨 있었다.' },
+    { id: 'dungeon:cemetery', group: '던전', title: '닻의 묘지 정복', text: '가라앉은 닻들이 일제히 울렸다. 누군가를 붙잡던 무게가 조금 가벼워졌다.' },
+    { id: 'dungeon:caldera', group: '던전', title: '검은 화구 제단 정복', text: '제단의 불이 꺼지고 나서야 바다가 원래 차가웠다는 걸 떠올렸다.' },
+    { id: 'dungeon:temple', group: '던전', title: '심해 신전 정복', text: '기도하던 것은 신이 아니라 물고기였다. 그래도 신전은 조용해졌다.' },
+    { id: 'dungeon:starSanctum', group: '던전', title: '별비 성소 정복', text: '떨어진 별의 심장을 건져 올렸다. 손바닥이 오래도록 따뜻했다.' },
+    { id: 'dungeon:abyss', group: '던전', title: '무한 심연 첫 정복', text: '끝이 없다는 말은 사실이었다. 그래서 한 층을 더 내려가기로 했다.' },
+    { id: 'rebirth:1', group: '환생', title: '첫 환생', text: '모든 것을 내려놓았는데 손에 쥔 진주는 남았다. 두 번째 항해가 시작된다.' },
+    { id: 'abyss:10', group: '심연', title: '심연 10층', text: '위에서 내려오는 빛이 완전히 사라졌다. 이제 등불은 나 자신이다.' },
+    { id: 'abyss:25', group: '심연', title: '심연 25층', text: '물고기들이 나를 먼저 알아본다. 이 깊이에서 나는 더 이상 손님이 아니다.' },
+    { id: 'abyss:50', group: '심연', title: '심연 50층', text: '수압이 기억을 누른다. 몇 번째 삶이었는지 세는 것을 그만두었다.' },
+    { id: 'abyss:100', group: '심연', title: '심연 100층', text: '바닥은 없었다. 대신 위를 올려다보니, 처음 찌를 던지던 시냇가가 보였다.' },
+];

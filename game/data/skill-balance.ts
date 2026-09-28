@@ -27,7 +27,8 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     vitalSurge: { chance: .23, multiplier: 1.65, scalingRatio: .05, drainRatio: .15 },
     voidLance: { chance: .55, multiplier: 2, scalingRatio: .3, manaCost: 20 },
     graveHook: { chance: .5, multiplier: 1.7, manaCost: 13 },
-    marrowGuard: { chance: .22, multiplier: 1.4 },
+    // v20.11: 심해의 닻(Lv10)보다 약하던 상위 기절기 → 배율 상향 + 자기 정화
+    marrowGuard: { chance: .22, multiplier: 1.75 },
     wakeFist: { chance: .26, multiplier: 1.45 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
     greenTide: { chance: .55, multiplier: 1.05, manaCost: 11, healRatio: .14 },
@@ -42,7 +43,8 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     moonTide: { chance: .6, multiplier: 2, manaCost: 20, healRatio: .2 },
     reefPulse: { chance: .55, multiplier: 1.25, manaCost: 14, healRatio: .16 },
     bellCrash: { chance: .24, multiplier: 1.5, scalingRatio: .02 },
-    thornCounter: { chance: .26, multiplier: 1.8 },
+    // v20.11: 갈래바람(Lv25)보다 약하던 Lv40 출혈기 → 배율·확률 상향 + 출혈 대상 추가 피해
+    thornCounter: { chance: .28, multiplier: 2.1 },
     windupCast: { chance: .25, multiplier: 1.5, scalingRatio: .03 },
     loadedHook: { chance: .3, multiplier: 1.05, cooldown: 2, drainRatio: .1 },
     redWake: { chance: .24, multiplier: 1.65, scalingRatio: .07, drainRatio: .18 },
@@ -78,6 +80,8 @@ export function tuneActiveSkills(skills: Skill[]) {
         if (sk.effect === 'drain') sk.desc += ` 실제 피해의 ${Math.round((sk.drainRatio ?? .25) * 100)}% 회복.`;
         if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += ` ${ { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun']} 효과.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
+        if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
+        if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈', weakened: '약화', controlled: '침묵·감속' }[sk.damageBonusCondition]} 중인 적에게 직접 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
     }

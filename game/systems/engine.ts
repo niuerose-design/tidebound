@@ -1,3 +1,4 @@
+import { syncVoyage } from './guidance';
 import { BOSS_RESEARCH, SPECIALIZATIONS, specializationFits } from '../data/specializations';
 import { commerce } from './commerce';
 import { rollAffix, saleValue } from './equipment';
@@ -7,14 +8,14 @@ import { activeSwarm, swarmUnlocked, catchReward, deepVoyagePearls, nextLifeBonu
 import { stats, dropRate, clampVitals, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery } from './mastery';
 import type { State, Action, Item, Attribute } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, SAVE_VERSION, xpNeeded } from '../data/balance';
+import { BALANCE, MONSTER_TUNING, RARITIES, SAVE_VERSION, xpNeeded, FIRST_AID_HEAL } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, SWARM_SIZES, SWARM_UNLOCK, swarmAttackMultiplier } from '../data/world';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { EQUIPMENT_NAMES } from '../data/equipment';
 import { strike, fighterSpeed, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION, emptyAttributes } from '../data/progression';
-import { initialProgress, canUse, canChangeJob, trimLoadout, validLoadout, skillCost, bookReward, itemKey, skillMasteryRanks, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from './progression';
+import { initialProgress, canUse, canChangeJob, trimLoadout, validLoadout, skillCost, bookPending, itemKey, skillMasteryRanks, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from './progression';
 import { scaledEnemyStats, profile } from '../data/encounters';
 import { newGuild } from '../data/guild';
 import { guildAction } from './guild';
@@ -23,11 +24,16 @@ export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'syst
     if (s.logs.length > 70)
         s.logs.shift();
 }
+/** 승리 1회당 회복량. 무리 규모와 관계없이 승리마다 한 번 적용합니다(응급처치 포함). */
+export function victoryHeal(s: State) {
+    const firstAid = s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0;
+    return Math.floor(stats(s).hp * ((s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : BALANCE.healAfterKill) + firstAid));
+}
 export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
         version: SAVE_VERSION,
-        skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null,
+        skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null, tutorial: {}, voyage: {},
         tide: 0,
         abyssBest: 0,
         shopSerial: 0,
@@ -170,7 +176,7 @@ function reward(s: State, rng: () => number) {
         const sk = SKILLS.find(skill => skill.id === id)!;
         if (sk.unlockJobMastery) addLog(s, `직업 숙련으로 ${sk.name} 해금 · 기본 Lv.0부터 장착 가능`, 'skill');
     }
-    s.hp = Math.min(stats(s).hp, s.hp + Math.floor(stats(s).hp * (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : BALANCE.healAfterKill)));
+    s.hp = Math.min(stats(s).hp, s.hp + victoryHeal(s));
     s.enemy = null;
     s.effects = {};
     s.playerStun = 0;
@@ -204,9 +210,12 @@ function reward(s: State, rng: () => number) {
             s.dungeon = null;
             s.running = false;
             if (repeat) continueRepeat(s, d.id, repeat);
+            else endRun(s, `${d.name} 정복 · 1회 도전 완료로 멈춤`);
         }
     }
 }
+/** 자동 진행 종료·전환 사유를 남깁니다(표시 전용). */
+function endRun(s: State, reason: string) { s.runEnd = { reason, turn: s.turn }; }
 /** 반복 설정 문자열: 'once' | 'fail' | 숫자(총 도전 횟수) | 'deeper:N'(무한 심연, 현재 최고 깊이 + N층까지). */
 export function parseRepeat(s: State, id: string, value?: string): { left: number | null; until?: number } | undefined {
     if (!value || value === 'once' || value === '1') return undefined;
@@ -247,11 +256,16 @@ function continueRepeat(s: State, id: string, repeat: { left: number | null; unt
         return;
     }
     s.running = true;
+    endRun(s, `${d.name} 반복 종료 · ${reached ? `목표 ${repeat.until}층 도달` : !allowed ? '입장 조건 미달' : '설정한 횟수 완료'} → 자동 낚시로 전환`);
     addLog(s, `${d.name} 반복 도전 종료${reached ? ` · 목표 ${repeat.until}층 도달` : ''} · 낚시터에서 자동 낚시를 이어갑니다.`);
 }
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
+    tickTurn(s, rng);
+    syncVoyage(s, text => addLog(s, text, 'reward'));
+}
+function tickTurn(s: State, rng: () => number) {
     s.turn++;
     const a = stats(s);
     if (s.recovery > 0) {
@@ -294,6 +308,7 @@ export function tick(s: State, rng = Math.random) {
         addLog(s, '물고기를 놓쳤습니다. 잠시 회복합니다.');
         if (s.dungeon) {
             const repeating = !!s.dungeon.repeat;
+            endRun(s, `${DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 낚시로 전환' : ' · 멈춤'}`);
             s.dungeon = null;
             s.running = repeating;
             addLog(s, repeating ? '던전 도전에 실패했습니다. 반복 도전을 멈추고 낚시터에서 자동 낚시를 이어갑니다.' : '던전 도전에 실패했습니다. 손실 없이 다시 도전할 수 있습니다.');
@@ -311,7 +326,22 @@ export function advance(s: State, now: number, rng = Math.random) {
     if (elapsed > 60000 && s.kills > before.kills)
         s.lastOffline = { seconds: Math.min(BALANCE.offlineCapSeconds, Math.floor(elapsed / 1000)), kills: s.kills - before.kills, gold: s.gold - before.gold, exp: Math.max(0, s.exp - before.exp) };
 }
+/** 한 어종의 미수령 연구 보상을 모두 지급합니다. 각 단계는 bookClaims로 한 번만 지급됩니다. */
+function claimBookRewards(s: State, id: string) {
+    const pending = bookPending(s, id);
+    if (!pending.ranks.length)
+        return false;
+    s.bookClaims[id] = pending.ranks.at(-1)! + 1;
+    s.sp += pending.sp;
+    s.gold += pending.gold;
+    addLog(s, `도감 연구 ${pending.ranks.length > 1 ? `${pending.ranks.length}단계 ` : ''}완료 · ${FISH.find(f => f.id === id)!.name} · 골드 +${pending.gold}${pending.sp ? ` · SP +${pending.sp}` : ''}`, 'reward');
+    return true;
+}
 export function act(s: State, a: Action, now: number, rng = Math.random) {
+    actInner(s, a, now, rng);
+    syncVoyage(s, text => addLog(s, text, 'reward'));
+}
+function actInner(s: State, a: Action, now: number, rng: () => number) {
     // Save files created before job-granted skills existed are upgraded lazily
     // on the next action. This also grants a newly level-eligible job skill.
     grantJobSkills(s);
@@ -348,6 +378,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             break;
         case 'pause':
             s.running = false;
+            endRun(s, '직접 멈춤');
             addLog(s, '낚시를 잠시 멈췄습니다.');
             break;
         case 'specialize': {
@@ -414,6 +445,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             s.dungeon = null;
             s.enemy = null;
             s.running = false;
+            endRun(s, '던전 귀환');
             addLog(s, '던전에서 귀환했습니다.');
             break;
         case 'job': {
@@ -434,6 +466,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
                 s.playerStun = 0;
                 s.cooldowns = {};
                 s.lastTick = now;
+                endRun(s, fromDungeon ? '전직으로 던전 정리 · 멈춤' : '전직으로 전투 정리 · 멈춤');
                 addLog(s, fromDungeon ? '전직을 위해 진행 중인 던전을 보상 없이 정리하고 귀환했습니다.' : '전직을 위해 진행 중인 전투를 정리했습니다. 현재 입질은 사라집니다.');
             }
             s.job = id;
@@ -535,13 +568,21 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
         case 'claimBook': {
             if (!FISH.some(f => f.id === id))
                 throw Error('물고기를 찾을 수 없습니다.');
-            const reward = bookReward(s, id);
-            if (!reward.ready)
+            if (!claimBookRewards(s, id))
                 throw Error('받을 도감 보상이 없습니다.');
-            s.bookClaims[id] = reward.rank + 1;
-            s.sp += reward.sp;
-            s.gold += reward.gold;
-            addLog(s, `도감 연구 완료 · ${FISH.find(f => f.id === id)!.name} · 골드 +${reward.gold}${reward.sp ? ` · SP +${reward.sp}` : ''}`, 'reward');
+            break;
+        }
+        case 'tutorial': {
+            if (!s.tutorial) s.tutorial = {};
+            if (id === 'hide') s.tutorial.hidden = true;
+            else if (id === 'show') { s.tutorial.hidden = false; s.tutorial.skipped = false; }
+            else if (id === 'skip') s.tutorial.skipped = true;
+            else throw Error('알 수 없는 안내 설정입니다.');
+            break;
+        }
+        case 'claimAllBooks': {
+            if (!FISH.map(f => claimBookRewards(s, f.id)).some(Boolean))
+                throw Error('받을 도감 보상이 없습니다.');
             break;
         }
         case 'registerItem': {
@@ -645,7 +686,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             }
             fresh.abyssBest = s.abyssBest;
             fresh.shopSerial = s.shopSerial;
-            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild });
+            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial });
             s.hp = stats(s).hp;
             s.mana = stats(s).mana;
             addLog(s, `새로운 항해가 시작됩니다. 환생 진주 +${pearls}${deepPearls ? ` (깊은 항해 +${deepPearls} 포함)` : ''}`);

@@ -1,6 +1,6 @@
 import { BookOpen, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Users, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA } from '@/game/data/balance';
+import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION } from '@/game/data/progression';
 import { ECONOMY, RESEARCH } from '@/game/data/economy';
 import { SWARM_UNLOCK } from '@/game/data/world';
@@ -28,7 +28,8 @@ export function Guide() {
         <section className="help-section">
             <div className="section-title"><h2><Target size={19}/> 능력치</h2><span>기본치 + 레벨 성장 + 직접 배분. 최종 수치에는 직업·장비·스킬이 더해집니다.</span></div>
             <div className="help-stat-grid">{ATTRIBUTES.map(a => <article className="panel help-stat-card" key={a.id}><strong>{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
-            <p className="footnote">능력치 화면은 체력 → 물리·마법 공격 → 물리·마법 방어 → 속도 → 명중·회피 → 치명타 순서로 핵심만 보여주고, 나머지는 ‘상세 능력치’에 있습니다. 확률·보너스는 %, 치명 피해는 배율(×), 명중·회피는 수치로 표시합니다.</p>
+            <p className="footnote">능력치 화면은 체력 → 물리·마법 공격 → 물리·마법 방어 → 속도 → 명중·회피 → 치명타 순서로 핵심만 보여주고, 나머지는 ‘상세 능력치’에 있습니다. 확률·보너스는 %, 치명 피해는 배율(×), 명중·회피는 수치로 표시합니다. 능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
+            <p className="footnote help-notation"><b>표기 규칙</b> +10%: 원래 값에 비율로 더해지는 보너스(같은 종류끼리 합산) · +1%p: 확률 자체에 더하는 절대 증가(20% → 21%) · ×1.2: 다른 보너스와 곱해지는 배율 · 1.2만: 큰 수의 줄임 표기(정확한 값은 숫자에 마우스를 올리면 표시).</p>
         </section>
         <section className="help-section">
             <div className="section-title"><h2><Swords size={19}/> 한 턴의 전투 순서</h2><span>속도가 높은 쪽이 먼저 행동합니다.</span></div>
@@ -102,7 +103,7 @@ export function Guide() {
                 condition={`강화는 최대 +${ECONOMY.enhanceMax}. 장비 카드의 수치는 강화가 적용된 값이며 카드에 강화 단계를 함께 표시합니다.`}
                 limit="구매·강화·옵션 변경 비용은 판매할 때 돌려받지 않습니다. 전리품 감지는 장비 드롭과 골드만 높이고 희귀어 출현·장비 등급에는 영향이 없습니다."/>
             <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
-                effect={`승리 후 최대 체력의 ${pct(BALANCE.healAfterKill)}를 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
+                effect={`승리 후 최대 체력의 ${pct(BALANCE.healAfterKill)}(던전 ${pct(MONSTER_TUNING.dungeonHealAfterKill)})를 회복합니다. 공용 패시브 응급처치(AP 2, Lv.2 자동 습득)를 장착하면 승리마다 ${pct(FIRST_AID_HEAL)}를 더 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
                 condition={`패배하면 손실 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다.`}
                 limit={`방치 정산은 최대 ${BALANCE.offlineCapSeconds / 3600}시간. 일시정지 중에는 쌓이지 않습니다. 해역 난이도는 일반 낚시터에만 적용됩니다.`}/>
             <Rule icon={<Gauge size={19}/>} title="데이터 초기화"

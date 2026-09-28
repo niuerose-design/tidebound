@@ -43,3 +43,9 @@ export function Empty({ title, description }: {
     </div>;
 }
 export const format = (n: number) => n.toLocaleString('ko-KR');
+/** 큰 수는 짧게(1.2만, 3.4억) 표시합니다. 정확한 값은 Num의 title(마우스 올리기·길게 누르기)로 확인합니다. */
+export function short(n: number) {
+    const a = Math.abs(n), f = (v: number) => (Math.floor(v * 10) / 10).toLocaleString('ko-KR');
+    return a >= 1e8 ? `${f(n / 1e8)}억` : a >= 1e4 ? `${f(n / 1e4)}만` : format(Math.floor(n));
+}
+export function Num({ n }: { n: number }) { return <span className="num-short" title={format(n)}>{short(n)}</span>; }

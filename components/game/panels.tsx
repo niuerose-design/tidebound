@@ -1,4 +1,6 @@
 'use client';
+import { RegionProgress } from './book-research';
+import { AutoRunStatus } from './auto-run';
 import { BOSS_RESEARCH, SPECIALIZATIONS } from '@/game/data/specializations';
 import { dungeonClearGold, stats } from '@/game/systems/stats';
 import { dungeonTier, tierReward, tierHealth, tierAttack } from '@/game/systems/meta';
@@ -9,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table';
 import type { State, Action, DuelResult } from '@/game/types';
-import { BALANCE, MONSTER_TUNING } from '@/game/data/balance';
+import { BALANCE, MONSTER_TUNING, FIRST_AID_HEAL } from '@/game/data/balance';
 import { STAGES, FISH, DUNGEONS } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
 import { JOBS } from '@/game/data/classes';
@@ -44,6 +46,7 @@ export function Stages({ s, send, busy }: Props) {
             <span>Lv. {st.level}+{st.rebirth ? ` · 환생 ${st.rebirth}회` : ''}</span>
             <span>{st.fish.length}종 서식</span>
             </div>
+            <RegionProgress s={s} id={st.id}/>
             </button>;
         })}</div>
     </>;
@@ -62,6 +65,7 @@ export function Dungeons({ s, send, busy }: Props) {
     return <>
     <Heading eyebrow="DUNGEON" title="바다의 잊힌 장소" description="연속 전투와 보스에 도전하세요. 현재 전투·웨이브·전투 로그를 이 화면에서 바로 확인할 수 있습니다."/>
     {!activeDungeon && <p className="footnote">현재 HP {format(s.hp)} / {format(playerStats.hp)} · MP {format(s.mana)} / {format(playerStats.mana)} · 입장 후 {MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 준비가 끝나면 모두 회복됩니다.</p>}
+    <AutoRunStatus s={s}/>
     {activeDungeon && <section className="panel dungeon-run-panel">
         <div className="dungeon-run-header">
         <div><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}</h2><p>{activeDungeon.description}</p></div>
@@ -97,12 +101,17 @@ export function Dungeons({ s, send, busy }: Props) {
             <h2>{d.name}</h2>
             <p>{d.description}</p>{d.bossFish&&<p className="dungeon-hint">보스 특성 · {profile(d.bossFish).name}<br/>{profile(d.bossFish).hint}</p>}{d.id === 'abyss' && <p>다음 깊이: 적 HP ×{tierHealth(tier).toFixed(2)} · 공격 ×{tierAttack(tier).toFixed(2)} · 보상 ×{tierReward(tier).toFixed(2)}</p>}
             <p className="dungeon-hint">최종 보스{d.id === 'abyss' ? ` (${s.abyssBest + 1}층 기준)` : ''} · HP {format(bossStats.hp)} · 물공 {format(bossStats.attack)} · 마공 {format(bossStats.magic || 0)}<br/>물방 {format(bossStats.defense)} · 마방 {format(bossStats.resist || 0)}</p><div className="dungeon-wave-list">{d.fish.map((id, index) => { const boss = index === d.fish.length - 1; const fish = boss && d.bossFish ? FISH.find(f => f.id === d.bossFish) : FISH.find(f => f.id === id); return <span className={boss ? 'boss-wave' : ''} key={`${id}-${index}`}>{boss ? 'BOSS' : `W${index + 1}`} · {fish?.name || id}</span>; })}</div>
-            <div className="rewards">
-            <span>
-            <Coins size={15}/>{format(dungeonClearGold(s, d.gold, tier))} G</span>
-            <span>
-            <Sparkles size={15}/>희귀 이상 장비</span>
-            <span>{d.id === 'abyss' ? `${s.abyssBest + 1}층 진주 ${abyssPearls(s.abyssBest + 1)}` : `첫 클리어 진주 ${d.pearls}`}</span>{d.id === 'abyss' && nextAbyssMilestone(s.abyssBest) && <span>{nextAbyssMilestone(s.abyssBest)}층 첫 돌파 SP 1</span>}
+            <div className="reward-split">
+            <div className="reward-group first"><small>{d.id === 'abyss' ? '새 깊이 보상 · 처음 도달할 때' : '최초 보상 · 한 번만'}</small><div className="rewards">
+            {d.id === 'abyss' ? <><span>{s.abyssBest + 1}층 진주 {abyssPearls(s.abyssBest + 1)}</span>{nextAbyssMilestone(s.abyssBest) && <span>{nextAbyssMilestone(s.abyssBest)}층 첫 돌파 SP 1</span>}</>
+                : <span className={s.clears[d.id] ? 'claimed' : ''}>진주 {d.pearls}{s.clears[d.id] ? ' · 받음' : ''}</span>}
+            {BOSS_RESEARCH[d.id] && <span className={s.bossResearchClaims?.[d.id] ? 'claimed' : ''}>첫 정복 연구 SP {BOSS_RESEARCH[d.id].sp}{s.bossResearchClaims?.[d.id] ? ' · 받음' : ''}</span>}
+            </div></div>
+            <div className="reward-group repeat"><small>반복 보상 · 정복할 때마다</small><div className="rewards">
+            <span><Coins size={15}/>{format(dungeonClearGold(s, d.gold, tier))} G</span>
+            <span><Sparkles size={15}/>희귀 이상 장비 1개</span>
+            <span>웨이브 처치 경험치·골드·숙련</span>
+            </div></div>
             </div>
             </div>
             <div className="dungeon-action">
@@ -117,7 +126,7 @@ export function Dungeons({ s, send, busy }: Props) {
             <button className="primary" disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: d.id, value: repeatChoice[d.id] || 'once' })}>{locked ? <Lock size={16}/> : <Swords size={16}/>}도전하기</button>
             </div>
             </section>;
-        })}</div><p className="footnote">입장 레벨은 최소 조건이며 클리어 보장이 아닙니다. 입장 후 {MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 준비를 마쳐야 체력·마나가 회복됩니다. 후반 웨이브일수록 적이 강화되고, 처치 후 체력 회복은 일반 사냥 16%에서 던전 8%로 줄어듭니다. 보스 연구의 SP·특화는 던전별 한 번만 받으며 환생해도 다시 지급하지 않습니다. 이미 정복한 던전도 미수령 연구 보상을 받을 수 있습니다. 일반 던전 진주는 최초 정복만 지급합니다. 무한 심연은 새 깊이마다 진주를 지급하며 정복할수록 적 체력·공격과 골드·경험치·장비 수준이 증가합니다. 심해 신전 정복 후 환생 상점에서 윤회의 낚싯대를 무료로 받을 수 있습니다. 마지막 웨이브는 별도 보스 물고기와 전용 스킬 프로필을 사용합니다.</p>
+        })}</div><p className="footnote">입장 레벨은 최소 조건이며 클리어 보장이 아닙니다. 입장 후 {MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 준비를 마쳐야 체력·마나가 회복됩니다. 후반 웨이브일수록 적이 강화되고, 처치 후 체력 회복은 일반 사냥 {Math.round(BALANCE.healAfterKill * 100)}%에서 던전 {Math.round(MONSTER_TUNING.dungeonHealAfterKill * 100)}%로 줄어듭니다(응급처치 장착 시 각각 +{Math.round(FIRST_AID_HEAL * 100)}%). 보스 연구의 SP·특화는 던전별 한 번만 받으며 환생해도 다시 지급하지 않습니다. 이미 정복한 던전도 미수령 연구 보상을 받을 수 있습니다. 일반 던전 진주는 최초 정복만 지급합니다. 무한 심연은 새 깊이마다 진주를 지급하며 정복할수록 적 체력·공격과 골드·경험치·장비 수준이 증가합니다. 심해 신전 정복 후 환생 상점에서 윤회의 낚싯대를 무료로 받을 수 있습니다. 마지막 웨이브는 별도 보스 물고기와 전용 스킬 프로필을 사용합니다.</p>
     </>;
 }
 export { Inventory, Rebirth } from './economy-panels';

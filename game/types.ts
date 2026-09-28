@@ -92,6 +92,8 @@ export type Skill = {
     extraAttacks?: number;
     /** Damage multiplier used by each follow-up hit. */
     extraAttackMultiplier?: number;
+    /** 공용 기술 중 SP 없이 레벨 조건만으로 자동 습득하는 기술. */
+    freeCommon?: boolean;
     masteryMilestones?: number[];
     masteryAP?: number;
     masteryBonus?: Partial<Stats>;
@@ -167,6 +169,12 @@ export type State = {
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
     growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number } | null;
+    /** 마지막으로 자동 진행(낚시·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
+    runEnd?: { reason: string; turn: number } | null;
+    /** 튜토리얼 카드. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. */
+    tutorial?: { hidden?: boolean; skipped?: boolean };
+    /** 해금한 항해 기록 id → 해금 턴(-1은 도입 전에 이미 달성해 조용히 채운 기록). 환생 후에도 유지됩니다. */
+    voyage?: Record<string, number>;
     tide: number;
     abyssBest: number;
     shopSerial: number;

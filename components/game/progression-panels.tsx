@@ -6,13 +6,15 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import type { State, Action } from '@/game/types';
 import { SKILLS } from '@/game/data/skills';
 import { FISH, STAGES, SWARM_UNLOCK } from '@/game/data/world';
-import { RARITIES, SLOTS } from '@/game/data/balance';
+import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
-import { ATTRIBUTES, PROGRESSION, STAT_LABELS, CORE_STATS, DETAIL_STATS, RATING_STATS, statDisplay } from '@/game/data/progression';
-import { attributes, apCapacity, apUsed, completedRegions, bookReward, itemKey } from '@/game/systems/progression';
-import { stats, dropRate, mastery, goldMultiplier, hitChance, expMultiplier } from '@/game/systems/stats';
+import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, statDisplay } from '@/game/data/progression';
+import { attributes, apCapacity, apUsed, completedRegions, itemKey } from '@/game/systems/progression';
+import { StatBreakdown } from './stat-breakdown';
+import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
+import { type StatTrace, stats, dropRate, mastery, goldMultiplier, hitChance, expMultiplier } from '@/game/systems/stats';
 import { profile, scaledEnemyStats } from '@/game/data/encounters';
-import { Heading, Meter, SlotIcon } from './shared';
+import { Heading, SlotIcon } from './shared';
 type Props = {
     s: State;
     send: (a: Action, path?: string) => void;
@@ -43,7 +45,7 @@ function Reset({ title, description, disabled, onConfirm, label }: {
     </AlertDialog>;
 }
 export function Character({ s, send, busy }: Props) {
-    const a = stats(s), v = attributes(s);
+    const trace: StatTrace = {}, a = stats(s, trace), v = attributes(s);
     return <>
     <Heading eyebrow="CHARACTER BUILD" title="어떤 낚시꾼이 될 것인가" description="기본 능력치는 전직 조건과 전투 특성을 함께 결정합니다. 레벨마다 4포인트를 직접 배분하세요.">
     <Reset title="능력치를 재분배할까요?" description="투자한 포인트를 전부 돌려받습니다. 전직 해금 기록은 유지되며 체력·마나는 새 최대값을 초과할 수 없습니다." disabled={busy || s.running} onConfirm={() => send({ type: 'resetAttributes' })} label="무료 재분배"/>
@@ -79,14 +81,9 @@ export function Character({ s, send, busy }: Props) {
     <h2>최종 전투 능력치</h2>
     <span>직업·장비·스킬 포함</span>
     </div>
-    <div className="derived-grid">{CORE_STATS.map(key => <div key={key} className={['hp', 'speed', 'crit'].includes(key) ? 'wide' : undefined}>
-        <span>{STAT_LABELS[key]}{RATING_STATS.has(key) ? ' 수치' : ''}</span>
-        <strong>{statDisplay(key, a[key])}</strong>
-        </div>)}</div>
-    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key !== 'harmony' || s.job === 'allRounder' || s.skills.includes('harmonicWeight')).map(key => <div key={key}>
-        <span>{STAT_LABELS[key]}</span>
-        <strong>{statDisplay(key, a[key])}</strong>
-        </div>)}</div></details>
+    <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace} wide={['hp', 'speed', 'crit'].includes(key)}/>)}</div>
+    <p className="footnote stat-breakdown-hint">능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
+    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key !== 'harmony' || s.job === 'allRounder' || s.skills.includes('harmonicWeight')).map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>)}</div></details>
     <div className="derived-summary">
     <span>장비 드롭 확률<strong>{(dropRate(s) * 100).toFixed(1)}%</strong>
     </span>
@@ -117,7 +114,7 @@ export { Classes } from './classes-panel';
 export { Skills } from './skills-panel';
 export function Collection({ s, send, busy }: Props) {
     const player = stats(s), bookComplete = PROGRESSION.fishComplete;
-    const complete = FISH.filter(f => (s.book[f.id] || 0) >= bookComplete).length, regions = completedRegions(s);
+    const complete = FISH.filter(f => (s.book[f.id] || 0) >= bookComplete).length, regions = completedRegions(s), pendingBooks = pendingBookCount(s);
     return <>
     <Heading eyebrow="ARCHIVE & RESEARCH" title="기록이 힘이 되는 도감" description="개체도감으로 편성의 폭을 넓히고, 물건도감으로 다음 장비를 만날 확률을 높이세요."/>
     <div className="skill-resource-grid">
@@ -125,7 +122,7 @@ export function Collection({ s, send, busy }: Props) {
     <small>개체도감 완성</small>
     <strong>{complete}<span> / {FISH.length}</span>
     </strong>
-    <p>종별 연구는 골드 · 최종 10,000회 연구는 SP 1 · 지역 완성은 AP +1</p>
+    <p>종별 연구 {BALANCE.bookMilestones.map(m => m.toLocaleString()).join(' · ')}회 · 앞 3단계는 골드, 최종 단계는 SP +1 · 지역 완성은 최대 체력 +20 · AP +1</p>
     </div>
     <div className="panel">
     <small>포획 숙련 보너스</small>
@@ -139,7 +136,8 @@ export function Collection({ s, send, busy }: Props) {
     <p>지역 내 모든 종 완성 시 최대 체력 +20 · AP +1</p>
     </div>
     </div>
-    <p className="footnote">카드마다 적 능력치 · 연구 진행도 · 다음 연구 보상을 나눠 표시합니다. 실제 적중률은 명중·회피 수치와 속도 차이를 반영한 확률입니다(1~99.5%).</p>
+    {pendingBooks > 0 && <div className="notice book-claim-all"><BookOpen size={20}/><div><strong>받지 않은 연구 보상 {pendingBooks}단계</strong><p>여러 어종의 미수령 보상을 한 번에 받습니다.</p></div><button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimAllBooks' })}>모두 받기</button></div>}
+    <p className="footnote">카드마다 연구 진행(플레이어 보상)을 먼저, 적 정보를 아래에 나눠 표시합니다. 달성한 연구 단계는 접혀 있습니다. 실제 적중률은 명중·회피 수치와 속도 차이를 반영한 확률입니다(1~99.5%).</p>
     <Tabs defaultValue="fish">
     <TabsList className="game-tabs">
     <TabsTrigger value="fish">개체도감</TabsTrigger>
@@ -148,10 +146,10 @@ export function Collection({ s, send, busy }: Props) {
     <TabsContent value="fish">{STAGES.map(st => <section className="book-section" key={st.id}>
         <div className="section-title">
         <h2>{st.name}</h2>
-        <span>{regions.some(r => r.id === st.id) ? '지역 연구 완료 · HP +20 · AP +1' : `${st.fish.filter(id => (s.book[id] || 0) >= bookComplete).length} / ${st.fish.length}종 완성`}</span>
+        <RegionProgress s={s} id={st.id}/>
         </div>
         <div className="book-grid">{st.fish.map(id => {
-                const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, reward = bookReward(s, id), enemy = scaledEnemyStats(f, { tier: s.tide || 0 }), p = profile(id);
+                const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, researchDone = (s.bookClaims?.[id] || 0) >= BALANCE.bookMilestones.length, enemy = scaledEnemyStats(f, { tier: s.tide || 0 }), p = profile(id);
                 return <article className={`panel book-card ${!n ? 'undiscovered' : ''}`} key={id}>
                 <div className="book-icon">
                 <Fish size={34}/>
@@ -163,25 +161,24 @@ export function Collection({ s, send, busy }: Props) {
                 <strong>{p.name}</strong>
                 <span>{p.hint}</span>
                 </div>
-                <section className="book-block"><h4>적 능력치 <small>{s.tide ? `해역 난이도 ${s.tide} 적용 · 일반 낚시터 기준` : '해역 난이도 0 · 일반 낚시터 기준'}</small></h4>
+                <BookResearch s={s} id={id} send={send} busy={busy}/>
+                {n >= bookComplete && <small className="book-swarm book-swarm-line">무리 사냥 ×5 해금{n >= SWARM_UNLOCK[100] ? ' · ×100 해금' : ` · ×100까지 ${(SWARM_UNLOCK[100] - n).toLocaleString()}마리`}</small>}
+                <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{s.tide ? `해역 난이도 ${s.tide} 적용 · 일반 낚시터 기준` : '해역 난이도 0 · 일반 낚시터 기준'}</small></h4></summary>
                 <div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><span>명중 수치 {statDisplay('accuracy', enemy.accuracy || 0)}</span><span>회피 수치 {statDisplay('evasion', enemy.evasion || 0)}</span></div>
-                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 내 공격 {Number((hitChance(player, enemy) * 100).toFixed(1))}%</span><span>적 공격 {Number((hitChance(enemy, player) * 100).toFixed(1))}%</span><span>포획 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 해역·골드 보너스 적용)</small></span></div></section>
-                <section className="book-block"><h4>연구 진행도</h4><Meter value={Math.min(n, reward.required || 200)} max={reward.required || 200} label={`누적 ${n.toLocaleString()}회 · 연구 ${reward.rank} / 4단계`}/>{n >= bookComplete && <small className="book-swarm">무리 사냥 ×5 해금{n >= SWARM_UNLOCK[100] ? ' · ×100 해금' : ` · ×100까지 ${(SWARM_UNLOCK[100] - n).toLocaleString()}마리`}</small>}</section>
-                <section className="book-block"><h4>다음 연구 보상</h4><p>{reward.rank >= 4 ? '모든 연구 보상을 받았습니다.' : `${reward.required.toLocaleString()}회 포획 → ${reward.gold.toLocaleString()} G${reward.sp ? ' · SP +1' : ''}`}</p><button className={reward.ready ? 'gold-button' : 'secondary'} disabled={busy || !reward.ready} onClick={() => send({ type: 'claimBook', id })}>{reward.rank >= 4 ? '연구 완료' : reward.ready ? '연구 보상 받기' : '포획 수 부족'}</button></section>
+                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 내 공격 {Number((hitChance(player, enemy) * 100).toFixed(1))}%</span><span>적 공격 {Number((hitChance(enemy, player) * 100).toFixed(1))}%</span><span>포획 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 해역·골드 보너스 적용)</small></span></div></details>
                 {s.stage === st.id && !s.dungeon && <button className="text-button" disabled={busy} onClick={() => send({ type: 'target', id })}>{s.target === id ? '집중 사냥 대상' : '이 물고기 집중 사냥'}</button>}</article>;
             })}</div>
         </section>)}<section className="book-section boss-book-section">
         <div className="section-title"><h2>던전 보스 도감</h2><span>{FISH.filter(f => f.boss && (s.book[f.id] || 0) >= bookComplete).length} / {FISH.filter(f => f.boss).length}종 완성</span></div>
         <div className="book-grid">{FISH.filter(f => f.boss).map(f => {
-            const n = s.book[f.id] || 0, p = profile(f.id), enemy = scaledEnemyStats(f, { boss: true, wave: 4, tier: f.id === 'abyssSovereign' ? 3 : 0 }), reward = bookReward(s, f.id);
+            const n = s.book[f.id] || 0, p = profile(f.id), enemy = scaledEnemyStats(f, { boss: true, wave: 4, tier: f.id === 'abyssSovereign' ? 3 : 0 }), researchDone = (s.bookClaims?.[f.id] || 0) >= BALANCE.bookMilestones.length;
             return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={f.id}>
                 <div className="book-icon"><Swords size={34}/><span>{n >= bookComplete ? '완성' : `${n} / ${bookComplete} 포획`}</span></div>
                 <h3>{f.name} <small className="fish-rarity legendary">전설 보스</small></h3>
                 <p>{f.lore}</p>
                 <div className="fish-trait"><strong>{p.name}</strong><span>{p.hint}</span></div>
-                <section className="book-block"><h4>적 능력치 <small>{f.id === 'abyssSovereign' ? '무한 심연 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span></div><div className="book-stats"><span>스킬 {p.skills.map(id => SKILLS.find(sk => sk.id === id)?.name || id).join(' · ')}</span></div></section>
-                <section className="book-block"><h4>연구 진행도</h4><Meter value={Math.min(n, reward.required || 200)} max={reward.required || 200} label={`누적 ${n.toLocaleString()}회 · 연구 ${reward.rank} / 4단계`}/></section>
-                <section className="book-block"><h4>다음 연구 보상</h4><p>{reward.rank >= 4 ? '모든 연구 보상을 받았습니다.' : `${reward.required.toLocaleString()}회 포획 → ${reward.gold.toLocaleString()} G${reward.sp ? ' · SP +1' : ''}`}</p><button className={reward.ready ? 'gold-button' : 'secondary'} disabled={busy || !reward.ready} onClick={() => send({ type: 'claimBook', id: f.id })}>{reward.rank >= 4 ? '연구 완료' : reward.ready ? '연구 보상 받기' : '포획 수 부족'}</button></section>
+                <BookResearch s={s} id={f.id} send={send} busy={busy}/>
+                <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{f.id === 'abyssSovereign' ? '무한 심연 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span></div><div className="book-stats"><span>스킬 {p.skills.map(id => SKILLS.find(sk => sk.id === id)?.name || id).join(' · ')}</span></div></details>
             </article>;
         })}</div>
         </section></TabsContent>

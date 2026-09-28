@@ -59,7 +59,7 @@ export function skillCost(_s: State, _id: string) { return PROGRESSION.skillSPCo
 export function grantJobSkills(s: State) {
     const granted: string[] = [];
     for (const sk of SKILLS) {
-        if (sk.job !== s.job || !canLearn(s, sk.id))
+        if ((sk.freeCommon ? !!sk.job : sk.job !== s.job) || !canLearn(s, sk.id))
             continue;
         if ((s.learned?.[sk.id] || 0) <= 0) {
             s.learned[sk.id] = 1;
@@ -153,7 +153,9 @@ export function jobRequirements(s: State, j: Job) {
             list.push({ label: `${JOBS.find(x => x.id === j.parent)?.name} 숙련 ${j.mastery}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery });
         for (const [jobId, mastery] of Object.entries(j.requiresJobMastery || {})) {
             const job = JOBS.find(x => x.id === jobId);
-            list.push({ label: `${job?.name || jobId} 숙련 ${mastery}`, met: (s.jobMastery?.[jobId] || 0) >= mastery });
+            // 선행 직업과 같은 조건이면 한 번만 표시합니다(판정은 같음).
+            if (!(jobId === j.parent && mastery === j.mastery))
+                list.push({ label: `${job?.name || jobId} 숙련 ${mastery}`, met: (s.jobMastery?.[jobId] || 0) >= mastery });
         }
         for (const [skillId, mastery] of Object.entries(j.requiresSkillMastery || {})) {
             const skill = SKILLS.find(x => x.id === skillId), milestones = masteryMilestonesFor(skill), target = milestones[Math.max(0, mastery - 1)] || milestones[milestones.length - 1];
@@ -177,4 +179,10 @@ export function trimLoadout(s: State) {
 }
 export function completedRegions(s: State) { return STAGES.filter(st => st.fish.every(id => (s.book[id] || 0) >= PROGRESSION.fishComplete)); }
 export function bookReward(s: State, id: string) { const rank = s.bookClaims?.[id] || 0; return { rank, required: BALANCE.bookMilestones[rank], sp: PROGRESSION.bookSP[rank] || 0, gold: PROGRESSION.bookGold[rank] || 0, ready: rank < BALANCE.bookMilestones.length && (s.book[id] || 0) >= BALANCE.bookMilestones[rank] }; }
+/** 이미 넘은 임계치 중 아직 받지 않은 연구 단계 전부. 여러 단계를 한 번에 넘었으면 모두 한 번에 받습니다. */
+export function bookPending(s: State, id: string) {
+    const claimed = s.bookClaims?.[id] || 0, n = s.book[id] || 0, ranks: number[] = [];
+    for (let r = claimed; r < BALANCE.bookMilestones.length && n >= BALANCE.bookMilestones[r]; r++) ranks.push(r);
+    return { ranks, gold: ranks.reduce((a, r) => a + (PROGRESSION.bookGold[r] || 0), 0), sp: ranks.reduce((a, r) => a + (PROGRESSION.bookSP[r] || 0), 0) };
+}
 export function itemKey(slot: string, rarity: number) { return `${slot}:${rarity}`; }
