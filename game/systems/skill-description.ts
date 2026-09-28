@@ -14,12 +14,13 @@ export function skillBonusText(key: string, value: number) {
 export function skillEffectLines(sk: Skill, level = 0): string[] {
     const out: string[] = [];
     if (sk.type === 'active') {
-        const base = [sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
+        const base = [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
         if (sk.scaling === 'hp') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hpScaling)}`);
         if (sk.scaling === 'mana') base.push(`최대 마나 × ${number(sk.scalingRatio ?? SKILL_FORMULA.manaScaling)}`);
         if (sk.scaling === 'hybrid') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hybridHpScaling)}`, `최대 마나 × ${number((sk.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2)}`);
         const damage = `${base.length > 1 ? `(${base.join(' + ')})` : base[0]} × ${number(sk.multiplier || 1)}${sk.id === 'crush' ? ` + 물리 방어 × ${number(SKILL_FORMULA.crushDefense)}` : ''}`;
         out.push(`${damage} 피해`);
+        if (sk.damageType === 'split') out.push(`물리 ${skillPercent(SKILL_FORMULA.splitPhysical)} · 마법 ${skillPercent(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각 방어 적용 · 명중·치명 판정 1회 · 장비·버프는 원시 피해에 미포함`);
         if (sk.accuracyBonus) out.push(`이 기술 명중 +${skillPercent(sk.accuracyBonus)}p`);
         if (sk.penetrationBonus) out.push(`이 기술 방어 관통 +${skillPercent(sk.penetrationBonus)}p · 합계 최대 85%`);
         if (sk.cleanseSelf) out.push('발동 시 자신의 출혈·감속 해제');

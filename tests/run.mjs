@@ -102,8 +102,8 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  act(s,{type:'learn',id:'pierce'},0);assert.equal(s.sp,3);assert.equal(skillLevel(sk,s.learned.pierce,2),3);
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
-test('69 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,69);assert.equal(SKILLS.length,103);assert.equal(JOB_TREES.length,4);
+test('70 jobs distribute tier 1 and 2 skills into one or two each',()=>{
+ assert.equal(JOBS.length,70);assert.equal(SKILLS.length,104);assert.equal(JOB_TREES.length,4);
  for(const job of JOBS.filter(j=>j.tier===1||j.tier===2)){
   const owned=SKILLS.filter(sk=>sk.job===job.id);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
  }
@@ -292,6 +292,23 @@ test('Dungeon repeat runs until its stop condition, then resumes idle fishing',(
  const w=newState(0);w.level=60;w.rebirths=3;w.abyssBest=40;w.hp=stats(w).hp;act(w,{type:'dungeon',id:'abyss',value:'fail'},0);run(w,100000);
  assert.equal(w.dungeon,null);assert.equal(w.abyssBest,40);assert.equal(w.running,true,'failure falls back to fishing');
  assert.throws(()=>act(strong(),{type:'dungeon',id:first.id,value:'0'},0));
+});
+
+test('All-rounder: allocated-point harmony damage, split mitigation and allocation-only unlock',()=>{
+ const s=newState(0);s.level=40;s.attributes={str:20,dex:20,int:20,vit:20,wis:20,luk:15};
+ assert.equal(stats(s).harmony,40+115*.8+15*12);
+ const j=JOBS.find(x=>x.id==='allRounder');assert.equal(j.parent,'wanderer');
+ s.jobMastery.wanderer=2400;s.unlockedJobs=['fisher','wanderer'];assert.equal(canChangeJob(s,'allRounder'),true);
+ s.attributes.luk=14;s.level=100;assert.equal(canChangeJob(s,'allRounder'),false,'level growth does not count as allocated points');
+ s.attributes.luk=15;s.jobMastery.wanderer=2399;assert.equal(canChangeJob(s,'allRounder'),false);
+ const base={hp:1e6,attack:1,magic:1,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5,harmony:1000};
+ const fighter=(st)=>({name:'A',stats:st,hp:st.hp,mana:st.mana,skills:['harmonicWeight'],cooldowns:{},stun:0,effects:{},ranks:{harmonicWeight:1},mastery:{},practice:{}});
+ const target=(def,res)=>({name:'B',stats:{...base,defense:def,resist:res,harmony:0},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}});
+ const sk=SKILLS.find(x=>x.id==='harmonicWeight');const raw=1000*sk.multiplier;
+ let b=target(0,0);strike(fighter(base),b,()=>0);assert.equal(1e6-b.hp,Math.round(raw*.5)*2);
+ b=target(50,0);strike(fighter(base),b,()=>0);assert.equal(1e6-b.hp,Math.round(raw*.5*100/200)+Math.round(raw*.5));
+ b=target(0,50);let log=strike(fighter({...base,attack:99999,magic:99999}),b,()=>0);assert.equal(1e6-b.hp,Math.round(raw*.5)+Math.round(raw*.5*100/200),'attack/magic are not added');assert.match(log,/복합 피해/);
+ let calls=0;strike(fighter(base),target(0,0),()=>{calls++;return 0;});let normal=0;strike({...fighter(base),skills:['arcane'],ranks:{arcane:1}},target(0,0),()=>{normal++;return 0;});assert.equal(calls,normal,'one hit roll and one crit roll');
 });
 
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});

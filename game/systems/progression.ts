@@ -147,6 +147,8 @@ export function jobRequirements(s: State, j: Job) {
     if (!unlocked) {
         for (const [key, n] of Object.entries(j.requires))
             list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n });
+        for (const [key, n] of Object.entries(j.requiresAllocated || {}))
+            list.push({ label: `배분 ${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n });
         if (j.parent)
             list.push({ label: `${JOBS.find(x => x.id === j.parent)?.name} 숙련 ${j.mastery}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery });
         for (const [jobId, mastery] of Object.entries(j.requiresJobMastery || {})) {

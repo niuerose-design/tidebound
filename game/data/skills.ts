@@ -119,6 +119,10 @@ SKILLS.push(
 
 // 장기 성장의 누적 숙련 곡선. 직업 해금은 무료 기본 Lv.0이며
 // 각 숫자가 성장 Lv.1, 2, ...의 목표입니다. SP와 숙련이 같은 단계를 엽니다.
+// 만능 항해사: 원시 피해 = 40 + 직접 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12 (장비·버프 제외), 스킬 배율 2.2.
+// 물리 50%·마법 50%로 나눠 각각 방어를 적용하며, 일반 공격력은 더하지 않습니다. 수치는 검증 초안입니다.
+SKILLS.push({ id: 'harmonicWeight', name: '육중 조화', desc: '직접 배분한 여섯 능력치로 원시 피해를 만들고 물리·마법 절반씩 복합 피해를 입힙니다. 가장 낮은 능력치가 높을수록 강해집니다.', type: 'active', level: 40, job: 'allRounder', chance: .5, cooldown: 3, damageType: 'split', scaling: 'harmony', cost: 4, manaCost: 16, multiplier: 2.2 });
+
 const masteryTuning: Record<string, number[]> = {
     hook: [120, 600, 2400, 8000],
     splash: [150, 800, 3000, 10000], breath: [200, 1000, 4000, 12000],

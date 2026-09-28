@@ -19,6 +19,8 @@ export type Stats = {
     manaRegen?: number;
     penetration?: number;
     lifesteal?: number;
+    /** 육중 조화의 원시 피해. 직접 배분한 여섯 능력치로만 계산하며 장비·버프는 제외. */
+    harmony?: number;
     hp: number;
     attack: number;
     defense: number;
@@ -71,7 +73,8 @@ export type Skill = {
     cooldown: number;
     multiplier: number;
     effect?: 'heal' | 'stun' | 'bleed' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste';
-    damageType?: 'physical' | 'magic';
+    /** split: 원시 피해를 물리·마법 절반씩 나누어 각각 방어를 적용하는 한 번의 공격. */
+    damageType?: 'physical' | 'magic' | 'split';
     cost?: number;
     manaCost?: number;
     accuracyBonus?: number;
@@ -82,7 +85,7 @@ export type Skill = {
     healRatio?: number;
     drainRatio?: number;
     condition?: 'wounded' | 'healthyTarget';
-    scaling?: 'hp' | 'mana' | 'hybrid';
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony';
     scalingRatio?: number;
     statusTurns?: number;
     /** Number of capped follow-up hits after the main hit. */

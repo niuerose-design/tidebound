@@ -25,6 +25,8 @@ export type Job = {
     masteryBoost?: number;
     requiresSkillMastery?: Record<string, number>;
     requiresJobMastery?: Record<string, number>;
+    /** 직접 배분한 능력치 포인트(레벨 기본치 제외) 조건. */
+    requiresAllocated?: Partial<Record<Attribute, number>>;
     penalties?: Partial<Stats>;
     branchless?: boolean;
     hidden?: boolean;
@@ -128,6 +130,11 @@ JOBS.push(
     { id: 'speciesChronicler', name: '어종 문양학자', title: '같은 흔적을 깊게 읽는다', desc: '뱀장어·곰치 계열의 지정 어종을 연구합니다. 지정 어종 승리에서만 숙련도를 크게 얻습니다.', attack: 1, magic: 1.02, hp: .98, defense: 1, resist: 1, crit: 0, tier: 2, level: 25, parent: 'bossNaturalist', requires: { int: 25, wis: 28 }, mastery: 1000, requiresSkillMastery: { titanFieldNotes: 1 }, role: '지정 어종·숙련', tree: 'other', masteryTarget: 24000, masteryBoost: .2 },
     { id: 'echoTamer', name: '메아리 조련사', title: '포효를 말로 바꾸는 자', desc: '메아리 조련사 숙련도 6,000에서 보스의 무음의 포효를 해금합니다. 그전에는 메아리 복기와 계승 기술로 수련합니다.', attack: .96, magic: 1.06, hp: .98, defense: 1, resist: 1.04, crit: 0, tier: 2, level: 25, parent: 'fishWhisperer', requires: { int: 28, wis: 28 }, mastery: 1200, requiresSkillMastery: { fishWhisper: 1 }, role: '보스 기술·침묵', tree: 'tide', masteryTarget: 30000, masteryBoost: .24 },
     { id: 'abyssMimic', name: '심연 모사체', title: '심연의 몸짓을 내 것으로', desc: '심연 모사체 숙련도 20,000에서 보스의 촉수 난무를 해금합니다. 심연 보스의 행동을 오랫동안 관찰하는 대기만성 직업입니다.', attack: 1.12, magic: 1.06, hp: 1.08, defense: .96, resist: 1.06, crit: .02, tier: 3, level: 40, rebirth: 1, parent: 'echoTamer', requires: { str: 35, int: 35, wis: 30 }, mastery: 12000, requiresSkillMastery: { sovereignSilence: 2 }, role: '보스 기술·추가타', tree: 'other', hidden: true, penalties: { accuracy: -.03 }, masteryTarget: 100000, masteryBoost: .38 },
+);
+
+// 이형 항해자 계열 상위직: 여섯 능력치를 고르게 배분할수록 강해지는 복합 피해 직업. 수치는 검증 초안입니다.
+JOBS.push(
+    { id: 'allRounder', name: '만능 항해사', title: '여섯 물결을 고르게 다루는 자', desc: '직접 배분한 여섯 능력치가 고를수록 강해지는 복합 피해 직업. 순간 화력 대신 균형 잡힌 생존력과 안정적인 물리·마법 복합 피해로 싸웁니다.', attack: 1.05, magic: 1.05, hp: 1.4, defense: 1.45, resist: 1.45, crit: .03, tier: 2, level: 40, parent: 'wanderer', requires: {}, requiresAllocated: { str: 15, dex: 15, int: 15, vit: 15, wis: 15, luk: 15 }, mastery: 2400, role: '올스탯·복합', tree: 'other' },
 );
 
 // 특정 스킬/직업을 마스터해야만 열리는 교차 전직 조건입니다.

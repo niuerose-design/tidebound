@@ -106,7 +106,9 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
     const landed = rng() < hit;
     if (!landed) notes.push('본타 빗나감');
     const magical = chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack;
-    let base = magical ? sa.magic : sa.attack;
+    const split = chosen?.damageType === 'split';
+    // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
+    let base = chosen?.scaling === 'harmony' ? (sa.harmony || 0) : magical ? sa.magic : sa.attack;
     if (chosen?.scaling === 'hp')
         base += sa.hp * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
     if (chosen?.scaling === 'mana')
@@ -115,12 +117,17 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
         base += sa.hp * (chosen.scalingRatio ?? SKILL_FORMULA.hybridHpScaling) + sa.mana * ((chosen.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2);
     if (chosen?.id === 'crush')
         base += sa.defense * SKILL_FORMULA.crushDefense / (chosen.multiplier || 1);
-    const defense = (magical ? sb.resist : sb.defense) * (1 - Math.min(.85, sa.penetration + (chosen?.penetrationBonus || 0)));
+    const pierce = 1 - Math.min(.85, sa.penetration + (chosen?.penetrationBonus || 0));
+    const defense = (magical ? sb.resist : sb.defense) * pierce;
+    // 복합(split) 피해: 한 번의 명중·치명 판정 뒤 물리·마법 절반씩 각각의 방어를 적용합니다.
+    const mitigated = (raw: number) => split
+        ? Math.round(raw * SKILL_FORMULA.splitPhysical * 100 / (100 + sb.defense * pierce * 2)) + Math.round(raw * (1 - SKILL_FORMULA.splitPhysical) * 100 / (100 + sb.resist * pierce * 2))
+        : Math.round(raw * 100 / (100 + defense * 2));
     const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow) : false;
     const linkMultiplier = linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1;
     if (linked) notes.push('연계');
     const crit = landed && rng() < sa.crit;
-    const damage = landed ? Math.max(1, Math.round(base * (chosen?.multiplier || 1) * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1) * 100 / (100 + defense * 2))) : 0;
+    const damage = landed ? Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1))) : 0;
     const actual = Math.min(b.hp, damage);
     let totalDamage = damage;
     b.hp = Math.max(0, b.hp - damage);
@@ -169,7 +176,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
         }
         const followCrit = rng() < sa.crit;
         const followMultiplier = (chosen?.multiplier || 1) * (chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier);
-        const followDamage = Math.max(1, Math.round(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1) * 100 / (100 + defense * 2)));
+        const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1)));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
         totalDamage += followDamage;
@@ -181,5 +188,5 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
         }
         notes.push(`추가타 ${followDamage}${followCrit ? ' [치명타]' : ''}`);
     }
-    return `${a.name} · ${label}${crit ? ' [치명타]' : ''} → ${totalDamage ? `${totalDamage} ${magical ? '마법' : '물리'} 피해` : '빗나감'}${healed ? ` · ${healed} 회복` : ''}${notes.length ? ' · ' + notes.join(' · ') : ''}`;
+    return `${a.name} · ${label}${crit ? ' [치명타]' : ''} → ${totalDamage ? `${totalDamage} ${split ? '복합' : magical ? '마법' : '물리'} 피해` : '빗나감'}${healed ? ` · ${healed} 회복` : ''}${notes.length ? ' · ' + notes.join(' · ') : ''}`;
 }
