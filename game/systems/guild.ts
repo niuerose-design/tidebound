@@ -60,7 +60,7 @@ export function guildAction(s: State, a: Action): string | null {
         grantXp(s, Math.floor(amount / 10));
         return `길드 금고에 ${amount.toLocaleString()} G 기부 · 명예 공헌도 +${amount}`;
     }
-    // v20.7: 길드 연구·임무·레이드는 개인 성장 보상이 있어 삭제했습니다. 이전 기록(연구 단계·메달·최고 단계)은 보존합니다.
+    // 길드 연구·임무·레이드는 개인 성장 보상이 있어 삭제했습니다. 이전 기록(연구 단계·메달·최고 단계)은 보존합니다.
     if (REMOVED_GUILD_ACTIONS.includes(a.type))
         throw Error('삭제된 길드 기능입니다.');
     return null;

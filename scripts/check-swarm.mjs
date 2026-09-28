@@ -1,10 +1,6 @@
-// Run: node scripts/check-swarm.mjs
-// 무리 사냥 검증: 같은 캐릭터·어종·시간으로 ×1/×5/×100의 시간당 숙련·경험치·골드·드롭·사망을 비교합니다.
-// Fresh saves; no paid SP, permanent bonuses, guilds or inherited-job routing.
-// Manage stats/gear/training each minute; sample available fishing areas every
-// ten minutes. The chooser has information a novice would not have: these are
-// managed runs, not a promise of wall-clock completion for every player.
+// 무리 사냥 검증: 같은 캐릭터·어종·시간으로 ×1/×5/×100의 시간당 숙련·경험치·골드·드롭·사망을 비교합니다. 사용: node scripts/check-swarm.mjs
 import { loadGame } from './lib/game-modules.mjs';
+import { random } from './lib/sim.mjs';
 const {load:moduleAt}=loadGame();
 
 const {newState,advance}=await moduleAt('systems/engine');
@@ -12,7 +8,6 @@ const {stats}=await moduleAt('systems/stats');
 const {SKILLS}=await moduleAt('data/skills');
 const {JOBS}=await moduleAt('data/classes');
 const {canUse,validLoadout}=await moduleAt('systems/progression');
-function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
 
 const {BALANCE}=await moduleAt('data/balance');
 const {act}=await moduleAt('systems/engine');

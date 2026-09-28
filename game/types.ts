@@ -140,7 +140,7 @@ export type Log = {
     id: number;
     text: string;
     type: 'battle' | 'reward' | 'system' | 'skill';
-    /** 전투 로그의 구조화된 결과 (v20.6 이후). */
+    /** 전투 로그의 구조화된 결과. 오래된 로그에는 없을 수 있습니다. */
     event?: CombatEvent;
 };
 export type GuildState = {
@@ -175,7 +175,7 @@ export type State = {
     tutorial?: { hidden?: boolean; skipped?: boolean };
     /** 해금한 항해 기록 id → 해금 턴(-1은 도입 전에 이미 달성해 조용히 채운 기록). 환생 후에도 유지됩니다. */
     voyage?: Record<string, number>;
-    /** 이 세이브에 적용된 레벨당 능력치 포인트. 없으면 v20.13 이전(4)으로 보고 차액을 한 번 지급합니다. */
+    /** 이 세이브에 적용된 레벨당 능력치 포인트. 없으면 이전 규칙(레벨당 4)으로 보고 차액을 한 번 지급합니다. */
     statRate?: number;
     tide: number;
     abyssBest: number;

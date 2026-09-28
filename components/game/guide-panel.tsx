@@ -1,14 +1,13 @@
 import { BookOpen, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Users, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL } from '@/game/data/balance';
-import { ATTRIBUTES, PROGRESSION } from '@/game/data/progression';
+import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
 import { ECONOMY, RESEARCH } from '@/game/data/economy';
 import { SWARM_UNLOCK } from '@/game/data/world';
 import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
 import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL } from '@/game/systems/meta';
 import { Heading } from './shared';
 
-const pct = (n: number) => `${Math.round(n * 1000) / 10}%`;
 
 /** 도움말 카드: 효과 → 조건 → 제한 순서로 적습니다. */
 function Rule({ icon, title, effect, condition, limit }: { icon: ReactNode; title: string; effect: ReactNode; condition?: ReactNode; limit?: ReactNode }) {
@@ -75,7 +74,7 @@ export function Guide() {
                 condition="그 직업을 선택한 동안에만 적용됩니다."
                 limit="페널티·치명타·경험치 보너스는 숙달로 변하지 않습니다. 숙련 기록은 다른 직업으로 옮겨도 남습니다."/>
             <Rule icon={<Users size={19}/>} title="만능 항해사 · 육중 조화"
-                effect={<>육중 조화의 원시 피해 = {SKILL_FORMULA.harmonyBase} + 배분 포인트 합 × {SKILL_FORMULA.harmonyPerPoint} + 가장 낮은 배분 포인트 × {SKILL_FORMULA.harmonyPerLowest}. 물리 {pct(SKILL_FORMULA.splitPhysical)} · 마법 {pct(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각 방어를 적용합니다.</>}
+                effect={<>육중 조화의 원시 피해 = {SKILL_FORMULA.harmonyBase} + 배분 포인트 합 × {SKILL_FORMULA.harmonyPerPoint} + 가장 낮은 배분 포인트 × {SKILL_FORMULA.harmonyPerLowest}. 물리 {percent(SKILL_FORMULA.splitPhysical)} · 마법 {percent(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각 방어를 적용합니다.</>}
                 condition="Lv.40, 여섯 능력치에 직접 배분한 포인트가 각각 15 이상, 이형 항해자 숙련 2,400."
                 limit="직접 배분한 포인트만 계산하며 장비·일시 버프·일반 공격력은 더하지 않습니다. 명중·치명 판정은 한 번입니다."/>
             <Rule icon={<Fish size={19}/>} title="무리 사냥"
@@ -85,7 +84,7 @@ export function Guide() {
             <Rule icon={<Swords size={19}/>} title="던전 반복 · 무한 심연"
                 effect={`던전은 정해진 횟수 또는 실패할 때까지, 무한 심연은 목표 깊이 또는 실패할 때까지 자동 재도전합니다. 심연은 깊을수록 층당 진주가 늘고 ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파 시 SP 1을 줍니다.`}
                 condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장마다 6초 준비 후 체력·마나를 회복합니다."
-                limit={`반복이 끝나거나 실패하면 낚시터에서 자동 낚시를 이어갑니다. 던전 처치 후 회복은 ${pct(MONSTER_TUNING.dungeonHealAfterKill)}입니다.`}/>
+                limit={`반복이 끝나거나 실패하면 낚시터에서 자동 낚시를 이어갑니다. 던전 처치 후 회복은 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다.`}/>
             <Rule icon={<RefreshCw size={19}/>} title="환생"
                 effect={<>진주 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스 + 깊은 항해(요구 레벨 초과분² ÷ 40). 환생 영구 보너스(체력·물리/마법 공격·물리/마법 방어) = 2.5% × √환생 횟수. 영구 경험치는 환생마다 +25%.</>}
                 condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨+${TAILWIND_WINDOW} 이내에 환생하면 순풍(다음 생 요구 레벨까지 경험치 +${TAILWIND_EXP * 100}%), Lv.${DEEP_VOYAGE_LEVEL}에서 환생하면 깊은 항해(다음 생 숙련 기본 획득 +2).`}
@@ -99,11 +98,11 @@ export function Guide() {
                 condition={`한 종을 ${PROGRESSION.fishComplete}회 포획하면 완성으로 처리합니다. 보상은 도감에서 직접 받습니다.`}
                 limit="각 연구 단계 보상은 한 번만 받습니다. 도감 카드는 적 능력치 · 연구 진행도 · 다음 연구 보상을 나눠 보여줍니다."/>
             <Rule icon={<Coins size={19}/>} title="상점 · 장비 강화"
-                effect={`낚싯대·방어구·나침반을 감정하거나 확정 구매합니다. 강화 1회당 장비 기본 수치 +${pct(ECONOMY.enhanceGain)}.`}
+                effect={`낚싯대·방어구·나침반을 감정하거나 확정 구매합니다. 강화 1회당 장비 기본 수치 +${percent(ECONOMY.enhanceGain)}.`}
                 condition={`강화는 최대 +${ECONOMY.enhanceMax}. 장비 카드의 수치는 강화가 적용된 값이며 카드에 강화 단계를 함께 표시합니다.`}
                 limit="구매·강화·옵션 변경 비용은 판매할 때 돌려받지 않습니다. 전리품 감지는 장비 드롭과 골드만 높이고 희귀어 출현·장비 등급에는 영향이 없습니다."/>
             <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
-                effect={`승리 후 최대 체력의 ${pct(BALANCE.healAfterKill)}(던전 ${pct(MONSTER_TUNING.dungeonHealAfterKill)})를 회복합니다. 공용 패시브 응급처치(AP 2, Lv.2 자동 습득)를 장착하면 승리마다 ${pct(FIRST_AID_HEAL)}를 더 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
+                effect={`승리 후 최대 체력의 ${percent(BALANCE.healAfterKill)}(던전 ${percent(MONSTER_TUNING.dungeonHealAfterKill)})를 회복합니다. 공용 패시브 응급처치(AP 2, Lv.2 자동 습득)를 장착하면 승리마다 ${percent(FIRST_AID_HEAL)}를 더 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
                 condition={`패배하면 손실 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다.`}
                 limit={`방치 정산은 최대 ${BALANCE.offlineCapSeconds / 3600}시간. 일시정지 중에는 쌓이지 않습니다. 해역 난이도는 일반 낚시터에만 적용됩니다.`}/>
             <Rule icon={<Gauge size={19}/>} title="데이터 초기화"

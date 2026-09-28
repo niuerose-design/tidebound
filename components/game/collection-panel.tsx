@@ -7,7 +7,7 @@ import { SKILLS } from '@/game/data/skills';
 import { FISH, STAGES, SWARM_UNLOCK } from '@/game/data/world';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
-import { PROGRESSION, statDisplay } from '@/game/data/progression';
+import { PROGRESSION, statDisplay, percent } from '@/game/data/progression';
 import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
 import { stats, mastery, goldMultiplier, hitChance } from '@/game/systems/stats';
@@ -67,7 +67,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 {n >= bookComplete && <small className="book-swarm book-swarm-line">무리 사냥 ×5 해금{n >= SWARM_UNLOCK[100] ? ' · ×100 해금' : ` · ×100까지 ${(SWARM_UNLOCK[100] - n).toLocaleString()}마리`}</small>}
                 <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{s.tide ? `해역 난이도 ${s.tide} 적용 · 일반 낚시터 기준` : '해역 난이도 0 · 일반 낚시터 기준'}</small></h4></summary>
                 <div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><span>명중 수치 {statDisplay('accuracy', enemy.accuracy || 0)}</span><span>회피 수치 {statDisplay('evasion', enemy.evasion || 0)}</span></div>
-                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 내 공격 {Number((hitChance(player, enemy) * 100).toFixed(1))}%</span><span>적 공격 {Number((hitChance(enemy, player) * 100).toFixed(1))}%</span><span>포획 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 해역·골드 보너스 적용)</small></span></div></details>
+                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 내 공격 {percent(hitChance(player, enemy))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>포획 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 해역·골드 보너스 적용)</small></span></div></details>
                 {s.stage === st.id && !s.dungeon && <button className="text-button" disabled={busy} onClick={() => send({ type: 'target', id })}>{s.target === id ? '집중 사냥 대상' : '이 물고기 집중 사냥'}</button>}</article>;
             })}</div>
         </section>)}<section className="book-section boss-book-section">

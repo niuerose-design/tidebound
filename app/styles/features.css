@@ -1,0 +1,217 @@
+/* 기능별 추가 스타일: 던전 반복·무리 사냥·전투 결과·로그인·도감·능력치 상세·안내·목표 등. */
+/* 던전 반복 도전 */
+.dungeon-repeat { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .8rem; color: var(--muted-foreground, inherit); }
+.dungeon-repeat select { flex: 1; min-width: 0; padding: .35rem .5rem; border-radius: .5rem; border: 1px solid var(--border, rgba(255,255,255,.2)); background: var(--background, transparent); color: inherit; font: inherit; }
+
+/* 무리 사냥 선택 */
+.swarm-picker { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; font-size: 13px; color: var(--muted); }
+.swarm-picker button { min-width: 44px; padding: 4px 10px; font-size: 13px; }
+
+/* 화면 설명 정리 */
+.derived-details { margin-top: 12px; }
+.derived-details > summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 10px 0; }
+.book-block { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; }
+.book-block h4 { font-size: 13px; margin: 0 0 6px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.book-block h4 small { font-weight: 400; font-size: 11px; color: var(--muted); }
+.book-block p { font-size: 13px; margin: 0 0 8px; }
+.book-block .book-swarm { display: block; font-size: 11px; color: var(--muted); margin-top: 6px; }
+.book-matchup { margin-top: 6px; }
+.book-matchup small { color: var(--muted); }
+.rebirth-three { grid-template-columns: repeat(3, 1fr); margin-top: 18px; }
+.derived-grid > .wide { grid-column: 1 / -1; }
+.ledger-gain li { display: flex; flex-direction: column; gap: 2px; }
+.ledger-gain li small { color: var(--muted); font-size: 12px; }
+.help-rule dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 10px 0 0; font-size: 14px; }
+.help-rule dt { color: var(--gold); font-weight: 600; white-space: nowrap; }
+.help-rule dd { margin: 0; line-height: 1.6; }
+@media (max-width: 767px) { .rebirth-three { grid-template-columns: 1fr; } }
+
+/* 전투 결과 표시: 물리(주황)·마법(청록)·복합(보라) */
+:root { --dmg-physical: #f2a36b; --dmg-magic: #7fd6ee; --dmg-split: #c7a3f0; }
+.bar-fx.dmg-physical { --bar-fx: var(--dmg-physical); }
+.bar-fx.dmg-magic { --bar-fx: var(--dmg-magic); }
+.bar-fx.dmg-split { --bar-fx: var(--dmg-split); }
+.bar-fx > b.miss { color: #a9b8ba; font-size: 12px; }
+.bar-fx.drain > b { top: 12px; }
+.battle-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; font-size: 12.5px; line-height: 1.6; }
+.battle-line > span { color: var(--muted); font-family: ui-monospace, monospace; }
+.battle-line .log-icon { flex-shrink: 0; }
+.battle-line.dmg-physical .log-icon, .battle-line.dmg-physical strong { color: var(--dmg-physical); }
+.battle-line.dmg-magic .log-icon, .battle-line.dmg-magic strong { color: var(--dmg-magic); }
+.battle-line.dmg-split .log-icon, .battle-line.dmg-split strong { color: var(--dmg-split); }
+.battle-line em { font-style: normal; padding: 0 5px; border-radius: 4px; background: rgba(255,255,255,.05); }
+.battle-line em.crit { color: #ffe2a0; font-weight: 700; }
+.battle-line em.miss { color: #a9b8ba; }
+.battle-line em.heal { color: #9ce8b4; }
+.battle-line em.status { color: #f5d680; }
+.battle-line em.dmg-dot { color: #f09b95; }
+.battle-line.log-miss { opacity: .8; }
+.status-chip { cursor: pointer; border: 0; font: inherit; }
+.status-pop { max-width: 240px; font-size: 13px; line-height: 1.6; }
+.status-pop strong { display: block; margin-bottom: 4px; }
+.status-pop small { display: block; color: var(--muted); margin-top: 4px; }
+
+/* 로그인 화면 */
+.login-form { display: flex; flex-direction: column; gap: 12px; width: min(360px, 100%); padding: 22px; margin-top: 18px; text-align: left; }
+.login-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.login-form input { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); color: inherit; font: inherit; font-size: 15px; }
+.login-error { color: #f09b95; font-size: 13px; margin: 0; }
+.login-note { margin-top: 12px; color: var(--muted); font-size: 12px; }
+.battle-feed-list p.battle-line { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; }
+.battle-feed-list p.battle-line > span { min-width: 27px; }
+.log-line .battle-line { flex: 1; }
+/* 도감 연구: 연구 진행(플레이어 보상)과 적 정보를 분리 */
+.book-research { background: #0f2026; border: 1px solid #2c4a45; border-radius: 6px; padding: 12px; }
+.book-research h4 small { color: #c9b27a; }
+.book-research-rows { display: grid; gap: 5px; margin: 0 0 10px; font-size: 13px; }
+.book-research-rows > div { display: flex; justify-content: space-between; gap: 10px; }
+.book-research-rows dt { color: var(--muted); flex-shrink: 0; }
+.book-research-rows dd { margin: 0; text-align: right; }
+.book-research-rows > div > small { flex-basis: 100%; font-size: 11px; color: var(--muted); margin-top: -2px; }
+.book-research-rows > div:has(> small) { flex-wrap: wrap; }
+.book-research > .gold-button { width: 100%; margin-top: 10px; font-size: 13px; }
+.book-done { margin-top: 10px; font-size: 12px; }
+.book-done summary { cursor: pointer; color: #9fb4af; display: flex; align-items: center; gap: 5px; }
+.book-done ul { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; }
+.book-done li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; color: #9fb4af; }
+.book-done li .positive { display: inline-flex; align-items: center; gap: 3px; }
+.book-enemy > summary { cursor: pointer; list-style: none; }
+.book-enemy > summary::-webkit-details-marker { display: none; }
+.book-enemy:not([open]) > summary h4 { margin: 0; color: var(--muted); }
+.book-swarm-line { display: block; font-size: 11px; color: var(--muted); margin-top: 8px; }
+.book-claim-all { align-items: center; margin-bottom: 14px; }
+.book-claim-all > div { flex: 1; }
+.book-claim-all > button { flex-shrink: 0; }
+.region-research { display: block; font-size: 12px; color: #9fb4af; margin-top: 10px; line-height: 1.6; text-align: left; }
+.region-research b { white-space: nowrap; }
+.section-title .region-research { margin-top: 0; text-align: right; }
+@media (max-width: 700px) { .book-claim-all { flex-wrap: wrap; } .book-claim-all > button { width: 100%; } .section-title .region-research { text-align: left; } }
+/* 능력치 원인별 상세보기 */
+.derived-grid > .stat-breakdown { border-bottom: 1px solid var(--border); padding: 14px 0; }
+.derived-grid > .stat-breakdown.wide { grid-column: 1 / -1; }
+.stat-breakdown > summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
+.stat-breakdown > summary::-webkit-details-marker { display: none; }
+.stat-breakdown-chevron { margin-left: 4px; vertical-align: -1px; color: #6f8a8c; transition: transform .15s; }
+.stat-breakdown[open] .stat-breakdown-chevron { transform: rotate(180deg); }
+.stat-breakdown ul { list-style: none; margin: 10px 0 0; padding: 8px 10px; background: #0f2227; border-radius: 5px; display: grid; gap: 4px; }
+.stat-breakdown li { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: #96b0b3; }
+.stat-breakdown li b { font-weight: 500; color: #d4e0d6; font-variant-numeric: tabular-nums; }
+.stat-breakdown .stat-breakdown-total { border-top: 1px solid var(--border); padding-top: 5px; margin-top: 2px; }
+.stat-breakdown .stat-breakdown-total b { color: var(--gold); }
+.stat-breakdown-hint { margin-top: 10px; }
+/* 스킬 상태 구분: 습득 / 다른 직업 사용 / 장착, 성장 구성 */
+.skill-state-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px; }
+.skill-state-row > span { display: flex; flex-direction: column; gap: 2px; font-size: 12px; padding: 6px 8px; border-radius: 5px; border: 1px solid var(--border); color: #7f9a9c; line-height: 1.35; }
+.skill-state-row small { font-size: 10px; color: #6f8a8c; }
+.skill-state-row .on { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
+.skill-state-row .warn { color: #e3c28d; border-color: #6d5a3f; background: #2c2618; }
+.skill-growth-split { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: #c9d6cf; margin-bottom: 8px; }
+.skill-growth-split > span { display: flex; flex-direction: column; }
+.skill-growth-split small { font-size: 10px; color: #7f9a9c; }
+.skill-growth-split .total { margin-left: auto; text-align: right; color: var(--gold); }
+.skill-growth-split em { font-style: normal; font-size: 10px; color: #7f9a9c; }
+/* 직업: 현재 / 전직 가능 / 조건 미달 구분, 부족한 조건 우선 */
+.job-status { font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 4px; margin-left: 8px; vertical-align: 2px; border: 1px solid var(--border); }
+.job-status.current { color: var(--gold); border-color: #6d5a3f; }
+.job-status.ready { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
+.job-status.locked { color: #e39b8d; border-color: #6d433f; }
+.job-missing span { color: #e3b0a4; border-color: #6d433f; }
+.job-met-fold { margin-top: 8px; font-size: 12px; }
+.job-met-fold summary { cursor: pointer; color: #8faead; }
+.job-met-fold .requirements { margin-top: 6px; }
+.job-node-state { margin-left: auto; font-size: 10px; padding: 1px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+.job-node-state.ready { color: #b6e0cc; background: #13302a; }
+.job-node-state.locked { color: #e3b0a4; background: #2e1d1a; }
+/* 던전: 최초 보상과 반복 보상 분리 */
+.reward-split { display: grid; gap: 10px; margin-top: 12px; }
+.reward-group > small { display: block; font-size: 11px; color: #8faead; margin-bottom: 6px; }
+.reward-group.first > small { color: #d6b879; }
+.reward-group .rewards { margin-top: 0; }
+.reward-group .rewards .claimed { opacity: .55; text-decoration: line-through; text-decoration-thickness: 1px; }
+/* 자동 진행 상태 */
+.auto-run-status dl { display: grid; gap: 7px; margin: 0; font-size: 13px; }
+.auto-run-status dl > div { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
+.auto-run-status dt { color: var(--muted); font-size: 12px; }
+.auto-run-status dd { margin: 0; color: #d4e0d6; line-height: 1.5; }
+.auto-run-state { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.auto-run-state.on { color: #b6e0cc; background: #13302a; }
+.auto-run-state.off { color: #e3c28d; background: #2c2618; }
+.auto-run-status { margin-bottom: 18px; }
+/* 튜토리얼·항해 기록 */
+.tutorial-card { padding: 14px 18px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
+.tutorial-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.tutorial-head strong { color: var(--gold); }
+.tutorial-head span { color: #9fb4af; flex: 1; }
+.tutorial-steps { list-style: none; padding: 0; margin: 12px 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.tutorial-steps li { display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 9px; border-radius: 12px; border: 1px solid var(--border); color: #7f9a9c; }
+.tutorial-steps li span { width: 6px; height: 6px; border-radius: 50%; background: #3b5153; }
+.tutorial-steps li.done { color: #b6e0cc; border-color: #3f6d5e; }
+.tutorial-steps li.current { color: var(--gold); border-color: #6d5a3f; }
+.tutorial-steps li.current span { background: var(--gold); }
+.tutorial-card p { font-size: 13px; margin: 0 0 6px; }
+.tutorial-card small { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
+.voyage-notice { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px; padding: 7px 12px; border: 1px solid #4a4230; background: #221f16; border-radius: 5px; color: #e0cfa2; font-size: 12px; text-align: left; cursor: pointer; }
+.voyage-notice span { color: #bfb38e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.voyage-section { margin-top: 22px; }
+.voyage-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.voyage-entry { padding: 16px; }
+.voyage-entry strong { font-size: 14px; color: #e0cfa2; }
+.voyage-entry p { font-size: 13px; line-height: 1.7; margin: 6px 0 0; color: #a9bdb8; }
+.voyage-entry.locked strong, .voyage-entry.locked p { color: #5f7577; }
+/* 장기 목표 */
+.growth-goals.folded { display: flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 13px; color: #9fb4af; }
+.growth-goals.folded span { flex: 1; }
+.growth-goals h2 { display: flex; align-items: center; gap: 6px; }
+.goal-steps { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px; font-size: 13px; }
+.goal-steps li { display: flex; align-items: center; gap: 6px; color: #8faead; }
+.goal-steps li span { width: 7px; height: 7px; border-radius: 50%; background: #3b5153; margin: 0 2.5px; }
+.goal-steps li.done { color: #b6e0cc; }
+.growth-goal-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.growth-none { font-size: 13px; color: var(--muted); }
+/* 정리: 숫자 줄임 표기는 부모 글꼴을 그대로 사용, 자동 진행 레일 접기, 왼쪽 안내 슬롯 */
+.num-short { font: inherit !important; color: inherit !important; line-height: inherit !important; white-space: nowrap; }
+.auto-run-status.compact { padding: 12px 16px; margin-bottom: 0; }
+.auto-run-status.compact > summary { display: flex; align-items: center; gap: 7px; cursor: pointer; list-style: none; font-size: 13px; }
+.auto-run-status.compact > summary::-webkit-details-marker { display: none; }
+.auto-run-status.compact > summary span { color: #8faead; font-size: 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auto-run-status.compact[open] > summary { margin-bottom: 10px; }
+.auto-run-status.compact dl > div { grid-template-columns: 84px 1fr; }
+.player-column > .tutorial-card, .player-column > .growth-goals { margin: 16px 0 0; padding: 16px; }
+.player-column > .tutorial-card .tutorial-head span { display: none; }
+.player-column > .tutorial-card .tutorial-steps li { font-size: 11px; padding: 2px 7px; }
+.player-column > .growth-goals .section-title h2 { font-size: 15px; }
+.player-column > .growth-goals p { font-size: 13px; }
+.battle-console>.session-metrics>div{padding:0 12px;gap:8px;min-width:0}
+.battle-console>.session-metrics span{white-space:nowrap;min-width:0}
+@media(min-width:768px) and (max-width:1600px){.battle-console>.session-metrics>div>svg{display:none}}
+.attribute-row .attribute-buttons { flex-direction: row; gap: 6px; flex-shrink: 0; }
+.attribute-row .attribute-buttons button { min-width: 44px; padding-left: 8px; padding-right: 8px; }
+/* 스킬 카드 간결 보기 */
+.skill-status-badge { align-self: flex-start; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); color: #9fb4af; margin: 10px 0 2px; }
+.skill-status-badge.on { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
+.skill-status-badge.off { color: #7f9a9c; }
+.skill-compact-growth { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #9fb4af; margin: 10px 0 6px; }
+.skill-card.compact .skill-current-description { margin: 8px 0; }
+.skill-card.compact .skill-actions { margin-top: 14px; }
+details.mastery-stack-note { display: block; }
+details.mastery-stack-note > summary { cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c1d0bf; list-style: none; }
+details.mastery-stack-note > summary::-webkit-details-marker { display: none; }
+details.mastery-stack-note > span { display: block; margin-top: 8px; }
+/* 전직 상세 간결 보기 */
+.job-compact .requirements span small { color: #8faead; margin-left: 3px; font-size: 10px; }
+.job-compact .meter { margin-top: 10px; }
+.job-more { margin: 4px 0 14px; font-size: 13px; }
+.job-more > summary { cursor: pointer; color: #8faead; padding: 8px 0; }
+.job-goal-link { display: block; margin: 10px auto 0; }
+/* 던전 탐험: 낚시터와 같은 카드형 */
+.dungeon-stage-card { cursor: default; text-align: left; display: flex; flex-direction: column; }
+.dungeon-stage-card.locked { opacity: .55; }
+.dungeon-stage-card .badge.muted { color: #7f9a9c; border-color: var(--border); }
+.dungeon-reward-lines { display: grid; gap: 4px; font-size: 12px; color: #a9bdb8; margin: 12px 0 4px; }
+.dungeon-reward-lines b { display: inline-block; min-width: 34px; color: #d6b879; font-weight: 500; }
+.dungeon-reward-lines span:last-child b { color: #8faead; }
+.dungeon-stage-card > .gold-button { width: 100%; margin-top: 10px; font-size: 13px; }
+.dungeon-actions { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+.dungeon-actions > span { flex: 1; }
+.dungeon-actions select { background: #0f2026; color: #d4e0d6; border: 1px solid var(--border); border-radius: 5px; padding: 5px 6px; font-size: 12px; }
+.dungeon-actions button { display: inline-flex; align-items: center; gap: 5px; }

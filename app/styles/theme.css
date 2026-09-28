@@ -1,0 +1,44 @@
+/* Tailwind 테마 변수와 색 토큰. */
+@custom-variant dark (&:is(.dark *));
+@theme inline {
+  --color-background:var(--background);
+  --color-foreground:var(--foreground);
+  --color-card:var(--card);
+  --color-card-foreground:var(--foreground);
+  --color-popover:var(--card);
+  --color-popover-foreground:var(--foreground);
+  --color-primary:var(--primary);
+  --color-primary-foreground:#092420;
+  --color-secondary:#203338;
+  --color-secondary-foreground:var(--foreground);
+  --color-muted:#1b2b30;
+  --color-muted-foreground:var(--muted);
+  --color-accent:#203a3c;
+  --color-accent-foreground:var(--foreground);
+  --color-destructive:#ef8c85;
+  --color-border:var(--border);
+  --color-input:var(--border);
+  --color-ring:var(--primary);
+  --color-sidebar:var(--sidebar);
+  --color-sidebar-foreground:#aec0c2;
+  --color-sidebar-primary:var(--primary);
+  --color-sidebar-primary-foreground:#0b211e;
+  --color-sidebar-accent:#203537;
+  --color-sidebar-accent-foreground:#95d9c3;
+  --color-sidebar-border:var(--border);
+  --color-sidebar-ring:var(--primary);
+  --radius-lg:10px;
+  --radius-md:7px;
+  --radius-sm:5px;
+}
+
+:root,.dark {
+  --background:#0e191f;
+  --foreground:#e3e9e7;
+  --card:#152329;
+  --primary:#81cbb4;
+  --muted:#8d9fa4;
+  --border:#2a3a40;
+  --sidebar:#101e24;
+  --gold:#d4b579
+}

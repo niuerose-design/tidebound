@@ -1,11 +1,8 @@
-// Run: node scripts/check-combat-depth.mjs [--baseline]
-// Fresh saves; no paid SP, permanent bonuses, guilds or inherited-job routing.
-// Manage stats/gear/training each minute; sample available fishing areas every
-// ten minutes. The chooser has information a novice would not have: these are
-// managed runs, not a promise of wall-clock completion for every player.
+// 전투 규칙 회귀 점검: 상태이상·추가타·오프라인 24시간 정산 등을 고정 시드로 검사합니다. 사용: node scripts/check-combat-depth.mjs
 const baseline=process.argv.includes('--baseline');
 import assert from 'node:assert/strict';
 import { loadGame } from './lib/game-modules.mjs';
+import { random } from './lib/sim.mjs';
 const {load:moduleAt}=loadGame();
 
 const {newState,advance}=await moduleAt('systems/engine');
@@ -18,7 +15,6 @@ const {FISH}=await moduleAt('data/world');
 const {tierHealth,tierAttack}=await moduleAt('systems/meta');
 const {enemyStats,scaledEnemyStats,profile}=await moduleAt('data/encounters');
 const {canUse,validLoadout,skillMasteryRanks,effectiveSkill}=await moduleAt('systems/progression');
-function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
 const builds=[
  ['whaler',{str:80,dex:30,vit:40,wis:10},['breath','pierce','whaleStrike','focus','barb']],
  ['corsair',{dex:70,luk:40,str:30,vit:20},['breath','cut','razor','drift','precision']],

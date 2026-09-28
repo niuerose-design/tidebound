@@ -21,6 +21,9 @@ jobs:
           cache: pnpm
       - name: Install
         run: pnpm install --frozen-lockfile
+      - name: Lint (warnings are errors)
+        run: pnpm lint 2>&1 | tee /tmp/lint.log; exit ${PIPESTATUS[0]}
+        shell: bash
       - name: Gameplay tests
         run: pnpm test 2>&1 | tee /tmp/test.log; exit ${PIPESTATUS[0]}
         shell: bash

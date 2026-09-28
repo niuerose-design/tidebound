@@ -1,10 +1,6 @@
-// Run: node scripts/check-all-rounder.mjs
-// 만능 항해사(육중 조화) 검증: 같은 레벨·같은 배분 포인트 총량으로 순수 공격 빌드와 비교합니다.
-// Fresh saves; no paid SP, permanent bonuses, guilds or inherited-job routing.
-// Manage stats/gear/training each minute; sample available fishing areas every
-// ten minutes. The chooser has information a novice would not have: these are
-// managed runs, not a promise of wall-clock completion for every player.
+// 만능 항해사(육중 조화) 검증: 같은 레벨·배분 포인트 총량에서 균등/편중 배분과 순수 공격 직업을 비교합니다. 사용: node scripts/check-all-rounder.mjs
 import { loadGame } from './lib/game-modules.mjs';
+import { random } from './lib/sim.mjs';
 const {load:moduleAt}=loadGame();
 
 const {newState}=await moduleAt('systems/engine');
@@ -15,7 +11,6 @@ const {JOBS}=await moduleAt('data/classes');
 const {FISH}=await moduleAt('data/world');
 const {scaledEnemyStats,profile}=await moduleAt('data/encounters');
 const {canUse,validLoadout,skillMasteryRanks}=await moduleAt('systems/progression');
-function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
 
 const LEVELS=[40,60];
 const {SKILL_FORMULA}=await moduleAt('data/balance');

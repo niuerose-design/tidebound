@@ -1,0 +1,373 @@
+/* 공통 패널·섹션 제목·캐릭터 칸·게이지·배지. */
+.panel {
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--card)
+}
+
+.section-title {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:17px
+}
+
+.section-title h2 {
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  gap:13px
+}
+
+.section-title>span {
+  font-size:12px;
+  color:#82999f
+}
+
+.battle-skills {
+  padding:19px 20px;
+  margin-bottom:20px
+}
+
+.battle-skill-row {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px
+}
+
+.battle-skill {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-align:left;
+  background:#112127;
+  border:1px solid #36504d;
+  border-radius:6px;
+  padding:12px 10px;
+  min-width:0
+}
+
+.skill-symbol {
+  width:35px;
+  flex-shrink:0;
+  color:#acd4bf;
+  display:flex;
+  justify-content:center
+}
+
+.battle-skill strong {
+  display:block;
+  font-size:12px;
+  font-weight:500
+}
+
+.battle-skill small {
+  display:block;
+  font-size:10px;
+  color:#8da6a6;
+  margin-top:3px
+}
+
+.battle-skill.vacant {
+  border-style:dashed;
+  border-color:#304046;
+  color:#7c939b
+}
+
+.battle-skill.vacant .skill-symbol {
+  color:#546b73;
+  font-size:24px
+}
+
+.log-panel {
+  padding:20px 20px 10px
+}
+
+.log-tabs {
+  background:transparent!important;
+  height:26px!important;
+  padding:0!important
+}
+
+.log-tabs button {
+  font-size:11px;
+  padding:3px 9px
+}
+
+.log-tabs button[data-state=active] {
+  background:#294039!important;
+  color:#aad6c6!important
+}
+
+.log-list {
+  height:198px;
+  overflow:auto;
+  scrollbar-width:thin;
+  scrollbar-color:#395454 transparent
+}
+
+.log-line {
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  font-size:12px;
+  line-height:1.6;
+  margin-bottom:9px
+}
+
+.log-line p {
+  color:#9db1b5
+}
+
+.log-line>span:nth-child(2) {
+  align-self:center;
+  color:#657f87
+}
+
+.log-number {
+  font-family:monospace;
+  font-size:10px;
+  color:#4f6b75;
+  min-width:25px
+}
+
+.log-line.reward p,.log-line.reward>span:nth-child(2) {
+  color:#d1b783
+}
+
+.log-line.system p {
+  color:#93bda9
+}
+
+.player-column {
+  padding-top:2px
+}
+
+.player-panel {
+  padding:21px 21px 16px
+}
+
+.player-panel>.section-title {
+  margin-bottom:25px
+}
+
+.player-avatar {
+  height:84px;
+  width:84px;
+  border:1px solid #8b805a;
+  border-radius:50%;
+  margin:0 auto 19px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:radial-gradient(circle,#33493e,#172a2d);
+  position:relative;
+  color:#d2b67b;
+  outline:5px solid #a9a36c09;
+  box-shadow:0 0 0 7px #85774726
+}
+
+.player-avatar>span {
+  position:absolute;
+  bottom:-7px;
+  left:29px;
+  min-width:25px;
+  line-height:24px;
+  border-radius:5px;
+  text-align:center;
+  color:#e0cd9f;
+  border:1px solid #8d7b54;
+  background:#28352f;
+  font-size:12px
+}
+
+.player-panel>h3 {
+  text-align:center;
+  font-size:16px;
+  margin-top:21px
+}
+
+.job-label {
+  text-align:center;
+  font-size:11px;
+  margin-top:4px;
+  color:#91a69e
+}
+
+.combat-power {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:19px 0 14px;
+  margin-bottom:10px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+  color:#9eb3b5
+}
+
+.combat-power strong {
+  font-size:24px;
+  color:var(--gold);
+  line-height:1;
+  font-weight:500
+}
+
+.meter {
+  width:100%
+}
+
+.meter [data-slot=progress] {
+  height:6px;
+  background:#09181e;
+  border-radius:2px
+}
+
+.meter [data-slot=progress-indicator] {
+  background:#6fbaa0;
+  border-radius:2px
+}
+
+.meter.gold [data-slot=progress-indicator] {
+  background:#c5ab71
+}
+
+.meter.enemy [data-slot=progress-indicator] {
+  background:#c6aa78
+}
+
+.meter-label {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:11px;
+  color:#96acae;
+  margin-bottom:7px;
+  gap:10px;
+  font-variant-numeric:tabular-nums
+}
+
+.player-panel .meter {
+  margin:15px 0
+}
+
+.stat-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:17px 14px;
+  padding:18px 0;
+  border-bottom:1px solid var(--border);
+  margin-bottom:20px
+}
+
+.stat-grid>div {
+  display:grid;
+  grid-template-columns:17px 1fr;
+  column-gap:5px;
+  align-items:center
+}
+
+.stat-grid svg {
+  width:13px;
+  height:13px;
+  color:#89a4a6
+}
+
+.stat-grid span {
+  font-size:11px;
+  color:#8fa5a9
+}
+
+.stat-grid b {
+  font-size:16px;
+  font-weight:500;
+  grid-column:2;
+  margin-top:2px
+}
+
+.equipment-title {
+  margin-bottom:10px
+}
+
+.mini-equipment button {
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:12px 0;
+  background:none;
+  border:0;
+  text-align:left;
+  padding:0
+}
+
+.mini-slot {
+  height:38px;
+  width:38px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#1d3137;
+  border:1px solid #3c5157;
+  border-radius:5px
+}
+
+.mini-equipment small {
+  display:block;
+  font-size:10px;
+  color:#728f99
+}
+
+.mini-equipment strong {
+  display:block;
+  font-size:12px;
+  font-weight:400
+}
+
+.next-goal {
+  padding:21px;
+  margin-top:18px;
+  background:linear-gradient(125deg,#1a2c30,#162228)
+}
+
+.next-goal .eyebrow {
+  font-size:9px;
+  color:#c8ae79
+}
+
+.next-goal h3 {
+  font-size:14px
+}
+
+.next-goal p {
+  font-size:12px;
+  margin:8px 0 13px;
+  line-height:1.8
+}
+
+.app-footer {
+  padding:8px 32px 23px;
+  display:flex;
+  justify-content:space-between;
+  color:#668088;
+  font-size:10px;
+  letter-spacing:.4px;
+  gap:10px
+}
+
+.app-footer>span {
+  display:flex;
+  gap:7px;
+  align-items:center
+}
+
+.badge {
+  display:inline-flex;
+  align-items:center;
+  border:1px solid #41594f;
+  border-radius:4px;
+  color:#a0c9b8;
+  padding:3px 8px;
+  font-size:11px;
+  white-space:nowrap
+}

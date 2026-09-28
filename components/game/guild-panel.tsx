@@ -6,7 +6,7 @@ import { guildLevelXp } from '@/game/data/guild';
 import { Heading, Meter, format } from './shared';
 import { guildLevelProgress } from '@/game/systems/guild';
 const donateAmounts = [100, 500, 1000, 5000];
-/** v20.7: 길드는 이름·가입·명예 기부 기록만 다룹니다. 개인 성장 보너스·보상은 없습니다. */
+/** 길드는 이름·가입·명예 기부 기록만 다룹니다. 개인 성장 보너스·보상은 없습니다. */
 export function Guild({ s, send, busy }: PanelProps) {
     const [name, setName] = useState(s.guild?.name || '심해개척단');
     const g = s.guild;

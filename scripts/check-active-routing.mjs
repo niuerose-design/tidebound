@@ -1,10 +1,7 @@
-// Run: node scripts/check-active-routing.mjs [--baseline]
-// Two seeded active routes per build, with and without existing gear.
-// Allocate stats on level-up; compare five-minute field/dungeon samples and
-// prioritize feasible first clears. Claim research SP and manage loadouts.
-// Fixed build heuristics with advance information, not a global fastest-time proof.
+// 시드 고정 관리형 플레이(장비 유무·물리/마법)로 낚시터·던전 경로와 첫 정복 시점을 확인합니다. 사용: node scripts/check-active-routing.mjs
 const baseline=process.argv.includes('--baseline');
 import { loadGame } from './lib/game-modules.mjs';
+import { random, totalXP } from './lib/sim.mjs';
 const {load:moduleAt}=loadGame();
 
 const {newState,tick,act}=await moduleAt('systems/engine');
@@ -12,9 +9,6 @@ const {canChangeJob,canUse,validLoadout,attributes,skillLevel,skillMastery,maxSk
 const {itemStats}=await moduleAt('systems/equipment');
 const {STAGES,DUNGEONS,FISH}=await moduleAt('data/world');
 const {SKILLS}=await moduleAt('data/skills');
-const {xpNeeded}=await moduleAt('data/balance');
-function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
-const totalXP=s=>s.exp+Array.from({length:s.level-1},(_,i)=>xpNeeded(i+1)).reduce((a,b)=>a+b,0);
 const gearScore=(item,magic)=>{const v=itemStats(item);return (v[magic?'magic':'attack']||0)*4+(v.hp||0)*.22+(v.defense||0)*1.5+(v.resist||0)*1.2+(v.accuracy||0)*150+(v.crit||0)*150;};
 function manage(s,magic,gear,rng){
  const action=a=>act(s,a,s.turn*2000,rng);

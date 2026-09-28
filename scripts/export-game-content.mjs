@@ -1,4 +1,4 @@
-// Export the same data and growth formulas used by the running game.
+// 게임 데이터(직업·스킬·물고기·던전)와 성장 공식을 JSON으로 내보냅니다. 사용: node scripts/export-game-content.mjs <출력.json>
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { loadGame } from './lib/game-modules.mjs';

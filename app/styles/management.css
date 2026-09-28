@@ -1,0 +1,200 @@
+/* 항구·환생·전직·스킬 등 관리 화면의 간격과 카드 규칙. */
+/* Harbor, legacy and vocation screens share the compact build-panel rhythm. */
+.port-resource-bar { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); padding:22px 26px; gap:24px; margin-bottom:22px; background:linear-gradient(110deg,#213a35,#152329); }
+.port-resource-bar>div { display:flex; align-items:center; gap:13px; min-width:0; }
+.port-resource-bar svg { color:#adc7b5; flex-shrink:0; }
+.port-resource-bar span { color:#a8bdb6; font-size:13px; }
+.port-resource-bar strong { display:block; margin-top:5px; color:var(--gold); font-size:28px; line-height:1.3; font-variant-numeric:tabular-nums; }
+.port-resource-bar strong small { font-size:13px; color:#a7b9b1; font-weight:400; }
+.port-tabs.game-tabs { margin-bottom:22px; }
+.port-gamble-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.port-purchase-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.port-gamble-grid>* , .port-purchase-grid>* { min-width:0; }
+.appraisal-odds { display:flex; align-items:center; flex-wrap:wrap; gap:12px 22px; padding:0 2px 18px; font-size:13px; }
+.appraisal-odds>span { color:var(--muted); }
+.appraisal-odds b { font-weight:500; }
+.gamble-card { padding:26px; gap:15px; }
+.gamble-card h2 { margin:4px 0; font-size:24px; }
+.gamble-icon { display:flex; align-items:center; justify-content:center; width:66px; height:66px; border:1px solid #507361; border-radius:14px; background:#203b36; color:#c3d3ad; margin-bottom:5px; }
+.gamble-card>p { min-height:48px; line-height:1.8; }
+.gamble-guarantee { font-size:12px; color:#a8bcb4; }
+.gamble-card>button { margin-top:auto; }
+.forge-card h2 { font-size:18px; line-height:1.65; }
+.forge-actions { display:flex; flex-direction:column; gap:10px; margin-top:auto; }
+.forge-actions>p { margin:0 0 2px; }
+.forge-actions>button { width:100%; font-size:13px; }
+.training-list { padding:0 24px; }
+.training-row { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:18px 0; border-bottom:1px solid var(--border); }
+.training-row:last-child { border-bottom:0; }
+.training-row h3 { font-size:15px; }
+.training-row h3 small { font-weight:400; font-size:12px; color:#b0c5a9; margin-left:9px; }
+.training-row p { color:var(--muted); font-size:13px; margin:5px 0 0; }
+.training-row>button { min-width:128px; flex-shrink:0; }
+.legacy-resource-bar { grid-template-columns:.8fr .8fr 1fr 1.3fr; }
+.legacy-resource-bar>div:last-child strong small { display:block; margin-top:4px; line-height:1.5; }
+.rebirth-ready { display:grid; grid-template-columns:minmax(0,1fr) 245px; gap:30px; padding:28px; }
+.rebirth-ready h2 { font-size:23px; margin:9px 0 24px; line-height:1.5; }
+.rebirth-ready .meter { max-width:560px; }
+.rebirth-reward { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding-left:25px; border-left:1px solid var(--border); font-size:14px; color:#a9beb5; }
+.rebirth-reward>strong { display:flex; gap:12px; align-items:center; font-size:43px; color:var(--gold); line-height:1.2; }
+.rebirth-reward>small { font-size:12px; text-align:center; }
+.rebirth-reward>button { width:100%; margin-top:6px; }
+.rebirth-gains { display:flex; flex-wrap:wrap; gap:12px 25px; padding:19px 2px 24px; font-size:13px; color:#a2b9b0; }
+.rebirth-gains b { color:#d6dbc3; margin-left:7px; font-weight:500; }
+.rebirth-records { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.rebirth-records>article { padding:23px 26px; }
+.rebirth-records h2 { font-size:17px; margin:0 0 14px; }
+.rebirth-records .ledger-kept h2 { color:#b1d8be; }
+.rebirth-records .ledger-reset h2 { color:#d4b4a4; }
+.rebirth-records ul { padding-left:18px; list-style:disc; margin:0; }
+.rebirth-records li { padding:4px 0; line-height:1.7; color:#aabbb6; font-size:13px; }
+.legacy-fold { margin-top:18px; padding:19px 24px; }
+.legacy-fold summary { cursor:pointer; color:#c1d0bf; font-size:14px; }
+.legacy-fold p { line-height:1.85; margin:15px 0 0; font-size:13px; color:#9fb4af; }
+.legacy-fold b { margin-right:12px; color:var(--gold); }
+.data-management summary { color:#b5aaa0; }
+.data-management button { margin-top:17px; }
+.tab-intro { color:#a2b7ae; font-size:14px; margin-bottom:20px; line-height:1.8; }
+.research-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.research-card { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:21px 24px; }
+.research-card h2 { font-size:17px; margin:0 0 6px; }
+.research-card p { font-size:13px; color:#a5bfb1; margin:0 0 9px; }
+.research-card small { font-size:12px; color:var(--muted); }
+.research-card>button { flex-shrink:0; min-width:88px; }
+.job-current-summary { display:flex; align-items:center; gap:17px; padding:22px 26px; margin-bottom:20px; background:linear-gradient(110deg,#213a35,#152329); }
+.job-current-summary>svg { color:var(--gold); flex-shrink:0; }
+.job-current-summary small { font-size:12px; color:#a8bcb3; }
+.job-current-summary h2 { font-size:22px; margin:3px 0; }
+.job-current-summary p { margin:7px 0 0; font-size:13px; color:#a5bcb0; }
+.job-current-summary>button { margin-left:auto; flex-shrink:0; }
+.job-family-tabs.game-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); height:auto; gap:4px; padding:0; }
+.job-family-tabs [data-slot=tabs-trigger] { gap:9px; padding:13px 8px; font-size:14px; }
+.job-family-tabs [data-slot=tabs-trigger]>span { color:#8eab9f; font-size:12px; }
+.job-browser-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(340px,1fr); gap:22px; align-items:start; }
+.job-browser, .job-inspector { min-width:0; }
+.job-browser { padding:20px; border-top-width:3px; }
+.job-family-description { font-size:13px; color:#9db5ab; line-height:1.85; margin:0 0 14px; }
+.job-filter-tabs.game-tabs { width:100%; display:flex; height:auto; margin:0; }
+.job-filter-tabs [data-slot=tabs-trigger] { font-size:12px; padding:10px 7px; flex:1; }
+.job-list-caption { display:flex; justify-content:space-between; align-items:center; gap:6px; min-height:48px; font-size:12px; color:#93aaa4; }
+.job-list-caption button { font-size:12px; flex-shrink:0; }
+.job-browser-list { max-height:590px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#4d6860 transparent; padding:2px 5px 2px 0; display:flex; flex-direction:column; gap:8px; }
+.job-node-row { display:flex; align-items:stretch; gap:5px; }
+.job-browser .job-node { min-width:0; flex:1; padding:13px 11px; gap:10px; text-align:left; }
+.job-browser .job-node>span:nth-child(2) { min-width:0; display:flex; flex-direction:column; gap:3px; }
+.job-browser .job-node strong { font-size:14px; line-height:1.5; }
+.job-browser .job-node small { white-space:normal; font-size:12px; line-height:1.65; margin-top:3px; }
+.job-browser .job-node.locked { opacity:1; }
+.job-browser .job-node.locked .job-node-icon { color:#8fa69e; }
+.job-browser .job-node-children { display:flex; flex-direction:column; gap:8px; margin:8px 0 0 16px; padding-left:13px; }
+.job-current-label { margin-left:auto; font-size:11px; white-space:nowrap; color:#c8dba9; }
+.job-expand { display:flex; align-items:center; gap:4px; padding:7px; color:#a3baae; border:1px solid #364b44; border-radius:6px; background:#1b302d; font-size:12px; }
+.job-expand svg { transition:transform .15s; }
+.job-expand[data-state=open] svg { transform:rotate(180deg); }
+.job-inspector { padding:25px; }
+.job-inspector>h2 { font-size:28px; margin:18px 0 8px; }
+.job-inspector>p { font-size:14px; line-height:1.85; color:#a8bcb3; margin:12px 0; }
+.job-inspector .job-motto { color:var(--gold); margin:0 0 15px; font-size:13px; }
+.job-detail-section { border-top:1px solid var(--border); padding-top:18px; margin-top:18px; }
+.job-detail-section h3 { font-size:14px; margin:0 0 12px; color:#cbd8c4; }
+.job-section-heading { display:flex; align-items:center; gap:9px; }
+.job-section-heading h3 { margin:0; }
+.job-section-heading { margin-bottom:12px; }
+.info-trigger { display:inline-flex; justify-content:center; align-items:center; flex-shrink:0; color:#adc6b6; border-radius:4px; padding:4px; }
+.info-trigger:hover { color:#e4e6c9; background:#31463c; }
+.game-tooltip { max-width:340px; padding:13px 16px; background:#253c35; color:#e0e4d8; border:1px solid #506958; font-size:13px; line-height:1.8; }
+.game-tooltip p+p { margin-top:10px; }
+.job-bonus-table { width:100%; margin-bottom:14px; font-size:13px; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+.job-bonus-table th,.job-bonus-table td { padding:9px 5px; border-bottom:1px solid #2b4039; text-align:right; font-weight:400; }
+.job-bonus-table th:first-child { text-align:left; }
+.job-bonus-table thead { color:#8fab9d; font-size:12px; }
+.job-mastery-explainer { font-size:12px; color:#a6bbae; line-height:1.85; margin:11px 0 0; }
+.job-mastery-explainer b { display:block; font-weight:500; color:#d0cba6; }
+.job-inspector .vocation-skills { margin-bottom:0; }
+.job-inspector .vocation-skills>span { font-size:14px; }
+.job-inspector .vocation-skills small { font-size:12px; }
+.job-inspector>button { width:100%; margin-top:23px; }
+.job-inspector-empty { min-height:200px; padding:40px; text-align:center; color:#8ca89a; line-height:1.8; font-size:14px; }
+.job-inspector-empty svg { margin:0 auto 20px; }
+.skill-level-line .info-trigger { margin-left:auto; }
+.skill-card .skill-current-description { min-height:0; }
+.skill-specific-note { color:#a8bca6!important; font-size:12px!important; }
+.skill-grid.skill-grid-detailed { grid-template-columns:1fr; }
+.skill-grid-detailed .skill-card { min-width:0; }
+.skill-grid-detailed .skill-title { margin-bottom:13px; }
+.skill-grid-detailed .skill-actions { justify-content:flex-end; }
+.skill-grid-detailed .skill-actions>button { flex:0 1 190px; }
+.skill-stage-table-wrap { min-width:0; max-width:100%; overflow:auto; scrollbar-width:thin; }
+.skill-growth-table { width:100%; font-size:13px; }
+.skill-growth-table caption { text-align:left; padding:12px 0; font-weight:500; color:#d7dec9; }
+.skill-growth-table caption small { display:block; margin-top:5px; color:#8fad9d; font-size:12px; font-weight:400; }
+.skill-growth-table th,.skill-growth-table td { padding:11px 12px; font-variant-numeric:tabular-nums; vertical-align:top; }
+.skill-growth-table th>small { display:block; color:#a6d4b3; font-size:11px; }
+.skill-growth-table .skill-stage-effects { text-align:left; white-space:normal; min-width:220px; line-height:1.8; }
+.skill-stage-effects>span { display:block; }
+.skill-growth-table tr.current { background:#264237; }
+.skill-card .skill-stage-table-wrap:focus-visible, .info-trigger:focus-visible, .job-expand:focus-visible { outline:2px solid #b2ceaa; outline-offset:3px; }
+@media (max-width:1180px) {
+    .port-gamble-grid { gap:12px; }
+    .port-gamble-grid .market-card { padding:20px; }
+    .legacy-resource-bar { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .job-browser-layout { grid-template-columns:minmax(0,1fr) minmax(310px,1fr); gap:15px; }
+    .job-inspector { padding:20px; }
+    .job-browser { padding:16px; }
+    .research-card { padding:18px; }
+}
+@media (max-width:1000px) {
+    .job-browser-layout { grid-template-columns:1fr; }
+    .job-browser-list { max-height:390px; }
+    .port-gamble-grid { grid-template-columns:1fr; }
+    .gamble-card { display:grid; grid-template-columns:66px minmax(0,1fr); column-gap:20px; }
+    .gamble-card .gamble-icon { grid-row:1/3; }
+    .gamble-card>p { min-height:0; grid-column:2; margin:0; }
+    .gamble-card .gamble-guarantee { grid-column:1/-1; }
+    .gamble-card>button { grid-column:1/-1; }
+}
+@media (max-width:767px) {
+    .port-resource-bar { padding:20px; gap:18px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .port-resource-bar strong { font-size:25px; }
+    .port-resource-bar>div { gap:10px; }
+    .port-resource-bar>div:last-child { grid-column:1/-1; }
+    .legacy-resource-bar>div:last-child { grid-column:auto; }
+    .port-resource-bar>div>svg { width:18px; }
+    .port-purchase-grid,.research-grid,.rebirth-records { grid-template-columns:1fr; }
+    .port-tabs.game-tabs { width:100%; display:flex; padding:0; height:auto; }
+    .port-tabs [data-slot=tabs-trigger] { flex:1; padding:12px 7px; font-size:13px; }
+    .training-list { padding:0 18px; }
+    .training-row { gap:10px; }
+    .training-row>button { min-width:106px; font-size:13px; }
+    .rebirth-ready { grid-template-columns:1fr; padding:22px; gap:20px; }
+    .rebirth-ready h2 { font-size:21px; }
+    .rebirth-reward { border-left:0; border-top:1px solid var(--border); padding:20px 0 0; }
+    .rebirth-gains { display:grid; grid-template-columns:1fr 1fr; font-size:12px; gap:15px; }
+    .rebirth-gains b { display:block; margin:5px 0 0; }
+    .job-current-summary { padding:20px; flex-wrap:wrap; gap:12px; }
+    .job-current-summary>button { margin-left:38px; }
+    .job-family-tabs.game-tabs { grid-template-columns:1fr 1fr; }
+    .job-family-tabs [data-slot=tabs-trigger] { font-size:13px; }
+    .job-browser .job-node-children { margin-left:9px; padding-left:9px; }
+    .job-browser .job-node { padding:11px 8px; }
+    .skill-grid-detailed .skill-card { padding:20px; }
+    .skill-growth-table th,.skill-growth-table td { padding:10px; font-size:12px; }
+    .skill-grid-detailed .skill-actions { flex-wrap:wrap; }
+    .skill-grid-detailed .skill-actions>button { flex:1 1 100px; }
+}
+
+/* Growth goals and optional tactical choices follow the existing game panels. */
+.growth-goals { margin-bottom: 16px; padding: 18px; min-width: 0; }
+.growth-goals p { margin: 8px 0; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.growth-goals small { display: block; margin-top: 10px; color: var(--muted-foreground); font-size: 13px; }
+.growth-goals summary, .skill-specialization summary { cursor: pointer; padding: 10px 0; font-size: 14px; }
+.growth-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.growth-suggestions button { white-space: normal; text-align: left; }
+.skill-specialization { margin: 12px 0; border-top: 1px solid var(--border); }
+.skill-specialization p, .specialization-option p { font-size: 14px; line-height: 1.6; }
+.specialization-option { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.specialization-option strong, .specialization-option small { display: block; margin-bottom: 6px; }
+.boss-research { max-width: 240px; padding: 10px 0; }
+.boss-research strong, .boss-research p { font-size: 14px; line-height: 1.5; }
+.boss-research .secondary { white-space: normal; }
+@media (max-width: 640px) { .growth-suggestions { flex-direction: column; } .boss-research { max-width: none; } }

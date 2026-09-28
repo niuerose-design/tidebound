@@ -1,7 +1,7 @@
 'use client';
 import { ConfirmButton } from './confirm-button';
 import { RefreshCw } from 'lucide-react';
-import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS } from '@/game/data/progression';
+import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, percent } from '@/game/data/progression';
 import { attributes, apCapacity, apUsed } from '@/game/systems/progression';
 import { StatBreakdown } from './stat-breakdown';
 import { type StatTrace, stats, dropRate, goldMultiplier, expMultiplier } from '@/game/systems/stats';
@@ -49,7 +49,7 @@ export function Character({ s, send, busy }: PanelProps) {
     <p className="footnote stat-breakdown-hint">능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
     <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key !== 'harmony' || s.job === 'allRounder' || s.skills.includes('harmonicWeight')).map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>)}</div></details>
     <div className="derived-summary">
-    <span>장비 드롭 확률<strong>{(dropRate(s) * 100).toFixed(1)}%</strong>
+    <span>장비 드롭 확률<strong>{percent(dropRate(s))}</strong>
     </span>
     <span>골드 획득 배율<strong>×{goldMultiplier(s).toFixed(2)}</strong>
     </span>

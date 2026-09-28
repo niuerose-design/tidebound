@@ -1,10 +1,8 @@
-// Run: node scripts/check-expedition.mjs [--baseline]
-// 720 complete, seeded, gearless dungeon expeditions across fixed fixtures.
-// Includes accumulated rebirth/research/mastery fixtures and engine regressions.
-// Fixtures test reachability; they do not measure time to earn that progression.
+// 던전 도달성 점검: 고정 캐릭터로 던전별 보스 도달률·정복률과 입장 준비·보스 보상 규칙을 검사합니다. 사용: node scripts/check-expedition.mjs
 const baseline=process.argv.includes('--baseline');
 import assert from 'node:assert/strict';
 import { loadGame } from './lib/game-modules.mjs';
+import { random } from './lib/sim.mjs';
 const {load:moduleAt}=loadGame();
 
 
@@ -14,7 +12,6 @@ const {grantJobSkills,canUse,validLoadout,attributes}=await moduleAt('systems/pr
 const {FISH}=await moduleAt('data/world');
 const {scaledEnemyStats}=await moduleAt('data/encounters');
 const {MONSTER_TUNING}=await moduleAt('data/balance');
-function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
 function fixture(level,magic,progressed=false){
  const s=newState(0);s.level=level;s.equipment={};s.inventory=[];s.statPoints=level*4;s.rebirths=progressed?30:level>=40?1:0; if(progressed)s.permanent={attack:10,hp:10,guard:10};
  while(s.statPoints){const v=attributes(s);act(s,{type:'attribute',id:magic?(v.int<35?'int':v.wis<20?'wis':s.statPoints%4===0?'vit':'int'):(v.str<35?'str':v.dex<20?'dex':s.statPoints%4===0?'vit':'str')},0);}

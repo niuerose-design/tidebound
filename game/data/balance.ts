@@ -11,7 +11,7 @@ export const BALANCE = {
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
     activeSlots: 4, passiveSlots: 3, inventoryCap: 60, dropChance: 0.17,
-    // v20.10 회복 개편: 16% → 8% (scripts/check-recovery.mjs 측정). 응급처치 패시브가 승리마다 FIRST_AID_HEAL을 더합니다.
+    // 처치 후 회복률(근거: scripts/check-recovery.mjs). 응급처치를 장착하면 승리마다 FIRST_AID_HEAL을 더합니다.
     healAfterKill: 0.08, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
