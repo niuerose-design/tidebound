@@ -93,6 +93,10 @@ test('Long-term goals: dungeon steps, one-time achievement notice, suggestions o
  const f=newState(0);const g=goalSuggestions(f);assert.equal(g.job,undefined);assert.equal(g.dungeon,undefined);
  for(const d of DUNGEONS){const x=newState(0);x.level=d.level;x.rebirths=d.rebirth;const sug=goalSuggestions(x).dungeon;if(sug)assert.ok(x.level>=sug.level&&x.rebirths>=sug.rebirth);}
 });
+test('Stat points: 5 per level, old saves get the difference once, max button spends all',()=>{
+ const s=newState(0);assert.equal(s.statRate,5);const old=newState(0);old.level=21;old.statPoints=10;old.attributes.str=70;delete old.statRate;act(old,{type:'pause'},0);assert.equal(old.statPoints,30);assert.equal(old.statRate,5);act(old,{type:'pause'},0);assert.equal(old.statPoints,30);
+ act(old,{type:'attribute',id:'vit',value:'max'},0);assert.equal(old.statPoints,0);assert.equal(old.attributes.vit,30);assert.throws(()=>act(old,{type:'attribute',id:'vit',value:'max'},0));assert.throws(()=>act(old,{type:'attribute',id:'vit',value:'7'},0));
+});
 test('SP is only earned once at 10000 catches; early codex rewards are gold',()=>{
  const s=newState(0);assert.equal(s.sp,0);s.book.minnow=50;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.sp,0);assert.equal(s.gold,300);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
  s.book.minnow=9999;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.bookClaims.minnow,3);assert.equal(s.gold,300+1000+5000);assert.equal(s.sp,0);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));

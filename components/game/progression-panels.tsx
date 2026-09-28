@@ -47,7 +47,7 @@ function Reset({ title, description, disabled, onConfirm, label }: {
 export function Character({ s, send, busy }: Props) {
     const trace: StatTrace = {}, a = stats(s, trace), v = attributes(s);
     return <>
-    <Heading eyebrow="CHARACTER BUILD" title="어떤 낚시꾼이 될 것인가" description="기본 능력치는 전직 조건과 전투 특성을 함께 결정합니다. 레벨마다 4포인트를 직접 배분하세요.">
+    <Heading eyebrow="CHARACTER BUILD" title="어떤 낚시꾼이 될 것인가" description={`기본 능력치는 전직 조건과 전투 특성을 함께 결정합니다. 레벨마다 ${PROGRESSION.statPerLevel}포인트를 직접 배분하세요.`}>
     <Reset title="능력치를 재분배할까요?" description="투자한 포인트를 전부 돌려받습니다. 전직 해금 기록은 유지되며 체력·마나는 새 최대값을 초과할 수 없습니다." disabled={busy || s.running} onConfirm={() => send({ type: 'resetAttributes' })} label="무료 재분배"/>
     </Heading>
     <div className="build-banner panel">
@@ -74,6 +74,7 @@ export function Character({ s, send, busy }: Props) {
         <div className="attribute-buttons">
         <button className="secondary small" aria-label={`${attr.name} 1 증가`} disabled={busy || s.statPoints < 1} onClick={() => send({ type: 'attribute', id: attr.id, value: '1' })}>+1</button>
         <button className="secondary small" aria-label={`${attr.name} 5 증가`} disabled={busy || s.statPoints < 5} onClick={() => send({ type: 'attribute', id: attr.id, value: '5' })}>+5</button>
+        <button className="secondary small" aria-label={`${attr.name}에 남은 포인트 모두 투자`} title={`남은 ${s.statPoints}포인트 모두 투자`} disabled={busy || s.statPoints < 1} onClick={() => send({ type: 'attribute', id: attr.id, value: 'max' })}>최대</button>
         </div>
         </div>)}</section>
     <section className="panel derived-panel">
