@@ -1,8 +1,9 @@
 'use client';
 import { GrowthGoals } from './growth-goals';
 import { AutoRunStatus } from './auto-run';
+import { TutorialCard, VoyageLog, VoyageNotice } from './guidance-panels';
 import { useEffect, useState } from 'react';
-import { Anchor, ArrowRight, BookOpen, Check, ChevronRight, ClipboardList, Coins, Compass, Fish, Heart, HelpCircle, Lock, Map, Pause, Play, RefreshCw, Settings2, Shield, ShoppingBag, Sparkles, Swords, Target, Trophy, Users, Waves, Zap } from 'lucide-react';
+import { Anchor, ArrowRight, BookOpen, Check, ChevronRight, ClipboardList, Coins, Compass, Fish, Heart, HelpCircle, Lock, Map, Pause, Play, RefreshCw, Settings2, Shield, ShoppingBag, Sparkles, Swords, Target, Trophy, Users, Waves, Zap, ScrollText } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,7 +31,7 @@ import { StatusBadges } from './combat-status';
 import { BattleLogLine } from './combat-log';
 import { LoginScreen } from './login-screen';
 import type { State, Action } from '@/game/types';
-const NAV = [{ label: '항해', items: [{ id: 'battle', name: '자동 낚시', Icon: Anchor }, { id: 'stages', name: '낚시터', Icon: Map }, { id: 'dungeons', name: '던전 탐험', Icon: Compass }] }, { label: '낚시꾼', items: [{ id: 'character', name: '능력치 · 빌드', Icon: Target }, { id: 'shop', name: '항구 상점', Icon: ShoppingBag }, { id: 'inventory', name: '장비 보관함', Icon: ShoppingBag }, { id: 'skills', name: '스킬', Icon: Zap }, { id: 'classes', name: '전직', Icon: Swords }, { id: 'rebirth', name: '환생', Icon: RefreshCw }] }, { label: '기록과 명예', items: [{ id: 'book', name: '물고기 도감', Icon: BookOpen }, { id: 'guild', name: '길드', Icon: Users }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy }, { id: 'updates', name: '업데이트 내역', Icon: ClipboardList }, { id: 'help', name: '도움말', Icon: HelpCircle }] }];
+const NAV = [{ label: '항해', items: [{ id: 'battle', name: '자동 낚시', Icon: Anchor }, { id: 'stages', name: '낚시터', Icon: Map }, { id: 'dungeons', name: '던전 탐험', Icon: Compass }] }, { label: '낚시꾼', items: [{ id: 'character', name: '능력치 · 빌드', Icon: Target }, { id: 'shop', name: '항구 상점', Icon: ShoppingBag }, { id: 'inventory', name: '장비 보관함', Icon: ShoppingBag }, { id: 'skills', name: '스킬', Icon: Zap }, { id: 'classes', name: '전직', Icon: Swords }, { id: 'rebirth', name: '환생', Icon: RefreshCw }] }, { label: '기록과 명예', items: [{ id: 'book', name: '물고기 도감', Icon: BookOpen }, { id: 'voyage', name: '항해 기록', Icon: ScrollText }, { id: 'guild', name: '길드', Icon: Users }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy }, { id: 'updates', name: '업데이트 내역', Icon: ClipboardList }, { id: 'help', name: '도움말', Icon: HelpCircle }] }];
 function SettingsDialog({ open, onOpenChange, s, busy, send, name, setName, onLogout }: {
     onLogout?: () => void;
     open: boolean;
@@ -253,6 +254,7 @@ function BattleV2({ s, busy, send, setView, saved, settings, setSettings, name, 
     return <>
     <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onLogout={onLogout}/></div></Heading>
     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Waves size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>
+    <VoyageNotice s={s} setView={setView}/>
     <div className="battle-hud" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
     <div className="battle-character-column"><Player s={s} busy={busy} send={send} setView={setView}/></div>
     <div className="battle-console">
@@ -297,7 +299,7 @@ export default function GameShell() {
         <button className="primary" onClick={() => send({ type: 'sync' })}>다시 연결</button></div> : <>
         <div className={`workspace ${view === 'battle' ? 'battle-workspace' : ''}`}>
         <main className="main-content">{error && <div className="error-box">{error}<button className="text-button" onClick={() => send({ type: 'sync' })}>다시 시도</button>
-            </div>}{view === 'guild' && <Guild {...props!}/>}{view === 'updates' && <UpdateLog/>}{view === 'help' && <Guide/>}{view === 'battle' && <GrowthGoals {...props!} setView={setView}/>}{view === 'battle' && <BattleV2 {...props!} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView} onLogout={game.logout}/>}{view === 'character' && <Character {...props!}/>}{view === 'stages' && <Stages {...props!}/>}{view === 'dungeons' && <Dungeons {...props!}/>}{view === 'shop' && <Shop {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{view === 'skills' && <Skills {...props!}/>}{view === 'classes' && <Classes {...props!}/>}{view === 'rebirth' && <Rebirth {...props!}/>}{view === 'book' && <Collection {...props!}/>}{view === 'ranking' && <Rankings {...props!} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
+            </div>}{view === 'guild' && <Guild {...props!}/>}{view === 'updates' && <UpdateLog/>}{view === 'help' && <Guide/>}{view === 'battle' && <TutorialCard {...props!} setView={setView}/>}{view === 'battle' && <GrowthGoals {...props!} setView={setView}/>}{view === 'voyage' && <VoyageLog {...props!}/>}{view === 'battle' && <BattleV2 {...props!} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView} onLogout={game.logout}/>}{view === 'character' && <Character {...props!}/>}{view === 'stages' && <Stages {...props!}/>}{view === 'dungeons' && <Dungeons {...props!}/>}{view === 'shop' && <Shop {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{view === 'skills' && <Skills {...props!}/>}{view === 'classes' && <Classes {...props!}/>}{view === 'rebirth' && <Rebirth {...props!}/>}{view === 'book' && <Collection {...props!}/>}{view === 'ranking' && <Rankings {...props!} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
         <footer className="app-footer">
         <span>TIDEBOUND <span className="muted">/</span> 심연의 낚시꾼</span>
         <span>행동력 없는 끝없는 항해 <Waves size={14}/>

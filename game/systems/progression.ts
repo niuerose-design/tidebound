@@ -59,7 +59,7 @@ export function skillCost(_s: State, _id: string) { return PROGRESSION.skillSPCo
 export function grantJobSkills(s: State) {
     const granted: string[] = [];
     for (const sk of SKILLS) {
-        if (sk.job !== s.job || !canLearn(s, sk.id))
+        if ((sk.freeCommon ? !!sk.job : sk.job !== s.job) || !canLearn(s, sk.id))
             continue;
         if ((s.learned?.[sk.id] || 0) <= 0) {
             s.learned[sk.id] = 1;

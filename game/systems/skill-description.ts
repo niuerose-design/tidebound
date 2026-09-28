@@ -1,5 +1,5 @@
 import type { Skill, Stats } from '../types';
-import { STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
+import { STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL } from '../data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '../data/progression';
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel, skillMasteryRewards } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
@@ -35,6 +35,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.extraAttacks) out.push(`추가 공격 ${Math.min(STATUS_TUNING.maxExtraAttacks, sk.extraAttacks)}회 · 각 타격은 위 피해식의 ${skillPercent(sk.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)}`);
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
+    if (sk.id === 'firstAid') out.push(`승리 후 최대 체력 ${skillPercent(FIRST_AID_HEAL)} 추가 회복 · 승리당 1회 (무리 사냥 포함)`);
     if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 승리 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
     const rewards = skillMasteryRewards(sk, level + 1);
     if (rewards.ap) out.push(`최대 성장 보상: 장착 AP 한도 +${rewards.ap}`);

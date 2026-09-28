@@ -1,6 +1,6 @@
 import { BookOpen, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Users, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA } from '@/game/data/balance';
+import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION } from '@/game/data/progression';
 import { ECONOMY, RESEARCH } from '@/game/data/economy';
 import { SWARM_UNLOCK } from '@/game/data/world';
@@ -103,7 +103,7 @@ export function Guide() {
                 condition={`강화는 최대 +${ECONOMY.enhanceMax}. 장비 카드의 수치는 강화가 적용된 값이며 카드에 강화 단계를 함께 표시합니다.`}
                 limit="구매·강화·옵션 변경 비용은 판매할 때 돌려받지 않습니다. 전리품 감지는 장비 드롭과 골드만 높이고 희귀어 출현·장비 등급에는 영향이 없습니다."/>
             <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
-                effect={`승리 후 최대 체력의 ${pct(BALANCE.healAfterKill)}를 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
+                effect={`승리 후 최대 체력의 ${pct(BALANCE.healAfterKill)}(던전 ${pct(MONSTER_TUNING.dungeonHealAfterKill)})를 회복합니다. 공용 패시브 응급처치(AP 2, Lv.2 자동 습득)를 장착하면 승리마다 ${pct(FIRST_AID_HEAL)}를 더 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
                 condition={`패배하면 손실 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다.`}
                 limit={`방치 정산은 최대 ${BALANCE.offlineCapSeconds / 3600}시간. 일시정지 중에는 쌓이지 않습니다. 해역 난이도는 일반 낚시터에만 적용됩니다.`}/>
             <Rule icon={<Gauge size={19}/>} title="데이터 초기화"

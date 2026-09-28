@@ -1,3 +1,4 @@
+import { syncVoyage } from './guidance';
 import { BOSS_RESEARCH, SPECIALIZATIONS, specializationFits } from '../data/specializations';
 import { commerce } from './commerce';
 import { rollAffix, saleValue } from './equipment';
@@ -7,7 +8,7 @@ import { activeSwarm, swarmUnlocked, catchReward, deepVoyagePearls, nextLifeBonu
 import { stats, dropRate, clampVitals, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery } from './mastery';
 import type { State, Action, Item, Attribute } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, SAVE_VERSION, xpNeeded } from '../data/balance';
+import { BALANCE, MONSTER_TUNING, RARITIES, SAVE_VERSION, xpNeeded, FIRST_AID_HEAL } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, SWARM_SIZES, SWARM_UNLOCK, swarmAttackMultiplier } from '../data/world';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
@@ -23,11 +24,16 @@ export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'syst
     if (s.logs.length > 70)
         s.logs.shift();
 }
+/** 승리 1회당 회복량. 무리 규모와 관계없이 승리마다 한 번 적용합니다(응급처치 포함). */
+export function victoryHeal(s: State) {
+    const firstAid = s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0;
+    return Math.floor(stats(s).hp * ((s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : BALANCE.healAfterKill) + firstAid));
+}
 export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
         version: SAVE_VERSION,
-        skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null,
+        skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null, tutorial: {}, voyage: {},
         tide: 0,
         abyssBest: 0,
         shopSerial: 0,
@@ -170,7 +176,7 @@ function reward(s: State, rng: () => number) {
         const sk = SKILLS.find(skill => skill.id === id)!;
         if (sk.unlockJobMastery) addLog(s, `직업 숙련으로 ${sk.name} 해금 · 기본 Lv.0부터 장착 가능`, 'skill');
     }
-    s.hp = Math.min(stats(s).hp, s.hp + Math.floor(stats(s).hp * (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : BALANCE.healAfterKill)));
+    s.hp = Math.min(stats(s).hp, s.hp + victoryHeal(s));
     s.enemy = null;
     s.effects = {};
     s.playerStun = 0;
@@ -256,6 +262,10 @@ function continueRepeat(s: State, id: string, repeat: { left: number | null; unt
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
+    tickTurn(s, rng);
+    syncVoyage(s, text => addLog(s, text, 'reward'));
+}
+function tickTurn(s: State, rng: () => number) {
     s.turn++;
     const a = stats(s);
     if (s.recovery > 0) {
@@ -328,6 +338,10 @@ function claimBookRewards(s: State, id: string) {
     return true;
 }
 export function act(s: State, a: Action, now: number, rng = Math.random) {
+    actInner(s, a, now, rng);
+    syncVoyage(s, text => addLog(s, text, 'reward'));
+}
+function actInner(s: State, a: Action, now: number, rng: () => number) {
     // Save files created before job-granted skills existed are upgraded lazily
     // on the next action. This also grants a newly level-eligible job skill.
     grantJobSkills(s);
@@ -558,6 +572,14 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
                 throw Error('받을 도감 보상이 없습니다.');
             break;
         }
+        case 'tutorial': {
+            if (!s.tutorial) s.tutorial = {};
+            if (id === 'hide') s.tutorial.hidden = true;
+            else if (id === 'show') { s.tutorial.hidden = false; s.tutorial.skipped = false; }
+            else if (id === 'skip') s.tutorial.skipped = true;
+            else throw Error('알 수 없는 안내 설정입니다.');
+            break;
+        }
         case 'claimAllBooks': {
             if (!FISH.map(f => claimBookRewards(s, f.id)).some(Boolean))
                 throw Error('받을 도감 보상이 없습니다.');
@@ -664,7 +686,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             }
             fresh.abyssBest = s.abyssBest;
             fresh.shopSerial = s.shopSerial;
-            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild });
+            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial });
             s.hp = stats(s).hp;
             s.mana = stats(s).mana;
             addLog(s, `새로운 항해가 시작됩니다. 환생 진주 +${pearls}${deepPearls ? ` (깊은 항해 +${deepPearls} 포함)` : ''}`);

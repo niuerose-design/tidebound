@@ -11,7 +11,8 @@ export const BALANCE = {
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
     activeSlots: 4, passiveSlots: 3, inventoryCap: 60, dropChance: 0.17,
-    healAfterKill: 0.16, recoveryTurns: 3,
+    // v20.10 회복 개편: 16% → 8% (scripts/check-recovery.mjs 측정). 응급처치 패시브가 승리마다 FIRST_AID_HEAL을 더합니다.
+    healAfterKill: 0.08, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
     bookMilestones: [50, 500, 2500, 10000], duelCooldownMs: 60000, duelMaxTurns: 80,
@@ -26,7 +27,7 @@ export const MONSTER_TUNING = {
     bossMultiplier: 2.7,
     bossRewardMultiplier: 1.9,
     dungeonPreparationTurns: 3,
-    dungeonHealAfterKill: .08,
+    dungeonHealAfterKill: .04,
 } as const;
 /** Entry-level fish stay approachable; higher-level fish are a real gearless wall. */
 export function monsterLevelScale(level: number) {
@@ -72,3 +73,5 @@ export const STATUS_GUIDE = [
 export const xpNeeded = (level: number) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1));
 export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }];
 export const SLOTS = { rod: '낚싯대', coat: '방어구', charm: '나침반' };
+/** 응급처치(공용 패시브): 승리 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
+export const FIRST_AID_HEAL = .04;

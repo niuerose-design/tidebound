@@ -3681,3 +3681,24 @@ strong,b {
 .auto-run-state.on { color: #b6e0cc; background: #13302a; }
 .auto-run-state.off { color: #e3c28d; background: #2c2618; }
 .auto-run-status { margin-bottom: 18px; }
+/* v20.10 튜토리얼·항해 기록 */
+.tutorial-card { padding: 14px 18px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
+.tutorial-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.tutorial-head strong { color: var(--gold); }
+.tutorial-head span { color: #9fb4af; flex: 1; }
+.tutorial-steps { list-style: none; padding: 0; margin: 12px 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.tutorial-steps li { display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 9px; border-radius: 12px; border: 1px solid var(--border); color: #7f9a9c; }
+.tutorial-steps li span { width: 6px; height: 6px; border-radius: 50%; background: #3b5153; }
+.tutorial-steps li.done { color: #b6e0cc; border-color: #3f6d5e; }
+.tutorial-steps li.current { color: var(--gold); border-color: #6d5a3f; }
+.tutorial-steps li.current span { background: var(--gold); }
+.tutorial-card p { font-size: 13px; margin: 0 0 6px; }
+.tutorial-card small { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
+.voyage-notice { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px; padding: 7px 12px; border: 1px solid #4a4230; background: #221f16; border-radius: 5px; color: #e0cfa2; font-size: 12px; text-align: left; cursor: pointer; }
+.voyage-notice span { color: #bfb38e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.voyage-section { margin-top: 22px; }
+.voyage-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.voyage-entry { padding: 16px; }
+.voyage-entry strong { font-size: 14px; color: #e0cfa2; }
+.voyage-entry p { font-size: 13px; line-height: 1.7; margin: 6px 0 0; color: #a9bdb8; }
+.voyage-entry.locked strong, .voyage-entry.locked p { color: #5f7577; }

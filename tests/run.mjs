@@ -7,7 +7,8 @@ import assert from 'node:assert/strict';
 const out=await mkdtemp(join(tmpdir(),'tidebound-tests-'));
 async function compile(dir){for(const e of await readdir(dir,{withFileTypes:true})){if(e.name==='server')continue;const src=join(dir,e.name),dst=join(out,src);if(e.isDirectory()){await mkdir(dst,{recursive:true});await compile(src)}else if(e.name.endsWith('.ts')){const text=await readFile(src,'utf8');const js=ts.transpileModule(text,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])(\.\.?\/[^'"]+)\1/g,(_,q,p)=>`from ${q}${p}.js${q}`);await writeFile(dst.replace(/\.ts$/,'.js'),js)}}}
 await mkdir(join(out,'game'));await writeFile(join(out,'package.json'),'{"type":"module"}');await compile('game');
-const {newState,act,advance,tick}=await import(pathToFileURL(join(out,'game/systems/engine.js')).href);
+const {newState,act,advance,tick,victoryHeal}=await import(pathToFileURL(join(out,'game/systems/engine.js')).href);
+const engineSource=await readFile('game/systems/engine.ts','utf8');
 const {stats,snapshot,expMultiplier,normalizeStats}=await import(pathToFileURL(join(out,'game/systems/stats.js')).href);
 const {victoryMastery}=await import(pathToFileURL(join(out,'game/systems/mastery.js')).href);
 const {visibleStatuses}=await import(pathToFileURL(join(out,'game/systems/combat-status.js')).href);
@@ -70,6 +71,20 @@ test('Stat trace: per-source deltas sum to the final value and do not change the
  for(const [k,v] of Object.entries(traced)){const sum=(trace[k]||[]).reduce((a,x)=>a+x.delta,0);assert.ok(Math.abs(sum-v)<1e-6,`${k}: ${sum} vs ${v}`);}
  assert.ok(trace.hp.some(x=>x.source==='research'&&x.factor>1));assert.ok(trace.hp.some(x=>x.source==='rebirth'));assert.ok(trace.attack.some(x=>x.source==='book'));assert.ok(trace.attack.some(x=>x.source==='equipment')||trace.magic.some(x=>x.source==='equipment')||Object.values(trace).flat().some(x=>x.source==='equipment'));
 });
+test('Voyage log: unlocks once, survives rebirth, silent backfill for old saves; tutorial has no rewards',()=>{
+ const s=newState(0);act(s,{type:'start'},0);tick(s,rng);assert.ok(s.voyage['stage:brook']>=0);const logs=s.logs.filter(l=>l.text.includes('항해 기록')).length;assert.equal(logs,1);
+ for(let i=0;i<5;i++)tick(s,rng);assert.equal(s.logs.filter(l=>l.text.includes('항해 기록')).length,1);
+ const old=newState(0);delete old.voyage;delete old.tutorial;old.clears.grotto=2;old.rebirths=1;old.abyssBest=30;act(old,{type:'pause'},0);
+ assert.equal(old.voyage['dungeon:grotto'],-1);assert.equal(old.voyage['abyss:25'],-1);assert.equal(old.voyage['abyss:50'],undefined);assert.ok(!old.logs.some(l=>l.text.includes('항해 기록')));assert.equal(old.tutorial,undefined);
+ const r=newState(0);r.level=60;r.voyage={'stage:reef':12};const before={sp:r.sp,gold:r.gold};act(r,{type:'tutorial',id:'skip'},0);assert.equal(r.tutorial.skipped,true);assert.equal(r.sp,before.sp);assert.equal(r.gold,before.gold);
+ act(r,{type:'rebirth'},0);assert.equal(r.voyage['stage:reef'],12);assert.ok(r.voyage['rebirth:1']>=0);assert.equal(r.tutorial.skipped,true);
+});
+test('Recovery: 8% after a win (4% in dungeons); first aid is free at Lv.2 and adds 4% once per win',()=>{
+ const s=newState(0);assert.equal((s.learned.firstAid||0),0);s.level=2;act(s,{type:'sync'},0);assert.equal(s.learned.firstAid,1);assert.equal(s.sp,0);
+ const max=stats(s).hp;s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.08));s.skills=['firstAid'];assert.equal(victoryHeal(s),Math.floor(max*.12));
+ s.dungeon={id:'grotto',wave:0};assert.equal(victoryHeal(s),Math.floor(max*.08));s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.04));
+ const src=engineSource.slice(engineSource.indexOf('function reward('));assert.equal((src.slice(0,src.indexOf('\nfunction ')).match(/victoryHeal\(/g)||[]).length,1);
+});
 test('SP is only earned once at 10000 catches; early codex rewards are gold',()=>{
  const s=newState(0);assert.equal(s.sp,0);s.book.minnow=50;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.sp,0);assert.equal(s.gold,300);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
  s.book.minnow=9999;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.bookClaims.minnow,3);assert.equal(s.gold,300+1000+5000);assert.equal(s.sp,0);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
@@ -114,7 +129,7 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
 test('70 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,70);assert.equal(SKILLS.length,104);assert.equal(JOB_TREES.length,4);
+ assert.equal(JOBS.length,70);assert.equal(SKILLS.length,105);assert.equal(JOB_TREES.length,4);
  for(const job of JOBS.filter(j=>j.tier===1||j.tier===2)){
   const owned=SKILLS.filter(sk=>sk.job===job.id);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
  }
