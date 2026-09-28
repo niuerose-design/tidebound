@@ -1,5 +1,5 @@
 'use client';
-import { GrowthGoals } from './growth-goals';
+import { GrowthGoals, tutorialActive } from './growth-goals';
 import { UPDATE_LOG } from '@/game/data/update-log';
 import { AutoRunStatus } from './auto-run';
 import { TutorialCard, VoyageLog, VoyageNotice } from './guidance-panels';
@@ -100,7 +100,7 @@ function Navigation({ view, setView }: {
     </SidebarFooter>
     </Sidebar>;
 }
-function Player({ s, setView }: {
+function Player({ s, busy, send, setView }: {
     s: State;
     busy: boolean;
     send: (a: Action) => void;
@@ -180,13 +180,7 @@ function Player({ s, setView }: {
             </button>;
         })}</div>
     </div>
-    <div className="panel next-goal">
-    <div className="eyebrow">NEXT MILESTONE</div>
-    <h3>{s.level < 10 ? '새로운 길을 찾아서' : s.job === 'fisher' ? '전직할 준비가 됐습니다' : s.level < 30 ? '한계를 넘어서는 항해' : '새로운 생을 향하여'}</h3>
-    <p>{s.level < 10 ? '레벨 10과 기본 능력치 조건을 준비하세요.' : s.job === 'fisher' ? '첫 전직 후보의 조건을 비교해 보세요.' : s.level < 30 ? '레벨·능력치·선행 숙련을 채워 다음 전직을 준비하세요.' : '진주를 얻고 영구 능력을 강화하세요.'}</p>
-    <button className="text-button" onClick={() => setView(s.job === 'fisher' ? 'classes' : 'rebirth')}>자세히 보기 <ArrowRight size={14}/>
-    </button>
-    </div>
+    {tutorialActive(s) ? <TutorialCard s={s} send={send} busy={busy} setView={setView}/> : <GrowthGoals s={s} send={send} busy={busy} setView={setView}/>}
     </aside>;
 }
 function BattleRail({ s, busy, send, setView }: {
@@ -198,13 +192,13 @@ function BattleRail({ s, busy, send, setView }: {
     const battleLogs = s.logs.filter(log => log.type === 'battle').slice(-9).reverse();
     const dungeons = [...DUNGEONS].sort((a, b) => a.level - b.level);
     return <aside className="battle-utility-rail" aria-label="전투 보조 패널">
-    <AutoRunStatus s={s}/>
     <section className="panel battle-rail-panel battle-feed">
     <div className="section-title"><h2><Swords size={15}/> 전투 기록</h2><span className="micro">LIVE</span></div>
     <div className="battle-feed-list" role="log" aria-label="최근 전투 메시지">
     {battleLogs.length ? battleLogs.map(log => <BattleLogLine key={log.id} log={log} index/>) : <p className="battle-feed-empty">자동 낚시를 시작하면 전투 기록이 표시됩니다.</p>}
     </div>
     </section>
+    <AutoRunStatus s={s} compact/>
     <section className="panel battle-rail-panel battle-selector-panel">
     <div className="section-title"><h2><Map size={15}/> 낚시터</h2><button className="text-button" onClick={() => setView('stages')}>전체 지도 <ChevronRight size={13}/></button></div>
     <div className="battle-stage-list">{STAGES.map((stage, index) => {
@@ -300,7 +294,7 @@ export default function GameShell() {
         <button className="primary" onClick={() => send({ type: 'sync' })}>다시 연결</button></div> : <>
         <div className={`workspace ${view === 'battle' ? 'battle-workspace' : ''}`}>
         <main className="main-content">{error && <div className="error-box">{error}<button className="text-button" onClick={() => send({ type: 'sync' })}>다시 시도</button>
-            </div>}{view === 'guild' && <Guild {...props!}/>}{view === 'updates' && <UpdateLog/>}{view === 'help' && <Guide/>}{view === 'battle' && <TutorialCard {...props!} setView={setView}/>}{view === 'battle' && <GrowthGoals {...props!} setView={setView}/>}{view === 'voyage' && <VoyageLog {...props!}/>}{view === 'battle' && <BattleV2 {...props!} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView} onLogout={game.logout}/>}{view === 'character' && <Character {...props!}/>}{view === 'stages' && <Stages {...props!}/>}{view === 'dungeons' && <Dungeons {...props!}/>}{view === 'shop' && <Shop {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{view === 'skills' && <Skills {...props!}/>}{view === 'classes' && <Classes {...props!}/>}{view === 'rebirth' && <Rebirth {...props!}/>}{view === 'book' && <Collection {...props!}/>}{view === 'ranking' && <Rankings {...props!} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
+            </div>}{view === 'guild' && <Guild {...props!}/>}{view === 'updates' && <UpdateLog/>}{view === 'help' && <Guide/>}{view === 'voyage' && <VoyageLog {...props!}/>}{view === 'battle' && <BattleV2 {...props!} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView} onLogout={game.logout}/>}{view === 'character' && <Character {...props!}/>}{view === 'stages' && <Stages {...props!}/>}{view === 'dungeons' && <Dungeons {...props!}/>}{view === 'shop' && <Shop {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{view === 'skills' && <Skills {...props!}/>}{view === 'classes' && <Classes {...props!}/>}{view === 'rebirth' && <Rebirth {...props!}/>}{view === 'book' && <Collection {...props!}/>}{view === 'ranking' && <Rankings {...props!} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
         <footer className="app-footer">
         <span>TIDEBOUND <span className="muted">/</span> 심연의 낚시꾼</span>
         <span>행동력 없는 끝없는 항해 <Waves size={14}/>

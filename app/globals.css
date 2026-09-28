@@ -3712,3 +3712,19 @@ strong,b {
 .goal-steps li.done { color: #b6e0cc; }
 .growth-goal-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
 .growth-none { font-size: 13px; color: var(--muted); }
+/* v20.13 정리: 숫자 줄임 표기는 부모 글꼴을 그대로 사용, 자동 진행 레일 접기, 왼쪽 안내 슬롯 */
+.num-short { font: inherit !important; color: inherit !important; line-height: inherit !important; white-space: nowrap; }
+.auto-run-status.compact { padding: 12px 16px; margin-bottom: 0; }
+.auto-run-status.compact > summary { display: flex; align-items: center; gap: 7px; cursor: pointer; list-style: none; font-size: 13px; }
+.auto-run-status.compact > summary::-webkit-details-marker { display: none; }
+.auto-run-status.compact > summary span { color: #8faead; font-size: 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auto-run-status.compact[open] > summary { margin-bottom: 10px; }
+.auto-run-status.compact dl > div { grid-template-columns: 84px 1fr; }
+.player-column > .tutorial-card, .player-column > .growth-goals { margin: 16px 0 0; padding: 16px; }
+.player-column > .tutorial-card .tutorial-head span { display: none; }
+.player-column > .tutorial-card .tutorial-steps li { font-size: 11px; padding: 2px 7px; }
+.player-column > .growth-goals .section-title h2 { font-size: 15px; }
+.player-column > .growth-goals p { font-size: 13px; }
+.battle-console>.session-metrics>div{padding:0 12px;gap:8px;min-width:0}
+.battle-console>.session-metrics span{white-space:nowrap;min-width:0}
+@media(min-width:768px) and (max-width:1600px){.battle-console>.session-metrics>div>svg{display:none}}
