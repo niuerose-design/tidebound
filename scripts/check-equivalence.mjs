@@ -29,7 +29,6 @@ const { SKILLS } = await load('game/data/skills.js');
 const { JOBS } = await load('game/data/classes.js');
 const { STAGES, DUNGEONS, FISH } = await load('game/data/world.js');
 const { RESEARCH, SHOP, RELICS, GAMBLE_CATEGORIES } = await load('game/data/economy.js');
-const { GUILD_RESEARCH } = await load('game/data/guild.js');
 const { scaledEnemyStats } = await load('game/data/encounters.js');
 const { SPECIALIZATIONS } = await load('game/data/specializations.js');
 
@@ -57,7 +56,7 @@ function pickAction(s, r) {
         () => ({ type: 'buy', id: pick(SHOP).id }), () => ({ type: 'gamble', id: pick(GAMBLE_CATEGORIES).id }), () => ({ type: 'enhance', id: pick(inv) }),
         () => ({ type: 'reforge', id: pick(inv) }), () => ({ type: 'lockItem', id: pick(inv) }), () => ({ type: 'sellRarity', id: String(Math.floor(r() * 4)) }),
         () => ({ type: 'permanent', id: pick(RESEARCH).id }), () => ({ type: 'buyRelic', id: pick(RELICS).id }),
-        () => ({ type: 'guildJoin', value: '검증길드' }), () => ({ type: 'guildDonate', id: pick(['gold', 'pearl']), value: '1000' }), () => ({ type: 'guildResearch', id: pick(GUILD_RESEARCH).id }),
+        () => ({ type: 'guildJoin', value: '검증길드' }), () => ({ type: 'guildDonate', id: pick(['gold', 'pearl']), value: '1000' }), 
         () => ({ type: 'guildClaim', id: String(Math.floor(r() * 3)) }), () => ({ type: 'guildRaid' }),
     ];
     return pick(options)();
@@ -100,7 +99,7 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
 // 3-1. 길드
 {
     const s = engine.newState(0), game = seeded(12); s.gold = 1e7; s.pearls = 500; s.level = 50; const trace = []; let now = 0;
-    const acts = [{ type: 'guildJoin', value: '검증길드' }, ...Array.from({ length: 30 }, (_, i) => [{ type: 'guildDonate', id: i % 2 ? 'pearl' : 'gold', value: String(1000 * (i + 1)) }, { type: 'guildResearch', id: GUILD_RESEARCH[i % GUILD_RESEARCH.length].id }, { type: 'guildClaim', id: String(i % 3) }, { type: 'guildRaid' }, { type: 'guildRename', value: `길드${i}` }]).flat()];
+    const acts = [{ type: 'guildJoin', value: '검증길드' }, ...Array.from({ length: 30 }, (_, i) => [{ type: 'guildDonate', id: i % 2 ? 'pearl' : 'gold', value: String(1000 * (i + 1)) }, { type: 'guildClaim', id: String(i % 3) }, { type: 'guildRaid' }, { type: 'guildRename', value: `길드${i}` }]).flat()];
     for (const a of acts) { let err = null; try { engine.act(s, a, now, game); } catch (e) { err = String(e.message); } now += 3600_000; engine.advance(s, now, game); trace.push(hash([err, s.guild, s.gold, s.pearls])); }
     result.guild = { trace: hash(trace), rngCalls: game.calls };
 }

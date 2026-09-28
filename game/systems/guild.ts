@@ -1,8 +1,7 @@
 import type { Action, State } from '../types';
-import { GUILD_MISSIONS, GUILD_RESEARCH, guildLevelXp, guildResearchCost } from '../data/guild';
-import { stats, power, goldMultiplier } from './stats';
+import { guildLevelXp } from '../data/guild';
 export const guildHasJoined = (s: State) => Boolean(s.guild?.name);
-export const guildBonus = (s: State, id: string) => (s.guild?.research?.[id] || 0);
+export const REMOVED_GUILD_ACTIONS = ['guildResearch', 'guildClaim', 'guildRaid'];
 export const guildLevelProgress = (s: State) => ({
     current: s.guild?.xp || 0,
     next: guildLevelXp(Math.max(1, s.guild?.level || 1)),
@@ -17,7 +16,6 @@ function grantXp(s: State, amount: number) {
     while (g.level < 20 && g.xp >= guildLevelXp(Math.max(1, g.level))) {
         g.xp -= guildLevelXp(Math.max(1, g.level));
         g.level++;
-        g.medals += 2;
     }
 }
 export function guildAction(s: State, a: Action, now: number): string | null {
@@ -60,59 +58,10 @@ export function guildAction(s: State, a: Action, now: number): string | null {
         s.guild.treasury += amount;
         s.guild.contribution += amount;
         grantXp(s, Math.floor(amount / 10));
-        return `길드 금고에 ${amount.toLocaleString()} G 기부 · 공헌도 +${amount}`;
+        return `길드 금고에 ${amount.toLocaleString()} G 기부 · 명예 공헌도 +${amount}`;
     }
-    if (a.type === 'guildResearch') {
-        requireGuild(s);
-        const r = GUILD_RESEARCH.find(x => x.id === id), rank = s.guild.research[id] || 0;
-        if (!r || rank >= r.max)
-            throw Error('길드 연구 한도를 확인하세요.');
-        if (s.guild.level < Math.ceil((rank + 1) / 2))
-            throw Error('길드 레벨이 부족합니다.');
-        const cost = guildResearchCost(id, rank);
-        if (s.guild.treasury < cost)
-            throw Error('길드 금고가 부족합니다.');
-        s.guild.treasury -= cost;
-        s.guild.research[id] = rank + 1;
-        return `${r.name} ${rank + 1}단계 연구 · 금고 -${cost.toLocaleString()} G`;
-    }
-    if (a.type === 'guildClaim') {
-        requireGuild(s);
-        const mission = GUILD_MISSIONS.find(x => x.id === id);
-        if (!mission || s.guild.missionClaimed[id])
-            throw Error('이미 받은 길드 임무 보상입니다.');
-        const progress = id === 'kills' ? s.guild.missionKills : s.guild.missionDungeons;
-        if (progress < mission.goal)
-            throw Error('길드 임무 조건이 아직 부족합니다.');
-        s.guild.missionClaimed[id] = true;
-        s.guild.medals += mission.reward;
-        grantXp(s, mission.reward * 100);
-        return `${mission.name} 완료 · 길드 메달 +${mission.reward}`;
-    }
-    if (a.type === 'guildRaid') {
-        requireGuild(s);
-        if (s.guild.lastRaid > 0 && now - s.guild.lastRaid < 60 * 60 * 1000)
-            throw Error('길드 레이드 입장권은 1시간마다 충전됩니다.');
-        const tier = s.guild.raidTier;
-        const entry = 1000 + tier * 500;
-        if (s.guild.treasury < entry)
-            throw Error(`길드 금고에 ${entry.toLocaleString()} G가 필요합니다.`);
-        s.guild.treasury -= entry;
-        s.guild.lastRaid = now;
-        const damage = Math.floor(power(stats(s)) * (1 + s.guild.level * .08));
-        const bossHp = 1800 * tier;
-        if (damage >= bossHp) {
-            const reward = Math.floor((3000 + tier * 1200) * goldMultiplier(s));
-            s.gold += reward;
-            s.guild.medals += 3 + Math.floor(tier / 5);
-            s.guild.raidBest = Math.max(s.guild.raidBest, tier);
-            s.guild.raidTier++;
-            grantXp(s, tier * 200);
-            return `길드 레이드 ${tier}단계 정복 · +${reward.toLocaleString()} G · 메달 +${3 + Math.floor(tier / 5)}`;
-        }
-        s.guild.medals += 1;
-        grantXp(s, tier * 50);
-        return `길드 레이드 ${tier}단계에 ${damage.toLocaleString()} 피해 · 메달 +1 (보스 HP ${bossHp.toLocaleString()})`;
-    }
+    // v20.7: 길드 연구·임무·레이드는 개인 성장 보상이 있어 삭제했습니다. 이전 기록(연구 단계·메달·최고 단계)은 보존합니다.
+    if (REMOVED_GUILD_ACTIONS.includes(a.type))
+        throw Error('삭제된 길드 기능입니다.');
     return null;
 }

@@ -17,7 +17,7 @@ import { PROGRESSION, emptyAttributes } from '../data/progression';
 import { initialProgress, canUse, canChangeJob, trimLoadout, validLoadout, skillCost, bookReward, itemKey, skillMasteryRanks, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from './progression';
 import { scaledEnemyStats, profile } from '../data/encounters';
 import { newGuild } from '../data/guild';
-import { guildAction, guildHasJoined } from './guild';
+import { guildAction } from './guild';
 export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'system' | 'skill' = 'system', event?: CombatEvent) {
     s.logs.push({ id: ++s.logId, text, type, ...(event ? { event } : {}) });
     if (s.logs.length > 70)
@@ -132,8 +132,6 @@ function reward(s: State, rng: () => number) {
     const masteryReward = victoryMastery(s, e), practice = masteryReward.amount * size;
     const gold = Math.floor(e.gold * goldMultiplier(s)) * size, exp = Math.floor(e.exp * expMultiplier(s)) * size;
     s.kills += size;
-    if (guildHasJoined(s))
-        s.guild.missionKills += size;
     const jobTargets = vocationTargets(jobMasteryTarget(JOBS.find(j => j.id === s.job)!));
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
     s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practice;
@@ -200,8 +198,6 @@ function reward(s: State, rng: () => number) {
             if (first && d.id !== 'abyss')
                 s.pearls += d.pearls;
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
-            if (guildHasJoined(s))
-                s.guild.missionDungeons++;
             drop(s, d.level + encounterTier(s) * 5, rng, true);
             addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 진주` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;

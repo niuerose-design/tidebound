@@ -7,7 +7,6 @@ import { PROGRESSION } from '../data/progression';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { attributes, effectiveSkill, completedRegions, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier } from './progression';
-import { guildBonus } from './guild';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, speed: 10, mana: 40, manaRegen: 3, penetration: 0, lifesteal: 0, ...a }; }
 export function mastery(s: State) { return Object.values(s.book).reduce((a, n) => a + BALANCE.bookMilestones.filter(m => n >= m).length, 0); }
@@ -20,7 +19,7 @@ export function stats(s: State): CombatStats {
         resist: 3 + (s.level - 1) * .7 + v.wis * 1.2,
         crit: BALANCE.baseCrit + j.crit + v.luk * .003, critDamage: BALANCE.critMultiplier + v.luk * .005,
         accuracy: .92 + v.dex * .004, evasion: v.dex * .002, speed: 10 + v.dex * .5, mana: 30 + v.wis * 3 + v.int, manaRegen: 2 + v.wis * .15, penetration: 0, lifesteal: 0, harmony: harmonyPower(s) };
-    a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * .002 + guildBonus(s, 'treasury') * .04;
+    a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * .002;
     a.rebirthBonus = s.permanent.pearl || 0;
     a.dungeonGoldBonus = (s.permanent.dungeon || 0) * .08;
     for (const item of Object.values(s.equipment)) {
@@ -57,10 +56,6 @@ export function stats(s: State): CombatStats {
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) a[key] *= memory;
     a.defense *= 1 + (s.permanent.guard || 0) * .03;
     a.resist *= 1 + (s.permanent.guard || 0) * .03;
-    const guildMight = 1 + guildBonus(s, 'might') * .02;
-    a.attack *= guildMight;
-    a.magic *= guildMight;
-    a.hp *= 1 + guildBonus(s, 'bastion') * .03;
     for (const k of ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'speed'] as (keyof CombatStats)[])
         a[k] = Math.max(k === 'hp' || k === 'speed' ? 1 : 0, Math.floor(a[k]));
     a.crit = Math.min(.6, a.crit);
@@ -69,7 +64,7 @@ export function stats(s: State): CombatStats {
     a.lifesteal = Math.min(.3, a.lifesteal);
     return a;
 }
-export function dropRate(s: State) { return Math.min(.6, BALANCE.dropChance + attributes(s).luk * .001 + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + guildBonus(s, 'scouting') * .005 + (stats(s).dropBonus || 0)); }
+export function dropRate(s: State) { return Math.min(.6, BALANCE.dropChance + attributes(s).luk * .001 + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + (stats(s).dropBonus || 0)); }
 export function power(v: Stats) { const a = normalizeStats(v); return Math.round(Math.max(a.attack, a.magic) * 7 + Math.min(a.attack, a.magic) * 2 + a.hp * .5 + (a.defense + a.resist) * 3 + a.crit * 200 + Math.max(0, a.accuracy - .8) * 220 + a.evasion * 200); }
 export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillSpecializations: { ...s.skillSpecializations }, skillPractice: { ...s.skillPractice }, power: power(a), rating: s.rating, guild: s.guild?.name || '' }; }
 /** 육중 조화의 원시 피해. 직접 배분한 포인트(s.attributes)만 사용합니다. */
