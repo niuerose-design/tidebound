@@ -21,15 +21,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: pnpm db:local
-      - name: Seed a mid-game save
+      - name: Seed a mid-game save and start the server
+        env:
+          TIDEBOUND_DEV_DB: /tmp/shot-db.json
         run: |
-          node scripts/screenshots/seed-state.mjs > /tmp/seed.sql
-          node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file /tmp/seed.sql
-      - name: Start dev server
-        run: |
-          nohup pnpm dev > /tmp/dev.log 2>&1 &
-          for i in $(seq 1 60); do curl -sf http://localhost:5173/ > /dev/null && break; sleep 2; done
+          node scripts/screenshots/seed-state.mjs /tmp/shot-db.json
+          nohup pnpm start --port 5173 > /tmp/dev.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:5173/api/auth > /dev/null && break; sleep 2; done
           tail -20 /tmp/dev.log
       - name: Capture
         run: |

@@ -24,5 +24,9 @@ for (let i = 0; i < 25; i++) { try { act(s, { type: 'gamble', id: ['rod', 'coat'
 act(s, { type: 'stage', id: 'reef' }, now); act(s, { type: 'start' }, now);
 advance(s, now, rng);
 s.lastTick = now;
-const json = JSON.stringify(s).replace(/'/g, "''");
-console.log(`INSERT OR REPLACE INTO players (id,state,revision,updated_at) VALUES ('local-preview-player','${json}',1,${now});`);
+// 로컬 파일 DB에 계정·세션·세이브를 함께 기록합니다. 세션 토큰은 캡처 스크립트가 쿠키로 사용합니다.
+const token = 'a'.repeat(64), accountId = 'acct_screenshot';
+const dbFile = { players: { [accountId]: { state: JSON.stringify(s), revision: 1, updated_at: now } }, rankings: {}, accounts: { [accountId]: { id: accountId, username: 'screenshot', pass_hash: 'x', salt: 'x', created_at: now } }, sessions: { [token]: { account_id: accountId, expires_at: now + 86400000 } } };
+const { writeFileSync } = await import('node:fs');
+writeFileSync(process.argv[2] || '/tmp/shot-db.json', JSON.stringify(dbFile));
+console.log('seeded', process.argv[2] || '/tmp/shot-db.json');

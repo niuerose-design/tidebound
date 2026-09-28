@@ -27,9 +27,11 @@ import { stats, power } from '@/game/systems/stats';
 import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, useCombatFx } from './combat-fx';
 import { StatusBadges } from './combat-status';
 import { BattleLogLine } from './combat-log';
+import { LoginScreen } from './login-screen';
 import type { State, Action } from '@/game/types';
 const NAV = [{ label: '항해', items: [{ id: 'battle', name: '자동 낚시', Icon: Anchor }, { id: 'stages', name: '낚시터', Icon: Map }, { id: 'dungeons', name: '던전 탐험', Icon: Compass }] }, { label: '낚시꾼', items: [{ id: 'character', name: '능력치 · 빌드', Icon: Target }, { id: 'shop', name: '항구 상점', Icon: ShoppingBag }, { id: 'inventory', name: '장비 보관함', Icon: ShoppingBag }, { id: 'skills', name: '스킬', Icon: Zap }, { id: 'classes', name: '전직', Icon: Swords }, { id: 'rebirth', name: '환생', Icon: RefreshCw }] }, { label: '기록과 명예', items: [{ id: 'book', name: '물고기 도감', Icon: BookOpen }, { id: 'guild', name: '길드', Icon: Users }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy }, { id: 'updates', name: '업데이트 내역', Icon: ClipboardList }, { id: 'help', name: '도움말', Icon: HelpCircle }] }];
-function SettingsDialog({ open, onOpenChange, s, busy, send, name, setName }: {
+function SettingsDialog({ open, onOpenChange, s, busy, send, name, setName, onLogout }: {
+    onLogout?: () => void;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     s: State | null;
@@ -59,6 +61,7 @@ function SettingsDialog({ open, onOpenChange, s, busy, send, name, setName }: {
                 <p>전직하면 전용 기술이 무료로 열립니다. 장착 승리로 계승·강화하거나, 해금한 스킬에 1 SP를 사용할 수 있습니다. 숙련과 SP는 같은 성장 단계를 엽니다.</p>
                 <p>진행은 서버에 자동 저장됩니다. 자동 낚시를 켜 둔 채 나가면 최대 24시간의 부재중 전투를 다음 접속 때 정산합니다. 전직은 전투 중에도 현재 전투를 정리한 뒤 바로 적용됩니다.</p>
             </div>
+            {onLogout && <button className="secondary" onClick={() => { onOpenChange(false); onLogout(); }}>로그아웃</button>}
         </DialogContent>
     </Dialog>;
 }
@@ -223,7 +226,8 @@ function BattleRail({ s, busy, send, setView }: {
     </section>
     </aside>;
 }
-function BattleV2({ s, busy, send, setView, saved, settings, setSettings, name, setName }: {
+function BattleV2({ s, busy, send, setView, saved, settings, setSettings, name, setName, onLogout }: {
+    onLogout: () => void;
     s: State;
     busy: boolean;
     send: (a: Action) => void;
@@ -245,7 +249,7 @@ function BattleV2({ s, busy, send, setView, saved, settings, setSettings, name, 
     const combatFx = useCombatFx(s.logs, s.name);
     const noticeText = s.lastOffline ? `부재중 항해 정산 · ${Math.floor(s.lastOffline.seconds / 60)}분 동안 ${s.lastOffline.kills}마리 포획 · +${format(s.lastOffline.gold)} G` : d ? `${d.name} ${s.dungeon!.wave + 1}번째 전투 · 보스 전까지 항로를 유지합니다.` : `${st.name}에서 다음 입질을 기다립니다. 목표 어종을 고르면 원하는 기록을 더 빠르게 채울 수 있습니다.`;
     return <>
-    <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName}/></div></Heading>
+    <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onLogout={onLogout}/></div></Heading>
     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Waves size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>
     <div className="battle-hud" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
     <div className="battle-character-column"><Player s={s} busy={busy} send={send} setView={setView}/></div>
@@ -276,22 +280,22 @@ export default function GameShell() {
         if (error && s)
             toast.error(error);
     }, [error, s]);
-    const props = s ? { s, send, busy } : null;
+    const props = s ? { s, send, busy } : null, onLogout = game.logout;
     return <SidebarProvider style={{ '--sidebar-width': '222px' } as React.CSSProperties}>
     <Toaster theme="dark" position="bottom-right"/>
     <Navigation view={view} setView={setView}/>
     <div className="app-body">
     {view !== 'battle' && <header className="topbar">
     <div className="breadcrumb"><SidebarTrigger className="mobile-menu"/><span>항해 기록</span><ChevronRight size={13}/><strong>{NAV.flatMap(g => g.items).find(i => i.id === view)?.name}</strong></div>
-    <div className="topbar-right"><span className="save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s?.name || ''); }} s={s} busy={busy} send={send} name={name} setName={setName}/></div>
-    </header>}{!s ? <div className="loading-screen">
+    <div className="topbar-right"><span className="save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s?.name || ''); }} s={s} busy={busy} send={send} name={name} setName={setName} onLogout={onLogout}/></div>
+    </header>}{!s && game.needsLogin ? <LoginScreen onSubmit={game.authenticate}/> : !s ? <div className="loading-screen">
         <Anchor size={48}/>
         <h1>{error ? '항해를 준비하지 못했습니다' : '바다와 연결하고 있습니다'}</h1>
         <p>{error || '낚시꾼의 기록을 불러오는 중입니다.'}</p>
-        <button className="primary" onClick={() => send({ type: 'sync' })}>다시 연결</button>{error.includes('로그인') && <a className="text-button" href="/signin-with-chatgpt?return_to=%2F" target="_top">ChatGPT로 로그인</a>}</div> : <>
+        <button className="primary" onClick={() => send({ type: 'sync' })}>다시 연결</button></div> : <>
         <div className={`workspace ${view === 'battle' ? 'battle-workspace' : ''}`}>
         <main className="main-content">{error && <div className="error-box">{error}<button className="text-button" onClick={() => send({ type: 'sync' })}>다시 시도</button>
-            </div>}{view === 'guild' && <Guild {...props!}/>}{view === 'updates' && <UpdateLog/>}{view === 'help' && <Guide/>}{view === 'battle' && <GrowthGoals {...props!} setView={setView}/>}{view === 'battle' && <BattleV2 {...props!} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView}/>}{view === 'character' && <Character {...props!}/>}{view === 'stages' && <Stages {...props!}/>}{view === 'dungeons' && <Dungeons {...props!}/>}{view === 'shop' && <Shop {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{view === 'skills' && <Skills {...props!}/>}{view === 'classes' && <Classes {...props!}/>}{view === 'rebirth' && <Rebirth {...props!}/>}{view === 'book' && <Collection {...props!}/>}{view === 'ranking' && <Rankings {...props!} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
+            </div>}{view === 'guild' && <Guild {...props!}/>}{view === 'updates' && <UpdateLog/>}{view === 'help' && <Guide/>}{view === 'battle' && <GrowthGoals {...props!} setView={setView}/>}{view === 'battle' && <BattleV2 {...props!} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView} onLogout={game.logout}/>}{view === 'character' && <Character {...props!}/>}{view === 'stages' && <Stages {...props!}/>}{view === 'dungeons' && <Dungeons {...props!}/>}{view === 'shop' && <Shop {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{view === 'skills' && <Skills {...props!}/>}{view === 'classes' && <Classes {...props!}/>}{view === 'rebirth' && <Rebirth {...props!}/>}{view === 'book' && <Collection {...props!}/>}{view === 'ranking' && <Rankings {...props!} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
         <footer className="app-footer">
         <span>TIDEBOUND <span className="muted">/</span> 심연의 낚시꾼</span>
         <span>행동력 없는 끝없는 항해 <Waves size={14}/>

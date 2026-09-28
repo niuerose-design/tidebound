@@ -30,7 +30,7 @@ for(const sk of SKILLS.filter(x=>x.type==='active')){
  assert(ACTIVE_SKILL_BALANCE[sk.id],`Missing balance row: ${sk.id}`);
  for(let level=0;level<=maxSkillLevel(sk);level++){
   const value=effectiveSkill(sk,level+1);
-  if(sk.damageType==='magic'){assert(value.manaCost>0);assert(value.chance>=.45);}
+  if(sk.damageType==='magic'||sk.damageType==='split'){assert(value.manaCost>0);assert(value.chance>=.45);}
   else {assert.equal(value.manaCost,0);assert(value.chance<=.381);}
  }
 }

@@ -6,7 +6,13 @@ mkdirSync(dir, { recursive: true });
 const views = [['battle', '자동 낚시'], ['stages', '낚시터'], ['dungeons', '던전 탐험'], ['character', '능력치 · 빌드'], ['shop', '항구 상점'], ['inventory', '장비 보관함'], ['skills', '스킬'], ['classes', '전직'], ['rebirth', '환생'], ['book', '물고기 도감'], ['help', '도움말']];
 const browser = await chromium.launch();
 // 데스크톱 메뉴로 화면을 연 뒤 같은 페이지를 각 크기로 캡처합니다 (모바일 메뉴 조작 없이).
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+// 로그인 화면을 먼저 찍고, 시드한 세션 쿠키로 들어갑니다.
+const guest = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+await guest.goto(base, { waitUntil: 'networkidle' }); await guest.waitForTimeout(1500);
+await guest.screenshot({ path: `${dir}/desktop-login.png`, fullPage: true }); await guest.setViewportSize({ width: 390, height: 844 }); await guest.screenshot({ path: `${dir}/mobile-login.png`, fullPage: true }); await guest.close();
+const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+await context.addCookies([{ name: 'tb_session', value: 'a'.repeat(64), url: base }]);
+const page = await context.newPage();
 page.on('pageerror', e => console.log('PAGE ERROR', e.message));
 await page.goto(base, { waitUntil: 'networkidle' });
 await page.waitForTimeout(2500);

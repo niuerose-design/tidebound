@@ -48,6 +48,8 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     redWake: { chance: .24, multiplier: 1.65, scalingRatio: .07, drainRatio: .18 },
     leviathanEquation: { chance: .55, multiplier: 2.6, scalingRatio: .45, manaCost: 28 },
     harvestEcho: { chance: .26, multiplier: 2.2, drainRatio: .18 },
+    // 만능 항해사: check-all-rounder.mjs 검증값
+    harmonicWeight: { chance: .5, multiplier: 2.2, cooldown: 3, manaCost: 16 },
     twinHook: { chance: .24, multiplier: 1.15, extraAttackMultiplier: .5 },
     electricBite: { chance: .55, multiplier: 1.7, manaCost: 14 },
     tentacleBarrage: { chance: .22, multiplier: 1.05, extraAttackMultiplier: .45 },
@@ -60,7 +62,8 @@ export function tuneActiveSkills(skills: Skill[]) {
         const tuning = ACTIVE_SKILL_BALANCE[sk.id];
         if (!tuning) continue;
         Object.assign(sk, tuning);
-        const magic = sk.damageType === 'magic';
+        // 복합(split) 피해도 마나를 쓰는 주문으로 취급합니다.
+        const magic = sk.damageType === 'magic' || sk.damageType === 'split';
         if (!magic) sk.manaCost = 0;
         // At maximum mastery physical procs stay <= 38%; spells remain paid.
         sk.rankEffects = { ...sk.rankEffects, multiplierScale: sk.id === 'hook' ? .03 : .05,

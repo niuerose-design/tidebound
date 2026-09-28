@@ -1,13 +1,13 @@
-import { identity, checkOrigin, db, mutate, failure, ApiError, actionBody } from '@/game/server/store';
+import { identity, checkOrigin, db, mutate, failure, ApiError, actionBody, RANKING_SEASON } from '@/game/server/store';
 import { snapshot } from '@/game/systems/stats';
 import { duel, TRAINING } from '@/game/systems/duel';
-import { BALANCE, SAVE_VERSION } from '@/game/data/balance';
+import { BALANCE } from '@/game/data/balance';
 import type { Snapshot } from '@/game/types';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
     try {
         checkOrigin(req);
-        const id = identity(req), a = await actionBody(req);
+        const id = await identity(req), a = await actionBody(req);
         let opponent: Snapshot;
         const training = a.type === 'training';
         if (training) {
@@ -19,10 +19,7 @@ export async function POST(req: Request) {
         else {
             if (a.type !== 'ranked' || a.id === id)
                 throw new ApiError('다른 낚시꾼을 선택하세요.');
-            const row = await db().prepare("SELECT snapshot,rating FROM rankings WHERE id=? AND json_extract(snapshot,'$.season')=?").bind(a.id || '', SAVE_VERSION).first<{
-                snapshot: string;
-                rating: number;
-            }>();
+            const row = await db().getRanking(a.id || '', RANKING_SEASON);
             if (!row)
                 throw new ApiError('상대가 등록되지 않았습니다.');
             opponent = { ...JSON.parse(row.snapshot), rating: row.rating };
@@ -38,7 +35,7 @@ export async function POST(req: Request) {
         } return result; });
         // Rating comes from authoritative player state; refresh snapshot with the explicit registration button.
         if (!training)
-            await db().prepare('UPDATE rankings SET rating=? WHERE id=?').bind(payload.state.rating, id).run();
+            await db().updateRating(id, payload.state.rating);
         return Response.json(payload);
     }
     catch (e) {
