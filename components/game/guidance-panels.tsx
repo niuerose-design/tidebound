@@ -1,14 +1,14 @@
 'use client';
+import type { PanelProps } from './panel-props';
 import { Check, ChevronDown, ChevronUp, Compass, ScrollText, X } from 'lucide-react';
-import type { Action, State } from '@/game/types';
+import type { State } from '@/game/types';
 import { VOYAGE_LOG } from '@/game/data/voyage-log';
 import { TUTORIAL_STEPS, tutorialProgress } from '@/game/systems/guidance';
 import { Heading } from './shared';
 
-type Props = { s: State; send: (a: Action) => void; busy: boolean; setView?: (view: string) => void };
 
 /** 접을 수 있는 짧은 튜토리얼. 새 세이브에만 보이고, 완료한 단계는 저장 상태로 자동 인정합니다. 보상은 없습니다. */
-export function TutorialCard({ s, send, busy, setView }: Props) {
+export function TutorialCard({ s, send, busy, setView }: PanelProps) {
     if (!s.tutorial || s.tutorial.skipped) return null;
     const done = tutorialProgress(s);
     if (done >= TUTORIAL_STEPS.length) return null;
@@ -38,7 +38,7 @@ export function VoyageNotice({ s, setView }: { s: State; setView?: (view: string
     return <button type="button" className="voyage-notice" onClick={() => setView?.('voyage')}><ScrollText size={14}/><b>항해 기록</b><span>{entry.title} — {entry.text}</span></button>;
 }
 
-export function VoyageLog({ s, send, busy }: Props) {
+export function VoyageLog({ s, send, busy }: PanelProps) {
     const got = s.voyage || {};
     const groups = ['해역', '던전', '환생', '심연'] as const;
     return <>

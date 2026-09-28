@@ -1,24 +1,17 @@
 'use client';
-import { useEffect, useState } from 'react';
+import type { PanelProps } from './panel-props';
+import { useState } from 'react';
 import { Flag, Users } from 'lucide-react';
-import type { Action, State } from '@/game/types';
 import { guildLevelXp } from '@/game/data/guild';
 import { Heading, Meter, format } from './shared';
 import { guildLevelProgress } from '@/game/systems/guild';
-type Props = {
-    s: State;
-    send: (a: Action) => void;
-    busy: boolean;
-};
 const donateAmounts = [100, 500, 1000, 5000];
 /** v20.7: 길드는 이름·가입·명예 기부 기록만 다룹니다. 개인 성장 보너스·보상은 없습니다. */
-export function Guild({ s, send, busy }: Props) {
+export function Guild({ s, send, busy }: PanelProps) {
     const [name, setName] = useState(s.guild?.name || '심해개척단');
     const g = s.guild;
-    useEffect(() => {
-        if (g?.name)
-            setName(g.name);
-    }, [g?.name]);
+    const [shownGuild, setShownGuild] = useState(g?.name);
+    if (g?.name && shownGuild !== g.name) { setShownGuild(g.name); setName(g.name); }
     if (!g?.name)
         return <>
         <Heading eyebrow="GUILD HALL" title="함께 남기는 항해의 기록" description="길드는 이름과 명예 기록을 남기는 공간입니다. 능력치나 보상은 주지 않습니다."/>

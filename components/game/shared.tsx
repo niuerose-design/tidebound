@@ -1,6 +1,6 @@
 'use client';
 import { Progress } from '@/components/ui/progress';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Fish, Anchor, Compass, Zap, Heart, Shield, Swords, Target, Waves } from 'lucide-react';
 export function Meter({ value, max, label, color = 'teal' }: {
     value: number;
@@ -49,3 +49,9 @@ export function short(n: number) {
     return a >= 1e8 ? `${f(n / 1e8)}억` : a >= 1e4 ? `${f(n / 1e4)}만` : format(Math.floor(n));
 }
 export function Num({ n }: { n: number }) { return <span className="num-short" title={format(n)}>{short(n)}</span>; }
+/** 1초마다 갱신되는 현재 시각. 렌더 중 Date.now()를 직접 부르지 않기 위한 훅입니다. */
+export function useNow(ms = 1000) {
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => { const timer = setInterval(() => setNow(Date.now()), ms); return () => clearInterval(timer); }, [ms]);
+    return now;
+}

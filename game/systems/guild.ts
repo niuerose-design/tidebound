@@ -18,7 +18,7 @@ function grantXp(s: State, amount: number) {
         g.level++;
     }
 }
-export function guildAction(s: State, a: Action, now: number): string | null {
+export function guildAction(s: State, a: Action): string | null {
     const id = a.id || '';
     if (a.type === 'guildJoin') {
         if (guildHasJoined(s))

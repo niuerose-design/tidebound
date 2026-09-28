@@ -3,20 +3,9 @@
 // Manage stats/gear/training each minute; sample available fishing areas every
 // ten minutes. The chooser has information a novice would not have: these are
 // managed runs, not a promise of wall-clock completion for every player.
-import ts from 'typescript';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
 import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
-const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tidebound-balance-'));
-try {
-for(const f of fs.readdirSync('game',{recursive:true}).filter(f=>f.endsWith('.ts')&&!f.startsWith('server/'))){
- const code=ts.transpileModule(fs.readFileSync(path.join('game',f),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])([.][^'"]+)\1/g,(_,q,p)=>`from ${q}${p}.js${q}`);
- const out=path.join(temp,f.replace(/\.ts$/,'.js'));fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,code);
-}
-fs.writeFileSync(path.join(temp,'package.json'),' {"type":"module"}');
-const moduleAt=p=>import(pathToFileURL(path.join(temp,p+'.js')).href);
+import { loadGame } from './lib/game-modules.mjs';
+const {load:moduleAt}=loadGame();
 const {newState,tick,act}=await moduleAt('systems/engine');
 const {stats}=await moduleAt('systems/stats');
 const {canChangeJob,canUse,validLoadout,attributes,effectiveSkill,maxSkillLevel}=await moduleAt('systems/progression');
@@ -76,4 +65,3 @@ for(const magic of [false,true])for(const seed of [11,29,47]){
  console.log(JSON.stringify({build:magic?'magic':'physical',seed,hours:+(s.turn/1800).toFixed(2),level:s.level,kills:s.kills,deaths:s.deaths,job:s.job,stage:s.stage,skills:s.skills,checkpoint}));
 }
 
-} finally { fs.rmSync(temp,{recursive:true,force:true}); }

@@ -6,29 +6,14 @@
 // Manage stats/gear/training each minute; sample available fishing areas every
 // ten minutes. The chooser has information a novice would not have: these are
 // managed runs, not a promise of wall-clock completion for every player.
-import ts from 'typescript';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
-const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tidebound-recovery-'));
-try {
-for(const f of fs.readdirSync('game',{recursive:true}).filter(f=>f.endsWith('.ts')&&!f.startsWith('server/'))){
- const code=ts.transpileModule(fs.readFileSync(path.join('game',f),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])([.][^'"]+)\1/g,(_,q,p)=>`from ${q}${p}.js${q}`);
- const out=path.join(temp,f.replace(/\.ts$/,'.js'));fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,code);
-}
-fs.writeFileSync(path.join(temp,'package.json'),' {"type":"module"}');
-const moduleAt=p=>import(pathToFileURL(path.join(temp,p+'.js')).href);
+import { loadGame } from './lib/game-modules.mjs';
+const {load:moduleAt}=loadGame();
 const {newState,tick,act}=await moduleAt('systems/engine');
-const {stats}=await moduleAt('systems/stats');
-const {canChangeJob,canUse,validLoadout,attributes,effectiveSkill,maxSkillLevel}=await moduleAt('systems/progression');
+const {canChangeJob,canUse,validLoadout,attributes}=await moduleAt('systems/progression');
 const {itemStats}=await moduleAt('systems/equipment');
 const {STAGES}=await moduleAt('data/world');
 const {SKILLS}=await moduleAt('data/skills');
-const {ACTIVE_SKILL_BALANCE}=await moduleAt('data/skill-balance');
 const {xpNeeded}=await moduleAt('data/balance');
-const {strike}=await moduleAt('systems/combat');
 const {BALANCE:B,MONSTER_TUNING:MT}=await moduleAt('data/balance');
 const {DUNGEONS}=await moduleAt('data/world');
 function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
@@ -73,4 +58,3 @@ for(const [name,[normal,dungeon]] of Object.entries(configs))for(const noHeal of
 }
 console.table(rows);
 
-} finally { fs.rmSync(temp,{recursive:true,force:true}); }

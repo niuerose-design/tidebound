@@ -1,15 +1,15 @@
 'use client';
+import type { PanelProps } from './panel-props';
 import { Check, Flag } from 'lucide-react';
-import type { Action, State } from '@/game/types';
+import type { State } from '@/game/types';
 import { goalProgress, goalSuggestions } from '@/game/systems/goals';
 import { TUTORIAL_STEPS, tutorialProgress } from '@/game/systems/guidance';
 import { Meter } from './shared';
 
-type Props = { s: State; send: (a: Action) => void; busy: boolean; setView?: (view: string) => void };
 /** 튜토리얼이 보이는 동안인지. 이때 장기 목표는 한 줄로 접어 둡니다. */
 export const tutorialActive = (s: State) => !!s.tutorial && !s.tutorial.skipped && tutorialProgress(s) < TUTORIAL_STEPS.length;
 
-export function GrowthGoals({ s, send, busy, setView }: Props) {
+export function GrowthGoals({ s, send, busy, setView }: PanelProps) {
     const goal = s.growthGoal, p = goalProgress(s), next = goalSuggestions(s);
     const suggestions = <div className="growth-suggestions">
         {next.skill && <button className="secondary" disabled={busy} onClick={() => send({ type: 'growthGoal', id: next.skill!.id, value: 'skill' })}>숙련 · {next.skill.name}{s.skills.includes(next.skill.id) ? ' (장착 중)' : ''}</button>}

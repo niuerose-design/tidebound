@@ -1,29 +1,12 @@
 // Export the same data and growth formulas used by the running game.
-import ts from 'typescript';
-import { mkdtemp, readFile, writeFile, mkdir, readdir, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { loadGame } from './lib/game-modules.mjs';
 
 const outputPath = process.argv[2];
 if (!outputPath) throw new Error('Usage: node scripts/export-game-content.mjs /absolute/path/content.json');
-const temp = await mkdtemp(join(tmpdir(), 'tidebound-content-'));
-try {
-    async function compile(dir) {
-        for (const entry of await readdir(dir, { withFileTypes: true })) {
-            if (entry.name === 'server') continue;
-            const src = join(dir, entry.name), dst = join(temp, src);
-            if (entry.isDirectory()) { await mkdir(dst, { recursive: true }); await compile(src); }
-            else if (entry.name.endsWith('.ts')) {
-                const code = ts.transpileModule(await readFile(src, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText.replace(/from (['"])(\.\.?\/[^'"]+)\1/g, (_, quote, path) => `from ${quote}${path}.js${quote}`);
-                await writeFile(dst.replace(/\.ts$/, '.js'), code);
-            }
-        }
-    }
-    await mkdir(join(temp, 'game'));
-    await writeFile(join(temp, 'package.json'), '{"type":"module"}');
-    await compile('game');
-    const moduleAt = path => import(pathToFileURL(join(temp, path + '.js')).href);
+const { load: moduleAt } = loadGame();
+{
     const { JOBS, JOB_TREES } = await moduleAt('game/data/classes');
     const { SKILLS } = await moduleAt('game/data/skills');
     const { FISH, DUNGEONS } = await moduleAt('game/data/world');
@@ -54,7 +37,4 @@ try {
     const payload = { longTerm: { refinementOffsets: longTerm.REFINEMENT_OFFSETS, vocationOffsets: longTerm.VOCATION_OFFSETS }, specializations: SPECIALIZATIONS, bossResearch: BOSS_RESEARCH, version: '20.0', asOf: '2026-09-28', jobs, skills, fish: FISH, dungeons: DUNGEONS, trees: JOB_TREES, progression: PROGRESSION, statLabels: STAT_LABELS, statusTuning: STATUS_TUNING };
     await writeFile(resolve(outputPath), JSON.stringify(payload, null, 2));
     console.log(JSON.stringify({ output: resolve(outputPath), jobs: jobs.length, skills: skills.length, stages: skills.reduce((sum, sk) => sum + sk.stages.length, 0) }));
-} finally {
-    // Only the exact private compilation directory created above is removed.
-    await rm(temp, { recursive: true, force: true });
 }

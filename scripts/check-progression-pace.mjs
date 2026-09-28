@@ -3,24 +3,12 @@
 // Manage stats/loadout each minute; sample available fishing areas every
 // ten minutes. The chooser has information a novice would not have: these are
 // managed runs, not a promise of wall-clock completion for every player.
-import ts from 'typescript';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
 import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
-const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tidebound-balance-'));
-try {
-for(const f of fs.readdirSync('game',{recursive:true}).filter(f=>f.endsWith('.ts')&&!f.startsWith('server/'))){
- const code=ts.transpileModule(fs.readFileSync(path.join('game',f),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])([.][^'"]+)\1/g,(_,q,p)=>`from ${q}${p}.js${q}`);
- const out=path.join(temp,f.replace(/\.ts$/,'.js'));fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,code);
-}
-fs.writeFileSync(path.join(temp,'package.json'),' {"type":"module"}');
-const moduleAt=p=>import(pathToFileURL(path.join(temp,p+'.js')).href);
+import { loadGame } from './lib/game-modules.mjs';
+const {load:moduleAt}=loadGame();
 const {newState,tick,act}=await moduleAt('systems/engine');
 const {stats}=await moduleAt('systems/stats');
 const {canChangeJob,canUse,validLoadout,attributes,effectiveSkill,maxSkillLevel}=await moduleAt('systems/progression');
-const {itemStats}=await moduleAt('systems/equipment');
 const {STAGES}=await moduleAt('data/world');
 const {SKILLS}=await moduleAt('data/skills');
 const {ACTIVE_SKILL_BALANCE}=await moduleAt('data/skill-balance');
@@ -46,7 +34,6 @@ const free=fighter('pierce',0);assert(strike(free,target(),()=>0).includes('ê´€í
 console.log(JSON.stringify({checks:'passed',activeSkills:Object.keys(ACTIVE_SKILL_BALANCE).length}));
 function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
 const totalXP=s=>s.exp+Array.from({length:s.level-1},(_,i)=>xpNeeded(i+1)).reduce((a,b)=>a+b,0);
-function gearScore(item,magic){const v=itemStats(item);return (v[magic?'magic':'attack']||0)*4+(v.hp||0)*.22+(v.defense||0)*1.5+(v.resist||0)*1.2+(v.accuracy||0)*150+(v.crit||0)*150;}
 function manage(s,magic,rng){
  const now=s.turn*2000; const actNow=a=>act(s,a,now,rng);
  while(s.statPoints){const v=attributes(s);let id=magic?(v.wis<20?'wis':v.int<35?'int':s.statPoints%4===0?'vit':'int'):(v.dex<20?'dex':v.str<35?'str':s.statPoints%4===0?'vit':'str');actNow({type:'attribute',id});}
@@ -75,4 +62,3 @@ for(const magic of [false,true])for(const seed of [29]){
  console.log(JSON.stringify({build:magic?'magic':'physical',seed,hours:+(s.turn/1800).toFixed(2),level:s.level,kills:s.kills,deaths:s.deaths,job:s.job,stage:s.stage,skills:s.skills,checkpoint}));
 }
 
-} finally { fs.rmSync(temp,{recursive:true,force:true}); }

@@ -1,36 +1,31 @@
-import { pathToFileURL } from 'node:url';
-import ts from 'typescript';
-import {mkdtemp,readFile,writeFile,mkdir,readdir,rm} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
-import {join,resolve} from 'node:path';
+import {readFile} from 'node:fs/promises';
+import { loadGame } from '../scripts/lib/game-modules.mjs';
 import assert from 'node:assert/strict';
-const out=await mkdtemp(join(tmpdir(),'tidebound-tests-'));
-async function compile(dir){for(const e of await readdir(dir,{withFileTypes:true})){if(e.name==='server')continue;const src=join(dir,e.name),dst=join(out,src);if(e.isDirectory()){await mkdir(dst,{recursive:true});await compile(src)}else if(e.name.endsWith('.ts')){const text=await readFile(src,'utf8');const js=ts.transpileModule(text,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])(\.\.?\/[^'"]+)\1/g,(_,q,p)=>`from ${q}${p}.js${q}`);await writeFile(dst.replace(/\.ts$/,'.js'),js)}}}
-await mkdir(join(out,'game'));await writeFile(join(out,'package.json'),'{"type":"module"}');await compile('game');
-const {newState,act,advance,tick,victoryHeal}=await import(pathToFileURL(join(out,'game/systems/engine.js')).href);
-const engineSource=await readFile('game/systems/engine.ts','utf8');
-const {stats,snapshot,expMultiplier,normalizeStats}=await import(pathToFileURL(join(out,'game/systems/stats.js')).href);
-const {victoryMastery}=await import(pathToFileURL(join(out,'game/systems/mastery.js')).href);
-const {visibleStatuses}=await import(pathToFileURL(join(out,'game/systems/combat-status.js')).href);
-const {duel,TRAINING}=await import(pathToFileURL(join(out,'game/systems/duel.js')).href);
-const {strike,fighterSpeed}=await import(pathToFileURL(join(out,'game/systems/combat.js')).href);
-const {combatFxFromLog,combatFxBatch}=await import(pathToFileURL(join(out,'game/systems/combat-feedback.js')).href);
-const {migrateState}=await import(pathToFileURL(join(out,'game/systems/migrations.js')).href);
-const {apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,skillRankDeltas,skillMasteryLevel,skillMasteryHint,masteryMilestonesFor,jobRequirements,validLoadout,skillLevel,maxSkillLevel,inherited,trimLoadout,jobMasteryTarget,jobCombatMultiplier}=await import(pathToFileURL(join(out,'game/systems/progression.js')).href);
-const {goalProgress,goalSuggestions}=await import(pathToFileURL(join(out,'game/systems/goals.js')).href);
-const {skillGrowthStages,skillEffectLines}=await import(pathToFileURL(join(out,'game/systems/skill-description.js')).href);
-const {SKILLS}=await import(pathToFileURL(join(out,'game/data/skills.js')).href);
-const {STAGES,FISH,DUNGEONS}=await import(pathToFileURL(join(out,'game/data/world.js')).href);
-const {profile}=await import(pathToFileURL(join(out,'game/data/encounters.js')).href);
-const {shopCost,gambleCost,shopPreview}=await import(pathToFileURL(join(out,'game/systems/commerce.js')).href);
-const {itemStats,enhanceCost,bulkItems}=await import(pathToFileURL(join(out,'game/systems/equipment.js')).href);
-const {goldMultiplier,dungeonGoldMultiplier,dropRate,hitChance}=await import(pathToFileURL(join(out,'game/systems/stats.js')).href);
-const {rebirthLevel,rebirthReward,tierReward}=await import(pathToFileURL(join(out,'game/systems/meta.js')).href);
-const metaMod=await import(pathToFileURL(join(out,'game/systems/meta.js')).href);
-const longTerm=await import(pathToFileURL(join(out,'game/data/long-term.js')).href);
-const {xpNeeded}=await import(pathToFileURL(join(out,'game/data/balance.js')).href);
-const {PROGRESSION}=await import(pathToFileURL(join(out,'game/data/progression.js')).href);
-const {JOBS,JOB_TREES}=await import(pathToFileURL(join(out,'game/data/classes.js')).href);
+const {load}=loadGame();
+const {newState,act,advance,tick,victoryHeal}=await load('game/systems/engine.js');
+const encounterSource=await readFile('game/systems/encounter.ts','utf8');
+const {stats,snapshot,expMultiplier,normalizeStats}=await load('game/systems/stats.js');
+const {victoryMastery}=await load('game/systems/mastery.js');
+const {visibleStatuses}=await load('game/systems/combat-status.js');
+const {duel,TRAINING}=await load('game/systems/duel.js');
+const {strike,fighterSpeed}=await load('game/systems/combat.js');
+const {combatFxFromLog,combatFxBatch}=await load('game/systems/combat-feedback.js');
+const {migrateState}=await load('game/systems/migrations.js');
+const {apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,skillRankDeltas,skillMasteryLevel,masteryMilestonesFor,jobRequirements,validLoadout,skillLevel,maxSkillLevel,inherited,trimLoadout,jobMasteryTarget,jobCombatMultiplier}=await load('game/systems/progression.js');
+const {goalProgress,goalSuggestions}=await load('game/systems/goals.js');
+const {skillGrowthStages}=await load('game/systems/skill-description.js');
+const {SKILLS}=await load('game/data/skills.js');
+const {STAGES,FISH,DUNGEONS}=await load('game/data/world.js');
+const {profile}=await load('game/data/encounters.js');
+const {shopCost,gambleCost,shopPreview}=await load('game/systems/commerce.js');
+const {itemStats,enhanceCost,bulkItems}=await load('game/systems/equipment.js');
+const {goldMultiplier,dungeonGoldMultiplier,dropRate,hitChance}=await load('game/systems/stats.js');
+const {rebirthLevel,rebirthReward}=await load('game/systems/meta.js');
+const metaMod=await load('game/systems/meta.js');
+const longTerm=await load('game/data/long-term.js');
+const {xpNeeded}=await load('game/data/balance.js');
+const {PROGRESSION}=await load('game/data/progression.js');
+const {JOBS,JOB_TREES}=await load('game/data/classes.js');
 let seed=44;const rng=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
 let passed=0;const test=(name,fn)=>{fn();passed++;console.log('PASS',name)};
 test('Fresh state, stage and job restrictions',()=>{const s=newState(0);assert.equal(s.hp,stats(s).hp);assert.throws(()=>act(s,{type:'stage',id:'moon'},0));assert.throws(()=>act(s,{type:'job',id:'harpoon'},0));assert.throws(()=>act(s,{type:'skill',id:'pierce'},0));});
@@ -84,7 +79,7 @@ test('Recovery: 8% after a win (4% in dungeons); first aid is free at Lv.2 and a
  const s=newState(0);assert.equal((s.learned.firstAid||0),0);s.level=2;act(s,{type:'sync'},0);assert.equal(s.learned.firstAid,1);assert.equal(s.sp,0);
  const max=stats(s).hp;s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.08));s.skills=['firstAid'];assert.equal(victoryHeal(s),Math.floor(max*.12));
  s.dungeon={id:'grotto',wave:0};assert.equal(victoryHeal(s),Math.floor(max*.08));s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.04));
- const src=engineSource.slice(engineSource.indexOf('function reward('));assert.equal((src.slice(0,src.indexOf('\nfunction ')).match(/victoryHeal\(/g)||[]).length,1);
+ const src=encounterSource.slice(encounterSource.indexOf('function reward('));const end=src.indexOf('\nexport function ');assert.equal(((end<0?src:src.slice(0,end)).match(/victoryHeal\(/g)||[]).length,1);
 });
 test('Long-term goals: dungeon steps, one-time achievement notice, suggestions only what is open now',()=>{
  const s=newState(0);act(s,{type:'growthGoal',id:'grotto',value:'dungeon'},0);let p=goalProgress(s);assert.equal(p.max,3);assert.equal(p.value,0);
@@ -389,5 +384,5 @@ test('Follow-up hits: each hit counted once, total equals HP lost, stops when th
  const crit=[];strike(mk(['arcane'],{crit:1}),{...mk([]),name:'B',hp:1e6},()=>0,crit);assert.equal(crit[0].hits[0].critical,true);assert.equal(crit[0].damageType,'magic');
 });
 
-console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});
+console.log(`${passed} gameplay tests passed.`)
 

@@ -1,17 +1,10 @@
 // 리팩터링 동일성 검증: 고정 상태·고정 난수로 게임 로직을 실행해 결과 지문을 만듭니다.
 // 사용법: node scripts/check-equivalence.mjs > before.json   (변경 전)
 //         node scripts/check-equivalence.mjs > after.json    (변경 후) 후 두 파일 비교
-import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, writeFile, mkdir, readdir, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import ts from 'typescript';
+import { loadGame } from './lib/game-modules.mjs';
 
-const out = await mkdtemp(join(tmpdir(), 'tidebound-eq-'));
-async function compile(dir) { for (const e of await readdir(dir, { withFileTypes: true })) { if (e.name === 'server') continue; const src = join(dir, e.name), dst = join(out, src); if (e.isDirectory()) { await mkdir(dst, { recursive: true }); await compile(src); } else if (e.name.endsWith('.ts')) { const text = await readFile(src, 'utf8'); const js = ts.transpileModule(text, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText.replace(/from (['"])(\.\.?\/[^'"]+)\1/g, (_, q, p) => `from ${q}${p}.js${q}`); await writeFile(dst.replace(/\.ts$/, '.js'), js); } } }
-await mkdir(join(out, 'game')); await writeFile(join(out, 'package.json'), '{"type":"module"}'); await compile('game');
-const load = p => import(pathToFileURL(join(out, p)).href);
+const { load } = loadGame();
 const engine = await load('game/systems/engine.js');
 const statsM = await load('game/systems/stats.js');
 const prog = await load('game/systems/progression.js');
@@ -137,5 +130,4 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
     display.push(feedback.combatFxBatch(logs, 0, '검증'), status.visibleStatuses({ bleed: { turns: 2, damage: 5 } }, 1, [], 'player'));
     result.display = hash(display);
 }
-await rm(out, { recursive: true, force: true });
 console.log(JSON.stringify(result, null, 1));

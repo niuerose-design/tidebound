@@ -3,26 +3,11 @@
 // Allocate stats on level-up; compare five-minute field/dungeon samples and
 // prioritize feasible first clears. Claim research SP and manage loadouts.
 // Fixed build heuristics with advance information, not a global fastest-time proof.
-import ts from 'typescript';
-import {execFileSync} from 'node:child_process';
 const baseline=process.argv.includes('--baseline');
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
-const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tidebound-balance-'));
-try {
-for(const f of fs.readdirSync('game',{recursive:true}).filter(f=>f.endsWith('.ts')&&!f.startsWith('server/'))){
- let source;try{source=baseline?execFileSync('git',['show',`1cbc6cea7a92a5463ef7958d7d3cdd16f011b2c3:game/${f}`],{encoding:'utf8',stdio:['ignore','pipe','ignore']}):fs.readFileSync(path.join('game',f),'utf8');}catch{continue;}
- const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])([.][^'"]+)\1/g,(_,q,p)=>`from ${q}${p}.js${q}`);
- const out=path.join(temp,f.replace(/\.ts$/,'.js'));fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,code);
-}
-fs.writeFileSync(path.join(temp,'package.json'),' {"type":"module"}');
-const moduleAt=p=>import(pathToFileURL(path.join(temp,p+'.js')).href);
+import { loadGame } from './lib/game-modules.mjs';
+const {load:moduleAt}=loadGame();
 
 const {newState,tick,act}=await moduleAt('systems/engine');
-const {stats}=await moduleAt('systems/stats');
 const {canChangeJob,canUse,validLoadout,attributes,skillLevel,skillMastery,maxSkillLevel,bookReward}=await moduleAt('systems/progression');
 const {itemStats}=await moduleAt('systems/equipment');
 const {STAGES,DUNGEONS,FISH}=await moduleAt('data/world');
@@ -77,4 +62,3 @@ for(const gear of [false,true])for(const magic of [false,true])for(const seed of
  }
  console.log(JSON.stringify({baseline,gear,build:magic?'magic':'physical',seed,hours:+(s.turn/1800).toFixed(2),level:s.level,kills:s.kills,deaths:s.deaths,job:s.job,checkpoints,clears:s.clears,entries,routeChanges}));
 }
-}finally{fs.rmSync(temp,{recursive:true,force:true});}

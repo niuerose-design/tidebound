@@ -1,11 +1,12 @@
 'use client';
-import { useEffect, useState, type ReactNode } from 'react';
+import type { PanelProps } from './panel-props';
+import { useState, type ReactNode } from 'react';
 import { Check, ChevronDown, Compass, Info, Lock } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
-import type { State, Action, Stats } from '@/game/types';
+import type { Stats } from '@/game/types';
 import { JOBS, JOB_TREES, type Job } from '@/game/data/classes';
 import { SKILLS } from '@/game/data/skills';
 import { skillEffectLines } from '@/game/systems/skill-description';
@@ -14,7 +15,6 @@ import { vocationTargets, thresholdRank } from '@/game/data/long-term';
 import { jobRequirements, jobMasteryTarget, jobMasteryBoost, jobCombatMultiplier } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon, format } from './shared';
 
-type Props = { s: State; send: (a: Action) => void; busy: boolean };
 const bonusKeys = ['attack', 'magic', 'hp', 'defense', 'resist'] as const;
 const percent = (value: number) => `${value > 0 ? '+' : ''}${Number((value * 100).toFixed(2))}%`;
 function ancestors(job: Job) {
@@ -23,7 +23,7 @@ function ancestors(job: Job) {
     while (parent && !ids.has(parent)) { ids.add(parent); parent = JOBS.find(j => j.id === parent)?.parent; }
     return ids;
 }
-function JobDetail({ j, s, send, busy }: Props & { j: Job }) {
+function JobDetail({ j, s, send, busy }: PanelProps & { j: Job }) {
     const req = jobRequirements(s, j), ready = req.every(r => r.met), current = j.id === s.job, missing = req.filter(r => !r.met), metReq = req.filter(r => r.met);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;
     const dedicationTargets = vocationTargets(target), dedication = thresholdRank(xp, dedicationTargets);
@@ -57,11 +57,13 @@ function JobDetail({ j, s, send, busy }: Props & { j: Job }) {
         <button className="text-button job-goal-link" disabled={busy} onClick={()=>send({type:'growthGoal',id:j.id,value:'job'})}>이 전직을 장기 목표로</button>
     </article>;
 }
-export function Classes({ s, send, busy }: Props) {
+export function Classes({ s, send, busy }: PanelProps) {
     const current = JOBS.find(j => j.id === s.job) || JOBS[0];
     const [treeId, setTreeId] = useState(current.tree), [filter, setFilter] = useState('all'), [selectedId, setSelectedId] = useState(current.id);
     const [expanded, setExpanded] = useState(() => ancestors(current));
-    useEffect(() => { setSelectedId(current.id); setTreeId(current.tree); setFilter('all'); setExpanded(ancestors(current)); }, [current.id, current.tree]);
+    // 전직하면 목록 선택을 새 직업으로 맞춥니다(렌더 중 이전 값과 비교).
+    const [shownJob, setShownJob] = useState(current.id);
+    if (shownJob !== current.id) { setShownJob(current.id); setSelectedId(current.id); setTreeId(current.tree); setFilter('all'); setExpanded(ancestors(current)); }
     const tree = JOB_TREES.find(t => t.id === treeId)!;
     const family = JOBS.filter(j => j.tree === treeId), available = (j: Job) => j.id !== s.job && jobRequirements(s, j).every(r => r.met);
     const locked = (j: Job) => j.id !== s.job && !jobRequirements(s, j).every(r => r.met);

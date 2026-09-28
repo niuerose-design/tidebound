@@ -53,8 +53,8 @@ export function classAccess(s: State, sk: Skill) { return !sk.job || s.job === s
 export function skillUnlockReady(s: State, sk: Skill) { return !sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery; }
 export function canLearn(s: State, id: string) { const sk = SKILLS.find(x => x.id === id); return !!sk && s.level >= sk.level && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
 export function canUse(s: State, id: string) { return canLearn(s, id) && (s.learned?.[id] || 0) > 0; }
-/** Every explicit SP action costs exactly one point. Job-granted skills cost no SP. */
-export function skillCost(_s: State, _id: string) { return PROGRESSION.skillSPCost; }
+/** SP로 하는 행동은 모두 1 SP입니다. 직업이 주는 기술은 SP가 들지 않습니다. */
+export function skillCost() { return PROGRESSION.skillSPCost; }
 /** Rank 1 means acquired base skill, NOT an SP investment. */
 export function grantJobSkills(s: State) {
     const granted: string[] = [];
