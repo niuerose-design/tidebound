@@ -3550,3 +3550,21 @@ strong,b {
 /* v20.5 무리 사냥 선택 */
 .swarm-picker { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; font-size: 13px; color: var(--muted); }
 .swarm-picker button { min-width: 44px; padding: 4px 10px; font-size: 13px; }
+
+/* v20.5 화면 설명 정리 */
+.derived-details { margin-top: 12px; }
+.derived-details > summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 10px 0; }
+.book-block { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; }
+.book-block h4 { font-size: 13px; margin: 0 0 6px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.book-block h4 small { font-weight: 400; font-size: 11px; color: var(--muted); }
+.book-block p { font-size: 13px; margin: 0 0 8px; }
+.book-block .book-swarm { display: block; font-size: 11px; color: var(--muted); margin-top: 6px; }
+.book-matchup { margin-top: 6px; }
+.book-matchup small { color: var(--muted); }
+.rebirth-three { grid-template-columns: repeat(3, 1fr); }
+.ledger-gain li { display: flex; flex-direction: column; gap: 2px; }
+.ledger-gain li small { color: var(--muted); font-size: 12px; }
+.help-rule dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 10px 0 0; font-size: 14px; }
+.help-rule dt { color: var(--gold); font-weight: 600; white-space: nowrap; }
+.help-rule dd { margin: 0; line-height: 1.6; }
+@media (max-width: 767px) { .rebirth-three { grid-template-columns: 1fr; } }

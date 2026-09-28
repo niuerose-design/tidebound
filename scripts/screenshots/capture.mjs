@@ -12,8 +12,11 @@ for (const [label, viewport] of [['desktop', { width: 1440, height: 900 }], ['mo
     await page.waitForTimeout(2500);
     for (const [id, name] of views) {
         try {
-            if (label === 'mobile') { const t = page.locator('[data-sidebar="trigger"]').first(); if (await t.count()) { await t.click(); await page.waitForTimeout(300); } }
-            await page.locator('.game-sidebar').getByText(name, { exact: true }).first().click({ timeout: 5000 });
+            if (label === 'mobile') {
+                const t = page.locator('[data-sidebar="trigger"], [data-slot="sidebar-trigger"], button:has-text("Toggle Sidebar")').first();
+                if (await t.count()) { await t.click(); await page.waitForTimeout(400); } else console.log('NO TRIGGER');
+            }
+            await page.getByText(name, { exact: true }).locator('visible=true').first().click({ timeout: 5000 });
             await page.waitForTimeout(900);
             await page.screenshot({ path: `${dir}/${label}-${id}.png`, fullPage: true });
             // 탭이 있는 화면은 각 탭도 캡처

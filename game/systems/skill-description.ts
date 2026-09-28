@@ -1,14 +1,13 @@
 import type { Skill, Stats } from '../types';
 import { STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
-import { PERCENT_STATS, STAT_LABELS } from '../data/progression';
+import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '../data/progression';
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel, skillMasteryRewards } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
 
 const number = (n: number) => Number(n.toFixed(4)).toLocaleString('ko-KR', { maximumFractionDigits: 4 });
 export const skillPercent = (n: number) => `${number(n * 100)}%`;
-const pointStats = new Set(['accuracy', 'evasion', 'crit', 'critDamage', 'dropBonus', 'penetration', 'lifesteal']);
 export function skillBonusText(key: string, value: number) {
-    return `${STAT_LABELS[key as keyof Stats] || key} ${value >= 0 ? '+' : ''}${PERCENT_STATS.has(key) ? skillPercent(value) + (pointStats.has(key) ? 'p' : '') : number(value)}`;
+    return `${STAT_LABELS[key as keyof Stats] || key} ${statDeltaDisplay(key, value)}`;
 }
 /** Describes the effective values used by combat, including HP/MP scaling and follow-ups. */
 export function skillEffectLines(sk: Skill, level = 0): string[] {
@@ -35,11 +34,11 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.effect === 'drain') out.push(`실제로 깎은 체력의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 회복`);
         if (sk.extraAttacks) out.push(`추가 공격 ${Math.min(STATUS_TUNING.maxExtraAttacks, sk.extraAttacks)}회 · 각 타격은 위 피해식의 ${skillPercent(sk.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)}`);
     }
-    for (const [key, n] of Object.entries(sk.bonus || {})) out.push(skillBonusText(key, n));
+    for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
     if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 승리 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
     const rewards = skillMasteryRewards(sk, level + 1);
     if (rewards.ap) out.push(`최대 성장 보상: 장착 AP 한도 +${rewards.ap}`);
-    for (const [key, n] of Object.entries(rewards.bonus)) out.push(`최대 성장 보상: ${skillBonusText(key, n)}`);
+    for (const [key, n] of byStatOrder(Object.entries(rewards.bonus))) out.push(`최대 성장 보상: ${skillBonusText(key, n as number)}`);
     return out;
 }
 export function skillGrowthStages(sk: Skill) {

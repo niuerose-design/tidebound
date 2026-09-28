@@ -15,7 +15,7 @@ import { SKILLS } from '@/game/data/skills';
 import { JOBS } from '@/game/data/classes';
 import { TRAINING } from '@/game/systems/duel';
 import { ENEMY_SKILLS, profile, scaledEnemyStats } from '@/game/data/encounters';
-import { formatStat } from '@/game/data/progression';
+import { statDisplay } from '@/game/data/progression';
 import { Empty, Heading, Meter, format } from './shared';
 import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, useCombatFx } from './combat-fx';
 import { StatusBadges } from './combat-status';
@@ -75,7 +75,7 @@ export function Dungeons({ s, send, busy }: Props) {
         })}</div>
         <div className="dungeon-combat-grid dungeon-combat-fx-host">
         <CombatFxOverlay effect={combatFx}/>
-        <div className="dungeon-combatant player-combatant"><span className="eyebrow">내 낚시꾼</span><div className="combatant-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label="HP" color="teal"/><PlayerHitEffect effect={combatFx}/></div><Meter value={s.mana} max={playerStats.mana} label="MP" color="blue"/><small>속도 {playerStats.speed} · 명중 {Math.round((playerStats.accuracy || 0) * 100)}% · 회피 {Math.round((playerStats.evasion || 0) * 100)}%</small></div>
+        <div className="dungeon-combatant player-combatant"><span className="eyebrow">내 낚시꾼</span><div className="combatant-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label="HP" color="teal"/><PlayerHitEffect effect={combatFx}/></div><Meter value={s.mana} max={playerStats.mana} label="MP" color="blue"/><small>속도 {playerStats.speed} · 명중 수치 {statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', playerStats.evasion || 0)}</small></div>
         <div className="dungeon-vs">VS<span>{activeWave + 1}/{activeDungeon.fish.length}</span></div>
         <div className="dungeon-combatant enemy-combatant"><span className="eyebrow">{s.enemy?.boss ? 'BOSS ENCOUNTER' : 'CURRENT CATCH'}</span><div className="combatant-name"><h3>{s.enemy?.name || (s.recovery > 0 ? `출정 준비 · ${Math.ceil(s.recovery * BALANCE.turnMs / 1000)}초 남음` : '다음 입질을 기다리는 중')}</h3>{s.enemy && <StatusBadges effects={s.enemy.effects} stun={s.enemy.stun} recent={combatFx} target="enemy"/>}</div>{s.enemy ? <><div className="player-hp-anchor"><Meter value={s.enemy.hp} max={s.enemy.maxHp} label="HP" color="rose"/><CombatBarEffect effect={combatFx} target="enemy"/></div><small>{enemyProfile?.name || '미확인 개체'} · 속도 {s.enemy.combatStats?.speed || '-'} · 공격 스킬 {s.enemy.skills?.map(id => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id)?.name || id).join(', ') || '기본 공격'}</small>{enemyProfile?.hint && <p className="dungeon-hint">{enemyProfile.hint}</p>}</> : <p className="dungeon-hint">{s.recovery > 0 ? '준비가 끝나면 체력·마나가 모두 회복되고 탐험이 시작됩니다.' : '자동 낚시가 다음 웨이브를 준비하고 있습니다.'}</p>}</div>
         </div>
@@ -95,7 +95,7 @@ export function Dungeons({ s, send, busy }: Props) {
             <span className="eyebrow">Lv. {d.level} {d.rebirth ? `· 환생 ${d.rebirth}회` : ''}</span>
             <h2>{d.name}</h2>
             <p>{d.description}</p>{d.bossFish&&<p className="dungeon-hint">보스 특성 · {profile(d.bossFish).name}<br/>{profile(d.bossFish).hint}</p>}{d.id === 'abyss' && <p>다음 깊이: 적 HP ×{tierHealth(tier).toFixed(2)} · 공격 ×{tierAttack(tier).toFixed(2)} · 보상 ×{tierReward(tier).toFixed(2)}</p>}
-            <p className="dungeon-hint">최종 보스 · HP {format(bossStats.hp)} · 물공 {format(bossStats.attack)} · 마공 {format(bossStats.magic || 0)}<br/>물방 {format(bossStats.defense)} · 마방 {format(bossStats.resist || 0)}</p><div className="dungeon-wave-list">{d.fish.map((id, index) => { const boss = index === d.fish.length - 1; const fish = boss && d.bossFish ? FISH.find(f => f.id === d.bossFish) : FISH.find(f => f.id === id); return <span className={boss ? 'boss-wave' : ''} key={`${id}-${index}`}>{boss ? 'BOSS' : `W${index + 1}`} · {fish?.name || id}</span>; })}</div>
+            <p className="dungeon-hint">최종 보스{d.id === 'abyss' ? ` (${s.abyssBest + 1}층 기준)` : ''} · HP {format(bossStats.hp)} · 물공 {format(bossStats.attack)} · 마공 {format(bossStats.magic || 0)}<br/>물방 {format(bossStats.defense)} · 마방 {format(bossStats.resist || 0)}</p><div className="dungeon-wave-list">{d.fish.map((id, index) => { const boss = index === d.fish.length - 1; const fish = boss && d.bossFish ? FISH.find(f => f.id === d.bossFish) : FISH.find(f => f.id === id); return <span className={boss ? 'boss-wave' : ''} key={`${id}-${index}`}>{boss ? 'BOSS' : `W${index + 1}`} · {fish?.name || id}</span>; })}</div>
             <div className="rewards">
             <span>
             <Coins size={15}/>{format(dungeonClearGold(s, d.gold, tier))} G</span>
@@ -176,7 +176,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
             <TableCell>
             <strong>{r.name}{r.self ? ' (나)' : ''}</strong>
             <small className="block">Lv. {r.level} · {JOBS.find(j => j.id === r.job)?.name} · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
-            <small className="block ranking-combat-stats">명중 {formatStat('accuracy', r.stats.accuracy || 0)} · 회피 {formatStat('evasion', r.stats.evasion || 0)}</small>
+            <small className="block ranking-combat-stats">명중 수치 {statDisplay('accuracy', r.stats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', r.stats.evasion || 0)}</small>
             </TableCell>
             <TableCell><span className="ranking-guild">{r.guild || '무소속'}</span></TableCell>
             <TableCell>{format(r.power)}</TableCell>
@@ -216,9 +216,9 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
     </span>
     </div>
     <div className="duel-hit-summary">
-    <span>내 명중률 <b>{result ? Math.round(result.playerHitChance * 100) : 0}%</b> · 명중 {result ? formatStat('accuracy', result.playerAccuracy) : '-'}</span>
-    <span>상대 명중률 <b>{result ? Math.round(result.opponentHitChance * 100) : 0}%</b> · 회피 {result ? formatStat('evasion', result.opponentEvasion) : '-'}</span>
-    <span>내 회피 {result ? formatStat('evasion', result.playerEvasion) : '-'} · 상대 명중 {result ? formatStat('accuracy', result.opponentAccuracy) : '-'}</span>
+    <span>내 명중률 <b>{result ? Math.round(result.playerHitChance * 100) : 0}%</b> · 명중 수치 {result ? statDisplay('accuracy', result.playerAccuracy) : '-'}</span>
+    <span>상대 명중률 <b>{result ? Math.round(result.opponentHitChance * 100) : 0}%</b> · 상대 회피 수치 {result ? statDisplay('evasion', result.opponentEvasion) : '-'}</span>
+    <span>내 회피 수치 {result ? statDisplay('evasion', result.playerEvasion) : '-'} · 상대 명중 수치 {result ? statDisplay('accuracy', result.opponentAccuracy) : '-'}</span>
     </div>
     <div className="duel-log">{result?.logs.map((l, i) => <p key={i}>{l}</p>)}</div>
     </DialogContent>

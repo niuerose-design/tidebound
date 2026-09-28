@@ -328,5 +328,9 @@ test('Swarm hunting: unlock by codex, sequential units without healing, rewards 
  const other=newState(0);act(other,{type:'stage',id:'brook'},0);act(other,{type:'target',id:'minnow'},0);other.book.minnow=500;act(other,{type:'swarm',id:'100'},0);act(other,{type:'target',id:'carp'},0);act(other,{type:'start'},0);other.stats;tick(other,()=>.99);assert.ok(other.enemy);assert.equal(other.swarm,100);assert.equal(other.enemy?.swarm,undefined,'swarm applies only to an unlocked target');
 });
 
+test('Rebirth reward breakdown always sums to the pearls actually granted',()=>{
+ for(const [lv,rb,bonus] of [[30,0,0],[45,3,2],[60,6,0],[100,6,1],[100,25,3],[70,400,5]]){const s=newState(0);s.level=lv;s.rebirths=rb;const p=metaMod.rebirthRewardParts(s,bonus);assert.equal(p.level+p.count+p.bonus+p.deep,metaMod.rebirthReward(s,bonus));}
+});
+
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});
 

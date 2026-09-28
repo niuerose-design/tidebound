@@ -1,37 +1,47 @@
-import { BookOpen, Coins, Crosshair, Fish, Gauge, Heart, Shield, Sparkles, Swords, Target, Zap } from 'lucide-react';
-import { BALANCE, MONSTER_TUNING, STATUS_GUIDE } from '@/game/data/balance';
-import { PROGRESSION } from '@/game/data/progression';
+import { BookOpen, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Users, Zap } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA } from '@/game/data/balance';
+import { ATTRIBUTES, PROGRESSION } from '@/game/data/progression';
+import { ECONOMY, RESEARCH } from '@/game/data/economy';
 import { SWARM_UNLOCK } from '@/game/data/world';
+import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
+import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL } from '@/game/systems/meta';
 import { Heading } from './shared';
 
-const attributes = [
-    ['STR · 근력', '물리 공격 +2 · 물리 방어 +0.25'],
-    ['DEX · 기민', '명중 +0.4%p · 회피 +0.2%p · 속도 +0.5'],
-    ['INT · 지능', '마법 공격 +2.4 · 최대 마나 +1'],
-    ['VIT · 체질', '최대 체력 +9 · 물리 방어 +0.6'],
-    ['WIS · 정신', '마법 방어 +1.2 · 최대 마나 +3 · 마나 회복 +0.15'],
-    ['LUK · 행운', '치명타·치명 피해·장비 드롭·골드 획득을 함께 높입니다.'],
-];
+const pct = (n: number) => `${Math.round(n * 1000) / 10}%`;
+
+/** 도움말 카드: 효과 → 조건 → 제한 순서로 적습니다. */
+function Rule({ icon, title, effect, condition, limit }: { icon: ReactNode; title: string; effect: ReactNode; condition?: ReactNode; limit?: ReactNode }) {
+    return <section className="panel help-card help-rule">
+        <h2>{icon} {title}</h2>
+        <dl>
+            <dt>효과</dt><dd>{effect}</dd>
+            {condition && <><dt>조건</dt><dd>{condition}</dd></>}
+            {limit && <><dt>제한</dt><dd>{limit}</dd></>}
+        </dl>
+    </section>;
+}
 
 export function Guide() {
     return <>
-        <Heading eyebrow="CAPTAIN'S MANUAL" title="항해 도움말" description="스탯이 전투에 어떻게 연결되는지, 자동 전투가 어떤 순서로 판정되는지 정리했습니다." />
+        <Heading eyebrow="CAPTAIN'S MANUAL" title="항해 도움말" description="규칙마다 효과 · 조건 · 제한 순으로 정리했습니다." />
         <section className="help-section">
-            <div className="section-title"><h2><Target size={19}/> 능력치</h2><span>기본 능력치에 레벨·장비·직업·스킬이 합산됩니다.</span></div>
-            <div className="help-stat-grid">{attributes.map(([name, desc]) => <article className="panel help-stat-card" key={name}><strong>{name}</strong><p>{desc}</p></article>)}</div>
+            <div className="section-title"><h2><Target size={19}/> 능력치</h2><span>기본치 + 레벨 성장 + 직접 배분. 최종 수치에는 직업·장비·스킬이 더해집니다.</span></div>
+            <div className="help-stat-grid">{ATTRIBUTES.map(a => <article className="panel help-stat-card" key={a.id}><strong>{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
+            <p className="footnote">능력치 화면은 체력 → 물리·마법 공격 → 물리·마법 방어 → 속도 → 명중·회피 → 치명타 순서로 핵심만 보여주고, 나머지는 ‘상세 능력치’에 있습니다. 확률·보너스는 %, 치명 피해는 배율(×), 명중·회피는 수치로 표시합니다.</p>
         </section>
         <section className="help-section">
-            <div className="section-title"><h2><Swords size={19}/> 한 턴의 전투 순서</h2><span>플레이어와 물고기가 각각 행동합니다.</span></div>
+            <div className="section-title"><h2><Swords size={19}/> 한 턴의 전투 순서</h2><span>속도가 높은 쪽이 먼저 행동합니다.</span></div>
             <div className="help-flow">
-                <div><b>1</b><strong>상태 처리</strong><p>출혈·약화·침묵·감속/가속의 남은 턴과 마나 회복·기절을 먼저 처리합니다.</p></div>
-                <div><b>2</b><strong>스킬 판정</strong><p>장착한 모든 액티브를 우선순위 순서대로 조건·쿨다운·마나·발동 확률을 확인합니다.</p></div>
-                <div><b>3</b><strong>명중 판정</strong><p>내 명중 − 상대 회피 + 속도 보정를 1~99.5% 범위로 적용합니다.</p></div>
-                <div><b>4</b><strong>피해 계산</strong><p>물리/마법 공격과 상대 방어, 관통, 치명타를 반영합니다.</p></div>
-                <div><b>5</b><strong>추가타</strong><p>쌍갈고리·촉수 난무처럼 추가타가 있는 스킬은 같은 행동 안에서 제한된 후속 타격을 냅니다.</p></div>
+                <div><b>1</b><strong>상태 처리</strong><p>출혈·약화·침묵·감속/가속의 남은 턴, 마나 회복, 기절을 먼저 처리합니다.</p></div>
+                <div><b>2</b><strong>스킬 선택</strong><p>장착한 액티브를 위에서부터 조건·재사용 대기·마나·발동 확률 순으로 확인하고, 모두 실패하면 기본 공격을 합니다.</p></div>
+                <div><b>3</b><strong>명중 판정</strong><p>한 번의 공격마다 한 번 판정합니다.</p></div>
+                <div><b>4</b><strong>피해 계산</strong><p>공격 수치 × 스킬 배율에 상대 방어·관통·치명타를 적용합니다.</p></div>
+                <div><b>5</b><strong>추가타</strong><p>추가타가 있는 스킬은 같은 행동 안에서 후속 타격을 냅니다.</p></div>
             </div>
         </section>
         <section className="help-section">
-            <div className="section-title"><h2><Gauge size={19}/> 상태이상 사전</h2><span>{STATUS_GUIDE.length}종의 상태가 같은 규칙으로 PvE·PvP에 적용됩니다.</span></div>
+            <div className="section-title"><h2><Gauge size={19}/> 상태이상 사전</h2><span>{STATUS_GUIDE.length}종이 PvE·PvP에 같은 규칙으로 적용됩니다.</span></div>
             <div className="help-status-grid">{STATUS_GUIDE.map(status => <article className="panel help-status-card" key={status.id}>
                 <div className="help-status-top"><strong>{status.name}</strong><span>{status.kind}</span></div>
                 <p>{status.description}</p>
@@ -39,68 +49,66 @@ export function Guide() {
             </article>)}</div>
         </section>
         <div className="help-columns">
-            <section className="panel help-card"><h2>숙련 → 특화 → 보스 연구</h2><p>액티브 스킬의 실전 숙련 1단계를 달성하면 스킬 화면에서 특화를 하나 선택할 수 있습니다. 정밀 챔질은 회피 대응, 상처 추적·약점 해류는 상태이상 연계, 마나 절약은 긴 전투에 사용합니다. 특화마다 피해 감소 등의 대가가 있으므로 기본형도 유효한 선택입니다.</p><p>보스 첫 정복 연구에서는 SP와 일부 특화를 얻습니다. 조수의 동굴은 봉인 추격, 해초 묘실은 정화의 숨, 닻의 묘지는 닻 파쇄, 검은 화구 제단은 촉수의 잔향을 엽니다. 던전 화면에서 보상을 한 번 수령하면 환생 후에도 해금이 유지됩니다. 이전에 정복한 기록도 인정합니다.</p><p>특화 변경은 낚시 중단·던전 귀환 후 무료입니다. SP로 성장 레벨을 올려도 실전 숙련 1단계를 대신하지 않습니다.</p></section>
-            <section className="panel help-card"><h2>이번 항해에서 남길 목표</h2><p>스킬·전직·던전 화면에서 목표를 정하면 자동 낚시와 환생 화면에서 남은 조건을 확인할 수 있습니다. 스킬 목표는 선택 당시의 다음 실전 숙련 단계이며, 달성해도 자동으로 더 높은 목표로 바뀌지 않습니다.</p><p>경험치를 올려 환생을 앞당길지, 익숙한 적에게서 기술을 숙련할지는 자유롭게 선택하세요. 일반 숙련은 적의 강함과 관계없이 승리당 1이며, 기존 조건부 숙련 패시브의 추가 보상도 유지됩니다.</p></section>
-            <section className="panel help-card">
-                <h2><Crosshair size={19}/> 명중·회피</h2>
-                <p>명중은 내 공격과 상태이상이 빗나가지 않을 확률을 높입니다. 회피는 상대의 공격과 그 공격에 붙은 기절·출혈 같은 효과를 함께 피할 확률을 높입니다.</p>
-                <div className="help-formula">내 명중률 = 내 명중 − 상대 회피 + 속도 보정<br/>적 명중률 = 적 명중 − 내 회피 + 속도 보정<br/><small>최소 1% · 최대 99.5% · 속도비에 따라 ±6%p<br/>스킬 특화·가속·감속은 실제 공격에 추가 반영<br/>명중 120% 제한 폐지 · 회피 50% 초과분은 점차 효율 감소(90%에 수렴)</small></div>
-            </section>
-            <section className="panel help-card">
-                <h2><Zap size={19}/> 액티브 스킬</h2>
-                <p>장착한 액티브는 위에서부터 조건·쿨다운·마나·발동 확률을 판정합니다. 앞 스킬이 실패하면 다음으로 넘어가며, 모두 실패하면 기본 공격을 합니다. 액티브·패시브 개수 제한은 없고 총 AP만 제한됩니다. 추가타는 스킬별 횟수·배율을 따르며 최대 2회로 제한됩니다.</p>
-                <p className="help-note">전직하면 해당 직업의 기술을 SP 없이 기본 Lv.0으로 얻습니다. 장착한 채 승리해 첫 숙련을 달성하면 다른 직업에서도 무료로 계승합니다. 해금한 기술에 한해 계승 또는 강화에 각각 1 SP를 쓸 수 있습니다. 스킬의 자세히 보기에서 모든 성장 단계의 실제 효과를 비교할 수 있습니다. SP와 숙련은 동일한 성장 단계를 열며 합산하지 않습니다. SP를 써도 숙련 성장은 계속되고, 전직의 선행조건에는 실제 누적 숙련도만 인정됩니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><BookOpen size={19}/> 경험치와 조건부 숙련</h2>
-                <p>경험치 획득 배율은 1 + 환생 보너스 + 진주 연구 + 현재 직업 + 장착 스킬입니다. 능력치 화면의 경험치 획득 증가와 배율은 실제 포획 보상에 적용되는 값입니다.</p>
-                <p className="help-note">승리 시 현재 직업과 장착한 사용 가능 스킬의 숙련도가 기본 1 증가합니다. 거수 관찰일지 등은 지정된 적을 이겼을 때만 추가 숙련을 줍니다. 조건이 겹치면 가장 큰 보너스 하나만 적용하며 한 번의 승리당 최대 10입니다. 도감 포획 수는 여전히 1만 증가합니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Zap size={19}/> 숙련으로 해금하는 보스 기술</h2>
-                <p>메아리 조련사는 직업 숙련도 6,000에서 무음의 포효를, 심연 모사체는 20,000에서 촉수 난무를 무료 해금합니다. 이 최초 해금 조건은 SP로 건너뛸 수 없습니다. 해금한 뒤에는 다른 스킬처럼 장착 숙련이나 SP로 강화·계승합니다.</p>
-                <p className="help-note">몬스터 스킬명은 전투 중앙에, 피해·회복 숫자는 해당 HP 바에 표시합니다. 기절·침묵·출혈·약화·감속·가속은 영향을 받은 캐릭터 이름 옆에서 확인합니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Shield size={19}/> 직업 숙달 보너스</h2>
-                <p>직업별 숙련 목표를 채우면 해당 직업의 체력·공격·방어 보너스가 강화됩니다. 전직 화면에서 숙달 전후 수치를 비교하세요. 강화된 보너스는 그 직업을 선택한 동안에만 적용되고, 다른 직업으로 옮기면 이전 보너스는 적용되지 않습니다. 숙련 기록은 계속 남습니다.</p>
-                <p className="help-note">페널티·치명타·경험치 보너스는 숙달로 변하지 않습니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Coins size={19}/> 항구 상점과 전리품 감지</h2>
-                <p>상점에서 낚싯대·방어구·나침반을 감정할 수 있습니다. 낚싯대는 물리형과 마법형이 같은 확률입니다. 장비 강화 탭에서 착용 장비를 강화하세요.</p>
-                <p className="help-note">전리품 감지(이전 이름: 희귀어 감지)는 장비 드롭 확률과 골드 보상을 높입니다. 희귀 물고기 출현률·장비 등급·상점 감정 확률에는 영향을 주지 않습니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Heart size={19}/> 생존과 회복</h2>
-                <p>전투 승리 후 체력의 16%를 회복합니다. 패배해도 장비·골드 손실 없이 3턴 회복한 뒤 다시 전투합니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Gauge size={19}/> 방치 진행</h2>
-                <p>자동 낚시 중 접속하지 않은 시간도 서버가 최대 24시간까지 실제 턴으로 계산합니다. 일시정지 중에는 보상이 쌓이지 않습니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Sparkles size={19}/> 환생</h2>
-                <p>레벨 30부터 환생할 수 있습니다. 진주·SP·도감·스킬 해금·SP 계승·강화·숙련·유물·길드·랭킹은 유지되고, 일반 장비·골드·레벨·진행 중 전투는 초기화됩니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Shield size={19}/> 데이터 초기화</h2>
-                <p>환생 화면의 위험 구역에서 자동 낚시와 던전을 멈춘 뒤 전체 데이터를 초기화할 수 있습니다. 캐릭터 이름만 남고 레벨·환생·장비·도감·길드·랭킹 등록 정보까지 새 게임처럼 돌아갑니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Coins size={19}/> 골드와 던전</h2>
-                <p>골드는 상점·감정·강화·길드 기부에 사용합니다. 골드 획득 보너스는 포획과 던전 보상에만 적용되며 장비 판매가에는 적용되지 않습니다. 던전 탐험 화면에서 웨이브·보스·현재 HP·최근 로그를 확인할 수 있습니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Fish size={19}/> 희귀어와 보스</h2>
-                <p>희귀·영웅·전설 물고기는 일반 개체보다 낮은 출현 가중치와 높은 보상을 가집니다. 각 던전의 마지막 웨이브는 별도 보스 개체이며 전용 스킬 프로필을 사용합니다. 일부 보스 스킬은 몬스터 계열 직업의 플레이어 스킬로도 계승됩니다.</p>
-            </section>
-            <section className="panel help-card">
-                <h2><Gauge size={19}/> 무리 사냥</h2>
-                <p>집중 사냥 중인 어종을 {SWARM_UNLOCK[5]}마리 포획하면 ×5, {SWARM_UNLOCK[100].toLocaleString()}마리 포획하면 ×100 무리를 고를 수 있습니다. 한 전투에서 그 수만큼 한 마리씩 연달아 싸우며, 무리를 모두 잡으면 경험치·골드·숙련·도감·드롭 판정을 마리 수만큼 한 번에 받습니다.</p>
-                <p className="help-note">사이에 체력 회복이 없고, 적 공격은 1 + log10(무리 수)배(×5 약 1.7배, ×100 3배)입니다. 도중에 쓰러지거나 설정을 바꾸면 보상이 없습니다. 시간당 보상은 한 마리씩 잡을 때보다 늘지 않습니다.</p>
-            </section>
+            <Rule icon={<Crosshair size={19}/>} title="명중·회피"
+                effect={<>명중 수치는 내 공격이, 회피 수치는 상대 공격과 그 공격의 상태이상이 빗나갈 가능성을 바꿉니다. 실제 적중률 = 내 명중 − 상대 회피 + 속도 보정.</>}
+                condition="속도 차이에 따라 최대 ±6%p. 스킬 특화·가속·감속은 해당 공격에 추가로 반영됩니다."
+                limit="실제 적중률은 1~99.5%. 회피는 50%를 넘으면 효율이 줄어 90%에 수렴합니다. 명중·회피 수치는 확률이 아니므로, 어종별 실제 적중률은 물고기 도감에서 확인하세요."/>
+            <Rule icon={<Zap size={19}/>} title="액티브 스킬"
+                effect="전투 중 발동 확률에 따라 자동으로 사용합니다. 추가타는 스킬별 횟수·배율로 같은 행동 안에서 이어집니다."
+                condition="마나와 재사용 대기가 충족되고, 스킬별 조건(체력 비율 등)을 만족해야 합니다."
+                limit={`장착 개수 제한은 없고 총 AP만 제한합니다. 추가타는 최대 ${STATUS_TUNING.maxExtraAttacks}회입니다.`}/>
+            <Rule icon={<Sparkles size={19}/>} title="스킬 습득·계승·강화"
+                effect="전직하면 그 직업의 기술을 SP 없이 기본 Lv.0으로 얻습니다. 장착한 채 승리해 첫 숙련을 채우면 다른 직업에서도 무료로 씁니다."
+                condition="해금한 기술에 한해 계승 또는 강화에 각각 1 SP를 쓸 수 있습니다."
+                limit="SP는 도감 최종 연구·던전 첫 연구·심연 이정표에서만 얻습니다. 보스 기술의 최초 해금(직업 숙련 조건)은 SP로 건너뛸 수 없습니다."/>
+            <Rule icon={<Target size={19}/>} title="숙련 → 특화 → 연마"
+                effect="액티브의 실전 숙련 1단계에서 특화를 하나 고를 수 있습니다. 기본 숙련을 마친 뒤에는 장기 연마 30단계가 이어져 단계마다 직접 피해·양수 패시브 +0.8%입니다."
+                condition="특화 일부는 해당 던전의 보스 연구 보상을 받아야 열립니다."
+                limit="연마는 SP로 건너뛸 수 없고 AP·발동률·숙련 배수는 늘지 않습니다. 특화마다 피해 감소 등의 대가가 있습니다."/>
+            <Rule icon={<BookOpen size={19}/>} title="경험치와 숙련 획득"
+                effect="승리할 때마다 현재 직업과 장착한 사용 가능 스킬의 숙련이 기본 1 늘어납니다. 경험치 배율 = 1 + 환생 + 진주 연구 + 직업 + 장착 스킬."
+                condition="조건부 숙련 스킬은 지정된 적을 이겼을 때만 추가 숙련을 줍니다. 겹치면 가장 큰 보너스 하나만 적용합니다."
+                limit={`승리 1회당 최대 ${PROGRESSION.maxMasteryPerVictory}. 도감 포획 수는 1씩만 늘어납니다(무리 사냥 제외).`}/>
+            <Rule icon={<Shield size={19}/>} title="직업 숙달"
+                effect="직업별 숙련 목표를 채우면 그 직업의 체력·공격·방어 보너스가 강화됩니다. 전직 화면에서 숙달 전후를 비교할 수 있습니다."
+                condition="그 직업을 선택한 동안에만 적용됩니다."
+                limit="페널티·치명타·경험치 보너스는 숙달로 변하지 않습니다. 숙련 기록은 다른 직업으로 옮겨도 남습니다."/>
+            <Rule icon={<Users size={19}/>} title="만능 항해사 · 육중 조화"
+                effect={<>육중 조화의 원시 피해 = {SKILL_FORMULA.harmonyBase} + 배분 포인트 합 × {SKILL_FORMULA.harmonyPerPoint} + 가장 낮은 배분 포인트 × {SKILL_FORMULA.harmonyPerLowest}. 물리 {pct(SKILL_FORMULA.splitPhysical)} · 마법 {pct(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각 방어를 적용합니다.</>}
+                condition="Lv.40, 여섯 능력치에 직접 배분한 포인트가 각각 15 이상, 이형 항해자 숙련 2,400."
+                limit="직접 배분한 포인트만 계산하며 장비·일시 버프·일반 공격력은 더하지 않습니다. 명중·치명 판정은 한 번입니다."/>
+            <Rule icon={<Fish size={19}/>} title="무리 사냥"
+                effect="한 전투에서 같은 어종을 여러 마리 연달아 상대하고, 모두 잡으면 경험치·골드·숙련·도감을 마리 수만큼 받고 드롭을 마리 수만큼 판정합니다."
+                condition={`집중 사냥 중인 어종을 ${SWARM_UNLOCK[5]}마리 포획하면 ×5, ${SWARM_UNLOCK[100].toLocaleString()}마리 포획하면 ×100.`}
+                limit="사이에 체력 회복이 없고 적 공격이 1 + log10(무리 수)배(×5 약 1.7배, ×100 3배)입니다. 쓰러지거나 설정을 바꾸면 보상이 없고, 시간당 보상은 한 마리씩 잡을 때보다 늘지 않습니다."/>
+            <Rule icon={<Swords size={19}/>} title="던전 반복 · 무한 심연"
+                effect={`던전은 정해진 횟수 또는 실패할 때까지, 무한 심연은 목표 깊이 또는 실패할 때까지 자동 재도전합니다. 심연은 깊을수록 층당 진주가 늘고 ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파 시 SP 1을 줍니다.`}
+                condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장마다 6초 준비 후 체력·마나를 회복합니다."
+                limit={`반복이 끝나거나 실패하면 낚시터에서 자동 낚시를 이어갑니다. 던전 처치 후 회복은 ${pct(MONSTER_TUNING.dungeonHealAfterKill)}입니다.`}/>
+            <Rule icon={<RefreshCw size={19}/>} title="환생"
+                effect={<>진주 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스 + 깊은 항해(요구 레벨 초과분² ÷ 40). 환생 영구 보너스(체력·물리/마법 공격·물리/마법 방어) = 2.5% × √환생 횟수. 영구 경험치는 환생마다 +25%.</>}
+                condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨+${TAILWIND_WINDOW} 이내에 환생하면 순풍(다음 생 요구 레벨까지 경험치 +${TAILWIND_EXP * 100}%), Lv.${DEEP_VOYAGE_LEVEL}에서 환생하면 깊은 항해(다음 생 숙련 기본 획득 +2).`}
+                limit={`환생 횟수 보상 진주와 영구 경험치는 20회까지 회당 1개·+25%, 이후에는 √(횟수 − 20)으로 완만해집니다. 환생 AP는 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도는 최대 ${ECONOMY.tideCap}.`}/>
+            <Rule icon={<Sparkles size={19}/>} title="진주 연구"
+                effect="진주로 영구 능력을 올립니다. 환생해도 유지됩니다."
+                condition="단계가 오를수록 비용이 커지고, 20단계 이후에는 더 가파르게 오릅니다."
+                limit={<>연구 상한: {RESEARCH.map(r => `${r.name} ${r.max}단계`).join(' · ')}.</>}/>
+            <Rule icon={<BookOpen size={19}/>} title="물고기 도감"
+                effect={`종별 연구는 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 포획에 골드를 주고, 최종 연구에서 SP 1을 줍니다. 지역의 모든 종을 완성하면 AP +1 · 최대 체력 +20.`}
+                condition={`한 종을 ${PROGRESSION.fishComplete}회 포획하면 완성으로 처리합니다. 보상은 도감에서 직접 받습니다.`}
+                limit="각 연구 단계 보상은 한 번만 받습니다. 도감 카드는 적 능력치 · 연구 진행도 · 다음 연구 보상을 나눠 보여줍니다."/>
+            <Rule icon={<Coins size={19}/>} title="상점 · 장비 강화"
+                effect={`낚싯대·방어구·나침반을 감정하거나 확정 구매합니다. 강화 1회당 장비 기본 수치 +${pct(ECONOMY.enhanceGain)}.`}
+                condition={`강화는 최대 +${ECONOMY.enhanceMax}. 장비 카드의 수치는 강화가 적용된 값이며 카드에 강화 단계를 함께 표시합니다.`}
+                limit="구매·강화·옵션 변경 비용은 판매할 때 돌려받지 않습니다. 전리품 감지는 장비 드롭과 골드만 높이고 희귀어 출현·장비 등급에는 영향이 없습니다."/>
+            <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
+                effect={`승리 후 최대 체력의 ${pct(BALANCE.healAfterKill)}를 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
+                condition={`패배하면 손실 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다.`}
+                limit={`방치 정산은 최대 ${BALANCE.offlineCapSeconds / 3600}시간. 일시정지 중에는 쌓이지 않습니다. 해역 난이도는 일반 낚시터에만 적용됩니다.`}/>
+            <Rule icon={<Gauge size={19}/>} title="데이터 초기화"
+                effect="캐릭터 이름만 남기고 레벨·환생·장비·도감·길드·랭킹 등록까지 새 게임으로 돌아갑니다."
+                condition="환생 화면의 ‘저장 데이터 관리’에서 자동 낚시와 던전을 멈춘 뒤 실행합니다."
+                limit="되돌릴 수 없습니다."/>
         </div>
-        <div className="notice"><BookOpen size={18}/><span>도감 연구는 {BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회에 골드를 주고, 최종 10,000회 연구에서만 1 SP를 줍니다. 시작 SP와 레벨업 SP 지급은 없습니다. 이미 받은 SP는 업데이트로 사라지지 않습니다. 한 종을 {PROGRESSION.fishComplete}회 연구하면 완성으로 처리되고, 지역 내 모든 종을 완성한 지역 연구에서 AP +1과 최대 체력 +20을 얻습니다. 일반 물고기는 HP ×{MONSTER_TUNING.hpMultiplier.toFixed(2)} · 공격 ×{MONSTER_TUNING.attackMultiplier.toFixed(2)} · 방어 ×{MONSTER_TUNING.defenseMultiplier.toFixed(2)} 기본 보정에 더해 고레벨일수록 체력·공격·방어가 강해집니다. 던전은 입장 후 6초 준비, 웨이브별 추가 강화, 처치 후 체력 8% 회복이 적용됩니다. 보스 전투 강화와 경험치 배율은 별개입니다. 랭킹은 직접 등록한 스냅샷으로 비동기 결투를 진행합니다.</span></div>
     </>;
 }
