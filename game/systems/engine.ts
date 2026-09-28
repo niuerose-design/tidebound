@@ -3,12 +3,12 @@ import { commerce } from './commerce';
 import { rollAffix, saleValue } from './equipment';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, skillPracticeTargets } from './progression';
-import { catchReward, deepVoyagePearls, nextLifeBonus, TAILWIND_EXP, rebirthLevel, rebirthReward, tideLimit, encounterTier } from './meta';
+import { activeSwarm, swarmUnlocked, catchReward, deepVoyagePearls, nextLifeBonus, TAILWIND_EXP, rebirthLevel, rebirthReward, tideLimit, encounterTier } from './meta';
 import { stats, dropRate, clampVitals, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery } from './mastery';
 import type { State, Action, Item, Attribute } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, SAVE_VERSION, xpNeeded } from '../data/balance';
-import { FISH, STAGES, DUNGEONS } from '../data/world';
+import { FISH, STAGES, DUNGEONS, SWARM_SIZES, SWARM_UNLOCK, swarmAttackMultiplier } from '../data/world';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { EQUIPMENT_NAMES } from '../data/equipment';
@@ -115,38 +115,47 @@ function spawn(s: State, rng: () => number) {
     const tier = encounterTier(s);
     const foe = scaledEnemyStats(f, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
     const hp = foe.hp;
-    const { exp, gold, powerScale } = catchReward(f, tier, boss);
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp, maxHp: hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, powerMultiplier: powerScale, powerLabel: f.powerLabel };
+    const { exp, gold } = catchReward(f, tier, boss);
+    // 무리 사냥: 한 마리씩 상대하되 무리 규모만큼 적 공격이 강해집니다.
+    const swarm = !dungeon && s.target === f.id ? activeSwarm(s) : 1;
+    if (swarm > 1) {
+        foe.attack = Math.round(foe.attack * swarmAttackMultiplier(swarm));
+        foe.magic = Math.round((foe.magic || 0) * swarmAttackMultiplier(swarm));
+    }
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp, maxHp: hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, remaining: swarm } : {}) };
 }
 function reward(s: State, rng: () => number) {
     const e = s.enemy!;
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
-    const masteryReward = victoryMastery(s, e);
-    const gold = Math.floor(e.gold * goldMultiplier(s)), exp = Math.floor(e.exp * expMultiplier(s));
-    s.kills++;
+    // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
+    const size = e.swarm || 1;
+    const masteryReward = victoryMastery(s, e), practice = masteryReward.amount * size;
+    const gold = Math.floor(e.gold * goldMultiplier(s)) * size, exp = Math.floor(e.exp * expMultiplier(s)) * size;
+    s.kills += size;
     if (guildHasJoined(s))
-        s.guild.missionKills++;
+        s.guild.missionKills += size;
     const jobTargets = vocationTargets(jobMasteryTarget(JOBS.find(j => j.id === s.job)!));
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
-    s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + masteryReward.amount;
+    s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practice;
     const newJobRank = thresholdRank(s.jobMastery[s.job], jobTargets);
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {
         if (canUse(s, id)) {
             const sk = SKILLS.find(x => x.id === id)!, targets = skillRefinementTargets(sk);
             const before = thresholdRank(s.skillPractice[id] || 0, targets);
-            s.skillPractice[id] = (s.skillPractice[id] || 0) + masteryReward.amount;
+            s.skillPractice[id] = (s.skillPractice[id] || 0) + practice;
             const after = thresholdRank(s.skillPractice[id], targets);
             if (after > before) addLog(s, `${sk.name} 연마 ${after}/${targets.length}단계 달성 · 직접 피해·양수 패시브 누적 ${refinementBonusLabel(after)}`, 'skill');
         }
     }
-    s.book[e.id] = (s.book[e.id] || 0) + 1;
+    s.book[e.id] = (s.book[e.id] || 0) + size;
     s.gold += gold;
     s.exp += exp;
-    addLog(s, `${e.name} 포획 · +${gold} G · +${exp} EXP`, 'reward');
-    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${masteryReward.amount} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus})`, 'skill');
+    addLog(s, `${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 포획 · +${gold} G · +${exp} EXP`, 'reward');
+    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''})`, 'skill');
     const fish = FISH.find(f => f.id === e.id)!;
-    drop(s, fish.level + encounterTier(s) * 5, rng);
+    for (let i = 0; i < size; i++)
+        drop(s, fish.level + encounterTier(s) * 5, rng);
     while (s.exp >= xpNeeded(s.level) && s.level < 100) {
         s.exp -= xpNeeded(s.level);
         s.level++;
@@ -276,8 +285,19 @@ export function tick(s: State, rng = Math.random) {
     e.mana = enemy.mana;
     e.effects = enemy.effects;
     e.cooldowns = enemy.cooldowns;
-    if (e.hp <= 0 && s.hp > 0)
-        reward(s, rng);
+    if (e.hp <= 0 && s.hp > 0) {
+        if ((e.remaining || 1) > 1) {
+            // 무리의 다음 개체: 보상·회복 없이 같은 전투를 이어갑니다.
+            e.remaining = e.remaining! - 1;
+            e.hp = e.maxHp;
+            e.stun = 0;
+            e.effects = {};
+            e.cooldowns = {};
+            e.mana = 100;
+        }
+        else
+            reward(s, rng);
+    }
     else if (s.hp <= 0) {
         s.deaths++;
         s.recovery = BALANCE.recoveryTurns;
@@ -560,6 +580,19 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
                 throw Error('현재 낚시터의 물고기를 선택하세요.');
             s.target = id === 'all' ? null : id;
             s.enemy = null;
+            break;
+        }
+        case 'swarm': {
+            const size = Number(id);
+            if (!(SWARM_SIZES as readonly number[]).includes(size))
+                throw Error('무리 규모를 확인하세요.');
+            if (size > 1 && (s.dungeon || !s.target))
+                throw Error('낚시터에서 집중 사냥할 어종을 먼저 고르세요.');
+            if (size > 1 && !swarmUnlocked(s, s.target!, size))
+                throw Error(`이 어종을 ${SWARM_UNLOCK[size].toLocaleString()}마리 포획하면 열립니다.`);
+            s.swarm = size;
+            s.enemy = null;
+            addLog(s, size > 1 ? `무리 사냥 ×${size} · 전멸해야 보상을 받습니다.` : '무리 사냥을 끄고 한 마리씩 낚습니다.');
             break;
         }
         case 'savePreset': {

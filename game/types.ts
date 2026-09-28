@@ -108,9 +108,9 @@ export type Skill = {
     };
 };
 export type Enemy = {
-    /** Optional challenge multiplier for x5/x100-style elite encounters. */
-    powerMultiplier?: number;
-    powerLabel?: string;
+    /** 무리 사냥 규모(N)와 현재 싸우는 개체를 포함한 남은 마리 수. 없으면 한 마리. */
+    swarm?: number;
+    remaining?: number;
     combatStats?: Stats;
     effects?: StatusEffects;
     cooldowns?: Record<string, number>;
@@ -151,6 +151,8 @@ export type State = {
     version: number;
     /** SP를 지급한 무한 심연 이정표 깊이. 환생해도 유지됩니다. */
     abyssMilestones?: number[];
+    /** 선택한 무리 사냥 규모. 집중 사냥 중인 어종의 해금 조건을 충족할 때만 적용됩니다. */
+    swarm?: number;
     /** 직전 환생 방식에 따른 이번 생의 효과. 다음 환생 때 다시 정해집니다. */
     lifeBonus?: 'deep' | 'tailwind' | null;
     skillSpecializations?: Record<string, string>;

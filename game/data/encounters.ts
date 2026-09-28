@@ -50,13 +50,13 @@ export function enemyStats(f: { id: string; hp: number; attack: number; defense:
         speed: Math.round((9 + f.level * .35) * p.speed), mana: 100, manaRegen: 10,
     };
 }
-export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0] & { powerMultiplier?: number }, options: { boss?: boolean; tier?: number; wave?: number } = {}): Stats {
-    const foe = enemyStats(f, options.boss), power = Math.max(1, f.powerMultiplier || 1);
+export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: { boss?: boolean; tier?: number; wave?: number } = {}): Stats {
+    const foe = enemyStats(f, options.boss);
     const pressure = options.wave === undefined ? { hp: 1, attack: 1, defense: 1 } : dungeonPressure(options.wave);
-    foe.hp = Math.round(foe.hp * tierHealth(options.tier || 0) * power * pressure.hp);
-    foe.attack = Math.round(foe.attack * tierAttack(options.tier || 0) * power * pressure.attack);
-    foe.magic = Math.round((foe.magic || 0) * tierAttack(options.tier || 0) * power * pressure.attack);
-    foe.defense = Math.round(foe.defense * Math.sqrt(power) * pressure.defense);
-    foe.resist = Math.round((foe.resist || 0) * Math.sqrt(power) * pressure.defense);
+    foe.hp = Math.round(foe.hp * tierHealth(options.tier || 0) * pressure.hp);
+    foe.attack = Math.round(foe.attack * tierAttack(options.tier || 0) * pressure.attack);
+    foe.magic = Math.round((foe.magic || 0) * tierAttack(options.tier || 0) * pressure.attack);
+    foe.defense = Math.round(foe.defense * pressure.defense);
+    foe.resist = Math.round((foe.resist || 0) * pressure.defense);
     return foe;
 }

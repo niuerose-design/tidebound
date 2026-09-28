@@ -311,5 +311,22 @@ test('All-rounder: allocated-point harmony damage, split mitigation and allocati
  let calls=0;strike(fighter(base),target(0,0),()=>{calls++;return 0;});let normal=0;strike({...fighter(base),skills:['arcane'],ranks:{arcane:1}},target(0,0),()=>{normal++;return 0;});assert.equal(calls,normal,'one hit roll and one crit roll');
 });
 
+test('Swarm hunting: unlock by codex, sequential units without healing, rewards only on full wipe',()=>{
+ const s=newState(0);s.level=40;s.permanent.attack=300;s.permanent.hp=300;s.hp=stats(s).hp;act(s,{type:'stage',id:'brook'},0);
+ assert.throws(()=>act(s,{type:'swarm',id:'5'},0),/어종/);act(s,{type:'target',id:'minnow'},0);
+ s.book.minnow=49;assert.throws(()=>act(s,{type:'swarm',id:'5'},0),/50/);s.book.minnow=50;act(s,{type:'swarm',id:'5'},0);assert.throws(()=>act(s,{type:'swarm',id:'100'},0),/500/);
+ assert.throws(()=>act(s,{type:'swarm',id:'7'},0));
+ act(s,{type:'start'},0);tick(s,()=>.99);const e=s.enemy;assert.equal(e.swarm,5);
+ const single=newState(0);single.level=40;single.permanent.attack=300;single.permanent.hp=300;act(single,{type:'stage',id:'brook'},0);act(single,{type:'target',id:'minnow'},0);act(single,{type:'start'},0);tick(single,()=>.99);
+ assert.equal(e.combatStats.attack,Math.round(single.enemy.combatStats.attack*(1+Math.log10(5))));assert.equal(e.combatStats.hp,single.enemy.combatStats.hp,'each unit keeps single HP');
+ const kills=s.kills,gold=s.gold,book=s.book.minnow,job=s.jobMastery[s.job]||0,mult=goldMultiplier(s);
+ let guard=0;while(s.enemy&&s.enemy.remaining>1&&guard++<500){tick(s,()=>.5);assert.equal(s.kills,kills,'no partial rewards');}
+ const hpBeforeLast=s.hp;while(s.enemy&&guard++<1000)tick(s,()=>.5);
+ assert.equal(s.kills-kills,5);assert.equal(s.book.minnow-book,5);assert.equal(s.gold-gold,Math.floor(e.gold*mult)*5);assert.equal((s.jobMastery[s.job]||0)-job,5);
+ const dead=newState(0);dead.level=1;act(dead,{type:'stage',id:'brook'},0);act(dead,{type:'target',id:'minnow'},0);dead.book.minnow=500;act(dead,{type:'swarm',id:'100'},0);act(dead,{type:'start'},0);
+ for(let i=0;i<3000&&dead.deaths===0;i++)tick(dead,rng);assert.ok(dead.deaths>0);assert.equal(dead.kills,0,'death forfeits the whole swarm');
+ const other=newState(0);act(other,{type:'stage',id:'brook'},0);act(other,{type:'target',id:'minnow'},0);other.book.minnow=500;act(other,{type:'swarm',id:'100'},0);act(other,{type:'target',id:'carp'},0);act(other,{type:'start'},0);other.stats;tick(other,()=>.99);assert.ok(other.enemy);assert.equal(other.swarm,100);assert.equal(other.enemy?.swarm,undefined,'swarm applies only to an unlocked target');
+});
+
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});
 

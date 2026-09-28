@@ -1,7 +1,7 @@
 import { BookOpen, Coins, Crosshair, Fish, Gauge, Heart, Shield, Sparkles, Swords, Target, Zap } from 'lucide-react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE } from '@/game/data/balance';
 import { PROGRESSION } from '@/game/data/progression';
-import { ENCOUNTER_POWER } from '@/game/data/world';
+import { SWARM_UNLOCK } from '@/game/data/world';
 import { Heading } from './shared';
 
 const attributes = [
@@ -96,8 +96,9 @@ export function Guide() {
                 <p>희귀·영웅·전설 물고기는 일반 개체보다 낮은 출현 가중치와 높은 보상을 가집니다. 각 던전의 마지막 웨이브는 별도 보스 개체이며 전용 스킬 프로필을 사용합니다. 일부 보스 스킬은 몬스터 계열 직업의 플레이어 스킬로도 계승됩니다.</p>
             </section>
             <section className="panel help-card">
-                <h2><Gauge size={19}/> 강화 개체</h2>
-                <p>전투는 계속 1:1로 유지합니다. 이후 수역이나 던전에 <b>x{ENCOUNTER_POWER.elite.multiplier} {ENCOUNTER_POWER.elite.label}</b> 또는 <b>x{ENCOUNTER_POWER.mythic.multiplier} {ENCOUNTER_POWER.mythic.label}</b>을 배치하면 한 마리의 체력·공격·보상이 함께 커져 다수 전투에 가까운 파밍 밀도를 만들 수 있습니다.</p>
+                <h2><Gauge size={19}/> 무리 사냥</h2>
+                <p>집중 사냥 중인 어종을 {SWARM_UNLOCK[5]}마리 포획하면 ×5, {SWARM_UNLOCK[100].toLocaleString()}마리 포획하면 ×100 무리를 고를 수 있습니다. 한 전투에서 그 수만큼 한 마리씩 연달아 싸우며, 무리를 모두 잡으면 경험치·골드·숙련·도감·드롭 판정을 마리 수만큼 한 번에 받습니다.</p>
+                <p className="help-note">사이에 체력 회복이 없고, 적 공격은 1 + log10(무리 수)배(×5 약 1.7배, ×100 3배)입니다. 도중에 쓰러지거나 설정을 바꾸면 보상이 없습니다. 시간당 보상은 한 마리씩 잡을 때보다 늘지 않습니다.</p>
             </section>
         </div>
         <div className="notice"><BookOpen size={18}/><span>도감 연구는 {BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회에 골드를 주고, 최종 10,000회 연구에서만 1 SP를 줍니다. 시작 SP와 레벨업 SP 지급은 없습니다. 이미 받은 SP는 업데이트로 사라지지 않습니다. 한 종을 {PROGRESSION.fishComplete}회 연구하면 완성으로 처리되고, 지역 내 모든 종을 완성한 지역 연구에서 AP +1과 최대 체력 +20을 얻습니다. 일반 물고기는 HP ×{MONSTER_TUNING.hpMultiplier.toFixed(2)} · 공격 ×{MONSTER_TUNING.attackMultiplier.toFixed(2)} · 방어 ×{MONSTER_TUNING.defenseMultiplier.toFixed(2)} 기본 보정에 더해 고레벨일수록 체력·공격·방어가 강해집니다. 던전은 입장 후 6초 준비, 웨이브별 추가 강화, 처치 후 체력 8% 회복이 적용됩니다. 보스 전투 강화와 경험치 배율은 별개입니다. 랭킹은 직접 등록한 스냅샷으로 비동기 결투를 진행합니다.</span></div>

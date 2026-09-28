@@ -3546,3 +3546,7 @@ strong,b {
 /* v20.4 던전 반복 도전 */
 .dungeon-repeat { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .8rem; color: var(--muted-foreground, inherit); }
 .dungeon-repeat select { flex: 1; min-width: 0; padding: .35rem .5rem; border-radius: .5rem; border: 1px solid var(--border, rgba(255,255,255,.2)); background: var(--background, transparent); color: inherit; font: inherit; }
+
+/* v20.5 무리 사냥 선택 */
+.swarm-picker { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; font-size: 13px; color: var(--muted); }
+.swarm-picker button { min-width: 44px; padding: 4px 10px; font-size: 13px; }

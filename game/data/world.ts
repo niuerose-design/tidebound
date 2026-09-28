@@ -10,14 +10,15 @@ export const STAGES = [
     { id: 'starfall', name: '별비의 외해', subtitle: 'STARFALL OPEN SEA', level: 46, rebirth: 2, description: '별이 바다에 떨어진 날 태어난 희귀종들이 밤을 가른다.', fish: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], tone: '#9c8ed4' },
 ];
 /**
- * Future high-density farming content can attach one of these values to a
- * FishDef.powerMultiplier. Combat remains 1:1 while rewards scale with the
- * stronger catch, so x5/x100 encounters replace multi-target battles cleanly.
+ * 무리 사냥: 도감을 완성한 어종을 집중 사냥할 때 한 전투에서 N마리를 연달아 상대합니다.
+ * 전투는 한 마리씩 1:1(최대 체력 비례 효과도 한 마리 기준)이며, 사이에 체력 회복이 없고
+ * 무리 규모에 따라 적 공격이 강해집니다. 보상은 무리 전멸 시 N마리분을 한 번에 지급합니다.
  */
-export const ENCOUNTER_POWER = {
-    elite: { label: '강화 개체', multiplier: 5 },
-    mythic: { label: '신화 개체', multiplier: 100 },
-} as const;
+export const SWARM_SIZES = [1, 5, 100] as const;
+/** 무리 규모별 해금에 필요한 해당 어종 도감 포획 수. */
+export const SWARM_UNLOCK: Record<number, number> = { 1: 0, 5: 50, 100: 500 };
+/** 무리 규모에 따른 적 공격 배율: 1 + log10(N). ×5 ≈ 1.70, ×100 = 3. */
+export const swarmAttackMultiplier = (size: number) => 1 + Math.log10(Math.max(1, size));
 export type FishDef = {
     id: string;
     name: string;
@@ -31,9 +32,6 @@ export type FishDef = {
     rarity?: 'common' | 'rare' | 'epic' | 'legendary';
     spawnWeight?: number;
     rewardMultiplier?: number;
-    /** Data hook for elite encounters that are stronger than a normal catch. */
-    powerMultiplier?: number;
-    powerLabel?: string;
     boss?: boolean;
 };
 const rows: [
@@ -58,8 +56,6 @@ const specialFish: Array<{
     rarity: 'common' | 'rare' | 'epic' | 'legendary';
     spawnWeight?: number;
     rewardMultiplier?: number;
-    powerMultiplier?: number;
-    powerLabel?: string;
     boss?: boolean;
 }> = [
     { id: 'seahorse', name: '유리 해마', level: 15, lore: '투명한 몸 안에서 작은 별빛이 흔들린다.', rarity: 'rare' as const, spawnWeight: .18, rewardMultiplier: 1.35 },
@@ -82,7 +78,7 @@ const specialFish: Array<{
     { id: 'starfallSeraph', name: '별비 세라핌', level: 62, lore: '별비를 날개로 두른 외해 성역의 최종 수호자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
 ];
 for (const f of specialFish)
-    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: Math.round(9 * Math.pow(1.15, f.level - 1)), gold: Math.round(7 * Math.pow(1.12, f.level - 1)), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, powerMultiplier: f.powerMultiplier, powerLabel: f.powerLabel, boss: f.boss });
+    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: Math.round(9 * Math.pow(1.15, f.level - 1)), gold: Math.round(7 * Math.pow(1.12, f.level - 1)), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss });
 export const DUNGEONS = [
     { id: 'abyss', name: '윤회의 무한 심연', level: 40, rebirth: 3, fish: ['moonfish', 'dragon', 'ancient', 'dragon', 'ancient'], bossFish: 'abyssSovereign', boss: '심연의 기억 · 심연의 주권자', gold: 12000, pearls: 1, description: '정복할 때마다 다음 깊이가 열립니다. 깊을수록 층마다 더 많은 진주를 얻고, 10·25·50·100층을 처음 돌파하면 SP 1을 받습니다.' },
     { id: 'grotto', name: '조수의 동굴', level: 8, rebirth: 0, fish: ['ray', 'puffer', 'mackerel', 'ray', 'eel'], bossFish: 'grottoWarden', boss: '동굴의 주인 · 수호 곰치', gold: 350, pearls: 1, description: '다섯 번의 전투 끝에 잠든 수호자가 눈을 뜬다.' },
