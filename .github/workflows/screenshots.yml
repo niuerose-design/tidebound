@@ -1,0 +1,48 @@
+name: Screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [screens-request]
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm db:local
+      - name: Seed a mid-game save
+        run: |
+          node scripts/screenshots/seed-state.mjs > /tmp/seed.sql
+          node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file /tmp/seed.sql
+      - name: Start dev server
+        run: |
+          nohup pnpm dev > /tmp/dev.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:5173/ > /dev/null && break; sleep 2; done
+          tail -20 /tmp/dev.log
+      - name: Capture
+        run: |
+          mkdir -p /tmp/pw && cd /tmp/pw && npm init -y > /dev/null && npm i playwright@1.49.1 > /dev/null
+          npx playwright install --with-deps chromium > /dev/null
+          cp $GITHUB_WORKSPACE/scripts/screenshots/capture.mjs /tmp/pw/
+          node capture.mjs http://localhost:5173 /tmp/shots
+          tail -30 /tmp/dev.log
+      - name: Publish to screenshots branch
+        run: |
+          cd /tmp/shots
+          git init -q && git checkout -q -b screenshots
+          git config user.name "github-actions" && git config user.email "actions@github.com"
+          echo "source: ${GITHUB_SHA}" > SOURCE.txt
+          git add -A && git commit -qm "screenshots for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" screenshots
