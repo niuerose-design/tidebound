@@ -1,6 +1,6 @@
 'use client';
 
-import { thresholdRank } from '@/game/data/long-term';
+import { thresholdRank, refinementBonusLabel } from '@/game/data/long-term';
 import { useState } from 'react';
 import { ArrowUp, Info, Sparkles } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -66,7 +66,7 @@ function SkillCard({ sk, s, send, busy, detailed }: Props & { sk: Skill; detaile
             <button className="secondary" disabled={busy || s.running || !!s.dungeon || !usable || !s.skillSpecializations?.[sk.id]} onClick={()=>send({type:'specialize',id:sk.id,value:'none'})}>기본형으로 복귀</button>
             {SPECIALIZATIONS.filter(x=>specializationFits(sk,x)).map(spec=>{const locked=mastery<1||!!(spec.dungeon&&!s.bossResearchClaims?.[spec.dungeon]);return <div className="specialization-option" key={spec.id}><strong>{spec.name}{s.skillSpecializations?.[sk.id]===spec.id?' · 선택 중':''}</strong><p>{spec.description}</p>{spec.dungeon&&<small>{DUNGEONS.find(x=>x.id===spec.dungeon)?.name} {s.bossResearchClaims?.[spec.dungeon] ? '연구 완료' : '연구 보상 필요'}</small>}<button className="secondary" disabled={busy||s.running||!!s.dungeon||!usable||locked||s.skillSpecializations?.[sk.id]===spec.id} onClick={()=>send({type:'specialize',id:sk.id,value:spec.id})}>{mastery<1?'실전 숙련 1단계 필요':locked?'보스 연구 필요':'이 특화 선택'}</button></div>})}
         </details>}
-        {acquired && refinement.length > 0 && <details className="skill-specialization"><summary>장기 연마 · {refined} / {refinement.length}단계</summary><p>기본 숙련을 마친 뒤에도 실전 수련이 이어집니다. 각 단계마다 직접 피해 배율·양수 패시브 수치 +4%씩(합산). SP로 건너뛸 수 없고, AP·발동률·숙련 배수는 늘지 않습니다.</p><p>{refinement.map((n,i)=>`${i+1}단계 ${n.toLocaleString()}`).join(' · ')}</p><Meter value={Math.min(practice,refinement[refined] || refinement.at(-1)!)} max={refinement[refined] || refinement.at(-1)!} label={refined===refinement.length?'연마 완료':'다음 연마까지'}/></details>}
+        {acquired && refinement.length > 0 && <details className="skill-specialization"><summary>장기 연마 · {refined} / {refinement.length}단계 · 누적 {refinementBonusLabel(refined)}</summary><p>기본 숙련을 마친 뒤에도 실전 수련이 이어집니다. 단계마다 직접 피해 배율·양수 패시브 수치 {refinementBonusLabel()}씩(합산, 최대 {refinementBonusLabel(refinement.length)}). SP로 건너뛸 수 없고, AP·발동률·숙련 배수는 늘지 않습니다.</p><p>{refined < refinement.length ? `다음 ${refined+1}단계 ${refinement[refined].toLocaleString()} · 남은 숙련 ${(refinement[refined]-practice).toLocaleString()}` : '모든 연마 단계를 달성했습니다.'} · 최종 {refinement.at(-1)!.toLocaleString()}</p><Meter value={Math.min(practice,refinement[refined] || refinement.at(-1)!)} max={refinement[refined] || refinement.at(-1)!} label={refined===refinement.length?'연마 완료':'다음 연마까지'}/></details>}
         <button className="text-button" disabled={busy} onClick={()=>send({type:'growthGoal',id:sk.id,value:'skill'})}>다음 실전 숙련을 항해 목표로</button>
         <div className="skill-actions skill-actions-v2">
             {sk.job && acquired && !isInherited && <ConfirmAction label="계승 · 1 SP" description={`${sk.name}을 다른 직업에서도 사용할 수 있게 합니다. 성장 레벨과 숙련도는 변하지 않습니다. 숙련도 ${milestones[0].toLocaleString()}을 쌓으면 SP 없이도 계승됩니다.`} disabled={busy || !canInheritSkill(s, sk.id) || s.sp < 1} onConfirm={() => send({ type: 'inheritSkill', id: sk.id })}/>}

@@ -1,5 +1,5 @@
 import { applySpecialization } from '../data/specializations';
-import { refinementTargets, thresholdRank } from '../data/long-term';
+import { refinementTargets, thresholdRank, REFINEMENT_STEP_BONUS } from '../data/long-term';
 import { rebirthAP } from './meta';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat } from '../data/progression';
@@ -102,8 +102,8 @@ export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, specialization?
     };
     const refinement = thresholdRank(practice, skillRefinementTargets(sk));
     // Only actual practice refines a skill; neither AP/cost nor mastery multipliers scale.
-    result.multiplier *= 1 + refinement * .04;
-    if (refinement && result.bonus) result.bonus = Object.fromEntries(Object.entries(result.bonus).map(([k, n]) => [k, n > 0 ? n * (1 + refinement * .04) : n]));
+    result.multiplier *= 1 + refinement * REFINEMENT_STEP_BONUS;
+    if (refinement && result.bonus) result.bonus = Object.fromEntries(Object.entries(result.bonus).map(([k, n]) => [k, n > 0 ? n * (1 + refinement * REFINEMENT_STEP_BONUS) : n]));
     return mastery >= 1 ? applySpecialization(result, specialization) : result;
 }
 export type SkillRankDelta = { label: string; from: string; to: string; };

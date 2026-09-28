@@ -1,7 +1,7 @@
 import { BOSS_RESEARCH, SPECIALIZATIONS, specializationFits } from '../data/specializations';
 import { commerce } from './commerce';
 import { rollAffix, saleValue } from './equipment';
-import { vocationTargets, thresholdRank } from '../data/long-term';
+import { vocationTargets, thresholdRank, refinementBonusLabel } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, skillPracticeTargets } from './progression';
 import { rebirthLevel, rebirthReward, tideLimit, encounterTier, tierReward, tierHealth, tierAttack } from './meta';
 import { goldMultiplier, dungeonGoldMultiplier, expMultiplier } from './stats';
@@ -141,7 +141,7 @@ function reward(s: State, rng: () => number) {
             const before = thresholdRank(s.skillPractice[id] || 0, targets);
             s.skillPractice[id] = (s.skillPractice[id] || 0) + masteryReward.amount;
             const after = thresholdRank(s.skillPractice[id], targets);
-            if (after > before) addLog(s, `${sk.name} 연마 ${after}단계 달성 · 직접 피해·양수 패시브 +4%`, 'skill');
+            if (after > before) addLog(s, `${sk.name} 연마 ${after}/${targets.length}단계 달성 · 직접 피해·양수 패시브 누적 ${refinementBonusLabel(after)}`, 'skill');
         }
     }
     s.book[e.id] = (s.book[e.id] || 0) + 1;
