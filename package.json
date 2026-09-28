@@ -9,7 +9,7 @@
     "dev": "next dev --port 5173",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ignore-pattern .next",
+    "lint": "eslint . --ignore-pattern .next --max-warnings 0",
     "test": "node tests/run.mjs"
   },
   "dependencies": {

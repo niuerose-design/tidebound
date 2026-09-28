@@ -1,11 +1,7 @@
 // 스킬 역할 분류와 겹침 그룹 출력 (docs/skill-role-review.md 근거). 사용: node scripts/check-skill-roles.mjs [out.json]
-import { pathToFileURL } from 'node:url';
-import ts from 'typescript';
-import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
-const temp=fs.mkdtempSync(path.join(os.tmpdir(),'roles-'));
-for(const f of fs.readdirSync('game',{recursive:true}).filter(f=>f.endsWith('.ts')&&!f.startsWith('server/'))){const code=ts.transpileModule(fs.readFileSync(path.join('game',f),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])([.][^'"]+)\1/g,(_,q,p)=>`from ${q}${p}.js${q}`);const out=path.join(temp,f.replace(/\.ts$/,'.js'));fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,code);}
-fs.writeFileSync(path.join(temp,'package.json'),'{"type":"module"}');
-const m=p=>import(pathToFileURL(path.join(temp,p+'.js')).href);
+import fs from 'node:fs';
+import { loadGame } from './lib/game-modules.mjs';
+const {load:m}=loadGame();
 const {SKILLS}=await m('data/skills'); const {JOBS}=await m('data/classes'); const {effectiveSkill,maxSkillLevel}=await m('systems/progression');
 const roles=sk=>{const r=[];const b=sk.bonus||{};const lv=(sk.levelEffects||[]).flatMap(x=>Object.keys(x.bonus||{}));const keys=new Set([...Object.keys(b),...lv,...Object.keys(sk.masteryBonus||{})]);
  if(sk.type==='active'){ if(sk.damageType==='magic')r.push('마법공격'); else if(sk.damageType==='split')r.push('복합'); else r.push('물리공격');

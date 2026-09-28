@@ -1,6 +1,6 @@
 import type { Skill } from '../types';
 
-/** 2026-09-28: player techniques only; enemy skills keep their own tuning. */
+/** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     hook: { chance: .18, multiplier: 1.25, cooldown: 3 },
     splash: { chance: .45, multiplier: 1.05, manaCost: 9, cooldown: 5 },
@@ -27,7 +27,6 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     vitalSurge: { chance: .23, multiplier: 1.65, scalingRatio: .05, drainRatio: .15 },
     voidLance: { chance: .55, multiplier: 2, scalingRatio: .3, manaCost: 20 },
     graveHook: { chance: .5, multiplier: 1.7, manaCost: 13 },
-    // v20.11: 심해의 닻(Lv10)보다 약하던 상위 기절기 → 배율 상향 + 자기 정화
     marrowGuard: { chance: .22, multiplier: 1.75 },
     wakeFist: { chance: .26, multiplier: 1.45 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
@@ -43,7 +42,6 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     moonTide: { chance: .6, multiplier: 2, manaCost: 20, healRatio: .2 },
     reefPulse: { chance: .55, multiplier: 1.25, manaCost: 14, healRatio: .16 },
     bellCrash: { chance: .24, multiplier: 1.5, scalingRatio: .02 },
-    // v20.11: 갈래바람(Lv25)보다 약하던 Lv40 출혈기 → 배율·확률 상향 + 출혈 대상 추가 피해
     thornCounter: { chance: .28, multiplier: 2.1 },
     windupCast: { chance: .25, multiplier: 1.5, scalingRatio: .03 },
     loadedHook: { chance: .3, multiplier: 1.05, cooldown: 2, drainRatio: .1 },

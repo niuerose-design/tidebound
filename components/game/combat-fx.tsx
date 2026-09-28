@@ -22,7 +22,7 @@ export function useCombatFx(logs: Log[], playerName: string) {
         if (!batch.length) return;
         const timer = window.setTimeout(() => setEffects([]), batch.at(-1)!.delay + 1500);
         return () => window.clearTimeout(timer);
-    }, [latest, playerName]);
+    }, [latest, logs, playerName]);
     return effects;
 }
 

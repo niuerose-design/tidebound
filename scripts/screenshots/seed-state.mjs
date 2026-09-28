@@ -1,13 +1,6 @@
 // 스크린샷용 중반 진행 세이브를 만들어 로컬 D1에 넣을 SQL을 출력합니다.
-import { pathToFileURL } from 'node:url';
-import { mkdtemp, readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import ts from 'typescript';
-const out = await mkdtemp(join(tmpdir(), 'tidebound-seed-'));
-async function compile(dir) { for (const e of await readdir(dir, { withFileTypes: true })) { if (e.name === 'server') continue; const src = join(dir, e.name), dst = join(out, src); if (e.isDirectory()) { await mkdir(dst, { recursive: true }); await compile(src); } else if (e.name.endsWith('.ts')) { const js = ts.transpileModule(await readFile(src, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText.replace(/from (['"])(\.\.?\/[^'"]+)\1/g, (_, q, p) => `from ${q}${p}.js${q}`); await writeFile(dst.replace(/\.ts$/, '.js'), js); } } }
-await mkdir(join(out, 'game')); await writeFile(join(out, 'package.json'), '{"type":"module"}'); await compile('game');
-const load = p => import(pathToFileURL(join(out, p)).href);
+import { loadGame } from '../lib/game-modules.mjs';
+const { load } = loadGame();
 const { newState, act, advance } = await load('game/systems/engine.js');
 const { FISH } = await load('game/data/world.js');
 let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);

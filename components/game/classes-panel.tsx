@@ -1,29 +1,28 @@
 'use client';
-import { useEffect, useState, type ReactNode } from 'react';
+import type { PanelProps } from './panel-props';
+import { useState, type ReactNode } from 'react';
 import { Check, ChevronDown, Compass, Info, Lock } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
-import type { State, Action, Stats } from '@/game/types';
+import type { Stats } from '@/game/types';
 import { JOBS, JOB_TREES, type Job } from '@/game/data/classes';
 import { SKILLS } from '@/game/data/skills';
 import { skillEffectLines } from '@/game/systems/skill-description';
-import { STAT_LABELS, statDeltaDisplay } from '@/game/data/progression';
+import { STAT_LABELS, statDeltaDisplay, percent } from '@/game/data/progression';
 import { vocationTargets, thresholdRank } from '@/game/data/long-term';
 import { jobRequirements, jobMasteryTarget, jobMasteryBoost, jobCombatMultiplier } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon, format } from './shared';
 
-type Props = { s: State; send: (a: Action) => void; busy: boolean };
 const bonusKeys = ['attack', 'magic', 'hp', 'defense', 'resist'] as const;
-const percent = (value: number) => `${value > 0 ? '+' : ''}${Number((value * 100).toFixed(2))}%`;
 function ancestors(job: Job) {
     const ids = new Set<string>();
     let parent = job.parent;
     while (parent && !ids.has(parent)) { ids.add(parent); parent = JOBS.find(j => j.id === parent)?.parent; }
     return ids;
 }
-function JobDetail({ j, s, send, busy }: Props & { j: Job }) {
+function JobDetail({ j, s, send, busy }: PanelProps & { j: Job }) {
     const req = jobRequirements(s, j), ready = req.every(r => r.met), current = j.id === s.job, missing = req.filter(r => !r.met), metReq = req.filter(r => r.met);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;
     const dedicationTargets = vocationTargets(target), dedication = thresholdRank(xp, dedicationTargets);
@@ -37,14 +36,14 @@ function JobDetail({ j, s, send, busy }: Props & { j: Job }) {
                 : <div className="requirements">{req.map(r => <span key={r.label} className="met"><Check size={12}/> {r.label}</span>)}</div>}</section>
         <section className="job-detail-section job-compact">
             <h3>직업 보정</h3>
-            <div className="requirements">{bonuses.map(key => <span key={key} className={j[key] < 1 ? 'negative' : 'met'}>{STAT_LABELS[key]} {percent(jobCombatMultiplier(j, j[key], mastered) - 1)}{grows && !mastered && j[key] > 1 ? <small> → 숙달 {percent(jobCombatMultiplier(j, j[key], true) - 1)}</small> : null}</span>)}{!!j.expBonus && <span className="met">경험치 {percent(j.expBonus)}</span>}{j.crit > 0 && <span className="met">치명타 {percent(j.crit)}p</span>}{Object.entries(j.penalties || {}).map(([key, n]) => <span className="negative" key={key}>{STAT_LABELS[key as keyof Stats]} {statDeltaDisplay(key, n)}</span>)}{!bonuses.length && !j.expBonus && !j.crit && !j.penalties && <span>보정 없음</span>}</div>
+            <div className="requirements">{bonuses.map(key => <span key={key} className={j[key] < 1 ? 'negative' : 'met'}>{STAT_LABELS[key]} {percent(jobCombatMultiplier(j, j[key], mastered) - 1, 2, true)}{grows && !mastered && j[key] > 1 ? <small> → 숙달 {percent(jobCombatMultiplier(j, j[key], true) - 1, 2, true)}</small> : null}</span>)}{!!j.expBonus && <span className="met">경험치 {percent(j.expBonus, 2, true)}</span>}{j.crit > 0 && <span className="met">치명타 {percent(j.crit, 2, true)}p</span>}{Object.entries(j.penalties || {}).map(([key, n]) => <span className="negative" key={key}>{STAT_LABELS[key as keyof Stats]} {statDeltaDisplay(key, n)}</span>)}{!bonuses.length && !j.expBonus && !j.crit && !j.penalties && <span>보정 없음</span>}</div>
             <Meter value={Math.min(xp, target)} max={target} label={mastered ? `숙달 완료 · 단련 ${dedication} / ${dedicationTargets.length}` : '직업 숙련'}/>
         </section>
         <details className="job-more"><summary>상세 정보 · 숙달 전후 표와 직업 단련</summary>
         <section className="job-detail-section">
             <div className="job-section-heading"><h3>이 직업으로 활동할 때의 보너스</h3><TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" className="info-trigger" aria-label="직업 숙달 보너스 안내"><Info size={16}/></button></TooltipTrigger><TooltipContent className="game-tooltip"><p>숙련 목표를 채우면 이 직업의 체력·공격·방어 보너스가 강화됩니다. 이 직업을 선택한 동안에만 적용되며, 다른 직업의 보너스와 합쳐지지 않습니다. 전직 후에도 숙련 기록은 유지됩니다. 페널티·치명타·경험치 보너스는 변하지 않습니다.</p></TooltipContent></Tooltip></TooltipProvider></div>
-            {bonuses.length > 0 && <table className="job-bonus-table"><thead><tr><th>능력치</th><th>숙달 전</th><th>숙달 후</th></tr></thead><tbody>{bonuses.map(key => <tr key={key}><th>{STAT_LABELS[key]}</th><td className={j[key] < 1 ? 'negative' : ''}>{percent(jobCombatMultiplier(j, j[key]) - 1)}</td><td className={j[key] < 1 ? 'negative' : 'positive'}>{percent(jobCombatMultiplier(j, j[key], true) - 1)}</td></tr>)}</tbody></table>}
-            <div className="requirements">{!!j.expBonus && <span className="met">경험치 {percent(j.expBonus)}</span>}{j.crit > 0 && <span className="met">치명타 {percent(j.crit)}p</span>}{Object.entries(j.penalties || {}).map(([key, n]) => <span className="negative" key={key}>{STAT_LABELS[key as keyof Stats]} {statDeltaDisplay(key, n)}</span>)}</div>
+            {bonuses.length > 0 && <table className="job-bonus-table"><thead><tr><th>능력치</th><th>숙달 전</th><th>숙달 후</th></tr></thead><tbody>{bonuses.map(key => <tr key={key}><th>{STAT_LABELS[key]}</th><td className={j[key] < 1 ? 'negative' : ''}>{percent(jobCombatMultiplier(j, j[key]) - 1, 2, true)}</td><td className={j[key] < 1 ? 'negative' : 'positive'}>{percent(jobCombatMultiplier(j, j[key], true) - 1, 2, true)}</td></tr>)}</tbody></table>}
+            <div className="requirements">{!!j.expBonus && <span className="met">경험치 {percent(j.expBonus, 2, true)}</span>}{j.crit > 0 && <span className="met">치명타 {percent(j.crit, 2, true)}p</span>}{Object.entries(j.penalties || {}).map(([key, n]) => <span className="negative" key={key}>{STAT_LABELS[key as keyof Stats]} {statDeltaDisplay(key, n)}</span>)}</div>
             {!bonuses.length && !j.expBonus && !j.crit && !j.penalties && <p className="footnote">추가 직업 보정이 없습니다.</p>}
             <Meter value={Math.min(xp, target)} max={target} label={mastered ? '직업 숙달 완료' : '직업 숙련 목표'}/>
             <p className="job-mastery-explainer">{grows ? mastered ? (current ? '숙달 후 보너스를 적용 중입니다.' : '이 직업으로 다시 전직하면 숙달 후 보너스가 적용됩니다.') : '목표를 채우면 위의 숙달 후 수치가 적용됩니다.' : '숙달로 강화되는 능력치가 없습니다. 숙련 기록은 전직·스킬 해금 조건에 사용됩니다.'} <b>이 직업을 선택한 동안에만 적용됩니다.</b></p>
@@ -57,11 +56,13 @@ function JobDetail({ j, s, send, busy }: Props & { j: Job }) {
         <button className="text-button job-goal-link" disabled={busy} onClick={()=>send({type:'growthGoal',id:j.id,value:'job'})}>이 전직을 장기 목표로</button>
     </article>;
 }
-export function Classes({ s, send, busy }: Props) {
+export function Classes({ s, send, busy }: PanelProps) {
     const current = JOBS.find(j => j.id === s.job) || JOBS[0];
     const [treeId, setTreeId] = useState(current.tree), [filter, setFilter] = useState('all'), [selectedId, setSelectedId] = useState(current.id);
     const [expanded, setExpanded] = useState(() => ancestors(current));
-    useEffect(() => { setSelectedId(current.id); setTreeId(current.tree); setFilter('all'); setExpanded(ancestors(current)); }, [current.id, current.tree]);
+    // 전직하면 목록 선택을 새 직업으로 맞춥니다(렌더 중 이전 값과 비교).
+    const [shownJob, setShownJob] = useState(current.id);
+    if (shownJob !== current.id) { setShownJob(current.id); setSelectedId(current.id); setTreeId(current.tree); setFilter('all'); setExpanded(ancestors(current)); }
     const tree = JOB_TREES.find(t => t.id === treeId)!;
     const family = JOBS.filter(j => j.tree === treeId), available = (j: Job) => j.id !== s.job && jobRequirements(s, j).every(r => r.met);
     const locked = (j: Job) => j.id !== s.job && !jobRequirements(s, j).every(r => r.met);

@@ -1,57 +1,22 @@
 'use client';
-import { RegionProgress } from './book-research';
 import { AutoRunStatus } from './auto-run';
 import { BOSS_RESEARCH, SPECIALIZATIONS } from '@/game/data/specializations';
 import { dungeonClearGold, stats } from '@/game/systems/stats';
 import { dungeonTier } from '@/game/systems/meta';
-import { TideSelector } from './economy-panels';
 import { useState } from 'react';
-import { Anchor, ArrowUpRight, Lock, RefreshCw, Swords, Waves } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import type { State, Action, DuelResult } from '@/game/types';
+import { Anchor, Lock, Swords } from 'lucide-react';
 import { BALANCE, MONSTER_TUNING, FIRST_AID_HEAL } from '@/game/data/balance';
-import { STAGES, FISH, DUNGEONS } from '@/game/data/world';
+import { FISH, DUNGEONS } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
-import { JOBS } from '@/game/data/classes';
-import { TRAINING } from '@/game/systems/duel';
 import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
 import { statDisplay } from '@/game/data/progression';
-import { Empty, Heading, Meter, format } from './shared';
+import { Heading, Meter, format } from './shared';
 import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, useCombatFx } from './combat-fx';
 import { StatusBadges } from './combat-status';
 import { BattleLogLine } from './combat-log';
-import type { Ranking } from './use-game';
 import { abyssPearls, nextAbyssMilestone } from '@/game/data/long-term';
-type Props = {
-    s: State;
-    send: (a: Action, path?: string) => void;
-    busy: boolean;
-};
-export function Stages({ s, send, busy }: Props) {
-    return <>
-    <Heading eyebrow="WORLD MAP" title="낚시터" description="더 깊은 바다, 더 강한 물고기. 오늘의 항해를 선택하세요."/>
-    <TideSelector s={s} send={send} busy={busy}/>
-    <div className="stage-grid">{STAGES.map((st, i) => {
-            const locked = s.level < st.level || s.rebirths < st.rebirth;
-            return <button key={st.id} className={`stage-card ${s.stage === st.id ? 'selected' : ''}`} disabled={busy || locked} onClick={() => send({ type: 'stage', id: st.id })} style={{ '--stage-color': st.tone } as React.CSSProperties}>
-            <div className="stage-top">
-            <span className="stage-num">0{i + 1}</span>{locked ? <Lock size={20}/> : s.stage === st.id ? <span className="badge">현재 낚시터</span> : <ArrowUpRight />}</div>
-            <Waves className="stage-wave" size={48}/>
-            <div className="eyebrow">{st.subtitle}</div>
-            <h2>{st.name}</h2>
-            <p>{st.description}</p>
-            <div className="stage-footer">
-            <span>Lv. {st.level}+{st.rebirth ? ` · 환생 ${st.rebirth}회` : ''}</span>
-            <span>{st.fish.length}종 서식</span>
-            </div>
-            <RegionProgress s={s} id={st.id}/>
-            </button>;
-        })}</div>
-    </>;
-}
-export function Dungeons({ s, send, busy }: Props) {
+import type { PanelProps } from './panel-props';
+export function Dungeons({ s, send, busy }: PanelProps) {
     const activeDungeon = s.dungeon ? DUNGEONS.find(d => d.id === s.dungeon?.id) : undefined;
     const playerStats = stats(s);
     const enemyFish = s.enemy ? FISH.find(f => f.id === s.enemy?.id) : undefined;
@@ -112,111 +77,5 @@ export function Dungeons({ s, send, busy }: Props) {
             </div>
             </article>;
         })}</div><p className="footnote">입장 레벨은 최소 조건이며 클리어 보장이 아닙니다. 입장 후 {MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 준비를 마쳐야 체력·마나가 회복됩니다. 후반 웨이브일수록 적이 강화되고, 처치 후 체력 회복은 일반 사냥 {Math.round(BALANCE.healAfterKill * 100)}%에서 던전 {Math.round(MONSTER_TUNING.dungeonHealAfterKill * 100)}%로 줄어듭니다(응급처치 장착 시 각각 +{Math.round(FIRST_AID_HEAL * 100)}%). 보스 연구의 SP·특화는 던전별 한 번만 받으며 환생해도 다시 지급하지 않습니다. 이미 정복한 던전도 미수령 연구 보상을 받을 수 있습니다. 일반 던전 진주는 최초 정복만 지급합니다. 무한 심연은 새 깊이마다 진주를 지급하며 정복할수록 적 체력·공격과 골드·경험치·장비 수준이 증가합니다. 심해 신전 정복 후 환생 상점에서 윤회의 낚싯대를 무료로 받을 수 있습니다. 마지막 웨이브는 별도 보스 물고기와 전용 스킬 프로필을 사용합니다.</p>
-    </>;
-}
-export { Inventory, Rebirth } from './economy-panels';
-export { Skills, Classes, Collection } from './progression-panels';
-export function Rankings({ s, send, busy, rows, rankError, loadRanking, register, result, setResult }: Props & {
-    rows: Ranking[];
-    rankError: string;
-    loadRanking: () => void;
-    register: () => void;
-    result: DuelResult | null;
-    setResult: (v: DuelResult | null) => void;
-}) {
-    return <>
-    <Heading eyebrow="ASYNC ARENA" title="낚시꾼의 명예" description="등록된 능력치와 스킬로 겨룹니다. 상대의 접속 여부와 관계없이 전투합니다.">
-    <button className="primary" disabled={busy} onClick={register}>
-    <ArrowUpRight size={17}/>내 전투 정보 등록</button>
-    </Heading>
-    <div className="arena-stats">
-    <div className="panel">
-    <small>내 결투 점수</small>
-    <strong>{s.rating}</strong>
-    </div>
-    <div className="panel">
-    <small>랭크 전적</small>
-    <strong>{s.wins}승 <span>{s.losses}패</span>
-    </strong>
-    </div>
-    <div className="panel">
-    <small>진행 방식</small>
-    <strong className="small-type">최대 80턴 · 무승부 지원</strong>
-    </div>
-    </div>
-    <Tabs defaultValue="ranking">
-    <TabsList className="game-tabs">
-    <TabsTrigger value="ranking">낚시꾼 랭킹</TabsTrigger>
-    <TabsTrigger value="training">훈련 상대</TabsTrigger>
-    </TabsList>
-    <TabsContent value="ranking">
-    <div className="panel ranking-panel">
-    <div className="section-title">
-    <h2>등록된 낚시꾼</h2>
-    <button className="text-button" onClick={loadRanking}>
-    <RefreshCw size={14}/>새로고침</button>
-    </div>{rankError ? <div className="error-box">{rankError}</div> : rows.length ? <Table>
-        <TableHeader>
-        <TableRow>
-        <TableHead>순위</TableHead>
-        <TableHead>낚시꾼</TableHead>
-        <TableHead>길드</TableHead>
-        <TableHead>전투력</TableHead>
-        <TableHead>점수</TableHead>
-        <TableHead>결투</TableHead>
-        </TableRow>
-        </TableHeader>
-        <TableBody>{rows.map((r, i) => <TableRow key={r.id}>
-            <TableCell className="rank-number">{i + 1}</TableCell>
-            <TableCell>
-            <strong>{r.name}{r.self ? ' (나)' : ''}</strong>
-            <small className="block">Lv. {r.level} · {JOBS.find(j => j.id === r.job)?.name} · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
-            <small className="block ranking-combat-stats">명중 수치 {statDisplay('accuracy', r.stats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', r.stats.evasion || 0)}</small>
-            </TableCell>
-            <TableCell><span className="ranking-guild">{r.guild || '무소속'}</span></TableCell>
-            <TableCell>{format(r.power)}</TableCell>
-            <TableCell>{r.rating}</TableCell>
-            <TableCell>
-            <button className="secondary small" disabled={busy || r.self || Date.now() - s.lastDuel < BALANCE.duelCooldownMs} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>{r.self ? '내 캐릭터' : '대결'}</button>
-            </TableCell>
-            </TableRow>)}</TableBody>
-        </Table> : <Empty title="첫 번째 낚시꾼이 되어보세요" description="전투 정보를 등록하면 랭킹에 등장합니다. 다른 참가자가 없을 때는 훈련 상대와 대결할 수 있습니다."/>}</div>
-    <p className="footnote">랭킹은 결투 점수 순입니다. 랭크 결투는 1분 간격이며 도전자의 점수만 변동합니다. 장비·스킬을 바꾼 뒤 다시 등록하면 방어용 정보가 갱신됩니다.</p>
-    </TabsContent>
-    <TabsContent value="training">
-    <div className="class-grid">{TRAINING.map((t, i) => <div className="panel training-card" key={t.name}>
-        <Swords size={35}/>
-        <span className="badge">훈련용 NPC</span>
-        <h2>{t.name}</h2>
-        <p>Lv. {t.level} · {JOBS.find(j => j.id === t.job)?.name}</p>
-        <div className="training-stats">공격 {t.stats.attack} · 방어 {t.stats.defense}<br />체력 {t.stats.hp} · 치명타 {Math.round(t.stats.crit * 100)}%</div>
-        <button className="primary" disabled={busy} onClick={() => send({ type: 'training', id: String(i) }, '/api/duel')}>연습 대결</button>
-        </div>)}</div>
-    <p className="footnote">훈련은 실제 유저 랭킹에 포함되지 않으며 점수·재화·PvE 체력에 영향을 주지 않습니다.</p>
-    </TabsContent>
-    </Tabs>
-    <Dialog open={!!result} onOpenChange={open => {
-            if (!open)
-                setResult(null);
-        }}>
-    <DialogContent className="duel-dialog">
-    <DialogHeader>
-    <DialogTitle>{result?.winner === 'player' ? '승리했습니다' : result?.winner === 'draw' ? '무승부' : '다음 결투를 준비하세요'}</DialogTitle>
-    <DialogDescription>{result?.opponent} · {result?.turns}턴 전투 · {result?.training ? '훈련 대결' : `점수 ${result?.ratingChange && result.ratingChange > 0 ? '+' : ''}${result?.ratingChange}`}</DialogDescription>
-    </DialogHeader>
-    <div className="duel-hp">
-    <span>내 남은 체력 <b>{result?.playerHp}</b>
-    </span>
-    <span>상대 남은 체력 <b>{result?.opponentHp}</b>
-    </span>
-    </div>
-    <div className="duel-hit-summary">
-    <span>내 명중률 <b>{result ? Math.round(result.playerHitChance * 100) : 0}%</b> · 명중 수치 {result ? statDisplay('accuracy', result.playerAccuracy) : '-'}</span>
-    <span>상대 명중률 <b>{result ? Math.round(result.opponentHitChance * 100) : 0}%</b> · 상대 회피 수치 {result ? statDisplay('evasion', result.opponentEvasion) : '-'}</span>
-    <span>내 회피 수치 {result ? statDisplay('evasion', result.playerEvasion) : '-'} · 상대 명중 수치 {result ? statDisplay('accuracy', result.opponentAccuracy) : '-'}</span>
-    </div>
-    <div className="duel-log">{result?.logs.map((l, i) => <p key={i}>{l}</p>)}</div>
-    </DialogContent>
-    </Dialog>
     </>;
 }

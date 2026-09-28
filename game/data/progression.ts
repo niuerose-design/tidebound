@@ -26,6 +26,8 @@ export const ATTRIBUTES: {
 ];
 export const STAT_LABELS: Record<keyof Stats, string> = { expBonus: '경험치 획득 증가', goldBonus: '골드 획득 보너스', dropBonus: '장비 드롭 보너스', rebirthBonus: '환생 진주 보너스', harmony: '육중 조화 원시 피해', dungeonGoldBonus: '던전 골드 보너스', hp: '최대 체력', attack: '물리 공격', defense: '물리 방어', crit: '치명타', magic: '마법 공격', resist: '마법 방어', accuracy: '명중', evasion: '회피', critDamage: '치명 피해', speed: '속도', mana: '최대 마나', manaRegen: '턴당 마나 회복', penetration: '방어 관통', lifesteal: '흡혈' };
 export const PERCENT_STATS = new Set(['expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus', 'crit', 'accuracy', 'evasion', 'critDamage', 'penetration', 'lifesteal']);
+/** 비율(0.123)을 퍼센트 문자열로: digits는 최대 소수 자리, signed면 +/− 부호를 붙입니다. */
+export const percent = (n: number, digits = 1, signed = false) => `${signed && n > 0 ? '+' : ''}${Number((n * 100).toFixed(digits))}%`;
 export const formatStat = (key: string, n: number) => PERCENT_STATS.has(key) ? `${Math.round(n * 1000) / 10}%` : `${Math.round(n * 10) / 10}`;
 /** 능력치 표시 순서: 체력 → 물리·마법 공격 → 물리·마법 방어 → 속도 → 명중·회피 → 치명타. 평소에는 CORE만, 나머지는 상세보기. */
 export const CORE_STATS = ['hp', 'attack', 'magic', 'defense', 'resist', 'speed', 'accuracy', 'evasion', 'crit'] as const;
