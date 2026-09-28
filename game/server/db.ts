@@ -92,11 +92,13 @@ function fileStorage(): Storage {
     };
 }
 
+/** 배포 설정 문제. 사용자에게 원인을 그대로 보여줍니다(비밀값은 포함하지 않음). */
+export class ConfigError extends Error { status = 503; }
 let storage: Storage | null = null;
 export function db(): Storage {
     if (storage) return storage;
     const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
     if (url) return storage = neonStorage(url);
-    if (process.env.NODE_ENV === 'production' && !process.env.TIDEBOUND_DEV_DB) throw new Error('DATABASE_URL이 설정되지 않았습니다.');
+    if (process.env.NODE_ENV === 'production' && !process.env.TIDEBOUND_DEV_DB) throw new ConfigError('서버에 DB가 연결되지 않았습니다(DATABASE_URL 없음). Vercel의 Storage에서 Neon을 연결한 뒤 다시 배포하세요.');
     return storage = fileStorage();
 }

@@ -3,7 +3,7 @@ import { newState, advance, act } from '../systems/engine';
 import { migrateState } from '../systems/migrations';
 import { snapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
-import { db } from './db';
+import { db, ConfigError } from './db';
 import { accountFromRequest, AuthError } from './auth';
 export { db };
 export class ApiError extends Error {
@@ -45,7 +45,7 @@ export async function register(id: string) {
 }
 export const RANKING_SEASON = SAVE_VERSION;
 export function failure(e: unknown) {
-    if (e instanceof ApiError || e instanceof AuthError)
+    if (e instanceof ApiError || e instanceof AuthError || e instanceof ConfigError)
         return Response.json({ error: e.message }, { status: e.status });
     console.error('Game API error', e);
     return Response.json({ error: '요청을 처리하지 못했습니다. 잠시 후 다시 시도하세요.' }, { status: 503 });

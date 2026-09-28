@@ -1,5 +1,6 @@
 'use client';
 import { GrowthGoals } from './growth-goals';
+import { UPDATE_LOG } from '@/game/data/update-log';
 import { AutoRunStatus } from './auto-run';
 import { TutorialCard, VoyageLog, VoyageNotice } from './guidance-panels';
 import { useEffect, useState } from 'react';
@@ -94,7 +95,7 @@ function Navigation({ view, setView }: {
     <div className="sidebar-quote">
     <Waves size={22}/>
     <p>수면 아래,<br />다음 이야기가 기다립니다.</p>
-    <small>THE ENDLESS VOYAGE · v20.7</small>
+    <small>THE ENDLESS VOYAGE · v{UPDATE_LOG[0].version}</small>
     </div>
     </SidebarFooter>
     </Sidebar>;
