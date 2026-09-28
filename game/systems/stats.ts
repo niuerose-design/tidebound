@@ -1,3 +1,4 @@
+import { tailwindActive, TAILWIND_EXP } from './meta';
 import { rebirthExperience, rebirthMemory, evasionRating, vocationTargets, thresholdRank } from '../data/long-term';
 import { itemStats } from './equipment';
 import type { State, Snapshot, Stats, CombatStats } from '../types';
@@ -74,7 +75,7 @@ export function power(v: Stats) { const a = normalizeStats(v); return Math.round
 export function snapshot(s: State): Snapshot { const a = stats(s); return { name: s.name, level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillSpecializations: { ...s.skillSpecializations }, skillPractice: { ...s.skillPractice }, power: power(a), rating: s.rating, guild: s.guild?.name || '' }; }
 export const skillUnlocked = canLearn;
 export const goldMultiplier = (s: State) => 1 + stats(s).goldBonus;
-export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus);
+export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus) * (tailwindActive(s) ? 1 + TAILWIND_EXP : 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 export const hitChance = (a: Stats, b: Stats) => {
     const accuracy = Math.max(0, a.accuracy ?? 1);

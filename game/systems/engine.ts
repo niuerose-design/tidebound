@@ -3,7 +3,7 @@ import { commerce } from './commerce';
 import { rollAffix, saleValue } from './equipment';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, skillPracticeTargets } from './progression';
-import { rebirthLevel, rebirthReward, tideLimit, encounterTier, tierReward, tierHealth, tierAttack } from './meta';
+import { deepVoyagePearls, nextLifeBonus, TAILWIND_EXP, rebirthLevel, rebirthReward, tideLimit, encounterTier, tierReward, tierHealth, tierAttack } from './meta';
 import { goldMultiplier, dungeonGoldMultiplier, expMultiplier } from './stats';
 import { victoryMastery } from './mastery';
 import type { State, Action, Item, Attribute } from '../types';
@@ -148,7 +148,7 @@ function reward(s: State, rng: () => number) {
     s.gold += gold;
     s.exp += exp;
     addLog(s, `${e.name} 포획 · +${gold} G · +${exp} EXP`, 'reward');
-    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${masteryReward.amount} (기본 1 + 보너스 ${masteryReward.bonus})`, 'skill');
+    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${masteryReward.amount} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus})`, 'skill');
     const fish = FISH.find(f => f.id === e.id)!;
     drop(s, fish.level + encounterTier(s) * 5, rng);
     while (s.exp >= xpNeeded(s.level) && s.level < 100) {
@@ -600,7 +600,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
         case 'rebirth': {
             if (s.level < rebirthLevel(s))
                 throw Error(`레벨 ${rebirthLevel(s)}부터 환생할 수 있습니다.`);
-            const pearls = rebirthReward(s, stats(s).rebirthBonus || 0);
+            const pearls = rebirthReward(s, stats(s).rebirthBonus || 0), deepPearls = deepVoyagePearls(s), lifeBonus = nextLifeBonus(s);
             const fresh = newState(now);
             fresh.gold = 100 + (s.permanent.starting || 0) * 500;
             fresh.inventory = s.inventory.filter(i => i.relic);
@@ -610,10 +610,12 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             }
             fresh.abyssBest = s.abyssBest;
             fresh.shopSerial = s.shopSerial;
-            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild });
+            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild });
             s.hp = stats(s).hp;
             s.mana = stats(s).mana;
-            addLog(s, `새로운 항해가 시작됩니다. 환생 진주 +${pearls}`);
+            addLog(s, `새로운 항해가 시작됩니다. 환생 진주 +${pearls}${deepPearls ? ` (깊은 항해 +${deepPearls} 포함)` : ''}`);
+            if (lifeBonus === 'deep') addLog(s, 'Lv.100 완주 · 이번 생 동안 직업·스킬 숙련 기본 획득 +2', 'reward');
+            if (lifeBonus === 'tailwind') addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${TAILWIND_EXP * 100}%`, 'reward');
             break;
         }
         default: throw Error('지원하지 않는 행동입니다.');

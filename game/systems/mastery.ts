@@ -23,6 +23,8 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
         const extra = masteryGainBonus(sk, skillLevel(sk, s.learned[id], skillMastery(s, id)));
         if (extra > bonus) { bonus = extra; source = sk.name; }
     }
-    const amount = Math.min(PROGRESSION.maxMasteryPerVictory, 1 + Math.max(0, Math.floor(bonus)));
-    return { amount, bonus: amount - 1, source };
+    // 깊은 항해(직전 생 Lv.100 완주) 동안 기본 숙련 +1 → +2. 보너스 한도는 그만큼 함께 올라갑니다.
+    const base = s.lifeBonus === 'deep' ? 2 : 1;
+    const amount = Math.min(PROGRESSION.maxMasteryPerVictory + base - 1, base + Math.max(0, Math.floor(bonus)));
+    return { amount, base, bonus: amount - base, source };
 }

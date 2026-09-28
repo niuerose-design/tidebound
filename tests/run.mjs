@@ -24,6 +24,7 @@ const {shopCost,gambleCost,shopPreview}=await import(pathToFileURL(join(out,'gam
 const {itemStats,enhanceCost,bulkItems}=await import(pathToFileURL(join(out,'game/systems/equipment.js')).href);
 const {goldMultiplier,dungeonGoldMultiplier,dropRate,hitChance}=await import(pathToFileURL(join(out,'game/systems/stats.js')).href);
 const {rebirthLevel,rebirthReward,tierReward}=await import(pathToFileURL(join(out,'game/systems/meta.js')).href);
+const metaMod=await import(pathToFileURL(join(out,'game/systems/meta.js')).href);
 const longTerm=await import(pathToFileURL(join(out,'game/data/long-term.js')).href);
 const {xpNeeded}=await import(pathToFileURL(join(out,'game/data/balance.js')).href);
 const {PROGRESSION}=await import(pathToFileURL(join(out,'game/data/progression.js')).href);
@@ -81,7 +82,7 @@ test('Shop preview equals purchased item and overspending is rejected',()=>{cons
 test('Appraisal probability boundaries and full bag rejection',()=>{for(const [roll,rarity] of [[0,1],[.549,1],[.55,2],[.949,2],[.95,3]]){const s=newState(0);s.gold=10000;const cost=gambleCost(s);act(s,{type:'gamble',id:'physical'},0,()=>roll);assert.equal(s.inventory[0].rarity,rarity);assert.equal(s.gold,10000-cost);}const s=newState(0);s.gold=9999;s.inventory=Array.from({length:60},(_,i)=>({...shopPreview(s,'coat'),id:String(i)}));const old=s.gold;assert.throws(()=>act(s,{type:'buy',id:'coat'},0));assert.equal(s.gold,old);});
 test('Equipment enhancement changes real stats and caps at ten',()=>{const s=newState(0);s.gold=1e9;const item=s.equipment.rod;const cost=enhanceCost(item),before=itemStats(item).attack;act(s,{type:'enhance',id:item.id},0);assert.equal(s.gold,1e9-cost);assert.ok(Math.abs(itemStats(item).attack-before*1.15)<1e-8);for(let i=1;i<10;i++)act(s,{type:'enhance',id:item.id},0);const gold=s.gold;assert.throws(()=>act(s,{type:'enhance',id:item.id},0));assert.equal(s.gold,gold);});
 test('Bulk sale respects exact rarity, locks and relics',()=>{const s=newState(0);s.inventory=[{...shopPreview(s,'coat'),id:'a'},{...shopPreview(s,'coat'),id:'b',locked:true},{...shopPreview(s,'coat'),id:'c',relic:'test'},{...shopPreview(s,'coat'),id:'d',rarity:2}];assert.equal(bulkItems(s,1).length,1);const gold=s.gold;act(s,{type:'sellRarity',id:'1'},0);assert.equal(s.gold,gold+15);assert.deepEqual(s.inventory.map(i=>i.id),['b','c','d']);assert.throws(()=>act(s,{type:'sell',id:'b'},0));assert.throws(()=>act(s,{type:'registerItem',id:'c'},0));});
-test('Rebirth unlocks, research and relic persistence',()=>{const s=newState(0);s.pearls=100;s.level=30;assert.throws(()=>act(s,{type:'buyRelic',id:'memoryRod'},0));act(s,{type:'rebirth'},0);assert.equal(apCapacity(s),7);assert.equal(rebirthLevel(s),35);assert.equal(expMultiplier(s),1.25);act(s,{type:'permanent',id:'ap'},0);assert.equal(apCapacity(s),8);act(s,{type:'buyRelic',id:'memoryRod'},0);const relic=s.inventory[0];act(s,{type:'equip',id:relic.id},0);s.gold=10000;act(s,{type:'enhance',id:relic.id},0);s.permanent.starting=2;s.level=35;act(s,{type:'rebirth'},0);assert.equal(s.equipment.rod.relic,'memoryRod');assert.equal(s.equipment.rod.enhance,1);assert.equal(s.gold,1100);assert.equal(apCapacity(s),9);assert.throws(()=>act(s,{type:'buyRelic',id:'memoryRod'},0));s.level=100;s.rebirths=100;assert.equal(rebirthLevel(s),60);assert.ok(xpNeeded(60)<xpNeeded(30)*5);});
+test('Rebirth unlocks, research and relic persistence',()=>{const s=newState(0);s.pearls=100;s.level=30;assert.throws(()=>act(s,{type:'buyRelic',id:'memoryRod'},0));act(s,{type:'rebirth'},0);assert.equal(apCapacity(s),7);assert.equal(rebirthLevel(s),35);assert.equal(expMultiplier({...s,lifeBonus:null}),1.25);assert.equal(expMultiplier(s),1.875);act(s,{type:'permanent',id:'ap'},0);assert.equal(apCapacity(s),8);act(s,{type:'buyRelic',id:'memoryRod'},0);const relic=s.inventory[0];act(s,{type:'equip',id:relic.id},0);s.gold=10000;act(s,{type:'enhance',id:relic.id},0);s.permanent.starting=2;s.level=35;act(s,{type:'rebirth'},0);assert.equal(s.equipment.rod.relic,'memoryRod');assert.equal(s.equipment.rod.enhance,1);assert.equal(s.gold,1100);assert.equal(apCapacity(s),9);assert.throws(()=>act(s,{type:'buyRelic',id:'memoryRod'},0));s.level=100;s.rebirths=100;assert.equal(rebirthLevel(s),60);assert.ok(xpNeeded(60)<xpNeeded(30)*5);});
 test('Rebirth skills still require their job; temple relic and research caps work',()=>{
  const s=newState(0);s.level=30;s.sp=100;s.pearls=1000;assert.throws(()=>act(s,{type:'learn',id:'soulHook'},0));s.rebirths=1;assert.throws(()=>act(s,{type:'learn',id:'soulHook'},0));
  s.attributes.str=20;s.attributes.wis=20;act(s,{type:'job',id:'rebirthFisher'},0);assert.equal(s.learned.soulHook,1);assert.equal(s.sp,100);
@@ -271,6 +272,22 @@ test('Abyss pearls scale with depth and milestone SP is granted once, survives r
  assert.equal(old.version,7);assert.equal(old.sp,6);assert.deepEqual(old.abyssMilestones,[10,25]);
  const json=JSON.stringify(old);migrateState(old);assert.equal(JSON.stringify(old),json);
  assert.deepEqual(ABYSS_SP_MILESTONES,[10,25,50,100]);
+});
+
+test('Rebirth timing: deep voyage pearls and mastery, tailwind experience',()=>{
+ const meta=metaMod;
+ const s=newState(0);s.rebirths=6;assert.equal(meta.rebirthLevel(s),60);
+ for(const [lv,extra] of [[60,0],[70,2],[80,10],[90,22],[100,40]]){s.level=lv;assert.equal(meta.deepVoyagePearls(s),extra);}
+ s.level=65;assert.equal(meta.nextLifeBonus(s),'tailwind');s.level=66;assert.equal(meta.nextLifeBonus(s),null);s.level=100;assert.equal(meta.nextLifeBonus(s),'deep');
+ const pearls=s.pearls,expected=meta.rebirthReward(s,stats(s).rebirthBonus||0);act(s,{type:'rebirth'},0);
+ assert.equal(s.pearls-pearls,expected);assert.equal(s.lifeBonus,'deep');
+ assert.equal(victoryMastery(s,{id:'minnow',boss:false}).amount,2);
+ const f=newState(0);f.rebirths=6;f.level=60;act(f,{type:'rebirth'},0);assert.equal(f.lifeBonus,'tailwind');
+ const plain=newState(0);plain.rebirths=7;plain.level=f.level;
+ assert.ok(Math.abs(expMultiplier(f)/expMultiplier({...f,lifeBonus:null})-1.5)<1e-9);
+ f.level=meta.rebirthLevel(f);assert.equal(expMultiplier(f),expMultiplier({...f,lifeBonus:null}),'tailwind ends at the rebirth level');
+ assert.equal(victoryMastery(f,{id:'minnow',boss:false}).amount,1);
+ const m=newState(0);m.rebirths=6;m.level=80;act(m,{type:'rebirth'},0);assert.equal(m.lifeBonus,null);
 });
 
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});

@@ -148,6 +148,8 @@ export type State = {
     version: 1 | 2 | 3 | 4 | 5 | 6 | 7;
     /** SP를 지급한 무한 심연 이정표 깊이. 환생해도 유지됩니다. */
     abyssMilestones?: number[];
+    /** 직전 환생 방식에 따른 이번 생의 효과. 다음 환생 때 다시 정해집니다. */
+    lifeBonus?: 'deep' | 'tailwind' | null;
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
     growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number } | null;

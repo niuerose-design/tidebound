@@ -11,7 +11,7 @@ import { SLOTS, RARITIES, BALANCE, upgradeCost } from '@/game/data/balance';
 import { STAT_LABELS, formatStat } from '@/game/data/progression';
 import { itemStats, itemDescription, enhanceCost, reforgeCost, bulkItems, saleValue } from '@/game/systems/equipment';
 import { shopCost, gambleCost, ownsRelic, relicCost, shopPreview } from '@/game/systems/commerce';
-import { rebirthLevel, rebirthReward, rebirthAP, tideLimit, tierReward, tierHealth, tierAttack } from '@/game/systems/meta';
+import { deepVoyagePearls, nextLifeBonus, tailwindActive, TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL, rebirthLevel, rebirthReward, rebirthAP, tideLimit, tierReward, tierHealth, tierAttack } from '@/game/systems/meta';
 import { stats } from '@/game/systems/stats';
 import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format } from './shared';
@@ -168,6 +168,8 @@ export function Rebirth({ s, send, busy }: Props) {
     const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
     const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }, bonus), permanentExp = 1 + rebirthExperience(s.rebirths) + (s.permanent.exp || 0) * .2;
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0;
+    const projected = { ...s, level: Math.max(s.level, required) }, deepPearls = deepVoyagePearls(projected), lifeBonus = nextLifeBonus(projected);
+    const lifeText = lifeBonus === 'deep' ? `깊은 항해 · 다음 생 동안 직업·스킬 숙련 기본 획득 +2` : lifeBonus === 'tailwind' ? `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${TAILWIND_EXP * 100}%` : `없음 · Lv.${required + TAILWIND_WINDOW} 이하면 순풍, Lv.${DEEP_VOYAGE_LEVEL}이면 깊은 항해`;
     return <>
         <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 항해를 마치고, 다음 생에 남길 힘을 선택하세요."/>
         <section className="panel port-resource-bar legacy-resource-bar">
@@ -181,8 +183,8 @@ export function Rebirth({ s, send, busy }: Props) {
             <GrowthGoals s={s} send={send} busy={busy}/>
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
-                    <p className="footnote">환생할 때마다 필요 레벨 +{ECONOMY.rebirthLevelStep}, 최대 Lv.{ECONOMY.rebirthLevelCap}.</p></div>
-                <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 진주' : '환생 조건 달성 시 예상 진주'}</span><strong><Sparkles size={26}/>{format(reward)}</strong>{bonus > 0 && <small>진주 연구·스킬 보너스 +{bonus} 포함</small>}
+                    <p className="footnote">환생할 때마다 필요 레벨 +{ECONOMY.rebirthLevelStep}, 최대 Lv.{ECONOMY.rebirthLevelCap}. 빠르게 환생하면(요구 레벨+{TAILWIND_WINDOW} 이내) 다음 생 초반 경험치 +{TAILWIND_EXP * 100}%, 요구 레벨을 넘길수록 추가 진주(초과 레벨² ÷ 40), Lv.{DEEP_VOYAGE_LEVEL} 완주 시 다음 생 숙련 기본 획득 +2.</p>{s.lifeBonus && <p className="footnote">이번 생 효과: {s.lifeBonus === 'deep' ? '깊은 항해 · 직업·스킬 숙련 기본 획득 +2' : tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${TAILWIND_EXP * 100}%` : '순풍 (종료됨)'}</p>}</div>
+                <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 진주' : '환생 조건 달성 시 예상 진주'}</span><strong><Sparkles size={26}/>{format(reward)}</strong>{bonus > 0 && <small>진주 연구·스킬 보너스 +{bonus} 포함</small>}{deepPearls > 0 && <small>깊은 항해 진주 +{deepPearls} 포함 (요구 레벨 초과 {projected.level - required})</small>}<small>다음 생 효과: {lifeText}</small>
                     <Confirm label="환생하기" title="다음 항해를 시작할까요?" description="레벨·현재 직업·골드·일반 장비·골드 훈련·배분 능력치가 초기화됩니다. 유물(강화·옵션 포함), 도감, 진주 연구, 해금·계승한 스킬과 성장·숙련·SP, 직업 숙련과 해금, 길드, 던전 정복·보스 연구·특화·항해 목표, 랭킹 점수는 유지됩니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>
             </section>
