@@ -7,7 +7,7 @@ import { catchReward, deepVoyagePearls, nextLifeBonus, TAILWIND_EXP, rebirthLeve
 import { stats, dropRate, clampVitals, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery } from './mastery';
 import type { State, Action, Item, Attribute } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, upgradeCost } from '../data/balance';
+import { BALANCE, MONSTER_TUNING, RARITIES, SAVE_VERSION, xpNeeded } from '../data/balance';
 import { FISH, STAGES, DUNGEONS } from '../data/world';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
@@ -26,7 +26,7 @@ export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'syst
 export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
-        version: 7,
+        version: SAVE_VERSION,
         skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null,
         tide: 0,
         abyssBest: 0,
@@ -57,7 +57,6 @@ export function newState(now: number): State {
             coat: { id: 'starter-coat', name: '낡은 구명조끼', slot: 'coat', rarity: 0, power: 2, level: 1 },
             charm: null,
         },
-        upgrades: { attack: 0, hp: 0, defense: 0 },
         permanent: { attack: 0, hp: 0, gold: 0 },
         dungeon: null,
         clears: {},
@@ -612,18 +611,6 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
                 throw Error('보호 장비와 유물은 판매할 수 없습니다.');
             s.gold += saleValue(item);
             s.inventory = s.inventory.filter(x => x.id !== id);
-            break;
-        }
-        case 'upgrade': {
-            if (!['attack', 'hp', 'defense', 'magic', 'gold'].includes(id))
-                throw Error('잘못된 강화입니다.');
-            const cost = upgradeCost(s.upgrades[id] || 0);
-            if (s.gold < cost)
-                throw Error('골드가 부족합니다.');
-            s.gold -= cost;
-            s.upgrades[id] = (s.upgrades[id] || 0) + 1;
-            if (id === 'hp')
-                s.hp = Math.min(stats(s).hp, s.hp + 25);
             break;
         }
         case 'rebirth': {

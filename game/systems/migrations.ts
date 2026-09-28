@@ -1,60 +1,16 @@
 import type { State } from '../types';
-import { initialProgress, apUsed, apCapacity, grantJobSkills, trimLoadout } from './progression';
-import { stats, clampVitals } from './stats';
-import { newGuild } from '../data/guild';
-import { ABYSS_SP_MILESTONES } from '../data/long-term';
-/** v1 → v7 additive migration. No gold/items/codex/levels/guild progress are removed. */
-export function migrateState(s: State): State {
-    if (s.version === 7) return s;
-    if (s.version === 6) {
-        // Depths already reached before v20.2 still earn their one-time SP.
-        const reached = ABYSS_SP_MILESTONES.filter(n => (s.abyssBest || 0) >= n);
-        s.abyssMilestones = reached;
-        s.sp += reached.length;
-        s.version = 7;
-        return s;
-    }
-    if (s.version === 5) {
-        s.skillSpecializations ??= {};
-        s.bossResearchClaims ??= {};
-        s.growthGoal ??= null;
-        s.version = 6;
-        return migrateState(s);
-    }
-    if (s.version === 4) {
-        // Existing SP balances are intentionally preserved; only future
-        // sources are rare. Current-job skills are granted lazily and cost
-        // no SP, while all explicit SP actions now cost exactly one.
-        s.version = 5;
-        s.skillInheritances = {};
-        grantJobSkills(s);
-        trimLoadout(s);
-        clampVitals(s);
-        return migrateState(s);
-    }
-    if (s.version === 3) {
-        s.guild = newGuild();
-        s.version = 4;
-        return migrateState(s);
-    }
-    if (s.version === 2) {
-        s.tide = 0;
-        s.abyssBest = 0;
-        s.shopSerial = 0;
-        s.version = 3;
-        return migrateState(s);
-    }
-    const equipped = [...s.skills], job = s.job;
-    Object.assign(s, initialProgress(s.level));
-    for (const id of equipped)
-        s.learned[id] = 1;
-    s.unlockedJobs = job === 'fisher' ? ['fisher'] : ['fisher', job];
-    s.skills = equipped;
-    // Legacy loadouts are learned for free, but use the new AP capacity immediately.
-    while (apUsed(s) > apCapacity(s))
-        s.skills.pop();
-    s.version = 2;
-    s.mana = stats(s).mana;
-    s.hp = Math.min(s.hp, stats(s).hp);
-    return migrateState(s);
+import { SAVE_VERSION } from '../data/balance';
+import { newState } from './engine';
+/**
+ * v8(게임 v20.5): 골드 훈련 삭제와 함께 이전 버전의 세이브는 이름만 남기고 새로 시작합니다.
+ * 이후 버전 변경은 이 함수에 단계별 추가 마이그레이션으로 이어 붙입니다.
+ */
+export function migrateState(s: State, now = s.lastTick || 0): State {
+    if (s.version === SAVE_VERSION) return s;
+    const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
+    const fresh = newState(now);
+    if (name) fresh.name = name;
+    for (const key of Object.keys(s)) delete (s as Record<string, unknown>)[key];
+    Object.assign(s, fresh);
+    return s;
 }

@@ -35,7 +35,7 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
         }>();
         if (!row)
             throw new ApiError('저장 데이터를 불러오지 못했습니다.', 503);
-        const s = migrateState(JSON.parse(row.state) as State);
+        const s = migrateState(JSON.parse(row.state) as State, now);
         advance(s, now);
         act(s, action, now);
         const result = extra ? await extra(s) : null;

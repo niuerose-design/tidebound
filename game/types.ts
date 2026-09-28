@@ -145,7 +145,7 @@ export type GuildState = {
     lastRaid: number;
 };
 export type State = {
-    version: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+    version: number;
     /** SP를 지급한 무한 심연 이정표 깊이. 환생해도 유지됩니다. */
     abyssMilestones?: number[];
     /** 직전 환생 방식에 따른 이번 생의 효과. 다음 환생 때 다시 정해집니다. */
@@ -199,7 +199,6 @@ export type State = {
     book: Record<string, number>;
     inventory: Item[];
     equipment: Record<string, Item | null>;
-    upgrades: Record<string, number>;
     permanent: Record<string, number>;
     dungeon: null | {
         id: string;
@@ -224,6 +223,8 @@ export type State = {
     };
 };
 export type Snapshot = {
+    /** 세이브 버전. 랭킹·결투는 현재 버전의 스냅샷만 사용합니다. */
+    season?: number;
     skillPractice?: Record<string, number>;
     skillSpecializations?: Record<string, string>;
     skillRanks?: Record<string, number>;

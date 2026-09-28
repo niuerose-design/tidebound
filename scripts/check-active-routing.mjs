@@ -1,5 +1,5 @@
 // Run: node scripts/check-active-routing.mjs [--baseline]
-// Two seeded active routes per build, with and without existing gear/gold training.
+// Two seeded active routes per build, with and without existing gear.
 // Allocate stats on level-up; compare five-minute field/dungeon samples and
 // prioritize feasible first clears. Claim research SP and manage loadouts.
 // Fixed build heuristics with advance information, not a global fastest-time proof.
@@ -27,7 +27,7 @@ const {canChangeJob,canUse,validLoadout,attributes,skillLevel,skillMastery,maxSk
 const {itemStats}=await moduleAt('systems/equipment');
 const {STAGES,DUNGEONS,FISH}=await moduleAt('data/world');
 const {SKILLS}=await moduleAt('data/skills');
-const {xpNeeded,upgradeCost}=await moduleAt('data/balance');
+const {xpNeeded}=await moduleAt('data/balance');
 function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
 const totalXP=s=>s.exp+Array.from({length:s.level-1},(_,i)=>xpNeeded(i+1)).reduce((a,b)=>a+b,0);
 const gearScore=(item,magic)=>{const v=itemStats(item);return (v[magic?'magic':'attack']||0)*4+(v.hp||0)*.22+(v.defense||0)*1.5+(v.resist||0)*1.2+(v.accuracy||0)*150+(v.crit||0)*150;};
@@ -43,7 +43,6 @@ function manage(s,magic,gear,rng){
  for(const id of order){const sk=SKILLS.find(x=>x.id===id);while(s.sp>0&&s.skills.includes(id)&&skillLevel(sk,s.learned[id],skillMastery(s,id))<maxSkillLevel(sk))action({type:'learn',id});}
  if(gear){
   for(const item of [...s.inventory])if(gearScore(item,magic)>gearScore(s.equipment[item.slot]||{slot:item.slot,power:0,rarity:0,level:0},magic))action({type:'equip',id:item.id});
-  for(const id of [magic?'magic':'attack','hp','defense'])while(s.gold>=upgradeCost(s.upgrades[id]||0))action({type:'upgrade',id});
  }
  s.running=true;
 }

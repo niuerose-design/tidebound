@@ -6,8 +6,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import type { State, Action, Item, Stats } from '@/game/types';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
-import { SHOP, GAMBLE_CATEGORIES, GOLD_TRAINING, RESEARCH, RELICS, ECONOMY, APPRAISAL, AFFIXES, researchCost } from '@/game/data/economy';
-import { SLOTS, RARITIES, BALANCE, upgradeCost } from '@/game/data/balance';
+import { SHOP, GAMBLE_CATEGORIES, RESEARCH, RELICS, ECONOMY, APPRAISAL, AFFIXES, researchCost } from '@/game/data/economy';
+import { SLOTS, RARITIES, BALANCE } from '@/game/data/balance';
 import { STAT_LABELS, formatStat } from '@/game/data/progression';
 import { itemStats, itemDescription, enhanceCost, reforgeCost, bulkItems, saleValue } from '@/game/systems/equipment';
 import { shopCost, gambleCost, ownsRelic, relicCost, shopPreview } from '@/game/systems/commerce';
@@ -118,7 +118,7 @@ export function Shop({ s, send, busy }: Props) {
             <div><ShoppingBag size={22}/><span>장비 가방<strong>{s.inventory.length} <small>/ {BALANCE.inventoryCap}</small></strong></span></div>
             <div><span>현재 구매 장비<strong>Lv.{s.level}</strong></span></div>
         </section>
-        <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="gamble">장비 감정</TabsTrigger><TabsTrigger value="buy">확정 구매</TabsTrigger><TabsTrigger value="forge">강화·훈련</TabsTrigger></TabsList></Tabs>
+        <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="gamble">장비 감정</TabsTrigger><TabsTrigger value="buy">확정 구매</TabsTrigger><TabsTrigger value="forge">장비 강화</TabsTrigger></TabsList></Tabs>
         {tab === 'gamble' && <section aria-label="부위별 장비 감정">
             <div className="appraisal-odds"><span>감정 등급 확률</span>{APPRAISAL.map(r => <b key={r.rarity} style={{ color: RARITIES[r.rarity].color }}>{RARITIES[r.rarity].name} {Math.round(r.chance * 100)}%</b>)}</div>
             <div className="port-gamble-grid">{GAMBLE_CATEGORIES.map(o => <article className="panel market-card gamble-card" key={o.id}>
@@ -133,16 +133,11 @@ export function Shop({ s, send, busy }: Props) {
             <SlotIcon slot={o.slot} size={26}/><h2>{o.name}</h2><p>{o.description} · 희귀 · Lv.{s.level}</p>
             <BonusList item={shopPreview(s, o.id)}/><button className="primary" disabled={busy || s.gold < cost || full} onClick={() => send({ type: 'buy', id: o.id })}>구매 · {format(cost)} G</button>
         </article>)}</div><p className="footnote">표시된 등급과 추가 옵션을 확정적으로 획득합니다. 일반 장비는 환생 시 초기화됩니다.</p></section>}
-        {tab === 'forge' && <section aria-label="장비 강화와 골드 훈련">
+        {tab === 'forge' && <section aria-label="장비 강화">
             <div className="section-title"><h2>착용 장비 강화</h2><span>보관 중인 장비는 장비 보관함에서 강화</span></div>
             <div className="port-gamble-grid">{Object.entries(SLOTS).map(([slot, name]) => {
                 const item = s.equipment[slot as keyof typeof s.equipment];
                 return <article className="panel market-card forge-card" key={slot}><SlotIcon slot={slot}/><small>{name}</small>{item ? <><h2>{item.name} <span className="gold-text">+{item.enhance || 0}</span></h2><BonusList item={item}/><EquipmentForge s={s} send={send} busy={busy} item={item}/></> : <><h2>착용 장비 없음</h2><p>장비 보관함에서 {name}을 장착하세요.</p></>}</article>;
-            })}</div>
-            <div className="section-title"><h2>골드 훈련</h2><span>이번 항해에만 적용 · 환생 시 초기화</span></div>
-            <div className="panel training-list">{GOLD_TRAINING.map(t => {
-                const rank = s.upgrades[t.id] || 0, price = upgradeCost(rank);
-                return <div className="training-row" key={t.id}><div><h3>{t.name} <small>Lv.{rank}</small></h3><p>단계당 {t.effect}</p></div><button className="secondary" disabled={busy || s.gold < price} onClick={() => send({ type: 'upgrade', id: t.id })}><ArrowUp size={14}/>{format(price)} G</button></div>;
             })}</div>
         </section>}
         {full && <div className="notice">가방이 가득 찼습니다. 장비를 정리하면 다시 구매·감정할 수 있습니다.</div>}
@@ -185,13 +180,13 @@ export function Rebirth({ s, send, busy }: Props) {
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
                     <p className="footnote">환생할 때마다 필요 레벨 +{ECONOMY.rebirthLevelStep}, 최대 Lv.{ECONOMY.rebirthLevelCap}. 빠르게 환생하면(요구 레벨+{TAILWIND_WINDOW} 이내) 다음 생 초반 경험치 +{TAILWIND_EXP * 100}%, 요구 레벨을 넘길수록 추가 진주(초과 레벨² ÷ 40), Lv.{DEEP_VOYAGE_LEVEL} 완주 시 다음 생 숙련 기본 획득 +2.</p>{s.lifeBonus && <p className="footnote">이번 생 효과: {s.lifeBonus === 'deep' ? '깊은 항해 · 직업·스킬 숙련 기본 획득 +2' : tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${TAILWIND_EXP * 100}%` : '순풍 (종료됨)'}</p>}</div>
                 <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 진주' : '환생 조건 달성 시 예상 진주'}</span><strong><Sparkles size={26}/>{format(reward)}</strong>{bonus > 0 && <small>진주 연구·스킬 보너스 +{bonus} 포함</small>}{deepPearls > 0 && <small>깊은 항해 진주 +{deepPearls} 포함 (요구 레벨 초과 {projected.level - required})</small>}<small>다음 생 효과: {lifeText}</small>
-                    <Confirm label="환생하기" title="다음 항해를 시작할까요?" description="레벨·현재 직업·골드·일반 장비·골드 훈련·배분 능력치가 초기화됩니다. 유물(강화·옵션 포함), 도감, 진주 연구, 해금·계승한 스킬과 성장·숙련·SP, 직업 숙련과 해금, 길드, 던전 정복·보스 연구·특화·항해 목표, 랭킹 점수는 유지됩니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
+                    <Confirm label="환생하기" title="다음 항해를 시작할까요?" description="레벨·현재 직업·골드·일반 장비·배분 능력치가 초기화됩니다. 유물(강화·옵션 포함), 도감, 진주 연구, 해금·계승한 스킬과 성장·숙련·SP, 직업 숙련과 해금, 길드, 던전 정복·보스 연구·특화·항해 목표, 랭킹 점수는 유지됩니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>
             </section>
             <p className="footnote">환생 기억: 체력·양 공격·양 방어 ×{rebirthMemory(s.rebirths).toFixed(3)} → ×{rebirthMemory(s.rebirths + 1).toFixed(3)}. 20회 이후 경험치·진주 증가는 완만해집니다. 공격·체력 연구는 200단계, 방어는 100단계까지 이어집니다.</p><div className="rebirth-gains"><span>영구 AP <b>+{apGain}</b></span><span>영구 경험치 <b>×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</b></span><span>다음 생 시작 골드 <b>{format(100 + (s.permanent.starting || 0) * 500)} G</b></span><span>선택 가능 해역 <b>난이도 {tideLimit({ ...s, rebirths: s.rebirths + 1 })}까지</b></span></div>
             <div className="rebirth-records">
                 <article className="panel ledger-kept"><h2>다음 생에도 유지</h2><ul><li>진주 · 진주 연구 · 물고기와 장비 도감</li><li>스킬 해금·계승·성장·숙련·특화 · 보유 SP · 항해 목표</li><li>직업 해금과 숙련 기록</li><li>환생 유물 · 유물 강화·옵션·보관 위치</li><li>길드·공헌·연구·레이드 · 던전 정복 기록</li><li>랭킹 점수와 전적</li></ul></article>
-                <article className="panel ledger-reset"><h2>이번 항해와 함께 초기화</h2><ul><li>레벨·경험치 · 현재 직업 → 견습 낚시꾼</li><li>능력치 배분 · 골드 훈련</li><li>일반 장비와 해당 장비의 강화·옵션</li><li>골드 → 유산 연구가 반영된 시작 골드</li><li>낚시터와 해역 난이도 선택</li><li>진행 중 전투·던전</li></ul></article>
+                <article className="panel ledger-reset"><h2>이번 항해와 함께 초기화</h2><ul><li>레벨·경험치 · 현재 직업 → 견습 낚시꾼</li><li>능력치 배분</li><li>일반 장비와 해당 장비의 강화·옵션</li><li>골드 → 유산 연구가 반영된 시작 골드</li><li>낚시터와 해역 난이도 선택</li><li>진행 중 전투·던전</li></ul></article>
             </div>
             <details className="panel legacy-roadmap legacy-fold"><summary>환생 이후에 열리는 콘텐츠</summary><p><b>1회</b> 윤회의 챔질 · 황금의 기억 · 심해 신전(Lv.30) · 윤회의 낚싯대</p><p><b>2회</b> 영혼의 비늘 · 영혼의 잠수복</p><p><b>3회</b> 영원의 해류 · 심연의 눈 · 무한 심연(Lv.40)</p><p>무한 심연은 5연전 정복마다 다음 깊이를 엽니다. 새 깊이 정복 시 진주 +1, 5의 배수 깊이는 +3.</p></details>
             <details className="panel legacy-fold data-management"><summary>저장 데이터 관리</summary><p>전체 초기화는 환생과 다릅니다. 이름을 제외한 모든 성장 기록과 랭킹 방어 등록을 삭제하며 복구할 수 없습니다. 자동 낚시를 중단하고 던전에서 나온 뒤 진행하세요.</p><Confirm label="전체 데이터 초기화" title="정말 모든 데이터를 초기화할까요?" description="레벨·장비·환생·진주·도감·스킬·길드·랭킹을 모두 처음 상태로 되돌립니다. 이 작업은 되돌릴 수 없습니다." disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetData' })}/></details>

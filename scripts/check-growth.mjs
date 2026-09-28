@@ -24,7 +24,7 @@ const {itemStats}=await moduleAt('systems/equipment');
 const {STAGES}=await moduleAt('data/world');
 const {SKILLS}=await moduleAt('data/skills');
 const {ACTIVE_SKILL_BALANCE}=await moduleAt('data/skill-balance');
-const {upgradeCost,xpNeeded}=await moduleAt('data/balance');
+const {xpNeeded}=await moduleAt('data/balance');
 const {strike}=await moduleAt('systems/combat');
 for(const sk of SKILLS.filter(x=>x.type==='active')){
  assert(ACTIVE_SKILL_BALANCE[sk.id],`Missing balance row: ${sk.id}`);

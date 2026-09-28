@@ -24,7 +24,7 @@ const {itemStats}=await moduleAt('systems/equipment');
 const {STAGES}=await moduleAt('data/world');
 const {SKILLS}=await moduleAt('data/skills');
 const {ACTIVE_SKILL_BALANCE}=await moduleAt('data/skill-balance');
-const {upgradeCost,xpNeeded}=await moduleAt('data/balance');
+const {xpNeeded}=await moduleAt('data/balance');
 const {strike}=await moduleAt('systems/combat');
 for(const sk of SKILLS.filter(x=>x.type==='active')){
  assert(ACTIVE_SKILL_BALANCE[sk.id],`Missing balance row: ${sk.id}`);
@@ -56,7 +56,6 @@ function manage(s,magic,rng){
  const priority=available.sort((a,b)=>((a.job===s.job?10:0)+(a.damageType==='magic'===magic?2:0)) - ((b.job===s.job?10:0)+(b.damageType==='magic'===magic?2:0))).reverse();
  s.skills=[];for(const sk of priority)if(validLoadout(s,[...s.skills,sk.id]))s.skills.push(sk.id);
  for(const item of [...s.inventory])if(gearScore(item,magic)>gearScore(s.equipment[item.slot]||{slot:item.slot,power:0,rarity:0,level:0},magic))actNow({type:'equip',id:item.id});
- for(const id of [magic?'magic':'attack','hp','defense'])while(s.gold>=upgradeCost(s.upgrades[id]||0))actNow({type:'upgrade',id});
  s.running=true;
 }
 function chooseStage(s,seed){

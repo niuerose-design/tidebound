@@ -1,7 +1,7 @@
 import { identity, checkOrigin, db, mutate, failure, ApiError, actionBody } from '@/game/server/store';
 import { snapshot } from '@/game/systems/stats';
 import { duel, TRAINING } from '@/game/systems/duel';
-import { BALANCE } from '@/game/data/balance';
+import { BALANCE, SAVE_VERSION } from '@/game/data/balance';
 import type { Snapshot } from '@/game/types';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         else {
             if (a.type !== 'ranked' || a.id === id)
                 throw new ApiError('다른 낚시꾼을 선택하세요.');
-            const row = await db().prepare('SELECT snapshot,rating FROM rankings WHERE id=?').bind(a.id || '').first<{
+            const row = await db().prepare("SELECT snapshot,rating FROM rankings WHERE id=? AND json_extract(snapshot,'$.season')=?").bind(a.id || '', SAVE_VERSION).first<{
                 snapshot: string;
                 rating: number;
             }>();

@@ -44,13 +44,6 @@ export const GAMBLE_CATEGORIES = [
     { id: 'coat', name: '방어구', slot: 'coat', offers: ['coat'], description: '최대 체력과 물리·마법 방어를 보강합니다.' },
     { id: 'charm', name: '나침반', slot: 'charm', offers: ['charm'], description: '치명타 확률을 높이고 무작위 추가 옵션을 얻습니다.' },
 ] as const;
-export const GOLD_TRAINING = [
-    { id: 'attack', name: '작살 훈련', effect: '물리 공격 +4' },
-    { id: 'magic', name: '해류 수련', effect: '마법 공격 +4' },
-    { id: 'hp', name: '체력 단련', effect: '최대 체력 +25' },
-    { id: 'defense', name: '방어 훈련', effect: '물리 방어 +3' },
-    { id: 'gold', name: '교역 기술', effect: '포획·던전 골드 +5%' },
-] as const;
 export const RELICS = [
     { id: 'memoryRod', name: '윤회의 낚싯대', slot: 'rod', style: 'balanced', power: 45, cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
     { id: 'soulCoat', name: '영혼의 잠수복', slot: 'coat', style: 'balanced', power: 55, cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 유영', value: .12 } },

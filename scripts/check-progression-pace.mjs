@@ -1,5 +1,5 @@
 // Run: node scripts/check-progression-pace.mjs
-// Gearless progression benchmark: no equipment, gold training, paid SP or permanent research.
+// Gearless progression benchmark: no equipment, paid SP or permanent research.
 // Manage stats/loadout each minute; sample available fishing areas every
 // ten minutes. The chooser has information a novice would not have: these are
 // managed runs, not a promise of wall-clock completion for every player.
@@ -24,7 +24,7 @@ const {itemStats}=await moduleAt('systems/equipment');
 const {STAGES}=await moduleAt('data/world');
 const {SKILLS}=await moduleAt('data/skills');
 const {ACTIVE_SKILL_BALANCE}=await moduleAt('data/skill-balance');
-const {upgradeCost,xpNeeded}=await moduleAt('data/balance');
+const {xpNeeded}=await moduleAt('data/balance');
 const {strike}=await moduleAt('systems/combat');
 for(const sk of SKILLS.filter(x=>x.type==='active')){
  assert(ACTIVE_SKILL_BALANCE[sk.id],`Missing balance row: ${sk.id}`);

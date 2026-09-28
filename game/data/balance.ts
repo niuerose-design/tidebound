@@ -1,4 +1,6 @@
 /** 가장 자주 수정할 밸런스. UI/저장 코드와 독립적입니다. */
+/** 세이브 형식 버전. 바뀌면 migrations.ts가 이전 세이브를 변환하고, 랭킹은 같은 버전의 스냅샷만 보여줍니다. */
+export const SAVE_VERSION = 8;
 export const BALANCE = {
     turnMs: 2000, offlineCapSeconds: 86400, baseHp: 110, baseAttack: 13, baseDefense: 3,
     hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08,
@@ -9,7 +11,7 @@ export const BALANCE = {
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
     activeSlots: 4, passiveSlots: 3, inventoryCap: 60, dropChance: 0.17,
-    healAfterKill: 0.16, recoveryTurns: 3, upgradeBase: 70, upgradeGrowth: 1.65,
+    healAfterKill: 0.16, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
     bookMilestones: [50, 500, 2500, 10000], duelCooldownMs: 60000, duelMaxTurns: 80,
@@ -65,6 +67,5 @@ export const STATUS_GUIDE = [
     { id: 'haste', name: '가속', kind: '속도 증가', description: '속도가 35% 높아져 선공과 명중 보정에 유리해집니다.', detail: '추가 공격을 만들지는 않으며, 기존 턴 구조 안에서 선공을 유리하게 만듭니다.' },
 ] as const;
 export const xpNeeded = (level: number) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1));
-export const upgradeCost = (level: number) => Math.floor(BALANCE.upgradeBase * Math.pow(BALANCE.upgradeGrowth, level));
 export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }];
 export const SLOTS = { rod: '낚싯대', coat: '방어구', charm: '나침반' };

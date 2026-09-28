@@ -1,8 +1,9 @@
 import { identity, checkOrigin, db, register, failure } from '@/game/server/store';
+import { SAVE_VERSION } from '@/game/data/balance';
 export const dynamic = 'force-dynamic';
 export async function GET(req: Request) { try {
     const id = identity(req);
-    const rows = await db().prepare('SELECT id,snapshot,rating,power,updated_at FROM rankings ORDER BY rating DESC,power DESC LIMIT 100').all<{
+    const rows = await db().prepare("SELECT id,snapshot,rating,power,updated_at FROM rankings WHERE json_extract(snapshot,'$.season')=? ORDER BY rating DESC,power DESC LIMIT 100").bind(SAVE_VERSION).all<{
         id: string;
         snapshot: string;
         rating: number;

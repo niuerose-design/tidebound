@@ -45,7 +45,7 @@ const builds=[
 ];
 const summary=[];
 for(const [job,attributes,skills] of builds){
- const s=newState(0);s.level=40;s.rebirths=5;s.attributes={...s.attributes,...attributes};s.job=job;s.equipment={};s.inventory=[];s.upgrades={};s.permanent={};s.book={};s.unlockedJobs=JOBS.map(j=>j.id);s.jobMastery[job]=12000;
+ const s=newState(0);s.level=40;s.rebirths=5;s.attributes={...s.attributes,...attributes};s.job=job;s.equipment={};s.inventory=[];s.permanent={};s.book={};s.unlockedJobs=JOBS.map(j=>j.id);s.jobMastery[job]=12000;
  for(const sk of SKILLS){s.learned[sk.id]=1;s.skillPractice[sk.id]=80000;}s.skills=[];
  for(const id of skills)if(canUse(s,id)&&validLoadout(s,[...s.skills,id]))s.skills.push(id);
  for(const [id,tier] of [['shark',0],['ghost',0],['dragon',10],['dragon',30],['templeOracle',0],['abyssSovereign',3]]){

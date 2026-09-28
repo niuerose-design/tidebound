@@ -28,7 +28,7 @@ const guild = await load('game/systems/guild.js');
 const { SKILLS } = await load('game/data/skills.js');
 const { JOBS } = await load('game/data/classes.js');
 const { STAGES, DUNGEONS, FISH } = await load('game/data/world.js');
-const { RESEARCH, SHOP, RELICS, GOLD_TRAINING, GAMBLE_CATEGORIES } = await load('game/data/economy.js');
+const { RESEARCH, SHOP, RELICS, GAMBLE_CATEGORIES } = await load('game/data/economy.js');
 const { GUILD_RESEARCH } = await load('game/data/guild.js');
 const { scaledEnemyStats } = await load('game/data/encounters.js');
 const { SPECIALIZATIONS } = await load('game/data/specializations.js');
@@ -51,7 +51,7 @@ function pickAction(s, r) {
         () => ({ type: 'attribute', id: pick(ATTRS) }), () => ({ type: 'resetAttributes' }), () => ({ type: 'claimBook', id: pick(FISH).id }),
         () => ({ type: 'registerItem', id: pick(inv) }), () => ({ type: 'target', id: pick(FISH).id }), () => ({ type: 'savePreset', id: String(Math.floor(r() * 3)) }),
         () => ({ type: 'loadPreset', id: String(Math.floor(r() * 3)) }), () => ({ type: 'equip', id: pick(inv) }), () => ({ type: 'unequip', id: pick(['rod', 'coat', 'charm']) }),
-        () => ({ type: 'sell', id: pick(inv) }), () => ({ type: 'upgrade', id: pick(GOLD_TRAINING).id }), () => ({ type: 'rebirth' }),
+        () => ({ type: 'sell', id: pick(inv) }), () => ({ type: 'rebirth' }),
         () => ({ type: 'specialize', id: pick(skillIds), value: pick([...SPECIALIZATIONS.map(x => x.id), 'none']) }), () => ({ type: 'bossResearch', id: pick(DUNGEONS).id }),
         () => ({ type: 'growthGoal', id: pick(skillIds), value: 'skill' }), () => ({ type: 'offlineDismiss' }),
         () => ({ type: 'buy', id: pick(SHOP).id }), () => ({ type: 'gamble', id: pick(GAMBLE_CATEGORIES).id }), () => ({ type: 'enhance', id: pick(inv) }),
