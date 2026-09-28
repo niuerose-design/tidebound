@@ -24,6 +24,7 @@ const {shopCost,gambleCost,shopPreview}=await import(pathToFileURL(join(out,'gam
 const {itemStats,enhanceCost,bulkItems}=await import(pathToFileURL(join(out,'game/systems/equipment.js')).href);
 const {goldMultiplier,dungeonGoldMultiplier,dropRate,hitChance}=await import(pathToFileURL(join(out,'game/systems/stats.js')).href);
 const {rebirthLevel,rebirthReward,tierReward}=await import(pathToFileURL(join(out,'game/systems/meta.js')).href);
+const longTerm=await import(pathToFileURL(join(out,'game/data/long-term.js')).href);
 const {xpNeeded}=await import(pathToFileURL(join(out,'game/data/balance.js')).href);
 const {PROGRESSION}=await import(pathToFileURL(join(out,'game/data/progression.js')).href);
 const {JOBS,JOB_TREES}=await import(pathToFileURL(join(out,'game/data/classes.js')).href);
@@ -62,7 +63,7 @@ test('SP is only earned once at 10000 catches; early codex rewards are gold',()=
  s.book.minnow=10000;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.sp,1);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
  s.inventory.push({id:'book-item',slot:'rod',rarity:1,power:5,level:1,name:'test'});act(s,{type:'registerItem',id:'book-item'},0);assert.equal(s.itemBook['rod:1'],true);assert.equal(s.inventory.length,0);assert.throws(()=>act(s,{type:'registerItem',id:'book-item'},0));
 });
-test('Migration preserves old progress and is idempotent',()=>{const s=newState(0);s.version=1;s.level=20;s.gold=345;s.job='harpoon';s.skills=['hook','pierce'];s.book.minnow=50;const gear=JSON.stringify(s.equipment);migrateState(s);assert.equal(s.version,6);assert.equal(s.gold,345);assert.equal(s.book.minnow,50);assert.equal(s.statPoints,80);assert.equal(s.learned.pierce,1);assert.equal(JSON.stringify(s.equipment),gear);const saved=JSON.stringify(s);migrateState(s);assert.equal(JSON.stringify(s),saved);});
+test('Migration preserves old progress and is idempotent',()=>{const s=newState(0);s.version=1;s.level=20;s.gold=345;s.job='harpoon';s.skills=['hook','pierce'];s.book.minnow=50;const gear=JSON.stringify(s.equipment);migrateState(s);assert.equal(s.version,7);assert.equal(s.gold,345);assert.equal(s.book.minnow,50);assert.equal(s.statPoints,80);assert.equal(s.learned.pierce,1);assert.equal(JSON.stringify(s.equipment),gear);const saved=JSON.stringify(s);migrateState(s);assert.equal(JSON.stringify(s),saved);});
 test('Equipment swapping preserves item counts and sale is single-use',()=>{const s=newState(0);s.inventory.push({id:'test',name:'Test',slot:'rod',rarity:2,power:20,level:1});act(s,{type:'equip',id:'test'},0);assert.equal(s.equipment.rod.id,'test');assert.equal(s.inventory.length,1);act(s,{type:'sell',id:'starter'},0);assert.throws(()=>act(s,{type:'sell',id:'starter'},0));assert.equal(s.inventory.length,0)});
 test('Upgrades consume exact currency and reject insufficient funds',()=>{const s=newState(0);act(s,{type:'upgrade',id:'attack'},0);assert.equal(s.gold,30);assert.equal(s.upgrades.attack,1);assert.throws(()=>act(s,{type:'upgrade',id:'attack'},0));assert.throws(()=>act(s,{type:'permanent',id:'attack'},0));});
 test('Rebirth resets run while preserving permanent progression',()=>{const s=newState(0);s.level=30;s.job='harpoon';s.gold=999;s.book={minnow:50};s.permanent.attack=2;s.pearls=1;s.clears.grotto=1;s.skills=['pierce'];act(s,{type:'rebirth'},100);assert.equal(s.level,1);assert.equal(s.job,'fisher');assert.equal(s.gold,100);assert.equal(s.pearls,4);assert.equal(s.rebirths,1);assert.equal(s.book.minnow,50);assert.equal(s.permanent.attack,2);assert.equal(s.clears.grotto,1);assert.deepEqual(s.skills,['hook']);assert.equal(s.hp,stats(s).hp)});
@@ -89,7 +90,7 @@ test('Rebirth skills still require their job; temple relic and research caps wor
 test('Gold and experience multipliers match actual combat payouts',()=>{const s=newState(0);s.rebirths=2;s.permanent.gold=2;s.permanent.exp=1;s.upgrades.gold=3;s.level=20;s.running=true;s.enemy={id:'minnow',name:'target',hp:1,maxHp:1,attack:0,defense:0,exp:10,gold:100,boss:false,stun:0};const gold=s.gold,exp=s.exp,mult=goldMultiplier(s);tick(s,()=>.5);assert.equal(s.gold-gold,Math.floor(100*mult));assert.equal(s.exp-exp,17);assert.ok(s.logs.some(l=>l.text.includes(`+${Math.floor(100*mult)} G`)));});
 test('Tide scaling and endless depths advance only on full clear',()=>{const s=newState(0);assert.throws(()=>act(s,{type:'tide',id:'1'},0));s.rebirths=3;act(s,{type:'tide',id:'2'},0);s.running=true;tick(s,()=>.5);assert.ok(s.enemy.maxHp>50);s.level=100;s.upgrades.attack=10000;s.upgrades.hp=10000;act(s,{type:'dungeon',id:'abyss'},0);assert.equal(s.dungeon.depth,1);assert.throws(()=>act(s,{type:'tide',id:'1'},0));for(let i=0;i<20&&s.running;i++)tick(s,()=>.5);assert.equal(s.abyssBest,1);assert.equal(s.pearls,1);act(s,{type:'dungeon',id:'abyss'},0);assert.equal(s.dungeon.depth,2);act(s,{type:'leaveDungeon'},0);assert.equal(s.abyssBest,1);assert.equal(s.pearls,1);act(s,{type:'dungeon',id:'abyss'},0);for(let i=0;i<20&&s.running;i++)tick(s,()=>.5);assert.equal(s.abyssBest,2);assert.equal(s.pearls,2);});
 test('Accuracy and evasion use the displayed formula',()=>{assert.ok(Math.abs(hitChance({accuracy:.94},{evasion:.14})-.8)<1e-9);assert.ok(Math.abs(hitChance({accuracy:.94},{evasion:.24})-.7)<1e-9);assert.equal(hitChance({accuracy:2},{evasion:0}),.995);assert.equal(hitChance({accuracy:.1},{evasion:.8}),.01);});
-test('V2 migration preserves existing investments',()=>{const s=newState(0);s.version=2;s.permanent.ap=3;s.rebirths=2;s.gold=12345;s.pearls=45;s.learned.hook=4;delete s.tide;delete s.abyssBest;delete s.shopSerial;migrateState(s);assert.equal(s.version,6);assert.equal(s.tide,0);assert.equal(s.gold,12345);assert.equal(s.pearls,45);assert.equal(s.learned.hook,4);assert.equal(apCapacity(s),11);const old=JSON.stringify(s);migrateState(s);assert.equal(JSON.stringify(s),old);});
+test('V2 migration preserves existing investments',()=>{const s=newState(0);s.version=2;s.permanent.ap=3;s.rebirths=2;s.gold=12345;s.pearls=45;s.learned.hook=4;delete s.tide;delete s.abyssBest;delete s.shopSerial;migrateState(s);assert.equal(s.version,7);assert.equal(s.tide,0);assert.equal(s.gold,12345);assert.equal(s.pearls,45);assert.equal(s.learned.hook,4);assert.equal(apCapacity(s),11);const old=JSON.stringify(s);migrateState(s);assert.equal(JSON.stringify(s),old);});
 test('Guild creation, rename, treasury research and reincarnation persistence',()=>{const s=newState(0);assert.throws(()=>act(s,{type:'guildJoin',value:'심해개척단'},0));s.gold=10000;s.level=20;act(s,{type:'guildJoin',value:'파도연합'},0);assert.equal(s.gold,9000);act(s,{type:'guildRename',value:'푸른파도'},0);assert.equal(s.guild.name,'푸른파도');assert.equal(s.gold,8500);act(s,{type:'guildDonate',id:'1000'},0);assert.equal(s.guild.treasury,1000);const attack=stats(s).attack;act(s,{type:'guildResearch',id:'might'},0);assert.equal(s.guild.research.might,1);assert.ok(stats(s).attack>attack);s.guild.missionKills=100;act(s,{type:'guildClaim',id:'kills'},0);assert.equal(s.guild.medals,3);assert.equal(snapshot(s).guild,'푸른파도');s.level=30;s.gold=10000;const saved=JSON.stringify(s.guild);act(s,{type:'rebirth'},0);assert.equal(JSON.stringify(s.guild),saved);});
 test('Guild raid cooldown and gold cannot be bypassed',()=>{const s=newState(0);s.gold=10000;act(s,{type:'guildJoin',value:'레이드'},0);s.guild.treasury=100000;s.level=100;s.upgrades.attack=1000;act(s,{type:'guildRaid'},1000);assert.equal(s.guild.lastRaid,1000);assert.throws(()=>act(s,{type:'guildRaid'},1001));assert.ok(s.guild.treasury<100000);});
 test('SP and mastery reach identical growth levels, never stacking or locking',()=>{
@@ -146,7 +147,7 @@ test('SP inheritance, growth and practice survive reincarnation',()=>{
 });
 test('V4 migration preserves balances and investments and initializes SP inheritance once',()=>{
  const s=newState(0);s.version=4;delete s.skillInheritances;s.sp=32;s.learned.pierce=4;s.skillSpent.pierce=10;s.skillPractice.pierce=900;s.gold=444;
- migrateState(s);assert.equal(s.version,6);assert.equal(s.sp,32);assert.equal(s.skillSpent.pierce,10);assert.equal(s.learned.pierce,4);assert.equal(s.gold,444);assert.deepEqual(s.skillInheritances,{});
+ migrateState(s);assert.equal(s.version,7);assert.equal(s.sp,32);assert.equal(s.skillSpent.pierce,10);assert.equal(s.learned.pierce,4);assert.equal(s.gold,444);assert.deepEqual(s.skillInheritances,{});
  const json=JSON.stringify(s);migrateState(s);assert.equal(JSON.stringify(s),json);
 });
 test('Level ups grant native skills but no SP',()=>{
@@ -254,6 +255,22 @@ test('Active descriptions show maximum-resource scaling, statuses and additional
  const hush=skillGrowthStages(SKILLS.find(sk=>sk.id==='hushCurrent'));assert.match(hush[0].effects.join(' '),/침묵 2턴/);
  const twin=skillGrowthStages(SKILLS.find(sk=>sk.id==='twinHook'));assert.match(twin[0].effects.join(' '),/추가 공격/);
  for(const sk of SKILLS){const rows=skillGrowthStages(sk);assert.equal(rows.length,maxSkillLevel(sk)+1);assert.ok(rows.every(r=>r.effects.length&&Number.isFinite(r.effective.cost)));}
+});
+
+test('Abyss pearls scale with depth and milestone SP is granted once, survives rebirth and migrates retroactively',()=>{
+ const {abyssPearls,ABYSS_SP_MILESTONES}=longTerm;
+ assert.deepEqual([1,5,9,10,15,25,50].map(abyssPearls),[1,3,1,6,6,9,18]);
+ const clearNext=(s)=>{act(s,{type:'dungeon',id:'abyss'},s.lastTick);let t=s.lastTick;for(let i=0;i<4000&&s.dungeon;i++){t+=2000;advance(s,t,rng);}assert.equal(s.dungeon,null);};
+ const s=newState(0);s.level=60;s.rebirths=3;s.permanent.attack=3000;s.permanent.hp=3000;s.permanent.guard=1000;s.abyssBest=9;s.sp=0;s.hp=stats(s).hp;s.mana=stats(s).mana;
+ const pearls=s.pearls;clearNext(s);
+ assert.equal(s.abyssBest,10);assert.equal(s.pearls-pearls,6);assert.equal(s.sp,1);assert.deepEqual(s.abyssMilestones,[10]);
+ s.abyssBest=24;s.hp=stats(s).hp;clearNext(s);assert.equal(s.sp,2);assert.deepEqual(s.abyssMilestones,[10,25]);
+ s.abyssMilestones.push(50);s.abyssBest=49;s.hp=stats(s).hp;clearNext(s);assert.equal(s.sp,2,'already-claimed milestone pays nothing');
+ s.level=100;act(s,{type:'rebirth'},s.lastTick);assert.deepEqual(s.abyssMilestones,[10,25,50]);
+ const old=newState(0);old.version=6;delete old.abyssMilestones;old.abyssBest=30;old.sp=4;migrateState(old);
+ assert.equal(old.version,7);assert.equal(old.sp,6);assert.deepEqual(old.abyssMilestones,[10,25]);
+ const json=JSON.stringify(old);migrateState(old);assert.equal(JSON.stringify(old),json);
+ assert.deepEqual(ABYSS_SP_MILESTONES,[10,25,50,100]);
 });
 
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});

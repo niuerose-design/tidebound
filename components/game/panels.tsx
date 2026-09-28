@@ -22,6 +22,7 @@ import { Empty, Heading, Meter, SkillIcon, SlotIcon, format } from './shared';
 import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, useCombatFx } from './combat-fx';
 import { StatusBadges } from './combat-status';
 import type { Ranking } from './use-game';
+import { abyssPearls, nextAbyssMilestone } from '@/game/data/long-term';
 type Props = {
     s: State;
     send: (a: Action, path?: string) => void;
@@ -99,7 +100,7 @@ export function Dungeons({ s, send, busy }: Props) {
             <Coins size={15}/>{format(Math.floor(d.gold * tierReward(tier) * goldMultiplier(s) * dungeonGoldMultiplier(s)))} G</span>
             <span>
             <Sparkles size={15}/>희귀 이상 장비</span>
-            <span>{d.id === 'abyss' ? '새 깊이 진주 1~3' : `첫 클리어 진주 ${d.pearls}`}</span>
+            <span>{d.id === 'abyss' ? `${s.abyssBest + 1}층 진주 ${abyssPearls(s.abyssBest + 1)}` : `첫 클리어 진주 ${d.pearls}`}</span>{d.id === 'abyss' && nextAbyssMilestone(s.abyssBest) && <span>{nextAbyssMilestone(s.abyssBest)}층 첫 돌파 SP 1</span>}
             </div>
             </div>
             <div className="dungeon-action">

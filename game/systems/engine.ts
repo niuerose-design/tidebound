@@ -1,7 +1,7 @@
 import { BOSS_RESEARCH, SPECIALIZATIONS, specializationFits } from '../data/specializations';
 import { commerce } from './commerce';
 import { rollAffix, saleValue } from './equipment';
-import { vocationTargets, thresholdRank, refinementBonusLabel } from '../data/long-term';
+import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, skillPracticeTargets } from './progression';
 import { rebirthLevel, rebirthReward, tideLimit, encounterTier, tierReward, tierHealth, tierAttack } from './meta';
 import { goldMultiplier, dungeonGoldMultiplier, expMultiplier } from './stats';
@@ -27,8 +27,8 @@ export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'syst
 export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
-        version: 6,
-        skillSpecializations: {}, bossResearchClaims: {}, growthGoal: null,
+        version: 7,
+        skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null,
         tide: 0,
         abyssBest: 0,
         shopSerial: 0,
@@ -181,8 +181,15 @@ function reward(s: State, rng: () => number) {
             const depth = s.dungeon.depth || 1;
             if (d.id === 'abyss') {
                 s.abyssBest = Math.max(s.abyssBest, depth);
-                s.pearls += 1 + (depth % 5 === 0 ? 2 : 0);
-                addLog(s, `심연 ${depth}층 정복 · 진주 +${1 + (depth % 5 === 0 ? 2 : 0)}`);
+                const pearls = abyssPearls(depth);
+                s.pearls += pearls;
+                addLog(s, `심연 ${depth}층 정복 · 진주 +${pearls}`, 'reward');
+                s.abyssMilestones ??= [];
+                if (ABYSS_SP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) {
+                    s.abyssMilestones.push(depth);
+                    s.sp += 1;
+                    addLog(s, `심연 ${depth}층 첫 돌파 이정표 · SP +1`, 'reward');
+                }
             }
             if (first && BOSS_RESEARCH[d.id]) addLog(s, `${d.name} 첫 정복! 던전 화면에서 연구 보상 SP ${BOSS_RESEARCH[d.id].sp}을 받으세요.`, 'reward');
             if (first && d.id !== 'abyss')
@@ -603,7 +610,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             }
             fresh.abyssBest = s.abyssBest;
             fresh.shopSerial = s.shopSerial;
-            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild });
+            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild });
             s.hp = stats(s).hp;
             s.mana = stats(s).mana;
             addLog(s, `새로운 항해가 시작됩니다. 환생 진주 +${pearls}`);

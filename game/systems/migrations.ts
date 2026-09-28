@@ -2,15 +2,24 @@ import type { State } from '../types';
 import { initialProgress, apUsed, apCapacity, grantJobSkills, trimLoadout } from './progression';
 import { stats } from './stats';
 import { newGuild } from '../data/guild';
-/** v1 → v6 additive migration. No gold/items/codex/levels/guild progress are removed. */
+import { ABYSS_SP_MILESTONES } from '../data/long-term';
+/** v1 → v7 additive migration. No gold/items/codex/levels/guild progress are removed. */
 export function migrateState(s: State): State {
-    if (s.version === 6) return s;
+    if (s.version === 7) return s;
+    if (s.version === 6) {
+        // Depths already reached before v20.2 still earn their one-time SP.
+        const reached = ABYSS_SP_MILESTONES.filter(n => (s.abyssBest || 0) >= n);
+        s.abyssMilestones = reached;
+        s.sp += reached.length;
+        s.version = 7;
+        return s;
+    }
     if (s.version === 5) {
         s.skillSpecializations ??= {};
         s.bossResearchClaims ??= {};
         s.growthGoal ??= null;
         s.version = 6;
-        return s;
+        return migrateState(s);
     }
     if (s.version === 4) {
         // Existing SP balances are intentionally preserved; only future

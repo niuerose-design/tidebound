@@ -145,7 +145,9 @@ export type GuildState = {
     lastRaid: number;
 };
 export type State = {
-    version: 1 | 2 | 3 | 4 | 5 | 6;
+    version: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+    /** SP를 지급한 무한 심연 이정표 깊이. 환생해도 유지됩니다. */
+    abyssMilestones?: number[];
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
     growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number } | null;

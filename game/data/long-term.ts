@@ -14,3 +14,9 @@ export const thresholdRank = (practice: number, targets: number[]) => targets.fi
 export const rebirthExperience = (count: number) => .25 * (Math.min(20, count) + Math.sqrt(Math.max(0, count - 20)));
 export const rebirthMemory = (count: number) => 1 + .025 * Math.sqrt(Math.max(0, count));
 export const evasionRating = (raw: number) => raw <= .5 ? Math.max(0, raw) : .5 + .4 * (raw - .5) / (.4 + raw - .5);
+
+// v20.2 무한 심연: 깊을수록 한 층의 가치가 커집니다. 5의 배수 층은 3배.
+export const abyssPearls = (depth: number) => (1 + Math.floor(depth / 10)) * (depth % 5 === 0 ? 3 : 1);
+/** 처음 돌파할 때 SP 1을 주는 깊이. SP는 극히 드문 자원이므로 이정표 수를 적게 유지합니다. */
+export const ABYSS_SP_MILESTONES = [10, 25, 50, 100];
+export const nextAbyssMilestone = (best: number) => ABYSS_SP_MILESTONES.find(n => n > best);
