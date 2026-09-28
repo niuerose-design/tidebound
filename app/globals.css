@@ -3569,3 +3569,28 @@ strong,b {
 .help-rule dt { color: var(--gold); font-weight: 600; white-space: nowrap; }
 .help-rule dd { margin: 0; line-height: 1.6; }
 @media (max-width: 767px) { .rebirth-three { grid-template-columns: 1fr; } }
+
+/* v20.6 전투 결과 표시: 물리(주황)·마법(청록)·복합(보라) */
+:root { --dmg-physical: #f2a36b; --dmg-magic: #7fd6ee; --dmg-split: #c7a3f0; }
+.bar-fx.dmg-physical { --bar-fx: var(--dmg-physical); }
+.bar-fx.dmg-magic { --bar-fx: var(--dmg-magic); }
+.bar-fx.dmg-split { --bar-fx: var(--dmg-split); }
+.bar-fx > b.miss { color: #a9b8ba; font-size: 12px; }
+.bar-fx.drain > b { top: 12px; }
+.battle-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0; font-size: 12.5px; line-height: 1.6; }
+.battle-line > span { color: var(--muted); font-family: ui-monospace, monospace; }
+.battle-line .log-icon { flex-shrink: 0; }
+.battle-line.dmg-physical .log-icon, .battle-line.dmg-physical strong { color: var(--dmg-physical); }
+.battle-line.dmg-magic .log-icon, .battle-line.dmg-magic strong { color: var(--dmg-magic); }
+.battle-line.dmg-split .log-icon, .battle-line.dmg-split strong { color: var(--dmg-split); }
+.battle-line em { font-style: normal; padding: 0 5px; border-radius: 4px; background: rgba(255,255,255,.05); }
+.battle-line em.crit { color: #ffe2a0; font-weight: 700; }
+.battle-line em.miss { color: #a9b8ba; }
+.battle-line em.heal { color: #9ce8b4; }
+.battle-line em.status { color: #f5d680; }
+.battle-line em.dmg-dot { color: #f09b95; }
+.battle-line.log-miss { opacity: .8; }
+.status-chip { cursor: pointer; border: 0; font: inherit; }
+.status-pop { max-width: 240px; font-size: 13px; line-height: 1.6; }
+.status-pop strong { display: block; margin-bottom: 4px; }
+.status-pop small { display: block; color: var(--muted); margin-top: 4px; }

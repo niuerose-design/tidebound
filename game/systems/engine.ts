@@ -12,14 +12,14 @@ import { FISH, STAGES, DUNGEONS, SWARM_SIZES, SWARM_UNLOCK, swarmAttackMultiplie
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { EQUIPMENT_NAMES } from '../data/equipment';
-import { strike, fighterSpeed, Fighter } from './combat';
+import { strike, fighterSpeed, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION, emptyAttributes } from '../data/progression';
 import { initialProgress, canUse, canChangeJob, trimLoadout, validLoadout, skillCost, bookReward, itemKey, skillMasteryRanks, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from './progression';
 import { scaledEnemyStats, profile } from '../data/encounters';
 import { newGuild } from '../data/guild';
 import { guildAction, guildHasJoined } from './guild';
-export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'system' | 'skill' = 'system') {
-    s.logs.push({ id: ++s.logId, text, type });
+export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'system' | 'skill' = 'system', event?: CombatEvent) {
+    s.logs.push({ id: ++s.logId, text, type, ...(event ? { event } : {}) });
     if (s.logs.length > 70)
         s.logs.shift();
 }
@@ -273,9 +273,10 @@ export function tick(s: State, rng = Math.random) {
     const player: Fighter = { name: s.name, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), specializations: s.skillSpecializations, practice: s.skillPractice };
     const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = fighterSpeed(player) >= fighterSpeed(enemy) ? player : enemy, second = first === player ? enemy : player;
-    addLog(s, strike(first, second, rng), 'battle');
+    const events: CombatEvent[] = [];
+    addLog(s, strike(first, second, rng, events), 'battle', events.at(-1));
     if (first.hp > 0 && second.hp > 0)
-        addLog(s, strike(second, first, rng), 'battle');
+        addLog(s, strike(second, first, rng, events), 'battle', events.at(-1));
     s.hp = player.hp;
     s.mana = player.mana ?? a.mana;
     s.playerStun = player.stun;

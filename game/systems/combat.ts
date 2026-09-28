@@ -1,7 +1,8 @@
 import { SKILLS } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
-import type { Stats, StatusEffects } from '../types';
+import type { Stats, StatusEffects, CombatEvent, CombatHit } from '../types';
+export type { CombatEvent, CombatHit } from '../types';
 import { normalizeStats, hitChance } from './stats';
 import { effectiveSkill } from './progression';
 export type Fighter = {
@@ -34,6 +35,15 @@ function consumeStatus(effects: StatusEffects, key: DurationStatus) {
 function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number) {
     effects[key] = Math.max(effects[key] || 0, turns);
 }
+const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합' } as const;
+/** 본타·추가타를 한 번씩만 적고, 추가타가 있을 때만 합계를 붙입니다. */
+export function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageType'>) {
+    const word = DAMAGE_WORD[ev.damageType];
+    if (ev.hits.every(h => h.miss)) return '빗나감';
+    if (ev.hits.length === 1) return `${ev.total} ${word} 피해`;
+    const part = (h: CombatHit) => h.miss ? '빗나감' : `${h.value}${h.critical ? ' [치명타]' : ''}`;
+    return [`본타 ${part(ev.hits[0])}`, ...ev.hits.slice(1).map((h, i) => `추가타${ev.hits.length > 2 ? ` ${i + 1}` : ''} ${part(h)}`), `합계 ${ev.total} ${word} 피해`].join(' · ');
+}
 /** 무리 개체는 한 번의 타격(지속 피해 포함)으로 한 마리 체력까지만 잃습니다. 넘친 피해로 여러 마리를 한꺼번에 잡지 않게 합니다. */
 const unitCap = (f: Fighter) => f.swarm ? Math.ceil((f.stats.hp || 0) / f.swarm) : Infinity;
 /** Speed used for the existing round-based order. Slow/haste change priority, not action count. */
@@ -45,36 +55,44 @@ export function fighterSpeed(f: Fighter) {
     return Math.max(1, base * multiplier);
 }
 /** Shared PvE/PvP action. Recovery, status, conditional proc, MP, accuracy, defense and crit. */
-export function strike(a: Fighter, b: Fighter, rng = Math.random) {
+export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[]) {
     const sa = normalizeStats(a.stats), sb = normalizeStats(b.stats);
     a.effects ??= {};
     b.effects ??= {};
     a.mana = Math.min(sa.mana, (a.mana ?? sa.mana) + sa.manaRegen);
     const notes: string[] = [];
+    const ev: CombatEvent = { actor: a.name, skillName: '기본 공격', damageType: 'physical', hits: [], total: 0, healed: 0, drained: 0, statuses: [] };
+    const emit = (text: string) => { events?.push(ev); return text; };
     if (a.effects.dot) {
         const dot = a.effects.dot;
         const dotHit = Math.min(dot.damage, unitCap(a));
         a.hp = Math.max(0, a.hp - dotHit);
         notes.push(`${dot.name} ${dotHit}`);
+        ev.dot = { name: dot.name, value: dotHit };
         dot.turns--;
         if (dot.turns <= 0)
             delete a.effects.dot;
-        if (a.hp <= 0)
-            return `${a.name} · ${notes.join(' · ')} → 쓰러짐`;
+        if (a.hp <= 0) {
+            ev.defeated = true;
+            return emit(`${a.name} · ${notes.join(' · ')} → 쓰러짐`);
+        }
     }
     const attackSpeed = fighterSpeed(a), targetSpeed = fighterSpeed(b);
     const weakened = consumeStatus(a.effects, 'weaken');
     const silenced = consumeStatus(a.effects, 'silence');
     consumeStatus(a.effects, 'slow');
     consumeStatus(a.effects, 'haste');
-    if (silenced)
+    if (silenced) {
         notes.push('침묵 중');
+        ev.silenced = true;
+    }
     const blocked = new Set(Object.keys(a.cooldowns).filter(k => a.cooldowns[k] > 0));
     for (const k of Object.keys(a.cooldowns))
         a.cooldowns[k] = Math.max(0, a.cooldowns[k] - 1);
     if (a.stun > 0) {
         a.stun--;
-        return `${a.name}: 기절로 행동 불가.${notes.length ? ' ' + notes.join(' · ') : ''}`;
+        ev.stunned = true;
+        return emit(`${a.name}: 기절로 행동 불가.${notes.length ? ' ' + notes.join(' · ') : ''}`);
     }
     let chosen;
     if (!silenced) {
@@ -100,7 +118,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
     if (chosen) {
         a.cooldowns[chosen.id] = chosen.cooldown;
         a.mana = Math.max(0, a.mana - (chosen.manaCost || 0));
-        if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.slow; notes.push('정화'); }
+        if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
         if (chosen.effect === 'heal') {
             healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio)));
             a.hp += healed;
@@ -109,7 +127,6 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
     const hit = hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) }, { ...sb, speed: targetSpeed });
     const label = chosen?.name || '기본 공격';
     const landed = rng() < hit;
-    if (!landed) notes.push('본타 빗나감');
     const magical = chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack;
     const split = chosen?.damageType === 'split';
     // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
@@ -130,53 +147,60 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
         : Math.round(raw * 100 / (100 + defense * 2));
     const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow) : false;
     const linkMultiplier = linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1;
-    if (linked) notes.push('연계');
+    if (linked) { notes.push('연계'); ev.linked = true; }
     const crit = landed && rng() < sa.crit;
     const damage = landed ? Math.min(unitCap(b), Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)))) : 0;
     const actual = Math.min(b.hp, damage);
-    let totalDamage = damage;
     b.hp = Math.max(0, b.hp - damage);
+    // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
+    ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed });
     if (landed && chosen?.effect === 'stun') {
         b.stun = Math.max(b.stun, chosen.statusTurns ?? 1);
         notes.push('기절');
+        ev.statuses.push({ id: 'stun', turns: chosen.statusTurns ?? 1 });
     }
     if (landed && chosen?.effect === 'bleed') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.bleedTurns;
         b.effects.dot = { damage: Math.max(1, Math.floor(base * SKILL_FORMULA.bleedRatio * (weakened ? SKILL_FORMULA.weakenedDamage : 1))), turns, name: '출혈' };
         notes.push(`출혈 ${turns}턴`);
+        ev.statuses.push({ id: 'bleed', turns });
     }
     if (landed && chosen?.effect === 'weaken') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.weakenTurns;
         extendStatus(b.effects, 'weaken', turns);
         notes.push(`공격 약화 ${turns}턴`);
+        ev.statuses.push({ id: 'weaken', turns });
     }
     if (landed && chosen?.effect === 'silence') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.silenceTurns;
         extendStatus(b.effects, 'silence', turns);
         notes.push(`침묵 ${turns}턴`);
+        ev.statuses.push({ id: 'silence', turns });
     }
     if (landed && chosen?.effect === 'slow') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.slowTurns;
         extendStatus(b.effects, 'slow', turns);
         notes.push(`감속 ${turns}턴`);
+        ev.statuses.push({ id: 'slow', turns });
     }
     if (landed && chosen?.effect === 'haste') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.hasteTurns;
         extendStatus(a.effects, 'haste', turns);
         notes.push(`가속 ${turns}턴`);
+        ev.statuses.push({ id: 'haste', turns, onSelf: true });
     }
     const drain = Math.floor(actual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0)));
     if (drain) {
         const recovery = Math.min(sa.hp - a.hp, drain);
         a.hp += recovery;
-        healed += recovery;
+        ev.drained += recovery;
     }
     // Follow-up hits are part of the same action. They use the same hit chance,
     // cannot recursively trigger another follow-up, and are capped in balance.ts.
     const followUps = Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
     for (let i = 0; i < followUps && b.hp > 0; i++) {
         if (rng() >= hit) {
-            notes.push(`추가타 ${i + 1} 빗나감`);
+            ev.hits.push({ kind: 'follow', value: 0, critical: false, miss: true });
             continue;
         }
         const followCrit = rng() < sa.crit;
@@ -184,14 +208,18 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
         const followDamage = Math.min(unitCap(b), Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1))));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
-        totalDamage += followDamage;
+        ev.hits.push({ kind: 'follow', value: followActual, critical: followCrit, miss: false });
         const followDrain = Math.floor(followActual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0)));
         if (followDrain) {
             const recovery = Math.min(sa.hp - a.hp, followDrain);
             a.hp += recovery;
-            healed += recovery;
+            ev.drained += recovery;
         }
-        notes.push(`추가타 ${followDamage}${followCrit ? ' [치명타]' : ''}`);
     }
-    return `${a.name} · ${label}${crit ? ' [치명타]' : ''} → ${totalDamage ? `${totalDamage} ${split ? '복합' : magical ? '마법' : '물리'} 피해` : '빗나감'}${healed ? ` · ${healed} 회복` : ''}${notes.length ? ' · ' + notes.join(' · ') : ''}`;
+    ev.skillId = chosen?.id;
+    ev.skillName = label;
+    ev.damageType = split ? 'split' : magical ? 'magic' : 'physical';
+    ev.healed = healed;
+    ev.total = ev.hits.reduce((n, h) => n + h.value, 0);
+    return emit(`${a.name} · ${label}${crit ? ' [치명타]' : ''} → ${describeHits(ev)}${healed ? ` · 회복 ${healed}` : ''}${ev.drained ? ` · 흡혈 ${ev.drained}` : ''}${notes.length ? ' · ' + notes.join(' · ') : ''}`);
 }

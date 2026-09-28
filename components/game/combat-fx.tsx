@@ -40,11 +40,18 @@ export function CombatFxOverlay({ effect }: { effect: CombatFx[] }) {
     </div>)}</div>;
 }
 
+const DAMAGE_ICON = { physical: '⚔', magic: '✦', split: '⚔✦' } as const;
+/** HP 바 위 숫자: 실제로 깎인 값만 한 번씩. 물리·마법·복합은 색과 아이콘, 치명·빗나감·흡혈·지속 피해는 실제 결과로 표시합니다. */
 export function CombatBarEffect({ effect, target }: { effect: CombatFx[]; target: 'player' | 'enemy' }) {
     return <span className="bar-fx-layer" aria-hidden="true">{effect.flatMap(fx => {
         const hit = fx.target === target && fx.hits.length > 0;
-        const heals = fx.actor === target && fx.healing > 0;
-        return [hit && <span key={`${fx.id}-hit`} className={`bar-fx bar-fx-${fx.kind} ${fx.basic ? 'basic' : ''}`} style={fxStyle(fx.delay)}>{fx.hits.map((part, i) => <b key={i} className={part.critical ? 'critical' : ''} style={fxStyle(fx.delay + i * 160)}>{part.miss ? '빗나감' : `−${part.value.toLocaleString()}`}</b>)}</span>, heals && <span key={`${fx.id}-heal`} className="bar-fx bar-fx-heal" style={fxStyle(fx.delay + 150)}><b>+{fx.healing.toLocaleString()}</b></span>];
+        const self = fx.actor === target;
+        return [
+            self && fx.dot && <span key={`${fx.id}-dot`} className="bar-fx bar-fx-bleed" style={fxStyle(fx.delay)}><b>{fx.dot.name} −{fx.dot.value.toLocaleString()}</b></span>,
+            hit && <span key={`${fx.id}-hit`} className={`bar-fx bar-fx-${fx.kind} dmg-${fx.damageType} ${fx.basic ? 'basic' : ''}`} style={fxStyle(fx.delay)}>{fx.hits.map((part, i) => <b key={i} className={`${part.critical ? 'critical' : ''} ${part.miss ? 'miss' : ''}`} style={fxStyle(fx.delay + i * 160)}>{part.miss ? (i ? '추가타 빗나감' : '빗나감') : `${DAMAGE_ICON[fx.damageType]} −${part.value.toLocaleString()}${part.critical ? ' 치명' : ''}`}</b>)}</span>,
+            self && fx.healing > 0 && <span key={`${fx.id}-heal`} className="bar-fx bar-fx-heal" style={fxStyle(fx.delay + 150)}><b>+{fx.healing.toLocaleString()} 회복</b></span>,
+            self && fx.drained > 0 && <span key={`${fx.id}-drain`} className="bar-fx bar-fx-heal drain" style={fxStyle(fx.delay + 300)}><b>+{fx.drained.toLocaleString()} 흡혈</b></span>,
+        ];
     })}</span>;
 }
 

@@ -126,10 +126,20 @@ export type Enemy = {
     boss: boolean;
     stun: number;
 };
+/** 한 번의 행동 결과. 전투 화면은 문자열 대신 이 값으로 피해·치명·회피·추가타·흡혈을 표시합니다. */
+export type CombatHit = { kind: 'main' | 'follow'; value: number; critical: boolean; miss: boolean };
+export type CombatEvent = {
+    actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split';
+    hits: CombatHit[]; total: number; healed: number; drained: number;
+    statuses: { id: string; turns: number; onSelf?: boolean }[];
+    dot?: { name: string; value: number }; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
+};
 export type Log = {
     id: number;
     text: string;
     type: 'battle' | 'reward' | 'system' | 'skill';
+    /** 전투 로그의 구조화된 결과 (v20.6 이후). */
+    event?: CombatEvent;
 };
 export type GuildState = {
     name: string;
