@@ -116,7 +116,7 @@ export function Dungeons({ s, send, busy }: Props) {
             </div>
             <div className="dungeon-action">
             {BOSS_RESEARCH[d.id]&&<div className="boss-research"><strong>첫 정복 연구 · {BOSS_RESEARCH[d.id].sp} SP</strong>{BOSS_RESEARCH[d.id].specialization&&<p>{SPECIALIZATIONS.find(x=>x.id===BOSS_RESEARCH[d.id].specialization)?.name} 특화 해금</p>}<button className="secondary" disabled={busy||!s.clears[d.id]||!!s.bossResearchClaims?.[d.id]} onClick={()=>send({type:'bossResearch',id:d.id})}>{s.bossResearchClaims?.[d.id]?'연구 보상 수령 완료':s.clears[d.id]?'연구 보상 받기':'첫 정복 후 수령'}</button></div>}
-            <button className="text-button" disabled={busy} onClick={()=>send({type:'growthGoal',id:d.id,value:'dungeon'})}>이 연구를 항해 목표로</button>
+            <button className="text-button" disabled={busy} onClick={()=>send({type:'growthGoal',id:d.id,value:'dungeon'})}>이 연구를 장기 목표로</button>
             <small>{d.id === 'abyss' ? `다음 도전 ${s.abyssBest + 1}층 · 최고 ${s.abyssBest}층` : s.clears[d.id] ? `${s.clears[d.id]}회 정복` : '미탐험'}</small>
             <label className="dungeon-repeat"><span>반복</span><select value={repeatChoice[d.id] || 'once'} disabled={busy || locked || !!s.dungeon} onChange={e => setRepeatChoice({ ...repeatChoice, [d.id]: e.target.value })}>
                 <option value="once">1회</option>

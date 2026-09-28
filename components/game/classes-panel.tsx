@@ -30,7 +30,7 @@ function JobDetail({ j, s, send, busy }: Props & { j: Job }) {
     const bonuses = bonusKeys.filter(key => j[key] !== 1), grows = bonuses.some(key => j[key] > 1) && jobMasteryBoost(j) > 0;
     return <article className={`panel job-inspector ${current ? 'current' : ''}`} aria-label={`${j.name} 상세`}>
         <div className="vocation-top"><span className="badge">{j.hidden ? '히든' : j.branchless ? '독립 1차' : j.tier ? `${j.tier}차` : '시작 직업'} · {j.role}</span>{current && <span className="gold-text">현재 직업</span>}</div>
-        <button className="text-button" disabled={busy} onClick={()=>send({type:'growthGoal',id:j.id,value:'job'})}>이 전직을 항해 목표로</button><h2>{j.name}</h2><p className="job-motto">{j.title}</p><p>{j.desc}</p>
+        <button className="text-button" disabled={busy} onClick={()=>send({type:'growthGoal',id:j.id,value:'job'})}>이 전직을 장기 목표로</button><h2>{j.name}</h2><p className="job-motto">{j.title}</p><p>{j.desc}</p>
         <section className="job-detail-section"><h3>전직 조건 <span className={`job-status ${current ? 'current' : ready ? 'ready' : 'locked'}`}>{current ? '현재 직업' : ready ? '전직 가능' : `조건 미달 · ${missing.length}개 부족`}</span></h3>
             {!current && !ready && <div className="requirements job-missing">{missing.map(r => <span key={r.label}><Lock size={12}/> {r.label}</span>)}</div>}
             {!current && !ready ? metReq.length > 0 && <details className="job-met-fold"><summary>충족한 조건 {metReq.length}개</summary><div className="requirements">{metReq.map(r => <span key={r.label} className="met"><Check size={12}/> {r.label}</span>)}</div></details>

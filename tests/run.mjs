@@ -17,6 +17,7 @@ const {strike,fighterSpeed}=await import(pathToFileURL(join(out,'game/systems/co
 const {combatFxFromLog,combatFxBatch}=await import(pathToFileURL(join(out,'game/systems/combat-feedback.js')).href);
 const {migrateState}=await import(pathToFileURL(join(out,'game/systems/migrations.js')).href);
 const {apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,skillRankDeltas,skillMasteryLevel,skillMasteryHint,masteryMilestonesFor,jobRequirements,validLoadout,skillLevel,maxSkillLevel,inherited,trimLoadout,jobMasteryTarget,jobCombatMultiplier}=await import(pathToFileURL(join(out,'game/systems/progression.js')).href);
+const {goalProgress,goalSuggestions}=await import(pathToFileURL(join(out,'game/systems/goals.js')).href);
 const {skillGrowthStages,skillEffectLines}=await import(pathToFileURL(join(out,'game/systems/skill-description.js')).href);
 const {SKILLS}=await import(pathToFileURL(join(out,'game/data/skills.js')).href);
 const {STAGES,FISH,DUNGEONS}=await import(pathToFileURL(join(out,'game/data/world.js')).href);
@@ -84,6 +85,13 @@ test('Recovery: 8% after a win (4% in dungeons); first aid is free at Lv.2 and a
  const max=stats(s).hp;s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.08));s.skills=['firstAid'];assert.equal(victoryHeal(s),Math.floor(max*.12));
  s.dungeon={id:'grotto',wave:0};assert.equal(victoryHeal(s),Math.floor(max*.08));s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.04));
  const src=engineSource.slice(engineSource.indexOf('function reward('));assert.equal((src.slice(0,src.indexOf('\nfunction ')).match(/victoryHeal\(/g)||[]).length,1);
+});
+test('Long-term goals: dungeon steps, one-time achievement notice, suggestions only what is open now',()=>{
+ const s=newState(0);act(s,{type:'growthGoal',id:'grotto',value:'dungeon'},0);let p=goalProgress(s);assert.equal(p.max,3);assert.equal(p.value,0);
+ s.level=60;s.clears.grotto=1;s.bossResearchClaims.grotto=true;act(s,{type:'sync'},0);assert.equal(goalProgress(s).done,true);assert.equal(s.growthGoal.notified,true);
+ act(s,{type:'sync'},0);assert.equal(s.logs.filter(l=>l.text.startsWith('장기 목표 달성')).length,1);
+ const f=newState(0);const g=goalSuggestions(f);assert.equal(g.job,undefined);assert.equal(g.dungeon,undefined);
+ for(const d of DUNGEONS){const x=newState(0);x.level=d.level;x.rebirths=d.rebirth;const sug=goalSuggestions(x).dungeon;if(sug)assert.ok(x.level>=sug.level&&x.rebirths>=sug.rebirth);}
 });
 test('SP is only earned once at 10000 catches; early codex rewards are gold',()=>{
  const s=newState(0);assert.equal(s.sp,0);s.book.minnow=50;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.sp,0);assert.equal(s.gold,300);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
