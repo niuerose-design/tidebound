@@ -34,7 +34,7 @@ export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
         version: SAVE_VERSION,
-        skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null, tutorial: {}, voyage: {},
+        skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null, tutorial: {}, voyage: {}, statRate: PROGRESSION.statPerLevel,
         tide: 0,
         abyssBest: 0,
         shopSerial: 0,
@@ -263,9 +263,19 @@ function continueRepeat(s: State, id: string, repeat: { left: number | null; unt
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
+    syncStatRate(s);
     tickTurn(s, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
     syncGoal(s, text => addLog(s, text, 'reward'));
+}
+/** 레벨당 능력치 포인트가 오른 뒤(4 → 5), 이전 세이브에 지난 레벨만큼 차액을 한 번 지급합니다. */
+export function syncStatRate(s: State) {
+    const rate = s.statRate ?? 4;
+    if (rate >= PROGRESSION.statPerLevel) return;
+    const bonus = (s.level - 1) * (PROGRESSION.statPerLevel - rate);
+    s.statPoints += bonus;
+    s.statRate = PROGRESSION.statPerLevel;
+    if (bonus > 0) addLog(s, `레벨당 능력치 포인트가 ${PROGRESSION.statPerLevel}로 올라 지난 레벨분 +${bonus}포인트를 받았습니다.`, 'reward');
 }
 function tickTurn(s: State, rng: () => number) {
     s.turn++;
@@ -340,6 +350,7 @@ function claimBookRewards(s: State, id: string) {
     return true;
 }
 export function act(s: State, a: Action, now: number, rng = Math.random) {
+    syncStatRate(s);
     actInner(s, a, now, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
     syncGoal(s, text => addLog(s, text, 'reward'));
@@ -546,8 +557,8 @@ function actInner(s: State, a: Action, now: number, rng: () => number) {
         case 'attribute': {
             if (!['str', 'dex', 'int', 'vit', 'wis', 'luk'].includes(id))
                 throw Error('알 수 없는 능력치입니다.');
-            const amount = Number(a.value || '1');
-            if (!Number.isInteger(amount) || ![1, 5, 10].includes(amount) || s.statPoints < amount)
+            const amount = a.value === 'max' ? s.statPoints : Number(a.value || '1');
+            if (!Number.isInteger(amount) || amount < 1 || (a.value !== 'max' && ![1, 5, 10].includes(amount)) || s.statPoints < amount)
                 throw Error('능력치 포인트가 부족합니다.');
             s.attributes[id as Attribute] += amount;
             s.statPoints -= amount;

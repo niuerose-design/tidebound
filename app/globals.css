@@ -3728,3 +3728,34 @@ strong,b {
 .battle-console>.session-metrics>div{padding:0 12px;gap:8px;min-width:0}
 .battle-console>.session-metrics span{white-space:nowrap;min-width:0}
 @media(min-width:768px) and (max-width:1600px){.battle-console>.session-metrics>div>svg{display:none}}
+.attribute-row .attribute-buttons { flex-direction: row; gap: 6px; flex-shrink: 0; }
+.attribute-row .attribute-buttons button { min-width: 44px; padding-left: 8px; padding-right: 8px; }
+/* v20.14 스킬 카드 간결 보기 */
+.skill-status-badge { align-self: flex-start; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); color: #9fb4af; margin: 10px 0 2px; }
+.skill-status-badge.on { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
+.skill-status-badge.off { color: #7f9a9c; }
+.skill-compact-growth { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #9fb4af; margin: 10px 0 6px; }
+.skill-card.compact .skill-current-description { margin: 8px 0; }
+.skill-card.compact .skill-actions { margin-top: 14px; }
+details.mastery-stack-note { display: block; }
+details.mastery-stack-note > summary { cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c1d0bf; list-style: none; }
+details.mastery-stack-note > summary::-webkit-details-marker { display: none; }
+details.mastery-stack-note > span { display: block; margin-top: 8px; }
+/* v20.14 전직 상세 간결 보기 */
+.job-compact .requirements span small { color: #8faead; margin-left: 3px; font-size: 10px; }
+.job-compact .meter { margin-top: 10px; }
+.job-more { margin: 4px 0 14px; font-size: 13px; }
+.job-more > summary { cursor: pointer; color: #8faead; padding: 8px 0; }
+.job-goal-link { display: block; margin: 10px auto 0; }
+/* v20.14 던전 탐험: 낚시터와 같은 카드형 */
+.dungeon-stage-card { cursor: default; text-align: left; display: flex; flex-direction: column; }
+.dungeon-stage-card.locked { opacity: .55; }
+.dungeon-stage-card .badge.muted { color: #7f9a9c; border-color: var(--border); }
+.dungeon-reward-lines { display: grid; gap: 4px; font-size: 12px; color: #a9bdb8; margin: 12px 0 4px; }
+.dungeon-reward-lines b { display: inline-block; min-width: 34px; color: #d6b879; font-weight: 500; }
+.dungeon-reward-lines span:last-child b { color: #8faead; }
+.dungeon-stage-card > .gold-button { width: 100%; margin-top: 10px; font-size: 13px; }
+.dungeon-actions { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+.dungeon-actions > span { flex: 1; }
+.dungeon-actions select { background: #0f2026; color: #d4e0d6; border: 1px solid var(--border); border-radius: 5px; padding: 5px 6px; font-size: 12px; }
+.dungeon-actions button { display: inline-flex; align-items: center; gap: 5px; }

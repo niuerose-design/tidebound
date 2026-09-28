@@ -3,10 +3,10 @@ import { RegionProgress } from './book-research';
 import { AutoRunStatus } from './auto-run';
 import { BOSS_RESEARCH, SPECIALIZATIONS } from '@/game/data/specializations';
 import { dungeonClearGold, stats } from '@/game/systems/stats';
-import { dungeonTier, tierReward, tierHealth, tierAttack } from '@/game/systems/meta';
+import { dungeonTier } from '@/game/systems/meta';
 import { TideSelector } from './economy-panels';
 import { useState } from 'react';
-import { Anchor, ArrowUpRight, Lock, RefreshCw, Sparkles, Swords, Waves, Coins } from 'lucide-react';
+import { Anchor, ArrowUpRight, Lock, RefreshCw, Swords, Waves } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table';
@@ -16,7 +16,7 @@ import { STAGES, FISH, DUNGEONS } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
 import { JOBS } from '@/game/data/classes';
 import { TRAINING } from '@/game/systems/duel';
-import { ENEMY_SKILLS, profile, scaledEnemyStats } from '@/game/data/encounters';
+import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
 import { statDisplay } from '@/game/data/progression';
 import { Empty, Heading, Meter, format } from './shared';
 import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, useCombatFx } from './combat-fx';
@@ -86,46 +86,31 @@ export function Dungeons({ s, send, busy }: Props) {
         </div>
         <div className="dungeon-combat-log"><div className="section-title"><h3>최근 전투 로그</h3><span>자동 갱신</span></div>{s.logs.filter(log => log.type === 'battle').slice(-6).reverse().map(log => <BattleLogLine key={log.id} log={log}/>)}</div>
     </section>}
-    <div className="dungeon-list">{[...DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
+    <div className="stage-grid dungeon-grid">{[...DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
             const locked = s.level < d.level || s.rebirths < d.rebirth;
             const tier = dungeonTier(d.id, s.abyssBest + 1);
-            const bossFish = FISH.find(f => f.id === d.bossFish)!;
-            const bossStats = scaledEnemyStats(bossFish, { boss: true, tier, wave: d.fish.length - 1 });
-            return <section className="panel dungeon-card" key={d.id}>
-            <div className="dungeon-emblem">
-            <Anchor size={44}/>
-            <span>0{i + 1}</span>
-            </div>
-            <div className="dungeon-copy">
-            <span className="eyebrow">Lv. {d.level} {d.rebirth ? `· 환생 ${d.rebirth}회` : ''}</span>
+            const research = BOSS_RESEARCH[d.id], claimed = !!s.bossResearchClaims?.[d.id], active = s.dungeon?.id === d.id;
+            return <article className={`stage-card dungeon-stage-card ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} key={d.id}>
+            <div className="stage-top"><span className="stage-num">{String(i + 1).padStart(2, '0')}</span>{locked ? <Lock size={20}/> : active ? <span className="badge">탐험 중</span> : d.id === 'abyss' ? <span className="badge">최고 {s.abyssBest}층</span> : s.clears[d.id] ? <span className="badge">{s.clears[d.id]}회 정복</span> : <span className="badge muted">미탐험</span>}</div>
+            <Anchor className="stage-wave" size={40}/>
+            <div className="eyebrow">{d.id === 'abyss' ? `다음 도전 ${s.abyssBest + 1}층` : `${d.fish.length}웨이브 · 보스 ${d.boss?.split('·').pop()?.trim() || ''}`}</div>
             <h2>{d.name}</h2>
-            <p>{d.description}</p>{d.bossFish&&<p className="dungeon-hint">보스 특성 · {profile(d.bossFish).name}<br/>{profile(d.bossFish).hint}</p>}{d.id === 'abyss' && <p>다음 깊이: 적 HP ×{tierHealth(tier).toFixed(2)} · 공격 ×{tierAttack(tier).toFixed(2)} · 보상 ×{tierReward(tier).toFixed(2)}</p>}
-            <p className="dungeon-hint">최종 보스{d.id === 'abyss' ? ` (${s.abyssBest + 1}층 기준)` : ''} · HP {format(bossStats.hp)} · 물공 {format(bossStats.attack)} · 마공 {format(bossStats.magic || 0)}<br/>물방 {format(bossStats.defense)} · 마방 {format(bossStats.resist || 0)}</p><div className="dungeon-wave-list">{d.fish.map((id, index) => { const boss = index === d.fish.length - 1; const fish = boss && d.bossFish ? FISH.find(f => f.id === d.bossFish) : FISH.find(f => f.id === id); return <span className={boss ? 'boss-wave' : ''} key={`${id}-${index}`}>{boss ? 'BOSS' : `W${index + 1}`} · {fish?.name || id}</span>; })}</div>
-            <div className="reward-split">
-            <div className="reward-group first"><small>{d.id === 'abyss' ? '새 깊이 보상 · 처음 도달할 때' : '최초 보상 · 한 번만'}</small><div className="rewards">
-            {d.id === 'abyss' ? <><span>{s.abyssBest + 1}층 진주 {abyssPearls(s.abyssBest + 1)}</span>{nextAbyssMilestone(s.abyssBest) && <span>{nextAbyssMilestone(s.abyssBest)}층 첫 돌파 SP 1</span>}</>
-                : <span className={s.clears[d.id] ? 'claimed' : ''}>진주 {d.pearls}{s.clears[d.id] ? ' · 받음' : ''}</span>}
-            {BOSS_RESEARCH[d.id] && <span className={s.bossResearchClaims?.[d.id] ? 'claimed' : ''}>첫 정복 연구 SP {BOSS_RESEARCH[d.id].sp}{s.bossResearchClaims?.[d.id] ? ' · 받음' : ''}</span>}
-            </div></div>
-            <div className="reward-group repeat"><small>반복 보상 · 정복할 때마다</small><div className="rewards">
-            <span><Coins size={15}/>{format(dungeonClearGold(s, d.gold, tier))} G</span>
-            <span><Sparkles size={15}/>희귀 이상 장비 1개</span>
-            <span>웨이브 처치 경험치·골드·숙련</span>
-            </div></div>
+            <p>{d.description}</p>
+            <div className="dungeon-reward-lines">
+                <span><b>최초</b>{d.id === 'abyss' ? `${s.abyssBest + 1}층 진주 ${abyssPearls(s.abyssBest + 1)}${nextAbyssMilestone(s.abyssBest) ? ` · ${nextAbyssMilestone(s.abyssBest)}층 SP 1` : ''}` : `진주 ${d.pearls}${research ? ` · 연구 SP ${research.sp}` : ''}`}{d.id !== 'abyss' && s.clears[d.id] && (!research || claimed) ? ' · 받음' : ''}</span>
+                <span><b>반복</b>{format(dungeonClearGold(s, d.gold, tier))} G · 희귀 이상 장비</span>
             </div>
+            {research && s.clears[d.id] && !claimed && <button className="gold-button" disabled={busy} onClick={() => send({ type: 'bossResearch', id: d.id })}>첫 정복 연구 받기 · SP {research.sp}{research.specialization ? ` · ${SPECIALIZATIONS.find(x => x.id === research.specialization)?.name} 특화` : ''}</button>}
+            <div className="stage-footer dungeon-actions">
+                <span>Lv. {d.level}+{d.rebirth ? ` · 환생 ${d.rebirth}회` : ''}</span>
+                <select aria-label={`${d.name} 반복 설정`} value={repeatChoice[d.id] || 'once'} disabled={busy || locked || !!s.dungeon} onChange={e => setRepeatChoice({ ...repeatChoice, [d.id]: e.target.value })}>
+                    <option value="once">1회</option>
+                    {d.id === 'abyss' ? [5, 10, 25].map(n => <option key={n} value={`deeper:${n}`}>{s.abyssBest + n}층까지</option>) : [5, 10, 25].map(n => <option key={n} value={String(n)}>{n}회</option>)}
+                    <option value="fail">실패까지</option>
+                </select>
+                <button className="primary small" disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: d.id, value: repeatChoice[d.id] || 'once' })}>{locked ? <Lock size={14}/> : <Swords size={14}/>}도전</button>
             </div>
-            <div className="dungeon-action">
-            {BOSS_RESEARCH[d.id]&&<div className="boss-research"><strong>첫 정복 연구 · {BOSS_RESEARCH[d.id].sp} SP</strong>{BOSS_RESEARCH[d.id].specialization&&<p>{SPECIALIZATIONS.find(x=>x.id===BOSS_RESEARCH[d.id].specialization)?.name} 특화 해금</p>}<button className="secondary" disabled={busy||!s.clears[d.id]||!!s.bossResearchClaims?.[d.id]} onClick={()=>send({type:'bossResearch',id:d.id})}>{s.bossResearchClaims?.[d.id]?'연구 보상 수령 완료':s.clears[d.id]?'연구 보상 받기':'첫 정복 후 수령'}</button></div>}
-            <button className="text-button" disabled={busy} onClick={()=>send({type:'growthGoal',id:d.id,value:'dungeon'})}>이 연구를 장기 목표로</button>
-            <small>{d.id === 'abyss' ? `다음 도전 ${s.abyssBest + 1}층 · 최고 ${s.abyssBest}층` : s.clears[d.id] ? `${s.clears[d.id]}회 정복` : '미탐험'}</small>
-            <label className="dungeon-repeat"><span>반복</span><select value={repeatChoice[d.id] || 'once'} disabled={busy || locked || !!s.dungeon} onChange={e => setRepeatChoice({ ...repeatChoice, [d.id]: e.target.value })}>
-                <option value="once">1회</option>
-                {d.id === 'abyss' ? [5, 10, 25].map(n => <option key={n} value={`deeper:${n}`}>{s.abyssBest + n}층까지 (+{n})</option>) : [5, 10, 25].map(n => <option key={n} value={String(n)}>{n}회</option>)}
-                <option value="fail">실패할 때까지</option>
-            </select></label>
-            <button className="primary" disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: d.id, value: repeatChoice[d.id] || 'once' })}>{locked ? <Lock size={16}/> : <Swords size={16}/>}도전하기</button>
-            </div>
-            </section>;
+            </article>;
         })}</div><p className="footnote">입장 레벨은 최소 조건이며 클리어 보장이 아닙니다. 입장 후 {MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 준비를 마쳐야 체력·마나가 회복됩니다. 후반 웨이브일수록 적이 강화되고, 처치 후 체력 회복은 일반 사냥 {Math.round(BALANCE.healAfterKill * 100)}%에서 던전 {Math.round(MONSTER_TUNING.dungeonHealAfterKill * 100)}%로 줄어듭니다(응급처치 장착 시 각각 +{Math.round(FIRST_AID_HEAL * 100)}%). 보스 연구의 SP·특화는 던전별 한 번만 받으며 환생해도 다시 지급하지 않습니다. 이미 정복한 던전도 미수령 연구 보상을 받을 수 있습니다. 일반 던전 진주는 최초 정복만 지급합니다. 무한 심연은 새 깊이마다 진주를 지급하며 정복할수록 적 체력·공격과 골드·경험치·장비 수준이 증가합니다. 심해 신전 정복 후 환생 상점에서 윤회의 낚싯대를 무료로 받을 수 있습니다. 마지막 웨이브는 별도 보스 물고기와 전용 스킬 프로필을 사용합니다.</p>
     </>;
 }
