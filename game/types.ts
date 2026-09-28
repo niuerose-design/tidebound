@@ -168,7 +168,7 @@ export type State = {
     lifeBonus?: 'deep' | 'tailwind' | null;
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
-    growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number } | null;
+    growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number; notified?: boolean } | null;
     /** 마지막으로 자동 진행(낚시·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
     runEnd?: { reason: string; turn: number } | null;
     /** 튜토리얼 카드. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. */

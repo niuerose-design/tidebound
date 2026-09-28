@@ -15,7 +15,7 @@ export function AutoRunStatus({ s }: { s: State }) {
     return <section className="panel auto-run-status" aria-label="자동 진행 상태">
         <div className="section-title"><h2><Activity size={15}/> 자동 진행</h2><span className={`auto-run-state ${s.running ? 'on' : 'off'}`}>{s.running ? '진행 중' : '멈춤'}</span></div>
         <dl>
-            <div><dt>현재 목표</dt><dd>{goal}</dd></div>
+            <div><dt>현재 활동</dt><dd>{goal}</dd></div>
             <div><dt>진행 상황</dt><dd>{progress}</dd></div>
             <div><dt>중단 조건</dt><dd>{stop}</dd></div>
             <div><dt>마지막 종료 사유</dt><dd>{s.runEnd ? s.runEnd.reason : '기록 없음'}</dd></div>

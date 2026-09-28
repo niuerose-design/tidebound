@@ -3702,3 +3702,13 @@ strong,b {
 .voyage-entry strong { font-size: 14px; color: #e0cfa2; }
 .voyage-entry p { font-size: 13px; line-height: 1.7; margin: 6px 0 0; color: #a9bdb8; }
 .voyage-entry.locked strong, .voyage-entry.locked p { color: #5f7577; }
+/* v20.12 장기 목표 */
+.growth-goals.folded { display: flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 13px; color: #9fb4af; }
+.growth-goals.folded span { flex: 1; }
+.growth-goals h2 { display: flex; align-items: center; gap: 6px; }
+.goal-steps { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px; font-size: 13px; }
+.goal-steps li { display: flex; align-items: center; gap: 6px; color: #8faead; }
+.goal-steps li span { width: 7px; height: 7px; border-radius: 50%; background: #3b5153; margin: 0 2.5px; }
+.goal-steps li.done { color: #b6e0cc; }
+.growth-goal-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.growth-none { font-size: 13px; color: var(--muted); }

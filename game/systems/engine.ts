@@ -1,4 +1,5 @@
 import { syncVoyage } from './guidance';
+import { syncGoal } from './goals';
 import { BOSS_RESEARCH, SPECIALIZATIONS, specializationFits } from '../data/specializations';
 import { commerce } from './commerce';
 import { rollAffix, saleValue } from './equipment';
@@ -264,6 +265,7 @@ export function tick(s: State, rng = Math.random) {
         return;
     tickTurn(s, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
+    syncGoal(s, text => addLog(s, text, 'reward'));
 }
 function tickTurn(s: State, rng: () => number) {
     s.turn++;
@@ -340,6 +342,7 @@ function claimBookRewards(s: State, id: string) {
 export function act(s: State, a: Action, now: number, rng = Math.random) {
     actInner(s, a, now, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
+    syncGoal(s, text => addLog(s, text, 'reward'));
 }
 function actInner(s: State, a: Action, now: number, rng: () => number) {
     // Save files created before job-granted skills existed are upgraded lazily
