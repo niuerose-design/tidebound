@@ -1,5 +1,4 @@
 'use client';
-import { useState } from 'react';
 import { Check, Flag } from 'lucide-react';
 import type { Action, State } from '@/game/types';
 import { goalProgress, goalSuggestions } from '@/game/systems/goals';
@@ -11,12 +10,7 @@ type Props = { s: State; send: (a: Action) => void; busy: boolean; setView?: (vi
 export const tutorialActive = (s: State) => !!s.tutorial && !s.tutorial.skipped && tutorialProgress(s) < TUTORIAL_STEPS.length;
 
 export function GrowthGoals({ s, send, busy, setView }: Props) {
-    const [peek, setPeek] = useState(false);
     const goal = s.growthGoal, p = goalProgress(s), next = goalSuggestions(s);
-    const folded = tutorialActive(s) && !goal && !peek;
-    if (folded) return <section className="panel growth-goals folded" aria-label="장기 목표">
-        <Flag size={15}/><span>장기 목표 · 항해 안내를 마치면 열립니다</span><button className="text-button" onClick={() => setPeek(true)}>지금 보기</button>
-    </section>;
     const suggestions = <div className="growth-suggestions">
         {next.skill && <button className="secondary" disabled={busy} onClick={() => send({ type: 'growthGoal', id: next.skill!.id, value: 'skill' })}>숙련 · {next.skill.name}{s.skills.includes(next.skill.id) ? ' (장착 중)' : ''}</button>}
         {next.job && <button className="secondary" disabled={busy} onClick={() => send({ type: 'growthGoal', id: next.job!.id, value: 'job' })}>전직 · {next.job.name}</button>}
