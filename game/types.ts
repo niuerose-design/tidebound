@@ -108,9 +108,8 @@ export type Skill = {
     };
 };
 export type Enemy = {
-    /** 무리 사냥 규모(N)와 현재 싸우는 개체를 포함한 남은 마리 수. 없으면 한 마리. */
+    /** 무리 사냥 규모(N). 무리 전체가 체력 ×N인 한 개체입니다. 없으면 한 마리. */
     swarm?: number;
-    remaining?: number;
     combatStats?: Stats;
     effects?: StatusEffects;
     cooldowns?: Record<string, number>;

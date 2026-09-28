@@ -114,15 +114,15 @@ function spawn(s: State, rng: () => number) {
     const boss = finalWave;
     const tier = encounterTier(s);
     const foe = scaledEnemyStats(f, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
-    const hp = foe.hp;
     const { exp, gold } = catchReward(f, tier, boss);
-    // 무리 사냥: 한 마리씩 상대하되 무리 규모만큼 적 공격이 강해집니다.
+    // 무리 사냥: 무리 전체를 체력 ×N인 한 개체로 상대하고, 규모만큼 적 공격이 강해집니다.
     const swarm = !dungeon && s.target === f.id ? activeSwarm(s) : 1;
     if (swarm > 1) {
+        foe.hp = foe.hp * swarm;
         foe.attack = Math.round(foe.attack * swarmAttackMultiplier(swarm));
         foe.magic = Math.round((foe.magic || 0) * swarmAttackMultiplier(swarm));
     }
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp, maxHp: hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, remaining: swarm } : {}) };
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}) };
 }
 function reward(s: State, rng: () => number) {
     const e = s.enemy!;
@@ -271,7 +271,7 @@ export function tick(s: State, rng = Math.random) {
         spawn(s, rng);
     const e = s.enemy!;
     const player: Fighter = { name: s.name, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), specializations: s.skillSpecializations, practice: s.skillPractice };
-    const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {} };
+    const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = fighterSpeed(player) >= fighterSpeed(enemy) ? player : enemy, second = first === player ? enemy : player;
     addLog(s, strike(first, second, rng), 'battle');
     if (first.hp > 0 && second.hp > 0)
@@ -285,19 +285,8 @@ export function tick(s: State, rng = Math.random) {
     e.mana = enemy.mana;
     e.effects = enemy.effects;
     e.cooldowns = enemy.cooldowns;
-    if (e.hp <= 0 && s.hp > 0) {
-        if ((e.remaining || 1) > 1) {
-            // 무리의 다음 개체: 보상·회복 없이 같은 전투를 이어갑니다.
-            e.remaining = e.remaining! - 1;
-            e.hp = e.maxHp;
-            e.stun = 0;
-            e.effects = {};
-            e.cooldowns = {};
-            e.mana = 100;
-        }
-        else
-            reward(s, rng);
-    }
+    if (e.hp <= 0 && s.hp > 0)
+        reward(s, rng);
     else if (s.hp <= 0) {
         s.deaths++;
         s.recovery = BALANCE.recoveryTurns;

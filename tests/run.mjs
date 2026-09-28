@@ -311,21 +311,24 @@ test('All-rounder: allocated-point harmony damage, split mitigation and allocati
  let calls=0;strike(fighter(base),target(0,0),()=>{calls++;return 0;});let normal=0;strike({...fighter(base),skills:['arcane'],ranks:{arcane:1}},target(0,0),()=>{normal++;return 0;});assert.equal(calls,normal,'one hit roll and one crit roll');
 });
 
-test('Swarm hunting: unlock by codex, sequential units without healing, rewards only on full wipe',()=>{
+test('Swarm hunting: unlock by codex, one entity with N x HP, rewards only on kill',()=>{
  const s=newState(0);s.level=40;s.permanent.attack=300;s.permanent.hp=300;s.hp=stats(s).hp;act(s,{type:'stage',id:'brook'},0);
  assert.throws(()=>act(s,{type:'swarm',id:'5'},0),/어종/);act(s,{type:'target',id:'minnow'},0);
  s.book.minnow=49;assert.throws(()=>act(s,{type:'swarm',id:'5'},0),/50/);s.book.minnow=50;act(s,{type:'swarm',id:'5'},0);assert.throws(()=>act(s,{type:'swarm',id:'100'},0),/500/);
  assert.throws(()=>act(s,{type:'swarm',id:'7'},0));
  act(s,{type:'start'},0);tick(s,()=>.99);const e=s.enemy;assert.equal(e.swarm,5);
  const single=newState(0);single.level=40;single.permanent.attack=300;single.permanent.hp=300;act(single,{type:'stage',id:'brook'},0);act(single,{type:'target',id:'minnow'},0);act(single,{type:'start'},0);tick(single,()=>.99);
- assert.equal(e.combatStats.attack,Math.round(single.enemy.combatStats.attack*(1+Math.log10(5))));assert.equal(e.combatStats.hp,single.enemy.combatStats.hp,'each unit keeps single HP');
+ assert.equal(e.combatStats.attack,Math.round(single.enemy.combatStats.attack*(1+Math.log10(5))));assert.equal(e.maxHp,single.enemy.maxHp*5,'one entity with 5x HP');assert.equal(e.combatStats.hp,e.maxHp);
  const kills=s.kills,gold=s.gold,book=s.book.minnow,job=s.jobMastery[s.job]||0,mult=goldMultiplier(s);
- let guard=0;while(s.enemy&&s.enemy.remaining>1&&guard++<500){tick(s,()=>.5);assert.equal(s.kills,kills,'no partial rewards');}
- const hpBeforeLast=s.hp;while(s.enemy&&guard++<1000)tick(s,()=>.5);
+ let guard=0;while(s.enemy===e&&guard++<2000){tick(s,()=>.5);if(s.enemy===e)assert.equal(s.kills,kills,'no partial rewards');}
  assert.equal(s.kills-kills,5);assert.equal(s.book.minnow-book,5);assert.equal(s.gold-gold,Math.floor(e.gold*mult)*5);assert.equal((s.jobMastery[s.job]||0)-job,5);
+ // 적의 자기 체력 비례 공격은 한 마리 체력 기준
+ const hpSkill={name:'foe',stats:{hp:1000,attack:0,magic:0,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5,harmony:0},hp:5000,skills:['vitalSurge'],cooldowns:{},stun:0,effects:{},mana:100,ranks:{vitalSurge:1}};
+ const t1={name:'p',stats:{...hpSkill.stats,hp:1e6},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}},t5={...t1,effects:{},cooldowns:{}};
+ strike({...hpSkill,cooldowns:{},effects:{}},t1,()=>0);strike({...hpSkill,cooldowns:{},effects:{},hp:5000,stats:{...hpSkill.stats,hp:5000},swarm:5},t5,()=>0);assert.equal(t1.hp,t5.hp);
  const dead=newState(0);dead.level=1;act(dead,{type:'stage',id:'brook'},0);act(dead,{type:'target',id:'minnow'},0);dead.book.minnow=500;act(dead,{type:'swarm',id:'100'},0);act(dead,{type:'start'},0);
  for(let i=0;i<3000&&dead.deaths===0;i++)tick(dead,rng);assert.ok(dead.deaths>0);assert.equal(dead.kills,0,'death forfeits the whole swarm');
- const other=newState(0);act(other,{type:'stage',id:'brook'},0);act(other,{type:'target',id:'minnow'},0);other.book.minnow=500;act(other,{type:'swarm',id:'100'},0);act(other,{type:'target',id:'carp'},0);act(other,{type:'start'},0);other.stats;tick(other,()=>.99);assert.ok(other.enemy);assert.equal(other.swarm,100);assert.equal(other.enemy?.swarm,undefined,'swarm applies only to an unlocked target');
+ const other=newState(0);act(other,{type:'stage',id:'brook'},0);act(other,{type:'target',id:'minnow'},0);other.book.minnow=500;act(other,{type:'swarm',id:'100'},0);act(other,{type:'target',id:'carp'},0);act(other,{type:'start'},0);tick(other,()=>.99);assert.ok(other.enemy);assert.equal(other.swarm,100);assert.equal(other.enemy?.swarm,undefined,'swarm applies only to an unlocked target');
 });
 
 test('Rebirth reward breakdown always sums to the pearls actually granted',()=>{

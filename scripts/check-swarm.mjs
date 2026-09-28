@@ -60,7 +60,7 @@ for(const [label,job,L,attributes,skills,stage,fish] of cases)for(const size of 
  const m0=s.jobMastery[job],g0=s.gold,k0=s.kills,d0=s.deaths,inv0=s.inventory.length,L0=s.level,e0=s.exp;
  const rng=random(7);let now=0;const end=HOURS*3600000;
  while(now<end){now=Math.min(end,now+600000);advance(s,now,rng);s.level=L;s.exp=0;} // 레벨 고정: 같은 조건 비교
- const h=HOURS;rows.push({label,size,killsPerH:Math.round((s.kills-k0)/h),masteryPerH:Math.round((s.jobMastery[job]-m0)/h),goldPerH:Math.round((s.gold-g0)/h),dropsPerH:+((s.inventory.length-inv0)/h).toFixed(1),deathsPerH:+((s.deaths-d0)/h).toFixed(2),inProgress:s.enemy?.remaining??0});
+ const h=HOURS;rows.push({label,size,killsPerH:Math.round((s.kills-k0)/h),masteryPerH:Math.round((s.jobMastery[job]-m0)/h),goldPerH:Math.round((s.gold-g0)/h),dropsPerH:+((s.inventory.length-inv0)/h).toFixed(1),deathsPerH:+((s.deaths-d0)/h).toFixed(2),inProgress:s.enemy?.swarm?Math.round((1-s.enemy.hp/s.enemy.maxHp)*100):0});
 }
 const byLabel={};for(const r of rows)(byLabel[r.label]??=[]).push(r);
 for(const [label,list] of Object.entries(byLabel)){const base=list[0];for(const r of list){r.masteryVsX1=base.masteryPerH?+(r.masteryPerH/base.masteryPerH).toFixed(2):null;r.goldVsX1=base.goldPerH?+(r.goldPerH/base.goldPerH).toFixed(2):null;}}

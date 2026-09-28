@@ -17,6 +17,8 @@ export type Fighter = {
     specializations?: Record<string, string>;
     practice?: Record<string, number>;
     effects?: StatusEffects;
+    /** 무리 사냥 개체의 규모. 자기 최대 체력 비례 공격은 한 마리 체력 기준으로 계산합니다. */
+    swarm?: number;
 };
 type DurationStatus = 'weaken' | 'silence' | 'slow' | 'haste';
 function consumeStatus(effects: StatusEffects, key: DurationStatus) {
@@ -32,6 +34,8 @@ function consumeStatus(effects: StatusEffects, key: DurationStatus) {
 function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number) {
     effects[key] = Math.max(effects[key] || 0, turns);
 }
+/** 무리 개체는 한 번의 타격(지속 피해 포함)으로 한 마리 체력까지만 잃습니다. 넘친 피해로 여러 마리를 한꺼번에 잡지 않게 합니다. */
+const unitCap = (f: Fighter) => f.swarm ? Math.ceil((f.stats.hp || 0) / f.swarm) : Infinity;
 /** Speed used for the existing round-based order. Slow/haste change priority, not action count. */
 export function fighterSpeed(f: Fighter) {
     const base = normalizeStats(f.stats).speed;
@@ -49,8 +53,9 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
     const notes: string[] = [];
     if (a.effects.dot) {
         const dot = a.effects.dot;
-        a.hp = Math.max(0, a.hp - dot.damage);
-        notes.push(`${dot.name} ${dot.damage}`);
+        const dotHit = Math.min(dot.damage, unitCap(a));
+        a.hp = Math.max(0, a.hp - dotHit);
+        notes.push(`${dot.name} ${dotHit}`);
         dot.turns--;
         if (dot.turns <= 0)
             delete a.effects.dot;
@@ -110,11 +115,11 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
     // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
     let base = chosen?.scaling === 'harmony' ? (sa.harmony || 0) : magical ? sa.magic : sa.attack;
     if (chosen?.scaling === 'hp')
-        base += sa.hp * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
+        base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
     if (chosen?.scaling === 'mana')
         base += sa.mana * (chosen.scalingRatio ?? SKILL_FORMULA.manaScaling);
     if (chosen?.scaling === 'hybrid')
-        base += sa.hp * (chosen.scalingRatio ?? SKILL_FORMULA.hybridHpScaling) + sa.mana * ((chosen.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2);
+        base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hybridHpScaling) + sa.mana * ((chosen.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2);
     if (chosen?.id === 'crush')
         base += sa.defense * SKILL_FORMULA.crushDefense / (chosen.multiplier || 1);
     const pierce = 1 - Math.min(.85, sa.penetration + (chosen?.penetrationBonus || 0));
@@ -127,7 +132,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
     const linkMultiplier = linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1;
     if (linked) notes.push('연계');
     const crit = landed && rng() < sa.crit;
-    const damage = landed ? Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1))) : 0;
+    const damage = landed ? Math.min(unitCap(b), Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)))) : 0;
     const actual = Math.min(b.hp, damage);
     let totalDamage = damage;
     b.hp = Math.max(0, b.hp - damage);
@@ -176,7 +181,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
         }
         const followCrit = rng() < sa.crit;
         const followMultiplier = (chosen?.multiplier || 1) * (chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier);
-        const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1)));
+        const followDamage = Math.min(unitCap(b), Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1))));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
         totalDamage += followDamage;
