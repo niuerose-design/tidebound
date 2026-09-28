@@ -1,0 +1,10 @@
+import type { State } from '../types';
+import { ECONOMY } from '../data/economy';
+export const rebirthLevel = (s: State) => Math.min(ECONOMY.rebirthLevelCap, 30 + s.rebirths * ECONOMY.rebirthLevelStep);
+export const rebirthReward = (s: State, bonus = 0) => Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) + Math.max(0, Math.floor(bonus));
+export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
+export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
+export const encounterTier = (s: State) => s.dungeon?.id === 'abyss' ? (s.dungeon.depth || 1) + 2 : s.dungeon ? 0 : (s.tide || 0);
+export const tierReward = (tier: number) => 1 + tier * .5;
+export const tierHealth = (tier: number) => 1 + tier * .35 + Math.pow(Math.max(0, tier - 20), 2) * .006;
+export const tierAttack = (tier: number) => 1 + tier * .18 + Math.pow(Math.max(0, tier - 20), 2) * .002;
