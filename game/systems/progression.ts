@@ -177,4 +177,10 @@ export function trimLoadout(s: State) {
 }
 export function completedRegions(s: State) { return STAGES.filter(st => st.fish.every(id => (s.book[id] || 0) >= PROGRESSION.fishComplete)); }
 export function bookReward(s: State, id: string) { const rank = s.bookClaims?.[id] || 0; return { rank, required: BALANCE.bookMilestones[rank], sp: PROGRESSION.bookSP[rank] || 0, gold: PROGRESSION.bookGold[rank] || 0, ready: rank < BALANCE.bookMilestones.length && (s.book[id] || 0) >= BALANCE.bookMilestones[rank] }; }
+/** 이미 넘은 임계치 중 아직 받지 않은 연구 단계 전부. 여러 단계를 한 번에 넘었으면 모두 한 번에 받습니다. */
+export function bookPending(s: State, id: string) {
+    const claimed = s.bookClaims?.[id] || 0, n = s.book[id] || 0, ranks: number[] = [];
+    for (let r = claimed; r < BALANCE.bookMilestones.length && n >= BALANCE.bookMilestones[r]; r++) ranks.push(r);
+    return { ranks, gold: ranks.reduce((a, r) => a + (PROGRESSION.bookGold[r] || 0), 0), sp: ranks.reduce((a, r) => a + (PROGRESSION.bookSP[r] || 0), 0) };
+}
 export function itemKey(slot: string, rarity: number) { return `${slot}:${rarity}`; }

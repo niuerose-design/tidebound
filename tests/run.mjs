@@ -58,9 +58,14 @@ test('Stat and SP refunds cannot create points or erase acquired skills',()=>{
  act(s,{type:'learn',id:'hook'},0);assert.equal(s.sp,2);assert.equal(s.skillSpent.hook,1);act(s,{type:'resetSkills'},0);act(s,{type:'resetSkills'},0);assert.equal(s.sp,3);assert.equal(s.learned.hook,1);
  assert.throws(()=>act(s,{type:'attribute',id:'str',value:'-1'},0));
 });
+test('Codex: crossing several thresholds claims all pending ranks once; claim-all spans species',()=>{
+ const s=newState(0),g=s.gold;s.book.minnow=10000;s.book.carp=500;act(s,{type:'claimAllBooks'},0);
+ assert.equal(s.bookClaims.minnow,4);assert.equal(s.bookClaims.carp,2);assert.equal(s.sp,1);assert.equal(s.gold,g+200+1000+5000+15000+200+1000);
+ assert.throws(()=>act(s,{type:'claimAllBooks'},0));assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
+});
 test('SP is only earned once at 10000 catches; early codex rewards are gold',()=>{
  const s=newState(0);assert.equal(s.sp,0);s.book.minnow=50;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.sp,0);assert.equal(s.gold,300);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
- s.book.minnow=9999;act(s,{type:'claimBook',id:'minnow'},0);act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.sp,0);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
+ s.book.minnow=9999;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.bookClaims.minnow,3);assert.equal(s.gold,300+1000+5000);assert.equal(s.sp,0);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
  s.book.minnow=10000;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.sp,1);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
  s.inventory.push({id:'book-item',slot:'rod',rarity:1,power:5,level:1,name:'test'});act(s,{type:'registerItem',id:'book-item'},0);assert.equal(s.itemBook['rod:1'],true);assert.equal(s.inventory.length,0);assert.throws(()=>act(s,{type:'registerItem',id:'book-item'},0));
 });

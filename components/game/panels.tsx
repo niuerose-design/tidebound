@@ -1,4 +1,5 @@
 'use client';
+import { RegionProgress } from './book-research';
 import { BOSS_RESEARCH, SPECIALIZATIONS } from '@/game/data/specializations';
 import { dungeonClearGold, stats } from '@/game/systems/stats';
 import { dungeonTier, tierReward, tierHealth, tierAttack } from '@/game/systems/meta';
@@ -44,6 +45,7 @@ export function Stages({ s, send, busy }: Props) {
             <span>Lv. {st.level}+{st.rebirth ? ` · 환생 ${st.rebirth}회` : ''}</span>
             <span>{st.fish.length}종 서식</span>
             </div>
+            <RegionProgress s={s} id={st.id}/>
             </button>;
         })}</div>
     </>;

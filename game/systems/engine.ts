@@ -14,7 +14,7 @@ import { SKILLS } from '../data/skills';
 import { EQUIPMENT_NAMES } from '../data/equipment';
 import { strike, fighterSpeed, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION, emptyAttributes } from '../data/progression';
-import { initialProgress, canUse, canChangeJob, trimLoadout, validLoadout, skillCost, bookReward, itemKey, skillMasteryRanks, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from './progression';
+import { initialProgress, canUse, canChangeJob, trimLoadout, validLoadout, skillCost, bookPending, itemKey, skillMasteryRanks, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from './progression';
 import { scaledEnemyStats, profile } from '../data/encounters';
 import { newGuild } from '../data/guild';
 import { guildAction } from './guild';
@@ -311,6 +311,17 @@ export function advance(s: State, now: number, rng = Math.random) {
     if (elapsed > 60000 && s.kills > before.kills)
         s.lastOffline = { seconds: Math.min(BALANCE.offlineCapSeconds, Math.floor(elapsed / 1000)), kills: s.kills - before.kills, gold: s.gold - before.gold, exp: Math.max(0, s.exp - before.exp) };
 }
+/** 한 어종의 미수령 연구 보상을 모두 지급합니다. 각 단계는 bookClaims로 한 번만 지급됩니다. */
+function claimBookRewards(s: State, id: string) {
+    const pending = bookPending(s, id);
+    if (!pending.ranks.length)
+        return false;
+    s.bookClaims[id] = pending.ranks.at(-1)! + 1;
+    s.sp += pending.sp;
+    s.gold += pending.gold;
+    addLog(s, `도감 연구 ${pending.ranks.length > 1 ? `${pending.ranks.length}단계 ` : ''}완료 · ${FISH.find(f => f.id === id)!.name} · 골드 +${pending.gold}${pending.sp ? ` · SP +${pending.sp}` : ''}`, 'reward');
+    return true;
+}
 export function act(s: State, a: Action, now: number, rng = Math.random) {
     // Save files created before job-granted skills existed are upgraded lazily
     // on the next action. This also grants a newly level-eligible job skill.
@@ -535,13 +546,13 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
         case 'claimBook': {
             if (!FISH.some(f => f.id === id))
                 throw Error('물고기를 찾을 수 없습니다.');
-            const reward = bookReward(s, id);
-            if (!reward.ready)
+            if (!claimBookRewards(s, id))
                 throw Error('받을 도감 보상이 없습니다.');
-            s.bookClaims[id] = reward.rank + 1;
-            s.sp += reward.sp;
-            s.gold += reward.gold;
-            addLog(s, `도감 연구 완료 · ${FISH.find(f => f.id === id)!.name} · 골드 +${reward.gold}${reward.sp ? ` · SP +${reward.sp}` : ''}`, 'reward');
+            break;
+        }
+        case 'claimAllBooks': {
+            if (!FISH.map(f => claimBookRewards(s, f.id)).some(Boolean))
+                throw Error('받을 도감 보상이 없습니다.');
             break;
         }
         case 'registerItem': {

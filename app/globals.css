@@ -3604,3 +3604,29 @@ strong,b {
 .battle-feed-list p.battle-line { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; }
 .battle-feed-list p.battle-line > span { min-width: 27px; }
 .log-line .battle-line { flex: 1; }
+/* v20.8 도감 연구: 연구 진행(플레이어 보상)과 적 정보를 분리 */
+.book-research { background: #0f2026; border: 1px solid #2c4a45; border-radius: 6px; padding: 12px; }
+.book-research h4 small { color: #c9b27a; }
+.book-research-rows { display: grid; gap: 5px; margin: 0 0 10px; font-size: 13px; }
+.book-research-rows > div { display: flex; justify-content: space-between; gap: 10px; }
+.book-research-rows dt { color: var(--muted); flex-shrink: 0; }
+.book-research-rows dd { margin: 0; text-align: right; }
+.book-research-rows > div > small { flex-basis: 100%; font-size: 11px; color: var(--muted); margin-top: -2px; }
+.book-research-rows > div:has(> small) { flex-wrap: wrap; }
+.book-research > .gold-button { width: 100%; margin-top: 10px; font-size: 13px; }
+.book-done { margin-top: 10px; font-size: 12px; }
+.book-done summary { cursor: pointer; color: #9fb4af; display: flex; align-items: center; gap: 5px; }
+.book-done ul { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; }
+.book-done li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; color: #9fb4af; }
+.book-done li .positive { display: inline-flex; align-items: center; gap: 3px; }
+.book-enemy > summary { cursor: pointer; list-style: none; }
+.book-enemy > summary::-webkit-details-marker { display: none; }
+.book-enemy:not([open]) > summary h4 { margin: 0; color: var(--muted); }
+.book-swarm-line { display: block; font-size: 11px; color: var(--muted); margin-top: 8px; }
+.book-claim-all { align-items: center; margin-bottom: 14px; }
+.book-claim-all > div { flex: 1; }
+.book-claim-all > button { flex-shrink: 0; }
+.region-research { display: block; font-size: 12px; color: #9fb4af; margin-top: 10px; line-height: 1.6; text-align: left; }
+.region-research b { white-space: nowrap; }
+.section-title .region-research { margin-top: 0; text-align: right; }
+@media (max-width: 700px) { .book-claim-all { flex-wrap: wrap; } .book-claim-all > button { width: 100%; } .section-title .region-research { text-align: left; } }
