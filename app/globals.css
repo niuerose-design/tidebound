@@ -3601,3 +3601,6 @@ strong,b {
 .login-form input { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); color: inherit; font: inherit; font-size: 15px; }
 .login-error { color: #f09b95; font-size: 13px; margin: 0; }
 .login-note { margin-top: 12px; color: var(--muted); font-size: 12px; }
+.battle-feed-list p.battle-line { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; }
+.battle-feed-list p.battle-line > span { min-width: 27px; }
+.log-line .battle-line { flex: 1; }
