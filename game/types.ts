@@ -205,6 +205,8 @@ export type State = {
         id: string;
         wave: number;
         depth?: number;
+        /** 반복 도전. left: 남은 추가 도전 횟수(null=실패할 때까지), until: 무한 심연 목표 깊이. */
+        repeat?: { left: number | null; until?: number };
     };
     clears: Record<string, number>;
     logs: Log[];

@@ -199,10 +199,54 @@ function reward(s: State, rng: () => number) {
                 s.guild.missionDungeons++;
             drop(s, d.level + encounterTier(s) * 5, rng, true);
             addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 진주` : ''}`, 'reward');
+            const repeat = s.dungeon.repeat;
             s.dungeon = null;
             s.running = false;
+            if (repeat) continueRepeat(s, d.id, repeat);
         }
     }
+}
+/** 반복 설정 문자열: 'once' | 'fail' | 숫자(총 도전 횟수) | 'deeper:N'(무한 심연, 현재 최고 깊이 + N층까지). */
+export function parseRepeat(s: State, id: string, value?: string): { left: number | null; until?: number } | undefined {
+    if (!value || value === 'once' || value === '1') return undefined;
+    if (value === 'fail') return { left: null };
+    if (id === 'abyss' && value.startsWith('deeper:')) {
+        const more = Math.floor(Number(value.slice(7)));
+        if (!Number.isFinite(more) || more < 1 || more > 999) throw Error('목표 깊이를 확인하세요.');
+        return more > 1 ? { left: null, until: s.abyssBest + more } : undefined;
+    }
+    const total = Math.floor(Number(value));
+    if (!Number.isFinite(total) || total < 1 || total > 999) throw Error('반복 횟수는 1~999회입니다.');
+    return total > 1 ? { left: total - 1 } : undefined;
+}
+function enterDungeon(s: State, id: string, repeat?: { left: number | null; until?: number }) {
+    const d = DUNGEONS.find(x => x.id === id)!;
+    s.dungeon = { id, wave: 0, ...(id === 'abyss' ? { depth: s.abyssBest + 1 } : {}), ...(repeat ? { repeat } : {}) };
+    s.enemy = null;
+    // Preparation takes real turns: repeated entry cannot heal instantly.
+    s.effects = {};
+    s.playerStun = 0;
+    s.cooldowns = {};
+    s.recovery = Math.max(s.recovery, MONSTER_TUNING.dungeonPreparationTurns);
+    addLog(s, `${d.name} 입장 준비${repeatLabel(repeat)} · ${MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 후 체력·마나를 회복하고 출발합니다.`);
+}
+function repeatLabel(r?: { left: number | null; until?: number }) {
+    if (!r) return '';
+    if (r.until) return ` (반복 · ${r.until}층까지)`;
+    return r.left === null ? ' (반복 · 실패할 때까지)' : r.left === 0 ? ' (반복 · 마지막 도전)' : ` (반복 · 이후 ${r.left}회 더)`;
+}
+/** 반복 도전이 끝나면 낚시터로 돌아가 자동 낚시를 이어갑니다. */
+function continueRepeat(s: State, id: string, repeat: { left: number | null; until?: number }) {
+    const d = DUNGEONS.find(x => x.id === id)!;
+    const reached = repeat.until !== undefined && s.abyssBest >= repeat.until;
+    const allowed = s.level >= d.level && s.rebirths >= d.rebirth;
+    if (!reached && allowed && (repeat.left === null || repeat.left > 0)) {
+        enterDungeon(s, id, { left: repeat.left === null ? null : repeat.left - 1, ...(repeat.until !== undefined ? { until: repeat.until } : {}) });
+        s.running = true;
+        return;
+    }
+    s.running = true;
+    addLog(s, `${d.name} 반복 도전 종료${reached ? ` · 목표 ${repeat.until}층 도달` : ''} · 낚시터에서 자동 낚시를 이어갑니다.`);
 }
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
@@ -247,9 +291,10 @@ export function tick(s: State, rng = Math.random) {
         s.playerStun = 0;
         addLog(s, '물고기를 놓쳤습니다. 잠시 회복합니다.');
         if (s.dungeon) {
+            const repeating = !!s.dungeon.repeat;
             s.dungeon = null;
-            s.running = false;
-            addLog(s, '던전 도전에 실패했습니다. 손실 없이 다시 도전할 수 있습니다.');
+            s.running = repeating;
+            addLog(s, repeating ? '던전 도전에 실패했습니다. 반복 도전을 멈추고 낚시터에서 자동 낚시를 이어갑니다.' : '던전 도전에 실패했습니다. 손실 없이 다시 도전할 수 있습니다.');
         }
     }
 }
@@ -360,16 +405,9 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             const d = DUNGEONS.find(x => x.id === id);
             if (!d || s.level < d.level || s.rebirths < d.rebirth)
                 throw Error('던전 입장 조건을 충족하지 못했습니다.');
-            s.dungeon = { id, wave: 0, ...(id === 'abyss' ? { depth: s.abyssBest + 1 } : {}) };
-            s.enemy = null;
-            // Preparation takes real turns: repeated entry cannot heal instantly.
-            s.effects = {};
-            s.playerStun = 0;
-            s.cooldowns = {};
-            s.recovery = Math.max(s.recovery, MONSTER_TUNING.dungeonPreparationTurns);
+            enterDungeon(s, d.id, parseRepeat(s, d.id, a.value));
             s.running = true;
             s.lastTick = now;
-            addLog(s, `${d.name} 입장 준비 · ${MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 후 체력·마나를 회복하고 출발합니다.`);
             break;
         }
         case 'leaveDungeon':

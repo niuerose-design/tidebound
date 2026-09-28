@@ -56,13 +56,16 @@ export function Dungeons({ s, send, busy }: Props) {
     const enemyProfile = enemyFish ? profile(enemyFish.id) : undefined;
     const activeWave = s.dungeon?.wave ?? 0;
     const combatFx = useCombatFx(s.logs, s.name);
+    const [repeatChoice, setRepeatChoice] = useState<Record<string, string>>({});
+    const repeat = s.dungeon?.repeat;
+    const repeatStatus = repeat ? (repeat.until ? `반복 중 · ${repeat.until}층까지` : repeat.left === null ? '반복 중 · 실패할 때까지' : repeat.left === 0 ? '반복 중 · 마지막 도전' : `반복 중 · 이후 ${repeat.left}회 더`) : '';
 
     return <>
     <Heading eyebrow="DUNGEON" title="바다의 잊힌 장소" description="연속 전투와 보스에 도전하세요. 현재 전투·웨이브·전투 로그를 이 화면에서 바로 확인할 수 있습니다."/>
     {!activeDungeon && <p className="footnote">현재 HP {format(s.hp)} / {format(playerStats.hp)} · MP {format(s.mana)} / {format(playerStats.mana)} · 입장 후 {MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 준비가 끝나면 모두 회복됩니다.</p>}
     {activeDungeon && <section className="panel dungeon-run-panel">
         <div className="dungeon-run-header">
-        <div><span className="eyebrow">ACTIVE EXPEDITION</span><h2>{activeDungeon.name}</h2><p>{activeDungeon.description}</p></div>
+        <div><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}</h2><p>{activeDungeon.description}</p></div>
         <button className="secondary" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</button>
         </div>
         <div className="dungeon-wave-track">{activeDungeon.fish.map((id, index) => {
@@ -107,7 +110,12 @@ export function Dungeons({ s, send, busy }: Props) {
             {BOSS_RESEARCH[d.id]&&<div className="boss-research"><strong>첫 정복 연구 · {BOSS_RESEARCH[d.id].sp} SP</strong>{BOSS_RESEARCH[d.id].specialization&&<p>{SPECIALIZATIONS.find(x=>x.id===BOSS_RESEARCH[d.id].specialization)?.name} 특화 해금</p>}<button className="secondary" disabled={busy||!s.clears[d.id]||!!s.bossResearchClaims?.[d.id]} onClick={()=>send({type:'bossResearch',id:d.id})}>{s.bossResearchClaims?.[d.id]?'연구 보상 수령 완료':s.clears[d.id]?'연구 보상 받기':'첫 정복 후 수령'}</button></div>}
             <button className="text-button" disabled={busy} onClick={()=>send({type:'growthGoal',id:d.id,value:'dungeon'})}>이 연구를 항해 목표로</button>
             <small>{d.id === 'abyss' ? `다음 도전 ${s.abyssBest + 1}층 · 최고 ${s.abyssBest}층` : s.clears[d.id] ? `${s.clears[d.id]}회 정복` : '미탐험'}</small>
-            <button className="primary" disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: d.id })}>{locked ? <Lock size={16}/> : <Swords size={16}/>}도전하기</button>
+            <label className="dungeon-repeat"><span>반복</span><select value={repeatChoice[d.id] || 'once'} disabled={busy || locked || !!s.dungeon} onChange={e => setRepeatChoice({ ...repeatChoice, [d.id]: e.target.value })}>
+                <option value="once">1회</option>
+                {d.id === 'abyss' ? [5, 10, 25].map(n => <option key={n} value={`deeper:${n}`}>{s.abyssBest + n}층까지 (+{n})</option>) : [5, 10, 25].map(n => <option key={n} value={String(n)}>{n}회</option>)}
+                <option value="fail">실패할 때까지</option>
+            </select></label>
+            <button className="primary" disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: d.id, value: repeatChoice[d.id] || 'once' })}>{locked ? <Lock size={16}/> : <Swords size={16}/>}도전하기</button>
             </div>
             </section>;
         })}</div><p className="footnote">입장 레벨은 최소 조건이며 클리어 보장이 아닙니다. 입장 후 {MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 준비를 마쳐야 체력·마나가 회복됩니다. 후반 웨이브일수록 적이 강화되고, 처치 후 체력 회복은 일반 사냥 16%에서 던전 8%로 줄어듭니다. 보스 연구의 SP·특화는 던전별 한 번만 받으며 환생해도 다시 지급하지 않습니다. 이미 정복한 던전도 미수령 연구 보상을 받을 수 있습니다. 일반 던전 진주는 최초 정복만 지급합니다. 무한 심연은 새 깊이마다 진주를 지급하며 정복할수록 적 체력·공격과 골드·경험치·장비 수준이 증가합니다. 심해 신전 정복 후 환생 상점에서 윤회의 낚싯대를 무료로 받을 수 있습니다. 마지막 웨이브는 별도 보스 물고기와 전용 스킬 프로필을 사용합니다.</p>

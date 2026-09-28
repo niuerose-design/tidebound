@@ -3542,3 +3542,7 @@ strong,b {
 .boss-research strong, .boss-research p { font-size: 14px; line-height: 1.5; }
 .boss-research .secondary { white-space: normal; }
 @media (max-width: 640px) { .growth-suggestions { flex-direction: column; } .boss-research { max-width: none; } }
+
+/* v20.4 던전 반복 도전 */
+.dungeon-repeat { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .8rem; color: var(--muted-foreground, inherit); }
+.dungeon-repeat select { flex: 1; min-width: 0; padding: .35rem .5rem; border-radius: .5rem; border: 1px solid var(--border, rgba(255,255,255,.2)); background: var(--background, transparent); color: inherit; font: inherit; }

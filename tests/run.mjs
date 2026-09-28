@@ -290,5 +290,18 @@ test('Rebirth timing: deep voyage pearls and mastery, tailwind experience',()=>{
  const m=newState(0);m.rebirths=6;m.level=80;act(m,{type:'rebirth'},0);assert.equal(m.lifeBonus,null);
 });
 
+test('Dungeon repeat runs until its stop condition, then resumes idle fishing',()=>{
+ const strong=()=>{const s=newState(0);s.level=60;s.rebirths=3;s.permanent.attack=3000;s.permanent.hp=3000;s.permanent.guard=1000;s.hp=stats(s).hp;s.mana=stats(s).mana;return s;};
+ const run=(s,limit=20000)=>{let t=s.lastTick;for(let i=0;i<limit&&s.dungeon;i++){t+=2000;advance(s,t,rng);}};
+ const first=[...DUNGEONS].sort((a,b)=>a.level-b.level)[0];
+ const s=strong();act(s,{type:'dungeon',id:first.id,value:'5'},0);assert.equal(s.dungeon.repeat.left,4);run(s);
+ assert.equal(s.clears[first.id],5);assert.equal(s.dungeon,null);assert.equal(s.running,true,'idle fishing resumes');
+ const once=strong();act(once,{type:'dungeon',id:first.id},0);assert.equal(once.dungeon.repeat,undefined);run(once);assert.equal(once.clears[first.id],1);assert.equal(once.running,false,'single run keeps old behaviour');
+ const a=strong();a.abyssBest=3;act(a,{type:'dungeon',id:'abyss',value:'deeper:5'},0);assert.equal(a.dungeon.repeat.until,8);run(a);assert.equal(a.abyssBest,8);assert.equal(a.running,true);
+ const w=newState(0);w.level=60;w.rebirths=3;w.abyssBest=40;w.hp=stats(w).hp;act(w,{type:'dungeon',id:'abyss',value:'fail'},0);run(w,100000);
+ assert.equal(w.dungeon,null);assert.equal(w.abyssBest,40);assert.equal(w.running,true,'failure falls back to fishing');
+ assert.throws(()=>act(strong(),{type:'dungeon',id:first.id,value:'0'},0));
+});
+
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});
 
