@@ -1,5 +1,5 @@
 import { env } from 'cloudflare:workers';
-import type { State, Action, Snapshot } from '../types';
+import type { State, Action } from '../types';
 import { newState, advance, act } from '../systems/engine';
 import { migrateState } from '../systems/migrations';
 import { snapshot } from '../systems/stats';

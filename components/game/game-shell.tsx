@@ -19,7 +19,6 @@ import { Guide } from './guide-panel';
 import { UpdateLog } from './update-log-panel';
 import { apCapacity, apUsed, effectiveSkill, skillMastery } from '@/game/systems/progression';
 import { Shop, TideSelector } from './economy-panels';
-import { rebirthLevel } from '@/game/systems/meta';
 import { hitChance, normalizeStats } from '@/game/systems/stats';
 import { profile } from '@/game/data/encounters';
 import { stats, power } from '@/game/systems/stats';
@@ -92,7 +91,7 @@ function Navigation({ view, setView }: {
     </SidebarFooter>
     </Sidebar>;
 }
-function Player({ s, busy, send, setView }: {
+function Player({ s, setView }: {
     s: State;
     busy: boolean;
     send: (a: Action) => void;
@@ -180,122 +179,6 @@ function Player({ s, busy, send, setView }: {
     </button>
     </div>
     </aside>;
-}
-function Battle({ s, busy, send, setView }: {
-    s: State;
-    busy: boolean;
-    send: (a: Action) => void;
-    setView: (v: string) => void;
-}) {
-    const [filter, setFilter] = useState('all');
-    const st = STAGES.find(x => x.id === s.stage)!, d = DUNGEONS.find(x => x.id === s.dungeon?.id);
-    const enemy = s.enemy;
-    const activeIds = s.skills.filter(id => SKILLS.find(sk => sk.id === id)?.type === 'active');
-    return <>
-    <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로.">
-    <span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span>
-    </Heading>
-    <div className="session-metrics">
-    <div>
-    <Fish />
-    <span>누적 포획<strong>{format(s.kills)} <small>마리</small>
-    </strong>
-    </span>
-    </div>
-    <div>
-    <BookOpen />
-    <span>발견한 물고기<strong>{Object.keys(s.book).length} <small>/ {FISH.length}종</small>
-    </strong>
-    </span>
-    </div>
-    <div>
-    <Compass />
-    <span>탐험 중인 지역<strong>{d ? '던전' : `0${STAGES.indexOf(st) + 1}`} <small>{d ? `${s.dungeon!.wave + 1} / ${d.fish.length}` : '낚시터'}</small>
-    </strong>
-    </span>
-    </div>
-    </div>
-    <TideSelector s={s} send={send} busy={busy}/>
-    <div className="target-toolbar">
-    <span>
-    <Target size={15}/> 집중 사냥</span>
-    <Tabs value={s.target || 'all'} onValueChange={id => send({ type: 'target', id })}>
-    <TabsList>
-    <TabsTrigger value="all" disabled={busy || !!s.dungeon}>무작위</TabsTrigger>{st.fish.map(id => <TabsTrigger value={id} key={id} disabled={busy || !!s.dungeon}>{FISH.find(f => f.id === id)?.name}</TabsTrigger>)}</TabsList>
-    </Tabs>
-    </div>
-    {s.enemy && <div className="matchup-strip">내 명중률 {Number((hitChance(stats(s), normalizeStats(s.enemy.combatStats || { hp: s.enemy.maxHp, attack: s.enemy.attack, defense: s.enemy.defense, crit: 0 })) * 100).toFixed(1))}% · 적 명중률 {Number((hitChance(normalizeStats(s.enemy.combatStats || { hp: s.enemy.maxHp, attack: s.enemy.attack, defense: s.enemy.defense, crit: 0 }), stats(s)) * 100).toFixed(1))}% <span>명중−상대 회피·속도 보정 · 1~99.5% 범위</span>
-        </div>}<section className={`battle-scene ${s.running ? 'running' : ''}`}>
-    <img className="ocean-art" src="/ocean.webp" alt="청록빛 파도 사이로 솟아오르는 은빛 심해 물고기"/>
-    <div className="scene-shade"/>
-    <div className="scene-top">
-    <span className="scene-label">
-    <Compass size={14}/>{d ? 'DUNGEON EXPEDITION' : st.subtitle}</span>
-    <button className="scene-link" onClick={() => setView('stages')}>낚시터 변경 <ChevronRight size={15}/>
-    </button>
-    </div>
-    <div className="scene-copy">
-    <span className="eyebrow">{d ? `${s.dungeon!.wave + 1} / ${d.fish.length} 전투` : `STAGE 0${STAGES.indexOf(st) + 1} · Lv. ${st.level}+`}</span>
-    <h2>{d?.name || st.name}</h2>
-    <p>{s.recovery ? '낚시꾼이 체력을 회복하고 있습니다.' : enemy ? `${enemy.boss ? 'BOSS · ' : ''}${enemy.name}에게 입질이 왔습니다.` : s.running ? '물결 속에서 다음 입질을 기다립니다.' : st.description}</p>
-    </div>
-    <div className="enemy-status">
-    <div className="enemy-title">
-    <span>{enemy ? <>
-        <Fish size={17}/>{enemy.name}</> : <>
-        <Waves size={17}/>입질을 기다리는 중</>}</span>
-    <small>{enemy ? `${Math.ceil(enemy.hp)} / ${enemy.maxHp} HP` : 'READY TO CAST'}</small>
-    </div>
-    <small className="enemy-trait">{enemy ? profile(enemy.id).name + ' · ' + profile(enemy.id).hint : ''}</small>
-    <StatusBadges effects={enemy?.effects} stun={enemy?.stun}/>
-    <Meter value={enemy?.hp || 0} max={enemy?.maxHp || 1} color="enemy"/>
-    </div>
-    <div className="scene-bottom">
-    <div>
-    <span className="turn-dot"/>
-    <span>자동 턴제 낚시</span>
-    <small>{format(s.turn)} TURN</small>
-    </div>
-    <button className={s.running ? 'pause-button' : 'primary'} disabled={busy} onClick={() => send({ type: s.running ? 'pause' : 'start' })}>{s.running ? <Pause size={17}/> : <Play size={17}/>} {s.running ? '낚시 일시정지' : '자동 낚시 시작'}</button>
-    </div>
-    </section>
-    <section className="panel battle-skills">
-    <div className="section-title">
-    <h2>전투 스킬 <span className="micro">AP {apUsed(s)} / {apCapacity(s)} · 액티브 {activeIds.length}개</span>
-    </h2>
-    <button className="text-button" onClick={() => setView('skills')}>스킬 편성 <ChevronRight size={14}/>
-    </button>
-    </div>
-    <div className="battle-skill-row">{(activeIds.length ? activeIds : ['']).map(id => {
-            const sk = SKILLS.find(x => x.id === id), effective = sk ? effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id), s.skillSpecializations?.[id], s.skillPractice[id] || 0) : null;
-            return <button key={id || 'empty'} className={`battle-skill ${sk ? '' : 'vacant'}`} onClick={() => setView('skills')}>
-            <div className="skill-symbol">{sk ? <SkillIcon id={sk.id}/> : <span>+</span>}</div>
-            <div>
-            <strong>{sk?.name || '빈 스킬 슬롯'}</strong>
-            <small>{sk ? `${Math.round(effective!.chance * 100)}% 발동 · ${(s.cooldowns[id] || 0) > 0 ? `대기 ${s.cooldowns[id]}턴` : '사용 준비'}` : '스킬을 장착하세요'}</small>
-            </div>
-            </button>;
-        })}</div>
-    </section>
-    <section className="panel log-panel">
-    <div className="section-title">
-    <h2>항해 일지 <span className="micro">BATTLE LOG</span>
-    </h2>
-    <Tabs value={filter} onValueChange={setFilter}>
-    <TabsList className="log-tabs">
-    <TabsTrigger value="all">전체</TabsTrigger>
-    <TabsTrigger value="battle">전투</TabsTrigger>
-    <TabsTrigger value="reward">획득</TabsTrigger>
-    </TabsList>
-    </Tabs>
-    </div>
-    <div className="log-list" role="log" aria-label="최근 전투와 획득 기록">{s.logs.filter(l => filter === 'all' || l.type === filter).slice(-18).reverse().map(log => <div key={log.id} className={`log-line ${log.type}`}>
-        <span className="log-number">{String(log.id).padStart(3, '0')}</span>
-        <span>{log.type === 'reward' ? <Sparkles size={13}/> : log.type === 'system' ? <Compass size={13}/> : <Swords size={13}/>}</span>
-        <p>{log.text}</p>
-        </div>)}</div>
-    </section>
-    </>;
 }
 function BattleRail({ s, busy, send, setView }: {
     s: State;

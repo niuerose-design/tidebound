@@ -1,7 +1,7 @@
 'use client';
 import { Progress } from '@/components/ui/progress';
 import type { ReactNode } from 'react';
-import { Fish, Anchor, Compass, Sparkles, Zap, Heart, Shield, Swords, Target, Waves } from 'lucide-react';
+import { Fish, Anchor, Compass, Zap, Heart, Shield, Swords, Target, Waves } from 'lucide-react';
 export function Meter({ value, max, label, color = 'teal' }: {
     value: number;
     max: number;

@@ -1,20 +1,18 @@
 'use client';
-import { tierHealth, tierAttack, tierReward } from '@/game/systems/meta';
-import { useState } from 'react';
-import { ArrowUp, BookOpen, Check, Compass, Fish, Heart, Lock, RefreshCw, Shield, Sparkles, Swords, Target, Waves, Zap, ArrowDown } from 'lucide-react';
+import { tierReward } from '@/game/systems/meta';
+import { BookOpen, Fish, RefreshCw, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import type { State, Action, Stats } from '@/game/types';
-import { JOBS } from '@/game/data/classes';
 import { SKILLS } from '@/game/data/skills';
 import { FISH, STAGES } from '@/game/data/world';
-import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
+import { RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
 import { ATTRIBUTES, PROGRESSION, STAT_LABELS, formatStat } from '@/game/data/progression';
-import { attributes, apCapacity, apUsed, canUse, canLearn, inherited, lineage, jobRequirements, effectiveSkill, skillCost, skillRankHint, skillMastery, skillMasteryHint, skillMasteryLabel, skillMasteryRewards, skillTrack, masteryMilestonesFor, completedRegions, bookReward, itemKey, canSpendSkill, isNativeJobSkill } from '@/game/systems/progression';
+import { attributes, apCapacity, apUsed, completedRegions, bookReward, itemKey } from '@/game/systems/progression';
 import { stats, dropRate, mastery, goldMultiplier, hitChance, expMultiplier } from '@/game/systems/stats';
 import { profile, scaledEnemyStats } from '@/game/data/encounters';
-import { Heading, Meter, SkillIcon, SlotIcon, format } from './shared';
+import { Heading, Meter, SlotIcon } from './shared';
 type Props = {
     s: State;
     send: (a: Action, path?: string) => void;
@@ -115,7 +113,7 @@ export { Classes } from './classes-panel';
 export { Skills } from './skills-panel';
 export function Collection({ s, send, busy }: Props) {
     const player = stats(s), bookComplete = PROGRESSION.fishComplete;
-    const discovered = FISH.filter(f => (s.book[f.id] || 0) > 0).length, complete = FISH.filter(f => (s.book[f.id] || 0) >= bookComplete).length, regions = completedRegions(s);
+    const complete = FISH.filter(f => (s.book[f.id] || 0) >= bookComplete).length, regions = completedRegions(s);
     return <>
     <Heading eyebrow="ARCHIVE & RESEARCH" title="기록이 힘이 되는 도감" description="개체도감으로 편성의 폭을 넓히고, 물건도감으로 다음 장비를 만날 확률을 높이세요."/>
     <div className="skill-resource-grid">

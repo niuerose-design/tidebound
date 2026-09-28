@@ -4,7 +4,7 @@ import { JOBS } from '@/game/data/classes';
 import { SKILLS } from '@/game/data/skills';
 import { DUNGEONS } from '@/game/data/world';
 import { BOSS_RESEARCH, SPECIALIZATIONS } from '@/game/data/specializations';
-import { skillPracticeTargets, canUse, jobRequirements, masteryMilestonesFor, skillMastery, maxSkillLevel } from '@/game/systems/progression';
+import { skillPracticeTargets, canUse, jobRequirements, masteryMilestonesFor } from '@/game/systems/progression';
 import { Meter } from './shared';
 
 type Props = { s: State; send: (a: Action) => void; busy: boolean; setView?: (view: string) => void };

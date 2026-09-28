@@ -3,11 +3,10 @@ import { rebirthExperience, rebirthMemory, evasionRating, vocationTargets, thres
 import { itemStats } from './equipment';
 import type { State, Snapshot, Stats, CombatStats } from '../types';
 import { BALANCE } from '../data/balance';
-import { ECONOMY } from '../data/economy';
 import { PROGRESSION } from '../data/progression';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
-import { attributes, effectiveSkill, completedRegions, canUse, canLearn, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier } from './progression';
+import { attributes, effectiveSkill, completedRegions, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier } from './progression';
 import { guildBonus } from './guild';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, speed: 10, mana: 40, manaRegen: 3, penetration: 0, lifesteal: 0, ...a }; }
@@ -73,7 +72,6 @@ export function stats(s: State): CombatStats {
 export function dropRate(s: State) { return Math.min(.6, BALANCE.dropChance + attributes(s).luk * .001 + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + guildBonus(s, 'scouting') * .005 + (stats(s).dropBonus || 0)); }
 export function power(v: Stats) { const a = normalizeStats(v); return Math.round(Math.max(a.attack, a.magic) * 7 + Math.min(a.attack, a.magic) * 2 + a.hp * .5 + (a.defense + a.resist) * 3 + a.crit * 200 + Math.max(0, a.accuracy - .8) * 220 + a.evasion * 200); }
 export function snapshot(s: State): Snapshot { const a = stats(s); return { name: s.name, level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillSpecializations: { ...s.skillSpecializations }, skillPractice: { ...s.skillPractice }, power: power(a), rating: s.rating, guild: s.guild?.name || '' }; }
-export const skillUnlocked = canLearn;
 export const goldMultiplier = (s: State) => 1 + stats(s).goldBonus;
 export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus) * (tailwindActive(s) ? 1 + TAILWIND_EXP : 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);

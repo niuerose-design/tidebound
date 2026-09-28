@@ -14,11 +14,6 @@ export function attributes(s: State) {
         out[key] = PROGRESSION.baseAttribute + Math.floor(s.level / PROGRESSION.attributeGrowthEvery) + (s.attributes?.[key] || 0);
     return out;
 }
-export function skillTrack(rank: number, mastery: number): 'unlearned' | 'job' | 'sp' | 'mastery' {
-    if (rank <= 0)
-        return 'unlearned';
-    return rank - 1 > mastery ? 'sp' : mastery >= 1 ? 'mastery' : 'job';
-}
 export function masteryMilestonesFor(sk?: Skill) { return sk?.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones; }
 export function skillRefinementTargets(sk: Skill) {
     const positive = Object.values(sk.bonus || {}).some(n => n > 0) || Object.values(sk.levelEffects || {}).some(row => Object.values(row.bonus || {}).some(n => n > 0));
@@ -60,10 +55,6 @@ export function canLearn(s: State, id: string) { const sk = SKILLS.find(x => x.i
 export function canUse(s: State, id: string) { return canLearn(s, id) && (s.learned?.[id] || 0) > 0; }
 /** Every explicit SP action costs exactly one point. Job-granted skills cost no SP. */
 export function skillCost(_s: State, _id: string) { return PROGRESSION.skillSPCost; }
-export function isNativeJobSkill(s: State, id: string) {
-    const sk = SKILLS.find(x => x.id === id);
-    return !!sk?.job && sk.job === s.job;
-}
 /** Rank 1 means acquired base skill, NOT an SP investment. */
 export function grantJobSkills(s: State) {
     const granted: string[] = [];
@@ -138,12 +129,6 @@ export function skillRankDeltas(sk: Skill, rank: number, mastery = 0, specializa
     if (sk.masteryGain) deltas.push({ label: '조건 충족 시 추가 숙련', from: `+${masteryGainBonus(sk, level)}`, to: `+${masteryGainBonus(sk, level + 1)}` });
     return deltas;
 }
-export function skillMasteryDeltas(sk: Skill, level: number): SkillRankDelta[] {
-    const milestones = masteryMilestonesFor(sk);
-    if (level < 0 || level >= milestones.length)
-        return [];
-    return skillDeltas(effectiveSkill(sk, 1, level), effectiveSkill(sk, 1, level + 1));
-}
 export function skillRankHint(sk: Skill, rank: number, mastery = 0, specialization?: string, practice = 0) {
     const rows = skillRankDeltas(sk, Math.max(1, rank), mastery, specialization, practice);
     return rows.length ? rows.map(x => `${x.label} ${x.from} → ${x.to}`).join(' · ') : '최대 강화 레벨입니다.';
@@ -153,12 +138,6 @@ export function skillMasteryHint(sk: Skill, level: number, rank = 1) {
     if (current >= milestones.length)
         return '최대 강화 완료 · 실전 숙련과 전직 조건은 계속 기록됩니다.';
     return `${milestones[current].toLocaleString()} 또는 1 SP → Lv.${current + 1} · ${skillRankHint(sk, rank, level)}`;
-}
-export function skillMasteryLabel(sk: Skill, level: number, rank = 1) {
-    const milestones = masteryMilestonesFor(sk);
-    if (level >= milestones.length)
-        return `숙련 ${milestones.length} / ${milestones.length} · 무료 강화 완료`;
-    return `실전 숙련 ${level} / ${milestones.length} · 다음 ${milestones[level].toLocaleString()}`;
 }
 export function jobRequirements(s: State, j: Job) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
