@@ -3,8 +3,8 @@ import { commerce } from './commerce';
 import { rollAffix, saleValue } from './equipment';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, skillPracticeTargets } from './progression';
-import { deepVoyagePearls, nextLifeBonus, TAILWIND_EXP, rebirthLevel, rebirthReward, tideLimit, encounterTier, tierReward } from './meta';
-import { goldMultiplier, dungeonGoldMultiplier, expMultiplier } from './stats';
+import { catchReward, deepVoyagePearls, nextLifeBonus, TAILWIND_EXP, rebirthLevel, rebirthReward, tideLimit, encounterTier } from './meta';
+import { stats, dropRate, clampVitals, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery } from './mastery';
 import type { State, Action, Item, Attribute } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, upgradeCost } from '../data/balance';
@@ -12,7 +12,6 @@ import { FISH, STAGES, DUNGEONS } from '../data/world';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { EQUIPMENT_NAMES } from '../data/equipment';
-import { stats, dropRate } from './stats';
 import { strike, fighterSpeed, Fighter } from './combat';
 import { PROGRESSION, emptyAttributes } from '../data/progression';
 import { initialProgress, canUse, canChangeJob, trimLoadout, validLoadout, skillCost, bookReward, itemKey, skillMasteryRanks, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from './progression';
@@ -114,13 +113,11 @@ function spawn(s: State, rng: () => number) {
     const id = dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (s.target && st.fish.includes(s.target) ? s.target : weightedFishId(st.fish, rng));
     const f = FISH.find(x => x.id === id)!;
     const boss = finalWave;
-    const mult = boss ? MONSTER_TUNING.bossRewardMultiplier : 1;
-    const powerScale = Math.max(1, f.powerMultiplier || 1);
     const tier = encounterTier(s);
     const foe = scaledEnemyStats(f, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
     const hp = foe.hp;
-    const rewardScale = f.rewardMultiplier || 1;
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp, maxHp: hp, attack: foe.attack, defense: foe.defense, exp: Math.round(f.exp * mult * tierReward(tier) * rewardScale * powerScale), gold: Math.round(f.gold * mult * tierReward(tier) * rewardScale * powerScale), boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, powerMultiplier: powerScale, powerLabel: f.powerLabel };
+    const { exp, gold, powerScale } = catchReward(f, tier, boss);
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp, maxHp: hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, powerMultiplier: powerScale, powerLabel: f.powerLabel };
 }
 function reward(s: State, rng: () => number) {
     const e = s.enemy!;
@@ -175,7 +172,7 @@ function reward(s: State, rng: () => number) {
         const d = DUNGEONS.find(x => x.id === s.dungeon!.id)!;
         s.dungeon.wave++;
         if (s.dungeon.wave >= d.fish.length) {
-            const bonusGold = Math.floor(d.gold * tierReward(encounterTier(s)) * goldMultiplier(s) * dungeonGoldMultiplier(s));
+            const bonusGold = dungeonClearGold(s, d.gold, encounterTier(s));
             s.gold += bonusGold;
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
@@ -315,15 +312,13 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
     grantJobSkills(s);
     const message = commerce(s, a, rng);
     if (message !== null) {
-        s.hp = Math.min(s.hp, stats(s).hp);
-        s.mana = Math.min(s.mana, stats(s).mana);
+        clampVitals(s);
         addLog(s, message);
         return;
     }
     const guildMessage = guildAction(s, a, now);
     if (guildMessage !== null) {
-        s.hp = Math.min(s.hp, stats(s).hp);
-        s.mana = Math.min(s.mana, stats(s).mana);
+        clampVitals(s);
         addLog(s, guildMessage, 'reward');
         return;
     }
@@ -467,8 +462,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
                     throw Error('총 장착 AP 한도를 초과합니다.');
                 s.skills.push(id);
             }
-            s.hp = Math.min(s.hp, stats(s).hp);
-            s.mana = Math.min(s.mana, stats(s).mana);
+            clampVitals(s);
             break;
         }
         case 'learn': {
@@ -505,8 +499,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             s.learned = Object.fromEntries(Object.keys(s.learned).map(id => [id, 1]));
             trimLoadout(s);
             s.cooldowns = {};
-            s.hp = Math.min(s.hp, stats(s).hp);
-            s.mana = Math.min(s.mana, stats(s).mana);
+            clampVitals(s);
             break;
         }
         case 'attribute': {
@@ -524,8 +517,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
                 throw Error('전투를 멈춘 뒤 재분배하세요.');
             s.statPoints += Object.values(s.attributes).reduce((sum, n) => sum + n, 0);
             s.attributes = emptyAttributes();
-            s.hp = Math.min(s.hp, stats(s).hp);
-            s.mana = Math.min(s.mana, stats(s).mana);
+            clampVitals(s);
             break;
         }
         case 'resetData': {
@@ -582,8 +574,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             if (!preset || !validLoadout(s, preset.skills))
                 throw Error('현재 직업·레벨·AP로 불러올 수 없는 편성입니다.');
             s.skills = [...preset.skills];
-            s.hp = Math.min(s.hp, stats(s).hp);
-            s.mana = Math.min(s.mana, stats(s).mana);
+            clampVitals(s);
             break;
         }
         case 'skillUp': {

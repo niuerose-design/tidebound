@@ -1,5 +1,5 @@
 'use client';
-import { tierReward } from '@/game/systems/meta';
+import { catchReward } from '@/game/systems/meta';
 import { BookOpen, Fish, RefreshCw, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
@@ -170,7 +170,7 @@ export function Collection({ s, send, busy }: Props) {
                 <span>속도 {enemy.speed}</span>
                 <span className="positive">내 명중률 {Number((hitChance(player, enemy) * 100).toFixed(1))}%</span>
                 <span>적 명중률 {Number((hitChance(enemy, player) * 100).toFixed(1))}%</span>
-                <span>기본 골드 {f.gold} → {Math.floor(Math.round(f.gold * tierReward(s.tide || 0) * (f.rewardMultiplier || 1) * (f.powerMultiplier || 1)) * goldMultiplier(s))} G</span>
+                <span>기본 골드 {f.gold} → {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G</span>
                 </div>
                 <Meter value={Math.min(n, reward.required || 200)} max={reward.required || 200} label={`누적 ${n}회 · 연구 ${reward.rank} / 4`}/>
                 <button className={reward.ready ? 'gold-button' : 'secondary'} disabled={busy || !reward.ready} onClick={() => send({ type: 'claimBook', id })}>{reward.rank >= 4 ? '연구 보상 수령 완료' : reward.ready ? `연구 완료 · ${reward.gold.toLocaleString()} G${reward.sp ? ' · SP +1' : ''}` : `${reward.required.toLocaleString()}회 → ${reward.gold.toLocaleString()} G${reward.sp ? ' · SP +1' : ''}`}</button>{s.stage === st.id && !s.dungeon && <button className="text-button" disabled={busy} onClick={() => send({ type: 'target', id })}>{s.target === id ? '집중 사냥 대상' : '이 물고기 집중 사냥'}</button>}</article>;
@@ -194,7 +194,7 @@ export function Collection({ s, send, busy }: Props) {
     <div className="notice">
     <BookOpen size={22}/>
     <div>
-    <strong>등록한 종류 {Object.keys(s.itemBook).length} / 12 · 드롭 확률 +{(Object.keys(s.itemBook).length * .5).toFixed(1)}%p</strong>
+    <strong>등록한 종류 {Object.keys(s.itemBook).length} / 12 · 드롭 확률 +{(Object.keys(s.itemBook).length * PROGRESSION.itemDropBonus * 100).toFixed(1)}%p</strong>
     <p>가방의 장비 한 개를 영구 등록하며, 해당 장비는 소모됩니다. 같은 슬롯·등급은 한 번만 등록합니다.</p>
     </div>
     </div>

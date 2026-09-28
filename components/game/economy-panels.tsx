@@ -12,7 +12,7 @@ import { STAT_LABELS, formatStat } from '@/game/data/progression';
 import { itemStats, itemDescription, enhanceCost, reforgeCost, bulkItems, saleValue } from '@/game/systems/equipment';
 import { shopCost, gambleCost, ownsRelic, relicCost, shopPreview } from '@/game/systems/commerce';
 import { deepVoyagePearls, nextLifeBonus, tailwindActive, TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL, rebirthLevel, rebirthReward, rebirthAP, tideLimit, tierReward, tierHealth, tierAttack } from '@/game/systems/meta';
-import { stats } from '@/game/systems/stats';
+import { stats, permanentExpBonus } from '@/game/systems/stats';
 import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format } from './shared';
 type Props = {
@@ -166,7 +166,7 @@ export function TideSelector({ s, send, busy }: Props) {
 export function Rebirth({ s, send, busy }: Props) {
     const [tab, setTab] = useState('prepare');
     const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
-    const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }, bonus), permanentExp = 1 + rebirthExperience(s.rebirths) + (s.permanent.exp || 0) * .2;
+    const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }, bonus), permanentExp = 1 + permanentExpBonus(s);
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0;
     const projected = { ...s, level: Math.max(s.level, required) }, deepPearls = deepVoyagePearls(projected), lifeBonus = nextLifeBonus(projected);
     const lifeText = lifeBonus === 'deep' ? `깊은 항해 · 다음 생 동안 직업·스킬 숙련 기본 획득 +2` : lifeBonus === 'tailwind' ? `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${TAILWIND_EXP * 100}%` : `없음 · Lv.${required + TAILWIND_WINDOW} 이하면 순풍, Lv.${DEEP_VOYAGE_LEVEL}이면 깊은 항해`;
@@ -188,7 +188,7 @@ export function Rebirth({ s, send, busy }: Props) {
                     <Confirm label="환생하기" title="다음 항해를 시작할까요?" description="레벨·현재 직업·골드·일반 장비·골드 훈련·배분 능력치가 초기화됩니다. 유물(강화·옵션 포함), 도감, 진주 연구, 해금·계승한 스킬과 성장·숙련·SP, 직업 숙련과 해금, 길드, 던전 정복·보스 연구·특화·항해 목표, 랭킹 점수는 유지됩니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>
             </section>
-            <p className="footnote">환생 기억: 체력·양 공격·양 방어 ×{rebirthMemory(s.rebirths).toFixed(3)} → ×{rebirthMemory(s.rebirths + 1).toFixed(3)}. 20회 이후 경험치·진주 증가는 완만해집니다. 공격·체력 연구는 200단계, 방어는 100단계까지 이어집니다.</p><div className="rebirth-gains"><span>영구 AP <b>+{apGain}</b></span><span>영구 경험치 <b>×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</b></span><span>다음 생 시작 골드 <b>{format(100 + (s.permanent.starting || 0) * 500)} G</b></span><span>선택 가능 해역 <b>난이도 {Math.min(ECONOMY.tideCap, s.rebirths + 1)}까지</b></span></div>
+            <p className="footnote">환생 기억: 체력·양 공격·양 방어 ×{rebirthMemory(s.rebirths).toFixed(3)} → ×{rebirthMemory(s.rebirths + 1).toFixed(3)}. 20회 이후 경험치·진주 증가는 완만해집니다. 공격·체력 연구는 200단계, 방어는 100단계까지 이어집니다.</p><div className="rebirth-gains"><span>영구 AP <b>+{apGain}</b></span><span>영구 경험치 <b>×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</b></span><span>다음 생 시작 골드 <b>{format(100 + (s.permanent.starting || 0) * 500)} G</b></span><span>선택 가능 해역 <b>난이도 {tideLimit({ ...s, rebirths: s.rebirths + 1 })}까지</b></span></div>
             <div className="rebirth-records">
                 <article className="panel ledger-kept"><h2>다음 생에도 유지</h2><ul><li>진주 · 진주 연구 · 물고기와 장비 도감</li><li>스킬 해금·계승·성장·숙련·특화 · 보유 SP · 항해 목표</li><li>직업 해금과 숙련 기록</li><li>환생 유물 · 유물 강화·옵션·보관 위치</li><li>길드·공헌·연구·레이드 · 던전 정복 기록</li><li>랭킹 점수와 전적</li></ul></article>
                 <article className="panel ledger-reset"><h2>이번 항해와 함께 초기화</h2><ul><li>레벨·경험치 · 현재 직업 → 견습 낚시꾼</li><li>능력치 배분 · 골드 훈련</li><li>일반 장비와 해당 장비의 강화·옵션</li><li>골드 → 유산 연구가 반영된 시작 골드</li><li>낚시터와 해역 난이도 선택</li><li>진행 중 전투·던전</li></ul></article>

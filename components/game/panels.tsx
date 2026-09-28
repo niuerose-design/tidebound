@@ -1,7 +1,7 @@
 'use client';
 import { BOSS_RESEARCH, SPECIALIZATIONS } from '@/game/data/specializations';
-import { goldMultiplier, dungeonGoldMultiplier, stats } from '@/game/systems/stats';
-import { tierReward, tierHealth, tierAttack } from '@/game/systems/meta';
+import { dungeonClearGold, stats } from '@/game/systems/stats';
+import { dungeonTier, tierReward, tierHealth, tierAttack } from '@/game/systems/meta';
 import { TideSelector } from './economy-panels';
 import { useState } from 'react';
 import { Anchor, ArrowUpRight, Lock, RefreshCw, Sparkles, Swords, Waves, Coins } from 'lucide-react';
@@ -83,7 +83,7 @@ export function Dungeons({ s, send, busy }: Props) {
     </section>}
     <div className="dungeon-list">{[...DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
             const locked = s.level < d.level || s.rebirths < d.rebirth;
-            const tier = d.id === 'abyss' ? s.abyssBest + 3 : 0;
+            const tier = dungeonTier(d.id, s.abyssBest + 1);
             const bossFish = FISH.find(f => f.id === d.bossFish)!;
             const bossStats = scaledEnemyStats(bossFish, { boss: true, tier, wave: d.fish.length - 1 });
             return <section className="panel dungeon-card" key={d.id}>
@@ -98,7 +98,7 @@ export function Dungeons({ s, send, busy }: Props) {
             <p className="dungeon-hint">최종 보스 · HP {format(bossStats.hp)} · 물공 {format(bossStats.attack)} · 마공 {format(bossStats.magic || 0)}<br/>물방 {format(bossStats.defense)} · 마방 {format(bossStats.resist || 0)}</p><div className="dungeon-wave-list">{d.fish.map((id, index) => { const boss = index === d.fish.length - 1; const fish = boss && d.bossFish ? FISH.find(f => f.id === d.bossFish) : FISH.find(f => f.id === id); return <span className={boss ? 'boss-wave' : ''} key={`${id}-${index}`}>{boss ? 'BOSS' : `W${index + 1}`} · {fish?.name || id}</span>; })}</div>
             <div className="rewards">
             <span>
-            <Coins size={15}/>{format(Math.floor(d.gold * tierReward(tier) * goldMultiplier(s) * dungeonGoldMultiplier(s)))} G</span>
+            <Coins size={15}/>{format(dungeonClearGold(s, d.gold, tier))} G</span>
             <span>
             <Sparkles size={15}/>희귀 이상 장비</span>
             <span>{d.id === 'abyss' ? `${s.abyssBest + 1}층 진주 ${abyssPearls(s.abyssBest + 1)}` : `첫 클리어 진주 ${d.pearls}`}</span>{d.id === 'abyss' && nextAbyssMilestone(s.abyssBest) && <span>{nextAbyssMilestone(s.abyssBest)}층 첫 돌파 SP 1</span>}

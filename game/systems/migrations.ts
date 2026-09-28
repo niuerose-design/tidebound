@@ -1,6 +1,6 @@
 import type { State } from '../types';
 import { initialProgress, apUsed, apCapacity, grantJobSkills, trimLoadout } from './progression';
-import { stats } from './stats';
+import { stats, clampVitals } from './stats';
 import { newGuild } from '../data/guild';
 import { ABYSS_SP_MILESTONES } from '../data/long-term';
 /** v1 → v7 additive migration. No gold/items/codex/levels/guild progress are removed. */
@@ -29,8 +29,7 @@ export function migrateState(s: State): State {
         s.skillInheritances = {};
         grantJobSkills(s);
         trimLoadout(s);
-        s.hp = Math.min(s.hp, stats(s).hp);
-        s.mana = Math.min(s.mana, stats(s).mana);
+        clampVitals(s);
         return migrateState(s);
     }
     if (s.version === 3) {

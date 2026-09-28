@@ -1,6 +1,6 @@
 import { SKILLS } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
-import { STATUS_TUNING } from '../data/balance';
+import { STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
 import type { Stats, StatusEffects } from '../types';
 import { normalizeStats, hitChance } from './stats';
 import { effectiveSkill } from './progression';
@@ -78,8 +78,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
             if (!base || base.type !== 'active' || blocked.has(id))
                 continue;
             const candidate = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.specializations?.[id], a.practice?.[id] || 0);
-            if (candidate.effect === 'heal' && a.hp > sa.hp * .8) continue;
-            if (candidate.condition === 'wounded' && a.hp > sa.hp * .7)
+            if (candidate.effect === 'heal' && a.hp > sa.hp * SKILL_FORMULA.healThreshold) continue;
+            if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)
                 continue;
             if (candidate.condition === 'healthyTarget' && b.hp < sb.hp * .6)
                 continue;
@@ -97,7 +97,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
         a.mana = Math.max(0, a.mana - (chosen.manaCost || 0));
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.slow; notes.push('정화'); }
         if (chosen.effect === 'heal') {
-            healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? .22)));
+            healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio)));
             a.hp += healed;
         }
     }
@@ -108,19 +108,19 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
     const magical = chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack;
     let base = magical ? sa.magic : sa.attack;
     if (chosen?.scaling === 'hp')
-        base += sa.hp * (chosen.scalingRatio ?? .08);
+        base += sa.hp * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
     if (chosen?.scaling === 'mana')
-        base += sa.mana * (chosen.scalingRatio ?? .45);
+        base += sa.mana * (chosen.scalingRatio ?? SKILL_FORMULA.manaScaling);
     if (chosen?.scaling === 'hybrid')
-        base += sa.hp * (chosen.scalingRatio ?? .05) + sa.mana * ((chosen.scalingRatio ?? .25) * 2);
+        base += sa.hp * (chosen.scalingRatio ?? SKILL_FORMULA.hybridHpScaling) + sa.mana * ((chosen.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2);
     if (chosen?.id === 'crush')
-        base += sa.defense * 1.5 / (chosen.multiplier || 1);
+        base += sa.defense * SKILL_FORMULA.crushDefense / (chosen.multiplier || 1);
     const defense = (magical ? sb.resist : sb.defense) * (1 - Math.min(.85, sa.penetration + (chosen?.penetrationBonus || 0)));
     const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow) : false;
     const linkMultiplier = linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1;
     if (linked) notes.push('연계');
     const crit = landed && rng() < sa.crit;
-    const damage = landed ? Math.max(1, Math.round(base * (chosen?.multiplier || 1) * linkMultiplier * (weakened ? .75 : 1) * (crit ? sa.critDamage : 1) * 100 / (100 + defense * 2))) : 0;
+    const damage = landed ? Math.max(1, Math.round(base * (chosen?.multiplier || 1) * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1) * 100 / (100 + defense * 2))) : 0;
     const actual = Math.min(b.hp, damage);
     let totalDamage = damage;
     b.hp = Math.max(0, b.hp - damage);
@@ -130,7 +130,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
     }
     if (landed && chosen?.effect === 'bleed') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.bleedTurns;
-        b.effects.dot = { damage: Math.max(1, Math.floor(base * .22 * (weakened ? .75 : 1))), turns, name: '출혈' };
+        b.effects.dot = { damage: Math.max(1, Math.floor(base * SKILL_FORMULA.bleedRatio * (weakened ? SKILL_FORMULA.weakenedDamage : 1))), turns, name: '출혈' };
         notes.push(`출혈 ${turns}턴`);
     }
     if (landed && chosen?.effect === 'weaken') {
@@ -153,7 +153,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
         extendStatus(a.effects, 'haste', turns);
         notes.push(`가속 ${turns}턴`);
     }
-    const drain = Math.floor(actual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? .25) : 0)));
+    const drain = Math.floor(actual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0)));
     if (drain) {
         const recovery = Math.min(sa.hp - a.hp, drain);
         a.hp += recovery;
@@ -168,12 +168,12 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random) {
             continue;
         }
         const followCrit = rng() < sa.crit;
-        const followMultiplier = (chosen?.multiplier || 1) * (chosen?.extraAttackMultiplier ?? .65);
-        const followDamage = Math.max(1, Math.round(base * followMultiplier * linkMultiplier * (weakened ? .75 : 1) * (followCrit ? sa.critDamage : 1) * 100 / (100 + defense * 2)));
+        const followMultiplier = (chosen?.multiplier || 1) * (chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier);
+        const followDamage = Math.max(1, Math.round(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1) * 100 / (100 + defense * 2)));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
         totalDamage += followDamage;
-        const followDrain = Math.floor(followActual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? .25) : 0)));
+        const followDrain = Math.floor(followActual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0)));
         if (followDrain) {
             const recovery = Math.min(sa.hp - a.hp, followDrain);
             a.hp += recovery;

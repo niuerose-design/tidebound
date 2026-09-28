@@ -38,6 +38,12 @@ export function dungeonPressure(wave: number) {
     const index = Math.max(0, Math.min(4, wave));
     return { hp: 1.05 + index * .04, attack: 1.04 + index * .025, defense: 1 + index * .02 };
 }
+// 스킬 공식의 기본값. 전투 계산(combat.ts)과 스킬 설명(skill-description.ts)이 같은 값을 씁니다.
+export const SKILL_FORMULA = {
+    healThreshold: .8, woundedThreshold: .7, healRatio: .22,
+    hpScaling: .08, manaScaling: .45, hybridHpScaling: .05, hybridManaScaling: .25,
+    crushDefense: 1.5, weakenedDamage: .75, bleedRatio: .22, drainRatio: .25, extraAttackMultiplier: .65,
+};
 // 상태이상 수치와 지속시간은 전투 코드와 분리해 여기서 조정합니다.
 export const STATUS_TUNING = {
     weakenTurns: 3,
