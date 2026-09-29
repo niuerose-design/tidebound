@@ -59,6 +59,9 @@ export const SKILL_FORMULA = {
     guardBase: .95, guardSpan: .5, guardFloor: .2,
     // 처형형 연계: 적 체력이 이 비율 이하일 때 lowHp 조건 보너스가 붙습니다.
     lowHpThreshold: .35,
+    // v21.1 마력 평타: 마법 직업(마법 배율이 물리보다 0.05 이상 높음)은 기본 공격 대신
+    // 차수별 확률로 마법 공격 × arcaneStrikeRatio의 마법 피해를 줍니다. 마나를 쓰지 않습니다.
+    arcaneStrikeRatio: .6, arcaneStrikeChance: [0, .7, .8, .9, .95, .95],
 };
 // 상태이상 수치와 지속시간은 전투 코드와 분리해 여기서 조정합니다.
 export const STATUS_TUNING = {

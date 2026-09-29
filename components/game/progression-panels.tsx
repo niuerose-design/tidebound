@@ -83,7 +83,7 @@ export function Character({ s, send, busy }: Props) {
         <span>{STAT_LABELS[key]}{RATING_STATS.has(key) ? ' 수치' : ''}</span>
         <strong>{statDisplay(key, a[key])}</strong>
         </div>)}</div>
-    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : key === 'thorns' || key === 'dotBonus' ? (a[key] || 0) > 0 : true).map(key => <div key={key}>
+    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : key === 'thorns' || key === 'dotBonus' || key === 'arcaneStrike' ? (a[key] || 0) > 0 : true).map(key => <div key={key}>
         <span>{STAT_LABELS[key]}</span>
         <strong>{statDisplay(key, a[key])}</strong>
         </div>)}</div></details>

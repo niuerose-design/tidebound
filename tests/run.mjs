@@ -401,5 +401,16 @@ test('v21 job chains: five-step flagships per archetype and a physical kraken ro
  for(const job of JOBS.filter(j=>j.branchless&&j.role.startsWith('능력치'))){const owned=SKILLS.filter(sk=>sk.job===job.id);assert.equal(owned.length,1,job.id);assert.equal(owned[0].type,'passive');}
 });
 
+test('v21.1 magic jobs replace basic attacks with a weaker arcane strike from tier 1',()=>{
+ const base={hp:1e6,attack:10,magic:1000,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:0,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
+ const hit=(extra)=>{const b={name:'B',stats:{...base,hp:1e6},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};const ev=[];const log=strike({name:'A',stats:{...base,...extra},hp:1e6,mana:0,skills:[],cooldowns:{},stun:0,effects:{}},b,()=>0,ev);return {dmg:1e6-b.hp,log,ev:ev[0]};};
+ const arc=hit({arcaneStrike:.7});assert.match(arc.log,/마력 평타/);assert.equal(arc.dmg,Math.round(1000*SKILL_FORMULA.arcaneStrikeRatio));assert.equal(arc.ev.damageType,'magic');
+ const plain=hit({});assert.match(plain.log,/기본 공격/);assert.equal(plain.dmg,10);
+ const job=id=>stats({...newState(0),job:id}).arcaneStrike;
+ assert.equal(job('apprentice'),SKILL_FORMULA.arcaneStrikeChance[1]);assert.equal(job('tempest'),SKILL_FORMULA.arcaneStrikeChance[2]);assert.equal(job('grandMagus'),SKILL_FORMULA.arcaneStrikeChance[5]);
+ assert.equal(job('harpoon'),0);assert.equal(job('fisher'),0);assert.equal(job('celestialBlade'),0);
+ assert.ok(SKILL_FORMULA.arcaneStrikeChance.slice(1).every((c,i,a)=>c>=.7&&(i===0||c>=a[i-1])));
+});
+
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});
 

@@ -8,7 +8,7 @@ import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { attributes, effectiveSkill, completedRegions, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier } from './progression';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
-export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, speed: 10, mana: 40, manaRegen: 3, penetration: 0, lifesteal: 0, thorns: 0, dotBonus: 0, guardAffinity: 1, healFocus: 0, ...a }; }
+export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, speed: 10, mana: 40, manaRegen: 3, penetration: 0, lifesteal: 0, thorns: 0, dotBonus: 0, guardAffinity: 1, healFocus: 0, arcaneStrike: 0, ...a }; }
 export function mastery(s: State) { return Object.values(s.book).reduce((a, n) => a + BALANCE.bookMilestones.filter(m => n >= m).length, 0); }
 export function stats(s: State): CombatStats {
     const j = JOBS.find(j => j.id === s.job) || JOBS[0], v = attributes(s), m = mastery(s), regions = completedRegions(s).length;
@@ -18,7 +18,7 @@ export function stats(s: State): CombatStats {
         defense: BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel + v.vit * .6 + v.str * .25,
         resist: 3 + (s.level - 1) * .7 + v.wis * 1.2,
         crit: BALANCE.baseCrit + j.crit + v.luk * .003, critDamage: BALANCE.critMultiplier + v.luk * .005,
-        accuracy: .92 + v.dex * .004, evasion: v.dex * .002, speed: 10 + v.dex * .5, mana: 30 + v.wis * 3 + v.int, manaRegen: 2 + v.wis * .15, penetration: 0, lifesteal: 0, harmony: harmonyPower(s), thorns: 0, dotBonus: 0, guardAffinity: guardAffinity(j.defense), healFocus: j.healer ? 1 : 0 };
+        accuracy: .92 + v.dex * .004, evasion: v.dex * .002, speed: 10 + v.dex * .5, mana: 30 + v.wis * 3 + v.int, manaRegen: 2 + v.wis * .15, penetration: 0, lifesteal: 0, harmony: harmonyPower(s), thorns: 0, dotBonus: 0, guardAffinity: guardAffinity(j.defense), healFocus: j.healer ? 1 : 0, arcaneStrike: arcaneStrikeChance(j) };
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * .002;
     a.rebirthBonus = s.permanent.pearl || 0;
     a.dungeonGoldBonus = (s.permanent.dungeon || 0) * .08;
@@ -74,6 +74,8 @@ export function stats(s: State): CombatStats {
 export function dropRate(s: State) { return Math.min(.6, BALANCE.dropChance + attributes(s).luk * .001 + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + (stats(s).dropBonus || 0)); }
 export function power(v: Stats) { const a = normalizeStats(v); return Math.round(Math.max(a.attack, a.magic) * 7 + Math.min(a.attack, a.magic) * 2 + a.hp * .5 + (a.defense + a.resist) * 3 + a.crit * 200 + Math.max(0, a.accuracy - .8) * 220 + a.evasion * 200); }
 export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillSpecializations: { ...s.skillSpecializations }, skillPractice: { ...s.skillPractice }, power: power(a), rating: s.rating, guild: s.guild?.name || '' }; }
+/** 마법 직업이면 기본 공격이 마력 평타로 바뀔 확률(차수별). */
+export const arcaneStrikeChance = (j: { magic: number; attack: number; tier: number }) => j.magic - j.attack >= .05 ? SKILL_FORMULA.arcaneStrikeChance[Math.min(j.tier, SKILL_FORMULA.arcaneStrikeChance.length - 1)] || 0 : 0;
 /** 직업의 물리 방어 배율로 정하는 방어 친화도(0.2~1). 방어 비례 피해·반격의 효율입니다. */
 export const guardAffinity = (defenseMultiplier: number) => Math.min(1, Math.max(SKILL_FORMULA.guardFloor, (defenseMultiplier - SKILL_FORMULA.guardBase) / SKILL_FORMULA.guardSpan));
 /** 육중 조화의 원시 피해. 직접 배분한 포인트(s.attributes)만 사용합니다. */
