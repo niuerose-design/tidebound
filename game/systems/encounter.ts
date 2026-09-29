@@ -8,7 +8,7 @@ import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from
 import { victoryMastery } from './mastery';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, FIRST_AID_HEAL } from '../data/balance';
-import { FISH, STAGES, DUNGEONS, swarmAttackMultiplier } from '../data/world';
+import { FISH, STAGES, DUNGEONS, swarmHpMultiplier } from '../data/world';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { EQUIPMENT_NAMES } from '../data/equipment';
@@ -63,13 +63,10 @@ export function spawn(s: State, rng: () => number) {
     const tier = encounterTier(s);
     const foe = scaledEnemyStats(f, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
     const { exp, gold } = catchReward(f, tier, boss);
-    // 무리 사냥: 무리 전체를 체력 ×N인 한 개체로 상대하고, 규모만큼 적 공격이 강해집니다.
+    // 무리 사냥: 무리 전체를 체력 ×N(×100은 98배)인 한 개체로 상대합니다. 공격·방어는 한 마리와 같습니다.
     const swarm = !dungeon && s.target === f.id ? activeSwarm(s) : 1;
-    if (swarm > 1) {
-        foe.hp = foe.hp * swarm;
-        foe.attack = Math.round(foe.attack * swarmAttackMultiplier(swarm));
-        foe.magic = Math.round((foe.magic || 0) * swarmAttackMultiplier(swarm));
-    }
+    if (swarm > 1)
+        foe.hp = Math.round(foe.hp * swarmHpMultiplier(swarm));
     s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}) };
 }
 export function reward(s: State, rng: () => number) {

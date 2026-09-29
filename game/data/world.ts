@@ -17,8 +17,8 @@ export const STAGES = [
 export const SWARM_SIZES = [1, 5, 100] as const;
 /** 무리 규모별 해금에 필요한 해당 어종 도감 포획 수. */
 export const SWARM_UNLOCK: Record<number, number> = { 1: 0, 5: 50, 100: 500 };
-/** 무리 규모에 따른 적 공격 배율: 1 + log10(N). ×5 ≈ 1.70, ×100 = 3. */
-export const swarmAttackMultiplier = (size: number) => 1 + Math.log10(Math.max(1, size));
+/** 무리 체력 배율: N배, ×100만 98배. 공격·방어는 한 마리와 같아서 한 마리를 압도할수록 시간이 단축됩니다. */
+export const swarmHpMultiplier = (size: number) => size >= 100 ? size * .98 : Math.max(1, size);
 export type FishDef = {
     id: string;
     name: string;
