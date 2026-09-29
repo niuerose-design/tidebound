@@ -23,6 +23,7 @@ pnpm dev               # http://localhost:5173
 2. 프로젝트의 Storage에서 **Neon Postgres**를 추가해 연결합니다. `DATABASE_URL`(또는 `POSTGRES_URL`)이 자동으로 설정됩니다.
 3. 환경 변수 `ENABLE_EXPERIMENTAL_COREPACK=1`을 추가해 package.json의 pnpm 버전을 쓰게 합니다.
 4. 배포하면 첫 요청 때 필요한 테이블(players · rankings · accounts · sessions)을 자동으로 만듭니다.
+5. `vercel.json`에서 `main` 브랜치만 자동 배포하도록 막아 두었습니다. 작업 브랜치의 미리보기 배포가 필요하면 `"**": false` 줄을 지우면 됩니다.
 
 로그인은 아이디(영문 소문자·숫자·밑줄 3~20자)와 비밀번호(8자 이상)입니다. 비밀번호는 PBKDF2-SHA256으로 해시해 저장하고, 세션은 30일 HttpOnly 쿠키입니다.
 
