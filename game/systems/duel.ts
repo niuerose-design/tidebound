@@ -8,7 +8,7 @@ export const TRAINING: Snapshot[] = [
     { name: '심해의 방랑자', level: 26, job: 'tide', rebirths: 1, stats: { hp: 780, attack: 125, defense: 50, crit: .2 }, skills: ['spring', 'wave', 'hook', 'focus'], power: 1600, rating: 1600 },
 ];
 export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rng = Math.random): DuelResult {
-    const fighter = (s: Snapshot): Fighter => ({ name: s.name, stats: s.stats, hp: s.stats.hp, skills: s.skills, cooldowns: {}, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, specializations: s.skillSpecializations, practice: s.skillPractice, effects: {} });
+    const fighter = (s: Snapshot): Fighter => ({ name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, skills: s.skills, cooldowns: {}, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, specializations: s.skillSpecializations, practice: s.skillPractice, effects: {} });
     const a = fighter(player), b = fighter(opponent);
     const logs: string[] = [];
     let turns = 0;

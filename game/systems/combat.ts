@@ -4,9 +4,11 @@ import { STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
 import type { Stats, StatusEffects, CombatEvent, CombatHit } from '../types';
 export type { CombatEvent, CombatHit } from '../types';
 import { normalizeStats, hitChance } from './stats';
-import { effectiveSkill } from './progression';
+import { effectiveSkill, signatureScale } from './progression';
 export type Fighter = {
     name: string;
+    /** 현재 직업. 4차 이상 전용 기술의 계보 밖 효율을 정합니다(적은 없음). */
+    job?: string;
     stats: Stats;
     hp: number;
     skills: string[];
@@ -101,6 +103,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             if (!base || base.type !== 'active' || blocked.has(id))
                 continue;
             const candidate = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.specializations?.[id], a.practice?.[id] || 0);
+            candidate.multiplier *= signatureScale(base, a.job);
             // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
             if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)
                 continue;

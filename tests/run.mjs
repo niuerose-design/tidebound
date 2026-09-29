@@ -412,5 +412,15 @@ test('v21.1 magic jobs replace basic attacks with a weaker arcane strike from ti
  assert.ok(SKILL_FORMULA.arcaneStrikeChance.slice(1).every((c,i,a)=>c>=.7&&(i===0||c>=a[i-1])));
 });
 
+test('v21.2 tier 4+ signature skills work fully in their own lineage and at 70% when inherited elsewhere',()=>{
+ const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
+ const hit=(job,id='braveSlash')=>{const b={name:'B',stats:{...base},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};strike({name:'A',job,stats:{...base},hp:1e6,mana:100,skills:[id],cooldowns:{},stun:0,effects:{},ranks:{[id]:1},mastery:{},practice:{}},b,()=>0);return 1e6-b.hp;};
+ const own=hit('hero'),outside=hit('apostle');assert.ok(Math.abs(outside/own-SKILL_FORMULA.signatureScale)<.02);assert.equal(hit('knight'),hit('knight'));
+ assert.equal(hit(undefined),own,'enemies and legacy fighters are unaffected');assert.equal(hit('apostle','flashCut'),hit('hero','flashCut'),'tier 3 skills combine freely');
+ const s=newState(0);s.level=100;s.rebirths=2;s.skillInheritances.heroSoul=true;s.learned.heroSoul=1;s.skills=['heroSoul'];
+ const withHero=stats({...s,job:'hero'}).critDamage-stats({...s,job:'hero',skills:[]}).critDamage,withApostle=stats({...s,job:'apostle'}).critDamage-stats({...s,job:'apostle',skills:[]}).critDamage;
+ assert.ok(Math.abs(withApostle/withHero-SKILL_FORMULA.signatureScale)<1e-9);
+});
+
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});
 

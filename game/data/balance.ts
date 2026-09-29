@@ -62,6 +62,9 @@ export const SKILL_FORMULA = {
     // v21.1 마력 평타: 마법 직업(마법 배율이 물리보다 0.05 이상 높음)은 기본 공격 대신
     // 차수별 확률로 마법 공격 × arcaneStrikeRatio의 마법 피해를 줍니다. 마나를 쓰지 않습니다.
     arcaneStrikeRatio: .6, arcaneStrikeChance: [0, .7, .8, .9, .95, .95],
+    // v21.2 전용 기술: signatureTier 이상 직업의 기술은 자기 계보(조상·후손 직업)에서 온전히,
+    // 계보 밖에서 계승하면 배율·패시브 수치가 signatureScale 배로 발휘됩니다. 1~3차 기술은 자유롭게 조합됩니다.
+    signatureTier: 4, signatureScale: .7,
 };
 // 상태이상 수치와 지속시간은 전투 코드와 분리해 여기서 조정합니다.
 export const STATUS_TUNING = {

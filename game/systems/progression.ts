@@ -3,7 +3,7 @@ import { refinementTargets, thresholdRank, REFINEMENT_STEP_BONUS } from '../data
 import { rebirthAP } from './meta';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat } from '../data/progression';
-import { BALANCE } from '../data/balance';
+import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { JOBS, Job } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { STAGES } from '../data/world';
@@ -35,6 +35,13 @@ export function skillMastery(s: State, id: string) { const sk = SKILLS.find(x =>
 export function skillMasteryRanks(s: State) { const out: Record<string, number> = {}; for (const [id, practice] of Object.entries(s.skillPractice || {})) out[id] = skillMasteryLevel(practice, masteryMilestonesFor(SKILLS.find(x => x.id === id))); return out; }
 export function apUsed(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = SKILLS.find(x => x.id === id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
 export function lineage(job: string): string[] { const j = JOBS.find(x => x.id === job); return j ? [j.id, ...(j.parent ? lineage(j.parent) : [])] : []; }
+/** 전용 기술 효율: 4차 이상 직업의 기술을 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1. */
+export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
+    if (!sk.job || !userJob) return 1;
+    const owner = JOBS.find(j => j.id === sk.job);
+    if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
+    return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
+}
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? JOBS.find(x => x.id === jobOrId) : jobOrId;
     return Math.max(1, job?.masteryTarget ?? PROGRESSION.jobMastery);
