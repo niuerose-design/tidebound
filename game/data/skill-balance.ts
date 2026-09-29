@@ -57,6 +57,9 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     borrowedTentacles: { chance: .22, multiplier: 1.15, extraAttackMultiplier: .55 },
 };
 
+/** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
+export const MAGIC_MANA_COST_SCALE = 4;
+
 export function tuneActiveSkills(skills: Skill[]) {
     for (const sk of skills) {
         const tuning = ACTIVE_SKILL_BALANCE[sk.id];
@@ -64,7 +67,8 @@ export function tuneActiveSkills(skills: Skill[]) {
         Object.assign(sk, tuning);
         // 복합(split) 피해도 마나를 쓰는 주문으로 취급합니다.
         const magic = sk.damageType === 'magic' || sk.damageType === 'split';
-        if (!magic) sk.manaCost = 0;
+        // 물리 기술은 마나를 쓰지 않고, 마법·복합 기술은 정신(마나 회복)에 투자해야 꾸준히 쓸 수 있도록 비용을 높입니다.
+        sk.manaCost = magic ? Math.round((sk.manaCost || 0) * MAGIC_MANA_COST_SCALE) : 0;
         // At maximum mastery physical procs stay <= 38%; spells remain paid.
         sk.rankEffects = { ...sk.rankEffects, multiplierScale: sk.id === 'hook' ? .03 : .05,
             chanceIncrease: sk.id === 'hook' ? .01 : magic ? .025 : .02,

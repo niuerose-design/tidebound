@@ -3,7 +3,7 @@ import { rebirthExperience, rebirthMemory, evasionRating, vocationTargets, thres
 import { itemStats } from './equipment';
 import type { State, Snapshot, Stats, CombatStats } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA } from '../data/balance';
-import { PROGRESSION } from '../data/progression';
+import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { attributes, effectiveSkill, completedRegions, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier } from './progression';
@@ -38,21 +38,21 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     };
     set('expBonus', 'rebirth', permanentExpBonus(s)); add('expBonus', 'job', j.expBonus || 0);
     for (const k of ['goldBonus', 'dropBonus', 'rebirthBonus', 'dungeonGoldBonus', 'penetration', 'lifesteal'] as const) a[k] = 0;
-    set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * 9); add('hp', 'book', regions * 20);
-    set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'book', m); add('attack', 'attributes', v.str * 2);
-    set('magic', 'base', 10 + (s.level - 1) * 3); add('magic', 'attributes', v.int * 2.4); add('magic', 'book', m);
-    set('defense', 'base', BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel); add('defense', 'attributes', v.vit * .6); add('defense', 'attributes', v.str * .25);
-    set('resist', 'base', 3 + (s.level - 1) * .7); add('resist', 'attributes', v.wis * 1.2);
-    set('crit', 'base', BALANCE.baseCrit); add('crit', 'job', j.crit); add('crit', 'attributes', v.luk * .003);
-    set('critDamage', 'base', BALANCE.critMultiplier); add('critDamage', 'attributes', v.luk * .005);
-    set('accuracy', 'base', .92); add('accuracy', 'attributes', v.dex * .004);
-    set('evasion', 'attributes', v.dex * .002);
-    set('speed', 'base', 10); add('speed', 'attributes', v.dex * .5);
-    set('mana', 'base', 30); add('mana', 'attributes', v.wis * 3); add('mana', 'attributes', v.int);
-    set('manaRegen', 'base', 2); add('manaRegen', 'attributes', v.wis * .15);
+    set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * E.vit.hp); add('hp', 'book', regions * 20);
+    set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'book', m); add('attack', 'attributes', v.str * E.str.attack);
+    set('magic', 'base', 10 + (s.level - 1) * 3); add('magic', 'attributes', v.int * E.int.magic); add('magic', 'book', m);
+    set('defense', 'base', BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel); add('defense', 'attributes', v.vit * E.vit.defense); add('defense', 'attributes', v.str * E.str.defense);
+    set('resist', 'base', 3 + (s.level - 1) * .7); add('resist', 'attributes', v.wis * E.wis.resist);
+    set('crit', 'base', BALANCE.baseCrit); add('crit', 'job', j.crit); add('crit', 'attributes', v.luk * E.luk.crit);
+    set('critDamage', 'base', BALANCE.critMultiplier); add('critDamage', 'attributes', v.luk * E.luk.critDamage);
+    set('accuracy', 'base', .92); add('accuracy', 'attributes', v.dex * E.dex.accuracy);
+    set('evasion', 'attributes', v.dex * E.dex.evasion);
+    set('speed', 'base', 10); add('speed', 'attributes', v.dex * E.dex.speed);
+    set('mana', 'base', 30); add('mana', 'attributes', v.wis * E.wis.mana); add('mana', 'attributes', v.int * E.int.mana);
+    set('manaRegen', 'base', 2); add('manaRegen', 'attributes', v.wis * E.wis.manaRegen);
     set('harmony', 'attributes', harmonyPower(s));
-    a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * .002;
-    rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * .002);
+    a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
+    rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus);
     set('rebirthBonus', 'research', s.permanent.pearl || 0);
     set('dungeonGoldBonus', 'research', (s.permanent.dungeon || 0) * .08);
     for (const item of Object.values(s.equipment)) {
@@ -98,7 +98,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     limit('lifesteal', Math.min(.3, a.lifesteal));
     return a;
 }
-export function dropRate(s: State) { return Math.min(.6, BALANCE.dropChance + attributes(s).luk * .001 + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + (stats(s).dropBonus || 0)); }
+export function dropRate(s: State) { return Math.min(.6, BALANCE.dropChance + attributes(s).luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + (stats(s).dropBonus || 0)); }
 export function power(v: Stats) { const a = normalizeStats(v); return Math.round(Math.max(a.attack, a.magic) * 7 + Math.min(a.attack, a.magic) * 2 + a.hp * .5 + (a.defense + a.resist) * 3 + a.crit * 200 + Math.max(0, a.accuracy - .8) * 220 + a.evasion * 200); }
 export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillSpecializations: { ...s.skillSpecializations }, skillPractice: { ...s.skillPractice }, power: power(a), rating: s.rating, guild: s.guild?.name || '' }; }
 /** 육중 조화의 원시 피해. 직접 배분한 포인트(s.attributes)만 사용합니다. */

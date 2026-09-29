@@ -86,7 +86,7 @@ test('All-rounder: allocated-point harmony damage, split mitigation and allocati
  s.jobMastery.wanderer=2400;s.unlockedJobs=['fisher','wanderer'];assert.equal(canChangeJob(s,'allRounder'),true);
  s.attributes.luk=14;s.level=100;assert.equal(canChangeJob(s,'allRounder'),false,'level growth does not count as allocated points');
  s.attributes.luk=15;s.jobMastery.wanderer=2399;assert.equal(canChangeJob(s,'allRounder'),false);
- const base={hp:1e6,attack:1,magic:1,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5,harmony:1000};
+ const base={hp:1e6,attack:1,magic:1,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:1000,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5,harmony:1000};
  const fighter=(st)=>({name:'A',stats:st,hp:st.hp,mana:st.mana,skills:['harmonicWeight'],cooldowns:{},stun:0,effects:{},ranks:{harmonicWeight:1},mastery:{},practice:{}});
  const target=(def,res)=>({name:'B',stats:{...base,defense:def,resist:res,harmony:0},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}});
  const sk=SKILLS.find(x=>x.id==='harmonicWeight');const raw=1000*sk.multiplier;
@@ -108,7 +108,7 @@ test('Swarm hunting: unlock by codex, one entity with N x HP, rewards only on ki
  let guard=0;while(s.enemy===e&&guard++<2000){tick(s,()=>.5);if(s.enemy===e)assert.equal(s.kills,kills,'no partial rewards');}
  assert.equal(s.kills-kills,5);assert.equal(s.book.minnow-book,5);assert.equal(s.gold-gold,Math.floor(e.gold*mult)*5);assert.equal((s.jobMastery[s.job]||0)-job,5);
  // 적의 자기 체력 비례 공격은 한 마리 체력 기준
- const hpSkill={name:'foe',stats:{hp:1000,attack:0,magic:0,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5,harmony:0},hp:5000,skills:['vitalSurge'],cooldowns:{},stun:0,effects:{},mana:100,ranks:{vitalSurge:1}};
+ const hpSkill={name:'foe',stats:{hp:1000,attack:0,magic:0,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:1000,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5,harmony:0},hp:5000,skills:['vitalSurge'],cooldowns:{},stun:0,effects:{},mana:1000,ranks:{vitalSurge:1}};
  const t1={name:'p',stats:{...hpSkill.stats,hp:1e6},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}},t5={...t1,effects:{},cooldowns:{}};
  strike({...hpSkill,cooldowns:{},effects:{}},t1,()=>0);strike({...hpSkill,cooldowns:{},effects:{},hp:5000,stats:{...hpSkill.stats,hp:5000},swarm:5},t5,()=>0);assert.equal(t1.hp,t5.hp);
  const dead=newState(0);dead.level=1;act(dead,{type:'stage',id:'brook'},0);act(dead,{type:'target',id:'minnow'},0);dead.book.minnow=500;act(dead,{type:'swarm',id:'100'},0);act(dead,{type:'start'},0);
@@ -121,8 +121,8 @@ test('Rebirth reward breakdown always sums to the pearls actually granted',()=>{
 });
 
 test('Follow-up hits: each hit counted once, total equals HP lost, stops when the target dies, works for player and enemy',()=>{
- const base={hp:1e6,attack:100,magic:10,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:.1,critDamage:1.5,harmony:0};
- const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1000,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1]))});
+ const base={hp:1e6,attack:100,magic:10,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:1000,manaRegen:0,penetration:0,lifesteal:.1,critDamage:1.5,harmony:0};
+ const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1000,mana:1000,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1]))});
  for(const id of ['twinHook','tentacleBarrage','foeFrenzy']){
   const a=mk([id]),b={...mk([]),name:'B',hp:1e6};a.hp=500;const ev=[];const text=strike(a,b,()=>0,ev);const e=ev[0];
   assert.equal(e.skillId,id);assert.ok(e.hits.length>=2,id);assert.equal(e.hits[0].kind,'main');assert.ok(e.hits.slice(1).every(h=>h.kind==='follow'));
