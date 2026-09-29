@@ -70,6 +70,8 @@ export const SKILL_FORMULA = {
 export const STATUS_TUNING = {
     weakenTurns: 3,
     bleedTurns: 3,
+    /** v21.3 중독 중첩 상한. 중첩형 기술은 겹칠 때마다 한 중첩씩 쌓고 지속 시간을 갱신합니다. */
+    poisonMaxStacks: 5,
     silenceTurns: 2,
     slowTurns: 3,
     hasteTurns: 3,

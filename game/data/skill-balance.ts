@@ -79,7 +79,7 @@ export function tuneActiveSkills(skills: Skill[]) {
         sk.desc = `(${source}${scaling}) × ${sk.multiplier} 피해.${sk.id === 'crush' ? ' 물리 방어 150% 추가 피해.' : ''}`;
         if (sk.effect === 'heal') sk.desc += ` 최대 체력 ${Math.round((sk.healRatio ?? .22) * 100)}% 회복.`;
         if (sk.effect === 'drain') sk.desc += ` 실제 피해의 ${Math.round((sk.drainRatio ?? .25) * 100)}% 회복.`;
-        if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += ` ${sk.effect === 'bleed' && sk.dotName ? sk.dotName : { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun']} 효과.`;
+        if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += ` ${sk.effect === 'bleed' && sk.dotName ? sk.dotName + (sk.dotStacks ? '(중첩)' : '') : { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun']} 효과.`;
         if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';

@@ -179,8 +179,19 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (landed && chosen?.effect === 'bleed') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.bleedTurns;
         const name = chosen.dotName || '출혈';
-        b.effects.dot = { damage: Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1))), turns, name };
-        notes.push(`${name} ${turns}턴`);
+        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
+        const current = b.effects.dot;
+        if (chosen.dotStacks) {
+            // 중독 중첩: 이미 걸린 중첩형 지속 피해에 한 중첩을 더하고, 한 중첩 피해는 더 강한 쪽을 씁니다.
+            const stacks = current?.stacks ? Math.min(STATUS_TUNING.poisonMaxStacks, current.stacks + 1) : 1;
+            const perStack = Math.max(tick, current?.stacks ? current.perStack || 0 : 0);
+            b.effects.dot = { damage: perStack * stacks, perStack, stacks, turns, name };
+            notes.push(`${name} ${stacks}중첩 ${turns}턴`);
+        } else {
+            // 일반 출혈은 덮어쓰되, 쌓아 둔 중독이 더 강하면 지우지 않습니다.
+            if (!current?.stacks || tick >= current.damage) b.effects.dot = { damage: tick, turns, name };
+            notes.push(`${name} ${turns}턴`);
+        }
         ev.statuses.push({ id: 'bleed', turns });
     }
     if (landed && chosen?.effect === 'weaken') {

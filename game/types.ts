@@ -42,6 +42,9 @@ export type StatusEffects = {
         damage: number;
         turns: number;
         name: string;
+        /** 중첩형 지속 피해(중독)의 현재 중첩 수와 한 중첩당 피해. damage = perStack × stacks. */
+        stacks?: number;
+        perStack?: number;
     };
     weaken?: number;
     silence?: number;
@@ -102,6 +105,8 @@ export type Skill = {
     /** 이 기술이 거는 지속 피해 비율(기본 SKILL_FORMULA.bleedRatio)과 이름(기본 출혈). */
     dotRatio?: number;
     dotName?: string;
+    /** true면 같은 중첩형 지속 피해에 겹쳐 쌓입니다(최대 STATUS_TUNING.poisonMaxStacks, 지속 시간 갱신). */
+    dotStacks?: boolean;
     /** Number of capped follow-up hits after the main hit. */
     extraAttacks?: number;
     /** Damage multiplier used by each follow-up hit. */

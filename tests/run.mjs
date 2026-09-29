@@ -26,7 +26,7 @@ const {goldMultiplier,dungeonGoldMultiplier,dropRate,hitChance}=await import(pat
 const {rebirthLevel,rebirthReward,tierReward}=await import(pathToFileURL(join(out,'game/systems/meta.js')).href);
 const metaMod=await import(pathToFileURL(join(out,'game/systems/meta.js')).href);
 const longTerm=await import(pathToFileURL(join(out,'game/data/long-term.js')).href);
-const {xpNeeded,SKILL_FORMULA}=await import(pathToFileURL(join(out,'game/data/balance.js')).href);
+const {xpNeeded,SKILL_FORMULA,STATUS_TUNING}=await import(pathToFileURL(join(out,'game/data/balance.js')).href);const STATUS_TUNING_MAX=STATUS_TUNING.poisonMaxStacks;
 const {PROGRESSION}=await import(pathToFileURL(join(out,'game/data/progression.js')).href);
 const {JOBS,JOB_TREES}=await import(pathToFileURL(join(out,'game/data/classes.js')).href);
 let seed=44;const rng=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
@@ -420,6 +420,16 @@ test('v21.2 tier 4+ signature skills work fully in their own lineage and at 70% 
  const s=newState(0);s.level=100;s.rebirths=2;s.skillInheritances.heroSoul=true;s.learned.heroSoul=1;s.skills=['heroSoul'];
  const withHero=stats({...s,job:'hero'}).critDamage-stats({...s,job:'hero',skills:[]}).critDamage,withApostle=stats({...s,job:'apostle'}).critDamage-stats({...s,job:'apostle',skills:[]}).critDamage;
  assert.ok(Math.abs(withApostle/withHero-SKILL_FORMULA.signatureScale)<1e-9);
+});
+
+test('v21.3 poison stacks up to the cap, refreshes duration, and ordinary bleeds do not erase a stronger stack',()=>{
+ const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
+ const mk=(skills)=>({name:'A',stats:{...base},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
+ const b=mk([]),dart=SKILLS.find(x=>x.id==='venomDart');const per=Math.floor(100*dart.dotRatio);
+ for(let i=1;i<=STATUS_TUNING_MAX+2;i++){strike(mk(['venomDart']),b,()=>0);const n=Math.min(i,STATUS_TUNING_MAX);assert.equal(b.effects.dot.stacks,n);assert.equal(b.effects.dot.damage,per*n);assert.equal(b.effects.dot.turns,dart.statusTurns??3);}
+ assert.match(visibleStatuses(b.effects,0,[],'enemy')[0].label,/중독 ×/);
+ strike(mk(['cut']),b,()=>0);assert.equal(b.effects.dot.stacks,STATUS_TUNING_MAX,'weaker bleed keeps the stacked poison');
+ const fresh=mk([]);strike(mk(['cut']),fresh,()=>0);assert.equal(fresh.effects.dot.stacks,undefined);strike(mk(['venomDart']),fresh,()=>0);assert.equal(fresh.effects.dot.stacks,1,'a plain bleed does not count as a poison stack');
 });
 
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});
