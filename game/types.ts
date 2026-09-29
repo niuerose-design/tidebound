@@ -21,6 +21,14 @@ export type Stats = {
     lifesteal?: number;
     /** 육중 조화의 원시 피해. 직접 배분한 여섯 능력치로만 계산하며 장비·버프는 제외. */
     harmony?: number;
+    /** 반격: 맞을 때마다 (내 물리 방어 × 이 값)을 공격자에게 돌려줍니다. 직업의 방어 친화도가 곱해진 최종값. */
+    thorns?: number;
+    /** 출혈·중독 같은 지속 피해 증가율. 0.2 = +20%. */
+    dotBonus?: number;
+    /** 방어 비례 피해·반격이 얼마나 제대로 발휘되는지(0.2~1). 방어 배율이 높은 수호 계열일수록 1에 가깝습니다. */
+    guardAffinity?: number;
+    /** 회복 직업이면 1. 회복이 필요 없을 때 쓴 회복 기술도 피해가 줄지 않습니다. */
+    healFocus?: number;
     hp: number;
     attack: number;
     defense: number;
@@ -79,15 +87,19 @@ export type Skill = {
     manaCost?: number;
     accuracyBonus?: number;
     penetrationBonus?: number;
-    damageBonusCondition?: 'bleeding' | 'weakened' | 'controlled';
+    damageBonusCondition?: 'bleeding' | 'weakened' | 'controlled' | 'lowHp';
     conditionalDamageBonus?: number;
     cleanseSelf?: boolean;
     healRatio?: number;
     drainRatio?: number;
     condition?: 'wounded' | 'healthyTarget';
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony';
+    /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. */
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'dual';
     scalingRatio?: number;
     statusTurns?: number;
+    /** 이 기술이 거는 지속 피해 비율(기본 SKILL_FORMULA.bleedRatio)과 이름(기본 출혈). */
+    dotRatio?: number;
+    dotName?: string;
     /** Number of capped follow-up hits after the main hit. */
     extraAttacks?: number;
     /** Damage multiplier used by each follow-up hit. */
@@ -132,7 +144,7 @@ export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split';
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
-    dot?: { name: string; value: number }; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
+    dot?: { name: string; value: number }; reflected?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
 };
 export type Log = {
     id: number;

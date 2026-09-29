@@ -26,7 +26,7 @@ const {goldMultiplier,dungeonGoldMultiplier,dropRate,hitChance}=await import(pat
 const {rebirthLevel,rebirthReward,tierReward}=await import(pathToFileURL(join(out,'game/systems/meta.js')).href);
 const metaMod=await import(pathToFileURL(join(out,'game/systems/meta.js')).href);
 const longTerm=await import(pathToFileURL(join(out,'game/data/long-term.js')).href);
-const {xpNeeded}=await import(pathToFileURL(join(out,'game/data/balance.js')).href);
+const {xpNeeded,SKILL_FORMULA}=await import(pathToFileURL(join(out,'game/data/balance.js')).href);
 const {PROGRESSION}=await import(pathToFileURL(join(out,'game/data/progression.js')).href);
 const {JOBS,JOB_TREES}=await import(pathToFileURL(join(out,'game/data/classes.js')).href);
 let seed=44;const rng=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
@@ -101,8 +101,9 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  act(s,{type:'learn',id:'pierce'},0);assert.equal(s.sp,3);assert.equal(skillLevel(sk,s.learned.pierce,2),3);
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
-test('70 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,70);assert.equal(SKILLS.length,104);assert.equal(JOB_TREES.length,4);
+test('115 jobs distribute tier 1 and 2 skills into one or two each',()=>{
+ assert.equal(JOBS.length,115);assert.equal(SKILLS.length,185);assert.equal(JOB_TREES.length,6);
+ for(const job of JOBS)assert.ok(JOB_TREES.some(t=>t.id===job.tree),job.id);
  for(const job of JOBS.filter(j=>j.tier===1||j.tier===2)){
   const owned=SKILLS.filter(sk=>sk.job===job.id);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
  }
@@ -295,7 +296,11 @@ test('Dungeon repeat runs until its stop condition, then resumes idle fishing',(
 
 test('All-rounder: allocated-point harmony damage, split mitigation and allocation-only unlock',()=>{
  const s=newState(0);s.level=40;s.attributes={str:20,dex:20,int:20,vit:20,wis:20,luk:15};
- assert.equal(stats(s).harmony,40+115*.8+15*12);
+ const rawHarmony=40+115*.8+15*12;assert.equal(stats(s).harmony,Math.floor(rawHarmony*SKILL_FORMULA.harmonyScale));
+ // 서로 다른 직업의 능력치 패시브를 장착할수록 조화가 강해지고, 같은 직업의 패시브는 한 번만 셉니다.
+ for(const id of ['axeArm','bookwise','innerBreath'])s.skillInheritances[id]=true,s.learned[id]=1;
+ s.skills=['axeArm','bookwise','innerBreath'];assert.equal(stats(s).harmony,Math.floor(rawHarmony*SKILL_FORMULA.harmonyScale*(1+3*SKILL_FORMULA.harmonyPerJob)));
+ s.skills=[];
  const j=JOBS.find(x=>x.id==='allRounder');assert.equal(j.parent,'wanderer');
  s.jobMastery.wanderer=2400;s.unlockedJobs=['fisher','wanderer'];assert.equal(canChangeJob(s,'allRounder'),true);
  s.attributes.luk=14;s.level=100;assert.equal(canChangeJob(s,'allRounder'),false,'level growth does not count as allocated points');
@@ -348,6 +353,52 @@ test('Follow-up hits: each hit counted once, total equals HP lost, stops when th
  const rolls=[0,0];let r=0;const b2={...mk([]),name:'B',hp:1e6};const ev2=[];strike(mk(['twinHook']),b2,()=>rolls[r++]??.9999,ev2);
  assert.ok(ev2[0].hits.some(h=>h.kind==='follow'&&h.miss),'a follow-up can miss independently');
  const crit=[];strike(mk(['arcane'],{crit:1}),{...mk([]),name:'B',hp:1e6},()=>0,crit);assert.equal(crit[0].hits[0].critical,true);assert.equal(crit[0].damageType,'magic');
+});
+
+test('v21 tank counter and defense-scaled damage follow the job defense multiplier',()=>{
+ const base={hp:1e6,attack:100,magic:0,defense:100,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
+ const fighter=(extra={},skills=[])=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
+ // 반격: 맞은 쪽 물리 방어 × thorns를 공격자의 물리 방어로 경감해 돌려줍니다.
+ const attacker=fighter({defense:0}),tank=fighter({thorns:.5});const ev=[];strike(attacker,tank,()=>0,ev);
+ assert.equal(1e6-attacker.hp,50);assert.equal(ev[0].reflected,50);assert.match(ev[0]&&strike(fighter({defense:0}),fighter({thorns:.5}),()=>0),/반격 50/);
+ const noThorns=fighter({defense:0});strike(noThorns,fighter(),()=>0);assert.equal(noThorns.hp,1e6);
+ // 방어 비례 기술은 방어 친화도만큼만 더해집니다.
+ const hit=(affinity)=>{const b=fighter({defense:0});strike(fighter({guardAffinity:affinity},['ironRetort']),b,()=>0);return 1e6-b.hp;};
+ assert.ok(hit(1)>hit(.2));const sk=SKILLS.find(x=>x.id==='ironRetort');assert.equal(hit(1),Math.round((100+100*sk.scalingRatio)*sk.multiplier));
+ // 직업 방어 배율 → 방어 친화도 → 최종 반격 수치
+ const s=newState(0);s.level=40;s.skillInheritances.reefFortress=true;s.learned.reefFortress=1;s.skills=['reefFortress'];
+ s.job='brineThorn';const tankThorns=stats(s).thorns;s.job='krakenSlayer';const dealerThorns=stats(s).thorns;
+ assert.equal(stats({...s,job:'brineThorn'}).guardAffinity,1);assert.ok(Math.abs(stats(s).guardAffinity-SKILL_FORMULA.guardFloor)<1e-9);
+ assert.ok(Math.abs(dealerThorns/tankThorns-stats(s).guardAffinity)<1e-9);
+});
+test('v21 heal skills fire at full HP; non-healers deal reduced damage when the heal is wasted',()=>{
+ const base={hp:1000,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
+ const cast=(extra,hp)=>{const a={name:'A',stats:{...base,...extra},hp,mana:100,skills:['moonTide'],cooldowns:{},stun:0,effects:{},ranks:{moonTide:1},mastery:{},practice:{}};const b={name:'B',stats:{...base,hp:1e6},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};const log=strike(a,b,()=>0);return {dmg:1e6-b.hp,log,a};};
+ const idle=cast({},1000),healer=cast({healFocus:1},1000),hurt=cast({},300);
+ assert.match(idle.log,/월광 조수/);assert.equal(idle.a.cooldowns.moonTide>0,true);
+ assert.ok(Math.abs(idle.dmg/healer.dmg-SKILL_FORMULA.idleHealDamage)<.01);assert.equal(hurt.dmg,healer.dmg,'a needed heal keeps full damage');
+ assert.ok(SKILLS.filter(sk=>sk.effect==='heal').every(sk=>!sk.condition));
+ assert.equal(stats({...newState(0),job:'lunarOracle'}).healFocus,1);assert.equal(stats(newState(0)).healFocus,0);
+});
+test('v21 poison, burns and execute conditions are data-driven',()=>{
+ const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
+ const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
+ const dart=SKILLS.find(x=>x.id==='venomDart');let b=mk([]);strike(mk(['venomDart'],{dotBonus:.5}),b,()=>0);
+ assert.equal(b.effects.dot.name,'중독');assert.equal(b.effects.dot.damage,Math.floor(100*dart.dotRatio*1.5));
+ b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.dot.name,'화상');
+ const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[];strike(mk(['braveSlash']),t,()=>0,ev);return ev[0].hits[0].value;};
+ const sk=SKILLS.find(x=>x.id==='braveSlash');assert.equal(brave(3e5),Math.round(Math.round(100*sk.multiplier)*(1+sk.conditionalDamageBonus)));assert.equal(brave(1e6),Math.round(100*sk.multiplier));
+});
+test('v21 job chains: five-step flagships per archetype and a physical kraken route',()=>{
+ for(const top of ['hero','grandMagus','celestialBlade','guardianDeity','apostle']){
+  let j=JOBS.find(x=>x.id===top);assert.equal(j.tier,5);assert.ok(j.rebirth>=2);
+  while(j.parent){const p=JOBS.find(x=>x.id===j.parent);assert.equal(p.tier,j.tier-1,j.id);assert.ok(p.level<j.level);assert.ok(Object.keys(j.requiresSkillMastery||{}).every(id=>SKILLS.find(sk=>sk.id===id).job===p.id),j.id);j=p;}
+  assert.equal(j.tier,1);
+ }
+ const bite=SKILLS.find(x=>x.id==='electricBite');assert.equal(bite.damageType,'physical');assert.equal(bite.manaCost,0);
+ assert.equal(JOBS.find(j=>j.id==='stormEel').parent,'tidalBrawler');assert.deepEqual(JOBS.find(j=>j.id==='stormEel').requiresSkillMastery,{wakeFist:2});
+ for(const id of ['stormEel','krakenkin'])assert.ok(SKILLS.filter(sk=>sk.job===id&&sk.type==='active').every(sk=>sk.damageType!=='magic'),id);
+ for(const job of JOBS.filter(j=>j.branchless&&j.role.startsWith('능력치'))){const owned=SKILLS.filter(sk=>sk.job===job.id);assert.equal(owned.length,1,job.id);assert.equal(owned[0].type,'passive');}
 });
 
 console.log(`${passed} gameplay tests passed.`);await rm(out,{recursive:true,force:true});

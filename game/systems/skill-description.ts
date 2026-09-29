@@ -13,7 +13,8 @@ export function skillBonusText(key: string, value: number) {
 export function skillEffectLines(sk: Skill, level = 0): string[] {
     const out: string[] = [];
     if (sk.type === 'active') {
-        const base = [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
+        const base = [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.scaling === 'dual' ? '(물리 공격 + 마법 공격) ÷ 2' : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
+        if (sk.scaling === 'defense') base.push(`물리 방어 × ${number(sk.scalingRatio ?? 1)} × 방어 친화도`);
         if (sk.scaling === 'hp') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hpScaling)}`);
         if (sk.scaling === 'mana') base.push(`최대 마나 × ${number(sk.scalingRatio ?? SKILL_FORMULA.manaScaling)}`);
         if (sk.scaling === 'hybrid') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hybridHpScaling)}`, `최대 마나 × ${number((sk.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2)}`);
@@ -23,10 +24,11 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.accuracyBonus) out.push(`이 기술 명중 +${skillPercent(sk.accuracyBonus)}p`);
         if (sk.penetrationBonus) out.push(`이 기술 방어 관통 +${skillPercent(sk.penetrationBonus)}p · 합계 최대 85%`);
         if (sk.cleanseSelf) out.push('발동 시 자신의 출혈·감속 해제');
-        if (sk.damageBonusCondition) out.push(`${{ bleeding: '출혈', weakened: '약화', controlled: '침묵·감속' }[sk.damageBonusCondition]} 중인 적에게 직접 피해 +${skillPercent(sk.conditionalDamageBonus || 0)}`);
-        if (sk.effect === 'heal') out.push(`체력 ${skillPercent(sk.condition === 'wounded' ? SKILL_FORMULA.woundedThreshold : SKILL_FORMULA.healThreshold)} 이하일 때 자신의 최대 체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복 후 공격`);
+        if (sk.scaling === 'defense') out.push('방어 친화도: 직업의 물리 방어 배율이 높을수록 1에 가깝고(수호 계열), 다른 직업이 계승하면 최소 20%만 발휘');
+        if (sk.damageBonusCondition) out.push(sk.damageBonusCondition === 'lowHp' ? `체력 ${skillPercent(SKILL_FORMULA.lowHpThreshold)} 이하인 적에게 직접 피해 +${skillPercent(sk.conditionalDamageBonus || 0)}` : `${{ bleeding: '출혈·중독', weakened: '약화', controlled: '침묵·감속' }[sk.damageBonusCondition]} 중인 적에게 직접 피해 +${skillPercent(sk.conditionalDamageBonus || 0)}`);
+        if (sk.effect === 'heal') out.push(`${sk.condition === 'wounded' ? `체력 ${skillPercent(SKILL_FORMULA.woundedThreshold)} 이하일 때 ` : ''}자신의 최대 체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복 후 공격 · 체력 ${skillPercent(SKILL_FORMULA.healThreshold)} 이상에서 쓰면 회복 직업이 아닐 때 피해 ×${number(SKILL_FORMULA.idleHealDamage)}`);
         if (sk.effect === 'stun') out.push(`명중 시 기절 ${sk.statusTurns ?? 1}턴`);
-        if (sk.effect === 'bleed') out.push(`명중 시 출혈 ${sk.statusTurns ?? STATUS_TUNING.bleedTurns}턴 · 턴마다 (${base.join(' + ')}) × ${number(SKILL_FORMULA.bleedRatio)} 피해`);
+        if (sk.effect === 'bleed') out.push(`명중 시 ${sk.dotName || '출혈'} ${sk.statusTurns ?? STATUS_TUNING.bleedTurns}턴 · 턴마다 (${base.join(' + ')}) × ${number(sk.dotRatio ?? SKILL_FORMULA.bleedRatio)} × (1 + 지속 피해 증가) 피해 · 방어 무시`);
         if (sk.effect === 'weaken') out.push(`명중 시 상대 직접 피해 −${skillPercent(1 - SKILL_FORMULA.weakenedDamage)} · ${sk.statusTurns ?? STATUS_TUNING.weakenTurns}턴`);
         if (sk.effect === 'silence') out.push(`명중 시 침묵 ${sk.statusTurns ?? STATUS_TUNING.silenceTurns}턴 · 상대 액티브 사용 불가`);
         if (sk.effect === 'slow') out.push(`명중 시 상대 속도 −${skillPercent(STATUS_TUNING.slowMultiplier)} · ${sk.statusTurns ?? STATUS_TUNING.slowTurns}턴`);

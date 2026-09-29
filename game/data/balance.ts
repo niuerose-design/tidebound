@@ -48,6 +48,17 @@ export const SKILL_FORMULA = {
     // 육중 조화: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
     // 초안(합 × 1.2 + 최저 × 6)은 편중 배분이 더 강해 check-all-rounder.mjs 결과로 조정했습니다.
     harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,
+    // v21 만능 항해사: 원시 피해도 연구·환생·직업 배율을 받고, 장착한 능력치 패시브의
+    // 출신 직업이 서로 다를수록(최대 harmonyJobCap개) 직업당 harmonyPerJob만큼 강해집니다.
+    harmonyScale: 2, harmonyPerJob: .15, harmonyJobCap: 6,
+    // v21 회복 기술은 체력이 가득 차도 발동합니다. 체력이 healThreshold 이상일 때 쓰면
+    // 회복 직업이 아닌 경우 그 공격의 피해가 idleHealDamage 배가 됩니다.
+    idleHealDamage: .6,
+    // v21 방어 친화도: (직업 물리 방어 배율 − guardBase) ÷ guardSpan, guardFloor~1로 제한.
+    // 방어 비례 피해와 반격은 이 값만큼만 발휘되어 계승해도 수호 계열만큼 강하지 않습니다.
+    guardBase: .95, guardSpan: .5, guardFloor: .2,
+    // 처형형 연계: 적 체력이 이 비율 이하일 때 lowHp 조건 보너스가 붙습니다.
+    lowHpThreshold: .35,
 };
 // 상태이상 수치와 지속시간은 전투 코드와 분리해 여기서 조정합니다.
 export const STATUS_TUNING = {
