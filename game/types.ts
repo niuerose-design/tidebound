@@ -31,6 +31,15 @@ export type Stats = {
     healFocus?: number;
     /** 마법 직업의 기본 공격이 마력 평타(마법 공격 × arcaneStrikeRatio, 마나 없음)로 바뀔 확률. */
     arcaneStrike?: number;
+    /** v22 장비 규칙 옵션. 기존 기술 규칙의 숫자 하나만 바꿉니다(상한은 data/gear.ts RULE_CAPS). */
+    stunBonus?: number;
+    controlBonus?: number;
+    dotTurnsBonus?: number;
+    poisonStackBonus?: number;
+    arcaneRatioBonus?: number;
+    followUpBonus?: number;
+    healBonus?: number;
+    executeBonus?: number;
     hp: number;
     attack: number;
     defense: number;
@@ -57,11 +66,16 @@ export type Item = {
     description?: string;
     locked?: boolean;
     relic?: string;
+    /** v21 이전 장비와 유물의 단일 옵션. */
     affix?: {
         stat: keyof Stats;
         value: number;
         name: string;
     };
+    /** v22 등급 수만큼 붙는 옵션(0~6개). */
+    affixes?: import('./data/gear').ItemAffix[];
+    /** 드롭한 낚시터·던전 id. */
+    origin?: string;
     id: string;
     name: string;
     slot: 'rod' | 'coat' | 'charm';
@@ -189,6 +203,8 @@ export type State = {
     tide: number;
     abyssBest: number;
     shopSerial: number;
+    /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
+    essence?: number;
     guild: GuildState;
     attributes: Record<Attribute, number>;
     statPoints: number;

@@ -1,6 +1,7 @@
 import { BOSS_RESEARCH, SPECIALIZATIONS, specializationFits } from '../data/specializations';
 import { commerce } from './commerce';
-import { rollAffix, saleValue } from './equipment';
+import { saleValue } from './equipment';
+import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, skillPracticeTargets } from './progression';
 import { activeSwarm, swarmUnlocked, catchReward, deepVoyagePearls, nextLifeBonus, TAILWIND_EXP, rebirthLevel, rebirthReward, tideLimit, encounterTier } from './meta';
@@ -31,6 +32,7 @@ export function newState(now: number): State {
         tide: 0,
         abyssBest: 0,
         shopSerial: 0,
+        essence: 0,
         guild: newGuild(),
         name: '물결의 낚시꾼',
         level: 1,
@@ -74,15 +76,23 @@ export function newState(now: number): State {
     state.mana = stats(state).mana;
     return state;
 }
+/** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
+export function rollRarity(rng: () => number, minRarity = 0) {
+    const weights = DROP_RARITY.map((w, i) => i >= minRarity ? w : 0);
+    let roll = rng() * weights.reduce((sum, w) => sum + w, 0);
+    for (let i = 0; i < weights.length; i++) { roll -= weights[i]; if (roll < 0) return i; }
+    return weights.length - 1;
+}
 function drop(s: State, level: number, rng: () => number, guaranteed = false) {
     if (!guaranteed && rng() > dropRate(s))
         return;
-    const roll = rng();
-    const rarity = guaranteed ? Math.max(1, roll > .95 ? 3 : roll > .7 ? 2 : 1) : roll > .985 ? 3 : roll > .90 ? 2 : roll > .65 ? 1 : 0;
+    const rarity = rollRarity(rng, guaranteed ? 1 : 0);
+    const origin = s.dungeon?.id || s.stage;
     const slot = (['rod', 'coat', 'charm'] as const)[Math.floor(rng() * 3)];
     const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: EQUIPMENT_NAMES[slot][rarity], power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
     if (rarity > 0)
-        item.affix = rollAffix(rarity, rng);
+        item.affixes = rollAffixes(rarity, item.power, origin, rng);
+    item.origin = origin;
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     if (s.inventory.length >= BALANCE.inventoryCap) {
@@ -91,7 +101,7 @@ function drop(s: State, level: number, rng: () => number, guaranteed = false) {
     }
     else {
         s.inventory.push(item);
-        addLog(s, `${RARITIES[rarity].name} 장비 발견 · ${item.name}`, 'reward');
+        addLog(s, `${RARITIES[rarity].name} 장비 발견 · ${item.name}${rarity ? ` · 옵션 ${rarity}개` : ''}`, 'reward');
     }
 }
 function weightedFishId(ids: string[], rng: () => number) {
@@ -198,7 +208,9 @@ function reward(s: State, rng: () => number) {
             if (first && d.id !== 'abyss')
                 s.pearls += d.pearls;
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
-            drop(s, d.level + encounterTier(s) * 5, rng, true);
+            // 희귀 이상 확정 장비: 첫 정복, 무한 심연 5층마다, 반복 정복은 낮은 확률.
+            if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop)
+                drop(s, d.level + encounterTier(s) * 5, rng, true);
             addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 진주` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;
             s.dungeon = null;
@@ -645,7 +657,7 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
             }
             fresh.abyssBest = s.abyssBest;
             fresh.shopSerial = s.shopSerial;
-            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild });
+            Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: s.pearls + pearls, essence: s.essence || 0, rebirths: s.rebirths + 1, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild });
             s.hp = stats(s).hp;
             s.mana = stats(s).mana;
             addLog(s, `새로운 항해가 시작됩니다. 환생 진주 +${pearls}${deepPearls ? ` (깊은 항해 +${deepPearls} 포함)` : ''}`);

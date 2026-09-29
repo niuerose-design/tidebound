@@ -10,7 +10,12 @@ export const BALANCE = {
     // Gear luck, routing and inherited techniques still change the time to rebirth.
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
-    activeSlots: 4, passiveSlots: 3, inventoryCap: 60, dropChance: 0.17,
+    activeSlots: 4, passiveSlots: 3, inventoryCap: 60,
+    // v22: 장비는 드물게 떨어집니다. 처치당 기본 0.1%(시간당 수백 마리를 잡아도 한두 개).
+    // 행운·물건도감·연구·드롭 보너스는 이 확률에 곱해지는 상대 증가로 바뀝니다(구 기준 17%p당 +100%).
+    dropChance: 0.001, dropBonusScale: 0.17, dropChanceCap: 0.01,
+    // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
+    dungeonRepeatDrop: 0.05,
     healAfterKill: 0.16, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
@@ -89,5 +94,6 @@ export const STATUS_GUIDE = [
     { id: 'haste', name: '가속', kind: '속도 증가', description: '속도가 35% 높아져 선공과 명중 보정에 유리해집니다.', detail: '추가 공격을 만들지는 않으며, 기존 턴 구조 안에서 선공을 유리하게 만듭니다.' },
 ] as const;
 export const xpNeeded = (level: number) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1));
-export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }];
+// v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.
+export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }, { name: '신화', color: '#f08a6c', factor: 3.9 }, { name: '고대', color: '#5fd0b5', factor: 4.5 }, { name: '태초', color: '#ff6fb5', factor: 5.2 }];
 export const SLOTS = { rod: '낚싯대', coat: '방어구', charm: '나침반' };

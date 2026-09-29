@@ -6,9 +6,9 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import type { State, Action } from '@/game/types';
 import { SKILLS } from '@/game/data/skills';
 import { FISH, STAGES, SWARM_UNLOCK } from '@/game/data/world';
-import { RARITIES, SLOTS } from '@/game/data/balance';
+import { RARITIES, SLOTS, BALANCE } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
-import { ATTRIBUTES, PROGRESSION, STAT_LABELS, CORE_STATS, DETAIL_STATS, RATING_STATS, statDisplay } from '@/game/data/progression';
+import { ATTRIBUTES, PROGRESSION, STAT_LABELS, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, RATING_STATS, statDisplay } from '@/game/data/progression';
 import { attributes, apCapacity, apUsed, completedRegions, bookReward, itemKey } from '@/game/systems/progression';
 import { stats, dropRate, mastery, goldMultiplier, hitChance, expMultiplier } from '@/game/systems/stats';
 import { profile, scaledEnemyStats } from '@/game/data/encounters';
@@ -83,12 +83,12 @@ export function Character({ s, send, busy }: Props) {
         <span>{STAT_LABELS[key]}{RATING_STATS.has(key) ? ' 수치' : ''}</span>
         <strong>{statDisplay(key, a[key])}</strong>
         </div>)}</div>
-    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : key === 'thorns' || key === 'dotBonus' || key === 'arcaneStrike' ? (a[key] || 0) > 0 : true).map(key => <div key={key}>
+    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).map(key => <div key={key}>
         <span>{STAT_LABELS[key]}</span>
         <strong>{statDisplay(key, a[key])}</strong>
         </div>)}</div></details>
     <div className="derived-summary">
-    <span>장비 드롭 확률<strong>{(dropRate(s) * 100).toFixed(1)}%</strong>
+    <span>장비 드롭 확률 (처치당)<strong>{(dropRate(s) * 100).toFixed(2)}%</strong>
     </span>
     <span>골드 획득 배율<strong>×{goldMultiplier(s).toFixed(2)}</strong>
     </span>
@@ -189,7 +189,7 @@ export function Collection({ s, send, busy }: Props) {
     <div className="notice">
     <BookOpen size={22}/>
     <div>
-    <strong>등록한 종류 {Object.keys(s.itemBook).length} / 12 · 드롭 확률 +{(Object.keys(s.itemBook).length * PROGRESSION.itemDropBonus * 100).toFixed(1)}%p</strong>
+    <strong>등록한 종류 {Object.keys(s.itemBook).length} / {Object.keys(SLOTS).length * RARITIES.length} · 장비 드롭 확률 +{Math.round(Object.keys(s.itemBook).length * PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}%</strong>
     <p>가방의 장비 한 개를 영구 등록하며, 해당 장비는 소모됩니다. 같은 슬롯·등급은 한 번만 등록합니다.</p>
     </div>
     </div>
@@ -204,7 +204,7 @@ export function Collection({ s, send, busy }: Props) {
             <SlotIcon slot={slot} size={32}/>
             </div>
             <h3>{EQUIPMENT_NAMES[slot as keyof typeof EQUIPMENT_NAMES][i]}</h3>
-            <p>{label} · 드롭 확률 +0.5%p</p>
+            <p>{label} · 장비 드롭 확률 +{Math.round(PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}%</p>
             <AlertDialog>
             <AlertDialogTrigger asChild>
             <button className="secondary" disabled={busy || !!registered || !candidate}>{registered ? '영구 보너스 적용 중' : candidate ? '장비 1개 등록' : '가방에 해당 장비 없음'}</button>

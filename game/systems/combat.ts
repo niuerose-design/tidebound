@@ -127,7 +127,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         a.mana = Math.max(0, a.mana - (chosen.manaCost || 0));
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
         if (chosen.effect === 'heal') {
-            healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio)));
+            healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio) * (1 + sa.healBonus)));
             a.hp += healed;
         }
     }
@@ -137,7 +137,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack;
     const split = chosen?.damageType === 'split';
     // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
-    let base = arcane ? sa.magic * SKILL_FORMULA.arcaneStrikeRatio : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : magical ? sa.magic : sa.attack;
+    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : magical ? sa.magic : sa.attack;
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
         base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
@@ -155,7 +155,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const mitigated = (raw: number) => split
         ? Math.round(raw * SKILL_FORMULA.splitPhysical * 100 / (100 + sb.defense * pierce * 2)) + Math.round(raw * (1 - SKILL_FORMULA.splitPhysical) * 100 / (100 + sb.resist * pierce * 2))
         : Math.round(raw * 100 / (100 + defense * 2));
-    const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * SKILL_FORMULA.lowHpThreshold : false;
+    const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
     const linkMultiplier = linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1;
     if (linked) { notes.push('연계'); ev.linked = true; }
     const crit = landed && rng() < sa.crit;
@@ -172,18 +172,19 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
     ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed });
     if (landed && chosen?.effect === 'stun') {
-        b.stun = Math.max(b.stun, chosen.statusTurns ?? 1);
-        notes.push('기절');
-        ev.statuses.push({ id: 'stun', turns: chosen.statusTurns ?? 1 });
+        const turns = (chosen.statusTurns ?? 1) + sa.stunBonus;
+        b.stun = Math.max(b.stun, turns);
+        notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
+        ev.statuses.push({ id: 'stun', turns });
     }
     if (landed && chosen?.effect === 'bleed') {
-        const turns = chosen.statusTurns ?? STATUS_TUNING.bleedTurns;
+        const turns = (chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus;
         const name = chosen.dotName || '출혈';
         const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
         const current = b.effects.dot;
         if (chosen.dotStacks) {
             // 중독 중첩: 이미 걸린 중첩형 지속 피해에 한 중첩을 더하고, 한 중첩 피해는 더 강한 쪽을 씁니다.
-            const stacks = current?.stacks ? Math.min(STATUS_TUNING.poisonMaxStacks, current.stacks + 1) : 1;
+            const stacks = current?.stacks ? Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, current.stacks + 1) : 1;
             const perStack = Math.max(tick, current?.stacks ? current.perStack || 0 : 0);
             b.effects.dot = { damage: perStack * stacks, perStack, stacks, turns, name };
             notes.push(`${name} ${stacks}중첩 ${turns}턴`);
@@ -201,13 +202,13 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         ev.statuses.push({ id: 'weaken', turns });
     }
     if (landed && chosen?.effect === 'silence') {
-        const turns = chosen.statusTurns ?? STATUS_TUNING.silenceTurns;
+        const turns = (chosen.statusTurns ?? STATUS_TUNING.silenceTurns) + sa.controlBonus;
         extendStatus(b.effects, 'silence', turns);
         notes.push(`침묵 ${turns}턴`);
         ev.statuses.push({ id: 'silence', turns });
     }
     if (landed && chosen?.effect === 'slow') {
-        const turns = chosen.statusTurns ?? STATUS_TUNING.slowTurns;
+        const turns = (chosen.statusTurns ?? STATUS_TUNING.slowTurns) + sa.controlBonus;
         extendStatus(b.effects, 'slow', turns);
         notes.push(`감속 ${turns}턴`);
         ev.statuses.push({ id: 'slow', turns });
@@ -233,7 +234,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             continue;
         }
         const followCrit = rng() < sa.crit;
-        const followMultiplier = (chosen?.multiplier || 1) * (chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier);
+        const followMultiplier = (chosen?.multiplier || 1) * ((chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier) + sa.followUpBonus);
         const followDamage = Math.min(unitCap(b), Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1))));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
