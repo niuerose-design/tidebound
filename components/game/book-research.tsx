@@ -5,9 +5,17 @@ import { FISH, STAGES } from '@/game/data/world';
 import { BALANCE } from '@/game/data/balance';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookPending } from '@/game/systems/progression';
+import { bookTrait, bonusLabel } from '@/game/systems/book';
+import { BOOK_TRAITS, BOOK_ECOLOGY, REGION_THEMES } from '@/game/data/book-traits';
 import { Meter } from './shared';
 
 const MILESTONES = BALANCE.bookMilestones;
+/** 연구 단계를 달성하면 바로 적용되는 전투 보상. 생태 연구는 2단계부터 붙습니다. */
+export function stepEffect(id: string, rank: number) {
+    const trait = BOOK_TRAITS[bookTrait(id)];
+    const ecology = rank + 1 >= BOOK_ECOLOGY.fromStage ? ` · 생태 연구: 이 어종 상대 주는 피해 +${BOOK_ECOLOGY.dealtPerStage * 100}% · 받는 공격 피해 -${BOOK_ECOLOGY.takenPerStage * 100}%` : '';
+    return `${trait.name} 연구 ${bonusLabel(trait.perStage)}${ecology}`;
+}
 const stepReward = (rank: number) => [`${PROGRESSION.bookGold[rank].toLocaleString()} G`, PROGRESSION.bookSP[rank] ? `SP +${PROGRESSION.bookSP[rank]}` : ''].filter(Boolean).join(' · ');
 
 /** 연구 진행: 처치 수 → 다음 연구 목표 → 받을 보상 → 수령 여부. 끝난 단계는 접어서 아래에 둡니다. */
@@ -19,7 +27,7 @@ export function BookResearch({ s, id, send, busy }: { s: State; id: string; send
         <dl className="book-research-rows">
             <div><dt>처치 수</dt><dd>{n.toLocaleString()}회</dd></div>
             <div><dt>다음 연구 목표</dt><dd>{next < 0 ? '모든 단계 달성' : `${next + 1}단계 · ${MILESTONES[next].toLocaleString()}회 (남은 ${(MILESTONES[next] - n).toLocaleString()}회)`}</dd></div>
-            {next >= 0 && <div><dt>받을 보상</dt><dd>{stepReward(next)}</dd><small>달성하면 포획 숙련 물리·마법 공격 +1이 바로 적용됩니다.</small></div>}
+            {next >= 0 && <div><dt>받을 보상</dt><dd>{stepReward(next)}</dd><small>달성하면 바로 적용: {stepEffect(id, next)}</small></div>}
             <div><dt>수령 여부</dt><dd>{pending.ranks.length ? <b className="positive">미수령 {pending.ranks.length}단계</b> : next < 0 ? '모두 수령' : '목표 미달성'}</dd></div>
         </dl>
         {next >= 0 && <Meter value={n - (MILESTONES[next - 1] || 0)} max={MILESTONES[next] - (MILESTONES[next - 1] || 0)} label={`${next + 1} / ${MILESTONES.length}단계 진행`}/>}
@@ -36,7 +44,7 @@ export function regionResearch(s: State, stageId: string) {
     const st = STAGES.find(x => x.id === stageId)!;
     const done = st.fish.filter(id => (s.book[id] || 0) >= PROGRESSION.fishComplete).length;
     const pending = st.fish.reduce((a, id) => a + bookPending(s, id).ranks.length, 0);
-    return { done, total: st.fish.length, complete: done === st.fish.length, pending, reward: '최대 체력 +20 · AP +1' };
+    return { done, total: st.fish.length, complete: done === st.fish.length, pending, reward: `${REGION_THEMES[st.id]?.label ? REGION_THEMES[st.id].label + ' · ' : ''}AP +1` };
 }
 
 export function pendingBookCount(s: State) { return FISH.reduce((a, f) => a + bookPending(s, f.id).ranks.length, 0); }

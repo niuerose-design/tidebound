@@ -94,7 +94,7 @@ export function Guide() {
                 condition="단계가 오를수록 비용이 커지고, 20단계 이후에는 더 가파르게 오릅니다."
                 limit={<>연구 상한: {RESEARCH.map(r => `${r.name} ${r.max}단계`).join(' · ')}.</>}/>
             <Rule icon={<BookOpen size={19}/>} title="물고기 도감"
-                effect={`종별 연구는 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 포획에 골드를 주고, 최종 연구에서 SP 1을 줍니다. 지역의 모든 종을 완성하면 AP +1 · 최대 체력 +20.`}
+                effect={`종별 연구는 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 포획에 골드를 주고, 최종 연구에서 SP 1을 줍니다. 연구 단계마다 어종 성향에 맞는 능력치가 오르고, 2단계부터는 그 어종 상대 피해 보정(생태 연구)이 붙습니다. 50회 포획하면 성향·스킬 정보가 공개됩니다. 지역의 모든 종을 완성하면 AP +1과 지역 테마 보너스를 받습니다.`}
                 condition={`한 종을 ${PROGRESSION.fishComplete}회 포획하면 완성으로 처리합니다. 보상은 도감에서 직접 받습니다.`}
                 limit="각 연구 단계 보상은 한 번만 받습니다. 도감 카드는 적 능력치 · 연구 진행도 · 다음 연구 보상을 나눠 보여줍니다."/>
             <Rule icon={<Coins size={19}/>} title="상점 · 장비 강화"

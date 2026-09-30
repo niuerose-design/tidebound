@@ -6,6 +6,7 @@ import { jobMasteryTarget, skillRefinementTargets } from './progression';
 import { activeSwarm, catchReward, encounterTier } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery } from './mastery';
+import { rareSpawnBonus } from './book';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, FIRST_AID_HEAL } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier } from '../data/world';
@@ -42,12 +43,14 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         addLog(s, `${RARITIES[rarity].name} 장비 발견 · ${item.name}`, 'reward');
     }
 }
-export function weightedFishId(ids: string[], rng: () => number) {
+/** rareBonus: 희귀 이상 어종의 출현 가중치 증가율(0.1 = +10%). */
+export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0) {
     const choices = ids.map(id => FISH.find(f => f.id === id)).filter(Boolean) as typeof FISH;
-    const total = choices.reduce((sum, f) => sum + (f.spawnWeight ?? 1), 0);
+    const weight = (f: typeof FISH[number]) => (f.spawnWeight ?? 1) * (f.rarity && f.rarity !== 'common' ? 1 + rareBonus : 1);
+    const total = choices.reduce((sum, f) => sum + weight(f), 0);
     let roll = rng() * total;
     for (const f of choices) {
-        roll -= f.spawnWeight ?? 1;
+        roll -= weight(f);
         if (roll <= 0)
             return f.id;
     }
@@ -57,7 +60,7 @@ export function spawn(s: State, rng: () => number) {
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
     const st = STAGES.find(x => x.id === s.stage)!;
     const finalWave = !!dungeon && s.dungeon!.wave === dungeon.fish.length - 1;
-    const id = dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (s.target && st.fish.includes(s.target) ? s.target : weightedFishId(st.fish, rng));
+    const id = dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (s.target && st.fish.includes(s.target) ? s.target : weightedFishId(st.fish, rng, rareSpawnBonus(s)));
     const f = FISH.find(x => x.id === id)!;
     const boss = finalWave;
     const tier = encounterTier(s);

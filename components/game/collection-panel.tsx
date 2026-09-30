@@ -11,7 +11,25 @@ import { PROGRESSION, statDisplay, percent } from '@/game/data/progression';
 import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
 import { stats, mastery, goldMultiplier, hitChance } from '@/game/systems/stats';
-import { profile, scaledEnemyStats } from '@/game/data/encounters';
+import { ENEMY_SKILLS, profile, scaledEnemyStats } from '@/game/data/encounters';
+import { bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel, regionThemes } from '@/game/systems/book';
+import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL } from '@/game/data/book-traits';
+import type { State } from '@/game/types';
+
+const skillName = (id: string) => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id)?.name || id;
+/** 도감 카드의 플레이어 보상 요약: 성향 연구 능력치와 생태 연구 보정. */
+function BookTraitLine({ s, id }: { s: State; id: string }) {
+    const trait = BOOK_TRAITS[bookTrait(id)], eco = bookEcology(s, id);
+    return <div className="fish-trait book-trait-reward">
+        <strong>{trait.name} 연구</strong>
+        <span>단계마다 {bonusLabel(trait.perStage)}</span>
+        <span>{eco.stages ? <b className="positive">생태 연구 적용 중 · 이 어종 상대 주는 피해 +{Math.round(eco.dealt * 100)}% · 받는 공격 피해 -{Math.round(eco.taken * 100)}%</b> : `생태 연구(${BALANCE.bookMilestones[BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회~) · 이 어종 상대 주는 피해 +${BOOK_ECOLOGY.dealtPerStage * 100}% · 받는 공격 피해 -${BOOK_ECOLOGY.takenPerStage * 100}% (단계마다)`}</span>
+    </div>;
+}
+/** 포획 50회 전에는 적 성향·스킬·능력치를 숨깁니다. */
+function LockedInfo({ n }: { n: number }) {
+    return <div className="fish-trait book-locked"><strong>미확인 개체</strong><span>{BOOK_REVEAL}회 포획하면 성향·스킬·능력치 정보가 공개됩니다 ({Math.min(n, BOOK_REVEAL)} / {BOOK_REVEAL}).</span></div>;
+}
 import { Heading, SlotIcon } from './shared';
 import type { PanelProps } from './panel-props';
 export function Collection({ s, send, busy }: PanelProps) {
@@ -24,18 +42,18 @@ export function Collection({ s, send, busy }: PanelProps) {
     <small>개체도감 완성</small>
     <strong>{complete}<span> / {FISH.length}</span>
     </strong>
-    <p>종별 연구 {BALANCE.bookMilestones.map(m => m.toLocaleString()).join(' · ')}회 · 앞 3단계는 골드, 최종 단계는 SP +1 · 지역 완성은 최대 체력 +20 · AP +1</p>
+    <p>종별 연구 {BALANCE.bookMilestones.map(m => m.toLocaleString()).join(' · ')}회 · 앞 3단계는 골드, 최종 단계는 SP +1 · {BOOK_REVEAL}회 포획하면 적 정보 공개</p>
     </div>
     <div className="panel">
-    <small>포획 숙련 보너스</small>
-    <strong>+{mastery(s)}</strong>
-    <p>물리·마법 공격 · 단계마다 +1</p>
+    <small>성향 연구 보너스 · {mastery(s)}단계</small>
+    <p>{bonusLabel(bookStatBonus(s)) || '아직 달성한 연구 단계가 없습니다.'}</p>
+    <p>어종 성향마다 오르는 능력치가 다릅니다. 2단계부터는 그 어종 상대 피해 보정(생태 연구)이 붙습니다.</p>
     </div>
     <div className="panel">
     <small>지역 연구 완성</small>
     <strong>{regions.length}<span> / {STAGES.length}</span>
     </strong>
-    <p>지역 내 모든 종 완성 시 최대 체력 +20 · AP +1</p>
+    <p>지역 내 모든 종 완성 시 지역 테마 보너스 · AP +1{regions.length ? ` · 적용 중: ${regionThemes(s).map(t => t.label).join(' · ')}` : ''}</p>
     </div>
     </div>
     {pendingBooks > 0 && <div className="notice book-claim-all"><BookOpen size={20}/><div><strong>받지 않은 연구 보상 {pendingBooks}단계</strong><p>여러 어종의 미수령 보상을 한 번에 받습니다.</p></div><button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimAllBooks' })}>모두 받기</button></div>}
@@ -59,15 +77,16 @@ export function Collection({ s, send, busy }: PanelProps) {
                 </div>
                 <h3>{f.name} {f.rarity && f.rarity !== 'common' && <small className={`fish-rarity ${f.rarity}`}>{f.rarity === 'rare' ? '희귀' : f.rarity === 'epic' ? '영웅' : '전설'}</small>}</h3>
                 <p>{f.lore}</p>
-                <div className="fish-trait">
+                {bookRevealed(s, id) ? <div className="fish-trait">
                 <strong>{p.name}</strong>
                 <span>{p.hint}</span>
-                </div>
+                </div> : <LockedInfo n={n}/>}
+                <BookTraitLine s={s} id={id}/>
                 <BookResearch s={s} id={id} send={send} busy={busy}/>
                 {n >= bookComplete && <small className="book-swarm book-swarm-line">무리 사냥 ×5 해금{n >= SWARM_UNLOCK[100] ? ' · ×100 해금' : ` · ×100까지 ${(SWARM_UNLOCK[100] - n).toLocaleString()}마리`}{n >= SWARM_UNLOCK[500] ? ' · ×500 해금' : n >= SWARM_UNLOCK[100] ? ` · ×500까지 ${(SWARM_UNLOCK[500] - n).toLocaleString()}마리` : ''}</small>}
-                <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{s.tide ? `해역 난이도 ${s.tide} 적용 · 일반 낚시터 기준` : '해역 난이도 0 · 일반 낚시터 기준'}</small></h4></summary>
+                {bookRevealed(s, id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{s.tide ? `해역 난이도 ${s.tide} 적용 · 일반 낚시터 기준` : '해역 난이도 0 · 일반 낚시터 기준'}</small></h4></summary>
                 <div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><span>명중 수치 {statDisplay('accuracy', enemy.accuracy || 0)}</span><span>회피 수치 {statDisplay('evasion', enemy.evasion || 0)}</span></div>
-                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 내 공격 {percent(hitChance(player, enemy))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>포획 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 해역·골드 보너스 적용)</small></span></div></details>
+                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 내 공격 {percent(hitChance(player, enemy))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>포획 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 해역·골드 보너스 적용)</small></span></div>{f.level >= 5 && p.skills.length > 0 && <div className="book-stats"><span>스킬 {p.skills.map(skillName).join(' · ')}</span></div>}</details>}
                 {s.stage === st.id && !s.dungeon && <button className="text-button" disabled={busy} onClick={() => send({ type: 'target', id })}>{s.target === id ? '집중 사냥 대상' : '이 물고기 집중 사냥'}</button>}</article>;
             })}</div>
         </section>)}<section className="book-section boss-book-section">
@@ -78,9 +97,10 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <div className="book-icon"><Swords size={34}/><span>{n >= bookComplete ? '완성' : `${n} / ${bookComplete} 포획`}</span></div>
                 <h3>{f.name} <small className="fish-rarity legendary">전설 보스</small></h3>
                 <p>{f.lore}</p>
-                <div className="fish-trait"><strong>{p.name}</strong><span>{p.hint}</span></div>
+                {bookRevealed(s, f.id) ? <div className="fish-trait"><strong>{p.name}</strong><span>{p.hint}</span></div> : <LockedInfo n={n}/>}
+                <BookTraitLine s={s} id={f.id}/>
                 <BookResearch s={s} id={f.id} send={send} busy={busy}/>
-                <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{f.id === 'abyssSovereign' ? '무한 심연 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span></div><div className="book-stats"><span>스킬 {p.skills.map(id => SKILLS.find(sk => sk.id === id)?.name || id).join(' · ')}</span></div></details>
+                {bookRevealed(s, f.id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{f.id === 'abyssSovereign' ? '무한 심연 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span></div><div className="book-stats"><span>스킬 {p.skills.map(skillName).join(' · ')}</span></div></details>}
             </article>;
         })}</div>
         </section></TabsContent>

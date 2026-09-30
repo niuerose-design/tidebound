@@ -6,9 +6,11 @@ import { BALANCE, SAVE_VERSION, SKILL_FORMULA } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
-import { attributes, effectiveSkill, completedRegions, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier } from './progression';
+import { bookStatBonus, regionThemes } from './book';
+import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier } from './progression';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, speed: 10, mana: 40, manaRegen: 3, penetration: 0, lifesteal: 0, ...a }; }
+/** 달성한 도감 연구 단계의 총합(어종 × 단계). */
 export function mastery(s: State) { return Object.values(s.book).reduce((a, n) => a + BALANCE.bookMilestones.filter(m => n >= m).length, 0); }
 /** 능력치 증가 원인. 능력치 화면의 상세보기가 이 순서로 보여줍니다. */
 export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', 'research', 'book', 'equipment', 'limit'] as const;
@@ -21,7 +23,7 @@ export type StatTrace = Partial<Record<keyof CombatStats, { source: StatSource; 
  * 기록 여부와 관계없이 계산 순서와 결과는 같습니다(덧셈·곱셈 순서 유지).
  */
 export function stats(s: State, trace?: StatTrace): CombatStats {
-    const j = JOBS.find(j => j.id === s.job) || JOBS[0], v = attributes(s), m = mastery(s), regions = completedRegions(s).length;
+    const j = JOBS.find(j => j.id === s.job) || JOBS[0], v = attributes(s), themes = regionThemes(s);
     const rec = (k: keyof CombatStats, source: StatSource, delta: number, factor?: number) => {
         if (trace && delta) (trace[k] ||= []).push(factor === undefined ? { source, delta } : { source, delta, factor });
     };
@@ -38,9 +40,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     };
     set('expBonus', 'rebirth', permanentExpBonus(s)); add('expBonus', 'job', j.expBonus || 0);
     for (const k of ['goldBonus', 'dropBonus', 'rebirthBonus', 'dungeonGoldBonus', 'penetration', 'lifesteal'] as const) a[k] = 0;
-    set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * E.vit.hp); add('hp', 'book', regions * 20);
-    set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'book', m); add('attack', 'attributes', v.str * E.str.attack);
-    set('magic', 'base', 10 + (s.level - 1) * 3); add('magic', 'attributes', v.int * E.int.magic); add('magic', 'book', m);
+    set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * E.vit.hp);
+    set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'attributes', v.str * E.str.attack);
+    set('magic', 'base', 10 + (s.level - 1) * 3); add('magic', 'attributes', v.int * E.int.magic);
     set('defense', 'base', BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel); add('defense', 'attributes', v.vit * E.vit.defense); add('defense', 'attributes', v.str * E.str.defense);
     set('resist', 'base', 3 + (s.level - 1) * .7); add('resist', 'attributes', v.wis * E.wis.resist);
     set('crit', 'base', BALANCE.baseCrit); add('crit', 'job', j.crit); add('crit', 'attributes', v.luk * E.luk.crit);
@@ -55,6 +57,10 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus);
     set('rebirthBonus', 'research', s.permanent.pearl || 0);
     set('dungeonGoldBonus', 'research', (s.permanent.dungeon || 0) * .08);
+    // 도감: 어종 성향별 연구 능력치와 완성 지역의 테마 보너스(고정값). 배율은 아래에서 따로 적용합니다.
+    for (const bonus of [bookStatBonus(s), ...themes.map(t => t.add || {})])
+        for (const [key, n] of Object.entries(bonus))
+            add(key as keyof CombatStats, 'book', n);
     for (const item of Object.values(s.equipment)) {
         if (item)
             for (const [key, n] of Object.entries(itemStats(item)))
@@ -87,6 +93,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));
     const memory = rebirthMemory(s.rebirths) * (1 + dedication * .04);
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(key, [['rebirth', memory]]);
+    for (const t of themes)
+        for (const [key, n] of Object.entries(t.scale || {}))
+            mul(key as keyof CombatStats, [['book', n]]);
     mul('defense', [['research', 1 + (s.permanent.guard || 0) * .03]]);
     mul('resist', [['research', 1 + (s.permanent.guard || 0) * .03]]);
     const limit = (k: keyof CombatStats, n: number) => { const before = a[k]; a[k] = n; rec(k, 'limit', n - before); };
