@@ -6,4 +6,5 @@ await import('./systems.test.mjs');
 await import('./growth.test.mjs');
 await import('./content.test.mjs');
 await import('./expansion.test.mjs');
+await import('./playback.test.mjs');
 console.log(`${results.passed} gameplay tests passed.`);
