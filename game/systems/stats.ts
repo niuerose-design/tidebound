@@ -1,4 +1,4 @@
-import { tailwindActive, TAILWIND_EXP, tierReward } from './meta';
+import { tailwindActive, tailwindExp, tierReward } from './meta';
 import { rebirthExperience, rebirthMemory, evasionRating, vocationTargets, thresholdRank } from '../data/long-term';
 import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS } from '../data/gear';
@@ -161,7 +161,7 @@ export function clampVitals(s: State) {
     s.mana = Math.min(s.mana, stats(s).mana);
 }
 export const goldMultiplier = (s: State) => 1 + stats(s).goldBonus;
-export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus) * (tailwindActive(s) ? 1 + TAILWIND_EXP : 1);
+export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus) * (tailwindActive(s) ? 1 + tailwindExp(s) : 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 던전 정복 골드. 전투 보상과 던전 화면 표시가 같은 식을 씁니다. */
 export const dungeonClearGold = (s: State, baseGold: number, tier: number) => Math.floor(baseGold * tierReward(tier) * goldMultiplier(s) * dungeonGoldMultiplier(s));

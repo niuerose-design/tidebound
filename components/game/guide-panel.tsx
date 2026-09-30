@@ -7,7 +7,7 @@ import { victoryHealRate } from '@/game/systems/encounter';
 import type { State } from '@/game/types';
 import { SWARM_UNLOCK } from '@/game/data/world';
 import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
-import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL } from '@/game/systems/meta';
+import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL, tailwindWindow, tailwindExp } from '@/game/systems/meta';
 import { Heading } from './shared';
 
 /** 도움말 카드: 효과 → 조건 → 제한 순서로 적습니다. */
@@ -121,7 +121,7 @@ export function Guide({ s }: { s?: State }) {
             <div className="help-columns">
                 <Rule icon={<RefreshCw size={19}/>} title="환생"
                     effect={<>진주 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스 + 깊은 항해(요구 레벨 초과분² ÷ 40). 환생 영구 보너스(체력·물리/마법 공격·물리/마법 방어) = 2.5% × √환생 횟수. 영구 경험치는 환생마다 +25%.</>}
-                    condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨+${TAILWIND_WINDOW} 이내에 환생하면 순풍(다음 생 요구 레벨까지 경험치 +${TAILWIND_EXP * 100}%), Lv.${DEEP_VOYAGE_LEVEL}에서 환생하면 깊은 항해(다음 생 숙련 기본 획득 +2).`}
+                    condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨+${s ? tailwindWindow(s) : TAILWIND_WINDOW} 이내에 환생하면 순풍(다음 생 요구 레벨까지 경험치 +${Math.round((s ? tailwindExp(s) : TAILWIND_EXP) * 100)}%, 기본 +${TAILWIND_WINDOW}·+${TAILWIND_EXP * 100}%에서 순풍의 돛·바람목 넓히기 연구로 늘어남), Lv.${DEEP_VOYAGE_LEVEL}에서 환생하면 깊은 항해(다음 생 숙련 기본 획득 +2).`}
                     limit={`환생 횟수 보상 진주와 영구 경험치는 20회까지 회당 1개·+25%, 이후에는 √(횟수 − 20)으로 완만해집니다. 환생 AP는 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도는 최대 ${ECONOMY.tideCap}.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="진주 연구"
                     effect="진주로 영구 능력을 올립니다. 환생해도 유지됩니다. 전투(공격·생존)·유틸·골드 탭으로 나뉘며, 물리 공격(날카로운 기억)과 마법 공격(심해 등불의 기억), 물리 방어(불굴의 기억)와 마법 방어(진주막의 기억)는 각각 따로 연구합니다."

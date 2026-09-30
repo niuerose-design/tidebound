@@ -5,6 +5,7 @@ import { STAGES, DUNGEONS, SWARM_SIZES, SWARM_UNLOCK } from '../../data/world';
 import { JOBS } from '../../data/classes';
 import { SKILLS } from '../../data/skills';
 import type { ActionHandlers } from './types';
+import { researchRank } from '../../data/economy';
 import { addLog, endRun } from '../state';
 import { parseRepeat, enterDungeon } from '../dungeon-run';
 
@@ -81,6 +82,11 @@ export const voyageActions: ActionHandlers = {
     },
     offlineDismiss(s) {
         s.lastOffline = null;
+    },
+    autoSell(s, { a }) {
+        if (!researchRank(s, 'sortingNet'))
+            throw Error('선별의 그물 연구가 필요합니다.');
+        s.autoSell = a.value === 'on';
     },
     rename(s, { a }) {
         const name = (a.value || '').trim();

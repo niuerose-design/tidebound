@@ -263,6 +263,10 @@ export type State = {
     researchResetUsed?: boolean;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
+    /** 선별의 그물 자동 판매 켜짐 여부(설정). */
+    autoSell?: boolean;
+    /** 황금 개체를 잡은 횟수(어종별). */
+    goldenBook?: Record<string, number>;
     dungeon: null | {
         id: string;
         wave: number;
@@ -283,6 +287,8 @@ export type State = {
         kills: number;
         gold: number;
         exp: number;
+        /** 병 속의 편지: 정산 중 주운 편지병과 내용. */
+        bottles?: { count: number; gold: number; items: number; pearls: number };
     };
 };
 export type Snapshot = {

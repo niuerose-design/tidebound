@@ -15,7 +15,8 @@ import { JOBS } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { EQUIPMENT_NAMES } from '../data/equipment';
 import { PROGRESSION } from '../data/progression';
-import { canUse, grantJobSkills } from './progression';
+import { canUse, grantJobSkills, itemKey } from './progression';
+import { saleValue } from './equipment';
 import { scaledEnemyStats, profile } from '../data/encounters';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -45,6 +46,13 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     item.origin = origin;
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
+    // 선별의 그물: 켜 두면 1단계는 일반, 2단계는 희귀 이하를 바로 팝니다. 유물·장비 도감에 없는 종류는 남깁니다.
+    const net = researchRank(s, 'sortingNet');
+    if (net && s.autoSell && !item.relic && item.rarity < net && s.itemBook?.[itemKey(slot, rarity)]) {
+        s.gold += saleValue(item);
+        addLog(s, `선별의 그물: ${item.name} 자동 판매 +${saleValue(item)} G`, 'reward');
+        return;
+    }
     if (s.inventory.length >= inventoryCap(s)) {
         s.gold += item.power * 3;
         addLog(s, `가방 가득 참: ${item.name} 자동 판매 +${item.power * 3} G`, 'reward');
@@ -92,7 +100,11 @@ export function reward(s: State, rng: () => number) {
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
     const size = e.swarm || 1;
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, masteryReward.amount * size), practice = researched.total;
-    const gold = Math.floor(e.gold * goldMultiplier(s)) * size, exp = Math.floor(e.exp * expMultiplier(s)) * size;
+    const perFish = Math.floor(e.gold * goldMultiplier(s)), exp = Math.floor(e.exp * expMultiplier(s)) * size;
+    // 황금 개체: 승리마다 0.1%p/단계 확률로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 0단계면 난수를 쓰지 않습니다.
+    const goldenRank = researchRank(s, 'goldenFish'), golden = goldenRank > 0 && rng() < goldenRank * .001;
+    const gold = perFish * size + (golden ? perFish * 9 : 0);
+    if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     s.kills += size;
     const jobTargets = vocationTargets(jobMasteryTarget(JOBS.find(j => j.id === s.job)!));
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
@@ -111,7 +123,7 @@ export function reward(s: State, rng: () => number) {
     s.book[e.id] = (s.book[e.id] || 0) + size;
     s.gold += gold;
     s.exp += exp;
-    addLog(s, `${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 포획 · +${gold} G · +${exp} EXP`, 'reward');
+    addLog(s, `${golden ? '✦ 황금 ' : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 포획 · +${gold} G · +${exp} EXP${golden ? ' · 황금 개체 골드 10배' : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
     const fish = FISH.find(f => f.id === e.id)!;
     for (let i = 0; i < size; i++)

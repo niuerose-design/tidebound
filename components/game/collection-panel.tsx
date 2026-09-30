@@ -26,6 +26,11 @@ function BookTraitLine({ s, id }: { s: State; id: string }) {
         <span>{eco.stages ? <b className="positive">생태 연구 적용 중 · 이 어종 상대 주는 피해 +{Math.round(eco.dealt * 100)}% · 받는 공격 피해 -{Math.round(eco.taken * 100)}%</b> : `생태 연구(${BALANCE.bookMilestones[BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회~) · 이 어종 상대 주는 피해 +${BOOK_ECOLOGY.dealtPerStage * 100}% · 받는 공격 피해 -${BOOK_ECOLOGY.takenPerStage * 100}% (단계마다)`}</span>
     </div>;
 }
+/** 황금 개체를 잡은 어종에 남는 황금 표시. */
+function GoldenMark({ s, id }: { s: State; id: string }) {
+    const n = s.goldenBook?.[id] || 0;
+    return n ? <small className="fish-golden" title="황금 개체 포획 횟수">✦ 황금 {n}</small> : null;
+}
 /** 포획 50회 전에는 적 성향·스킬·능력치를 숨깁니다. */
 function LockedInfo({ n }: { n: number }) {
     return <div className="fish-trait book-locked"><strong>미확인 개체</strong><span>{BOOK_REVEAL}회 포획하면 성향·스킬·능력치 정보가 공개됩니다 ({Math.min(n, BOOK_REVEAL)} / {BOOK_REVEAL}).</span></div>;
@@ -75,7 +80,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <Fish size={34}/>
                 <span>{n >= bookComplete ? '완성 · 지역 연구에 반영' : `${n} / ${bookComplete} 포획`}</span>
                 </div>
-                <h3>{f.name} {f.rarity && f.rarity !== 'common' && <small className={`fish-rarity ${f.rarity}`}>{f.rarity === 'rare' ? '희귀' : f.rarity === 'epic' ? '영웅' : '전설'}</small>}</h3>
+                <h3>{f.name} {f.rarity && f.rarity !== 'common' && <small className={`fish-rarity ${f.rarity}`}>{f.rarity === 'rare' ? '희귀' : f.rarity === 'epic' ? '영웅' : '전설'}</small>}<GoldenMark s={s} id={id}/></h3>
                 <p>{f.lore}</p>
                 {bookRevealed(s, id) ? <div className="fish-trait">
                 <strong>{p.name}</strong>
@@ -94,7 +99,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             const n = s.book[f.id] || 0, p = profile(f.id), enemy = scaledEnemyStats(f, { boss: true, wave: 4, tier: f.id === 'abyssSovereign' ? 3 : 0 }), researchDone = (s.bookClaims?.[f.id] || 0) >= BALANCE.bookMilestones.length;
             return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={f.id}>
                 <div className="book-icon"><Swords size={34}/><span>{n >= bookComplete ? '완성' : `${n} / ${bookComplete} 포획`}</span></div>
-                <h3>{f.name} <small className="fish-rarity legendary">전설 보스</small></h3>
+                <h3>{f.name} <small className="fish-rarity legendary">전설 보스</small><GoldenMark s={s} id={f.id}/></h3>
                 <p>{f.lore}</p>
                 {bookRevealed(s, f.id) ? <div className="fish-trait"><strong>{p.name}</strong><span>{p.hint}</span></div> : <LockedInfo n={n}/>}
                 <BookTraitLine s={s} id={f.id}/>

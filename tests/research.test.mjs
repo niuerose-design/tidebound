@@ -86,3 +86,54 @@ test('Research v2: online ticks and one offline settlement give the same result 
     assert.ok(offline.kills > 100 && (offline.masteryCarry ?? -1) >= 0);
     assert.deepEqual(pick(online), pick(offline));
 });
+
+// 진주 연구 3단계: 특별 연구 5개
+import { reward, messageBottles, expMultiplier, metaMod } from './harness.mjs';
+const counting = (value = .99) => { const f = () => { f.calls++; return typeof value === 'function' ? value(f.calls) : value; }; f.calls = 0; return f; };
+
+test('Research v3: five special entries match the plan table and sit in the utility special group', () => {
+    const table = { tailwindSail: [5, 8, 5, 2, 90], tailwindWindow: [5, 6, 4, 2, 70], sortingNet: [2, 10, 10, 2, 30], messageBottle: [5, 6, 4, 3, 70], goldenFish: [10, 8, 5, 5, 305] };
+    for (const [id, [max, base, step, rebirth, total]] of Object.entries(table)) {
+        const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.tab, r.group], [max, base, step, rebirth, 'utility', 'special'], id);
+        assert.equal(economy.researchSpent(id, max), total, id);
+        const s = newState(0); s.pearls = 1000; s.rebirths = rebirth - 1; assert.throws(() => act(s, { type: 'permanent', id }, 0), /환생/);
+    }
+});
+
+test('Research v3: tailwind sail and window scale the tailwind bonus, its condition and the rebirth log', () => {
+    const s = newState(0); assert.equal(metaMod.tailwindExp(s), .5); assert.equal(metaMod.tailwindWindow(s), 5);
+    s.permanent.tailwindSail = 3; s.permanent.tailwindWindow = 2; close(metaMod.tailwindExp(s), .8); assert.equal(metaMod.tailwindWindow(s), 7);
+    s.rebirths = 6; s.level = 67; assert.equal(metaMod.nextLifeBonus(s), 'tailwind'); s.level = 68; assert.equal(metaMod.nextLifeBonus(s), null);
+    s.level = 67; act(s, { type: 'rebirth' }, 0); assert.equal(s.lifeBonus, 'tailwind'); assert.ok(s.logs.some(l => l.text.includes('경험치 +80%')));
+    close(expMultiplier(s) / expMultiplier({ ...s, lifeBonus: null }), 1.8);
+});
+
+test('Research v3: sorting net sells only known, low-rarity drops while the setting is on', () => {
+    const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /선별의 그물/);
+    s.permanent.sortingNet = 1; act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoSell, true);
+    drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'unregistered kind is kept');
+    s.itemBook['rod:0'] = true; const gold = s.gold; drop(s, 5, () => 0); assert.equal(s.inventory.length, 1); assert.ok(s.gold > gold);
+    s.itemBook['rod:1'] = true; drop(s, 5, () => 0, true); assert.equal(s.inventory.length, 2, 'rank 1 keeps rare');
+    s.permanent.sortingNet = 2; drop(s, 5, () => 0, true); assert.equal(s.inventory.length, 2, 'rank 2 sells rare');
+    act(s, { type: 'autoSell', value: 'off' }, 0); drop(s, 5, () => 0); assert.equal(s.inventory.length, 3, 'off keeps everything');
+});
+
+test('Research v3: golden fish multiplies one catch by ten, is recorded, and draws no random number at rank 0', () => {
+    const fight = rank => { const s = newState(0); s.permanent.goldenFish = rank; s.enemy = { id: 'minnow', name: '은빛 피라미', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
+    const plain = fight(0), rngPlain = counting(); reward(plain, rngPlain);
+    const lucky = fight(1), rngLucky = counting(); reward(lucky, rngLucky);
+    assert.equal(rngLucky.calls, rngPlain.calls + 1); assert.equal(lucky.gold, plain.gold); assert.equal(lucky.goldenBook, undefined);
+    const gold = fight(10), rngGold = counting(n => n === 1 ? 0 : .99); reward(gold, rngGold);
+    assert.equal(gold.gold - 100 /* start gold */, (plain.gold - 100) * 10); assert.equal(gold.goldenBook.minnow, 1);
+});
+
+test('Research v3: message bottles roll once per full offline hour and never at rank 0', () => {
+    const s = newState(0), idle = counting(0); assert.equal(messageBottles(s, 10, idle), null); assert.equal(idle.calls, 0);
+    s.permanent.messageBottle = 5; s.level = 20; const seq = [.1, .5, .1, .99, .5, .1, .8], rng = counting(n => seq[n - 1] ?? .5);
+    const pearls = s.pearls, gold = s.gold, found = messageBottles(s, 4, rng); // 1시간째 골드, 2시간째 진주, 3시간째 없음, 4시간째 장비
+    assert.deepEqual([found.count, found.items, found.pearls], [3, 1, 1]); assert.equal(found.gold, 20 * 500);
+    assert.equal(s.pearls - pearls, 1); assert.ok(s.gold - gold >= 20 * 500); assert.equal(s.inventory.length, 1);
+    const o = newState(0); o.permanent.messageBottle = 5; act(o, { type: 'start' }, 0); advance(o, 10 * 3600_000, seeded(7));
+    assert.ok(o.lastOffline && o.lastOffline.bottles && o.lastOffline.bottles.count <= 10);
+    const n = newState(0); act(n, { type: 'start' }, 0); advance(n, 10 * 3600_000, seeded(7)); assert.equal(n.lastOffline.bottles, undefined);
+});

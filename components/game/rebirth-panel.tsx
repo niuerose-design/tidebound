@@ -8,7 +8,7 @@ import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
 import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, ECONOMY, researchCost, researchEffect, researchUnlocked, type ResearchDef, type ResearchTab } from '@/game/data/economy';
 import { BALANCE } from '@/game/data/balance';
 import { ownsRelic, relicCost, researchRefund } from '@/game/systems/commerce';
-import { rebirthRewardParts, nextLifeBonus, tailwindActive, TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
+import { rebirthRewardParts, nextLifeBonus, tailwindActive, tailwindWindow, tailwindExp, DEEP_VOYAGE_LEVEL, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
 import { stats, permanentExpBonus } from '@/game/systems/stats';
 import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
@@ -27,7 +27,7 @@ function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a
 }
 function ResearchTabView({ tab, s, send, busy }: { tab: ResearchTab; s: State; send: (a: Action) => void; busy: boolean }) {
     const list = RESEARCH.filter(r => r.tab === tab), name = RESEARCH_TABS.find(x => x.id === tab)!.name;
-    const groups = tab === 'combat' ? (['attack', 'defense'] as const) : [undefined];
+    const groups = tab === 'combat' ? (['attack', 'defense'] as const) : tab === 'utility' ? (['basic', 'special'] as const) : [undefined];
     const { refund, spent, first } = researchRefund(s, tab);
     return <>
         {groups.map(g => <section key={g || 'all'} className="research-group">
@@ -48,7 +48,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0;
     const projected = { ...s, level: Math.max(s.level, required) }, lifeBonus = nextLifeBonus(projected);
     const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
-    const lifeText = lifeBonus === 'deep' ? `깊은 항해 · 다음 생 동안 직업·스킬 숙련 기본 획득 +2` : lifeBonus === 'tailwind' ? `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${TAILWIND_EXP * 100}%` : `없음 · Lv.${required + TAILWIND_WINDOW} 이하면 순풍, Lv.${DEEP_VOYAGE_LEVEL}이면 깊은 항해`;
+    const lifeText = lifeBonus === 'deep' ? `깊은 항해 · 다음 생 동안 직업·스킬 숙련 기본 획득 +2` : lifeBonus === 'tailwind' ? `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : `없음 · Lv.${required + tailwindWindow(s)} 이하면 순풍, Lv.${DEEP_VOYAGE_LEVEL}이면 깊은 항해`;
     return <>
         <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 항해를 마치고, 다음 생에 남길 힘을 선택하세요."/>
         <section className="panel port-resource-bar legacy-resource-bar">
@@ -62,7 +62,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             <GrowthGoals s={s} send={send} busy={busy}/>
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
-                    {s.lifeBonus && <p className="footnote">이번 생 효과: {s.lifeBonus === 'deep' ? '깊은 항해 · 직업·스킬 숙련 기본 획득 +2' : tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${TAILWIND_EXP * 100}%` : '순풍 (요구 레벨 도달로 종료)'}</p>}</div>
+                    {s.lifeBonus && <p className="footnote">이번 생 효과: {s.lifeBonus === 'deep' ? '깊은 항해 · 직업·스킬 숙련 기본 획득 +2' : tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : '순풍 (요구 레벨 도달로 종료)'}</p>}</div>
                 <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 진주' : '환생 조건 달성 시 예상 진주'}</span><strong><Sparkles size={26}/>{format(reward)}</strong>
                     <ConfirmButton label="환생하기" title="다음 항해를 시작할까요?" description="오른쪽 아래 '초기화되는 것'이 처음 상태로 돌아가고, '유지되는 것'은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>
