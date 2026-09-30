@@ -219,7 +219,11 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         notes.push(`가속 ${turns}턴`);
         ev.statuses.push({ id: 'haste', turns, onSelf: true });
     }
-    const drain = Math.floor(actual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0)));
+    const drainRate = sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0);
+    // 흡혈 회복은 준 피해 비례지만 한 번의 행동에서 최대 체력 × 흡혈률 × lifestealHpCap을 넘지 않습니다.
+    let drainLeft = Math.floor(sa.hp * drainRate * SKILL_FORMULA.lifestealHpCap);
+    const drain = Math.min(drainLeft, Math.floor(actual * drainRate));
+    drainLeft -= drain;
     if (drain) {
         const recovery = Math.min(sa.hp - a.hp, drain);
         a.hp += recovery;
@@ -239,7 +243,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
         ev.hits.push({ kind: 'follow', value: followActual, critical: followCrit, miss: false });
-        const followDrain = Math.floor(followActual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0)));
+        const followDrain = Math.min(drainLeft, Math.floor(followActual * drainRate));
+        drainLeft -= followDrain;
         if (followDrain) {
             const recovery = Math.min(sa.hp - a.hp, followDrain);
             a.hp += recovery;

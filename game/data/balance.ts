@@ -59,6 +59,9 @@ export const SKILL_FORMULA = {
     // v21 회복 기술은 체력이 가득 차도 발동합니다. 체력이 healThreshold 이상일 때 쓰면
     // 회복 직업이 아닌 경우 그 공격의 피해가 idleHealDamage 배가 됩니다.
     idleHealDamage: .6,
+    // v22.2 흡혈 상한: 한 번의 행동(추가타 포함)으로 회복하는 흡혈량은 최대 체력 × 흡혈률 × 이 값까지입니다.
+    // 심연은 적의 체력이 높고 공격이 약한 소모전이라, 준 피해 비례 흡혈 3%만으로 도달 층이 3배가 되었습니다.
+    lifestealHpCap: .025,
     // v21 방어 친화도: (직업 물리 방어 배율 − guardBase) ÷ guardSpan, guardFloor~1로 제한.
     // 방어 비례 피해와 반격은 이 값만큼만 발휘되어 계승해도 수호 계열만큼 강하지 않습니다.
     guardBase: .95, guardSpan: .5, guardFloor: .2,

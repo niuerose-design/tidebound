@@ -446,12 +446,13 @@ test('v22 gear: rarity = option count, at most one rule option, themed origins a
 test('v22 gear: rule options change existing rules within caps and apply from equipment',()=>{
  const s=newState(0);const add=(stat,value)=>({id:'r'+stat,slot:'charm',rarity:3,power:10,level:1,name:'r',affixes:[{id:stat,name:stat,stat,value,rule:true}]});
  s.equipment.charm=add('stunBonus',1);s.equipment.rod={...add('stunBonus',1),slot:'rod',style:'balanced'};assert.equal(stats(s).stunBonus,1,'same rule is capped');
- const leech=slot=>({id:'l'+slot,slot,rarity:6,power:10,level:1,name:'l',affixes:[{id:'bloodPact',name:'b',stat:'lifesteal',value:.03}]});const s2=newState(0);s2.equipment={rod:{...leech('rod'),style:'balanced'},coat:leech('coat'),charm:leech('charm')};assert.ok(Math.abs(stats(s2).lifesteal-gear.GEAR_CAPS.lifesteal)<1e-9,'gear lifesteal is capped');
+ const leech=slot=>({id:'l'+slot,slot,rarity:6,power:10,level:1,name:'l',affixes:[{id:'bloodPact',name:'b',stat:'lifesteal',value:.05}]});const s2=newState(0);s2.equipment={rod:{...leech('rod'),style:'balanced'},coat:leech('coat'),charm:leech('charm')};assert.ok(Math.abs(stats(s2).lifesteal-gear.GEAR_CAPS.lifesteal)<1e-9,'gear lifesteal is capped');
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
  let b=mk([]);strike(mk(['splash'],{stunBonus:1}),b,()=>0);assert.equal(b.stun,2);
  b=mk([]);strike(mk(['cut'],{dotTurnsBonus:2}),b,()=>0);assert.equal(b.effects.dot.turns,5);
  b=mk([]);for(let i=0;i<9;i++)strike(mk(['venomDart'],{poisonStackBonus:3}),b,()=>0);assert.equal(b.effects.dot.stacks,STATUS_TUNING_MAX+3);
+ {const a=mk([],{attack:1e7,lifesteal:.1});a.hp=1;strike(a,mk([]),()=>0);assert.equal(a.hp-1,Math.floor(1e6*.1*SKILL_FORMULA.lifestealHpCap),'lifesteal heal per action is capped by max HP');}
  const arc=(extra)=>{const t=mk([]);strike(mk([],{arcaneStrike:1,...extra}),t,()=>0);return 1e6-t.hp;};assert.equal(arc({arcaneRatioBonus:.2}),Math.round(100*(SKILL_FORMULA.arcaneStrikeRatio+.2)));
 });
 test('v22 gear: scarce drops, dismantle into essence and reroll one option',()=>{

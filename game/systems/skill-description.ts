@@ -34,7 +34,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.effect === 'silence') out.push(`명중 시 침묵 ${sk.statusTurns ?? STATUS_TUNING.silenceTurns}턴 · 상대 액티브 사용 불가`);
         if (sk.effect === 'slow') out.push(`명중 시 상대 속도 −${skillPercent(STATUS_TUNING.slowMultiplier)} · ${sk.statusTurns ?? STATUS_TUNING.slowTurns}턴`);
         if (sk.effect === 'haste') out.push(`명중 시 자신의 속도 +${skillPercent(STATUS_TUNING.hasteMultiplier)} · ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
-        if (sk.effect === 'drain') out.push(`실제로 깎은 체력의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 회복`);
+        if (sk.effect === 'drain') out.push(`실제로 깎은 체력의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 회복 · 한 번에 최대 체력 × (흡혈률 + ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}) × ${skillPercent(SKILL_FORMULA.lifestealHpCap)}까지`);
         if (sk.extraAttacks) out.push(`추가 공격 ${Math.min(STATUS_TUNING.maxExtraAttacks, sk.extraAttacks)}회 · 각 타격은 위 피해식의 ${skillPercent(sk.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)}`);
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
