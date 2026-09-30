@@ -4,6 +4,8 @@ import { stats } from '../stats';
 import type { State, Vows } from '../../types';
 import type { ActionHandlers } from './types';
 import { addLog, newState } from '../state';
+import { drawRebirthDoor } from '../../data/doors';
+import { JOBS } from '../../data/classes';
 import { gainLevels, releaseAnchor } from '../encounter';
 import { VOW_IDS, VOW_NAMES, type VowId, breathBonus, chooseAnchorTarget, cleanVows, hasVows, vowUnlocked, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '../vows';
 
@@ -52,10 +54,14 @@ export const lifecycleActions: ActionHandlers = {
             s.vows = { ...vows, ...(vows.anchor ? { seal: { ...chooseAnchorTarget(s.rebirths, rng), caught: 0, exp: 0 } } : {}) };
         }
         else delete s.vows;
+        // 윤회의 문: 이번 생에 열릴 ??? 직업을 게임 난수로 추첨해 저장합니다(후보가 없으면 난수를 쓰지 않음).
+        const door = drawRebirthDoor(s, rng);
+        if (door) s.rebirthDoor = door; else delete s.rebirthDoor;
         addLog(s, `새로운 항해가 시작됩니다. 환생 진주 +${pearls}${deepPearls ? ` (깊은 항해 +${deepPearls} 포함)` : ''}${breath ? ` · 한 번의 숨 +${breath}` : ''}`);
         if (lifeBonus === 'deep') addLog(s, 'Lv.100 완주 · 이번 생 동안 직업·스킬 숙련 기본 획득 +2', 'reward');
         if (lifeBonus === 'tailwind') addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%`, 'reward');
         if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => id === 'rough' ? `${VOW_NAMES.rough} ${s.vows!.rough}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
+        if (s.rebirthDoor) addLog(s, `윤회의 문 · 이번 생에는 ${JOBS.find(j => j.id === s.rebirthDoor)?.name}의 문이 열렸습니다.`, 'system');
         const seal = anchorSeal(s);
         if (seal) addLog(s, `잠든 닻 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1에 머뭅니다.`, 'system');
     },
@@ -90,6 +96,6 @@ export const lifecycleActions: ActionHandlers = {
         const name = s.name;
         Object.assign(s, newState(now), { name });
         // newState에 없는 선택 필드도 함께 지웁니다(계정당 첫 재분배 사용 여부는 유지).
-        for (const key of ['vows', 'nextVows', 'goldenBook', 'masteryCarry', 'autoSell'] as const) delete s[key];
+        for (const key of ['vows', 'nextVows', 'goldenBook', 'masteryCarry', 'autoSell', 'rebirthDoor'] as const) delete s[key];
     },
 };

@@ -20,8 +20,9 @@ export const buildActions: ActionHandlers = {
         addLog(s, `${sk.name} · ${spec?.name || '기본형'} 선택 · 변경 비용 없음`);
     },
     job(s, { id, now }) {
-        if (!canChangeJob(s, id))
-            throw Error('레벨·능력치·선행 직업 숙련 조건을 확인하세요.');
+        // 문 시간 판정은 요청 시각(서버 now)으로 합니다.
+        if (!canChangeJob(s, id, now))
+            throw Error('레벨·능력치·선행 직업 숙련·문 조건을 확인하세요.');
         // A class change is a safe combat boundary. Discard only the
         // unfinished encounter (and any dungeon reward), then apply the
         // new class with the current HP/MP ratio intact.
