@@ -1,11 +1,12 @@
 import type { State, Action, Item } from '../types';
-import { BALANCE, RARITIES } from '../data/balance';
-import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked } from '../data/economy';
+import { RARITIES } from '../data/balance';
+import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
 import { apCapacity, apUsed } from './progression';
 import { rollAffix, enhanceCost, reforgeCost, bulkItems, saleValue, dismantleEssence, rerollCost } from './equipment';
 import { rollAffixes } from '../data/gear';
-export const shopCost = (s: State) => ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel;
-export const gambleCost = (s: State) => ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel;
+/** 상점·뽑기 골드 가격. 항구 단골 할인(−2%/단계, 내림)을 적용합니다. */
+export const shopCost = (s: State) => Math.floor((ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel) * shopDiscount(s));
+export const gambleCost = (s: State) => Math.floor((ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel) * shopDiscount(s));
 export const relicCost = (s: State, id: string) => id === 'memoryRod' && s.clears.temple ? 0 : RELICS.find(x => x.id === id)?.cost ?? Infinity;
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: `희귀 ${o.name}`, slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
@@ -27,7 +28,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     const id = a.id || '';
     const spend = (cost: number) => { if (!Number.isFinite(cost) || s.gold < cost)
         throw Error('골드가 부족합니다.'); s.gold -= cost; };
-    const room = () => { if (s.inventory.length >= BALANCE.inventoryCap)
+    const room = () => { if (s.inventory.length >= inventoryCap(s))
         throw Error('가방을 비운 뒤 구매하세요.'); };
     const nextId = () => `shop-${++s.shopSerial}`;
     if (a.type === 'buy' || a.type === 'gamble') {
@@ -79,7 +80,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (a.type === 'enhance') {
             if ((item.enhance || 0) >= ECONOMY.enhanceMax)
                 throw Error('최대 강화입니다.');
-            const cost = enhanceCost(item);
+            const cost = enhanceCost(item, s);
             spend(cost);
             item.enhance = (item.enhance || 0) + 1;
             return `${item.name} +${item.enhance} 강화 성공 · -${cost} G`;
@@ -88,7 +89,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');
         if (!item.affixes?.length) {
             // v21 이전 장비·상점 장비·유물의 단일 옵션: 기존 방식(골드만).
-            const cost = reforgeCost(item);
+            const cost = reforgeCost(item, s);
             spend(cost);
             item.affix = rollAffix(item.rarity, rng);
             return `${item.name} 옵션 재설정 · ${item.affix.name} · -${cost} G`;
@@ -97,7 +98,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const index = Number(a.value || '0');
         if (!Number.isInteger(index) || index < 0 || index >= item.affixes.length)
             throw Error('재설정할 옵션을 고르세요.');
-        const cost = rerollCost(item);
+        const cost = rerollCost(item, s);
         if ((s.essence || 0) < cost.essence)
             throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
         spend(cost.gold);
@@ -145,6 +146,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (refund <= 0)
             throw Error('돌려받을 진주가 없습니다.');
         const after = { ...s, permanent: { ...s.permanent, ...Object.fromEntries(Object.keys(ranks).map(k => [k, 0])) } };
+        if (ranks.inventory && s.inventory.length > inventoryCap(after))
+            throw Error(`재분배하면 가방이 ${inventoryCap(after)}칸으로 줄어 ${s.inventory.length - inventoryCap(after)}개가 넘칩니다. 장비를 정리하세요.`);
         if (ranks.ap && apUsed(after) > apCapacity(after))
             throw Error(`재분배하면 장착 AP 한도(${apCapacity(after)})를 넘습니다. 스킬 장착을 ${apUsed(after) - apCapacity(after)} AP 줄인 뒤 다시 시도하세요.`);
         for (const k of Object.keys(ranks))

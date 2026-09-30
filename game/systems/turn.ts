@@ -7,6 +7,7 @@ import { BALANCE } from '../data/balance';
 import { DUNGEONS } from '../data/world';
 import { strike, fighterSpeed, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
+import { offlineCapSeconds } from '../data/economy';
 import { canUse, skillMasteryRanks } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, reward } from './encounter';
@@ -82,11 +83,13 @@ export function tickTurn(s: State, rng: () => number) {
 export function advance(s: State, now: number, rng = Math.random) {
     now = Math.max(now, s.lastTick);
     const elapsed = now - s.lastTick;
-    const count = Math.min(Math.floor(elapsed / BALANCE.turnMs), BALANCE.offlineCapSeconds * 1000 / BALANCE.turnMs);
+    // 정산 상한은 정산을 시작할 때의 긴 닻줄 단계로 정합니다(정산 중 연구가 바뀌지 않음).
+    const cap = offlineCapSeconds(s);
+    const count = Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
     const before = { kills: s.kills, gold: s.gold, exp: s.exp };
     for (let i = 0; i < count; i++)
         tick(s, rng);
-    s.lastTick = elapsed > BALANCE.offlineCapSeconds * 1000 ? now : now - (elapsed % BALANCE.turnMs);
+    s.lastTick = elapsed > cap * 1000 ? now : now - (elapsed % BALANCE.turnMs);
     if (elapsed > 60000 && s.kills > before.kills)
-        s.lastOffline = { seconds: Math.min(BALANCE.offlineCapSeconds, Math.floor(elapsed / 1000)), kills: s.kills - before.kills, gold: s.gold - before.gold, exp: Math.max(0, s.exp - before.exp) };
+        s.lastOffline = { seconds: Math.min(cap, Math.floor(elapsed / 1000)), kills: s.kills - before.kills, gold: s.gold - before.gold, exp: Math.max(0, s.exp - before.exp) };
 }

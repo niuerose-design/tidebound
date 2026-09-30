@@ -1,4 +1,5 @@
-import type { Item } from '../types';
+import type { Item, State } from '../types';
+import { BALANCE } from './balance';
 /** 가격·확률·영구 성장 수치의 단일 설정. 모두 게임 내 재화 전용. */
 export const ECONOMY = { enhanceMax: 10, enhanceGain: .15, shopBase: 180, shopPerLevel: 35, gambleBase: 300, gamblePerLevel: 45, rebirthAPCap: 12, rebirthLevelStep: 5, rebirthLevelCap: 60, rebirthExp: .25, tideCap: 200 };
 // v22: 감정은 희귀 이상. 드물게 신화·고대·태초가 나옵니다(등급 수 = 옵션 수).
@@ -12,6 +13,8 @@ export type ResearchDef = {
     rebirth?: number;
     /** 1단계당 효과량과 표시 방식. 카드의 '현재 → 다음' 표시에 씁니다. */
     per: number; unit: 'percent' | 'pp' | 'flat'; label: string; suffix?: string;
+    /** 가격 할인처럼 효과가 줄어드는 방향이면 true(표시 부호가 −). */
+    negative?: boolean;
 };
 export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '전투' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
 export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본' };
@@ -20,16 +23,28 @@ export const RESEARCH: ResearchDef[] = [
     // ranks are deliberately expensive so pearls remain a meaningful choice.
     { id: 'attack', name: '날카로운 기억', desc: '물리 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '물리 공격' },
     { id: 'magicAttack', name: '심해 등불의 기억', desc: '마법 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '마법 공격' },
+    { id: 'crit', name: '예리한 눈', desc: '치명 확률 +0.5%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .005, unit: 'pp', label: '치명 확률' },
+    { id: 'manaRegen', name: '고요한 호흡', desc: '턴당 마나 회복 +5%', max: 10, base: 3, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .05, unit: 'percent', label: '턴당 마나 회복' },
+    { id: 'critDamage', name: '파도의 일격', desc: '치명 피해 +2%p', max: 25, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 5, per: .02, unit: 'pp', label: '치명 피해' },
+    { id: 'penetration', name: '관통의 기억', desc: '방어 관통 +1%p (전체 상한 60%)', max: 15, base: 5, step: 4, tab: 'combat', group: 'attack', rebirth: 5, per: .01, unit: 'pp', label: '방어 관통' },
     { id: 'hp', name: '깊은 숨결', desc: '최대 체력 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'defense', per: .08, unit: 'percent', label: '최대 체력' },
     { id: 'guard', name: '불굴의 기억', desc: '물리 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '물리 방어' },
     { id: 'magicGuard', name: '진주막의 기억', desc: '마법 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '마법 방어' },
+    { id: 'recovery', name: '잔잔한 물결', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
+    { id: 'evasion', name: '물거품 걸음', desc: '회피 +0.4%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .004, unit: 'pp', label: '회피' },
+    { id: 'lifesteal', name: '피의 조수', desc: '흡혈 +0.5%p (전체 상한 30%)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },
     { id: 'ap', name: '영혼의 그릇', desc: '스킬 장착 한도 AP +1', max: 12, base: 4, step: 3, tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
     { id: 'exp', name: '항해의 기억', desc: '포획 경험치 +20%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', per: .2, unit: 'percent', label: '포획 경험치' },
     { id: 'starting', name: '항구의 유산', desc: '환생 직후 시작 골드 +500', max: 10, base: 3, step: 2, tab: 'utility', group: 'basic', per: 500, unit: 'flat', label: '시작 골드', suffix: ' G' },
+    { id: 'inventory', name: '넓은 선창', desc: '가방 +5칸', max: 8, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 2, per: 5, unit: 'flat', label: '가방', suffix: '칸' },
+    { id: 'offline', name: '긴 닻줄', desc: '오프라인 정산 상한 +2시간', max: 12, base: 3, step: 2, tab: 'utility', group: 'basic', rebirth: 2, per: 2, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
+    { id: 'mastery', name: '숙련의 기억', desc: '스킬·직업 숙련 획득 +5%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .05, unit: 'percent', label: '숙련 획득' },
     { id: 'gold', name: '황금 물결', desc: '포획·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '포획·던전 골드' },
     { id: 'dungeon', name: '심연의 금고', desc: '던전 클리어 골드 +8%', max: 10, base: 5, step: 4, tab: 'gold', per: .08, unit: 'percent', label: '던전 클리어 골드' },
     { id: 'drop', name: '보물의 감각', desc: '장비 드롭 확률 +1%p', max: 10, base: 3, step: 3, tab: 'gold', per: .01, unit: 'pp', label: '장비 드롭 확률' },
     { id: 'pearl', name: '윤회의 연금술', desc: '환생 진주 +1', max: 5, base: 6, step: 5, tab: 'gold', per: 1, unit: 'flat', label: '환생 진주' },
+    { id: 'shop', name: '항구 단골', desc: '상점·뽑기 골드 가격 -2%', max: 10, base: 3, step: 2, tab: 'gold', rebirth: 2, per: .02, unit: 'percent', label: '상점·뽑기 가격', negative: true },
+    { id: 'enhance', name: '대장장이의 기억', desc: '강화·옵션 재설정 골드 비용 -2%', max: 15, base: 3, step: 2, tab: 'gold', rebirth: 5, per: .02, unit: 'percent', label: '강화·재설정 비용', negative: true },
 ];
 export const researchCost = (id: string, rank: number) => { const r = RESEARCH.find(x => x.id === id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
 /** rank 단계까지 쓴 진주 합계(0 → rank). 재분배 반환액 계산에 씁니다. */
@@ -39,8 +54,18 @@ export const researchUnlocked = (rebirths: number, r: Pick<ResearchDef, 'rebirth
 export function researchEffect(r: ResearchDef, rank: number) {
     const n = r.per * rank;
     const value = r.unit === 'percent' ? `${Number((n * 100).toFixed(1))}%` : r.unit === 'pp' ? `${Number((n * 100).toFixed(1))}%p` : `${n.toLocaleString()}${r.suffix || ''}`;
-    return `${r.label} +${value}`;
+    return `${r.label} ${r.negative ? '−' : '+'}${value}`;
 }
+/** 연구 단계. 없는 연구는 0. */
+export const researchRank = (s: Pick<State, 'permanent'>, id: string) => s.permanent?.[id] || 0;
+/** 가방 칸 수: 60 + 넓은 선창 5칸/단계. */
+export const inventoryCap = (s: Pick<State, 'permanent'>) => BALANCE.inventoryCap + researchRank(s, 'inventory') * 5;
+/** 오프라인 정산 상한(초): 24시간 + 긴 닻줄 2시간/단계. */
+export const offlineCapSeconds = (s: Pick<State, 'permanent'>) => BALANCE.offlineCapSeconds + researchRank(s, 'offline') * 7200;
+/** 항구 단골: 상점·뽑기 골드 가격 배율. */
+export const shopDiscount = (s: Pick<State, 'permanent'>) => 1 - researchRank(s, 'shop') * .02;
+/** 대장장이의 기억: 강화·옵션 재설정 골드 비용 배율. */
+export const smithDiscount = (s: Pick<State, 'permanent'>) => 1 - researchRank(s, 'enhance') * .02;
 /** 재분배 반환 비율: 계정당 첫 1회 100%, 이후 90%(내림). */
 export const RESEARCH_RESET = { firstRefund: 1, refund: .9 };
 export const AFFIXES: {

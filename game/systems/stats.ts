@@ -6,7 +6,7 @@ import type { State, Snapshot, Stats, CombatStats } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS } from '../data/classes';
-import { RESEARCH } from '../data/economy';
+import { RESEARCH, researchRank } from '../data/economy';
 import { SKILLS } from '../data/skills';
 import { bookStatBonus, regionThemes } from './book';
 import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier, signatureScale } from './progression';
@@ -19,7 +19,7 @@ export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', '
 export type StatSource = typeof STAT_SOURCES[number];
 export const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '진주 연구', book: '도감', equipment: '장비', limit: '상한·정수 처리' };
 /** 진주 연구가 올리는 능력치 → 연구 id. 물리·마법 공격과 방어는 각각 다른 연구입니다. */
-const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', rebirthBonus: 'pearl' };
+const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', rebirthBonus: 'pearl', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
 /** 능력치 분해의 원인 이름. 진주 연구는 해당 연구 이름까지 붙입니다(예: 진주 연구 · 심해 등불의 기억). */
 export function statSourceLabel(k: keyof CombatStats, source: StatSource) {
     const name = source === 'research' ? RESEARCH.find(r => r.id === RESEARCH_BY_STAT[k])?.name : undefined;
@@ -67,6 +67,10 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus);
     set('rebirthBonus', 'research', s.permanent.pearl || 0);
     set('dungeonGoldBonus', 'research', (s.permanent.dungeon || 0) * .08);
+    // 진주 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다.
+    add('crit', 'research', researchRank(s, 'crit') * .005); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
+    add('penetration', 'research', researchRank(s, 'penetration') * .01); add('evasion', 'research', researchRank(s, 'evasion') * .004);
+    add('lifesteal', 'research', researchRank(s, 'lifesteal') * .005);
     // 도감: 어종 성향별 연구 능력치와 완성 지역의 테마 보너스(고정값). 배율은 아래에서 따로 적용합니다.
     for (const bonus of [bookStatBonus(s), ...themes.map(t => t.add || {})])
         for (const [key, n] of Object.entries(bonus))
@@ -119,6 +123,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     mul('thorns', [['job', a.guardAffinity]]);
     mul('defense', [['research', 1 + (s.permanent.guard || 0) * .03]]);
     mul('resist', [['research', 1 + (s.permanent.magicGuard || 0) * .03]]);
+    mul('manaRegen', [['research', 1 + researchRank(s, 'manaRegen') * .05]]);
     const limit = (k: keyof CombatStats, n: number) => { const before = a[k]; a[k] = n; rec(k, 'limit', n - before); };
     for (const k of ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'speed', 'harmony'] as (keyof CombatStats)[])
         limit(k, Math.max(k === 'hp' || k === 'speed' ? 1 : 0, Math.floor(a[k])));

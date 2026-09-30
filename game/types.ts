@@ -261,6 +261,8 @@ export type State = {
     permanent: Record<string, number>;
     /** 진주 연구 재분배의 계정당 첫 1회 무료 반환을 썼는지. 없으면 false. */
     researchResetUsed?: boolean;
+    /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
+    masteryCarry?: number;
     dungeon: null | {
         id: string;
         wave: number;

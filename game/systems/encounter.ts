@@ -5,7 +5,8 @@ import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYS
 import { jobMasteryTarget, skillRefinementTargets } from './progression';
 import { activeSwarm, catchReward, encounterTier } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
-import { victoryMastery } from './mastery';
+import { victoryMastery, researchMastery } from './mastery';
+import { inventoryCap, researchRank } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, FIRST_AID_HEAL } from '../data/balance';
@@ -21,8 +22,10 @@ import { continueRepeat } from './dungeon-run';
 /** 승리 1회당 회복량. 무리 규모와 관계없이 승리마다 한 번 적용합니다(응급처치 포함). */
 export function victoryHeal(s: State) {
     const firstAid = s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0;
-    return Math.floor(stats(s).hp * ((s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : BALANCE.healAfterKill) + firstAid));
+    return Math.floor(stats(s).hp * (victoryHealRate(s) + firstAid));
 }
+/** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 잔잔한 물결 1%p/단계. */
+export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : BALANCE.healAfterKill) + researchRank(s, 'recovery') * .01;
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 export function rollRarity(rng: () => number, minRarity = 0) {
     const weights = DROP_RARITY.map((w, i) => i >= minRarity ? w : 0);
@@ -42,7 +45,7 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     item.origin = origin;
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
-    if (s.inventory.length >= BALANCE.inventoryCap) {
+    if (s.inventory.length >= inventoryCap(s)) {
         s.gold += item.power * 3;
         addLog(s, `가방 가득 참: ${item.name} 자동 판매 +${item.power * 3} G`, 'reward');
     }
@@ -88,7 +91,7 @@ export function reward(s: State, rng: () => number) {
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
     const size = e.swarm || 1;
-    const masteryReward = victoryMastery(s, e), practice = masteryReward.amount * size;
+    const masteryReward = victoryMastery(s, e), researched = researchMastery(s, masteryReward.amount * size), practice = researched.total;
     const gold = Math.floor(e.gold * goldMultiplier(s)) * size, exp = Math.floor(e.exp * expMultiplier(s)) * size;
     s.kills += size;
     const jobTargets = vocationTargets(jobMasteryTarget(JOBS.find(j => j.id === s.job)!));
@@ -109,7 +112,7 @@ export function reward(s: State, rng: () => number) {
     s.gold += gold;
     s.exp += exp;
     addLog(s, `${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 포획 · +${gold} G · +${exp} EXP`, 'reward');
-    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''})`, 'skill');
+    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
     const fish = FISH.find(f => f.id === e.id)!;
     for (let i = 0; i < size; i++)
         drop(s, fish.level + encounterTier(s) * 5, rng);

@@ -1,0 +1,88 @@
+// 진주 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
+import { newState, act, advance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, assert, test } from './harness.mjs';
+
+const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'shop', 'enhance'];
+const research = id => economy.RESEARCH.find(r => r.id === id);
+const researchDelta = (s, k) => { const t = {}; stats(s, t); return (t[k] || []).filter(x => x.source === 'research' && x.factor === undefined).reduce((a, x) => a + x.delta, 0); };
+const researchFactor = (s, k) => { const t = {}; stats(s, t); return (t[k] || []).filter(x => x.source === 'research' && x.factor !== undefined).reduce((a, x) => a * x.factor, 1); };
+const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
+const seeded = seed => { let x = seed >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296); };
+
+test('Research v2: 12 new entries match the plan table and are refused before unlock and at the cap', () => {
+    const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 4, 3, 5, 1020], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], inventory: [8, 3, 3, 2, 108], offline: [12, 3, 2, 2, 168], mastery: [10, 3, 3, 5, 165], shop: [10, 3, 2, 2, 120], enhance: [15, 3, 2, 5, 255] };
+    for (const id of NEW) {
+        const r = research(id), [max, base, step, rebirth, total] = table[id];
+        assert.deepEqual([r.max, r.base, r.step, r.rebirth], [max, base, step, rebirth], id);
+        assert.equal(economy.researchSpent(id, max), total, `${id} total pearls`);
+        const s = newState(0); s.pearls = 10000; s.rebirths = rebirth - 1;
+        assert.throws(() => act(s, { type: 'permanent', id }, 0), /환생/);
+        s.rebirths = rebirth; act(s, { type: 'permanent', id }, 0); assert.equal(s.permanent[id], 1);
+        s.permanent[id] = max; assert.throws(() => act(s, { type: 'permanent', id }, 0), /한도/);
+    }
+    assert.deepEqual(economy.RESEARCH.filter(r => r.tab === 'combat' && r.group === 'attack').map(r => r.id), ['attack', 'magicAttack', 'crit', 'manaRegen', 'critDamage', 'penetration']);
+    assert.deepEqual(economy.RESEARCH.filter(r => r.tab === 'combat' && r.group === 'defense').map(r => r.id), ['hp', 'guard', 'magicGuard', 'recovery', 'evasion', 'lifesteal']);
+});
+
+test('Research v2: stat effects come from the research source and keep the existing caps', () => {
+    const s = newState(0);
+    Object.assign(s.permanent, { crit: 20, critDamage: 25, penetration: 15, evasion: 20, lifesteal: 20, manaRegen: 10 });
+    close(researchDelta(s, 'crit'), .1); close(researchDelta(s, 'critDamage'), .5); close(researchDelta(s, 'penetration'), .15);
+    close(researchDelta(s, 'evasion'), .08); close(researchDelta(s, 'lifesteal'), .1); close(researchFactor(s, 'manaRegen'), 1.5);
+    const base = newState(0);
+    close(stats(s).crit - stats(base).crit, .1); close(stats(s).lifesteal - stats(base).lifesteal, .1);
+    s.permanent.penetration = 1000; s.permanent.lifesteal = 1000; assert.equal(stats(s).penetration, .6); assert.equal(stats(s).lifesteal, .3);
+});
+
+test('Research v2: recovery, shop and smith discounts use the state-aware functions', () => {
+    const s = newState(0); s.permanent.recovery = 5;
+    close(victoryHealRate({ ...s, dungeon: null }), .13); close(victoryHealRate({ ...s, dungeon: { id: 'grotto', wave: 0 } }), .09);
+    close(victoryHealRate({ ...newState(0), dungeon: null }), .08);
+    s.level = 10; const full = shopCost(s), fullGamble = gambleCost(s);
+    s.permanent.shop = 10; assert.equal(shopCost(s), Math.floor(full * .8)); assert.equal(gambleCost(s), Math.floor(fullGamble * .8));
+    s.gold = 1e6; const before = s.gold; act(s, { type: 'buy', id: 'coat' }, 0); assert.equal(before - s.gold, shopCost(s));
+    const item = { id: 'forge', slot: 'coat', rarity: 1, power: 10, level: 10, name: 'forge', affix: { stat: 'hp', name: '생명', value: 15 } };
+    s.inventory.push(item); s.permanent.enhance = 15;
+    assert.equal(enhanceCost(item), 240); assert.equal(enhanceCost(item, s), 168); assert.equal(reforgeCost(item, s), Math.floor(reforgeCost(item) * .7));
+    const g = s.gold; act(s, { type: 'enhance', id: 'forge' }, 0); assert.equal(g - s.gold, 168);
+    s.permanent.enhance = 0; assert.equal(enhanceCost(item, s), enhanceCost(item));
+});
+
+test('Research v2: bag size grows with the hold; reset refuses when the bag would overflow', () => {
+    const s = newState(0); s.permanent.inventory = 2; assert.equal(economy.inventoryCap(s), 70);
+    const fill = n => Array.from({ length: n }, (_, i) => ({ id: `b${i}`, slot: 'rod', rarity: 0, power: 3, level: 1, name: 'b' }));
+    s.inventory = fill(69); drop(s, 5, () => .5, true); assert.equal(s.inventory.length, 70);
+    const gold = s.gold; drop(s, 5, () => .5, true); assert.equal(s.inventory.length, 70); assert.ok(s.gold > gold, 'full bag auto-sells');
+    const r = newState(0); r.rebirths = 2; r.permanent.inventory = 2; r.inventory = fill(65);
+    assert.throws(() => act(r, { type: 'resetResearch', id: 'utility' }, 0), /장비를 정리하세요/); assert.equal(r.permanent.inventory, 2);
+    r.inventory = fill(60); act(r, { type: 'resetResearch', id: 'utility' }, 0); assert.equal(r.permanent.inventory || 0, 0); assert.equal(economy.inventoryCap(r), 60);
+});
+
+test('Research v2: long anchor line extends the offline cap by two hours per rank', () => {
+    const run = rank => { const s = newState(0); s.permanent.offline = rank; act(s, { type: 'start' }, 0); advance(s, 40 * 3600_000, seeded(3)); return s; };
+    const base = run(0), long = run(3);
+    assert.equal(economy.offlineCapSeconds(base), 86400); assert.equal(economy.offlineCapSeconds(long), 30 * 3600);
+    assert.equal(base.turn, 86400 / 2); assert.equal(long.turn, 30 * 3600 / 2);
+    assert.equal(base.lastOffline.seconds, 86400); assert.equal(long.lastOffline.seconds, 30 * 3600);
+});
+
+test('Research v2: mastery memory adds +5% per rank with an integer carry and no random calls', () => {
+    const s = newState(0); assert.deepEqual(researchMastery(s, 3), { total: 3, extra: 0 }); assert.equal(s.masteryCarry, undefined);
+    s.permanent.mastery = 1; let extra = 0; for (let i = 0; i < 20; i++) extra += researchMastery(s, 1).extra;
+    assert.equal(extra, 1); assert.equal(s.masteryCarry, 0);
+    s.permanent.mastery = 3; assert.deepEqual(researchMastery(s, 7), { total: 8, extra: 1 }); assert.equal(s.masteryCarry, 1);
+    s.permanent.mastery = 10; s.masteryCarry = 0; assert.deepEqual(researchMastery(s, 10), { total: 15, extra: 5 });
+});
+
+test('Research v2: online ticks and one offline settlement give the same result with every new research', () => {
+    const make = () => {
+        const s = newState(0); s.level = 30; s.rebirths = 6; s.hp = 1e9;
+        Object.assign(s.permanent, { crit: 5, critDamage: 5, penetration: 5, manaRegen: 5, evasion: 5, lifesteal: 5, recovery: 5, inventory: 2, offline: 3, mastery: 3, shop: 2, enhance: 2 });
+        act(s, { type: 'stage', id: 'bay' }, 0); act(s, { type: 'start' }, 0); s.hp = stats(s).hp; return s;
+    };
+    const offline = make(), online = make(), end = 3 * 3600_000;
+    advance(offline, end, seeded(42));
+    const rng = seeded(42); for (let t = 2000; t <= end; t += 2000) advance(online, t, rng);
+    const pick = s => ({ turn: s.turn, kills: s.kills, gold: s.gold, exp: s.exp, level: s.level, hp: s.hp, carry: s.masteryCarry, job: s.jobMastery, practice: s.skillPractice, book: s.book, bag: s.inventory.length });
+    assert.ok(offline.kills > 100 && (offline.masteryCarry ?? -1) >= 0);
+    assert.deepEqual(pick(online), pick(offline));
+});

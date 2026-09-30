@@ -2,7 +2,9 @@ import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw,
 import type { ReactNode } from 'react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
-import { ECONOMY, RESEARCH, RESEARCH_RESET } from '@/game/data/economy';
+import { ECONOMY, RESEARCH, RESEARCH_RESET, offlineCapSeconds, inventoryCap } from '@/game/data/economy';
+import { victoryHealRate } from '@/game/systems/encounter';
+import type { State } from '@/game/types';
 import { SWARM_UNLOCK } from '@/game/data/world';
 import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
 import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL } from '@/game/systems/meta';
@@ -34,7 +36,7 @@ const STATUS_GROUPS = [
     { title: '지속 피해 · 속도', ids: ['bleed', 'slow', 'haste'] },
 ] as const;
 
-export function Guide() {
+export function Guide({ s }: { s?: State }) {
     return <>
         <Heading eyebrow="CAPTAIN'S MANUAL" title="항해 도움말" description="주제 제목을 누르면 접고 펼칠 수 있습니다. 규칙은 효과 · 조건 · 제한 순서입니다." />
         <Topic open icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분에 직업·장비·스킬이 더해집니다.">
@@ -110,9 +112,9 @@ export function Guide() {
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장마다 6초 준비 후 체력·마나를 회복합니다."
                     limit={`반복이 끝나거나 실패하면 낚시터에서 자동 낚시를 이어갑니다. 던전 처치 후 회복은 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
-                    effect={`승리 후 최대 체력의 ${percent(BALANCE.healAfterKill)}(던전 ${percent(MONSTER_TUNING.dungeonHealAfterKill)})를 회복합니다. 공용 패시브 응급처치(AP 2, Lv.2 자동 습득)를 장착하면 승리마다 ${percent(FIRST_AID_HEAL)}를 더 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
+                    effect={`승리 후 최대 체력의 ${percent(BALANCE.healAfterKill)}(던전 ${percent(MONSTER_TUNING.dungeonHealAfterKill)})를 회복하고, 진주 연구 잔잔한 물결로 1%p씩 늘어납니다${s ? `(지금 필드 ${percent(victoryHealRate({ ...s, dungeon: null }))} · 던전 ${percent(victoryHealRate({ ...s, dungeon: { id: '', wave: 0 } }))})` : ''}. 공용 패시브 응급처치(AP 2, Lv.2 자동 습득)를 장착하면 승리마다 ${percent(FIRST_AID_HEAL)}를 더 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
                     condition={`패배하면 손실 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다.`}
-                    limit={`방치 정산은 최대 ${BALANCE.offlineCapSeconds / 3600}시간. 일시정지 중에는 쌓이지 않습니다. 해역 난이도는 일반 낚시터에만 적용됩니다.`}/>
+                    limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간, 긴 닻줄 연구로 2시간씩 늘어납니다${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}. 가방은 기본 ${BALANCE.inventoryCap}칸, 넓은 선창 연구로 5칸씩 늘어납니다${s ? `(지금 ${inventoryCap(s)}칸)` : ''}. 일시정지 중에는 쌓이지 않습니다. 해역 난이도는 일반 낚시터에만 적용됩니다.`}/>
             </div>
         </Topic>
         <Topic icon={<RefreshCw size={19}/>} title="성장 · 재화" note="환생, 진주 연구, 도감, 상점.">
