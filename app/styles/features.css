@@ -14,7 +14,6 @@
 .book-block h4 { font-size: 13px; margin: 0 0 6px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .book-block h4 small { font-weight: 400; font-size: 11px; color: var(--muted); }
 .book-block p { font-size: 13px; margin: 0 0 8px; }
-.book-block .book-swarm { display: block; font-size: 11px; color: var(--muted); margin-top: 6px; }
 .book-matchup { margin-top: 6px; }
 .book-matchup small { color: var(--muted); }
 .rebirth-three { grid-template-columns: repeat(3, 1fr); margin-top: 18px; }
@@ -78,7 +77,6 @@
 .book-enemy > summary { cursor: pointer; list-style: none; }
 .book-enemy > summary::-webkit-details-marker { display: none; }
 .book-enemy:not([open]) > summary h4 { margin: 0; color: var(--muted); }
-.book-swarm-line { display: block; font-size: 11px; color: var(--muted); margin-top: 8px; }
 .book-claim-all { align-items: center; margin-bottom: 14px; }
 .book-claim-all > div { flex: 1; }
 .book-claim-all > button { flex-shrink: 0; }
