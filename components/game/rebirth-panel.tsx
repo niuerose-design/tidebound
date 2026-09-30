@@ -20,8 +20,8 @@ import { BonusList } from './inventory-panel';
 function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a: Action) => void; busy: boolean }) {
     const rank = s.permanent[r.id] || 0, cost = researchCost(r.id, rank), unlocked = researchUnlocked(s.rebirths, r), maxed = rank >= r.max;
     return <article className={`panel research-card ${unlocked ? '' : 'locked'}`}>
-        <div><h2>{r.name}</h2><p>{r.desc} <small>(1단계당)</small></p>
-            <p className="research-effect">{maxed ? `${researchEffect(r, rank)} · 최대` : `${rank ? researchEffect(r, rank) : `${r.label} +0`} → ${researchEffect(r, rank + 1)}`}</p>
+        <div><h2>{r.name}</h2><p>{r.desc}{r.levels ? '' : <small> (1단계당)</small>}</p>
+            <p className="research-effect">{maxed ? `${researchEffect(r, rank)} · 최대` : `${rank || r.levels ? researchEffect(r, rank) : `${r.label} +0`} → ${researchEffect(r, rank + 1)}`}</p>
             <small>연구 {rank} / {r.max}</small></div>
         <button className="secondary" disabled={busy || !unlocked || maxed || s.pearls < cost} onClick={() => send({ type: 'permanent', id: r.id })}>{!unlocked ? `환생 ${r.rebirth}회 필요` : maxed ? '연구 완료' : `${cost} 진주`}</button>
     </article>;

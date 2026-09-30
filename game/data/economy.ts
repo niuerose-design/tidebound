@@ -15,6 +15,8 @@ export type ResearchDef = {
     per: number; unit: 'percent' | 'pp' | 'flat'; label: string; suffix?: string;
     /** 가격 할인처럼 효과가 줄어드는 방향이면 true(표시 부호가 −). */
     negative?: boolean;
+    /** 단계마다 효과가 수치가 아니라 설명으로 바뀌는 연구(선별의 그물·서약)의 단계별 문구. [0]은 0단계. */
+    levels?: string[];
 };
 export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '전투' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
 export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본', special: '특별', vow: '서약' };
@@ -40,12 +42,12 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'offline', name: '긴 닻줄', desc: '오프라인 정산 상한 +2시간', max: 12, base: 3, step: 2, tab: 'utility', group: 'basic', rebirth: 2, per: 2, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
     { id: 'tailwindSail', name: '순풍의 돛', desc: '순풍 경험치 보너스 +10%p (기본 +50%)', max: 5, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 2, per: .1, unit: 'pp', label: '순풍 경험치 보너스' },
     { id: 'tailwindWindow', name: '바람목 넓히기', desc: '순풍 조건 +1레벨 (기본 요구 레벨+5 이내)', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '순풍 조건', suffix: '레벨' },
-    { id: 'sortingNet', name: '선별의 그물', desc: '1단계 일반, 2단계 희귀 이하 드롭 자동 판매 (설정에서 켜고 끔)', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 판매 등급', suffix: '단계' },
+    { id: 'sortingNet', name: '선별의 그물', desc: '1단계 일반, 2단계 희귀 이하 드롭 자동 판매 (설정에서 켜고 끔)', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 판매 등급', suffix: '단계', levels: ['자동 판매 없음', '일반 자동 판매', '희귀 이하 자동 판매'] },
     { id: 'messageBottle', name: '병 속의 편지', desc: '오프라인 정산 1시간마다 편지병 확률 +4%p', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .04, unit: 'pp', label: '시간당 편지병 확률' },
     { id: 'goldenFish', name: '황금 개체', desc: '포획마다 황금 개체 확률 +0.1%p (포획 골드 10배)', max: 10, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 5, per: .001, unit: 'pp', label: '황금 개체 확률' },
-    { id: 'vowAnchor', name: '잠든 닻', desc: '서약 해금. 2·3단계는 봉인 해제 보너스 50%씩 강화 (×1.5 → ×1.75 → ×2)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계' },
-    { id: 'vowBreath', name: '한 번의 숨', desc: '서약 해금. 2·3단계는 환생 진주 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계' },
-    { id: 'vowRough', name: '거친 바다', desc: '서약 해금. 2·3단계는 드롭·골드 보너스 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계' },
+    { id: 'vowAnchor', name: '잠든 닻', desc: '서약 해금. 2·3단계는 봉인 해제 보너스 50%씩 강화 (×1.5 → ×1.75 → ×2)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 봉인 해제 ×1.5', '봉인 해제 ×1.75', '봉인 해제 ×2'] },
+    { id: 'vowBreath', name: '한 번의 숨', desc: '서약 해금. 2·3단계는 환생 진주 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 환생 진주 +50%', '환생 진주 +75%', '환생 진주 +100%'] },
+    { id: 'vowRough', name: '거친 바다', desc: '서약 해금. 2·3단계는 드롭·골드 보너스 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 선택 단계당 드롭·골드 +50%', '선택 단계당 +75%', '선택 단계당 +100%'] },
     { id: 'mastery', name: '숙련의 기억', desc: '스킬·직업 숙련 획득 +5%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .05, unit: 'percent', label: '숙련 획득' },
     { id: 'gold', name: '황금 물결', desc: '포획·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '포획·던전 골드' },
     { id: 'dungeon', name: '심연의 금고', desc: '던전 클리어 골드 +8%', max: 10, base: 5, step: 4, tab: 'gold', per: .08, unit: 'percent', label: '던전 클리어 골드' },
@@ -60,6 +62,7 @@ export const researchSpent = (id: string, rank: number) => { let sum = 0; for (l
 export const researchUnlocked = (rebirths: number, r: Pick<ResearchDef, 'rebirth'>) => rebirths >= (r.rebirth || 0);
 /** rank 단계의 총 효과 표시. 예: 물리 공격 +10% */
 export function researchEffect(r: ResearchDef, rank: number) {
+    if (r.levels) return r.levels[Math.min(rank, r.levels.length - 1)];
     const n = r.per * rank;
     const value = r.unit === 'percent' ? `${Number((n * 100).toFixed(1))}%` : r.unit === 'pp' ? `${Number((n * 100).toFixed(1))}%p` : `${n.toLocaleString()}${r.suffix || ''}`;
     return `${r.label} ${r.negative ? '−' : '+'}${value}`;
