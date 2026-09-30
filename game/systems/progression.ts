@@ -7,6 +7,7 @@ import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { JOBS, Job } from '../data/classes';
 import { SKILLS } from '../data/skills';
 import { STAGES } from '../data/world';
+import { doorFor, DOORS } from '../data/doors';
 export function initialProgress(level = 1) { return { attributes: emptyAttributes(), statPoints: PROGRESSION.startingStats + (level - 1) * PROGRESSION.statPerLevel, sp: PROGRESSION.startingSP, peakLevel: level, learned: { hook: 1 } as Record<string, number>, skillSpent: {} as Record<string, number>, skillInheritances: {} as Record<string, boolean>, skillPractice: {} as Record<string, number>, jobMastery: {} as Record<string, number>, unlockedJobs: ['fisher'], bookClaims: {} as Record<string, number>, itemBook: {} as Record<string, boolean>, target: null as string | null, presets: {} as State['presets'], mana: 40, effects: {}, playerStun: 0 }; }
 export function attributes(s: State) {
     const out = emptyAttributes();
@@ -158,32 +159,40 @@ export function skillMasteryHint(sk: Skill, level: number, rank = 1) {
         return '최대 강화 완료 · 실전 숙련과 전직 조건은 계속 기록됩니다.';
     return `${milestones[current].toLocaleString()} 또는 1 SP → Lv.${current + 1} · ${skillRankHint(sk, rank, level)}`;
 }
-export function jobRequirements(s: State, j: Job) {
+/** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다. */
+export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
+/** 전직 조건 목록. now는 서버가 넘긴 요청 시각(문 판정용)이며, 화면에서는 마지막 서버 시각(lastTick)을 씁니다. */
+export function jobRequirements(s: State, j: Job, now = s.lastTick) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
-    const list = [{ label: `레벨 ${j.level}`, met: s.level >= j.level }];
+    /** value·target은 화면의 진행 막대용입니다(판정은 met). */
+    const list: { label: string; met: boolean; value?: number; target?: number }[] = [{ label: `레벨 ${j.level}`, met: s.level >= j.level, value: s.level, target: j.level }];
     if (j.rebirth)
-        list.push({ label: `환생 ${j.rebirth}회`, met: s.rebirths >= j.rebirth });
+        list.push({ label: `환생 ${j.rebirth}회`, met: s.rebirths >= j.rebirth, value: s.rebirths, target: j.rebirth });
     if (!unlocked) {
         for (const [key, n] of Object.entries(j.requires))
-            list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n });
+            list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n, value: a[key as Attribute], target: n });
         for (const [key, n] of Object.entries(j.requiresAllocated || {}))
-            list.push({ label: `배분 ${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n });
+            list.push({ label: `배분 ${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n, value: s.attributes?.[key as Attribute] || 0, target: n });
         if (j.parent)
-            list.push({ label: `${JOBS.find(x => x.id === j.parent)?.name} 숙련 ${j.mastery}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery });
+            list.push({ label: `${JOBS.find(x => x.id === j.parent)?.name} 숙련 ${j.mastery}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery, value: s.jobMastery?.[j.parent] || 0, target: j.mastery });
         for (const [jobId, mastery] of Object.entries(j.requiresJobMastery || {})) {
             const job = JOBS.find(x => x.id === jobId);
             // 선행 직업과 같은 조건이면 한 번만 표시합니다(판정은 같음).
             if (!(jobId === j.parent && mastery === j.mastery))
-                list.push({ label: `${job?.name || jobId} 숙련 ${mastery}`, met: (s.jobMastery?.[jobId] || 0) >= mastery });
+                list.push({ label: `${job?.name || jobId} 숙련 ${mastery}`, met: (s.jobMastery?.[jobId] || 0) >= mastery, value: s.jobMastery?.[jobId] || 0, target: mastery });
         }
         for (const [skillId, mastery] of Object.entries(j.requiresSkillMastery || {})) {
             const skill = SKILLS.find(x => x.id === skillId), milestones = masteryMilestonesFor(skill), target = milestones[Math.max(0, mastery - 1)] || milestones[milestones.length - 1];
-            list.push({ label: `${skill?.name || skillId} 숙련 ${mastery}단계 (${target})`, met: skillMastery(s, skillId) >= mastery });
+            list.push({ label: `${skill?.name || skillId} 숙련 ${mastery}단계 (${target})`, met: skillMastery(s, skillId) >= mastery, value: skillMastery(s, skillId), target: mastery });
         }
+        // ??? 계보의 첫 직업은 해당 문이 열려 있어야 합니다(한 번 들어간 직업은 제외).
+        const door = doorFor(s, j.id, now);
+        if (door) list.push({ label: `${DOORS.find(d => d.id === door.door)!.name} 열림`, met: door.open });
     }
     return list;
 }
-export function canChangeJob(s: State, id: string) { const j = JOBS.find(x => x.id === id); return !!j && jobRequirements(s, j).every(x => x.met); }
+/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. now는 서버 요청 시각입니다. */
+export function canChangeJob(s: State, id: string, now = s.lastTick) { const j = JOBS.find(x => x.id === id); return !!j && (jobMastered(s, j) || jobRequirements(s, j, now).every(x => x.met)); }
 export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && apUsed(s, ids) <= apCapacity(s, ids); }
 export function trimLoadout(s: State) {
     s.skills = [...new Set(s.skills)].filter(id => canUse(s, id));

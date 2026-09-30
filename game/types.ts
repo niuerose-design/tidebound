@@ -273,6 +273,8 @@ export type State = {
     vows?: Vows;
     /** 다음 생에 걸 서약 예약. 환생할 때 vows가 됩니다. */
     nextVows?: Vows;
+    /** 윤회의 문: 이번 생에 문이 열린 ??? 직업(환생 때 추첨). */
+    rebirthDoor?: string;
     dungeon: null | {
         id: string;
         wave: number;

@@ -168,7 +168,8 @@ test('Vows · sleeping anchor: level 1 until 300 catches at the target, then sto
     for (let i = 0; i < 50; i++) catchOne(g); const stored = g.vows.seal.exp;
     act(g, { type: 'anchorGiveUp' }, 0); assert.equal(g.vows.seal, null); assert.ok(g.logs.some(l => l.text.includes(`+${stored} EXP`))); assert.ok(g.level > 1);
     assert.throws(() => act(g, { type: 'anchorGiveUp' }, 0));
-    const none = vowReady(); const rng = counting(); act(none, { type: 'rebirth' }, 0, rng); assert.equal(rng.calls, 0); assert.equal(none.vows, undefined);
+    // 윤회의 문 후보를 하나로 줄여(직전 값 제외) 문 추첨도 난수를 쓰지 않게 한 뒤, 서약이 없으면 난수를 쓰지 않는지 봅니다.
+    const none = vowReady(); none.rebirthDoor = 'voidcaller'; const rng = counting(); act(none, { type: 'rebirth' }, 0, rng); assert.equal(rng.calls, 0); assert.equal(none.vows, undefined);
 });
 
 test('Vows · one breath: a fall soft-resets the life (online and offline); an unbroken life adds rebirth pearls', () => {
