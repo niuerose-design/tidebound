@@ -1,14 +1,17 @@
 'use client';
 import type { PanelProps } from './panel-props';
 import { useState } from 'react';
-import { Compass } from 'lucide-react';
+import { Compass, Search } from 'lucide-react';
 import { JOBS, JOB_TREES, LINEAGES, lineageOf, type JobTreeId } from '@/game/data/classes';
 import { jobMasteryTarget } from '@/game/systems/progression';
 import { Heading, format } from './shared';
-import { LineageCard, RouteMap } from './jobs/lineage-view';
+import { LineageCard, RouteMap, JobList } from './jobs/lineage-view';
+import { JobCompare } from './jobs/job-compare';
 import { JobDetail } from './jobs/job-detail';
-import { DoorRow } from './jobs/mystery-doors';
-import { lineageJobs } from './jobs/job-status';
+import { DoorRow, openUnenteredDoors } from './jobs/mystery-doors';
+import { lineageJobs, finderJobs, searchJobs, TOP_TAGS, type Finder } from './jobs/job-status';
+
+const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', near: '거의 다 됨', goal: '목표', doors: '문 열림' };
 
 /**
  * 직업 화면: 세 번 눌러 원하는 직업에 닿는 카드형 화면.
@@ -21,6 +24,16 @@ export function Classes({ s, send, busy }: PanelProps) {
     const [lineageId, setLineageId] = useState<string>(lineageOf(current));
     const [selectedId, setSelectedId] = useState(current.id);
     const [sheetOpen, setSheetOpen] = useState(false);
+    // 편의 기능: 빠른 찾기(계열 무관 모아 보기), 이름 검색·태그 필터, 비교(최대 3개).
+    const [finder, setFinder] = useState<Finder | null>(null);
+    const [query, setQuery] = useState(''), [tag, setTag] = useState('');
+    const [compareIds, setCompareIds] = useState<string[]>([]);
+    const toggleCompare = (id: string) => setCompareIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : ids.length >= 3 ? ids : [...ids, id]);
+    const doors = openUnenteredDoors(s), doorJobs = doors.map(d => d.job);
+    const searching = !!query.trim() || !!tag;
+    const found = finder ? finderJobs(s, finder, doorJobs) : searching ? searchJobs(s, query, tag) : null;
+    const foundTitle = finder ? `빠른 찾기 · ${FINDER_LABEL[finder]}` : `검색${query.trim() ? ` '${query.trim()}'` : ''}${tag ? ` #${tag}` : ''}`;
+    const clearFound = () => { setFinder(null); setQuery(''); setTag(''); };
     // 전직하면 화면을 새 직업의 계보로 맞춥니다(렌더 중 이전 값과 비교).
     const [shownJob, setShownJob] = useState(current.id);
     if (shownJob !== current.id) { setShownJob(current.id); setSelectedId(current.id); setTreeId(current.tree); setLineageId(lineageOf(current)); }
@@ -39,22 +52,29 @@ export function Classes({ s, send, busy }: PanelProps) {
     return <>
         <Heading eyebrow="VOCATION TREE" title="직업 항해도" description="계열 → 계보 카드 → 항로도 → 직업 상세. 세 번 눌러 원하는 직업에 닿습니다."/>
         <section className="panel job-current-summary"><Compass size={26}/><div><small>현재 직업</small><h2>{current.name}</h2><p>숙련 {format(s.jobMastery[s.job] || 0)} / {format(jobMasteryTarget(current))} · 해금 {s.unlockedJobs.length} / {JOBS.length}</p></div><button className="secondary small" onClick={showCurrent}>현재 직업 보기</button></section>
+        <div className="job-finder" role="group" aria-label="빠른 찾기">{(['ready', 'near', 'goal', 'doors'] as Finder[]).map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{kind === 'goal' ? (s.growthGoal?.kind === 'job' ? 1 : 0) : finderJobs(s, kind, doorJobs).length}</b></button>)}</div>
+        <div className="job-search">
+            <label className="job-search-box"><Search size={15}/><input type="search" value={query} placeholder="직업 이름 검색" aria-label="직업 이름 검색" onChange={e => { setQuery(e.target.value); setFinder(null); }}/></label>
+            <div className="job-tag-chips" aria-label="태그 필터">{TOP_TAGS.map(t => <button type="button" key={t} className={`job-tag-chip ${tag === t ? 'active' : ''}`} aria-pressed={tag === t} onClick={() => { setTag(tag === t ? '' : t); setFinder(null); }}>#{t}</button>)}</div>
+        </div>
         <div className="job-columns">
             <section className="panel job-lineage-column" aria-label="계보 카드">
                 <h2 className="job-column-title"><span>①</span> 계보 카드</h2>
-                <div className="job-tree-chips" role="tablist" aria-label="직업 계열">{JOB_TREES.map(t => <button type="button" role="tab" key={t.id} aria-selected={t.id === treeId} className={`job-tree-chip ${t.id === treeId ? 'active' : ''}`} style={{ '--tree-color': t.accent } as React.CSSProperties} onClick={() => openTree(t.id)}>{t.name}<span>{JOBS.filter(j => j.tree === t.id).length}</span></button>)}</div>
+                <div className="job-tree-chips" role="tablist" aria-label="직업 계열">{JOB_TREES.map(t => <button type="button" role="tab" key={t.id} aria-selected={t.id === treeId} className={`job-tree-chip ${t.id === treeId ? 'active' : ''}`} style={{ '--tree-color': t.accent } as React.CSSProperties} onClick={() => openTree(t.id)}>{t.name}<span>{JOBS.filter(j => j.tree === t.id).length}</span>{t.id === 'mystery' && doors.length > 0 && <i className="job-tree-dot" aria-label="들어가지 않은 열린 문"/>}</button>)}</div>
                 <p className="job-family-description" style={{ borderLeftColor: tree.accent }}>{tree.description}</p>
                 {treeId === 'mystery' && <DoorRow s={s} selectedId={selectedId} onSelect={select}/>}
                 <div className="lineage-list">{lineages.map(l => <LineageCard key={l.id} s={s} lineage={l} accent={tree.accent} selected={l.id === lineage?.id} onOpen={() => setLineageId(l.id)}/>)}</div>
                 {!lineages.length && <p className="footnote">{treeId === 'mystery' ? '문을 지나 ??? 직업에 한 번 들어가면 그 계보가 여기에 나타납니다.' : '이 계열에는 아직 계보가 없습니다.'}</p>}
             </section>
-            {lineage ? <RouteMap s={s} lineage={lineage} jobs={lineageJobs(lineage.id)} selectedId={selectedId} onSelect={select}/>
+            {found ? <JobList s={s} title={foundTitle} jobs={found} selectedId={selectedId} onSelect={select} onClear={clearFound}/>
+                : lineage ? <RouteMap s={s} lineage={lineage} jobs={lineageJobs(lineage.id)} selectedId={selectedId} onSelect={select}/>
                 : <section className="panel route-map route-empty"><h2 className="job-column-title"><span>②</span> 항로도</h2><p className="footnote">{treeId === 'mystery' ? '열린 문의 직업을 누르면 오른쪽에 상세가 열립니다.' : '왼쪽에서 계보를 고르세요.'}</p></section>}
             <div className={`job-detail-slot ${sheetOpen ? 'sheet-open' : ''}`}>
                 <div className="job-sheet-backdrop" onClick={() => setSheetOpen(false)}/>
-                <JobDetail key={selected.id} j={selected} s={s} send={send} busy={busy} onClose={() => setSheetOpen(false)}/>
+                <JobDetail key={selected.id} j={selected} s={s} send={send} busy={busy} onClose={() => setSheetOpen(false)} onCompare={toggleCompare} compared={compareIds.includes(selected.id)} compareFull={compareIds.length >= 3}/>
             </div>
         </div>
+        <JobCompare s={s} jobs={compareIds.map(id => JOBS.find(j => j.id === id)!)} onRemove={toggleCompare} onClear={() => setCompareIds([])}/>
         <p className="footnote">승리마다 현재 직업의 숙련도가 기본 1씩 오릅니다. 직업 숙련이 숙달 목표에 닿으면 그 직업으로는 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다.</p>
     </>;
 }

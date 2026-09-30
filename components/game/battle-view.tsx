@@ -1,6 +1,7 @@
 'use client';
 import Image from 'next/image';
 import { VoyageNotice } from './guidance-panels';
+import { DoorNotice } from './jobs/mystery-doors';
 import { useState } from 'react';
 import { BookOpen, Check, ChevronRight, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Waves } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -54,6 +55,7 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onLogout={onLogout}/></div></Heading>
     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Waves size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>
     <VoyageNotice s={s} setView={setView}/>
+    <DoorNotice s={s} setView={setView}/>
     <div className="battle-hud" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
     <div className="battle-character-column"><Player s={s} busy={busy} send={send} setView={setView}/></div>
     <div className="battle-console">

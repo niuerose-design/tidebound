@@ -38,6 +38,11 @@ export const gear=await load('game/data/gear.js');
 export const {PROGRESSION}=await load('game/data/progression.js');
 export const {JOBS,JOB_TREES,LINEAGES,lineageOf,jobTags}=await load('game/data/classes.js');
 export const doorsMod=await load('game/data/doors.js');
+// 직업 화면 공용 계산(components/game/jobs/job-status.ts)은 게임 모듈만 쓰므로 같은 임시 폴더에 옮겨 불러옵니다.
+{const {dir}=loadGame(),ts=(await import('typescript')).default,fs=await import('node:fs');
+fs.mkdirSync(`${dir}/ui`,{recursive:true});
+fs.writeFileSync(`${dir}/ui/job-status.js`,ts.transpileModule(fs.readFileSync('components/game/jobs/job-status.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])@\/game\/([^'"]+)\1/g,'from $1../$2.js$1'));}
+export const jobUi=await load('ui/job-status.js');
 let seed=44;
 export const rng=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
 export const results={passed:0};
