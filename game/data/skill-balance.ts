@@ -1,7 +1,7 @@
 import type { Skill } from '../types';
 import { EXPANSION_BALANCE } from './expansion';
 
-/** 2026-09-28: player techniques only; enemy skills keep their own tuning. */
+/** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     hook: { chance: .18, multiplier: 1.25, cooldown: 3 },
     splash: { chance: .45, multiplier: 1.05, manaCost: 9, cooldown: 5 },
@@ -28,7 +28,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     vitalSurge: { chance: .23, multiplier: 1.65, scalingRatio: .05, drainRatio: .15 },
     voidLance: { chance: .55, multiplier: 2, scalingRatio: .3, manaCost: 20 },
     graveHook: { chance: .5, multiplier: 1.7, manaCost: 13 },
-    marrowGuard: { chance: .22, multiplier: 1.4 },
+    marrowGuard: { chance: .22, multiplier: 1.75 },
     wakeFist: { chance: .26, multiplier: 1.45 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
     greenTide: { chance: .55, multiplier: 1.05, manaCost: 11, healRatio: .14 },
@@ -60,6 +60,9 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     ...EXPANSION_BALANCE,
 };
 
+/** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
+export const MAGIC_MANA_COST_SCALE = 4;
+
 export function tuneActiveSkills(skills: Skill[]) {
     for (const sk of skills) {
         const tuning = ACTIVE_SKILL_BALANCE[sk.id];
@@ -67,7 +70,8 @@ export function tuneActiveSkills(skills: Skill[]) {
         Object.assign(sk, tuning);
         // 복합(split) 피해도 마나를 쓰는 주문으로 취급합니다.
         const magic = sk.damageType === 'magic' || sk.damageType === 'split';
-        if (!magic) sk.manaCost = 0;
+        // 물리 기술은 마나를 쓰지 않고, 마법·복합 기술은 정신(마나 회복)에 투자해야 꾸준히 쓸 수 있도록 비용을 높입니다.
+        sk.manaCost = magic ? Math.round((sk.manaCost || 0) * MAGIC_MANA_COST_SCALE) : 0;
         // At maximum mastery physical procs stay <= 38%; spells remain paid.
         sk.rankEffects = { ...sk.rankEffects, multiplierScale: sk.id === 'hook' ? .03 : .05,
             chanceIncrease: sk.id === 'hook' ? .01 : magic ? .025 : .02,
@@ -82,6 +86,7 @@ export function tuneActiveSkills(skills: Skill[]) {
         if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += ` ${sk.effect === 'bleed' && sk.dotName ? sk.dotName + (sk.dotStacks ? '(중첩)' : '') : { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun']} 효과.`;
         if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
+        if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
     }

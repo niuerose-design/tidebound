@@ -72,9 +72,9 @@ export function useGame() {
         lock.current = false;
         setBusy(false);
     } }, [request, loadRanking]);
-    useEffect(() => { send({ type: 'sync' }); const timer = setInterval(() => { if (document.visibilityState === 'visible' && stateRef.current)
+    useEffect(() => { const first = setTimeout(() => send({ type: 'sync' }), 0); const timer = setInterval(() => { if (document.visibilityState === 'visible' && stateRef.current)
         send({ type: 'sync' }); }, 3000); const visible = () => { if (document.visibilityState === 'visible')
-        send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible); return () => { clearInterval(timer); document.removeEventListener('visibilitychange', visible); }; }, [send]);
+        send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible); return () => { clearTimeout(first); clearInterval(timer); document.removeEventListener('visibilitychange', visible); }; }, [send]);
     useEffect(() => {
         const context = (document as Document & {
             modelContext?: {

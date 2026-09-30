@@ -1,5 +1,5 @@
 import type { Skill, Stats } from '../types';
-import { STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
+import { STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL } from '../data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '../data/progression';
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel, skillMasteryRewards } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
@@ -39,6 +39,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
     if ((JOBS.find(j => j.id === sk.job)?.tier || 0) >= SKILL_FORMULA.signatureTier) out.push(`전용 기술: 계보 밖 직업이 계승하면 ${sk.type === 'active' ? '피해 배율' : '능력치'} ×${number(SKILL_FORMULA.signatureScale)}`);
+    if (sk.id === 'firstAid') out.push(`승리 후 최대 체력 ${skillPercent(FIRST_AID_HEAL)} 추가 회복 · 승리당 1회 (무리 사냥 포함)`);
     if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 승리 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
     const rewards = skillMasteryRewards(sk, level + 1);
     if (rewards.ap) out.push(`최대 성장 보상: 장착 AP 한도 +${rewards.ap}`);

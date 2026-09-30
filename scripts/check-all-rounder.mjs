@@ -1,38 +1,16 @@
-// Run: node scripts/check-all-rounder.mjs
-// 만능 항해사(육중 조화) 검증: 같은 레벨·같은 배분 포인트 총량으로 순수 공격 빌드와 비교합니다.
-// Fresh saves; no paid SP, permanent bonuses, guilds or inherited-job routing.
-// Manage stats/gear/training each minute; sample available fishing areas every
-// ten minutes. The chooser has information a novice would not have: these are
-// managed runs, not a promise of wall-clock completion for every player.
-import ts from 'typescript';
-import {execFileSync} from 'node:child_process';
-const baseline=process.argv.includes('--baseline');
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
-const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tidebound-balance-'));
-try {
-for(const f of fs.readdirSync('game',{recursive:true}).filter(f=>f.endsWith('.ts')&&!f.startsWith('server/'))){
- let source; try { source=baseline?execFileSync('git',['show',`e015f6433fc42c6ef2d8fbcc1c810fc30b75c701:game/${f}`],{encoding:'utf8',stdio:['ignore','pipe','ignore']}):fs.readFileSync(path.join('game',f),'utf8'); } catch { continue; }
- const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])([.][^'"]+)\1/g,(_,q,p)=>`from ${q}${p}.js${q}`);
- const out=path.join(temp,f.replace(/\.ts$/,'.js'));fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,code);
-}
-fs.writeFileSync(path.join(temp,'package.json'),' {"type":"module"}');
-const moduleAt=p=>import(pathToFileURL(path.join(temp,p+'.js')).href);
+// 만능 항해사(육중 조화) 검증: 같은 레벨·배분 포인트 총량에서 균등/편중 배분과 순수 공격 직업을 비교합니다. 사용: node scripts/check-all-rounder.mjs
+import { loadGame } from './lib/game-modules.mjs';
+import { random } from './lib/sim.mjs';
+const {load:moduleAt}=loadGame();
 
-const {newState,tick,advance}=await moduleAt('systems/engine');
-const {stats,hitChance,snapshot}=await moduleAt('systems/stats');
-const {combatFxFromLog}=await moduleAt('systems/combat-feedback');
+const {newState}=await moduleAt('systems/engine');
+const {stats}=await moduleAt('systems/stats');
 const {strike,fighterSpeed}=await moduleAt('systems/combat');
 const {SKILLS}=await moduleAt('data/skills');
 const {JOBS}=await moduleAt('data/classes');
 const {FISH}=await moduleAt('data/world');
-const {tierHealth,tierAttack}=await moduleAt('systems/meta');
-const {enemyStats,scaledEnemyStats,profile}=await moduleAt('data/encounters');
-const {grantJobSkills,canUse,validLoadout,skillMasteryRanks,effectiveSkill}=await moduleAt('systems/progression');
-function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
+const {scaledEnemyStats,profile}=await moduleAt('data/encounters');
+const {canUse,validLoadout,skillMasteryRanks}=await moduleAt('systems/progression');
 
 const LEVELS=[40,60];
 const {SKILL_FORMULA}=await moduleAt('data/balance');
@@ -66,7 +44,7 @@ for(const L of LEVELS)for(const [label,attributes,skills] of builds(L)){
   for(let seed=1;seed<=120;seed++){
    const a={name:'player',stats:st,hp:st.hp,mana:st.mana,skills:s.skills,cooldowns:{},stun:0,effects:{},ranks:s.learned,mastery:skillMasteryRanks(s),practice:s.skillPractice};
    const b={name:'foe',stats:foe,hp:foe.hp,mana:100,skills:profile(id).skills,cooldowns:{},stun:0,effects:{}};const rng=random(seed);let n=0;
-   const hit=(x,y)=>{const before=y.hp,beforeX=x.hp;strike(x,y,rng);if(x===a){dealt+=before-y.hp;actions++;}else taken+=Math.max(0,before-y.hp);};
+   const hit=(x,y)=>{const before=y.hp;strike(x,y,rng);if(x===a){dealt+=before-y.hp;actions++;}else taken+=Math.max(0,before-y.hp);};
    while(a.hp>0&&b.hp>0&&n<300){n++;const first=fighterSpeed(a)>=fighterSpeed(b)?a:b,second=first===a?b:a;hit(first,second);if(first.hp>0&&second.hp>0)hit(second,first);}
    wins+=a.hp>0&&b.hp<=0?1:0;turns+=n;remaining+=Math.max(0,a.hp)/st.hp;
   }
@@ -76,5 +54,4 @@ for(const L of LEVELS)for(const [label,attributes,skills] of builds(L)){
  rows.push({L,build:label,skills:agg.skills,hp:agg.hp,atk:agg.atk,mag:agg.mag,def:agg.def,res:agg.res,harmony:agg.harmony,win:Math.round(agg.win/agg.n*100),turns:+(agg.turns/agg.n).toFixed(1),hpLeft:Math.round(agg.hpLeft/agg.n*100),dmgPerAction:Math.round(agg.dmgPerAction/agg.n),takenPerTurn:Math.round(agg.taken/agg.n),per:per.join(' ')});
 }
 if(QUIET){for(const r of rows)console.log([r.L,r.build.padEnd(16),'win',r.win,'turns',r.turns,'hpLeft',r.hpLeft,'dmg',r.dmgPerAction,'taken',r.takenPerTurn,'hp',r.hp].join(' '));}
-else{console.table(rows.map(({per,...r})=>r));for(const r of rows)console.log(r.L,r.build,r.per);}
-} finally {fs.rmSync(temp,{recursive:true,force:true});}
+else{console.table(rows.map(({...r})=>r));for(const r of rows)console.log(r.L,r.build,r.per);}

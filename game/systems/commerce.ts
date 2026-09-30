@@ -32,7 +32,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         let item: Item = { ...shopPreview(s, offer.id), id: nextId() };
         if (gamble) {
             const power = Math.round((s.level + 2) * RARITIES[rarity].factor);
-            const { affix: _fixed, ...base } = item;
+            const base: Item = { ...item };
+            delete base.affix;
             item = { ...base, name: `${RARITIES[rarity].name} ${offer.name}`, rarity, power, affixes: rollAffixes(rarity, power, undefined, rng) };
         }
         s.inventory.push(item);

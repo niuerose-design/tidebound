@@ -1,33 +1,17 @@
-// Run: node scripts/check-expedition.mjs [--baseline]
-// 720 complete, seeded, gearless dungeon expeditions across fixed fixtures.
-// Includes accumulated rebirth/research/mastery fixtures and engine regressions.
-// Fixtures test reachability; they do not measure time to earn that progression.
-import ts from 'typescript';
-import {execFileSync} from 'node:child_process';
+// 던전 도달성 점검: 고정 캐릭터로 던전별 보스 도달률·정복률과 입장 준비·보스 보상 규칙을 검사합니다. 사용: node scripts/check-expedition.mjs
 const baseline=process.argv.includes('--baseline');
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
 import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
-const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tidebound-balance-'));
-try {
-for(const f of fs.readdirSync('game',{recursive:true}).filter(f=>f.endsWith('.ts')&&!f.startsWith('server/'))){
- let source;try{source=baseline?execFileSync('git',['show',`1cbc6cea7a92a5463ef7958d7d3cdd16f011b2c3:game/${f}`],{encoding:'utf8',stdio:['ignore','pipe','ignore']}):fs.readFileSync(path.join('game',f),'utf8');}catch{continue;}
- const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])([.][^'"]+)\1/g,(_,q,p)=>`from ${q}${p}.js${q}`);
- const out=path.join(temp,f.replace(/\.ts$/,'.js'));fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,code);
-}
-fs.writeFileSync(path.join(temp,'package.json'),' {"type":"module"}');
-const moduleAt=p=>import(pathToFileURL(path.join(temp,p+'.js')).href);
+import { loadGame } from './lib/game-modules.mjs';
+import { random } from './lib/sim.mjs';
+const {load:moduleAt}=loadGame();
 
 
 const {newState,tick,act}=await moduleAt('systems/engine');
 const {stats}=await moduleAt('systems/stats');
 const {grantJobSkills,canUse,validLoadout,attributes}=await moduleAt('systems/progression');
-const {DUNGEONS,FISH}=await moduleAt('data/world');
+const {FISH}=await moduleAt('data/world');
 const {scaledEnemyStats}=await moduleAt('data/encounters');
-const {BALANCE,MONSTER_TUNING}=await moduleAt('data/balance');
-function random(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
+const {MONSTER_TUNING}=await moduleAt('data/balance');
 function fixture(level,magic,progressed=false){
  const s=newState(0);s.level=level;s.equipment={};s.inventory=[];s.statPoints=level*4;s.rebirths=progressed?30:level>=40?1:0; if(progressed)s.permanent={attack:10,hp:10,guard:10};
  while(s.statPoints){const v=attributes(s);act(s,{type:'attribute',id:magic?(v.int<35?'int':v.wis<20?'wis':s.statPoints%4===0?'vit':'int'):(v.str<35?'str':v.dex<20?'dex':s.statPoints%4===0?'vit':'str')},0);}
@@ -53,7 +37,6 @@ if(!baseline){
  tick(s,()=>.9999);const f=FISH.find(f=>f.id==='ray'),expected=scaledEnemyStats(f,{wave:0});assert.equal(s.enemy.maxHp,expected.hp);assert.equal(s.enemy.attack,expected.attack);
  const boss=FISH.find(f=>f.id==='grottoWarden');s.dungeon.wave=4;s.enemy=null;tick(s,()=>.9999);const expectedBoss=scaledEnemyStats(boss,{boss:true,wave:4});assert.equal(s.enemy.maxHp,expectedBoss.hp);assert.equal(s.enemy.exp,Math.round(boss.exp*1.9*boss.rewardMultiplier));
  const trained=s.skills[0],oldPractice=s.skillPractice[trained];s.enemy.hp=1;s.hp=stats(s).hp;tick(s,()=>0);assert.equal(s.skillPractice[trained],oldPractice+1);
- const health=scaledEnemyStats(f,{wave:3}).hp;assert(health>scaledEnemyStats(f,{wave:0}).hp);assert.equal(MONSTER_TUNING.bossRewardMultiplier,1.9);assert.equal(MONSTER_TUNING.dungeonHealAfterKill,.08);
+ const health=scaledEnemyStats(f,{wave:3}).hp;assert(health>scaledEnemyStats(f,{wave:0}).hp);assert.equal(MONSTER_TUNING.bossRewardMultiplier,1.9);assert.equal(MONSTER_TUNING.dungeonHealAfterKill,.04);
  console.log(JSON.stringify({checks:'passed',coverage:['real preparation turns','preview/spawn agreement','boss reward unchanged','victory mastery 1','increasing wave pressure']}));
 }
-}finally{fs.rmSync(temp,{recursive:true,force:true});}

@@ -1,0 +1,93 @@
+'use client';
+import { GrowthGoals, tutorialActive } from './growth-goals';
+import { TutorialCard } from './guidance-panels';
+import { Anchor, ChevronRight, Heart, Shield, Swords, Target, Users, Zap } from 'lucide-react';
+import { Meter, SlotIcon, format } from './shared';
+import { xpNeeded, SLOTS, RARITIES } from '@/game/data/balance';
+import { JOBS } from '@/game/data/classes';
+import { stats, power } from '@/game/systems/stats';
+import { StatusBadges } from './combat-status';
+import type { State, Action } from '@/game/types';
+export function Player({ s, busy, send, setView }: {
+    s: State;
+    busy: boolean;
+    send: (a: Action) => void;
+    setView: (v: string) => void;
+}) {
+    const a = stats(s);
+    return <aside className="player-column">
+    <div className="panel player-panel">
+    <div className="section-title">
+    <h2>나의 낚시꾼</h2>
+    <span className="micro">CHARACTER</span>
+    </div>
+    <div className="player-avatar">
+    <Anchor size={36}/>
+    <span>{s.level}</span>
+    </div>
+    <div className="combatant-name character-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun}/></div>
+    <p className="job-label">{JOBS.find(j => j.id === s.job)?.name} · 환생 {s.rebirths}회</p>
+    <p className="guild-label"><Users size={14}/>{s.guild?.name ? `길드 · ${s.guild.name}` : '무소속'}</p>
+    <div className="combat-power">
+    <span>전투력</span>
+    <strong>{format(power(a))}</strong>
+    </div>
+    <Meter value={s.hp} max={a.hp} label="체력"/>
+    <Meter value={s.mana} max={a.mana} label="마나" color="mana"/>
+    <Meter value={s.exp} max={xpNeeded(s.level)} label="경험치" color="gold"/>
+    <div className="stat-grid">
+    <div>
+    <Swords />
+    <span>물리 공격</span>
+    <b>{a.attack}</b>
+    </div>
+    <div>
+    <Shield />
+    <span>물리 방어</span>
+    <b>{a.defense}</b>
+    </div>
+    <div>
+    <Heart />
+    <span>최대 체력</span>
+    <b>{a.hp}</b>
+    </div>
+    <div>
+    <Target />
+    <span>치명타</span>
+    <b>{Math.round(a.crit * 100)}%</b>
+    </div>
+    <div>
+    <Zap />
+    <span>마법 공격</span>
+    <b>{a.magic}</b>
+    </div>
+    <div>
+    <Shield />
+    <span>마법 방어</span>
+    <b>{a.resist}</b>
+    </div>
+    </div>
+    <button className="text-button build-link" onClick={() => setView('character')}>능력치 배분 · 남은 {s.statPoints}P <ChevronRight size={14}/>
+    </button>
+    <div className="section-title equipment-title">
+    <h2>착용 장비</h2>
+    <button aria-label="장비 보관함 열기" className="icon-button" onClick={() => setView('inventory')}>
+    <ChevronRight size={17}/>
+    </button>
+    </div>
+    <div className="mini-equipment">{Object.entries(SLOTS).map(([id, label]) => {
+            const item = s.equipment[id];
+            return <button key={id} onClick={() => setView('inventory')}>
+            <div className="mini-slot" style={{ color: item ? RARITIES[item.rarity].color : undefined }}>
+            <SlotIcon slot={id} size={19}/>
+            </div>
+            <span>
+            <small>{label}</small>
+            <strong style={{ color: item ? RARITIES[item.rarity].color : undefined }}>{item?.name || '빈 슬롯'}</strong>
+            </span>
+            </button>;
+        })}</div>
+    </div>
+    {tutorialActive(s) ? <TutorialCard s={s} send={send} busy={busy} setView={setView}/> : <GrowthGoals s={s} send={send} busy={busy} setView={setView}/>}
+    </aside>;
+}

@@ -46,8 +46,6 @@ export function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageTyp
     const part = (h: CombatHit) => h.miss ? '빗나감' : `${h.value}${h.critical ? ' [치명타]' : ''}`;
     return [`본타 ${part(ev.hits[0])}`, ...ev.hits.slice(1).map((h, i) => `추가타${ev.hits.length > 2 ? ` ${i + 1}` : ''} ${part(h)}`), `합계 ${ev.total} ${word} 피해`].join(' · ');
 }
-/** 무리 개체는 한 번의 타격(지속 피해 포함)으로 한 마리 체력까지만 잃습니다. 넘친 피해로 여러 마리를 한꺼번에 잡지 않게 합니다. */
-const unitCap = (f: Fighter) => f.swarm ? Math.ceil((f.stats.hp || 0) / f.swarm) : Infinity;
 /** Speed used for the existing round-based order. Slow/haste change priority, not action count. */
 export function fighterSpeed(f: Fighter) {
     const base = normalizeStats(f.stats).speed;
@@ -67,7 +65,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const emit = (text: string) => { events?.push(ev); return text; };
     if (a.effects.dot) {
         const dot = a.effects.dot;
-        const dotHit = Math.min(dot.damage, unitCap(a));
+        const dotHit = dot.damage;
         a.hp = Math.max(0, a.hp - dotHit);
         notes.push(`${dot.name} ${dotHit}`);
         ev.dot = { name: dot.name, value: dotHit };
@@ -159,12 +157,12 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const linkMultiplier = linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1;
     if (linked) { notes.push('연계'); ev.linked = true; }
     const crit = landed && rng() < sa.crit;
-    const damage = landed ? Math.min(unitCap(b), Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)))) : 0;
+    const damage = landed ? Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1))) : 0;
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - damage);
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
     if (landed && sb.thorns > 0) {
-        const reflected = Math.min(a.hp, unitCap(a), Math.max(1, Math.round(sb.defense * sb.thorns * 100 / (100 + sa.defense * 2))));
+        const reflected = Math.min(a.hp, Math.max(1, Math.round(sb.defense * sb.thorns * 100 / (100 + sa.defense * 2))));
         a.hp = Math.max(0, a.hp - reflected);
         ev.reflected = reflected;
         notes.push(`반격 ${reflected}`);
@@ -239,7 +237,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         }
         const followCrit = rng() < sa.crit;
         const followMultiplier = (chosen?.multiplier || 1) * ((chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier) + sa.followUpBonus);
-        const followDamage = Math.min(unitCap(b), Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1))));
+        const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1)));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
         ev.hits.push({ kind: 'follow', value: followActual, critical: followCrit, miss: false });
