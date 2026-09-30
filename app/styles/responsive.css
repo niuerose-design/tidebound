@@ -34,11 +34,6 @@
     padding:26px 22px
   }
 
-  .workspace.with-player {
-    grid-template-columns:minmax(0,1fr) 250px;
-    gap:18px
-  }
-
   .topbar {
     padding:0 22px
   }
@@ -97,19 +92,6 @@
     grid-template-columns:repeat(2,1fr)
   }
 
-  .equipped-grid {
-    grid-template-columns:1fr
-  }
-
-  .equipped-item {
-    padding:13px 19px
-  }
-
-  .dungeon-card {
-    gap:20px;
-    padding:23px
-  }
-
   .stage-grid {
     gap:14px
   }
@@ -122,20 +104,9 @@
     gap:14px
   }
 
-  .class-card {
-    padding:23px 18px
-  }
-
-  .class-card h2 {
-    font-size:21px
-  }
-
 }
 
 @media(max-width:1080px) {
-  .workspace.with-player {
-    display:block
-  }
 
   .player-column {
     display:grid;
@@ -178,11 +149,6 @@
     grid-template-columns:repeat(4,1fr)
   }
 
-  .next-goal {
-    margin:0;
-    height:fit-content
-  }
-
   .stage-grid {
     grid-template-columns:repeat(2,1fr)
   }
@@ -191,49 +157,8 @@
     grid-template-columns:1fr
   }
 
-  .class-card {
-    display:grid;
-    grid-template-columns:90px 1fr;
-    gap:0 25px
-  }
-
-  .class-icon {
-    grid-row:1/5;
-    margin:0;
-    height:120px
-  }
-
-  .class-card>p {
-    min-height:0
-  }
-
-  .class-card .class-skills {
-    grid-column:2
-  }
-
-  .class-card button {
-    grid-column:2
-  }
-
-  .upgrade-grid {
-    grid-template-columns:1fr
-  }
-
-  .upgrade-card {
-    padding:24px
-  }
-
   .book-grid {
     grid-template-columns:repeat(2,1fr)
-  }
-
-  .dungeon-emblem {
-    width:75px;
-    height:90px
-  }
-
-  .dungeon-card {
-    flex-wrap:wrap
   }
 
   .dungeon-wave-track {
@@ -247,13 +172,6 @@
   .dungeon-vs {
     flex-direction:row;
     justify-content:center
-  }
-
-  .dungeon-action {
-    flex-direction:row;
-    width:100%;
-    justify-content:flex-end;
-    align-items:center
   }
 
   .topbar-right {
@@ -298,19 +216,6 @@
 
   .topbar-right {
     gap:12px
-  }
-
-  .currency {
-    font-size:13px;
-    gap:4px
-  }
-
-  .currency svg {
-    width:14px
-  }
-
-  .currency small {
-    display:none
   }
 
   .save-status {
@@ -398,26 +303,6 @@
 
   .scene-link {
     font-size:10px
-  }
-
-  .scene-bottom {
-    padding:14px 17px;
-    gap:10px
-  }
-
-  .scene-bottom>div {
-    max-width:130px;
-    font-size:11px
-  }
-
-  .scene-bottom small {
-    margin-left:12px;
-    font-size:9px
-  }
-
-  .scene-bottom>button {
-    font-size:12px;
-    padding:10px 12px
   }
 
   .enemy-status {
@@ -508,10 +393,6 @@
     margin-top:22px
   }
 
-  .next-goal {
-    margin-top:18px
-  }
-
   .mini-equipment {
     display:block
   }
@@ -568,11 +449,6 @@
     height:35px
   }
 
-  .dungeon-card {
-    gap:17px;
-    padding:21px
-  }
-
   .dungeon-run-panel {
     padding:18px
   }
@@ -587,18 +463,6 @@
 
   .dungeon-wave-track {
     grid-template-columns:repeat(2,minmax(0,1fr))
-  }
-
-  .dungeon-emblem {
-    display:none
-  }
-
-  .dungeon-copy h2 {
-    font-size:22px
-  }
-
-  .dungeon-copy>p {
-    font-size:13px
   }
 
   .rewards {
@@ -647,62 +511,12 @@
     margin-left:auto
   }
 
-  .class-card {
-    padding:25px;
-    display:flex
-  }
-
-  .class-icon {
-    height:100px
-  }
-
-  .class-card .eyebrow {
-    margin-top:17px
-  }
-
-  .class-card h2 {
-    font-size:24px
-  }
-
-  .class-card p {
-    font-size:14px;
-    min-height:0
-  }
-
-  .rebirth-hero {
-    padding:30px 20px
-  }
-
-  .rebirth-hero h2 {
-    font-size:26px
-  }
-
-  .rebirth-hero p {
-    font-size:12px;
-    text-align:center;
-    line-height:2
-  }
-
-  .two-columns {
-    grid-template-columns:1fr
-  }
-
   .book-grid {
     grid-template-columns:1fr
   }
 
   .book-card {
     padding:22px
-  }
-
-  .collection-summary {
-    flex-wrap:wrap;
-    padding:21px;
-    gap:18px
-  }
-
-  .collection-summary .meter {
-    max-width:none
   }
 
   .arena-stats {
@@ -776,22 +590,6 @@
 
   .error-box {
     font-size:12px
-  }
-
-  .offline-notice {
-    padding:15px
-  }
-
-  .offline-notice strong {
-    font-size:13px
-  }
-
-  .offline-notice p {
-    font-size:11px
-  }
-
-  .offline-notice>svg {
-    display:none
   }
 
 }

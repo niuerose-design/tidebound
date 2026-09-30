@@ -38,6 +38,8 @@ export type Job = {
     lineage?: string;
     /** 직업 성격 태그. 없으면 role을 '·'로 나눈 값(jobTags). */
     tags?: string[];
+    /** 미발견 히든·문 직업의 실루엣 카드에 보이는 한 줄 힌트. */
+    hint?: string;
 };
 export type JobTreeId = 'physical' | 'magic' | 'defense' | 'status' | 'hybrid' | 'support' | 'mystery';
 export type JobTree = {
@@ -206,6 +208,22 @@ for (const job of JOBS) {
     job.masteryBoost ??= tuning.boost;
 }
 
+/** 히든·??? 문 직업의 힌트. 이름·조건을 숨긴 실루엣 카드에 한 줄로 보입니다. */
+const JOB_HINTS: Record<string, string> = {
+    voidcaller: '한 번의 윤회를 넘긴 이형 항해자에게 윤회의 문이 속삭입니다.',
+    undead: '새벽의 고요 속에서만 문이 열립니다.',
+    skeleton: '망인의 뼈가 단단해질 때 드러납니다.',
+    bonecaster: '망인의 뼈에 마나를 새길 때 드러납니다.',
+    manaLeviathan: '공허와 조류를 모두 익히고 두 번의 윤회를 건넌 자에게.',
+    soulHarvester: '해골 기사와 망인의 기억이 깊이 쌓일 때.',
+    abyssArchivist: '진주 장부를 끝까지 적은 중개인에게 열립니다.',
+    krakenkin: '폭풍 곰치의 피가 짙어진 날, 방문자가 찾아옵니다.',
+    eternalNavigator: '세 번의 윤회와 폭풍을 모두 건넌 술사에게.',
+    rebirthFisher: '환생 뒤, 윤회의 문이 이 이름을 부를 때.',
+    abyssMimic: '메아리를 오래 길들인 자에게 보스의 그림자가 닿습니다.',
+};
+for (const job of JOBS) job.hint ??= JOB_HINTS[job.id];
+
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };
 const independent = (tree: JobTreeId): Lineage => ({ id: `${tree}-independent`, name: '독립 수련', tree, summary: '상위·하위 직업 없이 1차로 완결되는 직업들입니다. 다른 계보의 기술을 계승해 빈틈을 채우기 좋습니다.' });
@@ -253,3 +271,10 @@ export function lineageOf(job: Job): string {
 }
 /** 직업 성격 태그. tags가 없으면 role을 '·'로 나눕니다. */
 export const jobTags = (job: Job) => job.tags ?? job.role.split('·').map(x => x.trim()).filter(Boolean);
+
+/** id로 찾기(첫 항목 우선, JOBS.find와 같은 결과). 모듈 초기화가 끝난 뒤 처음 부를 때 한 번 만듭니다. */
+let jobByIdMap: Map<string, Job> | undefined;
+export function jobById(id: string | undefined) {
+    if (!jobByIdMap) { jobByIdMap = new Map(); for (const x of JOBS) if (!jobByIdMap.has(x.id)) jobByIdMap.set(x.id, x); }
+    return id === undefined ? undefined : jobByIdMap.get(id);
+}

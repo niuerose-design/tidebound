@@ -23,13 +23,6 @@
 .forge-actions { display:flex; flex-direction:column; gap:10px; margin-top:auto; }
 .forge-actions>p { margin:0 0 2px; }
 .forge-actions>button { width:100%; font-size:13px; }
-.training-list { padding:0 24px; }
-.training-row { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:18px 0; border-bottom:1px solid var(--border); }
-.training-row:last-child { border-bottom:0; }
-.training-row h3 { font-size:15px; }
-.training-row h3 small { font-weight:400; font-size:12px; color:#b0c5a9; margin-left:9px; }
-.training-row p { color:var(--muted); font-size:13px; margin:5px 0 0; }
-.training-row>button { min-width:128px; flex-shrink:0; }
 .legacy-resource-bar { grid-template-columns:.8fr .8fr 1fr 1.3fr; }
 .legacy-resource-bar>div:last-child strong small { display:block; margin-top:4px; line-height:1.5; }
 .rebirth-ready { display:grid; grid-template-columns:minmax(0,1fr) 245px; gap:30px; padding:28px; }
@@ -39,8 +32,6 @@
 .rebirth-reward>strong { display:flex; gap:12px; align-items:center; font-size:43px; color:var(--gold); line-height:1.2; }
 .rebirth-reward>small { font-size:12px; text-align:center; }
 .rebirth-reward>button { width:100%; margin-top:6px; }
-.rebirth-gains { display:flex; flex-wrap:wrap; gap:12px 25px; padding:19px 2px 24px; font-size:13px; color:#a2b9b0; }
-.rebirth-gains b { color:#d6dbc3; margin-left:7px; font-weight:500; }
 .rebirth-records { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
 .rebirth-records>article { padding:23px 26px; }
 .rebirth-records h2 { font-size:17px; margin:0 0 14px; }
@@ -96,30 +87,8 @@
 .job-current-summary h2 { font-size:22px; margin:3px 0; }
 .job-current-summary p { margin:7px 0 0; font-size:13px; color:#a5bcb0; }
 .job-current-summary>button { margin-left:auto; flex-shrink:0; }
-.job-family-tabs.game-tabs { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); height:auto!important; gap:4px; padding:0; }
-.job-family-tabs [data-slot=tabs-trigger] { gap:9px; padding:13px 8px; font-size:14px; }
-.job-family-tabs [data-slot=tabs-trigger]>span { color:#8eab9f; font-size:12px; }
-.job-browser-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(340px,1fr); gap:22px; align-items:start; }
-.job-browser, .job-inspector { min-width:0; }
-.job-browser { padding:20px; border-top-width:3px; }
+.job-inspector { min-width:0; }
 .job-family-description { font-size:13px; color:#9db5ab; line-height:1.85; margin:0 0 14px; }
-.job-filter-tabs.game-tabs { width:100%; display:flex; height:auto; margin:0; }
-.job-filter-tabs [data-slot=tabs-trigger] { font-size:12px; padding:10px 7px; flex:1; }
-.job-list-caption { display:flex; justify-content:space-between; align-items:center; gap:6px; min-height:48px; font-size:12px; color:#93aaa4; }
-.job-list-caption button { font-size:12px; flex-shrink:0; }
-.job-browser-list { max-height:590px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#4d6860 transparent; padding:2px 5px 2px 0; display:flex; flex-direction:column; gap:8px; }
-.job-node-row { display:flex; align-items:stretch; gap:5px; }
-.job-browser .job-node { min-width:0; flex:1; padding:13px 11px; gap:10px; text-align:left; }
-.job-browser .job-node>span:nth-child(2) { min-width:0; display:flex; flex-direction:column; gap:3px; }
-.job-browser .job-node strong { font-size:14px; line-height:1.5; }
-.job-browser .job-node small { white-space:normal; font-size:12px; line-height:1.65; margin-top:3px; }
-.job-browser .job-node.locked { opacity:1; }
-.job-browser .job-node.locked .job-node-icon { color:#8fa69e; }
-.job-browser .job-node-children { display:flex; flex-direction:column; gap:8px; margin:8px 0 0 16px; padding-left:13px; }
-.job-current-label { margin-left:auto; font-size:11px; white-space:nowrap; color:#c8dba9; }
-.job-expand { display:flex; align-items:center; gap:4px; padding:7px; color:#a3baae; border:1px solid #364b44; border-radius:6px; background:#1b302d; font-size:12px; }
-.job-expand svg { transition:transform .15s; }
-.job-expand[data-state=open] svg { transform:rotate(180deg); }
 .job-inspector { padding:25px; }
 .job-inspector>h2 { font-size:28px; margin:18px 0 8px; }
 .job-inspector>p { font-size:14px; line-height:1.85; color:#a8bcb3; margin:12px 0; }
@@ -137,14 +106,10 @@
 .job-bonus-table th,.job-bonus-table td { padding:9px 5px; border-bottom:1px solid #2b4039; text-align:right; font-weight:400; }
 .job-bonus-table th:first-child { text-align:left; }
 .job-bonus-table thead { color:#8fab9d; font-size:12px; }
-.job-mastery-explainer { font-size:12px; color:#a6bbae; line-height:1.85; margin:11px 0 0; }
-.job-mastery-explainer b { display:block; font-weight:500; color:#d0cba6; }
 .job-inspector .vocation-skills { margin-bottom:0; }
 .job-inspector .vocation-skills>span { font-size:14px; }
 .job-inspector .vocation-skills small { font-size:12px; }
 .job-inspector>button { width:100%; margin-top:23px; }
-.job-inspector-empty { min-height:200px; padding:40px; text-align:center; color:#8ca89a; line-height:1.8; font-size:14px; }
-.job-inspector-empty svg { margin:0 auto 20px; }
 .skill-level-line .info-trigger { margin-left:auto; }
 .skill-card .skill-current-description { min-height:0; }
 .skill-specific-note { color:#a8bca6!important; font-size:12px!important; }
@@ -162,19 +127,15 @@
 .skill-growth-table .skill-stage-effects { text-align:left; white-space:normal; min-width:220px; line-height:1.8; }
 .skill-stage-effects>span { display:block; }
 .skill-growth-table tr.current { background:#264237; }
-.skill-card .skill-stage-table-wrap:focus-visible, .info-trigger:focus-visible, .job-expand:focus-visible { outline:2px solid #b2ceaa; outline-offset:3px; }
+.skill-card .skill-stage-table-wrap:focus-visible, .info-trigger:focus-visible { outline:2px solid #b2ceaa; outline-offset:3px; }
 @media (max-width:1180px) {
     .port-gamble-grid { gap:12px; }
     .port-gamble-grid .market-card { padding:20px; }
     .legacy-resource-bar { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .job-browser-layout { grid-template-columns:minmax(0,1fr) minmax(310px,1fr); gap:15px; }
     .job-inspector { padding:20px; }
-    .job-browser { padding:16px; }
     .research-card { padding:18px; }
 }
 @media (max-width:1000px) {
-    .job-browser-layout { grid-template-columns:1fr; }
-    .job-browser-list { max-height:390px; }
     .port-gamble-grid { grid-template-columns:1fr; }
     .gamble-card { display:grid; grid-template-columns:66px minmax(0,1fr); column-gap:20px; }
     .gamble-card .gamble-icon { grid-row:1/3; }
@@ -192,20 +153,11 @@
     .port-purchase-grid,.research-grid,.rebirth-records { grid-template-columns:1fr; }
     .port-tabs.game-tabs { width:100%; display:flex; padding:0; height:auto; }
     .port-tabs [data-slot=tabs-trigger] { flex:1; padding:12px 7px; font-size:13px; }
-    .training-list { padding:0 18px; }
-    .training-row { gap:10px; }
-    .training-row>button { min-width:106px; font-size:13px; }
     .rebirth-ready { grid-template-columns:1fr; padding:22px; gap:20px; }
     .rebirth-ready h2 { font-size:21px; }
     .rebirth-reward { border-left:0; border-top:1px solid var(--border); padding:20px 0 0; }
-    .rebirth-gains { display:grid; grid-template-columns:1fr 1fr; font-size:12px; gap:15px; }
-    .rebirth-gains b { display:block; margin:5px 0 0; }
     .job-current-summary { padding:20px; flex-wrap:wrap; gap:12px; }
     .job-current-summary>button { margin-left:38px; }
-    .job-family-tabs.game-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); }
-    .job-family-tabs [data-slot=tabs-trigger] { font-size:13px; }
-    .job-browser .job-node-children { margin-left:9px; padding-left:9px; }
-    .job-browser .job-node { padding:11px 8px; }
     .skill-grid-detailed .skill-card { padding:20px; }
     .skill-growth-table th,.skill-growth-table td { padding:10px; font-size:12px; }
     .skill-grid-detailed .skill-actions { flex-wrap:wrap; }
@@ -223,10 +175,7 @@
 .skill-specialization p, .specialization-option p { font-size: 14px; line-height: 1.6; }
 .specialization-option { padding: 12px 0; border-bottom: 1px solid var(--border); }
 .specialization-option strong, .specialization-option small { display: block; margin-bottom: 6px; }
-.boss-research { max-width: 240px; padding: 10px 0; }
-.boss-research strong, .boss-research p { font-size: 14px; line-height: 1.5; }
-.boss-research .secondary { white-space: normal; }
-@media (max-width: 640px) { .growth-suggestions { flex-direction: column; } .boss-research { max-width: none; } }
+@media (max-width: 640px) { .growth-suggestions { flex-direction: column; } }
 
 /* 직업 항해도: 계열 칩 → 계보 카드 → 항로도 → 상세 패널(모바일은 아래에서 올라오는 창). */
 /* 세 칸: ① 계보 카드 · ② 항로도 · ③ 직업 상세 */
@@ -300,6 +249,45 @@
 .job-req-list small { font-size:12px; color:#8fa2a6; }
 .job-sheet-footer { display:flex; gap:8px; padding:14px 0 18px; margin-top:auto; background:#15252a; border-top:1px solid var(--border); }
 .job-sheet-footer>button { flex:1; }
+/* 직업 3단계: 빠른 찾기 · 검색·태그 · 비교 · 실루엣 */
+.job-finder { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; }
+.job-finder-chip { display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border:1px solid var(--border); border-radius:8px; background:#132226; color:#b8c9c2; font-size:13px; }
+.job-finder-chip b { color:#e8d39a; font-weight:700; }
+.job-finder-chip.active { border-color:#d5b36c; background:#223329; color:#f1e8cf; }
+.job-search { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 14px; }
+.job-search-box { display:flex; align-items:center; gap:6px; padding:0 10px; min-width:200px; border:1px solid var(--border); border-radius:8px; background:#101c20; color:#8fa2a6; }
+.job-search-box input { flex:1; min-width:0; padding:7px 0; background:none; border:0; outline:none; color:#e8efe9; font-size:13px; }
+.job-tag-chips { display:flex; flex-wrap:wrap; gap:4px; }
+.job-tag-chip { flex:0 0 auto; white-space:nowrap; padding:4px 8px; border:1px solid transparent; border-radius:99px; background:#132226; color:#8fa89f; font-size:11px; }
+.job-tag-chip.active { border-color:#7fb8a4; color:#dff2ea; background:#1a2e31; }
+.job-tree-dot { width:7px; height:7px; border-radius:50%; background:#d7c6f2; box-shadow:0 0 6px #b69be8; }
+.job-list-clear { align-self:flex-start; font-size:12px; }
+.route-steps.job-list { gap:8px; }
+.route-note.secret, .door-card .door-hint { color:#b9a9d8; font-style:italic; }
+.job-silhouette .job-detail-title h2 { color:#8b98a3; letter-spacing:4px; }
+.job-silhouette { padding-bottom:18px!important; }
+.job-compare { margin-top:18px; padding:18px; }
+.job-compare-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.job-compare-head h2 { margin:0; }
+.job-compare-scroll { overflow-x:auto; }
+.job-compare-table { width:100%; min-width:520px; border-collapse:collapse; font-size:12px; }
+.job-compare-table th, .job-compare-table td { padding:7px 8px; border-bottom:1px solid #22363a; text-align:left; vertical-align:top; }
+.job-compare-table tbody th { color:#95aca5; font-weight:500; white-space:nowrap; width:92px; }
+.job-compare-table thead th { position:relative; padding-right:26px; }
+.job-compare-table thead th strong { display:block; font-size:14px; color:#e8efe9; }
+.job-compare-table thead th small { color:#8fa2a6; font-weight:400; }
+.job-compare-table thead th button { position:absolute; top:6px; right:4px; padding:3px; color:#8fa2a6; border-radius:4px; }
+.job-compare-table td.negative { color:#e7b2a6; }
+.job-compare-section th { color:#d5b36c!important; font-size:11px; letter-spacing:1px; padding-top:12px!important; }
+.job-compare-req { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:3px; }
+.job-compare-req li { display:flex; align-items:center; gap:4px; }
+.job-compare-req li.met { color:#b6e0cc; }
+.job-compare-req li.missing { color:#e7b2a6; }
+.job-sheet-footer { flex-wrap:wrap; }
+.door-notice { display:flex; align-items:stretch; margin-top:8px; border:1px solid #5c4f80; background:#1f1b30; border-radius:5px; font-size:12px; }
+.door-notice-open { display:flex; align-items:center; gap:8px; flex:1; min-width:0; padding:7px 12px; color:#e3dcf4; text-align:left; }
+.door-notice-open span { color:#bfb4d8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.door-notice-dismiss { padding:0 10px; color:#a99fc4; }
 @media (max-width:1180px) {
     .job-columns { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
     .job-columns>.job-detail-slot { grid-column:1/-1; position:static; }
@@ -310,6 +298,8 @@
     .job-tree-chips::-webkit-scrollbar { display:none; }
     .job-tree-chip { flex:0 0 auto; padding:8px 13px; font-size:13px; }
     .door-row { grid-template-columns:1fr; }
+    .job-tag-chips { flex:1 1 100%; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+    .job-search-box { flex:1 1 100%; }
     .job-columns>.job-detail-slot { display:contents; }
     .job-detail-slot .job-sheet { position:fixed!important; left:0; right:0; bottom:0; z-index:61; max-height:82vh; overflow-y:auto; border-radius:14px 14px 0 0; translate:0 110%; transition:translate .22s ease; box-shadow:0 -12px 32px #0009; animation:none; }
     .job-detail-slot.sheet-open .job-sheet { translate:0 0; }

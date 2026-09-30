@@ -67,11 +67,6 @@
   color:#a1b4b8
 }
 
-.dungeon-list {
-  display:grid;
-  gap:18px
-}
-
 .dungeon-run-panel {
   margin-bottom:22px;
   padding:24px
@@ -115,8 +110,7 @@
   gap:4px
 }
 
-.dungeon-wave span,
-.dungeon-wave-list span {
+.dungeon-wave span {
   font-size:10px;
   letter-spacing:.08em;
   color:#839b9d
@@ -139,8 +133,7 @@
   background:#1a292c
 }
 
-.dungeon-wave.boss,
-.dungeon-wave-list .boss-wave {
+.dungeon-wave.boss {
   border-color:#aa7b61;
   color:#e2bc87
 }
@@ -224,20 +217,6 @@
   margin:0
 }
 
-.dungeon-wave-list {
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin:12px 0 15px
-}
-
-.dungeon-wave-list span {
-  border:1px solid #314d4c;
-  border-radius:5px;
-  padding:5px 7px;
-  background:#172d31
-}
-
 .fish-rarity {
   display:inline-block;
   margin-left:5px;
@@ -259,46 +238,6 @@
   border-color:#6a5240
 }
 
-.dungeon-card {
-  display:flex;
-  gap:26px;
-  align-items:center;
-  padding:30px
-}
-
-.dungeon-emblem {
-  width:105px;
-  height:115px;
-  flex-shrink:0;
-  border:1px solid #42605e;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:7px;
-  color:#b9bea0;
-  background:linear-gradient(130deg,#2c4541,#192e36);
-  border-radius:40px 40px 7px 7px
-}
-
-.dungeon-emblem span {
-  font-family:Georgia,serif;
-  font-size:15px
-}
-
-.dungeon-copy {
-  flex:1
-}
-
-.dungeon-copy h2 {
-  font-size:24px
-}
-
-.dungeon-copy>p {
-  font-size:14px;
-  margin:8px 0 17px
-}
-
 .rewards {
   display:flex;
   flex-wrap:wrap;
@@ -311,17 +250,6 @@
   display:flex;
   align-items:center;
   gap:5px
-}
-
-.dungeon-action {
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:13px
-}
-
-.dungeon-action small {
-  color:#9cafac
 }
 
 .notice {
@@ -347,39 +275,6 @@
   color:#81979e;
   margin-top:20px;
   line-height:1.9
-}
-
-.equipped-grid {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:15px;
-  margin-bottom:28px
-}
-
-.equipped-item {
-  padding:19px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex-wrap:wrap
-}
-
-.equipped-item small {
-  font-size:11px;
-  color:#87a0a6
-}
-
-.equipped-item h3 {
-  font-size:14px
-}
-
-.equipped-item p {
-  font-size:11px;
-  margin-top:3px
-}
-
-.equipped-item .text-button {
-  margin-left:auto
 }
 
 .icon-box {

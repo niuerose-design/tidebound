@@ -324,27 +324,6 @@
   font-weight:400
 }
 
-.next-goal {
-  padding:21px;
-  margin-top:18px;
-  background:linear-gradient(125deg,#1a2c30,#162228)
-}
-
-.next-goal .eyebrow {
-  font-size:9px;
-  color:#c8ae79
-}
-
-.next-goal h3 {
-  font-size:14px
-}
-
-.next-goal p {
-  font-size:12px;
-  margin:8px 0 13px;
-  line-height:1.8
-}
-
 .app-footer {
   padding:8px 32px 23px;
   display:flex;

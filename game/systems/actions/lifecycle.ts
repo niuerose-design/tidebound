@@ -5,7 +5,7 @@ import type { State, Vows } from '../../types';
 import type { ActionHandlers } from './types';
 import { addLog, newState } from '../state';
 import { drawRebirthDoor } from '../../data/doors';
-import { JOBS } from '../../data/classes';
+import { jobById } from '../../data/classes';
 import { gainLevels, releaseAnchor } from '../encounter';
 import { VOW_IDS, VOW_NAMES, type VowId, breathBonus, chooseAnchorTarget, cleanVows, hasVows, vowUnlocked, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '../vows';
 
@@ -61,7 +61,7 @@ export const lifecycleActions: ActionHandlers = {
         if (lifeBonus === 'deep') addLog(s, 'Lv.100 완주 · 이번 생 동안 직업·스킬 숙련 기본 획득 +2', 'reward');
         if (lifeBonus === 'tailwind') addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%`, 'reward');
         if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => id === 'rough' ? `${VOW_NAMES.rough} ${s.vows!.rough}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
-        if (s.rebirthDoor) addLog(s, `윤회의 문 · 이번 생에는 ${JOBS.find(j => j.id === s.rebirthDoor)?.name}의 문이 열렸습니다.`, 'system');
+        if (s.rebirthDoor) addLog(s, `윤회의 문 · 이번 생에는 ${jobById(s.rebirthDoor)?.name}의 문이 열렸습니다.`, 'system');
         const seal = anchorSeal(s);
         if (seal) addLog(s, `잠든 닻 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1에 머뭅니다.`, 'system');
     },

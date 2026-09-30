@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table';
 import type { DuelResult } from '@/game/types';
 import { BALANCE } from '@/game/data/balance';
-import { JOBS } from '@/game/data/classes';
+import { jobById } from '@/game/data/classes';
 import { TRAINING } from '@/game/systems/duel';
 import { statDisplay } from '@/game/data/progression';
 import { vowBadgeLabel } from '@/game/systems/vows';
@@ -67,7 +67,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
             <TableCell className="rank-number">{i + 1}</TableCell>
             <TableCell>
             <strong>{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
-            <small className="block">Lv. {r.level} · {JOBS.find(j => j.id === r.job)?.name} · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
+            <small className="block">Lv. {r.level} · {jobById(r.job)?.name} · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
             <small className="block ranking-combat-stats">명중 수치 {statDisplay('accuracy', r.stats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', r.stats.evasion || 0)}</small>
             </TableCell>
             <TableCell><span className="ranking-guild">{r.guild || '무소속'}</span></TableCell>
@@ -85,7 +85,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
         <Swords size={35}/>
         <span className="badge">훈련용 NPC</span>
         <h2>{t.name}</h2>
-        <p>Lv. {t.level} · {JOBS.find(j => j.id === t.job)?.name}</p>
+        <p>Lv. {t.level} · {jobById(t.job)?.name}</p>
         <div className="training-stats">공격 {t.stats.attack} · 방어 {t.stats.defense}<br />체력 {t.stats.hp} · 치명타 {Math.round(t.stats.crit * 100)}%</div>
         <button className="primary" disabled={busy} onClick={() => send({ type: 'training', id: String(i) }, '/api/duel')}>연습 대결</button>
         </div>)}</div>

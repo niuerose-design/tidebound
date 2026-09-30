@@ -13,24 +13,32 @@ import { vocationTargets, thresholdRank } from '@/game/data/long-term';
 import { jobMasteryTarget, jobMasteryBoost, jobCombatMultiplier } from '@/game/systems/progression';
 import { Meter, SkillIcon, format } from '../shared';
 import type { PanelProps } from '../panel-props';
-import { jobStatus, STATUS_LABEL, canEnter, crossParent, treeName } from './job-status';
+import { jobStatus, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS } from './job-status';
 
-const bonusKeys = ['attack', 'magic', 'hp', 'defense', 'resist'] as const;
 type Tab = 'overview' | 'requirements' | 'skills' | 'mastery';
 
 /** 3단계 상세 패널. 데스크톱은 오른쪽 패널, 모바일은 아래에서 올라오는 창(onClose로 닫기). */
-export function JobDetail({ j, s, send, busy, onClose }: PanelProps & { j: Job; onClose?: () => void }) {
+export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, compareFull }: PanelProps & { j: Job; onClose?: () => void; onCompare?: (id: string) => void; compared?: boolean; compareFull?: boolean }) {
     const [tab, setTab] = useState<Tab>('overview');
+    // 미발견 히든·문 직업: 이름·조건을 숨기고 차수 자리와 힌트 한 줄만 보여줍니다.
+    if (!jobRevealed(s, j)) return <article className="panel job-inspector job-sheet job-silhouette" aria-label="미발견 직업">
+        {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}
+        <h2 className="job-column-title"><span>③</span> 직업 상세</h2>
+        <div className="job-detail-title"><h2>???</h2></div>
+        <p className="job-detail-sub">{tierName(j)} · {treeName(j.tree)}</p>
+        <p className="job-cross">{j.hint || '아직 드러나지 않은 직업입니다.'}</p>
+        <p className="footnote">관문 조건(환생 횟수·선행 직업 숙련·문)을 채우면 이름과 조건이 드러납니다.</p>
+    </article>;
     const st = jobStatus(s, j), current = st.status === 'current', ready = canEnter(st);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;
     const dedicationTargets = vocationTargets(target), dedication = thresholdRank(xp, dedicationTargets);
-    const bonuses = bonusKeys.filter(key => j[key] !== 1), grows = bonuses.some(key => j[key] > 1) && jobMasteryBoost(j) > 0;
+    const bonuses = JOB_BONUS_KEYS.filter(key => j[key] !== 1), grows = bonuses.some(key => j[key] > 1) && jobMasteryBoost(j) > 0;
     const skills = SKILLS.filter(sk => sk.job === j.id), from = crossParent(j);
     return <article className={`panel job-inspector job-sheet ${current ? 'current' : ''}`} aria-label={`${j.name} 상세`}>
         {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}
         <h2 className="job-column-title"><span>③</span> 직업 상세</h2>
         <div className="job-detail-title"><h2>{j.name}</h2><span className={`job-status ${st.status}`}>{STATUS_LABEL(st)}</span></div>
-        <p className="job-detail-sub">{j.tier ? `${j.tier}차` : '시작'} · {[treeName(j.tree), ...jobTags(j).filter(t => t !== treeName(j.tree))].join(' · ')}{j.hidden ? ' · 히든' : ''}</p>
+        <p className="job-detail-sub">{tierName(j)} · {[treeName(j.tree), ...jobTags(j).filter(t => t !== treeName(j.tree))].join(' · ')}{j.hidden ? ' · 히든' : ''}</p>
         <p className="job-motto">{j.title}</p>
         <Tabs value={tab} onValueChange={v => setTab(v as Tab)}><TabsList className="game-tabs job-detail-tabs">
             <TabsTrigger value="overview">개요</TabsTrigger><TabsTrigger value="requirements">조건{!current && !ready ? ` ${st.missing.length}` : ''}</TabsTrigger><TabsTrigger value="skills">스킬 {skills.length}</TabsTrigger><TabsTrigger value="mastery">숙달</TabsTrigger>
@@ -68,6 +76,7 @@ export function JobDetail({ j, s, send, busy, onClose }: PanelProps & { j: Job; 
                 <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{j.name}(으)로 전직할까요?</AlertDialogTitle><AlertDialogDescription>새 직업의 기본 기술은 무료로 해금됩니다. 계승하지 않은 이전 직업의 기술은 해제되지만 해금·성장·숙련 기록은 남습니다. 전투 중이면 현재 적을 보상 없이 정리하고, 던전 중이면 보상 없이 귀환합니다.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>취소</AlertDialogCancel><AlertDialogAction onClick={() => send({ type: 'job', id: j.id })}>전직하기</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
             </AlertDialog>}
             <button className="secondary" disabled={busy || current || s.unlockedJobs.includes(j.id)} onClick={() => send({ type: 'growthGoal', id: j.id, value: 'job' })}>{s.growthGoal?.kind === 'job' && s.growthGoal.id === j.id ? '목표로 지정됨' : '목표로 지정'}</button>
+            {onCompare && <button className="secondary" disabled={!compared && compareFull} onClick={() => onCompare(j.id)}>{compared ? '비교에서 빼기' : compareFull ? '비교 가득 참(3)' : '비교에 추가'}</button>}
         </div>
     </article>;
 }

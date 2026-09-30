@@ -3,7 +3,7 @@ import { Fragment } from 'react';
 import { ArrowDown, Compass } from 'lucide-react';
 import type { State } from '@/game/types';
 import { JOBS, type Job, type Lineage } from '@/game/data/classes';
-import { jobStatus, crossParent, lineageSummary, tierLabel } from './job-status';
+import { jobStatus, crossParent, lineageSummary, tierLabel, jobRevealed, treeName } from './job-status';
 
 const tierRange = (tiers: number[]) => { const lo = Math.max(1, tiers[0]), hi = tiers.at(-1)!; return hi <= 0 ? '시작' : lo === hi ? `${hi}차` : `${lo}~${hi}차`; };
 
@@ -20,8 +20,9 @@ export function LineageCard({ s, lineage, accent, selected, onOpen }: { s: State
     </button>;
 }
 
-/** 항로도 카드 한 줄 설명: 현재 · 숙달 · 해금함 · 전직 가능 · 조건 부족(첫 부족 조건). */
+/** 항로도 카드 한 줄 설명: 현재 · 숙달 · 해금함 · 전직 가능 · 조건 부족(첫 부족 조건). 미발견 실루엣은 힌트만 보여줍니다. */
 function routeNote(s: State, j: Job) {
+    if (!jobRevealed(s, j)) return { text: j.hint || '아직 드러나지 않은 직업입니다.', cls: 'secret' };
     const st = jobStatus(s, j);
     if (st.status === 'current') return { text: '현재 직업', cls: 'current' };
     if (st.status === 'mastered') return { text: '숙달 · 조건 없이 전직', cls: 'mastered' };
@@ -41,14 +42,30 @@ export function RouteMap({ s, lineage, jobs, selectedId, onSelect }: { s: State;
             return <Fragment key={tier}>
                 {i > 0 && <ArrowDown className="route-arrow" size={16}/>}
                 <div className={`route-step ${group.length > 1 ? 'branch' : ''}`}>{group.map(j => {
-                    const note = routeNote(s, j), from = crossParent(j), parent = prev.length > 1 && JOBS.find(p => p.id === j.parent && prev.includes(p));
+                    const note = routeNote(s, j), revealed = note.cls !== 'secret', from = revealed ? crossParent(j) : '', parent = revealed && prev.length > 1 && JOBS.find(p => p.id === j.parent && prev.includes(p));
                     return <button type="button" key={j.id} className={`route-card ${note.cls} ${j.id === selectedId ? 'selected' : ''}`} aria-pressed={j.id === selectedId} onClick={() => onSelect(j.id)}>
-                        <strong><span className="route-tier">{tierLabel(tier)}</span> {j.name}</strong>
+                        <strong><span className="route-tier">{tierLabel(tier)}</span> {revealed ? j.name : '???'}</strong>
                         <small className={`route-note ${note.cls}`}>{note.text}</small>
                         {(from || parent) && <small className="route-from">{from || `↳ ${parent && parent.name}에서`}</small>}
                     </button>;
                 })}</div>
             </Fragment>;
         })}</div> : <div className="empty"><Compass size={28}/><p>이 계보에는 아직 직업이 없습니다.</p></div>}
+    </section>;
+}
+
+/** 빠른 찾기·검색 결과: 계열과 상관없이 모은 직업 카드 목록(② 칸 자리). */
+export function JobList({ s, title, jobs, selectedId, onSelect, onClear }: { s: State; title: string; jobs: Job[]; selectedId?: string; onSelect: (id: string) => void; onClear: () => void }) {
+    return <section className="panel route-map" aria-label={title}>
+        <h2 className="job-column-title"><span>②</span> {title} · {jobs.length}</h2>
+        <button type="button" className="text-button job-list-clear" onClick={onClear}>항로도로 돌아가기</button>
+        {jobs.length ? <div className="route-steps job-list">{jobs.map(j => {
+            const note = routeNote(s, j);
+            return <button type="button" key={j.id} className={`route-card ${note.cls} ${j.id === selectedId ? 'selected' : ''}`} aria-pressed={j.id === selectedId} onClick={() => onSelect(j.id)}>
+                <strong><span className="route-tier">{tierLabel(j.tier)}</span> {note.cls === 'secret' ? '???' : j.name}</strong>
+                <small className={`route-note ${note.cls}`}>{note.text}</small>
+                <small className="route-from">{treeName(j.tree)}{note.cls === 'secret' ? '' : ` · ${j.role}`}</small>
+            </button>;
+        })}</div> : <p className="footnote">해당하는 직업이 없습니다.</p>}
     </section>;
 }

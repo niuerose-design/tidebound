@@ -11,8 +11,11 @@ type StatBonus = Partial<CombatStats>;
 
 /** 달성한 연구 단계 수(0~4). 보상 수령과 관계없이 포획 수로 바로 적용됩니다. */
 export const bookStage = (s: Pick<State, 'book'>, id: string) => BALANCE.bookMilestones.filter(m => (s.book[id] || 0) >= m).length;
+const traitCache = new Map<string, BookTraitGroup>();
 export function bookTrait(id: string): BookTraitGroup {
-    return FISH.find(f => f.id === id)?.boss ? 'boss' : PROFILE_TRAIT[profileId(id)] || 'armored';
+    let trait = traitCache.get(id);
+    if (!trait) traitCache.set(id, trait = FISH.find(f => f.id === id)?.boss ? 'boss' : PROFILE_TRAIT[profileId(id)] || 'armored');
+    return trait;
 }
 /** 포획 50회부터 어종의 성향·스킬·능력치 정보를 공개합니다. */
 export const bookRevealed = (s: Pick<State, 'book'>, id: string) => (s.book[id] || 0) >= BOOK_REVEAL;

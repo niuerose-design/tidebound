@@ -177,3 +177,10 @@ for (const sk of SKILLS) {
 
 // Apply the centralized player balance after assignment and mastery defaults.
 tuneActiveSkills(SKILLS);
+
+/** id로 찾기(첫 항목 우선, SKILLS.find와 같은 결과). 모듈 초기화가 끝난 뒤 처음 부를 때 한 번 만듭니다. */
+let skillByIdMap: Map<string, Skill> | undefined;
+export function skillById(id: string | undefined) {
+    if (!skillByIdMap) { skillByIdMap = new Map(); for (const x of SKILLS) if (!skillByIdMap.has(x.id)) skillByIdMap.set(x.id, x); }
+    return id === undefined ? undefined : skillByIdMap.get(id);
+}
