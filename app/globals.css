@@ -3606,3 +3606,4 @@ strong,b {
 .log-line .battle-line { flex: 1; }
 /* v22 장비 옵션 줄: 이름·수치 / 설명 / 재설정 버튼 */
 .gear-option-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:6px 0;border-top:1px solid #9ab4b51a}.gear-option-row small{grid-column:1;color:#93a7a5;font-size:12px}.gear-option-row button{grid-column:2;grid-row:1/span 2;font-size:12px;padding:4px 10px}
+@media(max-width:520px){.item-grid{grid-template-columns:1fr}.gear-option-row{grid-template-columns:1fr}.gear-option-row button{grid-column:1;grid-row:auto;justify-self:start;margin-top:4px}}

@@ -1,7 +1,7 @@
 import { tailwindActive, TAILWIND_EXP, tierReward } from './meta';
 import { rebirthExperience, rebirthMemory, evasionRating, vocationTargets, thresholdRank } from '../data/long-term';
 import { itemStats } from './equipment';
-import { RULE_CAPS } from '../data/gear';
+import { GEAR_CAPS, RULE_CAPS } from '../data/gear';
 import type { State, Snapshot, Stats, CombatStats } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA } from '../data/balance';
 import { PROGRESSION } from '../data/progression';
@@ -23,11 +23,14 @@ export function stats(s: State): CombatStats {
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * .002;
     a.rebirthBonus = s.permanent.pearl || 0;
     a.dungeonGoldBonus = (s.permanent.dungeon || 0) * .08;
+    const gear: Partial<Record<keyof Stats, number>> = {};
     for (const item of Object.values(s.equipment)) {
         if (item)
             for (const [key, n] of Object.entries(itemStats(item)))
-                a[key as keyof Stats] += n;
+                gear[key as keyof Stats] = (gear[key as keyof Stats] || 0) + n;
     }
+    for (const [key, n] of Object.entries(gear))
+        a[key as keyof Stats] += Math.min(n!, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity);
     const passiveJobs = new Set<string>();
     for (const id of s.skills) {
         if (!canUse(s, id))

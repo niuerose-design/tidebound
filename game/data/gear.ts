@@ -24,6 +24,8 @@ export type AffixDef = {
     description: string;
 };
 export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean };
+/** 장비에서 오는 수치의 합계 상한. 흡혈은 심연 생존을 과하게 늘려 장비 합계 3%p까지만 인정합니다. */
+export const GEAR_CAPS: Partial<Record<GearStat, number>> = { lifesteal: .03 };
 
 export const RULE_CAPS: Partial<Record<GearStat, number>> = {
     stunBonus: 1, controlBonus: 1, dotTurnsBonus: 2, poisonStackBonus: 3, arcaneRatioBonus: .3, followUpBonus: .3, healBonus: .5, executeBonus: .15,
@@ -42,7 +44,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .06, description: '치명 피해가 오릅니다.' },
     { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', base: .025, description: '방어 관통이 오릅니다.' },
-    { id: 'leech', name: '흡혈', stat: 'lifesteal', kind: 'percent', base: .01, description: '준 피해의 일부를 회복합니다.' },
+    { id: 'leech', name: '흡혈', stat: 'lifesteal', kind: 'percent', base: .006, description: '준 피해의 일부를 회복합니다 (장비 흡혈 합계 최대 3%p).' },
     { id: 'drift', name: '유영', stat: 'evasion', kind: 'percent', base: .02, description: '회피가 오릅니다.' },
     { id: 'swift', name: '신속', stat: 'speed', kind: 'percent', base: 2, description: '속도가 오릅니다.' },
     { id: 'venom', name: '맹독', stat: 'dotBonus', kind: 'percent', base: .06, description: '출혈·중독·화상 피해가 늘어납니다.' },
@@ -56,7 +58,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'glassCannon', name: '유리 대포', stat: 'magic', kind: 'flat', base: .9, stat2: 'hp', base2: -2.2, description: '마법 공격이 크게 오르지만 최대 체력이 줄어듭니다.' },
     { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: .9, stat2: 'speed', base2: -4, description: '물리 방어가 크게 오르지만 느려집니다.' },
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .05, stat2: 'accuracy', base2: -.06, description: '치명타가 크게 오르지만 명중이 줄어듭니다.' },
-    { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .035, stat2: 'hp', base2: -1.5, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다.' },
+    { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .015, stat2: 'hp', base2: -1.5, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 3%p).' },
     // 규칙 옵션 (영웅 이상, 장비당 1개)
     { id: 'concuss', name: '뇌진탕', stat: 'stunBonus', kind: 'rule', base: 1, minRarity: 3, description: '기절 지속 +1턴 (합계 최대 +1).' },
     { id: 'binding', name: '속박', stat: 'controlBonus', kind: 'rule', base: 1, minRarity: 3, description: '침묵·감속 지속 +1턴 (합계 최대 +1).' },
