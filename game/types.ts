@@ -224,6 +224,8 @@ export type State = {
     inventory: Item[];
     equipment: Record<string, Item | null>;
     permanent: Record<string, number>;
+    /** 진주 연구 재분배의 계정당 첫 1회 무료 반환을 썼는지. 없으면 false. */
+    researchResetUsed?: boolean;
     dungeon: null | {
         id: string;
         wave: number;

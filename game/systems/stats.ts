@@ -5,6 +5,7 @@ import type { State, Snapshot, Stats, CombatStats } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS } from '../data/classes';
+import { RESEARCH } from '../data/economy';
 import { SKILLS } from '../data/skills';
 import { bookStatBonus, regionThemes } from './book';
 import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier } from './progression';
@@ -16,6 +17,13 @@ export function mastery(s: State) { return Object.values(s.book).reduce((a, n) =
 export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', 'research', 'book', 'equipment', 'limit'] as const;
 export type StatSource = typeof STAT_SOURCES[number];
 export const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '진주 연구', book: '도감', equipment: '장비', limit: '상한·정수 처리' };
+/** 진주 연구가 올리는 능력치 → 연구 id. 물리·마법 공격과 방어는 각각 다른 연구입니다. */
+const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', rebirthBonus: 'pearl' };
+/** 능력치 분해의 원인 이름. 진주 연구는 해당 연구 이름까지 붙입니다(예: 진주 연구 · 심해 등불의 기억). */
+export function statSourceLabel(k: keyof CombatStats, source: StatSource) {
+    const name = source === 'research' ? RESEARCH.find(r => r.id === RESEARCH_BY_STAT[k])?.name : undefined;
+    return name ? `${STAT_SOURCE_LABELS.research} · ${name}` : STAT_SOURCE_LABELS[source];
+}
 /** 원인별 증감 기록. factor는 배율로 적용된 경우의 배율입니다. */
 export type StatTrace = Partial<Record<keyof CombatStats, { source: StatSource; delta: number; factor?: number }[]>>;
 /**
@@ -87,7 +95,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const mult = (n: number) => jobCombatMultiplier(j, n, mastered);
     mul('hp', [['job', mult(j.hp)], ['research', 1 + (s.permanent.hp || 0) * .08]]);
     mul('attack', [['job', mult(j.attack)], ['research', 1 + (s.permanent.attack || 0) * .05]]);
-    mul('magic', [['job', mult(j.magic)], ['research', 1 + (s.permanent.attack || 0) * .05]]);
+    mul('magic', [['job', mult(j.magic)], ['research', 1 + (s.permanent.magicAttack || 0) * .05]]);
     mul('defense', [['job', mult(j.defense)]]);
     mul('resist', [['job', mult(j.resist)]]);
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));
@@ -97,7 +105,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         for (const [key, n] of Object.entries(t.scale || {}))
             mul(key as keyof CombatStats, [['book', n]]);
     mul('defense', [['research', 1 + (s.permanent.guard || 0) * .03]]);
-    mul('resist', [['research', 1 + (s.permanent.guard || 0) * .03]]);
+    mul('resist', [['research', 1 + (s.permanent.magicGuard || 0) * .03]]);
     const limit = (k: keyof CombatStats, n: number) => { const before = a[k]; a[k] = n; rec(k, 'limit', n - before); };
     for (const k of ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'speed'] as (keyof CombatStats)[])
         limit(k, Math.max(k === 'hp' || k === 'speed' ? 1 : 0, Math.floor(a[k])));

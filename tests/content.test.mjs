@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·만능 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, STAGES, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test } from './harness.mjs';
+import { bookMod, weightedFishId, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test } from './harness.mjs';
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
  assert.equal(visibleStatuses({},0,[stun],'player')[0].label,'기절함');assert.equal(visibleStatuses({},0,[stun],'enemy').length,0);
@@ -157,4 +157,34 @@ test('Ecology research: from stage 2 only against that species, +2% dealt / -1% 
  const base={attack:1000,defense:0,hp:1e6,crit:0,accuracy:2,evasion:0,speed:10,mana:0,manaRegen:0,resist:0,penetration:0,lifesteal:0,critDamage:1.5,magic:0};
  const hit=(a,b)=>{const x={name:'a',stats:base,hp:1e6,skills:[],cooldowns:{},stun:0,...a},y={name:'b',stats:base,hp:1e6,skills:[],cooldowns:{},stun:0,...b};strike(x,y,()=>.5);return 1e6-y.hp;};
  assert.equal(hit({},{}),1000);assert.equal(hit({damageDealt:.06},{}),1060);assert.equal(hit({},{damageTaken:.03}),970);
+});
+test('Pearl research: locked research is refused server-side until its rebirth count',()=>{
+ const r=economy.RESEARCH.find(x=>x.id==='magicAttack'),before=r.rebirth;r.rebirth=2;
+ try{const s=newState(0);s.pearls=100;assert.throws(()=>act(s,{type:'permanent',id:'magicAttack'},0),/환생 2회/);assert.equal(s.pearls,100);assert.equal(s.permanent.magicAttack||0,0);
+  s.rebirths=2;act(s,{type:'permanent',id:'magicAttack'},0);assert.equal(s.permanent.magicAttack,1);assert.equal(s.pearls,98);}
+ finally{r.rebirth=before;}
+ for(const x of economy.RESEARCH)assert.ok(['combat','utility','gold'].includes(x.tab));
+});
+test('Pearl research: physical and magic attack/defense are separate research lines',()=>{
+ const factor=(s,k)=>{const t={};stats(s,t);return (t[k]||[]).filter(x=>x.source==='research'&&x.factor!==undefined).reduce((a,x)=>a*x.factor,1);};
+ const s=newState(0);s.permanent.attack=10;assert.ok(Math.abs(factor(s,'attack')-1.5)<1e-9);assert.equal(factor(s,'magic'),1);
+ s.permanent.magicAttack=4;assert.ok(Math.abs(factor(s,'magic')-1.2)<1e-9);assert.ok(Math.abs(factor(s,'attack')-1.5)<1e-9);
+ s.permanent.guard=5;assert.ok(Math.abs(factor(s,'defense')-1.15)<1e-9);assert.equal(factor(s,'resist'),1);
+ s.permanent.magicGuard=2;assert.ok(Math.abs(factor(s,'resist')-1.06)<1e-9);
+});
+test('Pearl research reset: per-tab refund, first reset free then 90% floored, refusal conditions',()=>{
+ const s=newState(0);s.pearls=0;s.permanent.attack=3;s.permanent.magicAttack=1;s.permanent.hp=2;s.permanent.gold=2;
+ assert.throws(()=>act(s,{type:'resetResearch',id:'nope'},0));
+ s.running=true;assert.throws(()=>act(s,{type:'resetResearch',id:'combat'},0),/자동 낚시/);s.running=false;
+ s.dungeon={id:'grotto',wave:0};assert.throws(()=>act(s,{type:'resetResearch',id:'combat'},0));s.dungeon=null;
+ assert.throws(()=>act(s,{type:'resetResearch',id:'utility'},0),/돌려받을/);
+ assert.deepEqual(researchRefund(s,'combat').refund,(2+4+6)+2+(2+4));
+ act(s,{type:'resetResearch',id:'combat'},0);assert.equal(s.pearls,20);assert.equal(s.researchResetUsed,true);
+ assert.equal(s.permanent.attack||0,0);assert.equal(s.permanent.magicAttack||0,0);assert.equal(s.permanent.hp||0,0);assert.equal(s.permanent.gold,2);
+ act(s,{type:'resetResearch',id:'gold'},0);assert.equal(s.pearls,20+Math.floor((3+5)*.9));assert.equal(s.permanent.gold||0,0);
+ s.level=40;act(s,{type:'rebirth'},0);assert.equal(s.researchResetUsed,true);
+ const a=newState(0);a.permanent.ap=4;const cap=apCapacity(a);const pool=['hook',...SKILLS.filter(x=>x.cost).map(x=>x.id).filter(id=>id!=='hook')];a.skills=[];
+ for(const id of pool){if(apUsed({...a,skills:[...a.skills,id]})>cap)continue;a.skills.push(id);if(apUsed(a)>cap-4)break;}
+ assert.ok(apUsed(a)>cap-4&&apUsed(a)<=cap);const p=a.pearls;
+ assert.throws(()=>act(a,{type:'resetResearch',id:'utility'},0),/AP/);assert.equal(a.permanent.ap,4);assert.equal(a.pearls,p);assert.equal(a.researchResetUsed,undefined);
 });

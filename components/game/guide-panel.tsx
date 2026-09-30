@@ -2,7 +2,7 @@ import { BookOpen, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw, Shield, Spar
 import type { ReactNode } from 'react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
-import { ECONOMY, RESEARCH } from '@/game/data/economy';
+import { ECONOMY, RESEARCH, RESEARCH_RESET } from '@/game/data/economy';
 import { SWARM_UNLOCK } from '@/game/data/world';
 import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
 import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL } from '@/game/systems/meta';
@@ -90,8 +90,8 @@ export function Guide() {
                 condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨+${TAILWIND_WINDOW} 이내에 환생하면 순풍(다음 생 요구 레벨까지 경험치 +${TAILWIND_EXP * 100}%), Lv.${DEEP_VOYAGE_LEVEL}에서 환생하면 깊은 항해(다음 생 숙련 기본 획득 +2).`}
                 limit={`환생 횟수 보상 진주와 영구 경험치는 20회까지 회당 1개·+25%, 이후에는 √(횟수 − 20)으로 완만해집니다. 환생 AP는 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도는 최대 ${ECONOMY.tideCap}.`}/>
             <Rule icon={<Sparkles size={19}/>} title="진주 연구"
-                effect="진주로 영구 능력을 올립니다. 환생해도 유지됩니다."
-                condition="단계가 오를수록 비용이 커지고, 20단계 이후에는 더 가파르게 오릅니다."
+                effect="진주로 영구 능력을 올립니다. 환생해도 유지됩니다. 전투(공격·생존)·유틸·골드 탭으로 나뉘며, 물리 공격(날카로운 기억)과 마법 공격(심해 등불의 기억), 물리 방어(불굴의 기억)와 마법 방어(진주막의 기억)는 각각 따로 연구합니다."
+                condition={`단계가 오를수록 비용이 커지고, 20단계 이후에는 더 가파르게 오릅니다. 일부 연구는 정해진 환생 횟수 이후에 열립니다. 탭별 재분배는 그 탭에 쓴 진주를 돌려받고 단계를 0으로 되돌립니다: 계정당 첫 1회는 ${RESEARCH_RESET.firstRefund * 100}%, 이후 ${RESEARCH_RESET.refund * 100}%(내림). 자동 낚시·던전 중에는 할 수 없고, 영혼의 그릇을 되돌려 장착 AP가 넘치면 먼저 스킬을 해제해야 합니다.`}
                 limit={<>연구 상한: {RESEARCH.map(r => `${r.name} ${r.max}단계`).join(' · ')}.</>}/>
             <Rule icon={<BookOpen size={19}/>} title="물고기 도감"
                 effect={`종별 연구는 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 포획에 골드를 주고, 최종 연구에서 SP 1을 줍니다. 연구 단계마다 어종 성향에 맞는 능력치가 오르고, 2단계부터는 그 어종 상대 피해 보정(생태 연구)이 붙습니다. 50회 포획하면 성향·스킬 정보가 공개됩니다. 지역의 모든 종을 완성하면 AP +1과 지역 테마 보너스를 받습니다.`}
