@@ -15,6 +15,8 @@ export const voyageActions: ActionHandlers = {
         const tier = Number(id);
         if (!Number.isInteger(tier) || tier < 0 || tier > tideLimit(s) || s.dungeon)
             throw Error('해역 난이도 조건을 확인하세요.');
+        if (tier && s.vows?.seal)
+            throw Error('잠든 닻 봉인 중에는 해역 난이도가 0으로 고정됩니다.');
         s.tide = tier;
         s.enemy = null;
         s.effects = {};

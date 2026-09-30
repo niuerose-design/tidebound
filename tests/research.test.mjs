@@ -137,3 +137,60 @@ test('Research v3: message bottles roll once per full offline hour and never at 
     assert.ok(o.lastOffline && o.lastOffline.bottles && o.lastOffline.bottles.count <= 10);
     const n = newState(0); act(n, { type: 'start' }, 0); advance(n, 10 * 3600_000, seeded(7)); assert.equal(n.lastOffline.bottles, undefined);
 });
+
+// 진주 연구 4단계: 서약 3개
+import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta } from './harness.mjs';
+const vowReady = (research = {}, next = {}) => { const s = newState(0); s.rebirths = 5; s.level = 60; Object.assign(s.permanent, research); s.nextVows = next; return s; };
+const catchOne = (s, id = 'minnow') => { s.enemy = { id, name: id, hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 10, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; reward(s, () => .99); };
+
+test('Vows: research entries, reservation rules and cleanup on full reset', () => {
+    for (const id of ['vowAnchor', 'vowBreath', 'vowRough']) { const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.group], [3, 10, 10, 5, 'vow']); assert.equal(economy.researchSpent(id, 3), 60); }
+    const s = newState(0); assert.throws(() => act(s, { type: 'nextVow', id: 'anchor', value: 'on' }, 0), /연구가 필요/);
+    s.permanent.vowAnchor = 1; s.permanent.vowRough = 1; act(s, { type: 'nextVow', id: 'anchor', value: 'on' }, 0); act(s, { type: 'nextVow', id: 'rough', value: '2' }, 0);
+    assert.deepEqual(s.nextVows, { anchor: true, rough: 2 }); assert.throws(() => act(s, { type: 'nextVow', id: 'rough', value: '4' }, 0));
+    act(s, { type: 'nextVow', id: 'anchor', value: 'off' }, 0); act(s, { type: 'nextVow', id: 'rough', value: '0' }, 0); assert.equal(s.nextVows, undefined);
+    assert.deepEqual([1, 2, 3].map(r => vowsMod.anchorPayout({ permanent: { vowAnchor: r } })), [1.5, 1.75, 2]);
+    assert.deepEqual([1, 2, 3].map(r => vowsMod.breathBonus({ permanent: { vowBreath: r } })), [.5, .75, 1]);
+    const w = vowReady({ vowRough: 1 }, { rough: 1 }); w.goldenBook = { minnow: 1 }; w.masteryCarry = 3; act(w, { type: 'rebirth' }, 0); assert.ok(w.vows);
+    act(w, { type: 'resetData' }, 0); for (const k of ['vows', 'nextVows', 'goldenBook', 'masteryCarry']) assert.equal(w[k], undefined, k);
+});
+
+test('Vows · sleeping anchor: level 1 until 300 catches at the target, then stored exp ×1.5; tide locked; give up pays without bonus', () => {
+    const s = vowReady({ vowAnchor: 1 }, { anchor: true }); act(s, { type: 'rebirth' }, 0, () => 0);
+    assert.deepEqual(s.vows.seal, { kind: 'stage', id: 'brook', caught: 0, exp: 0 }); assert.deepEqual(s.nextVows, { anchor: true }, 'reservation stays for later lives');
+    assert.throws(() => act(s, { type: 'tide', id: '1' }, 0), /잠든 닻/); s.tide = 3; assert.equal(meta.encounterTier(s), 0); s.tide = 0;
+    s.stage = 'bay'; catchOne(s); const per = s.vows.seal.exp; assert.ok(per > 0); assert.equal(s.vows.seal.caught, 0, 'catches elsewhere do not count');
+    s.stage = 'brook'; for (let i = 0; i < 299; i++) catchOne(s);
+    assert.equal(s.level, 1); assert.equal(s.exp, 0); assert.equal(s.vows.seal.caught, 299);
+    catchOne(s); const expected = Math.floor(per * 301 * 1.5);
+    assert.equal(s.vows.seal, null); assert.ok(s.level > 1); assert.ok(s.logs.some(l => l.text.includes(`+${expected} EXP`)));
+    const g = vowReady({ vowAnchor: 3 }, { anchor: true }); act(g, { type: 'rebirth' }, 0, () => 0); g.stage = 'brook';
+    for (let i = 0; i < 50; i++) catchOne(g); const stored = g.vows.seal.exp;
+    act(g, { type: 'anchorGiveUp' }, 0); assert.equal(g.vows.seal, null); assert.ok(g.logs.some(l => l.text.includes(`+${stored} EXP`))); assert.ok(g.level > 1);
+    assert.throws(() => act(g, { type: 'anchorGiveUp' }, 0));
+    const none = vowReady(); const rng = counting(); act(none, { type: 'rebirth' }, 0, rng); assert.equal(rng.calls, 0); assert.equal(none.vows, undefined);
+});
+
+test('Vows · one breath: a fall soft-resets the life (online and offline); an unbroken life adds rebirth pearls', () => {
+    const s = vowReady({ vowBreath: 1 }, { breath: true }); act(s, { type: 'rebirth' }, 0); assert.equal(s.vows.breath, true);
+    s.level = 20; s.gold = 5000; s.pearls = 7; const rebirths = s.rebirths, lifeBonus = s.lifeBonus, deaths = s.deaths;
+    s.running = true; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
+    tick(s, () => .5);
+    assert.equal(s.level, 1); assert.equal(s.gold, 100); assert.equal(s.pearls, 7); assert.equal(s.rebirths, rebirths); assert.equal(s.lifeBonus, lifeBonus);
+    assert.equal(s.deaths, deaths + 1); assert.equal(s.vows, undefined); assert.equal(s.running, true); assert.ok(s.logs.some(l => l.text.includes('한 번의 숨')));
+    const o = vowReady({ vowBreath: 1 }, { breath: true }); act(o, { type: 'rebirth' }, 0); act(o, { type: 'stage', id: 'brook' }, 0); o.stage = 'trench'; act(o, { type: 'start' }, 0);
+    advance(o, 2 * 3600_000, seeded(9)); assert.equal(o.vows, undefined); assert.equal(o.stage, 'brook'); assert.ok(o.kills > 0 || o.deaths > 0);
+    const plain = vowReady(), vowed = vowReady({ vowBreath: 3 }); vowed.vows = { breath: true }; const p0 = plain.pearls, v0 = vowed.pearls;
+    act(plain, { type: 'rebirth' }, 0); act(vowed, { type: 'rebirth' }, 0);
+    const base = plain.pearls - p0; assert.equal(vowed.pearls - v0, base + base, 'rank 3 doubles rebirth pearls');
+});
+
+test('Vows · rough sea: enemies ×(1+0.5n), gold and drops ×(1+0.5n×boost); snapshot carries ranking badges', () => {
+    const base = newState(0); base.level = 20; spawn(base, () => .3);
+    const rough = newState(0); rough.level = 20; rough.permanent.vowRough = 1; rough.vows = { rough: 2 }; spawn(rough, () => .3);
+    assert.equal(rough.enemy.id, base.enemy.id); assert.equal(rough.enemy.maxHp, Math.round(base.enemy.maxHp * 2)); assert.equal(rough.enemy.combatStats.attack, Math.round(base.enemy.combatStats.attack * 2));
+    close(goldMultiplier(rough) / goldMultiplier(base), 2); close(dropRate(rough) / dropRate(base), 2);
+    rough.permanent.vowRough = 3; close(goldMultiplier(rough) / goldMultiplier(base), 3);
+    rough.vows = { rough: 2, anchor: true, breath: true }; assert.deepEqual(snapshot(rough).vows, ['anchor', 'breath', 'rough2']);
+    assert.equal('vows' in snapshot(base), false);
+});

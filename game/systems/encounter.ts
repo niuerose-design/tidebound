@@ -17,6 +17,7 @@ import { EQUIPMENT_NAMES } from '../data/equipment';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
 import { saleValue } from './equipment';
+import { roughLevel, roughEnemy, anchorSeal, atAnchorTarget, anchorPayout, anchorTargetName, ANCHOR_CATCHES } from './vows';
 import { scaledEnemyStats, profile } from '../data/encounters';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -24,6 +25,31 @@ import { continueRepeat } from './dungeon-run';
 export function victoryHeal(s: State) {
     const firstAid = s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0;
     return Math.floor(stats(s).hp * (victoryHealRate(s) + firstAid));
+}
+/** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
+export function gainLevels(s: State) {
+    while (s.exp >= xpNeeded(s.level) && s.level < 100) {
+        s.exp -= xpNeeded(s.level);
+        s.level++;
+        s.statPoints += PROGRESSION.statPerLevel;
+        if (s.level > s.peakLevel) {
+            s.sp += (s.level - s.peakLevel) * PROGRESSION.spPerPeakLevel;
+            s.peakLevel = s.level;
+        }
+        s.mana = stats(s).mana;
+        s.hp = stats(s).hp;
+        addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
+    }
+}
+/** 잠든 닻 봉인 해제. 달성하면 쌓인 경험치 × 배율, 포기하면 그대로 지급합니다. 레벨은 호출한 쪽에서 gainLevels로 올립니다. */
+export function releaseAnchor(s: State, achieved: boolean) {
+    const seal = anchorSeal(s);
+    if (!seal) return 0;
+    const exp = achieved ? Math.floor(seal.exp * anchorPayout(s)) : seal.exp;
+    s.exp += exp;
+    s.vows!.seal = null;
+    addLog(s, achieved ? `잠든 닻 봉인 해제 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리 달성 · 쌓인 경험치 ×${anchorPayout(s)} = +${exp} EXP` : `잠든 닻 포기 · 쌓인 경험치 +${exp} EXP를 그대로 받았습니다.`, 'reward');
+    return exp;
 }
 /** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 잔잔한 물결 1%p/단계. */
 export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : BALANCE.healAfterKill) + researchRank(s, 'recovery') * .01;
@@ -92,6 +118,13 @@ export function spawn(s: State, rng: () => number) {
         foe.attack = Math.round(foe.attack * swarmAttackMultiplier(swarm));
         foe.magic = Math.round((foe.magic || 0) * swarmAttackMultiplier(swarm));
     }
+    // 거친 바다: 적 체력·공격 ×(1 + 0.5 × 선택 단계). 해역 난이도와 별개로 곱합니다.
+    if (roughLevel(s)) {
+        const m = roughEnemy(s);
+        foe.hp = Math.round(foe.hp * m);
+        foe.attack = Math.round(foe.attack * m);
+        foe.magic = Math.round((foe.magic || 0) * m);
+    }
     s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}) };
 }
 export function reward(s: State, rng: () => number) {
@@ -122,24 +155,21 @@ export function reward(s: State, rng: () => number) {
     }
     s.book[e.id] = (s.book[e.id] || 0) + size;
     s.gold += gold;
-    s.exp += exp;
+    // 잠든 닻: 봉인 중에는 경험치를 따로 쌓고, 목표에서 300마리를 잡으면 배율을 곱해 한 번에 지급합니다.
+    const seal = anchorSeal(s);
+    if (seal) {
+        seal.exp += exp;
+        if (atAnchorTarget(s)) seal.caught += size;
+    }
+    else
+        s.exp += exp;
     addLog(s, `${golden ? '✦ 황금 ' : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 포획 · +${gold} G · +${exp} EXP${golden ? ' · 황금 개체 골드 10배' : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
     const fish = FISH.find(f => f.id === e.id)!;
     for (let i = 0; i < size; i++)
         drop(s, fish.level + encounterTier(s) * 5, rng);
-    while (s.exp >= xpNeeded(s.level) && s.level < 100) {
-        s.exp -= xpNeeded(s.level);
-        s.level++;
-        s.statPoints += PROGRESSION.statPerLevel;
-        if (s.level > s.peakLevel) {
-            s.sp += (s.level - s.peakLevel) * PROGRESSION.spPerPeakLevel;
-            s.peakLevel = s.level;
-        }
-        s.mana = stats(s).mana;
-        s.hp = stats(s).hp;
-        addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
-    }
+    if (seal && seal.caught >= ANCHOR_CATCHES) releaseAnchor(s, true);
+    gainLevels(s);
     for (const id of grantJobSkills(s)) {
         const sk = SKILLS.find(skill => skill.id === id)!;
         if (sk.unlockJobMastery) addLog(s, `직업 숙련으로 ${sk.name} 해금 · 기본 Lv.0부터 장착 가능`, 'skill');

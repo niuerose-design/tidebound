@@ -14,6 +14,7 @@ import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
+import { VOW_IDS, VOW_NAMES, vowUnlocked, vowBoost, anchorPayout, breathBonus, roughEnemy, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '@/game/systems/vows';
 import { BonusList } from './inventory-panel';
 /** 진주 연구 카드: 현재 → 다음 효과, 잠긴 연구는 해금 환생 횟수를 보여줍니다. */
 function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a: Action) => void; busy: boolean }) {
@@ -27,7 +28,7 @@ function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a
 }
 function ResearchTabView({ tab, s, send, busy }: { tab: ResearchTab; s: State; send: (a: Action) => void; busy: boolean }) {
     const list = RESEARCH.filter(r => r.tab === tab), name = RESEARCH_TABS.find(x => x.id === tab)!.name;
-    const groups = tab === 'combat' ? (['attack', 'defense'] as const) : tab === 'utility' ? (['basic', 'special'] as const) : [undefined];
+    const groups = tab === 'combat' ? (['attack', 'defense'] as const) : tab === 'utility' ? (['basic', 'special', 'vow'] as const) : [undefined];
     const { refund, spent, first } = researchRefund(s, tab);
     return <>
         {groups.map(g => <section key={g || 'all'} className="research-group">
@@ -40,11 +41,39 @@ function ResearchTabView({ tab, s, send, busy }: { tab: ResearchTab; s: State; s
         </div>
     </>;
 }
+const VOW_TEXT = {
+    anchor: (s: State) => `환생 때 사냥터·던전 하나가 지정되고, 그곳에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1 · 해역 난이도 0. 풀리면 쌓인 경험치 ×${anchorPayout(s)}. 언제든 포기 가능(보너스 없이 지급).`,
+    breath: (s: State) => `쓰러지면 이번 생을 처음부터 다시 시작(환생 횟수·진주 변화 없음, 서약 해제). 한 번도 쓰러지지 않고 환생하면 환생 진주 +${Math.round(breathBonus(s) * 100)}%.`,
+    rough: (s: State) => `선택 단계마다 적 체력·공격 +50%, 드롭·골드 +${Math.round(50 * vowBoost(s, 'rough'))}%. 해역 난이도와 별개입니다.`,
+};
+/** 환생 화면의 서약: 이번 생 서약과 잠든 닻 진행, 다음 생 서약 예약. */
+function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
+    const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), seal = anchorSeal(s), now = s.vows, next = s.nextVows || {};
+    if (!unlocked.length && !now) return null;
+    return <section className="panel vow-panel">
+        <div className="section-title"><h2>서약</h2><span>제약을 걸고 고유 보상을 받습니다. 진주 연구 유틸 탭에서 해금합니다.</span></div>
+        {now && <div className="vow-current"><strong>이번 생 서약</strong><span>{VOW_IDS.filter(id => now[id]).map(id => id === 'rough' ? `${VOW_NAMES.rough} ${now.rough}단계 (적 ×${roughEnemy(s)})` : VOW_NAMES[id]).join(' · ')}</span>
+            {seal && <div className="vow-seal"><Meter value={Math.min(seal.caught, ANCHOR_CATCHES)} max={ANCHOR_CATCHES} label={`잠든 닻 · ${anchorTargetName(seal)} ${seal.caught} / ${ANCHOR_CATCHES}마리 · 쌓인 경험치 ${format(seal.exp)}`}/>
+                <ConfirmButton label="잠든 닻 포기" title="잠든 닻을 포기할까요?" description={`봉인이 풀리고 쌓인 경험치 ${format(seal.exp)}를 보너스 없이 받습니다. 달성하면 ×${anchorPayout(s)}를 받을 수 있습니다.`} disabled={busy} onConfirm={() => send({ type: 'anchorGiveUp' })}/></div>}
+        </div>}
+        <div className="vow-grid">{VOW_IDS.map(id => {
+            const open = vowUnlocked(s, id);
+            return <article className={`vow-card ${open ? '' : 'locked'}`} key={id}>
+                <h3>{VOW_NAMES[id]}</h3><p>{VOW_TEXT[id](s)}</p>
+                {!open ? <small>진주 연구에서 해금 (환생 5회)</small> : id === 'rough'
+                    ? <div className="vow-rough">{[0, 1, 2, 3].map(n => <button key={n} className={(next.rough || 0) === n ? 'primary' : 'secondary'} disabled={busy} onClick={() => send({ type: 'nextVow', id, value: String(n) })}>{n ? `${n}단계` : '끔'}</button>)}</div>
+                    : <button className={next[id] ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!next[id]} onClick={() => send({ type: 'nextVow', id, value: next[id] ? 'off' : 'on' })}>{next[id] ? '다음 생에 걸기 · 켜짐' : '다음 생에 걸기 · 꺼짐'}</button>}
+            </article>;
+        })}</div>
+        <p className="footnote">예약한 서약은 다음 환생부터 걸리고, 바꾸기 전까지 이후 환생에도 유지됩니다.</p>
+    </section>;
+}
 export function Rebirth({ s, send, busy }: PanelProps) {
     const [tab, setTab] = useState('prepare');
     const [researchTab, setResearchTab] = useState<ResearchTab>('combat');
     const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
     const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }, bonus), permanentExp = 1 + permanentExpBonus(s);
+    const breathExtra = s.vows?.breath ? Math.floor(reward * breathBonus(s)) : 0;
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0;
     const projected = { ...s, level: Math.max(s.level, required) }, lifeBonus = nextLifeBonus(projected);
     const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
@@ -60,16 +89,17 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="prepare">환생 준비</TabsTrigger><TabsTrigger value="research">진주 연구</TabsTrigger><TabsTrigger value="relics">환생 유물</TabsTrigger></TabsList></Tabs>
         {tab === 'prepare' && <>
             <GrowthGoals s={s} send={send} busy={busy}/>
+            <VowPanel s={s} send={send} busy={busy}/>
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
                     {s.lifeBonus && <p className="footnote">이번 생 효과: {s.lifeBonus === 'deep' ? '깊은 항해 · 직업·스킬 숙련 기본 획득 +2' : tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : '순풍 (요구 레벨 도달로 종료)'}</p>}</div>
-                <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 진주' : '환생 조건 달성 시 예상 진주'}</span><strong><Sparkles size={26}/>{format(reward)}</strong>
+                <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 진주' : '환생 조건 달성 시 예상 진주'}</span><strong><Sparkles size={26}/>{format(reward + breathExtra)}</strong>
                     <ConfirmButton label="환생하기" title="다음 항해를 시작할까요?" description="오른쪽 아래 '초기화되는 것'이 처음 상태로 돌아가고, '유지되는 것'은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>
             </section>
             <div className="rebirth-records rebirth-three">
                 <article className="panel ledger-gain"><h2>받는 보상</h2><ul>
-                    <li><b>진주 +{format(reward)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{parts.deep ? ` · 깊은 항해 ${parts.deep}` : ''}</small></li>
+                    <li><b>진주 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{parts.deep ? ` · 깊은 항해 ${parts.deep}` : ''}{breathExtra ? ` · 한 번의 숨 +${breathExtra}` : ''}</small></li>
                     <li><b>환생 영구 보너스: 체력·물리/마법 공격·물리/마법 방어</b><small>현재 +{memoryNow}% → 환생 후 +{memoryNext}%</small></li>
                     <li><b>영구 경험치 획득</b><small>현재 ×{permanentExp.toFixed(2)} → 환생 후 ×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</small></li>
                     <li><b>장착 AP {apGain ? '+1' : '+0'}</b><small>{apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`}</small></li>

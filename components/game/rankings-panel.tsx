@@ -8,6 +8,7 @@ import { BALANCE } from '@/game/data/balance';
 import { JOBS } from '@/game/data/classes';
 import { TRAINING } from '@/game/systems/duel';
 import { statDisplay } from '@/game/data/progression';
+import { vowBadgeLabel } from '@/game/systems/vows';
 import { Empty, Heading, format, useNow } from './shared';
 import type { Ranking } from './use-game';
 import type { PanelProps } from './panel-props';
@@ -65,7 +66,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
         <TableBody>{rows.map((r, i) => <TableRow key={r.id}>
             <TableCell className="rank-number">{i + 1}</TableCell>
             <TableCell>
-            <strong>{r.name}{r.self ? ' (나)' : ''}</strong>
+            <strong>{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
             <small className="block">Lv. {r.level} · {JOBS.find(j => j.id === r.job)?.name} · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
             <small className="block ranking-combat-stats">명중 수치 {statDisplay('accuracy', r.stats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', r.stats.evasion || 0)}</small>
             </TableCell>

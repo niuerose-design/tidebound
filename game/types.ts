@@ -267,6 +267,10 @@ export type State = {
     autoSell?: boolean;
     /** 황금 개체를 잡은 횟수(어종별). */
     goldenBook?: Record<string, number>;
+    /** 이번 생에 걸린 서약. */
+    vows?: Vows;
+    /** 다음 생에 걸 서약 예약. 환생할 때 vows가 됩니다. */
+    nextVows?: Vows;
     dungeon: null | {
         id: string;
         wave: number;
@@ -291,7 +295,11 @@ export type State = {
         bottles?: { count: number; gold: number; items: number; pearls: number };
     };
 };
+/** 서약. anchor·breath는 걸었는지, rough는 거친 바다 선택 단계(1~3). seal은 잠든 닻 봉인 진행(이번 생만). */
+export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null };
 export type Snapshot = {
+    /** 걸어 둔 서약 배지(랭킹 표시). 예: ['anchor', 'rough2'] */
+    vows?: string[];
     /** 세이브 버전. 랭킹·결투는 현재 버전의 스냅샷만 사용합니다. */
     season?: number;
     skillPractice?: Record<string, number>;

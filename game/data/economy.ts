@@ -5,7 +5,7 @@ export const ECONOMY = { enhanceMax: 10, enhanceGain: .15, shopBase: 180, shopPe
 // v22: 감정은 희귀 이상. 드물게 신화·고대·태초가 나옵니다(등급 수 = 옵션 수).
 export const APPRAISAL = [{ rarity: 1, chance: .55 }, { rarity: 2, chance: .33 }, { rarity: 3, chance: .09 }, { rarity: 4, chance: .025 }, { rarity: 5, chance: .004 }, { rarity: 6, chance: .001 }];
 export type ResearchTab = 'combat' | 'utility' | 'gold';
-export type ResearchGroup = 'attack' | 'defense' | 'basic' | 'special';
+export type ResearchGroup = 'attack' | 'defense' | 'basic' | 'special' | 'vow';
 export type ResearchDef = {
     id: string; name: string; desc: string; max: number; base: number; step: number;
     tab: ResearchTab; group?: ResearchGroup;
@@ -17,7 +17,7 @@ export type ResearchDef = {
     negative?: boolean;
 };
 export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '전투' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
-export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본', special: '특별' };
+export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본', special: '특별', vow: '서약' };
 export const RESEARCH: ResearchDef[] = [
     // The first purchase is reachable after a normal first rebirth, but later
     // ranks are deliberately expensive so pearls remain a meaningful choice.
@@ -43,6 +43,9 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'sortingNet', name: '선별의 그물', desc: '1단계 일반, 2단계 희귀 이하 드롭 자동 판매 (설정에서 켜고 끔)', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 판매 등급', suffix: '단계' },
     { id: 'messageBottle', name: '병 속의 편지', desc: '오프라인 정산 1시간마다 편지병 확률 +4%p', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .04, unit: 'pp', label: '시간당 편지병 확률' },
     { id: 'goldenFish', name: '황금 개체', desc: '포획마다 황금 개체 확률 +0.1%p (포획 골드 10배)', max: 10, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 5, per: .001, unit: 'pp', label: '황금 개체 확률' },
+    { id: 'vowAnchor', name: '잠든 닻', desc: '서약 해금. 2·3단계는 봉인 해제 보너스 50%씩 강화 (×1.5 → ×1.75 → ×2)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계' },
+    { id: 'vowBreath', name: '한 번의 숨', desc: '서약 해금. 2·3단계는 환생 진주 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계' },
+    { id: 'vowRough', name: '거친 바다', desc: '서약 해금. 2·3단계는 드롭·골드 보너스 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계' },
     { id: 'mastery', name: '숙련의 기억', desc: '스킬·직업 숙련 획득 +5%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .05, unit: 'percent', label: '숙련 획득' },
     { id: 'gold', name: '황금 물결', desc: '포획·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '포획·던전 골드' },
     { id: 'dungeon', name: '심연의 금고', desc: '던전 클리어 골드 +8%', max: 10, base: 5, step: 4, tab: 'gold', per: .08, unit: 'percent', label: '던전 클리어 골드' },

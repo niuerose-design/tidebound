@@ -12,6 +12,7 @@ import { canUse, skillMasteryRanks } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, reward, drop } from './encounter';
 import { bookEcology } from './book';
+import { breathReset } from './actions/lifecycle';
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
@@ -65,6 +66,8 @@ export function tickTurn(s: State, rng: () => number) {
         reward(s, rng);
     else if (s.hp <= 0) {
         s.deaths++;
+        // 한 번의 숨: 쓰러지면 즉시 이번 생을 처음부터 다시 시작합니다(오프라인 정산 중에도 같은 규칙).
+        if (s.vows?.breath) { breathReset(s, s.lastTick); return; }
         s.recovery = BALANCE.recoveryTurns;
         s.enemy = null;
         s.cooldowns = {};
