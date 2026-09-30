@@ -96,7 +96,7 @@
 .job-current-summary h2 { font-size:22px; margin:3px 0; }
 .job-current-summary p { margin:7px 0 0; font-size:13px; color:#a5bcb0; }
 .job-current-summary>button { margin-left:auto; flex-shrink:0; }
-.job-family-tabs.game-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); height:auto; gap:4px; padding:0; }
+.job-family-tabs.game-tabs { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); height:auto!important; gap:4px; padding:0; }
 .job-family-tabs [data-slot=tabs-trigger] { gap:9px; padding:13px 8px; font-size:14px; }
 .job-family-tabs [data-slot=tabs-trigger]>span { color:#8eab9f; font-size:12px; }
 .job-browser-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(340px,1fr); gap:22px; align-items:start; }
@@ -202,7 +202,7 @@
     .rebirth-gains b { display:block; margin:5px 0 0; }
     .job-current-summary { padding:20px; flex-wrap:wrap; gap:12px; }
     .job-current-summary>button { margin-left:38px; }
-    .job-family-tabs.game-tabs { grid-template-columns:1fr 1fr; }
+    .job-family-tabs.game-tabs { grid-template-columns:repeat(4,minmax(0,1fr)); }
     .job-family-tabs [data-slot=tabs-trigger] { font-size:13px; }
     .job-browser .job-node-children { margin-left:9px; padding-left:9px; }
     .job-browser .job-node { padding:11px 8px; }
