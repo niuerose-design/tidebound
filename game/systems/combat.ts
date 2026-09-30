@@ -4,9 +4,11 @@ import { STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
 import type { Stats, StatusEffects, CombatEvent, CombatHit } from '../types';
 export type { CombatEvent, CombatHit } from '../types';
 import { normalizeStats, hitChance } from './stats';
-import { effectiveSkill } from './progression';
+import { effectiveSkill, signatureScale } from './progression';
 export type Fighter = {
     name: string;
+    /** 현재 직업. 4차 이상 전용 기술의 계보 밖 효율을 정합니다(적은 없음). */
+    job?: string;
     stats: Stats;
     hp: number;
     skills: string[];
@@ -99,7 +101,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             if (!base || base.type !== 'active' || blocked.has(id))
                 continue;
             const candidate = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.specializations?.[id], a.practice?.[id] || 0);
-            if (candidate.effect === 'heal' && a.hp > sa.hp * SKILL_FORMULA.healThreshold) continue;
+            candidate.multiplier *= signatureScale(base, a.job);
+            // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
             if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)
                 continue;
             if (candidate.condition === 'healthyTarget' && b.hp < sb.hp * .6)
@@ -112,23 +115,30 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             }
         }
     }
+    // 마력 평타: 마법 직업은 기본 공격 대신 확률적으로 마법 공격 기반의 약한 마법 피해를 줍니다.
+    const arcane = !chosen && sa.arcaneStrike > 0 && rng() < sa.arcaneStrike;
     let healed = 0;
+    // 체력이 충분한데 쓴 회복 기술: 회복 직업이 아니면 이번 공격 피해가 줄어듭니다.
+    const idleHeal = chosen?.effect === 'heal' && a.hp >= sa.hp * SKILL_FORMULA.healThreshold && !sa.healFocus;
     if (chosen) {
         a.cooldowns[chosen.id] = chosen.cooldown;
         a.mana = Math.max(0, a.mana - (chosen.manaCost || 0));
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
         if (chosen.effect === 'heal') {
-            healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio)));
+            healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio) * (1 + sa.healBonus)));
             a.hp += healed;
         }
     }
     const hit = hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) }, { ...sb, speed: targetSpeed });
-    const label = chosen?.name || '기본 공격';
+    const label = chosen?.name || (arcane ? '마력 평타' : '기본 공격');
     const landed = rng() < hit;
-    const magical = chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack;
+    const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack;
     const split = chosen?.damageType === 'split';
     // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
-    let base = chosen?.scaling === 'harmony' ? (sa.harmony || 0) : magical ? sa.magic : sa.attack;
+    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : magical ? sa.magic : sa.attack;
+    // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
+    if (chosen?.scaling === 'defense')
+        base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
     if (chosen?.scaling === 'hp')
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
     if (chosen?.scaling === 'mana')
@@ -143,24 +153,44 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const mitigated = (raw: number) => split
         ? Math.round(raw * SKILL_FORMULA.splitPhysical * 100 / (100 + sb.defense * pierce * 2)) + Math.round(raw * (1 - SKILL_FORMULA.splitPhysical) * 100 / (100 + sb.resist * pierce * 2))
         : Math.round(raw * 100 / (100 + defense * 2));
-    const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow) : false;
+    const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
     const linkMultiplier = linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1;
     if (linked) { notes.push('연계'); ev.linked = true; }
     const crit = landed && rng() < sa.crit;
-    const damage = landed ? Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1))) : 0;
+    const damage = landed ? Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1))) : 0;
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - damage);
+    // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
+    if (landed && sb.thorns > 0) {
+        const reflected = Math.min(a.hp, Math.max(1, Math.round(sb.defense * sb.thorns * 100 / (100 + sa.defense * 2))));
+        a.hp = Math.max(0, a.hp - reflected);
+        ev.reflected = reflected;
+        notes.push(`반격 ${reflected}`);
+    }
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
     ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed });
     if (landed && chosen?.effect === 'stun') {
-        b.stun = Math.max(b.stun, chosen.statusTurns ?? 1);
-        notes.push('기절');
-        ev.statuses.push({ id: 'stun', turns: chosen.statusTurns ?? 1 });
+        const turns = (chosen.statusTurns ?? 1) + sa.stunBonus;
+        b.stun = Math.max(b.stun, turns);
+        notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
+        ev.statuses.push({ id: 'stun', turns });
     }
     if (landed && chosen?.effect === 'bleed') {
-        const turns = chosen.statusTurns ?? STATUS_TUNING.bleedTurns;
-        b.effects.dot = { damage: Math.max(1, Math.floor(base * SKILL_FORMULA.bleedRatio * (weakened ? SKILL_FORMULA.weakenedDamage : 1))), turns, name: '출혈' };
-        notes.push(`출혈 ${turns}턴`);
+        const turns = (chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus;
+        const name = chosen.dotName || '출혈';
+        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
+        const current = b.effects.dot;
+        if (chosen.dotStacks) {
+            // 중독 중첩: 이미 걸린 중첩형 지속 피해에 한 중첩을 더하고, 한 중첩 피해는 더 강한 쪽을 씁니다.
+            const stacks = current?.stacks ? Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, current.stacks + 1) : 1;
+            const perStack = Math.max(tick, current?.stacks ? current.perStack || 0 : 0);
+            b.effects.dot = { damage: perStack * stacks, perStack, stacks, turns, name };
+            notes.push(`${name} ${stacks}중첩 ${turns}턴`);
+        } else {
+            // 일반 출혈은 덮어쓰되, 쌓아 둔 중독이 더 강하면 지우지 않습니다.
+            if (!current?.stacks || tick >= current.damage) b.effects.dot = { damage: tick, turns, name };
+            notes.push(`${name} ${turns}턴`);
+        }
         ev.statuses.push({ id: 'bleed', turns });
     }
     if (landed && chosen?.effect === 'weaken') {
@@ -170,13 +200,13 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         ev.statuses.push({ id: 'weaken', turns });
     }
     if (landed && chosen?.effect === 'silence') {
-        const turns = chosen.statusTurns ?? STATUS_TUNING.silenceTurns;
+        const turns = (chosen.statusTurns ?? STATUS_TUNING.silenceTurns) + sa.controlBonus;
         extendStatus(b.effects, 'silence', turns);
         notes.push(`침묵 ${turns}턴`);
         ev.statuses.push({ id: 'silence', turns });
     }
     if (landed && chosen?.effect === 'slow') {
-        const turns = chosen.statusTurns ?? STATUS_TUNING.slowTurns;
+        const turns = (chosen.statusTurns ?? STATUS_TUNING.slowTurns) + sa.controlBonus;
         extendStatus(b.effects, 'slow', turns);
         notes.push(`감속 ${turns}턴`);
         ev.statuses.push({ id: 'slow', turns });
@@ -187,7 +217,11 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         notes.push(`가속 ${turns}턴`);
         ev.statuses.push({ id: 'haste', turns, onSelf: true });
     }
-    const drain = Math.floor(actual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0)));
+    const drainRate = sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0);
+    // 흡혈 회복은 준 피해 비례지만 한 번의 행동에서 최대 체력 × 흡혈률 × lifestealHpCap을 넘지 않습니다.
+    let drainLeft = Math.floor(sa.hp * drainRate * SKILL_FORMULA.lifestealHpCap);
+    const drain = Math.min(drainLeft, Math.floor(actual * drainRate));
+    drainLeft -= drain;
     if (drain) {
         const recovery = Math.min(sa.hp - a.hp, drain);
         a.hp += recovery;
@@ -196,18 +230,19 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // Follow-up hits are part of the same action. They use the same hit chance,
     // cannot recursively trigger another follow-up, and are capped in balance.ts.
     const followUps = Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
-    for (let i = 0; i < followUps && b.hp > 0; i++) {
+    for (let i = 0; i < followUps && b.hp > 0 && a.hp > 0; i++) {
         if (rng() >= hit) {
             ev.hits.push({ kind: 'follow', value: 0, critical: false, miss: true });
             continue;
         }
         const followCrit = rng() < sa.crit;
-        const followMultiplier = (chosen?.multiplier || 1) * (chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier);
+        const followMultiplier = (chosen?.multiplier || 1) * ((chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier) + sa.followUpBonus);
         const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1)));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
         ev.hits.push({ kind: 'follow', value: followActual, critical: followCrit, miss: false });
-        const followDrain = Math.floor(followActual * (sa.lifesteal + (chosen?.effect === 'drain' ? (chosen.drainRatio ?? SKILL_FORMULA.drainRatio) : 0)));
+        const followDrain = Math.min(drainLeft, Math.floor(followActual * drainRate));
+        drainLeft -= followDrain;
         if (followDrain) {
             const recovery = Math.min(sa.hp - a.hp, followDrain);
             a.hp += recovery;

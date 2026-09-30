@@ -1,4 +1,5 @@
 import type { Skill } from '../types';
+import { EXPANSION_BALANCE } from './expansion';
 
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
@@ -42,7 +43,8 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     moonTide: { chance: .6, multiplier: 2, manaCost: 20, healRatio: .2 },
     reefPulse: { chance: .55, multiplier: 1.25, manaCost: 14, healRatio: .16 },
     bellCrash: { chance: .24, multiplier: 1.5, scalingRatio: .02 },
-    thornCounter: { chance: .28, multiplier: 2.1 },
+    // v21 수호 계열: 물리 방어 비례 피해(방어 친화도 적용).
+    thornCounter: { chance: .26, multiplier: 1.8, scaling: 'defense', scalingRatio: 1.2 },
     windupCast: { chance: .25, multiplier: 1.5, scalingRatio: .03 },
     loadedHook: { chance: .3, multiplier: 1.05, cooldown: 2, drainRatio: .1 },
     redWake: { chance: .24, multiplier: 1.65, scalingRatio: .07, drainRatio: .18 },
@@ -51,10 +53,11 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     // 만능 항해사: check-all-rounder.mjs 검증값
     harmonicWeight: { chance: .5, multiplier: 2.2, cooldown: 3, manaCost: 16 },
     twinHook: { chance: .24, multiplier: 1.15, extraAttackMultiplier: .5 },
-    electricBite: { chance: .55, multiplier: 1.7, manaCost: 14 },
+    electricBite: { chance: .28, multiplier: 1.75, damageType: 'physical' },
     tentacleBarrage: { chance: .22, multiplier: 1.05, extraAttackMultiplier: .45 },
     sovereignSilence: { chance: .5, multiplier: 1.05, manaCost: 16 },
     borrowedTentacles: { chance: .22, multiplier: 1.15, extraAttackMultiplier: .55 },
+    ...EXPANSION_BALANCE,
 };
 
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
@@ -75,15 +78,15 @@ export function tuneActiveSkills(skills: Skill[]) {
             manaReduction: magic ? 1 : 0, cooldownReduction: 0 };
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
-        const source = sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : magic ? '마법 공격' : '물리 공격';
-        const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : '';
+        const source = sk.scaling === 'harmony' ? '육중 조화 원시 피해' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
+        const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : '';
         sk.desc = `(${source}${scaling}) × ${sk.multiplier} 피해.${sk.id === 'crush' ? ' 물리 방어 150% 추가 피해.' : ''}`;
         if (sk.effect === 'heal') sk.desc += ` 최대 체력 ${Math.round((sk.healRatio ?? .22) * 100)}% 회복.`;
         if (sk.effect === 'drain') sk.desc += ` 실제 피해의 ${Math.round((sk.drainRatio ?? .25) * 100)}% 회복.`;
-        if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += ` ${ { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun']} 효과.`;
+        if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += ` ${sk.effect === 'bleed' && sk.dotName ? sk.dotName + (sk.dotStacks ? '(중첩)' : '') : { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun']} 효과.`;
+        if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
         if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
-        if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈', weakened: '약화', controlled: '침묵·감속' }[sk.damageBonusCondition]} 중인 적에게 직접 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
     }

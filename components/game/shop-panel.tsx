@@ -22,12 +22,12 @@ export function Shop({ s, send, busy }: PanelProps) {
         </section>
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="gamble">장비 감정</TabsTrigger><TabsTrigger value="buy">확정 구매</TabsTrigger><TabsTrigger value="forge">장비 강화</TabsTrigger></TabsList></Tabs>
         {tab === 'gamble' && <section aria-label="부위별 장비 감정">
-            <div className="appraisal-odds"><span>감정 등급 확률</span>{APPRAISAL.map(r => <b key={r.rarity} style={{ color: RARITIES[r.rarity].color }}>{RARITIES[r.rarity].name} {Math.round(r.chance * 100)}%</b>)}</div>
+            <div className="appraisal-odds"><span>감정 등급 확률</span>{APPRAISAL.map(r => <b key={r.rarity} style={{ color: RARITIES[r.rarity].color }}>{RARITIES[r.rarity].name} {Math.round(r.chance * 1000) / 10}%</b>)}</div>
             <div className="port-gamble-grid">{GAMBLE_CATEGORIES.map(o => <article className="panel market-card gamble-card" key={o.id}>
                 <div className="gamble-icon"><SlotIcon slot={o.slot} size={34}/></div>
                 <div><span className="eyebrow">미확인 장비</span><h2>{o.name}</h2></div><p>{o.description}</p>
-                <span className="gamble-guarantee">Lv.{s.level} · 희귀 이상 · 무작위 옵션 1개</span>
-                <ConfirmButton label={`${format(gamble)} G · 감정`} title={`${o.name}을 감정할까요?`} description={`골드 ${format(gamble)} G를 사용합니다. ${APPRAISAL.map(r => `${RARITIES[r.rarity].name} ${Math.round(r.chance * 100)}%`).join(' · ')}. ${o.description} 추가 옵션 8종은 같은 확률이며, 결과는 가방에 보관됩니다.`} disabled={busy || s.gold < gamble || full} onConfirm={() => send({ type: 'gamble', id: o.id })}/>
+                <span className="gamble-guarantee">Lv.{s.level} · 희귀 이상 · 등급 수만큼 옵션 1~6개</span>
+                <ConfirmButton label={`${format(gamble)} G · 감정`} title={`${o.name}을 감정할까요?`} description={`골드 ${format(gamble)} G를 사용합니다. ${APPRAISAL.map(r => `${RARITIES[r.rarity].name} ${Math.round(r.chance * 1000) / 10}%`).join(' · ')}. ${o.description} 등급 수만큼 옵션이 붙고(영웅 이상은 규칙 옵션 가능), 결과는 가방에 보관됩니다.`} disabled={busy || s.gold < gamble || full} onConfirm={() => send({ type: 'gamble', id: o.id })}/>
             </article>)}</div>
             <p className="footnote">장비 드롭 보너스는 감정 확률에 영향을 주지 않습니다. 획득한 장비는 보관함에서 직접 장착하세요.</p>
         </section>}

@@ -10,7 +10,12 @@ export const BALANCE = {
     // Gear luck, routing and inherited techniques still change the time to rebirth.
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
-    activeSlots: 4, passiveSlots: 3, inventoryCap: 60, dropChance: 0.17,
+    activeSlots: 4, passiveSlots: 3, inventoryCap: 60,
+    // v22: 장비는 드물게 떨어집니다. 처치당 기본 0.1%(시간당 수백 마리를 잡아도 한두 개).
+    // 행운·물건도감·연구·드롭 보너스는 이 확률에 곱해지는 상대 증가로 바뀝니다(구 기준 17%p당 +100%).
+    dropChance: 0.001, dropBonusScale: 0.17, dropChanceCap: 0.01,
+    // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
+    dungeonRepeatDrop: 0.05,
     // 처치 후 회복률(근거: scripts/check-recovery.mjs). 응급처치를 장착하면 승리마다 FIRST_AID_HEAL을 더합니다.
     healAfterKill: 0.08, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
@@ -49,11 +54,33 @@ export const SKILL_FORMULA = {
     // 육중 조화: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
     // 초안(합 × 1.2 + 최저 × 6)은 편중 배분이 더 강해 check-all-rounder.mjs 결과로 조정했습니다.
     harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,
+    // v21 만능 항해사: 원시 피해도 연구·환생·직업 배율을 받고, 장착한 능력치 패시브의
+    // 출신 직업이 서로 다를수록(최대 harmonyJobCap개) 직업당 harmonyPerJob만큼 강해집니다.
+    harmonyScale: 2, harmonyPerJob: .15, harmonyJobCap: 6,
+    // v21 회복 기술은 체력이 가득 차도 발동합니다. 체력이 healThreshold 이상일 때 쓰면
+    // 회복 직업이 아닌 경우 그 공격의 피해가 idleHealDamage 배가 됩니다.
+    idleHealDamage: .6,
+    // v22.2 흡혈 상한: 한 번의 행동(추가타 포함)으로 회복하는 흡혈량은 최대 체력 × 흡혈률 × 이 값까지입니다.
+    // 심연은 적의 체력이 높고 공격이 약한 소모전이라, 준 피해 비례 흡혈 3%만으로 도달 층이 3배가 되었습니다.
+    lifestealHpCap: .025,
+    // v21 방어 친화도: (직업 물리 방어 배율 − guardBase) ÷ guardSpan, guardFloor~1로 제한.
+    // 방어 비례 피해와 반격은 이 값만큼만 발휘되어 계승해도 수호 계열만큼 강하지 않습니다.
+    guardBase: .95, guardSpan: .5, guardFloor: .2,
+    // 처형형 연계: 적 체력이 이 비율 이하일 때 lowHp 조건 보너스가 붙습니다.
+    lowHpThreshold: .35,
+    // v21.1 마력 평타: 마법 직업(마법 배율이 물리보다 0.05 이상 높음)은 기본 공격 대신
+    // 차수별 확률로 마법 공격 × arcaneStrikeRatio의 마법 피해를 줍니다. 마나를 쓰지 않습니다.
+    arcaneStrikeRatio: .6, arcaneStrikeChance: [0, .7, .8, .9, .95, .95],
+    // v21.2 전용 기술: signatureTier 이상 직업의 기술은 자기 계보(조상·후손 직업)에서 온전히,
+    // 계보 밖에서 계승하면 배율·패시브 수치가 signatureScale 배로 발휘됩니다. 1~3차 기술은 자유롭게 조합됩니다.
+    signatureTier: 4, signatureScale: .7,
 };
 // 상태이상 수치와 지속시간은 전투 코드와 분리해 여기서 조정합니다.
 export const STATUS_TUNING = {
     weakenTurns: 3,
     bleedTurns: 3,
+    /** v21.3 중독 중첩 상한. 중첩형 기술은 겹칠 때마다 한 중첩씩 쌓고 지속 시간을 갱신합니다. */
+    poisonMaxStacks: 5,
     silenceTurns: 2,
     slowTurns: 3,
     hasteTurns: 3,
@@ -71,7 +98,8 @@ export const STATUS_GUIDE = [
     { id: 'haste', name: '가속', kind: '속도 증가', description: '속도가 35% 높아져 선공과 명중 보정에 유리해집니다.', detail: '추가 공격을 만들지는 않으며, 기존 턴 구조 안에서 선공을 유리하게 만듭니다.' },
 ] as const;
 export const xpNeeded = (level: number) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1));
-export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }];
+// v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.
+export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }, { name: '신화', color: '#f08a6c', factor: 3.9 }, { name: '고대', color: '#5fd0b5', factor: 4.5 }, { name: '태초', color: '#ff6fb5', factor: 5.2 }];
 export const SLOTS = { rod: '낚싯대', coat: '방어구', charm: '나침반' };
 /** 응급처치(공용 패시브): 승리 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
 export const FIRST_AID_HEAL = .04;

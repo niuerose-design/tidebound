@@ -1,4 +1,5 @@
 import type { Attribute, Stats } from '../types';
+import { EXPANSION_JOBS } from './expansion';
 export type Job = {
     id: string;
     name: string;
@@ -29,10 +30,12 @@ export type Job = {
     requiresAllocated?: Partial<Record<Attribute, number>>;
     penalties?: Partial<Stats>;
     branchless?: boolean;
+    /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다. */
+    healer?: boolean;
     hidden?: boolean;
     rebirth?: number;
 };
-export type JobTreeId = 'harpoon' | 'tide' | 'warden' | 'other';
+export type JobTreeId = 'harpoon' | 'tide' | 'warden' | 'venom' | 'utility' | 'other';
 export type JobTree = {
     id: JobTreeId;
     name: string;
@@ -44,6 +47,8 @@ export const JOB_TREES: JobTree[] = [
     { id: 'harpoon', name: '작살 사냥꾼', subtitle: '힘 · 물리', description: '근력과 기민으로 적을 꿰뚫고 치명타를 쌓는 전투 계열입니다.', accent: '#d88a68' },
     { id: 'tide', name: '조류술사', subtitle: '지능 · 정신 · 마법', description: '마나와 주문 확률을 이용해 큰 마법 피해와 약화를 만드는 계열입니다.', accent: '#75b8d6' },
     { id: 'warden', name: '산호 수호자', subtitle: '체질 · 보조 · 방어', description: '체력과 방어를 바탕으로 회복·기절·흡혈을 조합하는 계열입니다.', accent: '#8fc49b' },
+    { id: 'venom', name: '상태이상', subtitle: '출혈 · 중독 · 저주 · 제어', description: '방어를 무시하는 지속 피해와 기절·침묵·약화로 적을 무너뜨리는 계열입니다. 걸어 둔 상태이상에 연계할수록 강해집니다.', accent: '#b6c86a' },
+    { id: 'utility', name: '유틸리티', subtitle: '경험치 · 보상 · 속도 · 보조', description: '직접 화력보다 성장 속도·보상·명중·회피·가속으로 편성을 보조하는 계열입니다.', accent: '#e0b36a' },
     { id: 'other', name: '기타', subtitle: 'HP · MP · 히든 · 복합', description: '기존 계열에 속하지 않는 다중 특성, 체력·마나 비례, 숨은 직업의 모음입니다.', accent: '#c0a1dc' },
 ];
 export const JOBS: Job[] = [
@@ -97,9 +102,9 @@ JOBS.push(
     { id: 'salvageMerchant', name: '인양 상인', title: '전리품을 항해 자금으로 바꾼다', desc: '전투력 대신 포획·던전 골드를 극대화하는 독립 1차 직업입니다.', attack: .98, magic: .98, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 10, requires: { luk: 14, dex: 10 }, mastery: 0, role: '독립·골드', tree: 'other', penalties: { defense: -2 }, branchless: true },
     { id: 'pearlBroker', name: '진주 중개인', title: '윤회의 값을 협상한다', desc: '물고기 속삭임을 숙달한 뒤 환생 보상을 늘리는 경제형 2차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 25, parent: 'fishWhisperer', requires: { int: 25, luk: 25 }, mastery: 75, role: '환생·경제', tree: 'tide', penalties: { attack: -4, magic: -4 } },
     { id: 'rareTracker', name: '희귀어 추적자', title: '한 번뿐인 흔적을 놓치지 않는다', desc: '난파선 감식을 완성한 2차 파밍 직업입니다. 전리품 감지로 장비 드롭과 골드 보상을 늘립니다.', attack: .98, magic: .98, hp: .98, defense: 1, resist: 1, crit: .01, tier: 2, level: 25, parent: 'relicScavenger', requires: { dex: 28, luk: 28 }, mastery: 75, role: '희귀·파밍', tree: 'other', penalties: { defense: -3 } },
-    { id: 'stormEel', name: '폭풍 곰치 혈족', title: '몬스터의 전류를 배운 자', desc: '침묵·감속을 쓰는 곰치의 기술을 직업 스킬로 계승하는 몬스터 계열 2차 직업입니다.', attack: .94, magic: 1.08, hp: 1, defense: .98, resist: 1.06, crit: .01, tier: 2, level: 25, parent: 'fishWhisperer', requires: { int: 30, wis: 22 }, mastery: 75, role: '몬스터·감속', tree: 'tide', penalties: { attack: -5, accuracy: -.02 } },
+    { id: 'stormEel', name: '폭풍 곰치 혈족', title: '몬스터의 전류를 배운 자', desc: '곰치의 전기 이빨을 물어뜯는 물리 기술로 계승하는 몬스터 계열 2차 직업입니다. 감속과 속도 패시브로 선공을 잡습니다.', attack: 1.22, magic: 1, hp: 1.05, defense: 1, resist: 1.04, crit: .04, tier: 2, level: 25, parent: 'tidalBrawler', requires: { str: 28, dex: 22 }, mastery: 75, role: '몬스터·물리 감속', tree: 'harpoon', penalties: { accuracy: -.02 } },
     { id: 'abyssArchivist', name: '심연 기록관', title: '다음 생의 장부를 보관한다', desc: '진주 장부를 끝까지 숙련해 환생과 던전 경제를 함께 키우는 후반 비전투 직업입니다.', attack: .9, magic: .95, hp: .98, defense: .95, resist: 1.02, crit: 0, tier: 3, level: 40, parent: 'pearlBroker', requires: { int: 45, wis: 35, luk: 30 }, mastery: 150, role: '환생·기록', tree: 'other', penalties: { attack: -8, magic: -6, accuracy: -.04 }, hidden: true, rebirth: 1 },
-    { id: 'krakenkin', name: '크라켄 혈족', title: '보스의 촉수를 의지로 묶는다', desc: '폭풍 곰치의 계승을 마친 뒤 보스의 다중 공격을 사용할 수 있는 몬스터 계열 3차 직업입니다.', attack: 1.02, magic: 1, hp: 1.08, defense: .96, resist: 1, crit: .04, tier: 3, level: 40, parent: 'stormEel', requires: { str: 38, int: 35 }, mastery: 150, role: '몬스터·추가타', tree: 'other', penalties: { accuracy: -.04 }, hidden: true, rebirth: 1 },
+    { id: 'krakenkin', name: '크라켄 혈족', title: '보스의 촉수를 의지로 묶는다', desc: '폭풍 곰치의 계승을 마친 뒤 보스의 다중 공격을 사용할 수 있는 몬스터 계열 물리 3차 직업입니다.', attack: 1.42, magic: 1, hp: 1.15, defense: 1.02, resist: 1, crit: .08, tier: 3, level: 40, parent: 'stormEel', requires: { str: 38, dex: 30 }, mastery: 150, role: '몬스터·추가타', tree: 'other', penalties: { accuracy: -.04 }, hidden: true, rebirth: 1 },
 );
 
 // 한 직업의 기본 기술은 1~2개에 집중합니다. 성장 경로를 공유하더라도
@@ -137,6 +142,12 @@ JOBS.push(
     { id: 'allRounder', name: '만능 항해사', title: '여섯 물결을 고르게 다루는 자', desc: '직접 배분한 여섯 능력치가 고를수록 강해지는 복합 피해 직업. 순간 화력 대신 균형 잡힌 생존력과 안정적인 물리·마법 복합 피해로 싸웁니다.', attack: 1.05, magic: 1.05, hp: 1.4, defense: 1.45, resist: 1.45, crit: .03, tier: 2, level: 40, parent: 'wanderer', requires: {}, requiresAllocated: { str: 15, dex: 15, int: 15, vit: 15, wis: 15, luk: 15 }, mastery: 2400, role: '올스탯·복합', tree: 'other' },
 );
 
+// v21 직업 확장: 계열별 5차 최상위 직업과 능력치 패시브 직업. 자세한 설계는 expansion.ts.
+JOBS.push(...(EXPANSION_JOBS as Job[]));
+
+// v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
+for (const id of ['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender']) JOBS.find(j => j.id === id)!.healer = true;
+
 // 특정 스킬/직업을 마스터해야만 열리는 교차 전직 조건입니다.
 // 값은 스킬 숙련 단계(1~4) 또는 직업 숙련 승수로 작성합니다.
 const advancedRequirements: Record<string, Pick<Job, 'requiresSkillMastery' | 'requiresJobMastery'>> = {
@@ -159,7 +170,7 @@ const advancedRequirements: Record<string, Pick<Job, 'requiresSkillMastery' | 'r
     soulHarvester: { requiresSkillMastery: { marrowGuard: 4, boneLegacy: 3 }, requiresJobMastery: { undead: 150 } },
     pearlBroker: { requiresSkillMastery: { fishWhisper: 3 }, requiresJobMastery: { fishWhisperer: 75 } },
     rareTracker: { requiresSkillMastery: { salvageSense: 3 }, requiresJobMastery: { relicScavenger: 75 } },
-    stormEel: { requiresSkillMastery: { hushCurrent: 3 }, requiresJobMastery: { fishWhisperer: 75 } },
+    stormEel: { requiresSkillMastery: { wakeFist: 2 } },
     abyssArchivist: { requiresSkillMastery: { pearlLedger: 4 }, requiresJobMastery: { pearlBroker: 150 } },
     krakenkin: { requiresSkillMastery: { electricBite: 4 }, requiresJobMastery: { stormEel: 150 } },
 };
