@@ -1,13 +1,13 @@
 // 직업 분류 개편 1단계: 7계열·계보
 import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './harness.mjs';
 
-test('Job trees: seven trees, no job left in the old other tree, job count unchanged', () => {
+test('Job trees: seven trees, no job left in the old other tree, v23 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 115); assert.equal(new Set(JOBS.map(j => j.id)).size, 115);
+    assert.equal(JOBS.length, 161); assert.equal(new Set(JOBS.map(j => j.id)).size, 161);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 27, magic: 26, defense: 20, status: 9, hybrid: 11, support: 14, mystery: 8 });
+    assert.deepEqual(count, { physical: 28, magic: 28, defense: 23, status: 21, hybrid: 22, support: 25, mystery: 14 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
@@ -33,4 +33,15 @@ test('Lineages: every job belongs to exactly one lineage inside its own tree; in
     assert.equal(lineageOf(JOBS.find(j => j.id === 'woodcutter')), 'physical-independent');
     assert.deepEqual(jobTags(JOBS.find(j => j.id === 'whaler')), ['물리 폭발']);
     assert.deepEqual(jobTags(JOBS.find(j => j.id === 'corsair')), ['회피', '출혈']);
+});
+
+test('Job counts stay close: trees 21–28 (??? 14 or more), named lineages 4–8', () => {
+    for (const t of JOB_TREES) {
+        const n = JOBS.filter(j => j.tree === t.id).length;
+        if (t.id === 'mystery') assert.ok(n >= 14, `${t.id} ${n}`); else assert.ok(n >= 21 && n <= 28, `${t.id} ${n}`);
+    }
+    for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent') && l.id !== 'fisher')) {
+        const n = JOBS.filter(j => lineageOf(j) === l.id).length;
+        assert.ok(n >= 4 && n <= 8, `${l.id} ${n}`);
+    }
 });

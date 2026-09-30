@@ -2,6 +2,7 @@ import { tuneActiveSkills } from './skill-balance';
 import type { Skill } from '../types';
 import { JOBS } from './classes';
 import { EXPANSION_SKILLS } from './expansion';
+import { LINEAGE_SKILLS } from './expansion-lineages';
 export const SKILLS: Skill[] = [
     { id: 'hook', name: '강철 챔질', desc: '공격력 180% 피해.', type: 'active', level: 1, chance: .35, cooldown: 2, multiplier: 1.8 },
     { id: 'splash', name: '물보라', desc: '공격력 140% 피해, 적을 1턴 기절.', type: 'active', level: 3, chance: .25, cooldown: 4, multiplier: 1.4, effect: 'stun' },
@@ -127,6 +128,8 @@ SKILLS.push({ id: 'harmonicWeight', name: '육중 조화', desc: '직접 배분�
 
 // v21 직업 확장 기술. 직업 레벨·숙련 곡선·밸런스 표는 아래 공통 처리에서 적용됩니다.
 SKILLS.push(...EXPANSION_SKILLS);
+// v23 계보 보강 기술.
+SKILLS.push(...LINEAGE_SKILLS);
 // v21 회복 기술은 체력 조건 없이 시도합니다. 회복이 필요 없을 때의 피해 감소는 combat.ts에서 처리합니다.
 for (const sk of SKILLS) if (sk.effect === 'heal') delete sk.condition;
 

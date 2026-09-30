@@ -301,9 +301,10 @@
     .job-tag-chips { flex:1 1 100%; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
     .job-search-box { flex:1 1 100%; }
     .job-columns>.job-detail-slot { display:contents; }
-    .job-detail-slot .job-sheet { position:fixed!important; left:0; right:0; bottom:0; z-index:61; max-height:82vh; overflow-y:auto; border-radius:14px 14px 0 0; translate:0 110%; transition:translate .22s ease; box-shadow:0 -12px 32px #0009; animation:none; }
+    /* 전직 확인 창(z 50)이 위에 오도록 상세 창은 그 아래(45·46)에 둡니다. */
+    .job-detail-slot .job-sheet { position:fixed!important; left:0; right:0; bottom:0; z-index:46; max-height:82vh; overflow-y:auto; border-radius:14px 14px 0 0; translate:0 110%; transition:translate .22s ease; box-shadow:0 -12px 32px #0009; animation:none; }
     .job-detail-slot.sheet-open .job-sheet { translate:0 0; }
-    .job-detail-slot.sheet-open .job-sheet-backdrop { display:block; position:fixed; inset:0; z-index:60; background:#000a; }
+    .job-detail-slot.sheet-open .job-sheet-backdrop { display:block; position:fixed; inset:0; z-index:45; background:#000a; }
     .job-sheet-footer { position:sticky; bottom:0; z-index:1; }
     .job-sheet>.job-sheet-close { display:inline-flex; position:absolute; right:14px; top:14px; width:auto; margin:0; padding:6px; color:#b8c9c2; border-radius:6px; z-index:2; }
 }
