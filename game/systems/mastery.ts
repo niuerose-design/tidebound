@@ -1,6 +1,6 @@
 import type { Enemy, Skill, State } from '../types';
 import { FISH } from '../data/world';
-import { SKILLS } from '../data/skills';
+import { skillById } from '../data/skills';
 import { PROGRESSION } from '../data/progression';
 import { researchRank } from '../data/economy';
 import { canUse, masteryGainBonus, skillLevel, skillMastery } from './progression';
@@ -31,7 +31,7 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
     const boss = enemy.boss || FISH.some(f => f.id === enemy.id && f.boss);
     let bonus = 0, source = '';
     for (const id of new Set(s.skills)) {
-        const sk = SKILLS.find(x => x.id === id), rule = sk?.masteryGain;
+        const sk = skillById(id), rule = sk?.masteryGain;
         if (!sk || sk.type !== 'passive' || !rule || !canUse(s, id)) continue;
         if (rule.bossOnly && !boss) continue;
         if (rule.enemyIds && !rule.enemyIds.includes(enemy.id)) continue;

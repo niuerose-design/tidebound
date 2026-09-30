@@ -2,7 +2,7 @@
 import type { PanelProps } from './panel-props';
 import { useState } from 'react';
 import { Compass, Search } from 'lucide-react';
-import { JOBS, JOB_TREES, LINEAGES, lineageOf, type JobTreeId } from '@/game/data/classes';
+import { JOBS, JOB_TREES, LINEAGES, lineageOf, type JobTreeId, jobById } from '@/game/data/classes';
 import { jobMasteryTarget } from '@/game/systems/progression';
 import { Heading, format } from './shared';
 import { LineageCard, RouteMap, JobList } from './jobs/lineage-view';
@@ -19,7 +19,7 @@ const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', near: '�
  * ??? 탭은 ① 칸 위에 문 카드 4장, 아래에 한 번 들어간 ??? 계보 카드를 둡니다.
  */
 export function Classes({ s, send, busy }: PanelProps) {
-    const current = JOBS.find(j => j.id === s.job) || JOBS[0];
+    const current = jobById(s.job) || JOBS[0];
     const [treeId, setTreeId] = useState<JobTreeId>(current.tree);
     const [lineageId, setLineageId] = useState<string>(lineageOf(current));
     const [selectedId, setSelectedId] = useState(current.id);
@@ -41,7 +41,7 @@ export function Classes({ s, send, busy }: PanelProps) {
     const lineages = LINEAGES.filter(l => l.tree === treeId && lineageJobs(l.id).length)
         .filter(l => treeId !== 'mystery' || lineageJobs(l.id).some(j => s.unlockedJobs.includes(j.id)));
     const lineage = lineages.find(l => l.id === lineageId) || null;
-    const selected = JOBS.find(j => j.id === selectedId) || current;
+    const selected = jobById(selectedId) || current;
     const select = (id: string) => { setSelectedId(id); setSheetOpen(true); };
     const openTree = (id: JobTreeId) => {
         setTreeId(id);
@@ -52,7 +52,7 @@ export function Classes({ s, send, busy }: PanelProps) {
     return <>
         <Heading eyebrow="VOCATION TREE" title="직업 항해도" description="계열 → 계보 카드 → 항로도 → 직업 상세. 세 번 눌러 원하는 직업에 닿습니다."/>
         <section className="panel job-current-summary"><Compass size={26}/><div><small>현재 직업</small><h2>{current.name}</h2><p>숙련 {format(s.jobMastery[s.job] || 0)} / {format(jobMasteryTarget(current))} · 해금 {s.unlockedJobs.length} / {JOBS.length}</p></div><button className="secondary small" onClick={showCurrent}>현재 직업 보기</button></section>
-        <div className="job-finder" role="group" aria-label="빠른 찾기">{(['ready', 'near', 'goal', 'doors'] as Finder[]).map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{kind === 'goal' ? (s.growthGoal?.kind === 'job' ? 1 : 0) : finderJobs(s, kind, doorJobs).length}</b></button>)}</div>
+        <div className="job-finder" role="group" aria-label="빠른 찾기">{(Object.keys(FINDER_LABEL) as Finder[]).map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{finderJobs(s, kind, doorJobs).length}</b></button>)}</div>
         <div className="job-search">
             <label className="job-search-box"><Search size={15}/><input type="search" value={query} placeholder="직업 이름 검색" aria-label="직업 이름 검색" onChange={e => { setQuery(e.target.value); setFinder(null); }}/></label>
             <div className="job-tag-chips" aria-label="태그 필터">{TOP_TAGS.map(t => <button type="button" key={t} className={`job-tag-chip ${tag === t ? 'active' : ''}`} aria-pressed={tag === t} onClick={() => { setTag(tag === t ? '' : t); setFinder(null); }}>#{t}</button>)}</div>
@@ -74,7 +74,7 @@ export function Classes({ s, send, busy }: PanelProps) {
                 <JobDetail key={selected.id} j={selected} s={s} send={send} busy={busy} onClose={() => setSheetOpen(false)} onCompare={toggleCompare} compared={compareIds.includes(selected.id)} compareFull={compareIds.length >= 3}/>
             </div>
         </div>
-        <JobCompare s={s} jobs={compareIds.map(id => JOBS.find(j => j.id === id)!)} onRemove={toggleCompare} onClear={() => setCompareIds([])}/>
+        <JobCompare s={s} jobs={compareIds.map(id => jobById(id)!)} onRemove={toggleCompare} onClear={() => setCompareIds([])}/>
         <p className="footnote">승리마다 현재 직업의 숙련도가 기본 1씩 오릅니다. 직업 숙련이 숙달 목표에 닿으면 그 직업으로는 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다.</p>
     </>;
 }

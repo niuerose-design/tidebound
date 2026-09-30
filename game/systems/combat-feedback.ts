@@ -16,7 +16,7 @@ export type CombatFx = {
     chain?: number;
 };
 
-const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
+export const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
 const variantOf = (id: string | undefined, magical: boolean): CombatFxVariant => id && /electric|thunder|storm|spark/i.test(id) ? 'lightning' : id && /wave|tide|splash|spring|current|maelstrom/i.test(id) ? 'wave' : magical ? 'arcane' : id && /hook|pierce|hunt|lance|bore|razor/i.test(id) ? 'harpoon' : 'impact';
 /** 구조화된 전투 결과(log.event)를 우선 사용하고, 이전 세이브의 문자열 로그만 텍스트로 해석합니다. */
 export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {

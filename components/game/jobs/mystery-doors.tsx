@@ -2,12 +2,12 @@
 import { useState } from 'react';
 import { DoorClosed, DoorOpen, X } from 'lucide-react';
 import type { State } from '@/game/types';
-import { JOBS } from '@/game/data/classes';
+import { jobById } from '@/game/data/classes';
 import { DOORS, REBIRTH_DOOR_JOBS, timeSlot, currentVisit, visitorSchedule, kst, DISCOVERY_DOORS, type DoorId } from '@/game/data/doors';
 import { serverNow, jobRevealed } from './job-status';
 
 const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
-const jobOf = (id?: string) => JOBS.find(j => j.id === id);
+const jobOf = (id?: string) => jobById(id);
 
 /** 문 하나의 지금 상태: 열려 있는 직업(없으면 닫힘)과 안내 문구. 시각은 마지막 서버 시각 기준. */
 export function doorState(s: State, id: DoorId) {

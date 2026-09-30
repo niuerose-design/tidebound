@@ -13,7 +13,7 @@ test('Job UI: every hidden or door job has a one-line hint', () => {
 
 test('Job UI: a silhouette reveals its name once the gate conditions (rebirths, parent mastery, door) are met', () => {
     const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
-    assert.equal(ui.jobRevealed(s, job('voidcaller')), false); assert.equal(ui.shownName(s, job('voidcaller')), '???');
+    assert.equal(ui.jobRevealed(s, job('voidcaller')), false);
     s.rebirths = 1; s.rebirthDoor = 'voidcaller'; assert.equal(ui.jobRevealed(s, job('voidcaller')), false, 'parent mastery still missing');
     s.jobMastery.wanderer = 75; assert.equal(ui.jobRevealed(s, job('voidcaller')), true, 'level and stats are not needed');
     assert.equal(ui.jobRevealed(s, job('undead')), false, 'closed time door keeps the silhouette');

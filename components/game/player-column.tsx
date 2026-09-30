@@ -4,7 +4,7 @@ import { TutorialCard } from './guidance-panels';
 import { Anchor, ChevronRight, Heart, Shield, Swords, Target, Users, Zap } from 'lucide-react';
 import { Meter, SlotIcon, format } from './shared';
 import { xpNeeded, SLOTS, RARITIES } from '@/game/data/balance';
-import { JOBS } from '@/game/data/classes';
+import { jobById } from '@/game/data/classes';
 import { stats, power } from '@/game/systems/stats';
 import { StatusBadges } from './combat-status';
 import type { State, Action } from '@/game/types';
@@ -26,7 +26,7 @@ export function Player({ s, busy, send, setView }: {
     <span>{s.level}</span>
     </div>
     <div className="combatant-name character-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun}/></div>
-    <p className="job-label">{JOBS.find(j => j.id === s.job)?.name} · 환생 {s.rebirths}회</p>
+    <p className="job-label">{jobById(s.job)?.name} · 환생 {s.rebirths}회</p>
     <p className="guild-label"><Users size={14}/>{s.guild?.name ? `길드 · ${s.guild.name}` : '무소속'}</p>
     <div className="combat-power">
     <span>전투력</span>

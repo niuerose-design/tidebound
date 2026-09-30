@@ -3,7 +3,7 @@ import { skillPracticeTargets } from '../progression';
 import { swarmUnlocked, tideLimit } from '../meta';
 import { STAGES, DUNGEONS, SWARM_SIZES, SWARM_UNLOCK } from '../../data/world';
 import { JOBS } from '../../data/classes';
-import { SKILLS } from '../../data/skills';
+import { SKILLS, skillById } from '../../data/skills';
 import type { ActionHandlers } from './types';
 import { researchRank } from '../../data/economy';
 import { addLog, endRun } from '../state';
@@ -108,6 +108,6 @@ export const voyageActions: ActionHandlers = {
         if (id === 'none') { s.growthGoal = null; return; }
         const valid = kind === 'skill' ? SKILLS.some(x => x.id === id) : kind === 'job' ? JOBS.some(x => x.id === id) : kind === 'dungeon' ? DUNGEONS.some(x => x.id === id) : false;
         if (!valid) throw Error('성장 목표를 확인하세요.');
-        s.growthGoal = { kind: kind as 'skill' | 'job' | 'dungeon', id, ...(kind === 'skill' ? { target: Math.min(skillPracticeTargets(SKILLS.find(x => x.id === id)!).length, skillPracticeTargets(SKILLS.find(x => x.id === id)!).filter(n => (s.skillPractice[id] || 0) >= n).length + 1) } : {}) };
+        s.growthGoal = { kind: kind as 'skill' | 'job' | 'dungeon', id, ...(kind === 'skill' ? { target: Math.min(skillPracticeTargets(skillById(id)!).length, skillPracticeTargets(skillById(id)!).filter(n => (s.skillPractice[id] || 0) >= n).length + 1) } : {}) };
     },
 };

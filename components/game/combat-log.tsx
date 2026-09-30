@@ -1,8 +1,8 @@
 import { Sparkles, Swords, Wind } from 'lucide-react';
 import type { Log } from '@/game/types';
+import { STATUS_NAMES } from '@/game/systems/combat-feedback';
 
 const WORD = { physical: '물리', magic: '마법', split: '복합' } as const;
-const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
 
 /** 전투 로그 한 줄. 구조화된 결과가 있으면 피해 종류별 색·아이콘과 본타/추가타/합계를 나눠 보여줍니다. */
 export function BattleLogLine({ log, index }: { log: Log; index?: boolean }) {

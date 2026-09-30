@@ -271,3 +271,10 @@ export function lineageOf(job: Job): string {
 }
 /** 직업 성격 태그. tags가 없으면 role을 '·'로 나눕니다. */
 export const jobTags = (job: Job) => job.tags ?? job.role.split('·').map(x => x.trim()).filter(Boolean);
+
+/** id로 찾기(첫 항목 우선, JOBS.find와 같은 결과). 모듈 초기화가 끝난 뒤 처음 부를 때 한 번 만듭니다. */
+let jobByIdMap: Map<string, Job> | undefined;
+export function jobById(id: string | undefined) {
+    if (!jobByIdMap) { jobByIdMap = new Map(); for (const x of JOBS) if (!jobByIdMap.has(x.id)) jobByIdMap.set(x.id, x); }
+    return id === undefined ? undefined : jobByIdMap.get(id);
+}

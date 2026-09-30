@@ -11,8 +11,8 @@ import { rareSpawnBonus } from './book';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, FIRST_AID_HEAL } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier } from '../data/world';
-import { JOBS } from '../data/classes';
-import { SKILLS } from '../data/skills';
+import { jobById } from '../data/classes';
+import { skillById } from '../data/skills';
 import { EQUIPMENT_NAMES } from '../data/equipment';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
@@ -139,14 +139,14 @@ export function reward(s: State, rng: () => number) {
     const gold = perFish * size + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     s.kills += size;
-    const jobTargets = vocationTargets(jobMasteryTarget(JOBS.find(j => j.id === s.job)!));
+    const jobTargets = vocationTargets(jobMasteryTarget(jobById(s.job)!));
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
     s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practice;
     const newJobRank = thresholdRank(s.jobMastery[s.job], jobTargets);
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {
         if (canUse(s, id)) {
-            const sk = SKILLS.find(x => x.id === id)!, targets = skillRefinementTargets(sk);
+            const sk = skillById(id)!, targets = skillRefinementTargets(sk);
             const before = thresholdRank(s.skillPractice[id] || 0, targets);
             s.skillPractice[id] = (s.skillPractice[id] || 0) + practice;
             const after = thresholdRank(s.skillPractice[id], targets);
@@ -171,7 +171,7 @@ export function reward(s: State, rng: () => number) {
     if (seal && seal.caught >= ANCHOR_CATCHES) releaseAnchor(s, true);
     gainLevels(s);
     for (const id of grantJobSkills(s)) {
-        const sk = SKILLS.find(skill => skill.id === id)!;
+        const sk = skillById(id)!;
         if (sk.unlockJobMastery) addLog(s, `직업 숙련으로 ${sk.name} 해금 · 기본 Lv.0부터 장착 가능`, 'skill');
     }
     s.hp = Math.min(stats(s).hp, s.hp + victoryHeal(s));

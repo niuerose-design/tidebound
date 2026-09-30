@@ -13,9 +13,8 @@ import { vocationTargets, thresholdRank } from '@/game/data/long-term';
 import { jobMasteryTarget, jobMasteryBoost, jobCombatMultiplier } from '@/game/systems/progression';
 import { Meter, SkillIcon, format } from '../shared';
 import type { PanelProps } from '../panel-props';
-import { jobStatus, STATUS_LABEL, canEnter, crossParent, treeName, jobRevealed } from './job-status';
+import { jobStatus, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS } from './job-status';
 
-const bonusKeys = ['attack', 'magic', 'hp', 'defense', 'resist'] as const;
 type Tab = 'overview' | 'requirements' | 'skills' | 'mastery';
 
 /** 3단계 상세 패널. 데스크톱은 오른쪽 패널, 모바일은 아래에서 올라오는 창(onClose로 닫기). */
@@ -26,20 +25,20 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
         {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}
         <h2 className="job-column-title"><span>③</span> 직업 상세</h2>
         <div className="job-detail-title"><h2>???</h2></div>
-        <p className="job-detail-sub">{j.tier ? `${j.tier}차` : '시작'} · {treeName(j.tree)}</p>
+        <p className="job-detail-sub">{tierName(j)} · {treeName(j.tree)}</p>
         <p className="job-cross">{j.hint || '아직 드러나지 않은 직업입니다.'}</p>
         <p className="footnote">관문 조건(환생 횟수·선행 직업 숙련·문)을 채우면 이름과 조건이 드러납니다.</p>
     </article>;
     const st = jobStatus(s, j), current = st.status === 'current', ready = canEnter(st);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;
     const dedicationTargets = vocationTargets(target), dedication = thresholdRank(xp, dedicationTargets);
-    const bonuses = bonusKeys.filter(key => j[key] !== 1), grows = bonuses.some(key => j[key] > 1) && jobMasteryBoost(j) > 0;
+    const bonuses = JOB_BONUS_KEYS.filter(key => j[key] !== 1), grows = bonuses.some(key => j[key] > 1) && jobMasteryBoost(j) > 0;
     const skills = SKILLS.filter(sk => sk.job === j.id), from = crossParent(j);
     return <article className={`panel job-inspector job-sheet ${current ? 'current' : ''}`} aria-label={`${j.name} 상세`}>
         {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}
         <h2 className="job-column-title"><span>③</span> 직업 상세</h2>
         <div className="job-detail-title"><h2>{j.name}</h2><span className={`job-status ${st.status}`}>{STATUS_LABEL(st)}</span></div>
-        <p className="job-detail-sub">{j.tier ? `${j.tier}차` : '시작'} · {[treeName(j.tree), ...jobTags(j).filter(t => t !== treeName(j.tree))].join(' · ')}{j.hidden ? ' · 히든' : ''}</p>
+        <p className="job-detail-sub">{tierName(j)} · {[treeName(j.tree), ...jobTags(j).filter(t => t !== treeName(j.tree))].join(' · ')}{j.hidden ? ' · 히든' : ''}</p>
         <p className="job-motto">{j.title}</p>
         <Tabs value={tab} onValueChange={v => setTab(v as Tab)}><TabsList className="game-tabs job-detail-tabs">
             <TabsTrigger value="overview">개요</TabsTrigger><TabsTrigger value="requirements">조건{!current && !ready ? ` ${st.missing.length}` : ''}</TabsTrigger><TabsTrigger value="skills">스킬 {skills.length}</TabsTrigger><TabsTrigger value="mastery">숙달</TabsTrigger>

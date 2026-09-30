@@ -2,8 +2,8 @@
 import { SPECIALIZATIONS, specializationFits } from '../../data/specializations';
 import { stats, clampVitals } from '../stats';
 import type { Attribute } from '../../types';
-import { JOBS } from '../../data/classes';
-import { SKILLS } from '../../data/skills';
+import { jobById } from '../../data/classes';
+import { skillById } from '../../data/skills';
 import { emptyAttributes } from '../../data/progression';
 import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from '../progression';
 import type { ActionHandlers } from './types';
@@ -12,7 +12,7 @@ import { addLog, endRun } from '../state';
 export const buildActions: ActionHandlers = {
     specialize(s, { a, id }) {
         if (s.running || s.dungeon) throw Error('낚시를 멈추고 던전에서 나온 뒤 특화를 바꾸세요.');
-        const sk = SKILLS.find(x => x.id === id), spec = SPECIALIZATIONS.find(x => x.id === a.value);
+        const sk = skillById(id), spec = SPECIALIZATIONS.find(x => x.id === a.value);
         if (!sk || !canUse(s, id)) throw Error('사용 가능한 스킬을 선택하세요.');
         if (a.value !== 'none' && (!spec || !specializationFits(sk, spec) || skillMastery(s, id) < 1 || (spec.dungeon && !s.bossResearchClaims?.[spec.dungeon]))) throw Error('실전 숙련 1단계와 해당 보스 연구가 필요합니다.');
         s.skillSpecializations ??= {};
@@ -55,7 +55,7 @@ export const buildActions: ActionHandlers = {
         s.effects = {};
         s.playerStun = 0;
         s.cooldowns = {};
-        addLog(s, `${JOBS.find(j => j.id === id)!.name}(으)로 전직했습니다. 숙달 스킬을 계승할 수 있습니다.`);
+        addLog(s, `${jobById(id)!.name}(으)로 전직했습니다. 숙달 스킬을 계승할 수 있습니다.`);
     },
     skill(s, { id }) {
         if (s.skills.includes(id)) {
@@ -76,7 +76,7 @@ export const buildActions: ActionHandlers = {
     learn(s, { id }) {
         if (!canSpendSkill(s, id))
             throw Error('전직으로 얻고 현재 사용할 수 있는 스킬만 강화할 수 있습니다. 최대 레벨도 확인하세요.');
-        const sk = SKILLS.find(x => x.id === id)!;
+        const sk = skillById(id)!;
         const cost = skillCost();
         if (s.sp < cost)
             throw Error('SP가 부족합니다. 보스 첫 정복 연구 또는 최종 도감 연구에서 얻을 수 있습니다.');
@@ -94,7 +94,7 @@ export const buildActions: ActionHandlers = {
         s.sp -= cost;
         s.skillSpent[id] = (s.skillSpent[id] || 0) + cost;
         s.skillInheritances[id] = true;
-        addLog(s, `${SKILLS.find(x => x.id === id)!.name} SP 계승 · 다른 직업에서도 장착 가능`, 'skill');
+        addLog(s, `${skillById(id)!.name} SP 계승 · 다른 직업에서도 장착 가능`, 'skill');
     },
     resetSkills(s) {
         if (s.running || s.dungeon)

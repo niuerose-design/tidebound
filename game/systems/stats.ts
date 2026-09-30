@@ -5,10 +5,10 @@ import { GEAR_CAPS, RULE_CAPS } from '../data/gear';
 import type { State, Snapshot, Stats, CombatStats } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
-import { JOBS } from '../data/classes';
+import { JOBS, jobById } from '../data/classes';
 import { RESEARCH, researchRank } from '../data/economy';
 import { roughReward, vowBadges } from './vows';
-import { SKILLS } from '../data/skills';
+import { skillById } from '../data/skills';
 import { bookStatBonus, regionThemes } from './book';
 import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier, signatureScale } from './progression';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
@@ -33,7 +33,7 @@ export type StatTrace = Partial<Record<keyof CombatStats, { source: StatSource; 
  * 기록 여부와 관계없이 계산 순서와 결과는 같습니다(덧셈·곱셈 순서 유지).
  */
 export function stats(s: State, trace?: StatTrace): CombatStats {
-    const j = JOBS.find(j => j.id === s.job) || JOBS[0], v = attributes(s), themes = regionThemes(s);
+    const j = jobById(s.job) || JOBS[0], v = attributes(s), themes = regionThemes(s);
     const rec = (k: keyof CombatStats, source: StatSource, delta: number, factor?: number) => {
         if (trace && delta) (trace[k] ||= []).push(factor === undefined ? { source, delta } : { source, delta, factor });
     };
@@ -88,7 +88,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const id of s.skills) {
         if (!canUse(s, id))
             continue;
-        const sk = SKILLS.find(x => x.id === id);
+        const sk = skillById(id);
         if (sk?.type === 'passive' && sk.job && Object.values(sk.bonus || {}).some(n => n > 0)) passiveJobs.add(sk.job);
         if (sk?.bonus) {
             const bonus = effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id), undefined, s.skillPractice[id] || 0).bonus!;
