@@ -1,15 +1,64 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { State, Action, DuelResult, Snapshot } from '@/game/types';
+import { BALANCE } from '@/game/data/balance';
+import { stats } from '@/game/systems/stats';
+import { buildCombatReplay, type ReplayFrame } from '@/game/systems/combat-feedback';
 export type Ranking = Snapshot & {
     id: string;
     self: boolean;
     updatedAt: number;
 };
+/** 동기화 주기(ms). */
+const SYNC_MS = 3000;
+/** 턴이 서버에서 계산된 뒤 다음 동기화로 도착할 때까지의 여유. 이만큼 늦게 재생해야 턴 간격이 고르게 유지됩니다. */
+const REPLAY_LAG_MS = SYNC_MS + 500;
+/** 이보다 많은 턴이 밀리면(탭 복귀 등) 밀린 분은 건너뛰고 최신 상태로 맞춥니다. */
+const MAX_BEHIND_TURNS = 2;
+type Queued = { turnAt: number; at: number; frame: ReplayFrame };
+/**
+ * 전투 재생 버퍼. 동기화로 받은 턴을 서버 lastTick 기준 실제 턴 시각(turnMs 간격)에 맞춰 차례로 내보냅니다.
+ * 서버 시각은 min(받은 시각 − lastTick)으로 추정합니다. lastTick은 항상 서버의 현재 시각 이하이므로 최솟값이 시계 차이에 가장 가깝습니다.
+ */
+function createReplay(render: (frame: ReplayFrame | null) => void) {
+    let queue: Queued[] = [], timer: ReturnType<typeof setTimeout> | undefined, offset: number | null = null, current: ReplayFrame | null = null;
+    const show = (frame: ReplayFrame | null) => { current = frame; render(frame); };
+    const play = () => {
+        clearTimeout(timer);
+        const now = Date.now();
+        let shown: ReplayFrame | null = null;
+        while (queue.length && queue[0].at <= now) shown = queue.shift()!.frame;
+        if (shown) show(shown);
+        if (queue.length) timer = setTimeout(play, queue[0].at - now);
+    };
+    const reset = () => { queue = []; clearTimeout(timer); show(null); };
+    const push = (prev: State, next: State, receivedAt: number) => {
+        const sample = receivedAt - next.lastTick;
+        offset = offset === null ? sample : Math.min(offset, sample);
+        const base = prev.lastTick + offset + REPLAY_LAG_MS, count = Math.round((next.lastTick - prev.lastTick) / BALANCE.turnMs);
+        const now = Date.now();
+        const behind = new Set(queue.filter(q => q.turnAt <= now).map(q => q.turnAt)).size + Math.max(0, Math.min(count, Math.floor((now - base) / BALANCE.turnMs)));
+        if (behind > MAX_BEHIND_TURNS) { offset = sample; return reset(); }
+        const a = stats(next), turns = buildCombatReplay(prev, next, a.hp, a.mana);
+        if (!turns) return reset();
+        // 재생 중이 아니었다면 첫 턴이 올 때까지 이전 상태를 붙잡아 둡니다(새 상태가 먼저 보였다가 되감기지 않도록).
+        if (!current && turns.length) show({ offset: 0, hp: prev.hp, mana: prev.mana, recovery: prev.recovery, enemy: prev.enemy, effects: prev.effects, playerStun: prev.playerStun, lastLogId: prev.logs.at(-1)?.id ?? 0 });
+        for (const t of turns) {
+            const turnAt = base + t.turn * BALANCE.turnMs;
+            for (const frame of t.frames) queue.push({ turnAt, at: turnAt + frame.offset, frame });
+        }
+        play();
+    };
+    return { push, reset };
+}
 export function useGame() {
     const [state, setState] = useState<State | null>(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [saved, setSaved] = useState(false), [rows, setRows] = useState<Ranking[]>([]), [rankError, setRankError] = useState(''), [duel, setDuel] = useState<DuelResult | null>(null);
     const [needsLogin, setNeedsLogin] = useState(false);
     const lock = useRef(false), queue = useRef<Promise<unknown>>(Promise.resolve()), stateRef = useRef<State | null>(null);
+    const [frame, setFrame] = useState<ReplayFrame | null>(null), [replay] = useState(() => createReplay(setFrame));
+    useEffect(() => replay.reset, [replay]);
+    /** 화면에 보이는 상태: 전투 표시값(HP·MP·적·상태이상·회복 대기·로그)만 재생 중인 프레임으로 바꿉니다. */
+    const view = useMemo(() => state && frame ? { ...state, hp: frame.hp, mana: frame.mana, recovery: frame.recovery, enemy: frame.enemy, effects: frame.effects, playerStun: frame.playerStun, logs: state.logs.filter(l => l.id <= frame.lastLogId) } : state, [state, frame]);
     const request = useCallback(async (path: string, body?: unknown) => { const res = await fetch(path, { method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20000) }); const data = await res.json() as {
         error?: string;
         state: State;
@@ -23,8 +72,13 @@ export function useGame() {
         setBusy(true); try {
         const data = await request(path, a);
         if (data.state) {
+            const prev = stateRef.current;
             stateRef.current = data.state;
             setState(data.state);
+            // 동기화만 턴 단위로 재생합니다. 직접 한 행동과 오프라인 정산 결과는 지금처럼 바로 보여 줍니다.
+            const settled = !!data.state.lastOffline && JSON.stringify(data.state.lastOffline) !== JSON.stringify(prev?.lastOffline);
+            if (a.type === 'sync' && prev && !settled) replay.push(prev, data.state, Date.now());
+            else replay.reset();
         }
         if (data.result)
             setDuel(data.result);
@@ -46,7 +100,7 @@ export function useGame() {
         lock.current = false;
         setBusy(false);
         release();
-    } }, [request]);
+    } }, [request, replay]);
     const send = useCallback((a: Action, path?: string) => { void action(a, path).catch(() => { }); }, [action]);
     const loadRanking = useCallback(async () => { try {
         const d = await request('/api/ranking');
@@ -61,6 +115,7 @@ export function useGame() {
         const d = await request('/api/ranking', {});
         stateRef.current = d.state;
         setState(d.state);
+        replay.reset();
         setSaved(true);
         setError('');
         await loadRanking();
@@ -71,9 +126,9 @@ export function useGame() {
     finally {
         lock.current = false;
         setBusy(false);
-    } }, [request, loadRanking]);
+    } }, [request, loadRanking, replay]);
     useEffect(() => { const first = setTimeout(() => send({ type: 'sync' }), 0); const timer = setInterval(() => { if (document.visibilityState === 'visible' && stateRef.current)
-        send({ type: 'sync' }); }, 3000); const visible = () => { if (document.visibilityState === 'visible')
+        send({ type: 'sync' }); }, SYNC_MS); const visible = () => { if (document.visibilityState === 'visible')
         send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible); return () => { clearTimeout(first); clearInterval(timer); document.removeEventListener('visibilitychange', visible); }; }, [send]);
     useEffect(() => {
         const context = (document as Document & {
@@ -111,7 +166,8 @@ export function useGame() {
         await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }).catch(() => { });
         stateRef.current = null;
         setState(null);
+        replay.reset();
         setNeedsLogin(true);
-    }, []);
-    return { state, error, busy, saved, send, rows, rankError, loadRanking, register, duel, setDuel, needsLogin, authenticate, logout };
+    }, [replay]);
+    return { state: view, error, busy, saved, send, rows, rankError, loadRanking, register, duel, setDuel, needsLogin, authenticate, logout };
 }

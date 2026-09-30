@@ -25,7 +25,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     const revealed = !!enemyFish && bookRevealed(s, enemyFish.id);
     const enemyProfile = enemyFish && revealed ? profile(enemyFish.id) : undefined;
     const activeWave = s.dungeon?.wave ?? 0;
-    const combatFx = useCombatFx(s.logs, s.name);
+    const { effects: combatFx, skipped: fxSkipped } = useCombatFx(s.logs, s.name);
     const [repeatChoice, setRepeatChoice] = useState<Record<string, string>>({});
     const repeat = s.dungeon?.repeat;
     const repeatStatus = repeat ? (repeat.until ? `반복 중 · ${repeat.until}층까지` : repeat.left === null ? '반복 중 · 실패할 때까지' : repeat.left === 0 ? '반복 중 · 마지막 도전' : `반복 중 · 이후 ${repeat.left}회 더`) : '';
@@ -47,7 +47,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{fish?.name || id}</strong></div>;
         })}</div>
         <div className="dungeon-combat-grid dungeon-combat-fx-host">
-        <CombatFxOverlay effect={combatFx}/>
+        <CombatFxOverlay effect={combatFx} skipped={fxSkipped}/>
         <div className="dungeon-combatant player-combatant"><span className="eyebrow">내 낚시꾼</span><div className="combatant-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label="HP" color="teal"/><PlayerHitEffect effect={combatFx}/></div><Meter value={s.mana} max={playerStats.mana} label="MP" color="blue"/><small>속도 {playerStats.speed} · 명중 수치 {statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', playerStats.evasion || 0)}</small></div>
         <div className="dungeon-vs">VS<span>{activeWave + 1}/{activeDungeon.fish.length}</span></div>
         <div className="dungeon-combatant enemy-combatant"><span className="eyebrow">{s.enemy?.boss ? 'BOSS ENCOUNTER' : 'CURRENT CATCH'}</span><div className="combatant-name"><h3>{s.enemy?.name || (s.recovery > 0 ? `출정 준비 · ${Math.ceil(s.recovery * BALANCE.turnMs / 1000)}초 남음` : '다음 입질을 기다리는 중')}</h3>{s.enemy && <StatusBadges effects={s.enemy.effects} stun={s.enemy.stun} recent={combatFx} target="enemy"/>}</div>{s.enemy ? <><div className="player-hp-anchor"><Meter value={s.enemy.hp} max={s.enemy.maxHp} label="HP" color="rose"/><CombatBarEffect effect={combatFx} target="enemy"/></div><small>{enemyProfile?.name || '미확인 개체'} · 속도 {s.enemy.combatStats?.speed || '-'}{revealed ? ` · 공격 스킬 ${s.enemy.skills?.map(id => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id)?.name || id).join(', ') || '기본 공격'}` : ` · 도감 ${BOOK_REVEAL}회 포획 시 성향·스킬 공개`}</small>{enemyProfile?.hint && <p className="dungeon-hint">{enemyProfile.hint}</p>}</> : <p className="dungeon-hint">{s.recovery > 0 ? '준비가 끝나면 체력·마나가 모두 회복되고 탐험이 시작됩니다.' : '자동 낚시가 다음 웨이브를 준비하고 있습니다.'}</p>}</div>

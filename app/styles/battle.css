@@ -371,3 +371,10 @@
   .battle-console>.session-metrics strong,.battle-console>.session-metrics .session-currency strong{font-size:15px}
   .battle-console>.session-metrics span{font-size:10px}
 }
+
+/* 전투 재생 템포: 밀린 타격 카운터와 회복 대기 카운트다운. */
+.tide-fx-combo{position:absolute;right:14px;top:62px;display:flex;align-items:baseline;gap:5px;padding:5px 11px;border-radius:4px;background:#102127dd;border-bottom:1px solid #efd28a66;color:#d9d3b8;font-size:13px;animation:tideCombo 1.6s ease-out both}
+.tide-fx-combo strong{font:700 20px/1 ui-monospace,monospace;color:#efd28a;font-variant-numeric:tabular-nums}
+.combatant-name .recovery-countdown{color:#9ce8b4;font-variant-numeric:tabular-nums}
+@keyframes tideCombo{0%{opacity:0;scale:.8}12%{opacity:1;scale:1.08}24%,80%{opacity:1;scale:1}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.tide-fx-combo{animation-name:tideReduced}}
