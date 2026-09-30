@@ -1,5 +1,6 @@
 import type { Attribute, Stats } from '../types';
 import { EXPANSION_JOBS } from './expansion';
+import { LINEAGE_JOBS, NEW_LINEAGES, LINEAGE_HINTS } from './expansion-lineages';
 export type Job = {
     id: string;
     name: string;
@@ -152,8 +153,11 @@ JOBS.push(
 // v21 직업 확장: 계열별 5차 최상위 직업과 능력치 패시브 직업. 자세한 설계는 expansion.ts.
 JOBS.push(...(EXPANSION_JOBS as Job[]));
 
+// v23 계보 보강: 계열·계보 사이의 직업 수 차이를 줄입니다. 자세한 설계는 expansion-lineages.ts.
+JOBS.push(...(LINEAGE_JOBS as Job[]));
+
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
-for (const id of ['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender']) JOBS.find(j => j.id === id)!.healer = true;
+for (const id of ['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger']) JOBS.find(j => j.id === id)!.healer = true;
 
 // 특정 스킬/직업을 마스터해야만 열리는 교차 전직 조건입니다.
 // 값은 스킬 숙련 단계(1~4) 또는 직업 숙련 승수로 작성합니다.
@@ -222,7 +226,7 @@ const JOB_HINTS: Record<string, string> = {
     rebirthFisher: '환생 뒤, 윤회의 문이 이 이름을 부를 때.',
     abyssMimic: '메아리를 오래 길들인 자에게 보스의 그림자가 닿습니다.',
 };
-for (const job of JOBS) job.hint ??= JOB_HINTS[job.id];
+for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id];
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };
@@ -244,10 +248,14 @@ export const LINEAGES: Lineage[] = [
     independent('defense'),
     { id: 'poisoner', name: '독술사 계보', tree: 'status', summary: '중독·역병을 쌓아 5차 파멸의 사도에 이르는 계보입니다.' },
     { id: 'shaman', name: '주술사 계보', tree: 'status', summary: '약화·감속·침묵 저주로 적의 행동을 묶는 계보입니다.' },
+    NEW_LINEAGES.bloodAngler,
+    NEW_LINEAGES.nerveNeedler,
     independent('status'),
     { id: 'fisher', name: '견습 낚시꾼', tree: 'hybrid', summary: '모든 항해의 출발점입니다. 공용 기술로 첫 전직을 준비합니다.' },
     { id: 'wanderer', name: '이형 항해자 계보', tree: 'hybrid', summary: '체력·마나·속도·올스탯을 섞어 쓰는 복합 계보입니다.' },
     { id: 'spellbladeNovice', name: '마검 수련생 계보', tree: 'hybrid', summary: '물리와 마법을 함께 싣는 검술로 5차 천검에 이르는 계보입니다.' },
+    NEW_LINEAGES.tideLancer,
+    NEW_LINEAGES.runesmith,
     independent('hybrid'),
     { id: 'squidJester', name: '오징어 광대 계보', tree: 'support', summary: '확률과 치명으로 보상을 불리는 계보입니다.' },
     { id: 'relicScavenger', name: '난파선 수집가 계보', tree: 'support', summary: '장비와 희귀어를 찾아내는 파밍 계보입니다.' },
