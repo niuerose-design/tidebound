@@ -24,12 +24,15 @@ test('battle replay: turns follow lastTick, strikes 260ms apart, last frame equa
         let lastLog = prev.logs.at(-1)?.id ?? 0;
         for (const turn of replay) {
             turn.frames.forEach((f, i) => {
-                assert.equal(f.offset, i * FX_BEAT_MS);
+                // 연속 행동으로 타격이 많으면 간격을 좁혀 다음 턴 전에 끝냅니다.
+                const beat = turn.frames.length > 1 ? Math.min(FX_BEAT_MS, Math.floor(BALANCE.turnMs * .8 / (turn.frames.length - 1))) : FX_BEAT_MS;
+                assert.equal(f.offset, i * beat);
+                assert.ok(f.offset < BALANCE.turnMs);
                 assert.ok(f.lastLogId >= lastLog); lastLog = f.lastLogId;
                 assert.ok(f.hp >= 0 && f.hp <= maxHp);
                 if (f.enemy) assert.ok(f.enemy.hp >= 0 && f.enemy.hp <= f.enemy.maxHp);
             });
-            assert.ok(turn.frames.length <= 2, 'one frame per strike');
+            assert.ok(turn.frames.length <= 2 * BALANCE.chainMaxActions, 'one frame per strike');
         }
         const last = replay.at(-1).frames.at(-1);
         assert.deepEqual([last.hp, last.mana, last.recovery, last.lastLogId, last.effects], [next.hp, next.mana, next.recovery, next.logs.at(-1).id, next.effects]);

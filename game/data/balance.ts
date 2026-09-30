@@ -21,6 +21,8 @@ export const BALANCE = {
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
     bookMilestones: [50, 500, 2500, 10000], duelCooldownMs: 60000, duelMaxTurns: 80,
+    // 연속 행동: 상대보다 빠르면 행동마다 p = min(1, max(0, 계수 × log2(내 속도 / 상대 속도)))로 한 번 더 행동합니다. 턴당 최대 횟수까지.
+    chainCoefficient: 0.5, chainMaxActions: 5,
 };
 export const MONSTER_TUNING = {
     // A strong single-stat build should still need several hours of victories
@@ -94,8 +96,8 @@ export const STATUS_GUIDE = [
     { id: 'silence', name: '침묵', kind: '스킬 차단', description: '지속 중 액티브 스킬을 사용할 수 없습니다.', detail: '기본 공격은 계속하며, 쿨다운·마나를 낭비하지 않습니다.' },
     { id: 'weaken', name: '약화', kind: '피해 감소', description: '주는 직접 피해가 25% 감소합니다.', detail: '물리·마법 등 다음 공격의 피해 계산에 적용됩니다.' },
     { id: 'bleed', name: '출혈', kind: '지속 피해', description: '행동할 때마다 고정 피해를 받습니다.', detail: '명중한 공격의 위력에 따라 출혈 피해가 정해지고 최대 3턴 지속됩니다.' },
-    { id: 'slow', name: '감속', kind: '속도 감소', description: '속도가 35% 낮아져 선공과 명중 보정에 불리해집니다.', detail: '현재 라운드가 끝난 뒤 다음 라운드부터 선공 판정에 반영됩니다.' },
-    { id: 'haste', name: '가속', kind: '속도 증가', description: '속도가 35% 높아져 선공과 명중 보정에 유리해집니다.', detail: '추가 공격을 만들지는 않으며, 기존 턴 구조 안에서 선공을 유리하게 만듭니다.' },
+    { id: 'slow', name: '감속', kind: '속도 감소', description: '속도가 35% 낮아져 선공·명중 보정·연속 행동에 불리해집니다.', detail: '선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
+    { id: 'haste', name: '가속', kind: '속도 증가', description: '속도가 35% 높아져 선공·명중 보정·연속 행동에 유리해집니다.', detail: '상대보다 빨라지면 연속 행동 확률이 올라갑니다. 선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
 ] as const;
 export const xpNeeded = (level: number) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1));
 // v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.

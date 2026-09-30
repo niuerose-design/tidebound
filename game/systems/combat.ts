@@ -1,6 +1,6 @@
 import { SKILLS } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
-import { STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
+import { BALANCE, STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
 import type { Stats, StatusEffects, CombatEvent, CombatHit } from '../types';
 export type { CombatEvent, CombatHit } from '../types';
 import { normalizeStats, hitChance } from './stats';
@@ -50,13 +50,34 @@ export function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageTyp
     const part = (h: CombatHit) => h.miss ? '빗나감' : `${h.value}${h.critical ? ' [치명타]' : ''}`;
     return [`본타 ${part(ev.hits[0])}`, ...ev.hits.slice(1).map((h, i) => `추가타${ev.hits.length > 2 ? ` ${i + 1}` : ''} ${part(h)}`), `합계 ${ev.total} ${word} 피해`].join(' · ');
 }
-/** Speed used for the existing round-based order. Slow/haste change priority, not action count. */
+/** 행동 순서·명중 보정·연속 행동 확률에 쓰는 속도. 가속·감속이 반영됩니다. */
 export function fighterSpeed(f: Fighter) {
     const base = normalizeStats(f.stats).speed;
     const slowed = (f.effects?.slow || 0) > 0;
     const hasted = (f.effects?.haste || 0) > 0;
     const multiplier = (slowed ? 1 - STATUS_TUNING.slowMultiplier : 1) * (hasted ? 1 + STATUS_TUNING.hasteMultiplier : 1);
     return Math.max(1, base * multiplier);
+}
+/** 연속 행동 확률: min(1, max(0, 계수 × log2(내 속도 / 상대 속도))). 같거나 느리면 0. */
+export function chainChance(a: Fighter, b: Fighter) {
+    const sa = fighterSpeed(a), sb = fighterSpeed(b);
+    return sa > sb ? Math.min(1, Math.max(0, BALANCE.chainCoefficient * Math.log2(sa / sb))) : 0;
+}
+/**
+ * 한 전투원의 턴: 행동한 뒤 연속 행동 확률로 다시 행동합니다(연쇄). 턴당 최대 chainMaxActions번, 어느 쪽이든 쓰러지면 즉시 멈춥니다.
+ * 추가 행동도 strike 그대로의 온전한 행동입니다. 확률이 0이면 난수를 쓰지 않아 기존과 같은 난수 순서를 유지합니다.
+ * onAction은 행동마다 (로그 문장, 구조화된 결과)로 불립니다. 두 번째 행동부터 문장 끝에 '연속 N'을 붙입니다.
+ */
+export function actTurn(a: Fighter, b: Fighter, rng: () => number, onAction: (text: string, event: CombatEvent) => void) {
+    for (let chain = 1; ; chain++) {
+        const events: CombatEvent[] = [];
+        const text = strike(a, b, rng, events), ev = events[0];
+        if (chain > 1) ev.chain = chain;
+        onAction(chain > 1 ? `${text} · 연속 ${chain}` : text, ev);
+        if (a.hp <= 0 || b.hp <= 0 || chain >= BALANCE.chainMaxActions) return;
+        const p = chainChance(a, b);
+        if (p <= 0 || (p < 1 && rng() >= p)) return;
+    }
 }
 /** Shared PvE/PvP action. Recovery, status, conditional proc, MP, accuracy, defense and crit. */
 export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[]) {
