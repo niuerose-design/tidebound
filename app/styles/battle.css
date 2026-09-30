@@ -266,3 +266,11 @@
 .combatant-name .recovery-countdown{color:#9ce8b4;font-variant-numeric:tabular-nums}
 @keyframes tideCombo{0%{opacity:0;scale:.8}12%{opacity:1;scale:1.08}24%,80%{opacity:1;scale:1}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.tide-fx-combo{animation-name:tideReduced}}
+
+/* 일반 낚시터도 던전처럼 체력바 카드 위에서 스킬 연출을 보여 줍니다. */
+.battle-fx-host{position:relative;isolation:isolate}
+.battle-fx-host .tide-fx-layer{overflow:visible}
+.battle-fx-host .tide-fx{top:50%}.battle-fx-host .tide-fx-target-enemy{left:80%}.battle-fx-host .tide-fx-target-player{left:20%}
+.battle-fx-host .monster-skill-cue{top:50%;z-index:8}
+.battle-fx-host .tide-fx-combo{top:auto;bottom:-10px;right:8px}
+@media(max-width:767px){.battle-fx-host .tide-fx-target-player{left:50%;top:23%}.battle-fx-host .tide-fx-target-enemy{left:50%;top:78%}}
