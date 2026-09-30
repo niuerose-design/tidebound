@@ -58,7 +58,19 @@ export function jobCombatMultiplier(job: Job, factor: number, mastered = false) 
 export function inherited(s: State, id: string) { const sk = SKILLS.find(x => x.id === id); return !!sk && (!!s.skillInheritances?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
 export function classAccess(s: State, sk: Skill) { return !sk.job || s.job === sk.job || inherited(s, sk.id); }
 export function skillUnlockReady(s: State, sk: Skill) { return !sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery; }
-export function canLearn(s: State, id: string) { const sk = SKILLS.find(x => x.id === id); return !!sk && s.level >= sk.level && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
+/** 계승한 스킬은 환생 뒤 레벨이 낮아도 쓸 수 있습니다(레벨 조건 면제). 환생 횟수·직업 숙련 해금 조건은 그대로입니다. */
+export function canLearn(s: State, id: string) { const sk = SKILLS.find(x => x.id === id); return !!sk && (s.level >= sk.level || inherited(s, id)) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
+/** 스킬을 장착할 수 없는 이유. 쓸 수 있으면 빈 문자열입니다. */
+export function skillBlockReason(s: State, id: string) {
+    const sk = SKILLS.find(x => x.id === id);
+    if (!sk) return '스킬을 찾을 수 없습니다.';
+    if (!classAccess(s, sk)) return '전용 직업으로 전직하거나, 숙련 또는 SP 계승을 완료하세요.';
+    if (s.rebirths < (sk.rebirth || 0)) return `환생 ${sk.rebirth}회부터 사용할 수 있습니다.`;
+    if (!skillUnlockReady(s, sk)) return `직업 숙련 ${sk.unlockJobMastery!.toLocaleString()}부터 사용할 수 있습니다.`;
+    if (s.level < sk.level && !inherited(s, id)) return `Lv.${sk.level}부터 사용할 수 있습니다.`;
+    if (!((s.learned?.[id] || 0) > 0)) return '아직 습득하지 않은 스킬입니다.';
+    return '';
+}
 export function canUse(s: State, id: string) { return canLearn(s, id) && (s.learned?.[id] || 0) > 0; }
 /** SP로 하는 행동은 모두 1 SP입니다. 직업이 주는 기술은 SP가 들지 않습니다. */
 export function skillCost() { return PROGRESSION.skillSPCost; }

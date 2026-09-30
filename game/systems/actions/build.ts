@@ -5,7 +5,7 @@ import type { Attribute } from '../../types';
 import { JOBS } from '../../data/classes';
 import { SKILLS } from '../../data/skills';
 import { emptyAttributes } from '../../data/progression';
-import { canUse, canChangeJob, trimLoadout, validLoadout, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from '../progression';
+import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from '../progression';
 import type { ActionHandlers } from './types';
 import { addLog, endRun } from '../state';
 
@@ -65,7 +65,7 @@ export const buildActions: ActionHandlers = {
         }
         else {
             if (!canUse(s, id))
-                throw Error('전용 직업으로 전직하거나, 숙련 또는 SP 계승을 완료하세요.');
+                throw Error(skillBlockReason(s, id) || '사용할 수 없는 스킬입니다.');
             if (!validLoadout(s, [...s.skills, id]))
                 throw Error('총 장착 AP 한도를 초과합니다.');
             s.skills.push(id);
