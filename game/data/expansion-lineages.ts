@@ -37,8 +37,8 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'voodooCrafter', name: '부두 인형사', title: '실 한 가닥에 저주를 꿴다', desc: '약화를 걸고 약화된 적에게 더 큰 피해를 주는 저주 2차 직업입니다.', ...neutral, magic: 1.32, resist: 1.08, crit: .04, ...T2, parent: 'shaman', requires: { int: 28, luk: 24 }, requiresSkillMastery: { curseBolt: 2 }, role: '약화·저주 연계', tree: 'status', penalties: { attack: -3 } },
     { id: 'calamityShrine', name: '재앙의 무녀', title: '불길한 조류를 부른다', desc: '침묵을 걸고 제어된 적을 무너뜨리는 환생 후 4차 저주 직업입니다.', ...neutral, magic: 1.74, hp: 1.22, defense: 1.05, resist: 1.25, crit: .06, ...T4, parent: 'warlock', requires: { int: 56, wis: 42 }, requiresSkillMastery: { soulRend: 3 }, role: '침묵·재앙', tree: 'status' },
     // ── 상태이상: 피낚시꾼 계보(출혈) ───────────────────────────
-    { id: 'bloodAngler', name: '피낚시꾼', title: '상처에서 흐름을 읽는다', desc: '출혈을 거는 갈고리와 지속 피해 패시브를 익히는 출혈 입문 직업입니다.', ...neutral, attack: 1.04, crit: .02, ...T1, requires: { str: 12, dex: 10 }, role: '출혈 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
-    { id: 'gashTracker', name: '혈흔 추적자', title: '핏자국은 사라지지 않는다', desc: '출혈 중인 적을 더 깊이 베는 연계형 2차 직업입니다.', ...neutral, attack: 1.3, hp: 1.02, crit: .12, ...T2, parent: 'bloodAngler', requires: { dex: 30, str: 24 }, requiresSkillMastery: { gashHook: 2 }, role: '출혈·연계', tree: 'status' },
+    { id: 'bloodAngler', name: '피낚시꾼', title: '상처에서 흐름을 읽는다', desc: '출혈을 거는 갈고리와 지속 피해 패시브를 익히는 출혈 입문 직업입니다.', ...neutral, attack: 1.02, crit: .02, ...T1, requires: { str: 12, dex: 10 }, role: '출혈 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
+    { id: 'gashTracker', name: '혈흔 추적자', title: '핏자국은 사라지지 않는다', desc: '출혈 중인 적을 더 깊이 베는 연계형 2차 직업입니다.', ...neutral, attack: 1.22, hp: 1.02, crit: .08, ...T2, parent: 'bloodAngler', requires: { dex: 30, str: 24 }, requiresSkillMastery: { gashHook: 2 }, role: '출혈·연계', tree: 'status' },
     { id: 'crimsonExecutioner', name: '선혈 처형인', title: '마지막 한 방울까지', desc: '강한 출혈과 출혈 연계 피해로 적을 끝내는 3차 직업입니다. 방어가 조금 낮습니다.', ...neutral, attack: 1.48, hp: 1.05, crit: .15, ...T3, parent: 'gashTracker', requires: { str: 46, dex: 36 }, requiresSkillMastery: { openVein: 3 }, role: '출혈·처형', tree: 'status', penalties: { defense: -4 } },
     { id: 'bloodDancer', name: '혈무사', title: '붉은 물결 위의 춤', desc: '출혈을 거는 연속 베기와 속도 패시브로 연타를 쌓는 2차 직업입니다.', ...neutral, attack: 1.24, crit: .08, ...T2, parent: 'bloodAngler', requires: { dex: 32, luk: 20 }, requiresSkillMastery: { gashHook: 2 }, role: '출혈·연타', tree: 'status', penalties: { defense: -2 } },
     // ── 상태이상: 마비 침술사 계보(기절·감속) ───────────────────
@@ -135,7 +135,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'calamityRite', name: '재앙의 의식', desc: '', level: 55, job: 'calamityShrine', chance: .5, cooldown: 4, multiplier: 2.9, cost: 5, manaCost: 26, effect: 'silence', damageBonusCondition: 'controlled', conditionalDamageBonus: .55, masteryMilestones: M4 },
     { ...P, id: 'omenVeil', name: '흉조의 장막', desc: '마법 공격과 마법 방어가 오릅니다.', level: 55, job: 'calamityShrine', cost: 3, bonus: { magic: 40, resist: 25 }, masteryMilestones: M4 },
     // 상태이상: 출혈
-    { ...A, ...physical, id: 'gashHook', name: '베는 갈고리', desc: '', level: 10, job: 'bloodAngler', chance: .26, cooldown: 3, multiplier: 1.25, cost: 2, effect: 'bleed' },
+    { ...A, ...physical, id: 'gashHook', name: '베는 갈고리', desc: '', level: 10, job: 'bloodAngler', chance: .26, cooldown: 3, multiplier: 1, cost: 2, effect: 'bleed' },
     { ...P, id: 'bloodScent', name: '피 냄새', desc: '치명타와 지속 피해가 오릅니다.', level: 10, job: 'bloodAngler', cost: 2, bonus: { crit: .02, dotBonus: .06 } },
     { ...A, ...physical, id: 'openVein', name: '혈관 가르기', desc: '', level: 25, job: 'gashTracker', chance: .27, cooldown: 3, multiplier: 1.55, cost: 3, effect: 'bleed', damageBonusCondition: 'bleeding', conditionalDamageBonus: .35 },
     { ...P, id: 'trailOfRed', name: '붉은 흔적', desc: '지속 피해와 명중이 오릅니다.', level: 25, job: 'gashTracker', cost: 2, bonus: { dotBonus: .12, accuracy: .04 } },
