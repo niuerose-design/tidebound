@@ -17,7 +17,7 @@ import { lifecycleActions } from './actions/lifecycle';
 
 export { addLog, newState } from './state';
 export { tick, advance, syncStatRate } from './turn';
-export { victoryHeal } from './encounter';
+export { victoryHeal, rollRarity } from './encounter';
 export { parseRepeat } from './dungeon-run';
 
 const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions };

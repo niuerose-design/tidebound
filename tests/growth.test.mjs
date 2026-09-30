@@ -9,8 +9,9 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  act(s,{type:'learn',id:'pierce'},0);assert.equal(s.sp,3);assert.equal(skillLevel(sk,s.learned.pierce,2),3);
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
-test('70 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,70);assert.equal(SKILLS.length,105);assert.equal(JOB_TREES.length,4);
+test('115 jobs distribute tier 1 and 2 skills into one or two each',()=>{
+ assert.equal(JOBS.length,115);assert.equal(SKILLS.length,186);assert.equal(JOB_TREES.length,6);
+ for(const job of JOBS)assert.ok(JOB_TREES.some(t=>t.id===job.tree),job.id);
  for(const job of JOBS.filter(j=>j.tier===1||j.tier===2)){
   const owned=SKILLS.filter(sk=>sk.job===job.id);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
  }

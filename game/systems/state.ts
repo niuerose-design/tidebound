@@ -19,6 +19,7 @@ export function newState(now: number): State {
         tide: 0,
         abyssBest: 0,
         shopSerial: 0,
+        essence: 0,
         guild: newGuild(),
         name: '물결의 낚시꾼',
         level: 1,

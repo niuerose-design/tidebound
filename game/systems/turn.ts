@@ -44,7 +44,7 @@ export function tickTurn(s: State, rng: () => number) {
         spawn(s, rng);
     const e = s.enemy!;
     const ecology = bookEcology(s, e.id);
-    const player: Fighter = { name: s.name, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), specializations: s.skillSpecializations, practice: s.skillPractice, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}) };
+    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), specializations: s.skillSpecializations, practice: s.skillPractice, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}) };
     const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = fighterSpeed(player) >= fighterSpeed(enemy) ? player : enemy, second = first === player ? enemy : player;
     const events: CombatEvent[] = [];

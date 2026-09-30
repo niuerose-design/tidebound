@@ -5,4 +5,5 @@ await import('./features.test.mjs');
 await import('./systems.test.mjs');
 await import('./growth.test.mjs');
 await import('./content.test.mjs');
+await import('./expansion.test.mjs');
 console.log(`${results.passed} gameplay tests passed.`);

@@ -4,7 +4,7 @@ import { BookOpen, Fish, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { SKILLS } from '@/game/data/skills';
-import { FISH, STAGES, SWARM_UNLOCK } from '@/game/data/world';
+import { FISH, STAGES } from '@/game/data/world';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
 import { PROGRESSION, statDisplay, percent } from '@/game/data/progression';
@@ -82,8 +82,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <span>{p.hint}</span>
                 </div> : <LockedInfo n={n}/>}
                 <BookTraitLine s={s} id={id}/>
-                <BookResearch s={s} id={id} send={send} busy={busy}/>
-                {n >= bookComplete && <small className="book-swarm book-swarm-line">무리 사냥 ×5 해금{n >= SWARM_UNLOCK[100] ? ' · ×100 해금' : ` · ×100까지 ${(SWARM_UNLOCK[100] - n).toLocaleString()}마리`}{n >= SWARM_UNLOCK[500] ? ' · ×500 해금' : n >= SWARM_UNLOCK[100] ? ` · ×500까지 ${(SWARM_UNLOCK[500] - n).toLocaleString()}마리` : ''}</small>}
+                <BookResearch s={s} id={id} send={send} busy={busy} swarm/>
                 {bookRevealed(s, id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{s.tide ? `해역 난이도 ${s.tide} 적용 · 일반 낚시터 기준` : '해역 난이도 0 · 일반 낚시터 기준'}</small></h4></summary>
                 <div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><span>명중 수치 {statDisplay('accuracy', enemy.accuracy || 0)}</span><span>회피 수치 {statDisplay('evasion', enemy.evasion || 0)}</span></div>
                 <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 내 공격 {percent(hitChance(player, enemy))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>포획 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 해역·골드 보너스 적용)</small></span></div>{f.level >= 5 && p.skills.length > 0 && <div className="book-stats"><span>스킬 {p.skills.map(skillName).join(' · ')}</span></div>}</details>}
@@ -108,7 +107,7 @@ export function Collection({ s, send, busy }: PanelProps) {
     <div className="notice">
     <BookOpen size={22}/>
     <div>
-    <strong>등록한 종류 {Object.keys(s.itemBook).length} / 12 · 드롭 확률 +{(Object.keys(s.itemBook).length * PROGRESSION.itemDropBonus * 100).toFixed(1)}%p</strong>
+    <strong>등록한 종류 {Object.keys(s.itemBook).length} / {Object.keys(SLOTS).length * RARITIES.length} · 장비 드롭 확률 +{Math.round(Object.keys(s.itemBook).length * PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}%</strong>
     <p>가방의 장비 한 개를 영구 등록하며, 해당 장비는 소모됩니다. 같은 슬롯·등급은 한 번만 등록합니다.</p>
     </div>
     </div>
@@ -123,7 +122,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             <SlotIcon slot={slot} size={32}/>
             </div>
             <h3>{EQUIPMENT_NAMES[slot as keyof typeof EQUIPMENT_NAMES][i]}</h3>
-            <p>{label} · 드롭 확률 +0.5%p</p>
+            <p>{label} · 장비 드롭 확률 +{Math.round(PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}%</p>
             <AlertDialog>
             <AlertDialogTrigger asChild>
             <button className="secondary" disabled={busy || !!registered || !candidate}>{registered ? '영구 보너스 적용 중' : candidate ? '장비 1개 등록' : '가방에 해당 장비 없음'}</button>

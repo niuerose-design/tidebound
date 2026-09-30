@@ -21,6 +21,25 @@ export type Stats = {
     lifesteal?: number;
     /** 육중 조화의 원시 피해. 직접 배분한 여섯 능력치로만 계산하며 장비·버프는 제외. */
     harmony?: number;
+    /** 반격: 맞을 때마다 (내 물리 방어 × 이 값)을 공격자에게 돌려줍니다. 직업의 방어 친화도가 곱해진 최종값. */
+    thorns?: number;
+    /** 출혈·중독 같은 지속 피해 증가율. 0.2 = +20%. */
+    dotBonus?: number;
+    /** 방어 비례 피해·반격이 얼마나 제대로 발휘되는지(0.2~1). 방어 배율이 높은 수호 계열일수록 1에 가깝습니다. */
+    guardAffinity?: number;
+    /** 회복 직업이면 1. 회복이 필요 없을 때 쓴 회복 기술도 피해가 줄지 않습니다. */
+    healFocus?: number;
+    /** 마법 직업의 기본 공격이 마력 평타(마법 공격 × arcaneStrikeRatio, 마나 없음)로 바뀔 확률. */
+    arcaneStrike?: number;
+    /** v22 장비 규칙 옵션. 기존 기술 규칙의 숫자 하나만 바꿉니다(상한은 data/gear.ts RULE_CAPS). */
+    stunBonus?: number;
+    controlBonus?: number;
+    dotTurnsBonus?: number;
+    poisonStackBonus?: number;
+    arcaneRatioBonus?: number;
+    followUpBonus?: number;
+    healBonus?: number;
+    executeBonus?: number;
     hp: number;
     attack: number;
     defense: number;
@@ -32,6 +51,9 @@ export type StatusEffects = {
         damage: number;
         turns: number;
         name: string;
+        /** 중첩형 지속 피해(중독)의 현재 중첩 수와 한 중첩당 피해. damage = perStack × stacks. */
+        stacks?: number;
+        perStack?: number;
     };
     weaken?: number;
     silence?: number;
@@ -44,11 +66,16 @@ export type Item = {
     description?: string;
     locked?: boolean;
     relic?: string;
+    /** v21 이전 장비와 유물의 단일 옵션. */
     affix?: {
         stat: keyof Stats;
         value: number;
         name: string;
     };
+    /** v22 등급 수만큼 붙는 옵션(0~6개). */
+    affixes?: import('./data/gear').ItemAffix[];
+    /** 드롭한 낚시터·던전 id. */
+    origin?: string;
     id: string;
     name: string;
     slot: 'rod' | 'coat' | 'charm';
@@ -79,15 +106,21 @@ export type Skill = {
     manaCost?: number;
     accuracyBonus?: number;
     penetrationBonus?: number;
-    damageBonusCondition?: 'bleeding' | 'weakened' | 'controlled';
+    damageBonusCondition?: 'bleeding' | 'weakened' | 'controlled' | 'lowHp';
     conditionalDamageBonus?: number;
     cleanseSelf?: boolean;
     healRatio?: number;
     drainRatio?: number;
     condition?: 'wounded' | 'healthyTarget';
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony';
+    /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. */
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'dual';
     scalingRatio?: number;
     statusTurns?: number;
+    /** 이 기술이 거는 지속 피해 비율(기본 SKILL_FORMULA.bleedRatio)과 이름(기본 출혈). */
+    dotRatio?: number;
+    dotName?: string;
+    /** true면 같은 중첩형 지속 피해에 겹쳐 쌓입니다(최대 STATUS_TUNING.poisonMaxStacks, 지속 시간 갱신). */
+    dotStacks?: boolean;
     /** Number of capped follow-up hits after the main hit. */
     extraAttacks?: number;
     /** Damage multiplier used by each follow-up hit. */
@@ -134,7 +167,7 @@ export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split';
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
-    dot?: { name: string; value: number }; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
+    dot?: { name: string; value: number }; reflected?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
 };
 export type Log = {
     id: number;
@@ -180,6 +213,8 @@ export type State = {
     tide: number;
     abyssBest: number;
     shopSerial: number;
+    /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
+    essence?: number;
     guild: GuildState;
     attributes: Record<Attribute, number>;
     statPoints: number;

@@ -1,7 +1,8 @@
 import type { Item } from '../types';
 /** 가격·확률·영구 성장 수치의 단일 설정. 모두 게임 내 재화 전용. */
 export const ECONOMY = { enhanceMax: 10, enhanceGain: .15, shopBase: 180, shopPerLevel: 35, gambleBase: 300, gamblePerLevel: 45, rebirthAPCap: 12, rebirthLevelStep: 5, rebirthLevelCap: 60, rebirthExp: .25, tideCap: 200 };
-export const APPRAISAL = [{ rarity: 1, chance: .55 }, { rarity: 2, chance: .4 }, { rarity: 3, chance: .05 }];
+// v22: 감정은 희귀 이상. 드물게 신화·고대·태초가 나옵니다(등급 수 = 옵션 수).
+export const APPRAISAL = [{ rarity: 1, chance: .55 }, { rarity: 2, chance: .33 }, { rarity: 3, chance: .09 }, { rarity: 4, chance: .025 }, { rarity: 5, chance: .004 }, { rarity: 6, chance: .001 }];
 export type ResearchTab = 'combat' | 'utility' | 'gold';
 export type ResearchGroup = 'attack' | 'defense' | 'basic';
 export type ResearchDef = {
