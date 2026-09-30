@@ -11,14 +11,16 @@ export const STAGES = [
 ];
 /**
  * 무리 사냥: 도감을 완성한 어종을 집중 사냥할 때 무리 전체를 체력 ×N인 한 개체로 상대합니다.
- * 적 공격은 무리 규모에 따라 강해지고, 적 자신의 최대 체력 비례 공격은 한 마리 체력 기준입니다.
- * 처치하면 N마리분 보상을 한 번에 지급합니다.
+ * ×5·×100은 공격이 한 마리와 같고, ×500은 공격도 490배인 도전 과제입니다.
+ * 적 자신의 최대 체력 비례 공격은 한 마리 체력 기준입니다. 처치하면 N마리분 보상을 한 번에 지급합니다.
  */
-export const SWARM_SIZES = [1, 5, 100] as const;
+export const SWARM_SIZES = [1, 5, 100, 500] as const;
 /** 무리 규모별 해금에 필요한 해당 어종 도감 포획 수. */
-export const SWARM_UNLOCK: Record<number, number> = { 1: 0, 5: 50, 100: 500 };
-/** 무리 체력 배율: N배, ×100만 98배. 공격·방어는 한 마리와 같아서 한 마리를 압도할수록 시간이 단축됩니다. */
+export const SWARM_UNLOCK: Record<number, number> = { 1: 0, 5: 50, 100: 500, 500: 5000 };
+/** 무리 체력 배율: N배, ×100 이상은 98%(×100 = 98배, ×500 = 490배). */
 export const swarmHpMultiplier = (size: number) => size >= 100 ? size * .98 : Math.max(1, size);
+/** 무리 공격 배율: ×500 도전 무리만 체력과 같은 배율(490배), 그 아래 규모는 한 마리와 같습니다. 방어·속도는 늘 한 마리와 같습니다. */
+export const swarmAttackMultiplier = (size: number) => size >= 500 ? swarmHpMultiplier(size) : 1;
 export type FishDef = {
     id: string;
     name: string;
