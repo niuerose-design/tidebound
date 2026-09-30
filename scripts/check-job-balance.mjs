@@ -1,5 +1,6 @@
 // 직업 간 밸런스 점검: 모든 직업을 차수별 같은 레벨·같은 능력치 총량으로 세우고, 그 레벨의 낚시터 어종과 1:1로 싸워
 // 처치 턴·승률·남은 체력을 비교합니다. 같은 차수 중앙값에서 크게 벗어난 직업을 표시합니다.
+// 끝에는 선행→상위 직업을 상위 직업 레벨에서 나란히 세워 역전(상위가 더 약함)을 표시합니다.
 // 사용: node scripts/check-job-balance.mjs [--mastered] [--json out.json]
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
@@ -27,7 +28,10 @@ const TIERS = {
 };
 /** 능력치 배분: 직업 보정이 큰 쪽(물리/마법)을 주 능력치로. 총량은 레벨당 4. */
 function attributesFor(j, level) {
-    const total = 4 + (level - 1) * 4, magic = j.magic > j.attack || (j.magic === j.attack && SKILLS.some(sk => sk.job === j.id && sk.damageType === 'magic'));
+    // 주 피해 유형: 자기 액티브 기술의 피해 유형을 먼저 보고, 액티브가 없으면 직업 보정이 큰 쪽.
+    const own = SKILLS.filter(sk => sk.job === j.id && sk.type === 'active');
+    const ownMagic = own.filter(sk => sk.damageType === 'magic').length, ownPhysical = own.length - ownMagic;
+    const total = 4 + (level - 1) * 4, magic = ownMagic !== ownPhysical ? ownMagic > ownPhysical : j.magic > j.attack || (j.magic === j.attack && SKILLS.some(sk => sk.job === j.id && sk.damageType === 'magic'));
     const w = magic ? { int: 45, wis: 20, vit: 25, dex: 10 } : { str: 45, dex: 20, vit: 25, wis: 10 };
     const out = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; let used = 0;
     for (const [k, p] of Object.entries(w)) { out[k] = Math.floor(total * p / 100); used += out[k]; }
@@ -54,9 +58,9 @@ function fight(st, s, foeId, tier) {
     }
     return { win: wins / SEEDS, turns: turns / SEEDS, hpLeft: hpLeft / SEEDS };
 }
-const rows = [];
-for (const j of JOBS) {
-    const T = TIERS[j.tier], s = newState(0);
+/** 직업 하나를 주어진 차수 조건(레벨·상대)에서 세워 평가합니다. */
+function evaluate(j, T) {
+    const s = newState(0);
     const { attrs, magic } = attributesFor(j, T.level);
     Object.assign(s, { level: T.level, rebirths: 10, job: j.id, attributes: attrs, equipment: {}, inventory: [], permanent: {}, book: {}, unlockedJobs: JOBS.map(x => x.id) });
     s.jobMastery = { [j.id]: MASTERED ? jobMasteryTarget(j) : 0 };
@@ -66,8 +70,9 @@ for (const j of JOBS) {
     const avg = k => res.reduce((x, r) => x + r[k], 0) / res.length;
     // 효율: 승률 × 남은 체력 비중을 반영한 1턴당 처치(높을수록 좋음).
     const win = avg('win'), turns = avg('turns'), hpLeft = avg('hpLeft');
-    rows.push({ tier: j.tier, id: j.id, name: j.name, tree: j.tree, magic, skills: s.skills.length, hp: Math.round(st.hp), atk: Math.round(magic ? st.magic : st.attack), win, turns, hpLeft, score: win * (0.5 + hpLeft / 2) / turns });
+    return { tier: j.tier, id: j.id, name: j.name, tree: j.tree, magic, skills: s.skills.length, hp: Math.round(st.hp), atk: Math.round(magic ? st.magic : st.attack), win, turns, hpLeft, score: win * (0.5 + hpLeft / 2) / turns };
 }
+const rows = JOBS.map(j => evaluate(j, TIERS[j.tier]));
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 const pct = n => `${Math.round(n * 100)}%`;
 console.log(`직업 밸런스 (${MASTERED ? '숙달' : '숙달 전'}, 시드 ${SEEDS}, 상대별 평균)`);
@@ -85,5 +90,35 @@ for (const tier of Object.keys(TIERS).map(Number)) {
         console.log(`${flag} ${r.name.padEnd(10, '　')} ${r.tree.padEnd(8)} ${r.magic ? '마법' : '물리'} 승률 ${pct(r.win).padStart(4)} · ${r.turns.toFixed(1).padStart(5)}턴 · 남은 체력 ${pct(r.hpLeft).padStart(4)} · 상대 ${r.rel.toFixed(2)} · 스킬 ${r.skills}`);
     }
 }
+// 상하위 역전 점검: 상위 직업의 레벨·상대에서 선행 직업과 나란히 세워, 상위 직업이 선행 직업보다 약하거나 비슷한 경우를 표시합니다.
+// 선행 직업은 상위 직업 레벨에서도 자기 기술만 쓰므로, 차이는 직업 보정과 보유 기술에서만 나옵니다.
+const chain = [];
+for (const j of JOBS.filter(x => x.parent)) {
+    const parent = JOBS.find(x => x.id === j.parent); if (!parent || parent.tier >= j.tier) continue;
+    const T = TIERS[j.tier], child = evaluate(j, T), base = evaluate(parent, T);
+    chain.push({ id: j.id, name: j.name, tier: j.tier, parent: parent.id, parentName: parent.name, parentTier: parent.tier, ratio: base.score > 0 ? child.score / base.score : Infinity, child, base });
+}
+chain.sort((a, b) => a.ratio - b.ratio);
+console.log(`\n■ 상하위 역전 점검 (상위 직업 레벨에서 비교, 1.10배 미만 ◆)`);
+for (const c of chain) {
+    const flag = c.ratio < 1.1 ? '◆' : ' ';
+    console.log(`${flag} ${c.parentName}(${c.parentTier}차) → ${c.name}(${c.tier}차) · 상위/선행 ${c.ratio.toFixed(2)}배 · 승률 ${pct(c.base.win)}→${pct(c.child.win)} · 처치 ${c.base.turns.toFixed(1)}→${c.child.turns.toFixed(1)}턴`);
+}
+report.chain = chain.map(c => ({ id: c.id, parent: c.parent, ratio: c.ratio }));
+// 상위 차수 비교: 1~4차 직업을 한 단계 위 차수의 레벨·상대에 세워, 그 차수 중앙값 이상이면 표시합니다(★).
+// 하위 직업이 상위 직업 평균만큼 강하면, 숙련 조건이 무거운 의도된 경우가 아닌 한 수치 조정 대상입니다.
+console.log(`\n■ 상위 차수 비교 (한 단계 위 차수 조건에서 그 차수 중앙값 대비, 0.90배 이상 ★)`);
+const cross = [];
+for (const tier of [1, 2, 3, 4]) {
+    const upper = rows.filter(r => r.tier === tier + 1); if (!upper.length) continue;
+    const T = TIERS[tier + 1], upperMed = median(upper.map(r => r.score));
+    for (const j of JOBS.filter(x => x.tier === tier)) {
+        const r = evaluate(j, T), rel = r.score / upperMed;
+        cross.push({ id: j.id, name: j.name, tier, rel, win: r.win, turns: r.turns });
+    }
+}
+cross.sort((a, b) => b.rel - a.rel);
+for (const c of cross.filter(c => c.rel >= 0.75)) console.log(`${c.rel >= 0.9 ? '★' : ' '} ${c.name}(${c.tier}차) · ${c.tier + 1}차 중앙값 대비 ${c.rel.toFixed(2)}배 · 승률 ${pct(c.win)} · ${c.turns.toFixed(1)}턴`);
+report.cross = cross;
 const out = process.argv[process.argv.indexOf('--json') + 1];
-if (process.argv.includes('--json') && out) fs.writeFileSync(out, JSON.stringify({ mastered: MASTERED, report, rows }, null, 1));
+if (process.argv.includes('--json') && out) fs.writeFileSync(out, JSON.stringify({ mastered: MASTERED, report, rows, chain }, null, 1));
