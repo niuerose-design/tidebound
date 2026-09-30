@@ -1,4 +1,4 @@
-// 무리 사냥 검증: 같은 캐릭터·어종·시간으로 ×1/×5/×100의 시간당 숙련·경험치·골드·드롭·사망을 비교합니다. 사용: node scripts/check-swarm.mjs
+// 무리 사냥 검증: 같은 캐릭터·어종·시간으로 ×1/×5/×100/×500의 시간당 숙련·경험치·골드·드롭·사망을 비교합니다. 사용: node scripts/check-swarm.mjs
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
 const {load:moduleAt}=loadGame();
@@ -25,8 +25,8 @@ const cases=[
  ['적정 상대·마법','tempest',40,{int:80,wis:40,vit:30,dex:10},['spring','wave','maelstrom','arcane','abyssMind'],'moon','moonfish'],
 ];
 const rows=[];
-for(const [label,job,L,attributes,skills,stage,fish] of cases)for(const size of [1,5,100]){
- const s=newState(0);s.level=L;s.rebirths=5;s.attributes={str:0,dex:0,int:0,vit:0,wis:0,luk:0,...attributes};s.job=job;s.equipment={};s.inventory=[];s.book={[fish]:1000};s.unlockedJobs=JOBS.map(j=>j.id);s.jobMastery[job]=12000;
+for(const [label,job,L,attributes,skills,stage,fish] of cases)for(const size of [1,5,100,500]){
+ const s=newState(0);s.level=L;s.rebirths=5;s.attributes={str:0,dex:0,int:0,vit:0,wis:0,luk:0,...attributes};s.job=job;s.equipment={};s.inventory=[];s.book={[fish]:5000};s.unlockedJobs=JOBS.map(j=>j.id);s.jobMastery[job]=12000;
  for(const sk of SKILLS){s.learned[sk.id]=1;s.skillPractice[sk.id]=80000;}s.skills=[];
  for(const id of skills)if(canUse(s,id)&&validLoadout(s,[...s.skills,id]))s.skills.push(id);
  s.hp=stats(s).hp;s.mana=stats(s).mana;
