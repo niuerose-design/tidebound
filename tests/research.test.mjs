@@ -194,3 +194,16 @@ test('Vows · rough sea: enemies ×(1+0.5n), gold and drops ×(1+0.5n×boost); s
     rough.vows = { rough: 2, anchor: true, breath: true }; assert.deepEqual(snapshot(rough).vows, ['anchor', 'breath', 'rough2']);
     assert.equal('vows' in snapshot(base), false);
 });
+
+// 계승 스킬 레벨 조건 면제
+import { canUse, SKILLS } from './harness.mjs';
+test('Inherited skills skip the level requirement; other skills explain why they cannot be equipped', () => {
+    const sk = SKILLS.find(x => x.job && x.level >= 25 && x.type === 'active' && !x.rebirth && !x.unlockJobMastery);
+    const s = newState(0); s.level = 60; s.rebirths = 3; s.learned[sk.id] = 3; s.skillInheritances = { [sk.id]: true };
+    act(s, { type: 'rebirth' }, 0); assert.equal(s.level, 1); assert.equal(canUse(s, sk.id), true);
+    act(s, { type: 'skill', id: sk.id }, 0); assert.ok(s.skills.includes(sk.id));
+    const native = SKILLS.find(x => x.job === 'fisher' && x.level > 1 && !x.rebirth && !x.unlockJobMastery) || SKILLS.find(x => !x.job && x.level > 1);
+    const n = newState(0); n.learned[native.id] = 1;
+    assert.throws(() => act(n, { type: 'skill', id: native.id }, 0), new RegExp(`Lv\\.${native.level}부터`));
+    const other = newState(0); assert.throws(() => act(other, { type: 'skill', id: sk.id }, 0), /전직하거나/);
+});

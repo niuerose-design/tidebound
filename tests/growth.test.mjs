@@ -50,8 +50,8 @@ test('Negative AP works independent of priority and cannot be removed to overflo
 });
 test('SP inheritance, growth and practice survive reincarnation',()=>{
  const s=newState(0);s.level=30;s.learned.pierce=3;s.skillSpent.pierce=3;s.skillInheritances.pierce=true;s.skillPractice.pierce=100;s.sp=2;
- act(s,{type:'rebirth'},1);assert.equal(s.skillInheritances.pierce,true);assert.equal(s.learned.pierce,3);assert.equal(s.skillPractice.pierce,100);assert.equal(s.sp,2);assert.equal(canUse(s,'pierce'),false);
- s.level=10;assert.equal(canUse(s,'pierce'),true);
+ act(s,{type:'rebirth'},1);assert.equal(s.skillInheritances.pierce,true);assert.equal(s.learned.pierce,3);assert.equal(s.skillPractice.pierce,100);assert.equal(s.sp,2);
+ assert.equal(s.level,1);assert.equal(canUse(s,'pierce'),true,'inherited skills ignore the level requirement after rebirth');
 });
 test('Level ups grant native skills but no SP',()=>{
  const s=newState(0);s.running=true;s.exp=xpNeeded(1)+xpNeeded(2);s.enemy={id:'minnow',name:'target',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};
