@@ -2,10 +2,12 @@ import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw,
 import type { ReactNode } from 'react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
-import { ECONOMY, RESEARCH } from '@/game/data/economy';
+import { ECONOMY, RESEARCH, RESEARCH_RESET, offlineCapSeconds, inventoryCap } from '@/game/data/economy';
+import { victoryHealRate } from '@/game/systems/encounter';
+import type { State } from '@/game/types';
 import { SWARM_UNLOCK } from '@/game/data/world';
 import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
-import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL } from '@/game/systems/meta';
+import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL, tailwindWindow, tailwindExp } from '@/game/systems/meta';
 import { Heading } from './shared';
 
 /** 도움말 카드: 효과 → 조건 → 제한 순서로 적습니다. */
@@ -34,7 +36,7 @@ const STATUS_GROUPS = [
     { title: '지속 피해 · 속도', ids: ['bleed', 'slow', 'haste'] },
 ] as const;
 
-export function Guide() {
+export function Guide({ s }: { s?: State }) {
     return <>
         <Heading eyebrow="CAPTAIN'S MANUAL" title="항해 도움말" description="주제 제목을 누르면 접고 펼칠 수 있습니다. 규칙은 효과 · 조건 · 제한 순서입니다." />
         <Topic open icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분에 직업·장비·스킬이 더해집니다.">
@@ -110,23 +112,23 @@ export function Guide() {
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장마다 6초 준비 후 체력·마나를 회복합니다."
                     limit={`반복이 끝나거나 실패하면 낚시터에서 자동 낚시를 이어갑니다. 던전 처치 후 회복은 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
-                    effect={`승리 후 최대 체력의 ${percent(BALANCE.healAfterKill)}(던전 ${percent(MONSTER_TUNING.dungeonHealAfterKill)})를 회복합니다. 공용 패시브 응급처치(AP 2, Lv.2 자동 습득)를 장착하면 승리마다 ${percent(FIRST_AID_HEAL)}를 더 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
+                    effect={`승리 후 최대 체력의 ${percent(BALANCE.healAfterKill)}(던전 ${percent(MONSTER_TUNING.dungeonHealAfterKill)})를 회복하고, 진주 연구 잔잔한 물결로 1%p씩 늘어납니다${s ? `(지금 필드 ${percent(victoryHealRate({ ...s, dungeon: null }))} · 던전 ${percent(victoryHealRate({ ...s, dungeon: { id: '', wave: 0 } }))})` : ''}. 공용 패시브 응급처치(AP 2, Lv.2 자동 습득)를 장착하면 승리마다 ${percent(FIRST_AID_HEAL)}를 더 회복합니다. 자동 낚시 중 자리를 비운 시간도 서버가 실제 턴으로 계산합니다.`}
                     condition={`패배하면 손실 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다.`}
-                    limit={`방치 정산은 최대 ${BALANCE.offlineCapSeconds / 3600}시간. 일시정지 중에는 쌓이지 않습니다. 해역 난이도는 일반 낚시터에만 적용됩니다.`}/>
+                    limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간, 긴 닻줄 연구로 2시간씩 늘어납니다${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}. 가방은 기본 ${BALANCE.inventoryCap}칸, 넓은 선창 연구로 5칸씩 늘어납니다${s ? `(지금 ${inventoryCap(s)}칸)` : ''}. 일시정지 중에는 쌓이지 않습니다. 해역 난이도는 일반 낚시터에만 적용됩니다.`}/>
             </div>
         </Topic>
         <Topic icon={<RefreshCw size={19}/>} title="성장 · 재화" note="환생, 진주 연구, 도감, 상점.">
             <div className="help-columns">
                 <Rule icon={<RefreshCw size={19}/>} title="환생"
                     effect={<>진주 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스 + 깊은 항해(요구 레벨 초과분² ÷ 40). 환생 영구 보너스(체력·물리/마법 공격·물리/마법 방어) = 2.5% × √환생 횟수. 영구 경험치는 환생마다 +25%.</>}
-                    condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨+${TAILWIND_WINDOW} 이내에 환생하면 순풍(다음 생 요구 레벨까지 경험치 +${TAILWIND_EXP * 100}%), Lv.${DEEP_VOYAGE_LEVEL}에서 환생하면 깊은 항해(다음 생 숙련 기본 획득 +2).`}
+                    condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨+${s ? tailwindWindow(s) : TAILWIND_WINDOW} 이내에 환생하면 순풍(다음 생 요구 레벨까지 경험치 +${Math.round((s ? tailwindExp(s) : TAILWIND_EXP) * 100)}%, 기본 +${TAILWIND_WINDOW}·+${TAILWIND_EXP * 100}%에서 순풍의 돛·바람목 넓히기 연구로 늘어남), Lv.${DEEP_VOYAGE_LEVEL}에서 환생하면 깊은 항해(다음 생 숙련 기본 획득 +2).`}
                     limit={`환생 횟수 보상 진주와 영구 경험치는 20회까지 회당 1개·+25%, 이후에는 √(횟수 − 20)으로 완만해집니다. 환생 AP는 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도는 최대 ${ECONOMY.tideCap}.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="진주 연구"
-                    effect="진주로 영구 능력을 올립니다. 환생해도 유지됩니다."
-                    condition="단계가 오를수록 비용이 커지고, 20단계 이후에는 더 가파르게 오릅니다."
+                    effect="진주로 영구 능력을 올립니다. 환생해도 유지됩니다. 전투(공격·생존)·유틸·골드 탭으로 나뉘며, 물리 공격(날카로운 기억)과 마법 공격(심해 등불의 기억), 물리 방어(불굴의 기억)와 마법 방어(진주막의 기억)는 각각 따로 연구합니다."
+                    condition={`단계가 오를수록 비용이 커지고, 20단계 이후에는 더 가파르게 오릅니다. 일부 연구는 정해진 환생 횟수 이후에 열립니다. 탭별 재분배는 그 탭에 쓴 진주를 돌려받고 단계를 0으로 되돌립니다: 계정당 첫 1회는 ${RESEARCH_RESET.firstRefund * 100}%, 이후 ${RESEARCH_RESET.refund * 100}%(내림). 자동 낚시·던전 중에는 할 수 없고, 영혼의 그릇을 되돌려 장착 AP가 넘치면 먼저 스킬을 해제해야 합니다.`}
                     limit={<>연구 상한: {RESEARCH.map(r => `${r.name} ${r.max}단계`).join(' · ')}.</>}/>
                 <Rule icon={<BookOpen size={19}/>} title="물고기 도감"
-                    effect={`종별 연구는 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 포획에 골드를 주고, 최종 연구에서 SP 1을 줍니다. 지역의 모든 종을 완성하면 AP +1 · 최대 체력 +20.`}
+                    effect={`종별 연구는 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 포획에 골드를 주고, 최종 연구에서 SP 1을 줍니다. 연구 단계마다 어종 성향에 맞는 능력치가 오르고, 2단계부터는 그 어종 상대 피해 보정(생태 연구)이 붙습니다. 50회 포획하면 성향·스킬 정보가 공개됩니다. 지역의 모든 종을 완성하면 AP +1과 지역 테마 보너스를 받습니다.`}
                     condition={`한 종을 ${PROGRESSION.fishComplete}회 포획하면 완성으로 처리합니다. 보상은 도감에서 직접 받습니다.`}
                     limit="각 연구 단계 보상은 한 번만 받습니다. 무리 사냥 해금도 연구 단계 보상에 함께 표시됩니다."/>
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비 강화"

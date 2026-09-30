@@ -22,6 +22,10 @@ export type Fighter = {
     effects?: StatusEffects;
     /** 무리 사냥 개체의 규모. 자기 최대 체력 비례 공격은 한 마리 체력 기준으로 계산합니다. */
     swarm?: number;
+    /** 도감 생태 연구: 주는 피해 증가율(0.04 = +4%). */
+    damageDealt?: number;
+    /** 도감 생태 연구: 받는 공격 피해 감소율(0.02 = -2%). 지속 피해에는 적용하지 않습니다. */
+    damageTaken?: number;
 };
 type DurationStatus = 'weaken' | 'silence' | 'slow' | 'haste';
 function consumeStatus(effects: StatusEffects, key: DurationStatus) {
@@ -154,7 +158,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         ? Math.round(raw * SKILL_FORMULA.splitPhysical * 100 / (100 + sb.defense * pierce * 2)) + Math.round(raw * (1 - SKILL_FORMULA.splitPhysical) * 100 / (100 + sb.resist * pierce * 2))
         : Math.round(raw * 100 / (100 + defense * 2));
     const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
-    const linkMultiplier = linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1;
+    const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push('연계'); ev.linked = true; }
     const crit = landed && rng() < sa.crit;
     const damage = landed ? Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1))) : 0;
