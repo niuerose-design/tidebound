@@ -36,7 +36,7 @@ export const {xpNeeded,SKILL_FORMULA,STATUS_TUNING,BALANCE,RARITIES}=await load(
 export const STATUS_TUNING_MAX=STATUS_TUNING.poisonMaxStacks;
 export const gear=await load('game/data/gear.js');
 export const {PROGRESSION}=await load('game/data/progression.js');
-export const {JOBS,JOB_TREES}=await load('game/data/classes.js');
+export const {JOBS,JOB_TREES,LINEAGES,lineageOf,jobTags}=await load('game/data/classes.js');
 let seed=44;
 export const rng=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
 export const results={passed:0};
