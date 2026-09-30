@@ -44,7 +44,7 @@ export function Guide({ s }: { s?: State }) {
             <p className="footnote">능력치 화면의 수치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
             <p className="footnote help-notation"><b>표기 규칙</b> +10%: 원래 값에 비율로 더하는 보너스(같은 종류끼리 합산) · +1%p: 확률에 그대로 더하는 값(20% → 21%) · ×1.2: 다른 보너스와 곱하는 배율 · 1.2만: 큰 수 줄임 표기(숫자에 마우스를 올리면 정확한 값).</p>
         </Topic>
-        <Topic icon={<Swords size={19}/>} title="전투" note="속도가 높은 쪽이 먼저 행동합니다.">
+        <Topic icon={<Swords size={19}/>} title="전투" note="속도가 높은 쪽이 먼저 행동하고, 상대보다 빠르면 한 턴에 여러 번 행동할 수 있습니다.">
             <div className="help-flow">
                 <div><b>1</b><strong>상태 처리</strong><p>상태이상의 남은 턴, 마나 회복, 기절을 먼저 처리합니다.</p></div>
                 <div><b>2</b><strong>스킬 선택</strong><p>장착한 액티브를 위에서부터 조건·재사용 대기·마나·발동 확률 순으로 확인하고, 모두 실패하면 기본 공격을 합니다.</p></div>
@@ -53,6 +53,10 @@ export function Guide({ s }: { s?: State }) {
                 <div><b>5</b><strong>추가타</strong><p>추가타가 있는 스킬은 같은 행동 안에서 후속 타격을 냅니다.</p></div>
             </div>
             <div className="help-columns">
+                <Rule icon={<Zap size={19}/>} title="속도·연속 행동"
+                    effect={<>속도는 행동 순서, 명중 보정, 연속 행동을 정합니다. 상대보다 빠르면 행동할 때마다 확률로 한 번 더 행동하고, 성공하면 다시 판정합니다. 연속 확률 = {BALANCE.chainCoefficient} × log₂(내 속도 ÷ 상대 속도).</>}
+                    condition={`속도 1.2배 13% · 1.5배 29% · 2배 50% · 3배 79% · 4배 이상 100%. 추가 행동도 온전한 행동이라 스킬 선택, 재사용 대기, 마나 회복, 지속 피해, 기절이 모두 한 칸씩 진행됩니다. 적에게도 같은 규칙이 적용됩니다.`}
+                    limit={`한 턴에 전투원마다 최대 ${BALANCE.chainMaxActions}번. 어느 쪽이든 쓰러지면 바로 멈춥니다.`}/>
                 <Rule icon={<Crosshair size={19}/>} title="명중·회피"
                     effect={<>명중 수치는 내 공격이, 회피 수치는 상대 공격과 그 공격의 상태이상이 빗나갈 가능성을 바꿉니다. 실제 적중률 = 내 명중 − 상대 회피 + 속도 보정.</>}
                     condition="속도 차이에 따라 최대 ±6%p. 스킬 특화·가속·감속은 해당 공격에 추가로 반영됩니다."

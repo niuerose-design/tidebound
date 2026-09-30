@@ -12,6 +12,8 @@ export type CombatFx = {
     damageType: 'physical' | 'magic' | 'split'; dot?: { name: string; value: number };
     hits: { value: number; critical: boolean; miss: boolean }[];
     delay: number;
+    /** 연속 행동 번호(2 이상일 때만). */
+    chain?: number;
 };
 
 const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
@@ -26,7 +28,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
         const missed = ev.hits.length > 0 && ev.hits.every(h => h.miss);
         const status = ev.statuses.find(x => !x.onSelf) || ev.statuses[0];
         const kind: CombatFxKind = missed ? 'miss' : status ? status.id === 'bleed' ? 'bleed' : status.id as CombatFxKind : ev.damageType;
-        return { id: log.id, actor, target, title: ev.skillName, kind, variant: variantOf(ev.skillId, ev.damageType !== 'physical'), basic: !ev.skillId, critical: ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot };
+        return { id: log.id, actor, target, title: ev.skillName, kind, variant: variantOf(ev.skillId, ev.damageType !== 'physical'), basic: !ev.skillId, critical: ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}) };
     }
     const text = log.text;
     const actor = text.startsWith(`${playerName} ·`) || text.startsWith(`${playerName}:`) ? 'player' : 'enemy';
@@ -84,13 +86,18 @@ export type ReplayFrame = {
 /** turn: prev.lastTick 뒤 몇 번째 턴인지(1부터). */
 export type ReplayTurn = { turn: number; frames: ReplayFrame[] };
 
-/** 로그를 턴 단위로 묶습니다. 한 턴은 타격 1~2줄과 그 뒤의 보상·패배 줄, 또는 회복 완료 한 줄입니다. */
+/**
+ * 로그를 턴 단위로 묶습니다. 한 턴은 먼저 행동한 쪽의 타격(연속 행동 포함)과 나중 쪽의 타격, 그 뒤의 보상·패배 줄, 또는 회복 완료 한 줄입니다.
+ * 연속 번호(event.chain)가 2 이상인 타격은 앞 타격과 같은 턴이고, 1번째 행동은 아직 행동하지 않은 상대의 것이며 바로 앞이 타격일 때만 같은 턴입니다.
+ */
 export function groupReplayTurns(logs: Log[]): Log[][] {
     const turns: Log[][] = [];
     for (const log of logs) {
         const cur = turns.at(-1);
-        const strikes = cur ? cur.filter(l => l.type === 'battle').length : 0;
-        const starts = !cur || (log.type === 'battle' ? !(strikes === 1 && cur.at(-1)!.type === 'battle') : log.text === RECOVERED);
+        const leads = cur ? cur.filter(l => l.type === 'battle' && (l.event?.chain ?? 1) === 1) : [];
+        const follows = !!cur && cur.at(-1)!.type === 'battle' && (log.event?.chain ?? 1) > 1
+            || leads.length === 1 && cur!.at(-1)!.type === 'battle' && (!log.event || !leads[0].event || log.event.actor !== leads[0].event.actor);
+        const starts = !cur || (log.type === 'battle' ? !follows : log.text === RECOVERED);
         if (starts) turns.push([log]);
         else cur!.push(log);
     }
@@ -114,8 +121,10 @@ function placeTurns(groups: Log[][], count: number, recovery: number): number[] 
     return g === groups.length ? at : groups.map((_, i) => count - groups.length + 1 + i);
 }
 
+/** 한 턴의 타격 간격. 연속 행동으로 타격이 많으면 다음 턴 전에 끝나도록 좁힙니다. */
+const beatMs = (beats: number) => beats > 1 ? Math.min(FX_BEAT_MS, Math.floor(BALANCE.turnMs * .8 / (beats - 1))) : FX_BEAT_MS;
 const clamp = (v: number, max: number) => Math.max(0, Math.min(max, v));
-type Beat = { turn: number; index: number; logs: Log[]; side: 'player' | 'enemy' | null; player: number; foe: number; kill: boolean; lost: boolean; recovered: boolean; name?: string };
+type Beat = { turn: number; index: number; beatMs: number; logs: Log[]; side: 'player' | 'enemy' | null; player: number; foe: number; kill: boolean; lost: boolean; recovered: boolean; name?: string };
 
 /** prev → next 사이 턴별 재생 프레임. 재생할 수 없으면(세이브 교체·로그 누락 등) null. */
 export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMana: number): ReplayTurn[] | null {
@@ -139,7 +148,7 @@ export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMa
             const dealt = ev ? ev.hits.reduce((n, h) => n + (h.miss ? 0 : h.value), 0) : 0;
             const self = ev ? ev.healed + ev.drained - (ev.dot?.value || 0) - (ev.reflected || 0) : 0;
             const last = i === units.length - 1;
-            beats.push({ turn: at[g], index: i, logs, side, player: side === 'player' ? self : side === 'enemy' ? -dealt : 0, foe: side === 'enemy' ? self : side === 'player' ? -dealt : 0, kill: last && !!caught, lost: last && group.some(l => l.text === LOST), recovered: group[0].text === RECOVERED, name: caught });
+            beats.push({ turn: at[g], index: i, beatMs: beatMs(units.length), logs, side, player: side === 'player' ? self : side === 'enemy' ? -dealt : 0, foe: side === 'enemy' ? self : side === 'player' ? -dealt : 0, kill: last && !!caught, lost: last && group.some(l => l.text === LOST), recovered: group[0].text === RECOVERED, name: caught });
         });
     });
     // 플레이어 HP: 마지막 불연속(포획 회복·레벨업·패배·회복 완료) 뒤는 next에서 거꾸로, 그 앞은 prev에서 앞으로 계산합니다.
@@ -201,7 +210,7 @@ export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMa
                 if (beat.recovered) r = 0;
                 if (beat.lost) r = BALANCE.recoveryTurns;
                 const enemy = beat.side ? foes[b] : fallen ? null : frame.enemy;
-                frame = { ...frame, offset: beat.index * FX_BEAT_MS, hp: hp[b], mana: mana[b], recovery: r, enemy, lastLogId: beat.logs.at(-1)!.id };
+                frame = { ...frame, offset: beat.index * beat.beatMs, hp: hp[b], mana: mana[b], recovery: r, enemy, lastLogId: beat.logs.at(-1)!.id };
                 frames.push(frame);
                 fallen = beat.kill || beat.lost;
             }

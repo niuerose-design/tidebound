@@ -10,6 +10,7 @@ const FX_HOLD_MS = 1500;
 /**
  * 새 전투 로그의 연출. 재생 버퍼가 타격마다 로그를 한 줄씩 드러내므로 박자마다 이어 붙이고, 각 묶음은 제 시간이 지나면 지웁니다.
  * 한꺼번에 많이 들어오면(밀린 턴 건너뛰기) 최근 6개만 보여 주고 잘린 타격 수를 skipped로 알립니다.
+ * 연속 행동이 있으면 skipped는 그 묶음에서 가장 긴 연속 번호입니다(‘×N 연속’).
  */
 export function useCombatFx(logs: Log[], playerName: string) {
     const lastId = useRef<number | null>(null), timers = useRef(new Set<number>());
@@ -24,15 +25,16 @@ export function useCombatFx(logs: Log[], playerName: string) {
         }
         if (latest === lastId.current) return;
         const batch = combatFxBatch(logs, lastId.current, playerName), cut = combatFxSkipped(logs, lastId.current, playerName);
+        const chain = Math.max(0, ...batch.map(fx => fx.chain || 0)), combo = chain > 1 ? chain : cut;
         lastId.current = latest;
         if (!batch.length) return;
         const ids = new Set(batch.map(fx => fx.id));
         setEffects(prev => cut ? batch : [...prev.filter(fx => !ids.has(fx.id)), ...batch].slice(-6));
-        if (cut) setSkipped(cut);
+        if (combo) setSkipped(combo);
         const timer = window.setTimeout(() => {
             timers.current.delete(timer);
             setEffects(prev => prev.filter(fx => !ids.has(fx.id)));
-            if (cut) setSkipped(0);
+            if (combo) setSkipped(v => v === combo ? 0 : v);
         }, batch.at(-1)!.delay + FX_HOLD_MS);
         timers.current.add(timer);
     }, [latest, logs, playerName]);
