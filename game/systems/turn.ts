@@ -7,9 +7,12 @@ import { BALANCE } from '../data/balance';
 import { DUNGEONS } from '../data/world';
 import { strike, fighterSpeed, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
+import { offlineCapSeconds, researchRank } from '../data/economy';
 import { canUse, skillMasteryRanks } from './progression';
 import { addLog, endRun } from './state';
-import { spawn, reward } from './encounter';
+import { spawn, reward, drop } from './encounter';
+import { bookEcology } from './book';
+import { breathReset } from './actions/lifecycle';
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
@@ -42,7 +45,8 @@ export function tickTurn(s: State, rng: () => number) {
     if (!s.enemy)
         spawn(s, rng);
     const e = s.enemy!;
-    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), specializations: s.skillSpecializations, practice: s.skillPractice };
+    const ecology = bookEcology(s, e.id);
+    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), specializations: s.skillSpecializations, practice: s.skillPractice, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}) };
     const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = fighterSpeed(player) >= fighterSpeed(enemy) ? player : enemy, second = first === player ? enemy : player;
     const events: CombatEvent[] = [];
@@ -62,6 +66,8 @@ export function tickTurn(s: State, rng: () => number) {
         reward(s, rng);
     else if (s.hp <= 0) {
         s.deaths++;
+        // 한 번의 숨: 쓰러지면 즉시 이번 생을 처음부터 다시 시작합니다(오프라인 정산 중에도 같은 규칙).
+        if (s.vows?.breath) { breathReset(s, s.lastTick); return; }
         s.recovery = BALANCE.recoveryTurns;
         s.enemy = null;
         s.cooldowns = {};
@@ -80,11 +86,37 @@ export function tickTurn(s: State, rng: () => number) {
 export function advance(s: State, now: number, rng = Math.random) {
     now = Math.max(now, s.lastTick);
     const elapsed = now - s.lastTick;
-    const count = Math.min(Math.floor(elapsed / BALANCE.turnMs), BALANCE.offlineCapSeconds * 1000 / BALANCE.turnMs);
+    // 정산 상한은 정산을 시작할 때의 긴 닻줄 단계로 정합니다(정산 중 연구가 바뀌지 않음).
+    const cap = offlineCapSeconds(s);
+    const count = Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
     const before = { kills: s.kills, gold: s.gold, exp: s.exp };
     for (let i = 0; i < count; i++)
         tick(s, rng);
-    s.lastTick = elapsed > BALANCE.offlineCapSeconds * 1000 ? now : now - (elapsed % BALANCE.turnMs);
-    if (elapsed > 60000 && s.kills > before.kills)
-        s.lastOffline = { seconds: Math.min(BALANCE.offlineCapSeconds, Math.floor(elapsed / 1000)), kills: s.kills - before.kills, gold: s.gold - before.gold, exp: Math.max(0, s.exp - before.exp) };
+    s.lastTick = elapsed > cap * 1000 ? now : now - (elapsed % BALANCE.turnMs);
+    if (elapsed > 60000 && s.kills > before.kills) {
+        s.lastOffline = { seconds: Math.min(cap, Math.floor(elapsed / 1000)), kills: s.kills - before.kills, gold: s.gold - before.gold, exp: Math.max(0, s.exp - before.exp) };
+        const bottles = messageBottles(s, Math.floor(count * BALANCE.turnMs / 3_600_000), rng);
+        if (bottles) s.lastOffline.bottles = bottles;
+    }
+}
+/** 편지병 골드: 레벨 × 500. */
+export const bottleGold = (level: number) => level * 500;
+/**
+ * 병 속의 편지: 오프라인 정산의 온전한 1시간마다 4%p/단계 확률로 편지병을 줍습니다.
+ * 내용은 골드 70% · 장비 25% · 진주 1개 5%. 0단계면 난수를 쓰지 않습니다.
+ */
+export function messageBottles(s: State, hours: number, rng: () => number) {
+    const rank = researchRank(s, 'messageBottle');
+    if (!rank || hours <= 0) return null;
+    const found = { count: 0, gold: 0, items: 0, pearls: 0 };
+    for (let h = 0; h < hours; h++) {
+        if (rng() >= rank * .04) continue;
+        found.count++;
+        const roll = rng();
+        if (roll < .7) { const g = bottleGold(s.level); s.gold += g; found.gold += g; }
+        else if (roll < .95) { drop(s, s.level, rng, true); found.items++; }
+        else { s.pearls += 1; found.pearls++; }
+    }
+    if (found.count) addLog(s, `병 속의 편지 ${found.count}개를 주웠습니다${found.gold ? ` · +${found.gold} G` : ''}${found.items ? ` · 장비 ${found.items}개` : ''}${found.pearls ? ` · 진주 +${found.pearls}` : ''}`, 'reward');
+    return found;
 }

@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Item, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES } from '@/game/data/economy';
-import { SLOTS, RARITIES, BALANCE } from '@/game/data/balance';
+import { SLOTS, RARITIES } from '@/game/data/balance';
+import { inventoryCap } from '@/game/data/economy';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '@/game/data/progression';
 import { itemStats, itemDescription, enhanceCost, reforgeCost, bulkItems, saleValue, dismantleEssence, rerollCost } from '@/game/systems/equipment';
 import { ORIGIN_THEMES, affixDef, ESSENCE_BY_RARITY } from '@/game/data/gear';
@@ -20,7 +21,7 @@ export function BonusList({ item }: {
 
 /** v22 장비 옵션 목록. 옵션마다 이득·손해 수치와 한 줄 재설정 버튼을 보여줍니다. */
 function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
-    const cost = rerollCost(item), canPay = s.gold >= cost.gold && (s.essence || 0) >= cost.essence;
+    const cost = rerollCost(item, s), canPay = s.gold >= cost.gold && (s.essence || 0) >= cost.essence;
     return <div className="affix-explanation">
         <b>추가 옵션 {item.affixes!.length}개{item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</b>
         {item.affixes!.map((x, i) => <div key={x.id + i} className="gear-option-row">
@@ -68,7 +69,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     };
     return <>
     <Heading eyebrow="EQUIPMENT & FORGE" title="장비 보관함" description="실제 능력치와 교체 결과를 비교하세요. 보호한 장비와 유물은 일괄판매에서 제외됩니다.">
-    <span className="badge">{s.inventory.length} / {BALANCE.inventoryCap}</span>
+    <span className="badge">{s.inventory.length} / {inventoryCap(s)}</span>
     <span className="badge">정수 {s.essence || 0}</span>
     </Heading>
     <h2 className="economy-section-title">착용 장비</h2>
@@ -89,10 +90,10 @@ export function Inventory({ s, send, busy }: PanelProps) {
 }
 
 export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Item }) {
-    const rank = item.enhance || 0, cost = enhanceCost(item);
+    const rank = item.enhance || 0, cost = enhanceCost(item, s);
     return <div className="forge-actions">
         <p className="footnote">강화 1회당 기본 수치 +{ECONOMY.enhanceGain * 100}%. 실패·파괴 없이 최대 +{ECONOMY.enhanceMax}. 추가 옵션은 그대로입니다.</p>
         <button className="primary" disabled={busy || rank >= ECONOMY.enhanceMax || s.gold < cost} onClick={() => send({ type: 'enhance', id: item.id })}>{rank >= ECONOMY.enhanceMax ? '최대 강화' : `+${rank + 1} 강화 · ${format(cost)} G`}</button>
-        {item.affixes?.length ? <p className="footnote">옵션은 위 옵션 목록에서 하나씩 재설정합니다.</p> : <ConfirmButton label={`옵션 재설정 · ${format(reforgeCost(item))} G`} title="추가 옵션을 무작위로 바꿀까요?" description="이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다." disabled={busy || item.rarity === 0 || s.gold < reforgeCost(item)} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}
+        {item.affixes?.length ? <p className="footnote">옵션은 위 옵션 목록에서 하나씩 재설정합니다.</p> : <ConfirmButton label={`옵션 재설정 · ${format(reforgeCost(item, s))} G`} title="추가 옵션을 무작위로 바꿀까요?" description="이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다." disabled={busy || item.rarity === 0 || s.gold < reforgeCost(item, s)} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}
     </div>;
 }
