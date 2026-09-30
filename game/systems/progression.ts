@@ -4,9 +4,10 @@ import { rebirthAP } from './meta';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
-import { JOBS, Job } from '../data/classes';
-import { SKILLS } from '../data/skills';
+import { Job, jobById } from '../data/classes';
+import { SKILLS, skillById } from '../data/skills';
 import { STAGES } from '../data/world';
+import { doorFor, DOORS } from '../data/doors';
 export function initialProgress(level = 1) { return { attributes: emptyAttributes(), statPoints: PROGRESSION.startingStats + (level - 1) * PROGRESSION.statPerLevel, sp: PROGRESSION.startingSP, peakLevel: level, learned: { hook: 1 } as Record<string, number>, skillSpent: {} as Record<string, number>, skillInheritances: {} as Record<string, boolean>, skillPractice: {} as Record<string, number>, jobMastery: {} as Record<string, number>, unlockedJobs: ['fisher'], bookClaims: {} as Record<string, number>, itemBook: {} as Record<string, boolean>, target: null as string | null, presets: {} as State['presets'], mana: 40, effects: {}, playerStun: 0 }; }
 export function attributes(s: State) {
     const out = emptyAttributes();
@@ -28,26 +29,26 @@ export function skillMasteryRewards(sk: Skill, rank = 1, mastery = 0) {
         return { ap: 0, bonus: {} as Partial<Stats> };
     return { ap: sk.masteryAP || 0, bonus: sk.masteryBonus || {} };
 }
-export function apBonus(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = SKILLS.find(x => x.id === id); return sum + (sk && canUse(s, id) ? skillMasteryRewards(sk, s.learned?.[id] || 1, skillMastery(s, id)).ap : 0); }, 0); }
+export function apBonus(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk && canUse(s, id) ? skillMasteryRewards(sk, s.learned?.[id] || 1, skillMastery(s, id)).ap : 0); }, 0); }
 export function apCapacity(s: State, ids = s.skills) { return PROGRESSION.baseAP + rebirthAP(s) + (s.permanent.ap || 0) + completedRegions(s).length + apBonus(s, ids); }
 export function skillMasteryLevel(practice: number, milestones = PROGRESSION.skillMasteryMilestones) { return milestones.filter(m => practice >= m).length; }
-export function skillMastery(s: State, id: string) { const sk = SKILLS.find(x => x.id === id); return skillMasteryLevel(s.skillPractice?.[id] || 0, masteryMilestonesFor(sk)); }
-export function skillMasteryRanks(s: State) { const out: Record<string, number> = {}; for (const [id, practice] of Object.entries(s.skillPractice || {})) out[id] = skillMasteryLevel(practice, masteryMilestonesFor(SKILLS.find(x => x.id === id))); return out; }
-export function apUsed(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = SKILLS.find(x => x.id === id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
-export function lineage(job: string): string[] { const j = JOBS.find(x => x.id === job); return j ? [j.id, ...(j.parent ? lineage(j.parent) : [])] : []; }
+export function skillMastery(s: State, id: string) { const sk = skillById(id); return skillMasteryLevel(s.skillPractice?.[id] || 0, masteryMilestonesFor(sk)); }
+export function skillMasteryRanks(s: State) { const out: Record<string, number> = {}; for (const [id, practice] of Object.entries(s.skillPractice || {})) out[id] = skillMasteryLevel(practice, masteryMilestonesFor(skillById(id))); return out; }
+export function apUsed(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
+export function lineage(job: string): string[] { const j = jobById(job); return j ? [j.id, ...(j.parent ? lineage(j.parent) : [])] : []; }
 /** 전용 기술 효율: 4차 이상 직업의 기술을 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1. */
 export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (!sk.job || !userJob) return 1;
-    const owner = JOBS.find(j => j.id === sk.job);
+    const owner = jobById(sk.job);
     if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
 export function jobMasteryTarget(jobOrId: Job | string) {
-    const job = typeof jobOrId === 'string' ? JOBS.find(x => x.id === jobOrId) : jobOrId;
+    const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;
     return Math.max(1, job?.masteryTarget ?? PROGRESSION.jobMastery);
 }
 export function jobMasteryBoost(jobOrId: Job | string) {
-    const job = typeof jobOrId === 'string' ? JOBS.find(x => x.id === jobOrId) : jobOrId;
+    const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;
     return Math.max(0, job?.masteryBoost ?? .15);
 }
 /** UI, combat and exported job tables share this exact tier/mastery adjustment. */
@@ -55,10 +56,22 @@ export function jobCombatMultiplier(job: Job, factor: number, mastered = false) 
     const tierScale = job.tier <= 1 ? .55 : job.tier === 2 ? .82 : 1;
     return factor >= 1 ? 1 + (factor - 1) * tierScale * (mastered ? 1 + jobMasteryBoost(job) : 1) : factor;
 }
-export function inherited(s: State, id: string) { const sk = SKILLS.find(x => x.id === id); return !!sk && (!!s.skillInheritances?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
+export function inherited(s: State, id: string) { const sk = skillById(id); return !!sk && (!!s.skillInheritances?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
 export function classAccess(s: State, sk: Skill) { return !sk.job || s.job === sk.job || inherited(s, sk.id); }
 export function skillUnlockReady(s: State, sk: Skill) { return !sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery; }
-export function canLearn(s: State, id: string) { const sk = SKILLS.find(x => x.id === id); return !!sk && s.level >= sk.level && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
+/** 계승한 스킬은 환생 뒤 레벨이 낮아도 쓸 수 있습니다(레벨 조건 면제). 환생 횟수·직업 숙련 해금 조건은 그대로입니다. */
+export function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id)) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
+/** 스킬을 장착할 수 없는 이유. 쓸 수 있으면 빈 문자열입니다. */
+export function skillBlockReason(s: State, id: string) {
+    const sk = skillById(id);
+    if (!sk) return '스킬을 찾을 수 없습니다.';
+    if (!classAccess(s, sk)) return '전용 직업으로 전직하거나, 숙련 또는 SP 계승을 완료하세요.';
+    if (s.rebirths < (sk.rebirth || 0)) return `환생 ${sk.rebirth}회부터 사용할 수 있습니다.`;
+    if (!skillUnlockReady(s, sk)) return `직업 숙련 ${sk.unlockJobMastery!.toLocaleString()}부터 사용할 수 있습니다.`;
+    if (s.level < sk.level && !inherited(s, id)) return `Lv.${sk.level}부터 사용할 수 있습니다.`;
+    if (!((s.learned?.[id] || 0) > 0)) return '아직 습득하지 않은 스킬입니다.';
+    return '';
+}
 export function canUse(s: State, id: string) { return canLearn(s, id) && (s.learned?.[id] || 0) > 0; }
 /** SP로 하는 행동은 모두 1 SP입니다. 직업이 주는 기술은 SP가 들지 않습니다. */
 export function skillCost() { return PROGRESSION.skillSPCost; }
@@ -77,11 +90,11 @@ export function grantJobSkills(s: State) {
 }
 /** SP may never buy a skill from a job the player has not acquired it from. */
 export function canInheritSkill(s: State, id: string) {
-    const sk = SKILLS.find(x => x.id === id);
+    const sk = skillById(id);
     return !!sk?.job && (s.learned[id] || 0) > 0 && !inherited(s, id) && s.level >= sk.level && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk);
 }
 export function canSpendSkill(s: State, id: string) {
-    const sk = SKILLS.find(x => x.id === id), rank = s.learned?.[id] || 0;
+    const sk = skillById(id), rank = s.learned?.[id] || 0;
     return !!sk && rank > 0 && canUse(s, id) && skillLevel(sk, rank, skillMastery(s, id)) < maxSkillLevel(sk);
 }
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, specialization?: string, practice = 0): Skill {
@@ -146,39 +159,47 @@ export function skillMasteryHint(sk: Skill, level: number, rank = 1) {
         return '최대 강화 완료 · 실전 숙련과 전직 조건은 계속 기록됩니다.';
     return `${milestones[current].toLocaleString()} 또는 1 SP → Lv.${current + 1} · ${skillRankHint(sk, rank, level)}`;
 }
-export function jobRequirements(s: State, j: Job) {
+/** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다. */
+export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
+/** 전직 조건 목록. now는 서버가 넘긴 요청 시각(문 판정용)이며, 화면에서는 마지막 서버 시각(lastTick)을 씁니다. */
+export function jobRequirements(s: State, j: Job, now = s.lastTick) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
-    const list = [{ label: `레벨 ${j.level}`, met: s.level >= j.level }];
+    /** value·target은 화면의 진행 막대용입니다(판정은 met). */
+    const list: { label: string; met: boolean; value?: number; target?: number }[] = [{ label: `레벨 ${j.level}`, met: s.level >= j.level, value: s.level, target: j.level }];
     if (j.rebirth)
-        list.push({ label: `환생 ${j.rebirth}회`, met: s.rebirths >= j.rebirth });
+        list.push({ label: `환생 ${j.rebirth}회`, met: s.rebirths >= j.rebirth, value: s.rebirths, target: j.rebirth });
     if (!unlocked) {
         for (const [key, n] of Object.entries(j.requires))
-            list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n });
+            list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n, value: a[key as Attribute], target: n });
         for (const [key, n] of Object.entries(j.requiresAllocated || {}))
-            list.push({ label: `배분 ${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n });
+            list.push({ label: `배분 ${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n, value: s.attributes?.[key as Attribute] || 0, target: n });
         if (j.parent)
-            list.push({ label: `${JOBS.find(x => x.id === j.parent)?.name} 숙련 ${j.mastery}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery });
+            list.push({ label: `${jobById(j.parent)?.name} 숙련 ${j.mastery}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery, value: s.jobMastery?.[j.parent] || 0, target: j.mastery });
         for (const [jobId, mastery] of Object.entries(j.requiresJobMastery || {})) {
-            const job = JOBS.find(x => x.id === jobId);
+            const job = jobById(jobId);
             // 선행 직업과 같은 조건이면 한 번만 표시합니다(판정은 같음).
             if (!(jobId === j.parent && mastery === j.mastery))
-                list.push({ label: `${job?.name || jobId} 숙련 ${mastery}`, met: (s.jobMastery?.[jobId] || 0) >= mastery });
+                list.push({ label: `${job?.name || jobId} 숙련 ${mastery}`, met: (s.jobMastery?.[jobId] || 0) >= mastery, value: s.jobMastery?.[jobId] || 0, target: mastery });
         }
         for (const [skillId, mastery] of Object.entries(j.requiresSkillMastery || {})) {
-            const skill = SKILLS.find(x => x.id === skillId), milestones = masteryMilestonesFor(skill), target = milestones[Math.max(0, mastery - 1)] || milestones[milestones.length - 1];
-            list.push({ label: `${skill?.name || skillId} 숙련 ${mastery}단계 (${target})`, met: skillMastery(s, skillId) >= mastery });
+            const skill = skillById(skillId), milestones = masteryMilestonesFor(skill), target = milestones[Math.max(0, mastery - 1)] || milestones[milestones.length - 1];
+            list.push({ label: `${skill?.name || skillId} 숙련 ${mastery}단계 (${target})`, met: skillMastery(s, skillId) >= mastery, value: skillMastery(s, skillId), target: mastery });
         }
+        // ??? 계보의 첫 직업은 해당 문이 열려 있어야 합니다(한 번 들어간 직업은 제외).
+        const door = doorFor(s, j.id, now);
+        if (door) list.push({ label: `${DOORS.find(d => d.id === door.door)!.name} 열림`, met: door.open });
     }
     return list;
 }
-export function canChangeJob(s: State, id: string) { const j = JOBS.find(x => x.id === id); return !!j && jobRequirements(s, j).every(x => x.met); }
+/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. now는 서버 요청 시각입니다. */
+export function canChangeJob(s: State, id: string, now = s.lastTick) { const j = jobById(id); return !!j && (jobMastered(s, j) || jobRequirements(s, j, now).every(x => x.met)); }
 export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && apUsed(s, ids) <= apCapacity(s, ids); }
 export function trimLoadout(s: State) {
     s.skills = [...new Set(s.skills)].filter(id => canUse(s, id));
     // Evaluate the entire set so an AP-granting skill works in any priority position.
     while (s.skills.length && !validLoadout(s, s.skills)) {
         const index = s.skills.findLastIndex(id => {
-            const sk = SKILLS.find(x => x.id === id)!;
+            const sk = skillById(id)!;
             return (effectiveSkill(sk, s.learned[id], skillMastery(s, id)).cost ?? 2) > 0;
         });
         s.skills.splice(index < 0 ? s.skills.length - 1 : index, 1);

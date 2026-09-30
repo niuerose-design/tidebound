@@ -35,7 +35,8 @@ const profileIds: Record<string, string> = {
     minnow: 'swift', carp: 'armored', perch: 'swift', mackerel: 'swift', ray: 'armored', puffer: 'venom', lionfish: 'venom', eel: 'arcane', barracuda: 'swift', ghost: 'arcane', angler: 'arcane', shark: 'armored', viper: 'venom', squid: 'arcane', leviathan: 'armored', moonfish: 'arcane', dragon: 'swift', ancient: 'armored',
     seahorse: 'silencer', needlefish: 'swift', tidejelly: 'controller', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venomBoss', cinderKoi: 'frenzy', starKoi: 'arcane', prismRay: 'controller', voidGuppy: 'silencer', abyssManta: 'frenzy', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'frenzy', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
 };
-export function profile(id: string) { return PROFILES[profileIds[id] || 'armored']; }
+export const profileId = (id: string) => profileIds[id] || 'armored';
+export function profile(id: string) { return PROFILES[profileId(id)]; }
 /** Single source for live encounters, codex previews and simulation fixtures. */
 export function enemyStats(f: { id: string; hp: number; attack: number; defense: number; level: number }, boss = false): Stats {
     const p = profile(f.id), level = monsterLevelScale(f.level), bossScale = bossLevelScale(f.level);

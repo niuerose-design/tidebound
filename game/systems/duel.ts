@@ -1,7 +1,7 @@
 import type { Snapshot, DuelResult } from '../types';
 import { BALANCE } from '../data/balance';
 import { normalizeStats, hitChance } from './stats';
-import { Fighter, fighterSpeed, strike } from './combat';
+import { Fighter, fighterSpeed, actTurn } from './combat';
 export const TRAINING: Snapshot[] = [
     { name: '항구의 견습생', level: 3, job: 'fisher', rebirths: 0, stats: { hp: 140, attack: 18, defense: 5, crit: .08 }, skills: ['hook'], power: 250, rating: 1000 },
     { name: '산호초의 파수꾼', level: 12, job: 'warden', rebirths: 0, stats: { hp: 380, attack: 50, defense: 28, crit: .1 }, skills: ['anchor', 'breath', 'scales'], power: 700, rating: 1200 },
@@ -16,9 +16,10 @@ export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rn
         turns++;
         const sa = fighterSpeed(a), sb = fighterSpeed(b);
         const first = sa === sb ? (turns % 2 ? a : b) : sa > sb ? a : b, second = first === a ? b : a;
-        logs.push(`${turns}턴 · ${strike(first, second, rng)}`);
+        const log = (text: string) => { logs.push(`${turns}턴 · ${text}`); };
+        actTurn(first, second, rng, log);
         if (first.hp > 0 && second.hp > 0)
-            logs.push(`${turns}턴 · ${strike(second, first, rng)}`);
+            actTurn(second, first, rng, log);
     }
     const winner = a.hp <= 0 ? 'opponent' : b.hp <= 0 ? 'player' : 'draw';
     const expected = 1 / (1 + Math.pow(10, (opponent.rating - player.rating) / 400));

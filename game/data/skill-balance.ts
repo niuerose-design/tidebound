@@ -1,5 +1,6 @@
 import type { Skill } from '../types';
 import { EXPANSION_BALANCE } from './expansion';
+import { LINEAGE_BALANCE } from './expansion-lineages';
 
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
@@ -58,6 +59,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     sovereignSilence: { chance: .5, multiplier: 1.05, manaCost: 16 },
     borrowedTentacles: { chance: .22, multiplier: 1.15, extraAttackMultiplier: .55 },
     ...EXPANSION_BALANCE,
+    ...LINEAGE_BALANCE,
 };
 
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */

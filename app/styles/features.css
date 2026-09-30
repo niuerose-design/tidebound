@@ -1,7 +1,4 @@
 /* 기능별 추가 스타일: 던전 반복·무리 사냥·전투 결과·로그인·도감·능력치 상세·안내·목표 등. */
-/* 던전 반복 도전 */
-.dungeon-repeat { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .8rem; color: var(--muted-foreground, inherit); }
-.dungeon-repeat select { flex: 1; min-width: 0; padding: .35rem .5rem; border-radius: .5rem; border: 1px solid var(--border, rgba(255,255,255,.2)); background: var(--background, transparent); color: inherit; font: inherit; }
 
 /* 무리 사냥 선택 */
 .swarm-picker { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; font-size: 13px; color: var(--muted); }
@@ -103,29 +100,12 @@
 .skill-state-row small { font-size: 10px; color: #6f8a8c; }
 .skill-state-row .on { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
 .skill-state-row .warn { color: #e3c28d; border-color: #6d5a3f; background: #2c2618; }
-.skill-growth-split { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: #c9d6cf; margin-bottom: 8px; }
-.skill-growth-split > span { display: flex; flex-direction: column; }
-.skill-growth-split small { font-size: 10px; color: #7f9a9c; }
-.skill-growth-split .total { margin-left: auto; text-align: right; color: var(--gold); }
-.skill-growth-split em { font-style: normal; font-size: 10px; color: #7f9a9c; }
 /* 직업: 현재 / 전직 가능 / 조건 미달 구분, 부족한 조건 우선 */
 .job-status { font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 4px; margin-left: 8px; vertical-align: 2px; border: 1px solid var(--border); }
 .job-status.current { color: var(--gold); border-color: #6d5a3f; }
 .job-status.ready { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
 .job-status.locked { color: #e39b8d; border-color: #6d433f; }
-.job-missing span { color: #e3b0a4; border-color: #6d433f; }
-.job-met-fold { margin-top: 8px; font-size: 12px; }
-.job-met-fold summary { cursor: pointer; color: #8faead; }
-.job-met-fold .requirements { margin-top: 6px; }
-.job-node-state { margin-left: auto; font-size: 10px; padding: 1px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
-.job-node-state.ready { color: #b6e0cc; background: #13302a; }
-.job-node-state.locked { color: #e3b0a4; background: #2e1d1a; }
-/* 던전: 최초 보상과 반복 보상 분리 */
-.reward-split { display: grid; gap: 10px; margin-top: 12px; }
-.reward-group > small { display: block; font-size: 11px; color: #8faead; margin-bottom: 6px; }
-.reward-group.first > small { color: #d6b879; }
-.reward-group .rewards { margin-top: 0; }
-.reward-group .rewards .claimed { opacity: .55; text-decoration: line-through; text-decoration-thickness: 1px; }
+
 /* 자동 진행 상태 */
 .auto-run-status dl { display: grid; gap: 7px; margin: 0; font-size: 13px; }
 .auto-run-status dl > div { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
@@ -198,9 +178,6 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 /* 전직 상세 간결 보기 */
 .job-compact .requirements span small { color: #8faead; margin-left: 3px; font-size: 10px; }
 .job-compact .meter { margin-top: 10px; }
-.job-more { margin: 4px 0 14px; font-size: 13px; }
-.job-more > summary { cursor: pointer; color: #8faead; padding: 8px 0; }
-.job-goal-link { display: block; margin: 10px auto 0; }
 /* 던전 탐험: 낚시터와 같은 카드형 */
 .dungeon-stage-card { cursor: default; text-align: left; display: flex; flex-direction: column; }
 .dungeon-stage-card.locked { opacity: .55; }

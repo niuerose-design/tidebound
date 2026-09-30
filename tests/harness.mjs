@@ -13,14 +13,21 @@ export const {duel,TRAINING}=await load('game/systems/duel.js');
 export const {strike,fighterSpeed}=await load('game/systems/combat.js');
 export const {combatFxFromLog,combatFxBatch}=await load('game/systems/combat-feedback.js');
 export const {migrateState}=await load('game/systems/migrations.js');
-export const {apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,skillRankDeltas,skillMasteryLevel,masteryMilestonesFor,jobRequirements,validLoadout,skillLevel,maxSkillLevel,inherited,trimLoadout,jobMasteryTarget,jobCombatMultiplier}=await load('game/systems/progression.js');
+export const {jobMastered,apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,skillRankDeltas,skillMasteryLevel,masteryMilestonesFor,jobRequirements,validLoadout,skillLevel,maxSkillLevel,inherited,trimLoadout,jobMasteryTarget,jobCombatMultiplier}=await load('game/systems/progression.js');
 export const {goalProgress,goalSuggestions}=await load('game/systems/goals.js');
 export const {skillGrowthStages}=await load('game/systems/skill-description.js');
 export const {SKILLS}=await load('game/data/skills.js');
 export const {STAGES,FISH,DUNGEONS}=await load('game/data/world.js');
 export const {profile}=await load('game/data/encounters.js');
+export const bookMod=await load('game/systems/book.js');
+export const economy=await load('game/data/economy.js');
+export const {researchRefund}=await load('game/systems/commerce.js');
+export const {weightedFishId,victoryHealRate,drop,reward,spawn}=await load('game/systems/encounter.js');
+export const vowsMod=await load('game/systems/vows.js');
+export const {messageBottles}=await load('game/systems/turn.js');
+export const {researchMastery}=await load('game/systems/mastery.js');
 export const {shopCost,gambleCost,shopPreview}=await load('game/systems/commerce.js');
-export const {itemStats,enhanceCost,bulkItems}=await load('game/systems/equipment.js');
+export const {itemStats,enhanceCost,reforgeCost,bulkItems}=await load('game/systems/equipment.js');
 export const {goldMultiplier,dungeonGoldMultiplier,dropRate,hitChance}=await load('game/systems/stats.js');
 export const {rebirthLevel,rebirthReward}=await load('game/systems/meta.js');
 export const metaMod=await load('game/systems/meta.js');
@@ -29,7 +36,13 @@ export const {xpNeeded,SKILL_FORMULA,STATUS_TUNING,BALANCE,RARITIES}=await load(
 export const STATUS_TUNING_MAX=STATUS_TUNING.poisonMaxStacks;
 export const gear=await load('game/data/gear.js');
 export const {PROGRESSION}=await load('game/data/progression.js');
-export const {JOBS,JOB_TREES}=await load('game/data/classes.js');
+export const {JOBS,JOB_TREES,LINEAGES,lineageOf,jobTags}=await load('game/data/classes.js');
+export const doorsMod=await load('game/data/doors.js');
+// 직업 화면 공용 계산(components/game/jobs/job-status.ts)은 게임 모듈만 쓰므로 같은 임시 폴더에 옮겨 불러옵니다.
+{const {dir}=loadGame(),ts=(await import('typescript')).default,fs=await import('node:fs');
+fs.mkdirSync(`${dir}/ui`,{recursive:true});
+fs.writeFileSync(`${dir}/ui/job-status.js`,ts.transpileModule(fs.readFileSync('components/game/jobs/job-status.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText.replace(/from (['"])@\/game\/([^'"]+)\1/g,'from $1../$2.js$1'));}
+export const jobUi=await load('ui/job-status.js');
 let seed=44;
 export const rng=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
 export const results={passed:0};

@@ -1,7 +1,7 @@
 /** 장비 장착·해제·판매 */
 import { saleValue } from '../equipment';
 import { stats } from '../stats';
-import { BALANCE } from '../../data/balance';
+import { inventoryCap } from '../../data/economy';
 import type { ActionHandlers } from './types';
 
 export const itemActions: ActionHandlers = {
@@ -18,7 +18,7 @@ export const itemActions: ActionHandlers = {
     unequip(s, { id }) {
         if (!['rod', 'coat', 'charm'].includes(id) || !s.equipment[id])
             throw Error('장착한 장비가 없습니다.');
-        if (s.inventory.length >= BALANCE.inventoryCap)
+        if (s.inventory.length >= inventoryCap(s))
             throw Error('가방이 가득 찼습니다.');
         s.inventory.push(s.equipment[id]!);
         s.equipment[id] = null;

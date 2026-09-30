@@ -9,8 +9,8 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  act(s,{type:'learn',id:'pierce'},0);assert.equal(s.sp,3);assert.equal(skillLevel(sk,s.learned.pierce,2),3);
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
-test('115 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,115);assert.equal(SKILLS.length,186);assert.equal(JOB_TREES.length,6);
+test('161 jobs distribute tier 1 and 2 skills into one or two each',()=>{
+ assert.equal(JOBS.length,161);assert.equal(SKILLS.length,273);assert.equal(JOB_TREES.length,7);
  for(const job of JOBS)assert.ok(JOB_TREES.some(t=>t.id===job.tree),job.id);
  for(const job of JOBS.filter(j=>j.tier===1||j.tier===2)){
   const owned=SKILLS.filter(sk=>sk.job===job.id);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
@@ -50,8 +50,8 @@ test('Negative AP works independent of priority and cannot be removed to overflo
 });
 test('SP inheritance, growth and practice survive reincarnation',()=>{
  const s=newState(0);s.level=30;s.learned.pierce=3;s.skillSpent.pierce=3;s.skillInheritances.pierce=true;s.skillPractice.pierce=100;s.sp=2;
- act(s,{type:'rebirth'},1);assert.equal(s.skillInheritances.pierce,true);assert.equal(s.learned.pierce,3);assert.equal(s.skillPractice.pierce,100);assert.equal(s.sp,2);assert.equal(canUse(s,'pierce'),false);
- s.level=10;assert.equal(canUse(s,'pierce'),true);
+ act(s,{type:'rebirth'},1);assert.equal(s.skillInheritances.pierce,true);assert.equal(s.learned.pierce,3);assert.equal(s.skillPractice.pierce,100);assert.equal(s.sp,2);
+ assert.equal(s.level,1);assert.equal(canUse(s,'pierce'),true,'inherited skills ignore the level requirement after rebirth');
 });
 test('Level ups grant native skills but no SP',()=>{
  const s=newState(0);s.running=true;s.exp=xpNeeded(1)+xpNeeded(2);s.enemy={id:'minnow',name:'target',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};

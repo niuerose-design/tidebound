@@ -1,19 +1,34 @@
 import type { State, Action, Item } from '../types';
-import { BALANCE, RARITIES } from '../data/balance';
-import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, researchCost } from '../data/economy';
+import { RARITIES } from '../data/balance';
+import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
+import { apCapacity, apUsed } from './progression';
 import { rollAffix, enhanceCost, reforgeCost, bulkItems, saleValue, dismantleEssence, rerollCost } from './equipment';
 import { rollAffixes } from '../data/gear';
-export const shopCost = (s: State) => ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel;
-export const gambleCost = (s: State) => ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel;
+/** 상점·뽑기 골드 가격. 항구 단골 할인(−2%/단계, 내림)을 적용합니다. */
+export const shopCost = (s: State) => Math.floor((ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel) * shopDiscount(s));
+export const gambleCost = (s: State) => Math.floor((ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel) * shopDiscount(s));
 export const relicCost = (s: State, id: string) => id === 'memoryRod' && s.clears.temple ? 0 : RELICS.find(x => x.id === id)?.cost ?? Infinity;
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: `희귀 ${o.name}`, slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
+/** 탭에 쓴 진주와 재분배 반환액. 첫 1회는 전액, 이후 90%(내림). */
+export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed'>, tab: string) {
+    const ranks: Record<string, number> = {};
+    let spent = 0;
+    for (const r of RESEARCH) {
+        const rank = s.permanent[r.id] || 0;
+        if (r.tab !== tab || !rank) continue;
+        ranks[r.id] = rank;
+        spent += researchSpent(r.id, rank);
+    }
+    const rate = s.researchResetUsed ? RESEARCH_RESET.refund : RESEARCH_RESET.firstRefund;
+    return { spent, refund: Math.floor(spent * rate), ranks, first: !s.researchResetUsed };
+}
 /** All spend checks happen before mutations. null means action belongs to another system. */
 export function commerce(s: State, a: Action, rng: () => number): string | null {
     const id = a.id || '';
     const spend = (cost: number) => { if (!Number.isFinite(cost) || s.gold < cost)
         throw Error('골드가 부족합니다.'); s.gold -= cost; };
-    const room = () => { if (s.inventory.length >= BALANCE.inventoryCap)
+    const room = () => { if (s.inventory.length >= inventoryCap(s))
         throw Error('가방을 비운 뒤 구매하세요.'); };
     const nextId = () => `shop-${++s.shopSerial}`;
     if (a.type === 'buy' || a.type === 'gamble') {
@@ -65,7 +80,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (a.type === 'enhance') {
             if ((item.enhance || 0) >= ECONOMY.enhanceMax)
                 throw Error('최대 강화입니다.');
-            const cost = enhanceCost(item);
+            const cost = enhanceCost(item, s);
             spend(cost);
             item.enhance = (item.enhance || 0) + 1;
             return `${item.name} +${item.enhance} 강화 성공 · -${cost} G`;
@@ -74,7 +89,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');
         if (!item.affixes?.length) {
             // v21 이전 장비·상점 장비·유물의 단일 옵션: 기존 방식(골드만).
-            const cost = reforgeCost(item);
+            const cost = reforgeCost(item, s);
             spend(cost);
             item.affix = rollAffix(item.rarity, rng);
             return `${item.name} 옵션 재설정 · ${item.affix.name} · -${cost} G`;
@@ -83,7 +98,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const index = Number(a.value || '0');
         if (!Number.isInteger(index) || index < 0 || index >= item.affixes.length)
             throw Error('재설정할 옵션을 고르세요.');
-        const cost = rerollCost(item);
+        const cost = rerollCost(item, s);
         if ((s.essence || 0) < cost.essence)
             throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
         spend(cost.gold);
@@ -112,12 +127,35 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const r = RESEARCH.find(x => x.id === id), rank = s.permanent[id] || 0;
         if (!r || rank >= r.max)
             throw Error('연구 한도를 확인하세요.');
+        if (!researchUnlocked(s.rebirths, r))
+            throw Error(`환생 ${r.rebirth}회 이후에 열리는 연구입니다.`);
         const cost = researchCost(id, rank);
         if (s.pearls < cost)
             throw Error('진주가 부족합니다.');
         s.pearls -= cost;
         s.permanent[id] = rank + 1;
         return `${r.name} 연구 ${rank + 1}단계 · -${cost} 진주`;
+    }
+    if (a.type === 'resetResearch') {
+        const tab = RESEARCH_TABS.find(x => x.id === id);
+        if (!tab)
+            throw Error('연구 탭을 확인하세요.');
+        if (s.running || s.dungeon)
+            throw Error('자동 낚시를 멈추고 던전에서 나온 뒤 재분배하세요.');
+        const { refund, spent, ranks } = researchRefund(s, tab.id);
+        if (refund <= 0)
+            throw Error('돌려받을 진주가 없습니다.');
+        const after = { ...s, permanent: { ...s.permanent, ...Object.fromEntries(Object.keys(ranks).map(k => [k, 0])) } };
+        if (ranks.inventory && s.inventory.length > inventoryCap(after))
+            throw Error(`재분배하면 가방이 ${inventoryCap(after)}칸으로 줄어 ${s.inventory.length - inventoryCap(after)}개가 넘칩니다. 장비를 정리하세요.`);
+        if (ranks.ap && apUsed(after) > apCapacity(after))
+            throw Error(`재분배하면 장착 AP 한도(${apCapacity(after)})를 넘습니다. 스킬 장착을 ${apUsed(after) - apCapacity(after)} AP 줄인 뒤 다시 시도하세요.`);
+        for (const k of Object.keys(ranks))
+            delete s.permanent[k];
+        const first = !s.researchResetUsed;
+        s.researchResetUsed = true;
+        s.pearls += refund;
+        return `${tab.name} 연구 재분배 · 진주 +${refund}${first ? ' (첫 재분배 100% 반환)' : ` (${spent}개 중 90%)`}`;
     }
     if (a.type === 'buyRelic') {
         const r = RELICS.find(x => x.id === id);

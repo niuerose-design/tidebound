@@ -168,6 +168,8 @@ export type CombatEvent = {
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
     dot?: { name: string; value: number }; reflected?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
+    /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
+    chain?: number;
 };
 export type Log = {
     id: number;
@@ -259,6 +261,20 @@ export type State = {
     inventory: Item[];
     equipment: Record<string, Item | null>;
     permanent: Record<string, number>;
+    /** 진주 연구 재분배의 계정당 첫 1회 무료 반환을 썼는지. 없으면 false. */
+    researchResetUsed?: boolean;
+    /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
+    masteryCarry?: number;
+    /** 선별의 그물 자동 판매 켜짐 여부(설정). */
+    autoSell?: boolean;
+    /** 황금 개체를 잡은 횟수(어종별). */
+    goldenBook?: Record<string, number>;
+    /** 이번 생에 걸린 서약. */
+    vows?: Vows;
+    /** 다음 생에 걸 서약 예약. 환생할 때 vows가 됩니다. */
+    nextVows?: Vows;
+    /** 윤회의 문: 이번 생에 문이 열린 ??? 직업(환생 때 추첨). */
+    rebirthDoor?: string;
     dungeon: null | {
         id: string;
         wave: number;
@@ -279,9 +295,15 @@ export type State = {
         kills: number;
         gold: number;
         exp: number;
+        /** 병 속의 편지: 정산 중 주운 편지병과 내용. */
+        bottles?: { count: number; gold: number; items: number; pearls: number };
     };
 };
+/** 서약. anchor·breath는 걸었는지, rough는 거친 바다 선택 단계(1~3). seal은 잠든 닻 봉인 진행(이번 생만). */
+export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null };
 export type Snapshot = {
+    /** 걸어 둔 서약 배지(랭킹 표시). 예: ['anchor', 'rough2'] */
+    vows?: string[];
     /** 세이브 버전. 랭킹·결투는 현재 버전의 스냅샷만 사용합니다. */
     season?: number;
     skillPractice?: Record<string, number>;
