@@ -10,7 +10,7 @@ import type { Skill } from '../types';
  * 시간의 지배자(4차급 독립)
  *   정지된 시간(확정 기절) · 선행(곧바로 한 번 더 행동) · 역행(회복) · 시간의 주권(속도·회피·치명).
  *   확정 기절도 기절 뒤 면역 규칙을 따르므로 기절이 계속 이어지지는 않습니다.
- * 칠인 수행자(1차 독립, 문 없음)
+ * 玄(1차 독립, 문 없음)
  *   일곱 글자 無·虛·斬·血·縛·刹·魂은 혼자 쓰면 손해만 있습니다(無는 그것만으로는 아무 일도 하지 않음). 앞 글자의 숙련 Lv.1을 달성하면 다음 글자가 열립니다.
  *   일곱 글자를 모두 장착하고 天까지 열면, 한 전투에 여섯 글자를 모두 쓰는 순간 天이 터집니다.
  *   효과는 숙련 Lv.1 전까지 ???로 감춰집니다. 글자 액티브는 숙련할수록 AP 2 → 1.
@@ -31,7 +31,7 @@ export const TIME_MACHINE_MASTERY = 25;
 export const V25_JOBS: NewJob[] = [
     { id: 'clockmaker', name: '시계공', title: '고장 난 시간을 고친다', desc: '자신을 가속하고 상대를 감속하는 시간 직업. 가끔 타임머신이 작동해 나와 상대가 모두 처음 상태로 돌아갑니다. 끝까지 숙달하면 시간의 지배자가 열립니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, tier: 1, level: 10, mastery: 0, requires: { dex: 12, int: 10 }, role: '시간·속도', tree: 'mystery', branchless: true, hidden: true, fullKit: true, penalties: { defense: -1 }, masteryTarget: CLOCKMAKER_MASTERY, masteryBoost: .2 },
     { id: 'chronarch', name: '시간의 지배자', title: '멈춘 시간 속을 홀로 걷는다', desc: '시계공을 숙달한 자에게만 열리는 4차급 독립 직업. 확정 기절과 확정 추가 행동으로 전투의 시간을 지배합니다.', ...neutral, attack: 1.3, magic: 1.3, hp: 1.12, defense: 1.08, resist: 1.08, crit: .08, tier: 4, level: 10, mastery: 0, requires: {}, requiresJobMastery: { clockmaker: CLOCKMAKER_MASTERY }, role: '시간·제어', tree: 'mystery', lineage: 'mystery-independent', hidden: true, fullKit: true, masteryTarget: 30000, masteryBoost: .35 },
-    { id: 'glyphMonk', name: '칠인 수행자', title: '일곱 글자를 몸에 새긴다', desc: '혼자 쓰면 손해뿐인 일곱 글자를 서로 맞물려 쓰는 조합 직업. 글자 하나를 익히면 다음 글자가 열리고, 일곱 글자가 모두 맞물리면 天이 깨어납니다.', ...neutral, bonus: { attack: 2, magic: 2 }, tier: 1, level: 10, mastery: 0, requires: { wis: 12, luk: 10 }, role: '조합·각성', tree: 'mystery', branchless: true, hidden: true, fullKit: true, penalties: { hp: -10 }, masteryTarget: 5000, masteryBoost: .2 },
+    { id: 'glyphMonk', name: '玄', title: '일곱 글자를 몸에 새긴다', desc: '혼자 쓰면 손해뿐인 일곱 글자를 서로 맞물려 쓰는 조합 직업. 글자 하나를 익히면 다음 글자가 열리고, 일곱 글자가 모두 맞물리면 天이 깨어납니다.', ...neutral, bonus: { attack: 2, magic: 2 }, tier: 1, level: 10, mastery: 0, requires: { wis: 12, luk: 10 }, role: '조합·각성', tree: 'mystery', branchless: true, hidden: true, fullKit: true, penalties: { hp: -10 }, masteryTarget: 5000, masteryBoost: .2 },
 ];
 
 export const V25_SKILLS: Skill[] = [
@@ -45,7 +45,7 @@ export const V25_SKILLS: Skill[] = [
     { ...A, id: 'precede', name: '선행', desc: '', level: 10, job: 'chronarch', cost: 5, damageType: 'split', scaling: 'dual', extraTurn: true, masteryMilestones: [2500, 12000, 40000, 100000] },
     { ...A, id: 'rewind', name: '역행', desc: '', level: 10, job: 'chronarch', cost: 4, damageType: 'split', scaling: 'dual', effect: 'heal', masteryMilestones: [2500, 12000, 40000, 100000] },
     { ...P, id: 'chronoSovereign', name: '시간의 주권', desc: '속도·회피·치명타·명중이 크게 오릅니다.', level: 10, job: 'chronarch', cost: 3, bonus: { speed: 18, evasion: .05, crit: .05, accuracy: .05, attack: 40, magic: 40 }, masteryMilestones: [2500, 12000, 40000, 100000] },
-    // ── 칠인 수행자: 無 → 虛 → 斬 → 血 → 縛 → 刹 → 魂 → 天 ──
+    // ── 玄: 無 → 虛 → 斬 → 血 → 縛 → 刹 → 魂 → 天 ──
     { ...P, ...GLYPH, id: 'glyphNothing', name: '無', desc: '체력이 1일 때 받는 공격을 무효로 하고 체력을 되찾습니다(전투당 6번).', cost: 1, lastStand: { charges: 6, heal: .25 } },
     { ...GLYPH_A, id: 'glyphVoid', name: '虛', desc: '', unlockAfter: { skill: 'glyphNothing', level: 1 } },
     { ...GLYPH_A, id: 'glyphCut', name: '斬', desc: '', unlockAfter: { skill: 'glyphVoid', level: 1 } },

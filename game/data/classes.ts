@@ -39,7 +39,7 @@ export type Job = {
      */
     bonus?: Partial<Record<JobStatKey, number>>;
     branchless?: boolean;
-    /** v25: 1·2차여도 전용 기술을 3개 이상 가진 특수 직업(시계공·칠인 수행자). */
+    /** v25: 1·2차여도 전용 기술을 3개 이상 가진 특수 직업(시계공·玄). */
     fullKit?: boolean;
     /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다. */
     healer?: boolean;
@@ -173,7 +173,7 @@ JOBS.push(...(V24_JOBS as Job[]));
 
 // v24.2 ??? 문 직업과 보조 계열 소개 갱신. 자세한 설계는 support-rework.ts.
 JOBS.push(...(SUPPORT_JOBS as Job[]));
-// v25 ??? 특수 직업: 시계공·시간의 지배자·칠인 수행자. 자세한 설계는 expansion-v25.ts.
+// v25 ??? 특수 직업: 시계공·시간의 지배자·玄. 자세한 설계는 expansion-v25.ts.
 JOBS.push(...(V25_JOBS as Job[]));
 for (const job of JOBS) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
 

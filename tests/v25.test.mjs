@@ -1,4 +1,4 @@
-// v25 ??? 특수 직업: 시계공·시간의 지배자·칠인 수행자
+// v25 ??? 특수 직업: 시계공·시간의 지배자·玄
 import { newState, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, doorsMod as doors, assert, test } from './harness.mjs';
 const { actTurn } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/combat');
 const { skillVeiled, skillBlockReason } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
