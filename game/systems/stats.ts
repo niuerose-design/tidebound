@@ -85,10 +85,12 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const [key, n] of Object.entries(gear))
         add(key as keyof CombatStats, 'equipment', Math.min(n!, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity));
     const passiveJobs = new Set<string>();
+    let relief = 0;
     for (const id of s.skills) {
         if (!canUse(s, id))
             continue;
         const sk = skillById(id);
+        if (sk?.penaltyRelief !== undefined || sk?.levelEffects) relief = Math.max(relief, effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id)).penaltyRelief || 0);
         if (sk?.type === 'passive' && sk.job && Object.values(sk.bonus || {}).some(n => n > 0)) passiveJobs.add(sk.job);
         if (sk?.bonus) {
             const bonus = effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id), undefined, s.skillPractice[id] || 0).bonus!;
@@ -105,7 +107,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const [key, n] of Object.entries(j.penalties || {}))
         add(key as keyof CombatStats, 'job', n);
     const mastered = (s.jobMastery?.[s.job] || 0) >= jobMasteryTarget(j);
-    const mult = (n: number) => jobCombatMultiplier(j, n, mastered);
+    // 페널티 회복(끝나지 않는 골격 등): 1보다 낮은 직업 배율을 relief만큼 1 쪽으로 되돌립니다.
+    const mult = (n: number) => jobCombatMultiplier(j, n < 1 ? 1 - (1 - n) * (1 - Math.min(1, relief)) : n, mastered);
     // 1~3차 플러스 보정은 고정 수치로 더하고, 아래 배율은 마이너스 보정(1~3차)과 4·5차 보정에만 씁니다.
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) add(key, 'job', jobFlatBonus(j, key, mastered));
     add('harmony', 'job', (jobFlatBonus(j, 'attack', mastered) + jobFlatBonus(j, 'magic', mastered)) / 2);

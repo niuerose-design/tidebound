@@ -1,7 +1,8 @@
 // 직업 간 밸런스 점검: 모든 직업을 차수별 같은 레벨·같은 능력치 총량으로 세우고, 그 레벨의 낚시터 어종과 1:1로 싸워
 // 처치 턴·승률·남은 체력을 비교합니다. 같은 차수 중앙값에서 크게 벗어난 직업을 표시합니다.
 // 끝에는 선행→상위 직업을 상위 직업 레벨에서 나란히 세워 역전(상위가 더 약함)을 표시합니다.
-// 사용: node scripts/check-job-balance.mjs [--mastered] [--json out.json]
+// --skill-mastered: 모든 스킬을 숙련 마지막 단계까지 올린 상태(장기 연마 제외)로 비교합니다. 숙련으로 페널티를 되찾는 직업 점검용.
+// 사용: node scripts/check-job-balance.mjs [--mastered] [--skill-mastered] [--json out.json]
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
@@ -13,9 +14,9 @@ const { SKILLS } = await load('data/skills');
 const { JOBS } = await load('data/classes');
 const { FISH } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
-const { canUse, validLoadout, skillMasteryRanks, lineage, jobMasteryTarget, jobFactor } = await load('systems/progression');
+const { canUse, validLoadout, skillMasteryRanks, lineage, jobMasteryTarget, jobFactor, masteryMilestonesFor } = await load('systems/progression');
 
-const MASTERED = process.argv.includes('--mastered');
+const MASTERED = process.argv.includes('--mastered'), SKILL_MASTERED = process.argv.includes('--skill-mastered');
 const SEEDS = 60, MAX_TURNS = 300;
 // 차수별 레벨과 상대. 장비·연구 없이 싸우므로 그 레벨 사냥터보다 한 단계 낮은 어종으로 맞췄습니다(중앙 직업이 대부분 이기는 정도).
 const TIERS = {
@@ -64,7 +65,7 @@ function evaluate(j, T) {
     const { attrs, magic } = attributesFor(j, T.level);
     Object.assign(s, { level: T.level, rebirths: 10, job: j.id, attributes: attrs, equipment: {}, inventory: [], permanent: {}, book: {}, unlockedJobs: JOBS.map(x => x.id) });
     s.jobMastery = { [j.id]: MASTERED ? jobMasteryTarget(j) : 0 };
-    for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = 0; }
+    for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = SKILL_MASTERED ? masteryMilestonesFor(sk).at(-1) : 0; }
     loadout(s, j, magic);
     const st = stats(s), res = T.foes.map(id => fight(st, s, id, T.tier));
     const avg = k => res.reduce((x, r) => x + r[k], 0) / res.length;
@@ -75,7 +76,7 @@ function evaluate(j, T) {
 const rows = JOBS.map(j => evaluate(j, TIERS[j.tier]));
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 const pct = n => `${Math.round(n * 100)}%`;
-console.log(`직업 밸런스 (${MASTERED ? '숙달' : '숙달 전'}, 시드 ${SEEDS}, 상대별 평균)`);
+console.log(`직업 밸런스 (${MASTERED ? '숙달' : '숙달 전'}${SKILL_MASTERED ? ' · 스킬 숙련 완료' : ''}, 시드 ${SEEDS}, 상대별 평균)`);
 const report = {};
 for (const tier of Object.keys(TIERS).map(Number)) {
     const group = rows.filter(r => r.tier === tier); if (!group.length) continue;

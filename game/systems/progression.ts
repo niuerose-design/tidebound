@@ -120,6 +120,7 @@ export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, specialization?
         cooldown: sk.type === 'passive' ? 0 : Math.max(1, sk.cooldown - Math.floor(steps * (fx.cooldownReduction ?? 0))),
         multiplier: sk.multiplier * factor,
         bonus,
+        penaltyRelief: override?.penaltyRelief ?? sk.penaltyRelief,
     };
     const refinement = thresholdRank(practice, skillRefinementTargets(sk));
     // Only actual practice refines a skill; neither AP/cost nor mastery multipliers scale.

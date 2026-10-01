@@ -34,16 +34,16 @@ test('SP inheritance is separate, costs one, and refund preserves natural inheri
  act(s,{type:'inheritSkill',id:'pierce'},0);s.skillPractice.pierce=masteryMilestonesFor(SKILLS.find(sk=>sk.id==='pierce'))[0];act(s,{type:'resetSkills'},0);
  assert.equal(s.sp,5);assert.equal(canUse(s,'pierce'),true);
 });
-test('Bone growth boundaries flip penalties and AP exactly at 1000/10000/50000 wins',()=>{
- const bone=SKILLS.find(sk=>sk.id==='boneLegacy');assert.deepEqual(masteryMilestonesFor(bone),[1000,10000,50000]);
- for(const [wins,lv,cost] of [[0,0,6],[999,0,6],[1000,1,6],[9999,1,6],[10000,2,2],[49999,2,2],[50000,3,-3]]){
+test('Bone growth boundaries flip penalties and AP exactly at 2500/25000/125000 wins',()=>{
+ const bone=SKILLS.find(sk=>sk.id==='boneLegacy');assert.deepEqual(masteryMilestonesFor(bone),[2500,25000,125000]);
+ for(const [wins,lv,cost] of [[0,0,6],[2499,0,6],[2500,1,6],[24999,1,6],[25000,2,2],[124999,2,2],[125000,3,-3]]){
   const natural=skillMasteryLevel(wins,bone.masteryMilestones);assert.equal(natural,lv);
   const fx=effectiveSkill(bone,1,natural);assert.equal(fx.cost,cost);if(lv<2)assert.ok(fx.bonus.hp<0&&fx.bonus.defense<0);else assert.ok(fx.bonus.hp>0&&fx.bonus.defense>0);
  }
  assert.deepEqual(effectiveSkill(bone,4,0),effectiveSkill(bone,1,3));assert.equal(maxSkillLevel(bone),3);
 });
 test('Negative AP works independent of priority and cannot be removed to overflow AP',()=>{
- const s=newState(0);s.level=30;s.learned={hook:1,pierce:1,focus:1,boneLegacy:1};s.skillInheritances={pierce:true,focus:true};s.skillPractice.boneLegacy=50000;
+ const s=newState(0);s.level=30;s.learned={hook:1,pierce:1,focus:1,boneLegacy:1};s.skillInheritances={pierce:true,focus:true};s.skillPractice.boneLegacy=125000;
  s.skills=['hook','pierce','focus','boneLegacy'];assert.equal(apUsed(s),5);assert.equal(validLoadout(s,s.skills),true);
  trimLoadout(s);assert.equal(s.skills.length,4);assert.throws(()=>act(s,{type:'skill',id:'boneLegacy'},0));assert.equal(s.skills.length,4);
  act(s,{type:'skill',id:'pierce'},0);act(s,{type:'skill',id:'boneLegacy'},0);assert.ok(apUsed(s)<=apCapacity(s));
@@ -122,4 +122,13 @@ test('Research skill conditions and boss origins reference actual game data',()=
  for(const sk of SKILLS){if(sk.masteryGain){assert.equal(sk.masteryGain.bonusByLevel.length,maxSkillLevel(sk)+1);for(const id of sk.masteryGain.enemyIds||[])assert.ok(FISH.some(f=>f.id===id));}if(sk.unlockJobMastery)assert.ok(sk.job&&sk.sourceEnemySkill);}
  assert.equal(new Set(JOBS.map(j=>j.id)).size,JOBS.length);assert.equal(new Set(SKILLS.map(j=>j.id)).size,SKILLS.length);
  for(const job of JOBS){const seen=new Set();let node=job;while(node.parent){assert.ok(!seen.has(node.id));seen.add(node.id);node=JOBS.find(j=>j.id===node.parent);assert.ok(node);}}
+});
+
+test('Bone mastery relieves only the current job\'s negative multipliers',()=>{
+ const jobHpFactor=st=>{const trace={};stats(st,trace);return (trace.hp||[]).filter(t=>t.source==='job'&&t.factor!==undefined).reduce((x,t)=>x*t.factor,1);};
+ const s=newState(0);s.level=40;s.job='skeleton';s.learned.boneLegacy=1;s.skills=['boneLegacy'];
+ const hp=JOBS.find(j=>j.id==='skeleton').hp;assert.ok(hp<1);
+ for(const [wins,relief] of [[0,0],[2500,.15],[25000,.5],[125000,1]]){s.skillPractice.boneLegacy=wins;assert.ok(Math.abs(jobHpFactor(s)-(1-(1-hp)*(1-relief)))<1e-9,String(wins));}
+ // 장착하지 않으면 숙련만으로는 회복하지 않습니다.
+ s.skills=[];assert.ok(Math.abs(jobHpFactor(s)-hp)<1e-9);
 });
