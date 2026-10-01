@@ -43,3 +43,19 @@ test('v25 glyph chain unlocks one by one and descriptions stay hidden until mast
     const sk = SKILLS.find(x => x.id === 'glyphNothing'); assert.ok(skillVeiled(s, sk));
     s.skillPractice.glyphNothing = sk.masteryMilestones[0]; assert.ok(canUse(s, 'glyphVoid')); assert.equal(skillVeiled(s, sk), false);
 });
+
+const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+const { rebirthAPAt } = await G.load('systems/meta'), P = await G.load('systems/progression'), E = await G.load('data/economy'), W = await G.load('data/world');
+test('v25.1 AP curve: generous early rebirths, sparse late ones, steep late research, skill-collection AP', () => {
+    assert.deepEqual([1, 4, 5, 12, 14, 15, 50, 100, 500].map(rebirthAPAt), [2, 8, 9, 16, 16, 17, 20, 22, 22]);
+    const costs = Array.from({ length: 20 }, (_, i) => E.researchCost('ap', i));
+    assert.ok(costs.slice(0, 12).reduce((a, b) => a + b, 0) <= 246, 'old 12 ranks never refund more than they cost');
+    assert.ok(costs[19] > costs[7] * 30, 'last ranks are steep');
+    const s = newState(0); assert.equal(P.skillCollectionAP(s), 0);
+    const mastered = SKILLS.slice(0, 15); for (const sk of mastered) s.skillPractice[sk.id] = P.masteryMilestonesFor(sk).at(-1);
+    assert.equal(P.masteredSkillCount(s), 15); assert.equal(P.skillCollectionAP(s), 2);
+    s.rebirths = 100; s.permanent.ap = 20; for (const sk of SKILLS) s.skillPractice[sk.id] = P.masteryMilestonesFor(sk).at(-1);
+    for (const st of W.STAGES) for (const id of st.fish) s.book[id] = 50;
+    assert.equal(P.apCapacity(s, []), 6 + 22 + 20 + 9 + 10, 'total AP ceiling without equipped rewards');
+    assert.ok(SKILLS.filter(x => x.masteryAP).length === 4);
+});

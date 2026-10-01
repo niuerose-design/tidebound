@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { ECONOMY, researchRank } from '../data/economy';
+import { ECONOMY, researchRank, REBIRTH_AP_SCHEDULE } from '../data/economy';
 import { MONSTER_TUNING } from '../data/balance';
 import { SWARM_SIZES, SWARM_UNLOCK } from '../data/world';
 export const rebirthLevel = (s: State) => Math.min(ECONOMY.rebirthLevelCap, 30 + s.rebirths * ECONOMY.rebirthLevelStep);
@@ -17,7 +17,9 @@ export const tailwindActive = (s: State) => s.lifeBonus === 'tailwind' && s.leve
 export const rebirthReward = (s: State, bonus = 0) => deepVoyagePearls(s) + Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) + Math.max(0, Math.floor(bonus));
 /** 환생 진주의 구성. 합계는 rebirthReward와 같습니다. */
 export const rebirthRewardParts = (s: State, bonus = 0) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))), bonus: Math.max(0, Math.floor(bonus)), deep: deepVoyagePearls(s) });
-export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
+/** 환생 AP(v25.1): 초반 회당 +2, 중반 +1, 후반은 드문드문(REBIRTH_AP_SCHEDULE). */
+export const rebirthAPAt = (rebirths: number) => REBIRTH_AP_SCHEDULE.filter(n => n <= rebirths).length;
+export const rebirthAP = (s: Pick<State, 'rebirths'>) => rebirthAPAt(s.rebirths);
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무한 심연은 깊이 + 2, 일반 던전은 0. */
 export const dungeonTier = (id: string, abyssDepth: number) => id === 'abyss' ? abyssDepth + 2 : 0;

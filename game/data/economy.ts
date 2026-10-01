@@ -1,13 +1,25 @@
 import type { Item, State } from '../types';
 import { BALANCE } from './balance';
 /** 가격·확률·영구 성장 수치의 단일 설정. 모두 게임 내 재화 전용. */
-export const ECONOMY = { enhanceMax: 10, enhanceGain: .15, shopBase: 180, shopPerLevel: 35, gambleBase: 300, gamblePerLevel: 45, rebirthAPCap: 12, rebirthLevelStep: 5, rebirthLevelCap: 60, rebirthExp: .25, tideCap: 200 };
+/**
+ * v25.1 환생 AP: 이 목록에서 환생 횟수 이하인 항목 수만큼 AP를 줍니다.
+ * 초반(1~4회)은 회당 +2, 5~12회는 회당 +1, 그 뒤로는 15·20·30·50·75·100회에 +1씩(최대 22).
+ */
+export const REBIRTH_AP_SCHEDULE = [1, 1, 2, 2, 3, 3, 4, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 20, 30, 50, 75, 100];
+/**
+ * v25.1 숙련 수집 AP: 최대 숙련까지 마친 스킬 수가 이 값에 닿을 때마다 AP +1(최대 10).
+ * 숙련은 환생해도 남으므로 몇 년 단위로 쌓는 장기 목표입니다.
+ */
+export const SKILL_COLLECTION_AP = [5, 15, 30, 50, 75, 105, 140, 180, 225, 275];
+export const ECONOMY = { enhanceMax: 10, enhanceGain: .15, shopBase: 180, shopPerLevel: 35, gambleBase: 300, gamblePerLevel: 45, rebirthAPCap: 22, rebirthLevelStep: 5, rebirthLevelCap: 60, rebirthExp: .25, tideCap: 200 };
 // v22: 감정은 희귀 이상. 드물게 신화·고대·태초가 나옵니다(등급 수 = 옵션 수).
 export const APPRAISAL = [{ rarity: 1, chance: .55 }, { rarity: 2, chance: .33 }, { rarity: 3, chance: .09 }, { rarity: 4, chance: .025 }, { rarity: 5, chance: .004 }, { rarity: 6, chance: .001 }];
 export type ResearchTab = 'combat' | 'utility' | 'gold';
 export type ResearchGroup = 'attack' | 'defense' | 'basic' | 'special' | 'vow';
 export type ResearchDef = {
     id: string; name: string; desc: string; max: number; base: number; step: number;
+    /** 단계별 비용을 직접 정할 때(있으면 base·step 대신 사용). */
+    costs?: number[];
     tab: ResearchTab; group?: ResearchGroup;
     /** 해금에 필요한 환생 횟수. 없으면 0. */
     rebirth?: number;
@@ -35,7 +47,7 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'recovery', name: '잔잔한 물결', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
     { id: 'evasion', name: '물거품 걸음', desc: '회피 +0.4%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .004, unit: 'pp', label: '회피' },
     { id: 'lifesteal', name: '피의 조수', desc: '흡혈 +0.5%p (전체 상한 30%)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },
-    { id: 'ap', name: '영혼의 그릇', desc: '스킬 장착 한도 AP +1', max: 12, base: 4, step: 3, tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
+    { id: 'ap', name: '영혼의 그릇', desc: '스킬 장착 한도 AP +1', max: 20, base: 4, step: 3, costs: [2, 3, 4, 5, 6, 8, 10, 12, 25, 35, 50, 70, 95, 125, 160, 200, 250, 310, 380, 460], tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
     { id: 'exp', name: '항해의 기억', desc: '포획 경험치 +20%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', per: .2, unit: 'percent', label: '포획 경험치' },
     { id: 'starting', name: '항구의 유산', desc: '환생 직후 시작 골드 +500', max: 10, base: 3, step: 2, tab: 'utility', group: 'basic', per: 500, unit: 'flat', label: '시작 골드', suffix: ' G' },
     { id: 'inventory', name: '넓은 선창', desc: '가방 +5칸', max: 8, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 2, per: 5, unit: 'flat', label: '가방', suffix: '칸' },
@@ -56,7 +68,7 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'shop', name: '항구 단골', desc: '상점·뽑기 골드 가격 -2%', max: 10, base: 3, step: 2, tab: 'gold', rebirth: 2, per: .02, unit: 'percent', label: '상점·뽑기 가격', negative: true },
     { id: 'enhance', name: '대장장이의 기억', desc: '강화·옵션 재설정 골드 비용 -2%', max: 15, base: 3, step: 2, tab: 'gold', rebirth: 5, per: .02, unit: 'percent', label: '강화·재설정 비용', negative: true },
 ];
-export const researchCost = (id: string, rank: number) => { const r = RESEARCH.find(x => x.id === id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
+export const researchCost = (id: string, rank: number) => { const r = RESEARCH.find(x => x.id === id); return !r ? Infinity : r.costs ? r.costs[Math.min(rank, r.costs.length - 1)] : r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4); };
 /** rank 단계까지 쓴 진주 합계(0 → rank). 재분배 반환액 계산에 씁니다. */
 export const researchSpent = (id: string, rank: number) => { let sum = 0; for (let i = 0; i < rank; i++) sum += researchCost(id, i); return sum; };
 export const researchUnlocked = (rebirths: number, r: Pick<ResearchDef, 'rebirth'>) => rebirths >= (r.rebirth || 0);

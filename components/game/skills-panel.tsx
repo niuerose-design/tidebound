@@ -9,8 +9,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
+import { SKILL_COLLECTION_AP } from '@/game/data/economy';
 import { BALANCE } from '@/game/data/balance';
-import { skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled } from '@/game/systems/progression';
+import { skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, apBreakdown } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon } from './shared';
 import { masteryConditionText } from '@/game/systems/mastery';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -83,7 +84,7 @@ function SkillCard({ sk, s, send, busy, detailed }: PanelProps & { sk: Skill; de
 
 export function Skills({ s, send, busy }: PanelProps) {
     const [scope, setScope] = useState('current'), [filter, setFilter] = useState('all'), [view, setView] = useState('simple');
-    const currentJob = jobById(s.job) || JOBS[0], used = apUsed(s), cap = apCapacity(s);
+    const currentJob = jobById(s.job) || JOBS[0], used = apUsed(s), cap = apCapacity(s), ap = apBreakdown(s), nextCollection = SKILL_COLLECTION_AP.find(n => n > ap.mastered);
     const list = SKILLS.filter(sk => {
         const acquired = (s.learned[sk.id] || 0) > 0;
         if (scope === 'current' && sk.job !== s.job && !(s.job === 'fisher' && !sk.job)) return false;
@@ -95,7 +96,7 @@ export function Skills({ s, send, busy }: PanelProps) {
         <Heading eyebrow="SKILL LABORATORY" title="직업을 거쳐, 나만의 편성으로" description="전직 스킬은 무료로 사용합니다. 장착 후 승리로 계승·강화하거나, 얻어 둔 스킬에 1 SP를 투자하세요.">
             <ConfirmButton label="SP 투자 환급" description="사용한 SP만 환급합니다. 해금한 스킬·실전 숙련은 남고, SP로만 얻은 계승과 강화는 취소됩니다. 현재 편성이 AP를 넘으면 일부 스킬이 해제됩니다." disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetSkills' })}/>
         </Heading>
-        <div className="skill-resource-grid"><div className="panel"><small>장착 AP</small><strong>{used}<span> / {cap}</span></strong><Meter value={Math.max(0, used)} max={cap}/><p>음수 AP 스킬은 편성 여유를 늘립니다.</p></div><div className="panel"><small>보유 SP</small><strong>{s.sp}</strong><p>보스 첫 정복 연구·종별 {BALANCE.bookMilestones.at(-1)!.toLocaleString()}회 연구 · 레벨업 지급 없음</p></div><div className="panel"><small>계승한 직업 스킬</small><strong>{SKILLS.filter(sk => sk.job && (s.learned[sk.id] || 0) > 0 && inherited(s, sk.id)).length}</strong><p>숙련 계승과 SP 계승을 함께 셉니다.</p></div></div>
+        <div className="skill-resource-grid"><div className="panel"><small>장착 AP</small><strong>{used}<span> / {cap}</span></strong><Meter value={Math.max(0, used)} max={cap}/><p>기본 {ap.base} · 환생 {ap.rebirth} · 연구 {ap.research} · 낚시터 {ap.regions} · 숙련 수집 {ap.collection}{ap.equipped ? ` · 장착 보상 ${ap.equipped}` : ''}</p><p>숙련 완료 스킬 {ap.mastered}개{nextCollection ? ` · ${nextCollection}개에 AP +1` : ' · 숙련 수집 AP 최대'}</p></div><div className="panel"><small>보유 SP</small><strong>{s.sp}</strong><p>보스 첫 정복 연구·종별 {BALANCE.bookMilestones.at(-1)!.toLocaleString()}회 연구 · 레벨업 지급 없음</p></div><div className="panel"><small>계승한 직업 스킬</small><strong>{SKILLS.filter(sk => sk.job && (s.learned[sk.id] || 0) > 0 && inherited(s, sk.id)).length}</strong><p>숙련 계승과 SP 계승을 함께 셉니다.</p></div></div>
         <details className="mastery-stack-note panel"><summary><Sparkles size={16}/> 스킬 성장 규칙</summary><span>전직으로 <b>기본 Lv.0</b> 해금 → 장착 후 승리로 Lv.1부터 성장·무료 계승. SP 계승과 강화는 <b>각 1 SP</b>이며, 해금한 기술에만 사용합니다. 숙련 강화와 SP 강화는 같은 성장 단계를 열고 효과를 중복해서 더하지 않습니다.</span></details>
         <section className="panel loadout"><div className="section-title"><h2>현재 편성</h2><span>개수 제한 없음 · 총 AP만 제한</span></div><div className="loadout-columns">{(['active', 'passive'] as const).map(type => {
             const ids = s.skills.filter(id => skillById(id)?.type === type);

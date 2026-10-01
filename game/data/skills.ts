@@ -191,6 +191,9 @@ for (const sk of SKILLS) {
 // Apply the centralized player balance after assignment and mastery defaults.
 tuneActiveSkills(SKILLS, sk => JOBS.find(j => j.id === sk.job)?.tier ?? 0);
 
+// v25.1 대기만성 패시브: 최대 숙련에 닿으면 장착한 동안 AP 한도 +1(숙련 곡선은 그대로).
+for (const id of ['abyssalPatience', 'tideOfAges', 'aeonsInsight', 'reefOfEons']) { const sk = SKILLS.find(x => x.id === id); if (sk) sk.masteryAP = 1; }
+
 /** id로 찾기(첫 항목 우선, SKILLS.find와 같은 결과). 모듈 초기화가 끝난 뒤 처음 부를 때 한 번 만듭니다. */
 let skillByIdMap: Map<string, Skill> | undefined;
 export function skillById(id: string | undefined) {

@@ -1,6 +1,7 @@
 import { applySpecialization } from '../data/specializations';
 import { refinementTargets, thresholdRank, REFINEMENT_STEP_BONUS } from '../data/long-term';
 import { rebirthAP } from './meta';
+import { SKILL_COLLECTION_AP } from '../data/economy';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
@@ -30,7 +31,13 @@ export function skillMasteryRewards(sk: Skill, rank = 1, mastery = 0) {
     return { ap: sk.masteryAP || 0, bonus: sk.masteryBonus || {} };
 }
 export function apBonus(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk && canUse(s, id) ? skillMasteryRewards(sk, s.learned?.[id] || 1, skillMastery(s, id)).ap : 0); }, 0); }
-export function apCapacity(s: State, ids = s.skills) { return PROGRESSION.baseAP + rebirthAP(s) + (s.permanent.ap || 0) + completedRegions(s).length + apBonus(s, ids); }
+export function apCapacity(s: State, ids = s.skills) { return PROGRESSION.baseAP + rebirthAP(s) + (s.permanent.ap || 0) + completedRegions(s).length + skillCollectionAP(s) + apBonus(s, ids); }
+/** 최대 숙련까지 마친 스킬 수(환생해도 남음). */
+export function masteredSkillCount(s: State) { let n = 0; for (const sk of SKILLS) if ((s.skillPractice?.[sk.id] || 0) > 0 && skillMastery(s, sk.id) >= masteryMilestonesFor(sk).length) n++; return n; }
+/** v25.1 숙련 수집 AP: 숙련을 끝낸 스킬 수가 SKILL_COLLECTION_AP의 기준을 넘을 때마다 +1. */
+export function skillCollectionAP(s: State) { const n = masteredSkillCount(s); return SKILL_COLLECTION_AP.filter(x => x <= n).length; }
+/** AP 한도 구성(화면 표시용). */
+export function apBreakdown(s: State, ids = s.skills) { return { base: PROGRESSION.baseAP, rebirth: rebirthAP(s), research: s.permanent.ap || 0, regions: completedRegions(s).length, collection: skillCollectionAP(s), mastered: masteredSkillCount(s), equipped: apBonus(s, ids) }; }
 export function skillMasteryLevel(practice: number, milestones = PROGRESSION.skillMasteryMilestones) { return milestones.filter(m => practice >= m).length; }
 export function skillMastery(s: State, id: string) { const sk = skillById(id); return skillMasteryLevel(s.skillPractice?.[id] || 0, masteryMilestonesFor(sk)); }
 export function skillMasteryRanks(s: State) { const out: Record<string, number> = {}; for (const [id, practice] of Object.entries(s.skillPractice || {})) out[id] = skillMasteryLevel(practice, masteryMilestonesFor(skillById(id))); return out; }

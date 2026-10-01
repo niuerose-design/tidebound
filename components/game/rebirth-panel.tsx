@@ -5,10 +5,10 @@ import { useState } from 'react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
-import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, ECONOMY, researchCost, researchEffect, researchUnlocked, type ResearchDef, type ResearchTab } from '@/game/data/economy';
+import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, ECONOMY, REBIRTH_AP_SCHEDULE, researchCost, researchEffect, researchUnlocked, type ResearchDef, type ResearchTab } from '@/game/data/economy';
 import { BALANCE } from '@/game/data/balance';
 import { ownsRelic, relicCost, researchRefund } from '@/game/systems/commerce';
-import { rebirthRewardParts, nextLifeBonus, tailwindActive, tailwindWindow, tailwindExp, DEEP_VOYAGE_LEVEL, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
+import { rebirthRewardParts, nextLifeBonus, tailwindActive, tailwindWindow, tailwindExp, DEEP_VOYAGE_LEVEL, rebirthLevel, rebirthReward, rebirthAP, tideLimit, rebirthAPAt } from '@/game/systems/meta';
 import { stats, permanentExpBonus } from '@/game/systems/stats';
 import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
@@ -74,7 +74,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
     const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
     const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }, bonus), permanentExp = 1 + permanentExpBonus(s);
     const breathExtra = s.vows?.breath ? Math.floor(reward * breathBonus(s)) : 0;
-    const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0;
+    const apGain = rebirthAPAt(s.rebirths + 1) - rebirthAP(s), nextApAt = REBIRTH_AP_SCHEDULE.find(n => n > s.rebirths + 1);
     const projected = { ...s, level: Math.max(s.level, required) }, lifeBonus = nextLifeBonus(projected);
     const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
     const lifeText = lifeBonus === 'deep' ? `깊은 항해 · 다음 생 동안 직업·스킬 숙련 기본 획득 +2` : lifeBonus === 'tailwind' ? `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : `없음 · Lv.${required + tailwindWindow(s)} 이하면 순풍, Lv.${DEEP_VOYAGE_LEVEL}이면 깊은 항해`;
@@ -102,7 +102,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
                     <li><b>진주 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{parts.deep ? ` · 깊은 항해 ${parts.deep}` : ''}{breathExtra ? ` · 한 번의 숨 +${breathExtra}` : ''}</small></li>
                     <li><b>환생 영구 보너스: 체력·물리/마법 공격·물리/마법 방어</b><small>현재 +{memoryNow}% → 환생 후 +{memoryNext}%</small></li>
                     <li><b>영구 경험치 획득</b><small>현재 ×{permanentExp.toFixed(2)} → 환생 후 ×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</small></li>
-                    <li><b>장착 AP {apGain ? '+1' : '+0'}</b><small>{apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`}</small></li>
+                    <li><b>장착 AP +{apGain}</b><small>{apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + apGain}` : nextApAt ? `다음 환생 AP는 환생 ${nextApAt}회에` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`}</small></li>
                     <li><b>다음 생 효과</b><small>{lifeText}</small></li>
                     <li><b>해역 난이도 {tideLimit({ ...s, rebirths: s.rebirths + 1 })}까지 선택</b><small>다음 생 시작 골드 {format(100 + (s.permanent.starting || 0) * 500)} G</small></li>
                 </ul></article>
