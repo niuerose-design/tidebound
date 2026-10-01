@@ -25,7 +25,7 @@ test('v25 chronarch: frozen time always stuns; precede grants an immediate extra
 
 test('v25 glyphs: alone they hurt, together they cancel; seven glyphs unleash heaven', () => {
     const v = fighter(['glyphVoid']); strike(v, target(), () => 0); assert.equal(v.hp, 1, '虛 alone leaves 1 HP');
-    const enemy = { ...target(), skills: [] }, me = fighter(['glyphNothing'], { hp: 1 });
+    const me = fighter(['glyphNothing'], { hp: 1 });
     strike({ ...target(), name: 'E', stats: { ...base, attack: 500 } }, me, () => .5); assert.equal(me.hp, 251, '無 nullifies the blow at 1 HP and gives back 25%');
     const bind = fighter(['glyphBind']); strike(bind, target(), () => 0); assert.equal(bind.stun, 1, '縛 stuns its user too');
     const bind2 = fighter(['glyphBind', 'glyphInstant']); strike(bind2, target(), () => 0); assert.equal(bind2.stun, 0, '刹 waives the self-stun');
