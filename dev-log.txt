@@ -1,0 +1,6 @@
+$ next start --port 5173
+▲ Next.js 16.3.4
+- Local:         http://localhost:5173
+- Network:       http://10.1.1.167:5173
+✓ Ready in 147ms
+✓ Running next.config.ts took 55ms
