@@ -1,7 +1,9 @@
 'use client';
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Fish, Anchor, Compass, Zap, Heart, Shield, Swords, Target, Waves } from 'lucide-react';
+import { Fish, Anchor, Compass, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag } from 'lucide-react';
+import type { State } from '@/game/types';
+import { inventoryCap } from '@/game/data/economy';
 export function Meter({ value, max, label, color = 'teal' }: {
     value: number;
     max: number;
@@ -54,4 +56,14 @@ export function useNow(ms = 1000) {
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => { const timer = setInterval(() => setNow(Date.now()), ms); return () => clearInterval(timer); }, [ms]);
     return now;
+}
+
+/** 장비 보관함·항구 상점 공용 재화 막대: 보유 골드·정수·장비 가방. extra는 맨 끝에 붙습니다. */
+export function WalletBar({ s, label, extra }: { s: State; label: string; extra?: ReactNode }) {
+    return <section className="panel port-resource-bar" aria-label={label}>
+        <div><Coins size={22}/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div>
+        <div><Gem size={22}/><span>보유 정수<strong>{format(s.essence || 0)}</strong></span></div>
+        <div><ShoppingBag size={22}/><span>장비 가방<strong>{s.inventory.length} <small>/ {inventoryCap(s)}</small></strong></span></div>
+        {extra}
+    </section>;
 }

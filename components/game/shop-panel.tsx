@@ -1,12 +1,11 @@
 'use client';
 import { ConfirmButton } from './confirm-button';
 import { useState } from 'react';
-import { Coins, ShoppingBag } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SHOP, GAMBLE_CATEGORIES, APPRAISAL, inventoryCap } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
 import { shopCost, gambleCost, shopPreview } from '@/game/systems/commerce';
-import { Heading, SlotIcon, format, Num } from './shared';
+import { Heading, SlotIcon, format, WalletBar } from './shared';
 import type { PanelProps } from './panel-props';
 import { BonusList } from './inventory-panel';
 import { EquipmentForge } from './inventory-panel';
@@ -15,11 +14,7 @@ export function Shop({ s, send, busy }: PanelProps) {
     const cost = shopCost(s), gamble = gambleCost(s), full = s.inventory.length >= inventoryCap(s);
     return <>
         <Heading eyebrow="HARBOR MARKET" title="항구 상점" description="장비를 고르고, 감정하고, 단련하는 곳."/>
-        <section className="panel port-resource-bar" aria-label="상점 재화와 보관함">
-            <div><Coins size={22}/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div>
-            <div><ShoppingBag size={22}/><span>장비 가방<strong>{s.inventory.length} <small>/ {inventoryCap(s)}</small></strong></span></div>
-            <div><span>현재 구매 장비<strong>Lv.{s.level}</strong></span></div>
-        </section>
+        <WalletBar s={s} label="상점 재화와 보관함" extra={<div><span>현재 구매 장비<strong>Lv.{s.level}</strong></span></div>}/>
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="gamble">장비 감정</TabsTrigger><TabsTrigger value="buy">확정 구매</TabsTrigger><TabsTrigger value="forge">장비 강화</TabsTrigger></TabsList></Tabs>
         {tab === 'gamble' && <section aria-label="부위별 장비 감정">
             <div className="appraisal-odds"><span>감정 등급 확률</span>{APPRAISAL.map(r => <b key={r.rarity} style={{ color: RARITIES[r.rarity].color }}>{RARITIES[r.rarity].name} {Math.round(r.chance * 1000) / 10}%</b>)}</div>

@@ -5,12 +5,11 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Item, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
-import { inventoryCap } from '@/game/data/economy';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '@/game/data/progression';
 import { itemStats, itemDescription, enhanceCost, reforgeCost, bulkItems, saleValue, dismantleEssence, rerollCost } from '@/game/systems/equipment';
 import { ORIGIN_THEMES, affixDef, ESSENCE_BY_RARITY } from '@/game/data/gear';
 import { stats } from '@/game/systems/stats';
-import { Heading, SlotIcon, format } from './shared';
+import { Heading, SlotIcon, format, WalletBar } from './shared';
 import type { PanelProps } from './panel-props';
 export function BonusList({ item }: {
     item: Item;
@@ -68,10 +67,8 @@ export function Inventory({ s, send, busy }: PanelProps) {
  </article>;
     };
     return <>
-    <Heading eyebrow="EQUIPMENT & FORGE" title="장비 보관함" description="실제 능력치와 교체 결과를 비교하세요. 보호한 장비와 유물은 일괄판매에서 제외됩니다.">
-    <span className="badge">{s.inventory.length} / {inventoryCap(s)}</span>
-    <span className="badge">정수 {s.essence || 0}</span>
-    </Heading>
+    <Heading eyebrow="EQUIPMENT & FORGE" title="장비 보관함" description="실제 능력치와 교체 결과를 비교하세요. 보호한 장비와 유물은 일괄판매에서 제외됩니다."/>
+    <WalletBar s={s} label="보관함 재화와 가방"/>
     <h2 className="economy-section-title">착용 장비</h2>
     <div className="item-grid">{Object.values(s.equipment).filter((i): i is Item => !!i).map(i => card(i, true))}</div>
     <section className="panel bulk-sale">

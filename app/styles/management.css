@@ -1,6 +1,6 @@
 /* 항구·환생·전직·스킬 등 관리 화면의 간격과 카드 규칙. */
 /* Harbor, legacy and vocation screens share the compact build-panel rhythm. */
-.port-resource-bar { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); padding:22px 26px; gap:24px; margin-bottom:22px; background:linear-gradient(110deg,#213a35,#152329); }
+.port-resource-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); padding:22px 26px; gap:24px; margin-bottom:22px; background:linear-gradient(110deg,#213a35,#152329); }
 .port-resource-bar>div { display:flex; align-items:center; gap:13px; min-width:0; }
 .port-resource-bar svg { color:#adc7b5; flex-shrink:0; }
 .port-resource-bar span { color:#a8bdb6; font-size:13px; }
