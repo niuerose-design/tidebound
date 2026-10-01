@@ -1,6 +1,7 @@
 import type { Attribute, Stats } from '../types';
 import { EXPANSION_JOBS } from './expansion';
 import { LINEAGE_JOBS, NEW_LINEAGES, LINEAGE_HINTS } from './expansion-lineages';
+import { V24_JOBS, V24_HINTS } from './expansion-v24';
 export type Job = {
     id: string;
     name: string;
@@ -163,8 +164,11 @@ JOBS.push(...(EXPANSION_JOBS as Job[]));
 // v23 계보 보강: 계열·계보 사이의 직업 수 차이를 줄입니다. 자세한 설계는 expansion-lineages.ts.
 JOBS.push(...(LINEAGE_JOBS as Job[]));
 
+// v24 계보 완성: 3차(일부 2·4차)에서 끝나던 계보를 5차까지 잇습니다. 자세한 설계는 expansion-v24.ts.
+JOBS.push(...(V24_JOBS as Job[]));
+
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
-for (const id of ['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger']) JOBS.find(j => j.id === id)!.healer = true;
+for (const id of ['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger', 'tideSaint', 'lifeOcean']) JOBS.find(j => j.id === id)!.healer = true;
 
 // 특정 스킬/직업을 마스터해야만 열리는 교차 전직 조건입니다.
 // 값은 스킬 숙련 단계(1~4) 또는 직업 숙련 승수로 작성합니다.
@@ -233,7 +237,7 @@ const JOB_HINTS: Record<string, string> = {
     rebirthFisher: '환생 뒤, 윤회의 문이 이 이름을 부를 때.',
     abyssMimic: '메아리를 오래 길들인 자에게 보스의 그림자가 닿습니다.',
 };
-for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id];
+for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id];
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };

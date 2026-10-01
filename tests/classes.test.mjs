@@ -1,13 +1,13 @@
 // 직업 분류 개편 1단계: 7계열·계보
 import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './harness.mjs';
 
-test('Job trees: seven trees, no job left in the old other tree, v23 job counts per tree', () => {
+test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 161); assert.equal(new Set(JOBS.map(j => j.id)).size, 161);
+    assert.equal(JOBS.length, 202); assert.equal(new Set(JOBS.map(j => j.id)).size, 202);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 28, magic: 28, defense: 23, status: 21, hybrid: 22, support: 25, mystery: 14 });
+    assert.deepEqual(count, { physical: 35, magic: 34, defense: 27, status: 26, hybrid: 27, support: 37, mystery: 16 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
@@ -35,13 +35,13 @@ test('Lineages: every job belongs to exactly one lineage inside its own tree; in
     assert.deepEqual(jobTags(JOBS.find(j => j.id === 'corsair')), ['회피', '출혈']);
 });
 
-test('Job counts stay close: trees 21–28 (??? 14 or more), named lineages 4–8', () => {
-    for (const t of JOB_TREES) {
-        const n = JOBS.filter(j => j.tree === t.id).length;
-        if (t.id === 'mystery') assert.ok(n >= 14, `${t.id} ${n}`); else assert.ok(n >= 21 && n <= 28, `${t.id} ${n}`);
-    }
+test('Job counts stay close: trees within 1.5× of each other (??? 14 or more), named lineages 5–10 and all reach tier 5', () => {
+    const sizes = JOB_TREES.filter(t => t.id !== 'mystery').map(t => JOBS.filter(j => j.tree === t.id).length);
+    assert.ok(Math.max(...sizes) <= Math.min(...sizes) * 1.5, sizes.join(','));
+    assert.ok(JOBS.filter(j => j.tree === 'mystery').length >= 14);
     for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent') && l.id !== 'fisher')) {
-        const n = JOBS.filter(j => lineageOf(j) === l.id).length;
-        assert.ok(n >= 4 && n <= 8, `${l.id} ${n}`);
+        const jobs = JOBS.filter(j => lineageOf(j) === l.id);
+        assert.ok(jobs.length >= 4 && jobs.length <= 10, `${l.id} ${jobs.length}`);
+        assert.equal(Math.max(...jobs.map(j => j.tier)), 5, `${l.id} reaches tier 5`);
     }
 });

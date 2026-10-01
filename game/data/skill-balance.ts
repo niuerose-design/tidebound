@@ -1,6 +1,7 @@
 import type { Skill } from '../types';
 import { EXPANSION_BALANCE } from './expansion';
 import { LINEAGE_BALANCE } from './expansion-lineages';
+import { V24_BALANCE } from './expansion-v24';
 
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
@@ -60,6 +61,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     borrowedTentacles: { chance: .22, multiplier: 1.15, extraAttackMultiplier: .55 },
     ...EXPANSION_BALANCE,
     ...LINEAGE_BALANCE,
+    ...V24_BALANCE,
 };
 
 /**

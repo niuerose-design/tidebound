@@ -9,8 +9,8 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  act(s,{type:'learn',id:'pierce'},0);assert.equal(s.sp,3);assert.equal(skillLevel(sk,s.learned.pierce,2),3);
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
-test('161 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,161);assert.equal(SKILLS.length,276);assert.equal(JOB_TREES.length,7);
+test('202 jobs distribute tier 1 and 2 skills into one or two each',()=>{
+ assert.equal(JOBS.length,202);assert.equal(SKILLS.length,362);assert.equal(JOB_TREES.length,7);
  for(const job of JOBS)assert.ok(JOB_TREES.some(t=>t.id===job.tree),job.id);
  for(const job of JOBS.filter(j=>j.tier===1||j.tier===2)){
   const owned=SKILLS.filter(sk=>sk.job===job.id);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
@@ -131,4 +131,30 @@ test('Bone mastery relieves only the current job\'s negative multipliers',()=>{
  for(const [wins,relief] of [[0,0],[2500,.15],[25000,.5],[125000,1]]){s.skillPractice.boneLegacy=wins;assert.ok(Math.abs(jobHpFactor(s)-(1-(1-hp)*(1-relief)))<1e-9,String(wins));}
  // 장착하지 않으면 숙련만으로는 회복하지 않습니다.
  s.skills=[];assert.ok(Math.abs(jobHpFactor(s)-hp)<1e-9);
+});
+
+test('v24 per-rebirth passives grow with rebirths up to the cap', () => {
+ const s = newState(0); s.level = 60; s.job = 'samsaraArchivist'; s.learned.karmaRecord = 1; s.skills = ['karmaRecord'];
+ // 환생 기억 배율도 환생마다 커지므로 스킬에서 온 마법 공격만 비교합니다.
+ const at = n => { s.rebirths = n; const trace = {}; stats(s, trace); return (trace.magic || []).filter(t => t.source === 'skills').reduce((x, t) => x + t.delta, 0); };
+ const r0 = at(0), r10 = at(10), r30 = at(30), r60 = at(60);
+ assert.ok(r10 > r0 && r30 > r10); assert.equal(r60, r30, 'rebirths beyond the cap add nothing');
+});
+
+test('v24 late-bloomer passives start expensive and pay off at 10k/100k/500k mastery', () => {
+ const sk = SKILLS.find(x => x.id === 'abyssalPatience');
+ assert.deepEqual(masteryMilestonesFor(sk), [10000, 100000, 500000]);
+ const costs = [0, 1, 2, 3].map(lv => effectiveSkill(sk, 1, lv).cost), atk = [0, 1, 2, 3].map(lv => effectiveSkill(sk, 1, lv).bonus.attack);
+ assert.deepEqual(costs, [8, 7, 5, 2]);
+ for (let i = 1; i < 4; i++) assert.ok(atk[i] > atk[i - 1] * 1.8, `level ${i} pays off`);
+ for (const id of ['abyssalPatience', 'tideOfAges', 'reefOfEons', 'aeonsInsight']) assert.equal(maxSkillLevel(SKILLS.find(x => x.id === id)), 3, id);
+});
+
+test('v24 status split: tiers 1-3 never deal damage and apply a status in one skill; tiers 4-5 may', () => {
+ const ST = ['stun', 'bleed', 'weaken', 'silence', 'slow'];
+ for (const sk of SKILLS.filter(x => x.type === 'active' && ST.includes(x.effect))) {
+  const tier = JOBS.find(j => j.id === sk.job)?.tier ?? 0;
+  if (tier <= 3) assert.ok(sk.statusOnly, `${sk.id} (tier ${tier}) should be status-only`);
+ }
+ assert.ok(SKILLS.some(x => !x.statusOnly && ST.includes(x.effect) && JOBS.find(j => j.id === x.job)?.tier >= 4));
 });

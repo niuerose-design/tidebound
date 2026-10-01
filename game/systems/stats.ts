@@ -98,6 +98,10 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
             for (const [key, n] of Object.entries(bonus))
                 add(key as keyof CombatStats, 'skills', n > 0 ? n * scale : n);
         }
+        if (sk?.perRebirth) {
+            const times = Math.min(s.rebirths || 0, SKILL_FORMULA.perRebirthCap), scale = signatureScale(sk, s.job);
+            for (const [key, n] of Object.entries(sk.perRebirth)) add(key as keyof CombatStats, 'skills', n * times * scale);
+        }
         if (sk) {
             const masteryBonus = skillMasteryRewards(sk, s.learned[id] || 1, skillMastery(s, id)).bonus;
             for (const [key, n] of Object.entries(masteryBonus))
