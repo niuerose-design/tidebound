@@ -1,6 +1,6 @@
 'use client';
 import { catchReward } from '@/game/systems/meta';
-import { BookOpen, Fish, Swords } from 'lucide-react';
+import { BookOpen, ChevronDown, Fish, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { SKILLS } from '@/game/data/skills';
@@ -14,9 +14,17 @@ import { stats, mastery, goldMultiplier, hitChance } from '@/game/systems/stats'
 import { ENEMY_SKILLS, profile, scaledEnemyStats } from '@/game/data/encounters';
 import { bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel, regionThemes } from '@/game/systems/book';
 import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL } from '@/game/data/book-traits';
-import type { State } from '@/game/types';
+import type { State, Stats } from '@/game/types';
+import { skillEffectLines } from '@/game/systems/skill-description';
 
-const skillName = (id: string) => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id)?.name || id;
+const skillOf = (id: string) => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id);
+/** 몬스터 스킬 상세: 발동률·재사용 대기와 실제 효과(피해식·상태이상·추가타). */
+function EnemySkillList({ ids, enemy }: { ids: string[]; enemy: Stats }) {
+    return <div className="enemy-skill-list"><h5>사용 스킬 <small>치명 {percent(enemy.crit || 0)} · 치명 피해 ×{BALANCE.critMultiplier}</small></h5><ul>{ids.map(id => {
+        const sk = skillOf(id); if (!sk) return null;
+        return <li key={id}><strong>{sk.name}</strong><small>발동 {percent(sk.chance)} · 재사용 {sk.cooldown}턴{sk.statusOnly ? ' · 피해 없음' : ''}</small><span>{skillEffectLines(sk).join(' · ')}</span></li>;
+    })}</ul></div>;
+}
 /** 도감 카드의 플레이어 보상 요약: 성향 연구 능력치와 생태 연구 보정. */
 function BookTraitLine({ s, id }: { s: State; id: string }) {
     const trait = BOOK_TRAITS[bookTrait(id)], eco = bookEcology(s, id);
@@ -68,11 +76,11 @@ export function Collection({ s, send, busy }: PanelProps) {
     <TabsTrigger value="fish">개체도감</TabsTrigger>
     <TabsTrigger value="items">물건도감</TabsTrigger>
     </TabsList>
-    <TabsContent value="fish">{STAGES.map(st => <section className="book-section" key={st.id}>
-        <div className="section-title">
-        <h2>{st.name}</h2>
+    <TabsContent value="fish">{STAGES.map(st => <details className="book-section book-region" key={st.id} open={st.id === s.stage}>
+        <summary className="section-title">
+        <h2><ChevronDown size={18} className="book-region-chevron"/>{st.name} <small>{st.fish.filter(id => (s.book[id] || 0) >= bookComplete).length} / {st.fish.length}종 완성</small></h2>
         <RegionProgress s={s} id={st.id}/>
-        </div>
+        </summary>
         <div className="book-grid">{st.fish.map(id => {
                 const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, researchDone = (s.bookClaims?.[id] || 0) >= BALANCE.bookMilestones.length, enemy = scaledEnemyStats(f, { tier: s.tide || 0 }), p = profile(id);
                 return <article className={`panel book-card ${!n ? 'undiscovered' : ''}`} key={id}>
@@ -90,11 +98,11 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <BookResearch s={s} id={id} send={send} busy={busy} swarm/>
                 {bookRevealed(s, id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{s.tide ? `해역 난이도 ${s.tide} 적용 · 일반 낚시터 기준` : '해역 난이도 0 · 일반 낚시터 기준'}</small></h4></summary>
                 <div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><span>명중 수치 {statDisplay('accuracy', enemy.accuracy || 0)}</span><span>회피 수치 {statDisplay('evasion', enemy.evasion || 0)}</span></div>
-                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 내 공격 {percent(hitChance(player, enemy))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>포획 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 해역·골드 보너스 적용)</small></span></div>{f.level >= 5 && p.skills.length > 0 && <div className="book-stats"><span>스킬 {p.skills.map(skillName).join(' · ')}</span></div>}</details>}
+                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 내 공격 {percent(hitChance(player, enemy))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>포획 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 해역·골드 보너스 적용)</small></span></div>{f.level >= 5 && p.skills.length > 0 ? <EnemySkillList ids={p.skills} enemy={enemy}/> : <p className="footnote">스킬 없이 기본 공격만 합니다 · 치명 {percent(enemy.crit || 0)}</p>}</details>}
                 {s.stage === st.id && !s.dungeon && <button className="text-button" disabled={busy} onClick={() => send({ type: 'target', id })}>{s.target === id ? '집중 사냥 대상' : '이 물고기 집중 사냥'}</button>}</article>;
             })}</div>
-        </section>)}<section className="book-section boss-book-section">
-        <div className="section-title"><h2>던전 보스 도감</h2><span>{FISH.filter(f => f.boss && (s.book[f.id] || 0) >= bookComplete).length} / {FISH.filter(f => f.boss).length}종 완성</span></div>
+        </details>)}<details className="book-section book-region boss-book-section">
+        <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>던전 보스 도감</h2><span>{FISH.filter(f => f.boss && (s.book[f.id] || 0) >= bookComplete).length} / {FISH.filter(f => f.boss).length}종 완성</span></summary>
         <div className="book-grid">{FISH.filter(f => f.boss).map(f => {
             const n = s.book[f.id] || 0, p = profile(f.id), enemy = scaledEnemyStats(f, { boss: true, wave: 4, tier: f.id === 'abyssSovereign' ? 3 : 0 }), researchDone = (s.bookClaims?.[f.id] || 0) >= BALANCE.bookMilestones.length;
             return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={f.id}>
@@ -104,10 +112,10 @@ export function Collection({ s, send, busy }: PanelProps) {
                 {bookRevealed(s, f.id) ? <div className="fish-trait"><strong>{p.name}</strong><span>{p.hint}</span></div> : <LockedInfo n={n}/>}
                 <BookTraitLine s={s} id={f.id}/>
                 <BookResearch s={s} id={f.id} send={send} busy={busy}/>
-                {bookRevealed(s, f.id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{f.id === 'abyssSovereign' ? '무한 심연 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span></div><div className="book-stats"><span>스킬 {p.skills.map(skillName).join(' · ')}</span></div></details>}
+                {bookRevealed(s, f.id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{f.id === 'abyssSovereign' ? '무한 심연 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span></div><EnemySkillList ids={p.skills} enemy={enemy}/></details>}
             </article>;
         })}</div>
-        </section></TabsContent>
+        </details></TabsContent>
     <TabsContent value="items">
     <div className="notice">
     <BookOpen size={22}/>
