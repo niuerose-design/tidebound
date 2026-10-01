@@ -4,6 +4,7 @@ import { STATUS_TUNING } from './balance';
 import { LINEAGE_BALANCE } from './expansion-lineages';
 import { V24_BALANCE } from './expansion-v24';
 import { SUPPORT_BALANCE, SUPPORT_STATUS_ONLY } from './support-rework';
+import { V25_BALANCE, V25_STATUS_ONLY } from './expansion-v25';
 
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
@@ -66,7 +67,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     ...V24_BALANCE,
 };
 // v24.2 보조 계열 개편은 기존 값 위에 덮어씁니다(필드 단위 병합).
-for (const [id, tuning] of Object.entries(SUPPORT_BALANCE)) ACTIVE_SKILL_BALANCE[id] = { ...ACTIVE_SKILL_BALANCE[id], ...tuning };
+for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE })) ACTIVE_SKILL_BALANCE[id] = { ...ACTIVE_SKILL_BALANCE[id], ...tuning };
 
 /**
  * 상태이상 규칙(v24 → v24.1 혼합 방식)
@@ -79,7 +80,7 @@ for (const [id, tuning] of Object.entries(SUPPORT_BALANCE)) ACTIVE_SKILL_BALANCE
  */
 export const STATUS_ONLY_SKILLS = ['splash', 'anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
     'bellCrash', 'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
-    'quakeStep', 'sealHex', 'frostMist', ...SUPPORT_STATUS_ONLY];
+    'quakeStep', 'sealHex', 'frostMist', ...SUPPORT_STATUS_ONLY, ...V25_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, weaken: 3, silence: 2, slow: 3 };
 /** 상태이상 전용 전환과 초반 배율 제한. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. tier는 기술 주인 직업의 차수(공용 0). */
@@ -112,6 +113,12 @@ export function progressDesc(sk: Skill) {
     if (sk.allIn) out += ` 현재 체력 ${Math.round(sk.allIn.hpRatio * 100)}%와 남은 마나를 모두 걸고 (건 체력 × ${sk.allIn.hpScale} + 건 마나 × ${sk.allIn.manaScale})를 피해에 더합니다.`;
     if (sk.goldSpend) out += ` 보유 골드 ${Math.round(sk.goldSpend.ratio * 1000) / 10}%(최대 ${sk.goldSpend.cap.toLocaleString()})를 던져 × ${sk.goldSpend.scale}만큼 피해에 더합니다.`;
     if (sk.preyBonus) out += ` 보스·지정 어종에게 피해 +${Math.round(sk.preyBonus * 100)}%.`;
+    if (sk.allIn?.heal) out += ` 건 마나 × ${sk.allIn.heal}만큼 회복.`;
+    if (sk.recoil) out += ` 준 피해의 ${Math.round(sk.recoil * 100)}%를 자신도 받습니다(체력 1 아래로는 안 내려감).`;
+    if (sk.sureHit) out += ' 반드시 명중합니다.';
+    if (sk.extraTurn) out += ' 곧바로 한 번 더 행동합니다.';
+    if (sk.sealPower) out += ` 이번 전투에 새긴 인 1개마다 피해 +${Math.round(sk.sealPower * 100)}%.`;
+    if (sk.selfEffect) out += ` 쓰고 나면 자신 ${{ stun: '기절', slow: '감속', weaken: '약화' }[sk.selfEffect.status]} ${sk.selfEffect.turns}턴.`;
     return out;
 }
 
@@ -137,10 +144,12 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         const source = sk.scaling === 'harmony' ? '육중 조화 원시 피해' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
         const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : '';
         const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName + (sk.dotStacks ? '(중첩)' : '') : { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun'];
+        if (sk.restoreAll) { sk.desc = '피해 없이 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회.'; continue; }
         if (sk.statusOnly) {
             sk.desc = `피해 없이 ${statusName} ${sk.statusTurns}턴.${sk.effect === 'bleed' ? ` 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? .22} 피해(방어 무시).` : ''}`;
             if (sk.gamble?.accuracy) sk.desc += ` 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p 무작위.`;
             if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
+            sk.desc += progressDesc(sk);
             continue;
         }
         sk.desc = `(${source}${scaling}) × ${sk.multiplier} 피해.${sk.id === 'crush' ? ' 물리 방어 150% 추가 피해.' : ''}`;

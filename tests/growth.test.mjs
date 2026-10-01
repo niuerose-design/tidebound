@@ -9,10 +9,10 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  act(s,{type:'learn',id:'pierce'},0);assert.equal(s.sp,3);assert.equal(skillLevel(sk,s.learned.pierce,2),3);
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
-test('211 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,211);assert.equal(SKILLS.length,391);assert.equal(JOB_TREES.length,7);
+test('214 jobs distribute tier 1 and 2 skills into one or two each',()=>{
+ assert.equal(JOBS.length,214);assert.equal(SKILLS.length,407);assert.equal(JOB_TREES.length,7);
  for(const job of JOBS)assert.ok(JOB_TREES.some(t=>t.id===job.tree),job.id);
- for(const job of JOBS.filter(j=>j.tier===1||j.tier===2)){
+ for(const job of JOBS.filter(j=>(j.tier===1||j.tier===2)&&!j.fullKit)){
   const owned=SKILLS.filter(sk=>sk.job===job.id&&!sk.song);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
  }
  assert.equal(SKILLS.find(sk=>sk.id==='hushCurrent').job,'stillwaterBinder');
@@ -152,7 +152,7 @@ test('v24 late-bloomer passives start expensive and pay off at 10k/100k/500k mas
 
 const STATUS_TUNING_CAPS = (await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/balance')).STATUS_TUNING.earlyStatusMultiplierCap;
 test('v24.1 status rules: support skills are status-only; early damage+stun/silence skills are multiplier-capped', () => {
- for (const sk of SKILLS.filter(x => x.statusOnly)) assert.ok(sk.statusTurns > 0 && sk.chance <= .3 && sk.cooldown >= sk.statusTurns, sk.id);
+ for (const sk of SKILLS.filter(x => x.statusOnly && !x.restoreAll)) assert.ok(sk.statusTurns > 0 && sk.chance <= .3 && sk.cooldown >= sk.statusTurns, sk.id);
  const caps = STATUS_TUNING_CAPS;
  for (const sk of SKILLS.filter(x => x.type === 'active' && !x.statusOnly && caps[x.effect] !== undefined)) {
   const tier = JOBS.find(j => j.id === sk.job)?.tier ?? 0;

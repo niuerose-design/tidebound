@@ -16,10 +16,10 @@ const known = (ids: string[]) => ids.filter(id => JOBS.some(j => j.id === id));
 export const REBIRTH_DOOR_JOBS = known(['rebirthFisher', 'voidcaller']);
 /** 시간의 문: 한국 시간(UTC+9) 6시간 슬롯. 비어 있는 슬롯은 문이 닫힙니다. */
 export const TIME_SLOTS: TimeSlot[] = [
-    { id: 'dawn', name: '새벽', from: 0, to: 6, jobs: known(['undead']) },
-    { id: 'morning', name: '아침', from: 6, to: 12, jobs: known(['headwindSailor', 'sunriseAngler']) },
-    { id: 'day', name: '낮', from: 12, to: 18, jobs: known(['barehandFisher', 'noonDiver']) },
-    { id: 'night', name: '밤', from: 18, to: 24, jobs: known(['mistSwordsman', 'nightHeron']) },
+    { id: 'dawn', name: '새벽', from: 0, to: 6, jobs: known(['undead', 'clockmaker']) },
+    { id: 'morning', name: '아침', from: 6, to: 12, jobs: known(['headwindSailor', 'sunriseAngler', 'clockmaker']) },
+    { id: 'day', name: '낮', from: 12, to: 18, jobs: known(['barehandFisher', 'noonDiver', 'clockmaker']) },
+    { id: 'night', name: '밤', from: 18, to: 24, jobs: known(['mistSwordsman', 'nightHeron', 'clockmaker']) },
 ];
 const codexCount = (s: State) => FISH.filter(f => (s.book?.[f.id] || 0) > 0).length + Object.keys(s.itemBook || {}).length;
 /** 발견의 문: 조건을 만족하는 동안 열리는 직업. 한 번 전직하면(unlockedJobs) 조건이 없습니다. */

@@ -82,7 +82,9 @@ export function inherited(s: State, id: string) { const sk = skillById(id); retu
 export function classAccess(s: State, sk: Skill) { return (!sk.song || songAccess(s)) && (!sk.job || s.job === sk.job || inherited(s, sk.id)); }
 /** v24.2 노래 패시브는 음유시인 계보(방랑 음유시인의 후속 직업)만 장착합니다. */
 export function songAccess(s: Pick<State, 'job'>) { return lineage(s.job).includes('bard'); }
-export function skillUnlockReady(s: State, sk: Skill) { return !sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery; }
+export function skillUnlockReady(s: State, sk: Skill) { return (!sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery) && (!sk.unlockAfter || skillMastery(s, sk.unlockAfter.skill) >= sk.unlockAfter.level); }
+/** v25 숙련 Lv.1 전에는 효과를 감추는 기술인지. */
+export function skillVeiled(s: State, sk: Skill) { return !!sk.veiled && skillMastery(s, sk.id) < 1; }
 /** 계승한 스킬은 환생 뒤 레벨이 낮아도 쓸 수 있습니다(레벨 조건 면제). 환생 횟수·직업 숙련 해금 조건은 그대로입니다. */
 export function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id)) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
 /** 스킬을 장착할 수 없는 이유. 쓸 수 있으면 빈 문자열입니다. */
@@ -92,6 +94,7 @@ export function skillBlockReason(s: State, id: string) {
     if (sk.song && !songAccess(s)) return '노래는 방랑 음유시인 계보 직업만 부를 수 있습니다.';
     if (!classAccess(s, sk)) return '전용 직업으로 전직하거나, 숙련 또는 SP 계승을 완료하세요.';
     if (s.rebirths < (sk.rebirth || 0)) return `환생 ${sk.rebirth}회부터 사용할 수 있습니다.`;
+    if (sk.unlockAfter && skillMastery(s, sk.unlockAfter.skill) < sk.unlockAfter.level) return `${skillById(sk.unlockAfter.skill)?.name || sk.unlockAfter.skill} 숙련 Lv.${sk.unlockAfter.level}을 달성하면 열립니다.`;
     if (!skillUnlockReady(s, sk)) return `직업 숙련 ${sk.unlockJobMastery!.toLocaleString()}부터 사용할 수 있습니다.`;
     if (s.level < sk.level && !inherited(s, id)) return `Lv.${sk.level}부터 사용할 수 있습니다.`;
     if (!((s.learned?.[id] || 0) > 0)) return '아직 습득하지 않은 스킬입니다.';
@@ -131,7 +134,7 @@ export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, specialization?
         ...sk,
         cost: sk.song ? 0 : override?.cost ?? Math.max(1, (sk.cost ?? 2) - Math.floor(steps * (fx.apReduction ?? 0))),
         manaCost: Math.max(0, (sk.manaCost ?? 0) - Math.floor(steps * (fx.manaReduction ?? 0))),
-        chance: sk.type === 'passive' ? 0 : Math.min(.95, sk.chance + steps * (fx.chanceIncrease ?? PROGRESSION.masteryChance)),
+        chance: sk.type === 'passive' ? 0 : sk.chance >= 1 ? 1 : Math.min(.95, sk.chance + steps * (fx.chanceIncrease ?? PROGRESSION.masteryChance)),
         cooldown: sk.type === 'passive' ? 0 : Math.max(1, sk.cooldown - Math.floor(steps * (fx.cooldownReduction ?? 0))),
         multiplier: sk.multiplier * factor,
         bonus,

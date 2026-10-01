@@ -68,6 +68,12 @@ export type StatusEffects = {
     haste?: number;
     /** 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 남은 턴(자기 행동마다 1씩 줄어듭니다). */
     immune?: Partial<Record<'stun' | 'bleed' | 'weaken' | 'silence' | 'slow', number>>;
+    /** v25 일곱 글자: 이번 전투에 새긴 인. */
+    seals?: string[];
+    /** v25 타임머신을 이번 전투에 썼는지. */
+    timeUsed?: boolean;
+    /** v25 이번 전투에 無로 막은 횟수. */
+    lastStand?: number;
 };
 export type Item = {
     enhance?: number;
@@ -128,7 +134,29 @@ export type Skill = {
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
     gamble?: { min: number; max: number; accuracy?: number };
     /** v24.2 올인: 현재 체력의 hpRatio와 마나 전부를 걸고, (건 체력 × hpScale + 건 마나 × manaScale)을 피해에 더합니다. */
-    allIn?: { hpRatio: number; hpScale: number; manaScale: number };
+    allIn?: { hpRatio: number; hpScale: number; manaScale: number; heal?: number };
+    /** v25 정지된 시간: 반드시 명중합니다. */
+    sureHit?: boolean;
+    /** v25 시간: 이 행동 뒤 곧바로 한 번 더 행동합니다(연속 행동 횟수와 별개). */
+    extraTurn?: boolean;
+    /** v25 타임머신: 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회. */
+    restoreAll?: boolean;
+    /** v25 반동: 준 피해 × recoil만큼 자신도 받습니다(반동으로는 체력 1 아래로 내려가지 않음). */
+    recoil?: number;
+    /** v25 자기 상태이상: 쓰고 나면 자신이 기절·감속·약화됩니다. waivedBy 기술을 장착하면 생략. */
+    selfEffect?: { status: 'stun' | 'slow' | 'weaken'; turns: number; waivedBy?: string };
+    /** v25 無: 체력 1일 때 받는 공격(그 행동 전체)을 전투당 charges번까지 무효로 합니다. */
+    lastStand?: { charges: number; heal?: number };
+    /** v25 일곱 글자: 쓰면 이번 전투의 인(印)을 하나 새깁니다. */
+    seal?: boolean;
+    /** v25 魂: 이번 전투에 새긴 인 1개마다 피해 +sealPower. */
+    sealPower?: number;
+    /** v25 天: 일곱 글자를 모두 장착하고 여섯 인을 새기면 (물리+마법 공격) × (base + 일곱 글자 숙련 합 × perLevel) 고정 피해와 기절. */
+    sealFinale?: { base: number; perLevel: number; stun: number };
+    /** v25 해금 사슬: 이 기술의 숙련이 level 단계에 닿아야 습득합니다. */
+    unlockAfter?: { skill: string; level: number };
+    /** v25 숙련 Lv.1 전에는 효과를 ???로 감춥니다. */
+    veiled?: boolean;
     /** v24.2 노래: 음유시인 계보 직업만 장착할 수 있습니다(AP 0). */
     song?: boolean;
     /** v24.2 골드 투척: 보유 골드의 ratio(최대 cap)를 쓰고, 쓴 골드 × scale을 피해에 더합니다. */
@@ -198,6 +226,14 @@ export type CombatEvent = {
     immune?: string;
     /** 도박 기술의 피해 배율 굴림(있을 때만). */
     gamble?: number;
+    /** v25: 곧바로 한 번 더 행동(선행·찰). */
+    extraTurn?: boolean;
+    /** v25: 天 발동. */
+    finale?: boolean;
+    /** v25: 타임머신으로 모두 회복. */
+    restored?: boolean;
+    /** v25: 無로 막은 공격. */
+    nullified?: boolean;
     dot?: { name: string; value: number }; reflected?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
     /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
     chain?: number;

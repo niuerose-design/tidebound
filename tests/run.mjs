@@ -13,4 +13,5 @@ await import('./jobs-ui.test.mjs');
 await import('./playback.test.mjs');
 await import('./chain.test.mjs');
 await import('./support.test.mjs');
+await import('./v25.test.mjs');
 console.log(`${results.passed} gameplay tests passed.`);

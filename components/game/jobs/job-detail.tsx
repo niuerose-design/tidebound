@@ -10,7 +10,7 @@ import { SKILLS } from '@/game/data/skills';
 import { skillBrief } from '@/game/systems/skill-description';
 import { STAT_LABELS, statDeltaDisplay, percent } from '@/game/data/progression';
 import { vocationTargets, thresholdRank } from '@/game/data/long-term';
-import { jobMasteryTarget, jobMasteryBoost } from '@/game/systems/progression';
+import { jobMasteryTarget, jobMasteryBoost, skillVeiled } from '@/game/systems/progression';
 import { Meter, SkillIcon, format } from '../shared';
 import type { PanelProps } from '../panel-props';
 import { jobStatus, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS, hasJobBonus, growsWithMastery, jobBonusText } from './job-status';
@@ -59,7 +59,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
                     {r.target !== undefined ? <Meter value={Math.min(r.value || 0, r.target)} max={Math.max(1, r.target)} label={`${format(Math.floor(r.value || 0))} / ${format(r.target)}`}/> : <small>{r.met ? '열림' : '닫힘'}</small>}
                 </li>)}</ul>
             </section>}
-            {tab === 'skills' && <section className="job-detail-section"><div className="vocation-skills">{skills.map(sk => <span key={sk.id}><SkillIcon id={sk.id}/>{sk.name}<small>{sk.type === 'active' ? '액티브' : '패시브'} · Lv.{sk.level}{sk.unlockJobMastery ? ` · 직업 숙련 ${format(sk.unlockJobMastery)}에 해금` : ''}</small><small className="skill-effect-brief">{skillBrief(sk)}</small></span>)}{!skills.length && <p className="footnote">전용 스킬 없이 공용·계승 스킬을 조합하는 직업입니다.</p>}</div></section>}
+            {tab === 'skills' && <section className="job-detail-section"><div className="vocation-skills">{skills.map(sk => <span key={sk.id}><SkillIcon id={sk.id}/>{sk.name}<small>{sk.type === 'active' ? '액티브' : '패시브'} · Lv.{sk.level}{sk.unlockJobMastery ? ` · 직업 숙련 ${format(sk.unlockJobMastery)}에 해금` : ''}</small><small className="skill-effect-brief">{skillVeiled(s, sk) ? '??? · 숙련 Lv.1에 공개' : skillBrief(sk)}</small></span>)}{!skills.length && <p className="footnote">전용 스킬 없이 공용·계승 스킬을 조합하는 직업입니다.</p>}</div></section>}
             {tab === 'mastery' && <>
                 <section className="job-detail-section">
                     <Meter value={Math.min(xp, target)} max={target} label={mastered ? '직업 숙련 · 숙달 완료' : `직업 숙련 · 숙달까지 ${format(target - xp)}`}/>

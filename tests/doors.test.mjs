@@ -8,7 +8,7 @@ const job = id => JOBS.find(j => j.id === id);
 test('Doors: time slots follow Korean time and a closed door refuses the job change', () => {
     assert.equal(doors.timeSlot(at(2026, 10, 1, 5)).id, 'dawn'); assert.equal(doors.timeSlot(at(2026, 10, 1, 6)).id, 'morning');
     assert.equal(doors.timeSlot(at(2026, 10, 1, 12)).id, 'day'); assert.equal(doors.timeSlot(at(2026, 10, 1, 23, 59)).id, 'night');
-    assert.deepEqual(doors.TIME_SLOTS.map(t => t.jobs), [['undead'], ['headwindSailor', 'sunriseAngler'], ['barehandFisher', 'noonDiver'], ['mistSwordsman', 'nightHeron']]);
+    assert.deepEqual(doors.TIME_SLOTS.map(t => t.jobs), [['undead', 'clockmaker'], ['headwindSailor', 'sunriseAngler', 'clockmaker'], ['barehandFisher', 'noonDiver', 'clockmaker'], ['mistSwordsman', 'nightHeron', 'clockmaker']]);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead', at(2026, 10, 1, 12)), false);
     assert.ok(jobRequirements(s, job('undead'), at(2026, 10, 1, 12)).some(r => r.label === '시간의 문 열림' && !r.met));

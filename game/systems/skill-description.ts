@@ -4,6 +4,7 @@ import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '../data/progression'
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel, skillMasteryRewards } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
 import { jobById } from '../data/classes';
+import { skillById } from '../data/skills';
 
 const number = (n: number) => Number(n.toFixed(4)).toLocaleString('ko-KR', { maximumFractionDigits: 4 });
 export const skillPercent = (n: number) => `${number(n * 100)}%`;
@@ -55,7 +56,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.scaling === 'mana') base.push(`최대 마나 × ${number(sk.scalingRatio ?? SKILL_FORMULA.manaScaling)}`);
         if (sk.scaling === 'hybrid') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hybridHpScaling)}`, `최대 마나 × ${number((sk.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2)}`);
         const damage = `${base.length > 1 ? `(${base.join(' + ')})` : base[0]} × ${number(sk.multiplier || 1)}${sk.id === 'crush' ? ` + 물리 방어 × ${number(SKILL_FORMULA.crushDefense)}` : ''}`;
-        out.push(sk.statusOnly ? `직접 피해 없음 · 명중하면 ${statusLabel(sk)} ${sk.statusTurns ?? ''}턴만 겁니다` : `${damage} 피해`);
+        out.push(sk.restoreAll ? '직접 피해 없음 · 나와 상대의 체력·마나를 모두 가득 채웁니다 · 전투당 1회 · 쓸 때마다 직업 숙련 +25' : sk.statusOnly ? `직접 피해 없음 · 명중하면 ${statusLabel(sk)} ${sk.statusTurns ?? ''}턴만 겁니다` : `${damage} 피해`);
         if (sk.scaling === 'codex') out.push(`도감 기록(발견한 어종 + 등록한 물건) 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'catch') out.push(`피해 × (1 + log10(누적 포획 + 1) × ${number(sk.scalingRatio ?? 0)}) · 포획 10배마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'hunt') out.push(`피해 × (1 + √(던전 클리어 + 보스 포획) × ${number(sk.scalingRatio ?? 0)})`);
@@ -63,6 +64,13 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.gamble) out.push(`쓸 때마다 ${[sk.gamble.min !== sk.gamble.max ? `피해 ×${number(sk.gamble.min)}~${number(sk.gamble.max)}(평균 ×${number((sk.gamble.min + sk.gamble.max) / 2)})` : '', sk.gamble.accuracy ? `이 기술 명중 ±${skillPercent(sk.gamble.accuracy)}p` : ''].filter(Boolean).join(' · ')} 무작위`);
         if (sk.allIn) out.push(`현재 체력의 ${skillPercent(sk.allIn.hpRatio)}(1은 남김)와 남은 마나 전부를 걸고 (건 체력 × ${number(sk.allIn.hpScale)} + 건 마나 × ${number(sk.allIn.manaScale)})를 피해식에 더합니다 · 빗나가도 소모`);
         if (sk.goldSpend) out.push(`보유 골드의 ${skillPercent(sk.goldSpend.ratio)}(한 번에 최대 ${sk.goldSpend.cap.toLocaleString()})를 실제로 쓰고, 쓴 골드 × ${number(sk.goldSpend.scale)}를 피해식에 더합니다`);
+        if (sk.allIn?.heal) out.push(`건 마나 × ${number(sk.allIn.heal)}만큼 자신 회복`);
+        if (sk.recoil) out.push(`준 피해의 ${skillPercent(sk.recoil)}를 자신도 받음 · 반동으로는 체력 1 아래로 내려가지 않음`);
+        if (sk.sureHit) out.push('반드시 명중 · 기절 뒤 면역 규칙은 그대로');
+        if (sk.extraTurn) out.push('이 행동 뒤 곧바로 한 번 더 행동 · 연속 행동과 별개 · 추가 행동에서는 다시 생기지 않음');
+        if (sk.sealPower) out.push(`이번 전투에 새긴 인 1개마다 피해 +${skillPercent(sk.sealPower)}`);
+        if (sk.selfEffect) out.push(`쓰고 나면 자신 ${{ stun: '기절', slow: '감속', weaken: '약화' }[sk.selfEffect.status]} ${sk.selfEffect.turns}턴${sk.selfEffect.waivedBy ? ` · ${skillById(sk.selfEffect.waivedBy)?.name || ''}을 장착하면 생략` : ''}`);
+        if (sk.seal) out.push('쓰면 이번 전투의 인(印)을 하나 새깁니다');
         if (sk.preyBonus) out.push(`보스와 지정 어종(전류 곰치·불씨 곰치·수호 곰치)에게 직접 피해 +${skillPercent(sk.preyBonus)}`);
         if (sk.damageType === 'split') out.push(`물리 ${skillPercent(SKILL_FORMULA.splitPhysical)} · 마법 ${skillPercent(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각 방어 적용 · 명중·치명 판정 1회 · 장비·버프는 원시 피해에 미포함`);
         if (sk.accuracyBonus) out.push(`이 기술 명중 +${skillPercent(sk.accuracyBonus)}p`);
@@ -85,6 +93,9 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     if (sk.song) out.push('노래: AP 0 · 방랑 음유시인 계보 직업만 장착');
+    if (sk.lastStand) out.push(`체력이 1일 때 받는 공격(추가타 포함)을 무효${sk.lastStand.heal ? `하고 최대 체력 ${skillPercent(sk.lastStand.heal)} 회복` : ''} · 전투당 ${sk.lastStand.charges}번 · 지속 피해는 막지 못함`);
+    if (sk.sealFinale) out.push(`일곱 글자를 모두 장착하고 한 전투에 여섯 글자를 모두 쓰면 발동: (물리 공격 + 마법 공격) × (${number(sk.sealFinale.base)} + 일곱 글자와 天의 숙련 합 × ${number(sk.sealFinale.perLevel)}) 고정 피해 · 기절 ${sk.sealFinale.stun}턴 · 인 초기화`);
+    if (sk.unlockAfter) out.push(`해금: ${skillById(sk.unlockAfter.skill)?.name || sk.unlockAfter.skill} 숙련 Lv.${sk.unlockAfter.level}`);
     if (sk.perRebirth) out.push(`환생 1회마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);
     if (sk.penaltyRelief) out.push(`현재 직업의 마이너스 보정(체력·공격·방어 배율) ${skillPercent(sk.penaltyRelief)} 회복 · 여러 개면 가장 큰 값만`);
     if ((jobById(sk.job)?.tier || 0) >= SKILL_FORMULA.signatureTier) out.push(`전용 기술: 계보 밖 직업이 계승하면 ${sk.type === 'active' ? '피해 배율' : '능력치'} ×${number(SKILL_FORMULA.signatureScale)}`);

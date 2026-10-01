@@ -1,4 +1,4 @@
-import { SKILLS } from '../data/skills';
+import { SKILLS, skillById } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { BALANCE, STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
 import type { Stats, StatusEffects, CombatEvent, CombatHit } from '../types';
@@ -105,13 +105,19 @@ export function actTurn(a: Fighter, b: Fighter, rng: () => number, onAction: (te
         const text = strike(a, b, rng, events), ev = events[0];
         if (chain > 1) ev.chain = chain;
         onAction(chain > 1 ? `${text} · 연속 ${chain}` : text, ev);
+        // v25 확정 추가 행동(선행·찰): 연속 행동 횟수와 별개로 한 번 더 행동합니다. 추가 행동에서 다시 생기지는 않습니다.
+        if (ev?.extraTurn && a.hp > 0 && b.hp > 0) {
+            const extra: CombatEvent[] = [];
+            const t2 = strike(a, b, rng, extra, true);
+            onAction(`${t2} · 추가 행동`, extra[0]);
+        }
         if (a.hp <= 0 || b.hp <= 0 || chain >= BALANCE.chainMaxActions) return;
         const p = chainChance(a, b);
         if (p <= 0 || (p < 1 && rng() >= p)) return;
     }
 }
 /** Shared PvE/PvP action. Recovery, status, conditional proc, MP, accuracy, defense and crit. */
-export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[]) {
+export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false) {
     const sa = normalizeStats(a.stats), sb = normalizeStats(b.stats);
     a.effects ??= {};
     b.effects ??= {};
@@ -172,6 +178,10 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
             if (alreadyAfflicted(b, candidate))
                 continue;
+            if (candidate.restoreAll && a.effects.timeUsed)
+                continue;
+            if (bonusAction && candidate.extraTurn)
+                continue;
             if (candidate.statusOnly && candidate.effect && ENEMY_STATUS[candidate.effect] && isImmune(b, ENEMY_STATUS[candidate.effect]))
                 continue;
             if (rng() < candidate.chance) {
@@ -193,6 +203,13 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio) * (1 + sa.healBonus)));
             a.hp += healed;
         }
+        // v25 타임머신: 둘 다 처음 상태로. 전투당 1회.
+        if (chosen.restoreAll) {
+            a.effects.timeUsed = true;
+            a.hp = sa.hp; a.mana = sa.mana; b.hp = sb.hp; if (b.mana !== undefined) b.mana = sb.mana;
+            notes.push('타임머신 · 모두 처음 상태로');
+            ev.restored = true;
+        }
     }
     // v24.2 도박: 쓸 때마다 피해 배율과 명중을 굴립니다.
     let gambleRoll = 1, gambleAccuracy = 0;
@@ -208,6 +225,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         const spentHp = Math.max(0, Math.min(a.hp - 1, Math.floor(a.hp * chosen.allIn.hpRatio))), spentMana = Math.max(0, a.mana || 0);
         a.hp -= spentHp; a.mana = 0;
         allInBonus = spentHp * chosen.allIn.hpScale + spentMana * chosen.allIn.manaScale;
+        if (chosen.allIn.heal && spentMana > 0) { const h = Math.min(sa.hp - a.hp, Math.floor(spentMana * chosen.allIn.heal)); a.hp += h; healed += h; }
         notes.push(`올인 · 체력 ${spentHp} · 마나 ${Math.floor(spentMana)}`);
     }
     // v24.2 골드 투척: 보유 골드 일부를 던져 피해에 더합니다.
@@ -215,7 +233,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         const spent = Math.min(chosen.goldSpend.cap, Math.floor(a.gold! * chosen.goldSpend.ratio));
         if (spent > 0) { a.gold! -= spent; allInBonus += spent * chosen.goldSpend.scale; notes.push(`골드 ${spent.toLocaleString()} 투척`); }
     }
-    const hit = hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed });
+    const hit = chosen?.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed });
     const label = chosen?.name || (arcane ? '마력 평타' : '기본 공격');
     const landed = rng() < hit;
     const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack;
@@ -246,14 +264,25 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
     const preyHit = !!(chosen?.preyBonus && b.prey);
     if (preyHit) notes.push('사냥감');
-    const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * (preyHit ? 1 + chosen!.preyBonus! : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
+    const sealBoost = chosen?.sealPower ? 1 + chosen.sealPower * (a.effects.seals?.length || 0) : 1;
+    if (chosen?.sealPower) notes.push(`인 ${a.effects.seals?.length || 0}개`);
+    const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push('연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly;
     const crit = landed && !statusOnly && rng() < sa.crit;
     const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)));
-    const actual = Math.min(b.hp, damage);
-    b.hp = Math.max(0, b.hp - damage);
+    // v25 無: 체력 1인 쪽이 無를 장착했고 재사용 대기가 끝났으면 이 행동의 공격을 모두 무효로 합니다.
+    const charges = Math.max(0, ...b.skills.map(id => skillById(id)?.lastStand?.charges || 0));
+    const nullify = damage > 0 && b.hp <= 1 && charges > (b.effects.lastStand || 0);
+    if (nullify) {
+        b.effects.lastStand = (b.effects.lastStand || 0) + 1; ev.nullified = true;
+        const back = Math.floor(sb.hp * Math.max(0, ...b.skills.map(id => skillById(id)?.lastStand?.heal || 0)));
+        if (back > 0) b.hp = Math.min(sb.hp, b.hp + back);
+        notes.push(`無 · 공격 무효 (${b.effects.lastStand}/${charges})${back > 0 ? ` · 체력 ${back} 회복` : ''}`);
+    }
+    const actual = nullify ? 0 : Math.min(b.hp, damage);
+    b.hp = Math.max(0, b.hp - actual);
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
     if (landed && !statusOnly && sb.thorns > 0) {
         const reflected = Math.min(a.hp, Math.max(1, Math.round(sb.defense * sb.thorns * 100 / (100 + sa.defense * 2))));
@@ -329,7 +358,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // Follow-up hits are part of the same action. They use the same hit chance,
     // cannot recursively trigger another follow-up, and are capped in balance.ts.
     const followUps = statusOnly ? 0 : Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
-    for (let i = 0; i < followUps && b.hp > 0 && a.hp > 0; i++) {
+    for (let i = 0; i < followUps && b.hp > 0 && a.hp > 0 && !nullify; i++) {
         if (rng() >= hit) {
             ev.hits.push({ kind: 'follow', value: 0, critical: false, miss: true });
             continue;
@@ -346,6 +375,37 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             const recovery = Math.min(sa.hp - a.hp, followDrain);
             a.hp += recovery;
             ev.drained += recovery;
+        }
+    }
+    // v25 반동: 준 피해에 비례해 자신도 받습니다. 반동으로는 쓰러지지 않습니다.
+    if (chosen?.recoil && ev.hits.length) {
+        const dealt = ev.hits.reduce((n, h) => n + h.value, 0), self = Math.min(Math.max(0, a.hp - 1), Math.floor(dealt * chosen.recoil));
+        if (self > 0) { a.hp -= self; notes.push(`반동 ${self}`); }
+    }
+    // v25 자기 상태이상: 짝 기술(waivedBy)을 장착하면 생략합니다.
+    if (chosen?.selfEffect) {
+        const fx = chosen.selfEffect, waived = !!fx.waivedBy && a.skills.includes(fx.waivedBy);
+        if (waived) notes.push(`${skillById(fx.waivedBy!)?.name || ''} · 반작용 상쇄`);
+        else if (fx.status === 'stun') { a.stun = Math.max(a.stun, fx.turns); notes.push(`자신 기절 ${fx.turns}턴`); ev.statuses.push({ id: 'stun', turns: fx.turns, onSelf: true }); }
+        else { extendStatus(a.effects, fx.status, fx.turns); notes.push(`자신 ${fx.status === 'slow' ? '감속' : '약화'} ${fx.turns}턴`); ev.statuses.push({ id: fx.status, turns: fx.turns, onSelf: true }); }
+    }
+    if (chosen?.extraTurn && !bonusAction) { ev.extraTurn = true; notes.push('추가 행동'); }
+    // v25 일곱 글자: 인을 새기고, 天을 장착한 채 일곱 글자를 모두 갖추고 여섯 인이 모이면 天이 터집니다.
+    if (chosen?.seal) {
+        a.effects.seals = [...new Set([...(a.effects.seals || []), chosen.id])];
+        const finaleSkill = a.skills.map(id => skillById(id)).find(x => x?.sealFinale);
+        const glyphs = SKILLS.filter(x => x.job === chosen.job && (x.seal || x.lastStand));
+        const sealsNeeded = glyphs.filter(x => x.seal).length;
+        if (finaleSkill && b.hp > 0 && glyphs.every(x => a.skills.includes(x.id)) && a.effects.seals.length >= sealsNeeded) {
+            const f = finaleSkill.sealFinale!, levels = glyphs.reduce((n, x) => n + (a.mastery?.[x.id] || 0), 0) + (a.mastery?.[finaleSkill.id] || 0);
+            const blast = Math.max(1, Math.round((sa.attack + sa.magic) * (f.base + f.perLevel * levels)));
+            const dealt = Math.min(b.hp, blast);
+            b.hp = Math.max(0, b.hp - blast);
+            ev.hits.push({ kind: 'follow', value: dealt, critical: false, miss: false });
+            ev.finale = true;
+            a.effects.seals = [];
+            notes.push(`天 · 일곱 인 해방 ${dealt.toLocaleString()}`);
+            if (b.hp > 0 && !isImmune(b, 'stun')) { b.stun = Math.max(b.stun, f.stun); ev.statuses.push({ id: 'stun', turns: f.stun }); notes.push(`기절 ${f.stun}턴`); }
         }
     }
     ev.skillId = chosen?.id;

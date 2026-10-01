@@ -10,7 +10,7 @@ import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
 import { BALANCE } from '@/game/data/balance';
-import { skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus } from '@/game/systems/progression';
+import { skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon } from './shared';
 import { masteryConditionText } from '@/game/systems/mastery';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -29,7 +29,7 @@ function SkillCard({ sk, s, send, busy, detailed }: PanelProps & { sk: Skill; de
     const effective = effectiveSkill(sk, rank || 1, mastery, s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0), cost = effective.cost ?? 2;
     const equipped = s.skills.includes(sk.id), usable = canUse(s, sk.id), isInherited = inherited(s, sk.id);
     const paidInheritance = !!s.skillInheritances[sk.id];
-    const unlockText = !skillUnlockReady(s, sk) ? `직업 숙련 ${sk.unlockJobMastery!.toLocaleString()} 필요` : sk.job !== s.job ? '전직 필요' : s.rebirths < (sk.rebirth || 0) ? `환생 ${sk.rebirth}회 필요` : `Lv.${sk.level}에 자동 해금`;
+    const unlockText = sk.unlockAfter && skillMastery(s, sk.unlockAfter.skill) < sk.unlockAfter.level ? `${skillById(sk.unlockAfter.skill)?.name || ''} 숙련 Lv.${sk.unlockAfter.level} 필요` : !skillUnlockReady(s, sk) ? `직업 숙련 ${sk.unlockJobMastery!.toLocaleString()} 필요` : sk.job !== s.job ? '전직 필요' : s.rebirths < (sk.rebirth || 0) ? `환생 ${sk.rebirth}회 필요` : `Lv.${sk.level}에 자동 해금`;
     const inheritanceText = !acquired ? unlockText : !sk.job ? '공용' : isInherited ? (mastery > 0 ? '숙련 계승' : 'SP 계승') : sk.job === s.job ? '현재 직업 전용' : '계승 필요';
     const hint = skillRankHint(sk, rank || 1, mastery, s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0);
     const effects = skillEffectLines(effective, level);
@@ -39,6 +39,14 @@ function SkillCard({ sk, s, send, busy, detailed }: PanelProps & { sk: Skill; de
     const growth = skillGrowthStages(sk);
     const refinement = skillRefinementTargets(sk), refined = thresholdRank(practice, refinement);
     const equipAllowed = validLoadout(s, equipped ? s.skills.filter(id => id !== sk.id) : [...s.skills, sk.id]);
+    // v25 감춰진 기술: 숙련 Lv.1 전까지 효과를 ???로 보여 줍니다(장착·숙련 진행은 그대로).
+    if (skillVeiled(s, sk)) return <article className={`panel skill-card skill-veiled ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${detailed ? 'expanded' : 'compact'}`}>
+        <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · {sk.type === 'active' ? '액티브' : '패시브'} · 장착 AP {cost}</small></div></div>
+        <p className="skill-current-description">??? · 숙련 Lv.1을 달성하면 효과가 드러납니다.</p>
+        <div className="skill-compact-growth"><span>{acquired ? '습득' : unlockText}</span><span>{nextMastery ? `숙련 ${practice.toLocaleString()} / ${nextMastery.toLocaleString()}` : '숙련 완료'}</span></div>
+        {acquired && <Meter value={Math.min(practice, nextMastery || milestones[max - 1])} max={nextMastery || milestones[max - 1]}/>}
+        <div className="skill-actions skill-actions-v2"><button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} onClick={() => send({ type: 'skill', id: sk.id })}>{equipped ? '장착 해제' : !acquired ? unlockText : !usable ? '사용 조건 필요' : '장착'}</button></div>
+    </article>;
     return <article className={`panel skill-card ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${detailed ? 'expanded' : 'compact'}`} title={detailed ? undefined : `${effects.join(" · ")}\n다음 강화: ${hint}`}>
         <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · 캐릭터 Lv.{sk.level}{sk.rebirth ? ` · 환생 ${sk.rebirth}회` : ''}</small></div></div>
         {!detailed && <span className={`skill-status-badge ${equipped && usable ? 'on' : !acquired || !usable ? 'off' : ''}`}>{equipped ? (usable ? '장착 중' : '장착 · 사용 불가') : !acquired ? '미습득' : !usable ? '계승 필요' : '사용 가능'}</span>}
