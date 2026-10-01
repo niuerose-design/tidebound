@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { AutoRunStatus } from './auto-run';
 import { BookOpen, ChevronRight, Compass, Lock, Map, ShoppingBag, Swords, Trophy, Zap } from 'lucide-react';
 import { STAGES, DUNGEONS } from '@/game/data/world';
@@ -12,6 +13,11 @@ export function BattleRail({ s, busy, send, setView }: {
 }) {
     const battleLogs = s.logs.filter(log => log.type === 'battle').slice(-9).reverse();
     const dungeons = [...DUNGEONS].sort((a, b) => a.level - b.level);
+    // 낚시터·던전을 한 창에서 탭으로 고릅니다. 던전에 들어가면 던전 탭으로 넘어갑니다.
+    const [tab, setTab] = useState<'stage' | 'dungeon'>(s.dungeon ? 'dungeon' : 'stage');
+    const inDungeon = !!s.dungeon;
+    const [wasInDungeon, setWasInDungeon] = useState(inDungeon);
+    if (wasInDungeon !== inDungeon) { setWasInDungeon(inDungeon); if (inDungeon) setTab('dungeon'); }
     return <aside className="battle-utility-rail" aria-label="전투 보조 패널">
     <section className="panel battle-rail-panel battle-feed">
     <div className="section-title"><h2><Swords size={15}/> 전투 기록</h2><span className="micro">LIVE</span></div>
@@ -21,23 +27,26 @@ export function BattleRail({ s, busy, send, setView }: {
     </section>
     <AutoRunStatus s={s} compact/>
     <section className="panel battle-rail-panel battle-selector-panel">
-    <div className="section-title"><h2><Map size={15}/> 낚시터</h2><button className="text-button" onClick={() => setView('stages')}>전체 지도 <ChevronRight size={13}/></button></div>
-    <div className="battle-stage-list">{STAGES.map((stage, index) => {
+    <div className="section-title"><div className="battle-place-tabs" role="tablist" aria-label="사냥터 종류">
+        <button type="button" role="tab" id="place-tab-stage" aria-controls="place-panel" aria-selected={tab === 'stage'} className={tab === 'stage' ? 'active' : ''} onClick={() => setTab('stage')}><Map size={14}/>낚시터</button>
+        <button type="button" role="tab" id="place-tab-dungeon" aria-controls="place-panel" aria-selected={tab === 'dungeon'} className={tab === 'dungeon' ? 'active' : ''} onClick={() => setTab('dungeon')}><Compass size={14}/>던전{s.dungeon && <span className="battle-place-live" aria-label="진행 중"/>}</button>
+    </div>{tab === 'stage' ? <button className="text-button" onClick={() => setView('stages')}>전체 지도 <ChevronRight size={13}/></button> : <button className="text-button" onClick={() => setView('dungeons')}>탐험실 <ChevronRight size={13}/></button>}</div>
+    <div id="place-panel" role="tabpanel" aria-labelledby={`place-tab-${tab}`}>
+    {tab === 'stage' ? <div className="battle-stage-list">{STAGES.map((stage, index) => {
         const locked = s.level < stage.level || s.rebirths < stage.rebirth;
         return <button type="button" key={stage.id} className={`battle-stage-button ${s.stage === stage.id && !s.dungeon ? 'selected' : ''} ${locked ? 'locked' : ''}`} disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'stage', id: stage.id })}>
         <span className="battle-stage-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{stage.name}</strong><small>Lv. {stage.level}{stage.rebirth ? ` · 환생 ${stage.rebirth}` : ''}</small></span>{locked ? <Lock size={13}/> : s.stage === stage.id && !s.dungeon ? <span className="battle-selected-dot"/> : null}
         </button>;
     })}</div>
-    </section>
-    <section className="panel battle-rail-panel battle-selector-panel">
-    <div className="section-title"><h2><Compass size={15}/> 던전</h2><button className="text-button" onClick={() => setView('dungeons')}>탐험실 <ChevronRight size={13}/></button></div>
-    <div className="battle-dungeon-list">{dungeons.map(dungeon => {
+    : <div className="battle-dungeon-list">{dungeons.map(dungeon => {
         const locked = s.level < dungeon.level || s.rebirths < dungeon.rebirth;
         const active = s.dungeon?.id === dungeon.id;
         return <button type="button" key={dungeon.id} className={`battle-dungeon-button ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} disabled={busy || locked || (!!s.dungeon && !active)} onClick={() => send({ type: 'dungeon', id: dungeon.id })}>
         <span><strong>{dungeon.name}</strong><small>Lv. {dungeon.level}{dungeon.rebirth ? ` · 환생 ${dungeon.rebirth}` : ''}</small></span>{locked ? <Lock size={13}/> : active ? <span className="battle-dungeon-wave">W{(s.dungeon?.wave || 0) + 1}</span> : <Swords size={13}/>} 
         </button>;
-    })}</div>
+    })}</div>}
+    {tab === 'stage' && s.dungeon && <p className="battle-place-note">던전 탐험 중에는 낚시터를 바꿀 수 없습니다.</p>}
+    </div>
     </section>
     <section className="panel battle-rail-panel battle-shortcuts">
     <div className="section-title"><h2><Zap size={15}/> 빠른 이동</h2></div>
