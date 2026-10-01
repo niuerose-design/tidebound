@@ -44,3 +44,10 @@ test('Job UI: the visitor door reveals its visitor while it stays', async () => 
     const away = [...Array(24).keys()].find(h => !visitorSchedule('2026-10-01').some(v => h >= v.from && h < v.to));
     s.lastTick = at(2026, 10, 1, away); assert.equal(ui.jobRevealed(s, job(visit.job)), false, 'visitor gone and gates unmet → silhouette');
 });
+
+test('v25 hidden jobs without gates are shown; the chronarch appears once the clockmaker is mastered', () => {
+    const s = newState(0), job = id => JOBS.find(j => j.id === id);
+    assert.ok(ui.jobRevealed(s, job('glyphMonk')), '玄 has no door or gate, so it is visible from the start');
+    assert.equal(ui.jobRevealed(s, job('chronarch')), false);
+    s.jobMastery.clockmaker = 3000; assert.ok(ui.jobRevealed(s, job('chronarch')));
+});
