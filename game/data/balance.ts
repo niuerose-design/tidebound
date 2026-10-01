@@ -78,10 +78,11 @@ export const SKILL_FORMULA = {
     signatureTier: 4, signatureScale: .7,
     // v23.1 고정 수치 직업 보정의 환산 기준: 차수별 밸런스 점검 레벨(1차 Lv.15 · 2차 Lv.40 · 3차 Lv.50)에서
     // 장비 없이 배분했을 때의 능력치입니다. 고정 보정을 옛 배율로 되돌려 방어 친화도·마력 평타 판정에 씁니다.
+    // v24에서 2·3차 고정 보정을 0.44·0.45배로 줄이면서 판정이 그대로 유지되도록 기준값도 같은 배율로 줄였습니다.
     jobFlatReference: {
         1: { attack: 125, magic: 135, hp: 510, defense: 35, resist: 32 },
-        2: { attack: 300, magic: 330, hp: 1130, defense: 86, resist: 75 },
-        3: { attack: 370, magic: 410, hp: 1380, defense: 105, resist: 91 },
+        2: { attack: 132, magic: 145, hp: 497, defense: 38, resist: 33 },
+        3: { attack: 167, magic: 185, hp: 621, defense: 47, resist: 41 },
     } as Record<number, Record<'attack' | 'magic' | 'hp' | 'defense' | 'resist', number>>,
 };
 // 상태이상 수치와 지속시간은 전투 코드와 분리해 여기서 조정합니다.

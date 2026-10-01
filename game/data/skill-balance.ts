@@ -19,7 +19,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     undertow: { chance: .55, multiplier: 1.2, manaCost: 10 },
     rushCurrent: { chance: .28, multiplier: 1.05, cooldown: 4 },
     whaleStrike: { chance: .24, multiplier: 3.2 },
-    razor: { chance: .28, multiplier: 1.7 },
+    razor: { chance: .28, multiplier: 1.6 },
     maelstrom: { chance: .55, multiplier: 2.6, manaCost: 20, damageType: 'magic' },
     pearlPrayer: { chance: .6, multiplier: 1.7, manaCost: 16, damageType: 'magic', healRatio: .18 },
     crush: { chance: .22, multiplier: 1.5 },
