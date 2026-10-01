@@ -45,6 +45,7 @@ const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합' } as 
 /** 본타·추가타를 한 번씩만 적고, 추가타가 있을 때만 합계를 붙입니다. */
 export function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageType'>) {
     const word = DAMAGE_WORD[ev.damageType];
+    if (!ev.hits.length) return '피해 없음';
     if (ev.hits.every(h => h.miss)) return '빗나감';
     if (ev.hits.length === 1) return `${ev.total} ${word} 피해`;
     const part = (h: CombatHit) => h.miss ? '빗나감' : `${h.value}${h.critical ? ' [치명타]' : ''}`;
@@ -178,22 +179,24 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const mitigated = (raw: number) => split
         ? Math.round(raw * SKILL_FORMULA.splitPhysical * 100 / (100 + sb.defense * pierce * 2)) + Math.round(raw * (1 - SKILL_FORMULA.splitPhysical) * 100 / (100 + sb.resist * pierce * 2))
         : Math.round(raw * 100 / (100 + defense * 2));
-    const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
+    const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
     const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push('연계'); ev.linked = true; }
-    const crit = landed && rng() < sa.crit;
-    const damage = landed ? Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1))) : 0;
+    // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
+    const statusOnly = !!chosen?.statusOnly;
+    const crit = landed && !statusOnly && rng() < sa.crit;
+    const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)));
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - damage);
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
-    if (landed && sb.thorns > 0) {
+    if (landed && !statusOnly && sb.thorns > 0) {
         const reflected = Math.min(a.hp, Math.max(1, Math.round(sb.defense * sb.thorns * 100 / (100 + sa.defense * 2))));
         a.hp = Math.max(0, a.hp - reflected);
         ev.reflected = reflected;
         notes.push(`반격 ${reflected}`);
     }
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
-    ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed });
+    if (!statusOnly || !landed) ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed });
     if (landed && chosen?.effect === 'stun') {
         const turns = (chosen.statusTurns ?? 1) + sa.stunBonus;
         b.stun = Math.max(b.stun, turns);
@@ -254,7 +257,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     }
     // Follow-up hits are part of the same action. They use the same hit chance,
     // cannot recursively trigger another follow-up, and are capped in balance.ts.
-    const followUps = Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
+    const followUps = statusOnly ? 0 : Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
     for (let i = 0; i < followUps && b.hp > 0 && a.hp > 0; i++) {
         if (rng() >= hit) {
             ev.hits.push({ kind: 'follow', value: 0, critical: false, miss: true });

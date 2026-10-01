@@ -12,14 +12,14 @@ export function BattleLogLine({ log, index }: { log: Log; index?: boolean }) {
     const Icon = ev.damageType === 'magic' ? Sparkles : ev.damageType === 'split' ? Wind : Swords;
     const chain = ev.chain ? <em className="status chain">연속 {ev.chain}</em> : null;
     if (ev.stunned || ev.defeated) return <p className="battle-line log-status">{id}{chain}<b>{ev.actor}</b>{ev.dot && <em className="dmg-dot">{ev.dot.name} {ev.dot.value}</em>}{ev.stunned ? '기절로 행동 불가' : '쓰러짐'}</p>;
-    const missed = ev.hits.every(h => h.miss);
+    const missed = ev.hits.length > 0 && ev.hits.every(h => h.miss);
     const follows = ev.hits.length > 1;
     return <p className={`battle-line dmg-${ev.damageType} ${missed ? 'log-miss' : ''}`}>{id}
         <Icon size={12} className="log-icon" aria-label={`${WORD[ev.damageType]} 피해`}/>
         {chain}<b>{ev.actor}</b> · {ev.skillName}{' '}
         {ev.dot && <em className="dmg-dot">{ev.dot.name} {ev.dot.value}</em>}
         {missed ? <em className="miss">빗나감</em> : ev.hits.map((h, i) => <em key={i} className={`${h.miss ? 'miss' : ''} ${h.critical ? 'crit' : ''}`}>{follows ? (i ? `추가타${ev.hits.length > 2 ? ` ${i}` : ''} ` : '본타 ') : ''}{h.miss ? '빗나감' : h.value.toLocaleString()}{h.critical ? ' 치명' : ''}</em>)}
-        {!missed && <strong>{follows ? `합계 ${ev.total.toLocaleString()}` : ''} {WORD[ev.damageType]} 피해</strong>}
+        {!missed && ev.hits.length > 0 && <strong>{follows ? `합계 ${ev.total.toLocaleString()}` : ''} {WORD[ev.damageType]} 피해</strong>}
         {ev.healed > 0 && <em className="heal">회복 {ev.healed}</em>}
         {ev.drained > 0 && <em className="heal">흡혈 {ev.drained}</em>}
         {ev.statuses.map(st => <em key={st.id} className="status">{STATUS_NAMES[st.id] || st.id} {st.turns}턴{st.onSelf ? '(자신)' : ''}</em>)}

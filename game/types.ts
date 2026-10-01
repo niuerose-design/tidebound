@@ -132,6 +132,8 @@ export type Skill = {
     masteryBonus?: Partial<Stats>;
     /** Exact growth stages; index 0 is the free job skill. Negative AP is allowed. */
     levelEffects?: { cost?: number; bonus?: Partial<Stats>; penaltyRelief?: number }[];
+    /** 피해 없이 상태이상만 거는 기술. 명중 판정만 하고 직접 피해·반격·흡혈·추가타가 없습니다(출혈·중독의 턴당 피해는 그대로). */
+    statusOnly?: boolean;
     /** 장착하면 현재 직업의 마이너스 배율 보정을 이 비율만큼 되돌립니다(0~1). 여러 개면 가장 큰 값 하나만 적용합니다. */
     penaltyRelief?: number;
     bonus?: Partial<Stats>;

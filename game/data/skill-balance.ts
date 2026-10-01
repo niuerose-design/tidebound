@@ -16,7 +16,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     arcane: { chance: .6, multiplier: 1.55, manaCost: 10, cooldown: 2 },
     cut: { chance: .24, multiplier: 1.15 },
     hushCurrent: { chance: .5, multiplier: 1.1, manaCost: 11 },
-    undertow: { chance: .55, multiplier: 1.2, manaCost: 10 },
+    undertow: { chance: .55, multiplier: 1.7, manaCost: 10 },
     rushCurrent: { chance: .28, multiplier: 1.05, cooldown: 4 },
     whaleStrike: { chance: .24, multiplier: 3.2 },
     razor: { chance: .28, multiplier: 1.6 },
@@ -62,6 +62,37 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     ...LINEAGE_BALANCE,
 };
 
+/**
+ * v24 상태이상·피해 분리: 1~3차(공용 포함)에는 피해와 상태이상을 함께 주는 액티브가 없습니다.
+ * - STATUS_ONLY: 배율이 낮은 보조기. 피해 없이 상태이상만 걸고 지속 턴이 늘어납니다(기절 +1, 그 밖 +2).
+ * - DAMAGE_ONLY: 배율 1.7 이상인 주력기와 연계 공격기. 덤으로 붙던 상태이상을 떼고 피해만 줍니다.
+ *   연계 공격기(제어·출혈·약화 중인 적 추가 피해)는 같은 계보의 상태이상 전용 기술로 상태를 걸어 둡니다.
+ * 4·5차 기술은 피해와 상태이상을 함께 줄 수 있습니다.
+ */
+export const STATUS_ONLY_SKILLS = ['splash', 'anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
+    'bellCrash', 'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
+    'quakeStep', 'sealHex', 'frostMist'];
+export const DAMAGE_ONLY_SKILLS = ['graveHook', 'undertow', 'wave', 'anchorBreak', 'arcSlash', 'electricBite', 'fireball', 'maelstrom', 'marrowGuard', 'eternalWave', 'krakenBore', 'leviathanEquation', 'meteor', 'thunderPsalm',
+    'jointLock', 'openVein', 'pinDoll', 'rimeShackle', 'severNerve', 'corrosiveBloom', 'crimsonVerdict', 'deadCalm', 'miasma', 'skyBreaker', 'soulRend', 'thornCounter'];
+const STATUS_ONLY_MAX_CHANCE = .3;
+const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, weaken: 3, silence: 2, slow: 3 };
+/** 상태이상 전용·피해 전용 분리. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. */
+export function splitStatusAndDamage(sk: Skill) {
+    if (STATUS_ONLY_SKILLS.includes(sk.id) && sk.effect && STATUS_DEFAULT_TURNS[sk.effect] !== undefined) {
+        sk.statusOnly = true;
+        sk.statusTurns = (sk.statusTurns ?? STATUS_DEFAULT_TURNS[sk.effect]) + (sk.effect === 'stun' ? 1 : 2);
+        // 피해 없는 행동이 공격 턴을 너무 많이 잡아먹지 않도록: 발동률 30% 이하, 걸어 둔 상태가 끝나기 전에는 다시 쓰지 않습니다.
+        sk.chance = Math.min(sk.chance, STATUS_ONLY_MAX_CHANCE);
+        sk.cooldown = Math.max(sk.cooldown, sk.statusTurns);
+        delete sk.damageBonusCondition; delete sk.conditionalDamageBonus; delete sk.extraAttacks; delete sk.penetrationBonus;
+    }
+    if (DAMAGE_ONLY_SKILLS.includes(sk.id)) {
+        delete sk.effect; delete sk.statusTurns; delete sk.dotName; delete sk.dotRatio; delete sk.dotStacks;
+        // 가시 반류는 출혈을 스스로 걸지 않으므로 출혈 연계도 뗍니다(방어 비례 주력기).
+        if (sk.id === 'thornCounter') { delete sk.damageBonusCondition; delete sk.conditionalDamageBonus; }
+    }
+}
+
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
 export const MAGIC_MANA_COST_SCALE = 4;
 
@@ -70,23 +101,30 @@ export function tuneActiveSkills(skills: Skill[]) {
         const tuning = ACTIVE_SKILL_BALANCE[sk.id];
         if (!tuning) continue;
         Object.assign(sk, tuning);
+        splitStatusAndDamage(sk);
         // 복합(split) 피해도 마나를 쓰는 주문으로 취급합니다.
         const magic = sk.damageType === 'magic' || sk.damageType === 'split';
         // 물리 기술은 마나를 쓰지 않고, 마법·복합 기술은 정신(마나 회복)에 투자해야 꾸준히 쓸 수 있도록 비용을 높입니다.
         sk.manaCost = magic ? Math.round((sk.manaCost || 0) * MAGIC_MANA_COST_SCALE) : 0;
         // At maximum mastery physical procs stay <= 38%; spells remain paid.
         sk.rankEffects = { ...sk.rankEffects, multiplierScale: sk.id === 'hook' ? .03 : .05,
-            chanceIncrease: sk.id === 'hook' ? .01 : magic ? .025 : .02,
+            chanceIncrease: sk.id === 'hook' || sk.statusOnly ? .01 : magic ? .025 : .02,
             manaReduction: magic ? 1 : 0, cooldownReduction: 0 };
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
         const source = sk.scaling === 'harmony' ? '육중 조화 원시 피해' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
         const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : '';
+        const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName + (sk.dotStacks ? '(중첩)' : '') : { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun'];
+        if (sk.statusOnly) {
+            sk.desc = `피해 없이 ${statusName} ${sk.statusTurns}턴.${sk.effect === 'bleed' ? ` 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? .22} 피해(방어 무시).` : ''}`;
+            if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
+            continue;
+        }
         sk.desc = `(${source}${scaling}) × ${sk.multiplier} 피해.${sk.id === 'crush' ? ' 물리 방어 150% 추가 피해.' : ''}`;
         if (sk.effect === 'heal') sk.desc += ` 최대 체력 ${Math.round((sk.healRatio ?? .22) * 100)}% 회복.`;
         if (sk.effect === 'drain') sk.desc += ` 실제 피해의 ${Math.round((sk.drainRatio ?? .25) * 100)}% 회복.`;
-        if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += ` ${sk.effect === 'bleed' && sk.dotName ? sk.dotName + (sk.dotStacks ? '(중첩)' : '') : { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun']} 효과.`;
-        if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
+        if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += ` ${statusName} 효과.`;
+        if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
         if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
