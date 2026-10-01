@@ -46,7 +46,7 @@ export function enemyStats(f: { id: string; hp: number; attack: number; defense:
         magic: Math.round(f.attack * MONSTER_TUNING.attackMultiplier * level.attack * 1.15 * (boss ? bossScale.magic : 1)),
         defense: Math.round(f.defense * MONSTER_TUNING.defenseMultiplier * level.defense * p.defense),
         resist: Math.round(f.defense * MONSTER_TUNING.defenseMultiplier * level.defense * p.resist),
-        crit: boss ? .08 : 0, accuracy: .95 + f.level * .002,
+        crit: Math.min(MONSTER_TUNING.critCap, MONSTER_TUNING.critBase + f.level * MONSTER_TUNING.critPerLevel) + (boss ? MONSTER_TUNING.critBoss : 0) + (p === PROFILES.swift || p === PROFILES.frenzy ? MONSTER_TUNING.critSwift : 0), accuracy: .95 + f.level * .002,
         evasion: p.evasion + (p === PROFILES.swift ? Math.min(.2, Math.max(0, f.level - 5) * .004) : 0),
         speed: Math.round((9 + f.level * .35) * p.speed), mana: 100, manaRegen: 10,
     };

@@ -30,6 +30,8 @@ export const MONSTER_TUNING = {
     // remain readable so deaths do not turn the early game into a wall.
     hpMultiplier: 2.5,
     attackMultiplier: 1.15,
+    // v24 몬스터 치명타: 기본 + 레벨당 증가(상한), 보스·날쌘 성향은 추가. 치명 피해는 플레이어 기본값(critMultiplier)과 같습니다.
+    critBase: .04, critPerLevel: .0006, critCap: .1, critBoss: .04, critSwift: .04,
     defenseMultiplier: 1.1,
     bossMultiplier: 2.7,
     bossRewardMultiplier: 1.9,
