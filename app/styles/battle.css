@@ -315,6 +315,10 @@
 .battle-console>.battle-target-strip{order:7}
 .battle-console>.tide-selector{order:8}
 .battle-utility-rail{flex-direction:column;align-items:stretch}
+.battle-console .battle-opponent-strip{grid-template-columns:1fr 1fr;gap:8px}
+.battle-console .battle-opponent-strip .opponent-vs{display:none}
+.battle-console .battle-opponent-strip .opponent-card{padding:9px 10px}
+.battle-console .battle-opponent-strip .opponent-card small{font-size:10px;line-height:1.45}
 .battle-utility-rail>*{width:100%}
 .battle-utility-rail>.battle-feed{display:none}
 }
