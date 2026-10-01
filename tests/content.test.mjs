@@ -27,7 +27,7 @@ test('Growth descriptions expose real bone penalties, negative AP and farming st
  const bone=skillGrowthStages(SKILLS.find(sk=>sk.id==='boneLegacy'));
  assert.deepEqual(bone.map(r=>[r.practice,r.effective.cost,r.effective.bonus.hp,r.effective.bonus.defense]),[[0,6,-60,-8],[2500,6,-40,-5],[25000,2,100,12],[125000,-3,450,45]]);
  assert.deepEqual(bone.map(r=>r.effective.penaltyRelief||0),[0,.15,.5,1]);
- const loot=skillGrowthStages(SKILLS.find(sk=>sk.id==='rareSense'));assert.ok(loot[0].effects.includes('장비 드롭 보너스 +5%p'));assert.ok(loot.at(-1).effects.includes('골드 획득 보너스 +8.8%'));
+ const loot=skillGrowthStages(SKILLS.find(sk=>sk.id==='salvageContract'));assert.ok(loot[0].effects.includes('장비 드롭 보너스 +3%p'),loot[0].effects.join('|'));const codex=skillGrowthStages(SKILLS.find(sk=>sk.id==='rareSense'));assert.match(codex[0].effects.join(' '),/도감 기록 3마다 .*최대 19회/);
  const study=skillGrowthStages(SKILLS.find(sk=>sk.id==='titanFieldNotes'));assert.match(study[0].effects.join(' '),/모든 보스 승리 시 숙련 ×3/);assert.match(study.at(-1).effects.join(' '),/숙련 ×8/);
 });
 test('Active descriptions show maximum-resource scaling, statuses and additional hits',()=>{

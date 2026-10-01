@@ -78,6 +78,8 @@ export const SKILL_FORMULA = {
     // v21.2 전용 기술: signatureTier 이상 직업의 기술은 자기 계보(조상·후손 직업)에서 온전히,
     // 계보 밖에서 계승하면 배율·패시브 수치가 signatureScale 배로 발휘됩니다. 1~3차 기술은 자유롭게 조합됩니다.
     signatureTier: 4, signatureScale: .7,
+    // v24.2 지정 어종 연구(거수 생태학자 계보)의 대상: 뱀장어·곰치 계열.
+    designatedSpecies: ['eel', 'emberEel', 'grottoWarden'],
     // v24 환생 비례 패시브(perRebirth): 환생 횟수는 이 값까지만 셉니다.
     perRebirthCap: 30,
     // v23.1 고정 수치 직업 보정의 환산 기준: 차수별 밸런스 점검 레벨(1차 Lv.15 · 2차 Lv.40 · 3차 Lv.50)에서

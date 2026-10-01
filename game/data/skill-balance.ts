@@ -3,6 +3,7 @@ import { EXPANSION_BALANCE } from './expansion';
 import { STATUS_TUNING } from './balance';
 import { LINEAGE_BALANCE } from './expansion-lineages';
 import { V24_BALANCE } from './expansion-v24';
+import { SUPPORT_BALANCE, SUPPORT_STATUS_ONLY } from './support-rework';
 
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
@@ -64,6 +65,8 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     ...LINEAGE_BALANCE,
     ...V24_BALANCE,
 };
+// v24.2 보조 계열 개편은 기존 값 위에 덮어씁니다(필드 단위 병합).
+for (const [id, tuning] of Object.entries(SUPPORT_BALANCE)) ACTIVE_SKILL_BALANCE[id] = { ...ACTIVE_SKILL_BALANCE[id], ...tuning };
 
 /**
  * 상태이상 규칙(v24 → v24.1 혼합 방식)
@@ -76,7 +79,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
  */
 export const STATUS_ONLY_SKILLS = ['splash', 'anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
     'bellCrash', 'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
-    'quakeStep', 'sealHex', 'frostMist'];
+    'quakeStep', 'sealHex', 'frostMist', ...SUPPORT_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, weaken: 3, silence: 2, slow: 3 };
 /** 상태이상 전용 전환과 초반 배율 제한. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. tier는 기술 주인 직업의 차수(공용 0). */
@@ -98,6 +101,18 @@ export function applyStatusRules(sk: Skill, tier: number) {
     }
     const cap = sk.effect ? STATUS_TUNING.earlyStatusMultiplierCap[sk.effect] : undefined;
     if (cap !== undefined && tier <= 2) sk.multiplier = Math.min(sk.multiplier, cap);
+}
+
+const PROGRESS_SOURCE: Record<string, string> = { codex: '도감 기록 수', catch: 'log10(누적 포획 + 1)', hunt: '√(던전 클리어 + 보스 포획)', gold: 'log10(보유 골드 + 1)' };
+/** v24.2 진행도·도박·올인·골드 기술의 한 줄 설명. */
+export function progressDesc(sk: Skill) {
+    let out = '';
+    if (sk.scaling && PROGRESS_SOURCE[sk.scaling]) out += ` 피해 × (1 + ${PROGRESS_SOURCE[sk.scaling]} × ${sk.scalingRatio}).`;
+    if (sk.gamble && sk.gamble.min !== sk.gamble.max) out += ` 쓸 때마다 피해 ×${sk.gamble.min}~${sk.gamble.max}${sk.gamble.accuracy ? ` · 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p` : ''} 무작위.`;
+    if (sk.allIn) out += ` 현재 체력 ${Math.round(sk.allIn.hpRatio * 100)}%와 남은 마나를 모두 걸고 (건 체력 × ${sk.allIn.hpScale} + 건 마나 × ${sk.allIn.manaScale})를 피해에 더합니다.`;
+    if (sk.goldSpend) out += ` 보유 골드 ${Math.round(sk.goldSpend.ratio * 1000) / 10}%(최대 ${sk.goldSpend.cap.toLocaleString()})를 던져 × ${sk.goldSpend.scale}만큼 피해에 더합니다.`;
+    if (sk.preyBonus) out += ` 보스·지정 어종에게 피해 +${Math.round(sk.preyBonus * 100)}%.`;
+    return out;
 }
 
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
@@ -124,6 +139,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName + (sk.dotStacks ? '(중첩)' : '') : { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun'];
         if (sk.statusOnly) {
             sk.desc = `피해 없이 ${statusName} ${sk.statusTurns}턴.${sk.effect === 'bleed' ? ` 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? .22} 피해(방어 무시).` : ''}`;
+            if (sk.gamble?.accuracy) sk.desc += ` 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p 무작위.`;
             if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
             continue;
         }
@@ -134,6 +150,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
         if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
+        sk.desc += progressDesc(sk);
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
     }

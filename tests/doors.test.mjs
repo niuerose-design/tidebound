@@ -8,7 +8,7 @@ const job = id => JOBS.find(j => j.id === id);
 test('Doors: time slots follow Korean time and a closed door refuses the job change', () => {
     assert.equal(doors.timeSlot(at(2026, 10, 1, 5)).id, 'dawn'); assert.equal(doors.timeSlot(at(2026, 10, 1, 6)).id, 'morning');
     assert.equal(doors.timeSlot(at(2026, 10, 1, 12)).id, 'day'); assert.equal(doors.timeSlot(at(2026, 10, 1, 23, 59)).id, 'night');
-    assert.deepEqual(doors.TIME_SLOTS.map(t => t.jobs), [['undead'], [], [], []]);
+    assert.deepEqual(doors.TIME_SLOTS.map(t => t.jobs), [['undead'], ['headwindSailor', 'sunriseAngler'], ['barehandFisher', 'noonDiver'], ['mistSwordsman', 'nightHeron']]);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead', at(2026, 10, 1, 12)), false);
     assert.ok(jobRequirements(s, job('undead'), at(2026, 10, 1, 12)).some(r => r.label === '시간의 문 열림' && !r.met));
@@ -30,7 +30,7 @@ test('Doors: visitor schedule is a pure function of the KST date (1-2 two-hour v
     assert.equal(doors.currentVisit(at(2026, 10, 2, 21, 30))?.job, 'krakenkin'); assert.equal(doors.currentVisit(at(2026, 10, 2, 20)), null);
     assert.deepEqual(doors.doorFor({}, 'krakenkin', at(2026, 10, 2, 22)), { door: 'visitor', open: true });
     assert.deepEqual(doors.doorFor({}, 'krakenkin', at(2026, 10, 2, 9)), { door: 'visitor', open: false });
-    assert.equal(doors.DISCOVERY_DOORS.length, 0); assert.equal(doors.doorFor({}, 'skeleton', 0), null, 'later jobs in a ??? lineage have no door');
+    assert.deepEqual(doors.DISCOVERY_DOORS.map(d => d.job), ['poorMonk', 'codexReader', 'fallenAngler']); assert.equal(doors.doorFor({}, 'skeleton', 0), null, 'later jobs in a ??? lineage have no door');
 });
 
 test('Doors: the rebirth door is drawn at rebirth, stored, excludes the previous one and never changes on reload', () => {
@@ -50,4 +50,16 @@ test('Mastery rule: a mastered job can be re-entered at level 1, ignoring level,
     s.jobMastery.whaler = jobMasteryTarget(whaler); assert.equal(s.level, 1); assert.equal(canChangeJob(s, 'whaler'), true);
     act(s, { type: 'job', id: 'whaler' }, 0); assert.equal(s.job, 'whaler');
     s.jobMastery.undead = jobMasteryTarget(job('undead')); assert.equal(canChangeJob(s, 'undead', at(2026, 10, 1, 12)), true, 'mastery also ignores a closed door');
+});
+
+test('Doors v24.2: each time slot has its own pool and discovery doors open on hidden conditions', () => {
+    const s = ready();
+    assert.equal(canChangeJob(s, 'mistSwordsman', at(2026, 10, 1, 9)), false); assert.equal(canChangeJob(s, 'mistSwordsman', at(2026, 10, 1, 20)), true);
+    assert.equal(canChangeJob(s, 'headwindSailor', at(2026, 10, 1, 9)), true); assert.equal(canChangeJob(s, 'noonDiver', at(2026, 10, 1, 13)), true);
+    for (const id of ['headwindSailor', 'sunriseAngler', 'barehandFisher', 'noonDiver', 'mistSwordsman', 'nightHeron', 'poorMonk', 'codexReader', 'fallenAngler']) {
+        const j = job(id); assert.ok(j && j.tree === 'mystery' && j.tier === 1 && j.hidden && j.hint, id);
+    }
+    s.gold = 5000; assert.equal(canChangeJob(s, 'poorMonk'), false); s.gold = 50; assert.equal(canChangeJob(s, 'poorMonk'), true);
+    assert.equal(canChangeJob(s, 'fallenAngler'), false); s.deaths = 30; assert.equal(canChangeJob(s, 'fallenAngler'), true);
+    assert.equal(canChangeJob(s, 'codexReader'), false); s.itemBook = Object.fromEntries(Array.from({ length: 30 }, (_, i) => ['item' + i, 1])); assert.equal(canChangeJob(s, 'codexReader'), true);
 });

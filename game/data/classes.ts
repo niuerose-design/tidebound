@@ -2,6 +2,7 @@ import type { Attribute, Stats } from '../types';
 import { EXPANSION_JOBS } from './expansion';
 import { LINEAGE_JOBS, NEW_LINEAGES, LINEAGE_HINTS } from './expansion-lineages';
 import { V24_JOBS, V24_HINTS } from './expansion-v24';
+import { SUPPORT_JOBS, SUPPORT_JOB_DESC, SUPPORT_HINTS } from './support-rework';
 export type Job = {
     id: string;
     name: string;
@@ -167,6 +168,10 @@ JOBS.push(...(LINEAGE_JOBS as Job[]));
 // v24 계보 완성: 3차(일부 2·4차)에서 끝나던 계보를 5차까지 잇습니다. 자세한 설계는 expansion-v24.ts.
 JOBS.push(...(V24_JOBS as Job[]));
 
+// v24.2 ??? 문 직업과 보조 계열 소개 갱신. 자세한 설계는 support-rework.ts.
+JOBS.push(...(SUPPORT_JOBS as Job[]));
+for (const job of JOBS) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
+
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
 for (const id of ['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger', 'tideSaint', 'lifeOcean']) JOBS.find(j => j.id === id)!.healer = true;
 
@@ -237,7 +242,7 @@ const JOB_HINTS: Record<string, string> = {
     rebirthFisher: '환생 뒤, 윤회의 문이 이 이름을 부를 때.',
     abyssMimic: '메아리를 오래 길들인 자에게 보스의 그림자가 닿습니다.',
 };
-for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id];
+for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id];
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };

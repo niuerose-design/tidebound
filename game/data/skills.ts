@@ -4,6 +4,7 @@ import { JOBS } from './classes';
 import { EXPANSION_SKILLS } from './expansion';
 import { LINEAGE_SKILLS } from './expansion-lineages';
 import { V24_SKILLS } from './expansion-v24';
+import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 export const SKILLS: Skill[] = [
     { id: 'hook', name: '강철 챔질', desc: '공격력 180% 피해.', type: 'active', level: 1, chance: .35, cooldown: 2, multiplier: 1.8 },
     { id: 'splash', name: '물보라', desc: '공격력 140% 피해, 적을 1턴 기절.', type: 'active', level: 3, chance: .25, cooldown: 4, multiplier: 1.4, effect: 'stun' },
@@ -133,6 +134,9 @@ SKILLS.push(...EXPANSION_SKILLS);
 SKILLS.push(...LINEAGE_SKILLS);
 // v24 계보 완성 기술.
 SKILLS.push(...V24_SKILLS);
+// v24.2 보조 계열 개편·??? 문 직업 기술. 패시브 수치는 여기서 덮어씁니다(액티브는 skill-balance.ts).
+SKILLS.push(...SUPPORT_SKILLS);
+for (const sk of SKILLS) if (SUPPORT_PASSIVES[sk.id]) Object.assign(sk, SUPPORT_PASSIVES[sk.id]);
 // v21 회복 기술은 체력 조건 없이 시도합니다. 회복이 필요 없을 때의 피해 감소는 combat.ts에서 처리합니다.
 for (const sk of SKILLS) if (sk.effect === 'heal') delete sk.condition;
 

@@ -1,0 +1,212 @@
+import type { Job } from './classes';
+import type { Skill } from '../types';
+
+/**
+ * v24.2 보조 계열 개편 + ??? 문 직업 풀.
+ *
+ * - 오징어 광대: 골드 대신 '주사위'. 도박 기술은 쓸 때마다 피해 배율·명중을 굴리고(gamble), 올인은 체력·마나를 겁니다(allIn).
+ * - 난파선 수집가: 골드·드롭을 내려놓고 도감 기록(발견한 어종 + 등록한 물건)에 비례합니다(scaling 'codex', perCount codex).
+ * - 인양 상인: 골드·던전 골드에 수집가의 드롭을 넘겨받고, 보유 골드 비례(scaling 'gold')·골드 투척(goldSpend) 기술을 씁니다.
+ * - 항해 수습기록사: 경험치는 그대로, 누적 포획(scaling 'catch')과 환생 횟수(perCount rebirth)에 비례합니다.
+ * - 거수 생태학자: 던전 클리어 + 보스 포획(scaling 'hunt', perCount hunt)과 지정 어종 포획(perCount species), 사냥감 추가 피해(preyBonus).
+ * - 방랑 음유시인: 직업마다 AP 0 노래 패시브(song). 음유시인 계보만 장착합니다.
+ * - ??? 계열: 시간의 문(아침·낮·밤)과 발견의 문에 독립 1차 직업을 더합니다(doors.ts).
+ *
+ * 액티브 수치(SUPPORT_BALANCE)는 skill-balance.ts의 ACTIVE_SKILL_BALANCE에 합쳐져 상태이상 규칙·마나 배율·설명을 함께 거칩니다.
+ * 패시브 수치(SUPPORT_PASSIVES)는 skills.ts에서 기술 목록을 다 모은 뒤 덮어씁니다.
+ */
+type NewJob = Omit<Job, 'masteryTarget' | 'masteryBoost'> & Partial<Pick<Job, 'masteryTarget' | 'masteryBoost'>>;
+const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0 };
+const DOOR_T1 = { ...neutral, tier: 1, level: 10, mastery: 0, tree: 'mystery' as const, branchless: true, hidden: true, masteryTarget: 2000, masteryBoost: .12 };
+const A = { type: 'active' as const, chance: .26, cooldown: 3, multiplier: 1 };
+const P = { type: 'passive' as const, chance: 0, cooldown: 0, multiplier: 0 };
+const physical = { damageType: 'physical' as const, manaCost: 0 };
+const magic = { damageType: 'magic' as const };
+
+/** 액티브 최종 수치(ACTIVE_SKILL_BALANCE에 합쳐짐). 새 액티브도 여기에 두어 설명이 자동으로 만들어집니다. */
+export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
+    // ── 오징어 광대: 주사위 ──
+    inkTrick: { gamble: { min: 1, max: 1, accuracy: .25 } },
+    smokeVeil: { gamble: { min: 1, max: 1, accuracy: .2 } },
+    loadedHook: { multiplier: 1.05, gamble: { min: .3, max: 1.9, accuracy: .1 } },
+    allIn: { chance: .26, cooldown: 5, multiplier: 1.6, drainRatio: .35, allIn: { hpRatio: .2, hpScale: 1.2, manaScale: 2 } },
+    fateRoll: { multiplier: 2.5, gamble: { min: .2, max: 1.8, accuracy: .15 } },
+    jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 } },
+    allOrNothing: { chance: .24, cooldown: 6, multiplier: 2.6, drainRatio: .35, allIn: { hpRatio: .3, hpScale: 1.6, manaScale: 3 }, gamble: { min: .6, max: 1.8 } },
+    // ── 난파선 수집가: 도감 기록 ──
+    relicToss: { chance: .26, cooldown: 3, multiplier: 1, scaling: 'codex', scalingRatio: .006 },
+    anchorSwing: { scaling: 'codex', scalingRatio: .008 },
+    spoilsStrike: { scaling: 'codex', scalingRatio: .012 },
+    treasureStrike: { scaling: 'codex', scalingRatio: .015 },
+    hoardCrush: { scaling: 'codex', scalingRatio: .018 },
+    // ── 인양 상인: 보유 골드·골드 투척 ──
+    coinToss: { chance: .26, cooldown: 3, multiplier: 1, goldSpend: { ratio: .005, cap: 20, scale: 1 } },
+    ledgerStrike: { chance: .5, cooldown: 3, multiplier: 1.3, manaCost: 4, scaling: 'gold', scalingRatio: .05 },
+    coinBarrage: { scaling: 'gold', scalingRatio: .06, goldSpend: { ratio: .002, cap: 400, scale: .5 } },
+    goldenTempest: { scaling: 'gold', scalingRatio: .07, goldSpend: { ratio: .002, cap: 3000, scale: .15 } },
+    goldenStorm: { scaling: 'gold', scalingRatio: .08, goldSpend: { ratio: .002, cap: 12000, scale: .08 } },
+    // ── 항해 수습기록사: 누적 포획 ──
+    dispatchDash: { scaling: 'catch', scalingRatio: .06 },
+    constellationBolt: { scaling: 'catch', scalingRatio: .08 },
+    starBolt: { scaling: 'catch', scalingRatio: .1 },
+    galaxyFall: { scaling: 'catch', scalingRatio: .12 },
+    // ── 거수 생태학자: 사냥 기록·사냥감 ──
+    sigilShock: { chance: .5, cooldown: 3, multiplier: 1.2, manaCost: 4, preyBonus: .6 },
+    trackersSpear: { scaling: 'hunt', scalingRatio: .025, preyBonus: .2 },
+    weakpointThesis: { preyBonus: .3 },
+    weakpointCut: { preyBonus: .4 },
+    titanFell: { preyBonus: .5 },
+    // ── ??? 문 직업 ──
+    headwindTack: { chance: .28, cooldown: 3, multiplier: 1.2 },
+    dawnFlare: { chance: .55, cooldown: 3, multiplier: 1.6, manaCost: 3 },
+    bareGrab: { chance: .28, cooldown: 3, multiplier: 1.5 },
+    sunDive: { chance: .26, cooldown: 4, multiplier: 1.1, scalingRatio: .04 },
+    mistSlash: { chance: .28, cooldown: 3, multiplier: 1.3, accuracyBonus: .08 },
+    heronStill: { chance: .3, cooldown: 3, multiplier: 1 },
+    emptyPalm: { chance: .28, cooldown: 3, multiplier: 1.35, drainRatio: .15 },
+    encyclopediaBolt: { chance: .55, cooldown: 3, multiplier: 1.45, manaCost: 3, scaling: 'codex', scalingRatio: .008 },
+    riseAgain: { chance: .28, cooldown: 4, multiplier: 1.3, drainRatio: .25 },
+};
+
+/** 패시브 덮어쓰기. bonus는 통째로 바뀝니다(골드·드롭을 빼거나 옮기기 위해). */
+export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
+    // 오징어 광대: 골드 대신 치명
+    focus: { desc: '치명타 확률 +7%. 흔들리는 주사위의 고점을 받쳐 줍니다.' },
+    riskDividend: { desc: '치명 피해와 치명타 확률이 오릅니다.', bonus: { critDamage: .25, crit: .02 } },
+    jackpot: { desc: '치명 피해와 치명타 확률이 오릅니다.', bonus: { critDamage: .2, crit: .03 } },
+    fortuneFavor: { desc: '치명 피해와 치명타 확률이 오릅니다.', bonus: { critDamage: .3, crit: .03 } },
+    divineLuck: { desc: '치명타와 치명 피해가 크게 오릅니다.', bonus: { crit: .08, critDamage: .45 } },
+    // 난파선 수집가: 도감 기록
+    salvageSense: { desc: '명중이 오르고, 도감 기록이 쌓일수록 두 공격이 오릅니다.', bonus: { accuracy: .03 }, perCount: [{ source: 'codex', per: 6, bonus: { attack: 1, magic: 1 }, cap: 9 }] },
+    rareSense: { desc: '도감 기록마다 두 공격과 체력이 오릅니다.', bonus: { crit: .01 }, perCount: [{ source: 'codex', per: 3, bonus: { attack: 2, magic: 2, hp: 6 }, cap: 19 }] },
+    pressureSuit: { desc: '최대 체력이 오르고, 도감 기록마다 두 방어가 오릅니다.', bonus: { hp: 90 }, perCount: [{ source: 'codex', per: 4, bonus: { defense: 1, resist: 1 }, cap: 14 }] },
+    deepSalvage: { desc: '도감 기록마다 두 공격과 치명타가 오릅니다.', bonus: {}, perCount: [{ source: 'codex', per: 2, bonus: { attack: 2, magic: 2, crit: .001 }, cap: 28 }] },
+    kingsHoard: { desc: '도감 기록 하나하나가 두 공격이 됩니다.', bonus: {}, perCount: [{ source: 'codex', per: 1, bonus: { attack: 2, magic: 2 }, cap: 57 }] },
+    legendHoard: { desc: '도감 기록 하나하나가 두 공격과 체력이 됩니다.', bonus: {}, perCount: [{ source: 'codex', per: 1, bonus: { attack: 3, magic: 3, hp: 10 }, cap: 57 }] },
+    // 인양 상인: 수집가의 드롭을 넘겨받음
+    salvageContract: { desc: '골드 획득 +10%, 던전 클리어 골드 +8%, 장비 드롭 +3%p.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03 } },
+    goldMemory: { desc: '골드·드롭·명중이 오르고, 보유 골드 자릿수마다 두 공격이 오릅니다.', bonus: { goldBonus: .15, dropBonus: .04, accuracy: .05 }, perCount: [{ source: 'gold', per: 1, bonus: { attack: 2, magic: 2 }, cap: 9 }] },
+    portLedger: { desc: '골드 획득·장비 드롭·명중이 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03 } },
+    tradeWind: { desc: '골드·던전 골드 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
+    tradeEmpire: { desc: '골드·던전 골드·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
+    goldenEmpire: { desc: '골드·던전 골드·장비 드롭·환생 진주와 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
+    // 항해 수습기록사: 경험치 + 포획·환생
+    voyageReview: { desc: '획득 경험치 +8%. 누적 포획이 쌓일수록 두 공격이 오릅니다.', bonus: { expBonus: .08 }, perCount: [{ source: 'catch', per: 500, bonus: { attack: 1, magic: 1 }, cap: 10 }] },
+    chronicleStudy: { desc: '획득 경험치 +12%. 환생할 때마다 두 공격과 체력이 오릅니다.', bonus: { expBonus: .12 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 3, magic: 3, hp: 10 }, cap: 10 }] },
+    swiftQuill: { desc: '속도와 경험치 획득이 오르고, 누적 포획마다 속도가 더 오릅니다.', bonus: { speed: 6, expBonus: .03 }, perCount: [{ source: 'catch', per: 1000, bonus: { speed: 1 }, cap: 5 }] },
+    starLog: { desc: '경험치 획득이 오르고, 환생과 누적 포획에 비례해 마법 공격이 오릅니다.', bonus: { expBonus: .06 }, perCount: [{ source: 'rebirth', per: 1, bonus: { magic: 5 }, cap: 12 }, { source: 'catch', per: 2000, bonus: { magic: 2 }, cap: 15 }] },
+    starChart: { desc: '경험치 획득이 오르고, 환생할 때마다 마법 공격과 체력이 오릅니다.', bonus: { expBonus: .15 }, perCount: [{ source: 'rebirth', per: 1, bonus: { magic: 6, hp: 15 }, cap: 20 }] },
+    cosmicChart: { desc: '경험치 획득이 크게 오르고, 환생과 누적 포획에 비례해 공격·체력·치명타가 오릅니다.', bonus: { expBonus: .25 }, perCount: [{ source: 'rebirth', per: 1, bonus: { magic: 8, attack: 4, hp: 20 }, cap: 25 }, { source: 'catch', per: 5000, bonus: { crit: .004 }, cap: 10 }] },
+    // 거수 생태학자: 사냥 기록·지정 어종
+    titanFieldNotes: { perCount: [{ source: 'hunt', per: 10, bonus: { attack: 1, magic: 1 }, cap: 10 }] },
+    serpentFolklore: { perCount: [{ source: 'species', per: 30, bonus: { magic: 2, resist: 1 }, cap: 15 }] },
+    huntersPatience: { desc: '물리 공격과 명중이 오르고, 사냥 기록마다 물리 공격이 더 오릅니다.', bonus: { attack: 6, accuracy: .04 }, perCount: [{ source: 'hunt', per: 10, bonus: { attack: 2 }, cap: 15 }] },
+    titanAnatomy: { desc: '치명 피해와 관통이 오르고, 사냥 기록·지정 어종 포획에 비례해 더 강해집니다.', bonus: { critDamage: .06, penetration: .02 }, perCount: [{ source: 'hunt', per: 8, bonus: { critDamage: .006, penetration: .001 }, cap: 25 }, { source: 'species', per: 40, bonus: { attack: 2, magic: 2 }, cap: 15 }] },
+    titanLore: { desc: '치명 피해와 빈사 기준이 오르고, 사냥 기록·지정 어종 포획에 비례해 더 강해집니다.', bonus: { critDamage: .1, executeBonus: .04 }, perCount: [{ source: 'hunt', per: 5, bonus: { attack: 3, magic: 3 }, cap: 40 }, { source: 'species', per: 30, bonus: { critDamage: .01 }, cap: 20 }] },
+    apexLore: { desc: '빈사 기준이 오르고, 사냥 기록·지정 어종 포획에 비례해 크게 강해집니다.', bonus: { executeBonus: .06 }, perCount: [{ source: 'hunt', per: 4, bonus: { attack: 4, magic: 4, hp: 10 }, cap: 60 }, { source: 'species', per: 25, bonus: { critDamage: .01, penetration: .002 }, cap: 25 }] },
+};
+
+/** 새 기술: 도박·수집·상인·생태 보강 액티브, 음유시인 노래, ??? 문 직업 기술. 액티브 수치는 SUPPORT_BALANCE. */
+export const SUPPORT_SKILLS: Skill[] = [
+    { ...A, ...physical, id: 'allOrNothing', name: '전부 아니면 전무', desc: '', level: 70, job: 'luckDeity', cost: 6, effect: 'drain', masteryMilestones: [4000, 18000, 60000, 150000] },
+    { ...A, ...physical, id: 'relicToss', name: '유물 던지기', desc: '', level: 10, job: 'relicScavenger', cost: 2 },
+    { ...A, ...physical, id: 'coinToss', name: '동전 던지기', desc: '', level: 10, job: 'salvageMerchant', cost: 2 },
+    { ...A, ...magic, id: 'ledgerStrike', name: '장부 일격', desc: '', level: 25, job: 'memoryMerchant', cost: 3 },
+    { ...A, ...magic, id: 'sigilShock', name: '문양 전격', desc: '', level: 25, job: 'speciesChronicler', cost: 3 },
+    // 노래: AP 0, 음유시인 계보 전용. 여섯 능력치를 고르게 올립니다.
+    { ...P, id: 'roadSong', name: '길손의 노래', desc: '여섯 능력치가 고르게 오르는 노래.', level: 10, job: 'bard', song: true, bonus: { hp: 30, attack: 3, magic: 3, defense: 1, resist: 1, speed: 1 } },
+    { ...P, id: 'courtSerenade', name: '궁정 세레나데', desc: '여섯 능력치와 명중이 오르는 노래.', level: 25, job: 'minstrel', song: true, bonus: { hp: 60, attack: 8, magic: 8, defense: 3, resist: 3, accuracy: .02 } },
+    { ...P, id: 'tideHarmony', name: '물결 화음', desc: '여섯 능력치와 마나 회복이 오르는 노래.', level: 25, job: 'tidalSinger', song: true, bonus: { hp: 70, attack: 6, magic: 10, defense: 3, resist: 4, manaRegen: .5 } },
+    { ...P, id: 'heroicVerse', name: '영웅의 시', desc: '여섯 능력치와 치명·회피가 오르는 노래.', level: 40, job: 'legendBard', song: true, bonus: { hp: 140, attack: 18, magic: 18, defense: 6, resist: 6, crit: .02, evasion: .01 } },
+    { ...P, id: 'oceanOde', name: '바다의 송가', desc: '여섯 능력치와 속도가 크게 오르는 노래.', level: 55, job: 'balladKing', song: true, bonus: { hp: 320, attack: 45, magic: 45, defense: 14, resist: 14, speed: 3 }, masteryMilestones: [2500, 12000, 40000, 100000] },
+    { ...P, id: 'sirenAria', name: '세이렌의 아리아', desc: '여섯 능력치와 치명·회피가 크게 오르는 노래.', level: 70, job: 'siren', song: true, bonus: { hp: 520, attack: 75, magic: 75, defense: 22, resist: 22, crit: .03, evasion: .02 }, masteryMilestones: [4000, 18000, 60000, 150000] },
+    // ??? 시간의 문
+    { ...A, ...physical, id: 'headwindTack', name: '역풍 태킹', desc: '', level: 10, job: 'headwindSailor', cost: 2, effect: 'haste' },
+    { ...P, id: 'galeLegs', name: '돌풍 걸음', desc: '속도와 회피가 오릅니다.', level: 10, job: 'headwindSailor', cost: 2, bonus: { speed: 4, evasion: .02 } },
+    { ...A, ...magic, id: 'dawnFlare', name: '여명 섬광', desc: '', level: 10, job: 'sunriseAngler', cost: 2 },
+    { ...P, id: 'morningCalm', name: '아침 고요', desc: '마나 회복과 최대 마나가 오릅니다.', level: 10, job: 'sunriseAngler', cost: 2, bonus: { manaRegen: 1, mana: 12 } },
+    { ...A, ...physical, id: 'bareGrab', name: '맨손 낚아채기', desc: '', level: 10, job: 'barehandFisher', cost: 3 },
+    { ...P, id: 'ironGrip', name: '쇠 손아귀', desc: '물리 공격과 치명타가 오릅니다.', level: 10, job: 'barehandFisher', cost: 2, bonus: { attack: 4, crit: .02 } },
+    { ...A, ...physical, id: 'sunDive', name: '한낮 잠수', desc: '', level: 10, job: 'noonDiver', cost: 3, scaling: 'hp' },
+    { ...P, id: 'brineLungs', name: '짠물 폐', desc: '최대 체력과 물리 방어가 오릅니다.', level: 10, job: 'noonDiver', cost: 2, bonus: { hp: 40, defense: 2 } },
+    { ...A, ...physical, id: 'mistSlash', name: '안개 베기', desc: '', level: 10, job: 'mistSwordsman', cost: 2 },
+    { ...P, id: 'fogVeil', name: '안개 장막', desc: '회피와 치명타가 오릅니다.', level: 10, job: 'mistSwordsman', cost: 2, bonus: { evasion: .04, crit: .02 } },
+    { ...A, ...physical, id: 'heronStill', name: '왜가리의 정적', desc: '', level: 10, job: 'nightHeron', cost: 2, effect: 'slow' },
+    { ...P, id: 'nightEyes', name: '밤눈', desc: '명중과 치명타가 오릅니다.', level: 10, job: 'nightHeron', cost: 2, bonus: { accuracy: .04, crit: .02 } },
+    // ??? 발견의 문
+    { ...A, ...physical, id: 'emptyPalm', name: '빈손 장타', desc: '', level: 10, job: 'poorMonk', cost: 2, effect: 'drain' },
+    { ...P, id: 'vowOfPoverty', name: '청빈 서약', desc: '골드 획득이 줄어드는 대신 체력과 두 방어가 오릅니다.', level: 10, job: 'poorMonk', cost: 2, bonus: { hp: 30, defense: 2, resist: 2, goldBonus: -.1 } },
+    { ...A, ...magic, id: 'encyclopediaBolt', name: '백과 낭독', desc: '', level: 10, job: 'codexReader', cost: 2 },
+    { ...P, id: 'marginNotes', name: '여백 메모', desc: '최대 마나가 오르고, 도감 기록마다 마법 공격과 마법 방어가 오릅니다.', level: 10, job: 'codexReader', cost: 2, bonus: { mana: 8 }, perCount: [{ source: 'codex', per: 5, bonus: { magic: 1, resist: 1 }, cap: 11 }] },
+    { ...A, ...physical, id: 'riseAgain', name: '다시 일어서기', desc: '', level: 10, job: 'fallenAngler', cost: 3, effect: 'drain' },
+    { ...P, id: 'scarTissue', name: '아문 상처', desc: '최대 체력과 흡혈이 오릅니다.', level: 10, job: 'fallenAngler', cost: 2, bonus: { hp: 50, lifesteal: .02 } },
+];
+
+/** 상태이상 전용(피해 없음)으로 바꿀 새 기술. */
+export const SUPPORT_STATUS_ONLY = ['heronStill'];
+
+/** 직업 소개 갱신. */
+export const SUPPORT_JOB_DESC: Record<string, string> = {
+    squidJester: '정확한 한 방 대신 흔들리는 명중을 감수하고, 주사위처럼 결과가 갈리는 기술과 치명 조합을 노립니다.',
+    gambler: '쓸 때마다 피해 배율과 명중이 흔들리는 밑장 챔질과 치명 패시브를 가진 고위험 직업입니다.',
+    inkMime: '명중이 흔들리는 연막 찌르기로 약화를 걸고 회피·속도 패시브로 버티는 2차 직업입니다.',
+    highRoller: '체력 일부와 마나 전부를 거는 올인 한 방과 치명 패시브를 가진 고위험 3차 직업입니다.',
+    fateGambler: '배율이 크게 흔들리는 운명의 주사위와 치명 패시브를 가진 오징어 광대 계보 환생 후 4차 직업입니다.',
+    luckDeity: '잭팟 일격과 모든 것을 거는 전부 아니면 전무, 치명 패시브로 확률의 정점에 선 오징어 광대 계보 5차 직업입니다.',
+    relicScavenger: '도감 기록(발견한 어종 + 등록한 물건)이 쌓일수록 강해지는 수집가 1차 직업입니다.',
+    rareTracker: '도감 기록마다 두 공격과 체력이 오르는 전리품 감지를 가진 2차 수집 직업입니다.',
+    wreckDiver: '도감 기록에 비례하는 닻 휘두르기와 체력·방어 패시브를 가진 수집 2차 직업입니다.',
+    treasureDiver: '도감 기록에 비례하는 전리품 일격과 기록 비례 공격 패시브를 가진 수집 3차 직업입니다.',
+    treasureKing: '도감 기록마다 강해지는 보물 강타와 기록 하나하나가 공격이 되는 패시브를 가진 난파선 수집가 계보 환생 후 4차 직업입니다.',
+    seaTreasury: '도감을 채울수록 무거워지는 보물 더미 낙하와 기록 비례 패시브로 수집의 정점에 선 난파선 수집가 계보 5차 직업입니다.',
+    salvageMerchant: '동전을 던져 싸우고 포획·던전 골드와 장비 드롭을 늘리는 경제 1차 직업입니다.',
+    memoryMerchant: '보유 골드에 비례하는 장부 일격과 골드·드롭 패시브를 가진 경제형 2차 직업입니다.',
+    harborBroker: '약화를 거는 흥정 갈고리와 골드·드롭·명중 패시브를 가진 경제 2차 직업입니다.',
+    tradePrince: '보유 골드에 비례하고 골드를 뿌려 더 강해지는 금화 폭풍과 골드·드롭 패시브를 가진 환생 후 경제 3차 직업입니다.',
+    seaTradeKing: '골드를 쏟아붓는 금화 폭풍과 골드·드롭 패시브를 가진 인양 상인 계보 환생 후 4차 경제 직업입니다.',
+    goldEmperor: '재산을 쏟아붓는 황금 해일과 골드·드롭·환생 진주 패시브로 경제의 정점에 선 인양 상인 계보 5차 직업입니다.',
+    voyageScribe: '경험치를 더 얻고, 누적 포획이 쌓일수록 조금씩 강해지는 기록 1차 직업입니다.',
+    chronicleNavigator: '경험치 획득이 높고, 환생할 때마다 기록이 쌓여 강해지는 상위 기록사입니다.',
+    logbookRunner: '누적 포획에 비례하는 전령 질주와 속도·경험치 패시브를 가진 2차 직업입니다.',
+    starCartographer: '누적 포획에 비례하는 별자리 화살과 환생·포획 비례 패시브를 가진 기록 3차 직업입니다.',
+    starNavigator: '누적 포획에 비례하는 별빛 탄환과 환생할수록 강해지는 패시브를 가진 항해 수습기록사 계보 환생 후 4차 직업입니다.',
+    routeDeity: '누적 포획에 비례하는 은하 낙하와 환생·포획 비례 패시브로 기록의 정점에 선 항해 수습기록사 계보 5차 직업입니다.',
+    bossNaturalist: '보스 승리에서 숙련도를 더 얻고, 던전 클리어와 보스 포획이 쌓일수록 강해지는 생태 1차 직업입니다.',
+    speciesChronicler: '전류 곰치·불씨 곰치·수호 곰치를 연구합니다. 지정 어종 승리에서 숙련을 크게 얻고, 지정 어종과 보스에게 강한 문양 전격을 씁니다.',
+    beastTracker: '사냥 기록에 비례하고 보스·지정 어종에게 강한 추적자의 창과 공격 패시브를 가진 2차 직업입니다.',
+    titanScholar: '보스·지정 어종에게 강한 약점 논증과 사냥 기록 비례 패시브를 가진 보스 연구 3차 직업입니다.',
+    titanAnatomist: '보스·지정 어종과 빈사의 적을 크게 베는 약점 절개와 사냥 기록 비례 패시브를 가진 거수 생태학자 계보 환생 후 4차 직업입니다.',
+    beastKing: '보스·지정 어종을 쓰러뜨리는 거수 쓰러뜨리기와 사냥 기록 비례 패시브로 보스 사냥의 정점에 선 거수 생태학자 계보 5차 직업입니다.',
+    bard: '스스로 가속하는 노래와 경험치·속도 패시브, AP 0 노래를 가진 유틸리티 입문 직업입니다.',
+    minstrel: '침묵을 거는 불협화음과 골드·경험치 패시브, AP 0 노래를 가진 유틸리티 2차 직업입니다.',
+    tidalSinger: '회복하는 합창과 경험치·마나 회복 패시브, AP 0 노래를 가진 노래 2차 직업입니다.',
+    legendBard: '가속 서사시와 성장 패시브, AP 0 노래로 모든 능력치를 고르게 올리는 유틸리티 3차 직업입니다.',
+    balladKing: '가속을 거는 조류 찬가와 성장 패시브, AP 0 노래를 가진 방랑 음유시인 계보 환생 후 4차 직업입니다.',
+    siren: '침묵을 거는 세이렌의 노래와 성장 패시브, AP 0 노래로 노래의 정점에 선 방랑 음유시인 계보 5차 직업입니다.',
+};
+
+/** ??? 문 직업. 모두 상위·하위가 없는 독립 1차이며 문(doors.ts)이 열릴 때만 전직할 수 있습니다. */
+export const SUPPORT_JOBS: NewJob[] = [
+    { id: 'headwindSailor', name: '역풍 항해사', title: '거꾸로 부는 바람을 탄다', desc: '아침에만 문 앞에 서는 항해사. 스스로 가속하는 태킹과 속도·회피 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, hp: 5 }, requires: { dex: 12, luk: 10 }, role: '시간·속도', penalties: { defense: -2 } },
+    { id: 'sunriseAngler', name: '해돋이 낚시꾼', title: '첫 햇살에 줄을 던진다', desc: '아침에만 문 앞에 서는 술사. 여명 섬광과 마나 회복 패시브로 주문을 자주 씁니다.', ...DOOR_T1, bonus: { magic: 5 }, requires: { int: 12, wis: 10 }, role: '시간·마나', penalties: { attack: -2 } },
+    { id: 'barehandFisher', name: '맨손 어부', title: '낚싯대도 필요 없다', desc: '낮에만 문 앞에 서는 어부. 방어를 버리고 맨손으로 큰 한 방을 노립니다.', ...DOOR_T1, bonus: { attack: 4 }, requires: { str: 14 }, role: '시간·공격', penalties: { defense: -3, mana: -4 } },
+    { id: 'noonDiver', name: '한낮 잠수부', title: '뜨거운 해 아래 가장 깊이', desc: '낮에만 문 앞에 서는 잠수부. 최대 체력에 비례하는 잠수 공격과 체력·방어 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, defense: 1 }, requires: { vit: 14 }, role: '시간·체력', penalties: { speed: -2 } },
+    { id: 'mistSwordsman', name: '안개 검객', title: '보이지 않는 칼끝', desc: '밤에만 문 앞에 서는 검객. 명중이 높은 안개 베기와 회피·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 3 }, crit: .02, requires: { dex: 12, str: 10 }, role: '시간·회피', penalties: { hp: -10 } },
+    { id: 'nightHeron', name: '밤왜가리 사냥꾼', title: '움직이지 않고 기다린다', desc: '밤에만 문 앞에 서는 사냥꾼. 피해 없이 감속을 거는 정적과 명중·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, magic: 1 }, requires: { dex: 10, luk: 12 }, role: '시간·감속', penalties: { resist: -2 } },
+    { id: 'poorMonk', name: '청빈 수도승', title: '가진 것이 없어 잃을 것도 없다', desc: '빈손으로 싸우는 수도승. 흡혈하는 빈손 장타와 골드를 내려놓는 대신 단단해지는 서약을 가집니다.', ...DOOR_T1, bonus: { hp: 10, resist: 1 }, requires: { vit: 12, wis: 12 }, role: '발견·생존', penalties: { crit: -.01 } },
+    { id: 'codexReader', name: '바다 백과 탐독가', title: '모든 물고기를 읽었다', desc: '도감을 깊이 읽은 자에게 열리는 술사. 도감 기록에 비례하는 주문과 패시브를 가집니다.', ...DOOR_T1, bonus: { magic: 5, resist: 1 }, requires: { int: 14 }, role: '발견·도감', penalties: { hp: -10 } },
+    { id: 'fallenAngler', name: '일곱 번 넘어진 낚시꾼', title: '넘어진 만큼 일어선다', desc: '여러 번 쓰러져 본 자에게 열리는 직업. 흡혈하는 일어서기와 체력·흡혈 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, attack: 1 }, requires: { vit: 12, str: 10 }, role: '발견·흡혈', penalties: { speed: -2 } },
+];
+
+/** 실루엣 카드 힌트. */
+export const SUPPORT_HINTS: Record<string, string> = {
+    headwindSailor: '아침 바람이 거꾸로 부는 시간, 갑판에 선 자.',
+    sunriseAngler: '해가 뜨는 시간에만 문이 열립니다.',
+    barehandFisher: '해가 가장 높은 시간, 맨손의 어부가 찾아옵니다.',
+    noonDiver: '한낮의 바다 밑에서 누군가 숨을 참고 있습니다.',
+    mistSwordsman: '밤안개가 내려앉을 때만 칼끝이 보입니다.',
+    nightHeron: '밤이 되면 물가에 움직이지 않는 그림자가 섭니다.',
+    poorMonk: '어느 정도 성장했는데도 주머니가 거의 비어 있을 때.',
+    codexReader: '도감에 기록이 서른 개 넘게 쌓였을 때.',
+    fallenAngler: '서른 번쯤 쓰러져 본 낚시꾼에게.',
+};

@@ -3,7 +3,7 @@ import { syncVoyage } from './guidance';
 import { syncGoal } from './goals';
 import { stats } from './stats';
 import type { State } from '../types';
-import { BALANCE } from '../data/balance';
+import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { DUNGEONS } from '../data/world';
 import { actTurn, fighterSpeed, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
@@ -46,8 +46,8 @@ export function tickTurn(s: State, rng: () => number) {
         spawn(s, rng);
     const e = s.enemy!;
     const ecology = bookEcology(s, e.id);
-    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), specializations: s.skillSpecializations, practice: s.skillPractice, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}) };
-    const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, ...(e.swarm ? { swarm: e.swarm } : {}) };
+    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), specializations: s.skillSpecializations, practice: s.skillPractice, gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}) };
+    const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = fighterSpeed(player) >= fighterSpeed(enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
     const log = (text: string, event: CombatEvent) => addLog(s, text, 'battle', event);
@@ -56,6 +56,7 @@ export function tickTurn(s: State, rng: () => number) {
         actTurn(second, first, rng, log);
     s.hp = player.hp;
     s.mana = player.mana ?? a.mana;
+    s.gold = Math.max(0, player.gold ?? s.gold);
     s.playerStun = player.stun;
     s.effects = player.effects || {};
     e.hp = enemy.hp;

@@ -6,7 +6,7 @@ import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat } from '../data/p
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { Job, JobStatKey, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
-import { STAGES } from '../data/world';
+import { STAGES, FISH } from '../data/world';
 import { doorFor, DOORS } from '../data/doors';
 export function initialProgress(level = 1) { return { attributes: emptyAttributes(), statPoints: PROGRESSION.startingStats + (level - 1) * PROGRESSION.statPerLevel, sp: PROGRESSION.startingSP, peakLevel: level, learned: { hook: 1 } as Record<string, number>, skillSpent: {} as Record<string, number>, skillInheritances: {} as Record<string, boolean>, skillPractice: {} as Record<string, number>, jobMastery: {} as Record<string, number>, unlockedJobs: ['fisher'], bookClaims: {} as Record<string, number>, itemBook: {} as Record<string, boolean>, target: null as string | null, presets: {} as State['presets'], mana: 40, effects: {}, playerStun: 0 }; }
 export function attributes(s: State) {
@@ -43,6 +43,18 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
+/**
+ * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
+ * codex 발견한 어종 + 등록한 물건 · catch 누적 포획 · hunt 던전 클리어 + 보스 포획 · species 지정 어종 포획 · gold 보유 골드 자릿수 · rebirth 환생.
+ */
+export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths'>) {
+    const book = s.book || {};
+    let catches = 0, discovered = 0, bosses = 0;
+    for (const f of FISH) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
+    const clears = Object.values(s.clears || {}).reduce((x, n) => x + (n || 0), 0);
+    const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
+    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0 };
+}
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;
     return Math.max(1, job?.masteryTarget ?? PROGRESSION.jobMastery);
@@ -67,7 +79,9 @@ export function jobFactor(job: Job, key: JobStatKey) {
     return job[key] + (flat && ref ? flat / (ref * jobTierScale(job)) : 0);
 }
 export function inherited(s: State, id: string) { const sk = skillById(id); return !!sk && (!!s.skillInheritances?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
-export function classAccess(s: State, sk: Skill) { return !sk.job || s.job === sk.job || inherited(s, sk.id); }
+export function classAccess(s: State, sk: Skill) { return (!sk.song || songAccess(s)) && (!sk.job || s.job === sk.job || inherited(s, sk.id)); }
+/** v24.2 노래 패시브는 음유시인 계보(방랑 음유시인의 후속 직업)만 장착합니다. */
+export function songAccess(s: Pick<State, 'job'>) { return lineage(s.job).includes('bard'); }
 export function skillUnlockReady(s: State, sk: Skill) { return !sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery; }
 /** 계승한 스킬은 환생 뒤 레벨이 낮아도 쓸 수 있습니다(레벨 조건 면제). 환생 횟수·직업 숙련 해금 조건은 그대로입니다. */
 export function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id)) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
@@ -75,6 +89,7 @@ export function canLearn(s: State, id: string) { const sk = skillById(id); retur
 export function skillBlockReason(s: State, id: string) {
     const sk = skillById(id);
     if (!sk) return '스킬을 찾을 수 없습니다.';
+    if (sk.song && !songAccess(s)) return '노래는 방랑 음유시인 계보 직업만 부를 수 있습니다.';
     if (!classAccess(s, sk)) return '전용 직업으로 전직하거나, 숙련 또는 SP 계승을 완료하세요.';
     if (s.rebirths < (sk.rebirth || 0)) return `환생 ${sk.rebirth}회부터 사용할 수 있습니다.`;
     if (!skillUnlockReady(s, sk)) return `직업 숙련 ${sk.unlockJobMastery!.toLocaleString()}부터 사용할 수 있습니다.`;
@@ -114,7 +129,7 @@ export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, specialization?
     const bonus = override?.bonus ?? (sk.bonus ? Object.fromEntries(Object.entries(sk.bonus).map(([k, n]) => [k, n < 0 ? n : n * (1 + steps * (fx.bonusScale ?? PROGRESSION.rankPassive))])) : undefined);
     const result: Skill = {
         ...sk,
-        cost: override?.cost ?? Math.max(1, (sk.cost ?? 2) - Math.floor(steps * (fx.apReduction ?? 0))),
+        cost: sk.song ? 0 : override?.cost ?? Math.max(1, (sk.cost ?? 2) - Math.floor(steps * (fx.apReduction ?? 0))),
         manaCost: Math.max(0, (sk.manaCost ?? 0) - Math.floor(steps * (fx.manaReduction ?? 0))),
         chance: sk.type === 'passive' ? 0 : Math.min(.95, sk.chance + steps * (fx.chanceIncrease ?? PROGRESSION.masteryChance)),
         cooldown: sk.type === 'passive' ? 0 : Math.max(1, sk.cooldown - Math.floor(steps * (fx.cooldownReduction ?? 0))),

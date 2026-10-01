@@ -1,10 +1,11 @@
 /**
  * ??? 계열의 문. 문마다 ??? 계보의 첫 직업을 엽니다. 한 번 들어간 직업(unlockedJobs)은 문 조건이 없습니다.
  * 시간 판정은 항상 서버가 넘긴 시각(요청 시각)으로 합니다. 목록에 없는 직업 id는 무시합니다.
- * 역풍 항해사·안개 검객·청빈 수도승·맨손 어부는 직업이 생기면 이 목록에만 추가하면 됩니다.
+ * 새 ??? 직업은 support-rework.ts에 만들고 이 목록에 추가합니다.
  */
 import type { State } from '../types';
 import { JOBS } from './classes';
+import { FISH } from './world';
 
 export type DoorId = 'rebirth' | 'time' | 'discovery' | 'visitor';
 export type TimeSlot = { id: string; name: string; from: number; to: number; jobs: string[] };
@@ -16,12 +17,18 @@ export const REBIRTH_DOOR_JOBS = known(['rebirthFisher', 'voidcaller']);
 /** 시간의 문: 한국 시간(UTC+9) 6시간 슬롯. 비어 있는 슬롯은 문이 닫힙니다. */
 export const TIME_SLOTS: TimeSlot[] = [
     { id: 'dawn', name: '새벽', from: 0, to: 6, jobs: known(['undead']) },
-    { id: 'morning', name: '아침', from: 6, to: 12, jobs: known([]) },
-    { id: 'day', name: '낮', from: 12, to: 18, jobs: known([]) },
-    { id: 'night', name: '밤', from: 18, to: 24, jobs: known([]) },
+    { id: 'morning', name: '아침', from: 6, to: 12, jobs: known(['headwindSailor', 'sunriseAngler']) },
+    { id: 'day', name: '낮', from: 12, to: 18, jobs: known(['barehandFisher', 'noonDiver']) },
+    { id: 'night', name: '밤', from: 18, to: 24, jobs: known(['mistSwordsman', 'nightHeron']) },
 ];
-/** 발견의 문: 조건을 처음 만족하면 열리는 직업. 지금은 비어 있습니다. */
-export const DISCOVERY_DOORS: { job: string; hint: string; test: (s: State) => boolean }[] = [];
+const codexCount = (s: State) => FISH.filter(f => (s.book?.[f.id] || 0) > 0).length + Object.keys(s.itemBook || {}).length;
+/** 발견의 문: 조건을 만족하는 동안 열리는 직업. 한 번 전직하면(unlockedJobs) 조건이 없습니다. */
+type DiscoveryDoor = { job: string; hint: string; test: (s: State) => boolean };
+export const DISCOVERY_DOORS: DiscoveryDoor[] = ([
+    { job: 'poorMonk', hint: '어느 정도 성장했는데도 주머니가 거의 비어 있을 때.', test: s => s.level >= 15 && (s.gold || 0) < 100 },
+    { job: 'codexReader', hint: '도감에 기록이 서른 개 넘게 쌓였을 때.', test: s => codexCount(s) >= 30 },
+    { job: 'fallenAngler', hint: '서른 번쯤 쓰러져 본 낚시꾼에게.', test: s => (s.deaths || 0) >= 30 },
+] as DiscoveryDoor[]).filter(d => JOBS.some(j => j.id === d.job));
 /** 방문자의 문: 하루 1~2번, 한 번에 2시간 머무는 방문자. */
 export const VISITOR_JOBS = known(['krakenkin']);
 export const VISIT_HOURS = 2;

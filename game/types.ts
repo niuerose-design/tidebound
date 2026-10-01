@@ -40,12 +40,19 @@ export type Stats = {
     followUpBonus?: number;
     healBonus?: number;
     executeBonus?: number;
+    /** v24.2 진행도 비례 피해의 기준값(능력치 계산이 채움). 도감 종 수 · log10(누적 포획) · √(던전 클리어+보스 처치) · log10(보유 골드). */
+    codexPower?: number;
+    catchPower?: number;
+    huntPower?: number;
+    goldPower?: number;
     hp: number;
     attack: number;
     defense: number;
     crit: number;
 };
 export type CombatStats = Required<Stats>;
+/** 진행도 비례 기능이 세는 기록. */
+export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth';
 export type StatusEffects = {
     dot?: {
         damage: number;
@@ -115,7 +122,19 @@ export type Skill = {
     drainRatio?: number;
     condition?: 'wounded' | 'healthyTarget';
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. */
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'dual';
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold';
+    /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
+    perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
+    /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
+    gamble?: { min: number; max: number; accuracy?: number };
+    /** v24.2 올인: 현재 체력의 hpRatio와 마나 전부를 걸고, (건 체력 × hpScale + 건 마나 × manaScale)을 피해에 더합니다. */
+    allIn?: { hpRatio: number; hpScale: number; manaScale: number };
+    /** v24.2 노래: 음유시인 계보 직업만 장착할 수 있습니다(AP 0). */
+    song?: boolean;
+    /** v24.2 골드 투척: 보유 골드의 ratio(최대 cap)를 쓰고, 쓴 골드 × scale을 피해에 더합니다. */
+    goldSpend?: { ratio: number; cap: number; scale: number };
+    /** v24.2 사냥감 연구: 보스·지정 어종에게 직접 피해 +preyBonus. */
+    preyBonus?: number;
     scalingRatio?: number;
     statusTurns?: number;
     /** 이 기술이 거는 지속 피해 비율(기본 SKILL_FORMULA.bleedRatio)과 이름(기본 출혈). */
@@ -177,6 +196,8 @@ export type CombatEvent = {
     statuses: { id: string; turns: number; onSelf?: boolean }[];
     /** 면역으로 막힌 상태이상(있을 때만). */
     immune?: string;
+    /** 도박 기술의 피해 배율 굴림(있을 때만). */
+    gamble?: number;
     dot?: { name: string; value: number }; reflected?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
     /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
     chain?: number;

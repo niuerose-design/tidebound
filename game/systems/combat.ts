@@ -26,6 +26,10 @@ export type Fighter = {
     damageDealt?: number;
     /** 도감 생태 연구: 받는 공격 피해 감소율(0.02 = -2%). 지속 피해에는 적용하지 않습니다. */
     damageTaken?: number;
+    /** v24.2 골드 투척 기술이 쓰는 보유 골드(플레이어만). */
+    gold?: number;
+    /** v24.2 사냥감 연구 대상 여부(보스·지정 어종). */
+    prey?: boolean;
 };
 type DurationStatus = 'weaken' | 'silence' | 'slow' | 'haste';
 type ImmuneStatus = keyof NonNullable<StatusEffects['immune']>;
@@ -190,7 +194,28 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             a.hp += healed;
         }
     }
-    const hit = hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) }, { ...sb, speed: targetSpeed });
+    // v24.2 도박: 쓸 때마다 피해 배율과 명중을 굴립니다.
+    let gambleRoll = 1, gambleAccuracy = 0;
+    if (chosen?.gamble) {
+        gambleRoll = chosen.gamble.min + rng() * (chosen.gamble.max - chosen.gamble.min);
+        if (chosen.gamble.accuracy) gambleAccuracy = (rng() * 2 - 1) * chosen.gamble.accuracy;
+        notes.push([chosen.gamble.min !== chosen.gamble.max ? `주사위 ×${gambleRoll.toFixed(2)}` : '주사위', chosen.gamble.accuracy ? `명중 ${gambleAccuracy >= 0 ? '+' : ''}${Math.round(gambleAccuracy * 100)}%p` : ''].filter(Boolean).join(' · '));
+        ev.gamble = gambleRoll;
+    }
+    // v24.2 올인: 현재 체력 일부와 남은 마나 전부를 겁니다(체력은 1 남김).
+    let allInBonus = 0;
+    if (chosen?.allIn) {
+        const spentHp = Math.max(0, Math.min(a.hp - 1, Math.floor(a.hp * chosen.allIn.hpRatio))), spentMana = Math.max(0, a.mana || 0);
+        a.hp -= spentHp; a.mana = 0;
+        allInBonus = spentHp * chosen.allIn.hpScale + spentMana * chosen.allIn.manaScale;
+        notes.push(`올인 · 체력 ${spentHp} · 마나 ${Math.floor(spentMana)}`);
+    }
+    // v24.2 골드 투척: 보유 골드 일부를 던져 피해에 더합니다.
+    if (chosen?.goldSpend && (a.gold || 0) > 0) {
+        const spent = Math.min(chosen.goldSpend.cap, Math.floor(a.gold! * chosen.goldSpend.ratio));
+        if (spent > 0) { a.gold! -= spent; allInBonus += spent * chosen.goldSpend.scale; notes.push(`골드 ${spent.toLocaleString()} 투척`); }
+    }
+    const hit = hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed });
     const label = chosen?.name || (arcane ? '마력 평타' : '기본 공격');
     const landed = rng() < hit;
     const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack;
@@ -204,6 +229,10 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
     if (chosen?.scaling === 'mana')
         base += sa.mana * (chosen.scalingRatio ?? SKILL_FORMULA.manaScaling);
+    // v24.2 진행도 비례 피해: 기본 피해 × 비율 × 기록(도감 종 수 · log10 포획 · √사냥 · log10 골드).
+    const progress = chosen?.scaling === 'codex' ? sa.codexPower : chosen?.scaling === 'catch' ? sa.catchPower : chosen?.scaling === 'hunt' ? sa.huntPower : chosen?.scaling === 'gold' ? sa.goldPower : 0;
+    if (progress) base += base * (chosen?.scalingRatio ?? 0) * progress;
+    base += allInBonus;
     if (chosen?.scaling === 'hybrid')
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hybridHpScaling) + sa.mana * ((chosen.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2);
     if (chosen?.id === 'crush')
@@ -215,12 +244,14 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         ? Math.round(raw * SKILL_FORMULA.splitPhysical * 100 / (100 + sb.defense * pierce * 2)) + Math.round(raw * (1 - SKILL_FORMULA.splitPhysical) * 100 / (100 + sb.resist * pierce * 2))
         : Math.round(raw * 100 / (100 + defense * 2));
     const linked = chosen?.damageBonusCondition === 'bleeding' ? !!b.effects.dot : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
-    const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
+    const preyHit = !!(chosen?.preyBonus && b.prey);
+    if (preyHit) notes.push('사냥감');
+    const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * (preyHit ? 1 + chosen!.preyBonus! : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push('연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly;
     const crit = landed && !statusOnly && rng() < sa.crit;
-    const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)));
+    const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)));
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - damage);
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
