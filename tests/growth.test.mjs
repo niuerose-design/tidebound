@@ -158,3 +158,9 @@ test('v24 status split: tiers 1-3 never deal damage and apply a status in one sk
  }
  assert.ok(SKILLS.some(x => !x.statusOnly && ST.includes(x.effect) && JOBS.find(j => j.id === x.job)?.tier >= 4));
 });
+
+test('v24 loadout priority moves only among skills of the same type', () => {
+ const s = newState(0); s.skills = ['hook', 'focus', 'splash', 'breath'];
+ act(s, { type: 'skillUp', id: 'splash' }, 0); assert.deepEqual(s.skills, ['splash', 'focus', 'hook', 'breath'], 'active jumps over the passive to the previous active');
+ act(s, { type: 'skillUp', id: 'splash' }, 0); assert.deepEqual(s.skills, ['splash', 'focus', 'hook', 'breath'], 'first active stays first');
+});

@@ -499,8 +499,12 @@
     padding:19px
   }
 
+  .loadout-columns {
+    grid-template-columns:1fr
+  }
+
   .loadout-row {
-    gap:10px
+    gap:8px
   }
 
   .loadout-skill {

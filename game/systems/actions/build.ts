@@ -135,10 +135,13 @@ export const buildActions: ActionHandlers = {
         s.skills = [...preset.skills];
         clampVitals(s);
     },
+    /** 같은 종류(액티브끼리·패시브끼리)에서 한 칸 앞으로. 액티브는 앞에 있을수록 먼저 판정합니다. */
     skillUp(s, { id }) {
-        const index = s.skills.indexOf(id);
-        if (index > 0) {
-            [s.skills[index - 1], s.skills[index]] = [s.skills[index], s.skills[index - 1]];
+        const index = s.skills.indexOf(id), type = skillById(id)?.type;
+        for (let j = index - 1; j >= 0; j--) {
+            if (skillById(s.skills[j])?.type !== type) continue;
+            [s.skills[j], s.skills[index]] = [s.skills[index], s.skills[j]];
+            break;
         }
     },
 };
