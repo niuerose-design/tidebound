@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import type { Stats } from '@/game/types';
 import { jobTags, type Job } from '@/game/data/classes';
 import { SKILLS } from '@/game/data/skills';
-import { skillEffectLines } from '@/game/systems/skill-description';
+import { skillBrief } from '@/game/systems/skill-description';
 import { STAT_LABELS, statDeltaDisplay, percent } from '@/game/data/progression';
 import { vocationTargets, thresholdRank } from '@/game/data/long-term';
 import { jobMasteryTarget, jobMasteryBoost } from '@/game/systems/progression';
@@ -27,7 +27,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
         <div className="job-detail-title"><h2>???</h2></div>
         <p className="job-detail-sub">{tierName(j)} · {treeName(j.tree)}</p>
         <p className="job-cross">{j.hint || '아직 드러나지 않은 직업입니다.'}</p>
-        <p className="footnote">관문 조건(환생 횟수·선행 직업 숙련·문)을 채우면 이름과 조건이 드러납니다.</p>
+        <p className="footnote">이 직업의 문이 열리면 바로, 문이 없으면 관문 조건(환생 횟수·선행 직업 숙련)을 모두 채우면 이름과 조건이 드러납니다. 한 번 전직하거나 숙달하면 계속 보입니다.</p>
     </article>;
     const st = jobStatus(s, j), current = st.status === 'current', ready = canEnter(st);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;
@@ -59,7 +59,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
                     {r.target !== undefined ? <Meter value={Math.min(r.value || 0, r.target)} max={Math.max(1, r.target)} label={`${format(Math.floor(r.value || 0))} / ${format(r.target)}`}/> : <small>{r.met ? '열림' : '닫힘'}</small>}
                 </li>)}</ul>
             </section>}
-            {tab === 'skills' && <section className="job-detail-section"><div className="vocation-skills">{skills.map(sk => <span key={sk.id}><SkillIcon id={sk.id}/>{sk.name}<small>{sk.type === 'active' ? '액티브' : '패시브'} · Lv.{sk.level}{sk.unlockJobMastery ? ` · 직업 숙련 ${format(sk.unlockJobMastery)}에 해금` : ''}</small><small className="skill-effect-brief">{skillEffectLines(sk).slice(0, 2).join(' · ')}</small></span>)}{!skills.length && <p className="footnote">전용 스킬 없이 공용·계승 스킬을 조합하는 직업입니다.</p>}</div></section>}
+            {tab === 'skills' && <section className="job-detail-section"><div className="vocation-skills">{skills.map(sk => <span key={sk.id}><SkillIcon id={sk.id}/>{sk.name}<small>{sk.type === 'active' ? '액티브' : '패시브'} · Lv.{sk.level}{sk.unlockJobMastery ? ` · 직업 숙련 ${format(sk.unlockJobMastery)}에 해금` : ''}</small><small className="skill-effect-brief">{skillBrief(sk)}</small></span>)}{!skills.length && <p className="footnote">전용 스킬 없이 공용·계승 스킬을 조합하는 직업입니다.</p>}</div></section>}
             {tab === 'mastery' && <>
                 <section className="job-detail-section">
                     <Meter value={Math.min(xp, target)} max={target} label={mastered ? '직업 숙련 · 숙달 완료' : `직업 숙련 · 숙달까지 ${format(target - xp)}`}/>

@@ -58,11 +58,13 @@ export function jobBonusText(j: Job, key: JobBonusKey, mastered = false) {
 /** 실루엣 대상: 히든 직업과 ??? 문 직업. */
 export const secretJob = (j: Job) => !!j.hidden || !!doorFor({}, j.id, 0);
 /**
- * 실루엣 공개: 들어간 적 있거나 숙달했거나, 관문 조건(환생 횟수·선행 직업 숙련·문 열림)을 모두 채우면 이름을 공개합니다.
+ * 실루엣 공개: 들어간 적 있거나 숙달했거나, 그 직업의 문이 지금 열려 있거나, 관문 조건(환생 횟수·선행 직업 숙련·문 열림)을 모두 채우면 이름을 공개합니다.
  * 레벨과 능력치는 보지 않습니다.
  */
 export function jobRevealed(s: State, j: Job) {
     if (!secretJob(j) || s.unlockedJobs.includes(j.id) || jobMastered(s, j)) return true;
+    // 문이 열려 있으면 다른 관문과 상관없이 정체(이름·조건)를 드러냅니다. 전직은 여전히 모든 조건이 필요합니다.
+    if (doorFor(s, j.id, serverNow(s))?.open) return true;
     const parent = jobById(j.parent)?.name;
     const gates = jobRequirements(s, j, serverNow(s)).filter(r => r.label.startsWith('환생 ') || r.label.endsWith('문 열림') || (!!parent && r.label.startsWith(`${parent} 숙련`)));
     return gates.length > 0 && gates.every(r => r.met);
