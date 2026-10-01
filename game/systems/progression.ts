@@ -4,7 +4,7 @@ import { rebirthAP } from './meta';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
-import { Job, jobById } from '../data/classes';
+import { Job, JobStatKey, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { STAGES } from '../data/world';
 import { doorFor, DOORS } from '../data/doors';
@@ -51,10 +51,20 @@ export function jobMasteryBoost(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;
     return Math.max(0, job?.masteryBoost ?? .15);
 }
-/** UI, combat and exported job tables share this exact tier/mastery adjustment. */
+const jobTierScale = (job: Job) => job.tier <= 1 ? .55 : job.tier === 2 ? .82 : 1;
+/** UI, combat and exported job tables share this exact tier/mastery adjustment. 1~3차는 배율이 1 이하라 마이너스 보정만 남습니다. */
 export function jobCombatMultiplier(job: Job, factor: number, mastered = false) {
-    const tierScale = job.tier <= 1 ? .55 : job.tier === 2 ? .82 : 1;
-    return factor >= 1 ? 1 + (factor - 1) * tierScale * (mastered ? 1 + jobMasteryBoost(job) : 1) : factor;
+    return factor >= 1 ? 1 + (factor - 1) * jobTierScale(job) * (mastered ? 1 + jobMasteryBoost(job) : 1) : factor;
+}
+/** 고정 수치 직업 보정(숙달하면 1 + 숙달 보너스 배). 능력치 계산·직업 화면·내보내기가 같은 값을 씁니다. 화면에는 반올림해 보여 줍니다. */
+export function jobFlatBonus(job: Job, key: JobStatKey, mastered = false) {
+    const n = job.bonus?.[key] || 0;
+    return n > 0 ? n * (mastered ? 1 + jobMasteryBoost(job) : 1) : 0;
+}
+/** 고정 보정을 차수별 환산 기준으로 옛 배율에 맞춘 값. 방어 친화도·마력 평타처럼 직업 성향을 판정할 때만 씁니다. */
+export function jobFactor(job: Job, key: JobStatKey) {
+    const flat = job.bonus?.[key] || 0, ref = SKILL_FORMULA.jobFlatReference[Math.min(3, Math.max(1, job.tier))]?.[key];
+    return job[key] + (flat && ref ? flat / (ref * jobTierScale(job)) : 0);
 }
 export function inherited(s: State, id: string) { const sk = skillById(id); return !!sk && (!!s.skillInheritances?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
 export function classAccess(s: State, sk: Skill) { return !sk.job || s.job === sk.job || inherited(s, sk.id); }

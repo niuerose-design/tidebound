@@ -10,10 +10,10 @@ import { SKILLS } from '@/game/data/skills';
 import { skillEffectLines } from '@/game/systems/skill-description';
 import { STAT_LABELS, statDeltaDisplay, percent } from '@/game/data/progression';
 import { vocationTargets, thresholdRank } from '@/game/data/long-term';
-import { jobMasteryTarget, jobMasteryBoost, jobCombatMultiplier } from '@/game/systems/progression';
+import { jobMasteryTarget, jobMasteryBoost } from '@/game/systems/progression';
 import { Meter, SkillIcon, format } from '../shared';
 import type { PanelProps } from '../panel-props';
-import { jobStatus, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS } from './job-status';
+import { jobStatus, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS, hasJobBonus, growsWithMastery, jobBonusText } from './job-status';
 
 type Tab = 'overview' | 'requirements' | 'skills' | 'mastery';
 
@@ -32,7 +32,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
     const st = jobStatus(s, j), current = st.status === 'current', ready = canEnter(st);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;
     const dedicationTargets = vocationTargets(target), dedication = thresholdRank(xp, dedicationTargets);
-    const bonuses = JOB_BONUS_KEYS.filter(key => j[key] !== 1), grows = bonuses.some(key => j[key] > 1) && jobMasteryBoost(j) > 0;
+    const bonuses = JOB_BONUS_KEYS.filter(key => hasJobBonus(j, key)), grows = bonuses.some(key => growsWithMastery(j, key)) && jobMasteryBoost(j) > 0;
     const skills = SKILLS.filter(sk => sk.job === j.id), from = crossParent(j);
     return <article className={`panel job-inspector job-sheet ${current ? 'current' : ''}`} aria-label={`${j.name} 상세`}>
         {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}
@@ -48,7 +48,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
                 <p>{j.desc}</p>
                 {from && <p className="job-cross">{from}에서 이어지는 직업입니다.</p>}
                 <section className="job-detail-section job-compact"><h3>직업 보정 · {j.role}</h3>
-                    <div className="requirements">{bonuses.map(key => <span key={key} className={j[key] < 1 ? 'negative' : 'met'}>{STAT_LABELS[key]} {percent(jobCombatMultiplier(j, j[key], mastered) - 1, 2, true)}</span>)}{!!j.expBonus && <span className="met">경험치 {percent(j.expBonus, 2, true)}</span>}{j.crit > 0 && <span className="met">치명타 {percent(j.crit, 2, true)}p</span>}{Object.entries(j.penalties || {}).map(([key, n]) => <span className="negative" key={key}>{STAT_LABELS[key as keyof Stats]} {statDeltaDisplay(key, n)}</span>)}{!bonuses.length && !j.expBonus && !j.crit && !j.penalties && <span>보정 없음</span>}</div>
+                    <div className="requirements">{bonuses.map(key => <span key={key} className={growsWithMastery(j, key) ? 'met' : 'negative'}>{STAT_LABELS[key]} {jobBonusText(j, key, mastered)}</span>)}{!!j.expBonus && <span className="met">경험치 {percent(j.expBonus, 2, true)}</span>}{j.crit > 0 && <span className="met">치명타 {percent(j.crit, 2, true)}p</span>}{Object.entries(j.penalties || {}).map(([key, n]) => <span className="negative" key={key}>{STAT_LABELS[key as keyof Stats]} {statDeltaDisplay(key, n)}</span>)}{!bonuses.length && !j.expBonus && !j.crit && !j.penalties && <span>보정 없음</span>}</div>
                 </section>
             </>}
             {tab === 'requirements' && <section className="job-detail-section">
@@ -65,7 +65,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
                     <Meter value={Math.min(xp, target)} max={target} label={mastered ? '직업 숙련 · 숙달 완료' : `직업 숙련 · 숙달까지 ${format(target - xp)}`}/>
                     <p className="footnote">숙달하면 이 직업으로는 조건 없이 언제든 다시 전직할 수 있습니다.</p>
                     <div className="job-section-heading"><h3>숙달 전후 보너스</h3><TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" className="info-trigger" aria-label="직업 숙달 보너스 안내"><Info size={16}/></button></TooltipTrigger><TooltipContent className="game-tooltip"><p>숙련 목표를 채우면 이 직업의 체력·공격·방어 보너스가 강화됩니다. 이 직업을 선택한 동안에만 적용되며, 전직 후에도 숙련 기록은 유지됩니다.</p></TooltipContent></Tooltip></TooltipProvider></div>
-                    {bonuses.length > 0 ? <table className="job-bonus-table"><thead><tr><th>능력치</th><th>숙달 전</th><th>숙달 후</th></tr></thead><tbody>{bonuses.map(key => <tr key={key}><th>{STAT_LABELS[key]}</th><td className={j[key] < 1 ? 'negative' : ''}>{percent(jobCombatMultiplier(j, j[key]) - 1, 2, true)}</td><td className={j[key] < 1 ? 'negative' : 'positive'}>{percent(jobCombatMultiplier(j, j[key], true) - 1, 2, true)}</td></tr>)}</tbody></table> : <p className="footnote">숙달로 강화되는 능력치가 없습니다.</p>}
+                    {bonuses.length > 0 ? <table className="job-bonus-table"><thead><tr><th>능력치</th><th>숙달 전</th><th>숙달 후</th></tr></thead><tbody>{bonuses.map(key => <tr key={key}><th>{STAT_LABELS[key]}</th><td className={growsWithMastery(j, key) ? '' : 'negative'}>{jobBonusText(j, key)}</td><td className={growsWithMastery(j, key) ? 'positive' : 'negative'}>{jobBonusText(j, key, true)}</td></tr>)}</tbody></table> : <p className="footnote">숙달로 강화되는 능력치가 없습니다.</p>}
                     {!grows && bonuses.length > 0 && <p className="footnote">숙달 보너스 배율이 없습니다.</p>}
                 </section>
                 <section className="job-detail-section"><h3>직업 단련 · {dedication} / {dedicationTargets.length}</h3><p className="footnote">숙달 이후에도 이 직업의 체력·양 공격·양 방어가 단계마다 4%씩 추가됩니다.</p><Meter value={Math.min(xp, dedicationTargets[dedication] || dedicationTargets.at(-1)!)} max={dedicationTargets[dedication] || dedicationTargets.at(-1)!} label="누적 직업 숙련"/></section>

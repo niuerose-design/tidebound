@@ -4,13 +4,12 @@ import type { State, Stats } from '@/game/types';
 import type { Job } from '@/game/data/classes';
 import { SKILLS } from '@/game/data/skills';
 import { STAT_LABELS, statDeltaDisplay, percent } from '@/game/data/progression';
-import { jobCombatMultiplier } from '@/game/systems/progression';
-import { jobStatus, STATUS_LABEL, treeName, tierName, JOB_BONUS_KEYS } from './job-status';
+import { jobStatus, STATUS_LABEL, treeName, tierName, JOB_BONUS_KEYS, hasJobBonus, jobBonusText } from './job-status';
 
 /** 비교: 최대 3개 직업의 보정(숙달 전·후), 전직 조건, 전용 스킬을 나란히 보여줍니다. */
 export function JobCompare({ s, jobs, onRemove, onClear }: { s: State; jobs: Job[]; onRemove: (id: string) => void; onClear: () => void }) {
     if (!jobs.length) return null;
-    const cell = (j: Job, key: typeof JOB_BONUS_KEYS[number]) => j[key] === 1 ? '—' : `${percent(jobCombatMultiplier(j, j[key]) - 1, 1, true)} → ${percent(jobCombatMultiplier(j, j[key], true) - 1, 1, true)}`;
+    const cell = (j: Job, key: typeof JOB_BONUS_KEYS[number]) => !hasJobBonus(j, key) ? '—' : `${jobBonusText(j, key)} → ${jobBonusText(j, key, true)}`;
     return <section className="panel job-compare" aria-label="직업 비교">
         <div className="job-compare-head"><h2 className="job-column-title">직업 비교 · {jobs.length} / 3</h2><button type="button" className="text-button" onClick={onClear}>모두 비우기</button></div>
         <div className="job-compare-scroll"><table className="job-compare-table">

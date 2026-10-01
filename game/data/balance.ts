@@ -65,17 +65,24 @@ export const SKILL_FORMULA = {
     // v22.2 흡혈 상한: 한 번의 행동(추가타 포함)으로 회복하는 흡혈량은 최대 체력 × 흡혈률 × 이 값까지입니다.
     // 심연은 적의 체력이 높고 공격이 약한 소모전이라, 준 피해 비례 흡혈 3%만으로 도달 층이 3배가 되었습니다.
     lifestealHpCap: .025,
-    // v21 방어 친화도: (직업 물리 방어 배율 − guardBase) ÷ guardSpan, guardFloor~1로 제한.
+    // v21 방어 친화도: (직업 물리 방어 배율 − guardBase) ÷ guardSpan, guardFloor~1로 제한. 고정 보정 직업은 jobFactor로 환산한 배율을 씁니다.
     // 방어 비례 피해와 반격은 이 값만큼만 발휘되어 계승해도 수호 계열만큼 강하지 않습니다.
     guardBase: .95, guardSpan: .5, guardFloor: .2,
     // 처형형 연계: 적 체력이 이 비율 이하일 때 lowHp 조건 보너스가 붙습니다.
     lowHpThreshold: .35,
-    // v21.1 마력 평타: 마법 직업(마법 배율이 물리보다 0.05 이상 높음)은 기본 공격 대신
+    // v21.1 마력 평타: 마법 직업(마법 배율이 물리보다 0.05 이상 높음, 고정 보정의 반올림을 감안해 0.045로 판정)은 기본 공격 대신
     // 차수별 확률로 마법 공격 × arcaneStrikeRatio의 마법 피해를 줍니다. 마나를 쓰지 않습니다.
     arcaneStrikeRatio: .6, arcaneStrikeChance: [0, .7, .8, .9, .95, .95],
     // v21.2 전용 기술: signatureTier 이상 직업의 기술은 자기 계보(조상·후손 직업)에서 온전히,
     // 계보 밖에서 계승하면 배율·패시브 수치가 signatureScale 배로 발휘됩니다. 1~3차 기술은 자유롭게 조합됩니다.
     signatureTier: 4, signatureScale: .7,
+    // v23.1 고정 수치 직업 보정의 환산 기준: 차수별 밸런스 점검 레벨(1차 Lv.15 · 2차 Lv.40 · 3차 Lv.50)에서
+    // 장비 없이 배분했을 때의 능력치입니다. 고정 보정을 옛 배율로 되돌려 방어 친화도·마력 평타 판정에 씁니다.
+    jobFlatReference: {
+        1: { attack: 125, magic: 135, hp: 510, defense: 35, resist: 32 },
+        2: { attack: 300, magic: 330, hp: 1130, defense: 86, resist: 75 },
+        3: { attack: 370, magic: 410, hp: 1380, defense: 105, resist: 91 },
+    } as Record<number, Record<'attack' | 'magic' | 'hp' | 'defense' | 'resist', number>>,
 };
 // 상태이상 수치와 지속시간은 전투 코드와 분리해 여기서 조정합니다.
 export const STATUS_TUNING = {

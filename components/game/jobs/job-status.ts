@@ -2,7 +2,8 @@
 import type { State } from '@/game/types';
 import { JOBS, JOB_TREES, lineageOf, jobTags, type Job, jobById } from '@/game/data/classes';
 import { doorFor } from '@/game/data/doors';
-import { jobRequirements, jobMastered } from '@/game/systems/progression';
+import { jobRequirements, jobMastered, jobCombatMultiplier, jobFlatBonus } from '@/game/systems/progression';
+import { percent } from '@/game/data/progression';
 
 export type JobStatus = 'current' | 'mastered' | 'ready' | 'near' | 'locked';
 /** 화면의 기준 시각. 클라이언트 시계 대신 마지막 서버 시각(lastTick)을 씁니다. */
@@ -37,6 +38,22 @@ export const tierLabel = (tier: number) => tier ? `0${tier}` : '시작';
 export const tierName = (j: Job) => j.tier ? `${j.tier}차` : '시작';
 /** 직업 보정 능력치(숙달하면 강화). */
 export const JOB_BONUS_KEYS = ['attack', 'magic', 'hp', 'defense', 'resist'] as const;
+export type JobBonusKey = typeof JOB_BONUS_KEYS[number];
+/** 이 능력치에 직업 보정이 있는지(고정 수치·배율 어느 쪽이든). */
+export const hasJobBonus = (j: Job, key: JobBonusKey) => j[key] !== 1 || !!j.bonus?.[key];
+/** 숙달로 강화되는 플러스 보정이 있는지. */
+export const growsWithMastery = (j: Job, key: JobBonusKey) => j[key] > 1 || !!j.bonus?.[key];
+/**
+ * 직업 보정 표시: 1~3차 플러스는 고정 수치(+N), 마이너스와 4·5차는 배율(%).
+ * 한 능력치에 고정 보정과 마이너스 배율이 함께 있으면 둘 다 보여 줍니다.
+ */
+export function jobBonusText(j: Job, key: JobBonusKey, mastered = false) {
+    const parts: string[] = [];
+    const flat = jobFlatBonus(j, key, mastered);
+    if (flat > 0) parts.push(`+${Math.round(flat).toLocaleString('ko-KR')}`);
+    if (j[key] !== 1) parts.push(percent(jobCombatMultiplier(j, j[key], mastered) - 1, 2, true));
+    return parts.join(' · ') || '—';
+}
 
 /** 실루엣 대상: 히든 직업과 ??? 문 직업. */
 export const secretJob = (j: Job) => !!j.hidden || !!doorFor({}, j.id, 0);

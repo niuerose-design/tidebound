@@ -13,7 +13,7 @@ const { load: moduleAt } = loadGame();
     const { PROGRESSION, STAT_LABELS } = await moduleAt('game/data/progression');
     const { STATUS_TUNING } = await moduleAt('game/data/balance');
     const { ENEMY_SKILLS, profile } = await moduleAt('game/data/encounters');
-    const { effectiveSkill, masteryMilestonesFor, masteryGainBonus, jobCombatMultiplier } = await moduleAt('game/systems/progression');
+    const { effectiveSkill, masteryMilestonesFor, masteryGainBonus, jobCombatMultiplier, jobFlatBonus } = await moduleAt('game/systems/progression');
     const { masteryConditionText } = await moduleAt('game/systems/mastery');
     const jobName = id => JOBS.find(job => job.id === id)?.name || id;
     const jobs = JOBS.map(job => ({
@@ -26,6 +26,8 @@ const { load: moduleAt } = loadGame();
         }).join(' / ') || '없음',
         effectiveMultipliers: Object.fromEntries(['hp', 'attack', 'magic', 'defense', 'resist'].map(key => [key, jobCombatMultiplier(job, job[key])])),
         masteredMultipliers: Object.fromEntries(['hp', 'attack', 'magic', 'defense', 'resist'].map(key => [key, jobCombatMultiplier(job, job[key], true)])),
+        flatBonus: Object.fromEntries(['hp', 'attack', 'magic', 'defense', 'resist'].map(key => [key, jobFlatBonus(job, key)])),
+        masteredFlatBonus: Object.fromEntries(['hp', 'attack', 'magic', 'defense', 'resist'].map(key => [key, jobFlatBonus(job, key, true)])),
     }));
     const skills = SKILLS.map(skill => ({ ...skill, ownerName: jobName(skill.job) || '공용', masteryCondition: masteryConditionText(skill),
         sourceName: ENEMY_SKILLS.find(sk => sk.id === skill.sourceEnemySkill)?.name || '',
