@@ -31,7 +31,7 @@ test('v21 poison, burns and execute conditions are data-driven',()=>{
  const dart=SKILLS.find(x=>x.id==='venomDart');let b=mk([]);strike(mk(['venomDart'],{dotBonus:.5}),b,()=>0);
  assert.equal(b.effects.dot.name,'중독');assert.equal(b.effects.dot.damage,Math.floor(100*dart.dotRatio*1.5));
  assert.equal(b.hp,1e6);// 독침은 상태이상 전용: 직접 피해 없음
- b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.dot,undefined);assert.ok(b.hp<1e6);// 화염구는 피해 전용
+ b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.dot.name,'화상');assert.ok(b.hp<1e6);// 화염구는 피해와 화상을 함께
  b=mk([]);strike(mk(['rotBloom']),b,()=>0);assert.equal(b.effects.dot.name,'중독');assert.ok(b.hp<1e6);// 4차는 피해와 상태이상을 함께
  const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[];strike(mk(['braveSlash']),t,()=>0,ev);return ev[0].hits[0].value;};
  const sk=SKILLS.find(x=>x.id==='braveSlash');assert.equal(brave(3e5),Math.round(Math.round(100*sk.multiplier)*(1+sk.conditionalDamageBonus)));assert.equal(brave(1e6),Math.round(100*sk.multiplier));

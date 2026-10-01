@@ -72,6 +72,7 @@ export function Guide({ s }: { s?: State }) {
                     <small>{status.detail}</small>
                 </article>)}</div>
             </div>)}
+            <p className="footnote help-status-rules"><b>공통 규칙</b> 상대에게 이미 걸린 상태이상은 다시 걸지 않고 그 기술을 건너뜁니다(중첩형 중독은 계속 쌓임). 상태이상이 풀린 뒤에는 기절 {STATUS_TUNING.immuneTurns.stun}턴, 그 밖 {STATUS_TUNING.immuneTurns.slow}턴 동안 같은 상태이상에 면역입니다. 1~2차 기술이 피해와 함께 거는 기절은 피해 배율 ×{STATUS_TUNING.earlyStatusMultiplierCap.stun}, 침묵은 ×{STATUS_TUNING.earlyStatusMultiplierCap.silence} 이하입니다. 배율이 낮은 보조기는 피해 없이 상태이상만 오래 겁니다.</p>
         </Topic>
         <Topic icon={<Zap size={19}/>} title="스킬" note="발동, 습득·계승, 숙련과 연마.">
             <div className="help-columns">

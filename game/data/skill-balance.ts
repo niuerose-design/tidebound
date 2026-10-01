@@ -1,5 +1,6 @@
 import type { Skill } from '../types';
 import { EXPANSION_BALANCE } from './expansion';
+import { STATUS_TUNING } from './balance';
 import { LINEAGE_BALANCE } from './expansion-lineages';
 import { V24_BALANCE } from './expansion-v24';
 
@@ -21,7 +22,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     rushCurrent: { chance: .28, multiplier: 1.05, cooldown: 4 },
     whaleStrike: { chance: .24, multiplier: 3.2 },
     razor: { chance: .28, multiplier: 1.6 },
-    maelstrom: { chance: .55, multiplier: 2.6, manaCost: 20, damageType: 'magic' },
+    maelstrom: { chance: .55, multiplier: 2.4, manaCost: 20, damageType: 'magic' },
     pearlPrayer: { chance: .6, multiplier: 1.7, manaCost: 16, damageType: 'magic', healRatio: .18 },
     crush: { chance: .22, multiplier: 1.5 },
     oath: { chance: .24, multiplier: 2.1, drainRatio: .15 },
@@ -65,21 +66,21 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
 };
 
 /**
- * v24 상태이상·피해 분리: 1~3차(공용 포함)에는 피해와 상태이상을 함께 주는 액티브가 없습니다.
+ * 상태이상 규칙(v24 → v24.1 혼합 방식)
  * - STATUS_ONLY: 배율이 낮은 보조기. 피해 없이 상태이상만 걸고 지속 턴이 늘어납니다(기절 +1, 그 밖 +2).
- * - DAMAGE_ONLY: 배율 1.7 이상인 주력기와 연계 공격기. 덤으로 붙던 상태이상을 떼고 피해만 줍니다.
- *   연계 공격기(제어·출혈·약화 중인 적 추가 피해)는 같은 계보의 상태이상 전용 기술로 상태를 걸어 둡니다.
- * 4·5차 기술은 피해와 상태이상을 함께 줄 수 있습니다.
+ * - 그 밖의 기술은 피해와 상태이상을 함께 줄 수 있습니다. 대신 전투에서
+ *   ① 상대에게 이미 걸린 상태이상은 다시 걸지 않고(그 기술은 건너뜀, 중첩형 중독 제외)
+ *   ② 상태이상이 풀린 뒤 잠시 같은 상태이상에 면역이며(STATUS_TUNING.immuneTurns)
+ *   ③ 1~2차(공용 포함)의 피해+기절·침묵 기술은 피해 배율이 제한됩니다(STATUS_TUNING.earlyStatusMultiplierCap).
+ * - 1~3차 연계 공격기는 상태이상 없이 피해만 줍니다(같은 계보의 보조기로 상태를 겁니다).
  */
 export const STATUS_ONLY_SKILLS = ['splash', 'anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
     'bellCrash', 'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
     'quakeStep', 'sealHex', 'frostMist'];
-export const DAMAGE_ONLY_SKILLS = ['graveHook', 'undertow', 'wave', 'anchorBreak', 'arcSlash', 'electricBite', 'fireball', 'maelstrom', 'marrowGuard', 'eternalWave', 'krakenBore', 'leviathanEquation', 'meteor', 'thunderPsalm',
-    'jointLock', 'openVein', 'pinDoll', 'rimeShackle', 'severNerve', 'corrosiveBloom', 'crimsonVerdict', 'deadCalm', 'miasma', 'skyBreaker', 'soulRend', 'thornCounter'];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, weaken: 3, silence: 2, slow: 3 };
-/** 상태이상 전용·피해 전용 분리. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. */
-export function splitStatusAndDamage(sk: Skill) {
+/** 상태이상 전용 전환과 초반 배율 제한. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. tier는 기술 주인 직업의 차수(공용 0). */
+export function applyStatusRules(sk: Skill, tier: number) {
     if (STATUS_ONLY_SKILLS.includes(sk.id) && sk.effect && STATUS_DEFAULT_TURNS[sk.effect] !== undefined) {
         sk.statusOnly = true;
         sk.statusTurns = (sk.statusTurns ?? STATUS_DEFAULT_TURNS[sk.effect]) + (sk.effect === 'stun' ? 1 : 2);
@@ -87,23 +88,27 @@ export function splitStatusAndDamage(sk: Skill) {
         sk.chance = Math.min(sk.chance, STATUS_ONLY_MAX_CHANCE);
         sk.cooldown = Math.max(sk.cooldown, sk.statusTurns);
         delete sk.damageBonusCondition; delete sk.conditionalDamageBonus; delete sk.extraAttacks; delete sk.penetrationBonus;
+        return;
     }
-    if (DAMAGE_ONLY_SKILLS.includes(sk.id)) {
+    // 1~3차 연계 공격기(제어·출혈·약화 중인 적 추가 피해)는 상태이상 없이 피해만 줍니다. 상태는 같은 계보의 보조기가 겁니다.
+    // (직접 건 상태 때문에 연계기가 건너뛰어지는 일을 막습니다.)
+    if (tier <= 3 && sk.damageBonusCondition && sk.damageBonusCondition !== 'lowHp' && sk.effect && STATUS_DEFAULT_TURNS[sk.effect] !== undefined) {
         delete sk.effect; delete sk.statusTurns; delete sk.dotName; delete sk.dotRatio; delete sk.dotStacks;
-        // 가시 반류는 출혈을 스스로 걸지 않으므로 출혈 연계도 뗍니다(방어 비례 주력기).
-        if (sk.id === 'thornCounter') { delete sk.damageBonusCondition; delete sk.conditionalDamageBonus; }
+        return;
     }
+    const cap = sk.effect ? STATUS_TUNING.earlyStatusMultiplierCap[sk.effect] : undefined;
+    if (cap !== undefined && tier <= 2) sk.multiplier = Math.min(sk.multiplier, cap);
 }
 
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
 export const MAGIC_MANA_COST_SCALE = 4;
 
-export function tuneActiveSkills(skills: Skill[]) {
+export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number = () => 0) {
     for (const sk of skills) {
         const tuning = ACTIVE_SKILL_BALANCE[sk.id];
         if (!tuning) continue;
         Object.assign(sk, tuning);
-        splitStatusAndDamage(sk);
+        applyStatusRules(sk, tierOf(sk));
         // 복합(split) 피해도 마나를 쓰는 주문으로 취급합니다.
         const magic = sk.damageType === 'magic' || sk.damageType === 'split';
         // 물리 기술은 마나를 쓰지 않고, 마법·복합 기술은 정신(마나 회복)에 투자해야 꾸준히 쓸 수 있도록 비용을 높입니다.

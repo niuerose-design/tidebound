@@ -35,6 +35,8 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.effect === 'slow') out.push(`명중 시 상대 속도 −${skillPercent(STATUS_TUNING.slowMultiplier)} · ${sk.statusTurns ?? STATUS_TUNING.slowTurns}턴`);
         if (sk.effect === 'haste') out.push(`명중 시 자신의 속도 +${skillPercent(STATUS_TUNING.hasteMultiplier)} · ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
         if (sk.effect === 'drain') out.push(`실제로 깎은 체력의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 회복 · 한 번에 최대 체력 × (흡혈률 + ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}) × ${skillPercent(SKILL_FORMULA.lifestealHpCap)}까지`);
+        const statusKey = ({ stun: 'stun', bleed: 'bleed', weaken: 'weaken', silence: 'silence', slow: 'slow' } as const)[sk.effect as 'stun'];
+        if (statusKey) out.push(`${sk.dotStacks ? '중첩은 계속 쌓임' : '상대에게 이미 걸려 있으면 이 기술은 건너뜀'} · 풀린 뒤 ${STATUS_TUNING.immuneTurns[statusKey]}턴 면역`);
         if (sk.extraAttacks) out.push(`추가 공격 ${Math.min(STATUS_TUNING.maxExtraAttacks, sk.extraAttacks)}회 · 각 타격은 위 피해식의 ${skillPercent(sk.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)}`);
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));

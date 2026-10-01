@@ -102,6 +102,10 @@ export const STATUS_TUNING = {
     hasteMultiplier: .35,
     /** Extra hits are intentionally capped so one proc cannot create runaway loops. */
     maxExtraAttacks: 2,
+    /** v24.1 면역: 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 턴(자기 행동 기준). */
+    immuneTurns: { stun: 2, bleed: 1, weaken: 1, silence: 1, slow: 1 },
+    /** v24.1 초반 배율 제한: 1~2차(공용 포함)에서 피해와 함께 거는 상태이상별 최대 피해 배율. */
+    earlyStatusMultiplierCap: { stun: 1.2, silence: 1.5 } as Partial<Record<string, number>>,
 } as const;
 export const STATUS_GUIDE = [
     { id: 'stun', name: '기절', kind: '행동 차단', description: '다음 행동을 건너뜁니다.', detail: '기절 중에도 출혈 같은 지속 피해는 먼저 처리됩니다.' },

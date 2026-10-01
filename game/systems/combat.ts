@@ -28,16 +28,42 @@ export type Fighter = {
     damageTaken?: number;
 };
 type DurationStatus = 'weaken' | 'silence' | 'slow' | 'haste';
+type ImmuneStatus = keyof NonNullable<StatusEffects['immune']>;
+/** 상태이상이 끝나면 같은 상태이상에 잠시 면역이 됩니다(가속은 자기 버프라 제외). */
+function grantImmunity(effects: StatusEffects, key: ImmuneStatus) {
+    (effects.immune ??= {})[key] = STATUS_TUNING.immuneTurns[key];
+}
 function consumeStatus(effects: StatusEffects, key: DurationStatus) {
     const remaining = effects[key] || 0;
     if (remaining <= 0)
         return false;
-    if (remaining === 1)
+    if (remaining === 1) {
         delete effects[key];
+        if (key !== 'haste') grantImmunity(effects, key);
+    }
     else
         effects[key] = remaining - 1;
     return true;
 }
+/** 자기 행동마다 면역 턴을 1씩 줄입니다. */
+function tickImmunity(effects: StatusEffects) {
+    if (!effects.immune) return;
+    for (const key of Object.keys(effects.immune) as ImmuneStatus[]) {
+        const left = (effects.immune[key] || 0) - 1;
+        if (left > 0) effects.immune[key] = left; else delete effects.immune[key];
+    }
+    if (!Object.keys(effects.immune).length) delete effects.immune;
+}
+const ENEMY_STATUS: Record<string, ImmuneStatus> = { stun: 'stun', bleed: 'bleed', weaken: 'weaken', silence: 'silence', slow: 'slow' };
+/** 상대에게 이미 걸려 있는 상태이상(중첩형 중독은 더 쌓을 수 있으므로 제외). */
+function alreadyAfflicted(b: Fighter, sk: { effect?: string; dotStacks?: boolean }) {
+    const key = sk.effect ? ENEMY_STATUS[sk.effect] : undefined;
+    if (!key) return false;
+    if (key === 'stun') return b.stun > 0;
+    if (key === 'bleed') return !!b.effects?.dot && !sk.dotStacks;
+    return (b.effects?.[key] || 0) > 0;
+}
+const isImmune = (b: Fighter, key: ImmuneStatus) => (b.effects?.immune?.[key] || 0) > 0;
 function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number) {
     effects[key] = Math.max(effects[key] || 0, turns);
 }
@@ -89,6 +115,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const notes: string[] = [];
     const ev: CombatEvent = { actor: a.name, skillName: '기본 공격', damageType: 'physical', hits: [], total: 0, healed: 0, drained: 0, statuses: [] };
     const emit = (text: string) => { events?.push(ev); return text; };
+    tickImmunity(a.effects);
     if (a.effects.dot) {
         const dot = a.effects.dot;
         const dotHit = dot.damage;
@@ -96,8 +123,10 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         notes.push(`${dot.name} ${dotHit}`);
         ev.dot = { name: dot.name, value: dotHit };
         dot.turns--;
-        if (dot.turns <= 0)
+        if (dot.turns <= 0) {
             delete a.effects.dot;
+            grantImmunity(a.effects, 'bleed');
+        }
         if (a.hp <= 0) {
             ev.defeated = true;
             return emit(`${a.name} · ${notes.join(' · ')} → 쓰러짐`);
@@ -117,6 +146,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         a.cooldowns[k] = Math.max(0, a.cooldowns[k] - 1);
     if (a.stun > 0) {
         a.stun--;
+        if (a.stun === 0) grantImmunity(a.effects, 'stun');
         ev.stunned = true;
         return emit(`${a.name}: 기절로 행동 불가.${notes.length ? ' ' + notes.join(' · ') : ''}`);
     }
@@ -134,6 +164,11 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             if (candidate.condition === 'healthyTarget' && b.hp < sb.hp * .6)
                 continue;
             if (a.mana < (candidate.manaCost || 0))
+                continue;
+            // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
+            if (alreadyAfflicted(b, candidate))
+                continue;
+            if (candidate.statusOnly && candidate.effect && ENEMY_STATUS[candidate.effect] && isImmune(b, ENEMY_STATUS[candidate.effect]))
                 continue;
             if (rng() < candidate.chance) {
                 chosen = candidate;
@@ -197,13 +232,15 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     }
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
     if (!statusOnly || !landed) ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed });
-    if (landed && chosen?.effect === 'stun') {
+    if (landed && chosen?.effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
+    else if (landed && chosen?.effect === 'stun') {
         const turns = (chosen.statusTurns ?? 1) + sa.stunBonus;
         b.stun = Math.max(b.stun, turns);
         notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
         ev.statuses.push({ id: 'stun', turns });
     }
-    if (landed && chosen?.effect === 'bleed') {
+    if (landed && chosen?.effect === 'bleed' && isImmune(b, 'bleed')) { notes.push('출혈 면역'); ev.immune = 'bleed'; }
+    else if (landed && chosen?.effect === 'bleed') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus;
         const name = chosen.dotName || '출혈';
         const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
@@ -221,19 +258,22 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         }
         ev.statuses.push({ id: 'bleed', turns });
     }
-    if (landed && chosen?.effect === 'weaken') {
+    if (landed && chosen?.effect === 'weaken' && isImmune(b, 'weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
+    else if (landed && chosen?.effect === 'weaken') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.weakenTurns;
         extendStatus(b.effects, 'weaken', turns);
         notes.push(`공격 약화 ${turns}턴`);
         ev.statuses.push({ id: 'weaken', turns });
     }
-    if (landed && chosen?.effect === 'silence') {
+    if (landed && chosen?.effect === 'silence' && isImmune(b, 'silence')) { notes.push('침묵 면역'); ev.immune = 'silence'; }
+    else if (landed && chosen?.effect === 'silence') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.silenceTurns) + sa.controlBonus;
         extendStatus(b.effects, 'silence', turns);
         notes.push(`침묵 ${turns}턴`);
         ev.statuses.push({ id: 'silence', turns });
     }
-    if (landed && chosen?.effect === 'slow') {
+    if (landed && chosen?.effect === 'slow' && isImmune(b, 'slow')) { notes.push('감속 면역'); ev.immune = 'slow'; }
+    else if (landed && chosen?.effect === 'slow') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.slowTurns) + sa.controlBonus;
         extendStatus(b.effects, 'slow', turns);
         notes.push(`감속 ${turns}턴`);

@@ -150,13 +150,16 @@ test('v24 late-bloomer passives start expensive and pay off at 10k/100k/500k mas
  for (const id of ['abyssalPatience', 'tideOfAges', 'reefOfEons', 'aeonsInsight']) assert.equal(maxSkillLevel(SKILLS.find(x => x.id === id)), 3, id);
 });
 
-test('v24 status split: tiers 1-3 never deal damage and apply a status in one skill; tiers 4-5 may', () => {
- const ST = ['stun', 'bleed', 'weaken', 'silence', 'slow'];
- for (const sk of SKILLS.filter(x => x.type === 'active' && ST.includes(x.effect))) {
+const STATUS_TUNING_CAPS = (await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/balance')).STATUS_TUNING.earlyStatusMultiplierCap;
+test('v24.1 status rules: support skills are status-only; early damage+stun/silence skills are multiplier-capped', () => {
+ for (const sk of SKILLS.filter(x => x.statusOnly)) assert.ok(sk.statusTurns > 0 && sk.chance <= .3 && sk.cooldown >= sk.statusTurns, sk.id);
+ const caps = STATUS_TUNING_CAPS;
+ for (const sk of SKILLS.filter(x => x.type === 'active' && !x.statusOnly && caps[x.effect] !== undefined)) {
   const tier = JOBS.find(j => j.id === sk.job)?.tier ?? 0;
-  if (tier <= 3) assert.ok(sk.statusOnly, `${sk.id} (tier ${tier}) should be status-only`);
+  if (tier <= 2) assert.ok(sk.multiplier <= caps[sk.effect] + 1e-9, `${sk.id} ×${sk.multiplier}`);
  }
- assert.ok(SKILLS.some(x => !x.statusOnly && ST.includes(x.effect) && JOBS.find(j => j.id === x.job)?.tier >= 4));
+ assert.equal(SKILLS.find(x => x.id === 'wave').effect, 'stun'); assert.ok(SKILLS.find(x => x.id === 'wave').multiplier <= caps.stun);
+ assert.equal(SKILLS.find(x => x.id === 'meteor').effect, 'stun'); assert.ok(SKILLS.find(x => x.id === 'meteor').multiplier > caps.stun, 'tier 3 keeps its damage');
 });
 
 test('v24 loadout priority moves only among skills of the same type', () => {

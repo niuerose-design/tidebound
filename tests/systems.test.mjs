@@ -39,3 +39,22 @@ test('v24 monsters can land critical hits; bosses and swift predators crit more'
  const st = { hp: 1000, attack: 100, defense: 0, crit: 1 }, a = { name: 'foe', stats: st, hp: 1000, skills: [], cooldowns: {}, stun: 0 }, b = { name: 'me', stats: { ...st, crit: 0 }, hp: 1000, skills: [], cooldowns: {}, stun: 0 };
  assert.match(strike(a, b, () => 0), /치명타/);
 });
+
+test('v24.1 a status already on the target is not re-applied: the skill is skipped for the next one', () => {
+ const st = { hp: 1000, attack: 50, magic: 50, defense: 0, resist: 0, crit: 0, mana: 1000, manaRegen: 0, accuracy: 5 };
+ const a = { name: 'A', stats: st, hp: 1000, mana: 1000, skills: ['meteor', 'hook'], cooldowns: {}, stun: 0, effects: {}, ranks: { meteor: 1, hook: 1 } };
+ const b = { name: 'B', stats: st, hp: 1000, skills: [], cooldowns: {}, stun: 2, effects: {} };
+ const log = strike(a, b, () => 0); assert.doesNotMatch(log, /메테오/); assert.match(log, /강철 챔질/);
+});
+test('v24.1 immunity: after a stun wears off the target cannot be stunned again for a while', () => {
+ const st = { hp: 1e6, attack: 10, defense: 0, crit: 0, accuracy: 5, mana: 1000, manaRegen: 0 };
+ const a = { name: 'A', stats: st, hp: 1e6, mana: 1000, skills: ['meteor'], cooldowns: {}, stun: 0, effects: {}, ranks: { meteor: 1 } };
+ const b = { name: 'B', stats: st, hp: 1e6, skills: [], cooldowns: {}, stun: 1, effects: {} };
+ strike(b, a, () => 0); assert.equal(b.stun, 0); assert.equal(b.effects.immune.stun, 2, 'stun ends → immune');
+ const log = strike(a, b, () => 0); assert.match(log, /기절 면역/); assert.equal(b.stun, 0, 'damage lands, stun does not');
+ strike(b, a, () => 0); assert.equal(b.effects.immune.stun, 1); strike(b, a, () => 0); assert.equal(b.effects.immune, undefined, 'immunity expires');
+ // 상태이상 전용 기술은 면역 중인 상대에게 쓰지 않습니다.
+ const c = { name: 'C', stats: st, hp: 1e6, mana: 1000, skills: ['splash'], cooldowns: {}, stun: 0, effects: {}, ranks: { splash: 1 } };
+ const d = { name: 'D', stats: st, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: { immune: { stun: 1 } } };
+ assert.doesNotMatch(strike(c, d, () => 0), /물보라/);
+});

@@ -59,6 +59,8 @@ export type StatusEffects = {
     silence?: number;
     slow?: number;
     haste?: number;
+    /** 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 남은 턴(자기 행동마다 1씩 줄어듭니다). */
+    immune?: Partial<Record<'stun' | 'bleed' | 'weaken' | 'silence' | 'slow', number>>;
 };
 export type Item = {
     enhance?: number;
@@ -173,6 +175,8 @@ export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split';
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
+    /** 면역으로 막힌 상태이상(있을 때만). */
+    immune?: string;
     dot?: { name: string; value: number }; reflected?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
     /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
     chain?: number;

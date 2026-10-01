@@ -182,7 +182,7 @@ for (const sk of SKILLS) {
 }
 
 // Apply the centralized player balance after assignment and mastery defaults.
-tuneActiveSkills(SKILLS);
+tuneActiveSkills(SKILLS, sk => JOBS.find(j => j.id === sk.job)?.tier ?? 0);
 
 /** id로 찾기(첫 항목 우선, SKILLS.find와 같은 결과). 모듈 초기화가 끝난 뒤 처음 부를 때 한 번 만듭니다. */
 let skillByIdMap: Map<string, Skill> | undefined;
