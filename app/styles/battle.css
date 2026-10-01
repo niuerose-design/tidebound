@@ -281,3 +281,40 @@
 .battle-fx-host .monster-skill-cue{top:50%;z-index:8}
 .battle-fx-host .tide-fx-combo{top:auto;bottom:-10px;right:8px}
 @media(max-width:767px){.battle-fx-host .tide-fx-target-player{left:50%;top:23%}.battle-fx-host .tide-fx-target-enemy{left:50%;top:78%}}
+
+/* 모바일 요약 줄: 레벨·경험치를 스크롤 없이 확인 */
+.mobile-fisher-strip{display:none}
+@media(max-width:767px){
+.mobile-fisher-strip{display:flex;align-items:center;gap:11px;width:100%;margin:0 0 12px;padding:11px 12px;text-align:left;border:1px solid #3c5f55;border-radius:8px;background:linear-gradient(135deg,#15302f,#10232a);color:#d9e5dc;cursor:pointer}
+.mobile-fisher-strip:focus-visible{outline:2px solid #8fb39a;outline-offset:2px}
+.mobile-fisher-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex:none;width:50px;height:50px;border:1px solid #b99a5c;border-radius:50%;background:#1b2d2a;color:#e0c27d}
+.mobile-fisher-badge b{font:700 11px/1 monospace;color:#f0dcaa}
+.mobile-fisher-main{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.mobile-fisher-head{display:flex;align-items:baseline;gap:6px;min-width:0}
+.mobile-fisher-head strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-fisher-head small{flex:1;min-width:0;font-size:11px;color:#8faaa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-fisher-head em{flex:none;font-style:normal;font-size:11px;color:#e0c27d}
+.mobile-fisher-bar{position:relative;display:block;height:16px;border-radius:4px;background:#0a171b;overflow:hidden}
+.mobile-fisher-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.mobile-fisher-bar small{position:relative;display:block;padding:0 6px;font:600 10px/16px monospace;color:#eef3ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-fisher-bar.exp i{background:linear-gradient(90deg,#8a6b2f,#d1a752)}
+.mobile-fisher-bar.hp i{background:#3f8b6c}
+.mobile-fisher-bar.mana i{background:#4b6fa0}
+.mobile-fisher-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mobile-fisher-mini .mobile-fisher-bar{height:13px}
+.mobile-fisher-mini .mobile-fisher-bar small{font-size:9px;line-height:13px}
+.mobile-fisher-chevron{flex:none;color:#7f9c98}
+/* 모바일 순서: 요약 → 장면(시작·정지) → 대결 → 스킬 → 기록 → 지표·해역·집중 사냥 */
+.battle-console>.mobile-fisher-strip{order:0}
+.battle-console>.battle-scene{order:1}
+.battle-console>.battle-opponent-strip{order:2}
+.battle-console>.matchup-strip{order:3}
+.battle-console>.battle-skills{order:4}
+.battle-console>.log-panel{order:5}
+.battle-console>.session-metrics{order:6;margin-top:12px}
+.battle-console>.battle-target-strip{order:7}
+.battle-console>.tide-selector{order:8}
+.battle-utility-rail{flex-direction:column;align-items:stretch}
+.battle-utility-rail>*{width:100%}
+.battle-utility-rail>.battle-feed{display:none}
+}
