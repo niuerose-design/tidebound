@@ -45,15 +45,15 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
 }
 /**
  * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
- * codex 발견한 어종 + 등록한 물건 · catch 누적 포획 · hunt 던전 클리어 + 보스 포획 · species 지정 어종 포획 · gold 보유 골드 자릿수 · rebirth 환생.
+ * codex 발견한 어종 + 등록한 물건 · catch 누적 포획 · hunt 던전 클리어 + 보스 포획 · species 지정 어종 포획 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수.
  */
-export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths'>) {
+export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery'>) {
     const book = s.book || {};
     let catches = 0, discovered = 0, bosses = 0;
     for (const f of FISH) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
     const clears = Object.values(s.clears || {}).reduce((x, n) => x + (n || 0), 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
-    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0 };
+    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, mastered: masteredJobCount(s) };
 }
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;
@@ -190,6 +190,8 @@ export function skillMasteryHint(sk: Skill, level: number, rank = 1) {
 }
 /** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다. */
 export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
+/** 숙달(숙련 목표 달성)한 직업 수. 편력 낚시꾼의 패시브와 발견의 문이 셉니다. */
+export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && jobMastered(s, j); }).length;
 /** 전직 조건 목록. now는 서버가 넘긴 요청 시각(문 판정용)이며, 화면에서는 마지막 서버 시각(lastTick)을 씁니다. */
 export function jobRequirements(s: State, j: Job, now = s.lastTick) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);

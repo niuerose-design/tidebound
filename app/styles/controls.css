@@ -101,3 +101,10 @@
 .skill-chip{border:0;background:transparent;color:#8fa9a7;border-radius:5px;padding:6px 10px;font-size:12px;cursor:pointer}.skill-chip.active{background:#2d4b45;color:#e2dfbe}
 .skill-finder .gear-count{margin-left:auto}
 @media(max-width:767px){.skill-finder .gear-count{margin-left:0;width:100%}}
+/* v25.3 스킬 편의: 즐겨찾기 핀, 끌어서 순서 변경, 계보별 묶기, 추천 편성. */
+.skill-pin{margin-left:auto;align-self:flex-start;border:1px solid transparent;background:transparent;color:#6f8a8c;border-radius:6px;padding:4px;cursor:pointer}.skill-pin:hover{color:#d6b879}.skill-pin.active{color:#e8d39a;border-color:#d5b36c55;background:#223329}
+.skill-title{display:flex;align-items:center;gap:10px}
+.loadout-skill.draggable{cursor:grab}.loadout-skill.dragging{opacity:.45}.loadout-grip{display:flex;color:#5f7a7c;flex-shrink:0}
+.loadout .section-title{flex-wrap:wrap;gap:8px}.loadout .section-title>button{margin-left:auto;font-size:13px}
+.skill-group{border:1px solid #9ab4b522;border-radius:8px;padding:0 14px 14px;margin-bottom:12px;background:#0f2227}
+.skill-group>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 0;cursor:pointer;list-style:none}.skill-group>summary::-webkit-details-marker{display:none}.skill-group>summary h2{font-size:16px}.skill-group>summary span{font-size:12px;color:#9dadaf}

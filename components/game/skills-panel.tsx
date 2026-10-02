@@ -3,14 +3,15 @@
 import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { thresholdRank, refinementBonusLabel } from '@/game/data/long-term';
-import { useState } from 'react';
-import { ArrowDown, ArrowUp, Info, Search, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowDown, ArrowUp, GripVertical, Info, Pin, Search, Sparkles } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
+import { stats } from '@/game/systems/stats';
 import { BALANCE } from '@/game/data/balance';
-import { skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason } from '@/game/systems/progression';
+import { lineage, skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon } from './shared';
 import { masteryConditionText } from '@/game/systems/mastery';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -21,7 +22,11 @@ import { ENEMY_SKILLS } from '@/game/data/encounters';
 
 
 
-function SkillCard({ sk, s, send, busy, detailed }: PanelProps & { sk: Skill; detailed: boolean }) {
+function PinButton({ pinned, onPin, name }: { pinned: boolean; onPin: () => void; name: string }) {
+    return <button type="button" className={`skill-pin ${pinned ? 'active' : ''}`} aria-pressed={pinned} aria-label={`${name} ${pinned ? '즐겨찾기 해제' : '즐겨찾기'}`} title={pinned ? '즐겨찾기 해제' : '즐겨찾기에 고정'} onClick={onPin}><Pin size={14}/></button>;
+}
+
+function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: PanelProps & { sk: Skill; detailed: boolean; pinned?: boolean; onPin?: () => void }) {
     const rank = s.learned[sk.id] || 0, acquired = rank > 0;
     const practice = s.skillPractice[sk.id] || 0, mastery = skillMastery(s, sk.id);
     const level = skillLevel(sk, rank || 1, mastery), max = maxSkillLevel(sk), milestones = masteryMilestonesFor(sk);
@@ -44,14 +49,14 @@ function SkillCard({ sk, s, send, busy, detailed }: PanelProps & { sk: Skill; de
     const equipLabel = equipped ? '장착 해제' : !acquired ? unlockText : !usable ? skillBlockReason(s, sk.id).replace(/[.。]$/, '') : !equipAllowed ? `AP ${apShort} 부족` : '장착';
     // v25 감춰진 기술: 숙련 Lv.1 전까지 효과를 ???로 보여 줍니다(장착·숙련 진행은 그대로).
     if (skillVeiled(s, sk)) return <article className={`panel skill-card skill-veiled ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${detailed ? 'expanded' : 'compact'}`}>
-        <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · {sk.type === 'active' ? '액티브' : '패시브'} · 장착 AP {cost}</small></div></div>
+        <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · {sk.type === 'active' ? '액티브' : '패시브'} · 장착 AP {cost}</small></div>{onPin && <PinButton pinned={pinned} onPin={onPin} name={sk.name}/>}</div>
         <p className="skill-current-description">??? · 숙련 Lv.1을 달성하면 효과가 드러납니다.</p>
         <div className="skill-compact-growth"><span>{acquired ? '습득' : unlockText}</span><span>{nextMastery ? `숙련 ${practice.toLocaleString()} / ${nextMastery.toLocaleString()}` : '숙련 완료'}</span></div>
         {acquired && <Meter value={Math.min(practice, nextMastery || milestones[max - 1])} max={nextMastery || milestones[max - 1]}/>}
         <div className="skill-actions skill-actions-v2"><button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} onClick={() => send({ type: 'skill', id: sk.id })}>{equipLabel}</button></div>
     </article>;
     return <article className={`panel skill-card ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${detailed ? 'expanded' : 'compact'}`} title={detailed ? undefined : `${effects.join(" · ")}\n다음 강화: ${hint}`}>
-        <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · 캐릭터 Lv.{sk.level}{sk.rebirth ? ` · 환생 ${sk.rebirth}회` : ''}</small></div></div>
+        <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · 캐릭터 Lv.{sk.level}{sk.rebirth ? ` · 환생 ${sk.rebirth}회` : ''}</small></div>{onPin && <PinButton pinned={pinned} onPin={onPin} name={sk.name}/>}</div>
         {!detailed && <span className={`skill-status-badge ${equipped && usable ? 'on' : !acquired || !usable ? 'off' : ''}`}>{equipped ? (usable ? '장착 중' : '장착 · 사용 불가') : !acquired ? '미습득' : !usable ? '계승 필요' : '사용 가능'}</span>}
         {detailed && <div className="skill-state-row" aria-label="스킬 상태"><span className={acquired ? 'on' : 'off'}><small>습득</small>{acquired ? '습득' : '미습득'}</span><span className={!sk.job || isInherited ? 'on' : 'off'}><small>다른 직업</small>{!sk.job ? '공용 · 모든 직업' : isInherited ? '계승 완료 · 사용 가능' : '계승 필요'}</span><span className={equipped ? (usable ? 'on' : 'warn') : 'off'}><small>장착</small>{equipped ? (usable ? '장착 중' : '장착 · 지금은 사용 불가') : '미장착'}</span></div>}
         {detailed && <div className="skill-level-line"><strong>{acquired ? `성장 Lv.${level}` : '미해금'} <small>/ 최대 {max}{acquired ? ` · SP Lv.${Math.min(max, Math.max(0, rank - 1))} · 숙련 Lv.${Math.min(max, mastery)} 중 높은 값` : ''}</small></strong>{!acquired && <span>{inheritanceText}</span>}<TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" className="info-trigger" aria-label={`${sk.name} 현재 효과와 다음 강화`}><Info size={16}/></button></TooltipTrigger><TooltipContent className="game-tooltip"><strong>성장 Lv.{level} / {max}</strong><p>{effects.join(' · ')}</p><p>다음 강화: {hint}</p></TooltipContent></Tooltip></TooltipProvider></div>}
@@ -104,10 +109,45 @@ function skillDamageKind(sk: Skill): SkillDamage[] {
     return out;
 }
 
+const PIN_KEY = 'tidebound.skillPins';
+/**
+ * 추천 편성: 현재 직업 전용 → 선행 계보 → 공용 → 계승한 다른 직업 순으로, 액티브는 발동률 × 위력, 패시브는 양수 수치 합이 큰 순서대로 AP 안에서 채웁니다.
+ * 화면용 추천일 뿐이라 서버 규칙(setSkills의 사용 가능·AP 검사)을 그대로 통과해야 적용됩니다.
+ */
+function recommendLoadout(s: Parameters<typeof canUse>[0]) {
+    const line = lineage(s.job), magic = stats(s).magic > stats(s).attack;
+    const rank = (sk: Skill) => sk.job === s.job ? 0 : sk.job && line.includes(sk.job) ? 1 : !sk.job ? 2 : 3;
+    const fx = (sk: Skill) => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0);
+    const worth = (sk: Skill) => { const e = fx(sk); if (sk.type === 'active') return (e.chance || 0) * Math.max(1, e.multiplier || 1) * (sk.damageType === 'magic' ? (magic ? 1 : .4) : sk.damageType === 'physical' ? (magic ? .4 : 1) : 1) * (sk.statusOnly ? .5 : 1); return Object.values(e.bonus || {}).reduce((n, v) => n + (v > 0 ? 1 : 0), 0) + ((e.cost ?? 2) <= 0 ? 10 : 0); };
+    const pool = SKILLS.filter(sk => canUse(s, sk.id) && !skillVeiled(s, sk)).sort((a, b) => rank(a) - rank(b) || worth(b) - worth(a));
+    const out: string[] = [];
+    for (const type of ['active', 'passive'] as const) for (const sk of pool.filter(x => x.type === type)) if (validLoadout(s, [...out, sk.id])) out.push(sk.id);
+    return out;
+}
+
 export function Skills({ s, send, busy }: PanelProps) {
     const [scope, setScope] = useState('current'), [filter, setFilter] = useState('all'), [view, setView] = useState('simple');
     const [query, setQuery] = useState(''), [kind, setKind] = useState<SkillKind>('all'), [damage, setDamage] = useState<SkillDamage>('all'), [sort, setSort] = useState<SkillSort>('default');
+    const [grouped, setGrouped] = useState(false), [dragId, setDragId] = useState<string | null>(null);
+    // 즐겨찾기는 이 기기에만 저장합니다(게임 규칙이 아니라 화면 편의). 첫 렌더 뒤 저장소에서 읽습니다.
+    const [pins, setPins] = useState<string[]>([]);
+    useEffect(() => { const timer = window.setTimeout(() => { try { const raw = localStorage.getItem(PIN_KEY); if (raw) setPins(JSON.parse(raw)); } catch { /* 저장소 없음 */ } }, 0); return () => window.clearTimeout(timer); }, []);
+    const togglePin = (id: string) => setPins(prev => { const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]; try { localStorage.setItem(PIN_KEY, JSON.stringify(next)); } catch { /* 저장소 없음 */ } return next; });
     const currentJob = jobById(s.job) || JOBS[0], used = apUsed(s), cap = apCapacity(s);
+    const line = lineage(s.job);
+    const recommended = recommendLoadout(s);
+    const sameLoadout = recommended.length === s.skills.length && recommended.every(id => s.skills.includes(id));
+    /** 끌어서 놓기: 액티브끼리만 순서를 바꾸고 패시브는 뒤에 그대로 둡니다. */
+    const dropOn = (targetId: string) => {
+        if (!dragId || dragId === targetId) return;
+        const actives = s.skills.filter(id => skillById(id)?.type === 'active'), rest = s.skills.filter(id => skillById(id)?.type !== 'active');
+        const from = actives.indexOf(dragId), to = actives.indexOf(targetId);
+        if (from < 0 || to < 0) return;
+        actives.splice(from, 1); actives.splice(to, 0, dragId);
+        send({ type: 'setSkills', value: [...actives, ...rest].join(',') });
+    };
+    /** 계보별 묶기: 현재 직업 → 선행 직업(가까운 순) → 공용 → 다른 직업(계승). */
+    const groupOf = (sk: Skill) => !sk.job ? { key: 'common', order: line.length + 1, name: '공용' } : sk.job === s.job ? { key: sk.job, order: 0, name: `${currentJob.name} · 현재 직업` } : line.includes(sk.job) ? { key: sk.job, order: line.indexOf(sk.job), name: `${jobById(sk.job)?.name} · 선행 직업` } : { key: sk.job, order: line.length + 2, name: `${jobById(sk.job)?.name} · 계승` };
     const q = query.trim().toLowerCase();
     // 검색어가 있으면 범위(현재 직업·해금 등)를 무시하고 모든 기술에서 찾습니다. 이름·설명·직업 이름·효과 설명을 대상으로 합니다.
     const list = SKILLS.filter(sk => {
@@ -117,6 +157,7 @@ export function Skills({ s, send, busy }: PanelProps) {
             if (scope === 'common' && sk.job) return false;
             if (scope === 'owned' && !acquired) return false;
             if (scope === 'equipped' && !s.skills.includes(sk.id)) return false;
+            if (scope === 'pinned' && !pins.includes(sk.id)) return false;
         } else {
             const job = jobById(sk.job)?.name || '공용';
             const effects = skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ');
@@ -141,13 +182,13 @@ export function Skills({ s, send, busy }: PanelProps) {
         </Heading>
         <div className="skill-resource-grid"><div className="panel"><small>장착 AP</small><strong>{used}<span> / {cap}</span></strong><Meter value={Math.max(0, used)} max={cap}/><p>음수 AP 스킬은 편성 여유를 늘립니다.</p></div><div className="panel"><small>보유 SP</small><strong>{s.sp}</strong><p>보스 첫 정복 연구·종별 {BALANCE.bookMilestones.at(-1)!.toLocaleString()}회 연구 · 레벨업 지급 없음</p></div><div className="panel"><small>계승한 직업 스킬</small><strong>{SKILLS.filter(sk => sk.job && (s.learned[sk.id] || 0) > 0 && inherited(s, sk.id)).length}</strong><p>숙련 계승과 SP 계승을 함께 셉니다.</p></div></div>
         <details className="mastery-stack-note panel"><summary><Sparkles size={16}/> 스킬 성장 규칙</summary><span>전직으로 <b>기본 Lv.0</b> 해금 → 장착 후 승리로 Lv.1부터 성장·무료 계승. SP 계승과 강화는 <b>각 1 SP</b>이며, 해금한 기술에만 사용합니다. 숙련 강화와 SP 강화는 같은 성장 단계를 열고 효과를 중복해서 더하지 않습니다.</span></details>
-        <section className="panel loadout"><div className="section-title"><h2>현재 편성</h2><span>개수 제한 없음 · 총 AP만 제한</span></div><div className="loadout-columns">{(['active', 'passive'] as const).map(type => {
+        <section className="panel loadout"><div className="section-title"><h2>현재 편성</h2><span>개수 제한 없음 · 총 AP만 제한 · 액티브는 끌어서 순서 변경</span><ConfirmButton label="추천 편성" title="추천 편성을 적용할까요?" description={`현재 직업 전용 → 선행 계보 → 공용 순서로, 발동률과 위력이 높은 액티브와 수치가 큰 패시브를 AP ${cap} 안에서 채웁니다. 적용 후: ${recommended.map(id => skillById(id)?.name).join(', ') || '없음'}. 지금 편성은 저장 칸에 먼저 담아 두면 되돌릴 수 있습니다.`} confirmLabel="적용" disabled={busy || !recommended.length || sameLoadout} onConfirm={() => send({ type: 'setSkills', value: recommended.join(',') })}/></div><div className="loadout-columns">{(['active', 'passive'] as const).map(type => {
             const ids = s.skills.filter(id => skillById(id)?.type === type);
             return <div className={`loadout-column loadout-${type}`} key={type}><h3>{type === 'active' ? '액티브' : '패시브'}<small>{type === 'active' ? '위에서부터 먼저 판정 · 처음 성공한 하나만 사용' : '장착 효과 · 순서 무관'}</small></h3>
                 <ol className="loadout-row">{ids.map((id, i) => {
                     const sk = skillById(id)!;
                     const rank = s.learned[id] || 1, mastery = skillMastery(s, id), fx = effectiveSkill(sk, rank, mastery, s.skillSpecializations?.[id], s.skillPractice[id] || 0);
-                    return <li className="loadout-skill" key={id}>{type === 'active' && <span className="loadout-order" aria-label={`판정 ${i + 1}순위`}>{i + 1}</span>}<SkillIcon id={id}/><div><strong>{sk.name} · Lv.{skillLevel(sk, rank, mastery)}</strong><small>AP {fx.cost}{type === 'active' ? ` · 발동 ${Math.round((fx.chance || 0) * 100)}%` : ''}</small></div>{type === 'active' && i > 0 && <button className="icon-button" aria-label={`${sk.name} 우선순위 올리기`} title="먼저 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id })}><ArrowUp size={16}/></button>}{type === 'active' && i < ids.length - 1 && <button className="icon-button" aria-label={`${sk.name} 우선순위 내리기`} title="나중에 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id: ids[i + 1] })}><ArrowDown size={16}/></button>}<button className="text-button" disabled={busy || !validLoadout(s, s.skills.filter(x => x !== id))} onClick={() => send({ type: 'skill', id })}>해제</button></li>;
+                    return <li className={`loadout-skill ${type === 'active' ? 'draggable' : ''} ${dragId === id ? 'dragging' : ''}`} key={id} draggable={type === 'active' && !busy} onDragStart={e => { setDragId(id); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDragId(null)} onDragOver={e => { if (type === 'active' && dragId) e.preventDefault(); }} onDrop={e => { e.preventDefault(); dropOn(id); setDragId(null); }}>{type === 'active' && <span className="loadout-grip" aria-hidden="true" title="끌어서 순서 변경"><GripVertical size={14}/></span>}{type === 'active' && <span className="loadout-order" aria-label={`판정 ${i + 1}순위`}>{i + 1}</span>}<SkillIcon id={id}/><div><strong>{sk.name} · Lv.{skillLevel(sk, rank, mastery)}</strong><small>AP {fx.cost}{type === 'active' ? ` · 발동 ${Math.round((fx.chance || 0) * 100)}%` : ''}</small></div>{type === 'active' && i > 0 && <button className="icon-button" aria-label={`${sk.name} 우선순위 올리기`} title="먼저 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id })}><ArrowUp size={16}/></button>}{type === 'active' && i < ids.length - 1 && <button className="icon-button" aria-label={`${sk.name} 우선순위 내리기`} title="나중에 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id: ids[i + 1] })}><ArrowDown size={16}/></button>}<button className="text-button" disabled={busy || !validLoadout(s, s.skills.filter(x => x !== id))} onClick={() => send({ type: 'skill', id })}>해제</button></li>;
                 })}</ol>
                 {!ids.length && <p className="loadout-empty">{type === 'active' ? '액티브가 없으면 기본 공격만 합니다.' : '장착한 패시브가 없습니다.'}</p>}
             </div>;
@@ -162,10 +203,11 @@ export function Skills({ s, send, busy }: PanelProps) {
                 <span className="gear-count">{list.length}종 표시{q ? ' · 검색 중에는 모든 직업의 기술을 봅니다' : ''}</span>
             </div>
         </section>
-        <div className="skill-view-toolbar"><Tabs value={scope} onValueChange={setScope}><TabsList className="game-tabs"><TabsTrigger value="current">{currentJob.name} 전용</TabsTrigger><TabsTrigger value="equipped">장착 중 {s.skills.length}</TabsTrigger><TabsTrigger value="owned">해금한 스킬</TabsTrigger><TabsTrigger value="common">공용</TabsTrigger><TabsTrigger value="all">전체 계보</TabsTrigger></TabsList></Tabs><div className="skill-view-toggle" role="group" aria-label="스킬 보기 방식"><button className={view === 'simple' ? 'active' : ''} aria-pressed={view === 'simple'} onClick={() => setView('simple')}>간단히 보기</button><button className={view === 'detail' ? 'active' : ''} aria-pressed={view === 'detail'} onClick={() => setView('detail')}>자세히 보기</button></div></div>
+        <div className="skill-view-toolbar"><Tabs value={scope} onValueChange={setScope}><TabsList className="game-tabs"><TabsTrigger value="current">{currentJob.name} 전용</TabsTrigger><TabsTrigger value="equipped">장착 중 {s.skills.length}</TabsTrigger><TabsTrigger value="pinned">즐겨찾기 {pins.length}</TabsTrigger><TabsTrigger value="owned">해금한 스킬</TabsTrigger><TabsTrigger value="common">공용</TabsTrigger><TabsTrigger value="all">전체 계보</TabsTrigger></TabsList></Tabs><div className="skill-view-toggle" role="group" aria-label="스킬 보기 방식"><button className={view === 'simple' ? 'active' : ''} aria-pressed={view === 'simple'} onClick={() => setView('simple')}>간단히 보기</button><button className={view === 'detail' ? 'active' : ''} aria-pressed={view === 'detail'} onClick={() => setView('detail')}>자세히 보기</button><button className={grouped ? 'active' : ''} aria-pressed={grouped} onClick={() => setGrouped(v => !v)}>계보별 묶기</button></div></div>
         <Tabs value={filter} onValueChange={setFilter}><TabsList className="game-tabs"><TabsTrigger value="all">모두</TabsTrigger><TabsTrigger value="usable">사용 가능</TabsTrigger><TabsTrigger value="unlearned">미해금</TabsTrigger></TabsList></Tabs>
         {!list.length && <div className="notice">조건에 맞는 기술이 없습니다. {q ? '다른 검색어를 써 보세요.' : '범위 탭을 ‘모든 스킬’로 바꾸거나 필터를 초기화해 보세요.'}</div>}
-        {(['active', 'passive'] as const).map(type => <section className="skill-family" key={type}><div className="section-title"><h2>{type === 'active' ? '액티브 · 확률 발동' : '패시브 · 장착 효과'}</h2><span>{list.filter(sk => sk.type === type).length}종</span></div><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{list.filter(sk => sk.type === type).map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'}/>)}</div>{!list.some(sk => sk.type === type) && <div className="notice">이 범위에 해당하는 스킬이 없습니다.</div>}</section>)}
+        {grouped ? [...new Map(list.map(sk => [groupOf(sk).key, groupOf(sk)])).values()].sort((a, b) => a.order - b.order).map(g => { const items = list.filter(sk => groupOf(sk).key === g.key); return <details className="skill-family skill-group" key={g.key} open={g.order <= 1}><summary><h2>{g.name}</h2><span>액티브 {items.filter(sk => sk.type === 'active').length} · 패시브 {items.filter(sk => sk.type === 'passive').length} · 장착 {items.filter(sk => s.skills.includes(sk.id)).length}</span></summary><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{items.map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'} pinned={pins.includes(sk.id)} onPin={() => togglePin(sk.id)}/>)}</div></details>; })
+        : (['active', 'passive'] as const).map(type => <section className="skill-family" key={type}><div className="section-title"><h2>{type === 'active' ? '액티브 · 확률 발동' : '패시브 · 장착 효과'}</h2><span>{list.filter(sk => sk.type === type).length}종</span></div><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{list.filter(sk => sk.type === type).map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'} pinned={pins.includes(sk.id)} onPin={() => togglePin(sk.id)}/>)}</div>{!list.some(sk => sk.type === type) && <div className="notice">이 범위에 해당하는 스킬이 없습니다.</div>}</section>)}
         <p className="footnote">액티브는 편성 순서대로 판정해 처음 성공한 하나만 사용합니다. 모두 실패하면 기본 공격합니다. 숙련은 장착하고 승리할 때 기본 1씩, 조건부 패시브가 있으면 최대 10씩 증가하며, 환생과 전직 후에도 보존됩니다. SP 강화·계승은 직업 전직에 필요한 실전 숙련도를 대신하지 않습니다.</p>
     </>;
 }

@@ -6,6 +6,7 @@
 import type { State } from '../types';
 import { JOBS } from './classes';
 import { FISH } from './world';
+import { masteredJobCount } from '../systems/progression';
 
 export type DoorId = 'rebirth' | 'time' | 'discovery' | 'visitor';
 export type TimeSlot = { id: string; name: string; from: number; to: number; jobs: string[] };
@@ -28,6 +29,7 @@ export const DISCOVERY_DOORS: DiscoveryDoor[] = ([
     { job: 'poorMonk', hint: '어느 정도 성장했는데도 주머니가 거의 비어 있을 때.', test: s => s.level >= 15 && (s.gold || 0) < 100 },
     { job: 'codexReader', hint: '도감에 기록이 서른 개 넘게 쌓였을 때.', test: s => codexCount(s) >= 30 },
     { job: 'fallenAngler', hint: '서른 번쯤 쓰러져 본 낚시꾼에게.', test: s => (s.deaths || 0) >= 30 },
+    { job: 'journeyman', hint: '직업 셋을 끝까지 숙달한 낚시꾼에게.', test: s => masteredJobCount(s) >= 3 },
 ] as DiscoveryDoor[]).filter(d => JOBS.some(j => j.id === d.job));
 /** 방문자의 문: 하루 1~2번, 한 번에 2시간 머무는 방문자. */
 export const VISITOR_JOBS = known(['krakenkin']);
