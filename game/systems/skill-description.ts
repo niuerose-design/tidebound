@@ -52,6 +52,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.type === 'active') {
         const base = [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.scaling === 'dual' ? '(물리 공격 + 마법 공격) ÷ 2' : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
         if (sk.scaling === 'defense') base.push(`물리 방어 × ${number(sk.scalingRatio ?? 1)} × 방어 친화도`);
+        if (sk.scaling === 'resist') base.push(`마법 방어 × ${number(sk.scalingRatio ?? 1)} × 결계 친화도`);
         if (sk.scaling === 'hp') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hpScaling)}`);
         if (sk.scaling === 'mana') base.push(`최대 마나 × ${number(sk.scalingRatio ?? SKILL_FORMULA.manaScaling)}`);
         if (sk.scaling === 'hybrid') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hybridHpScaling)}`, `최대 마나 × ${number((sk.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2)}`);
@@ -77,6 +78,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.accuracyBonus) out.push(`이 기술 명중 +${skillPercent(sk.accuracyBonus)}p`);
         if (sk.penetrationBonus) out.push(`이 기술 방어 관통 +${skillPercent(sk.penetrationBonus)}p · 합계 최대 85%`);
         if (sk.cleanseSelf) out.push('발동 시 자신의 출혈·감속 해제');
+        if (sk.scaling === 'resist') out.push('결계 친화도: 직업의 마법 방어 배율이 높을수록 1에 가깝고(결계 계열), 다른 직업이 계승하면 최소 20%만 발휘');
         if (sk.scaling === 'defense') out.push('방어 친화도: 직업의 물리 방어 배율이 높을수록 1에 가깝고(수호 계열), 다른 직업이 계승하면 최소 20%만 발휘');
         if (sk.damageBonusCondition) out.push(sk.damageBonusCondition === 'lowHp' ? `체력 ${skillPercent(SKILL_FORMULA.lowHpThreshold)} 이하인 적에게 직접 피해 +${skillPercent(sk.conditionalDamageBonus || 0)}` : `${{ bleeding: '출혈·중독', weakened: '약화', controlled: '침묵·감속' }[sk.damageBonusCondition]} 중인 적에게 직접 피해 +${skillPercent(sk.conditionalDamageBonus || 0)}`);
         if (sk.effect === 'heal') out.push(`${sk.condition === 'wounded' ? `체력 ${skillPercent(SKILL_FORMULA.woundedThreshold)} 이하일 때 ` : ''}자신의 최대 체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복 후 공격 · 체력 ${skillPercent(SKILL_FORMULA.healThreshold)} 이상에서 쓰면 회복 직업이 아닐 때 피해 ×${number(SKILL_FORMULA.idleHealDamage)}`);

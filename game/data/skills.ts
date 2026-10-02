@@ -4,6 +4,7 @@ import { JOBS } from './classes';
 import { EXPANSION_SKILLS } from './expansion';
 import { LINEAGE_SKILLS } from './expansion-lineages';
 import { V24_SKILLS } from './expansion-v24';
+import { DEFENSE_SKILLS } from './expansion-defense';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
 export const SKILLS: Skill[] = [
@@ -135,6 +136,8 @@ SKILLS.push(...EXPANSION_SKILLS);
 SKILLS.push(...LINEAGE_SKILLS);
 // v24 계보 완성 기술.
 SKILLS.push(...V24_SKILLS);
+// v25.14 방어 계열 보강 기술.
+SKILLS.push(...DEFENSE_SKILLS);
 // v24.2 보조 계열 개편·??? 문 직업 기술. 패시브 수치는 여기서 덮어씁니다(액티브는 skill-balance.ts).
 SKILLS.push(...SUPPORT_SKILLS);
 // v25 ??? 특수 직업 기술.

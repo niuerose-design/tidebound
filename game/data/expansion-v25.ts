@@ -11,7 +11,7 @@ import type { Skill } from '../types';
  *   정지된 시간(확정 기절) · 선행(곧바로 한 번 더 행동) · 역행(회복) · 시간의 주권(속도·회피·치명).
  *   확정 기절도 기절 뒤 면역 규칙을 따르므로 기절이 계속 이어지지는 않습니다.
  * 玄(1차 독립, 문 없음)
- *   일곱 글자 無·虛·斬·血·縛·刹·魂은 혼자 쓰면 손해만 있습니다(無는 혼자서는 버티기만 함). 앞 글자의 숙련 Lv.1을 달성하면 다음 글자가 열립니다.
+ *   일곱 글자 無·虛·斬·血·縛·刹·魂은 혼자 쓰면 손해만 있습니다(無는 혼자 새기면 전투당 1번만 버티고 회복도 없음). 앞 글자의 숙련 Lv.1을 달성하면 다음 글자가 열립니다.
  *   無는 체력이 1 아래로 내려가지 않게 버티는 바탕(전투당 6번 + 숙련 1단계마다 2번, 버틸 때마다 25% 회복)이라 虛의 올인·斬의 반동·血의 마나 소진이 죽음으로 이어지지 않습니다.
  *   점검(scripts/check-job-balance.mjs 조건, 일곱 글자 숙련 완료): 4차 조건 Lv.60에서 승률 100% · 처치 17턴으로 4차 중앙값 수준, 天은 전투당 약 0.9회.
  *   일곱 글자를 모두 장착하고 天까지 열면, 한 전투에 여섯 글자를 모두 쓰는 순간 天이 터집니다.
@@ -48,7 +48,7 @@ export const V25_SKILLS: Skill[] = [
     { ...A, id: 'rewind', name: '역행', desc: '', level: 10, job: 'chronarch', cost: 4, damageType: 'split', scaling: 'dual', effect: 'heal', masteryMilestones: [2500, 12000, 40000, 100000] },
     { ...P, id: 'chronoSovereign', name: '시간의 주권', desc: '속도·회피·치명타·명중이 크게 오르고, 연속 행동마다 편성 첫 번째 대기 중인 기술을 초기화합니다.', level: 10, job: 'chronarch', cost: 3, bonus: { speed: 18, evasion: .05, crit: .05, accuracy: .05, attack: 40, magic: 40 }, cooldownReset: { on: 'chain', chance: 1, pick: 'first' }, masteryMilestones: [2500, 12000, 40000, 100000] },
     // ── 玄: 無 → 虛 → 斬 → 血 → 縛 → 刹 → 魂 → 天 ──
-    { ...P, ...GLYPH, id: 'glyphNothing', name: '無', desc: '체력이 1 아래로 내려가지 않습니다. 쓰러질 피해를 받으면 체력 1로 버티고 최대 체력의 25%를 되찾습니다(전투당 6번, 숙련 1단계마다 +2번).', cost: 1, lastStand: { charges: 6, chargesPerLevel: 2, heal: .25 } },
+    { ...P, ...GLYPH, id: 'glyphNothing', name: '無', desc: '체력이 1 아래로 내려가지 않습니다. 쓰러질 피해를 받으면 체력 1로 버티고 최대 체력의 25%를 되찾습니다(전투당 6번, 숙련 1단계마다 +2번). 함께 새긴 글자 수에 비례해 횟수·회복이 줄어, 無만 새기면 전투당 1번·회복 없음입니다.', cost: 1, lastStand: { charges: 6, chargesPerLevel: 2, heal: .25 } },
     { ...GLYPH_A, id: 'glyphVoid', name: '虛', desc: '', unlockAfter: { skill: 'glyphNothing', level: 1 } },
     { ...GLYPH_A, id: 'glyphCut', name: '斬', desc: '', unlockAfter: { skill: 'glyphVoid', level: 1 } },
     { ...GLYPH_A, id: 'glyphBlood', name: '血', desc: '', unlockAfter: { skill: 'glyphCut', level: 1 } },

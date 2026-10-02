@@ -1,5 +1,5 @@
 'use client';
-import { Settings2 } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import type { State, Action } from '@/game/types';
 import { offlineCapSeconds, researchRank, salvageRate } from '@/game/data/economy';
@@ -28,7 +28,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
     };
     return <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogTrigger asChild>
-            <button className="icon-button" aria-label="설정과 도움말"><Settings2 size={19}/></button>
+            <button className="icon-button settings-button" aria-label="설정과 도움말" title="설정"><Settings size={20}/><span>설정</span></button>
         </DialogTrigger>
         <DialogContent>
             <DialogHeader>
@@ -43,6 +43,14 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
             {s && researchRank(s, 'sortingNet') > 0 && <div className="setting-toggle">
                 <div><strong>선별의 그물 자동 판매</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '희귀 이하' : '일반'} 등급 드롭을 바로 팝니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
                 <button className={s.autoSell ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoSell} onClick={() => send({ type: 'autoSell', value: s.autoSell ? 'off' : 'on' })}>{s.autoSell ? '켜짐' : '꺼짐'}</button>
+            </div>}
+            {s && <div className="setting-toggle">
+                <div><strong>문 알림</strong><p>전투 화면 맨 위 ‘문이 열렸습니다’ 줄입니다. 꺼도 전직 화면의 ??? 탭에서 열린 문을 볼 수 있습니다.</p></div>
+                <button className={s.hideDoorNotice ? 'secondary' : 'primary'} disabled={busy} aria-pressed={!s.hideDoorNotice} onClick={() => send({ type: 'doorNotice', value: s.hideDoorNotice ? 'on' : 'off' })}>{s.hideDoorNotice ? '꺼짐' : '켜짐'}</button>
+            </div>}
+            {s && <div className="setting-toggle">
+                <div><strong>능력치 최대 투자 확인</strong><p>능력치 화면의 ‘최대’ 버튼을 누를 때 확인 창을 띄웁니다. 끄면 남은 포인트를 바로 투자합니다(재분배는 무료).</p></div>
+                <button className={s.skipStatConfirm ? 'secondary' : 'primary'} disabled={busy} aria-pressed={!s.skipStatConfirm} onClick={() => send({ type: 'statConfirm', value: s.skipStatConfirm ? 'on' : 'off' })}>{s.skipStatConfirm ? '꺼짐' : '켜짐'}</button>
             </div>}
             {s && salvageRate(s) > 0 && <div className="setting-toggle">
                 <div><strong>환생 정리 방식</strong><p>환생할 때 유물을 뺀 보관함·착용 장비 전부를 효율 {Math.round(salvageRate(s) * 100)}%로 {s.salvageMode === 'dismantle' ? '분해해 정수를 받습니다.' : '판매해 다음 생 시작 골드에 더합니다.'}</p></div>

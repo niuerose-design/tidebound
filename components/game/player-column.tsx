@@ -1,8 +1,9 @@
 'use client';
-import { GrowthGoals, tutorialActive } from './growth-goals';
+import { tutorialActive } from './growth-goals';
 import { TutorialCard } from './guidance-panels';
 import { tutorialEarly } from '@/game/systems/guidance';
-import { Anchor, ChevronRight, Heart, Shield, Swords, Target, Users, Zap } from 'lucide-react';
+import { Anchor, BookOpen, ChevronRight, Flag, Heart, Shield, ShoppingBag, Swords, Target, Trophy, Users, Zap } from 'lucide-react';
+import { goalSummary } from '@/game/systems/progress';
 import { Meter, SlotIcon, format } from './shared';
 import { xpNeeded, SLOTS, RARITIES } from '@/game/data/balance';
 import { jobById } from '@/game/data/classes';
@@ -88,7 +89,14 @@ export function Player({ s, busy, send, setView }: {
             </span>
             </button>;
         })}</div>
+    <div className="section-title shortcut-title">
+    <h2><Zap size={15}/> 빠른 이동</h2>
     </div>
-    {tutorialActive(s) && !tutorialEarly(s) ? <TutorialCard s={s} send={send} busy={busy} setView={setView}/> : <GrowthGoals s={s} send={send} busy={busy} setView={setView}/>}
+    <div className="battle-stage-list battle-shortcut-list">
+        {(s.daily || s.weekly) && <button type="button" className="battle-stage-button" onClick={() => setView('voyage')}><span className="battle-stage-index"><Flag size={13}/></span><span><strong>목표 · 업적</strong><small>오늘 {goalSummary(s.daily).done}/{goalSummary(s.daily).total} · 주간 {goalSummary(s.weekly).done}/{goalSummary(s.weekly).total}</small></span><ChevronRight size={13}/></button>}
+        {([['skills', '스킬 편성', Zap], ['inventory', '장비 보관함', ShoppingBag], ['book', '도감 연구', BookOpen], ['ranking', '랭킹 · 결투', Trophy]] as const).map(([id, name, Icon]) => <button type="button" key={id} className="battle-stage-button" onClick={() => setView(id)}><span className="battle-stage-index"><Icon size={13}/></span><span><strong>{name}</strong></span><ChevronRight size={13}/></button>)}
+    </div>
+    </div>
+    {tutorialActive(s) && !tutorialEarly(s) && <TutorialCard s={s} send={send} busy={busy} setView={setView}/>}
     </aside>;
 }

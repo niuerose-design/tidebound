@@ -39,8 +39,8 @@
 .opponent-vs svg{color:#8ca9a0}
 .opponent-vs strong{font:600 13px/1 monospace;letter-spacing:1px}
 .opponent-vs small{font:9px/1 monospace;color:#789395}
-.battle-console .battle-scene{margin-bottom:11px;height:390px}
-.battle-console .scene-copy{top:80px}
+.battle-console .battle-scene{margin-bottom:11px;height:330px}
+.battle-console .scene-copy{top:66px}
 .battle-console .scene-copy h2{font-size:31px}
 .battle-console .enemy-status{bottom:82px}
 .battle-console .battle-skills{margin-bottom:11px;padding:14px 15px}
@@ -92,8 +92,8 @@
 .battle-shortcut-grid button{display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 5px;border:1px solid #324c4e;border-radius:4px;background:#0e2026;color:#9eb8b0;font-size:10px}
 .battle-shortcut-grid button:hover{border-color:#719582;color:#d6e7db;background:#183035}
 .battle-hud button:focus-visible{outline:2px solid #d4b876;outline-offset:2px}
-@media(max-width:1500px){.battle-hud{grid-template-columns:222px minmax(0,1fr) 238px;gap:14px}.battle-character-column .player-panel{padding:16px 14px 12px}.battle-character-column .stat-grid{gap:11px 7px}.battle-rail-panel{padding:12px 10px}.battle-console .battle-scene{height:360px}.battle-console .scene-copy h2{font-size:28px}}
-@media(max-width:1180px){.battle-hud{grid-template-columns:220px minmax(0,1fr)}.battle-utility-rail{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1fr 1fr;align-items:start}.battle-shortcuts{grid-column:1/-1}.battle-feed-list{max-height:160px}.battle-stage-list,.battle-dungeon-list{max-height:180px}}
+@media(max-width:1500px){.battle-hud{grid-template-columns:222px minmax(0,1fr) 238px;gap:14px}.battle-character-column .player-panel{padding:16px 14px 12px}.battle-character-column .stat-grid{gap:11px 7px}.battle-rail-panel{padding:12px 10px}.battle-console .battle-scene{height:320px}.battle-console .scene-copy h2{font-size:28px}}
+@media(max-width:1180px){.battle-hud{grid-template-columns:220px minmax(0,1fr)}.battle-utility-rail{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1fr;align-items:start}.battle-feed-list{max-height:160px}.battle-stage-list,.battle-dungeon-list{max-height:180px}}
 @media(max-width:900px){.battle-hud{display:flex;flex-direction:column}.battle-console{order:1;width:100%}.battle-utility-rail{order:2;width:100%;display:grid;grid-template-columns:1fr 1fr}.battle-character-column{order:3;width:100%}.battle-shortcuts{grid-column:1/-1}.battle-character-column .player-column{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:0}.battle-character-column .player-avatar{display:none}.battle-character-column .player-panel>h3,.battle-character-column .job-label{text-align:left}.battle-character-column .player-panel>h3{margin-top:0}.battle-character-column .player-panel>.section-title{margin-bottom:12px}.battle-character-column .mini-equipment{display:flex;gap:10px}.battle-character-column .mini-equipment button{width:auto}.battle-character-column .player-panel .stat-grid{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console>.session-metrics{grid-template-columns:repeat(3,1fr)}.battle-console>.session-metrics>div{padding:0 9px}.battle-console>.session-metrics strong{font-size:16px}.battle-console>.session-metrics span{font-size:10px}.battle-console>.session-metrics svg{display:none}.battle-opponent-strip{grid-template-columns:1fr;gap:6px}.opponent-vs{flex-direction:row;gap:7px;height:22px}.opponent-vs svg{width:14px}.battle-console .battle-scene{height:405px}.battle-console .scene-copy{top:86px}.battle-console .scene-copy h2{font-size:28px}.battle-item-row{grid-template-columns:repeat(2,minmax(0,1fr))}.battle-utility-rail{display:flex}.battle-stage-list,.battle-dungeon-list{max-height:210px}.battle-character-column .player-column{display:block}.battle-character-column .player-avatar{display:flex}.battle-character-column .player-panel>h3,.battle-character-column .job-label{text-align:center}.battle-character-column .player-panel>h3{margin-top:18px}.battle-character-column .mini-equipment{display:block}.battle-character-column .mini-equipment button{width:100%}}
 
@@ -115,8 +115,8 @@
 .opponent-card>small{font-size:11px;margin-top:8px}
 .opponent-vs{gap:4px}
 .opponent-vs strong{font-size:14px}
-.battle-console .battle-scene{height:430px;margin-bottom:13px}
-.battle-console .scene-copy{top:91px}
+.battle-console .battle-scene{height:350px;margin-bottom:13px}
+.battle-console .scene-copy{top:72px}
 .battle-console .scene-copy h2{font-size:35px}
 .battle-console .scene-copy p{font-size:14px;line-height:1.85}
 .battle-console .enemy-status{bottom:88px;padding:14px 17px}
@@ -135,7 +135,7 @@
 .battle-rail-panel .section-title{margin-bottom:13px}
 .battle-rail-panel .section-title h2{font-size:15px;gap:8px}
 .battle-rail-panel .section-title .text-button{font-size:12px}
-.battle-feed-list{max-height:236px}
+.battle-feed-list{max-height:420px}
 .battle-feed-list p{grid-template-columns:32px 1fr;gap:9px;padding:9px 0;font-size:12px;line-height:1.6}
 .battle-feed-list p>span{font-size:10px}
 .battle-stage-list,.battle-dungeon-list{gap:6px;max-height:306px}
@@ -147,7 +147,7 @@
 .battle-dungeon-wave{padding:4px 6px;font-size:10px}
 .battle-shortcut-grid{gap:8px}
 .battle-shortcut-grid button{padding:11px 7px;gap:6px;font-size:12px}
-@media(max-width:1500px){.battle-hud{grid-template-columns:248px minmax(0,1fr) 294px;gap:17px}.battle-rail-panel{padding:16px 14px}.battle-feed-list p{font-size:11px}.battle-stage-button,.battle-dungeon-button{padding:10px 8px}.battle-stage-button strong,.battle-dungeon-button strong{font-size:12px}.battle-stage-button small,.battle-dungeon-button small{font-size:10px}.battle-console .battle-scene{height:400px}.battle-console .scene-copy h2{font-size:31px}}
+@media(max-width:1500px){.battle-hud{grid-template-columns:248px minmax(0,1fr) 294px;gap:17px}.battle-rail-panel{padding:16px 14px}.battle-feed-list p{font-size:11px}.battle-stage-button,.battle-dungeon-button{padding:10px 8px}.battle-stage-button strong,.battle-dungeon-button strong{font-size:12px}.battle-stage-button small,.battle-dungeon-button small{font-size:10px}.battle-console .battle-scene{height:340px}.battle-console .scene-copy h2{font-size:31px}}
 @media(max-width:1180px){.battle-workspace{padding-left:22px;padding-right:22px}.battle-hud{grid-template-columns:236px minmax(0,1fr);gap:17px}.battle-utility-rail{gap:13px}.battle-rail-panel{padding:16px 14px}.battle-feed-list{max-height:190px}.battle-stage-list,.battle-dungeon-list{max-height:230px}}
 @media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console .battle-scene{height:420px}.battle-console .scene-copy h2{font-size:30px}.battle-console .scene-copy p{font-size:13px}.battle-rail-panel{padding:16px 14px}.battle-feed-list{max-height:220px}.battle-stage-list,.battle-dungeon-list{max-height:250px}.battle-shortcut-grid button{padding:12px 7px;font-size:12px}}
 
@@ -397,7 +397,7 @@
 /* v25.4 전투 보조 패널의 채팅 토글. 전투 기록과 같은 높이에서 바꿔 끼웁니다. */
 .feed-tabs{margin-right:auto}
 .chat-panel{display:flex;flex-direction:column;gap:7px}
-.chat-list{max-height:236px;min-height:120px;overflow:auto;padding-right:3px;scrollbar-width:thin;scrollbar-color:#395454 transparent}
+.chat-list{max-height:420px;min-height:120px;overflow:auto;padding-right:3px;scrollbar-width:thin;scrollbar-color:#395454 transparent}
 .chat-line{display:grid;grid-template-columns:auto auto 1fr;gap:6px;align-items:baseline;margin:0;padding:5px 0;border-bottom:1px solid #263f42;font-size:11px;line-height:1.5;color:#c2d3cd}
 .chat-line:last-child{border-bottom:0}.chat-line.self .chat-name{color:#a4e9ba}
 .chat-time{font:9px/1.5 monospace;color:#5d7e7e}.chat-name{color:#e8d39a;white-space:nowrap;max-width:88px;overflow:hidden;text-overflow:ellipsis}.chat-text{word-break:break-word;overflow-wrap:anywhere}
@@ -411,7 +411,7 @@
 .chat-feed{display:flex;flex-direction:column;gap:7px}
 /* v25.13 모바일 전투 화면 정리: 캐릭터 열 접기, 안내 카드 중복 제거, 빠른 이동 격자 숨김(탭 바가 대신함) */
 .mobile-fisher-toggle{display:none}
-@media(max-width:900px){.mobile-fisher-toggle{display:flex;order:3;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#101c20;color:#c5d8d2;font-size:13px;cursor:pointer}.mobile-fisher-toggle svg{transition:transform .15s}.mobile-fisher-toggle svg.open{transform:rotate(90deg)}.battle-character-column{display:none;order:4}.battle-character-column.mobile-open{display:block}.battle-character-column .tutorial-card{display:none}.battle-shortcuts .battle-shortcut-grid{display:none}.battle-shortcuts .section-title{margin-bottom:6px}}
+@media(max-width:900px){.mobile-fisher-toggle{display:flex;order:3;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#101c20;color:#c5d8d2;font-size:13px;cursor:pointer}.mobile-fisher-toggle svg{transition:transform .15s}.mobile-fisher-toggle svg.open{transform:rotate(90deg)}.battle-character-column{display:none;order:4}.battle-character-column.mobile-open{display:block}.battle-character-column .tutorial-card{display:none}}
 /* v25.13 빠른 슬롯 전환 칩 */
 .slot-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 12px;color:#8ea7a4}
 .slot-chip{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#101c20;color:#c5d8d2;cursor:pointer;text-align:left}
@@ -419,3 +419,25 @@
 .slot-chip-index{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#1a2d33;font-size:11px;font-weight:700}
 .slot-chip-text{display:grid;line-height:1.2}.slot-chip-text strong{font-size:12px}.slot-chip-text small{font-size:10px;color:#8ea7a4}
 @media(max-width:767px){.slot-chips{gap:6px}.slot-chip{padding:5px 8px}.slot-chip-text strong{font-size:11px}}
+.battle-shortcut-list .battle-stage-button strong{font-size:12px}.battle-shortcut-list .battle-stage-button small{display:block;font-size:10px;color:#8ea7a4}.battle-shortcut-list .battle-stage-button>svg:last-child{margin-left:auto;color:#678785}.battle-shortcut-list .battle-stage-index{display:grid;place-items:center;color:#a4e9ba}
+
+/* v25.15 세 열 아래쪽 맞춤: 가장 긴 열에 맞춰 왼쪽 패널·항해 일지·전투 기록이 늘어납니다. */
+@media(min-width:901px){
+.battle-hud{align-items:stretch}
+.battle-character-column{display:flex;flex-direction:column}
+.battle-character-column .player-column{display:flex;flex-direction:column;flex:1}
+.battle-character-column .player-panel{flex:1}
+.battle-console>.log-panel{flex:1;display:flex;flex-direction:column;min-height:0;margin-bottom:0}
+.battle-console>.log-panel:not(.folded) .log-list{flex:1;height:auto;min-height:150px}
+.battle-utility-rail>.battle-selector-panel{flex:1;display:flex;flex-direction:column;min-height:0}
+.battle-utility-rail>.battle-selector-panel #place-panel{flex:1;display:flex;flex-direction:column;min-height:0}
+.battle-utility-rail>.battle-selector-panel .battle-stage-list,.battle-utility-rail>.battle-selector-panel .battle-dungeon-list{flex:1;min-height:180px;max-height:none}
+}
+/* v25.15 빠른 이동: 왼쪽 ‘착용 장비’ 아래 */
+.shortcut-title{margin:18px 0 8px}
+.player-panel .battle-shortcut-list{max-height:none;overflow:visible}
+/* v25.15 설정 버튼: 톱니 + 이름 */
+.settings-button{width:auto;height:34px;gap:6px;padding:0 12px 0 10px;border:1px solid #4b7365;background:#193236;color:#dbe9e3;font-size:13px;font-weight:600}
+.settings-button svg{color:#a4e9ba}
+.settings-button:hover{background:#244840;color:#fff}
+@media(max-width:767px){.settings-button{padding:0 9px}.settings-button span{display:none}}

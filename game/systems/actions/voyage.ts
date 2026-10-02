@@ -90,6 +90,12 @@ export const voyageActions: ActionHandlers = {
             throw Error('선별의 그물 연구가 필요합니다.');
         s.autoSell = a.value === 'on';
     },
+    doorNotice(s, { a }) {
+        s.hideDoorNotice = a.value === 'off';
+    },
+    statConfirm(s, { a }) {
+        s.skipStatConfirm = a.value === 'off';
+    },
     salvageMode(s, { a }) {
         if (!salvageRate(s))
             throw Error('환생 정리 연구가 필요합니다.');

@@ -4,6 +4,7 @@ import { LINEAGE_JOBS, NEW_LINEAGES, LINEAGE_HINTS } from './expansion-lineages'
 import { V24_JOBS, V24_HINTS } from './expansion-v24';
 import { SUPPORT_JOBS, SUPPORT_JOB_DESC, SUPPORT_HINTS } from './support-rework';
 import { V25_JOBS, V25_HINTS } from './expansion-v25';
+import { DEFENSE_JOBS, DEFENSE_HINTS, DEFENSE_LINEAGES } from './expansion-defense';
 export type Job = {
     id: string;
     name: string;
@@ -83,7 +84,7 @@ export const JOBS: Job[] = [
     { id: 'tempest', name: '심해 폭풍술사', title: '심연이 답하는 주문', desc: '약화와 폭발 주문을 쓰는 주문사. 마법 공격이 크게 오릅니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { magic: 50, resist: 4 }, tier: 2, level: 25, parent: 'tide', requires: { int: 35, wis: 20 }, mastery: 75, role: '마법 폭발', tree: 'magic' },
     { id: 'oracle', name: '진주 예언자', title: '마르지 않는 생명의 샘', desc: '마법 공격·체력·마법 방어가 함께 오르는 유지형. 회복과 흡수를 씁니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 30, hp: 100, resist: 11 }, tier: 2, level: 25, parent: 'tide', requires: { wis: 35, vit: 20 }, mastery: 75, role: '회복·유지', tree: 'magic' },
     { id: 'bulwark', name: '심연의 철벽', title: '가라앉지 않는 요새', desc: '체력과 물리 방어가 크게 오르는 요새. 방어 기반 공격과 기절을 씁니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { attack: 11, hp: 185, defense: 17, resist: 4 }, tier: 2, level: 25, parent: 'warden', requires: { vit: 35, str: 20 }, mastery: 75, role: '방어·제어', tree: 'defense' },
-    { id: 'paladin', name: '성해 기사', title: '빛과 작살의 서약', desc: '두 공격·체력·두 방어가 고르게 오르는 하이브리드 전투형.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { attack: 22, magic: 24, hp: 100, defense: 8, resist: 7 }, tier: 2, level: 25, parent: 'warden', requires: { str: 25, wis: 25 }, mastery: 75, role: '복합·흡혈', tree: 'defense' },
+    { id: 'paladin', name: '성해 기사', title: '빛과 작살의 서약', desc: '두 공격·체력·두 방어가 고르게 오르는 하이브리드 전투형.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { attack: 22, magic: 24, hp: 100, defense: 8, resist: 7 }, tier: 2, level: 25, parent: 'warden', requires: { str: 25, wis: 25 }, mastery: 75, role: '복합·흡혈', tree: 'defense', lineage: 'paladin' },
     { id: 'wanderer', name: '이형 항해자', title: '어느 깃발에도 속하지 않는 자', desc: '수면 읽기로 명중과 회피를 익히는 복합 입문 직업. 다른 직업에서 계승한 기술의 빈틈을 보완합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 1, magic: 1, hp: 5 }, tier: 1, level: 10, requires: { str: 10, int: 10, vit: 10 }, mastery: 0, role: '복합 입문', tree: 'hybrid', penalties: { accuracy: -.02 } },
     { id: 'chimera', name: '심해 융합자', title: '살과 마나를 한 덩어리로', desc: '최대 체력과 마나를 공격으로 바꾸는 대기만성형 직업.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { attack: 33, magic: 36, hp: 125, defense: 3, resist: 4 }, tier: 2, level: 25, parent: 'wanderer', requires: { str: 25, int: 25, vit: 20 }, mastery: 75, role: 'HP·MP 복합', tree: 'hybrid' },
     { id: 'voidcaller', name: '공허의 기록자', title: '기록되지 않은 파도의 목소리', desc: '환생 이후에 드러나는 히든 직업. 마나 비례 주문과 높은 발동 확률.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .1, bonus: { magic: 42, hp: 20, resist: 7 }, tier: 2, level: 25, parent: 'wanderer', requires: { int: 30, luk: 30 }, mastery: 75, role: '히든·MP', tree: 'mystery', lineage: 'voidcaller', hidden: true, rebirth: 1 },
@@ -108,7 +109,7 @@ JOBS.push(
     { id: 'stormScribe', name: '폭풍 필경사', title: '번개를 문장으로 봉인한다', desc: '한 번의 주문에 모든 마나를 태우는 고점형 3차 직업입니다.', attack: 1, magic: 1, hp: .95, defense: 1, resist: 1, crit: .08, bonus: { magic: 89, resist: 4 }, tier: 3, level: 40, parent: 'tempest', requires: { int: 50, wis: 34 }, mastery: 150, role: '마나·폭발', tree: 'magic', penalties: { mana: -8 } },
     { id: 'lunarOracle', name: '월광 예언자', title: '달의 조수로 미래를 고친다', desc: '높은 회복력과 저항을 얻지만 물리 공격에 약한 유지형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 55, hp: 175, resist: 16 }, tier: 3, level: 40, parent: 'oracle', requires: { wis: 50, vit: 35 }, mastery: 150, role: '회복·저항', tree: 'magic', penalties: { attack: -4 } },
     { id: 'reefMedic', name: '암초 의무관', title: '상처를 산호로 꿰맨다', desc: '작은 회복을 자주 발동해 자동 전투의 안정성을 높이는 보조 분기입니다.', attack: .97, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 2, hp: 65, defense: 4, resist: 3 }, tier: 2, level: 25, parent: 'seagrassKeeper', requires: { vit: 28, wis: 22 }, mastery: 75, role: '회복·흡혈', tree: 'defense', penalties: { attack: -3 } },
-    { id: 'bellTurtle', name: '종거북 수호자', title: '울림으로 적의 박자를 끊는다', desc: '속도를 포기하고 방어와 기절을 챙기는 느린 제어형입니다.', attack: .97, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { hp: 100, defense: 6, resist: 1 }, tier: 2, level: 25, parent: 'warden', requires: { vit: 34, luk: 20 }, mastery: 75, role: '기절·방어', tree: 'defense', penalties: { speed: -6 } },
+    { id: 'bellTurtle', name: '종거북 수호자', title: '울림으로 적의 박자를 끊는다', desc: '속도를 포기하고 방어와 기절을 챙기는 느린 제어형입니다.', attack: .97, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { hp: 100, defense: 6, resist: 1 }, tier: 2, level: 25, parent: 'warden', requires: { vit: 34, luk: 20 }, mastery: 75, role: '기절·방어', tree: 'defense', penalties: { speed: -6 }, lineage: 'bellTurtle' },
     { id: 'coralSaint', name: '산호 성인', title: '스스로 빛나는 방벽', desc: '액티브 없이 두 패시브만으로 파티 없는 자동 전투를 버티는 순수 보조형 3차 직업입니다.', attack: .94, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 50, hp: 220, defense: 12, resist: 16 }, tier: 3, level: 40, parent: 'oracle', requires: { vit: 50, wis: 38 }, mastery: 150, role: '패시브·유지', tree: 'defense', lineage: 'warden', penalties: { attack: -6 } },
     { id: 'brineThorn', name: '염수 가시성채', title: '다가오는 자를 꿰뚫는다', desc: '높은 생명력과 방어를 얻는 대신 마나와 명중을 포기하는 반격형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 9, hp: 215, defense: 26, resist: 6 }, tier: 3, level: 40, parent: 'bulwark', requires: { vit: 52, str: 38 }, mastery: 150, role: '반격·성채', tree: 'defense', penalties: { mana: -12, accuracy: -.04 } },
     { id: 'clockworkAngler', name: '태엽 낚시꾼', title: '한 턴을 미리 감는다', desc: '속도·명중·HP·MP 비례를 섞어 어느 편성에도 들어가는 복합 분기입니다.', attack: 1, magic: 1, hp: 1, defense: .98, resist: 1, crit: .02, bonus: { attack: 7, magic: 7, hp: 10 }, tier: 2, level: 25, parent: 'wanderer', requires: { dex: 28, int: 22 }, mastery: 75, role: '속도·복합', tree: 'hybrid', penalties: { hp: -18 } },
@@ -177,6 +178,8 @@ JOBS.push(...(V24_JOBS as Job[]));
 JOBS.push(...(SUPPORT_JOBS as Job[]));
 // v25 ??? 특수 직업: 시계공·시간의 지배자·玄. 자세한 설계는 expansion-v25.ts.
 JOBS.push(...(V25_JOBS as Job[]));
+// v25.14 방어 계열 보강: 종거북·성해 기사 갈래 5차까지, 새 소금 파수꾼(마법 방어) 계보. 자세한 설계는 expansion-defense.ts.
+JOBS.push(...(DEFENSE_JOBS as Job[]));
 for (const job of JOBS) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
 
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
@@ -249,7 +252,7 @@ const JOB_HINTS: Record<string, string> = {
     rebirthFisher: '환생 뒤, 윤회의 문이 이 이름을 부를 때.',
     abyssMimic: '메아리를 오래 길들인 자에게 보스의 그림자가 닿습니다.',
 };
-for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id] ?? V25_HINTS[job.id];
+for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id] ?? V25_HINTS[job.id] ?? DEFENSE_HINTS[job.id];
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };
@@ -269,6 +272,7 @@ export const LINEAGES: Lineage[] = [
     { id: 'warden', name: '산호 수호자 계보', tree: 'defense', summary: '방어·기절·회복·반격과 복합 흡혈로 갈라지는 수호 계보입니다.' },
     { id: 'seagrassKeeper', name: '해초 돌봄꾼 계보', tree: 'defense', summary: '회복과 흡혈로 편성을 지탱하는 보조 방어 계보입니다.' },
     { id: 'shieldbearer', name: '방패병 계보', tree: 'defense', summary: '반격·약화 탱커를 거쳐 5차 수호신에 이르는 계보입니다.' },
+    ...DEFENSE_LINEAGES,
     independent('defense'),
     { id: 'poisoner', name: '독술사 계보', tree: 'status', summary: '중독·역병을 쌓아 5차 파멸의 사도에 이르는 계보입니다.' },
     { id: 'shaman', name: '주술사 계보', tree: 'status', summary: '약화·감속·침묵 저주로 적의 행동을 묶는 계보입니다.' },

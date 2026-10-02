@@ -1,9 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ChatPanel } from './chat-panel';
-import { AutoRunStatus } from './auto-run';
-import { BookOpen, ChevronRight, Compass, Flag, Lock, Map, MessageCircle, ShoppingBag, Swords, Trophy, Zap } from 'lucide-react';
-import { goalSummary } from '@/game/systems/progress';
+import { ChevronRight, Compass, Lock, Map, MessageCircle, Swords } from 'lucide-react';
 import { STAGES, DUNGEONS } from '@/game/data/world';
 import { BattleLogLine } from './combat-log';
 import type { State, Action } from '@/game/types';
@@ -35,7 +33,6 @@ export function BattleRail({ s, busy, send, setView }: {
     {battleLogs.length ? battleLogs.map(log => <BattleLogLine key={log.id} log={log} index playerName={s.name}/>) : <p className="battle-feed-empty">자동 낚시를 시작하면 전투 기록이 표시됩니다.</p>}
     </div> : <ChatPanel open={feed === 'chat'} playerName={s.name} guildName={s.guildMember?.name}/>}
     </section>
-    <AutoRunStatus s={s} compact/>
     <section className="panel battle-rail-panel battle-selector-panel">
     <div className="section-title"><div className="battle-place-tabs" role="tablist" aria-label="사냥터 종류">
         <button type="button" role="tab" id="place-tab-stage" aria-controls="place-panel" aria-selected={tab === 'stage'} className={tab === 'stage' ? 'active' : ''} onClick={() => setTab('stage')}><Map size={14}/>낚시터</button>
@@ -57,11 +54,6 @@ export function BattleRail({ s, busy, send, setView }: {
     })}</div>}
     {tab === 'stage' && s.dungeon && <p className="battle-place-note">던전 탐험 중에는 낚시터를 바꿀 수 없습니다.</p>}
     </div>
-    </section>
-    <section className="panel battle-rail-panel battle-shortcuts">
-    <div className="section-title"><h2><Zap size={15}/> 빠른 이동</h2></div>
-    {(s.daily || s.weekly) && <button type="button" className="goal-chip" onClick={() => setView('voyage')}><Flag size={14}/><span>오늘 목표 {goalSummary(s.daily).done}/{goalSummary(s.daily).total} · 주간 {goalSummary(s.weekly).done}/{goalSummary(s.weekly).total}</span><ChevronRight size={13}/></button>}
-    <div className="battle-shortcut-grid"><button type="button" onClick={() => setView('skills')}><Zap size={14}/>스킬 편성</button><button type="button" onClick={() => setView('inventory')}><ShoppingBag size={14}/>장비 보관함</button><button type="button" onClick={() => setView('book')}><BookOpen size={14}/>도감 연구</button><button type="button" onClick={() => setView('ranking')}><Trophy size={14}/>비동기 결투</button></div>
     </section>
     </aside>;
 }

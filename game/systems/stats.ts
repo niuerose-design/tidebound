@@ -14,7 +14,7 @@ import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
 import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts } from './progression';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
-export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, dotBonus: 0, guardAffinity: 1, healFocus: 0, arcaneStrike: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, ...a }; }
+export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, dotBonus: 0, guardAffinity: 1, wardAffinity: 1, healFocus: 0, arcaneStrike: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, ...a }; }
 /** 달성한 도감 연구 단계의 총합(어종 × 단계). */
 export function mastery(s: State) { return Object.values(s.book).reduce((a, n) => a + BALANCE.bookMilestones.filter(m => n >= m).length, 0); }
 /** 능력치 증가 원인. 능력치 화면의 상세보기가 이 순서로 보여줍니다. */
@@ -39,7 +39,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const rec = (k: keyof CombatStats, source: StatSource, delta: number, factor?: number) => {
         if (trace && delta) (trace[k] ||= []).push(factor === undefined ? { source, delta } : { source, delta, factor });
     };
-    const a = { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, hp: 0, attack: 0, magic: 0, defense: 0, resist: 0, crit: 0, critDamage: 0, accuracy: 0, evasion: 0, speed: 0, mana: 0, manaRegen: 0, hpRegen: 0, penetration: 0, lifesteal: 0, harmony: 0, thorns: 0, dotBonus: 0, guardAffinity: 0, healFocus: 0, arcaneStrike: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0 } as CombatStats;
+    const a = { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, hp: 0, attack: 0, magic: 0, defense: 0, resist: 0, crit: 0, critDamage: 0, accuracy: 0, evasion: 0, speed: 0, mana: 0, manaRegen: 0, hpRegen: 0, penetration: 0, lifesteal: 0, harmony: 0, thorns: 0, dotBonus: 0, guardAffinity: 0, wardAffinity: 0, healFocus: 0, arcaneStrike: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0 } as CombatStats;
     const set = (k: keyof CombatStats, source: StatSource, n: number) => { a[k] = n; rec(k, source, n); };
     const add = (k: keyof CombatStats, source: StatSource, n: number) => { a[k] += n; rec(k, source, n); };
     /** 곱셈은 원래 식처럼 한 번에 적용하고, 증감은 원인별 배율 비율로 나눠 기록합니다. */
@@ -66,7 +66,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     set('manaRegen', 'base', 2); add('manaRegen', 'attributes', v.wis * E.wis.manaRegen);
     add('hpRegen', 'attributes', v.vit * E.vit.hpRegen);
     set('harmony', 'attributes', harmonyPower(s));
-    set('guardAffinity', 'job', guardAffinity(jobFactor(j, 'defense'))); set('healFocus', 'job', j.healer ? 1 : 0); set('arcaneStrike', 'job', arcaneStrikeChance({ tier: j.tier, magic: jobFactor(j, 'magic'), attack: jobFactor(j, 'attack') }));
+    set('guardAffinity', 'job', guardAffinity(jobFactor(j, 'defense'))); set('wardAffinity', 'job', guardAffinity(jobFactor(j, 'resist'))); set('healFocus', 'job', j.healer ? 1 : 0); set('arcaneStrike', 'job', arcaneStrikeChance({ tier: j.tier, magic: jobFactor(j, 'magic'), attack: jobFactor(j, 'attack') }));
     if (a.arcaneStrike > 0) add('arcaneRatioBonus', 'job', SKILL_FORMULA.arcaneRatioByTier[Math.min(j.tier, SKILL_FORMULA.arcaneRatioByTier.length - 1)] || 0);
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
     rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus); add('goldBonus', 'account', accountExpGold(s));
