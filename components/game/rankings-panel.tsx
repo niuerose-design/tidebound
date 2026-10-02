@@ -4,7 +4,7 @@ import { ArrowUpRight, RefreshCw, Swords, Fish, Users } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import type { DuelResult, Snapshot } from '@/game/types';
+import type { DuelResult, Snapshot, State } from '@/game/types';
 import { BALANCE } from '@/game/data/balance';
 import { jobById } from '@/game/data/classes';
 import { skillById } from '@/game/data/skills';
@@ -15,7 +15,8 @@ import { STAT_LABELS, statDisplay } from '@/game/data/progression';
 import { vowBadgeLabel } from '@/game/systems/vows';
 import { Empty, Heading, SkillIcon, format, useNow } from './shared';
 import { BattleLogLine, withTurnDividers } from './combat-log';
-import type { Ranking } from './use-game';
+import type { Ranking, AbyssRow } from './use-game';
+import { abyssWeeklyPearls } from '@/game/systems/progress';
 import type { PanelProps } from './panel-props';
 
 /** 랭킹 줄과 상세보기에 보여 주는 주요 능력치. */
@@ -32,10 +33,12 @@ function MainStats({ stats }: { stats: Snapshot['stats'] }) {
     const a = normalizeStats(stats);
     return <small className="block ranking-main-stats">{MAIN_STATS.map(k => <span key={k}>{SHORT[k]} <b>{statDisplay(k, a[k])}</b></span>)}</small>;
 }
-export function Rankings({ s, send, busy, rows, rankError, loadRanking, register, result, setResult }: PanelProps & {
+export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, loadAbyss, register, result, setResult }: PanelProps & {
     rows: Ranking[];
     rankError: string;
     loadRanking: () => void;
+    abyss: { week: string; rows: AbyssRow[] } | null;
+    loadAbyss: () => void;
     register: () => void;
     result: DuelResult | null;
     setResult: (v: DuelResult | null) => void;
@@ -73,7 +76,9 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
     <TabsList className="game-tabs">
     <TabsTrigger value="ranking">낚시꾼 랭킹</TabsTrigger>
     <TabsTrigger value="training">훈련 상대</TabsTrigger>
+    <TabsTrigger value="abyss" onClick={() => { if (!abyss) loadAbyss(); }}>심연 깊이 · 주간</TabsTrigger>
     </TabsList>
+    <TabsContent value="abyss"><AbyssBoard s={s} abyss={abyss} reload={loadAbyss}/></TabsContent>
     <TabsContent value="ranking">
     <div className="panel ranking-panel">
     <div className="section-title">
@@ -167,4 +172,17 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
     </DialogContent>
     </Dialog>
     </>;
+}
+
+/** v25.6 주간 심연 기록판: 한국 시간 월요일에 새 주가 시작되고, 지난주 순위 보상은 다음 행동 때 자동으로 진주로 들어옵니다. */
+function AbyssBoard({ s, abyss, reload }: { s: State; abyss: { week: string; rows: AbyssRow[] } | null; reload: () => void }) {
+    const mine = s.abyssWeek, rewards = [1, 2, 3, 10, 50].map(r => `${r === 1 ? '1위' : r === 2 ? '2위' : r === 3 ? '3위' : `${r}위 안`} ${abyssWeeklyPearls(r)}`).join(' · ');
+    return <section className="panel ranking-panel abyss-board">
+        <div className="section-title"><h2><ArrowUpRight size={17}/> 이번 주 심연 깊이{abyss ? ` · ${abyss.week}` : ''}</h2><button className="text-button" onClick={reload}><RefreshCw size={13}/> 새로고침</button></div>
+        <p className="footnote">무한 심연(환생 3회)에서 이번 주에 정복한 가장 깊은 층으로 겨룹니다. 한국 시간 월요일 0시에 새 주가 시작되고, 지난주 보상은 다음 행동 때 자동 지급: {rewards} · 참가 1진주. 내 기록은 심연을 정복하면 바로 올라갑니다.</p>
+        {mine && <p className="abyss-mine">내 이번 주 기록 <b>{mine.best}층</b>{mine.dirty ? ' · 올리는 중' : ''}</p>}
+        {!abyss ? <p className="footnote">불러오는 중…</p> : !abyss.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 주에 무한 심연을 정복한 낚시꾼이 없습니다. 첫 기록을 남겨 보세요."/> :
+        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>낚시꾼</TableHead><TableHead>깊이</TableHead><TableHead>직업</TableHead><TableHead>환생</TableHead></TableRow></TableHeader>
+        <TableBody>{abyss.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{r.depth}층</b></TableCell><TableCell>{jobName(r.job)}</TableCell><TableCell>{r.rebirths}</TableCell></TableRow>)}</TableBody></Table>}
+    </section>;
 }

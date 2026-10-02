@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { ChatPanel } from './chat-panel';
 import { AutoRunStatus } from './auto-run';
-import { BookOpen, ChevronRight, Compass, Lock, Map, MessageCircle, ShoppingBag, Swords, Trophy, Zap } from 'lucide-react';
+import { BookOpen, ChevronRight, Compass, Flag, Lock, Map, MessageCircle, ShoppingBag, Swords, Trophy, Zap } from 'lucide-react';
+import { goalSummary } from '@/game/systems/progress';
 import { STAGES, DUNGEONS } from '@/game/data/world';
 import { BattleLogLine } from './combat-log';
 import type { State, Action } from '@/game/types';
@@ -59,6 +60,7 @@ export function BattleRail({ s, busy, send, setView }: {
     </section>
     <section className="panel battle-rail-panel battle-shortcuts">
     <div className="section-title"><h2><Zap size={15}/> 빠른 이동</h2></div>
+    {(s.daily || s.weekly) && <button type="button" className="goal-chip" onClick={() => setView('voyage')}><Flag size={14}/><span>오늘 목표 {goalSummary(s.daily).done}/{goalSummary(s.daily).total} · 주간 {goalSummary(s.weekly).done}/{goalSummary(s.weekly).total}</span><ChevronRight size={13}/></button>}
     <div className="battle-shortcut-grid"><button type="button" onClick={() => setView('skills')}><Zap size={14}/>스킬 편성</button><button type="button" onClick={() => setView('inventory')}><ShoppingBag size={14}/>장비 보관함</button><button type="button" onClick={() => setView('book')}><BookOpen size={14}/>도감 연구</button><button type="button" onClick={() => setView('ranking')}><Trophy size={14}/>비동기 결투</button></div>
     </section>
     </aside>;

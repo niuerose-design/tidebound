@@ -233,3 +233,26 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .log-reward-ticker span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .duel-log .log-line { margin-bottom: 6px; }
 .duel-log .log-turn-divider { margin: 6px 0; }
+/* v25.6 항해 목표·업적·조건 카드·주간 심연판 */
+.goal-boards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-bottom:10px; }
+.goal-board { padding:18px; }
+.goal-list { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.goal-list li { display:grid; gap:6px; padding:10px 0; border-top:1px solid #9ab4b51a; }
+.goal-list li > div { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.goal-list strong { font-size:14px; color:#e1eeeb; } .goal-list small { font-size:12px; color:#9bb3b0; white-space:nowrap; }
+.goal-list li.done strong { color:#a4e9ba; } .goal-list li.done strong::after { content:' ✓'; }
+.achievement-group { margin-top:14px; } .achievement-group h3 { font-size:14px; color:#9bc8b5; margin-bottom:8px; }
+.achievement-list { grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+.voyage-entry.achievement { display:grid; gap:6px; padding:13px 14px; }
+.voyage-entry.achievement.done { border-left:3px solid #8fd9b9; } .voyage-entry.achievement:not(.done) strong { color:#c9d3cf; }
+.achievement-top { display:flex; justify-content:space-between; align-items:center; } .achievement-top svg { color:#8fd9b9; }
+.voyage-entry.achievement p { margin:0; font-size:12px; } .achievement-reward { font-size:12px; color:#e8d39a; }
+.goal-chip { display:flex; align-items:center; gap:7px; width:100%; margin-bottom:8px; padding:8px 10px; border:1px solid #3d675a; border-radius:6px; background:#13262c; color:#c5d8d2; font-size:12px; cursor:pointer; }
+.goal-chip span { flex:1; text-align:left; } .goal-chip svg:first-child { color:#a4e9ba; }
+.focus-panel .vow-card.chosen { border-color:#d5b36c; background:#223329; }
+.focus-panel select { background:#101c20; border:1px solid var(--border); border-radius:6px; color:#e8efe9; padding:7px 8px; font:inherit; font-size:13px; }
+.abyss-board .abyss-mine { font-size:14px; color:#c5d8d2; margin:6px 0 12px; } .abyss-board .abyss-mine b { color:#e8d39a; }
+.abyss-board tr.self td { color:#a4e9ba; }
+@media (max-width: 767px) { .goal-boards { grid-template-columns:1fr; } }
+.voyage-entry.achievement.claimable { border-left:3px solid #e8d39a; box-shadow:0 0 0 1px #e8d39a33 inset; }
+.voyage-section .section-title .primary.small { margin-left:auto; margin-right:12px; }

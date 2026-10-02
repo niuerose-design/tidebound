@@ -293,6 +293,15 @@ export type State = {
     tutorial?: { hidden?: boolean; skipped?: boolean };
     /** 해금한 항해 기록 id → 해금 턴(-1은 도입 전에 이미 달성해 조용히 채운 기록). 환생 후에도 유지됩니다. */
     voyage?: Record<string, number>;
+    /** v25.6 해금한 업적 id → 해금 턴. 환생 후에도 유지되며 보상은 해금 때 바로 받습니다. */
+    achievements?: Record<string, number>;
+    /** v25.6 보상을 받은 업적 id. 영구 AP·배율은 받은 것만 셉니다. */
+    achievementClaims?: Record<string, true>;
+    /** v25.6 일일·주간 항해 목표판(한국 시간 기준 날짜·주 키). */
+    daily?: import('./data/goals').GoalBoard;
+    weekly?: import('./data/goals').GoalBoard;
+    /** v25.6 이번 주 무한 심연 최고 깊이. settled는 보상을 정산한 지난주 키. */
+    abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
     /** 이 세이브에 적용된 레벨당 능력치 포인트. 없으면 이전 규칙(레벨당 4)으로 보고 차액을 한 번 지급합니다. */
     statRate?: number;
     tide: number;
@@ -383,7 +392,9 @@ export type State = {
     };
 };
 /** 서약. anchor·breath는 걸었는지, rough는 거친 바다 선택 단계(1~3). seal은 잠든 닻 봉인 진행(이번 생만). */
-export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null };
+export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
+    /** v25.6 이번 생의 조건 카드: stage 지정 해역 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
+    focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };
 export type Snapshot = {
     /** 걸어 둔 서약 배지(랭킹 표시). 예: ['anchor', 'rough2'] */
     vows?: string[];

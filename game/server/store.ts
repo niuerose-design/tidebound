@@ -4,6 +4,9 @@ import { migrateState } from '../systems/migrations';
 import { snapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
 import { db, ConfigError } from './db';
+import { weekKey, weekSeason } from '../data/goals';
+import { abyssWeeklyPearls } from '../systems/progress';
+import { addLog } from '../systems/state';
 import { accountFromRequest, AuthError } from './auth';
 export { db };
 export class ApiError extends Error {
@@ -44,6 +47,33 @@ export async function register(id: string) {
     return state;
 }
 export const RANKING_SEASON = SAVE_VERSION;
+/** v25.6 주간 심연 기록판. 행 id는 abyss:<계정>, 시즌은 주 키 정수(예: 202640)라 낚시꾼 랭킹(시즌 = 세이브 버전)과 섞이지 않습니다. */
+export const abyssRowId = (id: string) => `abyss:${id}`;
+export async function listAbyssBoard(now: number) {
+    const key = weekKey(now), rows = await db().listRankings(weekSeason(key), 100);
+    return { key, rows: rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as { name: string; depth: number; job: string; rebirths: number; account: string }; return { rank: i + 1, id: snap.account, name: snap.name, depth: Number(snap.depth) || r.rating, job: snap.job, rebirths: snap.rebirths, updatedAt: r.updated_at }; }) };
+}
+/**
+ * 행동 처리 뒤 저장 전에 한 번: 이번 주 심연 기록이 새로 깊어졌으면 올리고, 주가 바뀌었으면 지난주 순위 보상을 한 번 정산합니다.
+ * 심연에 들어간 적 없는 세이브는 아무것도 하지 않습니다(요청당 추가 질의 0).
+ */
+export async function syncAbyssBoard(id: string, s: State, now: number) {
+    const week = s.abyssWeek;
+    if (!week) return;
+    const database = db(), current = weekKey(now);
+    if (week.dirty && week.key === current) {
+        await database.upsertRanking({ id: abyssRowId(id), snapshot: JSON.stringify({ season: weekSeason(current), board: 'abyss', account: id, name: s.name, depth: week.best, job: s.job, rebirths: s.rebirths }), rating: week.best, power: week.best, updated_at: now });
+        delete week.dirty;
+    }
+    const previous = weekKey(now - 7 * 86400000);
+    if (week.settled === previous) return;
+    {
+        const rows = await database.listRankings(weekSeason(previous), 100);
+        const rank = rows.findIndex(r => r.id === abyssRowId(id)) + 1;
+        week.settled = previous;
+        if (rank > 0) { const pearls = abyssWeeklyPearls(rank); s.pearls += pearls; addLog(s, `지난주 심연 기록 ${rank}위(${rows[rank - 1].rating}층) · 진주 +${pearls}`, 'reward'); }
+    }
+}
 export function failure(e: unknown) {
     if (e instanceof ApiError || e instanceof AuthError || e instanceof ConfigError)
         return Response.json({ error: e.message }, { status: e.status });

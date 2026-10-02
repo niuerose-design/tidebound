@@ -46,6 +46,12 @@ assert.ok(data.rows.some(r => r.id === chatId && r.self), 'own chat line listed'
 ({ data } = await call(`/api/chat?after=${chatId}`, undefined, { expect: 200 }));
 assert.equal(data.rows.length, 0, 'cursor returns only newer lines');
 await call('/api/chat?channel=nope', undefined, { expect: 400 });
+// 주간 심연 기록판: 로그인만 되면 빈 판이라도 읽힙니다.
+({ data } = await call('/api/ranking?board=abyss', undefined, { expect: 200 }));
+assert.ok(/^\d{4}-W\d{2}$/.test(data.week) && Array.isArray(data.rows), 'abyss board has a week key');
+// 일일 목표판이 동기화 때 깔립니다.
+({ data } = await call('/api/game', { type: 'sync' }, { expect: 200 }));
+assert.ok(data.state.daily && data.state.daily.goals.length === 3 && data.state.weekly.goals.length === 4, 'daily/weekly goals present');
 await call('/api/auth', { action: 'logout' }, { expect: 200 });
 cookie = '';
 await call('/api/game', { type: 'sync' }, { expect: 401 });

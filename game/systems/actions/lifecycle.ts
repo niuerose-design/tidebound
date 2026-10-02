@@ -5,7 +5,9 @@ import type { State, Vows } from '../../types';
 import type { ActionHandlers } from './types';
 import { addLog, newState } from '../state';
 import { drawRebirthDoor } from '../../data/doors';
-import { jobById } from '../../data/classes';
+import { jobById, JOB_TREES } from '../../data/classes';
+import { STAGES } from '../../data/world';
+import { claimAchievements } from '../progress';
 import { gainLevels, releaseAnchor } from '../encounter';
 import { VOW_IDS, VOW_NAMES, type VowId, breathBonus, chooseAnchorTarget, cleanVows, hasVows, vowUnlocked, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '../vows';
 
@@ -23,7 +25,7 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
     }
     fresh.abyssBest = s.abyssBest;
     fresh.shopSerial = s.shopSerial;
-    Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus: next.lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: next.pearls, essence: s.essence || 0, rebirths: next.rebirths, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial });
+    Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus: next.lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: next.pearls, essence: s.essence || 0, rebirths: next.rebirths, permanent: s.permanent, book: s.book, clears: s.clears, kills: s.kills, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek });
     s.hp = stats(s).hp;
     s.mana = stats(s).mana;
 }
@@ -66,7 +68,24 @@ export const lifecycleActions: ActionHandlers = {
         if (seal) addLog(s, `잠든 닻 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1에 머뭅니다.`, 'system');
     },
     /** 다음 생 서약 예약. id: anchor·breath·rough, value: on/off 또는 거친 바다 0~3. */
+    /** v25.6 업적 보상 받기: id 또는 'all'. */
+    claimAchievement(s, { id }) {
+        const got = claimAchievements(s, id);
+        addLog(s, `업적 보상 ${got.count}개 · 진주 +${got.pearls}${got.sp ? ` · SP +${got.sp}` : ''}`, 'reward');
+    },
     nextVow(s, { id, a }) {
+        // v25.6 조건 카드: value는 'stage:<id>' · 'tree:<id>' · 'gold' · 'off'.
+        if (id === 'focus') {
+            const next: Vows = { ...(s.nextVows || {}) };
+            const [kind, target] = String(a.value || 'off').split(':', 2);
+            if (kind === 'off') delete next.focus;
+            else if (kind === 'stage' && STAGES.some(st => st.id === target && st.rebirth <= s.rebirths + 1)) next.focus = { kind, id: target };
+            else if (kind === 'tree' && JOB_TREES.some(t => t.id === target)) next.focus = { kind, id: target };
+            else if (kind === 'gold') next.focus = { kind };
+            else throw Error('조건 카드를 확인하세요.');
+            s.nextVows = next;
+            return;
+        }
         if (!VOW_IDS.includes(id as VowId))
             throw Error('서약을 확인하세요.');
         const vow = id as VowId;

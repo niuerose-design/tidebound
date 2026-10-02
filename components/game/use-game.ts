@@ -9,6 +9,8 @@ export type Ranking = Snapshot & {
     self: boolean;
     updatedAt: number;
 };
+/** v25.6 주간 심연 기록판 한 줄. */
+export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean };
 /** 동기화 주기(ms). */
 const SYNC_MS = 3000;
 /** 턴이 서버에서 계산된 뒤 다음 동기화로 도착할 때까지의 여유. 이만큼 늦게 재생해야 턴 간격이 고르게 유지됩니다. */
@@ -110,6 +112,8 @@ export function useGame() {
     catch (e) {
         setRankError((e as Error).message);
     } }, [request]);
+    const [abyss, setAbyss] = useState<{ week: string; rows: AbyssRow[] } | null>(null);
+    const loadAbyss = useCallback(async () => { try { const d = await request('/api/ranking?board=abyss') as unknown as { week: string; rows: AbyssRow[] }; setAbyss({ week: d.week, rows: d.rows }); } catch (e) { setRankError((e as Error).message); } }, [request]);
     const register = useCallback(async () => { if (lock.current)
         return; lock.current = true; setBusy(true); try {
         const d = await request('/api/ranking', {});
@@ -169,5 +173,5 @@ export function useGame() {
         replay.reset();
         setNeedsLogin(true);
     }, [replay]);
-    return { state: view, error, busy, saved, send, rows, rankError, loadRanking, register, duel, setDuel, needsLogin, authenticate, logout };
+    return { state: view, error, busy, saved, send, rows, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout };
 }

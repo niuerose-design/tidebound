@@ -47,9 +47,16 @@ export function cleanVows(s: Pick<State, 'permanent'>, v?: Vows): Vows {
     if (v?.anchor && vowUnlocked(s, 'anchor')) out.anchor = true;
     if (v?.breath && vowUnlocked(s, 'breath')) out.breath = true;
     if (v?.rough && vowUnlocked(s, 'rough')) out.rough = Math.max(1, Math.min(3, Math.floor(v.rough)));
+    if (v?.focus && FOCUS_KINDS.includes(v.focus.kind)) out.focus = { kind: v.focus.kind, ...(v.focus.id ? { id: v.focus.id } : {}) };
     return out;
 }
-export const hasVows = (v?: Vows) => !!(v && (v.anchor || v.breath || v.rough));
+export const hasVows = (v?: Vows) => !!(v && (v.anchor || v.breath || v.rough || v.focus));
+/** v25.6 이번 생의 조건 카드. 연구 없이 환생 1회부터 고를 수 있고, 한 생에 하나입니다. */
+export const FOCUS_KINDS = ['stage', 'tree', 'gold'] as const;
+export const FOCUS_NAMES: Record<'stage' | 'tree' | 'gold', string> = { stage: '해역 집중', tree: '계열 집중', gold: '황금 항해' };
+export const FOCUS_TEXT: Record<'stage' | 'tree' | 'gold', string> = { stage: '지정한 해역에서 경험치·골드 ×1.5.', tree: '지정한 계열의 직업으로 싸우면 직업·스킬 숙련 ×2.', gold: '생 전체에서 골드 ×2, 경험치 ×0.75.' };
+export function focusLabel(v?: Vows) { const f = v?.focus; if (!f) return ''; const name = f.kind === 'stage' ? STAGES.find(st => st.id === f.id)?.name : f.kind === 'tree' ? TREE_NAMES[f.id || ''] : ''; return `${FOCUS_NAMES[f.kind]}${name ? ` · ${name}` : ''}`; }
+const TREE_NAMES: Record<string, string> = { physical: '물리', magic: '마법', defense: '방어', status: '상태이상', hybrid: '복합', support: '보조', mystery: '???' };
 /** 랭킹 배지용 목록. 예: ['anchor', 'rough2'] */
 export const vowBadges = (v?: Vows) => [v?.anchor ? 'anchor' : '', v?.breath ? 'breath' : '', v?.rough ? `rough${v.rough}` : ''].filter(Boolean);
 export const vowBadgeLabel = (badge: string) => badge.startsWith('rough') ? `${VOW_NAMES.rough} ${badge.slice(5)}` : VOW_NAMES[badge as VowId] || badge;

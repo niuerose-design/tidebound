@@ -173,3 +173,48 @@ test('v25.5 multicast: chant spells fire together in one action with scaled cool
     const dotted = mk(['twinSpark', 'emberVerse']); dotted.effects = { dot: { name: '출혈', damage: 10, turns: 5 } }; dotted.cooldowns = { hook: 3 }; const l4 = [];
     actTurn(dotted, target(), () => 0, (text, ev) => l4.push(ev)); assert.equal(dotted.hp, 990, 'dot ticks once per action'); assert.equal(dotted.cooldowns.hook, 2);
 });
+
+test('v25.6 achievements pay out once with permanent bonuses; daily/weekly goals roll over on KST days and reward on completion', async () => {
+    const { ACHIEVEMENTS, achievementTotals } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/achievements');
+    const { weekKey, dayKey } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/goals');
+    const { apCapacity } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
+    const { syncAchievements, recordGoal } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progress');
+    assert.ok(ACHIEVEMENTS.length >= 40 && new Set(ACHIEVEMENTS.map(a => a.id)).size === ACHIEVEMENTS.length);
+    const s = newState(0); s.kills = 1000; s.rebirths = 3; const pearls = s.pearls, ap = apCapacity(s);
+    const logs = []; delete s.achievements; syncAchievements(s, t => logs.push(t));
+    assert.ok(s.achievements['kills:100'] !== undefined && s.achievements['kills:1000'] !== undefined && s.achievements['rebirths:3'] !== undefined);
+    assert.equal(s.pearls, pearls, 'unlocking pays nothing until claimed'); assert.equal(logs.length, 1, 'first sync is one summary line');
+    act(s, { type: 'claimAchievement', id: 'kills:100' }, 0); assert.equal(s.pearls - pearls, 1);
+    act(s, { type: 'claimAchievement', id: 'all' }, 0); assert.equal(s.pearls - pearls, 1 + 2 + 1 + 3, 'claim all pays the rest once');
+    assert.throws(() => act(s, { type: 'claimAchievement', id: 'all' }, 0), /없습니다/);
+    s.kills = 20000; syncAchievements(s, t => logs.push(t)); assert.ok(logs.at(-1).includes('포획 20,000마리'));
+    act(s, { type: 'claimAchievement', id: 'all' }, 0);
+    const totals = achievementTotals(s); assert.ok(totals.bonus.attack > 0 && totals.bonus.hp > 0);
+    s.abyssBest = 25; syncAchievements(s, () => {}); act(s, { type: 'claimAchievement', id: 'abyss:25' }, 0); assert.equal(apCapacity(s), ap + 1, 'claimed achievement AP raises capacity');
+    const plain = stats({ ...s, achievementClaims: {} }), boosted = stats(s); assert.ok(boosted.attack > plain.attack && boosted.hp > plain.hp, 'permanent multipliers apply');
+    // 일일 목표: KST 날짜 키로 깔리고 자정에 바뀝니다. 2026-10-02 15:00 UTC = KST 10-03 00:00.
+    const noon = Date.UTC(2026, 9, 2, 3), nextDay = Date.UTC(2026, 9, 2, 15);
+    assert.equal(dayKey(noon), '2026-10-02'); assert.equal(dayKey(nextDay), '2026-10-03'); assert.equal(weekKey(noon), '2026-W40'); assert.equal(weekKey(Date.UTC(2026, 9, 4, 15)), '2026-W41', 'monday KST starts a new week');
+    const g = newState(noon); g.level = 20; g.lastTick = noon; act(g, { type: 'sync' }, noon);
+    assert.equal(g.daily.key, '2026-10-02'); assert.equal(g.daily.goals.length, 3); assert.equal(g.weekly.goals.length, 4);
+    const before = g.pearls, catchGoal = g.daily.goals.find(x => x.kind === 'catch');
+    recordGoal(g, 'catch', undefined, catchGoal.target, () => {}); assert.ok(catchGoal.claimed); assert.equal(g.pearls - before, catchGoal.pearls);
+    const weeklyCatch = g.weekly.goals.find(x => x.kind === 'catch'); assert.equal(weeklyCatch.progress, catchGoal.target, 'weekly board advances too');
+    act(g, { type: 'sync' }, nextDay); assert.equal(g.daily.key, '2026-10-03'); assert.equal(g.daily.goals.find(x => x.kind === 'catch').progress, 0, 'new day resets'); assert.equal(g.weekly.key, '2026-W40', 'same week keeps weekly progress');
+});
+
+test('v25.6 focus cards change exp, gold and mastery for one life; weekly abyss depth is tracked per KST week', async () => {
+    const { expMultiplier, goldMultiplier } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/stats');
+    const { recordAbyssDepth, abyssWeeklyPearls } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progress');
+    const s = newState(0); s.level = 40; s.rebirths = 1; s.stage = 'reef';
+    act(s, { type: 'nextVow', id: 'focus', value: 'stage:reef' }, 0); assert.deepEqual(s.nextVows.focus, { kind: 'stage', id: 'reef' });
+    assert.throws(() => act(s, { type: 'nextVow', id: 'focus', value: 'stage:nope' }, 0));
+    act(s, { type: 'rebirth' }, 0, () => .5); assert.deepEqual(s.vows.focus, { kind: 'stage', id: 'reef' }, 'card carries into the new life');
+    s.stage = 'reef'; const onStage = expMultiplier(s); s.stage = 'brook'; const offStage = expMultiplier(s); assert.ok(Math.abs(onStage / offStage - 1.5) < 1e-9);
+    const g = newState(0); g.vows = { focus: { kind: 'gold' } }; assert.ok(Math.abs(goldMultiplier(g) / goldMultiplier({ ...g, vows: {} }) - 2) < 1e-9); assert.ok(Math.abs(expMultiplier(g) / expMultiplier({ ...g, vows: {} }) - .75) < 1e-9);
+    act(s, { type: 'nextVow', id: 'focus', value: 'off' }, 0); assert.equal(s.nextVows.focus, undefined);
+    const w = newState(0); const mon = Date.UTC(2026, 9, 4, 15); recordAbyssDepth(w, 7, Date.UTC(2026, 9, 2, 3)); assert.deepEqual(w.abyssWeek, { key: '2026-W40', best: 7, dirty: true });
+    delete w.abyssWeek.dirty; recordAbyssDepth(w, 5, Date.UTC(2026, 9, 2, 4)); assert.equal(w.abyssWeek.best, 7); assert.equal(w.abyssWeek.dirty, undefined, 'shallower run does not re-upload');
+    recordAbyssDepth(w, 3, mon); assert.equal(w.abyssWeek.key, '2026-W41'); assert.equal(w.abyssWeek.best, 3);
+    assert.deepEqual([1, 2, 3, 10, 50, 51].map(abyssWeeklyPearls), [30, 20, 15, 8, 3, 1]);
+});
