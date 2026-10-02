@@ -3,6 +3,8 @@ import { tideLimit, tierReward, tierHealth, tierAttack } from '@/game/systems/me
 import { TIDE_MILESTONES, TIDE_MILESTONE_PEARLS, nextTideMilestone } from '@/game/data/long-term';
 import type { PanelProps } from './panel-props';
 export function TideSelector({ s, send, busy }: PanelProps) {
+    // v25.9 환생 전에는 올릴 차수가 없으므로 카드 자체를 숨깁니다.
+    if (!tideLimit(s)) return null;
     return <section className="panel tide-selector" title="환생마다 1단계 해금(최대 200). 일반 낚시터에만 적용하며 선택은 자유입니다.">
     <div>
     <h3>환생 해역 · 난이도 {s.tide || 0}</h3>

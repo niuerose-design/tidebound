@@ -1,4 +1,5 @@
 'use client';
+import type { State } from '@/game/types';
 import { Skills } from './skills-panel';
 import { Classes } from './classes-panel';
 import { VoyageLog } from './guidance-panels';
@@ -23,7 +24,8 @@ import { SettingsDialog } from './settings-dialog';
 import { Navigation } from './navigation';
 import { BattleView } from './battle-view';
 import { MobileTabBar } from './mobile-tab-bar';
-export const NAV = [{ label: '항해', items: [{ id: 'battle', name: '자동 낚시', Icon: Anchor }, { id: 'stages', name: '낚시터', Icon: Map }, { id: 'dungeons', name: '던전 탐험', Icon: Compass }] }, { label: '낚시꾼', items: [{ id: 'character', name: '능력치 · 빌드', Icon: Target }, { id: 'shop', name: '항구 상점', Icon: ShoppingBag }, { id: 'inventory', name: '장비 보관함', Icon: ShoppingBag }, { id: 'skills', name: '스킬', Icon: Zap }, { id: 'classes', name: '전직', Icon: Swords }, { id: 'rebirth', name: '환생', Icon: RefreshCw }] }, { label: '기록과 명예', items: [{ id: 'book', name: '물고기 도감', Icon: BookOpen }, { id: 'voyage', name: '항해 기록', Icon: ScrollText }, { id: 'guild', name: '길드', Icon: Users }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy }, { id: 'updates', name: '업데이트 내역', Icon: ClipboardList }, { id: 'help', name: '도움말', Icon: HelpCircle }] }];
+type NavItem = { id: string; name: string; Icon: React.ComponentType<{ size?: number }>; unlock?: (s: State) => string | null };
+export const NAV: { label: string; items: NavItem[] }[] = [{ label: '항해', items: [{ id: 'battle', name: '자동 낚시', Icon: Anchor }, { id: 'stages', name: '낚시터', Icon: Map }, { id: 'dungeons', name: '던전 탐험', Icon: Compass }] }, { label: '낚시꾼', items: [{ id: 'character', name: '능력치 · 빌드', Icon: Target }, { id: 'shop', name: '항구 상점', Icon: ShoppingBag }, { id: 'inventory', name: '장비 보관함', Icon: ShoppingBag }, { id: 'skills', name: '스킬', Icon: Zap }, { id: 'classes', name: '전직', Icon: Swords }, { id: 'rebirth', name: '환생', Icon: RefreshCw, unlock: (s: State) => s.rebirths || s.level >= 20 ? null : 'Lv.20' }] }, { label: '기록과 명예', items: [{ id: 'book', name: '물고기 도감', Icon: BookOpen }, { id: 'voyage', name: '항해 기록', Icon: ScrollText }, { id: 'guild', name: '길드', Icon: Users, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10' }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10' }, { id: 'updates', name: '업데이트 내역', Icon: ClipboardList }, { id: 'help', name: '도움말', Icon: HelpCircle }] }];
 
 export default function GameShell() {
     const game = useGame();
@@ -41,7 +43,7 @@ export default function GameShell() {
     const props = s ? { s, send, busy } : null, onLogout = game.logout;
     return <SidebarProvider style={{ '--sidebar-width': '222px' } as React.CSSProperties}>
     <Toaster theme="dark" position="bottom-right"/>
-    <Navigation view={view} setView={setView}/>
+    <Navigation view={view} setView={setView} s={s}/>
     <div className="app-body">
     {view !== 'battle' && <header className="topbar">
     <div className="breadcrumb"><SidebarTrigger className="mobile-menu"/><span>항해 기록</span><ChevronRight size={13}/><strong>{NAV.flatMap(g => g.items).find(i => i.id === view)?.name}</strong></div>

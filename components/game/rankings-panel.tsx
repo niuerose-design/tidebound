@@ -77,7 +77,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <TabsList className="game-tabs">
     <TabsTrigger value="ranking">낚시꾼 랭킹</TabsTrigger>
     <TabsTrigger value="training">훈련 상대</TabsTrigger>
-    <TabsTrigger value="abyss" onClick={() => { if (!abyss) loadAbyss(); }}>심연 깊이 · 주간</TabsTrigger>
+    {s.rebirths >= 3 && <TabsTrigger value="abyss" onClick={() => { if (!abyss) loadAbyss(); }}>심연 깊이 · 주간</TabsTrigger>}
     </TabsList>
     <TabsContent value="abyss"><AbyssBoard s={s} abyss={abyss} reload={loadAbyss}/></TabsContent>
     <TabsContent value="ranking">
