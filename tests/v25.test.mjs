@@ -239,3 +239,14 @@ test('v25.6 account bonuses: exp/gold +10% per account rebirth (cap 30), AP per 
     assert.ok(accountBonusRows(s).every(r => r.next === '최대' || /최대/.test(r.next)), 'all rows show the cap');
     const t = newState(0); t.account = merged; t.level = 999; act(t, { type: 'rebirth' }, 0); assert.ok(t.rebirths === 1 && t.account === merged, 'account cache survives rebirth');
 });
+
+test('v25.7 legend+ enhances to +12, others stop at +10; sale value follows the fish gold curve and refunds 30% of enhancement', async () => {
+    const { enhanceMaxFor, saleValue, enhanceCost } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
+    const { fishGoldAt } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
+    assert.equal(enhanceMaxFor({ rarity: 2 }), 10); assert.equal(enhanceMaxFor({ rarity: 3 }), 12); assert.equal(enhanceMaxFor({ rarity: 6 }), 12);
+    const s = newState(0); s.gold = 1e9; const hero = { id: 'h', name: 'h', slot: 'coat', rarity: 2, power: 60, level: 30, enhance: 10 }, legend = { id: 'l', name: 'l', slot: 'coat', rarity: 3, power: 90, level: 30, enhance: 10 }; s.inventory = [hero, legend];
+    assert.throws(() => act(s, { type: 'enhance', id: 'h' }, 0), /최대 강화/); act(s, { type: 'enhance', id: 'l' }, 0); act(s, { type: 'enhance', id: 'l' }, 0); assert.equal(legend.enhance, 12); assert.throws(() => act(s, { type: 'enhance', id: 'l' }, 0), /최대 강화/);
+    assert.equal(saleValue({ rarity: 3, level: 30, power: 90 }), fishGoldAt(30) * 50); assert.equal(saleValue({ rarity: 0, level: 1, power: 2 }), 14);
+    let spent = 0; for (let e = 0; e < 12; e++) spent += enhanceCost({ ...legend, enhance: e }); assert.equal(saleValue(legend), Math.floor(fishGoldAt(30) * 50 + spent * .3), 'enhancement refund 30%');
+    assert.ok(saleValue({ rarity: 3, level: 60, power: 200 }) > saleValue({ rarity: 3, level: 30, power: 90 }) * 10, 'late-game sale keeps pace with exponential gold');
+});

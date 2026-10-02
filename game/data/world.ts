@@ -49,7 +49,9 @@ const rows: [
     ['viper', '심연 독사고기', 26, '눈보다 송곳니가 먼저 빛난다.'], ['squid', '거대 오징어', 28, '오래된 해도 위의 괴물은 실재했다.'], ['leviathan', '어린 레비아탄', 30, '이 거대한 그림자가 아직 어린 개체라니.'],
     ['moonfish', '월광 개복치', 32, '달의 파편을 삼켜 빛을 품었다.'], ['dragon', '해룡', 36, '물살을 뒤집고 조류를 지배한다.'], ['ancient', '태고의 실러캔스', 40, '바다가 처음 생긴 날을 기억한다.'],
 ];
-export const FISH: FishDef[] = rows.map(([id, name, level, lore]) => ({ id, name, level, hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8), exp: Math.round(9 * Math.pow(1.15, level - 1)), gold: Math.round(7 * Math.pow(1.12, level - 1)), lore }));
+/** 레벨별 물고기 기본 골드. 장비 판매가도 이 곡선을 따릅니다. */
+export const fishGoldAt = (level: number) => Math.round(7 * Math.pow(1.12, level - 1));
+export const FISH: FishDef[] = rows.map(([id, name, level, lore]) => ({ id, name, level, hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8), exp: Math.round(9 * Math.pow(1.15, level - 1)), gold: fishGoldAt(level), lore }));
 const specialFish: Array<{
     id: string;
     name: string;
@@ -80,7 +82,7 @@ const specialFish: Array<{
     { id: 'starfallSeraph', name: '별비 세라핌', level: 62, lore: '별비를 날개로 두른 외해 성역의 최종 수호자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
 ];
 for (const f of specialFish)
-    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: Math.round(9 * Math.pow(1.15, f.level - 1)), gold: Math.round(7 * Math.pow(1.12, f.level - 1)), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss });
+    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: Math.round(9 * Math.pow(1.15, f.level - 1)), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss });
 export const DUNGEONS = [
     { id: 'abyss', name: '윤회의 무한 심연', level: 40, rebirth: 3, fish: ['moonfish', 'dragon', 'ancient', 'dragon', 'ancient'], bossFish: 'abyssSovereign', boss: '심연의 기억 · 심연의 주권자', gold: 12000, pearls: 1, description: '정복할 때마다 다음 깊이가 열립니다. 깊을수록 층마다 더 많은 진주를 얻고, 10·25·50·100층을 처음 돌파하면 SP 1을 받습니다.' },
     { id: 'grotto', name: '조수의 동굴', level: 8, rebirth: 0, fish: ['ray', 'puffer', 'mackerel', 'ray', 'eel'], bossFish: 'grottoWarden', boss: '동굴의 주인 · 수호 곰치', gold: 350, pearls: 1, description: '다섯 번의 전투 끝에 잠든 수호자가 눈을 뜬다.' },
