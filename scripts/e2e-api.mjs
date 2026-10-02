@@ -51,6 +51,12 @@ assert.ok(data.rows.some(r => r.id === chatId && r.self), 'own chat line listed'
 ({ data } = await call(`/api/chat?after=${chatId}`, undefined, { expect: 200 }));
 assert.equal(data.rows.length, 0, 'cursor returns only newer lines');
 await call('/api/chat?channel=nope', undefined, { expect: 400 });
+// v25.13 계정 금고: 빈 금고 조회, 부족·잘못된 요청 거부.
+({ data } = await call('/api/vault', undefined, { expect: 200 }));
+assert.ok(data.pearls === 0 && data.essence === 0 && data.pearlOutLeft === 30, 'empty vault');
+await call('/api/vault', { action: 'deposit', kind: 'pearls', amount: 1 }, { expect: 400 });
+await call('/api/vault', { action: 'withdraw', kind: 'essence', amount: 1 }, { expect: 400 });
+await call('/api/vault', { action: 'deposit', kind: 'gold', amount: 1 }, { expect: 400 });
 // v25.11 공유 길드: 무소속 상태의 정보·제한. 창설·가입은 골드와 두 계정이 필요해 별도 스크립트로 확인합니다.
 ({ data } = await call('/api/guild', undefined, { expect: 200 }));
 assert.equal(data.guild, null); assert.ok(Array.isArray(data.board) && /^\d{4}-W\d{2}$/.test(data.week), 'guild info has week and board');

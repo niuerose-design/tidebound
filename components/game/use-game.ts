@@ -11,6 +11,7 @@ export type Ranking = Snapshot & {
 };
 /** v25.6 주간 심연 기록판 한 줄. */
 export type GuildInfo = import('@/game/server/guild').GuildInfo;
+export type VaultInfo = import('@/game/data/account').VaultInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean };
 /** 동기화 주기(ms). */
 const SYNC_MS = 3000;
@@ -129,6 +130,15 @@ export function useGame() {
         catch (e) { setGuildError((e as Error).message); return false; }
         finally { lock.current = false; setBusy(false); }
     }, [request, replay]);
+    /** v25.13 계정 공유 금고. */
+    const [vault, setVault] = useState<VaultInfo | null>(null), [vaultError, setVaultError] = useState('');
+    const loadVault = useCallback(async () => { try { setVault(await request('/api/vault') as unknown as VaultInfo); setVaultError(''); } catch (e) { setVaultError((e as Error).message); } }, [request]);
+    const vaultAct = useCallback(async (body: Record<string, unknown>) => {
+        if (lock.current) return false; lock.current = true; setBusy(true);
+        try { const d = await request('/api/vault', body) as unknown as { state?: State; info: VaultInfo }; if (d.state) { stateRef.current = d.state; setState(d.state); replay.reset(); setSaved(true); } setVault(d.info); setVaultError(''); return true; }
+        catch (e) { setVaultError((e as Error).message); return false; }
+        finally { lock.current = false; setBusy(false); }
+    }, [request, replay]);
     const [abyss, setAbyss] = useState<{ week: string; rows: AbyssRow[] } | null>(null);
     const loadAbyss = useCallback(async () => { try { const d = await request('/api/ranking?board=abyss') as unknown as { week: string; rows: AbyssRow[] }; setAbyss({ week: d.week, rows: d.rows }); } catch (e) { setRankError((e as Error).message); } }, [request]);
     const register = useCallback(async () => { if (lock.current)
@@ -203,5 +213,5 @@ export function useGame() {
         replay.reset();
         setNeedsLogin(true);
     }, [replay]);
-    return { state: view, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct };
+    return { state: view, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, vault, vaultError, loadVault, vaultAct };
 }

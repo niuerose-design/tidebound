@@ -18,7 +18,8 @@ import { VOW_IDS, VOW_NAMES, vowUnlocked, vowBoost, anchorPayout, breathBonus, r
 import { STAGES } from '@/game/data/world';
 import { JOB_TREES } from '@/game/data/classes';
 import { BonusList } from './inventory-panel';
-import { accountBonusRows, SLOT_COUNT, slotUnlocked } from '@/game/data/account';
+import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, type VaultInfo } from '@/game/data/account';
+import { useEffect, useState as useLocalState } from 'react';
 import { salvagePreview } from '@/game/systems/actions/lifecycle';
 /** 진주 연구 카드: 현재 → 다음 효과, 잠긴 연구는 해금 환생 횟수를 보여줍니다. */
 function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a: Action) => void; busy: boolean }) {
@@ -74,6 +75,23 @@ function AccountPanel({ s }: { s: State }) {
         <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}</ul>
     </section>;
 }
+/** v25.13 계정 공유 금고: 슬롯 사이에서 진주·정수를 옮깁니다. 2번 슬롯이 열린 뒤에 보입니다. */
+function VaultPanel({ s, busy, vault, error, load, act }: { s: State; busy: boolean; vault?: VaultInfo | null; error?: string; load?: () => Promise<void>; act?: (body: Record<string, unknown>) => Promise<boolean> }) {
+    const [amount, setAmount] = useLocalState({ pearls: '', essence: '' });
+    useEffect(() => { const t = setTimeout(() => { void load?.(); }, 0); return () => clearTimeout(t); }, [load]);
+    if (!act) return null;
+    const row = (kind: 'pearls' | 'essence', label: string, have: number, cap?: string) => { const n = Math.floor(Number(amount[kind])) || 0; return <li key={kind}>
+        <div><strong>{label}</strong><small>보유 {format(have)} · 금고 {vault ? format(vault[kind]) : '…'}{cap ? ` · ${cap}` : ''}</small></div>
+        <div className="vault-row"><input type="number" min={1} value={amount[kind]} placeholder="수량" aria-label={`${label} 수량`} onChange={e => setAmount({ ...amount, [kind]: e.target.value })}/>
+            <button className="secondary small" disabled={busy || n < 1 || have < n} onClick={() => act({ action: 'deposit', kind, amount: n })}>넣기</button>
+            <button className="primary small" disabled={busy || n < 1 || !vault || vault[kind] < n || (kind === 'pearls' && n > vault.pearlOutLeft)} onClick={() => act({ action: 'withdraw', kind, amount: n })}>꺼내기</button></div>
+    </li>; };
+    return <section className="panel vow-panel vault-panel">
+        <div className="section-title"><h2>계정 금고</h2><span>어느 슬롯에서든 넣고 꺼냅니다. 정수는 제한 없고, 진주 인출은 주당 {VAULT_PEARL_OUT_WEEKLY}개까지입니다. 골드는 옮길 수 없습니다.</span></div>
+        {error && <p className="login-error" role="alert">{error}</p>}
+        <ul className="account-rows vault-rows">{row('pearls', '진주', s.pearls, vault ? `이번 주 인출 가능 ${vault.pearlOutLeft}개` : undefined)}{row('essence', '정수', s.essence || 0)}</ul>
+    </section>;
+}
 /** 환생 화면의 서약: 이번 생 서약과 잠든 닻 진행, 다음 생 서약 예약. */
 function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
     const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), seal = anchorSeal(s), now = s.vows, next = s.nextVows || {};
@@ -96,7 +114,7 @@ function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy
         <p className="footnote">예약한 서약은 다음 환생부터 걸리고, 바꾸기 전까지 이후 환생에도 유지됩니다.</p>
     </section>;
 }
-export function Rebirth({ s, send, busy }: PanelProps) {
+export function Rebirth({ s, send, busy, vault, vaultError, loadVault, vaultAct }: PanelProps & { vault?: VaultInfo | null; vaultError?: string; loadVault?: () => Promise<void>; vaultAct?: (body: Record<string, unknown>) => Promise<boolean> }) {
     const [tab, setTab] = useState('prepare');
     const [researchTab, setResearchTab] = useState<ResearchTab>('combat');
     const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
@@ -119,6 +137,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             <GrowthGoals s={s} send={send} busy={busy}/>
             {s.rebirths > 0 && <FocusPanel s={s} send={send} busy={busy}/>}
             {s.rebirths > 0 && <AccountPanel s={s}/>}
+            {slotUnlocked(s.account, 2) && <VaultPanel s={s} busy={busy} vault={vault} error={vaultError} load={loadVault} act={vaultAct}/>}
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>

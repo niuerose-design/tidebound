@@ -278,3 +278,5 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .rebirth-title.season-rank { background:#1f3a2e; color:#a4e9ba; }
 .recommend-panel { margin-bottom:16px; } .recommend-list { display:grid; gap:8px; } .recommend-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:#101c20; }
 .recommend-row > div { display:grid; gap:2px; } .recommend-row small { font-size:12px; color:#9bb3b0; }
+.vault-rows { grid-template-columns:1fr 1fr; } .vault-row { display:flex; gap:6px; align-items:center; } .vault-row input { width:110px; min-width:0; background:#101c20; border:1px solid var(--border); border-radius:6px; color:#e8efe9; padding:6px 8px; font:inherit; font-size:13px; }
+@media (max-width: 767px) { .vault-rows { grid-template-columns:1fr; } }
