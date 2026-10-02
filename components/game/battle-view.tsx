@@ -34,8 +34,7 @@ import { BattleRail } from './battle-rail';
 import { MobileFisherStrip } from './mobile-fisher-strip';
 /** 로그 탭별 종류: 전투 탭은 전투·시스템(회복·이동), 획득 탭은 보상·스킬 해금. */
 const LOG_TABS: Record<string, Log['type'][]> = { battle: ['battle', 'system'], reward: ['reward', 'skill'] };
-export function BattleView({ s, busy, send, setView, saved, settings, setSettings, name, setName, onLogout, onSwitchSlot }: {
-    onLogout: () => void;
+export function BattleView({ s, busy, send, setView, saved, settings, setSettings, name, setName, onSwitchSlot }: {
     onSwitchSlot?: (slot: number) => Promise<void>;
     s: State;
     busy: boolean;
@@ -68,7 +67,7 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     const recoveryText = s.recovery > 0 ? d ? `출정 준비 · ${recoverySeconds}초 남음` : `회복 대기 · ${recoverySeconds}초 남음` : null;
     const noticeText = s.lastOffline ? `부재중 항해 정산 · ${Math.floor(s.lastOffline.seconds / 60)}분 동안 ${s.lastOffline.kills}마리 포획 · +${format(s.lastOffline.gold)} G${s.lastOffline.bottles?.count ? ` · 병 속의 편지 ${s.lastOffline.bottles.count}개(${[s.lastOffline.bottles.gold ? `+${format(s.lastOffline.bottles.gold)} G` : '', s.lastOffline.bottles.items ? `장비 ${s.lastOffline.bottles.items}개` : '', s.lastOffline.bottles.pearls ? `진주 +${s.lastOffline.bottles.pearls}` : ''].filter(Boolean).join(' · ')})` : ''}` : d ? `${d.name} ${s.dungeon!.wave + 1}번째 전투 · 보스 전까지 항로를 유지합니다.` : `${st.name}에서 다음 입질을 기다립니다. 목표 어종을 고르면 원하는 기록을 더 빠르게 채울 수 있습니다.`;
     return <>
-    <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onLogout={onLogout} onSwitchSlot={onSwitchSlot}/></div></Heading>
+    <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>
     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Waves size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>
     <SlotChips s={s} busy={busy} onSwitch={onSwitchSlot}/>
     <DoorNotice s={s} setView={setView}/>

@@ -1,10 +1,11 @@
 'use client';
 import { UPDATE_LOG } from '@/game/data/update-log';
-import { Anchor, ChevronRight, Lock, Waves } from 'lucide-react';
+import { Anchor, ChevronRight, Lock, LogOut, Waves } from 'lucide-react';
 import type { State } from '@/game/types';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { NAV } from './game-shell';
-export function Navigation({ view, setView, s }: {
+export function Navigation({ view, setView, s, onLogout }: {
+    onLogout?: () => void;
     view: string;
     setView: (s: string) => void;
     s?: State | null;
@@ -33,6 +34,7 @@ export function Navigation({ view, setView, s }: {
     <Waves size={22}/>
     <p>수면 아래,<br />다음 이야기가 기다립니다.</p>
     <small>THE ENDLESS VOYAGE · v{UPDATE_LOG[0].version}</small>
+    {onLogout && <button type="button" className="text-button sidebar-logout" onClick={onLogout}><LogOut size={13}/> 로그아웃</button>}
     </div>
     </SidebarFooter>
     </Sidebar>;
