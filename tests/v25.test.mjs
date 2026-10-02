@@ -239,3 +239,28 @@ test('v25.6 account bonuses: exp/gold +10% per account rebirth (cap 30), AP per 
     assert.ok(accountBonusRows(s).every(r => r.next === '최대' || /최대/.test(r.next)), 'all rows show the cap');
     const t = newState(0); t.account = merged; t.level = 999; act(t, { type: 'rebirth' }, 0); assert.ok(t.rebirths === 1 && t.account === merged, 'account cache survives rebirth');
 });
+
+test('v25.7 legend+ enhances to +12, others stop at +10; sale value follows the fish gold curve and refunds 30% of enhancement', async () => {
+    const { enhanceMaxFor, saleValue, enhanceCost } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
+    const { fishGoldAt } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
+    assert.equal(enhanceMaxFor({ rarity: 2 }), 10); assert.equal(enhanceMaxFor({ rarity: 3 }), 12); assert.equal(enhanceMaxFor({ rarity: 6 }), 12);
+    const s = newState(0); s.gold = 1e9; const hero = { id: 'h', name: 'h', slot: 'coat', rarity: 2, power: 60, level: 30, enhance: 10 }, legend = { id: 'l', name: 'l', slot: 'coat', rarity: 3, power: 90, level: 30, enhance: 10 }; s.inventory = [hero, legend];
+    assert.throws(() => act(s, { type: 'enhance', id: 'h' }, 0), /최대 강화/); act(s, { type: 'enhance', id: 'l' }, 0); act(s, { type: 'enhance', id: 'l' }, 0); assert.equal(legend.enhance, 12); assert.throws(() => act(s, { type: 'enhance', id: 'l' }, 0), /최대 강화/);
+    assert.equal(saleValue({ rarity: 3, level: 30, power: 90 }), fishGoldAt(30) * 50); assert.equal(saleValue({ rarity: 0, level: 1, power: 2 }), 14);
+    let spent = 0; for (let e = 0; e < 12; e++) spent += enhanceCost({ ...legend, enhance: e }); assert.equal(saleValue(legend), Math.floor(fishGoldAt(30) * 50 + spent * .3), 'enhancement refund 30%');
+    assert.ok(saleValue({ rarity: 3, level: 60, power: 200 }) > saleValue({ rarity: 3, level: 30, power: 90 }) * 10, 'late-game sale keeps pace with exponential gold');
+});
+
+test('v25.7 salvage research sells or dismantles all non-relic gear at rebirth with rank efficiency; gold carries into the next life', async () => {
+    const { salvageRate } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/economy');
+    const { saleValue, dismantleEssence } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
+    const gear = r => ({ id: `g${r}`, name: 'g', slot: 'coat', rarity: r, power: 40, level: 30 });
+    const s = newState(0); s.level = 30; s.inventory = [gear(1), gear(3), { ...gear(2), id: 'relic', relic: 'memoryRod' }]; s.equipment.coat = gear(2);
+    assert.throws(() => act(s, { type: 'salvageMode', value: 'dismantle' }, 0), /연구/);
+    act(s, { type: 'rebirth' }, 0); assert.equal(s.gold, 100, 'no research → nothing salvaged'); assert.equal(s.inventory.length, 1);
+    const t = newState(0); t.level = 35; t.rebirths = 1; t.permanent = { salvage: 1 }; assert.equal(salvageRate(t), .4); t.inventory = [gear(1), gear(3)]; t.equipment.coat = gear(2);
+    const expected = Math.floor((saleValue(gear(1)) + saleValue(gear(3)) + saleValue(gear(2)) + saleValue(t.equipment.rod)) * .4); // 시작 낚싯대도 일반 장비라 함께 팝니다.
+    act(t, { type: 'rebirth' }, 0); assert.equal(t.gold, 100 + expected, 'sold at 40% into next life gold'); assert.ok(t.logs.some(l => /환생 정리 · 장비 4개 판매/.test(l.text)));
+    const u = newState(0); u.level = 40; u.rebirths = 2; u.permanent = { salvage: 5 }; assert.equal(salvageRate(u), 1); u.inventory = [gear(4)]; u.essence = 3;
+    act(u, { type: 'salvageMode', value: 'dismantle' }, 0); act(u, { type: 'rebirth' }, 0); assert.equal(u.essence, 3 + dismantleEssence(gear(4)) + 2, 'dismantled at 100% (+ starter rod and coat, 1 essence each)'); assert.equal(u.gold, 100); assert.equal(u.salvageMode, 'dismantle', 'mode survives rebirth');
+});

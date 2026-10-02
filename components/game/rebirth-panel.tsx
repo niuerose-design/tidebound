@@ -19,6 +19,7 @@ import { STAGES } from '@/game/data/world';
 import { JOB_TREES } from '@/game/data/classes';
 import { BonusList } from './inventory-panel';
 import { accountBonusRows, SLOT_COUNT, slotUnlocked } from '@/game/data/account';
+import { salvagePreview } from '@/game/systems/actions/lifecycle';
 /** 진주 연구 카드: 현재 → 다음 효과, 잠긴 연구는 해금 환생 횟수를 보여줍니다. */
 function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a: Action) => void; busy: boolean }) {
     const rank = s.permanent[r.id] || 0, cost = researchCost(r.id, rank), unlocked = researchUnlocked(s.rebirths, r), maxed = rank >= r.max;
@@ -101,7 +102,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
     const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
     const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }, bonus), permanentExp = 1 + permanentExpBonus(s);
     const breathExtra = s.vows?.breath ? Math.floor(reward * breathBonus(s)) : 0;
-    const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0;
+    const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0, salvage = salvagePreview(s);
     const projected = { ...s, level: Math.max(s.level, required) }, lifeBonus = nextLifeBonus(projected);
     const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
     const lifeText = lifeBonus === 'deep' ? `깊은 항해 · 다음 생 동안 직업·스킬 숙련 기본 획득 +2` : lifeBonus === 'tailwind' ? `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : `없음 · Lv.${required + tailwindWindow(s)} 이하면 순풍, Lv.${DEEP_VOYAGE_LEVEL}이면 깊은 항해`;
@@ -133,6 +134,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
                     <li><b>영구 경험치 획득</b><small>현재 ×{permanentExp.toFixed(2)} → 환생 후 ×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</small></li>
                     <li><b>장착 AP {apGain ? '+1' : '+0'}</b><small>{apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`}</small></li>
                     <li><b>다음 생 효과</b><small>{lifeText}</small></li>
+                    {salvage.rate > 0 && <li><b>환생 정리 · 장비 {salvage.count}개 {salvage.mode === 'dismantle' ? `분해 → 정수 +${format(salvage.essence)}` : `판매 → 시작 골드 +${format(salvage.gold)} G`}</b><small>효율 {Math.round(salvage.rate * 100)}% · 방식은 설정에서 바꿉니다</small></li>}
                     <li><b>해역 난이도 {tideLimit({ ...s, rebirths: s.rebirths + 1 })}까지 선택</b><small>다음 생 시작 골드 {format(100 + (s.permanent.starting || 0) * 500)} G</small></li>
                 </ul></article>
                 <article className="panel ledger-kept"><h2>유지되는 것</h2><ul><li>진주 · 진주 연구 · 물고기와 장비 도감</li><li>스킬 해금·계승·성장·숙련·특화 · 보유 SP · 장기 목표</li><li>직업 해금과 숙련 기록</li><li>환생 유물 · 유물 강화·옵션·보관 위치</li><li>길드 이름·명예 기부 기록 · 던전 정복 기록 · 심연 최고 깊이</li><li>랭킹 점수와 전적</li></ul></article>

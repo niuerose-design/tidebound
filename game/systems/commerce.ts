@@ -2,7 +2,7 @@ import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
 import { apCapacity, apUsed } from './progression';
-import { rollAffix, enhanceCost, reforgeCost, bulkItems, saleValue, dismantleEssence, rerollCost } from './equipment';
+import { rollAffix, enhanceCost, reforgeCost, bulkItems, saleValue, dismantleEssence, rerollCost, enhanceMaxFor } from './equipment';
 import { rollAffixes } from '../data/gear';
 /** 상점·뽑기 골드 가격. 항구 단골 할인(−2%/단계, 내림)을 적용합니다. */
 export const shopCost = (s: State) => Math.floor((ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel) * shopDiscount(s));
@@ -78,7 +78,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
         if (a.type === 'enhance') {
-            if ((item.enhance || 0) >= ECONOMY.enhanceMax)
+            if ((item.enhance || 0) >= enhanceMaxFor(item))
                 throw Error('최대 강화입니다.');
             const cost = enhanceCost(item, s);
             spend(cost);

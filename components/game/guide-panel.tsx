@@ -138,8 +138,8 @@ export function Guide({ s }: { s?: State }) {
                     limit="각 연구 단계 보상은 한 번만 받습니다. 무리 사냥 해금도 연구 단계 보상에 함께 표시됩니다."/>
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비 강화"
                     effect={`낚싯대·방어구·나침반을 감정하거나 확정 구매합니다. 강화 1회당 장비 기본 수치 +${percent(ECONOMY.enhanceGain)}.`}
-                    condition={`강화는 최대 +${ECONOMY.enhanceMax}. 장비 카드의 수치는 강화가 적용된 값이며 카드에 강화 단계를 함께 표시합니다.`}
-                    limit="구매·강화·옵션 변경 비용은 판매할 때 돌려받지 않습니다. 전리품 감지는 장비 드롭과 골드만 높이고 희귀어 출현·장비 등급에는 영향이 없습니다."/>
+                    condition={`강화는 최대 +${ECONOMY.enhanceMax}, 전설 이상은 +${ECONOMY.enhanceMaxLegend}. 장비 카드의 수치는 강화가 적용된 값이며 카드에 강화 단계를 함께 표시합니다.`}
+                    limit="판매가는 등급과 레벨에 비례하고 강화 비용의 30%를 돌려받습니다. 분해는 골드 대신 정수를 줍니다. 구매·옵션 변경 비용은 돌려받지 않습니다. 전리품 감지는 장비 드롭과 골드만 높이고 희귀어 출현·장비 등급에는 영향이 없습니다."/>
             </div>
         </Topic>
         <Topic icon={<Gauge size={19}/>} title="저장 데이터" note="데이터 초기화 규칙.">

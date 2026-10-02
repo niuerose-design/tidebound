@@ -1,6 +1,8 @@
 /** 환생, 한 번의 숨 소프트 리셋, 서약 선택과 전체 초기화 */
 import { deepVoyagePearls, nextLifeBonus, tailwindExp, rebirthLevel, rebirthReward } from '../meta';
 import { stats } from '../stats';
+import { salvageRate } from '../../data/economy';
+import { saleValue, dismantleEssence } from '../equipment';
 import type { State, Vows } from '../../types';
 import type { ActionHandlers } from './types';
 import { addLog, newState } from '../state';
@@ -42,6 +44,12 @@ export function breathReset(s: State, now: number) {
     addLog(s, '한 번의 숨 · 쓰러져 이번 생을 처음부터 다시 시작합니다. 서약이 풀렸습니다.', 'system');
 }
 
+/** v25.7 환생 정리: 유물을 뺀 보관함·착용 장비 전부를 연구 효율만큼 판매하거나 분해합니다. 연구가 없으면 count 0. */
+export function salvagePreview(s: State) {
+    const rate = salvageRate(s), mode = s.salvageMode || 'sell';
+    const items = rate ? [...s.inventory, ...Object.values(s.equipment)].filter((i): i is NonNullable<typeof i> => !!i && !i.relic) : [];
+    return { mode, rate, count: items.length, gold: Math.floor(items.reduce((sum, i) => sum + saleValue(i), 0) * rate), essence: Math.floor(items.reduce((sum, i) => sum + dismantleEssence(i), 0) * rate) };
+}
 export const lifecycleActions: ActionHandlers = {
     rebirth(s, { now, rng }) {
         if (s.level < rebirthLevel(s))
@@ -50,7 +58,12 @@ export const lifecycleActions: ActionHandlers = {
         // 한 번의 숨: 이번 생에 한 번도 쓰러지지 않고(쓰러지면 서약이 풀림) 환생하면 진주 보너스.
         const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, pearls = base + breath;
         const vows = cleanVows(s, s.nextVows);
+        const salvage = salvagePreview(s);
         startLife(s, now, { pearls: s.pearls + pearls, rebirths: s.rebirths + 1, lifeBonus });
+        if (salvage.count) {
+            if (salvage.mode === 'dismantle') { s.essence = (s.essence || 0) + salvage.essence; addLog(s, `환생 정리 · 장비 ${salvage.count}개 분해 · 정수 +${salvage.essence}`, 'reward'); }
+            else { s.gold += salvage.gold; addLog(s, `환생 정리 · 장비 ${salvage.count}개 판매 · 다음 생 시작 골드 +${salvage.gold} G`, 'reward'); }
+        }
         if (hasVows(vows)) {
             // 잠든 닻의 목표는 게임의 고정 난수로 고릅니다. 잠든 닻이 없으면 난수를 쓰지 않습니다.
             s.vows = { ...vows, ...(vows.anchor ? { seal: { ...chooseAnchorTarget(s.rebirths, rng), caught: 0, exp: 0 } } : {}) };

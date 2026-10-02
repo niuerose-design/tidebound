@@ -1,6 +1,7 @@
 import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, smithDiscount } from '../data/economy';
 import { ESSENCE_BY_RARITY, rerollEssence } from '../data/gear';
+import { fishGoldAt } from '../data/world';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
 export function itemStats(item: Item): Partial<Stats> {
     const p = item.power * (1 + (item.enhance || 0) * ECONOMY.enhanceGain);
@@ -24,7 +25,16 @@ export function itemStats(item: Item): Partial<Stats> {
     }
     return result;
 }
-export const saleValue = (item: Item) => Math.floor(item.power * 3);
+/** v25.7 전설(등급 3) 이상은 +12, 그 아래는 +10까지 강화합니다. */
+export const enhanceMaxFor = (item: Pick<Item, 'rarity'>) => item.rarity >= 3 ? ECONOMY.enhanceMaxLegend : ECONOMY.enhanceMax;
+/** v25.7 판매가: 그 레벨 물고기 골드 × 등급별 마리 수 + 강화에 쓴 골드의 30%. 분해(정수)와 판매(골드)가 실제 선택이 되도록 분해만 유리하던 식(위력×3)을 바꿨습니다. */
+export const SALE_FISH = [2, 6, 18, 50, 120, 300, 700];
+export const saleValue = (item: Item) => {
+    const base = fishGoldAt(item.level || 1) * (SALE_FISH[item.rarity] ?? 2);
+    let spent = 0;
+    for (let e = 0; e < (item.enhance || 0); e++) spent += enhanceCost({ ...item, enhance: e });
+    return Math.floor(base + spent * ECONOMY.saleEnhanceRefund);
+};
 /** 대장장이의 기억 할인. 상태를 넘기지 않으면(도감·미리보기) 할인 전 가격입니다. */
 const smith = (cost: number, s?: Pick<State, 'permanent'>) => s ? Math.floor(cost * smithDiscount(s)) : cost;
 export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((120 + item.power * 12) * (1 + (item.enhance || 0)) ** 1.6), s);
