@@ -373,6 +373,8 @@ export type State = {
     autoSell?: boolean;
     /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
     hideDoorNotice?: boolean;
+    /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */
+    skipStatConfirm?: boolean;
     /** v25.7 환생 정리 방식(설정). 없으면 판매. */
     salvageMode?: 'sell' | 'dismantle';
     /** 황금 개체를 잡은 횟수(어종별). */

@@ -362,3 +362,11 @@ test('v25.14 recommended loadout mixes passives and actives within AP', async ()
     assert.ok(types.includes('passive') && types.includes('active'), `both kinds: ${types.join(',')}`); assert.ok(validLoadout(s, out)); assert.ok(apUsed(s, out) <= apCapacity(s));
     const passiveAP = apUsed(s, out.filter(id => SKILLS.find(x => x.id === id).type === 'passive')); assert.ok(passiveAP >= Math.min(2, apCapacity(s) * .3), 'passives get a real share');
 });
+
+test('v25.15 update log keeps only 3-5 entries, newest first; stat confirm setting toggles and survives rebirth', async () => {
+    const { UPDATE_LOG } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/update-log');
+    assert.ok(UPDATE_LOG.length >= 3 && UPDATE_LOG.length <= 5, `update log has ${UPDATE_LOG.length} entries; keep 3-5`);
+    const nums = UPDATE_LOG.map(e => e.version.split('.').map(Number)); for (let i = 1; i < nums.length; i++) assert.ok(nums[i - 1][0] > nums[i][0] || (nums[i - 1][0] === nums[i][0] && nums[i - 1][1] > nums[i][1]), 'newest first');
+    const s = newState(0); assert.ok(!s.skipStatConfirm); act(s, { type: 'statConfirm', value: 'off' }, 0); assert.equal(s.skipStatConfirm, true);
+    s.level = 30; act(s, { type: 'rebirth' }, 0); assert.equal(s.skipStatConfirm, true, 'setting is kept across rebirth'); act(s, { type: 'statConfirm', value: 'on' }, 0); assert.equal(s.skipStatConfirm, false);
+});

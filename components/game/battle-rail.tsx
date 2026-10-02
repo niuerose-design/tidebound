@@ -1,8 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ChatPanel } from './chat-panel';
-import { BookOpen, ChevronRight, Compass, Flag, Lock, Map, MessageCircle, ShoppingBag, Swords, Trophy, Zap } from 'lucide-react';
-import { goalSummary } from '@/game/systems/progress';
+import { ChevronRight, Compass, Lock, Map, MessageCircle, Swords } from 'lucide-react';
 import { STAGES, DUNGEONS } from '@/game/data/world';
 import { BattleLogLine } from './combat-log';
 import type { State, Action } from '@/game/types';
@@ -54,13 +53,6 @@ export function BattleRail({ s, busy, send, setView }: {
         </button>;
     })}</div>}
     {tab === 'stage' && s.dungeon && <p className="battle-place-note">던전 탐험 중에는 낚시터를 바꿀 수 없습니다.</p>}
-    </div>
-    </section>
-    <section className="panel battle-rail-panel battle-shortcuts">
-    <div className="section-title"><h2><Zap size={15}/> 빠른 이동</h2></div>
-    <div className="battle-stage-list battle-shortcut-list">
-        {(s.daily || s.weekly) && <button type="button" className="battle-stage-button" onClick={() => setView('voyage')}><span className="battle-stage-index"><Flag size={13}/></span><span><strong>목표 · 업적</strong><small>오늘 {goalSummary(s.daily).done}/{goalSummary(s.daily).total} · 주간 {goalSummary(s.weekly).done}/{goalSummary(s.weekly).total}</small></span><ChevronRight size={13}/></button>}
-        {([['skills', '스킬 편성', Zap], ['inventory', '장비 보관함', ShoppingBag], ['book', '도감 연구', BookOpen], ['ranking', '랭킹 · 결투', Trophy]] as const).map(([id, name, Icon]) => <button type="button" key={id} className="battle-stage-button" onClick={() => setView(id)}><span className="battle-stage-index"><Icon size={13}/></span><span><strong>{name}</strong></span><ChevronRight size={13}/></button>)}
     </div>
     </section>
     </aside>;
