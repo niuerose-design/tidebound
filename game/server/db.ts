@@ -5,6 +5,9 @@
 export type PlayerRow = { state: string; revision: number };
 export type RankingRow = { id: string; snapshot: string; rating: number; power: number; updated_at: number };
 export type AccountRow = { id: string; username: string; pass_hash: string; salt: string; created_at: number };
+/** v25.4 채팅 한 줄. 채널마다 최근 CHAT_KEEP개만 남깁니다. */
+export type ChatRow = { id: number; channel: string; account_id: string; name: string; text: string; created_at: number };
+export const CHAT_KEEP = 300;
 export interface Storage {
     getPlayer(id: string): Promise<PlayerRow | null>;
     createPlayerIfMissing(id: string, state: string, now: number): Promise<void>;
@@ -18,6 +21,11 @@ export interface Storage {
     createSession(token: string, accountId: string, expiresAt: number): Promise<void>;
     getSessionAccount(token: string, now: number): Promise<string | null>;
     deleteSession(token: string): Promise<void>;
+    /** 채널의 afterId보다 새 메시지를 오래된 순으로 최대 limit개. afterId가 0이면 최근 limit개. */
+    listChat(channel: string, afterId: number, limit: number): Promise<ChatRow[]>;
+    postChat(row: Omit<ChatRow, 'id'>): Promise<ChatRow>;
+    /** 계정의 마지막 메시지 시각(없으면 0). 도배 제한용. */
+    lastChatAt(accountId: string): Promise<number>;
 }
 
 // ---------- Neon Postgres (HTTP) ----------
@@ -27,6 +35,9 @@ const SCHEMA = [
     'CREATE INDEX IF NOT EXISTS rankings_rating_idx ON rankings (rating)',
     'CREATE TABLE IF NOT EXISTS accounts (id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, pass_hash TEXT NOT NULL, salt TEXT NOT NULL, created_at BIGINT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, account_id TEXT NOT NULL, expires_at BIGINT NOT NULL)',
+    'CREATE TABLE IF NOT EXISTS chat (id BIGSERIAL PRIMARY KEY, channel TEXT NOT NULL, account_id TEXT NOT NULL, name TEXT NOT NULL, text TEXT NOT NULL, created_at BIGINT NOT NULL)',
+    'CREATE INDEX IF NOT EXISTS chat_channel_id_idx ON chat (channel, id)',
+    'CREATE INDEX IF NOT EXISTS chat_account_id_idx ON chat (account_id, id)',
 ];
 function neonStorage(url: string): Storage {
     // Neon 서버리스 드라이버와 같은 규칙: 호스트의 첫 레이블을 api.로 바꾼 주소의 /sql 에 쿼리를 보냅니다.
@@ -57,11 +68,23 @@ function neonStorage(url: string): Storage {
         async createSession(token, accountId, expiresAt) { await q('INSERT INTO sessions (token,account_id,expires_at) VALUES ($1,$2,$3)', [token, accountId, expiresAt]); },
         async getSessionAccount(token, now) { const { rows } = await q<{ account_id: string }>('SELECT account_id FROM sessions WHERE token=$1 AND expires_at>$2', [token, now]); return rows[0]?.account_id ?? null; },
         async deleteSession(token) { await q('DELETE FROM sessions WHERE token=$1', [token]); },
+        async listChat(channel, afterId, limit) {
+            const { rows } = await q<ChatRow>('SELECT id,channel,account_id,name,text,created_at FROM chat WHERE channel=$1 AND id>$2 ORDER BY id DESC LIMIT $3', [channel, afterId, limit]);
+            return rows.map(r => ({ ...r, id: Number(r.id), created_at: Number(r.created_at) })).reverse();
+        },
+        async postChat(row) {
+            const { rows } = await q<{ id: string | number }>('INSERT INTO chat (channel,account_id,name,text,created_at) VALUES ($1,$2,$3,$4,$5) RETURNING id', [row.channel, row.account_id, row.name, row.text, row.created_at]);
+            const id = Number(rows[0]?.id);
+            // 20번째 메시지마다 채널의 오래된 줄을 지워 테이블이 자라지 않게 합니다.
+            if (id % 20 === 0) await q('DELETE FROM chat WHERE channel=$1 AND id <= (SELECT COALESCE((SELECT id FROM chat WHERE channel=$1 ORDER BY id DESC OFFSET $2 LIMIT 1), 0))', [row.channel, CHAT_KEEP]);
+            return { ...row, id };
+        },
+        async lastChatAt(accountId) { const { rows } = await q<{ created_at: string | number }>('SELECT created_at FROM chat WHERE account_id=$1 ORDER BY id DESC LIMIT 1', [accountId]); return rows[0] ? Number(rows[0].created_at) : 0; },
     };
 }
 
 // ---------- 개발용 로컬 파일 ----------
-type FileDb = { players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }> };
+type FileDb = { players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; chat?: ChatRow[]; chatSeq?: number };
 function fileStorage(): Storage {
     const path = process.env.TIDEBOUND_DEV_DB || '.data/dev-db.json';
     let chain: Promise<unknown> = Promise.resolve();
@@ -89,6 +112,9 @@ function fileStorage(): Storage {
         createSession: (token, accountId, expiresAt) => tx(db => { db.sessions[token] = { account_id: accountId, expires_at: expiresAt }; }),
         getSessionAccount: (token, now) => tx(db => { const x = db.sessions[token]; return x && x.expires_at > now ? x.account_id : null; }),
         deleteSession: token => tx(db => { delete db.sessions[token]; }),
+        listChat: (channel, afterId, limit) => tx(db => (db.chat || []).filter(r => r.channel === channel && r.id > afterId).slice(-limit)),
+        postChat: row => tx(db => { db.chat ??= []; db.chatSeq = (db.chatSeq || 0) + 1; const saved = { ...row, id: db.chatSeq }; db.chat.push(saved); const mine = db.chat.filter(r => r.channel === row.channel); if (mine.length > CHAT_KEEP) { const cut = mine[mine.length - CHAT_KEEP].id; db.chat = db.chat.filter(r => r.channel !== row.channel || r.id >= cut); } return saved; }),
+        lastChatAt: accountId => tx(db => { const mine = (db.chat || []).filter(r => r.account_id === accountId); return mine.length ? mine[mine.length - 1].created_at : 0; }),
     };
 }
 
