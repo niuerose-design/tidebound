@@ -131,3 +131,22 @@ test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint 
     assert.ok(dmg(20) > dmg(0) * 1.5 && dmg(20) < dmg(0) * 1.7, `mastered scaling +3% each (${dmg(0)} → ${dmg(20)})`);
     assert.equal(canChangeJob({ ...s, jobMastery: { ...s.jobMastery, polymath: 12000 } }, 'hundredLives'), false, 'needs 15 mastered');
 });
+
+test('v25.5 chained actions hasten player cooldowns and reset passives fire on crit, kill and chain (players only)', () => {
+    const mk = (skills, extra = {}) => ({ name: 'A', job: 'x', stats: { ...base, crit: 0 }, hp: 1000, mana: 200, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {}, ...extra });
+    const sk = id => SKILLS.find(x => x.id === id);
+    // 연속 행동 가속: 대기 3인 기술이 보통 행동에서는 2, 연속 행동에서는 1이 됩니다. 몬스터(ranks 없음)는 1씩만.
+    const p = mk([]); p.cooldowns = { hook: 3 }; strike(p, target(), () => 0, [], false, false); assert.equal(p.cooldowns.hook, 2);
+    p.cooldowns = { hook: 3 }; strike(p, target(), () => 0, [], false, true); assert.equal(p.cooldowns.hook, 1);
+    const m = mk([]); delete m.ranks; m.cooldowns = { hook: 3 }; strike(m, target(), () => 0, [], false, true); assert.equal(m.cooldowns.hook, 2, 'monsters are not hastened');
+    // 치명타 초기화: 관중의 환호 + 치명타 100% → 가장 긴 대기 하나만 0.
+    const g = mk(['showmanship', 'pierce', 'hook'], { stats: { ...base, crit: 1 } }); g.cooldowns = { pierce: 4, hook: 2 }; const evs = [];
+    strike(g, target(), () => 0, evs); assert.deepEqual(evs[0].cooldownReset, [sk('pierce').name]); assert.equal(g.cooldowns.pierce, 0); assert.ok(g.cooldowns.hook > 0);
+    // 확률 실패(rng 0.99 ≥ 0.3)면 초기화 없음.
+    const g2 = mk(['showmanship'], { stats: { ...base, crit: 1 } }); g2.cooldowns = { pierce: 4 }; let n = 0; strike(g2, target(), () => (n++ ? .99 : 0), []); assert.equal(g2.cooldowns.pierce, 3);
+    // 처치 초기화: 낭인의 기백은 상대를 쓰러뜨리면 전부.
+    const r = mk(['roninGrit', 'iaiDraw', 'pierce']); r.cooldowns = { iaiDraw: 3, pierce: 5 }; const t = target({ hp: 1 }); strike(r, t, () => 0, []); assert.ok(t.hp <= 0); assert.equal(r.cooldowns.iaiDraw, 0); assert.equal(r.cooldowns.pierce, 0);
+    // 연속 행동 초기화: 시간의 주권은 편성 첫 번째 대기 중인 기술만.
+    const c = mk(['chronoSovereign', 'frozenTime', 'precede']); c.cooldowns = { frozenTime: 6, precede: 5 }; strike(c, target(), () => 0, [], false, true); assert.equal(c.cooldowns.frozenTime, 0); assert.equal(c.cooldowns.precede, 3, 'second skill only hastened');
+    for (const id of ['showmanship', 'riskDividend', 'nimbleStep', 'chronoSovereign', 'roninGrit']) assert.ok(sk(id).cooldownReset, id);
+});

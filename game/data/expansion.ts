@@ -95,7 +95,7 @@ const M4 = [2500, 12000, 40000, 100000], M5 = [4000, 18000, 60000, 150000];
 export const EXPANSION_SKILLS: Skill[] = [
     // 검의 길
     { ...A, ...physical, id: 'iaiDraw', name: '발도', desc: '', level: 10, job: 'ronin', chance: .28, cooldown: 3, multiplier: 1.35, cost: 2, accuracyBonus: .08 },
-    { ...P, id: 'roninGrit', name: '낭인의 기백', desc: '물리 공격이 오릅니다.', level: 10, job: 'ronin', cost: 2, bonus: { attack: 14 } },
+    { ...P, id: 'roninGrit', name: '낭인의 기백', desc: '물리 공격이 오르고, 상대를 쓰러뜨리면 모든 재사용 대기가 초기화됩니다.', level: 10, job: 'ronin', cost: 2, bonus: { attack: 14 }, cooldownReset: { on: 'kill', chance: 1, pick: 'all' } },
     { ...A, ...physical, id: 'crossSlash', name: '십자베기', desc: '', level: 25, job: 'swordsman', chance: .28, cooldown: 3, multiplier: 1.2, cost: 3, extraAttacks: 1, extraAttackMultiplier: .6 },
     { ...P, id: 'swordForm', name: '검의 형', desc: '치명타와 명중이 오릅니다.', level: 25, job: 'swordsman', cost: 2, bonus: { crit: .04, accuracy: .05 } },
     { ...A, ...physical, id: 'flashCut', name: '일섬', desc: '', level: 40, job: 'bladeMaster', chance: .26, cooldown: 4, multiplier: 2.3, cost: 4, penetrationBonus: .15, accuracyBonus: .08 },
@@ -175,14 +175,14 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'axeArm', name: '도끼 팔', desc: '물리 공격이 오릅니다.', level: 10, job: 'woodcutter', cost: 2, bonus: { attack: 30 } },
     { ...P, id: 'breachTools', name: '공성 도구', desc: '방어 관통이 오릅니다.', level: 10, job: 'sapper', cost: 2, bonus: { penetration: .08, attack: 10 } },
     { ...P, id: 'keenEye', name: '매의 눈', desc: '치명타와 명중이 오릅니다.', level: 10, job: 'hunter', cost: 2, bonus: { crit: .07, accuracy: .07 } },
-    { ...P, id: 'showmanship', name: '관중의 환호', desc: '치명 피해가 오릅니다.', level: 10, job: 'gladiator', cost: 2, bonus: { critDamage: .35, crit: .02 } },
+    { ...P, id: 'showmanship', name: '관중의 환호', desc: '치명 피해가 오르고, 치명타가 터지면 30% 확률로 가장 긴 재사용 대기를 초기화합니다.', level: 10, job: 'gladiator', cost: 2, bonus: { critDamage: .35, crit: .02 }, cooldownReset: { on: 'crit', chance: .3, pick: 'longest' } },
     { ...P, id: 'bookwise', name: '박식', desc: '마법 공격과 마력 평타 계수가 오릅니다.', level: 10, job: 'scholar', cost: 2, bonus: { magic: 30, arcaneRatioBonus: .3 } },
     { ...P, id: 'stillMind', name: '고요한 마음', desc: '최대 마나·마나 회복과 마법 공격, 마력 평타 계수가 오릅니다.', level: 10, job: 'meditator', cost: 2, bonus: { mana: 40, manaRegen: 2.5, magic: 16, arcaneRatioBonus: .3 } },
     { ...P, id: 'temperedSkin', name: '담금질한 피부', desc: '물리 방어가 오릅니다.', level: 10, job: 'blacksmithApprentice', cost: 2, bonus: { defense: 26, hp: 40 } },
     { ...P, id: 'innerBreath', name: '내공 호흡', desc: '최대 체력과 턴당 체력 회복이 오릅니다.', level: 10, job: 'noviceMonk', cost: 2, bonus: { hp: 180, hpRegen: 2 } },
     { ...P, id: 'herbWard', name: '약초 방부', desc: '마법 방어와 마나 회복이 오릅니다.', level: 10, job: 'herbalist', cost: 2, bonus: { resist: 26, manaRegen: 1, hp: 40 } },
     { ...P, id: 'bitterBrew', name: '쓴 달임약', desc: '지속 피해와 명중이 오릅니다.', level: 10, job: 'apothecary', cost: 2, bonus: { dotBonus: .2, accuracy: .03 } },
-    { ...P, id: 'nimbleStep', name: '가벼운 발', desc: '회피와 속도가 오릅니다.', level: 10, job: 'acrobat', cost: 2, bonus: { evasion: .06, speed: 8 } },
+    { ...P, id: 'nimbleStep', name: '가벼운 발', desc: '회피와 속도가 오르고, 연속 행동마다 40% 확률로 가장 긴 재사용 대기를 초기화합니다.', level: 10, job: 'acrobat', cost: 2, bonus: { evasion: .06, speed: 8 }, cooldownReset: { on: 'chain', chance: .4, pick: 'longest' } },
     // 기존 직업 보강 (크라켄 혈족 물리 경로)
     { ...P, id: 'galvanicScales', name: '전류 비늘', desc: '물리 공격과 속도가 오릅니다.', level: 25, job: 'stormEel', cost: 2, bonus: { attack: 16, speed: 8 } },
     { ...P, id: 'abyssalGrip', name: '심연의 악력', desc: '물리 공격과 방어 관통이 오릅니다.', level: 40, job: 'krakenkin', cost: 3, bonus: { attack: 28, penetration: .04 } },

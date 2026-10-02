@@ -27,7 +27,7 @@ export function BattleLogLine({ log, index, playerName }: { log: Log; index?: bo
         {ev.drained > 0 && <em className="heal">흡혈 {ev.drained}</em>}
         {ev.statuses.map(st => <em key={st.id} className="status">{STATUS_NAMES[st.id] || st.id} {st.turns}턴{st.onSelf ? '(자신)' : ''}</em>)}
         {ev.linked && <em className="status">연계</em>}{ev.cleansed && <em className="heal">정화</em>}{ev.silenced && <em className="status">침묵 중</em>}
-        {ev.reflected ? <em className="dmg-dot">반격 {ev.reflected}</em> : null}{ev.endured && <em className="heal">無 체력 1로 버팀{ev.endured.heal ? ` +${ev.endured.heal.toLocaleString()}` : ''}</em>}{ev.finale && <em className="crit">天 일곱 인 해방</em>}{ev.restored && <em className="heal">타임머신</em>}{ev.extraTurn && <em className="status">추가 행동</em>}
+        {ev.reflected ? <em className="dmg-dot">반격 {ev.reflected}</em> : null}{ev.endured && <em className="heal">無 체력 1로 버팀{ev.endured.heal ? ` +${ev.endured.heal.toLocaleString()}` : ''}</em>}{ev.finale && <em className="crit">天 일곱 인 해방</em>}{ev.cooldownReset && <em className="status">대기 초기화 {ev.cooldownReset.join('·')}</em>}{ev.restored && <em className="heal">타임머신</em>}{ev.extraTurn && <em className="status">추가 행동</em>}
     </p>;
 }
 

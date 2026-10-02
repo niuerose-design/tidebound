@@ -151,6 +151,8 @@ export type Skill = {
     selfEffect?: { status: 'stun' | 'slow' | 'weaken'; turns: number; waivedBy?: string };
     /** v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다. */
     lastStand?: { charges: number; chargesPerLevel?: number; heal?: number };
+    /** v25.5 재사용 대기 초기화: 조건(치명타·처치·연속 행동)이 맞으면 chance 확률로 대기 중인 액티브를 되돌립니다. pick: longest 가장 긴 대기 하나, first 편성 순서 첫 번째, all 전부. */
+    cooldownReset?: { on: 'crit' | 'kill' | 'chain'; chance: number; pick: 'longest' | 'first' | 'all' };
     /** v25 일곱 글자: 쓰면 이번 전투의 인(印)을 하나 새깁니다. */
     seal?: boolean;
     /** v25 魂: 이번 전투에 새긴 인 1개마다 피해 +sealPower. */
@@ -234,6 +236,8 @@ export type CombatEvent = {
     extraTurn?: boolean;
     /** v25: 天 발동. */
     finale?: boolean;
+    /** v25.5 이 행동으로 재사용 대기가 초기화된 기술 이름들. */
+    cooldownReset?: string[];
     /** v25: 타임머신으로 모두 회복. */
     restored?: boolean;
     /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */

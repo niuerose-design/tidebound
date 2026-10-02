@@ -55,7 +55,7 @@ export function Guide({ s }: { s?: State }) {
             <div className="help-columns">
                 <Rule icon={<Zap size={19}/>} title="속도·연속 행동"
                     effect={<>속도는 행동 순서, 명중 보정, 연속 행동을 정합니다. 상대보다 빠르면 행동할 때마다 확률로 한 번 더 행동하고, 성공하면 다시 판정합니다. 연속 확률 = {BALANCE.chainCoefficient} × log₂(내 속도 ÷ 상대 속도).</>}
-                    condition={`${[1.2, 1.5, 2, 3, 4].map(r => `속도 ${r}배 ${Math.round(Math.min(1, BALANCE.chainCoefficient * Math.log2(r)) * 100)}%`).join(' · ')}(4배 이상 100%). 추가 행동도 온전한 행동이라 스킬 선택, 재사용 대기, 마나 회복, 지속 피해, 기절이 모두 한 칸씩 진행됩니다. 적에게도 같은 규칙이 적용됩니다.`}
+                    condition={`${[1.2, 1.5, 2, 3, 4].map(r => `속도 ${r}배 ${Math.round(Math.min(1, BALANCE.chainCoefficient * Math.log2(r)) * 100)}%`).join(' · ')}(4배 이상 100%). 추가 행동도 온전한 행동이라 스킬 선택, 재사용 대기, 마나 회복, 지속 피해, 기절이 모두 한 칸씩 진행됩니다. 연속 행동(2번째 이후)에서는 내 재사용 대기가 ${BALANCE.chainCooldownHaste} 더 줄고, 일부 패시브는 치명타·처치·연속 행동 때 대기를 초기화합니다. 적에게도 연속 행동 규칙은 같지만 대기 가속·초기화는 플레이어만 받습니다.`}
                     limit={`한 턴에 전투원마다 최대 ${BALANCE.chainMaxActions}번. 어느 쪽이든 쓰러지면 바로 멈춥니다. 속도 자체에는 상한이 없고 효과만 비율로 포화됩니다: 연속 행동은 상대의 4배에서 100%, 명중 보정은 약 1.7배에서 ±6%p가 최대입니다.`}/>
                 <Rule icon={<Crosshair size={19}/>} title="명중·회피"
                     effect={<>명중 수치는 내 공격이, 회피 수치는 상대 공격과 그 공격의 상태이상이 빗나갈 가능성을 바꿉니다. 실제 적중률 = 내 명중 − 상대 회피 + 속도 보정.</>}

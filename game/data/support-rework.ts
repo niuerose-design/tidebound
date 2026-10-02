@@ -75,7 +75,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
 export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     // 오징어 광대: 골드 대신 치명
     focus: { desc: '치명타 확률 +7%. 흔들리는 주사위의 고점을 받쳐 줍니다.' },
-    riskDividend: { desc: '치명 피해와 치명타 확률이 오릅니다.', bonus: { critDamage: .25, crit: .02 } },
+    riskDividend: { desc: '치명 피해와 치명타 확률이 오르고, 치명타가 터지면 25% 확률로 가장 긴 재사용 대기를 초기화합니다.', bonus: { critDamage: .25, crit: .02 }, cooldownReset: { on: 'crit', chance: .25, pick: 'longest' } },
     jackpot: { desc: '치명 피해와 치명타 확률이 오릅니다.', bonus: { critDamage: .2, crit: .03 } },
     fortuneFavor: { desc: '치명 피해와 치명타 확률이 오릅니다.', bonus: { critDamage: .3, crit: .03 } },
     divineLuck: { desc: '치명타와 치명 피해가 크게 오릅니다.', bonus: { crit: .08, critDamage: .45 } },

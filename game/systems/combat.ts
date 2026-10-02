@@ -104,7 +104,7 @@ export function chainChance(a: Fighter, b: Fighter) {
 export function actTurn(a: Fighter, b: Fighter, rng: () => number, onAction: (text: string, event: CombatEvent) => void) {
     for (let chain = 1; ; chain++) {
         const events: CombatEvent[] = [];
-        const text = strike(a, b, rng, events), ev = events[0];
+        const text = strike(a, b, rng, events, false, chain > 1), ev = events[0];
         if (chain > 1) ev.chain = chain;
         onAction(chain > 1 ? `${text} · 연속 ${chain}` : text, ev);
         // v25 확정 추가 행동(선행·찰): 연속 행동 횟수와 별개로 한 번 더 행동합니다. 추가 행동에서 다시 생기지는 않습니다.
@@ -137,7 +137,7 @@ function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, s
     return true;
 }
 /** Shared PvE/PvP action. Recovery, status, conditional proc, MP, accuracy, defense and crit. */
-export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false) {
+export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false) {
     const sa = normalizeStats(a.stats), sb = normalizeStats(b.stats);
     a.effects ??= {};
     b.effects ??= {};
@@ -174,8 +174,10 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         ev.silenced = true;
     }
     const blocked = new Set(Object.keys(a.cooldowns).filter(k => a.cooldowns[k] > 0));
+    // v25.5 연속 행동으로 들어온 행동은 플레이어(ranks가 있는 쪽)의 대기를 1 더 줄입니다. 몬스터는 제외.
+    const haste = chained && a.ranks ? BALANCE.chainCooldownHaste : 0;
     for (const k of Object.keys(a.cooldowns))
-        a.cooldowns[k] = Math.max(0, a.cooldowns[k] - 1);
+        a.cooldowns[k] = Math.max(0, a.cooldowns[k] - 1 - haste);
     if (a.stun > 0) {
         a.stun--;
         if (a.stun === 0) grantImmunity(a.effects, 'stun');
@@ -424,6 +426,21 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             a.effects.seals = [];
             notes.push(`天 · 일곱 인 해방 ${dealt.toLocaleString()}`);
             if (b.hp > 0 && !isImmune(b, 'stun')) { b.stun = Math.max(b.stun, f.stun); const own = ev.statuses.find(x => x.id === 'stun' && !x.onSelf); if (own) own.turns = Math.max(own.turns, f.stun); else ev.statuses.push({ id: 'stun', turns: f.stun }); notes.push(`기절 ${f.stun}턴`); }
+        }
+    }
+    // v25.5 재사용 대기 초기화 패시브: 치명타·처치·연속 행동 조건마다 확률로 대기 중인 액티브를 되돌립니다(플레이어 전용).
+    if (a.ranks) {
+        const critical = ev.hits.some(h => h.critical), killed = b.hp <= 0;
+        for (const id of a.skills) {
+            const rule = skillById(id)?.cooldownReset;
+            if (!rule || !(rule.on === 'crit' ? critical : rule.on === 'kill' ? killed : chained)) continue;
+            if (rule.chance < 1 && rng() >= rule.chance) continue;
+            const waiting = a.skills.filter(x => (a.cooldowns[x] || 0) > 0 && skillById(x)?.type === 'active');
+            if (!waiting.length) continue;
+            const picked = rule.pick === 'all' ? waiting : rule.pick === 'first' ? [waiting[0]] : [waiting.reduce((best, x) => a.cooldowns[x] > a.cooldowns[best] ? x : best, waiting[0])];
+            for (const x of picked) a.cooldowns[x] = 0;
+            ev.cooldownReset = [...(ev.cooldownReset || []), ...picked.map(x => skillById(x)?.name || x)];
+            notes.push(`대기 초기화 · ${picked.map(x => skillById(x)?.name || x).join('·')} (${skillById(id)?.name})`);
         }
     }
     ev.skillId = chosen?.id;

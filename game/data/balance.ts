@@ -23,6 +23,8 @@ export const BALANCE = {
     bookMilestones: [50, 500, 2500, 10000], duelCooldownMs: 60000, duelMaxTurns: 80,
     // 연속 행동: 상대보다 빠르면 행동마다 p = min(1, max(0, 계수 × log2(내 속도 / 상대 속도)))로 한 번 더 행동합니다. 턴당 최대 횟수까지.
     chainCoefficient: 0.5, chainMaxActions: 5,
+    // v25.5 연속 행동(2번째 이후)으로 들어간 행동은 플레이어의 재사용 대기를 이만큼 더 줄입니다(초기화가 아니라 가속).
+    chainCooldownHaste: 1,
 };
 export const MONSTER_TUNING = {
     // A strong single-stat build should still need several hours of victories
