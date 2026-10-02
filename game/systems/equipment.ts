@@ -28,9 +28,10 @@ export function itemStats(item: Item): Partial<Stats> {
 /** v25.7 전설(등급 3) 이상은 +12, 그 아래는 +10까지 강화합니다. */
 export const enhanceMaxFor = (item: Pick<Item, 'rarity'>) => item.rarity >= 3 ? ECONOMY.enhanceMaxLegend : ECONOMY.enhanceMax;
 /** v25.7 판매가: 그 레벨 물고기 골드 × 등급별 마리 수 + 강화에 쓴 골드의 30%. 분해(정수)와 판매(골드)가 실제 선택이 되도록 분해만 유리하던 식(위력×3)을 바꿨습니다. */
-export const SALE_FISH = [2, 6, 18, 50, 120, 300, 700];
+export const SALE_FISH = [2, 6, 18, 50, 120, 300, 700], SALE_LEVEL_CAP = 65;
 export const saleValue = (item: Item) => {
-    const base = fishGoldAt(item.level || 1) * (SALE_FISH[item.rarity] ?? 2);
+    // 해역 난이도(차수)로 드롭 레벨이 어종 레벨보다 높아져도 판매가는 Lv.65까지만 따라갑니다(차수당 +5 레벨이 지수 곡선을 타고 폭주하지 않게).
+    const base = fishGoldAt(Math.min(SALE_LEVEL_CAP, item.level || 1)) * (SALE_FISH[item.rarity] ?? 2);
     let spent = 0;
     for (let e = 0; e < (item.enhance || 0); e++) spent += enhanceCost({ ...item, enhance: e });
     return Math.floor(base + spent * ECONOMY.saleEnhanceRefund);

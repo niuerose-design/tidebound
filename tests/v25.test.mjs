@@ -249,6 +249,7 @@ test('v25.7 legend+ enhances to +12, others stop at +10; sale value follows the 
     assert.equal(saleValue({ rarity: 3, level: 30, power: 90 }), fishGoldAt(30) * 50); assert.equal(saleValue({ rarity: 0, level: 1, power: 2 }), 14);
     let spent = 0; for (let e = 0; e < 12; e++) spent += enhanceCost({ ...legend, enhance: e }); assert.equal(saleValue(legend), Math.floor(fishGoldAt(30) * 50 + spent * .3), 'enhancement refund 30%');
     assert.ok(saleValue({ rarity: 3, level: 60, power: 200 }) > saleValue({ rarity: 3, level: 30, power: 90 }) * 10, 'late-game sale keeps pace with exponential gold');
+    assert.equal(saleValue({ rarity: 0, level: 160, power: 10 }), saleValue({ rarity: 0, level: 65, power: 10 }), 'tier-boosted drop levels stop at the Lv.65 sale cap');
 });
 
 test('v25.7 salvage research sells or dismantles all non-relic gear at rebirth with rank efficiency; gold carries into the next life', async () => {
