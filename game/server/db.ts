@@ -12,6 +12,8 @@ export const CHAT_KEEP = 300;
 /** v25.11 공유 길드. 주간 합산(week가 현재 주와 다르면 0으로 보고 다시 셉니다). */
 export type GuildRow = { id: string; name: string; code: string; leader: string; treasury: number; created_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; points: number };
 export type GuildMemberRow = { account_id: string; guild_id: string; name: string; joined_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; claimed: string };
+/** v25.13 계정 공유 금고. pearl_out은 이번 주(week) 진주 인출 합계(주당 상한용). */
+export type WalletRow = { account_id: string; pearls: number; essence: number; week: string; pearl_out: number };
 export type GuildDelta = { catches?: number; clears?: number; bosses?: number; abyss?: number; donated?: number };
 /** 저장소에 넣는 상태 문자열. 파일 DB는 개발 편의를 위해 평문을 유지하고, TIDEBOUND_PACK_STATE=1 이면 파일 DB도 압축합니다(e2e 검증용). */
 const packing = (always: boolean) => always || process.env.TIDEBOUND_PACK_STATE === '1';
@@ -52,6 +54,9 @@ export interface Storage {
     removeGuildMember(accountId: string): Promise<void>;
     bumpGuildMember(accountId: string, week: string, delta: GuildDelta, claimed?: string): Promise<void>;
     renameGuildMember(accountId: string, name: string): Promise<void>;
+    /** v25.13 계정 금고. 없으면 0으로 봅니다. setWallet은 통째로 씁니다(계정당 요청이 직렬이라 읽고-쓰기면 충분). */
+    getWallet(accountId: string): Promise<WalletRow | null>;
+    setWallet(row: WalletRow): Promise<void>;
 }
 /** 주 키가 바뀌면 0으로 보는 주간 합산 갱신(파일 DB와 Neon이 같은 규칙). */
 export function applyDelta<T extends { week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number }>(row: T, week: string, d: GuildDelta): T {
@@ -78,6 +83,7 @@ const SCHEMA = [
     'CREATE INDEX IF NOT EXISTS guilds_week_points_idx ON guilds (week, points)',
     'CREATE TABLE IF NOT EXISTS guild_members (account_id TEXT PRIMARY KEY, guild_id TEXT NOT NULL, name TEXT NOT NULL, joined_at BIGINT NOT NULL, week TEXT NOT NULL DEFAULT \'\', catches INTEGER NOT NULL DEFAULT 0, clears INTEGER NOT NULL DEFAULT 0, bosses INTEGER NOT NULL DEFAULT 0, abyss INTEGER NOT NULL DEFAULT 0, donated BIGINT NOT NULL DEFAULT 0, claimed TEXT NOT NULL DEFAULT \'\')',
     'CREATE INDEX IF NOT EXISTS guild_members_guild_idx ON guild_members (guild_id)',
+    'CREATE TABLE IF NOT EXISTS wallets (account_id TEXT PRIMARY KEY, pearls INTEGER NOT NULL DEFAULT 0, essence INTEGER NOT NULL DEFAULT 0, week TEXT NOT NULL DEFAULT \'\', pearl_out INTEGER NOT NULL DEFAULT 0)',
 ];
 const slotRowId = (accountId: string, slot: number) => `${accountId}#${slot}`;
 function neonStorage(url: string): Storage {
@@ -147,11 +153,13 @@ function neonStorage(url: string): Storage {
             await q('UPDATE guild_members SET week=$2, catches=$3, clears=$4, bosses=$5, abyss=$6, donated=$7, claimed=$8 WHERE account_id=$1', [accountId, week, n.catches, n.clears, n.bosses, n.abyss, n.donated, claims]);
         },
         async renameGuildMember(accountId, name) { await q('UPDATE guild_members SET name=$1 WHERE account_id=$2', [name, accountId]); },
+        async getWallet(accountId) { const { rows } = await q<WalletRow>('SELECT account_id,pearls,essence,week,pearl_out FROM wallets WHERE account_id=$1', [accountId]); return rows[0] ? { ...rows[0], pearls: Number(rows[0].pearls), essence: Number(rows[0].essence), pearl_out: Number(rows[0].pearl_out) } : null; },
+        async setWallet(w) { await q('INSERT INTO wallets (account_id,pearls,essence,week,pearl_out) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (account_id) DO UPDATE SET pearls=EXCLUDED.pearls, essence=EXCLUDED.essence, week=EXCLUDED.week, pearl_out=EXCLUDED.pearl_out', [w.account_id, w.pearls, w.essence, w.week, w.pearl_out]); },
     };
 }
 
 // ---------- 개발용 로컬 파일 ----------
-type FileDb = { players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; chat?: ChatRow[]; chatSeq?: number };
+type FileDb = { players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; wallets?: Record<string, WalletRow>; chat?: ChatRow[]; chatSeq?: number };
 function fileStorage(): Storage {
     const path = process.env.TIDEBOUND_DEV_DB || '.data/dev-db.json';
     let chain: Promise<unknown> = Promise.resolve();
@@ -198,6 +206,8 @@ function fileStorage(): Storage {
         removeGuildMember: accountId => tx(db => { delete db.guildMembers?.[accountId]; }),
         bumpGuildMember: (accountId, week, d, claimed) => tx(db => { const m = db.guildMembers?.[accountId]; if (!m) return; const n = applyDelta(m, week, d); db.guildMembers![accountId] = { ...n, claimed: claimed !== undefined ? claimed : m.week === week ? m.claimed : '' }; }),
         renameGuildMember: (accountId, name) => tx(db => { const m = db.guildMembers?.[accountId]; if (m) m.name = name; }),
+        getWallet: accountId => tx(db => db.wallets?.[accountId] ? { ...db.wallets[accountId] } : null),
+        setWallet: w => tx(db => { (db.wallets ??= {})[w.account_id] = { ...w }; }),
     };
 }
 

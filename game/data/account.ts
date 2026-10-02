@@ -66,3 +66,9 @@ export function accountBonusRows(s: AccountState) {
         { name: '보스 포획 합계', value: `${boss}마리`, effect: `치명타 +${(accountCrit(s) * 100).toFixed(1)}%p`, next: `${R.bossPer}마리마다 +0.5%p · ${next(boss, R.bossPer, R.bossCap)}` },
     ];
 }
+/**
+ * v25.13 계정 공유 금고: 어느 슬롯에서든 진주·정수를 넣고 꺼냅니다. 정수는 제한 없음.
+ * 진주 인출은 주당 상한(알트 슬롯의 목표 진주를 본체로 몰아넣는 걸 막음). 입금은 제한 없음.
+ */
+export const VAULT_PEARL_OUT_WEEKLY = 30;
+export type VaultInfo = { pearls: number; essence: number; week: string; pearlOut: number; pearlOutLeft: number };
