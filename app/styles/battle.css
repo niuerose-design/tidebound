@@ -39,8 +39,6 @@
 .opponent-vs svg{color:#8ca9a0}
 .opponent-vs strong{font:600 13px/1 monospace;letter-spacing:1px}
 .opponent-vs small{font:9px/1 monospace;color:#789395}
-.battle-console>.matchup-strip{margin:-2px 0 9px;padding:0 4px 4px;font-size:11px}
-.battle-console>.matchup-strip span{font-size:10px}
 .battle-console .battle-scene{margin-bottom:11px;height:390px}
 .battle-console .scene-copy{top:80px}
 .battle-console .scene-copy h2{font-size:31px}
@@ -117,8 +115,6 @@
 .opponent-card>small{font-size:11px;margin-top:8px}
 .opponent-vs{gap:4px}
 .opponent-vs strong{font-size:14px}
-.battle-console>.matchup-strip{font-size:12px;margin:-3px 0 11px}
-.battle-console>.matchup-strip span{font-size:11px}
 .battle-console .battle-scene{height:430px;margin-bottom:13px}
 .battle-console .scene-copy{top:91px}
 .battle-console .scene-copy h2{font-size:35px}
@@ -308,7 +304,6 @@
 .battle-console>.mobile-fisher-strip{order:0}
 .battle-console>.battle-scene{order:1}
 .battle-console>.battle-opponent-strip{order:2}
-.battle-console>.matchup-strip{order:3}
 .battle-console>.battle-skills{order:4}
 .battle-console>.log-panel{order:5}
 .battle-console>.session-metrics{order:6;margin-top:12px}
@@ -340,3 +335,59 @@
 /* 모바일 항해 안내: 장면 위에 한 번 더(데스크톱은 왼쪽 열에 있음) */
 .battle-mobile-tutorial{display:none}
 @media(max-width:767px){.battle-mobile-tutorial{display:block;order:-1}.battle-mobile-tutorial .tutorial-card{margin-bottom:12px}}
+
+/* v25.3 연속 행동 카운터는 연속으로 행동한 쪽 카드에 붙습니다(데스크톱: 플레이어 왼쪽·상대 오른쪽, 모바일: 위·아래). */
+.tide-fx-combo small{display:block;width:100%;font-size:10px;letter-spacing:.5px;color:#9cb3af;margin-bottom:1px}
+.tide-fx-combo{flex-wrap:wrap;max-width:150px}
+.tide-fx-combo-player{right:auto;left:14px;border-bottom-color:#8fd9b966}.tide-fx-combo-player strong{color:#a4e9ba}
+.tide-fx-combo-enemy{border-bottom-color:#f0a59066}.tide-fx-combo-enemy strong{color:#f0b59a}
+.battle-fx-host .tide-fx-combo-player{left:8px;right:auto}.battle-fx-host .tide-fx-combo-enemy{right:8px;left:auto}
+@media(max-width:767px){.battle-fx-host .tide-fx-combo,.dungeon-combat-fx-host .tide-fx-combo{bottom:auto;left:auto;right:8px}.battle-fx-host .tide-fx-combo-player,.dungeon-combat-fx-host .tide-fx-combo-player{top:6px}.battle-fx-host .tide-fx-combo-enemy,.dungeon-combat-fx-host .tide-fx-combo-enemy{top:auto;bottom:6px}}
+
+/* v25.3 스킬 연출 강화: 카드 전체 섬광 + 이중 충격파 + 더 멀리 튀는 파편. 기본 공격은 그대로 체력바 숫자만. */
+.tide-fx-flash{left:-160px;top:-70px;width:320px;height:140px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--fx) 55%,transparent),transparent 70%);animation:tideFlash .7s ease-out var(--fx-delay) both;mix-blend-mode:screen}
+.tide-fx-ring{left:-30px;top:-30px;width:60px;height:60px}
+.tide-fx-shock{left:-38px;top:-38px;width:76px;height:76px;border-width:1px;opacity:.7;animation-delay:calc(var(--fx-delay) + .12s);animation-duration:.7s}
+.tide-fx.critical .tide-fx-flash{animation-duration:.9s}
+.tide-fx-fragment{font-size:24px}
+.tide-fx-caption{top:36px}.tide-fx-caption strong{font-size:16px;letter-spacing:.3px}
+.tide-fx.finale{--fx:#ffe38b}
+.tide-fx-heaven{left:-40px;top:-52px;width:80px;text-align:center;font:700 54px/1 Georgia,'Noto Serif KR',serif;color:#fff2c4;text-shadow:0 0 18px #ffd97a,0 0 40px #ffb84a;animation:tideHeaven 1.4s ease-out var(--fx-delay) both}
+.tide-fx.finale .tide-fx-caption{top:42px}.tide-fx.finale .tide-fx-caption strong{color:#ffe9b0;font-size:17px}
+@keyframes tideFlash{0%{opacity:0;scale:.4}18%{opacity:.9;scale:1}100%{opacity:0;scale:1.6}}
+@keyframes tideHeaven{0%{opacity:0;scale:.3;rotate:-8deg}18%{opacity:1;scale:1.25;rotate:2deg}32%{scale:1}78%{opacity:1}100%{opacity:0;scale:1.1;translate:0 -18px}}
+@media(prefers-reduced-motion:reduce){.tide-fx-flash,.tide-fx-shock{display:none}.tide-fx-heaven{animation-name:tideReduced}}
+
+/* v25.3 배경까지 번지는 연출. 스킬은 섬광·물결 고리, 天은 어둠·일곱 글자·전체 섬광. */
+.scene-fx-layer{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.scene-fx{--fx:#efd28a;position:absolute;inset:0;color:var(--fx)}
+.scene-fx-wave,.scene-fx-magic{--fx:#8ce4ed}.scene-fx-lightning,.scene-fx-stun{--fx:#ffe38b}.scene-fx-bleed{--fx:#fb8f97}.scene-fx-arcane,.scene-fx-silence{--fx:#c4b0ff}.scene-fx-slow{--fx:#a0d2ff}.scene-fx-haste,.scene-fx-heal{--fx:#a4e9ba}.scene-fx-weaken{--fx:#c2b7d8}
+.scene-fx i,.scene-fx b{position:absolute;display:block;font-style:normal}
+.scene-fx-burst .scene-fx-flash{inset:0;background:radial-gradient(ellipse at 62% 48%,color-mix(in srgb,var(--fx) 42%,transparent),transparent 62%);animation:sceneFlash .9s ease-out var(--fx-delay) both;mix-blend-mode:screen}
+.scene-fx-burst.critical .scene-fx-flash{background:radial-gradient(ellipse at 62% 48%,color-mix(in srgb,var(--fx) 62%,transparent),transparent 70%)}
+.scene-fx-ring{left:62%;top:48%;width:140px;height:70px;margin:-35px 0 0 -70px;border:2px solid var(--fx);border-radius:50%;box-shadow:0 0 18px var(--fx),inset 0 0 14px color-mix(in srgb,var(--fx) 40%,transparent);animation:sceneRing 1s cubic-bezier(.1,.7,.25,1) var(--fx-delay) both}
+.scene-fx-ring.late{animation-delay:calc(var(--fx-delay) + .18s);border-width:1px;opacity:.6}
+.scene-fx-spark{left:62%;top:48%;font:700 26px/1 monospace;text-shadow:0 0 10px currentColor;animation:sceneSpark .9s ease-out var(--fx-delay) both}
+.scene-fx-finale{--fx:#ffe38b}
+.scene-fx-finale .scene-fx-dark{inset:0;background:#040c10;animation:sceneDark 2.6s ease-in-out var(--fx-delay) both}
+.scene-fx-finale .scene-fx-flash{inset:0;background:radial-gradient(ellipse at 50% 50%,#fff3c8 0%,#ffd67a88 28%,transparent 62%);animation:sceneFinaleFlash 2.6s ease-out var(--fx-delay) both;mix-blend-mode:screen}
+.scene-fx-finale .scene-fx-slash{left:-10%;top:50%;width:120%;height:3px;background:linear-gradient(90deg,transparent,#fff7d6,#ffd36a,#fff7d6,transparent);box-shadow:0 0 24px #ffd36a;transform-origin:center;animation:sceneSlash 2.6s ease-out var(--fx-delay) both}
+.scene-fx-finale .scene-fx-ring{left:50%;top:50%;width:220px;height:220px;margin:-110px 0 0 -110px;animation:sceneFinaleRing 1.4s cubic-bezier(.1,.7,.25,1) calc(var(--fx-delay) + 1.05s) both}
+.scene-fx-finale .scene-fx-ring.late{animation-delay:calc(var(--fx-delay) + 1.25s)}
+.scene-fx-seal{left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;text-align:center;font:700 30px/44px Georgia,'Noto Serif KR',serif;color:#f7e3a8;text-shadow:0 0 14px #ffc85a;animation:sceneSeal 2.6s ease-in-out var(--fx-delay) both}
+.scene-fx-heaven{position:absolute;left:50%;top:50%;translate:-50% -50%;font:700 150px/1 Georgia,'Noto Serif KR',serif;color:#fff6d8;text-shadow:0 0 30px #ffd97a,0 0 80px #ffb84a,0 4px 0 #6a4a10;animation:sceneHeaven 2.6s ease-out var(--fx-delay) both}
+.scene-fx-title{position:absolute;left:50%;top:calc(50% + 92px);translate:-50% 0;font-size:16px;letter-spacing:6px;color:#ffe9b0;text-shadow:0 0 12px #000;animation:sceneTitle 2.6s ease-out var(--fx-delay) both;white-space:nowrap}
+.battle-scene:has(.scene-fx-finale) .ocean-art{animation:sceneQuake 2.6s ease-out both}
+@keyframes sceneFlash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
+@keyframes sceneRing{0%{opacity:0;scale:.2}15%{opacity:1}100%{opacity:0;scale:4.2}}
+@keyframes sceneSpark{0%,10%{opacity:0;translate:0 0;scale:.4}22%{opacity:1}100%{opacity:0;translate:var(--fx-x) var(--fx-y);scale:.6}}
+@keyframes sceneDark{0%{opacity:0}18%,62%{opacity:.78}100%{opacity:0}}
+@keyframes sceneFinaleFlash{0%,38%{opacity:0}42%{opacity:1}58%{opacity:.35}70%{opacity:.6}100%{opacity:0}}
+@keyframes sceneSlash{0%,36%{opacity:0;scale:0 1;rotate:-14deg}40%{opacity:1;scale:1 1}50%{opacity:.9;rotate:-14deg}100%{opacity:0;rotate:-14deg;scale:1.2 3}}
+@keyframes sceneFinaleRing{0%{opacity:0;scale:.1}12%{opacity:1}100%{opacity:0;scale:3.4}}
+@keyframes sceneSeal{0%{opacity:0;transform:rotate(var(--seal-angle)) translateX(260px) rotate(calc(-1 * var(--seal-angle))) scale(.6)}12%{opacity:1}36%{transform:rotate(var(--seal-angle)) translateX(118px) rotate(calc(-1 * var(--seal-angle))) scale(1)}40%{opacity:1;transform:rotate(var(--seal-angle)) translateX(0) rotate(calc(-1 * var(--seal-angle))) scale(1.3)}44%,100%{opacity:0;transform:rotate(var(--seal-angle)) translateX(0) rotate(calc(-1 * var(--seal-angle))) scale(2)}}
+@keyframes sceneHeaven{0%,38%{opacity:0;scale:.2}44%{opacity:1;scale:1.3}52%{scale:1}82%{opacity:1}100%{opacity:0;scale:1.15;translate:-50% -56%}}
+@keyframes sceneTitle{0%,46%{opacity:0;letter-spacing:14px}56%,84%{opacity:1;letter-spacing:6px}100%{opacity:0}}
+@keyframes sceneQuake{0%,38%{translate:0 0}41%{translate:-8px 4px}44%{translate:7px -5px}47%{translate:-5px 3px}50%{translate:4px -2px}54%{translate:-2px 1px}58%,100%{translate:0 0}}
+@media(max-width:767px){.scene-fx-heaven{font-size:104px}.scene-fx-seal{font-size:24px}.scene-fx-ring{width:100px;height:50px;margin:-25px 0 0 -50px}}
+@media(prefers-reduced-motion:reduce){.scene-fx-burst,.scene-fx-slash,.scene-fx-seal,.scene-fx-ring{display:none}.scene-fx-dark,.scene-fx-flash,.scene-fx-heaven,.scene-fx-title{animation-name:tideReduced;animation-duration:1.4s}.battle-scene:has(.scene-fx-finale) .ocean-art{animation:none}}

@@ -4,7 +4,7 @@ import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { thresholdRank, refinementBonusLabel } from '@/game/data/long-term';
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, Info, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowUp, Info, Search, Sparkles } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
@@ -84,16 +84,57 @@ function SkillCard({ sk, s, send, busy, detailed }: PanelProps & { sk: Skill; de
     </article>;
 }
 
+type SkillKind = 'all' | 'active' | 'passive';
+type SkillDamage = 'all' | 'physical' | 'magic' | 'status' | 'heal';
+type SkillSort = 'default' | 'ap' | 'chance' | 'level' | 'mastery' | 'name';
+const KIND_LABEL: Record<SkillKind, string> = { all: '전체', active: '액티브', passive: '패시브' };
+const DAMAGE_LABEL: Record<SkillDamage, string> = { all: '모든 효과', physical: '물리', magic: '마법', status: '상태이상·제어', heal: '회복·흡혈' };
+const SORT_LABEL: Record<SkillSort, string> = { default: '기본 순서', ap: 'AP 낮은 순', chance: '발동률 높은 순', level: '성장 Lv. 높은 순', mastery: '숙련 많은 순', name: '이름 순' };
+const STATUS_EFFECTS = new Set(['stun', 'bleed', 'silence', 'slow', 'weaken', 'poison', 'burn', 'freeze', 'curse']);
+/** 검색·칩 필터에 쓰는 기술의 효과 분류. 액티브는 피해 유형, 상태이상·회복은 효과로 나눕니다. */
+function skillDamageKind(sk: Skill): SkillDamage[] {
+    const out: SkillDamage[] = [];
+    if (sk.type === 'active') out.push(sk.damageType === 'magic' ? 'magic' : sk.damageType === 'split' ? 'physical' : 'physical');
+    if (sk.damageType === 'split') out.push('magic');
+    if (sk.effect && STATUS_EFFECTS.has(sk.effect) || sk.statusOnly) out.push('status');
+    if (sk.effect === 'heal' || sk.effect === 'drain' || sk.bonus?.lifesteal || sk.bonus?.hpRegen) out.push('heal');
+    if (sk.type === 'passive' && (sk.bonus?.attack || sk.bonus?.crit || sk.bonus?.critDamage || sk.bonus?.penetration)) out.push('physical');
+    if (sk.type === 'passive' && (sk.bonus?.magic || sk.bonus?.arcaneRatioBonus || sk.bonus?.mana || sk.bonus?.manaRegen)) out.push('magic');
+    if (sk.type === 'passive' && (sk.bonus?.dotBonus || sk.bonus?.stunBonus || sk.bonus?.controlBonus || sk.bonus?.dotTurnsBonus)) out.push('status');
+    return out;
+}
+
 export function Skills({ s, send, busy }: PanelProps) {
     const [scope, setScope] = useState('current'), [filter, setFilter] = useState('all'), [view, setView] = useState('simple');
+    const [query, setQuery] = useState(''), [kind, setKind] = useState<SkillKind>('all'), [damage, setDamage] = useState<SkillDamage>('all'), [sort, setSort] = useState<SkillSort>('default');
     const currentJob = jobById(s.job) || JOBS[0], used = apUsed(s), cap = apCapacity(s);
+    const q = query.trim().toLowerCase();
+    // 검색어가 있으면 범위(현재 직업·해금 등)를 무시하고 모든 기술에서 찾습니다. 이름·설명·직업 이름·효과 설명을 대상으로 합니다.
     const list = SKILLS.filter(sk => {
         const acquired = (s.learned[sk.id] || 0) > 0;
-        if (scope === 'current' && sk.job !== s.job && !(s.job === 'fisher' && !sk.job)) return false;
-        if (scope === 'common' && sk.job) return false;
-        if (scope === 'owned' && !acquired) return false;
+        if (!q) {
+            if (scope === 'current' && sk.job !== s.job && !(s.job === 'fisher' && !sk.job)) return false;
+            if (scope === 'common' && sk.job) return false;
+            if (scope === 'owned' && !acquired) return false;
+            if (scope === 'equipped' && !s.skills.includes(sk.id)) return false;
+        } else {
+            const job = jobById(sk.job)?.name || '공용';
+            const effects = skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ');
+            if (![sk.name, sk.desc, job, effects].some(x => x.toLowerCase().includes(q))) return false;
+        }
+        if (kind !== 'all' && sk.type !== kind) return false;
+        if (damage !== 'all' && !skillDamageKind(sk).includes(damage)) return false;
         return filter === 'unlearned' ? !acquired : filter === 'usable' ? canUse(s, sk.id) : true;
+    }).sort((a, b) => {
+        if (sort === 'default') return 0;
+        const fx = (sk: Skill) => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0);
+        if (sort === 'ap') return (fx(a).cost ?? 2) - (fx(b).cost ?? 2);
+        if (sort === 'chance') return (fx(b).chance || 0) - (fx(a).chance || 0);
+        if (sort === 'level') return skillLevel(b, s.learned[b.id] || 1, skillMastery(s, b.id)) - skillLevel(a, s.learned[a.id] || 1, skillMastery(s, a.id));
+        if (sort === 'mastery') return (s.skillPractice[b.id] || 0) - (s.skillPractice[a.id] || 0);
+        return a.name.localeCompare(b.name, 'ko');
     });
+    const filtersOn = !!q || kind !== 'all' || damage !== 'all' || sort !== 'default' || filter !== 'all';
     return <>
         <Heading eyebrow="SKILL LABORATORY" title="직업을 거쳐, 나만의 편성으로" description="전직 스킬은 무료로 사용합니다. 장착 후 승리로 계승·강화하거나, 얻어 둔 스킬에 1 SP를 투자하세요.">
             <ConfirmButton label="SP 투자 환급" description="사용한 SP만 환급합니다. 해금한 스킬·실전 숙련은 남고, SP로만 얻은 계승과 강화는 취소됩니다. 현재 편성이 AP를 넘으면 일부 스킬이 해제됩니다." disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetSkills' })}/>
@@ -111,8 +152,19 @@ export function Skills({ s, send, busy }: PanelProps) {
                 {!ids.length && <p className="loadout-empty">{type === 'active' ? '액티브가 없으면 기본 공격만 합니다.' : '장착한 패시브가 없습니다.'}</p>}
             </div>;
         })}</div><div className="preset-row">{['1', '2', '3'].map(id => <div key={id}><span>편성 {id}<small>{s.presets[id] ? `${s.presets[id].skills.length}개 스킬` : '저장 없음'}</small></span><button className="text-button" disabled={busy} onClick={() => send({ type: 'savePreset', id })}>저장</button><button className="text-button" disabled={busy || !s.presets[id]} onClick={() => send({ type: 'loadPreset', id })}>불러오기</button></div>)}</div></section>
-        <div className="skill-view-toolbar"><Tabs value={scope} onValueChange={setScope}><TabsList className="game-tabs"><TabsTrigger value="current">{currentJob.name} 전용</TabsTrigger><TabsTrigger value="owned">해금한 스킬</TabsTrigger><TabsTrigger value="common">공용</TabsTrigger><TabsTrigger value="all">전체 계보</TabsTrigger></TabsList></Tabs><div className="skill-view-toggle" role="group" aria-label="스킬 보기 방식"><button className={view === 'simple' ? 'active' : ''} aria-pressed={view === 'simple'} onClick={() => setView('simple')}>간단히 보기</button><button className={view === 'detail' ? 'active' : ''} aria-pressed={view === 'detail'} onClick={() => setView('detail')}>자세히 보기</button></div></div>
+        <section className="skill-finder" aria-label="스킬 찾기">
+            <label className="job-search-box skill-search"><Search size={15}/><input type="search" value={query} placeholder="스킬 이름·효과·직업으로 검색 (예: 기절, 흡혈, 마법사)" aria-label="스킬 검색" onChange={e => setQuery(e.target.value)}/></label>
+            <div className="skill-finder-row">
+                <div className="skill-chip-group" role="group" aria-label="종류">{(Object.keys(KIND_LABEL) as SkillKind[]).map(k => <button type="button" key={k} className={`skill-chip ${kind === k ? 'active' : ''}`} aria-pressed={kind === k} onClick={() => setKind(k)}>{KIND_LABEL[k]}</button>)}</div>
+                <div className="skill-chip-group" role="group" aria-label="효과">{(Object.keys(DAMAGE_LABEL) as SkillDamage[]).map(k => <button type="button" key={k} className={`skill-chip ${damage === k ? 'active' : ''}`} aria-pressed={damage === k} onClick={() => setDamage(k)}>{DAMAGE_LABEL[k]}</button>)}</div>
+                <label className="gear-select">정렬<select value={sort} onChange={e => setSort(e.target.value as SkillSort)} aria-label="스킬 정렬">{(Object.keys(SORT_LABEL) as SkillSort[]).map(k => <option key={k} value={k}>{SORT_LABEL[k]}</option>)}</select></label>
+                {filtersOn && <button type="button" className="text-button" onClick={() => { setQuery(''); setKind('all'); setDamage('all'); setSort('default'); setFilter('all'); }}>필터 초기화</button>}
+                <span className="gear-count">{list.length}종 표시{q ? ' · 검색 중에는 모든 직업의 기술을 봅니다' : ''}</span>
+            </div>
+        </section>
+        <div className="skill-view-toolbar"><Tabs value={scope} onValueChange={setScope}><TabsList className="game-tabs"><TabsTrigger value="current">{currentJob.name} 전용</TabsTrigger><TabsTrigger value="equipped">장착 중 {s.skills.length}</TabsTrigger><TabsTrigger value="owned">해금한 스킬</TabsTrigger><TabsTrigger value="common">공용</TabsTrigger><TabsTrigger value="all">전체 계보</TabsTrigger></TabsList></Tabs><div className="skill-view-toggle" role="group" aria-label="스킬 보기 방식"><button className={view === 'simple' ? 'active' : ''} aria-pressed={view === 'simple'} onClick={() => setView('simple')}>간단히 보기</button><button className={view === 'detail' ? 'active' : ''} aria-pressed={view === 'detail'} onClick={() => setView('detail')}>자세히 보기</button></div></div>
         <Tabs value={filter} onValueChange={setFilter}><TabsList className="game-tabs"><TabsTrigger value="all">모두</TabsTrigger><TabsTrigger value="usable">사용 가능</TabsTrigger><TabsTrigger value="unlearned">미해금</TabsTrigger></TabsList></Tabs>
+        {!list.length && <div className="notice">조건에 맞는 기술이 없습니다. {q ? '다른 검색어를 써 보세요.' : '범위 탭을 ‘모든 스킬’로 바꾸거나 필터를 초기화해 보세요.'}</div>}
         {(['active', 'passive'] as const).map(type => <section className="skill-family" key={type}><div className="section-title"><h2>{type === 'active' ? '액티브 · 확률 발동' : '패시브 · 장착 효과'}</h2><span>{list.filter(sk => sk.type === type).length}종</span></div><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{list.filter(sk => sk.type === type).map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'}/>)}</div>{!list.some(sk => sk.type === type) && <div className="notice">이 범위에 해당하는 스킬이 없습니다.</div>}</section>)}
         <p className="footnote">액티브는 편성 순서대로 판정해 처음 성공한 하나만 사용합니다. 모두 실패하면 기본 공격합니다. 숙련은 장착하고 승리할 때 기본 1씩, 조건부 패시브가 있으면 최대 10씩 증가하며, 환생과 전직 후에도 보존됩니다. SP 강화·계승은 직업 전직에 필요한 실전 숙련도를 대신하지 않습니다.</p>
     </>;
