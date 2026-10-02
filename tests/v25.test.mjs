@@ -1,5 +1,5 @@
 // v25 ??? 특수 직업: 시계공·시간의 지배자·玄
-import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, doorsMod as doors, assert, test } from './harness.mjs';
+import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, doorsMod as doors, combatFxFromLog, act, jobMasteryTarget, assert, test } from './harness.mjs';
 const { actTurn } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/combat');
 const { skillVeiled, skillBlockReason } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
 
@@ -62,4 +62,54 @@ test('v25 heaven fires in the real turn flow and shows up in the structured log'
     assert.ok(fired.event.hits.some(h => h.kind === 'follow' && h.value > 10000), 'the blast is a separate fixed-damage hit');
     assert.ok(fired.event.statuses.some(st => st.id === 'stun' && st.turns === 2)); assert.ok((s.effects.seals || []).length < 6, 'seals reset after heaven (a later action may seal again)');
     assert.ok(s.hp > 0 && s.deaths === 0, 'with 無 the monk never dies while sealing');
+});
+
+test('v25.3 passive-only and independent jobs fight at tier strength', () => {
+    // 마법 패시브 직업은 마력 평타가 나가야 합니다(마법 보정이 물리보다 충분히 높음).
+    const arcane = id => stats({ ...newState(0), job: id, level: 15 }).arcaneStrike;
+    for (const id of ['scholar', 'meditator', 'manaScribe', 'fishWhisperer', 'echoTamer', 'speciesChronicler', 'memoryMerchant', 'coralSaint']) assert.ok(arcane(id) > 0, `${id} should use arcane strikes`);
+    // 방어형 독립 직업은 물리 평타를 쓰도록 물리 보정이 마법보다 낮지 않습니다.
+    for (const id of ['lifeTender', 'driftwoodHermit', 'chronicleNavigator', 'netWeaver']) { const j = JOBS.find(x => x.id === id); assert.ok(j.attack >= j.magic, id); assert.equal(j.penalties?.attack, undefined, id); }
+    const bonus = id => SKILLS.find(x => x.id === id).bonus;
+    assert.equal(bonus('axeArm').attack, 30); assert.equal(bonus('bookwise').magic, 30); assert.ok(bonus('bookwise').arcaneRatioBonus > 0);
+    assert.equal(bonus('innerBreath').hpRegen, 2); assert.equal(bonus('vital').hpRegen, 2); assert.ok(bonus('flow').arcaneRatioBonus > 0);
+    assert.ok(bonus('echoReview').magic >= 24 && bonus('chronicleStudy').attack >= 16 && bonus('serpentFolklore').magic >= 24 && bonus('abyssObservation').attack >= 36);
+    // 턴당 체력 회복 패시브가 실제 능력치에 더해집니다.
+    const s = newState(0); s.level = 15; s.job = 'noviceMonk'; s.learned.innerBreath = 1; s.skills = ['innerBreath'];
+    assert.equal(stats(s).hpRegen, stats({ ...s, skills: [] }).hpRegen + 2);
+});
+
+test('v25.3 combat feedback marks heaven for the scene effect and build view pairs the two regens', async () => {
+    const { CORE_STATS, DETAIL_STATS } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/progression');
+    assert.ok(CORE_STATS.includes('hpRegen') && CORE_STATS.includes('manaRegen') && !DETAIL_STATS.includes('manaRegen'));
+    const ev = { actor: 'me', skillId: 'glyphSoul', skillName: '魂', damageType: 'physical', hits: [{ value: 10, critical: false, miss: false }], statuses: [], healed: 0, drained: 0, total: 10, finale: true };
+    const fx = combatFxFromLog({ id: 1, type: 'battle', text: '', event: ev }, 'me');
+    assert.equal(fx.finale, true); assert.equal(fx.actor, 'player'); assert.match(fx.title, /天/);
+    const plain = combatFxFromLog({ id: 2, type: 'battle', text: '', event: { ...ev, finale: undefined, actor: 'foe', chain: 3 } }, 'me');
+    assert.equal(plain.finale, undefined); assert.equal(plain.actor, 'enemy'); assert.equal(plain.chain, 3);
+});
+
+test('v25.3 passive-route returns: the archivist passive scales with rebirths and the journeyman with mastered jobs', async () => {
+    const { masteredJobCount } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
+    // 심연 기록관 직업은 비전투 그대로지만, 윤회의 조류 기록은 환생마다 자라 어느 직업에서든 쓸 만합니다.
+    const a = JOBS.find(j => j.id === 'abyssArchivist'); assert.ok(a.attack < 1 && a.penalties.attack < 0, 'archivist stays a non-combat job');
+    const s = newState(0); s.level = 50; s.job = 'harpoon'; s.learned.memoryOfTides = 1; s.skillInheritances.memoryOfTides = true; s.skills = ['memoryOfTides'];
+    // 환생 자체의 능력치 보정과 구분하려고 같은 환생 수에서 패시브 유무 차이를 봅니다.
+    const gain = (r, k) => stats({ ...s, rebirths: r })[k] - stats({ ...s, rebirths: r, skills: [] })[k];
+    assert.ok(gain(5, 'attack') - gain(0, 'attack') >= 25 && gain(5, 'attack') - gain(0, 'attack') <= 30, `+5 per rebirth before job scaling (${gain(5, 'attack') - gain(0, 'attack')})`);
+    assert.ok(gain(12, 'hp') - gain(0, 'hp') >= 12 * 18); assert.equal(SKILLS.find(x => x.id === 'memoryOfTides').perCount[0].cap, 12, 'rebirth scaling caps at 12');
+    assert.equal(stats({ ...s, rebirths: 3 }).rebirthBonus, 1);
+    // 편력 낚시꾼: 숙달 직업 3개에서 발견의 문이 열리고, 패시브는 숙달 직업 수에 비례합니다.
+    const j = newState(0); j.level = 10; j.attributes = { str: 10, int: 10, vit: 10, dex: 0, wis: 0, luk: 0 };
+    assert.equal(canChangeJob(j, 'journeyman'), false);
+    for (const id of ['harpoon', 'tide', 'warden']) j.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
+    assert.equal(masteredJobCount(j), 3); assert.equal(canChangeJob(j, 'journeyman'), true);
+    act(j, { type: 'job', id: 'journeyman' }, 0); j.skills = ['thousandHands', 'wayfarerKnack'];
+    const three = stats(j); j.jobMastery.scholar = jobMasteryTarget(JOBS.find(x => x.id === 'scholar')); j.jobMastery.woodcutter = jobMasteryTarget(JOBS.find(x => x.id === 'woodcutter'));
+    const five = stats(j); assert.equal(five.attack - three.attack, 6); assert.equal(five.hp - three.hp, 24); assert.ok(five.speed - three.speed === 1);
+    // setSkills: 끌어서 바꾼 순서와 추천 편성을 한 번에 적용. 사용 불가·AP 초과는 거부.
+    const k = newState(0); k.level = 10; k.job = 'harpoon'; k.unlockedJobs.push('harpoon'); for (const sk of SKILLS) k.learned[sk.id] = 1;
+    const usable = SKILLS.filter(sk => canUse(k, sk.id) && (sk.cost ?? 2) <= 2).map(sk => sk.id); assert.ok(usable.length >= 2);
+    act(k, { type: 'setSkills', value: [usable[1], usable[0]].join(',') }, 0); assert.deepEqual(k.skills, [usable[1], usable[0]]);
+    assert.throws(() => act(k, { type: 'setSkills', value: 'eternalWave' }, 0));
 });

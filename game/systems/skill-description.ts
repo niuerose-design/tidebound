@@ -11,7 +11,7 @@ export const skillPercent = (n: number) => `${number(n * 100)}%`;
 export function skillBonusText(key: string, value: number) {
     return `${STAT_LABELS[key as keyof Stats] || key} ${statDeltaDisplay(key, value)}`;
 }
-const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '던전 클리어·보스 포획', species: '지정 어종 포획', gold: '보유 골드 자릿수', rebirth: '환생' };
+const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '던전 클리어·보스 포획', species: '지정 어종 포획', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업' };
 const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '사냥 기록', gold: '보유 골드' };
 const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' };
 /** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */

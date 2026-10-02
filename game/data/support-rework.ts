@@ -85,14 +85,14 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     legendHoard: { desc: '도감 기록 하나하나가 두 공격과 체력이 됩니다.', bonus: {}, perCount: [{ source: 'codex', per: 1, bonus: { attack: 3, magic: 3, hp: 10 }, cap: 57 }] },
     // 인양 상인: 수집가의 드롭을 넘겨받음
     salvageContract: { desc: '골드 획득 +10%, 던전 클리어 골드 +8%, 장비 드롭 +3%p.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03 } },
-    goldMemory: { desc: '골드·드롭·명중이 오르고, 보유 골드 자릿수마다 두 공격이 오릅니다.', bonus: { goldBonus: .15, dropBonus: .04, accuracy: .05 }, perCount: [{ source: 'gold', per: 1, bonus: { attack: 2, magic: 2 }, cap: 9 }] },
+    goldMemory: { desc: '골드·드롭·명중과 마법 공격이 오르고, 보유 골드 자릿수마다 두 공격이 오릅니다.', bonus: { goldBonus: .15, dropBonus: .04, accuracy: .05, magic: 20 }, perCount: [{ source: 'gold', per: 1, bonus: { attack: 2, magic: 2 }, cap: 9 }] },
     portLedger: { desc: '골드 획득·장비 드롭·명중이 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03 } },
     tradeWind: { desc: '골드·던전 골드 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
     tradeEmpire: { desc: '골드·던전 골드·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
     goldenEmpire: { desc: '골드·던전 골드·장비 드롭·환생 진주와 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
     // 항해 수습기록사: 경험치 + 포획·환생
     voyageReview: { desc: '획득 경험치 +8%. 누적 포획이 쌓일수록 두 공격이 오릅니다.', bonus: { expBonus: .08 }, perCount: [{ source: 'catch', per: 500, bonus: { attack: 1, magic: 1 }, cap: 10 }] },
-    chronicleStudy: { desc: '획득 경험치 +12%. 환생할 때마다 두 공격과 체력이 오릅니다.', bonus: { expBonus: .12 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 3, magic: 3, hp: 10 }, cap: 10 }] },
+    chronicleStudy: { desc: '획득 경험치 +12%, 두 공격 +16, 최대 체력 +60. 환생할 때마다 두 공격과 체력이 더 오릅니다.', bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 3, magic: 3, hp: 10 }, cap: 10 }] },
     swiftQuill: { desc: '속도와 경험치 획득이 오르고, 누적 포획마다 속도가 더 오릅니다.', bonus: { speed: 6, expBonus: .03 }, perCount: [{ source: 'catch', per: 1000, bonus: { speed: 1 }, cap: 5 }] },
     starLog: { desc: '경험치 획득이 오르고, 환생과 누적 포획에 비례해 마법 공격이 오릅니다.', bonus: { expBonus: .06 }, perCount: [{ source: 'rebirth', per: 1, bonus: { magic: 5 }, cap: 12 }, { source: 'catch', per: 2000, bonus: { magic: 2 }, cap: 15 }] },
     starChart: { desc: '경험치 획득이 오르고, 환생할 때마다 마법 공격과 체력이 오릅니다.', bonus: { expBonus: .15 }, perCount: [{ source: 'rebirth', per: 1, bonus: { magic: 6, hp: 15 }, cap: 20 }] },
@@ -144,6 +144,11 @@ export const SUPPORT_SKILLS: Skill[] = [
 
 /** 상태이상 전용(피해 없음)으로 바꿀 새 기술. */
 export const SUPPORT_STATUS_ONLY = ['heronStill'];
+/** 편력 낚시꾼의 패시브: 숙달한 직업 수마다 자랍니다. 숙련 목표와 상한을 크게 잡아 장기 리턴으로 둡니다. */
+SUPPORT_SKILLS.push(
+    { ...P, id: 'thousandHands', name: '천 개의 손놀림', desc: '숙달한 직업 1개마다 두 공격 +3·최대 체력 +12·두 방어 +1(최대 60회).', level: 10, job: 'journeyman', cost: 3, perCount: [{ source: 'mastered', per: 1, bonus: { attack: 3, magic: 3, hp: 12, defense: 1, resist: 1 }, cap: 60 }], masteryMilestones: [800, 4000, 16000, 50000] },
+    { ...P, id: 'wayfarerKnack', name: '떠돌이의 요령', desc: '숙달한 직업 2개마다 치명타·명중 +1%p·속도 +1(최대 30회).', level: 10, job: 'journeyman', cost: 2, perCount: [{ source: 'mastered', per: 2, bonus: { crit: .01, accuracy: .01, speed: 1 }, cap: 30 }], masteryMilestones: [800, 4000, 16000, 50000] },
+);
 
 /** 직업 소개 갱신. */
 export const SUPPORT_JOB_DESC: Record<string, string> = {
@@ -195,6 +200,7 @@ export const SUPPORT_JOBS: NewJob[] = [
     { id: 'nightHeron', name: '밤왜가리 사냥꾼', title: '움직이지 않고 기다린다', desc: '밤에만 문 앞에 서는 사냥꾼. 피해 없이 감속을 거는 정적과 명중·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, magic: 1 }, requires: { dex: 10, luk: 12 }, role: '시간·감속', penalties: { resist: -2 } },
     { id: 'poorMonk', name: '청빈 수도승', title: '가진 것이 없어 잃을 것도 없다', desc: '빈손으로 싸우는 수도승. 흡혈하는 빈손 장타와 골드를 내려놓는 대신 단단해지는 서약을 가집니다.', ...DOOR_T1, bonus: { hp: 10, resist: 1 }, requires: { vit: 12, wis: 12 }, role: '발견·생존', penalties: { crit: -.01 } },
     { id: 'codexReader', name: '바다 백과 탐독가', title: '모든 물고기를 읽었다', desc: '도감을 깊이 읽은 자에게 열리는 술사. 도감 기록에 비례하는 주문과 패시브를 가집니다.', ...DOOR_T1, bonus: { magic: 5, resist: 1 }, requires: { int: 14 }, role: '발견·도감', penalties: { hp: -10 } },
+    { id: 'journeyman', name: '편력 낚시꾼', title: '배운 것은 몸에 남는다', desc: '직업 셋을 끝까지 숙달한 자에게 열리는 패시브 전용 직업. 두 패시브가 숙달한 직업 수에 비례해 자라며, 계승하면 어느 직업에서든 그대로 힘이 됩니다.', ...DOOR_T1, bonus: { attack: 2, magic: 2, hp: 10 }, requires: { str: 10, int: 10, vit: 10 }, role: '숙달·누적', fullKit: true, masteryTarget: 4000, masteryBoost: .15 },
     { id: 'fallenAngler', name: '일곱 번 넘어진 낚시꾼', title: '넘어진 만큼 일어선다', desc: '여러 번 쓰러져 본 자에게 열리는 직업. 흡혈하는 일어서기와 체력·흡혈 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, attack: 1 }, requires: { vit: 12, str: 10 }, role: '발견·흡혈', penalties: { speed: -2 } },
 ];
 
@@ -209,4 +215,5 @@ export const SUPPORT_HINTS: Record<string, string> = {
     poorMonk: '어느 정도 성장했는데도 주머니가 거의 비어 있을 때.',
     codexReader: '도감에 기록이 서른 개 넘게 쌓였을 때.',
     fallenAngler: '서른 번쯤 쓰러져 본 낚시꾼에게.',
+    journeyman: '직업 셋을 끝까지 숙달한 낚시꾼에게.',
 };

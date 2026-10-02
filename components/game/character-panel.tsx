@@ -2,7 +2,9 @@
 import { ConfirmButton } from './confirm-button';
 import { RefreshCw } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
-import { attributes, apCapacity, apUsed } from '@/game/systems/progression';
+import { attributes, apCapacity, apUsed, canUse } from '@/game/systems/progression';
+import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
+import { FIRST_AID_HEAL, MONSTER_TUNING } from '@/game/data/balance';
 import { StatBreakdown } from './stat-breakdown';
 import { type StatTrace, stats, dropRate, goldMultiplier, expMultiplier } from '@/game/systems/stats';
 import { Heading } from './shared';
@@ -45,7 +47,7 @@ export function Character({ s, send, busy }: PanelProps) {
     <h2>최종 전투 능력치</h2>
     <span>직업·장비·스킬 포함</span>
     </div>
-    <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace} wide={['hp', 'hpRegen', 'speed', 'crit'].includes(key)}/>)}</div>
+    <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace} wide={['hp', 'speed', 'crit'].includes(key)}/>)}</div>
     <p className="footnote stat-breakdown-hint">능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
     <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>)}</div></details>
     <div className="derived-summary">
@@ -55,6 +57,8 @@ export function Character({ s, send, busy }: PanelProps) {
     </span>
     <span>경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
     <span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong>
+    </span>
+    <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}${s.skills.includes('firstAid') && canUse(s, 'firstAid') ? ` + 응급처치 ${percent(FIRST_AID_HEAL)}` : ''}만큼 회복합니다(연구 ‘회복’ 1단계마다 +1%p). 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 기준입니다.`}>처치 후 회복 (승리당)<strong>{percent(victoryHealRate(s) + (s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0))} · {victoryHeal(s).toLocaleString()} HP</strong>
     </span>
     </div>
     <p className="footnote">명중·회피는 수치입니다. 실제 적중률은 상대의 회피·명중과 속도 차이로 1~99.5% 범위에서 정해지며, 물고기 도감에서 어종별로 확인할 수 있습니다. 치명타·보너스는 %, 치명 피해는 배율, 나머지는 고정 수치입니다.</p>

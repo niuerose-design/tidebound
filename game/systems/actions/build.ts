@@ -135,6 +135,14 @@ export const buildActions: ActionHandlers = {
         s.skills = [...preset.skills];
         clampVitals(s);
     },
+    /** v25.3 편성 전체를 한 번에: 끌어서 순서를 바꾸거나 추천 편성을 적용합니다. 모두 사용 가능하고 AP 안이어야 합니다. */
+    setSkills(s, { a }) {
+        const ids = [...new Set((a.value || '').split(',').map(x => x.trim()).filter(Boolean))];
+        for (const id of ids) if (!canUse(s, id)) throw Error(skillBlockReason(s, id) || '사용할 수 없는 스킬이 있습니다.');
+        if (!validLoadout(s, ids)) throw Error('총 장착 AP 한도를 초과합니다.');
+        s.skills = ids;
+        clampVitals(s);
+    },
     /** 같은 종류(액티브끼리·패시브끼리)에서 한 칸 앞으로. 액티브는 앞에 있을수록 먼저 판정합니다. */
     skillUp(s, { id }) {
         const index = s.skills.indexOf(id), type = skillById(id)?.type;
