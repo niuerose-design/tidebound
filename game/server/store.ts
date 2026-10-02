@@ -3,18 +3,56 @@ import { newState, advance, act } from '../systems/engine';
 import { migrateState } from '../systems/migrations';
 import { snapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
-import { db, ConfigError } from './db';
-import { accountFromRequest, AuthError } from './auth';
+import { db, ConfigError, type SlotRow } from './db';
+import { weekKey, weekSeason } from '../data/goals';
+import { abyssWeeklyPearls } from '../systems/progress';
+import { addLog } from '../systems/state';
+import { accountFromRequest, AuthError, readSlot } from './auth';
+import { FISH } from '../data/world';
+import { JOBS } from '../data/classes';
+import { jobMastered } from '../systems/progression';
+import { mergeSlots, slotUnlocked, slotUnlockText, ACCOUNT_RULES, SLOT_COUNT, type SlotSummary } from '../data/account';
 export { db };
 export class ApiError extends Error {
     constructor(message: string, public status = 400) { super(message); }
 }
-/** 로그인한 계정 ID. 세션이 없으면 401. */
-export async function identity(req: Request) {
-    const id = await accountFromRequest(req);
-    if (id)
-        return id;
-    throw new ApiError('플레이하려면 로그인이 필요합니다.', 401);
+/** 로그인한 계정과 현재 캐릭터 슬롯. 세션이 없으면 401. id는 세이브·랭킹·채팅에 쓰는 낚시꾼 ID(1번 슬롯은 계정 ID 그대로, 2·3번은 '계정#2'). */
+export async function session(req: Request) {
+    const account = await accountFromRequest(req);
+    if (!account) throw new ApiError('플레이하려면 로그인이 필요합니다.', 401);
+    const slot = readSlot(req);
+    return { account, slot, id: playerId(account, slot) };
+}
+export const playerId = (account: string, slot: number) => slot > 1 ? `${account}#${slot}` : account;
+/** 현재 슬롯의 낚시꾼 ID. 세션이 없으면 401. */
+export async function identity(req: Request) { return (await session(req)).id; }
+const ACCOUNT_REFRESH_MS = 10 * 60_000;
+/** 슬롯 요약: 계정 보너스에 쓰는 기록만 담습니다. */
+export function slotSummary(s: State, slot: number, now: number): SlotSummary {
+    const bosses = FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
+    return { slot, name: s.name, job: s.job, level: s.level, rebirths: s.rebirths || 0, mastered: JOBS.filter(j => jobMastered(s, j)).map(j => j.id), species: FISH.filter(f => (s.book?.[f.id] || 0) > 0).map(f => f.id), bossKills: bosses, abyssBest: s.abyssBest || 0, updatedAt: now };
+}
+/** 보너스 단계가 바뀌는 값만 비교해, 레벨업·포획마다 올리지 않습니다. */
+const summaryKey = (x: SlotSummary) => `${x.rebirths}|${x.mastered.join(',')}|${x.species.length}|${Math.floor(x.bossKills / ACCOUNT_RULES.bossPer)}|${Math.floor(x.abyssBest / ACCOUNT_RULES.abyssPer)}`;
+const parseSlots = (rows: SlotRow[]) => rows.flatMap(r => { try { return [JSON.parse(r.summary) as SlotSummary]; } catch { return []; } });
+/**
+ * 행동 처리 뒤 저장 전에 한 번: 내 슬롯 요약이 보너스 단계상 바뀌었거나 10분이 지났으면 올리고, 모든 슬롯을 합쳐 s.account 에 캐시합니다.
+ * 바뀐 게 없으면 추가 질의 0. 다른 슬롯의 진행은 최대 10분 늦게 반영됩니다.
+ */
+export async function syncAccount(account: string, slot: number, s: State, now: number) {
+    const own = slotSummary(s, slot, now), key = summaryKey(own), cached = s.account;
+    if (cached && cached.slot === slot && cached.ownKey === key && now - cached.syncedAt < ACCOUNT_REFRESH_MS) return;
+    const database = db();
+    await database.upsertSlot({ account_id: account, slot, summary: JSON.stringify(own), updated_at: now });
+    const others = parseSlots(await database.listSlots(account)).filter(x => x.slot !== slot);
+    s.account = { ...mergeSlots(slot, [...others, own], now), ownKey: key };
+}
+/** 슬롯 전환: 열린 슬롯인지 저장된 요약으로 확인합니다. */
+export async function switchSlot(account: string, slot: number, now: number) {
+    if (!Number.isInteger(slot) || slot < 1 || slot > SLOT_COUNT) throw new ApiError('없는 슬롯입니다.');
+    const merged = mergeSlots(slot, parseSlots(await db().listSlots(account)), now);
+    if (!slotUnlocked(merged, slot)) throw new ApiError(`${slot}번 슬롯은 ${slotUnlockText(slot)} 뒤에 열립니다.`, 403);
+    return merged;
 }
 export function checkOrigin(req: Request) {
     const origin = req.headers.get('origin');
@@ -44,6 +82,33 @@ export async function register(id: string) {
     return state;
 }
 export const RANKING_SEASON = SAVE_VERSION;
+/** v25.6 주간 심연 기록판. 행 id는 abyss:<계정>, 시즌은 주 키 정수(예: 202640)라 낚시꾼 랭킹(시즌 = 세이브 버전)과 섞이지 않습니다. */
+export const abyssRowId = (id: string) => `abyss:${id}`;
+export async function listAbyssBoard(now: number) {
+    const key = weekKey(now), rows = await db().listRankings(weekSeason(key), 100);
+    return { key, rows: rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as { name: string; depth: number; job: string; rebirths: number; account: string }; return { rank: i + 1, id: snap.account, name: snap.name, depth: Number(snap.depth) || r.rating, job: snap.job, rebirths: snap.rebirths, updatedAt: r.updated_at }; }) };
+}
+/**
+ * 행동 처리 뒤 저장 전에 한 번: 이번 주 심연 기록이 새로 깊어졌으면 올리고, 주가 바뀌었으면 지난주 순위 보상을 한 번 정산합니다.
+ * 심연에 들어간 적 없는 세이브는 아무것도 하지 않습니다(요청당 추가 질의 0).
+ */
+export async function syncAbyssBoard(id: string, s: State, now: number) {
+    const week = s.abyssWeek;
+    if (!week) return;
+    const database = db(), current = weekKey(now);
+    if (week.dirty && week.key === current) {
+        await database.upsertRanking({ id: abyssRowId(id), snapshot: JSON.stringify({ season: weekSeason(current), board: 'abyss', account: id, name: s.name, depth: week.best, job: s.job, rebirths: s.rebirths }), rating: week.best, power: week.best, updated_at: now });
+        delete week.dirty;
+    }
+    const previous = weekKey(now - 7 * 86400000);
+    if (week.settled === previous) return;
+    {
+        const rows = await database.listRankings(weekSeason(previous), 100);
+        const rank = rows.findIndex(r => r.id === abyssRowId(id)) + 1;
+        week.settled = previous;
+        if (rank > 0) { const pearls = abyssWeeklyPearls(rank); s.pearls += pearls; addLog(s, `지난주 심연 기록 ${rank}위(${rows[rank - 1].rating}층) · 진주 +${pearls}`, 'reward'); }
+    }
+}
 export function failure(e: unknown) {
     if (e instanceof ApiError || e instanceof AuthError || e instanceof ConfigError)
         return Response.json({ error: e.message }, { status: e.status });

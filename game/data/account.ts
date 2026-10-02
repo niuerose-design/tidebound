@@ -1,0 +1,68 @@
+import type { State } from '../types';
+
+/**
+ * v25.6 캐릭터 슬롯과 계정 보너스.
+ * 한 계정은 최대 3개의 낚시꾼을 따로 키울 수 있고(세이브·랭킹·채팅 모두 별개), 모든 슬롯의 기록을 합친 계정 보너스가 각 캐릭터에 적용됩니다.
+ * 슬롯 요약은 서버가 저장 전에 올리고(slots 테이블), 합계는 s.account 에 캐시되어 능력치 계산이 저장 상태만 봅니다. 없으면 보너스 0.
+ */
+export const SLOT_COUNT = 3;
+/** 슬롯 해금 조건: 2번은 어느 캐릭터든 환생 1회, 3번은 계정 환생 합계 5회. */
+export const SLOT_UNLOCK = [0, 1, 5];
+export const ACCOUNT_RULES = {
+    /** 계정 환생 합계 1회마다 경험치·골드 획득 +10%(최대 30회 · +300%). */
+    rebirthStep: .10, rebirthCap: 30,
+    /** 숙달한 직업(합집합) 5개마다 장착 AP +1(최대 +6). */
+    masteredPer: 5, masteredCap: 6,
+    /** 계정 최고 심연 깊이 10층마다 두 공격·최대 체력 +1%(최대 +10%). */
+    abyssPer: 10, abyssStep: .01, abyssCap: 10,
+    /** 도감 발견 어종(합집합) 5종마다 직업·스킬 숙련 획득 +5%(최대 +35%). */
+    speciesPer: 5, speciesCap: 7,
+    /** 보스 포획 합계 100마리마다 치명타 +0.5%p(최대 +5%p). */
+    bossPer: 100, bossStep: .005, bossCap: 10,
+} as const;
+/** 슬롯 하나의 기록 요약. 서버가 저장 전에 계산해 올립니다. */
+export type SlotSummary = { slot: number; name: string; job: string; level: number; rebirths: number; mastered: string[]; species: string[]; bossKills: number; abyssBest: number; updatedAt: number };
+/** 세이브에 캐시되는 계정 합계. slots 는 설정 화면의 슬롯 목록용, ownKey 는 마지막으로 올린 내 요약의 비교 키. */
+export type AccountSummary = { slot: number; rebirths: number; mastered: number; species: number; bossKills: number; abyssBest: number; slots: SlotSummary[]; syncedAt: number; ownKey?: string };
+export type AccountState = Pick<State, 'account'>;
+export const accountSlot = (s: AccountState) => s.account?.slot || 1;
+export function mergeSlots(slot: number, slots: SlotSummary[], now: number): AccountSummary {
+    const mastered = new Set<string>(), species = new Set<string>();
+    let rebirths = 0, bossKills = 0, abyssBest = 0;
+    for (const x of slots) { rebirths += x.rebirths; bossKills += x.bossKills; abyssBest = Math.max(abyssBest, x.abyssBest); x.mastered.forEach(id => mastered.add(id)); x.species.forEach(id => species.add(id)); }
+    return { slot, rebirths, mastered: mastered.size, species: species.size, bossKills, abyssBest, slots: [...slots].sort((a, b) => a.slot - b.slot), syncedAt: now };
+}
+/** 슬롯 n(1~3)이 열렸는지. 1번은 항상. */
+export function slotUnlocked(a: Pick<AccountSummary, 'rebirths' | 'slots'> | undefined, slot: number) {
+    if (slot < 1 || slot > SLOT_COUNT) return false;
+    if (slot === 1) return true;
+    if (!a) return false;
+    const need = SLOT_UNLOCK[slot - 1];
+    return slot === 2 ? a.slots.some(x => x.rebirths >= need) || a.rebirths >= need : a.rebirths >= need;
+}
+export const slotUnlockText = (slot: number) => slot === 2 ? '어느 캐릭터든 환생 1회' : `계정 환생 합계 ${SLOT_UNLOCK[slot - 1]}회`;
+const R = ACCOUNT_RULES;
+export const accountRebirthRank = (s: AccountState) => Math.min(R.rebirthCap, s.account?.rebirths || 0);
+/** 경험치·골드 가산 비율(0.1 = +10%). */
+export const accountExpGold = (s: AccountState) => accountRebirthRank(s) * R.rebirthStep;
+export const accountAP = (s: AccountState) => Math.min(R.masteredCap, Math.floor((s.account?.mastered || 0) / R.masteredPer));
+export const accountAbyssRank = (s: AccountState) => Math.min(R.abyssCap, Math.floor((s.account?.abyssBest || 0) / R.abyssPer));
+/** 두 공격·최대 체력 배율 가산(0.01 = +1%). */
+export const accountPower = (s: AccountState) => accountAbyssRank(s) * R.abyssStep;
+/** 숙련 획득 보너스를 20분의 1 단위로(연구 '숙련'과 같은 단위, 1 = +5%). */
+export const accountMasteryTwentieths = (s: AccountState) => Math.min(R.speciesCap, Math.floor((s.account?.species || 0) / R.speciesPer));
+export const accountBossRank = (s: AccountState) => Math.min(R.bossCap, Math.floor((s.account?.bossKills || 0) / R.bossPer));
+export const accountCrit = (s: AccountState) => accountBossRank(s) * R.bossStep;
+export const pct = (n: number, digits = 0) => `${(n * 100).toFixed(digits)}%`;
+/** 환생 화면 계정 보너스 카드의 줄. */
+export function accountBonusRows(s: AccountState) {
+    const a = s.account, next = (n: number, per: number, cap: number) => Math.floor(n / per) >= cap ? '최대' : `다음 단계까지 ${per - n % per}`;
+    const rebirths = a?.rebirths || 0, mastered = a?.mastered || 0, species = a?.species || 0, boss = a?.bossKills || 0, abyss = a?.abyssBest || 0;
+    return [
+        { name: '계정 환생 합계', value: `${rebirths}회`, effect: `경험치·골드 획득 +${pct(accountExpGold(s))}`, next: rebirths >= R.rebirthCap ? '최대' : `1회마다 +${pct(R.rebirthStep)} · 최대 ${R.rebirthCap}회` },
+        { name: '숙달한 직업(합집합)', value: `${mastered}개`, effect: `장착 AP +${accountAP(s)}`, next: `${R.masteredPer}개마다 +1 · ${next(mastered, R.masteredPer, R.masteredCap)}` },
+        { name: '계정 최고 심연 깊이', value: `${abyss}층`, effect: `두 공격·최대 체력 +${pct(accountPower(s))}`, next: `${R.abyssPer}층마다 +${pct(R.abyssStep)} · ${next(abyss, R.abyssPer, R.abyssCap)}` },
+        { name: '발견한 어종(합집합)', value: `${species}종`, effect: `직업·스킬 숙련 획득 +${accountMasteryTwentieths(s) * 5}%`, next: `${R.speciesPer}종마다 +5% · ${next(species, R.speciesPer, R.speciesCap)}` },
+        { name: '보스 포획 합계', value: `${boss}마리`, effect: `치명타 +${(accountCrit(s) * 100).toFixed(1)}%p`, next: `${R.bossPer}마리마다 +0.5%p · ${next(boss, R.bossPer, R.bossCap)}` },
+    ];
+}

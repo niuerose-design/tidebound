@@ -19,6 +19,7 @@ import { canUse, grantJobSkills, itemKey } from './progression';
 import { saleValue } from './equipment';
 import { roughLevel, roughEnemy, anchorSeal, atAnchorTarget, anchorPayout, anchorTargetName, ANCHOR_CATCHES } from './vows';
 import { scaledEnemyStats, profile } from '../data/encounters';
+import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
 /** 승리 1회당 회복량. 무리 규모와 관계없이 승리마다 한 번 적용합니다(응급처치 포함). */
@@ -132,7 +133,9 @@ export function reward(s: State, rng: () => number) {
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
     const size = e.swarm || 1;
-    const masteryReward = victoryMastery(s, e), researched = researchMastery(s, masteryReward.amount * size), practice = researched.total;
+    // v25.6 계열 집중 카드: 지정 계열 직업이면 숙련 ×2.
+    const focusMastery = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
+    const masteryReward = victoryMastery(s, e), researched = researchMastery(s, masteryReward.amount * size * focusMastery), practice = researched.total;
     const perFish = Math.floor(e.gold * goldMultiplier(s)), exp = Math.floor(e.exp * expMultiplier(s)) * size;
     // 황금 개체: 승리마다 0.1%p/단계 확률로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 0단계면 난수를 쓰지 않습니다.
     const goldenRank = researchRank(s, 'goldenFish'), golden = goldenRank > 0 && rng() < goldenRank * .001;
@@ -155,6 +158,9 @@ export function reward(s: State, rng: () => number) {
     }
     s.book[e.id] = (s.book[e.id] || 0) + size;
     s.gold += gold;
+    recordGoal(s, 'catch', undefined, size, text => addLog(s, text, 'reward')); recordGoal(s, 'species', e.id, size, text => addLog(s, text, 'reward'));
+    if (e.boss) recordGoal(s, 'boss', undefined, 1, text => addLog(s, text, 'reward'));
+    if (size > 1) recordGoal(s, 'swarm', undefined, 1, text => addLog(s, text, 'reward'));
     // 잠든 닻: 봉인 중에는 경험치를 따로 쌓고, 목표에서 300마리를 잡으면 배율을 곱해 한 번에 지급합니다.
     const seal = anchorSeal(s);
     if (seal) {
@@ -186,8 +192,10 @@ export function reward(s: State, rng: () => number) {
             s.gold += bonusGold;
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
+            recordGoal(s, 'dungeon', d.id, 1, text => addLog(s, text, 'reward'));
             if (d.id === 'abyss') {
                 s.abyssBest = Math.max(s.abyssBest, depth);
+                recordAbyssDepth(s, depth, s.lastTick);
                 const pearls = abyssPearls(depth);
                 s.pearls += pearls;
                 addLog(s, `심연 ${depth}층 정복 · 진주 +${pearls}`, 'reward');

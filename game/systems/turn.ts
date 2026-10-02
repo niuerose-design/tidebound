@@ -1,4 +1,5 @@
 /** 턴 진행(온라인 tick·오프라인 advance). */
+import { syncGoals, syncAchievements } from './progress';
 import { syncVoyage } from './guidance';
 import { syncGoal } from './goals';
 import { stats } from './stats';
@@ -19,8 +20,10 @@ export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
     syncStatRate(s);
+    syncGoals(s, s.lastTick);
     tickTurn(s, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
+    syncAchievements(s, text => addLog(s, text, 'reward'));
     syncGoal(s, text => addLog(s, text, 'reward'));
 }
 /** 레벨당 능력치 포인트가 오른 뒤(4 → 5), 이전 세이브에 지난 레벨만큼 차액을 한 번 지급합니다. */

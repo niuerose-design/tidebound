@@ -1,4 +1,5 @@
 /** 세이브 상태 생성과 로그 기록. */
+import { makeGoals, dayKey, weekKey } from '../data/goals';
 import { stats } from './stats';
 import type { State } from '../types';
 import { BALANCE, SAVE_VERSION } from '../data/balance';
@@ -15,7 +16,7 @@ export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
         version: SAVE_VERSION,
-        skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null, tutorial: {}, voyage: {}, statRate: PROGRESSION.statPerLevel,
+        skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null, tutorial: {}, voyage: {}, achievements: {}, achievementClaims: {}, statRate: PROGRESSION.statPerLevel,
         tide: 0,
         abyssBest: 0,
         shopSerial: 0,
@@ -61,6 +62,9 @@ export function newState(now: number): State {
     grantJobSkills(state);
     state.hp = stats(state).hp;
     state.mana = stats(state).mana;
+    // v25.6 새 세이브도 그날의 목표판을 바로 가집니다(행동 없이도 상태가 같도록).
+    state.daily = { key: dayKey(now), goals: makeGoals(state, dayKey(now), false) };
+    state.weekly = { key: weekKey(now), goals: makeGoals(state, weekKey(now), true) };
     return state;
 }
 /** 자동 진행 종료·전환 사유를 남깁니다(표시 전용). */

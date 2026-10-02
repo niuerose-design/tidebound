@@ -14,8 +14,11 @@ import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
-import { VOW_IDS, VOW_NAMES, vowUnlocked, vowBoost, anchorPayout, breathBonus, roughEnemy, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '@/game/systems/vows';
+import { VOW_IDS, VOW_NAMES, vowUnlocked, vowBoost, anchorPayout, breathBonus, roughEnemy, anchorSeal, anchorTargetName, ANCHOR_CATCHES, FOCUS_KINDS, FOCUS_NAMES, FOCUS_TEXT, focusLabel } from '@/game/systems/vows';
+import { STAGES } from '@/game/data/world';
+import { JOB_TREES } from '@/game/data/classes';
 import { BonusList } from './inventory-panel';
+import { accountBonusRows, SLOT_COUNT, slotUnlocked } from '@/game/data/account';
 /** 진주 연구 카드: 현재 → 다음 효과, 잠긴 연구는 해금 환생 횟수를 보여줍니다. */
 function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a: Action) => void; busy: boolean }) {
     const rank = s.permanent[r.id] || 0, cost = researchCost(r.id, rank), unlocked = researchUnlocked(s.rebirths, r), maxed = rank >= r.max;
@@ -46,6 +49,30 @@ const VOW_TEXT = {
     breath: (s: State) => `쓰러지면 이번 생을 처음부터 다시 시작(환생 횟수·진주 변화 없음, 서약 해제). 한 번도 쓰러지지 않고 환생하면 환생 진주 +${Math.round(breathBonus(s) * 100)}%.`,
     rough: (s: State) => `선택 단계마다 적 체력·공격 +50%, 드롭·골드 +${Math.round(50 * vowBoost(s, 'rough'))}%. 해역 난이도와 별개입니다.`,
 };
+/** v25.6 이번 생의 조건 카드: 환생 1회부터, 연구 없이 하나를 고릅니다. 다음 환생부터 적용. */
+function FocusPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
+    const next = s.nextVows?.focus, nowFocus = focusLabel(s.vows);
+    const pick = (value: string) => send({ type: 'nextVow', id: 'focus', value });
+    return <section className="panel vow-panel focus-panel">
+        <div className="section-title"><h2>이번 생의 조건 카드</h2><span>환생마다 하나를 골라 다음 생을 다르게 삽니다. 연구 없이 바로 고를 수 있습니다.</span></div>
+        {nowFocus && <div className="vow-current"><strong>이번 생 카드</strong><span>{nowFocus}</span></div>}
+        <div className="vow-grid">{FOCUS_KINDS.map(kind => <article className={`vow-card ${next?.kind === kind ? 'chosen' : ''}`} key={kind}>
+            <h3>{FOCUS_NAMES[kind]}</h3><p>{FOCUS_TEXT[kind]}</p>
+            {kind === 'stage' ? <select value={next?.kind === 'stage' ? next.id : ''} disabled={busy} aria-label="집중할 해역" onChange={e => pick(e.target.value ? `stage:${e.target.value}` : 'off')}><option value="">고르지 않음</option>{STAGES.filter(st => st.rebirth <= s.rebirths + 1).map(st => <option key={st.id} value={st.id}>{st.name}</option>)}</select>
+            : kind === 'tree' ? <select value={next?.kind === 'tree' ? next.id : ''} disabled={busy} aria-label="집중할 계열" onChange={e => pick(e.target.value ? `tree:${e.target.value}` : 'off')}><option value="">고르지 않음</option>{JOB_TREES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
+            : <button className={next?.kind === 'gold' ? 'primary' : 'secondary'} disabled={busy} aria-pressed={next?.kind === 'gold'} onClick={() => pick(next?.kind === 'gold' ? 'off' : 'gold')}>{next?.kind === 'gold' ? '다음 생에 걸기 · 켜짐' : '다음 생에 걸기'}</button>}
+        </article>)}</div>
+        <p className="footnote">카드는 한 생에 하나이고, 고르지 않으면 평소처럼 삽니다. 예약은 바꾸기 전까지 이후 환생에도 유지됩니다.</p>
+    </section>;
+}
+/** v25.6 계정 보너스: 모든 캐릭터 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. */
+function AccountPanel({ s }: { s: State }) {
+    const rows = accountBonusRows(s), slots = s.account?.slots || [], openSlots = Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).filter(n => slotUnlocked(s.account, n)).length;
+    return <section className="panel vow-panel account-panel">
+        <div className="section-title"><h2>계정 보너스</h2><span>캐릭터 슬롯 {slots.length || 1}/{openSlots}개 사용 중 · 모든 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. 슬롯은 설정(톱니바퀴)에서 바꿉니다.</span></div>
+        <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}</ul>
+    </section>;
+}
 /** 환생 화면의 서약: 이번 생 서약과 잠든 닻 진행, 다음 생 서약 예약. */
 function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
     const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), seal = anchorSeal(s), now = s.vows, next = s.nextVows || {};
@@ -89,6 +116,8 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="prepare">환생 준비</TabsTrigger><TabsTrigger value="research">진주 연구</TabsTrigger><TabsTrigger value="relics">환생 유물</TabsTrigger></TabsList></Tabs>
         {tab === 'prepare' && <>
             <GrowthGoals s={s} send={send} busy={busy}/>
+            <FocusPanel s={s} send={send} busy={busy}/>
+            <AccountPanel s={s}/>
             <VowPanel s={s} send={send} busy={busy}/>
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>

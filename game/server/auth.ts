@@ -1,4 +1,5 @@
 /** 아이디·비밀번호 계정과 세션. 비밀번호는 PBKDF2-SHA256(무작위 salt)으로만 저장합니다. */
+import { SLOT_COUNT } from '../data/account';
 import { db } from './db';
 
 export const SESSION_COOKIE = 'tb_session';
@@ -59,4 +60,14 @@ export function sessionCookie(token: string, expires: number, secure: boolean) {
 }
 export function clearSessionCookie(secure: boolean) {
     return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure ? '; Secure' : ''}`;
+}
+/** v25.6 현재 캐릭터 슬롯 쿠키. 없거나 범위 밖이면 1번. 로그인·가입 때 1번으로 돌아갑니다. */
+export const SLOT_COOKIE = 'tb_slot';
+export function readSlot(req: Request) {
+    const m = (req.headers.get('cookie') || '').match(new RegExp(`(?:^|;\\s*)${SLOT_COOKIE}=([1-9])`));
+    const slot = m ? Number(m[1]) : 1;
+    return slot >= 1 && slot <= SLOT_COUNT ? slot : 1;
+}
+export function slotCookie(slot: number, secure: boolean) {
+    return `${SLOT_COOKIE}=${slot}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${365 * 86400}${secure ? '; Secure' : ''}`;
 }

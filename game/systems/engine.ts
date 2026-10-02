@@ -4,6 +4,7 @@ import { commerce } from './commerce';
 import { guildAction } from './guild';
 import { clampVitals } from './stats';
 import { grantJobSkills } from './progression';
+import { syncGoals, syncAchievements } from './progress';
 import { syncVoyage } from './guidance';
 import { syncGoal } from './goals';
 import { addLog } from './state';
@@ -24,9 +25,11 @@ const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collect
 
 export function act(s: State, a: Action, now: number, rng = Math.random) {
     syncStatRate(s);
+    syncGoals(s, now);
     dispatch(s, a, now, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
     syncGoal(s, text => addLog(s, text, 'reward'));
+    syncAchievements(s, text => addLog(s, text, 'reward'));
 }
 function dispatch(s: State, a: Action, now: number, rng: () => number) {
     // 직업 기술이 생기기 전 세이브도 다음 행동에서 보충하고, 새로 레벨 조건을 채운 기술도 지급합니다.

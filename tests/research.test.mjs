@@ -1,5 +1,5 @@
 // 진주 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
-import { newState, act, advance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, assert, test } from './harness.mjs';
+import { newState, act, advance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, assert, test } from './harness.mjs';
 
 const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'shop', 'enhance'];
 const research = id => economy.RESEARCH.find(r => r.id === id);
@@ -182,8 +182,10 @@ test('Vows · one breath: a fall soft-resets the life (online and offline); an u
     const o = vowReady({ vowBreath: 1 }, { breath: true }); act(o, { type: 'rebirth' }, 0); act(o, { type: 'stage', id: 'brook' }, 0); o.stage = 'trench'; act(o, { type: 'start' }, 0);
     advance(o, 2 * 3600_000, seeded(9)); assert.equal(o.vows, undefined); assert.equal(o.stage, 'brook'); assert.ok(o.kills > 0 || o.deaths > 0);
     const plain = vowReady(), vowed = vowReady({ vowBreath: 3 }); vowed.vows = { breath: true }; const p0 = plain.pearls, v0 = vowed.pearls;
+    const base = rebirthReward(plain, stats(plain).rebirthBonus || 0);
     act(plain, { type: 'rebirth' }, 0); act(vowed, { type: 'rebirth' }, 0);
-    const base = plain.pearls - p0; assert.equal(vowed.pearls - v0, base + base, 'rank 3 doubles rebirth pearls');
+    // 둘 다 같은 업적 보상을 받으므로 차이가 한 번의 숨 보너스(= 기본 진주)입니다.
+    assert.equal((vowed.pearls - v0) - (plain.pearls - p0), base, 'rank 3 doubles rebirth pearls');
 });
 
 test('Vows · rough sea: enemies ×(1+0.5n), gold and drops ×(1+0.5n×boost); snapshot carries ranking badges', () => {

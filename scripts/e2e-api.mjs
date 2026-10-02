@@ -2,10 +2,14 @@
 // 사용: node scripts/e2e-api.mjs http://localhost:3000
 import assert from 'node:assert/strict';
 const base = process.argv[2] || 'http://localhost:3000';
+// 쿠키 단지: 세션(tb_session)과 캐릭터 슬롯(tb_slot) 두 쿠키를 브라우저처럼 따로 보관합니다.
+const jar = new Map();
+const cookieHeader = () => [...jar].map(([k, v]) => `${k}=${v}`).join('; ');
 let cookie = '';
 async function call(path, body, { expect } = {}) {
-    const res = await fetch(base + path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', ...(cookie ? { cookie } : {}) }, body: body ? JSON.stringify(body) : undefined });
-    const set = res.headers.get('set-cookie'); if (set) cookie = set.split(';')[0].endsWith('=') ? '' : set.split(';')[0];
+    const res = await fetch(base + path, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', ...(jar.size ? { cookie: cookieHeader() } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    for (const set of res.headers.getSetCookie?.() || []) { const [k, v] = set.split(';')[0].split('='); if (v) jar.set(k, v); else jar.delete(k); }
+    cookie = jar.has('tb_session') ? `tb_session=${jar.get('tb_session')}` : '';
     const data = await res.json().catch(() => ({}));
     if (expect !== undefined) assert.equal(res.status, expect, `${path} ${JSON.stringify(body)} → ${res.status} ${JSON.stringify(data)}`);
     return { status: res.status, data };
@@ -46,12 +50,26 @@ assert.ok(data.rows.some(r => r.id === chatId && r.self), 'own chat line listed'
 ({ data } = await call(`/api/chat?after=${chatId}`, undefined, { expect: 200 }));
 assert.equal(data.rows.length, 0, 'cursor returns only newer lines');
 await call('/api/chat?channel=nope', undefined, { expect: 400 });
+// 주간 심연 기록판: 로그인만 되면 빈 판이라도 읽힙니다.
+({ data } = await call('/api/ranking?board=abyss', undefined, { expect: 200 }));
+assert.ok(/^\d{4}-W\d{2}$/.test(data.week) && Array.isArray(data.rows), 'abyss board has a week key');
+// 일일 목표판이 동기화 때 깔립니다.
+({ data } = await call('/api/game', { type: 'sync' }, { expect: 200 }));
+assert.ok(data.state.daily && data.state.daily.goals.length === 3 && data.state.weekly.goals.length === 4, 'daily/weekly goals present');
 await call('/api/auth', { action: 'logout' }, { expect: 200 });
-cookie = '';
+jar.clear(); cookie = '';
 await call('/api/game', { type: 'sync' }, { expect: 401 });
 await call('/api/auth', { action: 'signup', username: user, password: pw }, { expect: 409 });
 await call('/api/auth', { action: 'login', username: user, password: 'wrong-password' }, { expect: 401 });
 await call('/api/auth', { action: 'login', username: user.toUpperCase(), password: pw }, { expect: 200 });
 ({ data } = await call('/api/game', { type: 'sync' }, { expect: 200 }));
 assert.equal(data.state.running, true, 'same save after re-login');
+// 캐릭터 슬롯: 환생 전엔 2번이 잠겨 있고, 계정 합계는 세이브에 캐시됩니다.
+assert.equal(data.state.account?.slot, 1); assert.equal(data.state.account.slots.length, 1, 'own slot summary cached');
+assert.equal((await call('/api/auth')).data.slot, 1);
+await call('/api/auth', { action: 'slot', slot: 2 }, { expect: 403 });
+await call('/api/auth', { action: 'slot', slot: 9 }, { expect: 400 });
+// 환생 1회를 흉내: 서버 저장 상태를 직접 바꿀 수 없으니 1번 캐릭터의 환생을 단축 치트 없이 확인하는 대신, 잠김 메시지가 조건을 알려주는지 봅니다.
+({ data } = await call('/api/auth', { action: 'slot', slot: 2 }, { expect: 403 }));
+assert.match(data.error, /환생 1회/);
 console.log('e2e api checks passed');
