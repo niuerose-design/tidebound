@@ -1,4 +1,4 @@
-import { CalendarDays, Code2, History } from 'lucide-react';
+import { CalendarDays, History } from 'lucide-react';
 import { UPDATE_LOG } from '@/game/data/update-log';
 import { Heading } from './shared';
 
@@ -17,7 +17,6 @@ export function UpdateLog() {
                 <div className="update-tags">{entry.tags.map(tag => <span key={tag}>#{tag}</span>)}</div>
             </article>)}
         </div>
-        <div className="notice update-edit-note"><Code2 size={18}/><span>내가 직접 수정할 수 있는 원본 위치: <code>game/data/update-log.ts</code>. 새 항목을 배열 맨 위에 추가하면 이 화면과 배포 기록에 함께 반영됩니다.</span></div>
         <div className="panel update-history-note"><History size={19}/><span>이 화면은 게임 플레이 데이터와 분리된 패치 기록입니다. 환생이나 저장 데이터에는 영향을 주지 않습니다.</span></div>
     </>;
 }

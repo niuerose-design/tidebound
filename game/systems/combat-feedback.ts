@@ -10,6 +10,8 @@ export type CombatFx = {
     title: string; kind: CombatFxKind; variant: CombatFxVariant;
     basic: boolean; critical: boolean; healing: number; drained: number; status: string;
     damageType: 'physical' | 'magic' | 'split'; dot?: { name: string; value: number };
+    /** v25 無로 버틴 쪽(self면 행동한 쪽 자신). */
+    endured?: { heal: number; self?: boolean };
     hits: { value: number; critical: boolean; miss: boolean }[];
     delay: number;
     /** 연속 행동 번호(2 이상일 때만). */
@@ -28,7 +30,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
         const missed = ev.hits.length > 0 && ev.hits.every(h => h.miss);
         const status = ev.statuses.find(x => !x.onSelf) || ev.statuses[0];
         const kind: CombatFxKind = missed ? 'miss' : status ? status.id === 'bleed' ? 'bleed' : status.id as CombatFxKind : ev.damageType;
-        return { id: log.id, actor, target, title: ev.skillName, kind, variant: variantOf(ev.skillId, ev.damageType !== 'physical'), basic: !ev.skillId, critical: ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}) };
+        return { id: log.id, actor, target, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'lightning' : variantOf(ev.skillId, ev.damageType !== 'physical'), basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}) };
     }
     const text = log.text;
     const actor = text.startsWith(`${playerName} ·`) || text.startsWith(`${playerName}:`) ? 'player' : 'enemy';
@@ -146,7 +148,7 @@ export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMa
             const ev = logs.find(l => l.type === 'battle')?.event;
             const side = ev ? ev.actor === next.name ? 'player' : 'enemy' : null;
             const dealt = ev ? ev.hits.reduce((n, h) => n + (h.miss ? 0 : h.value), 0) : 0;
-            const self = ev ? ev.healed + ev.drained - (ev.dot?.value || 0) - (ev.reflected || 0) : 0;
+            const self = ev ? ev.healed + ev.drained + (ev.regen || 0) - (ev.dot?.value || 0) - (ev.reflected || 0) : 0;
             const last = i === units.length - 1;
             beats.push({ turn: at[g], index: i, beatMs: beatMs(units.length), logs, side, player: side === 'player' ? self : side === 'enemy' ? -dealt : 0, foe: side === 'enemy' ? self : side === 'player' ? -dealt : 0, kill: last && !!caught, lost: last && group.some(l => l.text === LOST), recovered: group[0].text === RECOVERED, name: caught });
         });

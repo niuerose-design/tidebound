@@ -7,12 +7,10 @@ allowBuilds:
   fsevents: true
   sharp: true
   unrs-resolver: true
-  workerd: true
+  workerd: set this to true or false
 enableGlobalVirtualStore: false
 # A later project-only session must not mutate a shared-store inode through node_modules.
 packageImportMethod: clone-or-copy
 # The explicit installer owns dependency setup, including restored workspaces.
 verifyDepsBeforeRun: false
 optimisticRepeatInstall: false
-overrides:
-  miniflare>sharp: 0.35.4

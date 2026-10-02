@@ -93,7 +93,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     if (sk.song) out.push('노래: AP 0 · 방랑 음유시인 계보 직업만 장착');
-    if (sk.lastStand) out.push(`체력이 1일 때 받는 공격(추가타 포함)을 무효${sk.lastStand.heal ? `하고 최대 체력 ${skillPercent(sk.lastStand.heal)} 회복` : ''} · 전투당 ${sk.lastStand.charges}번 · 지속 피해는 막지 못함`);
+    if (sk.lastStand) out.push(`체력이 1 아래로 내려가지 않음 · 쓰러질 피해(추가타·지속 피해·반격 포함)를 받으면 체력 1로 버티고${sk.lastStand.heal ? ` 최대 체력 ${skillPercent(sk.lastStand.heal)} 회복` : ''} · 전투당 ${sk.lastStand.charges}번${sk.lastStand.chargesPerLevel ? ` (숙련 1단계마다 +${sk.lastStand.chargesPerLevel}번)` : ''}`);
     if (sk.sealFinale) out.push(`일곱 글자를 모두 장착하고 한 전투에 여섯 글자를 모두 쓰면 발동: (물리 공격 + 마법 공격) × (${number(sk.sealFinale.base)} + 일곱 글자와 天의 숙련 합 × ${number(sk.sealFinale.perLevel)}) 고정 피해 · 기절 ${sk.sealFinale.stun}턴 · 인 초기화`);
     if (sk.unlockAfter) out.push(`해금: ${skillById(sk.unlockAfter.skill)?.name || sk.unlockAfter.skill} 숙련 Lv.${sk.unlockAfter.level}`);
     if (sk.perRebirth) out.push(`환생 1회마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);

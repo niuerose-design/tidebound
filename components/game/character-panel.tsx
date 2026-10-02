@@ -37,7 +37,7 @@ export function Character({ s, send, busy }: PanelProps) {
         <div className="attribute-buttons">
         <button className="secondary small" aria-label={`${attr.name} 1 증가`} disabled={busy || s.statPoints < 1} onClick={() => send({ type: 'attribute', id: attr.id, value: '1' })}>+1</button>
         <button className="secondary small" aria-label={`${attr.name} 5 증가`} disabled={busy || s.statPoints < 5} onClick={() => send({ type: 'attribute', id: attr.id, value: '5' })}>+5</button>
-        <button className="secondary small" aria-label={`${attr.name}에 남은 포인트 모두 투자`} title={`남은 ${s.statPoints}포인트 모두 투자`} disabled={busy || s.statPoints < 1} onClick={() => send({ type: 'attribute', id: attr.id, value: 'max' })}>최대</button>
+        <ConfirmButton label="최대" title={`${attr.name}에 남은 ${s.statPoints}포인트를 모두 투자할까요?`} description={`${attr.description}. 재분배는 무료지만 자동 낚시 중에는 할 수 없습니다.`} confirmLabel="모두 투자" disabled={busy || s.statPoints < 1} onConfirm={() => send({ type: 'attribute', id: attr.id, value: 'max' })}/>
         </div>
         </div>)}</section>
     <section className="panel derived-panel">
@@ -45,7 +45,7 @@ export function Character({ s, send, busy }: PanelProps) {
     <h2>최종 전투 능력치</h2>
     <span>직업·장비·스킬 포함</span>
     </div>
-    <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace} wide={['hp', 'speed', 'crit'].includes(key)}/>)}</div>
+    <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace} wide={['hp', 'hpRegen', 'speed', 'crit'].includes(key)}/>)}</div>
     <p className="footnote stat-breakdown-hint">능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
     <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>)}</div></details>
     <div className="derived-summary">

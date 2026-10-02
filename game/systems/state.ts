@@ -7,7 +7,7 @@ import { PROGRESSION } from '../data/progression';
 import { initialProgress, grantJobSkills } from './progression';
 import { newGuild } from '../data/guild';
 export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'system' | 'skill' = 'system', event?: CombatEvent) {
-    s.logs.push({ id: ++s.logId, text, type, ...(event ? { event } : {}) });
+    s.logs.push({ id: ++s.logId, text, type, turn: s.turn, ...(event ? { event } : {}) });
     if (s.logs.length > 70)
         s.logs.shift();
 }

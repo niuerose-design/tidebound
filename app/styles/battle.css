@@ -322,3 +322,21 @@
 .battle-utility-rail>*{width:100%}
 .battle-utility-rail>.battle-feed{display:none}
 }
+
+/* 전투 화면 정리: 적 정보는 상대 카드 한 곳에, 환생 해역은 한 줄, 집중 사냥·무리 선택은 줄바꿈 허용 */
+.battle-console>.tide-selector{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px}
+.battle-console>.tide-selector>div{min-width:0}
+.battle-console>.tide-selector h3{margin:0 0 2px;font-size:12px}
+.battle-console>.tide-selector p{margin:0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.battle-console>.tide-selector .button-row{flex:none;gap:6px}
+.battle-console>.tide-selector .button-row button{padding:4px 10px;min-width:34px}
+.battle-console>.tide-selector .button-row span{font-size:12px;min-width:40px;text-align:center}
+.battle-target-strip{flex-wrap:wrap}
+.battle-target-strip [data-slot=tabs]{flex:1 1 auto;min-width:0}
+.battle-target-strip .swarm-picker{flex:none;margin-left:auto}
+.battle-target-strip .swarm-picker button{min-width:40px;padding:4px 8px;font-size:12px}
+.opponent-card .enemy-hint{color:#b9b07f;white-space:normal;line-height:1.5}
+
+/* 모바일 항해 안내: 장면 위에 한 번 더(데스크톱은 왼쪽 열에 있음) */
+.battle-mobile-tutorial{display:none}
+@media(max-width:767px){.battle-mobile-tutorial{display:block;order:-1}.battle-mobile-tutorial .tutorial-card{margin-bottom:12px}}

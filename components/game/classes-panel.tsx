@@ -3,7 +3,7 @@ import type { PanelProps } from './panel-props';
 import { useState } from 'react';
 import { Compass, Search } from 'lucide-react';
 import { JOBS, JOB_TREES, LINEAGES, lineageOf, type JobTreeId, jobById } from '@/game/data/classes';
-import { jobMasteryTarget } from '@/game/systems/progression';
+import { jobMasteryTarget, jobMastered } from '@/game/systems/progression';
 import { Heading, format } from './shared';
 import { LineageCard, RouteMap, JobList } from './jobs/lineage-view';
 import { JobCompare } from './jobs/job-compare';
@@ -11,7 +11,7 @@ import { JobDetail } from './jobs/job-detail';
 import { DoorRow, openUnenteredDoors } from './jobs/mystery-doors';
 import { lineageJobs, finderJobs, searchJobs, TOP_TAGS, type Finder } from './jobs/job-status';
 
-const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', near: '거의 다 됨', goal: '목표', doors: '문 열림' };
+const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', mastered: '숙달', near: '거의 다 됨', goal: '목표', doors: '문 열림' };
 
 /**
  * 직업 화면: 세 번 눌러 원하는 직업에 닿는 카드형 화면.
@@ -51,7 +51,7 @@ export function Classes({ s, send, busy }: PanelProps) {
     const showCurrent = () => { setTreeId(current.tree); setLineageId(lineageOf(current)); setSelectedId(current.id); };
     return <>
         <Heading eyebrow="VOCATION TREE" title="직업 항해도" description="계열 → 계보 카드 → 항로도 → 직업 상세. 세 번 눌러 원하는 직업에 닿습니다."/>
-        <section className="panel job-current-summary"><Compass size={26}/><div><small>현재 직업</small><h2>{current.name}</h2><p>숙련 {format(s.jobMastery[s.job] || 0)} / {format(jobMasteryTarget(current))} · 해금 {s.unlockedJobs.length} / {JOBS.length}</p></div><button className="secondary small" onClick={showCurrent}>현재 직업 보기</button></section>
+        <section className="panel job-current-summary"><Compass size={26}/><div><small>현재 직업</small><h2>{current.name}</h2><p>숙련 {format(s.jobMastery[s.job] || 0)} / {format(jobMasteryTarget(current))} · 전직해 본 직업 {s.unlockedJobs.length} / {JOBS.length} · 숙달 {JOBS.filter(j => jobMastered(s, j)).length}</p></div><button className="secondary small" onClick={showCurrent}>현재 직업 보기</button></section>
         <div className="job-finder" role="group" aria-label="빠른 찾기">{(Object.keys(FINDER_LABEL) as Finder[]).map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{finderJobs(s, kind, doorJobs).length}</b></button>)}</div>
         <div className="job-search">
             <label className="job-search-box"><Search size={15}/><input type="search" value={query} placeholder="직업 이름 검색" aria-label="직업 이름 검색" onChange={e => { setQuery(e.target.value); setFinder(null); }}/></label>

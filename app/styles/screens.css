@@ -428,3 +428,45 @@
 [data-slot=dialog-overlay],[data-slot=alert-dialog-overlay] {
   backdrop-filter:blur(4px)
 }
+
+/* 랭킹: 주요 능력치 한 줄, 상세보기(등록 시점 능력치·스킬 편성), 훈련 상대 카드 */
+.ranking-main-stats { display:flex; flex-wrap:wrap; gap:4px 10px; color:#9bc8b5; font-size:12px; margin-top:4px }
+.ranking-main-stats b { color:#dfe6d9; font-weight:600; font-variant-numeric:tabular-nums }
+.ranking-actions { white-space:nowrap }
+.ranking-actions .text-button { margin-left:8px; font-size:12px }
+.ranking-detail-stats { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px; padding:12px; background:#1b3336; border-radius:6px }
+.ranking-detail-stats span { display:flex; flex-direction:column; gap:2px }
+.ranking-detail-stats small { font-size:11px; color:#9bc8b5 }
+.ranking-detail-stats b { font-size:14px; font-weight:600; color:#e6ecdf; font-variant-numeric:tabular-nums }
+.ranking-detail-skills { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px }
+.ranking-detail-skills h3 { font-size:14px; margin:0 0 8px; color:#e8d39a }
+.ranking-detail-skills h3 small { font-weight:400; color:#8fa8a8; margin-left:6px }
+.ranking-detail-skills ul { list-style:none; margin:0; padding:0; display:grid; gap:6px }
+.ranking-detail-skills li { display:flex; align-items:center; gap:10px; padding:7px 9px; background:#132226; border-radius:6px; font-size:13px }
+.ranking-detail-skills li .skill-symbol { flex:none; width:30px; height:30px; display:grid; place-items:center; border-radius:6px; background:#1b3336 }
+.ranking-detail-skills li strong { display:block; font-weight:600; color:#e6ecdf }
+.ranking-detail-skills li small { display:block; color:#8fa8a8; font-size:11px }
+.training-title { margin:18px 0 10px }
+.training-title h2 { display:flex; align-items:center; gap:7px }
+.training-card .ranking-main-stats { justify-content:center; margin:6px 0 10px }
+.training-actions { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:auto }
+@media (max-width:767px) { .ranking-detail-skills { grid-template-columns:1fr } }
+
+/* 랭킹 정렬 칩, 결투 요약 정렬, 문 카운트다운, 모바일 랭킹 카드 */
+.ranking-sort { display:flex; align-items:center; gap:6px; flex-wrap:wrap }
+.ranking-sort > button:not(.text-button) { padding:4px 10px; border:1px solid var(--border); border-radius:999px; background:#132226; color:#b8c9c4; font-size:12px }
+.ranking-sort > button.active { border-color:#d5b36c; background:#223329; color:#f1e8cf }
+.ranking-sort .text-button { margin-left:6px }
+.duel-hit-summary { display:grid; gap:5px; padding:10px 13px; margin-top:8px; background:#13262c; border-radius:6px; font-size:12px; color:#a9c6bf }
+.duel-hit-summary b { color:#e6ecdf }
+.door-countdown { display:block; color:#e8d39a; font-weight:600 }
+@media (max-width:767px) {
+  .ranking-panel table, .ranking-panel tbody, .ranking-panel tr, .ranking-panel td { display:block; width:100% }
+  .ranking-panel thead { display:none }
+  .ranking-panel tr { position:relative; padding:12px 12px 12px 44px; margin-bottom:10px; border:1px solid var(--border); border-radius:8px; background:#132226 }
+  .ranking-panel td { padding:3px 0!important; border:0 }
+  .ranking-panel td.rank-number { position:absolute; left:12px; top:12px; width:auto; color:var(--gold) }
+  .ranking-panel td[data-label]::before { content:attr(data-label) ' '; color:#8fa8a8; font-size:11px; margin-right:4px }
+  .ranking-panel td[data-label] { display:inline-block; width:auto; margin-right:12px }
+  .ranking-actions { margin-top:6px }
+}
