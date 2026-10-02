@@ -76,6 +76,9 @@ export const SKILL_FORMULA = {
     // 차수별 확률로 마법 공격 × arcaneStrikeRatio의 마법 피해를 줍니다. 마나를 쓰지 않습니다.
     // v25.2: 계수 0.6 → 0.7, 1~2차 확률 0.7/0.8 → 0.8/0.85. 마법 직업의 기본 행동(마력 평타)이 물리 기본 공격의 60~68%에 그쳐 1차 마법 직업 승률이 70% 아래였습니다.
     arcaneStrikeRatio: .7, arcaneStrikeChance: [0, .8, .85, .9, .95, .95],
+    // v25.5 동시 시전(겹영창 계보): multicast 액티브는 첫 성공 뒤 나머지 multicast 액티브도 각자 발동률로 함께 나갑니다(한 행동, 최대 max개).
+    // 함께 나간 종류 n마다 각 기술의 재사용 대기 +cooldownStep×(n−1), 마나 ×(1 + manaScale×(n−1)).
+    multicast: { max: 4, cooldownStep: 1, manaScale: .35 },
     // v25.4 패시브는 최대 성장(마지막 숙련 단계)에 닿으면 장착 AP가 이만큼 줄어듭니다(0 아래로는 안 내려감). 노래와 단계별 AP가 정해진 대기만성형은 제외.
     masteredPassiveAP: 1,
     // v25.2 차수별 마력 평타 계수 추가: 3차 +0.03, 4·5차 +0.05(0.7 → 0.73 / 0.75).

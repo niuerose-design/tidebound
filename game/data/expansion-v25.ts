@@ -46,7 +46,7 @@ export const V25_SKILLS: Skill[] = [
     { ...A, id: 'frozenTime', name: '정지된 시간', desc: '', level: 10, job: 'chronarch', cost: 5, damageType: 'split', scaling: 'dual', effect: 'stun', masteryMilestones: [2500, 12000, 40000, 100000] },
     { ...A, id: 'precede', name: '선행', desc: '', level: 10, job: 'chronarch', cost: 5, damageType: 'split', scaling: 'dual', extraTurn: true, masteryMilestones: [2500, 12000, 40000, 100000] },
     { ...A, id: 'rewind', name: '역행', desc: '', level: 10, job: 'chronarch', cost: 4, damageType: 'split', scaling: 'dual', effect: 'heal', masteryMilestones: [2500, 12000, 40000, 100000] },
-    { ...P, id: 'chronoSovereign', name: '시간의 주권', desc: '속도·회피·치명타·명중이 크게 오릅니다.', level: 10, job: 'chronarch', cost: 3, bonus: { speed: 18, evasion: .05, crit: .05, accuracy: .05, attack: 40, magic: 40 }, masteryMilestones: [2500, 12000, 40000, 100000] },
+    { ...P, id: 'chronoSovereign', name: '시간의 주권', desc: '속도·회피·치명타·명중이 크게 오르고, 연속 행동마다 편성 첫 번째 대기 중인 기술을 초기화합니다.', level: 10, job: 'chronarch', cost: 3, bonus: { speed: 18, evasion: .05, crit: .05, accuracy: .05, attack: 40, magic: 40 }, cooldownReset: { on: 'chain', chance: 1, pick: 'first' }, masteryMilestones: [2500, 12000, 40000, 100000] },
     // ── 玄: 無 → 虛 → 斬 → 血 → 縛 → 刹 → 魂 → 天 ──
     { ...P, ...GLYPH, id: 'glyphNothing', name: '無', desc: '체력이 1 아래로 내려가지 않습니다. 쓰러질 피해를 받으면 체력 1로 버티고 최대 체력의 25%를 되찾습니다(전투당 6번, 숙련 1단계마다 +2번).', cost: 1, lastStand: { charges: 6, chargesPerLevel: 2, heal: .25 } },
     { ...GLYPH_A, id: 'glyphVoid', name: '虛', desc: '', unlockAfter: { skill: 'glyphNothing', level: 1 } },
