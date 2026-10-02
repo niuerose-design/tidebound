@@ -68,7 +68,7 @@ function FocusPanel({ s, send, busy }: { s: State; send: (a: Action) => void; bu
     </section>;
 }
 /** v25.6 계정 보너스: 모든 캐릭터 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. */
-function AccountPanel({ s }: { s: State }) {
+export function AccountPanel({ s }: { s: State }) {
     const rows = accountBonusRows(s), slots = s.account?.slots || [], openSlots = Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).filter(n => slotUnlocked(s.account, n)).length;
     return <section className="panel vow-panel account-panel">
         <div className="section-title"><h2>계정 보너스</h2><span>캐릭터 슬롯 {slots.length || 1}/{openSlots}개 사용 중 · 모든 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. 슬롯은 설정(톱니바퀴)에서 바꿉니다.</span></div>
@@ -76,7 +76,7 @@ function AccountPanel({ s }: { s: State }) {
     </section>;
 }
 /** v25.13 계정 공유 금고: 슬롯 사이에서 진주·정수를 옮깁니다. 2번 슬롯이 열린 뒤에 보입니다. */
-function VaultPanel({ s, busy, vault, error, load, act }: { s: State; busy: boolean; vault?: VaultInfo | null; error?: string; load?: () => Promise<void>; act?: (body: Record<string, unknown>) => Promise<boolean> }) {
+export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; busy: boolean; vault?: VaultInfo | null; error?: string; load?: () => Promise<void>; act?: (body: Record<string, unknown>) => Promise<boolean> }) {
     const [amount, setAmount] = useLocalState({ pearls: '', essence: '' });
     useEffect(() => { const t = setTimeout(() => { void load?.(); }, 0); return () => clearTimeout(t); }, [load]);
     if (!act) return null;
@@ -114,7 +114,7 @@ function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy
         <p className="footnote">예약한 서약은 다음 환생부터 걸리고, 바꾸기 전까지 이후 환생에도 유지됩니다.</p>
     </section>;
 }
-export function Rebirth({ s, send, busy, vault, vaultError, loadVault, vaultAct }: PanelProps & { vault?: VaultInfo | null; vaultError?: string; loadVault?: () => Promise<void>; vaultAct?: (body: Record<string, unknown>) => Promise<boolean> }) {
+export function Rebirth({ s, send, busy }: PanelProps) {
     const [tab, setTab] = useState('prepare');
     const [researchTab, setResearchTab] = useState<ResearchTab>('combat');
     const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
@@ -127,7 +127,7 @@ export function Rebirth({ s, send, busy, vault, vaultError, loadVault, vaultAct 
     return <>
         <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 항해를 마치고, 다음 생에 남길 힘을 선택하세요."/>
         <section className="panel port-resource-bar legacy-resource-bar">
-            <div><RefreshCw size={22}/><span>누적 환생<strong>{format(s.rebirths)} <small>회{rebirthTitle(s.rebirths) ? ` · ${rebirthTitle(s.rebirths)}` : ''}{nextRebirthTitle(s.rebirths) ? ` · ${nextRebirthTitle(s.rebirths)!.rebirths}회에 ‘${nextRebirthTitle(s.rebirths)!.title}’` : ''}</small></strong></span></div>
+            <div><RefreshCw size={22}/><span>누적 환생<strong>{format(s.rebirths)} <small>회{rebirthTitle(s.rebirths) ? ` · ${rebirthTitle(s.rebirths)}` : ''}{nextRebirthTitle(s.rebirths) ? ` · ${nextRebirthTitle(s.rebirths)!.rebirths}회에 ‘${nextRebirthTitle(s.rebirths)!.title}’` : ''} · 계정 보너스·슬롯·금고는 ‘캐릭터 슬롯’ 화면</small></strong></span></div>
             <div><Sparkles size={22}/><span>보유 진주<strong><Num n={s.pearls}/> <small>개</small></strong></span></div>
             <div><span>영구 경험치 배율<strong>×{permanentExp.toFixed(2)}</strong></span></div>
             <div><span>현재 장착 AP<strong>{apCapacity(s)} <small>환생 +{rebirthAP(s)} · 연구 +{s.permanent.ap || 0}</small></strong></span></div>
@@ -136,8 +136,6 @@ export function Rebirth({ s, send, busy, vault, vaultError, loadVault, vaultAct 
         {tab === 'prepare' && <>
             <GrowthGoals s={s} send={send} busy={busy}/>
             {s.rebirths > 0 && <FocusPanel s={s} send={send} busy={busy}/>}
-            {s.rebirths > 0 && <AccountPanel s={s}/>}
-            {slotUnlocked(s.account, 2) && <VaultPanel s={s} busy={busy} vault={vault} error={vaultError} load={loadVault} act={vaultAct}/>}
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
@@ -159,7 +157,7 @@ export function Rebirth({ s, send, busy, vault, vaultError, loadVault, vaultAct 
                 <article className="panel ledger-kept"><h2>유지되는 것</h2><ul><li>진주 · 진주 연구 · 물고기와 장비 도감</li><li>스킬 해금·계승·성장·숙련·특화 · 보유 SP · 장기 목표</li><li>직업 해금과 숙련 기록</li><li>환생 유물 · 유물 강화·옵션·보관 위치</li><li>길드 이름·명예 기부 기록 · 던전 정복 기록 · 심연 최고 깊이</li><li>랭킹 점수와 전적</li></ul></article>
                 <article className="panel ledger-reset"><h2>초기화되는 것</h2><ul><li>레벨·경험치 · 현재 직업 → 견습 낚시꾼</li><li>능력치 배분</li><li>일반 장비와 해당 장비의 강화·옵션</li><li>골드 → 시작 골드</li><li>낚시터와 해역 난이도 선택</li><li>진행 중 전투·던전</li></ul></article>
             </div>
-            <p className="footnote">진주·영구 보너스의 계산식과 연구 상한은 도움말의 ‘환생’에서 확인할 수 있습니다.{!s.rebirths && ' 첫 환생 뒤에 이번 생의 조건 카드·계정 보너스·서약이 열립니다.'}</p>
+            <p className="footnote">진주·영구 보너스의 계산식과 연구 상한은 도움말의 ‘환생’에서 확인할 수 있습니다.{!s.rebirths && ' 첫 환생 뒤에 이번 생의 조건 카드·서약·캐릭터 슬롯 화면이 열립니다.'}</p>
             <details className="panel legacy-roadmap legacy-fold"><summary>환생 이후에 열리는 콘텐츠</summary><p><b>1회</b> 윤회의 챔질 · 황금의 기억 · 심해 신전(Lv.30) · 윤회의 낚싯대</p><p><b>2회</b> 영혼의 비늘 · 영혼의 잠수복</p><p><b>3회</b> 영원의 해류 · 심연의 눈 · 무한 심연(Lv.40)</p><p><b>5회</b> 황혼의 열수구(Lv.55) · 칭호 ‘되돌아온 낚시꾼’ · 연구 해금 마무리</p><p><b>8회</b> 열수 대성당(Lv.60)</p><p><b>10·20·30·50회</b> 윤회 칭호 ‘윤회의 항해자’ · ‘조류를 거스른 자’ · ‘심연을 건넌 자’ · ‘영원의 낚시꾼’</p><p>무한 심연은 5연전 정복마다 다음 깊이를 엽니다. 깊을수록 층당 진주가 늘고, 10·25·50·100층 첫 돌파 시 SP 1.</p></details>
             <details className="panel legacy-fold data-management"><summary>저장 데이터 관리</summary><p>전체 초기화는 환생과 다릅니다. 이름을 제외한 모든 성장 기록과 랭킹 방어 등록을 삭제하며 복구할 수 없습니다. 자동 낚시를 중단하고 던전에서 나온 뒤 진행하세요.</p><ConfirmButton label="전체 데이터 초기화" title="정말 모든 데이터를 초기화할까요?" description="레벨·장비·환생·진주·도감·스킬·길드·랭킹을 모두 처음 상태로 되돌립니다. 이 작업은 되돌릴 수 없습니다." disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetData' })}/></details>
         </>}

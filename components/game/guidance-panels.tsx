@@ -1,8 +1,7 @@
 'use client';
 import type { PanelProps } from './panel-props';
-import { Check, ChevronDown, ChevronUp, Compass, ScrollText, X } from 'lucide-react';
-import type { State } from '@/game/types';
-import { VOYAGE_LOG } from '@/game/data/voyage-log';
+import { Check, ChevronDown, ChevronUp, Compass, X } from 'lucide-react';
+import { STAGES, DUNGEONS } from '@/game/data/world';
 import { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, achievementTotals, rewardText } from '@/game/data/achievements';
 import { goalText, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, type GoalBoard } from '@/game/data/goals';
 import { unclaimedAchievements } from '@/game/systems/progress';
@@ -33,13 +32,6 @@ export function TutorialCard({ s, send, busy, setView }: PanelProps) {
     </section>;
 }
 
-/** 새로 해금된 항해 기록 한 줄 알림. 해금 후 잠깐만 보이고 다시 재생하지 않습니다. */
-export function VoyageNotice({ s, setView }: { s: State; setView?: (view: string) => void }) {
-    const latest = Object.entries(s.voyage || {}).filter(([, turn]) => turn >= 0 && s.turn - turn <= 15).sort((a, b) => b[1] - a[1])[0];
-    const entry = latest && VOYAGE_LOG.find(x => x.id === latest[0]);
-    if (!entry) return null;
-    return <button type="button" className="voyage-notice" onClick={() => setView?.('voyage')}><ScrollText size={14}/><b>항해 기록</b><span>{entry.title} — {entry.text}</span></button>;
-}
 
 function GoalBoardView({ title, board, bonus }: { title: string; board?: GoalBoard; bonus: number }) {
     if (!board) return null;
@@ -49,22 +41,17 @@ function GoalBoardView({ title, board, bonus }: { title: string; board?: GoalBoa
 }
 export function VoyageLog({ s, send, busy }: PanelProps) {
     const got = s.voyage || {}, feats = s.achievements || {}, claimed = s.achievementClaims || {}, pending = unclaimedAchievements(s);
-    const groups = ['해역', '던전', '환생', '심연'] as const;
     const totals = achievementTotals(s);
+    /** 업적 ‘해역 N곳’·‘던전 N곳’ 카드에 붙는 방문 기록(이전 ‘항해 기록’ 해금을 여기로 통합). */
+    const visited = (a: { id: string }) => a.id.startsWith('stages:') ? STAGES.filter(st => got[`stage:${st.id}`] !== undefined).map(st => st.name) : a.id.startsWith('dungeons:') ? DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).map(d => d.name) : null;
     return <>
-        <Heading eyebrow="LOGBOOK" title="항해 기록" description="오늘의 목표와 주간 목표, 업적, 처음 겪은 순간의 기록입니다. 업적과 기록은 환생 후에도 유지됩니다.">
+        <Heading eyebrow="GOALS & FEATS" title="목표 · 업적" description="오늘의 목표와 주간 목표, 그리고 업적입니다. 업적은 환생 후에도 유지되고 보상은 여기서 받습니다.">
             {(!s.tutorial || s.tutorial.skipped || s.tutorial.hidden) && <button className="secondary" disabled={busy} onClick={() => send({ type: 'tutorial', id: 'show' })}>항해 안내 다시 보기</button>}
         </Heading>
         <div className="goal-boards"><GoalBoardView title="오늘의 항해 목표" board={s.daily} bonus={DAILY_ALL_BONUS}/><GoalBoardView title="이번 주 항해 목표" board={s.weekly} bonus={WEEKLY_ALL_BONUS}/></div>
         <p className="footnote">목표는 한국 시간 자정·월요일에 바뀌고, 채우면 보상이 바로 들어옵니다. 지난 목표는 사라집니다.</p>
         <section className="voyage-section"><div className="section-title"><h2>업적</h2>{pending.length > 0 && <button className="primary small" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: 'all' })}>보상 모두 받기 · {pending.length}개</button>}<span>{Object.keys(feats).length} / {ACHIEVEMENTS.length} · 영구 보너스: 장착 AP +{totals.ap}{(['attack', 'magic', 'hp', 'defense', 'resist'] as const).filter(k => totals.bonus[k] > 0).map(k => ` · ${({ attack: '물공', magic: '마공', hp: '체력', defense: '물방', resist: '마방' })[k]} +${Math.round(totals.bonus[k] * 100)}%`).join('')}</span></div>
-            {ACHIEVEMENT_GROUPS.map(g => <div key={g} className="achievement-group"><h3>{g}</h3><div className="voyage-list achievement-list">{ACHIEVEMENTS.filter(a => a.group === g).map(a => { const done = feats[a.id] !== undefined, got = !!claimed[a.id], p = Math.min(a.target, a.progress(s)); return <article key={a.id} className={`panel voyage-entry achievement ${done ? 'done' : ''} ${done && !got ? 'claimable' : ''}`}><div className="achievement-top"><strong>{a.title}</strong>{got ? <Check size={14}/> : done ? <button className="primary small" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: a.id })}>보상 받기</button> : null}</div><p>{a.desc}</p><Meter value={p} max={a.target} label="달성"/><small className="achievement-reward">{rewardText(a.reward)}</small></article>; })}</div></div>)}
+            {ACHIEVEMENT_GROUPS.map(g => <div key={g} className="achievement-group"><h3>{g}</h3><div className="voyage-list achievement-list">{ACHIEVEMENTS.filter(a => a.group === g).map(a => { const done = feats[a.id] !== undefined, got = !!claimed[a.id], p = Math.min(a.target, a.progress(s)); return <article key={a.id} className={`panel voyage-entry achievement ${done ? 'done' : ''} ${done && !got ? 'claimable' : ''}`}><div className="achievement-top"><strong>{a.title}</strong>{got ? <Check size={14}/> : done ? <button className="primary small" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: a.id })}>보상 받기</button> : null}</div><p>{a.desc}</p>{(() => { const v = visited(a); return v && v.length ? <small className="achievement-visited">다녀온 곳: {v.join(' · ')}</small> : null; })()}<Meter value={p} max={a.target} label="달성"/><small className="achievement-reward">{rewardText(a.reward)}</small></article>; })}</div></div>)}
         </section>
-        <p className="footnote">기록 해금 {VOYAGE_LOG.filter(x => got[x.id] !== undefined).length} / {VOYAGE_LOG.length}</p>
-        {groups.map(g => <section className="voyage-section" key={g}><div className="section-title"><h2>{g}</h2><span>{VOYAGE_LOG.filter(x => x.group === g && got[x.id] !== undefined).length} / {VOYAGE_LOG.filter(x => x.group === g).length}</span></div>
-            <div className="voyage-list">{VOYAGE_LOG.filter(x => x.group === g).map(x => got[x.id] !== undefined
-                ? <article className="panel voyage-entry" key={x.id}><strong>{x.title}</strong><p>{x.text}</p></article>
-                : <article className="panel voyage-entry locked" key={x.id}><strong>???</strong><p>아직 겪지 않은 순간입니다.</p></article>)}</div>
-        </section>)}
     </>;
 }
