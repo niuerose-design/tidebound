@@ -13,7 +13,7 @@ export const SPECIALIZATIONS: Specialization[] = [
 export const BOSS_RESEARCH: Record<string, { sp: number; specialization?: string }> = {
     grotto: { sp: 1, specialization: 'disrupt' }, kelpCatacomb: { sp: 1, specialization: 'purify' },
     cemetery: { sp: 1, specialization: 'shatter' }, caldera: { sp: 1, specialization: 'echo' },
-    temple: { sp: 2 }, starSanctum: { sp: 2 }, abyss: { sp: 2 },
+    temple: { sp: 2 }, starSanctum: { sp: 2 }, ventCathedral: { sp: 3 }, abyss: { sp: 2 },
 };
 export function specializationFits(sk: Skill, spec: Specialization) {
     return sk.type === 'active' && (spec.id !== 'echo' || !sk.extraAttacks) &&

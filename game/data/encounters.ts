@@ -35,7 +35,7 @@ export const PROFILES: Record<string, {
 };
 const profileIds: Record<string, string> = {
     minnow: 'swift', carp: 'armored', perch: 'swift', mackerel: 'swift', ray: 'armored', puffer: 'venom', lionfish: 'venom', eel: 'arcane', barracuda: 'swift', ghost: 'arcane', angler: 'arcane', shark: 'armored', viper: 'venom', squid: 'arcane', leviathan: 'armored', moonfish: 'arcane', dragon: 'swift', ancient: 'armored',
-    seahorse: 'silencer', needlefish: 'swift', tidejelly: 'controller', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venomBoss', cinderKoi: 'frenzy', starKoi: 'arcane', prismRay: 'controller', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'frenzy', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
+    seahorse: 'silencer', needlefish: 'swift', tidejelly: 'controller', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venomBoss', cinderKoi: 'frenzy', starKoi: 'arcane', prismRay: 'controller', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored', ventColossus: 'boss', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'frenzy', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
 };
 export const profileId = (id: string) => profileIds[id] || 'armored';
 export function profile(id: string) { return PROFILES[profileId(id)]; }

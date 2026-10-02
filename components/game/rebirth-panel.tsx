@@ -4,7 +4,7 @@ import { GrowthGoals } from './growth-goals';
 import { useState } from 'react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
+import { rebirthExperience, rebirthMemory, rebirthTitle, nextRebirthTitle } from '@/game/data/long-term';
 import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, ECONOMY, researchCost, researchEffect, researchUnlocked, type ResearchDef, type ResearchTab } from '@/game/data/economy';
 import { BALANCE } from '@/game/data/balance';
 import { ownsRelic, relicCost, researchRefund } from '@/game/systems/commerce';
@@ -109,7 +109,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
     return <>
         <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 항해를 마치고, 다음 생에 남길 힘을 선택하세요."/>
         <section className="panel port-resource-bar legacy-resource-bar">
-            <div><RefreshCw size={22}/><span>누적 환생<strong>{format(s.rebirths)} <small>회</small></strong></span></div>
+            <div><RefreshCw size={22}/><span>누적 환생<strong>{format(s.rebirths)} <small>회{rebirthTitle(s.rebirths) ? ` · ${rebirthTitle(s.rebirths)}` : ''}{nextRebirthTitle(s.rebirths) ? ` · ${nextRebirthTitle(s.rebirths)!.rebirths}회에 ‘${nextRebirthTitle(s.rebirths)!.title}’` : ''}</small></strong></span></div>
             <div><Sparkles size={22}/><span>보유 진주<strong><Num n={s.pearls}/> <small>개</small></strong></span></div>
             <div><span>영구 경험치 배율<strong>×{permanentExp.toFixed(2)}</strong></span></div>
             <div><span>현재 장착 AP<strong>{apCapacity(s)} <small>환생 +{rebirthAP(s)} · 연구 +{s.permanent.ap || 0}</small></strong></span></div>
@@ -141,7 +141,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
                 <article className="panel ledger-reset"><h2>초기화되는 것</h2><ul><li>레벨·경험치 · 현재 직업 → 견습 낚시꾼</li><li>능력치 배분</li><li>일반 장비와 해당 장비의 강화·옵션</li><li>골드 → 시작 골드</li><li>낚시터와 해역 난이도 선택</li><li>진행 중 전투·던전</li></ul></article>
             </div>
             <p className="footnote">진주·영구 보너스의 계산식과 연구 상한은 도움말의 ‘환생’에서 확인할 수 있습니다.</p>
-            <details className="panel legacy-roadmap legacy-fold"><summary>환생 이후에 열리는 콘텐츠</summary><p><b>1회</b> 윤회의 챔질 · 황금의 기억 · 심해 신전(Lv.30) · 윤회의 낚싯대</p><p><b>2회</b> 영혼의 비늘 · 영혼의 잠수복</p><p><b>3회</b> 영원의 해류 · 심연의 눈 · 무한 심연(Lv.40)</p><p>무한 심연은 5연전 정복마다 다음 깊이를 엽니다. 깊을수록 층당 진주가 늘고, 10·25·50·100층 첫 돌파 시 SP 1.</p></details>
+            <details className="panel legacy-roadmap legacy-fold"><summary>환생 이후에 열리는 콘텐츠</summary><p><b>1회</b> 윤회의 챔질 · 황금의 기억 · 심해 신전(Lv.30) · 윤회의 낚싯대</p><p><b>2회</b> 영혼의 비늘 · 영혼의 잠수복</p><p><b>3회</b> 영원의 해류 · 심연의 눈 · 무한 심연(Lv.40)</p><p><b>5회</b> 황혼의 열수구(Lv.55) · 칭호 ‘되돌아온 낚시꾼’ · 연구 해금 마무리</p><p><b>8회</b> 열수 대성당(Lv.60)</p><p><b>10·20·30·50회</b> 윤회 칭호 ‘윤회의 항해자’ · ‘조류를 거스른 자’ · ‘심연을 건넌 자’ · ‘영원의 낚시꾼’</p><p>무한 심연은 5연전 정복마다 다음 깊이를 엽니다. 깊을수록 층당 진주가 늘고, 10·25·50·100층 첫 돌파 시 SP 1.</p></details>
             <details className="panel legacy-fold data-management"><summary>저장 데이터 관리</summary><p>전체 초기화는 환생과 다릅니다. 이름을 제외한 모든 성장 기록과 랭킹 방어 등록을 삭제하며 복구할 수 없습니다. 자동 낚시를 중단하고 던전에서 나온 뒤 진행하세요.</p><ConfirmButton label="전체 데이터 초기화" title="정말 모든 데이터를 초기화할까요?" description="레벨·장비·환생·진주·도감·스킬·길드·랭킹을 모두 처음 상태로 되돌립니다. 이 작업은 되돌릴 수 없습니다." disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetData' })}/></details>
         </>}
         {tab === 'research' && <><p className="tab-intro">진주 연구는 환생 후에도 유지됩니다. 카드에는 1단계당 증가량과 현재 → 다음 단계 효과를 표시합니다.</p>

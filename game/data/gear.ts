@@ -94,6 +94,8 @@ export const ORIGIN_THEMES: Record<string, { name: string; affixes: string[] }> 
     caldera: { name: '검은 화구 제단', affixes: ['venom', 'lingering', 'saturate'] },
     temple: { name: '심해 신전', affixes: ['arcana', 'wellspring', 'runeCore', 'mending'] },
     starSanctum: { name: '별비 성소', affixes: ['echoing', 'reaper', 'concuss'] },
+    duskVents: { name: '황혼의 열수구', affixes: ['might', 'arcana', 'piercing', 'berserk', 'reaper'] },
+    ventCathedral: { name: '열수 대성당', affixes: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'] },
     abyss: { name: '윤회의 무한 심연', affixes: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'] },
 };
 export const THEME_WEIGHT = 4;
