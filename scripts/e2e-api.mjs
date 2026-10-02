@@ -25,6 +25,15 @@ await call('/api/game', { type: 'upgrade', id: 'attack' }, { expect: 400 });
 await call('/api/ranking', {}, { expect: 200 });
 ({ data } = await call('/api/ranking', undefined, { expect: 200 }));
 assert.ok(data.rows.some(r => r.self), 'own ranking row listed');
+const me = data.rows.find(r => r.self);
+assert.ok(me.rebirths !== undefined && me.stats && Array.isArray(me.skills), 'ranking row carries rebirths, stats and skills for the detail view');
+// 훈련 대결: 등록된 낚시꾼(자기 자신)과 던전 보스. 점수·전적은 바뀌지 않습니다.
+({ data } = await call('/api/duel', { type: 'training', id: `user:${me.id}` }, { expect: 200 }));
+assert.equal(data.result.training, true); assert.equal(data.result.ratingChange, 0); assert.equal(data.state.wins + data.state.losses, 0);
+({ data } = await call('/api/duel', { type: 'training', id: 'boss:grottoWarden' }, { expect: 200 }));
+assert.equal(data.result.opponent, '동굴의 수호 곰치');
+await call('/api/duel', { type: 'training', id: 'boss:minnow' }, { expect: 400 });
+await call('/api/duel', { type: 'training', id: '0' }, { expect: 400 });
 await call('/api/auth', { action: 'logout' }, { expect: 200 });
 cookie = '';
 await call('/api/game', { type: 'sync' }, { expect: 401 });

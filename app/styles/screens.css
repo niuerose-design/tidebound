@@ -428,3 +428,26 @@
 [data-slot=dialog-overlay],[data-slot=alert-dialog-overlay] {
   backdrop-filter:blur(4px)
 }
+
+/* 랭킹: 주요 능력치 한 줄, 상세보기(등록 시점 능력치·스킬 편성), 훈련 상대 카드 */
+.ranking-main-stats { display:flex; flex-wrap:wrap; gap:4px 10px; color:#9bc8b5; font-size:12px; margin-top:4px }
+.ranking-main-stats b { color:#dfe6d9; font-weight:600; font-variant-numeric:tabular-nums }
+.ranking-actions { white-space:nowrap }
+.ranking-actions .text-button { margin-left:8px; font-size:12px }
+.ranking-detail-stats { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px; padding:12px; background:#1b3336; border-radius:6px }
+.ranking-detail-stats span { display:flex; flex-direction:column; gap:2px }
+.ranking-detail-stats small { font-size:11px; color:#9bc8b5 }
+.ranking-detail-stats b { font-size:14px; font-weight:600; color:#e6ecdf; font-variant-numeric:tabular-nums }
+.ranking-detail-skills { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px }
+.ranking-detail-skills h3 { font-size:14px; margin:0 0 8px; color:#e8d39a }
+.ranking-detail-skills h3 small { font-weight:400; color:#8fa8a8; margin-left:6px }
+.ranking-detail-skills ul { list-style:none; margin:0; padding:0; display:grid; gap:6px }
+.ranking-detail-skills li { display:flex; align-items:center; gap:10px; padding:7px 9px; background:#132226; border-radius:6px; font-size:13px }
+.ranking-detail-skills li .skill-symbol { flex:none; width:30px; height:30px; display:grid; place-items:center; border-radius:6px; background:#1b3336 }
+.ranking-detail-skills li strong { display:block; font-weight:600; color:#e6ecdf }
+.ranking-detail-skills li small { display:block; color:#8fa8a8; font-size:11px }
+.training-title { margin:18px 0 10px }
+.training-title h2 { display:flex; align-items:center; gap:7px }
+.training-card .ranking-main-stats { justify-content:center; margin:6px 0 10px }
+.training-actions { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:auto }
+@media (max-width:767px) { .ranking-detail-skills { grid-template-columns:1fr } }

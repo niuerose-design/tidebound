@@ -1,5 +1,5 @@
 // 세이브·장비·환생·던전·결투·전투 판정·경제·길드
-import { newState, act, tick, stats, snapshot, expMultiplier, duel, TRAINING, strike, fighterSpeed, migrateState, apCapacity, SKILLS, FISH, DUNGEONS, profile, shopCost, gambleCost, shopPreview, itemStats, enhanceCost, bulkItems, goldMultiplier, dungeonGoldMultiplier, dropRate, hitChance, rebirthLevel, rebirthReward, xpNeeded, assert, rng, test, effectiveSkill, BALANCE } from './harness.mjs';
+import { newState, act, tick, stats, snapshot, expMultiplier, duel, TRAINING, bossSnapshot, BOSS_OPPONENTS, strike, fighterSpeed, migrateState, apCapacity, SKILLS, FISH, DUNGEONS, profile, shopCost, gambleCost, shopPreview, itemStats, enhanceCost, bulkItems, goldMultiplier, dungeonGoldMultiplier, dropRate, hitChance, rebirthLevel, rebirthReward, xpNeeded, assert, rng, test, effectiveSkill, BALANCE } from './harness.mjs';
 test('Saves from before v8 restart fresh, keep only the name, and are idempotent',()=>{const s=newState(0);s.version=7;s.name='오래된 낚시꾼';s.level=60;s.gold=99999;s.pearls=500;s.upgrades={attack:30};s.rebirths=4;migrateState(s,5000);const fresh=newState(5000);fresh.name='오래된 낚시꾼';assert.deepEqual(s,fresh);assert.equal(s.version,8);assert.equal(s.upgrades,undefined);const saved=JSON.stringify(s);migrateState(s,9000);assert.equal(JSON.stringify(s),saved);const v1=newState(0);v1.version=1;delete v1.guild;migrateState(v1,0);assert.equal(v1.version,8);assert.ok(v1.guild);});
 test('Equipment swapping preserves item counts and sale is single-use',()=>{const s=newState(0);s.inventory.push({id:'test',name:'Test',slot:'rod',rarity:2,power:20,level:1});act(s,{type:'equip',id:'test'},0);assert.equal(s.equipment.rod.id,'test');assert.equal(s.inventory.length,1);act(s,{type:'sell',id:'starter'},0);assert.throws(()=>act(s,{type:'sell',id:'starter'},0));assert.equal(s.inventory.length,0)});
 test('Gold training is removed: the upgrade action is rejected and research still costs pearls',()=>{const s=newState(0);const gold=s.gold;assert.throws(()=>act(s,{type:'upgrade',id:'attack'},0));assert.equal(s.gold,gold);assert.equal(s.upgrades,undefined);assert.throws(()=>act(s,{type:'permanent',id:'attack'},0));});
@@ -67,4 +67,14 @@ test('HP regen: constitution adds per-action HP recovery that never exceeds max 
     const events = []; strike(a, b, () => 0, events); assert.equal(a.hp, 150); assert.equal(events[0].regen, 50);
     a.hp = 980; strike(a, b, () => 0); assert.equal(a.hp, 1000, 'capped at max HP');
     const bHp = b.hp; strike(b, a, () => 0); assert.equal(b.hp, bHp, 'no regen without the stat');
+});
+test('Training opponents: dungeon bosses fight with their dungeon stats and enemy skills, never touching rating or state', () => {
+    assert.ok(BOSS_OPPONENTS.length >= 5 && BOSS_OPPONENTS.every(f => f.boss));
+    const boss = bossSnapshot('grottoWarden'); assert.ok(boss); assert.equal(boss.job, 'boss'); assert.ok(boss.stats.hp > 1000 && boss.skills.length > 0 && boss.power > 0);
+    assert.equal(bossSnapshot('minnow'), null, 'only bosses');
+    const s = newState(0); s.level = 30; s.attributes.str = 60; s.attributes.vit = 40; const before = JSON.stringify(s);
+    let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const r = duel(snapshot(s), boss, true, rng);
+    assert.equal(r.training, true); assert.equal(r.ratingChange, 0); assert.equal(r.opponent, boss.name); assert.ok(r.turns > 0 && r.logs.length > 0);
+    assert.equal(JSON.stringify(s), before, 'training never changes the save');
 });

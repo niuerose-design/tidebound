@@ -11,7 +11,7 @@ import { JobDetail } from './jobs/job-detail';
 import { DoorRow, openUnenteredDoors } from './jobs/mystery-doors';
 import { lineageJobs, finderJobs, searchJobs, TOP_TAGS, type Finder } from './jobs/job-status';
 
-const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', near: '거의 다 됨', goal: '목표', doors: '문 열림' };
+const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', mastered: '숙달', near: '거의 다 됨', goal: '목표', doors: '문 열림' };
 
 /**
  * 직업 화면: 세 번 눌러 원하는 직업에 닿는 카드형 화면.

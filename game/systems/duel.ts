@@ -1,7 +1,18 @@
 import type { Snapshot, DuelResult } from '../types';
 import { BALANCE } from '../data/balance';
-import { normalizeStats, hitChance } from './stats';
+import { normalizeStats, hitChance, power } from './stats';
 import { Fighter, fighterSpeed, actTurn } from './combat';
+import { FISH } from '../data/world';
+import { scaledEnemyStats, profile } from '../data/encounters';
+/** 훈련 상대로 쓰는 던전 보스. 던전 마지막 웨이브와 같은 능력치·스킬로 섭니다(레벨 보정 0단계). */
+export const BOSS_OPPONENTS = FISH.filter(f => f.boss);
+export function bossSnapshot(id: string): Snapshot | null {
+    const f = BOSS_OPPONENTS.find(x => x.id === id);
+    if (!f) return null;
+    const stats = scaledEnemyStats(f, { boss: true });
+    return { name: f.name, level: f.level, job: 'boss', rebirths: 0, stats, skills: profile(f.id).skills, power: power(stats), rating: 1000 + f.level * 10 };
+}
+/** 테스트·점검용 표본 상대. 화면의 훈련 상대는 등록된 낚시꾼과 던전 보스입니다. */
 export const TRAINING: Snapshot[] = [
     { name: '항구의 견습생', level: 3, job: 'fisher', rebirths: 0, stats: { hp: 140, attack: 18, defense: 5, crit: .08 }, skills: ['hook'], power: 250, rating: 1000 },
     { name: '산호초의 파수꾼', level: 12, job: 'warden', rebirths: 0, stats: { hp: 380, attack: 50, defense: 28, crit: .1 }, skills: ['anchor', 'breath', 'scales'], power: 700, rating: 1200 },

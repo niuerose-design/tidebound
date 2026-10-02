@@ -1,6 +1,6 @@
 import { identity, checkOrigin, db, mutate, failure, ApiError, actionBody, RANKING_SEASON } from '@/game/server/store';
 import { snapshot } from '@/game/systems/stats';
-import { duel, TRAINING } from '@/game/systems/duel';
+import { duel, bossSnapshot } from '@/game/systems/duel';
 import { BALANCE } from '@/game/data/balance';
 import type { Snapshot } from '@/game/types';
 export const dynamic = 'force-dynamic';
@@ -11,10 +11,18 @@ export async function POST(req: Request) {
         let opponent: Snapshot;
         const training = a.type === 'training';
         if (training) {
-            const index = Number(a.id);
-            if (!Number.isInteger(index) || !TRAINING[index])
-                throw new ApiError('훈련 상대를 찾을 수 없습니다.');
-            opponent = TRAINING[index];
+            // 훈련 상대: 등록된 낚시꾼(자기 자신 포함)의 방어 정보 또는 던전 보스. 점수·전적은 바뀌지 않습니다.
+            const [kind, target] = String(a.id || '').split(':', 2);
+            if (kind === 'user') {
+                const row = await db().getRanking(target || '', RANKING_SEASON);
+                if (!row) throw new ApiError('훈련 상대가 등록되지 않았습니다.');
+                opponent = { ...JSON.parse(row.snapshot), rating: row.rating };
+            }
+            else {
+                const boss = kind === 'boss' ? bossSnapshot(target || '') : null;
+                if (!boss) throw new ApiError('훈련 상대를 찾을 수 없습니다.');
+                opponent = boss;
+            }
         }
         else {
             if (a.type !== 'ranked' || a.id === id)
