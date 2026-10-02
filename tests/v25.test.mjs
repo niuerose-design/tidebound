@@ -218,26 +218,3 @@ test('v25.6 focus cards change exp, gold and mastery for one life; weekly abyss 
     recordAbyssDepth(w, 3, mon); assert.equal(w.abyssWeek.key, '2026-W41'); assert.equal(w.abyssWeek.best, 3);
     assert.deepEqual([1, 2, 3, 10, 50, 51].map(abyssWeeklyPearls), [30, 20, 15, 8, 3, 1]);
 });
-
-test('v25.6 companion fisher: research-gated, own job/stage/skills, accrues shared mastery and gold while the main is idle', async () => {
-    const { measureCompanion, companionSummary } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/companion');
-    const s = newState(0); s.level = 30; s.rebirths = 1; s.permanent.attack = 40; s.permanent.hp = 40; s.unlockedJobs.push('harpoon', 'woodcutter'); s.learned.axeArm = 1; s.learned.pierce = 1;
-    assert.throws(() => act(s, { type: 'companion', id: 'job', value: 'woodcutter' }, 0), /연구/);
-    s.pearls = 100; act(s, { type: 'permanent', id: 'companion' }, 0);
-    assert.throws(() => act(s, { type: 'companion', id: 'job', value: 'tide' }, 0), /전직/);
-    act(s, { type: 'companion', id: 'job', value: 'woodcutter' }, 0); act(s, { type: 'companion', id: 'stage', value: 'brook' }, 0);
-    assert.throws(() => act(s, { type: 'companion', id: 'stage', value: 'starfall' }, 0), /낚시터/);
-    act(s, { type: 'companion', id: 'skills', value: 'axeArm' }, 0); assert.deepEqual(s.companion.skills, ['axeArm']);
-    assert.throws(() => act(s, { type: 'companion', id: 'skills', value: 'pierce' }, 0), /스킬|AP/, 'harpoon skill is not usable by the woodcutter companion');
-    const rate = measureCompanion(s); assert.ok(rate.win >= .8 && rate.killsPerTurn > 0 && rate.killsPerTurn < 1, JSON.stringify(rate));
-    act(s, { type: 'companion', id: 'toggle', value: 'on' }, 0); assert.equal(s.running, false, 'main stays paused');
-    const mastery = s.jobMastery.woodcutter || 0, practice = s.skillPractice.axeArm || 0, gold = s.gold;
-    for (let i = 0; i < 600; i++) tick(s, () => .5);
-    assert.ok(s.companion.kills > 10, 'kills accrue while the main is idle: ' + s.companion.kills);
-    assert.equal((s.jobMastery.woodcutter || 0) - mastery, s.companion.mastery); assert.equal((s.skillPractice.axeArm || 0) - practice, s.companion.mastery, 'equipped skill practice grows with the job');
-    assert.ok(s.gold > gold && s.companion.gold === s.gold - gold, 'gold share is credited');
-    assert.ok(companionSummary(s).killsPerHour > 50);
-    s.level = 40; act(s, { type: 'rebirth' }, 0, () => .5); assert.ok(s.companion && s.companion.job === 'woodcutter', 'companion survives rebirth'); s.level = 30;
-    s.permanent.companion = 2; const k = s.companion.kills, m = s.companion.mastery; s.companion.running = true; delete s.companion.rate; for (let i = 0; i < 300; i++) tick(s, () => .5);
-    assert.ok(s.companion.mastery - m >= Math.floor((s.companion.kills - k) * 1.5) - 1, 'rank 2 gives ×1.5 mastery');
-});

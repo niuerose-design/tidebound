@@ -300,8 +300,6 @@ export type State = {
     /** v25.6 일일·주간 항해 목표판(한국 시간 기준 날짜·주 키). */
     daily?: import('./data/goals').GoalBoard;
     weekly?: import('./data/goals').GoalBoard;
-    /** v25.6 분신 낚시꾼(두 번째 낚싯대 연구). 계정의 직업·스킬 숙련을 함께 쓰므로 환생 후에도 유지됩니다. */
-    companion?: import('./systems/companion').Companion;
     /** v25.6 이번 주 무한 심연 최고 깊이. settled는 보상을 정산한 지난주 키. */
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
     /** 이 세이브에 적용된 레벨당 능력치 포인트. 없으면 이전 규칙(레벨당 4)으로 보고 차액을 한 번 지급합니다. */

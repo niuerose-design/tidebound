@@ -256,14 +256,3 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 @media (max-width: 767px) { .goal-boards { grid-template-columns:1fr; } }
 .voyage-entry.achievement.claimable { border-left:3px solid #e8d39a; box-shadow:0 0 0 1px #e8d39a33 inset; }
 .voyage-section .section-title .primary.small { margin-left:auto; margin-right:12px; }
-/* v25.6 분신 낚시꾼 */
-.companion-locked { display:flex; gap:12px; align-items:flex-start; } .companion-locked svg { color:#d6b879; flex:none; margin-top:2px; } .companion-locked p { margin:6px 0 0; font-size:13px; color:#a9bdb8; }
-.companion-status { padding:20px; margin-bottom:14px; }
-.companion-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:10px 0 12px; }
-.companion-grid > div { background:#0f2227; border-radius:8px; padding:10px 12px; display:grid; gap:4px; } .companion-grid small { font-size:11px; color:#8fa6a4; } .companion-grid strong { font-size:15px; color:#e1eeeb; } .companion-grid strong small { color:#9bc8b5; margin-left:4px; }
-.companion-columns { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; } .companion-columns .panel { padding:18px; }
-.companion-columns select { width:100%; background:#101c20; border:1px solid var(--border); border-radius:6px; color:#e8efe9; padding:9px 10px; font:inherit; font-size:14px; margin:4px 0 8px; }
-.companion-skills { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; }
-.companion-skill { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid #9ab4b533; border-radius:8px; background:#101c20; color:#c5d8d2; text-align:left; cursor:pointer; } .companion-skill.on { border-color:#8fd9b9; background:#1b332d; }
-.companion-skill span { display:grid; gap:2px; min-width:0; } .companion-skill strong { font-size:13px; } .companion-skill small { font-size:11px; color:#8fa6a4; }
-@media (max-width: 900px) { .companion-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .companion-columns { grid-template-columns:1fr; } }

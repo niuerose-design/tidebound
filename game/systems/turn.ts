@@ -1,6 +1,5 @@
 /** 턴 진행(온라인 tick·오프라인 advance). */
 import { syncGoals, syncAchievements } from './progress';
-import { tickCompanion } from './companion';
 import { syncVoyage } from './guidance';
 import { syncGoal } from './goals';
 import { stats } from './stats';
@@ -18,8 +17,6 @@ import { profile } from '../data/encounters';
 import { bookEcology } from './book';
 import { breathReset } from './actions/lifecycle';
 export function tick(s: State, rng = Math.random) {
-    // v25.6 분신은 본체가 멈춰 있어도 시간이 흐르면 따로 사냥합니다.
-    tickCompanion(s, text => addLog(s, text, 'reward'));
     if (!s.running)
         return;
     syncStatRate(s);
