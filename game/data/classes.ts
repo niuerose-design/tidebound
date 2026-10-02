@@ -30,6 +30,8 @@ export type Job = {
     masteryBoost?: number;
     requiresSkillMastery?: Record<string, number>;
     requiresJobMastery?: Record<string, number>;
+    /** v25.4 숙달(숙련 목표 달성)한 직업 수 조건. 편력 계보가 씁니다. */
+    requiresMastered?: number;
     /** 직접 배분한 능력치 포인트(레벨 기본치 제외) 조건. */
     requiresAllocated?: Partial<Record<Attribute, number>>;
     penalties?: Partial<Stats>;

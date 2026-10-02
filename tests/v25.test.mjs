@@ -113,3 +113,21 @@ test('v25.3 passive-route returns: the archivist passive scales with rebirths an
     act(k, { type: 'setSkills', value: [usable[1], usable[0]].join(',') }, 0); assert.deepEqual(k.skills, [usable[1], usable[0]]);
     assert.throws(() => act(k, { type: 'setSkills', value: 'eternalWave' }, 0));
 });
+
+test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint passives, journeyman lineage gates', async () => {
+    const { maxSkillLevel } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
+    const sk = id => SKILLS.find(x => x.id === id);
+    for (const id of ['axeArm', 'vital', 'lullaby', 'driftwoodGuard']) { const m = maxSkillLevel(sk(id)); assert.equal(effectiveSkill(sk(id), 1, m).cost, (sk(id).cost ?? 2) - 1, id); assert.equal(effectiveSkill(sk(id), 1, m - 1).cost, sk(id).cost ?? 2, `${id} before max`); }
+    assert.equal(effectiveSkill(sk('glyphNothing'), 1, 4).cost, 0, 'floor at 0'); assert.equal(effectiveSkill(sk('glyphCut'), 1, 4).cost, 1, 'actives unchanged');
+    for (const [id, last] of [['titanFieldNotes', 0], ['pearlLedger', 0], ['chronicleStudy', -1], ['serpentFolklore', 0], ['abyssObservation', -1]]) { const m = maxSkillLevel(sk(id)); assert.equal(sk(id).levelEffects.length, m + 1, id); assert.equal(effectiveSkill(sk(id), 1, m).cost, last, id); assert.ok(effectiveSkill(sk(id), 1, 0).cost >= 3, `${id} starts expensive`); }
+    assert.equal(effectiveSkill(sk('pearlLedger'), 1, 4).bonus.rebirthBonus, 2);
+    // 편력 계보: 숙달 직업 수 관문과 숙달 비례 피해.
+    const s = newState(0); s.level = 40; s.attributes = { str: 30, int: 30, vit: 30, dex: 0, wis: 0, luk: 0 }; s.jobMastery.journeyman = 4000; s.unlockedJobs.push('journeyman');
+    for (const id of ['harpoon', 'tide', 'warden', 'scholar', 'woodcutter', 'noviceMonk']) s.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
+    assert.equal(canChangeJob(s, 'polymath'), false, '6 mastered + journeyman = 7 < 8');
+    s.jobMastery.gladiator = jobMasteryTarget(JOBS.find(x => x.id === 'gladiator')); assert.equal(canChangeJob(s, 'polymath'), true);
+    act(s, { type: 'job', id: 'polymath' }, 0); assert.equal(s.job, 'polymath');
+    const dmg = mastered => { const a = { name: 'A', job: 'polymath', stats: { ...base, masteredPower: mastered }, hp: 1000, mana: 200, skills: ['borrowedForm'], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} }, t = target(); strike(a, t, () => 0); return 1e6 - t.hp; };
+    assert.ok(dmg(20) > dmg(0) * 1.5 && dmg(20) < dmg(0) * 1.7, `mastered scaling +3% each (${dmg(0)} → ${dmg(20)})`);
+    assert.equal(canChangeJob({ ...s, jobMastery: { ...s.jobMastery, polymath: 12000 } }, 'hundredLives'), false, 'needs 15 mastered');
+});

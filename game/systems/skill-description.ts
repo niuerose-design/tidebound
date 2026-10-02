@@ -60,6 +60,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.scaling === 'codex') out.push(`도감 기록(발견한 어종 + 등록한 물건) 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'catch') out.push(`피해 × (1 + log10(누적 포획 + 1) × ${number(sk.scalingRatio ?? 0)}) · 포획 10배마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'hunt') out.push(`피해 × (1 + √(던전 클리어 + 보스 포획) × ${number(sk.scalingRatio ?? 0)})`);
+        if (sk.scaling === 'mastered') out.push(`숙달한 직업 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'gold') out.push(`피해 × (1 + log10(보유 골드 + 1) × ${number(sk.scalingRatio ?? 0)}) · 골드 자릿수가 늘 때마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.gamble) out.push(`쓸 때마다 ${[sk.gamble.min !== sk.gamble.max ? `피해 ×${number(sk.gamble.min)}~${number(sk.gamble.max)}(평균 ×${number((sk.gamble.min + sk.gamble.max) / 2)})` : '', sk.gamble.accuracy ? `이 기술 명중 ±${skillPercent(sk.gamble.accuracy)}p` : ''].filter(Boolean).join(' · ')} 무작위`);
         if (sk.allIn) out.push(`현재 체력의 ${skillPercent(sk.allIn.hpRatio)}(1은 남김)와 남은 마나 전부를 걸고 (건 체력 × ${number(sk.allIn.hpScale)} + 건 마나 × ${number(sk.allIn.manaScale)})를 피해식에 더합니다 · 빗나가도 소모`);
@@ -101,6 +102,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if ((jobById(sk.job)?.tier || 0) >= SKILL_FORMULA.signatureTier) out.push(`전용 기술: 계보 밖 직업이 계승하면 ${sk.type === 'active' ? '피해 배율' : '능력치'} ×${number(SKILL_FORMULA.signatureScale)}`);
     if (sk.id === 'firstAid') out.push(`승리 후 최대 체력 ${skillPercent(FIRST_AID_HEAL)} 추가 회복 · 승리당 1회 (무리 사냥 포함)`);
     if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 승리 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
+    if (sk.type === 'passive' && !sk.song && !sk.levelEffects && SKILL_FORMULA.masteredPassiveAP) out.push(level >= maxSkillLevel(sk) ? `최대 성장: 장착 AP −${SKILL_FORMULA.masteredPassiveAP} 적용 중` : `최대 성장(Lv.${maxSkillLevel(sk)})에 닿으면 장착 AP −${SKILL_FORMULA.masteredPassiveAP}`);
     const rewards = skillMasteryRewards(sk, level + 1);
     if (rewards.ap) out.push(`최대 성장 보상: 장착 AP 한도 +${rewards.ap}`);
     for (const [key, n] of byStatOrder(Object.entries(rewards.bonus))) out.push(`최대 성장 보상: ${skillBonusText(key, n as number)}`);

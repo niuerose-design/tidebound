@@ -25,6 +25,9 @@ const magic = { damageType: 'magic' as const };
 
 /** 액티브 최종 수치(ACTIVE_SKILL_BALANCE에 합쳐짐). 새 액티브도 여기에 두어 설명이 자동으로 만들어집니다. */
 export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
+    // v25.4 편력 계보: 복합 피해 규칙(발동 45% 이상)에 맞춘 숙달 비례 일격.
+    borrowedForm: { chance: .45, cooldown: 4, multiplier: 1.2, manaCost: 8 },
+    thousandLives: { chance: .45, cooldown: 5, multiplier: 1.6, statusTurns: 3, manaCost: 12 },
     // ── 오징어 광대: 주사위 ──
     inkTrick: { gamble: { min: 1, max: 1, accuracy: .25 } },
     smokeVeil: { gamble: { min: 1, max: 1, accuracy: .2 } },
@@ -147,6 +150,10 @@ export const SUPPORT_STATUS_ONLY = ['heronStill'];
 /** 편력 낚시꾼의 패시브: 숙달한 직업 수마다 자랍니다. 숙련 목표와 상한을 크게 잡아 장기 리턴으로 둡니다. */
 SUPPORT_SKILLS.push(
     { ...P, id: 'thousandHands', name: '천 개의 손놀림', desc: '숙달한 직업 1개마다 두 공격 +3·최대 체력 +12·두 방어 +1(최대 60회).', level: 10, job: 'journeyman', cost: 3, perCount: [{ source: 'mastered', per: 1, bonus: { attack: 3, magic: 3, hp: 12, defense: 1, resist: 1 }, cap: 60 }], masteryMilestones: [800, 4000, 16000, 50000] },
+    { ...A, id: 'borrowedForm', name: '배운 대로', desc: '', level: 25, job: 'polymath', cost: 4, damageType: 'split', scaling: 'mastered', scalingRatio: .03, manaCost: 8, masteryMilestones: [1500, 7000, 25000, 80000] },
+    { ...P, id: 'hundredKnacks', name: '백 가지 요령', desc: '숙달한 직업 1개마다 두 공격 +5·최대 체력 +20·두 방어 +1.5(최대 60회).', level: 25, job: 'polymath', cost: 3, perCount: [{ source: 'mastered', per: 1, bonus: { attack: 5, magic: 5, hp: 20, defense: 1.5, resist: 1.5 }, cap: 60 }], masteryMilestones: [1500, 7000, 25000, 80000] },
+    { ...A, id: 'thousandLives', name: '천 번의 삶', desc: '', level: 40, job: 'hundredLives', cost: 5, damageType: 'split', scaling: 'mastered', scalingRatio: .04, effect: 'weaken', manaCost: 12, masteryMilestones: [2500, 12000, 40000, 100000] },
+    { ...P, id: 'everyLife', name: '모든 생의 기억', desc: '최대 체력 +100. 숙달한 직업 1개마다 치명타·명중 +0.4%p·속도 +0.5·최대 체력 +15(최대 60회).', level: 40, job: 'hundredLives', cost: 3, bonus: { hp: 100 }, perCount: [{ source: 'mastered', per: 1, bonus: { crit: .004, accuracy: .004, speed: .5, hp: 15 }, cap: 60 }], masteryMilestones: [2500, 12000, 40000, 100000] },
     { ...P, id: 'wayfarerKnack', name: '떠돌이의 요령', desc: '숙달한 직업 2개마다 치명타·명중 +1%p·속도 +1(최대 30회).', level: 10, job: 'journeyman', cost: 2, perCount: [{ source: 'mastered', per: 2, bonus: { crit: .01, accuracy: .01, speed: 1 }, cap: 30 }], masteryMilestones: [800, 4000, 16000, 50000] },
 );
 
@@ -201,6 +208,8 @@ export const SUPPORT_JOBS: NewJob[] = [
     { id: 'poorMonk', name: '청빈 수도승', title: '가진 것이 없어 잃을 것도 없다', desc: '빈손으로 싸우는 수도승. 흡혈하는 빈손 장타와 골드를 내려놓는 대신 단단해지는 서약을 가집니다.', ...DOOR_T1, bonus: { hp: 10, resist: 1 }, requires: { vit: 12, wis: 12 }, role: '발견·생존', penalties: { crit: -.01 } },
     { id: 'codexReader', name: '바다 백과 탐독가', title: '모든 물고기를 읽었다', desc: '도감을 깊이 읽은 자에게 열리는 술사. 도감 기록에 비례하는 주문과 패시브를 가집니다.', ...DOOR_T1, bonus: { magic: 5, resist: 1 }, requires: { int: 14 }, role: '발견·도감', penalties: { hp: -10 } },
     { id: 'journeyman', name: '편력 낚시꾼', title: '배운 것은 몸에 남는다', desc: '직업 셋을 끝까지 숙달한 자에게 열리는 패시브 전용 직업. 두 패시브가 숙달한 직업 수에 비례해 자라며, 계승하면 어느 직업에서든 그대로 힘이 됩니다.', ...DOOR_T1, bonus: { attack: 2, magic: 2, hp: 10 }, requires: { str: 10, int: 10, vit: 10 }, role: '숙달·누적', fullKit: true, masteryTarget: 4000, masteryBoost: .15 },
+    { id: 'polymath', name: '만능 어부', title: '여덟 가지 삶을 한 몸에', desc: '직업 여덟을 숙달한 편력 낚시꾼에게 열리는 2차급 독립 직업. 숙달한 직업 수에 비례하는 복합 일격과 패시브를 가집니다.', ...neutral, crit: .02, bonus: { attack: 4, magic: 4, hp: 20 }, tier: 2, level: 25, mastery: 0, requires: { str: 20, int: 20, vit: 20 }, requiresJobMastery: { journeyman: 4000 }, requiresMastered: 8, role: '숙달·복합', tree: 'mystery', lineage: 'mystery-independent', branchless: true, hidden: true, fullKit: true, masteryTarget: 12000, masteryBoost: .2 },
+    { id: 'hundredLives', name: '백 가지 삶', title: '모든 생을 기억하는 낚시꾼', desc: '직업 열다섯을 숙달한 자에게 열리는 3차급 독립 직업. 숙달한 직업 수만큼 강해지는 천 번의 삶과 패시브로 모든 숙련의 결산을 받습니다.', ...neutral, hp: 1.02, crit: .03, bonus: { attack: 12, magic: 12, hp: 60, defense: 3, resist: 3 }, tier: 3, level: 40, mastery: 0, requires: { str: 30, int: 30, vit: 30 }, requiresJobMastery: { polymath: 12000 }, requiresMastered: 15, role: '숙달·결산', tree: 'mystery', lineage: 'mystery-independent', branchless: true, hidden: true, fullKit: true, masteryTarget: 40000, masteryBoost: .3 },
     { id: 'fallenAngler', name: '일곱 번 넘어진 낚시꾼', title: '넘어진 만큼 일어선다', desc: '여러 번 쓰러져 본 자에게 열리는 직업. 흡혈하는 일어서기와 체력·흡혈 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, attack: 1 }, requires: { vit: 12, str: 10 }, role: '발견·흡혈', penalties: { speed: -2 } },
 ];
 
@@ -216,4 +225,6 @@ export const SUPPORT_HINTS: Record<string, string> = {
     codexReader: '도감에 기록이 서른 개 넘게 쌓였을 때.',
     fallenAngler: '서른 번쯤 쓰러져 본 낚시꾼에게.',
     journeyman: '직업 셋을 끝까지 숙달한 낚시꾼에게.',
+    polymath: '편력 낚시꾼이 여덟 가지 삶을 모두 숙달했을 때.',
+    hundredLives: '만능 어부가 열다섯 가지 삶을 모두 숙달했을 때.',
 };
