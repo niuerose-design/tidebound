@@ -47,6 +47,8 @@ export type Stats = {
     catchPower?: number;
     huntPower?: number;
     goldPower?: number;
+    /** v25.4 숙달한 직업 수(숙달 비례 피해의 기준값). */
+    masteredPower?: number;
     hp: number;
     attack: number;
     defense: number;
@@ -130,7 +132,7 @@ export type Skill = {
     drainRatio?: number;
     condition?: 'wounded' | 'healthyTarget';
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. */
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold';
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered';
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */

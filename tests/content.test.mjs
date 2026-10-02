@@ -17,10 +17,10 @@ test('Category appraisal rolls rod style and rarity separately, charging once',(
  const s=newState(0);s.gold=10000;const before=JSON.stringify(s);assert.throws(()=>act(s,{type:'gamble',id:'unknown'},0));assert.equal(JSON.stringify(s),before);
 });
 test('Job mastery strengthens only the currently selected job and never its penalties',()=>{
- const s=newState(0);s.level=50;s.permanent.attack=100;s.skills=[];s.job='harpoon';const base=stats(s);
- s.jobMastery.tide=jobMasteryTarget('tide');assert.deepEqual(stats(s),base);
+ const s=newState(0);s.level=50;s.permanent.attack=100;s.skills=[];s.job='harpoon';const strip=a=>Object.fromEntries(Object.entries(a).filter(([k])=>k!=='masteredPower'));const base=strip(stats(s));
+ s.jobMastery.tide=jobMasteryTarget('tide');assert.deepEqual(strip(stats(s)),base);assert.equal(stats(s).masteredPower,1,'mastered count is a reference stat, not strength');
  s.jobMastery.harpoon=jobMasteryTarget('harpoon');assert.ok(stats(s).attack>base.attack);
- s.job='fisher';assert.deepEqual(stats(s),stats({...s,jobMastery:{}}));
+ s.job='fisher';assert.deepEqual(strip(stats(s)),strip(stats({...s,jobMastery:{}})));
  const penaltyJob=JOBS.find(j=>j.hp<1);assert.equal(jobCombatMultiplier(penaltyJob,penaltyJob.hp,true),penaltyJob.hp);
 });
 test('Growth descriptions expose real bone penalties, negative AP and farming stages',()=>{

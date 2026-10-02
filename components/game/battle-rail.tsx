@@ -1,10 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { ChatPanel } from './chat-panel';
 import { AutoRunStatus } from './auto-run';
-import { BookOpen, ChevronRight, Compass, Lock, Map, ShoppingBag, Swords, Trophy, Zap } from 'lucide-react';
+import { BookOpen, ChevronRight, Compass, Lock, Map, MessageCircle, ShoppingBag, Swords, Trophy, Zap } from 'lucide-react';
 import { STAGES, DUNGEONS } from '@/game/data/world';
 import { BattleLogLine } from './combat-log';
 import type { State, Action } from '@/game/types';
+const FEED_KEY = 'tidebound.railFeed';
 export function BattleRail({ s, busy, send, setView }: {
     s: State;
     busy: boolean;
@@ -15,15 +17,22 @@ export function BattleRail({ s, busy, send, setView }: {
     const dungeons = [...DUNGEONS].sort((a, b) => a.level - b.level);
     // 낚시터·던전을 한 창에서 탭으로 고릅니다. 던전에 들어가면 던전 탭으로 넘어갑니다.
     const [tab, setTab] = useState<'stage' | 'dungeon'>(s.dungeon ? 'dungeon' : 'stage');
+    // v25.4 전투 기록 ↔ 채팅 토글. 선택은 이 기기에 남깁니다.
+    const [feed, setFeed] = useState<'log' | 'chat'>('log');
+    useEffect(() => { const timer = window.setTimeout(() => { try { if (localStorage.getItem(FEED_KEY) === 'chat') setFeed('chat'); } catch { /* 저장소 없음 */ } }, 0); return () => window.clearTimeout(timer); }, []);
+    const pickFeed = (v: 'log' | 'chat') => { setFeed(v); try { localStorage.setItem(FEED_KEY, v); } catch { /* 저장소 없음 */ } };
     const inDungeon = !!s.dungeon;
     const [wasInDungeon, setWasInDungeon] = useState(inDungeon);
     if (wasInDungeon !== inDungeon) { setWasInDungeon(inDungeon); if (inDungeon) setTab('dungeon'); }
     return <aside className="battle-utility-rail" aria-label="전투 보조 패널">
-    <section className="panel battle-rail-panel battle-feed">
-    <div className="section-title"><h2><Swords size={15}/> 전투 기록</h2><span className="micro">LIVE</span></div>
-    <div className="battle-feed-list" role="log" aria-label="최근 전투 메시지">
+    <section className={`panel battle-rail-panel battle-feed ${feed === 'chat' ? 'feed-chat' : ''}`}>
+    <div className="section-title"><div className="battle-place-tabs feed-tabs" role="tablist" aria-label="전투 기록 · 채팅">
+        <button type="button" role="tab" aria-selected={feed === 'log'} className={feed === 'log' ? 'active' : ''} onClick={() => pickFeed('log')}><Swords size={14}/>전투 기록</button>
+        <button type="button" role="tab" aria-selected={feed === 'chat'} className={feed === 'chat' ? 'active' : ''} onClick={() => pickFeed('chat')}><MessageCircle size={14}/>채팅</button>
+    </div><span className="micro">{feed === 'chat' ? 'GLOBAL' : 'LIVE'}</span></div>
+    {feed === 'log' ? <div className="battle-feed-list" role="log" aria-label="최근 전투 메시지">
     {battleLogs.length ? battleLogs.map(log => <BattleLogLine key={log.id} log={log} index playerName={s.name}/>) : <p className="battle-feed-empty">자동 낚시를 시작하면 전투 기록이 표시됩니다.</p>}
-    </div>
+    </div> : <ChatPanel open={feed === 'chat'} playerName={s.name}/>}
     </section>
     <AutoRunStatus s={s} compact/>
     <section className="panel battle-rail-panel battle-selector-panel">
