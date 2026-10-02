@@ -409,3 +409,6 @@
 
 .chat-channels{display:flex;gap:6px}.chat-channels button{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#101c20;color:#9bb3b0;font-size:12px;cursor:pointer}.chat-channels button.active{border-color:#3d675a;background:#13262c;color:#c5d8d2}
 .chat-feed{display:flex;flex-direction:column;gap:7px}
+/* v25.13 모바일 전투 화면 정리: 캐릭터 열 접기, 안내 카드 중복 제거, 빠른 이동 격자 숨김(탭 바가 대신함) */
+.mobile-fisher-toggle{display:none}
+@media(max-width:900px){.mobile-fisher-toggle{display:flex;order:3;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#101c20;color:#c5d8d2;font-size:13px;cursor:pointer}.mobile-fisher-toggle svg{transition:transform .15s}.mobile-fisher-toggle svg.open{transform:rotate(90deg)}.battle-character-column{display:none;order:4}.battle-character-column.mobile-open{display:block}.battle-character-column .tutorial-card{display:none}.battle-shortcuts .battle-shortcut-grid{display:none}.battle-shortcuts .section-title{margin-bottom:6px}}

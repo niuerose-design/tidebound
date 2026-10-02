@@ -45,6 +45,8 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     setName: (value: string) => void;
 }) {
     const [filter, setFilter] = useState('battle');
+    // v25.13 모바일: 캐릭터 열(상세·착용 장비)은 접어 두고 버튼으로 펼칩니다. 데스크톱에서는 늘 보입니다.
+    const [fisherOpen, setFisherOpen] = useState(false);
     const st = STAGES.find(x => x.id === s.stage)!, d = DUNGEONS.find(x => x.id === s.dungeon?.id);
     const enemy = s.enemy;
     const swarmNow = activeSwarm(s);
@@ -65,7 +67,8 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     <VoyageNotice s={s} setView={setView}/>
     <DoorNotice s={s} setView={setView}/>
     <div className="battle-hud" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
-    <div className="battle-character-column"><Player s={s} busy={busy} send={send} setView={setView}/></div>
+    <button type="button" className="mobile-fisher-toggle" aria-expanded={fisherOpen} onClick={() => setFisherOpen(v => !v)}>{fisherOpen ? '나의 낚시꾼 상세 접기' : '나의 낚시꾼 상세 · 착용 장비 · 능력치 배분'}<ChevronRight size={14} className={fisherOpen ? 'open' : ''}/></button>
+    <div className={`battle-character-column ${fisherOpen ? 'mobile-open' : ''}`}><Player s={s} busy={busy} send={send} setView={setView}/></div>
     <div className="battle-console">
     <MobileFisherStrip s={s} setView={setView}/>
     {tutorialActive(s) && <div className={tutorialEarly(s) ? 'battle-top-tutorial' : 'battle-mobile-tutorial'}><TutorialCard s={s} send={send} busy={busy} setView={setView}/></div>}
