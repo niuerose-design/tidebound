@@ -44,7 +44,7 @@ test('Abyss pearls scale with depth and milestone SP is granted once and survive
  const clearNext=(s)=>{act(s,{type:'dungeon',id:'abyss'},s.lastTick);let t=s.lastTick;for(let i=0;i<4000&&s.dungeon;i++){t+=2000;advance(s,t,rng);}assert.equal(s.dungeon,null);};
  const s=newState(0);s.level=60;s.rebirths=3;s.permanent.attack=3000;s.permanent.hp=3000;s.permanent.guard=1000;s.abyssBest=9;s.sp=0;s.hp=stats(s).hp;s.mana=stats(s).mana;
  act(s,{type:'sync'},s.lastTick);const pearls=s.pearls;clearNext(s);
- assert.equal(s.abyssBest,10);assert.equal(s.pearls-pearls,6);assert.equal(s.sp,1);assert.deepEqual(s.abyssMilestones,[10]);
+ assert.equal(s.abyssBest,10);assert.equal(s.pearls-pearls,16,"v25.8: floor 6 + 10F first-break bonus 10");assert.equal(s.sp,1);assert.deepEqual(s.abyssMilestones,[10]);
  s.abyssBest=24;s.hp=stats(s).hp;clearNext(s);assert.equal(s.sp,2);assert.deepEqual(s.abyssMilestones,[10,25]);
  s.abyssMilestones.push(50);s.abyssBest=49;s.hp=stats(s).hp;clearNext(s);assert.equal(s.sp,2,'already-claimed milestone pays nothing');
  s.level=100;act(s,{type:'rebirth'},s.lastTick);assert.deepEqual(s.abyssMilestones,[10,25,50]);

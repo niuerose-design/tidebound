@@ -20,3 +20,18 @@ export const abyssPearls = (depth: number) => (1 + Math.floor(depth / 10)) * (de
 /** 처음 돌파할 때 SP 1을 주는 깊이. SP는 극히 드문 자원이므로 이정표 수를 적게 유지합니다. */
 export const ABYSS_SP_MILESTONES = [10, 25, 50, 100];
 export const nextAbyssMilestone = (best: number) => ABYSS_SP_MILESTONES.find(n => n > best);
+
+/** v25.8 해역 난이도 이정표: 낚시터마다 이 차수에서 처음 포획하면 진주를 줍니다. */
+export const TIDE_MILESTONES = [5, 10, 20, 30, 50];
+export const TIDE_MILESTONE_PEARLS = [1, 2, 4, 7, 12];
+export const nextTideMilestone = (best: number) => TIDE_MILESTONES.find(n => n > best);
+/** v25.8 무한 심연 10층마다 첫 돌파 보너스 진주(층 수만큼)와 장착 AP +1 이정표. */
+export const abyssFloorBonus = (depth: number) => depth % 10 === 0 ? depth : 0;
+export const ABYSS_AP_MILESTONES = [30, 60, 90];
+export const abyssAP = (s: { abyssMilestones?: number[] }) => (s.abyssMilestones || []).filter(d => ABYSS_AP_MILESTONES.includes(d)).length;
+/** v25.8 윤회 칭호: 환생 횟수로 얻는 영구 칭호. 랭킹·채팅·전투 화면에 이름과 함께 표시됩니다. */
+export const REBIRTH_TITLES: { rebirths: number; title: string }[] = [
+    { rebirths: 5, title: '되돌아온 낚시꾼' }, { rebirths: 10, title: '윤회의 항해자' }, { rebirths: 20, title: '조류를 거스른 자' }, { rebirths: 30, title: '심연을 건넌 자' }, { rebirths: 50, title: '영원의 낚시꾼' },
+];
+export const rebirthTitle = (rebirths: number) => [...REBIRTH_TITLES].reverse().find(x => rebirths >= x.rebirths)?.title || '';
+export const nextRebirthTitle = (rebirths: number) => REBIRTH_TITLES.find(x => x.rebirths > rebirths);

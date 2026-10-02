@@ -29,7 +29,7 @@ export const weekSeason = (key: string) => Number(key.replace('-W', ''));
 export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, key: string, weekly: boolean): Goal[] {
     const level = Math.max(s.level, s.peakLevel || 0, 10), seed = hash(key + (weekly ? ':w' : ':d'));
     const stages = STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
-    const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => FISH.some(f => f.id === id));
+    const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => FISH.some(f => f.id === id && !f.minTier));
     const scale = weekly ? 6 : 1;
     const goals: Goal[] = [
         { id: 'catch', kind: 'catch', target: 60 * scale, pearls: weekly ? 4 : 1, progress: 0 },

@@ -44,4 +44,5 @@ export const REGION_THEMES: Record<string, { label: string; add?: StatBonus; sca
     trench: { label: '최대 체력 +3%', scale: { hp: 1.03 } },
     moon: { label: '턴당 마나 회복 +0.5', add: { manaRegen: .5 } },
     starfall: { label: '체력·공격·방어 +2%', scale: { hp: 1.02, attack: 1.02, magic: 1.02, defense: 1.02, resist: 1.02 } },
+    duskVents: { label: '방어 관통 +1%p · 치명 피해 +3%p', add: { penetration: .01, critDamage: .03 } },
 };

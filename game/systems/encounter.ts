@@ -1,7 +1,7 @@
 /** 적 등장·드롭·승리 보상. */
 import { BOSS_RESEARCH } from '../data/specializations';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
-import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES } from '../data/long-term';
+import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus, TIDE_MILESTONES, TIDE_MILESTONE_PEARLS } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets } from './progression';
 import { activeSwarm, catchReward, encounterTier } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
@@ -90,8 +90,8 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     }
 }
 /** rareBonus: 희귀 이상 어종의 출현 가중치 증가율(0.1 = +10%). */
-export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0) {
-    const choices = ids.map(id => FISH.find(f => f.id === id)).filter(Boolean) as typeof FISH;
+export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, tier = 0) {
+    const choices = (ids.map(id => FISH.find(f => f.id === id)).filter(Boolean) as typeof FISH).filter(f => (f.minTier || 0) <= tier);
     const weight = (f: typeof FISH[number]) => (f.spawnWeight ?? 1) * (f.rarity && f.rarity !== 'common' ? 1 + rareBonus : 1);
     const total = choices.reduce((sum, f) => sum + weight(f), 0);
     let roll = rng() * total;
@@ -106,10 +106,11 @@ export function spawn(s: State, rng: () => number) {
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
     const st = STAGES.find(x => x.id === s.stage)!;
     const finalWave = !!dungeon && s.dungeon!.wave === dungeon.fish.length - 1;
-    const id = dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (s.target && st.fish.includes(s.target) ? s.target : weightedFishId(st.fish, rng, rareSpawnBonus(s)));
+    const tier = encounterTier(s);
+    const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
+    const id = dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
     const f = FISH.find(x => x.id === id)!;
     const boss = finalWave;
-    const tier = encounterTier(s);
     const foe = scaledEnemyStats(f, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
     const { exp, gold } = catchReward(f, tier, boss);
     // 무리 사냥: 무리 전체를 체력 ×N(×100 이상은 98%)인 한 개체로 상대합니다. 공격은 ×500에서만 체력과 같은 배율이고, 방어는 한 마리와 같습니다.
@@ -174,6 +175,16 @@ export function reward(s: State, rng: () => number) {
     const fish = FISH.find(f => f.id === e.id)!;
     for (let i = 0; i < size; i++)
         drop(s, fish.level + encounterTier(s) * 5, rng);
+    // v25.8 해역 난이도 이정표: 낚시터에서 그 차수로 처음 포획하면 사이의 이정표 진주를 한 번에 줍니다.
+    if (!s.dungeon && !seal) {
+        const tier = encounterTier(s), best = s.tideBest?.[s.stage] || 0;
+        if (tier > best) {
+            (s.tideBest ??= {})[s.stage] = tier;
+            let pearls = 0; const hit: number[] = [];
+            TIDE_MILESTONES.forEach((n, i) => { if (best < n && n <= tier) { pearls += TIDE_MILESTONE_PEARLS[i]; hit.push(n); } });
+            if (pearls) { s.pearls += pearls; addLog(s, `해역 난이도 이정표 · ${STAGES.find(st => st.id === s.stage)?.name || s.stage} 차수 ${hit.join('·')} 첫 포획 · 진주 +${pearls}`, 'reward'); }
+        }
+    }
     if (seal && seal.caught >= ANCHOR_CATCHES) releaseAnchor(s, true);
     gainLevels(s);
     for (const id of grantJobSkills(s)) {
@@ -194,12 +205,16 @@ export function reward(s: State, rng: () => number) {
             const depth = s.dungeon.depth || 1;
             recordGoal(s, 'dungeon', d.id, 1, text => addLog(s, text, 'reward'));
             if (d.id === 'abyss') {
+                const deeper = depth > s.abyssBest;
                 s.abyssBest = Math.max(s.abyssBest, depth);
                 recordAbyssDepth(s, depth, s.lastTick);
                 const pearls = abyssPearls(depth);
                 s.pearls += pearls;
                 addLog(s, `심연 ${depth}층 정복 · 진주 +${pearls}`, 'reward');
                 s.abyssMilestones ??= [];
+                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 진주), 30·60·90층 첫 돌파 장착 AP +1.
+                if (deeper && abyssFloorBonus(depth)) { s.pearls += abyssFloorBonus(depth); addLog(s, `심연 ${depth}층 첫 돌파 · 보너스 진주 +${abyssFloorBonus(depth)}`, 'reward'); }
+                if (ABYSS_AP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) { s.abyssMilestones.push(depth); addLog(s, `심연 ${depth}층 첫 돌파 이정표 · 장착 AP +1`, 'reward'); }
                 if (ABYSS_SP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) {
                     s.abyssMilestones.push(depth);
                     s.sp += 1;

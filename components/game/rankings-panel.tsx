@@ -1,4 +1,5 @@
 'use client';
+import { rebirthTitle } from '@/game/data/long-term';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, RefreshCw, Swords, Fish, Users } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -98,7 +99,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
         <TableBody>{sorted.map((r, i) => <TableRow key={r.id}>
             <TableCell className="rank-number">{i + 1}</TableCell>
             <TableCell className="ranking-who">
-            <strong>{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
+            <strong>{rebirthTitle(r.rebirths) ? <small className="rebirth-title">{rebirthTitle(r.rebirths)}</small> : null}{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
             <small className="block">Lv. {r.level} · {jobName(r.job)} · 환생 {r.rebirths}회 · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
             <MainStats stats={r.stats}/>
             </TableCell>

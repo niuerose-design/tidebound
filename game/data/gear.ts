@@ -21,6 +21,8 @@ export type AffixDef = {
     stat2?: GearStat;
     base2?: number;
     minRarity?: number;
+    /** v25.8 이 출처(던전 id)에서 떨어진 장비에만 붙는 옵션. */
+    onlyOrigin?: string;
     description: string;
 };
 export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean };
@@ -59,6 +61,11 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: .9, stat2: 'speed', base2: -4, description: '물리 방어가 크게 오르지만 느려집니다.' },
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .05, stat2: 'accuracy', base2: -.06, description: '치명타가 크게 오르지만 명중이 줄어듭니다.' },
     { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .035, stat2: 'hp', base2: -1.5, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 6%p).' },
+    // v25.8 심연 전용 옵션: 무한 심연 드롭에만 붙고 일반 옵션보다 강합니다.
+    { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '심연 전용. 물리 공격이 크게 오릅니다.' },
+    { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '심연 전용. 마법 공격이 크게 오릅니다.' },
+    { id: 'abyssBreath', name: '심연의 숨', stat: 'lifesteal', kind: 'percent', base: .018, onlyOrigin: 'abyss', description: '심연 전용. 흡혈이 오릅니다 (장비 흡혈 합계 최대 6%p).' },
+    { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', base: .04, onlyOrigin: 'abyss', description: '심연 전용. 방어 관통이 크게 오릅니다.' },
     // 규칙 옵션 (영웅 이상, 장비당 1개)
     { id: 'concuss', name: '뇌진탕', stat: 'stunBonus', kind: 'rule', base: 1, minRarity: 3, description: '기절 지속 +1턴 (합계 최대 +1).' },
     { id: 'binding', name: '속박', stat: 'controlBonus', kind: 'rule', base: 1, minRarity: 3, description: '침묵·감속 지속 +1턴 (합계 최대 +1).' },
@@ -87,7 +94,9 @@ export const ORIGIN_THEMES: Record<string, { name: string; affixes: string[] }> 
     caldera: { name: '검은 화구 제단', affixes: ['venom', 'lingering', 'saturate'] },
     temple: { name: '심해 신전', affixes: ['arcana', 'wellspring', 'runeCore', 'mending'] },
     starSanctum: { name: '별비 성소', affixes: ['echoing', 'reaper', 'concuss'] },
-    abyss: { name: '윤회의 무한 심연', affixes: ['leech', 'piercing', 'reaper', 'bloodPact'] },
+    duskVents: { name: '황혼의 열수구', affixes: ['might', 'arcana', 'piercing', 'berserk', 'reaper'] },
+    ventCathedral: { name: '열수 대성당', affixes: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'] },
+    abyss: { name: '윤회의 무한 심연', affixes: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'] },
 };
 export const THEME_WEIGHT = 4;
 
@@ -126,7 +135,7 @@ export function rollAffixes(rarity: number, power: number, origin: string | unde
     const out = [...keep];
     while (out.length < rarity) {
         const hasRule = out.some(a => a.rule);
-        const pool = AFFIX_POOL.filter(a => !out.some(o => o.id === a.id) && (a.kind !== 'rule' || (!hasRule && rarity >= (a.minRarity || 0))));
+        const pool = AFFIX_POOL.filter(a => !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (a.kind !== 'rule' || (!hasRule && rarity >= (a.minRarity || 0))));
         if (!pool.length) break;
         out.push(rollOption(pickAffix(pool, origin, rng), power, rarity, rng));
     }

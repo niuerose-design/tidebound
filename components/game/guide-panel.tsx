@@ -113,7 +113,7 @@ export function Guide({ s }: { s?: State }) {
                     condition={`집중 사냥 중인 어종을 ${SWARM_UNLOCK[5]}마리 포획하면 ×5, ${SWARM_UNLOCK[100].toLocaleString()}마리 포획하면 ×100, ${SWARM_UNLOCK[500].toLocaleString()}마리 포획하면 ×500.`}
                     limit="적 방어는 늘 한 마리와 같고, 공격은 ×500에서만 490배입니다. 승리 회복은 무리 전체에 한 번이며, 처치 전에 쓰러지거나 규모를 바꾸면 보상이 없습니다. 적의 체력 비례 공격은 한 마리 기준입니다."/>
                 <Rule icon={<Swords size={19}/>} title="던전 반복 · 무한 심연"
-                    effect={`던전은 정해진 횟수 또는 실패할 때까지, 무한 심연은 목표 깊이 또는 실패할 때까지 자동 재도전합니다. 심연은 깊을수록 층당 진주가 늘고 ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파 시 SP 1을 줍니다.`}
+                    effect={`던전은 정해진 횟수 또는 실패할 때까지, 무한 심연은 목표 깊이 또는 실패할 때까지 자동 재도전합니다. 심연은 깊을수록 층당 진주가 늘고 10층마다 첫 돌파 보너스 진주(층 수만큼), ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파 시 SP 1, 30·60·90층 첫 돌파 시 장착 AP 1을 줍니다. 심연 드롭에는 심연 전용 옵션이 붙을 수 있습니다.`}
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장마다 6초 준비 후 체력·마나를 회복합니다."
                     limit={`반복이 끝나거나 실패하면 낚시터에서 자동 낚시를 이어갑니다. 던전 처치 후 회복은 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
