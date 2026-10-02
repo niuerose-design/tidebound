@@ -1,7 +1,7 @@
 import { SKILLS, skillById } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { BALANCE, STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
-import type { Stats, StatusEffects, CombatEvent, CombatHit } from '../types';
+import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit } from '../types';
 export type { CombatEvent, CombatHit } from '../types';
 import { normalizeStats, hitChance } from './stats';
 import { effectiveSkill, signatureScale } from './progression';
@@ -116,6 +116,24 @@ export function actTurn(a: Fighter, b: Fighter, rng: () => number, onAction: (te
         if (p <= 0 || (p < 1 && rng() >= p)) return;
     }
 }
+/**
+ * v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다.
+ * 직접 피해·추가타·지속 피해·반격 어느 것으로도 체력이 1 아래로 내려가지 않습니다. self는 행동한 쪽이 자기 지속 피해·반격을 버틴 경우입니다.
+ */
+function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, self = false) {
+    if (f.hp > 0) return false;
+    const id = f.skills.find(x => skillById(x)?.lastStand), stand = id ? skillById(id)!.lastStand! : undefined;
+    if (!stand) return false;
+    f.effects ??= {};
+    const used = f.effects.lastStand || 0, charges = stand.charges + Math.floor((stand.chargesPerLevel || 0) * (f.mastery?.[id!] || 0));
+    if (used >= charges) return false;
+    f.effects.lastStand = used + 1;
+    const heal = Math.max(0, Math.min(sf.hp - 1, Math.floor(sf.hp * (stand.heal || 0))));
+    f.hp = 1 + heal;
+    ev.endured = { heal, ...(self ? { self } : {}) };
+    notes.push(`無 · 체력 1로 버팀 (${f.effects.lastStand}/${charges})${heal > 0 ? ` · 체력 ${heal} 회복` : ''}`);
+    return true;
+}
 /** Shared PvE/PvP action. Recovery, status, conditional proc, MP, accuracy, defense and crit. */
 export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false) {
     const sa = normalizeStats(a.stats), sb = normalizeStats(b.stats);
@@ -125,6 +143,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const notes: string[] = [];
     const ev: CombatEvent = { actor: a.name, skillName: '기본 공격', damageType: 'physical', hits: [], total: 0, healed: 0, drained: 0, statuses: [] };
     const emit = (text: string) => { events?.push(ev); return text; };
+    // 턴당 체력 회복: 마나처럼 행동 시작 때 되찾습니다(연속·추가 행동 포함).
+    if (sa.hpRegen > 0 && a.hp > 0 && a.hp < sa.hp) { ev.regen = Math.min(sa.hp - a.hp, sa.hpRegen); a.hp += ev.regen; }
     tickImmunity(a.effects);
     if (a.effects.dot) {
         const dot = a.effects.dot;
@@ -137,7 +157,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             delete a.effects.dot;
             grantImmunity(a.effects, 'bleed');
         }
-        if (a.hp <= 0) {
+        if (a.hp <= 0 && !endure(a, sa, notes, ev, true)) {
             ev.defeated = true;
             return emit(`${a.name} · ${notes.join(' · ')} → 쓰러짐`);
         }
@@ -272,21 +292,15 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const statusOnly = !!chosen?.statusOnly;
     const crit = landed && !statusOnly && rng() < sa.crit;
     const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)));
-    // v25 無: 체력 1인 쪽이 無를 장착했고 재사용 대기가 끝났으면 이 행동의 공격을 모두 무효로 합니다.
-    const charges = Math.max(0, ...b.skills.map(id => skillById(id)?.lastStand?.charges || 0));
-    const nullify = damage > 0 && b.hp <= 1 && charges > (b.effects.lastStand || 0);
-    if (nullify) {
-        b.effects.lastStand = (b.effects.lastStand || 0) + 1; ev.nullified = true;
-        const back = Math.floor(sb.hp * Math.max(0, ...b.skills.map(id => skillById(id)?.lastStand?.heal || 0)));
-        if (back > 0) b.hp = Math.min(sb.hp, b.hp + back);
-        notes.push(`無 · 공격 무효 (${b.effects.lastStand}/${charges})${back > 0 ? ` · 체력 ${back} 회복` : ''}`);
-    }
-    const actual = nullify ? 0 : Math.min(b.hp, damage);
+    const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - actual);
+    // v25 無: 쓰러질 피해를 받은 쪽이 無를 장착했으면 체력 1로 버티고, 이 행동의 남은 추가타는 멈춥니다.
+    let stood = endure(b, sb, notes, ev);
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
     if (landed && !statusOnly && sb.thorns > 0) {
         const reflected = Math.min(a.hp, Math.max(1, Math.round(sb.defense * sb.thorns * 100 / (100 + sa.defense * 2))));
         a.hp = Math.max(0, a.hp - reflected);
+        endure(a, sa, notes, ev, true);
         ev.reflected = reflected;
         notes.push(`반격 ${reflected}`);
     }
@@ -358,7 +372,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // Follow-up hits are part of the same action. They use the same hit chance,
     // cannot recursively trigger another follow-up, and are capped in balance.ts.
     const followUps = statusOnly ? 0 : Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
-    for (let i = 0; i < followUps && b.hp > 0 && a.hp > 0 && !nullify; i++) {
+    for (let i = 0; i < followUps && b.hp > 0 && a.hp > 0 && !stood; i++) {
         if (rng() >= hit) {
             ev.hits.push({ kind: 'follow', value: 0, critical: false, miss: true });
             continue;
@@ -368,6 +382,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1)));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
+        if (endure(b, sb, notes, ev)) stood = true;
         ev.hits.push({ kind: 'follow', value: followActual, critical: followCrit, miss: false });
         const followDrain = Math.min(drainLeft, Math.floor(followActual * drainRate));
         drainLeft -= followDrain;
@@ -401,11 +416,12 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             const blast = Math.max(1, Math.round((sa.attack + sa.magic) * (f.base + f.perLevel * levels)));
             const dealt = Math.min(b.hp, blast);
             b.hp = Math.max(0, b.hp - blast);
+            endure(b, sb, notes, ev);
             ev.hits.push({ kind: 'follow', value: dealt, critical: false, miss: false });
             ev.finale = true;
             a.effects.seals = [];
             notes.push(`天 · 일곱 인 해방 ${dealt.toLocaleString()}`);
-            if (b.hp > 0 && !isImmune(b, 'stun')) { b.stun = Math.max(b.stun, f.stun); ev.statuses.push({ id: 'stun', turns: f.stun }); notes.push(`기절 ${f.stun}턴`); }
+            if (b.hp > 0 && !isImmune(b, 'stun')) { b.stun = Math.max(b.stun, f.stun); const own = ev.statuses.find(x => x.id === 'stun' && !x.onSelf); if (own) own.turns = Math.max(own.turns, f.stun); else ev.statuses.push({ id: 'stun', turns: f.stun }); notes.push(`기절 ${f.stun}턴`); }
         }
     }
     ev.skillId = chosen?.id;

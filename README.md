@@ -3,7 +3,7 @@
 ChatGPT Sites에서 시작한 프로젝트를 Next.js + Vercel 배포 구조로 옮긴 저장소입니다.
 
 - 구성: React 19 + TypeScript + Next.js + Tailwind CSS, 저장소는 Neon Postgres(배포) / 로컬 파일(개발)
-- 출발점: ChatGPT Sites 소스 v32(게임 v20.0), 원본 커밋 `df66490`. 원본 README는 `docs/README-original-v32.md`, 원본 파일 목록은 `docs/source-provenance.json`
+- 출발점: ChatGPT Sites 소스 v32(게임 v20.0), 원본 커밋 `df66490`
 
 ## 설치와 실행
 
@@ -43,14 +43,12 @@ pnpm dev               # http://localhost:5173
 | --- | --- |
 | `app/` | 페이지, 게임·랭킹·결투 API. 스타일은 `app/styles/*.css`를 `globals.css`가 순서대로 불러옵니다 |
 | `components/game/` | 화면별 컴포넌트(`*-panel.tsx`), 전투 화면(`battle-*.tsx`), 공용(`shared.tsx`, `confirm-button.tsx`, `panel-props.ts`) |
-| `components/ui/` | 공용 UI 컴포넌트 |
+| `components/ui/` | 실제로 쓰는 shadcn 부품만(대화창·팝오버·진행 막대·사이드바·표·탭·툴팁과 그 의존 부품). 새 부품은 `components.json` 설정으로 추가합니다 |
 | `game/data/` | 물고기·직업·스킬·경제·밸런스 |
 | `game/systems/` | 전투·성장·환생·장비·길드 로직. `engine.ts`는 진입점(act), 턴 진행은 `turn.ts`, 적 등장·보상은 `encounter.ts`, 던전 반복은 `dungeon-run.ts` |
 | `game/systems/actions/` | 행동 처리기: 항해(voyage) · 빌드(build) · 도감(collection) · 장비(items) · 환생(lifecycle) |
 | `game/server/` | 사용자 식별, 서버 저장, 동시 요청 처리 |
 | `public/` | 배경 이미지와 아이콘 |
 | `tests/`, `scripts/` | 테스트, 점검·내보내기 도구. 공용 로더는 `scripts/lib/game-modules.mjs`, 시뮬레이션 도우미는 `scripts/lib/sim.mjs` |
-| `docs/` | 설계 문서, 원본 README, 내보내기 기록 |
-| `vendor/` | 원본 shadcn 스타일과 라이선스 |
 
-물고기·낚시터는 `game/data/world.ts`, 직업은 `game/data/classes.ts`, 스킬은 `game/data/skills.ts`, 기본 밸런스는 `game/data/balance.ts`에서 수정합니다. 자세한 편집 지도는 `docs/README-original-v32.md`를 참고하세요. 원본 README에는 과거 밸런스 설명이 남아 있으므로 실제 소스 값이 우선합니다.
+물고기·낚시터는 `game/data/world.ts`, 직업은 `game/data/classes.ts`, 스킬은 `game/data/skills.ts`, 기본 밸런스는 `game/data/balance.ts`에서 수정합니다. 패치 기록은 `game/data/update-log.ts`에 최근 큰 패치만 남깁니다.

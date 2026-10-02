@@ -94,6 +94,7 @@
 .stat-breakdown .stat-breakdown-total { border-top: 1px solid var(--border); padding-top: 5px; margin-top: 2px; }
 .stat-breakdown .stat-breakdown-total b { color: var(--gold); }
 .stat-breakdown-hint { margin-top: 10px; }
+.stat-breakdown .stat-note { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: #96b0b3; }
 /* 스킬 상태 구분: 습득 / 다른 직업 사용 / 장착, 성장 구성 */
 .skill-state-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px; }
 .skill-state-row > span { display: flex; flex-direction: column; gap: 2px; font-size: 12px; padding: 6px 8px; border-radius: 5px; border: 1px solid var(--border); color: #7f9a9c; line-height: 1.35; }

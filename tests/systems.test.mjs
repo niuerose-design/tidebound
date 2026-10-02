@@ -58,3 +58,13 @@ test('v24.1 immunity: after a stun wears off the target cannot be stunned again 
  const d = { name: 'D', stats: st, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: { immune: { stun: 1 } } };
  assert.doesNotMatch(strike(c, d, () => 0), /물보라/);
 });
+test('HP regen: constitution adds per-action HP recovery that never exceeds max HP', () => {
+    const s = newState(0); const before = stats(s).hpRegen; s.attributes.vit += 10;
+    assert.equal(stats(s).hpRegen, before + 3, '체질 1마다 +0.3, 소수점 버림');
+    const st = { hp: 1000, attack: 0, magic: 0, defense: 0, resist: 0, crit: 0, mana: 100, manaRegen: 0, hpRegen: 50 };
+    const a = { name: 'A', stats: st, hp: 100, skills: [], cooldowns: {}, stun: 0, mana: 100, effects: {} };
+    const b = { name: 'B', stats: { ...st, hpRegen: 0 }, hp: 1000, skills: [], cooldowns: {}, stun: 0, mana: 100, effects: {} };
+    const events = []; strike(a, b, () => 0, events); assert.equal(a.hp, 150); assert.equal(events[0].regen, 50);
+    a.hp = 980; strike(a, b, () => 0); assert.equal(a.hp, 1000, 'capped at max HP');
+    const bHp = b.hp; strike(b, a, () => 0); assert.equal(b.hp, bHp, 'no regen without the stat');
+});

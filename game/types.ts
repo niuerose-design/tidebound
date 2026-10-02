@@ -17,6 +17,8 @@ export type Stats = {
     speed?: number;
     mana?: number;
     manaRegen?: number;
+    /** 턴당 체력 회복. 행동할 때마다(연속·추가 행동 포함) 이만큼 회복합니다. 체질로 오릅니다. */
+    hpRegen?: number;
     penetration?: number;
     lifesteal?: number;
     /** 육중 조화의 원시 피해. 직접 배분한 여섯 능력치로만 계산하며 장비·버프는 제외. */
@@ -145,8 +147,8 @@ export type Skill = {
     recoil?: number;
     /** v25 자기 상태이상: 쓰고 나면 자신이 기절·감속·약화됩니다. waivedBy 기술을 장착하면 생략. */
     selfEffect?: { status: 'stun' | 'slow' | 'weaken'; turns: number; waivedBy?: string };
-    /** v25 無: 체력 1일 때 받는 공격(그 행동 전체)을 전투당 charges번까지 무효로 합니다. */
-    lastStand?: { charges: number; heal?: number };
+    /** v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다. */
+    lastStand?: { charges: number; chargesPerLevel?: number; heal?: number };
     /** v25 일곱 글자: 쓰면 이번 전투의 인(印)을 하나 새깁니다. */
     seal?: boolean;
     /** v25 魂: 이번 전투에 새긴 인 1개마다 피해 +sealPower. */
@@ -232,8 +234,10 @@ export type CombatEvent = {
     finale?: boolean;
     /** v25: 타임머신으로 모두 회복. */
     restored?: boolean;
-    /** v25: 無로 막은 공격. */
-    nullified?: boolean;
+    /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */
+    endured?: { heal: number; self?: boolean };
+    /** 행동 시작 때 턴당 체력 회복으로 되찾은 체력(있을 때만). */
+    regen?: number;
     dot?: { name: string; value: number }; reflected?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
     /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
     chain?: number;
