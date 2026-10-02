@@ -7,6 +7,7 @@ import { skillById } from '../../data/skills';
 import { emptyAttributes } from '../../data/progression';
 import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from '../progression';
 import type { ActionHandlers } from './types';
+import { companionUnlocked, companionState, companionStageOpen, type Companion } from '../companion';
 import { addLog, endRun } from '../state';
 
 export const buildActions: ActionHandlers = {
@@ -134,6 +135,19 @@ export const buildActions: ActionHandlers = {
             throw Error('현재 직업·레벨·AP로 불러올 수 없는 편성입니다.');
         s.skills = [...preset.skills];
         clampVitals(s);
+    },
+    /** v25.6 분신 설정: id = job·stage·skills·toggle, value = 직업 id·낚시터 id·스킬 id 목록(쉼표)·on/off. */
+    companion(s, { id, a }) {
+        if (!companionUnlocked(s)) throw Error('두 번째 낚싯대 연구가 필요합니다.');
+        const c: Companion = s.companion ?? { job: 'fisher', stage: 'brook', skills: [], running: false, carry: 0, masteryCarry: 0, kills: 0, gold: 0, mastery: 0 };
+        const value = String(a.value || '');
+        if (id === 'job') { if (!jobById(value) || !s.unlockedJobs.includes(value)) throw Error('전직해 본 직업만 분신이 맡을 수 있습니다.'); c.job = value; c.skills = c.skills.filter(x => canUse(companionState(s, c), x)); }
+        else if (id === 'stage') { if (!companionStageOpen(s, value)) throw Error('열린 낚시터만 고를 수 있습니다.'); c.stage = value; }
+        else if (id === 'skills') { const ids = [...new Set(value.split(',').map(x => x.trim()).filter(Boolean))]; if (!validLoadout(companionState(s, { ...c, skills: [] }), ids)) throw Error('분신이 쓸 수 없는 스킬이 있거나 AP를 넘습니다.'); c.skills = ids; }
+        else if (id === 'toggle') c.running = value === 'on';
+        else throw Error('분신 설정을 확인하세요.');
+        delete c.rate;
+        s.companion = c;
     },
     /** v25.3 편성 전체를 한 번에: 끌어서 순서를 바꾸거나 추천 편성을 적용합니다. 모두 사용 가능하고 AP 안이어야 합니다. */
     setSkills(s, { a }) {

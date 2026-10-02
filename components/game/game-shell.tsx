@@ -3,7 +3,7 @@ import { Skills } from './skills-panel';
 import { Classes } from './classes-panel';
 import { VoyageLog } from './guidance-panels';
 import { useEffect, useState } from 'react';
-import { Anchor, BookOpen, Check, ChevronRight, ClipboardList, Compass, HelpCircle, Map, RefreshCw, ShoppingBag, Swords, Target, Trophy, Users, Waves, Zap, ScrollText } from 'lucide-react';
+import { Anchor, BookOpen, Check, ChevronRight, ClipboardList, Compass, Copy, HelpCircle, Map, RefreshCw, ShoppingBag, Swords, Target, Trophy, Users, Waves, Zap, ScrollText } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster, toast } from 'sonner';
 import { useGame } from './use-game';
@@ -14,6 +14,7 @@ import { LoginScreen } from './login-screen';
 import { Inventory } from './inventory-panel';
 import { Shop } from './shop-panel';
 import { Rebirth } from './rebirth-panel';
+import { CompanionPanel } from './companion-panel';
 import { Stages } from './stages-panel';
 import { Dungeons } from './dungeons-panel';
 import { Rankings } from './rankings-panel';
@@ -23,7 +24,7 @@ import { SettingsDialog } from './settings-dialog';
 import { Navigation } from './navigation';
 import { BattleView } from './battle-view';
 import { MobileTabBar } from './mobile-tab-bar';
-export const NAV = [{ label: '항해', items: [{ id: 'battle', name: '자동 낚시', Icon: Anchor }, { id: 'stages', name: '낚시터', Icon: Map }, { id: 'dungeons', name: '던전 탐험', Icon: Compass }] }, { label: '낚시꾼', items: [{ id: 'character', name: '능력치 · 빌드', Icon: Target }, { id: 'shop', name: '항구 상점', Icon: ShoppingBag }, { id: 'inventory', name: '장비 보관함', Icon: ShoppingBag }, { id: 'skills', name: '스킬', Icon: Zap }, { id: 'classes', name: '전직', Icon: Swords }, { id: 'rebirth', name: '환생', Icon: RefreshCw }] }, { label: '기록과 명예', items: [{ id: 'book', name: '물고기 도감', Icon: BookOpen }, { id: 'voyage', name: '항해 기록', Icon: ScrollText }, { id: 'guild', name: '길드', Icon: Users }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy }, { id: 'updates', name: '업데이트 내역', Icon: ClipboardList }, { id: 'help', name: '도움말', Icon: HelpCircle }] }];
+export const NAV = [{ label: '항해', items: [{ id: 'battle', name: '자동 낚시', Icon: Anchor }, { id: 'stages', name: '낚시터', Icon: Map }, { id: 'dungeons', name: '던전 탐험', Icon: Compass }] }, { label: '낚시꾼', items: [{ id: 'character', name: '능력치 · 빌드', Icon: Target }, { id: 'shop', name: '항구 상점', Icon: ShoppingBag }, { id: 'inventory', name: '장비 보관함', Icon: ShoppingBag }, { id: 'skills', name: '스킬', Icon: Zap }, { id: 'classes', name: '전직', Icon: Swords }, { id: 'rebirth', name: '환생', Icon: RefreshCw }, { id: 'companion', name: '분신 낚시꾼', Icon: Copy }] }, { label: '기록과 명예', items: [{ id: 'book', name: '물고기 도감', Icon: BookOpen }, { id: 'voyage', name: '항해 기록', Icon: ScrollText }, { id: 'guild', name: '길드', Icon: Users }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy }, { id: 'updates', name: '업데이트 내역', Icon: ClipboardList }, { id: 'help', name: '도움말', Icon: HelpCircle }] }];
 
 export default function GameShell() {
     const game = useGame();
@@ -53,7 +54,7 @@ export default function GameShell() {
         <button className="primary" onClick={() => send({ type: 'sync' })}>다시 연결</button></div> : <>
         <div className={`workspace ${view === 'battle' ? 'battle-workspace' : ''}`}>
         <main className="main-content">{error && <div className="error-box">{error}<button className="text-button" onClick={() => send({ type: 'sync' })}>다시 시도</button>
-            </div>}{view === 'guild' && <Guild {...props!}/>}{view === 'updates' && <UpdateLog/>}{view === 'help' && <Guide s={props?.s}/>}{view === 'voyage' && <VoyageLog {...props!}/>}{view === 'battle' && <BattleView {...props!} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView} onLogout={game.logout}/>}{view === 'character' && <Character {...props!}/>}{view === 'stages' && <Stages {...props!}/>}{view === 'dungeons' && <Dungeons {...props!}/>}{view === 'shop' && <Shop {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{view === 'skills' && <Skills {...props!}/>}{view === 'classes' && <Classes {...props!}/>}{view === 'rebirth' && <Rebirth {...props!}/>}{view === 'book' && <Collection {...props!}/>}{view === 'ranking' && <Rankings {...props!} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} abyss={game.abyss} loadAbyss={game.loadAbyss} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
+            </div>}{view === 'guild' && <Guild {...props!}/>}{view === 'updates' && <UpdateLog/>}{view === 'help' && <Guide s={props?.s}/>}{view === 'voyage' && <VoyageLog {...props!}/>}{view === 'battle' && <BattleView {...props!} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView} onLogout={game.logout}/>}{view === 'character' && <Character {...props!}/>}{view === 'stages' && <Stages {...props!}/>}{view === 'dungeons' && <Dungeons {...props!}/>}{view === 'shop' && <Shop {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{view === 'skills' && <Skills {...props!}/>}{view === 'classes' && <Classes {...props!}/>}{view === 'rebirth' && <Rebirth {...props!}/>}{view === 'companion' && <CompanionPanel {...props!}/>}{view === 'book' && <Collection {...props!}/>}{view === 'ranking' && <Rankings {...props!} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} abyss={game.abyss} loadAbyss={game.loadAbyss} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
         <MobileTabBar view={view} setView={setView}/>
         <footer className="app-footer">
         <span>TIDEBOUND <span className="muted">/</span> 심연의 낚시꾼</span>
