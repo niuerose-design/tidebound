@@ -65,6 +65,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     add('hpRegen', 'attributes', v.vit * E.vit.hpRegen);
     set('harmony', 'attributes', harmonyPower(s));
     set('guardAffinity', 'job', guardAffinity(jobFactor(j, 'defense'))); set('healFocus', 'job', j.healer ? 1 : 0); set('arcaneStrike', 'job', arcaneStrikeChance({ tier: j.tier, magic: jobFactor(j, 'magic'), attack: jobFactor(j, 'attack') }));
+    if (a.arcaneStrike > 0) add('arcaneRatioBonus', 'job', SKILL_FORMULA.arcaneRatioByTier[Math.min(j.tier, SKILL_FORMULA.arcaneRatioByTier.length - 1)] || 0);
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
     rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus);
     set('rebirthBonus', 'research', s.permanent.pearl || 0);

@@ -22,7 +22,7 @@ for(const sk of SKILLS.filter(x=>x.type==='active')){
 const hook=effectiveSkill(SKILLS.find(x=>x.id==='hook'),5);
 const fist=effectiveSkill(SKILLS.find(x=>x.id==='wakeFist'),1);
 assert(hook.multiplier<fist.multiplier&&hook.chance<fist.chance&&hook.cooldown>=fist.cooldown);
-const fresh=newState(0),base={...stats(fresh),hp:100,mana:50,manaRegen:0,lifesteal:0};
+const fresh=newState(0),base={...stats(fresh),hp:100,mana:50,manaRegen:0,hpRegen:0,lifesteal:0};
 const fighter=(id,mana=50)=>({name:'test',stats:base,hp:20,skills:[id],cooldowns:{},stun:0,mana,effects:{}});
 const target=()=>({...fighter(''),hp:1000,stats:{...base,hp:1000}});
 const healer=fighter('breath');strike(healer,target(),()=>0);assert.equal(healer.hp,30);

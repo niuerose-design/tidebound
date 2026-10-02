@@ -13,14 +13,16 @@ for(const sk of SKILLS.filter(x=>x.type==='active')){
  assert(ACTIVE_SKILL_BALANCE[sk.id],`Missing balance row: ${sk.id}`);
  for(let level=0;level<=maxSkillLevel(sk);level++){
   const value=effectiveSkill(sk,level+1);
-  if(sk.damageType==='magic'||sk.damageType==='split'){assert(value.manaCost>0);assert(value.chance>=.45);}
-  else {assert.equal(value.manaCost,0);assert(value.chance<=.381);}
+  // 상태이상 전용 기술은 발동률을 낮게 둡니다(check-progression-pace.mjs와 같은 규칙).
+  if(sk.statusOnly){assert(value.chance<=.35,sk.id);if(sk.damageType==='magic')assert(value.manaCost>0,sk.id);}
+  else if(sk.damageType==='magic'||sk.damageType==='split'){assert(value.manaCost>0,sk.id);assert(value.chance>=.45,sk.id);}
+  else {assert.equal(value.manaCost,0,sk.id);assert(value.chance<=.381,sk.id);}
  }
 }
 const hook=effectiveSkill(SKILLS.find(x=>x.id==='hook'),5);
 const fist=effectiveSkill(SKILLS.find(x=>x.id==='wakeFist'),1);
 assert(hook.multiplier<fist.multiplier&&hook.chance<fist.chance&&hook.cooldown>=fist.cooldown);
-const fresh=newState(0),base={...stats(fresh),hp:100,mana:50,manaRegen:0,lifesteal:0};
+const fresh=newState(0),base={...stats(fresh),hp:100,mana:50,manaRegen:0,hpRegen:0,lifesteal:0};
 const fighter=(id,mana=50)=>({name:'test',stats:base,hp:20,skills:[id],cooldowns:{},stun:0,mana,effects:{}});
 const target=()=>({...fighter(''),hp:1000,stats:{...base,hp:1000}});
 const healer=fighter('breath');strike(healer,target(),()=>0);assert.equal(healer.hp,30);

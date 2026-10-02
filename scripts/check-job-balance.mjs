@@ -52,7 +52,7 @@ function fight(st, s, foeId, tier) {
     let wins = 0, turns = 0, hpLeft = 0;
     for (let seed = 1; seed <= SEEDS; seed++) {
         const a = { name: 'player', stats: st, hp: st.hp, mana: st.mana, skills: s.skills, cooldowns: {}, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice };
-        const b = { name: 'foe', stats: foe, hp: foe.hp, mana: 100, skills: profile(foeId).skills, cooldowns: {}, stun: 0, effects: {} };
+        const b = { name: 'foe', stats: foe, hp: foe.hp, mana: 100, skills: profile(foeId).skills, magicBasic: profile(foeId).magicBasic, cooldowns: {}, stun: 0, effects: {} };
         const rng = random(seed); let n = 0;
         while (a.hp > 0 && b.hp > 0 && n < MAX_TURNS) { n++; const first = fighterSpeed(a) >= fighterSpeed(b) ? a : b, second = first === a ? b : a; strike(first, second, rng); if (first.hp > 0 && second.hp > 0) strike(second, first, rng); }
         const won = a.hp > 0 && b.hp <= 0; wins += won ? 1 : 0; turns += n; hpLeft += Math.max(0, a.hp) / st.hp;

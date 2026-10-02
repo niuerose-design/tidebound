@@ -13,9 +13,10 @@ export const PROGRESSION = {
 };
 /** 능력치 1포인트당 효과. 전투 계산(stats.ts)과 능력치 설명이 모두 이 값을 씁니다. */
 export const ATTRIBUTE_EFFECTS = {
-    str: { attack: 2, defense: .25 },
-    dex: { accuracy: .0025, evasion: .0015, speed: .2 },
-    int: { magic: 2.4, mana: 1 },
+    // v25.2: 기민의 속도를 줄이고 근력·지능의 공격을 올렸습니다(기민 +20이 근력 +20보다 처치 효율이 2.5배 높던 편중 완화).
+    str: { attack: 2.3, defense: .25 },
+    dex: { accuracy: .0025, evasion: .0015, speed: .15 },
+    int: { magic: 2.8, mana: 1 },
     vit: { hp: 9, defense: .6, hpRegen: .3 },
     wis: { resist: 1.2, mana: 3, manaRegen: .25 },
     luk: { crit: .003, critDamage: .005, dropBonus: .001, goldBonus: .002 },

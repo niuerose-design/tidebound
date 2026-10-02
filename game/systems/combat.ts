@@ -30,6 +30,8 @@ export type Fighter = {
     gold?: number;
     /** v24.2 사냥감 연구 대상 여부(보스·지정 어종). */
     prey?: boolean;
+    /** v25.2 기본 공격이 마법 피해(마력 생물). 마법 공격 수치로 치고 상대 마법 방어로 막습니다. */
+    magicBasic?: boolean;
 };
 type DurationStatus = 'weaken' | 'silence' | 'slow' | 'haste';
 type ImmuneStatus = keyof NonNullable<StatusEffects['immune']>;
@@ -256,7 +258,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const hit = chosen?.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed });
     const label = chosen?.name || (arcane ? '마력 평타' : '기본 공격');
     const landed = rng() < hit;
-    const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack;
+    const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack || !chosen && !!a.magicBasic;
     const split = chosen?.damageType === 'split';
     // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
     let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : magical ? sa.magic : sa.attack;
