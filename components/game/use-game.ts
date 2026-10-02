@@ -166,6 +166,17 @@ export function useGame() {
         setError('');
         send({ type: 'sync' });
     }, [send]);
+    /** v25.6 캐릭터 슬롯 전환. 서버가 해금을 확인하고 쿠키를 바꾸면 그 슬롯의 세이브를 불러옵니다. */
+    const switchSlot = useCallback(async (slot: number) => {
+        const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'slot', slot }) });
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        if (!res.ok) throw Error(data.error || '슬롯을 바꾸지 못했습니다.');
+        stateRef.current = null;
+        setState(null);
+        replay.reset();
+        setError('');
+        send({ type: 'sync' });
+    }, [replay, send]);
     const logout = useCallback(async () => {
         await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }).catch(() => { });
         stateRef.current = null;
@@ -173,5 +184,5 @@ export function useGame() {
         replay.reset();
         setNeedsLogin(true);
     }, [replay]);
-    return { state: view, error, busy, saved, send, rows, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout };
+    return { state: view, error, busy, saved, send, rows, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot };
 }

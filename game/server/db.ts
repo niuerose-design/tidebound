@@ -26,7 +26,11 @@ export interface Storage {
     postChat(row: Omit<ChatRow, 'id'>): Promise<ChatRow>;
     /** 계정의 마지막 메시지 시각(없으면 0). 도배 제한용. */
     lastChatAt(accountId: string): Promise<number>;
+    /** v25.6 캐릭터 슬롯 요약(계정 보너스 계산용). */
+    upsertSlot(row: SlotRow): Promise<void>;
+    listSlots(accountId: string): Promise<SlotRow[]>;
 }
+export type SlotRow = { account_id: string; slot: number; summary: string; updated_at: number };
 
 // ---------- Neon Postgres (HTTP) ----------
 const SCHEMA = [
@@ -38,7 +42,10 @@ const SCHEMA = [
     'CREATE TABLE IF NOT EXISTS chat (id BIGSERIAL PRIMARY KEY, channel TEXT NOT NULL, account_id TEXT NOT NULL, name TEXT NOT NULL, text TEXT NOT NULL, created_at BIGINT NOT NULL)',
     'CREATE INDEX IF NOT EXISTS chat_channel_id_idx ON chat (channel, id)',
     'CREATE INDEX IF NOT EXISTS chat_account_id_idx ON chat (account_id, id)',
+    'CREATE TABLE IF NOT EXISTS slots (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, slot INTEGER NOT NULL, summary TEXT NOT NULL, updated_at BIGINT NOT NULL)',
+    'CREATE INDEX IF NOT EXISTS slots_account_idx ON slots (account_id)',
 ];
+const slotRowId = (accountId: string, slot: number) => `${accountId}#${slot}`;
 function neonStorage(url: string): Storage {
     // Neon 서버리스 드라이버와 같은 규칙: 호스트의 첫 레이블을 api.로 바꾼 주소의 /sql 에 쿼리를 보냅니다.
     const endpoint = `https://${new URL(url.replace(/^postgres(ql)?:/, 'https:')).hostname.replace(/^[^.]+\./, 'api.')}/sql`;
@@ -80,11 +87,13 @@ function neonStorage(url: string): Storage {
             return { ...row, id };
         },
         async lastChatAt(accountId) { const { rows } = await q<{ created_at: string | number }>('SELECT created_at FROM chat WHERE account_id=$1 ORDER BY id DESC LIMIT 1', [accountId]); return rows[0] ? Number(rows[0].created_at) : 0; },
+        async upsertSlot(r) { await q('INSERT INTO slots (id,account_id,slot,summary,updated_at) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (id) DO UPDATE SET summary=EXCLUDED.summary, updated_at=EXCLUDED.updated_at', [slotRowId(r.account_id, r.slot), r.account_id, r.slot, r.summary, r.updated_at]); },
+        async listSlots(accountId) { const { rows } = await q<SlotRow>('SELECT account_id,slot,summary,updated_at FROM slots WHERE account_id=$1 ORDER BY slot', [accountId]); return rows.map(r => ({ ...r, slot: Number(r.slot), updated_at: Number(r.updated_at) })); },
     };
 }
 
 // ---------- 개발용 로컬 파일 ----------
-type FileDb = { players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; chat?: ChatRow[]; chatSeq?: number };
+type FileDb = { players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; chat?: ChatRow[]; chatSeq?: number };
 function fileStorage(): Storage {
     const path = process.env.TIDEBOUND_DEV_DB || '.data/dev-db.json';
     let chain: Promise<unknown> = Promise.resolve();
@@ -115,6 +124,8 @@ function fileStorage(): Storage {
         listChat: (channel, afterId, limit) => tx(db => (db.chat || []).filter(r => r.channel === channel && r.id > afterId).slice(-limit)),
         postChat: row => tx(db => { db.chat ??= []; db.chatSeq = (db.chatSeq || 0) + 1; const saved = { ...row, id: db.chatSeq }; db.chat.push(saved); const mine = db.chat.filter(r => r.channel === row.channel); if (mine.length > CHAT_KEEP) { const cut = mine[mine.length - CHAT_KEEP].id; db.chat = db.chat.filter(r => r.channel !== row.channel || r.id >= cut); } return saved; }),
         lastChatAt: accountId => tx(db => { const mine = (db.chat || []).filter(r => r.account_id === accountId); return mine.length ? mine[mine.length - 1].created_at : 0; }),
+        upsertSlot: r => tx(db => { (db.slots ??= {})[slotRowId(r.account_id, r.slot)] = r; }),
+        listSlots: accountId => tx(db => Object.values(db.slots || {}).filter(r => r.account_id === accountId).sort((a, b) => a.slot - b.slot)),
     };
 }
 

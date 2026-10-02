@@ -218,3 +218,24 @@ test('v25.6 focus cards change exp, gold and mastery for one life; weekly abyss 
     recordAbyssDepth(w, 3, mon); assert.equal(w.abyssWeek.key, '2026-W41'); assert.equal(w.abyssWeek.best, 3);
     assert.deepEqual([1, 2, 3, 10, 50, 51].map(abyssWeeklyPearls), [30, 20, 15, 8, 3, 1]);
 });
+
+const { mergeSlots, slotUnlocked, accountExpGold, accountAP, accountPower, accountMasteryTwentieths, accountCrit, accountBonusRows } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/account');
+const { apCapacity } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
+const { researchMastery } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/mastery');
+test('v25.6 account bonuses: exp/gold +10% per account rebirth (cap 30), AP per 5 mastered union, abyss power, species mastery, boss crit; slots unlock at 1 / 5 rebirths', () => {
+    const s = newState(0), base = stats(s), ap = apCapacity(s), run = researchMastery(s, 100).total;
+    assert.equal(accountExpGold(s), 0); assert.equal(accountAP(s), 0); assert.equal(slotUnlocked(s.account, 2), false, 'no cache → only slot 1');
+    const slot = (n, over) => ({ slot: n, name: `n${n}`, job: 'novice', level: 1, rebirths: 0, mastered: [], species: [], bossKills: 0, abyssBest: 0, updatedAt: 0, ...over });
+    const merged = mergeSlots(1, [slot(1, { rebirths: 3, mastered: ['a', 'b', 'c'], species: ['x', 'y'], bossKills: 150, abyssBest: 25 }), slot(2, { rebirths: 2, mastered: ['c', 'd', 'e', 'f'], species: ['y', 'z', 'w'], bossKills: 60, abyssBest: 40 })], 5);
+    assert.deepEqual([merged.rebirths, merged.mastered, merged.species, merged.bossKills, merged.abyssBest], [5, 6, 4, 210, 40], 'sum, union, union, sum, max');
+    assert.equal(slotUnlocked(merged, 2), true); assert.equal(slotUnlocked(merged, 3), true); assert.equal(slotUnlocked({ rebirths: 4, slots: [slot(1, { rebirths: 4 })] }, 3), false); assert.equal(slotUnlocked(merged, 4), false);
+    s.account = merged; const a = stats(s);
+    assert.ok(Math.abs(a.expBonus - base.expBonus - .5) < 1e-9 && Math.abs(a.goldBonus - base.goldBonus - .5) < 1e-9, '5 rebirths → exp/gold +50%');
+    assert.equal(apCapacity(s), ap + 1, '6 mastered → AP +1'); assert.equal(accountPower(s), .04); assert.ok(a.attack > base.attack && a.hp > base.hp && a.attack / base.attack < 1.05 && a.hp / base.hp < 1.05, 'abyss 40 → about +4% before flat terms and rounding');
+    assert.equal(accountCrit(s), .01); assert.ok(Math.abs(a.crit - base.crit - .01) < 1e-9, '210 bosses → crit +1%p'); assert.equal(accountMasteryTwentieths(s), 0, '4 species → no mastery bonus');
+    s.account = { ...merged, rebirths: 99, mastered: 100, species: 100, bossKills: 100000, abyssBest: 9999 };
+    assert.equal(accountExpGold(s), 3); assert.equal(accountAP(s), 6); assert.equal(accountPower(s), .1); assert.equal(accountMasteryTwentieths(s), 7); assert.equal(accountCrit(s), .05);
+    s.masteryCarry = 0; assert.equal(researchMastery(s, 100).total, run + 35, '7 twentieths → mastery +35%');
+    assert.ok(accountBonusRows(s).every(r => r.next === '최대' || /최대/.test(r.next)), 'all rows show the cap');
+    const t = newState(0); t.account = merged; t.level = 999; act(t, { type: 'rebirth' }, 0); assert.ok(t.rebirths === 1 && t.account === merged, 'account cache survives rebirth');
+});

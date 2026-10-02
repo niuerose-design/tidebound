@@ -256,3 +256,16 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 @media (max-width: 767px) { .goal-boards { grid-template-columns:1fr; } }
 .voyage-entry.achievement.claimable { border-left:3px solid #e8d39a; box-shadow:0 0 0 1px #e8d39a33 inset; }
 .voyage-section .section-title .primary.small { margin-left:auto; margin-right:12px; }
+/* v25.6 캐릭터 슬롯 · 계정 보너스 */
+.slot-section { margin-top:14px; padding-top:12px; border-top:1px solid #9ab4b522; }
+.slot-section .section-title { display:grid; gap:4px; } .slot-section .section-title h3 { font-size:15px; margin:0; } .slot-section .section-title span { font-size:12px; color:#a5bfb1; line-height:1.6; }
+.slot-list { list-style:none; margin:10px 0 0; padding:0; display:grid; gap:8px; }
+.slot-list li { display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:#101c20; }
+.slot-list li.current { border-color:#d5b36c; background:#223329; } .slot-list li.locked { opacity:.6; }
+.slot-list li > div { flex:1; display:grid; gap:2px; } .slot-list strong { font-size:14px; } .slot-list small { font-size:12px; color:#9bb3b0; }
+.slot-index { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; background:#1a2d33; color:#c5d8d2; font-weight:700; font-size:13px; }
+.slot-badge { font-size:12px; color:#e8d39a; white-space:nowrap; }
+.account-rows { list-style:none; margin:12px 0 0; padding:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+.account-rows li { display:grid; gap:4px; padding:12px 14px; border:1px solid var(--border); border-radius:8px; background:#101c20; }
+.account-rows li > div { display:flex; justify-content:space-between; align-items:baseline; gap:8px; } .account-rows strong { font-size:13px; color:#c5d8d2; }
+.account-rows b { font-size:14px; color:#a4e9ba; } .account-rows small { font-size:12px; color:#9bb3b0; }

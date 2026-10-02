@@ -18,6 +18,7 @@ import { VOW_IDS, VOW_NAMES, vowUnlocked, vowBoost, anchorPayout, breathBonus, r
 import { STAGES } from '@/game/data/world';
 import { JOB_TREES } from '@/game/data/classes';
 import { BonusList } from './inventory-panel';
+import { accountBonusRows, SLOT_COUNT, slotUnlocked } from '@/game/data/account';
 /** 진주 연구 카드: 현재 → 다음 효과, 잠긴 연구는 해금 환생 횟수를 보여줍니다. */
 function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a: Action) => void; busy: boolean }) {
     const rank = s.permanent[r.id] || 0, cost = researchCost(r.id, rank), unlocked = researchUnlocked(s.rebirths, r), maxed = rank >= r.max;
@@ -64,6 +65,14 @@ function FocusPanel({ s, send, busy }: { s: State; send: (a: Action) => void; bu
         <p className="footnote">카드는 한 생에 하나이고, 고르지 않으면 평소처럼 삽니다. 예약은 바꾸기 전까지 이후 환생에도 유지됩니다.</p>
     </section>;
 }
+/** v25.6 계정 보너스: 모든 캐릭터 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. */
+function AccountPanel({ s }: { s: State }) {
+    const rows = accountBonusRows(s), slots = s.account?.slots || [], openSlots = Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).filter(n => slotUnlocked(s.account, n)).length;
+    return <section className="panel vow-panel account-panel">
+        <div className="section-title"><h2>계정 보너스</h2><span>캐릭터 슬롯 {slots.length || 1}/{openSlots}개 사용 중 · 모든 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. 슬롯은 설정(톱니바퀴)에서 바꿉니다.</span></div>
+        <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}</ul>
+    </section>;
+}
 /** 환생 화면의 서약: 이번 생 서약과 잠든 닻 진행, 다음 생 서약 예약. */
 function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
     const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), seal = anchorSeal(s), now = s.vows, next = s.nextVows || {};
@@ -108,6 +117,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         {tab === 'prepare' && <>
             <GrowthGoals s={s} send={send} busy={busy}/>
             <FocusPanel s={s} send={send} busy={busy}/>
+            <AccountPanel s={s}/>
             <VowPanel s={s} send={send} busy={busy}/>
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>

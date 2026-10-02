@@ -3,8 +3,12 @@ import { Settings2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import type { State, Action } from '@/game/types';
 import { offlineCapSeconds, researchRank } from '@/game/data/economy';
-export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setName, onLogout }: {
+import { useState } from 'react';
+import { SLOT_COUNT, accountSlot, slotUnlocked, slotUnlockText } from '@/game/data/account';
+import { jobById } from '@/game/data/classes';
+export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setName, onLogout, onSwitchSlot }: {
     onLogout?: () => void;
+    onSwitchSlot?: (slot: number) => Promise<void>;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     s: State | null;
@@ -13,6 +17,15 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
     name: string;
     setName: (value: string) => void;
 }) {
+    const [slotError, setSlotError] = useState(''), [switching, setSwitching] = useState(false);
+    const current = s ? accountSlot(s) : 1, slots = s?.account?.slots || [];
+    const pick = async (slot: number) => {
+        if (!onSwitchSlot) return;
+        setSwitching(true); setSlotError('');
+        try { await onSwitchSlot(slot); onOpenChange(false); }
+        catch (e) { setSlotError(e instanceof Error ? e.message : '슬롯을 바꾸지 못했습니다.'); }
+        finally { setSwitching(false); }
+    };
     return <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogTrigger asChild>
             <button className="icon-button" aria-label="설정과 도움말"><Settings2 size={19}/></button>
@@ -30,6 +43,18 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
             {s && researchRank(s, 'sortingNet') > 0 && <div className="setting-toggle">
                 <div><strong>선별의 그물 자동 판매</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '희귀 이하' : '일반'} 등급 드롭을 바로 팝니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
                 <button className={s.autoSell ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoSell} onClick={() => send({ type: 'autoSell', value: s.autoSell ? 'off' : 'on' })}>{s.autoSell ? '켜짐' : '꺼짐'}</button>
+            </div>}
+            {s && onSwitchSlot && <div className="slot-section">
+                <div className="section-title"><h3>캐릭터 슬롯</h3><span>슬롯마다 다른 낚시꾼을 키웁니다. 모든 슬롯의 기록을 합친 계정 보너스가 각 캐릭터에 적용되고, 쉬는 슬롯은 다음에 들어올 때 부재중 정산을 받습니다.</span></div>
+                <ul className="slot-list">{Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map(slot => {
+                    const info = slot === current ? { name: s.name, job: s.job, level: s.level, rebirths: s.rebirths } : slots.find(x => x.slot === slot);
+                    const open = slotUnlocked(s.account, slot), job = info ? jobById(info.job)?.name || info.job : '';
+                    return <li key={slot} className={slot === current ? 'current' : open ? '' : 'locked'}>
+                        <span className="slot-index">{slot}</span>
+                        <div>{info ? <><strong>{info.name}</strong><small>Lv.{info.level} {job} · 환생 {info.rebirths}회</small></> : <><strong>{open ? '새 낚시꾼' : '잠김'}</strong><small>{open ? '처음부터 새로 시작합니다' : slotUnlockText(slot)}</small></>}</div>
+                        {slot === current ? <span className="slot-badge">플레이 중</span> : <button className="secondary" disabled={busy || switching || !open} onClick={() => pick(slot)}>{info ? '이어하기' : '시작'}</button>}
+                    </li>; })}</ul>
+                {slotError && <p className="login-error" role="alert">{slotError}</p>}
             </div>}
             <div className="help-copy">
                 <h3>항해 안내</h3>

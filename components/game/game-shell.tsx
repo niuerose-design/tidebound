@@ -45,7 +45,7 @@ export default function GameShell() {
     <div className="app-body">
     {view !== 'battle' && <header className="topbar">
     <div className="breadcrumb"><SidebarTrigger className="mobile-menu"/><span>항해 기록</span><ChevronRight size={13}/><strong>{NAV.flatMap(g => g.items).find(i => i.id === view)?.name}</strong></div>
-    <div className="topbar-right"><span className="save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s?.name || ''); }} s={s} busy={busy} send={send} name={name} setName={setName} onLogout={onLogout}/></div>
+    <div className="topbar-right"><span className="save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s?.name || ''); }} s={s} busy={busy} send={send} name={name} setName={setName} onLogout={onLogout} onSwitchSlot={game.switchSlot}/></div>
     </header>}{!s && game.needsLogin ? <LoginScreen onSubmit={game.authenticate}/> : !s ? <div className="loading-screen">
         <Anchor size={48}/>
         <h1>{error ? '항해를 준비하지 못했습니다' : '바다와 연결하고 있습니다'}</h1>

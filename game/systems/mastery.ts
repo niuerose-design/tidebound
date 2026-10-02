@@ -1,4 +1,5 @@
 import type { Enemy, Skill, State } from '../types';
+import { accountMasteryTwentieths } from '../data/account';
 import { FISH } from '../data/world';
 import { skillById } from '../data/skills';
 import { PROGRESSION } from '../data/progression';
@@ -19,7 +20,7 @@ export const masteryPerVictory = (bonus: number, base = 1) => Math.min(PROGRESSI
  * 난수를 쓰지 않으며, 0단계면 상태를 건드리지 않고 그대로 돌려줍니다.
  */
 export function researchMastery(s: State, practice: number) {
-    const rank = researchRank(s, 'mastery');
+    const rank = researchRank(s, 'mastery') + accountMasteryTwentieths(s);
     if (!rank || practice <= 0) return { total: practice, extra: 0 };
     const twentieths = practice * rank + (s.masteryCarry || 0);
     const extra = Math.floor(twentieths / 20);
