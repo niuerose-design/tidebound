@@ -42,6 +42,7 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'offline', name: '긴 닻줄', desc: '오프라인 정산 상한 +2시간', max: 12, base: 3, step: 2, tab: 'utility', group: 'basic', rebirth: 2, per: 2, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
     { id: 'tailwindSail', name: '순풍의 돛', desc: '순풍 경험치 보너스 +10%p (기본 +50%)', max: 5, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 2, per: .1, unit: 'pp', label: '순풍 경험치 보너스' },
     { id: 'tailwindWindow', name: '바람목 넓히기', desc: '순풍 조건 +1레벨 (기본 요구 레벨+5 이내)', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '순풍 조건', suffix: '레벨' },
+    { id: 'salvage', name: '환생 정리', desc: '환생할 때 보관함과 착용 중인 일반 장비를 모두 판매(골드는 다음 생 시작 골드에 더함)하거나 분해(정수)합니다. 방식은 설정에서 고르고, 효율은 1단계 40%부터 단계당 +15%', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 1, per: 15, unit: 'percent', label: '환생 정리 효율', levels: ['정리 없음', '효율 40%', '효율 55%', '효율 70%', '효율 85%', '효율 100%'] },
     { id: 'sortingNet', name: '선별의 그물', desc: '1단계 일반, 2단계 희귀 이하 드롭 자동 판매 (설정에서 켜고 끔)', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 판매 등급', suffix: '단계', levels: ['자동 판매 없음', '일반 자동 판매', '희귀 이하 자동 판매'] },
     { id: 'messageBottle', name: '병 속의 편지', desc: '오프라인 정산 1시간마다 편지병 확률 +4%p', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .04, unit: 'pp', label: '시간당 편지병 확률' },
     { id: 'goldenFish', name: '황금 개체', desc: '포획마다 황금 개체 확률 +0.1%p (포획 골드 10배)', max: 10, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 5, per: .001, unit: 'pp', label: '황금 개체 확률' },
@@ -111,3 +112,5 @@ export const RELICS = [
     { id: 'soulCoat', name: '영혼의 잠수복', slot: 'coat', style: 'balanced', power: 55, cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 유영', value: .12 } },
     { id: 'abyssCharm', name: '심연의 눈', slot: 'charm', style: 'balanced', power: 70, cost: 28, rebirth: 3, description: '깊은 심연에 도전하는 낚시꾼의 정밀 유물.', affix: { stat: 'accuracy', name: '심연 통찰', value: .2 } },
 ] as const;
+/** v25.7 환생 정리 효율(0 = 연구 없음). 1단계 40%, 단계당 +15%, 5단계 100%. */
+export const salvageRate = (s: Pick<State, 'permanent'>) => { const rank = researchRank(s, 'salvage'); return rank ? Math.min(1, .25 + rank * .15) : 0; };

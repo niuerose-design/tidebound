@@ -2,7 +2,7 @@
 import { Settings2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import type { State, Action } from '@/game/types';
-import { offlineCapSeconds, researchRank } from '@/game/data/economy';
+import { offlineCapSeconds, researchRank, salvageRate } from '@/game/data/economy';
 import { useState } from 'react';
 import { SLOT_COUNT, accountSlot, slotUnlocked, slotUnlockText } from '@/game/data/account';
 import { jobById } from '@/game/data/classes';
@@ -43,6 +43,10 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
             {s && researchRank(s, 'sortingNet') > 0 && <div className="setting-toggle">
                 <div><strong>선별의 그물 자동 판매</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '희귀 이하' : '일반'} 등급 드롭을 바로 팝니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
                 <button className={s.autoSell ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoSell} onClick={() => send({ type: 'autoSell', value: s.autoSell ? 'off' : 'on' })}>{s.autoSell ? '켜짐' : '꺼짐'}</button>
+            </div>}
+            {s && salvageRate(s) > 0 && <div className="setting-toggle">
+                <div><strong>환생 정리 방식</strong><p>환생할 때 유물을 뺀 보관함·착용 장비 전부를 효율 {Math.round(salvageRate(s) * 100)}%로 {s.salvageMode === 'dismantle' ? '분해해 정수를 받습니다.' : '판매해 다음 생 시작 골드에 더합니다.'}</p></div>
+                <button className="secondary" disabled={busy} onClick={() => send({ type: 'salvageMode', value: s.salvageMode === 'dismantle' ? 'sell' : 'dismantle' })}>{s.salvageMode === 'dismantle' ? '분해' : '판매'}</button>
             </div>}
             {s && onSwitchSlot && <div className="slot-section">
                 <div className="section-title"><h3>캐릭터 슬롯</h3><span>슬롯마다 다른 낚시꾼을 키웁니다. 모든 슬롯의 기록을 합친 계정 보너스가 각 캐릭터에 적용되고, 쉬는 슬롯은 다음에 들어올 때 부재중 정산을 받습니다.</span></div>

@@ -361,6 +361,8 @@ export type State = {
     masteryCarry?: number;
     /** 선별의 그물 자동 판매 켜짐 여부(설정). */
     autoSell?: boolean;
+    /** v25.7 환생 정리 방식(설정). 없으면 판매. */
+    salvageMode?: 'sell' | 'dismantle';
     /** 황금 개체를 잡은 횟수(어종별). */
     goldenBook?: Record<string, number>;
     /** 이번 생에 걸린 서약. */

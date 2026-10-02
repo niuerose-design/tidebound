@@ -5,7 +5,7 @@ import { STAGES, DUNGEONS, SWARM_SIZES, SWARM_UNLOCK } from '../../data/world';
 import { JOBS } from '../../data/classes';
 import { SKILLS, skillById } from '../../data/skills';
 import type { ActionHandlers } from './types';
-import { researchRank } from '../../data/economy';
+import { researchRank, salvageRate } from '../../data/economy';
 import { addLog, endRun } from '../state';
 import { parseRepeat, enterDungeon } from '../dungeon-run';
 
@@ -89,6 +89,13 @@ export const voyageActions: ActionHandlers = {
         if (!researchRank(s, 'sortingNet'))
             throw Error('선별의 그물 연구가 필요합니다.');
         s.autoSell = a.value === 'on';
+    },
+    salvageMode(s, { a }) {
+        if (!salvageRate(s))
+            throw Error('환생 정리 연구가 필요합니다.');
+        if (a.value !== 'sell' && a.value !== 'dismantle')
+            throw Error('정리 방식은 판매 또는 분해입니다.');
+        s.salvageMode = a.value;
     },
     rename(s, { a }) {
         const name = (a.value || '').trim();
