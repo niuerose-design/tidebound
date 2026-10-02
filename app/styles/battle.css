@@ -473,3 +473,18 @@
 .battle-console .scene-copy h2{font-size:28px}
 .battle-console .scene-copy p{line-height:1.6}
 }
+/* v25.17 합친 화면의 윗줄 탭 · 스킬 자원 카드 축소 */
+.view-tabs{margin-bottom:16px}
+.skill-resource-grid{gap:12px;margin-bottom:16px}.skill-resource-grid>.panel{padding:12px 16px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.skill-resource-grid strong{font-size:22px;margin:0}.skill-resource-grid .meter{flex-basis:100%;margin-top:4px}
+/* v25.17 왼쪽 메뉴 촘촘하게(한 화면에 다 보이도록) · 업적 묶음 접기 */
+.game-sidebar [data-slot=sidebar-group]{padding:6px 18px}
+.game-sidebar [data-slot=sidebar-group-label]{height:28px}
+.game-sidebar [data-slot=sidebar-menu-button]{height:39px}
+.game-sidebar [data-slot=sidebar-footer]{padding:14px 24px 18px}
+.sidebar-quote{padding-top:14px}.sidebar-quote small{display:block}
+.achievement-group summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#112329}
+.achievement-group summary::-webkit-details-marker{display:none}
+.achievement-group summary h3{margin:0}.achievement-group summary span{font-size:12px;color:#8ea7a4}
+.achievement-chevron{margin-left:auto;color:#7f9c98;transition:transform .15s}.achievement-group[open] .achievement-chevron{transform:rotate(180deg)}
+.achievement-group[open] summary{margin-bottom:10px}
+.goal-list li>div.meter{display:block}.goal-list .meter-label{display:flex;justify-content:space-between;white-space:nowrap}

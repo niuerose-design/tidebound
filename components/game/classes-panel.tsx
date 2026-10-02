@@ -75,6 +75,5 @@ export function Classes({ s, send, busy }: PanelProps) {
             </div>
         </div>
         <JobCompare s={s} jobs={compareIds.map(id => jobById(id)!)} onRemove={toggleCompare} onClear={() => setCompareIds([])}/>
-        <p className="footnote">승리마다 현재 직업의 숙련도가 기본 1씩 오릅니다. 직업 숙련이 숙달 목표에 닿으면 그 직업으로는 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다.</p>
     </>;
 }

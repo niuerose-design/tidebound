@@ -6,6 +6,7 @@ import { tutorialActive } from './growth-goals';
 import { tutorialEarly } from '@/game/systems/guidance';
 import { DoorNotice } from './jobs/mystery-doors';
 import { useEffect, useState } from 'react';
+import { tipAt } from '@/game/data/tips';
 const LOG_FOLD_KEY = 'tidebound.logFold';
 import { BookOpen, Check, ChevronRight, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Waves } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -50,6 +51,9 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     // v25.13 모바일: 캐릭터 열(상세·착용 장비)은 접어 두고 버튼으로 펼칩니다. 데스크톱에서는 늘 보입니다.
     const [fisherOpen, setFisherOpen] = useState(false);
     // 항해 일지 접기(이 기기에 기억). 접힌 동안에도 오른쪽 전투 기록은 그대로 흐릅니다.
+    // v25.17 맨 위 한 줄: 부재중 정산 → 던전 진행 → 번갈아 나오는 안내.
+    const [tip, setTip] = useState(0);
+    useEffect(() => { const timer = window.setInterval(() => setTip(v => v + 1), 14000); return () => window.clearInterval(timer); }, []);
     const [logOpen, setLogOpen] = useState(true);
     useEffect(() => { const t = setTimeout(() => { try { if (localStorage.getItem(LOG_FOLD_KEY) === 'folded') setLogOpen(false); } catch { /* 저장소 없음 */ } }, 0); return () => clearTimeout(t); }, []);
     const st = STAGES.find(x => x.id === s.stage)!, d = DUNGEONS.find(x => x.id === s.dungeon?.id);
@@ -65,7 +69,7 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     // 회복 대기(필드 패배 후)·출정 준비(던전 입장 후) 남은 시간. 던전 화면의 준비 카운트다운과 같은 방식입니다.
     const recoverySeconds = Math.ceil(s.recovery * BALANCE.turnMs / 1000);
     const recoveryText = s.recovery > 0 ? d ? `출정 준비 · ${recoverySeconds}초 남음` : `회복 대기 · ${recoverySeconds}초 남음` : null;
-    const noticeText = s.lastOffline ? `부재중 항해 정산 · ${Math.floor(s.lastOffline.seconds / 60)}분 동안 ${s.lastOffline.kills}마리 포획 · +${format(s.lastOffline.gold)} G${s.lastOffline.bottles?.count ? ` · 병 속의 편지 ${s.lastOffline.bottles.count}개(${[s.lastOffline.bottles.gold ? `+${format(s.lastOffline.bottles.gold)} G` : '', s.lastOffline.bottles.items ? `장비 ${s.lastOffline.bottles.items}개` : '', s.lastOffline.bottles.pearls ? `진주 +${s.lastOffline.bottles.pearls}` : ''].filter(Boolean).join(' · ')})` : ''}` : d ? `${d.name} ${s.dungeon!.wave + 1}번째 전투 · 보스 전까지 항로를 유지합니다.` : `${st.name}에서 다음 입질을 기다립니다. 목표 어종을 고르면 원하는 기록을 더 빠르게 채울 수 있습니다.`;
+    const noticeText = s.lastOffline ? `부재중 항해 정산 · ${Math.floor(s.lastOffline.seconds / 60)}분 동안 ${s.lastOffline.kills}마리 포획 · +${format(s.lastOffline.gold)} G${s.lastOffline.bottles?.count ? ` · 병 속의 편지 ${s.lastOffline.bottles.count}개(${[s.lastOffline.bottles.gold ? `+${format(s.lastOffline.bottles.gold)} G` : '', s.lastOffline.bottles.items ? `장비 ${s.lastOffline.bottles.items}개` : '', s.lastOffline.bottles.pearls ? `진주 +${s.lastOffline.bottles.pearls}` : ''].filter(Boolean).join(' · ')})` : ''}` : d ? `${d.name} ${s.dungeon!.wave + 1}번째 전투 · 보스 전까지 항로를 유지합니다.` : tipAt(tip);
     return <>
     <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>
     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Waves size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>
