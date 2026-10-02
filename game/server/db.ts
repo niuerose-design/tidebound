@@ -1,3 +1,4 @@
+import { packState, unpackState } from './pack';
 /**
  * 저장소 계층. DATABASE_URL(또는 POSTGRES_URL)이 있으면 Neon Postgres의 HTTP 쿼리 엔드포인트를,
  * 없으면 개발용 로컬 JSON 파일(.data/dev-db.json)을 사용합니다. 추가 패키지 없이 fetch만 씁니다.
@@ -8,6 +9,8 @@ export type AccountRow = { id: string; username: string; pass_hash: string; salt
 /** v25.4 채팅 한 줄. 채널마다 최근 CHAT_KEEP개만 남깁니다. */
 export type ChatRow = { id: number; channel: string; account_id: string; name: string; text: string; created_at: number };
 export const CHAT_KEEP = 300;
+/** 저장소에 넣는 상태 문자열. 파일 DB는 개발 편의를 위해 평문을 유지하고, TIDEBOUND_PACK_STATE=1 이면 파일 DB도 압축합니다(e2e 검증용). */
+const packing = (always: boolean) => always || process.env.TIDEBOUND_PACK_STATE === '1';
 export interface Storage {
     getPlayer(id: string): Promise<PlayerRow | null>;
     createPlayerIfMissing(id: string, state: string, now: number): Promise<void>;
@@ -63,9 +66,9 @@ function neonStorage(url: string): Storage {
     };
     const num = <T extends Record<string, unknown>>(r: T) => ({ ...r, ...('updated_at' in r ? { updated_at: Number(r.updated_at) } : {}), ...('rating' in r ? { rating: Number(r.rating) } : {}), ...('power' in r ? { power: Number(r.power) } : {}), ...('revision' in r ? { revision: Number(r.revision) } : {}), ...('created_at' in r ? { created_at: Number(r.created_at) } : {}) });
     return {
-        async getPlayer(id) { const { rows } = await q<PlayerRow>('SELECT state, revision FROM players WHERE id=$1', [id]); return rows[0] ? num(rows[0]) as PlayerRow : null; },
-        async createPlayerIfMissing(id, state, now) { await q('INSERT INTO players (id,state,revision,updated_at) VALUES ($1,$2,0,$3) ON CONFLICT (id) DO NOTHING', [id, state, now]); },
-        async updatePlayer(id, state, now, revision) { const r = await q('UPDATE players SET state=$1, revision=revision+1, updated_at=$2 WHERE id=$3 AND revision=$4', [state, now, id, revision]); return r.rowCount === 1; },
+        async getPlayer(id) { const { rows } = await q<PlayerRow>('SELECT state, revision FROM players WHERE id=$1', [id]); return rows[0] ? { ...num(rows[0]) as PlayerRow, state: unpackState(rows[0].state) } : null; },
+        async createPlayerIfMissing(id, state, now) { await q('INSERT INTO players (id,state,revision,updated_at) VALUES ($1,$2,0,$3) ON CONFLICT (id) DO NOTHING', [id, packState(state), now]); },
+        async updatePlayer(id, state, now, revision) { const r = await q('UPDATE players SET state=$1, revision=revision+1, updated_at=$2 WHERE id=$3 AND revision=$4', [packState(state), now, id, revision]); return r.rowCount === 1; },
         async upsertRanking(r) { await q('INSERT INTO rankings (id,snapshot,rating,power,updated_at) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (id) DO UPDATE SET snapshot=EXCLUDED.snapshot, rating=EXCLUDED.rating, power=EXCLUDED.power, updated_at=EXCLUDED.updated_at', [r.id, r.snapshot, r.rating, r.power, r.updated_at]); },
         async listRankings(season, limit) { const { rows } = await q<RankingRow>("SELECT id,snapshot,rating,power,updated_at FROM rankings WHERE (snapshot::jsonb->>'season')::int=$1 ORDER BY rating DESC, power DESC LIMIT $2", [season, limit]); return rows.map(r => num(r) as RankingRow); },
         async getRanking(id, season) { const { rows } = await q<RankingRow>("SELECT id,snapshot,rating,power,updated_at FROM rankings WHERE id=$1 AND (snapshot::jsonb->>'season')::int=$2", [id, season]); return rows[0] ? num(rows[0]) as RankingRow : null; },
@@ -109,9 +112,9 @@ function fileStorage(): Storage {
     const tx = <T>(fn: (db: FileDb) => T) => { const run = chain.then(async () => { const db = await load(); const out = fn(db); await save(db); return out; }); chain = run.catch(() => { }); return run; };
     const season = (r: RankingRow) => { try { return JSON.parse(r.snapshot).season; } catch { return undefined; } };
     return {
-        getPlayer: id => tx(db => db.players[id] ? { state: db.players[id].state, revision: db.players[id].revision } : null),
-        createPlayerIfMissing: (id, state, now) => tx(db => { db.players[id] ??= { state, revision: 0, updated_at: now }; }),
-        updatePlayer: (id, state, now, revision) => tx(db => { const p = db.players[id]; if (!p || p.revision !== revision) return false; db.players[id] = { state, revision: revision + 1, updated_at: now }; return true; }),
+        getPlayer: id => tx(db => db.players[id] ? { state: unpackState(db.players[id].state), revision: db.players[id].revision } : null),
+        createPlayerIfMissing: (id, state, now) => tx(db => { db.players[id] ??= { state: packing(false) ? packState(state) : state, revision: 0, updated_at: now }; }),
+        updatePlayer: (id, state, now, revision) => tx(db => { const p = db.players[id]; if (!p || p.revision !== revision) return false; db.players[id] = { state: packing(false) ? packState(state) : state, revision: revision + 1, updated_at: now }; return true; }),
         upsertRanking: r => tx(db => { db.rankings[r.id] = r; }),
         listRankings: (s, limit) => tx(db => Object.values(db.rankings).filter(r => season(r) === s).sort((a, b) => b.rating - a.rating || b.power - a.power).slice(0, limit)),
         getRanking: (id, s) => tx(db => db.rankings[id] && season(db.rankings[id]) === s ? db.rankings[id] : null),

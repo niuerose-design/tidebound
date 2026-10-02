@@ -61,9 +61,10 @@ export function checkOrigin(req: Request) {
 }
 export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
     const database = db(), now = Date.now();
-    await database.createPlayerIfMissing(id, JSON.stringify(newState(now)), now);
     for (let attempt = 0; attempt < 3; attempt++) {
-        const row = await database.getPlayer(id);
+        let row = await database.getPlayer(id);
+        // v25.10 처음 보는 낚시꾼일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
+        if (!row) { await database.createPlayerIfMissing(id, JSON.stringify(newState(now)), now); row = await database.getPlayer(id); }
         if (!row)
             throw new ApiError('저장 데이터를 불러오지 못했습니다.', 503);
         const s = migrateState(JSON.parse(row.state) as State, now);

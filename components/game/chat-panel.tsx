@@ -4,7 +4,7 @@ import { MessageCircle, Send } from 'lucide-react';
 
 export type ChatLine = { id: number; name: string; text: string; at: number; self: boolean };
 /** 열려 있는 동안만 이 간격으로 새 줄을 묻습니다. 닫히거나 탭이 숨으면 멈춥니다. */
-const POLL_MS = 5000, KEEP = 120, MAX_CHARS = 120;
+const POLL_MS = 8000, KEEP = 120, MAX_CHARS = 120;
 
 /**
  * 전체 채팅. 서버 부하를 줄이려고 (1) 열려 있을 때만 폴링, (2) after 커서로 새 줄만 받기, (3) 보낸 직후 한 번 더 받기만 합니다.
