@@ -14,6 +14,8 @@ export const PROFILES: Record<string, {
     name: string;
     hint: string;
     skills: string[];
+    /** v25.2 기본 공격도 마법 피해(마법 공격 수치 vs 마법 방어). 마력 생물·신탁 보스. */
+    magicBasic?: boolean;
     defense: number;
     resist: number;
     evasion: number;
@@ -21,13 +23,13 @@ export const PROFILES: Record<string, {
 }> = {
     swift: { name: '날쌘 개체', hint: '기민·명중으로 회피에 대응하세요.', skills: [], defense: .7, resist: .8, evasion: .14, speed: 1.4 },
     armored: { name: '단단한 비늘', hint: '마법 공격이나 방어 관통에 약합니다.', skills: ['foeCrush'], defense: 2.2, resist: .55, evasion: 0, speed: .7 },
-    arcane: { name: '마력 생물', hint: '마법 방어로 버티고 물리 공격을 활용하세요.', skills: ['foeShock'], defense: .6, resist: 2.1, evasion: .03, speed: 1 },
+    arcane: { name: '마력 생물', hint: '마법 방어로 버티고 물리 공격을 활용하세요.', skills: ['foeShock'], magicBasic: true, defense: .6, resist: 2.1, evasion: .03, speed: 1 },
     venom: { name: '독성 생물', hint: '출혈을 버틸 회복과 체력을 준비하세요.', skills: ['foeVenom'], defense: 1, resist: 1, evasion: .04, speed: 1.1 },
     silencer: { name: '침묵하는 생물', hint: '액티브를 봉인하는 침묵에 대비하세요.', skills: ['foeSilence'], defense: .9, resist: 1.1, evasion: .06, speed: 1.05 },
     controller: { name: '조류 제어자', hint: '감속·기절로 턴 우선권을 빼앗습니다.', skills: ['foeSlow', 'foeCrush'], defense: 1.2, resist: 1.3, evasion: .02, speed: .85 },
     frenzy: { name: '광폭 포식자', hint: '한 번의 공격 뒤 추가타가 이어집니다.', skills: ['foeFrenzy', 'foeHaste'], defense: 1.1, resist: .9, evasion: .08, speed: 1.25 },
     venomBoss: { name: '독성 보스', hint: '출혈과 감속을 번갈아 사용합니다.', skills: ['foeVenom', 'foeSlow'], defense: 1.25, resist: 1.05, evasion: .06, speed: 1.05 },
-    arcaneBoss: { name: '신탁 보스', hint: '마법 공격과 침묵으로 편성을 흔듭니다.', skills: ['foeShock', 'foeSilence'], defense: .95, resist: 1.45, evasion: .05, speed: 1.1 },
+    arcaneBoss: { name: '신탁 보스', hint: '마법 공격과 침묵으로 편성을 흔듭니다.', skills: ['foeShock', 'foeSilence'], magicBasic: true, defense: .95, resist: 1.45, evasion: .05, speed: 1.1 },
     boss: { name: '심연 보스', hint: '침묵·감속·추가타를 모두 사용합니다.', skills: ['foeSilence', 'foeSlow', 'foeFrenzy', 'tentacleBarrage'], defense: 1.35, resist: 1.35, evasion: .08, speed: 1.05 },
     stormEel: { name: '폭풍 곰치', hint: '플레이어도 배울 수 있는 감속 전류를 사용합니다.', skills: ['electricBite', 'foeSilence'], defense: 1.05, resist: 1.25, evasion: .04, speed: 1.1 },
 };
@@ -48,7 +50,9 @@ export function enemyStats(f: { id: string; hp: number; attack: number; defense:
         resist: Math.round(f.defense * MONSTER_TUNING.defenseMultiplier * level.defense * p.resist),
         crit: Math.min(MONSTER_TUNING.critCap, MONSTER_TUNING.critBase + f.level * MONSTER_TUNING.critPerLevel) + (boss ? MONSTER_TUNING.critBoss : 0) + (p === PROFILES.swift || p === PROFILES.frenzy ? MONSTER_TUNING.critSwift : 0), accuracy: .95 + f.level * .002,
         evasion: p.evasion + (p === PROFILES.swift ? Math.min(.2, Math.max(0, f.level - 5) * .004) : 0),
-        speed: Math.round((9 + f.level * .35) * p.speed), mana: 100, manaRegen: 10,
+        // v25.2: 속도 9 + 레벨 × .35 → 8 + 레벨 × .25. 고레벨에서 모든 빌드(특히 기민이 낮은 마법 빌드)가 몬스터보다 느려
+        // 연속 행동을 과하게 허용했습니다(4차 마법 직업 승률 85% → 98%).
+        speed: Math.round((8 + f.level * .25) * p.speed), mana: 100, manaRegen: 10,
     };
 }
 export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: { boss?: boolean; tier?: number; wave?: number } = {}): Stats {

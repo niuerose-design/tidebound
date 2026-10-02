@@ -64,8 +64,9 @@ export const V25_BALANCE: Record<string, Partial<Skill>> = {
     slackHand: { chance: .3, cooldown: 3, multiplier: 1 },
     timeMachine: { chance: .12, cooldown: 1, multiplier: 1 },
     frozenTime: { chance: 1, cooldown: 6, multiplier: 1.6, statusTurns: 2, manaCost: 8, sureHit: true },
-    precede: { chance: .3, cooldown: 5, multiplier: 1.9, manaCost: 8 },
-    rewind: { chance: .35, cooldown: 6, multiplier: 1.3, healRatio: .35, manaCost: 8 },
+    // v25.2: 복합 피해 기술 규칙(발동 45% 이상)에 맞추고 시간의 지배자를 4차 중앙값으로 끌어올립니다.
+    precede: { chance: .45, cooldown: 5, multiplier: 1.9, manaCost: 8 },
+    rewind: { chance: .45, cooldown: 6, multiplier: 1.3, healRatio: .35, manaCost: 8 },
     // 虛: 체력을 1까지 걸고 건 체력에 비례한 피해. 無 없이 쓰면 다음 공격에 쓰러집니다.
     glyphVoid: { chance: .26, cooldown: 4, multiplier: 1.2, accuracyBonus: .15, allIn: { hpRatio: 1, hpScale: 1, manaScale: 0 } },
     // 斬: 큰 피해, 준 피해의 절반을 자신도 받음(체력 1 아래로는 안 내려감).

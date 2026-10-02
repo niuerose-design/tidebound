@@ -1,5 +1,5 @@
 // 세이브·장비·환생·던전·결투·전투 판정·경제·길드
-import { newState, act, tick, stats, snapshot, expMultiplier, duel, TRAINING, bossSnapshot, BOSS_OPPONENTS, strike, fighterSpeed, migrateState, apCapacity, SKILLS, FISH, DUNGEONS, profile, shopCost, gambleCost, shopPreview, itemStats, enhanceCost, bulkItems, goldMultiplier, dungeonGoldMultiplier, dropRate, hitChance, rebirthLevel, rebirthReward, xpNeeded, assert, rng, test, effectiveSkill, BALANCE } from './harness.mjs';
+import { newState, act, tick, stats, snapshot, expMultiplier, duel, TRAINING, bossSnapshot, BOSS_OPPONENTS, strike, SKILL_FORMULA as BALANCE_FORMULA, fighterSpeed, migrateState, apCapacity, SKILLS, FISH, DUNGEONS, profile, shopCost, gambleCost, shopPreview, itemStats, enhanceCost, bulkItems, goldMultiplier, dungeonGoldMultiplier, dropRate, hitChance, rebirthLevel, rebirthReward, xpNeeded, assert, rng, test, effectiveSkill, BALANCE } from './harness.mjs';
 test('Saves from before v8 restart fresh, keep only the name, and are idempotent',()=>{const s=newState(0);s.version=7;s.name='오래된 낚시꾼';s.level=60;s.gold=99999;s.pearls=500;s.upgrades={attack:30};s.rebirths=4;migrateState(s,5000);const fresh=newState(5000);fresh.name='오래된 낚시꾼';assert.deepEqual(s,fresh);assert.equal(s.version,8);assert.equal(s.upgrades,undefined);const saved=JSON.stringify(s);migrateState(s,9000);assert.equal(JSON.stringify(s),saved);const v1=newState(0);v1.version=1;delete v1.guild;migrateState(v1,0);assert.equal(v1.version,8);assert.ok(v1.guild);});
 test('Equipment swapping preserves item counts and sale is single-use',()=>{const s=newState(0);s.inventory.push({id:'test',name:'Test',slot:'rod',rarity:2,power:20,level:1});act(s,{type:'equip',id:'test'},0);assert.equal(s.equipment.rod.id,'test');assert.equal(s.inventory.length,1);act(s,{type:'sell',id:'starter'},0);assert.throws(()=>act(s,{type:'sell',id:'starter'},0));assert.equal(s.inventory.length,0)});
 test('Gold training is removed: the upgrade action is rejected and research still costs pearls',()=>{const s=newState(0);const gold=s.gold;assert.throws(()=>act(s,{type:'upgrade',id:'attack'},0));assert.equal(s.gold,gold);assert.equal(s.upgrades,undefined);assert.throws(()=>act(s,{type:'permanent',id:'attack'},0));});
@@ -85,4 +85,16 @@ test('Logs carry the turn they were written in and duels return structured round
     assert.ok(battle.every(l => Number.isInteger(l.turn) && l.turn >= 1 && l.turn <= s.turn), 'every battle log has its turn');
     const r = duel(snapshot(s), TRAINING[0], true, () => .3);
     assert.equal(r.rounds.length, r.logs.length); assert.ok(r.rounds.every((x, i) => r.logs[i].startsWith(`${x.turn}턴 · `) && x.event.actor));
+});
+test('v25.2 arcane fish strike with magic damage against resist; magic jobs gain an arcane strike ratio by tier', () => {
+    const st = { hp: 1000, attack: 100, magic: 200, defense: 0, resist: 0, crit: 0, mana: 100, manaRegen: 0, accuracy: 5, evasion: 0 };
+    const target = () => ({ name: 'T', stats: { ...st, defense: 100, resist: 0 }, hp: 1000, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 100 });
+    const physical = { name: 'fish', stats: st, hp: 1000, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 100 }, arcane = { ...physical, magicBasic: true };
+    const a = target(), b = target(); const evs = [];
+    strike(physical, a, () => .5); strike(arcane, b, () => .5, evs);
+    assert.equal(a.hp, 1000 - Math.round(100 * 100 / 300), 'physical basic vs defense');
+    assert.equal(b.hp, 1000 - 200, 'arcane basic uses the magic stat and ignores physical defense'); assert.equal(evs[0].damageType, 'magic');
+    assert.ok(profile('starKoi').magicBasic && !profile('shark').magicBasic);
+    const s = newState(0); s.level = 60; s.job = 'sage'; s.unlockedJobs = ['fisher', 'sage'];
+    assert.equal(stats(s).arcaneRatioBonus, BALANCE_FORMULA.arcaneRatioByTier[4]); s.job = 'harpoon'; assert.equal(stats(s).arcaneRatioBonus, 0, 'physical jobs get none');
 });
