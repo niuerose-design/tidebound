@@ -99,7 +99,7 @@ export function groupReplayTurns(logs: Log[]): Log[][] {
     for (const log of logs) {
         const cur = turns.at(-1);
         const leads = cur ? cur.filter(l => l.type === 'battle' && (l.event?.chain ?? 1) === 1) : [];
-        const follows = !!cur && cur.at(-1)!.type === 'battle' && (log.event?.chain ?? 1) > 1
+        const follows = !!cur && cur.at(-1)!.type === 'battle' && ((log.event?.chain ?? 1) > 1 || (log.event?.multicast?.index || 0) > 0)
             || leads.length === 1 && cur!.at(-1)!.type === 'battle' && (!log.event || !leads[0].event || log.event.actor !== leads[0].event.actor);
         const starts = !cur || (log.type === 'battle' ? !follows : log.text === RECOVERED);
         if (starts) turns.push([log]);

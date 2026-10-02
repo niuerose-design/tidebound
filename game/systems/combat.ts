@@ -107,6 +107,13 @@ export function actTurn(a: Fighter, b: Fighter, rng: () => number, onAction: (te
         const text = strike(a, b, rng, events, false, chain > 1), ev = events[0];
         if (chain > 1) ev.chain = chain;
         onAction(chain > 1 ? `${text} · 연속 ${chain}` : text, ev);
+        // v25.5 동시 시전: 첫 줄에 적힌 기술들을 같은 행동 안에서 이어서 씁니다(행동 시작 효과 없이).
+        if (ev?.multicast?.ids) for (const [i, id] of ev.multicast.ids.entries()) {
+            if (a.hp <= 0 || b.hp <= 0) break;
+            const more: CombatEvent[] = [];
+            const t = strike(a, b, rng, more, false, chain > 1, { id, index: i + 1, count: ev.multicast.count });
+            onAction(`${t} · 동시 시전 ${i + 2}/${ev.multicast.count}`, more[0]);
+        }
         // v25 확정 추가 행동(선행·찰): 연속 행동 횟수와 별개로 한 번 더 행동합니다. 추가 행동에서 다시 생기지는 않습니다.
         if (ev?.extraTurn && a.hp > 0 && b.hp > 0) {
             const extra: CombatEvent[] = [];
@@ -137,18 +144,20 @@ function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, s
     return true;
 }
 /** Shared PvE/PvP action. Recovery, status, conditional proc, MP, accuracy, defense and crit. */
-export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false) {
+/** v25.5 동시 시전 묶음의 2번째 이후 줄: 행동 시작 효과(회복·지속 피해·대기 감소·기절)를 건너뛰고 정해진 기술을 바로 씁니다. */
+export type ForcedCast = { id: string; index: number; count: number };
+export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false, forced?: ForcedCast) {
     const sa = normalizeStats(a.stats), sb = normalizeStats(b.stats);
     a.effects ??= {};
     b.effects ??= {};
-    a.mana = Math.min(sa.mana, (a.mana ?? sa.mana) + sa.manaRegen);
+    if (!forced) a.mana = Math.min(sa.mana, (a.mana ?? sa.mana) + sa.manaRegen);
     const notes: string[] = [];
     const ev: CombatEvent = { actor: a.name, skillName: '기본 공격', damageType: 'physical', hits: [], total: 0, healed: 0, drained: 0, statuses: [] };
     const emit = (text: string) => { events?.push(ev); return text; };
     // 턴당 체력 회복: 마나처럼 행동 시작 때 되찾습니다(연속·추가 행동 포함).
-    if (sa.hpRegen > 0 && a.hp > 0 && a.hp < sa.hp) { ev.regen = Math.min(sa.hp - a.hp, sa.hpRegen); a.hp += ev.regen; }
-    tickImmunity(a.effects);
-    if (a.effects.dot) {
+    if (!forced && sa.hpRegen > 0 && a.hp > 0 && a.hp < sa.hp) { ev.regen = Math.min(sa.hp - a.hp, sa.hpRegen); a.hp += ev.regen; }
+    if (!forced) tickImmunity(a.effects);
+    if (!forced && a.effects.dot) {
         const dot = a.effects.dot;
         const dotHit = dot.damage;
         a.hp = Math.max(0, a.hp - dotHit);
@@ -165,27 +174,26 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         }
     }
     const attackSpeed = fighterSpeed(a), targetSpeed = fighterSpeed(b);
-    const weakened = consumeStatus(a.effects, 'weaken');
-    const silenced = consumeStatus(a.effects, 'silence');
-    consumeStatus(a.effects, 'slow');
-    consumeStatus(a.effects, 'haste');
+    const weakened = forced ? (a.effects.weaken || 0) > 0 : consumeStatus(a.effects, 'weaken');
+    const silenced = forced ? false : consumeStatus(a.effects, 'silence');
+    if (!forced) { consumeStatus(a.effects, 'slow'); consumeStatus(a.effects, 'haste'); }
     if (silenced) {
         notes.push('침묵 중');
         ev.silenced = true;
     }
     const blocked = new Set(Object.keys(a.cooldowns).filter(k => a.cooldowns[k] > 0));
-    // v25.5 연속 행동으로 들어온 행동은 플레이어(ranks가 있는 쪽)의 대기를 1 더 줄입니다. 몬스터는 제외.
-    const haste = chained && a.ranks ? BALANCE.chainCooldownHaste : 0;
-    for (const k of Object.keys(a.cooldowns))
-        a.cooldowns[k] = Math.max(0, a.cooldowns[k] - 1 - haste);
-    if (a.stun > 0) {
+    if (!forced) for (const k of Object.keys(a.cooldowns))
+        a.cooldowns[k] = Math.max(0, a.cooldowns[k] - 1);
+    if (!forced && a.stun > 0) {
         a.stun--;
         if (a.stun === 0) grantImmunity(a.effects, 'stun');
         ev.stunned = true;
         return emit(`${a.name}: 기절로 행동 불가.${notes.length ? ' ' + notes.join(' · ') : ''}`);
     }
+    const skillOf = (id: string) => { const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id); if (!base) return undefined; const c = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.specializations?.[id], a.practice?.[id] || 0); c.multiplier *= signatureScale(base, a.job); return c; };
     let chosen;
-    if (!silenced) {
+    if (forced) chosen = skillOf(forced.id);
+    else if (!silenced) {
         for (const id of a.skills) {
             const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
             if (!base || base.type !== 'active' || blocked.has(id))
@@ -197,7 +205,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
                 continue;
             if (candidate.condition === 'healthyTarget' && b.hp < sb.hp * .6)
                 continue;
-            if (a.mana < (candidate.manaCost || 0))
+            if ((a.mana ?? 0) < (candidate.manaCost || 0))
                 continue;
             // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
             if (alreadyAfflicted(b, candidate))
@@ -214,14 +222,30 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             }
         }
     }
+    // v25.5 동시 시전: 첫 성공이 multicast 기술이면 편성의 다른 multicast 액티브도 각자 발동률로 굴려 함께 나갑니다. 묶음 전체의 가중 마나를 감당할 수 있을 때까지 뒤에서부터 뺍니다.
+    const MC = SKILL_FORMULA.multicast;
+    let castCount = forced?.count || 1;
+    if (chosen?.multicast && !forced) {
+        const extras: { id: string; mana: number }[] = [];
+        for (const id of a.skills) {
+            if (id === chosen.id || extras.length + 1 >= MC.max || blocked.has(id)) continue;
+            const c = skillOf(id);
+            if (!c || c.type !== 'active' || !c.multicast || c.statusOnly && c.effect && ENEMY_STATUS[c.effect] && isImmune(b, ENEMY_STATUS[c.effect])) continue;
+            if (rng() < c.chance) extras.push({ id, mana: c.manaCost || 0 });
+        }
+        const manaFor = (n: number) => Math.ceil(((chosen!.manaCost || 0) + extras.slice(0, n - 1).reduce((s, e) => s + e.mana, 0)) * (1 + (n - 1) * MC.manaScale));
+        while (extras.length && (a.mana ?? 0) < manaFor(extras.length + 1)) extras.pop();
+        if (extras.length) { castCount = extras.length + 1; ev.multicast = { index: 0, count: castCount, ids: extras.map(e => e.id) }; notes.push(`동시 시전 1/${castCount}`); }
+    }
+    if (forced) ev.multicast = { index: forced.index, count: forced.count };
     // 마력 평타: 마법 직업은 기본 공격 대신 확률적으로 마법 공격 기반의 약한 마법 피해를 줍니다.
     const arcane = !chosen && sa.arcaneStrike > 0 && rng() < sa.arcaneStrike;
     let healed = 0;
     // 체력이 충분한데 쓴 회복 기술: 회복 직업이 아니면 이번 공격 피해가 줄어듭니다.
     const idleHeal = chosen?.effect === 'heal' && a.hp >= sa.hp * SKILL_FORMULA.healThreshold && !sa.healFocus;
     if (chosen) {
-        a.cooldowns[chosen.id] = chosen.cooldown;
-        a.mana = Math.max(0, a.mana - (chosen.manaCost || 0));
+        a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
+        a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
         if (chosen.effect === 'heal') {
             healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio) * (1 + sa.healBonus)));
@@ -408,7 +432,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         else if (fx.status === 'stun') { a.stun = Math.max(a.stun, fx.turns); notes.push(`자신 기절 ${fx.turns}턴`); ev.statuses.push({ id: 'stun', turns: fx.turns, onSelf: true }); }
         else { extendStatus(a.effects, fx.status, fx.turns); notes.push(`자신 ${fx.status === 'slow' ? '감속' : '약화'} ${fx.turns}턴`); ev.statuses.push({ id: fx.status, turns: fx.turns, onSelf: true }); }
     }
-    if (chosen?.extraTurn && !bonusAction) { ev.extraTurn = true; notes.push('추가 행동'); }
+    if (chosen?.extraTurn && !bonusAction && !forced) { ev.extraTurn = true; notes.push('추가 행동'); }
     // v25 일곱 글자: 인을 새기고, 天을 장착한 채 일곱 글자를 모두 갖추고 여섯 인이 모이면 天이 터집니다.
     if (chosen?.seal) {
         a.effects.seals = [...new Set([...(a.effects.seals || []), chosen.id])];

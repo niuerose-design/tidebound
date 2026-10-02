@@ -132,13 +132,11 @@ test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint 
     assert.equal(canChangeJob({ ...s, jobMastery: { ...s.jobMastery, polymath: 12000 } }, 'hundredLives'), false, 'needs 15 mastered');
 });
 
-test('v25.5 chained actions hasten player cooldowns and reset passives fire on crit, kill and chain (players only)', () => {
+test('v25.5 reset passives fire on crit, kill and chain (players only); chained actions tick cooldowns normally', () => {
     const mk = (skills, extra = {}) => ({ name: 'A', job: 'x', stats: { ...base, crit: 0 }, hp: 1000, mana: 200, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {}, ...extra });
     const sk = id => SKILLS.find(x => x.id === id);
-    // 연속 행동 가속: 대기 3인 기술이 보통 행동에서는 2, 연속 행동에서는 1이 됩니다. 몬스터(ranks 없음)는 1씩만.
-    const p = mk([]); p.cooldowns = { hook: 3 }; strike(p, target(), () => 0, [], false, false); assert.equal(p.cooldowns.hook, 2);
-    p.cooldowns = { hook: 3 }; strike(p, target(), () => 0, [], false, true); assert.equal(p.cooldowns.hook, 1);
-    const m = mk([]); delete m.ranks; m.cooldowns = { hook: 3 }; strike(m, target(), () => 0, [], false, true); assert.equal(m.cooldowns.hook, 2, 'monsters are not hastened');
+    // 연속 행동도 대기는 1씩만 줄어듭니다(공통 가속 없음).
+    const p = mk([]); p.cooldowns = { hook: 3 }; strike(p, target(), () => 0, [], false, true); assert.equal(p.cooldowns.hook, 2);
     // 치명타 초기화: 관중의 환호 + 치명타 100% → 가장 긴 대기 하나만 0.
     const g = mk(['showmanship', 'pierce', 'hook'], { stats: { ...base, crit: 1 } }); g.cooldowns = { pierce: 4, hook: 2 }; const evs = [];
     strike(g, target(), () => 0, evs); assert.deepEqual(evs[0].cooldownReset, [sk('pierce').name]); assert.equal(g.cooldowns.pierce, 0); assert.ok(g.cooldowns.hook > 0);
@@ -147,6 +145,31 @@ test('v25.5 chained actions hasten player cooldowns and reset passives fire on c
     // 처치 초기화: 낭인의 기백은 상대를 쓰러뜨리면 전부.
     const r = mk(['roninGrit', 'iaiDraw', 'pierce']); r.cooldowns = { iaiDraw: 3, pierce: 5 }; const t = target({ hp: 1 }); strike(r, t, () => 0, []); assert.ok(t.hp <= 0); assert.equal(r.cooldowns.iaiDraw, 0); assert.equal(r.cooldowns.pierce, 0);
     // 연속 행동 초기화: 시간의 주권은 편성 첫 번째 대기 중인 기술만.
-    const c = mk(['chronoSovereign', 'frozenTime', 'precede']); c.cooldowns = { frozenTime: 6, precede: 5 }; strike(c, target(), () => 0, [], false, true); assert.equal(c.cooldowns.frozenTime, 0); assert.equal(c.cooldowns.precede, 3, 'second skill only hastened');
+    const c = mk(['chronoSovereign', 'frozenTime', 'precede']); c.cooldowns = { frozenTime: 6, precede: 5 }; strike(c, target(), () => 0, [], false, true); assert.equal(c.cooldowns.frozenTime, 0); assert.equal(c.cooldowns.precede, 4, 'second skill only ticks');
     for (const id of ['showmanship', 'riskDividend', 'nimbleStep', 'chronoSovereign', 'roninGrit']) assert.ok(sk(id).cooldownReset, id);
+});
+
+test('v25.5 multicast: chant spells fire together in one action with scaled cooldown and mana; non-multicast loadouts are untouched', () => {
+    const sk = id => SKILLS.find(x => x.id === id);
+    for (const id of ['twinSpark', 'emberVerse', 'frostLance', 'voidRay', 'stormChant', 'infiniteChant']) assert.ok(sk(id).multicast && sk(id).damageType === 'magic', id);
+    const mk = (skills, mana = 200) => ({ name: 'A', job: 'chantNovice', stats: { ...base }, hp: 1000, mana, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} });
+    // rng 0: 첫 기술 성공 → 두 번째도 성공 → 같은 행동에 두 줄.
+    const a = mk(['twinSpark', 'emberVerse', 'hook']), t = target(), lines = [];
+    actTurn(a, t, () => 0, (text, ev) => lines.push({ text, ev }));
+    const casts = lines.filter(l => l.ev.multicast);
+    assert.equal(casts.length, 2, 'two spells in one action'); assert.deepEqual(casts.map(l => l.ev.skillId), ['twinSpark', 'emberVerse']);
+    assert.equal(casts[0].ev.multicast.count, 2); assert.equal(casts[1].ev.multicast.index, 1); assert.match(casts[1].text, /동시 시전 2\/2/);
+    const twin = sk('twinSpark'), ember = sk('emberVerse');
+    assert.equal(a.cooldowns.twinSpark, twin.cooldown + 1, 'cooldown +1 for the extra spell'); assert.equal(a.cooldowns.emberVerse, ember.cooldown + 1);
+    assert.equal(a.mana, 200 - Math.ceil(twin.manaCost * 1.35) - Math.ceil(ember.manaCost * 1.35), 'mana ×1.35 each');
+    assert.ok(1e6 - t.hp > 0 && casts[1].ev.total > 0, 'both spells dealt damage');
+    // 마나가 모자라면 두 번째는 빠집니다.
+    const poor = mk(['twinSpark', 'emberVerse'], twin.manaCost), t2 = target(), l2 = [];
+    actTurn(poor, t2, () => 0, (text, ev) => l2.push(ev)); assert.equal(l2.filter(ev => ev.multicast).length, 0); assert.equal(l2.length, 1); assert.equal(poor.cooldowns.twinSpark, twin.cooldown);
+    // 동시 시전이 아닌 기술은 그대로 하나만.
+    const plain = mk(['manaBolt', 'twinSpark']), l3 = [];
+    actTurn(plain, target(), () => 0, (text, ev) => l3.push(ev)); assert.equal(l3.length, 1); assert.equal(l3[0].skillId, 'manaBolt');
+    // 두 번째 줄은 행동 시작 효과(지속 피해·대기 감소)를 다시 겪지 않습니다.
+    const dotted = mk(['twinSpark', 'emberVerse']); dotted.effects = { dot: { name: '출혈', damage: 10, turns: 5 } }; dotted.cooldowns = { hook: 3 }; const l4 = [];
+    actTurn(dotted, target(), () => 0, (text, ev) => l4.push(ev)); assert.equal(dotted.hp, 990, 'dot ticks once per action'); assert.equal(dotted.cooldowns.hook, 2);
 });
