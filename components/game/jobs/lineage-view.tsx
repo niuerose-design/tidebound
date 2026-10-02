@@ -12,11 +12,11 @@ export function LineageCard({ s, lineage, accent, selected, onOpen }: { s: State
     const sum = lineageSummary(s, lineage.id);
     const independent = lineage.id.endsWith('-independent');
     const near = sum.jobs.filter(j => jobStatus(s, j).status === 'near').length;
-    const status = sum.current ? '현재 직업이 있는 계보' : sum.ready ? `전직 가능 ${sum.ready}` : near ? `거의 다 됨 ${near}` : `해금 ${sum.unlocked} / ${sum.total}`;
+    const status = sum.current ? '현재 직업이 있는 계보' : sum.ready ? `전직 가능 ${sum.ready}` : near ? `거의 다 됨 ${near}` : `전직해 본 ${sum.unlocked} / ${sum.total}`;
     return <button type="button" className={`lineage-item ${selected ? 'selected' : ''} ${sum.current ? 'has-current' : ''}`} style={{ '--tree-color': accent } as React.CSSProperties} aria-pressed={selected} onClick={onOpen}>
         <strong>{lineage.name}</strong>
         {independent ? <small>{lineage.summary}</small> : <span className="lineage-dots" aria-label="해금한 차수">{sum.tiers.filter(t => t.tier > 0).map(t => <i key={t.tier} className={t.reached ? 'reached' : ''}/>)}<em>{tierRange(sum.tiers.map(t => t.tier))}</em></span>}
-        <small className={`lineage-status ${sum.ready ? 'ready' : ''}`}>{status}{!sum.current && (sum.ready || near) ? ` · 해금 ${sum.unlocked} / ${sum.total}` : ''}</small>
+        <small className={`lineage-status ${sum.ready ? 'ready' : ''}`}>{status}{!sum.current && (sum.ready || near) ? ` · 전직해 본 ${sum.unlocked} / ${sum.total}` : ''}</small>
     </button>;
 }
 
@@ -26,7 +26,7 @@ function routeNote(s: State, j: Job) {
     const st = jobStatus(s, j);
     if (st.status === 'current') return { text: '현재 직업', cls: 'current' };
     if (st.status === 'mastered') return { text: '숙달 · 조건 없이 전직', cls: 'mastered' };
-    if (st.status === 'ready') return { text: s.unlockedJobs.includes(j.id) ? '해금함 · 전직 가능' : '전직 가능', cls: 'ready' };
+    if (st.status === 'ready') return { text: s.unlockedJobs.includes(j.id) ? '전직한 적 있음 · 전직 가능' : '전직 가능', cls: 'ready' };
     const first = st.missing[0]?.label || '';
     return { text: `${st.status === 'near' ? '거의 다 됨' : '조건 부족'} · ${first}${st.missing.length > 1 ? ` 외 ${st.missing.length - 1}` : ''}`, cls: st.status };
 }

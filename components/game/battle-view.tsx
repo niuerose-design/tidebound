@@ -1,6 +1,7 @@
 'use client';
 import Image from 'next/image';
-import { VoyageNotice } from './guidance-panels';
+import { VoyageNotice, TutorialCard } from './guidance-panels';
+import { tutorialActive } from './growth-goals';
 import { DoorNotice } from './jobs/mystery-doors';
 import { useState } from 'react';
 import { BookOpen, Check, ChevronRight, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Waves } from 'lucide-react';
@@ -65,6 +66,7 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     <div className="battle-character-column"><Player s={s} busy={busy} send={send} setView={setView}/></div>
     <div className="battle-console">
     <MobileFisherStrip s={s} setView={setView}/>
+    {tutorialActive(s) && <div className="battle-mobile-tutorial"><TutorialCard s={s} send={send} busy={busy} setView={setView}/></div>}
     <div className="session-metrics"><div><Fish/><span>누적 포획<strong><Num n={s.kills}/> <small>마리</small></strong></span></div><div><BookOpen/><span>발견한 물고기<strong>{Object.keys(s.book).length} <small>/ {FISH.length}종</small></strong></span></div><div><Compass/><span>탐험 중인 지역<strong>{d ? '던전' : `0${STAGES.indexOf(st) + 1}`} <small>{d ? `${s.dungeon!.wave + 1} / ${d.fish.length}` : '낚시터'}</small></strong></span></div><div className="session-currency gold"><Coins/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div><div className="session-currency pearl"><Sparkles/><span>보유 진주<strong><Num n={s.pearls}/> <small>개</small></strong></span></div></div>
     <TideSelector s={s} send={send} busy={busy}/>
     <div className="battle-target-strip"><span><Target size={15}/> 집중 사냥</span><Tabs value={s.target || 'all'} onValueChange={id => send({ type: 'target', id })}><TabsList><TabsTrigger value="all" disabled={busy || !!s.dungeon}>무작위</TabsTrigger>{st.fish.map(id => <TabsTrigger value={id} key={id} disabled={busy || !!s.dungeon}>{FISH.find(f => f.id === id)?.name}</TabsTrigger>)}</TabsList></Tabs>{s.target && !s.dungeon && <div className="swarm-picker" title="도감을 완성한 어종은 무리 전체를 체력 ×N(×100은 98배, ×500은 490배)인 한 개체로 상대할 수 있습니다. 적 공격은 ×500에서만 490배이고 그 아래는 한 마리와 같으며, 처치하면 마리 수만큼 보상을 받습니다."><span>무리</span>{SWARM_SIZES.map(n => { const open = swarmUnlocked(s, s.target!, n); return <button key={n} className={swarmNow === n ? 'primary' : 'secondary'} disabled={busy || !open} title={open ? `×${n}` : `${FISH.find(f => f.id === s.target)?.name} ${SWARM_UNLOCK[n].toLocaleString()}마리 포획 시 해금`} onClick={() => send({ type: 'swarm', id: String(n) })}>×{n}</button>; })}</div>}</div>

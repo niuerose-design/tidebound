@@ -336,3 +336,7 @@
 .battle-target-strip .swarm-picker{flex:none;margin-left:auto}
 .battle-target-strip .swarm-picker button{min-width:40px;padding:4px 8px;font-size:12px}
 .opponent-card .enemy-hint{color:#b9b07f;white-space:normal;line-height:1.5}
+
+/* 모바일 항해 안내: 장면 위에 한 번 더(데스크톱은 왼쪽 열에 있음) */
+.battle-mobile-tutorial{display:none}
+@media(max-width:767px){.battle-mobile-tutorial{display:block;order:-1}.battle-mobile-tutorial .tutorial-card{margin-bottom:12px}}

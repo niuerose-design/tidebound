@@ -4,13 +4,13 @@ import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { thresholdRank, refinementBonusLabel } from '@/game/data/long-term';
 import { useState } from 'react';
-import { ArrowUp, Info, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowUp, Info, Sparkles } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
 import { BALANCE } from '@/game/data/balance';
-import { skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled } from '@/game/systems/progression';
+import { skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon } from './shared';
 import { masteryConditionText } from '@/game/systems/mastery';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -39,13 +39,16 @@ function SkillCard({ sk, s, send, busy, detailed }: PanelProps & { sk: Skill; de
     const growth = skillGrowthStages(sk);
     const refinement = skillRefinementTargets(sk), refined = thresholdRank(practice, refinement);
     const equipAllowed = validLoadout(s, equipped ? s.skills.filter(id => id !== sk.id) : [...s.skills, sk.id]);
+    // 장착 버튼에 '왜 안 되는지'를 바로 적습니다: 사용 조건(계승·레벨·숙련) 또는 AP 부족량.
+    const apShort = Math.max(0, cost - (apCapacity(s) - apUsed(s)));
+    const equipLabel = equipped ? '장착 해제' : !acquired ? unlockText : !usable ? skillBlockReason(s, sk.id).replace(/[.。]$/, '') : !equipAllowed ? `AP ${apShort} 부족` : '장착';
     // v25 감춰진 기술: 숙련 Lv.1 전까지 효과를 ???로 보여 줍니다(장착·숙련 진행은 그대로).
     if (skillVeiled(s, sk)) return <article className={`panel skill-card skill-veiled ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${detailed ? 'expanded' : 'compact'}`}>
         <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · {sk.type === 'active' ? '액티브' : '패시브'} · 장착 AP {cost}</small></div></div>
         <p className="skill-current-description">??? · 숙련 Lv.1을 달성하면 효과가 드러납니다.</p>
         <div className="skill-compact-growth"><span>{acquired ? '습득' : unlockText}</span><span>{nextMastery ? `숙련 ${practice.toLocaleString()} / ${nextMastery.toLocaleString()}` : '숙련 완료'}</span></div>
         {acquired && <Meter value={Math.min(practice, nextMastery || milestones[max - 1])} max={nextMastery || milestones[max - 1]}/>}
-        <div className="skill-actions skill-actions-v2"><button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} onClick={() => send({ type: 'skill', id: sk.id })}>{equipped ? '장착 해제' : !acquired ? unlockText : !usable ? '사용 조건 필요' : '장착'}</button></div>
+        <div className="skill-actions skill-actions-v2"><button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} onClick={() => send({ type: 'skill', id: sk.id })}>{equipLabel}</button></div>
     </article>;
     return <article className={`panel skill-card ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${detailed ? 'expanded' : 'compact'}`} title={detailed ? undefined : `${effects.join(" · ")}\n다음 강화: ${hint}`}>
         <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · 캐릭터 Lv.{sk.level}{sk.rebirth ? ` · 환생 ${sk.rebirth}회` : ''}</small></div></div>
@@ -75,7 +78,7 @@ function SkillCard({ sk, s, send, busy, detailed }: PanelProps & { sk: Skill; de
         <div className="skill-actions skill-actions-v2">
             {sk.job && acquired && !isInherited && <ConfirmButton label="계승 · 1 SP" description={`${sk.name}을 다른 직업에서도 사용할 수 있게 합니다. 성장 레벨과 숙련도는 변하지 않습니다. 숙련도 ${milestones[0].toLocaleString()}을 쌓으면 SP 없이도 계승됩니다.`} disabled={busy || !canInheritSkill(s, sk.id) || s.sp < 1} onConfirm={() => send({ type: 'inheritSkill', id: sk.id })}/>}
             {acquired && <ConfirmButton label={level >= max ? '최대 레벨' : '강화 · 1 SP'} description={`${sk.name} 성장 Lv.${level} → Lv.${level + 1}. ${hint} 숙련은 계속 쌓이며 SP와 효과가 중첩되지는 않습니다. 이 강화만으로 계승되지는 않습니다.`} disabled={busy || !canSpendSkill(s, sk.id) || s.sp < 1} onConfirm={() => send({ type: 'learn', id: sk.id })}/>}
-            <button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} title={equipped && !equipAllowed ? 'AP를 지원하는 스킬입니다. 다른 기술을 먼저 해제하세요.' : undefined} onClick={() => send({ type: 'skill', id: sk.id })}>{equipped ? '장착 해제' : !acquired ? unlockText : !usable ? '계승·레벨 조건 필요' : '장착'}</button>
+            <button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} title={equipped && !equipAllowed ? 'AP를 지원하는 스킬입니다. 다른 기술을 먼저 해제하세요.' : undefined} onClick={() => send({ type: 'skill', id: sk.id })}>{equipLabel}</button>
         </div>
         {paidInheritance && mastery > 0 && detailed && <small className="footnote">실전 숙련으로 무료 계승도 완료했습니다. SP 투자 환급 시 숙련 계승은 유지됩니다.</small>}
     </article>;
@@ -103,7 +106,7 @@ export function Skills({ s, send, busy }: PanelProps) {
                 <ol className="loadout-row">{ids.map((id, i) => {
                     const sk = skillById(id)!;
                     const rank = s.learned[id] || 1, mastery = skillMastery(s, id), fx = effectiveSkill(sk, rank, mastery, s.skillSpecializations?.[id], s.skillPractice[id] || 0);
-                    return <li className="loadout-skill" key={id}>{type === 'active' && <span className="loadout-order" aria-label={`판정 ${i + 1}순위`}>{i + 1}</span>}<SkillIcon id={id}/><div><strong>{sk.name} · Lv.{skillLevel(sk, rank, mastery)}</strong><small>AP {fx.cost}{type === 'active' ? ` · 발동 ${Math.round((fx.chance || 0) * 100)}%` : ''}</small></div>{type === 'active' && i > 0 && <button className="icon-button" aria-label={`${sk.name} 우선순위 올리기`} disabled={busy} onClick={() => send({ type: 'skillUp', id })}><ArrowUp size={16}/></button>}<button className="text-button" disabled={busy || !validLoadout(s, s.skills.filter(x => x !== id))} onClick={() => send({ type: 'skill', id })}>해제</button></li>;
+                    return <li className="loadout-skill" key={id}>{type === 'active' && <span className="loadout-order" aria-label={`판정 ${i + 1}순위`}>{i + 1}</span>}<SkillIcon id={id}/><div><strong>{sk.name} · Lv.{skillLevel(sk, rank, mastery)}</strong><small>AP {fx.cost}{type === 'active' ? ` · 발동 ${Math.round((fx.chance || 0) * 100)}%` : ''}</small></div>{type === 'active' && i > 0 && <button className="icon-button" aria-label={`${sk.name} 우선순위 올리기`} title="먼저 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id })}><ArrowUp size={16}/></button>}{type === 'active' && i < ids.length - 1 && <button className="icon-button" aria-label={`${sk.name} 우선순위 내리기`} title="나중에 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id: ids[i + 1] })}><ArrowDown size={16}/></button>}<button className="text-button" disabled={busy || !validLoadout(s, s.skills.filter(x => x !== id))} onClick={() => send({ type: 'skill', id })}>해제</button></li>;
                 })}</ol>
                 {!ids.length && <p className="loadout-empty">{type === 'active' ? '액티브가 없으면 기본 공격만 합니다.' : '장착한 패시브가 없습니다.'}</p>}
             </div>;

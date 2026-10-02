@@ -3,10 +3,13 @@ import { useState } from 'react';
 import { DoorClosed, DoorOpen, X } from 'lucide-react';
 import type { State } from '@/game/types';
 import { jobById } from '@/game/data/classes';
-import { DOORS, REBIRTH_DOOR_JOBS, timeSlot, currentVisit, visitorSchedule, kst, DISCOVERY_DOORS, type DoorId } from '@/game/data/doors';
+import { DOORS, REBIRTH_DOOR_JOBS, TIME_SLOTS, timeSlot, currentVisit, visitorSchedule, kst, DISCOVERY_DOORS, type DoorId } from '@/game/data/doors';
 import { serverNow, jobRevealed } from './job-status';
 
 const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
+/** 한국 시간 기준 toHour 정각까지 남은 분(toHour가 24를 넘으면 내일). */
+const minutesUntil = (now: number, toHour: number) => { const t = kst(now); return Math.max(1, toHour * 60 - (t.hour * 60 + t.minute)); };
+const fmt = (m: number) => m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60 ? `${m % 60}분` : ''}`.trim() : `${m}분`;
 const jobOf = (id?: string) => jobById(id);
 
 /** 문 하나의 지금 상태: 열려 있는 직업(없으면 닫힘)과 안내 문구. 시각은 마지막 서버 시각 기준. */
@@ -18,11 +21,15 @@ export function doorState(s: State, id: DoorId) {
     }
     if (id === 'time') {
         const slot = timeSlot(now), job = slot.jobs[0];
-        return { job, note: `${slot.name} ${hh(slot.from)}–${hh(slot.to)} (한국 시간)${job ? '' : ' · 고요한 시간 · 문 닫힘'}` };
+        // 카운트다운: 열려 있으면 닫힐 때까지, 닫혀 있으면 다음 열리는 시간대까지(없으면 내일 첫 시간대).
+        const next = TIME_SLOTS.find(t => t.from >= slot.to && t.jobs.length) || TIME_SLOTS.find(t => t.jobs.length);
+        const countdown = job ? `닫힐 때까지 ${fmt(minutesUntil(now, slot.to))}` : next ? `열릴 때까지 ${fmt(minutesUntil(now, next.from >= slot.to ? next.from : 24 + next.from))}` : '';
+        return { job, note: `${slot.name} ${hh(slot.from)}–${hh(slot.to)} (한국 시간)${job ? '' : ' · 고요한 시간 · 문 닫힘'}`, countdown };
     }
     if (id === 'visitor') {
-        const visit = currentVisit(now), today = visitorSchedule(kst(now).date);
-        return { job: visit?.job, note: `오늘 방문 ${today.map(v => `${hh(v.from)}–${hh(v.to)}`).join(', ') || '없음'} (한국 시간)${visit ? '' : ' · 지금은 아무도 없습니다'}` };
+        const visit = currentVisit(now), today = visitorSchedule(kst(now).date), upcoming = today.find(v => v.from > kst(now).hour);
+        const countdown = visit ? `떠날 때까지 ${fmt(minutesUntil(now, visit.to))}` : upcoming ? `다음 방문까지 ${fmt(minutesUntil(now, upcoming.from))}` : today.length ? '오늘 방문은 끝났습니다' : '';
+        return { job: visit?.job, countdown, note: `오늘 방문 ${today.map(v => `${hh(v.from)}–${hh(v.to)}`).join(', ') || '없음'} (한국 시간)${visit ? '' : ' · 지금은 아무도 없습니다'}` };
     }
     const found = DISCOVERY_DOORS.find(d => d.test(s));
     return { job: found?.job, note: DISCOVERY_DOORS.length ? '숨은 조건을 처음 만족하면 열립니다.' : '??? · 준비 중' };
@@ -37,6 +44,7 @@ export function DoorRow({ s, selectedId, onSelect }: { s: State; selectedId?: st
             <strong>{door.name}</strong>
             <span className="door-job">{open ? revealed ? job!.name : '???' : '문 닫힘'}{entered ? ' · 입장한 적 있음' : ''}</span>
             {open && !revealed && job?.hint && <small className="door-hint">{job.hint}</small>}
+            {'countdown' in st && st.countdown && <small className="door-countdown">{st.countdown}</small>}
             <small>{st.note}</small>
         </button>;
     })}</div>;

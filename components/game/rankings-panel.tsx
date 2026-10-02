@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, RefreshCw, Swords, Fish, Users } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -42,6 +42,12 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
 }) {
     const now = useNow();
     const [detail, setDetail] = useState<Ranking | null>(null);
+    const [sort, setSort] = useState<'rating' | 'power' | 'level' | 'rebirths'>('rating');
+    const sorted = [...rows].sort((a, b) => (b[sort] - a[sort]) || (b.rating - a.rating) || (b.power - a.power));
+    // 등록한 지 오래된 내 방어용 정보는 화면을 열 때 한 번 자동으로 다시 등록합니다(10분 이상 지났을 때).
+    const refreshed = useRef(false);
+    const me = rows.find(r => r.self);
+    useEffect(() => { if (!refreshed.current && me && !busy && Date.now() - me.updatedAt > 10 * 60 * 1000) { refreshed.current = true; register(); } }, [me, busy, register]);
     const detailLoadout = detail ? loadout(detail) : null, detailStats = detail ? normalizeStats(detail.stats) : null;
     return <>
     <Heading eyebrow="ASYNC ARENA" title="낚시꾼의 명예" description="등록된 능력치와 스킬로 겨룹니다. 상대의 접속 여부와 관계없이 전투합니다.">
@@ -72,8 +78,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
     <div className="panel ranking-panel">
     <div className="section-title">
     <h2>등록된 낚시꾼</h2>
-    <button className="text-button" onClick={loadRanking}>
-    <RefreshCw size={14}/>새로고침</button>
+    <div className="ranking-sort" role="group" aria-label="정렬">{([['rating', '점수'], ['power', '전투력'], ['level', '레벨'], ['rebirths', '환생']] as const).map(([k, label]) => <button type="button" key={k} className={sort === k ? 'active' : ''} aria-pressed={sort === k} onClick={() => setSort(k)}>{label}</button>)}<button className="text-button" onClick={loadRanking}><RefreshCw size={14}/>새로고침</button></div>
     </div>{rankError ? <div className="error-box">{rankError}</div> : rows.length ? <Table>
         <TableHeader>
         <TableRow>
@@ -85,23 +90,23 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
         <TableHead>결투</TableHead>
         </TableRow>
         </TableHeader>
-        <TableBody>{rows.map((r, i) => <TableRow key={r.id}>
+        <TableBody>{sorted.map((r, i) => <TableRow key={r.id}>
             <TableCell className="rank-number">{i + 1}</TableCell>
-            <TableCell>
+            <TableCell className="ranking-who">
             <strong>{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
             <small className="block">Lv. {r.level} · {jobName(r.job)} · 환생 {r.rebirths}회 · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
             <MainStats stats={r.stats}/>
             </TableCell>
-            <TableCell><span className="ranking-guild">{r.guild || '무소속'}</span></TableCell>
-            <TableCell>{format(r.power)}</TableCell>
-            <TableCell>{r.rating}</TableCell>
+            <TableCell data-label="길드"><span className="ranking-guild">{r.guild || '무소속'}</span></TableCell>
+            <TableCell data-label="전투력">{format(r.power)}</TableCell>
+            <TableCell data-label="점수">{r.rating}</TableCell>
             <TableCell className="ranking-actions">
             <button className="secondary small" disabled={busy || r.self || now - s.lastDuel < BALANCE.duelCooldownMs} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>{r.self ? '내 캐릭터' : '대결'}</button>
             <button className="text-button" onClick={() => setDetail(r)}>상세보기</button>
             </TableCell>
             </TableRow>)}</TableBody>
         </Table> : <Empty title="첫 번째 낚시꾼이 되어보세요" description="전투 정보를 등록하면 랭킹에 등장합니다. 다른 참가자가 없을 때는 훈련 상대와 대결할 수 있습니다."/>}</div>
-    <p className="footnote">랭킹은 결투 점수 순입니다. 랭크 결투는 1분 간격이며 도전자의 점수만 변동합니다. 장비·스킬을 바꾼 뒤 다시 등록하면 방어용 정보가 갱신됩니다. 상세보기는 등록한 시점의 능력치와 스킬 편성입니다.</p>
+    <p className="footnote">기본 정렬은 결투 점수 순이고 순위 번호는 고른 정렬 기준의 순서입니다. 랭크 결투는 1분 간격이며 도전자의 점수만 변동합니다. 내 방어용 정보는 등록 후 10분이 지나면 이 화면을 열 때 자동으로 다시 등록되고, 버튼으로 바로 갱신할 수도 있습니다. 상세보기는 등록한 시점의 능력치와 스킬 편성입니다.</p>
     </TabsContent>
     <TabsContent value="training">
     <div className="section-title training-title"><h2><Users size={17}/> 등록된 낚시꾼</h2><span>방어용 등록 정보 그대로 · 점수·전적 변동 없음</span></div>
