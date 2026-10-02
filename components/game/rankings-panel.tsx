@@ -14,6 +14,7 @@ import { normalizeStats } from '@/game/systems/stats';
 import { STAT_LABELS, statDisplay } from '@/game/data/progression';
 import { vowBadgeLabel } from '@/game/systems/vows';
 import { Empty, Heading, SkillIcon, format, useNow } from './shared';
+import { BattleLogLine, withTurnDividers } from './combat-log';
 import type { Ranking } from './use-game';
 import type { PanelProps } from './panel-props';
 
@@ -157,7 +158,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, register
     <span>상대 명중률 <b>{result ? Math.round(result.opponentHitChance * 100) : 0}%</b> · 상대 회피 수치 {result ? statDisplay('evasion', result.opponentEvasion) : '-'}</span>
     <span>내 회피 수치 {result ? statDisplay('evasion', result.playerEvasion) : '-'} · 상대 명중 수치 {result ? statDisplay('accuracy', result.opponentAccuracy) : '-'}</span>
     </div>
-    <div className="duel-log">{result?.logs.map((l, i) => <p key={i}>{l}</p>)}</div>
+    <div className="duel-log">{result?.rounds?.length ? withTurnDividers(result.rounds.map((r, i) => ({ id: i, turn: r.turn, text: '', type: 'battle' as const, event: r.event })), log => <div key={log.id} className="log-line battle"><BattleLogLine log={log} playerName={s.name}/></div>) : result?.logs.map((l, i) => <p key={i}>{l}</p>)}</div>
     </DialogContent>
     </Dialog>
     </>;

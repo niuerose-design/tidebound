@@ -20,13 +20,15 @@ import { BOOK_REVEAL } from '@/game/data/book-traits';
 import { stats } from '@/game/systems/stats';
 import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, useCombatFx } from './combat-fx';
 import { StatusBadges } from './combat-status';
-import { BattleLogLine } from './combat-log';
-import type { State, Action } from '@/game/types';
+import { BattleLogLine, withTurnDividers } from './combat-log';
+import type { State, Action, Log } from '@/game/types';
 import { TideSelector } from './tide-selector';
 import { SettingsDialog } from './settings-dialog';
 import { Player } from './player-column';
 import { BattleRail } from './battle-rail';
 import { MobileFisherStrip } from './mobile-fisher-strip';
+/** 로그 탭별 종류: 전투 탭은 전투·시스템(회복·이동), 획득 탭은 보상·스킬 해금. */
+const LOG_TABS: Record<string, Log['type'][]> = { battle: ['battle', 'system'], reward: ['reward', 'skill'] };
 export function BattleView({ s, busy, send, setView, saved, settings, setSettings, name, setName, onLogout }: {
     onLogout: () => void;
     s: State;
@@ -39,7 +41,7 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     name: string;
     setName: (value: string) => void;
 }) {
-    const [filter, setFilter] = useState('all');
+    const [filter, setFilter] = useState('battle');
     const st = STAGES.find(x => x.id === s.stage)!, d = DUNGEONS.find(x => x.id === s.dungeon?.id);
     const enemy = s.enemy;
     const swarmNow = activeSwarm(s);
@@ -47,6 +49,8 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     const enemyStats = enemy ? normalizeStats(enemy.combatStats || { hp: enemy.maxHp, attack: enemy.attack, defense: enemy.defense, crit: 0 }) : null;
     const activeIds = s.skills.filter(id => skillById(id)?.type === 'active');
     const quickItems = s.inventory.slice(-6).reverse();
+    // 획득 로그는 전투 탭에서 빼고, 가장 최근 획득 한 줄만 전투 탭 위에 띄웁니다.
+    const latestReward = s.logs.findLast(l => l.type === 'reward' || l.type === 'skill');
     const { effects: combatFx, skipped: fxSkipped } = useCombatFx(s.logs, s.name);
     // 회복 대기(필드 패배 후)·출정 준비(던전 입장 후) 남은 시간. 던전 화면의 준비 카운트다운과 같은 방식입니다.
     const recoverySeconds = Math.ceil(s.recovery * BALANCE.turnMs / 1000);
@@ -68,7 +72,7 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     {enemy && <div className="matchup-strip">내 명중률 {percent(hitChance(playerStats, enemyStats!))} · 적 명중률 {percent(hitChance(enemyStats!, playerStats))} <span>명중−상대 회피·속도 보정 · 1~99.5% 범위</span></div>}
     <section className={`battle-scene ${s.running ? 'running' : ''}`}><Image className="ocean-art" src="/ocean.webp" alt="청록빛 파도 사이로 솟아오르는 은빛 심해 물고기" width={1536} height={1024} priority/><div className="scene-shade"/><div className="scene-top"><span className="scene-label"><Compass size={14}/>{d ? 'DUNGEON EXPEDITION' : st.subtitle}</span><div className="scene-actions"><button className={`scene-control ${s.running ? 'pause-button' : 'primary'}`} disabled={busy} onClick={() => send({ type: s.running ? 'pause' : 'start' })}>{s.running ? <Pause size={17}/> : <Play size={17}/>} {s.running ? '낚시 일시정지' : '자동 낚시 시작'}</button><button className="scene-link" onClick={() => setView(d ? 'dungeons' : 'stages')}>{d ? '던전 변경' : '낚시터 변경'} <ChevronRight size={15}/></button></div></div><div className="scene-copy"><span className="eyebrow">{d ? `${s.dungeon!.wave + 1} / ${d.fish.length} 전투` : `STAGE 0${STAGES.indexOf(st) + 1} · Lv. ${st.level}+`}</span><h2>{d?.name || st.name}</h2><p>{s.recovery ? `낚시꾼이 체력을 회복하고 있습니다 · ${recoverySeconds}초 남음` : enemy ? `${enemy.boss ? 'BOSS · ' : ''}${enemy.name}에게 입질이 왔습니다.` : s.running ? '물결 속에서 다음 입질을 기다립니다.' : st.description}</p></div></section>
     <section className="panel battle-skills"><div className="section-title"><h2>전투 스킬 <span className="micro">AP {apUsed(s)} / {apCapacity(s)} · 액티브 {activeIds.length}개</span></h2><button className="text-button" onClick={() => setView('skills')}>스킬 편성 <ChevronRight size={14}/></button></div><div className="battle-skill-row">{(activeIds.length ? activeIds : ['']).map(id => { const sk = skillById(id), effective = sk ? effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id), s.skillSpecializations?.[id], s.skillPractice[id] || 0) : null; return <button key={id || 'empty'} className={`battle-skill ${sk ? '' : 'vacant'}`} onClick={() => setView('skills')}><div className="skill-symbol">{sk ? <SkillIcon id={sk.id}/> : <span>+</span>}</div><div><strong>{sk?.name || '빈 스킬 슬롯'}</strong><small>{sk ? `${Math.round(effective!.chance * 100)}% 발동 · ${(s.cooldowns[id] || 0) > 0 ? `대기 ${s.cooldowns[id]}턴` : '사용 준비'}` : '스킬을 장착하세요'}</small></div></button>; })}</div></section>
-    <section className="panel log-panel"><div className="section-title"><h2>항해 일지 <span className="micro">BATTLE LOG</span></h2><Tabs value={filter} onValueChange={setFilter}><TabsList className="log-tabs"><TabsTrigger value="all">전체</TabsTrigger><TabsTrigger value="battle">전투</TabsTrigger><TabsTrigger value="reward">획득</TabsTrigger><TabsTrigger value="equipment">장비</TabsTrigger></TabsList></Tabs></div><div className="log-list" role="log" aria-label="최근 전투와 획득 기록">{filter === 'equipment' ? <div className="battle-item-row log-equipment-list">{quickItems.length ? quickItems.map(item => <button type="button" key={item.id} onClick={() => setView('inventory')}><span className="battle-item-icon" style={{ color: RARITIES[item.rarity].color }}><SlotIcon slot={item.slot} size={18}/></span><span><strong>{item.name}</strong><small>{RARITIES[item.rarity].name} · 위력 {item.power}</small></span></button>) : <p className="battle-item-empty">포획 보상으로 장비를 획득하면 여기에 표시됩니다.</p>}</div> : s.logs.filter(l => filter === 'all' || l.type === filter).slice(-18).reverse().map(log => <div key={log.id} className={`log-line ${log.type}`}><span className="log-number">{String(log.id).padStart(3, '0')}</span>{log.event ? <BattleLogLine log={log}/> : <><span>{log.type === 'reward' ? <Sparkles size={13}/> : log.type === 'system' ? <Compass size={13}/> : <Swords size={13}/>}</span><p>{log.text}</p></>}</div>)}</div></section>
+    <section className="panel log-panel"><div className="section-title"><h2>항해 일지 <span className="micro">BATTLE LOG</span></h2><Tabs value={filter} onValueChange={setFilter}><TabsList className="log-tabs"><TabsTrigger value="battle">전투</TabsTrigger><TabsTrigger value="reward">획득</TabsTrigger><TabsTrigger value="all">전체</TabsTrigger><TabsTrigger value="equipment">장비</TabsTrigger></TabsList></Tabs></div>{latestReward && filter === 'battle' && <button type="button" className="log-reward-ticker" onClick={() => setFilter('reward')} title="획득 기록 보기"><Sparkles size={13}/><span>{latestReward.text}</span></button>}<div className="log-list" role="log" aria-label="최근 전투와 획득 기록">{filter === 'equipment' ? <div className="battle-item-row log-equipment-list">{quickItems.length ? quickItems.map(item => <button type="button" key={item.id} onClick={() => setView('inventory')}><span className="battle-item-icon" style={{ color: RARITIES[item.rarity].color }}><SlotIcon slot={item.slot} size={18}/></span><span><strong>{item.name}</strong><small>{RARITIES[item.rarity].name} · 위력 {item.power}</small></span></button>) : <p className="battle-item-empty">포획 보상으로 장비를 획득하면 여기에 표시됩니다.</p>}</div> : withTurnDividers(s.logs.filter(l => filter === 'all' || LOG_TABS[filter]?.includes(l.type)).slice(-18).reverse(), log => <div key={log.id} className={`log-line ${log.type}`}><span className="log-number">{String(log.id).padStart(3, '0')}</span>{log.event ? <BattleLogLine log={log} playerName={s.name}/> : <><span>{log.type === 'reward' ? <Sparkles size={13}/> : log.type === 'system' ? <Compass size={13}/> : <Swords size={13}/>}</span><p>{log.text}</p></>}</div>)}</div></section>
     </div>
     <BattleRail s={s} busy={busy} send={send} setView={setView}/>
     </div>

@@ -22,7 +22,7 @@ export function BattleRail({ s, busy, send, setView }: {
     <section className="panel battle-rail-panel battle-feed">
     <div className="section-title"><h2><Swords size={15}/> 전투 기록</h2><span className="micro">LIVE</span></div>
     <div className="battle-feed-list" role="log" aria-label="최근 전투 메시지">
-    {battleLogs.length ? battleLogs.map(log => <BattleLogLine key={log.id} log={log} index/>) : <p className="battle-feed-empty">자동 낚시를 시작하면 전투 기록이 표시됩니다.</p>}
+    {battleLogs.length ? battleLogs.map(log => <BattleLogLine key={log.id} log={log} index playerName={s.name}/>) : <p className="battle-feed-empty">자동 낚시를 시작하면 전투 기록이 표시됩니다.</p>}
     </div>
     </section>
     <AutoRunStatus s={s} compact/>

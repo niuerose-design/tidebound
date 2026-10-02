@@ -1,4 +1,4 @@
-import type { Snapshot, DuelResult } from '../types';
+import type { Snapshot, DuelResult, CombatEvent } from '../types';
 import { BALANCE } from '../data/balance';
 import { normalizeStats, hitChance, power } from './stats';
 import { Fighter, fighterSpeed, actTurn } from './combat';
@@ -21,13 +21,13 @@ export const TRAINING: Snapshot[] = [
 export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rng = Math.random): DuelResult {
     const fighter = (s: Snapshot): Fighter => ({ name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, skills: s.skills, cooldowns: {}, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, specializations: s.skillSpecializations, practice: s.skillPractice, effects: {} });
     const a = fighter(player), b = fighter(opponent);
-    const logs: string[] = [];
+    const logs: string[] = [], rounds: DuelResult['rounds'] = [];
     let turns = 0;
     while (a.hp > 0 && b.hp > 0 && turns < BALANCE.duelMaxTurns) {
         turns++;
         const sa = fighterSpeed(a), sb = fighterSpeed(b);
         const first = sa === sb ? (turns % 2 ? a : b) : sa > sb ? a : b, second = first === a ? b : a;
-        const log = (text: string) => { logs.push(`${turns}턴 · ${text}`); };
+        const log = (text: string, event: CombatEvent) => { logs.push(`${turns}턴 · ${text}`); rounds.push({ turn: turns, event }); };
         actTurn(first, second, rng, log);
         if (first.hp > 0 && second.hp > 0)
             actTurn(second, first, rng, log);
@@ -36,6 +36,6 @@ export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rn
     const expected = 1 / (1 + Math.pow(10, (opponent.rating - player.rating) / 400));
     const score = winner === 'player' ? 1 : winner === 'draw' ? .5 : 0;
     const pa = normalizeStats(player.stats), pb = normalizeStats(opponent.stats);
-    return { winner, turns, logs, playerHp: a.hp, opponentHp: b.hp, opponent: opponent.name, ratingChange: training ? 0 : Math.round(24 * (score - expected)), training,
+    return { winner, turns, logs, rounds, playerHp: a.hp, opponentHp: b.hp, opponent: opponent.name, ratingChange: training ? 0 : Math.round(24 * (score - expected)), training,
         playerHitChance: hitChance(pa, pb), opponentHitChance: hitChance(pb, pa), playerAccuracy: pa.accuracy, opponentAccuracy: pb.accuracy, playerEvasion: pa.evasion, opponentEvasion: pb.evasion };
 }

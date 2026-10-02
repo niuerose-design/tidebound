@@ -245,6 +245,8 @@ export type CombatEvent = {
 export type Log = {
     id: number;
     text: string;
+    /** 기록된 턴 번호(s.turn). 전투 화면이 턴 경계를 나누는 데 씁니다. 오래된 로그에는 없습니다. */
+    turn?: number;
     type: 'battle' | 'reward' | 'system' | 'skill';
     /** 전투 로그의 구조화된 결과. 오래된 로그에는 없을 수 있습니다. */
     event?: CombatEvent;
@@ -400,6 +402,8 @@ export type DuelResult = {
     winner: 'player' | 'opponent' | 'draw';
     turns: number;
     logs: string[];
+    /** 행동별 구조화 결과(턴 번호 포함). 결투 결과창이 전투 로그와 같은 줄로 보여 줍니다. */
+    rounds?: { turn: number; event: CombatEvent }[];
     playerHp: number;
     opponentHp: number;
     opponent: string;

@@ -78,3 +78,11 @@ test('Training opponents: dungeon bosses fight with their dungeon stats and enem
     assert.equal(r.training, true); assert.equal(r.ratingChange, 0); assert.equal(r.opponent, boss.name); assert.ok(r.turns > 0 && r.logs.length > 0);
     assert.equal(JSON.stringify(s), before, 'training never changes the save');
 });
+test('Logs carry the turn they were written in and duels return structured rounds alongside text', () => {
+    const s = newState(0); s.running = true; let seed = 5; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    for (let i = 0; i < 6; i++) tick(s, rng);
+    const battle = s.logs.filter(l => l.type === 'battle'); assert.ok(battle.length >= 2);
+    assert.ok(battle.every(l => Number.isInteger(l.turn) && l.turn >= 1 && l.turn <= s.turn), 'every battle log has its turn');
+    const r = duel(snapshot(s), TRAINING[0], true, () => .3);
+    assert.equal(r.rounds.length, r.logs.length); assert.ok(r.rounds.every((x, i) => r.logs[i].startsWith(`${x.turn}턴 · `) && x.event.actor));
+});
