@@ -4,7 +4,7 @@ import { Lock, Users, Play } from 'lucide-react';
 import type { PanelProps } from './panel-props';
 import { Heading } from './shared';
 import { AccountPanel, VaultPanel } from './rebirth-panel';
-import { SLOT_COUNT, SLOT_UNLOCK, accountSlot, slotUnlocked, slotUnlockText } from '@/game/data/account';
+import { SLOT_COUNT, accountSlot, slotUnlocked, slotUnlockText } from '@/game/data/account';
 import { jobById } from '@/game/data/classes';
 import type { VaultInfo } from './use-game';
 
@@ -20,7 +20,7 @@ export function SlotsPanel({ s, busy, onSwitchSlot, vault, vaultError, loadVault
         <Heading eyebrow="ACCOUNT & SLOTS" title="캐릭터 슬롯" description={`한 계정에 낚시꾼 ${SLOT_COUNT}명까지. 슬롯마다 세이브·랭킹·채팅이 따로이고, 모든 슬롯의 기록을 합친 계정 보너스가 각 캐릭터에 적용됩니다. 쉬는 슬롯은 다음에 들어올 때 부재중 정산을 받습니다.`}/>
         {error && <p className="login-error" role="alert">{error}</p>}
         <section className="panel slot-section slots-screen">
-            <div className="section-title"><h3><Users size={16}/> 슬롯</h3><span>2번은 {slotUnlockText(2)}, 3번은 {slotUnlockText(3)}(합계 {SLOT_UNLOCK[2]}회)에 열립니다. 새 슬롯은 ‘시작’을 누르면 처음부터 만들어집니다.</span></div>
+            <div className="section-title"><h3><Users size={16}/> 슬롯</h3><span>2번은 {slotUnlockText(2)}, 3번은 {slotUnlockText(3)}에 열립니다. 새 슬롯은 ‘시작’을 누르면 처음부터 만들어집니다.</span></div>
             <ul className="slot-list">{Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map(slot => {
                 const info = slot === current ? { name: s.name, job: s.job, level: s.level, rebirths: s.rebirths } : slots.find(x => x.slot === slot);
                 const open = slotUnlocked(s.account, slot), job = info ? jobById(info.job)?.name || info.job : '';

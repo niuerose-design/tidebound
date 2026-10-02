@@ -71,7 +71,7 @@ function FocusPanel({ s, send, busy }: { s: State; send: (a: Action) => void; bu
 export function AccountPanel({ s }: { s: State }) {
     const rows = accountBonusRows(s), slots = s.account?.slots || [], openSlots = Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).filter(n => slotUnlocked(s.account, n)).length;
     return <section className="panel vow-panel account-panel">
-        <div className="section-title"><h2>계정 보너스</h2><span>캐릭터 슬롯 {slots.length || 1}/{openSlots}개 사용 중 · 모든 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. 슬롯은 설정(톱니바퀴)에서 바꿉니다.</span></div>
+        <div className="section-title"><h2>계정 보너스</h2><span>캐릭터 슬롯 {slots.length || 1}/{openSlots}개 사용 중 · 모든 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. 슬롯은 위 목록이나 전투 화면의 슬롯 칩에서 바꿉니다.</span></div>
         <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}</ul>
     </section>;
 }
