@@ -315,7 +315,8 @@
 .battle-console .battle-opponent-strip .opponent-card{padding:9px 10px}
 .battle-console .battle-opponent-strip .opponent-card small{font-size:10px;line-height:1.45}
 .battle-utility-rail>*{width:100%}
-.battle-utility-rail>.battle-feed{display:none}
+.battle-utility-rail>.battle-feed:not(.feed-chat) .battle-feed-list{display:none}
+.battle-utility-rail>.battle-feed:not(.feed-chat) .section-title{margin-bottom:0}
 }
 
 /* 전투 화면 정리: 적 정보는 상대 카드 한 곳에, 환생 해역은 한 줄, 집중 사냥·무리 선택은 줄바꿈 허용 */
