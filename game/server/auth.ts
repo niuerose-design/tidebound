@@ -45,7 +45,16 @@ async function startSession(accountId: string) {
     await db().createSession(token, accountId, expires);
     return { token, expires, accountId };
 }
-export async function logOut(token: string | null) { if (token) await db().deleteSession(token); }
+/** v25.10 세션 → 계정 조회를 서버 인스턴스 메모리에 60초 캐시합니다(동기화·채팅마다 1질의 절약). 로그아웃은 캐시도 지웁니다. */
+const SESSION_CACHE_MS = 60_000, sessionCache = new Map<string, { account: string; until: number }>();
+export async function logOut(token: string | null) { if (token) { sessionCache.delete(token); await db().deleteSession(token); } }
+async function cachedAccount(token: string, now: number) {
+    const hit = sessionCache.get(token);
+    if (hit && hit.until > now) return hit.account;
+    const account = await db().getSessionAccount(token, now);
+    if (account) { if (sessionCache.size > 5000) sessionCache.clear(); sessionCache.set(token, { account, until: now + SESSION_CACHE_MS }); }
+    return account;
+}
 export function readSessionToken(req: Request) {
     const cookie = req.headers.get('cookie') || '';
     const m = cookie.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([a-f0-9]{64})`));
@@ -53,7 +62,7 @@ export function readSessionToken(req: Request) {
 }
 export async function accountFromRequest(req: Request) {
     const token = readSessionToken(req);
-    return token ? db().getSessionAccount(token, Date.now()) : null;
+    return token ? cachedAccount(token, Date.now()) : null;
 }
 export function sessionCookie(token: string, expires: number, secure: boolean) {
     return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Expires=${new Date(expires).toUTCString()}${secure ? '; Secure' : ''}`;
