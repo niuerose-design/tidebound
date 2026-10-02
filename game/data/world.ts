@@ -1,13 +1,13 @@
 export const STAGES = [
     { id: 'brook', name: '여명의 시냇가', subtitle: 'DAWN CREEK', level: 1, rebirth: 0, description: '물안개 너머, 첫 번째 입질이 찾아온다.', fish: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
     { id: 'bay', name: '푸른 조개 만', subtitle: 'SHELL BAY', level: 5, rebirth: 0, description: '잔잔한 수면 아래 날카로운 비늘이 숨어 있다.', fish: ['mackerel', 'ray', 'puffer'], tone: '#68b6ce' },
-    { id: 'reef', name: '붉은 산호초', subtitle: 'CRIMSON REEF', level: 10, rebirth: 0, description: '붉게 물든 산호 사이로 포식자가 유영한다.', fish: ['lionfish', 'eel', 'barracuda'], tone: '#d49081' },
+    { id: 'reef', name: '붉은 산호초', subtitle: 'CRIMSON REEF', level: 10, rebirth: 0, description: '붉게 물든 산호 사이로 포식자가 유영한다.', fish: ['lionfish', 'eel', 'barracuda', 'stormBarracuda'], tone: '#d49081' },
     { id: 'kelp', name: '속삭이는 해초림', subtitle: 'WHISPERING KELP', level: 14, rebirth: 0, description: '해초의 미로에는 작지만 희귀한 생명들이 숨는다.', fish: ['seahorse', 'needlefish', 'tidejelly'], tone: '#72b89b' },
     { id: 'wreck', name: '망각의 난파선', subtitle: 'FORGOTTEN WRECK', level: 18, rebirth: 0, description: '잊힌 선원의 낚싯줄은 아직 팽팽하다.', fish: ['ghost', 'angler', 'shark'], tone: '#9e96c8' },
     { id: 'volcanic', name: '검은 화산수역', subtitle: 'BLACKWATER CALDERA', level: 24, rebirth: 0, description: '열수 분출구가 바다를 끓이고, 불씨를 품은 물고기가 떠오른다.', fish: ['emberEel', 'ashRay', 'magmaPuffer', 'cinderKoi'], tone: '#d17c62' },
     { id: 'trench', name: '검은 해구', subtitle: 'BLACK TRENCH', level: 26, rebirth: 0, description: '빛이 닿지 않는 곳, 거대한 심장이 뛴다.', fish: ['viper', 'squid', 'leviathan'], tone: '#5c9dba' },
-    { id: 'moon', name: '달빛의 심연', subtitle: 'LUNAR ABYSS', level: 32, rebirth: 1, description: '한 번의 생을 넘어선 낚시꾼만 닿는 바다.', fish: ['moonfish', 'dragon', 'ancient'], tone: '#b4afd6' },
-    { id: 'starfall', name: '별비의 외해', subtitle: 'STARFALL OPEN SEA', level: 46, rebirth: 2, description: '별이 바다에 떨어진 날 태어난 희귀종들이 밤을 가른다.', fish: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], tone: '#9c8ed4' },
+    { id: 'moon', name: '달빛의 심연', subtitle: 'LUNAR ABYSS', level: 32, rebirth: 1, description: '한 번의 생을 넘어선 낚시꾼만 닿는 바다.', fish: ['moonfish', 'dragon', 'ancient', 'eclipseMoonfish'], tone: '#b4afd6' },
+    { id: 'starfall', name: '별비의 외해', subtitle: 'STARFALL OPEN SEA', level: 46, rebirth: 2, description: '별이 바다에 떨어진 날 태어난 희귀종들이 밤을 가른다.', fish: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta', 'novaManta'], tone: '#9c8ed4' },
 ];
 /**
  * 무리 사냥: 도감을 완성한 어종을 집중 사냥할 때 무리 전체를 체력 ×N인 한 개체로 상대합니다.
@@ -35,6 +35,8 @@ export type FishDef = {
     spawnWeight?: number;
     rewardMultiplier?: number;
     boss?: boolean;
+    /** v25.8 변종 어종: 이 해역 난이도(차수) 이상에서만 나타납니다. */
+    minTier?: number;
 };
 const rows: [
     string,
@@ -61,6 +63,7 @@ const specialFish: Array<{
     spawnWeight?: number;
     rewardMultiplier?: number;
     boss?: boolean;
+    minTier?: number;
 }> = [
     { id: 'seahorse', name: '유리 해마', level: 15, lore: '투명한 몸 안에서 작은 별빛이 흔들린다.', rarity: 'rare' as const, spawnWeight: .18, rewardMultiplier: 1.35 },
     { id: 'needlefish', name: '은침 청새치', level: 16, lore: '해초 사이를 화살처럼 가르는 희귀한 사냥꾼.', rarity: 'rare' as const, spawnWeight: .12, rewardMultiplier: 1.45 },
@@ -72,6 +75,10 @@ const specialFish: Array<{
     { id: 'starKoi', name: '성운 비단잉어', level: 46, lore: '별자리의 무늬를 비늘에 품은 외해의 희귀종.', rarity: 'rare' as const, spawnWeight: .1, rewardMultiplier: 1.8 },
     { id: 'prismRay', name: '프리즘 가오리', level: 48, lore: '빛을 일곱 갈래로 쪼개며 헤엄친다.', rarity: 'epic' as const, spawnWeight: .065, rewardMultiplier: 2.2 },
     { id: 'voidGuppy', name: '공허 구피', level: 50, lore: '작은 몸 안에 깊이를 측정할 수 없는 어둠이 있다.', rarity: 'epic' as const, spawnWeight: .04, rewardMultiplier: 2.35 },
+    // v25.8 차수 변종: 해역 난이도 10·20·30 이상에서만 나타나는 희귀 변종. 도감 항목이 따로 있어 차수를 올릴 이유가 됩니다.
+    { id: 'stormBarracuda', name: '폭풍 바라쿠다', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, spawnWeight: .08, rewardMultiplier: 2.4, minTier: 10 },
+    { id: 'eclipseMoonfish', name: '월식 개복치', level: 44, lore: '달이 가려진 밤, 심연의 빛을 등에 지고 떠오른다.', rarity: 'epic' as const, spawnWeight: .06, rewardMultiplier: 2.8, minTier: 20 },
+    { id: 'novaManta', name: '신성 만타', level: 58, lore: '별이 터지는 순간의 빛을 날개에 새긴 외해의 전설.', rarity: 'legendary' as const, spawnWeight: .03, rewardMultiplier: 3.4, minTier: 30 },
     { id: 'abyssManta', name: '심연 만타', level: 54, lore: '날개를 펼치면 주변의 조류가 잠시 멎는다.', rarity: 'legendary' as const, spawnWeight: .018, rewardMultiplier: 2.8 },
     { id: 'grottoWarden', name: '동굴의 수호 곰치', level: 14, lore: '동굴의 진주를 지키며 침묵의 전류를 뿜는다.', rarity: 'legendary' as const, rewardMultiplier: 2.6, boss: true },
     { id: 'kelpHydra', name: '해초 히드라', level: 22, lore: '잘린 촉수마다 새로운 머리가 자라는 던전의 보스.', rarity: 'legendary' as const, rewardMultiplier: 3, boss: true },
@@ -82,7 +89,7 @@ const specialFish: Array<{
     { id: 'starfallSeraph', name: '별비 세라핌', level: 62, lore: '별비를 날개로 두른 외해 성역의 최종 수호자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
 ];
 for (const f of specialFish)
-    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: Math.round(9 * Math.pow(1.15, f.level - 1)), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss });
+    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: Math.round(9 * Math.pow(1.15, f.level - 1)), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
 export const DUNGEONS = [
     { id: 'abyss', name: '윤회의 무한 심연', level: 40, rebirth: 3, fish: ['moonfish', 'dragon', 'ancient', 'dragon', 'ancient'], bossFish: 'abyssSovereign', boss: '심연의 기억 · 심연의 주권자', gold: 12000, pearls: 1, description: '정복할 때마다 다음 깊이가 열립니다. 깊을수록 층마다 더 많은 진주를 얻고, 10·25·50·100층을 처음 돌파하면 SP 1을 받습니다.' },
     { id: 'grotto', name: '조수의 동굴', level: 8, rebirth: 0, fish: ['ray', 'puffer', 'mackerel', 'ray', 'eel'], bossFish: 'grottoWarden', boss: '동굴의 주인 · 수호 곰치', gold: 350, pearls: 1, description: '다섯 번의 전투 끝에 잠든 수호자가 눈을 뜬다.' },

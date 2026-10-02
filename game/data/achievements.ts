@@ -16,6 +16,7 @@ const codex = (s: State) => FISH.filter(f => (s.book?.[f.id] || 0) > 0).length;
 const clears = (s: State) => Object.values(s.clears || {}).reduce((a, b) => a + (b || 0), 0);
 const bosses = (s: State) => FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
 const masteredSkills = (s: State) => Object.values(s.skillPractice || {}).filter(n => n >= 8000).length;
+const tideBest = (s: State) => Math.max(0, ...Object.values(s.tideBest || {}));
 const tiers = (s: State) => Math.max(0, ...(s.unlockedJobs || []).map(id => JOBS.find(j => j.id === id)?.tier || 0));
 
 const series = (prefix: string, group: Achievement['group'], title: (n: number) => string, desc: (n: number) => string, steps: number[], progress: (s: State) => number, reward: (i: number) => AchievementReward): Achievement[] =>
@@ -23,7 +24,7 @@ const series = (prefix: string, group: Achievement['group'], title: (n: number) 
 
 export const ACHIEVEMENTS: Achievement[] = [
     ...series('kills', '사냥', n => `포획 ${n.toLocaleString()}마리`, n => `누적 ${n.toLocaleString()}마리를 포획합니다.`, [100, 1000, 5000, 20000, 100000], kills, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 4, bonus: { attack: .02, magic: .02 } }, { pearls: 8, bonus: { hp: .03 } }, { pearls: 15, ap: 1 }][i]),
-    ...series('codex', '항해', n => `도감 ${n}종`, n => `서로 다른 어종 ${n}종을 발견합니다.`, [10, 20, 30, 36], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5, bonus: { defense: .03, resist: .03 } }, { pearls: 10, ap: 1 }][i]),
+    ...series('codex', '항해', n => `도감 ${n}종`, n => `서로 다른 어종 ${n}종을 발견합니다.`, [10, 20, 30, FISH.length], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5, bonus: { defense: .03, resist: .03 } }, { pearls: 10, ap: 1 }][i]),
     ...series('stages', '항해', n => `해역 ${n}곳`, n => `낚시터 ${n}곳에서 낚시합니다.`, [3, 6, 9], s => STAGES.filter(st => s.voyage?.[`stage:${st.id}`] !== undefined).length, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6, bonus: { hp: .03 } }][i]),
     ...series('clears', '사냥', n => `던전 정복 ${n}회`, n => `던전을 ${n}회 정복합니다(무한 심연 포함).`, [1, 10, 50, 200, 1000], clears, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 5, bonus: { attack: .02, magic: .02 } }, { pearls: 8 }, { pearls: 15, ap: 1 }][i]),
     ...series('bosses', '사냥', n => `보스 ${n}마리`, n => `보스를 ${n}마리 포획합니다.`, [10, 100, 500], bosses, i => [{ pearls: 2 }, { pearls: 5, bonus: { defense: .03, resist: .03 } }, { pearls: 10, sp: 1 }][i]),
@@ -31,6 +32,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('mastered', '숙련', n => `직업 숙달 ${n}개`, n => `직업 ${n}개를 끝까지 숙달합니다.`, [1, 3, 8, 15, 30], masteredJobCount, i => [{ pearls: 2 }, { pearls: 4, bonus: { attack: .02, magic: .02 } }, { pearls: 8, ap: 1 }, { pearls: 12, bonus: { hp: .04 } }, { pearls: 20, ap: 1, sp: 1 }][i]),
     ...series('skillsMax', '숙련', n => `스킬 최대 숙련 ${n}개`, n => `스킬 ${n}개의 실전 숙련을 8,000 이상 쌓습니다.`, [1, 5, 15, 40], masteredSkills, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 20, bonus: { attack: .03, magic: .03 } }][i]),
     ...series('tier', '숙련', n => `${n}차 전직`, n => `${n}차 직업에 처음 전직합니다.`, [2, 3, 4, 5], tiers, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6, bonus: { hp: .03 } }, { pearls: 10, ap: 1 }][i]),
+    ...series('tide', '항해', n => `해역 난이도 ${n}`, n => `낚시터에서 해역 난이도 ${n} 이상으로 포획합니다.`, [5, 10, 20, 30, 50], tideBest, i => [{ pearls: 2 }, { pearls: 4, bonus: { attack: .02, magic: .02 } }, { pearls: 8, ap: 1 }, { pearls: 15, bonus: { hp: .04 } }, { pearls: 30, ap: 1, sp: 1 }][i]),
     ...series('abyss', '심연', n => `심연 ${n}층`, n => `무한 심연 ${n}층을 정복합니다.`, [5, 10, 25, 50, 100], s => s.abyssBest || 0, i => [{ pearls: 2 }, { pearls: 4, bonus: { defense: .02, resist: .02 } }, { pearls: 8, ap: 1 }, { pearls: 15, bonus: { attack: .03, magic: .03, hp: .03 } }, { pearls: 30, ap: 1, sp: 2 }][i]),
     ...series('rebirths', '환생', n => `환생 ${n}회`, n => `${n}번째 환생을 마칩니다.`, [1, 3, 5, 10, 20, 50], s => s.rebirths || 0, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5, bonus: { hp: .03 } }, { pearls: 10, ap: 1 }, { pearls: 20, bonus: { attack: .03, magic: .03 } }, { pearls: 40, ap: 1, sp: 2 }][i]),
     { id: 'deep:100', group: '환생', title: '깊은 항해', desc: 'Lv.100에 도달한 채 환생합니다.', reward: { pearls: 10, bonus: { hp: .03, defense: .02, resist: .02 } }, progress: s => s.lifeBonus === 'deep' ? 1 : 0, target: 1 },

@@ -265,3 +265,24 @@ test('v25.7 salvage research sells or dismantles all non-relic gear at rebirth w
     const u = newState(0); u.level = 40; u.rebirths = 2; u.permanent = { salvage: 5 }; assert.equal(salvageRate(u), 1); u.inventory = [gear(4)]; u.essence = 3;
     act(u, { type: 'salvageMode', value: 'dismantle' }, 0); act(u, { type: 'rebirth' }, 0); assert.equal(u.essence, 3 + dismantleEssence(gear(4)) + 2, 'dismantled at 100% (+ starter rod and coat, 1 essence each)'); assert.equal(u.gold, 100); assert.equal(u.salvageMode, 'dismantle', 'mode survives rebirth');
 });
+
+test('v25.8 tide milestones pay per stage once, variant fish need the tier, abyss 10-floor bonus and AP milestones, abyss-only affixes', async () => {
+    const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { weightedFishId, reward } = await mods.load('systems/encounter'); const { FISH, STAGES } = await mods.load('data/world'); const { rollAffixes, AFFIX_POOL } = await mods.load('data/gear');
+    const { apCapacity } = await mods.load('systems/progression'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
+    const reef = STAGES.find(st => st.id === 'reef');
+    const r = () => 0.999; assert.notEqual(weightedFishId(reef.fish, r, 0, 0), 'stormBarracuda', 'tier 0 never spawns the variant'); assert.ok(reef.fish.includes('stormBarracuda'));
+    const picks = new Set(); let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); for (let i = 0; i < 400; i++) picks.add(weightedFishId(reef.fish, rng, 0, 10)); assert.ok(picks.has('stormBarracuda'), 'tier 10 spawns it');
+    assert.ok(FISH.find(f => f.id === 'novaManta').minTier === 30 && ACHIEVEMENTS.some(a => a.id === 'tide:50') && ACHIEVEMENTS.some(a => a.id === `codex:${FISH.length}`));
+    const foe = (id, boss) => ({ id, name: id, hp: 0, maxHp: 1, attack: 1, defense: 0, exp: 0, gold: 0, boss, stun: 0, combatStats: {}, skills: [], cooldowns: {}, effects: {} });
+    const s = newState(0); s.level = 30; s.rebirths = 12; s.stage = 'reef'; s.tide = 12; s.enemy = foe('lionfish', false);
+    const pearls = s.pearls; reward(s, rng); assert.equal(s.tideBest.reef, 12); assert.equal(s.pearls - pearls, 3, 'tier 12 first catch pays milestones 5 and 10 at once');
+    s.enemy = foe('lionfish', false); const again = s.pearls; reward(s, rng); assert.equal(s.pearls, again, 'same tier pays nothing more');
+    s.tide = 20; s.enemy = foe('lionfish', false); reward(s, rng); assert.equal(s.pearls - again, 4, 'tier 20 pays the next milestone only');
+    const u = newState(0); u.abyssBest = 29; u.abyssMilestones = []; const ap = apCapacity(u);
+    u.dungeon = { id: 'abyss', wave: 4, depth: 30 }; u.enemy = foe('abyssSovereign', true);
+    const before = u.pearls; reward(u, rng); assert.equal(u.abyssBest, 30); assert.ok(u.abyssMilestones.includes(30)); assert.equal(apCapacity(u), ap + 1, '30F → AP +1'); assert.ok(u.pearls - before >= 30 + 12, '30F pays floor pearls (4×3) + bonus 30');
+    assert.ok(AFFIX_POOL.filter(a => a.onlyOrigin === 'abyss').length === 4);
+    for (let i = 0; i < 200; i++) assert.ok(rollAffixes(3, 100, 'temple', rng).every(a => !a.id.startsWith('abyss')), 'abyss-only affixes never roll elsewhere');
+    let found = false; for (let i = 0; i < 200 && !found; i++) found = rollAffixes(3, 100, 'abyss', rng).some(a => a.id.startsWith('abyss')); assert.ok(found, 'abyss drops roll abyss-only affixes');
+});

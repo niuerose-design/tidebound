@@ -302,6 +302,8 @@ export type State = {
     weekly?: import('./data/goals').GoalBoard;
     /** v25.6 이번 주 무한 심연 최고 깊이. settled는 보상을 정산한 지난주 키. */
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
+    /** v25.8 낚시터별 포획한 최고 해역 난이도(차수). 이정표 진주와 업적에 씁니다. */
+    tideBest?: Record<string, number>;
     /** v25.6 계정 합계 캐시(캐릭터 슬롯 보너스). 서버가 저장 전에 채웁니다. 없으면 보너스 0. */
     account?: import('./data/account').AccountSummary;
     /** 이 세이브에 적용된 레벨당 능력치 포인트. 없으면 이전 규칙(레벨당 4)으로 보고 차액을 한 번 지급합니다. */

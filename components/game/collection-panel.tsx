@@ -88,7 +88,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <Fish size={34}/>
                 <span>{n >= bookComplete ? '완성 · 지역 연구에 반영' : `${n} / ${bookComplete} 포획`}</span>
                 </div>
-                <h3>{f.name} {f.rarity && f.rarity !== 'common' && <small className={`fish-rarity ${f.rarity}`}>{f.rarity === 'rare' ? '희귀' : f.rarity === 'epic' ? '영웅' : '전설'}</small>}<GoldenMark s={s} id={id}/></h3>
+                <h3>{f.name} {f.rarity && f.rarity !== 'common' && <small className={`fish-rarity ${f.rarity}`}>{f.rarity === 'rare' ? '희귀' : f.rarity === 'epic' ? '영웅' : '전설'}</small>}{f.minTier ? <small className="fish-rarity tier">차수 {f.minTier}+</small> : null}<GoldenMark s={s} id={id}/></h3>
                 <p>{f.lore}</p>
                 {bookRevealed(s, id) ? <div className="fish-trait">
                 <strong>{p.name}</strong>
