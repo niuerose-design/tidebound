@@ -1,5 +1,6 @@
 'use client';
 import { rebirthTitle } from '@/game/data/long-term';
+import { duelTier, recommendOpponents, duelSeasonPearls, RECOMMEND_RANGE } from '@/game/systems/duel';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, RefreshCw, Swords, Fish, Users } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -34,10 +35,11 @@ function MainStats({ stats }: { stats: Snapshot['stats'] }) {
     const a = normalizeStats(stats);
     return <small className="block ranking-main-stats">{MAIN_STATS.map(k => <span key={k}>{SHORT[k]} <b>{statDisplay(k, a[k])}</b></span>)}</small>;
 }
-export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, loadAbyss, register, result, setResult }: PanelProps & {
+export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, loadAbyss, register, result, setResult , season }: PanelProps & {
     rows: Ranking[];
     rankError: string;
     loadRanking: () => void;
+    season?: string;
     abyss: { week: string; rows: AbyssRow[] } | null;
     loadAbyss: () => void;
     register: () => void;
@@ -58,10 +60,11 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <button className="primary" disabled={busy} onClick={register}>
     <ArrowUpRight size={17}/>내 전투 정보 등록</button>
     </Heading>
+    <p className="arena-season">결투 시즌 <b>{season || '—'}</b> · 매달 1일 0시(한국 시간)에 점수가 1000으로 돌아가고 지난 시즌 순위 보상(1위 {duelSeasonPearls(1)} · 2위 {duelSeasonPearls(2)} · 3위 {duelSeasonPearls(3)} · 10위 안 {duelSeasonPearls(10)} · 50위 안 {duelSeasonPearls(50)} · 참가 {duelSeasonPearls(99)}진주)을 첫 행동 때 받습니다.{s.duelSeason?.lastRank ? ` 지난 시즌 ${s.duelSeason.lastKey} ${s.duelSeason.lastRank}위.` : ''}</p>
     <div className="arena-stats">
     <div className="panel">
     <small>내 결투 점수</small>
-    <strong>{s.rating}</strong>
+    <strong>{s.rating} <span className={`duel-tier tier-${duelTier(s.rating).id}`}>{duelTier(s.rating).name}</span></strong>
     </div>
     <div className="panel">
     <small>랭크 전적</small>
@@ -81,6 +84,11 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     </TabsList>
     <TabsContent value="abyss"><AbyssBoard s={s} abyss={abyss} reload={loadAbyss}/></TabsContent>
     <TabsContent value="ranking">
+    {(() => { const picks = recommendOpponents(rows, s.rating); return picks.length ? <div className="panel ranking-panel recommend-panel">
+        <div className="section-title"><h2>추천 상대</h2><span>내 점수 ±{RECOMMEND_RANGE} 안에서 가까운 순</span></div>
+        <div className="recommend-list">{picks.map(r => <div key={r.id} className="recommend-row"><div><strong>{r.name}</strong><small>Lv. {r.level} · {jobName(r.job)} · 점수 {r.rating} <span className={`duel-tier tier-${duelTier(r.rating).id}`}>{duelTier(r.rating).name}</span></small></div>
+            <button className="secondary small" disabled={busy || now - s.lastDuel < BALANCE.duelCooldownMs} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>대결</button></div>)}</div>
+    </div> : null; })()}
     <div className="panel ranking-panel">
     <div className="section-title">
     <h2>등록된 낚시꾼</h2>
@@ -99,13 +107,13 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
         <TableBody>{sorted.map((r, i) => <TableRow key={r.id}>
             <TableCell className="rank-number">{i + 1}</TableCell>
             <TableCell className="ranking-who">
-            <strong>{rebirthTitle(r.rebirths) ? <small className="rebirth-title">{rebirthTitle(r.rebirths)}</small> : null}{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
+            <strong>{rebirthTitle(r.rebirths) ? <small className="rebirth-title">{rebirthTitle(r.rebirths)}</small> : null}{r.seasonRank && r.seasonRank <= 3 ? <small className="rebirth-title season-rank">지난 시즌 {r.seasonRank}위</small> : null}{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
             <small className="block">Lv. {r.level} · {jobName(r.job)} · 환생 {r.rebirths}회 · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
             <MainStats stats={r.stats}/>
             </TableCell>
             <TableCell data-label="길드"><span className="ranking-guild">{r.guild || '무소속'}</span></TableCell>
             <TableCell data-label="전투력">{format(r.power)}</TableCell>
-            <TableCell data-label="점수">{r.rating}</TableCell>
+            <TableCell data-label="점수">{r.rating} <span className={`duel-tier tier-${duelTier(r.rating).id}`}>{duelTier(r.rating).name}</span></TableCell>
             <TableCell className="ranking-actions">
             <button className="secondary small" disabled={busy || r.self || now - s.lastDuel < BALANCE.duelCooldownMs} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>{r.self ? '내 캐릭터' : '대결'}</button>
             <button className="text-button" onClick={() => setDetail(r)}>상세보기</button>

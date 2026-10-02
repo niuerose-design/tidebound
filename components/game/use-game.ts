@@ -107,9 +107,10 @@ export function useGame() {
         release();
     } }, [request, replay]);
     const send = useCallback((a: Action, path?: string) => { void action(a, path).catch(() => { }); }, [action]);
+    const [rankSeason, setRankSeason] = useState('');
     const loadRanking = useCallback(async () => { try {
-        const d = await request('/api/ranking');
-        setRows(d.rows);
+        const d = await request('/api/ranking') as unknown as { rows: Ranking[]; season?: string };
+        setRows(d.rows); setRankSeason(d.season || '');
         setRankError('');
     }
     catch (e) {
@@ -202,5 +203,5 @@ export function useGame() {
         replay.reset();
         setNeedsLogin(true);
     }, [replay]);
-    return { state: view, error, busy, saved, send, rows, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct };
+    return { state: view, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct };
 }

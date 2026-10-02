@@ -304,6 +304,8 @@ export type State = {
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
     /** v25.8 낚시터별 포획한 최고 해역 난이도(차수). 이정표 진주와 업적에 씁니다. */
     tideBest?: Record<string, number>;
+    /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위 보상을 한 번 정산합니다. */
+    duelSeason?: { key: string; lastKey?: string; lastRank?: number };
     /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */
     guildMember?: { id: string; name: string; code?: string; leader: boolean; syncedAt: number };
     /** v25.11 이번 주 길드 기여 기록. sent*는 서버에 올린 값, 차이만 다음에 올립니다. */
@@ -406,6 +408,8 @@ export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; seal?: 
     /** v25.6 이번 생의 조건 카드: stage 지정 해역 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };
 export type Snapshot = {
+    /** v25.12 지난 시즌 순위(상위 3위만 배지). 시즌 이월 때 서버가 넣습니다. */
+    seasonRank?: number;
     /** 걸어 둔 서약 배지(랭킹 표시). 예: ['anchor', 'rough2'] */
     vows?: string[];
     /** 세이브 버전. 랭킹·결투는 현재 버전의 스냅샷만 사용합니다. */

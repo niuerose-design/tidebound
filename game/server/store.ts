@@ -1,10 +1,12 @@
-import type { State, Action } from '../types';
+import type { State, Action, Snapshot } from '../types';
 import { newState, advance, act } from '../systems/engine';
 import { migrateState } from '../systems/migrations';
 import { snapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
 import { db, ConfigError, type SlotRow } from './db';
-import { weekKey, weekSeason } from '../data/goals';
+import { weekKey, weekSeason, monthKey, monthSeason, previousMonthKey } from '../data/goals';
+import { duelSeasonPearls } from '../systems/duel';
+import type { RankingRow } from './db';
 import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
 import { accountFromRequest, AuthError, readSlot } from './auth';
@@ -76,13 +78,40 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
     }
     throw new ApiError('다른 창에서 진행 중입니다. 다시 시도하세요.', 409);
 }
+/** v25.12 결투 시즌: 한국 시간 월 단위. 랭킹 행 id는 duel:<시즌>:<낚시꾼>이라 지난 시즌 행이 덮어써지지 않아 순위 정산이 안정적입니다. */
+export const duelSeasonKey = (now: number) => monthKey(now);
+export const duelRowId = (seasonKey: string, id: string) => `duel:${seasonKey}:${id}`;
 export async function register(id: string) {
-    const { state } = await mutate(id, { type: 'sync' });
-    const snap = snapshot(state);
-    await db().upsertRanking({ id, snapshot: JSON.stringify(snap), rating: snap.rating, power: snap.power, updated_at: Date.now() });
+    const now = Date.now(), key = duelSeasonKey(now);
+    const { state } = await mutate(id, { type: 'sync' }, s => syncDuelSeason(id, s, now));
+    const snap = { ...snapshot(state), season: monthSeason(key), seasonRank: state.duelSeason?.lastKey === previousMonthKey(key) ? state.duelSeason?.lastRank : undefined };
+    await db().upsertRanking({ id: duelRowId(key, id), snapshot: JSON.stringify(snap), rating: snap.rating, power: snap.power, updated_at: now });
     return state;
 }
-export const RANKING_SEASON = SAVE_VERSION;
+/**
+ * 저장 전에 한 번: 시즌(월)이 바뀌었으면 지난 시즌 순위 보상을 정산하고 점수를 1000으로 되돌립니다.
+ * 지난 시즌(또는 v25.11 이전 영구 랭킹)에 방어 정보가 있었으면 같은 정보로 새 시즌 행을 만들어 기록판이 비지 않게 합니다. 같은 시즌이면 질의 0.
+ */
+export async function syncDuelSeason(id: string, s: State, now: number) {
+    const key = duelSeasonKey(now);
+    if (s.duelSeason?.key === key) return;
+    const database = db(), previous = previousMonthKey(key), fresh = !s.duelSeason;
+    let rank = 0, carry: RankingRow | null = null;
+    if (!fresh) {
+        const rows = await database.listRankings(monthSeason(previous), 100);
+        rank = rows.findIndex(r => r.id === duelRowId(previous, id)) + 1;
+        carry = rows[rank - 1] || await database.getRanking(duelRowId(previous, id), monthSeason(previous));
+        if (rank > 0) { const pearls = duelSeasonPearls(rank); s.pearls += pearls; addLog(s, `지난 시즌(${previous}) 결투 ${rank}위 · 진주 +${pearls}`, 'reward'); }
+    }
+    carry ||= await database.getRanking(id, SAVE_VERSION); // v25.11 이전 영구 랭킹 행
+    s.duelSeason = { key, ...(rank > 0 ? { lastKey: previous, lastRank: rank } : {}) };
+    s.rating = 1000;
+    if (carry) {
+        const snap = { ...JSON.parse(carry.snapshot) as Snapshot, season: monthSeason(key), rating: 1000, ...(rank > 0 ? { seasonRank: rank } : { seasonRank: undefined }) };
+        await database.upsertRanking({ id: duelRowId(key, id), snapshot: JSON.stringify(snap), rating: 1000, power: carry.power, updated_at: now });
+    }
+    if (!fresh) addLog(s, `새 결투 시즌 ${key} · 점수가 1000으로 돌아갑니다.`, 'system');
+}
 /** v25.6 주간 심연 기록판. 행 id는 abyss:<계정>, 시즌은 주 키 정수(예: 202640)라 낚시꾼 랭킹(시즌 = 세이브 버전)과 섞이지 않습니다. */
 export const abyssRowId = (id: string) => `abyss:${id}`;
 export async function listAbyssBoard(now: number) {
