@@ -196,7 +196,7 @@ test('v25.6 achievements pay out once with permanent bonuses; daily/weekly goals
     const noon = Date.UTC(2026, 9, 2, 3), nextDay = Date.UTC(2026, 9, 2, 15);
     assert.equal(dayKey(noon), '2026-10-02'); assert.equal(dayKey(nextDay), '2026-10-03'); assert.equal(weekKey(noon), '2026-W40'); assert.equal(weekKey(Date.UTC(2026, 9, 4, 15)), '2026-W41', 'monday KST starts a new week');
     const g = newState(noon); g.level = 20; g.lastTick = noon; act(g, { type: 'sync' }, noon);
-    assert.equal(g.daily.key, '2026-10-02'); assert.equal(g.daily.goals.length, 3); assert.equal(g.weekly.goals.length, 4);
+    assert.equal(g.daily.key, '2026-10-02'); assert.equal(g.daily.goals.length, 4); assert.equal(g.weekly.goals.length, 5);
     const before = g.pearls, catchGoal = g.daily.goals.find(x => x.kind === 'catch');
     recordGoal(g, 'catch', undefined, catchGoal.target, () => {}); assert.ok(catchGoal.claimed); assert.equal(g.pearls - before, catchGoal.pearls);
     const weeklyCatch = g.weekly.goals.find(x => x.kind === 'catch'); assert.equal(weeklyCatch.progress, catchGoal.target, 'weekly board advances too');
@@ -314,4 +314,19 @@ test('v25.11 guild goals scale with members, points formula, weekly stats accumu
     recordGoal(s, 'catch', undefined, 5, () => {}); recordGoal(s, 'boss', undefined, 1, () => {}); recordGoal(s, 'dungeon', 'grotto', 1, () => {}); recordAbyssDepth(s, 7, mon);
     assert.deepEqual([s.guildStats.catches, s.guildStats.bosses, s.guildStats.clears, s.guildStats.abyss], [5, 1, 1, 7]);
     s.lastTick = Date.UTC(2026, 9, 8, 3); recordGoal(s, 'catch', undefined, 1, () => {}); assert.equal(s.guildStats.catches, 1, 'new week starts over'); assert.notEqual(guildStatsFor(s, mon).key, guildStatsFor(s, Date.UTC(2026, 9, 8, 3)).key);
+});
+
+test('v25.12 duel season keys, tiers, season pearls, optional duel goals excluded from the all-bonus, duel achievements', async () => {
+    const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { monthKey, monthSeason, previousMonthKey, weekSeason, makeGoals } = await mods.load('data/goals'); const { duelTier, duelSeasonPearls, recommendOpponents } = await mods.load('systems/duel');
+    const { recordGoal, syncGoals } = await mods.load('systems/progress'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
+    assert.equal(monthKey(Date.UTC(2026, 9, 31, 15, 30)), '2026-11', 'KST month'); assert.equal(previousMonthKey('2026-01'), '2025-12'); assert.ok(monthSeason('2026-10') !== weekSeason('2026-W10') && monthSeason('2026-10') > 10_000_000);
+    assert.deepEqual([999, 1000, 1200, 1399, 1600, 2500].map(r => duelTier(r).id), ['shell', 'coral', 'pearl', 'pearl', 'abyss', 'abyss']); assert.deepEqual([1, 2, 3, 10, 50, 51].map(duelSeasonPearls), [60, 40, 30, 15, 6, 2]);
+    const picks = recommendOpponents([{ id: 'a', rating: 1100 }, { id: 'me', rating: 1000, self: true }, { id: 'b', rating: 1300 }, { id: 'c', rating: 960 }], 1000); assert.deepEqual(picks.map(p => p.id), ['c', 'a'], 'within ±150, closest first, never self');
+    const daily = makeGoals({ rebirths: 0, level: 1, peakLevel: 1 }, '2026-10-02', false); const duelGoal = daily.find(g => g.kind === 'duel'); assert.ok(duelGoal && duelGoal.optional && duelGoal.target === 1);
+    const s = newState(Date.UTC(2026, 9, 1, 3)); syncGoals(s, Date.UTC(2026, 9, 1, 3)); const pearls = s.pearls;
+    for (const g of s.daily.goals) if (!g.optional) { g.progress = g.target - 1; recordGoal(s, g.kind, g.subject, 1, () => {}); }
+    assert.ok(s.daily.bonus, 'daily all-bonus pays without the optional duel goal'); const after = s.pearls;
+    recordGoal(s, 'duel', undefined, 1, () => {}); assert.equal(s.pearls, after + 1, 'duel goal pays on its own'); assert.ok(s.pearls > pearls);
+    assert.ok(ACHIEVEMENTS.some(a => a.id === 'duels:500'));
 });

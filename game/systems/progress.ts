@@ -50,7 +50,7 @@ function advanceBoard(s: State, b: GoalBoard, weekly: boolean, kind: GoalKind, s
         s.pearls += g.pearls; if (g.essence) s.essence = (s.essence || 0) + g.essence;
         log(`${weekly ? '주간' : '오늘의'} 목표 달성 · ${goalText(g)} · 진주 +${g.pearls}${g.essence ? ` · 정수 +${g.essence}` : ''}`);
     }
-    if (!b.bonus && b.goals.every(g => g.claimed)) {
+    if (!b.bonus && b.goals.every(g => g.claimed || g.optional)) {
         b.bonus = true; const bonus = weekly ? WEEKLY_ALL_BONUS : DAILY_ALL_BONUS; s.pearls += bonus;
         log(`${weekly ? '주간' : '오늘의'} 목표 모두 달성 · 보너스 진주 +${bonus}`);
     }

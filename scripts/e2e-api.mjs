@@ -32,6 +32,7 @@ await call('/api/ranking', {}, { expect: 200 });
 assert.ok(data.rows.some(r => r.self), 'own ranking row listed');
 const me = data.rows.find(r => r.self);
 assert.ok(me.rebirths !== undefined && me.stats && Array.isArray(me.skills), 'ranking row carries rebirths, stats and skills for the detail view');
+assert.ok(/^\d{4}-\d{2}$/.test(data.season) && me.id.startsWith(`duel:${data.season}:`), 'v25.12 monthly duel season row id');
 // 훈련 대결: 등록된 낚시꾼(자기 자신)과 던전 보스. 점수·전적은 바뀌지 않습니다.
 ({ data } = await call('/api/duel', { type: 'training', id: `user:${me.id}` }, { expect: 200 }));
 assert.equal(data.result.training, true); assert.equal(data.result.ratingChange, 0); assert.equal(data.state.wins + data.state.losses, 0);
@@ -63,7 +64,7 @@ await call('/api/chat', { channel: 'guild', text: '안녕' }, { expect: 403 });
 assert.ok(/^\d{4}-W\d{2}$/.test(data.week) && Array.isArray(data.rows), 'abyss board has a week key');
 // 일일 목표판이 동기화 때 깔립니다.
 ({ data } = await call('/api/game', { type: 'sync' }, { expect: 200 }));
-assert.ok(data.state.daily && data.state.daily.goals.length === 3 && data.state.weekly.goals.length === 4, 'daily/weekly goals present');
+assert.ok(data.state.daily && data.state.daily.goals.length === 4 && data.state.weekly.goals.length === 5, 'daily/weekly goals present');
 await call('/api/auth', { action: 'logout' }, { expect: 200 });
 jar.clear(); cookie = '';
 await call('/api/game', { type: 'sync' }, { expect: 401 });

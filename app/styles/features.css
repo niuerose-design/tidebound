@@ -271,3 +271,10 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .account-rows b { font-size:14px; color:#a4e9ba; } .account-rows small { font-size:12px; color:#9bb3b0; }
 .fish-rarity.tier { background:#2b3f55; color:#9fc4ff; }
 .rebirth-title { display:inline-block; margin-right:6px; padding:1px 7px; border-radius:999px; background:#3a2f1a; color:#e8d39a; font-size:11px; font-weight:600; vertical-align:middle; }
+/* v25.12 결투 시즌·티어·추천 상대 */
+.arena-season { font-size:13px; color:#9bb3b0; margin:-6px 0 14px; line-height:1.6; } .arena-season b { color:#e8d39a; }
+.duel-tier { display:inline-block; padding:1px 7px; border-radius:999px; font-size:11px; font-weight:600; vertical-align:middle; margin-left:4px; background:#1a2d33; color:#9bb3b0; }
+.duel-tier.tier-coral { background:#3a2a26; color:#f0a08a; } .duel-tier.tier-pearl { background:#2e3340; color:#dfe6ff; } .duel-tier.tier-deep { background:#16303a; color:#7fc8e8; } .duel-tier.tier-abyss { background:#2a1f3a; color:#c9a6ff; }
+.rebirth-title.season-rank { background:#1f3a2e; color:#a4e9ba; }
+.recommend-panel { margin-bottom:16px; } .recommend-list { display:grid; gap:8px; } .recommend-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:#101c20; }
+.recommend-row > div { display:grid; gap:2px; } .recommend-row small { font-size:12px; color:#9bb3b0; }
