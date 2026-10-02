@@ -435,3 +435,7 @@
 .text-button:hover {
   color:#c5e7dd
 }
+
+/* v25.9 사이드바 잠금 표시: 숨기지 않고 해금 조건만 보여줍니다. */
+.game-sidebar .nav-locked { opacity:.62; }
+.game-sidebar .nav-lock { margin-left:auto; display:inline-flex; align-items:center; gap:3px; font-size:10px; color:#8ea7a4; }

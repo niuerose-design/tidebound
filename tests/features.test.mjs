@@ -43,3 +43,11 @@ test('SP is only earned once at 10000 catches; early codex rewards are gold',()=
  s.book.minnow=10000;act(s,{type:'claimBook',id:'minnow'},0);assert.equal(s.sp,1);assert.throws(()=>act(s,{type:'claimBook',id:'minnow'},0));
  s.inventory.push({id:'book-item',slot:'rod',rarity:1,power:5,level:1,name:'test'});act(s,{type:'registerItem',id:'book-item'},0);assert.equal(s.itemBook['rod:1'],true);assert.equal(s.inventory.length,0);assert.throws(()=>act(s,{type:'registerItem',id:'book-item'},0));
 });
+
+test('v25.9 tutorial: 8 steps, dungeon/enhance steps complete by clears or enhancement, early phase ends at the job step', async () => {
+    const { TUTORIAL_STEPS, tutorialProgress, tutorialEarly } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/guidance');
+    assert.equal(TUTORIAL_STEPS.length, 8); assert.deepEqual(TUTORIAL_STEPS.map(x => x.id), ['catch', 'attribute', 'skill', 'dungeon', 'job', 'enhance', 'research', 'rebirth']);
+    const s = newState(0); assert.equal(tutorialEarly(s), true); assert.equal(tutorialProgress(s), 1, 'starter skill counts as equipped');
+    s.clears = { grotto: 1 }; assert.ok(TUTORIAL_STEPS.find(x => x.id === 'dungeon').done(s)); s.equipment.rod.enhance = 1; assert.ok(TUTORIAL_STEPS.find(x => x.id === 'enhance').done(s));
+    s.job = 'physical'; assert.equal(tutorialEarly(s), false); const r = newState(0); r.rebirths = 1; assert.equal(tutorialEarly(r), false, 'rebirth completes the early steps');
+});

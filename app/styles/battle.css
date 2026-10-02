@@ -335,6 +335,7 @@
 
 /* 모바일 항해 안내: 장면 위에 한 번 더(데스크톱은 왼쪽 열에 있음) */
 .battle-mobile-tutorial{display:none}
+.battle-top-tutorial{order:-1;margin-bottom:12px}.battle-top-tutorial .tutorial-card{margin:0}
 @media(max-width:767px){.battle-mobile-tutorial{display:block;order:-1}.battle-mobile-tutorial .tutorial-card{margin-bottom:12px}}
 
 /* v25.3 연속 행동 카운터는 연속으로 행동한 쪽 카드에 붙습니다(데스크톱: 플레이어 왼쪽·상대 오른쪽, 모바일: 위·아래). */
