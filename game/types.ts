@@ -304,6 +304,10 @@ export type State = {
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
     /** v25.8 낚시터별 포획한 최고 해역 난이도(차수). 이정표 진주와 업적에 씁니다. */
     tideBest?: Record<string, number>;
+    /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */
+    guildMember?: { id: string; name: string; code?: string; leader: boolean; syncedAt: number };
+    /** v25.11 이번 주 길드 기여 기록. sent*는 서버에 올린 값, 차이만 다음에 올립니다. */
+    guildStats?: { key: string; catches: number; clears: number; bosses: number; abyss: number; sentCatches: number; sentClears: number; sentBosses: number; sentAbyss: number; sentAt: number };
     /** v25.6 계정 합계 캐시(캐릭터 슬롯 보너스). 서버가 저장 전에 채웁니다. 없으면 보너스 0. */
     account?: import('./data/account').AccountSummary;
     /** 이 세이브에 적용된 레벨당 능력치 포인트. 없으면 이전 규칙(레벨당 4)으로 보고 차액을 한 번 지급합니다. */

@@ -57,6 +57,7 @@ function advanceBoard(s: State, b: GoalBoard, weekly: boolean, kind: GoalKind, s
 }
 /** 포획·정복 때 호출: kind와 대상 id로 일일·주간 목표를 함께 올립니다. */
 export function recordGoal(s: State, kind: GoalKind, subject: string | undefined, n: number, log: (text: string) => void) {
+    if (kind === 'catch' || kind === 'boss' || kind === 'dungeon') bumpGuildStat(s, kind === 'catch' ? 'catches' : kind === 'boss' ? 'bosses' : 'clears', n, s.lastTick);
     if (!s.daily || !s.weekly) return;
     advanceBoard(s, s.daily, false, kind, subject, n, log);
     advanceBoard(s, s.weekly, true, kind, subject, n, log);
@@ -69,6 +70,14 @@ export function recordAbyssDepth(s: State, depth: number, now: number) {
     const key = weekKey(now);
     if (!s.abyssWeek || s.abyssWeek.key !== key) s.abyssWeek = { key, best: 0 };
     if (depth > s.abyssWeek.best) { s.abyssWeek.best = depth; s.abyssWeek.dirty = true; }
+    const g = guildStatsFor(s, now); if (depth > g.abyss) g.abyss = depth;
 }
+/** v25.11 이번 주 길드 기여 기록. 길드 소속 여부와 무관하게 세고(가볍습니다), 서버가 소속일 때만 올립니다. 주가 바뀌면 처음부터. */
+export function guildStatsFor(s: State, now: number) {
+    const key = weekKey(now);
+    if (!s.guildStats || s.guildStats.key !== key) s.guildStats = { key, catches: 0, clears: 0, bosses: 0, abyss: 0, sentCatches: 0, sentClears: 0, sentBosses: 0, sentAbyss: 0, sentAt: 0 };
+    return s.guildStats;
+}
+export function bumpGuildStat(s: State, kind: 'catches' | 'clears' | 'bosses', n: number, now: number) { guildStatsFor(s, now)[kind] += n; }
 /** 지난주 순위 보상(진주). 1위 30 · 2위 20 · 3위 15 · 10위 안 8 · 50위 안 3 · 참가 1. */
 export const abyssWeeklyPearls = (rank: number) => rank <= 1 ? 30 : rank === 2 ? 20 : rank === 3 ? 15 : rank <= 10 ? 8 : rank <= 50 ? 3 : 1;

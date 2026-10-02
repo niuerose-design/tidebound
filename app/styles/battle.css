@@ -406,3 +406,6 @@
 .chat-form{display:flex;gap:6px}.chat-form input{flex:1;min-width:0;background:#0e2026;border:1px solid #9ab4b544;color:#e1eeeb;border-radius:8px;padding:8px 10px;font:inherit;font-size:12px}.chat-form input:focus{outline:none;border-color:#8fd9b9}.chat-form button{padding:6px 10px}
 .chat-note{font-size:10px;color:#6f8a8c}
 @media(max-width:900px){.battle-feed.feed-chat{grid-column:1/-1}}
+
+.chat-channels{display:flex;gap:6px}.chat-channels button{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#101c20;color:#9bb3b0;font-size:12px;cursor:pointer}.chat-channels button.active{border-color:#3d675a;background:#13262c;color:#c5d8d2}
+.chat-feed{display:flex;flex-direction:column;gap:7px}

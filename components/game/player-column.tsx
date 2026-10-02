@@ -28,7 +28,7 @@ export function Player({ s, busy, send, setView }: {
     </div>
     <div className="combatant-name character-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun}/></div>
     <p className="job-label">{jobById(s.job)?.name} · 환생 {s.rebirths}회</p>
-    <p className="guild-label"><Users size={14}/>{s.guild?.name ? `길드 · ${s.guild.name}` : '무소속'}</p>
+    <p className="guild-label"><Users size={14}/>{s.guildMember?.name ? `길드 · ${s.guildMember.name}` : '무소속'}</p>
     <div className="combat-power">
     <span>전투력</span>
     <strong>{format(power(a))}</strong>

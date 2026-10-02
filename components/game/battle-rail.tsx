@@ -30,10 +30,10 @@ export function BattleRail({ s, busy, send, setView }: {
     <div className="section-title"><div className="battle-place-tabs feed-tabs" role="tablist" aria-label="전투 기록 · 채팅">
         <button type="button" role="tab" aria-selected={feed === 'log'} className={feed === 'log' ? 'active' : ''} onClick={() => pickFeed('log')}><Swords size={14}/>전투 기록</button>
         <button type="button" role="tab" aria-selected={feed === 'chat'} className={feed === 'chat' ? 'active' : ''} onClick={() => pickFeed('chat')}><MessageCircle size={14}/>채팅</button>
-    </div><span className="micro">{feed === 'chat' ? 'GLOBAL' : 'LIVE'}</span></div>
+    </div><span className="micro">{feed === 'chat' ? 'CHAT' : 'LIVE'}</span></div>
     {feed === 'log' ? <div className="battle-feed-list" role="log" aria-label="최근 전투 메시지">
     {battleLogs.length ? battleLogs.map(log => <BattleLogLine key={log.id} log={log} index playerName={s.name}/>) : <p className="battle-feed-empty">자동 낚시를 시작하면 전투 기록이 표시됩니다.</p>}
-    </div> : <ChatPanel open={feed === 'chat'} playerName={s.name}/>}
+    </div> : <ChatPanel open={feed === 'chat'} playerName={s.name} guildName={s.guildMember?.name}/>}
     </section>
     <AutoRunStatus s={s} compact/>
     <section className="panel battle-rail-panel battle-selector-panel">

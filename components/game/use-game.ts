@@ -10,6 +10,7 @@ export type Ranking = Snapshot & {
     updatedAt: number;
 };
 /** v25.6 주간 심연 기록판 한 줄. */
+export type GuildInfo = import('@/game/server/guild').GuildInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean };
 /** 동기화 주기(ms). */
 const SYNC_MS = 3000;
@@ -114,6 +115,19 @@ export function useGame() {
     catch (e) {
         setRankError((e as Error).message);
     } }, [request]);
+    /** v25.11 공유 길드: 정보는 길드 화면을 열 때 읽고, 행동은 세이브와 함께 저장됩니다. */
+    const [guild, setGuild] = useState<GuildInfo | null>(null), [guildError, setGuildError] = useState('');
+    const loadGuild = useCallback(async () => { try { setGuild(await request('/api/guild') as unknown as GuildInfo); setGuildError(''); } catch (e) { setGuildError((e as Error).message); } }, [request]);
+    const guildAct = useCallback(async (body: Record<string, unknown>) => {
+        if (lock.current) return false; lock.current = true; setBusy(true);
+        try {
+            const d = await request('/api/guild', body) as unknown as { state?: State; info: GuildInfo };
+            if (d.state) { stateRef.current = d.state; setState(d.state); replay.reset(); setSaved(true); }
+            setGuild(d.info); setGuildError(''); return true;
+        }
+        catch (e) { setGuildError((e as Error).message); return false; }
+        finally { lock.current = false; setBusy(false); }
+    }, [request, replay]);
     const [abyss, setAbyss] = useState<{ week: string; rows: AbyssRow[] } | null>(null);
     const loadAbyss = useCallback(async () => { try { const d = await request('/api/ranking?board=abyss') as unknown as { week: string; rows: AbyssRow[] }; setAbyss({ week: d.week, rows: d.rows }); } catch (e) { setRankError((e as Error).message); } }, [request]);
     const register = useCallback(async () => { if (lock.current)
@@ -188,5 +202,5 @@ export function useGame() {
         replay.reset();
         setNeedsLogin(true);
     }, [replay]);
-    return { state: view, error, busy, saved, send, rows, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot };
+    return { state: view, error, busy, saved, send, rows, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct };
 }
