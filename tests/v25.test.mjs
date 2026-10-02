@@ -302,3 +302,16 @@ test('v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) 
     assert.throws(() => act(s, { type: 'dungeon', id: 'ventCathedral' }, 0)); s.rebirths = 8; act(s, { type: 'dungeon', id: 'ventCathedral' }, 0); assert.equal(s.dungeon.id, 'ventCathedral');
     assert.equal(rebirthTitle(4), ''); assert.equal(rebirthTitle(5), '되돌아온 낚시꾼'); assert.equal(rebirthTitle(49), '심연을 건넌 자'); assert.equal(rebirthTitle(120), '영원의 낚시꾼'); assert.equal(nextRebirthTitle(10).rebirths, 20); assert.equal(nextRebirthTitle(50), undefined);
 });
+
+test('v25.11 guild goals scale with members, points formula, weekly stats accumulate and reset by week', async () => {
+    const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { makeGuildGoals, guildPoints, guildGoalProgress, normalizeGuildCode } = await mods.load('data/guild'); const { recordGoal, recordAbyssDepth, guildStatsFor } = await mods.load('systems/progress');
+    assert.equal(makeGuildGoals(1)[0].target, 1200, 'solo guild counts as 3 members'); assert.equal(makeGuildGoals(10)[0].target, 4000); assert.equal(makeGuildGoals(20)[1].target, 240); assert.equal(makeGuildGoals(5)[3].target, 20);
+    assert.equal(guildPoints({ catches: 100, clears: 2, bosses: 4, abyss: 3, donated: 2500 }), 100 + 40 + 20 + 30 + 2);
+    assert.equal(guildGoalProgress(makeGuildGoals(3)[0], { catches: 99999, clears: 0, bosses: 0, abyss: 0, donated: 0 }), 1200, 'progress caps at target');
+    assert.equal(normalizeGuildCode(' k7pq-2m '), 'K7PQ2M');
+    const s = newState(0); const mon = Date.UTC(2026, 9, 1, 3); s.lastTick = mon;
+    recordGoal(s, 'catch', undefined, 5, () => {}); recordGoal(s, 'boss', undefined, 1, () => {}); recordGoal(s, 'dungeon', 'grotto', 1, () => {}); recordAbyssDepth(s, 7, mon);
+    assert.deepEqual([s.guildStats.catches, s.guildStats.bosses, s.guildStats.clears, s.guildStats.abyss], [5, 1, 1, 7]);
+    s.lastTick = Date.UTC(2026, 9, 8, 3); recordGoal(s, 'catch', undefined, 1, () => {}); assert.equal(s.guildStats.catches, 1, 'new week starts over'); assert.notEqual(guildStatsFor(s, mon).key, guildStatsFor(s, Date.UTC(2026, 9, 8, 3)).key);
+});

@@ -50,6 +50,14 @@ assert.ok(data.rows.some(r => r.id === chatId && r.self), 'own chat line listed'
 ({ data } = await call(`/api/chat?after=${chatId}`, undefined, { expect: 200 }));
 assert.equal(data.rows.length, 0, 'cursor returns only newer lines');
 await call('/api/chat?channel=nope', undefined, { expect: 400 });
+// v25.11 공유 길드: 무소속 상태의 정보·제한. 창설·가입은 골드와 두 계정이 필요해 별도 스크립트로 확인합니다.
+({ data } = await call('/api/guild', undefined, { expect: 200 }));
+assert.equal(data.guild, null); assert.ok(Array.isArray(data.board) && /^\d{4}-W\d{2}$/.test(data.week), 'guild info has week and board');
+await call('/api/guild', { action: 'join', code: 'NOPE' }, { expect: 400 });
+await call('/api/guild', { action: 'create', name: '테스트길드' }, { expect: 400 }); // 골드 부족
+await call('/api/guild', { action: 'claim', goal: 'catches' }, { expect: 400 });
+await call('/api/chat?channel=guild', undefined, { expect: 403 });
+await call('/api/chat', { channel: 'guild', text: '안녕' }, { expect: 403 });
 // 주간 심연 기록판: 로그인만 되면 빈 판이라도 읽힙니다.
 ({ data } = await call('/api/ranking?board=abyss', undefined, { expect: 200 }));
 assert.ok(/^\d{4}-W\d{2}$/.test(data.week) && Array.isArray(data.rows), 'abyss board has a week key');
