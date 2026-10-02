@@ -3,6 +3,7 @@ import { EXPANSION_BALANCE } from './expansion';
 import { STATUS_TUNING } from './balance';
 import { LINEAGE_BALANCE } from './expansion-lineages';
 import { V24_BALANCE } from './expansion-v24';
+import { DEFENSE_BALANCE } from './expansion-defense';
 import { SUPPORT_BALANCE, SUPPORT_STATUS_ONLY } from './support-rework';
 import { V25_BALANCE, V25_STATUS_ONLY } from './expansion-v25';
 
@@ -65,6 +66,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     ...EXPANSION_BALANCE,
     ...LINEAGE_BALANCE,
     ...V24_BALANCE,
+    ...DEFENSE_BALANCE,
 };
 // v24.2 보조 계열 개편은 기존 값 위에 덮어씁니다(필드 단위 병합).
 for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE })) ACTIVE_SKILL_BALANCE[id] = { ...ACTIVE_SKILL_BALANCE[id], ...tuning };
@@ -142,7 +144,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
         const source = sk.scaling === 'harmony' ? '육중 조화 원시 피해' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
-        const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : '';
+        const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'resist' ? ` + 마법 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 결계 친화도` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : '';
         const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName + (sk.dotStacks ? '(중첩)' : '') : { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun'];
         if (sk.restoreAll) { sk.desc = '피해 없이 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회.'; continue; }
         if (sk.statusOnly) {

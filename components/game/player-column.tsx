@@ -1,5 +1,5 @@
 'use client';
-import { GrowthGoals, tutorialActive } from './growth-goals';
+import { tutorialActive } from './growth-goals';
 import { TutorialCard } from './guidance-panels';
 import { tutorialEarly } from '@/game/systems/guidance';
 import { Anchor, ChevronRight, Heart, Shield, Swords, Target, Users, Zap } from 'lucide-react';
@@ -89,6 +89,6 @@ export function Player({ s, busy, send, setView }: {
             </button>;
         })}</div>
     </div>
-    {tutorialActive(s) && !tutorialEarly(s) ? <TutorialCard s={s} send={send} busy={busy} setView={setView}/> : <GrowthGoals s={s} send={send} busy={busy} setView={setView}/>}
+    {tutorialActive(s) && !tutorialEarly(s) && <TutorialCard s={s} send={send} busy={busy} setView={setView}/>}
     </aside>;
 }

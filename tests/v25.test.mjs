@@ -25,11 +25,13 @@ test('v25 chronarch: frozen time always stuns; precede grants an immediate extra
 
 test('v25 glyphs: alone they hurt, together they cancel; seven glyphs unleash heaven', () => {
     const v = fighter(['glyphVoid']); strike(v, target(), () => 0); assert.equal(v.hp, 1, '虛 alone leaves 1 HP');
-    const me = fighter(['glyphNothing'], { hp: 1 });
-    const foe = { ...target(), name: 'E', stats: { ...base, attack: 500 } };
-    strike(foe, me, () => .5); assert.equal(me.hp, 251, '無 holds at 1 HP and gives back 25%');
+    // v25.14 無만 새기면 전투당 1번·회복 없음. 여섯 글자를 모두 새겨야 원래 횟수(6+2/단계)·25% 회복.
+    const lone = fighter(['glyphNothing'], { hp: 1 }); const foe = { ...target(), name: 'E', stats: { ...base, attack: 500 } };
+    strike(foe, lone, () => .5); assert.equal(lone.hp, 1, '無 alone holds once with no heal'); strike(foe, lone, () => .5); assert.equal(lone.hp, 0, '無 alone has a single charge');
+    const me = fighter(['glyphNothing', 'glyphVoid', 'glyphCut', 'glyphBlood', 'glyphBind', 'glyphInstant', 'glyphSoul'], { hp: 1 });
+    strike(foe, me, () => .5); assert.equal(me.hp, 251, '無 with all glyphs holds at 1 HP and gives back 25%');
     me.hp = 100; const evs = []; strike(foe, me, () => .5, evs); assert.equal(me.hp, 251, 'lethal damage from any HP leaves 1 + 25%'); assert.deepEqual(evs[0].endured, { heal: 250 }); assert.equal(me.effects.lastStand, 2);
-    me.hp = 5; me.effects.dot = { damage: 10, turns: 2, name: '출혈' }; const dotText = strike(me, target(), () => 0); assert.doesNotMatch(dotText, /쓰러짐/); assert.equal(me.hp, 251, 'damage over time is held too'); assert.equal(me.effects.lastStand, 3);
+    me.hp = 5; me.effects.dot = { damage: 10, turns: 2, name: '출혈' }; me.cooldowns = { glyphVoid: 9, glyphCut: 9, glyphBlood: 9, glyphBind: 9, glyphInstant: 9, glyphSoul: 9 }; const dotText = strike(me, target(), () => 0); assert.doesNotMatch(dotText, /쓰러짐/); assert.equal(me.hp, 251, 'damage over time is held too'); assert.equal(me.effects.lastStand, 3);
     me.hp = 100; me.effects.lastStand = 6; strike(foe, me, () => .5); assert.equal(me.hp, 0, 'charges are per battle');
     const bind = fighter(['glyphBind']); strike(bind, target(), () => 0); assert.equal(bind.stun, 1, '縛 stuns its user too');
     const bind2 = fighter(['glyphBind', 'glyphInstant']); strike(bind2, target(), () => 0); assert.equal(bind2.stun, 0, '刹 waives the self-stun');
@@ -329,4 +331,34 @@ test('v25.12 duel season keys, tiers, season pearls, optional duel goals exclude
     assert.ok(s.daily.bonus, 'daily all-bonus pays without the optional duel goal'); const after = s.pearls;
     recordGoal(s, 'duel', undefined, 1, () => {}); assert.equal(s.pearls, after + 1, 'duel goal pays on its own'); assert.ok(s.pearls > pearls);
     assert.ok(ACHIEVEMENTS.some(a => a.id === 'duels:500'));
+});
+
+test('v25.14 defense expansion: 11 jobs wired, resist scaling uses ward affinity, salt warden lineage listed', async () => {
+    const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { JOBS, LINEAGES } = await mods.load('data/classes'); const { SKILLS } = await mods.load('data/skills'); const { ACTIVE_SKILL_BALANCE } = await mods.load('data/skill-balance');
+    const ids = ['bellWarden', 'eonTurtle', 'worldTurtle', 'holyKnight', 'holyCommander', 'lightOcean', 'saltWarden', 'stillWarden', 'wardKeeper', 'abyssWarder', 'wardDeity'];
+    for (const id of ids) { const j = JOBS.find(x => x.id === id); assert.ok(j && j.tree === 'defense', id); assert.ok(SKILLS.filter(sk => sk.job === id).length >= 2, id); }
+    for (const sk of SKILLS.filter(sk => ids.includes(sk.job) && sk.type === 'active')) assert.ok(ACTIVE_SKILL_BALANCE[sk.id], sk.id);
+    assert.ok(LINEAGES.some(l => l.id === 'saltWarden' && l.tree === 'defense'));
+    const s = newState(0); s.level = 40; s.job = 'wardKeeper'; s.learned.wardBurst = 1; s.skills = ['wardBurst']; const a = stats(s); assert.ok(a.wardAffinity > .5, 'ward lineage has high ward affinity'); assert.ok(a.resist > 60, 'Lv.40 ward keeper resist');
+    const base = { ...a, hp: 1000, mana: 200, manaRegen: 0, hpRegen: 0, lifesteal: 0, crit: 0, accuracy: 5, evasion: 0 };
+    const me = { name: 'A', job: 'wardKeeper', stats: base, hp: 1000, mana: 200, skills: ['wardBurst'], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} };
+    const foe = () => ({ name: 'T', stats: { ...base, resist: 0, defense: 0, evasion: 0 }, hp: 100000, mana: 0, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    const t1 = foe(); strike(me, t1, () => 0); const withWard = 100000 - t1.hp;
+    const low = { ...me, stats: { ...base, wardAffinity: .2 }, cooldowns: {} }; const t2 = foe(); strike(low, t2, () => 0); const withoutWard = 100000 - t2.hp;
+    assert.ok(withWard > withoutWard, 'resist scaling is multiplied by ward affinity');
+});
+
+test('v25.14 door notice setting toggles and survives rebirth', () => {
+    const s = newState(0); act(s, { type: 'doorNotice', value: 'off' }, 0); assert.equal(s.hideDoorNotice, true); s.level = 30; act(s, { type: 'rebirth' }, 0); assert.equal(s.hideDoorNotice, true, 'setting is kept like autoSell');
+    act(s, { type: 'doorNotice', value: 'on' }, 0); assert.equal(s.hideDoorNotice, false);
+});
+
+test('v25.14 recommended loadout mixes passives and actives within AP', async () => {
+    const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { recommendLoadout } = await mods.load('systems/loadout'); const { SKILLS } = await mods.load('data/skills'); const { JOBS } = await mods.load('data/classes'); const { apUsed, apCapacity, validLoadout } = await mods.load('systems/progression');
+    const s = newState(0); s.level = 60; s.rebirths = 3; s.job = 'tideWarGod'; s.unlockedJobs = JOBS.map(j => j.id); for (const sk of SKILLS) s.learned[sk.id] = 1;
+    const out = recommendLoadout(s); const types = out.map(id => SKILLS.find(x => x.id === id).type);
+    assert.ok(types.includes('passive') && types.includes('active'), `both kinds: ${types.join(',')}`); assert.ok(validLoadout(s, out)); assert.ok(apUsed(s, out) <= apCapacity(s));
+    const passiveAP = apUsed(s, out.filter(id => SKILLS.find(x => x.id === id).type === 'passive')); assert.ok(passiveAP >= Math.min(2, apCapacity(s) * .3), 'passives get a real share');
 });

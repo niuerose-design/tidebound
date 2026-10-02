@@ -29,6 +29,8 @@ export type Stats = {
     dotBonus?: number;
     /** 방어 비례 피해·반격이 얼마나 제대로 발휘되는지(0.2~1). 방어 배율이 높은 수호 계열일수록 1에 가깝습니다. */
     guardAffinity?: number;
+    /** v25.14 마법 방어 비례 피해가 발휘되는 정도(0.2~1). 마법 방어 배율이 높은 결계 계열일수록 1. */
+    wardAffinity?: number;
     /** 회복 직업이면 1. 회복이 필요 없을 때 쓴 회복 기술도 피해가 줄지 않습니다. */
     healFocus?: number;
     /** 마법 직업의 기본 공격이 마력 평타(마법 공격 × arcaneStrikeRatio, 마나 없음)로 바뀔 확률. */
@@ -132,7 +134,7 @@ export type Skill = {
     drainRatio?: number;
     condition?: 'wounded' | 'healthyTarget';
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. */
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered';
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered';
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
@@ -369,6 +371,8 @@ export type State = {
     masteryCarry?: number;
     /** 선별의 그물 자동 판매 켜짐 여부(설정). */
     autoSell?: boolean;
+    /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
+    hideDoorNotice?: boolean;
     /** v25.7 환생 정리 방식(설정). 없으면 판매. */
     salvageMode?: 'sell' | 'dismantle';
     /** 황금 개체를 잡은 횟수(어종별). */

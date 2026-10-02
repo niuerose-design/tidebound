@@ -9,11 +9,11 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
-import { stats } from '@/game/systems/stats';
 import { BALANCE } from '@/game/data/balance';
 import { lineage, skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon } from './shared';
 import { masteryConditionText } from '@/game/systems/mastery';
+import { recommendLoadout } from '@/game/systems/loadout';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { skillGrowthStages, skillEffectLines, skillBonusText, skillPercent } from '@/game/systems/skill-description';
 import { DUNGEONS } from '@/game/data/world';
@@ -110,21 +110,6 @@ function skillDamageKind(sk: Skill): SkillDamage[] {
 }
 
 const PIN_KEY = 'tidebound.skillPins';
-/**
- * 추천 편성: 현재 직업 전용 → 선행 계보 → 공용 → 계승한 다른 직업 순으로, 액티브는 발동률 × 위력, 패시브는 양수 수치 합이 큰 순서대로 AP 안에서 채웁니다.
- * 화면용 추천일 뿐이라 서버 규칙(setSkills의 사용 가능·AP 검사)을 그대로 통과해야 적용됩니다.
- */
-function recommendLoadout(s: Parameters<typeof canUse>[0]) {
-    const line = lineage(s.job), magic = stats(s).magic > stats(s).attack;
-    const rank = (sk: Skill) => sk.job === s.job ? 0 : sk.job && line.includes(sk.job) ? 1 : !sk.job ? 2 : 3;
-    const fx = (sk: Skill) => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0);
-    const worth = (sk: Skill) => { const e = fx(sk); if (sk.type === 'active') return (e.chance || 0) * Math.max(1, e.multiplier || 1) * (sk.damageType === 'magic' ? (magic ? 1 : .4) : sk.damageType === 'physical' ? (magic ? .4 : 1) : 1) * (sk.statusOnly ? .5 : 1); return Object.values(e.bonus || {}).reduce((n, v) => n + (v > 0 ? 1 : 0), 0) + ((e.cost ?? 2) <= 0 ? 10 : 0); };
-    const pool = SKILLS.filter(sk => canUse(s, sk.id) && !skillVeiled(s, sk)).sort((a, b) => rank(a) - rank(b) || worth(b) - worth(a));
-    const out: string[] = [];
-    for (const type of ['active', 'passive'] as const) for (const sk of pool.filter(x => x.type === type)) if (validLoadout(s, [...out, sk.id])) out.push(sk.id);
-    return out;
-}
-
 export function Skills({ s, send, busy }: PanelProps) {
     const [scope, setScope] = useState('current'), [filter, setFilter] = useState('all'), [view, setView] = useState('simple');
     const [query, setQuery] = useState(''), [kind, setKind] = useState<SkillKind>('all'), [damage, setDamage] = useState<SkillDamage>('all'), [sort, setSort] = useState<SkillSort>('default');

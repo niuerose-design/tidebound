@@ -282,3 +282,4 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 @media (max-width: 767px) { .vault-rows { grid-template-columns:1fr; } }
 .achievement-visited { font-size:11px; color:#9bc8b5; }
 .slots-screen { padding:20px 22px; margin-bottom:18px; } .slots-screen .section-title h3 { display:flex; align-items:center; gap:6px; font-size:16px; margin:0; } .slots-screen .slot-list li button { display:inline-flex; align-items:center; gap:4px; }
+.text-button.inline { display:inline; padding:0 2px; font-size:inherit; color:#e8d39a; text-decoration:underline; }

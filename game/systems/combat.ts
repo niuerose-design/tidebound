@@ -134,10 +134,13 @@ function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, s
     const id = f.skills.find(x => skillById(x)?.lastStand), stand = id ? skillById(id)!.lastStand! : undefined;
     if (!stand) return false;
     f.effects ??= {};
-    const used = f.effects.lastStand || 0, charges = stand.charges + Math.floor((stand.chargesPerLevel || 0) * (f.mastery?.[id!] || 0));
+    // v25.14 無는 함께 새긴 글자(같은 직업의 seal 액티브) 수에 비례합니다. 혼자 새기면 전투당 1번, 회복 없음. 여섯 글자를 모두 새겨야 원래 횟수·회복.
+    const owner = skillById(id!)!, sealsAll = SKILLS.filter(x => x.job === owner.job && x.seal).length, sealsOn = f.skills.filter(x => skillById(x)?.seal && skillById(x)?.job === owner.job).length;
+    const weave = sealsAll ? sealsOn / sealsAll : 1;
+    const used = f.effects.lastStand || 0, full = stand.charges + Math.floor((stand.chargesPerLevel || 0) * (f.mastery?.[id!] || 0)), charges = Math.max(1, Math.round(full * weave));
     if (used >= charges) return false;
     f.effects.lastStand = used + 1;
-    const heal = Math.max(0, Math.min(sf.hp - 1, Math.floor(sf.hp * (stand.heal || 0))));
+    const heal = Math.max(0, Math.min(sf.hp - 1, Math.floor(sf.hp * (stand.heal || 0) * weave)));
     f.hp = 1 + heal;
     ev.endured = { heal, ...(self ? { self } : {}) };
     notes.push(`無 · 체력 1로 버팀 (${f.effects.lastStand}/${charges})${heal > 0 ? ` · 체력 ${heal} 회복` : ''}`);
@@ -291,6 +294,9 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
         base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
+    // v25.14 마법 방어 비례 피해: 결계 계열(마법 방어 배율이 높은 직업)에서 온전히, 다른 직업이 계승하면 일부만.
+    if (chosen?.scaling === 'resist')
+        base += sa.resist * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1);
     if (chosen?.scaling === 'hp')
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
     if (chosen?.scaling === 'mana')
