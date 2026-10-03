@@ -11,6 +11,7 @@ import { itemStats, itemDescription, enhanceCost, reforgeCost, bulkItems, saleVa
 import { ORIGIN_THEMES, affixDef, ESSENCE_BY_RARITY } from '@/game/data/gear';
 import { stats, power } from '@/game/systems/stats';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
+const PAGE = 12;
 import type { PanelProps } from './panel-props';
 export function BonusList({ item }: {
     item: Item;
@@ -45,6 +46,8 @@ export function Inventory({ s, send, busy }: PanelProps) {
     const [sort, setSort] = useState<SortKey>('power');
     const [rarity, setRarity] = useState(-1);
     const [upgradesOnly, setUpgradesOnly] = useState(false);
+    // v25.19 보관함은 PAGE(12)개씩 보여 주고 ‘더 보기’로 늘립니다. 아래 일괄 판매·분해까지 길게 내리지 않아도 됩니다.
+    const [limit, setLimit] = useState(PAGE);
     const [open, setOpen] = useState<string | null>(null);
     const current = useMemo(() => stats(s), [s]);
     const currentPower = power(current);
@@ -125,7 +128,9 @@ export function Inventory({ s, send, busy }: PanelProps) {
             <span className="gear-count">{shown.length} / {s.inventory.length}개 표시</span>
         </div>
     </section>
-    <div className="gear-list">{shown.map(i => row(i))}</div>
+    <div className="gear-list">{shown.slice(0, limit).map(i => row(i))}</div>
+    {shown.length > limit && <button type="button" className="gear-more" onClick={() => setLimit(v => v + PAGE)}><ChevronDown size={15}/> 더 보기 · 남은 {shown.length - limit}개</button>}
+    {limit > PAGE && shown.length <= limit && <button type="button" className="gear-more muted" onClick={() => setLimit(PAGE)}>접기</button>}
     {!s.inventory.length ? <div className="notice">가방이 비어 있습니다. 낚시 또는 항구 상점에서 장비를 획득하세요.</div> : !shown.length && <div className="notice">조건에 맞는 장비가 없습니다.</div>}
     <details className="panel bulk-sale gear-bulk">
     <summary><h2>등급별 일괄판매 · 분해</h2><span>보호 장비·유물·착용 장비는 제외 · 분해 정수 등급별 {ESSENCE_BY_RARITY.join('·')}</span></summary>

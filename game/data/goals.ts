@@ -43,7 +43,7 @@ export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, ke
 }
 export function goalText(g: Goal) {
     const name = g.kind === 'species' ? FISH.find(f => f.id === g.subject)?.name || '지정 어종' : g.kind === 'dungeon' ? DUNGEONS.find(d => d.id === g.subject)?.name || '던전' : '';
-    return g.kind === 'duel' ? `랭크 결투 ${g.target}승` : g.kind === 'catch' ? `아무 물고기 ${g.target}마리 포획` : g.kind === 'species' ? `${name} ${g.target}마리 포획` : g.kind === 'dungeon' ? `${name} ${g.target}회 정복` : g.kind === 'boss' ? `보스 ${g.target}마리 포획` : `무리 사냥 ${g.target}회`;
+    return g.kind === 'duel' ? `랭크 결투 ${g.target}승` : g.kind === 'catch' ? `아무 물고기 ${g.target}마리 포획` : g.kind === 'species' ? `${name} ${g.target}마리 포획` : g.kind === 'dungeon' ? `${name} ${g.target}회 정복` : g.kind === 'boss' ? `보스 ${g.target}마리 포획` : `무리 변종 ${g.target}회 포획`;
 }
 /** v25.12 결투 시즌 키(한국 시간 월, 예: 2026-10)와 랭킹 시즌 정수. 주 시즌(2026xx)·세이브 버전과 겹치지 않도록 1천만을 더합니다. */
 export const monthKey = (now: number) => kst(now).date.slice(0, 7);

@@ -208,8 +208,10 @@ export type Skill = {
     };
 };
 export type Enemy = {
-    /** 무리 사냥 규모(N). 무리 전체가 체력 ×N인 한 개체입니다. 없으면 한 마리. */
+    /** 무리 규모(N). 무리 전체가 체력 ×N인 한 개체입니다. 없으면 한 마리. */
     swarm?: number;
+    /** v25.19 변종 종류(무리·거대·심연 변이·별빛). 없으면 보통 개체. */
+    variant?: 'giant' | 'abyssal' | 'starlit' | 'swarm';
     combatStats?: Stats;
     effects?: StatusEffects;
     cooldowns?: Record<string, number>;
@@ -282,7 +284,7 @@ export type State = {
     version: number;
     /** SP를 지급한 무한 심연 이정표 깊이. 환생해도 유지됩니다. */
     abyssMilestones?: number[];
-    /** 선택한 무리 사냥 규모. 집중 사냥 중인 어종의 해금 조건을 충족할 때만 적용됩니다. */
+    /** (구) 선택한 무리 사냥 규모. v25.19부터 무리는 변종으로 무작위 등장하며 이 값은 쓰지 않습니다. */
     swarm?: number;
     /** 직전 환생 방식에 따른 이번 생의 효과. 다음 환생 때 다시 정해집니다. */
     lifeBonus?: 'deep' | 'tailwind' | null;
@@ -379,6 +381,8 @@ export type State = {
     salvageMode?: 'sell' | 'dismantle';
     /** 황금 개체를 잡은 횟수(어종별). */
     goldenBook?: Record<string, number>;
+    /** v25.19 변종을 잡은 횟수(어종별 → 변종별). */
+    variantBook?: Record<string, Partial<Record<'giant' | 'abyssal' | 'starlit' | 'swarm', number>>>;
     /** 이번 생에 걸린 서약. */
     vows?: Vows;
     /** 다음 생에 걸 서약 예약. 환생할 때 vows가 됩니다. */

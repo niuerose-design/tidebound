@@ -2,7 +2,7 @@ import type { State } from '../types';
 import { JOBS, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { DUNGEONS } from '../data/world';
-import { BOSS_RESEARCH, SPECIALIZATIONS } from '../data/specializations';
+import { BOSS_RESEARCH } from '../data/specializations';
 import { skillPracticeTargets, canUse, jobRequirements, masteryMilestonesFor } from './progression';
 
 export type GoalProgress = { title: string; detail: string; value: number; max: number; done: boolean; view: string; steps?: { label: string; done: boolean }[] };
@@ -33,7 +33,7 @@ export function goalProgress(s: State): GoalProgress | null {
     const steps = [
         { label: `입장 조건 Lv.${dungeon.level}${dungeon.rebirth ? ` · 환생 ${dungeon.rebirth}회` : ''}`, done: s.level >= dungeon.level && s.rebirths >= dungeon.rebirth },
         { label: '첫 정복', done: !!s.clears[dungeon.id] },
-        { label: `연구 수령 · SP ${r?.sp || 0}${r?.specialization ? ` · ${SPECIALIZATIONS.find(x => x.id === r.specialization)?.name} 특화` : ''}`, done: !!s.bossResearchClaims?.[dungeon.id] },
+        { label: `연구 수령 · SP ${r?.sp || 0}`, done: !!s.bossResearchClaims?.[dungeon.id] },
     ];
     const value = steps.filter(x => x.done).length, next = steps.find(x => !x.done);
     return { title: `${dungeon.name} 연구`, value, max: steps.length, done: !next, view: 'dungeons', steps, detail: next ? `다음: ${next.label}` : '연구 완료 · 다음 목표를 정해 보세요.' };

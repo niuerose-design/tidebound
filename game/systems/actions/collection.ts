@@ -1,5 +1,5 @@
 /** 도감·연구 보상 */
-import { BOSS_RESEARCH, SPECIALIZATIONS } from '../../data/specializations';
+import { BOSS_RESEARCH } from '../../data/specializations';
 import type { State } from '../../types';
 import { FISH, DUNGEONS } from '../../data/world';
 import { bookPending, itemKey } from '../progression';
@@ -24,7 +24,7 @@ export const collectionActions: ActionHandlers = {
         s.bossResearchClaims ??= {};
         s.bossResearchClaims[id] = true;
         s.sp += reward.sp;
-        addLog(s, `${DUNGEONS.find(x => x.id === id)!.name} 연구 완료 · SP +${reward.sp}${reward.specialization ? ' · ' + SPECIALIZATIONS.find(x => x.id === reward.specialization)!.name + ' 특화 해금' : ''}`);
+        addLog(s, `${DUNGEONS.find(x => x.id === id)!.name} 연구 완료 · SP +${reward.sp}`);
     },
     claimBook(s, { id }) {
         if (!FISH.some(f => f.id === id))

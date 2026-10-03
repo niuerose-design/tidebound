@@ -525,3 +525,10 @@
 .bonus-chip.seen{color:#c5d8d2;border-color:#9ab4b555}.bonus-chip.done{color:#e8d39a;border-color:#6b6236;background:#2a2b1e}
 .bonus-empty{font-size:12px;color:#8ea7a4;margin:0 0 4px}
 @media(max-width:767px){.bonus-block>summary{padding:13px 14px;gap:10px}.bonus-body{padding:12px 14px 14px}.bonus-count{font-size:18px}.bonus-grid{grid-template-columns:1fr}}
+/* v25.19 변종 표식 */
+.variant-badge{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;vertical-align:middle}
+.variant-giant{background:#3a2a1a;color:#f0b26b}.variant-abyssal{background:#1f1a3a;color:#b9a6ff}.variant-starlit{background:#1a2f3a;color:#9fe2ff}.variant-swarm{background:#1f3a2e;color:#a4e9ba}
+.fish-golden.variant-giant,.fish-golden.variant-abyssal,.fish-golden.variant-starlit,.fish-golden.variant-swarm{background:none;border:1px solid currentColor}
+/* v25.19 보관함 더 보기 */
+.gear-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:10px 0 14px;padding:11px;border:1px dashed #4b7365;border-radius:8px;background:#0f1f25;color:#a4e9ba;font-size:13px;cursor:pointer}
+.gear-more:hover{background:#14302a}.gear-more.muted{border-style:solid;color:#8ea7a4}

@@ -15,8 +15,7 @@ import { masteryConditionText } from '@/game/systems/mastery';
 import { recommendLoadout } from '@/game/systems/loadout';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { skillGrowthStages, skillEffectLines, skillBonusText, skillPercent } from '@/game/systems/skill-description';
-import { DUNGEONS } from '@/game/data/world';
-import { SPECIALIZATIONS, specializationFits } from '@/game/data/specializations';
+
 import { ENEMY_SKILLS } from '@/game/data/encounters';
 
 
@@ -72,11 +71,6 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: Panel
             <div className="skill-stage-table-wrap" tabIndex={0} role="region" aria-label={`${sk.name} 단계별 실제 효과`}><table className="skill-stage-table skill-growth-table"><caption>기본 성장 효과 <small>특화 적용 전 · 필요 숙련은 누적 수치 · 기본 Lv.0부터 사용</small></caption><thead><tr><th>성장</th><th>필요 숙련</th><th>AP</th>{sk.type === 'active' && <><th>발동</th><th>마나</th><th>대기</th></>}<th>실제 효과</th></tr></thead><tbody>{growth.map(row => <tr key={row.level} className={level === row.level && acquired ? 'current' : ''}><th>Lv.{row.level}{level === row.level && acquired && <small>현재</small>}</th><td>{row.practice ? row.practice.toLocaleString() : '기본 해금'}</td><td className={(row.effective.cost || 0) < 0 ? 'ap-gain' : ''}>{row.effective.cost}</td>{sk.type === 'active' && <><td>{skillPercent(row.effective.chance)}</td><td>{row.effective.manaCost}</td><td>{row.effective.cooldown}턴</td></>}<td className="skill-stage-effects">{row.effects.map((text, i) => <span key={i}>{text}</span>)}</td></tr>)}</tbody></table></div>
             <p className="footnote">{sk.type === 'active' ? '피해식은 상대 방어·치명타·약화 적용 전입니다. 추가 공격은 각각 명중과 치명타를 판정합니다.' : '능력치 증가량은 직업·연구 배율 적용 전입니다. 조건부 숙련 보너스는 가장 높은 하나만 적용됩니다.'} {!sk.job ? '공용 기술은 계승 없이 사용할 수 있습니다.' : `무료 계승: 누적 숙련 ${milestones[0].toLocaleString()}. SP 계승은 숙련도를 올리지 않습니다.`} 숙련·SP 중 높은 성장 레벨만 적용하며, 다른 직업의 전직 선행조건에는 실전 숙련만 인정됩니다.</p>
         </>}
-        {acquired && sk.type === 'active' && <details className="skill-specialization"><summary>스킬 특화 · {SPECIALIZATIONS.find(x=>x.id===s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0)?.name || '기본형'}</summary>
-            <p>실전 숙련 1단계부터 하나를 선택합니다. SP 강화로는 특화가 열리지 않습니다. 낚시 중단·던전 귀환 후 무료 변경.</p>
-            <button className="secondary" disabled={busy || s.running || !!s.dungeon || !usable || !s.skillSpecializations?.[sk.id]} onClick={()=>send({type:'specialize',id:sk.id,value:'none'})}>기본형으로 복귀</button>
-            {SPECIALIZATIONS.filter(x=>specializationFits(sk,x)).map(spec=>{const locked=mastery<1||!!(spec.dungeon&&!s.bossResearchClaims?.[spec.dungeon]);return <div className="specialization-option" key={spec.id}><strong>{spec.name}{s.skillSpecializations?.[sk.id]===spec.id?' · 선택 중':''}</strong><p>{spec.description}</p>{spec.dungeon&&<small>{DUNGEONS.find(x=>x.id===spec.dungeon)?.name} {s.bossResearchClaims?.[spec.dungeon] ? '연구 완료' : '연구 보상 필요'}</small>}<button className="secondary" disabled={busy||s.running||!!s.dungeon||!usable||locked||s.skillSpecializations?.[sk.id]===spec.id} onClick={()=>send({type:'specialize',id:sk.id,value:spec.id})}>{mastery<1?'실전 숙련 1단계 필요':locked?'보스 연구 필요':'이 특화 선택'}</button></div>})}
-        </details>}
         {acquired && refinement.length > 0 && <details className="skill-specialization"><summary>장기 연마 · {refined} / {refinement.length}단계 · 누적 {refinementBonusLabel(refined)}</summary><p>기본 숙련을 마친 뒤에도 실전 수련이 이어집니다. 단계마다 직접 피해 배율·양수 패시브 수치 {refinementBonusLabel()}씩(합산, 최대 {refinementBonusLabel(refinement.length)}). SP로 건너뛸 수 없고, AP·발동률·숙련 배수는 늘지 않습니다.</p><p>{refined < refinement.length ? `다음 ${refined+1}단계 ${refinement[refined].toLocaleString()} · 남은 숙련 ${(refinement[refined]-practice).toLocaleString()}` : '모든 연마 단계를 달성했습니다.'} · 최종 {refinement.at(-1)!.toLocaleString()}</p><Meter value={Math.min(practice,refinement[refined] || refinement.at(-1)!)} max={refinement[refined] || refinement.at(-1)!} label={refined===refinement.length?'연마 완료':'다음 연마까지'}/></details>}
         {detailed && <button className="text-button" disabled={busy} onClick={()=>send({type:'growthGoal',id:sk.id,value:'skill'})}>다음 실전 숙련을 장기 목표로</button>}
         <div className="skill-actions skill-actions-v2">

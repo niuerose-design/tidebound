@@ -14,6 +14,7 @@ import { stats, mastery, goldMultiplier, hitChance } from '@/game/systems/stats'
 import { ENEMY_SKILLS, profile, scaledEnemyStats } from '@/game/data/encounters';
 import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel } from '@/game/systems/book';
 import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES } from '@/game/data/book-traits';
+import { VARIANTS } from '@/game/data/variants';
 import type { State, Stats } from '@/game/types';
 import { skillEffectLines } from '@/game/systems/skill-description';
 
@@ -36,8 +37,8 @@ function BookTraitLine({ s, id }: { s: State; id: string }) {
 }
 /** 황금 개체를 잡은 어종에 남는 황금 표시. */
 function GoldenMark({ s, id }: { s: State; id: string }) {
-    const n = s.goldenBook?.[id] || 0;
-    return n ? <small className="fish-golden" title="황금 개체 포획 횟수">✦ 황금 {n}</small> : null;
+    const n = s.goldenBook?.[id] || 0, row = s.variantBook?.[id] || {};
+    return <>{n ? <small className="fish-golden" title="황금 개체 포획 횟수">✦ 황금 {n}</small> : null}{VARIANTS.filter(v => row[v.id]).map(v => <small key={v.id} className={`fish-golden variant-${v.id}`} title={`${v.name} 포획 횟수`}>{v.mark} {v.name} {row[v.id]}</small>)}</>;
 }
 /** 포획 50회 전에는 적 성향·스킬·능력치를 숨깁니다. */
 function LockedInfo({ n }: { n: number }) {
