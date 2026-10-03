@@ -16,7 +16,7 @@ export function skillBonusText(key: string, value: number) {
 }
 const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '던전 클리어·보스 포획', species: '지정 어종 포획', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업', variant: '변종·황금 포획', str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
 const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록' };
-const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' };
+const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' };
 /** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */
 /** v27.15 도감의 적 스킬 한 줄: '물리 150%' · '출혈 5턴' · '물리 110% · 자신 가속 3턴'. 긴 문장은 쓰지 않습니다. */
 export function enemySkillBrief(sk: Skill) {
@@ -45,7 +45,7 @@ export function skillBrief(sk: Skill): string {
         return parts.join(' · ') || '장착 효과';
     }
     const parts = [sk.statusOnly ? '피해 없음' : `${sk.damageType === 'magic' ? '마법' : sk.damageType === 'split' ? '복합' : '물리'} 피해 ×${number(sk.multiplier || 1)}`];
-    if (sk.effect && STATUS_WORD[sk.effect] && sk.effect !== 'haste') parts.push(`${statusLabel(sk)} ${sk.statusTurns ?? ({ stun: 1, bleed: STATUS_TUNING.bleedTurns, weaken: STATUS_TUNING.weakenTurns, silence: STATUS_TUNING.silenceTurns, slow: STATUS_TUNING.slowTurns } as Record<string, number>)[sk.effect]}턴`);
+    if (sk.effect && STATUS_WORD[sk.effect] && sk.effect !== 'haste') parts.push(`${statusLabel(sk)} ${sk.statusTurns ?? ({ stun: 1, bleed: STATUS_TUNING.bleedTurns, poison: STATUS_TUNING.poisonTurns, weaken: STATUS_TUNING.weakenTurns, silence: STATUS_TUNING.silenceTurns, slow: STATUS_TUNING.slowTurns } as Record<string, number>)[sk.effect]}턴`);
     if (sk.effect === 'haste') parts.push(`자신 가속 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
     if (sk.effect === 'heal') parts.push(`체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복`);
@@ -96,20 +96,21 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.damageType === 'split') out.push(`복합 피해는 물리 ${skillPercent(SKILL_FORMULA.splitPhysical)}·마법 ${skillPercent(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각의 방어를 적용합니다. 명중·치명 판정은 한 번이고, 장비·버프는 원시 피해에 들어가지 않습니다.`);
         if (sk.accuracyBonus) out.push(`이 기술은 명중이 ${skillPercent(sk.accuracyBonus)}p 높습니다.`);
         if (sk.penetrationBonus) out.push(`이 기술은 방어 관통이 ${skillPercent(sk.penetrationBonus)}p 높습니다(합계 최대 85%).`);
-        if (sk.cleanseSelf) out.push('발동하면 내 출혈·감속이 풀립니다.');
+        if (sk.cleanseSelf) out.push('발동하면 내 출혈·중독·감속이 풀립니다.');
         if (sk.scaling === 'resist') out.push('결계 친화도: 직업의 마법 방어 배율이 높을수록 1에 가깝고(결계 계열), 다른 직업이 계승하면 최소 20%만 발휘');
         if (sk.scaling === 'defense') out.push('방어 친화도: 직업의 물리 방어 배율이 높을수록 1에 가깝고(수호 계열), 다른 직업이 계승하면 최소 20%만 발휘');
         if (sk.damageBonusCondition) out.push(sk.damageBonusCondition === 'lowHp' ? `체력이 ${skillPercent(SKILL_FORMULA.lowHpThreshold)} 이하인 적에게는 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커집니다.` : `${{ bleeding: '출혈·중독', weakened: '약화', controlled: '침묵·감속' }[sk.damageBonusCondition]} 중인 적에게는 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커집니다.`);
         if (sk.effect === 'heal') out.push(`${sk.condition === 'wounded' ? `체력이 ${skillPercent(SKILL_FORMULA.woundedThreshold)} 이하일 때 ` : ''}먼저 최대 체력의 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)}를 회복하고 공격합니다. 체력이 ${skillPercent(SKILL_FORMULA.healThreshold)} 이상일 때 쓰면 회복 직업이 아닌 한 피해가 ×${number(SKILL_FORMULA.idleHealDamage)}로 줄어듭니다.`);
         if (sk.effect === 'stun') out.push(`맞히면 ${sk.statusTurns ?? 1}턴 기절시킵니다.`);
-        if (sk.effect === 'bleed') out.push(`맞히면 ${sk.dotName || '출혈'}을 ${sk.statusTurns ?? STATUS_TUNING.bleedTurns}턴 겁니다. 턴마다 (${base.join(' + ')}) × ${number(sk.dotRatio ?? SKILL_FORMULA.bleedRatio)} × (1 + 지속 피해 증가) + 상대 최대 체력 ${skillPercent(SKILL_FORMULA.dotMaxHpRatio)}의 피해를 방어를 무시하고 줍니다.${sk.dotStacks ? ` 다시 걸면 최대 ${STATUS_TUNING.poisonMaxStacks}중첩까지 쌓이고 지속 시간이 갱신됩니다.` : ''}`);
+        if (sk.effect === 'bleed') out.push(`맞히면 ${sk.dotName || '출혈'}을 ${sk.statusTurns ?? STATUS_TUNING.bleedTurns}턴 겁니다. 출혈 중인 상대는 받는 직접 피해가 ${skillPercent(SKILL_FORMULA.bleedVulnerability)} 커집니다(중첩 없음). 턴마다 (${base.join(' + ')}) × ${number(sk.dotRatio ?? SKILL_FORMULA.bleedRatio)} × (1 + 지속 피해 증가) + 상대 최대 체력 ${skillPercent(SKILL_FORMULA.dotMaxHpRatio)}의 피해를 방어를 무시하고 줍니다.`);
+        if (sk.effect === 'poison') out.push(`맞히면 중독을 한 중첩 겁니다(최대 ${STATUS_TUNING.poisonMaxStacks}중첩, ${sk.statusTurns ?? STATUS_TUNING.poisonTurns}턴, 다시 걸면 지속 갱신). 턴마다 중첩당 (${base.join(' + ')}) × ${number(sk.dotRatio ?? SKILL_FORMULA.poisonRatio)} × (1 + 지속 피해 증가) + 상대 최대 체력 ${skillPercent(SKILL_FORMULA.dotMaxHpRatio)}의 피해를 줍니다. 방어를 무시합니다.`);
         if (sk.effect === 'weaken') out.push(`맞히면 ${sk.statusTurns ?? STATUS_TUNING.weakenTurns}턴 동안 상대의 직접 피해를 ${skillPercent(1 - SKILL_FORMULA.weakenedDamage)} 줄입니다(약화).`);
         if (sk.effect === 'silence') out.push(`맞히면 침묵 ${sk.statusTurns ?? STATUS_TUNING.silenceTurns}턴. 그동안 상대는 액티브를 쓰지 못합니다.`);
         if (sk.effect === 'slow') out.push(`맞히면 ${sk.statusTurns ?? STATUS_TUNING.slowTurns}턴 동안 상대 속도를 ${skillPercent(STATUS_TUNING.slowMultiplier)} 늦춥니다(감속).`);
         if (sk.effect === 'haste') out.push(`맞히면 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴 동안 내 속도가 ${skillPercent(STATUS_TUNING.hasteMultiplier)} 빨라집니다(가속).`);
         if (sk.effect === 'drain') out.push(`깎은 체력의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}를 회복합니다. 한 번에 최대 체력 × (흡혈률 + ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}) × ${skillPercent(SKILL_FORMULA.lifestealHpCap)}까지입니다.`);
-        const statusKey = ({ stun: 'stun', bleed: 'bleed', weaken: 'weaken', silence: 'silence', slow: 'slow' } as const)[sk.effect as 'stun'];
-        if (statusKey) out.push(`${sk.dotStacks ? '중첩은 계속 쌓입니다.' : '상대에게 이미 걸려 있으면 이 기술은 건너뜁니다.'} 풀린 뒤 ${STATUS_TUNING.immuneTurns[statusKey]}턴은 면역입니다.`);
+        const statusKey = ({ stun: 'stun', bleed: 'bleed', poison: 'poison', weaken: 'weaken', silence: 'silence', slow: 'slow' } as Record<string, keyof typeof STATUS_TUNING.immuneTurns>)[sk.effect || ''];
+        if (statusKey) out.push(`${statusKey === 'poison' ? '중첩은 계속 쌓입니다.' : '상대에게 이미 걸려 있으면 이 기술은 건너뜁니다.'} 풀린 뒤 ${STATUS_TUNING.immuneTurns[statusKey]}턴은 면역입니다.`);
         if (sk.extraAttacks) out.push(`이어서 추가 공격을 ${Math.min(STATUS_TUNING.maxExtraAttacks, sk.extraAttacks)}회 합니다. 각 타격은 위 피해식의 ${skillPercent(sk.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)}입니다.`);
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));

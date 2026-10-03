@@ -209,7 +209,8 @@ test('v27.13 batch appraisal: 5 or 10 at once, all-or-nothing on gold and bag ro
 
 test('v27.14 skill fx overrides name real skills and win over the id rules',()=>{
  for(const id of Object.keys(SKILL_FX)) assert.ok(SKILLS.some(x=>x.id===id),`stale fx id ${id}`);
- assert.equal(fxVariantOf('heavenlyDice',false),'gold');assert.equal(fxVariantOf('rapidJab',false),'pierce');assert.equal(fxVariantOf('timeMachine',false),'frost');
+ assert.equal(fxVariantOf('heavenlyDice',false),'gold');assert.equal(fxVariantOf('rapidJab',false),'pierce');assert.equal(fxVariantOf('timeMachine',false),'time');
+ assert.equal(fxVariantOf('foeVenom',false,'bleed'),'venom');assert.equal(fxVariantOf('foeInkBurst',true),'ink');assert.equal(fxVariantOf('graveHook',true),'bone');assert.equal(fxVariantOf('rewind',false),'time');
  assert.equal(fxVariantOf('fireball',true),'fire','id rules still apply without an override');assert.equal(fxVariantOf(undefined,true),'arcane');
  const actives=SKILLS.filter(x=>x.type==='active');assert.ok(actives.every(x=>typeof fxVariantOf(x.id,x.damageType==='magic',x.effect)==='string'));
 });
@@ -218,4 +219,14 @@ test('v27.14 mastery x2 event doubles victory practice',()=>{
  const run=ev=>{const s=newState(0);s.running=true;s.event=ev;s.enemy={id:'minnow',name:'target',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};let guard=0;while(s.enemy&&s.enemy.hp>0&&guard++<50)tick(s,()=>.5);return s.jobMastery.fisher||0;};
  const plain=run(null),doubled=run({id:'m',name:'m',until:9e15,exp:1,gold:1,drop:1,mastery:2});
  assert.ok(plain>0&&doubled===plain*2,`doubled: ${plain} vs ${doubled}`);
+});
+
+test('v27.16 stuck-state repair: NaN hp, dead enemy left over, unknown stage, and stalemates all recover',()=>{
+ const s=newState(0);s.running=true;s.hp=NaN;s.mana=NaN;s.recovery=NaN;s.stage='nowhere';s.enemy={id:'ghost-fish',name:'x',hp:NaN,maxHp:1,attack:1,defense:1,exp:1,gold:1,boss:false,stun:0};
+ tick(s,()=>.5);assert.ok(Number.isFinite(s.hp)&&Number.isFinite(s.mana)&&s.recovery>=0&&s.stage===STAGES[0].id,'repaired');assert.ok(s.logs.some(l=>l.text.includes('전투 상태를 복구')));
+ assert.ok(!s.enemy||s.enemy.id!=='ghost-fish','bad enemy discarded');
+ const t=newState(0);t.lastTick=NaN;advance(t,5000);assert.ok(Number.isFinite(t.lastTick));
+ const u=newState(0);u.running=true;u.enemy={id:'minnow',name:'돌',hp:10,maxHp:10,attack:0,defense:0,exp:1,gold:1,boss:false,stun:99999,combatStats:{hp:10,attack:0,magic:0,defense:1e9,resist:1e9,crit:0,speed:1,evasion:0,accuracy:0}};
+ u.hp=1;for(let i=0;i<130&&u.enemy&&u.enemy.id==='minnow';i++)tick(u,()=>.5);
+ assert.ok(!u.enemy||u.enemy.id!=='minnow'||u.enemy.hp<10,'stalemate broken within 130 turns');
 });

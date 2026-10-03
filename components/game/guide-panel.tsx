@@ -35,7 +35,7 @@ function Topic({ icon, title, note, open = false, children }: { icon: ReactNode;
 
 const STATUS_GROUPS = [
     { title: '행동 방해', ids: ['stun', 'silence', 'weaken'] },
-    { title: '지속 피해 · 속도', ids: ['bleed', 'slow', 'haste'] },
+    { title: '지속 피해 · 속도', ids: ['bleed', 'poison', 'slow', 'haste'] },
 ] as const;
 
 export function Guide({ s }: { s?: State }) {

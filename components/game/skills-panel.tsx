@@ -16,7 +16,7 @@ import { hanjaReading } from '@/game/systems/skill-description';
 import { masteryConditionText } from '@/game/systems/mastery';
 import { recommendLoadout } from '@/game/systems/loadout';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { skillGrowthStages, skillEffectLines, skillBonusText, skillPercent } from '@/game/systems/skill-description';
+import { skillGrowthStages, skillEffectLines, skillBonusText, skillPercent, skillBrief } from '@/game/systems/skill-description';
 
 import { ENEMY_SKILLS } from '@/game/data/encounters';
 
@@ -38,9 +38,6 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: Panel
     const inheritanceText = !acquired ? unlockText : !sk.job ? '공용' : isInherited ? (mastery > 0 ? '숙련 계승' : 'SP 계승') : sk.job === s.job ? '현재 직업 전용' : '계승 필요';
     const hint = skillRankHint(sk, rank || 1, mastery, s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0);
     const effects = skillEffectLines(effective, level);
-    // 능력치 보너스는 아래 칩으로 보여주므로, 간단히 보기 설명에는 칩으로 나타낼 수 없는 효과(회복·숙련 보너스·최대 성장 보상 등)만 씁니다.
-    const bonusLines = new Set(Object.entries(effective.bonus || {}).map(([key, n]) => skillBonusText(key, n as number)));
-    const passiveEffects = effects.filter(line => !bonusLines.has(line));
     const growth = skillGrowthStages(sk);
     const refinement = skillRefinementTargets(sk), refined = thresholdRank(practice, refinement);
     const lb = limitBreakOf(s, sk.id), lbNext = limitBreakNext(s, sk.id);
@@ -61,7 +58,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: Panel
         {!detailed && <span className={`skill-status-badge ${equipped && usable ? 'on' : !acquired || !usable ? 'off' : ''}`}>{equipped ? (usable ? '장착 중' : '장착 · 사용 불가') : !acquired ? '미습득' : !usable ? '계승 필요' : '사용 가능'}</span>}
         {detailed && <div className="skill-state-row" aria-label="스킬 상태"><span className={acquired ? 'on' : 'off'}><small>습득</small>{acquired ? '습득' : '미습득'}</span><span className={!sk.job || isInherited ? 'on' : 'off'}><small>다른 직업</small>{!sk.job ? '공용 · 모든 직업' : isInherited ? '계승 완료 · 사용 가능' : '계승 필요'}</span><span className={equipped ? (usable ? 'on' : 'warn') : 'off'}><small>장착</small>{equipped ? (usable ? '장착 중' : '장착 · 지금은 사용 불가') : '미장착'}</span></div>}
         {detailed && <div className="skill-level-line"><strong>{acquired ? `성장 Lv.${level}` : '미해금'} <small>/ 최대 {max}{lb > 0 ? ` · 한계돌파 ${lb}단계` : ''}{acquired ? ` · SP Lv.${Math.min(max, Math.max(0, rank - 1))} · 숙련 Lv.${Math.min(max, mastery - lb)} 중 높은 값` : ''}</small></strong>{!acquired && <span>{inheritanceText}</span>}<TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" className="info-trigger" aria-label={`${sk.name} 현재 효과와 다음 강화`}><Info size={16}/></button></TooltipTrigger><TooltipContent className="game-tooltip"><strong>성장 Lv.{level} / {max}</strong><p>{effects.join(' · ')}</p><p>다음 강화: {hint}</p></TooltipContent></Tooltip></TooltipProvider></div>}
-        {!detailed && <><p className="skill-current-description">{sk.type === 'active' ? effects.slice(0, 2).join(' · ') : sk.id === 'boneLegacy' ? '처음에는 생존력이 낮아지지만, 성장하면 체력·방어와 장착 AP 여유를 얻습니다.' : passiveEffects.join(' · ') || '장착한 동안 아래 능력치가 적용됩니다.'}</p></>}{sk.id === 'rareSense' && <p className="skill-specific-note">물고기 출현률과 장비 등급 확률은 바뀌지 않습니다.</p>}
+        {!detailed && <><p className="skill-current-description">{sk.id === 'boneLegacy' ? '처음에는 생존력이 낮아지지만, 성장하면 체력·방어와 장착 AP 여유를 얻습니다.' : sk.desc || skillBrief(sk)}</p></>}{sk.id === 'rareSense' && <p className="skill-specific-note">물고기 출현률과 장비 등급 확률은 바뀌지 않습니다.</p>}
         {sk.unlockJobMastery && (detailed || !acquired) && <div className="skill-unlock-note">최초 해금: {jobById(sk.job)?.name} 숙련도 <b>{(s.jobMastery[sk.job!] || 0).toLocaleString()} / {sk.unlockJobMastery.toLocaleString()}</b><small>해금 전에는 SP로 구매·계승할 수 없습니다.</small></div>}
         {detailed && (sk.sourceEnemySkill && <div className="skill-origin">몬스터 원형: {ENEMY_SKILLS.find(x => x.id === sk.sourceEnemySkill)?.name}</div>)}
         {detailed && sk.masteryGain && <div className="skill-unlock-note"><b>대상 포획 시 숙련 ×{1 + masteryGainBonus(sk, level)}</b><span>{masteryConditionText(sk)}</span><small>현재 직업·장착 스킬에 적용 · 가장 높은 보너스 하나만 · 최대 ×10</small></div>}

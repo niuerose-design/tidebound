@@ -8,7 +8,7 @@ import { stats } from './stats';
 import type { State } from '../types';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { TIME_MACHINE_MASTERY } from '../data/expansion-v25';
-import { DUNGEONS } from '../data/world';
+import { DUNGEONS, FISH, STAGES } from '../data/world';
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds, researchRank } from '../data/economy';
@@ -37,9 +37,26 @@ export function syncStatRate(s: State) {
     s.statRate = PROGRESSION.statPerLevel;
     if (bonus > 0) addLog(s, `레벨당 능력치 포인트가 ${PROGRESSION.statPerLevel}로 올라 지난 레벨분 +${bonus}포인트를 받았습니다.`, 'reward');
 }
+/** v27.16 전투가 멈춘 채로 남는 것을 막는 안전장치: 양쪽 체력이 이만큼 턴 동안 그대로면 물고기가 달아난 것으로 봅니다. */
+export const STALEMATE_TURNS = 120;
+/**
+ * v27.16 세이브가 어떤 이유로든 진행 불가 상태(숫자가 아닌 체력·회복·시각, 없는 낚시터·어종, 체력 0 이하로 남은 적)가 되면 조용히 복구합니다.
+ * 던전에 들어갔다 나오면 풀리던 '입질이 오지 않는' 현상의 안전망입니다. 복구한 내용은 일지에 남깁니다.
+ */
+export function repairState(s: State, now?: number) {
+    const fixed: string[] = [];
+    if (now !== undefined && !Number.isFinite(s.lastTick)) { s.lastTick = now; fixed.push('시각'); }
+    if (!Number.isFinite(s.recovery) || s.recovery < 0) { s.recovery = 0; fixed.push('회복 대기'); }
+    if (!STAGES.some(x => x.id === s.stage)) { s.stage = STAGES[0].id; s.target = null; fixed.push('낚시터'); }
+    if (s.enemy && (!Number.isFinite(s.enemy.hp) || s.enemy.hp <= 0 || !Number.isFinite(s.enemy.maxHp) || !FISH.some(f => f.id === s.enemy!.id))) { s.enemy = null; fixed.push('입질'); }
+    if (!Number.isFinite(s.hp) || !Number.isFinite(s.mana)) { const a = stats(s); if (!Number.isFinite(s.hp)) s.hp = a.hp; if (!Number.isFinite(s.mana)) s.mana = a.mana; fixed.push('체력·마나'); }
+    if (fixed.length) addLog(s, `전투 상태를 복구했습니다 (${fixed.join('·')}).`, 'system');
+    return fixed;
+}
 export function tickTurn(s: State, rng: () => number) {
     s.turn++;
     s.playMs = (s.playMs || 0) + BALANCE.turnMs;
+    repairState(s);
     const a = stats(s);
     if (s.recovery > 0) {
         s.recovery--;
@@ -53,6 +70,7 @@ export function tickTurn(s: State, rng: () => number) {
     if (!s.enemy)
         spawn(s, rng);
     const e = s.enemy!;
+    const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
     const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), specializations: s.skillSpecializations, practice: s.skillPractice, gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
     const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
@@ -73,6 +91,11 @@ export function tickTurn(s: State, rng: () => number) {
     e.mana = enemy.mana;
     e.effects = enemy.effects;
     e.cooldowns = enemy.cooldowns;
+    // v27.16 교착 안전장치: 양쪽 체력이 그대로인 턴이 이어지면 물고기가 달아난 것으로 보고 새 입질을 받습니다.
+    if (e.hp > 0 && s.hp > 0) {
+        e.stale = e.hp === enemyHpBefore && s.hp === playerHpBefore ? (e.stale || 0) + 1 : 0;
+        if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${e.name}이(가) 줄을 끊고 달아났습니다. 다음 입질을 기다립니다.`); return; }
+    }
     if (e.hp <= 0 && s.hp > 0)
         reward(s, rng);
     else if (s.hp <= 0) {
@@ -95,6 +118,7 @@ export function tickTurn(s: State, rng: () => number) {
     }
 }
 export function advance(s: State, now: number, rng = Math.random) {
+    repairState(s, now);
     now = Math.max(now, s.lastTick);
     // v26.1 서버 이벤트: 정산 시각 기준으로 적어 두고, 아래 틱들이 이 배율을 씁니다.
     s.event = activeEvent(now);
