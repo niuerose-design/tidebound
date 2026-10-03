@@ -613,7 +613,11 @@
 
 /* v25.18 모바일 안정화: 가로 넘침 차단, 전투 중 높이 변화 최소화, 스킬 화면 탭 줄 정리 */
 @media (max-width:767px) {
-  html, body { overflow-x:hidden; overscroll-behavior-y:none }
+  /* v26.9 iOS Safari에서 html·body 양쪽에 overflow-x:hidden을 걸면 body가 스크롤 컨테이너로 바뀌어 세로 스크롤이 걸리거나 튀는 일이 있어,
+     가로 넘침은 스크롤 컨테이너를 만들지 않는 clip으로 막고 당겨서 새로고침 방지는 html에만 둡니다. */
+  html { overscroll-behavior-y:none }
+  body { overflow-x:clip }
+  .chat-list, .battle-feed-list, .log-list, .job-sheet, .battle-stage-list, .battle-dungeon-list { -webkit-overflow-scrolling:touch }
   .mobile-tab-bar { z-index:60 }
   .battle-console .opponent-card.enemy-opponent { min-height:150px }
   .battle-console .log-panel:not(.folded) .log-list { min-height:198px }

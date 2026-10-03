@@ -38,7 +38,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     marrowGuard: { chance: .22, multiplier: 1.75 },
     wakeFist: { chance: .26, multiplier: 1.45 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
-    greenTide: { chance: .55, multiplier: 1.05, manaCost: 11, healRatio: .14 },
+    greenTide: { chance: .55, multiplier: 1.3, manaCost: 11, healRatio: .16 },
     inkTrick: { chance: .26, multiplier: 1.1 },
     tideUppercut: { chance: .26, multiplier: 1.45, scalingRatio: .025, drainRatio: .15 },
     anchorBreak: { chance: .25, multiplier: 1.8, penetrationBonus: .2 },
