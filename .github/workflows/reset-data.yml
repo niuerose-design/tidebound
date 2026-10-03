@@ -1,0 +1,56 @@
+name: 데이터 초기화
+
+# Actions 탭 → "데이터 초기화" → Run workflow 버튼으로만 실행됩니다(자동 실행 없음).
+# 저장소 Settings → Secrets and variables → Actions 에 DATABASE_URL(Neon 접속 주소)이 등록돼 있어야 합니다.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '무엇을 초기화할까요? (chat = 채팅만 / all = 계정 포함 전부)'
+        type: choice
+        required: true
+        default: chat
+        options:
+          - chat
+          - all
+      confirm:
+        description: 'all 을 골랐다면 여기에 "초기화" 라고 입력하세요 (되돌릴 수 없습니다)'
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency: reset-data
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: 초기화 실행
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          MODE: ${{ inputs.mode }}
+          CONFIRM: ${{ inputs.confirm }}
+        shell: bash
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL 시크릿이 없습니다. Settings → Secrets and variables → Actions 에서 등록하세요."
+            exit 1
+          fi
+          if [ "$MODE" = "all" ]; then
+            if [ "$CONFIRM" != "초기화" ]; then
+              echo "::error::계정 포함 전부 초기화는 확인 칸에 '초기화' 를 입력해야 실행됩니다. 아래는 지워질 줄 수 미리 보기입니다."
+              node scripts/reset-data.mjs all
+              exit 1
+            fi
+            node scripts/reset-data.mjs all --yes
+          else
+            node scripts/reset-data.mjs chat
+          fi
