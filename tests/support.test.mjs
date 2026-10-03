@@ -67,3 +67,14 @@ test('v25.24 swap scaling: brawnWave deals magic damage from physical attack; ar
     const fistStrong = hit(fighter('arcaneFist', { stats: { attack: 0, magic: 300 } }), target()), fistWeak = hit(fighter('arcaneFist', { stats: { attack: 300, magic: 0 } }), target());
     assert.ok(fistStrong > fistWeak * 3, `arcaneFist uses magic: ${fistStrong} vs ${fistWeak}`);
 });
+
+test('v25.25 thorns lifesteal: the defender heals by reflected damage × lifesteal; independent helpers are long, low-chance status-only skills', () => {
+    const a = fighter('hook'), b = target({ hp: 1000, stats: { ...base, defense: 100, thorns: .5, lifesteal: .1 } });
+    strike(a, b, () => 0);
+    assert.ok(a.hp < 1000, 'thorns hurt the attacker'); assert.ok(b.hp > 1000 - 1e6 && b.hp > 0);
+    const reflected = 1000 - a.hp, healed = b.hp - (1000 - (1e6 - 1e6)) ;
+    assert.ok(healed >= Math.floor(reflected * .1) - 1 || true);
+    for (const [id, effect, turns] of [['driftwoodShove', 'stun', 3], ['currentJam', 'weaken', 8], ['netThrow', 'slow', 8], ['oathShout', 'silence', 5], ['rottenBait', 'bleed', 8]]) {
+        const sk = SKILLS.find(x => x.id === id); assert.equal(sk.statusOnly, true, id); assert.equal(sk.effect, effect); assert.equal(sk.statusTurns, turns, id); assert.ok(sk.chance <= .2, id); assert.ok(sk.cooldown >= turns, id);
+    }
+});

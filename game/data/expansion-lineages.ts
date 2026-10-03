@@ -155,6 +155,12 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'rimeShackle', name: '서리 족쇄', desc: '', level: 25, job: 'frostBinder', chance: .5, cooldown: 3, multiplier: 1.45, cost: 3, manaCost: 13, effect: 'slow', damageBonusCondition: 'controlled', conditionalDamageBonus: .3 },
     { ...A, ...magic, id: 'frostMist', name: '서리 안개', desc: '', level: 25, job: 'frostBinder', chance: .5, cooldown: 4, multiplier: 1, cost: 2, manaCost: 8, effect: 'slow' },
     // 상태이상: 독립
+    // v25.25 독립 1차 보조기: 발동률은 낮고(18%) 상태이상은 길게. 계보 밖 연계기(제어·약화·출혈 추가 피해)의 조건을 채우는 용도.
+    { ...A, ...physical, id: 'driftwoodShove', name: '유목 밀치기', desc: '', level: 10, job: 'driftwoodHermit', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'stun', statusTurns: 2 },
+    { ...A, ...physical, id: 'currentJam', name: '해류 교란', desc: '', level: 10, job: 'tideSurveyor', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'weaken', statusTurns: 6 },
+    { ...A, ...physical, id: 'netThrow', name: '그물 던지기', desc: '', level: 10, job: 'netWeaver', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'slow', statusTurns: 6 },
+    { ...A, ...physical, id: 'oathShout', name: '맹세의 함성', desc: '', level: 10, job: 'oathAngler', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'silence', statusTurns: 3 },
+    { ...A, ...physical, id: 'rottenBait', name: '썩은 미끼', desc: '', level: 10, job: 'barbSkirmisher', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'bleed', dotName: '중독', dotRatio: .1, dotStacks: true, statusTurns: 6 },
     { ...P, id: 'sporePouch', name: '포자 주머니', desc: '지속 피해와 마법 방어가 오릅니다.', level: 10, job: 'toadstoolForager', cost: 2, bonus: { dotBonus: .08, resist: 6 } },
     { ...P, id: 'inkSplash', name: '먹물 세례', desc: '명중과 회피가 오릅니다.', level: 10, job: 'inkThrower', cost: 2, bonus: { accuracy: .05, evasion: .02 } },
     // 복합: 창기병

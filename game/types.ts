@@ -258,7 +258,7 @@ export type CombatEvent = {
     endured?: { heal: number; self?: boolean };
     /** 행동 시작 때 턴당 체력 회복으로 되찾은 체력(있을 때만). */
     regen?: number;
-    dot?: { name: string; value: number }; reflected?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
+    dot?: { name: string; value: number }; reflected?: number; /** v25.25 반격 흡혈로 맞은 쪽이 회복한 양. */ reflectHeal?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
     /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
     chain?: number;
 };

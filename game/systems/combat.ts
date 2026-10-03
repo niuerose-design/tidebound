@@ -340,6 +340,11 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         endure(a, sa, notes, ev, true);
         ev.reflected = reflected;
         notes.push(`반격 ${reflected}`);
+        // v25.25 반격에도 흡혈: 되돌려 준 피해 × 흡혈률만큼 맞은 쪽이 회복합니다.
+        if (sb.lifesteal > 0 && b.hp > 0) {
+            const heal = Math.min(sb.hp - b.hp, Math.floor(reflected * sb.lifesteal));
+            if (heal > 0) { b.hp += heal; ev.reflectHeal = heal; notes.push(`반격 흡혈 ${heal}`); }
+        }
     }
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
     if (!statusOnly || !landed) ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed });
