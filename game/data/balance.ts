@@ -65,7 +65,7 @@ export const SKILL_FORMULA = {
     // 육중 조화: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
     // 초안(합 × 1.2 + 최저 × 6)은 편중 배분이 더 강해 check-all-rounder.mjs 결과로 조정했습니다.
     harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,
-    // v21 만능 항해사: 원시 피해도 연구·환생·직업 배율을 받고, 장착한 능력치 패시브의
+    // v21 팔방 항해사: 원시 피해도 연구·환생·직업 배율을 받고, 장착한 능력치 패시브의
     // 출신 직업이 서로 다를수록(최대 harmonyJobCap개) 직업당 harmonyPerJob만큼 강해집니다.
     harmonyScale: 2, harmonyPerJob: .15, harmonyJobCap: 6,
     // v21 회복 기술은 체력이 가득 차도 발동합니다. 체력이 healThreshold 이상일 때 쓰면

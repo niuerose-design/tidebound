@@ -215,7 +215,7 @@ export function skillMasteryHint(sk: Skill, level: number, rank = 1) {
 }
 /** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다. */
 export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
-/** 숙달(숙련 목표 달성)한 직업 수. 편력 낚시꾼의 패시브와 발견의 문이 셉니다. */
+/** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 낚시꾼의 패시브와 발견의 문이 셉니다. */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && jobMastered(s, j); }).length;
 /** 전직 조건 목록. now는 서버가 넘긴 요청 시각(문 판정용)이며, 화면에서는 마지막 서버 시각(lastTick)을 씁니다. */
 export function jobRequirements(s: State, j: Job, now = s.lastTick) {

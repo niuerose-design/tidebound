@@ -1,4 +1,4 @@
-// 만능 항해사(육중 조화) 검증: 같은 레벨·배분 포인트 총량에서 균등/편중 배분과 순수 공격 직업을 비교합니다. 사용: node scripts/check-all-rounder.mjs
+// 팔방 항해사(육중 조화) 검증: 같은 레벨·배분 포인트 총량에서 균등/편중 배분과 순수 공격 직업을 비교합니다. 사용: node scripts/check-all-rounder.mjs
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
 const {load:moduleAt}=loadGame();

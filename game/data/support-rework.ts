@@ -7,7 +7,7 @@ import type { Skill } from '../types';
  * - 오징어 광대: 골드 대신 '주사위'. 도박 기술은 쓸 때마다 피해 배율·명중을 굴리고(gamble), 올인은 체력·마나를 겁니다(allIn).
  * - 난파선 수집가: 골드·드롭을 내려놓고 도감 기록(발견한 어종 + 등록한 물건)에 비례합니다(scaling 'codex', perCount codex).
  * - 인양 상인: 골드·던전 골드에 수집가의 드롭을 넘겨받고, 보유 골드 비례(scaling 'gold')·골드 투척(goldSpend) 기술을 씁니다.
- * - 항해 수습기록사: 경험치는 그대로, 누적 포획(scaling 'catch')과 환생 횟수(perCount rebirth)에 비례합니다.
+ * - 견습 기록사: 경험치는 그대로, 누적 포획(scaling 'catch')과 환생 횟수(perCount rebirth)에 비례합니다.
  * - 거수 생태학자: 던전 클리어 + 보스 포획(scaling 'hunt', perCount hunt)과 지정 어종 포획(perCount species), 사냥감 추가 피해(preyBonus).
  * - 방랑 음유시인: 직업마다 AP 0 노래 패시브(song). 음유시인 계보만 장착합니다.
  * - ??? 계열: 시간의 문(아침·낮·밤)과 발견의 문에 독립 1차 직업을 더합니다(doors.ts).
@@ -25,7 +25,7 @@ const magic = { damageType: 'magic' as const };
 
 /** 액티브 최종 수치(ACTIVE_SKILL_BALANCE에 합쳐짐). 새 액티브도 여기에 두어 설명이 자동으로 만들어집니다. */
 export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
-    // v25.4 편력 계보: 복합 피해 규칙(발동 45% 이상)에 맞춘 숙달 비례 일격.
+    // v25.4 떠돌이 계보: 복합 피해 규칙(발동 45% 이상)에 맞춘 숙달 비례 일격.
     borrowedForm: { chance: .45, cooldown: 4, multiplier: 1.2, manaCost: 8 },
     thousandLives: { chance: .45, cooldown: 5, multiplier: 1.6, statusTurns: 3, manaCost: 12 },
     // ── 오징어 광대: 주사위 ──
@@ -42,7 +42,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     spoilsStrike: { scaling: 'variant', scalingRatio: .04 },
     treasureStrike: { scaling: 'variant', scalingRatio: .045 },
     hoardCrush: { scaling: 'variant', scalingRatio: .05 },
-    // ── 어종 문양학자: 도감 기록 비례(난파선 수집가에서 이관) ──
+    // ── 어종 문양사: 도감 기록 비례(난파선 수집가에서 이관) ──
     sigilShock: { chance: .5, cooldown: 3, multiplier: 1.2, manaCost: 4, preyBonus: .6, scaling: 'codex', scalingRatio: .008 },
     // ── 인양 상인: 보유 골드·골드 투척 ──
     coinToss: { chance: .26, cooldown: 3, multiplier: 1, goldSpend: { ratio: .005, cap: 20, scale: 1 } },
@@ -50,7 +50,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     coinBarrage: { scaling: 'gold', scalingRatio: .06, goldSpend: { ratio: .002, cap: 400, scale: .5 } },
     goldenTempest: { scaling: 'gold', scalingRatio: .07, goldSpend: { ratio: .002, cap: 3000, scale: .15 } },
     goldenStorm: { scaling: 'gold', scalingRatio: .08, goldSpend: { ratio: .002, cap: 12000, scale: .08 } },
-    // ── 항해 수습기록사: 누적 포획 ──
+    // ── 견습 기록사: 누적 포획 ──
     dispatchDash: { scaling: 'catch', scalingRatio: .06 },
     constellationBolt: { scaling: 'catch', scalingRatio: .08 },
     starBolt: { scaling: 'catch', scalingRatio: .1 },
@@ -94,7 +94,7 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     tradeWind: { desc: '골드·던전 골드 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
     tradeEmpire: { desc: '골드·던전 골드·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
     goldenEmpire: { desc: '골드·던전 골드·장비 드롭·환생 진주와 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
-    // 항해 수습기록사: 경험치 + 포획·환생
+    // 견습 기록사: 경험치 + 포획·환생
     voyageReview: { desc: '획득 경험치 +8%. 누적 포획이 쌓일수록 두 공격이 오릅니다.', bonus: { expBonus: .08 }, perCount: [{ source: 'catch', per: 500, bonus: { attack: 1, magic: 1 }, cap: 10 }] },
     chronicleStudy: { desc: '획득 경험치 +12%, 두 공격 +16, 최대 체력 +60. 환생할 때마다, 그리고 도감 기록 5개마다 두 공격과 체력이 더 오릅니다.', bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 3, magic: 3, hp: 10 }, cap: 10 }, { source: 'codex', per: 5, bonus: { attack: 1, magic: 1, hp: 4 }, cap: 12 }] },
     swiftQuill: { desc: '속도와 경험치 획득이 오르고, 누적 포획마다 속도가 더 오릅니다.', bonus: { speed: 6, expBonus: .03 }, perCount: [{ source: 'catch', per: 1000, bonus: { speed: 1 }, cap: 5 }] },
@@ -112,7 +112,7 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
 
 /** 새 기술: 도박·수집·상인·생태 보강 액티브, 음유시인 노래, ??? 문 직업 기술. 액티브 수치는 SUPPORT_BALANCE. */
 export const SUPPORT_SKILLS: Skill[] = [
-    { ...A, ...physical, id: 'allOrNothing', name: '전부 아니면 전무', desc: '', level: 70, job: 'luckDeity', cost: 6, effect: 'drain', masteryMilestones: [4000, 18000, 60000, 150000] },
+    { ...A, ...physical, id: 'allOrNothing', name: '배수진', desc: '', level: 70, job: 'luckDeity', cost: 6, effect: 'drain', masteryMilestones: [4000, 18000, 60000, 150000] },
     { ...A, ...physical, id: 'relicToss', name: '유물 던지기', desc: '', level: 10, job: 'relicScavenger', cost: 2 },
     { ...A, ...physical, id: 'coinToss', name: '동전 던지기', desc: '', level: 10, job: 'salvageMerchant', cost: 2 },
     { ...A, ...magic, id: 'ledgerStrike', name: '장부 일격', desc: '', level: 25, job: 'memoryMerchant', cost: 3 },
@@ -148,7 +148,7 @@ export const SUPPORT_SKILLS: Skill[] = [
 
 /** 상태이상 전용(피해 없음)으로 바꿀 새 기술. */
 export const SUPPORT_STATUS_ONLY = ['heronStill'];
-/** 편력 낚시꾼의 패시브: 숙달한 직업 수마다 자랍니다. 숙련 목표와 상한을 크게 잡아 장기 리턴으로 둡니다. */
+/** 떠돌이 낚시꾼의 패시브: 숙달한 직업 수마다 자랍니다. 숙련 목표와 상한을 크게 잡아 장기 리턴으로 둡니다. */
 SUPPORT_SKILLS.push(
     { ...P, id: 'thousandHands', name: '천 개의 손놀림', desc: '숙달한 직업 1개마다 두 공격 +3·최대 체력 +12·두 방어 +1(최대 60회).', level: 10, job: 'journeyman', cost: 3, perCount: [{ source: 'mastered', per: 1, bonus: { attack: 3, magic: 3, hp: 12, defense: 1, resist: 1 }, cap: 60 }], masteryMilestones: [800, 4000, 16000, 50000] },
     { ...A, id: 'borrowedForm', name: '배운 대로', desc: '', level: 25, job: 'polymath', cost: 4, damageType: 'split', scaling: 'mastered', scalingRatio: .03, manaCost: 8, masteryMilestones: [1500, 7000, 25000, 80000] },
@@ -165,7 +165,7 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
     inkMime: '광대 계보의 2차 직업입니다. 연막 찌르기로 상대를 약화시키고, 패시브로 회피와 속도를 올립니다.',
     highRoller: '도박 계보의 3차 직업입니다. 올인 한 방은 체력과 마나를 걸고 때린 만큼 흡혈합니다. 패시브로 골드와 치명 피해를 올립니다. 위험이 큰 만큼 보상도 큽니다.',
     fateGambler: '오징어 광대 계보의 환생 후 4차 직업입니다. 운명의 주사위는 치명타로 판을 뒤집습니다. 패시브로 치명 피해와 골드를 올립니다.',
-    luckDeity: '오징어 광대 계보의 5차 직업입니다. 잭팟 일격을 쓰고, 패시브로 치명타·치명 피해·골드를 올려 확률의 정점에 섭니다.',
+    luckDeity: '오징어 광대 계보의 5차 직업입니다. 대박 일격을 쓰고, 패시브로 치명타·치명 피해·골드를 올려 확률의 정점에 섭니다.',
     relicScavenger: '변종 조우 확률을 올리는 난파선 감식과 변종 기록에 비례하는 유물 던지기를 가진 1차 직업입니다. 변종과 황금 개체를 찾는 계보의 출발점입니다.',
     rareTracker: '변종 조우 확률과 황금 개체 확률을 올리는 전리품 감지, 그리고 Lv.30에 ×500 무리를 여는 무리 감지를 가진 2차 희귀어 직업입니다.',
     wreckDiver: '난파선 수집가 계보의 2차 파밍 직업입니다. 묵직한 닻을 휘두르고, 패시브로 체력과 장비 드롭을 올립니다.',
@@ -182,8 +182,8 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
     chronicleNavigator: '경험치 획득이 높고, 환생할 때마다 기록이 쌓여 강해지는 상위 기록사입니다.',
     logbookRunner: '기록 계보의 2차 직업입니다. 전령 질주로 자신을 가속하고, 패시브로 속도와 경험치를 올립니다.',
     starCartographer: '기록 계보의 3차 직업입니다. 별빛 주문을 쓰고, 패시브로 경험치와 마법 공격을 올립니다.',
-    starNavigator: '항해 수습기록사 계보의 환생 후 4차 성장 직업입니다. 별빛 탄환을 쓰고, 패시브로 경험치를 올립니다.',
-    routeDeity: '항해 수습기록사 계보의 5차 직업입니다. 은하 낙하를 쓰고, 패시브로 경험치와 마법 공격을 올려 성장 보조의 정점에 섭니다.',
+    starNavigator: '견습 기록사 계보의 환생 후 4차 성장 직업입니다. 별빛 탄환을 쓰고, 패시브로 경험치를 올립니다.',
+    routeDeity: '견습 기록사 계보의 5차 직업입니다. 은하 낙하를 쓰고, 패시브로 경험치와 마법 공격을 올려 성장 보조의 정점에 섭니다.',
     bossNaturalist: '보스 포획에서 숙련도를 더 얻고, 던전 클리어와 보스 포획이 쌓일수록 강해지는 생태 1차 직업입니다.',
     speciesChronicler: '전류 곰치·불씨 곰치·수호 곰치를 연구합니다. 지정 어종 포획에서 숙련을 크게 얻고, 도감 기록(발견한 어종 + 등록한 물건)이 쌓일수록 강해지는 문양 전격을 씁니다.',
     beastTracker: '보스 사냥 계보의 2차 직업입니다. 창격으로 방어를 꿰뚫고, 패시브로 물리 공격과 명중을 올립니다.',
@@ -207,11 +207,11 @@ export const SUPPORT_JOBS: NewJob[] = [
     { id: 'mistSwordsman', name: '안개 검객', title: '보이지 않는 칼끝', desc: '밤에만 문 앞에 서는 검객. 명중이 높은 안개 베기와 회피·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 3 }, crit: .02, requires: { dex: 12, str: 10 }, role: '시간·회피', penalties: { hp: -10 } },
     { id: 'nightHeron', name: '밤왜가리 사냥꾼', title: '움직이지 않고 기다린다', desc: '밤에만 문 앞에 서는 사냥꾼. 피해 없이 감속을 거는 정적과 명중·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, magic: 1 }, requires: { dex: 10, luk: 12 }, role: '시간·감속', penalties: { resist: -2 } },
     { id: 'poorMonk', name: '청빈 수도승', title: '가진 것이 없어 잃을 것도 없다', desc: '빈손으로 싸우는 수도승. 흡혈하는 빈손 장타와 골드를 내려놓는 대신 단단해지는 서약을 가집니다.', ...DOOR_T1, bonus: { hp: 10, resist: 1 }, requires: { vit: 12, wis: 12 }, role: '발견·생존', penalties: { crit: -.01 } },
-    { id: 'codexReader', name: '바다 백과 탐독가', title: '모든 물고기를 읽었다', desc: '도감을 깊이 읽은 자에게 열리는 술사. 도감 기록에 비례하는 주문과 패시브를 가집니다.', ...DOOR_T1, bonus: { magic: 5, resist: 1 }, requires: { int: 14 }, role: '발견·도감', penalties: { hp: -10 } },
-    { id: 'journeyman', name: '편력 낚시꾼', title: '배운 것은 몸에 남는다', desc: '직업 셋을 끝까지 숙달한 자에게 열리는 패시브 전용 직업. 두 패시브가 숙달한 직업 수에 비례해 자라며, 계승하면 어느 직업에서든 그대로 힘이 됩니다.', ...DOOR_T1, bonus: { attack: 2, magic: 2, hp: 10 }, requires: { str: 10, int: 10, vit: 10 }, role: '숙달·누적', fullKit: true, masteryTarget: 4000, masteryBoost: .15 },
-    { id: 'polymath', name: '만능 어부', title: '여덟 가지 삶을 한 몸에', desc: '직업 여덟을 숙달한 편력 낚시꾼에게 열리는 2차급 독립 직업. 숙달한 직업 수에 비례하는 복합 일격과 패시브를 가집니다.', ...neutral, crit: .02, bonus: { attack: 4, magic: 4, hp: 20 }, tier: 2, level: 25, mastery: 0, requires: { str: 20, int: 20, vit: 20 }, requiresJobMastery: { journeyman: 4000 }, requiresMastered: 8, role: '숙달·복합', tree: 'mystery', lineage: 'mystery-independent', branchless: true, hidden: true, fullKit: true, masteryTarget: 12000, masteryBoost: .2 },
-    { id: 'hundredLives', name: '백 가지 삶', title: '모든 생을 기억하는 낚시꾼', desc: '직업 열다섯을 숙달한 자에게 열리는 3차급 독립 직업. 숙달한 직업 수만큼 강해지는 천 번의 삶과 패시브로 모든 숙련의 결산을 받습니다.', ...neutral, hp: 1.02, crit: .03, bonus: { attack: 12, magic: 12, hp: 60, defense: 3, resist: 3 }, tier: 3, level: 40, mastery: 0, requires: { str: 30, int: 30, vit: 30 }, requiresJobMastery: { polymath: 12000 }, requiresMastered: 15, role: '숙달·결산', tree: 'mystery', lineage: 'mystery-independent', branchless: true, hidden: true, fullKit: true, masteryTarget: 40000, masteryBoost: .3 },
-    { id: 'fallenAngler', name: '일곱 번 넘어진 낚시꾼', title: '넘어진 만큼 일어선다', desc: '여러 번 쓰러져 본 자에게 열리는 직업. 흡혈하는 일어서기와 체력·흡혈 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, attack: 1 }, requires: { vit: 12, str: 10 }, role: '발견·흡혈', penalties: { speed: -2 } },
+    { id: 'codexReader', name: '바다 백과 독자', title: '모든 물고기를 읽었다', desc: '도감을 깊이 읽은 자에게 열리는 술사. 도감 기록에 비례하는 주문과 패시브를 가집니다.', ...DOOR_T1, bonus: { magic: 5, resist: 1 }, requires: { int: 14 }, role: '발견·도감', penalties: { hp: -10 } },
+    { id: 'journeyman', name: '떠돌이 낚시꾼', title: '배운 것은 몸에 남는다', desc: '직업 셋을 끝까지 숙달한 자에게 열리는 패시브 전용 직업. 두 패시브가 숙달한 직업 수에 비례해 자라며, 계승하면 어느 직업에서든 그대로 힘이 됩니다.', ...DOOR_T1, bonus: { attack: 2, magic: 2, hp: 10 }, requires: { str: 10, int: 10, vit: 10 }, role: '숙달·누적', fullKit: true, masteryTarget: 4000, masteryBoost: .15 },
+    { id: 'polymath', name: '팔방 어부', title: '여덟 가지 삶을 한 몸에', desc: '직업 여덟을 숙달한 떠돌이 낚시꾼에게 열리는 2차급 독립 직업. 숙달한 직업 수에 비례하는 복합 일격과 패시브를 가집니다.', ...neutral, crit: .02, bonus: { attack: 4, magic: 4, hp: 20 }, tier: 2, level: 25, mastery: 0, requires: { str: 20, int: 20, vit: 20 }, requiresJobMastery: { journeyman: 4000 }, requiresMastered: 8, role: '숙달·복합', tree: 'mystery', lineage: 'mystery-independent', branchless: true, hidden: true, fullKit: true, masteryTarget: 12000, masteryBoost: .2 },
+    { id: 'hundredLives', name: '백수', title: '모든 생을 기억하는 낚시꾼', desc: '직업 열다섯을 숙달한 자에게 열리는 3차급 독립 직업. 숙달한 직업 수만큼 강해지는 천 번의 삶과 패시브로 모든 숙련의 결산을 받습니다.', ...neutral, hp: 1.02, crit: .03, bonus: { attack: 12, magic: 12, hp: 60, defense: 3, resist: 3 }, tier: 3, level: 40, mastery: 0, requires: { str: 30, int: 30, vit: 30 }, requiresJobMastery: { polymath: 12000 }, requiresMastered: 15, role: '숙달·결산', tree: 'mystery', lineage: 'mystery-independent', branchless: true, hidden: true, fullKit: true, masteryTarget: 40000, masteryBoost: .3 },
+    { id: 'fallenAngler', name: '칠전팔기 낚시꾼', title: '넘어진 만큼 일어선다', desc: '여러 번 쓰러져 본 자에게 열리는 직업. 흡혈하는 일어서기와 체력·흡혈 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, attack: 1 }, requires: { vit: 12, str: 10 }, role: '발견·흡혈', penalties: { speed: -2 } },
 ];
 
 /** 실루엣 카드 힌트. */
@@ -226,6 +226,6 @@ export const SUPPORT_HINTS: Record<string, string> = {
     codexReader: '도감에 기록이 서른 개 넘게 쌓였을 때.',
     fallenAngler: '서른 번쯤 쓰러져 본 낚시꾼에게.',
     journeyman: '직업 셋을 끝까지 숙달한 낚시꾼에게.',
-    polymath: '편력 낚시꾼이 여덟 가지 삶을 모두 숙달했을 때.',
-    hundredLives: '만능 어부가 열다섯 가지 삶을 모두 숙달했을 때.',
+    polymath: '떠돌이 낚시꾼이 여덟 가지 삶을 모두 숙달했을 때.',
+    hundredLives: '팔방 어부가 열다섯 가지 삶을 모두 숙달했을 때.',
 };

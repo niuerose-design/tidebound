@@ -7,6 +7,9 @@ import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
 
 const number = (n: number) => Number(n.toFixed(4)).toLocaleString('ko-KR', { maximumFractionDigits: 4 });
+/** 玄 계보처럼 한자 한 글자로 된 이름의 한글 음. 툴팁에 함께 보여 줍니다. */
+const HANJA_READING: Record<string, string> = { '玄': '현', '無': '무', '虛': '허', '斬': '참', '血': '혈', '縛': '박', '刹': '찰', '魂': '혼', '天': '천' };
+export const hanjaReading = (name: string) => HANJA_READING[name] ? `${name}(${HANJA_READING[name]})` : undefined;
 export const skillPercent = (n: number) => `${number(n * 100)}%`;
 export function skillBonusText(key: string, value: number) {
     return `${STAT_LABELS[key as keyof Stats] || key} ${statDeltaDisplay(key, value)}`;
