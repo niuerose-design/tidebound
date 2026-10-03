@@ -33,7 +33,8 @@ pnpm dev               # http://localhost:5173
 - `pnpm test`: 게임 규칙 테스트 (`tests/*.test.mjs`, 순서는 `tests/run.mjs`)
 - `node scripts/check-equivalence.mjs`: 같은 상태·난수의 결과 지문 (리팩터링 전후 비교)
 - `node scripts/check-balance.mjs`, `check-progression-pace.mjs`, `check-active-routing.mjs`, `check-combat-depth.mjs`: 밸런스 점검
-- `node scripts/check-all-rounder.mjs`, `check-swarm.mjs`, `check-expedition.mjs`, `check-recovery.mjs`: 만능 항해사 · 무리 사냥 · 던전 도달 · 회복률 검증
+- `node scripts/check-all-rounder.mjs`, `check-expedition.mjs`, `check-recovery.mjs`: 만능 항해사 · 던전 도달 · 회복률 검증
+- `DATABASE_URL=... node scripts/clear-chat.mjs`: 채팅 기록 전부 삭제(베타 전 정리). 로컬은 `TIDEBOUND_DEV_DB` 경로를 씁니다
 - `node scripts/e2e-api.mjs <주소>`: 가입·로그인·게임·랭킹 API 흐름
 - GitHub Actions: 푸시마다 린트·테스트·빌드·타입 검사·API 흐름을 실행합니다. `screens-request` 브랜치에 푸시하면 화면 스크린샷을 `screenshots` 브랜치에 저장합니다.
 

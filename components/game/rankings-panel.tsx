@@ -60,7 +60,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <button className="primary" disabled={busy} onClick={register}>
     <ArrowUpRight size={17}/>내 전투 정보 등록</button>
     </Heading>
-    <p className="arena-season">결투 시즌 <b>{season || '—'}</b> · 매달 1일 0시(한국 시간)에 점수가 1000으로 돌아가고 지난 시즌 순위 보상(1위 {duelSeasonPearls(1)} · 2위 {duelSeasonPearls(2)} · 3위 {duelSeasonPearls(3)} · 10위 안 {duelSeasonPearls(10)} · 50위 안 {duelSeasonPearls(50)} · 참가 {duelSeasonPearls(99)}진주)을 첫 행동 때 받습니다.{s.duelSeason?.lastRank ? ` 지난 시즌 ${s.duelSeason.lastKey} ${s.duelSeason.lastRank}위.` : ''}</p>
+    <p className="arena-season" title={`지난 시즌 순위 보상: 1위 ${duelSeasonPearls(1)} · 2위 ${duelSeasonPearls(2)} · 3위 ${duelSeasonPearls(3)} · 10위 안 ${duelSeasonPearls(10)} · 50위 안 ${duelSeasonPearls(50)} · 참가 ${duelSeasonPearls(99)}진주. 첫 행동 때 받습니다.`}>결투 시즌 <b>{season || '—'}</b> · 매달 1일 0시(한국 시간) 점수 1000으로 초기화 · 순위 보상은 다음 시즌 첫 행동 때 지급</p>
     <div className="arena-stats">
     <div className="panel">
     <small>내 결투 점수</small>
@@ -70,10 +70,6 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <small>랭크 전적</small>
     <strong>{s.wins}승 <span>{s.losses}패</span>
     </strong>
-    </div>
-    <div className="panel">
-    <small>진행 방식</small>
-    <strong className="small-type">최대 {BALANCE.duelMaxTurns}턴 · 무승부 지원</strong>
     </div>
     </div>
     <Tabs defaultValue="ranking">
@@ -91,7 +87,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     </div> : null; })()}
     <div className="panel ranking-panel">
     <div className="section-title">
-    <h2>등록된 낚시꾼</h2>
+    <h2>등록된 낚시꾼 <small className="micro">최대 {BALANCE.duelMaxTurns}턴 · 무승부 지원 · 1분 간격</small></h2>
     <div className="ranking-sort" role="group" aria-label="정렬">{([['rating', '점수'], ['power', '전투력'], ['level', '레벨'], ['rebirths', '환생']] as const).map(([k, label]) => <button type="button" key={k} className={sort === k ? 'active' : ''} aria-pressed={sort === k} onClick={() => setSort(k)}>{label}</button>)}<button className="text-button" onClick={loadRanking}><RefreshCw size={14}/>새로고침</button></div>
     </div>{rankError ? <div className="error-box">{rankError}</div> : rows.length ? <Table>
         <TableHeader>

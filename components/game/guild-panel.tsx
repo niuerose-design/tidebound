@@ -20,7 +20,7 @@ export function Guild({ s, busy, info, error, load, act }: Props) {
     const legacy = s.guild?.name && (s.guild.contribution > 0 || s.guild.level > 1);
     const copy = async () => { try { await navigator.clipboard.writeText(info?.guild?.code || ''); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* 클립보드 없음 */ } };
     const board = <section className="panel guild-board">
-        <div className="section-title"><h2><Trophy size={16}/> 이번 주 길드 기록판 <small className="micro">{info?.week}</small></h2><span>포획 1 · 던전 정복 20 · 보스 5 · 심연 최고 깊이 10 · 기부 1,000 G당 1점. 월요일 0시(한국 시간)에 새로 시작합니다.</span></div>
+        <div className="section-title"><h2><Trophy size={16}/> 이번 주 길드 기록판 <small className="micro">{info?.week}</small></h2><span title="포획 1 · 던전 정복 20 · 보스 5 · 심연 최고 깊이 10 · 기부 1,000 G당 1점">주간 점수 · 월요일 0시(한국 시간) 초기화</span></div>
         {info?.board.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>길드</TableHead><TableHead>점수</TableHead></TableRow></TableHeader>
             <TableBody>{info.board.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (내 길드)' : ''}</TableCell><TableCell><b>{format(r.points)}</b></TableCell></TableRow>)}</TableBody></Table>
             : <p className="footnote">이번 주 기록이 있는 길드가 아직 없습니다.</p>}
@@ -48,7 +48,7 @@ export function Guild({ s, busy, info, error, load, act }: Props) {
         {g.leader && <section className="panel guild-name-panel"><div><h2>가입 코드 <code className="guild-code">{g.code}</code></h2><p>길드원에게 알려주세요. 이름 변경 {GUILD_RENAME_COST} G.</p></div>
             <div className="guild-name-form"><button className="secondary" onClick={copy}>{copied ? <Check size={14}/> : <Copy size={14}/>} 코드 복사</button><input value={rename} maxLength={16} onChange={e => setRename(e.target.value)} aria-label="길드 이름 변경"/><button className="secondary" disabled={busy || s.gold < GUILD_RENAME_COST || rename.trim().length < 2 || rename.trim() === g.name} onClick={() => act({ action: 'rename', name: rename })}>이름 변경</button></div></section>}
         <section className="panel guild-goals">
-            <div className="section-title"><h2>주간 길드 목표</h2><span>길드원 수에 따라 목표가 커집니다(최소 3명 기준). 달성하면 길드원 각자가 한 번씩 받습니다.</span></div>
+            <div className="section-title"><h2>주간 길드 목표</h2><span>길드원 수에 비례 · 달성하면 각자 한 번씩 수령</span></div>
             <ul className="goal-list">{g.goals.map(goal => <li key={goal.id} className={goal.progress >= goal.target ? 'done' : ''}>
                 <div><strong>{goal.title}</strong><small>{format(goal.progress)} / {format(goal.target)} · 진주 +{goal.pearls}</small></div>
                 <span className="guild-goal-meter"><Meter value={goal.progress} max={goal.target}/></span>
@@ -56,7 +56,7 @@ export function Guild({ s, busy, info, error, load, act }: Props) {
             </li>)}</ul>
         </section>
         <section className="panel guild-members">
-            <div className="section-title"><h2>길드원 · 이번 주 기여</h2><span>포획·던전 정복·보스·심연 최고 깊이·기부는 60초마다 서버에 반영됩니다.</span></div>
+            <div className="section-title"><h2>길드원 · 이번 주 기여</h2><span>60초마다 반영</span></div>
             <Table><TableHeader><TableRow><TableHead>낚시꾼</TableHead><TableHead>포획</TableHead><TableHead>던전</TableHead><TableHead>보스</TableHead><TableHead>심연</TableHead><TableHead>기부</TableHead><TableHead>점수</TableHead>{g.leader && <TableHead/>}</TableRow></TableHeader>
                 <TableBody>{g.members.map(m => <TableRow key={m.account} className={m.self ? 'self' : ''}><TableCell>{m.leader && <Crown size={12}/>} {m.name}{m.self ? ' (나)' : ''}</TableCell><TableCell>{format(m.totals.catches)}</TableCell><TableCell>{m.totals.clears}</TableCell><TableCell>{m.totals.bosses}</TableCell><TableCell>{m.totals.abyss}층</TableCell><TableCell>{format(m.totals.donated)} G</TableCell><TableCell><b>{format(m.points)}</b></TableCell>
                     {g.leader && <TableCell>{!m.self && <ConfirmButton label="내보내기" title={`${m.name}을(를) 내보낼까요?`} description="길드에서 내보냅니다. 다시 가입하려면 코드가 필요합니다." disabled={busy} onConfirm={() => act({ action: 'kick', target: m.account })}/>}</TableCell>}</TableRow>)}</TableBody></Table>

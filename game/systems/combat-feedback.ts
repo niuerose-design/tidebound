@@ -4,7 +4,32 @@ import { BALANCE } from '../data/balance';
 import type { Enemy, Log, State, StatusEffects } from '../types';
 
 export type CombatFxKind = 'physical' | 'magic' | 'split' | 'stun' | 'bleed' | 'silence' | 'slow' | 'haste' | 'heal' | 'weaken' | 'miss';
-export type CombatFxVariant = 'harpoon' | 'wave' | 'arcane' | 'lightning' | 'impact';
+/** v25.20 스킬별 연출 갈래. 궤적 모양·파편 글자·색이 갈래마다 다릅니다. */
+export type CombatFxVariant = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph';
+/** 스킬 id·효과로 연출 갈래를 고릅니다. 앞 규칙이 우선이고, 아무것도 맞지 않으면 마법은 arcane, 물리는 impact. */
+export function fxVariantOf(id: string | undefined, magical: boolean, effect?: string): CombatFxVariant {
+    if (!id) return magical ? 'arcane' : 'impact';
+    const rules: [RegExp, CombatFxVariant][] = [
+        [/^glyph|^foeSilence$/, 'glyph'],
+        [/electric|thunder|storm(?!Chant)|spark|shock|lightning|sigil|psalm/i, 'lightning'],
+        [/fire|ember|flare|meteor|cinder|red(Wake|Waltz|Apocalypse)|crimson|blood/i, 'fire'],
+        [/frost|rime|ice|snow|still|deadCalm|heron|frozen/i, 'frost'],
+        [/star|galaxy|constellation|genesis|dawn|light|aeon|moon|sun|heaven|seaOfLight/i, 'star'],
+        [/gold|coin|jackpot|treasure|hoard|ledger|relic|spoils|haggling|fate|allIn|allOrNothing|harvest|loaded/i, 'gold'],
+        [/song|chant|ballad|anthem|chorus|verse|discord|tempo|siren|bell|toll|resonan|cannon|broadside|encyclopedia|thesis|echo|recall/i, 'song'],
+        [/ward|shield|bulwark|fortress|aegis|guard|bastion|citadel|plate|iron|stand|marrow|retort|thorn|salt/i, 'ward'],
+        [/heal|spring|breath|prayer|poultice|renewal|blessing|mend|lifeTorrent|oceanOfLife|green|reef|rewind|rise|surge$/i, 'heal'],
+        [/curse|hex|doom|seal|calamity|soul|void|null|abyss|shadow|grave|decree|tyranny|apocalypse|pin|ink|smoke|miasma|rot|corros|transmut|pastLife|thousand|borrowed|timeMachine|precede|windUp|slack/i, 'curse'],
+        [/venom|toxic|fang|bite|devour|maul|tentacle|kraken|worldTentacle|grab|frenzy/i, 'bite'],
+        [/quake|crush|crash|slam|break|collapse|hammer|anchor|fist|palm|bash|uppercut|wake|step|titan|bearer|combo|limitless|skyBreaker|jointLock|windup|foeCrush/i, 'quake'],
+        [/slash|cut|draw|iai|edge|razor|verdict|waltz|vein|gash|sever|needle|nerve|mist|whip|cross|flash|twinMoon|split|hook$|^hook/i, 'slash'],
+        [/hook|pierce|hunt|lance|bore|spear|harpoon|dart|dive|thrust|charge|whale|trench|track|bolt|ray|shard|toss/i, 'pierce'],
+        [/wave|tide|splash|current|maelstrom|undertow|tsunami|torrent|ripple|ocean|sea|rush|dragon|dispatch|headwind|tack|foeSlow|foeHaste/i, 'wave'],
+    ];
+    for (const [re, v] of rules) if (re.test(id)) return v;
+    if (effect === 'heal') return 'heal';
+    return magical ? 'arcane' : 'impact';
+}
 export type CombatFx = {
     id: number; actor: 'player' | 'enemy'; target: 'player' | 'enemy';
     title: string; kind: CombatFxKind; variant: CombatFxVariant;
@@ -21,7 +46,7 @@ export type CombatFx = {
 };
 
 export const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
-const variantOf = (id: string | undefined, magical: boolean): CombatFxVariant => id && /electric|thunder|storm|spark/i.test(id) ? 'lightning' : id && /wave|tide|splash|spring|current|maelstrom/i.test(id) ? 'wave' : magical ? 'arcane' : id && /hook|pierce|hunt|lance|bore|razor/i.test(id) ? 'harpoon' : 'impact';
+const variantOf = (id: string | undefined, magical: boolean, effect?: string): CombatFxVariant => fxVariantOf(id, magical, effect);
 /** 구조화된 전투 결과(log.event)를 우선 사용하고, 이전 세이브의 문자열 로그만 텍스트로 해석합니다. */
 export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
     if (log.type !== 'battle') return null;
@@ -32,7 +57,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
         const missed = ev.hits.length > 0 && ev.hits.every(h => h.miss);
         const status = ev.statuses.find(x => !x.onSelf) || ev.statuses[0];
         const kind: CombatFxKind = missed ? 'miss' : status ? status.id === 'bleed' ? 'bleed' : status.id as CombatFxKind : ev.damageType;
-        return { id: log.id, actor, target, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'lightning' : variantOf(ev.skillId, ev.damageType !== 'physical'), basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
+        return { id: log.id, actor, target, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
     }
     const text = log.text;
     const actor = text.startsWith(`${playerName} ·`) || text.startsWith(`${playerName}:`) ? 'player' : 'enemy';
@@ -54,7 +79,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
     const healing = Number(detail.match(/(?:^| · )(\d+) 회복/)?.[1] || 0);
     const effect = !mainMissed ? skill?.effect : undefined;
     const kind: CombatFxKind = missed ? 'miss' : effect && !['heal', 'drain'].includes(effect) ? effect as CombatFxKind : magical ? 'magic' : 'physical';
-    const variant: CombatFxVariant = skill && /electric|thunder|storm|spark/i.test(skill.id) ? 'lightning' : skill && /wave|tide|splash|spring|current|maelstrom/i.test(skill.id) ? 'wave' : magical ? 'arcane' : skill && /hook|pierce|hunt|lance|bore|razor/i.test(skill.id) ? 'harpoon' : 'impact';
+    const variant: CombatFxVariant = fxVariantOf(skill?.id, magical, skill?.effect);
     const statuses: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
     return { id: log.id, actor, target, title: label, kind, variant, basic: !skill, critical, healing, drained: 0, status: effect ? statuses[effect] || '' : '', hits, delay: 0, damageType: magical ? 'magic' : 'physical' };
 }
