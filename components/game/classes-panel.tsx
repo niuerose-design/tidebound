@@ -9,7 +9,7 @@ import { LineageCard, RouteMap, JobList } from './jobs/lineage-view';
 import { JobCompare } from './jobs/job-compare';
 import { JobDetail } from './jobs/job-detail';
 import { DoorRow, openUnenteredDoors } from './jobs/mystery-doors';
-import { lineageJobs, finderJobs, searchJobs, TOP_TAGS, type Finder } from './jobs/job-status';
+import { lineageJobs, finderJobs, searchJobs, secretJob, TOP_TAGS, type Finder } from './jobs/job-status';
 
 const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', mastered: '숙달', near: '거의 다 됨', goal: '목표', doors: '문 열림' };
 
@@ -38,14 +38,16 @@ export function Classes({ s, send, busy }: PanelProps) {
     const [shownJob, setShownJob] = useState(current.id);
     if (shownJob !== current.id) { setShownJob(current.id); setSelectedId(current.id); setTreeId(current.tree); setLineageId(lineageOf(current)); }
     const tree = JOB_TREES.find(t => t.id === treeId)!;
+    // ??? 계보는 한 번 들어갔거나, 문·히든이 아닌 공개 직업(예: 玄)이 있으면 보입니다.
+    const mysteryShown = (id: string) => lineageJobs(id).some(j => s.unlockedJobs.includes(j.id) || !secretJob(j));
     const lineages = LINEAGES.filter(l => l.tree === treeId && lineageJobs(l.id).length)
-        .filter(l => treeId !== 'mystery' || lineageJobs(l.id).some(j => s.unlockedJobs.includes(j.id)));
+        .filter(l => treeId !== 'mystery' || mysteryShown(l.id));
     const lineage = lineages.find(l => l.id === lineageId) || null;
     const selected = jobById(selectedId) || current;
     const select = (id: string) => { setSelectedId(id); setSheetOpen(true); };
     const openTree = (id: JobTreeId) => {
         setTreeId(id);
-        const first = LINEAGES.find(l => l.tree === id && lineageJobs(l.id).some(j => j.id === s.job)) || LINEAGES.find(l => l.tree === id && lineageJobs(l.id).length && (id !== 'mystery' || lineageJobs(l.id).some(j => s.unlockedJobs.includes(j.id))));
+        const first = LINEAGES.find(l => l.tree === id && lineageJobs(l.id).some(j => j.id === s.job)) || LINEAGES.find(l => l.tree === id && lineageJobs(l.id).length && (id !== 'mystery' || mysteryShown(l.id)));
         setLineageId(first?.id || '');
     };
     const showCurrent = () => { setTreeId(current.tree); setLineageId(lineageOf(current)); setSelectedId(current.id); };
