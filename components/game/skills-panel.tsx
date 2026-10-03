@@ -78,6 +78,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: Panel
             {acquired && <ConfirmButton label={level >= max ? '최대 레벨' : '강화 · 1 SP'} description={`${sk.name} 성장 Lv.${level} → Lv.${level + 1}. ${hint} 숙련은 계속 쌓이며 SP와 효과가 중첩되지는 않습니다. 이 강화만으로 계승되지는 않습니다.`} disabled={busy || !canSpendSkill(s, sk.id) || s.sp < 1} onConfirm={() => send({ type: 'learn', id: sk.id })}/>}
             <button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} title={equipped && !equipAllowed ? 'AP를 지원하는 스킬입니다. 다른 기술을 먼저 해제하세요.' : undefined} onClick={() => send({ type: 'skill', id: sk.id })}>{equipLabel}</button>
         </div>
+        {acquired && mastery - lb >= max && lbNext.stage <= PROGRESSION.limitBreak.max && !lbNext.ok && <p className="footnote limit-break-reason" role="note">한계돌파 {lbNext.stage}단계 조건: {lbNext.reason}. 장착 여부와 관계없이, 조건을 채우면 버튼이 켜집니다.</p>}
         {paidInheritance && mastery > 0 && detailed && <small className="footnote">실전 숙련으로 무료 계승도 완료했습니다. SP 투자 환급 시 숙련 계승은 유지됩니다.</small>}
     </article>;
 }

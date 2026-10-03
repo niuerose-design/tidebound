@@ -11,7 +11,7 @@ export const PROGRESSION = {
     maxMasteryPerVictory: 10,
     // v27.6 한계돌파: 실전 숙련을 다 채운 기술을 SP로 최대 성장 너머로 밀어 올립니다. 단계마다 성장 한 단계(+8% 배율·+15% 패시브·+1.5%p 발동) + 발동 +2.5%p 추가,
     // 마지막 단계는 장착 AP -1. 조건: 숙련 완료, 실전 숙련 수치가 마지막 이정표의 practiceMultiple배, SP.
-    limitBreak: { max: 3, sp: [2, 3, 4], practiceMultiple: [2, 4, 8], chance: .025, apAtMax: 1 },
+    limitBreak: { max: 3, sp: [2, 3, 4], practiceMultiple: [2, 4, 8], chance: .025, apAtMax: 1, /** v27.28 레벨별 효과표·횟수 비례 패시브: 단계마다 양수 효과 +10%. */ passive: .1 },
     bookSP: [0, 0, 0, 1], bookGold: [200, 1000, 5000, 15000], itemDropBonus: .005,
 };
 /** 능력치 1포인트당 효과. 전투 계산(stats.ts)과 능력치 설명이 모두 이 값을 씁니다. */
