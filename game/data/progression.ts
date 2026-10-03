@@ -19,8 +19,7 @@ export const ATTRIBUTE_EFFECTS = {
     int: { magic: 2.8, mana: 1 },
     vit: { hp: 9, defense: .6, hpRegen: .3 },
     wis: { resist: 1.2, mana: 3, manaRegen: .25 },
-    // v25.22 행운에 물리·마법 공격을 조금 더해 올-행운 빌드도 때릴 수 있게 합니다(주사위 기술은 치명 피해 배율 비례).
-    luk: { attack: .8, magic: .8, crit: .003, critDamage: .005, dropBonus: .001, goldBonus: .002 },
+    luk: { crit: .003, critDamage: .005, dropBonus: .001, goldBonus: .002 },
 } as const;
 const EFFECT_LABELS: Record<string, string> = { attack: '물리 공격', defense: '물리 방어', accuracy: '명중', evasion: '회피 수치', speed: '속도', magic: '마법 공격', mana: '최대 마나', hp: '최대 체력', resist: '마법 방어', manaRegen: '마나 회복', hpRegen: '턴당 체력 회복', crit: '치명타', critDamage: '치명 피해', dropBonus: '장비 드롭', goldBonus: '골드' };
 const RATIO_EFFECTS = new Set(['accuracy', 'evasion', 'crit', 'critDamage', 'dropBonus', 'goldBonus']);

@@ -95,9 +95,9 @@ export const MONOSTAT_SKILLS: Skill[] = [
     // 행운
     { ...A, ...physical, id: 'luckyBreak', name: '요행수', desc: '', level: 10, job: 'luckyAngler', chance: .5, cooldown: 3, multiplier: 1.1, cost: 2, ...attr('luk', 3.8) },
     { ...P, id: 'luckyStreak', name: '연승 기운', desc: '치명타가 오릅니다.', level: 10, job: 'luckyAngler', cost: 1, bonus: { crit: .05, hp: 60 } },
-    { ...A, ...physical, id: 'heavenlyStrike', name: '천운의 일격', desc: '', level: 25, job: 'fortunate', chance: .5, cooldown: 4, multiplier: 1.5, cost: 3, ...attr('luk', 4.5) },
+    { ...A, ...physical, id: 'heavenlyStrike', name: '천운의 일격', desc: '', level: 25, job: 'fortunate', chance: .5, cooldown: 4, multiplier: 1.5, cost: 3, ...attr('luk', 5.3) },
     { ...P, id: 'blessedHand', name: '축복받은 손', desc: '치명타와 치명 피해가 오릅니다.', level: 25, job: 'fortunate', cost: 2, bonus: { crit: .05, critDamage: .15, hp: 220 } },
-    { ...A, ...physical, id: 'fateReversal', name: '운명 역전', desc: '', level: 40, job: 'fortuneChild', chance: .5, cooldown: 4, multiplier: 2, cost: 4, ...attr('luk', 3) },
+    { ...A, ...physical, id: 'fateReversal', name: '운명 역전', desc: '', level: 40, job: 'fortuneChild', chance: .5, cooldown: 4, multiplier: 2, cost: 4, ...attr('luk', 3.8) },
     { ...P, id: 'fatesFavor', name: '운명의 편애', desc: '치명타와 치명 피해가 크게 오릅니다.', level: 40, job: 'fortuneChild', cost: 2, bonus: { crit: .07, critDamage: .3, hp: 320 } },
 ];
 

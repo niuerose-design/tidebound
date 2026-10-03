@@ -121,3 +121,11 @@ test('v26.2 ranked duel allowance: 20 per day, 3 per opponent, 1-minute cooldown
     const tomorrow = Date.parse('2026-10-04T00:01:00+09:00'); assert.equal(rankedDuelBlock(s, tomorrow, 'x'), '', 'resets at KST midnight');
     s.lastDuel = now; assert.match(rankedDuelBlock(s, now + 1000, 'q'), /한 번/);
 });
+
+test('v26.3 healOnly: 고요한 호흡 heals without attacking (no hit roll, no damage, no thorns); luck gives no attack', () => {
+    const sk = SKILLS.find(x => x.id === 'breath'); assert.equal(sk.healOnly, true); assert.equal(sk.multiplier, 0);
+    const a = fighter('breath', { hp: 400 }), b = target({ stats: { ...base, thorns: .5, defense: 100 } });
+    const text = strike(a, b, () => 0);
+    assert.equal(b.hp, 1e6, 'no damage'); assert.ok(a.hp > 400, 'healed'); assert.match(text, /회복/); assert.equal(a.hp >= 400, true, 'no thorns damage taken');
+    const s = newState(0); const before = stats(s).attack; s.attributes.luk = 100; assert.equal(stats(s).attack, before, 'luck adds no attack'); assert.ok(stats(s).crit > 0);
+});
