@@ -82,7 +82,7 @@ for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE }
  */
 export const STATUS_ONLY_SKILLS = ['splash', 'anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
     'bellCrash', 'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
-    'quakeStep', 'sealHex', 'frostMist', ...SUPPORT_STATUS_ONLY, ...V25_STATUS_ONLY];
+    'quakeStep', 'sealHex', 'frostMist', 'driftwoodShove', 'currentJam', 'netThrow', 'oathShout', 'rottenBait', ...SUPPORT_STATUS_ONLY, ...V25_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, weaken: 3, silence: 2, slow: 3 };
 /** 상태이상 전용 전환과 초반 배율 제한. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. tier는 기술 주인 직업의 차수(공용 0). */
