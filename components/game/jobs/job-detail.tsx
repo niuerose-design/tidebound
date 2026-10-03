@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import type { Stats } from '@/game/types';
-import { jobTags, type Job } from '@/game/data/classes';
+import { jobTags, type Job, constraintDeviceLabels } from '@/game/data/classes';
 import { SKILLS } from '@/game/data/skills';
 import { skillBrief } from '@/game/systems/skill-description';
 import { STAT_LABELS, statDeltaDisplay, percent } from '@/game/data/progression';
@@ -46,6 +46,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
         <div className="job-detail-body">
             {tab === 'overview' && <>
                 <p>{j.desc}</p>
+                {j.constraint && <section className="job-detail-section job-compact job-constraint"><h3>제약 · {j.constraint.label}</h3><p className="footnote">{j.constraint.desc} PvE 균형 대상이 아닌 계승·결투용 직업입니다.</p><div className="requirements">{constraintDeviceLabels(j.constraint.devices).map(t => <span key={t} className="met">{t}</span>)}</div></section>}
                 {from && <p className="job-cross">{from}에서 이어지는 직업입니다.</p>}
                 <section className="job-detail-section job-compact"><h3>직업 보정 · {j.role}</h3>
                     <div className="requirements">{bonuses.map(key => <span key={key} className={growsWithMastery(j, key) ? 'met' : 'negative'}>{STAT_LABELS[key]} {jobBonusText(j, key, mastered)}</span>)}{!!j.expBonus && <span className="met">경험치 {percent(j.expBonus, 2, true)}</span>}{j.crit > 0 && <span className="met">치명타 {percent(j.crit, 2, true)}p</span>}{Object.entries(j.penalties || {}).map(([key, n]) => <span className="negative" key={key}>{STAT_LABELS[key as keyof Stats]} {statDeltaDisplay(key, n)}</span>)}{!bonuses.length && !j.expBonus && !j.crit && !j.penalties && <span>보정 없음</span>}</div>

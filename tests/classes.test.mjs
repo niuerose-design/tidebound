@@ -3,11 +3,11 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 258); assert.equal(new Set(JOBS.map(j => j.id)).size, 258);
+    assert.equal(JOBS.length, 259); assert.equal(new Set(JOBS.map(j => j.id)).size, 259);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 41, magic: 42, defense: 41, status: 29, hybrid: 33, support: 41, mystery: 31 });
+    assert.deepEqual(count, { physical: 41, magic: 42, defense: 41, status: 29, hybrid: 33, support: 41, mystery: 32 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
@@ -46,4 +46,16 @@ test('Job counts stay close: trees within 1.5× of each other (??? 14 or more), 
         assert.ok(jobs.length >= 4 && jobs.length <= 10, `${l.id} ${jobs.length}`);
         assert.equal(Math.max(...jobs.map(j => j.tier)), 5, `${l.id} reaches tier 5`);
     }
+});
+
+test('v27.4 constraint framework: every job with a multiplier ≤ 0.3 declares a constraint with at least one device; devices drive turn order, last stand and evasion', async () => {
+    const { isConstraintJob, constraintDeviceLabels } = await import('./harness.mjs');
+    for (const j of JOBS) { if (isConstraintJob(j)) { assert.ok(j.constraint && j.constraint.label && j.constraint.desc, `${j.id} needs constraint`); assert.ok(Object.keys(j.constraint.devices).length >= 1, `${j.id} needs a device`); } }
+    const g = JOBS.find(j => j.id === 'glassHarpooner'); assert.ok(isConstraintJob(g)); assert.deepEqual(constraintDeviceLabels(g.constraint.devices), ['항상 선공', '체력 1로 버팀 ×2', '회피 +30%p']);
+    const { actsFirst, constraintFields, strike, newState, stats } = await import('./harness.mjs');
+    const slow = { name: 'g', stats: { hp: 10, attack: 10, defense: 0, speed: 1 }, hp: 10, skills: [], cooldowns: {}, stun: 0, effects: {}, ...constraintFields('glassHarpooner') };
+    const fast = { name: 'f', stats: { hp: 1000, attack: 1000, defense: 0, speed: 50, accuracy: 5 }, hp: 1000, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 100 };
+    assert.ok(actsFirst(slow, fast) && !actsFirst(fast, slow), 'firstStrike beats speed');
+    strike(fast, slow, () => .5); assert.equal(slow.hp, 1, 'job last stand keeps 1 hp'); strike(fast, slow, () => .5); assert.equal(slow.hp, 1); strike(fast, slow, () => .5); assert.equal(slow.hp, 0, 'two charges only');
+    const s = newState(0); s.level = 10; s.unlockedJobs.push('glassHarpooner'); const before = stats(s).evasion; s.job = 'glassHarpooner'; assert.ok(Math.abs(stats(s).evasion - before - .3) < 1e-9, 'evasion device applied');
 });

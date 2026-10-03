@@ -2,7 +2,7 @@ import type { Snapshot, DuelResult, CombatEvent, State } from '../types';
 import { dayKey } from '../data/goals';
 import { BALANCE } from '../data/balance';
 import { normalizeStats, hitChance, power } from './stats';
-import { Fighter, fighterSpeed, actTurn } from './combat';
+import { Fighter, fighterSpeed, actTurn, constraintFields } from './combat';
 import { FISH } from '../data/world';
 import { scaledEnemyStats, profile } from '../data/encounters';
 /** 훈련 상대로 쓰는 던전 보스. 던전 마지막 웨이브와 같은 능력치·스킬로 섭니다(레벨 보정 0단계). */
@@ -20,14 +20,14 @@ export const TRAINING: Snapshot[] = [
     { name: '심해의 방랑자', level: 26, job: 'tide', rebirths: 1, stats: { hp: 780, attack: 125, defense: 50, crit: .2 }, skills: ['spring', 'wave', 'hook', 'focus'], power: 1600, rating: 1600 },
 ];
 export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rng = Math.random): DuelResult {
-    const fighter = (s: Snapshot): Fighter => ({ name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, skills: s.skills, cooldowns: {}, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, specializations: s.skillSpecializations, practice: s.skillPractice, effects: {} });
+    const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, skills: s.skills, cooldowns: {}, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, specializations: s.skillSpecializations, practice: s.skillPractice, effects: {} });
     const a = fighter(player), b = fighter(opponent);
     const logs: string[] = [], rounds: DuelResult['rounds'] = [];
     let turns = 0;
     while (a.hp > 0 && b.hp > 0 && turns < BALANCE.duelMaxTurns) {
         turns++;
         const sa = fighterSpeed(a), sb = fighterSpeed(b);
-        const first = sa === sb ? (turns % 2 ? a : b) : sa > sb ? a : b, second = first === a ? b : a;
+        const first = !!a.firstStrike !== !!b.firstStrike ? (a.firstStrike ? a : b) : sa === sb ? (turns % 2 ? a : b) : sa > sb ? a : b, second = first === a ? b : a;
         const log = (text: string, event: CombatEvent) => { logs.push(`${turns}턴 · ${text}`); rounds.push({ turn: turns, event }); };
         actTurn(first, second, rng, log);
         if (first.hp > 0 && second.hp > 0)
