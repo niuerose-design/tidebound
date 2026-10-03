@@ -38,7 +38,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     graveHook: { chance: .5, multiplier: 1.7, manaCost: 13 },
     // v27.4 유리 작살꾼(제약 직업): 240%·빈사 +50%.
     glassLance: { chance: .3, multiplier: 2.4 },
-    marrowGuard: { chance: .34, multiplier: 1.9 },
+    marrowGuard: { chance: .3, multiplier: 2 },
     wakeFist: { chance: .26, multiplier: 1.45 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
     greenTide: { chance: .55, multiplier: 1.3, manaCost: 11, healRatio: .16 },
