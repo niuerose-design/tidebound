@@ -25,6 +25,8 @@ export type Stats = {
     harmony?: number;
     /** 반격: 맞을 때마다 (내 물리 방어 × 이 값)을 공격자에게 돌려줍니다. 직업의 방어 친화도가 곱해진 최종값. */
     thorns?: number;
+    /** v26.6 손가락 자르기 단계(최대 3). 주사위의 최저 배율을 올리고 최고 배율을 낮춥니다. */
+    diceTrim?: number;
     /** 출혈·중독 같은 지속 피해 증가율. 0.2 = +20%. */
     dotBonus?: number;
     /** 방어 비례 피해·반격이 얼마나 제대로 발휘되는지(0.2~1). 방어 배율이 높은 수호 계열일수록 1에 가깝습니다. */
@@ -149,8 +151,8 @@ export type Skill = {
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
     gamble?: { min: number; max: number; accuracy?: number };
-    /** v26.4 주사위: 능력치(attribute) per마다 주사위 1개(최대 max). 굴린 눈 중 가장 높은 눈 ÷ 3.5가 피해 배율. */
-    dice?: { attribute: Attribute; per: number; max: number };
+    /** v26.6 주사위: 능력치(attribute) per마다 주사위 1개(최대 max). 가장 높은 눈이 1이면 ×low, 6이면 ×high(눈마다 같은 비율로 커짐). 손가락 자르기(diceTrim)로 양 끝을 좁힐 수 있습니다. */
+    dice?: { attribute: Attribute; per: number; max: number; low: number; high: number };
     /** v24.2 올인: 현재 체력의 hpRatio와 마나 전부를 걸고, (건 체력 × hpScale + 건 마나 × manaScale)을 피해에 더합니다. */
     allIn?: { hpRatio: number; hpScale: number; manaScale: number; heal?: number };
     /** v26.3 순수 회복: 공격하지 않고 회복만 합니다(명중·피해·반격·추가타 없음). */

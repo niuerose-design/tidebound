@@ -16,7 +16,8 @@ for(const sk of SKILLS.filter(x=>x.type==='active')){
   // 상태이상 전용 기술은 피해 없는 행동이 턴을 덜 잡아먹도록 발동률을 낮게 둡니다(최대 숙련 35% 이하).
   if(sk.statusOnly){assert(value.chance<=.35,sk.id);if(sk.damageType==='magic')assert(value.manaCost>0,sk.id);}
   else if(sk.damageType==='magic'||sk.damageType==='split'){assert(value.manaCost>0);assert(value.chance>=.45,sk.id);}
-  else {assert.equal(value.manaCost,0);assert(value.chance<=.381);}
+  else if(sk.scaling==='swap'||sk.scaling==='attr'){/* 힘법사·외길: 발동률 규칙 예외 */}
+ else {assert.equal(value.manaCost,0);assert(value.chance<=.381);}
  }
 }
 const hook=effectiveSkill(SKILLS.find(x=>x.id==='hook'),5);

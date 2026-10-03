@@ -11,6 +11,7 @@ export const {victoryMastery}=await load('game/systems/mastery.js');
 export const {visibleStatuses}=await load('game/systems/combat-status.js');
 export const {duel,TRAINING,bossSnapshot,BOSS_OPPONENTS}=await load('game/systems/duel.js');
 export const {strike,fighterSpeed}=await load('game/systems/combat.js');
+export const {diceMultiplier,diceRange}=await load('game/data/balance.js');
 export const {combatFxFromLog,combatFxBatch}=await load('game/systems/combat-feedback.js');
 export const {migrateState}=await load('game/systems/migrations.js');
 export const {jobMastered,apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,skillRankDeltas,skillMasteryLevel,masteryMilestonesFor,jobRequirements,validLoadout,skillLevel,maxSkillLevel,inherited,trimLoadout,jobMasteryTarget,jobCombatMultiplier}=await load('game/systems/progression.js');

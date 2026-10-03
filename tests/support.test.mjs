@@ -1,5 +1,5 @@
 // v24.2 보조 계열 개편: 진행도 비례·도박·올인·골드 투척·사냥감·노래
-import { newState, stats, strike, canUse, effectiveSkill, apUsed, SKILLS, FISH, JOBS, assert, test } from './harness.mjs';
+import { newState, stats, strike, canUse, effectiveSkill, apUsed, SKILLS, FISH, JOBS, assert, test, diceMultiplier, diceRange } from './harness.mjs';
 
 const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0 };
 const fighter = (id, extra = {}) => ({ name: 'A', stats: { ...base, ...(extra.stats || {}) }, hp: extra.hp ?? 1000, mana: 200, skills: [id], cooldowns: {}, stun: 0, effects: {}, ranks: { [id]: 1 }, mastery: {}, practice: {}, ...extra.fields });
@@ -106,7 +106,7 @@ test('v26.1 server events multiply exp/gold/drop while active and are stamped in
 test('v26.2 attr scaling: 외길 actives add the allocated attribute × ratio, so a luck-only fisher deals damage', () => {
     const sk = SKILLS.find(x => x.id === 'luckyBreak'); assert.equal(sk.scaling, 'attr'); assert.equal(sk.scalingAttribute, 'luk');
     const none = hit(fighter('luckyBreak', { stats: { attack: 20, attrLuk: 0 } }), target()), lucky = hit(fighter('luckyBreak', { stats: { attack: 20, attrLuk: 100 } }), target());
-    assert.ok(none <= 2, 'attack alone contributes nothing (v26.4)'); assert.ok(lucky >= 100 * sk.scalingRatio * sk.multiplier * .28 && lucky <= 100 * sk.scalingRatio * sk.multiplier * 1.72, `${lucky} (dice ×0.29~1.71 of ${100 * sk.scalingRatio * sk.multiplier})`);
+    assert.ok(none <= 2, 'attack alone contributes nothing (v26.4)'); assert.ok(lucky >= 100 * sk.scalingRatio * sk.multiplier * .09 && lucky <= 100 * sk.scalingRatio * sk.multiplier * 3.4, `${lucky} (dice ×0.1~3.33 of ${100 * sk.scalingRatio * sk.multiplier})`);
     const s = newState(0); s.attributes.luk = 60; assert.equal(stats(s).attrLuk, 65, 'attrLuk mirrors base 5 + allocated');
 });
 
@@ -130,10 +130,28 @@ test('v26.3 healOnly: 고요한 호흡 heals without attacking (no hit roll, no 
     const s = newState(0); const before = stats(s).attack; s.attributes.luk = 100; assert.equal(stats(s).attack, before, 'luck adds no attack'); assert.ok(stats(s).crit > 0);
 });
 
-test('v26.4 dice: luck lane rolls more dice with more luck and uses the highest face ÷ 3.5', () => {
-    const sk = SKILLS.find(x => x.id === 'luckyBreak'); assert.equal(sk.name, '운빨 기도'); assert.deepEqual(sk.dice, { attribute: 'luk', per: 40, max: 3 });
+test('v26.6 dice: luck lane rolls more dice with more luck; the highest face maps 1→×low … 6→×high, and finger cutting narrows both ends', () => {
+    const sk = SKILLS.find(x => x.id === 'luckyBreak'); assert.equal(sk.name, '운빨 기도'); assert.deepEqual(sk.dice, { attribute: 'luk', per: 40, max: 3, low: .1, high: 3.33 });
     const seq = [0, .99, 0]; const t1 = target(); const text = strike(fighter('luckyBreak', { stats: { attrLuk: 10 } }), t1, () => seq.length ? seq.shift() : 0);
-    assert.match(text, /주사위 ⚅ ×1.71/, text);
+    assert.match(text, /주사위 ⚅ ×3.33/, text);
     const seq2 = [0, 0, 0, .5, 0]; const t2 = target(); const text2 = strike(fighter('luckyBreak', { stats: { attrLuk: 100 } }), t2, () => seq2.length ? seq2.shift() : 0);
-    assert.match(text2, /주사위 ⚀⚀⚃ ×1.14/, text2);
+    assert.match(text2, /주사위 ⚀⚀⚃ ×0.82/, text2);
+    assert.ok(Math.abs(diceMultiplier(sk.dice, 1) - .1) < 1e-9); assert.ok(Math.abs(diceMultiplier(sk.dice, 6) - 3.33) < 1e-9);
+    // 각 차수는 양 끝이 더 벌어집니다.
+    const lane = ['luckyBreak', 'heavenlyStrike', 'fateReversal', 'heavenlyDice'].map(id => SKILLS.find(x => x.id === id).dice);
+    for (let i = 1; i < lane.length; i++) { assert.ok(lane[i].low < lane[i - 1].low, 'lower floor'); assert.ok(lane[i].high > lane[i - 1].high, 'higher ceiling'); assert.ok(lane[i].max > lane[i - 1].max, 'more dice'); }
+    // 손가락 자르기: 최저는 오르고 최고는 내려감. 3단계는 거의 일정.
+    const r1 = diceRange(sk.dice, 1), r3 = diceRange(sk.dice, 3); assert.ok(r1.low > .1 && r1.high < 3.33); assert.ok(r3.low > r1.low && r3.high < r1.high); assert.ok(r3.high / r3.low < 1.6, `${r3.low}~${r3.high}`);
+    const cuts = ['fingerCutI', 'fingerCutII', 'fingerCutIII'].map(id => SKILLS.find(x => x.id === id)); assert.deepEqual(cuts.map(c => c.bonus.diceTrim), [1, 2, 3]); assert.deepEqual(cuts.map(c => c.job), ['luckyAngler', 'fortunate', 'fortuneChild']);
+    const seq3 = [0, .99, 0]; const text3 = strike(fighter('luckyBreak', { stats: { attrLuk: 10, diceTrim: 3 } }), target(), () => seq3.length ? seq3.shift() : 0);
+    assert.match(text3, new RegExp(`주사위 ⚅ ×${r3.high.toFixed(2)}`), text3);
+    const s = newState(0); s.level = 10; s.job = 'luckyAngler'; s.unlockedJobs.push('luckyAngler'); s.learned.fingerCutI = 1; s.skills = ['fingerCutI']; assert.ok(canUse(s, 'fingerCutI')); assert.ok(stats(s).diceTrim >= 1, 'equipped passive feeds diceTrim');
+});
+
+test('v26.5 focus hunting refuses a fish gated behind a higher sea difficulty instead of silently going random', async () => {
+    const { act } = await import('./harness.mjs');
+    const s = newState(0); s.level = 40; s.rebirths = 1; act(s, { type: 'stage', id: 'moon' }, 0);
+    act(s, { type: 'target', id: 'moonfish' }, 0); assert.equal(s.target, 'moonfish');
+    assert.throws(() => act(s, { type: 'target', id: 'eclipseMoonfish' }, 0), /난이도 20/);
+    const reef = newState(0); reef.level = 30; act(reef, { type: 'stage', id: 'reef' }, 0); act(reef, { type: 'target', id: 'stormBarracuda' }, 0); assert.equal(reef.target, 'stormBarracuda', 'v26.6 폭풍 바라쿠다는 조건 없이 저격 가능');
 });

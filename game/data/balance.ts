@@ -28,8 +28,9 @@ export const MONSTER_TUNING = {
     // A strong single-stat build should still need several hours of victories
     // before the first rebirth. HP is the main pacing lever; attack and defense
     // remain readable so deaths do not turn the early game into a wall.
-    hpMultiplier: 2.5,
-    attackMultiplier: 1.15,
+    // v26.6: 2.5/1.15 → 2.1/1.08. 10레벨 이후 사냥터가 해금 직후 10레벨 가까이 지나야 쓸 만했던 것을 2~4레벨로 줄였습니다.
+    hpMultiplier: 2.1,
+    attackMultiplier: 1.08,
     // v24 몬스터 치명타: 기본 + 레벨당 증가(상한), 보스·날쌘 성향은 추가. 치명 피해는 플레이어 기본값(critMultiplier)과 같습니다.
     critBase: .04, critPerLevel: .0006, critCap: .1, critBoss: .04, critSwift: .04,
     defenseMultiplier: 1.1,
@@ -38,9 +39,13 @@ export const MONSTER_TUNING = {
     dungeonPreparationTurns: 3,
     dungeonHealAfterKill: .04,
 } as const;
-/** Entry-level fish stay approachable; higher-level fish are a real gearless wall. */
+/**
+ * Entry-level fish stay approachable; higher-level fish are a real gearless wall.
+ * v26.6: 레벨당 체력 .035→.028, 공격 .012→.009. 10레벨 이후 사냥터가 외길·균형 빌드 모두에게 너무 벅차
+ * (자동 사냥이 20레벨 가까이 시냇가·조개 만에 머물렀습니다). MONSTER_TUNING 배율 하향과 함께 적용.
+ */
 export function monsterLevelScale(level: number) {
-    return { hp: 1 + Math.max(0, level - 5) * .035, attack: 1 + Math.max(0, level - 8) * .012, defense: 1 + Math.max(0, level - 10) * .006 };
+    return { hp: 1 + Math.max(0, level - 5) * .028, attack: 1 + Math.max(0, level - 8) * .009, defense: 1 + Math.max(0, level - 10) * .006 };
 }
 export function bossLevelScale(level: number) {
     const growth = Math.min(1, Math.max(0, level - 14) / 24);
@@ -52,6 +57,8 @@ export function dungeonPressure(wave: number) {
 }
 // 스킬 공식의 기본값. 전투 계산(combat.ts)과 스킬 설명(skill-description.ts)이 같은 값을 씁니다.
 export const SKILL_FORMULA = {
+    // v26.6 주사위: 손가락 자르기 1단계마다 최저 배율은 로그 폭의 diceTrimLow, 최고 배율은 diceTrimHigh만큼 안쪽으로. 최대 diceTrimCap단계.
+    diceTrimLow: .25, diceTrimHigh: .05, diceTrimCap: 3,
     healThreshold: .8, woundedThreshold: .7, healRatio: .22,
     hpScaling: .08, manaScaling: .45, hybridHpScaling: .05, hybridManaScaling: .25,
     crushDefense: 1.5, weakenedDamage: .75, bleedRatio: .22, drainRatio: .25, extraAttackMultiplier: .65,
@@ -135,3 +142,14 @@ export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name
 export const SLOTS = { rod: '낚싯대', coat: '방어구', charm: '나침반' };
 /** 응급처치(공용 패시브): 포획 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
 export const FIRST_AID_HEAL = .04;
+
+/** v26.6 주사위 배율 범위: 손가락 자르기 단계(trim)만큼 양 끝을 안쪽으로 좁힌 [최저, 최고]. */
+export function diceRange(d: { low: number; high: number }, trim = 0) {
+    const t = Math.max(0, Math.min(SKILL_FORMULA.diceTrimCap, trim)), span = d.high / d.low;
+    return { low: d.low * span ** (SKILL_FORMULA.diceTrimLow * t), high: d.high / span ** (SKILL_FORMULA.diceTrimHigh * t) };
+}
+/** v26.6 가장 높은 눈(1~6)에 해당하는 피해 배율. 1→최저, 6→최고, 눈마다 같은 비율로 커집니다. */
+export function diceMultiplier(d: { low: number; high: number }, face: number, trim = 0) {
+    const r = diceRange(d, trim);
+    return r.low * (r.high / r.low) ** ((Math.max(1, Math.min(6, face)) - 1) / 5);
+}

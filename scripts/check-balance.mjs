@@ -16,6 +16,7 @@ for(const sk of SKILLS.filter(x=>x.type==='active')){
   // 상태이상 전용 기술은 발동률을 낮게 둡니다(check-progression-pace.mjs와 같은 규칙).
   if(sk.statusOnly){assert(value.chance<=.35,sk.id);if(sk.damageType==='magic')assert(value.manaCost>0,sk.id);}
   else if(sk.damageType==='magic'||sk.damageType==='split'){assert(value.manaCost>0,sk.id);assert(value.chance>=.45,sk.id);}
+  else if(sk.scaling==='swap'||sk.scaling==='attr'){/* 힘법사·외길(v26): 공격력 대신 반대 능력치·배분 능력치 기준. 마나 없는 물리형이어도 발동률 규칙 예외 */}
   else {assert.equal(value.manaCost,0,sk.id);assert(value.chance<=.381,sk.id);}
  }
 }
@@ -25,7 +26,7 @@ assert(hook.multiplier<fist.multiplier&&hook.chance<fist.chance&&hook.cooldown>=
 const fresh=newState(0),base={...stats(fresh),hp:100,mana:50,manaRegen:0,hpRegen:0,lifesteal:0};
 const fighter=(id,mana=50)=>({name:'test',stats:base,hp:20,skills:[id],cooldowns:{},stun:0,mana,effects:{}});
 const target=()=>({...fighter(''),hp:1000,stats:{...base,hp:1000}});
-const healer=fighter('breath');strike(healer,target(),()=>0);assert.equal(healer.hp,30);
+const healer=fighter('breath');strike(healer,target(),()=>0);assert.equal(healer.hp,20+Math.floor(100*ACTIVE_SKILL_BALANCE.breath.healRatio));
 const dry=fighter('arcane',0);assert(!strike(dry,target(),()=>0).includes('해류 탄환'));
 const free=fighter('pierce',0);assert(strike(free,target(),()=>0).includes('관통 작살'));assert.equal(free.mana,0);
 console.log(JSON.stringify({checks:'passed',activeSkills:Object.keys(ACTIVE_SKILL_BALANCE).length}));

@@ -272,9 +272,10 @@ test('v25.8 tide milestones pay per stage once, variant fish need the tier, abys
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { weightedFishId, reward } = await mods.load('systems/encounter'); const { FISH, STAGES } = await mods.load('data/world'); const { rollAffixes, AFFIX_POOL } = await mods.load('data/gear');
     const { apCapacity } = await mods.load('systems/progression'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
-    const reef = STAGES.find(st => st.id === 'reef');
-    const r = () => 0.999; assert.notEqual(weightedFishId(reef.fish, r, 0, 0), 'stormBarracuda', 'tier 0 never spawns the variant'); assert.ok(reef.fish.includes('stormBarracuda'));
-    const picks = new Set(); let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); for (let i = 0; i < 400; i++) picks.add(weightedFishId(reef.fish, rng, 0, 10)); assert.ok(picks.has('stormBarracuda'), 'tier 10 spawns it');
+    const moon = STAGES.find(st => st.id === 'moon'); assert.ok(STAGES.find(st => st.id === 'reef').fish.includes('stormBarracuda'));
+    const r = () => 0.999; assert.notEqual(weightedFishId(moon.fish, r, 0, 0), 'eclipseMoonfish', 'tier 0 never spawns the variant'); assert.ok(moon.fish.includes('eclipseMoonfish'));
+    const picks = new Set(); let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); for (let i = 0; i < 400; i++) picks.add(weightedFishId(moon.fish, rng, 0, 20)); assert.ok(picks.has('eclipseMoonfish'), 'tier 20 spawns it');
+    assert.equal(FISH.find(f => f.id === 'stormBarracuda').minTier, undefined, 'v26.6 폭풍 바라쿠다는 난이도 0부터');
     assert.ok(FISH.find(f => f.id === 'novaManta').minTier === 30 && ACHIEVEMENTS.some(a => a.id === 'tide:50') && ACHIEVEMENTS.some(a => a.id === `codex:${FISH.length}`));
     const foe = (id, boss) => ({ id, name: id, hp: 0, maxHp: 1, attack: 1, defense: 0, exp: 0, gold: 0, boss, stun: 0, combatStats: {}, skills: [], cooldowns: {}, effects: {} });
     const s = newState(0); s.level = 30; s.rebirths = 12; s.stage = 'reef'; s.tide = 12; s.enemy = foe('lionfish', false);

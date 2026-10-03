@@ -1,5 +1,5 @@
 import type { Skill, Stats } from '../types';
-import { STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL } from '../data/balance';
+import { STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL, diceMultiplier, diceRange } from '../data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '../data/progression';
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel, skillMasteryRewards } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
@@ -67,7 +67,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.scaling === 'mastered') out.push(`숙달한 직업 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'luck') out.push(`물리 공격 × (치명 피해 배율 − 1) × ${number(sk.scalingRatio ?? 1)} 추가(행운 비례)`);
         if (sk.scaling === 'gold') out.push(`피해 × (1 + log10(보유 골드 + 1) × ${number(sk.scalingRatio ?? 0)}) · 골드 자릿수가 늘 때마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
-        if (sk.dice) out.push(`${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[sk.dice.attribute]} ${sk.dice.per}마다 주사위 1개(최대 ${sk.dice.max}개) · 가장 높은 눈 ÷ 3.5 = 피해 배율(×0.29~×1.71)`);
+        if (sk.dice) { const d = sk.dice; out.push(`${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[d.attribute]} ${d.per}마다 주사위 1개(최대 ${d.max}개) · 가장 높은 눈이 피해 배율: ${[1, 2, 3, 4, 5, 6].map(f => `${'⚀⚁⚂⚃⚄⚅'[f - 1]}×${number(diceMultiplier(d, f))}`).join(' ')}`); out.push(`손가락 자르기 장착 시 양 끝이 좁아짐 · 3단계: ×${number(diceRange(d, 3).low)}~×${number(diceRange(d, 3).high)}`); }
         if (sk.gamble) out.push(`쓸 때마다 ${[sk.gamble.min !== sk.gamble.max ? `피해 ×${number(sk.gamble.min)}~${number(sk.gamble.max)}(평균 ×${number((sk.gamble.min + sk.gamble.max) / 2)})` : '', sk.gamble.accuracy ? `이 기술 명중 ±${skillPercent(sk.gamble.accuracy)}p` : ''].filter(Boolean).join(' · ')} 무작위`);
         if (sk.allIn) out.push(`현재 체력의 ${skillPercent(sk.allIn.hpRatio)}(1은 남김)와 남은 마나 전부를 걸고 (건 체력 × ${number(sk.allIn.hpScale)} + 건 마나 × ${number(sk.allIn.manaScale)})를 피해식에 더합니다 · 빗나가도 소모`);
         if (sk.goldSpend) out.push(`보유 골드의 ${skillPercent(sk.goldSpend.ratio)}(한 번에 최대 ${sk.goldSpend.cap.toLocaleString()})를 실제로 쓰고, 쓴 골드 × ${number(sk.goldSpend.scale)}를 피해식에 더합니다`);

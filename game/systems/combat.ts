@@ -1,6 +1,6 @@
 import { SKILLS, skillById } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
-import { BALANCE, STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
+import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier } from '../data/balance';
 import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute } from '../types';
 const ATTR_KEY: Record<Attribute, 'attrStr' | 'attrDex' | 'attrInt' | 'attrVit' | 'attrWis' | 'attrLuk'> = { str: 'attrStr', dex: 'attrDex', int: 'attrInt', vit: 'attrVit', wis: 'attrWis', luk: 'attrLuk' };
 export type { CombatEvent, CombatHit } from '../types';
@@ -265,11 +265,11 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     }
     // v24.2 도박: 쓸 때마다 피해 배율과 명중을 굴립니다.
     let gambleRoll = 1, gambleAccuracy = 0;
-    // v26.4 주사위: 능력치 per마다 1개(최대 max)를 굴려 가장 높은 눈 ÷ 3.5를 배율로. 행운이 많을수록 많이 굴립니다.
+    // v26.6 주사위: 능력치 per마다 1개(최대 max)를 굴려 가장 높은 눈을 배율로(1→최저, 6→최고). 손가락 자르기가 양 끝을 좁힙니다.
     if (chosen?.dice) {
         const count = Math.min(chosen.dice.max, 1 + Math.floor((sa[ATTR_KEY[chosen.dice.attribute]] || 0) / chosen.dice.per));
         const faces = Array.from({ length: count }, () => 1 + Math.floor(rng() * 6));
-        gambleRoll = Math.max(...faces) / 3.5;
+        gambleRoll = diceMultiplier(chosen.dice, Math.max(...faces), sa.diceTrim || 0);
         notes.push(`주사위 ${faces.map(f => '⚀⚁⚂⚃⚄⚅'[f - 1]).join('')} ×${gambleRoll.toFixed(2)}`);
         ev.gamble = gambleRoll; ev.dice = faces;
     }
