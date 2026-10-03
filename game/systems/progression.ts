@@ -211,11 +211,8 @@ export function jobRequirements(s: State, j: Job, now = s.lastTick) {
     if (j.rebirth)
         list.push({ label: `환생 ${j.rebirth}회`, met: s.rebirths >= j.rebirth, value: s.rebirths, target: j.rebirth });
     if (!unlocked) {
-        // v25.22 몰아주기: 요구 능력치가 둘 이상일 때, 어느 한 능력치가 요구치 합계 이상이면 능력치 조건을 모두 채운 것으로 봅니다(올-근력·올-행운 같은 편중 빌드).
-        const reqs = Object.entries(j.requires), sum = reqs.reduce((t, [, n]) => t + n, 0), focused = reqs.length >= 2 && Object.values(a).some(v => v >= sum);
-        for (const [key, n] of reqs)
-            list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n || focused, value: a[key as Attribute], target: n });
-        if (focused && reqs.some(([key, n]) => a[key as Attribute] < n)) list.push({ label: `몰아주기 · 한 능력치 ${sum} 이상`, met: true });
+        for (const [key, n] of Object.entries(j.requires))
+            list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n, value: a[key as Attribute], target: n });
         for (const [key, n] of Object.entries(j.requiresAllocated || {}))
             list.push({ label: `배분 ${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n, value: s.attributes?.[key as Attribute] || 0, target: n });
         if (j.parent)

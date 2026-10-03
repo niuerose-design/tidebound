@@ -82,11 +82,11 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     divineLuck: { desc: '치명타와 치명 피해가 크게 오릅니다.', bonus: { crit: .08, critDamage: .45 } },
     // 난파선 수집가: 변종·황금 개체를 찾아내는 계보. 변종 조우 확률과 황금 개체 확률을 올리고, 변종·황금 포획 기록마다 강해집니다.
     salvageSense: { desc: '변종 조우 확률 +20%, 명중 +3%p, 치명타 +1%p.', bonus: { variantFind: .2, accuracy: .03, crit: .01 } },
-    rareSense: { desc: '변종 조우 확률 +30%, 황금 개체 확률 +0.3%p, 두 공격 +6. 변종·황금 포획 기록마다 두 공격과 체력이 오릅니다.', bonus: { variantFind: .3, goldenFind: .003, crit: .01, attack: 6, magic: 6 }, perCount: [{ source: 'variant', per: 5, bonus: { attack: 2, magic: 2, hp: 6 }, cap: 20 }] },
+    rareSense: { desc: '변종 조우 확률 +30%, 황금 개체 확률 +0.3%p. 변종·황금 포획 기록마다 두 공격과 체력이 오릅니다.', bonus: { variantFind: .3, goldenFind: .003, crit: .01 }, perCount: [{ source: 'variant', per: 5, bonus: { attack: 2, magic: 2, hp: 6 }, cap: 20 }] },
     pressureSuit: { desc: '최대 체력과 변종 조우 확률이 오르고, 변종·황금 포획 기록마다 두 방어가 오릅니다.', bonus: { hp: 90, variantFind: .15 }, perCount: [{ source: 'variant', per: 5, bonus: { defense: 1, resist: 1 }, cap: 15 }] },
     deepSalvage: { desc: '변종 조우 확률 +40%, 황금 개체 확률 +0.5%p. 변종·황금 포획 기록마다 두 공격과 치명타가 오릅니다.', bonus: { variantFind: .4, goldenFind: .005 }, perCount: [{ source: 'variant', per: 4, bonus: { attack: 3, magic: 3, crit: .001 }, cap: 25 }] },
-    kingsHoard: { desc: '변종 조우 확률 +60%, 황금 개체 확률 +1%p, 두 공격 +20. 변종·황금 포획 기록마다 두 공격이 오릅니다.', bonus: { variantFind: .6, goldenFind: .01, attack: 20, magic: 20 }, perCount: [{ source: 'variant', per: 3, bonus: { attack: 4, magic: 4 }, cap: 40 }] },
-    legendHoard: { desc: '변종 조우 확률 +100%, 황금 개체 확률 +2%p, 두 공격 +30, 최대 체력 +80. 변종·황금 포획 기록마다 두 공격과 체력이 오릅니다.', bonus: { variantFind: 1, goldenFind: .02, attack: 30, magic: 30, hp: 80 }, perCount: [{ source: 'variant', per: 3, bonus: { attack: 5, magic: 5, hp: 10 }, cap: 50 }] },
+    kingsHoard: { desc: '변종 조우 확률 +60%, 황금 개체 확률 +1%p. 변종·황금 포획 기록마다 두 공격이 오릅니다.', bonus: { variantFind: .6, goldenFind: .01 }, perCount: [{ source: 'variant', per: 3, bonus: { attack: 4, magic: 4 }, cap: 40 }] },
+    legendHoard: { desc: '변종 조우 확률 +100%, 황금 개체 확률 +2%p. 변종·황금 포획 기록마다 두 공격과 체력이 오릅니다.', bonus: { variantFind: 1, goldenFind: .02 }, perCount: [{ source: 'variant', per: 3, bonus: { attack: 5, magic: 5, hp: 10 }, cap: 50 }] },
     // 인양 상인: 수집가의 드롭을 넘겨받음
     salvageContract: { desc: '골드 획득 +10%, 던전 클리어 골드 +8%, 장비 드롭 +3%p.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03 } },
     goldMemory: { desc: '골드·드롭·명중과 마법 공격이 오르고, 보유 골드 자릿수마다 두 공격이 오릅니다.', bonus: { goldBonus: .15, dropBonus: .04, accuracy: .05, magic: 20 }, perCount: [{ source: 'gold', per: 1, bonus: { attack: 2, magic: 2 }, cap: 9 }] },
