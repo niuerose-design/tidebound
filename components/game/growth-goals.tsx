@@ -29,6 +29,5 @@ export function GrowthGoals({ s, send, busy, setView }: PanelProps) {
             </div>
             <details open={p.done}><summary>다른 목표 보기</summary>{suggestions}</details>
         </> : <><p>{newlyOpened ? '항해 안내를 마쳤습니다. 이제 장기 목표를 정해 보세요.' : '지금 도전할 수 있는 목표입니다. 스킬·전직·던전 화면에서도 목표로 정할 수 있습니다.'}</p>{suggestions}</>}
-        <small>목표를 달성하면 한 줄 알림을 띄웁니다. 목표·실전 숙련·보스 연구는 환생 후에도 유지됩니다.</small>
     </section>;
 }

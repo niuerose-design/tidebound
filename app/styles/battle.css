@@ -535,3 +535,5 @@
 /* v25.20 낚시터 화면의 해역 난이도 스테퍼: 숫자가 세로로 꺾이지 않게 */
 .main-content>.tide-selector .button-row,.workspace .tide-selector .button-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
 .main-content>.tide-selector .button-row span,.workspace .tide-selector .button-row span{white-space:nowrap;min-width:48px;text-align:center}
+/* v25.20 능력치 화면 위 띠를 다른 화면의 재화 띠와 같은 모양으로 */
+.build-resource-bar{margin-bottom:22px}

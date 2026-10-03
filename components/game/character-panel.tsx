@@ -1,6 +1,6 @@
 'use client';
 import { ConfirmButton } from './confirm-button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Target } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
 import { attributes, apCapacity, apUsed, canUse } from '@/game/systems/progression';
 import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
@@ -17,14 +17,11 @@ export function Character({ s, send, busy }: PanelProps) {
     <Heading eyebrow="CHARACTER BUILD" title="어떤 낚시꾼이 될 것인가" description={`기본 능력치는 전직 조건과 전투 특성을 함께 결정합니다. 레벨마다 ${PROGRESSION.statPerLevel}포인트를 직접 배분하세요.`}>
     <ConfirmButton icon={<RefreshCw size={15}/>} confirmLabel="초기화" title="능력치를 재분배할까요?" description="투자한 포인트를 전부 돌려받습니다. 전직 해금 기록은 유지되며 체력·마나는 새 최대값을 초과할 수 없습니다." disabled={busy || s.running} onConfirm={() => send({ type: 'resetAttributes' })} label="무료 재분배"/>
     </Heading>
-    <div className="build-banner panel">
-    <div>
-    <div className="eyebrow">UNSPENT POINTS</div>
-    <strong>{s.statPoints}<small>남은 능력치 포인트</small>
-    </strong>
-    </div>
-    <p>근력은 물리, 지능은 마법.<br />기민·체질·정신·행운으로 전투의 빈틈을 채우세요.</p>
-    </div>
+    <section className="panel port-resource-bar build-resource-bar">
+    <div><Target size={22}/><span>남은 능력치 포인트<strong>{s.statPoints} <small>P</small></strong></span></div>
+    <div><span>직접 투자한 포인트<strong>{Object.values(s.attributes).reduce((a, n) => a + n, 0)}</strong></span></div>
+    <div><span>레벨마다<strong>+{PROGRESSION.statPerLevel} <small>P</small></strong></span></div>
+    </section>
     <div className="build-columns">
     <section className="panel attribute-panel">
     <div className="section-title">
