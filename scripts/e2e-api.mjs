@@ -18,12 +18,13 @@ const user = `e2e_${Date.now().toString(36)}`, pw = 'test-password-1';
 await call('/api/game', { type: 'sync' }, { expect: 401 });
 await call('/api/chat', undefined, { expect: 401 });
 assert.equal((await call('/api/auth')).data.loggedIn, false);
-await call('/api/auth', { action: 'signup', username: 'x', password: pw }, { expect: 400 });
-await call('/api/auth', { action: 'signup', username: user, password: pw }, { expect: 200 });
+await call('/api/auth', { action: 'signup', username: 'x', password: pw, name: '테스터' }, { expect: 400 });
+await call('/api/auth', { action: 'signup', username: user, password: pw, name: 'x' }, { expect: 400 }); // v26.8 낚시꾼 이름 2~16자
+await call('/api/auth', { action: 'signup', username: user, password: pw, name: '테스터까미' }, { expect: 200 });
 assert.ok(cookie.startsWith('tb_session='), 'session cookie set');
 assert.equal((await call('/api/auth')).data.loggedIn, true);
 let { data } = await call('/api/game', { type: 'sync' }, { expect: 200 });
-assert.equal(data.state.version, 8);
+assert.equal(data.state.version, 8); assert.equal(data.state.name, '테스터까미', 'v26.8 signup name applied to the first fisher');
 ({ data } = await call('/api/game', { type: 'start' }, { expect: 200 }));
 assert.equal(data.state.running, true);
 await call('/api/game', { type: 'upgrade', id: 'attack' }, { expect: 400 });
@@ -74,7 +75,7 @@ assert.ok(data.state.daily && data.state.daily.goals.length === 4 && data.state.
 await call('/api/auth', { action: 'logout' }, { expect: 200 });
 jar.clear(); cookie = '';
 await call('/api/game', { type: 'sync' }, { expect: 401 });
-await call('/api/auth', { action: 'signup', username: user, password: pw }, { expect: 409 });
+await call('/api/auth', { action: 'signup', username: user, password: pw, name: '테스터까미' }, { expect: 409 });
 await call('/api/auth', { action: 'login', username: user, password: 'wrong-password' }, { expect: 401 });
 await call('/api/auth', { action: 'login', username: user.toUpperCase(), password: pw }, { expect: 200 });
 ({ data } = await call('/api/game', { type: 'sync' }, { expect: 200 }));
