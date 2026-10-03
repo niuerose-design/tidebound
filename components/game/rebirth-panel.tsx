@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
 import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, ECONOMY, researchCost, researchEffect, researchUnlocked, type ResearchDef, type ResearchTab } from '@/game/data/economy';
 import { BALANCE } from '@/game/data/balance';
-import { ownsRelic, relicCost, researchRefund } from '@/game/systems/commerce';
+import { ownsRelic, researchRefund } from '@/game/systems/commerce';
 import { rebirthRewardParts, nextLifeBonus, tailwindActive, tailwindWindow, tailwindExp, DEEP_VOYAGE_LEVEL, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
 import { stats, permanentExpBonus } from '@/game/systems/stats';
 import { apCapacity } from '@/game/systems/progression';
@@ -141,9 +141,9 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         {tab === 'research' && <><p className="tab-intro">진주 연구는 환생 후에도 유지됩니다. 카드에는 1단계당 증가량과 현재 → 다음 단계 효과를 표시합니다.</p>
             <Tabs value={researchTab} onValueChange={v => setResearchTab(v as ResearchTab)}><TabsList className="game-tabs research-tabs">{RESEARCH_TABS.map(t => <TabsTrigger key={t.id} value={t.id}>{t.name}</TabsTrigger>)}</TabsList></Tabs>
             <ResearchTabView tab={researchTab} s={s} send={send} busy={busy}/></>}
-        {tab === 'relics' && <><p className="tab-intro">환생해도 강화와 옵션까지 남는 장비입니다. 종류당 하나만 보유할 수 있습니다.</p><div className="port-gamble-grid">{RELICS.map(r => {
-            const cost = relicCost(s, r.id), owned = ownsRelic(s, r.id);
-            return <article className="panel market-card" key={r.id}><SlotIcon slot={r.slot} size={28}/><span className="badge">환생 {r.rebirth}회</span><h2>{r.name}</h2><p>{r.description}</p><BonusList item={{ ...r, id: r.id, rarity: 3, level: 1 }}/>{r.id === 'memoryRod' && <p className="footnote">심해 신전 정복 후 무료 수령 가능</p>}<button className="primary" disabled={busy || owned || s.rebirths < r.rebirth || s.pearls < cost || s.inventory.length >= BALANCE.inventoryCap} onClick={() => send({ type: 'buyRelic', id: r.id })}>{owned ? '보유 중' : s.rebirths < r.rebirth ? `환생 ${r.rebirth}회 필요` : cost === 0 ? '신전 보상 수령' : `${cost} 진주 · 구매`}</button></article>;
+        {tab === 'relics' && <><p className="tab-intro">환생해도 강화와 옵션까지 남는 장비입니다. 진주 없이 환생 횟수를 채우면 받을 수 있고, 종류당 하나만 보유할 수 있습니다.</p><div className="port-gamble-grid">{RELICS.map(r => {
+            const owned = ownsRelic(s, r.id);
+            return <article className="panel market-card" key={r.id}><SlotIcon slot={r.slot} size={28}/><span className="badge">환생 {r.rebirth}회</span><h2>{r.name}</h2><p>{r.description}</p><BonusList item={{ ...r, id: r.id, rarity: 3, level: 1 }}/><button className="primary" disabled={busy || owned || s.rebirths < r.rebirth || s.inventory.length >= BALANCE.inventoryCap} onClick={() => send({ type: 'buyRelic', id: r.id })}>{owned ? '보유 중' : s.rebirths < r.rebirth ? `환생 ${r.rebirth}회 필요` : '수령'}</button></article>;
         })}</div></>}
     </>;
 }

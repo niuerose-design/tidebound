@@ -76,7 +76,7 @@ test('v27.17 poison is its own stacking status; bleed does not stack but makes t
  for(let i=1;i<=STATUS_TUNING_MAX+2;i++){strike(mk(['venomDart']),b,()=>0);const n=Math.min(i,STATUS_TUNING_MAX);assert.equal(b.effects.poison.stacks,n);assert.equal(b.effects.poison.perStack,per);assert.equal(b.effects.poison.hpTick,hpTick);}
  assert.match(visibleStatuses(b.effects,0,[],'enemy').find(r=>r.id==='poison').label,/중독 ×5/);
  strike(mk(['cut']),b,()=>0);assert.ok(b.effects.dot&&!b.effects.dot.stacks,'bleed sits beside poison');assert.equal(b.effects.poison.stacks,STATUS_TUNING_MAX,'bleed never touches poison stacks');
- const hp=b.hp,expected=b.effects.poison.perStack*STATUS_TUNING_MAX+hpTick+b.effects.dot.damage;strike(b,mk([]),()=>0);assert.equal(hp-b.hp,expected,'bleed and poison ticks both apply on its own action');
+ const hp=b.hp,expected=(b.effects.poison.perStack+hpTick)*STATUS_TUNING_MAX+b.effects.dot.damage;strike(b,mk([]),()=>0);assert.equal(hp-b.hp,expected,'bleed and poison ticks both apply on its own action');
  const c=mk([]);strike(mk(['cut']),c,()=>0);const d1=c.effects.dot.damage;strike(mk(['cut']),c,()=>0);assert.equal(c.effects.dot.damage,d1);assert.equal(c.effects.dot.stacks,undefined,'bleed does not stack');
  const plain=mk([]),bleeding=mk([]);bleeding.effects.dot={damage:1,turns:3,name:'출혈'};strike(mk([]),plain,()=>.99);strike(mk([]),bleeding,()=>.99);
  assert.equal(1e6-bleeding.hp,Math.round((1e6-plain.hp)*(1+SKILL_FORMULA.bleedVulnerability)),'bleeding targets take extra direct damage');

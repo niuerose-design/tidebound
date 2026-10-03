@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment} from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -241,4 +241,12 @@ test('v27.18 charm crit is uncapped and crit above 60% becomes super crit (x1.5 
  const sup=f();const target=f({});const text=strike(sup,target,()=>.4);assert.equal(1e6-target.hp,normal*2*SKILL_FORMULA.superCritBonus,'super crit multiplies crit damage');assert.match(text,/\[극 치명타\]/);
  const target2=f({});const text2=strike(f(),target2,()=>.7);assert.equal(1e6-target2.hp,normal*2,'roll above superCrit is a normal crit');assert.ok(text2.includes('[치명타]')&&!text2.includes('[극 치명타]'));
  const fx=combatFxFromLog({id:1,type:'battle',text},'A');assert.ok(fx&&fx.hits[0].superCritical&&fx.hits[0].critical,'feedback parses the super crit label');
+});
+
+test('v27.19 relics come from rebirth count, and pearls spent before the change are refunded once',()=>{
+ const s=newState(0);s.level=30;s.pearls=5;act(s,{type:'rebirth'},0);const pearls=s.pearls;
+ act(s,{type:'buyRelic',id:'memoryRod'},0);assert.equal(s.pearls,pearls,'no pearls spent');assert.ok(s.inventory.some(i=>i.relic==='memoryRod'));
+ assert.throws(()=>act(s,{type:'buyRelic',id:'soulCoat'},0),/환생 조건/);
+ const before=s.pearls;s.relicRefunded=false;const refund=migrations.refundRelicPurchases(s);assert.equal(refund,10);assert.equal(s.pearls,before+10);assert.equal(migrations.refundRelicPurchases(s),0,'only once');
+ const u=newState(0);assert.equal(migrations.refundRelicPurchases(u),0);assert.equal(u.relicRefunded,true);
 });

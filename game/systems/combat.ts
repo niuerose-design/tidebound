@@ -199,10 +199,10 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             return emit(`${a.name} · ${notes.join(' · ')} → 쓰러짐`);
         }
     }
-    // v27.17 중독 틱: 중첩 × 중첩당 피해 + 최대 체력 비례. 출혈과 별개로 함께 들어갑니다.
+    // v27.19 중독 틱: 중첩 × (중첩당 피해 + 최대 체력 비례). 출혈과 별개로 함께 들어갑니다.
     if (!forced && a.effects.poison && a.hp > 0) {
         const poison = a.effects.poison;
-        const hit = poison.perStack * poison.stacks + poison.hpTick;
+        const hit = (poison.perStack + poison.hpTick) * poison.stacks;
         a.hp = Math.max(0, a.hp - hit);
         notes.push(`중독 ×${poison.stacks} ${hit}`);
         ev.dot = ev.dot ? { name: `${ev.dot.name}·중독`, value: ev.dot.value + hit } : { name: `중독 ×${poison.stacks}`, value: hit };

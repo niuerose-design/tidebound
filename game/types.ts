@@ -82,7 +82,7 @@ export type StatusEffects = {
         stacks?: number;
         perStack?: number;
     };
-    /** v27.17 중독: 출혈과 별개 상태이상. 걸릴 때마다 한 중첩씩 쌓이고(상한 STATUS_TUNING.poisonMaxStacks + 포화) 지속이 갱신됩니다. 틱 피해 = perStack × stacks + hpTick. */
+    /** v27.17 중독: 출혈과 별개 상태이상. 걸릴 때마다 한 중첩씩 쌓이고(상한 STATUS_TUNING.poisonMaxStacks + 포화) 지속이 갱신됩니다. 틱 피해 = (perStack + hpTick) × stacks. */
     poison?: { perStack: number; stacks: number; turns: number; hpTick: number };
     weaken?: number;
     silence?: number;
@@ -364,6 +364,8 @@ export type State = {
     skillPractice: Record<string, number>;
     /** v27.6 한계돌파 단계(기술 id → 0~limitBreak.max). 환생해도 유지됩니다. */
     limitBreaks?: Record<string, number>;
+    /** v27.19 환생 유물이 진주 구매에서 환생 횟수 제공으로 바뀌며, 이미 산 유물의 진주를 돌려준 뒤 true. */
+    relicRefunded?: boolean;
     jobMastery: Record<string, number>;
     unlockedJobs: string[];
     bookClaims: Record<string, number>;
