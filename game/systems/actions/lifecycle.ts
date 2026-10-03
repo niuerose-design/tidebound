@@ -44,6 +44,19 @@ export function breathReset(s: State, now: number) {
     addLog(s, '한 번의 숨 · 쓰러져 이번 생을 처음부터 다시 시작합니다. 서약이 풀렸습니다.', 'system');
 }
 
+/**
+ * v27.26 운영자 초기화(scripts/reset-life.mjs): 이번 생을 처음 상태로 되돌립니다. 환생 횟수·진주·생 보너스·서약은 그대로이고,
+ * 레벨 조건도 보지 않습니다. 레벨·골드·일반 장비·직업·능력치 배분·진행 중인 던전이 초기화되고 자동 낚시는 멈춥니다.
+ */
+export function restartLife(s: State, now: number) {
+    const vows = s.vows, nextVows = s.nextVows;
+    startLife(s, now, { pearls: s.pearls, rebirths: s.rebirths, lifeBonus: s.lifeBonus });
+    if (vows) s.vows = vows;
+    if (nextVows) s.nextVows = nextVows;
+    s.running = false;
+    addLog(s, '운영 조치로 이번 생을 처음부터 다시 시작합니다. 환생 횟수·진주·연구·유물·도감은 그대로입니다.', 'system');
+}
+
 /** v25.7 환생 정리: 유물을 뺀 보관함·착용 장비 전부를 연구 효율만큼 판매하거나 분해합니다. 연구가 없으면 count 0. */
 export function salvagePreview(s: State) {
     const rate = salvageRate(s), mode = s.salvageMode || 'sell';
