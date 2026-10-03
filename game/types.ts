@@ -379,6 +379,8 @@ export type State = {
     skipStatConfirm?: boolean;
     /** v25.7 환생 정리 방식(설정). 없으면 판매. */
     salvageMode?: 'sell' | 'dismantle';
+    /** v25.21 누적 플레이 시간(ms). 턴이 진행될 때마다 더하고 환생해도 유지합니다(‘도전’ 업적). */
+    playMs?: number;
     /** 황금 개체를 잡은 횟수(어종별). */
     goldenBook?: Record<string, number>;
     /** v25.19 변종을 잡은 횟수(어종별 → 변종별). */

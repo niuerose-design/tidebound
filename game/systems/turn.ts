@@ -37,6 +37,7 @@ export function syncStatRate(s: State) {
 }
 export function tickTurn(s: State, rng: () => number) {
     s.turn++;
+    s.playMs = (s.playMs || 0) + BALANCE.turnMs;
     const a = stats(s);
     if (s.recovery > 0) {
         s.recovery--;
