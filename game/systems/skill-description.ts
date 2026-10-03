@@ -11,8 +11,8 @@ export const skillPercent = (n: number) => `${number(n * 100)}%`;
 export function skillBonusText(key: string, value: number) {
     return `${STAT_LABELS[key as keyof Stats] || key} ${statDeltaDisplay(key, value)}`;
 }
-const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '던전 클리어·보스 포획', species: '지정 어종 포획', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업' };
-const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '사냥 기록', gold: '보유 골드' };
+const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '던전 클리어·보스 포획', species: '지정 어종 포획', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업', variant: '변종·황금 포획' };
+const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록' };
 const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' };
 /** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */
 export function statusLabel(sk: Skill) {
@@ -61,7 +61,9 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.scaling === 'codex') out.push(`도감 기록(발견한 어종 + 등록한 물건) 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'catch') out.push(`피해 × (1 + log10(누적 포획 + 1) × ${number(sk.scalingRatio ?? 0)}) · 포획 10배마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'hunt') out.push(`피해 × (1 + √(던전 클리어 + 보스 포획) × ${number(sk.scalingRatio ?? 0)})`);
+        if (sk.scaling === 'variant') out.push(`피해 × (1 + √(변종·황금 포획 수) × ${number(sk.scalingRatio ?? 0)})`);
         if (sk.scaling === 'mastered') out.push(`숙달한 직업 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
+        if (sk.scaling === 'luck') out.push(`물리 공격 × (치명 피해 배율 − 1) × ${number(sk.scalingRatio ?? 1)} 추가(행운 비례)`);
         if (sk.scaling === 'gold') out.push(`피해 × (1 + log10(보유 골드 + 1) × ${number(sk.scalingRatio ?? 0)}) · 골드 자릿수가 늘 때마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.gamble) out.push(`쓸 때마다 ${[sk.gamble.min !== sk.gamble.max ? `피해 ×${number(sk.gamble.min)}~${number(sk.gamble.max)}(평균 ×${number((sk.gamble.min + sk.gamble.max) / 2)})` : '', sk.gamble.accuracy ? `이 기술 명중 ±${skillPercent(sk.gamble.accuracy)}p` : ''].filter(Boolean).join(' · ')} 무작위`);
         if (sk.allIn) out.push(`현재 체력의 ${skillPercent(sk.allIn.hpRatio)}(1은 남김)와 남은 마나 전부를 걸고 (건 체력 × ${number(sk.allIn.hpScale)} + 건 마나 × ${number(sk.allIn.manaScale)})를 피해식에 더합니다 · 빗나가도 소모`);

@@ -241,8 +241,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         if (extras.length) { castCount = extras.length + 1; ev.multicast = { index: 0, count: castCount, ids: extras.map(e => e.id) }; notes.push(`동시 시전 1/${castCount}`); }
     }
     if (forced) ev.multicast = { index: forced.index, count: forced.count };
-    // 마력 평타: 마법 직업은 기본 공격 대신 확률적으로 마법 공격 기반의 약한 마법 피해를 줍니다.
-    const arcane = !chosen && sa.arcaneStrike > 0 && rng() < sa.arcaneStrike;
+    // 마력 평타: 마법 직업은 기본 공격 대신 마법 공격 × 계수의 마법 피해를 줍니다(v25.22부터 확률 없이 항상).
+    const arcane = !chosen && sa.arcaneStrike > 0;
     let healed = 0;
     // 체력이 충분한데 쓴 회복 기술: 회복 직업이 아니면 이번 공격 피해가 줄어듭니다.
     const idleHeal = chosen?.effect === 'heal' && a.hp >= sa.hp * SKILL_FORMULA.healThreshold && !sa.healFocus;
@@ -297,12 +297,15 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // v25.14 마법 방어 비례 피해: 결계 계열(마법 방어 배율이 높은 직업)에서 온전히, 다른 직업이 계승하면 일부만.
     if (chosen?.scaling === 'resist')
         base += sa.resist * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1);
+    // v25.22 행운 비례 피해(도박 기술): 물리 공격 × (치명 피해 배율 − 1) × 비율. 행운을 몰아주면 치명 피해 배율이 커져 주사위 기술이 세집니다.
+    if (chosen?.scaling === 'luck')
+        base += sa.attack * Math.max(0, (sa.critDamage || 1) - 1) * (chosen.scalingRatio ?? 1);
     if (chosen?.scaling === 'hp')
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
     if (chosen?.scaling === 'mana')
         base += sa.mana * (chosen.scalingRatio ?? SKILL_FORMULA.manaScaling);
     // v24.2 진행도 비례 피해: 기본 피해 × 비율 × 기록(도감 종 수 · log10 포획 · √사냥 · log10 골드).
-    const progress = chosen?.scaling === 'codex' ? sa.codexPower : chosen?.scaling === 'catch' ? sa.catchPower : chosen?.scaling === 'hunt' ? sa.huntPower : chosen?.scaling === 'gold' ? sa.goldPower : chosen?.scaling === 'mastered' ? sa.masteredPower : 0;
+    const progress = chosen?.scaling === 'codex' ? sa.codexPower : chosen?.scaling === 'catch' ? sa.catchPower : chosen?.scaling === 'hunt' ? sa.huntPower : chosen?.scaling === 'gold' ? sa.goldPower : chosen?.scaling === 'mastered' ? sa.masteredPower : chosen?.scaling === 'variant' ? sa.variantPower : 0;
     if (progress) base += base * (chosen?.scalingRatio ?? 0) * progress;
     base += allInBonus;
     if (chosen?.scaling === 'hybrid')

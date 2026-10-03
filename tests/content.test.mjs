@@ -27,7 +27,7 @@ test('Growth descriptions expose real bone penalties, negative AP and farming st
  const bone=skillGrowthStages(SKILLS.find(sk=>sk.id==='boneLegacy'));
  assert.deepEqual(bone.map(r=>[r.practice,r.effective.cost,r.effective.bonus.hp,r.effective.bonus.defense]),[[0,6,-60,-8],[2500,6,-40,-5],[25000,2,100,12],[125000,-3,450,45]]);
  assert.deepEqual(bone.map(r=>r.effective.penaltyRelief||0),[0,.15,.5,1]);
- const loot=skillGrowthStages(SKILLS.find(sk=>sk.id==='salvageContract'));assert.ok(loot[0].effects.includes('장비 드롭 보너스 +3%p'),loot[0].effects.join('|'));const codex=skillGrowthStages(SKILLS.find(sk=>sk.id==='rareSense'));assert.match(codex[0].effects.join(' '),/도감 기록 3마다 .*최대 19회/);
+ const loot=skillGrowthStages(SKILLS.find(sk=>sk.id==='salvageContract'));assert.ok(loot[0].effects.includes('장비 드롭 보너스 +3%p'),loot[0].effects.join('|'));const codex=skillGrowthStages(SKILLS.find(sk=>sk.id==='rareSense'));assert.match(codex[0].effects.join(' '),/변종·황금 포획 5마다 .*최대 20회/);
  const study=skillGrowthStages(SKILLS.find(sk=>sk.id==='titanFieldNotes'));assert.match(study[0].effects.join(' '),/모든 보스 포획 시 숙련 ×3/);assert.match(study.at(-1).effects.join(' '),/숙련 ×8/);
 });
 test('Active descriptions show maximum-resource scaling, statuses and additional hits',()=>{
@@ -107,7 +107,7 @@ test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; 
  const sw=base();sw.book.minnow=10;spawn(sw,()=>0);assert.equal(sw.enemy.variant,'swarm');assert.equal(sw.enemy.swarm,5,'x5 only until 500 catches');assert.equal(sw.enemy.maxHp,plain.enemy.maxHp*5);assert.equal(sw.enemy.combatStats.attack,plain.enemy.combatStats.attack,'swarm attack stays at one fish');
  const mid=base();mid.book.minnow=5000;spawn(mid,()=>0.999);assert.equal(mid.enemy.variant,undefined,'roll above total chance is a normal fish');
  let calls=0;spawn(mid,()=>calls++===0?0:.999);assert.equal(mid.enemy.swarm,100,'x500 needs the swarmSense passive');
- const big=base();big.book.minnow=5000;big.skills.push('swarmSense');calls=0;spawn(big,()=>calls++===0?0:.999);assert.equal(big.enemy.swarm,500);assert.equal(big.enemy.maxHp,Math.round(plain.enemy.maxHp*490),'x500 has 490x HP');assert.equal(big.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*490));assert.equal(big.enemy.combatStats.defense,plain.enemy.combatStats.defense);
+ const big=base();big.book.minnow=5000;big.job='rareTracker';big.learned.swarmSense=1;big.skills.push('swarmSense');calls=0;spawn(big,()=>calls++===0?0:.999);assert.equal(big.enemy.swarm,500);assert.equal(big.enemy.maxHp,Math.round(plain.enemy.maxHp*490),'x500 has 490x HP');assert.equal(big.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*490));assert.equal(big.enemy.combatStats.defense,plain.enemy.combatStats.defense);
  const g=base();g.book.minnow=10;spawn(g,()=>.05);assert.equal(g.enemy.variant,'giant');assert.equal(g.enemy.maxHp,Math.round(plain.enemy.maxHp*3));assert.equal(g.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*1.25));
  const kills=g.kills,gold=g.gold,book=g.book.minnow,mult=goldMultiplier(g);const e=g.enemy;g.running=true;let guard=0;while(g.enemy===e&&guard++<3000)tick(g,()=>.5);
  assert.equal(g.kills-kills,1);assert.equal(g.book.minnow-book,3,'giant counts 3 in the codex');assert.equal(g.gold-gold,Math.floor(e.gold*mult*4),'giant gold x4');assert.equal(g.variantBook.minnow.giant,1);

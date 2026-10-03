@@ -51,13 +51,20 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
  * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
  * codex 발견한 어종 + 등록한 물건 · catch 누적 포획 · hunt 던전 클리어 + 보스 포획 · species 지정 어종 포획 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수.
  */
-export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery'>) {
+/** 변종·황금 개체 포획 수(마리 수가 아니라 조우 횟수). */
+export function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
+    let n = 0;
+    for (const row of Object.values(s.variantBook || {})) for (const k of Object.values(row)) n += k || 0;
+    for (const k of Object.values(s.goldenBook || {})) n += k || 0;
+    return n;
+}
+export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook'>) {
     const book = s.book || {};
     let catches = 0, discovered = 0, bosses = 0;
     for (const f of FISH) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
     const clears = Object.values(s.clears || {}).reduce((x, n) => x + (n || 0), 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
-    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, mastered: masteredJobCount(s) };
+    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), mastered: masteredJobCount(s) };
 }
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;
@@ -204,8 +211,11 @@ export function jobRequirements(s: State, j: Job, now = s.lastTick) {
     if (j.rebirth)
         list.push({ label: `환생 ${j.rebirth}회`, met: s.rebirths >= j.rebirth, value: s.rebirths, target: j.rebirth });
     if (!unlocked) {
-        for (const [key, n] of Object.entries(j.requires))
-            list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n, value: a[key as Attribute], target: n });
+        // v25.22 몰아주기: 요구 능력치가 둘 이상일 때, 어느 한 능력치가 요구치 합계 이상이면 능력치 조건을 모두 채운 것으로 봅니다(올-근력·올-행운 같은 편중 빌드).
+        const reqs = Object.entries(j.requires), sum = reqs.reduce((t, [, n]) => t + n, 0), focused = reqs.length >= 2 && Object.values(a).some(v => v >= sum);
+        for (const [key, n] of reqs)
+            list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n || focused, value: a[key as Attribute], target: n });
+        if (focused && reqs.some(([key, n]) => a[key as Attribute] < n)) list.push({ label: `몰아주기 · 한 능력치 ${sum} 이상`, met: true });
         for (const [key, n] of Object.entries(j.requiresAllocated || {}))
             list.push({ label: `배분 ${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n, value: s.attributes?.[key as Attribute] || 0, target: n });
         if (j.parent)

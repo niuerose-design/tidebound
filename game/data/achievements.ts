@@ -1,7 +1,8 @@
 import type { State } from '../types';
 import { STAGES, DUNGEONS, FISH } from './world';
 import { JOBS } from './classes';
-import { jobMastered, masteredJobCount, ACHIEVEMENT_AP } from '../systems/progression';
+import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes } from '../systems/progression';
+import { stats } from '../systems/stats';
 
 /**
  * v25.6 업적: 조건을 처음 만족하면 한 번만 해금되고 보상을 바로 받습니다. 환생 후에도 유지됩니다.
@@ -40,15 +41,18 @@ export const ACHIEVEMENTS: Achievement[] = [
     // v25.21 ‘도전’ 탭: 플레이 시간과 장기 누적 기록. 다른 묶음과 달리 별도 탭에서 봅니다.
     ...series('playtime', '도전', n => `항해 ${n.toLocaleString()}시간`, n => `자동 낚시·던전으로 누적 ${n.toLocaleString()}시간을 보냅니다(부재중 정산 포함).`, [1, 10, 50, 100, 500, 1000], playHours, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6, bonus: { hp: .02 } }, { pearls: 10, ap: 1 }, { pearls: 20, bonus: { attack: .02, magic: .02 } }, { pearls: 40, sp: 1, ap: 1 }][i]),
     ...series('turns', '도전', n => `${n.toLocaleString()}턴`, n => `전투 턴을 누적 ${n.toLocaleString()}번 진행합니다.`, [10000, 100000, 1000000], s => s.turn || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, ap: 1 }][i]),
+    ...series('attr', '도전', n => `능력치 ${n} 돌파`, n => `기본 능력치 하나를 ${n} 이상으로 올립니다(직접 투자 + 성장).`, [100, 300, 500], s => Math.max(0, ...Object.values(attributes(s))), i => [{ pearls: 3 }, { pearls: 8, ap: 1 }, { pearls: 20, sp: 1, ap: 1 }][i]),
+    ...series('hpmax', '도전', n => `최대 체력 ${n.toLocaleString()}`, n => `최종 최대 체력이 ${n.toLocaleString()}을 넘습니다.`, [10000, 50000, 200000], s => stats(s).hp, i => [{ pearls: 3 }, { pearls: 10, bonus: { hp: .02 } }, { pearls: 25, ap: 1 }][i]),
+    ...series('manamax', '도전', n => `최대 마나 ${n.toLocaleString()}`, n => `최종 최대 마나가 ${n.toLocaleString()}을 넘습니다.`, [5000, 50000], s => stats(s).mana, i => [{ pearls: 3 }, { pearls: 12, ap: 1 }][i]),
     ...series('deaths', '도전', n => `쓰러짐 ${n}회`, n => `${n}번 쓰러지고도 다시 출항합니다.`, [10, 100, 1000], s => s.deaths || 0, i => [{ pearls: 1 }, { pearls: 3, bonus: { hp: .02 } }, { pearls: 8 }][i]),
     { id: 'deep:100', group: '환생', title: '깊은 항해', desc: 'Lv.100에 도달한 채 환생합니다.', reward: { pearls: 10, bonus: { hp: .03, defense: .02, resist: .02 } }, progress: s => s.lifeBonus === 'deep' ? 1 : 0, target: 1 },
     { id: 'warden:all', group: '숙련', title: '모든 바다의 수호자', desc: '방어 계열 직업 3개를 숙달합니다.', reward: { pearls: 6, bonus: { defense: .04, resist: .04 } }, progress: s => JOBS.filter(j => j.tree === 'defense' && jobMastered(s, j)).length, target: 3 },
 ];
 for (const a of ACHIEVEMENTS) if (a.reward.ap) ACHIEVEMENT_AP[a.id] = a.reward.ap;
 export const achievementById = (id: string) => ACHIEVEMENTS.find(a => a.id === id);
-export const ACHIEVEMENT_GROUPS = ['항해', '사냥', '숙련', '심연', '환생'] as const;
-/** ‘도전’ 탭에 따로 보여 주는 묶음. */
+/** 업적 묶음. ‘도전’은 플레이 시간·전투 턴·능력치 돌파 같은 누적 기록입니다. */
 export const CHALLENGE_GROUP = '도전' as const;
+export const ACHIEVEMENT_GROUPS = ['항해', '사냥', '숙련', '심연', '환생', CHALLENGE_GROUP] as const;
 
 /** 받은 업적의 영구 보상 합계. 능력치 배율은 더해서 한 번 곱합니다(apCapacity·stats가 씀). */
 export function achievementTotals(s: Pick<State, 'achievementClaims'>) {

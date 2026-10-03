@@ -19,7 +19,8 @@ export const ATTRIBUTE_EFFECTS = {
     int: { magic: 2.8, mana: 1 },
     vit: { hp: 9, defense: .6, hpRegen: .3 },
     wis: { resist: 1.2, mana: 3, manaRegen: .25 },
-    luk: { crit: .003, critDamage: .005, dropBonus: .001, goldBonus: .002 },
+    // v25.22 행운에 물리·마법 공격을 조금 더해 올-행운 빌드도 때릴 수 있게 합니다(주사위 기술은 치명 피해 배율 비례).
+    luk: { attack: .8, magic: .8, crit: .003, critDamage: .005, dropBonus: .001, goldBonus: .002 },
 } as const;
 const EFFECT_LABELS: Record<string, string> = { attack: '물리 공격', defense: '물리 방어', accuracy: '명중', evasion: '회피 수치', speed: '속도', magic: '마법 공격', mana: '최대 마나', hp: '최대 체력', resist: '마법 방어', manaRegen: '마나 회복', hpRegen: '턴당 체력 회복', crit: '치명타', critDamage: '치명 피해', dropBonus: '장비 드롭', goldBonus: '골드' };
 const RATIO_EFFECTS = new Set(['accuracy', 'evasion', 'crit', 'critDamage', 'dropBonus', 'goldBonus']);
@@ -37,16 +38,16 @@ export const ATTRIBUTES: {
     { id: 'wis', name: '정신', code: 'WIS', description: describeEffects('wis') },
     { id: 'luk', name: '행운', code: 'LUK', description: describeEffects('luk') },
 ];
-export const STAT_LABELS: Record<keyof Stats, string> = { expBonus: '경험치 획득 증가', goldBonus: '골드 획득 보너스', dropBonus: '장비 드롭 보너스', rebirthBonus: '환생 진주 보너스', harmony: '육중 조화 원시 피해', thorns: '반격(물리 방어 비례)', dotBonus: '지속 피해 증가', guardAffinity: '방어 친화도', wardAffinity: '결계 친화도', healFocus: '회복 숙련', arcaneStrike: '마력 평타 확률', stunBonus: '기절 지속 추가', controlBonus: '침묵·감속 지속 추가', dotTurnsBonus: '지속 피해 턴 추가', poisonStackBonus: '중독 최대 중첩 추가', arcaneRatioBonus: '마력 평타 계수 추가', followUpBonus: '추가타 위력 추가', healBonus: '회복량 증가', executeBonus: '빈사 기준 추가', codexPower: '도감 기록', catchPower: '포획 기록', huntPower: '사냥 기록', goldPower: '보유 골드 기록', masteredPower: '숙달한 직업 기록', dungeonGoldBonus: '던전 골드 보너스', hp: '최대 체력', attack: '물리 공격', defense: '물리 방어', crit: '치명타', magic: '마법 공격', resist: '마법 방어', accuracy: '명중', evasion: '회피', critDamage: '치명 피해', speed: '속도', mana: '최대 마나', manaRegen: '턴당 마나 회복', hpRegen: '턴당 체력 회복', penetration: '방어 관통', lifesteal: '흡혈' };
-export const PERCENT_STATS = new Set(['expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus', 'crit', 'accuracy', 'evasion', 'critDamage', 'penetration', 'lifesteal', 'thorns', 'dotBonus', 'arcaneStrike', 'followUpBonus', 'healBonus', 'executeBonus']);
+export const STAT_LABELS: Record<keyof Stats, string> = { expBonus: '경험치 획득 증가', goldBonus: '골드 획득 보너스', dropBonus: '장비 드롭 보너스', rebirthBonus: '환생 진주 보너스', harmony: '육중 조화 원시 피해', thorns: '반격(물리 방어 비례)', dotBonus: '지속 피해 증가', guardAffinity: '방어 친화도', wardAffinity: '결계 친화도', healFocus: '회복 숙련', arcaneStrike: '마력 평타 확률', variantPower: '변종 기록', variantFind: '변종 조우 확률 증가', goldenFind: '황금 개체 확률', stunBonus: '기절 지속 추가', controlBonus: '침묵·감속 지속 추가', dotTurnsBonus: '지속 피해 턴 추가', poisonStackBonus: '중독 최대 중첩 추가', arcaneRatioBonus: '마력 평타 계수 추가', followUpBonus: '추가타 위력 추가', healBonus: '회복량 증가', executeBonus: '빈사 기준 추가', codexPower: '도감 기록', catchPower: '포획 기록', huntPower: '사냥 기록', goldPower: '보유 골드 기록', masteredPower: '숙달한 직업 기록', dungeonGoldBonus: '던전 골드 보너스', hp: '최대 체력', attack: '물리 공격', defense: '물리 방어', crit: '치명타', magic: '마법 공격', resist: '마법 방어', accuracy: '명중', evasion: '회피', critDamage: '치명 피해', speed: '속도', mana: '최대 마나', manaRegen: '턴당 마나 회복', hpRegen: '턴당 체력 회복', penetration: '방어 관통', lifesteal: '흡혈' };
+export const PERCENT_STATS = new Set(['expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus', 'crit', 'accuracy', 'evasion', 'critDamage', 'penetration', 'lifesteal', 'thorns', 'dotBonus', 'arcaneStrike', 'followUpBonus', 'healBonus', 'executeBonus', 'variantFind', 'goldenFind']);
 /** 비율(0.123)을 퍼센트 문자열로: digits는 최대 소수 자리, signed면 +/− 부호를 붙입니다. */
 export const percent = (n: number, digits = 1, signed = false) => `${signed && n > 0 ? '+' : ''}${Number((n * 100).toFixed(digits))}%`;
 export const formatStat = (key: string, n: number) => PERCENT_STATS.has(key) ? `${Math.round(n * 1000) / 10}%` : `${Math.round(n * 10) / 10}`;
 /** 능력치 표시 순서: 체력 → 물리·마법 공격 → 물리·마법 방어 → 속도 → 명중·회피 → 치명타. 평소에는 CORE만, 나머지는 상세보기. */
 export const CORE_STATS = ['hp', 'hpRegen', 'manaRegen', 'attack', 'magic', 'defense', 'resist', 'speed', 'accuracy', 'evasion', 'crit'] as const;
-export const DETAIL_STATS = ['critDamage', 'mana', 'penetration', 'lifesteal', 'expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus', 'rebirthBonus', 'harmony', 'thorns', 'dotBonus', 'arcaneStrike', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus'] as const;
+export const DETAIL_STATS = ['critDamage', 'mana', 'penetration', 'lifesteal', 'expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus', 'rebirthBonus', 'harmony', 'thorns', 'dotBonus', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus', 'variantFind', 'goldenFind'] as const;
 /** 0보다 클 때만 상세 능력치에 보이는 항목. */
-export const OPTIONAL_STATS = new Set(['thorns', 'dotBonus', 'arcaneStrike', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus']);
+export const OPTIONAL_STATS = new Set(['thorns', 'dotBonus', 'arcaneStrike', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus', 'variantFind', 'goldenFind']);
 export const STAT_ORDER: string[] = [...CORE_STATS, ...DETAIL_STATS];
 export const byStatOrder = <T extends [string, unknown]>(entries: T[]) => [...entries].sort((a, b) => (STAT_ORDER.indexOf(a[0]) + 1 || 99) - (STAT_ORDER.indexOf(b[0]) + 1 || 99));
 /** 명중·회피는 적중 확률이 아닌 수치입니다. 실제 적중률은 상대 회피·속도와 함께 1~99.5%로 계산됩니다. */
@@ -63,7 +64,7 @@ export function statDisplay(key: string, n: number) {
 export function statDeltaDisplay(key: string, n: number) {
     const sign = n >= 0 ? '+' : '−', v = Math.abs(n);
     if (RATING_STATS.has(key)) return `${sign}${Math.round(v * 1000) / 10}`;
-    if (['crit', 'critDamage', 'penetration', 'lifesteal', 'dropBonus', 'thorns', 'dotBonus', 'arcaneStrike', 'followUpBonus', 'executeBonus'].includes(key)) return `${sign}${Math.round(v * 1000) / 10}%p`;
+    if (['crit', 'critDamage', 'penetration', 'lifesteal', 'dropBonus', 'thorns', 'dotBonus', 'arcaneStrike', 'followUpBonus', 'executeBonus', 'goldenFind'].includes(key)) return `${sign}${Math.round(v * 1000) / 10}%p`;
     return `${sign}${formatStat(key, v)}`;
 }
 export const emptyAttributes = (): Record<Attribute, number> => ({ str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 });
