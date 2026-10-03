@@ -5,6 +5,8 @@ import { skillById } from '../data/skills';
 import { PROGRESSION } from '../data/progression';
 import { researchRank } from '../data/economy';
 import { canUse, masteryGainBonus, skillLevel, skillMastery } from './progression';
+import { jobById } from '../data/classes';
+import { encounterTier, tierMastery } from './meta';
 
 export function masteryConditionText(sk: Skill) {
     const rule = sk.masteryGain;
@@ -43,4 +45,16 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
     const base = s.lifeBonus === 'deep' ? 2 : 1;
     const amount = masteryPerVictory(bonus, base);
     return { amount, base, bonus: amount - base, source };
+}
+/**
+ * 포획 숙련 배율(조건부 스킬 보너스 제외). 전투 보상과 능력치 화면이 같은 식을 씁니다.
+ * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · tide: 해역 난이도(던전은 1) · research: 숙련의 기억 + 계정 어종 보너스(+5%/단계).
+ */
+export function masteryMultipliers(s: State) {
+    const focus = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
+    const event = s.event?.mastery || 1;
+    const tide = s.dungeon ? 1 : tierMastery(encounterTier(s));
+    const research = 1 + (researchRank(s, 'mastery') + accountMasteryTwentieths(s)) / 20;
+    const base = s.lifeBonus === 'deep' ? 2 : 1;
+    return { base, focus, event, tide, research, total: focus * event * tide * research };
 }
