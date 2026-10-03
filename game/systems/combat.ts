@@ -305,7 +305,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (chosen?.scaling === 'mana')
         base += sa.mana * (chosen.scalingRatio ?? SKILL_FORMULA.manaScaling);
     // v24.2 진행도 비례 피해: 기본 피해 × 비율 × 기록(도감 종 수 · log10 포획 · √사냥 · log10 골드).
-    const progress = chosen?.scaling === 'codex' ? sa.codexPower : chosen?.scaling === 'catch' ? sa.catchPower : chosen?.scaling === 'hunt' ? sa.huntPower : chosen?.scaling === 'gold' ? sa.goldPower : chosen?.scaling === 'mastered' ? sa.masteredPower : 0;
+    const progress = chosen?.scaling === 'codex' ? sa.codexPower : chosen?.scaling === 'catch' ? sa.catchPower : chosen?.scaling === 'hunt' ? sa.huntPower : chosen?.scaling === 'gold' ? sa.goldPower : chosen?.scaling === 'mastered' ? sa.masteredPower : chosen?.scaling === 'variant' ? sa.variantPower : 0;
     if (progress) base += base * (chosen?.scalingRatio ?? 0) * progress;
     base += allInBonus;
     if (chosen?.scaling === 'hybrid')

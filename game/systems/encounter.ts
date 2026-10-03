@@ -152,8 +152,8 @@ export function reward(s: State, rng: () => number) {
     const focusMastery = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, masteryReward.amount * size * focusMastery), practice = researched.total;
     const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult), exp = Math.floor(e.exp * expMultiplier(s) * expMult) * size;
-    // 황금 개체: 포획마다 0.1%p/단계 확률로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 0단계면 난수를 쓰지 않습니다.
-    const goldenRank = researchRank(s, 'goldenFish'), golden = goldenRank > 0 && rng() < goldenRank * .001;
+    // 황금 개체: 난파선 수집가 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
+    const goldenChance = stats(s).goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
     const gold = perFish * size + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     s.kills += size;

@@ -110,12 +110,12 @@ export function Guide({ s }: { s?: State }) {
         <Topic icon={<Fish size={19}/>} title="사냥 · 던전 · 생존" note="변종, 던전 반복, 회복과 방치 진행.">
             <div className="help-columns">
                 <Rule icon={<Fish size={19}/>} title="변종(희귀어)"
-                    effect={<>같은 어종인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b> {percent(v.chance, 1)} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 포획 순간 따로 판정, 그 한 마리 골드 10배(진주 연구 단계마다 +0.1%p).</>}
-                    condition={`낚시터에서 그 어종을 ${VARIANT_BOOK_MIN}회 이상 포획한 뒤부터 입질마다 판정합니다. 해초림 테마 +10%, 공용 패시브 ‘무리 감지’(Lv.30) +50%.`}
+                    effect={<>같은 어종인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b> {percent(v.chance, 1)} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 포획 순간 따로 판정, 그 한 마리 골드 10배. 난파선 수집가 계보 패시브(전리품 감지·심해 인양·보물왕의 창고·전설의 보고)가 확률을 올립니다.</>}
+                    condition={`낚시터에서 그 어종을 ${VARIANT_BOOK_MIN}회 이상 포획한 뒤부터 입질마다 판정합니다. 해초림 테마 +10%. 난파선 수집가 계보 패시브가 확률을 올립니다(난파선 감식 +20% · 무리 감지 +50% · 전설의 보고 +100% 등).`}
                     limit="던전과 보스에는 변종이 없습니다. 지금 확률은 능력치 화면 아래 ‘변종 조우 확률’에서 봅니다."/>
                 <Rule icon={<Fish size={19}/>} title="무리 변종"
                     effect={`포획당 ${percent(swarm.chance, 1)}. 무리 전체를 체력 ×N인 한 개체로 상대하고, 포획하면 보상·숙련·도감을 마리 수만큼 받습니다.`}
-                    condition={`규모는 도감 포획 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100, ${SWARM_UNLOCK[500].toLocaleString()}회에 ‘무리 감지’를 장착하면 ×500.`}
+                    condition={`규모는 도감 포획 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100, ${SWARM_UNLOCK[500].toLocaleString()}회에 희귀어 추적자의 ‘무리 감지’(Lv.30)를 장착하면 ×500.`}
                     limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 포획 전에 쓰러지면 보상이 없습니다."/>
                 <Rule icon={<Swords size={19}/>} title="던전 · 무한 심연"
                     effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 심연은 10층마다 보너스 진주, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1, 30·60·90층에 장착 AP 1.`}

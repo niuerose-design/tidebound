@@ -50,9 +50,9 @@ export const ACHIEVEMENTS: Achievement[] = [
 ];
 for (const a of ACHIEVEMENTS) if (a.reward.ap) ACHIEVEMENT_AP[a.id] = a.reward.ap;
 export const achievementById = (id: string) => ACHIEVEMENTS.find(a => a.id === id);
-export const ACHIEVEMENT_GROUPS = ['항해', '사냥', '숙련', '심연', '환생'] as const;
-/** ‘도전’ 탭에 따로 보여 주는 묶음. */
+/** 업적 묶음. ‘도전’은 플레이 시간·전투 턴·능력치 돌파 같은 누적 기록입니다. */
 export const CHALLENGE_GROUP = '도전' as const;
+export const ACHIEVEMENT_GROUPS = ['항해', '사냥', '숙련', '심연', '환생', CHALLENGE_GROUP] as const;
 
 /** 받은 업적의 영구 보상 합계. 능력치 배율은 더해서 한 번 곱합니다(apCapacity·stats가 씀). */
 export function achievementTotals(s: Pick<State, 'achievementClaims'>) {

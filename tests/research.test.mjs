@@ -91,8 +91,8 @@ test('Research v2: online ticks and one offline settlement give the same result 
 import { reward, messageBottles, expMultiplier, metaMod } from './harness.mjs';
 const counting = (value = .99) => { const f = () => { f.calls++; return typeof value === 'function' ? value(f.calls) : value; }; f.calls = 0; return f; };
 
-test('Research v3: five special entries match the plan table and sit in the utility special group', () => {
-    const table = { tailwindSail: [5, 8, 5, 2, 90], tailwindWindow: [5, 6, 4, 2, 70], sortingNet: [2, 10, 10, 2, 30], messageBottle: [5, 6, 4, 3, 70], goldenFish: [10, 8, 5, 5, 305] };
+test('Research v3: four special entries match the plan table and sit in the utility special group', () => {
+    const table = { tailwindSail: [5, 8, 5, 2, 90], tailwindWindow: [5, 6, 4, 2, 70], sortingNet: [2, 10, 10, 2, 30], messageBottle: [5, 6, 4, 3, 70] };
     for (const [id, [max, base, step, rebirth, total]] of Object.entries(table)) {
         const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.tab, r.group], [max, base, step, rebirth, 'utility', 'special'], id);
         assert.equal(economy.researchSpent(id, max), total, id);
@@ -118,12 +118,13 @@ test('Research v3: sorting net sells only known, low-rarity drops while the sett
     act(s, { type: 'autoSell', value: 'off' }, 0); drop(s, 5, () => 0); assert.equal(s.inventory.length, 3, 'off keeps everything');
 });
 
-test('Research v3: golden fish multiplies one catch by ten, is recorded, and draws no random number at rank 0', () => {
-    const fight = rank => { const s = newState(0); s.permanent.goldenFish = rank; s.enemy = { id: 'minnow', name: '은빛 피라미', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
+test('v25.23 golden fish comes from the scavenger passives: multiplies one catch by ten, is recorded, and draws no random number without the skill', () => {
+    const fight = rank => { const s = newState(0); if (rank) { s.level = 40; s.job = 'rareTracker'; s.learned.rareSense = 1; s.skills = ['rareSense']; } s.enemy = { id: 'minnow', name: '은빛 피라미', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
     const plain = fight(0), rngPlain = counting(); reward(plain, rngPlain);
     const lucky = fight(1), rngLucky = counting(); reward(lucky, rngLucky);
     assert.equal(rngLucky.calls, rngPlain.calls + 1); assert.equal(lucky.gold, plain.gold); assert.equal(lucky.goldenBook, undefined);
-    const gold = fight(10), rngGold = counting(n => n === 1 ? 0 : .99); reward(gold, rngGold);
+    assert.equal(research('goldenFish'), undefined, 'golden research removed');
+    const gold = fight(1), rngGold = counting(n => n === 1 ? 0 : .99); reward(gold, rngGold);
     assert.equal(gold.gold - 100 /* start gold */, (plain.gold - 100) * 10); assert.equal(gold.goldenBook.minnow, 1);
 });
 

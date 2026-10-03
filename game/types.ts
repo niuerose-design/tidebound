@@ -51,6 +51,12 @@ export type Stats = {
     goldPower?: number;
     /** v25.4 숙달한 직업 수(숙달 비례 피해의 기준값). */
     masteredPower?: number;
+    /** v25.23 √(변종·황금 포획 수). 변종 기록 비례 피해의 기준값. */
+    variantPower?: number;
+    /** v25.23 변종 조우 확률 증가(0.5 = ×1.5). 난파선 수집가 계보 패시브. */
+    variantFind?: number;
+    /** v25.23 포획마다 황금 개체가 될 확률(그 한 마리 골드 10배). */
+    goldenFind?: number;
     hp: number;
     attack: number;
     defense: number;
@@ -58,7 +64,7 @@ export type Stats = {
 };
 export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
-export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered';
+export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant';
 export type StatusEffects = {
     dot?: {
         damage: number;
@@ -134,7 +140,7 @@ export type Skill = {
     drainRatio?: number;
     condition?: 'wounded' | 'healthyTarget';
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. */
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck';
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant';
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
