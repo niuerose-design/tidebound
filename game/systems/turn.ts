@@ -106,7 +106,7 @@ export function advance(s: State, now: number, rng = Math.random) {
     for (let i = 0; i < count; i++)
         tick(s, rng);
     s.lastTick = elapsed > cap * 1000 ? now : now - (elapsed % BALANCE.turnMs);
-    recordOpenDoors(s, now);
+    recordOpenDoors(s);
     if (elapsed > 60000 && s.kills > before.kills) {
         s.lastOffline = { seconds: Math.min(cap, Math.floor(elapsed / 1000)), kills: s.kills - before.kills, gold: s.gold - before.gold, exp: Math.max(0, s.exp - before.exp) };
         const bottles = messageBottles(s, Math.floor(count * BALANCE.turnMs / 3_600_000), rng);

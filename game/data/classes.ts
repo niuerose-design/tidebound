@@ -285,13 +285,13 @@ for (const job of JOBS) {
 /** 히든·??? 문 직업의 힌트. 이름·조건을 숨긴 실루엣 카드에 한 줄로 보입니다. */
 const JOB_HINTS: Record<string, string> = {
     voidcaller: '한 번의 윤회를 넘긴 이형 항해자에게 윤회의 문이 속삭입니다.',
-    undead: '새벽의 고요 속에서만 문이 열립니다.',
+    undead: '열 번 쓰러져 본 낚시꾼에게 죽음이 말을 겁니다.',
     skeleton: '망인의 뼈가 단단해질 때 드러납니다.',
     bonecaster: '망인의 뼈에 마나를 새길 때 드러납니다.',
     manaLeviathan: '공허와 조류를 모두 익히고 두 번의 윤회를 건넌 자에게.',
     soulHarvester: '해골 기사와 망인의 기억이 깊이 쌓일 때.',
     abyssArchivist: '진주 장부를 끝까지 적은 중개인에게 열립니다.',
-    krakenkin: '폭풍 곰치의 피가 짙어진 날, 방문자가 찾아옵니다.',
+    krakenkin: '보스 열 마리의 피를 묻힌 낚시꾼에게 혈족이 찾아옵니다.',
     eternalNavigator: '세 번의 윤회와 폭풍을 모두 건넌 술사에게.',
     rebirthFisher: '환생 뒤, 윤회의 문이 이 이름을 부를 때.',
     abyssMimic: '메아리를 오래 길들인 자에게 보스의 그림자가 닿습니다.',

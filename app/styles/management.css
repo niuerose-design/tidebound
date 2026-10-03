@@ -312,3 +312,15 @@
 /* v27.13 장비 감정 1·5·10개 버튼 */
 .gamble-count-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; width:100%; }
 .gamble-count-row button { width:100%; padding:9px 6px; font-size:12px; white-space:nowrap; }
+
+/* v27.12 발견의 문 목록: 윤회의 문 카드 옆에 조건 13개를 한 줄씩. */
+.door-card.discovery-list { cursor:default; grid-column:1 / -1; }
+.door-card.discovery-list strong small { font-weight:500; color:#9bb3b0; margin-left:6px; }
+.discovery-doors { list-style:none; margin:4px 0 0; padding:0; display:grid; gap:4px; width:100%; }
+.discovery-doors button { width:100%; display:grid; grid-template-columns:minmax(88px,auto) 1fr auto; gap:8px; align-items:center; text-align:left; padding:6px 8px; border:1px solid #2b3b40; border-radius:7px; background:#111c21; color:#c7d6d2; font-size:12px; }
+.discovery-doors li.open button { border-color:#6c5f8f; background:#1a1b2c; color:#e6e0f5; }
+.discovery-doors button.selected { box-shadow:0 0 0 1px #d5b36c; }
+.discovery-doors button:disabled { cursor:default; opacity:.75; }
+.discovery-doors b { font-weight:600; } .discovery-doors i { font-style:normal; color:#9bb3b0; } .discovery-doors em { font-style:normal; font-size:11px; color:#8ea39f; white-space:nowrap; }
+.discovery-doors li.open em { color:#d7c6f2; }
+@media (max-width:767px) { .door-row { grid-template-columns:1fr; } .discovery-doors button { grid-template-columns:1fr auto; } .discovery-doors i { grid-column:1 / -1; } }

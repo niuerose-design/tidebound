@@ -217,8 +217,8 @@ export function skillMasteryHint(sk: Skill, level: number, rank = 1) {
 export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
 /** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 낚시꾼의 패시브와 발견의 문이 셉니다. */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && jobMastered(s, j); }).length;
-/** 전직 조건 목록. now는 서버가 넘긴 요청 시각(문 판정용)이며, 화면에서는 마지막 서버 시각(lastTick)을 씁니다. */
-export function jobRequirements(s: State, j: Job, now = s.lastTick) {
+/** 전직 조건 목록. v27.13 문 판정은 플레이 기록만 보므로 시각 인자가 없습니다. */
+export function jobRequirements(s: State, j: Job) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
     /** value·target은 화면의 진행 막대용입니다(판정은 met). */
     const list: { label: string; met: boolean; value?: number; target?: number }[] = [{ label: `레벨 ${j.level}`, met: s.level >= j.level, value: s.level, target: j.level }];
@@ -244,13 +244,13 @@ export function jobRequirements(s: State, j: Job, now = s.lastTick) {
             list.push({ label: `${skill?.name || skillId} 숙련 ${mastery}단계 (${target})`, met: skillMastery(s, skillId) >= mastery, value: skillMastery(s, skillId), target: mastery });
         }
         // ??? 계보의 첫 직업은 해당 문이 열려 있어야 합니다(한 번 들어간 직업은 제외).
-        const door = doorFor(s, j.id, now);
+        const door = doorFor(s, j.id);
         if (door) list.push({ label: `${DOORS.find(d => d.id === door.door)!.name} 열림`, met: door.open });
     }
     return list;
 }
 /** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. now는 서버 요청 시각입니다. */
-export function canChangeJob(s: State, id: string, now = s.lastTick) { const j = jobById(id); return !!j && (jobMastered(s, j) || jobRequirements(s, j, now).every(x => x.met)); }
+export function canChangeJob(s: State, id: string) { const j = jobById(id); return !!j && (jobMastered(s, j) || jobRequirements(s, j).every(x => x.met)); }
 export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && apUsed(s, ids) <= apCapacity(s, ids); }
 export function trimLoadout(s: State) {
     s.skills = [...new Set(s.skills)].filter(id => canUse(s, id));

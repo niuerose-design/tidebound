@@ -12,7 +12,7 @@ import { addLog, endRun } from '../state';
 export const buildActions: ActionHandlers = {
     job(s, { id, now }) {
         // 문 시간 판정은 요청 시각(서버 now)으로 합니다.
-        if (!canChangeJob(s, id, now))
+        if (!canChangeJob(s, id))
             throw Error('레벨·능력치·선행 직업 숙련·문 조건을 확인하세요.');
         // A class change is a safe combat boundary. Discard only the
         // unfinished encounter (and any dungeon reward), then apply the

@@ -200,12 +200,12 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
 
 /** ??? 문 직업. 모두 상위·하위가 없는 독립 1차이며 문(doors.ts)이 열릴 때만 전직할 수 있습니다. */
 export const SUPPORT_JOBS: NewJob[] = [
-    { id: 'headwindSailor', name: '역풍 항해사', title: '거꾸로 부는 바람을 탄다', desc: '아침에만 문 앞에 서는 항해사. 스스로 가속하는 태킹과 속도·회피 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, hp: 5 }, requires: { dex: 12, luk: 10 }, role: '시간·속도', penalties: { defense: -2 } },
-    { id: 'sunriseAngler', name: '해돋이 낚시꾼', title: '첫 햇살에 줄을 던진다', desc: '아침에만 문 앞에 서는 술사. 여명 섬광과 마나 회복 패시브로 주문을 자주 씁니다.', ...DOOR_T1, bonus: { magic: 5 }, requires: { int: 12, wis: 10 }, role: '시간·마나', penalties: { attack: -2 } },
-    { id: 'barehandFisher', name: '맨손 어부', title: '낚싯대도 필요 없다', desc: '낮에만 문 앞에 서는 어부. 방어를 버리고 맨손으로 큰 한 방을 노립니다.', ...DOOR_T1, bonus: { attack: 4 }, requires: { str: 14 }, role: '시간·공격', penalties: { defense: -3, mana: -4 } },
-    { id: 'noonDiver', name: '한낮 잠수부', title: '뜨거운 해 아래 가장 깊이', desc: '낮에만 문 앞에 서는 잠수부. 최대 체력에 비례하는 잠수 공격과 체력·방어 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, defense: 1 }, requires: { vit: 14 }, role: '시간·체력', penalties: { speed: -2 } },
-    { id: 'mistSwordsman', name: '안개 검객', title: '보이지 않는 칼끝', desc: '밤에만 문 앞에 서는 검객. 명중이 높은 안개 베기와 회피·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 3 }, crit: .02, requires: { dex: 12, str: 10 }, role: '시간·회피', penalties: { hp: -10 } },
-    { id: 'nightHeron', name: '밤왜가리 사냥꾼', title: '움직이지 않고 기다린다', desc: '밤에만 문 앞에 서는 사냥꾼. 피해 없이 감속을 거는 정적과 명중·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, magic: 1 }, requires: { dex: 10, luk: 12 }, role: '시간·감속', penalties: { resist: -2 } },
+    { id: 'headwindSailor', name: '역풍 항해사', title: '거꾸로 부는 바람을 탄다', desc: '다섯 번째 바다에 닿은 자에게 열리는 항해사. 스스로 가속하는 태킹과 속도·회피 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, hp: 5 }, requires: { dex: 12, luk: 10 }, role: '시간·속도', penalties: { defense: -2 } },
+    { id: 'sunriseAngler', name: '해돋이 낚시꾼', title: '첫 햇살에 줄을 던진다', desc: '열다섯 종을 만난 자에게 열리는 술사. 여명 섬광과 마나 회복 패시브로 주문을 자주 씁니다.', ...DOOR_T1, bonus: { magic: 5 }, requires: { int: 12, wis: 10 }, role: '시간·마나', penalties: { attack: -2 } },
+    { id: 'barehandFisher', name: '맨손 어부', title: '낚싯대도 필요 없다', desc: '낚싯대 없이 버틴 자에게 열리는 어부. 방어를 버리고 맨손으로 큰 한 방을 노립니다.', ...DOOR_T1, bonus: { attack: 4 }, requires: { str: 14 }, role: '시간·공격', penalties: { defense: -3, mana: -4 } },
+    { id: 'noonDiver', name: '한낮 잠수부', title: '뜨거운 해 아래 가장 깊이', desc: '던전을 다섯 번 정복한 자에게 열리는 잠수부. 최대 체력에 비례하는 잠수 공격과 체력·방어 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, defense: 1 }, requires: { vit: 14 }, role: '시간·체력', penalties: { speed: -2 } },
+    { id: 'mistSwordsman', name: '안개 검객', title: '보이지 않는 칼끝', desc: '결투에서 이겨 본 자에게 열리는 검객. 명중이 높은 안개 베기와 회피·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 3 }, crit: .02, requires: { dex: 12, str: 10 }, role: '시간·회피', penalties: { hp: -10 } },
+    { id: 'nightHeron', name: '밤왜가리 사냥꾼', title: '움직이지 않고 기다린다', desc: '오백 마리를 낚은 자에게 열리는 사냥꾼. 피해 없이 감속을 거는 정적과 명중·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, magic: 1 }, requires: { dex: 10, luk: 12 }, role: '시간·감속', penalties: { resist: -2 } },
     { id: 'poorMonk', name: '청빈 수도승', title: '가진 것이 없어 잃을 것도 없다', desc: '빈손으로 싸우는 수도승. 흡혈하는 빈손 장타와 골드를 내려놓는 대신 단단해지는 서약을 가집니다.', ...DOOR_T1, bonus: { hp: 10, resist: 1 }, requires: { vit: 12, wis: 12 }, role: '발견·생존', penalties: { crit: -.01 } },
     { id: 'codexReader', name: '바다 백과 독자', title: '모든 물고기를 읽었다', desc: '도감을 깊이 읽은 자에게 열리는 술사. 도감 기록에 비례하는 주문과 패시브를 가집니다.', ...DOOR_T1, bonus: { magic: 5, resist: 1 }, requires: { int: 14 }, role: '발견·도감', penalties: { hp: -10 } },
     { id: 'journeyman', name: '떠돌이 낚시꾼', title: '배운 것은 몸에 남는다', desc: '직업 셋을 끝까지 숙달한 자에게 열리는 패시브 전용 직업. 두 패시브가 숙달한 직업 수에 비례해 자라며, 계승하면 어느 직업에서든 그대로 힘이 됩니다.', ...DOOR_T1, bonus: { attack: 2, magic: 2, hp: 10 }, requires: { str: 10, int: 10, vit: 10 }, role: '숙달·누적', fullKit: true, masteryTarget: 4000, masteryBoost: .15 },
@@ -216,12 +216,12 @@ export const SUPPORT_JOBS: NewJob[] = [
 
 /** 실루엣 카드 힌트. */
 export const SUPPORT_HINTS: Record<string, string> = {
-    headwindSailor: '아침 바람이 거꾸로 부는 시간, 갑판에 선 자.',
-    sunriseAngler: '해가 뜨는 시간에만 문이 열립니다.',
-    barehandFisher: '해가 가장 높은 시간, 맨손의 어부가 찾아옵니다.',
-    noonDiver: '한낮의 바다 밑에서 누군가 숨을 참고 있습니다.',
-    mistSwordsman: '밤안개가 내려앉을 때만 칼끝이 보입니다.',
-    nightHeron: '밤이 되면 물가에 움직이지 않는 그림자가 섭니다.',
+    headwindSailor: '다섯 번째 바다까지 거슬러 올라간 항해사에게.',
+    sunriseAngler: '열다섯 종의 물고기를 처음 만난 아침에.',
+    barehandFisher: '낚싯대 없이 열다섯 레벨을 넘긴 어부에게.',
+    noonDiver: '던전 다섯 번을 끝까지 잠수한 자에게.',
+    mistSwordsman: '결투에서 세 번 이긴 뒤 안개가 걷힙니다.',
+    nightHeron: '오백 마리를 낚고도 물가를 떠나지 않은 자에게.',
     poorMonk: '어느 정도 성장했는데도 주머니가 거의 비어 있을 때.',
     codexReader: '도감에 기록이 서른 개 넘게 쌓였을 때.',
     fallenAngler: '서른 번쯤 쓰러져 본 낚시꾼에게.',
