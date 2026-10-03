@@ -148,16 +148,20 @@ export function canSpendSkill(s: State, id: string) {
     const sk = skillById(id), rank = s.learned?.[id] || 0;
     return !!sk && rank > 0 && canUse(s, id) && skillLevel(sk, rank, skillMastery(s, id)) < maxSkillLevel(sk);
 }
+/** v27.28 한계돌파 단계(최대 성장을 넘은 만큼)에 따른 패시브 배율: 단계마다 +10%. */
+export const limitBreakScale = (broken: number) => 1 + Math.max(0, broken) * PROGRESSION.limitBreak.passive;
+export const brokenStages = (sk: Skill, rank = 1, mastery = 0) => Math.max(0, skillLevel(sk, rank, mastery) - maxSkillLevel(sk));
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, specialization?: string, practice = 0): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
     // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.
     const broken = Math.max(0, steps - maxSkillLevel(sk)), lb = PROGRESSION.limitBreak;
     const factor = 1 + steps * (fx.multiplierScale ?? PROGRESSION.rankMultiplier);
     // Penalties must not become harsher merely because a skill gained a level.
-    const bonus = override?.bonus ?? (sk.bonus ? Object.fromEntries(Object.entries(sk.bonus).map(([k, n]) => [k, n < 0 ? n : n * (1 + steps * (fx.bonusScale ?? PROGRESSION.rankPassive))])) : undefined);
+    // v27.28 레벨별 효과표는 최대 레벨에서 멈추므로, 한계돌파 단계만큼 양수 효과를 따로 올립니다.
+    const bonus = override?.bonus ? (broken ? Object.fromEntries(Object.entries(override.bonus).map(([k, n]) => [k, n > 0 ? n * limitBreakScale(broken) : n])) : override.bonus) : (sk.bonus ? Object.fromEntries(Object.entries(sk.bonus).map(([k, n]) => [k, n < 0 ? n : n * (1 + steps * (fx.bonusScale ?? PROGRESSION.rankPassive))])) : undefined);
     const result: Skill = {
         ...sk,
-        cost: sk.song ? 0 : override?.cost ?? Math.max(1, (sk.cost ?? 2) - Math.floor(steps * (fx.apReduction ?? 0))) - (sk.type === 'passive' && steps >= maxSkillLevel(sk) ? SKILL_FORMULA.masteredPassiveAP : 0) - (broken >= lb.max ? lb.apAtMax : 0),
+        cost: sk.song ? 0 : (override?.cost ?? Math.max(1, (sk.cost ?? 2) - Math.floor(steps * (fx.apReduction ?? 0))) - (sk.type === 'passive' && steps >= maxSkillLevel(sk) ? SKILL_FORMULA.masteredPassiveAP : 0)) - (broken >= lb.max ? lb.apAtMax : 0),
         manaCost: Math.max(0, (sk.manaCost ?? 0) - Math.floor(steps * (fx.manaReduction ?? 0))),
         chance: sk.type === 'passive' ? 0 : sk.chance >= 1 ? 1 : Math.min(.95, sk.chance + steps * (fx.chanceIncrease ?? PROGRESSION.masteryChance) + broken * lb.chance),
         cooldown: sk.type === 'passive' ? 0 : Math.max(1, sk.cooldown - Math.floor(steps * (fx.cooldownReduction ?? 0))),

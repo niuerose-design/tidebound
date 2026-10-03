@@ -171,7 +171,7 @@ test('Pearl research: physical and magic attack/defense are separate research li
  s.permanent.guard=5;assert.ok(Math.abs(factor(s,'defense')-1.15)<1e-9);assert.equal(factor(s,'resist'),1);
  s.permanent.magicGuard=2;assert.ok(Math.abs(factor(s,'resist')-1.06)<1e-9);
 });
-test('Pearl research reset: per-tab refund, first reset free then 90% floored, refusal conditions',()=>{
+test('Pearl research reset: per-tab refund, always free (v27.29), refusal conditions',()=>{
  const s=newState(0);s.pearls=0;s.permanent.attack=3;s.permanent.magicAttack=1;s.permanent.hp=2;s.permanent.gold=2;
  assert.throws(()=>act(s,{type:'resetResearch',id:'nope'},0));
  s.running=true;assert.throws(()=>act(s,{type:'resetResearch',id:'combat'},0),/자동 낚시/);s.running=false;
@@ -180,7 +180,7 @@ test('Pearl research reset: per-tab refund, first reset free then 90% floored, r
  assert.deepEqual(researchRefund(s,'combat').refund,(2+4+6)+2+(2+4));
  act(s,{type:'resetResearch',id:'combat'},0);assert.equal(s.pearls,20);assert.equal(s.researchResetUsed,true);
  assert.equal(s.permanent.attack||0,0);assert.equal(s.permanent.magicAttack||0,0);assert.equal(s.permanent.hp||0,0);assert.equal(s.permanent.gold,2);
- act(s,{type:'resetResearch',id:'gold'},0);assert.equal(s.pearls,20+Math.floor((3+5)*.9));assert.equal(s.permanent.gold||0,0);
+ act(s,{type:'resetResearch',id:'gold'},0);assert.equal(s.pearls,20+(3+5));assert.equal(s.permanent.gold||0,0);
  s.level=40;act(s,{type:'rebirth'},0);assert.equal(s.researchResetUsed,true);
  const a=newState(0);a.permanent.ap=4;const cap=apCapacity(a);const pool=['hook',...SKILLS.filter(x=>x.cost).map(x=>x.id).filter(id=>id!=='hook')];a.skills=[];
  for(const id of pool){if(apUsed({...a,skills:[...a.skills,id]})>cap)continue;a.skills.push(id);if(apUsed(a)>cap-4)break;}

@@ -174,7 +174,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error('연구 탭을 확인하세요.');
         if (s.running || s.dungeon)
             throw Error('자동 낚시를 멈추고 던전에서 나온 뒤 재분배하세요.');
-        const { refund, spent, ranks } = researchRefund(s, tab.id);
+        const { refund, ranks } = researchRefund(s, tab.id);
         if (refund <= 0)
             throw Error('돌려받을 진주가 없습니다.');
         const after = { ...s, permanent: { ...s.permanent, ...Object.fromEntries(Object.keys(ranks).map(k => [k, 0])) } };
@@ -184,10 +184,9 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error(`재분배하면 장착 AP 한도(${apCapacity(after)})를 넘습니다. 스킬 장착을 ${apUsed(after) - apCapacity(after)} AP 줄인 뒤 다시 시도하세요.`);
         for (const k of Object.keys(ranks))
             delete s.permanent[k];
-        const first = !s.researchResetUsed;
         s.researchResetUsed = true;
         s.pearls += refund;
-        return `${tab.name} 연구 재분배 · 진주 +${refund}${first ? ' (첫 재분배 100% 반환)' : ` (${spent}개 중 90%)`}`;
+        return `${tab.name} 연구 재분배 · 진주 +${refund} (100% 반환)`;
     }
     if (a.type === 'buyRelic') {
         const r = RELICS.find(x => x.id === id);

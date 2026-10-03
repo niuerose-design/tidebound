@@ -13,7 +13,7 @@ import { skillById } from '../data/skills';
 import { bookStatBonus, regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts } from './progression';
+import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages } from './progression';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, superCrit: 0, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, guardAffinity: 1, wardAffinity: 1, healFocus: 0, arcaneStrike: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0, ...a }; }
 /** 달성한 도감 연구 단계의 총합(어종 × 단계). */
@@ -107,15 +107,17 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
             for (const [key, n] of Object.entries(bonus))
                 add(key as keyof CombatStats, 'skills', n > 0 ? n * scale : n);
         }
+        // v27.28 횟수 비례 패시브도 한계돌파 단계마다 +10%.
+        const lbScale = sk ? limitBreakScale(brokenStages(sk, s.learned[id] || 1, skillMastery(s, id))) : 1;
         if (sk?.perCount) {
-            const scale = signatureScale(sk, s.job);
+            const scale = signatureScale(sk, s.job) * lbScale;
             for (const pc of sk.perCount) {
                 const times = Math.min(pc.cap, Math.floor(counts[pc.source] / pc.per));
                 if (times > 0) for (const [key, n] of Object.entries(pc.bonus)) add(key as keyof CombatStats, 'skills', n * times * scale);
             }
         }
         if (sk?.perRebirth) {
-            const times = Math.min(s.rebirths || 0, SKILL_FORMULA.perRebirthCap), scale = signatureScale(sk, s.job);
+            const times = Math.min(s.rebirths || 0, SKILL_FORMULA.perRebirthCap), scale = signatureScale(sk, s.job) * lbScale;
             for (const [key, n] of Object.entries(sk.perRebirth)) add(key as keyof CombatStats, 'skills', n * times * scale);
         }
         if (sk) {

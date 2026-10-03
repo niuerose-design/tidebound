@@ -31,15 +31,15 @@ function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a
 function ResearchTabView({ tab, s, send, busy }: { tab: ResearchTab; s: State; send: (a: Action) => void; busy: boolean }) {
     const list = RESEARCH.filter(r => r.tab === tab), name = RESEARCH_TABS.find(x => x.id === tab)!.name;
     const groups = tab === 'combat' ? (['attack', 'defense'] as const) : tab === 'utility' ? (['basic', 'special', 'vow'] as const) : [undefined];
-    const { refund, spent, first } = researchRefund(s, tab);
+    const { refund, spent } = researchRefund(s, tab);
     return <>
         {groups.map(g => <section key={g || 'all'} className="research-group">
             {g && <h3 className="research-group-title">{RESEARCH_GROUPS[g]}</h3>}
             <div className="research-grid">{list.filter(r => !g || r.group === g).map(r => <ResearchCard key={r.id} r={r} s={s} send={send} busy={busy}/>)}</div>
         </section>)}
         <div className="panel research-reset">
-            <div><strong>{name} 연구 재분배</strong><p>{spent ? `이 탭에 쓴 진주 ${spent}개 중 ${refund}개를 돌려받고 ${name} 연구 단계를 모두 0으로 되돌립니다.` : `${name} 탭에 쓴 진주가 없습니다.`} {first ? '계정당 첫 재분배는 100% 반환됩니다.' : '첫 재분배 이후에는 90%(내림)만 반환됩니다.'} 자동 낚시와 던전을 멈춘 상태에서만 할 수 있습니다.</p></div>
-            <ConfirmButton label={`재분배 · 진주 +${refund}`} title={`${name} 연구를 재분배할까요?`} description={`${name} 탭의 연구 단계가 모두 0이 되고 진주 ${refund}개를 돌려받습니다${first ? ' (첫 재분배 100%)' : ` (쓴 진주 ${spent}개의 90%)`}.`} disabled={busy || refund <= 0 || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetResearch', id: tab })}/>
+            <div><strong>{name} 연구 재분배</strong><p>{spent ? `이 탭에 쓴 진주 ${spent}개 중 ${refund}개를 돌려받고 ${name} 연구 단계를 모두 0으로 되돌립니다.` : `${name} 탭에 쓴 진주가 없습니다.`} 재분배는 언제나 무료이며 쓴 진주를 모두 돌려받습니다. 자동 낚시와 던전을 멈춘 상태에서만 할 수 있습니다.</p></div>
+            <ConfirmButton label={`재분배 · 진주 +${refund}`} title={`${name} 연구를 재분배할까요?`} description={`${name} 탭의 연구 단계가 모두 0이 되고 진주 ${refund}개를 모두 돌려받습니다.`} disabled={busy || refund <= 0 || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetResearch', id: tab })}/>
         </div>
     </>;
 }

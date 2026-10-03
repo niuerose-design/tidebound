@@ -78,7 +78,8 @@ export const shopDiscount = (s: Pick<State, 'permanent'>) => 1 - researchRank(s,
 /** 대장장이의 기억: 강화·옵션 재설정 골드 비용 배율. */
 export const smithDiscount = (s: Pick<State, 'permanent'>) => 1 - researchRank(s, 'enhance') * .02;
 /** 재분배 반환 비율: 계정당 첫 1회 100%, 이후 90%(내림). */
-export const RESEARCH_RESET = { firstRefund: 1, refund: .9 };
+/** v27.29 재분배는 언제나 100% 반환(무료). */
+export const RESEARCH_RESET = { firstRefund: 1, refund: 1 };
 export const AFFIXES: {
     stat: NonNullable<Item['affix']>['stat'];
     name: string;

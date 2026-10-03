@@ -169,7 +169,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Sparkles size={19}/>} title="진주 연구"
                     effect="진주로 영구 능력을 올립니다. 환생해도 유지되며 전투·유틸·골드 탭으로 나뉩니다."
                     condition="단계가 오를수록 비용이 커집니다. 일부 연구는 정해진 환생 횟수 뒤에 열립니다."
-                    limit={`탭별 재분배는 첫 1회 ${RESEARCH_RESET.firstRefund * 100}%, 이후 ${RESEARCH_RESET.refund * 100}%를 돌려받습니다. 자동 낚시·던전 중에는 할 수 없습니다.`}/>
+                    limit={`탭별 재분배는 언제나 무료이며 쓴 진주의 ${RESEARCH_RESET.refund * 100}%를 돌려받습니다. 자동 낚시·던전 중에는 할 수 없습니다.`}/>
                 <Rule icon={<BookOpen size={19}/>} title="물고기 도감"
                     effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 포획에 골드, 최종 단계에 SP 1. 단계마다 어종 성향의 능력치가 오르고 2단계부터 그 어종 상대 피해 보정이 붙습니다.`}
                     condition={`${PROGRESSION.fishComplete}회 포획하면 완성이고 적 정보가 열립니다. 지역의 모든 종을 완성하면 AP +1과 지역 테마 보너스.`}

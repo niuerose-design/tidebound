@@ -391,3 +391,18 @@ test('v27.27 runtime server events merge with code events and can disable them',
     const now = ev.activeEvent(at); assert.equal(now.gold, 3, 'admin event applies'); assert.ok(!(now.exp > 1), 'disabled code event is off');
     ev.setRuntimeEvents([], []); assert.ok(ev.activeEvent(at).exp >= 2, 'reset restores code events');
 });
+
+test('v27.28 limit break raises level-table passives (+10%/stage), applies stage-3 AP cut to them, and scales count-based passives', async () => {
+    const P = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
+    const obs = SKILLS.find(x => x.id === 'abyssObservation'), max = P.maxSkillLevel(obs);
+    const b = P.effectiveSkill(obs, 1, max), l1 = P.effectiveSkill(obs, 1, max + 1), l3 = P.effectiveSkill(obs, 1, max + 3);
+    assert.ok(Math.abs(l1.bonus.attack - b.bonus.attack * 1.1) < 1e-9, `stage 1 +10%: ${b.bonus.attack} → ${l1.bonus.attack}`);
+    assert.ok(Math.abs(l3.bonus.attack - b.bonus.attack * 1.3) < 1e-9, 'stage 3 +30%');
+    const eon = SKILLS.find(x => x.id === 'eonSlumber'), emax = P.maxSkillLevel(eon);
+    assert.equal(P.effectiveSkill(eon, 1, emax + 3).cost, P.effectiveSkill(eon, 1, emax).cost - 1, 'level-table passive also gets stage-3 AP -1');
+    const knack = SKILLS.find(x => x.id === 'hundredKnacks'), kmax = P.maxSkillLevel(knack), last = P.masteryMilestonesFor(knack).at(-1);
+    const s = newState(0); s.level = 100; s.job = knack.job; s.unlockedJobs = [knack.job]; s.learned[knack.id] = 1; s.skills = [knack.id]; s.skillPractice[knack.id] = last;
+    s.jobMastery = Object.fromEntries(JOBS.slice(0, 40).map(j => [j.id, 1e9]));
+    const before = stats(s).attack; s.limitBreaks = { [knack.id]: 1 }; const after = stats(s).attack;
+    assert.ok(after > before, `count passive grows with limit break: ${before} → ${after}`); assert.ok(kmax > 0);
+});
