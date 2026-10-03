@@ -7,7 +7,7 @@ import type { Enemy, Log, State, StatusEffects } from '../types';
 
 export type CombatFxKind = 'physical' | 'magic' | 'split' | 'stun' | 'bleed' | 'silence' | 'slow' | 'haste' | 'heal' | 'weaken' | 'miss';
 /** v25.20 스킬별 연출 갈래. 궤적 모양·파편 글자·색이 갈래마다 다릅니다. */
-export type CombatFxVariant = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph';
+export type CombatFxVariant = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph' | 'venom' | 'ink' | 'bone' | 'time';
 /** 스킬 id·효과로 연출 갈래를 고릅니다. 앞 규칙이 우선이고, 아무것도 맞지 않으면 마법은 arcane, 물리는 impact. */
 /** 스킬 직업의 차수. 공용·몬스터 기술은 0. */
 export function fxTierOf(id: string | undefined) { const sk = id ? SKILLS.find(x => x.id === id) : undefined; return sk?.job ? jobById(sk.job)?.tier || 0 : 0; }
@@ -17,6 +17,11 @@ export function fxVariantOf(id: string | undefined, magical: boolean, effect?: s
     if (SKILL_FX[id]) return SKILL_FX[id];
     const rules: [RegExp, CombatFxVariant][] = [
         [/^glyph|^foeSilence$/, 'glyph'],
+        // v27.16 독·먹물·뼈·시간 갈래
+        [/^foeVenom$|venom|toxic|miasma|rotten|rotBloom|corros|plague|doomMark/i, 'venom'],
+        [/^foeInkBurst$|^ink|smokeVeil/i, 'ink'],
+        [/^grave|marrow|^bone|ossuary|skeleton|soulReap|soulTyranny|harvestEcho/i, 'bone'],
+        [/windUp|slackHand|timeMachine|^precede$|frozenTime|^rewind$|chrono/i, 'time'],
         [/electric|thunder|storm(?!Chant)|spark|shock|lightning|sigil|psalm/i, 'lightning'],
         [/fire|ember|flare|meteor|cinder|red(Wake|Waltz|Apocalypse)|crimson|blood/i, 'fire'],
         [/frost|rime|ice|snow|still|deadCalm|heron|frozen/i, 'frost'],

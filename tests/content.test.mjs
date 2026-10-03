@@ -209,7 +209,8 @@ test('v27.13 batch appraisal: 5 or 10 at once, all-or-nothing on gold and bag ro
 
 test('v27.14 skill fx overrides name real skills and win over the id rules',()=>{
  for(const id of Object.keys(SKILL_FX)) assert.ok(SKILLS.some(x=>x.id===id),`stale fx id ${id}`);
- assert.equal(fxVariantOf('heavenlyDice',false),'gold');assert.equal(fxVariantOf('rapidJab',false),'pierce');assert.equal(fxVariantOf('timeMachine',false),'frost');
+ assert.equal(fxVariantOf('heavenlyDice',false),'gold');assert.equal(fxVariantOf('rapidJab',false),'pierce');assert.equal(fxVariantOf('timeMachine',false),'time');
+ assert.equal(fxVariantOf('foeVenom',false,'bleed'),'venom');assert.equal(fxVariantOf('foeInkBurst',true),'ink');assert.equal(fxVariantOf('graveHook',true),'bone');assert.equal(fxVariantOf('rewind',false),'time');
  assert.equal(fxVariantOf('fireball',true),'fire','id rules still apply without an override');assert.equal(fxVariantOf(undefined,true),'arcane');
  const actives=SKILLS.filter(x=>x.type==='active');assert.ok(actives.every(x=>typeof fxVariantOf(x.id,x.damageType==='magic',x.effect)==='string'));
 });
