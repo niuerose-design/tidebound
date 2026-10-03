@@ -244,7 +244,7 @@ export function jobRequirements(s: State, j: Job, now = s.lastTick) {
             list.push({ label: `${skill?.name || skillId} 숙련 ${mastery}단계 (${target})`, met: skillMastery(s, skillId) >= mastery, value: skillMastery(s, skillId), target: mastery });
         }
         // ??? 계보의 첫 직업은 해당 문이 열려 있어야 합니다(한 번 들어간 직업은 제외).
-        const door = doorFor(s, j.id, now);
+        const door = doorFor(s, j.id);
         if (door) list.push({ label: `${DOORS.find(d => d.id === door.door)!.name} 열림`, met: door.open });
     }
     return list;
