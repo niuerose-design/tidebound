@@ -196,7 +196,7 @@ test('v27.11 art: every fish has a silhouette shape and the shape table has no s
 
 test('v27.13 batch appraisal: 5 or 10 at once, all-or-nothing on gold and bag room, same rolls as singles',()=>{
  const s=newState(0);s.gold=100000;const seq=()=>.55;
- const r=act(s,{type:'gamble',id:'rod',value:'5'},0,seq);assert.equal(s.inventory.length,5);assert.ok(s.inventory.every(i=>i.slot==='rod'&&i.rarity>=1));
+ act(s,{type:'gamble',id:'rod',value:'5'},0,seq);assert.equal(s.inventory.length,5);assert.ok(s.inventory.every(i=>i.slot==='rod'&&i.rarity>=1));
  assert.match(s.logs.at(-1).text,/감정 5개/);
  const t=newState(0);t.gold=10;assert.throws(()=>act(t,{type:'gamble',id:'rod',value:'5'},0,seq),/골드/);assert.equal(t.inventory.length,0);assert.equal(t.gold,10,'nothing spent when short');
  const u=newState(0);u.gold=100000;u.inventory=Array.from({length:inventoryCapOf(u)-3},(_,i)=>({id:'x'+i,name:'x',slot:'rod',power:1,level:1}));
