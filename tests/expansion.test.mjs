@@ -29,7 +29,7 @@ test('v21 poison, burns and execute conditions are data-driven',()=>{
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
  const dart=SKILLS.find(x=>x.id==='venomDart');let b=mk([]);strike(mk(['venomDart'],{dotBonus:.5}),b,()=>0);
- assert.equal(b.effects.dot.name,'중독');assert.equal(b.effects.dot.damage,Math.floor(100*dart.dotRatio*1.5));
+ assert.equal(b.effects.dot.name,'중독');assert.equal(b.effects.dot.damage,Math.floor(100*dart.dotRatio*1.5)+Math.floor(1e6*.01),'v27.3 tick adds 1% of target max hp');
  assert.equal(b.hp,1e6);// 독침은 상태이상 전용: 직접 피해 없음
  b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.dot.name,'화상');assert.ok(b.hp<1e6);// 화염구는 피해와 화상을 함께
  b=mk([]);strike(mk(['rotBloom']),b,()=>0);assert.equal(b.effects.dot.name,'중독');assert.ok(b.hp<1e6);// 4차는 피해와 상태이상을 함께
@@ -72,7 +72,7 @@ test('v21.2 tier 4+ signature skills work fully in their own lineage and at 70% 
 test('v21.3 poison stacks up to the cap, refreshes duration, and ordinary bleeds do not erase a stronger stack',()=>{
  const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills)=>({name:'A',stats:{...base},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
- const b=mk([]),dart=SKILLS.find(x=>x.id==='venomDart');const per=Math.floor(100*dart.dotRatio);
+ const b=mk([]),dart=SKILLS.find(x=>x.id==='venomDart');const per=Math.floor(100*dart.dotRatio)+Math.floor(1e6*.01);
  for(let i=1;i<=STATUS_TUNING_MAX+2;i++){strike(mk(['venomDart']),b,()=>0);const n=Math.min(i,STATUS_TUNING_MAX);assert.equal(b.effects.dot.stacks,n);assert.equal(b.effects.dot.damage,per*n);assert.equal(b.effects.dot.turns,dart.statusTurns??3);}
  assert.match(visibleStatuses(b.effects,0,[],'enemy')[0].label,/중독 ×/);
  strike(mk(['cut']),b,()=>0);assert.equal(b.effects.dot.stacks,STATUS_TUNING_MAX,'weaker bleed keeps the stacked poison');

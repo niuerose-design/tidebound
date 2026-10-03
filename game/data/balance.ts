@@ -83,6 +83,8 @@ export const SKILL_FORMULA = {
     thornsLifestealScale: 2,
     // v27.2 탱커 개편: 반격은 공격자 방어를 thornsPierce만큼 무시하고, 무리(×N)를 상대할 때 (1 + log2 N)배(최대 swarmThornsCap)로 커집니다. 여러 마리가 한꺼번에 가시에 부딪히는 셈.
     thornsPierce: .5, swarmThornsCap: 10,
+    // v27.3 지속 피해(출혈·중독)는 틱마다 대상 최대 체력의 이 비율을 더합니다(무리는 한 마리 기준). 체력이 큰 탱커가 상태이상에 약해지는 장치.
+    dotMaxHpRatio: .01,
     // v21.1 마력 평타: 마법 직업(마법 배율이 물리보다 0.05 이상 높음, 고정 보정의 반올림을 감안해 0.045로 판정)은 기본 공격 대신
     // 차수별 확률로 마법 공격 × arcaneStrikeRatio의 마법 피해를 줍니다. 마나를 쓰지 않습니다.
     // v25.2: 계수 0.6 → 0.7, 1~2차 확률 0.7/0.8 → 0.8/0.85. 마법 직업의 기본 행동(마력 평타)이 물리 기본 공격의 60~68%에 그쳐 1차 마법 직업 승률이 70% 아래였습니다.
@@ -136,7 +138,7 @@ export const STATUS_GUIDE = [
     { id: 'stun', name: '기절', kind: '행동 차단', description: '다음 행동을 건너뜁니다.', detail: '기절 중에도 출혈 같은 지속 피해는 먼저 처리됩니다.' },
     { id: 'silence', name: '침묵', kind: '스킬 차단', description: '지속 중 액티브 스킬을 사용할 수 없습니다.', detail: '기본 공격은 계속하며, 쿨다운·마나를 낭비하지 않습니다.' },
     { id: 'weaken', name: '약화', kind: '피해 감소', description: `주는 직접 피해가 ${Math.round((1 - SKILL_FORMULA.weakenedDamage) * 100)}% 감소합니다.`, detail: '물리·마법 등 다음 공격의 피해 계산에 적용됩니다.' },
-    { id: 'bleed', name: '출혈', kind: '지속 피해', description: '행동할 때마다 고정 피해를 받습니다.', detail: `명중한 공격의 위력에 따라 출혈 피해가 정해지고 최대 ${STATUS_TUNING.bleedTurns}턴 지속됩니다.` },
+    { id: 'bleed', name: '출혈', kind: '지속 피해', description: '행동할 때마다 고정 피해를 받습니다. 방어·반격을 무시합니다.', detail: `명중한 공격의 위력 + 대상 최대 체력의 ${Math.round(SKILL_FORMULA.dotMaxHpRatio * 100)}%가 틱 피해가 되고 최대 ${STATUS_TUNING.bleedTurns}턴 지속됩니다. 체력이 큰 탱커일수록 아픕니다.` },
     { id: 'slow', name: '감속', kind: '속도 감소', description: `속도가 ${Math.round(STATUS_TUNING.slowMultiplier * 100)}% 낮아져 선공·명중 보정·연속 행동에 불리해집니다.`, detail: '선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
     { id: 'haste', name: '가속', kind: '속도 증가', description: `속도가 ${Math.round(STATUS_TUNING.hasteMultiplier * 100)}% 높아져 선공·명중 보정·연속 행동에 유리해집니다.`, detail: '상대보다 빨라지면 연속 행동 확률이 올라갑니다. 선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
 ] as const;
