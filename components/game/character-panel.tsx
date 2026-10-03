@@ -50,15 +50,15 @@ export function Character({ s, send, busy }: PanelProps) {
     <p className="footnote stat-breakdown-hint">능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
     <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>)}</div></details>
     <div className="derived-summary">
-    <span>장비 드롭 확률 (처치당)<strong>{percent(dropRate(s), 2)}</strong>
+    <span>장비 드롭 확률 (포획당)<strong>{percent(dropRate(s), 2)}</strong>
     </span>
     <span>골드 획득 배율<strong>×{goldMultiplier(s).toFixed(2)}</strong>
     </span>
-    {(() => { const c = variantChances(s), total = VARIANTS.reduce((a, v) => a + c[v.id], 0), golden = researchRank(s, 'goldenFish') * .001; return <span title={`낚시터에서 어종을 ${VARIANT_BOOK_MIN}회 이상 포획한 뒤부터 입질마다 변종을 판정합니다. ${VARIANTS.map(v => `${v.mark} ${v.name} ${percent(c[v.id], 1)}`).join(' · ')}. 황금 개체는 포획 순간 따로 판정(진주 연구 ${percent(golden, 1)}). 해초림 테마 +10%, 무리 감지 패시브 +50%.`}>변종 조우 확률 (입질당)<strong>{percent(total, 1)}{golden ? ` · 황금 ${percent(golden, 1)}` : ''}</strong></span>; })()}
+    {(() => { const c = variantChances(s), total = VARIANTS.reduce((a, v) => a + c[v.id], 0), golden = researchRank(s, 'goldenFish') * .001; return <span title={`낚시터에서 어종을 ${VARIANT_BOOK_MIN}회 이상 포획한 뒤부터 입질마다 변종을 판정합니다. ${VARIANTS.map(v => `${v.mark} ${v.name} ${percent(c[v.id], 1)}`).join(' · ')}. 황금 개체는 포획 순간 따로 판정(진주 연구 ${percent(golden, 1)}). 해초림 테마 +10%, 무리 감지 패시브 +50%.`}>변종 조우 확률 (포획당)<strong>{percent(total, 1)}{golden ? ` · 황금 ${percent(golden, 1)}` : ''}</strong></span>; })()}
     <span>경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
     <span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong>
     </span>
-    <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}${s.skills.includes('firstAid') && canUse(s, 'firstAid') ? ` + 응급처치 ${percent(FIRST_AID_HEAL)}` : ''}만큼 회복합니다(연구 ‘회복’ 1단계마다 +1%p). 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 기준입니다.`}>처치 후 회복 (승리당)<strong>{percent(victoryHealRate(s) + (s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0))} · {victoryHeal(s).toLocaleString()} HP</strong>
+    <span title={`포획할 때마다 최대 체력의 ${percent(victoryHealRate(s))}${s.skills.includes('firstAid') && canUse(s, 'firstAid') ? ` + 응급처치 ${percent(FIRST_AID_HEAL)}` : ''}만큼 회복합니다(연구 ‘회복’ 1단계마다 +1%p). 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 기준입니다.`}>포획 후 회복 (포획당)<strong>{percent(victoryHealRate(s) + (s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0))} · {victoryHeal(s).toLocaleString()} HP</strong>
     </span>
     </div>
     </section>

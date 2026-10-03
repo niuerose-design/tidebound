@@ -80,7 +80,7 @@ export const buildActions: ActionHandlers = {
             throw Error('전직으로 얻은 미계승 스킬만 SP로 계승할 수 있습니다.');
         const cost = skillCost();
         if (s.sp < cost)
-            throw Error('계승에는 1 SP가 필요합니다. 장착 승리로 무료 계승할 수도 있습니다.');
+            throw Error('계승에는 1 SP가 필요합니다. 장착 포획으로 무료 계승할 수도 있습니다.');
         s.sp -= cost;
         s.skillSpent[id] = (s.skillSpent[id] || 0) + cost;
         s.skillInheritances[id] = true;

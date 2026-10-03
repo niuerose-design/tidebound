@@ -8,14 +8,14 @@ import { GUILD_MAX_MEMBERS, GUILD_CREATE_COST, GUILD_RENAME_COST, GUILD_DONATION
 
 /**
  * v25.11 공유 길드 서비스. 길드는 계정 단위(캐릭터 슬롯 공통)이고, 세이브에는 소속 캐시(guildMember)와 이번 주 기여(guildStats)만 둡니다.
- * 기여 업로드는 60초에 한 번, 소속 캐시 갱신은 10분에 한 번이라 평소 동기화에는 추가 질의가 없습니다.
+ * 기여 업로드는 5분에 한 번(v25.21), 소속 캐시 갱신은 10분에 한 번이라 평소 동기화에는 추가 질의가 없습니다.
  */
-const UPLOAD_MS = 60_000, REFRESH_MS = 10 * 60_000, BOARD_SIZE = 20;
+const UPLOAD_MS = 5 * 60_000, REFRESH_MS = 10 * 60_000, BOARD_SIZE = 20;
 const cleanName = (name: unknown) => String(name ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 16);
 const randomCode = () => { const bytes = crypto.getRandomValues(new Uint8Array(6)); return Array.from(bytes, b => GUILD_CODE_CHARS[b % GUILD_CODE_CHARS.length]).join(''); };
 const totalsOf = (g: { week: string } & GuildTotals, week: string): GuildTotals => g.week === week ? { catches: g.catches, clears: g.clears, bosses: g.bosses, abyss: g.abyss, donated: g.donated } : emptyTotals();
 const claimsOf = (m: GuildMemberRow, week: string) => m.week === week && m.claimed ? m.claimed.split(',').filter(Boolean) : [];
-/** 채팅 채널 판정용 소속 캐시(인스턴스 메모리, 60초). 탈퇴·추방은 즉시 지웁니다. */
+/** 채팅 채널 판정용 소속 캐시(인스턴스 메모리, 5분). 탈퇴·추방은 즉시 지웁니다. */
 const channelCache = new Map<string, { guildId: string | null; until: number }>();
 export async function guildIdOf(account: string, now: number) {
     const hit = channelCache.get(account);
@@ -45,7 +45,7 @@ export async function guildInfo(account: string, now: number): Promise<GuildInfo
         goals: makeGuildGoals(members.length).map(goal => ({ ...goal, progress: guildGoalProgress(goal, totals), claimed: claimed.includes(goal.id) })),
         members: members.map(m => { const t = totalsOf(m, week); return { account: m.account_id, name: m.name, leader: m.account_id === g.leader, self: m.account_id === account, joinedAt: m.joined_at, totals: t, points: guildPoints(t) }; }) } };
 }
-/** 저장 전에 한 번: 소속이면 60초마다 이번 주 기여 차이를 올리고, 10분마다 소속 캐시(이름·리더·탈퇴 여부)를 맞춥니다. 무소속이면 질의 0. */
+/** 저장 전에 한 번: 소속이면 5분마다 이번 주 기여 차이를 올리고, 10분마다 소속 캐시(이름·리더·탈퇴 여부)를 맞춥니다. 무소속이면 질의 0. */
 export async function syncGuild(account: string, s: State, now: number) {
     const cache = s.guildMember;
     if (!cache) return;

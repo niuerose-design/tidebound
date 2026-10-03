@@ -33,8 +33,8 @@ export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, ke
     const scale = weekly ? 6 : 1;
     const goals: Goal[] = [
         { id: 'catch', kind: 'catch', target: 60 * scale, pearls: weekly ? 4 : 1, progress: 0 },
-        { id: 'species', kind: 'species', subject: pick(fishPool, seed), target: 25 * scale, pearls: weekly ? 5 : 1, essence: weekly ? 10 : 2, progress: 0 },
-        dungeons.length ? { id: 'dungeon', kind: 'dungeon', subject: pick(dungeons, seed >>> 3).id, target: weekly ? 5 : 1, pearls: weekly ? 6 : 1, essence: weekly ? 15 : 3, progress: 0 } : { id: 'boss', kind: 'boss', target: weekly ? 6 : 1, pearls: weekly ? 6 : 1, progress: 0 },
+        { id: 'species', kind: 'species', subject: pick(fishPool, seed), target: 25 * scale, pearls: weekly ? 5 : 2, progress: 0 },
+        dungeons.length ? { id: 'dungeon', kind: 'dungeon', subject: pick(dungeons, seed >>> 3).id, target: weekly ? 5 : 1, pearls: weekly ? 7 : 2, progress: 0 } : { id: 'boss', kind: 'boss', target: weekly ? 6 : 1, pearls: weekly ? 6 : 1, progress: 0 },
     ];
     if (weekly) goals.push({ id: 'boss', kind: 'boss', target: 12, pearls: 5, progress: 0 });
     // v25.12 랭크 결투 승리 목표. 상대가 없는 서버도 있으니 선택 목표로 두고 모두 달성 보너스에는 세지 않습니다.

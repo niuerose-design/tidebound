@@ -6,7 +6,7 @@ import { rareSpawnBonus } from '../systems/book';
 export type VariantId = 'giant' | 'abyssal' | 'starlit' | 'swarm';
 export type VariantDef = {
     id: VariantId; name: string; mark: string; desc: string;
-    /** 입질당 기본 확률. */
+    /** 포획당 기본 확률. */
     chance: number;
     /** 체력·공격(마공 포함)·속도 배율. */
     hp: number; attack: number; speed?: number;
@@ -16,14 +16,14 @@ export type VariantDef = {
     drops: number; guaranteed?: boolean;
     /** 도감 포획 수 증가분(마리당). */
     book: number;
-    /** 처치 시 진주(환생 3회부터 +1). */
+    /** 포획 시 진주(환생 3회부터 +1). */
     pearls?: number;
 };
 export const VARIANT_BOOK_MIN = 10;
 /** ×500 무리를 만나려면 장착해야 하는 공용 패시브. */
 export const SWARM_PASSIVE = 'swarmSense';
 export const VARIANTS: VariantDef[] = [
-    { id: 'swarm', name: '무리', mark: '≋', desc: '여러 마리가 한 개체로 덤빕니다. 기본 ×5, 도감 500회부터 ×100, 5,000회에 무리 감지 패시브를 장착하면 ×500. 처치하면 마리 수만큼 보상.', chance: .04, hp: 1, attack: 1, reward: 1, drops: 1, book: 1 },
+    { id: 'swarm', name: '무리', mark: '≋', desc: '여러 마리가 한 개체로 덤빕니다. 기본 ×5, 도감 500회부터 ×100, 5,000회에 무리 감지 패시브를 장착하면 ×500. 포획하면 마리 수만큼 보상.', chance: .04, hp: 1, attack: 1, reward: 1, drops: 1, book: 1 },
     { id: 'giant', name: '거대 개체', mark: '◆', desc: '체력 ×3 · 공격 ×1.25. 경험치·골드 ×4, 드롭 3번 판정, 도감 +3.', chance: .02, hp: 3, attack: 1.25, reward: 4, drops: 3, book: 3 },
     { id: 'abyssal', name: '심연 변이', mark: '◈', desc: '공격 ×1.5 · 속도 ×1.3 · 체력 ×1.5. 희귀 이상 장비 1개 확정 드롭, 경험치·골드 ×3.', chance: .004, hp: 1.5, attack: 1.5, speed: 1.3, reward: 3, drops: 1, guaranteed: true, book: 1 },
     { id: 'starlit', name: '별빛 개체', mark: '✧', desc: '체력 ×1.5. 진주 +1(환생 3회부터 +2), 경험치 ×5.', chance: .008, hp: 1.5, attack: 1, reward: 1, expMult: 5, drops: 1, book: 1, pearls: 1 },
