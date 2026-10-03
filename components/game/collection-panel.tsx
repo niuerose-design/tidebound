@@ -108,7 +108,7 @@ export function Collection({ s, send, busy }: PanelProps) {
     <div className="notice">
     <BookOpen size={22}/>
     <div>
-    <strong>등록한 종류 {registeredCount} / {Object.keys(SLOTS).length * RARITIES.length} · 장비 드롭 확률 {percent(currentDrop, 3)}/포획</strong>
+    <strong>등록한 종류 {registeredCount} / {Object.keys(SLOTS).length * RARITIES.length} · 장비 드롭 확률 {percent(currentDrop, 3)}</strong>
     <p>도감 보너스 +{Math.round(registeredCount * PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}% 포함, 행운·연구·이벤트를 모두 더한 실제 값입니다. 한 종류 더 등록하면 약 +{percent(perEntryDrop, 4)}p. 가방의 장비 한 개를 영구 등록하며 해당 장비는 소모됩니다. 같은 슬롯·등급은 한 번만 등록합니다.</p>
     </div>
     <AlertDialog>
@@ -136,7 +136,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             <SlotIcon slot={slot} size={32}/>
             </div>
             <h3>{EQUIPMENT_NAMES[slot as keyof typeof EQUIPMENT_NAMES][i]}</h3>
-            <p>{label} · 장비 드롭 확률 +{percent(perEntryDrop, 4)}p (전체 드롭 확률 기준)</p>
+            <p>{label} · 장비 드롭 확률 +{percent(perEntryDrop, 4)}p</p>
             <AlertDialog>
             <AlertDialogTrigger asChild>
             <button className="secondary" disabled={busy || !!registered || !candidate}>{registered ? '영구 보너스 적용 중' : candidate ? '장비 1개 등록' : '가방에 해당 장비 없음'}</button>
