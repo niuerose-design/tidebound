@@ -10,7 +10,7 @@ import { EQUIPMENT_NAMES } from '@/game/data/equipment';
 import { PROGRESSION, STAT_LABELS, statDisplay, percent } from '@/game/data/progression';
 import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
-import { stats, mastery, goldMultiplier, hitChance } from '@/game/systems/stats';
+import { stats, mastery, goldMultiplier, hitChance, dropRate } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats } from '@/game/data/encounters';
 import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel } from '@/game/systems/book';
 import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES } from '@/game/data/book-traits';
@@ -50,6 +50,11 @@ import type { PanelProps } from './panel-props';
 export function Collection({ s, send, busy }: PanelProps) {
     const player = stats(s), bookComplete = PROGRESSION.fishComplete;
     const complete = FISH.filter(f => (s.book[f.id] || 0) >= bookComplete).length, regions = completedRegions(s), pendingBooks = pendingBookCount(s);
+    // v26.8 물건도감: 표시 확률은 전체 장비 드롭 확률(행운·연구·이벤트 포함) 기준. 한 종류 더 등록했을 때의 증가분을 %p로 보여 줍니다.
+    const registeredCount = Object.keys(s.itemBook).length, currentDrop = dropRate(s);
+    const perEntryDrop = Math.max(0, dropRate({ ...s, itemBook: { ...s.itemBook, ['preview:next']: true } }) - currentDrop);
+    const bulkCandidates = Object.keys(SLOTS).flatMap(slot => RARITIES.map((_, i) => s.itemBook[itemKey(slot, i)] ? null : s.inventory.filter(x => x.slot === slot && x.rarity === i && !x.locked && !x.relic).sort((a, b) => a.power - b.power || (a.enhance || 0) - (b.enhance || 0))[0] || null)).filter((x): x is NonNullable<typeof x> => !!x);
+
     return <>
     <Heading eyebrow="ARCHIVE & RESEARCH" title="기록이 힘이 되는 도감" description="개체도감으로 편성의 폭을 넓히고, 물건도감으로 다음 장비를 만날 확률을 높이세요."/>
     {pendingBooks > 0 && <div className="notice book-claim-all"><BookOpen size={18}/><div><strong>받지 않은 연구 보상 {pendingBooks}단계</strong><span>어종별 미수령 보상을 한 번에 받습니다</span></div><button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimAllBooks' })}>모두 받기</button></div>}
@@ -103,9 +108,22 @@ export function Collection({ s, send, busy }: PanelProps) {
     <div className="notice">
     <BookOpen size={22}/>
     <div>
-    <strong>등록한 종류 {Object.keys(s.itemBook).length} / {Object.keys(SLOTS).length * RARITIES.length} · 장비 드롭 확률 +{Math.round(Object.keys(s.itemBook).length * PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}%</strong>
-    <p>가방의 장비 한 개를 영구 등록하며, 해당 장비는 소모됩니다. 같은 슬롯·등급은 한 번만 등록합니다.</p>
+    <strong>등록한 종류 {registeredCount} / {Object.keys(SLOTS).length * RARITIES.length} · 장비 드롭 확률 {percent(currentDrop, 3)}/포획</strong>
+    <p>도감 보너스 +{Math.round(registeredCount * PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}% 포함, 행운·연구·이벤트를 모두 더한 실제 값입니다. 한 종류 더 등록하면 약 +{percent(perEntryDrop, 4)}p. 가방의 장비 한 개를 영구 등록하며 해당 장비는 소모됩니다. 같은 슬롯·등급은 한 번만 등록합니다.</p>
     </div>
+    <AlertDialog>
+    <AlertDialogTrigger asChild><button className="secondary" disabled={busy || !bulkCandidates.length}>{bulkCandidates.length ? `일괄 등록 (${bulkCandidates.length}종)` : '일괄 등록할 장비 없음'}</button></AlertDialogTrigger>
+    <AlertDialogContent>
+    <AlertDialogHeader>
+    <AlertDialogTitle>미등록 {bulkCandidates.length}종을 한 번에 등록할까요?</AlertDialogTitle>
+    <AlertDialogDescription>종류마다 가방에서 가장 약한 장비 1개를 골라 소모합니다: {bulkCandidates.map(c => `${c.name}${c.enhance ? ` +${c.enhance}` : ''}`).join(', ')}. 보호 장비와 유물은 제외되며 돌려받을 수 없습니다.</AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+    <AlertDialogCancel>취소</AlertDialogCancel>
+    <AlertDialogAction onClick={() => send({ type: 'registerItemAll' })}>모두 등록</AlertDialogAction>
+    </AlertDialogFooter>
+    </AlertDialogContent>
+    </AlertDialog>
     </div>
     <div className="item-grid">{Object.entries(SLOTS).flatMap(([slot, label]) => RARITIES.map((rarity, i) => {
             const key = itemKey(slot, i), registered = s.itemBook[key], candidate = s.inventory.find(item => item.slot === slot && item.rarity === i && !item.locked && !item.relic);
@@ -118,7 +136,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             <SlotIcon slot={slot} size={32}/>
             </div>
             <h3>{EQUIPMENT_NAMES[slot as keyof typeof EQUIPMENT_NAMES][i]}</h3>
-            <p>{label} · 장비 드롭 확률 +{Math.round(PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}%</p>
+            <p>{label} · 장비 드롭 확률 +{percent(perEntryDrop, 4)}p (전체 드롭 확률 기준)</p>
             <AlertDialog>
             <AlertDialogTrigger asChild>
             <button className="secondary" disabled={busy || !!registered || !candidate}>{registered ? '영구 보너스 적용 중' : candidate ? '장비 1개 등록' : '가방에 해당 장비 없음'}</button>

@@ -51,3 +51,11 @@ test('v25.9 tutorial: 8 steps, dungeon/enhance steps complete by clears or enhan
     s.clears = { grotto: 1 }; assert.ok(TUTORIAL_STEPS.find(x => x.id === 'dungeon').done(s)); s.equipment.rod.enhance = 1; assert.ok(TUTORIAL_STEPS.find(x => x.id === 'enhance').done(s));
     s.job = 'physical'; assert.equal(tutorialEarly(s), false); const r = newState(0); r.rebirths = 1; assert.equal(tutorialEarly(r), false, 'rebirth completes the early steps');
 });
+
+test('v26.8 registerItemAll registers one weakest unlocked item per missing slot/rarity and skips locked/relic', () => {
+    const s = newState(0);
+    s.inventory.push({ id: 'r0a', slot: 'rod', rarity: 0, power: 9, level: 1, name: 'strong rod' }, { id: 'r0b', slot: 'rod', rarity: 0, power: 3, level: 1, name: 'weak rod' }, { id: 'c1', slot: 'coat', rarity: 1, power: 5, level: 1, name: 'coat', locked: true }, { id: 'm2', slot: 'charm', rarity: 2, power: 5, level: 1, name: 'relic charm', relic: true }, { id: 'm0', slot: 'charm', rarity: 0, power: 2, level: 1, name: 'charm' });
+    act(s, { type: 'registerItemAll' }, 0);
+    assert.deepEqual(Object.keys(s.itemBook).sort(), ['charm:0', 'rod:0']); assert.deepEqual(s.inventory.map(x => x.id).sort(), ['c1', 'm2', 'r0a'], 'weakest rod consumed, locked/relic kept');
+    assert.throws(() => act(s, { type: 'registerItemAll' }, 0), /미등록 장비가 가방에 없습니다/);
+});

@@ -2,6 +2,7 @@
 import { BOSS_RESEARCH } from '../../data/specializations';
 import type { State } from '../../types';
 import { FISH, DUNGEONS } from '../../data/world';
+import { SLOTS, RARITIES } from '../../data/balance';
 import { bookPending, itemKey } from '../progression';
 import type { ActionHandlers } from './types';
 import { addLog } from '../state';
@@ -48,5 +49,20 @@ export const collectionActions: ActionHandlers = {
         s.itemBook[key] = true;
         s.inventory = s.inventory.filter(x => x.id !== id);
         addLog(s, `${item.name} 물건도감 등록 · 장비 1개 소모`, 'reward');
+    },
+    /** v26.8 일괄 등록: 미등록 슬롯·등급마다 가방에서 가장 약한(위력 낮은) 장비 1개를 골라 한 번에 등록합니다. 보호·유물은 제외. */
+    registerItemAll(s) {
+        const picked: string[] = [];
+        for (const slot of Object.keys(SLOTS)) for (let rarity = 0; rarity < RARITIES.length; rarity++) {
+            const key = itemKey(slot, rarity);
+            if (s.itemBook[key]) continue;
+            const candidate = s.inventory.filter(x => x.slot === slot && x.rarity === rarity && !x.locked && !x.relic).sort((a, b) => a.power - b.power || (a.enhance || 0) - (b.enhance || 0))[0];
+            if (!candidate) continue;
+            s.itemBook[key] = true;
+            s.inventory = s.inventory.filter(x => x.id !== candidate.id);
+            picked.push(candidate.name);
+        }
+        if (!picked.length) throw Error('등록할 수 있는 미등록 장비가 가방에 없습니다.');
+        addLog(s, `물건도감 일괄 등록 ${picked.length}종 · ${picked.join(', ')} 소모`, 'reward');
     },
 };
