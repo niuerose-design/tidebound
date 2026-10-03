@@ -172,6 +172,9 @@
 .scene-actions .scene-control.primary{padding:11px 18px;font-size:14px;font-weight:700;letter-spacing:.2px;color:#0b1b1f;background:#a4e9ba;border:1px solid #d7ffe6;box-shadow:0 0 0 3px #0b1b1fcc,0 0 22px #a4e9ba99,0 6px 18px #0008;animation:scene-start-pulse 2.2s ease-in-out infinite}
 .scene-actions .scene-control.primary:hover{background:#c2f5d2}
 .scene-actions .scene-control.primary svg{width:19px;height:19px}
+/* 낚시 일시정지도 같은 크기. 주황빛 후광(맥동 없음)으로 '진행 중'을 알립니다. */
+.scene-actions .scene-control.pause-button{padding:11px 18px;font-size:14px;font-weight:700;letter-spacing:.2px;border:1px solid #ffd9b3;box-shadow:0 0 0 3px #0b1b1fcc,0 0 18px #f0b47a80,0 6px 18px #0008}
+.scene-actions .scene-control.pause-button svg{width:19px;height:19px}
 @keyframes scene-start-pulse{0%,100%{box-shadow:0 0 0 3px #0b1b1fcc,0 0 18px #a4e9ba80,0 6px 18px #0008}50%{box-shadow:0 0 0 3px #0b1b1fcc,0 0 30px #a4e9bacc,0 6px 18px #0008}}
 @media(prefers-reduced-motion:reduce){.scene-actions .scene-control.primary{animation:none}}
 .battle-console .battle-scene .enemy-status{bottom:24px}
@@ -180,7 +183,7 @@
   .scene-top{align-items:flex-start;gap:10px;padding:16px 17px}
   .scene-actions{gap:5px}
   .scene-actions .scene-control{font-size:10px;padding:7px 8px}
-  .scene-actions .scene-control.primary{font-size:13px;padding:10px 14px}
+  .scene-actions .scene-control.primary,.scene-actions .scene-control.pause-button{font-size:13px;padding:10px 14px}
   .scene-actions .scene-link{font-size:10px;padding:6px 7px}
 }
 
