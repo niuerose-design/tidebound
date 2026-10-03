@@ -63,7 +63,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     electricBite: { chance: .28, multiplier: 1.75, damageType: 'physical' },
     tentacleBarrage: { chance: .22, multiplier: 1.05, extraAttackMultiplier: .45 },
     sovereignSilence: { chance: .5, multiplier: 1.05, manaCost: 16 },
-    borrowedTentacles: { chance: .22, multiplier: 1.15, extraAttackMultiplier: .55 },
+    borrowedTentacles: { chance: .26, multiplier: 1.6, extraAttackMultiplier: .7 },
     ...EXPANSION_BALANCE,
     ...LINEAGE_BALANCE,
     ...V24_BALANCE,

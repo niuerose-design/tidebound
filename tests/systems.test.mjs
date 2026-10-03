@@ -98,3 +98,17 @@ test('v25.2 arcane fish strike with magic damage against resist; magic jobs gain
     const s = newState(0); s.level = 60; s.job = 'sage'; s.unlockedJobs = ['fisher', 'sage'];
     assert.equal(stats(s).arcaneRatioBonus, BALANCE_FORMULA.arcaneRatioByTier[4]); s.job = 'harpoon'; assert.equal(stats(s).arcaneRatioBonus, 0, 'physical jobs get none');
 });
+
+test('v27 tidal fish deal split basic attacks (half physical, half magic defense) and enemy skills cover all damage types', async () => {
+    const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { profile, ENEMY_SKILLS } = await mods.load('data/encounters'); const { strike } = await mods.load('systems/combat');
+    assert.ok(profile('perch').splitBasic && !profile('carp').splitBasic);
+    assert.deepEqual(['physical', 'magic', 'split'].map(t => ENEMY_SKILLS.some(sk => (sk.damageType || 'physical') === t && !sk.statusOnly)), [true, true, true]);
+    const st = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 100, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const foe = (extra) => ({ name: 'fish', stats: st, hp: 1000, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 100, ...extra });
+    const armoredOnly = (hp) => ({ name: 'p', stats: { ...st, defense: 200, resist: 0 }, hp, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    const a = armoredOnly(1e6), b = armoredOnly(1e6); const r = () => 0;
+    strike(foe({}), a, r); strike(foe({ splitBasic: true }), b, r);
+    const physicalDamage = 1e6 - a.hp, splitDamage = 1e6 - b.hp;
+    assert.ok(splitDamage > physicalDamage * 2, `split basic ignores half of the physical-only defense: ${splitDamage} vs ${physicalDamage}`);
+});
