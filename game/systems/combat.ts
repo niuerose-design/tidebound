@@ -355,7 +355,9 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (landed && !statusOnly && sb.thorns > 0) {
         // v27.2 공격자 방어를 절반만 적용하고, 무리 규모에 따라 (1 + log2 N)배(최대 10배). 탱커가 무리 사냥에서 빛나는 장치입니다.
         const crowd = a.swarm && a.swarm > 1 ? Math.min(SKILL_FORMULA.swarmThornsCap, 1 + Math.log2(a.swarm)) : 1;
-        const reflected = Math.min(a.hp, Math.max(1, Math.round(sb.defense * sb.thorns * crowd * 100 / (100 + sa.defense * 2 * (1 - SKILL_FORMULA.thornsPierce)))));
+        // v27.2 마법 공격을 맞으면 마법 방어로 반격합니다(결계 계보가 마법 무리를 갈 수 있도록). 공격자도 같은 종류의 방어로 막습니다.
+        const guard = magical ? sb.resist : sb.defense, foeGuard = magical ? sa.resist : sa.defense;
+        const reflected = Math.min(a.hp, Math.max(1, Math.round(guard * sb.thorns * crowd * 100 / (100 + foeGuard * 2 * (1 - SKILL_FORMULA.thornsPierce)))));
         a.hp = Math.max(0, a.hp - reflected);
         endure(a, sa, notes, ev, true);
         ev.reflected = reflected;

@@ -68,7 +68,7 @@ export function Guide({ s }: { s?: State }) {
                     condition="명중·회피 수치는 확률이 아닙니다. 어종별 실제 적중률은 도감에서 봅니다."
                     limit="적중률은 1~99.5%. 회피는 50%를 넘으면 효율이 줄어 90%에 수렴합니다."/>
                 <Rule icon={<Shield size={19}/>} title="반격 · 무리 사냥"
-                    effect={`맞을 때마다 (내 물리 방어 × 반격 계수)를 돌려줍니다. 공격자 방어는 ${Math.round((1 - SKILL_FORMULA.thornsPierce) * 100)}%만 적용합니다. 무리 ×N을 상대하면 반격이 (1 + log₂N)배: ×5 약 3.3배 · ×100 약 7.6배 · ×500 ${SKILL_FORMULA.swarmThornsCap}배.`}
+                    effect={`맞을 때마다 (내 방어 × 반격 계수)를 돌려줍니다. 물리 공격을 맞으면 물리 방어, 마법 공격을 맞으면 마법 방어 기준입니다. 공격자 방어는 ${Math.round((1 - SKILL_FORMULA.thornsPierce) * 100)}%만 적용합니다. 무리 ×N을 상대하면 반격이 (1 + log₂N)배: ×5 약 3.3배 · ×100 약 7.6배 · ×500 ${SKILL_FORMULA.swarmThornsCap}배.`}
                     condition="탱커 계보 패시브는 반격과 함께 무리 조우 확률을 올립니다(+30~120%). 탱커는 1:1이 느린 대신 무리를 반격으로 갈아 마리 수만큼 보상을 받는 길입니다."
                     limit="반격은 흡혈이 2배로 적용되고, 피해 없는 상태이상 기술에는 발동하지 않습니다."/>
             </div>
