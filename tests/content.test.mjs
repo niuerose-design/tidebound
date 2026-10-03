@@ -256,3 +256,8 @@ test('v27.20 plain (white) gear can be bought for the item book',()=>{
  const it=s.inventory[0];assert.equal(it.rarity,0);assert.equal(it.slot,'charm');assert.equal(it.affix,undefined);assert.equal(it.power,22);assert.equal(before-s.gold,Math.max(30,Math.floor(shopCost(s)*.2)));
  act(s,{type:'registerItem',id:it.id},0);assert.equal(s.itemBook['charm:0'],true);
 });
+
+test('v27.21 tide tier multiplies catch mastery on stages only',()=>{
+ const run=(tide,dungeon)=>{const s=newState(0);s.running=true;s.rebirths=10;s.tide=tide;if(dungeon){s.dungeon={id:'grotto',wave:0};}s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};let g=0;while(s.enemy&&s.enemy.hp>0&&g++<50)tick(s,()=>.5);return s.jobMastery.fisher||0;};
+ const base=run(0,false);assert.ok(base>0);assert.equal(run(10,false),Math.floor(base*4),'tide 10 → ×4');assert.equal(run(10,true),base,'dungeons ignore tide for mastery');
+});

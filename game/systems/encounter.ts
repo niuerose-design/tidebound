@@ -3,7 +3,7 @@ import { BOSS_RESEARCH } from '../data/specializations';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus, TIDE_MILESTONES, TIDE_MILESTONE_PEARLS } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets } from './progression';
-import { catchReward, encounterTier } from './meta';
+import { catchReward, encounterTier, tierMastery } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
@@ -152,7 +152,9 @@ export function reward(s: State, rng: () => number) {
     const focusMastery = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     // v27.14 서버 이벤트 숙련 배율(State.event.mastery). 정수로 유지하려고 올림 없이 곱한 뒤 연구 보정으로 넘깁니다.
     const eventMastery = s.event?.mastery || 1;
-    const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * size * focusMastery * eventMastery)), practice = researched.total;
+    // v27.21 해역 난이도가 높을수록 포획 숙련이 늘어납니다(낚시터만, 던전은 난이도 0 취급).
+    const tideMastery = s.dungeon ? 1 : tierMastery(encounterTier(s));
+    const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * size * focusMastery * eventMastery * tideMastery)), practice = researched.total;
     const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult), exp = Math.floor(e.exp * expMultiplier(s) * expMult) * size;
     // 황금 개체: 난파선 수집가 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
     const goldenChance = stats(s).goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
