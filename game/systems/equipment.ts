@@ -3,6 +3,8 @@ import { ECONOMY, AFFIXES, smithDiscount } from '../data/economy';
 import { ESSENCE_BY_RARITY, rerollEssence } from '../data/gear';
 import { fishGoldAt } from '../data/world';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
+/** 나침반: 위력 1당 치명타 +0.2%p, 치명타 상한 15%. 상한을 넘는 위력은 같은 비율로 치명 피해에 갑니다. */
+export const CHARM_CRIT_PER_POWER = .002, CHARM_CRIT_CAP = .15;
 export function itemStats(item: Item): Partial<Stats> {
     const p = item.power * (1 + (item.enhance || 0) * ECONOMY.enhanceGain);
     const result: Partial<Stats> = {};
@@ -15,8 +17,12 @@ export function itemStats(item: Item): Partial<Stats> {
         result.defense = p;
         result.resist = p * .5;
     }
-    if (item.slot === 'charm')
-        result.crit = Math.min(.15, p * .002);
+    if (item.slot === 'charm') {
+        // v27.18 치명타는 15%까지만 오르고, 그 위로는 강화·위력이 치명 피해로 갑니다(이전에는 위력 75부터 강화해도 수치가 멈췄습니다).
+        result.crit = Math.min(CHARM_CRIT_CAP, p * CHARM_CRIT_PER_POWER);
+        const overflow = p - CHARM_CRIT_CAP / CHARM_CRIT_PER_POWER;
+        if (overflow > 0) result.critDamage = overflow * CHARM_CRIT_PER_POWER;
+    }
     if (item.affix)
         result[item.affix.stat] = (result[item.affix.stat] || 0) + item.affix.value;
     for (const affix of item.affixes || []) {

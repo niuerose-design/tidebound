@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf} from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -229,4 +229,12 @@ test('v27.16 stuck-state repair: NaN hp, dead enemy left over, unknown stage, an
  const u=newState(0);u.running=true;u.enemy={id:'minnow',name:'돌',hp:10,maxHp:10,attack:0,defense:0,exp:1,gold:1,boss:false,stun:99999,combatStats:{hp:10,attack:0,magic:0,defense:1e9,resist:1e9,crit:0,speed:1,evasion:0,accuracy:0}};
  u.hp=1;for(let i=0;i<130&&u.enemy&&u.enemy.id==='minnow';i++)tick(u,()=>.5);
  assert.ok(!u.enemy||u.enemy.id!=='minnow'||u.enemy.hp<10,'stalemate broken within 130 turns');
+});
+
+test('v27.18 charm enhancement keeps paying past the 15% crit cap by raising crit damage',()=>{
+ const mk=(power,enhance)=>equipment.itemStats({id:'c',name:'c',slot:'charm',power,level:1,enhance});
+ assert.equal(mk(50,0).crit,.1);assert.equal(mk(50,0).critDamage,undefined);
+ const capped=mk(100,0),more=mk(100,5);assert.equal(capped.crit,.15);assert.equal(more.crit,.15);
+ assert.ok((more.critDamage||0)>(capped.critDamage||0),'enhancing a capped charm still adds crit damage: '+capped.critDamage+' → '+more.critDamage);
+ assert.ok(Math.abs(capped.critDamage-(100-75)*.002)<1e-9);
 });
