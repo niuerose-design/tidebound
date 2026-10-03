@@ -12,7 +12,7 @@ test('v25 clockmaker: time machine restores both sides once per battle; mastery 
     const text = strike(a, b, () => 0); assert.match(text, /타임머신/); assert.equal(a.hp, 1000); assert.equal(b.hp, 1e6); assert.ok(a.effects.timeUsed);
     a.hp = 10; strike(a, b, () => 0); assert.equal(a.hp, 10, 'only once per battle');
     const s = newState(0); s.level = 10; s.attributes.dex = 30; s.attributes.int = 30;
-    assert.ok(doors.TIME_SLOTS.every(t => t.jobs.includes('clockmaker')), 'the time door holds the clockmaker all day');
+    assert.ok(doors.DISCOVERY_DOORS.some(d => d.job === 'clockmaker' && d.test({ playMs: 10 * 3600_000 }) && !d.test({ playMs: 0 })), 'v27.12 the clockmaker opens after ten hours at sea');
     assert.equal(canChangeJob(s, 'chronarch'), false); s.jobMastery.clockmaker = 3000; assert.equal(canChangeJob(s, 'chronarch'), true, 'mastery alone opens the chronarch');
     assert.equal(JOBS.find(j => j.id === 'chronarch').tier, 4);
 });

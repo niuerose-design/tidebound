@@ -17,8 +17,8 @@ test('Job UI: a silhouette reveals its name when its door is open or all gate co
     s.rebirths = 1; s.jobMastery.wanderer = 75; assert.equal(ui.jobRevealed(s, job('voidcaller')), false, 'door still closed');
     s.rebirths = 0; s.jobMastery.wanderer = 0; s.rebirthDoor = 'voidcaller'; assert.equal(ui.jobRevealed(s, job('voidcaller')), true, 'an open door reveals the job even before the other gates');
     s.rebirthDoor = undefined; assert.equal(ui.jobRevealed(s, job('lichKing')), false, 'hidden job without a door still needs its gates');
-    assert.equal(ui.jobRevealed(s, job('undead')), false, 'closed time door keeps the silhouette');
-    s.lastTick = at(2026, 10, 1, 3); assert.equal(ui.jobRevealed(s, job('undead')), true, 'dawn door open');
+    assert.equal(ui.jobRevealed(s, job('undead')), false, 'closed discovery door keeps the silhouette');
+    s.deaths = 10; assert.equal(ui.jobRevealed(s, job('undead')), true, 'v27.12 ten defeats open the undead door'); s.deaths = 0;
     const t = newState(0); t.unlockedJobs.push('skeleton'); assert.equal(ui.jobRevealed(t, job('skeleton')), true, 'entered once → shown');
     const m = newState(0); m.jobMastery.bonecaster = jobMasteryTarget(job('bonecaster')); assert.equal(ui.jobRevealed(m, job('bonecaster')), true, 'mastered → shown');
 });
@@ -35,14 +35,11 @@ test('Job UI: quick finder and search never leak silhouette names', () => {
     s.growthGoal = { kind: 'job', id: 'whaler' }; assert.deepEqual(ui.finderJobs(s, 'goal', []).map(j => j.id), ['whaler']);
 });
 
-test('Job UI: the visitor door reveals its visitor while it stays', async () => {
-    const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
-    const { visitorSchedule } = await load('data/doors');
-    const visit = visitorSchedule('2026-10-01')[0];
-    const s = newState(0); s.lastTick = at(2026, 10, 1, visit.from);
-    assert.equal(ui.jobRevealed(s, job(visit.job)), true, 'visitor present → name shown');
-    const away = [...Array(24).keys()].find(h => !visitorSchedule('2026-10-01').some(v => h >= v.from && h < v.to));
-    s.lastTick = at(2026, 10, 1, away); assert.equal(ui.jobRevealed(s, job(visit.job)), false, 'visitor gone and gates unmet → silhouette');
+test('Job UI: a discovery door reveals its job while the condition holds and keeps it once recorded', () => {
+    const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
+    assert.equal(ui.jobRevealed(s, job('nightHeron')), false, 'condition unmet → silhouette');
+    s.kills = 500; assert.equal(ui.jobRevealed(s, job('nightHeron')), true, 'condition met → name shown');
+    s.kills = 0; assert.equal(ui.jobRevealed(s, job('nightHeron')), false); s.doorsOpened = ['nightHeron']; assert.equal(ui.jobRevealed(s, job('nightHeron')), true, 'recorded door stays open');
 });
 
 test('v25 hidden jobs without gates are shown; the chronarch appears once the clockmaker is mastered', () => {

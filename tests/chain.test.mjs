@@ -52,7 +52,7 @@ test('chain: online ticks and offline advance give the same result', () => {
     const ra = seeded(21), rb = seeded(21);
     for (let i = 0; i < 400; i++) { tick(a, ra); a.lastTick += BALANCE.turnMs; }
     advance(b, 400 * BALANCE.turnMs, rb);
-    b.lastOffline = a.lastOffline; a.doorsOpened = b.doorsOpened; a.event = b.event; // advance()만 문 개방·이벤트를 기록합니다(시각이 필요).
+    b.lastOffline = a.lastOffline; if (b.doorsOpened) a.doorsOpened = b.doorsOpened; a.event = b.event; // advance()만 문 개방·이벤트를 기록합니다(시각이 필요).
     assert.deepEqual(a, b);
     assert.ok(a.logs.some(l => l.event?.chain), 'chains happened');
 });
