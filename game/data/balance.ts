@@ -52,6 +52,8 @@ export function dungeonPressure(wave: number) {
 }
 // 스킬 공식의 기본값. 전투 계산(combat.ts)과 스킬 설명(skill-description.ts)이 같은 값을 씁니다.
 export const SKILL_FORMULA = {
+    // v26.6 주사위: 손가락 자르기 1단계마다 최저 배율은 로그 폭의 diceTrimLow, 최고 배율은 diceTrimHigh만큼 안쪽으로. 최대 diceTrimCap단계.
+    diceTrimLow: .25, diceTrimHigh: .05, diceTrimCap: 3,
     healThreshold: .8, woundedThreshold: .7, healRatio: .22,
     hpScaling: .08, manaScaling: .45, hybridHpScaling: .05, hybridManaScaling: .25,
     crushDefense: 1.5, weakenedDamage: .75, bleedRatio: .22, drainRatio: .25, extraAttackMultiplier: .65,
@@ -135,3 +137,14 @@ export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name
 export const SLOTS = { rod: '낚싯대', coat: '방어구', charm: '나침반' };
 /** 응급처치(공용 패시브): 포획 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
 export const FIRST_AID_HEAL = .04;
+
+/** v26.6 주사위 배율 범위: 손가락 자르기 단계(trim)만큼 양 끝을 안쪽으로 좁힌 [최저, 최고]. */
+export function diceRange(d: { low: number; high: number }, trim = 0) {
+    const t = Math.max(0, Math.min(SKILL_FORMULA.diceTrimCap, trim)), span = d.high / d.low;
+    return { low: d.low * span ** (SKILL_FORMULA.diceTrimLow * t), high: d.high / span ** (SKILL_FORMULA.diceTrimHigh * t) };
+}
+/** v26.6 가장 높은 눈(1~6)에 해당하는 피해 배율. 1→최저, 6→최고, 눈마다 같은 비율로 커집니다. */
+export function diceMultiplier(d: { low: number; high: number }, face: number, trim = 0) {
+    const r = diceRange(d, trim);
+    return r.low * (r.high / r.low) ** ((Math.max(1, Math.min(6, face)) - 1) / 5);
+}

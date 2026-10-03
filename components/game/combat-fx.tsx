@@ -82,11 +82,11 @@ export function SceneFx({ effect }: { effect: CombatFx[] }) {
         {SEAL_GLYPHS.map((g, i) => <b key={g} className="scene-fx-seal" style={fxStyle(fx.delay + i * 70, { '--seal-angle': `${i * 360 / 7 - 90}deg` })}>{g}</b>)}
         <strong className="scene-fx-heaven">天</strong>
         <span className="scene-fx-title">일곱 인 해방</span>
-    </div> : fx.gamble !== undefined ? <div key={fx.id} className={`scene-fx scene-fx-dice ${fx.gamble >= 1.5 ? 'high' : fx.gamble < .8 ? 'low' : 'mid'}`} style={fxStyle(fx.delay)}>
+    </div> : fx.gamble !== undefined ? <div key={fx.id} className={`scene-fx scene-fx-dice ${fx.gamble >= 1.8 ? 'high' : fx.gamble < .6 ? 'low' : 'mid'}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-flash"/>
         <b className="scene-fx-dice-faces">{(fx.dice || [Math.min(6, Math.max(1, Math.round(fx.gamble * 3.5)))]).map((f, i) => <span key={i} style={fxStyle(fx.delay + i * 90)}>{DICE_FACES[f - 1]}</span>)}</b>
         <span className="scene-fx-dice-mult">×{fx.gamble.toFixed(2)}</span>
-        <strong className="scene-fx-dice-line">{fx.gamble >= 1.5 ? '이게 실력이지~' : fx.gamble < .8 ? '좆망겜이네~' : '굴릴 만하네~'}</strong>
+        <strong className="scene-fx-dice-line">{fx.gamble >= 1.8 ? '이게 실력이지~' : fx.gamble < .6 ? '좆망겜이네~' : '굴릴 만하네~'}</strong>
     </div> : <div key={fx.id} className={`scene-fx scene-fx-burst scene-fx-${fx.variant} scene-fx-${fx.kind} ${fx.critical ? 'critical' : ''} ${(fx.tier || 0) >= 4 ? `scene-fx-tier${Math.min(5, fx.tier!)}` : ''}`} style={fxStyle(fx.delay)}>
         {(fx.tier || 0) >= 4 && <i className="scene-fx-dark"/>}<i className="scene-fx-flash"/>{(fx.tier || 0) >= 5 && <><i className="scene-fx-slash"/><span className="scene-fx-title">{fx.title}</span></>}
         {glyphs[fx.variant].slice(0, 4).map((g, i) => <b key={i} className="scene-fx-spark" style={fxStyle(fx.delay + i * 40, { '--fx-x': `${Math.cos(i * Math.PI / 2 + .6) * 180}px`, '--fx-y': `${Math.sin(i * Math.PI / 2 + .6) * 90}px` })}>{g}</b>)}
