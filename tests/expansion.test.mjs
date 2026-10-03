@@ -101,7 +101,7 @@ test('v22 gear: rule options change existing rules within caps and apply from eq
  const arc=(extra)=>{const t=mk([]);strike(mk([],{arcaneStrike:1,...extra}),t,()=>0);return 1e6-t.hp;};assert.equal(arc({arcaneRatioBonus:.2}),Math.round(100*(SKILL_FORMULA.arcaneStrikeRatio+.2)));
 });
 test('v22 gear: scarce drops, dismantle into essence and reroll one option',()=>{
- const s=newState(0);assert.ok(dropRate(s)<=.0015);s.running=true;act(s,{type:'stage',id:'brook'},0);s.running=true;for(let i=0;i<1800;i++)tick(s,rng);assert.ok(s.inventory.length<=2,'about one item an hour at most: '+s.inventory.length);
+ const s=newState(0);assert.ok(dropRate(s)<=.0015);s.running=true;act(s,{type:'stage',id:'brook'},0);s.running=true;for(let i=0;i<1800;i++)tick(s,rng);assert.ok(s.inventory.length<=8,'a few items an hour with variants: '+s.inventory.length);
  s.inventory=[{id:'x',slot:'rod',style:'physical',rarity:4,power:300,level:40,name:'x',origin:'wreck',affixes:gear.rollAffixes(4,300,'wreck',rng)},{id:'y',slot:'coat',rarity:2,power:50,level:10,name:'y',affixes:gear.rollAffixes(2,50,undefined,rng)},{id:'z',slot:'coat',rarity:2,power:50,level:10,name:'z',locked:true}];
  s.essence=0;act(s,{type:'dismantle',id:'y'},0);assert.equal(s.essence,gear.ESSENCE_BY_RARITY[2]);assert.throws(()=>act(s,{type:'dismantle',id:'z'},0));
  s.gold=1e9;assert.throws(()=>act(s,{type:'reforge',id:'x',value:'1'},0),/정수/);s.essence=100;

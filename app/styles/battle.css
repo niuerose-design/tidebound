@@ -429,9 +429,13 @@
 .battle-character-column .player-panel{flex:1}
 .battle-console>.log-panel{flex:1;display:flex;flex-direction:column;min-height:0;margin-bottom:0}
 .battle-console>.log-panel:not(.folded) .log-list{flex:1 1 0;height:auto;min-height:120px}
-.battle-utility-rail>.battle-feed{flex:1;display:flex;flex-direction:column;min-height:0}
-.battle-utility-rail>.battle-feed .battle-feed-list{flex:1 1 0;min-height:160px;max-height:none}
-.battle-utility-rail>.battle-selector-panel .battle-stage-list,.battle-utility-rail>.battle-selector-panel .battle-dungeon-list{max-height:262px}
+/* v25.19 전투 기록·채팅은 내용만큼만(최대 9줄 정도), 남는 높이는 낚시터·던전 목록이 채워 빈 공간이 없게 합니다. */
+.battle-utility-rail>.battle-feed{flex:none}
+.battle-utility-rail>.battle-feed .battle-feed-list{max-height:300px}
+.battle-utility-rail>.battle-feed .chat-list{max-height:260px;min-height:0}
+.battle-utility-rail>.battle-selector-panel{flex:1;display:flex;flex-direction:column;min-height:0}
+.battle-utility-rail>.battle-selector-panel #place-panel{flex:1;display:flex;flex-direction:column;min-height:0}
+.battle-utility-rail>.battle-selector-panel .battle-stage-list,.battle-utility-rail>.battle-selector-panel .battle-dungeon-list{flex:1 1 0;min-height:200px;max-height:none}
 /* 왼쪽 캐릭터 열을 촘촘하게: 전체 높이를 줄입니다. */
 .battle-character-column .player-panel>.section-title{margin-bottom:12px}
 .battle-character-column .player-avatar{width:58px;height:58px;margin-bottom:9px;box-shadow:0 0 0 5px #85774726}
@@ -488,10 +492,43 @@
 .achievement-chevron{margin-left:auto;color:#7f9c98;transition:transform .15s}.achievement-group[open] .achievement-chevron{transform:rotate(180deg)}
 .achievement-group[open] summary{margin-bottom:10px}
 .goal-list li>div.meter{display:block}.goal-list .meter-label{display:flex;justify-content:space-between;white-space:nowrap}
-/* v25.18 도감 ‘연구 보너스’ 탭 */
-.book-bonus-panel{margin-bottom:14px}
-.book-bonus-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.book-bonus-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;border:1px solid var(--border);border-radius:7px;background:#112329;font-size:13px}
-.book-bonus-list li span{color:#a9bdb8;display:grid;gap:2px}.book-bonus-list li small{font-size:11px;color:#7f9c98}.book-bonus-list li b{color:#dbe9e3;font-weight:600}
-.book-bonus-list li strong{color:#a4e9ba;text-align:right;font-weight:600}.book-bonus-list li.done strong{color:#e8d39a}
-@media(max-width:767px){.book-bonus-list li{flex-direction:column;align-items:flex-start;gap:4px}.book-bonus-list li strong{text-align:left}}
+/* v25.19 도감 ‘연구 보너스’ 탭: 접는 묶음 세 개(성향 연구 · 개체도감 완성 · 지역 연구) */
+.bonus-stack{display:grid;gap:12px}
+.bonus-block{border:1px solid var(--border);border-radius:10px;background:#0f1f25}
+.bonus-block>summary{display:flex;align-items:center;gap:16px;padding:16px 18px;cursor:pointer;list-style:none}
+.bonus-block>summary::-webkit-details-marker{display:none}
+.bonus-block>summary>div{flex:1;min-width:0}
+.bonus-block>summary h2{margin:0;font-size:16px;font-weight:600;color:#e1eeeb;letter-spacing:-.2px}
+.bonus-block>summary p{margin:5px 0 0;font-size:12px;line-height:1.6;color:#8ea7a4}
+.bonus-count{font:600 22px/1 var(--font-display,inherit);color:var(--gold);white-space:nowrap;letter-spacing:-.3px}
+.bonus-count small{font-size:13px;color:#8faaa8;font-weight:500;margin-left:2px}
+.bonus-count.small{font-size:15px}.bonus-count.small small{font-size:11px}
+.bonus-chevron{flex:none;color:#7f9c98;transition:transform .15s}.bonus-block[open]>summary .bonus-chevron{transform:rotate(180deg)}
+.bonus-body{padding:0 18px 18px;border-top:1px solid #9ab4b51a;margin-top:-2px;padding-top:14px}
+.bonus-body h3{margin:4px 0 10px;font-size:13px;font-weight:600;color:#aecbc0;display:flex;align-items:baseline;gap:8px}
+.bonus-body h3 small{font-size:11px;color:#7f9c98;font-weight:400}
+.bonus-body h3+ul+h3{margin-top:18px}
+.bonus-grid{list-style:none;margin:0 0 4px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.bonus-grid.wide{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.bonus-grid li{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid #9ab4b522;border-radius:7px;background:#112329;font-size:13px}
+.bonus-grid li span{color:#a9bdb8}.bonus-grid li strong{color:#a4e9ba;font-weight:600;text-align:right;white-space:nowrap}
+.bonus-grid li.done{border-color:#4a8063}.bonus-grid li.done strong{color:#e8d39a}.bonus-grid li strong em{font-style:normal;color:#e8d39a}
+.bonus-rows{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.bonus-rows li{padding:11px 13px;border:1px solid #9ab4b522;border-radius:8px;background:#112329}
+.bonus-rows li.active{border-color:#3f6b5e}.bonus-rows li.done{border-color:#4a8063;background:#14302a}
+.bonus-row-head{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.bonus-row-head strong{font-size:13px;color:#dbe9e3;font-weight:600}.bonus-row-head small{font-size:11px;color:#7f9c98}.bonus-row-head .bonus-count{margin-left:auto}
+.bonus-rows .meter{margin:0}
+.bonus-rows dl{display:grid;grid-template-columns:52px 1fr;gap:4px 10px;margin:8px 0 0;font-size:12px;line-height:1.6}
+.bonus-rows dt{color:#7f9c98}.bonus-rows dd{margin:0;color:#c5d8d2}.bonus-rows dd.positive{color:#a4e9ba}
+.bonus-chip{display:inline-block;margin:0 6px 4px 0;padding:2px 8px;border-radius:999px;border:1px solid #9ab4b533;color:#8ea7a4;font-size:11px}
+.bonus-chip.seen{color:#c5d8d2;border-color:#9ab4b555}.bonus-chip.done{color:#e8d39a;border-color:#6b6236;background:#2a2b1e}
+.bonus-empty{font-size:12px;color:#8ea7a4;margin:0 0 4px}
+@media(max-width:767px){.bonus-block>summary{padding:13px 14px;gap:10px}.bonus-body{padding:12px 14px 14px}.bonus-count{font-size:18px}.bonus-grid{grid-template-columns:1fr}}
+/* v25.19 변종 표식 */
+.variant-badge{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;vertical-align:middle}
+.variant-giant{background:#3a2a1a;color:#f0b26b}.variant-abyssal{background:#1f1a3a;color:#b9a6ff}.variant-starlit{background:#1a2f3a;color:#9fe2ff}.variant-swarm{background:#1f3a2e;color:#a4e9ba}
+.fish-golden.variant-giant,.fish-golden.variant-abyssal,.fish-golden.variant-starlit,.fish-golden.variant-swarm{background:none;border:1px solid currentColor}
+/* v25.19 보관함 더 보기 */
+.gear-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:10px 0 14px;padding:11px;border:1px dashed #4b7365;border-radius:8px;background:#0f1f25;color:#a4e9ba;font-size:13px;cursor:pointer}
+.gear-more:hover{background:#14302a}.gear-more.muted{border-style:solid;color:#8ea7a4}

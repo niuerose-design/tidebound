@@ -1,7 +1,7 @@
 import type { State } from '../types';
 import { ECONOMY, researchRank } from '../data/economy';
 import { MONSTER_TUNING } from '../data/balance';
-import { SWARM_SIZES, SWARM_UNLOCK } from '../data/world';
+import { SWARM_UNLOCK } from '../data/world';
 export const rebirthLevel = (s: State) => Math.min(ECONOMY.rebirthLevelCap, 30 + s.rebirths * ECONOMY.rebirthLevelStep);
 /** 요구 레벨을 넘겨 오래 버틴 항해의 추가 진주: 초과 레벨² ÷ 40. */
 export const deepVoyagePearls = (s: State) => { const over = s.level - rebirthLevel(s); return over > 0 ? Math.floor(over * over / 40) : 0; };
@@ -32,11 +32,5 @@ export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: n
 }
 /** 이 어종으로 해당 무리 규모를 고를 수 있는지 (도감 포획 수 기준). */
 export const swarmUnlocked = (s: State, fishId: string, size: number) => (s.book[fishId] || 0) >= (SWARM_UNLOCK[size] ?? Infinity);
-/** 지금 적용되는 무리 규모. 던전 밖에서 집중 사냥 중이고, 선택한 규모 이하에서 해금된 가장 큰 값. */
-export function activeSwarm(s: State) {
-    if (s.dungeon || !s.target) return 1;
-    const want = s.swarm || 1;
-    return [...SWARM_SIZES].reverse().find(n => n <= want && swarmUnlocked(s, s.target!, n)) || 1;
-}
 export const tierHealth = (tier: number) => 1 + tier * .35 + Math.pow(Math.max(0, tier - 20), 2) * .006;
 export const tierAttack = (tier: number) => 1 + tier * .18 + Math.pow(Math.max(0, tier - 20), 2) * .002;

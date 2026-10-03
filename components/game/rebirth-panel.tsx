@@ -4,7 +4,7 @@ import { GrowthGoals } from './growth-goals';
 import { useState } from 'react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { rebirthExperience, rebirthMemory, rebirthTitle, nextRebirthTitle } from '@/game/data/long-term';
+import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
 import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, ECONOMY, researchCost, researchEffect, researchUnlocked, type ResearchDef, type ResearchTab } from '@/game/data/economy';
 import { BALANCE } from '@/game/data/balance';
 import { ownsRelic, relicCost, researchRefund } from '@/game/systems/commerce';
@@ -109,7 +109,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
     return <>
         <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 항해를 마치고, 다음 생에 남길 힘을 선택하세요."/>
         <section className="panel port-resource-bar legacy-resource-bar">
-            <div><RefreshCw size={22}/><span>누적 환생<strong>{format(s.rebirths)} <small>회{rebirthTitle(s.rebirths) ? ` · ${rebirthTitle(s.rebirths)}` : ''}{nextRebirthTitle(s.rebirths) ? ` · ${nextRebirthTitle(s.rebirths)!.rebirths}회에 ‘${nextRebirthTitle(s.rebirths)!.title}’` : ''} · 계정 보너스·슬롯·금고는 ‘캐릭터 슬롯’ 화면</small></strong></span></div>
+            <div><RefreshCw size={22}/><span>누적 환생<strong>{format(s.rebirths)} <small>회</small></strong></span></div>
             <div><Sparkles size={22}/><span>보유 진주<strong><Num n={s.pearls}/> <small>개</small></strong></span></div>
             <div><span>영구 경험치 배율<strong>×{permanentExp.toFixed(2)}</strong></span></div>
             <div><span>현재 장착 AP<strong>{apCapacity(s)} <small>환생 +{rebirthAP(s)} · 연구 +{s.permanent.ap || 0}</small></strong></span></div>

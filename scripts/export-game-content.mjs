@@ -34,9 +34,9 @@ const { load: moduleAt } = loadGame();
         sourceMonsters: skill.sourceEnemySkill ? FISH.filter(f => profile(f.id).skills.includes(skill.sourceEnemySkill)).map(f => f.name) : [],
         stages: Array.from({ length: masteryMilestonesFor(skill).length + 1 }, (_, level) => ({ ...effectiveSkill(skill, level + 1), level, mastery: level ? masteryMilestonesFor(skill)[level - 1] : 0, extraMastery: masteryGainBonus(skill, level) })),
     }));
-    const { SPECIALIZATIONS, BOSS_RESEARCH } = await moduleAt('game/data/specializations');
+    const { BOSS_RESEARCH } = await moduleAt('game/data/specializations');
     const longTerm = await moduleAt('game/data/long-term');
-    const payload = { longTerm: { refinementOffsets: longTerm.REFINEMENT_OFFSETS, vocationOffsets: longTerm.VOCATION_OFFSETS }, specializations: SPECIALIZATIONS, bossResearch: BOSS_RESEARCH, version: '20.0', asOf: '2026-09-28', jobs, skills, fish: FISH, dungeons: DUNGEONS, trees: JOB_TREES, progression: PROGRESSION, statLabels: STAT_LABELS, statusTuning: STATUS_TUNING };
+    const payload = { longTerm: { refinementOffsets: longTerm.REFINEMENT_OFFSETS, vocationOffsets: longTerm.VOCATION_OFFSETS }, bossResearch: BOSS_RESEARCH, version: '20.0', asOf: '2026-09-28', jobs, skills, fish: FISH, dungeons: DUNGEONS, trees: JOB_TREES, progression: PROGRESSION, statLabels: STAT_LABELS, statusTuning: STATUS_TUNING };
     await writeFile(resolve(outputPath), JSON.stringify(payload, null, 2));
     console.log(JSON.stringify({ output: resolve(outputPath), jobs: jobs.length, skills: skills.length, stages: skills.reduce((sum, sk) => sum + sk.stages.length, 0) }));
 }

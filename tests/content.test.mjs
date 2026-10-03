@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·만능 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA } from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA } from './harness.mjs';
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
  assert.equal(visibleStatuses({},0,[stun],'player')[0].label,'기절함');assert.equal(visibleStatuses({},0,[stun],'enemy').length,0);
@@ -101,26 +101,19 @@ test('All-rounder: allocated-point harmony damage, split mitigation and allocati
  let calls=0;strike(fighter(base),target(0,0),()=>{calls++;return 0;});let normal=0;strike({...fighter(base),skills:['arcane'],ranks:{arcane:1}},target(0,0),()=>{normal++;return 0;});assert.equal(calls,normal,'one hit roll and one crit roll');
 });
 
-test('Swarm hunting: unlock by codex, one entity with N x HP and single attack, rewards only on kill',()=>{
- const s=newState(0);s.level=40;s.permanent.attack=300;s.permanent.hp=300;s.hp=stats(s).hp;act(s,{type:'stage',id:'brook'},0);
- assert.throws(()=>act(s,{type:'swarm',id:'5'},0),/어종/);act(s,{type:'target',id:'minnow'},0);
- s.book.minnow=49;assert.throws(()=>act(s,{type:'swarm',id:'5'},0),/50/);s.book.minnow=50;act(s,{type:'swarm',id:'5'},0);assert.throws(()=>act(s,{type:'swarm',id:'100'},0),/500/);
- assert.throws(()=>act(s,{type:'swarm',id:'7'},0));
- act(s,{type:'start'},0);tick(s,()=>.99);const e=s.enemy;assert.equal(e.swarm,5);
- const single=newState(0);single.level=40;single.permanent.attack=300;single.permanent.hp=300;act(single,{type:'stage',id:'brook'},0);act(single,{type:'target',id:'minnow'},0);act(single,{type:'start'},0);tick(single,()=>.99);
- assert.equal(e.combatStats.attack,single.enemy.combatStats.attack,'swarm attack stays at one fish');assert.equal(e.maxHp,single.enemy.maxHp*5,'one entity with 5x HP');assert.equal(e.combatStats.hp,e.maxHp);
- const big=newState(0);act(big,{type:'stage',id:'brook'},0);act(big,{type:'target',id:'minnow'},0);big.book.minnow=4999;assert.throws(()=>act(big,{type:'swarm',id:'500'},0),/5,000/);big.book.minnow=5000;act(big,{type:'swarm',id:'500'},0);act(big,{type:'start'},0);tick(big,()=>.99);
- assert.equal(big.enemy.swarm,500);assert.equal(big.enemy.maxHp,Math.round(single.enemy.maxHp*490),'x500 has 490x HP');assert.equal(big.enemy.combatStats.attack,Math.round(single.enemy.combatStats.attack*490),'x500 challenge also has 490x attack');assert.equal(big.enemy.combatStats.defense,single.enemy.combatStats.defense);
- const kills=s.kills,gold=s.gold,book=s.book.minnow,job=s.jobMastery[s.job]||0,mult=goldMultiplier(s);
- let guard=0;while(s.enemy===e&&guard++<2000){tick(s,()=>.5);if(s.enemy===e)assert.equal(s.kills,kills,'no partial rewards');}
- assert.equal(s.kills-kills,5);assert.equal(s.book.minnow-book,5);assert.equal(s.gold-gold,Math.floor(e.gold*mult)*5);assert.equal((s.jobMastery[s.job]||0)-job,5);
- // 적의 자기 체력 비례 공격은 한 마리 체력 기준
- const hpSkill={name:'foe',stats:{hp:1000,attack:0,magic:0,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:1000,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5,harmony:0},hp:5000,skills:['vitalSurge'],cooldowns:{},stun:0,effects:{},mana:1000,ranks:{vitalSurge:1}};
- const t1={name:'p',stats:{...hpSkill.stats,hp:1e6},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}},t5={...t1,effects:{},cooldowns:{}};
- strike({...hpSkill,cooldowns:{},effects:{}},t1,()=>0);strike({...hpSkill,cooldowns:{},effects:{},hp:5000,stats:{...hpSkill.stats,hp:5000},swarm:5},t5,()=>0);assert.equal(t1.hp,t5.hp);
- const dead=newState(0);dead.level=1;act(dead,{type:'stage',id:'brook'},0);act(dead,{type:'target',id:'minnow'},0);dead.book.minnow=500;act(dead,{type:'swarm',id:'100'},0);act(dead,{type:'start'},0);
- for(let i=0;i<3000&&dead.deaths===0;i++)tick(dead,rng);assert.ok(dead.deaths>0);assert.equal(dead.kills,0,'death forfeits the whole swarm');
- const other=newState(0);act(other,{type:'stage',id:'brook'},0);act(other,{type:'target',id:'minnow'},0);other.book.minnow=500;act(other,{type:'swarm',id:'100'},0);act(other,{type:'target',id:'carp'},0);act(other,{type:'start'},0);tick(other,()=>.99);assert.ok(other.enemy);assert.equal(other.swarm,100);assert.equal(other.enemy?.swarm,undefined,'swarm applies only to an unlocked target');
+test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; giant/abyssal/starlit change stats and rewards',()=>{
+ const base=()=>{const s=newState(0);s.level=40;s.permanent.attack=300;s.permanent.hp=300;s.hp=stats(s).hp;act(s,{type:'stage',id:'brook'},0);act(s,{type:'target',id:'minnow'},0);return s;};
+ const plain=base();plain.book.minnow=9;spawn(plain,()=>0);assert.equal(plain.enemy.variant,undefined,'no variant before 10 catches');assert.equal(plain.enemy.swarm,undefined);
+ const sw=base();sw.book.minnow=10;spawn(sw,()=>0);assert.equal(sw.enemy.variant,'swarm');assert.equal(sw.enemy.swarm,5,'x5 only until 500 catches');assert.equal(sw.enemy.maxHp,plain.enemy.maxHp*5);assert.equal(sw.enemy.combatStats.attack,plain.enemy.combatStats.attack,'swarm attack stays at one fish');
+ const mid=base();mid.book.minnow=5000;spawn(mid,()=>0.999);assert.equal(mid.enemy.variant,undefined,'roll above total chance is a normal fish');
+ let calls=0;spawn(mid,()=>calls++===0?0:.999);assert.equal(mid.enemy.swarm,100,'x500 needs the swarmSense passive');
+ const big=base();big.book.minnow=5000;big.skills.push('swarmSense');calls=0;spawn(big,()=>calls++===0?0:.999);assert.equal(big.enemy.swarm,500);assert.equal(big.enemy.maxHp,Math.round(plain.enemy.maxHp*490),'x500 has 490x HP');assert.equal(big.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*490));assert.equal(big.enemy.combatStats.defense,plain.enemy.combatStats.defense);
+ const g=base();g.book.minnow=10;spawn(g,()=>.05);assert.equal(g.enemy.variant,'giant');assert.equal(g.enemy.maxHp,Math.round(plain.enemy.maxHp*3));assert.equal(g.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*1.25));
+ const kills=g.kills,gold=g.gold,book=g.book.minnow,mult=goldMultiplier(g);const e=g.enemy;g.running=true;let guard=0;while(g.enemy===e&&guard++<3000)tick(g,()=>.5);
+ assert.equal(g.kills-kills,1);assert.equal(g.book.minnow-book,3,'giant counts 3 in the codex');assert.equal(g.gold-gold,Math.floor(e.gold*mult*4),'giant gold x4');assert.equal(g.variantBook.minnow.giant,1);
+ const ab=base();ab.book.minnow=10;spawn(ab,()=>.062);assert.equal(ab.enemy.variant,'abyssal');assert.equal(ab.enemy.combatStats.speed,Math.round(plain.enemy.combatStats.speed*1.3));
+ const st=base();st.book.minnow=10;st.rebirths=3;spawn(st,()=>.067);assert.equal(st.enemy.variant,'starlit');const pearls=st.pearls;const se=st.enemy;st.running=true;guard=0;while(st.enemy===se&&guard++<3000)tick(st,()=>.5);assert.equal(st.pearls-pearls,2,'starlit gives 2 pearls from rebirth 3');
+ const dn=base();dn.book.minnow=100;act(dn,{type:'dungeon',id:'grotto'},0);spawn(dn,()=>0);assert.equal(dn.enemy.variant,undefined,'no variants in dungeons');
 });
 
 test('Rebirth reward breakdown always sums to the pearls actually granted',()=>{

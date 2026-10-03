@@ -18,7 +18,7 @@ export const STAGES = [
  */
 export const SWARM_SIZES = [1, 5, 100, 500] as const;
 /** 무리 규모별 해금에 필요한 해당 어종 도감 포획 수. */
-export const SWARM_UNLOCK: Record<number, number> = { 1: 0, 5: 50, 100: 500, 500: 5000 };
+export const SWARM_UNLOCK: Record<number, number> = { 1: 0, 5: 10, 100: 500, 500: 5000 };
 /** 무리 체력 배율: N배, ×100 이상은 98%(×100 = 98배, ×500 = 490배). */
 export const swarmHpMultiplier = (size: number) => size >= 100 ? size * .98 : Math.max(1, size);
 /** 무리 공격 배율: ×500 도전 무리만 체력과 같은 배율(490배), 그 아래 규모는 한 마리와 같습니다. 방어·속도는 늘 한 마리와 같습니다. */

@@ -1,7 +1,7 @@
 /** 항해 진행: 낚시 시작·정지, 낚시터·던전 이동, 집중 사냥, 안내·목표 설정 */
 import { skillPracticeTargets } from '../progression';
-import { swarmUnlocked, tideLimit } from '../meta';
-import { STAGES, DUNGEONS, SWARM_SIZES, SWARM_UNLOCK } from '../../data/world';
+import { tideLimit } from '../meta';
+import { STAGES, DUNGEONS } from '../../data/world';
 import { JOBS } from '../../data/classes';
 import { SKILLS, skillById } from '../../data/skills';
 import type { ActionHandlers } from './types';
@@ -69,18 +69,6 @@ export const voyageActions: ActionHandlers = {
             throw Error('현재 낚시터의 물고기를 선택하세요.');
         s.target = id === 'all' ? null : id;
         s.enemy = null;
-    },
-    swarm(s, { id }) {
-        const size = Number(id);
-        if (!(SWARM_SIZES as readonly number[]).includes(size))
-            throw Error('무리 규모를 확인하세요.');
-        if (size > 1 && (s.dungeon || !s.target))
-            throw Error('낚시터에서 집중 사냥할 어종을 먼저 고르세요.');
-        if (size > 1 && !swarmUnlocked(s, s.target!, size))
-            throw Error(`이 어종을 ${SWARM_UNLOCK[size].toLocaleString()}마리 포획하면 열립니다.`);
-        s.swarm = size;
-        s.enemy = null;
-        addLog(s, size > 1 ? `무리 사냥 ×${size} · 전멸해야 보상을 받습니다.` : '무리 사냥을 끄고 한 마리씩 낚습니다.');
     },
     offlineDismiss(s) {
         s.lastOffline = null;

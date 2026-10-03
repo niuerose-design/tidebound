@@ -3,11 +3,12 @@ import { BOSS_RESEARCH } from '../data/specializations';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus, TIDE_MILESTONES, TIDE_MILESTONE_PEARLS } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets } from './progression';
-import { activeSwarm, catchReward, encounterTier } from './meta';
+import { catchReward, encounterTier } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
 import { rareSpawnBonus } from './book';
+import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize } from '../data/variants';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, FIRST_AID_HEAL } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier } from '../data/world';
@@ -102,15 +103,6 @@ export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, 
     }
     return choices[choices.length - 1]?.id || ids[0];
 }
-/** 현재 낚시터에서 희귀 이상 어종이 걸릴 확률(0~1). 지역 테마 보너스와 해역 난이도(차수 변종 제외)를 반영합니다. 던전은 고정 순서라 0. */
-export function rareSpawnChance(s: State) {
-    if (s.dungeon) return { chance: 0, bonus: rareSpawnBonus(s), rare: 0 };
-    const st = STAGES.find(x => x.id === s.stage)!, tier = encounterTier(s), bonus = rareSpawnBonus(s);
-    const choices = (st.fish.map(id => FISH.find(f => f.id === id)).filter(Boolean) as typeof FISH).filter(f => (f.minTier || 0) <= tier);
-    const weight = (f: typeof FISH[number]) => (f.spawnWeight ?? 1) * (f.rarity && f.rarity !== 'common' ? 1 + bonus : 1);
-    const total = choices.reduce((sum, f) => sum + weight(f), 0), rare = choices.filter(f => f.rarity && f.rarity !== 'common');
-    return { chance: total ? rare.reduce((sum, f) => sum + weight(f), 0) / total : 0, bonus, rare: rare.length };
-}
 export function spawn(s: State, rng: () => number) {
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
     const st = STAGES.find(x => x.id === s.stage)!;
@@ -122,12 +114,25 @@ export function spawn(s: State, rng: () => number) {
     const boss = finalWave;
     const foe = scaledEnemyStats(f, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
     const { exp, gold } = catchReward(f, tier, boss);
-    // 무리 사냥: 무리 전체를 체력 ×N(×100 이상은 98%)인 한 개체로 상대합니다. 공격은 ×500에서만 체력과 같은 배율이고, 방어는 한 마리와 같습니다.
-    const swarm = !dungeon && s.target === f.id ? activeSwarm(s) : 1;
+    // v25.19 변종: 어종을 10회 이상 포획한 낚시터 입질마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
+    let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
+    if (!dungeon && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
+        const chances = variantChances(s);
+        let roll = rng();
+        for (const v of VARIANTS) { roll -= chances[v.id]; if (roll < 0) { variant = v.id; break; } }
+        if (variant === 'swarm') { swarm = rollSwarmSize(s, f.id, rng); if (swarm <= 1) variant = undefined; }
+    }
     if (swarm > 1) {
         foe.hp = Math.round(foe.hp * swarmHpMultiplier(swarm));
         foe.attack = Math.round(foe.attack * swarmAttackMultiplier(swarm));
         foe.magic = Math.round((foe.magic || 0) * swarmAttackMultiplier(swarm));
+    }
+    const vdef = variantById(variant);
+    if (vdef && variant !== 'swarm') {
+        foe.hp = Math.round(foe.hp * vdef.hp);
+        foe.attack = Math.round(foe.attack * vdef.attack);
+        foe.magic = Math.round((foe.magic || 0) * vdef.attack);
+        if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
     // 거친 바다: 적 체력·공격 ×(1 + 0.5 × 선택 단계). 해역 난이도와 별개로 곱합니다.
     if (roughLevel(s)) {
@@ -136,17 +141,17 @@ export function spawn(s: State, rng: () => number) {
         foe.attack = Math.round(foe.attack * m);
         foe.magic = Math.round((foe.magic || 0) * m);
     }
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}) };
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}), ...(variant ? { variant } : {}) };
 }
 export function reward(s: State, rng: () => number) {
     const e = s.enemy!;
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
-    const size = e.swarm || 1;
+    const size = e.swarm || 1, vdef = variantById(e.variant), rewardMult = vdef?.reward || 1, expMult = vdef?.expMult || rewardMult, bookPer = vdef?.book || 1;
     // v25.6 계열 집중 카드: 지정 계열 직업이면 숙련 ×2.
     const focusMastery = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, masteryReward.amount * size * focusMastery), practice = researched.total;
-    const perFish = Math.floor(e.gold * goldMultiplier(s)), exp = Math.floor(e.exp * expMultiplier(s)) * size;
+    const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult), exp = Math.floor(e.exp * expMultiplier(s) * expMult) * size;
     // 황금 개체: 승리마다 0.1%p/단계 확률로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 0단계면 난수를 쓰지 않습니다.
     const goldenRank = researchRank(s, 'goldenFish'), golden = goldenRank > 0 && rng() < goldenRank * .001;
     const gold = perFish * size + (golden ? perFish * 9 : 0);
@@ -166,7 +171,9 @@ export function reward(s: State, rng: () => number) {
             if (after > before) addLog(s, `${sk.name} 연마 ${after}/${targets.length}단계 달성 · 직접 피해·양수 패시브 누적 ${refinementBonusLabel(after)}`, 'skill');
         }
     }
-    s.book[e.id] = (s.book[e.id] || 0) + size;
+    s.book[e.id] = (s.book[e.id] || 0) + size * bookPer;
+    if (e.variant) { s.variantBook ??= {}; const row = (s.variantBook[e.id] ??= {}); row[e.variant] = (row[e.variant] || 0) + 1; }
+    if (vdef?.pearls) { const pearls = vdef.pearls + (s.rebirths >= 3 ? 1 : 0); s.pearls += pearls; addLog(s, `${vdef.mark} ${vdef.name} · 진주 +${pearls}`, 'reward'); }
     s.gold += gold;
     recordGoal(s, 'catch', undefined, size, text => addLog(s, text, 'reward')); recordGoal(s, 'species', e.id, size, text => addLog(s, text, 'reward'));
     if (e.boss) recordGoal(s, 'boss', undefined, 1, text => addLog(s, text, 'reward'));
@@ -179,11 +186,12 @@ export function reward(s: State, rng: () => number) {
     }
     else
         s.exp += exp;
-    addLog(s, `${golden ? '✦ 황금 ' : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 포획 · +${gold} G · +${exp} EXP${golden ? ' · 황금 개체 골드 10배' : ''}`, 'reward');
+    addLog(s, `${golden ? '✦ 황금 ' : ''}${vdef && e.variant !== 'swarm' ? `${vdef.mark} ${vdef.name} ` : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 포획 · +${gold} G · +${exp} EXP${golden ? ' · 황금 개체 골드 10배' : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
     const fish = FISH.find(f => f.id === e.id)!;
-    for (let i = 0; i < size; i++)
+    for (let i = 0; i < size * (vdef?.drops || 1); i++)
         drop(s, fish.level + encounterTier(s) * 5, rng);
+    if (vdef?.guaranteed) drop(s, fish.level + encounterTier(s) * 5, rng, true);
     // v25.8 해역 난이도 이정표: 낚시터에서 그 차수로 처음 포획하면 사이의 이정표 진주를 한 번에 줍니다.
     if (!s.dungeon && !seal) {
         const tier = encounterTier(s), best = s.tideBest?.[s.stage] || 0;

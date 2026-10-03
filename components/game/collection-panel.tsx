@@ -12,8 +12,9 @@ import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
 import { stats, mastery, goldMultiplier, hitChance } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats } from '@/game/data/encounters';
-import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel, regionThemes } from '@/game/systems/book';
+import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel } from '@/game/systems/book';
 import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES } from '@/game/data/book-traits';
+import { VARIANTS } from '@/game/data/variants';
 import type { State, Stats } from '@/game/types';
 import { skillEffectLines } from '@/game/systems/skill-description';
 
@@ -36,40 +37,20 @@ function BookTraitLine({ s, id }: { s: State; id: string }) {
 }
 /** 황금 개체를 잡은 어종에 남는 황금 표시. */
 function GoldenMark({ s, id }: { s: State; id: string }) {
-    const n = s.goldenBook?.[id] || 0;
-    return n ? <small className="fish-golden" title="황금 개체 포획 횟수">✦ 황금 {n}</small> : null;
+    const n = s.goldenBook?.[id] || 0, row = s.variantBook?.[id] || {};
+    return <>{n ? <small className="fish-golden" title="황금 개체 포획 횟수">✦ 황금 {n}</small> : null}{VARIANTS.filter(v => row[v.id]).map(v => <small key={v.id} className={`fish-golden variant-${v.id}`} title={`${v.name} 포획 횟수`}>{v.mark} {v.name} {row[v.id]}</small>)}</>;
 }
 /** 포획 50회 전에는 적 성향·스킬·능력치를 숨깁니다. */
 function LockedInfo({ n }: { n: number }) {
     return <div className="fish-trait book-locked"><strong>미확인 개체</strong><span>{BOOK_REVEAL}회 포획하면 성향·스킬·능력치 정보가 공개됩니다 ({Math.min(n, BOOK_REVEAL)} / {BOOK_REVEAL}).</span></div>;
 }
-import { Heading, SlotIcon } from './shared';
+import { Heading, Meter, SlotIcon } from './shared';
 import type { PanelProps } from './panel-props';
 export function Collection({ s, send, busy }: PanelProps) {
     const player = stats(s), bookComplete = PROGRESSION.fishComplete;
     const complete = FISH.filter(f => (s.book[f.id] || 0) >= bookComplete).length, regions = completedRegions(s), pendingBooks = pendingBookCount(s);
     return <>
     <Heading eyebrow="ARCHIVE & RESEARCH" title="기록이 힘이 되는 도감" description="개체도감으로 편성의 폭을 넓히고, 물건도감으로 다음 장비를 만날 확률을 높이세요."/>
-    <div className="skill-resource-grid">
-    <div className="panel">
-    <small>개체도감 완성</small>
-    <strong>{complete}<span> / {FISH.length}</span>
-    </strong>
-    <p>종별 연구 {BALANCE.bookMilestones.map(m => m.toLocaleString()).join(' · ')}회 · 앞 3단계는 골드, 최종 단계는 SP +1 · {BOOK_REVEAL}회 포획하면 적 정보 공개</p>
-    </div>
-    <div className="panel">
-    <small>성향 연구 단계</small>
-    <strong>{mastery(s)}<span> / {FISH.length * BALANCE.bookMilestones.length}</span>
-    </strong>
-    <p>어종 성향마다 오르는 능력치가 다릅니다 · 합계는 ‘연구 보너스’ 탭</p>
-    </div>
-    <div className="panel">
-    <small>지역 연구 완성</small>
-    <strong>{regions.length}<span> / {STAGES.length}</span>
-    </strong>
-    <p>지역 내 모든 종 완성 시 지역 테마 보너스 · AP +1{regions.length ? ` · 적용 중: ${regionThemes(s).map(t => t.label).join(' · ')}` : ''}</p>
-    </div>
-    </div>
     {pendingBooks > 0 && <div className="notice book-claim-all"><BookOpen size={20}/><div><strong>받지 않은 연구 보상 {pendingBooks}단계</strong><p>여러 어종의 미수령 보상을 한 번에 받습니다.</p></div><button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimAllBooks' })}>모두 받기</button></div>}
     <Tabs defaultValue="fish">
     <TabsList className="game-tabs">
@@ -156,19 +137,37 @@ export function Collection({ s, send, busy }: PanelProps) {
         }))}</div>
     </TabsContent>
     <TabsContent value="bonus">
-    <section className="panel book-bonus-panel">
-    <div className="section-title"><h2>성향 연구 합계</h2><span>{mastery(s)}단계 · 능력치 화면의 ‘도감’ 기여와 같은 값</span></div>
-    <ul className="book-bonus-list">{(Object.entries(bookStatBonus(s)) as [keyof Stats, number][]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).map(([k, v]) => <li key={k}><span>{STAT_LABELS[k]}</span><strong>+{statDisplay(k, v)}</strong></li>)}</ul>
-    {!Object.keys(bookStatBonus(s)).length && <p className="loadout-empty">아직 달성한 연구 단계가 없습니다. 어종을 {BALANCE.bookMilestones[0]}회 포획하면 첫 단계가 열립니다.</p>}
-    </section>
-    <section className="panel book-bonus-panel">
-    <div className="section-title"><h2>성향별 단계</h2><span>단계마다 오르는 능력치</span></div>
-    <ul className="book-bonus-list book-trait-table">{(Object.keys(BOOK_TRAITS) as (keyof typeof BOOK_TRAITS)[]).map(g => { const ids = FISH.filter(f => bookTrait(f.id) === g).map(f => f.id), stages = ids.reduce((a, id) => a + bookStage(s, id), 0); return <li key={g}><span><b>{BOOK_TRAITS[g].name}</b><small>{ids.length}종 · {stages} / {ids.length * BALANCE.bookMilestones.length}단계</small></span><strong>{bonusLabel(BOOK_TRAITS[g].perStage)}{stages ? ` → 현재 ${bonusLabel(BOOK_TRAITS[g].perStage, stages)}` : ''}</strong></li>; })}</ul>
-    </section>
-    <section className="panel book-bonus-panel">
-    <div className="section-title"><h2>지역 테마</h2><span>{regions.length} / {STAGES.length} 완성</span></div>
-    <ul className="book-bonus-list">{STAGES.map(st => { const t = REGION_THEMES[st.id], done = regions.some(r => r.id === st.id); return <li key={st.id} className={done ? 'done' : ''}><span>{st.name}</span><strong>{t ? t.label : '테마 없음'}{done ? ' · 적용 중' : ''}</strong></li>; })}</ul>
-    </section>
+    {(() => { const total = bookStatBonus(s), entries = (Object.entries(total) as [keyof Stats, number][]).sort((x, y) => Math.abs(y[1]) - Math.abs(x[1])), maxStage = FISH.length * BALANCE.bookMilestones.length; return <div className="bonus-stack">
+    <details className="bonus-block" open>
+    <summary><div><h2>성향 연구</h2><p>어종을 {BALANCE.bookMilestones.map(m => m.toLocaleString()).join(' · ')}회 포획할 때마다 그 어종 성향의 능력치가 오릅니다. 2단계부터는 그 어종 상대 피해 보정도 붙습니다.</p></div><span className="bonus-count">{mastery(s)}<small> / {maxStage}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <div className="bonus-body">
+    <h3>능력치 합계 <small>능력치 화면의 ‘도감’ 기여와 같은 값</small></h3>
+    {entries.length ? <ul className="bonus-grid">{entries.map(([k, v]) => <li key={k}><span>{STAT_LABELS[k]}</span><strong>+{statDisplay(k, v)}</strong></li>)}</ul> : <p className="bonus-empty">아직 달성한 단계가 없습니다. 어종을 {BALANCE.bookMilestones[0]}회 포획하면 첫 단계가 열립니다.</p>}
+    <h3>성향별 진행</h3>
+    <ul className="bonus-rows">{(Object.keys(BOOK_TRAITS) as (keyof typeof BOOK_TRAITS)[]).map(g => { const ids = FISH.filter(f => bookTrait(f.id) === g).map(f => f.id), stages = ids.reduce((acc, id) => acc + bookStage(s, id), 0), max = ids.length * BALANCE.bookMilestones.length; return <li key={g} className={stages ? 'active' : ''}>
+        <div className="bonus-row-head"><strong>{BOOK_TRAITS[g].name}</strong><small>{ids.length}종</small><span className="bonus-count small">{stages}<small> / {max}</small></span></div>
+        <Meter value={stages} max={max}/>
+        <dl><dt>단계마다</dt><dd>{bonusLabel(BOOK_TRAITS[g].perStage)}</dd>{stages > 0 && <><dt>현재</dt><dd className="positive">{bonusLabel(BOOK_TRAITS[g].perStage, stages)}</dd></>}</dl>
+    </li>; })}</ul>
+    </div>
+    </details>
+    <details className="bonus-block">
+    <summary><div><h2>개체도감 완성</h2><p>어종을 {bookComplete}회 포획하면 완성입니다. 완성한 종은 지역 연구에 반영되고, {BOOK_REVEAL}회부터 적 정보가 열립니다. 종별 연구 앞 3단계는 골드, 마지막 단계는 SP +1을 줍니다.</p></div><span className="bonus-count">{complete}<small> / {FISH.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <div className="bonus-body">
+    <ul className="bonus-rows">{STAGES.map(st => { const ids = [...new Set(st.fish)], done = ids.filter(id => (s.book[id] || 0) >= bookComplete).length; return <li key={st.id} className={done === ids.length ? 'done' : done ? 'active' : ''}>
+        <div className="bonus-row-head"><strong>{st.name}</strong><small>{st.rebirth ? `환생 ${st.rebirth} · ` : ''}Lv.{st.level}</small><span className="bonus-count small">{done}<small> / {ids.length}</small></span></div>
+        <Meter value={done} max={ids.length}/>
+        <dl><dt>어종</dt><dd>{ids.map(id => { const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0; return <span key={id} className={`bonus-chip ${n >= bookComplete ? 'done' : n ? 'seen' : ''}`}>{n ? f.name : '???'}{n && n < bookComplete ? ` ${n}` : ''}</span>; })}</dd></dl>
+    </li>; })}</ul>
+    </div>
+    </details>
+    <details className="bonus-block">
+    <summary><div><h2>지역 연구</h2><p>지역의 모든 종을 완성하면 지역 테마 보너스와 장착 AP +1을 받습니다.</p></div><span className="bonus-count">{regions.length}<small> / {STAGES.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <div className="bonus-body">
+    <ul className="bonus-grid wide">{STAGES.map(st => { const t = REGION_THEMES[st.id], done = regions.some(r => r.id === st.id); return <li key={st.id} className={done ? 'done' : ''}><span>{st.name}</span><strong>{t ? t.label : '테마 없음'}{done ? <em> · 적용 중</em> : null}</strong></li>; })}</ul>
+    </div>
+    </details>
+    </div>; })()}
     </TabsContent>
     </Tabs>
     </>;

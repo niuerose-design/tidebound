@@ -23,7 +23,6 @@ const { JOBS } = await load('game/data/classes.js');
 const { STAGES, DUNGEONS, FISH } = await load('game/data/world.js');
 const { RESEARCH, SHOP, RELICS, GAMBLE_CATEGORIES } = await load('game/data/economy.js');
 const { scaledEnemyStats } = await load('game/data/encounters.js');
-const { SPECIALIZATIONS } = await load('game/data/specializations.js');
 
 const hash = v => createHash('sha256').update(JSON.stringify(v)).digest('hex').slice(0, 16);
 function seeded(seed) { let x = seed >>> 0; const f = () => { f.calls++; x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; f.calls = 0; return f; }
@@ -44,7 +43,7 @@ function pickAction(s, r) {
         () => ({ type: 'registerItem', id: pick(inv) }), () => ({ type: 'target', id: pick(FISH).id }), () => ({ type: 'savePreset', id: String(Math.floor(r() * 3)) }),
         () => ({ type: 'loadPreset', id: String(Math.floor(r() * 3)) }), () => ({ type: 'equip', id: pick(inv) }), () => ({ type: 'unequip', id: pick(['rod', 'coat', 'charm']) }),
         () => ({ type: 'sell', id: pick(inv) }), () => ({ type: 'rebirth' }),
-        () => ({ type: 'specialize', id: pick(skillIds), value: pick([...SPECIALIZATIONS.map(x => x.id), 'none']) }), () => ({ type: 'bossResearch', id: pick(DUNGEONS).id }),
+        () => ({ type: 'bossResearch', id: pick(DUNGEONS).id }),
         () => ({ type: 'growthGoal', id: pick(skillIds), value: 'skill' }), () => ({ type: 'offlineDismiss' }),
         () => ({ type: 'buy', id: pick(SHOP).id }), () => ({ type: 'gamble', id: pick(GAMBLE_CATEGORIES).id }), () => ({ type: 'enhance', id: pick(inv) }),
         () => ({ type: 'reforge', id: pick(inv) }), () => ({ type: 'lockItem', id: pick(inv) }), () => ({ type: 'sellRarity', id: String(Math.floor(r() * 4)) }),

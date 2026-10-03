@@ -1,5 +1,4 @@
 /** 빌드: 전직, 스킬 장착·습득·계승·강화, 능력치 배분, 편성 저장 */
-import { SPECIALIZATIONS, specializationFits } from '../../data/specializations';
 import { stats, clampVitals } from '../stats';
 import type { Attribute } from '../../types';
 import { jobById } from '../../data/classes';
@@ -10,15 +9,6 @@ import type { ActionHandlers } from './types';
 import { addLog, endRun } from '../state';
 
 export const buildActions: ActionHandlers = {
-    specialize(s, { a, id }) {
-        if (s.running || s.dungeon) throw Error('낚시를 멈추고 던전에서 나온 뒤 특화를 바꾸세요.');
-        const sk = skillById(id), spec = SPECIALIZATIONS.find(x => x.id === a.value);
-        if (!sk || !canUse(s, id)) throw Error('사용 가능한 스킬을 선택하세요.');
-        if (a.value !== 'none' && (!spec || !specializationFits(sk, spec) || skillMastery(s, id) < 1 || (spec.dungeon && !s.bossResearchClaims?.[spec.dungeon]))) throw Error('실전 숙련 1단계와 해당 보스 연구가 필요합니다.');
-        s.skillSpecializations ??= {};
-        if (a.value === 'none') delete s.skillSpecializations[id]; else s.skillSpecializations[id] = spec!.id;
-        addLog(s, `${sk.name} · ${spec?.name || '기본형'} 선택 · 변경 비용 없음`);
-    },
     job(s, { id, now }) {
         // 문 시간 판정은 요청 시각(서버 now)으로 합니다.
         if (!canChangeJob(s, id, now))
