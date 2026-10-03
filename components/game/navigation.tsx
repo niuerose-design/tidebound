@@ -31,7 +31,7 @@ export function Navigation({ view, setView, s, onLogout }: {
         </SidebarGroup>)}</SidebarContent>
     <SidebarFooter>
     <div className="sidebar-quote">
-    <small>THE ENDLESS VOYAGE · v{UPDATE_LOG[0].version}</small>
+    <small>OPEN BETA · v{UPDATE_LOG[0].version}</small>
     {onLogout && <button type="button" className="text-button sidebar-logout" onClick={onLogout}><LogOut size={13}/> 로그아웃</button>}
     </div>
     </SidebarFooter>

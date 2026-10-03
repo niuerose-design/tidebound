@@ -17,6 +17,7 @@ export function LoginScreen({ onSubmit }: { onSubmit: (mode: 'signup' | 'login',
     };
     return <div className="loading-screen login-screen">
         <Anchor size={48}/>
+        <span className="beta-badge">OPEN BETA</span>
         <h1>TIDEBOUND · 심연의 낚시꾼</h1>
         <p>{mode === 'login' ? '아이디와 비밀번호로 항해를 이어가세요.' : '새 낚시꾼의 아이디와 비밀번호를 정하세요.'}</p>
         <form className="panel login-form" onSubmit={submit}>

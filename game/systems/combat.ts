@@ -340,9 +340,9 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         endure(a, sa, notes, ev, true);
         ev.reflected = reflected;
         notes.push(`반격 ${reflected}`);
-        // v25.25 반격에도 흡혈: 되돌려 준 피해 × 흡혈률만큼 맞은 쪽이 회복합니다.
+        // v25.25 반격에도 흡혈: 되돌려 준 피해 × 흡혈률 × 2만큼 맞은 쪽이 회복합니다(반격 피해가 작아 2배).
         if (sb.lifesteal > 0 && b.hp > 0) {
-            const heal = Math.min(sb.hp - b.hp, Math.floor(reflected * sb.lifesteal));
+            const heal = Math.min(sb.hp - b.hp, Math.floor(reflected * sb.lifesteal * SKILL_FORMULA.thornsLifestealScale));
             if (heal > 0) { b.hp += heal; ev.reflectHeal = heal; notes.push(`반격 흡혈 ${heal}`); }
         }
     }
