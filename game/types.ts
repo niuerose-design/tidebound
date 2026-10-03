@@ -357,6 +357,8 @@ export type State = {
     /** Paid inheritance is independent of growth and never fabricates mastery wins. */
     skillInheritances: Record<string, boolean>;
     skillPractice: Record<string, number>;
+    /** v27.6 한계돌파 단계(기술 id → 0~limitBreak.max). 환생해도 유지됩니다. */
+    limitBreaks?: Record<string, number>;
     jobMastery: Record<string, number>;
     unlockedJobs: string[];
     bookClaims: Record<string, number>;

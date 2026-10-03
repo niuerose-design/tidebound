@@ -5,7 +5,7 @@ import type { Attribute } from '../../types';
 import { jobById } from '../../data/classes';
 import { skillById } from '../../data/skills';
 import { emptyAttributes } from '../../data/progression';
-import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery } from '../progression';
+import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery, limitBreakNext } from '../progression';
 import type { ActionHandlers } from './types';
 import { addLog, endRun } from '../state';
 
@@ -82,6 +82,15 @@ export const buildActions: ActionHandlers = {
         s.skillSpent[id] = (s.skillSpent[id] || 0) + cost;
         s.learned[id] = skillLevel(sk, s.learned[id], skillMastery(s, id)) + 2;
         addLog(s, `${sk.name} 강화 Lv.${s.learned[id] - 1} · SP -${cost}`, 'skill');
+    },
+    /** v27.6 한계돌파: 숙련 완료 + 실전 숙련 배수 + SP. 환생해도 남습니다. */
+    limitBreak(s, { id }) {
+        const next = limitBreakNext(s, id);
+        if (!next.ok) throw Error(next.reason);
+        s.sp -= next.sp;
+        s.limitBreaks ??= {};
+        s.limitBreaks[id] = next.stage;
+        addLog(s, `${skillById(id)!.name} 한계돌파 ${next.stage}단계 · SP -${next.sp}`, 'skill');
     },
     inheritSkill(s, { id }) {
         if (!canInheritSkill(s, id))

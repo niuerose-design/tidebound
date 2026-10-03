@@ -177,3 +177,18 @@ test('v27.2 thorns scale with swarm size, ignore half of attacker defense, and t
     const before = variantChances(s).swarm; s.skills = ['spikedShield']; assert.ok(canUse(s, 'spikedShield')); const after = variantChances(s).swarm;
     assert.ok(Math.abs(after / before - 1.5) < 1e-6, `가시 방패 +50% 무리 조우: ${before} → ${after}`);
 });
+
+test('v27.6 limit break: needs full mastery, practice multiples and SP; pushes growth past max, adds chance, stage 3 cuts AP; survives rebirth copy', async () => {
+    const { act } = await import('./harness.mjs'); const { limitBreakNext, maxSkillLevel, masteryMilestonesFor, skillLevel, skillMastery } = await import('./harness.mjs');
+    const sk = SKILLS.find(x => x.id === 'hook'); const max = maxSkillLevel(sk), last = masteryMilestonesFor(sk).at(-1);
+    const s = newState(0); s.sp = 20; s.learned.hook = 1;
+    assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /실전 숙련/);
+    s.skillPractice.hook = last; assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /실전 숙련 .* 필요/);
+    s.skillPractice.hook = last * 2; const base = effectiveSkill(sk, 1, skillMastery(s, 'hook'));
+    act(s, { type: 'limitBreak', id: 'hook' }, 0); assert.equal(s.limitBreaks.hook, 1); assert.equal(s.sp, 18);
+    const e1 = effectiveSkill(sk, 1, skillMastery(s, 'hook')); assert.equal(skillLevel(sk, 1, skillMastery(s, 'hook')), max + 1);
+    const step = (sk.rankEffects?.chanceIncrease ?? .015) + .025; assert.ok(e1.multiplier > base.multiplier && Math.abs(e1.chance - base.chance - step) < 1e-9, `chance +${step}: ${base.chance} → ${e1.chance}`);
+    assert.ok(!limitBreakNext(s, 'hook').ok, 'stage 2 needs 4x practice'); s.skillPractice.hook = last * 8;
+    act(s, { type: 'limitBreak', id: 'hook' }, 0); act(s, { type: 'limitBreak', id: 'hook' }, 0); assert.equal(s.limitBreaks.hook, 3); assert.equal(s.sp, 18 - 3 - 4);
+    const e3 = effectiveSkill(sk, 1, skillMastery(s, 'hook')); assert.equal(e3.cost, Math.max(1, (sk.cost ?? 2)) - 1, 'stage 3 AP -1'); assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /최대 단계/);
+});

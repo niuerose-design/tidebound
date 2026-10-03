@@ -23,8 +23,18 @@ export function skillRefinementTargets(sk: Skill) {
 }
 export const skillPracticeTargets = (sk: Skill) => [...masteryMilestonesFor(sk), ...skillRefinementTargets(sk)];
 export function maxSkillLevel(sk: Skill) { return masteryMilestonesFor(sk).length; }
-/** SP and mastery unlock the SAME stages. Neither locks out the other. */
-export function skillLevel(sk: Skill, rank = 1, mastery = 0) { return Math.min(maxSkillLevel(sk), Math.max(0, rank - 1, mastery)); }
+/** v27.6 한계돌파 단계. 숙련 완료가 조건이라 skillMastery()에 더해져 성장 레벨이 최대를 넘습니다. */
+export function limitBreakOf(s: Pick<State, 'limitBreaks'>, id: string) { return Math.min(PROGRESSION.limitBreak.max, s.limitBreaks?.[id] || 0); }
+/** 다음 한계돌파 조건. stage는 1부터, ok가 false면 reason에 이유. */
+export function limitBreakNext(s: State, id: string) {
+    const sk = skillById(id), stage = limitBreakOf(s, id) + 1, lb = PROGRESSION.limitBreak;
+    if (!sk || stage > lb.max) return { stage, sp: 0, practice: 0, ok: false, reason: stage > lb.max ? '한계돌파 최대 단계입니다.' : '스킬을 찾을 수 없습니다.' };
+    const last = masteryMilestonesFor(sk).at(-1)!, practice = last * lb.practiceMultiple[stage - 1], sp = lb.sp[stage - 1], have = s.skillPractice?.[id] || 0;
+    const reason = !(s.learned?.[id] > 0) ? '먼저 습득해야 합니다.' : skillMasteryLevel(have, masteryMilestonesFor(sk)) < maxSkillLevel(sk) ? '실전 숙련을 끝까지 채워야 합니다.' : have < practice ? `실전 숙련 ${practice.toLocaleString()} 필요 (지금 ${have.toLocaleString()})` : s.sp < sp ? `SP ${sp} 필요` : '';
+    return { stage, sp, practice, ok: !reason, reason };
+}
+/** SP and mastery unlock the SAME stages. Neither locks out the other. v27.6 숙련(한계돌파 포함)이 최대를 넘으면 그만큼 더 올라갑니다. */
+export function skillLevel(sk: Skill, rank = 1, mastery = 0) { const max = maxSkillLevel(sk); return Math.min(max + Math.min(PROGRESSION.limitBreak.max, Math.max(0, mastery - max)), Math.max(0, rank - 1, mastery)); }
 export function skillMasteryRewards(sk: Skill, rank = 1, mastery = 0) {
     if (skillLevel(sk, rank, mastery) < maxSkillLevel(sk))
         return { ap: 0, bonus: {} as Partial<Stats> };
@@ -36,8 +46,8 @@ export function apCapacity(s: State, ids = s.skills) { return PROGRESSION.baseAP
 export function achievementAP(s: Pick<State, 'achievementClaims'>) { let ap = 0; for (const id of Object.keys(s.achievementClaims || {})) ap += ACHIEVEMENT_AP[id] || 0; return ap; }
 export const ACHIEVEMENT_AP: Record<string, number> = {};
 export function skillMasteryLevel(practice: number, milestones = PROGRESSION.skillMasteryMilestones) { return milestones.filter(m => practice >= m).length; }
-export function skillMastery(s: State, id: string) { const sk = skillById(id); return skillMasteryLevel(s.skillPractice?.[id] || 0, masteryMilestonesFor(sk)); }
-export function skillMasteryRanks(s: State) { const out: Record<string, number> = {}; for (const [id, practice] of Object.entries(s.skillPractice || {})) out[id] = skillMasteryLevel(practice, masteryMilestonesFor(skillById(id))); return out; }
+export function skillMastery(s: State, id: string) { const sk = skillById(id); return skillMasteryLevel(s.skillPractice?.[id] || 0, masteryMilestonesFor(sk)) + limitBreakOf(s, id); }
+export function skillMasteryRanks(s: State) { const out: Record<string, number> = {}; for (const [id, practice] of Object.entries(s.skillPractice || {})) out[id] = skillMasteryLevel(practice, masteryMilestonesFor(skillById(id))) + limitBreakOf(s, id); return out; }
 export function apUsed(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
 export function lineage(job: string): string[] { const j = jobById(job); return j ? [j.id, ...(j.parent ? lineage(j.parent) : [])] : []; }
 /** 전용 기술 효율: 4차 이상 직업의 기술을 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1. */
@@ -139,15 +149,17 @@ export function canSpendSkill(s: State, id: string) {
     return !!sk && rank > 0 && canUse(s, id) && skillLevel(sk, rank, skillMastery(s, id)) < maxSkillLevel(sk);
 }
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, specialization?: string, practice = 0): Skill {
-    const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[steps];
+    const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
+    // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.
+    const broken = Math.max(0, steps - maxSkillLevel(sk)), lb = PROGRESSION.limitBreak;
     const factor = 1 + steps * (fx.multiplierScale ?? PROGRESSION.rankMultiplier);
     // Penalties must not become harsher merely because a skill gained a level.
     const bonus = override?.bonus ?? (sk.bonus ? Object.fromEntries(Object.entries(sk.bonus).map(([k, n]) => [k, n < 0 ? n : n * (1 + steps * (fx.bonusScale ?? PROGRESSION.rankPassive))])) : undefined);
     const result: Skill = {
         ...sk,
-        cost: sk.song ? 0 : override?.cost ?? Math.max(1, (sk.cost ?? 2) - Math.floor(steps * (fx.apReduction ?? 0))) - (sk.type === 'passive' && steps >= maxSkillLevel(sk) ? SKILL_FORMULA.masteredPassiveAP : 0),
+        cost: sk.song ? 0 : override?.cost ?? Math.max(1, (sk.cost ?? 2) - Math.floor(steps * (fx.apReduction ?? 0))) - (sk.type === 'passive' && steps >= maxSkillLevel(sk) ? SKILL_FORMULA.masteredPassiveAP : 0) - (broken >= lb.max ? lb.apAtMax : 0),
         manaCost: Math.max(0, (sk.manaCost ?? 0) - Math.floor(steps * (fx.manaReduction ?? 0))),
-        chance: sk.type === 'passive' ? 0 : sk.chance >= 1 ? 1 : Math.min(.95, sk.chance + steps * (fx.chanceIncrease ?? PROGRESSION.masteryChance)),
+        chance: sk.type === 'passive' ? 0 : sk.chance >= 1 ? 1 : Math.min(.95, sk.chance + steps * (fx.chanceIncrease ?? PROGRESSION.masteryChance) + broken * lb.chance),
         cooldown: sk.type === 'passive' ? 0 : Math.max(1, sk.cooldown - Math.floor(steps * (fx.cooldownReduction ?? 0))),
         multiplier: sk.multiplier * factor,
         bonus,
