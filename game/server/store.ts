@@ -9,6 +9,7 @@ import { duelSeasonPearls } from '../systems/duel';
 import type { RankingRow } from './db';
 import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
+import { refreshEvents } from './events-config';
 import { accountFromRequest, AuthError, readSlot } from './auth';
 import { FISH } from '../data/world';
 import { JOBS } from '../data/classes';
@@ -63,6 +64,7 @@ export function checkOrigin(req: Request) {
 }
 export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
     const database = db(), now = Date.now();
+    await refreshEvents(now);
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = await database.getPlayer(id);
         // v25.10 처음 보는 낚시꾼일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).

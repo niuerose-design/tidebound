@@ -10,6 +10,8 @@ import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
 import type { State } from '../types';
+import { SERVER_EVENTS, activeEvent, eventLabel, type ServerEvent } from '../data/events';
+import { readEventConfig, writeEventConfig } from './events-config';
 
 const digest = (v: string) => createHash('sha256').update(v).digest();
 /** 운영자 키 확인. 실패는 IP당 10분에 10번까지만 받습니다. */
@@ -70,4 +72,53 @@ export async function applyRestart(id: string, revision: number) {
     if (!await db().updatePlayer(id, JSON.stringify(s), now, revision)) throw new ApiError('그사이 게임이 저장되었습니다. 미리 보기를 다시 눌러 주세요.', 409);
     console.info('admin restartLife', { id, username, from: before.level });
     return { before, after: view(id, username, revision + 1, now, s) };
+}
+
+// ---------- v27.27 서버 이벤트 설정 ----------
+
+const MULTS = ['exp', 'gold', 'drop', 'mastery'] as const;
+/** 이벤트 목록: 코드 이벤트(끔 여부)와 운영 페이지 이벤트, 지금 배너 문구. */
+export async function listEvents(now = Date.now()) {
+    const config = await readEventConfig();
+    const live = (e: ServerEvent) => Date.parse(e.from) <= now && now <= Date.parse(e.until);
+    const all = [...SERVER_EVENTS.filter(e => !config.disabled.includes(e.id)), ...config.extra];
+    const active = activeEvent(now, all);
+    return {
+        code: SERVER_EVENTS.map(e => ({ ...e, disabled: config.disabled.includes(e.id), live: live(e) })),
+        extra: config.extra.map(e => ({ ...e, live: live(e) })),
+        banner: active ? eventLabel(active) : '',
+    };
+}
+/** 운영 페이지 이벤트 추가·수정. 배율은 1~10, 이름 40자, 시작 < 종료, 기간 최대 60일. */
+export async function saveEvent(input: Record<string, unknown>) {
+    const name = String(input.name ?? '').trim().slice(0, 40);
+    const from = String(input.from ?? ''), until = String(input.until ?? '');
+    const a = Date.parse(from), b = Date.parse(until);
+    if (!Number.isFinite(a) || !Number.isFinite(b) || a >= b) throw new ApiError('시작·종료 시각을 확인하세요(시작이 종료보다 앞이어야 합니다).');
+    if (b - a > 60 * 86400_000) throw new ApiError('이벤트 기간은 최대 60일입니다.');
+    const event: ServerEvent = { id: typeof input.id === 'string' && /^admin-[a-z0-9]{6,20}$/.test(input.id) ? input.id : `admin-${Date.now().toString(36)}`, name, from: new Date(a).toISOString(), until: new Date(b).toISOString() };
+    for (const k of MULTS) {
+        const v = Number(input[k] ?? 1);
+        if (!Number.isFinite(v) || v < 1 || v > 10) throw new ApiError('배율은 1~10 사이로 입력하세요.');
+        if (v !== 1) event[k] = Math.round(v * 100) / 100;
+    }
+    if (!event.name && MULTS.every(k => event[k] === undefined)) throw new ApiError('이름이나 배율 중 하나는 있어야 합니다.');
+    const config = await readEventConfig();
+    const extra = [...config.extra.filter(e => e.id !== event.id), event].slice(-20);
+    await writeEventConfig({ ...config, extra });
+    console.info('admin event saved', { id: event.id, from: event.from, until: event.until });
+    return listEvents();
+}
+export async function deleteEvent(id: string) {
+    const config = await readEventConfig();
+    await writeEventConfig({ ...config, extra: config.extra.filter(e => e.id !== id) });
+    return listEvents();
+}
+/** 코드에 들어 있는 이벤트를 끄거나 다시 켭니다. */
+export async function toggleCodeEvent(id: string, disabled: boolean) {
+    if (!SERVER_EVENTS.some(e => e.id === id)) throw new ApiError('없는 이벤트입니다.');
+    const config = await readEventConfig();
+    const set = new Set(config.disabled); if (disabled) set.add(id); else set.delete(id);
+    await writeEventConfig({ ...config, disabled: [...set] });
+    return listEvents();
 }

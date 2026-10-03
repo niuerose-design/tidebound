@@ -73,6 +73,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 delete base.affix;
                 item = { ...base, name: `${RARITIES[rarity].name} ${offer.name}`, rarity, power, affixes: rollAffixes(rarity, power, undefined, rng) };
             }
+            item.paid = cost;
             s.inventory.push(item);
             results.push(item);
         }

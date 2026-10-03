@@ -98,6 +98,8 @@ export type StatusEffects = {
     lastStand?: number;
 };
 export type Item = {
+    /** v27.27 상점에서 산 장비의 구매가(골드). 판매가는 이 값의 절반을 넘지 않습니다. */
+    paid?: number;
     enhance?: number;
     style?: "physical" | "magic" | "balanced";
     description?: string;

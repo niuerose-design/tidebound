@@ -31,9 +31,14 @@ export function itemStats(item: Item): Partial<Stats> {
 export const enhanceMaxFor = (item: Pick<Item, 'rarity'>) => item.rarity >= 3 ? ECONOMY.enhanceMaxLegend : ECONOMY.enhanceMax;
 /** v25.7 판매가: 그 레벨 물고기 골드 × 등급별 마리 수 + 강화에 쓴 골드의 30%. 분해(정수)와 판매(골드)가 실제 선택이 되도록 분해만 유리하던 식(위력×3)을 바꿨습니다. */
 export const SALE_FISH = [2, 6, 18, 50, 120, 300, 700], SALE_LEVEL_CAP = 65;
+/** v27.27 상점 구매품 되팔기 비율. */
+export const SHOP_RESALE = .5;
 export const saleValue = (item: Item) => {
     // 해역 난이도(차수)로 드롭 레벨이 어종 레벨보다 높아져도 판매가는 Lv.65까지만 따라갑니다(차수당 +5 레벨이 지수 곡선을 타고 폭주하지 않게).
-    const base = fishGoldAt(Math.min(SALE_LEVEL_CAP, item.level || 1)) * (SALE_FISH[item.rarity] ?? 2);
+    const drop = fishGoldAt(Math.min(SALE_LEVEL_CAP, item.level || 1)) * (SALE_FISH[item.rarity] ?? 2);
+    // v27.27 상점에서 산 장비(구매·감정)는 구매가의 절반까지만 받습니다. 예전 구매품(paid 없음, id shop-)은 그 레벨의 감정가로 어림합니다.
+    const paid = item.paid ?? (item.id?.startsWith('shop-') ? ECONOMY.gambleBase + (item.level || 1) * ECONOMY.gamblePerLevel : undefined);
+    const base = paid !== undefined ? Math.min(drop, Math.floor(paid * SHOP_RESALE)) : drop;
     let spent = 0;
     for (let e = 0; e < (item.enhance || 0); e++) spent += enhanceCost({ ...item, enhance: e });
     return Math.floor(base + spent * ECONOMY.saleEnhanceRefund);
