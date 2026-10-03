@@ -4,6 +4,8 @@ import { STATUS_TUNING } from './balance';
 import { LINEAGE_BALANCE } from './expansion-lineages';
 import { V24_BALANCE } from './expansion-v24';
 import { DEFENSE_BALANCE } from './expansion-defense';
+import { INVERSION_BALANCE } from './expansion-inversion';
+import { MONOSTAT_BALANCE } from './expansion-monostat';
 import { SUPPORT_BALANCE, SUPPORT_STATUS_ONLY } from './support-rework';
 import { V25_BALANCE, V25_STATUS_ONLY } from './expansion-v25';
 
@@ -67,6 +69,8 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     ...LINEAGE_BALANCE,
     ...V24_BALANCE,
     ...DEFENSE_BALANCE,
+    ...INVERSION_BALANCE,
+    ...MONOSTAT_BALANCE,
 };
 // v24.2 보조 계열 개편은 기존 값 위에 덮어씁니다(필드 단위 병합).
 for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE })) ACTIVE_SKILL_BALANCE[id] = { ...ACTIVE_SKILL_BALANCE[id], ...tuning };

@@ -13,7 +13,7 @@ export function initialProgress(level = 1) { return { attributes: emptyAttribute
 export function attributes(s: State) {
     const out = emptyAttributes();
     for (const key of Object.keys(out) as Attribute[])
-        out[key] = PROGRESSION.baseAttribute + Math.floor(s.level / PROGRESSION.attributeGrowthEvery) + (s.attributes?.[key] || 0);
+        out[key] = PROGRESSION.baseAttribute + (s.attributes?.[key] || 0);
     return out;
 }
 export function masteryMilestonesFor(sk?: Skill) { return sk?.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones; }
