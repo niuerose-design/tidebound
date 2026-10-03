@@ -120,7 +120,6 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
             </TableCell>
             </TableRow>)}</TableBody>
         </Table> : <Empty title="첫 번째 낚시꾼이 되어보세요" description="전투 정보를 등록하면 랭킹에 등장합니다. 다른 참가자가 없을 때는 훈련 상대와 대결할 수 있습니다."/>}</div>
-    <p className="footnote">기본 정렬은 결투 점수 순이고 순위 번호는 고른 정렬 기준의 순서입니다. 랭크 결투는 1분 간격이며 도전자의 점수만 변동합니다. 내 방어용 정보는 등록 후 10분이 지나면 이 화면을 열 때 자동으로 다시 등록되고, 버튼으로 바로 갱신할 수도 있습니다. 상세보기는 등록한 시점의 능력치와 스킬 편성입니다.</p>
     </TabsContent>
     <TabsContent value="training">
     <div className="section-title training-title"><h2><Users size={17}/> 등록된 낚시꾼</h2><span>방어용 등록 정보 그대로 · 점수·전적 변동 없음</span></div>
@@ -141,7 +140,6 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
         <div className="training-stats">체력 {format(a.hp)} · 공격 {a.attack} · 마법 {a.magic}<br />방어 {a.defense} · 마법 방어 {a.resist} · 속도 {a.speed}</div>
         <button className="primary" disabled={busy} onClick={() => send({ type: 'training', id: `boss:${f.id}` }, '/api/duel')}>연습 대결</button>
         </div>; })}</div>
-    <p className="footnote">훈련은 실제 유저 랭킹에 포함되지 않으며 점수·재화·PvE 체력에 영향을 주지 않습니다.</p>
     </TabsContent>
     </Tabs>
     <Dialog open={!!detail} onOpenChange={open => { if (!open) setDetail(null); }}>

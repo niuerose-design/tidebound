@@ -102,6 +102,15 @@ export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, 
     }
     return choices[choices.length - 1]?.id || ids[0];
 }
+/** 현재 낚시터에서 희귀 이상 어종이 걸릴 확률(0~1). 지역 테마 보너스와 해역 난이도(차수 변종 제외)를 반영합니다. 던전은 고정 순서라 0. */
+export function rareSpawnChance(s: State) {
+    if (s.dungeon) return { chance: 0, bonus: rareSpawnBonus(s), rare: 0 };
+    const st = STAGES.find(x => x.id === s.stage)!, tier = encounterTier(s), bonus = rareSpawnBonus(s);
+    const choices = (st.fish.map(id => FISH.find(f => f.id === id)).filter(Boolean) as typeof FISH).filter(f => (f.minTier || 0) <= tier);
+    const weight = (f: typeof FISH[number]) => (f.spawnWeight ?? 1) * (f.rarity && f.rarity !== 'common' ? 1 + bonus : 1);
+    const total = choices.reduce((sum, f) => sum + weight(f), 0), rare = choices.filter(f => f.rarity && f.rarity !== 'common');
+    return { chance: total ? rare.reduce((sum, f) => sum + weight(f), 0) / total : 0, bonus, rare: rare.length };
+}
 export function spawn(s: State, rng: () => number) {
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
     const st = STAGES.find(x => x.id === s.stage)!;
