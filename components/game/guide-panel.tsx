@@ -1,7 +1,7 @@
 'use client';
 import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, FIRST_AID_HEAL } from '@/game/data/balance';
+import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, FIRST_AID_HEAL, SKILL_FORMULA } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
 import { ECONOMY, RESEARCH_RESET, offlineCapSeconds, inventoryCap } from '@/game/data/economy';
 import { victoryHealRate } from '@/game/systems/encounter';
@@ -68,6 +68,31 @@ export function Guide({ s }: { s?: State }) {
                     condition="명중·회피 수치는 확률이 아닙니다. 어종별 실제 적중률은 도감에서 봅니다."
                     limit="적중률은 1~99.5%. 회피는 50%를 넘으면 효율이 줄어 90%에 수렴합니다."/>
             </div>
+            <details className="help-fold">
+                <summary><Sparkles size={15}/> 피해의 종류 <span>물리 · 마법 · 복합 · 마력 평타 · 능력치 비례</span><ChevronDown size={15} className="help-topic-chevron"/></summary>
+                <div className="help-columns">
+                    <Rule icon={<Swords size={19}/>} title="물리 피해"
+                        effect="물리 공격 × 스킬 배율. 상대의 물리 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 물리 방어 × 2)."
+                        condition="명중은 기본 공식 그대로(회피 전부 적용). 기본 공격과 대부분의 작살·격투 계열 기술이 여기에 속합니다."
+                        limit={`방어 관통은 최대 85%. 관통만큼 상대 방어를 무시합니다.`}/>
+                    <Rule icon={<Sparkles size={19}/>} title="마법 피해"
+                        effect="마법 공격 × 스킬 배율. 상대의 마법 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 마법 방어 × 2). 마나를 씁니다."
+                        condition="상대 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다. 단단한 비늘(물리 방어 높음) 어종에 유리하고, 마력 생물(마법 방어 높음)에는 불리합니다."
+                        limit="마나가 모자라면 그 기술은 건너뛰고 다음 기술이나 기본 공격으로 넘어갑니다."/>
+                    <Rule icon={<Shield size={19}/>} title="복합 피해"
+                        effect={`원시 피해를 물리 ${Math.round(SKILL_FORMULA.splitPhysical * 100)}% · 마법 ${Math.round((1 - SKILL_FORMULA.splitPhysical) * 100)}%로 나누어 각각의 방어를 따로 적용한 뒤 더합니다.`}
+                        condition="명중·치명타 판정은 한 번만 합니다. 한쪽 방어만 높은 어종에게 안정적입니다."
+                        limit="명중은 물리 규칙을 따릅니다(마법의 회피 절반 보정 없음)."/>
+                    <Rule icon={<Zap size={19}/>} title="마력 평타"
+                        effect={`마법 직업의 기본 공격이 확률로 마력 평타(마법 공격 × ${SKILL_FORMULA.arcaneStrikeRatio}, 3차부터 +${Math.round(SKILL_FORMULA.arcaneRatioByTier[3] * 100)}~${Math.round(SKILL_FORMULA.arcaneRatioByTier[5] * 100)}%p)로 바뀝니다. 마나를 쓰지 않는 마법 피해입니다.`}
+                        condition="마법 피해라서 회피 절반 보정을 받고 마법 방어로 줄어듭니다. 어종의 마법 평타(마력 생물)도 같은 규칙으로 나를 때립니다."
+                        limit="스킬이 하나도 나가지 않은 행동에서만 발생합니다."/>
+                    <Rule icon={<Target size={19}/>} title="능력치 · 기록 비례"
+                        effect="외길 계보는 공격력 대신 배분 능력치 × 비율을 기준값으로, 육중 조화는 여섯 능력치로 만든 원시 피해를 씁니다. 도감·포획·사냥·골드 비례 기술은 기본 피해에 기록 배율을 곱합니다."
+                        condition="피해 유형(물리/마법)은 기술에 표시된 대로 따르며, 방어·명중 규칙도 그 유형을 따릅니다. 힘법사 계열은 반대 공격력을 기준값으로 쓰는 ‘교차’ 기술입니다."
+                        limit="장비·버프로 오른 공격력은 능력치 비례 기준값에 들어가지 않습니다."/>
+                </div>
+            </details>
         </Topic>
         <Topic icon={<Gauge size={19}/>} title="상태이상" note={`${STATUS_GUIDE.length}종. PvE와 결투에 같은 규칙입니다.`}>
             {STATUS_GROUPS.map(g => <div className="help-status-group" key={g.title}>
