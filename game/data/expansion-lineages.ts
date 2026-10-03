@@ -31,7 +31,7 @@ export const LINEAGE_JOBS: NewJob[] = [
     // ── 방어: 해초 돌봄꾼 계보 보강 ─────────────────────────────
     { id: 'tideHealer', name: '해류 치유사', title: '물결로 상처를 씻는다', desc: '큰 회복 주문과 체력·마법 방어 패시브로 오래 버티는 회복 3차 직업입니다.', ...neutral, bonus: { magic: 37, hp: 185, defense: 9, resist: 10 }, ...T3, parent: 'reefMedic', requires: { vit: 45, wis: 38 }, requiresSkillMastery: { reefPulse: 3 }, role: '회복·지속전', tree: 'defense' },
     { id: 'shoreApothecary', name: '조간대 약사', title: '밀물과 썰물 사이의 약초', desc: '회복하며 자신의 출혈·감속을 풀어내는 해독형 2차 직업입니다.', ...neutral, bonus: { magic: 18, hp: 75, defense: 3, resist: 3 }, ...T2, parent: 'seagrassKeeper', requires: { vit: 26, int: 22 }, requiresSkillMastery: { greenTide: 2 }, role: '회복·해독', tree: 'defense' },
-    { id: 'deepCaretaker', name: '심해 요양사', title: '깊은 곳에서 생명을 돌본다', desc: '입힌 피해를 크게 흡수하고 두 방어를 함께 올리는 흡혈형 3차 직업입니다.', ...neutral, bonus: { magic: 55, hp: 220, defense: 7, resist: 12 }, ...T3, parent: 'shoreApothecary', requires: { vit: 45, wis: 40 }, requiresSkillMastery: { kelpPoultice: 3 }, role: '회복·흡혈', tree: 'defense' },
+    { id: 'deepCaretaker', name: '등대 요양사', title: '깊은 곳에서 생명을 돌본다', desc: '입힌 피해를 크게 흡수하고 두 방어를 함께 올리는 흡혈형 3차 직업입니다.', ...neutral, bonus: { magic: 55, hp: 220, defense: 7, resist: 12 }, ...T3, parent: 'shoreApothecary', requires: { vit: 45, wis: 40 }, requiresSkillMastery: { kelpPoultice: 3 }, role: '회복·흡혈', tree: 'defense' },
 
     // ── 상태이상: 주술사 계보 보강 ──────────────────────────────
     { id: 'voodooCrafter', name: '부두 인형사', title: '실 한 가닥에 저주를 꿴다', desc: '주술사의 저주탄으로 약화시킨 적을 바늘 인형으로 크게 찌르는 저주 2차 직업입니다.', ...neutral, bonus: { magic: 38, resist: 2 }, crit: .04, ...T2, parent: 'shaman', requires: { int: 28, luk: 24 }, requiresSkillMastery: { curseBolt: 2 }, role: '약화·저주 연계', tree: 'status' },
@@ -54,7 +54,7 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'tideLancer', name: '조류 창기병', title: '물살을 창끝에 싣는다', desc: '(물리+마법)/2로 찌르는 창술과 체력·마나 패시브를 익히는 복합 입문 직업입니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, ...T1, requires: { str: 10, wis: 12 }, role: '복합 입문·창', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
     { id: 'seaDragoon', name: '해룡 기수', title: '바다뱀의 등에 오른다', desc: '복합 계보의 2차 직업입니다. 급강하로 상대를 오래 약화시키고, 패시브로 체력과 방어를 받칩니다.', ...neutral, bonus: { attack: 36, magic: 39, hp: 60 }, crit: .03, ...T2, parent: 'tideLancer', requires: { str: 26, wis: 26 }, requiresSkillMastery: { currentThrust: 2 }, role: '복합·돌진', tree: 'hybrid' },
     { id: 'stormDragoon', name: '폭풍 용기사', title: '번개를 두른 창', desc: '방어를 꿰뚫는 뇌창과 속도 패시브로 싸우는 복합 3차 직업입니다.', ...neutral, bonus: { attack: 67, magic: 74, hp: 90, defense: 3, resist: 2 }, crit: .04, ...T3, parent: 'seaDragoon', requires: { str: 40, wis: 40, vit: 25 }, requiresSkillMastery: { dragonDive: 3 }, role: '복합·관통', tree: 'hybrid' },
-    { id: 'abyssDragonLord', name: '심해 용왕', title: '파도의 왕좌', desc: '복합 계보의 환생 후 4차 직업입니다. 대돌격으로 상대를 기절시키고, 패시브로 체력과 물리·마법 공격을 함께 올립니다.', ...neutral, attack: 1.39, magic: 1.39, hp: 1.18, defense: 1.06, resist: 1.06, crit: .06, ...T4, parent: 'stormDragoon', requires: { str: 50, wis: 50 }, requiresSkillMastery: { thunderLance: 3 }, role: '복합·최상위 돌진', tree: 'hybrid' },
+    { id: 'abyssDragonLord', name: '해구 용왕', title: '파도의 왕좌', desc: '복합 계보의 환생 후 4차 직업입니다. 대돌격으로 상대를 기절시키고, 패시브로 체력과 물리·마법 공격을 함께 올립니다.', ...neutral, attack: 1.39, magic: 1.39, hp: 1.18, defense: 1.06, resist: 1.06, crit: .06, ...T4, parent: 'stormDragoon', requires: { str: 50, wis: 50 }, requiresSkillMastery: { thunderLance: 3 }, role: '복합·최상위 돌진', tree: 'hybrid' },
     // ── 복합: 룬 대장장이 계보 ──────────────────────────────────
     { id: 'runesmith', name: '룬 대장장이', title: '쇠에 문장을 새긴다', desc: '약화를 거는 룬 망치와 두 방어 패시브를 익히는 복합 입문 직업입니다.', ...neutral, bonus: { attack: 1, magic: 1, defense: 1 }, ...T1, requires: { str: 10, int: 12 }, role: '복합 입문·룬', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
     { id: 'arcArtificer', name: '마갑 장인', title: '갑옷이 곧 무기', desc: '물리 방어에 비례하는 갑주 충격과 두 방어 패시브로 버티며 싸우는 2차 직업입니다.', ...neutral, bonus: { attack: 22, magic: 24, hp: 50, defense: 4, resist: 3 }, ...T2, parent: 'runesmith', requires: { int: 26, vit: 24 }, requiresSkillMastery: { runeHammer: 2 }, role: '복합·방어 비례', tree: 'hybrid' },
@@ -82,7 +82,7 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'lichKing', name: '사령왕', title: '죽음의 왕좌에 앉은 낚시꾼', desc: '망인 계보의 환생 후 4차 히든 직업입니다. 영혼 폭정으로 때린 만큼 흡혈하고, 패시브로 체력과 치명타를 올립니다.', ...neutral, attack: 1.39, magic: 1.07, hp: 1.04, defense: 1.14, crit: .2, ...T4, parent: 'soulHarvester', requires: { str: 54, luk: 42 }, requiresSkillMastery: { harvestEcho: 3 }, role: '치명·영혼 군주', tree: 'mystery', hidden: true },
     { id: 'voidDrifter', name: '허공 방랑자', title: '어디에도 닿지 않는 걸음', desc: '마나 비례 주문과 회피·마나 패시브로 싸우는 공허 계열 3차 히든 직업입니다.', ...neutral, bonus: { magic: 83, resist: 6 }, crit: .12, ...T3, rebirth: 1, parent: 'voidcaller', requires: { int: 46, luk: 40 }, requiresSkillMastery: { voidLance: 3 }, role: 'MP·회피', tree: 'mystery', lineage: 'voidcaller', hidden: true },
     { id: 'voidSovereign', name: '공허의 군주', title: '비어 있음으로 채운다', desc: '공허 계보의 4차 히든 직업입니다. 칙령은 최대 마나를 쏟아부어 때리고, 패시브로 마나와 마법 공격을 올립니다.', ...neutral, defense: 1.12, magic: 1.52, hp: 1.18, resist: 1.21, crit: .12, ...T4, rebirth: 2, parent: 'manaLeviathan', requires: { int: 60, wis: 45 }, requiresSkillMastery: { leviathanEquation: 3 }, role: 'MP·최상위', tree: 'mystery', lineage: 'voidcaller', hidden: true },
-    { id: 'deepHorror', name: '심해 괴수', title: '촉수가 파도를 삼킨다', desc: '몬스터 계보의 4차 히든 직업입니다. 난타로 여러 번 후려치고, 패시브로 체력과 방어를 받칩니다.', ...neutral, attack: 1.42, hp: 1.18, defense: 1.04, crit: .1, ...T4, parent: 'krakenkin', requires: { str: 52, dex: 38 }, requiresSkillMastery: { tentacleBarrage: 3 }, role: '몬스터·추가타', tree: 'mystery', lineage: 'krakenkin', penalties: { accuracy: -.04 }, hidden: true },
+    { id: 'deepHorror', name: '검은물 괴수', title: '촉수가 파도를 삼킨다', desc: '몬스터 계보의 4차 히든 직업입니다. 난타로 여러 번 후려치고, 패시브로 체력과 방어를 받칩니다.', ...neutral, attack: 1.42, hp: 1.18, defense: 1.04, crit: .1, ...T4, parent: 'krakenkin', requires: { str: 52, dex: 38 }, requiresSkillMastery: { tentacleBarrage: 3 }, role: '몬스터·추가타', tree: 'mystery', lineage: 'krakenkin', penalties: { accuracy: -.04 }, hidden: true },
     { id: 'tideDevourer', name: '조수 포식자', title: '모든 것을 삼키는 입', desc: '몬스터 계보의 4차 히든 직업입니다. 포식은 삼킨 만큼 회복하고, 패시브로 체력과 흡혈을 올립니다.', ...neutral, attack: 1.36, hp: 1.21, crit: .08, ...T4, parent: 'krakenkin', requires: { str: 50, vit: 40 }, requiresSkillMastery: { tentacleBarrage: 3 }, role: '몬스터·흡혈', tree: 'mystery', lineage: 'krakenkin', hidden: true },
     { id: 'leviathanAvatar', name: '대해수의 화신', title: '바다가 몸을 얻었다', desc: '세계를 휘감는 촉수 난타로 몬스터 계열의 정점에 선 5차 히든 직업입니다.', ...neutral, attack: 1.56, hp: 1.25, defense: 1.08, resist: 1.06, crit: .12, ...T5, parent: 'deepHorror', requires: { str: 66, dex: 44, vit: 40 }, requiresSkillMastery: { maulingTide: 3 }, role: '몬스터 최상위', tree: 'mystery', lineage: 'krakenkin', penalties: { accuracy: -.04 }, hidden: true },
 ];
@@ -91,7 +91,7 @@ export const LINEAGE_JOBS: NewJob[] = [
 export const NEW_LINEAGES = {
     bloodAngler: { id: 'bloodAngler', name: '피낚시꾼 계보', tree: 'status' as const, summary: '출혈을 쌓고 출혈 중인 적을 처형하는 계보입니다.' },
     nerveNeedler: { id: 'nerveNeedler', name: '마비 침술사 계보', tree: 'status' as const, summary: '기절·감속으로 적을 멈추고 제어된 적을 끝내는 계보입니다.' },
-    tideLancer: { id: 'tideLancer', name: '조류 창기병 계보', tree: 'hybrid' as const, summary: '물리·마법을 함께 실은 창술로 4차 심해 용왕에 이르는 계보입니다.' },
+    tideLancer: { id: 'tideLancer', name: '조류 창기병 계보', tree: 'hybrid' as const, summary: '물리·마법을 함께 실은 창술로 4차 해구 용왕에 이르는 계보입니다.' },
     runesmith: { id: 'runesmith', name: '룬 대장장이 계보', tree: 'hybrid' as const, summary: '방어를 무기로 바꾸는 룬 공학과 현측 포격으로 갈라지는 계보입니다.' },
 };
 
@@ -126,10 +126,10 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'philosopherSalt', name: '현자의 소금', desc: '마법 공격과 지속 피해가 오릅니다.', level: 40, job: 'brineSavant', cost: 3, bonus: { magic: 30, dotBonus: .12 } },
     // 방어
     { ...A, ...magic, id: 'tidalRenewal', name: '조류의 소생', desc: '', level: 40, job: 'tideHealer', chance: .55, cooldown: 4, multiplier: 1.8, cost: 4, manaCost: 18, effect: 'heal' },
-    { ...P, id: 'deepCurrentBalm', name: '심해 연고', desc: '최대 체력과 마법 방어가 오릅니다.', level: 40, job: 'tideHealer', cost: 3, bonus: { hp: 200, resist: 18 } },
+    { ...P, id: 'deepCurrentBalm', name: '등대 연고', desc: '최대 체력과 마법 방어가 오릅니다.', level: 40, job: 'tideHealer', cost: 3, bonus: { hp: 200, resist: 18 } },
     { ...A, ...magic, id: 'kelpPoultice', name: '해초 찜질', desc: '', level: 25, job: 'shoreApothecary', chance: .55, cooldown: 3, multiplier: 1.3, cost: 3, manaCost: 12, effect: 'heal', cleanseSelf: true },
     { ...P, id: 'tidepoolTonic', name: '조수 웅덩이 강장제', desc: '최대 체력과 마나 회복이 오릅니다.', level: 25, job: 'shoreApothecary', cost: 2, bonus: { hp: 80, manaRegen: 1 } },
-    { ...A, ...magic, id: 'abyssalMend', name: '심연의 봉합', desc: '', level: 40, job: 'deepCaretaker', chance: .55, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 18, effect: 'drain', drainRatio: .3 },
+    { ...A, ...magic, id: 'abyssalMend', name: '등대 봉합', desc: '', level: 40, job: 'deepCaretaker', chance: .55, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 18, effect: 'drain', drainRatio: .3 },
     { ...P, id: 'stillWaterVigil', name: '고요한 물의 간병', desc: '물리·마법 방어가 오릅니다.', level: 40, job: 'deepCaretaker', cost: 3, bonus: { defense: 20, resist: 20 } },
     // 상태이상: 주술사
     { ...A, ...magic, id: 'pinDoll', name: '바늘 인형', desc: '', level: 25, job: 'voodooCrafter', chance: .5, cooldown: 3, multiplier: 1.45, cost: 3, manaCost: 13, effect: 'weaken', damageBonusCondition: 'weakened', conditionalDamageBonus: .3 },
@@ -191,7 +191,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'smokeVeil', name: '연막 찌르기', desc: '', level: 25, job: 'inkMime', chance: .27, cooldown: 3, multiplier: 1.35, cost: 3, effect: 'weaken' },
     { ...P, id: 'slipperyStep', name: '미끄러운 발', desc: '회피와 속도가 오릅니다.', level: 25, job: 'inkMime', cost: 2, bonus: { evasion: .06, speed: 5 } },
     { ...A, ...physical, id: 'spoilsStrike', name: '전리품 일격', desc: '', level: 40, job: 'treasureDiver', chance: .26, cooldown: 4, multiplier: 1.9, cost: 4 },
-    { ...P, id: 'deepSalvage', name: '심해 인양', desc: '드롭과 골드 획득이 오릅니다.', level: 40, job: 'treasureDiver', cost: 3, bonus: { dropBonus: .06, goldBonus: .06 } },
+    { ...P, id: 'deepSalvage', name: '난파선 인양', desc: '드롭과 골드 획득이 오릅니다.', level: 40, job: 'treasureDiver', cost: 3, bonus: { dropBonus: .06, goldBonus: .06 } },
     { ...A, ...physical, id: 'anchorSwing', name: '닻 휘두르기', desc: '', level: 25, job: 'wreckDiver', chance: .26, cooldown: 3, multiplier: 1.45, cost: 3 },
     { ...P, id: 'pressureSuit', name: '잠수복', desc: '최대 체력과 드롭이 오릅니다.', level: 25, job: 'wreckDiver', cost: 2, bonus: { hp: 90, dropBonus: .03 } },
     { ...A, ...magic, id: 'coinBarrage', name: '금화 폭풍', desc: '', level: 40, job: 'tradePrince', chance: .5, cooldown: 4, multiplier: 2.1, cost: 4, manaCost: 18 },
@@ -216,7 +216,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'abyssDecree', name: '심연의 칙령', desc: '', level: 55, job: 'voidSovereign', chance: .55, cooldown: 4, multiplier: 2.7, cost: 5, manaCost: 30, scaling: 'mana', scalingRatio: .35, masteryMilestones: M4 },
     { ...P, id: 'silentAbyss', name: '침묵하는 심연', desc: '최대 마나와 마법 공격이 오릅니다.', level: 55, job: 'voidSovereign', cost: 3, bonus: { mana: 60, magic: 36 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'maulingTide', name: '난타의 조수', desc: '', level: 55, job: 'deepHorror', chance: .24, cooldown: 4, multiplier: 1.3, cost: 5, extraAttacks: 2, extraAttackMultiplier: .6, masteryMilestones: M4 },
-    { ...P, id: 'abyssHide', name: '심해 가죽', desc: '최대 체력과 물리 방어가 오릅니다.', level: 55, job: 'deepHorror', cost: 3, bonus: { hp: 220, defense: 20 }, masteryMilestones: M4 },
+    { ...P, id: 'abyssHide', name: '괴수 가죽', desc: '최대 체력과 물리 방어가 오릅니다.', level: 55, job: 'deepHorror', cost: 3, bonus: { hp: 220, defense: 20 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'devour', name: '포식', desc: '', level: 55, job: 'tideDevourer', chance: .26, cooldown: 4, multiplier: 2.4, cost: 5, effect: 'drain', drainRatio: .25, masteryMilestones: M4 },
     { ...P, id: 'gorgedMaw', name: '가득 찬 아가리', desc: '최대 체력과 흡혈이 오릅니다.', level: 55, job: 'tideDevourer', cost: 3, bonus: { hp: 260, lifesteal: .03 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'worldTentacle', name: '세계의 촉수', desc: '', level: 70, job: 'leviathanAvatar', chance: .24, cooldown: 4, multiplier: 1.5, cost: 6, extraAttacks: 3, extraAttackMultiplier: .65, masteryMilestones: M5 },
