@@ -12,6 +12,7 @@ export const ENEMY_SKILLS: Skill[] = [
     // v27 피해 유형 다양화: 물리 출혈기 · 마법 약화기 · 복합 강타.
     { id: 'foeBarbs', name: '가시 찌르기', desc: '물리 공격 105% 피해 + 3턴 출혈.', type: 'active', level: 1, chance: .24, cooldown: 4, multiplier: 1.05, effect: 'bleed', statusTurns: 3, manaCost: 0 },
     { id: 'foeInkBurst', name: '먹물 폭발', desc: '마법 공격 115% 피해 + 3턴 약화.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.15, damageType: 'magic', effect: 'weaken', statusTurns: 3, manaCost: 0 },
+    { id: 'foeShellRam', name: '비늘 들이받기', desc: '물리 공격 125% 피해.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.25, manaCost: 0 },
     { id: 'foeTideSlam', name: '조류 강타', desc: '복합 피해 120%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.2, damageType: 'split', manaCost: 0 },
 ];
 export const PROFILES: Record<string, {
@@ -28,18 +29,18 @@ export const PROFILES: Record<string, {
     speed: number;
 }> = {
     swift: { name: '날쌘 개체', hint: '기민·명중으로 회피에 대응하세요. 가시로 출혈을 겁니다.', skills: ['foeBarbs'], defense: .7, resist: .8, evasion: .14, speed: 1.4 },
-    armored: { name: '단단한 비늘', hint: '마법 공격이나 방어 관통에 약합니다. 조류 강타는 복합 피해입니다.', skills: ['foeCrush', 'foeTideSlam'], defense: 2.2, resist: .55, evasion: 0, speed: .7 },
+    armored: { name: '단단한 비늘', hint: '마법 공격이나 방어 관통에 약합니다. 물리 공격만 씁니다.', skills: ['foeCrush', 'foeShellRam'], defense: 2.2, resist: .55, evasion: 0, speed: .7 },
     arcane: { name: '마력 생물', hint: '마법 방어로 버티고 물리 공격을 활용하세요.', skills: ['foeShock'], magicBasic: true, defense: .6, resist: 2.1, evasion: .03, speed: 1 },
     venom: { name: '독성 생물', hint: '출혈을 버틸 회복과 체력을 준비하세요.', skills: ['foeVenom', 'foeBarbs'], defense: 1, resist: 1, evasion: .04, speed: 1.1 },
-    silencer: { name: '침묵하는 생물', hint: '액티브를 봉인하는 침묵과 마법 약화에 대비하세요.', skills: ['foeSilence', 'foeInkBurst'], defense: .9, resist: 1.1, evasion: .06, speed: 1.05 },
-    controller: { name: '조류 제어자', hint: '감속·기절로 턴 우선권을 빼앗고 복합 피해로 때립니다.', skills: ['foeSlow', 'foeCrush', 'foeTideSlam'], defense: 1.2, resist: 1.3, evasion: .02, speed: .85 },
+    silencer: { name: '침묵하는 생물', hint: '기본 공격부터 마법 피해. 액티브를 봉인하는 침묵과 마법 약화에 대비하세요.', skills: ['foeSilence', 'foeInkBurst'], magicBasic: true, defense: .9, resist: 1.1, evasion: .06, speed: 1.05 },
+    controller: { name: '조류 제어자', hint: '기본 공격부터 복합 피해. 감속·기절로 턴 우선권을 빼앗습니다.', skills: ['foeSlow', 'foeCrush', 'foeTideSlam'], splitBasic: true, defense: 1.2, resist: 1.3, evasion: .02, speed: .85 },
     frenzy: { name: '광폭 포식자', hint: '한 번의 공격 뒤 추가타가 이어집니다.', skills: ['foeFrenzy', 'foeHaste'], defense: 1.1, resist: .9, evasion: .08, speed: 1.25 },
     venomBoss: { name: '독성 보스', hint: '출혈과 감속을 번갈아 사용합니다.', skills: ['foeVenom', 'foeSlow'], defense: 1.25, resist: 1.05, evasion: .06, speed: 1.05 },
     arcaneBoss: { name: '신탁 보스', hint: '마법 공격과 침묵으로 편성을 흔듭니다.', skills: ['foeShock', 'foeSilence'], magicBasic: true, defense: .95, resist: 1.45, evasion: .05, speed: 1.1 },
     boss: { name: '심연 보스', hint: '침묵·감속·추가타·복합 강타를 모두 사용합니다.', skills: ['foeSilence', 'foeSlow', 'foeFrenzy', 'tentacleBarrage', 'foeTideSlam'], defense: 1.35, resist: 1.35, evasion: .08, speed: 1.05 },
     // v27 조류 생물: 기본 공격부터 복합 피해. 물리·마법 방어 중 하나만 높은 빌드에 부담을 줍니다.
     tidal: { name: '조류 생물', hint: '기본 공격이 복합 피해라 물리·마법 방어를 고루 갖춰야 합니다.', skills: ['foeTideSlam', 'foeInkBurst'], splitBasic: true, defense: .9, resist: .9, evasion: .04, speed: 1 },
-    stormEel: { name: '폭풍 곰치', hint: '플레이어도 배울 수 있는 감속 전류를 사용합니다.', skills: ['electricBite', 'foeSilence'], defense: 1.05, resist: 1.25, evasion: .04, speed: 1.1 },
+    stormEel: { name: '폭풍 곰치', hint: '기본 공격부터 마법(전류) 피해. 플레이어도 배울 수 있는 감속 전류를 사용합니다.', skills: ['electricBite', 'foeSilence'], magicBasic: true, defense: .85, resist: 1.1, evasion: .04, speed: 1.05 },
 };
 const profileIds: Record<string, string> = {
     minnow: 'swift', carp: 'armored', perch: 'tidal', mackerel: 'swift', ray: 'tidal', puffer: 'venom', lionfish: 'venom', eel: 'arcane', barracuda: 'swift', ghost: 'arcane', angler: 'arcane', shark: 'armored', viper: 'venom', squid: 'arcane', leviathan: 'armored', moonfish: 'arcane', dragon: 'swift', ancient: 'armored',
