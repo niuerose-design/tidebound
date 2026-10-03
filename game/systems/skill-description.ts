@@ -18,6 +18,15 @@ const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누
 const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록' };
 const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' };
 /** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */
+/** v27.15 도감의 적 스킬 한 줄: '물리 150%' · '출혈 5턴' · '물리 110% · 자신 가속 3턴'. 긴 문장은 쓰지 않습니다. */
+export function enemySkillBrief(sk: Skill) {
+    const parts: string[] = [];
+    if (!sk.statusOnly && sk.multiplier) parts.push(`${sk.damageType === 'magic' ? '마법' : sk.damageType === 'split' ? '복합' : '물리'} ${number(sk.multiplier * 100)}%`);
+    if (sk.effect === 'haste') parts.push(`자신 가속 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
+    else if (sk.effect && STATUS_WORD[sk.effect]) parts.push(`${statusLabel(sk)} ${sk.statusTurns ?? 1}턴`);
+    if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
+    return parts.join(' · ') || '기본 공격';
+}
 export function statusLabel(sk: Skill) {
     return sk.effect === 'bleed' && sk.dotName ? sk.dotName : STATUS_WORD[sk.effect || ''] || '';
 }
