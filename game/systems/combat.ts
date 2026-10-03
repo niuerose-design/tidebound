@@ -1,5 +1,6 @@
 import { SKILLS, skillById } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
+import { jobById } from '../data/classes';
 import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier } from '../data/balance';
 import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute } from '../types';
 const ATTR_KEY: Record<Attribute, 'attrStr' | 'attrDex' | 'attrInt' | 'attrVit' | 'attrWis' | 'attrLuk'> = { str: 'attrStr', dex: 'attrDex', int: 'attrInt', vit: 'attrVit', wis: 'attrWis', luk: 'attrLuk' };
@@ -35,7 +36,24 @@ export type Fighter = {
     magicBasic?: boolean;
     /** v27 기본 공격이 복합 피해(조류 생물). (물리+마법)/2로 치고 물리·마법 방어를 절반씩 적용합니다. */
     splitBasic?: boolean;
+    /** v27.4 제약 직업 장치: 항상 선공. */
+    firstStrike?: boolean;
+    /** v27.4 제약 직업 장치: 직업 자체의 최후의 버팀(기술 無와 같은 횟수 카운터를 씁니다). */
+    jobStand?: { charges: number; heal?: number };
+    /** v27.4 제약 직업 장치: 모든 공격 반드시 명중. */
+    sureHit?: boolean;
 };
+/** v27.4 직업의 제약 장치를 전투 참가자 필드로. 플레이어(PvE)와 결투 스냅샷이 같이 씁니다. */
+export function constraintFields(jobId: string | undefined): Partial<Fighter> {
+    const d = jobById(jobId)?.constraint?.devices;
+    if (!d) return {};
+    return { ...(d.firstStrike ? { firstStrike: true } : {}), ...(d.lastStand ? { jobStand: d.lastStand } : {}), ...(d.sureHit ? { sureHit: true } : {}), ...(d.damageTaken ? { damageTaken: d.damageTaken } : {}), ...(d.damageDealt ? { damageDealt: d.damageDealt } : {}) };
+}
+/** v27.4 턴 순서: 선공 장치가 있으면 속도와 무관하게 먼저. 둘 다 없으면 속도 비교(같으면 a). */
+export function actsFirst(a: Fighter, b: Fighter) {
+    if (!!a.firstStrike !== !!b.firstStrike) return !!a.firstStrike;
+    return fighterSpeed(a) >= fighterSpeed(b);
+}
 type DurationStatus = 'weaken' | 'silence' | 'slow' | 'haste';
 type ImmuneStatus = keyof NonNullable<StatusEffects['immune']>;
 /** 상태이상이 끝나면 같은 상태이상에 잠시 면역이 됩니다(가속은 자기 버프라 제외). */
@@ -134,13 +152,14 @@ export function actTurn(a: Fighter, b: Fighter, rng: () => number, onAction: (te
  */
 function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, self = false) {
     if (f.hp > 0) return false;
-    const id = f.skills.find(x => skillById(x)?.lastStand), stand = id ? skillById(id)!.lastStand! : undefined;
+    const id = f.skills.find(x => skillById(x)?.lastStand), stand = id ? skillById(id)!.lastStand! : f.jobStand;
     if (!stand) return false;
     f.effects ??= {};
     // v25.14 無는 함께 새긴 글자(같은 직업의 seal 액티브) 수에 비례합니다. 혼자 새기면 전투당 1번, 회복 없음. 여섯 글자를 모두 새겨야 원래 횟수·회복.
-    const owner = skillById(id!)!, sealsAll = SKILLS.filter(x => x.job === owner.job && x.seal).length, sealsOn = f.skills.filter(x => skillById(x)?.seal && skillById(x)?.job === owner.job).length;
+    const owner = id ? skillById(id)! : undefined, sealsAll = owner ? SKILLS.filter(x => x.job === owner.job && x.seal).length : 0, sealsOn = owner ? f.skills.filter(x => skillById(x)?.seal && skillById(x)?.job === owner.job).length : 0;
     const weave = sealsAll ? sealsOn / sealsAll : 1;
-    const used = f.effects.lastStand || 0, full = stand.charges + Math.floor((stand.chargesPerLevel || 0) * (f.mastery?.[id!] || 0)), charges = Math.max(1, Math.round(full * weave));
+    const perLevel = Number((stand as { chargesPerLevel?: number }).chargesPerLevel || 0);
+    const used = f.effects.lastStand || 0, full = stand.charges + Math.floor(perLevel * (id ? f.mastery?.[id] || 0 : 0)), charges = Math.max(1, Math.round(full * weave));
     if (used >= charges) return false;
     f.effects.lastStand = used + 1;
     const heal = Math.max(0, Math.min(sf.hp - 1, Math.floor(sf.hp * (stand.heal || 0) * weave)));
@@ -297,7 +316,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     }
     const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack || !chosen && !!a.magicBasic;
     // v26.7 마법 공격은 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다(물리 빌드와의 차별점).
-    const hit = chosen?.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed }, magical);
+    const hit = chosen?.sureHit || a.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed }, magical);
     const splitBasic = !chosen && !!a.splitBasic;
     const label = chosen?.name || (arcane ? '마력 평타' : splitBasic ? '복합 평타' : '기본 공격');
     // v26.3 순수 회복 기술: 명중 판정 없이 회복만 하고 끝납니다.

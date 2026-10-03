@@ -56,7 +56,43 @@ export type Job = {
     tags?: string[];
     /** 미발견 히든·문 직업의 실루엣 카드에 보이는 한 줄 힌트. */
     hint?: string;
+    /**
+     * v27.4 제약 직업 틀. 체력 ×0.01처럼 큰 마이너스 배율을 가진 직업이 "어떻게 살아남는지"를 데이터로 선언합니다.
+     * PvE 밸런스 대상이 아니라 기술 계승·예능·결투 저격용입니다. 새 제약 직업은 attack/hp/defense 배율 + 이 필드만 적으면 됩니다.
+     * 규칙(tests/classes.test.mjs): 배율 0.3 이하가 하나라도 있으면 constraint를 반드시 선언하고 장치를 하나 이상 둡니다.
+     */
+    constraint?: JobConstraint;
 };
+/** 제약 직업의 생존 장치. 전투 엔진(combat.ts)과 능력치(stats.ts)가 그대로 읽습니다. */
+export type ConstraintDevices = {
+    /** 턴 순서에서 항상 먼저 행동합니다(속도 비교 생략). 연속 행동 확률은 속도대로입니다. */
+    firstStrike?: boolean;
+    /** 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번, heal은 최대 체력 비율 회복). */
+    lastStand?: { charges: number; heal?: number };
+    /** 회피 +n(0.5 = +50%p). 명중 공식은 그대로(마법은 절반만 적용). */
+    evasion?: number;
+    /** 받는 피해 감소율(지속 피해 제외). */
+    damageTaken?: number;
+    /** 주는 피해 증가율. */
+    damageDealt?: number;
+    /** 모든 공격이 반드시 명중합니다. */
+    sureHit?: boolean;
+};
+export type JobConstraint = { label: string; desc: string; devices: ConstraintDevices };
+/** 제약 장치를 사람이 읽는 문구로. 직업 상세·도움말이 씁니다. */
+export function constraintDeviceLabels(d: ConstraintDevices) {
+    const out: string[] = [];
+    if (d.firstStrike) out.push('항상 선공');
+    if (d.lastStand) out.push(`체력 1로 버팀 ×${d.lastStand.charges}${d.lastStand.heal ? ` · 회복 ${Math.round(d.lastStand.heal * 100)}%` : ''}`);
+    if (d.evasion) out.push(`회피 +${Math.round(d.evasion * 100)}%p`);
+    if (d.damageTaken) out.push(`받는 피해 -${Math.round(d.damageTaken * 100)}%`);
+    if (d.damageDealt) out.push(`주는 피해 +${Math.round(d.damageDealt * 100)}%`);
+    if (d.sureHit) out.push('반드시 명중');
+    return out;
+}
+/** 제약 직업 판정: 다섯 배율 중 하나라도 constraintThreshold 이하. */
+export const CONSTRAINT_THRESHOLD = .3;
+export const isConstraintJob = (j: Pick<Job, 'attack' | 'magic' | 'hp' | 'defense' | 'resist'>) => [j.attack, j.magic, j.hp, j.defense, j.resist].some(n => n <= CONSTRAINT_THRESHOLD);
 /** 직업 보정을 받는 다섯 능력치. */
 export type JobStatKey = 'attack' | 'magic' | 'hp' | 'defense' | 'resist';
 export type JobTreeId = 'physical' | 'magic' | 'defense' | 'status' | 'hybrid' | 'support' | 'mystery';
@@ -91,6 +127,8 @@ export const JOBS: Job[] = [
     { id: 'chimera', name: '심해 융합자', title: '살과 마나를 한 덩어리로', desc: '최대 체력과 마나를 공격으로 바꾸는 대기만성형 직업.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { attack: 33, magic: 36, hp: 125, defense: 3, resist: 4 }, tier: 2, level: 25, parent: 'wanderer', requires: { str: 25, int: 25, vit: 20 }, mastery: 75, role: 'HP·MP 복합', tree: 'hybrid' },
     { id: 'voidcaller', name: '공허의 기록자', title: '기록되지 않은 파도의 목소리', desc: '환생 이후에 드러나는 히든 직업. 마나 비례 주문과 높은 발동 확률.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .1, bonus: { magic: 42, hp: 20, resist: 7 }, tier: 2, level: 25, parent: 'wanderer', requires: { int: 30, luk: 30 }, mastery: 75, role: '히든·MP', tree: 'mystery', lineage: 'voidcaller', hidden: true, rebirth: 1 },
     { id: 'undead', name: '망인', title: '죽음과 함께 걷는 낚시꾼', desc: '체력이 절반이고 마법·방어도 크게 불리합니다. 끝나지 않는 골격을 숙련하면 직업 페널티를 단계별로 되찾고, 3단계에서는 모두 되찾습니다.', attack: 0.95, magic: 0.75, hp: 0.5, defense: 0.8, resist: 0.7, crit: .02, tier: 1, level: 10, requires: { vit: 14, luk: 14 }, mastery: 0, role: '페널티·숙련', tree: 'mystery', hidden: true, penalties: { accuracy: -.08, mana: -10, resist: -3 } },
+    // v27.4 제약 직업 틀의 참고 구현: 체력 ×0.01 유리 대포. 선공·최후의 버팀 2회·회피 +30%로 "맞기 전에 끝내는" 직업. PvE 밸런스 대상 아님.
+    { id: 'glassHarpooner', name: '유리 작살꾼', title: '한 번 맞으면 깨지는 몸', desc: '최대 체력이 1%뿐인 제약 직업입니다. 항상 먼저 움직이고, 쓰러질 피해를 전투당 두 번 체력 1로 버티며, 회피 +30%p로 피합니다. 물리 공격 ×2.2·치명타 +15%로 맞기 전에 끝내는 결투·계승용 직업입니다.', attack: 2.2, magic: 1, hp: .01, defense: 1, resist: 1, crit: .15, tier: 1, level: 10, requires: { dex: 14, luk: 14 }, mastery: 0, role: '제약·유리 대포', tree: 'mystery', hidden: true, branchless: true, hint: '한 대도 맞을 수 없는 몸으로 먼저 찌르는 낚시꾼.', constraint: { label: '유리 몸', desc: '최대 체력 1%. 선공·최후의 버팀·회피로만 살아남습니다.', devices: { firstStrike: true, lastStand: { charges: 2 }, evasion: .3 } } },
     { id: 'skeleton', name: '해골 기사', title: '부서져도 다시 선다', desc: '최대 체력은 낮지만 방어와 골격의 힘으로 버티는 페널티 극복형 직업.', attack: 1, magic: 0.6, hp: 0.5, defense: 1, resist: 0.6, crit: .04, bonus: { attack: 19, defense: 8 }, tier: 2, level: 25, parent: 'undead', requires: { str: 32, vit: 24 }, mastery: 75, role: '골격·방어', tree: 'mystery', hidden: true, penalties: { accuracy: -.1, mana: -14, resist: -5 } },
     { id: 'bonecaster', name: '골령술사', title: '마나로 뼈를 세우는 자', desc: '약한 육체와 낮은 명중을 감수하고 마나·마법 방어·숙련 보상에 투자하는 히든 직업.', attack: 0.6, magic: 1, hp: 0.5, defense: 0.6, resist: 1, crit: .06, bonus: { magic: 33, resist: 5 }, tier: 2, level: 25, parent: 'undead', requires: { int: 32, wis: 24 }, mastery: 75, role: '골령·마법', tree: 'mystery', hidden: true, penalties: { accuracy: -.12, mana: -6, defense: -3 } },
 ];

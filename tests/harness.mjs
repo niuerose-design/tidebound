@@ -10,7 +10,7 @@ export const {stats,snapshot,expMultiplier,normalizeStats}=await load('game/syst
 export const {victoryMastery}=await load('game/systems/mastery.js');
 export const {visibleStatuses}=await load('game/systems/combat-status.js');
 export const {duel,TRAINING,bossSnapshot,BOSS_OPPONENTS}=await load('game/systems/duel.js');
-export const {strike,fighterSpeed}=await load('game/systems/combat.js');
+export const {strike,fighterSpeed,actsFirst,constraintFields}=await load('game/systems/combat.js');
 export const {diceMultiplier,diceRange}=await load('game/data/balance.js');
 export const {variantChances}=await load('game/data/variants.js');
 export const {combatFxFromLog,combatFxBatch}=await load('game/systems/combat-feedback.js');
@@ -38,7 +38,7 @@ export const {xpNeeded,SKILL_FORMULA,STATUS_TUNING,BALANCE,RARITIES}=await load(
 export const STATUS_TUNING_MAX=STATUS_TUNING.poisonMaxStacks;
 export const gear=await load('game/data/gear.js');
 export const {PROGRESSION}=await load('game/data/progression.js');
-export const {JOBS,JOB_TREES,LINEAGES,lineageOf,jobTags}=await load('game/data/classes.js');
+export const {JOBS,JOB_TREES,LINEAGES,lineageOf,jobTags,isConstraintJob,constraintDeviceLabels}=await load('game/data/classes.js');
 export const doorsMod=await load('game/data/doors.js');
 // 직업 화면 공용 계산(components/game/jobs/job-status.ts)은 게임 모듈만 쓰므로 같은 임시 폴더에 옮겨 불러옵니다.
 {const {dir}=loadGame(),ts=(await import('typescript')).default,fs=await import('node:fs');

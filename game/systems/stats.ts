@@ -131,6 +131,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const mult = (n: number) => jobCombatMultiplier(j, n < 1 ? 1 - (1 - n) * (1 - Math.min(1, relief)) : n, mastered);
     // 1~3차 플러스 보정은 고정 수치로 더하고, 아래 배율은 마이너스 보정(1~3차)과 4·5차 보정에만 씁니다.
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) add(key, 'job', jobFlatBonus(j, key, mastered));
+    // v27.4 제약 직업 장치: 회피.
+    if (j.constraint?.devices.evasion) add('evasion', 'job', j.constraint.devices.evasion);
     add('harmony', 'job', (jobFlatBonus(j, 'attack', mastered) + jobFlatBonus(j, 'magic', mastered)) / 2);
     const feats = achievementTotals(s).bonus, account = 1 + accountPower(s);
     mul('hp', [['job', mult(j.hp)], ['research', 1 + (s.permanent.hp || 0) * .08], ['achievement', 1 + feats.hp], ['account', account]]);
