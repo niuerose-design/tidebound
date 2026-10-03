@@ -74,6 +74,32 @@ export async function applyRestart(id: string, revision: number) {
     return { before, after: view(id, username, revision + 1, now, s) };
 }
 
+// ---------- v27.27 골드·진주 조정 ----------
+export const ADMIN_LIMITS = { gold: 1e15, pearls: 1e7 };
+const amount = (v: unknown, max: number, label: string) => {
+    if (v === undefined || v === null || v === '') return undefined;
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 0 || n > max) throw new ApiError(`${label} 값은 0 이상 ${max.toLocaleString()} 이하의 정수로 입력하세요.`);
+    return n;
+};
+/** 골드·진주를 입력한 값으로 맞춥니다. 그사이 게임이 저장되면 최신 세이브에 다시 적용합니다(최대 3번). */
+export async function adjustCurrency(id: string, input: { gold?: unknown; pearls?: unknown }) {
+    const gold = amount(input.gold, ADMIN_LIMITS.gold, '골드'), pearls = amount(input.pearls, ADMIN_LIMITS.pearls, '진주');
+    if (gold === undefined && pearls === undefined) throw new ApiError('바꿀 골드나 진주 값을 입력하세요.');
+    const username = await usernameOf(id);
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const row = await load(id), now = Date.now();
+        const s = migrateState(JSON.parse(row.state) as State, now), before = view(id, username, row.revision, now, s);
+        if (gold !== undefined) s.gold = gold;
+        if (pearls !== undefined) s.pearls = pearls;
+        if (await db().updatePlayer(id, JSON.stringify(s), now, row.revision)) {
+            console.info('admin adjustCurrency', { id, username, gold: [before.gold, s.gold], pearls: [before.pearls, s.pearls] });
+            return { before, after: view(id, username, row.revision + 1, now, s) };
+        }
+    }
+    throw new ApiError('게임이 계속 저장되고 있어 적용하지 못했습니다. 잠시 뒤 다시 시도하세요.', 409);
+}
+
 // ---------- v27.27 서버 이벤트 설정 ----------
 
 const MULTS = ['exp', 'gold', 'drop', 'mastery'] as const;
