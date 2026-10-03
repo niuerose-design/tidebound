@@ -49,3 +49,8 @@ export const INVERSION_SKILLS: Skill[] = [
     { ...A, ...brawnSpell, id: 'worldInversion', name: '세계 역전', desc: '', level: 70, job: 'skyInverter', chance: .5, cooldown: 5, multiplier: 4.4, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
     { ...P, id: 'skyInverterAura', name: '역천의 기운', desc: '물리 공격과 치명타가 크게 오르고 마법 방어가 오릅니다.', level: 70, job: 'skyInverter', cost: 3, bonus: { attack: 70, crit: .05, resist: 30 }, masteryMilestones: M5 },
 ];
+
+/** 밸런스 표: 액티브의 발동률·배율·대기·마나(마나는 skill-balance가 ×4). 상태 규칙과 설명 생성도 이 표를 거쳐야 적용됩니다. */
+export const INVERSION_BALANCE: Record<string, Partial<Skill>> = Object.fromEntries(
+    INVERSION_SKILLS.filter(sk => sk.type === 'active').map(sk => [sk.id, { chance: sk.chance, multiplier: sk.multiplier, cooldown: sk.cooldown, ...(sk.manaCost ? { manaCost: sk.manaCost } : {}) }]),
+);

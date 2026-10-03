@@ -6,6 +6,7 @@ import { SUPPORT_JOBS, SUPPORT_JOB_DESC, SUPPORT_HINTS } from './support-rework'
 import { V25_JOBS, V25_HINTS } from './expansion-v25';
 import { DEFENSE_JOBS, DEFENSE_HINTS, DEFENSE_LINEAGES } from './expansion-defense';
 import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
+import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
 export type Job = {
     id: string;
     name: string;
@@ -183,6 +184,8 @@ JOBS.push(...(V25_JOBS as Job[]));
 JOBS.push(...(DEFENSE_JOBS as Job[]));
 // v25.24 역전 계보(힘법사): 물리 계수 마법 피해 · 마법 계수 물리 피해. 자세한 설계는 expansion-inversion.ts.
 JOBS.push(...(INVERSION_JOBS as Job[]));
+// v25.26 외길 계보: 능력치 하나만으로 전직하는 1~3차. 자세한 설계는 expansion-monostat.ts.
+JOBS.push(...(MONOSTAT_JOBS as Job[]));
 for (const job of JOBS) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
 
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
@@ -300,6 +303,7 @@ export const LINEAGES: Lineage[] = [
     { id: 'voidcaller', name: '공허의 기록자 계보', tree: 'mystery', summary: '환생 이후에 드러나는 마나 비례 히든 계보입니다.' },
     { id: 'krakenkin', name: '크라켄 혈족', tree: 'mystery', summary: '몬스터의 피를 이은 추가타 직업입니다.' },
     independent('mystery'),
+    ...MONOSTAT_LINEAGES,
 ];
 /** 직업의 계보 id. lineage가 있으면 그 값, 상위·하위가 없는 1차 직업은 `${tree}-independent`, 그 밖에는 루트 조상 id. */
 export function lineageOf(job: Job): string {

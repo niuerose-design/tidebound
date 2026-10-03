@@ -6,6 +6,7 @@ import { LINEAGE_SKILLS } from './expansion-lineages';
 import { V24_SKILLS } from './expansion-v24';
 import { DEFENSE_SKILLS } from './expansion-defense';
 import { INVERSION_SKILLS } from './expansion-inversion';
+import { MONOSTAT_SKILLS } from './expansion-monostat';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
 export const SKILLS: Skill[] = [
@@ -142,6 +143,8 @@ SKILLS.push(...V24_SKILLS);
 SKILLS.push(...DEFENSE_SKILLS);
 // v25.24 역전 계보 기술.
 SKILLS.push(...INVERSION_SKILLS);
+// v25.26 외길 계보 기술.
+SKILLS.push(...MONOSTAT_SKILLS);
 // v24.2 보조 계열 개편·??? 문 직업 기술. 패시브 수치는 여기서 덮어씁니다(액티브는 skill-balance.ts).
 SKILLS.push(...SUPPORT_SKILLS);
 // v25 ??? 특수 직업 기술.
