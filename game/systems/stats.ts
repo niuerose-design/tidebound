@@ -159,8 +159,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         limit(k, Math.max(k === 'hp' || k === 'speed' ? 1 : 0, Math.floor(a[k])));
     // 장비 규칙 옵션은 같은 규칙끼리 상한까지만 합산합니다.
     for (const [key, cap] of Object.entries(RULE_CAPS)) limit(key as keyof CombatStats, Math.min(cap!, a[key as keyof CombatStats] || 0));
-    // v27.18 치명타 상한을 넘은 몫은 극 치명타 확률이 됩니다.
-    a.superCrit = Math.min(1, Math.max(0, a.crit - SKILL_FORMULA.critCap)); rec('superCrit', 'limit', a.superCrit);
+    // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +1%.
+    a.superCrit = Math.min(1, Math.max(0, a.crit - SKILL_FORMULA.critCap) * SKILL_FORMULA.superCritPerHundred); rec('superCrit', 'limit', a.superCrit);
     limit('crit', Math.min(SKILL_FORMULA.critCap, a.crit));
     limit('evasion', evasionRating(a.evasion));
     limit('penetration', Math.min(.6, a.penetration));
