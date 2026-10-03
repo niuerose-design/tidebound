@@ -7,13 +7,13 @@ import { SKILLS } from '@/game/data/skills';
 import { FISH, STAGES } from '@/game/data/world';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
-import { PROGRESSION, statDisplay, percent } from '@/game/data/progression';
+import { PROGRESSION, STAT_LABELS, statDisplay, percent } from '@/game/data/progression';
 import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
 import { stats, mastery, goldMultiplier, hitChance } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats } from '@/game/data/encounters';
-import { bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel, regionThemes } from '@/game/systems/book';
-import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL } from '@/game/data/book-traits';
+import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel, regionThemes } from '@/game/systems/book';
+import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES } from '@/game/data/book-traits';
 import type { State, Stats } from '@/game/types';
 import { skillEffectLines } from '@/game/systems/skill-description';
 
@@ -58,9 +58,10 @@ export function Collection({ s, send, busy }: PanelProps) {
     <p>종별 연구 {BALANCE.bookMilestones.map(m => m.toLocaleString()).join(' · ')}회 · 앞 3단계는 골드, 최종 단계는 SP +1 · {BOOK_REVEAL}회 포획하면 적 정보 공개</p>
     </div>
     <div className="panel">
-    <small>성향 연구 보너스 · {mastery(s)}단계</small>
-    <p>{bonusLabel(bookStatBonus(s)) || '아직 달성한 연구 단계가 없습니다.'}</p>
-    <p>어종 성향마다 오르는 능력치가 다릅니다. 2단계부터는 그 어종 상대 피해 보정(생태 연구)이 붙습니다.</p>
+    <small>성향 연구 단계</small>
+    <strong>{mastery(s)}<span> / {FISH.length * BALANCE.bookMilestones.length}</span>
+    </strong>
+    <p>어종 성향마다 오르는 능력치가 다릅니다 · 합계는 ‘연구 보너스’ 탭</p>
     </div>
     <div className="panel">
     <small>지역 연구 완성</small>
@@ -70,11 +71,11 @@ export function Collection({ s, send, busy }: PanelProps) {
     </div>
     </div>
     {pendingBooks > 0 && <div className="notice book-claim-all"><BookOpen size={20}/><div><strong>받지 않은 연구 보상 {pendingBooks}단계</strong><p>여러 어종의 미수령 보상을 한 번에 받습니다.</p></div><button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimAllBooks' })}>모두 받기</button></div>}
-    <p className="footnote">카드마다 연구 진행(플레이어 보상)을 먼저, 적 정보를 아래에 나눠 표시합니다. 달성한 연구 단계는 접혀 있습니다. 실제 적중률은 명중·회피 수치와 속도 차이를 반영한 확률입니다(1~99.5%).</p>
     <Tabs defaultValue="fish">
     <TabsList className="game-tabs">
     <TabsTrigger value="fish">개체도감</TabsTrigger>
     <TabsTrigger value="items">물건도감</TabsTrigger>
+    <TabsTrigger value="bonus">연구 보너스</TabsTrigger>
     </TabsList>
     <TabsContent value="fish">{STAGES.map(st => <details className="book-section book-region" key={st.id} open={st.id === s.stage}>
         <summary className="section-title">
@@ -154,8 +155,22 @@ export function Collection({ s, send, busy }: PanelProps) {
             </article>;
         }))}</div>
     </TabsContent>
+    <TabsContent value="bonus">
+    <section className="panel book-bonus-panel">
+    <div className="section-title"><h2>성향 연구 합계</h2><span>{mastery(s)}단계 · 능력치 화면의 ‘도감’ 기여와 같은 값</span></div>
+    <ul className="book-bonus-list">{(Object.entries(bookStatBonus(s)) as [keyof Stats, number][]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).map(([k, v]) => <li key={k}><span>{STAT_LABELS[k]}</span><strong>+{statDisplay(k, v)}</strong></li>)}</ul>
+    {!Object.keys(bookStatBonus(s)).length && <p className="loadout-empty">아직 달성한 연구 단계가 없습니다. 어종을 {BALANCE.bookMilestones[0]}회 포획하면 첫 단계가 열립니다.</p>}
+    </section>
+    <section className="panel book-bonus-panel">
+    <div className="section-title"><h2>성향별 단계</h2><span>단계마다 오르는 능력치</span></div>
+    <ul className="book-bonus-list book-trait-table">{(Object.keys(BOOK_TRAITS) as (keyof typeof BOOK_TRAITS)[]).map(g => { const ids = FISH.filter(f => bookTrait(f.id) === g).map(f => f.id), stages = ids.reduce((a, id) => a + bookStage(s, id), 0); return <li key={g}><span><b>{BOOK_TRAITS[g].name}</b><small>{ids.length}종 · {stages} / {ids.length * BALANCE.bookMilestones.length}단계</small></span><strong>{bonusLabel(BOOK_TRAITS[g].perStage)}{stages ? ` → 현재 ${bonusLabel(BOOK_TRAITS[g].perStage, stages)}` : ''}</strong></li>; })}</ul>
+    </section>
+    <section className="panel book-bonus-panel">
+    <div className="section-title"><h2>지역 테마</h2><span>{regions.length} / {STAGES.length} 완성</span></div>
+    <ul className="book-bonus-list">{STAGES.map(st => { const t = REGION_THEMES[st.id], done = regions.some(r => r.id === st.id); return <li key={st.id} className={done ? 'done' : ''}><span>{st.name}</span><strong>{t ? t.label : '테마 없음'}{done ? ' · 적용 중' : ''}</strong></li>; })}</ul>
+    </section>
+    </TabsContent>
     </Tabs>
-    <p className="footnote">포획 수·연구 보상·물건도감은 환생 후에도 유지됩니다. 연구 보상은 각 단계에서 한 번만 받을 수 있습니다.</p>
     </>;
 }
 

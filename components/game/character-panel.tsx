@@ -3,7 +3,7 @@ import { ConfirmButton } from './confirm-button';
 import { RefreshCw } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
 import { attributes, apCapacity, apUsed, canUse } from '@/game/systems/progression';
-import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
+import { rareSpawnChance, victoryHeal, victoryHealRate } from '@/game/systems/encounter';
 import { FIRST_AID_HEAL, MONSTER_TUNING } from '@/game/data/balance';
 import { StatBreakdown } from './stat-breakdown';
 import { type StatTrace, stats, dropRate, goldMultiplier, expMultiplier } from '@/game/systems/stats';
@@ -55,6 +55,7 @@ export function Character({ s, send, busy }: PanelProps) {
     </span>
     <span>골드 획득 배율<strong>×{goldMultiplier(s).toFixed(2)}</strong>
     </span>
+    {(() => { const r = rareSpawnChance(s); return <span title="현재 낚시터에서 한 번 입질할 때 희귀 이상 어종이 걸릴 확률입니다. 낚시터마다 어종 가중치가 다르고, 집중 사냥으로 어종을 고르면 그 어종만 나옵니다. 지역 연구 완성 테마(해초림 +10%)와 해역 난이도의 차수 변종이 영향을 줍니다.">희귀어 출현 확률 (현재 낚시터)<strong>{s.dungeon ? '던전 · 고정' : r.rare ? `${percent(r.chance, 1)}${r.bonus ? ` · 보너스 +${Math.round(r.bonus * 100)}%` : ''}` : '이 낚시터엔 없음'}</strong></span>; })()}
     <span>경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
     <span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong>
     </span>

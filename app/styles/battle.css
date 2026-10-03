@@ -488,3 +488,10 @@
 .achievement-chevron{margin-left:auto;color:#7f9c98;transition:transform .15s}.achievement-group[open] .achievement-chevron{transform:rotate(180deg)}
 .achievement-group[open] summary{margin-bottom:10px}
 .goal-list li>div.meter{display:block}.goal-list .meter-label{display:flex;justify-content:space-between;white-space:nowrap}
+/* v25.18 도감 ‘연구 보너스’ 탭 */
+.book-bonus-panel{margin-bottom:14px}
+.book-bonus-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.book-bonus-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;border:1px solid var(--border);border-radius:7px;background:#112329;font-size:13px}
+.book-bonus-list li span{color:#a9bdb8;display:grid;gap:2px}.book-bonus-list li small{font-size:11px;color:#7f9c98}.book-bonus-list li b{color:#dbe9e3;font-weight:600}
+.book-bonus-list li strong{color:#a4e9ba;text-align:right;font-weight:600}.book-bonus-list li.done strong{color:#e8d39a}
+@media(max-width:767px){.book-bonus-list li{flex-direction:column;align-items:flex-start;gap:4px}.book-bonus-list li strong{text-align:left}}
