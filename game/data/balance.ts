@@ -28,8 +28,9 @@ export const MONSTER_TUNING = {
     // A strong single-stat build should still need several hours of victories
     // before the first rebirth. HP is the main pacing lever; attack and defense
     // remain readable so deaths do not turn the early game into a wall.
-    hpMultiplier: 2.5,
-    attackMultiplier: 1.15,
+    // v26.6: 2.5/1.15 → 2.1/1.08. 10레벨 이후 사냥터가 해금 직후 10레벨 가까이 지나야 쓸 만했던 것을 2~4레벨로 줄였습니다.
+    hpMultiplier: 2.1,
+    attackMultiplier: 1.08,
     // v24 몬스터 치명타: 기본 + 레벨당 증가(상한), 보스·날쌘 성향은 추가. 치명 피해는 플레이어 기본값(critMultiplier)과 같습니다.
     critBase: .04, critPerLevel: .0006, critCap: .1, critBoss: .04, critSwift: .04,
     defenseMultiplier: 1.1,
@@ -41,7 +42,7 @@ export const MONSTER_TUNING = {
 /**
  * Entry-level fish stay approachable; higher-level fish are a real gearless wall.
  * v26.6: 레벨당 체력 .035→.028, 공격 .012→.009. 10레벨 이후 사냥터가 외길·균형 빌드 모두에게 너무 벅차
- * (자동 사냥이 22레벨까지 시냇가·조개 만에 머물렀습니다) 25레벨 어종 기준 체력 −9%, 공격 −5%.
+ * (자동 사냥이 20레벨 가까이 시냇가·조개 만에 머물렀습니다). MONSTER_TUNING 배율 하향과 함께 적용.
  */
 export function monsterLevelScale(level: number) {
     return { hp: 1 + Math.max(0, level - 5) * .028, attack: 1 + Math.max(0, level - 8) * .009, defense: 1 + Math.max(0, level - 10) * .006 };
