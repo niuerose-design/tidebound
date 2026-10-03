@@ -16,6 +16,7 @@ for(const sk of SKILLS.filter(x=>x.type==='active')){
   // 상태이상 전용 기술은 발동률을 낮게 둡니다(check-progression-pace.mjs와 같은 규칙).
   if(sk.statusOnly){assert(value.chance<=.35,sk.id);if(sk.damageType==='magic')assert(value.manaCost>0,sk.id);}
   else if(sk.damageType==='magic'||sk.damageType==='split'){assert(value.manaCost>0,sk.id);assert(value.chance>=.45,sk.id);}
+  else if(sk.scaling==='swap'){/* 힘법사(v26): 물리 피해지만 마법 공격 기준·마나 없음. 발동률 규칙 예외 */}
   else {assert.equal(value.manaCost,0,sk.id);assert(value.chance<=.381,sk.id);}
  }
 }

@@ -74,7 +74,7 @@ export const MONOSTAT_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'afterimageFlurry', name: '잔상 난무', desc: '', level: 40, job: 'shadowRunner', chance: .5, cooldown: 4, multiplier: 1.1, cost: 4, extraAttacks: 2, extraAttackMultiplier: .55, ...attr('dex', 1.6) },
     { ...P, id: 'shadowPace', name: '그림자 보법', desc: '기민 10마다 속도·회피·물리 공격·치명타가 오릅니다.', level: 40, job: 'shadowRunner', cost: 2, bonus: { speed: 4, evasion: .03 }, perCount: [{ source: 'dex', per: 10, bonus: { speed: 1.2, evasion: .004, attack: 3, crit: .002 }, cap: 40 }] },
     // 지능
-    { ...A, ...magic, id: 'pureBolt', name: '순수 마력탄', desc: '', level: 10, job: 'manaDevotee', chance: .5, cooldown: 3, multiplier: 1.4, cost: 2, manaCost: 6, ...attr('int', .6) },
+    { ...A, ...magic, id: 'pureBolt', name: '순수 마력탄', desc: '', level: 10, job: 'manaDevotee', chance: .5, cooldown: 3, multiplier: 1.4, cost: 2, manaCost: 6, ...attr('int', .8) },
     { ...P, id: 'manaFocus', name: '마력 집중', desc: '지능 10마다 마법 공격이 오릅니다.', level: 10, job: 'manaDevotee', cost: 1, bonus: { magic: 4, hp: 30 }, perCount: [{ source: 'int', per: 10, bonus: { magic: 2 }, cap: 40 }] },
     { ...A, ...magic, id: 'manaRupture', name: '마력 파열', desc: '', level: 25, job: 'arcaneSeeker', chance: .5, cooldown: 4, multiplier: 1.9, cost: 3, manaCost: 10, effect: 'weaken', ...attr('int', 1.5) },
     { ...P, id: 'arcaneVein', name: '마력 혈맥', desc: '지능 10마다 마법 공격과 최대 마나가 오릅니다.', level: 25, job: 'arcaneSeeker', cost: 2, bonus: { magic: 6, hp: 60 }, perCount: [{ source: 'int', per: 10, bonus: { magic: 3, mana: 3 }, cap: 40 }] },
@@ -88,7 +88,7 @@ export const MONOSTAT_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'landslide', name: '산사태', desc: '', level: 40, job: 'mountainBody', chance: .5, cooldown: 4, multiplier: 1.8, cost: 4, ...attr('vit', 3.2) },
     { ...P, id: 'mountainHeart', name: '산의 심장', desc: '체질 10마다 최대 체력·물리 방어·턴당 회복이 오릅니다.', level: 40, job: 'mountainBody', cost: 2, bonus: { hp: 100, defense: 4 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 40, defense: 1.5, hpRegen: .2 }, cap: 40 }] },
     // 정신
-    { ...A, ...magic, id: 'mindWave', name: '정신 파동', desc: '', level: 10, job: 'stillAngler', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 6, ...attr('wis', 3.5) },
+    { ...A, ...magic, id: 'mindWave', name: '정신 파동', desc: '', level: 10, job: 'stillAngler', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 6, ...attr('wis', 4.2) },
     { ...P, id: 'calmMind', name: '고요한 마음', desc: '정신 10마다 최대 마나와 마법 방어가 오릅니다.', level: 10, job: 'stillAngler', cost: 1, bonus: { mana: 12, resist: 2, hp: 60 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 5, resist: 1 }, cap: 40 }] },
     { ...A, ...magic, id: 'manaTide', name: '마나 해일', desc: '', level: 25, job: 'meditantAdept', chance: .5, cooldown: 4, multiplier: 1.4, cost: 3, manaCost: 10, effect: 'silence', ...attr('wis', 5) },
     { ...P, id: 'deepMeditation', name: '깊은 명상', desc: '정신 10마다 최대 마나·마법 방어·마나 회복이 오릅니다.', level: 25, job: 'meditantAdept', cost: 2, bonus: { mana: 16, resist: 4, hp: 100 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 7, resist: 2, manaRegen: .2 }, cap: 40 }] },

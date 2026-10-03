@@ -38,9 +38,13 @@ export const MONSTER_TUNING = {
     dungeonPreparationTurns: 3,
     dungeonHealAfterKill: .04,
 } as const;
-/** Entry-level fish stay approachable; higher-level fish are a real gearless wall. */
+/**
+ * Entry-level fish stay approachable; higher-level fish are a real gearless wall.
+ * v26.6: 레벨당 체력 .035→.028, 공격 .012→.009. 10레벨 이후 사냥터가 외길·균형 빌드 모두에게 너무 벅차
+ * (자동 사냥이 22레벨까지 시냇가·조개 만에 머물렀습니다) 25레벨 어종 기준 체력 −9%, 공격 −5%.
+ */
 export function monsterLevelScale(level: number) {
-    return { hp: 1 + Math.max(0, level - 5) * .035, attack: 1 + Math.max(0, level - 8) * .012, defense: 1 + Math.max(0, level - 10) * .006 };
+    return { hp: 1 + Math.max(0, level - 5) * .028, attack: 1 + Math.max(0, level - 8) * .009, defense: 1 + Math.max(0, level - 10) * .006 };
 }
 export function bossLevelScale(level: number) {
     const growth = Math.min(1, Math.max(0, level - 14) / 24);
