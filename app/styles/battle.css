@@ -532,3 +532,6 @@
 /* v25.19 보관함 더 보기 */
 .gear-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:10px 0 14px;padding:11px;border:1px dashed #4b7365;border-radius:8px;background:#0f1f25;color:#a4e9ba;font-size:13px;cursor:pointer}
 .gear-more:hover{background:#14302a}.gear-more.muted{border-style:solid;color:#8ea7a4}
+/* v25.20 낚시터 화면의 해역 난이도 스테퍼: 숫자가 세로로 꺾이지 않게 */
+.main-content>.tide-selector .button-row,.workspace .tide-selector .button-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.main-content>.tide-selector .button-row span,.workspace .tide-selector .button-row span{white-space:nowrap;min-width:48px;text-align:center}

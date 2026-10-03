@@ -13,7 +13,7 @@ export function Stages({ s, send, busy }: PanelProps) {
             const locked = s.level < st.level || s.rebirths < st.rebirth;
             return <button key={st.id} className={`stage-card ${s.stage === st.id ? 'selected' : ''}`} disabled={busy || locked} onClick={() => send({ type: 'stage', id: st.id })} style={{ '--stage-color': st.tone } as React.CSSProperties}>
             <div className="stage-top">
-            <span className="stage-num">0{i + 1}</span>{locked ? <Lock size={20}/> : s.stage === st.id ? <span className="badge">현재 낚시터</span> : <ArrowUpRight />}</div>
+            <span className="stage-num">{String(i + 1).padStart(2, '0')}</span>{locked ? <Lock size={20}/> : s.stage === st.id ? <span className="badge">현재 낚시터</span> : <ArrowUpRight />}</div>
             <Waves className="stage-wave" size={48}/>
             <div className="eyebrow">{st.subtitle}</div>
             <h2>{st.name}</h2>

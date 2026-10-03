@@ -18,7 +18,7 @@ export function goalProgress(s: State): GoalProgress | null {
         const value = s.skillPractice[skill.id] || 0, refine = stage > base.length;
         const hint = !s.learned[skill.id] ? ' · 먼저 전용 직업에서 해금하세요.' : !canUse(s, skill.id) ? ' · 현재 사용 조건을 확인하세요.' : !s.skills.includes(skill.id) ? ' · 숙련하려면 장착하세요.' : '';
         return { title: `${skill.name} · ${refine ? '장기 연마' : '실전 숙련'} ${refine ? stage - base.length : stage}단계`, value, max, done: value >= max, view: 'skills',
-            detail: `${Math.min(value, max).toLocaleString()} / ${max.toLocaleString()} · ${stage === 1 ? '무료 계승' + (skill.type === 'active' ? '·특화 선택' : '') : refine ? '직접 피해·양수 패시브 +4%' : '스킬 성장·상위 전직 준비'}${hint}` };
+            detail: `${Math.min(value, max).toLocaleString()} / ${max.toLocaleString()} · ${stage === 1 ? '무료 계승' : refine ? '직접 피해·양수 패시브 +4%' : '스킬 성장·상위 전직 준비'}${hint}` };
     }
     if (goal.kind === 'job') {
         const job = jobById(goal.id);
