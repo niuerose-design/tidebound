@@ -63,8 +63,8 @@ export const MONOSTAT_SKILLS: Skill[] = [
     // 근력
     { ...A, ...physical, id: 'logSwing', name: '통나무 휘두르기', desc: '', level: 10, job: 'brawnFisher', chance: .5, cooldown: 3, multiplier: 1.3, cost: 2, ...attr('str', .6) },
     { ...P, id: 'roughHands', name: '우악스러운 손', desc: '근력 10마다 물리 공격이 오릅니다.', level: 10, job: 'brawnFisher', cost: 1, bonus: { attack: 4 }, perCount: [{ source: 'str', per: 10, bonus: { attack: 2 }, cap: 40 }] },
-    { ...A, ...physical, id: 'boulderToss', name: '바위 던지기', desc: '', level: 20, job: 'mightyStrongman', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, effect: 'stun', ...attr('str', 1.6) },
-    { ...P, id: 'strongmanGrip', name: '장사의 악력', desc: '근력 10마다 물리 공격과 최대 체력이 오릅니다.', level: 20, job: 'mightyStrongman', cost: 2, bonus: { attack: 6, hp: 60 }, perCount: [{ source: 'str', per: 10, bonus: { attack: 3, hp: 12 }, cap: 40 }] },
+    { ...A, ...physical, id: 'boulderToss', name: '바위 던지기', desc: '', level: 20, job: 'mightyStrongman', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, effect: 'stun', ...attr('str', 1.9) },
+    { ...P, id: 'strongmanGrip', name: '장사의 악력', desc: '근력 10마다 물리 공격과 최대 체력이 오릅니다.', level: 20, job: 'mightyStrongman', cost: 2, bonus: { attack: 6, hp: 60 }, perCount: [{ source: 'str', per: 10, bonus: { attack: 3, hp: 16 }, cap: 40 }] },
     { ...A, ...physical, id: 'mountainCleave', name: '산 가르기', desc: '', level: 40, job: 'colossus', chance: .5, cooldown: 4, multiplier: 2.5, cost: 4, penetrationBonus: .1, ...attr('str', 1) },
     { ...P, id: 'giantsArm', name: '거인의 팔', desc: '근력 10마다 물리 공격·방어 관통·최대 체력이 오릅니다.', level: 40, job: 'colossus', cost: 2, bonus: { attack: 8, hp: 80 }, perCount: [{ source: 'str', per: 10, bonus: { attack: 5, penetration: .002, hp: 15 }, cap: 40 }] },
     // 기민
