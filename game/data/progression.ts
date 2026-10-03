@@ -44,7 +44,7 @@ export const percent = (n: number, digits = 1, signed = false) => `${signed && n
 export const formatStat = (key: string, n: number) => PERCENT_STATS.has(key) ? `${Math.round(n * 1000) / 10}%` : `${Math.round(n * 10) / 10}`;
 /** 능력치 표시 순서: 체력 → 물리·마법 공격 → 물리·마법 방어 → 속도 → 명중·회피 → 치명타. 평소에는 CORE만, 나머지는 상세보기. */
 export const CORE_STATS = ['hp', 'hpRegen', 'manaRegen', 'attack', 'magic', 'defense', 'resist', 'speed', 'accuracy', 'evasion', 'crit'] as const;
-export const DETAIL_STATS = ['critDamage', 'mana', 'penetration', 'lifesteal', 'expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus', 'rebirthBonus', 'harmony', 'thorns', 'dotBonus', 'arcaneStrike', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus'] as const;
+export const DETAIL_STATS = ['critDamage', 'mana', 'penetration', 'lifesteal', 'expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus', 'rebirthBonus', 'harmony', 'thorns', 'dotBonus', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus'] as const;
 /** 0보다 클 때만 상세 능력치에 보이는 항목. */
 export const OPTIONAL_STATS = new Set(['thorns', 'dotBonus', 'arcaneStrike', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus']);
 export const STAT_ORDER: string[] = [...CORE_STATS, ...DETAIL_STATS];

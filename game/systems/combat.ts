@@ -241,8 +241,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         if (extras.length) { castCount = extras.length + 1; ev.multicast = { index: 0, count: castCount, ids: extras.map(e => e.id) }; notes.push(`동시 시전 1/${castCount}`); }
     }
     if (forced) ev.multicast = { index: forced.index, count: forced.count };
-    // 마력 평타: 마법 직업은 기본 공격 대신 확률적으로 마법 공격 기반의 약한 마법 피해를 줍니다.
-    const arcane = !chosen && sa.arcaneStrike > 0 && rng() < sa.arcaneStrike;
+    // 마력 평타: 마법 직업은 기본 공격 대신 마법 공격 × 계수의 마법 피해를 줍니다(v25.22부터 확률 없이 항상).
+    const arcane = !chosen && sa.arcaneStrike > 0;
     let healed = 0;
     // 체력이 충분한데 쓴 회복 기술: 회복 직업이 아니면 이번 공격 피해가 줄어듭니다.
     const idleHeal = chosen?.effect === 'heal' && a.hp >= sa.hp * SKILL_FORMULA.healThreshold && !sa.healFocus;
