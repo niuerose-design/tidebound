@@ -12,7 +12,8 @@ export const STAT_NOTES: Partial<Record<keyof CombatStats, string>> = {
     manaRegen: '행동할 때마다(연속·추가 행동 포함) 이만큼 마나를 되찾습니다. 최대 마나를 넘지 않습니다.',
     evasion: '회피 수치는 50%를 넘으면 효율이 줄어 90%에 수렴합니다. 실제 적중률 = 상대 명중 − 내 회피 + 속도 보정(1~99.5%).',
     accuracy: '실제 적중률 = 내 명중 − 상대 회피 + 속도 보정(최대 ±6%p), 1~99.5% 범위.',
-    crit: '치명타 확률 상한 60%.',
+    crit: `치명타 확률 상한 ${SKILL_FORMULA.critCap * 100}%. 넘는 몫 100%p마다 극 치명타 확률 +${SKILL_FORMULA.superCritPerHundred * 100}%.`,
+    superCrit: `치명타가 뜬 뒤 이 확률로 극 치명타가 됩니다. 극 치명타는 치명 피해에 ×${SKILL_FORMULA.superCritBonus}를 더 곱합니다. 치명타 확률이 ${SKILL_FORMULA.critCap * 100}%를 넘은 몫 100%p마다 +${SKILL_FORMULA.superCritPerHundred * 100}%입니다.`,
     penetration: '방어 관통 상한 60%. 스킬의 관통 보너스를 더해도 85%까지입니다.',
     lifesteal: `흡혈 상한 30%. 한 번의 행동으로 최대 체력 × 흡혈률 × ${SKILL_FORMULA.lifestealHpCap * 100}%까지만 회복합니다.`,
 };

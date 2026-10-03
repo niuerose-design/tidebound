@@ -16,6 +16,7 @@ export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
         version: SAVE_VERSION,
+        relicRefunded: true,
         skillSpecializations: {}, bossResearchClaims: {}, abyssMilestones: [], growthGoal: null, tutorial: {}, voyage: {}, achievements: {}, achievementClaims: {}, statRate: PROGRESSION.statPerLevel,
         tide: 0,
         abyssBest: 0,

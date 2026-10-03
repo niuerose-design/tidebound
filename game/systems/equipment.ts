@@ -3,6 +3,8 @@ import { ECONOMY, AFFIXES, smithDiscount } from '../data/economy';
 import { ESSENCE_BY_RARITY, rerollEssence } from '../data/gear';
 import { fishGoldAt } from '../data/world';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
+/** 나침반: 위력 1당 치명타 +0.2%p. */
+export const CHARM_CRIT_PER_POWER = .002;
 export function itemStats(item: Item): Partial<Stats> {
     const p = item.power * (1 + (item.enhance || 0) * ECONOMY.enhanceGain);
     const result: Partial<Stats> = {};
@@ -15,8 +17,8 @@ export function itemStats(item: Item): Partial<Stats> {
         result.defense = p;
         result.resist = p * .5;
     }
-    if (item.slot === 'charm')
-        result.crit = Math.min(.15, p * .002);
+    // v27.18 나침반 치명타에 더는 15% 상한이 없습니다. 전체 치명타가 60%를 넘으면 그 몫은 극 치명타 확률이 됩니다.
+    if (item.slot === 'charm') result.crit = p * CHARM_CRIT_PER_POWER;
     if (item.affix)
         result[item.affix.stat] = (result[item.affix.stat] || 0) + item.affix.value;
     for (const affix of item.affixes || []) {

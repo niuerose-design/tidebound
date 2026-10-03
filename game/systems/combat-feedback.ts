@@ -49,7 +49,7 @@ export type CombatFx = {
     damageType: 'physical' | 'magic' | 'split'; dot?: { name: string; value: number };
     /** v25 無로 버틴 쪽(self면 행동한 쪽 자신). */
     endured?: { heal: number; self?: boolean };
-    hits: { value: number; critical: boolean; miss: boolean }[];
+    hits: { value: number; critical: boolean; miss: boolean; superCritical?: boolean }[];
     delay: number;
     /** 연속 행동 번호(2 이상일 때만). */
     chain?: number;
@@ -84,16 +84,16 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
     const arrow = text.indexOf(' → ');
     if (arrow < 0) return null;
     const header = text.slice(0, arrow), detail = text.slice(arrow + 3).trim();
-    const label = header.slice(header.indexOf(' · ') + 3).replace(/ \[치명타\]$/, '');
+    const label = header.slice(header.indexOf(' · ') + 3).replace(/ \[(극 )?치명타\]$/, '');
     const pool = actor === 'enemy' ? [...ENEMY_SKILLS, ...SKILLS] : [...SKILLS, ...ENEMY_SKILLS];
     const skill = pool.find(sk => sk.name === label);
     if (!skill && label !== '기본 공격') return null;
     const missed = detail.startsWith('빗나감'), magical = detail.includes('마법 피해');
     const total = Number(detail.match(/^(\d+) (?:마법|물리) 피해/)?.[1] || 0);
-    const follows = [...detail.matchAll(/ · 추가타 (\d+)( \[치명타\])?( 빗나감)?/g)].map(match => ({ value: match[3] ? 0 : Number(match[1]), critical: !!match[2], miss: !!match[3] }));
-    const critical = header.endsWith('[치명타]');
+    const follows = [...detail.matchAll(/ · 추가타 (\d+)( \[(극 )?치명타\])?( 빗나감)?/g)].map(match => ({ value: match[4] ? 0 : Number(match[1]), critical: !!match[2], miss: !!match[4], ...(match[3] ? { superCritical: true } : {}) }));
+    const superCritical = header.endsWith('[극 치명타]'), critical = superCritical || header.endsWith('[치명타]');
     const mainMissed = missed || detail.includes('본타 빗나감');
-    const hits = [{ value: mainMissed ? 0 : Math.max(0, total - follows.reduce((n, hit) => n + hit.value, 0)), critical, miss: mainMissed }, ...follows];
+    const hits = [{ value: mainMissed ? 0 : Math.max(0, total - follows.reduce((n, hit) => n + hit.value, 0)), critical, miss: mainMissed, ...(superCritical ? { superCritical: true } : {}) }, ...follows];
     const healing = Number(detail.match(/(?:^| · )(\d+) 회복/)?.[1] || 0);
     const effect = !mainMissed ? skill?.effect : undefined;
     const kind: CombatFxKind = missed ? 'miss' : effect && !['heal', 'drain'].includes(effect) ? effect as CombatFxKind : magical ? 'magic' : 'physical';

@@ -7,7 +7,8 @@ import { rollAffixes } from '../data/gear';
 /** 상점·뽑기 골드 가격. 항구 단골 할인(−2%/단계, 내림)을 적용합니다. */
 export const shopCost = (s: State) => Math.floor((ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel) * shopDiscount(s));
 export const gambleCost = (s: State) => Math.floor((ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel) * shopDiscount(s));
-export const relicCost = (s: State, id: string) => id === 'memoryRod' && s.clears.temple ? 0 : RELICS.find(x => x.id === id)?.cost ?? Infinity;
+/** v27.19 환생 유물은 진주가 아니라 환생 횟수로 받습니다. 비용은 항상 0(옛 호출 호환). */
+export const relicCost = () => 0;
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: `희귀 ${o.name}`, slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
 /** 탭에 쓴 진주와 재분배 반환액. 첫 1회는 전액, 이후 90%(내림). */
@@ -185,12 +186,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (ownsRelic(s, id))
             throw Error('이미 보유한 유물입니다.');
         room();
-        const cost = relicCost(s, id);
-        if (s.pearls < cost)
-            throw Error('진주가 부족합니다.');
-        s.pearls -= cost;
         s.inventory.push({ id: nextId(), name: r.name, slot: r.slot, style: r.style, power: r.power, rarity: 3, level: 1, relic: r.id, locked: true, description: r.description, affix: { ...r.affix } });
-        return `${r.name} 획득 · -${cost} 진주`;
+        return `${r.name} 수령 · 환생 ${r.rebirth}회 달성 보상`;
     }
     return null;
 }

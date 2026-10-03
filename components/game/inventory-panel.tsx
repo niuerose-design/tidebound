@@ -143,7 +143,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
 export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Item }) {
     const rank = item.enhance || 0, cost = enhanceCost(item, s), max = enhanceMaxFor(item);
     return <div className="forge-actions">
-        <p className="footnote">강화 1회당 기본 수치 +{ECONOMY.enhanceGain * 100}%. 실패·파괴 없이 최대 +{max}{item.rarity >= 3 ? '(전설 이상)' : ` · 전설 이상은 +${ECONOMY.enhanceMaxLegend}`}. 추가 옵션은 그대로이고, 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.</p>
+        <p className="footnote">강화 1회당 기본 수치 +{ECONOMY.enhanceGain * 100}%. 실패·파괴 없이 최대 +{max}{item.rarity >= 3 ? '(전설 이상)' : ` · 전설 이상은 +${ECONOMY.enhanceMaxLegend}`}. 추가 옵션은 그대로이고, 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 넘는 몫 100%p마다 극 치명타 확률 +1%.' : ''}</p>
         <button className="primary" disabled={busy || rank >= max || s.gold < cost} onClick={() => send({ type: 'enhance', id: item.id })}>{rank >= max ? '최대 강화' : `+${rank + 1} 강화 · ${format(cost)} G`}</button>
         {item.affixes?.length ? <p className="footnote">옵션은 위 옵션 목록에서 하나씩 재설정합니다.</p> : <ConfirmButton label={`옵션 재설정 · ${format(reforgeCost(item, s))} G`} title="추가 옵션을 무작위로 바꿀까요?" description="이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다." disabled={busy || item.rarity === 0 || s.gold < reforgeCost(item, s)} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}
     </div>;

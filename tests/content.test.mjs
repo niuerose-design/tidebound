@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf} from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -229,4 +229,24 @@ test('v27.16 stuck-state repair: NaN hp, dead enemy left over, unknown stage, an
  const u=newState(0);u.running=true;u.enemy={id:'minnow',name:'돌',hp:10,maxHp:10,attack:0,defense:0,exp:1,gold:1,boss:false,stun:99999,combatStats:{hp:10,attack:0,magic:0,defense:1e9,resist:1e9,crit:0,speed:1,evasion:0,accuracy:0}};
  u.hp=1;for(let i=0;i<130&&u.enemy&&u.enemy.id==='minnow';i++)tick(u,()=>.5);
  assert.ok(!u.enemy||u.enemy.id!=='minnow'||u.enemy.hp<10,'stalemate broken within 130 turns');
+});
+
+test('v27.18 charm crit is uncapped and crit above 60% becomes super crit (x1.5 crit damage)',()=>{
+ const mk=(power,enhance)=>equipment.itemStats({id:'c',name:'c',slot:'charm',power,level:1,enhance});
+ assert.ok(mk(100,5).crit>mk(100,0).crit&&mk(100,0).crit>.15,'enhancing keeps raising charm crit');
+ const s=newState(0);s.attributes.luk=400;const a=stats(s);assert.equal(a.crit,SKILL_FORMULA.critCap);assert.ok(a.superCrit>0&&a.superCrit<.02,'overflow goes to super crit at 1% per 100%p: '+a.superCrit);
+ const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:1,superCrit:.5,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:2};
+ const f=(extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills:[],cooldowns:{},stun:0,effects:{},ranks:{},mastery:{},practice:{}});
+ const plain=f({crit:0,superCrit:0}),t1=f({});strike(plain,t1,()=>.4);const normal=1e6-t1.hp;
+ const sup=f();const target=f({});const text=strike(sup,target,()=>.4);assert.equal(1e6-target.hp,normal*2*SKILL_FORMULA.superCritBonus,'super crit multiplies crit damage');assert.match(text,/\[극 치명타\]/);
+ const target2=f({});const text2=strike(f(),target2,()=>.7);assert.equal(1e6-target2.hp,normal*2,'roll above superCrit is a normal crit');assert.ok(text2.includes('[치명타]')&&!text2.includes('[극 치명타]'));
+ const fx=combatFxFromLog({id:1,type:'battle',text},'A');assert.ok(fx&&fx.hits[0].superCritical&&fx.hits[0].critical,'feedback parses the super crit label');
+});
+
+test('v27.19 relics come from rebirth count, and pearls spent before the change are refunded once',()=>{
+ const s=newState(0);s.level=30;s.pearls=5;act(s,{type:'rebirth'},0);const pearls=s.pearls;
+ act(s,{type:'buyRelic',id:'memoryRod'},0);assert.equal(s.pearls,pearls,'no pearls spent');assert.ok(s.inventory.some(i=>i.relic==='memoryRod'));
+ assert.throws(()=>act(s,{type:'buyRelic',id:'soulCoat'},0),/환생 조건/);
+ const before=s.pearls;s.relicRefunded=false;const refund=migrations.refundRelicPurchases(s);assert.equal(refund,10);assert.equal(s.pearls,before+10);assert.equal(migrations.refundRelicPurchases(s),0,'only once');
+ const u=newState(0);assert.equal(migrations.refundRelicPurchases(u),0);assert.equal(u.relicRefunded,true);
 });

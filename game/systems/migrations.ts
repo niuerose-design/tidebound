@@ -1,4 +1,6 @@
 import type { State } from '../types';
+import { addLog } from './state';
+import { RELICS } from '../data/economy';
 import { SAVE_VERSION } from '../data/balance';
 import { newState } from './engine';
 /**
@@ -14,8 +16,17 @@ function refundGoldenResearch(s: State) {
     s.pearls = (s.pearls || 0) + spent;
     delete (s.permanent as Record<string, number | undefined>).goldenFish;
 }
+/** v27.19 환생 유물이 진주 구매에서 환생 횟수 제공으로 바뀌었습니다. 이미 가진 유물(= 진주로 산 유물)의 진주를 한 번 돌려줍니다. */
+export function refundRelicPurchases(s: State) {
+    if (s.relicRefunded) return 0;
+    s.relicRefunded = true;
+    const owned = new Set([...(s.inventory || []), ...Object.values(s.equipment || {})].map(x => x?.relic).filter(Boolean));
+    const refund = RELICS.filter(r => owned.has(r.id)).reduce((n, r) => n + r.cost, 0);
+    if (refund > 0) { s.pearls = (s.pearls || 0) + refund; addLog(s, `환생 유물이 환생 횟수 보상으로 바뀌어 이미 산 유물의 진주 ${refund}개를 돌려받았습니다.`, 'system'); }
+    return refund;
+}
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    if (s.version === SAVE_VERSION) { refundGoldenResearch(s); return s; }
+    if (s.version === SAVE_VERSION) { refundGoldenResearch(s); refundRelicPurchases(s); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

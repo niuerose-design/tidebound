@@ -104,8 +104,9 @@ export const SHOP = [
 export const GAMBLE_CATEGORIES = [
     { id: 'rod', name: '낚싯대', slot: 'rod', offers: ['physical', 'magic'], description: '물리형·마법형 중 하나를 같은 확률로 획득합니다.' },
     { id: 'coat', name: '방어구', slot: 'coat', offers: ['coat'], description: '최대 체력과 물리·마법 방어를 보강합니다.' },
-    { id: 'charm', name: '나침반', slot: 'charm', offers: ['charm'], description: '치명타 확률을 높이고 무작위 추가 옵션을 얻습니다.' },
+    { id: 'charm', name: '나침반', slot: 'charm', offers: ['charm'], description: '치명타 확률을 높이고 무작위 추가 옵션을 얻습니다. 치명타 100%를 넘으면 극 치명타 확률이 생깁니다.' },
 ] as const;
+/** v27.19 환생 유물: 환생 횟수(rebirth)를 채우면 진주 없이 받습니다. cost는 v27.19 이전 구매자 환불 기준값입니다. */
 export const RELICS = [
     { id: 'memoryRod', name: '윤회의 낚싯대', slot: 'rod', style: 'balanced', power: 45, cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
     { id: 'soulCoat', name: '영혼의 잠수복', slot: 'coat', style: 'balanced', power: 55, cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 유영', value: .12 } },
