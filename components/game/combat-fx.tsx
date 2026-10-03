@@ -69,7 +69,7 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
 
 const SEAL_GLYPHS = ['無', '虛', '斬', '血', '縛', '刹', '魂'];
 /**
- * 낚시터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 물결 고리, 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
+ * 낚시터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
  * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)으로 충분하므로 배경에는 띄우지 않습니다.
  */
 export function SceneFx({ effect }: { effect: CombatFx[] }) {
@@ -80,7 +80,7 @@ export function SceneFx({ effect }: { effect: CombatFx[] }) {
         <strong className="scene-fx-heaven">天</strong>
         <span className="scene-fx-title">일곱 인 해방</span>
     </div> : <div key={fx.id} className={`scene-fx scene-fx-burst scene-fx-${fx.variant} scene-fx-${fx.kind} ${fx.critical ? 'critical' : ''}`} style={fxStyle(fx.delay)}>
-        <i className="scene-fx-flash"/><i className="scene-fx-ring"/><i className="scene-fx-ring late"/>
+        <i className="scene-fx-flash"/>
         {glyphs[fx.variant].slice(0, 4).map((g, i) => <b key={i} className="scene-fx-spark" style={fxStyle(fx.delay + i * 40, { '--fx-x': `${Math.cos(i * Math.PI / 2 + .6) * 180}px`, '--fx-y': `${Math.sin(i * Math.PI / 2 + .6) * 90}px` })}>{g}</b>)}
     </div>)}</div>;
 }
