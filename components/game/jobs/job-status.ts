@@ -11,7 +11,7 @@ export const serverNow = (s: State) => s.lastTick;
 
 /** 직업 상태: 현재 → 숙달(조건 무시) → 전직 가능 → 거의 다 됨(부족 1~2개) → 조건 부족 N. */
 export function jobStatus(s: State, j: Job) {
-    const req = jobRequirements(s, j, serverNow(s)), missing = req.filter(r => !r.met);
+    const req = jobRequirements(s, j), missing = req.filter(r => !r.met);
     const status: JobStatus = j.id === s.job ? 'current' : jobMastered(s, j) ? 'mastered' : !missing.length ? 'ready' : missing.length <= 2 ? 'near' : 'locked';
     return { status, req, missing };
 }
@@ -67,7 +67,7 @@ export function jobRevealed(s: State, j: Job) {
     if (doorFor(s, j.id)?.open) return true;
     // 관문: 환생 횟수 · 문 · 선행 직업 숙련(상위 직업 또는 requiresJobMastery로 지정한 직업, 예: 시계공 → 시간의 지배자).
     const keys = [j.parent, ...Object.keys(j.requiresJobMastery || {})].map(id => jobById(id)?.name).filter(Boolean) as string[];
-    const gates = jobRequirements(s, j, serverNow(s)).filter(r => r.label.startsWith('환생 ') || r.label.endsWith('문 열림') || keys.some(name => r.label.startsWith(`${name} 숙련`)));
+    const gates = jobRequirements(s, j).filter(r => r.label.startsWith('환생 ') || r.label.endsWith('문 열림') || keys.some(name => r.label.startsWith(`${name} 숙련`)));
     // 관문이 하나도 없는 히든 직업(예: 玄)은 처음부터 드러납니다.
     return gates.every(r => r.met);
 }
