@@ -31,11 +31,11 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     // ── 오징어 광대: 주사위 ──
     inkTrick: { gamble: { min: 1, max: 1, accuracy: .25 } },
     smokeVeil: { gamble: { min: 1, max: 1, accuracy: .2 } },
-    loadedHook: { multiplier: 1.05, gamble: { min: .3, max: 1.9, accuracy: .1 } },
-    allIn: { chance: .26, cooldown: 5, multiplier: 1.6, drainRatio: .35, allIn: { hpRatio: .2, hpScale: 1.2, manaScale: 2 } },
-    fateRoll: { multiplier: 2.5, gamble: { min: .2, max: 1.8, accuracy: .15 } },
-    jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 } },
-    allOrNothing: { chance: .24, cooldown: 6, multiplier: 2.6, drainRatio: .35, allIn: { hpRatio: .3, hpScale: 1.6, manaScale: 3 }, gamble: { min: .6, max: 1.8 } },
+    loadedHook: { multiplier: 1.05, gamble: { min: .3, max: 1.9, accuracy: .1 }, scaling: 'luck', scalingRatio: .4 },
+    allIn: { chance: .26, cooldown: 5, multiplier: 1.6, drainRatio: .35, allIn: { hpRatio: .2, hpScale: 1.2, manaScale: 2 }, scaling: 'luck', scalingRatio: .5 },
+    fateRoll: { multiplier: 2.5, gamble: { min: .2, max: 1.8, accuracy: .15 }, scaling: 'luck', scalingRatio: .6 },
+    jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 }, scaling: 'luck', scalingRatio: .8 },
+    allOrNothing: { chance: .24, cooldown: 6, multiplier: 2.6, drainRatio: .35, allIn: { hpRatio: .3, hpScale: 1.6, manaScale: 3 }, gamble: { min: .6, max: 1.8 }, scaling: 'luck', scalingRatio: .8 },
     // ── 난파선 수집가: 도감 기록 ──
     relicToss: { chance: .26, cooldown: 3, multiplier: 1, scaling: 'codex', scalingRatio: .006 },
     anchorSwing: { scaling: 'codex', scalingRatio: .008 },
