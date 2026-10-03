@@ -66,7 +66,7 @@ export type Stats = {
 };
 export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
-export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant';
+export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
     dot?: {
         damage: number;
@@ -149,6 +149,8 @@ export type Skill = {
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
     gamble?: { min: number; max: number; accuracy?: number };
+    /** v26.4 주사위: 능력치(attribute) per마다 주사위 1개(최대 max). 굴린 눈 중 가장 높은 눈 ÷ 3.5가 피해 배율. */
+    dice?: { attribute: Attribute; per: number; max: number };
     /** v24.2 올인: 현재 체력의 hpRatio와 마나 전부를 걸고, (건 체력 × hpScale + 건 마나 × manaScale)을 피해에 더합니다. */
     allIn?: { hpRatio: number; hpScale: number; manaScale: number; heal?: number };
     /** v26.3 순수 회복: 공격하지 않고 회복만 합니다(명중·피해·반격·추가타 없음). */
@@ -250,6 +252,8 @@ export type CombatEvent = {
     immune?: string;
     /** 도박 기술의 피해 배율 굴림(있을 때만). */
     gamble?: number;
+    /** v26.4 굴린 주사위 눈(있을 때만). */
+    dice?: number[];
     /** v25: 곧바로 한 번 더 행동(선행·찰). */
     extraTurn?: boolean;
     /** v25: 天 발동. */

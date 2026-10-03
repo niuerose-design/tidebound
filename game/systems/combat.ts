@@ -265,7 +265,15 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     }
     // v24.2 도박: 쓸 때마다 피해 배율과 명중을 굴립니다.
     let gambleRoll = 1, gambleAccuracy = 0;
-    if (chosen?.gamble) {
+    // v26.4 주사위: 능력치 per마다 1개(최대 max)를 굴려 가장 높은 눈 ÷ 3.5를 배율로. 행운이 많을수록 많이 굴립니다.
+    if (chosen?.dice) {
+        const count = Math.min(chosen.dice.max, 1 + Math.floor((sa[ATTR_KEY[chosen.dice.attribute]] || 0) / chosen.dice.per));
+        const faces = Array.from({ length: count }, () => 1 + Math.floor(rng() * 6));
+        gambleRoll = Math.max(...faces) / 3.5;
+        notes.push(`주사위 ${faces.map(f => '⚀⚁⚂⚃⚄⚅'[f - 1]).join('')} ×${gambleRoll.toFixed(2)}`);
+        ev.gamble = gambleRoll; ev.dice = faces;
+    }
+    else if (chosen?.gamble) {
         gambleRoll = chosen.gamble.min + rng() * (chosen.gamble.max - chosen.gamble.min);
         if (chosen.gamble.accuracy) gambleAccuracy = (rng() * 2 - 1) * chosen.gamble.accuracy;
         notes.push([chosen.gamble.min !== chosen.gamble.max ? `주사위 ×${gambleRoll.toFixed(2)}` : '주사위', chosen.gamble.accuracy ? `명중 ${gambleAccuracy >= 0 ? '+' : ''}${Math.round(gambleAccuracy * 100)}%p` : ''].filter(Boolean).join(' · '));
@@ -293,7 +301,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack || !chosen && !!a.magicBasic;
     const split = chosen?.damageType === 'split';
     // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
-    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : magical ? sa.magic : sa.attack;
+    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'attr' ? 0 : magical ? sa.magic : sa.attack;
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
         base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
@@ -301,7 +309,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (chosen?.scaling === 'resist')
         base += sa.resist * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1);
     // v25.22 행운 비례 피해(도박 기술): 물리 공격 × (치명 피해 배율 − 1) × 비율. 행운을 몰아주면 치명 피해 배율이 커져 주사위 기술이 세집니다.
-    // v26.2 능력치 비례 피해(외길 계보): 기준값 += 배분 능력치 × 비율. 그 능력치만 올려도 사냥이 됩니다.
+    // v26.4 능력치 비례 피해(외길 계보): 기준값 = 배분 능력치 × 비율(공격력은 쓰지 않음). 그 능력치만 올려도 사냥이 됩니다.
     if (chosen?.scaling === 'attr' && chosen.scalingAttribute)
         base += (sa[ATTR_KEY[chosen.scalingAttribute]] || 0) * (chosen.scalingRatio ?? 1);
     if (chosen?.scaling === 'luck')

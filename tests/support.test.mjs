@@ -81,14 +81,14 @@ test('v25.25 thorns lifesteal: the defender heals by reflected damage × lifeste
 test('v26.1 titles come from achievements; equip, hide and auto all resolve through displayTitle', async () => {
     const { TITLES, unlockedTitles, displayTitle, autoTitle } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/titles');
     const { act } = await import('./harness.mjs');
-    const s = newState(0); assert.equal(displayTitle(s), ''); assert.equal(unlockedTitles(s).length, 0);
+    const s = newState(0); assert.equal(displayTitle(s), '🌱 초심자', 'everyone starts with the sprout title'); assert.equal(unlockedTitles(s).length, 1);
     s.rebirths = 5; assert.equal(displayTitle(s), '되돌아온 낚시꾼', 'rebirth titles count by rebirth number even before the achievement syncs');
     s.achievements = { 'rebirths:5': 100, 'playtime:100': 500 }; assert.equal(autoTitle(s).id, 'playtime:100', 'auto = most recently achieved');
     assert.throws(() => act(s, { type: 'title', id: 'abyss:100' }, 0), /얻지 못한/);
     act(s, { type: 'title', id: 'rebirth:5' }, 0); assert.equal(displayTitle(s), '되돌아온 낚시꾼');
     act(s, { type: 'title', id: 'none' }, 0); assert.equal(s.title, null); assert.equal(displayTitle(s), '');
     act(s, { type: 'title', id: 'auto' }, 0); assert.equal(s.title, undefined); assert.equal(displayTitle(s), '바다에 사는 자');
-    assert.ok(TITLES.every(t => t.achievement), 'every title names its achievement');
+    assert.ok(TITLES.every(t => t.achievement || t.id === 'novice'), 'every earned title names its achievement');
 });
 
 test('v26.1 server events multiply exp/gold/drop while active and are stamped into the state by advance()', async () => {
@@ -106,7 +106,7 @@ test('v26.1 server events multiply exp/gold/drop while active and are stamped in
 test('v26.2 attr scaling: 외길 actives add the allocated attribute × ratio, so a luck-only fisher deals damage', () => {
     const sk = SKILLS.find(x => x.id === 'luckyBreak'); assert.equal(sk.scaling, 'attr'); assert.equal(sk.scalingAttribute, 'luk');
     const none = hit(fighter('luckyBreak', { stats: { attack: 20, attrLuk: 0 } }), target()), lucky = hit(fighter('luckyBreak', { stats: { attack: 20, attrLuk: 100 } }), target());
-    assert.ok(Math.abs(lucky / none - (20 + 100 * sk.scalingRatio) / 20) < .05, `${lucky}/${none}`);
+    assert.ok(none <= 2, 'attack alone contributes nothing (v26.4)'); assert.ok(lucky >= 100 * sk.scalingRatio * sk.multiplier * .28 && lucky <= 100 * sk.scalingRatio * sk.multiplier * 1.72, `${lucky} (dice ×0.29~1.71 of ${100 * sk.scalingRatio * sk.multiplier})`);
     const s = newState(0); s.attributes.luk = 60; assert.equal(stats(s).attrLuk, 65, 'attrLuk mirrors base 5 + allocated');
 });
 
@@ -128,4 +128,12 @@ test('v26.3 healOnly: 고요한 호흡 heals without attacking (no hit roll, no 
     const text = strike(a, b, () => 0);
     assert.equal(b.hp, 1e6, 'no damage'); assert.ok(a.hp > 400, 'healed'); assert.match(text, /회복/); assert.equal(a.hp >= 400, true, 'no thorns damage taken');
     const s = newState(0); const before = stats(s).attack; s.attributes.luk = 100; assert.equal(stats(s).attack, before, 'luck adds no attack'); assert.ok(stats(s).crit > 0);
+});
+
+test('v26.4 dice: luck lane rolls more dice with more luck and uses the highest face ÷ 3.5', () => {
+    const sk = SKILLS.find(x => x.id === 'luckyBreak'); assert.equal(sk.name, '운빨 기도'); assert.deepEqual(sk.dice, { attribute: 'luk', per: 40, max: 3 });
+    const seq = [0, .99, 0]; const t1 = target(); const text = strike(fighter('luckyBreak', { stats: { attrLuk: 10 } }), t1, () => seq.length ? seq.shift() : 0);
+    assert.match(text, /주사위 ⚅ ×1.71/, text);
+    const seq2 = [0, 0, 0, .5, 0]; const t2 = target(); const text2 = strike(fighter('luckyBreak', { stats: { attrLuk: 100 } }), t2, () => seq2.length ? seq2.shift() : 0);
+    assert.match(text2, /주사위 ⚀⚀⚃ ×1.14/, text2);
 });

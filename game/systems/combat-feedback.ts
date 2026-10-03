@@ -48,6 +48,8 @@ export type CombatFx = {
     finale?: boolean;
     /** v26.3 도박 기술의 배율 굴림(주사위 연출). */
     gamble?: number;
+    /** v26.4 굴린 주사위 눈. */
+    dice?: number[];
     /** v25.21 스킬 직업의 차수(공용 0). 4·5차는 더 큰 연출. */
     tier?: number;
 };
@@ -64,7 +66,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
         const missed = ev.hits.length > 0 && ev.hits.every(h => h.miss);
         const status = ev.statuses.find(x => !x.onSelf) || ev.statuses[0];
         const kind: CombatFxKind = missed ? 'miss' : status ? status.id === 'bleed' ? 'bleed' : status.id as CombatFxKind : ev.damageType;
-        return { id: log.id, actor, target, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), tier: ev.finale ? 5 : fxTierOf(ev.skillId), gamble: ev.gamble, basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
+        return { id: log.id, actor, target, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), tier: ev.finale ? 5 : fxTierOf(ev.skillId), gamble: ev.gamble, dice: ev.dice, basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
     }
     const text = log.text;
     const actor = text.startsWith(`${playerName} ·`) || text.startsWith(`${playerName}:`) ? 'player' : 'enemy';

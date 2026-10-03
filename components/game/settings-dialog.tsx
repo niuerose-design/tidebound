@@ -32,7 +32,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
         <DialogContent>
             <DialogHeader>
                 <DialogTitle>낚시꾼 설정</DialogTitle>
-                <DialogDescription>이름과 알림, 정리 방식, 캐릭터 슬롯을 고릅니다.</DialogDescription>
+                <DialogDescription>이름과 알림, 정리 방식, 분신을 고릅니다.</DialogDescription>
             </DialogHeader>
             <label className="field-label" htmlFor="player-name">낚시꾼 이름</label>
             <div className="button-row">
@@ -56,7 +56,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                 <button className="secondary" disabled={busy} onClick={() => send({ type: 'salvageMode', value: s.salvageMode === 'dismantle' ? 'sell' : 'dismantle' })}>{s.salvageMode === 'dismantle' ? '분해' : '판매'}</button>
             </div>}
             {s && onSwitchSlot && <div className="slot-section">
-                <div className="section-title"><h3>캐릭터 슬롯</h3><span>슬롯마다 다른 낚시꾼을 키웁니다. 모든 슬롯의 기록을 합친 계정 보너스가 각 캐릭터에 적용되고, 쉬는 슬롯은 다음에 들어올 때 부재중 정산을 받습니다.</span></div>
+                <div className="section-title"><h3>분신</h3><span>슬롯마다 다른 낚시꾼을 키웁니다. 모든 슬롯의 기록을 합친 계정 보너스가 각 캐릭터에 적용되고, 쉬는 슬롯은 다음에 들어올 때 부재중 정산을 받습니다.</span></div>
                 <ul className="slot-list">{Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map(slot => {
                     const info = slot === current ? { name: s.name, job: s.job, level: s.level, rebirths: s.rebirths } : slots.find(x => x.slot === slot);
                     const open = slotUnlocked(s.account, slot), job = info ? jobById(info.job)?.name || info.job : '';

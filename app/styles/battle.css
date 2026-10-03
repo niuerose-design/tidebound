@@ -633,3 +633,4 @@
 @keyframes tideDiceTumble{0%{transform:rotate(-200deg) scale(.4);opacity:0}60%{transform:rotate(20deg) scale(1.15);opacity:1}100%{transform:rotate(0) scale(1)}}
 @keyframes tideDice{0%{opacity:0;transform:translateY(10px)}15%{opacity:1;transform:translateY(0)}75%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
 @media(prefers-reduced-motion:reduce){.tide-fx-dice,.tide-fx-dice b{animation:none}}
+.tide-fx-dice{width:auto;min-width:60px;left:auto;transform:translateX(-50%)} .tide-fx-dice b{font-size:30px;letter-spacing:2px;white-space:nowrap} .tide-fx-dice em{font-style:normal;font-size:13px;font-weight:700;white-space:nowrap;margin-top:2px}
