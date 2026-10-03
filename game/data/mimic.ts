@@ -5,7 +5,7 @@
 export const MIMIC = {
     id: 'masteryMimic',
     /** 입질마다 미믹이 나올 확률(낚시터, Lv.10 이상, 누적 포획 100마리 이상). */
-    chance: .004,
+    chance: .0015,
     minLevel: 10,
     minKills: 100,
     /** 체력·공격 배율: 그 낚시터에서 가장 강한 어종 기준. */
