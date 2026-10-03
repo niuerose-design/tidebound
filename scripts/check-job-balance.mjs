@@ -31,7 +31,8 @@ const TIERS = {
 function attributesFor(j, level) {
     // 주 피해 유형: 자기 액티브 기술의 피해 유형을 먼저 보고, 액티브가 없으면 직업 보정이 큰 쪽.
     const own = SKILLS.filter(sk => sk.job === j.id && sk.type === 'active');
-    const ownMagic = own.filter(sk => sk.damageType === 'magic').length, ownPhysical = own.length - ownMagic;
+    // scaling 'swap'은 피해 유형과 반대 공격력을 쓰므로 주 능력치도 반대로 봅니다.
+    const ownMagic = own.filter(sk => (sk.damageType === 'magic') !== (sk.scaling === 'swap')).length, ownPhysical = own.length - ownMagic;
     const total = 4 + (level - 1) * 4, magic = ownMagic !== ownPhysical ? ownMagic > ownPhysical : jobFactor(j, 'magic') > jobFactor(j, 'attack') || (jobFactor(j, 'magic') === jobFactor(j, 'attack') && SKILLS.some(sk => sk.job === j.id && sk.damageType === 'magic'));
     const w = magic ? { int: 45, wis: 20, vit: 25, dex: 10 } : { str: 45, dex: 20, vit: 25, wis: 10 };
     const out = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; let used = 0;

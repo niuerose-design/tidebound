@@ -55,3 +55,15 @@ test('v24.2 songs cost 0 AP and only bard-lineage jobs may equip them', () => {
     s.job = 'whaler'; assert.equal(canUse(s, 'roadSong'), false, 'inherited songs still need a bard-lineage job');
     assert.ok(JOBS.find(j => j.id === 'siren'));
 });
+
+test('v25.24 swap scaling: brawnWave deals magic damage from physical attack; arcaneFist deals physical damage from magic attack', () => {
+    const brawn = SKILLS.find(x => x.id === 'brawnWave'), fist = SKILLS.find(x => x.id === 'arcaneFist');
+    assert.equal(brawn.damageType, 'magic'); assert.equal(brawn.scaling, 'swap'); assert.equal(fist.damageType, 'physical'); assert.equal(fist.scaling, 'swap');
+    const strong = hit(fighter('brawnWave', { stats: { attack: 300, magic: 0 } }), target()), weak = hit(fighter('brawnWave', { stats: { attack: 0, magic: 300 } }), target());
+    assert.ok(strong > weak * 3, `brawnWave uses attack: ${strong} vs ${weak}`);
+    const vsResist = hit(fighter('brawnWave', { stats: { attack: 300, magic: 0 } }), target({ stats: { ...base, resist: 200 } }));
+    const vsDefense = hit(fighter('brawnWave', { stats: { attack: 300, magic: 0 } }), target({ stats: { ...base, defense: 200 } }));
+    assert.ok(vsResist < vsDefense, `brawnWave is mitigated by resist: ${vsResist} vs ${vsDefense}`);
+    const fistStrong = hit(fighter('arcaneFist', { stats: { attack: 0, magic: 300 } }), target()), fistWeak = hit(fighter('arcaneFist', { stats: { attack: 300, magic: 0 } }), target());
+    assert.ok(fistStrong > fistWeak * 3, `arcaneFist uses magic: ${fistStrong} vs ${fistWeak}`);
+});

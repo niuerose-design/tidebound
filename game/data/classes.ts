@@ -5,6 +5,7 @@ import { V24_JOBS, V24_HINTS } from './expansion-v24';
 import { SUPPORT_JOBS, SUPPORT_JOB_DESC, SUPPORT_HINTS } from './support-rework';
 import { V25_JOBS, V25_HINTS } from './expansion-v25';
 import { DEFENSE_JOBS, DEFENSE_HINTS, DEFENSE_LINEAGES } from './expansion-defense';
+import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
 export type Job = {
     id: string;
     name: string;
@@ -180,6 +181,8 @@ JOBS.push(...(SUPPORT_JOBS as Job[]));
 JOBS.push(...(V25_JOBS as Job[]));
 // v25.14 방어 계열 보강: 종거북·성해 기사 갈래 5차까지, 새 소금 파수꾼(마법 방어) 계보. 자세한 설계는 expansion-defense.ts.
 JOBS.push(...(DEFENSE_JOBS as Job[]));
+// v25.24 역전 계보(힘법사): 물리 계수 마법 피해 · 마법 계수 물리 피해. 자세한 설계는 expansion-inversion.ts.
+JOBS.push(...(INVERSION_JOBS as Job[]));
 for (const job of JOBS) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
 
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
@@ -284,6 +287,7 @@ export const LINEAGES: Lineage[] = [
     { id: 'spellbladeNovice', name: '마검 수련생 계보', tree: 'hybrid', summary: '물리와 마법을 함께 싣는 검술로 5차 천검에 이르는 계보입니다.' },
     NEW_LINEAGES.tideLancer,
     NEW_LINEAGES.runesmith,
+    ...INVERSION_LINEAGES,
     independent('hybrid'),
     { id: 'squidJester', name: '오징어 광대 계보', tree: 'support', summary: '확률과 치명으로 보상을 불리는 계보입니다.' },
     { id: 'relicScavenger', name: '난파선 수집가 계보', tree: 'support', summary: '변종과 황금 개체를 더 자주 만나고, 변종 기록이 쌓일수록 강해지는 희귀어 사냥 계보입니다.' },
