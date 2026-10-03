@@ -330,11 +330,11 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .undiscovered .fish-art { color: #536c77; filter: saturate(0); }
 .undiscovered .fish-art img { opacity: 0 !important; }
 .job-art { color: var(--tree-color, #93c0b4); }
-.scene-foe { position: absolute; right: 26px; bottom: 150px; width: 112px; height: 112px; color: rgba(230, 241, 238, .82); background: none; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .55)); animation: foeDrift 4s ease-in-out infinite; pointer-events: none; }
-.scene-foe.boss { width: 140px; height: 140px; color: #f3dca0; }
+.scene-foe { position: absolute; right: 28px; top: calc(50% - 44px); width: 96px; height: 96px; z-index: 1; color: rgba(230, 241, 238, .82); background: none; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .55)); animation: foeDrift 4s ease-in-out infinite; pointer-events: none; }
+.scene-foe.boss { width: 120px; height: 120px; top: calc(50% - 56px); color: #f3dca0; }
 .scene-foe .fish-silhouette { width: 100%; height: 100%; }
 @keyframes foeDrift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
-@media (max-width: 767px) { .scene-foe { right: 14px; bottom: 190px; width: 84px; height: 84px; } .scene-foe.boss { width: 104px; height: 104px; } }
+@media (max-width: 767px) { .scene-foe { right: 14px; top: calc(50% - 20px); width: 84px; height: 84px; } .scene-foe.boss { width: 104px; height: 104px; top: calc(50% - 30px); } }
 @media (prefers-reduced-motion: reduce) { .scene-foe { animation: none; } }
 .book-icon .fish-art { width: 56px; height: 56px; }
 .job-detail-title .job-art { width: 44px; height: 44px; border-radius: 10px; }
