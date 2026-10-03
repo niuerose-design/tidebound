@@ -102,7 +102,7 @@ export function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageTyp
     if (!ev.hits.length) return '피해 없음';
     if (ev.hits.every(h => h.miss)) return '빗나감';
     if (ev.hits.length === 1) return `${ev.total} ${word} 피해`;
-    const part = (h: CombatHit) => h.miss ? '빗나감' : `${h.value}${h.critical ? ' [치명타]' : ''}`;
+    const part = (h: CombatHit) => h.miss ? '빗나감' : `${h.value}${h.superCritical ? ' [극 치명타]' : h.critical ? ' [치명타]' : ''}`;
     return [`본타 ${part(ev.hits[0])}`, ...ev.hits.slice(1).map((h, i) => `추가타${ev.hits.length > 2 ? ` ${i + 1}` : ''} ${part(h)}`), `합계 ${ev.total} ${word} 피해`].join(' · ');
 }
 /** 행동 순서·명중 보정·연속 행동 확률에 쓰는 속도. 가속·감속이 반영됩니다. */
@@ -378,8 +378,10 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (linked) { notes.push('연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly || healOnly;
-    const crit = landed && !statusOnly && rng() < sa.crit;
-    const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)));
+    // v27.18 극 치명타: 같은 난수로 판정합니다(치명타 확률 상한을 넘은 몫 = superCrit). 치명 피해에 superCritBonus를 더 곱합니다.
+    const critRoll = landed && !statusOnly ? rng() : 1;
+    const crit = critRoll < sa.crit, superCrit = crit && critRoll < (sa.superCrit || 0);
+    const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - actual);
     // v25 無: 쓰러질 피해를 받은 쪽이 無를 장착했으면 체력 1로 버티고, 이 행동의 남은 추가타는 멈춥니다.
@@ -402,7 +404,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         }
     }
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
-    if (!statusOnly || !landed) ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed });
+    if (!statusOnly || !landed) ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed, ...(superCrit ? { superCritical: true } : {}) });
     if (healOnly) notes.push(`회복 ${healed}`);
     if (landed && chosen?.effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
     else if (landed && chosen?.effect === 'stun') {
@@ -480,13 +482,13 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             ev.hits.push({ kind: 'follow', value: 0, critical: false, miss: true });
             continue;
         }
-        const followCrit = rng() < sa.crit;
+        const followRoll = rng(), followCrit = followRoll < sa.crit, followSuper = followCrit && followRoll < (sa.superCrit || 0);
         const followMultiplier = (chosen?.multiplier || 1) * ((chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier) + sa.followUpBonus);
-        const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage : 1)));
+        const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage * (followSuper ? SKILL_FORMULA.superCritBonus : 1) : 1)));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
         if (endure(b, sb, notes, ev)) stood = true;
-        ev.hits.push({ kind: 'follow', value: followActual, critical: followCrit, miss: false });
+        ev.hits.push({ kind: 'follow', value: followActual, critical: followCrit, miss: false, ...(followSuper ? { superCritical: true } : {}) });
         const followDrain = Math.min(drainLeft, Math.floor(followActual * drainRate));
         drainLeft -= followDrain;
         if (followDrain) {
@@ -547,5 +549,5 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     ev.damageType = split ? 'split' : magical ? 'magic' : 'physical';
     ev.healed = healed;
     ev.total = ev.hits.reduce((n, h) => n + h.value, 0);
-    return emit(`${a.name} · ${label}${crit ? ' [치명타]' : ''} → ${describeHits(ev)}${healed ? ` · 회복 ${healed}` : ''}${ev.drained ? ` · 흡혈 ${ev.drained}` : ''}${notes.length ? ' · ' + notes.join(' · ') : ''}`);
+    return emit(`${a.name} · ${label}${superCrit ? ' [극 치명타]' : crit ? ' [치명타]' : ''} → ${describeHits(ev)}${healed ? ` · 회복 ${healed}` : ''}${ev.drained ? ` · 흡혈 ${ev.drained}` : ''}${notes.length ? ' · ' + notes.join(' · ') : ''}`);
 }

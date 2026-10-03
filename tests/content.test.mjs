@@ -231,10 +231,14 @@ test('v27.16 stuck-state repair: NaN hp, dead enemy left over, unknown stage, an
  assert.ok(!u.enemy||u.enemy.id!=='minnow'||u.enemy.hp<10,'stalemate broken within 130 turns');
 });
 
-test('v27.18 charm enhancement keeps paying past the 15% crit cap by raising crit damage',()=>{
+test('v27.18 charm crit is uncapped and crit above 60% becomes super crit (x1.5 crit damage)',()=>{
  const mk=(power,enhance)=>equipment.itemStats({id:'c',name:'c',slot:'charm',power,level:1,enhance});
- assert.equal(mk(50,0).crit,.1);assert.equal(mk(50,0).critDamage,undefined);
- const capped=mk(100,0),more=mk(100,5);assert.equal(capped.crit,.15);assert.equal(more.crit,.15);
- assert.ok((more.critDamage||0)>(capped.critDamage||0),'enhancing a capped charm still adds crit damage: '+capped.critDamage+' → '+more.critDamage);
- assert.ok(Math.abs(capped.critDamage-(100-75)*.002)<1e-9);
+ assert.ok(mk(100,5).crit>mk(100,0).crit&&mk(100,0).crit>.15,'enhancing keeps raising charm crit');
+ const s=newState(0);s.attributes.luk=400;const a=stats(s);assert.equal(a.crit,SKILL_FORMULA.critCap);assert.ok(a.superCrit>0,'overflow goes to super crit: '+a.superCrit);
+ const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:1,superCrit:.5,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:2};
+ const f=(extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills:[],cooldowns:{},stun:0,effects:{},ranks:{},mastery:{},practice:{}});
+ const plain=f({crit:0,superCrit:0}),t1=f({});strike(plain,t1,()=>.4);const normal=1e6-t1.hp;
+ const sup=f();const target=f({});const text=strike(sup,target,()=>.4);assert.equal(1e6-target.hp,normal*2*SKILL_FORMULA.superCritBonus,'super crit multiplies crit damage');assert.match(text,/\[극 치명타\]/);
+ const target2=f({});const text2=strike(f(),target2,()=>.7);assert.equal(1e6-target2.hp,normal*2,'roll above superCrit is a normal crit');assert.ok(text2.includes('[치명타]')&&!text2.includes('[극 치명타]'));
+ const fx=combatFxFromLog({id:1,type:'battle',text},'A');assert.ok(fx&&fx.hits[0].superCritical&&fx.hits[0].critical,'feedback parses the super crit label');
 });

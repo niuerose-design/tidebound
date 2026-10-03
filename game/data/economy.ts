@@ -104,7 +104,7 @@ export const SHOP = [
 export const GAMBLE_CATEGORIES = [
     { id: 'rod', name: '낚싯대', slot: 'rod', offers: ['physical', 'magic'], description: '물리형·마법형 중 하나를 같은 확률로 획득합니다.' },
     { id: 'coat', name: '방어구', slot: 'coat', offers: ['coat'], description: '최대 체력과 물리·마법 방어를 보강합니다.' },
-    { id: 'charm', name: '나침반', slot: 'charm', offers: ['charm'], description: '치명타 확률(최대 15%)을 높이고, 그 위로는 치명 피해가 오릅니다. 무작위 추가 옵션을 얻습니다.' },
+    { id: 'charm', name: '나침반', slot: 'charm', offers: ['charm'], description: '치명타 확률을 높이고 무작위 추가 옵션을 얻습니다. 치명타 60%를 넘는 몫은 극 치명타 확률이 됩니다.' },
 ] as const;
 export const RELICS = [
     { id: 'memoryRod', name: '윤회의 낚싯대', slot: 'rod', style: 'balanced', power: 45, cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },

@@ -63,6 +63,8 @@ export type Stats = {
     variantFind?: number;
     /** v25.23 포획마다 황금 개체가 될 확률(그 한 마리 골드 10배). */
     goldenFind?: number;
+    /** v27.18 극 치명타 확률: 치명타 확률이 상한(60%)을 넘은 몫. 치명타가 뜬 뒤 이 확률로 극 치명타(치명 피해 × superCritBonus). */
+    superCrit?: number;
     hp: number;
     attack: number;
     defense: number;
@@ -250,7 +252,7 @@ export type Enemy = {
     stun: number;
 };
 /** 한 번의 행동 결과. 전투 화면은 문자열 대신 이 값으로 피해·치명·회피·추가타·흡혈을 표시합니다. */
-export type CombatHit = { kind: 'main' | 'follow'; value: number; critical: boolean; miss: boolean };
+export type CombatHit = { kind: 'main' | 'follow'; value: number; critical: boolean; miss: boolean; /** v27.18 극 치명타 */ superCritical?: boolean };
 export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split';
     hits: CombatHit[]; total: number; healed: number; drained: number;

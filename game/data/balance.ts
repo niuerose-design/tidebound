@@ -65,7 +65,9 @@ export const SKILL_FORMULA = {
     /** v27.17 출혈 중인 대상이 받는 직접 피해 증가. 출혈은 중첩되지 않는 대신 이 보정을 줍니다. */
     bleedVulnerability: .12,
     /** v27.17 중독 한 중첩의 틱 피해 비율(위력 기준). 다섯 중첩이면 출혈보다 큽니다. */
-    poisonRatio: .14, drainRatio: .25, extraAttackMultiplier: .65,
+    poisonRatio: .14,
+    /** v27.18 극 치명타: 치명타 확률이 상한 60%를 넘은 몫이 극 치명타 확률이 되고, 극 치명타는 치명 피해에 이 배율을 더 곱합니다. */
+    critCap: .6, superCritBonus: 1.5, drainRatio: .25, extraAttackMultiplier: .65,
     // 육중 조화: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
     // 초안(합 × 1.2 + 최저 × 6)은 편중 배분이 더 강해 check-all-rounder.mjs 결과로 조정했습니다.
     harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,
