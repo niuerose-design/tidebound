@@ -53,7 +53,7 @@ const VOW_TEXT = {
 export function AccountPanel({ s }: { s: State }) {
     const rows = accountBonusRows(s), slots = s.account?.slots || [], openSlots = Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).filter(n => slotUnlocked(s.account, n)).length;
     return <section className="panel vow-panel account-panel">
-        <div className="section-title"><h2>계정 보너스</h2><span>캐릭터 슬롯 {slots.length || 1}/{openSlots}개 사용 중 · 모든 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. 슬롯은 위 목록이나 전투 화면의 슬롯 칩에서 바꿉니다.</span></div>
+        <div className="section-title"><h2>계정 보너스</h2><span>슬롯 {slots.length || 1}/{openSlots} 사용 중 · 모든 슬롯 합산</span></div>
         <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}</ul>
     </section>;
 }
@@ -69,7 +69,7 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
             <button className="primary small" disabled={busy || n < 1 || !vault || vault[kind] < n || (kind === 'pearls' && n > vault.pearlOutLeft)} onClick={() => act({ action: 'withdraw', kind, amount: n })}>꺼내기</button></div>
     </li>; };
     return <section className="panel vow-panel vault-panel">
-        <div className="section-title"><h2>계정 금고</h2><span>어느 슬롯에서든 넣고 꺼냅니다. 정수는 제한 없고, 진주 인출은 주당 {VAULT_PEARL_OUT_WEEKLY}개까지입니다. 골드는 옮길 수 없습니다.</span></div>
+        <div className="section-title"><h2>계정 금고</h2><span>어느 슬롯에서든 넣고 꺼냄 · 진주 인출 주당 {VAULT_PEARL_OUT_WEEKLY}개 · 골드 불가</span></div>
         {error && <p className="login-error" role="alert">{error}</p>}
         <ul className="account-rows vault-rows">{row('pearls', '진주', s.pearls, vault ? `이번 주 인출 가능 ${vault.pearlOutLeft}개` : undefined)}{row('essence', '정수', s.essence || 0)}</ul>
     </section>;
