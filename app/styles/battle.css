@@ -435,9 +435,13 @@
 .battle-console>.log-panel{flex:1;display:flex;flex-direction:column;min-height:0;margin-bottom:0}
 .battle-console>.log-panel:not(.folded) .log-list{flex:1 1 0;height:auto;min-height:120px}
 /* v25.19 전투 기록·채팅은 내용만큼만(최대 9줄 정도), 남는 높이는 낚시터·던전 목록이 채워 빈 공간이 없게 합니다. */
-.battle-utility-rail>.battle-feed{flex:none}
-.battle-utility-rail>.battle-feed .battle-feed-list{max-height:300px}
-.battle-utility-rail>.battle-feed .chat-list{max-height:260px;min-height:0}
+/* v26.7 전투 기록·채팅 패널이 남는 세로 공간을 채워 오른쪽 열 하단이 가운데 열과 맞습니다. */
+.battle-utility-rail>.battle-feed{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.battle-utility-rail>.battle-feed .battle-feed-list{flex:1 1 0;max-height:none;min-height:220px}
+.battle-utility-rail>.battle-feed .chat-panel,.battle-utility-rail>.battle-feed .chat-feed{flex:1 1 auto;min-height:0}
+.battle-utility-rail>.battle-feed .chat-list{flex:1 1 0;max-height:none;min-height:180px}
+.battle-utility-rail>.battle-feed .chat-list{display:flex;flex-direction:column}
+.battle-utility-rail>.battle-feed .chat-list>:first-child{margin-top:auto}
 /* v26.7 선택 패널은 열 높이에 맞춰 늘리지 않고 목록만큼만 차지합니다. */
 .battle-utility-rail>.battle-selector-panel{flex:none;display:flex;flex-direction:column;min-height:0}
 .battle-utility-rail>.battle-selector-panel #place-panel{display:flex;flex-direction:column;min-height:0}
