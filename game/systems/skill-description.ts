@@ -1,5 +1,5 @@
 import type { Skill, Stats } from '../types';
-import { STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL, diceMultiplier, diceRange } from '../data/balance';
+import { STATUS_TUNING, SKILL_FORMULA, diceMultiplier, diceRange } from '../data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay, PROGRESSION } from '../data/progression';
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel, skillMasteryRewards } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
@@ -109,7 +109,6 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.perRebirth) out.push(`환생 1회마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);
     if (sk.penaltyRelief) out.push(`현재 직업의 마이너스 보정(체력·공격·방어 배율) ${skillPercent(sk.penaltyRelief)} 회복 · 여러 개면 가장 큰 값만`);
     if ((jobById(sk.job)?.tier || 0) >= SKILL_FORMULA.signatureTier) out.push(`전용 기술: 계보 밖 직업이 계승하면 ${sk.type === 'active' ? '피해 배율' : '능력치'} ×${number(SKILL_FORMULA.signatureScale)}`);
-    if (sk.id === 'firstAid') out.push(`포획 후 최대 체력 ${skillPercent(FIRST_AID_HEAL)} 추가 회복 · 포획당 1회 (무리 사냥 포함)`);
     if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 포획 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
     if (sk.type === 'passive' && !sk.song && !sk.levelEffects && SKILL_FORMULA.masteredPassiveAP) out.push(level >= maxSkillLevel(sk) ? `최대 성장: 장착 AP −${SKILL_FORMULA.masteredPassiveAP} 적용 중` : `최대 성장(Lv.${maxSkillLevel(sk)})에 닿으면 장착 AP −${SKILL_FORMULA.masteredPassiveAP}`);
     const rewards = skillMasteryRewards(sk, level + 1);

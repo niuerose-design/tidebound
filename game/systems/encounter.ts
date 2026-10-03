@@ -10,7 +10,7 @@ import { inventoryCap, researchRank } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize } from '../data/variants';
 import type { State, Item } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, FIRST_AID_HEAL } from '../data/balance';
+import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier } from '../data/world';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
@@ -25,8 +25,7 @@ import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
 /** 포획 1회당 회복량. 무리 규모와 관계없이 포획마다 한 번 적용합니다(응급처치 포함). */
 export function victoryHeal(s: State) {
-    const firstAid = s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0;
-    return Math.floor(stats(s).hp * (victoryHealRate(s) + firstAid));
+    return Math.floor(stats(s).hp * victoryHealRate(s));
 }
 /** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
 export function gainLevels(s: State) {
@@ -54,7 +53,8 @@ export function releaseAnchor(s: State, achieved: boolean) {
     return exp;
 }
 /** 포획 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 잔잔한 물결 1%p/단계. */
-export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : BALANCE.healAfterKill) + researchRank(s, 'recovery') * .01;
+/** 포획 후 회복률. v27.8 낚시터는 기본 20%에서 해역 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘잔잔한 물결’은 1단계마다 +1%p. */
+export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill - encounterTier(s) * BALANCE.healAfterKillTierDecay)) + researchRank(s, 'recovery') * .01;
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 export function rollRarity(rng: () => number, minRarity = 0) {
     const weights = DROP_RARITY.map((w, i) => i >= minRarity ? w : 0);

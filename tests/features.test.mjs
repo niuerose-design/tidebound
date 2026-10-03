@@ -20,10 +20,11 @@ test('Voyage log: unlocks once, survives rebirth, silent backfill for old saves;
  const r=newState(0);r.level=60;r.voyage={'stage:reef':12};const before={sp:r.sp,gold:r.gold};act(r,{type:'tutorial',id:'skip'},0);assert.equal(r.tutorial.skipped,true);assert.equal(r.sp,before.sp);assert.equal(r.gold,before.gold);
  act(r,{type:'rebirth'},0);assert.equal(r.voyage['stage:reef'],12);assert.ok(r.voyage['rebirth:1']>=0);assert.equal(r.tutorial.skipped,true);
 });
-test('Recovery: 8% after a win (4% in dungeons); first aid is free at Lv.2 and adds 4% once per win',()=>{
+test('Recovery v27.8: 20% after a win minus 1%p per sea tier (min 5%), 8% in dungeons; first aid is free at Lv.2 and gives hp regen',()=>{
  const s=newState(0);assert.equal((s.learned.firstAid||0),0);s.level=2;act(s,{type:'sync'},0);assert.equal(s.learned.firstAid,1);assert.equal(s.sp,0);
- const max=stats(s).hp;s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.08));s.skills=['firstAid'];assert.equal(victoryHeal(s),Math.floor(max*.12));
- s.dungeon={id:'grotto',wave:0};assert.equal(victoryHeal(s),Math.floor(max*.08));s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.04));
+ const max=stats(s).hp;s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.2));const regen0=stats(s).hpRegen;s.skills=['firstAid'];assert.equal(victoryHeal(s),Math.floor(stats(s).hp*.2),'first aid no longer adds victory heal');assert.ok(stats(s).hpRegen>regen0,'first aid gives hp regen');
+ s.skills=[];s.tide=10;assert.equal(victoryHeal(s),Math.floor(max*.1));s.tide=30;assert.equal(victoryHeal(s),Math.floor(max*.05),'floor 5%');s.tide=0;
+ s.dungeon={id:'grotto',wave:0};assert.equal(victoryHeal(s),Math.floor(max*.08));
  const src=encounterSource.slice(encounterSource.indexOf('function reward('));const end=src.indexOf('\nexport function ');assert.equal(((end<0?src:src.slice(0,end)).match(/victoryHeal\(/g)||[]).length,1);
 });
 test('Long-term goals: dungeon steps, one-time achievement notice, suggestions only what is open now',()=>{
