@@ -396,6 +396,20 @@
 @keyframes sceneFlash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
 @keyframes sceneRing{0%{opacity:0;scale:.2}15%{opacity:1}100%{opacity:0;scale:4.2}}
 @keyframes sceneSpark{0%,10%{opacity:0;translate:0 0;scale:.4}22%{opacity:1}100%{opacity:0;translate:var(--fx-x) var(--fx-y);scale:.6}}
+/* v27.23 숙련의 까미 등장: 어두워진 바다 위로 금빛 섬광, 동전 파편, 제목 */
+.scene-fx-kkami{--fx:#ffd76a;--fx-delay:0ms;position:absolute;inset:0}
+.scene-fx-kkami .scene-fx-dark{position:absolute;inset:0;background:#0a0804;animation:sceneKkamiDark 3.2s ease-in-out both}
+.scene-fx-kkami .scene-fx-flash{position:absolute;inset:0;background:radial-gradient(ellipse at 72% 55%,#fff3c8 0%,#ffd76a99 24%,transparent 60%);animation:sceneKkamiFlash 3.2s ease-out both;mix-blend-mode:screen}
+.scene-fx-kkami-coin{position:absolute;left:calc(50% + (var(--i) - 3.5) * 38px);top:72%;font-size:22px;color:#ffe9a8;text-shadow:0 0 10px #ffd76a;animation:sceneKkamiCoin 1.6s ease-out calc(.25s + var(--i) * .09s) both}
+.scene-fx-kkami-title{position:absolute;left:50%;top:calc(100% - 64px);translate:-50% -50%;font-size:26px;font-weight:800;letter-spacing:2px;color:#ffe9b0;text-shadow:0 0 18px #ffb84a,0 2px 6px #000;white-space:nowrap;animation:sceneKkamiTitle 3.2s ease-out both}
+.scene-fx-kkami-sub{position:absolute;left:50%;top:calc(100% - 42px);translate:-50% 0;font-size:14px;letter-spacing:3px;color:#fff3c8;text-shadow:0 0 8px #000;white-space:nowrap;animation:sceneTitle 3.2s ease-out both}
+.scene-foe.kkami{color:#ffd76a;filter:drop-shadow(0 0 14px #ffb84a) drop-shadow(0 10px 18px rgba(0,0,0,.55));animation:foeDrift 2.2s ease-in-out infinite,kkamiGlow 1.2s ease-in-out infinite alternate}
+@keyframes sceneKkamiDark{0%{opacity:0}12%,70%{opacity:.7}100%{opacity:0}}
+@keyframes sceneKkamiFlash{0%{opacity:0;scale:.6}14%{opacity:1;scale:1}60%{opacity:.7}100%{opacity:0;scale:1.3}}
+@keyframes sceneKkamiCoin{0%{opacity:0;transform:translateY(20px) scale(.4) rotate(0deg)}25%{opacity:1}100%{opacity:0;transform:translateY(-70px) scale(1.1) rotate(360deg)}}
+@keyframes sceneKkamiTitle{0%{opacity:0;scale:1.8;letter-spacing:12px}18%,80%{opacity:1;scale:1;letter-spacing:2px}100%{opacity:0;scale:.9}}
+@keyframes kkamiGlow{from{filter:drop-shadow(0 0 8px #ffb84a) drop-shadow(0 10px 18px rgba(0,0,0,.55))}to{filter:drop-shadow(0 0 22px #ffd76a) drop-shadow(0 10px 18px rgba(0,0,0,.55))}}
+@media(prefers-reduced-motion:reduce){.scene-fx-kkami-coin{display:none}.scene-fx-kkami .scene-fx-dark,.scene-fx-kkami .scene-fx-flash,.scene-fx-kkami-title,.scene-fx-kkami-sub{animation-name:tideReduced;animation-duration:1.4s}.scene-foe.kkami{animation:none}}
 @keyframes sceneDark{0%{opacity:0}18%,62%{opacity:.78}100%{opacity:0}}
 @keyframes sceneFinaleFlash{0%,38%{opacity:0}42%{opacity:1}58%{opacity:.35}70%{opacity:.6}100%{opacity:0}}
 @keyframes sceneSlash{0%,36%{opacity:0;scale:0 1;rotate:-14deg}40%{opacity:1;scale:1 1}50%{opacity:.9;rotate:-14deg}100%{opacity:0;rotate:-14deg;scale:1.2 3}}
@@ -684,3 +698,79 @@
 @keyframes sceneDiceTumble{0%{transform:rotate(-220deg) scale(.3);opacity:0}65%{transform:rotate(18deg) scale(1.15);opacity:1}100%{transform:rotate(0) scale(1)}}
 @keyframes sceneDiceLine{0%{opacity:0;transform:translateX(-50%) translateY(8px) scale(.9)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 @media(prefers-reduced-motion:reduce){.scene-fx-dice,.scene-fx-dice-faces span,.scene-fx-dice-line{animation:none}}
+
+/* v27.23 무한 심연 현재 층 */
+.abyss-floor{display:inline-block;margin-left:6px;padding:2px 10px;border:1px solid #d5b36c;border-radius:999px;background:rgba(213,179,108,.14);color:#ffe3a0;font-size:.55em;font-weight:700;letter-spacing:1px;vertical-align:middle;box-shadow:0 0 12px rgba(213,179,108,.35)}
+/* v27.24 5차 궁극기 전용 장면 연출(.scene-fx-ult.ult-<kind>): 어둠 + 섬광 + 두 장치(ult-a/ult-b) + 파편 8개 + 제목 */
+.scene-fx-ult{--fx:#ffe38b;position:absolute;inset:0}
+.scene-fx-ult .scene-fx-dark{inset:0;background:#040c10;animation:sceneDark 2.4s ease-in-out var(--fx-delay) both}
+.scene-fx-ult .scene-fx-flash{inset:0;background:radial-gradient(ellipse at 62% 48%,color-mix(in srgb,var(--fx) 70%,#fff) 0%,color-mix(in srgb,var(--fx) 45%,transparent) 30%,transparent 64%);animation:sceneFinaleFlash 2.4s ease-out var(--fx-delay) both;mix-blend-mode:screen}
+.scene-fx-ult .ult-a,.scene-fx-ult .ult-b{position:absolute;pointer-events:none}
+.scene-fx-ult .ult-frag{position:absolute;left:62%;top:48%;font:700 24px/1 monospace;color:var(--fx);text-shadow:0 0 12px var(--fx);animation:ultFrag 1.4s ease-out calc(var(--fx-delay) + .5s + var(--i) * .07s) both;--ang:calc(var(--i) * 45deg)}
+.ult-title{position:absolute;left:50%;top:calc(50% + 78px);translate:-50% 0;font-size:22px;font-weight:800;letter-spacing:5px;color:#fff2c4;text-shadow:0 0 16px var(--fx),0 2px 6px #000;white-space:nowrap;animation:sceneTitle 2.4s ease-out var(--fx-delay) both}
+@keyframes ultFrag{0%{opacity:0;transform:rotate(var(--ang)) translateX(10px) scale(.4)}20%{opacity:1}100%{opacity:0;transform:rotate(var(--ang)) translateX(150px) scale(1)}}
+/* 용사의 일격: 흑백 정지 뒤 화면을 가르는 참격 */
+.ult-slash{--fx:#fff1c8}.ult-slash .scene-fx-dark{background:#000}
+.ult-slash .ult-a{left:-20%;top:50%;width:140%;height:4px;rotate:-18deg;background:linear-gradient(90deg,transparent,#fff,#ffe9a8,#fff,transparent);box-shadow:0 0 28px #fff;animation:ultSlashLine 2.4s cubic-bezier(.2,.9,.2,1) var(--fx-delay) both}
+.ult-slash .ult-b{left:-20%;top:50%;width:140%;height:60px;rotate:-18deg;translate:0 -30px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.18) 50%,transparent);animation:ultSlashGap 2.4s ease-out var(--fx-delay) both}
+.battle-scene:has(.ult-slash) .ocean-art{animation:ultMono 2.4s ease-out both}
+@keyframes ultSlashLine{0%,30%{opacity:0;scale:0 1}36%{opacity:1;scale:1 1}70%{opacity:1}100%{opacity:0}}
+@keyframes ultSlashGap{0%,40%{opacity:0;scale:1 0}60%{opacity:1;scale:1 1}100%{opacity:0;scale:1 1.6}}
+@keyframes ultMono{0%,8%{filter:none}12%,60%{filter:grayscale(1) contrast(1.2)}100%{filter:none}}
+/* 대해의 분노: 아래에서 솟는 두 겹 파도 */
+.ult-wave{--fx:#8ce4ed}.ult-wave .scene-fx-dark{background:#031a24}
+.ult-wave .ult-a,.ult-wave .ult-b{left:-30%;width:160%;height:90%;top:100%;border-radius:50% 50% 0 0/100% 100% 0 0;background:linear-gradient(180deg,#d9fbff,#8ce4ed 18%,#1f8aa6 45%,#06303f);box-shadow:0 -14px 50px #8ce4ed,inset 0 20px 40px rgba(255,255,255,.35);animation:ultWaveRise 2.4s cubic-bezier(.3,.8,.3,1) var(--fx-delay) both}
+.ult-wave .ult-b{animation-delay:calc(var(--fx-delay) + .35s);opacity:.7;height:70%}
+@keyframes ultWaveRise{0%{translate:0 0;opacity:1}40%{translate:0 -95%;opacity:1}70%{translate:0 -100%;opacity:1}100%{translate:0 -10%;opacity:0}}
+/* 창세의 빛: 중앙 빛기둥과 수평 섬광 */
+.ult-light{--fx:#fff1a8}
+.ult-light .ult-a{left:50%;top:-20%;width:90px;height:140%;translate:-50% 0;background:linear-gradient(90deg,transparent,#fff7d6 30%,#fff 50%,#fff7d6 70%,transparent);filter:blur(2px);animation:ultBeam 2.4s ease-out var(--fx-delay) both}
+.ult-light .ult-b{left:-10%;top:50%;width:120%;height:3px;background:linear-gradient(90deg,transparent,#fff,transparent);box-shadow:0 0 30px #fff1a8;animation:ultSlashLine 2.4s ease-out calc(var(--fx-delay) + .3s) both}
+@keyframes ultBeam{0%{opacity:0;scale:.1 1}18%{opacity:1;scale:1 1}60%{opacity:1}100%{opacity:0;scale:3 1}}
+/* 파멸의 낙인: 바닥의 녹색 낙인과 차오르는 독 안개 */
+.ult-venom{--fx:#9af06a}.ult-venom .scene-fx-dark{background:#04120a}
+.ult-venom .ult-a{left:62%;top:78%;width:260px;height:90px;margin:-45px 0 0 -130px;border:3px dashed #9af06a;border-radius:50%;box-shadow:0 0 24px #9af06a,inset 0 0 24px rgba(154,240,106,.5);animation:ultSigil 2.4s ease-out var(--fx-delay) both}
+.ult-venom .ult-b{inset:0;background:linear-gradient(180deg,transparent 30%,rgba(154,240,106,.45));animation:ultFog 2.4s ease-in-out var(--fx-delay) both}
+@keyframes ultSigil{0%{opacity:0;rotate:0deg;scale:.3}20%{opacity:1;scale:1}100%{opacity:0;rotate:200deg;scale:1.4}}
+@keyframes ultFog{0%{opacity:0;translate:0 60%}40%,70%{opacity:1;translate:0 0}100%{opacity:0;translate:0 -30%}}
+/* 신성한 심판: 닫히는 육각 결계 위로 내리꽂히는 빛 */
+.ult-judgment{--fx:#ffd76a}
+.ult-judgment .ult-a{left:62%;top:48%;width:220px;height:220px;margin:-110px 0 0 -110px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:color-mix(in srgb,#ffd76a 35%,transparent);box-shadow:0 0 40px #ffd76a;animation:ultHex 2.4s ease-out var(--fx-delay) both}
+.ult-judgment .ult-b{left:62%;top:-20%;width:60px;height:80%;translate:-50% 0;background:linear-gradient(180deg,#fff,#ffd76a,transparent);filter:blur(1px);animation:ultDrop 2.4s cubic-bezier(.6,0,.2,1) calc(var(--fx-delay) + .5s) both}
+@keyframes ultHex{0%{opacity:0;scale:2.4;rotate:40deg}30%{opacity:1;scale:1;rotate:0deg}80%{opacity:1}100%{opacity:0;scale:1.2}}
+@keyframes ultDrop{0%{opacity:0;translate:-50% -100%}30%{opacity:1;translate:-50% 0}70%{opacity:1}100%{opacity:0}}
+/* 붉은 종말: 붉은 비와 핏빛 가장자리 */
+.ult-blood{--fx:#ff6a6a}.ult-blood .scene-fx-dark{background:#1a0306}
+.ult-blood .ult-a{inset:-20% 0 0 0;background:repeating-linear-gradient(100deg,transparent 0 14px,rgba(255,90,90,.55) 14px 16px);animation:ultRain 2.4s linear var(--fx-delay) both}
+.ult-blood .ult-b{inset:0;box-shadow:inset 0 0 120px 40px rgba(180,0,20,.75);animation:sceneDark 2.4s ease-in-out var(--fx-delay) both}
+@keyframes ultRain{0%{opacity:0;translate:0 -30%}15%{opacity:1}100%{opacity:0;translate:0 30%}}
+/* 세계의 촉수: 네 귀퉁이에서 뻗어 중앙을 조이는 촉수 */
+.ult-tentacle{--fx:#c4a0ff}.ult-tentacle .scene-fx-dark{background:#0a0414}
+.ult-tentacle .ult-a,.ult-tentacle .ult-b{left:50%;top:50%;width:160%;height:34px;margin:-17px 0 0 -80%;border-radius:17px;background:linear-gradient(90deg,#3a2460,#7c56c8 30%,#c4a0ff 50%,#7c56c8 70%,#3a2460);box-shadow:0 0 24px #7c56c8;animation:ultTentacle 2.4s cubic-bezier(.5,0,.3,1) var(--fx-delay) both}
+.ult-tentacle .ult-a{rotate:35deg}.ult-tentacle .ult-b{rotate:-35deg;animation-delay:calc(var(--fx-delay) + .15s)}
+@keyframes ultTentacle{0%{opacity:0;scale:1.6 .2}30%{opacity:1;scale:1 1}60%{scale:.5 1.3}100%{opacity:0;scale:.2 1.6}}
+/* 영혼 수확 일격: 뼈 교차와 떠오르는 영혼 */
+.ult-soul{--fx:#ece6d2}.ult-soul .scene-fx-dark{background:#07080c}
+.ult-soul .ult-a,.ult-soul .ult-b{left:62%;top:48%;width:260px;height:6px;margin:-3px 0 0 -130px;border-radius:3px;background:linear-gradient(90deg,transparent,#ece6d2,transparent);box-shadow:0 0 18px #ece6d2;animation:ultBone 2.4s ease-out var(--fx-delay) both}
+.ult-soul .ult-a{rotate:35deg}.ult-soul .ult-b{rotate:-35deg}
+.ult-soul .ult-frag{animation-name:ultSoulRise;font-size:26px;color:#dfe9ff;text-shadow:0 0 14px #9fc8ff}
+@keyframes ultBone{0%,20%{opacity:0;scale:0 1}32%{opacity:1;scale:1 1}80%{opacity:1}100%{opacity:0}}
+@keyframes ultSoulRise{0%{opacity:0;transform:translate(calc((var(--i) - 3.5) * 24px),30px) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(calc((var(--i) - 3.5) * 30px),-110px) scale(1.1)}}
+/* 대박 일격: 슬롯 세 칸과 동전 폭포 */
+.ult-jackpot{--fx:#ffd76a}.ult-jackpot .scene-fx-dark{background:#120c02}
+.ult-jackpot .ult-a{left:62%;top:40%;width:210px;height:64px;margin:-32px 0 0 -105px;border:3px solid #ffd76a;border-radius:10px;background:#1a1206;box-shadow:0 0 24px #ffd76a;animation:ultSlot 2.4s ease-out var(--fx-delay) both}
+.ult-jackpot .ult-a::before{content:'✦ ✦ ✦';position:absolute;inset:0;display:grid;place-items:center;font:700 34px/1 monospace;color:#ffe9a8;letter-spacing:14px;animation:ultSlotReel 2.4s steps(1) var(--fx-delay) both}
+.ult-jackpot .ult-b{display:none}
+.ult-jackpot .ult-frag{animation-name:ultCoinFall;font-size:22px;color:#ffe9a8}
+@keyframes ultSlot{0%{opacity:0;scale:.6}15%{opacity:1;scale:1}85%{opacity:1}100%{opacity:0}}
+@keyframes ultSlotReel{0%{content:'◉ ◌ ●'}15%{content:'● ◉ ◌'}30%{content:'◌ ● ◉'}45%{content:'✦ ◉ ●'}60%{content:'✦ ✦ ◌'}72%,100%{content:'✦ ✦ ✦'}}
+@keyframes ultCoinFall{0%{opacity:0;transform:translate(calc((var(--i) - 3.5) * 28px),-40px) rotate(0deg)}20%{opacity:1}100%{opacity:0;transform:translate(calc((var(--i) - 3.5) * 34px),90px) rotate(540deg)}}
+/* 정지된 시간: 푸르게 멈춘 화면, 도는 시계 테두리, 금 가는 선 */
+.ult-time{--fx:#a9c7ff}.ult-time .scene-fx-dark{background:#020816}
+.ult-time .ult-a{left:62%;top:48%;width:200px;height:200px;margin:-100px 0 0 -100px;border:3px dashed #a9c7ff;border-radius:50%;box-shadow:0 0 24px #a9c7ff;animation:ultClock 2.4s linear var(--fx-delay) both}
+.ult-time .ult-b{left:62%;top:48%;width:2px;height:260px;margin:-130px 0 0 -1px;background:linear-gradient(180deg,transparent,#fff,transparent);box-shadow:60px -40px 0 -0.5px #a9c7ff,-50px 30px 0 -0.5px #a9c7ff;rotate:25deg;animation:ultCrack 2.4s ease-out calc(var(--fx-delay) + .6s) both}
+.battle-scene:has(.ult-time) .ocean-art{animation:ultFreeze 2.4s ease-out both}
+@keyframes ultClock{0%{opacity:0;rotate:0deg;scale:.4}20%{opacity:1;scale:1}80%{opacity:1;rotate:300deg}100%{opacity:0;rotate:360deg;scale:1.3}}
+@keyframes ultCrack{0%,10%{opacity:0;scale:1 0}30%{opacity:1;scale:1 1}80%{opacity:1}100%{opacity:0}}
+@keyframes ultFreeze{0%{filter:none}15%,70%{filter:grayscale(.8) sepia(.3) hue-rotate(180deg) brightness(.8)}100%{filter:none}}
+@media(prefers-reduced-motion:reduce){.scene-fx-ult .ult-a,.scene-fx-ult .ult-b,.scene-fx-ult .ult-frag{display:none}.scene-fx-ult .scene-fx-dark,.scene-fx-ult .scene-fx-flash,.ult-title{animation-name:tideReduced;animation-duration:1.4s}.battle-scene:has(.ult-slash) .ocean-art,.battle-scene:has(.ult-time) .ocean-art{animation:none}}

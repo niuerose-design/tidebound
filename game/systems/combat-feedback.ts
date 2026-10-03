@@ -55,6 +55,8 @@ export type CombatFx = {
     chain?: number;
     /** v25 天 · 일곱 인 해방. 화면 전체 연출을 띄웁니다. */
     finale?: boolean;
+    /** v27.24 스킬 id(5차 궁극기 전용 장면 연출 선택용). */
+    skillId?: string;
     /** v26.3 도박 기술의 배율 굴림(주사위 연출). */
     gamble?: number;
     /** v26.4 굴린 주사위 눈. */
@@ -75,7 +77,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
         const missed = ev.hits.length > 0 && ev.hits.every(h => h.miss);
         const status = ev.statuses.find(x => !x.onSelf) || ev.statuses[0];
         const kind: CombatFxKind = missed ? 'miss' : status ? status.id === 'bleed' ? 'bleed' : status.id as CombatFxKind : ev.damageType;
-        return { id: log.id, actor, target, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), tier: ev.finale ? 5 : fxTierOf(ev.skillId), gamble: ev.gamble, dice: ev.dice, basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
+        return { id: log.id, actor, target, skillId: ev.skillId, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), tier: ev.finale ? 5 : fxTierOf(ev.skillId), gamble: ev.gamble, dice: ev.dice, basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
     }
     const text = log.text;
     const actor = text.startsWith(`${playerName} ·`) || text.startsWith(`${playerName}:`) ? 'player' : 'enemy';
@@ -99,7 +101,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
     const kind: CombatFxKind = missed ? 'miss' : effect && !['heal', 'drain'].includes(effect) ? effect as CombatFxKind : magical ? 'magic' : 'physical';
     const variant: CombatFxVariant = fxVariantOf(skill?.id, magical, skill?.effect);
     const statuses: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', poison: '중독', weaken: '약화', slow: '감속', haste: '가속' };
-    return { id: log.id, actor, target, title: label, kind, variant, tier: fxTierOf(skill?.id), basic: !skill, critical, healing, drained: 0, status: effect ? statuses[effect] || '' : '', hits, delay: 0, damageType: magical ? 'magic' : 'physical' };
+    return { skillId: skill?.id,  id: log.id, actor, target, title: label, kind, variant, tier: fxTierOf(skill?.id), basic: !skill, critical, healing, drained: 0, status: effect ? statuses[effect] || '' : '', hits, delay: 0, damageType: magical ? 'magic' : 'physical' };
 }
 
 /** 한 턴 안에서 타격 사이 간격(ms). 연출·HP 바·로그 줄이 모두 이 간격을 따릅니다. */

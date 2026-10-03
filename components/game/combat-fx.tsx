@@ -77,13 +77,30 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
 }
 
 const SEAL_GLYPHS = ['無', '虛', '斬', '血', '縛', '刹', '魂'];
+/** v27.24 5차 궁극기 전용 장면 연출. kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. */
+export const ULTIMATES: Record<string, { kind: string; title: string; glyphs: string[] }> = {
+    braveSlash: { kind: 'slash', title: '용사의 일격', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
+    oceanWrath: { kind: 'wave', title: '대해의 분노', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
+    genesis: { kind: 'light', title: '창세의 빛', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
+    doomMark: { kind: 'venom', title: '파멸의 낙인', glyphs: ['●', '◌', '●', '◌', '●', '◌', '●', '◌'] },
+    aegisJudgment: { kind: 'judgment', title: '신성한 심판', glyphs: ['⬡', '✦', '⬡', '✦', '⬡', '✦', '⬡', '✦'] },
+    redApocalypse: { kind: 'blood', title: '붉은 종말', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
+    worldTentacle: { kind: 'tentacle', title: '세계의 촉수', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
+    soulReap: { kind: 'soul', title: '영혼 수확 일격', glyphs: ['☠', '◌', '☠', '◌', '☠', '◌', '☠', '◌'] },
+    jackpotStrike: { kind: 'jackpot', title: '대박 일격', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },
+    frozenTime: { kind: 'time', title: '정지된 시간', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
+};
 /**
  * 낚시터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
  * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)으로 충분하므로 배경에는 띄우지 않습니다.
  */
 export function SceneFx({ effect }: { effect: CombatFx[] }) {
     const cues = effect.filter(fx => fx.actor === 'player' && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => fx.finale ? <div key={fx.id} className="scene-fx scene-fx-finale" style={fxStyle(fx.delay)}>
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = fx.skillId ? ULTIMATES[fx.skillId] : undefined; return ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+        <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
+        {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
+        <strong className="ult-title">{ult.title}</strong>
+    </div> : fx.finale ? <div key={fx.id} className="scene-fx scene-fx-finale" style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="scene-fx-slash"/><i className="scene-fx-ring"/><i className="scene-fx-ring late"/>
         {SEAL_GLYPHS.map((g, i) => <b key={g} className="scene-fx-seal" style={fxStyle(fx.delay + i * 70, { '--seal-angle': `${i * 360 / 7 - 90}deg` })}>{g}</b>)}
         <strong className="scene-fx-heaven">天</strong>
@@ -96,7 +113,7 @@ export function SceneFx({ effect }: { effect: CombatFx[] }) {
     </div> : <div key={fx.id} className={`scene-fx scene-fx-burst scene-fx-${fx.variant} scene-fx-${fx.kind} ${fx.critical ? 'critical' : ''} ${(fx.tier || 0) >= 4 ? `scene-fx-tier${Math.min(5, fx.tier!)}` : ''}`} style={fxStyle(fx.delay)}>
         {(fx.tier || 0) >= 4 && <i className="scene-fx-dark"/>}<i className="scene-fx-flash"/>{(fx.tier || 0) >= 5 && <><i className="scene-fx-slash"/><span className="scene-fx-title">{fx.title}</span></>}
         {glyphs[fx.variant].slice(0, 4).map((g, i) => <b key={i} className="scene-fx-spark" style={fxStyle(fx.delay + i * 40, { '--fx-x': `${Math.cos(i * Math.PI / 2 + .6) * 180}px`, '--fx-y': `${Math.sin(i * Math.PI / 2 + .6) * 90}px` })}>{g}</b>)}
-    </div>)}</div>;
+    </div>; })}</div>;
 }
 
 const DAMAGE_ICON = { physical: '⚔', magic: '✦', split: '⚔✦' } as const;
