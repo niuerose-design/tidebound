@@ -382,7 +382,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     else if (landed && chosen?.effect === 'bleed') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus;
         const name = chosen.dotName || '출혈';
-        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
+        // v27.3 틱 피해 = 위력 비례 + 대상 최대 체력 × dotMaxHpRatio(무리는 한 마리 기준). 방어·반격을 모두 무시하므로 탱커의 카운터입니다.
+        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)) + Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.dotMaxHpRatio));
         const current = b.effects.dot;
         if (chosen.dotStacks) {
             // 중독 중첩: 이미 걸린 중첩형 지속 피해에 한 중첩을 더하고, 한 중첩 피해는 더 강한 쪽을 씁니다.
