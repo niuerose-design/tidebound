@@ -1,6 +1,6 @@
 'use client';
 import { rebirthTitle } from '@/game/data/long-term';
-import { duelTier, recommendOpponents, duelSeasonPearls, RECOMMEND_RANGE } from '@/game/systems/duel';
+import { duelTier, recommendOpponents, duelSeasonPearls, RECOMMEND_RANGE, duelAllowance } from '@/game/systems/duel';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, RefreshCw, Swords, Fish, Users } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -71,6 +71,11 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <strong>{s.wins}승 <span>{s.losses}패</span>
     </strong>
     </div>
+    {(() => { const a = duelAllowance(s, now); return <div className="panel" title={`랭크 결투는 하루 ${a.perDay}회, 같은 상대와는 하루 ${a.perOpponent}회, ${Math.round(BALANCE.duelCooldownMs / 1000)}초에 한 번입니다(한국 시간 자정에 초기화). 연습 대결은 점수·전적이 바뀌지 않고 횟수 제한이 없습니다.`}>
+    <small>오늘 랭크 결투</small>
+    <strong>{a.left} <span>/ {a.perDay}회 남음</span></strong>
+    <small className="block">같은 상대 하루 {a.perOpponent}회 · {a.cooldown > 0 ? `${Math.ceil(a.cooldown / 1000)}초 뒤 가능` : '지금 가능'} · 연습은 무제한</small>
+    </div>; })()}
     </div>
     <Tabs defaultValue="ranking">
     <TabsList className="game-tabs">
@@ -111,7 +116,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
             <TableCell data-label="전투력">{format(r.power)}</TableCell>
             <TableCell data-label="점수">{r.rating} <span className={`duel-tier tier-${duelTier(r.rating).id}`}>{duelTier(r.rating).name}</span></TableCell>
             <TableCell className="ranking-actions">
-            <button className="secondary small" disabled={busy || r.self || now - s.lastDuel < BALANCE.duelCooldownMs} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>{r.self ? '내 캐릭터' : '대결'}</button>
+            {(() => { const a = duelAllowance(s, now, r.id); return <><button className="secondary small" disabled={busy || r.self || a.cooldown > 0 || a.left <= 0 || a.vs <= 0} title={r.self ? undefined : `이 상대와 오늘 ${a.vs}회 남음`} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>{r.self ? '내 캐릭터' : `대결 ${a.vs}/${a.perOpponent}`}</button><button className="secondary small" disabled={busy || r.self} title="점수·전적이 바뀌지 않는 연습 대결" onClick={() => send({ type: 'training', id: `user:${r.id}` }, '/api/duel')}>연습</button></>; })()}
             <button className="text-button" onClick={() => setDetail(r)}>상세보기</button>
             </TableCell>
             </TableRow>)}</TableBody>

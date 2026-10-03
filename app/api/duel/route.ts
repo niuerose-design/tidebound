@@ -3,8 +3,7 @@ import { monthSeason } from '@/game/data/goals';
 import { recordGoal } from '@/game/systems/progress';
 import { addLog } from '@/game/systems/state';
 import { snapshot } from '@/game/systems/stats';
-import { duel, bossSnapshot } from '@/game/systems/duel';
-import { BALANCE } from '@/game/data/balance';
+import { duel, bossSnapshot, rankedDuelBlock, recordRankedDuel } from '@/game/systems/duel';
 import type { Snapshot } from '@/game/types';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
@@ -37,9 +36,8 @@ export async function POST(req: Request) {
                 throw new ApiError('상대가 등록되지 않았습니다.');
             opponent = { ...JSON.parse(row.snapshot), rating: row.rating };
         }
-        const payload = await mutate(id, { type: 'sync' }, async (s) => { await syncDuelSeason(id, s, now); if (!training && now - s.lastDuel < BALANCE.duelCooldownMs)
-            throw new ApiError('랭크 결투는 1분에 한 번 가능합니다.'); const result = duel(snapshot(s), opponent, training); if (!training) {
-            s.lastDuel = now;
+        const payload = await mutate(id, { type: 'sync' }, async (s) => { await syncDuelSeason(id, s, now); if (!training) { const block = rankedDuelBlock(s, now, String(a.id)); if (block) throw new ApiError(block); } const result = duel(snapshot(s), opponent, training); if (!training) {
+            s.lastDuel = now; recordRankedDuel(s, now, String(a.id));
             s.rating = Math.max(0, s.rating + result.ratingChange);
             if (result.winner === 'player') { s.wins++; recordGoal(s, 'duel', undefined, 1, text => addLog(s, text, 'reward')); }
             if (result.winner === 'opponent')

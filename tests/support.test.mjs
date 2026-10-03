@@ -102,3 +102,22 @@ test('v26.1 server events multiply exp/gold/drop while active and are stamped in
     assert.ok(Math.abs(expMultiplier(s) / base[0] - 2) < 1e-9); assert.ok(Math.abs(goldMultiplier(s) / base[1] - 1.5) < 1e-9); assert.ok(Math.abs(dropRate(s) - base[2]) < 1e-9, 'drop ×1 stays');
     const t = newState(0); advance(t, Date.parse('2030-01-01T00:00:00Z')); assert.equal(t.event, null, 'no event far in the future → null stamped');
 });
+
+test('v26.2 attr scaling: 외길 actives add the allocated attribute × ratio, so a luck-only fisher deals damage', () => {
+    const sk = SKILLS.find(x => x.id === 'luckyBreak'); assert.equal(sk.scaling, 'attr'); assert.equal(sk.scalingAttribute, 'luk');
+    const none = hit(fighter('luckyBreak', { stats: { attack: 20, attrLuk: 0 } }), target()), lucky = hit(fighter('luckyBreak', { stats: { attack: 20, attrLuk: 100 } }), target());
+    assert.ok(Math.abs(lucky / none - (20 + 100 * sk.scalingRatio) / 20) < .05, `${lucky}/${none}`);
+    const s = newState(0); s.attributes.luk = 60; assert.equal(stats(s).attrLuk, 65, 'attrLuk mirrors base 5 + allocated');
+});
+
+test('v26.2 ranked duel allowance: 20 per day, 3 per opponent, 1-minute cooldown; practice is free', async () => {
+    const { duelAllowance, rankedDuelBlock, recordRankedDuel } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/duel');
+    const s = newState(0); const now = Date.parse('2026-10-03T12:00:00+09:00'); s.lastDuel = 0;
+    assert.equal(rankedDuelBlock(s, now, 'x'), ''); assert.equal(duelAllowance(s, now).left, 20);
+    for (let i = 0; i < 3; i++) recordRankedDuel(s, now, 'x');
+    assert.match(rankedDuelBlock(s, now, 'x'), /같은 상대/); assert.equal(rankedDuelBlock(s, now, 'y'), ''); assert.equal(duelAllowance(s, now).left, 17);
+    for (let i = 0; i < 17; i++) recordRankedDuel(s, now, 'y' + i);
+    assert.match(rankedDuelBlock(s, now, 'z'), /모두 썼습니다/);
+    const tomorrow = Date.parse('2026-10-04T00:01:00+09:00'); assert.equal(rankedDuelBlock(s, tomorrow, 'x'), '', 'resets at KST midnight');
+    s.lastDuel = now; assert.match(rankedDuelBlock(s, now + 1000, 'q'), /한 번/);
+});
