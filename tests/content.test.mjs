@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations,shopCost,reward} from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -264,10 +264,10 @@ test('v27.21 tide tier multiplies catch mastery on stages only',()=>{
 
 test('v27.22 mastery mimic: rare stage-only spawn with the strongest local body, pays lottery mastery to job and equipped skills',()=>{
  const s=newState(0);s.level=20;s.kills=100;s.stage='reef';s.running=true;s.skills=['hook'];
- spawn(s,()=>0);assert.equal(s.enemy.id,'masteryMimic','roll 0 spawns the mimic');assert.equal(s.enemy.name,'숙련의 미믹');
+ spawn(s,()=>0);assert.equal(s.enemy.id,'masteryMimic','roll 0 spawns the mimic');assert.equal(s.enemy.name,'숙련의 까미');assert.equal(mimicChanceOf(10,0),MIMIC_DATA.chance+10*MIMIC_DATA.chancePerTier,'tide raises the chance');assert.ok(Math.abs(mimicChanceOf(0,4)-MIMIC_DATA.chance*(1+4*MIMIC_DATA.stageStep))<1e-12,'later stages raise the chance');
  const top=FISH.filter(f=>['lionfish','eel','barracuda','stormBarracuda'].includes(f.id)).sort((a,b)=>b.level-a.level)[0];assert.ok(s.enemy.maxHp>top.hp*2,'borrows the strongest local body');
  const low=newState(0);low.level=5;low.kills=500;low.stage='reef';spawn(low,()=>0);assert.notEqual(low.enemy.id,'masteryMimic','not before Lv.10');
  const d=newState(0);d.level=20;d.kills=500;d.dungeon={id:'grotto',wave:0};spawn(d,()=>0);assert.notEqual(d.enemy.id,'masteryMimic','never in dungeons');
  s.enemy.hp=0;reward(s,()=>.99);
- assert.ok((s.jobMastery.fisher||0)>=100000,'big ticket: '+s.jobMastery.fisher);assert.ok((s.skillPractice.hook||0)>=100000);assert.equal(s.book.masteryMimic,1);assert.ok(s.logs.some(l=>l.text.includes('숙련의 미믹')));
+ assert.ok((s.jobMastery.fisher||0)>=100000,'big ticket: '+s.jobMastery.fisher);assert.ok((s.skillPractice.hook||0)>=100000);assert.equal(s.book.masteryMimic,1);assert.ok(s.logs.some(l=>l.text.includes('숙련의 까미')));
 });

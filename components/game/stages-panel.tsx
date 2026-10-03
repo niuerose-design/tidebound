@@ -2,6 +2,7 @@
 import { RegionProgress } from './book-research';
 import { ArrowUpRight, Lock, Waves } from 'lucide-react';
 import { STAGES } from '@/game/data/world';
+import { mimicStageMultiplier } from '@/game/data/mimic';
 import { Heading } from './shared';
 import type { PanelProps } from './panel-props';
 import { TideSelector } from './tide-selector';
@@ -24,7 +25,7 @@ export function Stages({ s, send, busy }: PanelProps) {
             <p>{st.description}</p>
             <div className="stage-footer">
             <span>Lv. {st.level}+{st.rebirth ? ` · 환생 ${st.rebirth}회` : ''}</span>
-            <span>{st.fish.length}종 서식</span>
+            <span>{st.fish.length}종 서식 · 까미 ×{mimicStageMultiplier(i).toFixed(2)}</span>
             </div>
             <RegionProgress s={s} id={st.id}/>
             </button>;
