@@ -128,9 +128,9 @@ export const V24_SKILLS: Skill[] = [
         levelEffects: [{ cost: 8, bonus: { attack: 15, magic: 15, expBonus: .05 } }, { cost: 7, bonus: { attack: 60, magic: 60, expBonus: .1 } }, { cost: 5, bonus: { attack: 150, magic: 150, expBonus: .2 } }, { cost: 2, bonus: { attack: 280, magic: 280, expBonus: .3 } }] },
     // 방어
     { ...A, ...physical, id: 'citadelCrash', name: '요새 붕괴', desc: '', level: 55, job: 'coralCitadel', chance: .26, cooldown: 4, multiplier: 1.8, cost: 5, effect: 'stun', scaling: 'defense', scalingRatio: 1.8, masteryMilestones: M4 },
-    { ...P, id: 'livingReef', name: '살아 있는 산호', desc: '반격·물리 방어·체력이 오릅니다.', level: 55, job: 'coralCitadel', cost: 3, bonus: { thorns: .4, defense: 50, hp: 200 }, masteryMilestones: M4 },
+    { ...P, id: 'livingReef', name: '살아 있는 산호', desc: '반격·물리 방어·체력이 오릅니다.', level: 55, job: 'coralCitadel', cost: 3, bonus: { thorns: .4, defense: 50, hp: 200 , swarmFind: 1}, masteryMilestones: M4 },
     { ...A, ...physical, id: 'bastionQuake', name: '성벽 진동', desc: '', level: 70, job: 'abyssBastion', chance: .26, cooldown: 5, multiplier: 2.2, cost: 6, effect: 'weaken', scaling: 'defense', scalingRatio: 3, masteryMilestones: M5 },
-    { ...P, id: 'eternalReef', name: '영원의 산호', desc: '반격과 두 방어가 크게 오릅니다.', level: 70, job: 'abyssBastion', cost: 3, bonus: { thorns: .45, defense: 90, resist: 50 }, masteryMilestones: M5 },
+    { ...P, id: 'eternalReef', name: '영원의 산호', desc: '반격과 두 방어가 크게 오릅니다.', level: 70, job: 'abyssBastion', cost: 3, bonus: { thorns: .45, defense: 90, resist: 50 , swarmFind: 1.2}, masteryMilestones: M5 },
     { ...P, id: 'reefOfEons', name: '억겁의 산호', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 체력·물리 방어가 크게 오릅니다.', level: 70, job: 'abyssBastion', cost: 8, bonus: { hp: 150, defense: 15 }, masteryMilestones: LATE,
         levelEffects: [{ cost: 8, bonus: { hp: 150, defense: 15 } }, { cost: 7, bonus: { hp: 600, defense: 60 } }, { cost: 5, bonus: { hp: 1500, defense: 140, resist: 60 } }, { cost: 2, bonus: { hp: 3000, defense: 260, resist: 120, thorns: .2 } }] },
     { ...A, ...magic, id: 'tidalBlessing', name: '조수의 축복', desc: '', level: 55, job: 'tideSaint', chance: .55, cooldown: 4, multiplier: 2, cost: 5, manaCost: 24, effect: 'heal', healRatio: .25, masteryMilestones: M4 },

@@ -83,11 +83,11 @@ export const MONOSTAT_SKILLS: Skill[] = [
     { ...P, id: 'pureCore', name: '순수한 핵', desc: '지능 10마다 마법 공격·방어 관통·최대 체력이 오릅니다.', level: 40, job: 'pureMagus', cost: 2, bonus: { magic: 8, hp: 80 }, perCount: [{ source: 'int', per: 10, bonus: { magic: 5, penetration: .002, hp: 12 }, cap: 40 }] },
     // 체질
     { ...A, ...physical, id: 'bodySlam', name: '몸통 박치기', desc: '', level: 10, job: 'bulkyFisher', chance: .5, cooldown: 3, multiplier: 1.1, cost: 2, ...attr('vit', 2.4) },
-    { ...P, id: 'thickBuild', name: '두꺼운 몸', desc: '체질 10마다 최대 체력이 오릅니다.', level: 10, job: 'bulkyFisher', cost: 1, bonus: { hp: 30 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 15 }, cap: 40 }] },
+    { ...P, id: 'thickBuild', name: '두꺼운 몸', desc: '체질 10마다 최대 체력이 오릅니다.', level: 10, job: 'bulkyFisher', cost: 1, bonus: { hp: 30 , swarmFind: 0.3}, perCount: [{ source: 'vit', per: 10, bonus: { hp: 15 }, cap: 40 }] },
     { ...A, ...physical, id: 'massiveCharge', name: '육중한 돌진', desc: '', level: 20, job: 'hulkingBrute', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, effect: 'stun', ...attr('vit', 2.8) },
-    { ...P, id: 'wallOfFlesh', name: '살의 벽', desc: '체질 10마다 최대 체력과 물리 방어가 오릅니다.', level: 20, job: 'hulkingBrute', cost: 2, bonus: { hp: 60, defense: 2 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 25, defense: 1 }, cap: 40 }] },
+    { ...P, id: 'wallOfFlesh', name: '살의 벽', desc: '체질 10마다 최대 체력과 물리 방어가 오릅니다.', level: 20, job: 'hulkingBrute', cost: 2, bonus: { hp: 60, defense: 2 , swarmFind: 0.5}, perCount: [{ source: 'vit', per: 10, bonus: { hp: 25, defense: 1 }, cap: 40 }] },
     { ...A, ...physical, id: 'landslide', name: '산사태', desc: '', level: 40, job: 'mountainBody', chance: .5, cooldown: 4, multiplier: 1.8, cost: 4, ...attr('vit', 3.2) },
-    { ...P, id: 'mountainHeart', name: '산의 심장', desc: '체질 10마다 최대 체력·물리 방어·턴당 회복이 오릅니다.', level: 40, job: 'mountainBody', cost: 2, bonus: { hp: 100, defense: 4 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 40, defense: 1.5, hpRegen: .2 }, cap: 40 }] },
+    { ...P, id: 'mountainHeart', name: '산의 심장', desc: '체질 10마다 최대 체력·물리 방어·턴당 회복이 오릅니다.', level: 40, job: 'mountainBody', cost: 2, bonus: { hp: 100, defense: 4 , swarmFind: 0.8}, perCount: [{ source: 'vit', per: 10, bonus: { hp: 40, defense: 1.5, hpRegen: .2 }, cap: 40 }] },
     // 정신
     { ...A, ...magic, id: 'mindWave', name: '정신 파동', desc: '', level: 10, job: 'stillAngler', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 6, ...attr('wis', 4.2) },
     { ...P, id: 'calmMind', name: '고요한 마음', desc: '정신 10마다 최대 마나·마법 방어·최대 체력이 오릅니다.', level: 10, job: 'stillAngler', cost: 1, bonus: { mana: 12, resist: 2, hp: 60 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 5, resist: 1, hp: 8 }, cap: 40 }] },

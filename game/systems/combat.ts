@@ -353,7 +353,9 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     let stood = endure(b, sb, notes, ev);
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
     if (landed && !statusOnly && sb.thorns > 0) {
-        const reflected = Math.min(a.hp, Math.max(1, Math.round(sb.defense * sb.thorns * 100 / (100 + sa.defense * 2))));
+        // v27.2 공격자 방어를 절반만 적용하고, 무리 규모에 따라 (1 + log2 N)배(최대 10배). 탱커가 무리 사냥에서 빛나는 장치입니다.
+        const crowd = a.swarm && a.swarm > 1 ? Math.min(SKILL_FORMULA.swarmThornsCap, 1 + Math.log2(a.swarm)) : 1;
+        const reflected = Math.min(a.hp, Math.max(1, Math.round(sb.defense * sb.thorns * crowd * 100 / (100 + sa.defense * 2 * (1 - SKILL_FORMULA.thornsPierce)))));
         a.hp = Math.max(0, a.hp - reflected);
         endure(a, sa, notes, ev, true);
         ev.reflected = reflected;
