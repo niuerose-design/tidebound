@@ -50,7 +50,7 @@ export function Classes({ s, send, busy }: PanelProps) {
     };
     const showCurrent = () => { setTreeId(current.tree); setLineageId(lineageOf(current)); setSelectedId(current.id); };
     return <>
-        <Heading eyebrow="VOCATION TREE" title="직업 항해도" description="계열 → 계보 카드 → 항로도 → 직업 상세. 세 번 눌러 원하는 직업에 닿습니다."/>
+        <Heading eyebrow="VOCATION TREE" title="직업 항해도"/>
         <section className="panel job-current-summary"><Compass size={26}/><div><small>현재 직업</small><h2>{current.name}</h2><p>숙련 {format(s.jobMastery[s.job] || 0)} / {format(jobMasteryTarget(current))} · 전직해 본 직업 {s.unlockedJobs.length} / {JOBS.length} · 숙달 {JOBS.filter(j => jobMastered(s, j)).length}</p></div><button className="secondary small" onClick={showCurrent}>현재 직업 보기</button></section>
         <div className="job-finder" role="group" aria-label="빠른 찾기">{(Object.keys(FINDER_LABEL) as Finder[]).map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{finderJobs(s, kind, doorJobs).length}</b></button>)}</div>
         <div className="job-search">

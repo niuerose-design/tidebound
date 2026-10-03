@@ -610,3 +610,18 @@
   .app-body { padding-bottom:calc(70px + env(safe-area-inset-bottom)) }
   .app-footer { margin-bottom:8px }
 }
+
+/* v25.18 모바일 안정화: 가로 넘침 차단, 전투 중 높이 변화 최소화, 스킬 화면 탭 줄 정리 */
+@media (max-width:767px) {
+  html, body { overflow-x:hidden; overscroll-behavior-y:none }
+  .mobile-tab-bar { z-index:60 }
+  .battle-console .opponent-card.enemy-opponent { min-height:150px }
+  .battle-console .log-panel:not(.folded) .log-list { min-height:198px }
+  .skill-view-toolbar { gap:10px }
+  .skill-view-toolbar [data-slot=tabs] { width:100%; min-width:0 }
+  .skill-view-toolbar [data-slot=tabs-list] { display:flex; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; width:100%; height:auto; padding-bottom:2px }
+  .skill-view-toolbar [data-slot=tabs-list]::-webkit-scrollbar { display:none }
+  .skill-view-toolbar [data-slot=tabs-trigger] { flex:none; white-space:nowrap }
+  .skill-view-toggle { width:100%; justify-content:space-between }
+  .skill-view-toggle button { flex:1; padding:8px 4px }
+}

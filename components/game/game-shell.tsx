@@ -46,7 +46,7 @@ export default function GameShell() {
     }, [error, s]);
     const props = s ? { s, send, busy } : null, onLogout = game.logout;
     return <SidebarProvider style={{ '--sidebar-width': '222px' } as React.CSSProperties}>
-    <Toaster theme="dark" position="bottom-right"/>
+    <Toaster theme="dark" position="top-center" mobileOffset={{ top: 64 }}/>
     <Navigation view={view} setView={setView} s={s} onLogout={onLogout}/>
     <div className="app-body">
     {view !== 'battle' && <header className="topbar">
