@@ -11,7 +11,8 @@ const attr = (a: Attribute, ratio: number) => ({ scaling: 'attr' as const, scali
 type NewJob = Omit<Job, 'masteryTarget' | 'masteryBoost'> & Partial<Pick<Job, 'masteryTarget' | 'masteryBoost'>>;
 const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0 };
 const T1 = { tier: 1, level: 10, mastery: 0, masteryTarget: 450, masteryBoost: .08 };
-const T2 = { tier: 2, level: 25, mastery: 75, masteryTarget: 2800, masteryBoost: .18 };
+// v27.1 외길 2차는 20레벨부터(일반 2차는 25). 한 능력치만 올린 낚시꾼이 18~24레벨 낚시터에서 1차로 버티던 구간을 없앱니다.
+const T2 = { tier: 2, level: 20, mastery: 75, masteryTarget: 2800, masteryBoost: .18 };
 const T3 = { tier: 3, level: 40, mastery: 150, masteryTarget: 10000, masteryBoost: .3 };
 const T5 = { tier: 5, level: 70, rebirth: 2, mastery: 600, masteryTarget: 30000, masteryBoost: .35 };
 const R1 = 20, R2 = 60, R3 = 110, R5 = 200;
@@ -62,49 +63,49 @@ export const MONOSTAT_SKILLS: Skill[] = [
     // 근력
     { ...A, ...physical, id: 'logSwing', name: '통나무 휘두르기', desc: '', level: 10, job: 'brawnFisher', chance: .5, cooldown: 3, multiplier: 1.3, cost: 2, ...attr('str', .6) },
     { ...P, id: 'roughHands', name: '우악스러운 손', desc: '근력 10마다 물리 공격이 오릅니다.', level: 10, job: 'brawnFisher', cost: 1, bonus: { attack: 4 }, perCount: [{ source: 'str', per: 10, bonus: { attack: 2 }, cap: 40 }] },
-    { ...A, ...physical, id: 'boulderToss', name: '바위 던지기', desc: '', level: 25, job: 'mightyStrongman', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, effect: 'stun', ...attr('str', 1.6) },
-    { ...P, id: 'strongmanGrip', name: '장사의 악력', desc: '근력 10마다 물리 공격과 최대 체력이 오릅니다.', level: 25, job: 'mightyStrongman', cost: 2, bonus: { attack: 6, hp: 60 }, perCount: [{ source: 'str', per: 10, bonus: { attack: 3, hp: 12 }, cap: 40 }] },
+    { ...A, ...physical, id: 'boulderToss', name: '바위 던지기', desc: '', level: 20, job: 'mightyStrongman', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, effect: 'stun', ...attr('str', 1.9) },
+    { ...P, id: 'strongmanGrip', name: '장사의 악력', desc: '근력 10마다 물리 공격과 최대 체력이 오릅니다.', level: 20, job: 'mightyStrongman', cost: 2, bonus: { attack: 6, hp: 60 }, perCount: [{ source: 'str', per: 10, bonus: { attack: 3, hp: 16 }, cap: 40 }] },
     { ...A, ...physical, id: 'mountainCleave', name: '산 가르기', desc: '', level: 40, job: 'colossus', chance: .5, cooldown: 4, multiplier: 2.5, cost: 4, penetrationBonus: .1, ...attr('str', 1) },
     { ...P, id: 'giantsArm', name: '거인의 팔', desc: '근력 10마다 물리 공격·방어 관통·최대 체력이 오릅니다.', level: 40, job: 'colossus', cost: 2, bonus: { attack: 8, hp: 80 }, perCount: [{ source: 'str', per: 10, bonus: { attack: 5, penetration: .002, hp: 15 }, cap: 40 }] },
     // 기민
     { ...A, ...physical, id: 'rapidJab', name: '연속 찌르기', desc: '', level: 10, job: 'nimbleAngler', chance: .5, cooldown: 3, multiplier: .9, cost: 2, extraAttacks: 1, extraAttackMultiplier: .55, ...attr('dex', 1.2) },
     { ...P, id: 'quickHands', name: '잰손', desc: '기민 10마다 속도·명중·물리 공격이 오릅니다.', level: 10, job: 'nimbleAngler', cost: 1, bonus: { speed: 2, accuracy: .01 }, perCount: [{ source: 'dex', per: 10, bonus: { speed: .6, accuracy: .002, attack: 1 }, cap: 40 }] },
-    { ...A, ...physical, id: 'galeTriple', name: '질풍 삼연격', desc: '', level: 25, job: 'galeDancer', chance: .5, cooldown: 3, multiplier: 1, cost: 3, extraAttacks: 1, extraAttackMultiplier: .6, ...attr('dex', 1.4) },
-    { ...P, id: 'windStep', name: '바람 걸음', desc: '기민 10마다 속도·회피·물리 공격이 오릅니다.', level: 25, job: 'galeDancer', cost: 2, bonus: { speed: 3, evasion: .02 }, perCount: [{ source: 'dex', per: 10, bonus: { speed: 1, evasion: .003, attack: 2 }, cap: 40 }] },
+    { ...A, ...physical, id: 'galeTriple', name: '질풍 삼연격', desc: '', level: 20, job: 'galeDancer', chance: .5, cooldown: 3, multiplier: 1, cost: 3, extraAttacks: 1, extraAttackMultiplier: .6, ...attr('dex', 1.4) },
+    { ...P, id: 'windStep', name: '바람 걸음', desc: '기민 10마다 속도·회피·물리 공격이 오릅니다.', level: 20, job: 'galeDancer', cost: 2, bonus: { speed: 3, evasion: .02 }, perCount: [{ source: 'dex', per: 10, bonus: { speed: 1, evasion: .003, attack: 2 }, cap: 40 }] },
     { ...A, ...physical, id: 'afterimageFlurry', name: '잔상 난무', desc: '', level: 40, job: 'shadowRunner', chance: .5, cooldown: 4, multiplier: 1.1, cost: 4, extraAttacks: 2, extraAttackMultiplier: .55, ...attr('dex', 1.6) },
     { ...P, id: 'shadowPace', name: '그림자 보법', desc: '기민 10마다 속도·회피·물리 공격·치명타가 오릅니다.', level: 40, job: 'shadowRunner', cost: 2, bonus: { speed: 4, evasion: .03 }, perCount: [{ source: 'dex', per: 10, bonus: { speed: 1.2, evasion: .004, attack: 3, crit: .002 }, cap: 40 }] },
     // 지능
     { ...A, ...magic, id: 'pureBolt', name: '순수 마력탄', desc: '', level: 10, job: 'manaDevotee', chance: .5, cooldown: 3, multiplier: 1.4, cost: 2, manaCost: 6, ...attr('int', .8) },
-    { ...P, id: 'manaFocus', name: '마력 집중', desc: '지능 10마다 마법 공격이 오릅니다.', level: 10, job: 'manaDevotee', cost: 1, bonus: { magic: 4, hp: 30 }, perCount: [{ source: 'int', per: 10, bonus: { magic: 2 }, cap: 40 }] },
-    { ...A, ...magic, id: 'manaRupture', name: '마력 파열', desc: '', level: 25, job: 'arcaneSeeker', chance: .5, cooldown: 4, multiplier: 1.9, cost: 3, manaCost: 10, effect: 'weaken', ...attr('int', 1.5) },
-    { ...P, id: 'arcaneVein', name: '마력 혈맥', desc: '지능 10마다 마법 공격과 최대 마나가 오릅니다.', level: 25, job: 'arcaneSeeker', cost: 2, bonus: { magic: 6, hp: 60 }, perCount: [{ source: 'int', per: 10, bonus: { magic: 3, mana: 3 }, cap: 40 }] },
+    { ...P, id: 'manaFocus', name: '마력 집중', desc: '지능 10마다 마법 공격과 최대 체력이 오릅니다.', level: 10, job: 'manaDevotee', cost: 1, bonus: { magic: 4, hp: 30 }, perCount: [{ source: 'int', per: 10, bonus: { magic: 2, hp: 6 }, cap: 40 }] },
+    { ...A, ...magic, id: 'manaRupture', name: '마력 파열', desc: '', level: 20, job: 'arcaneSeeker', chance: .5, cooldown: 4, multiplier: 1.9, cost: 3, manaCost: 10, effect: 'weaken', ...attr('int', 1.8) },
+    { ...P, id: 'arcaneVein', name: '마력 혈맥', desc: '지능 10마다 마법 공격·최대 마나·최대 체력이 오릅니다.', level: 20, job: 'arcaneSeeker', cost: 2, bonus: { magic: 6, hp: 60 }, perCount: [{ source: 'int', per: 10, bonus: { magic: 3, mana: 3, hp: 10 }, cap: 40 }] },
     { ...A, ...magic, id: 'manaDetonation', name: '마력 폭발', desc: '', level: 40, job: 'pureMagus', chance: .5, cooldown: 4, multiplier: 2.6, cost: 4, manaCost: 14, penetrationBonus: .1, ...attr('int', 1.4) },
     { ...P, id: 'pureCore', name: '순수한 핵', desc: '지능 10마다 마법 공격·방어 관통·최대 체력이 오릅니다.', level: 40, job: 'pureMagus', cost: 2, bonus: { magic: 8, hp: 80 }, perCount: [{ source: 'int', per: 10, bonus: { magic: 5, penetration: .002, hp: 12 }, cap: 40 }] },
     // 체질
     { ...A, ...physical, id: 'bodySlam', name: '몸통 박치기', desc: '', level: 10, job: 'bulkyFisher', chance: .5, cooldown: 3, multiplier: 1.1, cost: 2, ...attr('vit', 2.4) },
     { ...P, id: 'thickBuild', name: '두꺼운 몸', desc: '체질 10마다 최대 체력이 오릅니다.', level: 10, job: 'bulkyFisher', cost: 1, bonus: { hp: 30 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 15 }, cap: 40 }] },
-    { ...A, ...physical, id: 'massiveCharge', name: '육중한 돌진', desc: '', level: 25, job: 'hulkingBrute', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, effect: 'stun', ...attr('vit', 2.8) },
-    { ...P, id: 'wallOfFlesh', name: '살의 벽', desc: '체질 10마다 최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'hulkingBrute', cost: 2, bonus: { hp: 60, defense: 2 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 25, defense: 1 }, cap: 40 }] },
+    { ...A, ...physical, id: 'massiveCharge', name: '육중한 돌진', desc: '', level: 20, job: 'hulkingBrute', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, effect: 'stun', ...attr('vit', 2.8) },
+    { ...P, id: 'wallOfFlesh', name: '살의 벽', desc: '체질 10마다 최대 체력과 물리 방어가 오릅니다.', level: 20, job: 'hulkingBrute', cost: 2, bonus: { hp: 60, defense: 2 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 25, defense: 1 }, cap: 40 }] },
     { ...A, ...physical, id: 'landslide', name: '산사태', desc: '', level: 40, job: 'mountainBody', chance: .5, cooldown: 4, multiplier: 1.8, cost: 4, ...attr('vit', 3.2) },
     { ...P, id: 'mountainHeart', name: '산의 심장', desc: '체질 10마다 최대 체력·물리 방어·턴당 회복이 오릅니다.', level: 40, job: 'mountainBody', cost: 2, bonus: { hp: 100, defense: 4 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 40, defense: 1.5, hpRegen: .2 }, cap: 40 }] },
     // 정신
     { ...A, ...magic, id: 'mindWave', name: '정신 파동', desc: '', level: 10, job: 'stillAngler', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 6, ...attr('wis', 4.2) },
-    { ...P, id: 'calmMind', name: '고요한 마음', desc: '정신 10마다 최대 마나와 마법 방어가 오릅니다.', level: 10, job: 'stillAngler', cost: 1, bonus: { mana: 12, resist: 2, hp: 60 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 5, resist: 1 }, cap: 40 }] },
-    { ...A, ...magic, id: 'manaTide', name: '마나 해일', desc: '', level: 25, job: 'meditantAdept', chance: .5, cooldown: 4, multiplier: 1.4, cost: 3, manaCost: 10, effect: 'silence', ...attr('wis', 5) },
-    { ...P, id: 'deepMeditation', name: '깊은 명상', desc: '정신 10마다 최대 마나·마법 방어·마나 회복이 오릅니다.', level: 25, job: 'meditantAdept', cost: 2, bonus: { mana: 16, resist: 4, hp: 100 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 7, resist: 2, manaRegen: .2 }, cap: 40 }] },
+    { ...P, id: 'calmMind', name: '고요한 마음', desc: '정신 10마다 최대 마나·마법 방어·최대 체력이 오릅니다.', level: 10, job: 'stillAngler', cost: 1, bonus: { mana: 12, resist: 2, hp: 60 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 5, resist: 1, hp: 8 }, cap: 40 }] },
+    { ...A, ...magic, id: 'manaTide', name: '마나 해일', desc: '', level: 20, job: 'meditantAdept', chance: .5, cooldown: 4, multiplier: 1.4, cost: 3, manaCost: 10, effect: 'silence', ...attr('wis', 5.8) },
+    { ...P, id: 'deepMeditation', name: '깊은 명상', desc: '정신 10마다 최대 마나·마법 방어·마나 회복·최대 체력이 오릅니다.', level: 20, job: 'meditantAdept', cost: 2, bonus: { mana: 16, resist: 4, hp: 100 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 7, resist: 2, manaRegen: .2, hp: 12 }, cap: 40 }] },
     { ...A, ...magic, id: 'voidTorrent', name: '무념 폭류', desc: '', level: 40, job: 'voidMind', chance: .5, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 14, ...attr('wis', 4.5) },
     { ...P, id: 'emptyMind', name: '무념', desc: '정신 10마다 최대 마나·마법 방어·마나 회복이 크게 오릅니다.', level: 40, job: 'voidMind', cost: 2, bonus: { mana: 24, resist: 6, hp: 160 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 10, resist: 3, manaRegen: .3 }, cap: 40 }] },
     // 행운
     { ...A, ...physical, id: 'luckyBreak', name: '운빨 기도', desc: '', level: 10, job: 'luckyAngler', chance: .5, cooldown: 3, multiplier: 1.1, cost: 2, ...attr('luk', 3.8), dice: { attribute: 'luk', per: 40, max: 3, low: .1, high: 3.33 } },
     { ...P, id: 'luckyStreak', name: '연승 기운', desc: '행운 10마다 치명타가 오릅니다.', level: 10, job: 'luckyAngler', cost: 1, bonus: { crit: .01, hp: 60 }, perCount: [{ source: 'luk', per: 10, bonus: { crit: .004 }, cap: 40 }] },
-    { ...A, ...physical, id: 'heavenlyStrike', name: '천운의 일격', desc: '', level: 25, job: 'fortunate', chance: .5, cooldown: 4, multiplier: 1.5, cost: 3, ...attr('luk', 3.5), dice: { attribute: 'luk', per: 35, max: 5, low: .05, high: 4.5 } },
-    { ...P, id: 'blessedHand', name: '축복받은 손', desc: '행운 10마다 치명타와 치명 피해가 오릅니다.', level: 25, job: 'fortunate', cost: 2, bonus: { crit: .01, hp: 120 }, perCount: [{ source: 'luk', per: 10, bonus: { crit: .004, critDamage: .01 }, cap: 40 }] },
+    { ...A, ...physical, id: 'heavenlyStrike', name: '천운의 일격', desc: '', level: 20, job: 'fortunate', chance: .5, cooldown: 4, multiplier: 1.5, cost: 3, ...attr('luk', 4), dice: { attribute: 'luk', per: 35, max: 5, low: .05, high: 4.5 } },
+    { ...P, id: 'blessedHand', name: '축복받은 손', desc: '행운 10마다 치명타와 치명 피해가 오릅니다.', level: 20, job: 'fortunate', cost: 2, bonus: { crit: .01, hp: 120 }, perCount: [{ source: 'luk', per: 10, bonus: { crit: .004, critDamage: .01 }, cap: 40 }] },
     { ...A, ...physical, id: 'fateReversal', name: '운명 역전', desc: '', level: 40, job: 'fortuneChild', chance: .5, cooldown: 4, multiplier: 2, cost: 4, ...attr('luk', 3), dice: { attribute: 'luk', per: 30, max: 7, low: .02, high: 6 } },
     { ...A, ...physical, id: 'heavenlyDice', name: '천운의 주사위', desc: '', level: 70, job: 'fortuneAvatar', chance: .5, cooldown: 4, multiplier: 2.6, cost: 6, ...attr('luk', 3), dice: { attribute: 'luk', per: 25, max: 10, low: .01, high: 8 }, masteryMilestones: [4000, 18000, 60000, 150000] },
     { ...P, id: 'avatarsLuck', name: '천운', desc: '행운 10마다 치명타·치명 피해·최대 체력이 오릅니다.', level: 70, job: 'fortuneAvatar', cost: 3, bonus: { crit: .03, hp: 200 }, perCount: [{ source: 'luk', per: 10, bonus: { crit: .006, critDamage: .02, hp: 10 }, cap: 40 }], masteryMilestones: [4000, 18000, 60000, 150000] },
     // v26.6 손가락 자르기: 주사위의 최저 배율을 올리고 최고 배율을 낮추는 선택형 패시브. 장착한 단계를 합산(최대 3단계)합니다.
     { ...P, id: 'fingerCutI', name: '손가락 자르기 I', desc: '주사위의 최저 배율을 올리고 최고 배율을 낮춥니다(1단계). 다른 단계와 합산, 최대 3단계.', level: 10, job: 'luckyAngler', cost: 1, bonus: { diceTrim: 1 } },
-    { ...P, id: 'fingerCutII', name: '손가락 자르기 II', desc: '주사위의 최저 배율을 더 올리고 최고 배율을 더 낮춥니다(2단계). 다른 단계와 합산, 최대 3단계.', level: 25, job: 'fortunate', cost: 1, bonus: { diceTrim: 2 } },
+    { ...P, id: 'fingerCutII', name: '손가락 자르기 II', desc: '주사위의 최저 배율을 더 올리고 최고 배율을 더 낮춥니다(2단계). 다른 단계와 합산, 최대 3단계.', level: 20, job: 'fortunate', cost: 1, bonus: { diceTrim: 2 } },
     { ...P, id: 'fingerCutIII', name: '손가락 자르기 III', desc: '주사위의 양 끝을 크게 좁혀 거의 일정한 배율로 때립니다(3단계).', level: 40, job: 'fortuneChild', cost: 1, bonus: { diceTrim: 3 } },
     { ...P, id: 'fatesFavor', name: '운명의 편애', desc: '행운 10마다 치명타와 치명 피해가 크게 오릅니다.', level: 40, job: 'fortuneChild', cost: 2, bonus: { crit: .02, hp: 160 }, perCount: [{ source: 'luk', per: 10, bonus: { crit: .005, critDamage: .015 }, cap: 40 }] },
 ];
