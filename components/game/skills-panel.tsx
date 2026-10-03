@@ -2,6 +2,7 @@
 
 import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
+import { PROGRESSION } from '@/game/data/progression';
 import { thresholdRank, refinementBonusLabel } from '@/game/data/long-term';
 import { useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, GripVertical, Info, Pin, Search } from 'lucide-react';
@@ -9,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
-import { lineage, skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason } from '@/game/systems/progression';
+import { lineage, skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason, limitBreakOf, limitBreakNext } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon } from './shared';
 import { masteryConditionText } from '@/game/systems/mastery';
 import { recommendLoadout } from '@/game/systems/loadout';
@@ -41,6 +42,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: Panel
     const passiveEffects = effects.filter(line => !bonusLines.has(line));
     const growth = skillGrowthStages(sk);
     const refinement = skillRefinementTargets(sk), refined = thresholdRank(practice, refinement);
+    const lb = limitBreakOf(s, sk.id), lbNext = limitBreakNext(s, sk.id);
     const equipAllowed = validLoadout(s, equipped ? s.skills.filter(id => id !== sk.id) : [...s.skills, sk.id]);
     // 장착 버튼에 '왜 안 되는지'를 바로 적습니다: 사용 조건(계승·레벨·숙련) 또는 AP 부족량.
     const apShort = Math.max(0, cost - (apCapacity(s) - apUsed(s)));
@@ -57,7 +59,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: Panel
         <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · 캐릭터 Lv.{sk.level}{sk.rebirth ? ` · 환생 ${sk.rebirth}회` : ''}</small></div>{onPin && <PinButton pinned={pinned} onPin={onPin} name={sk.name}/>}</div>
         {!detailed && <span className={`skill-status-badge ${equipped && usable ? 'on' : !acquired || !usable ? 'off' : ''}`}>{equipped ? (usable ? '장착 중' : '장착 · 사용 불가') : !acquired ? '미습득' : !usable ? '계승 필요' : '사용 가능'}</span>}
         {detailed && <div className="skill-state-row" aria-label="스킬 상태"><span className={acquired ? 'on' : 'off'}><small>습득</small>{acquired ? '습득' : '미습득'}</span><span className={!sk.job || isInherited ? 'on' : 'off'}><small>다른 직업</small>{!sk.job ? '공용 · 모든 직업' : isInherited ? '계승 완료 · 사용 가능' : '계승 필요'}</span><span className={equipped ? (usable ? 'on' : 'warn') : 'off'}><small>장착</small>{equipped ? (usable ? '장착 중' : '장착 · 지금은 사용 불가') : '미장착'}</span></div>}
-        {detailed && <div className="skill-level-line"><strong>{acquired ? `성장 Lv.${level}` : '미해금'} <small>/ 최대 {max}{acquired ? ` · SP Lv.${Math.min(max, Math.max(0, rank - 1))} · 숙련 Lv.${Math.min(max, mastery)} 중 높은 값` : ''}</small></strong>{!acquired && <span>{inheritanceText}</span>}<TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" className="info-trigger" aria-label={`${sk.name} 현재 효과와 다음 강화`}><Info size={16}/></button></TooltipTrigger><TooltipContent className="game-tooltip"><strong>성장 Lv.{level} / {max}</strong><p>{effects.join(' · ')}</p><p>다음 강화: {hint}</p></TooltipContent></Tooltip></TooltipProvider></div>}
+        {detailed && <div className="skill-level-line"><strong>{acquired ? `성장 Lv.${level}` : '미해금'} <small>/ 최대 {max}{lb > 0 ? ` · 한계돌파 ${lb}단계` : ''}{acquired ? ` · SP Lv.${Math.min(max, Math.max(0, rank - 1))} · 숙련 Lv.${Math.min(max, mastery - lb)} 중 높은 값` : ''}</small></strong>{!acquired && <span>{inheritanceText}</span>}<TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" className="info-trigger" aria-label={`${sk.name} 현재 효과와 다음 강화`}><Info size={16}/></button></TooltipTrigger><TooltipContent className="game-tooltip"><strong>성장 Lv.{level} / {max}</strong><p>{effects.join(' · ')}</p><p>다음 강화: {hint}</p></TooltipContent></Tooltip></TooltipProvider></div>}
         {!detailed && <><p className="skill-current-description">{sk.type === 'active' ? effects.slice(0, 2).join(' · ') : sk.id === 'boneLegacy' ? '처음에는 생존력이 낮아지지만, 성장하면 체력·방어와 장착 AP 여유를 얻습니다.' : passiveEffects.join(' · ') || '장착한 동안 아래 능력치가 적용됩니다.'}</p></>}{sk.id === 'rareSense' && <p className="skill-specific-note">물고기 출현률과 장비 등급 확률은 바뀌지 않습니다.</p>}
         {sk.unlockJobMastery && (detailed || !acquired) && <div className="skill-unlock-note">최초 해금: {jobById(sk.job)?.name} 숙련도 <b>{(s.jobMastery[sk.job!] || 0).toLocaleString()} / {sk.unlockJobMastery.toLocaleString()}</b><small>해금 전에는 SP로 구매·계승할 수 없습니다.</small></div>}
         {detailed && (sk.sourceEnemySkill && <div className="skill-origin">몬스터 원형: {ENEMY_SKILLS.find(x => x.id === sk.sourceEnemySkill)?.name}</div>)}
@@ -74,6 +76,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: Panel
         {acquired && refinement.length > 0 && <details className="skill-specialization"><summary>장기 연마 · {refined} / {refinement.length}단계 · 누적 {refinementBonusLabel(refined)}</summary><p>기본 숙련을 마친 뒤에도 실전 수련이 이어집니다. 단계마다 직접 피해 배율·양수 패시브 수치 {refinementBonusLabel()}씩(합산, 최대 {refinementBonusLabel(refinement.length)}). SP로 건너뛸 수 없고, AP·발동률·숙련 배수는 늘지 않습니다.</p><p>{refined < refinement.length ? `다음 ${refined+1}단계 ${refinement[refined].toLocaleString()} · 남은 숙련 ${(refinement[refined]-practice).toLocaleString()}` : '모든 연마 단계를 달성했습니다.'} · 최종 {refinement.at(-1)!.toLocaleString()}</p><Meter value={Math.min(practice,refinement[refined] || refinement.at(-1)!)} max={refinement[refined] || refinement.at(-1)!} label={refined===refinement.length?'연마 완료':'다음 연마까지'}/></details>}
         <div className="skill-actions skill-actions-v2">
             {sk.job && acquired && !isInherited && <ConfirmButton label="계승 · 1 SP" description={`${sk.name}을 다른 직업에서도 사용할 수 있게 합니다. 성장 레벨과 숙련도는 변하지 않습니다. 숙련도 ${milestones[0].toLocaleString()}을 쌓으면 SP 없이도 계승됩니다.`} disabled={busy || !canInheritSkill(s, sk.id) || s.sp < 1} onConfirm={() => send({ type: 'inheritSkill', id: sk.id })}/>}
+            {acquired && mastery - lb >= max && lbNext.stage <= PROGRESSION.limitBreak.max && <ConfirmButton label={`한계돌파 ${lbNext.stage}단계 · SP ${lbNext.sp}`} description={lbNext.ok ? `${sk.name} 성장 Lv.${level} → Lv.${level + 1}. 발동 +${Math.round((PROGRESSION.masteryChance + PROGRESSION.limitBreak.chance) * 1000) / 10}%p, 배율·패시브 한 단계 더${lbNext.stage >= PROGRESSION.limitBreak.max ? ', 장착 AP -1' : ''}. 환생해도 유지됩니다.` : `조건: ${lbNext.reason}`} disabled={busy || !lbNext.ok} onConfirm={() => send({ type: 'limitBreak', id: sk.id })}/>}
             {acquired && <ConfirmButton label={level >= max ? '최대 레벨' : '강화 · 1 SP'} description={`${sk.name} 성장 Lv.${level} → Lv.${level + 1}. ${hint} 숙련은 계속 쌓이며 SP와 효과가 중첩되지는 않습니다. 이 강화만으로 계승되지는 않습니다.`} disabled={busy || !canSpendSkill(s, sk.id) || s.sp < 1} onConfirm={() => send({ type: 'learn', id: sk.id })}/>}
             <button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} title={equipped && !equipAllowed ? 'AP를 지원하는 스킬입니다. 다른 기술을 먼저 해제하세요.' : undefined} onClick={() => send({ type: 'skill', id: sk.id })}>{equipLabel}</button>
         </div>
