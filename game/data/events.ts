@@ -9,6 +9,8 @@ export type ActiveEvent = { id: string; name: string; until: number; exp: number
 
 export const SERVER_EVENTS: ServerEvent[] = [
     { id: 'openbeta-exp', name: '오픈베타 기념 경험치 2배', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', exp: 2 },
+    // 배율 없는 공지형 이벤트: 玄 상시 개방 안내.
+    { id: 'glyph-open', name: '숨겨진 직업 하나가 개방되었습니다', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00' },
 ];
 
 export function activeEvent(now: number, events: ServerEvent[] = SERVER_EVENTS): ActiveEvent | null {
@@ -24,5 +26,5 @@ export function activeEvent(now: number, events: ServerEvent[] = SERVER_EVENTS):
 export function eventLabel(e: ActiveEvent) {
     const parts = [e.exp !== 1 ? `경험치 ×${e.exp}` : '', e.gold !== 1 ? `골드 ×${e.gold}` : '', e.drop !== 1 ? `장비 드롭 ×${e.drop}` : ''].filter(Boolean);
     const d = new Date(e.until + 9 * 3600_000);
-    return `${e.name} · ${parts.join(' · ')} · ${d.getUTCMonth() + 1}/${d.getUTCDate()}까지`;
+    return [e.name, ...parts, `${d.getUTCMonth() + 1}/${d.getUTCDate()}까지`].join(' · ');
 }
