@@ -137,3 +137,10 @@ test('v26.4 dice: luck lane rolls more dice with more luck and uses the highest 
     const seq2 = [0, 0, 0, .5, 0]; const t2 = target(); const text2 = strike(fighter('luckyBreak', { stats: { attrLuk: 100 } }), t2, () => seq2.length ? seq2.shift() : 0);
     assert.match(text2, /주사위 ⚀⚀⚃ ×1.14/, text2);
 });
+
+test('v26.5 focus hunting refuses a fish gated behind a higher sea difficulty instead of silently going random', async () => {
+    const { act } = await import('./harness.mjs');
+    const s = newState(0); s.level = 30; act(s, { type: 'stage', id: 'reef' }, 0);
+    act(s, { type: 'target', id: 'barracuda' }, 0); assert.equal(s.target, 'barracuda');
+    assert.throws(() => act(s, { type: 'target', id: 'stormBarracuda' }, 0), /난이도 10/);
+});

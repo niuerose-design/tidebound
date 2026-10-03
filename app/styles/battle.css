@@ -634,3 +634,17 @@
 @keyframes tideDice{0%{opacity:0;transform:translateY(10px)}15%{opacity:1;transform:translateY(0)}75%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
 @media(prefers-reduced-motion:reduce){.tide-fx-dice,.tide-fx-dice b{animation:none}}
 .tide-fx-dice{width:auto;min-width:60px;left:auto;transform:translateX(-50%)} .tide-fx-dice b{font-size:30px;letter-spacing:2px;white-space:nowrap} .tide-fx-dice em{font-style:normal;font-size:13px;font-weight:700;white-space:nowrap;margin-top:2px}
+
+/* v26.5 주사위 연출: 메인 화면 배경(낚시터 장면)에 띄웁니다. 고리 없이 눈·배율·대사만. */
+.scene-fx-dice{--fx:#f3dca0;color:var(--fx);animation:sceneDice 1.6s ease-out forwards}
+.scene-fx-dice .scene-fx-flash{inset:0;background:radial-gradient(ellipse at 60% 50%,color-mix(in srgb,var(--fx) 26%,transparent),transparent 60%);animation:sceneDiceFlash 1.2s ease-out forwards}
+.scene-fx-dice.low{--fx:#9fb7b0} .scene-fx-dice.high{--fx:#ffe08a}
+.scene-fx-dice-faces{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);display:flex;gap:6px;font:400 46px/1 'Noto Sans Symbols','Segoe UI Symbol',sans-serif;text-shadow:0 0 14px color-mix(in srgb,var(--fx) 70%,transparent)}
+.scene-fx-dice-faces span{display:inline-block;animation:sceneDiceTumble .6s ease-out both}
+.scene-fx-dice-mult{position:absolute;left:50%;top:60%;transform:translateX(-50%);font-size:18px;font-weight:700;letter-spacing:.04em;background:rgba(4,11,12,.7);border:1px solid color-mix(in srgb,var(--fx) 45%,transparent);border-radius:999px;padding:2px 12px}
+.scene-fx-dice-line{position:absolute;left:50%;top:76%;transform:translateX(-50%);font-size:20px;font-weight:800;white-space:nowrap;text-shadow:0 2px 10px rgba(0,0,0,.8);animation:sceneDiceLine .9s ease-out .35s both}
+@keyframes sceneDice{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes sceneDiceFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+@keyframes sceneDiceTumble{0%{transform:rotate(-220deg) scale(.3);opacity:0}65%{transform:rotate(18deg) scale(1.15);opacity:1}100%{transform:rotate(0) scale(1)}}
+@keyframes sceneDiceLine{0%{opacity:0;transform:translateX(-50%) translateY(8px) scale(.9)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.scene-fx-dice,.scene-fx-dice-faces span,.scene-fx-dice-line{animation:none}}

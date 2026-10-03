@@ -1,7 +1,7 @@
 /** 항해 진행: 낚시 시작·정지, 낚시터·던전 이동, 집중 사냥, 안내·목표 설정 */
 import { skillPracticeTargets } from '../progression';
-import { tideLimit } from '../meta';
-import { STAGES, DUNGEONS } from '../../data/world';
+import { tideLimit, encounterTier } from '../meta';
+import { STAGES, DUNGEONS, FISH } from '../../data/world';
 import { JOBS } from '../../data/classes';
 import { SKILLS, skillById } from '../../data/skills';
 import type { ActionHandlers } from './types';
@@ -67,6 +67,10 @@ export const voyageActions: ActionHandlers = {
         const stage = STAGES.find(x => x.id === s.stage)!;
         if (id !== 'all' && !stage.fish.includes(id))
             throw Error('현재 낚시터의 물고기를 선택하세요.');
+        // v26.5 해역 난이도 조건이 있는 어종은 그 난이도부터만 집중 사냥할 수 있습니다(조용히 무작위로 빠지지 않도록 막습니다).
+        const need = id === 'all' ? 0 : FISH.find(f => f.id === id)?.minTier || 0;
+        if (need > encounterTier(s))
+            throw Error(`${FISH.find(f => f.id === id)?.name}은(는) 해역 난이도 ${need}부터 나타납니다(지금 ${encounterTier(s)}).`);
         s.target = id === 'all' ? null : id;
         s.enemy = null;
     },
