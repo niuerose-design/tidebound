@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA } from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH} from './harness.mjs';
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
  assert.equal(visibleStatuses({},0,[stun],'player')[0].label,'기절함');assert.equal(visibleStatuses({},0,[stun],'enemy').length,0);
@@ -185,4 +185,10 @@ test('Pearl research reset: per-tab refund, first reset free then 90% floored, r
  for(const id of pool){if(apUsed({...a,skills:[...a.skills,id]})>cap)continue;a.skills.push(id);if(apUsed(a)>cap-4)break;}
  assert.ok(apUsed(a)>cap-4&&apUsed(a)<=cap);const p=a.pearls;
  assert.throws(()=>act(a,{type:'resetResearch',id:'utility'},0),/AP/);assert.equal(a.permanent.ap,4);assert.equal(a.pearls,p);assert.equal(a.researchResetUsed,undefined);
+});
+
+test('v27.11 art: every fish has a silhouette shape and the shape table has no stale ids',()=>{
+ assert.deepEqual(unmappedFish(),[],'fish without a silhouette shape');
+ for(const id of Object.keys(FISH_SHAPES)) assert.ok(FISH.some(f=>f.id===id),`stale shape id ${id}`);
+ assert.equal(fishShape('magmaKraken'),'squid');assert.equal(fishShape('nope'),'fish');
 });

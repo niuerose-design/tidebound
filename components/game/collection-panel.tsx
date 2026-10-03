@@ -1,6 +1,7 @@
 'use client';
 import { catchReward } from '@/game/systems/meta';
-import { BookOpen, ChevronDown, Fish, Swords } from 'lucide-react';
+import { BookOpen, ChevronDown, Swords } from 'lucide-react';
+import { FishArt } from './art';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { SKILLS } from '@/game/data/skills';
@@ -73,7 +74,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, researchDone = (s.bookClaims?.[id] || 0) >= BALANCE.bookMilestones.length, enemy = scaledEnemyStats(f, { tier: s.tide || 0 }), p = profile(id);
                 return <article className={`panel book-card ${!n ? 'undiscovered' : ''}`} key={id}>
                 <div className="book-icon">
-                <Fish size={34}/>
+                <FishArt id={id} size={56}/>
                 <span>{n >= bookComplete ? '완성 · 지역 연구에 반영' : `${n} / ${bookComplete} 포획`}</span>
                 </div>
                 <h3>{f.name} {f.rarity && f.rarity !== 'common' && <small className={`fish-rarity ${f.rarity}`}>{f.rarity === 'rare' ? '희귀' : f.rarity === 'epic' ? '영웅' : '전설'}</small>}{f.minTier ? <small className="fish-rarity tier">차수 {f.minTier}+</small> : null}<GoldenMark s={s} id={id}/></h3>
