@@ -8,10 +8,10 @@ export type ServerEvent = { id: string; name: string; from: string; until: strin
 export type ActiveEvent = { id: string; name: string; until: number; exp: number; gold: number; drop: number; mastery?: number };
 
 export const SERVER_EVENTS: ServerEvent[] = [
-    { id: 'openbeta-exp', name: '오픈베타 기념 경험치 2배', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', exp: 2 },
-    // 배율 없는 공지형 이벤트: 玄 상시 개방 안내.
+    { id: 'openbeta-exp', name: '오픈베타 기념', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', exp: 2 },
+    // 이름은 배너 앞머리에 한 번씩만 붙습니다(배율은 뒤에 따로 나오므로 이름에 적지 않습니다). 빈 이름은 생략. 배율 없는 공지형 이벤트도 됩니다.
     { id: 'glyph-open', name: '숨겨진 직업 하나가 개방되었습니다', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00' },
-    { id: 'mastery-x2', name: '숙련도 2배', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', mastery: 2 },
+    { id: 'mastery-x2', name: '', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', mastery: 2 },
 ];
 
 export function activeEvent(now: number, events: ServerEvent[] = SERVER_EVENTS): ActiveEvent | null {
@@ -19,7 +19,7 @@ export function activeEvent(now: number, events: ServerEvent[] = SERVER_EVENTS):
     if (!live.length) return null;
     // 겹치면 배율은 곱하고, 이름은 이어 붙이고, 종료는 가장 이른 것으로 둡니다.
     return {
-        id: live.map(e => e.id).join('+'), name: live.map(e => e.name).join(' · '), until: Math.min(...live.map(e => Date.parse(e.until))),
+        id: live.map(e => e.id).join('+'), name: [...new Set(live.map(e => e.name).filter(Boolean))].join(' · '), until: Math.min(...live.map(e => Date.parse(e.until))),
         exp: live.reduce((m, e) => m * (e.exp ?? 1), 1), gold: live.reduce((m, e) => m * (e.gold ?? 1), 1), drop: live.reduce((m, e) => m * (e.drop ?? 1), 1), mastery: live.reduce((m, e) => m * (e.mastery ?? 1), 1),
     };
 }

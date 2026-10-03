@@ -17,14 +17,14 @@ import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLa
 import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES } from '@/game/data/book-traits';
 import { VARIANTS } from '@/game/data/variants';
 import type { State, Stats } from '@/game/types';
-import { skillEffectLines } from '@/game/systems/skill-description';
+import { enemySkillBrief } from '@/game/systems/skill-description';
 
 const skillOf = (id: string) => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id);
 /** 몬스터 스킬 상세: 발동률·재사용 대기와 실제 효과(피해식·상태이상·추가타). */
 function EnemySkillList({ ids, enemy }: { ids: string[]; enemy: Stats }) {
     return <div className="enemy-skill-list"><h5>사용 스킬 <small>치명 {percent(enemy.crit || 0)} · 치명 피해 ×{BALANCE.critMultiplier}</small></h5><ul>{ids.map(id => {
         const sk = skillOf(id); if (!sk) return null;
-        return <li key={id}><strong>{sk.name}</strong><small>발동 {percent(sk.chance)} · 재사용 {sk.cooldown}턴{sk.statusOnly ? ' · 피해 없음' : ''}</small><span>{skillEffectLines(sk).join(' · ')}</span></li>;
+        return <li key={id}><strong>{sk.name}</strong><span>{enemySkillBrief(sk)}</span><small>발동 {percent(sk.chance)} · 재사용 {sk.cooldown}턴</small></li>;
     })}</ul></div>;
 }
 /** 도감 카드의 플레이어 보상 요약: 성향 연구 능력치와 생태 연구 보정. */
