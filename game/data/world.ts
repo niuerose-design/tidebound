@@ -69,6 +69,7 @@ const specialFish: Array<{
     boss?: boolean;
     minTier?: number;
 }> = [
+    { id: 'masteryMimic', name: '숙련의 까미', level: 10, lore: '보물상자인 척 입을 벌리고 있다. 잡으면 오래 쌓은 숙련이 한꺼번에 밀려온다.', rarity: 'legendary' as const, spawnWeight: 0, rewardMultiplier: 1 },
     { id: 'seahorse', name: '유리 해마', level: 15, lore: '투명한 몸 안에서 작은 별빛이 흔들린다.', rarity: 'rare' as const, spawnWeight: .18, rewardMultiplier: 1.35 },
     { id: 'needlefish', name: '은침 청새치', level: 16, lore: '해초 사이를 화살처럼 가르는 희귀한 사냥꾼.', rarity: 'rare' as const, spawnWeight: .12, rewardMultiplier: 1.45 },
     { id: 'tidejelly', name: '조류 해파리', level: 17, lore: '빛나는 촉수가 물살의 방향을 바꾼다.', rarity: 'epic' as const, spawnWeight: .07, rewardMultiplier: 1.75 },

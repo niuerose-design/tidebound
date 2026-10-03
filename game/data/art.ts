@@ -17,6 +17,7 @@ export const FISH_SHAPES: Record<string, FishShape> = {
     ventCrab: 'crab', glassSquid: 'squid', sulfurEel: 'eel', blindShark: 'shark',
     seahorse: 'seahorse', needlefish: 'fish', tidejelly: 'jelly', emberEel: 'eel', ashRay: 'ray', magmaPuffer: 'puffer', cinderKoi: 'koi', starKoi: 'koi', prismRay: 'ray', voidGuppy: 'fish',
     stormBarracuda: 'fish', eclipseMoonfish: 'puffer', novaManta: 'ray', cinderAngler: 'angler', ventLeviathan: 'giant', abyssManta: 'ray',
+    masteryMimic: 'spirit',
     grottoWarden: 'eel', kelpHydra: 'giant', anchorWraith: 'spirit', magmaKraken: 'squid', templeOracle: 'spirit', abyssSovereign: 'giant', ventColossus: 'giant', starfallSeraph: 'spirit',
 };
 export const fishShape = (id: string): FishShape => FISH_SHAPES[id] ?? 'fish';

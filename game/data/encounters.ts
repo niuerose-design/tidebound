@@ -45,7 +45,7 @@ export const PROFILES: Record<string, {
     stormEel: { name: '폭풍 곰치', hint: '기본 공격부터 마법(전류) 피해. 플레이어도 배울 수 있는 감속 전류를 사용합니다.', skills: ['electricBite', 'foeSilence'], magicBasic: true, power: .82, defense: .85, resist: 1.1, evasion: .04, speed: 1.05 },
 };
 const profileIds: Record<string, string> = {
-    minnow: 'swift', carp: 'armored', perch: 'tidal', mackerel: 'swift', ray: 'tidal', puffer: 'venom', lionfish: 'venom', eel: 'arcane', barracuda: 'swift', ghost: 'arcane', angler: 'arcane', shark: 'armored', viper: 'venom', squid: 'arcane', leviathan: 'armored', moonfish: 'arcane', dragon: 'swift', ancient: 'armored',
+    masteryMimic: 'armored', minnow: 'swift', carp: 'armored', perch: 'tidal', mackerel: 'swift', ray: 'tidal', puffer: 'venom', lionfish: 'venom', eel: 'arcane', barracuda: 'swift', ghost: 'arcane', angler: 'arcane', shark: 'armored', viper: 'venom', squid: 'arcane', leviathan: 'armored', moonfish: 'arcane', dragon: 'swift', ancient: 'armored',
     seahorse: 'silencer', needlefish: 'swift', tidejelly: 'tidal', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venomBoss', cinderKoi: 'frenzy', starKoi: 'arcane', prismRay: 'tidal', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored', ventColossus: 'boss', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'frenzy', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
 };
 export const profileId = (id: string) => profileIds[id] || 'armored';

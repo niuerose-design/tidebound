@@ -12,6 +12,7 @@ export const {FISH_SHAPES,fishShape,unmappedFish}=await load('game/data/art.js')
 export const {SKILL_FX}=await load('game/data/skill-fx.js');
 export const equipment=await load('game/systems/equipment.js');
 export const migrations=await load('game/systems/migrations.js');
+export const {mimicChance:mimicChanceOf,MIMIC:MIMIC_DATA}=await load('game/data/mimic.js');
 export const {fxVariantOf}=await load('game/systems/combat-feedback.js');
 export const {visibleStatuses}=await load('game/systems/combat-status.js');
 export const {duel,TRAINING,bossSnapshot,BOSS_OPPONENTS}=await load('game/systems/duel.js');

@@ -42,6 +42,7 @@
 | `cinderAngler` | 잿불 아귀 | 황혼의 열수구 | anglerfish using a vent ember as its lure, mouth open in darkness, rare |
 | `ventLeviathan` | 열수 레비아탄 | 황혼의 열수구 | huge leviathan nesting inside a hydrothermal vent field, vast shadow, epic |
 | `abyssManta` | 심연 만타 | 별비의 외해 | manta whose spread wings seem to still the current, deep legendary calm |
+| `masteryMimic` | 숙련의 까미 | 모든 낚시터 (특별) | mimic sea creature disguised as a barnacled treasure chest, lid open like a mouth with pearl teeth, faint golden glow of hoarded skill scrolls inside |
 | `grottoWarden` | 동굴의 수호 곰치 **BOSS** | 조수의 동굴 (보스) | guardian moray coiled around a glowing pearl in a sea cave, emitting silent electric current |
 | `kelpHydra` | 해초 히드라 **BOSS** | 해초 묘실 (보스) | hydra made of kelp with several regrowing heads, cut stumps sprouting new heads, catacomb kelp |
 | `anchorWraith` | 닻망령 **BOSS** | 닻의 묘지 (보스) | wraith wearing a sunken anchor as armor, chains trailing, slow cursed glow, anchor graveyard |
