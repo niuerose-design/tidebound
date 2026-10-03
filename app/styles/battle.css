@@ -612,3 +612,15 @@
 .book-claim-all strong{font-size:14px;color:#e8d39a}.book-claim-all span{font-size:12px;color:#9bb3b0}
 .book-claim-all>button{flex:none;padding:8px 16px}
 @media(max-width:700px){.book-claim-all{flex-wrap:wrap}.book-claim-all>button{width:100%}}
+/* v25.21 길드 관리(길드장) 접이식 */
+.guild-manage{padding:0;margin-bottom:18px}
+.guild-manage>summary{display:flex;align-items:center;gap:8px;padding:14px 18px;cursor:pointer;list-style:none;font-weight:600;color:#e8d39a}
+.guild-manage>summary::-webkit-details-marker{display:none}.guild-manage>summary small{font-weight:400;color:#8ea7a4;font-size:12px}
+.guild-manage-chevron{margin-left:auto;color:#7f9c98;transition:transform .15s}.guild-manage[open]>summary .guild-manage-chevron{transform:rotate(180deg)}
+.guild-manage-body{border-top:1px solid #9ab4b51a;padding:6px 18px 16px;display:grid;gap:14px}
+.guild-manage-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-top:12px;border-top:1px solid #9ab4b512}
+.guild-manage-row:first-child{border-top:0}.guild-manage-row h3{margin:0;font-size:14px;color:#dbe9e3}.guild-manage-row p{margin:3px 0 0;font-size:12px;color:#8ea7a4}
+.guild-manage-row.members{flex-direction:column;align-items:stretch}
+.guild-kick-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.guild-kick-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid #9ab4b522;border-radius:7px;background:#112329;font-size:13px}
+.guild-kick-list li span{display:grid;gap:2px}.guild-kick-list li small{font-size:11px;color:#7f9c98}.guild-kick-list li.empty{color:#8ea7a4;justify-content:center}
