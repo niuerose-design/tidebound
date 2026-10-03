@@ -41,6 +41,10 @@ export function Guide({ s }: { s?: State }) {
         <Heading eyebrow="CAPTAIN'S MANUAL" title="항해 도움말" description="주제 제목을 누르면 접고 펼칠 수 있습니다. 규칙은 효과 · 조건 · 제한 순서입니다." />
         <Topic open icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분에 직업·장비·스킬이 더해집니다.">
             <div className="help-stat-grid">{ATTRIBUTES.map(a => <article className="panel help-stat-card" key={a.id}><strong>{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
+            <Rule icon={<Swords size={19}/>} title="첫 전직 빌드"
+                effect="작살 사냥꾼: 근력 12 · 기민 10(물리 공격·치명타·관통). 조류 술사: 지능 12 · 정신 10(마법 공격·마나 순환). 산호 수호자: 체질 12 · 근력 10(방어·체력·기절 제어)."
+                condition="모두 레벨 10부터 해금합니다."
+                limit="이미 해금한 직업은 능력치를 재분배해도 다시 선택할 수 있습니다. 재분배는 무료이고 자동 낚시 중에는 할 수 없습니다."/>
             <p className="footnote">능력치 화면의 수치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
             <p className="footnote help-notation"><b>표기 규칙</b> +10%: 원래 값에 비율로 더하는 보너스(같은 종류끼리 합산) · +1%p: 확률에 그대로 더하는 값(20% → 21%) · ×1.2: 다른 보너스와 곱하는 배율 · 1.2만: 큰 수 줄임 표기(숫자에 마우스를 올리면 정확한 값).</p>
         </Topic>

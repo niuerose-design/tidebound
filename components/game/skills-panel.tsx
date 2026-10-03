@@ -4,12 +4,11 @@ import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { thresholdRank, refinementBonusLabel } from '@/game/data/long-term';
 import { useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, GripVertical, Info, Pin, Search, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowUp, GripVertical, Info, Pin, Search } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
-import { BALANCE } from '@/game/data/balance';
 import { lineage, skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon } from './shared';
 import { masteryConditionText } from '@/game/systems/mastery';
@@ -165,8 +164,7 @@ export function Skills({ s, send, busy }: PanelProps) {
         <Heading eyebrow="SKILL LABORATORY" title="직업을 거쳐, 나만의 편성으로" description="전직 스킬은 무료로 사용합니다. 장착 후 승리로 계승·강화하거나, 얻어 둔 스킬에 1 SP를 투자하세요.">
             <ConfirmButton label="SP 투자 환급" description="사용한 SP만 환급합니다. 해금한 스킬·실전 숙련은 남고, SP로만 얻은 계승과 강화는 취소됩니다. 현재 편성이 AP를 넘으면 일부 스킬이 해제됩니다." disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetSkills' })}/>
         </Heading>
-        <div className="skill-resource-grid"><div className="panel"><small>장착 AP</small><strong>{used}<span> / {cap}</span></strong><Meter value={Math.max(0, used)} max={cap}/><p>음수 AP 스킬은 편성 여유를 늘립니다.</p></div><div className="panel"><small>보유 SP</small><strong>{s.sp}</strong><p>보스 첫 정복 연구·종별 {BALANCE.bookMilestones.at(-1)!.toLocaleString()}회 연구 · 레벨업 지급 없음</p></div><div className="panel"><small>계승한 직업 스킬</small><strong>{SKILLS.filter(sk => sk.job && (s.learned[sk.id] || 0) > 0 && inherited(s, sk.id)).length}</strong><p>숙련 계승과 SP 계승을 함께 셉니다.</p></div></div>
-        <details className="mastery-stack-note panel"><summary><Sparkles size={16}/> 스킬 성장 규칙</summary><span>전직으로 <b>기본 Lv.0</b> 해금 → 장착 후 승리로 Lv.1부터 성장·무료 계승. SP 계승과 강화는 <b>각 1 SP</b>이며, 해금한 기술에만 사용합니다. 숙련 강화와 SP 강화는 같은 성장 단계를 열고 효과를 중복해서 더하지 않습니다.</span></details>
+        <div className="skill-resource-grid"><div className="panel"><small>장착 AP</small><strong>{used}<span> / {cap}</span></strong><Meter value={Math.max(0, used)} max={cap}/></div><div className="panel"><small>보유 SP</small><strong>{s.sp}</strong></div><div className="panel"><small>계승한 직업 스킬</small><strong>{SKILLS.filter(sk => sk.job && (s.learned[sk.id] || 0) > 0 && inherited(s, sk.id)).length}</strong></div></div>
         <section className="panel loadout"><div className="section-title"><h2>현재 편성</h2><span>개수 제한 없음 · 총 AP만 제한 · 액티브는 끌어서 순서 변경</span><ConfirmButton label="추천 편성" title="추천 편성을 적용할까요?" description={`현재 직업 전용 → 선행 계보 → 공용 순서로, 발동률과 위력이 높은 액티브와 수치가 큰 패시브를 AP ${cap} 안에서 채웁니다. 적용 후: ${recommended.map(id => skillById(id)?.name).join(', ') || '없음'}. 지금 편성은 저장 칸에 먼저 담아 두면 되돌릴 수 있습니다.`} confirmLabel="적용" disabled={busy || !recommended.length || sameLoadout} onConfirm={() => send({ type: 'setSkills', value: recommended.join(',') })}/></div><div className="loadout-columns">{(['active', 'passive'] as const).map(type => {
             const ids = s.skills.filter(id => skillById(id)?.type === type);
             return <div className={`loadout-column loadout-${type}`} key={type}><h3>{type === 'active' ? '액티브' : '패시브'}<small>{type === 'active' ? '위에서부터 먼저 판정 · 처음 성공한 하나만 사용' : '장착 효과 · 순서 무관'}</small></h3>
@@ -193,6 +191,5 @@ export function Skills({ s, send, busy }: PanelProps) {
         {!list.length && <div className="notice">조건에 맞는 기술이 없습니다. {q ? '다른 검색어를 써 보세요.' : '범위 탭을 ‘모든 스킬’로 바꾸거나 필터를 초기화해 보세요.'}</div>}
         {grouped ? [...new Map(list.map(sk => [groupOf(sk).key, groupOf(sk)])).values()].sort((a, b) => a.order - b.order).map(g => { const items = list.filter(sk => groupOf(sk).key === g.key); return <details className="skill-family skill-group" key={g.key} open={g.order <= 1}><summary><h2>{g.name}</h2><span>액티브 {items.filter(sk => sk.type === 'active').length} · 패시브 {items.filter(sk => sk.type === 'passive').length} · 장착 {items.filter(sk => s.skills.includes(sk.id)).length}</span></summary><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{items.map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'} pinned={pins.includes(sk.id)} onPin={() => togglePin(sk.id)}/>)}</div></details>; })
         : (['active', 'passive'] as const).map(type => <section className="skill-family" key={type}><div className="section-title"><h2>{type === 'active' ? '액티브 · 확률 발동' : '패시브 · 장착 효과'}</h2><span>{list.filter(sk => sk.type === type).length}종</span></div><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{list.filter(sk => sk.type === type).map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'} pinned={pins.includes(sk.id)} onPin={() => togglePin(sk.id)}/>)}</div>{!list.some(sk => sk.type === type) && <div className="notice">이 범위에 해당하는 스킬이 없습니다.</div>}</section>)}
-        <p className="footnote">액티브는 편성 순서대로 판정해 처음 성공한 하나만 사용합니다. 모두 실패하면 기본 공격합니다. 숙련은 장착하고 승리할 때 기본 1씩, 조건부 패시브가 있으면 최대 10씩 증가하며, 환생과 전직 후에도 보존됩니다. SP 강화·계승은 직업 전직에 필요한 실전 숙련도를 대신하지 않습니다.</p>
     </>;
 }
