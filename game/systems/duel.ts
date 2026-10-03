@@ -1,4 +1,5 @@
-import type { Snapshot, DuelResult, CombatEvent } from '../types';
+import type { Snapshot, DuelResult, CombatEvent, State } from '../types';
+import { dayKey } from '../data/goals';
 import { BALANCE } from '../data/balance';
 import { normalizeStats, hitChance, power } from './stats';
 import { Fighter, fighterSpeed, actTurn } from './combat';
@@ -48,3 +49,29 @@ export const duelSeasonPearls = (rank: number) => rank <= 1 ? 60 : rank === 2 ? 
 /** 추천 상대: 내 점수 ±150 안에서 가까운 순으로 최대 n명. */
 export const RECOMMEND_RANGE = 150;
 export function recommendOpponents<T extends { rating: number; self?: boolean }>(rows: T[], rating: number, n = 5) { return rows.filter(r => !r.self && Math.abs(r.rating - rating) <= RECOMMEND_RANGE).sort((a, b) => Math.abs(a.rating - rating) - Math.abs(b.rating - rating)).slice(0, n); }
+
+/** v26.2 오늘의 랭크 결투 기록(한국 시간 날짜 기준). 날짜가 바뀌면 비어 있는 기록을 돌려줍니다. */
+export function duelDayOf(s: Pick<State, 'duelDay'>, now: number) {
+    const key = dayKey(now);
+    return s.duelDay?.key === key ? s.duelDay : { key, count: 0, opponents: {} };
+}
+/** 오늘 남은 랭크 결투 횟수와, 이 상대에게 남은 횟수. */
+export function duelAllowance(s: Pick<State, 'duelDay' | 'lastDuel'>, now: number, opponentId?: string) {
+    const day = duelDayOf(s, now);
+    const left = Math.max(0, BALANCE.duelPerDay - day.count), vs = opponentId ? Math.max(0, BALANCE.duelPerOpponentPerDay - (day.opponents[opponentId] || 0)) : BALANCE.duelPerOpponentPerDay;
+    const cooldown = Math.max(0, BALANCE.duelCooldownMs - (now - (s.lastDuel || 0)));
+    return { left, vs, cooldown, perDay: BALANCE.duelPerDay, perOpponent: BALANCE.duelPerOpponentPerDay };
+}
+/** 랭크 결투를 할 수 없는 이유. 가능하면 빈 문자열. */
+export function rankedDuelBlock(s: Pick<State, 'duelDay' | 'lastDuel'>, now: number, opponentId: string) {
+    const a = duelAllowance(s, now, opponentId);
+    if (a.cooldown > 0) return `랭크 결투는 ${Math.round(BALANCE.duelCooldownMs / 1000)}초에 한 번 가능합니다.`;
+    if (a.left <= 0) return `오늘 랭크 결투 ${a.perDay}회를 모두 썼습니다. 연습 대결은 횟수 제한이 없습니다.`;
+    if (a.vs <= 0) return `같은 상대와는 하루 ${a.perOpponent}회까지 랭크 결투를 할 수 있습니다.`;
+    return '';
+}
+/** 랭크 결투 1회를 오늘 기록에 더합니다. */
+export function recordRankedDuel(s: State, now: number, opponentId: string) {
+    const day = duelDayOf(s, now);
+    s.duelDay = { key: day.key, count: day.count + 1, opponents: { ...day.opponents, [opponentId]: (day.opponents[opponentId] || 0) + 1 } };
+}

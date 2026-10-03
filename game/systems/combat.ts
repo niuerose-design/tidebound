@@ -1,7 +1,8 @@
 import { SKILLS, skillById } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { BALANCE, STATUS_TUNING, SKILL_FORMULA } from '../data/balance';
-import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit } from '../types';
+import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute } from '../types';
+const ATTR_KEY: Record<Attribute, 'attrStr' | 'attrDex' | 'attrInt' | 'attrVit' | 'attrWis' | 'attrLuk'> = { str: 'attrStr', dex: 'attrDex', int: 'attrInt', vit: 'attrVit', wis: 'attrWis', luk: 'attrLuk' };
 export type { CombatEvent, CombatHit } from '../types';
 import { normalizeStats, hitChance } from './stats';
 import { effectiveSkill, signatureScale } from './progression';
@@ -298,6 +299,9 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (chosen?.scaling === 'resist')
         base += sa.resist * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1);
     // v25.22 행운 비례 피해(도박 기술): 물리 공격 × (치명 피해 배율 − 1) × 비율. 행운을 몰아주면 치명 피해 배율이 커져 주사위 기술이 세집니다.
+    // v26.2 능력치 비례 피해(외길 계보): 기준값 += 배분 능력치 × 비율. 그 능력치만 올려도 사냥이 됩니다.
+    if (chosen?.scaling === 'attr' && chosen.scalingAttribute)
+        base += (sa[ATTR_KEY[chosen.scalingAttribute]] || 0) * (chosen.scalingRatio ?? 1);
     if (chosen?.scaling === 'luck')
         base += sa.attack * Math.max(0, (sa.critDamage || 1) - 1) * (chosen.scalingRatio ?? 1);
     if (chosen?.scaling === 'hp')

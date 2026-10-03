@@ -304,3 +304,14 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .event-banner { display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px 14px; border: 1px solid rgba(243, 220, 160, .45); border-radius: 12px; background: linear-gradient(90deg, rgba(243, 220, 160, .12), rgba(243, 220, 160, .03)); color: #f3dca0; font-size: .92rem; }
 .event-banner b { letter-spacing: .08em; font-size: .8rem; }
 .event-banner span { color: #e6f1ee; }
+
+/* v26.2 칭호 글꼴·메인 화면 칭호 선택 */
+.title-row .title-name { font-weight: 600; color: #e6f1ee; display: flex; align-items: center; gap: 8px; }
+.title-row.on .title-name { color: #f3dca0; }
+.title-row .title-name em { font-style: normal; font-size: .72rem; letter-spacing: .08em; color: #f3dca0; border: 1px solid rgba(243, 220, 160, .45); border-radius: 999px; padding: 1px 7px; }
+.title-row.locked .title-name { color: #9fb7b0; font-weight: 500; }
+.title-row .title-desc, .title-row .title-locked { font-size: .82rem; color: #9fb7b0; }
+.title-panel summary span { font-size: .82rem; }
+.title-label { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: .82rem; color: #9fb7b0; }
+.title-label select { flex: 1; min-width: 0; background: #101c20; color: #e8d39a; border: 1px solid var(--border, #1f3338); border-radius: 6px; padding: 3px 6px; font-size: .82rem; }
+.metric-hint { display: inline-block; width: 15px; height: 15px; line-height: 13px; text-align: center; border: 1px solid rgba(159, 183, 176, .5); border-radius: 999px; font-size: 10px; color: #9fb7b0; margin-left: 4px; cursor: help; }

@@ -53,6 +53,8 @@ export type Stats = {
     masteredPower?: number;
     /** v25.23 √(변종·황금 포획 수). 변종 기록 비례 피해의 기준값. */
     variantPower?: number;
+    /** v26.2 배분 능력치 원값(외길 계보의 능력치 비례 피해용). 능력치 계산이 채웁니다. */
+    attrStr?: number; attrDex?: number; attrInt?: number; attrVit?: number; attrWis?: number; attrLuk?: number;
     /** v25.23 변종 조우 확률 증가(0.5 = ×1.5). 난파선 수집가 계보 패시브. */
     variantFind?: number;
     /** v25.23 포획마다 황금 개체가 될 확률(그 한 마리 골드 10배). */
@@ -140,7 +142,9 @@ export type Skill = {
     drainRatio?: number;
     condition?: 'wounded' | 'healthyTarget';
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. swap: 피해 유형과 반대 공격력을 기준값으로(물리 계수 마법 피해 등). */
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap';
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr';
+    /** v26.2 scaling 'attr'가 비례하는 능력치. 기준값 += 능력치 × scalingRatio. */
+    scalingAttribute?: Attribute;
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
@@ -414,6 +418,8 @@ export type State = {
     logs: Log[];
     logId: number;
     lastDuel: number;
+    /** v26.2 오늘(한국 시간) 랭크 결투 횟수와 상대별 횟수. */
+    duelDay?: { key: string; count: number; opponents: Record<string, number> };
     rating: number;
     wins: number;
     losses: number;
