@@ -21,14 +21,14 @@ const swarmAt = (rank: number, n: number) => SWARM_SIZES.filter(size => size > 1
     .map(size => `무리 변종 ×${size} ${SWARM_UNLOCK[size] === MILESTONES[rank] ? '해금' : n >= SWARM_UNLOCK[size] ? `해금(${SWARM_UNLOCK[size].toLocaleString()}회 달성)` : `${SWARM_UNLOCK[size].toLocaleString()}회에 해금`}`);
 const stepReward = (rank: number, n: number, swarm: boolean) => [`${PROGRESSION.bookGold[rank].toLocaleString()} G`, PROGRESSION.bookSP[rank] ? `SP +${PROGRESSION.bookSP[rank]}` : '', ...(swarm ? swarmAt(rank, n) : [])].filter(Boolean).join(' · ');
 
-/** 연구 진행: 처치 수 → 다음 연구 목표 → 받을 보상 → 수령 여부. 끝난 단계는 접어서 아래에 둡니다. 낚시터 어종(swarm)은 단계 보상에 무리 사냥 해금도 같이 적습니다. */
+/** 연구 진행: 포획 수 → 다음 연구 목표 → 받을 보상 → 수령 여부. 끝난 단계는 접어서 아래에 둡니다. 낚시터 어종(swarm)은 단계 보상에 무리 사냥 해금도 같이 적습니다. */
 export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; id: string; send: (a: Action) => void; busy: boolean; swarm?: boolean }) {
     const n = s.book[id] || 0, claimed = s.bookClaims?.[id] || 0, pending = bookPending(s, id);
     const reached = MILESTONES.filter(m => n >= m).length, next = reached < MILESTONES.length ? reached : -1;
     return <section className="book-block book-research">
         <h4>연구 진행 <small>플레이어 보상</small></h4>
         <dl className="book-research-rows">
-            <div><dt>처치 수</dt><dd>{n.toLocaleString()}회</dd></div>
+            <div><dt>포획 수</dt><dd>{n.toLocaleString()}회</dd></div>
             <div><dt>다음 연구 목표</dt><dd>{next < 0 ? '모든 단계 달성' : `${next + 1}단계 · ${MILESTONES[next].toLocaleString()}회 (남은 ${(MILESTONES[next] - n).toLocaleString()}회)`}</dd></div>
             {next >= 0 && <div><dt>받을 보상</dt><dd>{stepReward(next, n, swarm)}</dd><small>달성하면 바로 적용: {stepEffect(id, next)}</small></div>}
             <div><dt>수령 여부</dt><dd>{pending.ranks.length ? <b className="positive">미수령 {pending.ranks.length}단계</b> : next < 0 ? '모두 수령' : '목표 미달성'}</dd></div>

@@ -1,12 +1,15 @@
 import { SKILLS } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { BALANCE } from '../data/balance';
+import { jobById } from '../data/classes';
 import type { Enemy, Log, State, StatusEffects } from '../types';
 
 export type CombatFxKind = 'physical' | 'magic' | 'split' | 'stun' | 'bleed' | 'silence' | 'slow' | 'haste' | 'heal' | 'weaken' | 'miss';
 /** v25.20 스킬별 연출 갈래. 궤적 모양·파편 글자·색이 갈래마다 다릅니다. */
 export type CombatFxVariant = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph';
 /** 스킬 id·효과로 연출 갈래를 고릅니다. 앞 규칙이 우선이고, 아무것도 맞지 않으면 마법은 arcane, 물리는 impact. */
+/** 스킬 직업의 차수. 공용·몬스터 기술은 0. */
+export function fxTierOf(id: string | undefined) { const sk = id ? SKILLS.find(x => x.id === id) : undefined; return sk?.job ? jobById(sk.job)?.tier || 0 : 0; }
 export function fxVariantOf(id: string | undefined, magical: boolean, effect?: string): CombatFxVariant {
     if (!id) return magical ? 'arcane' : 'impact';
     const rules: [RegExp, CombatFxVariant][] = [
@@ -43,6 +46,8 @@ export type CombatFx = {
     chain?: number;
     /** v25 天 · 일곱 인 해방. 화면 전체 연출을 띄웁니다. */
     finale?: boolean;
+    /** v25.21 스킬 직업의 차수(공용 0). 4·5차는 더 큰 연출. */
+    tier?: number;
 };
 
 export const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
@@ -57,7 +62,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
         const missed = ev.hits.length > 0 && ev.hits.every(h => h.miss);
         const status = ev.statuses.find(x => !x.onSelf) || ev.statuses[0];
         const kind: CombatFxKind = missed ? 'miss' : status ? status.id === 'bleed' ? 'bleed' : status.id as CombatFxKind : ev.damageType;
-        return { id: log.id, actor, target, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
+        return { id: log.id, actor, target, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), tier: ev.finale ? 5 : fxTierOf(ev.skillId), basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
     }
     const text = log.text;
     const actor = text.startsWith(`${playerName} ·`) || text.startsWith(`${playerName}:`) ? 'player' : 'enemy';
@@ -81,7 +86,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
     const kind: CombatFxKind = missed ? 'miss' : effect && !['heal', 'drain'].includes(effect) ? effect as CombatFxKind : magical ? 'magic' : 'physical';
     const variant: CombatFxVariant = fxVariantOf(skill?.id, magical, skill?.effect);
     const statuses: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
-    return { id: log.id, actor, target, title: label, kind, variant, basic: !skill, critical, healing, drained: 0, status: effect ? statuses[effect] || '' : '', hits, delay: 0, damageType: magical ? 'magic' : 'physical' };
+    return { id: log.id, actor, target, title: label, kind, variant, tier: fxTierOf(skill?.id), basic: !skill, critical, healing, drained: 0, status: effect ? statuses[effect] || '' : '', hits, delay: 0, damageType: magical ? 'magic' : 'physical' };
 }
 
 /** 한 턴 안에서 타격 사이 간격(ms). 연출·HP 바·로그 줄이 모두 이 간격을 따릅니다. */

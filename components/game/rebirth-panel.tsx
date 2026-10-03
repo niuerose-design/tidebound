@@ -1,6 +1,5 @@
 'use client';
 import { ConfirmButton } from './confirm-button';
-import { GrowthGoals } from './growth-goals';
 import { useState } from 'react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -115,7 +114,6 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         </section>
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="prepare">환생 준비</TabsTrigger><TabsTrigger value="research">진주 연구</TabsTrigger><TabsTrigger value="relics">환생 유물</TabsTrigger></TabsList></Tabs>
         {tab === 'prepare' && <>
-            <GrowthGoals s={s} send={send} busy={busy}/>
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>

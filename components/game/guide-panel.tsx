@@ -86,12 +86,12 @@ export function Guide({ s }: { s?: State }) {
                     condition="마나·재사용 대기·스킬별 조건(체력 비율 등)을 채워야 합니다."
                     limit={`장착 개수 제한은 없고 총 AP만 제한합니다. 추가타는 최대 ${STATUS_TUNING.maxExtraAttacks}회.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="습득 · 계승 · 강화"
-                    effect="전직하면 그 직업의 기술을 Lv.0으로 얻습니다. 장착한 채 승리해 첫 숙련을 채우면 다른 직업에서도 씁니다."
+                    effect="전직하면 그 직업의 기술을 Lv.0으로 얻습니다. 장착한 채 포획해 첫 숙련을 채우면 다른 직업에서도 씁니다."
                     condition="해금한 기술에 한해 계승·강화에 각각 1 SP."
                     limit="SP는 도감 최종 연구, 던전 첫 정복 연구, 심연 이정표에서만 얻습니다."/>
                 <Rule icon={<Target size={19}/>} title="숙련 · 연마"
-                    effect="승리할 때마다 현재 직업과 장착한 스킬의 숙련이 기본 1 오릅니다. 기본 숙련을 마치면 연마 30단계가 이어져 단계마다 직접 피해·양수 패시브 +0.8%."
-                    condition={`조건부 숙련 스킬은 지정한 적을 이겼을 때만 더 줍니다. 승리 1회당 최대 ${PROGRESSION.maxMasteryPerVictory}.`}
+                    effect="포획할 때마다 현재 직업과 장착한 스킬의 숙련이 기본 1 오릅니다. 기본 숙련을 마치면 연마 30단계가 이어져 단계마다 직접 피해·양수 패시브 +0.8%."
+                    condition={`조건부 숙련 스킬은 지정한 적을 이겼을 때만 더 줍니다. 포획 1회당 최대 ${PROGRESSION.maxMasteryPerVictory}.`}
                     limit="연마는 SP로 건너뛸 수 없고 AP·발동률은 늘지 않습니다. 숙련은 환생과 전직 뒤에도 남습니다."/>
                 <Rule icon={<BookOpen size={19}/>} title="경험치 배율"
                     effect="경험치 배율 = 1 + 환생 + 진주 연구 + 직업 + 장착 스킬."
@@ -113,15 +113,15 @@ export function Guide({ s }: { s?: State }) {
                     condition={`낚시터에서 그 어종을 ${VARIANT_BOOK_MIN}회 이상 포획한 뒤부터 입질마다 판정합니다. 해초림 테마 +10%, 공용 패시브 ‘무리 감지’(Lv.30) +50%.`}
                     limit="던전과 보스에는 변종이 없습니다. 지금 확률은 능력치 화면 아래 ‘변종 조우 확률’에서 봅니다."/>
                 <Rule icon={<Fish size={19}/>} title="무리 변종"
-                    effect={`입질당 ${percent(swarm.chance, 1)}. 무리 전체를 체력 ×N인 한 개체로 상대하고, 처치하면 보상·숙련·도감을 마리 수만큼 받습니다.`}
+                    effect={`포획당 ${percent(swarm.chance, 1)}. 무리 전체를 체력 ×N인 한 개체로 상대하고, 포획하면 보상·숙련·도감을 마리 수만큼 받습니다.`}
                     condition={`규모는 도감 포획 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100, ${SWARM_UNLOCK[500].toLocaleString()}회에 ‘무리 감지’를 장착하면 ×500.`}
-                    limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 처치 전에 쓰러지면 보상이 없습니다."/>
+                    limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 포획 전에 쓰러지면 보상이 없습니다."/>
                 <Rule icon={<Swords size={19}/>} title="던전 · 무한 심연"
                     effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 심연은 10층마다 보너스 진주, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1, 30·60·90층에 장착 AP 1.`}
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
-                    limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 낚시터로 돌아옵니다.`}/>
+                    limit={`던전에서는 포획 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 낚시터로 돌아옵니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
-                    effect={`승리 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 응급처치 패시브는 승리마다 ${percent(FIRST_AID_HEAL)}를 더 회복합니다.`}
+                    effect={`포획 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 응급처치 패시브는 포획마다 ${percent(FIRST_AID_HEAL)}를 더 회복합니다.`}
                     condition={`패배하면 잃는 것 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다. 자리를 비운 시간도 서버가 턴으로 계산합니다.`}
                     limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}, 가방은 기본 ${BALANCE.inventoryCap}칸${s ? `(지금 ${inventoryCap(s)}칸)` : ''}. 둘 다 진주 연구로 늘어납니다.`}/>
             </div>

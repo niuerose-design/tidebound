@@ -13,7 +13,7 @@ export function masteryConditionText(sk: Skill) {
     return names ? `${names}${rule.bossOnly ? ' (보스)' : ''}` : rule.bossOnly ? '모든 보스' : '모든 적';
 }
 
-/** 승리당 숙련 획득량. base는 기본 획득(보통 1), bonus는 조건부 보너스. 스킬 설명과 실제 지급이 같은 식을 씁니다. */
+/** 포획당 숙련 획득량. base는 기본 획득(보통 1), bonus는 조건부 보너스. 스킬 설명과 실제 지급이 같은 식을 씁니다. */
 export const masteryPerVictory = (bonus: number, base = 1) => Math.min(PROGRESSION.maxMasteryPerVictory + base - 1, base + Math.max(0, Math.floor(bonus)));
 /**
  * 숙련의 기억: 숙련 획득 +5%/단계. 숙련은 정수라 소수점은 s.masteryCarry에 1/20 단위 정수로 누적합니다.

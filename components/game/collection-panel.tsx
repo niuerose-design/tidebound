@@ -35,10 +35,11 @@ function BookTraitLine({ s, id }: { s: State; id: string }) {
         <span>{eco.stages ? <b className="positive">생태 연구 적용 중 · 이 어종 상대 주는 피해 +{Math.round(eco.dealt * 100)}% · 받는 공격 피해 -{Math.round(eco.taken * 100)}%</b> : `생태 연구(${BALANCE.bookMilestones[BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회~) · 이 어종 상대 주는 피해 +${BOOK_ECOLOGY.dealtPerStage * 100}% · 받는 공격 피해 -${BOOK_ECOLOGY.takenPerStage * 100}% (단계마다)`}</span>
     </div>;
 }
-/** 황금 개체를 잡은 어종에 남는 황금 표시. */
+/** v25.21 어종 이름 옆 변종 아이콘 줄. 잡은 변종은 색이 켜지고 횟수가 붙으며, 아직 못 만난 변종은 흐리게 자리만 보여 줍니다. */
 function GoldenMark({ s, id }: { s: State; id: string }) {
-    const n = s.goldenBook?.[id] || 0, row = s.variantBook?.[id] || {};
-    return <>{n ? <small className="fish-golden" title="황금 개체 포획 횟수">✦ 황금 {n}</small> : null}{VARIANTS.filter(v => row[v.id]).map(v => <small key={v.id} className={`fish-golden variant-${v.id}`} title={`${v.name} 포획 횟수`}>{v.mark} {v.name} {row[v.id]}</small>)}</>;
+    const row = s.variantBook?.[id] || {}, golden = s.goldenBook?.[id] || 0;
+    const marks = [{ id: 'golden', mark: '✦', name: '황금 개체', n: golden }, ...VARIANTS.map(v => ({ id: v.id, mark: v.mark, name: v.name, n: row[v.id] || 0 }))];
+    return <span className="variant-marks" aria-label="변종 포획 기록">{marks.map(m => <i key={m.id} className={`variant-mark variant-${m.id} ${m.n ? 'lit' : ''}`} title={m.n ? `${m.name} ${m.n}회 포획` : `${m.name} · 아직 못 만남`}>{m.mark}{m.n > 1 ? <b>{m.n > 99 ? '99+' : m.n}</b> : null}</i>)}</span>;
 }
 /** 포획 50회 전에는 적 성향·스킬·능력치를 숨깁니다. */
 function LockedInfo({ n }: { n: number }) {
@@ -51,7 +52,7 @@ export function Collection({ s, send, busy }: PanelProps) {
     const complete = FISH.filter(f => (s.book[f.id] || 0) >= bookComplete).length, regions = completedRegions(s), pendingBooks = pendingBookCount(s);
     return <>
     <Heading eyebrow="ARCHIVE & RESEARCH" title="기록이 힘이 되는 도감" description="개체도감으로 편성의 폭을 넓히고, 물건도감으로 다음 장비를 만날 확률을 높이세요."/>
-    {pendingBooks > 0 && <div className="notice book-claim-all"><BookOpen size={20}/><div><strong>받지 않은 연구 보상 {pendingBooks}단계</strong><p>여러 어종의 미수령 보상을 한 번에 받습니다.</p></div><button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimAllBooks' })}>모두 받기</button></div>}
+    {pendingBooks > 0 && <div className="notice book-claim-all"><BookOpen size={18}/><div><strong>받지 않은 연구 보상 {pendingBooks}단계</strong><span>어종별 미수령 보상을 한 번에 받습니다</span></div><button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimAllBooks' })}>모두 받기</button></div>}
     <Tabs defaultValue="fish">
     <TabsList className="game-tabs">
     <TabsTrigger value="fish">개체도감</TabsTrigger>

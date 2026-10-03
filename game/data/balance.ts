@@ -11,12 +11,12 @@ export const BALANCE = {
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
     activeSlots: 4, passiveSlots: 3, inventoryCap: 60,
-    // v22: 장비는 드물게 떨어집니다. 처치당 기본 0.1%(시간당 수백 마리를 잡아도 한두 개).
+    // v22: 장비는 드물게 떨어집니다. 포획당 기본 0.1%(시간당 수백 마리를 잡아도 한두 개).
     // 행운·물건도감·연구·드롭 보너스는 이 확률에 곱해지는 상대 증가로 바뀝니다(구 기준 17%p당 +100%).
     dropChance: 0.001, dropBonusScale: 0.17, dropChanceCap: 0.01,
     // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
     dungeonRepeatDrop: 0.05,
-    // 처치 후 회복률(근거: scripts/check-recovery.mjs). 응급처치를 장착하면 승리마다 FIRST_AID_HEAL을 더합니다.
+    // 포획 후 회복률(근거: scripts/check-recovery.mjs). 응급처치를 장착하면 포획마다 FIRST_AID_HEAL을 더합니다.
     healAfterKill: 0.08, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
@@ -130,5 +130,5 @@ export const xpNeeded = (level: number) => Math.floor(BALANCE.xpBase * Math.pow(
 // v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.
 export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }, { name: '신화', color: '#f08a6c', factor: 3.9 }, { name: '고대', color: '#5fd0b5', factor: 4.5 }, { name: '태초', color: '#ff6fb5', factor: 5.2 }];
 export const SLOTS = { rod: '낚싯대', coat: '방어구', charm: '나침반' };
-/** 응급처치(공용 패시브): 승리 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
+/** 응급처치(공용 패시브): 포획 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
 export const FIRST_AID_HEAL = .04;

@@ -75,7 +75,6 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
             {current ? <button className="secondary" disabled>현재 직업</button> : <AlertDialog><AlertDialogTrigger asChild><button className="primary" disabled={busy || !ready}>{ready ? '이 직업으로 전직' : `전직 조건 부족 ${st.missing.length}`}</button></AlertDialogTrigger>
                 <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{j.name}(으)로 전직할까요?</AlertDialogTitle><AlertDialogDescription>새 직업의 기본 기술은 무료로 해금됩니다. 계승하지 않은 이전 직업의 기술은 해제되지만 해금·성장·숙련 기록은 남습니다. 전투 중이면 현재 적을 보상 없이 정리하고, 던전 중이면 보상 없이 귀환합니다.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>취소</AlertDialogCancel><AlertDialogAction onClick={() => send({ type: 'job', id: j.id })}>전직하기</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
             </AlertDialog>}
-            <button className="secondary" disabled={busy || current || s.unlockedJobs.includes(j.id)} onClick={() => send({ type: 'growthGoal', id: j.id, value: 'job' })}>{s.growthGoal?.kind === 'job' && s.growthGoal.id === j.id ? '목표로 지정됨' : '목표로 지정'}</button>
             {onCompare && <button className="secondary" disabled={!compared && compareFull} onClick={() => onCompare(j.id)}>{compared ? '비교에서 빼기' : compareFull ? '비교 가득 참(3)' : '비교에 추가'}</button>}
         </div>
     </article>;

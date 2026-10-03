@@ -23,7 +23,7 @@ import { scaledEnemyStats, profile } from '../data/encounters';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
-/** 승리 1회당 회복량. 무리 규모와 관계없이 승리마다 한 번 적용합니다(응급처치 포함). */
+/** 포획 1회당 회복량. 무리 규모와 관계없이 포획마다 한 번 적용합니다(응급처치 포함). */
 export function victoryHeal(s: State) {
     const firstAid = s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0;
     return Math.floor(stats(s).hp * (victoryHealRate(s) + firstAid));
@@ -53,7 +53,7 @@ export function releaseAnchor(s: State, achieved: boolean) {
     addLog(s, achieved ? `잠든 닻 봉인 해제 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리 달성 · 쌓인 경험치 ×${anchorPayout(s)} = +${exp} EXP` : `잠든 닻 포기 · 쌓인 경험치 +${exp} EXP를 그대로 받았습니다.`, 'reward');
     return exp;
 }
-/** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 잔잔한 물결 1%p/단계. */
+/** 포획 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 잔잔한 물결 1%p/단계. */
 export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : BALANCE.healAfterKill) + researchRank(s, 'recovery') * .01;
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 export function rollRarity(rng: () => number, minRarity = 0) {
@@ -152,7 +152,7 @@ export function reward(s: State, rng: () => number) {
     const focusMastery = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, masteryReward.amount * size * focusMastery), practice = researched.total;
     const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult), exp = Math.floor(e.exp * expMultiplier(s) * expMult) * size;
-    // 황금 개체: 승리마다 0.1%p/단계 확률로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 0단계면 난수를 쓰지 않습니다.
+    // 황금 개체: 포획마다 0.1%p/단계 확률로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 0단계면 난수를 쓰지 않습니다.
     const goldenRank = researchRank(s, 'goldenFish'), golden = goldenRank > 0 && rng() < goldenRank * .001;
     const gold = perFish * size + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
