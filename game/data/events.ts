@@ -14,7 +14,12 @@ export const SERVER_EVENTS: ServerEvent[] = [
     { id: 'mastery-x2', name: '', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', mastery: 2 },
 ];
 
-export function activeEvent(now: number, events: ServerEvent[] = SERVER_EVENTS): ActiveEvent | null {
+/** v27.27 운영 페이지에서 추가·끈 이벤트. 서버가 DB 설정을 읽어 채웁니다(코드 이벤트는 disabled로만 끌 수 있음). */
+let runtime: { extra: ServerEvent[]; disabled: string[] } = { extra: [], disabled: [] };
+export function setRuntimeEvents(extra: ServerEvent[], disabled: string[]) { runtime = { extra, disabled }; }
+/** 지금 적용 대상인 이벤트 목록: 코드 이벤트(끈 것 제외) + 운영 페이지 이벤트. */
+export const currentEvents = () => [...SERVER_EVENTS.filter(e => !runtime.disabled.includes(e.id)), ...runtime.extra];
+export function activeEvent(now: number, events: ServerEvent[] = currentEvents()): ActiveEvent | null {
     const live = events.filter(e => Date.parse(e.from) <= now && now <= Date.parse(e.until));
     if (!live.length) return null;
     // 겹치면 배율은 곱하고, 이름은 이어 붙이고, 종료는 가장 이른 것으로 둡니다.

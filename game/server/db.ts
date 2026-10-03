@@ -31,6 +31,9 @@ export interface Storage {
     listAccounts(): Promise<{ id: string; username: string }[]>;
     /** v27.26 운영 도구용: 모든 세이브(압축 해제된 상태 문자열). */
     listPlayers(): Promise<{ id: string; state: string; revision: number; updated_at: number }[]>;
+    /** v27.27 운영 설정(서버 이벤트 등) 키-값. */
+    getSetting(key: string): Promise<string | null>;
+    setSetting(key: string, value: string, now: number): Promise<void>;
     createSession(token: string, accountId: string, expiresAt: number): Promise<void>;
     getSessionAccount(token: string, now: number): Promise<string | null>;
     deleteSession(token: string): Promise<void>;
@@ -73,6 +76,7 @@ export type SlotRow = { account_id: string; slot: number; summary: string; updat
 
 // ---------- Neon Postgres (HTTP) ----------
 const SCHEMA = [
+    'CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at BIGINT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS players (id TEXT PRIMARY KEY, state TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0, updated_at BIGINT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS rankings (id TEXT PRIMARY KEY, snapshot TEXT NOT NULL, rating INTEGER NOT NULL DEFAULT 1000, power INTEGER NOT NULL, updated_at BIGINT NOT NULL)',
     'CREATE INDEX IF NOT EXISTS rankings_rating_idx ON rankings (rating)',
@@ -120,6 +124,8 @@ function neonStorage(url: string): Storage {
         async getAccountByName(username) { const { rows } = await q<AccountRow>('SELECT id,username,pass_hash,salt,created_at FROM accounts WHERE username=$1', [username]); return rows[0] ? num(rows[0]) as AccountRow : null; },
         async listAccounts() { const { rows } = await q<{ id: string; username: string }>('SELECT id, username FROM accounts'); return rows; },
         async listPlayers() { const { rows } = await q<{ id: string; state: string; revision: number; updated_at: number }>('SELECT id, state, revision, updated_at FROM players'); return rows.map(r => ({ id: r.id, state: unpackState(r.state), revision: Number(r.revision), updated_at: Number(r.updated_at) })); },
+        async getSetting(key) { const { rows } = await q<{ value: string }>('SELECT value FROM settings WHERE key=$1', [key]); return rows[0]?.value ?? null; },
+        async setSetting(key, value, now) { await q('INSERT INTO settings (key,value,updated_at) VALUES ($1,$2,$3) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at', [key, value, now]); },
         async createSession(token, accountId, expiresAt) { await q('INSERT INTO sessions (token,account_id,expires_at) VALUES ($1,$2,$3)', [token, accountId, expiresAt]); },
         async getSessionAccount(token, now) { const { rows } = await q<{ account_id: string }>('SELECT account_id FROM sessions WHERE token=$1 AND expires_at>$2', [token, now]); return rows[0]?.account_id ?? null; },
         async deleteSession(token) { await q('DELETE FROM sessions WHERE token=$1', [token]); },
@@ -165,7 +171,7 @@ function neonStorage(url: string): Storage {
 }
 
 // ---------- 개발용 로컬 파일 ----------
-type FileDb = { players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; wallets?: Record<string, WalletRow>; chat?: ChatRow[]; chatSeq?: number };
+type FileDb = { settings?: Record<string, { value: string; updated_at: number }>; players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; wallets?: Record<string, WalletRow>; chat?: ChatRow[]; chatSeq?: number };
 function fileStorage(): Storage {
     const path = process.env.TIDEBOUND_DEV_DB || '.data/dev-db.json';
     let chain: Promise<unknown> = Promise.resolve();
@@ -192,6 +198,8 @@ function fileStorage(): Storage {
         getAccountByName: username => tx(db => Object.values(db.accounts).find(x => x.username === username) || null),
         listAccounts: () => tx(db => Object.values(db.accounts).map(a => ({ id: a.id, username: a.username }))),
         listPlayers: () => tx(db => Object.entries(db.players).map(([id, p]) => ({ id, state: unpackState(p.state), revision: p.revision, updated_at: p.updated_at }))),
+        getSetting: key => tx(db => db.settings?.[key]?.value ?? null),
+        setSetting: (key, value, now) => tx(db => { (db.settings ??= {})[key] = { value, updated_at: now }; }),
         createSession: (token, accountId, expiresAt) => tx(db => { db.sessions[token] = { account_id: accountId, expires_at: expiresAt }; }),
         getSessionAccount: (token, now) => tx(db => { const x = db.sessions[token]; return x && x.expires_at > now ? x.account_id : null; }),
         deleteSession: token => tx(db => { delete db.sessions[token]; }),

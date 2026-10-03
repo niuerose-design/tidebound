@@ -371,3 +371,23 @@ test('v25.15 update log keeps only 3-5 entries, newest first; stat confirm setti
     const s = newState(0); assert.ok(!s.skipStatConfirm); act(s, { type: 'statConfirm', value: 'off' }, 0); assert.equal(s.skipStatConfirm, true);
     s.level = 30; act(s, { type: 'rebirth' }, 0); assert.equal(s.skipStatConfirm, true, 'setting is kept across rebirth'); act(s, { type: 'statConfirm', value: 'on' }, 0); assert.equal(s.skipStatConfirm, false);
 });
+
+test('v27.27 shop gear resells for at most half its price; old shop items are estimated', async () => {
+    const { saleValue } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
+    for (const level of [30, 60, 90]) {
+        const s = newState(0); s.level = level; s.gold = 1e12; s.inventory = [];
+        act(s, { type: 'gamble', id: 'rod', value: 10 }, 0);
+        assert.equal(s.inventory.length, 10, `Lv.${level} gamble x10`);
+        for (const item of s.inventory) { assert.ok(item.paid > 0); assert.ok(saleValue(item) <= item.paid * .5, `Lv.${level} ${item.name} sells ${saleValue(item)} for ${item.paid}`); }
+        const legacy = { ...s.inventory[0] }; delete legacy.paid; assert.ok(saleValue(legacy) <= s.inventory[0].paid, `legacy shop- item ${saleValue(legacy)} vs ${s.inventory[0].paid}`);
+    }
+});
+
+test('v27.27 runtime server events merge with code events and can disable them', async () => {
+    const ev = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/events');
+    const at = Date.parse('2026-10-05T12:00:00+09:00');
+    const before = ev.activeEvent(at); assert.ok(before && before.exp >= 2, 'open beta exp event is live');
+    ev.setRuntimeEvents([{ id: 'admin-test01', name: '주말', from: '2026-10-05T00:00:00+09:00', until: '2026-10-06T00:00:00+09:00', gold: 3 }], ['openbeta-exp']);
+    const now = ev.activeEvent(at); assert.equal(now.gold, 3, 'admin event applies'); assert.ok(!(now.exp > 1), 'disabled code event is off');
+    ev.setRuntimeEvents([], []); assert.ok(ev.activeEvent(at).exp >= 2, 'reset restores code events');
+});
