@@ -397,6 +397,8 @@ export type State = {
     nextVows?: Vows;
     /** 윤회의 문: 이번 생에 문이 열린 ??? 직업(환생 때 추첨). */
     rebirthDoor?: string;
+    /** v25.23 한 번이라도 열린 것을 본 문의 직업. 이후로는 시간·방문·조건과 상관없이 계속 열려 있습니다. */
+    doorsOpened?: string[];
     dungeon: null | {
         id: string;
         wave: number;

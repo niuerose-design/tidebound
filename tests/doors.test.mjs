@@ -63,3 +63,11 @@ test('Doors v24.2: each time slot has its own pool and discovery doors open on h
     assert.equal(canChangeJob(s, 'fallenAngler'), false); s.deaths = 30; assert.equal(canChangeJob(s, 'fallenAngler'), true);
     assert.equal(canChangeJob(s, 'codexReader'), false); s.itemBook = Object.fromEntries(Array.from({ length: 30 }, (_, i) => ['item' + i, 1])); assert.equal(canChangeJob(s, 'codexReader'), true);
 });
+
+test('v25.23 a door seen open stays open: recordOpenDoors stores it and doorFor honors it outside its window', () => {
+    const t = { unlockedJobs: [] }; const fresh = doors.recordOpenDoors(t, at(2026, 10, 2, 22));
+    assert.ok(fresh.includes('krakenkin')); assert.ok(t.doorsOpened.includes('krakenkin'));
+    assert.deepEqual(doors.doorFor(t, 'krakenkin', at(2026, 10, 2, 9)), { door: 'visitor', open: true });
+    assert.deepEqual(doors.recordOpenDoors(t, at(2026, 10, 2, 22)), [], 'already recorded');
+    assert.deepEqual(doors.doorFor({}, 'krakenkin', at(2026, 10, 2, 9)), { door: 'visitor', open: false });
+});

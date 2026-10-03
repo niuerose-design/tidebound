@@ -1,5 +1,6 @@
 /**
  * ??? 계열의 문. 문마다 ??? 계보의 첫 직업을 엽니다. 한 번 들어간 직업(unlockedJobs)은 문 조건이 없습니다.
+ * v25.23 한 번 열린 것을 본 문(doorsOpened)은 그 뒤로 계속 열려 있습니다(시간대·방문·숨은 조건을 다시 맞출 필요 없음).
  * 시간 판정은 항상 서버가 넘긴 시각(요청 시각)으로 합니다. 목록에 없는 직업 id는 무시합니다.
  * 새 ??? 직업은 support-rework.ts에 만들고 이 목록에 추가합니다.
  */
@@ -37,9 +38,9 @@ export const VISIT_HOURS = 2;
 
 export const DOORS: { id: DoorId; name: string; summary: string }[] = [
     { id: 'rebirth', name: '윤회의 문', summary: '환생할 때마다 하나의 직업이 이번 생 동안 문을 엽니다.' },
-    { id: 'time', name: '시간의 문', summary: '한국 시간 6시간마다 다른 직업이 문 앞에 섭니다.' },
-    { id: 'discovery', name: '발견의 문', summary: '숨은 조건을 처음 만족하면 열립니다.' },
-    { id: 'visitor', name: '방문자의 문', summary: '하루 한두 번, 두 시간 동안 누군가 찾아옵니다.' },
+    { id: 'time', name: '시간의 문', summary: '한국 시간 6시간마다 다른 직업이 문 앞에 섭니다. 한 번 열린 문은 계속 열려 있습니다.' },
+    { id: 'discovery', name: '발견의 문', summary: '숨은 조건을 처음 만족하면 열리고, 그 뒤로 계속 열려 있습니다.' },
+    { id: 'visitor', name: '방문자의 문', summary: '하루 한두 번, 두 시간 동안 누군가 찾아옵니다. 한 번 만난 방문자는 계속 머뭅니다.' },
 ];
 
 const KST = 9 * 3600_000;
@@ -83,12 +84,24 @@ export function currentVisit(now: number) {
 
 /** 지금 이 직업을 여는 문. 문 목록에 없는 직업은 null(문 조건 없음), 목록에 있지만 닫혀 있으면 open:false. */
 export function doorFor(s: Pick<State, 'rebirthDoor'> & Partial<State>, jobId: string, now: number): { door: DoorId; open: boolean } | null {
-    if (REBIRTH_DOOR_JOBS.includes(jobId)) return { door: 'rebirth', open: s.rebirthDoor === jobId };
-    if (TIME_SLOTS.some(t => t.jobs.includes(jobId))) return { door: 'time', open: timeSlot(now).jobs.includes(jobId) };
+    const seen = !!s.doorsOpened?.includes(jobId);
+    if (REBIRTH_DOOR_JOBS.includes(jobId)) return { door: 'rebirth', open: seen || s.rebirthDoor === jobId };
+    if (TIME_SLOTS.some(t => t.jobs.includes(jobId))) return { door: 'time', open: seen || timeSlot(now).jobs.includes(jobId) };
     const discovery = DISCOVERY_DOORS.find(d => d.job === jobId);
-    if (discovery) return { door: 'discovery', open: discovery.test(s as State) };
-    if (VISITOR_JOBS.includes(jobId)) return { door: 'visitor', open: currentVisit(now)?.job === jobId };
+    if (discovery) return { door: 'discovery', open: seen || discovery.test(s as State) };
+    if (VISITOR_JOBS.includes(jobId)) return { door: 'visitor', open: seen || currentVisit(now)?.job === jobId };
     return null;
+}
+/** 문이 열리는 모든 ??? 직업. */
+export const DOOR_JOBS = [...REBIRTH_DOOR_JOBS, ...TIME_SLOTS.flatMap(t => t.jobs), ...DISCOVERY_DOORS.map(d => d.job), ...VISITOR_JOBS];
+/** 지금 열려 있는 문을 doorsOpened에 기록합니다(이후 상시 개방). 동기화·정산 때 호출. 새로 열린 직업 id를 돌려줍니다. */
+export function recordOpenDoors(s: State, now: number) {
+    const fresh: string[] = [];
+    for (const jobId of DOOR_JOBS) {
+        if (s.doorsOpened?.includes(jobId)) continue;
+        if (doorFor(s, jobId, now)?.open) { (s.doorsOpened ??= []).push(jobId); fresh.push(jobId); }
+    }
+    return fresh;
 }
 
 /**
