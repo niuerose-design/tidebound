@@ -24,6 +24,8 @@ export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed'>
     return { spent, refund: Math.floor(spent * rate), ranks, first: !s.researchResetUsed };
 }
 /** All spend checks happen before mutations. null means action belongs to another system. */
+/** v27.13 한 번에 감정할 수 있는 개수. */
+export const GAMBLE_COUNTS = [1, 5, 10];
 export function commerce(s: State, a: Action, rng: () => number): string | null {
     const id = a.id || '';
     const spend = (cost: number) => { if (!Number.isFinite(cost) || s.gold < cost)
@@ -32,27 +34,46 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         throw Error('가방을 비운 뒤 구매하세요.'); };
     const nextId = () => `shop-${++s.shopSerial}`;
     if (a.type === 'buy' || a.type === 'gamble') {
-        const category = a.type === 'gamble' ? GAMBLE_CATEGORIES.find(x => x.id === id) : undefined;
-        const offerId = category ? category.offers[category.offers.length > 1 ? Math.min(category.offers.length - 1, Math.floor(rng() * category.offers.length)) : 0] : id;
-        const offer = SHOP.find(x => x.id === offerId);
-        if (!offer)
-            throw Error('상품을 확인하세요.');
-        room();
         const gamble = a.type === 'gamble';
-        const cost = gamble ? gambleCost(s) : shopCost(s);
-        spend(cost);
-        const roll = gamble ? rng() : 0;
-        let threshold = 0;
-        const rarity = gamble ? (APPRAISAL.find(r => { threshold = Math.round((threshold + r.chance) * 1000) / 1000; return roll < threshold; })?.rarity ?? APPRAISAL[APPRAISAL.length - 1].rarity) : 1;
-        let item: Item = { ...shopPreview(s, offer.id), id: nextId() };
-        if (gamble) {
-            const power = Math.round((s.level + 2) * RARITIES[rarity].factor);
-            const base: Item = { ...item };
-            delete base.affix;
-            item = { ...base, name: `${RARITIES[rarity].name} ${offer.name}`, rarity, power, affixes: rollAffixes(rarity, power, undefined, rng) };
+        // 감정은 부위(rod·coat·charm)로 고르지만, 상품 id를 직접 넘겨도 그 상품 하나로 감정합니다(기존 호출 호환).
+        const category = gamble ? GAMBLE_CATEGORIES.find(x => x.id === id) ?? (SHOP.some(x => x.id === id) ? { offers: [id] } : undefined) : undefined;
+        if (gamble ? !category : !SHOP.some(x => x.id === id))
+            throw Error('상품을 확인하세요.');
+        // v27.13 감정은 1·5·10개 단위. 골드와 가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다(1개일 때의 난수 순서는 그대로).
+        const count = gamble ? Number(a.value || 1) : 1;
+        if (!GAMBLE_COUNTS.includes(count))
+            throw Error('감정 개수는 1·5·10개 중 하나입니다.');
+        const cost = gamble ? gambleCost(s) : shopCost(s), total = cost * count;
+        if (s.inventory.length + count > inventoryCap(s))
+            throw Error(count > 1 ? `가방에 ${count}칸이 필요합니다. 장비를 정리하세요.` : '가방을 비운 뒤 구매하세요.');
+        if (s.gold < total)
+            throw Error('골드가 부족합니다.');
+        const results: Item[] = [];
+        for (let i = 0; i < count; i++) {
+            const offerId = category ? category.offers[category.offers.length > 1 ? Math.min(category.offers.length - 1, Math.floor(rng() * category.offers.length)) : 0] : id;
+            const offer = SHOP.find(x => x.id === offerId)!;
+            spend(cost);
+            const roll = gamble ? rng() : 0;
+            let threshold = 0;
+            const rarity = gamble ? (APPRAISAL.find(r => { threshold = Math.round((threshold + r.chance) * 1000) / 1000; return roll < threshold; })?.rarity ?? APPRAISAL[APPRAISAL.length - 1].rarity) : 1;
+            let item: Item = { ...shopPreview(s, offer.id), id: nextId() };
+            if (gamble) {
+                const power = Math.round((s.level + 2) * RARITIES[rarity].factor);
+                const base: Item = { ...item };
+                delete base.affix;
+                item = { ...base, name: `${RARITIES[rarity].name} ${offer.name}`, rarity, power, affixes: rollAffixes(rarity, power, undefined, rng) };
+            }
+            s.inventory.push(item);
+            results.push(item);
         }
-        s.inventory.push(item);
-        return `${gamble ? '감정' : '구매'} · ${item.name}${gamble ? ` · 옵션 ${rarity}개` : ''} · -${cost} G`;
+        if (count === 1) {
+            const item = results[0];
+            return `${gamble ? '감정' : '구매'} · ${item.name}${gamble ? ` · 옵션 ${item.rarity}개` : ''} · -${cost} G`;
+        }
+        // 묶음 결과: 등급별 개수(높은 등급부터)와 가장 좋은 장비 이름.
+        const tally = [...APPRAISAL].map(r => r.rarity).sort((x, y) => y - x).map(r => [r, results.filter(i => i.rarity === r).length] as const).filter(([, n]) => n);
+        const best = results.reduce((b, i) => (i.rarity || 0) > (b.rarity || 0) ? i : b, results[0]);
+        return `감정 ${count}개 · ${tally.map(([r, n]) => `${RARITIES[r].name} ${n}`).join(' · ')} · 최고 ${best.name} · -${total} G`;
     }
     if (a.type === 'lockItem') {
         const item = s.inventory.find(x => x.id === id);

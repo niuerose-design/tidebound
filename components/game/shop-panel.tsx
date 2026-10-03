@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SHOP, GAMBLE_CATEGORIES, APPRAISAL, inventoryCap } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
-import { shopCost, gambleCost, shopPreview } from '@/game/systems/commerce';
+import { shopCost, gambleCost, shopPreview, GAMBLE_COUNTS } from '@/game/systems/commerce';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 import type { PanelProps } from './panel-props';
 import { BonusList } from './inventory-panel';
 import { EquipmentForge } from './inventory-panel';
 export function Shop({ s, send, busy }: PanelProps) {
     const [tab, setTab] = useState('gamble');
-    const cost = shopCost(s), gamble = gambleCost(s), full = s.inventory.length >= inventoryCap(s);
+    const cost = shopCost(s), gamble = gambleCost(s), cap = inventoryCap(s), full = s.inventory.length >= cap;
     return <>
         <Heading eyebrow="HARBOR MARKET" title="항구 상점" description="장비를 고르고, 감정하고, 단련하는 곳."/>
         <WalletBar s={s} label="상점 재화와 보관함" extra={<div><span>현재 구매 장비<strong>Lv.{s.level}</strong></span></div>}/>
@@ -22,7 +22,7 @@ export function Shop({ s, send, busy }: PanelProps) {
                 <div className="gamble-icon"><SlotIcon slot={o.slot} size={34}/></div>
                 <div><span className="eyebrow">미확인 장비</span><h2>{o.name}</h2></div><p>{o.description}</p>
                 <span className="gamble-guarantee">Lv.{s.level} · 희귀 이상 · 등급 수만큼 옵션 1~6개</span>
-                <ConfirmButton label={`${format(gamble)} G · 감정`} title={`${o.name}을 감정할까요?`} description={`골드 ${format(gamble)} G를 사용합니다. ${APPRAISAL.map(r => `${RARITIES[r.rarity].name} ${Math.round(r.chance * 1000) / 10}%`).join(' · ')}. ${o.description} 등급 수만큼 옵션이 붙고(영웅 이상은 규칙 옵션 가능), 결과는 가방에 보관됩니다.`} disabled={busy || s.gold < gamble || full} onConfirm={() => send({ type: 'gamble', id: o.id })}/>
+                <div className="gamble-count-row">{GAMBLE_COUNTS.map(n => { const total = gamble * n, noRoom = s.inventory.length + n > cap; return <ConfirmButton key={n} label={`${n}개 · ${format(total)} G`} title={`${o.name} ${n}개를 감정할까요?`} description={`골드 ${format(total)} G를 사용합니다. ${APPRAISAL.map(r => `${RARITIES[r.rarity].name} ${Math.round(r.chance * 1000) / 10}%`).join(' · ')}. ${o.description} 등급 수만큼 옵션이 붙고(영웅 이상은 규칙 옵션 가능), 결과는 가방에 보관됩니다.${n > 1 ? ` 가방 ${n}칸이 필요합니다.` : ''}`} disabled={busy || s.gold < total || noRoom} onConfirm={() => send({ type: 'gamble', id: o.id, value: String(n) })}/>; })}</div>
             </article>)}</div>
         </section>}
         {tab === 'buy' && <section aria-label="확정 장비 구매"><div className="port-purchase-grid">{SHOP.map(o => <article className="panel market-card" key={o.id}>
