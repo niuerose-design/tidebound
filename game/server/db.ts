@@ -27,6 +27,10 @@ export interface Storage {
     updateRating(id: string, rating: number): Promise<void>;
     createAccount(row: AccountRow): Promise<boolean>;
     getAccountByName(username: string): Promise<AccountRow | null>;
+    /** v27.26 운영 도구용: 모든 계정의 id·아이디. */
+    listAccounts(): Promise<{ id: string; username: string }[]>;
+    /** v27.26 운영 도구용: 모든 세이브(압축 해제된 상태 문자열). */
+    listPlayers(): Promise<{ id: string; state: string; revision: number; updated_at: number }[]>;
     createSession(token: string, accountId: string, expiresAt: number): Promise<void>;
     getSessionAccount(token: string, now: number): Promise<string | null>;
     deleteSession(token: string): Promise<void>;
@@ -114,6 +118,8 @@ function neonStorage(url: string): Storage {
         async updateRating(id, rating) { await q('UPDATE rankings SET rating=$1 WHERE id=$2', [rating, id]); },
         async createAccount(a) { const r = await q('INSERT INTO accounts (id,username,pass_hash,salt,created_at) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (username) DO NOTHING', [a.id, a.username, a.pass_hash, a.salt, a.created_at]); return r.rowCount === 1; },
         async getAccountByName(username) { const { rows } = await q<AccountRow>('SELECT id,username,pass_hash,salt,created_at FROM accounts WHERE username=$1', [username]); return rows[0] ? num(rows[0]) as AccountRow : null; },
+        async listAccounts() { const { rows } = await q<{ id: string; username: string }>('SELECT id, username FROM accounts'); return rows; },
+        async listPlayers() { const { rows } = await q<{ id: string; state: string; revision: number; updated_at: number }>('SELECT id, state, revision, updated_at FROM players'); return rows.map(r => ({ id: r.id, state: unpackState(r.state), revision: Number(r.revision), updated_at: Number(r.updated_at) })); },
         async createSession(token, accountId, expiresAt) { await q('INSERT INTO sessions (token,account_id,expires_at) VALUES ($1,$2,$3)', [token, accountId, expiresAt]); },
         async getSessionAccount(token, now) { const { rows } = await q<{ account_id: string }>('SELECT account_id FROM sessions WHERE token=$1 AND expires_at>$2', [token, now]); return rows[0]?.account_id ?? null; },
         async deleteSession(token) { await q('DELETE FROM sessions WHERE token=$1', [token]); },
@@ -184,6 +190,8 @@ function fileStorage(): Storage {
         updateRating: (id, rating) => tx(db => { if (db.rankings[id]) db.rankings[id].rating = rating; }),
         createAccount: a => tx(db => { if (Object.values(db.accounts).some(x => x.username === a.username)) return false; db.accounts[a.id] = a; return true; }),
         getAccountByName: username => tx(db => Object.values(db.accounts).find(x => x.username === username) || null),
+        listAccounts: () => tx(db => Object.values(db.accounts).map(a => ({ id: a.id, username: a.username }))),
+        listPlayers: () => tx(db => Object.entries(db.players).map(([id, p]) => ({ id, state: unpackState(p.state), revision: p.revision, updated_at: p.updated_at }))),
         createSession: (token, accountId, expiresAt) => tx(db => { db.sessions[token] = { account_id: accountId, expires_at: expiresAt }; }),
         getSessionAccount: (token, now) => tx(db => { const x = db.sessions[token]; return x && x.expires_at > now ? x.account_id : null; }),
         deleteSession: token => tx(db => { delete db.sessions[token]; }),

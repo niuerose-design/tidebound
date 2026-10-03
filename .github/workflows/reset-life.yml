@@ -1,0 +1,63 @@
+name: 이번 생 초기화
+
+# Actions 탭 → "이번 생 초기화" → Run workflow 로만 실행됩니다(자동 실행 없음).
+# 특정 유저의 레벨·골드·일반 장비·직업·능력치를 처음 상태로 되돌립니다. 환생 횟수·진주·연구·유물·도감은 그대로입니다.
+# 저장소 Settings → Secrets and variables → Actions 에 DATABASE_URL(Neon 접속 주소)이 있어야 합니다.
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: '낚시꾼 이름(채팅·랭킹에 보이는 이름). 아이디로 찾으려면 비워 두고 아래 칸에 입력'
+        type: string
+        required: false
+        default: ''
+      username:
+        description: '또는 로그인 아이디'
+        type: string
+        required: false
+        default: ''
+      slot:
+        description: '분신 슬롯 번호(아이디로 찾을 때만)'
+        type: choice
+        default: '1'
+        options: ['1', '2', '3']
+      apply:
+        description: '체크하면 실제로 저장합니다. 체크하지 않으면 미리 보기만 합니다.'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency: reset-life
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: 실행
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NAME: ${{ inputs.name }}
+          USERNAME_IN: ${{ inputs.username }}
+          SLOT: ${{ inputs.slot }}
+          APPLY: ${{ inputs.apply }}
+        shell: bash
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL 시크릿이 없습니다. Settings → Secrets and variables → Actions 에서 등록하세요."
+            exit 1
+          fi
+          args=()
+          if [ -n "$NAME" ]; then args+=(--name "$NAME"); elif [ -n "$USERNAME_IN" ]; then args+=("$USERNAME_IN" --slot "$SLOT"); else
+            echo "::error::낚시꾼 이름이나 로그인 아이디 중 하나를 입력하세요."; exit 1; fi
+          if [ "$APPLY" = "true" ]; then args+=(--yes); fi
+          node scripts/reset-life.mjs "${args[@]}"

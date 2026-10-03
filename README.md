@@ -35,6 +35,7 @@ pnpm dev               # http://localhost:5173
 - `node scripts/check-balance.mjs`, `check-progression-pace.mjs`, `check-active-routing.mjs`, `check-combat-depth.mjs`: 밸런스 점검
 - `node scripts/check-all-rounder.mjs`, `check-expedition.mjs`, `check-recovery.mjs`: 팔방 항해사 · 던전 도달 · 회복률 검증
 - `DATABASE_URL=... node scripts/clear-chat.mjs`: 채팅 기록 전부 삭제(베타 전 정리). 로컬은 `TIDEBOUND_DEV_DB` 경로를 씁니다
+- 운영 도구 웹 페이지 `/admin`: Vercel 환경 변수 `TIDEBOUND_ADMIN_KEY`(12자 이상)를 넣으면 켜집니다. 낚시꾼 이름·아이디로 찾아 이번 생 초기화를 미리 보기 → 적용. 같은 기능을 Actions 탭 '이번 생 초기화' 워크플로로도 실행할 수 있습니다(시크릿 `DATABASE_URL` 필요).
 - `DATABASE_URL=... node scripts/reset-life.mjs <아이디> [--slot 2] [--yes]` 또는 `... reset-life.mjs --name <낚시꾼 이름> [--yes]`: 특정 유저의 이번 생만 처음 상태로(환생 횟수·진주·연구·유물·도감 유지, `--yes` 없이는 미리 보기)
 - `DATABASE_URL=... node scripts/reset-data.mjs chat`: 채팅만 초기화. `... reset-data.mjs all --yes`: 계정 포함 전부 초기화(되돌릴 수 없음, `--yes` 없이는 미리 보기)
 - `node scripts/e2e-api.mjs <주소>`: 가입·로그인·게임·랭킹 API 흐름
