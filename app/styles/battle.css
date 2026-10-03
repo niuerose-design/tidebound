@@ -138,16 +138,19 @@
 .battle-feed-list{max-height:420px}
 .battle-feed-list p{grid-template-columns:32px 1fr;gap:9px;padding:9px 0;font-size:12px;line-height:1.6}
 .battle-feed-list p>span{font-size:10px}
-.battle-stage-list,.battle-dungeon-list{gap:6px;max-height:306px}
-.battle-stage-button,.battle-dungeon-button{gap:10px;padding:11px 10px}
+/* v26.7 낚시터·던전 목록을 촘촘하게(채팅 두 줄 구조에 맞춰 세로 폭 축소). */
+.battle-stage-list,.battle-dungeon-list{gap:3px;max-height:306px}
+.battle-stage-button,.battle-dungeon-button{gap:8px;padding:6px 9px}
 .battle-stage-index{width:27px;font-size:11px}
-.battle-stage-button strong,.battle-dungeon-button strong{font-size:13px}
-.battle-stage-button small,.battle-dungeon-button small{font-size:11px}
+.battle-stage-button strong,.battle-dungeon-button strong{font-size:12px}
+.battle-stage-button small,.battle-dungeon-button small{font-size:10px}
+.battle-stage-button>span:nth-child(2),.battle-dungeon-button>span:first-child{flex-direction:row;align-items:baseline;gap:7px}
+.battle-stage-button small,.battle-dungeon-button small{flex:none;white-space:nowrap}
 .battle-selected-dot{width:7px;height:7px}
 .battle-dungeon-wave{padding:4px 6px;font-size:10px}
 .battle-shortcut-grid{gap:8px}
 .battle-shortcut-grid button{padding:11px 7px;gap:6px;font-size:12px}
-@media(max-width:1500px){.battle-hud{grid-template-columns:248px minmax(0,1fr) 294px;gap:17px}.battle-rail-panel{padding:16px 14px}.battle-feed-list p{font-size:11px}.battle-stage-button,.battle-dungeon-button{padding:10px 8px}.battle-stage-button strong,.battle-dungeon-button strong{font-size:12px}.battle-stage-button small,.battle-dungeon-button small{font-size:10px}.battle-console .battle-scene{height:260px}.battle-console .scene-copy h2{font-size:29px}}
+@media(max-width:1500px){.battle-hud{grid-template-columns:248px minmax(0,1fr) 294px;gap:17px}.battle-rail-panel{padding:16px 14px}.battle-feed-list p{font-size:11px}.battle-stage-button,.battle-dungeon-button{padding:6px 8px}.battle-stage-button strong,.battle-dungeon-button strong{font-size:11px}.battle-stage-button small,.battle-dungeon-button small{font-size:10px}.battle-console .battle-scene{height:260px}.battle-console .scene-copy h2{font-size:29px}}
 @media(max-width:1180px){.battle-workspace{padding-left:22px;padding-right:22px}.battle-hud{grid-template-columns:236px minmax(0,1fr);gap:17px}.battle-utility-rail{gap:13px}.battle-rail-panel{padding:16px 14px}.battle-feed-list{max-height:190px}.battle-stage-list,.battle-dungeon-list{max-height:230px}}
 @media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console .battle-scene{height:420px}.battle-console .scene-copy h2{font-size:30px}.battle-console .scene-copy p{font-size:13px}.battle-rail-panel{padding:16px 14px}.battle-feed-list{max-height:220px}.battle-stage-list,.battle-dungeon-list{max-height:250px}.battle-shortcut-grid button{padding:12px 7px;font-size:12px}}
 
@@ -398,9 +401,11 @@
 .feed-tabs{margin-right:auto}
 .chat-panel{display:flex;flex-direction:column;gap:7px}
 .chat-list{max-height:420px;min-height:120px;overflow:auto;padding-right:3px;scrollbar-width:thin;scrollbar-color:#395454 transparent}
-.chat-line{display:grid;grid-template-columns:auto auto 1fr;gap:6px;align-items:baseline;margin:0;padding:5px 0;border-bottom:1px solid #263f42;font-size:11px;line-height:1.5;color:#c2d3cd}
+/* v26.7 두 줄 구조: 윗줄 칭호·이름·시간, 아랫줄 본문 전체 폭. 긴 이름이 본문 정렬을 흐트러뜨리지 않습니다. */
+.chat-line{display:flex;flex-direction:column;gap:1px;margin:0;padding:5px 0;border-bottom:1px solid #263f42;font-size:11px;line-height:1.5;color:#c2d3cd}
+.chat-head{display:flex;align-items:baseline;gap:6px;min-width:0}
 .chat-line:last-child{border-bottom:0}.chat-line.self .chat-name{color:#a4e9ba}
-.chat-time{font:9px/1.5 monospace;color:#5d7e7e}.chat-name{color:#e8d39a;max-width:46%;overflow-wrap:anywhere;word-break:break-all}.chat-text{word-break:break-word;overflow-wrap:anywhere}
+.chat-time{font:9px/1.5 monospace;color:#5d7e7e;flex:none}.chat-name{color:#e8d39a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.chat-text{word-break:break-word;overflow-wrap:anywhere}
 .chat-empty{display:flex;align-items:center;gap:6px;color:#718c90;font-size:11px;padding:18px 0}
 .chat-error{font-size:11px;color:#e39b8d;margin:0}
 .chat-form{display:flex;gap:6px}.chat-form input{flex:1;min-width:0;background:#0e2026;border:1px solid #9ab4b544;color:#e1eeeb;border-radius:8px;padding:8px 10px;font:inherit;font-size:12px}.chat-form input:focus{outline:none;border-color:#8fd9b9}.chat-form button{padding:6px 10px}
@@ -430,12 +435,17 @@
 .battle-console>.log-panel{flex:1;display:flex;flex-direction:column;min-height:0;margin-bottom:0}
 .battle-console>.log-panel:not(.folded) .log-list{flex:1 1 0;height:auto;min-height:120px}
 /* v25.19 전투 기록·채팅은 내용만큼만(최대 9줄 정도), 남는 높이는 낚시터·던전 목록이 채워 빈 공간이 없게 합니다. */
-.battle-utility-rail>.battle-feed{flex:none}
-.battle-utility-rail>.battle-feed .battle-feed-list{max-height:300px}
-.battle-utility-rail>.battle-feed .chat-list{max-height:260px;min-height:0}
-.battle-utility-rail>.battle-selector-panel{flex:1;display:flex;flex-direction:column;min-height:0}
-.battle-utility-rail>.battle-selector-panel #place-panel{flex:1;display:flex;flex-direction:column;min-height:0}
-.battle-utility-rail>.battle-selector-panel .battle-stage-list,.battle-utility-rail>.battle-selector-panel .battle-dungeon-list{flex:1 1 0;min-height:200px;max-height:none}
+/* v26.7 전투 기록·채팅 패널이 남는 세로 공간을 채워 오른쪽 열 하단이 가운데 열과 맞습니다. */
+.battle-utility-rail>.battle-feed{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.battle-utility-rail>.battle-feed .battle-feed-list{flex:1 1 0;max-height:none;min-height:220px}
+.battle-utility-rail>.battle-feed .chat-panel,.battle-utility-rail>.battle-feed .chat-feed{flex:1 1 auto;min-height:0}
+.battle-utility-rail>.battle-feed .chat-list{flex:1 1 0;max-height:none;min-height:180px}
+.battle-utility-rail>.battle-feed .chat-list{display:flex;flex-direction:column}
+.battle-utility-rail>.battle-feed .chat-list>:first-child{margin-top:auto}
+/* v26.7 선택 패널은 열 높이에 맞춰 늘리지 않고 목록만큼만 차지합니다. */
+.battle-utility-rail>.battle-selector-panel{flex:none;display:flex;flex-direction:column;min-height:0}
+.battle-utility-rail>.battle-selector-panel #place-panel{display:flex;flex-direction:column;min-height:0}
+.battle-utility-rail>.battle-selector-panel .battle-stage-list,.battle-utility-rail>.battle-selector-panel .battle-dungeon-list{min-height:0;max-height:330px}
 /* 왼쪽 캐릭터 열을 촘촘하게: 전체 높이를 줄입니다. */
 .battle-character-column .player-panel>.section-title{margin-bottom:12px}
 .battle-character-column .player-avatar{width:58px;height:58px;margin-bottom:9px;box-shadow:0 0 0 5px #85774726}
