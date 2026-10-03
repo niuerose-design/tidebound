@@ -23,7 +23,11 @@ export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 export const dungeonTier = (id: string, abyssDepth: number) => id === 'abyss' ? abyssDepth + 2 : 0;
 /** 잠든 닻 봉인 중에는 일반 낚시터 해역 난이도가 0으로 고정됩니다. */
 export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1) : s.vows?.seal ? 0 : (s.tide || 0);
+/** 해역 난이도 1단계당 포획 숙련 +30%. */
+export const TIDE_MASTERY_PER_TIER = .3;
 export const tierReward = (tier: number) => 1 + tier * .5;
+/** v27.21 해역 난이도별 포획 숙련 배율. 적이 커져 시간당 포획이 줄어드는 만큼을 숙련으로 돌려줍니다. */
+export const tierMastery = (tier: number) => 1 + tier * TIDE_MASTERY_PER_TIER;
 /** 포획 보상(골드 배율 적용 전). 전투 보상과 도감 화면 표시가 같은 식을 씁니다. */
 export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: number }, tier: number, boss = false) {
     const mult = boss ? MONSTER_TUNING.bossRewardMultiplier : 1;
