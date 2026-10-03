@@ -596,6 +596,14 @@
 .tide-fx-bone .tide-fx-trail{width:90px;height:3px;rotate:30deg;border-radius:2px;box-shadow:0 0 8px var(--fx)}.tide-fx-bone .tide-fx-trail::after{content:'';position:absolute;inset:0;rotate:-60deg;background:inherit;box-shadow:inherit}.tide-fx-bone .tide-fx-ring{border-style:double;border-width:4px}.tide-fx-bone .tide-fx-fragment{animation-name:tideFragmentUp;animation-duration:.85s}
 /* 시간: 시계 테두리처럼 점선 고리가 돌고 파편은 제자리에서 깜빡임 */
 .tide-fx-time .tide-fx-trail{display:none}.tide-fx-time .tide-fx-ring{border-style:dashed;border-width:2px;width:76px;height:76px;left:-38px;top:-38px;animation-name:tideSpin;animation-duration:.9s}.tide-fx-time .tide-fx-fragment{animation-name:tideTwinkle;animation-duration:.9s;font-size:18px}
+/* v27.22 상태이상 피격: 상태마다 다른 움직임 */
+.tide-fx-stun .tide-fx-fragment{animation-name:tideTwinkle;animation-duration:.8s;font-size:18px}.tide-fx-stun .tide-fx-ring{border-style:dotted}
+.tide-fx-bleed .tide-fx-fragment{animation-name:tideFragmentDown;animation-duration:1s}.tide-fx-bleed .tide-fx-trail{display:none}
+.tide-fx-poison .tide-fx-fragment{animation-name:tideFragmentUp;animation-duration:1.1s;font-size:13px}.tide-fx-poison .tide-fx-trail{display:none}
+.tide-fx-silence .tide-fx-fragment{animation-name:tideTwinkle;animation-duration:.7s;font-size:17px}.tide-fx-silence .tide-fx-ring{border-style:dashed;border-width:2px}
+.tide-fx-slow .tide-fx-fragment{animation-name:tideFragmentDown;animation-duration:1.5s;font-size:15px}.tide-fx-slow .tide-fx-ring{animation-duration:1.4s}
+.tide-fx-weaken .tide-fx-fragment{animation-name:tideFragmentDown;animation-duration:.9s}.tide-fx-weaken .tide-fx-ring{opacity:.5}
+.tide-fx-haste .tide-fx-fragment{animation-name:tideFragmentUp;animation-duration:.5s}
 /* 인(玄): 글자 파편 */
 .tide-fx-glyph .tide-fx-fragment{font-family:Georgia,'Noto Serif KR',serif;font-size:22px}
 @keyframes tideFragmentUp{0%,12%{opacity:0;transform:translate(0,0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translate(calc(var(--fx-x) * .5),calc(-40px + var(--fx-y) * .3)) rotate(var(--fx-rotate)) scale(.6)}}

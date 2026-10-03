@@ -9,6 +9,7 @@ import { victoryMastery, researchMastery } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize } from '../data/variants';
+import { MIMIC, rollMimicMastery } from '../data/mimic';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier } from '../data/world';
@@ -109,14 +110,17 @@ export function spawn(s: State, rng: () => number) {
     const finalWave = !!dungeon && s.dungeon!.wave === dungeon.fish.length - 1;
     const tier = encounterTier(s);
     const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
-    const id = dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
-    const f = FISH.find(x => x.id === id)!;
+    // v27.22 숙련의 미믹: 낚시터 입질마다 아주 드물게. 그 낚시터에서 가장 강한 어종의 몸집을 빌립니다.
+    const mimic = !dungeon && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills && rng() < MIMIC.chance;
+    const id = mimic ? MIMIC.id : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
+    const top = mimic ? [...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0] : undefined;
+    const f = mimic ? { ...FISH.find(x => x.id === MIMIC.id)!, level: top!.level, hp: Math.round(top!.hp * MIMIC.hp), attack: Math.round(top!.attack * MIMIC.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : FISH.find(x => x.id === id)!;
     const boss = finalWave;
     const foe = scaledEnemyStats(f, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
     const { exp, gold } = catchReward(f, tier, boss);
     // v25.19 변종: 어종을 10회 이상 포획한 낚시터 입질마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
     let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
-    if (!dungeon && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
+    if (!dungeon && !mimic && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
         const chances = variantChances(s);
         let roll = rng();
         for (const v of VARIANTS) { roll -= chances[v.id]; if (roll < 0) { variant = v.id; break; } }
@@ -161,16 +165,20 @@ export function reward(s: State, rng: () => number) {
     const gold = perFish * size + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     s.kills += size;
+    // v27.22 숙련의 미믹: 로또 숙련을 이번 포획 숙련에 더합니다(직업·장착 스킬 모두).
+    let mimicBonus = 0;
+    if (e.id === MIMIC.id) { const t = rollMimicMastery(rng); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 미믹 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
+    const practiceTotal = practice + mimicBonus;
     const jobTargets = vocationTargets(jobMasteryTarget(jobById(s.job)!));
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
-    s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practice;
+    s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practiceTotal;
     const newJobRank = thresholdRank(s.jobMastery[s.job], jobTargets);
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {
         if (canUse(s, id)) {
             const sk = skillById(id)!, targets = skillRefinementTargets(sk);
             const before = thresholdRank(s.skillPractice[id] || 0, targets);
-            s.skillPractice[id] = (s.skillPractice[id] || 0) + practice;
+            s.skillPractice[id] = (s.skillPractice[id] || 0) + practiceTotal;
             const after = thresholdRank(s.skillPractice[id], targets);
             if (after > before) addLog(s, `${sk.name} 연마 ${after}/${targets.length}단계 달성 · 직접 피해·양수 패시브 누적 ${refinementBonusLabel(after)}`, 'skill');
         }

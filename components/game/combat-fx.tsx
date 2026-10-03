@@ -49,7 +49,7 @@ export function useCombatFx(logs: Log[], playerName: string) {
 function fxStyle(delay: number, extra: Record<string, string | number> = {}): CSSProperties {
     return { '--fx-delay': `${delay}ms`, ...extra } as CSSProperties;
 }
-import type { CombatFxVariant } from '@/game/systems/combat-feedback';
+import type { CombatFxVariant, CombatFxKind } from '@/game/systems/combat-feedback';
 /** v25.20 갈래별 파편 글자. 궤적·색은 battle.css의 .tide-fx-<갈래>가 맡습니다. */
 const glyphs: Record<CombatFxVariant, string[]> = {
     pierce: ['➤', '·', '─', '·', '➤', '─'], slash: ['╱', '╲', '╱', '·', '╲', '·'], quake: ['▲', '▪', '▲', '▪', '▲', '▪'], bite: ['◣', '◥', '◣', '·', '◥', '·'],
@@ -59,15 +59,20 @@ const glyphs: Record<CombatFxVariant, string[]> = {
     venom: ['●', '·', '◌', '●', '·', '◌'], ink: ['●', '◍', '·', '●', '·', '◍'], bone: ['☠', '·', '✕', '·', '☠', '✕'], time: ['◴', '◷', '◶', '◵', '·', '◴'],
 };
 
-/** 4차는 9개, 5차는 12개 파편(바깥 고리 추가). */
-const fragmentsFor = (fx: CombatFx) => { const base = glyphs[fx.variant]; const n = (fx.tier || 0) >= 5 ? 12 : (fx.tier || 0) >= 4 ? 9 : 6; return Array.from({ length: n }, (_, i) => base[i % base.length]); };
+/** v27.22 상태이상 피격 전용 파편: 기절은 별, 출혈은 핏방울, 중독은 거품, 침묵은 지워진 음표, 감속은 모래시계, 약화는 아래 화살, 가속은 위 화살. */
+const STATUS_GLYPHS: Partial<Record<CombatFxKind, string[]>> = {
+    stun: ['★', '·', '✶', '·', '★', '✶'], bleed: ['▾', '·', '●', '▾', '·', '●'], poison: ['●', '◌', '·', '●', '·', '◌'],
+    silence: ['♪', '✕', '·', '♪', '✕', '·'], slow: ['⧗', '·', '≈', '⧗', '·', '≈'], weaken: ['▽', '·', '▽', '·', '▽', '·'], haste: ['▲', '·', '▲', '·', '▲', '·'],
+};
+/** 4차는 9개, 5차는 12개 파편(바깥 고리 추가). 상태이상 피격은 상태별 파편을 씁니다. */
+const fragmentsFor = (fx: CombatFx) => { const base = STATUS_GLYPHS[fx.kind] ?? glyphs[fx.variant]; const n = (fx.tier || 0) >= 5 ? 12 : (fx.tier || 0) >= 4 ? 9 : 6; return Array.from({ length: n }, (_, i) => base[i % base.length]); };
 /** 상대 카드 위의 연출. 기본 공격은 체력바 숫자만, 스킬은 궤적·충격파·파편·섬광, 天은 일곱 글자 고리까지 띄웁니다. ‘×N 연속’은 연속으로 행동한 쪽 카드에 붙습니다. */
 export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; combo?: CombatCombo | null }) {
     return <div className="tide-fx-layer" aria-hidden="true">{combo && <div key={`combo-${effect[0]?.id}`} className={`tide-fx-combo tide-fx-combo-${combo.actor}`}><small>{combo.actor === 'player' ? '내 연속 행동' : '상대 연속 행동'}</small><strong>×{combo.count.toLocaleString()}</strong> 연속</div>}{effect.filter(fx => !fx.basic && fx.status !== '행동 불가').map(fx => fx.actor === 'enemy' ? <div key={fx.id} className={`monster-skill-cue monster-skill-${fx.kind}`} style={fxStyle(fx.delay)}><small>몬스터 스킬</small><strong>{fx.title}</strong></div> : <div key={fx.id} className={`tide-fx tide-fx-${fx.kind} tide-fx-${fx.variant} tide-fx-target-${fx.target} ${fx.critical ? 'critical' : ''} ${fx.finale ? 'finale' : ''} ${(fx.tier || 0) >= 4 ? `tier-${Math.min(5, fx.tier!)}` : ''}`} style={fxStyle(fx.delay)}>
         <i className="tide-fx-flash"/>{(fx.tier || 0) >= 4 && <i className="tide-fx-big"/>}<i className="tide-fx-trail"/>{fx.gamble === undefined && <><i className="tide-fx-ring"/><i className="tide-fx-ring tide-fx-shock"/></>}
         {fx.kind !== 'miss' && fragmentsFor(fx).map((glyph, i, all) => <i key={i} className="tide-fx-fragment" style={fxStyle(fx.delay + (i >= 6 ? 90 : 0), { '--fx-x': `${Math.cos(i * 2 * Math.PI / all.length) * (i >= 6 ? 128 : 88)}px`, '--fx-y': `${Math.sin(i * 2 * Math.PI / all.length) * (i >= 6 ? 72 : 52)}px`, '--fx-rotate': `${i * 41}deg` })}>{glyph}</i>)}
         {fx.finale && <i className="tide-fx-heaven">天</i>}
-        <div className="tide-fx-caption"><strong>{fx.title}</strong></div>
+        <div className="tide-fx-caption"><strong>{fx.title}</strong>{fx.status && STATUS_GLYPHS[fx.kind] && <small>{fx.status}</small>}</div>
     </div>)}</div>;
 }
 

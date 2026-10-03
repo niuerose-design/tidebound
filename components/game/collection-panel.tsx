@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { SKILLS } from '@/game/data/skills';
 import { FISH, STAGES } from '@/game/data/world';
+import { MIMIC } from '@/game/data/mimic';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
 import { PROGRESSION, STAT_LABELS, statDisplay, percent } from '@/game/data/progression';
@@ -65,7 +66,15 @@ export function Collection({ s, send, busy }: PanelProps) {
     <TabsTrigger value="items">물건도감</TabsTrigger>
     <TabsTrigger value="bonus">연구 보너스</TabsTrigger>
     </TabsList>
-    <TabsContent value="fish">{STAGES.map(st => <details className="book-section book-region" key={st.id} open={st.id === s.stage}>
+    <TabsContent value="fish">{(() => { const n = s.book[MIMIC.id] || 0; return <details className="book-section book-region book-special" open={n > 0}>
+        <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>특별 도감 <small>{n ? `숙련의 미믹 ${n}회 포획` : '아직 만나지 못함'}</small></h2></summary>
+        <div className="book-grid"><article className={`panel book-card ${!n ? 'undiscovered' : ''}`}>
+            <div className="book-icon"><FishArt id={MIMIC.id} size={56}/><span>{n ? `${n}회 포획` : '미발견'}</span></div>
+            <h3>{n ? '숙련의 미믹' : '???'} <small className="fish-rarity legendary">특별</small></h3>
+            <p>{n ? FISH.find(f => f.id === MIMIC.id)!.lore : '모든 낚시터에서 아주 드물게 나타난다고 합니다.'}</p>
+            <div className="fish-trait"><strong>숙련 로또</strong><span>잡으면 현재 직업과 장착 스킬의 숙련이 한꺼번에 오릅니다: {MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()} (${Math.round(t.chance * 100)}%)`).join(' · ')}.</span><span>낚시터 입질마다 {(MIMIC.chance * 100).toFixed(1)}% · Lv.{MIMIC.minLevel}·누적 포획 {MIMIC.minKills}마리부터 · 던전 제외 · 그 낚시터에서 가장 강한 어종의 몸집(체력 ×{MIMIC.hp}, 공격 ×{MIMIC.attack}).</span></div>
+        </article></div>
+    </details>; })()}{STAGES.map(st => <details className="book-section book-region" key={st.id} open={st.id === s.stage}>
         <summary className="section-title">
         <h2><ChevronDown size={18} className="book-region-chevron"/>{st.name} <small>{st.fish.filter(id => (s.book[id] || 0) >= bookComplete).length} / {st.fish.length}종 완성</small></h2>
         <RegionProgress s={s} id={st.id}/>
