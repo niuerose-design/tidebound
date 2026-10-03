@@ -7,7 +7,7 @@ import type { Skill } from '../types';
  * - 성해 기사(2차)에서 끊기던 '복합 흡혈 기사' 갈래를 5차까지: 성해 성기사 → 성해 대성기사 → 빛의 바다. (물리+마법)÷2 흡혈기와 두 공격·체력 패시브.
  * - 새 계보 '소금 파수꾼'(1차~5차): 마법 방어 전문. 마법 방어 비례 피해(scaling 'resist', 결계 친화도 적용)와 침묵·약화·기절을 잇습니다.
  *   방어 계열이 물리 방어·반격·회복에 치우쳐 있던 것을 마법 방어 축으로 넓힙니다.
- * 수치는 같은 차수의 방어 직업(심연의 철벽·염수 가시성채·산호 요새·심해의 성벽)과 check-job-balance.mjs 중앙값을 기준으로 맞췄습니다.
+ * 수치는 같은 차수의 방어 직업(쇠닻 철벽·염수 가시성채·산호 요새·해구 성벽)과 check-job-balance.mjs 중앙값을 기준으로 맞췄습니다.
  */
 type NewJob = Omit<Job, 'masteryTarget' | 'masteryBoost'> & Partial<Pick<Job, 'masteryTarget' | 'masteryBoost'>>;
 const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0 };
@@ -27,7 +27,7 @@ export const DEFENSE_JOBS: NewJob[] = [
     { id: 'saltWarden', name: '소금 파수꾼', title: '소금은 저주를 막는다', desc: '마법 방어를 실어 치는 소금 결계와 염장 피부를 익히는 마법 방어 입문 직업입니다.', ...neutral, bonus: { magic: 8, hp: 30, resist: 6 }, tier: 1, level: 10, requires: { wis: 12, vit: 10 }, mastery: 0, role: '마법 방어 입문', tree: 'defense', masteryTarget: 400, masteryBoost: .08 },
     { id: 'stillWarden', name: '정적의 파수꾼', title: '소리가 닿지 않는 결계', desc: '정적 계보의 2차 직업입니다. 정적 파문은 마법 방어에 비례해 때리고 상대를 침묵시킵니다. 정적의 갑옷으로 마법 방어와 물리 방어를 받칩니다.', ...neutral, bonus: { magic: 10, hp: 110, defense: 8, resist: 20 }, tier: 2, level: 25, parent: 'saltWarden', requires: { wis: 28, vit: 24 }, mastery: 75, requiresSkillMastery: { saltWard: 2 }, role: '마법 방어·침묵', tree: 'defense', masteryTarget: 3000, masteryBoost: .18 },
     { id: 'wardKeeper', name: '결계 수호자', title: '겹겹이 두른 결계', desc: '결계를 깨뜨려 약화를 거는 결계 파쇄와 겹결계 패시브로 마법에 끄떡없는 3차 직업입니다.', ...neutral, bonus: { magic: 20, hp: 220, defense: 18, resist: 40 }, tier: 3, level: 40, parent: 'stillWarden', requires: { wis: 42, vit: 40 }, mastery: 150, requiresSkillMastery: { stillRipple: 3 }, role: '마법 방어·약화', tree: 'defense', masteryTarget: 9500, masteryBoost: .3 },
-    { id: 'abyssWarder', name: '심해 결계사', title: '심연의 저주도 결계 앞에 멎는다', desc: '심해 결계진으로 기절시키고 심해의 결계 패시브로 마법 방어·반격을 올리는 환생 후 4차 직업입니다.', ...neutral, magic: 1.2, hp: 1.4, defense: 1.3, resist: 1.75, ...T4, parent: 'wardKeeper', requires: { wis: 56, vit: 50 }, requiresSkillMastery: { wardBurst: 3 }, role: '마법 방어·기절', tree: 'defense' },
+    { id: 'abyssWarder', name: '열수 결계사', title: '심연의 저주도 결계 앞에 멎는다', desc: '열수 결계진으로 기절시키고 열수 결계 패시브로 마법 방어·반격을 올리는 환생 후 4차 직업입니다.', ...neutral, magic: 1.2, hp: 1.4, defense: 1.3, resist: 1.75, ...T4, parent: 'wardKeeper', requires: { wis: 56, vit: 50 }, requiresSkillMastery: { wardBurst: 3 }, role: '마법 방어·기절', tree: 'defense' },
     { id: 'wardDeity', name: '결계의 신', title: '바다 전체를 결계로 감싼다', desc: '소금 파수꾼 계보의 5차 직업입니다. 신의 결계로 상대를 침묵시키고, 신들의 결계로 마법 방어와 체력을 크게 올립니다. 천년 결계는 대기만성 패시브라 처음에는 4차와 비슷하고, 숙련이 쌓일수록 강해집니다.', ...neutral, magic: 1.12, hp: 1.32, defense: 1.22, resist: 1.6, ...T5, parent: 'abyssWarder', penalties: { speed: -6 }, requires: { wis: 68, vit: 62 }, requiresSkillMastery: { abyssWardArray: 3 }, role: '마법 방어 최상위·대기만성', tree: 'defense' },
 ];
 
@@ -37,7 +37,7 @@ const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
 const dual = { damageType: 'split' as const, scaling: 'dual' as const };
 const M3 = [1500, 7000, 25000, 60000], M4 = [2500, 12000, 40000, 100000], M5 = [4000, 18000, 60000, 150000];
-/** 대기만성: 숙련 10,000 / 100,000 / 500,000. 단계마다 AP가 줄고 보상이 크게 오릅니다(심해의 성벽 억겁의 산호와 같은 규칙). */
+/** 대기만성: 숙련 10,000 / 100,000 / 500,000. 단계마다 AP가 줄고 보상이 크게 오릅니다(해구 성벽 억겁의 산호와 같은 규칙). */
 const LATE = [10000, 100000, 500000];
 const lateBloomer = { masteryMilestones: LATE, rankEffects: { bonusScale: 1.6, apReduction: 2 } };
 
@@ -65,8 +65,8 @@ export const DEFENSE_SKILLS: Skill[] = [
     { ...P, id: 'stillArmor', name: '정적의 갑옷', desc: '마법 방어·물리 방어·턴당 마나 회복이 오릅니다.', level: 25, job: 'stillWarden', cost: 2, bonus: { resist: 30, defense: 10, manaRegen: 1 , swarmFind: 0.5, thorns: 0.2} },
     { ...A, ...magic, id: 'wardBurst', name: '결계 파쇄', desc: '', level: 40, job: 'wardKeeper', chance: .5, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 16, scaling: 'resist', scalingRatio: 2.6, effect: 'weaken', masteryMilestones: M3 },
     { ...P, id: 'layeredWard', name: '겹결계', desc: '마법 방어·체력·물리 방어가 오릅니다.', level: 40, job: 'wardKeeper', cost: 3, bonus: { resist: 50, hp: 200, defense: 20 , swarmFind: 0.8, thorns: 0.3}, masteryMilestones: M3 },
-    { ...A, ...magic, id: 'abyssWardArray', name: '심해 결계진', desc: '', level: 55, job: 'abyssWarder', chance: .5, cooldown: 4, multiplier: 2.2, cost: 5, manaCost: 22, scaling: 'resist', scalingRatio: 3.4, effect: 'stun', masteryMilestones: M4 },
-    { ...P, id: 'deepWard', name: '심해의 결계', desc: '마법 방어·체력·물리 방어·반격이 오릅니다.', level: 55, job: 'abyssWarder', cost: 3, bonus: { resist: 70, hp: 280, defense: 35, thorns: .3 , swarmFind: 0.6}, masteryMilestones: M4 },
+    { ...A, ...magic, id: 'abyssWardArray', name: '열수 결계진', desc: '', level: 55, job: 'abyssWarder', chance: .5, cooldown: 4, multiplier: 2.2, cost: 5, manaCost: 22, scaling: 'resist', scalingRatio: 3.4, effect: 'stun', masteryMilestones: M4 },
+    { ...P, id: 'deepWard', name: '열수 결계', desc: '마법 방어·체력·물리 방어·반격이 오릅니다.', level: 55, job: 'abyssWarder', cost: 3, bonus: { resist: 70, hp: 280, defense: 35, thorns: .3 , swarmFind: 0.6}, masteryMilestones: M4 },
     { ...A, ...magic, id: 'divineWard', name: '신의 결계', desc: '', level: 70, job: 'wardDeity', chance: .5, cooldown: 5, multiplier: 2.8, cost: 6, manaCost: 30, scaling: 'resist', scalingRatio: 4.2, effect: 'silence', masteryMilestones: M5 },
     { ...P, id: 'wardOfGods', name: '신들의 결계', desc: '마법 방어·체력·물리 방어·흡혈이 크게 오릅니다.', level: 70, job: 'wardDeity', cost: 3, bonus: { resist: 110, hp: 420, defense: 50, lifesteal: .02 , thorns: .35, swarmFind: 1.2}, masteryMilestones: M5 },
     { ...P, ...lateBloomer, id: 'millenniumWard', name: '천년 결계', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 마법 방어·체력이 크게 오릅니다.', level: 70, job: 'wardDeity', cost: 8, bonus: { resist: 20, hp: 150 },
@@ -78,7 +78,7 @@ export const DEFENSE_BALANCE: Record<string, Partial<Skill>> = Object.fromEntrie
 export const DEFENSE_HINTS: Record<string, string> = {
     bellWarden: '종거북이 종소리 충돌을 두 번째 단계까지 익혔을 때.', eonTurtle: '대종 울림을 끝까지 익힌 수호귀가 한 번의 생을 넘길 때.', worldTurtle: '해일 종타를 끝까지 익히고 두 번의 생을 건넜을 때.',
     holyKnight: '성해 기사가 두 바다의 서약을 두 번째 단계까지 익혔을 때.', holyCommander: '서약의 일격을 끝까지 익힌 성기사가 한 번의 생을 넘길 때.', lightOcean: '빛의 작살을 끝까지 익히고 두 번의 생을 건넜을 때.',
-    saltWarden: '정신과 체질을 함께 다진 낚시꾼에게.', stillWarden: '소금 결계를 두 번째 단계까지 익혔을 때.', wardKeeper: '정적 파문을 끝까지 익혔을 때.', abyssWarder: '결계 파쇄를 끝까지 익힌 수호자가 한 번의 생을 넘길 때.', wardDeity: '심해 결계진을 끝까지 익히고 두 번의 생을 건넜을 때.',
+    saltWarden: '정신과 체질을 함께 다진 낚시꾼에게.', stillWarden: '소금 결계를 두 번째 단계까지 익혔을 때.', wardKeeper: '정적 파문을 끝까지 익혔을 때.', abyssWarder: '결계 파쇄를 끝까지 익힌 수호자가 한 번의 생을 넘길 때.', wardDeity: '열수 결계진을 끝까지 익히고 두 번의 생을 건넜을 때.',
 };
 /** 산호 수호자(1차)에서 갈라지는 두 갈래는 직업 수가 많아져 계보를 따로 묶습니다(1차는 산호 수호자 공통). */
 export const DEFENSE_LINEAGES = [
