@@ -287,3 +287,13 @@ test('v27.25 a closed dungeon refuses entry, stops repeats, and evicts a save al
   const g=newState(0);g.level=60;g.rebirths=3;act(g,{type:'dungeon',id:'grotto'},0);assert.equal(g.dungeon.id,'grotto','other dungeons stay open');
  } finally { CLOSED_DUNGEONS.delete('abyss'); }
 });
+
+test('v27.26 restartLife resets this life only: rebirths, pearls, relics, research and codex stay',async()=>{
+ const {restartLife}=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/actions/lifecycle');
+ const s=newState(0);s.level=55;s.rebirths=4;s.pearls=77;s.gold=99999;s.job='harpoon';s.unlockedJobs.push('harpoon');s.attributes.str=40;s.permanent.ap=2;s.book.minnow=12;s.running=true;s.dungeon={id:'grotto',wave:2};
+ s.inventory=[{id:'r',name:'윤회의 낚싯대',slot:'rod',power:45,rarity:3,level:1,relic:'memoryRod',locked:true},{id:'n',name:'x',slot:'coat',power:10,rarity:1,level:40}];
+ restartLife(s,1000);
+ assert.equal(s.level,1);assert.equal(s.job,'fisher');assert.equal(s.attributes.str,0);assert.equal(s.dungeon,null);assert.equal(s.running,false);
+ assert.equal(s.rebirths,4);assert.equal(s.pearls,77);assert.equal(s.permanent.ap,2);assert.equal(s.book.minnow,12);
+ assert.deepEqual(s.inventory.map(i=>i.id),['r'],'only relics survive');assert.ok(s.logs.some(l=>l.text.includes('운영 조치')));
+});
