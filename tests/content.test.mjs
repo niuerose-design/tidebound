@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH} from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -205,4 +205,11 @@ test('v27.13 batch appraisal: 5 or 10 at once, all-or-nothing on gold and bag ro
  const a=newState(0),b=newState(0);a.gold=b.gold=100000;const seqA=[.2,.7,.1,.9,.3,.4,.6,.8,.05,.5],seqB=[...seqA];
  act(a,{type:'gamble',id:'coat',value:'1'},0,()=>seqA.shift()??.5);act(b,{type:'gamble',id:'coat'},0,()=>seqB.shift()??.5);
  assert.deepEqual({...a.inventory[0],id:0},{...b.inventory[0],id:0},'value 1 equals the old single appraisal');
+});
+
+test('v27.14 skill fx overrides name real skills and win over the id rules',()=>{
+ for(const id of Object.keys(SKILL_FX)) assert.ok(SKILLS.some(x=>x.id===id),`stale fx id ${id}`);
+ assert.equal(fxVariantOf('heavenlyDice',false),'gold');assert.equal(fxVariantOf('rapidJab',false),'pierce');assert.equal(fxVariantOf('timeMachine',false),'frost');
+ assert.equal(fxVariantOf('fireball',true),'fire','id rules still apply without an override');assert.equal(fxVariantOf(undefined,true),'arcane');
+ const actives=SKILLS.filter(x=>x.type==='active');assert.ok(actives.every(x=>typeof fxVariantOf(x.id,x.damageType==='magic',x.effect)==='string'));
 });

@@ -1,4 +1,5 @@
 import { SKILLS } from '../data/skills';
+import { SKILL_FX } from '../data/skill-fx';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { BALANCE } from '../data/balance';
 import { jobById } from '../data/classes';
@@ -12,6 +13,8 @@ export type CombatFxVariant = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | '
 export function fxTierOf(id: string | undefined) { const sk = id ? SKILLS.find(x => x.id === id) : undefined; return sk?.job ? jobById(sk.job)?.tier || 0 : 0; }
 export function fxVariantOf(id: string | undefined, magical: boolean, effect?: string): CombatFxVariant {
     if (!id) return magical ? 'arcane' : 'impact';
+    // v27.14 스킬별 지정이 있으면 그것을 먼저 씁니다.
+    if (SKILL_FX[id]) return SKILL_FX[id];
     const rules: [RegExp, CombatFxVariant][] = [
         [/^glyph|^foeSilence$/, 'glyph'],
         [/electric|thunder|storm(?!Chant)|spark|shock|lightning|sigil|psalm/i, 'lightning'],
