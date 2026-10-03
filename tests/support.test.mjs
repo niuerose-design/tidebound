@@ -150,7 +150,8 @@ test('v26.6 dice: luck lane rolls more dice with more luck; the highest face map
 
 test('v26.5 focus hunting refuses a fish gated behind a higher sea difficulty instead of silently going random', async () => {
     const { act } = await import('./harness.mjs');
-    const s = newState(0); s.level = 30; act(s, { type: 'stage', id: 'reef' }, 0);
-    act(s, { type: 'target', id: 'barracuda' }, 0); assert.equal(s.target, 'barracuda');
-    assert.throws(() => act(s, { type: 'target', id: 'stormBarracuda' }, 0), /난이도 10/);
+    const s = newState(0); s.level = 40; s.rebirths = 1; act(s, { type: 'stage', id: 'moon' }, 0);
+    act(s, { type: 'target', id: 'moonfish' }, 0); assert.equal(s.target, 'moonfish');
+    assert.throws(() => act(s, { type: 'target', id: 'eclipseMoonfish' }, 0), /난이도 20/);
+    const reef = newState(0); reef.level = 30; act(reef, { type: 'stage', id: 'reef' }, 0); act(reef, { type: 'target', id: 'stormBarracuda' }, 0); assert.equal(reef.target, 'stormBarracuda', 'v26.6 폭풍 바라쿠다는 조건 없이 저격 가능');
 });
