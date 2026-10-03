@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 
-type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; inDungeon: boolean; revision: number; updatedAt: number };
+type AdminSp = { have: number; research: { name: string; sp: number; claimed: boolean }[]; spentSkills: { name: string; sp: number }[]; limitBreaks: { name: string; sp: number }[]; logs: string[] };
+type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number };
 type Preview = { before: AdminPlayer; after: AdminPlayer };
 type EventRow = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; live: boolean; disabled?: boolean };
 type EventList = { code: EventRow[]; extra: EventRow[]; banner: string };
@@ -12,13 +13,28 @@ const isoToKst = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISO
 const when = (e: EventRow) => `${isoToKst(e.from).replace('T', ' ')} ~ ${isoToKst(e.until).replace('T', ' ')} (한국 시간)`;
 const mults = (e: EventRow) => MULTS.filter(([k]) => (e[k] ?? 1) !== 1).map(([k, label]) => `${label} ×${e[k]}`).join(' · ') || '배율 없음(공지)';
 const field = { padding: 8, borderRadius: 6, border: '1px solid #3b5458', background: '#0d1a1e', color: '#e6f1ee' } as const;
-const line = (p: AdminPlayer) => `${p.name} · Lv.${p.level} ${p.job} · 환생 ${p.rebirths}회 · 진주 ${p.pearls} · 골드 ${p.gold.toLocaleString()}${p.inDungeon ? ' · 던전 진행 중' : ''}`;
+const sum = (xs: { sp: number }[]) => xs.reduce((a, x) => a + x.sp, 0);
+/** v27.28 SP 내역: 받은 연구·안 받은 연구·쓴 곳·남은 기록. */
+function SpDetail({ sp }: { sp: AdminSp }) {
+    const got = sp.research.filter(r => r.claimed), waiting = sp.research.filter(r => !r.claimed), small = { color: '#9bb3b0' } as const;
+    return <div style={{ fontSize: 13, display: 'grid', gap: 4, marginTop: 8, paddingTop: 8, borderTop: '1px solid #2a3d40' }}>
+        <div><b>보유 SP {sp.have}</b> <span style={small}>· 스킬에 쓴 SP {sum(sp.spentSkills)} · 한계돌파에 쓴 SP {sum(sp.limitBreaks)}</span></div>
+        <div>보스 첫 정복 연구 받음: {got.length ? got.map(r => `${r.name}(+${r.sp})`).join(', ') : '없음'}</div>
+        <div>정복했지만 아직 안 받음: {waiting.length ? <b style={{ color: '#d5b36c' }}>{waiting.map(r => `${r.name}(+${r.sp})`).join(', ')}</b> : '없음'}</div>
+        {sp.spentSkills.length > 0 && <div style={small}>강화·계승: {sp.spentSkills.map(x => `${x.name} ${x.sp}`).join(', ')}</div>}
+        {sp.limitBreaks.length > 0 && <div style={small}>한계돌파: {sp.limitBreaks.map(x => `${x.name} ${x.sp}`).join(', ')}</div>}
+        <div style={small}>최근 기록의 SP 줄{sp.logs.length ? '' : ': 없음(기록은 최근 70줄만 남습니다)'}</div>
+        {sp.logs.length > 0 && <ul style={{ margin: 0, paddingLeft: 18, ...small }}>{sp.logs.map((t, i) => <li key={i}>{t}</li>)}</ul>}
+    </div>;
+}
+const line = (p: AdminPlayer) => `${p.name} · Lv.${p.level} ${p.job} · 환생 ${p.rebirths}회 · 진주 ${p.pearls} · SP ${p.sp.have} · 골드 ${p.gold.toLocaleString()}${p.inDungeon ? ' · 던전 진행 중' : ''}`;
 
 /** v27.26 운영 도구: 낚시꾼 이름·아이디로 찾아 이번 생을 처음 상태로 되돌립니다(환생 횟수·진주·연구·유물·도감 유지). */
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
     const [tab, setTab] = useState<'life' | 'events'>('life'), [events, setEvents] = useState<EventList | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1' });
+    const [spOpen, setSpOpen] = useState<string | null>(null);
     const [edit, setEdit] = useState<{ player: AdminPlayer; gold: string; pearls: string } | null>(null);
     const [preview, setPreview] = useState<{ id: string; data: Preview } | null>(null), [done, setDone] = useState(''), [error, setError] = useState(''), [busy, setBusy] = useState(false);
     const call = async (body: Record<string, unknown>) => {
@@ -89,12 +105,16 @@ export default function AdminPage() {
         {tab === 'life' && players && <section style={{ marginTop: 16 }}>
             <h2 style={{ fontSize: 16 }}>검색 결과 {players.length}명{players.length === 30 ? ' (최대 30명까지 표시)' : ''}</h2>
             {!players.length && <p style={{ color: '#9bb3b0' }}>찾은 낚시꾼이 없습니다.</p>}
-            <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{players.map(p => <li key={p.id} className="panel" style={{ padding: 10, display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between', border: preview?.id === p.id || edit?.player.id === p.id ? '1px solid #d5b36c' : undefined }}>
+            <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{players.map(p => <li key={p.id} className="panel" style={{ padding: 10, border: preview?.id === p.id || edit?.player.id === p.id ? '1px solid #d5b36c' : undefined }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 13 }}><b>{p.name}</b> · 아이디 {p.username || '?'} · {p.slot}번 슬롯<br/><small style={{ color: '#9bb3b0' }}>{line(p)} · 마지막 저장 {new Date(p.updatedAt).toLocaleString('ko-KR')}</small></span>
                 <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <button className="secondary" disabled={busy} onClick={() => { setPreview(null); setDone(''); setEdit({ player: p, gold: String(p.gold), pearls: String(p.pearls) }); }}>골드·진주</button>
+                    <button className="secondary" disabled={busy} onClick={() => setSpOpen(spOpen === p.id ? null : p.id)} aria-expanded={spOpen === p.id}>SP 내역</button>
                     <button className="secondary" disabled={busy} onClick={() => look(p.id)}>초기화 미리 보기</button>
                 </span>
+                </div>
+                {spOpen === p.id && <SpDetail sp={p.sp}/>}
             </li>)}</ul>
         </section>}
         {tab === 'life' && edit && <form className="panel" onSubmit={e => { e.preventDefault(); adjust(); }} style={{ padding: 16, marginTop: 16, display: 'grid', gap: 8 }}>

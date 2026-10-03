@@ -9,6 +9,10 @@ import { allow, clientIp } from './throttle';
 import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
+import { BOSS_RESEARCH } from '../data/specializations';
+import { DUNGEONS } from '../data/world';
+import { PROGRESSION } from '../data/progression';
+import { skillById } from '../data/skills';
 import type { State } from '../types';
 import { SERVER_EVENTS, activeEvent, eventLabel, type ServerEvent } from '../data/events';
 import { readEventConfig, writeEventConfig } from './events-config';
@@ -26,10 +30,19 @@ export function requireAdmin(req: Request) {
     }
 }
 
-export type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; inDungeon: boolean; revision: number; updatedAt: number };
+/** v27.28 SP 확인용: 보유 SP, 보스 첫 정복 연구 상태, 스킬에 쓴 SP, 남아 있는 SP 기록. */
+export type AdminSp = { have: number; research: { name: string; sp: number; claimed: boolean }[]; spentSkills: { name: string; sp: number }[]; limitBreaks: { name: string; sp: number }[]; logs: string[] };
+export type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number };
+const spView = (s: State): AdminSp => ({
+    have: s.sp || 0,
+    research: DUNGEONS.filter(d => BOSS_RESEARCH[d.id] && (s.clears?.[d.id] || 0) > 0).map(d => ({ name: d.name, sp: BOSS_RESEARCH[d.id].sp, claimed: !!s.bossResearchClaims?.[d.id] })),
+    spentSkills: Object.entries(s.skillSpent || {}).filter(([, n]) => n > 0).map(([id, n]) => ({ name: skillById(id)?.name || id, sp: n })),
+    limitBreaks: Object.entries(s.limitBreaks || {}).filter(([, n]) => n > 0).map(([id, n]) => ({ name: `${skillById(id)?.name || id} ${n}단계`, sp: PROGRESSION.limitBreak.sp.slice(0, n).reduce((a, b) => a + b, 0) })),
+    logs: (s.logs || []).filter(l => /SP [+-]|SP 계승/.test(l.text)).slice(-10).map(l => l.text),
+});
 const view = (id: string, username: string, revision: number, updatedAt: number, s: State): AdminPlayer => {
     const [, slot] = id.split('#');
-    return { id, username, slot: Number(slot || 1), name: s.name, level: s.level, job: jobById(s.job)?.name || s.job, rebirths: s.rebirths || 0, pearls: s.pearls || 0, gold: Math.floor(s.gold || 0), inDungeon: !!s.dungeon, revision, updatedAt };
+    return { id, username, slot: Number(slot || 1), name: s.name, level: s.level, job: jobById(s.job)?.name || s.job, rebirths: s.rebirths || 0, pearls: s.pearls || 0, gold: Math.floor(s.gold || 0), sp: spView(s), inDungeon: !!s.dungeon, revision, updatedAt };
 };
 
 /** 낚시꾼 이름(부분 일치) 또는 로그인 아이디(정확히)로 찾습니다. 최대 30명. */
