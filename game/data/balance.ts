@@ -16,8 +16,8 @@ export const BALANCE = {
     dropChance: 0.001, dropBonusScale: 0.17, dropChanceCap: 0.01,
     // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
     dungeonRepeatDrop: 0.05,
-    // 포획 후 회복률(근거: scripts/check-recovery.mjs). 응급처치를 장착하면 포획마다 FIRST_AID_HEAL을 더합니다.
-    healAfterKill: 0.08, recoveryTurns: 3,
+    // 포획 후 회복률(근거: scripts/check-recovery.mjs). v27.8: 기본 20%, 해역 난이도 1마다 healAfterKillTierDecay만큼 줄고 healAfterKillMin 아래로는 내려가지 않습니다.
+    healAfterKill: 0.2, healAfterKillTierDecay: .01, healAfterKillMin: .05, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
     bookMilestones: [50, 500, 2500, 10000], duelCooldownMs: 60000, duelMaxTurns: 80, /** v26.2 랭크 결투 하루 횟수와 같은 상대 하루 횟수. 연습 대결은 제한 없음. */ duelPerDay: 20, duelPerOpponentPerDay: 3,
@@ -37,7 +37,7 @@ export const MONSTER_TUNING = {
     bossMultiplier: 2.7,
     bossRewardMultiplier: 1.9,
     dungeonPreparationTurns: 3,
-    dungeonHealAfterKill: .04,
+    dungeonHealAfterKill: .08,
 } as const;
 /**
  * Entry-level fish stay approachable; higher-level fish are a real gearless wall.
@@ -147,7 +147,6 @@ export const xpNeeded = (level: number) => Math.floor(BALANCE.xpBase * Math.pow(
 export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }, { name: '신화', color: '#f08a6c', factor: 3.9 }, { name: '고대', color: '#5fd0b5', factor: 4.5 }, { name: '태초', color: '#ff6fb5', factor: 5.2 }];
 export const SLOTS = { rod: '낚싯대', coat: '방어구', charm: '나침반' };
 /** 응급처치(공용 패시브): 포획 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
-export const FIRST_AID_HEAL = .04;
 
 /** v26.6 주사위 배율 범위: 손가락 자르기 단계(trim)만큼 양 끝을 안쪽으로 좁힌 [최저, 최고]. */
 export function diceRange(d: { low: number; high: number }, trim = 0) {

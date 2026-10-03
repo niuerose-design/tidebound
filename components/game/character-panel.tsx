@@ -2,10 +2,10 @@
 import { ConfirmButton } from './confirm-button';
 import { RefreshCw, Target } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
-import { attributes, apCapacity, apUsed, canUse } from '@/game/systems/progression';
+import { attributes, apCapacity, apUsed } from '@/game/systems/progression';
 import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
 import { VARIANTS, VARIANT_BOOK_MIN, variantChances } from '@/game/data/variants';
-import { FIRST_AID_HEAL, MONSTER_TUNING } from '@/game/data/balance';
+import {MONSTER_TUNING, BALANCE } from '@/game/data/balance';
 import { StatBreakdown } from './stat-breakdown';
 import { type StatTrace, stats, dropRate, goldMultiplier, expMultiplier } from '@/game/systems/stats';
 import { Heading } from './shared';
@@ -62,7 +62,7 @@ export function Character({ s, send, busy }: PanelProps) {
     <span>경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
     <span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong>
     </span>
-    <span title={`포획할 때마다 최대 체력의 ${percent(victoryHealRate(s))}${s.skills.includes('firstAid') && canUse(s, 'firstAid') ? ` + 응급처치 ${percent(FIRST_AID_HEAL)}` : ''}만큼 회복합니다(연구 ‘회복’ 1단계마다 +1%p). 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 기준입니다.`}>포획 후 회복 (포획당)<strong>{percent(victoryHealRate(s) + (s.skills.includes('firstAid') && canUse(s, 'firstAid') ? FIRST_AID_HEAL : 0))} · {victoryHeal(s).toLocaleString()} HP</strong>
+    <span title={`포획할 때마다 최대 체력의 ${percent(victoryHealRate(s))}만큼 회복합니다. 기본 ${percent(BALANCE.healAfterKill)}에서 해역 난이도 1마다 ${percent(BALANCE.healAfterKillTierDecay)}p씩 줄고(최저 ${percent(BALANCE.healAfterKillMin)}), 연구 ‘잔잔한 물결’ 1단계마다 +1%p. 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 고정입니다.`}>포획 후 회복 (포획당)<strong>{percent(victoryHealRate(s))} · {victoryHeal(s).toLocaleString()} HP</strong>
     </span>
     </div>
     </section>

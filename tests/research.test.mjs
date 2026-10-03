@@ -35,8 +35,8 @@ test('Research v2: stat effects come from the research source and keep the exist
 
 test('Research v2: recovery, shop and smith discounts use the state-aware functions', () => {
     const s = newState(0); s.permanent.recovery = 5;
-    close(victoryHealRate({ ...s, dungeon: null }), .13); close(victoryHealRate({ ...s, dungeon: { id: 'grotto', wave: 0 } }), .09);
-    close(victoryHealRate({ ...newState(0), dungeon: null }), .08);
+    close(victoryHealRate({ ...s, dungeon: null }), .25); close(victoryHealRate({ ...s, dungeon: { id: 'grotto', wave: 0 } }), .13);
+    close(victoryHealRate({ ...newState(0), dungeon: null }), .2);
     s.level = 10; const full = shopCost(s), fullGamble = gambleCost(s);
     s.permanent.shop = 10; assert.equal(shopCost(s), Math.floor(full * .8)); assert.equal(gambleCost(s), Math.floor(fullGamble * .8));
     s.gold = 1e6; const before = s.gold; act(s, { type: 'buy', id: 'coat' }, 0); assert.equal(before - s.gold, shopCost(s));

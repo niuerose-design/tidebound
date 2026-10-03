@@ -1,7 +1,7 @@
 'use client';
 import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, FIRST_AID_HEAL, SKILL_FORMULA } from '@/game/data/balance';
+import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
 import { ECONOMY, RESEARCH_RESET, offlineCapSeconds, inventoryCap } from '@/game/data/economy';
 import { victoryHealRate } from '@/game/systems/encounter';
@@ -151,7 +151,7 @@ export function Guide({ s }: { s?: State }) {
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                     limit={`던전에서는 포획 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 낚시터로 돌아옵니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
-                    effect={`포획 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 응급처치 패시브는 포획마다 ${percent(FIRST_AID_HEAL)}를 더 회복합니다.`}
+                    effect={`포획 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 해역 난이도 1마다 ${percent(BALANCE.healAfterKillTierDecay)}p씩 줄어 최저 ${percent(BALANCE.healAfterKillMin)}까지 내려갑니다. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}
                     condition={`패배하면 잃는 것 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다. 자리를 비운 시간도 서버가 턴으로 계산합니다.`}
                     limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}, 가방은 기본 ${BALANCE.inventoryCap}칸${s ? `(지금 ${inventoryCap(s)}칸)` : ''}. 둘 다 진주 연구로 늘어납니다.`}/>
             </div>
