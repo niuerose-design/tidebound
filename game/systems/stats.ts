@@ -198,9 +198,11 @@ export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus) * 
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 던전 정복 골드. 전투 보상과 던전 화면 표시가 같은 식을 씁니다. */
 export const dungeonClearGold = (s: State, baseGold: number, tier: number) => Math.floor(baseGold * tierReward(tier) * goldMultiplier(s) * dungeonGoldMultiplier(s));
-export const hitChance = (a: Stats, b: Stats) => {
+/** 실제 적중률 = 명중 − 상대 회피 + 속도 보정(±6%p). v26.7 magical이면 회피를 magicEvasionScale만 적용하고 속도 보정은 플러스만 받습니다. */
+export const hitChance = (a: Stats, b: Stats, magical = false) => {
     const accuracy = Math.max(0, a.accuracy ?? 1);
-    const evasion = Math.max(0, b.evasion ?? 0);
-    const tempo = Math.max(-.06, Math.min(.06, .08 * Math.log2(Math.max(1, a.speed ?? 10) / Math.max(1, b.speed ?? 10))));
+    const evasion = Math.max(0, b.evasion ?? 0) * (magical ? SKILL_FORMULA.magicEvasionScale : 1);
+    const raw = Math.max(-.06, Math.min(.06, .08 * Math.log2(Math.max(1, a.speed ?? 10) / Math.max(1, b.speed ?? 10))));
+    const tempo = magical ? Math.max(0, raw) : raw;
     return Math.min(.995, Math.max(.01, accuracy - evasion + tempo));
 };

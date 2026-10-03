@@ -64,7 +64,7 @@ export function Guide({ s }: { s?: State }) {
                     condition={`${[1.5, 2, 4].map(r => `속도 ${r}배 ${Math.round(Math.min(1, BALANCE.chainCoefficient * Math.log2(r)) * 100)}%`).join(' · ')}. 추가 행동도 온전한 행동이라 대기·회복·지속 피해가 한 칸씩 진행됩니다.`}
                     limit={`한 턴에 최대 ${BALANCE.chainMaxActions}번. 속도에 상한은 없지만 효과는 4배에서 멈춥니다.`}/>
                 <Rule icon={<Crosshair size={19}/>} title="명중 · 회피"
-                    effect="실제 적중률 = 내 명중 − 상대 회피 + 속도 보정(최대 ±6%p)."
+                    effect="실제 적중률 = 내 명중 − 상대 회피 + 속도 보정(최대 ±6%p). 마법 기술·마력 평타는 상대 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다."
                     condition="명중·회피 수치는 확률이 아닙니다. 어종별 실제 적중률은 도감에서 봅니다."
                     limit="적중률은 1~99.5%. 회피는 50%를 넘으면 효율이 줄어 90%에 수렴합니다."/>
             </div>
