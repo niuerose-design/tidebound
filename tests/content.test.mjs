@@ -213,3 +213,9 @@ test('v27.14 skill fx overrides name real skills and win over the id rules',()=>
  assert.equal(fxVariantOf('fireball',true),'fire','id rules still apply without an override');assert.equal(fxVariantOf(undefined,true),'arcane');
  const actives=SKILLS.filter(x=>x.type==='active');assert.ok(actives.every(x=>typeof fxVariantOf(x.id,x.damageType==='magic',x.effect)==='string'));
 });
+
+test('v27.14 mastery x2 event doubles victory practice',()=>{
+ const run=ev=>{const s=newState(0);s.running=true;s.event=ev;s.enemy={id:'minnow',name:'target',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};let guard=0;while(s.enemy&&s.enemy.hp>0&&guard++<50)tick(s,()=>.5);return s.jobMastery.fisher||0;};
+ const plain=run(null),doubled=run({id:'m',name:'m',until:9e15,exp:1,gold:1,drop:1,mastery:2});
+ assert.ok(plain>0&&doubled===plain*2,`doubled: ${plain} vs ${doubled}`);
+});
