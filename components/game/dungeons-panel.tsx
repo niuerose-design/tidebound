@@ -37,7 +37,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     <AutoRunStatus s={s}/>
     {activeDungeon && <section className="panel dungeon-run-panel">
         <div className="dungeon-run-header">
-        <div><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}</h2><p>{activeDungeon.description}</p></div>
+        <div><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}{activeDungeon.id === 'abyss' && <b className="abyss-floor"> {s.dungeon!.depth || s.abyssBest + 1}층</b>}</h2><p>{activeDungeon.description}{activeDungeon.id === 'abyss' ? ` · 최고 기록 ${s.abyssBest}층` : ''}</p></div>
         <button className="secondary" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</button>
         </div>
         <div className="dungeon-wave-track">{activeDungeon.fish.map((id, index) => {

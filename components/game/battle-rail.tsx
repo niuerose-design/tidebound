@@ -50,7 +50,7 @@ export function BattleRail({ s, busy, send, setView }: {
         const locked = s.level < dungeon.level || s.rebirths < dungeon.rebirth;
         const active = s.dungeon?.id === dungeon.id;
         return <button type="button" key={dungeon.id} className={`battle-dungeon-button ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} disabled={busy || locked || (!!s.dungeon && !active)} onClick={() => send({ type: 'dungeon', id: dungeon.id })}>
-        <span><strong>{dungeon.name}</strong><small>Lv. {dungeon.level}{dungeon.rebirth ? ` · 환생 ${dungeon.rebirth}` : ''}</small></span>{locked ? <Lock size={13}/> : active ? <span className="battle-dungeon-wave">W{(s.dungeon?.wave || 0) + 1}</span> : <Swords size={13}/>} 
+        <span><strong>{dungeon.name}</strong><small>Lv. {dungeon.level}{dungeon.rebirth ? ` · 환생 ${dungeon.rebirth}` : ''}</small></span>{locked ? <Lock size={13}/> : active ? <span className="battle-dungeon-wave">{dungeon.id === 'abyss' ? `${s.dungeon?.depth || s.abyssBest + 1}F · ` : ''}W{(s.dungeon?.wave || 0) + 1}</span> : <Swords size={13}/>} 
         </button>;
     })}</div>}
     {tab === 'stage' && s.dungeon && <p className="battle-place-note">던전 탐험 중에는 낚시터를 바꿀 수 없습니다.</p>}
