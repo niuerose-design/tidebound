@@ -33,6 +33,8 @@ export type Fighter = {
     prey?: boolean;
     /** v25.2 기본 공격이 마법 피해(마력 생물). 마법 공격 수치로 치고 상대 마법 방어로 막습니다. */
     magicBasic?: boolean;
+    /** v27 기본 공격이 복합 피해(조류 생물). (물리+마법)/2로 치고 물리·마법 방어를 절반씩 적용합니다. */
+    splitBasic?: boolean;
 };
 type DurationStatus = 'weaken' | 'silence' | 'slow' | 'haste';
 type ImmuneStatus = keyof NonNullable<StatusEffects['immune']>;
@@ -296,13 +298,14 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack || !chosen && !!a.magicBasic;
     // v26.7 마법 공격은 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다(물리 빌드와의 차별점).
     const hit = chosen?.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed }, magical);
-    const label = chosen?.name || (arcane ? '마력 평타' : '기본 공격');
+    const splitBasic = !chosen && !!a.splitBasic;
+    const label = chosen?.name || (arcane ? '마력 평타' : splitBasic ? '복합 평타' : '기본 공격');
     // v26.3 순수 회복 기술: 명중 판정 없이 회복만 하고 끝납니다.
     const healOnly = !!chosen?.healOnly;
     const landed = healOnly ? true : rng() < hit;
-    const split = chosen?.damageType === 'split';
+    const split = chosen?.damageType === 'split' || splitBasic;
     // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
-    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'attr' ? 0 : magical ? sa.magic : sa.attack;
+    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'attr' ? 0 : splitBasic ? (sa.attack + sa.magic) / 2 : magical ? sa.magic : sa.attack;
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
         base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
