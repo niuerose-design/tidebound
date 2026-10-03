@@ -1,5 +1,6 @@
 'use client';
 import { Fragment } from 'react';
+import { JobArt } from '../art';
 import { ArrowDown, Compass } from 'lucide-react';
 import type { State } from '@/game/types';
 import { JOBS, type Job, type Lineage } from '@/game/data/classes';
@@ -14,7 +15,7 @@ export function LineageCard({ s, lineage, accent, selected, onOpen }: { s: State
     const near = sum.jobs.filter(j => jobStatus(s, j).status === 'near').length;
     const status = sum.current ? '현재 직업이 있는 계보' : sum.ready ? `전직 가능 ${sum.ready}` : near ? `거의 다 됨 ${near}` : `전직해 본 ${sum.unlocked} / ${sum.total}`;
     return <button type="button" className={`lineage-item ${selected ? 'selected' : ''} ${sum.current ? 'has-current' : ''}`} style={{ '--tree-color': accent } as React.CSSProperties} aria-pressed={selected} onClick={onOpen}>
-        <strong>{lineage.name}</strong>
+        <strong>{sum.jobs[0] && <JobArt job={sum.jobs[0]} size={30}/>}{lineage.name}</strong>
         {independent ? <small>{lineage.summary}</small> : <span className="lineage-dots" aria-label="해금한 차수">{sum.tiers.filter(t => t.tier > 0).map(t => <i key={t.tier} className={t.reached ? 'reached' : ''}/>)}<em>{tierRange(sum.tiers.map(t => t.tier))}</em></span>}
         <small className={`lineage-status ${sum.ready ? 'ready' : ''}`}>{status}{!sum.current && (sum.ready || near) ? ` · 전직해 본 ${sum.unlocked} / ${sum.total}` : ''}</small>
     </button>;

@@ -5,6 +5,7 @@ import { dungeonClearGold, stats } from '@/game/systems/stats';
 import { dungeonTier } from '@/game/systems/meta';
 import { useState } from 'react';
 import { Anchor, Lock, Swords } from 'lucide-react';
+import { FishArt } from './art';
 import { BALANCE, MONSTER_TUNING } from '@/game/data/balance';
 import { FISH, DUNGEONS } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
@@ -44,7 +45,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             const isCurrent = s.dungeon!.wave === index;
             const isBoss = index === activeDungeon.fish.length - 1;
             const fish = isBoss && activeDungeon.bossFish ? FISH.find(f => f.id === activeDungeon.bossFish) : FISH.find(f => f.id === id);
-            return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{fish?.name || id}</strong></div>;
+            return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><FishArt id={fish?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{fish?.name || id}</strong></div>;
         })}</div>
         <div className="dungeon-combat-grid dungeon-combat-fx-host">
         <CombatFxOverlay effect={combatFx} combo={fxCombo}/>

@@ -308,3 +308,7 @@
     .job-sheet-footer { position:sticky; bottom:0; z-index:1; }
     .job-sheet>.job-sheet-close { display:inline-flex; position:absolute; right:14px; top:14px; width:auto; margin:0; padding:6px; color:#b8c9c2; border-radius:6px; z-index:2; }
 }
+
+/* v27.13 장비 감정 1·5·10개 버튼 */
+.gamble-count-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; width:100%; }
+.gamble-count-row button { width:100%; padding:9px 6px; font-size:12px; white-space:nowrap; }

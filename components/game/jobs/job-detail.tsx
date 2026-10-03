@@ -8,6 +8,7 @@ import type { Stats } from '@/game/types';
 import { jobTags, type Job, constraintDeviceLabels } from '@/game/data/classes';
 import { SKILLS } from '@/game/data/skills';
 import { hanjaReading } from '@/game/systems/skill-description';
+import { JobArt } from '../art';
 import { skillBrief } from '@/game/systems/skill-description';
 import { STAT_LABELS, statDeltaDisplay, percent } from '@/game/data/progression';
 import { vocationTargets, thresholdRank } from '@/game/data/long-term';
@@ -38,7 +39,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
     return <article className={`panel job-inspector job-sheet ${current ? 'current' : ''}`} aria-label={`${j.name} 상세`}>
         {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}
         <h2 className="job-column-title"><span>③</span> 직업 상세</h2>
-        <div className="job-detail-title"><h2 title={hanjaReading(j.name)}>{j.name}</h2><span className={`job-status ${st.status}`}>{STATUS_LABEL(st)}</span></div>
+        <div className="job-detail-title"><JobArt job={j} size={44}/><h2 title={hanjaReading(j.name)}>{j.name}</h2><span className={`job-status ${st.status}`}>{STATUS_LABEL(st)}</span></div>
         <p className="job-detail-sub">{tierName(j)} · {[treeName(j.tree), ...jobTags(j).filter(t => t !== treeName(j.tree))].join(' · ')}{j.hidden ? ' · 히든' : ''}</p>
         <p className="job-motto">{j.title}</p>
         <Tabs value={tab} onValueChange={v => setTab(v as Tab)}><TabsList className="game-tabs job-detail-tabs">

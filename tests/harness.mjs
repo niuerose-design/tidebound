@@ -8,6 +8,7 @@ export const {newState,act,advance,tick,victoryHeal,rollRarity}=await load('game
 export const encounterSource=await readFile('game/systems/encounter.ts','utf8');
 export const {stats,snapshot,expMultiplier,normalizeStats}=await load('game/systems/stats.js');
 export const {victoryMastery}=await load('game/systems/mastery.js');
+export const {FISH_SHAPES,fishShape,unmappedFish}=await load('game/data/art.js');
 export const {visibleStatuses}=await load('game/systems/combat-status.js');
 export const {duel,TRAINING,bossSnapshot,BOSS_OPPONENTS}=await load('game/systems/duel.js');
 export const {strike,fighterSpeed,actsFirst,constraintFields}=await load('game/systems/combat.js');
