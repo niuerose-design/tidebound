@@ -286,3 +286,16 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 
 /* v26.0 오픈베타 표지 배지 */
 .beta-badge { display: inline-block; margin-bottom: 10px; padding: 4px 12px; border: 1px solid rgba(243, 220, 160, .55); border-radius: 999px; color: #f3dca0; font-size: 11px; letter-spacing: .3em; font-weight: 600; background: rgba(243, 220, 160, .08); }
+
+/* v26.1 칭호 선택 */
+.title-panel summary { display: flex; align-items: center; gap: 12px; cursor: pointer; list-style: none; }
+.title-panel summary h2 { margin: 0; font-size: 1.05rem; }
+.title-panel summary span { color: var(--muted, #9fb7b0); font-size: .85rem; }
+.title-actions { display: flex; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; }
+.title-list { display: grid; gap: 6px; }
+.title-row { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr auto; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid rgba(127, 211, 195, .14); border-radius: 10px; }
+.title-row.locked { opacity: .55; }
+.title-row.on { border-color: rgba(243, 220, 160, .55); background: rgba(243, 220, 160, .06); }
+.title-desc { font-size: .85rem; color: var(--muted, #9fb7b0); }
+.title-locked { font-size: .8rem; color: var(--muted, #9fb7b0); }
+@media (max-width: 640px) { .title-row { grid-template-columns: 1fr auto; } .title-row .title-desc { grid-column: 1 / -1; } }

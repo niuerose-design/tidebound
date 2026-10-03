@@ -11,7 +11,6 @@ import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
 export const SKILLS: Skill[] = [
     { id: 'hook', name: '강철 챔질', desc: '공격력 180% 피해.', type: 'active', level: 1, chance: .35, cooldown: 2, multiplier: 1.8 },
-    { id: 'splash', name: '물보라', desc: '공격력 140% 피해, 적을 1턴 기절.', type: 'active', level: 3, chance: .25, cooldown: 4, multiplier: 1.4, effect: 'stun' },
     { id: 'breath', name: '고요한 호흡', desc: '최대 체력 22% 회복 후 기본 공격.', type: 'active', level: 6, chance: .3, cooldown: 5, multiplier: 1, effect: 'heal' },
     { id: 'pierce', name: '관통 작살', desc: '공격력 300% 피해.', type: 'active', level: 10, job: 'harpoon', chance: .35, cooldown: 4, multiplier: 3 },
     { id: 'hunt', name: '폭풍 사냥', desc: '공격력 420% 피해.', type: 'active', level: 20, job: 'harpoon', chance: .25, cooldown: 5, multiplier: 4.2 },
@@ -26,7 +25,7 @@ export const SKILLS: Skill[] = [
 ];
 // 장착 AP와 턴당 마나 비용. 기존 ID를 유지하여 저장 호환성을 지킵니다.
 const settings: Record<string, Partial<Skill>> = {
-    hook: { cost: 2, manaCost: 0 }, splash: { cost: 2, manaCost: 6, damageType: 'magic', desc: '마법 공격 140% 피해, 적을 1턴 기절.' },
+    hook: { cost: 2, manaCost: 0 },
     breath: { cost: 2, manaCost: 7, condition: 'wounded' }, pierce: { cost: 4, manaCost: 8 }, hunt: { cost: 5, manaCost: 12 },
     wave: { cost: 4, manaCost: 10, damageType: 'magic', desc: '마법 공격 240% 피해, 적을 1턴 기절.' }, spring: { cost: 4, manaCost: 12, damageType: 'magic', condition: 'wounded', desc: '최대 체력 22% 회복, 마법 공격 250% 피해.' },
     anchor: { cost: 3, manaCost: 6 }, fortress: { cost: 4, manaCost: 10, condition: 'wounded' }, focus: { cost: 2 }, scales: { cost: 2 }, vital: { cost: 2 }, resolve: { cost: 3 },
@@ -102,7 +101,7 @@ SKILLS.push(
 // 직업 전직으로 얻고, 장착 포획으로 계승 자격을 만든 뒤 SP로 보강합니다.
 // 저장된 스킬 ID는 그대로 유지되므로 기존 세이브도 안전하게 읽힙니다.
 const skillJobAssignments: Record<string, string> = {
-    splash: 'fisher', breath: 'fisher', arcane: 'bubbleMage', cut: 'barbSkirmisher', soulHook: 'rebirthFisher',
+    breath: 'fisher', arcane: 'bubbleMage', cut: 'barbSkirmisher', soulHook: 'rebirthFisher',
     focus: 'squidJester', scales: 'scaleKnight', vital: 'lifeTender', resolve: 'oathAngler',
     hunt: 'stormHunter', spring: 'tideMender', fortress: 'coralBuilder',
     hushCurrent: 'stillwaterBinder', undertow: 'stillwaterBinder', rushCurrent: 'wakeRunner',
@@ -155,7 +154,7 @@ for (const sk of SKILLS) if (sk.effect === 'heal') delete sk.condition;
 
 const masteryTuning: Record<string, number[]> = {
     hook: [120, 600, 2400, 8000],
-    splash: [150, 800, 3000, 10000], breath: [200, 1000, 4000, 12000],
+    breath: [200, 1000, 4000, 12000],
     boneLegacy: [2500, 25000, 125000],
     pierce: [350, 1800, 7000, 20000], anchor: [400, 2000, 8000, 24000],
     whaleStrike: [800, 4000, 16000, 45000], marrowGuard: [1000, 6000, 22000, 60000],
@@ -166,7 +165,7 @@ const masteryTuning: Record<string, number[]> = {
 };
 // 랭크별 성장 방향은 스킬별 데이터로 조정합니다. 수치는 랭크가 1 오를 때마다 적용됩니다.
 const rankEffects: Record<string, Skill['rankEffects']> = {
-    hook: { chanceIncrease: .04 }, splash: { manaReduction: 1 }, breath: { chanceIncrease: .05, manaReduction: 1 },
+    hook: { chanceIncrease: .04 }, breath: { chanceIncrease: .05, manaReduction: 1 },
     pierce: { apReduction: 1 }, hunt: { chanceIncrease: .05 }, wave: { manaReduction: 1 }, spring: { chanceIncrease: .05, manaReduction: 1 },
     anchor: { apReduction: 1 }, fortress: { manaReduction: 1 }, focus: { bonusScale: .3 }, scales: { bonusScale: .3 }, vital: { bonusScale: .3 }, resolve: { bonusScale: .3 },
     arcane: { chanceIncrease: .05, manaReduction: 1 }, cut: { chanceIncrease: .04 }, hushCurrent: { chanceIncrease: .04, manaReduction: 1 }, undertow: { chanceIncrease: .04 }, rushCurrent: { chanceIncrease: .05, cooldownReduction: 1 }, insight: { bonusScale: .3 }, flow: { bonusScale: .3 }, precision: { bonusScale: .3 },

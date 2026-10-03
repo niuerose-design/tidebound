@@ -1,5 +1,6 @@
 /** 빌드: 전직, 스킬 장착·습득·계승·강화, 능력치 배분, 편성 저장 */
 import { stats, clampVitals } from '../stats';
+import { unlockedTitles } from '../../data/titles';
 import type { Attribute } from '../../types';
 import { jobById } from '../../data/classes';
 import { skillById } from '../../data/skills';
@@ -46,6 +47,13 @@ export const buildActions: ActionHandlers = {
         s.playerStun = 0;
         s.cooldowns = {};
         addLog(s, `${jobById(id)!.name}(으)로 전직했습니다. 숙달 스킬을 계승할 수 있습니다.`);
+    },
+    /** v26.1 칭호 장착: id가 'auto'면 자동, 'none'이면 해제, 그 외에는 얻은 칭호만. */
+    title(s, { id }) {
+        if (id === 'auto') { delete s.title; return; }
+        if (id === 'none') { s.title = null; return; }
+        if (!unlockedTitles(s).some(t => t.id === id)) throw Error('아직 얻지 못한 칭호입니다.');
+        s.title = id;
     },
     skill(s, { id }) {
         if (s.skills.includes(id)) {

@@ -94,7 +94,7 @@ test('v22 gear: rule options change existing rules within caps and apply from eq
  const leech=slot=>({id:'l'+slot,slot,rarity:6,power:10,level:1,name:'l',affixes:[{id:'bloodPact',name:'b',stat:'lifesteal',value:.05}]});const s2=newState(0);s2.equipment={rod:{...leech('rod'),style:'balanced'},coat:leech('coat'),charm:leech('charm')};assert.ok(Math.abs(stats(s2).lifesteal-gear.GEAR_CAPS.lifesteal)<1e-9,'gear lifesteal is capped');
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
- let b=mk([]);strike(mk(['splash'],{stunBonus:1}),b,()=>0);assert.equal(b.stun,3);
+ let b=mk([]);strike(mk(['anchor'],{stunBonus:1}),b,()=>0);assert.equal(b.stun,3);
  b=mk([]);strike(mk(['cut'],{dotTurnsBonus:2}),b,()=>0);assert.equal(b.effects.dot.turns,7);
  b=mk([]);for(let i=0;i<9;i++)strike(mk(['venomDart'],{poisonStackBonus:3}),b,()=>0);assert.equal(b.effects.dot.stacks,STATUS_TUNING_MAX+3);
  {const a=mk([],{attack:1e7,lifesteal:.1});a.hp=1;strike(a,mk([]),()=>0);assert.equal(a.hp-1,Math.floor(1e6*.1*SKILL_FORMULA.lifestealHpCap),'lifesteal heal per action is capped by max HP');}

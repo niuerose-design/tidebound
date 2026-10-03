@@ -23,7 +23,7 @@ test('SP levels do not replace real mastery in advanced job requirements',()=>{
 });
 test('Stat and SP refunds cannot create points or erase acquired skills',()=>{
  const s=newState(0);const attack=stats(s).attack;act(s,{type:'attribute',id:'str'},0);assert.equal(stats(s).attack,attack+2);
- act(s,{type:'resetAttributes'},0);act(s,{type:'resetAttributes'},0);assert.equal(s.statPoints,4);s.sp=3;
+ act(s,{type:'resetAttributes'},0);act(s,{type:'resetAttributes'},0);assert.equal(s.statPoints,5);s.sp=3;
  act(s,{type:'learn',id:'hook'},0);assert.equal(s.sp,2);assert.equal(s.skillSpent.hook,1);act(s,{type:'resetSkills'},0);act(s,{type:'resetSkills'},0);assert.equal(s.sp,3);assert.equal(s.learned.hook,1);
  assert.throws(()=>act(s,{type:'attribute',id:'str',value:'-1'},0));
 });

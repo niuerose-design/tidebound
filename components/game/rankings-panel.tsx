@@ -103,7 +103,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
         <TableBody>{sorted.map((r, i) => <TableRow key={r.id}>
             <TableCell className="rank-number">{i + 1}</TableCell>
             <TableCell className="ranking-who">
-            <strong>{rebirthTitle(r.rebirths) ? <small className="rebirth-title">{rebirthTitle(r.rebirths)}</small> : null}{r.seasonRank && r.seasonRank <= 3 ? <small className="rebirth-title season-rank">지난 시즌 {r.seasonRank}위</small> : null}{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
+            <strong>{(r.title ?? rebirthTitle(r.rebirths)) ? <small className="rebirth-title">{r.title ?? rebirthTitle(r.rebirths)}</small> : null}{r.seasonRank && r.seasonRank <= 3 ? <small className="rebirth-title season-rank">지난 시즌 {r.seasonRank}위</small> : null}{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
             <small className="block">Lv. {r.level} · {jobName(r.job)} · 환생 {r.rebirths}회 · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
             <MainStats stats={r.stats}/>
             </TableCell>

@@ -29,7 +29,7 @@ export function Heading({ eyebrow, title, description, children }: {
 }
 export function SkillIcon({ id }: {
     id: string;
-}) { const Icon = id === 'breath' || id === 'spring' || id === 'vital' ? Heart : id === 'scales' || id === 'fortress' ? Shield : id === 'splash' || id === 'wave' ? Waves : id === 'focus' ? Target : id === 'anchor' ? Anchor : id === 'hook' || id === 'pierce' ? Swords : Zap; return <Icon size={24}/>; }
+}) { const Icon = id === 'breath' || id === 'spring' || id === 'vital' ? Heart : id === 'scales' || id === 'fortress' ? Shield : id === 'wave' ? Waves : id === 'focus' ? Target : id === 'anchor' ? Anchor : id === 'hook' || id === 'pierce' ? Swords : Zap; return <Icon size={24}/>; }
 export function SlotIcon({ slot, size = 24 }: {
     slot: string;
     size?: number;
