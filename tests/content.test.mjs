@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA} from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA,CLOSED_DUNGEONS} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -276,4 +276,14 @@ test('v27.24 ultimate finale skills exist, belong to 5th-tier jobs, and the fx p
  const ids=['braveSlash','oceanWrath','genesis','doomMark','aegisJudgment','redApocalypse','worldTentacle','soulReap','jackpotStrike','frozenTime'];
  for(const id of ids){const sk=SKILLS.find(x=>x.id===id);assert.ok(sk,id);const job=JOBS.find(j=>j.id===sk.job);assert.ok(job&&(job.tier===5||job.id==='chronarch'),id+' job tier');}
  const fx=combatFxFromLog({id:9,type:'battle',text:'나 · 용사의 일격 → 100 물리 피해'},'나');assert.equal(fx.skillId,'braveSlash');
+});
+
+test('v27.25 a closed dungeon refuses entry, stops repeats, and evicts a save already inside',()=>{
+ CLOSED_DUNGEONS.add('abyss');
+ try {
+  const s=newState(0);s.level=60;s.rebirths=3;assert.throws(()=>act(s,{type:'dungeon',id:'abyss'},0),/밸런스 조정/);
+  const inside=newState(0);inside.level=60;inside.rebirths=3;inside.running=true;inside.dungeon={id:'abyss',wave:1,depth:5};inside.enemy={id:'dragon',name:'x',hp:10,maxHp:10,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};
+  tick(inside,()=>.5);assert.equal(inside.dungeon,null,'evicted');assert.ok(inside.running,'keeps fishing');assert.ok(inside.logs.some(l=>l.text.includes('밸런스 조정으로 닫혀')));
+  const g=newState(0);g.level=60;g.rebirths=3;act(g,{type:'dungeon',id:'grotto'},0);assert.equal(g.dungeon.id,'grotto','other dungeons stay open');
+ } finally { CLOSED_DUNGEONS.delete('abyss'); }
 });

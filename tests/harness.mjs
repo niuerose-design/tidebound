@@ -25,7 +25,9 @@ export const {jobMastered,apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,s
 export const {goalProgress,goalSuggestions}=await load('game/systems/goals.js');
 export const {skillGrowthStages}=await load('game/systems/skill-description.js');
 export const {SKILLS}=await load('game/data/skills.js');
-export const {STAGES,FISH,DUNGEONS}=await load('game/data/world.js');
+export const {STAGES,FISH,DUNGEONS,CLOSED_DUNGEONS}=await load('game/data/world.js');
+// v27.25 점검 중인 던전(무한 심연)은 라이브에서만 닫습니다. 테스트는 모든 던전을 엽니다(닫힘 자체는 content.test에서 따로 확인).
+CLOSED_DUNGEONS.clear();
 export const {profile}=await load('game/data/encounters.js');
 export const bookMod=await load('game/systems/book.js');
 export const economy=await load('game/data/economy.js');

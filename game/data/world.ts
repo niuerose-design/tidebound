@@ -98,6 +98,10 @@ const specialFish: Array<{
 ];
 for (const f of specialFish)
     FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: Math.round(9 * Math.pow(1.15, f.level - 1)), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
+/** v27.25 점검 중이라 입장할 수 없는 던전. 밸런스 조정이 끝나면 비웁니다. 테스트는 harness에서 비웁니다. */
+export const CLOSED_DUNGEONS = new Set<string>(['abyss']);
+export const dungeonClosed = (id: string) => CLOSED_DUNGEONS.has(id);
+export const DUNGEON_CLOSED_NOTE = '밸런스 조정 중 · 입장 불가';
 export const DUNGEONS = [
     { id: 'abyss', name: '윤회의 무한 심연', level: 40, rebirth: 3, fish: ['moonfish', 'dragon', 'ancient', 'dragon', 'ancient'], bossFish: 'abyssSovereign', boss: '심연의 기억 · 심연의 주권자', gold: 12000, pearls: 1, description: '정복할 때마다 다음 깊이가 열립니다. 깊을수록 층마다 더 많은 진주를 얻고, 10·25·50·100층을 처음 돌파하면 SP 1을 받습니다.' },
     { id: 'grotto', name: '조수의 동굴', level: 8, rebirth: 0, fish: ['ray', 'puffer', 'mackerel', 'ray', 'eel'], bossFish: 'grottoWarden', boss: '동굴의 주인 · 수호 곰치', gold: 350, pearls: 1, description: '다섯 번의 전투 끝에 잠든 수호자가 눈을 뜬다.' },
