@@ -12,7 +12,8 @@ export function BattleRail({ s, busy, send, setView }: {
     send: (a: Action) => void;
     setView: (v: string) => void;
 }) {
-    const battleLogs = s.logs.filter(log => log.type === 'battle').slice(-9).reverse();
+    // v26.7 패널이 세로 공간을 채우므로 최근 40줄까지 보여 주고 스크롤합니다(전에는 9줄).
+    const battleLogs = s.logs.filter(log => log.type === 'battle').slice(-40).reverse();
     const dungeons = [...DUNGEONS].sort((a, b) => a.level - b.level);
     // 낚시터·던전을 한 창에서 탭으로 고릅니다. 던전에 들어가면 던전 탭으로 넘어갑니다.
     const [tab, setTab] = useState<'stage' | 'dungeon'>(s.dungeon ? 'dungeon' : 'stage');
