@@ -187,8 +187,8 @@ export function useGame() {
         return () => lifecycle.abort();
     }, [action]);
     /** 아이디·비밀번호 가입/로그인. 성공하면 세이브를 다시 불러옵니다. */
-    const authenticate = useCallback(async (mode: 'signup' | 'login', username: string, password: string) => {
-        const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: mode, username, password }) });
+    const authenticate = useCallback(async (mode: 'signup' | 'login', username: string, password: string, fisherName?: string) => {
+        const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: mode, username, password, name: fisherName }) });
         const data = await res.json().catch(() => ({})) as { error?: string };
         if (!res.ok) throw Error(data.error || '로그인에 실패했습니다.');
         setNeedsLogin(false);
