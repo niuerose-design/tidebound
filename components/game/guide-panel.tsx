@@ -1,5 +1,5 @@
 'use client';
-import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap } from 'lucide-react';
+import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap , Droplets } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
@@ -73,12 +73,16 @@ export function Guide({ s }: { s?: State }) {
                     limit="반격은 흡혈이 2배로 적용되고, 피해 없는 상태이상 기술에는 발동하지 않습니다."/>
             </div>
             <details className="help-fold">
-                <summary><Sparkles size={15}/> 피해의 종류 <span>물리 · 마법 · 복합 · 마력 평타 · 능력치 비례</span><ChevronDown size={15} className="help-topic-chevron"/></summary>
+                <summary><Sparkles size={15}/> 피해의 종류 <span>물리 · 마법 · 복합 · 지속(고정) · 마력 평타 · 능력치 비례</span><ChevronDown size={15} className="help-topic-chevron"/></summary>
                 <div className="help-columns">
                     <Rule icon={<Swords size={19}/>} title="물리 피해"
                         effect="물리 공격 × 스킬 배율. 상대의 물리 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 물리 방어 × 2)."
                         condition="명중은 기본 공식 그대로(회피 전부 적용). 기본 공격과 대부분의 작살·격투 계열 기술이 여기에 속합니다."
                         limit={`방어 관통은 최대 85%. 관통만큼 상대 방어를 무시합니다.`}/>
+                    <Rule icon={<Droplets size={19}/>} title="지속 피해 (고정 피해)"
+                        effect="출혈·중독·화상·부식은 물리도 마법도 아닌 고정 피해입니다. 걸릴 때 시전자의 공격력으로 틱 피해가 정해지고, 그 뒤로는 걸린 쪽이 행동할 때마다 그 값이 체력에서 그대로 빠집니다."
+                        condition="물리·마법 방어, 방어 관통, 회피, 반격, 생태 연구 보정, 흡혈이 모두 적용되지 않습니다. 기절 중에도 들어갑니다."
+                        limit="면역(풀린 뒤 1턴), 정화 기술, 無처럼 쓰러지지 않는 장치로만 막을 수 있습니다. 중독은 중첩마다, 출혈은 한 번만 최대 체력 1%분을 더합니다."/>
                     <Rule icon={<Sparkles size={19}/>} title="마법 피해"
                         effect="마법 공격 × 스킬 배율. 상대의 마법 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 마법 방어 × 2). 마나를 씁니다."
                         condition="상대 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다. 단단한 비늘(물리 방어 높음) 어종에 유리하고, 마력 생물(마법 방어 높음)에는 불리합니다."

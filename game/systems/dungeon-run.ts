@@ -1,7 +1,7 @@
 /** 던전 입장과 반복 도전. */
 import type { State } from '../types';
 import { BALANCE, MONSTER_TUNING } from '../data/balance';
-import { DUNGEONS } from '../data/world';
+import { DUNGEONS, dungeonClosed } from '../data/world';
 import { addLog, endRun } from './state';
 /** 반복 설정 문자열: 'once' | 'fail' | 숫자(총 도전 횟수) | 'deeper:N'(무한 심연, 현재 최고 깊이 + N층까지). */
 export function parseRepeat(s: State, id: string, value?: string): { left: number | null; until?: number } | undefined {
@@ -36,7 +36,7 @@ export function repeatLabel(r?: { left: number | null; until?: number }) {
 export function continueRepeat(s: State, id: string, repeat: { left: number | null; until?: number }) {
     const d = DUNGEONS.find(x => x.id === id)!;
     const reached = repeat.until !== undefined && s.abyssBest >= repeat.until;
-    const allowed = s.level >= d.level && s.rebirths >= d.rebirth;
+    const allowed = s.level >= d.level && s.rebirths >= d.rebirth && !dungeonClosed(d.id);
     if (!reached && allowed && (repeat.left === null || repeat.left > 0)) {
         enterDungeon(s, id, { left: repeat.left === null ? null : repeat.left - 1, ...(repeat.until !== undefined ? { until: repeat.until } : {}) });
         s.running = true;

@@ -8,7 +8,7 @@ import { stats } from './stats';
 import type { State } from '../types';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { TIME_MACHINE_MASTERY } from '../data/expansion-v25';
-import { DUNGEONS, FISH, STAGES } from '../data/world';
+import { DUNGEONS, FISH, STAGES, dungeonClosed } from '../data/world';
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds, researchRank } from '../data/economy';
@@ -57,6 +57,8 @@ export function tickTurn(s: State, rng: () => number) {
     s.turn++;
     s.playMs = (s.playMs || 0) + BALANCE.turnMs;
     repairState(s);
+    // v27.25 점검 중인 던전 안에 있던 세이브는 보상 없이 귀환시키고 낚시터 자동 낚시로 잇습니다.
+    if (s.dungeon && dungeonClosed(s.dungeon.id)) { const name = DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'; s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${name}이(가) 밸런스 조정으로 닫혀 낚시터로 돌아왔습니다. 조정이 끝나면 다시 열립니다.`, 'system'); }
     const a = stats(s);
     if (s.recovery > 0) {
         s.recovery--;
