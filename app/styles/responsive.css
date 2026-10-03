@@ -601,11 +601,12 @@
 /* 모바일 하단 탭 */
 .mobile-tab-bar { display:none }
 @media (max-width:767px) {
-  .mobile-tab-bar { position:fixed; left:0; right:0; bottom:0; z-index:40; display:grid; grid-template-columns:repeat(5, 1fr); height:58px; padding-bottom:env(safe-area-inset-bottom); background:#0d1b20f2; border-top:1px solid #243b40; backdrop-filter:blur(8px) }
+  /* 반투명 블러(backdrop-filter)는 iOS Safari에서 fixed 요소가 스크롤 중 떨리거나 밀리는 원인이라 불투명 배경으로 고정합니다. */
+  .mobile-tab-bar { position:fixed; left:0; right:0; bottom:0; z-index:40; display:grid; grid-template-columns:repeat(5, 1fr); height:calc(58px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); box-sizing:border-box; background:#0d1b20; border-top:1px solid #243b40; transform:translateZ(0); will-change:transform }
   .mobile-tab-bar button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:0; background:none; color:#8fa8a8; font-size:10px; letter-spacing:.3px }
   .mobile-tab-bar button.active { color:#e8d39a }
   .mobile-tab-bar button svg { transition:transform .15s }
   .mobile-tab-bar button.active svg { transform:translateY(-1px) }
-  .app-body { padding-bottom:70px }
+  .app-body { padding-bottom:calc(70px + env(safe-area-inset-bottom)) }
   .app-footer { margin-bottom:8px }
 }
