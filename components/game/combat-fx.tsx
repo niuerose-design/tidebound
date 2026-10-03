@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
 import type { Log } from '@/game/types';
 import { combatFxBatch, combatFxSkipped, type CombatFx } from '@/game/systems/combat-feedback';
@@ -65,6 +66,7 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
         <i className="tide-fx-flash"/>{(fx.tier || 0) >= 4 && <i className="tide-fx-big"/>}<i className="tide-fx-trail"/><i className="tide-fx-ring"/><i className="tide-fx-ring tide-fx-shock"/>
         {fx.kind !== 'miss' && fragmentsFor(fx).map((glyph, i, all) => <i key={i} className="tide-fx-fragment" style={fxStyle(fx.delay + (i >= 6 ? 90 : 0), { '--fx-x': `${Math.cos(i * 2 * Math.PI / all.length) * (i >= 6 ? 128 : 88)}px`, '--fx-y': `${Math.sin(i * 2 * Math.PI / all.length) * (i >= 6 ? 72 : 52)}px`, '--fx-rotate': `${i * 41}deg` })}>{glyph}</i>)}
         {fx.finale && <i className="tide-fx-heaven">天</i>}
+        {fx.gamble !== undefined && <i className={`tide-fx-dice ${fx.gamble >= 1.5 ? 'high' : fx.gamble < .8 ? 'low' : ''}`}><b>{DICE_FACES[Math.min(5, Math.max(0, Math.round((fx.gamble - .1) / 2.1 * 5)))]}</b><small>×{fx.gamble.toFixed(2)}</small></i>}
         <div className="tide-fx-caption"><strong>{fx.title}</strong></div>
     </div>)}</div>;
 }

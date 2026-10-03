@@ -11,7 +11,7 @@ import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
 export const SKILLS: Skill[] = [
     { id: 'hook', name: '강철 챔질', desc: '공격력 180% 피해.', type: 'active', level: 1, chance: .35, cooldown: 2, multiplier: 1.8 },
-    { id: 'breath', name: '고요한 호흡', desc: '최대 체력 22% 회복 후 기본 공격.', type: 'active', level: 6, chance: .3, cooldown: 5, multiplier: 1, effect: 'heal' },
+    { id: 'breath', name: '고요한 호흡', desc: '공격하지 않고 최대 체력 18%를 회복합니다.', type: 'active', level: 6, chance: .3, cooldown: 5, multiplier: 0, effect: 'heal', healOnly: true },
     { id: 'pierce', name: '관통 작살', desc: '공격력 300% 피해.', type: 'active', level: 10, job: 'harpoon', chance: .35, cooldown: 4, multiplier: 3 },
     { id: 'hunt', name: '폭풍 사냥', desc: '공격력 420% 피해.', type: 'active', level: 20, job: 'harpoon', chance: .25, cooldown: 5, multiplier: 4.2 },
     { id: 'wave', name: '해일', desc: '공격력 240% 피해, 적을 1턴 기절.', type: 'active', level: 10, job: 'tide', chance: .3, cooldown: 4, multiplier: 2.4, effect: 'stun' },

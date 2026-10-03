@@ -12,7 +12,7 @@ import { V25_BALANCE, V25_STATUS_ONLY } from './expansion-v25';
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     hook: { chance: .18, multiplier: 1.25, cooldown: 3 },
-    breath: { chance: .45, multiplier: .85, manaCost: 10, cooldown: 5, damageType: 'magic', healRatio: .1 },
+    breath: { chance: .45, multiplier: 0, manaCost: 5, cooldown: 5, damageType: 'magic', healRatio: .18, healOnly: true },
     pierce: { chance: .24, multiplier: 1.9, penetrationBonus: .2, cooldown: 4 },
     hunt: { chance: .2, multiplier: 2.3, cooldown: 5, damageBonusCondition: 'lowHp', conditionalDamageBonus: .9 },
     wave: { chance: .6, multiplier: 1.9, manaCost: 14, cooldown: 3 },
@@ -158,6 +158,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
             sk.desc += progressDesc(sk);
             continue;
         }
+        if (sk.healOnly) { sk.desc = `공격하지 않고 최대 체력 ${Math.round((sk.healRatio ?? .22) * 100)}%를 회복합니다.${progressDesc(sk)}`; continue; }
         sk.desc = `(${source}${scaling}) × ${sk.multiplier} 피해.${sk.id === 'crush' ? ' 물리 방어 150% 추가 피해.' : ''}`;
         if (sk.effect === 'heal') sk.desc += ` 최대 체력 ${Math.round((sk.healRatio ?? .22) * 100)}% 회복.`;
         if (sk.effect === 'drain') sk.desc += ` 실제 피해의 ${Math.round((sk.drainRatio ?? .25) * 100)}% 회복.`;

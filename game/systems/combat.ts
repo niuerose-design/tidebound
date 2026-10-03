@@ -287,7 +287,9 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     }
     const hit = chosen?.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed });
     const label = chosen?.name || (arcane ? '마력 평타' : '기본 공격');
-    const landed = rng() < hit;
+    // v26.3 순수 회복 기술: 명중 판정 없이 회복만 하고 끝납니다.
+    const healOnly = !!chosen?.healOnly;
+    const landed = healOnly ? true : rng() < hit;
     const magical = arcane || chosen?.damageType === 'magic' || chosen?.id === 'oath' && sa.magic > sa.attack || !chosen && !!a.magicBasic;
     const split = chosen?.damageType === 'split';
     // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
@@ -330,7 +332,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push('연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
-    const statusOnly = !!chosen?.statusOnly;
+    const statusOnly = !!chosen?.statusOnly || healOnly;
     const crit = landed && !statusOnly && rng() < sa.crit;
     const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage : 1)));
     const actual = Math.min(b.hp, damage);
@@ -352,6 +354,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     }
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
     if (!statusOnly || !landed) ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed });
+    if (healOnly) notes.push(`회복 ${healed}`);
     if (landed && chosen?.effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
     else if (landed && chosen?.effect === 'stun') {
         const turns = (chosen.statusTurns ?? 1) + sa.stunBonus;

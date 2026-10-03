@@ -151,6 +151,8 @@ export type Skill = {
     gamble?: { min: number; max: number; accuracy?: number };
     /** v24.2 올인: 현재 체력의 hpRatio와 마나 전부를 걸고, (건 체력 × hpScale + 건 마나 × manaScale)을 피해에 더합니다. */
     allIn?: { hpRatio: number; hpScale: number; manaScale: number; heal?: number };
+    /** v26.3 순수 회복: 공격하지 않고 회복만 합니다(명중·피해·반격·추가타 없음). */
+    healOnly?: boolean;
     /** v25 정지된 시간: 반드시 명중합니다. */
     sureHit?: boolean;
     /** v25 시간: 이 행동 뒤 곧바로 한 번 더 행동합니다(연속 행동 횟수와 별개). */
