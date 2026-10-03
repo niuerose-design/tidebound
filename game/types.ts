@@ -294,6 +294,8 @@ export type State = {
     swarm?: number;
     /** 직전 환생 방식에 따른 이번 생의 효과. 다음 환생 때 다시 정해집니다. */
     lifeBonus?: 'deep' | 'tailwind' | null;
+    /** v26.1 지금 진행 중인 서버 이벤트(서버가 동기화 때 적음). 없으면 null. */
+    event?: import('./data/events').ActiveEvent | null;
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
     growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number; notified?: boolean } | null;
@@ -305,6 +307,8 @@ export type State = {
     voyage?: Record<string, number>;
     /** v25.6 해금한 업적 id → 해금 턴. 환생 후에도 유지되며 보상은 해금 때 바로 받습니다. */
     achievements?: Record<string, number>;
+    /** v26.1 장착한 칭호 id. undefined면 자동(가장 최근 달성), null이면 표시 안 함. */
+    title?: string | null;
     /** v25.6 보상을 받은 업적 id. 영구 AP·배율은 받은 것만 셉니다. */
     achievementClaims?: Record<string, true>;
     /** v25.6 일일·주간 항해 목표판(한국 시간 기준 날짜·주 키). */
@@ -428,6 +432,8 @@ export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; seal?: 
     /** v25.6 이번 생의 조건 카드: stage 지정 해역 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };
 export type Snapshot = {
+    /** v26.1 표시 칭호 이름(랭킹). */
+    title?: string;
     /** v25.12 지난 시즌 순위(상위 3위만 배지). 시즌 이월 때 서버가 넣습니다. */
     seasonRank?: number;
     /** 걸어 둔 서약 배지(랭킹 표시). 예: ['anchor', 'rough2'] */

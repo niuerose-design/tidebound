@@ -132,7 +132,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<RefreshCw size={19}/>} title="환생"
                     effect="진주 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스 + 깊은 항해 보너스. 영구 보너스(체력·공격·방어)는 2.5% × √환생 횟수, 영구 경험치는 환생마다 +25%."
                     condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨 +${s ? tailwindWindow(s) : TAILWIND_WINDOW} 안에 환생하면 다음 생 경험치 +${Math.round((s ? tailwindExp(s) : TAILWIND_EXP) * 100)}%(순풍), Lv.${DEEP_VOYAGE_LEVEL}에 환생하면 숙련 기본 획득 +2(깊은 항해).`}
-                    limit={`횟수 보상은 20회까지 회당 진주 1·경험치 +25%, 이후 완만해집니다. 환생 AP 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도 최대 ${ECONOMY.tideCap}.`}/>
+                    limit={`횟수 보상은 20회까지 회당 진주 1·경험치 +25%, 이후 완만해집니다. 환생 AP 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도 최대 ${ECONOMY.tideCap}. 칭호는 업적(환생 횟수·도전·심연)을 달성하면 얻고, 능력치 화면의 ‘칭호’에서 장착하거나 숨깁니다.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="진주 연구"
                     effect="진주로 영구 능력을 올립니다. 환생해도 유지되며 전투·유틸·골드 탭으로 나뉩니다."
                     condition="단계가 오를수록 비용이 커집니다. 일부 연구는 정해진 환생 횟수 뒤에 열립니다."

@@ -1,5 +1,6 @@
 'use client';
 import { tutorialActive } from './growth-goals';
+import { displayTitle } from '@/game/data/titles';
 import { TutorialCard } from './guidance-panels';
 import { tutorialEarly } from '@/game/systems/guidance';
 import { Anchor, BookOpen, ChevronRight, Flag, Heart, Shield, ShoppingBag, Swords, Target, Trophy, Users, Zap } from 'lucide-react';
@@ -27,7 +28,7 @@ export function Player({ s, busy, send, setView }: {
     <Anchor size={36}/>
     <span>{s.level}</span>
     </div>
-    <div className="combatant-name character-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun}/></div>
+    <div className="combatant-name character-name"><h3>{displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun}/></div>
     <p className="job-label">{jobById(s.job)?.name} · 환생 {s.rebirths}회</p>
     <p className="guild-label"><Users size={14}/>{s.guildMember?.name ? `길드 · ${s.guildMember.name}` : '무소속'}</p>
     <div className="combat-power">

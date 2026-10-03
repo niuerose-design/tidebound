@@ -10,7 +10,7 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
 test('222 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,257);assert.equal(SKILLS.length,503);assert.equal(JOB_TREES.length,7);
+ assert.equal(JOBS.length,257);assert.equal(SKILLS.length,502);assert.equal(JOB_TREES.length,7);
  for(const job of JOBS)assert.ok(JOB_TREES.some(t=>t.id===job.tree),job.id);
  for(const job of JOBS.filter(j=>(j.tier===1||j.tier===2)&&!j.fullKit)){
   const owned=SKILLS.filter(sk=>sk.job===job.id&&!sk.song);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
@@ -55,7 +55,7 @@ test('SP inheritance, growth and practice survive reincarnation',()=>{
 });
 test('Level ups grant native skills but no SP',()=>{
  const s=newState(0);s.running=true;s.exp=xpNeeded(1)+xpNeeded(2);s.enemy={id:'minnow',name:'target',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};
- tick(s,()=>.5);assert.equal(s.level,3);assert.equal(s.sp,0);assert.equal(s.learned.splash,1);
+ tick(s,()=>.5);assert.equal(s.level,3);assert.equal(s.sp,0);assert.equal(s.learned.splash,undefined,'v26.1 물보라 삭제');
 });
 test('Combat feedback preserves both actors, healing target and follow-up misses',()=>{
  const logs=[
@@ -163,7 +163,7 @@ test('v24.1 status rules: support skills are status-only; early damage+stun/sile
 });
 
 test('v24 loadout priority moves only among skills of the same type', () => {
- const s = newState(0); s.skills = ['hook', 'focus', 'splash', 'breath'];
- act(s, { type: 'skillUp', id: 'splash' }, 0); assert.deepEqual(s.skills, ['splash', 'focus', 'hook', 'breath'], 'active jumps over the passive to the previous active');
- act(s, { type: 'skillUp', id: 'splash' }, 0); assert.deepEqual(s.skills, ['splash', 'focus', 'hook', 'breath'], 'first active stays first');
+ const s = newState(0); s.skills = ['hook', 'focus', 'breath', 'pierce'];
+ act(s, { type: 'skillUp', id: 'breath' }, 0); assert.deepEqual(s.skills, ['breath', 'focus', 'hook', 'pierce'], 'active jumps over the passive to the previous active');
+ act(s, { type: 'skillUp', id: 'breath' }, 0); assert.deepEqual(s.skills, ['breath', 'focus', 'hook', 'pierce'], 'first active stays first');
 });

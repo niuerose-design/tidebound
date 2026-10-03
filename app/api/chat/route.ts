@@ -1,7 +1,7 @@
 import { session, checkOrigin, db, failure, readJson, ApiError } from '@/game/server/store';
 import { guildIdOf } from '@/game/server/guild';
 import type { State } from '@/game/types';
-import { rebirthTitle } from '@/game/data/long-term';
+import { displayTitle } from '@/game/data/titles';
 export const dynamic = 'force-dynamic';
 
 /** v25.4 전체 채팅. 열려 있는 동안만 몇 초마다 새 줄을 묻고(after 커서), 한 줄은 120자, 계정마다 2.5초에 한 줄입니다. */
@@ -40,7 +40,7 @@ export async function POST(req: Request) { try {
     if (now - await database.lastChatAt(id) < CHAT_COOLDOWN_MS) throw new ApiError('조금 천천히 보내 주세요.', 429);
     const player = await database.getPlayer(id);
     if (!player) throw new ApiError('먼저 게임을 시작하세요.');
-    const state = JSON.parse(player.state) as State, title = rebirthTitle(state.rebirths || 0);
+    const state = JSON.parse(player.state) as State, title = displayTitle(state);
     const name = `${title ? `[${title}] ` : ''}${String(state.name || '낚시꾼').slice(0, 20)}`;
     const row = await database.postChat({ channel, account_id: id, name, text, created_at: now });
     return Response.json({ row: { id: row.id, name: row.name, text: row.text, at: row.created_at, self: true }, now }, { headers: { 'Cache-Control': 'no-store' } });

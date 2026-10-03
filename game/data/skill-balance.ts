@@ -12,7 +12,6 @@ import { V25_BALANCE, V25_STATUS_ONLY } from './expansion-v25';
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     hook: { chance: .18, multiplier: 1.25, cooldown: 3 },
-    splash: { chance: .45, multiplier: 1.05, manaCost: 9, cooldown: 5 },
     breath: { chance: .45, multiplier: .85, manaCost: 10, cooldown: 5, damageType: 'magic', healRatio: .1 },
     pierce: { chance: .24, multiplier: 1.9, penetrationBonus: .2, cooldown: 4 },
     hunt: { chance: .2, multiplier: 2.3, cooldown: 5, damageBonusCondition: 'lowHp', conditionalDamageBonus: .9 },
@@ -84,7 +83,7 @@ for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE }
  *   ③ 1~2차(공용 포함)의 피해+기절·침묵 기술은 피해 배율이 제한됩니다(STATUS_TUNING.earlyStatusMultiplierCap).
  * - 1~3차 연계 공격기는 상태이상 없이 피해만 줍니다(같은 계보의 보조기로 상태를 겁니다).
  */
-export const STATUS_ONLY_SKILLS = ['splash', 'anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
+export const STATUS_ONLY_SKILLS = ['anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
     'bellCrash', 'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
     'quakeStep', 'sealHex', 'frostMist', 'driftwoodShove', 'currentJam', 'netThrow', 'oathShout', 'rottenBait', ...SUPPORT_STATUS_ONLY, ...V25_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
