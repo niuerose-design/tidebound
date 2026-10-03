@@ -16,7 +16,7 @@ export type AbyssRow = { rank: number; id: string; name: string; depth: number; 
 /** 동기화 주기(ms). */
 const SYNC_MS = 3000;
 /** 대기 중(자동 낚시 꺼짐) 동기화는 SYNC_MS × 이 값마다. */
-const IDLE_SYNC_SKIP = 3;
+const IDLE_SYNC_SKIP = 10;
 /** 턴이 서버에서 계산된 뒤 다음 동기화로 도착할 때까지의 여유. 이만큼 늦게 재생해야 턴 간격이 고르게 유지됩니다. */
 const REPLAY_LAG_MS = SYNC_MS + 500;
 /** 이보다 많은 턴이 밀리면(탭 복귀 등) 밀린 분은 건너뛰고 최신 상태로 맞춥니다. */
@@ -159,7 +159,7 @@ export function useGame() {
         setBusy(false);
     } }, [request, loadRanking, replay]);
     useEffect(() => { const first = setTimeout(() => send({ type: 'sync' }), 0); let ticks = 0; const timer = setInterval(() => { const s = stateRef.current; ticks++;
-        // v25.10 자동 낚시가 꺼져 있고 던전도 아니면 3번에 한 번(9초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
+        // v25.21 자동 낚시가 꺼져 있고 던전도 아니면 10번에 한 번(30초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
         if (document.visibilityState === 'visible' && s && (s.running || s.dungeon || ticks % IDLE_SYNC_SKIP === 0))
         send({ type: 'sync' }); }, SYNC_MS); const visible = () => { if (document.visibilityState === 'visible')
         send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible); return () => { clearTimeout(first); clearInterval(timer); document.removeEventListener('visibilitychange', visible); }; }, [send]);
