@@ -160,7 +160,7 @@ export function useGame() {
     } }, [request, loadRanking, replay]);
     useEffect(() => { const first = setTimeout(() => send({ type: 'sync' }), 0); let ticks = 0; const timer = setInterval(() => { const s = stateRef.current; ticks++;
         // v25.21 자동 낚시가 꺼져 있고 던전도 아니면 10번에 한 번(30초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
-        if (document.visibilityState === 'visible' && s && (s.running || s.dungeon || ticks % IDLE_SYNC_SKIP === 0))
+        if (document.visibilityState === 'visible' && (!s || s.running || s.dungeon || ticks % IDLE_SYNC_SKIP === 0))
         send({ type: 'sync' }); }, SYNC_MS); const visible = () => { if (document.visibilityState === 'visible')
         send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible); return () => { clearTimeout(first); clearInterval(timer); document.removeEventListener('visibilitychange', visible); }; }, [send]);
     useEffect(() => {
@@ -204,8 +204,13 @@ export function useGame() {
         setState(null);
         replay.reset();
         setError('');
-        send({ type: 'sync' });
-    }, [replay, send]);
+        // v27.11 자동 낚시 중 3초 동기화와 겹치면 sync가 잠금에 걸려 버려지고 화면이 '불러오는 중'에 멈췄습니다. 새 슬롯 상태가 올 때까지 다시 시도합니다.
+        for (let attempt = 0; attempt < 10 && !stateRef.current; attempt++) {
+            await action({ type: 'sync' }).catch(() => { });
+            if (!stateRef.current) await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        if (!stateRef.current) throw Error('새 슬롯을 불러오지 못했습니다. 화면을 새로 고쳐 주세요.');
+    }, [action, replay]);
     const logout = useCallback(async () => {
         await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }).catch(() => { });
         stateRef.current = null;
