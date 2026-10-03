@@ -3,7 +3,7 @@ import type { Skill, Stats } from '../types';
 import { bossLevelScale, monsterLevelScale, dungeonPressure, MONSTER_TUNING } from './balance';
 export const ENEMY_SKILLS: Skill[] = [
     { id: 'foeShock', name: '전류 방출', desc: '마법 공격', type: 'active', level: 1, chance: .3, cooldown: 3, multiplier: 1.5, damageType: 'magic', manaCost: 0 },
-    { id: 'foeVenom', name: '독가시', desc: '피해 없이 5턴 지속 피해.', type: 'active', level: 1, chance: .25, cooldown: 4, multiplier: 1, effect: 'bleed', statusTurns: 5, statusOnly: true, manaCost: 0 },
+    { id: 'foeVenom', name: '독가시', desc: '피해 없이 중독 1중첩.', type: 'active', level: 1, chance: .25, cooldown: 4, multiplier: 1, effect: 'poison', statusTurns: 5, statusOnly: true, manaCost: 0 },
     { id: 'foeCrush', name: '꼬리 후려치기', desc: '피해 없이 2턴 기절.', type: 'active', level: 1, chance: .2, cooldown: 5, multiplier: 1.3, effect: 'stun', statusTurns: 2, statusOnly: true, manaCost: 0 },
     { id: 'foeSilence', name: '무음의 포효', desc: '피해 없이 4턴 침묵.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.15, effect: 'silence', damageType: 'magic', statusTurns: 4, statusOnly: true, manaCost: 0 },
     { id: 'foeSlow', name: '점액 조류', desc: '피해 없이 5턴 감속.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.1, effect: 'slow', damageType: 'magic', statusTurns: 5, statusOnly: true, manaCost: 0 },

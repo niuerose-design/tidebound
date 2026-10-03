@@ -5,7 +5,7 @@ import { BALANCE } from '../data/balance';
 import { jobById } from '../data/classes';
 import type { Enemy, Log, State, StatusEffects } from '../types';
 
-export type CombatFxKind = 'physical' | 'magic' | 'split' | 'stun' | 'bleed' | 'silence' | 'slow' | 'haste' | 'heal' | 'weaken' | 'miss';
+export type CombatFxKind = 'physical' | 'magic' | 'split' | 'stun' | 'bleed' | 'poison' | 'silence' | 'slow' | 'haste' | 'heal' | 'weaken' | 'miss';
 /** v25.20 스킬별 연출 갈래. 궤적 모양·파편 글자·색이 갈래마다 다릅니다. */
 export type CombatFxVariant = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph' | 'venom' | 'ink' | 'bone' | 'time';
 /** 스킬 id·효과로 연출 갈래를 고릅니다. 앞 규칙이 우선이고, 아무것도 맞지 않으면 마법은 arcane, 물리는 impact. */
@@ -15,6 +15,7 @@ export function fxVariantOf(id: string | undefined, magical: boolean, effect?: s
     if (!id) return magical ? 'arcane' : 'impact';
     // v27.14 스킬별 지정이 있으면 그것을 먼저 씁니다.
     if (SKILL_FX[id]) return SKILL_FX[id];
+    if (effect === 'poison') return 'venom';
     const rules: [RegExp, CombatFxVariant][] = [
         [/^glyph|^foeSilence$/, 'glyph'],
         // v27.16 독·먹물·뼈·시간 갈래
@@ -62,7 +63,7 @@ export type CombatFx = {
     tier?: number;
 };
 
-export const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
+export const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', poison: '중독', weaken: '약화', slow: '감속', haste: '가속' };
 const variantOf = (id: string | undefined, magical: boolean, effect?: string): CombatFxVariant => fxVariantOf(id, magical, effect);
 /** 구조화된 전투 결과(log.event)를 우선 사용하고, 이전 세이브의 문자열 로그만 텍스트로 해석합니다. */
 export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
@@ -97,7 +98,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
     const effect = !mainMissed ? skill?.effect : undefined;
     const kind: CombatFxKind = missed ? 'miss' : effect && !['heal', 'drain'].includes(effect) ? effect as CombatFxKind : magical ? 'magic' : 'physical';
     const variant: CombatFxVariant = fxVariantOf(skill?.id, magical, skill?.effect);
-    const statuses: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', weaken: '약화', slow: '감속', haste: '가속' };
+    const statuses: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', poison: '중독', weaken: '약화', slow: '감속', haste: '가속' };
     return { id: log.id, actor, target, title: label, kind, variant, tier: fxTierOf(skill?.id), basic: !skill, critical, healing, drained: 0, status: effect ? statuses[effect] || '' : '', hits, delay: 0, damageType: magical ? 'magic' : 'physical' };
 }
 

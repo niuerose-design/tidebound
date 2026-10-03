@@ -160,7 +160,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'currentJam', name: '해류 교란', desc: '', level: 10, job: 'tideSurveyor', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'weaken', statusTurns: 6 },
     { ...A, ...physical, id: 'netThrow', name: '그물 던지기', desc: '', level: 10, job: 'netWeaver', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'slow', statusTurns: 6 },
     { ...A, ...physical, id: 'oathShout', name: '맹세의 함성', desc: '', level: 10, job: 'oathAngler', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'silence', statusTurns: 3 },
-    { ...A, ...physical, id: 'rottenBait', name: '썩은 미끼', desc: '', level: 10, job: 'barbSkirmisher', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'bleed', dotName: '중독', dotRatio: .1, dotStacks: true, statusTurns: 6 },
+    { ...A, ...physical, id: 'rottenBait', name: '썩은 미끼', desc: '', level: 10, job: 'barbSkirmisher', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'poison', dotRatio: .1, statusTurns: 6 },
     { ...P, id: 'sporePouch', name: '포자 주머니', desc: '지속 피해와 마법 방어가 오릅니다.', level: 10, job: 'toadstoolForager', cost: 2, bonus: { dotBonus: .08, resist: 6 } },
     { ...P, id: 'inkSplash', name: '먹물 세례', desc: '명중과 회피가 오릅니다.', level: 10, job: 'inkThrower', cost: 2, bonus: { accuracy: .05, evasion: .02 } },
     // 복합: 창기병

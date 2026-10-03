@@ -61,7 +61,11 @@ export const SKILL_FORMULA = {
     diceTrimLow: .25, diceTrimHigh: .05, diceTrimCap: 3,
     healThreshold: .8, woundedThreshold: .7, healRatio: .22,
     hpScaling: .08, manaScaling: .45, hybridHpScaling: .05, hybridManaScaling: .25,
-    crushDefense: 1.5, weakenedDamage: .75, bleedRatio: .22, drainRatio: .25, extraAttackMultiplier: .65,
+    crushDefense: 1.5, weakenedDamage: .75, bleedRatio: .22,
+    /** v27.17 출혈 중인 대상이 받는 직접 피해 증가. 출혈은 중첩되지 않는 대신 이 보정을 줍니다. */
+    bleedVulnerability: .12,
+    /** v27.17 중독 한 중첩의 틱 피해 비율(위력 기준). 다섯 중첩이면 출혈보다 큽니다. */
+    poisonRatio: .14, drainRatio: .25, extraAttackMultiplier: .65,
     // 육중 조화: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
     // 초안(합 × 1.2 + 최저 × 6)은 편중 배분이 더 강해 check-all-rounder.mjs 결과로 조정했습니다.
     harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,
@@ -120,7 +124,9 @@ export const SKILL_FORMULA = {
 export const STATUS_TUNING = {
     weakenTurns: 3,
     bleedTurns: 3,
-    /** v21.3 중독 중첩 상한. 중첩형 기술은 겹칠 때마다 한 중첩씩 쌓고 지속 시간을 갱신합니다. */
+    /** v27.17 중독 지속 턴. 걸릴 때마다 한 중첩씩 쌓고 지속 시간을 갱신합니다. */
+    poisonTurns: 4,
+    /** v21.3 중독 중첩 상한. */
     poisonMaxStacks: 5,
     silenceTurns: 2,
     slowTurns: 3,
@@ -130,7 +136,7 @@ export const STATUS_TUNING = {
     /** Extra hits are intentionally capped so one proc cannot create runaway loops. */
     maxExtraAttacks: 2,
     /** v24.1 면역: 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 턴(자기 행동 기준). */
-    immuneTurns: { stun: 2, bleed: 1, weaken: 1, silence: 1, slow: 1 },
+    immuneTurns: { stun: 2, bleed: 1, poison: 1, weaken: 1, silence: 1, slow: 1 },
     /** v24.1 초반 배율 제한: 1~2차(공용 포함)에서 피해와 함께 거는 상태이상별 최대 피해 배율. */
     earlyStatusMultiplierCap: { stun: 1.2, silence: 1.5 } as Partial<Record<string, number>>,
 } as const;
@@ -138,7 +144,8 @@ export const STATUS_GUIDE = [
     { id: 'stun', name: '기절', kind: '행동 차단', description: '다음 행동을 건너뜁니다.', detail: '기절 중에도 출혈 같은 지속 피해는 먼저 처리됩니다.' },
     { id: 'silence', name: '침묵', kind: '스킬 차단', description: '지속 중 액티브 스킬을 사용할 수 없습니다.', detail: '기본 공격은 계속하며, 쿨다운·마나를 낭비하지 않습니다.' },
     { id: 'weaken', name: '약화', kind: '피해 감소', description: `주는 직접 피해가 ${Math.round((1 - SKILL_FORMULA.weakenedDamage) * 100)}% 감소합니다.`, detail: '물리·마법 등 다음 공격의 피해 계산에 적용됩니다.' },
-    { id: 'bleed', name: '출혈', kind: '지속 피해', description: '행동할 때마다 고정 피해를 받습니다. 방어·반격을 무시합니다.', detail: `명중한 공격의 위력 + 대상 최대 체력의 ${Math.round(SKILL_FORMULA.dotMaxHpRatio * 100)}%가 틱 피해가 되고 최대 ${STATUS_TUNING.bleedTurns}턴 지속됩니다. 체력이 큰 탱커일수록 아픕니다.` },
+    { id: 'bleed', name: '출혈', kind: '지속 피해', description: `행동할 때마다 고정 피해를 받고, 출혈 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.bleedVulnerability * 100)}% 커집니다. 중첩되지 않습니다.`, detail: `명중한 공격의 위력 + 대상 최대 체력의 ${Math.round(SKILL_FORMULA.dotMaxHpRatio * 100)}%가 틱 피해가 되고 최대 ${STATUS_TUNING.bleedTurns}턴 지속됩니다. 체력이 큰 탱커일수록 아픕니다.` },
+    { id: 'poison', name: '중독', kind: '지속 피해 · 중첩', description: `걸릴 때마다 한 중첩씩 쌓여 틱 피해가 커집니다(최대 ${STATUS_TUNING.poisonMaxStacks}중첩, 포화 옵션으로 상한 증가).`, detail: `중첩당 (명중한 공격의 위력 × ${SKILL_FORMULA.poisonRatio}) + 대상 최대 체력의 ${Math.round(SKILL_FORMULA.dotMaxHpRatio * 100)}%가 틱 피해입니다. 다시 걸면 지속 ${STATUS_TUNING.poisonTurns}턴이 갱신됩니다. 출혈과 함께 걸릴 수 있습니다.` },
     { id: 'slow', name: '감속', kind: '속도 감소', description: `속도가 ${Math.round(STATUS_TUNING.slowMultiplier * 100)}% 낮아져 선공·명중 보정·연속 행동에 불리해집니다.`, detail: '선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
     { id: 'haste', name: '가속', kind: '속도 증가', description: `속도가 ${Math.round(STATUS_TUNING.hasteMultiplier * 100)}% 높아져 선공·명중 보정·연속 행동에 유리해집니다.`, detail: '상대보다 빨라지면 연속 행동 확률이 올라갑니다. 선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
 ] as const;

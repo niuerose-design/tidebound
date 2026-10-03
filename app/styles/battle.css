@@ -236,7 +236,7 @@
 /* Short target-anchored feedback inspired by the supplied combat reference. */
 .tide-fx-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:6}
 .tide-fx{--fx:#efd28a;position:absolute;left:72%;top:53%;width:0;height:0;color:var(--fx)}
-.tide-fx-target-player{left:28%}.tide-fx-magic,.tide-fx-wave{--fx:#8ce4ed}.tide-fx-lightning,.tide-fx-stun{--fx:#ffe38b}.tide-fx-bleed{--fx:#fb8f97}.tide-fx-silence,.tide-fx-arcane{--fx:#c4b0ff}.tide-fx-slow{--fx:#a0d2ff}.tide-fx-haste,.tide-fx-heal{--fx:#a4e9ba}.tide-fx-weaken{--fx:#c2b7d8}.tide-fx-miss{--fx:#a6bdbb}
+.tide-fx-target-player{left:28%}.tide-fx-magic,.tide-fx-wave{--fx:#8ce4ed}.tide-fx-lightning,.tide-fx-stun{--fx:#ffe38b}.tide-fx-bleed{--fx:#fb8f97}.tide-fx-poison{--fx:#9af06a}.tide-fx-silence,.tide-fx-arcane{--fx:#c4b0ff}.tide-fx-slow{--fx:#a0d2ff}.tide-fx-haste,.tide-fx-heal{--fx:#a4e9ba}.tide-fx-weaken{--fx:#c2b7d8}.tide-fx-miss{--fx:#a6bdbb}
 .tide-fx i{display:block;position:absolute;pointer-events:none;font-style:normal}
 .tide-fx-trail{left:-120px;top:-2px;width:122px;height:3px;background:linear-gradient(90deg,transparent,var(--fx),#fff);box-shadow:0 0 8px var(--fx);animation:tideStrike .42s ease-out var(--fx-delay) both}
 .tide-fx-target-player .tide-fx-trail{left:0;transform-origin:right;background:linear-gradient(90deg,#fff,var(--fx),transparent)}
@@ -376,7 +376,7 @@
 /* v25.3 배경까지 번지는 연출. 스킬은 섬광·물결 고리, 天은 어둠·일곱 글자·전체 섬광. */
 .scene-fx-layer{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
 .scene-fx{--fx:#efd28a;position:absolute;inset:0;color:var(--fx)}
-.scene-fx-wave,.scene-fx-magic{--fx:#8ce4ed}.scene-fx-lightning,.scene-fx-stun{--fx:#ffe38b}.scene-fx-bleed{--fx:#fb8f97}.scene-fx-arcane,.scene-fx-silence{--fx:#c4b0ff}.scene-fx-slow{--fx:#a0d2ff}.scene-fx-haste,.scene-fx-heal{--fx:#a4e9ba}.scene-fx-weaken{--fx:#c2b7d8}
+.scene-fx-wave,.scene-fx-magic{--fx:#8ce4ed}.scene-fx-lightning,.scene-fx-stun{--fx:#ffe38b}.scene-fx-bleed{--fx:#fb8f97}.scene-fx-poison{--fx:#9af06a}.scene-fx-arcane,.scene-fx-silence{--fx:#c4b0ff}.scene-fx-slow{--fx:#a0d2ff}.scene-fx-haste,.scene-fx-heal{--fx:#a4e9ba}.scene-fx-weaken{--fx:#c2b7d8}
 .scene-fx i,.scene-fx b{position:absolute;display:block;font-style:normal}
 .scene-fx-burst .scene-fx-flash{inset:0;background:radial-gradient(ellipse at 62% 48%,color-mix(in srgb,var(--fx) 42%,transparent),transparent 62%);animation:sceneFlash .9s ease-out var(--fx-delay) both;mix-blend-mode:screen}
 .scene-fx-burst.critical .scene-fx-flash{background:radial-gradient(ellipse at 62% 48%,color-mix(in srgb,var(--fx) 62%,transparent),transparent 70%)}

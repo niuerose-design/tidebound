@@ -5,7 +5,7 @@ const {load:m}=loadGame();
 const {SKILLS}=await m('data/skills'); const {JOBS}=await m('data/classes'); const {effectiveSkill,maxSkillLevel}=await m('systems/progression');
 const roles=sk=>{const r=[];const b=sk.bonus||{};const lv=(sk.levelEffects||[]).flatMap(x=>Object.keys(x.bonus||{}));const keys=new Set([...Object.keys(b),...lv,...Object.keys(sk.masteryBonus||{})]);
  if(sk.type==='active'){ if(sk.damageType==='magic')r.push('마법공격'); else if(sk.damageType==='split')r.push('복합'); else r.push('물리공격');
-  if(sk.penetrationBonus||sk.scaling==='hp'||sk.scaling==='hybrid')r.push('고방어대응'); if(['stun','bleed','weaken','silence','slow'].includes(sk.effect))r.push('상태이상:'+sk.effect);
+  if(sk.penetrationBonus||sk.scaling==='hp'||sk.scaling==='hybrid')r.push('고방어대응'); if(['stun','bleed','poison','weaken','silence','slow'].includes(sk.effect))r.push('상태이상:'+sk.effect);
   if(sk.extraAttacks||sk.damageBonusCondition)r.push('연계'); if(['heal','drain'].includes(sk.effect)||sk.cleanseSelf)r.push('생존:'+(sk.effect||'cleanse')); if(sk.effect==='haste')r.push('버프:haste'); if((sk.manaCost||0)===0)r.push('마나0');}
  else { if(keys.has('attack')||keys.has('crit')||keys.has('critDamage')||keys.has('penetration'))r.push('물리공격↑'); if(keys.has('magic'))r.push('마법공격↑'); if(keys.has('hp')||keys.has('defense')||keys.has('resist')||keys.has('lifesteal')||keys.has('evasion'))r.push('생존↑'); if(keys.has('mana')||keys.has('manaRegen'))r.push('마나유지'); if(keys.has('goldBonus')||keys.has('expBonus')||keys.has('dropBonus')||keys.has('dungeonGoldBonus')||keys.has('rebirthBonus')||sk.masteryGain)r.push('숙련·재화'); if(keys.has('accuracy')||keys.has('speed'))r.push('명중·속도');}
  return r;};

@@ -80,12 +80,14 @@ export type StatusEffects = {
         stacks?: number;
         perStack?: number;
     };
+    /** v27.17 중독: 출혈과 별개 상태이상. 걸릴 때마다 한 중첩씩 쌓이고(상한 STATUS_TUNING.poisonMaxStacks + 포화) 지속이 갱신됩니다. 틱 피해 = perStack × stacks + hpTick. */
+    poison?: { perStack: number; stacks: number; turns: number; hpTick: number };
     weaken?: number;
     silence?: number;
     slow?: number;
     haste?: number;
     /** 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 남은 턴(자기 행동마다 1씩 줄어듭니다). */
-    immune?: Partial<Record<'stun' | 'bleed' | 'weaken' | 'silence' | 'slow', number>>;
+    immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'weaken' | 'silence' | 'slow', number>>;
     /** v25 일곱 글자: 이번 전투에 새긴 인. */
     seals?: string[];
     /** v25 타임머신을 이번 전투에 썼는지. */
@@ -132,7 +134,7 @@ export type Skill = {
     chance: number;
     cooldown: number;
     multiplier: number;
-    effect?: 'heal' | 'stun' | 'bleed' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste';
+    effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste';
     /** split: 원시 피해를 물리·마법 절반씩 나누어 각각 방어를 적용하는 한 번의 공격. */
     damageType?: 'physical' | 'magic' | 'split';
     cost?: number;
@@ -197,7 +199,6 @@ export type Skill = {
     dotRatio?: number;
     dotName?: string;
     /** true면 같은 중첩형 지속 피해에 겹쳐 쌓입니다(최대 STATUS_TUNING.poisonMaxStacks, 지속 시간 갱신). */
-    dotStacks?: boolean;
     /** Number of capped follow-up hits after the main hit. */
     extraAttacks?: number;
     /** Damage multiplier used by each follow-up hit. */
@@ -226,6 +227,8 @@ export type Skill = {
     };
 };
 export type Enemy = {
+    /** v27.16 양쪽 체력이 그대로인 턴 수. 오래 이어지면 물고기가 달아난 것으로 보고 새 입질을 받습니다. */
+    stale?: number;
     /** 무리 규모(N). 무리 전체가 체력 ×N인 한 개체입니다. 없으면 한 마리. */
     swarm?: number;
     /** v25.19 변종 종류(무리·거대·심연 변이·별빛). 없으면 보통 개체. */
