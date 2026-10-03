@@ -164,3 +164,16 @@ test('v26.7 magic attacks take half of the target evasion and never a negative t
     assert.equal(hitChance(me, { accuracy: 1, evasion: 0, speed: 10 }, true), hitChance(me, { accuracy: 1, evasion: 0, speed: 10 }), 'no evasion → same');
     assert.ok(hitChance({ ...me, speed: 20 }, swift, true) > magic, 'faster still gains the plus side of tempo');
 });
+
+test('v27.2 thorns scale with swarm size, ignore half of attacker defense, and tank passives raise swarm encounter odds', async () => {
+    const { SKILL_FORMULA, variantChances } = await import('./harness.mjs');
+    const tank = () => ({ name: 'T', stats: { ...base, defense: 100, thorns: .4 }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    const foe = (swarm) => ({ name: 'F', stats: { ...base, attack: 50, defense: 100 }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 100, ...(swarm ? { swarm } : {}) });
+    const t1 = tank(), f1 = foe(); strike(f1, t1, () => .5); const single = 1e6 - f1.hp;
+    const t2 = tank(), f2 = foe(100); strike(f2, t2, () => .5); const crowd = 1e6 - f2.hp;
+    assert.ok(single >= 1, 'thorns fired'); assert.ok(Math.abs(crowd / single - (1 + Math.log2(100))) < .15, `×100 swarm reflects (1+log2 100)≈7.6x: ${crowd}/${single}`);
+    assert.equal(single, Math.round(100 * .4 * 100 / (100 + 100 * 2 * (1 - SKILL_FORMULA.thornsPierce))), 'attacker defense counted at thornsPierce');
+    const s = newState(0); s.level = 30; s.unlockedJobs.push('gatekeeper'); s.job = 'gatekeeper'; s.learned.spikedShield = 1;
+    const before = variantChances(s).swarm; s.skills = ['spikedShield']; assert.ok(canUse(s, 'spikedShield')); const after = variantChances(s).swarm;
+    assert.ok(Math.abs(after / before - 1.5) < 1e-6, `가시 방패 +50% 무리 조우: ${before} → ${after}`);
+});
