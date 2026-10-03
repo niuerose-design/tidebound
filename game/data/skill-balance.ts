@@ -60,7 +60,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     redWake: { chance: .24, multiplier: 1.65, scalingRatio: .07, drainRatio: .18 },
     leviathanEquation: { chance: .55, multiplier: 2.6, scalingRatio: .45, manaCost: 28 },
     harvestEcho: { chance: .26, multiplier: 2.2, drainRatio: .18 },
-    // 만능 항해사: check-all-rounder.mjs 검증값
+    // 팔방 항해사: check-all-rounder.mjs 검증값
     harmonicWeight: { chance: .5, multiplier: 2.2, cooldown: 3, manaCost: 16 },
     twinHook: { chance: .24, multiplier: 1.15, extraAttackMultiplier: .5 },
     electricBite: { chance: .28, multiplier: 1.75, damageType: 'physical' },
