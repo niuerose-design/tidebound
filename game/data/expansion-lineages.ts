@@ -210,7 +210,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'harmonics', name: '화음', desc: '경험치 획득과 마나 회복이 오릅니다.', level: 25, job: 'tidalSinger', cost: 2, bonus: { expBonus: .04, manaRegen: 1 } },
     // ???
     { ...A, ...physical, id: 'soulTyranny', name: '영혼 폭정', desc: '', level: 55, job: 'lichKing', chance: .26, cooldown: 4, multiplier: 2.5, cost: 5, effect: 'drain', drainRatio: .2, masteryMilestones: M4 },
-    { ...P, id: 'undyingThrone', name: '죽지 않는 왕좌', desc: '최대 체력과 치명타가 오릅니다.', level: 55, job: 'lichKing', cost: 3, bonus: { hp: 240, crit: .04 }, masteryMilestones: M4 },
+    { ...P, id: 'undyingThrone', name: '죽지 않는 왕좌', desc: '최대 체력과 치명타가 오릅니다.', level: 55, job: 'lichKing', cost: 3, bonus: { hp: 320, crit: .08, attack: 30 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'nullStep', name: '허공 걸음', desc: '', level: 40, job: 'voidDrifter', chance: .55, cooldown: 4, multiplier: 2, cost: 4, manaCost: 20, scaling: 'mana', scalingRatio: .3 },
     { ...P, id: 'phaseCloak', name: '위상 망토', desc: '회피와 최대 마나가 오릅니다.', level: 40, job: 'voidDrifter', cost: 3, bonus: { evasion: .06, mana: 30 } },
     { ...A, ...magic, id: 'abyssDecree', name: '심연의 칙령', desc: '', level: 55, job: 'voidSovereign', chance: .55, cooldown: 4, multiplier: 2.7, cost: 5, manaCost: 30, scaling: 'mana', scalingRatio: .35, masteryMilestones: M4 },

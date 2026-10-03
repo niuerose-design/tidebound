@@ -34,8 +34,11 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     eternalWave: { chance: .6, multiplier: 2.6, manaCost: 24, cooldownReset: { on: 'kill', chance: 1, pick: 'all' } },
     vitalSurge: { chance: .23, multiplier: 1.65, scalingRatio: .05, drainRatio: .15 },
     voidLance: { chance: .55, multiplier: 2, scalingRatio: .3, manaCost: 20 },
+    // v27.5 망인 계보 계승 가치: 무덤의 챔질 AP 4→2·대기 3, 골수 방패 발동 34%·×1.9·AP 3. 같은 차수 기술 중 꼴찌였습니다.
     graveHook: { chance: .5, multiplier: 1.7, manaCost: 13 },
-    marrowGuard: { chance: .22, multiplier: 1.75 },
+    // v27.4 유리 작살꾼(제약 직업): 240%·빈사 +50%.
+    glassLance: { chance: .3, multiplier: 2.4 },
+    marrowGuard: { chance: .34, multiplier: 1.9 },
     wakeFist: { chance: .26, multiplier: 1.45 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
     greenTide: { chance: .55, multiplier: 1.3, manaCost: 11, healRatio: .16 },
