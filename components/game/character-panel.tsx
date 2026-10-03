@@ -1,9 +1,10 @@
 'use client';
 import { ConfirmButton } from './confirm-button';
-import { RefreshCw, Target } from 'lucide-react';
+import { ChevronDown, RefreshCw, Target } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
 import { attributes, apCapacity, apUsed } from '@/game/systems/progression';
 import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
+import { masteryMultipliers } from '@/game/systems/mastery';
 import { VARIANTS, VARIANT_BOOK_MIN, variantChances } from '@/game/data/variants';
 import {MONSTER_TUNING, BALANCE } from '@/game/data/balance';
 import { StatBreakdown } from './stat-breakdown';
@@ -11,6 +12,18 @@ import { type StatTrace, stats, dropRate, goldMultiplier, expMultiplier } from '
 import { Heading } from './shared';
 import { TITLES, unlockedTitles, displayTitle, titleById } from '@/game/data/titles';
 import type { PanelProps } from './panel-props';
+import type { State } from '@/game/types';
+/** 상세 능력치의 숙련도 획득 보너스. 펼치면 배율별 기여와 포획당 기대 숙련을 보여줍니다. */
+function MasteryBreakdown({ s }: { s: State }) {
+    const m = masteryMultipliers(s), x = (n: number) => `×${n.toFixed(2)}`;
+    const rows: [string, string][] = [[m.base > 1 ? '기본 획득 (깊은 항해)' : '기본 획득', `+${m.base}`], ['해역 난이도', s.dungeon ? '×1 (던전)' : x(m.tide)], ['숙련의 기억 · 계정 어종', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as [string, string]] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as [string, string]] : [])];
+    return <details className="stat-breakdown">
+        <summary><span>숙련도 획득 보너스<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>+{Math.round((m.total - 1) * 100)}%</strong></summary>
+        <ul>{rows.map(([label, value]) => <li key={label}><span>{label}</span><b>{value}</b></li>)}
+            <li className="stat-breakdown-total"><span>포획당 숙련</span><b>≈ {(m.base * m.total).toFixed(1)}</b></li></ul>
+        <p className="stat-note">포획할 때마다 현재 직업과 장착 스킬의 숙련이 오릅니다. 조건부 숙련 스킬 보너스(지정 적 포획 시)와 무리 마릿수는 따로 더해집니다.</p>
+    </details>;
+}
 export function Character({ s, send, busy }: PanelProps) {
     const trace: StatTrace = {}, a = stats(s, trace), v = attributes(s);
     return <>
@@ -50,9 +63,9 @@ export function Character({ s, send, busy }: PanelProps) {
     <h2>최종 전투 능력치</h2>
     <span>직업·장비·스킬 포함</span>
     </div>
-    <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace} wide={['hp', 'speed'].includes(key)}/>)}</div>
+    <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace} wide={key === 'speed'}/>)}</div>
     <p className="footnote stat-breakdown-hint">능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
-    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>)}</div></details>
+    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).flatMap(key => [<StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>, ...(key === 'critDamage' ? [<MasteryBreakdown key="mastery" s={s}/>] : [])])}</div></details>
     <div className="derived-summary">
     <span>장비 드롭 확률 (포획당)<strong>{percent(dropRate(s), 2)}</strong>
     </span>
