@@ -1,6 +1,6 @@
 import type { Skill, Stats } from '../types';
 import { STATUS_TUNING, SKILL_FORMULA, FIRST_AID_HEAL, diceMultiplier, diceRange } from '../data/balance';
-import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '../data/progression';
+import { STAT_LABELS, byStatOrder, statDeltaDisplay, PROGRESSION } from '../data/progression';
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel, skillMasteryRewards } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
 import { jobById } from '../data/classes';
@@ -118,9 +118,11 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     return out;
 }
 export function skillGrowthStages(sk: Skill) {
-    const milestones = masteryMilestonesFor(sk);
-    return Array.from({ length: maxSkillLevel(sk) + 1 }, (_, level) => {
-        const effective = effectiveSkill(sk, level + 1);
-        return { level, practice: level ? milestones[level - 1] : 0, effective, effects: skillEffectLines(effective, level) };
+    const milestones = masteryMilestonesFor(sk), max = maxSkillLevel(sk), lb = PROGRESSION.limitBreak;
+    // v27.6 한계돌파 단계(최대 성장 다음 1~max)는 숙련 채널로만 도달하므로 mastery 인자로 흉내 냅니다.
+    return Array.from({ length: max + 1 + lb.max }, (_, level) => {
+        const broken = Math.max(0, level - max);
+        const effective = broken ? effectiveSkill(sk, 1, level) : effectiveSkill(sk, level + 1);
+        return { level, practice: level ? (broken ? milestones[max - 1] * lb.practiceMultiple[broken - 1] : milestones[level - 1]) : 0, broken, effective, effects: skillEffectLines(effective, level) };
     });
 }
