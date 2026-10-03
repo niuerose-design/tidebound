@@ -1,5 +1,6 @@
 /** 턴 진행(온라인 tick·오프라인 advance). */
 import { syncGoals, syncAchievements } from './progress';
+import { activeEvent } from '../data/events';
 import { recordOpenDoors } from '../data/doors';
 import { syncVoyage } from './guidance';
 import { syncGoal } from './goals';
@@ -95,6 +96,8 @@ export function tickTurn(s: State, rng: () => number) {
 }
 export function advance(s: State, now: number, rng = Math.random) {
     now = Math.max(now, s.lastTick);
+    // v26.1 서버 이벤트: 정산 시각 기준으로 적어 두고, 아래 틱들이 이 배율을 씁니다.
+    s.event = activeEvent(now);
     const elapsed = now - s.lastTick;
     // 정산 상한은 정산을 시작할 때의 긴 닻줄 단계로 정합니다(정산 중 연구가 바뀌지 않음).
     const cap = offlineCapSeconds(s);

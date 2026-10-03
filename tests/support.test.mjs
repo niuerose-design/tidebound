@@ -90,3 +90,15 @@ test('v26.1 titles come from achievements; equip, hide and auto all resolve thro
     act(s, { type: 'title', id: 'auto' }, 0); assert.equal(s.title, undefined); assert.equal(displayTitle(s), '바다에 사는 자');
     assert.ok(TITLES.every(t => t.achievement), 'every title names its achievement');
 });
+
+test('v26.1 server events multiply exp/gold/drop while active and are stamped into the state by advance()', async () => {
+    const { activeEvent, eventLabel } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/events');
+    const { expMultiplier, goldMultiplier, dropRate } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/stats');
+    const { advance } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/turn');
+    const ev = [{ id: 'x', name: '테스트', from: '2026-01-01T00:00:00+09:00', until: '2026-01-02T00:00:00+09:00', exp: 2, gold: 1.5 }];
+    assert.equal(activeEvent(Date.parse('2025-12-31T00:00:00+09:00'), ev), null);
+    const live = activeEvent(Date.parse('2026-01-01T12:00:00+09:00'), ev); assert.equal(live.exp, 2); assert.equal(live.gold, 1.5); assert.equal(live.drop, 1); assert.match(eventLabel(live), /경험치 ×2 · 골드 ×1.5 · 1\/2까지/);
+    const s = newState(0); const base = [expMultiplier(s), goldMultiplier(s), dropRate(s)]; s.event = live;
+    assert.ok(Math.abs(expMultiplier(s) / base[0] - 2) < 1e-9); assert.ok(Math.abs(goldMultiplier(s) / base[1] - 1.5) < 1e-9); assert.ok(Math.abs(dropRate(s) - base[2]) < 1e-9, 'drop ×1 stays');
+    const t = newState(0); advance(t, Date.parse('2030-01-01T00:00:00Z')); assert.equal(t.event, null, 'no event far in the future → null stamped');
+});

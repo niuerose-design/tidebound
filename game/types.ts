@@ -294,6 +294,8 @@ export type State = {
     swarm?: number;
     /** 직전 환생 방식에 따른 이번 생의 효과. 다음 환생 때 다시 정해집니다. */
     lifeBonus?: 'deep' | 'tailwind' | null;
+    /** v26.1 지금 진행 중인 서버 이벤트(서버가 동기화 때 적음). 없으면 null. */
+    event?: import('./data/events').ActiveEvent | null;
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
     growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number; notified?: boolean } | null;

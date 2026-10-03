@@ -299,3 +299,8 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .title-desc { font-size: .85rem; color: var(--muted, #9fb7b0); }
 .title-locked { font-size: .8rem; color: var(--muted, #9fb7b0); }
 @media (max-width: 640px) { .title-row { grid-template-columns: 1fr auto; } .title-row .title-desc { grid-column: 1 / -1; } }
+
+/* v26.1 서버 이벤트 배너 */
+.event-banner { display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px 14px; border: 1px solid rgba(243, 220, 160, .45); border-radius: 12px; background: linear-gradient(90deg, rgba(243, 220, 160, .12), rgba(243, 220, 160, .03)); color: #f3dca0; font-size: .92rem; }
+.event-banner b { letter-spacing: .08em; font-size: .8rem; }
+.event-banner span { color: #e6f1ee; }
