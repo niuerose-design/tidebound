@@ -15,14 +15,15 @@ export const relicCost = () => 0;
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: `희귀 ${o.name}`, slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
 /** 탭에 쓴 진주와 재분배 반환액. 첫 1회는 전액, 이후 90%(내림). */
-export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed'>, tab: string) {
+export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' | 'researchGranted'>, tab: string) {
     const ranks: Record<string, number> = {};
     let spent = 0;
     for (const r of RESEARCH) {
         const rank = s.permanent[r.id] || 0;
         if (r.tab !== tab || !rank) continue;
         ranks[r.id] = rank;
-        spent += researchSpent(r.id, rank);
+        // v27.31 무료로 받은 앞 단계는 반환하지 않습니다.
+        spent += researchSpent(r.id, rank) - researchSpent(r.id, Math.min(rank, s.researchGranted?.[r.id] || 0));
     }
     const rate = s.researchResetUsed ? RESEARCH_RESET.refund : RESEARCH_RESET.firstRefund;
     return { spent, refund: Math.floor(spent * rate), ranks, first: !s.researchResetUsed };
@@ -177,13 +178,16 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const { refund, ranks } = researchRefund(s, tab.id);
         if (refund <= 0)
             throw Error('돌려받을 진주가 없습니다.');
-        const after = { ...s, permanent: { ...s.permanent, ...Object.fromEntries(Object.keys(ranks).map(k => [k, 0])) } };
+        const after = { ...s, permanent: { ...s.permanent, ...Object.fromEntries(Object.keys(ranks).map(k => [k, Math.min(ranks[k], s.researchGranted?.[k] || 0)])) } };
         if (ranks.inventory && s.inventory.length > inventoryCap(after))
             throw Error(`재분배하면 가방이 ${inventoryCap(after)}칸으로 줄어 ${s.inventory.length - inventoryCap(after)}개가 넘칩니다. 장비를 정리하세요.`);
         if (ranks.ap && apUsed(after) > apCapacity(after))
             throw Error(`재분배하면 장착 AP 한도(${apCapacity(after)})를 넘습니다. 스킬 장착을 ${apUsed(after) - apCapacity(after)} AP 줄인 뒤 다시 시도하세요.`);
-        for (const k of Object.keys(ranks))
-            delete s.permanent[k];
+        // v27.31 무료로 받은 단계는 남깁니다(반환 진주에도 들어가지 않음).
+        for (const k of Object.keys(ranks)) {
+            const kept = Math.min(ranks[k], s.researchGranted?.[k] || 0);
+            if (kept) s.permanent[k] = kept; else delete s.permanent[k];
+        }
         s.researchResetUsed = true;
         s.pearls += refund;
         return `${tab.name} 연구 재분배 · 진주 +${refund} (100% 반환)`;

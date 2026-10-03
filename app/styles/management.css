@@ -99,6 +99,9 @@
 .job-section-heading h3 { margin:0; }
 .job-section-heading { margin-bottom:12px; }
 .info-trigger { display:inline-flex; justify-content:center; align-items:center; flex-shrink:0; color:#adc6b6; border-radius:4px; padding:4px; }
+.vow-info-trigger { gap:4px; margin-left:8px; padding:2px 7px; font-size:12px; font-weight:500; color:var(--gold); border:1px solid #506958; vertical-align:middle; }
+.vow-info-pop p { margin:0; }
+.vow-info-pop b { color:var(--gold); font-weight:600; }
 .info-trigger:hover { color:#e4e6c9; background:#31463c; }
 .game-tooltip { max-width:340px; padding:13px 16px; background:#253c35; color:#e0e4d8; border:1px solid #506958; font-size:13px; line-height:1.8; }
 .game-tooltip p+p { margin-top:10px; }

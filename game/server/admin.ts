@@ -10,12 +10,12 @@ import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
 import { BOSS_RESEARCH } from '../data/specializations';
-import { DUNGEONS } from '../data/world';
+import { DUNGEONS, STAGES } from '../data/world';
 import { PROGRESSION } from '../data/progression';
 import { skillById } from '../data/skills';
 import type { State } from '../types';
 import { SERVER_EVENTS, activeEvent, eventLabel, type ServerEvent } from '../data/events';
-import { readEventConfig, writeEventConfig } from './events-config';
+import { readEventConfig, writeEventConfig, readClosures, writeClosures } from './events-config';
 
 const digest = (v: string) => createHash('sha256').update(v).digest();
 /** 운영자 키 확인. 실패는 IP당 10분에 10번까지만 받습니다. */
@@ -160,4 +160,26 @@ export async function toggleCodeEvent(id: string, disabled: boolean) {
     const set = new Set(config.disabled); if (disabled) set.add(id); else set.delete(id);
     await writeEventConfig({ ...config, disabled: [...set] });
     return listEvents();
+}
+
+// ---------- v27.31 낚시터·던전 입장 막기 ----------
+
+/** 낚시터·던전 목록과 닫힘 여부. 첫 낚시터는 닫을 수 없습니다. */
+export async function listClosures() {
+    const c = await readClosures();
+    return {
+        stages: STAGES.map((st, i) => ({ id: st.id, name: st.name, closed: c.stages.includes(st.id), locked: i === 0 })),
+        dungeons: DUNGEONS.map(d => ({ id: d.id, name: d.name, closed: c.dungeons.includes(d.id), locked: false })),
+    };
+}
+/** 한 곳을 닫거나 엽니다. 안에 있던 낚시꾼은 다음 동기화 때 보상 없이 나옵니다. */
+export async function setClosed(kind: string, id: string, closed: boolean) {
+    if (kind !== 'stages' && kind !== 'dungeons') throw new ApiError('낚시터나 던전을 고르세요.');
+    if (kind === 'stages' ? !STAGES.some(st => st.id === id) : !DUNGEONS.some(d => d.id === id)) throw new ApiError('없는 곳입니다.');
+    if (kind === 'stages' && id === STAGES[0].id) throw new ApiError('첫 낚시터는 닫을 수 없습니다(닫힌 곳에서 나온 낚시꾼이 돌아갈 곳).');
+    const c = await readClosures(), set = new Set(c[kind]);
+    if (closed) set.add(id); else set.delete(id);
+    await writeClosures({ ...c, [kind]: [...set] });
+    console.info('admin closure', { kind, id, closed });
+    return listClosures();
 }

@@ -6,6 +6,9 @@ type AdminPlayer = { id: string; username: string; slot: number; name: string; l
 type Preview = { before: AdminPlayer; after: AdminPlayer };
 type EventRow = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; live: boolean; disabled?: boolean };
 type EventList = { code: EventRow[]; extra: EventRow[]; banner: string };
+type ClosureRow = { id: string; name: string; closed: boolean; locked: boolean };
+type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
+type Tab = 'life' | 'events' | 'closures';
 const MULTS = [['exp', '경험치'], ['gold', '골드'], ['drop', '장비 드롭'], ['mastery', '숙련']] as const;
 /** datetime-local(한국 시간으로 입력) → ISO. */
 const kstToIso = (v: string) => v ? `${v}:00+09:00` : '';
@@ -32,7 +35,7 @@ const line = (p: AdminPlayer) => `${p.name} · Lv.${p.level} ${p.job} · 환생 
 /** v27.26 운영 도구: 낚시꾼 이름·아이디로 찾아 이번 생을 처음 상태로 되돌립니다(환생 횟수·진주·연구·유물·도감 유지). */
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
-    const [tab, setTab] = useState<'life' | 'events'>('life'), [events, setEvents] = useState<EventList | null>(null);
+    const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1' });
     const [spOpen, setSpOpen] = useState<string | null>(null);
     const [edit, setEdit] = useState<{ player: AdminPlayer; gold: string; pearls: string } | null>(null);
@@ -68,11 +71,20 @@ export default function AdminPage() {
     };
     const removeEvent = async (id: string) => { if (!confirm('이 이벤트를 삭제할까요?')) return; const d = await call({ action: 'deleteEvent', id }); if (d) setEvents(d); };
     const toggleEvent = async (id: string, disabled: boolean) => { const d = await call({ action: 'toggleEvent', id, disabled }); if (d) setEvents(d); };
-    const tabButton = (id: 'life' | 'events', label: string) => <button type="button" className={tab === id ? 'primary' : 'secondary'} onClick={() => { setTab(id); setError(''); setDone(''); if (id === 'events' && key) loadEvents(); }}>{label}</button>;
+    const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); };
+    const toggleClosed = async (kind: keyof ClosureList, row: ClosureRow) => {
+        if (!row.closed && !confirm(`${row.name}의 입장을 막을까요?\n안에 있던 낚시꾼은 다음 동기화 때 보상 없이 나옵니다${kind === 'stages' ? '(더 앞의 열린 낚시터로 옮김)' : ''}.`)) return;
+        const d = await call({ action: 'setClosed', kind, id: row.id, closed: !row.closed });
+        if (d) { setClosures(d); setDone(`${row.name}을(를) ${row.closed ? '열었습니다' : '닫았습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
+    };
+    const tabButton = (id: Tab, label: string) => <button type="button" className={tab === id ? 'primary' : 'secondary'} onClick={() => { setTab(id); setError(''); setDone(''); if (id === 'events' && key) loadEvents(); if (id === 'closures' && key) loadClosures(); }}>{label}</button>;
+    const closureList = (kind: keyof ClosureList, title: string) => closures && <div><h2 style={{ fontSize: 16 }}>{title}</h2><ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{closures[kind].map(r => <li key={r.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
+        <span style={{ fontSize: 13 }}><b>{r.name}</b> · {r.closed ? <b style={{ color: '#ff9a9a' }}>입장 막힘</b> : <span style={{ color: '#9ce8b4' }}>열림</span>}{r.locked ? <small style={{ color: '#9bb3b0' }}> · 첫 낚시터라 닫을 수 없음</small> : null}</span>
+        {!r.locked && <button className={r.closed ? 'primary' : 'secondary'} disabled={busy} onClick={() => toggleClosed(kind, r)}>{r.closed ? '다시 열기' : '입장 막기'}</button>}</li>)}</ul></div>;
     return <main className="admin-tool" style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px', color: '#e6f1ee' }}>
         <h1 style={{ fontSize: 24, marginBottom: 8 }}>운영 도구</h1>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>{tabButton('life', '낚시꾼 관리')}{tabButton('events', '서버 이벤트')}</div>
-        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·진주를 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·진주·연구·유물·도감·스킬 성장은 그대로입니다.' : '기간 동안 모든 낚시꾼의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다.'}</p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>{tabButton('life', '낚시꾼 관리')}{tabButton('events', '서버 이벤트')}{tabButton('closures', '입장 관리')}</div>
+        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·진주를 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·진주·연구·유물·도감·스킬 성장은 그대로입니다.' : tab === 'events' ? '기간 동안 모든 낚시꾼의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다.' : '점검할 낚시터·던전의 입장을 막습니다. 안에 있던 낚시꾼은 다음 동기화 때 보상 없이 나오고(낚시터는 더 앞의 열린 곳으로), 반복 도전도 멈춥니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.'}</p>
         <section className="panel" style={{ padding: 16, display: 'grid', gap: 10 }}>
             <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>운영자 키<input type="password" value={key} onChange={e => setKey(e.target.value)} autoComplete="off" placeholder="Vercel 환경 변수 TIDEBOUND_ADMIN_KEY 값" style={field}/></label>
             {tab === 'life' && <form onSubmit={e => { e.preventDefault(); search(); }} style={{ display: 'flex', gap: 8 }}>
@@ -80,6 +92,7 @@ export default function AdminPage() {
                 <button className="primary" disabled={busy || !key || !query.trim()}>찾기</button>
             </form>}
             {tab === 'events' && <button className="secondary" disabled={busy || !key} onClick={loadEvents}>이벤트 불러오기</button>}
+            {tab === 'closures' && <button className="secondary" disabled={busy || !key} onClick={loadClosures}>목록 불러오기</button>}
         </section>
         {error && <p role="alert" style={{ color: '#ff9a9a' }}>{error}</p>}
         {done && <p role="status" style={{ color: '#9ce8b4' }}>{done}</p>}
@@ -102,6 +115,7 @@ export default function AdminPage() {
                 <button className="primary" disabled={busy || !draft.from || !draft.until}>이벤트 저장</button>
             </form>
         </section>}
+        {tab === 'closures' && closures && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>{closureList('dungeons', '던전')}{closureList('stages', '낚시터')}</section>}
         {tab === 'life' && players && <section style={{ marginTop: 16 }}>
             <h2 style={{ fontSize: 16 }}>검색 결과 {players.length}명{players.length === 30 ? ' (최대 30명까지 표시)' : ''}</h2>
             {!players.length && <p style={{ color: '#9bb3b0' }}>찾은 낚시꾼이 없습니다.</p>}

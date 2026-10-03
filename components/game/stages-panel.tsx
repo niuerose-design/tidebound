@@ -1,7 +1,7 @@
 'use client';
 import { RegionProgress } from './book-research';
 import { ArrowUpRight, Lock, Waves } from 'lucide-react';
-import { STAGES } from '@/game/data/world';
+import { STAGES, closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { mimicStageMultiplier } from '@/game/data/mimic';
 import { Heading } from './shared';
 import type { PanelProps } from './panel-props';
@@ -14,13 +14,13 @@ export function Stages({ s, send, busy }: PanelProps) {
     <TideSelector s={s} send={send} busy={busy}/>
     {inDungeon && <p className="footnote">던전 탐험 중에는 낚시가 멈춰 있고 낚시터를 바꿀 수 없습니다. 던전에서 귀환하거나 반복이 끝나면 낚시터로 돌아옵니다.</p>}
     <div className="stage-grid">{STAGES.map((st, i) => {
-            const locked = s.level < st.level || s.rebirths < st.rebirth;
+            const closed = closedIn(s, 'stages', st.id), locked = closed || s.level < st.level || s.rebirths < st.rebirth;
             const current = s.stage === st.id && !inDungeon;
             return <button key={st.id} className={`stage-card ${current ? 'selected' : ''}`} disabled={busy || locked || inDungeon} onClick={() => send({ type: 'stage', id: st.id })} style={{ '--stage-color': st.tone } as React.CSSProperties}>
             <div className="stage-top">
             <span className="stage-num">{String(i + 1).padStart(2, '0')}</span>{locked ? <Lock size={20}/> : current ? <span className="badge">현재 낚시터</span> : <ArrowUpRight />}</div>
             <Waves className="stage-wave" size={48}/>
-            <div className="eyebrow">{st.subtitle}</div>
+            <div className="eyebrow">{closed ? CLOSED_NOTE : st.subtitle}</div>
             <h2>{st.name}</h2>
             <p>{st.description}</p>
             <div className="stage-footer">
