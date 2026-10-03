@@ -48,7 +48,14 @@ export function useCombatFx(logs: Log[], playerName: string) {
 function fxStyle(delay: number, extra: Record<string, string | number> = {}): CSSProperties {
     return { '--fx-delay': `${delay}ms`, ...extra } as CSSProperties;
 }
-const glyphs = { harpoon: ['✦', '·', '╱', '·', '✧', '╲'], wave: ['≈', '·', '∿', '·', '≈', '∿'], arcane: ['✧', '·', '◇', '·', '✦', '◇'], lightning: ['ϟ', '·', 'ϟ', '·', 'ϟ', '✦'], impact: ['✦', '·', '╱', '·', '╲', '✧'] };
+import type { CombatFxVariant } from '@/game/systems/combat-feedback';
+/** v25.20 갈래별 파편 글자. 궤적·색은 battle.css의 .tide-fx-<갈래>가 맡습니다. */
+const glyphs: Record<CombatFxVariant, string[]> = {
+    pierce: ['➤', '·', '─', '·', '➤', '─'], slash: ['╱', '╲', '╱', '·', '╲', '·'], quake: ['▲', '▪', '▲', '▪', '▲', '▪'], bite: ['◣', '◥', '◣', '·', '◥', '·'],
+    wave: ['≈', '∿', '≈', '·', '∿', '≈'], lightning: ['ϟ', '·', 'ϟ', '·', 'ϟ', '✦'], fire: ['🔥', '✦', '·', '🔥', '·', '✦'], frost: ['❄', '·', '✧', '❄', '·', '✧'],
+    star: ['✦', '✧', '★', '·', '✦', '✧'], gold: ['◉', '✦', '◉', '·', '◉', '✦'], song: ['♪', '♫', '♪', '·', '♫', '♪'], ward: ['⬡', '·', '⬡', '·', '⬡', '·'],
+    heal: ['✚', '·', '✚', '·', '❀', '·'], curse: ['☠', '·', '✺', '·', '☠', '·'], arcane: ['✧', '·', '◇', '·', '✦', '◇'], impact: ['✦', '·', '╱', '·', '╲', '✧'], glyph: ['無', '虛', '斬', '血', '縛', '刹'],
+};
 
 /** 상대 카드 위의 연출. 기본 공격은 체력바 숫자만, 스킬은 궤적·충격파·파편·섬광, 天은 일곱 글자 고리까지 띄웁니다. ‘×N 연속’은 연속으로 행동한 쪽 카드에 붙습니다. */
 export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; combo?: CombatCombo | null }) {
