@@ -24,7 +24,7 @@ export function SlotChips({ s, busy, onSwitch }: { s: State; busy: boolean; onSw
     // 부재 시간은 마지막 저장 시각(lastTick) 기준으로 계산해 렌더 중 Date.now()를 부르지 않습니다.
     const current = accountSlot(s), slots = s.account?.slots || [], now = s.lastTick;
     const pick = async (slot: number) => { setSwitching(true); setError(''); try { await onSwitch(slot); } catch (e) { setError(e instanceof Error ? e.message : '슬롯을 바꾸지 못했습니다.'); } finally { setSwitching(false); } };
-    return <div className="slot-chips" role="group" aria-label="캐릭터 슬롯 전환">
+    return <div className="slot-chips" role="group" aria-label="분신 전환">
         <Users size={14}/>
         {Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map(slot => {
             const info = slots.find(x => x.slot === slot), open = slotUnlocked(s.account, slot), mine = slot === current;

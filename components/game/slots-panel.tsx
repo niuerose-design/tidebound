@@ -17,7 +17,7 @@ export function SlotsPanel({ s, busy, onSwitchSlot, vault, vaultError, loadVault
     const current = accountSlot(s), slots = s.account?.slots || [];
     const pick = async (slot: number) => { if (!onSwitchSlot) return; setSwitching(true); setError(''); try { await onSwitchSlot(slot); } catch (e) { setError(e instanceof Error ? e.message : '슬롯을 바꾸지 못했습니다.'); } finally { setSwitching(false); } };
     return <>
-        <Heading eyebrow="ACCOUNT & SLOTS" title="캐릭터 슬롯" description={`한 계정에 낚시꾼 ${SLOT_COUNT}명. 모든 슬롯의 기록을 합친 계정 보너스가 각 캐릭터에 적용됩니다.`}/>
+        <Heading eyebrow="ACCOUNT & SLOTS" title="분신" description={`한 계정에 낚시꾼 ${SLOT_COUNT}명. 모든 슬롯의 기록을 합친 계정 보너스가 각 캐릭터에 적용됩니다.`}/>
         {error && <p className="login-error" role="alert">{error}</p>}
         <section className="panel slot-section slots-screen">
             <div className="section-title"><h3><Users size={16}/> 슬롯</h3><span>2번 {slotUnlockText(2)} · 3번 {slotUnlockText(3)}</span></div>

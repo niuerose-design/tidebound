@@ -13,7 +13,8 @@ const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0 };
 const T1 = { tier: 1, level: 10, mastery: 0, masteryTarget: 450, masteryBoost: .08 };
 const T2 = { tier: 2, level: 25, mastery: 75, masteryTarget: 2800, masteryBoost: .18 };
 const T3 = { tier: 3, level: 40, mastery: 150, masteryTarget: 10000, masteryBoost: .3 };
-const R1 = 20, R2 = 60, R3 = 110;
+const T5 = { tier: 5, level: 70, rebirth: 2, mastery: 600, masteryTarget: 30000, masteryBoost: .35 };
+const R1 = 20, R2 = 60, R3 = 110, R5 = 200;
 
 export const MONOSTAT_JOBS: NewJob[] = [
     // ── 근력 외길 (물리) ──
@@ -37,9 +38,10 @@ export const MONOSTAT_JOBS: NewJob[] = [
     { id: 'meditantAdept', name: '명상 수행자', title: '고요가 깊어진다', desc: '침묵을 거는 마나 비례 마나 해일과 마나·마법 방어 패시브를 가진 정신 외길 2차 직업입니다.', ...neutral, bonus: { magic: 12, resist: 14 }, ...T2, parent: 'stillAngler', requires: { wis: R2 }, requiresSkillMastery: { mindWave: 2 }, role: '외길·정신·침묵', tree: 'status' },
     { id: 'voidMind', name: '무념의 현인', title: '생각이 멎은 자리에 힘이 남는다', desc: '마나 비례 무념 폭류와 마나·마법 방어·마나 회복 패시브로 정신 외길의 끝에 선 3차 직업입니다.', ...neutral, bonus: { magic: 30, resist: 26 }, ...T3, parent: 'meditantAdept', requires: { wis: R3 }, requiresSkillMastery: { manaTide: 3 }, role: '외길·정신·마나', tree: 'status' },
     // ── 행운 외길 (보조) ──
-    { id: 'luckyAngler', name: '요행 낚시꾼', title: '운도 실력이다', desc: '행운 하나로 전직하는 외길 1차 직업입니다. 치명 피해 비례 요행수와 치명타 패시브로 운만 키웁니다.', ...neutral, bonus: { attack: 2, magic: 2 }, crit: .03, ...T1, requires: { luk: R1 }, role: '외길·행운', tree: 'support' },
-    { id: 'fortunate', name: '행운아', title: '언제나 한 끗 차이로 이긴다', desc: '치명 피해 비례 천운의 일격과 치명타·치명 피해 패시브를 가진 행운 외길 2차 직업입니다.', ...neutral, bonus: { attack: 16, magic: 10 }, crit: .08, ...T2, parent: 'luckyAngler', requires: { luk: R2 }, requiresSkillMastery: { luckyBreak: 2 }, role: '외길·행운·치명', tree: 'support' },
-    { id: 'fortuneChild', name: '운명의 총아', title: '운명이 편을 든다', desc: '치명 피해 비례 운명 역전과 치명타·치명 피해 패시브로 행운 외길의 끝에 선 3차 직업입니다.', ...neutral, bonus: { attack: 40, magic: 20 }, crit: .12, ...T3, parent: 'fortunate', requires: { luk: R3 }, requiresSkillMastery: { heavenlyStrike: 3 }, role: '외길·행운·치명', tree: 'support' },
+    { id: 'luckyAngler', name: '요행 낚시꾼', title: '운도 실력이다', desc: '행운 하나로 전직하는 외길 1차 직업입니다. 주사위를 굴리는 운빨 기도와 치명타 패시브로 운만 키웁니다.', ...neutral, bonus: { attack: 2, magic: 2 }, crit: .03, ...T1, requires: { luk: R1 }, role: '외길·행운', tree: 'support' },
+    { id: 'fortunate', name: '행운아', title: '언제나 한 끗 차이로 이긴다', desc: '행운 비례 천운의 일격과 치명타·치명 피해 패시브를 가진 행운 외길 2차 직업입니다. 주사위가 늘어납니다.', ...neutral, bonus: { attack: 16, magic: 10 }, crit: .08, ...T2, parent: 'luckyAngler', requires: { luk: R2 }, requiresSkillMastery: { luckyBreak: 2 }, role: '외길·행운·치명', tree: 'support' },
+    { id: 'fortuneChild', name: '운명의 총아', title: '운명이 편을 든다', desc: '행운 비례 운명 역전과 치명타·치명 피해 패시브를 가진 행운 외길 3차 직업입니다. 행운이 많을수록 주사위를 많이 굴립니다.', ...neutral, bonus: { attack: 40, magic: 20 }, crit: .12, ...T3, parent: 'fortunate', requires: { luk: R3 }, requiresSkillMastery: { heavenlyStrike: 3 }, role: '외길·행운·치명', tree: 'support' },
+    { id: 'fortuneAvatar', name: '천운의 화신', title: '주사위가 세계를 정한다', desc: '행운 외길의 끝. 행운 25마다 주사위를 하나 더 굴려(최대 10개) 가장 높은 눈으로 때리는 천운의 주사위와 치명·체력 패시브를 가진 환생 후 5차 직업입니다. 3차에서 바로 이어집니다.', ...neutral, attack: 1.2, hp: 1.15, crit: .2, ...T5, parent: 'fortuneChild', requires: { luk: R5 }, requiresSkillMastery: { fateReversal: 3 }, role: '외길·행운 최상위', tree: 'support' },
 ];
 
 export const MONOSTAT_LINEAGES = [
@@ -48,7 +50,7 @@ export const MONOSTAT_LINEAGES = [
     { id: 'manaDevotee', name: '지능 외길', tree: 'magic' as const, summary: `지능 ${R1}·${R2}·${R3}만으로 전직하는 세 직업. 마법 공격 하나로 밀어붙입니다.` },
     { id: 'stillAngler', name: '정신 외길', tree: 'status' as const, summary: `정신 ${R1}·${R2}·${R3}만으로 전직하는 세 직업. 정신 그 자체가 피해가 됩니다.` },
     { id: 'bulkyFisher', name: '체질 외길', tree: 'defense' as const, summary: `체질 ${R1}·${R2}·${R3}만으로 전직하는 세 직업. 체질 그 자체가 피해가 됩니다.` },
-    { id: 'luckyAngler', name: '행운 외길', tree: 'support' as const, summary: `행운 ${R1}·${R2}·${R3}만으로 전직하는 세 직업. 행운 그 자체가 피해가 됩니다.` },
+    { id: 'luckyAngler', name: '행운 외길', tree: 'support' as const, summary: `행운 ${R1}·${R2}·${R3}·${R5}만으로 전직하는 네 직업(3차에서 바로 5차). 행운이 곧 피해이고, 행운이 많을수록 주사위를 많이 굴려 가장 높은 눈으로 때립니다.` },
 ];
 
 const P = { type: 'passive' as const, chance: 0, cooldown: 0, multiplier: 0, rankEffects: { bonusScale: .3 } };
@@ -93,11 +95,13 @@ export const MONOSTAT_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'voidTorrent', name: '무념 폭류', desc: '', level: 40, job: 'voidMind', chance: .5, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 14, ...attr('wis', 4.5) },
     { ...P, id: 'emptyMind', name: '무념', desc: '최대 마나·마법 방어·마나 회복이 크게 오릅니다.', level: 40, job: 'voidMind', cost: 2, bonus: { mana: 80, resist: 28, manaRegen: 3, hp: 320 } },
     // 행운
-    { ...A, ...physical, id: 'luckyBreak', name: '요행수', desc: '', level: 10, job: 'luckyAngler', chance: .5, cooldown: 3, multiplier: 1.1, cost: 2, ...attr('luk', 3.8) },
+    { ...A, ...physical, id: 'luckyBreak', name: '운빨 기도', desc: '', level: 10, job: 'luckyAngler', chance: .5, cooldown: 3, multiplier: 1.1, cost: 2, ...attr('luk', 3.8), dice: { attribute: 'luk', per: 40, max: 3 } },
     { ...P, id: 'luckyStreak', name: '연승 기운', desc: '치명타가 오릅니다.', level: 10, job: 'luckyAngler', cost: 1, bonus: { crit: .05, hp: 60 } },
-    { ...A, ...physical, id: 'heavenlyStrike', name: '천운의 일격', desc: '', level: 25, job: 'fortunate', chance: .5, cooldown: 4, multiplier: 1.5, cost: 3, ...attr('luk', 5.3) },
+    { ...A, ...physical, id: 'heavenlyStrike', name: '천운의 일격', desc: '', level: 25, job: 'fortunate', chance: .5, cooldown: 4, multiplier: 1.5, cost: 3, ...attr('luk', 5.3), dice: { attribute: 'luk', per: 35, max: 5 } },
     { ...P, id: 'blessedHand', name: '축복받은 손', desc: '치명타와 치명 피해가 오릅니다.', level: 25, job: 'fortunate', cost: 2, bonus: { crit: .05, critDamage: .15, hp: 220 } },
-    { ...A, ...physical, id: 'fateReversal', name: '운명 역전', desc: '', level: 40, job: 'fortuneChild', chance: .5, cooldown: 4, multiplier: 2, cost: 4, ...attr('luk', 3.8) },
+    { ...A, ...physical, id: 'fateReversal', name: '운명 역전', desc: '', level: 40, job: 'fortuneChild', chance: .5, cooldown: 4, multiplier: 2, cost: 4, ...attr('luk', 5.3), dice: { attribute: 'luk', per: 30, max: 7 } },
+    { ...A, ...physical, id: 'heavenlyDice', name: '천운의 주사위', desc: '', level: 70, job: 'fortuneAvatar', chance: .5, cooldown: 4, multiplier: 2.6, cost: 6, ...attr('luk', 6), dice: { attribute: 'luk', per: 25, max: 10 }, masteryMilestones: [4000, 18000, 60000, 150000] },
+    { ...P, id: 'avatarsLuck', name: '천운', desc: '치명타·치명 피해·최대 체력이 크게 오릅니다.', level: 70, job: 'fortuneAvatar', cost: 3, bonus: { crit: .1, critDamage: .5, hp: 420 }, masteryMilestones: [4000, 18000, 60000, 150000] },
     { ...P, id: 'fatesFavor', name: '운명의 편애', desc: '치명타와 치명 피해가 크게 오릅니다.', level: 40, job: 'fortuneChild', cost: 2, bonus: { crit: .07, critDamage: .3, hp: 320 } },
 ];
 

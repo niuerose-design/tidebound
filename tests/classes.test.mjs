@@ -3,11 +3,11 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 257); assert.equal(new Set(JOBS.map(j => j.id)).size, 257);
+    assert.equal(JOBS.length, 258); assert.equal(new Set(JOBS.map(j => j.id)).size, 258);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 41, magic: 42, defense: 41, status: 29, hybrid: 33, support: 40, mystery: 31 });
+    assert.deepEqual(count, { physical: 41, magic: 42, defense: 41, status: 29, hybrid: 33, support: 41, mystery: 31 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
@@ -42,7 +42,7 @@ test('Job counts stay close: trees within 1.5× of each other (??? 14 or more), 
     for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent') && l.id !== 'fisher')) {
         const jobs = JOBS.filter(j => lineageOf(j) === l.id);
         // v25.26 외길 계보는 의도적으로 1~3차 세 직업입니다.
-        if (jobs.every(j => j.role?.startsWith('외길'))) { assert.equal(jobs.length, 3, l.id); assert.equal(Math.max(...jobs.map(j => j.tier)), 3, `${l.id} ends at tier 3`); continue; }
+        if (jobs.every(j => j.role?.startsWith('외길'))) { assert.ok(jobs.length === 3 || jobs.length === 4, l.id); assert.ok([3, 5].includes(Math.max(...jobs.map(j => j.tier))), `${l.id} ends at tier 3 or 5`); continue; }
         assert.ok(jobs.length >= 4 && jobs.length <= 10, `${l.id} ${jobs.length}`);
         assert.equal(Math.max(...jobs.map(j => j.tier)), 5, `${l.id} reaches tier 5`);
     }
