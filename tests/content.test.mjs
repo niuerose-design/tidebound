@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations} from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations,shopCost} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -249,4 +249,10 @@ test('v27.19 relics come from rebirth count, and pearls spent before the change 
  assert.throws(()=>act(s,{type:'buyRelic',id:'soulCoat'},0),/환생 조건/);
  const before=s.pearls;s.relicRefunded=false;const refund=migrations.refundRelicPurchases(s);assert.equal(refund,10);assert.equal(s.pearls,before+10);assert.equal(migrations.refundRelicPurchases(s),0,'only once');
  const u=newState(0);assert.equal(migrations.refundRelicPurchases(u),0);assert.equal(u.relicRefunded,true);
+});
+
+test('v27.20 plain (white) gear can be bought for the item book',()=>{
+ const s=newState(0);s.level=20;s.gold=10000;const before=s.gold;act(s,{type:'buy',id:'charm',value:'plain'},0);
+ const it=s.inventory[0];assert.equal(it.rarity,0);assert.equal(it.slot,'charm');assert.equal(it.affix,undefined);assert.equal(it.power,22);assert.equal(before-s.gold,Math.max(30,Math.floor(shopCost(s)*.2)));
+ act(s,{type:'registerItem',id:it.id},0);assert.equal(s.itemBook['charm:0'],true);
 });

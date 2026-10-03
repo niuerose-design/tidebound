@@ -1,3 +1,4 @@
+import { EQUIPMENT_NAMES } from '../data/equipment';
 import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
@@ -6,6 +7,8 @@ import { rollAffix, enhanceCost, reforgeCost, bulkItems, saleValue, dismantleEss
 import { rollAffixes } from '../data/gear';
 /** 상점·뽑기 골드 가격. 항구 단골 할인(−2%/단계, 내림)을 적용합니다. */
 export const shopCost = (s: State) => Math.floor((ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel) * shopDiscount(s));
+/** v27.20 일반 등급(흰색) 장비 확정 구매: 도감용. 드롭 확률이 낮고 던전·보스 드롭은 희귀 이상이라 흰색을 따로 팝니다. */
+export const plainCost = (s: State) => Math.max(30, Math.floor(shopCost(s) * .2));
 export const gambleCost = (s: State) => Math.floor((ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel) * shopDiscount(s));
 /** v27.19 환생 유물은 진주가 아니라 환생 횟수로 받습니다. 비용은 항상 0(옛 호출 호환). */
 export const relicCost = () => 0;
@@ -41,10 +44,11 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (gamble ? !category : !SHOP.some(x => x.id === id))
             throw Error('상품을 확인하세요.');
         // v27.13 감정은 1·5·10개 단위. 골드와 가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다(1개일 때의 난수 순서는 그대로).
+        const plain = !gamble && a.value === 'plain';
         const count = gamble ? Number(a.value || 1) : 1;
         if (!GAMBLE_COUNTS.includes(count))
             throw Error('감정 개수는 1·5·10개 중 하나입니다.');
-        const cost = gamble ? gambleCost(s) : shopCost(s), total = cost * count;
+        const cost = gamble ? gambleCost(s) : plain ? plainCost(s) : shopCost(s), total = cost * count;
         if (s.inventory.length + count > inventoryCap(s))
             throw Error(count > 1 ? `가방에 ${count}칸이 필요합니다. 장비를 정리하세요.` : '가방을 비운 뒤 구매하세요.');
         if (s.gold < total)
@@ -58,6 +62,11 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             let threshold = 0;
             const rarity = gamble ? (APPRAISAL.find(r => { threshold = Math.round((threshold + r.chance) * 1000) / 1000; return roll < threshold; })?.rarity ?? APPRAISAL[APPRAISAL.length - 1].rarity) : 1;
             let item: Item = { ...shopPreview(s, offer.id), id: nextId() };
+            if (plain) {
+                const base: Item = { ...item };
+                delete base.affix;
+                item = { ...base, name: EQUIPMENT_NAMES[offer.slot][0], rarity: 0, power: Math.round((s.level + 2) * RARITIES[0].factor) };
+            }
             if (gamble) {
                 const power = Math.round((s.level + 2) * RARITIES[rarity].factor);
                 const base: Item = { ...item };

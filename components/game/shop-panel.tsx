@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SHOP, GAMBLE_CATEGORIES, APPRAISAL, inventoryCap } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
-import { shopCost, gambleCost, shopPreview, GAMBLE_COUNTS } from '@/game/systems/commerce';
+import { shopCost, gambleCost, shopPreview, plainCost, GAMBLE_COUNTS } from '@/game/systems/commerce';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 import type { PanelProps } from './panel-props';
 import { BonusList } from './inventory-panel';
 import { EquipmentForge } from './inventory-panel';
 export function Shop({ s, send, busy }: PanelProps) {
     const [tab, setTab] = useState('gamble');
-    const cost = shopCost(s), gamble = gambleCost(s), cap = inventoryCap(s), full = s.inventory.length >= cap;
+    const cost = shopCost(s), plain = plainCost(s), gamble = gambleCost(s), cap = inventoryCap(s), full = s.inventory.length >= cap;
     return <>
         <Heading eyebrow="HARBOR MARKET" title="항구 상점" description="장비를 고르고, 감정하고, 단련하는 곳."/>
         <WalletBar s={s} label="상점 재화와 보관함" extra={<div><span>현재 구매 장비<strong>Lv.{s.level}</strong></span></div>}/>
@@ -27,7 +27,7 @@ export function Shop({ s, send, busy }: PanelProps) {
         </section>}
         {tab === 'buy' && <section aria-label="확정 장비 구매"><div className="port-purchase-grid">{SHOP.map(o => <article className="panel market-card" key={o.id}>
             <SlotIcon slot={o.slot} size={26}/><h2>{o.name}</h2><p>{o.description} · 희귀 · Lv.{s.level}</p>
-            <BonusList item={shopPreview(s, o.id)}/><button className="primary" disabled={busy || s.gold < cost || full} onClick={() => send({ type: 'buy', id: o.id })}>구매 · {format(cost)} G</button>
+            <BonusList item={shopPreview(s, o.id)}/><button className="primary" disabled={busy || s.gold < cost || full} onClick={() => send({ type: 'buy', id: o.id })}>구매 · {format(cost)} G</button><button className="secondary" title="옵션 없는 일반 등급(흰색). 물건 도감 등록용." disabled={busy || s.gold < plain || full} onClick={() => send({ type: 'buy', id: o.id, value: 'plain' })}>일반 등급 · {format(plain)} G · 도감용</button>
         </article>)}</div></section>}
         {tab === 'forge' && <section aria-label="장비 강화">
             <div className="section-title"><h2>착용 장비 강화</h2><span>보관 중인 장비는 장비 보관함에서 강화</span></div>
