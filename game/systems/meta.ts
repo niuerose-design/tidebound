@@ -19,7 +19,7 @@ export const rebirthReward = (s: State, bonus = 0) => deepVoyagePearls(s) + Math
 export const rebirthRewardParts = (s: State, bonus = 0) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))), bonus: Math.max(0, Math.floor(bonus)), deep: deepVoyagePearls(s) });
 export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
-/** 던전 전투 난이도 단계. 무한 심연은 깊이 + 2, 일반 던전은 0. */
+/** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, 일반 던전은 0. */
 export const dungeonTier = (id: string, abyssDepth: number) => id === 'abyss' ? abyssDepth + 2 : 0;
 /** 잠든 닻 봉인 중에는 일반 낚시터 해역 난이도가 0으로 고정됩니다. */
 export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1) : s.vows?.seal ? 0 : (s.tide || 0);
@@ -34,7 +34,7 @@ export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: n
     const rewardScale = f.rewardMultiplier || 1;
     return { exp: Math.round(f.exp * mult * tierReward(tier) * rewardScale), gold: Math.round(f.gold * mult * tierReward(tier) * rewardScale) };
 }
-/** v27.35 던전 보상에 쓰는 층 배율 단계(무한 심연은 rewardTierCap에서 멈춤). */
+/** v27.35 던전 보상에 쓰는 층 배율 단계(무릉도장은 rewardTierCap에서 멈춤). */
 export const dungeonRewardTier = (tier: number) => Math.min(tier, DUNGEON_TUNING.rewardTierCap);
 /** 던전 포획 보상(배율 적용 전). 보스는 권장 레벨 물고기 몇 마리분, 일반 웨이브는 어종 레벨을 권장 레벨 + 2까지만 셉니다. */
 export function dungeonCatchReward(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) {

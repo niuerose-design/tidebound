@@ -62,13 +62,13 @@ export function dungeonPressure(wave: number) {
  * - v27.35 보상은 '권장 레벨 물고기 몇 마리분'으로 정합니다. 보스 경험치 = 물고기 bossExpFish마리분, 보스 골드 = bossGoldFish마리분,
  *   클리어 골드 = clearGoldFish마리분. 일반 웨이브는 어종 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
  *   한 번 클리어(전투 5번)가 같은 레벨 낚시 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
- * - 무한 심연 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(진주는 층 공식 그대로).
+ * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(진주는 층 공식 그대로).
  * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
  * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
  */
 export const DUNGEON_TUNING = { bossExpFish: 6, bossGoldFish: 4, clearGoldFish: 6, expLevelOver: 2, rewardTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
 /**
- * v27.35 무한 심연 적: 층마다 가파르게 강해지는 별도 공식(보상은 rewardTierCap에서 멈춤).
+ * v27.35 무릉도장 적: 층마다 가파르게 강해지는 별도 공식(보상은 rewardTierCap에서 멈춤).
  * 1층 일반 어종 체력 hp(10만)에서 층마다 ×hpGrowth, 공격은 기준 어종의 attack배에서 층마다 ×attackGrowth, 방어는 defense배에서 ×defenseGrowth.
  * 어종·보스 사이의 상대 차이(성향·보스 배율)는 그대로 유지합니다.
  */
@@ -130,7 +130,7 @@ export const SKILL_FORMULA = {
     // v21.2 전용 기술: signatureTier 이상 직업의 기술은 자기 계보(조상·후손 직업)에서 온전히,
     // 계보 밖에서 계승하면 배율·패시브 수치가 signatureScale 배로 발휘됩니다. 1~3차 기술은 자유롭게 조합됩니다.
     signatureTier: 4, signatureScale: .7,
-    // v24.2 지정 어종 연구(거수 생태학자 계보)의 대상: 뱀장어·곰치 계열.
+    // v24.2 지정 어종 연구(와일드헌터 계보)의 대상: 뱀장어·곰치 계열.
     designatedSpecies: ['eel', 'emberEel', 'grottoWarden'],
     // v24 환생 비례 패시브(perRebirth): 환생 횟수는 이 값까지만 셉니다.
     perRebirthCap: 30,

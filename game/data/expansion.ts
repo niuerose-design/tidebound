@@ -7,7 +7,7 @@ import type { Skill } from '../types';
  * 설계 원칙
  * - 1차에 가까울수록 단순한 능력치 패시브(공격·방어·체력 등)를 주고, 강함보다 조합 재료가 되도록 합니다.
  * - 2~3차는 기술의 다양성(연타·기절·중독·반격·복합 피해·처형)에 초점을 둡니다.
- * - 강함의 밸런스는 계열별 최상위(5차: 용사·대마도사·천검·수호신·파멸의 사도)끼리 맞춥니다.
+ * - 강함의 밸런스는 계열별 최상위(5차: 용사·플레임위자드 (5차)·천검·미하일 (5차)·아크메이지(불,독) (5차))끼리 맞춥니다.
  *   수치는 scripts/check-archetypes.mjs의 동일 투자 비교로 검증합니다.
  *
  * 액티브 기술의 발동률·배율·재사용 대기·마나는 여기 선언한 값이 그대로 밸런스 표(skill-balance.ts)에 들어갑니다.
@@ -31,7 +31,7 @@ export const EXPANSION_JOBS: NewJob[] = [
     { id: 'fistMaster', name: '권사', title: '멈추지 않는 연환', desc: '한 번에 세 번 치는 연환권과 속도 패시브로 연타를 익힙니다.', ...neutral, bonus: { attack: 33, hp: 35 }, crit: .06, tier: 2, level: 25, parent: 'martialArtist', requires: { str: 28, dex: 24 }, mastery: 75, requiresSkillMastery: { palmStrike: 2 }, role: '물리·다단 연타', tree: 'physical', masteryTarget: 2600, masteryBoost: .18 },
     { id: 'fistKing', name: '권왕', title: '하늘을 부수는 주먹', desc: '진각으로 적을 오래 감속시키고, 장타·진각으로 멈춘 적을 파천권으로 크게 치는 격투 3차 직업입니다.', ...neutral, bonus: { attack: 75, hp: 90, defense: 2 }, crit: .08, tier: 3, level: 40, parent: 'fistMaster', requires: { str: 45, dex: 40 }, mastery: 150, requiresSkillMastery: { comboFist: 3 }, role: '물리·제어 연계', tree: 'physical', masteryTarget: 9500, masteryBoost: .3 },
 
-    // ── 마도의 길 (마법 최상위: 대마도사) ───────────────────────
+    // ── 마도의 길 (마법 최상위: 플레임위자드 (5차)) ───────────────────────
     { id: 'chantNovice', name: '겹영창 수습생', title: '두 입으로 외는 주문', desc: '동시 시전 주문 둘을 겹쳐 쓰는 영창 계보의 입문 직업. 상태이상 대신 순수 피해 주문을 한 행동에 쏟아붓습니다.', ...neutral, bonus: { magic: 4 }, tier: 1, level: 10, requires: { int: 12, wis: 12 }, mastery: 0, role: '마법·동시 시전', tree: 'magic', masteryTarget: 500, masteryBoost: .08 },
     { id: 'twinCaster', name: '이중 영창사', title: '서리와 불꽃을 한 호흡에', desc: '서리 창을 더해 두 주문을 함께 외는 2차 직업입니다. 함께 나간 주문이 많을수록 대기와 마나가 늘어납니다.', ...neutral, bonus: { magic: 34, resist: 3 }, crit: .02, tier: 2, level: 25, parent: 'chantNovice', requires: { int: 32, wis: 24 }, mastery: 75, requiresSkillMastery: { twinSpark: 2 }, role: '마법·동시 시전', tree: 'magic', masteryTarget: 2800, masteryBoost: .2 },
     { id: 'tripleCaster', name: '삼중 영창사', title: '세 주문이 한 점에 모인다', desc: '공허 광선까지 세 주문을 한 행동에 겹치는 3차 직업입니다. 마나 회복 패시브로 긴 영창을 버팁니다.', ...neutral, hp: 1, bonus: { magic: 98, resist: 6 }, crit: .04, tier: 3, level: 40, parent: 'twinCaster', requires: { int: 48, wis: 38 }, mastery: 150, requiresSkillMastery: { frostLance: 3 }, role: '마법·동시 시전', tree: 'magic', masteryTarget: 9000, masteryBoost: .28 },
@@ -50,14 +50,14 @@ export const EXPANSION_JOBS: NewJob[] = [
     { id: 'swordSaint', name: '마검성', title: '두 개의 달을 벤다', desc: '추가타가 붙는 쌍월로 복합 피해를 두 번 넣는 환생 후 4차 직업입니다.', ...neutral, attack: 1.36, magic: 1.36, hp: 1.14, defense: 1.04, resist: 1.04, crit: .06, tier: 4, ...T4, parent: 'runeKnight', requires: { str: 48, int: 48 }, requiresSkillMastery: { runeBurst: 3 }, role: '복합·연타', tree: 'hybrid' },
     { id: 'celestialBlade', name: '천검', title: '하늘과 땅을 가르는 검', desc: '기절을 거는 천지개벽으로 물리·마법 복합 계열의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.67, magic: 1.67, hp: 1.29, defense: 1.08, resist: 1.08, crit: .08, tier: 5, ...T5, parent: 'swordSaint', requires: { str: 58, int: 58, dex: 25 }, requiresSkillMastery: { twinMoon: 3 }, role: '복합 최상위', tree: 'hybrid' },
 
-    // ── 방패의 길 (탱커 최상위: 수호신) ─────────────────────────
+    // ── 방패의 길 (탱커 최상위: 미하일 (5차)) ─────────────────────────
     { id: 'shieldbearer', name: '방패병', title: '가장 앞에 서는 자', desc: '물리 방어를 실어 치는 방패 치기와 방어 패시브를 익히는 탱커 입문 직업입니다.', ...neutral, bonus: { hp: 15, defense: 2 }, tier: 1, level: 10, requires: { vit: 12, str: 10 }, mastery: 0, role: '탱커 입문', tree: 'defense', masteryTarget: 400, masteryBoost: .08 },
     { id: 'gatekeeper', name: '수문장', title: '문은 열리지 않는다', desc: '맞을 때마다 방어 비례 반격을 돌려주는 가시 방패를 얻는 탱커 2차 직업입니다.', ...neutral, bonus: { attack: 5, hp: 165, defense: 17, resist: 5 }, tier: 2, level: 25, parent: 'shieldbearer', requires: { vit: 32, str: 22 }, mastery: 75, requiresSkillMastery: { shieldBash: 2 }, role: '탱커·반격', tree: 'defense', masteryTarget: 3000, masteryBoost: .18 },
     { id: 'fortressLord', name: '철옹성', title: '성벽이 곧 무기', desc: '약화를 거는 성벽 강타와 반격·체력 패시브로 오래 버티며 되갚는 탱커 3차 직업입니다.', ...neutral, bonus: { attack: 24, hp: 300, defense: 36, resist: 12 }, tier: 3, level: 40, parent: 'gatekeeper', requires: { vit: 48, str: 32 }, mastery: 150, requiresSkillMastery: { ironRetort: 3 }, role: '탱커·약화', tree: 'defense', penalties: { speed: -4 }, masteryTarget: 11000, masteryBoost: .3 },
     { id: 'unyielding', name: '불굴의 수호자', title: '쓰러지지 않는 마지막 방패', desc: '환생 후 4차 탱커입니다. 최후의 저항은 때린 만큼 흡혈하고, 패시브로 체력을 크게 올립니다.', ...neutral, attack: 1.07, hp: 1.49, defense: 1.6, resist: 1.32, tier: 4, ...T4, parent: 'fortressLord', requires: { vit: 58, str: 35, wis: 20 }, requiresSkillMastery: { bulwarkSlam: 3 }, role: '탱커·흡혈', tree: 'defense', penalties: { speed: -5 } },
     { id: 'guardianDeity', name: '수호신', title: '바다를 지키는 신', desc: '방어로 심판하는 기술과 가장 강한 반격으로 탱커 계열의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.11, hp: 1.49, defense: 1.7, resist: 1.42, tier: 5, ...T5, parent: 'unyielding', requires: { vit: 70, str: 40, wis: 25 }, requiresSkillMastery: { lastStand: 3 }, role: '탱커 최상위·반격', tree: 'defense', penalties: { speed: -6 } },
 
-    // ── 역병의 길 (상태이상 최상위: 파멸의 사도) ────────────────
+    // ── 역병의 길 (상태이상 최상위: 아크메이지(불,독) (5차)) ────────────────
     { id: 'poisoner', name: '독술사', title: '한 방울이면 충분하다', desc: '방어를 무시하는 중독과 지속 피해 패시브를 익히는 상태이상 입문 직업입니다.', ...neutral, bonus: { attack: 2 }, crit: .02, tier: 1, level: 10, requires: { dex: 12, luk: 8 }, mastery: 0, role: '중독 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
     { id: 'venomAssassin', name: '독침 암살자', title: '상처는 작고 독은 깊다', desc: '6턴 동안 중독을 남기는 맹독 송곳니로 지속 피해를 키웁니다.', ...neutral, bonus: { attack: 22 }, crit: .08, tier: 2, level: 25, parent: 'poisoner', requires: { dex: 32, luk: 20 }, mastery: 75, requiresSkillMastery: { venomDart: 2 }, role: '중독·치명', tree: 'status', masteryTarget: 2800, masteryBoost: .18 },
     { id: 'plagueDoctor', name: '역병술사', title: '병을 다루는 의사', desc: '독침·맹독 송곳니로 걸어 둔 중독에 역병 안개로 큰 피해를 더하는 연계 3차 직업입니다.', ...neutral, bonus: { attack: 50, magic: 18, hp: 30 }, crit: .05, tier: 3, level: 40, parent: 'venomAssassin', requires: { dex: 45, int: 30 }, mastery: 150, requiresSkillMastery: { toxicFang: 3 }, role: '역병·연계', tree: 'status', masteryTarget: 10000, masteryBoost: .3 },
@@ -66,7 +66,7 @@ export const EXPANSION_JOBS: NewJob[] = [
 
     // ── 저주의 길 (마법 제어 분기) ──────────────────────────────
     { id: 'shaman', name: '주술사', title: '정령에게 묻는다', desc: '약화 저주탄과 마법 방어 패시브를 익히는 주술 입문 직업입니다.', ...neutral, bonus: { magic: 4, resist: 1 }, tier: 1, level: 10, requires: { int: 10, wis: 12 }, mastery: 0, role: '약화 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
-    { id: 'hexer', name: '저주술사', title: '발을 묶는 속삭임', desc: '오래 지속되는 감속을 거는 속박의 저주로 흑주술사의 연계를 준비하는 저주 2차 직업입니다.', ...neutral, bonus: { magic: 36, resist: 4 }, crit: .03, tier: 2, level: 25, parent: 'shaman', requires: { int: 30, wis: 25 }, mastery: 75, requiresSkillMastery: { curseBolt: 2 }, role: '감속·연계', tree: 'status', masteryTarget: 2800, masteryBoost: .18 },
+    { id: 'hexer', name: '저주술사', title: '발을 묶는 속삭임', desc: '오래 지속되는 감속을 거는 속박의 저주로 칼리 (3차)의 연계를 준비하는 저주 2차 직업입니다.', ...neutral, bonus: { magic: 36, resist: 4 }, crit: .03, tier: 2, level: 25, parent: 'shaman', requires: { int: 30, wis: 25 }, mastery: 75, requiresSkillMastery: { curseBolt: 2 }, role: '감속·연계', tree: 'status', masteryTarget: 2800, masteryBoost: .18 },
     { id: 'warlock', name: '흑주술사', title: '영혼을 찢는 계약', desc: '봉인의 주문으로 침묵을 걸고, 기절·침묵·감속 중인 적을 영혼 찢기로 크게 베는 마법 3차 직업입니다.', ...neutral, hp: 1, bonus: { magic: 83, resist: 8 }, crit: .05, tier: 3, level: 40, parent: 'hexer', requires: { int: 45, wis: 35 }, mastery: 150, requiresSkillMastery: { hexChain: 3 }, role: '침묵·연계', tree: 'status', masteryTarget: 10000, masteryBoost: .3 },
 
     // ── 노래의 길 (유틸리티) ─────────────────────────────────────
@@ -198,7 +198,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'herbWard', name: '약초 방부', desc: '마법 방어와 마나 회복이 오릅니다.', level: 10, job: 'herbalist', cost: 2, bonus: { resist: 26, manaRegen: 1, hp: 40 } },
     { ...P, id: 'bitterBrew', name: '쓴 달임약', desc: '지속 피해와 명중이 오릅니다.', level: 10, job: 'apothecary', cost: 2, bonus: { dotBonus: .2, accuracy: .03 } },
     { ...P, id: 'nimbleStep', name: '가벼운 발', desc: '회피와 속도가 오르고, 연속 행동마다 40% 확률로 가장 긴 재사용 대기를 초기화합니다.', level: 10, job: 'acrobat', cost: 2, bonus: { evasion: .06, speed: 8 }, cooldownReset: { on: 'chain', chance: .4, pick: 'longest' } },
-    // 기존 직업 보강 (크라켄 혈족 물리 경로)
+    // 기존 직업 보강 (은월 (3차) 물리 경로)
     { ...P, id: 'galvanicScales', name: '전류 비늘', desc: '물리 공격과 속도가 오릅니다.', level: 25, job: 'stormEel', cost: 2, bonus: { attack: 16, speed: 8 } },
     { ...P, id: 'abyssalGrip', name: '촉수 악력', desc: '물리 공격과 방어 관통이 오릅니다.', level: 40, job: 'krakenkin', cost: 3, bonus: { attack: 28, penetration: .04 } },
 ];

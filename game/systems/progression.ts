@@ -109,7 +109,7 @@ export function jobFactor(job: Job, key: JobStatKey) {
 }
 export function inherited(s: State, id: string) { const sk = skillById(id); return !!sk && (!!s.skillInheritances?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
 export function classAccess(s: State, sk: Skill) { return (!sk.song || songAccess(s)) && (!sk.job || s.job === sk.job || inherited(s, sk.id)); }
-/** v24.2 노래 패시브는 음유시인 계보(방랑 음유시인의 후속 직업)만 장착합니다. */
+/** v24.2 노래 패시브는 음유시인 계보(엔젤릭버스터 (1차)의 후속 직업)만 장착합니다. */
 export function songAccess(s: Pick<State, 'job'>) { return lineage(s.job).includes('bard'); }
 export function skillUnlockReady(s: State, sk: Skill) { return (!sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery) && (!sk.unlockAfter || skillMastery(s, sk.unlockAfter.skill) >= sk.unlockAfter.level); }
 /** v25 숙련 Lv.1 전에는 효과를 감추는 기술인지. */
@@ -120,7 +120,7 @@ export function canLearn(s: State, id: string) { const sk = skillById(id); retur
 export function skillBlockReason(s: State, id: string) {
     const sk = skillById(id);
     if (!sk) return '스킬을 찾을 수 없습니다.';
-    if (sk.song && !songAccess(s)) return '노래는 방랑 음유시인 계보 직업만 부를 수 있습니다.';
+    if (sk.song && !songAccess(s)) return '노래는 엔젤릭버스터 계보 직업만 부를 수 있습니다.';
     if (!classAccess(s, sk)) return '전용 직업으로 전직하거나, 숙련 또는 SP 계승을 완료하세요.';
     if (s.rebirths < (sk.rebirth || 0)) return `환생 ${sk.rebirth}회부터 사용할 수 있습니다.`;
     if (sk.unlockAfter && skillMastery(s, sk.unlockAfter.skill) < sk.unlockAfter.level) return `${skillById(sk.unlockAfter.skill)?.name || sk.unlockAfter.skill} 숙련 Lv.${sk.unlockAfter.level}을 달성하면 열립니다.`;

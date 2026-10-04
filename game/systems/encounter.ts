@@ -104,7 +104,7 @@ export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, 
     }
     return choices[choices.length - 1]?.id || ids[0];
 }
-/** 무한 심연 1층 기준 능력치(첫 어종). 한 번만 계산합니다. */
+/** 무릉도장 1층 기준 능력치(첫 어종). 한 번만 계산합니다. */
 let abyssRef: ReturnType<typeof scaledEnemyStats> | undefined;
 export const abyssReference = () => abyssRef ??= scaledEnemyStats(FISH.find(f => f.id === DUNGEONS.find(d => d.id === 'abyss')!.fish[0])!, { tier: 0, wave: 0 });
 export function spawn(s: State, rng: () => number) {
@@ -241,22 +241,22 @@ export function reward(s: State, rng: () => number) {
                 recordAbyssDepth(s, depth, s.lastTick);
                 const pearls = abyssPearls(depth);
                 s.pearls += pearls;
-                addLog(s, `심연 ${depth}층 정복 · 진주 +${pearls}`, 'reward');
+                addLog(s, `무릉도장 ${depth}층 정복 · 진주 +${pearls}`, 'reward');
                 s.abyssMilestones ??= [];
                 // v25.8 10층마다 첫 돌파 보너스(층 수만큼 진주), 30·60·90층 첫 돌파 장착 AP +1.
-                if (deeper && abyssFloorBonus(depth)) { s.pearls += abyssFloorBonus(depth); addLog(s, `심연 ${depth}층 첫 돌파 · 보너스 진주 +${abyssFloorBonus(depth)}`, 'reward'); }
-                if (ABYSS_AP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) { s.abyssMilestones.push(depth); addLog(s, `심연 ${depth}층 첫 돌파 이정표 · 장착 AP +1`, 'reward'); }
+                if (deeper && abyssFloorBonus(depth)) { s.pearls += abyssFloorBonus(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 · 보너스 진주 +${abyssFloorBonus(depth)}`, 'reward'); }
+                if (ABYSS_AP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) { s.abyssMilestones.push(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 이정표 · 장착 AP +1`, 'reward'); }
                 if (ABYSS_SP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) {
                     s.abyssMilestones.push(depth);
                     s.sp += 1;
-                    addLog(s, `심연 ${depth}층 첫 돌파 이정표 · SP +1`, 'reward');
+                    addLog(s, `무릉도장 ${depth}층 첫 돌파 이정표 · SP +1`, 'reward');
                 }
             }
             if (first && BOSS_RESEARCH[d.id]) addLog(s, `${d.name} 첫 정복! 던전 화면에서 연구 보상 SP ${BOSS_RESEARCH[d.id].sp}을 받으세요.`, 'reward');
             if (first && d.id !== 'abyss')
                 s.pearls += d.pearls;
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
-            // 희귀 이상 확정 장비: 첫 정복, 무한 심연 5층마다, 반복 정복은 낮은 확률.
+            // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다, 반복 정복은 낮은 확률.
             if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop * overlevel)
                 drop(s, d.level + encounterTier(s) * 5, rng, true);
             addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 진주` : ''}`, 'reward');

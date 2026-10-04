@@ -53,7 +53,7 @@ export function newState(now: number): State {
         permanent: { attack: 0, hp: 0, gold: 0 },
         dungeon: null,
         clears: {},
-        logs: [{ id: 1, text: '여명의 시냇가에 도착했습니다. 낚시를 시작하세요.', type: 'system' }],
+        logs: [{ id: 1, text: '리스항구 · 선착장에 도착했습니다. 낚시를 시작하세요.', type: 'system' }],
         logId: 1,
         lastDuel: 0,
         rating: 1000,

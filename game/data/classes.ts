@@ -7,6 +7,7 @@ import { V25_JOBS, V25_HINTS } from './expansion-v25';
 import { DEFENSE_JOBS, DEFENSE_HINTS, DEFENSE_LINEAGES } from './expansion-defense';
 import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
 import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
+import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
 export type Job = {
     id: string;
     name: string;
@@ -44,7 +45,7 @@ export type Job = {
      */
     bonus?: Partial<Record<JobStatKey, number>>;
     branchless?: boolean;
-    /** v25: 1·2차여도 전용 기술을 3개 이상 가진 특수 직업(시계공·玄). */
+    /** v25: 1·2차여도 전용 기술을 3개 이상 가진 특수 직업(제로 (1차)·玄). */
     fullKit?: boolean;
     /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다. */
     healer?: boolean;
@@ -108,7 +109,7 @@ export const JOB_TREES: JobTree[] = [
     { id: 'magic', name: '마법', subtitle: '지능 · 정신 · 마법', description: '마나와 주문 확률을 이용해 큰 마법 피해·회복·약화를 만드는 계열입니다.', accent: '#75b8d6' },
     { id: 'defense', name: '방어', subtitle: '체질 · 방어 · 회복', description: '체력과 방어를 바탕으로 회복·기절·반격·흡혈을 조합하는 계열입니다.', accent: '#8fc49b' },
     { id: 'status', name: '상태이상', subtitle: '출혈 · 중독 · 저주 · 제어', description: '방어를 무시하는 지속 피해와 기절·침묵·약화로 적을 무너뜨리는 계열입니다. 걸어 둔 상태이상에 연계할수록 강해집니다.', accent: '#b6c86a' },
-    { id: 'hybrid', name: '복합', subtitle: '물리 + 마법 · HP · MP', description: '물리와 마법, 체력과 마나를 함께 쓰는 복합 계열입니다. 모든 항해의 출발점인 무직도 여기에 속합니다.', accent: '#c0a1dc' },
+    { id: 'hybrid', name: '복합', subtitle: '물리 + 마법 · HP · MP', description: '물리와 마법, 체력과 마나를 함께 쓰는 복합 계열입니다. 모든 항해의 출발점인 초보자도 여기에 속합니다.', accent: '#c0a1dc' },
     { id: 'support', name: '보조', subtitle: '경험치 · 보상 · 속도 · 파밍', description: '직접 화력보다 성장 속도·보상·파밍·가속으로 편성을 보조하는 계열입니다.', accent: '#e0b36a' },
     { id: 'mystery', name: '???', subtitle: '히든 · 페널티 · 몬스터', description: '조건을 만족해야 드러나는 숨은 직업, 페널티를 숙련으로 극복하는 직업, 몬스터 혈족의 모음입니다.', accent: '#9a9ab8' },
 ];
@@ -136,8 +137,8 @@ export const JOBS: Job[] = [
 // 직업은 전투 공식과 분리된 데이터입니다. 숫자를 낮추거나 조건을 바꿔도 저장 형식은 변하지 않습니다.
 // 1차 직업은 거의 중립, 2차는 방향성, 3차는 큰 대가와 뚜렷한 보상을 갖도록 설계했습니다.
 JOBS.push(
-    { id: 'tidalBrawler', name: '조수 투사', title: '주먹으로 물살을 가른다', desc: '작살 사냥꾼과 같은 출발선에서 근접 연타를 연구하는 소규모 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 2, defense: 1 }, tier: 1, level: 10, requires: { str: 10, dex: 10 }, mastery: 0, role: '근접 입문', tree: 'physical' },
-    { id: 'currentScholar', name: '해류 연구자', title: '파도의 문장을 읽는다', desc: '조류 술사보다 공격력은 낮지만 마나와 약화 주문 조합을 실험하는 입문 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 4, resist: 1 }, tier: 1, level: 10, requires: { int: 10, wis: 10 }, mastery: 0, role: '주문 입문', tree: 'magic' },
+    { id: 'tidalBrawler', name: '조수 투사', title: '주먹으로 물살을 가른다', desc: '아처와 같은 출발선에서 근접 연타를 연구하는 소규모 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 2, defense: 1 }, tier: 1, level: 10, requires: { str: 10, dex: 10 }, mastery: 0, role: '근접 입문', tree: 'physical' },
+    { id: 'currentScholar', name: '해류 연구자', title: '파도의 문장을 읽는다', desc: '매지션보다 공격력은 낮지만 마나와 약화 주문 조합을 실험하는 입문 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 4, resist: 1 }, tier: 1, level: 10, requires: { int: 10, wis: 10 }, mastery: 0, role: '주문 입문', tree: 'magic' },
     { id: 'seagrassKeeper', name: '해초 돌봄꾼', title: '작은 회복을 반복한다', desc: '강한 탱커 대신 낮은 비용 회복과 지속전을 선택하는 보조 입문 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { hp: 35, defense: 3, resist: 3 }, tier: 1, level: 10, requires: { vit: 10, wis: 10 }, mastery: 0, role: '보조 입문', tree: 'defense' },
     { id: 'squidJester', name: '오징어 광대', title: '웃음 뒤에 먹물을 숨긴다', desc: '정확한 한 방 대신 확률·치명 조합을 노리는 입문 직업입니다. 낚시꾼의 집중과 먹물 속임수를 익힙니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .03, bonus: { attack: 4, magic: 4 }, tier: 1, level: 10, requires: { dex: 10, luk: 10 }, mastery: 0, role: '확률 입문', tree: 'support' },
     { id: 'reefBrawler', name: '암초 격투가', title: '부딪힐수록 단단해진다', desc: '체력 비례 챔질과 흡혈을 섞는 근접형. 물리 공격은 과하지 않지만 장기전에 강합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 13, hp: 35, defense: 3 }, tier: 2, level: 25, parent: 'harpoon', requires: { str: 25, vit: 20 }, mastery: 75, role: 'HP·흡혈', tree: 'physical' },
@@ -174,7 +175,7 @@ JOBS.push(
 // 다른 직업의 기술은 자동 지급하지 않으므로 계승을 위한 순회가 필요합니다.
 JOBS.push(
     { id: 'oathAngler', name: '맹세의 낚시꾼', title: '오래 버틴 결의', desc: '심연의 결의 패시브와 낮은 확률로 길게 침묵시키는 맹세의 함성을 익히는 독립 직업입니다. 물리 공격을 보강할 다음 편성을 준비합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { attack: 1 }, tier: 1, level: 10, requires: { str: 12, wis: 10 }, mastery: 0, role: '독립·공격 패시브', tree: 'physical', branchless: true, masteryTarget: 1200, masteryBoost: .1 },
-    { id: 'stormHunter', name: '폭풍 추격자', title: '긴 틈을 한 방으로', desc: '빈사 상태의 적을 폭풍 사냥으로 끝내는 마무리 분기입니다. 거경 사냥꾼이 체력이 온전한 적을 여는 쪽이라면, 이쪽은 닫는 쪽입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 11 }, tier: 2, level: 25, parent: 'harpoon', requires: { str: 28, dex: 22 }, mastery: 400, requiresSkillMastery: { pierce: 2 }, role: '단일·폭발', tree: 'physical', masteryTarget: 4000, masteryBoost: .18 },
+    { id: 'stormHunter', name: '폭풍 추격자', title: '긴 틈을 한 방으로', desc: '빈사 상태의 적을 폭풍 사냥으로 끝내는 마무리 분기입니다. 헌터가 체력이 온전한 적을 여는 쪽이라면, 이쪽은 닫는 쪽입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 11 }, tier: 2, level: 25, parent: 'harpoon', requires: { str: 28, dex: 22 }, mastery: 400, requiresSkillMastery: { pierce: 2 }, role: '단일·폭발', tree: 'physical', masteryTarget: 4000, masteryBoost: .18 },
     { id: 'tideMender', name: '생명의 조율사', title: '밀려오는 회복의 때', desc: '생명의 조류와 턴마다 차오르는 생명의 흐름을 가진 회복형 주문사. 진주 예언자가 흡혈이라면 이쪽은 지속 회복입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 6, hp: 25, resist: 2 }, tier: 2, level: 25, parent: 'tide', requires: { int: 24, wis: 28 }, mastery: 400, requiresSkillMastery: { wave: 1 }, role: '회복·주문', tree: 'magic', masteryTarget: 4000, masteryBoost: .18 },
     { id: 'scaleKnight', name: '비늘 견습기사', title: '가장 작은 방벽', desc: '비늘 갑옷 하나로 물리 방어를 익힙니다. 화려한 공격 대신 방어 패시브의 계승을 준비합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { defense: 1 }, tier: 1, level: 10, requires: { vit: 12, str: 10 }, mastery: 0, role: '독립·물리 방어', tree: 'defense', branchless: true, masteryTarget: 800, masteryBoost: .08 },
     { id: 'lifeTender', name: '해양 생명지기', title: '작은 생명을 품는다', desc: '바다의 생명력 하나를 익히는 독립 직업. 체력 비례 공격과 조합할 기반을 만듭니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { hp: 40 }, tier: 1, level: 10, requires: { vit: 14, wis: 10 }, mastery: 0, role: '독립·최대 체력', tree: 'defense', branchless: true, masteryTarget: 1400, masteryBoost: .12 },
@@ -195,12 +196,12 @@ JOBS.push(
     { id: 'voyageScribe', name: '견습 기록사', title: '한 번의 포획도 기록으로', desc: '전투력을 조금 포기하고 경험치를 더 얻습니다. 항해 복기를 계승해 다음 직업의 성장에 보탬이 됩니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, expBonus: .03, tier: 1, level: 10, requires: { int: 12, wis: 12 }, mastery: 0, role: '경험치·기록', tree: 'support', masteryTarget: 3000, masteryBoost: .1 },
     { id: 'chronicleNavigator', name: '항로 연대기가', title: '여러 항해를 한 권에', desc: '항해 기록을 쌓아 경험치 획득을 높이는 상위 기록사. 빠른 레벨업과 전투용 AP 사이에서 균형을 고릅니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { attack: 12, magic: 12, hp: 40, resist: 3 }, expBonus: .06, tier: 2, level: 25, parent: 'voyageScribe', requires: { int: 26, wis: 28 }, mastery: 1200, requiresSkillMastery: { voyageReview: 2 }, role: '경험치·장기 성장', tree: 'support', masteryTarget: 18000, masteryBoost: .2 },
     { id: 'bossNaturalist', name: '거수 생태학자', title: '거대한 적이 남긴 배움', desc: '보스 포획에서 직업과 장착 스킬의 숙련도를 더 얻습니다. 일반 어종에는 보너스가 없으며 전투 보정도 받지 않습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 10, requires: { wis: 12, vit: 12 }, mastery: 0, role: '보스·숙련', tree: 'support', masteryTarget: 6000, masteryBoost: .12 },
-    { id: 'speciesChronicler', name: '어종 문양사', title: '같은 흔적을 깊게 읽는다', desc: '뱀장어·곰치 계열의 지정 어종을 연구합니다. 지정 어종 포획에서만 숙련도를 크게 얻습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 14, hp: 30 }, tier: 2, level: 25, parent: 'bossNaturalist', requires: { int: 25, wis: 28 }, mastery: 1000, requiresSkillMastery: { titanFieldNotes: 1 }, role: '지정 어종·숙련', tree: 'support', masteryTarget: 24000, masteryBoost: .2 },
+    { id: 'speciesChronicler', name: '어종 문양사', title: '같은 흔적을 깊게 읽는다', desc: '뱀장어·곰치 계열과 머쉬맘을 연구합니다. 지정 어종 포획에서만 숙련도를 크게 얻습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 14, hp: 30 }, tier: 2, level: 25, parent: 'bossNaturalist', requires: { int: 25, wis: 28 }, mastery: 1000, requiresSkillMastery: { titanFieldNotes: 1 }, role: '지정 어종·숙련', tree: 'support', masteryTarget: 24000, masteryBoost: .2 },
     { id: 'echoTamer', name: '메아리 조련사', title: '포효를 말로 바꾸는 자', desc: '메아리 조련사 숙련도 6,000에서 보스의 무음의 포효를 해금합니다. 그전에는 메아리 복기와 계승 기술로 수련합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 52, hp: 80, resist: 4 }, tier: 2, level: 25, parent: 'fishWhisperer', requires: { int: 28, wis: 28 }, mastery: 1200, requiresSkillMastery: { fishWhisper: 1 }, role: '보스 기술·침묵', tree: 'magic', masteryTarget: 30000, masteryBoost: .24 },
     { id: 'abyssMimic', name: '메아리 모사체', title: '심연의 몸짓을 내 것으로', desc: '메아리 모사체 숙련도 20,000에서 보스의 촉수 난무를 해금합니다. 심연 보스의 행동을 오랫동안 관찰하는 대기만성 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .03, bonus: { attack: 56, magic: 24, hp: 110, resist: 4 }, tier: 3, level: 40, rebirth: 1, parent: 'echoTamer', requires: { str: 35, int: 35, wis: 30 }, mastery: 12000, requiresSkillMastery: { sovereignSilence: 2 }, role: '보스 기술·추가타', tree: 'magic', masteryTarget: 100000, masteryBoost: .38 },
 );
 
-// 이형 항해자 계열 상위직: 여섯 능력치를 고르게 배분할수록 강해지는 복합 피해 직업. 수치는 검증 초안입니다.
+// 제논 계열 상위직: 여섯 능력치를 고르게 배분할수록 강해지는 복합 피해 직업. 수치는 검증 초안입니다.
 JOBS.push(
     { id: 'allRounder', name: '팔방 항해사', title: '여섯 물결을 고르게 다루는 자', desc: '직접 배분한 여섯 능력치가 고를수록 강해지는 복합 피해 직업. 순간 화력 대신 균형 잡힌 생존력과 안정적인 물리·마법 복합 피해로 싸웁니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .03, bonus: { attack: 5, magic: 6, hp: 165, defense: 14, resist: 12 }, tier: 2, level: 40, parent: 'wanderer', requires: {}, requiresAllocated: { str: 15, dex: 15, int: 15, vit: 15, wis: 15, luk: 15 }, mastery: 2400, role: '올스탯·복합', tree: 'hybrid' },
 );
@@ -216,11 +217,11 @@ JOBS.push(...(V24_JOBS as Job[]));
 
 // v24.2 ??? 문 직업과 보조 계열 소개 갱신. 자세한 설계는 support-rework.ts.
 JOBS.push(...(SUPPORT_JOBS as Job[]));
-// v25 ??? 특수 직업: 시계공·시간의 지배자·玄. 자세한 설계는 expansion-v25.ts.
+// v25 ??? 특수 직업: 제로 (1차)·제로 (4차)·玄. 자세한 설계는 expansion-v25.ts.
 JOBS.push(...(V25_JOBS as Job[]));
-// v25.14 방어 계열 보강: 종거북·성해 기사 갈래 5차까지, 새 소금 파수꾼(마법 방어) 계보. 자세한 설계는 expansion-defense.ts.
+// v25.14 방어 계열 보강: 종거북·루미너스 (2차) 갈래 5차까지, 새 호영 (1차)(마법 방어) 계보. 자세한 설계는 expansion-defense.ts.
 JOBS.push(...(DEFENSE_JOBS as Job[]));
-// v25.24 역전 계보(힘법사): 물리 계수 마법 피해 · 마법 계수 물리 피해. 자세한 설계는 expansion-inversion.ts.
+// v25.24 역전 계보(아크 (1차)): 물리 계수 마법 피해 · 마법 계수 물리 피해. 자세한 설계는 expansion-inversion.ts.
 JOBS.push(...(INVERSION_JOBS as Job[]));
 // v25.26 외길 계보: 능력치 하나만으로 전직하는 1~3차. 자세한 설계는 expansion-monostat.ts.
 JOBS.push(...(MONOSTAT_JOBS as Job[]));
@@ -284,12 +285,12 @@ for (const job of JOBS) {
 
 /** 히든·??? 문 직업의 힌트. 이름·조건을 숨긴 실루엣 카드에 한 줄로 보입니다. */
 const JOB_HINTS: Record<string, string> = {
-    voidcaller: '한 번의 윤회를 넘긴 이형 항해자에게 윤회의 문이 속삭입니다.',
+    voidcaller: '한 번의 윤회를 넘긴 제논 (1차)에게 윤회의 문이 속삭입니다.',
     undead: '열 번 쓰러져 본 낚시꾼에게 죽음이 말을 겁니다.',
     skeleton: '망인의 뼈가 단단해질 때 드러납니다.',
     bonecaster: '망인의 뼈에 마나를 새길 때 드러납니다.',
     manaLeviathan: '공허와 조류를 모두 익히고 두 번의 윤회를 건넌 자에게.',
-    soulHarvester: '해골 기사와 망인의 기억이 깊이 쌓일 때.',
+    soulHarvester: '나이트워커 (2차)와 망인의 기억이 깊이 쌓일 때.',
     abyssArchivist: '진주 장부를 끝까지 적은 중개인에게 열립니다.',
     krakenkin: '보스 열 마리의 피를 묻힌 낚시꾼에게 혈족이 찾아옵니다.',
     eternalNavigator: '세 번의 윤회와 폭풍을 모두 건넌 술사에게.',
@@ -297,6 +298,9 @@ const JOB_HINTS: Record<string, string> = {
     abyssMimic: '메아리를 오래 길들인 자에게 보스의 그림자가 닿습니다.',
 };
 for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id] ?? V25_HINTS[job.id] ?? DEFENSE_HINTS[job.id];
+// v27.36 메이플 직업 이름: maple-names.ts 한곳에서 덮어씁니다(id는 그대로).
+const MAPLE_JOB_NAMES = mapleJobNames(JOBS);
+for (const job of JOBS) job.name = MAPLE_JOB_NAMES[job.id] ?? job.name;
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };
@@ -311,14 +315,14 @@ export const LINEAGES: Lineage[] = [
     { id: 'currentScholar', name: '해류 연구자 계보', tree: 'magic', summary: '마나와 약화 주문, 출혈·관통 연금을 실험하는 계보입니다.' },
     { id: 'fishWhisperer', name: '물고기 말벗 계보', tree: 'magic', summary: '보스 기술 모사와 환생·기록 경제로 이어지는 계보입니다.' },
     { id: 'chantNovice', name: '겹영창 계보', tree: 'magic', summary: '동시 시전 주문을 겹쳐 한 행동에 쏟아붓는 순수 피해 마법 계보입니다. 함께 나간 주문이 많을수록 대기와 마나가 늘어납니다.' },
-    { id: 'apprentice', name: '견습 마법사 계보', tree: 'magic', summary: '화염·메테오·연속 주문을 거쳐 5차 대마도사에 이르는 계보입니다.' },
+    { id: 'apprentice', name: '견습 마법사 계보', tree: 'magic', summary: '화염·메테오·연속 주문을 거쳐 5차 플레임위자드에 이르는 계보입니다.' },
     independent('magic'),
     { id: 'warden', name: '산호 수호자 계보', tree: 'defense', summary: '방어·기절·회복·반격과 복합 흡혈로 갈라지는 수호 계보입니다.' },
     { id: 'seagrassKeeper', name: '해초 돌봄꾼 계보', tree: 'defense', summary: '회복과 흡혈로 편성을 지탱하는 보조 방어 계보입니다.' },
-    { id: 'shieldbearer', name: '방패병 계보', tree: 'defense', summary: '반격·약화 탱커를 거쳐 5차 수호신에 이르는 계보입니다.' },
+    { id: 'shieldbearer', name: '방패병 계보', tree: 'defense', summary: '반격·약화 탱커를 거쳐 5차 미하일에 이르는 계보입니다.' },
     ...DEFENSE_LINEAGES,
     independent('defense'),
-    { id: 'poisoner', name: '독술사 계보', tree: 'status', summary: '중독·역병을 쌓아 5차 파멸의 사도에 이르는 계보입니다.' },
+    { id: 'poisoner', name: '독술사 계보', tree: 'status', summary: '중독·역병을 쌓아 5차 아크메이지(불,독) (5차)에 이르는 계보입니다.' },
     { id: 'shaman', name: '주술사 계보', tree: 'status', summary: '약화·감속·침묵 저주로 적의 행동을 묶는 계보입니다.' },
     NEW_LINEAGES.bloodAngler,
     NEW_LINEAGES.nerveNeedler,
@@ -343,6 +347,7 @@ export const LINEAGES: Lineage[] = [
     independent('mystery'),
     ...MONOSTAT_LINEAGES,
 ];
+for (const lineage of LINEAGES) lineage.name = MAPLE_LINEAGE_NAMES[lineage.id] ?? lineage.name;
 /** 직업의 계보 id. lineage가 있으면 그 값, 상위·하위가 없는 1차 직업은 `${tree}-independent`, 그 밖에는 루트 조상 id. */
 export function lineageOf(job: Job): string {
     if (job.lineage) return job.lineage;
