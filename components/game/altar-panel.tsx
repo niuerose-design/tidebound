@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format } from './shared';
-import { ALTAR, BLESSINGS, offeringPoints, type AltarGaugeId } from '@/game/data/altar';
+import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_LEVEL_STEP, offeringPoints, type AltarGaugeId } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
@@ -58,12 +58,12 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 {info.gauges.map(g => {
                     const open = g.until > now;
                     return <button key={g.id} type="button" className={`altar-gauge ${gauge === g.id ? 'selected' : ''} ${g.id === 'god' ? 'god' : ''}`} onClick={() => setGauge(g.id)} aria-pressed={gauge === g.id}>
-                        <div className="altar-gauge-head"><strong>{g.id === 'god' ? <Skull size={14}/> : <Sparkles size={14}/>} {g.name}</strong>{open ? <em className="altar-open">진행 중 · {left(g.until - now)} 남음</em> : <small>{g.desc}</small>}</div>
+                        <div className="altar-gauge-head"><strong>{g.id === 'god' ? <Skull size={14}/> : <Sparkles size={14}/>} {g.name}{open && g.level ? ` · ${g.level}단계` : ''}</strong>{open ? <em className="altar-open">진행 중 · {g.desc} · {left(g.until - now)} 남음</em> : <small>{g.desc}</small>}</div>
                         <Meter value={Math.min(g.points, g.cost)} max={g.cost} color={g.id === 'god' ? 'gold' : 'teal'}/>
-                        <small className="micro">{format(g.points)} / {format(g.cost)}{g.points >= g.cost && g.id === 'god' ? ' · 신이 떠나면 바로 깨어납니다' : ''}</small>
+                        <small className="micro">{format(g.points)} / {format(g.cost)}{g.points >= g.cost && g.id === 'god' ? ' · 신이 떠나면 바로 깨어납니다' : g.id !== 'god' ? ` · ${g.next}` : ''}</small>
                     </button>;
                 })}
-                <p className="footnote">바칠 게이지를 고른 뒤 아래에서 재화를 바치세요. 축복은 쌓이며 최대 {ALTAR.blessingCapMs / 3600_000}시간까지 이어지고, 접속해 사냥하는 동안 적용됩니다(오프라인 정산 제외).</p>
+                <p className="footnote">바칠 게이지를 고른 뒤 아래에서 재화를 바치세요. 축복이 진행 중일 때 게이지를 다시 채우면 단계가 오릅니다(최대 {BLESSING_MAX_LEVEL}단계, 다음 단계 비용 ×{BLESSING_LEVEL_STEP}, 채울 때마다 +1시간, 최대 {ALTAR.blessingCapMs / 3600_000}시간). 축복이 끝나면 단계는 처음으로 돌아갑니다. 축복과 이벤트 배율은 접속해 사냥하는 동안만 적용되고 오프라인 정산에는 적용되지 않습니다.</p>
             </section>
             <section className="panel altar-offer">
                 <Tabs value={pane} onValueChange={v => setPane(v as typeof pane)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="offer"><Coins size={14}/> 공물 바치기</TabsTrigger><TabsTrigger value="board"><Trophy size={14}/> 이번 주 기여 순위</TabsTrigger></TabsList></Tabs>

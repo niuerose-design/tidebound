@@ -5,7 +5,7 @@
  */
 import { db } from './db';
 import { setRuntimeEvents, setAltarEvents, SERVER_EVENTS, type ServerEvent } from '../data/events';
-import { BLESSINGS } from '../data/altar';
+import { BLESSINGS, blessingEffect } from '../data/altar';
 import { DEFAULT_CLOSURES, DUNGEONS, STAGES, setClosures, type Closures } from '../data/world';
 
 export type EventConfig = { extra: ServerEvent[]; disabled: string[] };
@@ -51,8 +51,9 @@ export async function writeEventConfig(config: EventConfig, now = Date.now()) {
 export async function altarBlessingEvents(now: number): Promise<ServerEvent[]> {
     const gauges = await db().listAltarGauges();
     return BLESSINGS.flatMap(b => {
-        const until = gauges.find(g => g.id === b.id)?.until || 0;
-        return until > now ? [{ id: `altar-${b.id}`, name: '', from: '2026-01-01T00:00:00+09:00', until: new Date(until).toISOString(), ...b.effect }] : [];
+        const g = gauges.find(x => x.id === b.id), until = g?.until || 0;
+        // v27.48 축복 단계별 효과(단계가 없던 옛 행은 1단계).
+        return until > now ? [{ id: `altar-${b.id}`, name: '', from: '2026-01-01T00:00:00+09:00', until: new Date(until).toISOString(), ...blessingEffect(b, Math.max(1, g?.level || 1)) }] : [];
     });
 }
 /** 축복이 막 열렸을 때 이 인스턴스는 30초를 기다리지 않고 바로 반영합니다. */

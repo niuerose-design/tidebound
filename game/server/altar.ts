@@ -16,9 +16,11 @@ import { weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
 import { duel, abyssBossSnapshot } from '../systems/duel';
-import { josa, ALTAR, BLESSINGS, GAUGE_IDS, gaugeCost, offeringPoints, tithe, type AltarGaugeId, type AltarInfo, type AltarStatus, type Offering } from '../data/altar';
+import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, blessingDesc, GAUGE_IDS, gaugeCost, offeringPoints, tithe, type AltarGaugeId, type AltarInfo, type AltarStatus, type Offering } from '../data/altar';
 
-type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number }>; board: AltarOfferRow[] };
+type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number }>; board: AltarOfferRow[] };
+/** 진행 중인 축복의 단계(끝났으면 0). */
+const liveLevel = (g: { until: number; level: number } | undefined, now: number) => g && g.until > now ? Math.max(1, g.level || 1) : 0;
 let cache: Shared | null = null;
 export const godAlive = (a: AltarRow, now: number) => a.god_state === 'alive' && a.god_until >= now;
 const parseGod = (a: AltarRow): Snapshot | null => { try { return a.god ? JSON.parse(a.god) as Snapshot : null; } catch { return null; } };
@@ -49,7 +51,7 @@ async function shared(now: number, force = false): Promise<Shared> {
     if (!force && cache && cache.week === week && now - cache.at < ALTAR.cacheMs) return cache;
     const database = db();
     const [altar, gauges, board] = await Promise.all([database.getAltar(), database.listAltarGauges(), database.listAltarOffers(week, ALTAR.boardSize)]);
-    const map = Object.fromEntries(gauges.map(g => [g.id, { points: g.points, until: g.until }]));
+    const map = Object.fromEntries(gauges.map(g => [g.id, { points: g.points, until: g.until, level: g.level || 0 }]));
     if (await trySummon(altar, map.god?.points || 0, now)) return shared(now, true);
     return cache = { at: now, week, altar, gauges: map, board };
 }
@@ -68,8 +70,9 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
     return {
         week: sh.week,
         gauges: GAUGE_IDS.map(g => {
-            const b = BLESSINGS.find(x => x.id === g);
-            return { id: g, name: b ? b.name : '신 소환', desc: b ? `${b.desc} · ${b.hours}시간` : '가득 차면 신이 깨어납니다', points: sh.gauges[g]?.points || 0, cost: gaugeCost(g), until: sh.gauges[g]?.until || 0 };
+            const b = BLESSINGS.find(x => x.id === g), level = liveLevel(sh.gauges[g], now);
+            const next = !b ? '가득 차면 신이 깨어납니다' : !level ? `채우면 1단계로 열림 · ${blessingDesc(b, 1)} · ${b.hours}시간` : level < BLESSING_MAX_LEVEL ? `채우면 ${level + 1}단계 · ${blessingDesc(b, level + 1)} · +${b.hours}시간` : `최고 단계 · 채우면 +${b.hours}시간`;
+            return { id: g, name: b ? b.name : '신 소환', desc: b ? blessingDesc(b, level || 1) : '가득 차면 신이 깨어납니다', points: sh.gauges[g]?.points || 0, cost: gaugeCost(g, level, level > 0), until: sh.gauges[g]?.until || 0, level, next };
         }),
         god: god && a.gen > 0 ? { gen: a.gen, alive: godAlive(a, now), name: god.name, level: god.level, power: god.power, until: a.god_until, mine: isThrone && a.god_state === 'alive' } : null,
         throne: a.throne ? { id: isThrone ? id : '', name: a.throne_name, since: a.throne_since, mine: isThrone, ...(isThrone ? { tithe: { gold: a.tithe_gold, pearls: a.tithe_pearls, essence: a.tithe_essence } } : {}) } : null,
@@ -110,10 +113,16 @@ export async function commitOffering(account: string, id: string, name: string, 
     ]);
     const b = BLESSINGS.find(x => x.id === gauge);
     if (b) {
-        // 한 번에 여러 칸을 채웠어도 최대 몇 번만(축복 시간 상한이 있음).
-        let opened = 0, until = 0;
-        for (let i = 0; i < 12 && await database.spendAltarGauge(b.id, b.cost); i++) { opened++; until = await database.extendAltarGauge(b.id, now, b.hours * 3600_000, ALTAR.blessingCapMs); }
-        if (opened) { await refreshAltarEvents(now); await announce(`${name}의 공물로 ${josa(b.name, '이가')} 열렸습니다! ${b.desc} · ${new Date(until + 9 * 3600_000).toISOString().slice(11, 16)}까지`, now); }
+        // v27.48 한 칸 찰 때마다: 닫혀 있으면 1단계로 열고, 진행 중이면 단계 +1(최대 3)·시간 +1시간. 비용은 단계마다 ×1.5.
+        let opened = 0, until = 0, level = 0, wasLive = false, before = 0;
+        for (let i = 0; i < 12; i++) {
+            const g = (await database.listAltarGauges()).find(x => x.id === b.id), live = g && g.until > now ? Math.max(1, g.level || 1) : 0;
+            if (i === 0) { wasLive = live > 0; before = live; }
+            const r = await database.levelAltarBlessing(b.id, gaugeCost(b.id, live, live > 0), live, now, b.hours * 3600_000, ALTAR.blessingCapMs, BLESSING_MAX_LEVEL);
+            if (!r) break;
+            opened++; until = r.until; level = r.level;
+        }
+        if (opened) { await refreshAltarEvents(now); await announce(`${name}의 공물로 ${josa(b.name, '이가')} ${!wasLive ? `열렸습니다${level > 1 ? `(${level}단계)` : ''}` : level > before ? `${level}단계가 되었습니다` : `${level}단계로 ${opened}시간 연장되었습니다`}! ${blessingDesc(b, level)} · ${new Date(until + 9 * 3600_000).toISOString().slice(11, 16)}까지`, now); }
     }
     invalidateAltar();
     await shared(now, true); // 신 소환 게이지가 찼으면 여기서 깨어납니다.
@@ -161,10 +170,10 @@ export async function syncAltarStatus(s: State, now: number) {
     try {
         const sh = await shared(now), a = sh.altar, god = parseGod(a);
         const status: AltarStatus = {
-            blessings: BLESSINGS.filter(b => (sh.gauges[b.id]?.until || 0) > now).map(b => ({ id: b.id, name: b.name, desc: b.desc, until: sh.gauges[b.id].until })),
+            blessings: BLESSINGS.filter(b => liveLevel(sh.gauges[b.id], now) > 0).map(b => { const level = liveLevel(sh.gauges[b.id], now); return { id: b.id, name: `${b.name} ${level}단계`, desc: blessingDesc(b, level), until: sh.gauges[b.id].until, level }; }),
             god: god && godAlive(a, now) ? { gen: a.gen, name: god.name, until: a.god_until } : null,
             throne: a.throne_name,
-            gauges: GAUGE_IDS.map(g => ({ id: g, name: g === 'god' ? '신 소환' : BLESSINGS.find(b => b.id === g)!.name, pct: Math.min(100, Math.floor((sh.gauges[g]?.points || 0) / gaugeCost(g) * 100)) })),
+            gauges: GAUGE_IDS.map(g => { const level = liveLevel(sh.gauges[g], now); return { id: g, name: g === 'god' ? '신 소환' : BLESSINGS.find(b => b.id === g)!.name, pct: Math.min(100, Math.floor((sh.gauges[g]?.points || 0) / gaugeCost(g, level, level > 0) * 100)) }; }),
         };
         s.altarStatus = status;
     }
