@@ -307,8 +307,9 @@
     .job-tag-chips { flex:1 1 100%; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
     .job-search-box { flex:1 1 100%; }
     .job-columns>.job-detail-slot { display:contents; }
-    /* 전직 확인 창(z 50)이 위에 오도록 상세 창은 그 아래(45·46)에 둡니다. */
-    .job-detail-slot .job-sheet { position:fixed!important; left:0; right:0; bottom:0; z-index:46; max-height:82vh; overflow-y:auto; border-radius:14px 14px 0 0; translate:0 110%; transition:translate .22s ease; box-shadow:0 -12px 32px #0009; animation:none; }
+    /* 전직 확인 창(z 50)이 위에 오도록 상세 창은 그 아래(45·46)에 둡니다.
+       v27.60 모바일 하단 탭바(z 60)가 창 맨 아래 전직 버튼을 덮지 않도록 창을 탭바 높이(58px)만큼 올립니다. */
+    .job-detail-slot .job-sheet { position:fixed!important; left:0; right:0; bottom:calc(58px + env(safe-area-inset-bottom)); z-index:46; max-height:calc(82vh - 58px - env(safe-area-inset-bottom)); overflow-y:auto; border-radius:14px 14px 0 0; translate:0 calc(110% + 80px); transition:translate .22s ease; box-shadow:0 -12px 32px #0009; animation:none; }
     .job-detail-slot.sheet-open .job-sheet { translate:0 0; }
     .job-detail-slot.sheet-open .job-sheet-backdrop { display:block; position:fixed; inset:0; z-index:45; background:#000a; }
     .job-sheet-footer { position:sticky; bottom:0; z-index:1; }
