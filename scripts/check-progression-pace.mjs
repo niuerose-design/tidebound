@@ -26,9 +26,9 @@ assert(hook.multiplier<fist.multiplier&&hook.chance<fist.chance&&hook.cooldown>=
 const fresh=newState(0),base={...stats(fresh),hp:100,mana:50,manaRegen:0,hpRegen:0,lifesteal:0};
 const fighter=(id,mana=50)=>({name:'test',stats:base,hp:20,skills:[id],cooldowns:{},stun:0,mana,effects:{}});
 const target=()=>({...fighter(''),hp:1000,stats:{...base,hp:1000}});
-const healer=fighter('breath');strike(healer,target(),()=>0);assert.equal(healer.hp,30);
+const healer=fighter('breath');strike(healer,target(),()=>0);assert.equal(healer.hp,20+Math.floor(100*ACTIVE_SKILL_BALANCE.breath.healRatio));
 const dry=fighter('arcane',0);assert(!strike(dry,target(),()=>0).includes('해류 탄환'));
-const free=fighter('pierce',0);assert(strike(free,target(),()=>0).includes('관통 작살'));assert.equal(free.mana,0);
+const free=fighter('pierce',0);assert(strike(free,target(),()=>0).includes(SKILLS.find(x=>x.id==='pierce').name));assert.equal(free.mana,0);
 console.log(JSON.stringify({checks:'passed',activeSkills:Object.keys(ACTIVE_SKILL_BALANCE).length}));
 for(const magic of [false,true])for(const seed of [29]){
  const s=newState(0),rng=random(seed);s.equipment={};s.inventory=[];let checkpoint={};
