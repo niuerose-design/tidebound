@@ -7,6 +7,17 @@ export type ServerEvent = { id: string; name: string; from: string; until: strin
 /** State에 적히는 이벤트 요약(배율과 종료 시각만). */
 export type ActiveEvent = { id: string; name: string; until: number; exp: number; gold: number; drop: number; mastery?: number; mimic?: number; /** v27.44 제단 축복이 섞였을 때 배너용(축복을 뺀 이벤트, 없으면 null). 축복은 제단 알림이 따로 보여 줍니다. */ banner?: ActiveEvent | null };
 
+/**
+ * v27.51 오프라인 정산(1분 넘게 밀린 정산) 배율: 정산하는 순간 열려 있는 이벤트·제단 축복 배율의 절반만큼(×m → ×(1 + (m − 1) × OFFLINE_EVENT_SCALE)).
+ * 백그라운드 탭에서는 동기화가 멈춰 오프라인 정산이 되므로, 탭을 화면에 띄워 두지 않아도 이벤트를 일부 받습니다. 계산량은 같습니다.
+ */
+export const OFFLINE_EVENT_SCALE = .5;
+const halfOf = (m: number | undefined) => m === undefined ? undefined : 1 + (m - 1) * OFFLINE_EVENT_SCALE;
+export function offlineEvent(e: ActiveEvent | null): ActiveEvent | null {
+    if (!e) return null;
+    return { ...e, exp: halfOf(e.exp)!, gold: halfOf(e.gold)!, drop: halfOf(e.drop)!, mastery: halfOf(e.mastery), mimic: halfOf(e.mimic) };
+}
+
 export const SERVER_EVENTS: ServerEvent[] = [
     { id: 'openbeta-exp', name: '오픈베타 기념', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', exp: 2 },
     // 이름은 배너 앞머리에 한 번씩만 붙습니다(배율은 뒤에 따로 나오므로 이름에 적지 않습니다). 빈 이름은 생략. 배율 없는 공지형 이벤트도 됩니다.
