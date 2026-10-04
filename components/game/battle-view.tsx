@@ -30,6 +30,7 @@ import { profile } from '@/game/data/encounters';
 import { bookRevealed } from '@/game/systems/book';
 import { BOOK_REVEAL } from '@/game/data/book-traits';
 import { stats } from '@/game/systems/stats';
+import { useSkillFx } from './skill-fx-setting';
 import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, SceneFx, useCombatFx } from './combat-fx';
 import { StatusBadges } from './combat-status';
 import { BattleLogLine, withTurnDividers } from './combat-log';
@@ -76,7 +77,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     const quickItems = s.inventory.slice(-6).reverse();
     // 획득 로그는 전투 탭에서 빼고, 가장 최근 획득 한 줄만 전투 탭 위에 띄웁니다.
     const latestReward = s.logs.findLast(l => l.type === 'reward' || l.type === 'skill');
-    const { effects: combatFx, combo: fxCombo } = useCombatFx(s.logs, s.name);
+    const skillFx = useSkillFx(), { effects: combatFx, combo: fxCombo } = useCombatFx(s.logs, s.name, skillFx);
     // 회복 대기(필드 패배 후)·출정 준비(던전 입장 후) 남은 시간. 던전 화면의 준비 카운트다운과 같은 방식입니다.
     const recoverySeconds = Math.ceil(s.recovery * BALANCE.turnMs / 1000);
     const recoveryText = s.recovery > 0 ? d ? `출정 준비 · ${recoverySeconds}초 남음` : `회복 대기 · ${recoverySeconds}초 남음` : null;

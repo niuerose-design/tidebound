@@ -15,7 +15,7 @@ export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
  * 한꺼번에 많이 들어오면(밀린 턴 건너뛰기) 최근 6개만 보여 주고 잘린 타격 수를 combo로 알립니다.
  * 연속 행동이 있으면 combo는 그 묶음에서 가장 긴 연속 번호와 그 행동의 주인입니다(‘×N 연속’을 행동한 쪽 카드에 띄움).
  */
-export function useCombatFx(logs: Log[], playerName: string) {
+export function useCombatFx(logs: Log[], playerName: string, enabled = true) {
     const lastId = useRef<number | null>(null), timers = useRef(new Set<number>());
     const [effects, setEffects] = useState<CombatFx[]>([]), [combo, setCombo] = useState<CombatCombo | null>(null);
     const latest = logs.at(-1)?.id ?? 0;
@@ -27,6 +27,8 @@ export function useCombatFx(logs: Log[], playerName: string) {
             return;
         }
         if (latest === lastId.current) return;
+        // v27.62 스킬 이펙트를 끈 기기: 새 로그는 읽은 것으로만 치고 연출을 만들지 않습니다(다시 켜면 그다음 타격부터).
+        if (!enabled) { lastId.current = latest; return; }
         const batch = combatFxBatch(logs, lastId.current, playerName), cut = combatFxSkipped(logs, lastId.current, playerName);
         const longest = batch.reduce<CombatFx | null>((best, fx) => (fx.chain || 0) > (best?.chain || 0) ? fx : best, null);
         const next: CombatCombo | null = longest && (longest.chain || 0) > 1 ? { count: longest.chain!, actor: longest.actor } : cut ? { count: cut, actor: batch.at(-1)!.actor } : null;
@@ -41,10 +43,11 @@ export function useCombatFx(logs: Log[], playerName: string) {
             if (next) setCombo(v => v === next ? null : v);
         }, batch.at(-1)!.delay + FX_HOLD_MS);
         timers.current.add(timer);
-    }, [latest, logs, playerName]);
+    }, [latest, logs, playerName, enabled]);
     useEffect(() => { const pending = timers.current; return () => pending.forEach(clearTimeout); }, []);
-    return { effects, combo };
+    return enabled ? { effects, combo } : NO_FX;
 }
+const NO_FX: { effects: CombatFx[]; combo: CombatCombo | null } = { effects: [], combo: null };
 
 function fxStyle(delay: number, extra: Record<string, string | number> = {}): CSSProperties {
     return { '--fx-delay': `${delay}ms`, ...extra } as CSSProperties;

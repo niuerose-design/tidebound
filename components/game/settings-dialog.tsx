@@ -1,4 +1,5 @@
 'use client';
+import { useSkillFx, setSkillFx } from './skill-fx-setting';
 import { Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import type { State, Action } from '@/game/types';
@@ -44,6 +45,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                 <div><strong>선별의 눈 자동 판매</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 팝니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
                 <button className={s.autoSell ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoSell} onClick={() => send({ type: 'autoSell', value: s.autoSell ? 'off' : 'on' })}>{s.autoSell ? '켜짐' : '꺼짐'}</button>
             </div>}
+            <SkillFxToggle/>
             {s && <div className="setting-toggle">
                 <div><strong>문 알림</strong><p>전투 화면 맨 위 ‘문이 열렸습니다’ 줄입니다. 꺼도 전직 화면의 ??? 탭에서 열린 문을 볼 수 있습니다.</p></div>
                 <button className={s.hideDoorNotice ? 'secondary' : 'primary'} disabled={busy} aria-pressed={!s.hideDoorNotice} onClick={() => send({ type: 'doorNotice', value: s.hideDoorNotice ? 'on' : 'off' })}>{s.hideDoorNotice ? '꺼짐' : '켜짐'}</button>
@@ -74,4 +76,13 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
             </div>}
         </DialogContent>
     </Dialog>;
+}
+
+/** v27.62 스킬 이펙트 켜기/끄기(이 기기에만 저장). 모바일은 꺼짐, 데스크톱은 켜짐이 기본입니다. */
+function SkillFxToggle() {
+    const on = useSkillFx();
+    return <div className="setting-toggle">
+        <div><strong>스킬 이펙트</strong><p>전투 화면의 스킬 연출·피해 숫자·체력 막대 반짝임입니다. 끄면 휴대폰이 덜 버벅이고 배터리를 아낍니다. HP와 전투 기록은 그대로 보입니다. 이 기기에만 저장되며, 처음에는 모바일은 꺼짐·데스크톱은 켜짐입니다.</p></div>
+        <button className={on ? 'primary' : 'secondary'} aria-pressed={on} onClick={() => setSkillFx(!on)}>{on ? '켜짐' : '꺼짐'}</button>
+    </div>;
 }
