@@ -499,3 +499,14 @@ test('v27.43 altar: offering points, tithe, blessing events skip offline catch-u
     }
     finally { ev.setAltarEvents([]); }
 });
+test('v27.43 altar first god matches the Mu Lung floor-50 boss and fights past the 80-turn duel cap', async () => {
+    const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const D = await G.load('systems/duel'), engine = await G.load('systems/engine'), enc = await G.load('systems/encounter'), A = await G.load('data/altar');
+    const god = D.abyssBossSnapshot(A.ALTAR.firstGod.depth);
+    const s = engine.newState(0); s.level = 70; s.rebirths = 10; s.dungeon = { id: 'abyss', wave: 4, depth: 50 };
+    enc.spawn(s, () => .5);
+    assert.equal(god.stats.hp, s.enemy.maxHp); assert.equal(god.stats.attack, s.enemy.attack); assert.equal(god.stats.defense, s.enemy.defense);
+    const tank = { ...god, name: '버티는 자', stats: { ...god.stats, attack: 1, magic: 1 }, skills: [] };
+    const t0 = performance.now(), r = D.duel(tank, { ...god, stats: { ...god.stats, attack: 1, magic: 1 }, skills: [] }, true, () => .5, A.ALTAR.godMaxTurns);
+    assert.equal(r.turns, A.ALTAR.godMaxTurns); assert.equal(r.winner, 'draw'); assert.ok(performance.now() - t0 < 1500, 'a full god fight stays cheap');
+});

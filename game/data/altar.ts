@@ -18,12 +18,14 @@ export const ALTAR = {
     titheRate: .1,
     /** 신 소환에 드는 기여도, 신이 머무는 시간, 모험가별 도전 간격. */
     godCost: 30_000, godLifetimeMs: 24 * 3600_000, challengeCooldownMs: 10 * 60_000,
+    /** 신과의 전투 턴 상한. 무릉도장 보스전에는 턴 제한이 없어 결투(80턴)보다 넉넉히 둡니다. */
+    godMaxTurns: 1000,
     /** 축복 시간은 쌓이지만 지금부터 최대 12시간까지만. */
     blessingCapMs: 12 * 3600_000,
     /** 순위표 길이와 화면 캐시. */
     boardSize: 20, cacheMs: 15_000,
-    /** 처음 깨어나는 신(자리 주인이 없을 때): 자쿰을 바탕으로 체력 ×2, 공격 ×1.2. */
-    firstGod: { base: 'ventColossus', name: '검은 마법사', hp: 2, attack: 1.2 },
+    /** 처음 깨어나는 신(자리 주인이 없을 때): 무릉도장 depth층 보스(무공)와 같은 능력치·기술. */
+    firstGod: { name: '검은 마법사', depth: 50 },
     /** 자리 주인을 본뜬 신: 주인의 능력치에 체력 ×2, 공격·마법 ×1.15(신격). */
     godhood: { hp: 2, attack: 1.15 },
 } as const;

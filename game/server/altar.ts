@@ -15,7 +15,7 @@ import { allow } from './throttle';
 import { weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
-import { duel, bossSnapshot } from '../systems/duel';
+import { duel, abyssBossSnapshot } from '../systems/duel';
 import { josa, ALTAR, BLESSINGS, GAUGE_IDS, gaugeCost, offeringPoints, tithe, type AltarGaugeId, type AltarInfo, type Offering } from '../data/altar';
 
 type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number }>; board: AltarOfferRow[] };
@@ -27,9 +27,10 @@ const parseGod = (a: AltarRow): Snapshot | null => { try { return a.god ? JSON.p
 export function nextGod(a: Pick<AltarRow, 'throne_snapshot' | 'throne_name'>): Snapshot {
     let holder: Snapshot | null = null;
     try { holder = a.throne_snapshot ? JSON.parse(a.throne_snapshot) as Snapshot : null; } catch { holder = null; }
-    const base = holder || bossSnapshot(ALTAR.firstGod.base)!, m = holder ? ALTAR.godhood : ALTAR.firstGod;
-    const stats = { ...base.stats, hp: Math.round(base.stats.hp * m.hp), attack: Math.round(base.stats.attack * m.attack), ...(base.stats.magic ? { magic: Math.round(base.stats.magic * m.attack) } : {}) };
-    return { ...base, name: holder ? `신이 된 ${a.throne_name}` : ALTAR.firstGod.name, stats, power: power(stats), rating: 1000 };
+    if (!holder) return { ...abyssBossSnapshot(ALTAR.firstGod.depth), name: ALTAR.firstGod.name };
+    const m = ALTAR.godhood;
+    const stats = { ...holder.stats, hp: Math.round(holder.stats.hp * m.hp), attack: Math.round(holder.stats.attack * m.attack), ...(holder.stats.magic ? { magic: Math.round(holder.stats.magic * m.attack) } : {}) };
+    return { ...holder, name: `신이 된 ${a.throne_name}`, stats, power: power(stats), rating: 1000 };
 }
 
 /** 살아 있는 신이 없고 신 소환 게이지가 찼으면 깨웁니다. 소환이 다른 요청에 밀리면 게이지를 돌려놓습니다. */
@@ -128,7 +129,7 @@ export function makeChallenge(id: string) {
             if (!god || !godAlive(a, now)) throw new ApiError('지금 깨어 있는 신이 없습니다.');
             if (a.throne === id) throw new ApiError('신의 자리에 앉아 있는 동안에는 도전할 수 없습니다.');
             if (now - last < ALTAR.challengeCooldownMs) throw new ApiError(`신에게는 ${Math.ceil((ALTAR.challengeCooldownMs - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
-            const me = snapshot(s), result = duel(me, god, true);
+            const me = snapshot(s), result = duel(me, god, true, Math.random, ALTAR.godMaxTurns);
             const claimed = result.winner === 'player' && await db().claimAltarThrone(a.gen, id, s.name, JSON.stringify(me), now);
             outcome = { result, claimed, gen: a.gen, god: god.name };
             if (claimed) { invalidateAltar(); await announce(`${josa(s.name, '이가')} ${josa(god.name, '을를')} 쓰러뜨리고 신의 자리에 앉았습니다!`, now); }
