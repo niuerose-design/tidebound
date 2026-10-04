@@ -9,7 +9,7 @@ const target = (extra = {}) => ({ name: 'B', stats: { ...base, hp: 1e6 }, hp: ex
 
 test('v25 clockmaker: time machine restores both sides once per battle; mastery opens the chronarch with no door', () => {
     const a = fighter(['timeMachine'], { hp: 10 }), b = target({ hp: 5 });
-    const text = strike(a, b, () => 0); assert.match(text, /타임머신/); assert.equal(a.hp, 1000); assert.equal(b.hp, 1e6); assert.ok(a.effects.timeUsed);
+    const text = strike(a, b, () => 0); assert.match(text, /타임 리와인드/); assert.equal(a.hp, 1000); assert.equal(b.hp, 1e6); assert.ok(a.effects.timeUsed);
     a.hp = 10; strike(a, b, () => 0); assert.equal(a.hp, 10, 'only once per battle');
     const s = newState(0); s.level = 10; s.attributes.dex = 30; s.attributes.int = 30;
     assert.ok(doors.DISCOVERY_DOORS.some(d => d.job === 'clockmaker' && d.test({ playMs: 10 * 3600_000 }) && !d.test({ playMs: 0 })), 'v27.12 the clockmaker opens after ten hours at sea');
@@ -93,7 +93,7 @@ test('v25.3 combat feedback marks heaven for the scene effect and build view pai
 
 test('v25.3 passive-route returns: the archivist passive scales with rebirths and the journeyman with mastered jobs', async () => {
     const { masteredJobCount } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
-    // 진주 기록관 직업은 비전투 그대로지만, 윤회의 조류 기록은 환생마다 자라 어느 직업에서든 쓸 만합니다.
+    // 세계석 기록관 직업은 비전투 그대로지만, 드래곤 링크는 환생마다 자라 어느 직업에서든 쓸 만합니다.
     const a = JOBS.find(j => j.id === 'abyssArchivist'); assert.ok(a.attack < 1 && a.penalties.attack < 0, 'archivist stays a non-combat job');
     const s = newState(0); s.level = 50; s.job = 'harpoon'; s.learned.memoryOfTides = 1; s.skillInheritances.memoryOfTides = true; s.skills = ['memoryOfTides'];
     // 환생 자체의 능력치 보정과 구분하려고 같은 환생 수에서 패시브 유무 차이를 봅니다.
@@ -144,9 +144,9 @@ test('v25.5 reset passives fire on crit, kill and chain (players only); chained 
     strike(g, target(), () => 0, evs); assert.deepEqual(evs[0].cooldownReset, [sk('pierce').name]); assert.equal(g.cooldowns.pierce, 0); assert.ok(g.cooldowns.hook > 0);
     // 확률 실패(rng 0.99 ≥ 0.3)면 초기화 없음.
     const g2 = mk(['showmanship'], { stats: { ...base, crit: 1 } }); g2.cooldowns = { pierce: 4 }; let n = 0; strike(g2, target(), () => (n++ ? .99 : 0), []); assert.equal(g2.cooldowns.pierce, 3);
-    // 처치 초기화: 낭인의 기백은 상대를 쓰러뜨리면 전부.
+    // 처치 초기화: 전사의 기백은 상대를 쓰러뜨리면 전부.
     const r = mk(['roninGrit', 'iaiDraw', 'pierce']); r.cooldowns = { iaiDraw: 3, pierce: 5 }; const t = target({ hp: 1 }); strike(r, t, () => 0, []); assert.ok(t.hp <= 0); assert.equal(r.cooldowns.iaiDraw, 0); assert.equal(r.cooldowns.pierce, 0);
-    // 연속 행동 초기화: 시간의 주권은 편성 첫 번째 대기 중인 기술만.
+    // 연속 행동 초기화: 얼티밋 타임은 편성 첫 번째 대기 중인 기술만.
     const c = mk(['chronoSovereign', 'frozenTime', 'precede']); c.cooldowns = { frozenTime: 6, precede: 5 }; strike(c, target(), () => 0, [], false, true); assert.equal(c.cooldowns.frozenTime, 0); assert.equal(c.cooldowns.precede, 4, 'second skill only ticks');
     for (const id of ['showmanship', 'riskDividend', 'nimbleStep', 'chronoSovereign', 'roninGrit']) assert.ok(sk(id).cooldownReset, id);
 });
@@ -275,7 +275,7 @@ test('v25.8 tide milestones pay per stage once, variant fish need the tier, abys
     const moon = STAGES.find(st => st.id === 'moon'); assert.ok(STAGES.find(st => st.id === 'reef').fish.includes('stormBarracuda'));
     const r = () => 0.999; assert.notEqual(weightedFishId(moon.fish, r, 0, 0), 'eclipseMoonfish', 'tier 0 never spawns the variant'); assert.ok(moon.fish.includes('eclipseMoonfish'));
     const picks = new Set(); let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); for (let i = 0; i < 400; i++) picks.add(weightedFishId(moon.fish, rng, 0, 20)); assert.ok(picks.has('eclipseMoonfish'), 'tier 20 spawns it');
-    assert.equal(FISH.find(f => f.id === 'stormBarracuda').minTier, undefined, 'v26.6 폭풍 바라쿠다는 난이도 0부터');
+    assert.equal(FISH.find(f => f.id === 'stormBarracuda').minTier, undefined, 'v26.6 아이언 호그는 난이도 0부터');
     assert.ok(FISH.find(f => f.id === 'novaManta').minTier === 30 && ACHIEVEMENTS.some(a => a.id === 'tide:50') && ACHIEVEMENTS.some(a => a.id === `codex:${FISH.length}`));
     const foe = (id, boss) => ({ id, name: id, hp: 0, maxHp: 1, attack: 1, defense: 0, exp: 0, gold: 0, boss, stun: 0, combatStats: {}, skills: [], cooldowns: {}, effects: {} });
     const s = newState(0); s.level = 30; s.rebirths = 12; s.stage = 'reef'; s.tide = 12; s.enemy = foe('lionfish', false);
@@ -416,7 +416,7 @@ test('v27.31 limit break needs the pearl research "한계의 문"; old breaks ge
     assert.match(P.limitBreakNext(s, 'hook').reason, /한계의 문.*2단계/, 'research rank caps the next stage');
     // 연구를 재분배하면 효과는 멈추고 기록은 남습니다(다시 사면 돌아옴).
     const withBreak = P.skillMastery(s, 'hook'); s.permanent.limitBreak = 0; assert.equal(P.skillMastery(s, 'hook'), withBreak - 1); assert.equal(P.limitBreakOwned(s, 'hook'), 1);
-    // 이미 2단계를 한 옛 세이브: 연구 2단계를 무료로 받고, 재분배해도 무료 단계는 남고 진주로 돌려받지 않습니다.
+    // 이미 2단계를 한 옛 세이브: 연구 2단계를 무료로 받고, 재분배해도 무료 단계는 남고 세계석으로 돌려받지 않습니다.
     const old = newState(0); old.limitBreaks = { hook: 2, net: 1 }; delete old.researchGranted; old.permanent = {};
     assert.equal(M.grantLimitBreakResearch(old), 2); assert.equal(old.permanent.limitBreak, 2); assert.equal(M.grantLimitBreakResearch(old), 0, 'only once');
     assert.equal(C.researchRefund(old, 'utility').refund, 0, 'free ranks are not refundable');
@@ -478,4 +478,24 @@ test('v27.36 high-rarity gear is damped and enhancement gives +10% per level', a
     assert.ok(Math.abs(rod(6) - rod(1) * Eq.GEAR_RARITY_SCALE[6]) < 1e-9, 'primal damped');
     const flat = Eq.itemStats({ id: 'r', slot: 'coat', rarity: 5, power: 100, level: 50, affixes: [{ id: 'might', name: 'm', stat: 'attack', value: 50 }, { id: 'x', name: 'x', stat: 'crit', value: .05 }] });
     assert.ok(Math.abs(flat.attack - 50 * Eq.GEAR_RARITY_SCALE[5]) < 1e-9 && flat.crit === .05, 'flat options damped, percent options untouched');
+});
+test('v27.43 altar: offering points, tithe, blessing events skip offline catch-up, mimic multiplier', async () => {
+    const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const A = await G.load('data/altar'), ev = await G.load('data/events'), engine = await G.load('systems/engine');
+    assert.equal(A.offeringPoints({ gold: 2999, pearls: 2, essence: 3 }), 2 + 100 + 15);
+    assert.deepEqual(A.tithe({ gold: 12345, pearls: 9, essence: 30 }), { gold: 1234, pearls: 0, essence: 3 });
+    assert.ok(A.GAUGE_IDS.includes('god') && A.BLESSINGS.every(b => A.gaugeCost(b.id) === b.cost));
+    const now = Date.parse('2027-01-05T12:00:00+09:00');
+    ev.setAltarEvents([{ id: 'altar-mimic', name: '제단 까미의 축복', from: '2026-01-01T00:00:00+09:00', until: new Date(now + 3600_000).toISOString(), mimic: 3, gold: 2 }]);
+    try {
+        const live = ev.activeEvent(now); assert.equal(live.mimic, 3); assert.equal(live.gold, 2); assert.match(ev.eventLabel(live), /까미 출현 ×3/);
+        assert.equal(ev.activeEvent(now, ev.currentEvents(false)), null, 'altar blessings are not part of the offline settlement list');
+        // 오프라인 정산(1분 초과) 동안에는 축복 없이 돌고, 끝난 뒤 다시 적힙니다.
+        const s = engine.newState(now - 3600_000); engine.act(s, { type: 'start' }, now - 3600_000); const gold = s.gold;
+        const seen = []; const orig = Math.random; let calls = 0; Math.random = () => { calls++; if (calls % 500 === 0) seen.push(s.event?.gold || 1); return orig(); };
+        try { engine.advance(s, now); } finally { Math.random = orig; }
+        assert.ok(seen.length && seen.every(g => g === 1), 'no altar gold bonus during catch-up');
+        assert.equal(s.event.gold, 2, 'blessing shown again after catch-up'); assert.ok(s.gold > gold);
+    }
+    finally { ev.setAltarEvents([]); }
 });

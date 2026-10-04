@@ -114,7 +114,7 @@ export function spawn(s: State, rng: () => number) {
     const tier = encounterTier(s);
     const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
-    const mimic = !dungeon && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills && rng() < mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1);
+    const mimic = !dungeon && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills && rng() < mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1) * (s.event?.mimic ?? 1);
     const id = mimic ? MIMIC.id : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
     const top = mimic ? [...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0] : undefined;
     const f = mimic ? { ...FISH.find(x => x.id === MIMIC.id)!, level: top!.level, hp: Math.round(top!.hp * MIMIC.hp), attack: Math.round(top!.attack * MIMIC.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : FISH.find(x => x.id === id)!;
@@ -185,7 +185,7 @@ export function reward(s: State, rng: () => number) {
     }
     s.book[e.id] = (s.book[e.id] || 0) + size * bookPer;
     if (e.variant) { s.variantBook ??= {}; const row = (s.variantBook[e.id] ??= {}); row[e.variant] = (row[e.variant] || 0) + 1; }
-    if (vdef?.pearls) { const pearls = vdef.pearls + (s.rebirths >= 3 ? 1 : 0); s.pearls += pearls; addLog(s, `${vdef.mark} ${vdef.name} · 진주 +${pearls}`, 'reward'); }
+    if (vdef?.pearls) { const pearls = vdef.pearls + (s.rebirths >= 3 ? 1 : 0); s.pearls += pearls; addLog(s, `${vdef.mark} ${vdef.name} · 세계석 +${pearls}`, 'reward'); }
     s.gold += gold;
     recordGoal(s, 'catch', undefined, size, text => addLog(s, text, 'reward')); recordGoal(s, 'species', e.id, size, text => addLog(s, text, 'reward'));
     if (e.boss) recordGoal(s, 'boss', undefined, 1, text => addLog(s, text, 'reward'));
@@ -204,14 +204,14 @@ export function reward(s: State, rng: () => number) {
     for (let i = 0; i < size * (vdef?.drops || 1); i++)
         drop(s, fish.level + encounterTier(s) * 5, rng);
     if (vdef?.guaranteed) drop(s, fish.level + encounterTier(s) * 5, rng, true);
-    // v25.8 해역 난이도 이정표: 사냥터에서 그 차수로 처음 처치하면 사이의 이정표 진주를 한 번에 줍니다.
+    // v25.8 해역 난이도 이정표: 사냥터에서 그 차수로 처음 처치하면 사이의 이정표 세계석을 한 번에 줍니다.
     if (!s.dungeon && !seal) {
         const tier = encounterTier(s), best = s.tideBest?.[s.stage] || 0;
         if (tier > best) {
             (s.tideBest ??= {})[s.stage] = tier;
             let pearls = 0; const hit: number[] = [];
             TIDE_MILESTONES.forEach((n, i) => { if (best < n && n <= tier) { pearls += TIDE_MILESTONE_PEARLS[i]; hit.push(n); } });
-            if (pearls) { s.pearls += pearls; addLog(s, `해역 난이도 이정표 · ${STAGES.find(st => st.id === s.stage)?.name || s.stage} 차수 ${hit.join('·')} 첫 처치 · 진주 +${pearls}`, 'reward'); }
+            if (pearls) { s.pearls += pearls; addLog(s, `해역 난이도 이정표 · ${STAGES.find(st => st.id === s.stage)?.name || s.stage} 차수 ${hit.join('·')} 첫 처치 · 세계석 +${pearls}`, 'reward'); }
         }
     }
     if (seal && seal.caught >= ANCHOR_CATCHES) releaseAnchor(s, true);
@@ -241,10 +241,10 @@ export function reward(s: State, rng: () => number) {
                 recordAbyssDepth(s, depth, s.lastTick);
                 const pearls = abyssPearls(depth);
                 s.pearls += pearls;
-                addLog(s, `무릉도장 ${depth}층 정복 · 진주 +${pearls}`, 'reward');
+                addLog(s, `무릉도장 ${depth}층 정복 · 세계석 +${pearls}`, 'reward');
                 s.abyssMilestones ??= [];
-                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 진주), 30·60·90층 첫 돌파 장착 AP +1.
-                if (deeper && abyssFloorBonus(depth)) { s.pearls += abyssFloorBonus(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 · 보너스 진주 +${abyssFloorBonus(depth)}`, 'reward'); }
+                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 세계석), 30·60·90층 첫 돌파 장착 AP +1.
+                if (deeper && abyssFloorBonus(depth)) { s.pearls += abyssFloorBonus(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 · 보너스 세계석 +${abyssFloorBonus(depth)}`, 'reward'); }
                 if (ABYSS_AP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) { s.abyssMilestones.push(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 이정표 · 장착 AP +1`, 'reward'); }
                 if (ABYSS_SP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) {
                     s.abyssMilestones.push(depth);
@@ -259,7 +259,7 @@ export function reward(s: State, rng: () => number) {
             // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다, 반복 정복은 낮은 확률.
             if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop * overlevel)
                 drop(s, d.level + encounterTier(s) * 5, rng, true);
-            addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 진주` : ''}`, 'reward');
+            addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;
             s.dungeon = null;
             s.running = false;

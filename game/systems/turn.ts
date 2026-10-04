@@ -1,6 +1,6 @@
 /** 턴 진행(온라인 tick·오프라인 advance). */
 import { syncGoals, syncAchievements } from './progress';
-import { activeEvent } from '../data/events';
+import { activeEvent, currentEvents } from '../data/events';
 import { recordOpenDoors } from '../data/doors';
 import { syncVoyage } from './guidance';
 import { syncGoal } from './goals';
@@ -84,7 +84,7 @@ function tickTurn(s: State, rng: () => number) {
     const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
-    // v25 타임머신: 쓸 때마다 현재 직업 숙련이 오릅니다.
+    // v25 타임 리와인드: 쓸 때마다 현재 직업 숙련이 오릅니다.
     const log = (text: string, event: CombatEvent) => { addLog(s, text, 'battle', event); if (event?.restored && event.actor === s.name) s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + TIME_MACHINE_MASTERY; };
     actTurn(first, second, rng, log);
     if (first.hp > 0 && second.hp > 0)
@@ -129,10 +129,11 @@ export function advance(s: State, now: number, rng = Math.random) {
     repairState(s, now);
     now = Math.max(now, s.lastTick);
     // v26.1 서버 이벤트: 정산 시각 기준으로 적어 두고, 아래 틱들이 이 배율을 씁니다.
-    s.event = activeEvent(now);
+    const elapsed = now - s.lastTick;
+    // v27.43 제단 축복은 접속해 있는 동안만: 1분 넘게 밀린 정산에는 빼고, 정산이 끝난 뒤 다시 적습니다.
+    s.event = activeEvent(now, elapsed > 60000 ? currentEvents(false) : undefined);
     // v27.31 닫힌 사냥터·던전 목록도 같이 적어 화면이 잠금 표시를 합니다.
     const closed = closuresSnapshot(); if (closed) s.closed = closed; else delete s.closed;
-    const elapsed = now - s.lastTick;
     // 정산 상한은 정산을 시작할 때의 긴 닻줄 단계로 정합니다(정산 중 연구가 바뀌지 않음).
     const cap = offlineCapSeconds(s);
     const count = Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
@@ -144,6 +145,7 @@ export function advance(s: State, now: number, rng = Math.random) {
             tick(s, rng);
     }
     finally { delete s.catchingUp; }
+    if (elapsed > 60000) s.event = activeEvent(now);
     s.lastTick = elapsed > cap * 1000 ? now : now - (elapsed % BALANCE.turnMs);
     recordOpenDoors(s);
     if (elapsed > 60000 && s.kills > before.kills) {
@@ -156,7 +158,7 @@ export function advance(s: State, now: number, rng = Math.random) {
 const bottleGold = (level: number) => level * 500;
 /**
  * 병 속의 편지: 오프라인 정산의 온전한 1시간마다 4%p/단계 확률로 편지병을 줍습니다.
- * 내용은 골드 70% · 장비 25% · 진주 1개 5%. 0단계면 난수를 쓰지 않습니다.
+ * 내용은 골드 70% · 장비 25% · 세계석 1개 5%. 0단계면 난수를 쓰지 않습니다.
  */
 export function messageBottles(s: State, hours: number, rng: () => number) {
     const rank = researchRank(s, 'messageBottle');
@@ -170,6 +172,6 @@ export function messageBottles(s: State, hours: number, rng: () => number) {
         else if (roll < .95) { drop(s, s.level, rng, true); found.items++; }
         else { s.pearls += 1; found.pearls++; }
     }
-    if (found.count) addLog(s, `병 속의 편지 ${found.count}개를 주웠습니다${found.gold ? ` · +${found.gold} G` : ''}${found.items ? ` · 장비 ${found.items}개` : ''}${found.pearls ? ` · 진주 +${found.pearls}` : ''}`, 'reward');
+    if (found.count) addLog(s, `병 속의 편지 ${found.count}개를 주웠습니다${found.gold ? ` · +${found.gold} G` : ''}${found.items ? ` · 장비 ${found.items}개` : ''}${found.pearls ? ` · 세계석 +${found.pearls}` : ''}`, 'reward');
     return found;
 }

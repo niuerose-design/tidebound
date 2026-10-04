@@ -5,7 +5,7 @@ test('Name statuses include bleed, show consumed stun and target haste at its ac
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
  assert.equal(visibleStatuses({},0,[stun],'player')[0].label,'기절함');assert.equal(visibleStatuses({},0,[stun],'enemy').length,0);
  assert.equal(visibleStatuses({dot:{turns:2,damage:1,name:'출혈'},silence:2},1,[stun],'player').length,3);
- const haste=combatFxFromLog({id:2,type:'battle',text:'적 · 광폭 순환 → 10 물리 피해 · 가속 3턴'},'나');
+ const haste=combatFxFromLog({id:2,type:'battle',text:'적 · 광폭화 → 10 물리 피해 · 가속 3턴'},'나');
  assert.equal(visibleStatuses({},0,[haste],'enemy')[0].id,'haste');assert.equal(visibleStatuses({},0,[haste],'player').length,0);
 });
 
@@ -191,7 +191,7 @@ test('Pearl research reset: per-tab refund, always free (v27.29), refusal condit
 test('v27.11 art: every fish has a silhouette shape and the shape table has no stale ids',()=>{
  assert.deepEqual(unmappedFish(),[],'fish without a silhouette shape');
  for(const id of Object.keys(FISH_SHAPES)) assert.ok(FISH.some(f=>f.id===id),`stale shape id ${id}`);
- assert.equal(fishShape('magmaKraken'),'squid');assert.equal(fishShape('nope'),'fish');
+ assert.equal(fishShape('magmaKraken'),'demon');assert.equal(fishShape('nope'),'slime');
 });
 
 test('v27.13 batch appraisal: 5 or 10 at once, all-or-nothing on gold and bag room, same rolls as singles',()=>{
@@ -277,7 +277,7 @@ test('v27.22 mastery mimic: rare stage-only spawn with the strongest local body,
 test('v27.24 ultimate finale skills exist, belong to 5th-tier jobs, and the fx parser carries the skill id',()=>{
  const ids=['braveSlash','oceanWrath','genesis','doomMark','aegisJudgment','redApocalypse','worldTentacle','soulReap','jackpotStrike','frozenTime'];
  for(const id of ids){const sk=SKILLS.find(x=>x.id===id);assert.ok(sk,id);const job=JOBS.find(j=>j.id===sk.job);assert.ok(job&&(job.tier===5||job.id==='chronarch'),id+' job tier');}
- const fx=combatFxFromLog({id:9,type:'battle',text:'나 · 용사의 일격 → 100 물리 피해'},'나');assert.equal(fx.skillId,'braveSlash');
+ const fx=combatFxFromLog({id:9,type:'battle',text:'나 · 소드 오브 버닝 소울 → 100 물리 피해'},'나');assert.equal(fx.skillId,'braveSlash');
 });
 
 test('v27.25·v27.31 closed dungeons/stages refuse entry, evict saves inside, and are written to State.closed',()=>{

@@ -2,7 +2,7 @@
 /** 세이브 형식 버전. 바뀌면 migrations.ts가 이전 세이브를 변환하고, 랭킹은 같은 버전의 스냅샷만 보여줍니다. */
 export const SAVE_VERSION = 8;
 export const BALANCE = {
-    turnMs: 2000, offlineCapSeconds: 86400, baseHp: 110, baseAttack: 13, baseDefense: 3,
+    turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13, baseDefense: 3,
     hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08,
     // Stage hopping used to make the first rebirth arrive in under an hour.
     // See scripts/check-progression-pace.mjs for gearless routing samples;
@@ -62,7 +62,7 @@ export function dungeonPressure(wave: number) {
  * - v27.35 보상은 '권장 레벨 몬스터 몇 마리분'으로 정합니다. 보스 경험치 = 몬스터 bossExpFish마리분, 보스 골드 = bossGoldFish마리분,
  *   클리어 골드 = clearGoldFish마리분. 일반 웨이브는 몬스터 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
  *   한 번 클리어(전투 5번)가 같은 레벨 사냥 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
- * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(진주는 층 공식 그대로).
+ * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(세계석은 층 공식 그대로).
  * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
  * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
  */
@@ -90,7 +90,7 @@ export const SKILL_FORMULA = {
     poisonRatio: .14,
     /** v27.18 극 치명타: 치명타 확률 상한은 100%. 100%를 넘는 몫 100%p마다 극 치명타 확률 +1%(superCritPerHundred). 극 치명타는 치명 피해에 superCritBonus를 더 곱합니다. */
     critCap: 1, superCritPerHundred: .01, superCritBonus: 1.5, drainRatio: .25, extraAttackMultiplier: .65,
-    // 육중 조화: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
+    // 올라운드 밸런스: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
     // 초안(합 × 1.2 + 최저 × 6)은 편중 배분이 더 강해 check-all-rounder.mjs 결과로 조정했습니다.
     harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,
     // v21 올라운더: 원시 피해도 연구·환생·직업 배율을 받고, 장착한 능력치 패시브의
@@ -130,7 +130,7 @@ export const SKILL_FORMULA = {
     // v21.2 전용 기술: signatureTier 이상 직업의 기술은 자기 계보(조상·후손 직업)에서 온전히,
     // 계보 밖에서 계승하면 배율·패시브 수치가 signatureScale 배로 발휘됩니다. 1~3차 기술은 자유롭게 조합됩니다.
     signatureTier: 4, signatureScale: .7,
-    // v24.2 지정 몬스터 연구(와일드헌터 계보)의 대상: 뱀장어·곰치 계열.
+    // v24.2 지정 몬스터 연구(와일드헌터 계보)의 대상: 리본 돼지·파이어보어·머쉬맘.
     designatedSpecies: ['eel', 'emberEel', 'grottoWarden'],
     // v24 환생 비례 패시브(perRebirth): 환생 횟수는 이 값까지만 셉니다.
     perRebirthCap: 30,

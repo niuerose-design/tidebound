@@ -16,7 +16,7 @@ export const plainCost = (s: State) => Math.max(30, Math.floor(shopCost(s) * .2)
 export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, fishPrice(s, SHOP_FISH.gamble)) * shopDiscount(s));
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: `희귀 ${o.name}`, slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
-/** 탭에 쓴 진주와 재분배 반환액. 첫 1회는 전액, 이후 90%(내림). */
+/** 탭에 쓴 세계석과 재분배 반환액. 첫 1회는 전액, 이후 90%(내림). */
 export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' | 'researchGranted'>, tab: string) {
     const ranks: Record<string, number> = {};
     let spent = 0;
@@ -166,10 +166,10 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error(`환생 ${r.rebirth}회 이후에 열리는 연구입니다.`);
         const cost = researchCost(id, rank);
         if (s.pearls < cost)
-            throw Error('진주가 부족합니다.');
+            throw Error('세계석이 부족합니다.');
         s.pearls -= cost;
         s.permanent[id] = rank + 1;
-        return `${r.name} 연구 ${rank + 1}단계 · -${cost} 진주`;
+        return `${r.name} 연구 ${rank + 1}단계 · -${cost} 세계석`;
     }
     if (a.type === 'resetResearch') {
         const tab = RESEARCH_TABS.find(x => x.id === id);
@@ -179,20 +179,20 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error('자동 사냥을 멈추고 던전에서 나온 뒤 재분배하세요.');
         const { refund, ranks } = researchRefund(s, tab.id);
         if (refund <= 0)
-            throw Error('돌려받을 진주가 없습니다.');
+            throw Error('돌려받을 세계석이 없습니다.');
         const after = { ...s, permanent: { ...s.permanent, ...Object.fromEntries(Object.keys(ranks).map(k => [k, Math.min(ranks[k], s.researchGranted?.[k] || 0)])) } };
         if (ranks.inventory && s.inventory.length > inventoryCap(after))
             throw Error(`재분배하면 가방이 ${inventoryCap(after)}칸으로 줄어 ${s.inventory.length - inventoryCap(after)}개가 넘칩니다. 장비를 정리하세요.`);
         if (ranks.ap && apUsed(after) > apCapacity(after))
             throw Error(`재분배하면 장착 AP 한도(${apCapacity(after)})를 넘습니다. 스킬 장착을 ${apUsed(after) - apCapacity(after)} AP 줄인 뒤 다시 시도하세요.`);
-        // v27.31 무료로 받은 단계는 남깁니다(반환 진주에도 들어가지 않음).
+        // v27.31 무료로 받은 단계는 남깁니다(반환 세계석에도 들어가지 않음).
         for (const k of Object.keys(ranks)) {
             const kept = Math.min(ranks[k], s.researchGranted?.[k] || 0);
             if (kept) s.permanent[k] = kept; else delete s.permanent[k];
         }
         s.researchResetUsed = true;
         s.pearls += refund;
-        return `${tab.name} 연구 재분배 · 진주 +${refund} (100% 반환)`;
+        return `${tab.name} 연구 재분배 · 세계석 +${refund} (100% 반환)`;
     }
     if (a.type === 'buyRelic') {
         const r = RELICS.find(x => x.id === id);

@@ -31,7 +31,7 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'penetration', name: '관통의 기억', desc: '방어 관통 +1%p (전체 상한 60%)', max: 15, base: 5, step: 4, tab: 'combat', group: 'attack', rebirth: 5, per: .01, unit: 'pp', label: '방어 관통' },
     { id: 'hp', name: '깊은 숨결', desc: '최대 체력 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'defense', per: .08, unit: 'percent', label: '최대 체력' },
     { id: 'guard', name: '불굴의 기억', desc: '물리 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '물리 방어' },
-    { id: 'magicGuard', name: '진주막의 기억', desc: '마법 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '마법 방어' },
+    { id: 'magicGuard', name: '마나 장막의 기억', desc: '마법 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '마법 방어' },
     { id: 'recovery', name: '잔잔한 물결', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
     { id: 'evasion', name: '물거품 걸음', desc: '회피 +0.4%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .004, unit: 'pp', label: '회피' },
     { id: 'lifesteal', name: '피의 조수', desc: '흡혈 +0.5%p (전체 상한 30%)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },
@@ -47,18 +47,18 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'messageBottle', name: '병 속의 편지', desc: '오프라인 정산 1시간마다 편지병 확률 +4%p', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .04, unit: 'pp', label: '시간당 편지병 확률' },
     { id: 'limitBreak', name: '한계의 문', desc: '스킬 한계돌파 해금. 연구 단계까지만 한계돌파할 수 있고, 이미 한 한계돌파도 연구 단계까지만 효과가 납니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '한계돌파 상한', suffix: '단계', levels: ['잠김 · 한계돌파 불가', '한계돌파 1단계까지', '한계돌파 2단계까지', '한계돌파 3단계까지'] },
     { id: 'vowAnchor', name: '잠든 닻', desc: '서약 해금. 2·3단계는 봉인 해제 보너스 50%씩 강화 (×1.5 → ×1.75 → ×2)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 봉인 해제 ×1.5', '봉인 해제 ×1.75', '봉인 해제 ×2'] },
-    { id: 'vowBreath', name: '한 번의 숨', desc: '서약 해금. 2·3단계는 환생 진주 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 환생 진주 +50%', '환생 진주 +75%', '환생 진주 +100%'] },
+    { id: 'vowBreath', name: '한 번의 숨', desc: '서약 해금. 2·3단계는 환생 세계석 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 환생 세계석 +50%', '환생 세계석 +75%', '환생 세계석 +100%'] },
     { id: 'vowRough', name: '거친 바다', desc: '서약 해금. 2·3단계는 드롭·골드 보너스 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 선택 단계당 드롭·골드 +50%', '선택 단계당 +75%', '선택 단계당 +100%'] },
     { id: 'mastery', name: '숙련의 기억', desc: '스킬·직업 숙련 획득 +5%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .05, unit: 'percent', label: '숙련 획득' },
     { id: 'gold', name: '황금 물결', desc: '처치·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '처치·던전 골드' },
     { id: 'dungeon', name: '심연의 금고', desc: '던전 클리어 골드 +8%', max: 10, base: 5, step: 4, tab: 'gold', per: .08, unit: 'percent', label: '던전 클리어 골드' },
     { id: 'drop', name: '보물의 감각', desc: '장비 드롭 확률 +1%p', max: 10, base: 3, step: 3, tab: 'gold', per: .01, unit: 'pp', label: '장비 드롭 확률' },
-    { id: 'pearl', name: '윤회의 연금술', desc: '환생 진주 +1', max: 5, base: 6, step: 5, tab: 'gold', per: 1, unit: 'flat', label: '환생 진주' },
+    { id: 'pearl', name: '윤회의 연금술', desc: '환생 세계석 +1', max: 5, base: 6, step: 5, tab: 'gold', per: 1, unit: 'flat', label: '환생 세계석' },
     { id: 'shop', name: '항구 단골', desc: '상점·뽑기 골드 가격 -2%', max: 10, base: 3, step: 2, tab: 'gold', rebirth: 2, per: .02, unit: 'percent', label: '상점·뽑기 가격', negative: true },
     { id: 'enhance', name: '대장장이의 기억', desc: '강화·옵션 재설정 골드 비용 -2%', max: 15, base: 3, step: 2, tab: 'gold', rebirth: 5, per: .02, unit: 'percent', label: '강화·재설정 비용', negative: true },
 ];
 export const researchCost = (id: string, rank: number) => { const r = RESEARCH.find(x => x.id === id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
-/** rank 단계까지 쓴 진주 합계(0 → rank). 재분배 반환액 계산에 씁니다. */
+/** rank 단계까지 쓴 세계석 합계(0 → rank). 재분배 반환액 계산에 씁니다. */
 export const researchSpent = (id: string, rank: number) => { let sum = 0; for (let i = 0; i < rank; i++) sum += researchCost(id, i); return sum; };
 export const researchUnlocked = (rebirths: number, r: Pick<ResearchDef, 'rebirth'>) => rebirths >= (r.rebirth || 0);
 /** rank 단계의 총 효과 표시. 예: 물리 공격 +10% */
@@ -72,7 +72,7 @@ export function researchEffect(r: ResearchDef, rank: number) {
 export const researchRank = (s: Pick<State, 'permanent'>, id: string) => s.permanent?.[id] || 0;
 /** 가방 칸 수: 60 + 넓은 선창 5칸/단계. */
 export const inventoryCap = (s: Pick<State, 'permanent'>) => BALANCE.inventoryCap + researchRank(s, 'inventory') * 5;
-/** 오프라인 정산 상한(초): 24시간 + 긴 닻줄 2시간/단계. */
+/** 오프라인 정산 상한(초): v27.43 기본 6시간(24 → 6, 인플레·서버 부하 완화) + 긴 닻줄 2시간/단계(최대 12단계 = 30시간). */
 export const offlineCapSeconds = (s: Pick<State, 'permanent'>) => BALANCE.offlineCapSeconds + researchRank(s, 'offline') * 7200;
 /** 항구 단골: 상점·뽑기 골드 가격 배율. */
 export const shopDiscount = (s: Pick<State, 'permanent'>) => 1 - researchRank(s, 'shop') * .02;
@@ -108,7 +108,7 @@ export const GAMBLE_CATEGORIES = [
     { id: 'coat', name: '방어구', slot: 'coat', offers: ['coat'], description: '최대 체력과 물리·마법 방어를 보강합니다.' },
     { id: 'charm', name: '나침반', slot: 'charm', offers: ['charm'], description: '등급에 따라 정해진 치명타 확률(전설 10%, 태초 16%, 강화할수록 조금씩 상승)과 무작위 추가 옵션을 얻습니다. 치명타 100%를 넘으면 극 치명타 확률이 생깁니다.' },
 ] as const;
-/** v27.19 환생 유물: 환생 횟수(rebirth)를 채우면 진주 없이 받습니다. cost는 v27.19 이전 구매자 환불 기준값입니다. */
+/** v27.19 환생 유물: 환생 횟수(rebirth)를 채우면 세계석 없이 받습니다. cost는 v27.19 이전 구매자 환불 기준값입니다. */
 export const RELICS = [
     { id: 'memoryRod', name: '윤회의 낚싯대', slot: 'rod', style: 'balanced', power: 45, cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
     { id: 'soulCoat', name: '영혼의 잠수복', slot: 'coat', style: 'balanced', power: 55, cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 유영', value: .12 } },

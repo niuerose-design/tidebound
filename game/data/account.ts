@@ -67,8 +67,8 @@ export function accountBonusRows(s: AccountState) {
     ];
 }
 /**
- * v25.13 계정 공유 금고: 어느 슬롯에서든 진주·정수를 넣고 꺼냅니다. 정수는 제한 없음.
- * 진주 인출은 주당 상한(알트 슬롯의 목표 진주를 본체로 몰아넣는 걸 막음). 입금은 제한 없음.
+ * v25.13 계정 공유 금고: 어느 슬롯에서든 세계석·정수를 넣고 꺼냅니다. 정수는 제한 없음.
+ * 세계석 인출은 주당 상한(알트 슬롯의 목표 세계석을 본체로 몰아넣는 걸 막음). 입금은 제한 없음.
  */
 export const VAULT_PEARL_OUT_WEEKLY = 30;
 export type VaultInfo = { pearls: number; essence: number; week: string; pearlOut: number; pearlOutLeft: number };

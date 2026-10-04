@@ -59,6 +59,14 @@ await call('/api/vault', { action: 'deposit', kind: 'pearls', amount: 1 }, { exp
 await call('/api/vault', { action: 'withdraw', kind: 'essence', amount: 1 }, { expect: 400 });
 await call('/api/vault', { action: 'deposit', kind: 'gold', amount: 1 }, { expect: 400 });
 // v25.11 공유 길드: 무소속 상태의 정보·제한. 창설·가입은 골드와 두 계정이 필요해 별도 스크립트로 확인합니다.
+// v27.43 제단: 정보, 잘못된 요청, 재화 부족, 신 없음, 자리 주인 아님.
+({ data } = await call('/api/altar', undefined, { expect: 200 }));
+assert.ok(data.gauges.length === 4 && data.gauges.some(g => g.id === 'god') && /^\d{4}-W\d{2}$/.test(data.week) && data.me.points === 0, 'altar info');
+await call('/api/altar', { action: 'offer', gold: 0, gauge: 'gold' }, { expect: 400 });
+await call('/api/altar', { action: 'offer', pearls: 1, gauge: 'nope' }, { expect: 400 });
+({ data } = await call('/api/altar', { action: 'offer', pearls: 99999, gauge: 'gold' }, { expect: 400 })); assert.match(data.error, /세계석이 부족/);
+await call('/api/altar', { action: 'challenge' }, { expect: 400 });
+await call('/api/altar', { action: 'harvest' }, { expect: 400 });
 ({ data } = await call('/api/guild', undefined, { expect: 200 }));
 assert.equal(data.guild, null); assert.ok(Array.isArray(data.board) && /^\d{4}-W\d{2}$/.test(data.week), 'guild info has week and board');
 await call('/api/guild', { action: 'join', code: 'NOPE' }, { expect: 400 });

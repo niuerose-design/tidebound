@@ -9,6 +9,7 @@
 |---|---|---|---|
 | 어종·보스 | `public/art/fish/` | `{어종 id}.webp` (예: `minnow.webp`, `magmaKraken.webp`) | 512×512, 정방형 |
 | 직업 계보 | `public/art/jobs/` | `{계보 id}.webp` (예: `harpoon.webp`, `brawnFisher.webp`) | 512×512, 정방형 |
+| 스킬 아이콘 | `public/art/skills/` | `{스킬 id}.png` (예: `hook.png`). 목록은 `docs/art/skill-icons.md` | 원작 도트 아이콘 그대로(32×32 등) |
 
 - id 목록은 `docs/art/fish-prompts.md`, `docs/art/job-prompts.md` 첫 열입니다. 대소문자를 그대로 지킵니다.
 - 형식은 WebP(품질 80 내외, 장당 60KB 이하 권장). PNG를 쓰려면 `game/data/art.ts`의 `fishArtSrc`/`jobArtSrc`에서 확장자만 바꿉니다.
@@ -24,7 +25,9 @@
 | 직업 상세 | — | 제목 왼쪽 44px |
 | 계보 목록 | — | 이름 앞 30px |
 
-구현: `components/game/art.tsx`의 `FishArt`·`JobArt`. 이미지가 로드되기 전과 실패 시에는 실루엣이 보이고, 로드되면 0.3초에 걸쳐 그림으로 바뀝니다. 미발견 어종(도감 `???`)은 그림이 있어도 실루엣만 보입니다.
+스킬 아이콘은 파일을 넣은 뒤 `node scripts/art-manifest.mjs`를 실행해야 화면에 나옵니다(있는 파일만 요청하도록 목록을 만듭니다). 도트가 흐려지지 않게 그립니다.
+
+구현: `components/game/art.tsx`의 `FishArt`·`JobArt`, 스킬은 `components/game/shared.tsx`의 `SkillIcon`. 이미지가 로드되기 전과 실패 시에는 실루엣이 보이고, 로드되면 0.3초에 걸쳐 그림으로 바뀝니다. 미발견 어종(도감 `???`)은 그림이 있어도 실루엣만 보입니다.
 
 ## 공통 스타일 (모든 프롬프트 앞에 붙임)
 

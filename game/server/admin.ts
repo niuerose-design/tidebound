@@ -87,7 +87,7 @@ export async function applyRestart(id: string, revision: number) {
     return { before, after: view(id, username, revision + 1, now, s) };
 }
 
-// ---------- v27.27 골드·진주 조정 ----------
+// ---------- v27.27 골드·세계석 조정 ----------
 const ADMIN_LIMITS = { gold: 1e15, pearls: 1e7 };
 const amount = (v: unknown, max: number, label: string) => {
     if (v === undefined || v === null || v === '') return undefined;
@@ -95,10 +95,10 @@ const amount = (v: unknown, max: number, label: string) => {
     if (!Number.isInteger(n) || n < 0 || n > max) throw new ApiError(`${label} 값은 0 이상 ${max.toLocaleString()} 이하의 정수로 입력하세요.`);
     return n;
 };
-/** 골드·진주를 입력한 값으로 맞춥니다. 그사이 게임이 저장되면 최신 세이브에 다시 적용합니다(최대 3번). */
+/** 골드·세계석을 입력한 값으로 맞춥니다. 그사이 게임이 저장되면 최신 세이브에 다시 적용합니다(최대 3번). */
 export async function adjustCurrency(id: string, input: { gold?: unknown; pearls?: unknown }) {
-    const gold = amount(input.gold, ADMIN_LIMITS.gold, '골드'), pearls = amount(input.pearls, ADMIN_LIMITS.pearls, '진주');
-    if (gold === undefined && pearls === undefined) throw new ApiError('바꿀 골드나 진주 값을 입력하세요.');
+    const gold = amount(input.gold, ADMIN_LIMITS.gold, '골드'), pearls = amount(input.pearls, ADMIN_LIMITS.pearls, '세계석');
+    if (gold === undefined && pearls === undefined) throw new ApiError('바꿀 골드나 세계석 값을 입력하세요.');
     const username = await usernameOf(id);
     for (let attempt = 0; attempt < 3; attempt++) {
         const row = await load(id), now = Date.now();
@@ -115,7 +115,7 @@ export async function adjustCurrency(id: string, input: { gold?: unknown; pearls
 
 // ---------- v27.27 서버 이벤트 설정 ----------
 
-const MULTS = ['exp', 'gold', 'drop', 'mastery'] as const;
+const MULTS = ['exp', 'gold', 'drop', 'mastery', 'mimic'] as const;
 /** 이벤트 목록: 코드 이벤트(끔 여부)와 운영 페이지 이벤트, 지금 배너 문구. */
 export async function listEvents(now = Date.now()) {
     const config = await readEventConfig();
@@ -194,6 +194,8 @@ export type AdminStats = {
     stages: { name: string; count: number }[]; dungeons: { name: string; count: number }[]; jobs: { name: string; count: number }[];
     totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number };
     medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number;
+    /** v27.43 제단: 신 세대, 신이 깨어 있는지, 신의 자리 주인, 누적 기여도, 쌓인 몫(골드). */
+    altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number };
     top: { name: string; level: number; rebirths: number; abyss: number }[];
 };
 const median = (xs: number[]) => { if (!xs.length) return 0; const a = [...xs].sort((x, y) => x - y), m = a.length >> 1; return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2); };
@@ -204,7 +206,7 @@ const bucketize = (xs: number[], edges: number[], unit: string) => edges.map((lo
  * 활동은 마지막 저장 시각 기준이라 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다.
  */
 export async function adminStats(now = Date.now()): Promise<AdminStats> {
-    const database = db(), [accounts, rows] = await Promise.all([database.listAccounts(), database.listPlayers()]);
+    const database = db(), [accounts, rows, altar] = await Promise.all([database.listAccounts(), database.listPlayers(), database.getAltar()]);
     const saves: { s: State; at: number }[] = [];
     for (const row of rows) { try { const s = JSON.parse(row.state) as State; if (s && typeof s.level === 'number') saves.push({ s, at: row.updated_at }); } catch { /* 깨진 세이브는 건너뜀 */ } }
     const list = saves.map(x => x.s), levels = list.map(s => s.level || 1), rebirths = list.map(s => s.rebirths || 0);
@@ -225,6 +227,7 @@ export async function adminStats(now = Date.now()): Promise<AdminStats> {
         abyssBest: Math.max(0, ...list.map(s => s.abyssBest || 0)),
         limitBreakers: list.filter(s => Object.values(s.limitBreaks || {}).some(n => n > 0)).length,
         inGuild: list.filter(s => s.guildMember?.id).length,
+        altar: { gen: altar.gen, godAlive: altar.god_state === 'alive' && altar.god_until >= now, throne: altar.throne_name, points: altar.total_points, titheGold: altar.tithe_gold },
         top: [...list].sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level).slice(0, 10).map(s => ({ name: s.name, level: s.level, rebirths: s.rebirths || 0, abyss: s.abyssBest || 0 })),
     };
 }

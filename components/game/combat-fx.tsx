@@ -79,16 +79,16 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
 const SEAL_GLYPHS = ['無', '虛', '斬', '血', '縛', '刹', '魂'];
 /** v27.24 5차 궁극기 전용 장면 연출. kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. */
 const ULTIMATES: Record<string, { kind: string; title: string; glyphs: string[] }> = {
-    braveSlash: { kind: 'slash', title: '용사의 일격', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
-    oceanWrath: { kind: 'wave', title: '대해의 분노', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
-    genesis: { kind: 'light', title: '창세의 빛', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
-    doomMark: { kind: 'venom', title: '파멸의 낙인', glyphs: ['●', '◌', '●', '◌', '●', '◌', '●', '◌'] },
-    aegisJudgment: { kind: 'judgment', title: '신성한 심판', glyphs: ['⬡', '✦', '⬡', '✦', '⬡', '✦', '⬡', '✦'] },
-    redApocalypse: { kind: 'blood', title: '붉은 종말', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
-    worldTentacle: { kind: 'tentacle', title: '세계의 촉수', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
-    soulReap: { kind: 'soul', title: '영혼 수확 일격', glyphs: ['☠', '◌', '☠', '◌', '☠', '◌', '☠', '◌'] },
-    jackpotStrike: { kind: 'jackpot', title: '대박 일격', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },
-    frozenTime: { kind: 'time', title: '정지된 시간', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
+    braveSlash: { kind: 'slash', title: '소드 오브 버닝 소울', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
+    oceanWrath: { kind: 'wave', title: '썬더 브레이크', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
+    genesis: { kind: 'light', title: '인피니티 플레임 서클', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
+    doomMark: { kind: 'venom', title: '포이즌 노바', glyphs: ['●', '◌', '●', '◌', '●', '◌', '●', '◌'] },
+    aegisJudgment: { kind: 'judgment', title: '소드 오브 라이트', glyphs: ['⬡', '✦', '⬡', '✦', '⬡', '✦', '⬡', '✦'] },
+    redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
+    worldTentacle: { kind: 'tentacle', title: '파쇄 연권', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
+    soulReap: { kind: 'soul', title: '쉐도우 바이트', glyphs: ['☠', '◌', '☠', '◌', '☠', '◌', '☠', '◌'] },
+    jackpotStrike: { kind: 'jackpot', title: '조커', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },
+    frozenTime: { kind: 'time', title: '타임 디스토션', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
 };
 /**
  * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.

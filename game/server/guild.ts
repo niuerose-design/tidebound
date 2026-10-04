@@ -152,6 +152,6 @@ export async function claimGoal(account: string, s: State, goalId: unknown, now:
     if (claimed.includes(goal.id)) throw new ApiError('이번 주에 이미 받았습니다.');
     await db().bumpGuildMember(account, week, {}, [...claimed, goal.id].join(','));
     s.pearls += goal.pearls;
-    addLog(s, `주간 길드 목표 달성 · ${goal.title} · 진주 +${goal.pearls}`, 'reward');
+    addLog(s, `주간 길드 목표 달성 · ${goal.title} · 세계석 +${goal.pearls}`, 'reward');
     return goal.pearls;
 }

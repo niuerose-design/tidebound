@@ -1,4 +1,4 @@
-/** 서약(진주 연구 4단계): 스스로 제약을 걸고 고유 보상을 받습니다. 계산만 두고, 상태 변경은 각 시스템에서 합니다. */
+/** 서약(세계석 연구 4단계): 스스로 제약을 걸고 고유 보상을 받습니다. 계산만 두고, 상태 변경은 각 시스템에서 합니다. */
 import type { State, Vows } from '../types';
 import { researchRank } from '../data/economy';
 import { STAGES, DUNGEONS } from '../data/world';
@@ -15,7 +15,7 @@ export const vowBoost = (s: Pick<State, 'permanent'>, id: VowId) => 1 + Math.max
 export const vowUnlocked = (s: Pick<State, 'permanent'>, id: VowId) => researchRank(s, VOW_RESEARCH[id]) > 0;
 /** 잠든 닻 봉인 해제 배율: ×1.5 → ×1.75 → ×2. */
 export const anchorPayout = (s: Pick<State, 'permanent'>) => 1 + .5 * vowBoost(s, 'anchor');
-/** 한 번의 숨 환생 진주 보너스: +50% → +75% → +100%. */
+/** 한 번의 숨 환생 세계석 보너스: +50% → +75% → +100%. */
 export const breathBonus = (s: Pick<State, 'permanent'>) => .5 * vowBoost(s, 'breath');
 /** 거친 바다 선택 단계(0~3). */
 export const roughLevel = (s: Pick<State, 'vows'>) => s.vows?.rough || 0;

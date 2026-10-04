@@ -26,7 +26,7 @@ export function Guild({ s, busy, info, error, load, act }: Props) {
     </section>;
     if (!info) return <><Heading eyebrow="GUILD HALL" title="길드" description="불러오는 중…"/>{error && <p className="login-error" role="alert">{error}</p>}</>;
     if (!info.guild) return <>
-        <Heading eyebrow="GUILD HALL" title="함께 항해할 길드" description={`길드는 계정 단위로 최대 ${GUILD_MAX_MEMBERS}명. 주간 길드 목표를 함께 채우면 길드원 각자가 진주를 받고, 길드 채팅이 열립니다. 능력치 보너스는 없습니다.`}/>
+        <Heading eyebrow="GUILD HALL" title="함께 항해할 길드" description={`길드는 계정 단위로 최대 ${GUILD_MAX_MEMBERS}명. 주간 길드 목표를 함께 채우면 길드원 각자가 세계석을 받고, 길드 채팅이 열립니다. 능력치 보너스는 없습니다.`}/>
         {error && <p className="login-error" role="alert">{error}</p>}
         <div className="guild-entry-grid">
             <section className="panel guild-join-card"><Flag size={42}/><div><h2>길드 창설</h2><p>창설 비용 {GUILD_CREATE_COST.toLocaleString()} G. 창설자가 길드장이 되고 가입 코드를 받습니다.</p></div>
@@ -52,7 +52,7 @@ export function Guild({ s, busy, info, error, load, act }: Props) {
         <section className="panel guild-goals">
             <div className="section-title"><h2>주간 길드 목표</h2><span>길드원 수에 비례 · 달성하면 각자 한 번씩 수령</span></div>
             <ul className="goal-list">{g.goals.map(goal => <li key={goal.id} className={goal.progress >= goal.target ? 'done' : ''}>
-                <div><strong>{goal.title}</strong><small>{format(goal.progress)} / {format(goal.target)} · 진주 +{goal.pearls}</small></div>
+                <div><strong>{goal.title}</strong><small>{format(goal.progress)} / {format(goal.target)} · 세계석 +{goal.pearls}</small></div>
                 <span className="guild-goal-meter"><Meter value={goal.progress} max={goal.target}/></span>
                 {goal.progress >= goal.target && <button className={goal.claimed ? 'secondary small' : 'primary small'} disabled={busy || goal.claimed} onClick={() => act({ action: 'claim', goal: goal.id })}>{goal.claimed ? '받음' : '보상 받기'}</button>}
             </li>)}</ul>

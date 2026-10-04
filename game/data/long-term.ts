@@ -21,11 +21,11 @@ export const abyssPearls = (depth: number) => (1 + Math.floor(depth / 10)) * (de
 export const ABYSS_SP_MILESTONES = [10, 25, 50, 100];
 export const nextAbyssMilestone = (best: number) => ABYSS_SP_MILESTONES.find(n => n > best);
 
-/** v25.8 해역 난이도 이정표: 사냥터마다 이 차수에서 처음 처치하면 진주를 줍니다. */
+/** v25.8 해역 난이도 이정표: 사냥터마다 이 차수에서 처음 처치하면 세계석을 줍니다. */
 export const TIDE_MILESTONES = [5, 10, 20, 30, 50];
 export const TIDE_MILESTONE_PEARLS = [1, 2, 4, 7, 12];
 export const nextTideMilestone = (best: number) => TIDE_MILESTONES.find(n => n > best);
-/** v25.8 무릉도장 10층마다 첫 돌파 보너스 진주(층 수만큼)와 장착 AP +1 이정표. */
+/** v25.8 무릉도장 10층마다 첫 돌파 보너스 세계석(층 수만큼)와 장착 AP +1 이정표. */
 export const abyssFloorBonus = (depth: number) => depth % 10 === 0 ? depth : 0;
 export const ABYSS_AP_MILESTONES = [30, 60, 90];
 export const abyssAP = (s: { abyssMilestones?: number[] }) => (s.abyssMilestones || []).filter(d => ABYSS_AP_MILESTONES.includes(d)).length;

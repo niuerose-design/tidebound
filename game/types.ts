@@ -21,7 +21,7 @@ export type Stats = {
     hpRegen?: number;
     penetration?: number;
     lifesteal?: number;
-    /** 육중 조화의 원시 피해. 직접 배분한 여섯 능력치로만 계산하며 장비·버프는 제외. */
+    /** 올라운드 밸런스의 원시 피해. 직접 배분한 여섯 능력치로만 계산하며 장비·버프는 제외. */
     harmony?: number;
     /** 반격: 맞을 때마다 (내 물리 방어 × 이 값)을 공격자에게 돌려줍니다. 직업의 방어 친화도가 곱해진 최종값. */
     thorns?: number;
@@ -92,7 +92,7 @@ export type StatusEffects = {
     immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'weaken' | 'silence' | 'slow', number>>;
     /** v25 일곱 글자: 이번 전투에 새긴 인. */
     seals?: string[];
-    /** v25 타임머신을 이번 전투에 썼는지. */
+    /** v25 타임 리와인드를 이번 전투에 썼는지. */
     timeUsed?: boolean;
     /** v25 이번 전투에 無로 막은 횟수. */
     lastStand?: number;
@@ -165,11 +165,11 @@ export type Skill = {
     allIn?: { hpRatio: number; hpScale: number; manaScale: number; heal?: number };
     /** v26.3 순수 회복: 공격하지 않고 회복만 합니다(명중·피해·반격·추가타 없음). */
     healOnly?: boolean;
-    /** v25 정지된 시간: 반드시 명중합니다. */
+    /** v25 타임 디스토션: 반드시 명중합니다. */
     sureHit?: boolean;
     /** v25 시간: 이 행동 뒤 곧바로 한 번 더 행동합니다(연속 행동 횟수와 별개). */
     extraTurn?: boolean;
-    /** v25 타임머신: 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회. */
+    /** v25 타임 리와인드: 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회. */
     restoreAll?: boolean;
     /** v25 반동: 준 피해 × recoil만큼 자신도 받습니다(반동으로는 체력 1 아래로 내려가지 않음). */
     recoil?: number;
@@ -273,7 +273,7 @@ export type CombatEvent = {
     cooldownReset?: string[];
     /** v25.5 동시 시전: 이 줄이 묶음의 몇 번째(0부터)이고 몇 개가 함께 나갔는지. 첫 줄은 이어서 나갈 기술 id를 들고 있습니다. */
     multicast?: { index: number; count: number; ids?: string[] };
-    /** v25: 타임머신으로 모두 회복. */
+    /** v25: 타임 리와인드로 모두 회복. */
     restored?: boolean;
     /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */
     endured?: { heal: number; self?: boolean };
@@ -339,10 +339,12 @@ export type State = {
     weekly?: import('./data/goals').GoalBoard;
     /** v25.6 이번 주 무릉도장 최고 깊이. settled는 보상을 정산한 지난주 키. */
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
-    /** v25.8 사냥터별 처치한 최고 해역 난이도(차수). 이정표 진주와 업적에 씁니다. */
+    /** v25.8 사냥터별 처치한 최고 해역 난이도(차수). 이정표 세계석과 업적에 씁니다. */
     tideBest?: Record<string, number>;
     /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위 보상을 한 번 정산합니다. */
     duelSeason?: { key: string; lastKey?: string; lastRank?: number };
+    /** v27.43 제단: 마지막 신 도전 시각, 익명 기여 설정. 서버만 씁니다. */
+    altar?: { challengeAt?: number; anonymous?: boolean };
     /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */
     guildMember?: { id: string; name: string; code?: string; leader: boolean; syncedAt: number };
     /** v25.11 이번 주 길드 기여 기록. sent*는 서버에 올린 값, 차이만 다음에 올립니다. */
@@ -368,7 +370,7 @@ export type State = {
     skillPractice: Record<string, number>;
     /** v27.6 한계돌파 단계(기술 id → 0~limitBreak.max). 환생해도 유지됩니다. */
     limitBreaks?: Record<string, number>;
-    /** v27.19 환생 유물이 진주 구매에서 환생 횟수 제공으로 바뀌며, 이미 산 유물의 진주를 돌려준 뒤 true. */
+    /** v27.19 환생 유물이 세계석 구매에서 환생 횟수 제공으로 바뀌며, 이미 산 유물의 세계석을 돌려준 뒤 true. */
     relicRefunded?: boolean;
     jobMastery: Record<string, number>;
     unlockedJobs: string[];
@@ -404,9 +406,9 @@ export type State = {
     inventory: Item[];
     equipment: Record<string, Item | null>;
     permanent: Record<string, number>;
-    /** 진주 연구 재분배의 계정당 첫 1회 무료 반환을 썼는지. 없으면 false. */
+    /** 세계석 연구 재분배의 계정당 첫 1회 무료 반환을 썼는지. 없으면 false. */
     researchResetUsed?: boolean;
-    /** v27.31 무료로 받은 진주 연구 단계(재분배 때 반환하지 않음). limitBreak: 이미 한 한계돌파만큼 ‘한계의 문’을 무료로 받음. */
+    /** v27.31 무료로 받은 세계석 연구 단계(재분배 때 반환하지 않음). limitBreak: 이미 한 한계돌파만큼 ‘한계의 문’을 무료로 받음. */
     researchGranted?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;

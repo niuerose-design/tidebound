@@ -1,7 +1,7 @@
 // 기본 상태·전직·SP·환급 규칙
 import { newState, act, advance, stats, apCapacity, apUsed, canUse, canChangeJob, masteryMilestonesFor, jobRequirements, SKILLS, STAGES, PROGRESSION, JOBS, assert, rng, test } from './harness.mjs';
 test('Fresh state, stage and job restrictions',()=>{const s=newState(0);assert.equal(s.hp,stats(s).hp);assert.throws(()=>act(s,{type:'stage',id:'moon'},0));assert.throws(()=>act(s,{type:'job',id:'harpoon'},0));assert.throws(()=>act(s,{type:'skill',id:'pierce'},0));});
-test('Server elapsed time, capped offline progress, no repeated rewards',()=>{const s=newState(0);act(s,{type:'start'},0);advance(s,86_400_000,rng);assert.equal(s.turn,43200);assert.ok(s.kills>100);const serialized=JSON.stringify(s);advance(s,86_400_000,rng);assert.equal(JSON.stringify(s),serialized);assert.ok(s.inventory.length<=60);assert.ok(s.hp>=0&&s.hp<=stats(s).hp);});
+test('Server elapsed time, capped offline progress, no repeated rewards',()=>{const s=newState(0);s.permanent.offline=9;act(s,{type:'start'},0);advance(s,86_400_000,rng);assert.equal(s.turn,43200);assert.ok(s.kills>100);const serialized=JSON.stringify(s);advance(s,86_400_000,rng);assert.equal(JSON.stringify(s),serialized);assert.ok(s.inventory.length<=60);assert.ok(s.hp>=0&&s.hp<=stats(s).hp);});
 test('Pause does not accumulate rewards',()=>{const s=newState(0);advance(s,600000,rng);assert.equal(s.kills,0);act(s,{type:'start'},600000);advance(s,602000,rng);assert.equal(s.turn,1)});
 test('Job skills are free and SP cannot buy an unvisited job skill',()=>{
  const s=newState(0);s.level=25;s.sp=10;s.attributes.str=30;s.attributes.dex=20;
@@ -19,7 +19,7 @@ test('SP levels do not replace real mastery in advanced job requirements',()=>{
  s.jobMastery.whaler=150;s.jobMastery.harpoon=150;s.learned.whaleStrike=5;
  const targets=masteryMilestonesFor(SKILLS.find(x=>x.id==='whaleStrike'));s.skillPractice.whaleStrike=targets.at(-1)-1;
  assert.equal(canChangeJob(s,'krakenSlayer'),false);s.skillPractice.whaleStrike=targets.at(-1);assert.equal(canChangeJob(s,'krakenSlayer'),true);
- assert.ok(jobRequirements(s,JOBS.find(x=>x.id==='krakenSlayer')).some(x=>x.label.includes('거경 관통 숙련 4단계')));
+ assert.ok(jobRequirements(s,JOBS.find(x=>x.id==='krakenSlayer')).some(x=>x.label.includes('애로우 봄 숙련 4단계')));
 });
 test('Stat and SP refunds cannot create points or erase acquired skills',()=>{
  const s=newState(0);const attack=stats(s).attack;act(s,{type:'attribute',id:'str'},0);assert.equal(stats(s).attack,attack+2);

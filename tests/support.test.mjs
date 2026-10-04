@@ -122,7 +122,7 @@ test('v26.2 ranked duel allowance: 20 per day, 3 per opponent, 1-minute cooldown
     s.lastDuel = now; assert.match(rankedDuelBlock(s, now + 1000, 'q'), /한 번/);
 });
 
-test('v26.3 healOnly: 고요한 호흡 heals without attacking (no hit roll, no damage, no thorns); luck gives no attack', () => {
+test('v26.3 healOnly: 회복 heals without attacking (no hit roll, no damage, no thorns); luck gives no attack', () => {
     const sk = SKILLS.find(x => x.id === 'breath'); assert.equal(sk.healOnly, true); assert.equal(sk.multiplier, 0);
     const a = fighter('breath', { hp: 400 }), b = target({ stats: { ...base, thorns: .5, defense: 100 } });
     const text = strike(a, b, () => 0);
@@ -131,7 +131,7 @@ test('v26.3 healOnly: 고요한 호흡 heals without attacking (no hit roll, no 
 });
 
 test('v26.6 dice: luck lane rolls more dice with more luck; the highest face maps 1→×low … 6→×high, and finger cutting narrows both ends', () => {
-    const sk = SKILLS.find(x => x.id === 'luckyBreak'); assert.equal(sk.name, '운빨 기도'); assert.deepEqual(sk.dice, { attribute: 'luk', per: 40, max: 3, low: .1, high: 3.33 });
+    const sk = SKILLS.find(x => x.id === 'luckyBreak'); assert.equal(sk.name, '럭키 세븐'); assert.deepEqual(sk.dice, { attribute: 'luk', per: 40, max: 3, low: .1, high: 3.33 });
     const seq = [0, .99, 0]; const t1 = target(); const text = strike(fighter('luckyBreak', { stats: { attrLuk: 10 } }), t1, () => seq.length ? seq.shift() : 0);
     assert.match(text, /주사위 ⚅ ×3.33/, text);
     const seq2 = [0, 0, 0, .5, 0]; const t2 = target(); const text2 = strike(fighter('luckyBreak', { stats: { attrLuk: 100 } }), t2, () => seq2.length ? seq2.shift() : 0);
@@ -153,7 +153,7 @@ test('v26.5 focus hunting refuses a fish gated behind a higher sea difficulty in
     const s = newState(0); s.level = 40; s.rebirths = 1; act(s, { type: 'stage', id: 'moon' }, 0);
     act(s, { type: 'target', id: 'moonfish' }, 0); assert.equal(s.target, 'moonfish');
     assert.throws(() => act(s, { type: 'target', id: 'eclipseMoonfish' }, 0), /난이도 20/);
-    const reef = newState(0); reef.level = 30; act(reef, { type: 'stage', id: 'reef' }, 0); act(reef, { type: 'target', id: 'stormBarracuda' }, 0); assert.equal(reef.target, 'stormBarracuda', 'v26.6 폭풍 바라쿠다는 조건 없이 저격 가능');
+    const reef = newState(0); reef.level = 30; act(reef, { type: 'stage', id: 'reef' }, 0); act(reef, { type: 'target', id: 'stormBarracuda' }, 0); assert.equal(reef.target, 'stormBarracuda', 'v26.6 아이언 호그는 조건 없이 저격 가능');
 });
 
 test('v26.7 magic attacks take half of the target evasion and never a negative tempo', async () => {
@@ -175,7 +175,7 @@ test('v27.2 thorns scale with swarm size, ignore half of attacker defense, and t
     assert.equal(single, Math.round(100 * .4 * 100 / (100 + 100 * 2 * (1 - SKILL_FORMULA.thornsPierce))), 'attacker defense counted at thornsPierce');
     const s = newState(0); s.level = 30; s.unlockedJobs.push('gatekeeper'); s.job = 'gatekeeper'; s.learned.spikedShield = 1;
     const before = variantChances(s).swarm; s.skills = ['spikedShield']; assert.ok(canUse(s, 'spikedShield')); const after = variantChances(s).swarm;
-    assert.ok(Math.abs(after / before - 1.5) < 1e-6, `가시 방패 +50% 무리 조우: ${before} → ${after}`);
+    assert.ok(Math.abs(after / before - 1.5) < 1e-6, `실드 오브 라이트 +50% 무리 조우: ${before} → ${after}`);
 });
 
 test('v27.6 limit break: needs full mastery, practice multiples and SP; pushes growth past max, adds chance, stage 3 cuts AP; survives rebirth copy', async () => {

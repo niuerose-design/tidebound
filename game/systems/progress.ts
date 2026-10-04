@@ -19,7 +19,7 @@ export function syncAchievements(s: State, log: (text: string) => void) {
 }
 /** 해금했지만 아직 받지 않은 업적. */
 export const unclaimedAchievements = (s: Pick<State, 'achievements' | 'achievementClaims'>) => Object.keys(s.achievements || {}).filter(id => !s.achievementClaims?.[id] && achievementById(id));
-/** 보상 받기: id 하나 또는 'all'. 진주·SP는 여기서 더하고, 영구 AP·배율은 받은 업적만 셉니다. */
+/** 보상 받기: id 하나 또는 'all'. 세계석·SP는 여기서 더하고, 영구 AP·배율은 받은 업적만 셉니다. */
 export function claimAchievements(s: State, id: string) {
     const ids = id === 'all' ? unclaimedAchievements(s) : unclaimedAchievements(s).filter(x => x === id);
     if (!ids.length) throw Error('받을 업적 보상이 없습니다.');
@@ -48,11 +48,11 @@ function advanceBoard(s: State, b: GoalBoard, weekly: boolean, kind: GoalKind, s
         if (g.progress < g.target) continue;
         g.claimed = true;
         s.pearls += g.pearls; if (g.essence) s.essence = (s.essence || 0) + g.essence;
-        log(`${weekly ? '주간' : '오늘의'} 목표 달성 · ${goalText(g)} · 진주 +${g.pearls}${g.essence ? ` · 정수 +${g.essence}` : ''}`);
+        log(`${weekly ? '주간' : '오늘의'} 목표 달성 · ${goalText(g)} · 세계석 +${g.pearls}${g.essence ? ` · 정수 +${g.essence}` : ''}`);
     }
     if (!b.bonus && b.goals.every(g => g.claimed || g.optional)) {
         b.bonus = true; const bonus = weekly ? WEEKLY_ALL_BONUS : DAILY_ALL_BONUS; s.pearls += bonus;
-        log(`${weekly ? '주간' : '오늘의'} 목표 모두 달성 · 보너스 진주 +${bonus}`);
+        log(`${weekly ? '주간' : '오늘의'} 목표 모두 달성 · 보너스 세계석 +${bonus}`);
     }
 }
 /** 처치·정복 때 호출: kind와 대상 id로 일일·주간 목표를 함께 올립니다. */
@@ -79,5 +79,5 @@ export function guildStatsFor(s: State, now: number) {
     return s.guildStats;
 }
 function bumpGuildStat(s: State, kind: 'catches' | 'clears' | 'bosses', n: number, now: number) { guildStatsFor(s, now)[kind] += n; }
-/** 지난주 순위 보상(진주). 1위 30 · 2위 20 · 3위 15 · 10위 안 8 · 50위 안 3 · 참가 1. */
+/** 지난주 순위 보상(세계석). 1위 30 · 2위 20 · 3위 15 · 10위 안 8 · 50위 안 3 · 참가 1. */
 export const abyssWeeklyPearls = (rank: number) => rank <= 1 ? 30 : rank === 2 ? 20 : rank === 3 ? 15 : rank <= 10 ? 8 : rank <= 50 ? 3 : 1;

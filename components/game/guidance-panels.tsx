@@ -36,8 +36,8 @@ export function TutorialCard({ s, send, busy, setView }: PanelProps) {
 function GoalBoardView({ title, board, bonus }: { title: string; board?: GoalBoard; bonus: number }) {
     if (!board) return null;
     const done = board.goals.filter(g => g.claimed).length;
-    return <section className="panel goal-board"><div className="section-title"><h2>{title}</h2><span>{done} / {board.goals.length} · 모두 달성 시 진주 +{bonus}{board.bonus ? ' (받음)' : ''}</span></div>
-        <ul className="goal-list">{board.goals.map(g => <li key={g.id} className={g.claimed ? 'done' : ''}><div><strong>{goalText(g)}</strong><small>진주 +{g.pearls}{g.essence ? ` · 정수 +${g.essence}` : ''}</small></div><Meter value={g.progress} max={g.target} label="진행"/></li>)}</ul></section>;
+    return <section className="panel goal-board"><div className="section-title"><h2>{title}</h2><span>{done} / {board.goals.length} · 모두 달성 시 세계석 +{bonus}{board.bonus ? ' (받음)' : ''}</span></div>
+        <ul className="goal-list">{board.goals.map(g => <li key={g.id} className={g.claimed ? 'done' : ''}><div><strong>{goalText(g)}</strong><small>세계석 +{g.pearls}{g.essence ? ` · 정수 +${g.essence}` : ''}</small></div><Meter value={g.progress} max={g.target} label="진행"/></li>)}</ul></section>;
 }
 export function VoyageLog({ s, send, busy }: PanelProps) {
     const got = s.voyage || {}, feats = s.achievements || {}, claimed = s.achievementClaims || {}, pending = unclaimedAchievements(s);

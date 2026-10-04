@@ -85,7 +85,7 @@ export function Guide({ s }: { s?: State }) {
                         limit="면역(풀린 뒤 1턴), 정화 기술, 無처럼 쓰러지지 않는 장치로만 막을 수 있습니다. 중독은 중첩마다, 출혈은 한 번만 최대 체력 1%분을 더합니다."/>
                     <Rule icon={<Sparkles size={19}/>} title="마법 피해"
                         effect="마법 공격 × 스킬 배율. 상대의 마법 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 마법 방어 × 2). 마나를 씁니다."
-                        condition="상대 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다. 단단한 비늘(물리 방어 높음) 몬스터에 유리하고, 마력 생물(마법 방어 높음)에는 불리합니다."
+                        condition="상대 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다. 단단한 껍질(물리 방어 높음) 몬스터에 유리하고, 마력 생물(마법 방어 높음)에는 불리합니다."
                         limit="마나가 모자라면 그 기술은 건너뛰고 다음 기술이나 기본 공격으로 넘어갑니다."/>
                     <Rule icon={<Shield size={19}/>} title="복합 피해"
                         effect={`원시 피해를 물리 ${Math.round(SKILL_FORMULA.splitPhysical * 100)}% · 마법 ${Math.round((1 - SKILL_FORMULA.splitPhysical) * 100)}%로 나누어 각각의 방어를 따로 적용한 뒤 더합니다.`}
@@ -96,7 +96,7 @@ export function Guide({ s }: { s?: State }) {
                         condition="마법 피해라서 회피 절반 보정을 받고 마법 방어로 줄어듭니다. 몬스터의 마법 평타(마력 생물)도 같은 규칙으로 나를 때립니다."
                         limit="스킬이 하나도 나가지 않은 행동에서만 발생합니다."/>
                     <Rule icon={<Target size={19}/>} title="능력치 · 기록 비례"
-                        effect="외길 계보는 공격력 대신 배분 능력치 × 비율을 기준값으로, 육중 조화는 여섯 능력치로 만든 원시 피해를 씁니다. 도감·처치·사냥·골드 비례 기술은 기본 피해에 기록 배율을 곱합니다."
+                        effect="외길 계보는 공격력 대신 배분 능력치 × 비율을 기준값으로, 올라운드 밸런스는 여섯 능력치로 만든 원시 피해를 씁니다. 도감·처치·사냥·골드 비례 기술은 기본 피해에 기록 배율을 곱합니다."
                         condition="피해 유형(물리/마법)은 기술에 표시된 대로 따르며, 방어·명중 규칙도 그 유형을 따릅니다. 아크 계열은 반대 공격력을 기준값으로 쓰는 ‘교차’ 기술입니다."
                         limit="장비·버프로 오른 공격력은 능력치 비례 기준값에 들어가지 않습니다."/>
                 </div>
@@ -128,7 +128,7 @@ export function Guide({ s }: { s?: State }) {
                     condition={`조건부 숙련 스킬은 지정한 적을 이겼을 때만 더 줍니다. 처치 1회당 최대 ${PROGRESSION.maxMasteryPerVictory}.`}
                     limit="연마는 SP로 건너뛸 수 없고 AP·발동률은 늘지 않습니다. 숙련은 환생과 전직 뒤에도 남습니다."/>
                 <Rule icon={<BookOpen size={19}/>} title="경험치 배율"
-                    effect="경험치 배율 = 1 + 환생 + 진주 연구 + 직업 + 장착 스킬."
+                    effect="경험치 배율 = 1 + 환생 + 세계석 연구 + 직업 + 장착 스킬."
                     condition="해역 난이도를 올리면 적이 강해지는 대신 경험치·골드·장비 레벨이 오릅니다."/>
             </div>
         </Topic>
@@ -143,33 +143,33 @@ export function Guide({ s }: { s?: State }) {
         <Topic icon={<Fish size={19}/>} title="사냥 · 던전 · 생존" note="변종, 던전 반복, 회복과 방치 진행.">
             <div className="help-columns">
                 <Rule icon={<Fish size={19}/>} title="변종(희귀어)"
-                    effect={<>같은 몬스터인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b> {percent(v.chance, 1)} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 처치 순간 따로 판정, 그 한 마리 골드 10배. 섀도어 계보 패시브(전리품 감지·심해 인양·보물왕의 창고·전설의 보고)가 확률을 올립니다.</>}
-                    condition={`사냥터에서 그 몬스터를 ${VARIANT_BOOK_MIN}회 이상 처치한 뒤부터 출현마다 판정합니다. 버섯숲 연못 테마 +10%. 섀도어 계보 패시브가 확률을 올립니다(난파선 감식 +20% · 무리 감지 +50% · 전설의 보고 +100% 등).`}
+                    effect={<>같은 몬스터인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b> {percent(v.chance, 1)} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 처치 순간 따로 판정, 그 한 마리 골드 10배. 섀도어 계보 패시브(메소 마스터리·심해 인양·섀도우 파트너·메소 익스플로전 강화)가 확률을 올립니다.</>}
+                    condition={`사냥터에서 그 몬스터를 ${VARIANT_BOOK_MIN}회 이상 처치한 뒤부터 출현마다 판정합니다. 버섯숲 연못 테마 +10%. 섀도어 계보 패시브가 확률을 올립니다(픽파킷 +20% · 무리 감지 +50% · 메소 익스플로전 강화 +100% 등).`}
                     limit="던전과 보스에는 변종이 없습니다. 지금 확률은 능력치 화면 아래 ‘변종 조우 확률’에서 봅니다."/>
                 <Rule icon={<Fish size={19}/>} title="무리 변종"
                     effect={`처치당 ${percent(swarm.chance, 1)}. 무리 전체를 체력 ×N인 한 개체로 상대하고, 처치하면 보상·숙련·도감을 마리 수만큼 받습니다.`}
                     condition={`규모는 도감 처치 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100, ${SWARM_UNLOCK[500].toLocaleString()}회에 시프의 ‘무리 감지’(Lv.30)를 장착하면 ×500.`}
                     limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 처치 전에 쓰러지면 보상이 없습니다."/>
                 <Rule icon={<Swords size={19}/>} title="던전 · 무릉도장"
-                    effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 진주, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1, 30·60·90층에 장착 AP 1.`}
+                    effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 세계석, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1, 30·60·90층에 장착 AP 1.`}
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                     limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 사냥터로 돌아옵니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
                     effect={`처치 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 해역 난이도 1마다 ${percent(BALANCE.healAfterKillTierDecay)}p씩 줄어 최저 ${percent(BALANCE.healAfterKillMin)}까지 내려갑니다. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}
                     condition={`패배하면 잃는 것 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다. 자리를 비운 시간도 서버가 턴으로 계산합니다.`}
-                    limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}, 가방은 기본 ${BALANCE.inventoryCap}칸${s ? `(지금 ${inventoryCap(s)}칸)` : ''}. 둘 다 진주 연구로 늘어납니다.`}/>
+                    limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}, 가방은 기본 ${BALANCE.inventoryCap}칸${s ? `(지금 ${inventoryCap(s)}칸)` : ''}. 둘 다 세계석 연구로 늘어납니다.`}/>
             </div>
         </Topic>
-        <Topic icon={<RefreshCw size={19}/>} title="성장 · 재화" note="환생, 진주 연구, 도감, 상점.">
+        <Topic icon={<RefreshCw size={19}/>} title="성장 · 재화" note="환생, 세계석 연구, 도감, 상점.">
             <div className="help-columns">
                 <Rule icon={<RefreshCw size={19}/>} title="환생"
-                    effect="진주 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스 + 깊은 항해 보너스. 영구 보너스(체력·공격·방어)는 2.5% × √환생 횟수, 영구 경험치는 환생마다 +25%."
+                    effect="세계석 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스 + 깊은 항해 보너스. 영구 보너스(체력·공격·방어)는 2.5% × √환생 횟수, 영구 경험치는 환생마다 +25%."
                     condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨 +${s ? tailwindWindow(s) : TAILWIND_WINDOW} 안에 환생하면 다음 생 경험치 +${Math.round((s ? tailwindExp(s) : TAILWIND_EXP) * 100)}%(순풍), Lv.${DEEP_VOYAGE_LEVEL}에 환생하면 숙련 기본 획득 +2(깊은 항해).`}
-                    limit={`횟수 보상은 20회까지 회당 진주 1·경험치 +25%, 이후 완만해집니다. 환생 AP 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도 최대 ${ECONOMY.tideCap}. 칭호는 업적(환생 횟수·도전·무릉도장)을 달성하면 얻고, 능력치 화면의 ‘칭호’에서 장착하거나 숨깁니다.`}/>
-                <Rule icon={<Sparkles size={19}/>} title="진주 연구"
-                    effect="진주로 영구 능력을 올립니다. 환생해도 유지되며 전투·유틸·골드 탭으로 나뉩니다."
+                    limit={`횟수 보상은 20회까지 회당 세계석 1·경험치 +25%, 이후 완만해집니다. 환생 AP 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도 최대 ${ECONOMY.tideCap}. 칭호는 업적(환생 횟수·도전·무릉도장)을 달성하면 얻고, 능력치 화면의 ‘칭호’에서 장착하거나 숨깁니다.`}/>
+                <Rule icon={<Sparkles size={19}/>} title="세계석 연구"
+                    effect="세계석으로 영구 능력을 올립니다. 환생해도 유지되며 전투·유틸·골드 탭으로 나뉩니다."
                     condition="단계가 오를수록 비용이 커집니다. 일부 연구는 정해진 환생 횟수 뒤에 열립니다."
-                    limit={`탭별 재분배는 언제나 무료이며 쓴 진주의 ${RESEARCH_RESET.refund * 100}%를 돌려받습니다. 자동 사냥·던전 중에는 할 수 없습니다.`}/>
+                    limit={`탭별 재분배는 언제나 무료이며 쓴 세계석의 ${RESEARCH_RESET.refund * 100}%를 돌려받습니다. 자동 사냥·던전 중에는 할 수 없습니다.`}/>
                 <Rule icon={<BookOpen size={19}/>} title="몬스터 도감"
                     effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 처치에 골드, 최종 단계에 SP 1. 단계마다 몬스터 성향의 능력치가 오르고 2단계부터 그 몬스터 상대 피해 보정이 붙습니다.`}
                     condition={`${PROGRESSION.fishComplete}회 처치하면 완성이고 적 정보가 열립니다. 지역의 모든 종을 완성하면 AP +1과 지역 테마 보너스.`}
