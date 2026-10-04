@@ -1,5 +1,5 @@
 // 세계석 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
-import { newState, act, advance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, assert, test } from './harness.mjs';
+import { newState, act, advance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, MIMIC_DATA, assert, test } from './harness.mjs';
 
 const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'shop', 'enhance'];
 const research = id => economy.RESEARCH.find(r => r.id === id);
@@ -80,9 +80,13 @@ test('Research v2: online ticks and one offline settlement give the same result 
         Object.assign(s.permanent, { crit: 5, critDamage: 5, penetration: 5, manaRegen: 5, evasion: 5, lifesteal: 5, recovery: 5, inventory: 2, offline: 3, mastery: 3, shop: 2, enhance: 2 });
         act(s, { type: 'stage', id: 'bay' }, 0); act(s, { type: 'start' }, 0); s.hp = stats(s).hp; return s;
     };
+    // 까미는 오프라인 정산 중 확률이 ¼이라(v27.35) 이 비교에서는 끕니다.
+    const minLevel = MIMIC_DATA.minLevel; MIMIC_DATA.minLevel = 999;
     const offline = make(), online = make(), end = 3 * 3600_000;
-    advance(offline, end, seeded(42));
-    const rng = seeded(42); for (let t = 2000; t <= end; t += 2000) advance(online, t, rng);
+    try {
+        advance(offline, end, seeded(42));
+        const rng = seeded(42); for (let t = 2000; t <= end; t += 2000) advance(online, t, rng);
+    } finally { MIMIC_DATA.minLevel = minLevel; }
     const pick = s => ({ turn: s.turn, kills: s.kills, gold: s.gold, exp: s.exp, level: s.level, hp: s.hp, carry: s.masteryCarry, job: s.jobMastery, practice: s.skillPractice, book: s.book, bag: s.inventory.length });
     assert.ok(offline.kills > 100 && (offline.masteryCarry ?? -1) >= 0);
     assert.deepEqual(pick(online), pick(offline));
@@ -119,11 +123,12 @@ test('Research v3: sorting net sells only known, low-rarity drops while the sett
     act(s, { type: 'autoSell', value: 'off' }, 0); drop(s, 5, () => 0); assert.equal(s.inventory.length, 3, 'off keeps everything');
 });
 
-test('v25.23 golden fish comes from the scavenger passives: multiplies one catch by ten, is recorded, and draws no random number without the skill', () => {
+test('v25.23 golden fish: multiplies one catch by ten and is recorded; v27.44 everyone rolls a 0.2% base, thief passives add to it', () => {
     const fight = rank => { const s = newState(0); if (rank) { s.level = 40; s.job = 'rareTracker'; s.learned.rareSense = 1; s.skills = ['rareSense']; } s.enemy = { id: 'minnow', name: '달팽이', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
     const plain = fight(0), rngPlain = counting(); reward(plain, rngPlain);
     const lucky = fight(1), rngLucky = counting(); reward(lucky, rngLucky);
-    assert.equal(rngLucky.calls, rngPlain.calls + 1); assert.equal(lucky.gold, plain.gold); assert.equal(lucky.goldenBook, undefined);
+    assert.equal(rngLucky.calls, rngPlain.calls, 'both roll once now'); assert.equal(lucky.gold, plain.gold); assert.equal(lucky.goldenBook, undefined);
+    assert.ok(stats(lucky).goldenFind > stats(plain).goldenFind && stats(plain).goldenFind === .002, 'passive adds to the base');
     assert.equal(research('goldenFish'), undefined, 'golden research removed');
     const gold = fight(1), rngGold = counting(n => n === 1 ? 0 : .99); reward(gold, rngGold);
     assert.equal(gold.gold - 100 /* start gold */, (plain.gold - 100) * 10); assert.equal(gold.goldenBook.minnow, 1);

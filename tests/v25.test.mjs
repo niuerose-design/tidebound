@@ -499,3 +499,9 @@ test('v27.43 altar: offering points, tithe, blessing events skip offline catch-u
     }
     finally { ev.setAltarEvents([]); }
 });
+
+test('v27.44 golden monsters have a 0.2% base chance that thief passives add to', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { stats } = await L.load('systems/stats'), B = await L.load('data/balance');
+    assert.equal(stats(newState(0)).goldenFind, B.BALANCE.goldenBase); assert.equal(B.BALANCE.goldenBase, .002);
+});
