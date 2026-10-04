@@ -1,5 +1,6 @@
 import type { Enemy, Skill, State } from '../types';
-import { accountMasteryTwentieths } from '../data/account';
+import { accountMastery } from '../data/account';
+import { rankPerkLevel } from '../data/rank';
 import { FISH } from '../data/world';
 import { skillById } from '../data/skills';
 import { PROGRESSION } from '../data/progression';
@@ -17,10 +18,11 @@ export function masteryConditionText(sk: Skill) {
 /** 처치당 숙련 획득량. base는 기본 획득(보통 1), bonus는 조건부 보너스. 스킬 설명과 실제 지급이 같은 식을 씁니다. */
 export const masteryPerVictory = (bonus: number, base = 1) => Math.min(PROGRESSION.maxMasteryPerVictory + base - 1, base + Math.max(0, Math.floor(bonus)));
 /**
- * 숙련의 기억: 숙련 획득 +3%/단계(v27.73, 전에는 5%) + 계정 어종 보너스 5%/단계. 숙련은 정수라 소수점은 s.masteryCarry에 1/100 단위 정수로 누적합니다.
+ * 숙련의 기억: 숙련 획득 +3%/단계(v27.73, 전에는 5%) × 계정 어종 배율(v27.79, 1%/단계 곱연산). 숙련은 정수라 소수점은 s.masteryCarry에 1/100 단위 정수로 누적합니다.
  * 난수를 쓰지 않으며, 0단계면 상태를 건드리지 않고 그대로 돌려줍니다.
  */
-export const masteryResearchHundredths = (s: State) => researchRank(s, 'mastery') * 3 + accountMasteryTwentieths(s) * 5;
+/** 연구(+3%/단계)와 계정 어종 배율(×1.01/단계)을 곱한 뒤 1/100 단위 정수로. */
+export const masteryResearchHundredths = (s: State) => Math.round(((1 + researchRank(s, 'mastery') * .03) * accountMastery(s) - 1) * 100);
 export function researchMastery(s: State, practice: number) {
     const rate = masteryResearchHundredths(s);
     if (!rate || practice <= 0) return { total: practice, extra: 0 };
@@ -42,19 +44,19 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
         if (extra > bonus) { bonus = extra; source = sk.name; }
     }
     // 깊은 모험(직전 생 Lv.100 완주) 동안 기본 숙련 +1 → +2. 보너스 한도는 그만큼 함께 올라갑니다.
-    const base = s.lifeBonus === 'deep' ? 2 : 1;
+    const base = (s.lifeBonus === 'deep' ? 2 : 1) + rankPerkLevel(s, 'drill');
     const amount = masteryPerVictory(bonus, base);
     return { amount, base, bonus: amount - base, source };
 }
 /**
  * 처치 숙련 배율(조건부 스킬 보너스 제외). 전투 보상과 능력치 화면이 같은 식을 씁니다.
- * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · research: 숙련의 기억(+3%/단계) + 계정 어종 보너스(+5%/단계).
+ * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · research: 숙련의 기억(+3%/단계) × 계정 어종 배율(×1.01/단계).
  * v27.74 사냥터·던전 난이도 배율은 없습니다(난이도 5 이상의 숙련은 숙련의 까미가 맡음).
  */
 export function masteryMultipliers(s: State) {
     const focus = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     const event = s.event?.mastery || 1;
     const research = 1 + masteryResearchHundredths(s) / 100;
-    const base = s.lifeBonus === 'deep' ? 2 : 1;
+    const base = (s.lifeBonus === 'deep' ? 2 : 1) + rankPerkLevel(s, 'drill');
     return { base, focus, event, research, total: focus * event * research };
 }

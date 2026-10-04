@@ -300,6 +300,11 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .beta-badge { display: inline-block; margin-bottom: 10px; padding: 4px 12px; border: 1px solid rgba(243, 220, 160, .55); border-radius: 999px; color: #f3dca0; font-size: 11px; letter-spacing: .3em; font-weight: 600; background: rgba(243, 220, 160, .08); }
 
 /* v26.1 칭호 선택 */
+.identity-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+@media (max-width: 900px) { .identity-row { grid-template-columns: 1fr; } }
+.rank-badge { background: #1f2d3a; color: #a9cdf0; }
+.rank-panel .rank-points { color: var(--muted, #9fb7b0); font-size: .85rem; flex: 1; }
+.rank-panel summary h2 { display: inline-flex; align-items: center; gap: 6px; }
 .title-panel summary { display: flex; align-items: center; gap: 14px; padding: 2px 4px; cursor: pointer; list-style: none; }
 .title-panel summary h2 { margin: 0; font-size: 1.05rem; }
 .title-panel summary span { color: var(--muted, #9fb7b0); font-size: .85rem; }

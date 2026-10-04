@@ -1,6 +1,7 @@
 'use client';
 import { tutorialActive } from './growth-goals';
 import { displayTitle, unlockedTitles, titleById } from '@/game/data/titles';
+import { rankOf } from '@/game/data/rank';
 import { TutorialCard } from './guidance-panels';
 import { tutorialEarly } from '@/game/systems/guidance';
 import { BookOpen, ChevronRight, Flag, Heart, Shield, ShoppingBag, Swords, Target, Trophy, Users, Zap, Leaf, Flame } from 'lucide-react';
@@ -28,7 +29,7 @@ export function Player({ s, busy, send, setView }: {
     <Leaf size={36}/>
     <span>{s.level}</span>
     </div>
-    <div className="combatant-name character-name"><h3>{displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun}/></div>
+    <div className="combatant-name character-name"><h3>{displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}<small className="rebirth-title rank-badge" title="계급 · 처치 수로 오릅니다">{rankOf(s).name}</small>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun}/></div>
     <p className="job-label">{jobById(s.job)?.name} · 환생 {s.rebirths}회</p>
     {(() => { const owned = unlockedTitles(s); if (!owned.length) return null; const value = s.title === null ? 'none' : s.title === undefined ? 'auto' : titleById(s.title) ? s.title : 'auto'; return <label className="title-label"><span>칭호</span><select value={value} disabled={busy} onChange={e => send({ type: 'title', id: e.target.value })}><option value="auto">자동 · 최근 획득</option><option value="none">표시 안 함</option>{owned.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>; })()}
     <p className="guild-label"><Users size={14}/>{s.guildMember?.name ? `길드 · ${s.guildMember.name}` : '무소속'}</p>
