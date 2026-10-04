@@ -11,9 +11,12 @@ export const BALANCE = {
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
     activeSlots: 4, passiveSlots: 3, inventoryCap: 60,
-    // v22: 장비는 드물게 떨어집니다. 처치당 기본 0.1%(시간당 수백 마리를 잡아도 한두 개).
-    // 행운·물건도감·연구·드롭 보너스는 이 확률에 곱해지는 상대 증가로 바뀝니다(구 기준 17%p당 +100%).
-    dropChance: 0.001, dropBonusScale: 0.17, dropChanceCap: 0.01,
+    // v27.53 처치당 기본 0.25%(전에는 0.1%), 상한 1.5%. 일반 처치 드롭은 희귀 이상만 나옵니다.
+    // 행운·물건도감·연구·드롭 보너스는 이 확률에 곱해지는 상대 증가: 드롭 보너스 0.01 = 드롭 확률 +10%(dropBonusScale 0.1).
+    // 전에는 0.01이 +5.9%인데 설명은 '+1%p'로 적혀 있어 실제 효과가 설명의 수십분의 일이었습니다.
+    dropChance: 0.0025, dropBonusScale: 0.1, dropChanceCap: 0.015,
+    /** v27.53 해역 난이도·무릉도장 층으로 올라가는 드롭 장비 레벨 상한: 캐릭터 레벨 + dropLevelOver(그 지역 몬스터보다 낮아지지는 않음). */
+    dropLevelOver: 10,
     // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
     /** v27.30 반복 정복 확정 장비 확률 5% → 1%(레벨 초과 감소 적용). 드롭률을 낮게 둔 의미가 없어지던 문제. */
     dungeonRepeatDrop: 0.01,

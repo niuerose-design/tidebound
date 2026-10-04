@@ -39,7 +39,7 @@ export const REGION_THEMES: Record<string, { label: string; add?: StatBonus; sca
     bay: { label: '골드 +5%', add: { goldBonus: .05 } },
     reef: { label: '치명 피해 +5%p', add: { critDamage: .05 } },
     kelp: { label: '희귀어 출현 +10%', rareSpawn: .1 },
-    wreck: { label: '장비 드롭 +0.5%p', add: { dropBonus: .005 } },
+    wreck: { label: '장비 드롭 확률 +5%', add: { dropBonus: .005 } },
     volcanic: { label: '방어 관통 +2%p', add: { penetration: .02 } },
     trench: { label: '최대 체력 +3%', scale: { hp: 1.03 } },
     moon: { label: '턴당 마나 회복 +0.5', add: { manaRegen: .5 } },

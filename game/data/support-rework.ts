@@ -88,7 +88,7 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     kingsHoard: { desc: '변종 조우 확률 +60%, 황금 개체 확률 +1%p. 변종·황금 처치 기록마다 두 공격이 오릅니다.', bonus: { variantFind: .6, goldenFind: .01 }, perCount: [{ source: 'variant', per: 3, bonus: { attack: 4, magic: 4 }, cap: 40 }] },
     legendHoard: { desc: '변종 조우 확률 +100%, 황금 개체 확률 +2%p. 변종·황금 처치 기록마다 두 공격과 체력이 오릅니다.', bonus: { variantFind: 1, goldenFind: .02 }, perCount: [{ source: 'variant', per: 3, bonus: { attack: 5, magic: 5, hp: 10 }, cap: 50 }] },
     // 해적(캡틴): 수집가의 드롭을 넘겨받음
-    salvageContract: { desc: '골드 획득 +10%, 던전 클리어 골드 +8%, 장비 드롭 +3%p.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03 } },
+    salvageContract: { desc: '골드 획득 +10%, 던전 클리어 골드 +8%, 장비 드롭 확률 +30%.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03 } },
     goldMemory: { desc: '골드·드롭·명중과 마법 공격이 오르고, 보유 골드 자릿수마다 두 공격이 오릅니다.', bonus: { goldBonus: .15, dropBonus: .04, accuracy: .05, magic: 20 }, perCount: [{ source: 'gold', per: 1, bonus: { attack: 2, magic: 2 }, cap: 9 }] },
     portLedger: { desc: '골드 획득·장비 드롭·명중이 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03 } },
     tradeWind: { desc: '골드·던전 골드 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },

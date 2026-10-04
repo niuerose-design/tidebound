@@ -588,3 +588,13 @@ test('v27.51 every final combat stat equals the sum of its shown breakdown rows'
         }
     }
 });
+
+test('v27.53 drops: 0.25% base, bonus 0.01 = +10%, rare or better, tide drop level capped at player level + 10', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const S = await L.load('systems/stats'), Enc = await L.load('systems/encounter'), E = await L.load('systems/engine'), P = await L.load('data/progression');
+    const s = E.newState(0); s.attributes.luk = 0; const base = S.dropRate(s); assert.ok(base >= .0025 && base < .0028, `base ${base} (기본 행운 포함)`);
+    s.permanent.drop = 10; assert.ok(Math.abs(S.dropRate(s) - base - .0025) < 1e-9, 'research 10 ranks = +100% of the 0.25% base');
+    assert.equal(P.statDisplay('dropBonus', .05), '+50%');
+    assert.equal(Enc.dropLevel({ level: 30 }, 25, 10), 40, 'capped at player + 10'); assert.equal(Enc.dropLevel({ level: 30 }, 50, 10), 50, 'never below the source level'); assert.equal(Enc.dropLevel({ level: 30 }, 25, 1), 30);
+    const t = E.newState(0); Enc.drop(t, 10, () => 0); assert.equal(t.inventory[0].rarity, 1, 'no common drops');
+});

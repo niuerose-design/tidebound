@@ -1,4 +1,6 @@
 import type { Attribute, Stats } from '../types';
+/** v27.53 드롭 보너스 표시: 보너스 0.01 = 드롭 확률 +10%(balance.ts dropBonusScale 0.1과 같은 값). */
+const dropPercent = (n: number) => Math.round(n * 1000);
 /** 전직은 무료. 숙련과 SP는 동일 레벨을 올리고 중첩하지 않습니다. */
 export const PROGRESSION = {
     statPerLevel: 5, startingStats: 5, baseAttribute: 5,
@@ -26,7 +28,7 @@ export const ATTRIBUTE_EFFECTS = {
 } as const;
 const EFFECT_LABELS: Record<string, string> = { attack: '물리 공격', defense: '물리 방어', accuracy: '명중', evasion: '회피 수치', speed: '속도', magic: '마법 공격', mana: '최대 마나', hp: '최대 체력', resist: '마법 방어', manaRegen: '마나 회복', hpRegen: '턴당 체력 회복', crit: '치명타', critDamage: '치명 피해', dropBonus: '장비 드롭', goldBonus: '골드' };
 const RATIO_EFFECTS = new Set(['accuracy', 'evasion', 'crit', 'critDamage', 'dropBonus', 'goldBonus']);
-const describeEffects = (id: Attribute) => Object.entries(ATTRIBUTE_EFFECTS[id]).map(([k, n]) => `${EFFECT_LABELS[k]} +${RATIO_EFFECTS.has(k) ? `${Math.round(n * 1000) / 10}%p` : n}${k === 'evasion' ? '(50% 이후 점감)' : ''}`).join(' · ');
+const describeEffects = (id: Attribute) => Object.entries(ATTRIBUTE_EFFECTS[id]).map(([k, n]) => `${EFFECT_LABELS[k]} +${k === 'dropBonus' ? `${dropPercent(n)}%` : RATIO_EFFECTS.has(k) ? `${Math.round(n * 1000) / 10}%p` : n}${k === 'evasion' ? '(50% 이후 점감)' : ''}`).join(' · ');
 export const ATTRIBUTES: {
     id: Attribute;
     name: string;
@@ -59,14 +61,16 @@ export function statDisplay(key: string, n: number) {
     if (RATING_STATS.has(key)) return `${Math.round(n * 1000) / 10}`;
     if (key === 'critDamage') return `×${n.toFixed(2)}`;
     if (key === 'rebirthBonus') return `+${Math.round(n * 10) / 10}`;
-    if (['expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus'].includes(key)) return `+${Math.round(n * 1000) / 10}%`;
+    if (key === 'dropBonus') return `+${dropPercent(n)}%`;
+    if (['expBonus', 'goldBonus', 'dungeonGoldBonus'].includes(key)) return `+${Math.round(n * 1000) / 10}%`;
     return formatStat(key, n);
 }
 /** 증감 표시(장비·스킬 보너스): 명중·회피는 수치, 확률형은 %p, 나머지는 formatStat. */
 export function statDeltaDisplay(key: string, n: number) {
     const sign = n >= 0 ? '+' : '−', v = Math.abs(n);
     if (RATING_STATS.has(key)) return `${sign}${Math.round(v * 1000) / 10}`;
-    if (['crit', 'critDamage', 'penetration', 'lifesteal', 'dropBonus', 'thorns', 'dotBonus', 'arcaneStrike', 'followUpBonus', 'executeBonus', 'goldenFind'].includes(key)) return `${sign}${Math.round(v * 1000) / 10}%p`;
+    if (key === 'dropBonus') return `${sign}${dropPercent(v)}%`;
+    if (['crit', 'critDamage', 'penetration', 'lifesteal', 'thorns', 'dotBonus', 'arcaneStrike', 'followUpBonus', 'executeBonus', 'goldenFind'].includes(key)) return `${sign}${Math.round(v * 1000) / 10}%p`;
     return `${sign}${formatStat(key, v)}`;
 }
 export const emptyAttributes = (): Record<Attribute, number> => ({ str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 });
