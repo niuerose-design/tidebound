@@ -1,4 +1,4 @@
-import { EQUIPMENT_NAMES } from '../data/equipment';
+import { gearName } from '../data/maple-gear';
 import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
@@ -15,7 +15,7 @@ export const shopCost = (s: State) => Math.floor(Math.max(ECONOMY.shopBase + s.l
 export const plainCost = (s: State) => Math.max(30, Math.floor(shopCost(s) * .2));
 export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, fishPrice(s, SHOP_FISH.gamble)) * shopDiscount(s));
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
-export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: `희귀 ${o.name}`, slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
+export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: gearName(o.slot, 1, o.style), slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
 /** 탭에 쓴 세계석과 재분배 반환액. 첫 1회는 전액, 이후 90%(내림). */
 export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' | 'researchGranted'>, tab: string) {
     const ranks: Record<string, number> = {};
@@ -68,13 +68,13 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             if (plain) {
                 const base: Item = { ...item };
                 delete base.affix;
-                item = { ...base, name: EQUIPMENT_NAMES[offer.slot][0], rarity: 0, power: Math.round((s.level + 2) * RARITIES[0].factor) };
+                item = { ...base, name: gearName(offer.slot, 0, base.style), rarity: 0, power: Math.round((s.level + 2) * RARITIES[0].factor) };
             }
             if (gamble) {
                 const power = Math.round((s.level + 2) * RARITIES[rarity].factor);
                 const base: Item = { ...item };
                 delete base.affix;
-                item = { ...base, name: `${RARITIES[rarity].name} ${offer.name}`, rarity, power, affixes: rollAffixes(rarity, power, undefined, rng) };
+                item = { ...base, name: gearName(offer.slot, rarity, base.style), rarity, power, affixes: rollAffixes(rarity, power, undefined, rng) };
             }
             item.paid = cost;
             s.inventory.push(item);

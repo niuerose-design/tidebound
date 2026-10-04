@@ -46,8 +46,8 @@ export function newState(now: number): State {
         book: {},
         inventory: [],
         equipment: {
-            rod: { id: 'starter', name: '대나무 낚싯대', slot: 'rod', rarity: 0, power: 2, level: 1 },
-            coat: { id: 'starter-coat', name: '낡은 구명조끼', slot: 'coat', rarity: 0, power: 2, level: 1 },
+            rod: { id: 'starter', name: '목검', slot: 'rod', rarity: 0, power: 2, level: 1 },
+            coat: { id: 'starter-coat', name: '하얀 반팔 면티', slot: 'coat', rarity: 0, power: 2, level: 1 },
             charm: null,
         },
         permanent: { attack: 0, hp: 0, gold: 0 },

@@ -93,25 +93,25 @@ export const AFFIXES: {
     { stat: 'resist', name: '정신', value: 3, description: '받는 마법 피해를 줄입니다.' },
     { stat: 'accuracy', name: '정밀', value: .025, description: '회피가 높은 적에게 공격을 맞히기 쉬워집니다.' },
     { stat: 'crit', name: '행운', value: .015, description: '치명타가 발생할 확률이 증가합니다.' },
-    { stat: 'evasion', name: '유영', value: .02, description: '적의 물리·마법 공격을 피할 확률이 증가합니다.' },
+    { stat: 'evasion', name: '회피', value: .02, description: '적의 물리·마법 공격을 피할 확률이 증가합니다.' },
     { stat: 'goldBonus', name: '황금', value: .04, description: '몬스터 처치와 던전 완료 골드가 증가합니다. 판매에는 적용되지 않습니다.' },
 ];
 export const SHOP = [
-    { id: 'physical', name: '작살형 낚싯대', slot: 'rod', style: 'physical', description: '물리 공격에 집중한 무기.' },
-    { id: 'magic', name: '해류 지팡이', slot: 'rod', style: 'magic', description: '마법 스킬을 위한 무기.' },
-    { id: 'coat', name: '항해사의 방어구', slot: 'coat', style: 'balanced', description: '체력과 두 방어를 보강합니다.' },
-    { id: 'charm', name: '정밀한 조류 나침반', slot: 'charm', style: 'balanced', description: '치명타를 높이고 정밀 옵션으로 명중을 보강합니다.' },
+    { id: 'physical', name: '소드', slot: 'rod', style: 'physical', description: '물리 공격에 집중한 무기.' },
+    { id: 'magic', name: '스태프', slot: 'rod', style: 'magic', description: '마법 스킬을 위한 무기.' },
+    { id: 'coat', name: '모험가의 갑옷', slot: 'coat', style: 'balanced', description: '체력과 두 방어를 보강합니다.' },
+    { id: 'charm', name: '정밀한 귀고리', slot: 'charm', style: 'balanced', description: '치명타를 높이고 정밀 옵션으로 명중을 보강합니다.' },
 ] as const;
 /** 감정은 부위를 먼저 고릅니다. 무기의 공격 계열은 같은 확률입니다. */
 export const GAMBLE_CATEGORIES = [
     { id: 'rod', name: '무기', slot: 'rod', offers: ['physical', 'magic'], description: '물리형·마법형 중 하나를 같은 확률로 획득합니다.' },
     { id: 'coat', name: '방어구', slot: 'coat', offers: ['coat'], description: '최대 체력과 물리·마법 방어를 보강합니다.' },
-    { id: 'charm', name: '나침반', slot: 'charm', offers: ['charm'], description: '등급에 따라 정해진 치명타 확률(전설 10%, 태초 16%, 강화할수록 조금씩 상승)과 무작위 추가 옵션을 얻습니다. 치명타 100%를 넘으면 극 치명타 확률이 생깁니다.' },
+    { id: 'charm', name: '장신구', slot: 'charm', offers: ['charm'], description: '등급에 따라 정해진 치명타 확률(전설 10%, 태초 16%, 강화할수록 조금씩 상승)과 무작위 추가 옵션을 얻습니다. 치명타 100%를 넘으면 극 치명타 확률이 생깁니다.' },
 ] as const;
 /** v27.19 환생 유물: 환생 횟수(rebirth)를 채우면 세계석 없이 받습니다. cost는 v27.19 이전 구매자 환불 기준값입니다. */
 export const RELICS = [
-    { id: 'memoryRod', name: '윤회의 낚싯대', slot: 'rod', style: 'balanced', power: 45, cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
-    { id: 'soulCoat', name: '영혼의 잠수복', slot: 'coat', style: 'balanced', power: 55, cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 유영', value: .12 } },
+    { id: 'memoryRod', name: '윤회의 샤이닝 로드', slot: 'rod', style: 'balanced', power: 45, cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
+    { id: 'soulCoat', name: '영혼의 망토', slot: 'coat', style: 'balanced', power: 55, cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 회피', value: .12 } },
     { id: 'abyssCharm', name: '심연의 눈', slot: 'charm', style: 'balanced', power: 70, cost: 28, rebirth: 3, description: '깊은 심연에 도전하는 모험가의 정밀 유물.', affix: { stat: 'accuracy', name: '심연 통찰', value: .2 } },
 ] as const;
 /** v25.7 환생 정리 효율(0 = 연구 없음). 1단계 40%, 단계당 +15%, 5단계 100%. */

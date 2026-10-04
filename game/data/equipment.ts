@@ -1,1 +1,3 @@
-export const EQUIPMENT_NAMES = { rod: ['대나무 낚싯대', '강철 릴 낚싯대', '산호 작살', '심연의 인도자', '폭풍 삼지창', '해신의 낚싯대', '태초의 조류'], coat: ['낡은 구명조끼', '비늘 외투', '수호자의 갑주', '레비아탄의 비늘', '용린 갑주', '심해왕의 망토', '태초의 껍질'], charm: ['조개 부적', '청옥 나침반', '월광 진주', '바다의 심장', '별의 나침반', '고대 해도', '태초의 눈'] };
+import { GEAR_SETS, ARMOR_NAMES, ACCESSORY_NAMES } from './maple-gear';
+/** 장비 도감에 쓰는 등급별 이름. v27.46 메이플 장비: 무기는 공격 계열마다 이름이 달라 세트 이름으로 묶어 보여 줍니다(실제 이름은 maple-gear.ts gearName). */
+export const EQUIPMENT_NAMES: Record<'rod' | 'coat' | 'charm', readonly string[]> = { rod: GEAR_SETS.map(x => `${x} 무기`), coat: ARMOR_NAMES, charm: ACCESSORY_NAMES };

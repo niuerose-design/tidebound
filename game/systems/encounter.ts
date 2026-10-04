@@ -15,7 +15,7 @@ import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel } from '.
 import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish } from '../data/world';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
-import { EQUIPMENT_NAMES } from '../data/equipment';
+import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
 import { saleValue } from './equipment';
@@ -69,12 +69,13 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     const rarity = rollRarity(rng, guaranteed ? 1 : 0);
     const origin = s.dungeon?.id || s.stage;
     const slot = (['rod', 'coat', 'charm'] as const)[Math.floor(rng() * 3)];
-    const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: EQUIPMENT_NAMES[slot][rarity], power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
+    const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: '', power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
     if (rarity > 0)
         item.affixes = rollAffixes(rarity, item.power, origin, rng);
     item.origin = origin;
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
+    item.name = gearName(slot, rarity, item.style);
     // 선별의 그물: 켜 두면 1단계는 일반, 2단계는 희귀 이하를 바로 팝니다. 유물·장비 도감에 없는 종류는 남깁니다.
     const net = researchRank(s, 'sortingNet');
     if (net && s.autoSell && !item.relic && item.rarity < net && s.itemBook?.[itemKey(slot, rarity)]) {
