@@ -85,14 +85,28 @@ export function stageStatFish<F extends { level: number; hp: number; attack: num
  * 전에는 난이도가 체력·공격 배율만 올려, 낮은 사냥터(리스항구)의 약한 몬스터를 고레벨이 순식간에 잡으며 난이도 숙련·까미 확률만 챙겼습니다.
  * 이제 같은 난이도라면 어느 사냥터든 내 레벨 근처까지 단단해져, 사냥터를 취향대로 고를 수 있습니다. 경험치·골드도 올라간 레벨 기준(원래보다 낮아지지 않음).
  */
-/** 난이도가 이 단계에 이르면 모든 사냥터 몬스터가 목표 레벨(내 레벨과 가장 높은 사냥터 수준 중 낮은 쪽)에 닿습니다. 그 전에는 남은 차이를 단계 비율만큼 메웁니다. */
-export const TIDE_LIFT_TIERS = 10;
+/**
+ * 난이도가 이 단계에 이르면 모든 사냥터 몬스터가 목표 레벨(내 레벨과 가장 높은 사냥터 수준 중 낮은 쪽)에 닿습니다. 그 전에는 남은 차이를 단계 비율만큼 메웁니다.
+ * v27.67 10 → 5: 숙련의 까미가 나오는 난이도(5)부터는 어느 사냥터든 같은 수준이 되게 맞춥니다(난이도 5 리스항구 까미 작업 방지).
+ */
+export const TIDE_LIFT_TIERS = 5;
 /** 목표 레벨의 상한: 가장 높은 사냥터 몬스터의 능력치 레벨(입장 레벨 + STAGE_ENEMY_LEVEL_OVER). 상위 사냥터의 난이도는 그대로 두고 낮은 사냥터만 따라 올라옵니다. */
 let liftCap = 0;
 const tideLiftCap = () => liftCap ||= Math.max(...STAGES.map(st => st.level)) + STAGE_ENEMY_LEVEL_OVER;
 export function tideLiftLevel(level: number, tier: number, playerLevel: number) {
     const target = Math.min(playerLevel, tideLiftCap());
     return target > level && tier > 0 ? Math.round(level + (target - level) * Math.min(1, tier / TIDE_LIFT_TIERS)) : level;
+}
+/**
+ * v27.67 레벨이 올라간 몬스터의 보상 배율 정규화: 사냥터 평균 보상 배율(출현 가중, 지금 난이도에서 나오는 몬스터)로 나눕니다.
+ * 희귀 몬스터만 사는 사냥터(네온 수로)가 같은 레벨로 올라간 뒤에도 보상 ×2를 유지하던 것을 맞춥니다. 사냥터 안의 상대 차이는 남습니다.
+ * 반환값은 rewardMultiplier에 곱할 값(올라간 정도만큼 점점 적용).
+ */
+export function stageRewardNorm(stageFish: readonly string[], tier: number) {
+    const rows = stageFish.map(id => FISH.find(f => f.id === id)!).filter(f => f && (f.minTier || 0) <= tier);
+    const weight = rows.reduce((a, f) => a + (f.spawnWeight ?? 1), 0);
+    const avg = weight ? rows.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / weight : 1;
+    return 1 / Math.pow(Math.max(1, avg), Math.min(1, tier / TIDE_LIFT_TIERS));
 }
 export function tideLiftFish<F extends { level: number; hp: number; attack: number; defense: number; exp: number; gold: number }>(f: F, tier: number, playerLevel: number): F {
     const level = tideLiftLevel(f.level, tier, playerLevel);

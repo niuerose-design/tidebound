@@ -54,12 +54,13 @@ for (const p of PROFILES.filter(x => x.name.includes(PICK))) {
     console.log('| 장소 | 처치 | 경험치(레벨 필요량 대비) | 골드 | 직업 숙련 | 장비 | 세계석 | 던전 클리어 | 쓰러짐 |');
     console.log('|---|---|---|---|---|---|---|---|---|');
     const tides = [...new Set([0, Math.min(5, tideLimit(base)), Math.min(10, tideLimit(base)), Math.min(30, tideLimit(base))])];
-    const stages = STAGES.filter(st => st.rebirth <= p.rebirths && levelGateOk(base, st.level));
+    const ONLY = (process.env.AUDIT_STAGES || '').split(',').filter(Boolean);
+    const stages = STAGES.filter(st => st.rebirth <= p.rebirths && levelGateOk(base, st.level) && (!ONLY.length || ONLY.includes(st.id)));
     for (const st of stages) for (const t of tides) {
         const r = run(base, s => { s.stage = st.id; s.tide = t; s.dungeon = null; s.enemy = null; s.running = true; s.target = null; });
         console.log(row(`${st.name} (Lv.${st.level}) 난이도 ${t}`, r));
     }
-    for (const d of DUNGEONS.filter(x => x.rebirth <= p.rebirths && levelGateOk(base, x.level))) {
+    if (!process.env.AUDIT_NO_DUNGEONS) for (const d of DUNGEONS.filter(x => x.rebirth <= p.rebirths && levelGateOk(base, x.level))) {
         const r = run(base, s => { s.enemy = null; act(s, { type: 'dungeon', id: d.id, value: d.id === 'abyss' ? 'deeper:999' : 'fail' }, s.lastTick, random(3)); });
         console.log(row(`던전 ${d.name} (Lv.${d.level})${r.clears ? '' : ' · 클리어 실패 → 사냥터로'}`, r));
     }

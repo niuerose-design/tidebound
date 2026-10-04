@@ -13,7 +13,7 @@ import { MIMIC, rollMimicMastery, mimicChance, specialLuck } from '../data/mimic
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
-import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale } from '../data/world';
+import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm } from '../data/world';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
@@ -132,7 +132,9 @@ export function spawn(s: State, rng: () => number) {
     const top = rare ? tideLiftFish([...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0], tier, s.level) : undefined;
     const f = rare ? { ...FISH.find(x => x.id === rareId)!, level: top!.level, hp: Math.round(top!.hp * rareDef.hp), attack: Math.round(top!.attack * rareDef.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : FISH.find(x => x.id === id)!;
     const boss = finalWave;
-    const field = dungeon || rare ? f : tideLiftFish(stageStatFish(f, st.level), tier, s.level);
+    const capped = dungeon || rare ? f : stageStatFish(f, st.level), lifted = dungeon || rare ? f : tideLiftFish(capped, tier, s.level);
+    // v27.67 레벨이 올라간 몬스터는 사냥터 평균 보상 배율로 나눠 사냥터 사이 보상을 맞춥니다(stageRewardNorm).
+    const field = lifted !== capped ? { ...lifted, rewardMultiplier: (lifted.rewardMultiplier || 1) * stageRewardNorm(st.fish, tier) } : lifted;
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
         : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
     const base = dungeon ? dungeonCatchReward(f, dungeon.level, tier, boss) : catchReward(field, tier, boss), gold = base.gold;
