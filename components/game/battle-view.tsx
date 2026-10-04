@@ -103,7 +103,7 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     </>;
 }
 
-/** v27.23 숙련의 까미가 나타나면 3초 동안 금빛 연출을 띄웁니다. 같은 까미에는 한 번만. v27.58 경험의 누리도 같은 연출(푸른빛). */
+/** v27.23 숙련의 까미가 나타나면 3초 동안 금빛 연출을 띄웁니다. 같은 까미에는 한 번만. v27.58 경험의 누리도 같은 연출(하얀 빛). */
 function KkamiArrival({ s }: { s: State }) {
     const [show, setShow] = useState<'' | 'kkami' | 'nuri'>('');
     const seen = useRef('');

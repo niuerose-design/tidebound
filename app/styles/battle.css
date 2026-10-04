@@ -406,9 +406,9 @@
 .scene-fx-kkami-coin{position:absolute;left:calc(50% + (var(--i) - 3.5) * 38px);top:72%;font-size:22px;color:#ffe9a8;text-shadow:0 0 10px #ffd76a;animation:sceneKkamiCoin 1.6s ease-out calc(.25s + var(--i) * .09s) both}
 .scene-fx-kkami-title{position:absolute;left:50%;top:calc(100% - 64px);translate:-50% -50%;font-size:26px;font-weight:800;letter-spacing:2px;color:#ffe9b0;text-shadow:0 0 18px #ffb84a,0 2px 6px #000;white-space:nowrap;animation:sceneKkamiTitle 3.2s ease-out both}
 .scene-fx-kkami-sub{position:absolute;left:50%;top:calc(100% - 42px);translate:-50% 0;font-size:14px;letter-spacing:3px;color:#fff3c8;text-shadow:0 0 8px #000;white-space:nowrap;animation:sceneTitle 3.2s ease-out both}
-.scene-fx-nuri .scene-fx-flash{background:radial-gradient(ellipse at 72% 55%,#e6f6ff 0%,#7cc8ff99 24%,transparent 60%)}
-.scene-fx-nuri .scene-fx-kkami-coin{color:#c8ecff;text-shadow:0 0 10px #6ab8ff}
-.scene-fx-nuri .scene-fx-kkami-title{color:#d8f0ff;text-shadow:0 0 18px #4aa8ff,0 2px 6px #000}
+.scene-fx-nuri .scene-fx-flash{background:radial-gradient(ellipse at 72% 55%,#ffffff 0%,#fff1c499 26%,transparent 62%)}
+.scene-fx-nuri .scene-fx-kkami-coin{color:#fffdf4;text-shadow:0 0 10px #ffe39a}
+.scene-fx-nuri .scene-fx-kkami-title{color:#fffaf0;text-shadow:0 0 18px #ffe7a8,0 2px 6px #000}
 .scene-foe.kkami{color:#ffd76a;filter:drop-shadow(0 0 14px #ffb84a) drop-shadow(0 10px 18px rgba(0,0,0,.55));animation:foeDrift 2.2s ease-in-out infinite,kkamiGlow 1.2s ease-in-out infinite alternate}
 @keyframes sceneKkamiDark{0%{opacity:0}12%,70%{opacity:.7}100%{opacity:0}}
 @keyframes sceneKkamiFlash{0%{opacity:0;scale:.6}14%{opacity:1;scale:1}60%{opacity:.7}100%{opacity:0;scale:1.3}}
