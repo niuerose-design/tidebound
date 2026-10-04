@@ -37,6 +37,10 @@ export const MONSTER_TUNING = {
     attackMultiplier: 1.08,
     // v24 몬스터 치명타: 기본 + 레벨당 증가(상한), 보스·날쌘 성향은 추가. 치명 피해는 플레이어 기본값(critMultiplier)과 같습니다.
     critBase: .04, critPerLevel: .0006, critCap: .1, critBoss: .04, critSwift: .04,
+    // v27.69 몬스터 방어 관통: 레벨 × penPerLevel(상한 penCap), 보스 +penBoss. 전에는 0이라 방어만 쌓으면 고레벨 몬스터도 거의 못 때렸습니다.
+    penPerLevel: .0035, penCap: .28, penBoss: .1,
+    // v27.69 각성(foeWard)을 쓰는 몬스터 레벨(보스는 레벨과 무관하게 씀).
+    wardLevel: 50,
     defenseMultiplier: 1.1,
     bossMultiplier: 2.7,
     bossRewardMultiplier: 1.9,

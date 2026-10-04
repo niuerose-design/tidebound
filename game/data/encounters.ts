@@ -9,6 +9,8 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'foeSilence', name: '무음의 포효', desc: '피해 없이 4턴 침묵.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.15, effect: 'silence', damageType: 'magic', statusTurns: 4, statusOnly: true, manaCost: 0 },
     { id: 'foeSlow', name: '끈적한 점액', desc: '피해 없이 5턴 감속.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.1, effect: 'slow', damageType: 'magic', statusTurns: 5, statusOnly: true, manaCost: 0 },
     { id: 'foeHaste', name: '광폭화', desc: '물리 공격 110% 피해, 자신을 3턴 가속.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.1, effect: 'haste', statusTurns: 3, manaCost: 0 },
+    // v27.69 각성: 자신에게 상태이상이 걸렸을 때만(condition 'afflicted') 출혈·중독·화상·감속·약화를 풀고 wardTurns턴 동안 모든 상태이상 면역. 보스와 고레벨 몬스터가 씁니다. 침묵 중에는 못 씁니다.
+    { id: 'foeWard', name: '각성', desc: '자신의 출혈·중독·화상·감속·약화를 풀고 3턴 동안 모든 상태이상에 면역.', type: 'active', level: 1, chance: .45, cooldown: 8, multiplier: 1, statusOnly: true, cleanseSelf: true, wardTurns: 3, condition: 'afflicted', manaCost: 0 },
     { id: 'foeFrenzy', name: '난타', desc: '물리 공격 후 1회의 추가타.', type: 'active', level: 1, chance: .22, cooldown: 5, multiplier: 1.35, extraAttacks: 1, extraAttackMultiplier: .7, manaCost: 0 },
     // v27 피해 유형 다양화: 물리 출혈기 · 마법 약화기 · 복합 강타.
     { id: 'foeBarbs', name: '가시 찌르기', desc: '물리 공격 105% 피해 + 3턴 출혈.', type: 'active', level: 1, chance: .24, cooldown: 4, multiplier: 1.05, effect: 'bleed', statusTurns: 3, manaCost: 0 },
@@ -53,6 +55,12 @@ const profileIds: Record<string, string> = {
 };
 export const profileId = (id: string) => profileIds[id] || 'armored';
 export function profile(id: string) { return PROFILES[profileId(id)]; }
+/** 몬스터가 쓰는 기술: Lv.5부터 성향 기술, v27.69 보스와 Lv.wardLevel 이상은 각성(foeWard)을 더합니다. */
+export function foeSkills(id: string, level: number, boss = false): string[] {
+    if (level < 5) return [];
+    const base = profile(id).skills;
+    return boss || level >= MONSTER_TUNING.wardLevel ? [...base, 'foeWard'] : base;
+}
 /** Single source for live encounters, codex previews and simulation fixtures. */
 export function enemyStats(f: { id: string; hp: number; attack: number; defense: number; level: number }, boss = false): Stats {
     const p = profile(f.id), level = monsterLevelScale(f.level), bossScale = bossLevelScale(f.level);
@@ -63,6 +71,7 @@ export function enemyStats(f: { id: string; hp: number; attack: number; defense:
         defense: Math.round(f.defense * MONSTER_TUNING.defenseMultiplier * level.defense * p.defense),
         resist: Math.round(f.defense * MONSTER_TUNING.defenseMultiplier * level.defense * p.resist),
         crit: Math.min(MONSTER_TUNING.critCap, MONSTER_TUNING.critBase + f.level * MONSTER_TUNING.critPerLevel) + (boss ? MONSTER_TUNING.critBoss : 0) + (p === PROFILES.swift || p === PROFILES.frenzy ? MONSTER_TUNING.critSwift : 0), accuracy: .95 + f.level * .002,
+        penetration: Math.min(MONSTER_TUNING.penCap, f.level * MONSTER_TUNING.penPerLevel) + (boss ? MONSTER_TUNING.penBoss : 0),
         evasion: p.evasion + (p === PROFILES.swift ? Math.min(.2, Math.max(0, f.level - 5) * .004) : 0),
         // v25.2: 속도 9 + 레벨 × .35 → 8 + 레벨 × .25. 고레벨에서 모든 빌드(특히 기민이 낮은 마법 빌드)가 몬스터보다 느려
         // 연속 행동을 과하게 허용했습니다(4차 마법 직업 승률 85% → 98%).

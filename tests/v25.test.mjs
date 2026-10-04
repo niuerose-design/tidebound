@@ -764,3 +764,24 @@ test('v27.67 lift completes at the mimic tide, and lifted monsters are normalize
     const plain = W.STAGES.find(st => st.fish.every(id => (W.FISH.find(f => f.id === id).rewardMultiplier || 1) === 1));
     assert.equal(W.stageRewardNorm(plain.fish, 30), 1, 'stages of common monsters are untouched');
 });
+
+test('v27.69 monsters get level-based penetration and the ward: bosses/Lv.50+ cleanse and go immune when afflicted', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const E = await L.load('data/encounters'), B = await L.load('data/balance'), C = await L.load('systems/combat'), W = await L.load('data/world');
+    const low = W.FISH.find(f => f.level <= 5), high = W.FISH.find(f => f.level >= 55 && !f.boss), boss = W.FISH.find(f => f.boss);
+    assert.ok(E.enemyStats(low).penetration < .03 && E.enemyStats(high).penetration > .15, 'penetration grows with level');
+    assert.equal(E.enemyStats(high, true).penetration, Math.min(B.MONSTER_TUNING.penCap, high.level * B.MONSTER_TUNING.penPerLevel) + B.MONSTER_TUNING.penBoss, 'bosses add more');
+    assert.ok(E.enemyStats({ ...high, level: 200 }).penetration <= B.MONSTER_TUNING.penCap + B.MONSTER_TUNING.penBoss, 'capped');
+    assert.ok(!E.foeSkills(low.id, low.level).includes('foeWard') && E.foeSkills(high.id, high.level).includes('foeWard') && E.foeSkills(boss.id, boss.level, true).includes('foeWard') && E.foeSkills(high.id, 20, true).includes('foeWard'), 'ward on bosses and Lv.50+');
+    assert.deepEqual(E.foeSkills(low.id, 3), [], 'under Lv.5: no skills');
+    // 각성: 상태이상이 있을 때만 쓰고, 정화 + 3턴 면역
+    const base = { hp: 10000, attack: 100, defense: 10, mana: 100 };
+    const foe = { name: '적', stats: base, hp: 10000, skills: ['foeWard'], cooldowns: {}, stun: 0, mana: 100, effects: { dot: { turns: 3, perTurn: 10 }, poison: { stacks: 2, turns: 3, perStack: 5 } } };
+    const target = { name: '나', stats: base, hp: 10000, skills: [], cooldowns: {}, stun: 0, mana: 100, effects: {} };
+    const text = C.strike(foe, target, () => 0);
+    assert.ok(/정화/.test(text) && /면역 3턴/.test(text), `ward used when afflicted: ${text}`);
+    assert.ok(!foe.effects.dot && !foe.effects.poison && foe.effects.immune.bleed === 3 && foe.effects.immune.stun === 3, 'cleansed and immune');
+    const calm = { ...foe, cooldowns: {}, effects: {} };
+    assert.ok(!/정화/.test(C.strike(calm, target, () => 0)), 'not used without an affliction');
+    assert.ok(E.enemyStats(boss, true).penetration > 0, boss.id);
+});

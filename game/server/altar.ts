@@ -51,6 +51,11 @@ async function shared(now: number, force = false): Promise<Shared> {
     if (!force && cache && cache.week === week && now - cache.at < ALTAR.cacheMs) return cache;
     const database = db();
     const [altar, gauges, board] = await Promise.all([database.getAltar(), database.listAltarGauges(), database.listAltarOffers(week, ALTAR.boardSize)]);
+    // v27.69 신의 자리 임기(ALTAR.throneTermMs)가 지나면 자리와 몫을 비웁니다. 다음에 깨어나는 신은 다시 처음 신입니다.
+    if (altar.throne && now - altar.throne_since >= ALTAR.throneTermMs && await database.expireAltarThrone(now - ALTAR.throneTermMs)) {
+        await announce(`${josa(altar.throne_name, '이가')} 신의 자리에서 내려왔습니다. 다음에 깨어나는 신은 ${ALTAR.firstGod.name}입니다.`, now);
+        return shared(now, true);
+    }
     const map = Object.fromEntries(gauges.map(g => [g.id, { points: g.points, until: g.until, level: g.level || 0 }]));
     if (await trySummon(altar, map.god?.points || 0, now)) return shared(now, true);
     return cache = { at: now, week, altar, gauges: map, board };

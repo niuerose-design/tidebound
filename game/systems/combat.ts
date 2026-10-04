@@ -254,6 +254,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
                 continue;
             if (candidate.condition === 'healthyTarget' && b.hp < sb.hp * .6)
                 continue;
+            if (candidate.condition === 'afflicted' && !(a.effects.dot || a.effects.poison || a.effects.burn || a.effects.slow || a.effects.weaken))
+                continue;
             if ((a.mana ?? 0) < (candidate.manaCost || 0))
                 continue;
             // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
@@ -296,6 +298,12 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
         a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.poison; delete a.effects.burn; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
+        if (chosen.wardTurns) {
+            delete a.effects.weaken;
+            const immune = (a.effects.immune ??= {});
+            for (const key of ['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow'] as const) immune[key] = Math.max(immune[key] || 0, chosen.wardTurns);
+            notes.push(`상태이상 면역 ${chosen.wardTurns}턴`);
+        }
         if (chosen.effect === 'heal') {
             healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio) * (1 + sa.healBonus)));
             a.hp += healed;

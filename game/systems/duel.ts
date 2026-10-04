@@ -5,7 +5,7 @@ import { normalizeStats, hitChance, power } from './stats';
 import { Fighter, fighterSpeed, actTurn, constraintFields } from './combat';
 import { FISH, DUNGEONS } from '../data/world';
 import { abyssReference } from './encounter';
-import { scaledEnemyStats, abyssEnemyStats, profile } from '../data/encounters';
+import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ALTAR } from '../data/altar';
 /** 훈련 상대로 쓰는 던전 보스. 던전 마지막 웨이브와 같은 능력치·스킬로 섭니다(레벨 보정 0단계). */
 export const BOSS_OPPONENTS = FISH.filter(f => f.boss);
@@ -13,13 +13,13 @@ export function bossSnapshot(id: string): Snapshot | null {
     const f = BOSS_OPPONENTS.find(x => x.id === id);
     if (!f) return null;
     const stats = scaledEnemyStats(f, { boss: true });
-    return { name: f.name, level: f.level, job: 'boss', rebirths: 0, stats, skills: profile(f.id).skills, power: power(stats), rating: 1000 + f.level * 10 };
+    return { name: f.name, level: f.level, job: 'boss', rebirths: 0, stats, skills: foeSkills(f.id, f.level, true), power: power(stats), rating: 1000 + f.level * 10 };
 }
 /** v27.43 무릉도장 depth층 보스(마지막 웨이브)와 같은 능력치·기술. 제단의 첫 신이 씁니다. */
 export function abyssBossSnapshot(depth: number): Snapshot {
     const d = DUNGEONS.find(x => x.id === 'abyss')!, f = FISH.find(x => x.id === d.bossFish)!;
     const stats = abyssEnemyStats(f, abyssReference(), depth, { boss: true, wave: d.fish.length - 1 });
-    return { name: d.boss, level: f.level, job: 'boss', rebirths: 0, stats, skills: profile(f.id).skills, power: power(stats), rating: 1000 + f.level * 10 };
+    return { name: d.boss, level: f.level, job: 'boss', rebirths: 0, stats, skills: foeSkills(f.id, f.level, true), power: power(stats), rating: 1000 + f.level * 10 };
 }
 /** v27.54 검은 마법사 신격 보정(공격·마법 ×5, 방어 관통 50%). 이미 저장된 옛 검은 마법사에도 도전 때 한 번 적용됩니다(관통으로 적용 여부 판별). */
 export function divineFirstGod(god: Snapshot): Snapshot {

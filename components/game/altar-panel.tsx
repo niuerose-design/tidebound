@@ -104,7 +104,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
             <section className="panel altar-throne">
                 <div className="section-title"><h2><Crown size={16}/> 신의 자리</h2></div>
                 {throne ? <>
-                    <div className="altar-god-card"><strong>{throne.name}{throne.mine ? ' (나)' : ''}</strong><small>{new Date(throne.since).toLocaleString('ko-KR')}부터</small></div>
+                    <div className="altar-god-card"><strong>{throne.name}{throne.mine ? ' (나)' : ''}</strong><small>{new Date(throne.since).toLocaleString('ko-KR')}부터 · 임기 {left(throne.since + ALTAR.throneTermMs - now)} 남음(지나면 자리와 몫이 비고 다음 신은 {ALTAR.firstGod.name})</small></div>
                     {throne.mine && throne.tithe && <>
                         <p className="altar-tithe">쌓인 몫 · {format(throne.tithe.gold)} G · 세계석 {format(throne.tithe.pearls)} · 정수 {format(throne.tithe.essence)}</p>
                         <button className="primary" disabled={busy || !(throne.tithe.gold || throne.tithe.pearls || throne.tithe.essence)} onClick={() => void act({ action: 'harvest' })}>몫 거두기</button>
