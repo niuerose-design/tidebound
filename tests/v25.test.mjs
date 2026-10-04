@@ -436,7 +436,7 @@ test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain fish) and 
     assert.throws(() => act(s, { type: 'swarmCap', value: '50' }, 0), /무리 최대 규모/);
 });
 
-test('v27.34 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, overlevel cuts clear gold, stage enemies capped', async () => {
+test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, overlevel cuts clear gold, stage enemies capped', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), B = await L.load('data/balance'), M = await L.load('systems/meta'), C = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), E = await L.load('data/encounters');
     for (const lv of [1, 10, 25, 40]) assert.equal(W.fishGoldAt(lv), Math.round(7 * Math.pow(1.12, lv - 1)), `Lv.${lv} unchanged`);
@@ -446,12 +446,27 @@ test('v27.34 gold curve slows after Lv.40, prices follow it, dungeon exp is norm
     assert.equal(Eq.enhanceCost(item(40)), Eq.enhanceCost(item(20)), 'no price scaling up to Lv.40');
     assert.ok(Eq.enhanceCost(item(60)) > Eq.enhanceCost(item(40)) * 3, 'Lv.60 gear costs more to enhance');
     const abyss = W.DUNGEONS.find(d => d.id === 'abyss'), boss = W.FISH.find(f => f.id === abyss.bossFish);
-    assert.equal(M.dungeonExp(boss, abyss.level, 0, true), Math.round(B.xpNeeded(abyss.level) * B.DUNGEON_TUNING.bossExpShare));
-    assert.equal(M.dungeonExp(boss, abyss.level, 80, true), M.dungeonExp(boss, abyss.level, B.DUNGEON_TUNING.expTierCap, true), 'abyss depth stops raising exp');
+    assert.equal(M.dungeonExp(boss, abyss.level, 0, true), Math.round(W.fishExpAt(abyss.level) * B.DUNGEON_TUNING.bossExpFish));
+    assert.equal(M.dungeonExp(boss, abyss.level, 80, true), M.dungeonExp(boss, abyss.level, B.DUNGEON_TUNING.rewardTierCap, true), 'abyss depth stops raising exp');
     assert.ok(M.dungeonExp(boss, abyss.level, 80, true) < M.catchReward(boss, 80, true).exp / 10, 'far below the old uncapped boss exp');
     assert.equal(B.dungeonOverlevel(18, 8), 1); assert.equal(B.dungeonOverlevel(30, 8), .7); assert.equal(B.dungeonOverlevel(100, 8), B.DUNGEON_TUNING.overlevelFloor);
     const reef = W.STAGES.find(st => st.id === 'reef'), storm = W.FISH.find(f => f.id === 'stormBarracuda');
     assert.equal(W.stageStatFish(storm, reef.level).level, reef.level + W.STAGE_ENEMY_LEVEL_OVER); assert.ok(W.stageStatFish(storm, reef.level).hp < storm.hp);
     const fish = W.FISH.find(f => f.id === abyss.fish[0]);
-    assert.ok(E.scaledEnemyStats(fish, { tier: 50, wave: 0 }).speed > E.scaledEnemyStats(fish, { tier: 0, wave: 0 }).speed * 1.9, 'deep abyss enemies are faster');
+    assert.ok(E.scaledEnemyStats(fish, { tier: 50, wave: 0 }).speed > E.scaledEnemyStats(fish, { tier: 0, wave: 0 }).speed * 1.9, 'deep dungeon tiers are faster');
+    // v27.35 무한 심연: 1층 체력 10만에서 층마다 가파르게, 보상은 상한에서 멈춤. 던전 클리어 골드는 권장 레벨 물고기 몇 마리분.
+    const Enc = await L.load('systems/encounter'), ref = Enc.abyssReference();
+    assert.equal(E.abyssEnemyStats(fish, ref, 1, { wave: 0 }).hp, B.ABYSS_TUNING.hp);
+    assert.ok(E.abyssEnemyStats(fish, ref, 20, { wave: 0 }).hp > B.ABYSS_TUNING.hp * 10 && E.abyssEnemyStats(fish, ref, 20, { wave: 0 }).attack > E.abyssEnemyStats(fish, ref, 1, { wave: 0 }).attack * 4);
+    assert.deepEqual(M.dungeonCatchReward(fish, abyss.level, 100, false), M.dungeonCatchReward(fish, abyss.level, B.DUNGEON_TUNING.rewardTierCap, false), 'abyss rewards stop growing');
+    const temple = W.DUNGEONS.find(d => d.id === 'temple'); assert.equal(M.dungeonClearBase(temple), W.fishGoldAt(temple.level) * B.DUNGEON_TUNING.clearGoldFish);
+});
+
+test('mimic appears at a quarter of the rate during offline catch-up', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic');
+    const roll = Mi.mimicChance(0, 0) * .5; // 온라인이면 등장, 오프라인(¼)이면 미등장
+    const make = () => { const s = newState(0); s.level = 20; s.kills = 500; s.stage = 'brook'; return s; };
+    const on = make(); Enc.spawn(on, () => roll); assert.equal(on.enemy.id, Mi.MIMIC.id);
+    const off = make(); off.catchingUp = true; Enc.spawn(off, () => roll); assert.notEqual(off.enemy.id, Mi.MIMIC.id);
 });

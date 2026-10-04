@@ -137,8 +137,13 @@ export function advance(s: State, now: number, rng = Math.random) {
     const cap = offlineCapSeconds(s);
     const count = Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
     const before = { kills: s.kills, gold: s.gold, exp: s.exp };
-    for (let i = 0; i < count; i++)
-        tick(s, rng);
+    // 1분 넘게 밀린 정산은 오프라인 정산으로 봅니다(저장하지 않는 임시 표시).
+    if (elapsed > 60000) s.catchingUp = true;
+    try {
+        for (let i = 0; i < count; i++)
+            tick(s, rng);
+    }
+    finally { delete s.catchingUp; }
     s.lastTick = elapsed > cap * 1000 ? now : now - (elapsed % BALANCE.turnMs);
     recordOpenDoors(s);
     if (elapsed > 60000 && s.kills > before.kills) {
