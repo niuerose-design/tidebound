@@ -29,7 +29,7 @@ function Rule({ icon, title, effect, condition, limit }: { icon: ReactNode; titl
     </section>;
 }
 
-/** 도움말 주제: 제목을 눌러 접고 펼칩니다. 첫 주제만 펼친 채로 시작합니다. */
+/** 도움말 주제: 제목을 눌러 접고 펼칩니다. v27.81 모든 주제가 접힌 채로 시작합니다. */
 function Topic({ icon, title, note, open = false, children }: { icon: ReactNode; title: string; note: string; open?: boolean; children: ReactNode }) {
     return <details className="help-section help-topic" open={open}>
         <summary className="section-title"><h2>{icon} {title}</h2><span>{note}</span><ChevronDown size={17} className="help-topic-chevron"/></summary>
@@ -45,8 +45,8 @@ const STATUS_GROUPS = [
 export function Guide({ s }: { s?: State }) {
     const swarm = VARIANTS.find(v => v.id === 'swarm')!;
     return <>
-        <Heading eyebrow="ADVENTURER'S MANUAL" title="모험 도움말" description="제목을 누르면 접고 펼칩니다."/>
-        <Topic open icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분. 직업·장비·스킬이 더해집니다.">
+        <Heading eyebrow="ADVENTURER'S MANUAL" title="모험 도움말" description="주제는 모두 접혀 있습니다. 제목을 누르면 펼치고 다시 누르면 접습니다."/>
+        <Topic icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분. 직업·장비·스킬이 더해집니다.">
             <div className="help-stat-grid">{ATTRIBUTES.map(a => <article className="panel help-stat-card" key={a.id}><strong>{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
             <Rule icon={<Swords size={19}/>} title="계보와 전직"
                 effect={<>직업은 일곱 계열({JOB_TREES.filter(t => t.id !== 'mystery').map(t => t.name).join(' · ')} · ???)의 {LINEAGES.filter(l => !l.id.endsWith('independent') && l.tree !== 'mystery').length}개 계보로 이어집니다. 1차는 Lv.10에 열리고, 계보를 따라 5차까지 올라갑니다.<br/>자주 가는 길: <b>아처</b>(근력·기민, 관통·치명 물리) · <b>매지션</b>(지능·정신, 폭발 주문과 회복) · <b>검사</b>(체질·근력, 방어·기절) · <b>매지션(불,독)</b>(기민·지능, 중독을 쌓는 상태이상) · <b>데몬슬레이어 (1차)</b>(근력·지능, 물리+마법 복합) · <b>엔젤릭버스터 (1차)</b>(행운·정신, 가속·경험치 보조).</>}

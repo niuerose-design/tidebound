@@ -478,6 +478,8 @@ export type State = {
         mode?: import('./data/balance').DungeonMode;
     };
     clears: Record<string, number>;
+    /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
+    modeClears?: Partial<Record<import('./data/balance').DungeonMode, Record<string, number>>>;
     logs: Log[];
     logId: number;
     lastDuel: number;

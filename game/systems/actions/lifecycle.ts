@@ -13,7 +13,8 @@ import { drawRebirthDoor } from '../../data/doors';
 import { jobById, JOB_TREES } from '../../data/classes';
 import { jobMastered, canChangeJob, canUse, grantJobSkills, trimLoadout } from '../progression';
 import { STAGES } from '../../data/world';
-import { claimAchievements } from '../progress';
+import { claimAchievements, rerollBoardGoal } from '../progress';
+import { goalText } from '../../data/goals';
 import { gainLevels, releaseAnchor } from '../encounter';
 import { VOW_IDS, VOW_NAMES, type VowId, breathBonus, chooseAnchorTarget, cleanVows, hasVows, vowUnlocked, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '../vows';
 
@@ -124,6 +125,11 @@ export const lifecycleActions: ActionHandlers = {
     claimAchievement(s, { id }) {
         const got = claimAchievements(s, id);
         addLog(s, `업적 보상 ${got.count}개 · 세계석 +${got.pearls}${got.sp ? ` · SP +${got.sp}` : ''}`, 'reward');
+    },
+    /** v27.81 일일·주간 목표 다시 뽑기(목표마다 하루 1회). id: 'daily:<목표 id>' · 'weekly:<목표 id>'. */
+    rerollGoal(s, { id, now }) {
+        const { weekly, goal } = rerollBoardGoal(s, id, now);
+        addLog(s, `${weekly ? '주간' : '오늘의'} 목표 다시 뽑기 · ${goalText(goal)} · 세계석 +${goal.pearls}`, 'system');
     },
     nextVow(s, { id, a }) {
         // v25.6 조건 카드: value는 'stage:<id>' · 'tree:<id>' · 'gold' · 'off'.

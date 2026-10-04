@@ -189,7 +189,7 @@ test('v25.6 achievements pay out once with permanent bonuses; daily/weekly goals
     act(s, { type: 'claimAchievement', id: 'kills:100' }, 0); assert.equal(s.pearls - pearls, 1);
     act(s, { type: 'claimAchievement', id: 'all' }, 0); assert.equal(s.pearls - pearls, 1 + 2 + 1 + 3, 'claim all pays the rest once');
     assert.throws(() => act(s, { type: 'claimAchievement', id: 'all' }, 0), /없습니다/);
-    s.kills = 20000; syncAchievements(s, t => logs.push(t)); assert.ok(logs.at(-1).includes('처치 20,000마리'));
+    s.kills = 20000; syncAchievements(s, t => logs.push(t)); assert.ok(logs.some(t => t.includes('처치 20,000마리')) && logs.some(t => t.includes('일병 진급')), 'kills unlock the kill series and the rank series');
     act(s, { type: 'claimAchievement', id: 'all' }, 0);
     const totals = achievementTotals(s); assert.ok(totals.bonus.attack > 0 && totals.bonus.hp > 0);
     s.abyssBest = 25; syncAchievements(s, () => {}); act(s, { type: 'claimAchievement', id: 'abyss:25' }, 0); assert.equal(apCapacity(s), ap + 1, 'claimed achievement AP raises capacity');
@@ -203,6 +203,38 @@ test('v25.6 achievements pay out once with permanent bonuses; daily/weekly goals
     recordGoal(g, 'catch', undefined, catchGoal.target, () => {}); assert.ok(catchGoal.claimed); assert.equal(g.pearls - before, catchGoal.pearls);
     const weeklyCatch = g.weekly.goals.find(x => x.kind === 'catch'); assert.equal(weeklyCatch.progress, catchGoal.target, 'weekly board advances too');
     act(g, { type: 'sync' }, nextDay); assert.equal(g.daily.key, '2026-10-03'); assert.equal(g.daily.goals.find(x => x.kind === 'catch').progress, 0, 'new day resets'); assert.equal(g.weekly.key, '2026-W40', 'same week keeps weekly progress');
+});
+
+test('v27.81 goals reroll once per goal per KST day without duplicating board entries; claimed goals stay', async () => {
+    const { sameGoal } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/goals');
+    const noon = Date.UTC(2026, 9, 2, 3), nextDay = Date.UTC(2026, 9, 2, 15);
+    const g = newState(noon); g.level = 40; g.rebirths = 2; g.lastTick = noon; act(g, { type: 'sync' }, noon);
+    const before = g.daily.goals.map(x => ({ ...x })), species = g.daily.goals.find(x => x.kind === 'species');
+    species.progress = 7;
+    act(g, { type: 'rerollGoal', id: 'daily:species' }, noon);
+    const after = g.daily.goals.find(x => x.id === 'species');
+    assert.ok(!sameGoal(after, species), 'rerolled goal differs'); assert.equal(after.progress, 0); assert.equal(after.rerolled, '2026-10-02');
+    assert.ok(g.daily.goals.every((x, i) => g.daily.goals.findIndex(y => sameGoal(x, y)) === i), 'no duplicate goals on the board');
+    assert.equal(g.daily.goals.length, before.length);
+    assert.throws(() => act(g, { type: 'rerollGoal', id: 'daily:species' }, noon), /하루에 한 번/);
+    const duel = g.daily.goals.find(x => x.id === 'duel'); act(g, { type: 'rerollGoal', id: 'daily:duel' }, noon); assert.ok(g.daily.goals.find(x => x.id === 'duel').optional && !sameGoal(g.daily.goals.find(x => x.id === 'duel'), duel), 'optional flag is kept');
+    const weekly = g.weekly.goals.find(x => x.kind === 'catch'); weekly.claimed = true;
+    assert.throws(() => act(g, { type: 'rerollGoal', id: 'weekly:catch' }, noon), /달성한 목표/);
+    act(g, { type: 'rerollGoal', id: 'weekly:species' }, noon); assert.equal(g.weekly.goals.find(x => x.id === 'species').rerolled, '2026-10-02');
+    assert.throws(() => act(g, { type: 'rerollGoal', id: 'weekly:species' }, noon), /하루에 한 번/);
+    act(g, { type: 'rerollGoal', id: 'weekly:species' }, nextDay); assert.equal(g.weekly.goals.find(x => x.id === 'species').rerolled, '2026-10-03', 'weekly goals reroll again on the next day');
+    assert.throws(() => act(g, { type: 'rerollGoal', id: 'monthly:catch' }, nextDay), /목표판/);
+});
+
+test('v27.81 rank and dungeon-mode achievements: rank exp reaches cumulative needs, hell/nightmare clears are recorded per dungeon', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { ACHIEVEMENTS } = await L.load('data/achievements'), { syncAchievements } = await L.load('systems/progress'), { RANK_CUMULATIVE, RANKS } = await L.load('data/rank');
+    const rank = ACHIEVEMENTS.filter(a => a.group === '계급'); assert.ok(rank.length >= 8 && rank.some(a => a.id === 'rank:ltg' && a.target === RANK_CUMULATIVE[RANKS.length - 1]));
+    const s = newState(0); s.kills = RANK_CUMULATIVE[1]; syncAchievements(s, () => {}); assert.ok(s.achievements['rank:pvt1'] !== undefined && s.achievements['rank:sgt'] === undefined);
+    s.rank = { exp: RANK_CUMULATIVE[3], perks: { tally: 5 } }; syncAchievements(s, () => {}); assert.ok(s.achievements['rank:sgt'] !== undefined && s.achievements['rankPoints:5'] !== undefined, 'rank state wins over kills; spent points count');
+    const hell = ACHIEVEMENTS.find(a => a.id === 'hell:1'), nightmareAll = ACHIEVEMENTS.find(a => a.id === 'nightmareAll:3');
+    assert.equal(hell.progress(s), 0); s.modeClears = { hell: { grotto: 3 }, nightmare: { grotto: 1, a: 2, b: 1 } };
+    assert.equal(ACHIEVEMENTS.find(a => a.id === 'hell:10').progress(s), 3); assert.equal(nightmareAll.progress(s), 3); assert.equal(ACHIEVEMENTS.find(a => a.id === 'nightmare:1').progress(s), 4);
 });
 
 test('v25.6 focus cards change exp, gold and mastery for one life; weekly abyss depth is tracked per KST week', async () => {
@@ -668,7 +700,7 @@ test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% o
 test('v27.58 achievements: dungeon group replaces Mu Lung, new series per group with SP +1, old ids kept', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS } = await L.load('data/achievements'), { syncAchievements, claimAchievements } = await L.load('systems/progress');
-    assert.deepEqual([...ACHIEVEMENT_GROUPS], ['모험', '사냥', '숙련', '던전', '환생', '도전']);
+    assert.deepEqual([...ACHIEVEMENT_GROUPS], ['모험', '사냥', '숙련', '던전', '환생', '계급', '도전']);
     assert.ok(ACHIEVEMENTS.every(a => ACHIEVEMENT_GROUPS.includes(a.group)) && new Set(ACHIEVEMENTS.map(a => a.id)).size === ACHIEVEMENTS.length);
     for (const id of ['abyss:100', 'clears:1', 'dungeons:7', 'bosses:500']) assert.equal(ACHIEVEMENTS.find(a => a.id === id)?.group, '던전', id);
     assert.ok(ACHIEVEMENTS.some(a => a.id === 'codex:47'), 'codex id unchanged by the nuri');
