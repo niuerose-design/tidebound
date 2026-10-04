@@ -511,3 +511,9 @@ test('v27.43 altar first god matches the Mu Lung floor-50 boss and fights past t
     const t0 = performance.now(), r = D.duel(tank, { ...god, stats: { ...god.stats, attack: 1, magic: 1 }, skills: [] }, true, () => .5, A.ALTAR.godMaxTurns);
     assert.equal(r.turns, A.ALTAR.godMaxTurns); assert.equal(r.winner, 'draw'); assert.ok(performance.now() - t0 < 1500, 'a full god fight stays cheap');
 });
+
+test('v27.45 golden monsters have a 0.2% base chance that thief passives add to', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { stats } = await L.load('systems/stats'), B = await L.load('data/balance');
+    assert.equal(stats(newState(0)).goldenFind, B.BALANCE.goldenBase); assert.equal(B.BALANCE.goldenBase, .002);
+});

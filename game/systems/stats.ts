@@ -60,6 +60,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     set('resist', 'base', 3 + (s.level - 1) * .7); add('resist', 'attributes', v.wis * E.wis.resist);
     set('crit', 'base', BALANCE.baseCrit); add('crit', 'job', j.crit); add('crit', 'attributes', v.luk * E.luk.crit);
     set('critDamage', 'base', BALANCE.critMultiplier); add('critDamage', 'attributes', v.luk * E.luk.critDamage);
+    set('goldenFind', 'base', BALANCE.goldenBase);
     set('accuracy', 'base', .92); add('accuracy', 'attributes', v.dex * E.dex.accuracy);
     set('evasion', 'attributes', v.dex * E.dex.evasion);
     set('speed', 'base', 10); add('speed', 'attributes', v.dex * E.dex.speed);
