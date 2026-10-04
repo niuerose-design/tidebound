@@ -1,9 +1,11 @@
 /**
  * v27.27 운영 페이지에서 바꾼 서버 이벤트(settings.events)와 v27.31 닫은 사냥터·던전(settings.closures)을
  * DB에서 읽어 게임 계산에 넣습니다. 인스턴스마다 30초 캐시라 두 설정 모두 30초에 한 번만 읽습니다.
+ * v27.43 제단 축복(altar_gauges의 until)도 같은 30초 캐시로 읽습니다.
  */
 import { db } from './db';
-import { setRuntimeEvents, SERVER_EVENTS, type ServerEvent } from '../data/events';
+import { setRuntimeEvents, setAltarEvents, SERVER_EVENTS, type ServerEvent } from '../data/events';
+import { BLESSINGS } from '../data/altar';
 import { DEFAULT_CLOSURES, DUNGEONS, STAGES, setClosures, type Closures } from '../data/world';
 
 export type EventConfig = { extra: ServerEvent[]; disabled: string[] };
@@ -28,8 +30,8 @@ const cleanClosures = (c: Closures): Closures => ({ dungeons: [...new Set(c.dung
 export async function refreshEvents(now = Date.now()) {
     if (cached && now - cached.at < TTL) return;
     try {
-        const [config, closures] = await Promise.all([readEventConfig(), readClosures()]);
-        cached = { at: now, config }; setRuntimeEvents(config.extra, config.disabled); setClosures(closures);
+        const [config, closures, blessings] = await Promise.all([readEventConfig(), readClosures(), altarBlessingEvents(now)]);
+        cached = { at: now, config }; setRuntimeEvents(config.extra, config.disabled); setClosures(closures); setAltarEvents(blessings);
     }
     catch { cached = { at: now, config: cached?.config ?? { extra: [], disabled: [] } }; }
 }
@@ -45,3 +47,13 @@ export async function writeEventConfig(config: EventConfig, now = Date.now()) {
     cached = { at: now, config: clean };
     setRuntimeEvents(clean.extra, clean.disabled);
 }
+/** 열려 있는 제단 축복을 서버 이벤트 형식으로. 시작 시각은 쓰지 않으므로 과거로 둡니다. */
+export async function altarBlessingEvents(now: number): Promise<ServerEvent[]> {
+    const gauges = await db().listAltarGauges();
+    return BLESSINGS.flatMap(b => {
+        const until = gauges.find(g => g.id === b.id)?.until || 0;
+        return until > now ? [{ id: `altar-${b.id}`, name: `제단 ${b.name}`, from: '2026-01-01T00:00:00+09:00', until: new Date(until).toISOString(), ...b.effect }] : [];
+    });
+}
+/** 축복이 막 열렸을 때 이 인스턴스는 30초를 기다리지 않고 바로 반영합니다. */
+export async function refreshAltarEvents(now = Date.now()) { try { setAltarEvents(await altarBlessingEvents(now)); } catch { /* 다음 30초 갱신에서 반영 */ } }

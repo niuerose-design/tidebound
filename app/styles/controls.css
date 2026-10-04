@@ -118,3 +118,14 @@
 .guild-legacy{padding:14px 18px;margin-bottom:18px;display:grid;gap:4px}.guild-legacy small{color:#8ea7a4;font-size:12px}.guild-legacy p{font-size:12px;color:#9bb3b0;margin:0}
 .guild-leave{justify-content:flex-end;margin:6px 0 20px}
 @media(max-width:767px){.guild-entry-grid{grid-template-columns:1fr}}
+/* v27.43 제단 */
+.altar-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}.altar-grid>.panel{padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.altar-gauge{display:flex;flex-direction:column;gap:6px;text-align:left;background:#0f2227;border:1px solid var(--border);border-radius:7px;padding:12px 14px;cursor:pointer;color:inherit}.altar-gauge.selected{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}.altar-gauge.god strong{color:#e6b7b7}
+.altar-gauge-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.altar-gauge-head strong{display:flex;align-items:center;gap:6px;font-size:14px}.altar-gauge-head small{font-size:12px;color:var(--muted)}.altar-open{font-style:normal;font-size:12px;color:#9fe0b8}
+.altar-input{display:grid;grid-template-columns:auto 56px 1fr auto;align-items:center;gap:8px;font-size:13px}.altar-input input{min-width:0;background:#0e2026;border:1px solid #9ab4b544;color:#e1eeeb;border-radius:8px;padding:9px 12px;font:inherit;text-align:right}.altar-input small{font-size:12px;color:var(--muted)}
+.altar-anon{display:flex;align-items:center;gap:7px;font-size:13px;color:#b4ccc6}
+.altar-god-card{display:flex;flex-direction:column;gap:4px;background:#0f2227;border-radius:7px;padding:14px}.altar-god-card strong{font-size:18px;color:var(--gold)}.altar-god-card span{font-size:13px}.altar-god-card small{font-size:12px;color:var(--muted)}
+.altar-tithe{font-size:14px;color:#d6dfd7}
+.altar-result{border:1px solid var(--border);border-radius:7px;padding:12px;font-size:13px;display:flex;flex-direction:column;gap:6px}.altar-result.win{border-color:#496250;background:#1c3229}.altar-result.lose{background:#2a1c1f;border-color:#5a3a3f}.altar-result ol{max-height:220px;overflow:auto;margin:6px 0 0;padding-left:18px;font-size:12px;color:#a9bfbf}
+@media(max-width:767px){.altar-grid{grid-template-columns:1fr}.altar-input{grid-template-columns:auto 50px 1fr}.altar-input small{grid-column:2/-1}}
+.game-sidebar [data-sidebar=menu-button]>span{white-space:nowrap}

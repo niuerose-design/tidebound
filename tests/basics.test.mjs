@@ -1,7 +1,7 @@
 // 기본 상태·전직·SP·환급 규칙
 import { newState, act, advance, stats, apCapacity, apUsed, canUse, canChangeJob, masteryMilestonesFor, jobRequirements, SKILLS, STAGES, PROGRESSION, JOBS, assert, rng, test } from './harness.mjs';
 test('Fresh state, stage and job restrictions',()=>{const s=newState(0);assert.equal(s.hp,stats(s).hp);assert.throws(()=>act(s,{type:'stage',id:'moon'},0));assert.throws(()=>act(s,{type:'job',id:'harpoon'},0));assert.throws(()=>act(s,{type:'skill',id:'pierce'},0));});
-test('Server elapsed time, capped offline progress, no repeated rewards',()=>{const s=newState(0);act(s,{type:'start'},0);advance(s,86_400_000,rng);assert.equal(s.turn,43200);assert.ok(s.kills>100);const serialized=JSON.stringify(s);advance(s,86_400_000,rng);assert.equal(JSON.stringify(s),serialized);assert.ok(s.inventory.length<=60);assert.ok(s.hp>=0&&s.hp<=stats(s).hp);});
+test('Server elapsed time, capped offline progress, no repeated rewards',()=>{const s=newState(0);s.permanent.offline=9;act(s,{type:'start'},0);advance(s,86_400_000,rng);assert.equal(s.turn,43200);assert.ok(s.kills>100);const serialized=JSON.stringify(s);advance(s,86_400_000,rng);assert.equal(JSON.stringify(s),serialized);assert.ok(s.inventory.length<=60);assert.ok(s.hp>=0&&s.hp<=stats(s).hp);});
 test('Pause does not accumulate rewards',()=>{const s=newState(0);advance(s,600000,rng);assert.equal(s.kills,0);act(s,{type:'start'},600000);advance(s,602000,rng);assert.equal(s.turn,1)});
 test('Job skills are free and SP cannot buy an unvisited job skill',()=>{
  const s=newState(0);s.level=25;s.sp=10;s.attributes.str=30;s.attributes.dex=20;

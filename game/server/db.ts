@@ -14,6 +14,14 @@ export type GuildRow = { id: string; name: string; code: string; leader: string;
 export type GuildMemberRow = { account_id: string; guild_id: string; name: string; joined_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; claimed: string };
 /** v25.13 계정 공유 금고. pearl_out은 이번 주(week) 세계석 인출 합계(주당 상한용). */
 export type WalletRow = { account_id: string; pearls: number; essence: number; week: string; pearl_out: number };
+/** v27.43 제단(서버에 한 줄). god_state: none(깨어난 적 없음)·alive·slain·gone(시간이 지나 떠남은 god_until로 판단). */
+export type AltarRow = { gen: number; god_state: string; god: string; god_until: number; throne: string; throne_name: string; throne_since: number; throne_snapshot: string; tithe_gold: number; tithe_pearls: number; tithe_essence: number; total_gold: number; total_pearls: number; total_essence: number; total_points: number };
+/** 제단 게이지(축복·신 소환). until은 축복이 열려 있는 시각(신 소환은 쓰지 않음). */
+export type AltarGaugeRow = { id: string; points: number; until: number };
+/** 이번 주 제단 기여. id는 주:모험가. anonymous=1이면 순위표에 이름을 숨깁니다. */
+export type AltarOfferRow = { id: string; week: string; player_id: string; account_id: string; name: string; anonymous: number; points: number; gold: number; pearls: number; essence: number; updated_at: number };
+export type AltarAmounts = { gold: number; pearls: number; essence: number };
+const ALTAR_EMPTY: AltarRow = { gen: 0, god_state: 'none', god: '', god_until: 0, throne: '', throne_name: '', throne_since: 0, throne_snapshot: '', tithe_gold: 0, tithe_pearls: 0, tithe_essence: 0, total_gold: 0, total_pearls: 0, total_essence: 0, total_points: 0 };
 export type GuildDelta = { catches?: number; clears?: number; bosses?: number; abyss?: number; donated?: number };
 /** 저장소에 넣는 상태 문자열. 파일 DB는 개발 편의를 위해 평문을 유지하고, TIDEBOUND_PACK_STATE=1 이면 파일 DB도 압축합니다(e2e 검증용). */
 const packing = (always: boolean) => always || process.env.TIDEBOUND_PACK_STATE === '1';
@@ -64,6 +72,27 @@ export interface Storage {
     /** v25.13 계정 금고. 없으면 0으로 봅니다. setWallet은 통째로 씁니다(계정당 요청이 직렬이라 읽고-쓰기면 충분). */
     getWallet(accountId: string): Promise<WalletRow | null>;
     setWallet(row: WalletRow): Promise<void>;
+    /** v27.43 제단. 모든 갱신은 한 문장(원자적)이라 여러 인스턴스가 동시에 바쳐도 값이 틀어지지 않습니다. */
+    getAltar(): Promise<AltarRow>;
+    /** 누적 합계를 더하고, 자리 주인이 있고 바친 사람이 주인이 아니면 몫(tithe)을 쌓습니다. */
+    addAltar(offerer: string, add: AltarAmounts & { points: number }, tithe: AltarAmounts): Promise<void>;
+    listAltarGauges(): Promise<AltarGaugeRow[]>;
+    addAltarGauge(id: string, points: number): Promise<void>;
+    /** 게이지에서 cost만큼 뺍니다. 모자라면 false(동시에 둘이 넘겨도 한 번만 성공). */
+    spendAltarGauge(id: string, cost: number): Promise<boolean>;
+    /** 축복 시간을 늘립니다: max(지금, 남은 끝) + ms, 단 지금 + cap까지. 새 종료 시각을 돌려줍니다. */
+    extendAltarGauge(id: string, now: number, ms: number, cap: number): Promise<number>;
+    /** 살아 있는 신이 없을 때만 새 신을 깨웁니다(세대 +1). */
+    summonAltarGod(god: string, until: number, now: number): Promise<boolean>;
+    /** gen 세대의 신이 아직 살아 있으면 쓰러뜨린 모험가를 자리에 앉히고 몫을 비웁니다. 먼저 온 한 명만 true. */
+    claimAltarThrone(gen: number, id: string, name: string, snapshot: string, now: number): Promise<boolean>;
+    /** 자리 주인이면 쌓인 몫을 0으로 만들고 그 값을 돌려줍니다. */
+    takeAltarTithe(id: string): Promise<AltarAmounts | null>;
+    bumpAltarOffer(row: Omit<AltarOfferRow, 'id' | 'points' | 'gold' | 'pearls' | 'essence'>, add: AltarAmounts & { points: number }): Promise<void>;
+    listAltarOffers(week: string, limit: number): Promise<AltarOfferRow[]>;
+    getAltarOffer(week: string, playerId: string): Promise<AltarOfferRow | null>;
+    /** 이번 주 기여도가 points보다 높은 모험가 수(내 순위 = 이 값 + 1). */
+    countAltarAbove(week: string, points: number): Promise<number>;
 }
 /** 주 키가 바뀌면 0으로 보는 주간 합산 갱신(파일 DB와 Neon이 같은 규칙). */
 function applyDelta<T extends { week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number }>(row: T, week: string, d: GuildDelta): T {
@@ -91,6 +120,11 @@ const SCHEMA = [
     'CREATE INDEX IF NOT EXISTS guilds_week_points_idx ON guilds (week, points)',
     'CREATE TABLE IF NOT EXISTS guild_members (account_id TEXT PRIMARY KEY, guild_id TEXT NOT NULL, name TEXT NOT NULL, joined_at BIGINT NOT NULL, week TEXT NOT NULL DEFAULT \'\', catches INTEGER NOT NULL DEFAULT 0, clears INTEGER NOT NULL DEFAULT 0, bosses INTEGER NOT NULL DEFAULT 0, abyss INTEGER NOT NULL DEFAULT 0, donated BIGINT NOT NULL DEFAULT 0, claimed TEXT NOT NULL DEFAULT \'\')',
     'CREATE INDEX IF NOT EXISTS guild_members_guild_idx ON guild_members (guild_id)',
+    'CREATE TABLE IF NOT EXISTS altar (id TEXT PRIMARY KEY, gen INTEGER NOT NULL DEFAULT 0, god_state TEXT NOT NULL DEFAULT \'none\', god TEXT NOT NULL DEFAULT \'\', god_until BIGINT NOT NULL DEFAULT 0, throne TEXT NOT NULL DEFAULT \'\', throne_name TEXT NOT NULL DEFAULT \'\', throne_since BIGINT NOT NULL DEFAULT 0, throne_snapshot TEXT NOT NULL DEFAULT \'\', tithe_gold BIGINT NOT NULL DEFAULT 0, tithe_pearls BIGINT NOT NULL DEFAULT 0, tithe_essence BIGINT NOT NULL DEFAULT 0, total_gold BIGINT NOT NULL DEFAULT 0, total_pearls BIGINT NOT NULL DEFAULT 0, total_essence BIGINT NOT NULL DEFAULT 0, total_points BIGINT NOT NULL DEFAULT 0)',
+    'INSERT INTO altar (id) VALUES (\'main\') ON CONFLICT (id) DO NOTHING',
+    'CREATE TABLE IF NOT EXISTS altar_gauges (id TEXT PRIMARY KEY, points BIGINT NOT NULL DEFAULT 0, until BIGINT NOT NULL DEFAULT 0)',
+    'CREATE TABLE IF NOT EXISTS altar_offers (id TEXT PRIMARY KEY, week TEXT NOT NULL, player_id TEXT NOT NULL, account_id TEXT NOT NULL, name TEXT NOT NULL, anonymous INTEGER NOT NULL DEFAULT 0, points BIGINT NOT NULL DEFAULT 0, gold BIGINT NOT NULL DEFAULT 0, pearls BIGINT NOT NULL DEFAULT 0, essence BIGINT NOT NULL DEFAULT 0, updated_at BIGINT NOT NULL)',
+    'CREATE INDEX IF NOT EXISTS altar_offers_week_points_idx ON altar_offers (week, points)',
     'CREATE TABLE IF NOT EXISTS wallets (account_id TEXT PRIMARY KEY, pearls INTEGER NOT NULL DEFAULT 0, essence INTEGER NOT NULL DEFAULT 0, week TEXT NOT NULL DEFAULT \'\', pearl_out INTEGER NOT NULL DEFAULT 0)',
 ];
 const slotRowId = (accountId: string, slot: number) => `${accountId}#${slot}`;
@@ -111,6 +145,8 @@ function neonStorage(url: string): Storage {
     };
     const numGuild = (r: GuildRow): GuildRow => ({ ...r, treasury: Number(r.treasury), created_at: Number(r.created_at), catches: Number(r.catches), clears: Number(r.clears), bosses: Number(r.bosses), abyss: Number(r.abyss), donated: Number(r.donated), points: Number(r.points) });
     const numMember = (r: GuildMemberRow): GuildMemberRow => ({ ...r, joined_at: Number(r.joined_at), catches: Number(r.catches), clears: Number(r.clears), bosses: Number(r.bosses), abyss: Number(r.abyss), donated: Number(r.donated) });
+    const numAltar = (r: AltarRow): AltarRow => ({ ...r, gen: Number(r.gen), god_until: Number(r.god_until), throne_since: Number(r.throne_since), tithe_gold: Number(r.tithe_gold), tithe_pearls: Number(r.tithe_pearls), tithe_essence: Number(r.tithe_essence), total_gold: Number(r.total_gold), total_pearls: Number(r.total_pearls), total_essence: Number(r.total_essence), total_points: Number(r.total_points) });
+    const numOffer = (r: AltarOfferRow): AltarOfferRow => ({ ...r, anonymous: Number(r.anonymous), points: Number(r.points), gold: Number(r.gold), pearls: Number(r.pearls), essence: Number(r.essence), updated_at: Number(r.updated_at) });
     const num = <T extends Record<string, unknown>>(r: T) => ({ ...r, ...('updated_at' in r ? { updated_at: Number(r.updated_at) } : {}), ...('rating' in r ? { rating: Number(r.rating) } : {}), ...('power' in r ? { power: Number(r.power) } : {}), ...('revision' in r ? { revision: Number(r.revision) } : {}), ...('created_at' in r ? { created_at: Number(r.created_at) } : {}) });
     return {
         async getPlayer(id) { const { rows } = await q<PlayerRow>('SELECT state, revision FROM players WHERE id=$1', [id]); return rows[0] ? { ...num(rows[0]) as PlayerRow, state: unpackState(rows[0].state) } : null; },
@@ -166,12 +202,35 @@ function neonStorage(url: string): Storage {
         },
         async renameGuildMember(accountId, name) { await q('UPDATE guild_members SET name=$1 WHERE account_id=$2', [name, accountId]); },
         async getWallet(accountId) { const { rows } = await q<WalletRow>('SELECT account_id,pearls,essence,week,pearl_out FROM wallets WHERE account_id=$1', [accountId]); return rows[0] ? { ...rows[0], pearls: Number(rows[0].pearls), essence: Number(rows[0].essence), pearl_out: Number(rows[0].pearl_out) } : null; },
+        async getAltar() {
+            const { rows } = await q<AltarRow>("SELECT gen,god_state,god,god_until,throne,throne_name,throne_since,throne_snapshot,tithe_gold,tithe_pearls,tithe_essence,total_gold,total_pearls,total_essence,total_points FROM altar WHERE id='main'");
+            return rows[0] ? numAltar(rows[0]) : { ...ALTAR_EMPTY };
+        },
+        async addAltar(offerer, a, t) {
+            await q("UPDATE altar SET total_gold=total_gold+$2, total_pearls=total_pearls+$3, total_essence=total_essence+$4, total_points=total_points+$5, tithe_gold=tithe_gold+CASE WHEN throne<>'' AND throne<>$1 THEN $6 ELSE 0 END, tithe_pearls=tithe_pearls+CASE WHEN throne<>'' AND throne<>$1 THEN $7 ELSE 0 END, tithe_essence=tithe_essence+CASE WHEN throne<>'' AND throne<>$1 THEN $8 ELSE 0 END WHERE id='main'", [offerer, a.gold, a.pearls, a.essence, a.points, t.gold, t.pearls, t.essence]);
+        },
+        async listAltarGauges() { const { rows } = await q<AltarGaugeRow>('SELECT id,points,until FROM altar_gauges'); return rows.map(r => ({ id: r.id, points: Number(r.points), until: Number(r.until) })); },
+        async addAltarGauge(id, points) { await q('INSERT INTO altar_gauges (id,points,until) VALUES ($1,$2,0) ON CONFLICT (id) DO UPDATE SET points=altar_gauges.points+EXCLUDED.points', [id, points]); },
+        async spendAltarGauge(id, cost) { const r = await q('UPDATE altar_gauges SET points=points-$2 WHERE id=$1 AND points>=$2', [id, cost]); return r.rowCount === 1; },
+        async extendAltarGauge(id, now, ms, cap) { const { rows } = await q<{ until: string }>('UPDATE altar_gauges SET until=LEAST(GREATEST(until,$2)+$3,$2+$4) WHERE id=$1 RETURNING until', [id, now, ms, cap]); return Number(rows[0]?.until || 0); },
+        async summonAltarGod(god, until, now) { const r = await q("UPDATE altar SET gen=gen+1, god_state='alive', god=$1, god_until=$2 WHERE id='main' AND (god_state<>'alive' OR god_until<$3)", [god, until, now]); return r.rowCount === 1; },
+        async claimAltarThrone(gen, id, name, snapshot, now) { const r = await q("UPDATE altar SET god_state='slain', throne=$2, throne_name=$3, throne_snapshot=$4, throne_since=$5, tithe_gold=0, tithe_pearls=0, tithe_essence=0 WHERE id='main' AND gen=$1 AND god_state='alive' AND god_until>=$5", [gen, id, name, snapshot, now]); return r.rowCount === 1; },
+        async takeAltarTithe(id) {
+            const { rows } = await q<{ g: string; p: string; e: string }>("UPDATE altar a SET tithe_gold=0, tithe_pearls=0, tithe_essence=0 FROM (SELECT tithe_gold g, tithe_pearls p, tithe_essence e FROM altar WHERE id='main' FOR UPDATE) o WHERE a.id='main' AND a.throne=$1 RETURNING o.g, o.p, o.e", [id]);
+            return rows[0] ? { gold: Number(rows[0].g), pearls: Number(rows[0].p), essence: Number(rows[0].e) } : null;
+        },
+        async bumpAltarOffer(r, a) {
+            await q('INSERT INTO altar_offers (id,week,player_id,account_id,name,anonymous,points,gold,pearls,essence,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, anonymous=EXCLUDED.anonymous, points=altar_offers.points+EXCLUDED.points, gold=altar_offers.gold+EXCLUDED.gold, pearls=altar_offers.pearls+EXCLUDED.pearls, essence=altar_offers.essence+EXCLUDED.essence, updated_at=EXCLUDED.updated_at', [`${r.week}:${r.player_id}`, r.week, r.player_id, r.account_id, r.name, r.anonymous, a.points, a.gold, a.pearls, a.essence, r.updated_at]);
+        },
+        async listAltarOffers(week, limit) { const { rows } = await q<AltarOfferRow>('SELECT * FROM altar_offers WHERE week=$1 ORDER BY points DESC, updated_at ASC LIMIT $2', [week, limit]); return rows.map(numOffer); },
+        async getAltarOffer(week, playerId) { const { rows } = await q<AltarOfferRow>('SELECT * FROM altar_offers WHERE id=$1', [`${week}:${playerId}`]); return rows[0] ? numOffer(rows[0]) : null; },
+        async countAltarAbove(week, points) { const { rows } = await q<{ n: string }>('SELECT COUNT(*) AS n FROM altar_offers WHERE week=$1 AND points>$2', [week, points]); return Number(rows[0]?.n || 0); },
         async setWallet(w) { await q('INSERT INTO wallets (account_id,pearls,essence,week,pearl_out) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (account_id) DO UPDATE SET pearls=EXCLUDED.pearls, essence=EXCLUDED.essence, week=EXCLUDED.week, pearl_out=EXCLUDED.pearl_out', [w.account_id, w.pearls, w.essence, w.week, w.pearl_out]); },
     };
 }
 
 // ---------- 개발용 로컬 파일 ----------
-type FileDb = { settings?: Record<string, { value: string; updated_at: number }>; players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; wallets?: Record<string, WalletRow>; chat?: ChatRow[]; chatSeq?: number };
+type FileDb = { settings?: Record<string, { value: string; updated_at: number }>; players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; wallets?: Record<string, WalletRow>; altar?: AltarRow; altarGauges?: Record<string, AltarGaugeRow>; altarOffers?: Record<string, AltarOfferRow>; chat?: ChatRow[]; chatSeq?: number };
 function fileStorage(): Storage {
     const path = process.env.TIDEBOUND_DEV_DB || '.data/dev-db.json';
     let chain: Promise<unknown> = Promise.resolve();
@@ -224,6 +283,30 @@ function fileStorage(): Storage {
         renameGuildMember: (accountId, name) => tx(db => { const m = db.guildMembers?.[accountId]; if (m) m.name = name; }),
         getWallet: accountId => tx(db => db.wallets?.[accountId] ? { ...db.wallets[accountId] } : null),
         setWallet: w => tx(db => { (db.wallets ??= {})[w.account_id] = { ...w }; }),
+        getAltar: () => tx(db => ({ ...ALTAR_EMPTY, ...db.altar })),
+        addAltar: (offerer, a, t) => tx(db => {
+            const r = db.altar = { ...ALTAR_EMPTY, ...db.altar }, owed = r.throne !== '' && r.throne !== offerer;
+            r.total_gold += a.gold; r.total_pearls += a.pearls; r.total_essence += a.essence; r.total_points += a.points;
+            if (owed) { r.tithe_gold += t.gold; r.tithe_pearls += t.pearls; r.tithe_essence += t.essence; }
+        }),
+        listAltarGauges: () => tx(db => Object.values(db.altarGauges || {}).map(g => ({ ...g }))),
+        addAltarGauge: (id, points) => tx(db => { const g = (db.altarGauges ??= {})[id] ??= { id, points: 0, until: 0 }; g.points += points; }),
+        spendAltarGauge: (id, cost) => tx(db => { const g = db.altarGauges?.[id]; if (!g || g.points < cost) return false; g.points -= cost; return true; }),
+        extendAltarGauge: (id, now, ms, cap) => tx(db => { const g = db.altarGauges?.[id]; if (!g) return 0; g.until = Math.min(Math.max(g.until, now) + ms, now + cap); return g.until; }),
+        summonAltarGod: (god, until, now) => tx(db => { const r = db.altar = { ...ALTAR_EMPTY, ...db.altar }; if (r.god_state === 'alive' && r.god_until >= now) return false; Object.assign(r, { gen: r.gen + 1, god_state: 'alive', god, god_until: until }); return true; }),
+        claimAltarThrone: (gen, id, name, snapshot, now) => tx(db => {
+            const r = db.altar = { ...ALTAR_EMPTY, ...db.altar };
+            if (r.gen !== gen || r.god_state !== 'alive' || r.god_until < now) return false;
+            Object.assign(r, { god_state: 'slain', throne: id, throne_name: name, throne_snapshot: snapshot, throne_since: now, tithe_gold: 0, tithe_pearls: 0, tithe_essence: 0 }); return true;
+        }),
+        takeAltarTithe: id => tx(db => { const r = db.altar; if (!r || r.throne !== id) return null; const out = { gold: r.tithe_gold, pearls: r.tithe_pearls, essence: r.tithe_essence }; r.tithe_gold = r.tithe_pearls = r.tithe_essence = 0; return out; }),
+        bumpAltarOffer: (r, a) => tx(db => {
+            const key = `${r.week}:${r.player_id}`, old = (db.altarOffers ??= {})[key];
+            db.altarOffers[key] = { ...r, id: key, points: (old?.points || 0) + a.points, gold: (old?.gold || 0) + a.gold, pearls: (old?.pearls || 0) + a.pearls, essence: (old?.essence || 0) + a.essence };
+        }),
+        listAltarOffers: (week, limit) => tx(db => Object.values(db.altarOffers || {}).filter(o => o.week === week).sort((a, b) => b.points - a.points || a.updated_at - b.updated_at).slice(0, limit).map(o => ({ ...o }))),
+        getAltarOffer: (week, playerId) => tx(db => db.altarOffers?.[`${week}:${playerId}`] ? { ...db.altarOffers[`${week}:${playerId}`] } : null),
+        countAltarAbove: (week, points) => tx(db => Object.values(db.altarOffers || {}).filter(o => o.week === week && o.points > points).length),
     };
 }
 

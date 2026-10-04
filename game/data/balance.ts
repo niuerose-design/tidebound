@@ -2,7 +2,7 @@
 /** 세이브 형식 버전. 바뀌면 migrations.ts가 이전 세이브를 변환하고, 랭킹은 같은 버전의 스냅샷만 보여줍니다. */
 export const SAVE_VERSION = 8;
 export const BALANCE = {
-    turnMs: 2000, offlineCapSeconds: 86400, baseHp: 110, baseAttack: 13, baseDefense: 3,
+    turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13, baseDefense: 3,
     hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08,
     // Stage hopping used to make the first rebirth arrive in under an hour.
     // See scripts/check-progression-pace.mjs for gearless routing samples;

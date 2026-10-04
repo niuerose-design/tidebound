@@ -479,3 +479,23 @@ test('v27.36 high-rarity gear is damped and enhancement gives +10% per level', a
     const flat = Eq.itemStats({ id: 'r', slot: 'coat', rarity: 5, power: 100, level: 50, affixes: [{ id: 'might', name: 'm', stat: 'attack', value: 50 }, { id: 'x', name: 'x', stat: 'crit', value: .05 }] });
     assert.ok(Math.abs(flat.attack - 50 * Eq.GEAR_RARITY_SCALE[5]) < 1e-9 && flat.crit === .05, 'flat options damped, percent options untouched');
 });
+test('v27.43 altar: offering points, tithe, blessing events skip offline catch-up, mimic multiplier', async () => {
+    const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const A = await G.load('data/altar'), ev = await G.load('data/events'), engine = await G.load('systems/engine');
+    assert.equal(A.offeringPoints({ gold: 2999, pearls: 2, essence: 3 }), 2 + 100 + 15);
+    assert.deepEqual(A.tithe({ gold: 12345, pearls: 9, essence: 30 }), { gold: 1234, pearls: 0, essence: 3 });
+    assert.ok(A.GAUGE_IDS.includes('god') && A.BLESSINGS.every(b => A.gaugeCost(b.id) === b.cost));
+    const now = Date.parse('2027-01-05T12:00:00+09:00');
+    ev.setAltarEvents([{ id: 'altar-mimic', name: '제단 까미의 축복', from: '2026-01-01T00:00:00+09:00', until: new Date(now + 3600_000).toISOString(), mimic: 3, gold: 2 }]);
+    try {
+        const live = ev.activeEvent(now); assert.equal(live.mimic, 3); assert.equal(live.gold, 2); assert.match(ev.eventLabel(live), /까미 출현 ×3/);
+        assert.equal(ev.activeEvent(now, ev.currentEvents(false)), null, 'altar blessings are not part of the offline settlement list');
+        // 오프라인 정산(1분 초과) 동안에는 축복 없이 돌고, 끝난 뒤 다시 적힙니다.
+        const s = engine.newState(now - 3600_000); engine.act(s, { type: 'start' }, now - 3600_000); const gold = s.gold;
+        const seen = []; const orig = Math.random; let calls = 0; Math.random = () => { calls++; if (calls % 500 === 0) seen.push(s.event?.gold || 1); return orig(); };
+        try { engine.advance(s, now); } finally { Math.random = orig; }
+        assert.ok(seen.length && seen.every(g => g === 1), 'no altar gold bonus during catch-up');
+        assert.equal(s.event.gold, 2, 'blessing shown again after catch-up'); assert.ok(s.gold > gold);
+    }
+    finally { ev.setAltarEvents([]); }
+});
