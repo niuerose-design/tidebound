@@ -60,9 +60,10 @@ test('Research v2: bag size grows with the hold; reset refuses when the bag woul
 test('Research v2: long anchor line extends the offline cap by two hours per rank', () => {
     const run = rank => { const s = newState(0); s.permanent.offline = rank; act(s, { type: 'start' }, 0); advance(s, 40 * 3600_000, seeded(3)); return s; };
     const base = run(0), long = run(3);
-    assert.equal(economy.offlineCapSeconds(base), 86400); assert.equal(economy.offlineCapSeconds(long), 30 * 3600);
-    assert.equal(base.turn, 86400 / 2); assert.equal(long.turn, 30 * 3600 / 2);
-    assert.equal(base.lastOffline.seconds, 86400); assert.equal(long.lastOffline.seconds, 30 * 3600);
+    // v27.43 기본 6시간 + 2시간/단계.
+    assert.equal(economy.offlineCapSeconds(base), 6 * 3600); assert.equal(economy.offlineCapSeconds(long), 12 * 3600);
+    assert.equal(base.turn, 6 * 3600 / 2); assert.equal(long.turn, 12 * 3600 / 2);
+    assert.equal(base.lastOffline.seconds, 6 * 3600); assert.equal(long.lastOffline.seconds, 12 * 3600);
 });
 
 test('Research v2: mastery memory adds +5% per rank with an integer carry and no random calls', () => {

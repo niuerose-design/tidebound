@@ -72,7 +72,7 @@ export function researchEffect(r: ResearchDef, rank: number) {
 export const researchRank = (s: Pick<State, 'permanent'>, id: string) => s.permanent?.[id] || 0;
 /** 가방 칸 수: 60 + 넓은 선창 5칸/단계. */
 export const inventoryCap = (s: Pick<State, 'permanent'>) => BALANCE.inventoryCap + researchRank(s, 'inventory') * 5;
-/** 오프라인 정산 상한(초): 24시간 + 긴 닻줄 2시간/단계. */
+/** 오프라인 정산 상한(초): v27.43 기본 6시간(24 → 6, 인플레·서버 부하 완화) + 긴 닻줄 2시간/단계(최대 12단계 = 30시간). */
 export const offlineCapSeconds = (s: Pick<State, 'permanent'>) => BALANCE.offlineCapSeconds + researchRank(s, 'offline') * 7200;
 /** 항구 단골: 상점·뽑기 골드 가격 배율. */
 export const shopDiscount = (s: Pick<State, 'permanent'>) => 1 - researchRank(s, 'shop') * .02;

@@ -56,7 +56,7 @@ if(!baseline){
  const full=newState(0),st=stats(full),healer={name:'test',stats:st,hp:st.hp,skills:['breath'],cooldowns:{},stun:0,mana:st.mana};const b={name:'dummy',stats:st,hp:st.hp,skills:[],cooldowns:{},stun:0};strike(healer,b,()=>0);assert.ok(healer.cooldowns.breath>0,'v21: heal skills also fire at full HP');
  const striker={...healer,skills:['twinHook'],cooldowns:{},stats:{...st,accuracy:1,attack:100}};const victim={...b,hp:10000};const rolls=[0,.9999,0,.99];let r=0;const log=strike(striker,victim,()=>rolls[r++]??0);assert(log.includes('본타 빗나감')&&victim.hp<10000);const fx=combatFxFromLog({id:1,type:'battle',text:log},'test');assert(fx.hits[0].miss&&fx.hits[1].value>0);
  const long=newState(0);long.level=40;long.job='whaler';long.equipment={};long.skills=[];const before=stats(long);long.rebirths=100;long.permanent={attack:40,hp:40,guard:30};long.jobMastery.whaler=600000;const after=stats(long);assert(after.attack>before.attack*3&&after.hp>before.hp*4&&after.defense>before.defense*2);
- // Production advance executes every turn for a complete daily absence.
- const idle=newState(0);idle.running=true;const start=performance.now();advance(idle,86400000,random(88));assert.equal(idle.turn,43200);assert.equal(idle.lastTick,86400000);const elapsed=performance.now()-start;
+ // Production advance executes every turn for a complete daily absence (v27.43: 기본 상한 6시간 + 긴 닻줄 9단계 = 24시간).
+ const idle=newState(0);idle.running=true;idle.permanent.offline=9;const start=performance.now();advance(idle,86400000,random(88));assert.equal(idle.turn,43200);assert.equal(idle.lastTick,86400000);const elapsed=performance.now()-start;
  console.log(JSON.stringify({checks:'passed',offline24hMs:Math.round(elapsed),offlineKills:idle.kills,offlineLevel:idle.level,offlineDeaths:idle.deaths,yearPracticeAt1PerWin:{winsPerHour:[100,300,900,1800],practice:[100,300,900,1800].map(n=>n*24*365)},maximumBonusPerWin:10}));
 }

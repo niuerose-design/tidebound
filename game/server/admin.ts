@@ -115,7 +115,7 @@ export async function adjustCurrency(id: string, input: { gold?: unknown; pearls
 
 // ---------- v27.27 서버 이벤트 설정 ----------
 
-const MULTS = ['exp', 'gold', 'drop', 'mastery'] as const;
+const MULTS = ['exp', 'gold', 'drop', 'mastery', 'mimic'] as const;
 /** 이벤트 목록: 코드 이벤트(끔 여부)와 운영 페이지 이벤트, 지금 배너 문구. */
 export async function listEvents(now = Date.now()) {
     const config = await readEventConfig();
@@ -194,6 +194,8 @@ export type AdminStats = {
     stages: { name: string; count: number }[]; dungeons: { name: string; count: number }[]; jobs: { name: string; count: number }[];
     totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number };
     medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number;
+    /** v27.43 제단: 신 세대, 신이 깨어 있는지, 신의 자리 주인, 누적 기여도, 쌓인 몫(골드). */
+    altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number };
     top: { name: string; level: number; rebirths: number; abyss: number }[];
 };
 const median = (xs: number[]) => { if (!xs.length) return 0; const a = [...xs].sort((x, y) => x - y), m = a.length >> 1; return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2); };
@@ -204,7 +206,7 @@ const bucketize = (xs: number[], edges: number[], unit: string) => edges.map((lo
  * 활동은 마지막 저장 시각 기준이라 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다.
  */
 export async function adminStats(now = Date.now()): Promise<AdminStats> {
-    const database = db(), [accounts, rows] = await Promise.all([database.listAccounts(), database.listPlayers()]);
+    const database = db(), [accounts, rows, altar] = await Promise.all([database.listAccounts(), database.listPlayers(), database.getAltar()]);
     const saves: { s: State; at: number }[] = [];
     for (const row of rows) { try { const s = JSON.parse(row.state) as State; if (s && typeof s.level === 'number') saves.push({ s, at: row.updated_at }); } catch { /* 깨진 세이브는 건너뜀 */ } }
     const list = saves.map(x => x.s), levels = list.map(s => s.level || 1), rebirths = list.map(s => s.rebirths || 0);
@@ -225,6 +227,7 @@ export async function adminStats(now = Date.now()): Promise<AdminStats> {
         abyssBest: Math.max(0, ...list.map(s => s.abyssBest || 0)),
         limitBreakers: list.filter(s => Object.values(s.limitBreaks || {}).some(n => n > 0)).length,
         inGuild: list.filter(s => s.guildMember?.id).length,
+        altar: { gen: altar.gen, godAlive: altar.god_state === 'alive' && altar.god_until >= now, throne: altar.throne_name, points: altar.total_points, titheGold: altar.tithe_gold },
         top: [...list].sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level).slice(0, 10).map(s => ({ name: s.name, level: s.level, rebirths: s.rebirths || 0, abyss: s.abyssBest || 0 })),
     };
 }

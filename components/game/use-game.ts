@@ -11,6 +11,8 @@ export type Ranking = Snapshot & {
 };
 /** v25.6 주간 심연 기록판 한 줄. */
 export type GuildInfo = import('@/game/server/guild').GuildInfo;
+export type AltarInfo = import('@/game/data/altar').AltarInfo;
+export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: number; logs: string[]; claimed: boolean };
 export type VaultInfo = import('@/game/data/account').VaultInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean };
 /** 동기화 주기(ms). */
@@ -130,6 +132,19 @@ export function useGame() {
         catch (e) { setGuildError((e as Error).message); return false; }
         finally { lock.current = false; setBusy(false); }
     }, [request, replay]);
+    /** v27.43 제단: 정보는 제단 화면을 열 때와 행동 뒤에만 읽습니다(주기 폴링 없음). 도전 결과는 altarResult로 보여 줍니다. */
+    const [altar, setAltar] = useState<AltarInfo | null>(null), [altarError, setAltarError] = useState(''), [altarResult, setAltarResult] = useState<AltarResult | null>(null);
+    const loadAltar = useCallback(async () => { try { setAltar(await request('/api/altar') as unknown as AltarInfo); setAltarError(''); } catch (e) { setAltarError((e as Error).message); } }, [request]);
+    const altarAct = useCallback(async (body: Record<string, unknown>) => {
+        if (lock.current) return false; lock.current = true; setBusy(true);
+        try {
+            const d = await request('/api/altar', body) as unknown as { state?: State; info: AltarInfo; result?: AltarResult };
+            if (d.state) { stateRef.current = d.state; setState(d.state); replay.reset(); setSaved(true); }
+            setAltar(d.info); setAltarError(''); if (body.action === 'challenge' && d.result) setAltarResult(d.result); return true;
+        }
+        catch (e) { setAltarError((e as Error).message); return false; }
+        finally { lock.current = false; setBusy(false); }
+    }, [request, replay]);
     /** v25.13 계정 공유 금고. */
     const [vault, setVault] = useState<VaultInfo | null>(null), [vaultError, setVaultError] = useState('');
     const loadVault = useCallback(async () => { try { setVault(await request('/api/vault') as unknown as VaultInfo); setVaultError(''); } catch (e) { setVaultError((e as Error).message); } }, [request]);
@@ -218,5 +233,5 @@ export function useGame() {
         replay.reset();
         setNeedsLogin(true);
     }, [replay]);
-    return { state: view, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, vault, vaultError, loadVault, vaultAct };
+    return { state: view, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
 }

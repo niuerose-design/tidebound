@@ -6,7 +6,7 @@ import { offlineCapSeconds } from '@/game/data/economy';
 import { jobById } from '@/game/data/classes';
 import type { State } from '@/game/types';
 
-/** 부재 시간 표시: 슬롯 요약의 updatedAt(마지막 저장 ±10분) 기준. 부재중 정산 상한(기본 24시간)에 닿았으면 그렇게 표시합니다. */
+/** 부재 시간 표시: 슬롯 요약의 updatedAt(마지막 저장 ±10분) 기준. 부재중 정산 상한(기본 6시간)에 닿았으면 그렇게 표시합니다. */
 function awayText(updatedAt: number, now: number, capSeconds: number) {
     const sec = Math.max(0, Math.floor((now - updatedAt) / 1000));
     if (sec < 600) return '방금 전';
