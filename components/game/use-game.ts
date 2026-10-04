@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { State, Action, DuelResult, Snapshot } from '@/game/types';
 import { BALANCE } from '@/game/data/balance';
 import { stats } from '@/game/systems/stats';
@@ -24,6 +24,22 @@ const REPLAY_LAG_MS = SYNC_MS + 500;
 /** 이보다 많은 턴이 밀리면(탭 복귀 등) 밀린 분은 건너뛰고 최신 상태로 맞춥니다. */
 const MAX_BEHIND_TURNS = 2;
 type Queued = { turnAt: number; at: number; frame: ReplayFrame };
+/**
+ * v27.62 재생 프레임 저장소. 프레임(턴당 여러 번)을 React 상태로 두면 앱 전체가 프레임마다 다시 그려져
+ * 전투와 상관없는 스킬·전직 화면까지 매번 다시 계산했습니다. 프레임은 여기 두고 전투 화면만 구독합니다(useReplayView).
+ */
+export type FrameStore = { get: () => ReplayFrame | null; set: (frame: ReplayFrame | null) => void; subscribe: (fn: () => void) => () => void };
+function createFrameStore(): FrameStore {
+    let frame: ReplayFrame | null = null;
+    const subs = new Set<() => void>();
+    return { get: () => frame, set: next => { if (next === frame) return; frame = next; subs.forEach(fn => fn()); }, subscribe: fn => { subs.add(fn); return () => { subs.delete(fn); }; } };
+}
+const noFrame = () => null;
+/** 전투 화면에 보이는 상태: 전투 표시값(HP·MP·적·상태이상·회복 대기·로그)만 재생 중인 프레임으로 바꿉니다. */
+export function useReplayView(state: State, frames: FrameStore): State {
+    const frame = useSyncExternalStore(frames.subscribe, frames.get, noFrame);
+    return useMemo(() => frame ? { ...state, hp: frame.hp, mana: frame.mana, recovery: frame.recovery, enemy: frame.enemy, effects: frame.effects, playerStun: frame.playerStun, logs: state.logs.filter(l => l.id <= frame.lastLogId) } : state, [state, frame]);
+}
 /**
  * 전투 재생 버퍼. 동기화로 받은 턴을 서버 lastTick 기준 실제 턴 시각(turnMs 간격)에 맞춰 차례로 내보냅니다.
  * 서버 시각은 min(받은 시각 − lastTick)으로 추정합니다. lastTick은 항상 서버의 현재 시각 이하이므로 최솟값이 시계 차이에 가장 가깝습니다.
@@ -63,10 +79,8 @@ export function useGame() {
     const [state, setState] = useState<State | null>(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [saved, setSaved] = useState(false), [rows, setRows] = useState<Ranking[]>([]), [rankError, setRankError] = useState(''), [duel, setDuel] = useState<DuelResult | null>(null);
     const [needsLogin, setNeedsLogin] = useState(false);
     const lock = useRef(false), queue = useRef<Promise<unknown>>(Promise.resolve()), stateRef = useRef<State | null>(null);
-    const [frame, setFrame] = useState<ReplayFrame | null>(null), [replay] = useState(() => createReplay(setFrame));
+    const [frames] = useState(createFrameStore), [replay] = useState(() => createReplay(frames.set));
     useEffect(() => replay.reset, [replay]);
-    /** 화면에 보이는 상태: 전투 표시값(HP·MP·적·상태이상·회복 대기·로그)만 재생 중인 프레임으로 바꿉니다. */
-    const view = useMemo(() => state && frame ? { ...state, hp: frame.hp, mana: frame.mana, recovery: frame.recovery, enemy: frame.enemy, effects: frame.effects, playerStun: frame.playerStun, logs: state.logs.filter(l => l.id <= frame.lastLogId) } : state, [state, frame]);
     const request = useCallback(async (path: string, body?: unknown) => { const res = await fetch(path, { method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20000) }); const data = await res.json() as {
         error?: string;
         state: State;
@@ -233,5 +247,5 @@ export function useGame() {
         replay.reset();
         setNeedsLogin(true);
     }, [replay]);
-    return { state: view, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
+    return { state, frames, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
 }

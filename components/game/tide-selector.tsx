@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { tideLimit, tierReward, tierHealth, tierAttack, tierMastery } from '@/game/systems/meta';
 import { TIDE_MILESTONES, TIDE_MILESTONE_PEARLS, nextTideMilestone } from '@/game/data/long-term';
 import type { PanelProps } from './panel-props';
-export function TideSelector({ s, send, busy }: PanelProps) {
+/** v27.62 전투 화면에서는 동기화 상태만 받아 재생 프레임마다 다시 그리지 않습니다(memo). */
+export const TideSelector = memo(function TideSelector({ s, send, busy }: PanelProps) {
     // v27.55 슬라이더는 움직이는 동안 화면에만 보이고, 손을 떼면 한 번만 보냅니다(요청 몰림 방지).
     const [draft, setDraft] = useState<number | null>(null);
     // v25.9 환생 전에는 올릴 차수가 없으므로 카드 자체를 숨깁니다.
@@ -31,4 +32,4 @@ export function TideSelector({ s, send, busy }: PanelProps) {
         onBlur={() => { if (draft !== null) go(draft); }}/>}
     </div>
     </section>;
-}
+});

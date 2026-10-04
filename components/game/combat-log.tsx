@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type React from 'react';
 import { Sparkles, Swords, Wind } from 'lucide-react';
 import type { Log } from '@/game/types';
@@ -6,7 +7,12 @@ import { STATUS_NAMES } from '@/game/systems/combat-feedback';
 const WORD = { physical: '물리', magic: '마법', split: '복합' } as const;
 
 /** 전투 로그 한 줄. 구조화된 결과가 있으면 피해 종류별 색·아이콘과 본타/추가타/합계를 나눠 보여줍니다. */
-export function BattleLogLine({ log, index, playerName }: { log: Log; index?: boolean; playerName?: string }) {
+/**
+ * v27.62 한 번 남은 로그는 내용이 바뀌지 않습니다(같은 id = 같은 줄). 전투 재생 프레임마다 기록 수십 줄을 다시 그리던 것을
+ * id·문구가 같으면 건너뛰게 합니다(모바일 전투 화면 끊김 원인).
+ */
+export const BattleLogLine = memo(BattleLogLineView, (a, b) => a.log.id === b.log.id && a.log.text === b.log.text && a.index === b.index && a.playerName === b.playerName);
+function BattleLogLineView({ log, index, playerName }: { log: Log; index?: boolean; playerName?: string }) {
     const ev = log.event;
     const id = index ? <span>{String(log.id).padStart(3, '0')}</span> : null;
     if (!ev) return <p className="battle-line">{id}{log.text}</p>;
@@ -32,9 +38,9 @@ export function BattleLogLine({ log, index, playerName }: { log: Log; index?: bo
 }
 
 /** 턴 경계. 로그 목록에서 턴이 바뀌는 자리에 끼웁니다. */
-function LogTurnDivider({ turn }: { turn: number }) {
+const LogTurnDivider = memo(function LogTurnDivider({ turn }: { turn: number }) {
     return <div className="log-turn-divider" role="separator" aria-label={`${turn}턴`}><span>{turn.toLocaleString()}턴</span></div>;
-}
+});
 /** 턴 번호가 바뀌는 줄 앞에 구분선을 끼워 렌더합니다(최신순 목록 기준: 각 턴 묶음의 위에 선). 턴 정보가 없는 오래된 로그는 그대로. */
 export function withTurnDividers<T extends { turn?: number }>(logs: T[], render: (log: T) => React.ReactNode) {
     const out: React.ReactNode[] = [];

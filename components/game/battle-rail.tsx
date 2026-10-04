@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { levelGateOk } from '@/game/systems/meta';
 import { ChatPanel } from './chat-panel';
 import { ChevronRight, Compass, Flame, Lock, Map, MessageCircle, Swords } from 'lucide-react';
@@ -9,24 +9,20 @@ import { STAGES, DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { BattleLogLine } from './combat-log';
 import type { State, Action } from '@/game/types';
 const FEED_KEY = 'tidebound.railFeed';
-export function BattleRail({ s, busy, send, setView }: {
+export function BattleRail({ s, base, busy, send, setView }: {
     s: State;
+    /** v27.62 재생 프레임이 아닌 동기화 상태. 사냥터·던전 선택판은 이것만 보고 프레임마다 다시 그리지 않습니다. */
+    base: State;
     busy: boolean;
     send: (a: Action) => void;
     setView: (v: string) => void;
 }) {
     // v26.7 패널이 세로 공간을 채우므로 최근 40줄까지 보여 주고 스크롤합니다(전에는 9줄).
     const battleLogs = s.logs.filter(log => log.type === 'battle').slice(-40).reverse();
-    const dungeons = [...DUNGEONS].sort((a, b) => a.level - b.level);
-    // 사냥터·던전을 한 창에서 탭으로 고릅니다. 던전에 들어가면 던전 탭으로 넘어갑니다.
-    const [tab, setTab] = useState<'stage' | 'dungeon' | 'altar'>(s.dungeon ? 'dungeon' : 'stage');
     // v25.4 전투 기록 ↔ 채팅 토글. 선택은 이 기기에 남깁니다.
     const [feed, setFeed] = useState<'log' | 'chat'>('log');
     useEffect(() => { const timer = window.setTimeout(() => { try { if (localStorage.getItem(FEED_KEY) === 'chat') setFeed('chat'); } catch { /* 저장소 없음 */ } }, 0); return () => window.clearTimeout(timer); }, []);
     const pickFeed = (v: 'log' | 'chat') => { setFeed(v); try { localStorage.setItem(FEED_KEY, v); } catch { /* 저장소 없음 */ } };
-    const inDungeon = !!s.dungeon;
-    const [wasInDungeon, setWasInDungeon] = useState(inDungeon);
-    if (wasInDungeon !== inDungeon) { setWasInDungeon(inDungeon); if (inDungeon) setTab('dungeon'); }
     return <aside className="battle-utility-rail" aria-label="전투 보조 패널">
     <section className={`panel battle-rail-panel battle-feed ${feed === 'chat' ? 'feed-chat' : ''}`}>
     <div className="section-title"><div className="battle-place-tabs feed-tabs" role="tablist" aria-label="전투 기록 · 채팅">
@@ -37,6 +33,20 @@ export function BattleRail({ s, busy, send, setView }: {
     {battleLogs.length ? battleLogs.map(log => <BattleLogLine key={log.id} log={log} index playerName={s.name}/>) : <p className="battle-feed-empty">자동 사냥을 시작하면 전투 기록이 표시됩니다.</p>}
     </div> : <ChatPanel open={feed === 'chat'} playerName={s.name} guildName={s.guildMember?.name}/>}
     </section>
+    <PlaceSelector s={base} busy={busy} send={send} setView={setView}/>
+    </aside>;
+}
+
+type PlaceProps = { s: State; busy: boolean; send: (a: Action) => void; setView: (v: string) => void };
+/** 사냥터·던전·제단 선택판. 동기화 상태만 받아 전투 재생 프레임마다 다시 그리지 않습니다(v27.62). */
+const PlaceSelector = memo(function PlaceSelector({ s, busy, send, setView }: PlaceProps) {
+    const dungeons = [...DUNGEONS].sort((a, b) => a.level - b.level);
+    // 사냥터·던전을 한 창에서 탭으로 고릅니다. 던전에 들어가면 던전 탭으로 넘어갑니다.
+    const [tab, setTab] = useState<'stage' | 'dungeon' | 'altar'>(s.dungeon ? 'dungeon' : 'stage');
+    const inDungeon = !!s.dungeon;
+    const [wasInDungeon, setWasInDungeon] = useState(inDungeon);
+    if (wasInDungeon !== inDungeon) { setWasInDungeon(inDungeon); if (inDungeon) setTab('dungeon'); }
+    return <>
     <section className="panel battle-rail-panel battle-selector-panel">
     <div className="section-title"><div className="battle-place-tabs" role="tablist" aria-label="사냥터 종류">
         <button type="button" role="tab" id="place-tab-stage" aria-controls="place-panel" aria-selected={tab === 'stage'} className={tab === 'stage' ? 'active' : ''} onClick={() => setTab('stage')}><Map size={14}/>사냥터</button>
@@ -61,8 +71,8 @@ export function BattleRail({ s, busy, send, setView }: {
     {tab === 'stage' && s.dungeon && <p className="battle-place-note">던전 탐험 중에는 사냥터를 바꿀 수 없습니다.</p>}
     </div>
     </section>
-    </aside>;
-}
+    </>;
+});
 
 const left = (ms: number) => { const m = Math.max(1, Math.ceil(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`; };
 /** v27.47 오른쪽 패널 제단 탭: 동기화 때 받은 제단 요약(State.altarStatus). 누르면 제단 화면으로 갑니다. */

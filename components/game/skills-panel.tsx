@@ -4,7 +4,7 @@ import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { PROGRESSION } from '@/game/data/progression';
 import { thresholdRank, refinementBonusLabel } from '@/game/data/long-term';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, GripVertical, Info, Pin, Search } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
@@ -115,7 +115,8 @@ export function Skills({ s, send, busy }: PanelProps) {
     const togglePin = (id: string) => setPins(prev => { const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]; try { localStorage.setItem(PIN_KEY, JSON.stringify(next)); } catch { /* 저장소 없음 */ } return next; });
     const currentJob = jobById(s.job) || JOBS[0], used = apUsed(s), cap = apCapacity(s);
     const line = lineage(s.job);
-    const recommended = recommendLoadout(s);
+    // v27.62 추천 편성은 상태가 바뀔 때만 다시 계산합니다(검색 입력·필터 조작 때마다 계산하지 않음).
+    const recommended = useMemo(() => recommendLoadout(s), [s]);
     const sameLoadout = recommended.length === s.skills.length && recommended.every(id => s.skills.includes(id));
     /** 끌어서 놓기: 액티브끼리만 순서를 바꾸고 패시브는 뒤에 그대로 둡니다. */
     const dropOn = (targetId: string) => {
