@@ -138,7 +138,7 @@ export async function syncAbyssBoard(id: string, s: State, now: number) {
         const rows = await database.listRankings(weekSeason(previous), 100);
         const rank = rows.findIndex(r => r.id === abyssRowId(id)) + 1;
         week.settled = previous;
-        if (rank > 0) { const pearls = abyssWeeklyPearls(rank); s.pearls += pearls; addLog(s, `지난주 심연 기록 ${rank}위(${rows[rank - 1].rating}층) · 진주 +${pearls}`, 'reward'); }
+        if (rank > 0) { const pearls = abyssWeeklyPearls(rank); s.pearls += pearls; addLog(s, `지난주 무릉도장 기록 ${rank}위(${rows[rank - 1].rating}층) · 진주 +${pearls}`, 'reward'); }
     }
 }
 export function failure(e: unknown) {

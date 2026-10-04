@@ -19,7 +19,7 @@ export function Guild({ s, busy, info, error, load, act }: Props) {
     useEffect(() => { if (info?.guild) { const t = setTimeout(() => setRename(info.guild!.name), 0); return () => clearTimeout(t); } }, [info?.guild]);
     const copy = async () => { try { await navigator.clipboard.writeText(info?.guild?.code || ''); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* 클립보드 없음 */ } };
     const board = <section className="panel guild-board">
-        <div className="section-title"><h2><Trophy size={16}/> 이번 주 길드 기록판 <small className="micro">{info?.week}</small></h2><span title="포획 1 · 던전 정복 20 · 보스 5 · 심연 최고 깊이 10 · 기부 1,000 G당 1점">주간 점수 · 월요일 0시(한국 시간) 초기화</span></div>
+        <div className="section-title"><h2><Trophy size={16}/> 이번 주 길드 기록판 <small className="micro">{info?.week}</small></h2><span title="포획 1 · 던전 정복 20 · 보스 5 · 무릉도장 최고 층 10 · 기부 1,000 G당 1점">주간 점수 · 월요일 0시(한국 시간) 초기화</span></div>
         {info?.board.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>길드</TableHead><TableHead>점수</TableHead></TableRow></TableHeader>
             <TableBody>{info.board.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (내 길드)' : ''}</TableCell><TableCell><b>{format(r.points)}</b></TableCell></TableRow>)}</TableBody></Table>
             : <p className="footnote">이번 주 기록이 있는 길드가 아직 없습니다.</p>}
@@ -59,7 +59,7 @@ export function Guild({ s, busy, info, error, load, act }: Props) {
         </section>
         <section className="panel guild-members">
             <div className="section-title"><h2>길드원 · 이번 주 기여</h2><span>5분마다 반영</span></div>
-            <Table><TableHeader><TableRow><TableHead>낚시꾼</TableHead><TableHead>포획</TableHead><TableHead>던전</TableHead><TableHead>보스</TableHead><TableHead>심연</TableHead><TableHead>기부</TableHead><TableHead>점수</TableHead></TableRow></TableHeader>
+            <Table><TableHeader><TableRow><TableHead>낚시꾼</TableHead><TableHead>포획</TableHead><TableHead>던전</TableHead><TableHead>보스</TableHead><TableHead>무릉도장</TableHead><TableHead>기부</TableHead><TableHead>점수</TableHead></TableRow></TableHeader>
                 <TableBody>{g.members.map(m => <TableRow key={m.account} className={m.self ? 'self' : ''}><TableCell>{m.leader && <Crown size={12}/>} {m.name}{m.self ? ' (나)' : ''}</TableCell><TableCell>{format(m.totals.catches)}</TableCell><TableCell>{m.totals.clears}</TableCell><TableCell>{m.totals.bosses}</TableCell><TableCell>{m.totals.abyss}층</TableCell><TableCell>{format(m.totals.donated)} G</TableCell><TableCell><b>{format(m.points)}</b></TableCell></TableRow>)}</TableBody></Table>
         </section>
         <section className="panel guild-donate">

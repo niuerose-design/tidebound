@@ -19,7 +19,7 @@ export const rebirthReward = (s: State, bonus = 0) => deepVoyagePearls(s) + Math
 export const rebirthRewardParts = (s: State, bonus = 0) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))), bonus: Math.max(0, Math.floor(bonus)), deep: deepVoyagePearls(s) });
 export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
-/** 던전 전투 난이도 단계. 무한 심연은 깊이 + 2, 일반 던전은 0. */
+/** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, 일반 던전은 0. */
 export const dungeonTier = (id: string, abyssDepth: number) => id === 'abyss' ? abyssDepth + 2 : 0;
 /** 잠든 닻 봉인 중에는 일반 낚시터 해역 난이도가 0으로 고정됩니다. */
 export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1) : s.vows?.seal ? 0 : (s.tide || 0);

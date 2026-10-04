@@ -71,7 +71,7 @@ export function Character({ s, send, busy }: PanelProps) {
     </span>
     <span>골드 획득 배율<strong>×{goldMultiplier(s).toFixed(2)}</strong>
     </span>
-    {(() => { const c = variantChances(s), total = VARIANTS.reduce((a, v) => a + c[v.id], 0), golden = a.goldenFind || 0; return <span title={`낚시터에서 어종을 ${VARIANT_BOOK_MIN}회 이상 포획한 뒤부터 입질마다 변종을 판정합니다. ${VARIANTS.map(v => `${v.mark} ${v.name} ${percent(c[v.id], 1)}`).join(' · ')}. 황금 개체는 포획 순간 따로 판정(${percent(golden, 1)}). 해초림 테마 +10%, 난파선 수집가 계보 패시브가 변종 조우 확률을 올립니다(현재 +${percent(a.variantFind || 0, 0)}).`}>변종 조우 확률 (포획당)<strong>{percent(total, 1)}{golden ? ` · 황금 ${percent(golden, 1)}` : ''}</strong></span>; })()}
+    {(() => { const c = variantChances(s), total = VARIANTS.reduce((a, v) => a + c[v.id], 0), golden = a.goldenFind || 0; return <span title={`낚시터에서 어종을 ${VARIANT_BOOK_MIN}회 이상 포획한 뒤부터 입질마다 변종을 판정합니다. ${VARIANTS.map(v => `${v.mark} ${v.name} ${percent(c[v.id], 1)}`).join(' · ')}. 황금 개체는 포획 순간 따로 판정(${percent(golden, 1)}). 버섯숲 연못 테마 +10%, 난파선 수집가 계보 패시브가 변종 조우 확률을 올립니다(현재 +${percent(a.variantFind || 0, 0)}).`}>변종 조우 확률 (포획당)<strong>{percent(total, 1)}{golden ? ` · 황금 ${percent(golden, 1)}` : ''}</strong></span>; })()}
     <span>경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
     <span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong>
     </span>

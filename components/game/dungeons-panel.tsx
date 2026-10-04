@@ -67,7 +67,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">
                 <span><b>최초</b>{d.id === 'abyss' ? `${s.abyssBest + 1}층 진주 ${abyssPearls(s.abyssBest + 1)} · 10층마다 보너스 진주(층 수만큼)${nextAbyssMilestone(s.abyssBest) ? ` · ${nextAbyssMilestone(s.abyssBest)}층 SP 1` : ''}${ABYSS_AP_MILESTONES.find(n => n > s.abyssBest) ? ` · ${ABYSS_AP_MILESTONES.find(n => n > s.abyssBest)}층 AP 1` : ''}` : `진주 ${d.pearls}${research ? ` · 연구 SP ${research.sp}` : ''}`}{d.id !== 'abyss' && s.clears[d.id] && (!research || claimed) ? ' · 받음' : ''}</span>
-                <span><b>반복</b>{format(dungeonClearGold(s, d.gold, tier))} G · 희귀 이상 장비{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 심연 전용 옵션' : ''}</span>
+                <span><b>반복</b>{format(dungeonClearGold(s, d.gold, tier))} G · 희귀 이상 장비{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''}</span>
             </div>
             {research && s.clears[d.id] && !claimed && <button className="gold-button" disabled={busy} onClick={() => send({ type: 'bossResearch', id: d.id })}>첫 정복 연구 받기 · SP {research.sp}</button>}
             <div className="stage-footer dungeon-actions">

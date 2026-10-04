@@ -309,7 +309,7 @@ export type GuildState = {
 };
 export type State = {
     version: number;
-    /** SP를 지급한 무한 심연 이정표 깊이. 환생해도 유지됩니다. */
+    /** SP를 지급한 무릉도장 이정표 깊이. 환생해도 유지됩니다. */
     abyssMilestones?: number[];
     /** (구) 선택한 무리 사냥 규모. v25.19부터 무리는 변종으로 무작위 등장하며 이 값은 쓰지 않습니다. */
     swarm?: number;
@@ -337,7 +337,7 @@ export type State = {
     /** v25.6 일일·주간 항해 목표판(한국 시간 기준 날짜·주 키). */
     daily?: import('./data/goals').GoalBoard;
     weekly?: import('./data/goals').GoalBoard;
-    /** v25.6 이번 주 무한 심연 최고 깊이. settled는 보상을 정산한 지난주 키. */
+    /** v25.6 이번 주 무릉도장 최고 깊이. settled는 보상을 정산한 지난주 키. */
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
     /** v25.8 낚시터별 포획한 최고 해역 난이도(차수). 이정표 진주와 업적에 씁니다. */
     tideBest?: Record<string, number>;
@@ -438,7 +438,7 @@ export type State = {
         id: string;
         wave: number;
         depth?: number;
-        /** 반복 도전. left: 남은 추가 도전 횟수(null=실패할 때까지), until: 무한 심연 목표 깊이. */
+        /** 반복 도전. left: 남은 추가 도전 횟수(null=실패할 때까지), until: 무릉도장 목표 깊이. */
         repeat?: { left: number | null; until?: number };
     };
     clears: Record<string, number>;

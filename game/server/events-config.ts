@@ -16,7 +16,7 @@ export async function readEventConfig(): Promise<EventConfig> {
     catch { return { extra: [], disabled: [] }; }
 }
 const CLOSURES_KEY = 'closures';
-/** 저장한 적이 없으면 기본값(무한 심연 닫힘). 모르는 id와 첫 낚시터는 버립니다. */
+/** 저장한 적이 없으면 기본값(무릉도장 닫힘). 모르는 id와 첫 낚시터는 버립니다. */
 export async function readClosures(): Promise<Closures> {
     const raw = await db().getSetting(CLOSURES_KEY);
     if (!raw) return { dungeons: [...DEFAULT_CLOSURES.dungeons], stages: [...DEFAULT_CLOSURES.stages] };

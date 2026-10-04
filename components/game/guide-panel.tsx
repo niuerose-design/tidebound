@@ -122,7 +122,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Sparkles size={19}/>} title="습득 · 계승 · 강화"
                     effect="전직하면 그 직업의 기술을 Lv.0으로 얻습니다. 장착한 채 포획해 첫 숙련을 채우면 다른 직업에서도 씁니다."
                     condition="해금한 기술에 한해 계승·강화에 각각 1 SP."
-                    limit="SP는 도감 최종 연구, 던전 첫 정복 연구, 심연 이정표에서만 얻습니다."/>
+                    limit="SP는 도감 최종 연구, 던전 첫 정복 연구, 무릉도장 이정표에서만 얻습니다."/>
                 <Rule icon={<Target size={19}/>} title="숙련 · 연마"
                     effect="포획할 때마다 현재 직업과 장착한 스킬의 숙련이 기본 1 오릅니다. 해역 난이도 1단계마다 30%씩 더 오릅니다(낚시터만). 기본 숙련을 마치면 연마 30단계가 이어져 단계마다 직접 피해·양수 패시브 +0.8%."
                     condition={`조건부 숙련 스킬은 지정한 적을 이겼을 때만 더 줍니다. 포획 1회당 최대 ${PROGRESSION.maxMasteryPerVictory}.`}
@@ -144,14 +144,14 @@ export function Guide({ s }: { s?: State }) {
             <div className="help-columns">
                 <Rule icon={<Fish size={19}/>} title="변종(희귀어)"
                     effect={<>같은 어종인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b> {percent(v.chance, 1)} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 포획 순간 따로 판정, 그 한 마리 골드 10배. 난파선 수집가 계보 패시브(전리품 감지·심해 인양·보물왕의 창고·전설의 보고)가 확률을 올립니다.</>}
-                    condition={`낚시터에서 그 어종을 ${VARIANT_BOOK_MIN}회 이상 포획한 뒤부터 입질마다 판정합니다. 해초림 테마 +10%. 난파선 수집가 계보 패시브가 확률을 올립니다(난파선 감식 +20% · 무리 감지 +50% · 전설의 보고 +100% 등).`}
+                    condition={`낚시터에서 그 어종을 ${VARIANT_BOOK_MIN}회 이상 포획한 뒤부터 입질마다 판정합니다. 버섯숲 연못 테마 +10%. 난파선 수집가 계보 패시브가 확률을 올립니다(난파선 감식 +20% · 무리 감지 +50% · 전설의 보고 +100% 등).`}
                     limit="던전과 보스에는 변종이 없습니다. 지금 확률은 능력치 화면 아래 ‘변종 조우 확률’에서 봅니다."/>
                 <Rule icon={<Fish size={19}/>} title="무리 변종"
                     effect={`포획당 ${percent(swarm.chance, 1)}. 무리 전체를 체력 ×N인 한 개체로 상대하고, 포획하면 보상·숙련·도감을 마리 수만큼 받습니다.`}
                     condition={`규모는 도감 포획 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100, ${SWARM_UNLOCK[500].toLocaleString()}회에 희귀어 추적자의 ‘무리 감지’(Lv.30)를 장착하면 ×500.`}
                     limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 포획 전에 쓰러지면 보상이 없습니다."/>
-                <Rule icon={<Swords size={19}/>} title="던전 · 무한 심연"
-                    effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 심연은 10층마다 보너스 진주, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1, 30·60·90층에 장착 AP 1.`}
+                <Rule icon={<Swords size={19}/>} title="던전 · 무릉도장"
+                    effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 진주, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1, 30·60·90층에 장착 AP 1.`}
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                     limit={`던전에서는 포획 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 낚시터로 돌아옵니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
@@ -165,7 +165,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<RefreshCw size={19}/>} title="환생"
                     effect="진주 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스 + 깊은 항해 보너스. 영구 보너스(체력·공격·방어)는 2.5% × √환생 횟수, 영구 경험치는 환생마다 +25%."
                     condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨 +${s ? tailwindWindow(s) : TAILWIND_WINDOW} 안에 환생하면 다음 생 경험치 +${Math.round((s ? tailwindExp(s) : TAILWIND_EXP) * 100)}%(순풍), Lv.${DEEP_VOYAGE_LEVEL}에 환생하면 숙련 기본 획득 +2(깊은 항해).`}
-                    limit={`횟수 보상은 20회까지 회당 진주 1·경험치 +25%, 이후 완만해집니다. 환생 AP 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도 최대 ${ECONOMY.tideCap}. 칭호는 업적(환생 횟수·도전·심연)을 달성하면 얻고, 능력치 화면의 ‘칭호’에서 장착하거나 숨깁니다.`}/>
+                    limit={`횟수 보상은 20회까지 회당 진주 1·경험치 +25%, 이후 완만해집니다. 환생 AP 최대 ${ECONOMY.rebirthAPCap}, 해역 난이도 최대 ${ECONOMY.tideCap}. 칭호는 업적(환생 횟수·도전·무릉도장)을 달성하면 얻고, 능력치 화면의 ‘칭호’에서 장착하거나 숨깁니다.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="진주 연구"
                     effect="진주로 영구 능력을 올립니다. 환생해도 유지되며 전투·유틸·골드 탭으로 나뉩니다."
                     condition="단계가 오를수록 비용이 커집니다. 일부 연구는 정해진 환생 횟수 뒤에 열립니다."

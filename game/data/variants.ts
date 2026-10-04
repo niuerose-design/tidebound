@@ -31,7 +31,7 @@ export const VARIANTS: VariantDef[] = [
     { id: 'starlit', name: '별빛 개체', mark: '✧', desc: '체력 ×1.5. 진주 +1(환생 3회부터 +2), 경험치 ×5.', chance: .008, hp: 1.5, attack: 1, reward: 1, expMult: 5, drops: 1, book: 1, pearls: 1 },
 ];
 export const variantById = (id?: VariantId) => id ? VARIANTS.find(v => v.id === id) : undefined;
-/** 변종 확률 배율: 지역 테마(해초림 +10%) × (1 + 변종 조우 확률 증가). 증가분은 난파선 수집가 계보 패시브가 올립니다. */
+/** 변종 확률 배율: 지역 테마(버섯숲 연못 +10%) × (1 + 변종 조우 확률 증가). 증가분은 난파선 수집가 계보 패시브가 올립니다. */
 export function variantMultiplier(s: State) {
     return (1 + rareSpawnBonus(s)) * (1 + (stats(s).variantFind || 0));
 }

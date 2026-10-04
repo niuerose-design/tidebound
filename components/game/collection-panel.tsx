@@ -110,7 +110,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 {bookRevealed(s, f.id) ? <div className="fish-trait"><strong>{p.name}</strong><span>{p.hint}</span></div> : <LockedInfo n={n}/>}
                 <BookTraitLine s={s} id={f.id}/>
                 <BookResearch s={s} id={f.id} send={send} busy={busy}/>
-                {bookRevealed(s, f.id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{f.id === 'abyssSovereign' ? '무한 심연 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span></div><EnemySkillList ids={p.skills} enemy={enemy}/></details>}
+                {bookRevealed(s, f.id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{f.id === 'abyssSovereign' ? '무릉도장 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span></div><EnemySkillList ids={p.skills} enemy={enemy}/></details>}
             </article>;
         })}</div>
         </details></TabsContent>
