@@ -11,10 +11,10 @@ export const BALANCE = {
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
     activeSlots: 4, passiveSlots: 3, inventoryCap: 60,
-    // v27.53 처치당 기본 0.25%(전에는 0.1%), 상한 1.5%. 일반 처치 드롭은 희귀 이상만 나옵니다.
+    // v27.53 처치당 기본 0.25%(전에는 0.1%). v27.73 상한 1.5% → 3%: 행운 500이나 행운 300 + 물건도감 완성만으로 상한에 닿아 보물의 감각 연구가 0 효과가 되던 것을 풀었습니다. 일반 처치 드롭은 희귀 이상만 나옵니다.
     // 행운·물건도감·연구·드롭 보너스는 이 확률에 곱해지는 상대 증가: 드롭 보너스 0.01 = 드롭 확률 +10%(dropBonusScale 0.1).
     // 전에는 0.01이 +5.9%인데 설명은 '+1%p'로 적혀 있어 실제 효과가 설명의 수십분의 일이었습니다.
-    dropChance: 0.0025, dropBonusScale: 0.1, dropChanceCap: 0.015,
+    dropChance: 0.0025, dropBonusScale: 0.1, dropChanceCap: 0.03,
     /** v27.53 해역 난이도·무릉도장 층으로 올라가는 드롭 장비 레벨 상한: 캐릭터 레벨 + dropLevelOver(그 지역 몬스터보다 낮아지지는 않음). */
     dropLevelOver: 10,
     // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).

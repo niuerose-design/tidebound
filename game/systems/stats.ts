@@ -75,11 +75,11 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v27.73 장비 드롭 보너스도 여기서 모읍니다(연구 ‘보물의 감각’ 1단계 = 0.01 = 드롭 확률 +10%, 행운, 물건도감). 전에는 dropRate에서만 더해 상세 능력치에 보이지 않았습니다.
     a.dropBonus = researchRank(s, 'drop') * .01 + v.luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus;
     rec('dropBonus', 'research', researchRank(s, 'drop') * .01); rec('dropBonus', 'attributes', v.luk * E.luk.dropBonus); rec('dropBonus', 'book', Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus);
-    set('rebirthBonus', 'research', s.permanent.pearl || 0);
+    set('rebirthBonus', 'research', (s.permanent.pearl || 0) * 2);
     set('dungeonGoldBonus', 'research', (s.permanent.dungeon || 0) * .08);
     // 세계석 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다.
     add('crit', 'research', researchRank(s, 'crit') * .005); add('crit', 'account', accountCrit(s)); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
-    add('penetration', 'research', researchRank(s, 'penetration') * .01); add('evasion', 'research', researchRank(s, 'evasion') * .004);
+    add('penetration', 'research', researchRank(s, 'penetration') * .01); add('evasion', 'research', researchRank(s, 'evasion') * .006);
     add('lifesteal', 'research', researchRank(s, 'lifesteal') * .005);
     // 도감: 몬스터 성향별 연구 능력치와 완성 지역의 테마 보너스(고정값). 배율은 아래에서 따로 적용합니다.
     for (const bonus of [bookStatBonus(s), ...themes.map(t => t.add || {})])

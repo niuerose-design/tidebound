@@ -18,15 +18,16 @@ export function masteryConditionText(sk: Skill) {
 /** 처치당 숙련 획득량. base는 기본 획득(보통 1), bonus는 조건부 보너스. 스킬 설명과 실제 지급이 같은 식을 씁니다. */
 export const masteryPerVictory = (bonus: number, base = 1) => Math.min(PROGRESSION.maxMasteryPerVictory + base - 1, base + Math.max(0, Math.floor(bonus)));
 /**
- * 숙련의 기억: 숙련 획득 +5%/단계. 숙련은 정수라 소수점은 s.masteryCarry에 1/20 단위 정수로 누적합니다.
+ * 숙련의 기억: 숙련 획득 +3%/단계(v27.73, 전에는 5%) + 계정 어종 보너스 5%/단계. 숙련은 정수라 소수점은 s.masteryCarry에 1/100 단위 정수로 누적합니다.
  * 난수를 쓰지 않으며, 0단계면 상태를 건드리지 않고 그대로 돌려줍니다.
  */
+export const masteryResearchHundredths = (s: State) => researchRank(s, 'mastery') * 3 + accountMasteryTwentieths(s) * 5;
 export function researchMastery(s: State, practice: number) {
-    const rank = researchRank(s, 'mastery') + accountMasteryTwentieths(s);
-    if (!rank || practice <= 0) return { total: practice, extra: 0 };
-    const twentieths = practice * rank + (s.masteryCarry || 0);
-    const extra = Math.floor(twentieths / 20);
-    s.masteryCarry = twentieths % 20;
+    const rate = masteryResearchHundredths(s);
+    if (!rate || practice <= 0) return { total: practice, extra: 0 };
+    const hundredths = practice * rate + (s.masteryCarry || 0);
+    const extra = Math.floor(hundredths / 100);
+    s.masteryCarry = hundredths % 100;
     return { total: practice + extra, extra };
 }
 /** A victory is always one catch. Bonuses change mastery, never codex counts or SP. */
@@ -48,14 +49,14 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
 }
 /**
  * 처치 숙련 배율(조건부 스킬 보너스 제외). 전투 보상과 능력치 화면이 같은 식을 씁니다.
- * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · tide: 사냥터 난이도(일반 던전 포함, 무릉도장은 1) · research: 숙련의 기억 + 계정 몬스터 보너스(+5%/단계).
+ * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · tide: 사냥터 난이도(일반 던전 포함, 무릉도장은 1) · research: 숙련의 기억(+3%/단계) + 계정 어종 보너스(+5%/단계).
  */
 export function masteryMultipliers(s: State) {
     const focus = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     const event = s.event?.mastery || 1;
     // v27.68 일반 던전도 사냥터 난이도 숙련 배율을 받습니다(무릉도장은 1).
     const tide = s.dungeon?.id === 'abyss' ? 1 : tierMastery(encounterTier(s));
-    const research = 1 + (researchRank(s, 'mastery') + accountMasteryTwentieths(s)) / 20;
+    const research = 1 + masteryResearchHundredths(s) / 100;
     const base = s.lifeBonus === 'deep' ? 2 : 1;
     return { base, focus, event, tide, research, total: focus * event * tide * research };
 }
