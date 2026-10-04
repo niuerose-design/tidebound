@@ -383,3 +383,4 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .book-enemy-chevron { flex: none; transition: transform .15s ease; transform: rotate(-90deg); }
 .book-enemy[open] > summary .book-enemy-chevron { transform: rotate(0deg); }
 @media (prefers-reduced-motion: reduce) { .book-enemy-chevron { transition: none; } }
+.bonus-feats { margin-top:16px; }

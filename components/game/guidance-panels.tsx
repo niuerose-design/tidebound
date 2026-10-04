@@ -78,9 +78,10 @@ function AchievementBonus({ s }: { s: State }) {
             </dl>
             <p className="footnote">능력치 배율은 종류별로 더해 최종 능력치에 한 번 곱합니다. 받은 업적 {claimedList.length} / {ACHIEVEMENTS.length}개 · 세계석 {pearls.toLocaleString()} · SP {sp} 수령.</p>
         </section>
-        <section className="voyage-section"><div className="section-title"><h2>영구 보너스가 붙은 업적</h2><span>{permanent.filter(a => claimed[a.id]).length} / {permanent.length} 수령</span></div>
+        <details className="achievement-group bonus-feats" open>
+            <summary><h3>영구 보너스가 붙은 업적</h3><span>{permanent.filter(a => claimed[a.id]).length} / {permanent.length} 수령</span><ChevronDown size={15} className="achievement-chevron"/></summary>
             <div className="voyage-list achievement-list">{permanent.map(a => { const done = feats[a.id] !== undefined, got = !!claimed[a.id]; return <article key={a.id} className={`panel voyage-entry achievement ${got ? 'done' : ''} ${done && !got ? 'claimable' : ''}`}><div className="achievement-top"><strong>{a.title}</strong>{got ? <Check size={14}/> : <small>{done ? '받기 전' : '미달성'}</small>}</div><p>{a.desc}</p><small className="achievement-reward">{rewardText({ ap: a.reward.ap, bonus: a.reward.bonus })}</small></article>; })}</div>
-        </section>
+        </details>
     </>;
 }
 
