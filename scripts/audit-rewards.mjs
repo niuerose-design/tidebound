@@ -7,7 +7,9 @@ const { load } = loadGame();
 const { newState, tick, act } = await load('systems/engine');
 const { drop } = await load('systems/encounter');
 const { syncGoals } = await load('systems/progress');
-const { STAGES, DUNGEONS } = await load('data/world');
+const { STAGES, DUNGEONS, setClosures } = await load('data/world');
+// 운영에서 닫아 둔 사냥터·던전(예: 무릉도장)도 점검표에서는 열어 둡니다.
+setClosures({ dungeons: [], stages: [] });
 const { xpNeeded } = await load('data/balance');
 const { levelGateOk, tideLimit } = await load('systems/meta');
 const MINUTES = Number(process.argv[2] || 30), PICK = process.argv[3] || '';
@@ -59,6 +61,6 @@ for (const p of PROFILES.filter(x => x.name.includes(PICK))) {
     }
     for (const d of DUNGEONS.filter(x => x.rebirth <= p.rebirths && levelGateOk(base, x.level))) {
         const r = run(base, s => { s.enemy = null; act(s, { type: 'dungeon', id: d.id, value: d.id === 'abyss' ? 'deeper:999' : 'fail' }, s.lastTick, random(3)); });
-        console.log(row(`던전 ${d.name} (Lv.${d.level})`, r));
+        console.log(row(`던전 ${d.name} (Lv.${d.level})${r.clears ? '' : ' · 클리어 실패 → 사냥터로'}`, r));
     }
 }
