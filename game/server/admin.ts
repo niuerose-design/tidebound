@@ -125,7 +125,7 @@ export async function listEvents(now = Date.now()) {
     return {
         code: SERVER_EVENTS.map(e => ({ ...e, disabled: config.disabled.includes(e.id), live: live(e) })),
         extra: config.extra.map(e => ({ ...e, live: live(e) })),
-        banner: active ? eventLabel(active) : '',
+        banner: active ? eventLabel(active) : '', at: now,
     };
 }
 /** 운영 페이지 이벤트 추가·수정. 배율은 1~10, 이름 40자, 시작 < 종료, 기간 최대 60일. */

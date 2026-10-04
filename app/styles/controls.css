@@ -129,3 +129,4 @@
 .altar-result{border:1px solid var(--border);border-radius:7px;padding:12px;font-size:13px;display:flex;flex-direction:column;gap:6px}.altar-result.win{border-color:#496250;background:#1c3229}.altar-result.lose{background:#2a1c1f;border-color:#5a3a3f}.altar-result ol{max-height:220px;overflow:auto;margin:6px 0 0;padding-left:18px;font-size:12px;color:#a9bfbf}
 @media(max-width:767px){.altar-grid{grid-template-columns:1fr}.altar-input{grid-template-columns:auto 50px 1fr}.altar-input small{grid-column:2/-1}}
 .game-sidebar [data-sidebar=menu-button]>span{white-space:nowrap}
+.altar-tabs{margin-bottom:4px}.altar-offer [data-slot=table-container]{max-height:440px;overflow:auto}

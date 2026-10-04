@@ -3,8 +3,9 @@ import { dayKey } from '../data/goals';
 import { BALANCE } from '../data/balance';
 import { normalizeStats, hitChance, power } from './stats';
 import { Fighter, fighterSpeed, actTurn, constraintFields } from './combat';
-import { FISH } from '../data/world';
-import { scaledEnemyStats, profile } from '../data/encounters';
+import { FISH, DUNGEONS } from '../data/world';
+import { abyssReference } from './encounter';
+import { scaledEnemyStats, abyssEnemyStats, profile } from '../data/encounters';
 /** 훈련 상대로 쓰는 던전 보스. 던전 마지막 웨이브와 같은 능력치·스킬로 섭니다(레벨 보정 0단계). */
 export const BOSS_OPPONENTS = FISH.filter(f => f.boss);
 export function bossSnapshot(id: string): Snapshot | null {
@@ -13,18 +14,25 @@ export function bossSnapshot(id: string): Snapshot | null {
     const stats = scaledEnemyStats(f, { boss: true });
     return { name: f.name, level: f.level, job: 'boss', rebirths: 0, stats, skills: profile(f.id).skills, power: power(stats), rating: 1000 + f.level * 10 };
 }
+/** v27.43 무릉도장 depth층 보스(마지막 웨이브)와 같은 능력치·기술. 제단의 첫 신이 씁니다. */
+export function abyssBossSnapshot(depth: number): Snapshot {
+    const d = DUNGEONS.find(x => x.id === 'abyss')!, f = FISH.find(x => x.id === d.bossFish)!;
+    const stats = abyssEnemyStats(f, abyssReference(), depth, { boss: true, wave: d.fish.length - 1 });
+    return { name: d.boss, level: f.level, job: 'boss', rebirths: 0, stats, skills: profile(f.id).skills, power: power(stats), rating: 1000 + f.level * 10 };
+}
 /** 테스트·점검용 표본 상대. 화면의 훈련 상대는 등록된 모험가와 던전 보스입니다. */
 export const TRAINING: Snapshot[] = [
     { name: '항구의 견습생', level: 3, job: 'fisher', rebirths: 0, stats: { hp: 140, attack: 18, defense: 5, crit: .08 }, skills: ['hook'], power: 250, rating: 1000 },
     { name: '산호초의 파수꾼', level: 12, job: 'warden', rebirths: 0, stats: { hp: 380, attack: 50, defense: 28, crit: .1 }, skills: ['anchor', 'breath', 'scales'], power: 700, rating: 1200 },
     { name: '심해의 방랑자', level: 26, job: 'tide', rebirths: 1, stats: { hp: 780, attack: 125, defense: 50, crit: .2 }, skills: ['spring', 'wave', 'hook', 'focus'], power: 1600, rating: 1600 },
 ];
-export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rng = Math.random): DuelResult {
+/** maxTurns: 결투는 80턴, v27.43 제단의 신은 무릉도장처럼 길게(ALTAR.godMaxTurns). */
+export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rng = Math.random, maxTurns: number = BALANCE.duelMaxTurns): DuelResult {
     const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, skills: s.skills, cooldowns: {}, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, specializations: s.skillSpecializations, practice: s.skillPractice, effects: {} });
     const a = fighter(player), b = fighter(opponent);
     const logs: string[] = [], rounds: DuelResult['rounds'] = [];
     let turns = 0;
-    while (a.hp > 0 && b.hp > 0 && turns < BALANCE.duelMaxTurns) {
+    while (a.hp > 0 && b.hp > 0 && turns < maxTurns) {
         turns++;
         const sa = fighterSpeed(a), sb = fighterSpeed(b);
         const first = !!a.firstStrike !== !!b.firstStrike ? (a.firstStrike ? a : b) : sa === sb ? (turns % 2 ? a : b) : sa > sb ? a : b, second = first === a ? b : a;

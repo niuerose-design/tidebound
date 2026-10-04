@@ -5,7 +5,7 @@
  */
 export type ServerEvent = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; /** v27.43 숙련의 까미 출현 배율(제단 축복). */ mimic?: number };
 /** State에 적히는 이벤트 요약(배율과 종료 시각만). */
-export type ActiveEvent = { id: string; name: string; until: number; exp: number; gold: number; drop: number; mastery?: number; mimic?: number };
+export type ActiveEvent = { id: string; name: string; until: number; exp: number; gold: number; drop: number; mastery?: number; mimic?: number; /** v27.44 제단 축복이 섞였을 때 배너용(축복을 뺀 이벤트, 없으면 null). 축복은 제단 알림이 따로 보여 줍니다. */ banner?: ActiveEvent | null };
 
 export const SERVER_EVENTS: ServerEvent[] = [
     { id: 'openbeta-exp', name: '오픈베타 기념', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', exp: 2 },
@@ -28,10 +28,12 @@ export const currentEvents = (withAltar = true) => [...SERVER_EVENTS.filter(e =>
 export function activeEvent(now: number, events: ServerEvent[] = currentEvents()): ActiveEvent | null {
     const live = events.filter(e => Date.parse(e.from) <= now && now <= Date.parse(e.until));
     if (!live.length) return null;
+    const others = live.filter(e => !e.id.startsWith('altar-'));
+    const banner = others.length < live.length ? { banner: others.length ? activeEvent(now, others) : null } : {};
     // 겹치면 배율은 곱하고, 이름은 이어 붙이고, 종료는 가장 이른 것으로 둡니다.
     return {
         id: live.map(e => e.id).join('+'), name: [...new Set(live.map(e => e.name).filter(Boolean))].join(' · '), until: Math.min(...live.map(e => Date.parse(e.until))),
-        exp: live.reduce((m, e) => m * (e.exp ?? 1), 1), gold: live.reduce((m, e) => m * (e.gold ?? 1), 1), drop: live.reduce((m, e) => m * (e.drop ?? 1), 1), mastery: live.reduce((m, e) => m * (e.mastery ?? 1), 1), mimic: live.reduce((m, e) => m * (e.mimic ?? 1), 1),
+        exp: live.reduce((m, e) => m * (e.exp ?? 1), 1), gold: live.reduce((m, e) => m * (e.gold ?? 1), 1), drop: live.reduce((m, e) => m * (e.drop ?? 1), 1), mastery: live.reduce((m, e) => m * (e.mastery ?? 1), 1), mimic: live.reduce((m, e) => m * (e.mimic ?? 1), 1), ...banner,
     };
 }
 /** 이벤트 배너 문구: 배율과 종료일. */
