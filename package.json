@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ignore-pattern .next --max-warnings 0",
-    "test": "node tests/run.mjs"
+    "test": "node tests/run.mjs",
+    "checks": "node scripts/run-checks.mjs"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",

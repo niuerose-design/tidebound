@@ -28,7 +28,7 @@ const fighter=(id,mana=50)=>({name:'test',stats:base,hp:20,skills:[id],cooldowns
 const target=()=>({...fighter(''),hp:1000,stats:{...base,hp:1000}});
 const healer=fighter('breath');strike(healer,target(),()=>0);assert.equal(healer.hp,20+Math.floor(100*ACTIVE_SKILL_BALANCE.breath.healRatio));
 const dry=fighter('arcane',0);assert(!strike(dry,target(),()=>0).includes('해류 탄환'));
-const free=fighter('pierce',0);assert(strike(free,target(),()=>0).includes('관통 작살'));assert.equal(free.mana,0);
+const free=fighter('pierce',0);assert(strike(free,target(),()=>0).includes(SKILLS.find(x=>x.id==='pierce').name));assert.equal(free.mana,0);
 console.log(JSON.stringify({checks:'passed',activeSkills:Object.keys(ACTIVE_SKILL_BALANCE).length}));
 for(const magic of [false,true])for(const seed of [11,29,47]){
  const s=newState(0),rng=random(seed);let checkpoint={};
