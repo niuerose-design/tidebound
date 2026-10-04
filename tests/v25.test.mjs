@@ -733,3 +733,18 @@ test('v27.64 tide lifts low-stage monster levels toward the top stage (capped by
     const spawnAt = tide => { const s = newState(0); s.level = 90; s.rebirths = 40; s.kills = 0; s.stage = W.STAGES[0].id; s.tide = tide; Enc.spawn(s, () => .99); return s.enemy; };
     assert.ok(spawnAt(20).maxHp > spawnAt(0).maxHp * 50, 'first stage at high tide is far tougher than before');
 });
+
+test('v27.66 exp level-gap cap: monsters more than 10 levels above the player give exp as if they were player level + 10', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const W = await L.load('data/world'), Enc = await L.load('systems/encounter'), Meta = await L.load('systems/meta');
+    assert.equal(W.expLevelScale(20, 10), 1, 'within the gap: full exp');
+    assert.ok(Math.abs(W.expLevelScale(50, 10) - W.fishExpAt(20) / W.fishExpAt(50)) < 1e-12, 'above the gap: scaled to player level + 10');
+    const top = W.STAGES.at(-1), spawnAt = level => { const s = newState(0); s.rebirths = 10; s.level = level; s.kills = 0; s.stage = top.id; s.target = null; s.tide = 0; Enc.spawn(s, () => .5); return s.enemy; };
+    const low = spawnAt(1), high = spawnAt(top.level + 6);
+    assert.ok(low.exp < high.exp / 100, `Lv.1 in the top stage gets far less exp (${low.exp} vs ${high.exp})`);
+    assert.equal(low.gold, spawnAt(1).gold, 'gold is not scaled');
+    const d = newState(0); d.rebirths = 10; d.level = 1; d.dungeon = { id: 'abyss', wave: 0, depth: 1 }; Enc.spawn(d, () => .5);
+    const d2 = newState(0); d2.rebirths = 10; d2.level = 80; d2.dungeon = { id: 'abyss', wave: 0, depth: 1 }; Enc.spawn(d2, () => .5);
+    assert.ok(d.enemy.exp < d2.enemy.exp, 'dungeons too');
+    void Meta;
+});

@@ -12,8 +12,8 @@ import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize 
 import { MIMIC, rollMimicMastery, mimicChance, specialLuck } from '../data/mimic';
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import type { State, Item } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel } from '../data/balance';
-import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish } from '../data/world';
+import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
+import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale } from '../data/world';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
@@ -135,7 +135,10 @@ export function spawn(s: State, rng: () => number) {
     const field = dungeon || rare ? f : tideLiftFish(stageStatFish(f, st.level), tier, s.level);
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
         : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
-    const { exp, gold } = dungeon ? dungeonCatchReward(f, dungeon.level, tier, boss) : catchReward(field, tier, boss);
+    const base = dungeon ? dungeonCatchReward(f, dungeon.level, tier, boss) : catchReward(field, tier, boss), gold = base.gold;
+    // v27.66 레벨 차 경험치 보정(EXP_LEVEL_GAP). 던전은 보상에 쓰는 몬스터 레벨(권장 + expLevelOver, 보스는 권장 레벨), 사냥터는 실제 몬스터 레벨 기준.
+    const rewardLevel = dungeon ? (boss ? dungeon.level : Math.min(f.level, dungeon.level + DUNGEON_TUNING.expLevelOver)) : field.level;
+    const exp = Math.max(1, Math.round(base.exp * expLevelScale(rewardLevel, s.level)));
     // v25.19 변종: 몬스터를 10회 이상 처치한 사냥터 출현마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
     let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
     if (!dungeon && !rare && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
