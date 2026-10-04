@@ -72,7 +72,7 @@ function AchievementBonus({ s }: { s: State }) {
     return <>
         <section className="panel bonus-summary">
             <div className="section-title"><h2>영구 보너스</h2><span>받은 업적의 보상만 셉니다 · 환생해도 유지</span></div>
-            <dl className="bonus-grid">
+            <dl className="feat-bonus-grid">
                 <div><dt>장착 AP</dt><dd>+{totals.ap}<small> / {max.ap}</small></dd></div>
                 {BONUS_KEYS.map(k => <div key={k}><dt>{BONUS_LABEL[k]}</dt><dd>+{pct(totals.bonus[k])}<small> / {pct(max.bonus[k])}</small></dd></div>)}
             </dl>

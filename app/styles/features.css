@@ -254,9 +254,9 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .goal-reroll { width:24px; height:24px; padding:0; color:#9bc8b5; } .goal-reroll:disabled { opacity:.35; cursor:default; }
 .goal-optional { font-size:11px; color:#8ea7a4; font-weight:normal; margin-left:4px; }
 .bonus-summary { padding:18px; margin-top:12px; }
-.bonus-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin:12px 0 6px; }
-.bonus-grid div { padding:10px 12px; border:1px solid #9ab4b522; border-radius:8px; background:#112329; }
-.bonus-grid dt { font-size:12px; color:#8ea7a4; margin-bottom:4px; } .bonus-grid dd { margin:0; font-size:18px; color:#e8d39a; } .bonus-grid dd small { font-size:12px; color:#7f9c98; }
+.feat-bonus-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; margin:12px 0 6px; }
+.feat-bonus-grid div { padding:10px 12px; border:1px solid #9ab4b522; border-radius:8px; background:#112329; }
+.feat-bonus-grid dt { font-size:12px; color:#8ea7a4; margin-bottom:4px; } .feat-bonus-grid dd { margin:0; font-size:18px; color:#e8d39a; } .feat-bonus-grid dd small { font-size:12px; color:#7f9c98; }
 .voyage-entry.achievement .achievement-top small { font-size:12px; color:#8ea7a4; }
 .goal-list { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
 .goal-list li { display:grid; gap:6px; padding:10px 0; border-top:1px solid #9ab4b51a; }
@@ -275,7 +275,7 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .focus-panel select { background:#101c20; border:1px solid var(--border); border-radius:6px; color:#e8efe9; padding:7px 8px; font:inherit; font-size:13px; }
 .abyss-board .abyss-mine { font-size:14px; color:#c5d8d2; margin:6px 0 12px; } .abyss-board .abyss-mine b { color:#e8d39a; }
 .abyss-board tr.self td { color:#a4e9ba; }
-@media (max-width: 767px) { .goal-boards { grid-template-columns:1fr; } .bonus-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 767px) { .goal-boards { grid-template-columns:1fr; } .feat-bonus-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 .voyage-entry.achievement.claimable { border-left:3px solid #e8d39a; box-shadow:0 0 0 1px #e8d39a33 inset; }
 .voyage-section .section-title .primary.small { margin-left:auto; margin-right:12px; }
 /* v25.6 캐릭터 슬롯 · 계정 보너스 */
