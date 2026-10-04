@@ -103,7 +103,7 @@ export function applyOffering(s: State, o: Offering, points: number, gauge: Alta
     if (s.pearls < o.pearls) throw new ApiError('세계석이 부족합니다.');
     if ((s.essence || 0) < o.essence) throw new ApiError('정수가 부족합니다.');
     s.gold -= o.gold; s.pearls -= o.pearls; s.essence = (s.essence || 0) - o.essence;
-    s.altar = { ...s.altar, anonymous };
+    s.altar = { ...s.altar, anonymous, offers: (s.altar?.offers || 0) + 1 };
     const parts = [o.gold ? `${o.gold.toLocaleString()} G` : '', o.pearls ? `세계석 ${o.pearls.toLocaleString()}` : '', o.essence ? `정수 ${o.essence.toLocaleString()}` : ''].filter(Boolean).join(' · ');
     addLog(s, `제단에 공물을 바쳤습니다 · ${parts} · 기여도 +${points.toLocaleString()} (${gauge === 'god' ? '신 소환' : BLESSINGS.find(b => b.id === gauge)!.name})`, 'system');
 }
