@@ -4,8 +4,8 @@ import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { PROGRESSION } from '@/game/data/progression';
 import { thresholdRank, refinementBonusLabel } from '@/game/data/long-term';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, GripVertical, Info, Pin, Search } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, Eye, EyeOff, GripVertical, Info, Pin, Search } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
@@ -22,11 +22,16 @@ import { ENEMY_SKILLS } from '@/game/data/encounters';
 
 
 
-function PinButton({ pinned, onPin, name }: { pinned: boolean; onPin: () => void; name: string }) {
-    return <button type="button" className={`skill-pin ${pinned ? 'active' : ''}`} aria-pressed={pinned} aria-label={`${name} ${pinned ? '즐겨찾기 해제' : '즐겨찾기'}`} title={pinned ? '즐겨찾기 해제' : '즐겨찾기에 고정'} onClick={onPin}><Pin size={14}/></button>;
+/** v27.70 카드 머리의 즐겨찾기·숨기기 버튼. 둘 다 세이브에 저장되어 기기를 옮겨도 따라갑니다. */
+function MarkButtons({ pinned, hidden, onPin, onHide, name, disabled }: { pinned: boolean; hidden: boolean; onPin: () => void; onHide: () => void; name: string; disabled: boolean }) {
+    return <span className="skill-title-tools">
+        <button type="button" className={`skill-pin ${pinned ? 'active' : ''}`} disabled={disabled} aria-pressed={pinned} aria-label={`${name} ${pinned ? '즐겨찾기 해제' : '즐겨찾기'}`} title={pinned ? '즐겨찾기 해제' : '즐겨찾기에 고정'} onClick={onPin}><Pin size={14}/></button>
+        <button type="button" className={`skill-pin skill-hide ${hidden ? 'active' : ''}`} disabled={disabled} aria-pressed={hidden} aria-label={`${name} ${hidden ? '숨김 해제' : '숨기기'}`} title={hidden ? '숨김 해제' : '목록에서 숨기기 (장착 중·검색·숨김 탭에는 보임)'} onClick={onHide}>{hidden ? <Eye size={14}/> : <EyeOff size={14}/>}</button>
+    </span>;
 }
 
-function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: PanelProps & { sk: Skill; detailed: boolean; pinned?: boolean; onPin?: () => void }) {
+function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false }: PanelProps & { sk: Skill; detailed: boolean; pinned?: boolean; hidden?: boolean }) {
+    const marks = <MarkButtons pinned={pinned} hidden={hidden} disabled={busy} name={sk.name} onPin={() => send({ type: 'pinSkill', id: sk.id })} onHide={() => send({ type: 'hideSkill', id: sk.id })}/>;
     const rank = s.learned[sk.id] || 0, acquired = rank > 0;
     const practice = s.skillPractice[sk.id] || 0, mastery = skillMastery(s, sk.id);
     const level = skillLevel(sk, rank || 1, mastery), max = maxSkillLevel(sk), milestones = masteryMilestonesFor(sk);
@@ -46,15 +51,15 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, onPin }: Panel
     const apShort = Math.max(0, cost - (apCapacity(s) - apUsed(s)));
     const equipLabel = equipped ? '장착 해제' : !acquired ? unlockText : !usable ? skillBlockReason(s, sk.id).replace(/[.。]$/, '') : !equipAllowed ? `AP ${apShort} 부족` : '장착';
     // v25 감춰진 기술: 숙련 Lv.1 전까지 효과를 ???로 보여 줍니다(장착·숙련 진행은 그대로).
-    if (skillVeiled(s, sk)) return <article className={`panel skill-card skill-veiled ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${detailed ? 'expanded' : 'compact'}`}>
-        <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3 title={hanjaReading(sk.name)}>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · {sk.type === 'active' ? '액티브' : '패시브'} · 장착 AP {cost}</small></div>{onPin && <PinButton pinned={pinned} onPin={onPin} name={sk.name}/>}</div>
+    if (skillVeiled(s, sk)) return <article className={`panel skill-card skill-veiled ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${hidden ? 'skill-hidden' : ''} ${detailed ? 'expanded' : 'compact'}`}>
+        <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3 title={hanjaReading(sk.name)}>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · {sk.type === 'active' ? '액티브' : '패시브'} · 장착 AP {cost}</small></div>{marks}</div>
         <p className="skill-current-description">??? · 숙련 Lv.1을 달성하면 효과가 드러납니다.</p>
         <div className="skill-compact-growth"><span>{acquired ? '습득' : unlockText}</span><span>{nextMastery ? `숙련 ${practice.toLocaleString()} / ${nextMastery.toLocaleString()}` : '숙련 완료'}</span></div>
         {acquired && <Meter value={Math.min(practice, nextMastery || milestones[max - 1])} max={nextMastery || milestones[max - 1]}/>}
         <div className="skill-actions skill-actions-v2"><button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} onClick={() => send({ type: 'skill', id: sk.id })}>{equipLabel}</button></div>
     </article>;
-    return <article className={`panel skill-card ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${detailed ? 'expanded' : 'compact'}`} title={detailed ? undefined : `${effects.join(" · ")}\n다음 강화: ${hint}`}>
-        <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3 title={hanjaReading(sk.name)}>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · 캐릭터 Lv.{sk.level}{sk.rebirth ? ` · 환생 ${sk.rebirth}회` : ''}</small></div>{onPin && <PinButton pinned={pinned} onPin={onPin} name={sk.name}/>}</div>
+    return <article className={`panel skill-card ${equipped ? 'chosen' : ''} ${!acquired ? 'locked' : ''} ${hidden ? 'skill-hidden' : ''} ${detailed ? 'expanded' : 'compact'}`} title={detailed ? undefined : `${effects.join(" · ")}\n다음 강화: ${hint}`}>
+        <div className="skill-title"><div className="icon-box"><SkillIcon id={sk.id}/></div><div><h3 title={hanjaReading(sk.name)}>{sk.name}</h3><small>{jobById(sk.job)?.name || '공용'} · 캐릭터 Lv.{sk.level}{sk.rebirth ? ` · 환생 ${sk.rebirth}회` : ''}</small></div>{marks}</div>
         {!detailed && <span className={`skill-status-badge ${equipped && usable ? 'on' : !acquired || !usable ? 'off' : ''}`}>{equipped ? (usable ? '장착 중' : '장착 · 사용 불가') : !acquired ? '미습득' : !usable ? '계승 필요' : '사용 가능'}</span>}
         {detailed && <div className="skill-state-row" aria-label="스킬 상태"><span className={acquired ? 'on' : 'off'}><small>습득</small>{acquired ? '습득' : '미습득'}</span><span className={!sk.job || isInherited ? 'on' : 'off'}><small>다른 직업</small>{!sk.job ? '공용 · 모든 직업' : isInherited ? '계승 완료 · 사용 가능' : '계승 필요'}</span><span className={equipped ? (usable ? 'on' : 'warn') : 'off'}><small>장착</small>{equipped ? (usable ? '장착 중' : '장착 · 지금은 사용 불가') : '미장착'}</span></div>}
         {detailed && <div className="skill-level-line"><strong>{acquired ? `성장 Lv.${level}` : '미해금'} <small>/ 최대 {max}{lb > 0 ? ` · 한계돌파 ${lb}단계` : ''}{acquired ? ` · SP Lv.${Math.min(max, Math.max(0, rank - 1))} · 숙련 Lv.${Math.min(max, mastery - lb)} 중 높은 값` : ''}</small></strong>{!acquired && <span>{inheritanceText}</span>}<TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" className="info-trigger" aria-label={`${sk.name} 현재 효과와 다음 강화`}><Info size={16}/></button></TooltipTrigger><TooltipContent className="game-tooltip"><strong>성장 Lv.{level} / {max}</strong><p>{effects.join(' · ')}</p><p>다음 강화: {hint}</p></TooltipContent></Tooltip></TooltipProvider></div>}
@@ -104,15 +109,24 @@ function skillDamageKind(sk: Skill): SkillDamage[] {
     return out;
 }
 
+/** v27.70 전 버전이 즐겨찾기를 두던 브라우저 저장소 키. 세이브에 즐겨찾기가 없을 때 한 번 옮기고 지웁니다. */
 const PIN_KEY = 'tidebound.skillPins';
 export function Skills({ s, send, busy }: PanelProps) {
     const [scope, setScope] = useState('current'), [filter, setFilter] = useState('all'), [view, setView] = useState('simple');
     const [query, setQuery] = useState(''), [kind, setKind] = useState<SkillKind>('all'), [damage, setDamage] = useState<SkillDamage>('all'), [sort, setSort] = useState<SkillSort>('default');
     const [grouped, setGrouped] = useState(false), [dragId, setDragId] = useState<string | null>(null);
-    // 즐겨찾기는 이 기기에만 저장합니다(게임 규칙이 아니라 화면 편의). 첫 렌더 뒤 저장소에서 읽습니다.
-    const [pins, setPins] = useState<string[]>([]);
-    useEffect(() => { const timer = window.setTimeout(() => { try { const raw = localStorage.getItem(PIN_KEY); if (raw) setPins(JSON.parse(raw)); } catch { /* 저장소 없음 */ } }, 0); return () => window.clearTimeout(timer); }, []);
-    const togglePin = (id: string) => setPins(prev => { const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]; try { localStorage.setItem(PIN_KEY, JSON.stringify(next)); } catch { /* 저장소 없음 */ } return next; });
+    // v27.70 즐겨찾기·숨김은 세이브에 저장됩니다(기기를 옮겨도 따라감). 게임 규칙에는 쓰지 않는 화면 편의 설정입니다.
+    const pins = s.skillPins || [], hidden = s.skillHidden || [];
+    // 전 버전의 브라우저 즐겨찾기를 세이브로 한 번 옮깁니다: 세이브에 목록이 없을 때만 보내고, 세이브에 목록이 생기면 브라우저 키를 지웁니다.
+    const migrated = useRef(false);
+    useEffect(() => {
+        try {
+            if (s.skillPins !== undefined) { localStorage.removeItem(PIN_KEY); return; }
+            if (migrated.current) return;
+            const raw = localStorage.getItem(PIN_KEY), ids: unknown = raw ? JSON.parse(raw) : null;
+            if (Array.isArray(ids) && ids.length) { migrated.current = true; send({ type: 'pinSkill', value: ids.filter(x => typeof x === 'string').join(',') }); }
+        } catch { /* 저장소 없음 */ }
+    }, [s.skillPins, send]);
     const currentJob = jobById(s.job) || JOBS[0], used = apUsed(s), cap = apCapacity(s);
     const line = lineage(s.job);
     // v27.62 추천 편성은 상태가 바뀔 때만 다시 계산합니다(검색 입력·필터 조작 때마다 계산하지 않음).
@@ -139,6 +153,9 @@ export function Skills({ s, send, busy }: PanelProps) {
             if (scope === 'owned' && !acquired) return false;
             if (scope === 'equipped' && !s.skills.includes(sk.id)) return false;
             if (scope === 'pinned' && !pins.includes(sk.id)) return false;
+            if (scope === 'hidden') return hidden.includes(sk.id);
+            // v27.70 숨긴 스킬은 장착 중이 아니면 목록에서 빼고, 검색·‘숨김’ 탭에서만 보여 줍니다.
+            if (hidden.includes(sk.id) && !s.skills.includes(sk.id)) return false;
         } else {
             const job = jobById(sk.job)?.name || '공용';
             const effects = skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ');
@@ -183,10 +200,11 @@ export function Skills({ s, send, busy }: PanelProps) {
                 <span className="gear-count">{list.length}종 표시{q ? ' · 검색 중에는 모든 직업의 기술을 봅니다' : ''}</span>
             </div>
         </section>
-        <div className="skill-view-toolbar"><Tabs value={scope} onValueChange={setScope}><TabsList className="game-tabs"><TabsTrigger value="current">{currentJob.name} 전용</TabsTrigger><TabsTrigger value="equipped">장착 중 {s.skills.length}</TabsTrigger><TabsTrigger value="pinned">즐겨찾기 {pins.length}</TabsTrigger><TabsTrigger value="owned">해금한 스킬</TabsTrigger><TabsTrigger value="common">공용</TabsTrigger><TabsTrigger value="all">전체 계보</TabsTrigger></TabsList></Tabs><div className="skill-view-toggle" role="group" aria-label="스킬 보기 방식"><button className={view === 'simple' ? 'active' : ''} aria-pressed={view === 'simple'} onClick={() => setView('simple')}>간단히 보기</button><button className={view === 'detail' ? 'active' : ''} aria-pressed={view === 'detail'} onClick={() => setView('detail')}>자세히 보기</button><button className={grouped ? 'active' : ''} aria-pressed={grouped} onClick={() => setGrouped(v => !v)}>계보별 묶기</button></div></div>
+        <div className="skill-view-toolbar"><Tabs value={scope} onValueChange={setScope}><TabsList className="game-tabs"><TabsTrigger value="current">{currentJob.name} 전용</TabsTrigger><TabsTrigger value="equipped">장착 중 {s.skills.length}</TabsTrigger><TabsTrigger value="pinned">즐겨찾기 {pins.length}</TabsTrigger><TabsTrigger value="owned">해금한 스킬</TabsTrigger><TabsTrigger value="common">공용</TabsTrigger><TabsTrigger value="all">전체 계보</TabsTrigger><TabsTrigger value="hidden">숨김 {hidden.length}</TabsTrigger></TabsList></Tabs><div className="skill-view-toggle" role="group" aria-label="스킬 보기 방식"><button className={view === 'simple' ? 'active' : ''} aria-pressed={view === 'simple'} onClick={() => setView('simple')}>간단히 보기</button><button className={view === 'detail' ? 'active' : ''} aria-pressed={view === 'detail'} onClick={() => setView('detail')}>자세히 보기</button><button className={grouped ? 'active' : ''} aria-pressed={grouped} onClick={() => setGrouped(v => !v)}>계보별 묶기</button></div></div>
         <Tabs value={filter} onValueChange={setFilter}><TabsList className="game-tabs"><TabsTrigger value="all">모두</TabsTrigger><TabsTrigger value="usable">사용 가능</TabsTrigger><TabsTrigger value="unlearned">미해금</TabsTrigger></TabsList></Tabs>
-        {!list.length && <div className="notice">조건에 맞는 기술이 없습니다. {q ? '다른 검색어를 써 보세요.' : '범위 탭을 ‘모든 스킬’로 바꾸거나 필터를 초기화해 보세요.'}</div>}
-        {grouped ? [...new Map(list.map(sk => [groupOf(sk).key, groupOf(sk)])).values()].sort((a, b) => a.order - b.order).map(g => { const items = list.filter(sk => groupOf(sk).key === g.key); return <details className="skill-family skill-group" key={g.key} open={g.order <= 1}><summary><h2>{g.name}</h2><span>액티브 {items.filter(sk => sk.type === 'active').length} · 패시브 {items.filter(sk => sk.type === 'passive').length} · 장착 {items.filter(sk => s.skills.includes(sk.id)).length}</span></summary><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{items.map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'} pinned={pins.includes(sk.id)} onPin={() => togglePin(sk.id)}/>)}</div></details>; })
-        : (['active', 'passive'] as const).map(type => <section className="skill-family" key={type}><div className="section-title"><h2>{type === 'active' ? '액티브 · 확률 발동' : '패시브 · 장착 효과'}</h2><span>{list.filter(sk => sk.type === type).length}종</span></div><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{list.filter(sk => sk.type === type).map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'} pinned={pins.includes(sk.id)} onPin={() => togglePin(sk.id)}/>)}</div>{!list.some(sk => sk.type === type) && <div className="notice">이 범위에 해당하는 스킬이 없습니다.</div>}</section>)}
+        {scope === 'hidden' && !q && <p className="footnote">숨긴 스킬은 다른 범위 탭에서 보이지 않습니다(장착 중인 스킬과 검색 결과는 예외). 카드의 눈 모양 버튼으로 다시 보이게 할 수 있습니다.</p>}
+        {!list.length && <div className="notice">조건에 맞는 기술이 없습니다. {q ? '다른 검색어를 써 보세요.' : scope === 'hidden' ? '숨긴 스킬이 없습니다. 카드의 눈 모양 버튼으로 자주 안 보는 스킬을 숨길 수 있습니다.' : '범위 탭을 ‘모든 스킬’로 바꾸거나 필터를 초기화해 보세요.'}</div>}
+        {grouped ? [...new Map(list.map(sk => [groupOf(sk).key, groupOf(sk)])).values()].sort((a, b) => a.order - b.order).map(g => { const items = list.filter(sk => groupOf(sk).key === g.key); return <details className="skill-family skill-group" key={g.key} open={g.order <= 1}><summary><h2>{g.name}</h2><span>액티브 {items.filter(sk => sk.type === 'active').length} · 패시브 {items.filter(sk => sk.type === 'passive').length} · 장착 {items.filter(sk => s.skills.includes(sk.id)).length}</span></summary><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{items.map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'} pinned={pins.includes(sk.id)} hidden={hidden.includes(sk.id)}/>)}</div></details>; })
+        : (['active', 'passive'] as const).map(type => <section className="skill-family" key={type}><div className="section-title"><h2>{type === 'active' ? '액티브 · 확률 발동' : '패시브 · 장착 효과'}</h2><span>{list.filter(sk => sk.type === type).length}종</span></div><div className={`skill-grid ${view === 'detail' ? 'skill-grid-detailed' : ''}`}>{list.filter(sk => sk.type === type).map(sk => <SkillCard key={sk.id} sk={sk} s={s} send={send} busy={busy} detailed={view === 'detail'} pinned={pins.includes(sk.id)} hidden={hidden.includes(sk.id)}/>)}</div>{!list.some(sk => sk.type === type) && <div className="notice">이 범위에 해당하는 스킬이 없습니다.</div>}</section>)}
     </>;
 }

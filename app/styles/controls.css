@@ -103,6 +103,8 @@
 @media(max-width:767px){.skill-finder .gear-count{margin-left:0;width:100%}}
 /* v25.3 스킬 편의: 즐겨찾기 핀, 끌어서 순서 변경, 계보별 묶기, 추천 편성. */
 .skill-pin{margin-left:auto;align-self:flex-start;border:1px solid transparent;background:transparent;color:#6f8a8c;border-radius:6px;padding:4px;cursor:pointer}.skill-pin:hover{color:#d6b879}.skill-pin.active{color:#e8d39a;border-color:#d5b36c55;background:#223329}
+.skill-title-tools{margin-left:auto;align-self:flex-start;display:flex;gap:2px}.skill-title-tools .skill-pin{margin-left:0;align-self:auto}
+.skill-pin.skill-hide:hover{color:#c9dbd6}.skill-pin.skill-hide.active{color:#c9dbd6;border-color:#3b5458;background:#1a2a2e}.skill-card.skill-hidden{opacity:.72}.skill-card.skill-hidden:hover{opacity:1}
 .skill-title{display:flex;align-items:center;gap:10px}
 .loadout-skill.draggable{cursor:grab}.loadout-skill.dragging{opacity:.45}.loadout-grip{display:flex;color:#5f7a7c;flex-shrink:0}
 .loadout .section-title{flex-wrap:wrap;gap:8px}.loadout .section-title>button{margin-left:auto;font-size:13px}

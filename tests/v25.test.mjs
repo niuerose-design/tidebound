@@ -787,3 +787,21 @@ test('v27.69 monsters get level-based penetration and the ward: bosses/Lv.50+ cl
     assert.ok(!/정화/.test(C.strike(calm, target, () => 0)), 'not used without an affliction');
     assert.ok(E.enemyStats(boss, true).penetration > 0, boss.id);
 });
+
+test('v27.70 skill pins and hidden skills live in the save: toggles, mutual exclusion, list import, and they survive rebirth, SP refund and a life restart', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), { restartLife } = await L.load('systems/actions/lifecycle');
+    const s = newState(0);
+    assert.equal(s.skillPins, undefined, 'a save that never pinned has no list (the screen migrates browser pins only then)');
+    act(s, { type: 'pinSkill', id: 'hook' }, 0); assert.deepEqual(s.skillPins, ['hook']);
+    act(s, { type: 'hideSkill', id: 'hook' }, 0); assert.deepEqual(s.skillHidden, ['hook']); assert.deepEqual(s.skillPins, [], 'hiding drops the pin');
+    act(s, { type: 'pinSkill', id: 'hook' }, 0); assert.deepEqual(s.skillPins, ['hook']); assert.deepEqual(s.skillHidden, [], 'pinning drops the hide');
+    act(s, { type: 'pinSkill', id: 'hook' }, 0); assert.deepEqual(s.skillPins, [], 'toggle off');
+    assert.throws(() => act(s, { type: 'hideSkill', id: 'nope' }, 0), /없는 스킬/); assert.throws(() => act(s, { type: 'pinSkill', id: '' }, 0), /없는 스킬/);
+    act(s, { type: 'hideSkill', id: 'pierce' }, 0);
+    act(s, { type: 'pinSkill', value: 'hook, pierce,hook,bogus' }, 0); assert.deepEqual(s.skillPins, ['hook', 'pierce'], 'import: known ids, deduplicated'); assert.deepEqual(s.skillHidden, [], 'imported pins leave the hidden list');
+    act(s, { type: 'hideSkill', id: 'pierce' }, 0); assert.deepEqual(s.skillPins, ['hook']); assert.deepEqual(s.skillHidden, ['pierce']);
+    act(s, { type: 'resetSkills' }, 0); assert.deepEqual([s.skillPins, s.skillHidden], [['hook'], ['pierce']], 'SP refund keeps marks');
+    s.level = 60; act(s, { type: 'rebirth' }, 0, () => .5); assert.deepEqual([s.skillPins, s.skillHidden], [['hook'], ['pierce']], 'rebirth keeps marks');
+    restartLife(s, 0); assert.deepEqual([s.skillPins, s.skillHidden], [['hook'], ['pierce']], 'admin life restart keeps marks');
+    assert.equal(canUse(s, 'hook'), true, 'hiding never changes usability');
+});
