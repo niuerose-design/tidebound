@@ -157,7 +157,8 @@ export function canSpendSkill(s: State, id: string) {
 /** v27.28 한계돌파 단계(최대 성장을 넘은 만큼)에 따른 패시브 배율: 단계마다 +10%. */
 export const limitBreakScale = (broken: number) => 1 + Math.max(0, broken) * PROGRESSION.limitBreak.passive;
 export const brokenStages = (sk: Skill, rank = 1, mastery = 0) => Math.max(0, skillLevel(sk, rank, mastery) - maxSkillLevel(sk));
-export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, specialization?: string, practice = 0): Skill {
+/** 스킬의 실제 효과. _specialization은 호출 호환용으로만 남긴 자리입니다(특화는 효과 수치를 바꾸지 않음 · check-combat-depth가 검사). */
+export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, _specialization?: string, practice = 0): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
     // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.
     const broken = Math.max(0, steps - maxSkillLevel(sk)), lb = PROGRESSION.limitBreak;

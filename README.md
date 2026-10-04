@@ -35,8 +35,8 @@ pnpm dev               # http://localhost:5173
 - `node scripts/check-balance.mjs`, `check-progression-pace.mjs`, `check-active-routing.mjs`, `check-combat-depth.mjs`: 밸런스 점검
 - `node scripts/check-all-rounder.mjs`, `check-expedition.mjs`, `check-recovery.mjs`: 팔방 항해사 · 던전 도달 · 회복률 검증
 - `DATABASE_URL=... node scripts/clear-chat.mjs`: 채팅 기록 전부 삭제(베타 전 정리). 로컬은 `TIDEBOUND_DEV_DB` 경로를 씁니다
-- 운영 도구 웹 페이지 `/admin`: Vercel 환경 변수 `TIDEBOUND_ADMIN_KEY`(12자 이상)를 넣으면 켜집니다. 낚시꾼 이름·아이디로 찾아 이번 생 초기화를 미리 보기 → 적용. 같은 기능을 Actions 탭 '이번 생 초기화' 워크플로로도 실행할 수 있습니다(시크릿 `DATABASE_URL` 필요).
-- `DATABASE_URL=... node scripts/reset-life.mjs <아이디> [--slot 2] [--yes]` 또는 `... reset-life.mjs --name <낚시꾼 이름> [--yes]`: 특정 유저의 이번 생만 처음 상태로(환생 횟수·진주·연구·유물·도감 유지, `--yes` 없이는 미리 보기)
+- 운영 도구 웹 페이지 `/admin`: Vercel 환경 변수 `TIDEBOUND_ADMIN_KEY`(12자 이상)를 넣으면 켜집니다. 모험가 이름·아이디로 찾아 이번 생 초기화를 미리 보기 → 적용. 같은 기능을 Actions 탭 '이번 생 초기화' 워크플로로도 실행할 수 있습니다(시크릿 `DATABASE_URL` 필요).
+- `DATABASE_URL=... node scripts/reset-life.mjs <아이디> [--slot 2] [--yes]` 또는 `... reset-life.mjs --name <모험가 이름> [--yes]`: 특정 유저의 이번 생만 처음 상태로(환생 횟수·세계석·연구·유물·도감 유지, `--yes` 없이는 미리 보기)
 - `DATABASE_URL=... node scripts/reset-data.mjs chat`: 채팅만 초기화. `... reset-data.mjs all --yes`: 계정 포함 전부 초기화(되돌릴 수 없음, `--yes` 없이는 미리 보기)
 - `node scripts/e2e-api.mjs <주소>`: 가입·로그인·게임·랭킹 API 흐름
 - GitHub Actions: 푸시마다 린트·테스트·빌드·타입 검사·API 흐름을 실행합니다. `screens-request` 브랜치에 푸시하면 화면 스크린샷을 `screenshots` 브랜치에 저장합니다.
@@ -48,11 +48,11 @@ pnpm dev               # http://localhost:5173
 | `app/` | 페이지, 게임·랭킹·결투 API. 스타일은 `app/styles/*.css`를 `globals.css`가 순서대로 불러옵니다 |
 | `components/game/` | 화면별 컴포넌트(`*-panel.tsx`), 전투 화면(`battle-*.tsx`), 공용(`shared.tsx`, `confirm-button.tsx`, `panel-props.ts`) |
 | `components/ui/` | 실제로 쓰는 shadcn 부품만(대화창·팝오버·진행 막대·사이드바·표·탭·툴팁과 그 의존 부품). 새 부품은 `components.json` 설정으로 추가합니다 |
-| `game/data/` | 물고기·직업·스킬·경제·밸런스 |
+| `game/data/` | 몬스터·사냥터·직업·스킬·경제·밸런스 |
 | `game/systems/` | 전투·성장·환생·장비·길드 로직. `engine.ts`는 진입점(act), 턴 진행은 `turn.ts`, 적 등장·보상은 `encounter.ts`, 던전 반복은 `dungeon-run.ts` |
 | `game/systems/actions/` | 행동 처리기: 항해(voyage) · 빌드(build) · 도감(collection) · 장비(items) · 환생(lifecycle) |
 | `game/server/` | 사용자 식별, 서버 저장, 동시 요청 처리 |
 | `public/` | 배경 이미지와 아이콘 |
 | `tests/`, `scripts/` | 테스트, 점검·내보내기 도구. 공용 로더는 `scripts/lib/game-modules.mjs`, 시뮬레이션 도우미는 `scripts/lib/sim.mjs` |
 
-물고기·낚시터는 `game/data/world.ts`, 직업은 `game/data/classes.ts`, 스킬은 `game/data/skills.ts`, 기본 밸런스는 `game/data/balance.ts`에서 수정합니다. 패치 기록은 `game/data/update-log.ts`에 최근 큰 패치만 남깁니다.
+몬스터·사냥터는 `game/data/world.ts`, 직업은 `game/data/classes.ts`, 스킬은 `game/data/skills.ts`, 기본 밸런스는 `game/data/balance.ts`에서 수정합니다. 패치 기록은 `game/data/update-log.ts`에 최근 큰 패치만 남깁니다.
