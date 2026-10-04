@@ -34,7 +34,8 @@ export function requireAdmin(req: Request) {
 
 /** v27.28 SP 확인용: 보유 SP, 보스 첫 정복 연구 상태, 스킬에 쓴 SP, 남아 있는 SP 기록. */
 export type AdminSp = { have: number; research: { name: string; sp: number; claimed: boolean }[]; spentSkills: { name: string; sp: number }[]; limitBreaks: { name: string; sp: number }[]; logs: string[] };
-export type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number };
+/** v27.63 lastRebirthAt: 마지막 환생 시각, lifeMs: 이번 생 경과(실제 시간, partial이면 업데이트 이후), paceMs: 최근 환생 평균 실제 시간(일부 기록 제외). */
+export type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
 const spView = (s: State): AdminSp => ({
     have: s.sp || 0,
     research: DUNGEONS.filter(d => BOSS_RESEARCH[d.id] && (s.clears?.[d.id] || 0) > 0).map(d => ({ name: d.name, sp: BOSS_RESEARCH[d.id].sp, claimed: !!s.bossResearchClaims?.[d.id] })),
@@ -42,9 +43,13 @@ const spView = (s: State): AdminSp => ({
     limitBreaks: Object.entries(s.limitBreaks || {}).filter(([, n]) => n > 0).map(([id, n]) => ({ name: `${skillById(id)?.name || id} ${n}단계`, sp: PROGRESSION.limitBreak.sp.slice(0, n).reduce((a, b) => a + b, 0) })),
     logs: (s.logs || []).filter(l => /SP [+-]|SP 계승/.test(l.text)).slice(-10).map(l => l.text),
 });
+const lifeView = (s: State, at: number) => {
+    const log = s.rebirthLog || [], full = log.filter(r => !r.partial);
+    return { lastRebirthAt: log.at(-1)?.at ?? null, lifeMs: s.lifeStart ? Math.max(0, (s.lastTick || at) - s.lifeStart.at) : null, lifePartial: !!s.lifeStart?.partial, paceMs: full.length ? Math.round(full.reduce((a, r) => a + r.realMs, 0) / full.length) : null };
+};
 const view = (id: string, username: string, revision: number, updatedAt: number, s: State): AdminPlayer => {
     const [, slot] = id.split('#');
-    return { id, username, slot: Number(slot || 1), name: s.name, level: s.level, job: jobById(s.job)?.name || s.job, rebirths: s.rebirths || 0, pearls: s.pearls || 0, gold: Math.floor(s.gold || 0), sp: spView(s), inDungeon: !!s.dungeon, revision, updatedAt };
+    return { id, username, slot: Number(slot || 1), name: s.name, level: s.level, job: jobById(s.job)?.name || s.job, rebirths: s.rebirths || 0, pearls: s.pearls || 0, gold: Math.floor(s.gold || 0), sp: spView(s), inDungeon: !!s.dungeon, revision, updatedAt, ...lifeView(s, updatedAt) };
 };
 
 /** 모험가 이름(부분 일치) 또는 로그인 아이디(정확히)로 찾습니다. 최대 30명. */
@@ -206,7 +211,32 @@ export type AdminStats = {
      * abyss: 무릉도장 최고 층 분포. burn: 화상 기술을 장착한 모험가 수.
      */
     balance: { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: { label: string; count: number }[]; burn: number };
+    /**
+     * v27.63 환생 통계(세이브의 최근 환생 기록 20개 기준). recent: 24시간·7일 안에 일어난 환생 수.
+     * 시간: 생 시작부터 환생까지 실제 시간(real)·사냥 시간(play)의 평균·중앙값(업데이트 전에 시작한 ‘일부’ 기록은 뺌).
+     * byCount: 몇 번째 환생인지 구간별 평균. latest: 서버 전체 최근 환생 20건.
+     */
+    rebirthPace: {
+        recent: { day: number; week: number }; measured: number;
+        real: { avg: number; median: number }; play: { avg: number; median: number };
+        byCount: { label: string; count: number; real: number; play: number }[];
+        latest: { name: string; n: number; at: number; realMs: number; playMs: number; level: number; partial: boolean }[];
+    };
 };
+/** v27.63 환생 통계. */
+const REBIRTH_BANDS: [number, number, string][] = [[1, 1, '1번째'], [2, 3, '2~3번째'], [4, 5, '4~5번째'], [6, 10, '6~10번째'], [11, 20, '11~20번째'], [21, Infinity, '21번째 이후']];
+function rebirthPaceStats(list: State[], now: number): AdminStats['rebirthPace'] {
+    const all = list.flatMap(s => (s.rebirthLog || []).map(r => ({ ...r, name: s.name })));
+    const full = all.filter(r => !r.partial), avg = (xs: number[]) => xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0;
+    return {
+        recent: { day: all.filter(r => now - r.at <= 86400_000).length, week: all.filter(r => now - r.at <= 7 * 86400_000).length },
+        measured: full.length,
+        real: { avg: avg(full.map(r => r.realMs)), median: median(full.map(r => r.realMs)) },
+        play: { avg: avg(full.map(r => r.playMs)), median: median(full.map(r => r.playMs)) },
+        byCount: REBIRTH_BANDS.map(([lo, hi, label]) => { const rows = full.filter(r => r.n >= lo && r.n <= hi); return { label, count: rows.length, real: avg(rows.map(r => r.realMs)), play: avg(rows.map(r => r.playMs)) }; }).filter(b => b.count),
+        latest: [...all].sort((a, b) => b.at - a.at).slice(0, 20).map(r => ({ name: r.name, n: r.n, at: r.at, realMs: r.realMs, playMs: r.playMs, level: r.level, partial: !!r.partial })),
+    };
+}
 /** v27.54 밸런스 지표. 통계 탭을 열 때만 돕니다. */
 function balanceStats(list: State[]): AdminStats['balance'] {
     const tries = list.reduce((a, s) => a + (s.altar?.tries || 0), 0), wins = list.reduce((a, s) => a + (s.altar?.wins || 0), 0);
@@ -250,6 +280,7 @@ export async function adminStats(now = Date.now()): Promise<AdminStats> {
         inGuild: list.filter(s => s.guildMember?.id).length,
         altar: { gen: altar.gen, godAlive: altar.god_state === 'alive' && altar.god_until >= now, throne: altar.throne_name, points: altar.total_points, titheGold: altar.tithe_gold },
         balance: balanceStats(list),
+        rebirthPace: rebirthPaceStats(list, now),
         top: [...list].sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level).slice(0, 10).map(s => ({ name: s.name, level: s.level, rebirths: s.rebirths || 0, abyss: s.abyssBest || 0 })),
     };
 }

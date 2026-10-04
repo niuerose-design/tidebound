@@ -695,3 +695,25 @@ test('v27.62 sync log delta: server sends only logs after the client key, client
     assert.deepEqual(D.mergeLogs([], cut.logs, cut.delta), cut.logs, 'missing base → just the new logs');
     E.advance(s, 600_000, rng); assert.equal(D.trimLogs(s.logs, D.logKey(client.at(-1))), null, 'client fell behind the 70-log window → full list');
 });
+
+test('v27.63 rebirth history: each rebirth records real/play time, level and pearls; old saves start a partial clock', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const E = await L.load('systems/engine'), M = await L.load('systems/migrations'), Meta = await L.load('systems/meta'), LC = await L.load('systems/actions/lifecycle');
+    const H = 3600_000, s = E.newState(0);
+    assert.deepEqual(s.lifeStart, { at: 0, playMs: 0 }, 'new saves start the clock at creation');
+    s.playMs = 2 * H; s.level = Meta.rebirthLevel(s);
+    E.act(s, { type: 'rebirth' }, 5 * H);
+    assert.equal(s.rebirthLog.length, 1);
+    const r = s.rebirthLog[0];
+    assert.deepEqual({ n: r.n, at: r.at, realMs: r.realMs, playMs: r.playMs, level: r.level }, { n: 1, at: 5 * H, realMs: 5 * H, playMs: 2 * H, level: Meta.rebirthLevel(E.newState(0)) });
+    assert.ok(r.pearls > 0 && !r.partial);
+    assert.deepEqual(s.lifeStart, { at: 5 * H, playMs: 2 * H }, 'next life clock starts at the rebirth');
+    LC.breathReset(s, 6 * H); assert.deepEqual(s.lifeStart, { at: 5 * H, playMs: 2 * H }, 'a breath restart is not a rebirth: the clock keeps running');
+    for (let i = 0; i < 25; i++) { s.level = Meta.rebirthLevel(s); E.act(s, { type: 'rebirth' }, (7 + i) * H); }
+    assert.equal(s.rebirthLog.length, LC.REBIRTH_LOG_KEEP, 'keeps the latest records only');
+    assert.equal(s.rebirthLog.at(-1).n, s.rebirths);
+    const old = E.newState(0); delete old.lifeStart; old.playMs = 9 * H; M.migrateState(old, 100 * H);
+    assert.deepEqual(old.lifeStart, { at: 100 * H, playMs: 9 * H, partial: true }, 'old saves: partial clock from the update');
+    old.level = Meta.rebirthLevel(old); E.act(old, { type: 'rebirth' }, 101 * H);
+    assert.ok(old.rebirthLog[0].partial && old.rebirthLog[0].realMs === H && !old.lifeStart.partial, 'first measured rebirth is partial, the next life is full');
+});

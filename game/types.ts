@@ -289,6 +289,9 @@ export type CombatEvent = {
     /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
     chain?: number;
 };
+export type LifeStart = { at: number; playMs: number; partial?: boolean };
+/** 환생 한 번의 기록. realMs: 생 시작부터 환생까지 실제 시간, playMs: 그동안 사냥이 진행된 시간(부재중 정산 포함). */
+export type RebirthRecord = { n: number; at: number; realMs: number; playMs: number; level: number; pearls: number; partial?: boolean };
 export type Log = {
     id: number;
     text: string;
@@ -432,6 +435,10 @@ export type State = {
     salvageMode?: 'sell' | 'dismantle';
     /** v25.21 누적 플레이 시간(ms). 턴이 진행될 때마다 더하고 환생해도 유지합니다(‘도전’ 업적). */
     playMs?: number;
+    /** v27.63 이번 생의 시작: 실제 시각과 그때까지의 누적 플레이 시간. partial이면 업데이트 시점부터 잰 것(기존 세이브). */
+    lifeStart?: LifeStart;
+    /** v27.63 최근 환생 기록(최신이 끝, 최대 REBIRTH_LOG_KEEP개). */
+    rebirthLog?: RebirthRecord[];
     /** 황금 개체를 잡은 횟수(몬스터별). */
     goldenBook?: Record<string, number>;
     /** v25.19 변종을 잡은 횟수(몬스터별 → 변종별). */

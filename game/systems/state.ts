@@ -53,6 +53,7 @@ export function newState(now: number): State {
         permanent: { attack: 0, hp: 0, gold: 0 },
         dungeon: null,
         clears: {},
+        lifeStart: { at: now, playMs: 0 },
         logs: [{ id: 1, text: '리스항구 · 선착장에 도착했습니다. 사냥을 시작하세요.', type: 'system' }],
         logId: 1,
         lastDuel: 0,

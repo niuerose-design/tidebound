@@ -2,7 +2,8 @@
 import { useState } from 'react';
 
 type AdminSp = { have: number; research: { name: string; sp: number; claimed: boolean }[]; spentSkills: { name: string; sp: number }[]; limitBreaks: { name: string; sp: number }[]; logs: string[] };
-type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number };
+type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
+type RebirthPace = { recent: { day: number; week: number }; measured: number; real: { avg: number; median: number }; play: { avg: number; median: number }; byCount: { label: string; count: number; real: number; play: number }[]; latest: { name: string; n: number; at: number; realMs: number; playMs: number; level: number; partial: boolean }[] };
 type Preview = { before: AdminPlayer; after: AdminPlayer };
 type EventRow = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; mimic?: number; live: boolean; disabled?: boolean };
 type EventList = { code: EventRow[]; extra: EventRow[]; banner: string; at: number };
@@ -12,8 +13,10 @@ type Tab = 'life' | 'events' | 'closures' | 'stats';
 type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };
 type Balance = { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: Bucket[]; burn: number };
-type Stats = { balance: Balance; altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number }; at: number; accounts: number; saves: number; active: { hour: number; day: number; week: number }; running: number; inDungeon: number; level: { avg: number; max: number; buckets: Bucket[] }; rebirths: { avg: number; max: number; buckets: Bucket[] }; stages: Count[]; dungeons: Count[]; jobs: Count[]; totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number }; medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number; top: { name: string; level: number; rebirths: number; abyss: number }[] };
+type Stats = { rebirthPace: RebirthPace; balance: Balance; altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number }; at: number; accounts: number; saves: number; active: { hour: number; day: number; week: number }; running: number; inDungeon: number; level: { avg: number; max: number; buckets: Bucket[] }; rebirths: { avg: number; max: number; buckets: Bucket[] }; stages: Count[]; dungeons: Count[]; jobs: Count[]; totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number }; medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number; top: { name: string; level: number; rebirths: number; abyss: number }[] };
 const n = (v: number) => v.toLocaleString('ko-KR');
+/** v27.63 걸린 시간: 2일 3시간 · 5시간 12분 · 37분. */
+const dur = (ms: number) => { const m = Math.max(0, Math.floor(ms / 60_000)), h = Math.floor(m / 60), d = Math.floor(h / 24); return d ? `${d}일 ${h % 24}시간` : h ? `${h}시간 ${m % 60}분` : `${m}분`; };
 /** v27.32 통계 카드 한 칸. */
 const Tile = ({ label, value, note }: { label: string; value: string; note?: string }) => <div className="panel" style={{ padding: 12 }}><div style={{ fontSize: 12, color: '#9bb3b0' }}>{label}</div><div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>{note && <div style={{ fontSize: 12, color: '#9bb3b0' }}>{note}</div>}</div>;
 /** 막대 목록: 가장 큰 값을 100%로 봅니다. */
@@ -49,6 +52,8 @@ function SpDetail({ sp }: { sp: AdminSp }) {
     </div>;
 }
 const line = (p: AdminPlayer) => `${p.name} · Lv.${p.level} ${p.job} · 환생 ${p.rebirths}회 · 세계석 ${p.pearls} · SP ${p.sp.have} · 골드 ${p.gold.toLocaleString()}${p.inDungeon ? ' · 던전 진행 중' : ''}`;
+/** v27.63 환생 시간: 마지막 환생 시각 · 이번 생 경과 · 평균 환생 시간. */
+const lifeLine = (p: AdminPlayer) => [p.lastRebirthAt ? `마지막 환생 ${new Date(p.lastRebirthAt).toLocaleString('ko-KR')}` : '', p.lifeMs !== null ? `이번 생 ${dur(p.lifeMs)}${p.lifePartial ? '(업데이트 이후)' : ''}` : '', p.paceMs !== null ? `평균 환생 ${dur(p.paceMs)}` : ''].filter(Boolean).join(' · ');
 
 /** v27.26 운영 도구: 모험가 이름·아이디로 찾아 이번 생을 처음 상태로 되돌립니다(환생 횟수·세계석·연구·유물·도감 유지). */
 export default function AdminPage() {
@@ -156,6 +161,21 @@ export default function AdminPage() {
                 <Tile label="오프라인 상한 도달" value={`${n(stats.balance.offline.capped)} / ${n(stats.balance.offline.settled)}`} note="최근 부재중 정산이 상한(6시간 + 긴 휴식)에 닿은 모험가"/>
                 <Tile label="화상 기술 장착" value={n(stats.balance.burn)} note="플레임 디스차지 · 파이어 애로우 등"/>
             </div>
+            <h2 style={{ fontSize: 15, margin: '4px 0 0' }}>환생 통계</h2>
+            <p style={{ color: '#9bb3b0', fontSize: 12, margin: 0 }}>모험가마다 최근 환생 20회를 기록합니다(v27.63부터). 업데이트 전에 시작한 생은 업데이트 시점부터 잰 ‘일부’ 기록이라 평균·중앙값에서 뺍니다. 실제 시간은 생 시작부터 환생까지 흐른 시간, 사냥 시간은 그동안 전투가 진행된 시간(부재중 정산 포함)입니다.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 10 }}>
+                <Tile label="최근 24시간 환생" value={`${n(stats.rebirthPace.recent.day)}회`} note={`최근 7일 ${n(stats.rebirthPace.recent.week)}회`}/>
+                <Tile label="환생까지 실제 시간" value={stats.rebirthPace.measured ? dur(stats.rebirthPace.real.median) : '-'} note={stats.rebirthPace.measured ? `중앙값 · 평균 ${dur(stats.rebirthPace.real.avg)} · ${n(stats.rebirthPace.measured)}건` : '전체를 잰 환생이 아직 없습니다'}/>
+                <Tile label="환생까지 사냥 시간" value={stats.rebirthPace.measured ? dur(stats.rebirthPace.play.median) : '-'} note={stats.rebirthPace.measured ? `중앙값 · 평균 ${dur(stats.rebirthPace.play.avg)}` : ''}/>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 12 }}>
+                <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>환생 회차별 평균 시간</h2>
+                    {!stats.rebirthPace.byCount.length && <p style={{ color: '#9bb3b0', fontSize: 13, margin: 0 }}>없습니다.</p>}
+                    <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}><tbody>{stats.rebirthPace.byCount.map(b => <tr key={b.label}><td style={{ padding: '3px 0' }}>{b.label}</td><td style={{ textAlign: 'right' }}>실제 {dur(b.real)}</td><td style={{ textAlign: 'right' }}>사냥 {dur(b.play)}</td><td style={{ textAlign: 'right', color: '#9bb3b0' }}>{n(b.count)}건</td></tr>)}</tbody></table></div>
+                <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>최근 환생 20건</h2>
+                    {!stats.rebirthPace.latest.length && <p style={{ color: '#9bb3b0', fontSize: 13, margin: 0 }}>없습니다.</p>}
+                    <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, display: 'grid', gap: 3 }}>{stats.rebirthPace.latest.map((r, i) => <li key={i}>{r.name} · {r.n}번째 · {new Date(r.at).toLocaleString('ko-KR')} · 실제 {dur(r.realMs)}{r.partial ? '(일부)' : ''} · 사냥 {dur(r.playMs)} · Lv.{r.level}</li>)}</ol></div>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 12 }}>
                 <Bars title="레벨 분포" rows={stats.level.buckets} total={stats.saves}/>
                 <Bars title="환생 횟수 분포" rows={stats.rebirths.buckets} total={stats.saves}/>
@@ -173,7 +193,7 @@ export default function AdminPage() {
             {!players.length && <p style={{ color: '#9bb3b0' }}>찾은 모험가가 없습니다.</p>}
             <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{players.map(p => <li key={p.id} className="panel" style={{ padding: 10, border: preview?.id === p.id || edit?.player.id === p.id ? '1px solid #d5b36c' : undefined }}>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13 }}><b>{p.name}</b> · 아이디 {p.username || '?'} · {p.slot}번 슬롯<br/><small style={{ color: '#9bb3b0' }}>{line(p)} · 마지막 저장 {new Date(p.updatedAt).toLocaleString('ko-KR')}</small></span>
+                <span style={{ fontSize: 13 }}><b>{p.name}</b> · 아이디 {p.username || '?'} · {p.slot}번 슬롯<br/><small style={{ color: '#9bb3b0' }}>{line(p)} · 마지막 저장 {new Date(p.updatedAt).toLocaleString('ko-KR')}{lifeLine(p) ? <><br/>{lifeLine(p)}</> : null}</small></span>
                 <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <button className="secondary" disabled={busy} onClick={() => { setPreview(null); setDone(''); setEdit({ player: p, gold: String(p.gold), pearls: String(p.pearls) }); }}>골드·세계석</button>
                     <button className="secondary" disabled={busy} onClick={() => setSpOpen(spOpen === p.id ? null : p.id)} aria-expanded={spOpen === p.id}>SP 내역</button>

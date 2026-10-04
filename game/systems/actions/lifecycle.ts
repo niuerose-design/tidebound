@@ -4,7 +4,9 @@ import { stats } from '../stats';
 import { salvageRate, startingLevel } from '../../data/economy';
 import { PROGRESSION } from '../../data/progression';
 import { saleValue, dismantleEssence } from '../equipment';
-import type { State, Vows } from '../../types';
+import type { State, Vows, RebirthRecord } from '../../types';
+/** v27.63 세이브에 남기는 최근 환생 기록 수. */
+export const REBIRTH_LOG_KEEP = 20;
 import type { ActionHandlers } from './types';
 import { addLog, newState } from '../state';
 import { drawRebirthDoor } from '../../data/doors';
@@ -32,7 +34,7 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
     }
     fresh.abyssBest = s.abyssBest;
     fresh.shopSerial = s.shopSerial;
-    Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, limitBreaks: s.limitBreaks, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus: next.lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: next.pearls, essence: s.essence || 0, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, book: s.book, clears: s.clears, kills: s.kills, playMs: s.playMs || 0, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
+    Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, limitBreaks: s.limitBreaks, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus: next.lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: next.pearls, essence: s.essence || 0, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, book: s.book, clears: s.clears, kills: s.kills, playMs: s.playMs || 0, lifeStart: s.lifeStart, rebirthLog: s.rebirthLog, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
     s.hp = stats(s).hp;
     s.mana = stats(s).mana;
 }
@@ -77,7 +79,12 @@ export const lifecycleActions: ActionHandlers = {
         const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, pearls = base + breath;
         const vows = cleanVows(s, s.nextVows);
         const salvage = salvagePreview(s);
+        // v27.63 환생 기록: 이번 생에 걸린 실제 시간·사냥 시간·도달 레벨·받은 세계석. 다음 생 시작 시각을 새로 잽니다.
+        const life = s.lifeStart || { at: now, playMs: s.playMs || 0, partial: true };
+        const record: RebirthRecord = { n: s.rebirths + 1, at: now, realMs: Math.max(0, now - life.at), playMs: Math.max(0, (s.playMs || 0) - life.playMs), level: s.level, pearls, ...(life.partial ? { partial: true } : {}) };
         startLife(s, now, { pearls: s.pearls + pearls, rebirths: s.rebirths + 1, lifeBonus });
+        s.rebirthLog = [...(s.rebirthLog || []), record].slice(-REBIRTH_LOG_KEEP);
+        s.lifeStart = { at: now, playMs: s.playMs || 0 };
         if (salvage.count) {
             if (salvage.mode === 'dismantle') { s.essence = (s.essence || 0) + salvage.essence; addLog(s, `환생 정리 · 장비 ${salvage.count}개 분해 · 정수 +${salvage.essence}`, 'reward'); }
             else { s.gold += salvage.gold; addLog(s, `환생 정리 · 장비 ${salvage.count}개 판매 · 다음 생 시작 골드 +${salvage.gold} G`, 'reward'); }

@@ -342,3 +342,12 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .job-detail-title .job-art { width: 44px; height: 44px; border-radius: 10px; }
 .lineage-item .job-art { width: 30px; height: 30px; border-radius: 8px; margin-right: 8px; vertical-align: middle; }
 .dungeon-wave .fish-art { width: 28px; height: 28px; border-radius: 7px; margin-bottom: 4px; }
+/* v27.63 환생 기록 */
+.rebirth-history{padding:16px 18px}
+.rebirth-history-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rebirth-history-table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+.rebirth-history-table th,.rebirth-history-table td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:right}
+.rebirth-history-table th:first-child,.rebirth-history-table td:first-child,.rebirth-history-table th:nth-child(2),.rebirth-history-table td:nth-child(2){text-align:left}
+.rebirth-history-table th{color:var(--muted);font-weight:600;font-size:12px}
+.rebirth-history-table small{color:var(--muted)}
+.rebirth-stat-bar small{display:block;color:var(--muted);font-size:12px}
