@@ -1,6 +1,6 @@
 /** 턴 진행(온라인 tick·오프라인 advance). */
 import { syncGoals, syncAchievements } from './progress';
-import { activeEvent } from '../data/events';
+import { activeEvent, offlineEvent } from '../data/events';
 import { recordOpenDoors } from '../data/doors';
 import { syncVoyage } from './guidance';
 import { syncGoal } from './goals';
@@ -130,8 +130,9 @@ export function advance(s: State, now: number, rng = Math.random) {
     now = Math.max(now, s.lastTick);
     // v26.1 서버 이벤트: 정산 시각 기준으로 적어 두고, 아래 틱들이 이 배율을 씁니다.
     const elapsed = now - s.lastTick;
-    // v27.48 이벤트·제단 축복 배율은 접속해 있는 동안만: 1분 넘게 밀린 정산(오프라인 정산)에는 어떤 배율도 적용하지 않고, 정산이 끝난 뒤 다시 적습니다.
-    s.event = elapsed > 60000 ? null : activeEvent(now);
+    // v27.51 이벤트·제단 축복 배율: 접속 중에는 그대로, 1분 넘게 밀린 정산(오프라인 정산)에는 절반만(offlineEvent). 정산이 끝난 뒤 원래 배율을 다시 적습니다.
+    const live = activeEvent(now);
+    s.event = elapsed > 60000 ? offlineEvent(live) : live;
     // v27.31 닫힌 사냥터·던전 목록도 같이 적어 화면이 잠금 표시를 합니다.
     const closed = closuresSnapshot(); if (closed) s.closed = closed; else delete s.closed;
     // 정산 상한은 정산을 시작할 때의 긴 휴식 단계로 정합니다(정산 중 연구가 바뀌지 않음).
@@ -145,7 +146,7 @@ export function advance(s: State, now: number, rng = Math.random) {
             tick(s, rng);
     }
     finally { delete s.catchingUp; }
-    if (elapsed > 60000) s.event = activeEvent(now);
+    if (elapsed > 60000) s.event = live;
     s.lastTick = elapsed > cap * 1000 ? now : now - (elapsed % BALANCE.turnMs);
     recordOpenDoors(s);
     if (elapsed > 60000 && s.kills > before.kills) {

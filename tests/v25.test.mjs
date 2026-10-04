@@ -495,7 +495,7 @@ test('v27.43 altar: offering points, tithe, blessing events skip offline catch-u
         const s = engine.newState(now - 3600_000); engine.act(s, { type: 'start' }, now - 3600_000); const gold = s.gold;
         const seen = []; const orig = Math.random; let calls = 0; Math.random = () => { calls++; if (calls % 500 === 0) seen.push(s.event?.gold || 1); return orig(); };
         try { engine.advance(s, now); } finally { Math.random = orig; }
-        assert.ok(seen.length && seen.every(g => g === 1), 'no altar gold bonus during catch-up');
+        assert.ok(seen.length && seen.every(g => g === 1.5), 'half the altar gold bonus during catch-up (v27.51)');
         assert.equal(s.event.gold, 2, 'blessing shown again after catch-up'); assert.ok(s.gold > gold);
     }
     finally { ev.setAltarEvents([]); }
@@ -553,17 +553,18 @@ test('v27.48 burn: stacks to 3, ticks like poison, adds half of bleed vulnerabil
     assert.ok(SKILL_FORMULA.burnVulnerability < SKILL_FORMULA.bleedVulnerability && SKILL_FORMULA.burnRatio > SKILL_FORMULA.poisonRatio && SKILL_FORMULA.burnRatio < SKILL_FORMULA.bleedRatio, 'between poison and bleed');
 });
 
-test('v27.48 altar blessing levels cost x1.5 per level; offline settlement ignores event multipliers', async () => {
+test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlement gets half the event multipliers', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const A = await L.load('data/altar'), Ev = await L.load('data/events'), T = await L.load('systems/turn');
     const gold = A.BLESSINGS.find(b => b.id === 'gold');
     assert.deepEqual([A.blessingCost(gold, 0, false), A.blessingCost(gold, 1, true), A.blessingCost(gold, 2, true), A.blessingCost(gold, 3, true)], [1200, 1800, 2700, 2700]);
     assert.equal(A.blessingEffect(gold, 3).gold, 3); assert.ok(A.BLESSINGS.find(b => b.id === 'mimic').cost > A.BLESSINGS.find(b => b.id === 'exp').cost, 'mimic costs most');
     assert.equal(A.gaugeCost('god'), 10000); assert.equal(A.ALTAR.essencePoints, 3);
-    // 오프라인 정산: 골드 ×10 이벤트가 열려 있어도 정산 결과는 이벤트가 없을 때와 같습니다.
+    // 오프라인 정산: 골드 ×10 이벤트는 정산 중 ×5.5(절반)로 적용됩니다.
     const E = await L.load('systems/engine'), t0 = Date.parse('2030-01-01T00:00:00Z');
     const run = withEvent => { Ev.setRuntimeEvents(withEvent ? [{ id: 'admin-x', name: 'x', from: '2000-01-01T00:00:00Z', until: '2100-01-01T00:00:00Z', gold: 10 }] : [], []); const s = E.newState(t0); E.act(s, { type: 'start' }, t0); s.hp = 1e9; let n = 7; T.advance(s, t0 + 3600_000, () => ((n = (n * 9301 + 49297) % 233280) / 233280)); return s; };
     const on = run(true), off = run(false); Ev.setRuntimeEvents([], []);
-    assert.equal(on.gold, off.gold, 'offline gold ignores the event'); assert.ok(on.kills > 10);
+    const ratio = (on.gold - 100) / (off.gold - 100); assert.ok(ratio > 5 && ratio < 6, `offline gold x5.5: ${ratio}`); assert.ok(on.kills > 10);
+    assert.equal(Ev.offlineEvent({ id: 'e', name: '', until: 0, exp: 2, gold: 1, drop: 3, mastery: 2 }).exp, 1.5);
     assert.ok(on.event && on.event.gold === 10, 'event is set again after settlement');
 });
