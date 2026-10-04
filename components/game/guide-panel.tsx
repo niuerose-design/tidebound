@@ -41,7 +41,7 @@ const STATUS_GROUPS = [
 export function Guide({ s }: { s?: State }) {
     const swarm = VARIANTS.find(v => v.id === 'swarm')!;
     return <>
-        <Heading eyebrow="CAPTAIN'S MANUAL" title="항해 도움말" description="제목을 누르면 접고 펼칩니다."/>
+        <Heading eyebrow="ADVENTURER'S MANUAL" title="모험 도움말" description="제목을 누르면 접고 펼칩니다."/>
         <Topic open icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분. 직업·장비·스킬이 더해집니다.">
             <div className="help-stat-grid">{ATTRIBUTES.map(a => <article className="panel help-stat-card" key={a.id}><strong>{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
             <Rule icon={<Swords size={19}/>} title="계보와 전직"

@@ -3,7 +3,7 @@ import { tutorialActive } from './growth-goals';
 import { displayTitle, unlockedTitles, titleById } from '@/game/data/titles';
 import { TutorialCard } from './guidance-panels';
 import { tutorialEarly } from '@/game/systems/guidance';
-import { Anchor, BookOpen, ChevronRight, Flag, Heart, Shield, ShoppingBag, Swords, Target, Trophy, Users, Zap } from 'lucide-react';
+import { BookOpen, ChevronRight, Flag, Heart, Shield, ShoppingBag, Swords, Target, Trophy, Users, Zap, Leaf } from 'lucide-react';
 import { goalSummary } from '@/game/systems/progress';
 import { Meter, SlotIcon, format } from './shared';
 import { xpNeeded, SLOTS, RARITIES } from '@/game/data/balance';
@@ -25,7 +25,7 @@ export function Player({ s, busy, send, setView }: {
     <span className="micro">CHARACTER</span>
     </div>
     <div className="player-avatar">
-    <Anchor size={36}/>
+    <Leaf size={36}/>
     <span>{s.level}</span>
     </div>
     <div className="combatant-name character-name"><h3>{displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun}/></div>

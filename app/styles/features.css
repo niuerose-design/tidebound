@@ -117,7 +117,7 @@
 .auto-run-state.on { color: #b6e0cc; background: #13302a; }
 .auto-run-state.off { color: #e3c28d; background: #2c2618; }
 .auto-run-status { margin-bottom: 18px; }
-/* 튜토리얼·항해 기록 */
+/* 튜토리얼·모험 기록 */
 .tutorial-card { padding: 14px 18px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
 .tutorial-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
 .tutorial-head strong { color: var(--gold); }
@@ -243,7 +243,7 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .log-reward-ticker span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .duel-log .log-line { margin-bottom: 6px; }
 .duel-log .log-turn-divider { margin: 6px 0; }
-/* v25.6 항해 목표·업적·조건 카드·주간 심연판 */
+/* v25.6 모험 목표·업적·조건 카드·주간 심연판 */
 .goal-boards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-bottom:10px; }
 .goal-board { padding:18px; }
 .goal-list { list-style:none; margin:0; padding:0; display:grid; gap:10px; }

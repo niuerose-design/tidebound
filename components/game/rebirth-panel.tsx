@@ -88,15 +88,15 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
         <ul className="account-rows vault-rows">{row('pearls', '세계석', s.pearls, vault ? `이번 주 인출 가능 ${vault.pearlOutLeft}개` : undefined)}{row('essence', '정수', s.essence || 0)}</ul>
     </section>;
 }
-/** 환생 화면의 서약: 이번 생 서약과 잠든 닻 진행, 다음 생 서약 예약. */
+/** 환생 화면의 서약: 이번 생 서약과 잠든 힘 진행, 다음 생 서약 예약. */
 function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
     const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), seal = anchorSeal(s), now = s.vows, next = s.nextVows || {};
     if (!unlocked.length && !now) return null;
     return <section className="panel vow-panel">
         <div className="section-title"><h2>서약</h2><span>제약을 걸고 고유 보상을 받습니다. 세계석 연구 유틸 탭에서 해금합니다.</span></div>
         {now && <div className="vow-current"><strong>이번 생 서약</strong><span>{VOW_IDS.filter(id => now[id]).map(id => id === 'rough' ? `${VOW_NAMES.rough} ${now.rough}단계 (적 ×${roughEnemy(s)})` : VOW_NAMES[id]).join(' · ')}</span>
-            {seal && <div className="vow-seal"><Meter value={Math.min(seal.caught, ANCHOR_CATCHES)} max={ANCHOR_CATCHES} label={`잠든 닻 · ${anchorTargetName(seal)} ${seal.caught} / ${ANCHOR_CATCHES}마리 · 쌓인 경험치 ${format(seal.exp)}`}/>
-                <ConfirmButton label="잠든 닻 포기" title="잠든 닻을 포기할까요?" description={`봉인이 풀리고 쌓인 경험치 ${format(seal.exp)}를 보너스 없이 받습니다. 달성하면 ×${anchorPayout(s)}를 받을 수 있습니다.`} disabled={busy} onConfirm={() => send({ type: 'anchorGiveUp' })}/></div>}
+            {seal && <div className="vow-seal"><Meter value={Math.min(seal.caught, ANCHOR_CATCHES)} max={ANCHOR_CATCHES} label={`잠든 힘 · ${anchorTargetName(seal)} ${seal.caught} / ${ANCHOR_CATCHES}마리 · 쌓인 경험치 ${format(seal.exp)}`}/>
+                <ConfirmButton label="잠든 힘 포기" title="잠든 힘을 포기할까요?" description={`봉인이 풀리고 쌓인 경험치 ${format(seal.exp)}를 보너스 없이 받습니다. 달성하면 ×${anchorPayout(s)}를 받을 수 있습니다.`} disabled={busy} onConfirm={() => send({ type: 'anchorGiveUp' })}/></div>}
         </div>}
         <div className="vow-grid">{VOW_IDS.map(id => {
             const open = vowUnlocked(s, id);
@@ -120,7 +120,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
     const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
     const lifeText = lifeBonus === 'deep' ? `깊은 항해 · 다음 생 동안 직업·스킬 숙련 기본 획득 +2` : lifeBonus === 'tailwind' ? `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : `없음 · Lv.${required + tailwindWindow(s)} 이하면 순풍, Lv.${DEEP_VOYAGE_LEVEL}이면 깊은 항해`;
     return <>
-        <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 항해를 마치고, 다음 생에 남길 힘을 선택하세요."/>
+        <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 모험을 마치고, 다음 생에 남길 힘을 선택하세요."/>
         <section className="panel port-resource-bar legacy-resource-bar">
             <div><RefreshCw size={22}/><span>누적 환생<strong>{format(s.rebirths)} <small>회</small></strong></span></div>
             <div><Sparkles size={22}/><span>보유 세계석<strong><Num n={s.pearls}/> <small>개</small></strong></span></div>
@@ -131,10 +131,10 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         {tab === 'prepare' && <>
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
             <section className="panel rebirth-ready">
-                <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 항해를 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 항해가 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
+                <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
                     {s.lifeBonus && <p className="footnote">이번 생 효과: {s.lifeBonus === 'deep' ? '깊은 항해 · 직업·스킬 숙련 기본 획득 +2' : tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : '순풍 (요구 레벨 도달로 종료)'}</p>}</div>
                 <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 세계석' : '환생 조건 달성 시 예상 세계석'}</span><strong><Sparkles size={26}/>{format(reward + breathExtra)}</strong>
-                    <ConfirmButton label="환생하기" title="다음 항해를 시작할까요?" description="오른쪽 아래 '초기화되는 것'이 처음 상태로 돌아가고, '유지되는 것'은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
+                    <ConfirmButton label="환생하기" title="다음 모험을 시작할까요?" description="오른쪽 아래 '초기화되는 것'이 처음 상태로 돌아가고, '유지되는 것'은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>
             </section>
             <div className="rebirth-records rebirth-three">

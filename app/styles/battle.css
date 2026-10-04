@@ -349,7 +349,7 @@
 .battle-target-strip .swarm-picker button{min-width:40px;padding:4px 8px;font-size:12px}
 .opponent-card .enemy-hint{color:#b9b07f;white-space:normal;line-height:1.5}
 
-/* 모바일 항해 안내: 장면 위에 한 번 더(데스크톱은 왼쪽 열에 있음) */
+/* 모바일 모험 안내: 장면 위에 한 번 더(데스크톱은 왼쪽 열에 있음) */
 .battle-mobile-tutorial{display:none}
 .battle-top-tutorial{order:-1;margin-bottom:12px}.battle-top-tutorial .tutorial-card{margin:0}
 @media(max-width:767px){.battle-mobile-tutorial{display:block;order:-1}.battle-mobile-tutorial .tutorial-card{margin-bottom:12px}}
@@ -453,7 +453,7 @@
 @media(max-width:767px){.slot-chips{gap:6px}.slot-chip{padding:5px 8px}.slot-chip-text strong{font-size:11px}}
 .battle-shortcut-list .battle-stage-button strong{font-size:12px}.battle-shortcut-list .battle-stage-button small{display:block;font-size:10px;color:#8ea7a4}.battle-shortcut-list .battle-stage-button>svg:last-child{margin-left:auto;color:#678785}.battle-shortcut-list .battle-stage-index{display:grid;place-items:center;color:#a4e9ba}
 
-/* v25.15 세 열 아래쪽 맞춤: 가장 긴 열에 맞춰 왼쪽 패널·항해 일지·전투 기록이 늘어납니다. */
+/* v25.15 세 열 아래쪽 맞춤: 가장 긴 열에 맞춰 왼쪽 패널·모험 일지·전투 기록이 늘어납니다. */
 @media(min-width:901px){
 .battle-hud{align-items:stretch}
 .battle-character-column{display:flex;flex-direction:column}

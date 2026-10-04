@@ -10,7 +10,7 @@ export function Stages({ s, send, busy }: PanelProps) {
     // 사냥터와 던전은 동시에 돌지 않습니다. 던전 탐험 중에는 현재 사냥터 표시를 지우고 이동을 막습니다(전투 레일과 같은 규칙).
     const inDungeon = !!s.dungeon;
     return <>
-    <Heading eyebrow="WORLD MAP" title="사냥터" description="더 깊은 바다, 더 강한 몬스터. 오늘의 항해를 선택하세요."/>
+    <Heading eyebrow="WORLD MAP" title="사냥터" description="더 깊은 바다, 더 강한 몬스터. 오늘의 사냥터를 선택하세요."/>
     <TideSelector s={s} send={send} busy={busy}/>
     {inDungeon && <p className="footnote">던전 탐험 중에는 사냥이 멈춰 있고 사냥터를 바꿀 수 없습니다. 던전에서 귀환하거나 반복이 끝나면 사냥터로 돌아옵니다.</p>}
     {/* v27.34 지역(헤네시스 등)별로 묶어 보여 줍니다. 번호는 전체 순서 그대로입니다. */}

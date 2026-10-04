@@ -1,7 +1,7 @@
 'use client';
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Fish, Anchor, Compass, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag } from 'lucide-react';
+import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond } from 'lucide-react';
 import type { State } from '@/game/types';
 import { inventoryCap } from '@/game/data/economy';
 import { skillArtSrc } from '@/game/data/art';
@@ -43,7 +43,7 @@ export function SkillIcon({ id, size = 24 }: {
 export function SlotIcon({ slot, size = 24 }: {
     slot: string;
     size?: number;
-}) { const Icon = slot === 'rod' ? Anchor : slot === 'coat' ? Shield : Compass; return <Icon size={size}/>; }
+}) { const Icon = slot === 'rod' ? Sword : slot === 'coat' ? Shield : Diamond; return <Icon size={size}/>; }
 export function Empty({ title, description }: {
     title: string;
     description: string;
@@ -68,7 +68,7 @@ export function useNow(ms = 1000) {
     return now;
 }
 
-/** 장비 보관함·항구 상점 공용 재화 막대: 보유 골드·정수·장비 가방. extra는 맨 끝에 붙습니다. */
+/** 장비 보관함·상점 공용 재화 막대: 보유 골드·정수·장비 가방. extra는 맨 끝에 붙습니다. */
 export function WalletBar({ s, label, extra }: { s: State; label: string; extra?: ReactNode }) {
     return <section className="panel port-resource-bar" aria-label={label}>
         <div><Coins size={22}/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div>

@@ -1,6 +1,6 @@
 'use client';
 import { UPDATE_LOG } from '@/game/data/update-log';
-import { Anchor, ChevronRight, Lock, LogOut } from 'lucide-react';
+import { ChevronRight, Lock, LogOut, Leaf } from 'lucide-react';
 import type { State } from '@/game/types';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { NAV } from './game-shell';
@@ -14,7 +14,7 @@ export function Navigation({ view, setView, s, onLogout }: {
     return <Sidebar className="game-sidebar">
     <SidebarHeader>
     <div className="brand">
-    <Anchor size={30}/>
+    <Leaf size={30}/>
     <div>
     <strong>판게아 RPG</strong>
     <small>PANGAEA RPG</small>

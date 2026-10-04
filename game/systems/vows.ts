@@ -6,26 +6,26 @@ import { STAGES, DUNGEONS } from '../data/world';
 export const VOW_IDS = ['anchor', 'breath', 'rough'] as const;
 export type VowId = typeof VOW_IDS[number];
 export const VOW_RESEARCH: Record<VowId, string> = { anchor: 'vowAnchor', breath: 'vowBreath', rough: 'vowRough' };
-export const VOW_NAMES: Record<VowId, string> = { anchor: '잠든 닻', breath: '한 번의 숨', rough: '거친 바다' };
-/** 잠든 닻: 목표에서 이만큼 잡으면 봉인이 풀립니다. */
+export const VOW_NAMES: Record<VowId, string> = { anchor: '잠든 힘', breath: '한 번의 숨', rough: '험한 길' };
+/** 잠든 힘: 목표에서 이만큼 잡으면 봉인이 풀립니다. */
 export const ANCHOR_CATCHES = 300;
 
 /** 서약 보너스 강화 배율: 연구 1단계 ×1, 2단계 ×1.5, 3단계 ×2. 서약이 걸린 뒤 연구를 되돌려도 ×1은 유지합니다. */
 export const vowBoost = (s: Pick<State, 'permanent'>, id: VowId) => 1 + Math.max(0, researchRank(s, VOW_RESEARCH[id]) - 1) * .5;
 export const vowUnlocked = (s: Pick<State, 'permanent'>, id: VowId) => researchRank(s, VOW_RESEARCH[id]) > 0;
-/** 잠든 닻 봉인 해제 배율: ×1.5 → ×1.75 → ×2. */
+/** 잠든 힘 봉인 해제 배율: ×1.5 → ×1.75 → ×2. */
 export const anchorPayout = (s: Pick<State, 'permanent'>) => 1 + .5 * vowBoost(s, 'anchor');
 /** 한 번의 숨 환생 세계석 보너스: +50% → +75% → +100%. */
 export const breathBonus = (s: Pick<State, 'permanent'>) => .5 * vowBoost(s, 'breath');
-/** 거친 바다 선택 단계(0~3). */
+/** 험한 길 선택 단계(0~3). */
 export const roughLevel = (s: Pick<State, 'vows'>) => s.vows?.rough || 0;
-/** 거친 바다: 적 체력·공격 배율 1 + 0.5 × 선택 단계. */
+/** 험한 길: 적 체력·공격 배율 1 + 0.5 × 선택 단계. */
 export const roughEnemy = (s: Pick<State, 'vows'>) => 1 + .5 * roughLevel(s);
-/** 거친 바다: 드롭·골드 배율 1 + 0.5 × 선택 단계 × 강화 배율. 서약이 없으면 정확히 1입니다. */
+/** 험한 길: 드롭·골드 배율 1 + 0.5 × 선택 단계 × 강화 배율. 서약이 없으면 정확히 1입니다. */
 export const roughReward = (s: Pick<State, 'vows' | 'permanent'>) => roughLevel(s) ? 1 + .5 * roughLevel(s) * vowBoost(s, 'rough') : 1;
 export const anchorSeal = (s: Pick<State, 'vows'>) => s.vows?.seal || null;
 
-/** 지금 싸우는 곳이 잠든 닻 목표인지. */
+/** 지금 싸우는 곳이 잠든 힘 목표인지. */
 export function atAnchorTarget(s: Pick<State, 'vows' | 'dungeon' | 'stage'>) {
     const seal = s.vows?.seal;
     if (!seal) return false;
@@ -41,7 +41,7 @@ export function chooseAnchorTarget(rebirths: number, rng: () => number) {
 }
 export const anchorTargetName = (seal: { kind: 'stage' | 'dungeon'; id: string }) => (seal.kind === 'dungeon' ? DUNGEONS : STAGES).find(x => x.id === seal.id)?.name || seal.id;
 
-/** 다음 생 서약을 정리합니다: 해금한 서약만, 거친 바다는 1~3단계. */
+/** 다음 생 서약을 정리합니다: 해금한 서약만, 험한 길은 1~3단계. */
 export function cleanVows(s: Pick<State, 'permanent'>, v?: Vows): Vows {
     const out: Vows = {};
     if (v?.anchor && vowUnlocked(s, 'anchor')) out.anchor = true;
@@ -53,7 +53,7 @@ export function cleanVows(s: Pick<State, 'permanent'>, v?: Vows): Vows {
 export const hasVows = (v?: Vows) => !!(v && (v.anchor || v.breath || v.rough || v.focus));
 /** v25.6 이번 생의 조건 카드. 연구 없이 환생 1회부터 고를 수 있고, 한 생에 하나입니다. */
 const FOCUS_KINDS = ['stage', 'tree', 'gold'] as const;
-export const FOCUS_NAMES: Record<'stage' | 'tree' | 'gold', string> = { stage: '해역 집중', tree: '계열 집중', gold: '황금 항해' };
+export const FOCUS_NAMES: Record<'stage' | 'tree' | 'gold', string> = { stage: '해역 집중', tree: '계열 집중', gold: '황금 모험' };
 /** 랭킹 배지용 목록. 예: ['anchor', 'rough2'] */
 export const vowBadges = (v?: Vows) => [v?.anchor ? 'anchor' : '', v?.breath ? 'breath' : '', v?.rough ? `rough${v.rough}` : ''].filter(Boolean);
 export const vowBadgeLabel = (badge: string) => badge.startsWith('rough') ? `${VOW_NAMES.rough} ${badge.slice(5)}` : VOW_NAMES[badge as VowId] || badge;

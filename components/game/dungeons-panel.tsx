@@ -4,7 +4,7 @@ import { BOSS_RESEARCH } from '@/game/data/specializations';
 import { dungeonClearGold, stats } from '@/game/systems/stats';
 import { dungeonTier, dungeonClearBase, dungeonRewardTier } from '@/game/systems/meta';
 import { useState } from 'react';
-import { Anchor, Lock, Swords } from 'lucide-react';
+import { Lock, Swords } from 'lucide-react';
 import { FishArt } from './art';
 import { BALANCE, MONSTER_TUNING, dungeonOverlevel } from '@/game/data/balance';
 import { FISH, DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
@@ -61,7 +61,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             const research = BOSS_RESEARCH[d.id], claimed = !!s.bossResearchClaims?.[d.id], active = s.dungeon?.id === d.id, overlevel = dungeonOverlevel(s.level, d.level);
             return <article className={`stage-card dungeon-stage-card ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} key={d.id}>
             <div className="stage-top"><span className="stage-num">{String(i + 1).padStart(2, '0')}</span>{locked ? <Lock size={20}/> : active ? <span className="badge">탐험 중</span> : d.id === 'abyss' ? <span className="badge">최고 {s.abyssBest}층</span> : s.clears[d.id] ? <span className="badge">{s.clears[d.id]}회 정복</span> : <span className="badge muted">미탐험</span>}</div>
-            <Anchor className="stage-wave" size={40}/>
+            <Swords className="stage-wave" size={40}/>
             <div className="eyebrow">{closed ? CLOSED_NOTE : d.id === 'abyss' ? `다음 도전 ${s.abyssBest + 1}층` : `${d.fish.length}웨이브 · 보스 ${d.boss?.split('·').pop()?.trim() || ''}`}</div>
             <h2>{d.name}</h2>
             <p>{d.description}</p>

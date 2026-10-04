@@ -114,7 +114,7 @@ test('Research v3: tailwind sail and window scale the tailwind bonus, its condit
 });
 
 test('Research v3: sorting net sells only known, low-rarity drops while the setting is on', () => {
-    const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /선별의 그물/);
+    const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /선별의 눈/);
     s.permanent.sortingNet = 1; act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoSell, true);
     drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'unregistered kind is kept');
     s.itemBook['rod:0'] = true; const gold = s.gold; drop(s, 5, () => 0); assert.equal(s.inventory.length, 1); assert.ok(s.gold > gold);
@@ -165,7 +165,7 @@ test('Vows: research entries, reservation rules and cleanup on full reset', () =
 test('Vows · sleeping anchor: level 1 until 300 catches at the target, then stored exp ×1.5; tide locked; give up pays without bonus', () => {
     const s = vowReady({ vowAnchor: 1 }, { anchor: true }); act(s, { type: 'rebirth' }, 0, () => 0);
     assert.deepEqual(s.vows.seal, { kind: 'stage', id: 'brook', caught: 0, exp: 0 }); assert.deepEqual(s.nextVows, { anchor: true }, 'reservation stays for later lives');
-    assert.throws(() => act(s, { type: 'tide', id: '1' }, 0), /잠든 닻/); s.tide = 3; assert.equal(meta.encounterTier(s), 0); s.tide = 0;
+    assert.throws(() => act(s, { type: 'tide', id: '1' }, 0), /잠든 힘/); s.tide = 3; assert.equal(meta.encounterTier(s), 0); s.tide = 0;
     s.stage = 'bay'; catchOne(s); const per = s.vows.seal.exp; assert.ok(per > 0); assert.equal(s.vows.seal.caught, 0, 'catches elsewhere do not count');
     s.stage = 'brook'; for (let i = 0; i < 299; i++) catchOne(s);
     assert.equal(s.level, 1); assert.equal(s.exp, 0); assert.equal(s.vows.seal.caught, 299);

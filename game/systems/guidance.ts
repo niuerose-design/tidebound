@@ -11,13 +11,13 @@ export const TUTORIAL_STEPS: { id: string; title: string; hint: string; view: st
     { id: 'job', title: '전직', hint: 'Lv.10부터 전직 화면에서 첫 직업을 고를 수 있습니다.', view: 'classes', done: s => s.job !== 'fisher' || (s.unlockedJobs?.length || 0) > 1 || s.rebirths > 0 },
     { id: 'enhance', title: '장비 강화', hint: '장비 보관함에서 골드로 장비를 한 번 강화하세요. 실패·파괴 없이 기본 수치가 15%씩 오릅니다.', view: 'inventory', done: s => [...s.inventory, ...Object.values(s.equipment)].some(i => (i?.enhance || 0) > 0) || s.rebirths > 0 },
     { id: 'research', title: '기초 연구', hint: '몬스터 도감에서 연구 보상을 받거나 환생 화면에서 세계석 연구를 하세요.', view: 'book', done: s => Object.values(s.bookClaims || {}).some(n => n > 0) || Object.values(s.permanent || {}).some(n => n > 0) || s.rebirths > 0 },
-    { id: 'rebirth', title: '환생', hint: '요구 레벨에 도달하면 환생으로 세계석과 영구 보너스를 얻고 다시 항해합니다.', view: 'rebirth', done: s => s.rebirths > 0 },
+    { id: 'rebirth', title: '환생', hint: '요구 레벨에 도달하면 환생으로 세계석과 영구 보너스를 얻고 다시 모험합니다.', view: 'rebirth', done: s => s.rebirths > 0 },
 ];
 export const tutorialProgress = (s: State) => TUTORIAL_STEPS.filter(x => x.done(s)).length;
 /** v25.9 전직 단계까지는 안내 카드를 전투 화면 맨 위에 둡니다. */
 export const tutorialEarly = (s: State) => !TUTORIAL_STEPS.find(x => x.id === 'job')!.done(s);
 
-/** 지금 조건을 만족한 항해 기록 id. */
+/** 지금 조건을 만족한 모험 기록 id. */
 function metVoyage(s: State): string[] {
     const ids: string[] = [];
     if (s.running && !s.dungeon) ids.push(`stage:${s.stage}`);
@@ -27,7 +27,7 @@ function metVoyage(s: State): string[] {
     return ids;
 }
 /**
- * 새로 해금된 항해 기록을 저장하고 한 줄 알림을 남깁니다. 전투를 멈추지 않고 난수도 쓰지 않습니다.
+ * 새로 해금된 모험 기록을 저장하고 한 줄 알림을 남깁니다. 전투를 멈추지 않고 난수도 쓰지 않습니다.
  * 기록이 없던 세이브는 이미 달성한 기록을 조용히 채웁니다(알림 없음, 기존 유저에게 강제 노출하지 않음).
  */
 export function syncVoyage(s: State, log?: (text: string) => void) {

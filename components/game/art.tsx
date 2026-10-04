@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Anchor, Compass, Coins, Droplets, Shield, Sparkles, Swords, Wand2 } from 'lucide-react';
+import { Compass, Coins, Droplets, Shield, Sparkles, Swords, Wand2, Atom } from 'lucide-react';
 import type { Job } from '@/game/data/classes';
 import { lineageOf } from '@/game/data/classes';
 import { fishArtSrc, fishShape, jobArtSrc, type FishShape } from '@/game/data/art';
@@ -148,7 +148,7 @@ export function FishArt({ id, size = 48, className = '', boss = false }: { id: s
     </span>;
 }
 
-const TREE_ICON = { physical: Swords, magic: Wand2, defense: Shield, status: Droplets, hybrid: Anchor, support: Coins, mystery: Sparkles } as const;
+const TREE_ICON = { physical: Swords, magic: Wand2, defense: Shield, status: Droplets, hybrid: Atom, support: Coins, mystery: Sparkles } as const;
 /** 직업 그림. 계보 단위로 public/art/jobs/{lineageId}.webp 를 쓰고, 없으면 계열 아이콘. */
 export function JobArt({ job, size = 48, className = '' }: { job: Job; size?: number; className?: string }) {
     const [state, setState] = useState<'pending' | 'ready' | 'missing'>('pending');
