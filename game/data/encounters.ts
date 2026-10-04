@@ -3,6 +3,7 @@ import type { Skill, Stats } from '../types';
 import { bossLevelScale, monsterLevelScale, dungeonPressure, MONSTER_TUNING, DUNGEON_TUNING, ABYSS_TUNING } from './balance';
 export const ENEMY_SKILLS: Skill[] = [
     { id: 'foeShock', name: '마력 방출', desc: '마법 공격', type: 'active', level: 1, chance: .3, cooldown: 3, multiplier: 1.5, damageType: 'magic', manaCost: 0 },
+    { id: 'foeBurn', name: '불꽃 숨결', desc: '마법 공격 110% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .28, cooldown: 3, multiplier: 1.1, damageType: 'magic', effect: 'burn', manaCost: 0 },
     { id: 'foeVenom', name: '독 포자', desc: '피해 없이 중독 1중첩.', type: 'active', level: 1, chance: .25, cooldown: 4, multiplier: 1, effect: 'poison', statusTurns: 5, statusOnly: true, manaCost: 0 },
     { id: 'foeCrush', name: '몸통 박치기', desc: '피해 없이 2턴 기절.', type: 'active', level: 1, chance: .2, cooldown: 5, multiplier: 1.3, effect: 'stun', statusTurns: 2, statusOnly: true, manaCost: 0 },
     { id: 'foeSilence', name: '무음의 포효', desc: '피해 없이 4턴 침묵.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.15, effect: 'silence', damageType: 'magic', statusTurns: 4, statusOnly: true, manaCost: 0 },
@@ -36,6 +37,8 @@ const PROFILES: Record<string, {
     venom: { name: '독성 생물', hint: '출혈을 버틸 회복과 체력을 준비하세요.', skills: ['foeVenom', 'foeBarbs'], defense: 1, resist: 1, evasion: .04, speed: 1.1 },
     silencer: { name: '침묵하는 생물', hint: '기본 공격부터 마법 피해. 액티브를 봉인하는 침묵과 마법 약화에 대비하세요.', skills: ['foeSilence', 'foeInkBurst'], magicBasic: true, power: .9, defense: .9, resist: 1.1, evasion: .06, speed: 1.05 },
     controller: { name: '대지 제어자', hint: '기본 공격부터 복합 피해. 감속·기절로 턴 우선권을 빼앗습니다.', skills: ['foeSlow', 'foeCrush', 'foeTideSlam'], splitBasic: true, defense: 1.2, resist: 1.3, evasion: .02, speed: .85 },
+    /** v27.48 불꽃 생물: 화상을 쌓으며 추가타로 몰아칩니다(레드 드레이크 · 주니어 발록). */
+    blaze: { name: '불꽃 생물', hint: '화상을 최대 3중첩까지 쌓습니다. 화상 중에는 받는 직접 피해가 커지니 회복과 마법 방어를 챙기세요.', skills: ['foeBurn', 'foeFrenzy'], defense: 1.1, resist: 1, evasion: .06, speed: 1.15 },
     frenzy: { name: '광폭한 짐승', hint: '한 번의 공격 뒤 추가타가 이어집니다.', skills: ['foeFrenzy', 'foeHaste'], defense: 1.1, resist: .9, evasion: .08, speed: 1.25 },
     venomBoss: { name: '독성 보스', hint: '출혈과 감속을 번갈아 사용합니다.', skills: ['foeVenom', 'foeSlow'], defense: 1.25, resist: 1.05, evasion: .06, speed: 1.05 },
     arcaneBoss: { name: '신탁 보스', hint: '마법 공격과 침묵으로 편성을 흔듭니다.', skills: ['foeShock', 'foeSilence'], magicBasic: true, defense: .95, resist: 1.45, evasion: .05, speed: 1.1 },
@@ -46,7 +49,7 @@ const PROFILES: Record<string, {
 };
 const profileIds: Record<string, string> = {
     masteryMimic: 'armored', minnow: 'swift', carp: 'armored', perch: 'tidal', mackerel: 'swift', ray: 'tidal', puffer: 'venom', lionfish: 'venom', eel: 'arcane', barracuda: 'swift', ghost: 'arcane', angler: 'arcane', shark: 'armored', viper: 'venom', squid: 'arcane', leviathan: 'armored', moonfish: 'arcane', dragon: 'swift', ancient: 'armored',
-    seahorse: 'silencer', needlefish: 'swift', tidejelly: 'tidal', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venomBoss', cinderKoi: 'frenzy', starKoi: 'arcane', prismRay: 'tidal', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored', ventColossus: 'boss', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'frenzy', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
+    seahorse: 'silencer', needlefish: 'swift', tidejelly: 'tidal', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venomBoss', cinderKoi: 'blaze', starKoi: 'arcane', prismRay: 'tidal', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored', ventColossus: 'boss', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'blaze', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
 };
 export const profileId = (id: string) => profileIds[id] || 'armored';
 export function profile(id: string) { return PROFILES[profileId(id)]; }

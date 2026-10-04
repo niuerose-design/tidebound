@@ -20,7 +20,7 @@ export const BOOK_TRAITS: Record<BookTraitGroup, { name: string; perStage: StatB
 };
 /** 적 전투 성향 → 도감 보상 성향. 보스 몬스터는 성향과 관계없이 boss입니다. */
 export const PROFILE_TRAIT: Record<string, BookTraitGroup> = {
-    swift: 'swift', armored: 'armored', arcane: 'arcane', venom: 'venom', silencer: 'silencer', controller: 'controller', frenzy: 'frenzy',
+    swift: 'swift', armored: 'armored', arcane: 'arcane', venom: 'venom', silencer: 'silencer', controller: 'controller', frenzy: 'frenzy', blaze: 'frenzy',
     stormEel: 'arcane', venomBoss: 'venom', arcaneBoss: 'arcane', boss: 'boss',
 };
 

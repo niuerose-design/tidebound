@@ -533,3 +533,22 @@ test('v27.46 maple gear names: drops/shop use set names by style, old save names
     assert.equal(s.inventory[0].affixes[0].name, '회피');
     assert.equal(mig.renameMapleGear(s), 0, 'idempotent');
 });
+test('v27.48 burn: stacks to 3, ticks like poison, adds half of bleed vulnerability, separate from bleed/poison', async () => {
+    const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { STATUS_TUNING, SKILL_FORMULA } = await G.load('data/balance');
+    const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const mk = (skills) => ({ name: 'A', stats: { ...base }, hp: 1e6, mana: 1000, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
+    const b = mk([]);
+    for (let i = 0; i < 5; i++) { const a = mk(['fireball']); strike(a, b, () => 0); }
+    assert.equal(b.effects.burn.stacks, STATUS_TUNING.burnMaxStacks, 'caps at 3 stacks');
+    assert.equal(b.effects.burn.turns, STATUS_TUNING.burnTurns);
+    const fang = mk(['toxicFang']), c = mk([]); strike(fang, c, () => 0); assert.equal(c.effects.burn.stacks, 1); assert.equal(c.effects.poison, undefined);
+    // 틱: 화상 중인 쪽이 행동하면 (중첩당 + 체력 비례) × 중첩만큼 깎입니다.
+    const before = b.hp, burn = { ...b.effects.burn }; strike(b, mk([]), () => .99);
+    assert.ok(before - b.hp >= (burn.perStack + burn.hpTick) * burn.stacks, 'burn ticks on action');
+    // 받는 직접 피해: 화상 +6%, 출혈 +12%, 둘 다면 합산.
+    const hit = (effects) => { const t = mk([]); t.effects = effects; strike(mk([]), t, () => .5); return 1e6 - t.hp; };
+    const plain = hit({}), burned = hit({ burn: { perStack: 0, stacks: 1, turns: 9, hpTick: 0 } });
+    assert.ok(Math.abs(burned / plain - (1 + SKILL_FORMULA.burnVulnerability)) < .02, `burn vulnerability ${burned / plain}`);
+    assert.ok(SKILL_FORMULA.burnVulnerability < SKILL_FORMULA.bleedVulnerability && SKILL_FORMULA.burnRatio > SKILL_FORMULA.poisonRatio && SKILL_FORMULA.burnRatio < SKILL_FORMULA.bleedRatio, 'between poison and bleed');
+});
