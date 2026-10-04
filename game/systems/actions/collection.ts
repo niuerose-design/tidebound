@@ -6,7 +6,7 @@ import { SLOTS, RARITIES } from '../../data/balance';
 import { bookPending, itemKey } from '../progression';
 import type { ActionHandlers } from './types';
 import { addLog } from '../state';
-/** 한 어종의 미수령 연구 보상을 모두 지급합니다. 각 단계는 bookClaims로 한 번만 지급됩니다. */
+/** 한 몬스터의 미수령 연구 보상을 모두 지급합니다. 각 단계는 bookClaims로 한 번만 지급됩니다. */
 function claimBookRewards(s: State, id: string) {
     const pending = bookPending(s, id);
     if (!pending.ranks.length)
@@ -29,7 +29,7 @@ export const collectionActions: ActionHandlers = {
     },
     claimBook(s, { id }) {
         if (!FISH.some(f => f.id === id))
-            throw Error('물고기를 찾을 수 없습니다.');
+            throw Error('몬스터를 찾을 수 없습니다.');
         if (!claimBookRewards(s, id))
             throw Error('받을 도감 보상이 없습니다.');
     },

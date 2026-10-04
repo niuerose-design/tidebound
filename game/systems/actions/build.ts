@@ -30,7 +30,7 @@ export const buildActions: ActionHandlers = {
             s.cooldowns = {};
             s.lastTick = now;
             endRun(s, fromDungeon ? '전직으로 던전 정리 · 멈춤' : '전직으로 전투 정리 · 멈춤');
-            addLog(s, fromDungeon ? '전직을 위해 진행 중인 던전을 보상 없이 정리하고 귀환했습니다.' : '전직을 위해 진행 중인 전투를 정리했습니다. 현재 입질은 사라집니다.');
+            addLog(s, fromDungeon ? '전직을 위해 진행 중인 던전을 보상 없이 정리하고 귀환했습니다.' : '전직을 위해 진행 중인 전투를 정리했습니다. 현재 몬스터는 사라집니다.');
         }
         s.job = id;
         if (!s.unlockedJobs.includes(id))
@@ -97,7 +97,7 @@ export const buildActions: ActionHandlers = {
             throw Error('전직으로 얻은 미계승 스킬만 SP로 계승할 수 있습니다.');
         const cost = skillCost();
         if (s.sp < cost)
-            throw Error('계승에는 1 SP가 필요합니다. 장착 포획으로 무료 계승할 수도 있습니다.');
+            throw Error('계승에는 1 SP가 필요합니다. 장착 처치로 무료 계승할 수도 있습니다.');
         s.sp -= cost;
         s.skillSpent[id] = (s.skillSpent[id] || 0) + cost;
         s.skillInheritances[id] = true;

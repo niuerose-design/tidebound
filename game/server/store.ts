@@ -19,7 +19,7 @@ export { db };
 export class ApiError extends Error {
     constructor(message: string, public status = 400) { super(message); }
 }
-/** 로그인한 계정과 현재 캐릭터 슬롯. 세션이 없으면 401. id는 세이브·랭킹·채팅에 쓰는 낚시꾼 ID(1번 슬롯은 계정 ID 그대로, 2·3번은 '계정#2'). */
+/** 로그인한 계정과 현재 캐릭터 슬롯. 세션이 없으면 401. id는 세이브·랭킹·채팅에 쓰는 모험가 ID(1번 슬롯은 계정 ID 그대로, 2·3번은 '계정#2'). */
 export async function session(req: Request) {
     const account = await accountFromRequest(req);
     if (!account) throw new ApiError('플레이하려면 로그인이 필요합니다.', 401);
@@ -27,7 +27,7 @@ export async function session(req: Request) {
     return { account, slot, id: playerId(account, slot) };
 }
 export const playerId = (account: string, slot: number) => slot > 1 ? `${account}#${slot}` : account;
-/** 현재 슬롯의 낚시꾼 ID. 세션이 없으면 401. */
+/** 현재 슬롯의 모험가 ID. 세션이 없으면 401. */
 export async function identity(req: Request) { return (await session(req)).id; }
 const ACCOUNT_REFRESH_MS = 10 * 60_000;
 /** 슬롯 요약: 계정 보너스에 쓰는 기록만 담습니다. */
@@ -35,7 +35,7 @@ function slotSummary(s: State, slot: number, now: number): SlotSummary {
     const bosses = FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
     return { slot, name: s.name, job: s.job, level: s.level, rebirths: s.rebirths || 0, mastered: JOBS.filter(j => jobMastered(s, j)).map(j => j.id), species: FISH.filter(f => (s.book?.[f.id] || 0) > 0).map(f => f.id), bossKills: bosses, abyssBest: s.abyssBest || 0, updatedAt: now };
 }
-/** 보너스 단계가 바뀌는 값만 비교해, 레벨업·포획마다 올리지 않습니다. */
+/** 보너스 단계가 바뀌는 값만 비교해, 레벨업·처치마다 올리지 않습니다. */
 const summaryKey = (x: SlotSummary) => `${x.rebirths}|${x.mastered.join(',')}|${x.species.length}|${Math.floor(x.bossKills / ACCOUNT_RULES.bossPer)}|${Math.floor(x.abyssBest / ACCOUNT_RULES.abyssPer)}`;
 const parseSlots = (rows: SlotRow[]) => rows.flatMap(r => { try { return [JSON.parse(r.summary) as SlotSummary]; } catch { return []; } });
 /**
@@ -67,7 +67,7 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
     await refreshEvents(now);
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = await database.getPlayer(id);
-        // v25.10 처음 보는 낚시꾼일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
+        // v25.10 처음 보는 모험가일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
         if (!row) { await database.createPlayerIfMissing(id, JSON.stringify(newState(now)), now); row = await database.getPlayer(id); }
         if (!row)
             throw new ApiError('저장 데이터를 불러오지 못했습니다.', 503);
@@ -80,7 +80,7 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
     }
     throw new ApiError('다른 창에서 진행 중입니다. 다시 시도하세요.', 409);
 }
-/** v25.12 결투 시즌: 한국 시간 월 단위. 랭킹 행 id는 duel:<시즌>:<낚시꾼>이라 지난 시즌 행이 덮어써지지 않아 순위 정산이 안정적입니다. */
+/** v25.12 결투 시즌: 한국 시간 월 단위. 랭킹 행 id는 duel:<시즌>:<모험가>이라 지난 시즌 행이 덮어써지지 않아 순위 정산이 안정적입니다. */
 export const duelSeasonKey = (now: number) => monthKey(now);
 export const duelRowId = (seasonKey: string, id: string) => `duel:${seasonKey}:${id}`;
 export async function register(id: string) {
@@ -114,7 +114,7 @@ export async function syncDuelSeason(id: string, s: State, now: number) {
     }
     if (!fresh) addLog(s, `새 결투 시즌 ${key} · 점수가 1000으로 돌아갑니다.`, 'system');
 }
-/** v25.6 주간 심연 기록판. 행 id는 abyss:<계정>, 시즌은 주 키 정수(예: 202640)라 낚시꾼 랭킹(시즌 = 세이브 버전)과 섞이지 않습니다. */
+/** v25.6 주간 심연 기록판. 행 id는 abyss:<계정>, 시즌은 주 키 정수(예: 202640)라 모험가 랭킹(시즌 = 세이브 버전)과 섞이지 않습니다. */
 const abyssRowId = (id: string) => `abyss:${id}`;
 export async function listAbyssBoard(now: number) {
     const key = weekKey(now), rows = await db().listRankings(weekSeason(key), 100);

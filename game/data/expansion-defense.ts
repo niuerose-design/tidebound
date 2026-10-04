@@ -78,7 +78,7 @@ export const DEFENSE_BALANCE: Record<string, Partial<Skill>> = Object.fromEntrie
 export const DEFENSE_HINTS: Record<string, string> = {
     bellWarden: '종거북이 종소리 충돌을 두 번째 단계까지 익혔을 때.', eonTurtle: '대종 울림을 끝까지 익힌 수호귀가 한 번의 생을 넘길 때.', worldTurtle: '해일 종타를 끝까지 익히고 두 번의 생을 건넜을 때.',
     holyKnight: '루미너스 (2차)가 두 바다의 서약을 두 번째 단계까지 익혔을 때.', holyCommander: '서약의 일격을 끝까지 익힌 성기사가 한 번의 생을 넘길 때.', lightOcean: '빛의 작살을 끝까지 익히고 두 번의 생을 건넜을 때.',
-    saltWarden: '정신과 체질을 함께 다진 낚시꾼에게.', stillWarden: '소금 결계를 두 번째 단계까지 익혔을 때.', wardKeeper: '정적 파문을 끝까지 익혔을 때.', abyssWarder: '결계 파쇄를 끝까지 익힌 수호자가 한 번의 생을 넘길 때.', wardDeity: '열수 결계진을 끝까지 익히고 두 번의 생을 건넜을 때.',
+    saltWarden: '정신과 체질을 함께 다진 모험가에게.', stillWarden: '소금 결계를 두 번째 단계까지 익혔을 때.', wardKeeper: '정적 파문을 끝까지 익혔을 때.', abyssWarder: '결계 파쇄를 끝까지 익힌 수호자가 한 번의 생을 넘길 때.', wardDeity: '열수 결계진을 끝까지 익히고 두 번의 생을 건넜을 때.',
 };
 /** 검사(1차)에서 갈라지는 두 갈래는 직업 수가 많아져 계보를 따로 묶습니다(1차는 검사 공통). */
 export const DEFENSE_LINEAGES = [

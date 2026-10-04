@@ -67,7 +67,7 @@ test('battle replay: field defeat counts recovery down one turn at a time', () =
 });
 test('battle replay: grouping and skipped-hit counter', () => {
     const hit = (id, actor) => ({ id, type: 'battle', text: `${actor} · 기본 공격 → 3 물리 피해`, event: { actor, skillName: '기본 공격', damageType: 'physical', hits: [{ kind: 'main', value: 3, critical: false, miss: false }], total: 3, healed: 0, drained: 0, statuses: [] } });
-    const logs = [hit(1, '나'), hit(2, '적'), hit(3, '나'), { id: 4, type: 'reward', text: '적 포획 · +3 G · +2 EXP' }, hit(5, '나'), hit(6, '적'), { id: 7, type: 'system', text: '숨을 고르고 다시 낚싯대를 들었습니다.' }];
+    const logs = [hit(1, '나'), hit(2, '적'), hit(3, '나'), { id: 4, type: 'reward', text: '적 처치 · +3 G · +2 EXP' }, hit(5, '나'), hit(6, '적'), { id: 7, type: 'system', text: '숨을 고르고 다시 무기를 들었습니다.' }];
     assert.deepEqual(groupReplayTurns(logs).map(g => g.map(l => l.id)), [[1, 2], [3, 4], [5, 6], [7]]);
     const many = Array.from({ length: 20 }, (_, i) => hit(i + 1, i % 2 ? '적' : '나'));
     assert.equal(combatFxBatch(many, 0, '나').length, 6);

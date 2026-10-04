@@ -1,4 +1,4 @@
-/** 항해 진행: 낚시 시작·정지, 낚시터·던전 이동, 집중 사냥, 안내·목표 설정 */
+/** 항해 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
 import { skillPracticeTargets } from '../progression';
 import { tideLimit, encounterTier } from '../meta';
 import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed } from '../../data/world';
@@ -27,17 +27,17 @@ export const voyageActions: ActionHandlers = {
     start(s, { now }) {
         s.running = true;
         s.lastTick = now;
-        addLog(s, '자동 낚시를 시작했습니다.');
+        addLog(s, '자동 사냥을 시작했습니다.');
     },
     pause(s) {
         s.running = false;
         endRun(s, '직접 멈춤');
-        addLog(s, '낚시를 잠시 멈췄습니다.');
+        addLog(s, '사냥을 잠시 멈췄습니다.');
     },
     stage(s, { id }) {
         const st = STAGES.find(x => x.id === id);
         if (!st || s.level < st.level || s.rebirths < st.rebirth)
-            throw Error('아직 진입할 수 없는 낚시터입니다.');
+            throw Error('아직 진입할 수 없는 사냥터입니다.');
         if (stageClosed(st.id))
             throw Error(`${st.name}은(는) 점검 중이라 입장할 수 없습니다.`);
         s.stage = id;
@@ -71,8 +71,8 @@ export const voyageActions: ActionHandlers = {
             throw Error('던전에서는 목표를 바꿀 수 없습니다.');
         const stage = STAGES.find(x => x.id === s.stage)!;
         if (id !== 'all' && !stage.fish.includes(id))
-            throw Error('현재 낚시터의 물고기를 선택하세요.');
-        // v26.5 해역 난이도 조건이 있는 어종은 그 난이도부터만 집중 사냥할 수 있습니다(조용히 무작위로 빠지지 않도록 막습니다).
+            throw Error('현재 사냥터의 몬스터를 선택하세요.');
+        // v26.5 해역 난이도 조건이 있는 몬스터는 그 난이도부터만 집중 사냥할 수 있습니다(조용히 무작위로 빠지지 않도록 막습니다).
         const need = id === 'all' ? 0 : FISH.find(f => f.id === id)?.minTier || 0;
         if (need > encounterTier(s))
             throw Error(`${FISH.find(f => f.id === id)?.name}은(는) 해역 난이도 ${need}부터 나타납니다(지금 ${encounterTier(s)}).`);
@@ -93,7 +93,7 @@ export const voyageActions: ActionHandlers = {
     statConfirm(s, { a }) {
         s.skipStatConfirm = a.value === 'off';
     },
-    /** v27.32 무리 최대 규모: '0'(끔)·'5'·'100'·'500'(제한 없음). 다음 입질부터 적용합니다. */
+    /** v27.32 무리 최대 규모: '0'(끔)·'5'·'100'·'500'(제한 없음). 다음 출현부터 적용합니다. */
     swarmCap(s, { a }) {
         const cap = Number(a.value);
         if (!(SWARM_CAPS as readonly number[]).includes(cap))

@@ -81,7 +81,7 @@ export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: {
 
 /**
  * v27.35 무릉도장 적 능력치. 층 배율(tier) 대신 ABYSS_TUNING 공식을 씁니다.
- * ref는 심연 첫 어종의 1층 기준 능력치이고, 모든 어종에 같은 배수를 곱해 어종·보스 사이의 차이를 유지합니다.
+ * ref는 심연 첫 몬스터의 1층 기준 능력치이고, 모든 몬스터에 같은 배수를 곱해 몬스터·보스 사이의 차이를 유지합니다.
  */
 export function abyssEnemyStats(f: Parameters<typeof enemyStats>[0], ref: Stats, depth: number, options: { boss?: boolean; wave?: number } = {}): Stats {
     const foe = scaledEnemyStats(f, { boss: options.boss, tier: 0, wave: options.wave ?? 0 });

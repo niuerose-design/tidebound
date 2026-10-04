@@ -15,7 +15,7 @@ export type VaultInfo = import('@/game/data/account').VaultInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean };
 /** 동기화 주기(ms). */
 const SYNC_MS = 3000;
-/** 대기 중(자동 낚시 꺼짐) 동기화는 SYNC_MS × 이 값마다. */
+/** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다. */
 const IDLE_SYNC_SKIP = 10;
 /** 턴이 서버에서 계산된 뒤 다음 동기화로 도착할 때까지의 여유. 이만큼 늦게 재생해야 턴 간격이 고르게 유지됩니다. */
 const REPLAY_LAG_MS = SYNC_MS + 500;
@@ -159,7 +159,7 @@ export function useGame() {
         setBusy(false);
     } }, [request, loadRanking, replay]);
     useEffect(() => { const first = setTimeout(() => send({ type: 'sync' }), 0); let ticks = 0; const timer = setInterval(() => { const s = stateRef.current; ticks++;
-        // v25.21 자동 낚시가 꺼져 있고 던전도 아니면 10번에 한 번(30초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
+        // v25.21 자동 사냥이 꺼져 있고 던전도 아니면 10번에 한 번(30초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
         if (document.visibilityState === 'visible' && (!s || s.running || s.dungeon || ticks % IDLE_SYNC_SKIP === 0))
         send({ type: 'sync' }); }, SYNC_MS); const visible = () => { if (document.visibilityState === 'visible')
         send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible); return () => { clearTimeout(first); clearInterval(timer); document.removeEventListener('visibilitychange', visible); }; }, [send]);
@@ -176,8 +176,8 @@ export function useGame() {
             Promise.resolve(context.registerTool(tool, { signal: lifecycle.signal })).catch(() => { });
         }
         catch { } };
-        registerTool({ name: 'read_fishing_state', description: '현재 낚시꾼의 상태와 진행 중인 전투를 읽습니다.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true }, execute: () => { const s = stateRef.current; return s ? { level: s.level, gold: s.gold, stage: s.stage, running: s.running, job: s.job, skills: s.skills } : { loading: true }; } });
-        registerTool({ name: 'set_fishing_running', description: '자동 낚시를 시작하거나 멈춥니다.', inputSchema: { type: 'object', properties: { running: { type: 'boolean' } }, required: ['running'], additionalProperties: false }, annotations: { readOnlyHint: false }, execute: async (input: unknown) => { if (!input || typeof (input as {
+        registerTool({ name: 'read_fishing_state', description: '현재 모험가의 상태와 진행 중인 전투를 읽습니다.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true }, execute: () => { const s = stateRef.current; return s ? { level: s.level, gold: s.gold, stage: s.stage, running: s.running, job: s.job, skills: s.skills } : { loading: true }; } });
+        registerTool({ name: 'set_fishing_running', description: '자동 사냥을 시작하거나 멈춥니다.', inputSchema: { type: 'object', properties: { running: { type: 'boolean' } }, required: ['running'], additionalProperties: false }, annotations: { readOnlyHint: false }, execute: async (input: unknown) => { if (!input || typeof (input as {
                 running?: unknown;
             }).running !== 'boolean')
                 throw Error('running must be boolean'); if (lock.current)
@@ -204,7 +204,7 @@ export function useGame() {
         setState(null);
         replay.reset();
         setError('');
-        // v27.11 자동 낚시 중 3초 동기화와 겹치면 sync가 잠금에 걸려 버려지고 화면이 '불러오는 중'에 멈췄습니다. 새 슬롯 상태가 올 때까지 다시 시도합니다.
+        // v27.11 자동 사냥 중 3초 동기화와 겹치면 sync가 잠금에 걸려 버려지고 화면이 '불러오는 중'에 멈췄습니다. 새 슬롯 상태가 올 때까지 다시 시도합니다.
         for (let attempt = 0; attempt < 10 && !stateRef.current; attempt++) {
             await action({ type: 'sync' }).catch(() => { });
             if (!stateRef.current) await new Promise(resolve => setTimeout(resolve, 300));

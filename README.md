@@ -1,4 +1,4 @@
-# TIDEBOUND · 심연의 낚시꾼
+# 판게아 RPG (구 TIDEBOUND)
 
 ChatGPT Sites에서 시작한 프로젝트를 Next.js + Vercel 배포 구조로 옮긴 저장소입니다.
 

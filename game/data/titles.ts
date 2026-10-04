@@ -9,7 +9,7 @@ import { REBIRTH_TITLES } from './long-term';
 export type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '사냥'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
 export const TITLES: TitleDef[] = [
-    { id: 'novice', name: '🌱 초심자', desc: '항해를 시작한 모든 낚시꾼', group: '시작' },
+    { id: 'novice', name: '🌱 초심자', desc: '항해를 시작한 모든 모험가', group: '시작' },
     ...REBIRTH_TITLES.map(t => ({ id: `rebirth:${t.rebirths}`, name: t.title, desc: `환생 ${t.rebirths}회`, group: '환생' as const, achievement: `rebirths:${t.rebirths}` })),
     { id: 'playtime:100', name: '바다에 사는 자', desc: '누적 플레이 100시간', group: '도전', achievement: 'playtime:100' },
     { id: 'playtime:500', name: '바다 그 자체', desc: '누적 플레이 500시간', group: '도전', achievement: 'playtime:500' },

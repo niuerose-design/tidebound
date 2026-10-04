@@ -28,8 +28,8 @@ test('Growth descriptions expose real bone penalties, negative AP and farming st
  const bone=skillGrowthStages(SKILLS.find(sk=>sk.id==='boneLegacy')).filter(r=>!r.broken);// v27.6 한계돌파 행 제외
  assert.deepEqual(bone.map(r=>[r.practice,r.effective.cost,r.effective.bonus.hp,r.effective.bonus.defense]),[[0,6,-60,-8],[2500,6,-40,-5],[25000,2,100,12],[125000,-3,450,45]]);
  assert.deepEqual(bone.map(r=>r.effective.penaltyRelief||0),[0,.15,.5,1]);
- const loot=skillGrowthStages(SKILLS.find(sk=>sk.id==='salvageContract'));assert.ok(loot[0].effects.includes('장비 드롭 보너스 +3%p'),loot[0].effects.join('|'));const codex=skillGrowthStages(SKILLS.find(sk=>sk.id==='rareSense'));assert.match(codex[0].effects.join(' '),/변종·황금 포획 5마다 .*최대 20회/);
- const study=skillGrowthStages(SKILLS.find(sk=>sk.id==='titanFieldNotes'));assert.match(study[0].effects.join(' '),/모든 보스 포획 시 숙련 ×3/);assert.match(study.at(-1).effects.join(' '),/숙련 ×8/);
+ const loot=skillGrowthStages(SKILLS.find(sk=>sk.id==='salvageContract'));assert.ok(loot[0].effects.includes('장비 드롭 보너스 +3%p'),loot[0].effects.join('|'));const codex=skillGrowthStages(SKILLS.find(sk=>sk.id==='rareSense'));assert.match(codex[0].effects.join(' '),/변종·황금 처치 5마다 .*최대 20회/);
+ const study=skillGrowthStages(SKILLS.find(sk=>sk.id==='titanFieldNotes'));assert.match(study[0].effects.join(' '),/모든 보스 처치 시 숙련 ×3/);assert.match(study.at(-1).effects.join(' '),/숙련 ×8/);
 });
 test('Active descriptions show maximum-resource scaling, statuses and additional hits',()=>{
  const voidLance=skillGrowthStages(SKILLS.find(sk=>sk.id==='voidLance'));assert.match(voidLance[0].effects.join(' '),/최대 마나 × 0.3/);
@@ -174,7 +174,7 @@ test('Pearl research: physical and magic attack/defense are separate research li
 test('Pearl research reset: per-tab refund, always free (v27.29), refusal conditions',()=>{
  const s=newState(0);s.pearls=0;s.permanent.attack=3;s.permanent.magicAttack=1;s.permanent.hp=2;s.permanent.gold=2;
  assert.throws(()=>act(s,{type:'resetResearch',id:'nope'},0));
- s.running=true;assert.throws(()=>act(s,{type:'resetResearch',id:'combat'},0),/자동 낚시/);s.running=false;
+ s.running=true;assert.throws(()=>act(s,{type:'resetResearch',id:'combat'},0),/자동 사냥/);s.running=false;
  s.dungeon={id:'grotto',wave:0};assert.throws(()=>act(s,{type:'resetResearch',id:'combat'},0));s.dungeon=null;
  assert.throws(()=>act(s,{type:'resetResearch',id:'utility'},0),/돌려받을/);
  assert.deepEqual(researchRefund(s,'combat').refund,(2+4+6)+2+(2+4));
@@ -299,7 +299,7 @@ test('v27.25·v27.31 closed dungeons/stages refuse entry, evict saves inside, an
 test('v27.26 restartLife resets this life only: rebirths, pearls, relics, research and codex stay',async()=>{
  const {restartLife}=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/actions/lifecycle');
  const s=newState(0);s.level=55;s.rebirths=4;s.pearls=77;s.gold=99999;s.job='harpoon';s.unlockedJobs.push('harpoon');s.attributes.str=40;s.permanent.ap=2;s.book.minnow=12;s.running=true;s.dungeon={id:'grotto',wave:2};
- s.inventory=[{id:'r',name:'윤회의 낚싯대',slot:'rod',power:45,rarity:3,level:1,relic:'memoryRod',locked:true},{id:'n',name:'x',slot:'coat',power:10,rarity:1,level:40}];
+ s.inventory=[{id:'r',name:'윤회의 무기',slot:'rod',power:45,rarity:3,level:1,relic:'memoryRod',locked:true},{id:'n',name:'x',slot:'coat',power:10,rarity:1,level:40}];
  restartLife(s,1000);
  assert.equal(s.level,1);assert.equal(s.job,'fisher');assert.equal(s.attributes.str,0);assert.equal(s.dungeon,null);assert.equal(s.running,false);
  assert.equal(s.rebirths,4);assert.equal(s.pearls,77);assert.equal(s.permanent.ap,2);assert.equal(s.book.minnow,12);

@@ -4,10 +4,10 @@ import { kst } from './doors';
 
 /**
  * v25.6 일일·주간 항해 목표. 한국 시간 자정·월요일에 바뀌며, 날짜를 씨앗으로 정해지므로 서버·클라이언트가 같은 목표를 봅니다.
- * 진행은 포획·정복 때 쌓이고, 다 채우면 보상(진주·정수)을 바로 받습니다. 하루 목표를 모두 채우면 추가 진주.
+ * 진행은 처치·정복 때 쌓이고, 다 채우면 보상(진주·정수)을 바로 받습니다. 하루 목표를 모두 채우면 추가 진주.
  */
 export type GoalKind = 'catch' | 'species' | 'dungeon' | 'boss' | 'swarm' | 'duel';
-export type Goal = { id: string; kind: GoalKind; target: number; /** species면 어종 id, dungeon이면 던전 id(빈 값은 아무 곳). */ subject?: string; pearls: number; essence?: number; /** v25.12 선택 목표: 모두 달성 보너스 계산에서 뺍니다(상대가 없을 수 있는 결투). */ optional?: boolean; progress: number; claimed?: boolean };
+export type Goal = { id: string; kind: GoalKind; target: number; /** species면 몬스터 id, dungeon이면 던전 id(빈 값은 아무 곳). */ subject?: string; pearls: number; essence?: number; /** v25.12 선택 목표: 모두 달성 보너스 계산에서 뺍니다(상대가 없을 수 있는 결투). */ optional?: boolean; progress: number; claimed?: boolean };
 export type GoalBoard = { key: string; goals: Goal[]; /** 모두 완료 보너스를 받았는지. */ bonus?: boolean };
 export const DAILY_ALL_BONUS = 3, WEEKLY_ALL_BONUS = 10;
 
@@ -42,8 +42,8 @@ export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, ke
     return goals;
 }
 export function goalText(g: Goal) {
-    const name = g.kind === 'species' ? FISH.find(f => f.id === g.subject)?.name || '지정 어종' : g.kind === 'dungeon' ? DUNGEONS.find(d => d.id === g.subject)?.name || '던전' : '';
-    return g.kind === 'duel' ? `랭크 결투 ${g.target}승` : g.kind === 'catch' ? `아무 물고기 ${g.target}마리 포획` : g.kind === 'species' ? `${name} ${g.target}마리 포획` : g.kind === 'dungeon' ? `${name} ${g.target}회 정복` : g.kind === 'boss' ? `보스 ${g.target}마리 포획` : `무리 변종 ${g.target}회 포획`;
+    const name = g.kind === 'species' ? FISH.find(f => f.id === g.subject)?.name || '지정 몬스터' : g.kind === 'dungeon' ? DUNGEONS.find(d => d.id === g.subject)?.name || '던전' : '';
+    return g.kind === 'duel' ? `랭크 결투 ${g.target}승` : g.kind === 'catch' ? `아무 몬스터 ${g.target}마리 처치` : g.kind === 'species' ? `${name} ${g.target}마리 처치` : g.kind === 'dungeon' ? `${name} ${g.target}회 정복` : g.kind === 'boss' ? `보스 ${g.target}마리 처치` : `무리 변종 ${g.target}회 처치`;
 }
 /** v25.12 결투 시즌 키(한국 시간 월, 예: 2026-10)와 랭킹 시즌 정수. 주 시즌(2026xx)·세이브 버전과 겹치지 않도록 1천만을 더합니다. */
 export const monthKey = (now: number) => kst(now).date.slice(0, 7);

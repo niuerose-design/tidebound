@@ -55,7 +55,7 @@ function advanceBoard(s: State, b: GoalBoard, weekly: boolean, kind: GoalKind, s
         log(`${weekly ? '주간' : '오늘의'} 목표 모두 달성 · 보너스 진주 +${bonus}`);
     }
 }
-/** 포획·정복 때 호출: kind와 대상 id로 일일·주간 목표를 함께 올립니다. */
+/** 처치·정복 때 호출: kind와 대상 id로 일일·주간 목표를 함께 올립니다. */
 export function recordGoal(s: State, kind: GoalKind, subject: string | undefined, n: number, log: (text: string) => void) {
     if (kind === 'catch' || kind === 'boss' || kind === 'dungeon') bumpGuildStat(s, kind === 'catch' ? 'catches' : kind === 'boss' ? 'bosses' : 'clears', n, s.lastTick);
     if (!s.daily || !s.weekly) return;

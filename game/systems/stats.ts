@@ -16,7 +16,7 @@ import { accountExpGold, accountPower, accountCrit } from '../data/account';
 import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages } from './progression';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, superCrit: 0, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, guardAffinity: 1, wardAffinity: 1, healFocus: 0, arcaneStrike: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0, ...a }; }
-/** 달성한 도감 연구 단계의 총합(어종 × 단계). */
+/** 달성한 도감 연구 단계의 총합(몬스터 × 단계). */
 export function mastery(s: State) { return Object.values(s.book).reduce((a, n) => a + BALANCE.bookMilestones.filter(m => n >= m).length, 0); }
 /** 능력치 증가 원인. 능력치 화면의 상세보기가 이 순서로 보여줍니다. */
 export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', 'research', 'book', 'achievement', 'account', 'equipment', 'limit'] as const;
@@ -77,7 +77,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     add('crit', 'research', researchRank(s, 'crit') * .005); add('crit', 'account', accountCrit(s)); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
     add('penetration', 'research', researchRank(s, 'penetration') * .01); add('evasion', 'research', researchRank(s, 'evasion') * .004);
     add('lifesteal', 'research', researchRank(s, 'lifesteal') * .005);
-    // 도감: 어종 성향별 연구 능력치와 완성 지역의 테마 보너스(고정값). 배율은 아래에서 따로 적용합니다.
+    // 도감: 몬스터 성향별 연구 능력치와 완성 지역의 테마 보너스(고정값). 배율은 아래에서 따로 적용합니다.
     for (const bonus of [bookStatBonus(s), ...themes.map(t => t.add || {})])
         for (const [key, n] of Object.entries(bonus))
             add(key as keyof CombatStats, 'book', n);
@@ -169,7 +169,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     limit('lifesteal', Math.min(.3, a.lifesteal));
     return a;
 }
-/** 포획당 장비 드롭 확률. 기본 확률에 행운·물건도감·연구·드롭 보너스를 상대 증가로 곱합니다. */
+/** 처치당 장비 드롭 확률. 기본 확률에 행운·물건도감·연구·드롭 보너스를 상대 증가로 곱합니다. */
 export function dropRate(s: State) {
     const bonus = attributes(s).luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + (stats(s).dropBonus || 0);
     // 거친 바다 서약은 드롭 확률에도 곱합니다(서약이 없으면 ×1). 상한은 그대로입니다.
@@ -195,7 +195,7 @@ export function clampVitals(s: State) {
     s.hp = Math.min(s.hp, stats(s).hp);
     s.mana = Math.min(s.mana, stats(s).mana);
 }
-/** 골드 배율. 거친 바다 서약은 포획·던전 골드를 함께 올립니다(서약이 없으면 ×1). */
+/** 골드 배율. 거친 바다 서약은 처치·던전 골드를 함께 올립니다(서약이 없으면 ×1). */
 /** v25.6 이번 생의 조건 카드 배율. 해역 집중은 그 해역에서만, 황금 항해는 생 전체. */
 const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;

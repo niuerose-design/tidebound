@@ -21,7 +21,7 @@ export function Player({ s, busy, send, setView }: {
     return <aside className="player-column">
     <div className="panel player-panel">
     <div className="section-title">
-    <h2>나의 낚시꾼</h2>
+    <h2>나의 모험가</h2>
     <span className="micro">CHARACTER</span>
     </div>
     <div className="player-avatar">
