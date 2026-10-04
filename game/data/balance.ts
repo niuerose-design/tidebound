@@ -209,10 +209,16 @@ export const STATUS_GUIDE = [
 /**
  * v27.54 필요 경험치 보정.
  * - 환생 비례: 환생 1회마다 +perRebirth(20회까지), 이후 √(초과 횟수) × perRebirth. 환생 경험치 보너스(회당 +25%)가 요구치를 크게 앞질러 환생이 점점 빨라지던 것을 늦춥니다.
- * - 통곡의 벽: wallLevel부터 레벨마다 ×wallGrowth 복리(Lv.80 약 ×11, Lv.90 약 ×108).
+ * - 통곡의 벽: wallLevel부터 레벨마다 ×wallGrowth 복리(v27.77 1.10: Lv.80 약 ×2.9, Lv.100 약 ×19).
  */
-export const XP_SCALING = { perRebirth: .15, wallLevel: 70, wallGrowth: 1.25 };
-export const xpRebirthFactor = (rebirths = 0) => 1 + XP_SCALING.perRebirth * (Math.min(20, rebirths) + Math.sqrt(Math.max(0, rebirths - 20)));
+/**
+ * v27.77 한 생의 필요 경험치 배율. 목표: 첫 생 약 20시간, 환생 1~10회 6~8시간, 그 뒤 천천히 늘어 환생 100회 12~13시간(강한 유저가 난이도 0에서 시간당 1,200마리 기준).
+ * base(첫 생 ×4) + 환생 1회당 +1(20회까지) + 그 뒤 1회당 +0.1 — 요구 레벨이 Lv.100에서 멈춘 뒤에도 계속 늘어납니다.
+ * 통곡의 벽(Lv.70부터 레벨당 ×wallGrowth)은 요구 레벨 상한을 80 → 100으로 올리면서 1.25 → 1.10으로 낮췄습니다(지수 복리는 유지: Lv.100 약 ×19. 1.25면 Lv.100까지 수백 시간).
+ * 전에는 1 + 0.15 × (min(20, r) + √(r−20))로, 환생 경험치 보너스(+25%/회)에 못 미쳐 환생이 쌓일수록 한 생이 짧아졌습니다.
+ */
+export const XP_SCALING = { base: 4, perRebirth: 1, lateFrom: 20, latePerRebirth: .1, wallLevel: 70, wallGrowth: 1.1 };
+export const xpRebirthFactor = (rebirths = 0) => XP_SCALING.base + XP_SCALING.perRebirth * Math.min(XP_SCALING.lateFrom, rebirths) + XP_SCALING.latePerRebirth * Math.max(0, rebirths - XP_SCALING.lateFrom);
 export const xpWallFactor = (level: number) => level >= XP_SCALING.wallLevel ? Math.pow(XP_SCALING.wallGrowth, level - XP_SCALING.wallLevel + 1) : 1;
 export const xpNeeded = (level: number, rebirths = 0) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1) * xpRebirthFactor(rebirths) * xpWallFactor(level));
 // v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.
