@@ -925,12 +925,13 @@ test('v27.78 heal after kill keeps falling with tide; stageField matches spawn; 
     assert.ok(avg < 1.35, `starfall weighted reward multiplier ${avg}`);
 });
 
-test('v27.80 regional book: research 5·6 need 250k/500k kills plus difficulty 20/50, region research stacks per region, records survive rebirth', async () => {
+test('v27.80 regional book: research 5·6 need 250k/500k kills (stage 6 also difficulty 50), region research stacks per region, records survive rebirth', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), Bk = await L.load('systems/book'), P = await L.load('systems/progression'), St = await L.load('systems/stats'), E = await L.load('systems/encounter');
     const s = newState(0);
-    s.book.minnow = 250000; assert.equal(Bk.bookStage(s, 'minnow'), 4, 'kills alone stop at 4');
-    s.bookTier = { minnow: 20 }; assert.equal(Bk.bookStage(s, 'minnow'), 5);
+    s.book.minnow = 249999; assert.equal(Bk.bookStage(s, 'minnow'), 4);
+    s.book.minnow = 250000; assert.equal(Bk.bookStage(s, 'minnow'), 5, 'v27.81 stage 5 needs kills only');
+    s.bookTier = { minnow: 20 };
     s.book.minnow = 500000; assert.equal(Bk.bookStage(s, 'minnow'), 5, 'stage 6 needs difficulty 50');
     s.bookTier.minnow = 50; assert.equal(Bk.bookStage(s, 'minnow'), 6);
     s.bookClaims = { minnow: 4 }; assert.deepEqual(P.bookPending(s, 'minnow').ranks, [4, 5]);
