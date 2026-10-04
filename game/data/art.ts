@@ -11,16 +11,25 @@ export const jobArtSrc = (lineageId: string) => `/art/jobs/${lineageId}.webp`;
 export const skillArtSrc = (skillId: string) => `/art/skills/${skillId}.png`;
 
 /** 실루엣 모양. 몬스터마다 하나를 고정해 두어 이미지가 없어도 책·장면에서 종류를 구분할 수 있게 합니다. */
-export type FishShape = 'fish' | 'koi' | 'ray' | 'eel' | 'squid' | 'crab' | 'jelly' | 'shark' | 'puffer' | 'seahorse' | 'angler' | 'spirit' | 'giant';
+export type FishShape = 'snail' | 'mushroom' | 'slime' | 'pig' | 'boar' | 'golem' | 'eye' | 'monkey' | 'drake' | 'ghost' | 'skeleton' | 'octopus' | 'bat' | 'crab' | 'croc' | 'snake' | 'bubble' | 'chest' | 'demon' | 'mage' | 'fighter' | 'statue' | 'clock';
+/** v27.42 메이플 몬스터 모양으로 다시 짰습니다(maple-monsters.ts 이름 기준). */
 export const FISH_SHAPES: Record<string, FishShape> = {
-    minnow: 'fish', carp: 'koi', perch: 'fish', mackerel: 'fish', ray: 'ray', puffer: 'puffer', lionfish: 'fish', eel: 'eel', barracuda: 'fish', ghost: 'spirit',
-    angler: 'angler', shark: 'shark', viper: 'eel', squid: 'squid', leviathan: 'giant', moonfish: 'puffer', dragon: 'giant', ancient: 'fish',
-    ventCrab: 'crab', glassSquid: 'squid', sulfurEel: 'eel', blindShark: 'shark',
-    seahorse: 'seahorse', needlefish: 'fish', tidejelly: 'jelly', emberEel: 'eel', ashRay: 'ray', magmaPuffer: 'puffer', cinderKoi: 'koi', starKoi: 'koi', prismRay: 'ray', voidGuppy: 'fish',
-    stormBarracuda: 'fish', eclipseMoonfish: 'puffer', novaManta: 'ray', cinderAngler: 'angler', ventLeviathan: 'giant', abyssManta: 'ray',
-    masteryMimic: 'spirit',
-    grottoWarden: 'eel', kelpHydra: 'giant', anchorWraith: 'spirit', magmaKraken: 'squid', templeOracle: 'spirit', abyssSovereign: 'giant', ventColossus: 'giant', starfallSeraph: 'spirit',
+    // 달팽이 · 버섯 · 슬라임
+    minnow: 'snail', carp: 'snail', perch: 'snail', mackerel: 'mushroom', ray: 'slime', puffer: 'mushroom',
+    barracuda: 'mushroom', seahorse: 'mushroom', needlefish: 'mushroom', tidejelly: 'mushroom',
+    // 돼지 · 멧돼지
+    lionfish: 'pig', eel: 'pig', stormBarracuda: 'boar', ghost: 'boar', emberEel: 'boar', abyssManta: 'boar',
+    // 골렘 · 해골 · 눈 · 원숭이 · 망령
+    shark: 'golem', ashRay: 'golem', magmaPuffer: 'golem', angler: 'skeleton', viper: 'eye', squid: 'eye', leviathan: 'eye',
+    moonfish: 'monkey', dragon: 'monkey', eclipseMoonfish: 'ghost', glassSquid: 'ghost',
+    // 용 · 비룡
+    cinderKoi: 'drake', ancient: 'drake', novaManta: 'drake', ventLeviathan: 'drake',
+    // 커닝시티
+    starKoi: 'bubble', prismRay: 'octopus', voidGuppy: 'bat', ventCrab: 'crab', sulfurEel: 'snake', blindShark: 'croc', cinderAngler: 'croc',
+    // 까미 · 보스
+    masteryMimic: 'chest',
+    grottoWarden: 'mushroom', kelpHydra: 'slime', anchorWraith: 'mushroom', magmaKraken: 'demon', templeOracle: 'mage', abyssSovereign: 'fighter', ventColossus: 'statue', starfallSeraph: 'clock',
 };
-export const fishShape = (id: string): FishShape => FISH_SHAPES[id] ?? 'fish';
+export const fishShape = (id: string): FishShape => FISH_SHAPES[id] ?? 'slime';
 /** 모양 표가 빠뜨린 몬스터(테스트가 비어 있는지 확인합니다). */
 export const unmappedFish = () => FISH.filter(f => !(f.id in FISH_SHAPES)).map(f => f.id);

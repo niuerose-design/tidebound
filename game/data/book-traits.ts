@@ -10,12 +10,12 @@ type StatBonus = Partial<CombatStats>;
  */
 export const BOOK_TRAITS: Record<BookTraitGroup, { name: string; perStage: StatBonus }> = {
     swift: { name: '날쌘 개체', perStage: { attack: 2, accuracy: .003 } },
-    armored: { name: '단단한 비늘', perStage: { defense: 1, penetration: .0025 } },
+    armored: { name: '단단한 껍질', perStage: { defense: 1, penetration: .0025 } },
     arcane: { name: '마력 생물', perStage: { magic: 2, resist: .5 } },
     venom: { name: '독성 생물', perStage: { hp: 12, lifesteal: .001 } },
     silencer: { name: '침묵하는 생물', perStage: { mana: 3, manaRegen: .1 } },
-    controller: { name: '조류 제어자', perStage: { speed: .25, resist: 1 } },
-    frenzy: { name: '광폭 포식자', perStage: { attack: 1, critDamage: .015 } },
+    controller: { name: '대지 제어자', perStage: { speed: .25, resist: 1 } },
+    frenzy: { name: '광폭한 짐승', perStage: { attack: 1, critDamage: .015 } },
     boss: { name: '던전 보스', perStage: { attack: 1, magic: 1, hp: 5 } },
 };
 /** 적 전투 성향 → 도감 보상 성향. 보스 몬스터는 성향과 관계없이 boss입니다. */

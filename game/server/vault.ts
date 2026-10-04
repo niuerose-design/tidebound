@@ -19,8 +19,8 @@ export async function vaultInfo(account: string, now: number): Promise<VaultInfo
 export async function vaultMove(account: string, s: State, action: unknown, kind: unknown, rawAmount: unknown, now: number) {
     const amount = Math.floor(Number(rawAmount));
     if (!Number.isFinite(amount) || amount < 1 || amount > 1_000_000) throw new ApiError('수량을 확인하세요.');
-    if (kind !== 'pearls' && kind !== 'essence') throw new ApiError('진주 또는 정수만 넣고 꺼낼 수 있습니다.');
-    const w = await wallet(account, now), label = kind === 'pearls' ? '진주' : '정수';
+    if (kind !== 'pearls' && kind !== 'essence') throw new ApiError('세계석 또는 정수만 넣고 꺼낼 수 있습니다.');
+    const w = await wallet(account, now), label = kind === 'pearls' ? '세계석' : '정수';
     if (action === 'deposit') {
         const have = kind === 'pearls' ? s.pearls : (s.essence || 0);
         if (have < amount) throw new ApiError(`${label}가 부족합니다.`);
@@ -30,7 +30,7 @@ export async function vaultMove(account: string, s: State, action: unknown, kind
     }
     else if (action === 'withdraw') {
         if (w[kind] < amount) throw new ApiError(`금고의 ${label}가 부족합니다.`);
-        if (kind === 'pearls' && w.pearl_out + amount > VAULT_PEARL_OUT_WEEKLY) throw new ApiError(`진주 인출은 주당 ${VAULT_PEARL_OUT_WEEKLY}개까지입니다(이번 주 남은 ${Math.max(0, VAULT_PEARL_OUT_WEEKLY - w.pearl_out)}개).`);
+        if (kind === 'pearls' && w.pearl_out + amount > VAULT_PEARL_OUT_WEEKLY) throw new ApiError(`세계석 인출은 주당 ${VAULT_PEARL_OUT_WEEKLY}개까지입니다(이번 주 남은 ${Math.max(0, VAULT_PEARL_OUT_WEEKLY - w.pearl_out)}개).`);
         w[kind] -= amount;
         if (kind === 'pearls') { s.pearls += amount; w.pearl_out += amount; } else s.essence = (s.essence || 0) + amount;
         addLog(s, `계정 금고에서 ${label} ${amount.toLocaleString()} 인출 · 금고 ${label} ${w[kind].toLocaleString()}`, 'reward');

@@ -339,7 +339,7 @@ export type State = {
     weekly?: import('./data/goals').GoalBoard;
     /** v25.6 이번 주 무릉도장 최고 깊이. settled는 보상을 정산한 지난주 키. */
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
-    /** v25.8 사냥터별 처치한 최고 해역 난이도(차수). 이정표 진주와 업적에 씁니다. */
+    /** v25.8 사냥터별 처치한 최고 해역 난이도(차수). 이정표 세계석과 업적에 씁니다. */
     tideBest?: Record<string, number>;
     /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위 보상을 한 번 정산합니다. */
     duelSeason?: { key: string; lastKey?: string; lastRank?: number };
@@ -368,7 +368,7 @@ export type State = {
     skillPractice: Record<string, number>;
     /** v27.6 한계돌파 단계(기술 id → 0~limitBreak.max). 환생해도 유지됩니다. */
     limitBreaks?: Record<string, number>;
-    /** v27.19 환생 유물이 진주 구매에서 환생 횟수 제공으로 바뀌며, 이미 산 유물의 진주를 돌려준 뒤 true. */
+    /** v27.19 환생 유물이 세계석 구매에서 환생 횟수 제공으로 바뀌며, 이미 산 유물의 세계석을 돌려준 뒤 true. */
     relicRefunded?: boolean;
     jobMastery: Record<string, number>;
     unlockedJobs: string[];
@@ -404,9 +404,9 @@ export type State = {
     inventory: Item[];
     equipment: Record<string, Item | null>;
     permanent: Record<string, number>;
-    /** 진주 연구 재분배의 계정당 첫 1회 무료 반환을 썼는지. 없으면 false. */
+    /** 세계석 연구 재분배의 계정당 첫 1회 무료 반환을 썼는지. 없으면 false. */
     researchResetUsed?: boolean;
-    /** v27.31 무료로 받은 진주 연구 단계(재분배 때 반환하지 않음). limitBreak: 이미 한 한계돌파만큼 ‘한계의 문’을 무료로 받음. */
+    /** v27.31 무료로 받은 세계석 연구 단계(재분배 때 반환하지 않음). limitBreak: 이미 한 한계돌파만큼 ‘한계의 문’을 무료로 받음. */
     researchGranted?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;

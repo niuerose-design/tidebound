@@ -1,4 +1,4 @@
-// 운영: 특정 유저의 이번 생을 처음 상태로 되돌립니다(환생 횟수·진주·연구·유물·도감은 그대로, 레벨 조건 없음).
+// 운영: 특정 유저의 이번 생을 처음 상태로 되돌립니다(환생 횟수·세계석·연구·유물·도감은 그대로, 레벨 조건 없음).
 // 기본은 미리 보기이고 --yes 를 붙여야 실제로 저장합니다. 세이브 버전 검사로 접속 중인 저장과 충돌하면 저장하지 않습니다.
 // 대상은 로그인 아이디(계정 아이디)나 --name 낚시꾼 이름(채팅·랭킹에 보이는 이름)으로 고릅니다. 이름이 여럿 겹치면 후보 목록만 보여 줍니다.
 // 사용: DATABASE_URL='postgres://...' node scripts/reset-life.mjs <아이디> [--slot 2] [--yes]   (Neon · 배포 DB)
@@ -28,7 +28,7 @@ const { load } = loadGame();
 const { migrateState } = await load('systems/migrations');
 const { restartLife } = await load('systems/actions/lifecycle');
 const { jobById } = await load('data/classes');
-const summary = s => `${s.name} · Lv.${s.level} ${jobById(s.job)?.name || s.job} · 환생 ${s.rebirths}회 · 진주 ${s.pearls} · 골드 ${Math.floor(s.gold).toLocaleString()} · 장비 ${s.inventory.length}개${s.dungeon ? ' · 던전 진행 중' : ''}`;
+const summary = s => `${s.name} · Lv.${s.level} ${jobById(s.job)?.name || s.job} · 환생 ${s.rebirths}회 · 세계석 ${s.pearls} · 골드 ${Math.floor(s.gold).toLocaleString()} · 장비 ${s.inventory.length}개${s.dungeon ? ' · 던전 진행 중' : ''}`;
 
 /** 낚시꾼 이름으로 찾기: 모든 세이브의 이름을 읽어 정확히 같은 것만 고릅니다. 하나면 그 세이브, 여럿이면 후보를 출력하고 끝냅니다. */
 function pickByName(rows, usernameOf) {

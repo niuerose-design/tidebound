@@ -1,4 +1,4 @@
-// 진주 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
+// 세계석 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
 import { newState, act, advance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, assert, test } from './harness.mjs';
 
 const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'shop', 'enhance'];
@@ -87,7 +87,7 @@ test('Research v2: online ticks and one offline settlement give the same result 
     assert.deepEqual(pick(online), pick(offline));
 });
 
-// 진주 연구 3단계: 특별 연구 5개
+// 세계석 연구 3단계: 특별 연구 5개
 import { reward, messageBottles, expMultiplier, metaMod } from './harness.mjs';
 const counting = (value = .99) => { const f = () => { f.calls++; return typeof value === 'function' ? value(f.calls) : value; }; f.calls = 0; return f; };
 
@@ -119,7 +119,7 @@ test('Research v3: sorting net sells only known, low-rarity drops while the sett
 });
 
 test('v25.23 golden fish comes from the scavenger passives: multiplies one catch by ten, is recorded, and draws no random number without the skill', () => {
-    const fight = rank => { const s = newState(0); if (rank) { s.level = 40; s.job = 'rareTracker'; s.learned.rareSense = 1; s.skills = ['rareSense']; } s.enemy = { id: 'minnow', name: '은빛 피라미', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
+    const fight = rank => { const s = newState(0); if (rank) { s.level = 40; s.job = 'rareTracker'; s.learned.rareSense = 1; s.skills = ['rareSense']; } s.enemy = { id: 'minnow', name: '달팽이', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
     const plain = fight(0), rngPlain = counting(); reward(plain, rngPlain);
     const lucky = fight(1), rngLucky = counting(); reward(lucky, rngLucky);
     assert.equal(rngLucky.calls, rngPlain.calls + 1); assert.equal(lucky.gold, plain.gold); assert.equal(lucky.goldenBook, undefined);
@@ -131,7 +131,7 @@ test('v25.23 golden fish comes from the scavenger passives: multiplies one catch
 test('Research v3: message bottles roll once per full offline hour and never at rank 0', () => {
     const s = newState(0), idle = counting(0); assert.equal(messageBottles(s, 10, idle), null); assert.equal(idle.calls, 0);
     s.permanent.messageBottle = 5; s.level = 20; const seq = [.1, .5, .1, .99, .5, .1, .8], rng = counting(n => seq[n - 1] ?? .5);
-    const pearls = s.pearls, gold = s.gold, found = messageBottles(s, 4, rng); // 1시간째 골드, 2시간째 진주, 3시간째 없음, 4시간째 장비
+    const pearls = s.pearls, gold = s.gold, found = messageBottles(s, 4, rng); // 1시간째 골드, 2시간째 세계석, 3시간째 없음, 4시간째 장비
     assert.deepEqual([found.count, found.items, found.pearls], [3, 1, 1]); assert.equal(found.gold, 20 * 500);
     assert.equal(s.pearls - pearls, 1); assert.ok(s.gold - gold >= 20 * 500); assert.equal(s.inventory.length, 1);
     const o = newState(0); o.permanent.messageBottle = 5; act(o, { type: 'start' }, 0); advance(o, 10 * 3600_000, seeded(7));
@@ -139,7 +139,7 @@ test('Research v3: message bottles roll once per full offline hour and never at 
     const n = newState(0); act(n, { type: 'start' }, 0); advance(n, 10 * 3600_000, seeded(7)); assert.equal(n.lastOffline.bottles, undefined);
 });
 
-// 진주 연구 4단계: 서약 3개
+// 세계석 연구 4단계: 서약 3개
 import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta } from './harness.mjs';
 const vowReady = (research = {}, next = {}) => { const s = newState(0); s.rebirths = 5; s.level = 60; Object.assign(s.permanent, research); s.nextVows = next; return s; };
 const catchOne = (s, id = 'minnow') => { s.enemy = { id, name: id, hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 10, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; reward(s, () => .99); };
@@ -185,7 +185,7 @@ test('Vows · one breath: a fall soft-resets the life (online and offline); an u
     const plain = vowReady(), vowed = vowReady({ vowBreath: 3 }); vowed.vows = { breath: true }; const p0 = plain.pearls, v0 = vowed.pearls;
     const base = rebirthReward(plain, stats(plain).rebirthBonus || 0);
     act(plain, { type: 'rebirth' }, 0); act(vowed, { type: 'rebirth' }, 0);
-    // 둘 다 같은 업적 보상을 받으므로 차이가 한 번의 숨 보너스(= 기본 진주)입니다.
+    // 둘 다 같은 업적 보상을 받으므로 차이가 한 번의 숨 보너스(= 기본 세계석)입니다.
     assert.equal((vowed.pearls - v0) - (plain.pearls - p0), base, 'rank 3 doubles rebirth pearls');
 });
 
