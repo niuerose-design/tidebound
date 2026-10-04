@@ -278,11 +278,15 @@ export function completedRegions(s: State) { return PLACES.filter(st => st.fish.
 export const bookRankMet = (s: Pick<State, 'book' | 'bookTier'>, id: string, r: number) => r < BALANCE.bookMilestones.length && (s.book[id] || 0) >= BALANCE.bookMilestones[r] && (s.bookTier?.[id] || 0) >= (BALANCE.bookTierReq[r] || 0);
 /** 연구 r단계의 난이도 조건(없으면 0). */
 export const bookTierReq = (r: number) => BALANCE.bookTierReq[r] || 0;
-export function bookReward(s: State, id: string) { const rank = s.bookClaims?.[id] || 0; return { rank, required: BALANCE.bookMilestones[rank], tier: bookTierReq(rank), sp: PROGRESSION.bookSP[rank] || 0, gold: PROGRESSION.bookGold[rank] || 0, ready: bookRankMet(s, id, rank) }; }
-/** 이미 넘은 임계치 중 아직 받지 않은 연구 단계 전부. 여러 단계를 한 번에 넘었으면 모두 한 번에 받습니다. */
+export function bookReward(s: State, id: string) { const rank = s.bookClaims?.[id] || 0; return { rank, required: BALANCE.bookMilestones[rank], tier: bookTierReq(rank), sp: PROGRESSION.bookSP[rank] || 0, ready: bookPending(s, id).ranks.length > 0 }; }
+/**
+ * 받을 연구 보상: 이미 넘은 단계 중 아직 받지 않은 것. v27.81 보상은 SP뿐이라 SP가 있는 단계만 ranks에 넣고,
+ * 받을 때는 넘은 단계 전부(upTo)까지 수령 처리합니다.
+ */
 export function bookPending(s: State, id: string) {
-    const claimed = s.bookClaims?.[id] || 0, ranks: number[] = [];
-    for (let r = claimed; bookRankMet(s, id, r); r++) ranks.push(r);
-    return { ranks, gold: ranks.reduce((a, r) => a + (PROGRESSION.bookGold[r] || 0), 0), sp: ranks.reduce((a, r) => a + (PROGRESSION.bookSP[r] || 0), 0) };
+    const claimed = s.bookClaims?.[id] || 0, met: number[] = [];
+    for (let r = claimed; bookRankMet(s, id, r); r++) met.push(r);
+    const ranks = met.filter(r => (PROGRESSION.bookSP[r] || 0) > 0);
+    return { ranks, upTo: met.length ? met[met.length - 1] + 1 : claimed, sp: ranks.reduce((a, r) => a + (PROGRESSION.bookSP[r] || 0), 0) };
 }
 export function itemKey(slot: string, rarity: number) { return `${slot}:${rarity}`; }
