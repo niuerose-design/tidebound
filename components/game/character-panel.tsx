@@ -5,6 +5,7 @@ import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, perc
 import { attributes, apCapacity, apUsed } from '@/game/systems/progression';
 import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
 import { masteryMultipliers } from '@/game/systems/mastery';
+import { RANK_PERKS, rankOf, rankPerkLevel, rankPerkValue } from '@/game/data/rank';
 import { VARIANTS, VARIANT_BOOK_MIN, variantChances } from '@/game/data/variants';
 import {MONSTER_TUNING, BALANCE } from '@/game/data/balance';
 import { StatBreakdown } from './stat-breakdown';
@@ -17,13 +18,24 @@ import type { PanelProps } from './panel-props';
 import type { State } from '@/game/types';
 /** 상세 능력치의 숙련도 획득 보너스. 펼치면 배율별 기여와 처치당 기대 숙련을 보여줍니다. */
 function MasteryBreakdown({ s }: { s: State }) {
-    const m = masteryMultipliers(s), x = (n: number) => `×${n.toFixed(2)}`;
-    const rows: [string, string][] = [[m.base > 1 ? '기본 획득 (깊은 모험)' : '기본 획득', `+${m.base}`], ['숙련의 기억 · 계정 몬스터', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as [string, string]] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as [string, string]] : [])];
+    const m = masteryMultipliers(s), x = (n: number) => `×${n.toFixed(2)}`, drill = rankPerkLevel(s, 'drill');
+    /** v27.85 기본 획득을 구성 요소(기본 1 · 깊은 모험 +1 · 계급 특전 숙련 훈련 +N)로 나눠 보여 줍니다. 고정값이라 배율보다 먼저 더합니다. */
+    const rows: [string, string][] = [['기본 획득', '+1'], ...(s.lifeBonus === 'deep' ? [['깊은 모험 (이번 생)', '+1'] as [string, string]] : []), ...(drill ? [[`계급 특전 · 숙련 훈련 ${drill}단계`, `+${drill}`] as [string, string]] : []), ['고정 획득 합계', `+${m.base}`], ['숙련의 기억 · 계정 몬스터', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as [string, string]] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as [string, string]] : [])];
     return <details className="stat-breakdown">
-        <summary><span>숙련도 획득 보너스<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>+{Math.round((m.total - 1) * 100)}%</strong></summary>
+        <summary><span>숙련도 획득<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>처치당 ≈ {(m.base * m.total).toFixed(1)}</strong></summary>
         <ul>{rows.map(([label, value]) => <li key={label}><span>{label}</span><b>{value}</b></li>)}
-            <li className="stat-breakdown-total"><span>처치당 숙련</span><b>≈ {(m.base * m.total).toFixed(1)}</b></li></ul>
+            <li className="stat-breakdown-total"><span>계산식</span><b>{m.base} × {m.total.toFixed(2)} ≈ {(m.base * m.total).toFixed(1)}</b></li></ul>
         <p className="stat-note">처치할 때마다 현재 직업과 장착 스킬의 숙련이 오릅니다. 조건부 숙련 스킬 보너스(지정 적 처치 시)와 무리 마릿수는 따로 더해집니다.</p>
+    </details>;
+}
+/** v27.85 계급 특전 요약: 무엇을 몇 단계 켰고 실제로 얼마가 적용되는지. 특전이 없으면 안내만 보입니다. */
+function RankPerkBreakdown({ s }: { s: State }) {
+    const active = RANK_PERKS.map(p => ({ p, level: rankPerkLevel(s, p.id) })).filter(x => x.level > 0);
+    const value = (id: typeof RANK_PERKS[number]['id'], level: number) => id === 'tally' ? `처치 1마리 = 계급 경험치 ${1 + level}마리` : id === 'drill' ? `처치 숙련 +${level} (고정)` : `${(rankPerkValue(s, id) * 100).toFixed(1)}% (${id === 'medal' ? 'SP' : '세계석'} +1 · 사냥터만)`;
+    return <details className="stat-breakdown">
+        <summary><span>계급 특전 · {rankOf(s).name}<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>{active.length ? `${active.reduce((a, x) => a + x.level, 0)}P 적용` : '없음'}</strong></summary>
+        <ul>{active.map(({ p, level }) => <li key={p.id}><span>{p.name} {level}단계</span><b>{value(p.id, level)}</b></li>)}</ul>
+        <p className="stat-note">{active.length ? '숙련 훈련은 위 숙련도 획득의 고정 획득에 더해져 있습니다. 전공 훈장·보급품은 던전에서는 발동하지 않습니다.' : '치장 → 계급에서 진급 포인트로 특전을 켜면 여기에 적용값이 보입니다.'}</p>
     </details>;
 }
 export function Character({ s, send, busy }: PanelProps) {
@@ -63,7 +75,7 @@ export function Character({ s, send, busy }: PanelProps) {
     </div>
     <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>)}</div>
     <p className="footnote stat-breakdown-hint">능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
-    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).flatMap(key => [<StatBreakdown key={key} k={key} value={a[key]} trace={trace} event={key === 'expBonus' ? s.event?.exp ?? 1 : key === 'goldBonus' ? s.event?.gold ?? 1 : key === 'dropBonus' ? s.event?.drop ?? 1 : 1} eventNote={key === 'dropBonus' ? '드롭 확률 전체에 곱함' : undefined} final={key === 'goldBonus' ? `골드 획득 배율 ×${goldMultiplier(s).toFixed(2)} = (1 + ${percent(a.goldBonus || 0, 0)}) × 계정 ${accountExpGold(s).toFixed(2)} × 서약 ${roughReward(s).toFixed(2)} × 집중 ${focusGold(s).toFixed(2)} × 이벤트 ${(s.event?.gold || 1).toFixed(2)}` : key === 'expBonus' ? `경험치 획득 배율 ×${expMultiplier(s).toFixed(2)} = (1 + ${percent(a.expBonus || 0, 0)}) × 계정 ${accountExpGold(s).toFixed(2)} × 순풍 ${tailwindActive(s) ? (1 + tailwindExp(s)).toFixed(2) : '1.00'} × 집중 ${focusExp(s).toFixed(2)} × 이벤트 ${(s.event?.exp || 1).toFixed(2)}` : key === 'dropBonus' ? `처치당 드롭 확률 ${percent(dropRate(s), 2)} = 기본 ${percent(BALANCE.dropChance, 2)} × (1 + ${percent((a.dropBonus || 0) / BALANCE.dropBonusScale, 0)}) × 서약 ${roughReward(s).toFixed(2)} × 이벤트 ${(s.event?.drop || 1).toFixed(2)}${dropRate(s) >= BALANCE.dropChanceCap ? ` (상한 ${percent(BALANCE.dropChanceCap, 1)})` : ''}` : undefined}/>, ...(key === 'critDamage' ? [<MasteryBreakdown key="mastery" s={s}/>] : [])])}</div></details>
+    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).flatMap(key => [<StatBreakdown key={key} k={key} value={a[key]} trace={trace} event={key === 'expBonus' ? s.event?.exp ?? 1 : key === 'goldBonus' ? s.event?.gold ?? 1 : key === 'dropBonus' ? s.event?.drop ?? 1 : 1} eventNote={key === 'dropBonus' ? '드롭 확률 전체에 곱함' : undefined} final={key === 'goldBonus' ? `골드 획득 배율 ×${goldMultiplier(s).toFixed(2)} = (1 + ${percent(a.goldBonus || 0, 0)}) × 계정 ${accountExpGold(s).toFixed(2)} × 서약 ${roughReward(s).toFixed(2)} × 집중 ${focusGold(s).toFixed(2)} × 이벤트 ${(s.event?.gold || 1).toFixed(2)}` : key === 'expBonus' ? `경험치 획득 배율 ×${expMultiplier(s).toFixed(2)} = (1 + ${percent(a.expBonus || 0, 0)}) × 계정 ${accountExpGold(s).toFixed(2)} × 순풍 ${tailwindActive(s) ? (1 + tailwindExp(s)).toFixed(2) : '1.00'} × 집중 ${focusExp(s).toFixed(2)} × 이벤트 ${(s.event?.exp || 1).toFixed(2)}` : key === 'dropBonus' ? `처치당 드롭 확률 ${percent(dropRate(s), 2)} = 기본 ${percent(BALANCE.dropChance, 2)} × (1 + ${percent((a.dropBonus || 0) / BALANCE.dropBonusScale, 0)}) × 서약 ${roughReward(s).toFixed(2)} × 이벤트 ${(s.event?.drop || 1).toFixed(2)}${dropRate(s) >= BALANCE.dropChanceCap ? ` (상한 ${percent(BALANCE.dropChanceCap, 1)})` : ''}` : undefined}/>, ...(key === 'critDamage' ? [<MasteryBreakdown key="mastery" s={s}/>, <RankPerkBreakdown key="rankPerks" s={s}/>] : [])])}</div></details>
     <div className="derived-summary">
     <span title={`기본 ${percent(BALANCE.dropChance, 2)} × (1 + 장비 드롭 보너스 ÷ ${BALANCE.dropBonusScale}) × 서약·이벤트. 상한 ${percent(BALANCE.dropChanceCap, 1)}. 보너스의 구성(행운·물건도감·연구·스킬·장비)은 상세 능력치의 ‘장비 드롭 보너스’에서 봅니다.`}>장비 드롭 확률 (처치당)<strong>{percent(dropRate(s), 2)}{dropRate(s) >= BALANCE.dropChanceCap ? ' (상한)' : ''}</strong>
     </span>
