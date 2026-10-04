@@ -2,6 +2,7 @@
 import { skillPracticeTargets } from '../progression';
 import { tideLimit, encounterTier } from '../meta';
 import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed } from '../../data/world';
+import { SWARM_CAPS } from '../../data/variants';
 import { JOBS } from '../../data/classes';
 import { SKILLS, skillById } from '../../data/skills';
 import type { ActionHandlers } from './types';
@@ -91,6 +92,13 @@ export const voyageActions: ActionHandlers = {
     },
     statConfirm(s, { a }) {
         s.skipStatConfirm = a.value === 'off';
+    },
+    /** v27.32 무리 최대 규모: '0'(끔)·'5'·'100'·'500'(제한 없음). 다음 입질부터 적용합니다. */
+    swarmCap(s, { a }) {
+        const cap = Number(a.value);
+        if (!(SWARM_CAPS as readonly number[]).includes(cap))
+            throw Error('무리 최대 규모는 끔·×5·×100·제한 없음 중에서 고르세요.');
+        if (cap >= 500) delete s.swarmCap; else s.swarmCap = cap;
     },
     salvageMode(s, { a }) {
         if (!salvageRate(s))

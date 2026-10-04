@@ -25,7 +25,7 @@ export const VARIANT_BOOK_MIN = 10;
 /** ×500 무리를 만나려면 장착해야 하는 패시브(희귀어 추적자 Lv.30, 난파선 수집가 계보). */
 export const SWARM_PASSIVE = 'swarmSense';
 export const VARIANTS: VariantDef[] = [
-    { id: 'swarm', name: '무리', mark: '≋', desc: '여러 마리가 한 개체로 덤빕니다. 기본 ×5, 도감 500회부터 ×100, 5,000회에 희귀어 추적자의 ‘무리 감지’를 장착하면 ×500. 포획하면 마리 수만큼 보상. 탱커의 반격은 무리에 (1 + log₂N)배로 들어가고, 탱커 패시브는 무리 조우 확률을 올립니다.', chance: .04, hp: 1, attack: 1, reward: 1, drops: 1, book: 1 },
+    { id: 'swarm', name: '무리', mark: '≋', desc: '여러 마리가 한 개체로 덤빕니다. 기본 ×5, 도감 500회부터 ×100, 5,000회에 희귀어 추적자의 ‘무리 감지’를 장착하면 ×500. 포획하면 마리 수만큼 보상. 탱커의 반격은 무리에 (1 + log₂N)배로 들어가고, 탱커 패시브는 무리 조우 확률을 올립니다. 설정의 ‘무리 최대 규모’로 큰 무리를 줄이거나 끌 수 있습니다.', chance: .04, hp: 1, attack: 1, reward: 1, drops: 1, book: 1 },
     { id: 'giant', name: '거대 개체', mark: '◆', desc: '체력 ×3 · 공격 ×1.25. 경험치·골드 ×4, 드롭 3번 판정, 도감 +3.', chance: .02, hp: 3, attack: 1.25, reward: 4, drops: 3, book: 3 },
     { id: 'abyssal', name: '심연 변이', mark: '◈', desc: '공격 ×1.5 · 속도 ×1.3 · 체력 ×1.5. 희귀 이상 장비 1개 확정 드롭, 경험치·골드 ×3.', chance: .004, hp: 1.5, attack: 1.5, speed: 1.3, reward: 3, drops: 1, guaranteed: true, book: 1 },
     { id: 'starlit', name: '별빛 개체', mark: '✧', desc: '체력 ×1.5. 진주 +1(환생 3회부터 +2), 경험치 ×5.', chance: .008, hp: 1.5, attack: 1, reward: 1, expMult: 5, drops: 1, book: 1, pearls: 1 },
@@ -47,12 +47,19 @@ export function swarmSizesFor(s: State, fishId: string) {
     const n = s.book[fishId] || 0;
     return SWARM_SIZES.filter(size => size > 1 && n >= SWARM_UNLOCK[size] && (size < 500 || canUse(s, SWARM_PASSIVE)));
 }
-/** 무리 규모 추첨: 큰 규모일수록 드뭅니다(×5 : ×100 : ×500 = 8 : 3 : 1). */
+/** v27.32 설정 ‘무리 최대 규모’에서 고를 수 있는 값. 0은 무리 끔, 500은 제한 없음과 같습니다. */
+export const SWARM_CAPS = [0, 5, 100, 500] as const;
+export const swarmCapOf = (s: Pick<State, 'swarmCap'>) => s.swarmCap ?? 500;
+/**
+ * 무리 규모 추첨: 큰 규모일수록 드뭅니다(×5 : ×100 : ×500 = 8 : 3 : 1).
+ * v27.32 설정 상한을 넘게 뽑히면 상한 규모로 낮춥니다(난수 소비는 같음). 상한 0(끔)이면 1을 돌려 일반 개체가 됩니다.
+ */
 export function rollSwarmSize(s: State, fishId: string, rng: () => number) {
     const sizes = swarmSizesFor(s, fishId);
     if (!sizes.length) return 1;
     const weight = (n: number) => n >= 500 ? 1 : n >= 100 ? 3 : 8;
-    let roll = rng() * sizes.reduce((a, n) => a + weight(n), 0);
-    for (const n of sizes) { roll -= weight(n); if (roll < 0) return n; }
-    return sizes[sizes.length - 1];
+    let roll = rng() * sizes.reduce((a, n) => a + weight(n), 0), size: number = sizes[sizes.length - 1];
+    for (const n of sizes) { roll -= weight(n); if (roll < 0) { size = n; break; } }
+    const cap = swarmCapOf(s);
+    return size <= cap ? size : cap >= 5 ? cap : 1;
 }
