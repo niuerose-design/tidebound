@@ -330,3 +330,5 @@
 .discovery-doors b { font-weight:600; } .discovery-doors i { font-style:normal; color:#9bb3b0; } .discovery-doors em { font-style:normal; font-size:11px; color:#8ea39f; white-space:nowrap; }
 .discovery-doors li.open em { color:#d7c6f2; }
 @media (max-width:767px) { .door-row { grid-template-columns:1fr; } .discovery-doors button { grid-template-columns:1fr auto; } .discovery-doors i { grid-column:1 / -1; } }
+/* v27.40 스킬 아이콘: 원작 도트 아이콘이 흐려지지 않게 */
+.skill-art { image-rendering: pixelated; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0; }

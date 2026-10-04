@@ -7,6 +7,8 @@ import { FISH } from './world';
 
 export const fishArtSrc = (id: string) => `/art/fish/${id}.webp`;
 export const jobArtSrc = (lineageId: string) => `/art/jobs/${lineageId}.webp`;
+/** v27.40 스킬 아이콘(원작 도트 아이콘을 그대로 쓰려고 PNG). 있는 파일 목록은 art-manifest.ts. */
+export const skillArtSrc = (skillId: string) => `/art/skills/${skillId}.png`;
 
 /** 실루엣 모양. 몬스터마다 하나를 고정해 두어 이미지가 없어도 책·장면에서 종류를 구분할 수 있게 합니다. */
 export type FishShape = 'fish' | 'koi' | 'ray' | 'eel' | 'squid' | 'crab' | 'jelly' | 'shark' | 'puffer' | 'seahorse' | 'angler' | 'spirit' | 'giant';

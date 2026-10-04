@@ -19,7 +19,7 @@ test('SP levels do not replace real mastery in advanced job requirements',()=>{
  s.jobMastery.whaler=150;s.jobMastery.harpoon=150;s.learned.whaleStrike=5;
  const targets=masteryMilestonesFor(SKILLS.find(x=>x.id==='whaleStrike'));s.skillPractice.whaleStrike=targets.at(-1)-1;
  assert.equal(canChangeJob(s,'krakenSlayer'),false);s.skillPractice.whaleStrike=targets.at(-1);assert.equal(canChangeJob(s,'krakenSlayer'),true);
- assert.ok(jobRequirements(s,JOBS.find(x=>x.id==='krakenSlayer')).some(x=>x.label.includes('거경 관통 숙련 4단계')));
+ assert.ok(jobRequirements(s,JOBS.find(x=>x.id==='krakenSlayer')).some(x=>x.label.includes('애로우 봄 숙련 4단계')));
 });
 test('Stat and SP refunds cannot create points or erase acquired skills',()=>{
  const s=newState(0);const attack=stats(s).attack;act(s,{type:'attribute',id:'str'},0);assert.equal(stats(s).attack,attack+2);

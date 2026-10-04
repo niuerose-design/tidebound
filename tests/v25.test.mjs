@@ -9,7 +9,7 @@ const target = (extra = {}) => ({ name: 'B', stats: { ...base, hp: 1e6 }, hp: ex
 
 test('v25 clockmaker: time machine restores both sides once per battle; mastery opens the chronarch with no door', () => {
     const a = fighter(['timeMachine'], { hp: 10 }), b = target({ hp: 5 });
-    const text = strike(a, b, () => 0); assert.match(text, /타임머신/); assert.equal(a.hp, 1000); assert.equal(b.hp, 1e6); assert.ok(a.effects.timeUsed);
+    const text = strike(a, b, () => 0); assert.match(text, /타임 리와인드/); assert.equal(a.hp, 1000); assert.equal(b.hp, 1e6); assert.ok(a.effects.timeUsed);
     a.hp = 10; strike(a, b, () => 0); assert.equal(a.hp, 10, 'only once per battle');
     const s = newState(0); s.level = 10; s.attributes.dex = 30; s.attributes.int = 30;
     assert.ok(doors.DISCOVERY_DOORS.some(d => d.job === 'clockmaker' && d.test({ playMs: 10 * 3600_000 }) && !d.test({ playMs: 0 })), 'v27.12 the clockmaker opens after ten hours at sea');
@@ -93,7 +93,7 @@ test('v25.3 combat feedback marks heaven for the scene effect and build view pai
 
 test('v25.3 passive-route returns: the archivist passive scales with rebirths and the journeyman with mastered jobs', async () => {
     const { masteredJobCount } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
-    // 진주 기록관 직업은 비전투 그대로지만, 윤회의 조류 기록은 환생마다 자라 어느 직업에서든 쓸 만합니다.
+    // 진주 기록관 직업은 비전투 그대로지만, 드래곤 링크는 환생마다 자라 어느 직업에서든 쓸 만합니다.
     const a = JOBS.find(j => j.id === 'abyssArchivist'); assert.ok(a.attack < 1 && a.penalties.attack < 0, 'archivist stays a non-combat job');
     const s = newState(0); s.level = 50; s.job = 'harpoon'; s.learned.memoryOfTides = 1; s.skillInheritances.memoryOfTides = true; s.skills = ['memoryOfTides'];
     // 환생 자체의 능력치 보정과 구분하려고 같은 환생 수에서 패시브 유무 차이를 봅니다.
@@ -144,9 +144,9 @@ test('v25.5 reset passives fire on crit, kill and chain (players only); chained 
     strike(g, target(), () => 0, evs); assert.deepEqual(evs[0].cooldownReset, [sk('pierce').name]); assert.equal(g.cooldowns.pierce, 0); assert.ok(g.cooldowns.hook > 0);
     // 확률 실패(rng 0.99 ≥ 0.3)면 초기화 없음.
     const g2 = mk(['showmanship'], { stats: { ...base, crit: 1 } }); g2.cooldowns = { pierce: 4 }; let n = 0; strike(g2, target(), () => (n++ ? .99 : 0), []); assert.equal(g2.cooldowns.pierce, 3);
-    // 처치 초기화: 낭인의 기백은 상대를 쓰러뜨리면 전부.
+    // 처치 초기화: 전사의 기백은 상대를 쓰러뜨리면 전부.
     const r = mk(['roninGrit', 'iaiDraw', 'pierce']); r.cooldowns = { iaiDraw: 3, pierce: 5 }; const t = target({ hp: 1 }); strike(r, t, () => 0, []); assert.ok(t.hp <= 0); assert.equal(r.cooldowns.iaiDraw, 0); assert.equal(r.cooldowns.pierce, 0);
-    // 연속 행동 초기화: 시간의 주권은 편성 첫 번째 대기 중인 기술만.
+    // 연속 행동 초기화: 얼티밋 타임은 편성 첫 번째 대기 중인 기술만.
     const c = mk(['chronoSovereign', 'frozenTime', 'precede']); c.cooldowns = { frozenTime: 6, precede: 5 }; strike(c, target(), () => 0, [], false, true); assert.equal(c.cooldowns.frozenTime, 0); assert.equal(c.cooldowns.precede, 4, 'second skill only ticks');
     for (const id of ['showmanship', 'riskDividend', 'nimbleStep', 'chronoSovereign', 'roninGrit']) assert.ok(sk(id).cooldownReset, id);
 });

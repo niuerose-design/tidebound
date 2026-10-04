@@ -4,6 +4,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Fish, Anchor, Compass, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag } from 'lucide-react';
 import type { State } from '@/game/types';
 import { inventoryCap } from '@/game/data/economy';
+import { skillArtSrc } from '@/game/data/art';
+import { SKILL_ART } from '@/game/data/art-manifest';
 export function Meter({ value, max, label, color = 'teal' }: {
     value: number;
     max: number;
@@ -27,9 +29,17 @@ export function Heading({ eyebrow, title, description, children }: {
     <div className="eyebrow">{eyebrow}</div>
     <h1>{title}</h1>{description && <p>{description}</p>}</div>{children}</div>;
 }
-export function SkillIcon({ id }: {
+export function SkillIcon({ id, size = 24 }: {
     id: string;
-}) { const Icon = id === 'breath' || id === 'spring' || id === 'vital' ? Heart : id === 'scales' || id === 'fortress' ? Shield : id === 'wave' ? Waves : id === 'focus' ? Target : id === 'anchor' ? Anchor : id === 'hook' || id === 'pierce' ? Swords : Zap; return <Icon size={24}/>; }
+    size?: number;
+}) {
+    // v27.40 아이콘 이미지가 있으면 도트를 살려 그리고, 없거나 못 불러오면 기본 아이콘을 씁니다.
+    const [broken, setBroken] = useState(false);
+    // eslint-disable-next-line @next/next/no-img-element -- 선택적 정적 파일(목록에 있는 것만 요청)
+    if (SKILL_ART.has(id) && !broken) return <img className="skill-art" src={skillArtSrc(id)} alt="" width={size} height={size} loading="lazy" decoding="async" onError={() => setBroken(true)}/>;
+    const Icon = id === 'breath' || id === 'spring' || id === 'vital' ? Heart : id === 'scales' || id === 'fortress' ? Shield : id === 'wave' ? Waves : id === 'focus' ? Target : id === 'anchor' ? Anchor : id === 'hook' || id === 'pierce' ? Swords : Zap;
+    return <Icon size={size}/>;
+}
 export function SlotIcon({ slot, size = 24 }: {
     slot: string;
     size?: number;

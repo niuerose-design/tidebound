@@ -59,14 +59,14 @@ test('Level ups grant native skills but no SP',()=>{
 });
 test('Combat feedback preserves both actors, healing target and follow-up misses',()=>{
  const logs=[
- {id:10,type:'battle',text:'나 · 쌍갈고리 [치명타] → 150 물리 피해 · 20 회복 · 추가타 50 · 추가타 2 빗나감'},
+ {id:10,type:'battle',text:'나 · 선풍 [치명타] → 150 물리 피해 · 20 회복 · 추가타 50 · 추가타 2 빗나감'},
  {id:11,type:'battle',text:'몬스터 · 기본 공격 → 8 물리 피해 · 침묵 중'},
  {id:12,type:'battle',text:'나: 기절로 행동 불가.'}];
  const batch=combatFxBatch(logs,9,'나');assert.equal(batch.length,3);assert.deepEqual(batch.map(f=>f.actor),['player','enemy','player']);
  assert.deepEqual(batch[0].hits.map(h=>h.value),[100,50,0]);assert.equal(batch[0].kind,'physical');assert.equal(batch[0].target,'enemy');assert.equal(batch[0].healing,20);assert.equal(batch[0].hits[0].critical,true);
  assert.equal(batch[1].basic,true);assert.equal(batch[1].kind,'physical');assert.equal(batch[2].target,'player');assert.equal(batch[2].kind,'stun');assert.ok(batch[1].delay>batch[0].delay);
  assert.equal(combatFxBatch(logs,12,'나').length,0);assert.equal(combatFxBatch(Array.from({length:80},(_,i)=>({...logs[1],id:i})),0,'나').length,6);
- const heal=combatFxFromLog({id:90,type:'battle',text:'나 · 생명의 조류 → 80 마법 피해 · 25 회복'},'나');assert.equal(heal.target,'enemy');assert.equal(heal.healing,25);
+ const heal=combatFxFromLog({id:90,type:'battle',text:'나 · 마나 리커버리 → 80 마법 피해 · 25 회복'},'나');assert.equal(heal.target,'enemy');assert.equal(heal.healing,25);
 });
 test('PvP snapshots use the same purchased or mastered active levels',()=>{
  const s=newState(0);s.level=25;s.learned.hook=3;s.skills=['hook'];const paid=snapshot(s);

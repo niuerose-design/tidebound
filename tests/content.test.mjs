@@ -277,7 +277,7 @@ test('v27.22 mastery mimic: rare stage-only spawn with the strongest local body,
 test('v27.24 ultimate finale skills exist, belong to 5th-tier jobs, and the fx parser carries the skill id',()=>{
  const ids=['braveSlash','oceanWrath','genesis','doomMark','aegisJudgment','redApocalypse','worldTentacle','soulReap','jackpotStrike','frozenTime'];
  for(const id of ids){const sk=SKILLS.find(x=>x.id===id);assert.ok(sk,id);const job=JOBS.find(j=>j.id===sk.job);assert.ok(job&&(job.tier===5||job.id==='chronarch'),id+' job tier');}
- const fx=combatFxFromLog({id:9,type:'battle',text:'나 · 용사의 일격 → 100 물리 피해'},'나');assert.equal(fx.skillId,'braveSlash');
+ const fx=combatFxFromLog({id:9,type:'battle',text:'나 · 소드 오브 버닝 소울 → 100 물리 피해'},'나');assert.equal(fx.skillId,'braveSlash');
 });
 
 test('v27.25·v27.31 closed dungeons/stages refuse entry, evict saves inside, and are written to State.closed',()=>{

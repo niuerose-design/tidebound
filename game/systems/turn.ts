@@ -84,7 +84,7 @@ function tickTurn(s: State, rng: () => number) {
     const enemy: Fighter = { name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
-    // v25 타임머신: 쓸 때마다 현재 직업 숙련이 오릅니다.
+    // v25 타임 리와인드: 쓸 때마다 현재 직업 숙련이 오릅니다.
     const log = (text: string, event: CombatEvent) => { addLog(s, text, 'battle', event); if (event?.restored && event.actor === s.name) s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + TIME_MACHINE_MASTERY; };
     actTurn(first, second, rng, log);
     if (first.hp > 0 && second.hp > 0)

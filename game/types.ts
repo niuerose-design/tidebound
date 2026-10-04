@@ -21,7 +21,7 @@ export type Stats = {
     hpRegen?: number;
     penetration?: number;
     lifesteal?: number;
-    /** 육중 조화의 원시 피해. 직접 배분한 여섯 능력치로만 계산하며 장비·버프는 제외. */
+    /** 올라운드 밸런스의 원시 피해. 직접 배분한 여섯 능력치로만 계산하며 장비·버프는 제외. */
     harmony?: number;
     /** 반격: 맞을 때마다 (내 물리 방어 × 이 값)을 공격자에게 돌려줍니다. 직업의 방어 친화도가 곱해진 최종값. */
     thorns?: number;
@@ -92,7 +92,7 @@ export type StatusEffects = {
     immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'weaken' | 'silence' | 'slow', number>>;
     /** v25 일곱 글자: 이번 전투에 새긴 인. */
     seals?: string[];
-    /** v25 타임머신을 이번 전투에 썼는지. */
+    /** v25 타임 리와인드를 이번 전투에 썼는지. */
     timeUsed?: boolean;
     /** v25 이번 전투에 無로 막은 횟수. */
     lastStand?: number;
@@ -165,11 +165,11 @@ export type Skill = {
     allIn?: { hpRatio: number; hpScale: number; manaScale: number; heal?: number };
     /** v26.3 순수 회복: 공격하지 않고 회복만 합니다(명중·피해·반격·추가타 없음). */
     healOnly?: boolean;
-    /** v25 정지된 시간: 반드시 명중합니다. */
+    /** v25 타임 디스토션: 반드시 명중합니다. */
     sureHit?: boolean;
     /** v25 시간: 이 행동 뒤 곧바로 한 번 더 행동합니다(연속 행동 횟수와 별개). */
     extraTurn?: boolean;
-    /** v25 타임머신: 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회. */
+    /** v25 타임 리와인드: 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회. */
     restoreAll?: boolean;
     /** v25 반동: 준 피해 × recoil만큼 자신도 받습니다(반동으로는 체력 1 아래로 내려가지 않음). */
     recoil?: number;
@@ -273,7 +273,7 @@ export type CombatEvent = {
     cooldownReset?: string[];
     /** v25.5 동시 시전: 이 줄이 묶음의 몇 번째(0부터)이고 몇 개가 함께 나갔는지. 첫 줄은 이어서 나갈 기술 id를 들고 있습니다. */
     multicast?: { index: number; count: number; ids?: string[] };
-    /** v25: 타임머신으로 모두 회복. */
+    /** v25: 타임 리와인드로 모두 회복. */
     restored?: boolean;
     /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */
     endured?: { heal: number; self?: boolean };

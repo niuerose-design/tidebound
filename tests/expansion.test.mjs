@@ -20,7 +20,7 @@ test('v21 heal skills fire at full HP; non-healers deal reduced damage when the 
  const base={hp:1000,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const cast=(extra,hp)=>{const a={name:'A',stats:{...base,...extra},hp,mana:100,skills:['moonTide'],cooldowns:{},stun:0,effects:{},ranks:{moonTide:1},mastery:{},practice:{}};const b={name:'B',stats:{...base,hp:1e6},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};const log=strike(a,b,()=>0);return {dmg:1e6-b.hp,log,a};};
  const idle=cast({},1000),healer=cast({healFocus:1},1000),hurt=cast({},300);
- assert.match(idle.log,/월광 조수/);assert.equal(idle.a.cooldowns.moonTide>0,true);
+ assert.match(idle.log,/달빛 치유/);assert.equal(idle.a.cooldowns.moonTide>0,true);
  assert.ok(Math.abs(idle.dmg/healer.dmg-SKILL_FORMULA.idleHealDamage)<.01);assert.equal(hurt.dmg,healer.dmg,'a needed heal keeps full damage');
  assert.ok(SKILLS.filter(sk=>sk.effect==='heal').every(sk=>!sk.condition));
  assert.equal(stats({...newState(0),job:'lunarOracle'}).healFocus,1);assert.equal(stats(newState(0)).healFocus,0);
@@ -31,7 +31,7 @@ test('v21 poison, burns and execute conditions are data-driven',()=>{
  const dart=SKILLS.find(x=>x.id==='venomDart');let b=mk([]);strike(mk(['venomDart'],{dotBonus:.5}),b,()=>0);
  assert.equal(b.effects.poison.stacks,1);assert.equal(b.effects.poison.perStack,Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)*1.5));assert.equal(b.effects.poison.hpTick,Math.floor(1e6*.01),'v27.3 tick adds 1% of target max hp');
  assert.equal(b.hp,1e6);// 독침은 상태이상 전용: 직접 피해 없음
- b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.dot.name,'화상');assert.ok(b.hp<1e6);// 화염구는 피해와 화상을 함께
+ b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.dot.name,'화상');assert.ok(b.hp<1e6);// 플레임 디스차지는 피해와 화상을 함께
  b=mk([]);strike(mk(['rotBloom']),b,()=>0);assert.equal(b.effects.poison.stacks,1);assert.ok(b.hp<1e6);// 4차는 피해와 상태이상을 함께
  const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[];strike(mk(['braveSlash']),t,()=>0,ev);return ev[0].hits[0].value;};
  const sk=SKILLS.find(x=>x.id==='braveSlash');assert.equal(brave(3e5),Math.round(Math.round(100*sk.multiplier)*(1+sk.conditionalDamageBonus)));assert.equal(brave(1e6),Math.round(100*sk.multiplier));

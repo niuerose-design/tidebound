@@ -288,11 +288,11 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio) * (1 + sa.healBonus)));
             a.hp += healed;
         }
-        // v25 타임머신: 둘 다 처음 상태로. 전투당 1회.
+        // v25 타임 리와인드: 둘 다 처음 상태로. 전투당 1회.
         if (chosen.restoreAll) {
             a.effects.timeUsed = true;
             a.hp = sa.hp; a.mana = sa.mana; b.hp = sb.hp; if (b.mana !== undefined) b.mana = sb.mana;
-            notes.push('타임머신 · 모두 처음 상태로');
+            notes.push('타임 리와인드 · 모두 처음 상태로');
             ev.restored = true;
         }
     }
@@ -335,7 +335,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const healOnly = !!chosen?.healOnly;
     const landed = healOnly ? true : rng() < hit;
     const split = chosen?.damageType === 'split' || splitBasic;
-    // 육중 조화는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
+    // 올라운드 밸런스는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
     let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'attr' ? 0 : splitBasic ? (sa.attack + sa.magic) / 2 : magical ? sa.magic : sa.attack;
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
