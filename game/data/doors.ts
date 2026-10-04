@@ -27,10 +27,10 @@ const HOUR = 3600_000;
 export type DiscoveryDoor = { job: string; hint: string; test: (s: State) => boolean };
 export const DISCOVERY_DOORS: DiscoveryDoor[] = ([
     { job: 'undead', hint: '열 번 쓰러져 본 모험가에게 죽음이 말을 겁니다.', test: s => (s.deaths || 0) >= 10 },
-    { job: 'clockmaker', hint: '바다에서 열 시간을 보낸 뒤, 시계 소리가 들립니다.', test: s => (s.playMs || 0) >= 10 * HOUR },
-    { job: 'headwindSailor', hint: '다섯 번째 바다까지 거슬러 올라간 항해사에게.', test: s => (s.bestStage || 0) >= 4 },
+    { job: 'clockmaker', hint: '사냥터에서 열 시간을 보낸 뒤, 시계 소리가 들립니다.', test: s => (s.playMs || 0) >= 10 * HOUR },
+    { job: 'headwindSailor', hint: '다섯 번째 사냥터까지 거슬러 올라간 모험가에게.', test: s => (s.bestStage || 0) >= 4 },
     { job: 'sunriseAngler', hint: '열다섯 종의 몬스터를 처음 만난 아침에.', test: s => speciesCount(s) >= 15 },
-    { job: 'barehandFisher', hint: '무기 없이 열다섯 레벨을 넘긴 어부에게.', test: s => s.level >= 15 && !s.equipment?.rod },
+    { job: 'barehandFisher', hint: '무기 없이 열다섯 레벨을 넘긴 모험가에게.', test: s => s.level >= 15 && !s.equipment?.rod },
     { job: 'noonDiver', hint: '던전 다섯 번을 끝까지 잠수한 자에게.', test: s => dungeonClears(s) >= 5 },
     { job: 'mistSwordsman', hint: '결투에서 세 번 이긴 뒤 안개가 걷힙니다.', test: s => (s.wins || 0) >= 3 },
     { job: 'nightHeron', hint: '오백 마리를 낚고도 물가를 떠나지 않은 자에게.', test: s => (s.kills || 0) >= 500 },

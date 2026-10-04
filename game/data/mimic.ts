@@ -4,7 +4,7 @@
  */
 export const MIMIC = {
     id: 'masteryMimic',
-    /** 출현마다 까미가 나올 확률(사냥터, Lv.10 이상, 누적 처치 100마리 이상). 해역 난이도 1단계마다 chancePerTier만큼 더합니다. */
+    /** 출현마다 까미가 나올 확률(사냥터, Lv.10 이상, 누적 처치 100마리 이상). 사냥터 난이도 1단계마다 chancePerTier만큼 더합니다. */
     chance: .0015,
     chancePerTier: .0005,
     /** 사냥터 순서(0부터)마다 등장 확률 배율 +stageStep. 낮은 사냥터는 빨리 많이 잡고, 높은 사냥터는 한 번의 확률이 높습니다. */
@@ -28,6 +28,6 @@ export function rollMimicMastery(rng: () => number) {
     for (const t of MIMIC.tiers) { roll -= t.chance; if (roll < 0) return t; }
     return MIMIC.tiers[MIMIC.tiers.length - 1];
 }
-/** 등장 확률 = (기본 + 해역 난이도 × 단계당) × (1 + 사냥터 순서 × stageStep). 예: 난이도 10, 열 번째 사냥터 → 0.65% × 3.25 ≈ 2.1%. */
+/** 등장 확률 = (기본 + 사냥터 난이도 × 단계당) × (1 + 사냥터 순서 × stageStep). 예: 난이도 10, 열 번째 사냥터 → 0.65% × 3.25 ≈ 2.1%. */
 export const mimicChance = (tier: number, stageIndex = 0) => (MIMIC.chance + tier * MIMIC.chancePerTier) * (1 + stageIndex * MIMIC.stageStep);
 export const mimicStageMultiplier = (stageIndex: number) => 1 + stageIndex * MIMIC.stageStep;

@@ -11,7 +11,7 @@ export const TAILWIND_WINDOW = 5, TAILWIND_EXP = .5, DEEP_VOYAGE_LEVEL = 100;
 export const tailwindExp = (s: Pick<State, 'permanent'>) => (TAILWIND_EXP * 10 + researchRank(s, 'tailwindSail')) / 10;
 /** 순풍 조건 폭: 요구 레벨 + 5 + 바람목 넓히기 1레벨/단계. */
 export const tailwindWindow = (s: Pick<State, 'permanent'>) => TAILWIND_WINDOW + researchRank(s, 'tailwindWindow');
-/** 이번 환생으로 다음 생에 얻는 효과. Lv.100 완주는 깊은 항해, 요구 레벨 + 순풍 조건 폭 이내는 순풍. */
+/** 이번 환생으로 다음 생에 얻는 효과. Lv.100 완주는 깊은 모험, 요구 레벨 + 순풍 조건 폭 이내는 순풍. */
 export const nextLifeBonus = (s: State): 'deep' | 'tailwind' | null => s.level >= DEEP_VOYAGE_LEVEL ? 'deep' : s.level <= rebirthLevel(s) + tailwindWindow(s) ? 'tailwind' : null;
 export const tailwindActive = (s: State) => s.lifeBonus === 'tailwind' && s.level < rebirthLevel(s);
 export const rebirthReward = (s: State, bonus = 0) => deepVoyagePearls(s) + Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) + Math.max(0, Math.floor(bonus));
@@ -21,12 +21,12 @@ export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, 일반 던전은 0. */
 export const dungeonTier = (id: string, abyssDepth: number) => id === 'abyss' ? abyssDepth + 2 : 0;
-/** 잠든 힘 봉인 중에는 일반 사냥터 해역 난이도가 0으로 고정됩니다. */
+/** 잠든 힘 봉인 중에는 일반 사냥터 난이도가 0으로 고정됩니다. */
 export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1) : s.vows?.seal ? 0 : (s.tide || 0);
-/** 해역 난이도 1단계당 처치 숙련 +30%. */
+/** 사냥터 난이도 1단계당 처치 숙련 +30%. */
 const TIDE_MASTERY_PER_TIER = .3;
 export const tierReward = (tier: number) => 1 + tier * .5;
-/** v27.21 해역 난이도별 처치 숙련 배율. 적이 커져 시간당 처치가 줄어드는 만큼을 숙련으로 돌려줍니다. */
+/** v27.21 사냥터 난이도별 처치 숙련 배율. 적이 커져 시간당 처치가 줄어드는 만큼을 숙련으로 돌려줍니다. */
 export const tierMastery = (tier: number) => 1 + tier * TIDE_MASTERY_PER_TIER;
 /** 처치 보상(골드 배율 적용 전). 전투 보상과 도감 화면 표시가 같은 식을 씁니다. */
 export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: number }, tier: number, boss = false) {

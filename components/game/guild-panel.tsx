@@ -14,7 +14,7 @@ type Props = PanelProps & { info: GuildInfo | null; error: string; load: () => P
  * 개인 능력치 보너스는 없습니다(v20.7 결정 유지). 길드장은 ‘길드 관리’에서 코드·이름·내보내기를 다룹니다.
  */
 export function Guild({ s, busy, info, error, load, act }: Props) {
-    const [name, setName] = useState('심해개척단'), [code, setCode] = useState(''), [rename, setRename] = useState(''), [copied, setCopied] = useState(false);
+    const [name, setName] = useState('단풍개척단'), [code, setCode] = useState(''), [rename, setRename] = useState(''), [copied, setCopied] = useState(false);
     useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
     useEffect(() => { if (info?.guild) { const t = setTimeout(() => setRename(info.guild!.name), 0); return () => clearTimeout(t); } }, [info?.guild]);
     const copy = async () => { try { await navigator.clipboard.writeText(info?.guild?.code || ''); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* 클립보드 없음 */ } };

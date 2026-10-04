@@ -15,20 +15,20 @@ const stamp = () => Date.now();
 const num = (v: string) => Math.max(0, Math.floor(Number(v.replace(/[^0-9]/g, '')) || 0));
 const QUICK = [10, 25, 50, 100];
 /**
- * v27.44 바칠 양: 좌우 슬라이더(보유량 기준) · 빠른 비율 버튼 · 직접 입력. 보유량이 1,000 이하면 1개 단위, 넘으면 0.1% 단위로 움직입니다.
- * unit을 주면(골드 1,000 = 기여도 1) 그 배수로 내려 맞춰 버려지는 자투리가 없게 합니다.
+ * v27.44 바칠 양: 좌우 슬라이더 · 빠른 비율 버튼 · 직접 입력. unit을 주면(골드 1,000 = 기여도 1) 그 배수로 내려 맞춰 자투리가 버려지지 않습니다.
+ * v27.51 슬라이더·비율 버튼의 100%는 보유량이 아니라 '고른 게이지를 채우는 데 필요한 양'(cap, 보유량 이하)입니다. 직접 입력하면 그보다 더 바칠 수 있습니다.
  */
-function AmountRow({ icon, label, have, value, setValue, unit = 1 }: { icon: React.ReactNode; label: string; have: number; value: string; setValue: (v: string) => void; unit?: number }) {
-    const fine = have <= 1000, n = Math.min(num(value), have), max = fine ? have : 1000;
-    const set = (amount: number) => { const v = Math.floor(Math.max(0, Math.min(have, amount)) / unit) * unit; setValue(v ? v.toLocaleString() : ''); };
+function AmountRow({ icon, label, have, cap, value, setValue, unit = 1 }: { icon: React.ReactNode; label: string; have: number; cap: number; value: string; setValue: (v: string) => void; unit?: number }) {
+    const top = Math.max(0, Math.min(have, cap)), fine = top <= 1000, n = Math.min(num(value), top), max = fine ? top : 1000;
+    const set = (amount: number) => { const up = Math.ceil(Math.max(0, Math.min(top, amount)) / unit) * unit, v = up > top ? Math.floor(top / unit) * unit : up; setValue(v ? v.toLocaleString() : ''); };
     return <div className="altar-amount">
-        <label className="altar-input">{icon}<span>{label}</span><input inputMode="numeric" value={value} placeholder="0" onChange={e => setValue(e.target.value)}/><small>보유 {format(have)}</small></label>
+        <label className="altar-input">{icon}<span>{label}</span><input inputMode="numeric" value={value} placeholder="0" onChange={e => setValue(e.target.value)}/><small>보유 {format(have)}{cap < have ? ` · 채우기 ${format(top)}` : ''}</small></label>
         <div className="altar-slide">
-            <input type="range" min={0} max={max || 1} step={1} value={have ? (fine ? n : Math.round(n / have * 1000)) : 0} disabled={!have} aria-label={`${label} 바칠 양`}
-                onChange={e => set(fine ? Number(e.target.value) : have * Number(e.target.value) / 1000)}/>
-            <span className="altar-pct">{have ? Math.round(n / have * 100) : 0}%</span>
+            <input type="range" min={0} max={max || 1} step={1} value={top ? (fine ? n : Math.round(n / top * 1000)) : 0} disabled={!top} aria-label={`${label} 바칠 양`}
+                onChange={e => set(fine ? Number(e.target.value) : top * Number(e.target.value) / 1000)}/>
+            <span className="altar-pct">{top ? Math.round(n / top * 100) : 0}%</span>
         </div>
-        <div className="altar-quick">{QUICK.map(p => <button key={p} type="button" className="secondary small" disabled={!have} onClick={() => set(have * p / 100)}>{p === 100 ? '최대' : `${p}%`}</button>)}<button type="button" className="text-button" disabled={!value} onClick={() => setValue('')}>비우기</button></div>
+        <div className="altar-quick">{QUICK.map(p => <button key={p} type="button" className="secondary small" disabled={!top} onClick={() => set(top * p / 100)}>{p === 100 ? (cap < have ? '채우기' : '최대') : `${p}%`}</button>)}<button type="button" className="text-button" disabled={!value} onClick={() => setValue('')}>비우기</button></div>
     </div>;
 }
 
@@ -42,6 +42,10 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
     useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
     useEffect(() => { const t = setInterval(() => setNow(stamp), 30_000); return () => clearInterval(t); }, []);
     const offer = { gold: num(gold), pearls: num(pearls), essence: num(essence) }, points = offeringPoints(offer);
+    // v27.51 고른 게이지가 가득 찰 때까지 남은 기여도. 다른 칸에 넣은 양을 빼고 각 재화로 환산한 만큼이 슬라이더의 100%입니다.
+    const target = info?.gauges.find(g => g.id === gauge), need = target ? Math.max(0, target.cost - target.points) : Infinity;
+    const rest = (except: keyof typeof offer) => need === Infinity || need <= 0 ? Infinity : Math.max(0, need - offeringPoints({ ...offer, [except]: 0 }));
+    const caps = { gold: rest('gold') * ALTAR.goldPerPoint, pearls: Math.ceil(rest('pearls') / ALTAR.pearlPoints), essence: Math.ceil(rest('essence') / ALTAR.essencePoints) };
     const short = offer.gold > s.gold || offer.pearls > s.pearls || offer.essence > (s.essence || 0);
     const submit = async () => { if (await act({ action: 'offer', ...offer, gauge, anonymous })) { setGold(''); setPearls(''); setEssence(''); setNow(stamp); } };
     const myPower = power(stats(s)), wait = (s.altar?.challengeAt || 0) + ALTAR.challengeCooldownMs - now;
@@ -69,9 +73,9 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 <Tabs value={pane} onValueChange={v => setPane(v as typeof pane)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="offer"><Coins size={14}/> 공물 바치기</TabsTrigger><TabsTrigger value="board"><Trophy size={14}/> 이번 주 기여 순위</TabsTrigger></TabsList></Tabs>
                 {pane === 'offer' ? <>
                 <div className="section-title"><h2>→ {info.gauges.find(g => g.id === gauge)?.name}</h2><span className="micro">내 기여도 {format(info.me.points)}{info.me.rank ? ` · ${info.me.rank}위` : ''}</span></div>
-                <AmountRow icon={<Coins size={14}/>} label="골드" have={s.gold} value={gold} setValue={setGold} unit={ALTAR.goldPerPoint}/>
-                <AmountRow icon={<Gem size={14}/>} label="세계석" have={s.pearls} value={pearls} setValue={setPearls}/>
-                <AmountRow icon={<Droplets size={14}/>} label="정수" have={s.essence || 0} value={essence} setValue={setEssence}/>
+                <AmountRow icon={<Coins size={14}/>} label="골드" have={s.gold} cap={caps.gold} value={gold} setValue={setGold} unit={ALTAR.goldPerPoint}/>
+                <AmountRow icon={<Gem size={14}/>} label="세계석" have={s.pearls} cap={caps.pearls} value={pearls} setValue={setPearls}/>
+                <AmountRow icon={<Droplets size={14}/>} label="정수" have={s.essence || 0} cap={caps.essence} value={essence} setValue={setEssence}/>
                 <label className="altar-anon"><input type="checkbox" checked={anonymous} onChange={e => setAnonymous(e.target.checked)}/><EyeOff size={14}/> 익명으로 기여 (순위표에 ‘익명의 모험가’로 표시)</label>
                 <button className="primary" disabled={busy || points < 1 || short} onClick={() => void submit()}>바치기 · 기여도 +{format(points)}</button>
                 <p className="footnote">기여도: 골드 {ALTAR.goldPerPoint.toLocaleString()} = 1 · 세계석 1 = {ALTAR.pearlPoints} · 정수 1 = {ALTAR.essencePoints}. 바친 재화는 돌아오지 않습니다(신의 자리 주인에게 {ALTAR.titheRate * 100}%가 돌아갑니다).</p>

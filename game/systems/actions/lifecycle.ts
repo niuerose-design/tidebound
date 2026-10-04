@@ -33,7 +33,7 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
 }
 
 /**
- * 한 번의 숨: 쓰러지면 이번 생을 처음부터 다시 시작합니다. 환생이 아니므로 환생 횟수·세계석·순풍/깊은 항해가 바뀌지 않고,
+ * 한 번의 숨: 쓰러지면 이번 생을 처음부터 다시 시작합니다. 환생이 아니므로 환생 횟수·세계석·순풍/깊은 모험이 바뀌지 않고,
  * 요구 레벨도 보지 않습니다. 모든 서약이 풀립니다. 자동 사냥 중이었다면 첫 사냥터에서 이어갑니다.
  */
 export function breathReset(s: State, now: number) {
@@ -85,7 +85,7 @@ export const lifecycleActions: ActionHandlers = {
         // 윤회의 문: 이번 생에 열릴 ??? 직업을 게임 난수로 추첨해 저장합니다(후보가 없으면 난수를 쓰지 않음).
         const door = drawRebirthDoor(s, rng);
         if (door) s.rebirthDoor = door; else delete s.rebirthDoor;
-        addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${deepPearls ? ` (깊은 항해 +${deepPearls} 포함)` : ''}${breath ? ` · 한 번의 숨 +${breath}` : ''}`);
+        addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${deepPearls ? ` (깊은 모험 +${deepPearls} 포함)` : ''}${breath ? ` · 한 번의 숨 +${breath}` : ''}`);
         if (lifeBonus === 'deep') addLog(s, 'Lv.100 완주 · 이번 생 동안 직업·스킬 숙련 기본 획득 +2', 'reward');
         if (lifeBonus === 'tailwind') addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%`, 'reward');
         if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => id === 'rough' ? `${VOW_NAMES.rough} ${s.vows!.rough}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');

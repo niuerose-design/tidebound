@@ -16,7 +16,7 @@ import type { State } from '@/game/types';
 /** 상세 능력치의 숙련도 획득 보너스. 펼치면 배율별 기여와 처치당 기대 숙련을 보여줍니다. */
 function MasteryBreakdown({ s }: { s: State }) {
     const m = masteryMultipliers(s), x = (n: number) => `×${n.toFixed(2)}`;
-    const rows: [string, string][] = [[m.base > 1 ? '기본 획득 (깊은 항해)' : '기본 획득', `+${m.base}`], ['해역 난이도', s.dungeon ? '×1 (던전)' : x(m.tide)], ['숙련의 기억 · 계정 몬스터', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as [string, string]] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as [string, string]] : [])];
+    const rows: [string, string][] = [[m.base > 1 ? '기본 획득 (깊은 모험)' : '기본 획득', `+${m.base}`], ['사냥터 난이도', s.dungeon ? '×1 (던전)' : x(m.tide)], ['숙련의 기억 · 계정 몬스터', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as [string, string]] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as [string, string]] : [])];
     return <details className="stat-breakdown">
         <summary><span>숙련도 획득 보너스<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>+{Math.round((m.total - 1) * 100)}%</strong></summary>
         <ul>{rows.map(([label, value]) => <li key={label}><span>{label}</span><b>{value}</b></li>)}
@@ -75,7 +75,7 @@ export function Character({ s, send, busy }: PanelProps) {
     <span>경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
     <span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong>
     </span>
-    <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}만큼 회복합니다. 기본 ${percent(BALANCE.healAfterKill)}에서 해역 난이도 1마다 ${percent(BALANCE.healAfterKillTierDecay)}p씩 줄고(최저 ${percent(BALANCE.healAfterKillMin)}), 연구 ‘회복의 기억’ 1단계마다 +1%p. 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 고정입니다.`}>처치 후 회복 (처치당)<strong>{percent(victoryHealRate(s))} · {victoryHeal(s).toLocaleString()} HP</strong>
+    <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}만큼 회복합니다. 기본 ${percent(BALANCE.healAfterKill)}에서 사냥터 난이도 1마다 ${percent(BALANCE.healAfterKillTierDecay)}p씩 줄고(최저 ${percent(BALANCE.healAfterKillMin)}), 연구 ‘회복의 기억’ 1단계마다 +1%p. 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 고정입니다.`}>처치 후 회복 (처치당)<strong>{percent(victoryHealRate(s))} · {victoryHeal(s).toLocaleString()} HP</strong>
     </span>
     </div>
     </section>

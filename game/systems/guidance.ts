@@ -31,7 +31,7 @@ function metVoyage(s: State): string[] {
  * 기록이 없던 세이브는 이미 달성한 기록을 조용히 채웁니다(알림 없음, 기존 유저에게 강제 노출하지 않음).
  */
 export function syncVoyage(s: State, log?: (text: string) => void) {
-    // v25.13 알림 없이 조용히 기록만 남깁니다(업적 ‘해역 N곳’·‘던전 N곳’의 방문 기록으로만 쓰임).
+    // v25.13 알림 없이 조용히 기록만 남깁니다(업적 ‘사냥터 N곳’·‘던전 N곳’의 방문 기록으로만 쓰임).
     void log;
     const silent = !s.voyage;
     s.voyage ??= {};

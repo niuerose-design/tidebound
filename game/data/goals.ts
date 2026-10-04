@@ -25,7 +25,7 @@ export function weekKey(now: number) {
 /** 주 키를 랭킹 시즌 정수로(예: 2026-W40 → 202640). */
 export const weekSeason = (key: string) => Number(key.replace('-W', ''));
 
-/** 지금 플레이어가 갈 수 있는 해역·던전 안에서 목표를 뽑습니다(환생·레벨 조건). */
+/** 지금 플레이어가 갈 수 있는 사냥터·던전 안에서 목표를 뽑습니다(환생·레벨 조건). */
 export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, key: string, weekly: boolean): Goal[] {
     const level = Math.max(s.level, s.peakLevel || 0, 10), seed = hash(key + (weekly ? ':w' : ':d'));
     const stages = STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);

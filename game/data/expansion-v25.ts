@@ -85,7 +85,7 @@ export const V25_BALANCE: Record<string, Partial<Skill>> = {
 export const V25_STATUS_ONLY = ['slackHand', 'glyphBind'];
 
 export const V25_HINTS: Record<string, string> = {
-    clockmaker: '바다에서 열 시간을 보낸 뒤, 시계 소리가 들립니다.',
+    clockmaker: '사냥터에서 열 시간을 보낸 뒤, 시계 소리가 들립니다.',
     chronarch: '제로 (1차)의 모든 톱니를 맞춘 자에게.',
     glyphMonk: '일곱 글자를 품은 수행자. 누구에게나 열려 있습니다.',
 };

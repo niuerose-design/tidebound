@@ -341,7 +341,7 @@ export type State = {
     weekly?: import('./data/goals').GoalBoard;
     /** v25.6 이번 주 무릉도장 최고 깊이. settled는 보상을 정산한 지난주 키. */
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
-    /** v25.8 사냥터별 처치한 최고 해역 난이도(차수). 이정표 세계석과 업적에 씁니다. */
+    /** v25.8 사냥터별 처치한 최고 사냥터 난이도(차수). 이정표 세계석과 업적에 씁니다. */
     tideBest?: Record<string, number>;
     /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위 보상을 한 번 정산합니다. */
     duelSeason?: { key: string; lastKey?: string; lastRank?: number };
@@ -470,7 +470,7 @@ export type State = {
 };
 /** 서약. anchor·breath는 걸었는지, rough는 험한 길 선택 단계(1~3). seal은 잠든 힘 봉인 진행(이번 생만). */
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
-    /** v25.6 이번 생의 조건 카드: stage 지정 해역 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
+    /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };
 export type Snapshot = {
     /** v26.1 표시 칭호 이름(랭킹). */

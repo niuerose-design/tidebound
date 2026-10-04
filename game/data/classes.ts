@@ -8,6 +8,7 @@ import { DEFENSE_JOBS, DEFENSE_HINTS, DEFENSE_LINEAGES } from './expansion-defen
 import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
 import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
 import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
+import { MAPLE_JOB_FLAVOR, MAPLE_LINEAGE_SUMMARY } from './maple-flavor';
 export type Job = {
     id: string;
     name: string;
@@ -109,7 +110,7 @@ export const JOB_TREES: JobTree[] = [
     { id: 'magic', name: '마법', subtitle: '지능 · 정신 · 마법', description: '마나와 주문 확률을 이용해 큰 마법 피해·회복·약화를 만드는 계열입니다.', accent: '#75b8d6' },
     { id: 'defense', name: '방어', subtitle: '체질 · 방어 · 회복', description: '체력과 방어를 바탕으로 회복·기절·반격·흡혈을 조합하는 계열입니다.', accent: '#8fc49b' },
     { id: 'status', name: '상태이상', subtitle: '출혈 · 중독 · 저주 · 제어', description: '방어를 무시하는 지속 피해와 기절·침묵·약화로 적을 무너뜨리는 계열입니다. 걸어 둔 상태이상에 연계할수록 강해집니다.', accent: '#b6c86a' },
-    { id: 'hybrid', name: '복합', subtitle: '물리 + 마법 · HP · MP', description: '물리와 마법, 체력과 마나를 함께 쓰는 복합 계열입니다. 모든 항해의 출발점인 초보자도 여기에 속합니다.', accent: '#c0a1dc' },
+    { id: 'hybrid', name: '복합', subtitle: '물리 + 마법 · HP · MP', description: '물리와 마법, 체력과 마나를 함께 쓰는 복합 계열입니다. 모든 모험의 출발점인 초보자도 여기에 속합니다.', accent: '#c0a1dc' },
     { id: 'support', name: '보조', subtitle: '경험치 · 보상 · 속도 · 파밍', description: '직접 화력보다 성장 속도·보상·파밍·가속으로 편성을 보조하는 계열입니다.', accent: '#e0b36a' },
     { id: 'mystery', name: '???', subtitle: '히든 · 페널티 · 몬스터', description: '조건을 만족해야 드러나는 숨은 직업, 페널티를 숙련으로 극복하는 직업, 몬스터 혈족의 모음입니다.', accent: '#9a9ab8' },
 ];
@@ -301,6 +302,8 @@ for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] 
 // v27.36 메이플 직업 이름: maple-names.ts 한곳에서 덮어씁니다(id는 그대로).
 const MAPLE_JOB_NAMES = mapleJobNames(JOBS);
 for (const job of JOBS) job.name = MAPLE_JOB_NAMES[job.id] ?? job.name;
+// v27.51 칭호·설명·힌트의 바다 표현: maple-flavor.ts.
+for (const job of JOBS) Object.assign(job, MAPLE_JOB_FLAVOR[job.id]);
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };
@@ -327,7 +330,7 @@ export const LINEAGES: Lineage[] = [
     NEW_LINEAGES.bloodAngler,
     NEW_LINEAGES.nerveNeedler,
     independent('status'),
-    { id: 'fisher', name: '무직', tree: 'hybrid', summary: '모든 항해의 출발점입니다. 공용 기술로 첫 전직을 준비합니다.' },
+    { id: 'fisher', name: '무직', tree: 'hybrid', summary: '모든 모험의 출발점입니다. 공용 기술로 첫 전직을 준비합니다.' },
     { id: 'wanderer', name: '이형 항해자 계보', tree: 'hybrid', summary: '체력·마나·속도·올스탯을 섞어 쓰는 복합 계보입니다.' },
     { id: 'spellbladeNovice', name: '마검 수련생 계보', tree: 'hybrid', summary: '물리와 마법을 함께 싣는 검술로 5차 천검에 이르는 계보입니다.' },
     NEW_LINEAGES.tideLancer,
@@ -348,6 +351,7 @@ export const LINEAGES: Lineage[] = [
     ...MONOSTAT_LINEAGES,
 ];
 for (const lineage of LINEAGES) lineage.name = MAPLE_LINEAGE_NAMES[lineage.id] ?? lineage.name;
+for (const lineage of LINEAGES) lineage.summary = MAPLE_LINEAGE_SUMMARY[lineage.id] ?? lineage.summary;
 /** 직업의 계보 id. lineage가 있으면 그 값, 상위·하위가 없는 1차 직업은 `${tree}-independent`, 그 밖에는 루트 조상 id. */
 export function lineageOf(job: Job): string {
     if (job.lineage) return job.lineage;

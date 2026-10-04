@@ -42,7 +42,7 @@ function GoalBoardView({ title, board, bonus }: { title: string; board?: GoalBoa
 export function VoyageLog({ s, send, busy }: PanelProps) {
     const got = s.voyage || {}, feats = s.achievements || {}, claimed = s.achievementClaims || {}, pending = unclaimedAchievements(s);
     const totals = achievementTotals(s);
-    /** 업적 ‘해역 N곳’·‘던전 N곳’ 카드에 붙는 방문 기록(이전 ‘모험 기록’ 해금을 여기로 통합). */
+    /** 업적 ‘사냥터 N곳’·‘던전 N곳’ 카드에 붙는 방문 기록(이전 ‘모험 기록’ 해금을 여기로 통합). */
     const visited = (a: { id: string }) => a.id.startsWith('stages:') ? STAGES.filter(st => got[`stage:${st.id}`] !== undefined).map(st => st.name) : a.id.startsWith('dungeons:') ? DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).map(d => d.name) : null;
     return <>
         <Heading eyebrow="GOALS & FEATS" title="목표 · 업적" description="오늘의 목표와 주간 목표, 그리고 업적입니다. 업적은 환생 후에도 유지되고 보상은 여기서 받습니다.">
