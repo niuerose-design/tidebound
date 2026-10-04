@@ -17,6 +17,12 @@ export const BALANCE = {
     dropChance: 0.0025, dropBonusScale: 0.1, dropChanceCap: 0.03,
     /** v27.53 해역 난이도·무릉도장 층으로 올라가는 드롭 장비 레벨 상한: 캐릭터 레벨 + dropLevelOver(그 지역 몬스터보다 낮아지지는 않음). */
     dropLevelOver: 10,
+    /**
+     * v27.76 사냥터 난이도의 장비 보상(숙련 배율 대신).
+     * rarityPerTier: 희귀 이상 드롭의 등급 가중치를 (1 + rarityPerTier × 난이도)^(등급−1)로 밉니다. 보수적으로 잡아 난이도 100에서 태초 0.6% → 1.0%, 전설 이상 24% → 30%.
+     * essence*: 난이도 essenceMinTier 이상 사냥터에서 처치마다 정수 드롭(확률 essenceChancePerTier × 난이도, 양 1 + ⌊난이도 ÷ essenceEveryTiers⌋). 던전은 제외.
+     */
+    tideLoot: { rarityPerTier: .0014, essenceMinTier: 5, essenceChancePerTier: .003, essenceEveryTiers: 10 },
     // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
     /** v27.30 반복 정복 확정 장비 확률 5% → 1%(레벨 초과 감소 적용). 드롭률을 낮게 둔 의미가 없어지던 문제. */
     dungeonRepeatDrop: 0.01,
