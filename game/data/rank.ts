@@ -29,12 +29,12 @@ export const RANKS: RankDef[] = [
 export const RANK_CUMULATIVE: number[] = RANKS.reduce<number[]>((acc, r, i) => { acc.push((acc[i - 1] || 0) + r.need); return acc; }, []);
 export const RANK_TOTAL_POINTS = RANKS.reduce((a, r) => a + r.points, 0);
 
-/** 진급 포인트로 사는 특전. v27.80 단계당 1P로 통일(합계 23단계, 총 포인트 41). */
+/** 진급 포인트로 사는 특전. 단계당 1P, 합계 41단계 = 총 진급 포인트 41(전부 찍으면 중장). */
 export type RankPerkDef = { id: RankPerkId; name: string; desc: (level: number) => string; max: number; cost: number; per: number };
 export type RankPerkId = 'tally' | 'drill' | 'medal' | 'supply';
 export const RANK_PERKS: RankPerkDef[] = [
-    { id: 'tally', name: '전과 기록', desc: l => `처치 1마리를 계급 경험치 ${1 + l}마리로 셉니다(무리는 마릿수만큼)`, max: 5, cost: 1, per: 1 },
-    { id: 'drill', name: '숙련 훈련', desc: l => `처치 숙련 기본 획득 +${l}(직업·장착 스킬 모두, 배율과 무관한 고정값)`, max: 3, cost: 1, per: 1 },
+    { id: 'tally', name: '전과 기록', desc: l => `처치 1마리를 계급 경험치 ${1 + l}마리로 셉니다(무리는 마릿수만큼)`, max: 18, cost: 1, per: 1 },
+    { id: 'drill', name: '숙련 훈련', desc: l => `처치 숙련 기본 획득 +${l}(직업·장착 스킬 모두, 배율과 무관한 고정값)`, max: 8, cost: 1, per: 1 },
     { id: 'medal', name: '전공 훈장', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 SP +1`, max: 5, cost: 1, per: .001 },
     { id: 'supply', name: '보급품', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 세계석 +1`, max: 10, cost: 1, per: .001 },
 ];
