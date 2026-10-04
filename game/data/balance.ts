@@ -15,7 +15,8 @@ export const BALANCE = {
     // 행운·물건도감·연구·드롭 보너스는 이 확률에 곱해지는 상대 증가로 바뀝니다(구 기준 17%p당 +100%).
     dropChance: 0.001, dropBonusScale: 0.17, dropChanceCap: 0.01,
     // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
-    dungeonRepeatDrop: 0.05,
+    /** v27.30 반복 정복 확정 장비 확률 5% → 1%(레벨 초과 감소 적용). 드롭률을 낮게 둔 의미가 없어지던 문제. */
+    dungeonRepeatDrop: 0.01,
     // 포획 후 회복률(근거: scripts/check-recovery.mjs). v27.8: 기본 20%, 해역 난이도 1마다 healAfterKillTierDecay만큼 줄고 healAfterKillMin 아래로는 내려가지 않습니다.
     healAfterKill: 0.2, healAfterKillTierDecay: .01, healAfterKillMin: .05, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
@@ -51,10 +52,24 @@ export function bossLevelScale(level: number) {
     const growth = Math.min(1, Math.max(0, level - 14) / 24);
     return { hp: 2.1 + (MONSTER_TUNING.bossMultiplier - 2.1) * growth, attack: 1.2 + .25 * growth, magic: 1.08 + .17 * growth };
 }
+/** v27.30 던전 적 압박: 같은 레벨 낚시터보다 단단하게(체력 1.3~1.62배, 공격 1.12~1.32배, 방어 1.08~1.24배). */
 export function dungeonPressure(wave: number) {
     const index = Math.max(0, Math.min(4, wave));
-    return { hp: 1.05 + index * .04, attack: 1.04 + index * .025, defense: 1 + index * .02 };
+    return { hp: 1.3 + index * .08, attack: 1.12 + index * .05, defense: 1.08 + index * .04 };
 }
+/**
+ * v27.30 던전 보상 기준.
+ * - 보스 경험치 = 던전 권장 레벨의 레벨업 경험치 × bossExpShare(보스 레벨·보상 배수와 무관).
+ * - 일반 웨이브 경험치는 어종 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
+ * - 무한 심연 층 배율은 경험치에만 expTierCap 단계에서 멈춥니다(골드·진주는 그대로).
+ * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
+ * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
+ */
+export const DUNGEON_TUNING = { bossExpShare: .2, expLevelOver: 2, expTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
+export const dungeonOverlevel = (playerLevel: number, dungeonLevel: number) => {
+    const over = Math.max(0, playerLevel - dungeonLevel - DUNGEON_TUNING.overlevelGrace);
+    return Math.max(DUNGEON_TUNING.overlevelFloor, 1 - Math.ceil(over / DUNGEON_TUNING.overlevelStep) * DUNGEON_TUNING.overlevelCut);
+};
 // 스킬 공식의 기본값. 전투 계산(combat.ts)과 스킬 설명(skill-description.ts)이 같은 값을 씁니다.
 export const SKILL_FORMULA = {
     // v26.6 주사위: 손가락 자르기 1단계마다 최저 배율은 로그 폭의 diceTrimLow, 최고 배율은 diceTrimHigh만큼 안쪽으로. 최대 diceTrimCap단계.

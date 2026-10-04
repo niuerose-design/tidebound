@@ -6,7 +6,7 @@ import { dungeonTier } from '@/game/systems/meta';
 import { useState } from 'react';
 import { Anchor, Lock, Swords } from 'lucide-react';
 import { FishArt } from './art';
-import { BALANCE, MONSTER_TUNING } from '@/game/data/balance';
+import { BALANCE, MONSTER_TUNING, dungeonOverlevel } from '@/game/data/balance';
 import { FISH, DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
 import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
@@ -58,7 +58,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     <div className="stage-grid dungeon-grid">{[...DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
             const closed = closedIn(s, 'dungeons', d.id), locked = closed || s.level < d.level || s.rebirths < d.rebirth;
             const tier = dungeonTier(d.id, s.abyssBest + 1);
-            const research = BOSS_RESEARCH[d.id], claimed = !!s.bossResearchClaims?.[d.id], active = s.dungeon?.id === d.id;
+            const research = BOSS_RESEARCH[d.id], claimed = !!s.bossResearchClaims?.[d.id], active = s.dungeon?.id === d.id, overlevel = dungeonOverlevel(s.level, d.level);
             return <article className={`stage-card dungeon-stage-card ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} key={d.id}>
             <div className="stage-top"><span className="stage-num">{String(i + 1).padStart(2, '0')}</span>{locked ? <Lock size={20}/> : active ? <span className="badge">탐험 중</span> : d.id === 'abyss' ? <span className="badge">최고 {s.abyssBest}층</span> : s.clears[d.id] ? <span className="badge">{s.clears[d.id]}회 정복</span> : <span className="badge muted">미탐험</span>}</div>
             <Anchor className="stage-wave" size={40}/>
@@ -67,7 +67,8 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">
                 <span><b>최초</b>{d.id === 'abyss' ? `${s.abyssBest + 1}층 진주 ${abyssPearls(s.abyssBest + 1)} · 10층마다 보너스 진주(층 수만큼)${nextAbyssMilestone(s.abyssBest) ? ` · ${nextAbyssMilestone(s.abyssBest)}층 SP 1` : ''}${ABYSS_AP_MILESTONES.find(n => n > s.abyssBest) ? ` · ${ABYSS_AP_MILESTONES.find(n => n > s.abyssBest)}층 AP 1` : ''}` : `진주 ${d.pearls}${research ? ` · 연구 SP ${research.sp}` : ''}`}{d.id !== 'abyss' && s.clears[d.id] && (!research || claimed) ? ' · 받음' : ''}</span>
-                <span><b>반복</b>{format(dungeonClearGold(s, d.gold, tier))} G · 희귀 이상 장비{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 심연 전용 옵션' : ''}</span>
+                <span><b>반복</b>{format(Math.floor(dungeonClearGold(s, d.gold, tier) * overlevel))} G · 낮은 확률로 희귀 이상 장비{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 심연 전용 옵션' : ''}</span>
+                {overlevel < 1 && <span><b>레벨 초과</b>권장 레벨보다 높아 클리어 골드·반복 장비 확률 ×{overlevel.toFixed(1)}</span>}
             </div>
             {research && s.clears[d.id] && !claimed && <button className="gold-button" disabled={busy} onClick={() => send({ type: 'bossResearch', id: d.id })}>첫 정복 연구 받기 · SP {research.sp}</button>}
             <div className="stage-footer dungeon-actions">

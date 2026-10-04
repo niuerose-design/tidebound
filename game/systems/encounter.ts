@@ -3,7 +3,7 @@ import { BOSS_RESEARCH } from '../data/specializations';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus, TIDE_MILESTONES, TIDE_MILESTONE_PEARLS } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets } from './progression';
-import { catchReward, encounterTier } from './meta';
+import { catchReward, encounterTier, dungeonExp } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
@@ -11,8 +11,8 @@ import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize } from '../data/variants';
 import { MIMIC, rollMimicMastery, mimicChance } from '../data/mimic';
 import type { State, Item } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded } from '../data/balance';
-import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier } from '../data/world';
+import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel } from '../data/balance';
+import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish } from '../data/world';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
 import { EQUIPMENT_NAMES } from '../data/equipment';
@@ -116,8 +116,9 @@ export function spawn(s: State, rng: () => number) {
     const top = mimic ? [...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0] : undefined;
     const f = mimic ? { ...FISH.find(x => x.id === MIMIC.id)!, level: top!.level, hp: Math.round(top!.hp * MIMIC.hp), attack: Math.round(top!.attack * MIMIC.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : FISH.find(x => x.id === id)!;
     const boss = finalWave;
-    const foe = scaledEnemyStats(f, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
-    const { exp, gold } = catchReward(f, tier, boss);
+    const foe = scaledEnemyStats(dungeon || mimic ? f : stageStatFish(f, st.level), { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
+    const { gold } = catchReward(f, tier, boss);
+    const exp = dungeon ? dungeonExp(f, dungeon.level, tier, boss) : catchReward(f, tier, boss).exp;
     // v25.19 변종: 어종을 10회 이상 포획한 낚시터 입질마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
     let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
     if (!dungeon && !mimic && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
@@ -224,7 +225,9 @@ export function reward(s: State, rng: () => number) {
         const d = DUNGEONS.find(x => x.id === s.dungeon!.id)!;
         s.dungeon.wave++;
         if (s.dungeon.wave >= d.fish.length) {
-            const bonusGold = dungeonClearGold(s, d.gold, encounterTier(s));
+            // v27.30 권장 레벨보다 크게 높으면 클리어 골드와 반복 장비 확률이 줄어듭니다.
+            const overlevel = dungeonOverlevel(s.level, d.level);
+            const bonusGold = Math.floor(dungeonClearGold(s, d.gold, encounterTier(s)) * overlevel);
             s.gold += bonusGold;
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
@@ -251,7 +254,7 @@ export function reward(s: State, rng: () => number) {
                 s.pearls += d.pearls;
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             // 희귀 이상 확정 장비: 첫 정복, 무한 심연 5층마다, 반복 정복은 낮은 확률.
-            if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop)
+            if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop * overlevel)
                 drop(s, d.level + encounterTier(s) * 5, rng, true);
             addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 진주` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;

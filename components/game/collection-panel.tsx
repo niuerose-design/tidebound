@@ -5,7 +5,7 @@ import { FishArt } from './art';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { SKILLS } from '@/game/data/skills';
-import { FISH, STAGES } from '@/game/data/world';
+import { FISH, STAGES, stageStatFish } from '@/game/data/world';
 import { MIMIC, mimicChance } from '@/game/data/mimic';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
@@ -80,7 +80,7 @@ export function Collection({ s, send, busy }: PanelProps) {
         <RegionProgress s={s} id={st.id}/>
         </summary>
         <div className="book-grid">{st.fish.map(id => {
-                const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, researchDone = (s.bookClaims?.[id] || 0) >= BALANCE.bookMilestones.length, enemy = scaledEnemyStats(f, { tier: s.tide || 0 }), p = profile(id);
+                const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, researchDone = (s.bookClaims?.[id] || 0) >= BALANCE.bookMilestones.length, enemy = scaledEnemyStats(stageStatFish(f, st.level), { tier: s.tide || 0 }), p = profile(id);
                 return <article className={`panel book-card ${!n ? 'undiscovered' : ''}`} key={id}>
                 <div className="book-icon">
                 <FishArt id={id} size={56}/>
