@@ -97,13 +97,17 @@ function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number
     effects[key] = Math.max(effects[key] || 0, turns);
 }
 const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합' } as const;
-/** 본타·추가타를 한 번씩만 적고, 추가타가 있을 때만 합계를 붙입니다. */
+/** v27.75 화면에 보여 주는 타격 수치: 계산된 피해(raw). 남은 체력에 막힌 실제 감소량(value)은 규칙에만 씁니다. */
+export const shownHit = (h: Pick<CombatHit, 'value' | 'raw'>) => h.raw ?? h.value;
+/** 타격 기록: 실제 감소량과 다를 때만 계산 피해(raw)를 함께 적습니다. */
+const hitRecord = (kind: CombatHit['kind'], actual: number, computed: number, critical: boolean, superCritical = false): CombatHit => ({ kind, value: actual, ...(computed !== actual ? { raw: computed } : {}), critical, miss: false, ...(superCritical ? { superCritical: true } : {}) });
+/** 본타·추가타를 한 번씩만 적고, 추가타가 있을 때만 합계를 붙입니다. 수치는 계산된 피해(shownHit)입니다. */
 function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageType'>) {
     const word = DAMAGE_WORD[ev.damageType];
     if (!ev.hits.length) return '피해 없음';
     if (ev.hits.every(h => h.miss)) return '빗나감';
     if (ev.hits.length === 1) return `${ev.total} ${word} 피해`;
-    const part = (h: CombatHit) => h.miss ? '빗나감' : `${h.value}${h.superCritical ? ' [극 치명타]' : h.critical ? ' [치명타]' : ''}`;
+    const part = (h: CombatHit) => h.miss ? '빗나감' : `${shownHit(h)}${h.superCritical ? ' [극 치명타]' : h.critical ? ' [치명타]' : ''}`;
     return [`본타 ${part(ev.hits[0])}`, ...ev.hits.slice(1).map((h, i) => `추가타${ev.hits.length > 2 ? ` ${i + 1}` : ''} ${part(h)}`), `합계 ${ev.total} ${word} 피해`].join(' · ');
 }
 /** 행동 순서·명중 보정·연속 행동 확률에 쓰는 속도. 가속·감속이 반영됩니다. */
@@ -424,7 +428,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         }
     }
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
-    if (!statusOnly || !landed) ev.hits.push({ kind: 'main', value: actual, critical: crit, miss: !landed, ...(superCrit ? { superCritical: true } : {}) });
+    if (!statusOnly || !landed) ev.hits.push(landed ? hitRecord('main', actual, damage, crit, superCrit) : { kind: 'main', value: 0, critical: false, miss: true });
     if (healOnly) notes.push(`회복 ${healed}`);
     if (landed && chosen?.effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
     else if (landed && chosen?.effect === 'stun') {
@@ -520,7 +524,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
         if (endure(b, sb, notes, ev)) stood = true;
-        ev.hits.push({ kind: 'follow', value: followActual, critical: followCrit, miss: false, ...(followSuper ? { superCritical: true } : {}) });
+        ev.hits.push(hitRecord('follow', followActual, followDamage, followCrit, followSuper));
         const followDrain = Math.min(drainLeft, Math.floor(followActual * drainRate));
         drainLeft -= followDrain;
         if (followDrain) {
@@ -554,10 +558,10 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             const dealt = Math.min(b.hp, blast);
             b.hp = Math.max(0, b.hp - blast);
             endure(b, sb, notes, ev);
-            ev.hits.push({ kind: 'follow', value: dealt, critical: false, miss: false });
+            ev.hits.push(hitRecord('follow', dealt, blast, false));
             ev.finale = true;
             a.effects.seals = [];
-            notes.push(`天 · 일곱 인 해방 ${dealt.toLocaleString()}`);
+            notes.push(`天 · 일곱 인 해방 ${blast.toLocaleString()}`);
             if (b.hp > 0 && !isImmune(b, 'stun')) { b.stun = Math.max(b.stun, f.stun); const own = ev.statuses.find(x => x.id === 'stun' && !x.onSelf); if (own) own.turns = Math.max(own.turns, f.stun); else ev.statuses.push({ id: 'stun', turns: f.stun }); notes.push(`기절 ${f.stun}턴`); }
         }
     }
@@ -580,6 +584,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     ev.skillName = label;
     ev.damageType = split ? 'split' : magical ? 'magic' : 'physical';
     ev.healed = healed;
-    ev.total = ev.hits.reduce((n, h) => n + h.value, 0);
+    // v27.75 합계도 계산된 피해 기준(표시용). 실제 감소량 합이 필요하면 hits의 value를 더합니다.
+    ev.total = ev.hits.reduce((n, h) => n + shownHit(h), 0);
     return emit(`${a.name} · ${label}${superCrit ? ' [극 치명타]' : crit ? ' [치명타]' : ''} → ${describeHits(ev)}${healed ? ` · 회복 ${healed}` : ''}${ev.drained ? ` · 흡혈 ${ev.drained}` : ''}${notes.length ? ' · ' + notes.join(' · ') : ''}`);
 }

@@ -875,3 +875,21 @@ test('v27.71 evasion: non-dex sources are capped at 60%p raw, dex evasion stacks
     assert.ok(dexEv > lowEv && bothEv > dexEv, `dex ${dexEv} beats passive-only ${lowEv}; both ${bothEv}`);
     assert.ok(Math.abs(bothEv - LT.evasionRating(dex0 + 470 * .0015 + .6)) < 1e-9, 'dex stacks on top of the capped passive sum');
 });
+
+test('v27.75 hits record the computed damage: text and FX show it, value/HP bar/recoil keep the actual HP removed', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), C = await L.load('systems/combat'), FB = await L.load('systems/combat-feedback');
+    const base = { hp: 1000, attack: 5000, defense: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0 };
+    const mk = (skills, extra = {}) => ({ name: 'A', job: 'x', stats: { ...base }, hp: 1000, mana: 200, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {}, ...extra });
+    const b = { ...mk([]), name: 'E', hp: 30 }, events = [];
+    const text = C.strike(mk([]), b, () => .99, events);
+    const ev = events[0], hit = ev.hits[0];
+    assert.equal(b.hp, 0); assert.equal(hit.value, 30, 'value = HP actually removed'); assert.equal(hit.raw, 5000, 'raw = computed damage'); assert.equal(ev.total, 5000);
+    assert.match(text, /→ 5000 물리 피해/, 'the log shows the computed damage'); assert.equal(C.shownHit(hit), 5000);
+    const fx = FB.combatFxFromLog({ id: 1, type: 'battle', text, event: ev }, 'A'); assert.equal(fx.hits[0].value, 5000, 'FX number shows the computed damage');
+    const small = { ...mk([]), name: 'E', hp: 30 }; C.strike({ ...mk([]), stats: { ...base, attack: 20 } }, small, () => .99, events);
+    assert.equal(events[1].hits[0].raw, undefined, 'raw is only written when it differs'); assert.equal(events[1].total, 20);
+    // 반동(글자 斬)은 실제로 깎인 체력에 비례합니다: 체력 30인 적을 크게 때려도 자해는 30 × 반동률.
+    const cutter = mk(['glyphCut'], { ranks: { glyphCut: 1 } }), prey = { ...mk([]), name: 'E', hp: 30 }, evs = [];
+    C.strike(cutter, prey, () => 0, evs); const dealt = evs[0].hits.reduce((n, h) => n + h.value, 0);
+    assert.ok(evs[0].skillId === 'glyphCut' && dealt === 30, `glyphCut landed for ${dealt}`); assert.equal(cutter.hp, 1000 - Math.floor(30 * .5), 'recoil uses the actual HP removed');
+});
