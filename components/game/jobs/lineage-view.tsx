@@ -1,7 +1,7 @@
 'use client';
 import { Fragment } from 'react';
 import { JobArt } from '../art';
-import { ArrowDown, Compass } from 'lucide-react';
+import { ArrowDown, Compass, Flag } from 'lucide-react';
 import type { State } from '@/game/types';
 import { JOBS, type Job, type Lineage } from '@/game/data/classes';
 import { jobStatus, crossParent, lineageSummary, tierLabel, jobRevealed, treeName } from './job-status';
@@ -33,6 +33,8 @@ function routeNote(s: State, j: Job) {
 }
 
 /** ② 항로도: 계보의 직업을 차수(01~05) 순서로 위에서 아래로 잇습니다. 같은 차수에 여러 직업이면 나란히 둡니다. */
+/** v27.72 목표로 찍은 직업(직업 상세의 ‘목표로 설정’). 항로도·목록 카드에 깃발을 붙입니다. */
+const isGoal = (s: State, j: Job) => s.growthGoal?.kind === 'job' && s.growthGoal.id === j.id;
 export function RouteMap({ s, lineage, jobs, selectedId, onSelect }: { s: State; lineage: Lineage; jobs: Job[]; selectedId?: string; onSelect: (id: string) => void }) {
     const tiers = [...new Set(jobs.map(j => j.tier))].sort((a, b) => a - b);
     return <section className="panel route-map" aria-label={`${lineage.name} 항로도`}>
@@ -45,7 +47,7 @@ export function RouteMap({ s, lineage, jobs, selectedId, onSelect }: { s: State;
                 <div className={`route-step ${group.length > 1 ? 'branch' : ''}`}>{group.map(j => {
                     const note = routeNote(s, j), revealed = note.cls !== 'secret', from = revealed ? crossParent(j) : '', parent = revealed && prev.length > 1 && JOBS.find(p => p.id === j.parent && prev.includes(p));
                     return <button type="button" key={j.id} className={`route-card ${note.cls} ${j.id === selectedId ? 'selected' : ''}`} aria-pressed={j.id === selectedId} onClick={() => onSelect(j.id)}>
-                        <strong><span className="route-tier">{tierLabel(tier)}</span> {revealed ? j.name : '???'}</strong>
+                        <strong><span className="route-tier">{tierLabel(tier)}</span> {revealed ? j.name : '???'}{isGoal(s, j) && <Flag className="route-goal" size={12} aria-label="목표 직업"/>}</strong>
                         <small className={`route-note ${note.cls}`}>{note.text}</small>
                         {(from || parent) && <small className="route-from">{from || `↳ ${parent && parent.name}에서`}</small>}
                     </button>;
@@ -63,7 +65,7 @@ export function JobList({ s, title, jobs, selectedId, onSelect, onClear }: { s: 
         {jobs.length ? <div className="route-steps job-list">{jobs.map(j => {
             const note = routeNote(s, j);
             return <button type="button" key={j.id} className={`route-card ${note.cls} ${j.id === selectedId ? 'selected' : ''}`} aria-pressed={j.id === selectedId} onClick={() => onSelect(j.id)}>
-                <strong><span className="route-tier">{tierLabel(j.tier)}</span> {note.cls === 'secret' ? '???' : j.name}</strong>
+                <strong><span className="route-tier">{tierLabel(j.tier)}</span> {note.cls === 'secret' ? '???' : j.name}{isGoal(s, j) && <Flag className="route-goal" size={12} aria-label="목표 직업"/>}</strong>
                 <small className={`route-note ${note.cls}`}>{note.text}</small>
                 <small className="route-from">{treeName(j.tree)}{note.cls === 'secret' ? '' : ` · ${j.role}`}</small>
             </button>;
