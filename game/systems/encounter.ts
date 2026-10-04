@@ -124,7 +124,7 @@ export function spawn(s: State, rng: () => number) {
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
     const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1) * (s.event?.mimic ?? 1) * luck : 0;
-    const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? EXP_NURI.offlineScale : 1) * luck : 0;
+    const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? EXP_NURI.offlineScale : 1) * (s.event?.nuri ?? 1) * luck : 0;
     const special = mimicOk || nuriOk ? rng() : 1;
     const mimic = special < mimicP, nuri = !mimic && special < mimicP + nuriP, rare = mimic || nuri, rareId = mimic ? MIMIC.id : EXP_NURI.id, rareDef = mimic ? MIMIC : EXP_NURI;
     const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));

@@ -14,6 +14,9 @@ export const thresholdRank = (practice: number, targets: number[]) => targets.fi
 export const rebirthExperience = (count: number) => .25 * (Math.min(20, count) + Math.sqrt(Math.max(0, count - 20)));
 export const rebirthMemory = (count: number) => 1 + .025 * Math.sqrt(Math.max(0, count));
 export const evasionRating = (raw: number) => raw <= .5 ? Math.max(0, raw) : .5 + .4 * (raw - .5) / (.4 + raw - .5);
+/** v27.71 기민을 뺀 나머지 회피 소스(패시브·장비·연구·직업)의 합산 상한. 기민으로 쌓은 회피는 이 위에 그대로 더해집니다. */
+export const EVASION_SOURCE_CAP = .6;
+export const evasionRaw = (dex: number, others: number) => Math.max(0, dex) + Math.min(EVASION_SOURCE_CAP, others);
 
 // 무릉도장: 깊을수록 한 층의 가치가 커집니다. 5의 배수 층은 3배.
 export const abyssPearls = (depth: number) => (1 + Math.floor(depth / 10)) * (depth % 5 === 0 ? 3 : 1);

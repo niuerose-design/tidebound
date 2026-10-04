@@ -1,11 +1,11 @@
 /**
  * v26.1 서버 이벤트: 기간 동안 모든 모험가의 경험치·골드·드롭 배율을 올립니다.
- * v27.70부터 목록은 운영 페이지에서만 관리합니다(코드 목록은 비움). 서버가 동기화·정산 때 activeEvent(now)를 State.event에 적어 둡니다.
+ * v27.72부터 목록은 운영 페이지에서만 관리합니다(코드 목록은 비움). 서버가 동기화·정산 때 activeEvent(now)를 State.event에 적어 둡니다.
  * 틱 계산은 State.event만 보므로 오프라인 정산에도 같은 배율이 붙습니다. 시각은 ISO(한국 시간 +09:00) 문자열로 적습니다.
  */
-export type ServerEvent = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; /** v27.43 숙련의 까미 출현 배율(제단 축복). */ mimic?: number };
+export type ServerEvent = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; /** v27.43 숙련의 까미 출현 배율(제단 축복). */ mimic?: number; /** v27.70 경험의 누리 출현 배율(제단 축복). */ nuri?: number };
 /** State에 적히는 이벤트 요약(배율과 종료 시각만). */
-export type ActiveEvent = { id: string; name: string; until: number; exp: number; gold: number; drop: number; mastery?: number; mimic?: number; /** v27.44 제단 축복이 섞였을 때 배너용(축복을 뺀 이벤트, 없으면 null). 축복은 제단 알림이 따로 보여 줍니다. */ banner?: ActiveEvent | null };
+export type ActiveEvent = { id: string; name: string; until: number; exp: number; gold: number; drop: number; mastery?: number; mimic?: number; nuri?: number; /** v27.44 제단 축복이 섞였을 때 배너용(축복을 뺀 이벤트, 없으면 null). 축복은 제단 알림이 따로 보여 줍니다. */ banner?: ActiveEvent | null };
 
 /**
  * v27.51 오프라인 정산(1분 넘게 밀린 정산) 배율: 정산하는 순간 열려 있는 이벤트·제단 축복 배율의 절반만큼(×m → ×(1 + (m − 1) × OFFLINE_EVENT_SCALE)).
@@ -15,11 +15,11 @@ export const OFFLINE_EVENT_SCALE = .5;
 const halfOf = (m: number | undefined) => m === undefined ? undefined : 1 + (m - 1) * OFFLINE_EVENT_SCALE;
 export function offlineEvent(e: ActiveEvent | null): ActiveEvent | null {
     if (!e) return null;
-    return { ...e, exp: halfOf(e.exp)!, gold: halfOf(e.gold)!, drop: halfOf(e.drop)!, mastery: halfOf(e.mastery), mimic: halfOf(e.mimic) };
+    return { ...e, exp: halfOf(e.exp)!, gold: halfOf(e.gold)!, drop: halfOf(e.drop)!, mastery: halfOf(e.mastery), mimic: halfOf(e.mimic), nuri: halfOf(e.nuri) };
 }
 
 /**
- * v27.70 코드에 든 이벤트는 없습니다. 이벤트·서버 메시지(배율 없는 공지)는 모두 운영 페이지(/admin)에서 만들어 DB 설정으로 적용합니다.
+ * v27.72 코드에 든 이벤트는 없습니다. 이벤트·서버 메시지(배율 없는 공지)는 모두 운영 페이지(/admin)에서 만들어 DB 설정으로 적용합니다.
  * 코드 이벤트가 다시 필요하면 여기에 적습니다. 이름은 배너 앞머리에 한 번씩만 붙고(배율은 뒤에 따로), 빈 이름은 생략됩니다.
  */
 export const SERVER_EVENTS: ServerEvent[] = [];
@@ -43,12 +43,12 @@ export function activeEvent(now: number, events: ServerEvent[] = currentEvents()
     // 겹치면 배율은 곱하고, 이름은 이어 붙이고, 종료는 가장 이른 것으로 둡니다.
     return {
         id: live.map(e => e.id).join('+'), name: [...new Set(live.map(e => e.name).filter(Boolean))].join(' · '), until: Math.min(...live.map(e => Date.parse(e.until))),
-        exp: live.reduce((m, e) => m * (e.exp ?? 1), 1), gold: live.reduce((m, e) => m * (e.gold ?? 1), 1), drop: live.reduce((m, e) => m * (e.drop ?? 1), 1), mastery: live.reduce((m, e) => m * (e.mastery ?? 1), 1), mimic: live.reduce((m, e) => m * (e.mimic ?? 1), 1), ...banner,
+        exp: live.reduce((m, e) => m * (e.exp ?? 1), 1), gold: live.reduce((m, e) => m * (e.gold ?? 1), 1), drop: live.reduce((m, e) => m * (e.drop ?? 1), 1), mastery: live.reduce((m, e) => m * (e.mastery ?? 1), 1), mimic: live.reduce((m, e) => m * (e.mimic ?? 1), 1), nuri: live.reduce((m, e) => m * (e.nuri ?? 1), 1), ...banner,
     };
 }
 /** 이벤트 배너 문구: 배율과 종료일. */
 export function eventLabel(e: ActiveEvent) {
-    const parts = [e.exp !== 1 ? `경험치 ×${e.exp}` : '', e.gold !== 1 ? `골드 ×${e.gold}` : '', e.drop !== 1 ? `장비 드롭 ×${e.drop}` : '', (e.mastery ?? 1) !== 1 ? `숙련 ×${e.mastery}` : '', (e.mimic ?? 1) !== 1 ? `까미 출현 ×${e.mimic}` : ''].filter(Boolean);
+    const parts = [e.exp !== 1 ? `경험치 ×${e.exp}` : '', e.gold !== 1 ? `골드 ×${e.gold}` : '', e.drop !== 1 ? `장비 드롭 ×${e.drop}` : '', (e.mastery ?? 1) !== 1 ? `숙련 ×${e.mastery}` : '', (e.mimic ?? 1) !== 1 ? `까미 출현 ×${e.mimic}` : '', (e.nuri ?? 1) !== 1 ? `누리 출현 ×${e.nuri}` : ''].filter(Boolean);
     const d = new Date(e.until + 9 * 3600_000);
     return [e.name, ...parts, `${d.getUTCMonth() + 1}/${d.getUTCDate()}까지`].join(' · ');
 }

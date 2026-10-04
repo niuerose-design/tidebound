@@ -9,7 +9,7 @@ import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, skil
 import type { ActionHandlers } from './types';
 import { addLog, endRun } from '../state';
 
-/** v27.70 즐겨찾기·숨김 목록 상한(스킬 수보다 넉넉히). */
+/** v27.72 즐겨찾기·숨김 목록 상한(스킬 수보다 넉넉히). */
 const SKILL_MARK_MAX = 400;
 /** 쉼표 구분 id 문자열 → 실제 스킬 id만, 중복 없이. */
 const skillIdList = (value: string) => [...new Set(value.split(',').map(x => x.trim()).filter(x => skillById(x)))].slice(0, SKILL_MARK_MAX);
@@ -136,7 +136,7 @@ export const buildActions: ActionHandlers = {
         clampVitals(s);
     },
     /**
-     * v27.70 즐겨찾기 토글(id). value가 있으면 목록 전체를 그 값(쉼표 구분 id)으로 바꿉니다(브라우저에만 있던 즐겨찾기를 세이브로 옮길 때 한 번).
+     * v27.72 즐겨찾기 토글(id). value가 있으면 목록 전체를 그 값(쉼표 구분 id)으로 바꿉니다(브라우저에만 있던 즐겨찾기를 세이브로 옮길 때 한 번).
      * 즐겨찾기한 스킬은 숨김에서 빠집니다. 게임 규칙에는 쓰지 않는 화면 편의 설정입니다.
      */
     pinSkill(s, { a, id }) {
@@ -146,7 +146,7 @@ export const buildActions: ActionHandlers = {
         s.skillPins = pins.includes(id) ? pins.filter(x => x !== id) : [...pins, id].slice(-SKILL_MARK_MAX);
         if (s.skillPins.includes(id) && s.skillHidden?.includes(id)) s.skillHidden = s.skillHidden.filter(x => x !== id);
     },
-    /** v27.70 숨기기 토글(id). 숨긴 스킬은 즐겨찾기에서 빠집니다. 장착·사용 판정과는 무관합니다. */
+    /** v27.72 숨기기 토글(id). 숨긴 스킬은 즐겨찾기에서 빠집니다. 장착·사용 판정과는 무관합니다. */
     hideSkill(s, { id }) {
         if (!skillById(id)) throw Error('없는 스킬입니다.');
         const hidden = s.skillHidden || [];

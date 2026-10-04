@@ -1,5 +1,5 @@
 import { session, checkOrigin, mutate, failure, readJson, ApiError, syncAccount, db } from '@/game/server/store';
-import { altarInfo, parseOffering, applyOffering, commitOffering, makeChallenge, makeHarvest } from '@/game/server/altar';
+import { altarInfo, parseOffering, applyOffering, commitOffering, makeChallenge, makeHarvest, makeImpeach } from '@/game/server/altar';
 import type { State } from '@/game/types';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
@@ -28,8 +28,8 @@ export async function POST(req: Request) { try {
         await commitOffering(account, id, payload.state.name, o, points, gauge, anonymous, now);
         return Response.json({ state: payload.state, result: { points }, info: await altarInfo(id, payload.state, Date.now()) }, { headers });
     }
-    if (action !== 'challenge' && action !== 'harvest') throw new ApiError('올바르지 않은 요청입니다.');
-    const run = action === 'challenge' ? makeChallenge(id) : makeHarvest(id);
+    if (action !== 'challenge' && action !== 'harvest' && action !== 'impeach') throw new ApiError('올바르지 않은 요청입니다.');
+    const run = action === 'challenge' ? makeChallenge(id) : action === 'impeach' ? makeImpeach(id) : makeHarvest(id);
     const payload = await mutate(id, { type: 'sync' }, async s => { await syncAccount(account, slot, s, now); result = await run(s, now); });
     return Response.json({ state: payload.state, result, info: await altarInfo(id, payload.state, Date.now()) }, { headers });
 }

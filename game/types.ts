@@ -330,7 +330,7 @@ export type State = {
     event?: import('./data/events').ActiveEvent | null;
     /** v27.31 운영 페이지에서 닫은 사냥터·던전(서버가 동기화 때 적음). 없으면 null. */
     closed?: import('./data/world').Closures | null;
-    /** v27.70 운영 페이지에서 연 문의 ??? 직업 id(서버가 동기화 때 적음). 없으면 null. 열려 있는 동안만 문이 열리고 doorsOpened에는 남지 않습니다. */
+    /** v27.72 운영 페이지에서 연 문의 ??? 직업 id(서버가 동기화 때 적음). 없으면 null. 열려 있는 동안만 문이 열리고 doorsOpened에는 남지 않습니다. */
     openDoors?: string[] | null;
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
@@ -451,9 +451,9 @@ export type State = {
     vows?: Vows;
     /** 다음 생에 걸 서약 예약. 환생할 때 vows가 됩니다. */
     nextVows?: Vows;
-    /** v27.70 스킬 화면 즐겨찾기(스킬 id). 전에는 브라우저에만 저장했고, 이제 세이브에 담아 기기를 옮겨도 따라갑니다. 환생·SP 환급·이번 생 초기화에도 유지. */
+    /** v27.72 스킬 화면 즐겨찾기(스킬 id). 전에는 브라우저에만 저장했고, 이제 세이브에 담아 기기를 옮겨도 따라갑니다. 환생·SP 환급·이번 생 초기화에도 유지. */
     skillPins?: string[];
-    /** v27.70 스킬 화면에서 숨긴 스킬(스킬 id). 장착 중·검색 결과·‘숨김’ 탭에는 그대로 보입니다. 환생·SP 환급·이번 생 초기화에도 유지. */
+    /** v27.72 스킬 화면에서 숨긴 스킬(스킬 id). 장착 중·검색 결과·‘숨김’ 탭에는 그대로 보입니다. 환생·SP 환급·이번 생 초기화에도 유지. */
     skillHidden?: string[];
     /** 윤회의 문: 이번 생에 문이 열린 ??? 직업(환생 때 추첨). */
     rebirthDoor?: string;
@@ -465,6 +465,8 @@ export type State = {
         depth?: number;
         /** 반복 도전. left: 남은 추가 도전 횟수(null=실패할 때까지), until: 무릉도장 목표 깊이. */
         repeat?: { left: number | null; until?: number };
+        /** v27.70 일반 던전 난이도(DUNGEON_MODES). 없으면 노말. 무릉도장은 쓰지 않습니다. */
+        mode?: import('./data/balance').DungeonMode;
     };
     clears: Record<string, number>;
     logs: Log[];

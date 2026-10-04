@@ -8,7 +8,7 @@ import { SKILLS, skillById } from '../../data/skills';
 import type { ActionHandlers } from './types';
 import { researchRank, salvageRate } from '../../data/economy';
 import { addLog, endRun } from '../state';
-import { parseRepeat, enterDungeon } from '../dungeon-run';
+import { parseDungeonValue, enterDungeon } from '../dungeon-run';
 
 export const voyageActions: ActionHandlers = {
     sync() {},
@@ -55,7 +55,8 @@ export const voyageActions: ActionHandlers = {
             throw Error('던전 입장 조건을 충족하지 못했습니다.');
         if (dungeonClosed(d.id))
             throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);
-        enterDungeon(s, d.id, parseRepeat(s, d.id, a.value));
+        const { mode, repeat } = parseDungeonValue(s, d.id, a.value);
+        enterDungeon(s, d.id, repeat, mode);
         s.running = true;
         s.lastTick = now;
     },

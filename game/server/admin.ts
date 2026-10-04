@@ -124,7 +124,7 @@ export async function adjustCurrency(id: string, input: { gold?: unknown; pearls
 
 // ---------- v27.27 서버 이벤트 설정 ----------
 
-const MULTS = ['exp', 'gold', 'drop', 'mastery', 'mimic'] as const;
+const MULTS = ['exp', 'gold', 'drop', 'mastery', 'mimic', 'nuri'] as const;
 /** 이벤트 목록: 코드 이벤트(끔 여부)와 운영 페이지 이벤트, 지금 배너 문구. */
 export async function listEvents(now = Date.now()) {
     const config = await readEventConfig();
@@ -193,7 +193,7 @@ export async function setClosed(kind: string, id: string, closed: boolean) {
     return listClosures();
 }
 
-// ---------- v27.70 문 개방 ----------
+// ---------- v27.72 문 개방 ----------
 
 /** ??? 문이 있는 직업 목록과 운영자가 연 문. 윤회의 문 직업 → 발견의 문 직업 순서. */
 export async function listDoors() {

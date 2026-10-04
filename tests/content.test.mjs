@@ -259,9 +259,9 @@ test('v27.20 plain (white) gear can be bought for the item book',()=>{
  act(s,{type:'registerItem',id:it.id},0);assert.equal(s.itemBook['charm:0'],true);
 });
 
-test('v27.21 tide tier multiplies catch mastery on stages and (v27.68) normal dungeons, not Mu Lung',()=>{
- const run=(tide,dungeon)=>{const s=newState(0);s.running=true;s.rebirths=10;s.tide=tide;if(dungeon){s.dungeon=dungeon==='abyss'?{id:'abyss',wave:0,depth:1}:{id:'grotto',wave:0};}s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};let g=0;while(s.enemy&&s.enemy.hp>0&&g++<50)tick(s,()=>.5);return s.jobMastery.fisher||0;};
- const base=run(0,false);assert.ok(base>0);assert.equal(run(10,false),Math.floor(base*4),'tide 10 → ×4');assert.equal(run(10,true),Math.floor(base*4),'v27.68 normal dungeons follow the tide too');assert.equal(run(10,'abyss'),base,'Mu Lung keeps its own floor formula');
+test('v27.21 tide tier multiplies catch mastery on stages; v27.70 dungeons use their own mode tier, not Mu Lung',()=>{
+ const run=(tide,dungeon)=>{const s=newState(0);s.running=true;s.rebirths=10;s.tide=tide;if(dungeon){s.dungeon=dungeon==='abyss'?{id:'abyss',wave:0,depth:1}:{id:'grotto',wave:0,...(dungeon==='hell'?{mode:'hell'}:{})};}s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};let g=0;while(s.enemy&&s.enemy.hp>0&&g++<50)tick(s,()=>.5);return s.jobMastery.fisher||0;};
+ const base=run(0,false);assert.ok(base>0);assert.equal(run(10,false),Math.floor(base*4),'tide 10 → ×4');assert.equal(run(10,true),base,'v27.70 dungeons ignore the stage tide');assert.equal(run(0,'hell'),Math.floor(base*16),'hell dungeon = tier 50 mastery');assert.equal(run(10,'abyss'),base,'Mu Lung keeps its own floor formula');
 });
 
 test('v27.22 mastery mimic: rare stage-only spawn with the strongest local body, pays lottery mastery to job and equipped skills',()=>{

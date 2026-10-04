@@ -97,6 +97,8 @@ export interface Storage {
     resetAltarGod(): Promise<void>;
     /** v27.69 신의 자리 임기 만료: before보다 먼저 앉은 자리와 쌓인 몫만 비웁니다(조건부라 막 앉은 자리는 건드리지 않음). 비웠으면 true. */
     expireAltarThrone(before: number): Promise<boolean>;
+    /** v27.70 탄핵: 지금 자리 주인이 id일 때만 자리와 몫을 비웁니다(경쟁 안전). 비웠으면 true. */
+    vacateAltarThrone(id: string): Promise<boolean>;
     bumpAltarOffer(row: Omit<AltarOfferRow, 'id' | 'points' | 'gold' | 'pearls' | 'essence'>, add: AltarAmounts & { points: number }): Promise<void>;
     listAltarOffers(week: string, limit: number): Promise<AltarOfferRow[]>;
     getAltarOffer(week: string, playerId: string): Promise<AltarOfferRow | null>;
@@ -232,6 +234,7 @@ function neonStorage(url: string): Storage {
         async claimAltarThrone(gen, id, name, snapshot, now) { const r = await q("UPDATE altar SET god_state='slain', throne=$2, throne_name=$3, throne_snapshot=$4, throne_since=$5, tithe_gold=0, tithe_pearls=0, tithe_essence=0 WHERE id='main' AND gen=$1 AND god_state='alive' AND god_until>=$5", [gen, id, name, snapshot, now]); return r.rowCount === 1; },
         async resetAltarGauges() { await q('UPDATE altar_gauges SET points=0'); },
         async resetAltarGod() { await q("UPDATE altar SET god_state='none', god='', god_until=0, throne='', throne_name='', throne_since=0, throne_snapshot='', tithe_gold=0, tithe_pearls=0, tithe_essence=0 WHERE id='main'"); },
+        async vacateAltarThrone(id) { const r = await q("UPDATE altar SET throne='', throne_name='', throne_since=0, throne_snapshot='', tithe_gold=0, tithe_pearls=0, tithe_essence=0 WHERE id='main' AND throne=$1", [id]); return r.rowCount === 1; },
         async expireAltarThrone(before) { const r = await q("UPDATE altar SET throne='', throne_name='', throne_since=0, throne_snapshot='', tithe_gold=0, tithe_pearls=0, tithe_essence=0 WHERE id='main' AND throne<>'' AND throne_since<$1", [before]); return r.rowCount === 1; },
         async takeAltarTithe(id) {
             const { rows } = await q<{ g: string; p: string; e: string }>("UPDATE altar a SET tithe_gold=0, tithe_pearls=0, tithe_essence=0 FROM (SELECT tithe_gold g, tithe_pearls p, tithe_essence e FROM altar WHERE id='main' FOR UPDATE) o WHERE a.id='main' AND a.throne=$1 RETURNING o.g, o.p, o.e", [id]);
@@ -325,6 +328,7 @@ function fileStorage(): Storage {
         }),
         resetAltarGauges: () => tx(db => { for (const g of Object.values(db.altarGauges || {})) g.points = 0; }),
         resetAltarGod: () => tx(db => { db.altar = { ...ALTAR_EMPTY, ...db.altar, god_state: 'none', god: '', god_until: 0, throne: '', throne_name: '', throne_since: 0, throne_snapshot: '', tithe_gold: 0, tithe_pearls: 0, tithe_essence: 0 }; }),
+        vacateAltarThrone: id => tx(db => { const r = db.altar; if (!r || !r.throne || r.throne !== id) return false; Object.assign(r, { throne: '', throne_name: '', throne_since: 0, throne_snapshot: '', tithe_gold: 0, tithe_pearls: 0, tithe_essence: 0 }); return true; }),
         expireAltarThrone: before => tx(db => { const r = db.altar; if (!r || !r.throne || r.throne_since >= before) return false; Object.assign(r, { throne: '', throne_name: '', throne_since: 0, throne_snapshot: '', tithe_gold: 0, tithe_pearls: 0, tithe_essence: 0 }); return true; }),
         takeAltarTithe: id => tx(db => { const r = db.altar; if (!r || r.throne !== id) return null; const out = { gold: r.tithe_gold, pearls: r.tithe_pearls, essence: r.tithe_essence }; r.tithe_gold = r.tithe_pearls = r.tithe_essence = 0; return out; }),
         bumpAltarOffer: (r, a) => tx(db => {

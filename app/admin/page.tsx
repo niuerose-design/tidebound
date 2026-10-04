@@ -5,11 +5,11 @@ type AdminSp = { have: number; research: { name: string; sp: number; claimed: bo
 type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
 type RebirthPace = { recent: { day: number; week: number }; measured: number; real: { avg: number; median: number }; play: { avg: number; median: number }; byCount: { label: string; count: number; real: number; play: number }[]; latest: { name: string; n: number; at: number; realMs: number; playMs: number; level: number; partial: boolean }[] };
 type Preview = { before: AdminPlayer; after: AdminPlayer };
-type EventRow = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; mimic?: number; live: boolean; disabled?: boolean };
+type EventRow = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; mimic?: number; nuri?: number; live: boolean; disabled?: boolean };
 type EventList = { code: EventRow[]; extra: EventRow[]; banner: string; at: number };
 type ClosureRow = { id: string; name: string; closed: boolean; locked: boolean };
 type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
-/** v27.70 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
+/** v27.72 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
 type DoorRow = { id: string; name: string; door: string; hint: string; open: boolean };
 type DoorList = { doors: DoorRow[] };
 type Tab = 'life' | 'events' | 'closures' | 'doors' | 'stats';
@@ -31,7 +31,7 @@ function Bars({ title, rows, total }: { title: string; rows: { label: string; co
             <span style={{ height: 10, borderRadius: 5, background: '#1d3034' }}><span style={{ display: 'block', height: '100%', width: `${r.count / max * 100}%`, borderRadius: 5, background: '#6fb7a0' }}/></span>
             <span style={{ color: '#c9dbd6', minWidth: 72, textAlign: 'right' }}>{n(r.count)}{total ? <small style={{ color: '#9bb3b0' }}> ({Math.round(r.count / total * 100)}%)</small> : null}</span></div>)}</div></div>;
 }
-const MULTS = [['exp', '경험치'], ['gold', '골드'], ['drop', '장비 드롭'], ['mastery', '숙련'], ['mimic', '까미 출현']] as const;
+const MULTS = [['exp', '경험치'], ['gold', '골드'], ['drop', '장비 드롭'], ['mastery', '숙련'], ['mimic', '까미 출현'], ['nuri', '누리 출현']] as const;
 /** datetime-local(한국 시간으로 입력) → ISO. */
 const kstToIso = (v: string) => v ? `${v}:00+09:00` : '';
 const isoToKst = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 16);
@@ -62,7 +62,7 @@ const lifeLine = (p: AdminPlayer) => [p.lastRebirthAt ? `마지막 환생 ${new 
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
     const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [doors, setDoors] = useState<DoorList | null>(null), [stats, setStats] = useState<Stats | null>(null);
-    const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1' });
+    const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' });
     const [spOpen, setSpOpen] = useState<string | null>(null);
     const [edit, setEdit] = useState<{ player: AdminPlayer; gold: string; pearls: string } | null>(null);
     const [preview, setPreview] = useState<{ id: string; data: Preview } | null>(null), [done, setDone] = useState(''), [error, setError] = useState(''), [busy, setBusy] = useState(false);
@@ -92,8 +92,8 @@ export default function AdminPage() {
     };
     const loadEvents = async () => { const d = await call({ action: 'events' }); if (d) setEvents(d); };
     const saveEvent = async () => {
-        const d = await call({ action: 'saveEvent', event: { name: draft.name, from: kstToIso(draft.from), until: kstToIso(draft.until), exp: Number(draft.exp), gold: Number(draft.gold), drop: Number(draft.drop), mastery: Number(draft.mastery), mimic: Number(draft.mimic) } });
-        if (d) { setEvents(d); setDone('이벤트를 저장했습니다. 유저 화면에는 최대 1분 안에 반영됩니다.'); setDraft({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1' }); }
+        const d = await call({ action: 'saveEvent', event: { name: draft.name, from: kstToIso(draft.from), until: kstToIso(draft.until), exp: Number(draft.exp), gold: Number(draft.gold), drop: Number(draft.drop), mastery: Number(draft.mastery), mimic: Number(draft.mimic), nuri: Number(draft.nuri) } });
+        if (d) { setEvents(d); setDone('이벤트를 저장했습니다. 유저 화면에는 최대 1분 안에 반영됩니다.'); setDraft({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' }); }
     };
     const removeEvent = async (id: string) => { if (!confirm('이 이벤트를 삭제할까요?')) return; const d = await call({ action: 'deleteEvent', id }); if (d) setEvents(d); };
     const toggleEvent = async (id: string, disabled: boolean) => { const d = await call({ action: 'toggleEvent', id, disabled }); if (d) setEvents(d); };
@@ -111,7 +111,7 @@ export default function AdminPage() {
         const d = await call({ action: 'setClosed', kind, id: row.id, closed: !row.closed });
         if (d) { setClosures(d); setDone(`${row.name}을(를) ${row.closed ? '열었습니다' : '닫았습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
     };
-    /** v27.70 문 개방: 연 동안 모든 모험가에게 그 ??? 직업의 문이 열립니다. 닫으면 다시 조건대로(그 사이 전직한 모험가는 그대로). */
+    /** v27.72 문 개방: 연 동안 모든 모험가에게 그 ??? 직업의 문이 열립니다. 닫으면 다시 조건대로(그 사이 전직한 모험가는 그대로). */
     const loadDoors = async () => { const d = await call({ action: 'doors' }); if (d) setDoors(d); };
     const toggleDoor = async (row: DoorRow) => {
         if (!row.open && !confirm(`${row.door} · ${row.name}의 문을 모든 모험가에게 열까요?\n연 동안은 조건과 상관없이 전직할 수 있고, 다시 닫으면 조건대로 돌아갑니다(그 사이 전직한 모험가는 그대로).`)) return;

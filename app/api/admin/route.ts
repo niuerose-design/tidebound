@@ -2,7 +2,7 @@ import { checkOrigin, failure, readJson } from '@/game/server/store';
 import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats, resetAltar, listDoors, setDoorOpen } from '@/game/server/admin';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
-/** v27.26 운영자 도구. 헤더 x-admin-key 필요. POST { action: 'search', query } | 'preview' | 'apply' | v27.27 'events' | 'saveEvent' { event } | 'deleteEvent' { id } | 'toggleEvent' { id, disabled } | 'adjust' { id, gold?, pearls? } | v27.31 'closures' | 'setClosed' { kind: 'stages'|'dungeons', id, closed } | v27.32 'stats' | v27.70 'doors' | 'setDoor' { id, open }. */
+/** v27.26 운영자 도구. 헤더 x-admin-key 필요. POST { action: 'search', query } | 'preview' | 'apply' | v27.27 'events' | 'saveEvent' { event } | 'deleteEvent' { id } | 'toggleEvent' { id, disabled } | 'adjust' { id, gold?, pearls? } | v27.31 'closures' | 'setClosed' { kind: 'stages'|'dungeons', id, closed } | v27.32 'stats' | v27.72 'doors' | 'setDoor' { id, open }. */
 export async function POST(req: Request) { try {
     checkOrigin(req);
     requireAdmin(req);
