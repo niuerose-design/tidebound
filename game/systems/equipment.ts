@@ -4,9 +4,15 @@ import { ESSENCE_BY_RARITY, rerollEssence } from '../data/gear';
 import { fishGoldAt, priceScale } from '../data/world';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
 /** 나침반: 위력 1당 치명타 +0.2%p. */
-export const CHARM_CRIT_PER_POWER = .002;
+/** v27.36 나침반 치명타: 레벨·위력과 무관한 등급 고정값 × (1 + 강화 × CHARM_CRIT_ENHANCE). 예전 위력 × 0.2%는 Lv.60 전설 +10 하나로 100%를 넘었습니다. */
+export const CHARM_CRIT = [.03, .05, .07, .10, .12, .14, .16], CHARM_CRIT_ENHANCE = .05;
+export const charmCrit = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CHARM_CRIT[item.rarity] ?? CHARM_CRIT[0]) * (1 + (item.enhance || 0) * CHARM_CRIT_ENHANCE) * 10000) / 10000;
+/** v27.36 등급별 고정 수치 감쇠(기본 수치와 고정 수치 옵션에 곱함). 고대·태초 장비가 최종 능력치의 대부분을 차지하던 것을 줄입니다. 저장된 위력은 그대로라 기존 장비에도 바로 적용됩니다. */
+export const GEAR_RARITY_SCALE = [1, 1, 1, .85, .68, .58, .52];
+const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
 export function itemStats(item: Item): Partial<Stats> {
-    const p = item.power * (1 + (item.enhance || 0) * ECONOMY.enhanceGain);
+    const damp = GEAR_RARITY_SCALE[item.rarity] ?? 1;
+    const p = item.power * (1 + (item.enhance || 0) * ECONOMY.enhanceGain) * damp;
     const result: Partial<Stats> = {};
     if (item.slot === 'rod') {
         result.attack = p * (item.style === 'magic' ? .4 : item.style === 'physical' ? 1.4 : 1);
@@ -18,11 +24,12 @@ export function itemStats(item: Item): Partial<Stats> {
         result.resist = p * .5;
     }
     // v27.18 나침반 치명타에 더는 15% 상한이 없습니다. 전체 치명타가 60%를 넘으면 그 몫은 극 치명타 확률이 됩니다.
-    if (item.slot === 'charm') result.crit = p * CHARM_CRIT_PER_POWER;
+    if (item.slot === 'charm') result.crit = charmCrit(item);
+    const scaled = (stat: string, n: number) => FLAT_GEAR_STATS.has(stat) && n > 0 ? n * damp : n;
     if (item.affix)
-        result[item.affix.stat] = (result[item.affix.stat] || 0) + item.affix.value;
+        result[item.affix.stat] = (result[item.affix.stat] || 0) + scaled(item.affix.stat, item.affix.value);
     for (const affix of item.affixes || []) {
-        result[affix.stat] = (result[affix.stat] || 0) + affix.value;
+        result[affix.stat] = (result[affix.stat] || 0) + scaled(affix.stat, affix.value);
         if (affix.stat2 && affix.value2) result[affix.stat2] = (result[affix.stat2] || 0) + affix.value2;
     }
     return result;

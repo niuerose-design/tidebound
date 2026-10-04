@@ -232,8 +232,10 @@ test('v27.16 stuck-state repair: NaN hp, dead enemy left over, unknown stage, an
 });
 
 test('v27.18 charm crit is uncapped and crit above 60% becomes super crit (x1.5 crit damage)',()=>{
- const mk=(power,enhance)=>equipment.itemStats({id:'c',name:'c',slot:'charm',power,level:1,enhance});
- assert.ok(mk(100,5).crit>mk(100,0).crit&&mk(100,0).crit>.15,'enhancing keeps raising charm crit');
+ const mk=(power,enhance,rarity=3)=>equipment.itemStats({id:'c',name:'c',slot:'charm',power,level:1,enhance,rarity});
+ assert.ok(mk(100,5).crit>mk(100,0).crit,'enhancing keeps raising charm crit');
+ // v27.36 나침반 치명타는 등급 고정값: 위력(레벨)과 무관하고 전설 +10은 15%.
+ assert.equal(mk(100,0).crit,mk(900,0).crit);assert.ok(Math.abs(mk(100,10).crit-.15)<1e-9);assert.ok(mk(100,0,6).crit>mk(100,0,3).crit);
  const s=newState(0);s.attributes.luk=400;const a=stats(s);assert.equal(a.crit,SKILL_FORMULA.critCap);assert.ok(a.superCrit>0&&a.superCrit<.02,'overflow goes to super crit at 1% per 100%p: '+a.superCrit);
  const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:1,superCrit:.5,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:2};
  const f=(extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills:[],cooldowns:{},stun:0,effects:{},ranks:{},mastery:{},practice:{}});
