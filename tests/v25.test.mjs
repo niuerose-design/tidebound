@@ -598,3 +598,14 @@ test('v27.53 drops: 0.25% base, bonus 0.01 = +10%, rare or better, tide drop lev
     assert.equal(Enc.dropLevel({ level: 30 }, 25, 10), 40, 'capped at player + 10'); assert.equal(Enc.dropLevel({ level: 30 }, 50, 10), 50, 'never below the source level'); assert.equal(Enc.dropLevel({ level: 30 }, 25, 1), 30);
     const t = E.newState(0); Enc.drop(t, 10, () => 0); assert.equal(t.inventory[0].rarity, 1, 'no common drops');
 });
+
+test('v27.54 xp needed grows with rebirths and walls off after Lv.70; the Black Mage hits with divine force', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const B = await L.load('data/balance');
+    assert.equal(B.xpNeeded(50, 0), B.xpNeeded(50)); assert.ok(Math.abs(B.xpNeeded(50, 10) / B.xpNeeded(50, 0) - 2.5) < .01, 'rebirth 10 = ×2.5');
+    assert.ok(B.xpNeeded(69) / B.xpNeeded(68) < 1.1 && B.xpNeeded(80) / B.xpNeeded(69) > 10, 'wall after Lv.70');
+    const D = await L.load('systems/duel'), Alt = D;
+    const base = { ...D.abyssBossSnapshot(50), name: '검은 마법사' }, god = Alt.divineFirstGod(base);
+    assert.equal(god.stats.attack, Math.round(base.stats.attack * 5)); assert.equal(god.stats.penetration, .5);
+    assert.equal(Alt.divineFirstGod(god).stats.attack, god.stats.attack, 'applied once');
+});
