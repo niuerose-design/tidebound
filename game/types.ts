@@ -484,6 +484,8 @@ export type State = {
     };
     /** v27.86 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). */
     randomGameRuns?: number;
+    /** v27.87 랜덤게임 기록: 가장 멀리 간 웨이브·총 입장·받고 나간 횟수(환생해도 유지). */
+    randomGameStats?: { best: number; runs: number; cashed: number };
     clears: Record<string, number>;
     /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
     modeClears?: Partial<Record<import('./data/balance').DungeonMode, Record<string, number>>>;

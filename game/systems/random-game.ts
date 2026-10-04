@@ -29,6 +29,7 @@ export function spawnRandomGame(s: State, rng: () => number) {
 export function clearRandomWave(s: State) {
     const d = s.dungeon!, w = d.wave + 1, add = waveStake(w);
     d.wave = w;
+    s.randomGameStats ??= { best: 0, runs: 0, cashed: 0 }; s.randomGameStats.best = Math.max(s.randomGameStats.best, w);
     d.stake = { essence: (d.stake?.essence || 0) + add.essence, pearls: (d.stake?.pearls || 0) + add.pearls };
     const now = stakePayout(s);
     addLog(s, `랜덤게임 ${w}웨이브 돌파 · 판돈 정수 ${now.essence}${now.pearls ? ` · 세계석 ${now.pearls}` : ''}`, 'reward');
@@ -38,6 +39,7 @@ export function clearRandomWave(s: State) {
 /** 받고 나가기: 판돈을 받고 사냥터로 돌아가 자동 사냥을 이어갑니다. */
 export function cashOutRandomGame(s: State, reason = '받고 나가기') {
     const got = stakePayout(s), wave = s.dungeon?.wave || 0;
+    s.randomGameStats ??= { best: 0, runs: 0, cashed: 0 }; s.randomGameStats.cashed++;
     s.essence = (s.essence || 0) + got.essence;
     s.pearls += got.pearls;
     s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0;

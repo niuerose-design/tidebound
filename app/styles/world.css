@@ -369,3 +369,7 @@
 .random-game-card { margin-bottom: 18px; }
 .random-game-card .random-game-targets { flex-wrap: wrap; margin: 10px 0 6px; }
 .random-game-stake { margin: 6px 0 12px; font-size: 13px; color: var(--gold); }
+
+/* v27.87 통계 · 서약 예약 표시 */
+.stats-block { margin-bottom: 16px; }
+.vow-next-label { display: block; margin: 8px 0 4px; color: var(--muted); }
