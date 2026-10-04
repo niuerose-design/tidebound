@@ -11,10 +11,10 @@ import { TIME_MACHINE_MASTERY } from '../data/expansion-v25';
 import { DUNGEONS, FISH, STAGES, dungeonClosed, stageClosed, closuresSnapshot } from '../data/world';
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
-import { offlineCapSeconds, researchRank } from '../data/economy';
+import { offlineCapSeconds } from '../data/economy';
 import { canUse, skillMasteryRanks } from './progression';
 import { addLog, endRun } from './state';
-import { spawn, reward, drop } from './encounter';
+import { spawn, reward } from './encounter';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
 import { breathReset } from './actions/lifecycle';
@@ -151,28 +151,5 @@ export function advance(s: State, now: number, rng = Math.random) {
     recordOpenDoors(s);
     if (elapsed > 60000 && s.kills > before.kills) {
         s.lastOffline = { seconds: Math.min(cap, Math.floor(elapsed / 1000)), kills: s.kills - before.kills, gold: s.gold - before.gold, exp: Math.max(0, s.exp - before.exp) };
-        const bottles = messageBottles(s, Math.floor(count * BALANCE.turnMs / 3_600_000), rng);
-        if (bottles) s.lastOffline.bottles = bottles;
     }
-}
-/** 편지병 골드: 레벨 × 500. */
-const bottleGold = (level: number) => level * 500;
-/**
- * 병 속의 편지: 오프라인 정산의 온전한 1시간마다 4%p/단계 확률로 편지병을 줍습니다.
- * 내용은 골드 70% · 장비 25% · 세계석 1개 5%. 0단계면 난수를 쓰지 않습니다.
- */
-export function messageBottles(s: State, hours: number, rng: () => number) {
-    const rank = researchRank(s, 'messageBottle');
-    if (!rank || hours <= 0) return null;
-    const found = { count: 0, gold: 0, items: 0, pearls: 0 };
-    for (let h = 0; h < hours; h++) {
-        if (rng() >= rank * .04) continue;
-        found.count++;
-        const roll = rng();
-        if (roll < .7) { const g = bottleGold(s.level); s.gold += g; found.gold += g; }
-        else if (roll < .95) { drop(s, s.level, rng, true); found.items++; }
-        else { s.pearls += 1; found.pearls++; }
-    }
-    if (found.count) addLog(s, `병 속의 편지 ${found.count}개를 주웠습니다${found.gold ? ` · +${found.gold} G` : ''}${found.items ? ` · 장비 ${found.items}개` : ''}${found.pearls ? ` · 세계석 +${found.pearls}` : ''}`, 'reward');
-    return found;
 }

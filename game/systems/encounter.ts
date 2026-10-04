@@ -9,7 +9,7 @@ import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize } from '../data/variants';
-import { MIMIC, rollMimicMastery, mimicChance } from '../data/mimic';
+import { MIMIC, rollMimicMastery, mimicChance, specialLuck } from '../data/mimic';
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel } from '../data/balance';
@@ -121,8 +121,10 @@ export function spawn(s: State, rng: () => number) {
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
     // v27.58 경험의 누리: 까미와 같은 난수 하나를 [까미 구간 | 누리 구간]으로 나눠 씁니다(난수 사용 횟수는 그대로).
     const mimicOk = !dungeon && tier >= MIMIC.minTier && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && nuriEligible(s, tier);
-    const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1) * (s.event?.mimic ?? 1) : 0;
-    const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? EXP_NURI.offlineScale : 1) : 0;
+    // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
+    const luck = specialLuck(s);
+    const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1) * (s.event?.mimic ?? 1) * luck : 0;
+    const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? EXP_NURI.offlineScale : 1) * luck : 0;
     const special = mimicOk || nuriOk ? rng() : 1;
     const mimic = special < mimicP, nuri = !mimic && special < mimicP + nuriP, rare = mimic || nuri, rareId = mimic ? MIMIC.id : EXP_NURI.id, rareDef = mimic ? MIMIC : EXP_NURI;
     const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));

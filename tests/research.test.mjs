@@ -93,7 +93,7 @@ test('Research v2: online ticks and one offline settlement give the same result 
 });
 
 // 세계석 연구 3단계: 특별 연구 5개
-import { reward, messageBottles, expMultiplier, metaMod } from './harness.mjs';
+import { reward, expMultiplier, metaMod, mimicChanceOf } from './harness.mjs';
 const counting = (value = .99) => { const f = () => { f.calls++; return typeof value === 'function' ? value(f.calls) : value; }; f.calls = 0; return f; };
 
 test('Research v3: four special entries match the plan table and sit in the utility special group', () => {
@@ -136,15 +136,13 @@ test('v25.23 golden fish: multiplies one catch by ten and is recorded; v27.44 ev
     assert.equal(gold.gold - 100 /* start gold */, (plain.gold - 100) * 10); assert.equal(gold.goldenBook.minnow, 1);
 });
 
-test('Research v3: message bottles roll once per full offline hour and never at rank 0', () => {
-    const s = newState(0), idle = counting(0); assert.equal(messageBottles(s, 10, idle), null); assert.equal(idle.calls, 0);
-    s.permanent.messageBottle = 5; s.level = 20; const seq = [.1, .5, .1, .99, .5, .1, .8], rng = counting(n => seq[n - 1] ?? .5);
-    const pearls = s.pearls, gold = s.gold, found = messageBottles(s, 4, rng); // 1시간째 골드, 2시간째 세계석, 3시간째 없음, 4시간째 장비
-    assert.deepEqual([found.count, found.items, found.pearls], [3, 1, 1]); assert.equal(found.gold, 20 * 500);
-    assert.equal(s.pearls - pearls, 1); assert.ok(s.gold - gold >= 20 * 500); assert.equal(s.inventory.length, 1);
+test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance per rank, offline bottles gone', () => {
+    const make = rank => { const s = newState(0); s.level = 20; s.kills = 500; s.stage = 'brook'; s.tide = MIMIC_DATA.minTier; s.permanent.messageBottle = rank; return s; };
+    const roll = mimicChanceOf(MIMIC_DATA.minTier, 0) * 1.5; // 기본 확률 밖, 5단계(×1.75) 안
+    const plain = make(0); spawn(plain, () => roll); assert.notEqual(plain.enemy.id, MIMIC_DATA.id);
+    const lucky = make(5); spawn(lucky, () => roll); assert.equal(lucky.enemy.id, MIMIC_DATA.id);
     const o = newState(0); o.permanent.messageBottle = 5; act(o, { type: 'start' }, 0); advance(o, 10 * 3600_000, seeded(7));
-    assert.ok(o.lastOffline && o.lastOffline.bottles && o.lastOffline.bottles.count <= 10);
-    const n = newState(0); act(n, { type: 'start' }, 0); advance(n, 10 * 3600_000, seeded(7)); assert.equal(n.lastOffline.bottles, undefined);
+    assert.ok(o.lastOffline && !('bottles' in o.lastOffline), 'no more offline bottles');
 });
 
 // 세계석 연구 4단계: 서약 3개

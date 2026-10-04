@@ -33,3 +33,6 @@ export function rollMimicMastery(rng: () => number) {
 /** 등장 확률 = (기본 + 사냥터 난이도 × 단계당) × (1 + 사냥터 순서 × stageStep). 예: 난이도 10, 열 번째 사냥터 → 0.65% × 3.25 ≈ 2.1%. */
 export const mimicChance = (tier: number, stageIndex = 0) => (MIMIC.chance + tier * MIMIC.chancePerTier) * (1 + stageIndex * MIMIC.stageStep);
 export const mimicStageMultiplier = (stageIndex: number) => 1 + stageIndex * MIMIC.stageStep;
+/** v27.60 행운의 편지(세계석 연구 id messageBottle): 까미·경험의 누리 등장 확률 배율. 단계마다 +15%. */
+export const LUCKY_LETTER_PER_RANK = .15;
+export const specialLuck = (s: { permanent?: Record<string, number> }) => 1 + (s.permanent?.messageBottle || 0) * LUCKY_LETTER_PER_RANK;
