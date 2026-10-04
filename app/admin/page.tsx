@@ -95,6 +95,13 @@ export default function AdminPage() {
     const removeEvent = async (id: string) => { if (!confirm('이 이벤트를 삭제할까요?')) return; const d = await call({ action: 'deleteEvent', id }); if (d) setEvents(d); };
     const toggleEvent = async (id: string, disabled: boolean) => { const d = await call({ action: 'toggleEvent', id, disabled }); if (d) setEvents(d); };
     const loadStats = async () => { const d = await call({ action: 'stats' }); if (d) setStats(d); };
+    /** v27.69 제단 초기화: 공물(게이지 기여도) 또는 신(깨어난 신·신의 자리·몫). */
+    const resetAltar = async (kind: 'offers' | 'god') => {
+        const msg = kind === 'offers' ? '제단 게이지(축복 3종·신 소환)에 쌓인 공물(기여도)을 모두 0으로 되돌릴까요?\n이미 열려 있는 축복은 남은 시간 동안 유지됩니다. 바친 재화는 돌려주지 않습니다.' : '신을 초기화할까요?\n깨어 있는 신이 사라지고, 신의 자리 주인과 쌓인 몫(거두지 않은 재화)이 비워집니다. 다음에 소환되는 신은 처음 신(검은 마법사)입니다.';
+        if (!confirm(msg)) return;
+        const d = await call({ action: 'altarReset', kind });
+        if (d) { setStats(d); setDone(kind === 'offers' ? '제단 공물을 초기화했습니다. 유저 화면에는 최대 15초 뒤 반영됩니다.' : '신을 초기화했습니다. 유저 화면에는 최대 15초 뒤 반영됩니다.'); }
+    };
     const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); };
     const toggleClosed = async (kind: keyof ClosureList, row: ClosureRow) => {
         if (!row.closed && !confirm(`${row.name}의 입장을 막을까요?\n안에 있던 모험가는 다음 동기화 때 보상 없이 나옵니다${kind === 'stages' ? '(더 앞의 열린 사냥터로 옮김)' : ''}.`)) return;
@@ -153,6 +160,14 @@ export default function AdminPage() {
                 <Tile label="보유 세계석 합계" value={n(stats.totals.pearls)} note={`중앙값 ${n(stats.medians.pearls)} · 보유 SP 합계 ${n(stats.totals.sp)}`}/>
                 <Tile label="길드 가입" value={n(stats.inGuild)} note={`한계돌파한 모험가 ${n(stats.limitBreakers)}`}/>
                 <Tile label="제단 누적 기여도" value={n(stats.altar.points)} note={`${stats.altar.gen}번째 신 ${stats.altar.godAlive ? '깨어 있음' : '잠듦'} · 신의 자리 ${stats.altar.throne || '비어 있음'} · 쌓인 몫 ${n(stats.altar.titheGold)} G`}/>
+            </div>
+            <div className="panel" style={{ padding: 14, display: 'grid', gap: 8 }}>
+                <h2 style={{ fontSize: 15, margin: 0 }}>제단 관리</h2>
+                <p style={{ color: '#9bb3b0', fontSize: 12, margin: 0 }}>{stats.altar.gen}번째 신 {stats.altar.godAlive ? '깨어 있음' : '잠듦'} · 신의 자리 {stats.altar.throne || '비어 있음'} · 쌓인 몫 {n(stats.altar.titheGold)} G · 누적 기여도 {n(stats.altar.points)}</p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="secondary" disabled={busy} onClick={() => resetAltar('offers')}>공물 초기화(게이지 0)</button>
+                    <button className="secondary" disabled={busy} onClick={() => resetAltar('god')}>신 초기화(신·신의 자리·몫 비우기)</button>
+                </div>
             </div>
             <h2 style={{ fontSize: 15, margin: '4px 0 0' }}>밸런스 점검</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 10 }}>

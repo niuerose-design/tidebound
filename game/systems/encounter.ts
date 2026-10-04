@@ -21,7 +21,7 @@ import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
 import { saleValue } from './equipment';
 import { roughLevel, roughEnemy, anchorSeal, atAnchorTarget, anchorPayout, anchorTargetName, ANCHOR_CATCHES } from './vows';
-import { scaledEnemyStats, profile, abyssEnemyStats } from '../data/encounters';
+import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -169,7 +169,7 @@ export function spawn(s: State, rng: () => number) {
         foe.attack = Math.round(foe.attack * m);
         foe.magic = Math.round((foe.magic || 0) * m);
     }
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: f.level >= 5 ? profile(f.id).skills : [], cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}), ...(variant ? { variant } : {}) };
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}), ...(variant ? { variant } : {}) };
 }
 export function reward(s: State, rng: () => number) {
     const e = s.enemy!;

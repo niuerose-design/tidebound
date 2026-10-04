@@ -1,5 +1,5 @@
 import { checkOrigin, failure, readJson } from '@/game/server/store';
-import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats } from '@/game/server/admin';
+import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats, resetAltar } from '@/game/server/admin';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
 /** v27.26 운영자 도구. 헤더 x-admin-key 필요. POST { action: 'search', query } | 'preview' | 'apply' | v27.27 'events' | 'saveEvent' { event } | 'deleteEvent' { id } | 'toggleEvent' { id, disabled } | 'adjust' { id, gold?, pearls? } | v27.31 'closures' | 'setClosed' { kind: 'stages'|'dungeons', id, closed } | v27.32 'stats'. */
@@ -14,6 +14,8 @@ export async function POST(req: Request) { try {
     if (body.action === 'deleteEvent') return Response.json(await deleteEvent(String(body.id ?? '')), { headers });
     if (body.action === 'toggleEvent') return Response.json(await toggleCodeEvent(String(body.id ?? ''), !!body.disabled), { headers });
     if (body.action === 'stats') return Response.json(await adminStats(), { headers });
+    // v27.69 제단 초기화 { kind: 'offers' | 'god' } → 새 통계
+    if (body.action === 'altarReset') return Response.json(await resetAltar(String(body.kind ?? '')), { headers });
     if (body.action === 'closures') return Response.json(await listClosures(), { headers });
     if (body.action === 'setClosed') return Response.json(await setClosed(String(body.kind ?? ''), String(body.id ?? ''), !!body.closed), { headers });
     if (body.action === 'adjust') return Response.json(await adjustCurrency(String(body.id ?? ''), { gold: body.gold, pearls: body.pearls }), { headers });

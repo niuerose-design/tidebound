@@ -18,6 +18,7 @@ import { ALTAR } from '../data/altar';
 import { offlineCapSeconds } from '../data/economy';
 import { SERVER_EVENTS, activeEvent, eventLabel, type ServerEvent } from '../data/events';
 import { readEventConfig, writeEventConfig, readClosures, writeClosures } from './events-config';
+import { invalidateAltar } from './altar';
 
 const digest = (v: string) => createHash('sha256').update(v).digest();
 /** 운영자 키 확인. 실패는 IP당 10분에 10번까지만 받습니다. */
@@ -283,4 +284,12 @@ export async function adminStats(now = Date.now()): Promise<AdminStats> {
         rebirthPace: rebirthPaceStats(list, now),
         top: [...list].sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level).slice(0, 10).map(s => ({ name: s.name, level: s.level, rebirths: s.rebirths || 0, abyss: s.abyssBest || 0 })),
     };
+}
+
+/** v27.69 운영: 제단 초기화. offers = 게이지에 쌓인 공물(기여도) 0으로, god = 신·신의 자리·몫 비우기. 바뀐 통계를 돌려줍니다. */
+export async function resetAltar(kind: string) {
+    if (kind !== 'offers' && kind !== 'god') throw new ApiError('초기화할 대상을 고르세요(offers 또는 god).');
+    if (kind === 'offers') await db().resetAltarGauges(); else await db().resetAltarGod();
+    invalidateAltar();
+    return adminStats();
 }
