@@ -13,7 +13,7 @@ import { MIMIC, rollMimicMastery, mimicChance, specialLuck } from '../data/mimic
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel } from '../data/balance';
-import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish } from '../data/world';
+import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish } from '../data/world';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
@@ -128,12 +128,14 @@ export function spawn(s: State, rng: () => number) {
     const special = mimicOk || nuriOk ? rng() : 1;
     const mimic = special < mimicP, nuri = !mimic && special < mimicP + nuriP, rare = mimic || nuri, rareId = mimic ? MIMIC.id : EXP_NURI.id, rareDef = mimic ? MIMIC : EXP_NURI;
     const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
-    const top = rare ? [...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0] : undefined;
+    // v27.64 사냥터 몬스터는 난이도만큼 레벨이 올라갑니다(내 레벨까지, tideLiftFish). 까미·누리는 올라간 가장 강한 몬스터의 몸집을 빌립니다.
+    const top = rare ? tideLiftFish([...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0], tier, s.level) : undefined;
     const f = rare ? { ...FISH.find(x => x.id === rareId)!, level: top!.level, hp: Math.round(top!.hp * rareDef.hp), attack: Math.round(top!.attack * rareDef.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : FISH.find(x => x.id === id)!;
     const boss = finalWave;
+    const field = dungeon || rare ? f : tideLiftFish(stageStatFish(f, st.level), tier, s.level);
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
-        : scaledEnemyStats(dungeon || rare ? f : stageStatFish(f, st.level), { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
-    const { exp, gold } = dungeon ? dungeonCatchReward(f, dungeon.level, tier, boss) : catchReward(f, tier, boss);
+        : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
+    const { exp, gold } = dungeon ? dungeonCatchReward(f, dungeon.level, tier, boss) : catchReward(field, tier, boss);
     // v25.19 변종: 몬스터를 10회 이상 처치한 사냥터 출현마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
     let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
     if (!dungeon && !rare && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
