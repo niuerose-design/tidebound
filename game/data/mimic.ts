@@ -9,6 +9,8 @@ export const MIMIC = {
     chancePerTier: .0005,
     /** 낚시터 순서(0부터)마다 등장 확률 배율 +stageStep. 낮은 낚시터는 빨리 많이 잡고, 높은 낚시터는 한 번의 확률이 높습니다. */
     stageStep: .25,
+    /** 오프라인 정산(1분 넘게 쌓인 틱을 한꺼번에 돌릴 때) 중 등장 확률 배율. */
+    offlineScale: .25,
     minLevel: 10,
     minKills: 100,
     /** 체력·공격 배율: 그 낚시터에서 가장 강한 어종 기준. */
