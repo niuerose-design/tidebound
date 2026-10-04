@@ -29,7 +29,7 @@ export const FISH_SHAPES: Record<string, FishShape> = {
     // 커닝시티
     starKoi: 'bubble', prismRay: 'octopus', voidGuppy: 'bat', ventCrab: 'crab', sulfurEel: 'snake', blindShark: 'croc', cinderAngler: 'croc',
     // 까미 · 보스
-    masteryMimic: 'chest',
+    masteryMimic: 'chest', expNuri: 'bubble',
     grottoWarden: 'mushroom', kelpHydra: 'slime', anchorWraith: 'mushroom', magmaKraken: 'demon', templeOracle: 'mage', abyssSovereign: 'fighter', ventColossus: 'statue', starfallSeraph: 'clock',
 };
 export const fishShape = (id: string): FishShape => FISH_SHAPES[id] ?? 'slime';

@@ -12,8 +12,8 @@ const API = (process.env.MAPLE_API || 'https://maplestory.io/api/KMS/latest').re
 const args = process.argv.slice(2), force = args.includes('--force'), doSkills = args.includes('--skills'), doMobs = args.includes('--mobs') || !doSkills;
 /** 게임 몬스터 id → 원작 몬스터 번호(이름 검색으로 못 찾거나 잘못 찾을 때만). */
 const MOB_IDS = {};
-/** 게임 몬스터 id → 원작에서 찾을 이름(게임 이름과 다를 때만). 숙련의 까미는 원작이 없어 건너뜁니다. */
-const MOB_NAMES = { masteryMimic: null };
+/** 게임 몬스터 id → 원작에서 찾을 이름(게임 이름과 다를 때만). 숙련의 까미·경험의 누리는 원작이 없어 건너뜁니다. */
+const MOB_NAMES = { masteryMimic: null, expNuri: null };
 
 const { load } = loadGame();
 const { FISH } = await load('game/data/world.js');

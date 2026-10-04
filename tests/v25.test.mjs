@@ -637,3 +637,24 @@ test('v27.55 rebirth level keeps rising after Lv.60 (+1 per rebirth, cap 80); le
     const s5 = E.newState(0); s5.rebirths = 5; E.act(s5, { type: 'stage', id: high.id }, 0); assert.equal(s5.stage, high.id, 'Lv.1 with 5 rebirths enters');
     const gated = W.STAGES.find(st => st.rebirth > 5); if (gated) assert.throws(() => E.act(s5, { type: 'stage', id: gated.id }, 0), 'rebirth gates stay');
 });
+
+test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% of the current level requirement', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri'), B = await L.load('data/balance');
+    const make = (level = 80) => { const s = newState(0); s.level = level; s.kills = 5000; s.stage = 'brook'; s.running = true; return s; };
+    const pm = Mi.mimicChance(0, 0);
+    const a = make(); Enc.spawn(a, () => 0); assert.equal(a.enemy.id, Mi.MIMIC.id, 'roll 0 is still the mimic');
+    const b = make(); Enc.spawn(b, () => pm + N.nuriChance(0) / 2); assert.equal(b.enemy.id, N.EXP_NURI.id, 'right after the mimic band');
+    assert.equal(b.enemy.name, '경험의 누리'); assert.ok(!b.enemy.variant && !b.enemy.swarm, 'no variants');
+    const c = make(); Enc.spawn(c, () => pm + N.nuriChance(0) * 1.5); assert.ok(![Mi.MIMIC.id, N.EXP_NURI.id].includes(c.enemy.id), 'past both bands');
+    const off = make(); off.catchingUp = true; Enc.spawn(off, () => pm * Mi.MIMIC.offlineScale + N.nuriChance(0) * .5); assert.notEqual(off.enemy.id, N.EXP_NURI.id, 'quarter rate offline');
+    for (const lv of [N.EXP_NURI.minLevel - 1, 100]) { const s = make(lv); Enc.spawn(s, () => pm + N.nuriChance(0) / 2); assert.notEqual(s.enemy.id, N.EXP_NURI.id, `not at Lv.${lv}`); }
+    const few = make(); few.kills = N.EXP_NURI.minKills - 1; Enc.spawn(few, () => pm + N.nuriChance(0) / 2); assert.notEqual(few.enemy.id, N.EXP_NURI.id, 'needs kills');
+    for (const [roll, pct] of [[0, .01], [.8, .02], [.99, .03]]) {
+        const s = make(); s.rebirths = 3; s.exp = 0; Enc.spawn(s, () => pm + N.nuriChance(0) / 2); s.enemy.hp = 0;
+        const base = Math.floor(s.enemy.exp * (await L.load('systems/stats')).expMultiplier(s));
+        Enc.reward(s, () => roll);
+        assert.equal(s.exp, base + Math.floor(B.xpNeeded(80, 3) * pct), `tier ${pct}`);
+        assert.equal(s.book[N.EXP_NURI.id], 1); assert.ok(s.logs.some(l => l.text.includes('경험의 누리')));
+    }
+});

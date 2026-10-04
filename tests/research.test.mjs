@@ -1,5 +1,5 @@
 // 세계석 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
-import { newState, act, advance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, MIMIC_DATA, assert, test } from './harness.mjs';
+import { newState, act, advance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, MIMIC_DATA, NURI_DATA, assert, test } from './harness.mjs';
 
 const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'shop', 'enhance'];
 const research = id => economy.RESEARCH.find(r => r.id === id);
@@ -81,12 +81,12 @@ test('Research v2: online ticks and one offline settlement give the same result 
         act(s, { type: 'stage', id: 'bay' }, 0); act(s, { type: 'start' }, 0); s.hp = stats(s).hp; return s;
     };
     // 까미는 오프라인 정산 중 확률이 ¼이라(v27.35) 이 비교에서는 끕니다.
-    const minLevel = MIMIC_DATA.minLevel; MIMIC_DATA.minLevel = 999;
+    const minLevel = MIMIC_DATA.minLevel, nuriLevel = NURI_DATA.minLevel; MIMIC_DATA.minLevel = 999; NURI_DATA.minLevel = 999;
     const offline = make(), online = make(), end = 3 * 3600_000;
     try {
         advance(offline, end, seeded(42));
         const rng = seeded(42); for (let t = 2000; t <= end; t += 2000) advance(online, t, rng);
-    } finally { MIMIC_DATA.minLevel = minLevel; }
+    } finally { MIMIC_DATA.minLevel = minLevel; NURI_DATA.minLevel = nuriLevel; }
     const pick = s => ({ turn: s.turn, kills: s.kills, gold: s.gold, exp: s.exp, level: s.level, hp: s.hp, carry: s.masteryCarry, job: s.jobMastery, practice: s.skillPractice, book: s.book, bag: s.inventory.length });
     assert.ok(offline.kills > 100 && (offline.masteryCarry ?? -1) >= 0);
     assert.deepEqual(pick(online), pick(offline));
