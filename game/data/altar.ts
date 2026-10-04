@@ -30,8 +30,6 @@ export const ALTAR = {
     firstGod: { name: '검은 마법사', depth: 50, attack: 5, penetration: .5 },
     /** v27.69 신의 자리 임기: 앉은 지 이만큼 지나면 자리와 쌓인 몫을 비웁니다(다음 신은 다시 처음 신). 깨어 있는 신은 남은 시간 동안 그대로. */
     throneTermMs: 7 * 24 * 3600_000,
-    /** 자리 주인을 본뜬 신: 주인의 능력치에 체력 ×2, 공격·마법 ×1.15(신격). */
-    godhood: { hp: 2, attack: 1.15 },
 } as const;
 
 export type BlessingId = 'gold' | 'mimic' | 'exp' | 'nuri';

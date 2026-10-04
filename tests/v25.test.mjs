@@ -806,7 +806,7 @@ test('v27.70 dungeon modes: normal/hell/nightmare tiers, entry value parsing, re
     assert.equal(M.encounterTier(a), (a.dungeon.depth || 1) + 2, 'Mu Lung keeps the floor formula');
 });
 
-test('v27.70 the first god is the Mu Lung 50F boss with divinity (HP 9.3억, attack ×5, 50% penetration), and the throne copy carries godhood', async () => {
+test('v27.70 the first god is the Mu Lung 50F boss with divinity (HP 9.3억, attack ×5, 50% penetration), and the throne copy is the holder as is', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Du = await L.load('systems/duel'), A = await L.load('data/altar'), Alt = await L.load('server/altar').catch(() => null);
     const boss = Du.abyssBossSnapshot(A.ALTAR.firstGod.depth).stats, god = Du.divineFirstGod({ ...Du.abyssBossSnapshot(A.ALTAR.firstGod.depth), name: A.ALTAR.firstGod.name });
@@ -818,7 +818,7 @@ test('v27.70 the first god is the Mu Lung 50F boss with divinity (HP 9.3억, att
         assert.deepEqual({ hp: first.stats.hp, attack: first.stats.attack, pen: first.stats.penetration, name: first.name }, { hp: god.stats.hp, attack: god.stats.attack, pen: .5, name: A.ALTAR.firstGod.name }, 'summoned god = intended numbers');
         const holder = { name: '왕', level: 80, job: 'x', rebirths: 10, stats: { hp: 10000, attack: 1000, magic: 500, defense: 100 }, skills: [], power: 1, rating: 1000 };
         const copy = Alt.nextGod({ throne_snapshot: JSON.stringify(holder), throne_name: '왕' });
-        assert.deepEqual([copy.stats.hp, copy.stats.attack, copy.stats.magic, copy.name], [20000, 1150, 575, '신이 된 왕'], 'impeach opponent = throne holder × godhood');
+        assert.deepEqual([copy.stats.hp, copy.stats.attack, copy.stats.magic, copy.name, copy.skills], [10000, 1000, 500, '신이 된 왕', []], 'impeach opponent = throne holder as is (no godhood)');
     }
 });
 

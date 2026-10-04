@@ -14,7 +14,7 @@ import { refreshAltarEvents } from './events-config';
 import { allow } from './throttle';
 import { weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
-import { snapshot, power } from '../systems/stats';
+import { snapshot } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod } from '../systems/duel';
 import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, blessingDesc, GAUGE_IDS, gaugeCost, offeringPoints, tithe, type AltarGaugeId, type AltarInfo, type AltarStatus, type Offering } from '../data/altar';
 
@@ -30,9 +30,8 @@ export function nextGod(a: Pick<AltarRow, 'throne_snapshot' | 'throne_name'>): S
     let holder: Snapshot | null = null;
     try { holder = a.throne_snapshot ? JSON.parse(a.throne_snapshot) as Snapshot : null; } catch { holder = null; }
     if (!holder) return divineFirstGod({ ...abyssBossSnapshot(ALTAR.firstGod.depth), name: ALTAR.firstGod.name });
-    const m = ALTAR.godhood;
-    const stats = { ...holder.stats, hp: Math.round(holder.stats.hp * m.hp), attack: Math.round(holder.stats.attack * m.attack), ...(holder.stats.magic ? { magic: Math.round(holder.stats.magic * m.attack) } : {}) };
-    return { ...holder, name: `신이 된 ${a.throne_name}`, stats, power: power(stats), rating: 1000 };
+    // v27.71 보정 없이 신을 격파하던 당시의 능력치·스킬·숙련을 그대로 씁니다. 주인보다 강하면 끌어내릴 수 있습니다.
+    return { ...holder, name: `신이 된 ${a.throne_name}`, rating: 1000 };
 }
 
 /** 살아 있는 신이 없고 신 소환 게이지가 찼으면 깨웁니다. 소환이 다른 요청에 밀리면 게이지를 돌려놓습니다. */
