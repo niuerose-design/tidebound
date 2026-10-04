@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { SKILLS } from '@/game/data/skills';
 import { FISH, STAGES, stageStatFish } from '@/game/data/world';
-import { MIMIC, mimicChance } from '@/game/data/mimic';
+import { MIMIC, mimicChance, specialLuck } from '@/game/data/mimic';
 import { EXP_NURI, nuriChance } from '@/game/data/exp-nuri';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
@@ -68,19 +68,19 @@ export function Collection({ s, send, busy }: PanelProps) {
     <TabsTrigger value="items">물건도감</TabsTrigger>
     <TabsTrigger value="bonus">연구 보너스</TabsTrigger>
     </TabsList>
-    <TabsContent value="fish">{(() => { const n = s.book[MIMIC.id] || 0, m = s.book[EXP_NURI.id] || 0; return <details className="book-section book-region book-special" open={n + m > 0}>
+    <TabsContent value="fish">{(() => { const n = s.book[MIMIC.id] || 0, m = s.book[EXP_NURI.id] || 0, luck = specialLuck(s); return <details className="book-section book-region book-special" open={n + m > 0}>
         <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>특별 도감 <small>{n + m ? [n ? `숙련의 까미 ${n}회` : '', m ? `경험의 누리 ${m}회` : ''].filter(Boolean).join(' · ') + ' 처치' : '아직 만나지 못함'}</small></h2></summary>
         <div className="book-grid"><article className={`panel book-card ${!n ? 'undiscovered' : ''}`}>
             <div className="book-icon"><FishArt id={MIMIC.id} size={56}/><span>{n ? `${n}회 처치` : '미발견'}</span></div>
             <h3>{n ? '숙련의 까미' : '???'} <small className="fish-rarity legendary">특별</small></h3>
             <p>{n ? FISH.find(f => f.id === MIMIC.id)!.lore : `사냥터 난이도 ${MIMIC.minTier} 이상에서 아주 드물게 나타난다고 합니다.`}</p>
-            <div className="fish-trait"><strong>숙련 로또</strong><span>잡으면 현재 직업과 장착 스킬의 숙련이 한꺼번에 오릅니다: {MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()} (${Math.round(t.chance * 100)}%)`).join(' · ')}.</span><span>출현마다 ({(MIMIC.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(MIMIC.chancePerTier * 100).toFixed(2)}%p) × 사냥터 배율(첫 사냥터 ×1, 한 곳 뒤로 갈 때마다 +{MIMIC.stageStep}) · 지금 사냥터 {(s.tide || 0) >= MIMIC.minTier ? `${(mimicChance(s.tide || 0, Math.max(0, STAGES.findIndex(x => x.id === s.stage))) * 100).toFixed(2)}%` : '등장 안 함'} · 사냥터 난이도 {MIMIC.minTier} 이상 · Lv.{MIMIC.minLevel}·누적 처치 {MIMIC.minKills}마리부터 · 던전 제외 · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{MIMIC.hp}, 공격 ×{MIMIC.attack}).</span></div>
+            <div className="fish-trait"><strong>숙련 로또</strong><span>잡으면 현재 직업과 장착 스킬의 숙련이 한꺼번에 오릅니다: {MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()} (${Math.round(t.chance * 100)}%)`).join(' · ')}.</span><span>출현마다 ({(MIMIC.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(MIMIC.chancePerTier * 100).toFixed(2)}%p) × 사냥터 배율(첫 사냥터 ×1, 한 곳 뒤로 갈 때마다 +{MIMIC.stageStep}) · 지금 사냥터(행운의 편지 포함) {(s.tide || 0) >= MIMIC.minTier ? `${(mimicChance(s.tide || 0, Math.max(0, STAGES.findIndex(x => x.id === s.stage))) * luck * 100).toFixed(2)}%` : '등장 안 함'} · 사냥터 난이도 {MIMIC.minTier} 이상 · Lv.{MIMIC.minLevel}·누적 처치 {MIMIC.minKills}마리부터 · 던전 제외 · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{MIMIC.hp}, 공격 ×{MIMIC.attack}).</span></div>
         </article>
         <article className={`panel book-card ${!m ? 'undiscovered' : ''}`}>
             <div className="book-icon"><FishArt id={EXP_NURI.id} size={56}/><span>{m ? `${m}회 처치` : '미발견'}</span></div>
             <h3>{m ? '경험의 누리' : '???'} <small className="fish-rarity legendary">특별</small></h3>
             <p>{m ? FISH.find(f => f.id === EXP_NURI.id)!.lore : `사냥터 난이도 ${EXP_NURI.minTier} 이상, Lv.${EXP_NURI.minLevel}이 넘은 모험가 앞에 아주 드물게 나타난다고 합니다.`}</p>
-            <div className="fish-trait"><strong>경험치 로또</strong><span>잡으면 지금 레벨에 필요한 경험치의 일부를 한 번에 얻습니다(경험치 배율·잠든 힘과 무관): {EXP_NURI.tiers.map(t => `${t.label} ${Math.round(t.pct * 100)}% (${Math.round(t.chance * 100)}%)`).join(' · ')}.</span><span>출현마다 {(EXP_NURI.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(EXP_NURI.chancePerTier * 100).toFixed(2)}%p · 지금 {(s.tide || 0) >= EXP_NURI.minTier ? `${(nuriChance(s.tide || 0) * 100).toFixed(2)}%` : '등장 안 함'} · 사냥터 난이도 {EXP_NURI.minTier} 이상 · Lv.{EXP_NURI.minLevel}~99·누적 처치 {EXP_NURI.minKills.toLocaleString()}마리부터 · 던전 제외 · 오프라인 정산 중 ×{EXP_NURI.offlineScale} · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{EXP_NURI.hp}, 공격 ×{EXP_NURI.attack}).</span></div>
+            <div className="fish-trait"><strong>경험치 로또</strong><span>잡으면 지금 레벨에 필요한 경험치의 일부를 한 번에 얻습니다(경험치 배율·잠든 힘과 무관): {EXP_NURI.tiers.map(t => `${t.label} ${Math.round(t.pct * 100)}% (${Math.round(t.chance * 100)}%)`).join(' · ')}.</span><span>출현마다 {(EXP_NURI.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(EXP_NURI.chancePerTier * 100).toFixed(2)}%p · 지금(행운의 편지 포함) {(s.tide || 0) >= EXP_NURI.minTier ? `${(nuriChance(s.tide || 0) * luck * 100).toFixed(2)}%` : '등장 안 함'} · 사냥터 난이도 {EXP_NURI.minTier} 이상 · Lv.{EXP_NURI.minLevel}~99·누적 처치 {EXP_NURI.minKills.toLocaleString()}마리부터 · 던전 제외 · 오프라인 정산 중 ×{EXP_NURI.offlineScale} · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{EXP_NURI.hp}, 공격 ×{EXP_NURI.attack}).</span></div>
         </article></div>
     </details>; })()}{STAGES.map(st => <details className="book-section book-region" key={st.id} open={st.id === s.stage}>
         <summary className="section-title">

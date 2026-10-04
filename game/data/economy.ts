@@ -37,14 +37,16 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'lifesteal', name: '피의 갈증', desc: '흡혈 +0.5%p (전체 상한 30%)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },
     { id: 'ap', name: '영혼의 그릇', desc: '스킬 장착 한도 AP +1', max: 12, base: 4, step: 3, tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
     { id: 'exp', name: '모험의 기억', desc: '처치 경험치 +20%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', per: .2, unit: 'percent', label: '처치 경험치' },
-    { id: 'starting', name: '모험가의 유산', desc: '환생 직후 시작 골드 +500', max: 10, base: 3, step: 2, tab: 'utility', group: 'basic', per: 500, unit: 'flat', label: '시작 골드', suffix: ' G' },
+    // v27.60 모험가의 유산: 시작 골드 +500 → 시작 레벨 +2. id는 그대로라 찍어 둔 단계가 이어집니다.
+    { id: 'starting', name: '모험가의 유산', desc: '환생 직후 시작 레벨 +2 (오른 레벨만큼 능력치 포인트도 받음)', max: 10, base: 3, step: 2, tab: 'utility', group: 'basic', per: 2, unit: 'flat', label: '시작 레벨', suffix: '레벨' },
     { id: 'inventory', name: '넓은 가방', desc: '가방 +5칸', max: 8, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 2, per: 5, unit: 'flat', label: '가방', suffix: '칸' },
     { id: 'offline', name: '긴 휴식', desc: '오프라인 정산 상한 +2시간', max: 12, base: 3, step: 2, tab: 'utility', group: 'basic', rebirth: 2, per: 2, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
     { id: 'tailwindSail', name: '순풍의 깃털', desc: '순풍 경험치 보너스 +10%p (기본 +50%)', max: 5, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 2, per: .1, unit: 'pp', label: '순풍 경험치 보너스' },
     { id: 'tailwindWindow', name: '바람목 넓히기', desc: '순풍 조건 +1레벨 (기본 요구 레벨+5 이내)', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '순풍 조건', suffix: '레벨' },
     { id: 'salvage', name: '환생 정리', desc: '환생할 때 보관함과 착용 중인 일반 장비를 모두 판매(골드는 다음 생 시작 골드에 더함)하거나 분해(정수)합니다. 방식(판매/분해)은 환생 화면의 ‘받는 보상’ 줄이나 설정(톱니바퀴)에서 고르고, 효율은 1단계 40%부터 단계당 +15%', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 1, per: 15, unit: 'percent', label: '환생 정리 효율', levels: ['정리 없음', '효율 40%', '효율 55%', '효율 70%', '효율 85%', '효율 100%'] },
     { id: 'sortingNet', name: '선별의 눈', desc: '1단계 희귀, 2단계 영웅 이하 드롭 자동 판매 (설정에서 켜고 끔)', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 판매 등급', suffix: '단계', levels: ['자동 판매 없음', '희귀 자동 판매', '영웅 이하 자동 판매'] },
-    { id: 'messageBottle', name: '병 속의 편지', desc: '오프라인 정산 1시간마다 편지병 확률 +4%p', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .04, unit: 'pp', label: '시간당 편지병 확률' },
+    // v27.60 병 속의 편지(오프라인 편지병) → 행운의 편지. id는 그대로라 찍어 둔 단계가 이어집니다.
+    { id: 'messageBottle', name: '행운의 편지', desc: '숙련의 까미·경험의 누리 등장 확률 +15%', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
     { id: 'limitBreak', name: '한계의 문', desc: '스킬 한계돌파 해금. 연구 단계까지만 한계돌파할 수 있고, 이미 한 한계돌파도 연구 단계까지만 효과가 납니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '한계돌파 상한', suffix: '단계', levels: ['잠김 · 한계돌파 불가', '한계돌파 1단계까지', '한계돌파 2단계까지', '한계돌파 3단계까지'] },
     { id: 'vowAnchor', name: '잠든 힘', desc: '서약 해금. 2·3단계는 봉인 해제 보너스 50%씩 강화 (×1.5 → ×1.75 → ×2)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 봉인 해제 ×1.5', '봉인 해제 ×1.75', '봉인 해제 ×2'] },
     { id: 'vowBreath', name: '한 번의 숨', desc: '서약 해금. 2·3단계는 환생 세계석 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 환생 세계석 +50%', '환생 세계석 +75%', '환생 세계석 +100%'] },
@@ -116,3 +118,5 @@ export const RELICS = [
 ] as const;
 /** v25.7 환생 정리 효율(0 = 연구 없음). 1단계 40%, 단계당 +15%, 5단계 100%. */
 export const salvageRate = (s: Pick<State, 'permanent'>) => { const rank = researchRank(s, 'salvage'); return rank ? Math.min(1, .25 + rank * .15) : 0; };
+/** v27.60 모험가의 유산: 새 생의 시작 레벨(Lv.1 + 2/단계, 10단계 Lv.21). */
+export const startingLevel = (s: Pick<State, 'permanent'>) => 1 + researchRank(s, 'starting') * 2;

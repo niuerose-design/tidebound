@@ -468,8 +468,6 @@ export type State = {
         kills: number;
         gold: number;
         exp: number;
-        /** 병 속의 편지: 정산 중 주운 편지병과 내용. */
-        bottles?: { count: number; gold: number; items: number; pearls: number };
     };
 };
 /** 서약. anchor·breath는 걸었는지, rough는 험한 길 선택 단계(1~3). seal은 잠든 힘 봉인 진행(이번 생만). */
