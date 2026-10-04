@@ -50,9 +50,9 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'toadstoolForager', name: '독버섯 채집가', title: '먹지 말고 쓴다', desc: '지속 피해와 마법 방어 패시브 하나를 익히는 독립 1차 직업입니다.', ...STAT_T1, requires: { int: 10, vit: 10 }, role: '능력치·중독', tree: 'status' },
     { id: 'inkThrower', name: '먹물 투척수', title: '먼저 눈을 가린다', desc: '명중·회피 패시브 하나를 익히는 독립 1차 직업입니다.', ...STAT_T1, requires: { dex: 12, luk: 8 }, role: '능력치·명중', tree: 'status' },
 
-    // ── 복합: 다크나이트 계보(해룡) ────────────────────────────
+    // ── 복합: 다크나이트 계보(좀비 루팡) ────────────────────────────
     { id: 'tideLancer', name: '조류 창기병', title: '물살을 창끝에 싣는다', desc: '(물리+마법)/2로 찌르는 창술과 체력·마나 패시브를 익히는 복합 입문 직업입니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, ...T1, requires: { str: 10, wis: 12 }, role: '복합 입문·창', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
-    { id: 'seaDragoon', name: '해룡 기수', title: '바다뱀의 등에 오른다', desc: '복합 계보의 2차 직업입니다. 급강하로 상대를 오래 약화시키고, 패시브로 체력과 방어를 받칩니다.', ...neutral, bonus: { attack: 36, magic: 39, hp: 60 }, crit: .03, ...T2, parent: 'tideLancer', requires: { str: 26, wis: 26 }, requiresSkillMastery: { currentThrust: 2 }, role: '복합·돌진', tree: 'hybrid' },
+    { id: 'seaDragoon', name: '좀비 루팡 기수', title: '바다뱀의 등에 오른다', desc: '복합 계보의 2차 직업입니다. 급강하로 상대를 오래 약화시키고, 패시브로 체력과 방어를 받칩니다.', ...neutral, bonus: { attack: 36, magic: 39, hp: 60 }, crit: .03, ...T2, parent: 'tideLancer', requires: { str: 26, wis: 26 }, requiresSkillMastery: { currentThrust: 2 }, role: '복합·돌진', tree: 'hybrid' },
     { id: 'stormDragoon', name: '폭풍 용기사', title: '번개를 두른 창', desc: '방어를 꿰뚫는 뇌창과 속도 패시브로 싸우는 복합 3차 직업입니다.', ...neutral, bonus: { attack: 67, magic: 74, hp: 90, defense: 3, resist: 2 }, crit: .04, ...T3, parent: 'seaDragoon', requires: { str: 40, wis: 40, vit: 25 }, requiresSkillMastery: { dragonDive: 3 }, role: '복합·관통', tree: 'hybrid' },
     { id: 'abyssDragonLord', name: '해구 용왕', title: '파도의 왕좌', desc: '복합 계보의 환생 후 4차 직업입니다. 대돌격으로 상대를 기절시키고, 패시브로 체력과 물리·마법 공격을 함께 올립니다.', ...neutral, attack: 1.39, magic: 1.39, hp: 1.18, defense: 1.06, resist: 1.06, crit: .06, ...T4, parent: 'stormDragoon', requires: { str: 50, wis: 50 }, requiresSkillMastery: { thunderLance: 3 }, role: '복합·최상위 돌진', tree: 'hybrid' },
     // ── 복합: 메카닉 계보 ──────────────────────────────────
@@ -166,7 +166,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     // 복합: 창기병
     { ...A, ...dual, id: 'currentThrust', name: '해류 찌르기', desc: '', level: 10, job: 'tideLancer', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 8 },
     { ...P, id: 'lancerPoise', name: '창기병의 균형', desc: '최대 체력과 최대 마나가 오릅니다.', level: 10, job: 'tideLancer', cost: 2, bonus: { hp: 60, mana: 10 } },
-    { ...A, ...dual, id: 'dragonDive', name: '해룡 급강하', desc: '', level: 25, job: 'seaDragoon', chance: .5, cooldown: 3, multiplier: 1.7, cost: 3, manaCost: 13, effect: 'weaken' },
+    { ...A, ...dual, id: 'dragonDive', name: '좀비 루팡 급강하', desc: '', level: 25, job: 'seaDragoon', chance: .5, cooldown: 3, multiplier: 1.7, cost: 3, manaCost: 13, effect: 'weaken' },
     { ...P, id: 'wyrmScale', name: '용린', desc: '최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'seaDragoon', cost: 2, bonus: { hp: 120, defense: 10 } },
     { ...A, ...dual, id: 'thunderLance', name: '뇌창', desc: '', level: 40, job: 'stormDragoon', chance: .5, cooldown: 4, multiplier: 2.1, cost: 4, manaCost: 20, penetrationBonus: .15 },
     { ...P, id: 'stormRider', name: '폭풍 기수', desc: '물리·마법 공격과 속도가 오릅니다.', level: 40, job: 'stormDragoon', cost: 3, bonus: { attack: 18, magic: 18, speed: 6 } },

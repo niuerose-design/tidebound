@@ -92,7 +92,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.sealPower) out.push(`이번 전투에 새긴 인 1개마다 피해 +${skillPercent(sk.sealPower)}`);
         if (sk.selfEffect) out.push(`쓰고 나면 자신 ${{ stun: '기절', slow: '감속', weaken: '약화' }[sk.selfEffect.status]} ${sk.selfEffect.turns}턴${sk.selfEffect.waivedBy ? ` · ${skillById(sk.selfEffect.waivedBy)?.name || ''}을 장착하면 생략` : ''}`);
         if (sk.seal) out.push('쓰면 이번 전투의 인(印)을 하나 새깁니다');
-        if (sk.preyBonus) out.push(`보스와 지정 몬스터(전류 곰치·불씨 곰치·머쉬맘)에게는 직접 피해가 ${skillPercent(sk.preyBonus)} 커집니다.`);
+        if (sk.preyBonus) out.push(`보스와 지정 몬스터(리본 돼지·파이어보어·머쉬맘)에게는 직접 피해가 ${skillPercent(sk.preyBonus)} 커집니다.`);
         if (sk.damageType === 'split') out.push(`복합 피해는 물리 ${skillPercent(SKILL_FORMULA.splitPhysical)}·마법 ${skillPercent(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각의 방어를 적용합니다. 명중·치명 판정은 한 번이고, 장비·버프는 원시 피해에 들어가지 않습니다.`);
         if (sk.accuracyBonus) out.push(`이 기술은 명중이 ${skillPercent(sk.accuracyBonus)}p 높습니다.`);
         if (sk.penetrationBonus) out.push(`이 기술은 방어 관통이 ${skillPercent(sk.penetrationBonus)}p 높습니다(합계 최대 85%).`);

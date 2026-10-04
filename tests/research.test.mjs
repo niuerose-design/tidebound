@@ -119,7 +119,7 @@ test('Research v3: sorting net sells only known, low-rarity drops while the sett
 });
 
 test('v25.23 golden fish comes from the scavenger passives: multiplies one catch by ten, is recorded, and draws no random number without the skill', () => {
-    const fight = rank => { const s = newState(0); if (rank) { s.level = 40; s.job = 'rareTracker'; s.learned.rareSense = 1; s.skills = ['rareSense']; } s.enemy = { id: 'minnow', name: '은빛 피라미', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
+    const fight = rank => { const s = newState(0); if (rank) { s.level = 40; s.job = 'rareTracker'; s.learned.rareSense = 1; s.skills = ['rareSense']; } s.enemy = { id: 'minnow', name: '달팽이', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
     const plain = fight(0), rngPlain = counting(); reward(plain, rngPlain);
     const lucky = fight(1), rngLucky = counting(); reward(lucky, rngLucky);
     assert.equal(rngLucky.calls, rngPlain.calls + 1); assert.equal(lucky.gold, plain.gold); assert.equal(lucky.goldenBook, undefined);

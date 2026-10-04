@@ -1,3 +1,4 @@
+import { MAPLE_MONSTERS } from './maple-monsters';
 /** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
 export const STAGES = [
     { id: 'brook', region: '리스항구', place: '선착장', name: '리스항구 · 선착장', subtitle: 'LITH HARBOR · PIER', level: 1, rebirth: 0, description: '빅토리아 아일랜드의 관문. 선착장 끝에서 첫 몬스터가 찾아온다.', fish: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
@@ -86,23 +87,23 @@ const specialFish: Array<{
     minTier?: number;
 }> = [
     { id: 'masteryMimic', name: '숙련의 까미', level: 10, lore: '보물상자인 척 입을 벌리고 있다. 잡으면 오래 쌓은 숙련이 한꺼번에 밀려온다.', rarity: 'legendary' as const, spawnWeight: 0, rewardMultiplier: 1 },
-    { id: 'seahorse', name: '유리 해마', level: 15, lore: '투명한 몸 안에서 작은 별빛이 흔들린다.', rarity: 'rare' as const, spawnWeight: .18, rewardMultiplier: 1.35 },
-    { id: 'needlefish', name: '은침 청새치', level: 16, lore: '해초 사이를 화살처럼 가르는 희귀한 사냥꾼.', rarity: 'rare' as const, spawnWeight: .12, rewardMultiplier: 1.45 },
-    { id: 'tidejelly', name: '조류 해파리', level: 17, lore: '빛나는 촉수가 물살의 방향을 바꾼다.', rarity: 'epic' as const, spawnWeight: .07, rewardMultiplier: 1.75 },
-    { id: 'emberEel', name: '불씨 곰치', level: 24, lore: '열수 분출구에서 태어난 붉은 전류의 뱀.', rarity: 'rare' as const, spawnWeight: .14, rewardMultiplier: 1.5 },
-    { id: 'ashRay', name: '재빛 가오리', level: 26, lore: '화산재를 날개처럼 두르고 수면을 가른다.', rarity: 'rare' as const, spawnWeight: .1, rewardMultiplier: 1.55 },
-    { id: 'magmaPuffer', name: '마그마 복어', level: 27, lore: '몸속에 뜨거운 독을 저장한 위험한 희귀종.', rarity: 'epic' as const, spawnWeight: .06, rewardMultiplier: 1.9 },
-    { id: 'cinderKoi', name: '잿불 비단잉어', level: 29, lore: '비늘 사이로 식지 않은 불꽃이 흐른다.', rarity: 'epic' as const, spawnWeight: .045, rewardMultiplier: 2.1 },
-    { id: 'starKoi', name: '성운 비단잉어', level: 46, lore: '별자리의 무늬를 비늘에 품은 외해의 희귀종.', rarity: 'rare' as const, spawnWeight: .1, rewardMultiplier: 1.8 },
-    { id: 'prismRay', name: '프리즘 가오리', level: 48, lore: '빛을 일곱 갈래로 쪼개며 헤엄친다.', rarity: 'epic' as const, spawnWeight: .065, rewardMultiplier: 2.2 },
-    { id: 'voidGuppy', name: '공허 구피', level: 50, lore: '작은 몸 안에 깊이를 측정할 수 없는 어둠이 있다.', rarity: 'epic' as const, spawnWeight: .04, rewardMultiplier: 2.35 },
+    { id: 'seahorse', name: '파란 버섯', level: 15, lore: '투명한 몸 안에서 작은 별빛이 흔들린다.', rarity: 'rare' as const, spawnWeight: .18, rewardMultiplier: 1.35 },
+    { id: 'needlefish', name: '뿔버섯', level: 16, lore: '해초 사이를 화살처럼 가르는 희귀한 사냥꾼.', rarity: 'rare' as const, spawnWeight: .12, rewardMultiplier: 1.45 },
+    { id: 'tidejelly', name: '좀비버섯', level: 17, lore: '빛나는 촉수가 물살의 방향을 바꾼다.', rarity: 'epic' as const, spawnWeight: .07, rewardMultiplier: 1.75 },
+    { id: 'emberEel', name: '파이어보어', level: 24, lore: '열수 분출구에서 태어난 붉은 전류의 뱀.', rarity: 'rare' as const, spawnWeight: .14, rewardMultiplier: 1.5 },
+    { id: 'ashRay', name: '다크 스톤골렘', level: 26, lore: '화산재를 날개처럼 두르고 수면을 가른다.', rarity: 'rare' as const, spawnWeight: .1, rewardMultiplier: 1.55 },
+    { id: 'magmaPuffer', name: '믹스 골렘', level: 27, lore: '몸속에 뜨거운 독을 저장한 위험한 희귀종.', rarity: 'epic' as const, spawnWeight: .06, rewardMultiplier: 1.9 },
+    { id: 'cinderKoi', name: '레드 드레이크', level: 29, lore: '비늘 사이로 식지 않은 불꽃이 흐른다.', rarity: 'epic' as const, spawnWeight: .045, rewardMultiplier: 2.1 },
+    { id: 'starKoi', name: '버블링', level: 46, lore: '별자리의 무늬를 비늘에 품은 외해의 희귀종.', rarity: 'rare' as const, spawnWeight: .1, rewardMultiplier: 1.8 },
+    { id: 'prismRay', name: '옥토퍼스', level: 48, lore: '빛을 일곱 갈래로 쪼개며 헤엄친다.', rarity: 'epic' as const, spawnWeight: .065, rewardMultiplier: 2.2 },
+    { id: 'voidGuppy', name: '스티지', level: 50, lore: '작은 몸 안에 깊이를 측정할 수 없는 어둠이 있다.', rarity: 'epic' as const, spawnWeight: .04, rewardMultiplier: 2.35 },
     // v25.8 차수 변종: 해역 난이도 10·20·30 이상에서만 나타나는 희귀 변종. 도감 항목이 따로 있어 차수를 올릴 이유가 됩니다.
-    { id: 'stormBarracuda', name: '폭풍 바라쿠다', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, spawnWeight: .08, rewardMultiplier: 2.4 }, // v26.6 해역 난이도 조건(10) 제거: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
-    { id: 'eclipseMoonfish', name: '월식 개복치', level: 44, lore: '달이 가려진 밤, 심연의 빛을 등에 지고 떠오른다.', rarity: 'epic' as const, spawnWeight: .06, rewardMultiplier: 2.8, minTier: 20 },
-    { id: 'novaManta', name: '신성 만타', level: 58, lore: '별이 터지는 순간의 빛을 날개에 새긴 외해의 전설.', rarity: 'legendary' as const, spawnWeight: .03, rewardMultiplier: 3.4, minTier: 30 },
-    { id: 'cinderAngler', name: '잿불 아귀', level: 60, lore: '열수구의 불씨를 등불 삼아 어둠 속에서 입을 벌린다.', rarity: 'rare' as const, spawnWeight: .6, rewardMultiplier: 1.9 },
-    { id: 'ventLeviathan', name: '열수 레비아탄', level: 63, lore: '열수구를 통째로 둥지로 삼은 거대한 그림자.', rarity: 'epic' as const, spawnWeight: .3, rewardMultiplier: 2.5 },
-    { id: 'abyssManta', name: '심연 만타', level: 54, lore: '날개를 펼치면 주변의 조류가 잠시 멎는다.', rarity: 'legendary' as const, spawnWeight: .018, rewardMultiplier: 2.8 },
+    { id: 'stormBarracuda', name: '아이언 호그', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, spawnWeight: .08, rewardMultiplier: 2.4 }, // v26.6 해역 난이도 조건(10) 제거: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
+    { id: 'eclipseMoonfish', name: '레이스', level: 44, lore: '달이 가려진 밤, 심연의 빛을 등에 지고 떠오른다.', rarity: 'epic' as const, spawnWeight: .06, rewardMultiplier: 2.8, minTier: 20 },
+    { id: 'novaManta', name: '와이번', level: 58, lore: '별이 터지는 순간의 빛을 날개에 새긴 외해의 전설.', rarity: 'legendary' as const, spawnWeight: .03, rewardMultiplier: 3.4, minTier: 30 },
+    { id: 'cinderAngler', name: '크로코', level: 60, lore: '열수구의 불씨를 등불 삼아 어둠 속에서 입을 벌린다.', rarity: 'rare' as const, spawnWeight: .6, rewardMultiplier: 1.9 },
+    { id: 'ventLeviathan', name: '다크 와이번', level: 63, lore: '열수구를 통째로 둥지로 삼은 거대한 그림자.', rarity: 'epic' as const, spawnWeight: .3, rewardMultiplier: 2.5 },
+    { id: 'abyssManta', name: '와일드 카고', level: 54, lore: '날개를 펼치면 주변의 조류가 잠시 멎는다.', rarity: 'legendary' as const, spawnWeight: .018, rewardMultiplier: 2.8 },
     { id: 'grottoWarden', name: '머쉬맘', level: 14, lore: '버섯 동산을 다스리는 거대한 버섯. 짓누르는 몸통으로 침묵의 충격을 뿜는다.', rarity: 'legendary' as const, rewardMultiplier: 2.6, boss: true },
     { id: 'kelpHydra', name: '킹 슬라임', level: 22, lore: '쪼개질 때마다 새 슬라임을 낳는 수로의 왕.', rarity: 'legendary' as const, rewardMultiplier: 3, boss: true },
     { id: 'anchorWraith', name: '좀비 머쉬맘', level: 25, lore: '개미굴 깊은 곳에서 되살아난 머쉬맘. 느린 저주를 건다.', rarity: 'legendary' as const, rewardMultiplier: 3.2, boss: true },
@@ -114,6 +115,8 @@ const specialFish: Array<{
 ];
 for (const f of specialFish)
     FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: fishExpAt(f.level), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
+// v27.41 메이플 몬스터 이름: maple-monsters.ts 한곳에서 이름·설명을 덮어씁니다(id·능력치는 그대로).
+for (const f of FISH) { const m = MAPLE_MONSTERS[f.id]; if (m) { f.name = m.name; f.lore = m.lore; } }
 /**
  * v27.31 운영 페이지에서 닫은 사냥터·던전(입장 불가). 서버가 DB 설정(settings.closures)을 읽어 setClosures로 채웁니다.
  * 설정을 한 번도 저장하지 않았으면 DEFAULT_CLOSURES(무릉도장 닫힘)를 씁니다. 테스트는 harness에서 비웁니다.
