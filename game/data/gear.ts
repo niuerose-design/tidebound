@@ -1,4 +1,5 @@
 import type { Stats } from '../types';
+import { STAGES, DUNGEONS } from './world';
 
 /**
  * v22 장비 옵션.
@@ -77,28 +78,29 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'reaper', name: '처형', stat: 'executeBonus', kind: 'rule', base: .05, minRarity: 3, description: '빈사 판정 기준 +5%p (합계 최대 +15%p).' },
 ];
 
-/** 낚시터·던전별로 잘 나오는 옵션(가중치 ×4). 명시되지 않은 곳은 균등합니다. */
-export const ORIGIN_THEMES: Record<string, { name: string; affixes: string[] }> = {
-    brook: { name: '리스항구 · 선착장', affixes: ['vigor', 'plating', 'precise'] },
-    bay: { name: '리스항구 · 조개 해안', affixes: ['ward', 'wellspring', 'scholar'] },
-    reef: { name: '헤네시스 · 돼지의 해변', affixes: ['lucky', 'brutal', 'gambit'] },
-    kelp: { name: '헤네시스 · 버섯숲 연못', affixes: ['drift', 'swift', 'venom'] },
-    wreck: { name: '페리온 · 유적 발굴지 수로', affixes: ['piercing', 'brutal', 'might', 'berserk'] },
-    volcanic: { name: '페리온 · 불타는 땅 화구호', affixes: ['venom', 'arcana', 'spiked', 'lingering'] },
-    trench: { name: '엘리니아 · 깊은 숲 늪', affixes: ['leech', 'vigor', 'spiked', 'bloodPact'] },
-    moon: { name: '엘리니아 · 달빛 마법 호수', affixes: ['arcana', 'current', 'runic', 'glassCannon', 'runeCore'] },
-    starfall: { name: '커닝시티 · 네온 수로', affixes: ['scholar', 'seeker', 'lucky', 'echoing'] },
-    grotto: { name: '헤네시스 · 버섯 동산', affixes: ['swift', 'concuss', 'binding'] },
-    kelpCatacomb: { name: '커닝시티 · 지하 수로', affixes: ['venom', 'saturate', 'mending'] },
-    cemetery: { name: '슬리피우드 · 개미굴', affixes: ['plating', 'spiked', 'bulwark'] },
-    caldera: { name: '페리온 · 불의 제단', affixes: ['venom', 'lingering', 'saturate'] },
-    temple: { name: '엘리니아 · 잊힌 마법 사원', affixes: ['arcana', 'wellspring', 'runeCore', 'mending'] },
-    starSanctum: { name: '루디브리엄 · 시계탑', affixes: ['echoing', 'reaper', 'concuss'] },
-    duskVents: { name: '커닝시티 · 지하 배수로', affixes: ['might', 'arcana', 'piercing', 'berserk', 'reaper'] },
-    ventCathedral: { name: '엘나스 · 자쿰의 제단', affixes: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'] },
-    abyss: { name: '무릉도장', affixes: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'] },
+/** 낚시터·던전별로 잘 나오는 옵션(가중치 ×4). 명시되지 않은 곳은 균등합니다. 이름은 STAGES·DUNGEONS에서 가져옵니다. */
+const ORIGIN_AFFIXES: Record<string, string[]> = {
+    brook: ['vigor', 'plating', 'precise'],
+    bay: ['ward', 'wellspring', 'scholar'],
+    reef: ['lucky', 'brutal', 'gambit'],
+    kelp: ['drift', 'swift', 'venom'],
+    wreck: ['piercing', 'brutal', 'might', 'berserk'],
+    volcanic: ['venom', 'arcana', 'spiked', 'lingering'],
+    trench: ['leech', 'vigor', 'spiked', 'bloodPact'],
+    moon: ['arcana', 'current', 'runic', 'glassCannon', 'runeCore'],
+    starfall: ['scholar', 'seeker', 'lucky', 'echoing'],
+    grotto: ['swift', 'concuss', 'binding'],
+    kelpCatacomb: ['venom', 'saturate', 'mending'],
+    cemetery: ['plating', 'spiked', 'bulwark'],
+    caldera: ['venom', 'lingering', 'saturate'],
+    temple: ['arcana', 'wellspring', 'runeCore', 'mending'],
+    starSanctum: ['echoing', 'reaper', 'concuss'],
+    duskVents: ['might', 'arcana', 'piercing', 'berserk', 'reaper'],
+    ventCathedral: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'],
+    abyss: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'],
 };
-export const THEME_WEIGHT = 4;
+export const ORIGIN_THEMES: Record<string, { name: string; affixes: string[] }> = Object.fromEntries(Object.entries(ORIGIN_AFFIXES).map(([id, affixes]) => [id, { name: [...STAGES, ...DUNGEONS].find(x => x.id === id)?.name || id, affixes }]));
+const THEME_WEIGHT = 4;
 
 /** 드롭 등급 확률(드롭이 일어났을 때). 합 1. */
 export const DROP_RARITY = [.5, .25, .13, .07, .035, .012, .003];

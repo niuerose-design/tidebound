@@ -10,13 +10,13 @@ const jobOf = (id?: string) => jobById(id);
 
 /** 윤회의 문 상태: 이번 생에 열린 직업(없으면 기록된 직업)과 안내 문구. */
 const KEPT_NOTE = '한 번 열린 문 · 계속 열려 있습니다.';
-export function rebirthDoorState(s: State) {
+function rebirthDoorState(s: State) {
     const kept = REBIRTH_DOOR_JOBS.find(j => s.doorsOpened?.includes(j) && !s.unlockedJobs.includes(j)) ?? REBIRTH_DOOR_JOBS.find(j => s.doorsOpened?.includes(j));
     const current = s.rebirthDoor && REBIRTH_DOOR_JOBS.includes(s.rebirthDoor) ? s.rebirthDoor : undefined, job = current ?? kept;
     return { job, note: current ? '이번 생 동안 열려 있습니다.' : job ? KEPT_NOTE : '환생하면 한 직업의 문이 열립니다.' };
 }
 /** 발견의 문 한 줄: 열림 여부(기록 포함)·입장 여부. */
-export const discoveryState = (s: State, d: DiscoveryDoor) => ({ job: d.job, open: !!s.doorsOpened?.includes(d.job) || s.unlockedJobs.includes(d.job) || d.test(s), entered: s.unlockedJobs.includes(d.job) });
+const discoveryState = (s: State, d: DiscoveryDoor) => ({ job: d.job, open: !!s.doorsOpened?.includes(d.job) || s.unlockedJobs.includes(d.job) || d.test(s), entered: s.unlockedJobs.includes(d.job) });
 
 /** ??? 탭 윗줄: 윤회의 문 카드 하나와 발견의 문 목록. 열린 문의 직업을 누르면 상세를 엽니다. */
 export function DoorRow({ s, selectedId, onSelect }: { s: State; selectedId?: string; onSelect: (id: string) => void }) {

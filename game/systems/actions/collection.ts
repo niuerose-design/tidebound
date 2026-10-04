@@ -7,7 +7,7 @@ import { bookPending, itemKey } from '../progression';
 import type { ActionHandlers } from './types';
 import { addLog } from '../state';
 /** 한 어종의 미수령 연구 보상을 모두 지급합니다. 각 단계는 bookClaims로 한 번만 지급됩니다. */
-export function claimBookRewards(s: State, id: string) {
+function claimBookRewards(s: State, id: string) {
     const pending = bookPending(s, id);
     if (!pending.ranks.length)
         return false;

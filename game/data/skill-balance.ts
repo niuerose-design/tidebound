@@ -86,13 +86,13 @@ for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE }
  *   ③ 1~2차(공용 포함)의 피해+기절·침묵 기술은 피해 배율이 제한됩니다(STATUS_TUNING.earlyStatusMultiplierCap).
  * - 1~3차 연계 공격기는 상태이상 없이 피해만 줍니다(같은 계보의 보조기로 상태를 겁니다).
  */
-export const STATUS_ONLY_SKILLS = ['anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
+const STATUS_ONLY_SKILLS = ['anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
     'bellCrash', 'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
     'quakeStep', 'sealHex', 'frostMist', 'driftwoodShove', 'currentJam', 'netThrow', 'oathShout', 'rottenBait', ...SUPPORT_STATUS_ONLY, ...V25_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, poison: 4, weaken: 3, silence: 2, slow: 3 };
 /** 상태이상 전용 전환과 초반 배율 제한. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. tier는 기술 주인 직업의 차수(공용 0). */
-export function applyStatusRules(sk: Skill, tier: number) {
+function applyStatusRules(sk: Skill, tier: number) {
     if (STATUS_ONLY_SKILLS.includes(sk.id) && sk.effect && STATUS_DEFAULT_TURNS[sk.effect] !== undefined) {
         sk.statusOnly = true;
         sk.statusTurns = (sk.statusTurns ?? STATUS_DEFAULT_TURNS[sk.effect]) + (sk.effect === 'stun' ? 1 : 2);
@@ -114,7 +114,7 @@ export function applyStatusRules(sk: Skill, tier: number) {
 
 const PROGRESS_SOURCE: Record<string, string> = { codex: '도감 기록 수', catch: 'log10(누적 포획 + 1)', hunt: '√(던전 클리어 + 보스 포획)', gold: 'log10(보유 골드 + 1)' };
 /** v24.2 진행도·도박·올인·골드 기술의 한 줄 설명. */
-export function progressDesc(sk: Skill) {
+function progressDesc(sk: Skill) {
     let out = '';
     if (sk.scaling && PROGRESS_SOURCE[sk.scaling]) out += ` 피해 × (1 + ${PROGRESS_SOURCE[sk.scaling]} × ${sk.scalingRatio}).`;
     if (sk.dice) out += ` ${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[sk.dice.attribute]} ${sk.dice.per}마다 주사위 1개(최대 ${sk.dice.max}개)를 굴려 가장 높은 눈으로 피해 ×${sk.dice.low}~×${sk.dice.high}.`;
@@ -132,7 +132,7 @@ export function progressDesc(sk: Skill) {
 }
 
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
-export const MAGIC_MANA_COST_SCALE = 4;
+const MAGIC_MANA_COST_SCALE = 4;
 
 export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number = () => 0) {
     for (const sk of skills) {

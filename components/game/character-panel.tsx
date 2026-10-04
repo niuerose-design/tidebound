@@ -82,5 +82,3 @@ export function Character({ s, send, busy }: PanelProps) {
     </div>
     </>;
 }
-export { Classes } from './classes-panel';
-export { Skills } from './skills-panel';

@@ -23,7 +23,7 @@ export type VariantDef = {
 };
 export const VARIANT_BOOK_MIN = 10;
 /** ×500 무리를 만나려면 장착해야 하는 패시브(시프 Lv.30, 난파선 수집가 계보). */
-export const SWARM_PASSIVE = 'swarmSense';
+const SWARM_PASSIVE = 'swarmSense';
 export const VARIANTS: VariantDef[] = [
     { id: 'swarm', name: '무리', mark: '≋', desc: '여러 마리가 한 개체로 덤빕니다. 기본 ×5, 도감 500회부터 ×100, 5,000회에 시프의 ‘무리 감지’를 장착하면 ×500. 포획하면 마리 수만큼 보상. 탱커의 반격은 무리에 (1 + log₂N)배로 들어가고, 탱커 패시브는 무리 조우 확률을 올립니다. 설정의 ‘무리 최대 규모’로 큰 무리를 줄이거나 끌 수 있습니다.', chance: .04, hp: 1, attack: 1, reward: 1, drops: 1, book: 1 },
     { id: 'giant', name: '거대 개체', mark: '◆', desc: '체력 ×3 · 공격 ×1.25. 경험치·골드 ×4, 드롭 3번 판정, 도감 +3.', chance: .02, hp: 3, attack: 1.25, reward: 4, drops: 3, book: 3 },
@@ -32,7 +32,7 @@ export const VARIANTS: VariantDef[] = [
 ];
 export const variantById = (id?: VariantId) => id ? VARIANTS.find(v => v.id === id) : undefined;
 /** 변종 확률 배율: 지역 테마(버섯숲 연못 +10%) × (1 + 변종 조우 확률 증가). 증가분은 난파선 수집가 계보 패시브가 올립니다. */
-export function variantMultiplier(s: State) {
+function variantMultiplier(s: State) {
     return (1 + rareSpawnBonus(s)) * (1 + (stats(s).variantFind || 0));
 }
 /** 변종별 실제 확률(0~1). 합이 한 입질에 변종을 만날 확률입니다. */
@@ -43,7 +43,7 @@ export function variantChances(s: State) {
     return Object.fromEntries(VARIANTS.map(v => [v.id, Math.min(1, v.chance * m * (v.id === 'swarm' ? swarmBoost : 1))])) as Record<VariantId, number>;
 }
 /** 이 어종으로 등장할 수 있는 무리 규모(도감 포획 수·패시브 기준). */
-export function swarmSizesFor(s: State, fishId: string) {
+function swarmSizesFor(s: State, fishId: string) {
     const n = s.book[fishId] || 0;
     return SWARM_SIZES.filter(size => size > 1 && n >= SWARM_UNLOCK[size] && (size < 500 || canUse(s, SWARM_PASSIVE)));
 }

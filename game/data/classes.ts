@@ -92,7 +92,7 @@ export function constraintDeviceLabels(d: ConstraintDevices) {
     return out;
 }
 /** 제약 직업 판정: 다섯 배율 중 하나라도 constraintThreshold 이하. */
-export const CONSTRAINT_THRESHOLD = .3;
+const CONSTRAINT_THRESHOLD = .3;
 export const isConstraintJob = (j: Pick<Job, 'attack' | 'magic' | 'hp' | 'defense' | 'resist'>) => [j.attack, j.magic, j.hp, j.defense, j.resist].some(n => n <= CONSTRAINT_THRESHOLD);
 /** 직업 보정을 받는 다섯 능력치. */
 export type JobStatKey = 'attack' | 'magic' | 'hp' | 'defense' | 'resist';

@@ -46,10 +46,10 @@ export function skillMasteryRewards(sk: Skill, rank = 1, mastery = 0) {
         return { ap: 0, bonus: {} as Partial<Stats> };
     return { ap: sk.masteryAP || 0, bonus: sk.masteryBonus || {} };
 }
-export function apBonus(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk && canUse(s, id) ? skillMasteryRewards(sk, s.learned?.[id] || 1, skillMastery(s, id)).ap : 0); }, 0); }
+function apBonus(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk && canUse(s, id) ? skillMasteryRewards(sk, s.learned?.[id] || 1, skillMastery(s, id)).ap : 0); }, 0); }
 export function apCapacity(s: State, ids = s.skills) { return PROGRESSION.baseAP + rebirthAP(s) + (s.permanent.ap || 0) + completedRegions(s).length + achievementAP(s) + accountAP(s) + abyssAP(s) + apBonus(s, ids); }
 /** v25.6 업적 보상으로 늘어난 장착 AP. achievements.ts와 순환 의존을 피하려 여기서 직접 셉니다. */
-export function achievementAP(s: Pick<State, 'achievementClaims'>) { let ap = 0; for (const id of Object.keys(s.achievementClaims || {})) ap += ACHIEVEMENT_AP[id] || 0; return ap; }
+function achievementAP(s: Pick<State, 'achievementClaims'>) { let ap = 0; for (const id of Object.keys(s.achievementClaims || {})) ap += ACHIEVEMENT_AP[id] || 0; return ap; }
 export const ACHIEVEMENT_AP: Record<string, number> = {};
 export function skillMasteryLevel(practice: number, milestones = PROGRESSION.skillMasteryMilestones) { return milestones.filter(m => practice >= m).length; }
 export function skillMastery(s: State, id: string) { const sk = skillById(id); return skillMasteryLevel(s.skillPractice?.[id] || 0, masteryMilestonesFor(sk)) + limitBreakOf(s, id); }
@@ -68,7 +68,7 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
  * codex 발견한 어종 + 등록한 물건 · catch 누적 포획 · hunt 던전 클리어 + 보스 포획 · species 지정 어종 포획 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수.
  */
 /** 변종·황금 개체 포획 수(마리 수가 아니라 조우 횟수). */
-export function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
+function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
     let n = 0;
     for (const row of Object.values(s.variantBook || {})) for (const k of Object.values(row)) n += k || 0;
     for (const k of Object.values(s.goldenBook || {})) n += k || 0;
@@ -108,14 +108,14 @@ export function jobFactor(job: Job, key: JobStatKey) {
     return job[key] + (flat && ref ? flat / (ref * jobTierScale(job)) : 0);
 }
 export function inherited(s: State, id: string) { const sk = skillById(id); return !!sk && (!!s.skillInheritances?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
-export function classAccess(s: State, sk: Skill) { return (!sk.song || songAccess(s)) && (!sk.job || s.job === sk.job || inherited(s, sk.id)); }
+function classAccess(s: State, sk: Skill) { return (!sk.song || songAccess(s)) && (!sk.job || s.job === sk.job || inherited(s, sk.id)); }
 /** v24.2 노래 패시브는 음유시인 계보(엔젤릭버스터 (1차)의 후속 직업)만 장착합니다. */
-export function songAccess(s: Pick<State, 'job'>) { return lineage(s.job).includes('bard'); }
+function songAccess(s: Pick<State, 'job'>) { return lineage(s.job).includes('bard'); }
 export function skillUnlockReady(s: State, sk: Skill) { return (!sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery) && (!sk.unlockAfter || skillMastery(s, sk.unlockAfter.skill) >= sk.unlockAfter.level); }
 /** v25 숙련 Lv.1 전에는 효과를 감추는 기술인지. */
 export function skillVeiled(s: State, sk: Skill) { return !!sk.veiled && skillMastery(s, sk.id) < 1; }
 /** 계승한 스킬은 환생 뒤 레벨이 낮아도 쓸 수 있습니다(레벨 조건 면제). 환생 횟수·직업 숙련 해금 조건은 그대로입니다. */
-export function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id)) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
+function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id)) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
 /** 스킬을 장착할 수 없는 이유. 쓸 수 있으면 빈 문자열입니다. */
 export function skillBlockReason(s: State, id: string) {
     const sk = skillById(id);

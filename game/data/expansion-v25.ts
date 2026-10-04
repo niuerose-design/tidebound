@@ -26,7 +26,7 @@ const GLYPH = { level: 10, job: 'glyphMonk', veiled: true, masteryMilestones: [1
 const GLYPH_A = { ...A, ...physical, ...GLYPH, cost: 2, seal: true, rankEffects: { apReduction: .5 } };
 
 /** 제로 (1차) 숙달 목표 = 제로 (4차) 전직 조건. */
-export const CLOCKMAKER_MASTERY = 3000;
+const CLOCKMAKER_MASTERY = 3000;
 /** 타임머신을 쓸 때마다 더하는 직업 숙련. */
 export const TIME_MACHINE_MASTERY = 25;
 

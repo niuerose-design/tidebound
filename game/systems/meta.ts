@@ -1,7 +1,7 @@
 import type { State } from '../types';
 import { ECONOMY, researchRank } from '../data/economy';
 import { MONSTER_TUNING, DUNGEON_TUNING } from '../data/balance';
-import { SWARM_UNLOCK, fishExpAt, fishGoldAt } from '../data/world';
+import { fishExpAt, fishGoldAt } from '../data/world';
 export const rebirthLevel = (s: State) => Math.min(ECONOMY.rebirthLevelCap, 30 + s.rebirths * ECONOMY.rebirthLevelStep);
 /** 요구 레벨을 넘겨 오래 버틴 항해의 추가 진주: 초과 레벨² ÷ 40. */
 export const deepVoyagePearls = (s: State) => { const over = s.level - rebirthLevel(s); return over > 0 ? Math.floor(over * over / 40) : 0; };
@@ -24,7 +24,7 @@ export const dungeonTier = (id: string, abyssDepth: number) => id === 'abyss' ? 
 /** 잠든 닻 봉인 중에는 일반 낚시터 해역 난이도가 0으로 고정됩니다. */
 export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1) : s.vows?.seal ? 0 : (s.tide || 0);
 /** 해역 난이도 1단계당 포획 숙련 +30%. */
-export const TIDE_MASTERY_PER_TIER = .3;
+const TIDE_MASTERY_PER_TIER = .3;
 export const tierReward = (tier: number) => 1 + tier * .5;
 /** v27.21 해역 난이도별 포획 숙련 배율. 적이 커져 시간당 포획이 줄어드는 만큼을 숙련으로 돌려줍니다. */
 export const tierMastery = (tier: number) => 1 + tier * TIDE_MASTERY_PER_TIER;
@@ -47,6 +47,5 @@ export const dungeonExp = (f: { level: number; rewardMultiplier?: number }, dung
 /** 클리어 보너스 골드의 기준값(골드 배율·층 배율 적용 전): 권장 레벨 물고기 clearGoldFish마리분. */
 export const dungeonClearBase = (d: { level: number }) => fishGoldAt(d.level) * DUNGEON_TUNING.clearGoldFish;
 /** 이 어종으로 해당 무리 규모를 고를 수 있는지 (도감 포획 수 기준). */
-export const swarmUnlocked = (s: State, fishId: string, size: number) => (s.book[fishId] || 0) >= (SWARM_UNLOCK[size] ?? Infinity);
 export const tierHealth = (tier: number) => 1 + tier * .35 + Math.pow(Math.max(0, tier - 20), 2) * .006;
 export const tierAttack = (tier: number) => 1 + tier * .18 + Math.pow(Math.max(0, tier - 20), 2) * .002;

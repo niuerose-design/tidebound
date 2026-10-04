@@ -78,6 +78,6 @@ export function guildStatsFor(s: State, now: number) {
     if (!s.guildStats || s.guildStats.key !== key) s.guildStats = { key, catches: 0, clears: 0, bosses: 0, abyss: 0, sentCatches: 0, sentClears: 0, sentBosses: 0, sentAbyss: 0, sentAt: 0 };
     return s.guildStats;
 }
-export function bumpGuildStat(s: State, kind: 'catches' | 'clears' | 'bosses', n: number, now: number) { guildStatsFor(s, now)[kind] += n; }
+function bumpGuildStat(s: State, kind: 'catches' | 'clears' | 'bosses', n: number, now: number) { guildStatsFor(s, now)[kind] += n; }
 /** 지난주 순위 보상(진주). 1위 30 · 2위 20 · 3위 15 · 10위 안 8 · 50위 안 3 · 참가 1. */
 export const abyssWeeklyPearls = (rank: number) => rank <= 1 ? 30 : rank === 2 ? 20 : rank === 3 ? 15 : rank <= 10 ? 8 : rank <= 50 ? 3 : 1;

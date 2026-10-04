@@ -88,7 +88,7 @@ export async function applyRestart(id: string, revision: number) {
 }
 
 // ---------- v27.27 골드·진주 조정 ----------
-export const ADMIN_LIMITS = { gold: 1e15, pearls: 1e7 };
+const ADMIN_LIMITS = { gold: 1e15, pearls: 1e7 };
 const amount = (v: unknown, max: number, label: string) => {
     if (v === undefined || v === null || v === '') return undefined;
     const n = Number(v);

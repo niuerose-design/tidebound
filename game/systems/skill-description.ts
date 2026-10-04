@@ -27,7 +27,7 @@ export function enemySkillBrief(sk: Skill) {
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
     return parts.join(' · ') || '기본 공격';
 }
-export function statusLabel(sk: Skill) {
+function statusLabel(sk: Skill) {
     return sk.effect === 'bleed' && sk.dotName ? sk.dotName : STATUS_WORD[sk.effect || ''] || '';
 }
 /**

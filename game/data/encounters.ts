@@ -15,7 +15,7 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'foeShellRam', name: '비늘 들이받기', desc: '물리 공격 125% 피해.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.25, manaCost: 0 },
     { id: 'foeTideSlam', name: '조류 강타', desc: '복합 피해 120%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.2, damageType: 'split', manaCost: 0 },
 ];
-export const PROFILES: Record<string, {
+const PROFILES: Record<string, {
     name: string;
     hint: string;
     skills: string[];

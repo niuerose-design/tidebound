@@ -62,7 +62,7 @@ export function doorFor(s: Pick<State, 'rebirthDoor'> & Partial<State>, jobId: s
     return null;
 }
 /** 문이 열리는 모든 ??? 직업. */
-export const DOOR_JOBS = [...REBIRTH_DOOR_JOBS, ...DISCOVERY_DOORS.map(d => d.job)];
+const DOOR_JOBS = [...REBIRTH_DOOR_JOBS, ...DISCOVERY_DOORS.map(d => d.job)];
 /** 지금 열려 있는 문을 doorsOpened에 기록합니다(이후 상시 개방). 동기화·정산 때 호출. 새로 열린 직업 id를 돌려줍니다. */
 export function recordOpenDoors(s: State) {
     const fresh: string[] = [];
