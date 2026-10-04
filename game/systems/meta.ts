@@ -2,7 +2,7 @@ import type { State } from '../types';
 import { ECONOMY, researchRank } from '../data/economy';
 import { MONSTER_TUNING, DUNGEON_TUNING, dungeonModeTier } from '../data/balance';
 import { fishExpAt, fishGoldAt, tideLiftLevel } from '../data/world';
-/** 환생 요구 레벨: 30에서 환생마다 +5(Lv.60까지), 그 뒤로는 환생마다 +1(최대 Lv.80). */
+/** 환생 요구 레벨: 30에서 환생마다 +5(Lv.60까지), 그 뒤로는 환생마다 +1(v27.77 최대 Lv.100, 환생 46회에 도달). */
 export const rebirthLevel = (s: Pick<State, 'rebirths'>) => {
     const early = 30 + s.rebirths * ECONOMY.rebirthLevelStep;
     if (early <= ECONOMY.rebirthLevelLateFrom) return early;
@@ -38,22 +38,24 @@ export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id,
  */
 export const dungeonLevelAt = (d: { id: string; level: number }, tier: number, playerLevel: number) => d.id === 'abyss' ? d.level : tideLiftLevel(d.level, tier, playerLevel);
 export const tierReward = (tier: number) => 1 + tier * .5;
+/** v27.77 경험치의 난이도 배율. 골드(tierReward, 1 + 0.5t)와 분리해 1 + 0.1√t로 눌렀습니다: 난이도 17 ×1.41, 100 ×2. 전에는 난이도 100에서 ×51이라 19마리면 환생이었습니다. */
+export const tierExp = (tier: number) => 1 + .1 * Math.sqrt(Math.max(0, tier));
 // v27.74 사냥터·던전 난이도의 처치 숙련 배율(v27.21 tierMastery, 1 + 0.3×난이도)을 없앴습니다. 처치 숙련은 난이도와 무관하게 기본 1이고,
 // 난이도 5 이상의 숙련은 숙련의 까미가 맡습니다(난이도 10 기준 까미 기대 숙련이 처치 숙련의 수십 배라 배율의 몫은 몇 %에 불과했습니다).
 /** 처치 보상(골드 배율 적용 전). 전투 보상과 도감 화면 표시가 같은 식을 씁니다. */
 export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: number }, tier: number, boss = false) {
     const mult = boss ? MONSTER_TUNING.bossRewardMultiplier : 1;
     const rewardScale = f.rewardMultiplier || 1;
-    return { exp: Math.round(f.exp * mult * tierReward(tier) * rewardScale), gold: Math.round(f.gold * mult * tierReward(tier) * rewardScale) };
+    return { exp: Math.round(f.exp * mult * tierExp(tier) * rewardScale), gold: Math.round(f.gold * mult * tierReward(tier) * rewardScale) };
 }
 /** v27.35 던전 보상에 쓰는 층 배율 단계(무릉도장은 rewardTierCap에서 멈춤). */
 export const dungeonRewardTier = (tier: number, id = 'abyss') => id === 'abyss' ? Math.min(tier, DUNGEON_TUNING.rewardTierCap) : tier;
 /** 던전 처치 보상(배율 적용 전). 보스는 권장 레벨 몬스터 몇 마리분, 일반 웨이브는 몬스터 레벨을 권장 레벨 + 2까지만 셉니다. */
 export function dungeonCatchReward(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean, id = 'abyss') {
-    const t = tierReward(dungeonRewardTier(tier, id));
-    if (boss) return { exp: Math.round(fishExpAt(dungeonLevel) * DUNGEON_TUNING.bossExpFish * t), gold: Math.round(fishGoldAt(dungeonLevel) * DUNGEON_TUNING.bossGoldFish * t) };
-    const level = Math.min(f.level, dungeonLevel + DUNGEON_TUNING.expLevelOver), scale = (f.rewardMultiplier || 1) * t;
-    return { exp: Math.round(fishExpAt(level) * scale), gold: Math.round(fishGoldAt(level) * scale) };
+    const rt = dungeonRewardTier(tier, id), t = tierReward(rt), tx = tierExp(rt);
+    if (boss) return { exp: Math.round(fishExpAt(dungeonLevel) * DUNGEON_TUNING.bossExpFish * tx), gold: Math.round(fishGoldAt(dungeonLevel) * DUNGEON_TUNING.bossGoldFish * t) };
+    const level = Math.min(f.level, dungeonLevel + DUNGEON_TUNING.expLevelOver), scale = f.rewardMultiplier || 1;
+    return { exp: Math.round(fishExpAt(level) * scale * tx), gold: Math.round(fishGoldAt(level) * scale * t) };
 }
 export const dungeonExp = (f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) => dungeonCatchReward(f, dungeonLevel, tier, boss).exp;
 /** 클리어 보너스 골드의 기준값(골드 배율·층 배율 적용 전): 권장 레벨 몬스터 clearGoldFish마리분. */

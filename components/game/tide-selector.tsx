@@ -1,6 +1,6 @@
 'use client';
 import { memo, useState } from 'react';
-import { tideLimit, tierReward, tierHealth, tierAttack } from '@/game/systems/meta';
+import { tideLimit, tierReward, tierExp, tierHealth, tierAttack } from '@/game/systems/meta';
 import { TIDE_MILESTONES, TIDE_MILESTONE_PEARLS, nextTideMilestone } from '@/game/data/long-term';
 import type { PanelProps } from './panel-props';
 import { STAGES, FISH, tideLiftLevel } from '@/game/data/world';
@@ -17,7 +17,7 @@ export const TideSelector = memo(function TideSelector({ s, send, busy }: PanelP
     return <section className="panel tide-selector" title="환생마다 1단계 해금(최대 200). 일반 사냥터에만 적용하며 선택은 자유입니다. 난이도가 오르면 낮은 사냥터 몬스터의 레벨도 올라가 난이도 10부터는 어느 사냥터든 비슷하게 단단합니다.">
     <div>
     <h3>사냥터 난이도 {shown}</h3>
-    <p>{(() => { const st = STAGES.find(x => x.id === s.stage), lv = (st?.fish || []).map(id => FISH.find(f => f.id === id)?.level || 1), base = Math.min(...lv, 999), top = Math.max(...lv, 1), lo = tideLiftLevel(base, shown, s.level), hi = tideLiftLevel(top, shown, s.level); return st ? `몬스터 Lv.${lo}~${hi} · ` : ''; })()}적 HP ×{tierHealth(shown).toFixed(2)} · 공격 ×{tierAttack(shown).toFixed(2)} · 골드/EXP ×{tierReward(shown).toFixed(2)} · 장비 레벨 +{shown * 5}(캐릭터 레벨 +10까지) · 드롭 중 전설 이상 {percent(rarityShareFrom(shown, 3), 1)} · 태초 {percent(rarityShareFrom(shown, 6), 2)}{(() => { const te = tideEssence(shown); return te.chance > 0 ? ` · 처치당 정수 ${percent(te.chance, 1)} (+${te.amount})` : ' · 정수 드롭은 난이도 5부터'; })()}</p>
+    <p>{(() => { const st = STAGES.find(x => x.id === s.stage), lv = (st?.fish || []).map(id => FISH.find(f => f.id === id)?.level || 1), base = Math.min(...lv, 999), top = Math.max(...lv, 1), lo = tideLiftLevel(base, shown, s.level), hi = tideLiftLevel(top, shown, s.level); return st ? `몬스터 Lv.${lo}~${hi} · ` : ''; })()}적 HP ×{tierHealth(shown).toFixed(2)} · 공격 ×{tierAttack(shown).toFixed(2)} · 골드 ×{tierReward(shown).toFixed(2)} · 경험치 ×{tierExp(shown).toFixed(2)} · 장비 레벨 +{shown * 5}(캐릭터 레벨 +10까지) · 드롭 중 전설 이상 {percent(rarityShareFrom(shown, 3), 1)} · 태초 {percent(rarityShareFrom(shown, 6), 2)}{(() => { const te = tideEssence(shown); return te.chance > 0 ? ` · 처치당 정수 ${percent(te.chance, 1)} (+${te.amount})` : ' · 정수 드롭은 난이도 5부터'; })()}</p>
     <small>{(() => { const best = s.tideBest?.[s.stage] || 0, next = nextTideMilestone(best); return `이 사냥터 최고 차수 ${best}${next ? ` · 다음 이정표 차수 ${next} 첫 처치 세계석 +${TIDE_MILESTONE_PEARLS[TIDE_MILESTONES.indexOf(next)]}` : ' · 이정표 모두 달성'}`; })()}</small>
     </div>
     <div className="tide-controls">
