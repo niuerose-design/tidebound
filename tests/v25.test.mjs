@@ -403,11 +403,40 @@ test('v27.28 limit break raises level-table passives (+10%/stage), applies stage
     const knack = SKILLS.find(x => x.id === 'hundredKnacks'), kmax = P.maxSkillLevel(knack), last = P.masteryMilestonesFor(knack).at(-1);
     const s = newState(0); s.level = 100; s.job = knack.job; s.unlockedJobs = [knack.job]; s.learned[knack.id] = 1; s.skills = [knack.id]; s.skillPractice[knack.id] = last;
     s.jobMastery = Object.fromEntries(JOBS.slice(0, 40).map(j => [j.id, 1e9]));
-    const before = stats(s).attack; s.limitBreaks = { [knack.id]: 1 }; const after = stats(s).attack;
+    const before = stats(s).attack; s.limitBreaks = { [knack.id]: 1 }; s.permanent.limitBreak = 1; const after = stats(s).attack;
     assert.ok(after > before, `count passive grows with limit break: ${before} → ${after}`); assert.ok(kmax > 0);
 });
+test('v27.31 limit break needs the pearl research "한계의 문"; old breaks get it free, and a reset keeps free ranks without refunding them', async () => {
+    const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const P = await G.load('systems/progression'), M = await G.load('systems/migrations'), C = await G.load('systems/commerce');
+    const sk = SKILLS.find(x => x.id === 'hook'), last = P.masteryMilestonesFor(sk).at(-1);
+    const s = newState(0); s.sp = 20; s.pearls = 100; s.learned.hook = 1; s.skillPractice.hook = last * 8;
+    assert.match(P.limitBreakNext(s, 'hook').reason, /한계의 문.*1단계/);
+    act(s, { type: 'permanent', id: 'limitBreak' }, 0); act(s, { type: 'limitBreak', id: 'hook' }, 0); assert.equal(s.limitBreaks.hook, 1);
+    assert.match(P.limitBreakNext(s, 'hook').reason, /한계의 문.*2단계/, 'research rank caps the next stage');
+    // 연구를 재분배하면 효과는 멈추고 기록은 남습니다(다시 사면 돌아옴).
+    const withBreak = P.skillMastery(s, 'hook'); s.permanent.limitBreak = 0; assert.equal(P.skillMastery(s, 'hook'), withBreak - 1); assert.equal(P.limitBreakOwned(s, 'hook'), 1);
+    // 이미 2단계를 한 옛 세이브: 연구 2단계를 무료로 받고, 재분배해도 무료 단계는 남고 진주로 돌려받지 않습니다.
+    const old = newState(0); old.limitBreaks = { hook: 2, net: 1 }; delete old.researchGranted; old.permanent = {};
+    assert.equal(M.grantLimitBreakResearch(old), 2); assert.equal(old.permanent.limitBreak, 2); assert.equal(M.grantLimitBreakResearch(old), 0, 'only once');
+    assert.equal(C.researchRefund(old, 'utility').refund, 0, 'free ranks are not refundable');
+    old.pearls = 100; act(old, { type: 'permanent', id: 'limitBreak' }, 0); const paid = 100 - old.pearls; assert.ok(paid > 0);
+    old.running = false; act(old, { type: 'resetResearch', id: 'utility' }, 0); assert.equal(old.pearls, 100, 'refunds only the paid rank'); assert.equal(old.permanent.limitBreak, 2, 'free ranks stay');
+});
+test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain fish) and survives rebirth', async () => {
+    const V = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/variants');
+    const s = newState(0); s.book.perch = 10000; s.skills = [];
+    const big = () => .999; // 가장 큰 열린 규모(×100, 무리 감지 없음)
+    assert.equal(V.rollSwarmSize(s, 'perch', big), 100, 'no cap by default');
+    act(s, { type: 'swarmCap', value: '5' }, 0); assert.equal(s.swarmCap, 5); assert.equal(V.rollSwarmSize(s, 'perch', big), 5, 'capped to x5');
+    assert.equal(V.rollSwarmSize(s, 'perch', () => 0), 5, 'small rolls stay');
+    act(s, { type: 'swarmCap', value: '0' }, 0); assert.equal(V.rollSwarmSize(s, 'perch', big), 1, 'off → plain fish');
+    s.level = 999; act(s, { type: 'rebirth' }, 0); assert.equal(s.swarmCap, 0, 'setting survives rebirth');
+    act(s, { type: 'swarmCap', value: '500' }, 0); assert.equal(s.swarmCap, undefined, 'no limit clears the field');
+    assert.throws(() => act(s, { type: 'swarmCap', value: '50' }, 0), /무리 최대 규모/);
+});
 
-test('v27.30 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, overlevel cuts clear gold, stage enemies capped', async () => {
+test('v27.34 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, overlevel cuts clear gold, stage enemies capped', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), B = await L.load('data/balance'), M = await L.load('systems/meta'), C = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), E = await L.load('data/encounters');
     for (const lv of [1, 10, 25, 40]) assert.equal(W.fishGoldAt(lv), Math.round(7 * Math.pow(1.12, lv - 1)), `Lv.${lv} unchanged`);

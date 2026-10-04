@@ -8,7 +8,7 @@ import { stats } from './stats';
 import type { State } from '../types';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { TIME_MACHINE_MASTERY } from '../data/expansion-v25';
-import { DUNGEONS, FISH, STAGES, dungeonClosed } from '../data/world';
+import { DUNGEONS, FISH, STAGES, dungeonClosed, stageClosed, closuresSnapshot } from '../data/world';
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds, researchRank } from '../data/economy';
@@ -57,8 +57,14 @@ export function tickTurn(s: State, rng: () => number) {
     s.turn++;
     s.playMs = (s.playMs || 0) + BALANCE.turnMs;
     repairState(s);
-    // v27.25 점검 중인 던전 안에 있던 세이브는 보상 없이 귀환시키고 낚시터 자동 낚시로 잇습니다.
-    if (s.dungeon && dungeonClosed(s.dungeon.id)) { const name = DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'; s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${name}이(가) 밸런스 조정으로 닫혀 낚시터로 돌아왔습니다. 조정이 끝나면 다시 열립니다.`, 'system'); }
+    // v27.25·v27.31 운영 페이지에서 닫은 던전·낚시터에 있던 세이브는 보상 없이 나와 열린 낚시터에서 자동 낚시를 잇습니다.
+    if (s.dungeon && dungeonClosed(s.dungeon.id)) { const name = DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'; s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${name}이(가) 점검으로 닫혀 낚시터로 돌아왔습니다. 점검이 끝나면 다시 열립니다.`, 'system'); }
+    if (!s.dungeon && stageClosed(s.stage)) {
+        const from = STAGES.findIndex(x => x.id === s.stage), name = STAGES[from]?.name || '낚시터';
+        const to = [...STAGES.slice(0, Math.max(0, from))].reverse().find(x => !stageClosed(x.id) && s.level >= x.level && s.rebirths >= x.rebirth) || STAGES[0];
+        s.stage = to.id; s.target = null; s.enemy = null; s.effects = {}; s.playerStun = 0;
+        addLog(s, `${name}이(가) 점검으로 닫혀 ${to.name}(으)로 옮겼습니다. 점검이 끝나면 다시 열립니다.`, 'system');
+    }
     const a = stats(s);
     if (s.recovery > 0) {
         s.recovery--;
@@ -124,6 +130,8 @@ export function advance(s: State, now: number, rng = Math.random) {
     now = Math.max(now, s.lastTick);
     // v26.1 서버 이벤트: 정산 시각 기준으로 적어 두고, 아래 틱들이 이 배율을 씁니다.
     s.event = activeEvent(now);
+    // v27.31 닫힌 낚시터·던전 목록도 같이 적어 화면이 잠금 표시를 합니다.
+    const closed = closuresSnapshot(); if (closed) s.closed = closed; else delete s.closed;
     const elapsed = now - s.lastTick;
     // 정산 상한은 정산을 시작할 때의 긴 닻줄 단계로 정합니다(정산 중 연구가 바뀌지 않음).
     const cap = offlineCapSeconds(s);

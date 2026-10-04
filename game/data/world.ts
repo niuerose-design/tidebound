@@ -113,10 +113,28 @@ const specialFish: Array<{
 ];
 for (const f of specialFish)
     FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: fishExpAt(f.level), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
-/** v27.25 점검 중이라 입장할 수 없는 던전. 밸런스 조정이 끝나면 비웁니다. 테스트는 harness에서 비웁니다. */
-export const CLOSED_DUNGEONS = new Set<string>(['abyss']);
+/**
+ * v27.31 운영 페이지에서 닫은 낚시터·던전(입장 불가). 서버가 DB 설정(settings.closures)을 읽어 setClosures로 채웁니다.
+ * 설정을 한 번도 저장하지 않았으면 DEFAULT_CLOSURES(무한 심연 닫힘)를 씁니다. 테스트는 harness에서 비웁니다.
+ * 서버 계산은 dungeonClosed·stageClosed를, 화면은 동기화 때 적힌 State.closed를 봅니다.
+ */
+export type Closures = { dungeons: string[]; stages: string[] };
+export const DEFAULT_CLOSURES: Closures = { dungeons: ['abyss'], stages: [] };
+export const CLOSED_DUNGEONS = new Set<string>(DEFAULT_CLOSURES.dungeons);
+export const CLOSED_STAGES = new Set<string>(DEFAULT_CLOSURES.stages);
 export const dungeonClosed = (id: string) => CLOSED_DUNGEONS.has(id);
-export const DUNGEON_CLOSED_NOTE = '밸런스 조정 중 · 입장 불가';
+export const stageClosed = (id: string) => CLOSED_STAGES.has(id);
+/** 첫 낚시터는 닫을 수 없습니다(닫힌 낚시터에서 쫓겨난 낚시꾼이 돌아갈 곳). */
+export function setClosures(c: Closures) {
+    CLOSED_DUNGEONS.clear(); CLOSED_STAGES.clear();
+    for (const id of c.dungeons) if (DUNGEONS.some(d => d.id === id)) CLOSED_DUNGEONS.add(id);
+    for (const id of c.stages) if (id !== STAGES[0].id && STAGES.some(st => st.id === id)) CLOSED_STAGES.add(id);
+}
+/** State.closed에 적을 지금 닫힌 목록. 닫힌 곳이 없으면 null. */
+export const closuresSnapshot = (): Closures | null => CLOSED_DUNGEONS.size || CLOSED_STAGES.size ? { dungeons: [...CLOSED_DUNGEONS], stages: [...CLOSED_STAGES] } : null;
+/** 화면용: 동기화 때 받은 State.closed 기준. */
+export const closedIn = (s: { closed?: Closures | null }, kind: keyof Closures, id: string) => !!s.closed?.[kind]?.includes(id);
+export const CLOSED_NOTE = '점검 중 · 입장 불가';
 export const DUNGEONS = [
     { id: 'abyss', name: '윤회의 무한 심연', level: 40, rebirth: 3, fish: ['moonfish', 'dragon', 'ancient', 'dragon', 'ancient'], bossFish: 'abyssSovereign', boss: '심연의 기억 · 심연의 주권자', gold: 12000, pearls: 1, description: '정복할 때마다 다음 깊이가 열립니다. 깊을수록 층마다 더 많은 진주를 얻고, 10·25·50·100층을 처음 돌파하면 SP 1을 받습니다.' },
     { id: 'grotto', name: '조수의 동굴', level: 8, rebirth: 0, fish: ['ray', 'puffer', 'mackerel', 'ray', 'eel'], bossFish: 'grottoWarden', boss: '동굴의 주인 · 수호 곰치', gold: 350, pearls: 1, description: '다섯 번의 전투 끝에 잠든 수호자가 눈을 뜬다.' },

@@ -1,7 +1,8 @@
 /** 항해 진행: 낚시 시작·정지, 낚시터·던전 이동, 집중 사냥, 안내·목표 설정 */
 import { skillPracticeTargets } from '../progression';
 import { tideLimit, encounterTier } from '../meta';
-import { STAGES, DUNGEONS, FISH , dungeonClosed } from '../../data/world';
+import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed } from '../../data/world';
+import { SWARM_CAPS } from '../../data/variants';
 import { JOBS } from '../../data/classes';
 import { SKILLS, skillById } from '../../data/skills';
 import type { ActionHandlers } from './types';
@@ -37,6 +38,8 @@ export const voyageActions: ActionHandlers = {
         const st = STAGES.find(x => x.id === id);
         if (!st || s.level < st.level || s.rebirths < st.rebirth)
             throw Error('아직 진입할 수 없는 낚시터입니다.');
+        if (stageClosed(st.id))
+            throw Error(`${st.name}은(는) 점검 중이라 입장할 수 없습니다.`);
         s.stage = id;
         s.target = null;
         s.effects = {};
@@ -51,7 +54,7 @@ export const voyageActions: ActionHandlers = {
         if (!d || s.level < d.level || s.rebirths < d.rebirth)
             throw Error('던전 입장 조건을 충족하지 못했습니다.');
         if (dungeonClosed(d.id))
-            throw Error(`${d.name}은(는) 밸런스 조정 중이라 입장할 수 없습니다.`);
+            throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);
         enterDungeon(s, d.id, parseRepeat(s, d.id, a.value));
         s.running = true;
         s.lastTick = now;
@@ -89,6 +92,13 @@ export const voyageActions: ActionHandlers = {
     },
     statConfirm(s, { a }) {
         s.skipStatConfirm = a.value === 'off';
+    },
+    /** v27.32 무리 최대 규모: '0'(끔)·'5'·'100'·'500'(제한 없음). 다음 입질부터 적용합니다. */
+    swarmCap(s, { a }) {
+        const cap = Number(a.value);
+        if (!(SWARM_CAPS as readonly number[]).includes(cap))
+            throw Error('무리 최대 규모는 끔·×5·×100·제한 없음 중에서 고르세요.');
+        if (cap >= 500) delete s.swarmCap; else s.swarmCap = cap;
     },
     salvageMode(s, { a }) {
         if (!salvageRate(s))

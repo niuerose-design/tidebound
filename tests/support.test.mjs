@@ -183,7 +183,8 @@ test('v27.6 limit break: needs full mastery, practice multiples and SP; pushes g
     const sk = SKILLS.find(x => x.id === 'hook'); const max = maxSkillLevel(sk), last = masteryMilestonesFor(sk).at(-1);
     const s = newState(0); s.sp = 20; s.learned.hook = 1;
     assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /실전 숙련/);
-    s.skillPractice.hook = last; assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /실전 숙련 .* 필요/);
+    s.skillPractice.hook = last; assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /한계의 문/, 'v27.31 needs pearl research'); s.permanent.limitBreak = 3;
+    assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /실전 숙련 .* 필요/);
     s.skillPractice.hook = last * 2; const base = effectiveSkill(sk, 1, skillMastery(s, 'hook'));
     act(s, { type: 'limitBreak', id: 'hook' }, 0); assert.equal(s.limitBreaks.hook, 1); assert.equal(s.sp, 18);
     const e1 = effectiveSkill(sk, 1, skillMastery(s, 'hook')); assert.equal(skillLevel(sk, 1, skillMastery(s, 'hook')), max + 1);

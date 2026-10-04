@@ -8,11 +8,12 @@ import { DoorNotice } from './jobs/mystery-doors';
 import { useEffect, useRef, useState } from 'react';
 import { tipAt } from '@/game/data/tips';
 import { eventLabel } from '@/game/data/events';
+import { UPDATE_LOG } from '@/game/data/update-log';
 import { FishArt } from './art';
 import { MIMIC } from '@/game/data/mimic';
 import { rebirthLevel, encounterTier } from '@/game/systems/meta';
 const LOG_FOLD_KEY = 'tidebound.logFold';
-import { BookOpen, Check, ChevronRight, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Waves } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, ScrollText, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Waves } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heading, Meter, SkillIcon, SlotIcon, format, Num } from './shared';
@@ -74,7 +75,7 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     const recoveryText = s.recovery > 0 ? d ? `출정 준비 · ${recoverySeconds}초 남음` : `회복 대기 · ${recoverySeconds}초 남음` : null;
     const noticeText = s.lastOffline ? `부재중 항해 정산 · ${Math.floor(s.lastOffline.seconds / 60)}분 동안 ${s.lastOffline.kills}마리 포획 · +${format(s.lastOffline.gold)} G${s.lastOffline.bottles?.count ? ` · 병 속의 편지 ${s.lastOffline.bottles.count}개(${[s.lastOffline.bottles.gold ? `+${format(s.lastOffline.bottles.gold)} G` : '', s.lastOffline.bottles.items ? `장비 ${s.lastOffline.bottles.items}개` : '', s.lastOffline.bottles.pearls ? `진주 +${s.lastOffline.bottles.pearls}` : ''].filter(Boolean).join(' · ')})` : ''}` : d ? `${d.name} ${s.dungeon!.wave + 1}번째 전투 · 보스 전까지 항로를 유지합니다.` : tipAt(tip);
     return <>
-    <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>
+    <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 낚시 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>
     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Waves size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>
     <SlotChips s={s} busy={busy} onSwitch={onSwitchSlot}/>
     {s.event && <div className="event-banner" role="status"><Sparkles size={15}/><b>이벤트</b><span>{eventLabel(s.event)}</span></div>}

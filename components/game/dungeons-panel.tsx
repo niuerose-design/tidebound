@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Anchor, Lock, Swords } from 'lucide-react';
 import { FishArt } from './art';
 import { BALANCE, MONSTER_TUNING, dungeonOverlevel } from '@/game/data/balance';
-import { FISH, DUNGEONS , dungeonClosed, DUNGEON_CLOSED_NOTE } from '@/game/data/world';
+import { FISH, DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
 import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
 import { bookRevealed } from '@/game/systems/book';
@@ -56,13 +56,13 @@ export function Dungeons({ s, send, busy }: PanelProps) {
         <div className="dungeon-combat-log"><div className="section-title"><h3>최근 전투 로그</h3><span>자동 갱신</span></div>{s.logs.filter(log => log.type === 'battle').slice(-6).reverse().map(log => <BattleLogLine key={log.id} log={log} playerName={s.name}/>)}</div>
     </section>}
     <div className="stage-grid dungeon-grid">{[...DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
-            const closed = dungeonClosed(d.id), locked = closed || s.level < d.level || s.rebirths < d.rebirth;
+            const closed = closedIn(s, 'dungeons', d.id), locked = closed || s.level < d.level || s.rebirths < d.rebirth;
             const tier = dungeonTier(d.id, s.abyssBest + 1);
             const research = BOSS_RESEARCH[d.id], claimed = !!s.bossResearchClaims?.[d.id], active = s.dungeon?.id === d.id, overlevel = dungeonOverlevel(s.level, d.level);
             return <article className={`stage-card dungeon-stage-card ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} key={d.id}>
             <div className="stage-top"><span className="stage-num">{String(i + 1).padStart(2, '0')}</span>{locked ? <Lock size={20}/> : active ? <span className="badge">탐험 중</span> : d.id === 'abyss' ? <span className="badge">최고 {s.abyssBest}층</span> : s.clears[d.id] ? <span className="badge">{s.clears[d.id]}회 정복</span> : <span className="badge muted">미탐험</span>}</div>
             <Anchor className="stage-wave" size={40}/>
-            <div className="eyebrow">{closed ? DUNGEON_CLOSED_NOTE : d.id === 'abyss' ? `다음 도전 ${s.abyssBest + 1}층` : `${d.fish.length}웨이브 · 보스 ${d.boss?.split('·').pop()?.trim() || ''}`}</div>
+            <div className="eyebrow">{closed ? CLOSED_NOTE : d.id === 'abyss' ? `다음 도전 ${s.abyssBest + 1}층` : `${d.fish.length}웨이브 · 보스 ${d.boss?.split('·').pop()?.trim() || ''}`}</div>
             <h2>{d.name}</h2>
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">

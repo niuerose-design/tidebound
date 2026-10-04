@@ -74,6 +74,9 @@
 .setting-toggle { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 0; border-top:1px solid #9ab4b522; margin-top:12px; }
 .setting-toggle p { font-size:12px; color:#a5bfb1; margin:4px 0 0; line-height:1.6; }
 .setting-toggle button { flex-shrink:0; min-width:64px; }
+.swarm-cap-setting { flex-direction:column; align-items:stretch; }
+.swarm-cap-buttons { display:flex; flex-wrap:wrap; gap:6px; }
+.swarm-cap-buttons button { flex:1 1 0; min-width:72px; }
 .research-tabs.game-tabs { margin-bottom:16px; }
 .research-group { margin-bottom:18px; }
 .research-group-title { font-size:14px; color:#b9cfc6; margin:0 0 10px; letter-spacing:.04em; }
@@ -99,6 +102,9 @@
 .job-section-heading h3 { margin:0; }
 .job-section-heading { margin-bottom:12px; }
 .info-trigger { display:inline-flex; justify-content:center; align-items:center; flex-shrink:0; color:#adc6b6; border-radius:4px; padding:4px; }
+.vow-info-trigger { gap:4px; margin-left:8px; padding:2px 7px; font-size:12px; font-weight:500; color:var(--gold); border:1px solid #506958; vertical-align:middle; }
+.vow-info-pop p { margin:0; }
+.vow-info-pop b { color:var(--gold); font-weight:600; }
 .info-trigger:hover { color:#e4e6c9; background:#31463c; }
 .game-tooltip { max-width:340px; padding:13px 16px; background:#253c35; color:#e0e4d8; border:1px solid #506958; font-size:13px; line-height:1.8; }
 .game-tooltip p+p { margin-top:10px; }

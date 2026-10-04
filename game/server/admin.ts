@@ -10,12 +10,12 @@ import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
 import { BOSS_RESEARCH } from '../data/specializations';
-import { DUNGEONS } from '../data/world';
+import { DUNGEONS, STAGES } from '../data/world';
 import { PROGRESSION } from '../data/progression';
 import { skillById } from '../data/skills';
 import type { State } from '../types';
 import { SERVER_EVENTS, activeEvent, eventLabel, type ServerEvent } from '../data/events';
-import { readEventConfig, writeEventConfig } from './events-config';
+import { readEventConfig, writeEventConfig, readClosures, writeClosures } from './events-config';
 
 const digest = (v: string) => createHash('sha256').update(v).digest();
 /** 운영자 키 확인. 실패는 IP당 10분에 10번까지만 받습니다. */
@@ -160,4 +160,71 @@ export async function toggleCodeEvent(id: string, disabled: boolean) {
     const set = new Set(config.disabled); if (disabled) set.add(id); else set.delete(id);
     await writeEventConfig({ ...config, disabled: [...set] });
     return listEvents();
+}
+
+// ---------- v27.31 낚시터·던전 입장 막기 ----------
+
+/** 낚시터·던전 목록과 닫힘 여부. 첫 낚시터는 닫을 수 없습니다. */
+export async function listClosures() {
+    const c = await readClosures();
+    return {
+        stages: STAGES.map((st, i) => ({ id: st.id, name: st.name, closed: c.stages.includes(st.id), locked: i === 0 })),
+        dungeons: DUNGEONS.map(d => ({ id: d.id, name: d.name, closed: c.dungeons.includes(d.id), locked: false })),
+    };
+}
+/** 한 곳을 닫거나 엽니다. 안에 있던 낚시꾼은 다음 동기화 때 보상 없이 나옵니다. */
+export async function setClosed(kind: string, id: string, closed: boolean) {
+    if (kind !== 'stages' && kind !== 'dungeons') throw new ApiError('낚시터나 던전을 고르세요.');
+    if (kind === 'stages' ? !STAGES.some(st => st.id === id) : !DUNGEONS.some(d => d.id === id)) throw new ApiError('없는 곳입니다.');
+    if (kind === 'stages' && id === STAGES[0].id) throw new ApiError('첫 낚시터는 닫을 수 없습니다(닫힌 곳에서 나온 낚시꾼이 돌아갈 곳).');
+    const c = await readClosures(), set = new Set(c[kind]);
+    if (closed) set.add(id); else set.delete(id);
+    await writeClosures({ ...c, [kind]: [...set] });
+    console.info('admin closure', { kind, id, closed });
+    return listClosures();
+}
+
+// ---------- v27.32 통계 ----------
+
+export type AdminStats = {
+    at: number; accounts: number; saves: number;
+    active: { hour: number; day: number; week: number }; running: number; inDungeon: number;
+    level: { avg: number; max: number; buckets: { label: string; count: number }[] };
+    rebirths: { avg: number; max: number; buckets: { label: string; count: number }[] };
+    stages: { name: string; count: number }[]; dungeons: { name: string; count: number }[]; jobs: { name: string; count: number }[];
+    totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number };
+    medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number;
+    top: { name: string; level: number; rebirths: number; abyss: number }[];
+};
+const median = (xs: number[]) => { if (!xs.length) return 0; const a = [...xs].sort((x, y) => x - y), m = a.length >> 1; return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2); };
+const countBy = <T>(xs: T[], key: (x: T) => string | null) => { const m = new Map<string, number>(); for (const x of xs) { const k = key(x); if (k) m.set(k, (m.get(k) || 0) + 1); } return m; };
+const bucketize = (xs: number[], edges: number[], unit: string) => edges.map((lo, i) => { const hi = edges[i + 1]; return { label: hi === undefined ? `${lo}${unit} 이상` : lo + 1 === hi ? `${lo}${unit}` : `${lo}~${hi - 1}${unit}`, count: xs.filter(n => n >= lo && (hi === undefined || n < hi)).length }; });
+/**
+ * 운영 페이지 통계: 모든 세이브를 한 번 읽어 집계합니다. 운영자가 탭을 열거나 새로고침할 때만 돕니다(게임 요청에는 부하 없음).
+ * 활동은 마지막 저장 시각 기준이라 자동 낚시를 켜 둔 채 접속을 끊은 낚시꾼은 다시 접속할 때까지 세지 않습니다.
+ */
+export async function adminStats(now = Date.now()): Promise<AdminStats> {
+    const database = db(), [accounts, rows] = await Promise.all([database.listAccounts(), database.listPlayers()]);
+    const saves: { s: State; at: number }[] = [];
+    for (const row of rows) { try { const s = JSON.parse(row.state) as State; if (s && typeof s.level === 'number') saves.push({ s, at: row.updated_at }); } catch { /* 깨진 세이브는 건너뜀 */ } }
+    const list = saves.map(x => x.s), levels = list.map(s => s.level || 1), rebirths = list.map(s => s.rebirths || 0);
+    const since = (ms: number) => saves.filter(x => now - x.at <= ms).length;
+    const sum = (f: (s: State) => number) => list.reduce((a, s) => a + (Number.isFinite(f(s)) ? f(s) : 0), 0);
+    const named = (m: Map<string, number>, name: (id: string) => string) => [...m].map(([id, count]) => ({ name: name(id), count })).sort((a, b) => b.count - a.count);
+    return {
+        at: now, accounts: accounts.length, saves: saves.length,
+        active: { hour: since(3600_000), day: since(86400_000), week: since(7 * 86400_000) },
+        running: list.filter(s => s.running).length, inDungeon: list.filter(s => s.dungeon).length,
+        level: { avg: list.length ? Math.round(sum(s => s.level) / list.length * 10) / 10 : 0, max: Math.max(0, ...levels), buckets: bucketize(levels, [1, 10, 20, 30, 40, 50, 60, 80, 100], '') },
+        rebirths: { avg: list.length ? Math.round(sum(s => s.rebirths) / list.length * 10) / 10 : 0, max: Math.max(0, ...rebirths), buckets: bucketize(rebirths, [0, 1, 3, 5, 10, 20, 50], '회') },
+        stages: named(countBy(list, s => s.dungeon ? null : s.stage), id => STAGES.find(x => x.id === id)?.name || id),
+        dungeons: named(countBy(list, s => s.dungeon?.id || null), id => DUNGEONS.find(x => x.id === id)?.name || id),
+        jobs: named(countBy(list, s => s.job), id => jobById(id)?.name || id).slice(0, 15),
+        totals: { kills: sum(s => s.kills), playHours: Math.round(sum(s => s.playMs || 0) / 3600_000), gold: Math.floor(sum(s => s.gold)), pearls: sum(s => s.pearls), sp: sum(s => s.sp) },
+        medians: { gold: median(list.map(s => Math.floor(s.gold || 0))), pearls: median(list.map(s => s.pearls || 0)) },
+        abyssBest: Math.max(0, ...list.map(s => s.abyssBest || 0)),
+        limitBreakers: list.filter(s => Object.values(s.limitBreaks || {}).some(n => n > 0)).length,
+        inGuild: list.filter(s => s.guildMember?.id).length,
+        top: [...list].sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level).slice(0, 10).map(s => ({ name: s.name, level: s.level, rebirths: s.rebirths || 0, abyss: s.abyssBest || 0 })),
+    };
 }
