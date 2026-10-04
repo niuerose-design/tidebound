@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ChatPanel } from './chat-panel';
-import { ChevronRight, Compass, Lock, Map, MessageCircle, Swords } from 'lucide-react';
+import { ChevronRight, Compass, Flame, Lock, Map, MessageCircle, Swords } from 'lucide-react';
+import { serverNow } from './jobs/job-status';
+import { Meter } from './shared';
 import { STAGES, DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { BattleLogLine } from './combat-log';
 import type { State, Action } from '@/game/types';
@@ -16,7 +18,7 @@ export function BattleRail({ s, busy, send, setView }: {
     const battleLogs = s.logs.filter(log => log.type === 'battle').slice(-40).reverse();
     const dungeons = [...DUNGEONS].sort((a, b) => a.level - b.level);
     // 사냥터·던전을 한 창에서 탭으로 고릅니다. 던전에 들어가면 던전 탭으로 넘어갑니다.
-    const [tab, setTab] = useState<'stage' | 'dungeon'>(s.dungeon ? 'dungeon' : 'stage');
+    const [tab, setTab] = useState<'stage' | 'dungeon' | 'altar'>(s.dungeon ? 'dungeon' : 'stage');
     // v25.4 전투 기록 ↔ 채팅 토글. 선택은 이 기기에 남깁니다.
     const [feed, setFeed] = useState<'log' | 'chat'>('log');
     useEffect(() => { const timer = window.setTimeout(() => { try { if (localStorage.getItem(FEED_KEY) === 'chat') setFeed('chat'); } catch { /* 저장소 없음 */ } }, 0); return () => window.clearTimeout(timer); }, []);
@@ -38,7 +40,8 @@ export function BattleRail({ s, busy, send, setView }: {
     <div className="section-title"><div className="battle-place-tabs" role="tablist" aria-label="사냥터 종류">
         <button type="button" role="tab" id="place-tab-stage" aria-controls="place-panel" aria-selected={tab === 'stage'} className={tab === 'stage' ? 'active' : ''} onClick={() => setTab('stage')}><Map size={14}/>사냥터</button>
         <button type="button" role="tab" id="place-tab-dungeon" aria-controls="place-panel" aria-selected={tab === 'dungeon'} className={tab === 'dungeon' ? 'active' : ''} onClick={() => setTab('dungeon')}><Compass size={14}/>던전{s.dungeon && <span className="battle-place-live" aria-label="진행 중"/>}</button>
-    </div>{tab === 'stage' ? <button className="text-button" onClick={() => setView('stages')}>전체 지도 <ChevronRight size={13}/></button> : <button className="text-button" onClick={() => setView('dungeons')}>탐험실 <ChevronRight size={13}/></button>}</div>
+        <button type="button" role="tab" id="place-tab-altar" aria-controls="place-panel" aria-selected={tab === 'altar'} className={tab === 'altar' ? 'active' : ''} onClick={() => setTab('altar')}><Flame size={14}/>제단{s.altarStatus?.blessings.length ? <span className="battle-tab-dot" aria-label="축복 진행 중"/> : null}</button>
+    </div>{tab === 'stage' ? <button className="text-button" onClick={() => setView('stages')}>전체 지도 <ChevronRight size={13}/></button> : tab === 'dungeon' ? <button className="text-button" onClick={() => setView('dungeons')}>탐험실 <ChevronRight size={13}/></button> : <button className="text-button" onClick={() => setView('altar')}>열기 <ChevronRight size={13}/></button>}</div>
     <div id="place-panel" role="tabpanel" aria-labelledby={`place-tab-${tab}`}>
     {tab === 'stage' ? <div className="battle-stage-list">{STAGES.map((stage, index) => {
         const closed = closedIn(s, 'stages', stage.id), locked = closed || s.level < stage.level || s.rebirths < stage.rebirth;
@@ -46,6 +49,7 @@ export function BattleRail({ s, busy, send, setView }: {
         <span className="battle-stage-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{stage.place}</strong><small>{closed ? CLOSED_NOTE : `${stage.region} · Lv. ${stage.level}${stage.rebirth ? ` · 환생 ${stage.rebirth}` : ''}`}</small></span>{locked ? <Lock size={13}/> : s.stage === stage.id && !s.dungeon ? <span className="battle-selected-dot"/> : null}
         </button>;
     })}</div>
+    : tab === 'altar' ? <AltarRail s={s} setView={setView}/>
     : <div className="battle-dungeon-list">{dungeons.map(dungeon => {
         const closed = closedIn(s, 'dungeons', dungeon.id), locked = closed || s.level < dungeon.level || s.rebirths < dungeon.rebirth;
         const active = s.dungeon?.id === dungeon.id;
@@ -57,4 +61,18 @@ export function BattleRail({ s, busy, send, setView }: {
     </div>
     </section>
     </aside>;
+}
+
+const left = (ms: number) => { const m = Math.max(1, Math.ceil(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`; };
+/** v27.47 오른쪽 패널 제단 탭: 동기화 때 받은 제단 요약(State.altarStatus). 누르면 제단 화면으로 갑니다. */
+function AltarRail({ s, setView }: { s: State; setView: (v: string) => void }) {
+    const a = s.altarStatus;
+    if (!a) return <p className="battle-feed-empty">제단 소식을 불러오는 중입니다. 공물 바치기에서 바로 열 수 있습니다.</p>;
+    const now = serverNow(s), open = () => setView('altar');
+    return <div className="battle-dungeon-list battle-altar-list">
+        {a.blessings.map(b => <button type="button" key={b.id} className="battle-dungeon-button selected" onClick={open}><span><strong>{b.name} 진행 중</strong><small>{b.desc} · {left(b.until - now)} 남음</small></span><Flame size={13}/></button>)}
+        {a.god && <button type="button" className="battle-dungeon-button selected" onClick={open}><span><strong>{a.god.name} 깨어남</strong><small>쓰러뜨리면 신의 자리 · {left(a.god.until - now)} 뒤 떠남</small></span><Swords size={13}/></button>}
+        {a.gauges.map(g => <button type="button" key={g.id} className="battle-dungeon-button battle-altar-gauge" onClick={open}><span><strong>{g.name}</strong><small>게이지 {g.pct}%</small><Meter value={g.pct} max={100}/></span></button>)}
+        <p className="battle-altar-throne">신의 자리 · {a.throne || '비어 있음'}</p>
+    </div>;
 }
