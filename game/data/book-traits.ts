@@ -48,7 +48,7 @@ export const REGION_THEMES: Record<string, { label: string; add?: StatBonus; sca
 };
 
 /**
- * v27.79 지역 연구: 지역(리스항구 등)의 모든 몬스터가 연구 4·5·6단계 이상이면 지역 연구 1·2·3단계.
+ * v27.80 지역 연구: 지역(리스항구 등)의 모든 몬스터가 연구 4·5·6단계 이상이면 지역 연구 1·2·3단계.
  * add는 단계마다 더하는 고정값, scale은 단계마다 더하는 배율(+3%면 .03 → 3단계 ×1.09).
  */
 export const REGION_RESEARCH_FROM = 4;

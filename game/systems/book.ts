@@ -37,7 +37,7 @@ export function bookEcology(s: Pick<State, 'book' | 'bookTier'>, id: string) {
     return { stages, dealt: stages * BOOK_ECOLOGY.dealtPerStage, taken: stages * BOOK_ECOLOGY.takenPerStage };
 }
 
-/** v27.79 지역 연구 단계(0~3): 지역 몬스터 전부가 연구 4·5·6단계 이상. */
+/** v27.80 지역 연구 단계(0~3): 지역 몬스터 전부가 연구 4·5·6단계 이상. */
 export const regionResearchStage = (s: Pick<State, 'book' | 'bookTier'>, region: string) =>
     Math.max(0, Math.min(REGION_RESEARCH_MAX, Math.min(...regionFish(region).map(id => bookStage(s, id))) - REGION_RESEARCH_FROM + 1));
 /** 지역 연구 효과를 장소 테마와 같은 모양(add·scale 배율)으로 바꿉니다. */

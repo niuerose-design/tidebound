@@ -12,7 +12,7 @@ import { TideSelector } from './tide-selector';
 export function Stages({ s, send, busy }: PanelProps) {
     // 사냥터와 던전은 동시에 돌지 않습니다. 던전 탐험 중에는 현재 사냥터 표시를 지우고 이동을 막습니다(전투 레일과 같은 규칙).
     const inDungeon = !!s.dungeon;
-    // v27.79 지역별 접기·펴기: 처음에는 지금 사냥터가 있는 지역만 펼칩니다. 고른 상태는 이 브라우저에만 기억합니다.
+    // v27.80 지역별 접기·펴기: 처음에는 지금 사냥터가 있는 지역만 펼칩니다. 고른 상태는 이 브라우저에만 기억합니다.
     const [openRegions, setOpenRegions] = useState<Record<string, boolean>>(() => { try { return JSON.parse(localStorage.getItem('tidebound:stage-regions') || '{}'); } catch { return {}; } });
     const toggle = (region: string, open: boolean) => setOpenRegions(prev => { const next = { ...prev, [region]: open }; try { localStorage.setItem('tidebound:stage-regions', JSON.stringify(next)); } catch { /* 저장소를 못 쓰면 이번 화면에서만 기억 */ } return next; });
     return <>
@@ -20,7 +20,7 @@ export function Stages({ s, send, busy }: PanelProps) {
     <TideSelector s={s} send={send} busy={busy}/>
     {inDungeon && <p className="footnote">던전 탐험 중에는 사냥이 멈춰 있고 사냥터를 바꿀 수 없습니다. 던전에서 귀환하거나 반복이 끝나면 사냥터로 돌아옵니다.</p>}
     {/* v27.34 지역(헤네시스 등)별로 묶어 보여 줍니다. 번호는 전체 순서 그대로입니다. */}
-    {/* v27.34 지역(헤네시스 등)별로 묶어 보여 줍니다. v27.79 지역마다 접고 펼 수 있고, 무리 서식지가 지역 끝에 붙습니다. 번호는 전체 순서 그대로입니다. */}
+    {/* v27.34 지역(헤네시스 등)별로 묶어 보여 줍니다. v27.80 지역마다 접고 펼 수 있고, 무리 서식지가 지역 끝에 붙습니다. 번호는 전체 순서 그대로입니다. */}
     {REGIONS.map(region => { const places = STAGES.filter(st => st.region === region), here = places.some(st => st.id === s.stage), sig = regionSignature(region);
     return <details className="stage-region" key={region} open={openRegions[region] ?? here} onToggle={e => { const open = (e.currentTarget as HTMLDetailsElement).open; if ((openRegions[region] ?? here) !== open) toggle(region, open); }}>
     <summary className="stage-region-title"><ChevronDown size={18} className="stage-region-chevron"/>{region}<small>{places.filter(st => !st.habitat).length}곳 · 무리 서식지{sig.length ? ` · 대표 변종 ${sig.map(v => `${v.mark} ${v.name}`).join('·')}` : ''}{here ? ' · 현재 지역' : ''}</small></summary>

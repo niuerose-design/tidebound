@@ -30,7 +30,7 @@ export const BALANCE = {
     healAfterKill: 0.2, /** v27.78 난이도 t에서 처치 후 회복 = 기본 ÷ (1 + t ÷ healAfterKillTideScale), 최저 healAfterKillMin. 10에서 10%, 30에서 5%, 90부터 2%. */ healAfterKillTideScale: 10, healAfterKillMin: .02, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
-    bookMilestones: [50, 500, 2500, 10000, 250000, 500000], /** v27.79 연구 단계별 난이도 조건: 그 몬스터를 이 난이도 이상에서 처치한 적이 있어야 합니다(5단계 20 · 6단계 50). */ bookTierReq: [0, 0, 0, 0, 20, 50], duelCooldownMs: 60000, duelMaxTurns: 80, /** v26.2 랭크 결투 하루 횟수와 같은 상대 하루 횟수. 연습 대결은 제한 없음. */ duelPerDay: 20, duelPerOpponentPerDay: 3,
+    bookMilestones: [50, 500, 2500, 10000, 250000, 500000], /** v27.80 연구 단계별 난이도 조건: 그 몬스터를 이 난이도 이상에서 처치한 적이 있어야 합니다(5단계 20 · 6단계 50). */ bookTierReq: [0, 0, 0, 0, 20, 50], duelCooldownMs: 60000, duelMaxTurns: 80, /** v26.2 랭크 결투 하루 횟수와 같은 상대 하루 횟수. 연습 대결은 제한 없음. */ duelPerDay: 20, duelPerOpponentPerDay: 3,
     // 연속 행동: 상대보다 빠르면 행동마다 p = min(1, max(0, 계수 × log2(내 속도 / 상대 속도)))로 한 번 더 행동합니다. 턴당 최대 횟수까지.
     chainCoefficient: 0.5, chainMaxActions: 5,
 };

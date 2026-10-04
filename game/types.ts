@@ -350,6 +350,8 @@ export type State = {
     achievements?: Record<string, number>;
     /** v26.1 장착한 칭호 id. undefined면 자동(가장 최근 달성), null이면 표시 안 함. */
     title?: string | null;
+    /** v27.79 계급장: 처치 수로만 오르는 별도 레벨과 진급 포인트 특전. 환생해도 남습니다. 없으면 kills로 시작합니다. */
+    rank?: import('./data/rank').RankState;
     /** v25.6 보상을 받은 업적 id. 영구 AP·배율은 받은 것만 셉니다. */
     achievementClaims?: Record<string, true>;
     /** v25.6 일일·주간 항해 목표판(한국 시간 기준 날짜·주 키). */
@@ -452,7 +454,7 @@ export type State = {
     goldenBook?: Record<string, number>;
     /** v25.19 변종을 잡은 횟수(몬스터별 → 변종별). */
     variantBook?: Record<string, Partial<Record<'giant' | 'abyssal' | 'starlit' | 'swarm', number>>>;
-    /** v27.79 몬스터별로 처치한 가장 높은 난이도(사냥터 난이도·던전 모드). 도감 5·6단계 조건에 씁니다. 환생해도 유지됩니다. */
+    /** v27.80 몬스터별로 처치한 가장 높은 난이도(사냥터 난이도·던전 모드). 도감 5·6단계 조건에 씁니다. 환생해도 유지됩니다. */
     bookTier?: Record<string, number>;
     /** 이번 생에 걸린 서약. */
     vows?: Vows;

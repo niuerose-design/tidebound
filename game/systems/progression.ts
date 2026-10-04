@@ -274,7 +274,7 @@ export function trimLoadout(s: State) {
     }
 }
 export function completedRegions(s: State) { return PLACES.filter(st => st.fish.every(id => (s.book[id] || 0) >= PROGRESSION.fishComplete)); }
-/** v27.79 연구 r단계(0부터)를 넘었는지: 처치 수와, 5단계부터는 그 몬스터를 잡은 최고 난이도 조건. */
+/** v27.80 연구 r단계(0부터)를 넘었는지: 처치 수와, 5단계부터는 그 몬스터를 잡은 최고 난이도 조건. */
 export const bookRankMet = (s: Pick<State, 'book' | 'bookTier'>, id: string, r: number) => r < BALANCE.bookMilestones.length && (s.book[id] || 0) >= BALANCE.bookMilestones[r] && (s.bookTier?.[id] || 0) >= (BALANCE.bookTierReq[r] || 0);
 /** 연구 r단계의 난이도 조건(없으면 0). */
 export const bookTierReq = (r: number) => BALANCE.bookTierReq[r] || 0;

@@ -25,7 +25,7 @@ const stepReward = (rank: number, n: number, swarm: boolean) => [`${PROGRESSION.
 export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; id: string; send: (a: Action) => void; busy: boolean; swarm?: boolean }) {
     const n = s.book[id] || 0, claimed = s.bookClaims?.[id] || 0, pending = bookPending(s, id);
     const reached = bookStage(s, id), next = reached < MILESTONES.length ? reached : -1, best = s.bookTier?.[id] || 0;
-    /** v27.79 5단계부터 난이도 조건: 처치 수를 채워도 그 난이도 이상에서 잡은 적이 없으면 멈춥니다. */
+    /** v27.80 5단계부터 난이도 조건: 처치 수를 채워도 그 난이도 이상에서 잡은 적이 없으면 멈춥니다. */
     const tierText = (r: number) => bookTierReq(r) ? ` + 난이도 ${bookTierReq(r)} 이상 처치${best >= bookTierReq(r) ? ' ✓' : ` (최고 ${best})`}` : '';
     return <section className="book-block book-research">
         <h4>연구 진행 <small>플레이어 보상</small></h4>
@@ -59,7 +59,7 @@ export function RegionProgress({ s, id }: { s: State; id: string }) {
     return <span className="region-research">{r.complete ? `장소 연구 완료 · ${r.reward} 적용 중` : `장소 연구 ${r.done} / ${r.total}종 완성 · 완성 보상 ${r.reward}`}{r.pending > 0 && <b className="positive"> · 미수령 {r.pending}단계</b>}</span>;
 }
 
-/** v27.79 지역 연구 단계(0~3)와 효과. 지역 몬스터 전부가 연구 4·5·6단계 이상이면 1·2·3단계. */
+/** v27.80 지역 연구 단계(0~3)와 효과. 지역 몬스터 전부가 연구 4·5·6단계 이상이면 1·2·3단계. */
 export function RegionResearchLine({ s, region }: { s: State; region: string }) {
     const n = regionResearchStage(s, region), r = REGION_RESEARCH[region];
     if (!r) return null;

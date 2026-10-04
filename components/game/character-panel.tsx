@@ -4,11 +4,15 @@ import { ChevronDown, RefreshCw, Target } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
 import { attributes, apCapacity, apUsed } from '@/game/systems/progression';
 import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
+import { RankPanel } from './rank-panel';
 import { masteryMultipliers } from '@/game/systems/mastery';
 import { VARIANTS, VARIANT_BOOK_MIN, variantChances } from '@/game/data/variants';
 import {MONSTER_TUNING, BALANCE } from '@/game/data/balance';
 import { StatBreakdown } from './stat-breakdown';
-import { type StatTrace, stats, dropRate, goldMultiplier, expMultiplier } from '@/game/systems/stats';
+import { type StatTrace, stats, dropRate, goldMultiplier, expMultiplier, focusGold, focusExp } from '@/game/systems/stats';
+import { roughReward } from '@/game/systems/vows';
+import { accountExpGold } from '@/game/data/account';
+import { tailwindActive, tailwindExp } from '@/game/systems/meta';
 import { Heading } from './shared';
 import { TITLES, unlockedTitles, displayTitle, titleById } from '@/game/data/titles';
 import type { PanelProps } from './panel-props';
@@ -35,10 +39,10 @@ export function Character({ s, send, busy }: PanelProps) {
     <div><span>직접 투자한 포인트<strong>{Object.values(s.attributes).reduce((a, n) => a + n, 0)}</strong></span></div>
     <div><span>레벨마다<strong>+{PROGRESSION.statPerLevel} <small>P</small></strong></span></div>
     </section>
-    {(() => { const owned = new Set(unlockedTitles(s).map(t => t.id)), current = displayTitle(s), chosen = titleById(s.title); return <details className="panel title-panel"><summary><h2>칭호</h2><span>{current ? `표시 중 · ${current}` : '표시 안 함'} · {owned.size} / {TITLES.length} 획득 · 업적을 달성하면 얻습니다</span></summary>
+    <div className="identity-row">{(() => { const owned = new Set(unlockedTitles(s).map(t => t.id)), current = displayTitle(s), chosen = titleById(s.title); return <details className="panel title-panel"><summary><h2>칭호</h2><span>{current ? `표시 중 · ${current}` : '표시 안 함'} · {owned.size} / {TITLES.length} 획득 · 업적을 달성하면 얻습니다</span></summary>
         <div className="title-actions"><button type="button" className={s.title === undefined ? 'primary small' : 'secondary small'} disabled={busy} onClick={() => send({ type: 'title', id: 'auto' })}>자동(최근 획득)</button><button type="button" className={s.title === null ? 'primary small' : 'secondary small'} disabled={busy} onClick={() => send({ type: 'title', id: 'none' })}>표시 안 함</button></div>
         <div className="title-list">{TITLES.map(t => { const got = owned.has(t.id), on = chosen?.id === t.id; return <div key={t.id} className={`title-row ${got ? 'owned' : 'locked'} ${on ? 'on' : ''}`}><span className="title-name"><small className="rebirth-title">{t.name}</small></span><span className="title-desc">{t.group} · {t.desc}</span>{got ? <button type="button" className={on ? 'primary small' : 'secondary small'} disabled={busy || on} onClick={() => send({ type: 'title', id: t.id })}>{on ? '장착 중' : '장착'}</button> : <span className="title-locked">미획득</span>}</div>; })}</div>
-    </details>; })()}
+    </details>; })()}<RankPanel s={s} send={send} busy={busy}/></div>
     <div className="build-columns">
     <section className="panel attribute-panel">
     <div className="section-title">
@@ -65,14 +69,14 @@ export function Character({ s, send, busy }: PanelProps) {
     </div>
     <div className="derived-grid">{CORE_STATS.map(key => <StatBreakdown key={key} k={key} value={a[key]} trace={trace}/>)}</div>
     <p className="footnote stat-breakdown-hint">능력치를 누르면 기본·배분·직업·스킬·환생·연구·도감·장비별 기여를 볼 수 있습니다.</p>
-    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).flatMap(key => [<StatBreakdown key={key} k={key} value={a[key]} trace={trace} event={key === 'expBonus' ? s.event?.exp ?? 1 : key === 'goldBonus' ? s.event?.gold ?? 1 : key === 'dropBonus' ? s.event?.drop ?? 1 : 1} eventNote={key === 'dropBonus' ? '드롭 확률 전체에 곱함' : undefined}/>, ...(key === 'critDamage' ? [<MasteryBreakdown key="mastery" s={s}/>] : [])])}</div></details>
+    <details className="derived-details"><summary>상세 능력치</summary><div className="derived-grid">{DETAIL_STATS.filter(key => key === 'harmony' ? s.job === 'allRounder' || s.skills.includes('harmonicWeight') : OPTIONAL_STATS.has(key) ? (a[key] || 0) > 0 : true).flatMap(key => [<StatBreakdown key={key} k={key} value={a[key]} trace={trace} event={key === 'expBonus' ? s.event?.exp ?? 1 : key === 'goldBonus' ? s.event?.gold ?? 1 : key === 'dropBonus' ? s.event?.drop ?? 1 : 1} eventNote={key === 'dropBonus' ? '드롭 확률 전체에 곱함' : undefined} final={key === 'goldBonus' ? `골드 획득 배율 ×${goldMultiplier(s).toFixed(2)} = (1 + ${percent(a.goldBonus || 0, 0)}) × 계정 ${accountExpGold(s).toFixed(2)} × 서약 ${roughReward(s).toFixed(2)} × 집중 ${focusGold(s).toFixed(2)} × 이벤트 ${(s.event?.gold || 1).toFixed(2)}` : key === 'expBonus' ? `경험치 획득 배율 ×${expMultiplier(s).toFixed(2)} = (1 + ${percent(a.expBonus || 0, 0)}) × 계정 ${accountExpGold(s).toFixed(2)} × 순풍 ${tailwindActive(s) ? (1 + tailwindExp(s)).toFixed(2) : '1.00'} × 집중 ${focusExp(s).toFixed(2)} × 이벤트 ${(s.event?.exp || 1).toFixed(2)}` : key === 'dropBonus' ? `처치당 드롭 확률 ${percent(dropRate(s), 2)} = 기본 ${percent(BALANCE.dropChance, 2)} × (1 + ${percent((a.dropBonus || 0) / BALANCE.dropBonusScale, 0)}) × 서약 ${roughReward(s).toFixed(2)} × 이벤트 ${(s.event?.drop || 1).toFixed(2)}${dropRate(s) >= BALANCE.dropChanceCap ? ` (상한 ${percent(BALANCE.dropChanceCap, 1)})` : ''}` : undefined}/>, ...(key === 'critDamage' ? [<MasteryBreakdown key="mastery" s={s}/>] : [])])}</div></details>
     <div className="derived-summary">
     <span title={`기본 ${percent(BALANCE.dropChance, 2)} × (1 + 장비 드롭 보너스 ÷ ${BALANCE.dropBonusScale}) × 서약·이벤트. 상한 ${percent(BALANCE.dropChanceCap, 1)}. 보너스의 구성(행운·물건도감·연구·스킬·장비)은 상세 능력치의 ‘장비 드롭 보너스’에서 봅니다.`}>장비 드롭 확률 (처치당)<strong>{percent(dropRate(s), 2)}{dropRate(s) >= BALANCE.dropChanceCap ? ' (상한)' : ''}</strong>
     </span>
-    <span>골드 획득 배율<strong>×{goldMultiplier(s).toFixed(2)}</strong>
+    <span title="상세 능력치의 ‘골드 획득 보너스’에서 계산식을 봅니다.">골드 획득 배율<strong>×{goldMultiplier(s).toFixed(2)}</strong>
     </span>
     {(() => { const c = variantChances(s), total = VARIANTS.reduce((a, v) => a + c[v.id], 0), golden = a.goldenFind || 0; return <span title={`사냥터에서 몬스터를 ${VARIANT_BOOK_MIN}회 이상 처치한 뒤부터 출현마다 변종을 판정합니다. ${VARIANTS.map(v => `${v.mark} ${v.name} ${percent(c[v.id], 1)}`).join(' · ')}. 황금 개체는 처치 순간 따로 판정(${percent(golden, 1)}). 버섯숲 연못 테마 +10%, 섀도어 계보 패시브가 변종 조우 확률을 올립니다(현재 +${percent(a.variantFind || 0, 0)}).`}>변종 조우 확률 (처치당)<strong>{percent(total, 1)}{golden ? ` · 황금 ${percent(golden, 1)}` : ''}</strong></span>; })()}
-    <span>경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
+    <span title="상세 능력치의 ‘경험치 획득 보너스’에서 계산식을 봅니다.">경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
     <span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong>
     </span>
     <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}만큼 회복합니다. 기본 ${percent(BALANCE.healAfterKill)}이 사냥터 난이도가 오를수록 줄어듭니다(난이도 10에서 절반, 최저 ${percent(BALANCE.healAfterKillMin)}), 연구 ‘회복의 기억’ 1단계마다 +1%p. 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 고정입니다.`}>처치 후 회복 (처치당)<strong>{percent(victoryHealRate(s))} · {victoryHeal(s).toLocaleString()} HP</strong>

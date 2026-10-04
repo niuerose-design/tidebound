@@ -1,6 +1,7 @@
 /** 빌드: 전직, 스킬 장착·습득·계승·강화, 능력치 배분, 편성 저장 */
 import { stats, clampVitals } from '../stats';
 import { unlockedTitles } from '../../data/titles';
+import { RANK_PERKS, rankState, rankPerkLevel, rankPointsFree } from '../../data/rank';
 import type { Attribute } from '../../types';
 import { jobById } from '../../data/classes';
 import { skillById } from '../../data/skills';
@@ -54,6 +55,16 @@ export const buildActions: ActionHandlers = {
         addLog(s, `${jobById(id)!.name}(으)로 전직했습니다. 숙달 스킬을 계승할 수 있습니다.`);
     },
     /** v26.1 칭호 장착: id가 'auto'면 자동, 'none'이면 해제, 그 외에는 얻은 칭호만. */
+    /** v27.79 계급 특전: id = 특전 id(1단계 올림) 또는 'reset'(전부 돌려받음, 무료). */
+    rankPerk(s, { id }) {
+        const rk = rankState(s);
+        if (id === 'reset') { rk.perks = {}; s.rank = rk; return; }
+        const def = RANK_PERKS.find(p => p.id === id);
+        if (!def) throw Error('알 수 없는 특전입니다.');
+        if (rankPerkLevel(s, def.id) >= def.max) throw Error('최대 단계입니다.');
+        if (rankPointsFree(s) < def.cost) throw Error(`진급 포인트가 부족합니다 (필요 ${def.cost}).`);
+        rk.perks = { ...rk.perks, [def.id]: rankPerkLevel(s, def.id) + 1 }; s.rank = rk;
+    },
     title(s, { id }) {
         if (id === 'auto') { delete s.title; return; }
         if (id === 'none') { s.title = null; return; }

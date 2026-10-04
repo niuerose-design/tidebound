@@ -1,6 +1,6 @@
 import { MAPLE_MONSTERS } from './maple-monsters';
 /** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
-/** 사냥터 정의. habitat는 v27.79 무리 서식지(지역마다 하나)입니다. */
+/** 사냥터 정의. habitat는 v27.80 무리 서식지(지역마다 하나)입니다. */
 export type StageDef = { id: string; region: string; place: string; name: string; subtitle: string; level: number; rebirth: number; description: string; fish: string[]; tone: string; habitat?: boolean };
 const BASE_STAGES: StageDef[] = [
     { id: 'brook', region: '리스항구', place: '선착장', name: '리스항구 · 선착장', subtitle: 'LITH HARBOR · PIER', level: 1, rebirth: 0, description: '빅토리아 아일랜드의 관문. 선착장 끝에서 첫 몬스터가 찾아온다.', fish: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
@@ -16,7 +16,7 @@ const BASE_STAGES: StageDef[] = [
     { id: 'duskVents', region: '커닝시티', place: '지하 배수로', name: '커닝시티 · 지하 배수로', subtitle: 'KERNING CITY · UNDERGROUND DRAIN', level: 55, rebirth: 5, description: '도시 아래 끓어오르는 배수로. 다섯 번의 생을 건넌 모험가만 이 열기를 견딘다.', fish: ['ventCrab', 'glassSquid', 'sulfurEel', 'blindShark', 'cinderAngler', 'ventLeviathan'], tone: '#d88a5a' },
 ];
 /**
- * v27.79 무리 서식지: 지역마다 하나. 그 지역 몬스터가 전부 무리로만 나옵니다(×100 75% · ×500 25%, 도감·패시브 조건 없음).
+ * v27.80 무리 서식지: 지역마다 하나. 그 지역 몬스터가 전부 무리로만 나옵니다(×100 75% · ×500 25%, 도감·패시브 조건 없음).
  * 처치 한 번에 마리 수만큼 보상·도감·드롭 판정이 쌓이는 고위험 고보상 사냥터입니다. 까미·누리는 나오지 않습니다.
  * 입장: 지역 사냥터의 최고 레벨 · (지역 사냥터 최고 환생 조건 + 2, 최소 2회).
  */
