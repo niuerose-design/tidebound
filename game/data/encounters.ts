@@ -77,8 +77,7 @@ export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: {
     foe.magic = Math.round((foe.magic || 0) * tierAttack(options.tier || 0) * pressure.attack);
     foe.defense = Math.round(foe.defense * pressure.defense);
     foe.resist = Math.round((foe.resist || 0) * pressure.defense);
-    // v27.30 던전(특히 무릉도장)에서는 층 배율 1단계마다 속도 +2%: 속도만 올려 연속 행동으로 깊은 층을 밀던 빌드를 막습니다.
-    if (options.wave !== undefined && options.tier) foe.speed = Math.round((foe.speed || 10) * (1 + options.tier * DUNGEON_TUNING.tierSpeed));
+    // v27.68 층 배율 속도(+tierSpeed/단계)는 무릉도장 공식(abyssEnemyStats)에서만 붙입니다. 일반 던전이 사냥터 난이도를 따르게 되면서 여기서는 뺐습니다.
     return foe;
 }
 

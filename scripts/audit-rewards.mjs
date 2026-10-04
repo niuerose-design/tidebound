@@ -60,8 +60,12 @@ for (const p of PROFILES.filter(x => x.name.includes(PICK))) {
         const r = run(base, s => { s.stage = st.id; s.tide = t; s.dungeon = null; s.enemy = null; s.running = true; s.target = null; });
         console.log(row(`${st.name} (Lv.${st.level}) 난이도 ${t}`, r));
     }
-    if (!process.env.AUDIT_NO_DUNGEONS) for (const d of DUNGEONS.filter(x => x.rebirth <= p.rebirths && levelGateOk(base, x.level))) {
-        const r = run(base, s => { s.enemy = null; act(s, { type: 'dungeon', id: d.id, value: d.id === 'abyss' ? 'deeper:999' : 'fail' }, s.lastTick, random(3)); });
-        console.log(row(`던전 ${d.name} (Lv.${d.level})${r.clears ? '' : ' · 클리어 실패 → 사냥터로'}`, r));
+    const ONLY_D = (process.env.AUDIT_DUNGEONS || '').split(',').filter(Boolean);
+    if (!process.env.AUDIT_NO_DUNGEONS) for (const d of DUNGEONS.filter(x => x.rebirth <= p.rebirths && levelGateOk(base, x.level) && (!ONLY_D.length || ONLY_D.includes(x.id)))) {
+        // v27.68 일반 던전도 사냥터 난이도를 따르므로 난이도별로 잽니다(무릉도장은 층 공식이라 한 번).
+        for (const t of d.id === 'abyss' ? [0] : tides) {
+            const r = run(base, s => { s.tide = t; s.enemy = null; act(s, { type: 'dungeon', id: d.id, value: d.id === 'abyss' ? 'deeper:999' : 'fail' }, s.lastTick, random(3)); });
+            console.log(row(`던전 ${d.name} (Lv.${d.level})${d.id === 'abyss' ? '' : ` 난이도 ${t}`}${r.clears ? '' : ' · 클리어 실패 → 사냥터로'}`, r));
+        }
     }
 }

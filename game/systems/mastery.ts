@@ -48,12 +48,13 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
 }
 /**
  * 처치 숙련 배율(조건부 스킬 보너스 제외). 전투 보상과 능력치 화면이 같은 식을 씁니다.
- * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · tide: 사냥터 난이도(던전은 1) · research: 숙련의 기억 + 계정 몬스터 보너스(+5%/단계).
+ * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · tide: 사냥터 난이도(일반 던전 포함, 무릉도장은 1) · research: 숙련의 기억 + 계정 몬스터 보너스(+5%/단계).
  */
 export function masteryMultipliers(s: State) {
     const focus = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     const event = s.event?.mastery || 1;
-    const tide = s.dungeon ? 1 : tierMastery(encounterTier(s));
+    // v27.68 일반 던전도 사냥터 난이도 숙련 배율을 받습니다(무릉도장은 1).
+    const tide = s.dungeon?.id === 'abyss' ? 1 : tierMastery(encounterTier(s));
     const research = 1 + (researchRank(s, 'mastery') + accountMasteryTwentieths(s)) / 20;
     const base = s.lifeBonus === 'deep' ? 2 : 1;
     return { base, focus, event, tide, research, total: focus * event * tide * research };

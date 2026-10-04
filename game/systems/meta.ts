@@ -1,7 +1,7 @@
 import type { State } from '../types';
 import { ECONOMY, researchRank } from '../data/economy';
 import { MONSTER_TUNING, DUNGEON_TUNING } from '../data/balance';
-import { fishExpAt, fishGoldAt } from '../data/world';
+import { fishExpAt, fishGoldAt, tideLiftLevel } from '../data/world';
 /** 환생 요구 레벨: 30에서 환생마다 +5(Lv.60까지), 그 뒤로는 환생마다 +1(최대 Lv.80). */
 export const rebirthLevel = (s: Pick<State, 'rebirths'>) => {
     const early = 30 + s.rebirths * ECONOMY.rebirthLevelStep;
@@ -28,10 +28,15 @@ export const rebirthReward = (s: State, bonus = 0) => deepVoyagePearls(s) + Math
 export const rebirthRewardParts = (s: State, bonus = 0) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))), bonus: Math.max(0, Math.floor(bonus)), deep: deepVoyagePearls(s) });
 export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
-/** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, 일반 던전은 0. */
-export const dungeonTier = (id: string, abyssDepth: number) => id === 'abyss' ? abyssDepth + 2 : 0;
-/** 잠든 힘 봉인 중에는 일반 사냥터 난이도가 0으로 고정됩니다. */
-export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1) : s.vows?.seal ? 0 : (s.tide || 0);
+/** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, v27.68 일반 던전은 사냥터 난이도(전에는 0). */
+export const dungeonTier = (id: string, abyssDepth: number, tide = 0) => id === 'abyss' ? abyssDepth + 2 : tide;
+/** 잠든 힘 봉인 중에는 사냥터·일반 던전 난이도가 0으로 고정됩니다. */
+export const encounterTier = (s: State) => s.dungeon?.id === 'abyss' ? dungeonTier('abyss', s.dungeon.depth || 1) : s.vows?.seal ? 0 : (s.tide || 0);
+/**
+ * v27.68 일반 던전도 사냥터처럼 난이도만큼 레벨이 올라갑니다(tideLiftLevel). 보상·클리어 골드·과레벨 감쇠·클리어 드롭은 이 레벨 기준.
+ * 고레벨일수록 던전이 상대적으로 약해지고 보상이 낮게 고정되던 것(환생 40회 기준 사냥터의 1/3~1/7)을 맞춥니다. 무릉도장은 자체 층 공식 그대로.
+ */
+export const dungeonLevelAt = (d: { id: string; level: number }, tier: number, playerLevel: number) => d.id === 'abyss' ? d.level : tideLiftLevel(d.level, tier, playerLevel);
 /** 사냥터 난이도 1단계당 처치 숙련 +30%. */
 const TIDE_MASTERY_PER_TIER = .3;
 export const tierReward = (tier: number) => 1 + tier * .5;
@@ -44,10 +49,10 @@ export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: n
     return { exp: Math.round(f.exp * mult * tierReward(tier) * rewardScale), gold: Math.round(f.gold * mult * tierReward(tier) * rewardScale) };
 }
 /** v27.35 던전 보상에 쓰는 층 배율 단계(무릉도장은 rewardTierCap에서 멈춤). */
-export const dungeonRewardTier = (tier: number) => Math.min(tier, DUNGEON_TUNING.rewardTierCap);
+export const dungeonRewardTier = (tier: number, id = 'abyss') => id === 'abyss' ? Math.min(tier, DUNGEON_TUNING.rewardTierCap) : tier;
 /** 던전 처치 보상(배율 적용 전). 보스는 권장 레벨 몬스터 몇 마리분, 일반 웨이브는 몬스터 레벨을 권장 레벨 + 2까지만 셉니다. */
-export function dungeonCatchReward(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) {
-    const t = tierReward(dungeonRewardTier(tier));
+export function dungeonCatchReward(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean, id = 'abyss') {
+    const t = tierReward(dungeonRewardTier(tier, id));
     if (boss) return { exp: Math.round(fishExpAt(dungeonLevel) * DUNGEON_TUNING.bossExpFish * t), gold: Math.round(fishGoldAt(dungeonLevel) * DUNGEON_TUNING.bossGoldFish * t) };
     const level = Math.min(f.level, dungeonLevel + DUNGEON_TUNING.expLevelOver), scale = (f.rewardMultiplier || 1) * t;
     return { exp: Math.round(fishExpAt(level) * scale), gold: Math.round(fishGoldAt(level) * scale) };
