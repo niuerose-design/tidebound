@@ -332,3 +332,9 @@
 @media (max-width:767px) { .door-row { grid-template-columns:1fr; } .discovery-doors button { grid-template-columns:1fr auto; } .discovery-doors i { grid-column:1 / -1; } }
 /* v27.40 스킬 아이콘: 원작 도트 아이콘이 흐려지지 않게 */
 .skill-art { image-rendering: pixelated; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0; }
+/* v27.44 제단 알림(문 알림과 같은 모양, 주황빛) */
+.altar-notice { display:flex; align-items:stretch; margin-top:8px; border:1px solid #6b5236; background:#241c14; border-radius:5px; font-size:12px; }
+.altar-notice.live { border-color:#b07a3c; background:linear-gradient(90deg, #3a2814, #241c14); }
+.altar-notice-open { display:flex; align-items:center; gap:8px; flex:1; min-width:0; padding:7px 12px; color:#f3dcb8; text-align:left; }
+.altar-notice-open span { color:#d9c3a3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.altar-notice-dismiss { padding:0 10px; color:#c4a989; }

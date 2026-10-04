@@ -345,6 +345,8 @@ export type State = {
     duelSeason?: { key: string; lastKey?: string; lastRank?: number };
     /** v27.43 제단: 마지막 신 도전 시각, 익명 기여 설정. 서버만 씁니다. */
     altar?: { challengeAt?: number; anonymous?: boolean };
+    /** v27.44 제단 진행 요약(서버가 동기화마다 채우는 표시용). */
+    altarStatus?: import('./data/altar').AltarStatus;
     /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */
     guildMember?: { id: string; name: string; code?: string; leader: boolean; syncedAt: number };
     /** v25.11 이번 주 길드 기여 기록. sent*는 서버에 올린 값, 차이만 다음에 올립니다. */

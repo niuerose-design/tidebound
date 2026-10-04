@@ -47,12 +47,12 @@ export async function writeEventConfig(config: EventConfig, now = Date.now()) {
     cached = { at: now, config: clean };
     setRuntimeEvents(clean.extra, clean.disabled);
 }
-/** 열려 있는 제단 축복을 서버 이벤트 형식으로. 시작 시각은 쓰지 않으므로 과거로 둡니다. */
+/** 열려 있는 제단 축복을 서버 이벤트 형식으로. 시작 시각은 쓰지 않으므로 과거로 둡니다. 이름은 비워 이벤트 배너에 겹쳐 쓰지 않고, 제단 알림 줄이 따로 보여 줍니다. */
 export async function altarBlessingEvents(now: number): Promise<ServerEvent[]> {
     const gauges = await db().listAltarGauges();
     return BLESSINGS.flatMap(b => {
         const until = gauges.find(g => g.id === b.id)?.until || 0;
-        return until > now ? [{ id: `altar-${b.id}`, name: `제단 ${b.name}`, from: '2026-01-01T00:00:00+09:00', until: new Date(until).toISOString(), ...b.effect }] : [];
+        return until > now ? [{ id: `altar-${b.id}`, name: '', from: '2026-01-01T00:00:00+09:00', until: new Date(until).toISOString(), ...b.effect }] : [];
     });
 }
 /** 축복이 막 열렸을 때 이 인스턴스는 30초를 기다리지 않고 바로 반영합니다. */

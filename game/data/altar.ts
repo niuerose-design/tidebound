@@ -63,3 +63,11 @@ export function josa(word: string, pair: '이가' | '을를' | '은는' | '과�
     const c = word.charCodeAt(word.length - 1), last = c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 > 0;
     return word + (last ? pair[0] : pair[1]);
 }
+
+/** v27.44 전투 화면 제단 알림용 요약. 서버가 동기화 때 공용 캐시(15초)로 State.altarStatus에 적습니다(추가 질의 없음). */
+export type AltarStatus = {
+    blessings: { id: BlessingId; name: string; desc: string; until: number }[];
+    god: { gen: number; name: string; until: number } | null;
+    throne: string;
+    gauges: { id: AltarGaugeId; name: string; pct: number }[];
+};

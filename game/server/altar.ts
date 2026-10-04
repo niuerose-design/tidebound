@@ -16,7 +16,7 @@ import { weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
 import { duel, abyssBossSnapshot } from '../systems/duel';
-import { josa, ALTAR, BLESSINGS, GAUGE_IDS, gaugeCost, offeringPoints, tithe, type AltarGaugeId, type AltarInfo, type Offering } from '../data/altar';
+import { josa, ALTAR, BLESSINGS, GAUGE_IDS, gaugeCost, offeringPoints, tithe, type AltarGaugeId, type AltarInfo, type AltarStatus, type Offering } from '../data/altar';
 
 type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number }>; board: AltarOfferRow[] };
 let cache: Shared | null = null;
@@ -154,4 +154,19 @@ export function makeHarvest(id: string) {
         invalidateAltar();
         return taken;
     };
+}
+
+/** 동기화 때 한 번: 제단 진행 요약을 세이브에 적습니다. 공용 캐시를 쓰므로 15초에 한 번만 DB를 읽고, 실패해도 동기화는 그대로 진행합니다. */
+export async function syncAltarStatus(s: State, now: number) {
+    try {
+        const sh = await shared(now), a = sh.altar, god = parseGod(a);
+        const status: AltarStatus = {
+            blessings: BLESSINGS.filter(b => (sh.gauges[b.id]?.until || 0) > now).map(b => ({ id: b.id, name: b.name, desc: b.desc, until: sh.gauges[b.id].until })),
+            god: god && godAlive(a, now) ? { gen: a.gen, name: god.name, until: a.god_until } : null,
+            throne: a.throne_name,
+            gauges: GAUGE_IDS.map(g => ({ id: g, name: g === 'god' ? '신 소환' : BLESSINGS.find(b => b.id === g)!.name, pct: Math.min(100, Math.floor((sh.gauges[g]?.points || 0) / gaugeCost(g) * 100)) })),
+        };
+        s.altarStatus = status;
+    }
+    catch { /* 제단은 부가 정보 */ }
 }

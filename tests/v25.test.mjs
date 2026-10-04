@@ -488,7 +488,8 @@ test('v27.43 altar: offering points, tithe, blessing events skip offline catch-u
     const now = Date.parse('2027-01-05T12:00:00+09:00');
     ev.setAltarEvents([{ id: 'altar-mimic', name: '제단 까미의 축복', from: '2026-01-01T00:00:00+09:00', until: new Date(now + 3600_000).toISOString(), mimic: 3, gold: 2 }]);
     try {
-        const live = ev.activeEvent(now); assert.equal(live.mimic, 3); assert.equal(live.gold, 2); assert.match(ev.eventLabel(live), /까미 출현 ×3/);
+        const live = ev.activeEvent(now); assert.equal(live.mimic, 3); assert.equal(live.banner, null, 'altar-only: no event banner');
+        const mixed = ev.activeEvent(now, [...ev.currentEvents(), { id: 'x', name: '주말', from: '2026-01-01T00:00:00+09:00', until: '2027-12-31T00:00:00+09:00', exp: 3 }]); assert.equal(mixed.banner.gold, 1); assert.equal(mixed.banner.mimic, 1); assert.ok(mixed.banner.exp >= 3 && mixed.gold === 2); assert.equal(live.gold, 2); assert.match(ev.eventLabel(live), /까미 출현 ×3/);
         assert.equal(ev.activeEvent(now, ev.currentEvents(false)), null, 'altar blessings are not part of the offline settlement list');
         // 오프라인 정산(1분 초과) 동안에는 축복 없이 돌고, 끝난 뒤 다시 적힙니다.
         const s = engine.newState(now - 3600_000); engine.act(s, { type: 'start' }, now - 3600_000); const gold = s.gold;
