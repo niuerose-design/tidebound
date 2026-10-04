@@ -942,3 +942,16 @@ test('v27.79 rank: kills-only progression with perks (tally, drill, medal, suppl
     s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, swarm: 10 }; const e0 = s.rank.exp, sp0 = s.sp; Enc.reward(s, () => 0); assert.equal(s.rank.exp, e0 + 30, 'swarm 10 × (1 + tally 2)'); assert.equal(s.sp, sp0 + 1, 'medal hit');
     const r = newState(0); r.level = 60; r.rank = { exp: 12345, perks: { supply: 1 } }; act(r, { type: 'rebirth' }, 0); assert.deepEqual(r.rank, { exp: 12345, perks: { supply: 1 } }, 'rank survives rebirth');
 });
+
+test('v27.80 badge choice (title/rank) and the 지겨운 환생 research restores mastered job, inherited skills and attribute ratio after rebirth', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Pr = await L.load('systems/progression'), E = await L.load('data/economy');
+    const s = newState(0); act(s, { type: 'badge', id: 'rank' }, 0); assert.equal(s.badge, 'rank'); act(s, { type: 'badge', id: 'title' }, 0); assert.equal(s.badge, undefined); assert.throws(() => act(s, { type: 'badge', id: 'x' }, 0));
+    const r = E.RESEARCH.find(x => x.id === 'habit'); assert.ok(r && r.max === 3 && r.rebirth === 2 && E.researchCost('habit', 0) === 6);
+    const make = (habit) => { const t = newState(0); t.level = 60; t.rebirths = 5; t.permanent.habit = habit; t.unlockedJobs.push('harpoon'); t.job = 'harpoon'; t.jobMastery.harpoon = 1e9; t.attributes = { str: 60, dex: 20, int: 0, vit: 20, wis: 0, luk: 0 }; t.learned.hook = 1; t.skillInheritances.hook = true; t.skills = ['hook']; return t; };
+    const a = make(0); act(a, { type: 'rebirth' }, 0); assert.equal(a.job, 'fisher', 'without research the job resets');
+    const b = make(1); assert.ok(Pr.canChangeJob(b, 'harpoon')); act(b, { type: 'rebirth' }, 0); assert.equal(b.job, 'harpoon', 'level 1: auto job change to the mastered job'); assert.ok(b.logs.some(l => /자동 전직/.test(l.text)));
+    const c = make(2); act(c, { type: 'rebirth' }, 0); assert.ok(c.skills.includes('hook'), 'level 2 keeps the inherited skill');
+    const d = make(3); d.permanent.starting = 10; act(d, { type: 'rebirth' }, 0); assert.equal(d.statPoints, 0); assert.ok(d.attributes.str >= 55 && d.attributes.dex >= 18 && d.attributes.vit >= 18 && d.attributes.int === 0, `ratio kept ${JSON.stringify(d.attributes)}`);
+    const e = make(1); e.jobMastery.harpoon = 0; act(e, { type: 'rebirth' }, 0); assert.equal(e.job, 'fisher', 'unmastered job is not restored');
+});

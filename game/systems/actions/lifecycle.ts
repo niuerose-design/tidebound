@@ -1,7 +1,7 @@
 /** 환생, 하드코어 소프트 리셋, 서약 선택과 전체 초기화 */
 import { deepVoyagePearls, nextLifeBonus, tailwindExp, rebirthLevel, rebirthReward } from '../meta';
 import { stats } from '../stats';
-import { salvageRate, startingLevel } from '../../data/economy';
+import { salvageRate, startingLevel, researchRank } from '../../data/economy';
 import { PROGRESSION } from '../../data/progression';
 import { saleValue, dismantleEssence } from '../equipment';
 import type { State, Vows, RebirthRecord } from '../../types';
@@ -11,6 +11,7 @@ import type { ActionHandlers } from './types';
 import { addLog, newState } from '../state';
 import { drawRebirthDoor } from '../../data/doors';
 import { jobById, JOB_TREES } from '../../data/classes';
+import { jobMastered, canChangeJob, canUse, grantJobSkills, trimLoadout } from '../progression';
 import { STAGES } from '../../data/world';
 import { claimAchievements } from '../progress';
 import { gainLevels, releaseAnchor } from '../encounter';
@@ -34,7 +35,7 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
     }
     fresh.abyssBest = s.abyssBest;
     fresh.shopSerial = s.shopSerial;
-    Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, limitBreaks: s.limitBreaks, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus: next.lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: next.pearls, essence: s.essence || 0, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, book: s.book, clears: s.clears, kills: s.kills, rank: s.rank, playMs: s.playMs || 0, lifeStart: s.lifeStart, rebirthLog: s.rebirthLog, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
+    Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, limitBreaks: s.limitBreaks, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus: next.lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: next.pearls, essence: s.essence || 0, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, book: s.book, clears: s.clears, kills: s.kills, rank: s.rank, badge: s.badge, playMs: s.playMs || 0, lifeStart: s.lifeStart, rebirthLog: s.rebirthLog, deaths: s.deaths, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
     s.hp = stats(s).hp;
     s.mana = stats(s).mana;
 }
@@ -82,6 +83,8 @@ export const lifecycleActions: ActionHandlers = {
         // v27.63 환생 기록: 이번 생에 걸린 실제 시간·사냥 시간·도달 레벨·받은 세계석. 다음 생 시작 시각을 새로 잽니다.
         const life = s.lifeStart || { at: now, playMs: s.playMs || 0, partial: true };
         const record: RebirthRecord = { n: s.rebirths + 1, at: now, realMs: Math.max(0, now - life.at), playMs: Math.max(0, (s.playMs || 0) - life.playMs), level: s.level, pearls, ...(life.partial ? { partial: true } : {}) };
+        // v27.80 지겨운 환생: 직전 직업·스킬·능력치 비율을 기억했다가 숙달한 것만 복원합니다.
+        const habit = researchRank(s, 'habit'), prevJob = jobById(s.job), prevMastered = !!prevJob && jobMastered(s, prevJob), prevSkills = [...s.skills], prevAttr = { ...s.attributes };
         startLife(s, now, { pearls: s.pearls + pearls, rebirths: s.rebirths + 1, lifeBonus });
         s.rebirthLog = [...(s.rebirthLog || []), record].slice(-REBIRTH_LOG_KEEP);
         s.lifeStart = { at: now, playMs: s.playMs || 0 };
@@ -102,6 +105,17 @@ export const lifecycleActions: ActionHandlers = {
         if (lifeBonus === 'tailwind') addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%`, 'reward');
         if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => id === 'rough' ? `${VOW_NAMES.rough} ${s.vows!.rough}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
         if (s.rebirthDoor) addLog(s, `윤회의 문 · 이번 생에는 ${jobById(s.rebirthDoor)?.name}의 문이 열렸습니다.`, 'system');
+        if (habit >= 1 && prevJob && prevMastered && prevJob.id !== s.job && canChangeJob(s, prevJob.id)) {
+            s.job = prevJob.id; if (!s.unlockedJobs.includes(prevJob.id)) s.unlockedJobs.push(prevJob.id); grantJobSkills(s);
+            addLog(s, `지겨운 환생 · 숙달한 ${prevJob.name}(으)로 자동 전직`, 'system');
+        }
+        if (habit >= 2) {
+            const kept = prevSkills.filter(id => canUse(s, id)); if (kept.length) { s.skills = [...new Set([...kept, ...s.skills])]; trimLoadout(s); addLog(s, `지겨운 환생 · 스킬 편성 ${s.skills.length}개 유지`, 'system'); }
+        }
+        if (habit >= 3) {
+            const total = Object.values(prevAttr).reduce((a, b) => a + b, 0);
+            if (total > 0 && s.statPoints > 0) { const points = s.statPoints; let used = 0; for (const key of Object.keys(prevAttr) as (keyof typeof prevAttr)[]) { const n = Math.floor(points * prevAttr[key] / total); s.attributes[key] += n; used += n; } s.statPoints -= used; if (used) addLog(s, `지겨운 환생 · 능력치 ${used}포인트를 이전 비율로 배분`, 'system'); }
+        }
         const seal = anchorSeal(s);
         if (seal) addLog(s, `잠든 힘 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1에 머뭅니다.`, 'system');
     },

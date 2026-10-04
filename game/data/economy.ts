@@ -39,6 +39,8 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'exp', name: '모험의 기억', desc: '처치 경험치 +20%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', per: .2, unit: 'percent', label: '처치 경험치' },
     // v27.60 모험가의 유산: 시작 골드 +500 → 시작 레벨 +2. id는 그대로라 찍어 둔 단계가 이어집니다.
     { id: 'starting', name: '모험가의 유산', desc: '환생 직후 시작 레벨 +2 (오른 레벨만큼 능력치 포인트도 받음)', max: 10, base: 3, step: 2, tab: 'utility', group: 'basic', per: 2, unit: 'flat', label: '시작 레벨', suffix: '레벨' },
+    // v27.80 지겨운 환생: 환생 직후 잡일을 줄입니다. 숙달한 것만 복원하므로 숙련 복사 같은 우회가 없습니다.
+    { id: 'habit', name: '지겨운 환생', desc: '1단계: 환생 직전 직업을 숙달했으면 환생 직후 자동 전직. 2단계: 장착 스킬 중 계승·숙달한 것은 그대로 장착. 3단계: 능력치 배분 비율을 유지해 시작 포인트를 자동 배분', max: 3, base: 6, step: 4, tab: 'utility', group: 'basic', rebirth: 2, per: 1, unit: 'flat', label: '환생 편의', suffix: '단계', levels: ['없음', '자동 전직', '자동 전직 · 스킬 편성 유지', '자동 전직 · 스킬 편성 유지 · 능력치 비율 유지'] },
     { id: 'inventory', name: '넓은 가방', desc: '가방 +5칸', max: 8, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 2, per: 5, unit: 'flat', label: '가방', suffix: '칸' },
     { id: 'offline', name: '긴 휴식', desc: '오프라인 정산 상한 +2시간', max: 12, base: 3, step: 2, tab: 'utility', group: 'basic', rebirth: 2, per: 2, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
     { id: 'tailwindSail', name: '순풍의 깃털', desc: '순풍 경험치 보너스 +10%p (기본 +50%)', max: 5, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 2, per: .1, unit: 'pp', label: '순풍 경험치 보너스' },

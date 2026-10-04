@@ -350,6 +350,8 @@ export type State = {
     achievements?: Record<string, number>;
     /** v26.1 장착한 칭호 id. undefined면 자동(가장 최근 달성), null이면 표시 안 함. */
     title?: string | null;
+    /** v27.80 이름 옆 표시: 칭호 또는 계급장(채팅도 같음). 없으면 칭호. */
+    badge?: 'title' | 'rank';
     /** v27.79 계급장: 처치 수로만 오르는 별도 레벨과 진급 포인트 특전. 환생해도 남습니다. 없으면 kills로 시작합니다. */
     rank?: import('./data/rank').RankState;
     /** v25.6 보상을 받은 업적 id. 영구 AP·배율은 받은 것만 셉니다. */

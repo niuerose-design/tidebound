@@ -65,6 +65,11 @@ export const buildActions: ActionHandlers = {
         if (rankPointsFree(s) < def.cost) throw Error(`진급 포인트가 부족합니다 (필요 ${def.cost}).`);
         rk.perks = { ...rk.perks, [def.id]: rankPerkLevel(s, def.id) + 1 }; s.rank = rk;
     },
+    /** v27.80 이름 옆에 칭호/계급장 중 무엇을 보일지. */
+    badge(s, { id }) {
+        if (id !== 'title' && id !== 'rank') throw Error('칭호 또는 계급장만 고를 수 있습니다.');
+        if (id === 'title') delete s.badge; else s.badge = 'rank';
+    },
     title(s, { id }) {
         if (id === 'auto') { delete s.title; return; }
         if (id === 'none') { s.title = null; return; }
