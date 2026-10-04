@@ -5,7 +5,7 @@ import type { Skill } from '../types';
  * v23 계보 보강: 계열·계보 사이의 직업 수 차이를 줄입니다.
  *
  * - 일반 계열은 21~28개, 이름 있는 계보는 4~8개가 되도록 짧은 계보에 후속 차수·분기를 더하고,
- *   상태이상(출혈·마비)과 복합(해룡 기수·룬 대장장이)에 새 계보를 둡니다.
+ *   상태이상(출혈·마비)과 복합(드래곤나이트·메카닉 (1차))에 새 계보를 둡니다.
  * - ??? 계열은 문이 걸린 기존 첫 직업의 후속 차수만 더합니다. 새 첫 직업을 만들지 않으므로 문 규칙은 그대로입니다.
  * - 수치는 같은 차수의 기존 직업을 기준으로 잡고 scripts/check-job-balance.mjs로 중앙값 근처에 맞췄습니다.
  *   액티브의 발동률·배율·재사용 대기·마나는 expansion.ts와 같은 규칙(물리 30% 이하·마나 없음, 마법·복합 45% 이상·마나 사용)을 따릅니다.
@@ -21,27 +21,27 @@ const T5 = { tier: 5, level: 70, rebirth: 2, mastery: 600, masteryTarget: 30000,
 const STAT_T1 = { ...neutral, ...T1, branchless: true, masteryTarget: 500, masteryBoost: .08 };
 
 export const LINEAGE_JOBS: NewJob[] = [
-    // ── 물리: 무투가 계보 분기 ──────────────────────────────────
-    { id: 'grappler', name: '유술가', title: '붙잡으면 놓지 않는다', desc: '무투가의 장타로 멈춘 적의 관절을 꺾어, 제어된 적에게 큰 피해를 주는 격투 2차 직업입니다.', ...neutral, bonus: { attack: 27, hp: 50, defense: 2 }, crit: .04, ...T2, parent: 'martialArtist', requires: { str: 26, vit: 26 }, requiresSkillMastery: { palmStrike: 2 }, role: '물리·관절 제어', tree: 'physical' },
+    // ── 물리: 바이퍼 계보 분기 ──────────────────────────────────
+    { id: 'grappler', name: '유술가', title: '붙잡으면 놓지 않는다', desc: '해적의 장타로 멈춘 적의 관절을 꺾어, 제어된 적에게 큰 피해를 주는 격투 2차 직업입니다.', ...neutral, bonus: { attack: 27, hp: 50, defense: 2 }, crit: .04, ...T2, parent: 'martialArtist', requires: { str: 26, vit: 26 }, requiresSkillMastery: { palmStrike: 2 }, role: '물리·관절 제어', tree: 'physical' },
 
-    // ── 마법: 해류 연구자 계보 보강 ─────────────────────────────
+    // ── 마법: 일리움 계보 보강 ─────────────────────────────
     { id: 'crystalCaster', name: '마나 결정술사', title: '흐르는 마나를 굳힌다', desc: '최대 마나에 비례하는 결정 파편을 쏘는 주문 2차 직업입니다. 마나를 모을수록 강해집니다.', ...neutral, bonus: { magic: 45, resist: 2 }, crit: .03, ...T2, parent: 'currentScholar', requires: { int: 30, wis: 24 }, requiresSkillMastery: { rippleGlyph: 2 }, role: '마법·마나 비례', tree: 'magic' },
-    { id: 'brineSavant', name: '염해 연금술사', title: '바다를 녹이는 공식', desc: '염수 연금술사의 염수 촉매로 남긴 출혈에 부식의 개화로 큰 피해를 더하는 연금 3차 직업입니다.', ...neutral, hp: 1, bonus: { magic: 92, resist: 4 }, crit: .07, ...T3, parent: 'saltAlchemist', requires: { int: 46, luk: 34 }, requiresSkillMastery: { saltCatalyst: 3 }, role: '출혈·연금 폭발', tree: 'magic' },
+    { id: 'brineSavant', name: '염해 연금술사', title: '바다를 녹이는 공식', desc: '일리움 (2차)의 염수 촉매로 남긴 출혈에 부식의 개화로 큰 피해를 더하는 연금 3차 직업입니다.', ...neutral, hp: 1, bonus: { magic: 92, resist: 4 }, crit: .07, ...T3, parent: 'saltAlchemist', requires: { int: 46, luk: 34 }, requiresSkillMastery: { saltCatalyst: 3 }, role: '출혈·연금 폭발', tree: 'magic' },
 
     // ── 방어: 해초 돌봄꾼 계보 보강 ─────────────────────────────
     { id: 'tideHealer', name: '해류 치유사', title: '물결로 상처를 씻는다', desc: '큰 회복 주문과 체력·마법 방어 패시브로 오래 버티는 회복 3차 직업입니다.', ...neutral, bonus: { magic: 37, hp: 185, defense: 9, resist: 10 }, ...T3, parent: 'reefMedic', requires: { vit: 45, wis: 38 }, requiresSkillMastery: { reefPulse: 3 }, role: '회복·지속전', tree: 'defense' },
     { id: 'shoreApothecary', name: '조간대 약사', title: '밀물과 썰물 사이의 약초', desc: '회복하며 자신의 출혈·감속을 풀어내는 해독형 2차 직업입니다.', ...neutral, bonus: { magic: 18, hp: 75, defense: 3, resist: 3 }, ...T2, parent: 'seagrassKeeper', requires: { vit: 26, int: 22 }, requiresSkillMastery: { greenTide: 2 }, role: '회복·해독', tree: 'defense' },
     { id: 'deepCaretaker', name: '등대 요양사', title: '깊은 곳에서 생명을 돌본다', desc: '입힌 피해를 크게 흡수하고 두 방어를 함께 올리는 흡혈형 3차 직업입니다.', ...neutral, bonus: { magic: 55, hp: 220, defense: 7, resist: 12 }, ...T3, parent: 'shoreApothecary', requires: { vit: 45, wis: 40 }, requiresSkillMastery: { kelpPoultice: 3 }, role: '회복·흡혈', tree: 'defense' },
 
-    // ── 상태이상: 주술사 계보 보강 ──────────────────────────────
-    { id: 'voodooCrafter', name: '부두 인형사', title: '실 한 가닥에 저주를 꿴다', desc: '주술사의 저주탄으로 약화시킨 적을 바늘 인형으로 크게 찌르는 저주 2차 직업입니다.', ...neutral, bonus: { magic: 38, resist: 2 }, crit: .04, ...T2, parent: 'shaman', requires: { int: 28, luk: 24 }, requiresSkillMastery: { curseBolt: 2 }, role: '약화·저주 연계', tree: 'status' },
+    // ── 상태이상: 칼리 계보 보강 ──────────────────────────────
+    { id: 'voodooCrafter', name: '부두 인형사', title: '실 한 가닥에 저주를 꿴다', desc: '칼리 (1차)의 저주탄으로 약화시킨 적을 바늘 인형으로 크게 찌르는 저주 2차 직업입니다.', ...neutral, bonus: { magic: 38, resist: 2 }, crit: .04, ...T2, parent: 'shaman', requires: { int: 28, luk: 24 }, requiresSkillMastery: { curseBolt: 2 }, role: '약화·저주 연계', tree: 'status' },
     { id: 'calamityShrine', name: '재앙의 무녀', title: '불길한 조류를 부른다', desc: '침묵을 걸고 제어된 적을 무너뜨리는 환생 후 4차 저주 직업입니다.', ...neutral, magic: 1.52, hp: 1.2, defense: 1.12, resist: 1.18, crit: .06, ...T4, parent: 'warlock', requires: { int: 56, wis: 42 }, requiresSkillMastery: { soulRend: 3 }, role: '침묵·재앙', tree: 'status' },
-    // ── 상태이상: 피낚시꾼 계보(출혈) ───────────────────────────
+    // ── 상태이상: 데몬어벤져 계보(출혈) ───────────────────────────
     { id: 'bloodAngler', name: '피낚시꾼', title: '상처에서 흐름을 읽는다', desc: '출혈을 거는 갈고리와 지속 피해 패시브를 익히는 출혈 입문 직업입니다.', ...neutral, bonus: { attack: 1 }, crit: .02, ...T1, requires: { str: 12, dex: 10 }, role: '출혈 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
-    { id: 'gashTracker', name: '혈흔 추적자', title: '핏자국은 사라지지 않는다', desc: '피낚시꾼의 베는 갈고리로 출혈시킨 적을 더 깊이 베는 연계형 2차 직업입니다.', ...neutral, bonus: { attack: 24, hp: 10 }, crit: .08, ...T2, parent: 'bloodAngler', requires: { dex: 30, str: 24 }, requiresSkillMastery: { gashHook: 2 }, role: '출혈·연계', tree: 'status' },
+    { id: 'gashTracker', name: '혈흔 추적자', title: '핏자국은 사라지지 않는다', desc: '데몬어벤져 (1차)의 베는 갈고리로 출혈시킨 적을 더 깊이 베는 연계형 2차 직업입니다.', ...neutral, bonus: { attack: 24, hp: 10 }, crit: .08, ...T2, parent: 'bloodAngler', requires: { dex: 30, str: 24 }, requiresSkillMastery: { gashHook: 2 }, role: '출혈·연계', tree: 'status' },
     { id: 'crimsonExecutioner', name: '선혈 처형인', title: '마지막 한 방울까지', desc: '베는 갈고리로 걸어 둔 출혈에 선혈 판결로 큰 연계 피해를 더해 적을 끝내는 3차 직업입니다. 방어가 조금 낮습니다.', ...neutral, bonus: { attack: 80, hp: 30 }, crit: .15, ...T3, parent: 'gashTracker', requires: { str: 46, dex: 36 }, requiresSkillMastery: { openVein: 3 }, role: '출혈·처형', tree: 'status' },
     { id: 'bloodDancer', name: '혈무사', title: '붉은 물결 위의 춤', desc: '오래 가는 출혈을 거는 붉은 왈츠와 속도 패시브로 적을 갉아먹는 2차 직업입니다.', ...neutral, bonus: { attack: 26 }, crit: .08, ...T2, parent: 'bloodAngler', requires: { dex: 32, luk: 20 }, requiresSkillMastery: { gashHook: 2 }, role: '출혈·연타', tree: 'status' },
-    // ── 상태이상: 마비 침술사 계보(기절·감속) ───────────────────
+    // ── 상태이상: 카데나 계보(기절·감속) ───────────────────
     { id: 'nerveNeedler', name: '마비 침술사', title: '한 점을 찌르면 멈춘다', desc: '적을 잠시 기절시키는 침과 명중·치명 패시브를 익히는 제어 입문 직업입니다.', ...neutral, bonus: { attack: 1, magic: 1 }, ...T1, requires: { dex: 10, int: 12 }, role: '기절 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
     { id: 'nerveSeverer', name: '처형인', title: '움직임의 줄을 끊는다', desc: '마비 침으로 멈춘 적의 신경을 끊어 큰 피해를 주는 2차 직업입니다.', ...neutral, bonus: { attack: 30 }, crit: .08, ...T2, parent: 'nerveNeedler', requires: { dex: 30, int: 22 }, requiresSkillMastery: { numbNeedle: 2 }, role: '기절·연계', tree: 'status' },
     { id: 'silenceWarden', name: '정적의 집행자', title: '고요 속에서 끝낸다', desc: '마비 침으로 멈춘 적을 죽은 고요로 처형하는 3차 직업입니다.', ...neutral, bonus: { attack: 75, hp: 40 }, crit: .1, ...T3, parent: 'nerveSeverer', requires: { dex: 44, int: 34 }, requiresSkillMastery: { severNerve: 3 }, role: '기절·처형', tree: 'status' },
@@ -50,12 +50,12 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'toadstoolForager', name: '독버섯 채집가', title: '먹지 말고 쓴다', desc: '지속 피해와 마법 방어 패시브 하나를 익히는 독립 1차 직업입니다.', ...STAT_T1, requires: { int: 10, vit: 10 }, role: '능력치·중독', tree: 'status' },
     { id: 'inkThrower', name: '먹물 투척수', title: '먼저 눈을 가린다', desc: '명중·회피 패시브 하나를 익히는 독립 1차 직업입니다.', ...STAT_T1, requires: { dex: 12, luk: 8 }, role: '능력치·명중', tree: 'status' },
 
-    // ── 복합: 조류 창기병 계보(해룡) ────────────────────────────
+    // ── 복합: 다크나이트 계보(해룡) ────────────────────────────
     { id: 'tideLancer', name: '조류 창기병', title: '물살을 창끝에 싣는다', desc: '(물리+마법)/2로 찌르는 창술과 체력·마나 패시브를 익히는 복합 입문 직업입니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, ...T1, requires: { str: 10, wis: 12 }, role: '복합 입문·창', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
     { id: 'seaDragoon', name: '해룡 기수', title: '바다뱀의 등에 오른다', desc: '복합 계보의 2차 직업입니다. 급강하로 상대를 오래 약화시키고, 패시브로 체력과 방어를 받칩니다.', ...neutral, bonus: { attack: 36, magic: 39, hp: 60 }, crit: .03, ...T2, parent: 'tideLancer', requires: { str: 26, wis: 26 }, requiresSkillMastery: { currentThrust: 2 }, role: '복합·돌진', tree: 'hybrid' },
     { id: 'stormDragoon', name: '폭풍 용기사', title: '번개를 두른 창', desc: '방어를 꿰뚫는 뇌창과 속도 패시브로 싸우는 복합 3차 직업입니다.', ...neutral, bonus: { attack: 67, magic: 74, hp: 90, defense: 3, resist: 2 }, crit: .04, ...T3, parent: 'seaDragoon', requires: { str: 40, wis: 40, vit: 25 }, requiresSkillMastery: { dragonDive: 3 }, role: '복합·관통', tree: 'hybrid' },
     { id: 'abyssDragonLord', name: '해구 용왕', title: '파도의 왕좌', desc: '복합 계보의 환생 후 4차 직업입니다. 대돌격으로 상대를 기절시키고, 패시브로 체력과 물리·마법 공격을 함께 올립니다.', ...neutral, attack: 1.39, magic: 1.39, hp: 1.18, defense: 1.06, resist: 1.06, crit: .06, ...T4, parent: 'stormDragoon', requires: { str: 50, wis: 50 }, requiresSkillMastery: { thunderLance: 3 }, role: '복합·최상위 돌진', tree: 'hybrid' },
-    // ── 복합: 룬 대장장이 계보 ──────────────────────────────────
+    // ── 복합: 메카닉 계보 ──────────────────────────────────
     { id: 'runesmith', name: '룬 대장장이', title: '쇠에 문장을 새긴다', desc: '약화를 거는 룬 망치와 두 방어 패시브를 익히는 복합 입문 직업입니다.', ...neutral, bonus: { attack: 1, magic: 1, defense: 1 }, ...T1, requires: { str: 10, int: 12 }, role: '복합 입문·룬', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
     { id: 'arcArtificer', name: '마갑 장인', title: '갑옷이 곧 무기', desc: '물리 방어에 비례하는 갑주 충격과 두 방어 패시브로 버티며 싸우는 2차 직업입니다.', ...neutral, bonus: { attack: 22, magic: 24, hp: 50, defense: 4, resist: 3 }, ...T2, parent: 'runesmith', requires: { int: 26, vit: 24 }, requiresSkillMastery: { runeHammer: 2 }, role: '복합·방어 비례', tree: 'hybrid' },
     { id: 'resonanceEngineer', name: '공명 기공사', title: '공명하는 포신', desc: '복합 계보의 3차 직업입니다. 공명포는 방어를 꿰뚫고, 패시브로 체력과 방어를 받칩니다.', ...neutral, bonus: { attack: 59, magic: 65, hp: 115, defense: 7, resist: 5 }, crit: .03, ...T3, parent: 'arcArtificer', requires: { int: 40, vit: 36, str: 25 }, requiresSkillMastery: { plateSurge: 3 }, role: '복합·방어 연계', tree: 'hybrid' },
@@ -91,7 +91,7 @@ export const LINEAGE_JOBS: NewJob[] = [
 export const NEW_LINEAGES = {
     bloodAngler: { id: 'bloodAngler', name: '피낚시꾼 계보', tree: 'status' as const, summary: '출혈을 쌓고 출혈 중인 적을 처형하는 계보입니다.' },
     nerveNeedler: { id: 'nerveNeedler', name: '마비 침술사 계보', tree: 'status' as const, summary: '기절·감속으로 적을 멈추고 제어된 적을 끝내는 계보입니다.' },
-    tideLancer: { id: 'tideLancer', name: '조류 창기병 계보', tree: 'hybrid' as const, summary: '물리·마법을 함께 실은 창술로 4차 해구 용왕에 이르는 계보입니다.' },
+    tideLancer: { id: 'tideLancer', name: '조류 창기병 계보', tree: 'hybrid' as const, summary: '물리·마법을 함께 실은 창술로 4차 다크나이트에 이르는 계보입니다.' },
     runesmith: { id: 'runesmith', name: '룬 대장장이 계보', tree: 'hybrid' as const, summary: '방어를 무기로 바꾸는 룬 공학과 현측 포격으로 갈라지는 계보입니다.' },
 };
 
@@ -131,7 +131,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'tidepoolTonic', name: '조수 웅덩이 강장제', desc: '최대 체력과 마나 회복이 오릅니다.', level: 25, job: 'shoreApothecary', cost: 2, bonus: { hp: 80, manaRegen: 1 } },
     { ...A, ...magic, id: 'abyssalMend', name: '등대 봉합', desc: '', level: 40, job: 'deepCaretaker', chance: .55, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 18, effect: 'drain', drainRatio: .3 },
     { ...P, id: 'stillWaterVigil', name: '고요한 물의 간병', desc: '물리·마법 방어가 오릅니다.', level: 40, job: 'deepCaretaker', cost: 3, bonus: { defense: 20, resist: 20 } },
-    // 상태이상: 주술사
+    // 상태이상: 칼리 (1차)
     { ...A, ...magic, id: 'pinDoll', name: '바늘 인형', desc: '', level: 25, job: 'voodooCrafter', chance: .5, cooldown: 3, multiplier: 1.45, cost: 3, manaCost: 13, effect: 'weaken', damageBonusCondition: 'weakened', conditionalDamageBonus: .3 },
     { ...P, id: 'effigyThread', name: '인형의 실', desc: '마법 공격과 지속 피해가 오릅니다.', level: 25, job: 'voodooCrafter', cost: 2, bonus: { magic: 14, dotBonus: .08 } },
     { ...A, ...magic, id: 'calamityRite', name: '재앙의 의식', desc: '', level: 55, job: 'calamityShrine', chance: .5, cooldown: 4, multiplier: 2.9, cost: 5, manaCost: 26, effect: 'silence', damageBonusCondition: 'controlled', conditionalDamageBonus: .55, masteryMilestones: M4 },
@@ -172,7 +172,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'stormRider', name: '폭풍 기수', desc: '물리·마법 공격과 속도가 오릅니다.', level: 40, job: 'stormDragoon', cost: 3, bonus: { attack: 18, magic: 18, speed: 6 } },
     { ...A, ...dual, id: 'leviathanCharge', name: '용왕 대돌격', desc: '', level: 55, job: 'abyssDragonLord', chance: .5, cooldown: 4, multiplier: 2.5, cost: 5, manaCost: 26, effect: 'stun', masteryMilestones: M4 },
     { ...P, id: 'dragonKingAura', name: '용왕의 위엄', desc: '최대 체력과 물리·마법 공격이 오릅니다.', level: 55, job: 'abyssDragonLord', cost: 3, bonus: { hp: 260, attack: 24, magic: 24 }, masteryMilestones: M4 },
-    // 복합: 룬 대장장이
+    // 복합: 메카닉 (1차)
     { ...A, ...dual, id: 'runeHammer', name: '룬 망치', desc: '', level: 10, job: 'runesmith', chance: .48, cooldown: 3, multiplier: 1.15, cost: 2, manaCost: 8, effect: 'weaken' },
     { ...P, id: 'forgeRune', name: '대장간 룬', desc: '물리·마법 방어가 오릅니다.', level: 10, job: 'runesmith', cost: 2, bonus: { defense: 8, resist: 8 } },
     { ...A, ...physical, id: 'plateSurge', name: '갑주 충격', desc: '', level: 25, job: 'arcArtificer', chance: .26, cooldown: 3, multiplier: 1.4, cost: 3, scaling: 'defense', scalingRatio: .6 },

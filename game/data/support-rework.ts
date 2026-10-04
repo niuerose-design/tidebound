@@ -4,12 +4,12 @@ import type { Skill } from '../types';
 /**
  * v24.2 보조 계열 개편 + ??? 문 직업 풀.
  *
- * - 오징어 광대: 골드 대신 '주사위'. 도박 기술은 쓸 때마다 피해 배율·명중을 굴리고(gamble), 올인은 체력·마나를 겁니다(allIn).
+ * - 팬텀 (1차): 골드 대신 '주사위'. 도박 기술은 쓸 때마다 피해 배율·명중을 굴리고(gamble), 올인은 체력·마나를 겁니다(allIn).
  * - 난파선 수집가: 골드·드롭을 내려놓고 도감 기록(발견한 어종 + 등록한 물건)에 비례합니다(scaling 'codex', perCount codex).
  * - 인양 상인: 골드·던전 골드에 수집가의 드롭을 넘겨받고, 보유 골드 비례(scaling 'gold')·골드 투척(goldSpend) 기술을 씁니다.
- * - 견습 기록사: 경험치는 그대로, 누적 포획(scaling 'catch')과 환생 횟수(perCount rebirth)에 비례합니다.
- * - 거수 생태학자: 던전 클리어 + 보스 포획(scaling 'hunt', perCount hunt)과 지정 어종 포획(perCount species), 사냥감 추가 피해(preyBonus).
- * - 방랑 음유시인: 직업마다 AP 0 노래 패시브(song). 음유시인 계보만 장착합니다.
+ * - 패스파인더 (1차): 경험치는 그대로, 누적 포획(scaling 'catch')과 환생 횟수(perCount rebirth)에 비례합니다.
+ * - 와일드헌터 (1차): 던전 클리어 + 보스 포획(scaling 'hunt', perCount hunt)과 지정 어종 포획(perCount species), 사냥감 추가 피해(preyBonus).
+ * - 엔젤릭버스터 (1차): 직업마다 AP 0 노래 패시브(song). 음유시인 계보만 장착합니다.
  * - ??? 계열: 시간의 문(아침·낮·밤)과 발견의 문에 독립 1차 직업을 더합니다(doors.ts).
  *
  * 액티브 수치(SUPPORT_BALANCE)는 skill-balance.ts의 ACTIVE_SKILL_BALANCE에 합쳐져 상태이상 규칙·마나 배율·설명을 함께 거칩니다.
@@ -28,7 +28,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     // v25.4 떠돌이 계보: 복합 피해 규칙(발동 45% 이상)에 맞춘 숙달 비례 일격.
     borrowedForm: { chance: .45, cooldown: 4, multiplier: 1.2, manaCost: 8 },
     thousandLives: { chance: .45, cooldown: 5, multiplier: 1.6, statusTurns: 3, manaCost: 12 },
-    // ── 오징어 광대: 주사위 ──
+    // ── 팬텀 (1차): 주사위 ──
     inkTrick: { gamble: { min: 1, max: 1, accuracy: .25 } },
     smokeVeil: { gamble: { min: 1, max: 1, accuracy: .2 } },
     loadedHook: { multiplier: 1.05, gamble: { min: .3, max: 1.9, accuracy: .1 }, scaling: 'luck', scalingRatio: .4 },
@@ -42,7 +42,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     spoilsStrike: { scaling: 'variant', scalingRatio: .04 },
     treasureStrike: { scaling: 'variant', scalingRatio: .045 },
     hoardCrush: { scaling: 'variant', scalingRatio: .05 },
-    // ── 어종 문양사: 도감 기록 비례(난파선 수집가에서 이관) ──
+    // ── 와일드헌터 (2차): 도감 기록 비례(난파선 수집가에서 이관) ──
     sigilShock: { chance: .5, cooldown: 3, multiplier: 1.2, manaCost: 4, preyBonus: .6, scaling: 'codex', scalingRatio: .008 },
     // ── 인양 상인: 보유 골드·골드 투척 ──
     coinToss: { chance: .26, cooldown: 3, multiplier: 1, goldSpend: { ratio: .005, cap: 20, scale: 1 } },
@@ -50,12 +50,12 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     coinBarrage: { scaling: 'gold', scalingRatio: .06, goldSpend: { ratio: .002, cap: 400, scale: .5 } },
     goldenTempest: { scaling: 'gold', scalingRatio: .07, goldSpend: { ratio: .002, cap: 3000, scale: .15 } },
     goldenStorm: { scaling: 'gold', scalingRatio: .08, goldSpend: { ratio: .002, cap: 12000, scale: .08 } },
-    // ── 견습 기록사: 누적 포획 ──
+    // ── 패스파인더 (1차): 누적 포획 ──
     dispatchDash: { scaling: 'catch', scalingRatio: .06 },
     constellationBolt: { scaling: 'catch', scalingRatio: .08 },
     starBolt: { scaling: 'catch', scalingRatio: .1 },
     galaxyFall: { scaling: 'catch', scalingRatio: .12 },
-    // ── 거수 생태학자: 사냥 기록·사냥감 ──
+    // ── 와일드헌터 (1차): 사냥 기록·사냥감 ──
     trackersSpear: { scaling: 'hunt', scalingRatio: .025, preyBonus: .2 },
     weakpointThesis: { preyBonus: .3 },
     weakpointCut: { preyBonus: .4 },
@@ -74,7 +74,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
 
 /** 패시브 덮어쓰기. bonus는 통째로 바뀝니다(골드·드롭을 빼거나 옮기기 위해). */
 export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
-    // 오징어 광대: 골드 대신 치명
+    // 팬텀 (1차): 골드 대신 치명
     focus: { desc: '치명타 확률 +7%. 흔들리는 주사위의 고점을 받쳐 줍니다.' },
     riskDividend: { desc: '치명 피해와 치명타 확률이 오르고, 치명타가 터지면 25% 확률로 가장 긴 재사용 대기를 초기화합니다.', bonus: { critDamage: .25, crit: .02 }, cooldownReset: { on: 'crit', chance: .25, pick: 'longest' } },
     jackpot: { desc: '치명 피해와 치명타 확률이 오릅니다.', bonus: { critDamage: .2, crit: .03 } },
@@ -94,14 +94,14 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     tradeWind: { desc: '골드·던전 골드 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
     tradeEmpire: { desc: '골드·던전 골드·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
     goldenEmpire: { desc: '골드·던전 골드·장비 드롭·환생 진주와 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
-    // 견습 기록사: 경험치 + 포획·환생
+    // 패스파인더 (1차): 경험치 + 포획·환생
     voyageReview: { desc: '획득 경험치 +8%. 누적 포획이 쌓일수록 두 공격이 오릅니다.', bonus: { expBonus: .08 }, perCount: [{ source: 'catch', per: 500, bonus: { attack: 1, magic: 1 }, cap: 10 }] },
     chronicleStudy: { desc: '획득 경험치 +12%, 두 공격 +16, 최대 체력 +60. 환생할 때마다, 그리고 도감 기록 5개마다 두 공격과 체력이 더 오릅니다.', bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 3, magic: 3, hp: 10 }, cap: 10 }, { source: 'codex', per: 5, bonus: { attack: 1, magic: 1, hp: 4 }, cap: 12 }] },
     swiftQuill: { desc: '속도와 경험치 획득이 오르고, 누적 포획마다 속도가 더 오릅니다.', bonus: { speed: 6, expBonus: .03 }, perCount: [{ source: 'catch', per: 1000, bonus: { speed: 1 }, cap: 5 }] },
     starLog: { desc: '경험치 획득이 오르고, 환생과 누적 포획에 비례해 마법 공격이 오릅니다.', bonus: { expBonus: .06 }, perCount: [{ source: 'rebirth', per: 1, bonus: { magic: 5 }, cap: 12 }, { source: 'catch', per: 2000, bonus: { magic: 2 }, cap: 15 }] },
     starChart: { desc: '경험치 획득이 오르고, 환생할 때마다 마법 공격과 체력이 오릅니다.', bonus: { expBonus: .15 }, perCount: [{ source: 'rebirth', per: 1, bonus: { magic: 6, hp: 15 }, cap: 20 }] },
     cosmicChart: { desc: '경험치 획득이 크게 오르고, 환생과 누적 포획에 비례해 공격·체력·치명타가 오릅니다.', bonus: { expBonus: .25 }, perCount: [{ source: 'rebirth', per: 1, bonus: { magic: 8, attack: 4, hp: 20 }, cap: 25 }, { source: 'catch', per: 5000, bonus: { crit: .004 }, cap: 10 }] },
-    // 거수 생태학자: 사냥 기록·지정 어종
+    // 와일드헌터 (1차): 사냥 기록·지정 어종
     titanFieldNotes: { perCount: [{ source: 'hunt', per: 10, bonus: { attack: 1, magic: 1 }, cap: 10 }] },
     serpentFolklore: { perCount: [{ source: 'species', per: 30, bonus: { magic: 2, resist: 1 }, cap: 15 }, { source: 'codex', per: 4, bonus: { magic: 2 }, cap: 15 }] },
     huntersPatience: { desc: '물리 공격과 명중이 오르고, 사냥 기록마다 물리 공격이 더 오릅니다.', bonus: { attack: 6, accuracy: .04 }, perCount: [{ source: 'hunt', per: 10, bonus: { attack: 2 }, cap: 15 }] },
@@ -164,8 +164,8 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
     gambler: '쓸 때마다 피해 배율과 명중이 흔들리는 밑장 챔질과 치명 패시브를 가진 고위험 직업입니다.',
     inkMime: '광대 계보의 2차 직업입니다. 연막 찌르기로 상대를 약화시키고, 패시브로 회피와 속도를 올립니다.',
     highRoller: '도박 계보의 3차 직업입니다. 올인 한 방은 체력과 마나를 걸고 때린 만큼 흡혈합니다. 패시브로 골드와 치명 피해를 올립니다. 위험이 큰 만큼 보상도 큽니다.',
-    fateGambler: '오징어 광대 계보의 환생 후 4차 직업입니다. 운명의 주사위는 치명타로 판을 뒤집습니다. 패시브로 치명 피해와 골드를 올립니다.',
-    luckDeity: '오징어 광대 계보의 5차 직업입니다. 대박 일격을 쓰고, 패시브로 치명타·치명 피해·골드를 올려 확률의 정점에 섭니다.',
+    fateGambler: '팬텀 계보의 환생 후 4차 직업입니다. 운명의 주사위는 치명타로 판을 뒤집습니다. 패시브로 치명 피해와 골드를 올립니다.',
+    luckDeity: '팬텀 계보의 5차 직업입니다. 대박 일격을 쓰고, 패시브로 치명타·치명 피해·골드를 올려 확률의 정점에 섭니다.',
     relicScavenger: '변종 조우 확률을 올리는 난파선 감식과 변종 기록에 비례하는 유물 던지기를 가진 1차 직업입니다. 변종과 황금 개체를 찾는 계보의 출발점입니다.',
     rareTracker: '변종 조우 확률과 황금 개체 확률을 올리는 전리품 감지, 그리고 Lv.30에 ×500 무리를 여는 무리 감지를 가진 2차 희귀어 직업입니다.',
     wreckDiver: '난파선 수집가 계보의 2차 파밍 직업입니다. 묵직한 닻을 휘두르고, 패시브로 체력과 장비 드롭을 올립니다.',
@@ -182,20 +182,20 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
     chronicleNavigator: '경험치 획득이 높고, 환생할 때마다 기록이 쌓여 강해지는 상위 기록사입니다.',
     logbookRunner: '기록 계보의 2차 직업입니다. 전령 질주로 자신을 가속하고, 패시브로 속도와 경험치를 올립니다.',
     starCartographer: '기록 계보의 3차 직업입니다. 별빛 주문을 쓰고, 패시브로 경험치와 마법 공격을 올립니다.',
-    starNavigator: '견습 기록사 계보의 환생 후 4차 성장 직업입니다. 별빛 탄환을 쓰고, 패시브로 경험치를 올립니다.',
-    routeDeity: '견습 기록사 계보의 5차 직업입니다. 은하 낙하를 쓰고, 패시브로 경험치와 마법 공격을 올려 성장 보조의 정점에 섭니다.',
+    starNavigator: '패스파인더 계보의 환생 후 4차 성장 직업입니다. 별빛 탄환을 쓰고, 패시브로 경험치를 올립니다.',
+    routeDeity: '패스파인더 계보의 5차 직업입니다. 은하 낙하를 쓰고, 패시브로 경험치와 마법 공격을 올려 성장 보조의 정점에 섭니다.',
     bossNaturalist: '보스 포획에서 숙련도를 더 얻고, 던전 클리어와 보스 포획이 쌓일수록 강해지는 생태 1차 직업입니다.',
     speciesChronicler: '전류 곰치·불씨 곰치·머쉬맘을 연구합니다. 지정 어종 포획에서 숙련을 크게 얻고, 도감 기록(발견한 어종 + 등록한 물건)이 쌓일수록 강해지는 문양 전격을 씁니다.',
     beastTracker: '보스 사냥 계보의 2차 직업입니다. 창격으로 방어를 꿰뚫고, 패시브로 물리 공격과 명중을 올립니다.',
     titanScholar: '보스 연구 계보의 3차 직업입니다. 약점 논증은 방어를 꿰뚫고, 패시브로 치명 피해와 관통을 올립니다.',
-    titanAnatomist: '거수 생태학자 계보의 환생 후 4차 직업입니다. 약점 절개는 빈사의 적을 크게 벱니다. 패시브로 치명 피해와 처형 기준을 올립니다.',
-    beastKing: '거수 생태학자 계보의 5차 직업입니다. 거수 쓰러뜨리기를 쓰고, 패시브로 처형 기준과 두 공격을 올려 보스 사냥의 정점에 섭니다.',
+    titanAnatomist: '와일드헌터 계보의 환생 후 4차 직업입니다. 약점 절개는 빈사의 적을 크게 벱니다. 패시브로 치명 피해와 처형 기준을 올립니다.',
+    beastKing: '와일드헌터 계보의 5차 직업입니다. 거수 쓰러뜨리기를 쓰고, 패시브로 처형 기준과 두 공격을 올려 보스 사냥의 정점에 섭니다.',
     bard: '유틸리티 입문 직업입니다. 노래로 자신을 가속하고, 패시브로 경험치와 속도를 올립니다.',
     minstrel: '유틸리티 2차 직업입니다. 불협화음으로 상대를 침묵시키고, 패시브로 골드와 경험치를 올립니다.',
     tidalSinger: '노래 계보의 2차 직업입니다. 합창으로 체력을 회복하고, 패시브로 경험치와 마나 회복을 올립니다.',
     legendBard: '가속 서사시와 성장 패시브, AP 0 노래로 모든 능력치를 고르게 올리는 유틸리티 3차 직업입니다.',
-    balladKing: '방랑 음유시인 계보의 환생 후 4차 직업입니다. 조류 찬가로 자신을 가속하고, 패시브로 경험치와 속도를 올립니다.',
-    siren: '방랑 음유시인 계보의 5차 직업입니다. 세이렌의 노래로 상대를 침묵시키고, 패시브로 경험치·드롭·마법 공격을 올려 노래의 정점에 섭니다.',
+    balladKing: '엔젤릭버스터 계보의 환생 후 4차 직업입니다. 조류 찬가로 자신을 가속하고, 패시브로 경험치와 속도를 올립니다.',
+    siren: '엔젤릭버스터 계보의 5차 직업입니다. 세이렌의 노래로 상대를 침묵시키고, 패시브로 경험치·드롭·마법 공격을 올려 노래의 정점에 섭니다.',
 };
 
 /** ??? 문 직업. 모두 상위·하위가 없는 독립 1차이며 문(doors.ts)이 열릴 때만 전직할 수 있습니다. */

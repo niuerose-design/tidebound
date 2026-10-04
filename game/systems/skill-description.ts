@@ -115,7 +115,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
-    if (sk.song) out.push('노래: AP 0 · 방랑 음유시인 계보 직업만 장착');
+    if (sk.song) out.push('노래: AP 0 · 엔젤릭버스터 계보 직업만 장착');
     if (sk.multicast) out.push(`동시 시전: 이 기술이 먼저 성공하면 편성의 다른 동시 시전 기술도 각자 발동률로 한 행동에 함께 나갑니다(최대 ${SKILL_FORMULA.multicast.max}개). 함께 나간 종류 하나마다 재사용 대기 +${SKILL_FORMULA.multicast.cooldownStep}, 마나 +${skillPercent(SKILL_FORMULA.multicast.manaScale)}`);
     if (sk.cooldownReset) out.push(`${({ crit: '치명타가 터지면', kill: '상대를 쓰러뜨리면', chain: '연속 행동마다' })[sk.cooldownReset.on]} ${sk.cooldownReset.chance >= 1 ? '항상' : `${skillPercent(sk.cooldownReset.chance)} 확률로`} ${({ longest: '가장 긴 재사용 대기 하나', first: '편성 순서 첫 번째 대기 중인 기술', all: '모든 재사용 대기' })[sk.cooldownReset.pick]}를 초기화`);
     if (sk.lastStand) out.push(`체력이 1 아래로 내려가지 않음 · 쓰러질 피해(추가타·지속 피해·반격 포함)를 받으면 체력 1로 버티고${sk.lastStand.heal ? ` 최대 체력 ${skillPercent(sk.lastStand.heal)} 회복` : ''} · 전투당 ${sk.lastStand.charges}번${sk.lastStand.chargesPerLevel ? ` (숙련 1단계마다 +${sk.lastStand.chargesPerLevel}번)` : ''}`);

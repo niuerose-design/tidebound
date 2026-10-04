@@ -10,11 +10,11 @@ export const SKILL_FX: Record<string, SkillFx> = {
     rapidJab: 'pierce', galeTriple: 'pierce', afterimageFlurry: 'slash',
     // 근력·체질 외길: 땅울림
     logSwing: 'quake', mountainCleave: 'quake', boulderToss: 'quake', landslide: 'quake', massiveCharge: 'quake',
-    // 성해 기사: 빛
+    // 루미너스 (2차): 빛
     oath: 'star', vowStrike: 'star',
     // 독립 물리·복합
     netThrow: 'wave', oathShout: 'song', runeBurst: 'arcane', harmonicWeight: 'quake', windupCast: 'arcane',
-    // 작살 사냥꾼: 관통·베기
+    // 아처: 관통·베기
     abyssHarpoon: 'pierce', krakenBore: 'pierce', needleStep: 'slash',
     // 경제
     goldenStorm: 'gold',
@@ -24,11 +24,11 @@ export const SKILL_FX: Record<string, SkillFx> = {
     pureBolt: 'arcane', manaBolt: 'arcane', encyclopediaBolt: 'arcane', borrowedForm: 'arcane',
     // 부식·모사·맨손
     saltCatalyst: 'venom', borrowedTentacles: 'bite', bareGrab: 'quake',
-    // 시계공·시간의 지배자: 시간 갈래
+    // 제로 (1차)·제로 (4차): 시간 갈래
     windUp: 'time', slackHand: 'time', timeMachine: 'time', precede: 'time', frozenTime: 'time', rewind: 'time',
     // 독술사·부식 연성: 독 갈래
     toxicFang: 'venom', venomDart: 'venom', doomMark: 'venom', miasma: 'venom', rotBloom: 'venom', rottenBait: 'venom', corrosiveBloom: 'venom', transmute: 'venom', grandTransmutation: 'venom',
-    // 오징어 광대: 먹물 갈래
+    // 팬텀 (1차): 먹물 갈래
     inkTrick: 'ink', smokeVeil: 'ink',
     // 망인 계보: 뼈 갈래
     graveHook: 'bone', marrowGuard: 'bone', soulReap: 'bone', soulTyranny: 'bone', harvestEcho: 'bone',

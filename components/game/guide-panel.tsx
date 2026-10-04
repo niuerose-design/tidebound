@@ -45,7 +45,7 @@ export function Guide({ s }: { s?: State }) {
         <Topic open icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분. 직업·장비·스킬이 더해집니다.">
             <div className="help-stat-grid">{ATTRIBUTES.map(a => <article className="panel help-stat-card" key={a.id}><strong>{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
             <Rule icon={<Swords size={19}/>} title="계보와 전직"
-                effect={<>직업은 일곱 계열({JOB_TREES.filter(t => t.id !== 'mystery').map(t => t.name).join(' · ')} · ???)의 {LINEAGES.filter(l => !l.id.endsWith('independent') && l.tree !== 'mystery').length}개 계보로 이어집니다. 1차는 Lv.10에 열리고, 계보를 따라 5차까지 올라갑니다.<br/>자주 가는 길: <b>작살 사냥꾼</b>(근력·기민, 관통·치명 물리) · <b>조류 술사</b>(지능·정신, 폭발 주문과 회복) · <b>산호 수호자</b>(체질·근력, 방어·기절) · <b>독술사</b>(기민·지능, 중독을 쌓는 상태이상) · <b>마검 수련생</b>(근력·지능, 물리+마법 복합) · <b>방랑 음유시인</b>(행운·정신, 가속·경험치 보조).</>}
+                effect={<>직업은 일곱 계열({JOB_TREES.filter(t => t.id !== 'mystery').map(t => t.name).join(' · ')} · ???)의 {LINEAGES.filter(l => !l.id.endsWith('independent') && l.tree !== 'mystery').length}개 계보로 이어집니다. 1차는 Lv.10에 열리고, 계보를 따라 5차까지 올라갑니다.<br/>자주 가는 길: <b>아처</b>(근력·기민, 관통·치명 물리) · <b>매지션</b>(지능·정신, 폭발 주문과 회복) · <b>검사</b>(체질·근력, 방어·기절) · <b>독술사</b>(기민·지능, 중독을 쌓는 상태이상) · <b>데몬슬레이어 (1차)</b>(근력·지능, 물리+마법 복합) · <b>엔젤릭버스터 (1차)</b>(행운·정신, 가속·경험치 보조).</>}
                 condition="전직 화면의 계보 카드와 항로도에서 다음 직업의 조건을 보고, 숙달한 직업은 조건 없이 다시 전직합니다."
                 limit="능력치 재분배는 무료이며 자동 낚시 중에는 할 수 없습니다. ??? 계열은 윤회의 문(환생마다 추첨)이나 발견의 문(플레이 기록 조건)을 지나야 열리고, 한 번 열린 문은 계속 열려 있습니다."/>
             <p className="footnote help-notation"><b>표기</b> +10%: 비율 보너스(같은 종류끼리 합산) · +1%p: 확률에 그대로 더함 · ×1.2: 곱하는 배율. 능력치 화면의 수치를 누르면 기여 내역이 열립니다.</p>
@@ -97,7 +97,7 @@ export function Guide({ s }: { s?: State }) {
                         limit="스킬이 하나도 나가지 않은 행동에서만 발생합니다."/>
                     <Rule icon={<Target size={19}/>} title="능력치 · 기록 비례"
                         effect="외길 계보는 공격력 대신 배분 능력치 × 비율을 기준값으로, 육중 조화는 여섯 능력치로 만든 원시 피해를 씁니다. 도감·포획·사냥·골드 비례 기술은 기본 피해에 기록 배율을 곱합니다."
-                        condition="피해 유형(물리/마법)은 기술에 표시된 대로 따르며, 방어·명중 규칙도 그 유형을 따릅니다. 힘법사 계열은 반대 공격력을 기준값으로 쓰는 ‘교차’ 기술입니다."
+                        condition="피해 유형(물리/마법)은 기술에 표시된 대로 따르며, 방어·명중 규칙도 그 유형을 따릅니다. 아크 계열은 반대 공격력을 기준값으로 쓰는 ‘교차’ 기술입니다."
                         limit="장비·버프로 오른 공격력은 능력치 비례 기준값에 들어가지 않습니다."/>
                 </div>
             </details>
@@ -148,7 +148,7 @@ export function Guide({ s }: { s?: State }) {
                     limit="던전과 보스에는 변종이 없습니다. 지금 확률은 능력치 화면 아래 ‘변종 조우 확률’에서 봅니다."/>
                 <Rule icon={<Fish size={19}/>} title="무리 변종"
                     effect={`포획당 ${percent(swarm.chance, 1)}. 무리 전체를 체력 ×N인 한 개체로 상대하고, 포획하면 보상·숙련·도감을 마리 수만큼 받습니다.`}
-                    condition={`규모는 도감 포획 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100, ${SWARM_UNLOCK[500].toLocaleString()}회에 희귀어 추적자의 ‘무리 감지’(Lv.30)를 장착하면 ×500.`}
+                    condition={`규모는 도감 포획 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100, ${SWARM_UNLOCK[500].toLocaleString()}회에 시프의 ‘무리 감지’(Lv.30)를 장착하면 ×500.`}
                     limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 포획 전에 쓰러지면 보상이 없습니다."/>
                 <Rule icon={<Swords size={19}/>} title="던전 · 무릉도장"
                     effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 진주, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1, 30·60·90층에 장착 AP 1.`}
