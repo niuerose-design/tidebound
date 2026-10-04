@@ -779,3 +779,11 @@
 @media(prefers-reduced-motion:reduce){.scene-fx-ult .ult-a,.scene-fx-ult .ult-b,.scene-fx-ult .ult-frag{display:none}.scene-fx-ult .scene-fx-dark,.scene-fx-ult .scene-fx-flash,.ult-title{animation-name:tideReduced;animation-duration:1.4s}.battle-scene:has(.ult-slash) .ocean-art,.battle-scene:has(.ult-time) .ocean-art{animation:none}}
 .scene-top .scene-label{min-width:0}.scene-top .scene-label svg{flex-shrink:0}.scene-label-text{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.scene-top .scene-actions{flex-shrink:0}
 .tide-fx-burn .tide-fx-fragment{animation-name:tideFragmentUp;animation-duration:.9s;font-size:13px}
+/* v27.47 오른쪽 패널 제단 탭 */
+.battle-altar-list .battle-dungeon-button>span{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.battle-altar-list .battle-dungeon-button>span .meter{width:100%}
+.battle-selector-panel .battle-place-tabs button{white-space:nowrap;padding:6px 9px}
+.battle-altar-gauge .meter{margin-top:5px}
+.battle-tab-dot{width:6px;height:6px;border-radius:50%;background:#e7be71;display:inline-block;margin-left:2px}
+.battle-altar-throne{margin:6px 2px 0;color:#7f9c98;font-size:12px}
+.battle-selector-panel .section-title .text-button{white-space:nowrap;flex:none}
