@@ -25,7 +25,7 @@ export function newState(now: number): State {
         shopSerial: 0,
         essence: 0,
         guild: newGuild(),
-        name: '물결의 낚시꾼',
+        name: '초보 모험가',
         level: 1,
         exp: 0,
         gold: 100,

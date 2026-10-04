@@ -61,6 +61,7 @@
   border-top:1px solid #41575d66;
   display:flex;
   justify-content:space-between;
+  gap:6px 12px;
   margin-top:24px;
   padding-top:14px;
   font-size:12px;
@@ -369,3 +370,6 @@
 .random-game-card { margin-bottom: 18px; }
 .random-game-card .random-game-targets { flex-wrap: wrap; margin: 10px 0 6px; }
 .random-game-stake { margin: 6px 0 12px; font-size: 13px; color: var(--gold); }
+/* v27.86 무리 서식지 카드의 긴 요약은 한 줄에 못 들어가므로 줄을 나눕니다(전에는 두 줄이 겹쳐 보였음). */
+.stage-card.habitat .stage-footer { flex-wrap:wrap; }
+.stage-card.habitat .stage-footer > span { min-width:0; }
