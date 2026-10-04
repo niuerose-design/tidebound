@@ -453,7 +453,9 @@ test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is
     const reef = W.STAGES.find(st => st.id === 'reef'), storm = W.FISH.find(f => f.id === 'stormBarracuda');
     assert.equal(W.stageStatFish(storm, reef.level).level, reef.level + W.STAGE_ENEMY_LEVEL_OVER); assert.ok(W.stageStatFish(storm, reef.level).hp < storm.hp);
     const fish = W.FISH.find(f => f.id === abyss.fish[0]);
-    assert.ok(E.scaledEnemyStats(fish, { tier: 50, wave: 0 }).speed > E.scaledEnemyStats(fish, { tier: 0, wave: 0 }).speed * 1.9, 'deep dungeon tiers are faster');
+    const abyssRef = (await L.load('systems/encounter')).abyssReference();
+    assert.ok(E.abyssEnemyStats(fish, abyssRef, 60, { wave: 0 }).speed > E.abyssEnemyStats(fish, abyssRef, 1, { wave: 0 }).speed * 1.9, 'deep Mu Lung floors are faster');
+    assert.equal(E.scaledEnemyStats(fish, { tier: 50, wave: 0 }).speed, E.scaledEnemyStats(fish, { tier: 0, wave: 0 }).speed, 'v27.68 the tide in normal dungeons does not add speed');
     // v27.35 무한 심연: 1층 체력 10만에서 층마다 가파르게, 보상은 상한에서 멈춤. 던전 클리어 골드는 권장 레벨 몬스터 몇 마리분.
     const Enc = await L.load('systems/encounter'), ref = Enc.abyssReference();
     assert.equal(E.abyssEnemyStats(fish, ref, 1, { wave: 0 }).hp, B.ABYSS_TUNING.hp);

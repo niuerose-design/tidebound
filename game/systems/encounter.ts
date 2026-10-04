@@ -3,7 +3,7 @@ import { BOSS_RESEARCH } from '../data/specializations';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus, TIDE_MILESTONES, TIDE_MILESTONE_PEARLS } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets } from './progression';
-import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier } from './meta';
+import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
@@ -132,14 +132,15 @@ export function spawn(s: State, rng: () => number) {
     const top = rare ? tideLiftFish([...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0], tier, s.level) : undefined;
     const f = rare ? { ...FISH.find(x => x.id === rareId)!, level: top!.level, hp: Math.round(top!.hp * rareDef.hp), attack: Math.round(top!.attack * rareDef.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : FISH.find(x => x.id === id)!;
     const boss = finalWave;
-    const capped = dungeon || rare ? f : stageStatFish(f, st.level), lifted = dungeon || rare ? f : tideLiftFish(capped, tier, s.level);
+    const normalDungeon = !!dungeon && dungeon.id !== 'abyss', dLevel = dungeon ? dungeonLevelAt(dungeon, tier, s.level) : 0;
+    const capped = dungeon || rare ? f : stageStatFish(f, st.level), lifted = normalDungeon ? tideLiftFish(f, tier, s.level) : dungeon || rare ? f : tideLiftFish(capped, tier, s.level);
     // v27.67 레벨이 올라간 몬스터는 사냥터 평균 보상 배율로 나눠 사냥터 사이 보상을 맞춥니다(stageRewardNorm).
     const field = lifted !== capped ? { ...lifted, rewardMultiplier: (lifted.rewardMultiplier || 1) * stageRewardNorm(st.fish, tier) } : lifted;
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
         : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
-    const base = dungeon ? dungeonCatchReward(f, dungeon.level, tier, boss) : catchReward(field, tier, boss), gold = base.gold;
+    const base = dungeon ? dungeonCatchReward(field, dLevel, tier, boss, dungeon.id) : catchReward(field, tier, boss), gold = base.gold;
     // v27.66 레벨 차 경험치 보정(EXP_LEVEL_GAP). 던전은 보상에 쓰는 몬스터 레벨(권장 + expLevelOver, 보스는 권장 레벨), 사냥터는 실제 몬스터 레벨 기준.
-    const rewardLevel = dungeon ? (boss ? dungeon.level : Math.min(f.level, dungeon.level + DUNGEON_TUNING.expLevelOver)) : field.level;
+    const rewardLevel = dungeon ? (boss ? dLevel : Math.min(field.level, dLevel + DUNGEON_TUNING.expLevelOver)) : field.level;
     const exp = Math.max(1, Math.round(base.exp * expLevelScale(rewardLevel, s.level)));
     // v25.19 변종: 몬스터를 10회 이상 처치한 사냥터 출현마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
     let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
@@ -254,8 +255,8 @@ export function reward(s: State, rng: () => number) {
         s.dungeon.wave++;
         if (s.dungeon.wave >= d.fish.length) {
             // v27.30 권장 레벨보다 크게 높으면 클리어 골드와 반복 장비 확률이 줄어듭니다.
-            const overlevel = dungeonOverlevel(s.level, d.level);
-            const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase(d), dungeonRewardTier(encounterTier(s))) * overlevel);
+            const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level), overlevel = dungeonOverlevel(s.level, dLevel);
+            const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel);
             s.gold += bonusGold;
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
@@ -283,7 +284,7 @@ export function reward(s: State, rng: () => number) {
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다, 반복 정복은 낮은 확률.
             if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop * overlevel)
-                drop(s, dropLevel(s, d.level, encounterTier(s)), rng, true);
+                drop(s, dropLevel(s, dLevel, tier), rng, true);
             addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;
             s.dungeon = null;
