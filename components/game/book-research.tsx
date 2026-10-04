@@ -13,7 +13,7 @@ const MILESTONES = BALANCE.bookMilestones;
 /** 연구 단계를 달성하면 바로 적용되는 전투 보상. 생태 연구는 2단계부터 붙습니다. */
 function stepEffect(id: string, rank: number) {
     const trait = BOOK_TRAITS[bookTrait(id)];
-    const ecology = rank + 1 >= BOOK_ECOLOGY.fromStage ? ` · 생태 연구: 이 어종 상대 주는 피해 +${BOOK_ECOLOGY.dealtPerStage * 100}% · 받는 공격 피해 -${BOOK_ECOLOGY.takenPerStage * 100}%` : '';
+    const ecology = rank + 1 >= BOOK_ECOLOGY.fromStage ? ` · 생태 연구: 이 몬스터 상대 주는 피해 +${BOOK_ECOLOGY.dealtPerStage * 100}% · 받는 공격 피해 -${BOOK_ECOLOGY.takenPerStage * 100}%` : '';
     return `${trait.name} 연구 ${bonusLabel(trait.perStage)}${ecology}`;
 }
 /** 이 연구 단계 구간(이전 목표 초과 ~ 이번 목표 이하)에서 열리는 무리 사냥 규모. 목표와 해금 수가 다르면 해금 수를 같이 적습니다. */
@@ -21,14 +21,14 @@ const swarmAt = (rank: number, n: number) => SWARM_SIZES.filter(size => size > 1
     .map(size => `무리 변종 ×${size} ${SWARM_UNLOCK[size] === MILESTONES[rank] ? '해금' : n >= SWARM_UNLOCK[size] ? `해금(${SWARM_UNLOCK[size].toLocaleString()}회 달성)` : `${SWARM_UNLOCK[size].toLocaleString()}회에 해금`}`);
 const stepReward = (rank: number, n: number, swarm: boolean) => [`${PROGRESSION.bookGold[rank].toLocaleString()} G`, PROGRESSION.bookSP[rank] ? `SP +${PROGRESSION.bookSP[rank]}` : '', ...(swarm ? swarmAt(rank, n) : [])].filter(Boolean).join(' · ');
 
-/** 연구 진행: 포획 수 → 다음 연구 목표 → 받을 보상 → 수령 여부. 끝난 단계는 접어서 아래에 둡니다. 낚시터 어종(swarm)은 단계 보상에 무리 사냥 해금도 같이 적습니다. */
+/** 연구 진행: 처치 수 → 다음 연구 목표 → 받을 보상 → 수령 여부. 끝난 단계는 접어서 아래에 둡니다. 사냥터 몬스터(swarm)은 단계 보상에 무리 사냥 해금도 같이 적습니다. */
 export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; id: string; send: (a: Action) => void; busy: boolean; swarm?: boolean }) {
     const n = s.book[id] || 0, claimed = s.bookClaims?.[id] || 0, pending = bookPending(s, id);
     const reached = MILESTONES.filter(m => n >= m).length, next = reached < MILESTONES.length ? reached : -1;
     return <section className="book-block book-research">
         <h4>연구 진행 <small>플레이어 보상</small></h4>
         <dl className="book-research-rows">
-            <div><dt>포획 수</dt><dd>{n.toLocaleString()}회</dd></div>
+            <div><dt>처치 수</dt><dd>{n.toLocaleString()}회</dd></div>
             <div><dt>다음 연구 목표</dt><dd>{next < 0 ? '모든 단계 달성' : `${next + 1}단계 · ${MILESTONES[next].toLocaleString()}회 (남은 ${(MILESTONES[next] - n).toLocaleString()}회)`}</dd></div>
             {next >= 0 && <div><dt>받을 보상</dt><dd>{stepReward(next, n, swarm)}</dd><small>달성하면 바로 적용: {stepEffect(id, next)}</small></div>}
             <div><dt>수령 여부</dt><dd>{pending.ranks.length ? <b className="positive">미수령 {pending.ranks.length}단계</b> : next < 0 ? '모두 수령' : '목표 미달성'}</dd></div>
@@ -42,7 +42,7 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
     </section>;
 }
 
-/** 한 지역의 연구 진행도와 지역 완성 보상. 낚시터 카드와 도감 지역 제목에서 같이 씁니다. */
+/** 한 지역의 연구 진행도와 지역 완성 보상. 사냥터 카드와 도감 지역 제목에서 같이 씁니다. */
 function regionResearch(s: State, stageId: string) {
     const st = STAGES.find(x => x.id === stageId)!;
     const done = st.fish.filter(id => (s.book[id] || 0) >= PROGRESSION.fishComplete).length;

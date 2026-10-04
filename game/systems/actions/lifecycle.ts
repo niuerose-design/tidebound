@@ -34,7 +34,7 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
 
 /**
  * 한 번의 숨: 쓰러지면 이번 생을 처음부터 다시 시작합니다. 환생이 아니므로 환생 횟수·진주·순풍/깊은 항해가 바뀌지 않고,
- * 요구 레벨도 보지 않습니다. 모든 서약이 풀립니다. 자동 낚시 중이었다면 첫 낚시터에서 이어갑니다.
+ * 요구 레벨도 보지 않습니다. 모든 서약이 풀립니다. 자동 사냥 중이었다면 첫 사냥터에서 이어갑니다.
  */
 export function breathReset(s: State, now: number) {
     const running = s.running;
@@ -46,7 +46,7 @@ export function breathReset(s: State, now: number) {
 
 /**
  * v27.26 운영자 초기화(scripts/reset-life.mjs): 이번 생을 처음 상태로 되돌립니다. 환생 횟수·진주·생 보너스·서약은 그대로이고,
- * 레벨 조건도 보지 않습니다. 레벨·골드·일반 장비·직업·능력치 배분·진행 중인 던전이 초기화되고 자동 낚시는 멈춥니다.
+ * 레벨 조건도 보지 않습니다. 레벨·골드·일반 장비·직업·능력치 배분·진행 중인 던전이 초기화되고 자동 사냥은 멈춥니다.
  */
 export function restartLife(s: State, now: number) {
     const vows = s.vows, nextVows = s.nextVows;
@@ -137,7 +137,7 @@ export const lifecycleActions: ActionHandlers = {
     },
     resetData(s, { now }) {
         if (s.running || s.dungeon)
-            throw Error('자동 낚시와 던전을 먼저 멈춘 뒤 초기화하세요.');
+            throw Error('자동 사냥과 던전을 먼저 멈춘 뒤 초기화하세요.');
         const name = s.name;
         Object.assign(s, newState(now), { name });
         // newState에 없는 선택 필드도 함께 지웁니다(계정당 첫 재분배 사용 여부는 유지).

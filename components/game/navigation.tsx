@@ -16,8 +16,8 @@ export function Navigation({ view, setView, s, onLogout }: {
     <div className="brand">
     <Anchor size={30}/>
     <div>
-    <strong>TIDEBOUND</strong>
-    <small>심연의 낚시꾼</small>
+    <strong>판게아 RPG</strong>
+    <small>PANGAEA RPG</small>
     </div>
     </div>
     </SidebarHeader>

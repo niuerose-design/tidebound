@@ -32,11 +32,11 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'hp', name: '깊은 숨결', desc: '최대 체력 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'defense', per: .08, unit: 'percent', label: '최대 체력' },
     { id: 'guard', name: '불굴의 기억', desc: '물리 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '물리 방어' },
     { id: 'magicGuard', name: '진주막의 기억', desc: '마법 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '마법 방어' },
-    { id: 'recovery', name: '잔잔한 물결', desc: '포획 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '포획 후 회복' },
+    { id: 'recovery', name: '잔잔한 물결', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
     { id: 'evasion', name: '물거품 걸음', desc: '회피 +0.4%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .004, unit: 'pp', label: '회피' },
     { id: 'lifesteal', name: '피의 조수', desc: '흡혈 +0.5%p (전체 상한 30%)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },
     { id: 'ap', name: '영혼의 그릇', desc: '스킬 장착 한도 AP +1', max: 12, base: 4, step: 3, tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
-    { id: 'exp', name: '항해의 기억', desc: '포획 경험치 +20%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', per: .2, unit: 'percent', label: '포획 경험치' },
+    { id: 'exp', name: '항해의 기억', desc: '처치 경험치 +20%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', per: .2, unit: 'percent', label: '처치 경험치' },
     { id: 'starting', name: '항구의 유산', desc: '환생 직후 시작 골드 +500', max: 10, base: 3, step: 2, tab: 'utility', group: 'basic', per: 500, unit: 'flat', label: '시작 골드', suffix: ' G' },
     { id: 'inventory', name: '넓은 선창', desc: '가방 +5칸', max: 8, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 2, per: 5, unit: 'flat', label: '가방', suffix: '칸' },
     { id: 'offline', name: '긴 닻줄', desc: '오프라인 정산 상한 +2시간', max: 12, base: 3, step: 2, tab: 'utility', group: 'basic', rebirth: 2, per: 2, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
@@ -50,7 +50,7 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'vowBreath', name: '한 번의 숨', desc: '서약 해금. 2·3단계는 환생 진주 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 환생 진주 +50%', '환생 진주 +75%', '환생 진주 +100%'] },
     { id: 'vowRough', name: '거친 바다', desc: '서약 해금. 2·3단계는 드롭·골드 보너스 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 선택 단계당 드롭·골드 +50%', '선택 단계당 +75%', '선택 단계당 +100%'] },
     { id: 'mastery', name: '숙련의 기억', desc: '스킬·직업 숙련 획득 +5%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .05, unit: 'percent', label: '숙련 획득' },
-    { id: 'gold', name: '황금 물결', desc: '포획·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '포획·던전 골드' },
+    { id: 'gold', name: '황금 물결', desc: '처치·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '처치·던전 골드' },
     { id: 'dungeon', name: '심연의 금고', desc: '던전 클리어 골드 +8%', max: 10, base: 5, step: 4, tab: 'gold', per: .08, unit: 'percent', label: '던전 클리어 골드' },
     { id: 'drop', name: '보물의 감각', desc: '장비 드롭 확률 +1%p', max: 10, base: 3, step: 3, tab: 'gold', per: .01, unit: 'pp', label: '장비 드롭 확률' },
     { id: 'pearl', name: '윤회의 연금술', desc: '환생 진주 +1', max: 5, base: 6, step: 5, tab: 'gold', per: 1, unit: 'flat', label: '환생 진주' },
@@ -94,17 +94,17 @@ export const AFFIXES: {
     { stat: 'accuracy', name: '정밀', value: .025, description: '회피가 높은 적에게 공격을 맞히기 쉬워집니다.' },
     { stat: 'crit', name: '행운', value: .015, description: '치명타가 발생할 확률이 증가합니다.' },
     { stat: 'evasion', name: '유영', value: .02, description: '적의 물리·마법 공격을 피할 확률이 증가합니다.' },
-    { stat: 'goldBonus', name: '황금', value: .04, description: '물고기 포획과 던전 완료 골드가 증가합니다. 판매에는 적용되지 않습니다.' },
+    { stat: 'goldBonus', name: '황금', value: .04, description: '몬스터 처치와 던전 완료 골드가 증가합니다. 판매에는 적용되지 않습니다.' },
 ];
 export const SHOP = [
-    { id: 'physical', name: '작살형 낚싯대', slot: 'rod', style: 'physical', description: '물리 공격에 집중한 낚싯대.' },
-    { id: 'magic', name: '해류 지팡이', slot: 'rod', style: 'magic', description: '마법 스킬을 위한 낚싯대.' },
+    { id: 'physical', name: '작살형 낚싯대', slot: 'rod', style: 'physical', description: '물리 공격에 집중한 무기.' },
+    { id: 'magic', name: '해류 지팡이', slot: 'rod', style: 'magic', description: '마법 스킬을 위한 무기.' },
     { id: 'coat', name: '항해사의 방어구', slot: 'coat', style: 'balanced', description: '체력과 두 방어를 보강합니다.' },
     { id: 'charm', name: '정밀한 조류 나침반', slot: 'charm', style: 'balanced', description: '치명타를 높이고 정밀 옵션으로 명중을 보강합니다.' },
 ] as const;
-/** 감정은 부위를 먼저 고릅니다. 낚싯대의 공격 계열은 같은 확률입니다. */
+/** 감정은 부위를 먼저 고릅니다. 무기의 공격 계열은 같은 확률입니다. */
 export const GAMBLE_CATEGORIES = [
-    { id: 'rod', name: '낚싯대', slot: 'rod', offers: ['physical', 'magic'], description: '물리형·마법형 중 하나를 같은 확률로 획득합니다.' },
+    { id: 'rod', name: '무기', slot: 'rod', offers: ['physical', 'magic'], description: '물리형·마법형 중 하나를 같은 확률로 획득합니다.' },
     { id: 'coat', name: '방어구', slot: 'coat', offers: ['coat'], description: '최대 체력과 물리·마법 방어를 보강합니다.' },
     { id: 'charm', name: '나침반', slot: 'charm', offers: ['charm'], description: '등급에 따라 정해진 치명타 확률(전설 10%, 태초 16%, 강화할수록 조금씩 상승)과 무작위 추가 옵션을 얻습니다. 치명타 100%를 넘으면 극 치명타 확률이 생깁니다.' },
 ] as const;
@@ -112,7 +112,7 @@ export const GAMBLE_CATEGORIES = [
 export const RELICS = [
     { id: 'memoryRod', name: '윤회의 낚싯대', slot: 'rod', style: 'balanced', power: 45, cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
     { id: 'soulCoat', name: '영혼의 잠수복', slot: 'coat', style: 'balanced', power: 55, cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 유영', value: .12 } },
-    { id: 'abyssCharm', name: '심연의 눈', slot: 'charm', style: 'balanced', power: 70, cost: 28, rebirth: 3, description: '깊은 심연에 도전하는 낚시꾼의 정밀 유물.', affix: { stat: 'accuracy', name: '심연 통찰', value: .2 } },
+    { id: 'abyssCharm', name: '심연의 눈', slot: 'charm', style: 'balanced', power: 70, cost: 28, rebirth: 3, description: '깊은 심연에 도전하는 모험가의 정밀 유물.', affix: { stat: 'accuracy', name: '심연 통찰', value: .2 } },
 ] as const;
 /** v25.7 환생 정리 효율(0 = 연구 없음). 1단계 40%, 단계당 +15%, 5단계 100%. */
 export const salvageRate = (s: Pick<State, 'permanent'>) => { const rank = researchRank(s, 'salvage'); return rank ? Math.min(1, .25 + rank * .15) : 0; };

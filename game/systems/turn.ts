@@ -37,18 +37,18 @@ export function syncStatRate(s: State) {
     s.statRate = PROGRESSION.statPerLevel;
     if (bonus > 0) addLog(s, `레벨당 능력치 포인트가 ${PROGRESSION.statPerLevel}로 올라 지난 레벨분 +${bonus}포인트를 받았습니다.`, 'reward');
 }
-/** v27.16 전투가 멈춘 채로 남는 것을 막는 안전장치: 양쪽 체력이 이만큼 턴 동안 그대로면 물고기가 달아난 것으로 봅니다. */
+/** v27.16 전투가 멈춘 채로 남는 것을 막는 안전장치: 양쪽 체력이 이만큼 턴 동안 그대로면 몬스터가 달아난 것으로 봅니다. */
 const STALEMATE_TURNS = 120;
 /**
- * v27.16 세이브가 어떤 이유로든 진행 불가 상태(숫자가 아닌 체력·회복·시각, 없는 낚시터·어종, 체력 0 이하로 남은 적)가 되면 조용히 복구합니다.
- * 던전에 들어갔다 나오면 풀리던 '입질이 오지 않는' 현상의 안전망입니다. 복구한 내용은 일지에 남깁니다.
+ * v27.16 세이브가 어떤 이유로든 진행 불가 상태(숫자가 아닌 체력·회복·시각, 없는 사냥터·몬스터, 체력 0 이하로 남은 적)가 되면 조용히 복구합니다.
+ * 던전에 들어갔다 나오면 풀리던 '몬스터가 나오지 않는' 현상의 안전망입니다. 복구한 내용은 일지에 남깁니다.
  */
 function repairState(s: State, now?: number) {
     const fixed: string[] = [];
     if (now !== undefined && !Number.isFinite(s.lastTick)) { s.lastTick = now; fixed.push('시각'); }
     if (!Number.isFinite(s.recovery) || s.recovery < 0) { s.recovery = 0; fixed.push('회복 대기'); }
-    if (!STAGES.some(x => x.id === s.stage)) { s.stage = STAGES[0].id; s.target = null; fixed.push('낚시터'); }
-    if (s.enemy && (!Number.isFinite(s.enemy.hp) || s.enemy.hp <= 0 || !Number.isFinite(s.enemy.maxHp) || !FISH.some(f => f.id === s.enemy!.id))) { s.enemy = null; fixed.push('입질'); }
+    if (!STAGES.some(x => x.id === s.stage)) { s.stage = STAGES[0].id; s.target = null; fixed.push('사냥터'); }
+    if (s.enemy && (!Number.isFinite(s.enemy.hp) || s.enemy.hp <= 0 || !Number.isFinite(s.enemy.maxHp) || !FISH.some(f => f.id === s.enemy!.id))) { s.enemy = null; fixed.push('몬스터'); }
     if (!Number.isFinite(s.hp) || !Number.isFinite(s.mana)) { const a = stats(s); if (!Number.isFinite(s.hp)) s.hp = a.hp; if (!Number.isFinite(s.mana)) s.mana = a.mana; fixed.push('체력·마나'); }
     if (fixed.length) addLog(s, `전투 상태를 복구했습니다 (${fixed.join('·')}).`, 'system');
     return fixed;
@@ -57,10 +57,10 @@ function tickTurn(s: State, rng: () => number) {
     s.turn++;
     s.playMs = (s.playMs || 0) + BALANCE.turnMs;
     repairState(s);
-    // v27.25·v27.31 운영 페이지에서 닫은 던전·낚시터에 있던 세이브는 보상 없이 나와 열린 낚시터에서 자동 낚시를 잇습니다.
-    if (s.dungeon && dungeonClosed(s.dungeon.id)) { const name = DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'; s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${name}이(가) 점검으로 닫혀 낚시터로 돌아왔습니다. 점검이 끝나면 다시 열립니다.`, 'system'); }
+    // v27.25·v27.31 운영 페이지에서 닫은 던전·사냥터에 있던 세이브는 보상 없이 나와 열린 사냥터에서 자동 사냥을 잇습니다.
+    if (s.dungeon && dungeonClosed(s.dungeon.id)) { const name = DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'; s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${name}이(가) 점검으로 닫혀 사냥터로 돌아왔습니다. 점검이 끝나면 다시 열립니다.`, 'system'); }
     if (!s.dungeon && stageClosed(s.stage)) {
-        const from = STAGES.findIndex(x => x.id === s.stage), name = STAGES[from]?.name || '낚시터';
+        const from = STAGES.findIndex(x => x.id === s.stage), name = STAGES[from]?.name || '사냥터';
         const to = [...STAGES.slice(0, Math.max(0, from))].reverse().find(x => !stageClosed(x.id) && s.level >= x.level && s.rebirths >= x.rebirth) || STAGES[0];
         s.stage = to.id; s.target = null; s.enemy = null; s.effects = {}; s.playerStun = 0;
         addLog(s, `${name}이(가) 점검으로 닫혀 ${to.name}(으)로 옮겼습니다. 점검이 끝나면 다시 열립니다.`, 'system');
@@ -71,7 +71,7 @@ function tickTurn(s: State, rng: () => number) {
         if (!s.recovery) {
             s.hp = a.hp;
             s.mana = a.mana;
-            addLog(s, '숨을 고르고 다시 낚싯대를 들었습니다.');
+            addLog(s, '숨을 고르고 다시 무기를 들었습니다.');
         }
         return;
     }
@@ -99,10 +99,10 @@ function tickTurn(s: State, rng: () => number) {
     e.mana = enemy.mana;
     e.effects = enemy.effects;
     e.cooldowns = enemy.cooldowns;
-    // v27.16 교착 안전장치: 양쪽 체력이 그대로인 턴이 이어지면 물고기가 달아난 것으로 보고 새 입질을 받습니다.
+    // v27.16 교착 안전장치: 양쪽 체력이 그대로인 턴이 이어지면 몬스터가 달아난 것으로 보고 새 몬스터를 맞이합니다.
     if (e.hp > 0 && s.hp > 0) {
         e.stale = e.hp === enemyHpBefore && s.hp === playerHpBefore ? (e.stale || 0) + 1 : 0;
-        if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${e.name}이(가) 줄을 끊고 달아났습니다. 다음 입질을 기다립니다.`); return; }
+        if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${e.name}이(가) 줄을 끊고 달아났습니다. 다음 몬스터를 기다립니다.`); return; }
     }
     if (e.hp <= 0 && s.hp > 0)
         reward(s, rng);
@@ -115,13 +115,13 @@ function tickTurn(s: State, rng: () => number) {
         s.cooldowns = {};
         s.effects = {};
         s.playerStun = 0;
-        addLog(s, '물고기를 놓쳤습니다. 잠시 회복합니다.');
+        addLog(s, '몬스터를 놓쳤습니다. 잠시 회복합니다.');
         if (s.dungeon) {
             const repeating = !!s.dungeon.repeat;
-            endRun(s, `${DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 낚시로 전환' : ' · 멈춤'}`);
+            endRun(s, `${DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 사냥으로 전환' : ' · 멈춤'}`);
             s.dungeon = null;
             s.running = repeating;
-            addLog(s, repeating ? '던전 도전에 실패했습니다. 반복 도전을 멈추고 낚시터에서 자동 낚시를 이어갑니다.' : '던전 도전에 실패했습니다. 손실 없이 다시 도전할 수 있습니다.');
+            addLog(s, repeating ? '던전 도전에 실패했습니다. 반복 도전을 멈추고 사냥터에서 자동 사냥을 이어갑니다.' : '던전 도전에 실패했습니다. 손실 없이 다시 도전할 수 있습니다.');
         }
     }
 }
@@ -130,7 +130,7 @@ export function advance(s: State, now: number, rng = Math.random) {
     now = Math.max(now, s.lastTick);
     // v26.1 서버 이벤트: 정산 시각 기준으로 적어 두고, 아래 틱들이 이 배율을 씁니다.
     s.event = activeEvent(now);
-    // v27.31 닫힌 낚시터·던전 목록도 같이 적어 화면이 잠금 표시를 합니다.
+    // v27.31 닫힌 사냥터·던전 목록도 같이 적어 화면이 잠금 표시를 합니다.
     const closed = closuresSnapshot(); if (closed) s.closed = closed; else delete s.closed;
     const elapsed = now - s.lastTick;
     // 정산 상한은 정산을 시작할 때의 긴 닻줄 단계로 정합니다(정산 중 연구가 바뀌지 않음).

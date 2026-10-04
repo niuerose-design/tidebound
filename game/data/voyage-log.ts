@@ -6,7 +6,7 @@ export const VOYAGE_LOG: VoyageEntry[] = [
     { id: 'stage:reef', group: '사냥터', title: '헤네시스 · 돼지의 해변', text: '돼지들이 뛰노는 해변 아래로 붉은 산호가 펼쳐져 있다. 한눈을 팔면 줄이 끊긴다.' },
     { id: 'stage:kelp', group: '사냥터', title: '헤네시스 · 버섯숲 연못', text: '버섯 그늘 아래 연못. 물풀이 흔들릴 때마다 누군가 이름을 부르는 것 같았다. 대답하지 않기로 했다.' },
     { id: 'stage:wreck', group: '사냥터', title: '페리온 · 유적 발굴지 수로', text: '발굴지 수로 바닥에 아직 감기지 않은 낚싯줄이 있다. 주인은 끝내 돌아오지 않았다.' },
-    { id: 'stage:volcanic', group: '사냥터', title: '페리온 · 불타는 땅 화구호', text: '불타는 땅의 화구호에서 물이 끓는 소리를 처음 들었다. 이곳의 물고기는 불씨를 삼키고 자란다.' },
+    { id: 'stage:volcanic', group: '사냥터', title: '페리온 · 불타는 땅 화구호', text: '불타는 땅의 화구호에서 물이 끓는 소리를 처음 들었다. 이곳의 몬스터는 불씨를 삼키고 자란다.' },
     { id: 'stage:trench', group: '사냥터', title: '엘리니아 · 깊은 숲 늪', text: '요정들도 들어오지 않는 숲 깊은 늪. 수면 아래에서 거대한 심장 소리가 올라온다.' },
     { id: 'stage:moon', group: '사냥터', title: '엘리니아 · 달빛 마법 호수', text: '한 번의 삶을 넘어서야 보이는 호수. 수면에 비친 달이 둘이다.' },
     { id: 'stage:starfall', group: '사냥터', title: '커닝시티 · 네온 수로', text: '네온이 별처럼 떨어진 자리마다 물이 빛난다. 여기서 태어난 것들은 이름이 없다.' },

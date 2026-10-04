@@ -30,7 +30,7 @@ export type Fighter = {
     damageTaken?: number;
     /** v24.2 골드 투척 기술이 쓰는 보유 골드(플레이어만). */
     gold?: number;
-    /** v24.2 사냥감 연구 대상 여부(보스·지정 어종). */
+    /** v24.2 사냥감 연구 대상 여부(보스·지정 몬스터). */
     prey?: boolean;
     /** v25.2 기본 공격이 마법 피해(마력 생물). 마법 공격 수치로 치고 상대 마법 방어로 막습니다. */
     magicBasic?: boolean;
@@ -353,7 +353,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
     if (chosen?.scaling === 'mana')
         base += sa.mana * (chosen.scalingRatio ?? SKILL_FORMULA.manaScaling);
-    // v24.2 진행도 비례 피해: 기본 피해 × 비율 × 기록(도감 종 수 · log10 포획 · √사냥 · log10 골드).
+    // v24.2 진행도 비례 피해: 기본 피해 × 비율 × 기록(도감 종 수 · log10 처치 · √사냥 · log10 골드).
     const progress = chosen?.scaling === 'codex' ? sa.codexPower : chosen?.scaling === 'catch' ? sa.catchPower : chosen?.scaling === 'hunt' ? sa.huntPower : chosen?.scaling === 'gold' ? sa.goldPower : chosen?.scaling === 'mastered' ? sa.masteredPower : chosen?.scaling === 'variant' ? sa.variantPower : 0;
     if (progress) base += base * (chosen?.scalingRatio ?? 0) * progress;
     base += allInBonus;

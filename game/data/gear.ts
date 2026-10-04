@@ -8,7 +8,7 @@ import { STAGES, DUNGEONS } from './world';
  * - 능력치 옵션은 기존 전투 수치만 올립니다. 고정 수치 옵션은 장비 위력에 비례하고, 비율 옵션은 고정 폭입니다.
  * - 양날 옵션은 큰 이득과 손해를 함께 줍니다.
  * - 규칙 옵션은 영웅(3) 이상에서 장비당 최대 1개. 기존 기술 규칙의 숫자 하나만 바꾸며, 같은 규칙은 cap까지만 합산합니다.
- * - 드롭한 낚시터·던전(origin)에 따라 특정 옵션이 잘 나옵니다.
+ * - 드롭한 사냥터·던전(origin)에 따라 특정 옵션이 잘 나옵니다.
  */
 export type GearStat = keyof Stats;
 export type AffixDef = {
@@ -54,7 +54,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'spiked', name: '가시', stat: 'thorns', kind: 'percent', base: .04, description: '맞을 때 물리 방어 비례 반격 (방어 친화도 적용).' },
     { id: 'runic', name: '룬', stat: 'arcaneStrike', kind: 'percent', base: .03, description: '마법 직업의 마력 평타 확률이 오릅니다.' },
     { id: 'scholar', name: '학식', stat: 'expBonus', kind: 'percent', base: .03, description: '경험치 획득이 늘어납니다.' },
-    { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '포획·던전 골드가 늘어납니다.' },
+    { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '처치·던전 골드가 늘어납니다.' },
     { id: 'seeker', name: '탐색', stat: 'dropBonus', kind: 'percent', base: .01, description: '장비 드롭 확률이 늘어납니다(상대 증가).' },
     // 양날 옵션: 큰 이득 + 손해
     { id: 'berserk', name: '광전사', stat: 'attack', kind: 'flat', base: .9, stat2: 'defense', base2: -.45, description: '물리 공격이 크게 오르지만 물리 방어가 줄어듭니다.' },
@@ -78,7 +78,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'reaper', name: '처형', stat: 'executeBonus', kind: 'rule', base: .05, minRarity: 3, description: '빈사 판정 기준 +5%p (합계 최대 +15%p).' },
 ];
 
-/** 낚시터·던전별로 잘 나오는 옵션(가중치 ×4). 명시되지 않은 곳은 균등합니다. 이름은 STAGES·DUNGEONS에서 가져옵니다. */
+/** 사냥터·던전별로 잘 나오는 옵션(가중치 ×4). 명시되지 않은 곳은 균등합니다. 이름은 STAGES·DUNGEONS에서 가져옵니다. */
 const ORIGIN_AFFIXES: Record<string, string[]> = {
     brook: ['vigor', 'plating', 'precise'],
     bay: ['ward', 'wellspring', 'scholar'],

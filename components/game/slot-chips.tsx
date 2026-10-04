@@ -28,7 +28,7 @@ export function SlotChips({ s, busy, onSwitch }: { s: State; busy: boolean; onSw
         <Users size={14}/>
         {Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).map(slot => {
             const info = slots.find(x => x.slot === slot), open = slotUnlocked(s.account, slot), mine = slot === current;
-            const label = mine ? `${s.name} · Lv.${s.level}` : info ? `${info.name} · Lv.${info.level} ${jobById(info.job)?.name || ''}` : open ? '새 낚시꾼' : slotUnlockText(slot);
+            const label = mine ? `${s.name} · Lv.${s.level}` : info ? `${info.name} · Lv.${info.level} ${jobById(info.job)?.name || ''}` : open ? '새 모험가' : slotUnlockText(slot);
             const sub = mine ? '플레이 중' : info ? awayText(info.updatedAt, now, offlineCapSeconds(s)) : open ? '처음부터 시작' : '잠김';
             return <button type="button" key={slot} className={`slot-chip ${mine ? 'current' : ''} ${open ? '' : 'locked'}`} disabled={mine || busy || switching || !open} title={open ? `${slot}번 슬롯으로 전환` : slotUnlockText(slot)} onClick={() => pick(slot)}>
                 <span className="slot-chip-index">{open ? slot : <Lock size={11}/>}</span><span className="slot-chip-text"><strong>{label}</strong><small>{sub}</small></span>

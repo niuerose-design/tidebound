@@ -10,7 +10,7 @@ import type { State } from '@/game/types';
 export function MobileFisherStrip({ s, setView }: { s: State; setView: (v: string) => void }) {
     const a = stats(s), need = xpNeeded(s.level), exp = Math.min(1, s.exp / Math.max(1, need));
     const bar = (value: number, max: number) => `${Math.max(0, Math.min(100, value / Math.max(1, max) * 100))}%`;
-    return <button type="button" className="mobile-fisher-strip" onClick={() => setView('character')} aria-label="나의 낚시꾼 능력치 보기">
+    return <button type="button" className="mobile-fisher-strip" onClick={() => setView('character')} aria-label="나의 모험가 능력치 보기">
         <span className="mobile-fisher-badge"><Anchor size={15}/><b>Lv.{s.level}</b></span>
         <span className="mobile-fisher-main">
             <span className="mobile-fisher-head"><strong>{s.name}</strong><small>{jobById(s.job)?.name} · 환생 {s.rebirths}회</small><em>전투력 {format(power(a))}</em></span>

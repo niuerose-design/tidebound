@@ -24,7 +24,7 @@ import { scaledEnemyStats, profile, abyssEnemyStats } from '../data/encounters';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
-/** 포획 1회당 회복량. 무리 규모와 관계없이 포획마다 한 번 적용합니다(응급처치 포함). */
+/** 처치 1회당 회복량. 무리 규모와 관계없이 처치마다 한 번 적용합니다(응급처치 포함). */
 export function victoryHeal(s: State) {
     return Math.floor(stats(s).hp * victoryHealRate(s));
 }
@@ -53,8 +53,8 @@ export function releaseAnchor(s: State, achieved: boolean) {
     addLog(s, achieved ? `잠든 닻 봉인 해제 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리 달성 · 쌓인 경험치 ×${anchorPayout(s)} = +${exp} EXP` : `잠든 닻 포기 · 쌓인 경험치 +${exp} EXP를 그대로 받았습니다.`, 'reward');
     return exp;
 }
-/** 포획 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 잔잔한 물결 1%p/단계. */
-/** 포획 후 회복률. v27.8 낚시터는 기본 20%에서 해역 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘잔잔한 물결’은 1단계마다 +1%p. */
+/** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 잔잔한 물결 1%p/단계. */
+/** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 해역 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘잔잔한 물결’은 1단계마다 +1%p. */
 export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill - encounterTier(s) * BALANCE.healAfterKillTierDecay)) + researchRank(s, 'recovery') * .01;
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 export function rollRarity(rng: () => number, minRarity = 0) {
@@ -91,7 +91,7 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         addLog(s, `${RARITIES[rarity].name} 장비 발견 · ${item.name}${rarity ? ` · 옵션 ${rarity}개` : ''}`, 'reward');
     }
 }
-/** rareBonus: 희귀 이상 어종의 출현 가중치 증가율(0.1 = +10%). */
+/** rareBonus: 희귀 이상 몬스터의 출현 가중치 증가율(0.1 = +10%). */
 export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, tier = 0) {
     const choices = (ids.map(id => FISH.find(f => f.id === id)).filter(Boolean) as typeof FISH).filter(f => (f.minTier || 0) <= tier);
     const weight = (f: typeof FISH[number]) => (f.spawnWeight ?? 1) * (f.rarity && f.rarity !== 'common' ? 1 + rareBonus : 1);
@@ -104,7 +104,7 @@ export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, 
     }
     return choices[choices.length - 1]?.id || ids[0];
 }
-/** 무릉도장 1층 기준 능력치(첫 어종). 한 번만 계산합니다. */
+/** 무릉도장 1층 기준 능력치(첫 몬스터). 한 번만 계산합니다. */
 let abyssRef: ReturnType<typeof scaledEnemyStats> | undefined;
 export const abyssReference = () => abyssRef ??= scaledEnemyStats(FISH.find(f => f.id === DUNGEONS.find(d => d.id === 'abyss')!.fish[0])!, { tier: 0, wave: 0 });
 export function spawn(s: State, rng: () => number) {
@@ -113,7 +113,7 @@ export function spawn(s: State, rng: () => number) {
     const finalWave = !!dungeon && s.dungeon!.wave === dungeon.fish.length - 1;
     const tier = encounterTier(s);
     const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
-    // v27.22 숙련의 까미: 낚시터 입질마다 아주 드물게. 그 낚시터에서 가장 강한 어종의 몸집을 빌립니다.
+    // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
     const mimic = !dungeon && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills && rng() < mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1);
     const id = mimic ? MIMIC.id : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
     const top = mimic ? [...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0] : undefined;
@@ -122,7 +122,7 @@ export function spawn(s: State, rng: () => number) {
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
         : scaledEnemyStats(dungeon || mimic ? f : stageStatFish(f, st.level), { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
     const { exp, gold } = dungeon ? dungeonCatchReward(f, dungeon.level, tier, boss) : catchReward(f, tier, boss);
-    // v25.19 변종: 어종을 10회 이상 포획한 낚시터 입질마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
+    // v25.19 변종: 몬스터를 10회 이상 처치한 사냥터 출현마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
     let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
     if (!dungeon && !mimic && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
         const chances = variantChances(s);
@@ -156,16 +156,16 @@ export function reward(s: State, rng: () => number) {
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
     const size = e.swarm || 1, vdef = variantById(e.variant), rewardMult = vdef?.reward || 1, expMult = vdef?.expMult || rewardMult, bookPer = vdef?.book || 1;
-    // v25.6 계열 집중 카드 ×2 · v27.14 서버 이벤트 · v27.21 해역 난이도(낚시터만). 정수로 유지하려고 올림 없이 곱한 뒤 연구 보정으로 넘깁니다.
+    // v25.6 계열 집중 카드 ×2 · v27.14 서버 이벤트 · v27.21 해역 난이도(사냥터만). 정수로 유지하려고 올림 없이 곱한 뒤 연구 보정으로 넘깁니다.
     const { focus: focusMastery, event: eventMastery, tide: tideMastery } = masteryMultipliers(s);
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * size * focusMastery * eventMastery * tideMastery)), practice = researched.total;
     const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult), exp = Math.floor(e.exp * expMultiplier(s) * expMult) * size;
-    // 황금 개체: 난파선 수집가 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
+    // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
     const goldenChance = stats(s).goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
     const gold = perFish * size + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     s.kills += size;
-    // v27.22 숙련의 까미: 로또 숙련을 이번 포획 숙련에 더합니다(직업·장착 스킬 모두).
+    // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두).
     let mimicBonus = 0;
     if (e.id === MIMIC.id) { const t = rollMimicMastery(rng); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
     const practiceTotal = practice + mimicBonus;
@@ -198,20 +198,20 @@ export function reward(s: State, rng: () => number) {
     }
     else
         s.exp += exp;
-    addLog(s, `${golden ? '✦ 황금 ' : ''}${vdef && e.variant !== 'swarm' ? `${vdef.mark} ${vdef.name} ` : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 포획 · +${gold} G · +${exp} EXP${golden ? ' · 황금 개체 골드 10배' : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
+    addLog(s, `${golden ? '✦ 황금 ' : ''}${vdef && e.variant !== 'swarm' ? `${vdef.mark} ${vdef.name} ` : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 처치 · +${gold} G · +${exp} EXP${golden ? ' · 황금 개체 골드 10배' : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
     const fish = FISH.find(f => f.id === e.id)!;
     for (let i = 0; i < size * (vdef?.drops || 1); i++)
         drop(s, fish.level + encounterTier(s) * 5, rng);
     if (vdef?.guaranteed) drop(s, fish.level + encounterTier(s) * 5, rng, true);
-    // v25.8 해역 난이도 이정표: 낚시터에서 그 차수로 처음 포획하면 사이의 이정표 진주를 한 번에 줍니다.
+    // v25.8 해역 난이도 이정표: 사냥터에서 그 차수로 처음 처치하면 사이의 이정표 진주를 한 번에 줍니다.
     if (!s.dungeon && !seal) {
         const tier = encounterTier(s), best = s.tideBest?.[s.stage] || 0;
         if (tier > best) {
             (s.tideBest ??= {})[s.stage] = tier;
             let pearls = 0; const hit: number[] = [];
             TIDE_MILESTONES.forEach((n, i) => { if (best < n && n <= tier) { pearls += TIDE_MILESTONE_PEARLS[i]; hit.push(n); } });
-            if (pearls) { s.pearls += pearls; addLog(s, `해역 난이도 이정표 · ${STAGES.find(st => st.id === s.stage)?.name || s.stage} 차수 ${hit.join('·')} 첫 포획 · 진주 +${pearls}`, 'reward'); }
+            if (pearls) { s.pearls += pearls; addLog(s, `해역 난이도 이정표 · ${STAGES.find(st => st.id === s.stage)?.name || s.stage} 차수 ${hit.join('·')} 첫 처치 · 진주 +${pearls}`, 'reward'); }
         }
     }
     if (seal && seal.caught >= ANCHOR_CATCHES) releaseAnchor(s, true);

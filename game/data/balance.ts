@@ -11,13 +11,13 @@ export const BALANCE = {
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
     activeSlots: 4, passiveSlots: 3, inventoryCap: 60,
-    // v22: 장비는 드물게 떨어집니다. 포획당 기본 0.1%(시간당 수백 마리를 잡아도 한두 개).
+    // v22: 장비는 드물게 떨어집니다. 처치당 기본 0.1%(시간당 수백 마리를 잡아도 한두 개).
     // 행운·물건도감·연구·드롭 보너스는 이 확률에 곱해지는 상대 증가로 바뀝니다(구 기준 17%p당 +100%).
     dropChance: 0.001, dropBonusScale: 0.17, dropChanceCap: 0.01,
     // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
     /** v27.30 반복 정복 확정 장비 확률 5% → 1%(레벨 초과 감소 적용). 드롭률을 낮게 둔 의미가 없어지던 문제. */
     dungeonRepeatDrop: 0.01,
-    // 포획 후 회복률(근거: scripts/check-recovery.mjs). v27.8: 기본 20%, 해역 난이도 1마다 healAfterKillTierDecay만큼 줄고 healAfterKillMin 아래로는 내려가지 않습니다.
+    // 처치 후 회복률(근거: scripts/check-recovery.mjs). v27.8: 기본 20%, 해역 난이도 1마다 healAfterKillTierDecay만큼 줄고 healAfterKillMin 아래로는 내려가지 않습니다.
     healAfterKill: 0.2, healAfterKillTierDecay: .01, healAfterKillMin: .05, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
@@ -52,16 +52,16 @@ export function bossLevelScale(level: number) {
     const growth = Math.min(1, Math.max(0, level - 14) / 24);
     return { hp: 2.1 + (MONSTER_TUNING.bossMultiplier - 2.1) * growth, attack: 1.2 + .25 * growth, magic: 1.08 + .17 * growth };
 }
-/** v27.30 던전 적 압박: 같은 레벨 낚시터보다 단단하게(체력 1.3~1.62배, 공격 1.12~1.32배, 방어 1.08~1.24배). */
+/** v27.30 던전 적 압박: 같은 레벨 사냥터보다 단단하게(체력 1.3~1.62배, 공격 1.12~1.32배, 방어 1.08~1.24배). */
 export function dungeonPressure(wave: number) {
     const index = Math.max(0, Math.min(4, wave));
     return { hp: 1.3 + index * .08, attack: 1.12 + index * .05, defense: 1.08 + index * .04 };
 }
 /**
  * v27.30 던전 보상 기준.
- * - v27.35 보상은 '권장 레벨 물고기 몇 마리분'으로 정합니다. 보스 경험치 = 물고기 bossExpFish마리분, 보스 골드 = bossGoldFish마리분,
- *   클리어 골드 = clearGoldFish마리분. 일반 웨이브는 어종 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
- *   한 번 클리어(전투 5번)가 같은 레벨 낚시 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
+ * - v27.35 보상은 '권장 레벨 몬스터 몇 마리분'으로 정합니다. 보스 경험치 = 몬스터 bossExpFish마리분, 보스 골드 = bossGoldFish마리분,
+ *   클리어 골드 = clearGoldFish마리분. 일반 웨이브는 몬스터 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
+ *   한 번 클리어(전투 5번)가 같은 레벨 사냥 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
  * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(진주는 층 공식 그대로).
  * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
  * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
@@ -69,8 +69,8 @@ export function dungeonPressure(wave: number) {
 export const DUNGEON_TUNING = { bossExpFish: 6, bossGoldFish: 4, clearGoldFish: 6, expLevelOver: 2, rewardTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
 /**
  * v27.35 무릉도장 적: 층마다 가파르게 강해지는 별도 공식(보상은 rewardTierCap에서 멈춤).
- * 1층 일반 어종 체력 hp(10만)에서 층마다 ×hpGrowth, 공격은 기준 어종의 attack배에서 층마다 ×attackGrowth, 방어는 defense배에서 ×defenseGrowth.
- * 어종·보스 사이의 상대 차이(성향·보스 배율)는 그대로 유지합니다.
+ * 1층 일반 몬스터 체력 hp(10만)에서 층마다 ×hpGrowth, 공격은 기준 몬스터의 attack배에서 층마다 ×attackGrowth, 방어는 defense배에서 ×defenseGrowth.
+ * 몬스터·보스 사이의 상대 차이(성향·보스 배율)는 그대로 유지합니다.
  */
 export const ABYSS_TUNING = { hp: 100000, hpGrowth: 1.15, attack: 4, attackGrowth: 1.08, defense: 2, defenseGrowth: 1.05 };
 export const dungeonOverlevel = (playerLevel: number, dungeonLevel: number) => {
@@ -93,7 +93,7 @@ export const SKILL_FORMULA = {
     // 육중 조화: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
     // 초안(합 × 1.2 + 최저 × 6)은 편중 배분이 더 강해 check-all-rounder.mjs 결과로 조정했습니다.
     harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,
-    // v21 팔방 항해사: 원시 피해도 연구·환생·직업 배율을 받고, 장착한 능력치 패시브의
+    // v21 올라운더: 원시 피해도 연구·환생·직업 배율을 받고, 장착한 능력치 패시브의
     // 출신 직업이 서로 다를수록(최대 harmonyJobCap개) 직업당 harmonyPerJob만큼 강해집니다.
     harmonyScale: 2, harmonyPerJob: .15, harmonyJobCap: 6,
     // v21 회복 기술은 체력이 가득 차도 발동합니다. 체력이 healThreshold 이상일 때 쓰면
@@ -130,7 +130,7 @@ export const SKILL_FORMULA = {
     // v21.2 전용 기술: signatureTier 이상 직업의 기술은 자기 계보(조상·후손 직업)에서 온전히,
     // 계보 밖에서 계승하면 배율·패시브 수치가 signatureScale 배로 발휘됩니다. 1~3차 기술은 자유롭게 조합됩니다.
     signatureTier: 4, signatureScale: .7,
-    // v24.2 지정 어종 연구(와일드헌터 계보)의 대상: 뱀장어·곰치 계열.
+    // v24.2 지정 몬스터 연구(와일드헌터 계보)의 대상: 뱀장어·곰치 계열.
     designatedSpecies: ['eel', 'emberEel', 'grottoWarden'],
     // v24 환생 비례 패시브(perRebirth): 환생 횟수는 이 값까지만 셉니다.
     perRebirthCap: 30,
@@ -176,8 +176,8 @@ export const STATUS_GUIDE = [
 export const xpNeeded = (level: number) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1));
 // v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.
 export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }, { name: '신화', color: '#f08a6c', factor: 3.9 }, { name: '고대', color: '#5fd0b5', factor: 4.5 }, { name: '태초', color: '#ff6fb5', factor: 5.2 }];
-export const SLOTS = { rod: '낚싯대', coat: '방어구', charm: '나침반' };
-/** 응급처치(공용 패시브): 포획 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
+export const SLOTS = { rod: '무기', coat: '방어구', charm: '나침반' };
+/** 응급처치(공용 패시브): 처치 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
 
 /** v26.6 주사위 배율 범위: 손가락 자르기 단계(trim)만큼 양 끝을 안쪽으로 좁힌 [최저, 최고]. */
 export function diceRange(d: { low: number; high: number }, trim = 0) {

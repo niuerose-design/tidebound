@@ -65,9 +65,9 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
 }
 /**
  * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
- * codex 발견한 어종 + 등록한 물건 · catch 누적 포획 · hunt 던전 클리어 + 보스 포획 · species 지정 어종 포획 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수.
+ * codex 발견한 몬스터 + 등록한 물건 · catch 누적 처치 · hunt 던전 클리어 + 보스 처치 · species 지정 몬스터 처치 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수.
  */
-/** 변종·황금 개체 포획 수(마리 수가 아니라 조우 횟수). */
+/** 변종·황금 개체 처치 수(마리 수가 아니라 조우 횟수). */
 function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
     let n = 0;
     for (const row of Object.values(s.variantBook || {})) for (const k of Object.values(row)) n += k || 0;
@@ -225,7 +225,7 @@ export function skillMasteryHint(sk: Skill, level: number, rank = 1) {
 }
 /** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다. */
 export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
-/** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 낚시꾼의 패시브와 발견의 문이 셉니다. */
+/** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 발견의 문이 셉니다. */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && jobMastered(s, j); }).length;
 /** 전직 조건 목록. v27.13 문 판정은 플레이 기록만 보므로 시각 인자가 없습니다. */
 export function jobRequirements(s: State, j: Job) {

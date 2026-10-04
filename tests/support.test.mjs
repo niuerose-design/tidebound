@@ -82,10 +82,10 @@ test('v26.1 titles come from achievements; equip, hide and auto all resolve thro
     const { TITLES, unlockedTitles, displayTitle, autoTitle } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/titles');
     const { act } = await import('./harness.mjs');
     const s = newState(0); assert.equal(displayTitle(s), '🌱 초심자', 'everyone starts with the sprout title'); assert.equal(unlockedTitles(s).length, 1);
-    s.rebirths = 5; assert.equal(displayTitle(s), '되돌아온 낚시꾼', 'rebirth titles count by rebirth number even before the achievement syncs');
+    s.rebirths = 5; assert.equal(displayTitle(s), '되돌아온 모험가', 'rebirth titles count by rebirth number even before the achievement syncs');
     s.achievements = { 'rebirths:5': 100, 'playtime:100': 500 }; assert.equal(autoTitle(s).id, 'playtime:100', 'auto = most recently achieved');
     assert.throws(() => act(s, { type: 'title', id: 'abyss:100' }, 0), /얻지 못한/);
-    act(s, { type: 'title', id: 'rebirth:5' }, 0); assert.equal(displayTitle(s), '되돌아온 낚시꾼');
+    act(s, { type: 'title', id: 'rebirth:5' }, 0); assert.equal(displayTitle(s), '되돌아온 모험가');
     act(s, { type: 'title', id: 'none' }, 0); assert.equal(s.title, null); assert.equal(displayTitle(s), '');
     act(s, { type: 'title', id: 'auto' }, 0); assert.equal(s.title, undefined); assert.equal(displayTitle(s), '바다에 사는 자');
     assert.ok(TITLES.every(t => t.achievement || t.id === 'novice'), 'every earned title names its achievement');

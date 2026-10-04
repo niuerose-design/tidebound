@@ -36,7 +36,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     voidLance: { chance: .55, multiplier: 2, scalingRatio: .3, manaCost: 20 },
     // v27.5 망인 계보 계승 가치: 무덤의 챔질 AP 4→2·대기 3, 골수 방패 발동 34%·×1.9·AP 3. 같은 차수 기술 중 꼴찌였습니다.
     graveHook: { chance: .5, multiplier: 1.7, manaCost: 13 },
-    // v27.4 유리 작살꾼(제약 직업): 240%·빈사 +50%.
+    // v27.4 유리 대포(제약 직업): 240%·빈사 +50%.
     glassLance: { chance: .3, multiplier: 2.4 },
     marrowGuard: { chance: .3, multiplier: 2 },
     wakeFist: { chance: .26, multiplier: 1.45 },
@@ -60,7 +60,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     redWake: { chance: .24, multiplier: 1.65, scalingRatio: .07, drainRatio: .18 },
     leviathanEquation: { chance: .55, multiplier: 2.6, scalingRatio: .45, manaCost: 28 },
     harvestEcho: { chance: .26, multiplier: 2.2, drainRatio: .18 },
-    // 팔방 항해사: check-all-rounder.mjs 검증값
+    // 올라운더: check-all-rounder.mjs 검증값
     harmonicWeight: { chance: .5, multiplier: 2.2, cooldown: 3, manaCost: 16 },
     twinHook: { chance: .24, multiplier: 1.15, extraAttackMultiplier: .5 },
     electricBite: { chance: .28, multiplier: 1.75, damageType: 'physical' },
@@ -112,7 +112,7 @@ function applyStatusRules(sk: Skill, tier: number) {
     if (cap !== undefined && tier <= 2) sk.multiplier = Math.min(sk.multiplier, cap);
 }
 
-const PROGRESS_SOURCE: Record<string, string> = { codex: '도감 기록 수', catch: 'log10(누적 포획 + 1)', hunt: '√(던전 클리어 + 보스 포획)', gold: 'log10(보유 골드 + 1)' };
+const PROGRESS_SOURCE: Record<string, string> = { codex: '도감 기록 수', catch: 'log10(누적 처치 + 1)', hunt: '√(던전 클리어 + 보스 처치)', gold: 'log10(보유 골드 + 1)' };
 /** v24.2 진행도·도박·올인·골드 기술의 한 줄 설명. */
 function progressDesc(sk: Skill) {
     let out = '';
@@ -121,7 +121,7 @@ function progressDesc(sk: Skill) {
     if (sk.gamble && sk.gamble.min !== sk.gamble.max) out += ` 쓸 때마다 피해 ×${sk.gamble.min}~${sk.gamble.max}${sk.gamble.accuracy ? ` · 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p` : ''} 무작위.`;
     if (sk.allIn) out += ` 현재 체력 ${Math.round(sk.allIn.hpRatio * 100)}%와 남은 마나를 모두 걸고 (건 체력 × ${sk.allIn.hpScale} + 건 마나 × ${sk.allIn.manaScale})를 피해에 더합니다.`;
     if (sk.goldSpend) out += ` 보유 골드 ${Math.round(sk.goldSpend.ratio * 1000) / 10}%(최대 ${sk.goldSpend.cap.toLocaleString()})를 던져 × ${sk.goldSpend.scale}만큼 피해에 더합니다.`;
-    if (sk.preyBonus) out += ` 보스·지정 어종에게 피해 +${Math.round(sk.preyBonus * 100)}%.`;
+    if (sk.preyBonus) out += ` 보스·지정 몬스터에게 피해 +${Math.round(sk.preyBonus * 100)}%.`;
     if (sk.allIn?.heal) out += ` 건 마나 × ${sk.allIn.heal}만큼 회복.`;
     if (sk.recoil) out += ` 준 피해의 ${Math.round(sk.recoil * 100)}%를 자신도 받습니다(체력 1 아래로는 안 내려감).`;
     if (sk.sureHit) out += ' 반드시 명중합니다.';

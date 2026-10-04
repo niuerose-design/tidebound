@@ -120,9 +120,9 @@ export function combatFxSkipped(logs: Log[], afterId: number, playerName: string
 // ── 전투 화면 재생 (표시 전용) ──
 // 동기화로 받은 두 상태(prev → next) 사이의 전투 로그를 턴으로 묶고, 타격마다 보여 줄 HP·MP·적·로그 위치를 계산합니다.
 // 서버 계산을 흉내 내지 않고 로그의 실제 피해·회복 값만 되짚으므로, 배치의 마지막 프레임은 항상 next와 같습니다.
-const RECOVERED = '숨을 고르고 다시 낚싯대를 들었습니다.';
-const LOST = '물고기를 놓쳤습니다. 잠시 회복합니다.';
-const CAUGHT = /^(.+?)(?: 무리 ×\d+)? 포획 · \+\d/;
+const RECOVERED = '숨을 고르고 다시 무기를 들었습니다.';
+const LOST = '몬스터를 놓쳤습니다. 잠시 회복합니다.';
+const CAUGHT = /^(.+?)(?: 무리 ×\d+)? 처치 · \+\d/;
 
 export type ReplayFrame = {
     /** 턴 시작 뒤 이 프레임을 보여 줄 시각(ms). */
@@ -200,7 +200,7 @@ export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMa
             beats.push({ turn: at[g], index: i, beatMs: beatMs(units.length), logs, side, player: side === 'player' ? self : side === 'enemy' ? -dealt : 0, foe: side === 'enemy' ? self : side === 'player' ? -dealt : 0, kill: last && !!caught, lost: last && group.some(l => l.text === LOST), recovered: group[0].text === RECOVERED, name: caught });
         });
     });
-    // 플레이어 HP: 마지막 불연속(포획 회복·레벨업·패배·회복 완료) 뒤는 next에서 거꾸로, 그 앞은 prev에서 앞으로 계산합니다.
+    // 플레이어 HP: 마지막 불연속(처치 회복·레벨업·패배·회복 완료) 뒤는 next에서 거꾸로, 그 앞은 prev에서 앞으로 계산합니다.
     const hp: number[] = [];
     let cut = -1;
     for (let b = beats.length - 1, v = next.hp; b >= 0; b--) {
@@ -224,7 +224,7 @@ export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMa
             mana[b] = acts ? from + (next.mana - from) * done / acts : from;
         }
     }
-    // 적: 포획·패배로 나뉜 구간마다. 마지막까지 살아 있는 적은 next에서 거꾸로, 처음 적은 prev에서 앞으로, 그 사이는 0에서 거꾸로 셉니다.
+    // 적: 처치·패배로 나뉜 구간마다. 마지막까지 살아 있는 적은 next에서 거꾸로, 처음 적은 prev에서 앞으로, 그 사이는 0에서 거꾸로 셉니다.
     const foes: (Enemy | null)[] = [];
     for (let start = 0; start < beats.length;) {
         while (start < beats.length && !beats[start].side) { foes[start] = null; start++; }
