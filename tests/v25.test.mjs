@@ -423,3 +423,15 @@ test('v27.31 limit break needs the pearl research "한계의 문"; old breaks ge
     old.pearls = 100; act(old, { type: 'permanent', id: 'limitBreak' }, 0); const paid = 100 - old.pearls; assert.ok(paid > 0);
     old.running = false; act(old, { type: 'resetResearch', id: 'utility' }, 0); assert.equal(old.pearls, 100, 'refunds only the paid rank'); assert.equal(old.permanent.limitBreak, 2, 'free ranks stay');
 });
+test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain fish) and survives rebirth', async () => {
+    const V = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/variants');
+    const s = newState(0); s.book.perch = 10000; s.skills = [];
+    const big = () => .999; // 가장 큰 열린 규모(×100, 무리 감지 없음)
+    assert.equal(V.rollSwarmSize(s, 'perch', big), 100, 'no cap by default');
+    act(s, { type: 'swarmCap', value: '5' }, 0); assert.equal(s.swarmCap, 5); assert.equal(V.rollSwarmSize(s, 'perch', big), 5, 'capped to x5');
+    assert.equal(V.rollSwarmSize(s, 'perch', () => 0), 5, 'small rolls stay');
+    act(s, { type: 'swarmCap', value: '0' }, 0); assert.equal(V.rollSwarmSize(s, 'perch', big), 1, 'off → plain fish');
+    s.level = 999; act(s, { type: 'rebirth' }, 0); assert.equal(s.swarmCap, 0, 'setting survives rebirth');
+    act(s, { type: 'swarmCap', value: '500' }, 0); assert.equal(s.swarmCap, undefined, 'no limit clears the field');
+    assert.throws(() => act(s, { type: 'swarmCap', value: '50' }, 0), /무리 최대 규모/);
+});

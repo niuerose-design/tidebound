@@ -416,6 +416,8 @@ export type State = {
     hideDoorNotice?: boolean;
     /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */
     skipStatConfirm?: boolean;
+    /** v27.32 설정: 만날 무리의 최대 규모(0이면 무리 끔). 없으면 제한 없음. 상한을 넘게 뽑힌 무리는 상한 규모로 나옵니다. */
+    swarmCap?: number;
     /** v25.7 환생 정리 방식(설정). 없으면 판매. */
     salvageMode?: 'sell' | 'dismantle';
     /** v25.21 누적 플레이 시간(ms). 턴이 진행될 때마다 더하고 환생해도 유지합니다(‘도전’ 업적). */
