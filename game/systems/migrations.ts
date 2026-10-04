@@ -25,8 +25,20 @@ export function refundRelicPurchases(s: State) {
     if (refund > 0) { s.pearls = (s.pearls || 0) + refund; addLog(s, `환생 유물이 환생 횟수 보상으로 바뀌어 이미 산 유물의 진주 ${refund}개를 돌려받았습니다.`, 'system'); }
     return refund;
 }
+/**
+ * v27.31 한계돌파에 진주 연구 ‘한계의 문’이 필요해졌습니다. 이미 한 한계돌파(스킬 중 가장 높은 단계)만큼 연구를 무료로 한 번 줍니다.
+ * 무료 단계는 researchGranted에 적어 재분배 때 진주로 돌려주지 않습니다.
+ */
+export function grantLimitBreakResearch(s: State) {
+    if (s.researchGranted?.limitBreak !== undefined) return 0;
+    const owned = Math.min(3, Math.max(0, ...Object.values(s.limitBreaks || {})));
+    const have = s.permanent?.limitBreak || 0, grant = Math.max(0, owned - have);
+    s.researchGranted = { ...s.researchGranted, limitBreak: grant };
+    if (grant > 0) { s.permanent.limitBreak = have + grant; addLog(s, `한계돌파에 진주 연구 ‘한계의 문’이 필요해져, 이미 한 한계돌파만큼 ${have + grant}단계를 무료로 받았습니다.`, 'system'); }
+    return grant;
+}
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    if (s.version === SAVE_VERSION) { refundGoldenResearch(s); refundRelicPurchases(s); return s; }
+    if (s.version === SAVE_VERSION) { refundGoldenResearch(s); refundRelicPurchases(s); grantLimitBreakResearch(s); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

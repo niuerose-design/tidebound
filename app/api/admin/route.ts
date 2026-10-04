@@ -1,8 +1,8 @@
 import { checkOrigin, failure, readJson } from '@/game/server/store';
-import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent } from '@/game/server/admin';
+import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats } from '@/game/server/admin';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
-/** v27.26 운영자 도구. 헤더 x-admin-key 필요. POST { action: 'search', query } | 'preview' | 'apply' | v27.27 'events' | 'saveEvent' { event } | 'deleteEvent' { id } | 'toggleEvent' { id, disabled } | 'adjust' { id, gold?, pearls? }. */
+/** v27.26 운영자 도구. 헤더 x-admin-key 필요. POST { action: 'search', query } | 'preview' | 'apply' | v27.27 'events' | 'saveEvent' { event } | 'deleteEvent' { id } | 'toggleEvent' { id, disabled } | 'adjust' { id, gold?, pearls? } | v27.31 'closures' | 'setClosed' { kind: 'stages'|'dungeons', id, closed } | v27.32 'stats'. */
 export async function POST(req: Request) { try {
     checkOrigin(req);
     requireAdmin(req);
@@ -13,6 +13,9 @@ export async function POST(req: Request) { try {
     if (body.action === 'saveEvent') return Response.json(await saveEvent((body.event && typeof body.event === 'object' ? body.event : {}) as Record<string, unknown>), { headers });
     if (body.action === 'deleteEvent') return Response.json(await deleteEvent(String(body.id ?? '')), { headers });
     if (body.action === 'toggleEvent') return Response.json(await toggleCodeEvent(String(body.id ?? ''), !!body.disabled), { headers });
+    if (body.action === 'stats') return Response.json(await adminStats(), { headers });
+    if (body.action === 'closures') return Response.json(await listClosures(), { headers });
+    if (body.action === 'setClosed') return Response.json(await setClosed(String(body.kind ?? ''), String(body.id ?? ''), !!body.closed), { headers });
     if (body.action === 'adjust') return Response.json(await adjustCurrency(String(body.id ?? ''), { gold: body.gold, pearls: body.pearls }), { headers });
     if (body.action === 'apply') return Response.json(await applyRestart(String(body.id ?? ''), Number(body.revision)), { headers });
     return Response.json({ error: '알 수 없는 요청입니다.' }, { status: 400, headers });

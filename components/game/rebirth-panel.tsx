@@ -1,7 +1,8 @@
 'use client';
 import { ConfirmButton } from './confirm-button';
 import { useState } from 'react';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw, Info } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
 import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, ECONOMY, researchCost, researchEffect, researchUnlocked, type ResearchDef, type ResearchTab } from '@/game/data/economy';
@@ -13,16 +14,35 @@ import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
-import { VOW_IDS, VOW_NAMES, vowUnlocked, vowBoost, anchorPayout, breathBonus, roughEnemy, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '@/game/systems/vows';
+import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, type VowId, vowUnlocked, vowBoost, anchorPayout, breathBonus, roughEnemy, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '@/game/systems/vows';
 import { BonusList } from './inventory-panel';
 import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, type VaultInfo } from '@/game/data/account';
 import { useEffect, useState as useLocalState } from 'react';
 import { salvagePreview } from '@/game/systems/actions/lifecycle';
+const VOW_TEXT = {
+    anchor: (s: State) => `환생 때 사냥터·던전 하나가 지정되고, 그곳에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1 · 해역 난이도 0. 풀리면 쌓인 경험치 ×${anchorPayout(s)}. 언제든 포기 가능(보너스 없이 지급).`,
+    breath: (s: State) => `쓰러지면 이번 생을 처음부터 다시 시작(환생 횟수·진주 변화 없음, 서약 해제). 한 번도 쓰러지지 않고 환생하면 환생 진주 +${Math.round(breathBonus(s) * 100)}%.`,
+    rough: (s: State) => `선택 단계마다 적 체력·공격 +50%, 드롭·골드 +${Math.round(50 * vowBoost(s, 'rough'))}%. 해역 난이도와 별개입니다.`,
+};
+/** 서약 연구 카드의 설명 팝업: 서약이 무엇인지, 어떻게 거는지, 이 서약의 제약과 보상. 누르면 열립니다(모바일 포함). */
+function VowInfo({ id, s }: { id: VowId; s: State }) {
+    return <Popover>
+        <PopoverTrigger asChild><button type="button" className="info-trigger vow-info-trigger" aria-label={`${VOW_NAMES[id]} 서약 설명`}><Info size={15}/><span>서약이란?</span></button></PopoverTrigger>
+        <PopoverContent className="game-tooltip vow-info-pop" side="bottom" align="start">
+            <strong>서약 · {VOW_NAMES[id]}</strong>
+            <p>서약은 다음 생에 스스로 거는 제약입니다. 더 어렵게 플레이하는 대신 고유한 보상을 받습니다.</p>
+            <p><b>이 서약:</b> {VOW_TEXT[id](s)}</p>
+            <p><b>거는 법:</b> 이 연구로 해금한 뒤 환생 화면 아래 ‘서약’에서 ‘다음 생에 걸기’를 켜고 환생하면 그 생 동안 적용됩니다. 여러 서약을 함께 걸 수 있습니다.</p>
+            <p><b>연구 단계:</b> 1단계 해금, 2·3단계는 보상만 50%씩 강화합니다(제약은 그대로).</p>
+        </PopoverContent>
+    </Popover>;
+}
+const VOW_BY_RESEARCH = Object.fromEntries(VOW_IDS.map(id => [VOW_RESEARCH[id], id])) as Record<string, VowId>;
 /** 진주 연구 카드: 현재 → 다음 효과, 잠긴 연구는 해금 환생 횟수를 보여줍니다. */
 function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a: Action) => void; busy: boolean }) {
     const rank = s.permanent[r.id] || 0, cost = researchCost(r.id, rank), unlocked = researchUnlocked(s.rebirths, r), maxed = rank >= r.max;
     return <article className={`panel research-card ${unlocked ? '' : 'locked'}`}>
-        <div><h2>{r.name}</h2><p>{r.desc}{r.levels ? '' : <small> (1단계당)</small>}</p>
+        <div><h2>{r.name}{VOW_BY_RESEARCH[r.id] && <VowInfo id={VOW_BY_RESEARCH[r.id]} s={s}/>}</h2><p>{r.desc}{r.levels ? '' : <small> (1단계당)</small>}</p>
             <p className="research-effect">{maxed ? `${researchEffect(r, rank)} · 최대` : `${rank || r.levels ? researchEffect(r, rank) : `${r.label} +0`} → ${researchEffect(r, rank + 1)}`}</p>
             <small>연구 {rank} / {r.max}</small></div>
         <button className="secondary" disabled={busy || !unlocked || maxed || s.pearls < cost} onClick={() => send({ type: 'permanent', id: r.id })}>{!unlocked ? `환생 ${r.rebirth}회 필요` : maxed ? '연구 완료' : `${cost} 진주`}</button>
@@ -43,11 +63,6 @@ function ResearchTabView({ tab, s, send, busy }: { tab: ResearchTab; s: State; s
         </div>
     </>;
 }
-const VOW_TEXT = {
-    anchor: (s: State) => `환생 때 사냥터·던전 하나가 지정되고, 그곳에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1 · 해역 난이도 0. 풀리면 쌓인 경험치 ×${anchorPayout(s)}. 언제든 포기 가능(보너스 없이 지급).`,
-    breath: (s: State) => `쓰러지면 이번 생을 처음부터 다시 시작(환생 횟수·진주 변화 없음, 서약 해제). 한 번도 쓰러지지 않고 환생하면 환생 진주 +${Math.round(breathBonus(s) * 100)}%.`,
-    rough: (s: State) => `선택 단계마다 적 체력·공격 +50%, 드롭·골드 +${Math.round(50 * vowBoost(s, 'rough'))}%. 해역 난이도와 별개입니다.`,
-};
 /** v25.6 계정 보너스: 모든 캐릭터 슬롯의 기록을 합쳐 각 캐릭터에 적용됩니다. */
 export function AccountPanel({ s }: { s: State }) {
     const rows = accountBonusRows(s), slots = s.account?.slots || [], openSlots = Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).filter(n => slotUnlocked(s.account, n)).length;

@@ -317,6 +317,8 @@ export type State = {
     lifeBonus?: 'deep' | 'tailwind' | null;
     /** v26.1 지금 진행 중인 서버 이벤트(서버가 동기화 때 적음). 없으면 null. */
     event?: import('./data/events').ActiveEvent | null;
+    /** v27.31 운영 페이지에서 닫은 낚시터·던전(서버가 동기화 때 적음). 없으면 null. */
+    closed?: import('./data/world').Closures | null;
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
     growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number; notified?: boolean } | null;
@@ -404,6 +406,8 @@ export type State = {
     permanent: Record<string, number>;
     /** 진주 연구 재분배의 계정당 첫 1회 무료 반환을 썼는지. 없으면 false. */
     researchResetUsed?: boolean;
+    /** v27.31 무료로 받은 진주 연구 단계(재분배 때 반환하지 않음). limitBreak: 이미 한 한계돌파만큼 ‘한계의 문’을 무료로 받음. */
+    researchGranted?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
     /** 선별의 그물 자동 판매 켜짐 여부(설정). */
