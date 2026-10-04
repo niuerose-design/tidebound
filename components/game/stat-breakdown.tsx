@@ -23,7 +23,7 @@ const STAT_NOTES: Partial<Record<keyof CombatStats, string>> = {
  * v27.51 event: 서버 이벤트·제단 축복 배율. 경험치·골드 획득처럼 (1 + 보너스)에 곱해지는 능력치는 이벤트를 곱한 최종값을 보여 주고,
  * 장비 드롭처럼 확률 전체에 곱해지는 능력치(eventNote)는 값은 그대로 두고 이벤트 줄만 덧붙입니다.
  */
-export function StatBreakdown({ k, value: raw, trace, wide, event = 1, eventNote }: { k: keyof CombatStats; value: number; trace: StatTrace; wide?: boolean; event?: number; eventNote?: string }) {
+export function StatBreakdown({ k, value: raw, trace, wide, event = 1, eventNote, final }: { k: keyof CombatStats; value: number; trace: StatTrace; wide?: boolean; event?: number; eventNote?: string; /** v27.80 이 보너스가 최종 배율·확률로 이어지는 계산식(골드·경험치·드롭). */ final?: string }) {
     const scaled = event !== 1 && !eventNote, value = scaled ? (1 + raw) * event - 1 : raw;
     const rows = STAT_SOURCES.map(source => {
         const parts = (trace[k] || []).filter(x => x.source === source);
@@ -34,7 +34,8 @@ export function StatBreakdown({ k, value: raw, trace, wide, event = 1, eventNote
         <summary><span>{STAT_LABELS[k]}{RATING_STATS.has(k) ? ' 수치' : ''}<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>{statDisplay(k, value)}</strong></summary>
         <ul>{rows.map((r, i) => <li key={r.source}><span>{statSourceLabel(k, r.source)}</span><b>{i === 0 && r.source === 'base' ? statDisplay(k, r.delta).replace(/^\+/, '') : r.factor !== undefined && r.factor !== 1 ? `×${r.factor.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')} (${statDeltaDisplay(k, r.delta)})` : statDeltaDisplay(k, r.delta)}</b></li>)}
             {event !== 1 && <li><span>서버 이벤트{eventNote ? ` · ${eventNote}` : ''}</span><b>×{Number(event.toFixed(3))}{scaled ? ` (${statDeltaDisplay(k, value - raw)})` : ''}</b></li>}
-            <li className="stat-breakdown-total"><span>최종</span><b>{exact(k, value)}</b></li></ul>
+            <li className="stat-breakdown-total"><span>최종</span><b>{exact(k, value)}</b></li>
+            {final && <li className="stat-breakdown-total"><span>계산식</span><b>{final}</b></li>}</ul>
         {STAT_NOTES[k] && <p className="stat-note">{STAT_NOTES[k]}</p>}
     </details>;
 }

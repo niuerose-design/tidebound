@@ -11,6 +11,7 @@ import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize } from '../data/variants';
 import { MIMIC, rollMimicMastery, mimicChance, specialLuck } from '../data/mimic';
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
+import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue } from '../data/rank';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm } from '../data/world';
@@ -201,7 +202,11 @@ export function reward(s: State, rng: () => number) {
     const goldenChance = stats(s).goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
     const gold = perFish * size + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
+    // v27.79 계급장: 처치 수(무리는 마릿수)만큼 계급 경험치. ‘전과 기록’ 특전이 마리당 더 셉니다. 기록이 없던 세이브는 지금까지의 처치 수에서 시작합니다. 진급하면 알립니다.
+    const rk = rankState(s), rankBefore = rankIndex(rk.exp);
     s.kills += size;
+    rk.exp += size * (1 + rankPerkLevel(s, 'tally')); s.rank = rk;
+    if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 빌드 화면의 계급에서 사용)`, 'reward'); }
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두).
     let mimicBonus = 0;
     if (e.id === MIMIC.id) { const t = rollMimicMastery(rng); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
@@ -223,6 +228,12 @@ export function reward(s: State, rng: () => number) {
     s.book[e.id] = (s.book[e.id] || 0) + size * bookPer;
     if (e.variant) { s.variantBook ??= {}; const row = (s.variantBook[e.id] ??= {}); row[e.variant] = (row[e.variant] || 0) + 1; }
     if (vdef?.pearls) { const pearls = vdef.pearls + (s.rebirths >= 3 ? 1 : 0); s.pearls += pearls; addLog(s, `${vdef.mark} ${vdef.name} · 세계석 +${pearls}`, 'reward'); }
+    // v27.79 계급 특전: 사냥터 처치마다 SP·세계석 드롭(특전이 0이면 난수를 쓰지 않음).
+    if (!s.dungeon) {
+        const medal = rankPerkValue(s, 'medal'), supply = rankPerkValue(s, 'supply');
+        if (medal > 0 && rng() < medal) { s.sp += 1; addLog(s, '✦ 전공 훈장 · SP +1', 'reward'); }
+        if (supply > 0 && rng() < supply) { s.pearls += 1; addLog(s, '보급품 · 세계석 +1', 'reward'); }
+    }
     // v27.76 사냥터 난이도 정수 드롭: 난이도 5 이상 사냥터에서 처치마다 확률 판정(확률 0이면 난수를 쓰지 않음).
     if (!s.dungeon && !s.vows?.seal) {
         const te = tideEssence(encounterTier(s));

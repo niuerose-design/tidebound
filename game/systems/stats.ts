@@ -51,7 +51,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         let running = before;
         for (const [source, n] of parts) { const next = running * n; rec(k, source, next - running, n); running = next; }
     };
-    set('expBonus', 'rebirth', permanentExpBonus(s)); add('expBonus', 'job', j.expBonus || 0); add('expBonus', 'account', accountExpGold(s));
+    // v27.80 모험의 기억(연구)을 환생 보너스와 분리해 기록합니다(합은 permanentExpBonus와 같음).
+    set('expBonus', 'rebirth', rebirthExperience(s.rebirths)); add('expBonus', 'research', (s.permanent.exp || 0) * .2); add('expBonus', 'job', j.expBonus || 0);
     for (const k of ['goldBonus', 'dropBonus', 'rebirthBonus', 'dungeonGoldBonus', 'penetration', 'lifesteal'] as const) a[k] = 0;
     set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * E.vit.hp);
     set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'attributes', v.str * E.str.attack);
@@ -71,14 +72,14 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     set('guardAffinity', 'job', guardAffinity(jobFactor(j, 'defense'))); set('wardAffinity', 'job', guardAffinity(jobFactor(j, 'resist'))); set('healFocus', 'job', j.healer ? 1 : 0); set('arcaneStrike', 'job', arcaneStrikeChance({ tier: j.tier, magic: jobFactor(j, 'magic'), attack: jobFactor(j, 'attack') }));
     if (a.arcaneStrike > 0) add('arcaneRatioBonus', 'job', SKILL_FORMULA.arcaneRatioByTier[Math.min(j.tier, SKILL_FORMULA.arcaneRatioByTier.length - 1)] || 0);
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
-    rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus); add('goldBonus', 'account', accountExpGold(s));
+    rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus);
     // v27.73 장비 드롭 보너스도 여기서 모읍니다(연구 ‘보물의 감각’ 1단계 = 0.01 = 드롭 확률 +10%, 행운, 물건도감). 전에는 dropRate에서만 더해 상세 능력치에 보이지 않았습니다.
     a.dropBonus = researchRank(s, 'drop') * .01 + v.luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus;
     rec('dropBonus', 'research', researchRank(s, 'drop') * .01); rec('dropBonus', 'attributes', v.luk * E.luk.dropBonus); rec('dropBonus', 'book', Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus);
     set('rebirthBonus', 'research', (s.permanent.pearl || 0) * 2);
     set('dungeonGoldBonus', 'research', (s.permanent.dungeon || 0) * .08);
     // 세계석 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다.
-    add('crit', 'research', researchRank(s, 'crit') * .005); add('crit', 'account', accountCrit(s)); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
+    add('crit', 'research', researchRank(s, 'crit') * .005); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
     add('penetration', 'research', researchRank(s, 'penetration') * .01); add('evasion', 'research', researchRank(s, 'evasion') * .006);
     add('lifesteal', 'research', researchRank(s, 'lifesteal') * .005);
     // 도감: 몬스터 성향별 연구 능력치와 완성 지역의 테마 보너스(고정값). 배율은 아래에서 따로 적용합니다.
@@ -140,7 +141,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v27.4 제약 직업 장치: 회피.
     if (j.constraint?.devices.evasion) add('evasion', 'job', j.constraint.devices.evasion);
     add('harmony', 'job', (jobFlatBonus(j, 'attack', mastered) + jobFlatBonus(j, 'magic', mastered)) / 2);
-    const feats = achievementTotals(s).bonus, account = 1 + accountPower(s);
+    const feats = achievementTotals(s).bonus, account = accountPower(s);
     mul('hp', [['job', mult(j.hp)], ['research', 1 + (s.permanent.hp || 0) * .08], ['achievement', 1 + feats.hp], ['account', account]]);
     mul('attack', [['job', mult(j.attack)], ['research', 1 + (s.permanent.attack || 0) * .05], ['achievement', 1 + feats.attack], ['account', account]]);
     mul('magic', [['job', mult(j.magic)], ['research', 1 + (s.permanent.magicAttack || 0) * .05], ['achievement', 1 + feats.magic], ['account', account]]);
@@ -167,6 +168,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const [key, cap] of Object.entries(RULE_CAPS)) limit(key as keyof CombatStats, Math.min(cap!, a[key as keyof CombatStats] || 0));
     // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +1%.
     a.superCrit = Math.min(1, Math.max(0, a.crit - SKILL_FORMULA.critCap) * SKILL_FORMULA.superCritPerHundred); rec('superCrit', 'limit', a.superCrit);
+    // v27.79 계정 보스 보너스는 치명타 확률 배율(곱연산).
+    mul('crit', [['account', accountCrit(s)]]);
     limit('crit', Math.min(SKILL_FORMULA.critCap, a.crit));
     // v27.71 기민 외 회피 소스는 합쳐서 60%p까지만 세고, 그 위에 기민 회피를 더한 뒤 점감합니다(1레벨 패시브만으로 고기민 캐릭터를 따라잡지 못하게).
     limit('evasion', evasionRating(evasionRaw(dexEvasion, a.evasion - dexEvasion)));
@@ -202,10 +205,11 @@ export function clampVitals(s: State) {
 }
 /** 골드 배율. 험한 길 서약은 처치·던전 골드를 함께 올립니다(서약이 없으면 ×1). */
 /** v25.6 이번 생의 조건 카드 배율. 사냥터 집중은 그 사냥터에서만, 황금 모험은 생 전체. */
-const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
-const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
-export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * roughReward(s) * focusGold(s) * (s.event?.gold || 1);
-export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus) * (tailwindActive(s) ? 1 + tailwindExp(s) : 1) * focusExp(s) * (s.event?.exp || 1);
+export const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
+export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
+// v27.79 계정(분신) 보너스는 곱연산 배율입니다(accountExpGold ≤ ×1.3).
+export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * accountExpGold(s) * roughReward(s) * focusGold(s) * (s.event?.gold || 1);
+export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus) * accountExpGold(s) * (tailwindActive(s) ? 1 + tailwindExp(s) : 1) * focusExp(s) * (s.event?.exp || 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 던전 정복 골드. 전투 보상과 던전 화면 표시가 같은 식을 씁니다. */
 export const dungeonClearGold = (s: State, baseGold: number, tier: number) => Math.floor(baseGold * tierReward(tier) * goldMultiplier(s) * dungeonGoldMultiplier(s));

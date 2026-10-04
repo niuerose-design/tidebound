@@ -221,23 +221,24 @@ test('v25.6 focus cards change exp, gold and mastery for one life; weekly abyss 
     assert.deepEqual([1, 2, 3, 10, 50, 51].map(abyssWeeklyPearls), [30, 20, 15, 8, 3, 1]);
 });
 
-const { mergeSlots, slotUnlocked, accountExpGold, accountAP, accountPower, accountMasteryTwentieths, accountCrit, accountBonusRows } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/account');
+const { mergeSlots, slotUnlocked, accountExpGold, accountAP, accountPower, accountMastery, accountCrit, accountBonusRows } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/account');
 const { apCapacity } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
 const { researchMastery } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/mastery');
-test('v25.6 account bonuses: exp/gold +10% per account rebirth (cap 30), AP per 5 mastered union, abyss power, species mastery, boss crit; slots unlock at 1 / 5 rebirths', () => {
+const { expMultiplier: expMul, goldMultiplier: goldMul } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/stats');
+test('v27.79 account bonuses are low multiplicative factors (AP unchanged); slot 3 opens at 50 account rebirths', () => {
     const s = newState(0), base = stats(s), ap = apCapacity(s), run = researchMastery(s, 100).total;
-    assert.equal(accountExpGold(s), 0); assert.equal(accountAP(s), 0); assert.equal(slotUnlocked(s.account, 2), false, 'no cache → only slot 1');
+    assert.equal(accountExpGold(s), 1); assert.equal(accountAP(s), 0); assert.equal(slotUnlocked(s.account, 2), false, 'no cache → only slot 1');
     const slot = (n, over) => ({ slot: n, name: `n${n}`, job: 'novice', level: 1, rebirths: 0, mastered: [], species: [], bossKills: 0, abyssBest: 0, updatedAt: 0, ...over });
     const merged = mergeSlots(1, [slot(1, { rebirths: 3, mastered: ['a', 'b', 'c'], species: ['x', 'y'], bossKills: 150, abyssBest: 25 }), slot(2, { rebirths: 2, mastered: ['c', 'd', 'e', 'f'], species: ['y', 'z', 'w'], bossKills: 60, abyssBest: 40 })], 5);
     assert.deepEqual([merged.rebirths, merged.mastered, merged.species, merged.bossKills, merged.abyssBest], [5, 6, 4, 210, 40], 'sum, union, union, sum, max');
-    assert.equal(slotUnlocked(merged, 2), true); assert.equal(slotUnlocked(merged, 3), true); assert.equal(slotUnlocked({ rebirths: 4, slots: [slot(1, { rebirths: 4 })] }, 3), false); assert.equal(slotUnlocked(merged, 4), false);
+    assert.equal(slotUnlocked(merged, 2), true); assert.equal(slotUnlocked(merged, 3), false, 'slot 3 needs 50 account rebirths'); assert.equal(slotUnlocked({ rebirths: 50, slots: [slot(1, { rebirths: 50 })] }, 3), true); assert.equal(slotUnlocked(merged, 4), false);
     s.account = merged; const a = stats(s);
-    assert.ok(Math.abs(a.expBonus - base.expBonus - .5) < 1e-9 && Math.abs(a.goldBonus - base.goldBonus - .5) < 1e-9, '5 rebirths → exp/gold +50%');
-    assert.equal(apCapacity(s), ap + 1, '6 mastered → AP +1'); assert.equal(accountPower(s), .04); assert.ok(a.attack > base.attack && a.hp > base.hp && a.attack / base.attack < 1.05 && a.hp / base.hp < 1.05, 'abyss 40 → about +4% before flat terms and rounding');
-    assert.equal(accountCrit(s), .01); assert.ok(Math.abs(a.crit - base.crit - .01) < 1e-9, '210 bosses → crit +1%p'); assert.equal(accountMasteryTwentieths(s), 0, '4 species → no mastery bonus');
+    assert.equal(a.expBonus, base.expBonus); assert.ok(Math.abs(accountExpGold(s) - 1.05) < 1e-9 && Math.abs(expMul(s) / expMul({ ...s, account: undefined }) - 1.05) < 1e-9 && Math.abs(goldMul(s) / goldMul({ ...s, account: undefined }) - 1.05) < 1e-9, '5 rebirths → exp/gold ×1.05');
+    assert.equal(apCapacity(s), ap + 1, '6 mastered → AP +1'); assert.ok(Math.abs(accountPower(s) - 1.02) < 1e-9); assert.ok(a.attack >= base.attack && a.hp >= base.hp && a.attack / base.attack < 1.06 && a.hp / base.hp < 1.06, 'abyss 40 → about ×1.02 (정수 반올림 포함)');
+    assert.ok(Math.abs(accountCrit(s) - 1.02) < 1e-9); assert.ok(Math.abs(a.crit / base.crit - 1.02) < 1e-9, '210 bosses → crit ×1.02'); assert.equal(accountMastery(s), 1, '4 species → no mastery bonus');
     s.account = { ...merged, rebirths: 99, mastered: 100, species: 100, bossKills: 100000, abyssBest: 9999 };
-    assert.equal(accountExpGold(s), 3); assert.equal(accountAP(s), 6); assert.equal(accountPower(s), .1); assert.equal(accountMasteryTwentieths(s), 7); assert.equal(accountCrit(s), .05);
-    s.masteryCarry = 0; assert.equal(researchMastery(s, 100).total, run + 35, '7 twentieths → mastery +35%');
+    assert.ok(Math.abs(accountExpGold(s) - 1.3) < 1e-9); assert.equal(accountAP(s), 6); assert.ok(Math.abs(accountPower(s) - 1.05) < 1e-9); assert.ok(Math.abs(accountMastery(s) - 1.07) < 1e-9); assert.ok(Math.abs(accountCrit(s) - 1.1) < 1e-9);
+    s.masteryCarry = 0; assert.equal(researchMastery(s, 100).total, run + 7, '×1.07 → mastery +7%');
     assert.ok(accountBonusRows(s).every(r => r.next === '최대' || /최대/.test(r.next)), 'all rows show the cap');
     const t = newState(0); t.account = merged; t.level = 999; act(t, { type: 'rebirth' }, 0); assert.ok(t.rebirths === 1 && t.account === merged, 'account cache survives rebirth');
 });
@@ -922,4 +923,22 @@ test('v27.78 heal after kill keeps falling with tide; stageField matches spawn; 
     const star = W.STAGES.find(x => x.id === 'starfall').fish.map(id => W.FISH.find(f => f.id === id));
     const avg = star.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / star.reduce((a, f) => a + (f.spawnWeight ?? 1), 0);
     assert.ok(avg < 1.35, `starfall weighted reward multiplier ${avg}`);
+});
+
+test('v27.79 rank: kills-only progression with perks (tally, drill, medal, supply), free reset, survives rebirth', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const R = await L.load('data/rank'), Enc = await L.load('systems/encounter'), M = await L.load('systems/mastery');
+    assert.equal(R.RANKS.length, 17); assert.equal(R.RANKS[0].name, '이등병'); assert.equal(R.RANKS.at(-1).name, '중장'); assert.equal(R.RANK_CUMULATIVE[1], 5000);
+    const total = R.RANKS.reduce((a, r) => a + r.need, 0); assert.ok(total > 2.0e6 && total < 2.5e6, `total kills to top ${total}`); assert.equal(R.RANK_TOTAL_POINTS, 41); assert.ok(R.RANK_PERKS.every(p => p.cost === 1), 'every perk costs 1P'); assert.equal(R.RANK_PERKS.reduce((a, p) => a + p.max * p.cost, 0), R.RANK_TOTAL_POINTS, 'all perks maxed = all points');
+    for (let i = 1; i < R.RANKS.length; i++) { const g = R.RANKS[i].need / R.RANKS[i - 1].need; if (i > 1) assert.ok(g > 1.3 && g < 1.5, `growth ${g} at ${i}`); }
+    const s = newState(0); s.kills = 4999; assert.equal(R.rankOf(s).name, '이등병', 'old saves start from their kill count');
+    s.running = true; s.stage = 'brook'; s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0 };
+    Enc.reward(s, () => .99); assert.equal(s.rank.exp, 5000); assert.equal(R.rankOf(s).name, '일병'); assert.ok(s.logs.some(l => /일병\(으\)로 진급/.test(l.text))); assert.equal(R.rankPointsFree(s), 1);
+    act(s, { type: 'rankPerk', id: 'supply' }, 0); assert.equal(R.rankPerkLevel(s, 'supply'), 1); assert.equal(R.rankPointsFree(s), 0); assert.throws(() => act(s, { type: 'rankPerk', id: 'tally' }, 0), /부족/);
+    s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0 }; const p0 = s.pearls; Enc.reward(s, () => 0); assert.equal(s.pearls, p0 + 1, 'supply 0.1% hit on rng 0');
+    act(s, { type: 'rankPerk', id: 'reset' }, 0); assert.equal(R.rankPointsFree(s), 1); assert.deepEqual(s.rank.perks, {});
+    s.rank.exp = R.RANK_CUMULATIVE[16]; assert.equal(R.rankOf(s).name, '중장'); assert.equal(R.rankPointsEarned(s), 41);
+    s.rank.perks = { tally: 2, drill: 3, medal: 5 }; assert.equal(R.rankPointsSpent(s), 2 + 3 + 5); assert.equal(M.victoryMastery(s, { id: 'minnow', boss: false }).base, 4, 'drill 3 → base mastery 4');
+    s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, swarm: 10 }; const e0 = s.rank.exp, sp0 = s.sp; Enc.reward(s, () => 0); assert.equal(s.rank.exp, e0 + 30, 'swarm 10 × (1 + tally 2)'); assert.equal(s.sp, sp0 + 1, 'medal hit');
+    const r = newState(0); r.level = 60; r.rank = { exp: 12345, perks: { supply: 1 } }; act(r, { type: 'rebirth' }, 0); assert.deepEqual(r.rank, { exp: 12345, perks: { supply: 1 } }, 'rank survives rebirth');
 });

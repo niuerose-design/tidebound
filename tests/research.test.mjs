@@ -73,7 +73,7 @@ test('Research v2/v27.73: mastery memory adds +3% per rank with an integer carry
     assert.equal(extra, 3); assert.equal(s.masteryCarry, 0);
     s.permanent.mastery = 3; assert.deepEqual(researchMastery(s, 7), { total: 7, extra: 0 }); assert.equal(s.masteryCarry, 63);
     s.permanent.mastery = 10; s.masteryCarry = 0; assert.deepEqual(researchMastery(s, 10), { total: 13, extra: 3 });
-    s.permanent.mastery = 10; s.masteryCarry = 0; s.account = { species: 10 }; const m = masteryMultipliers(s); assert.ok(Math.abs(m.research - 1.4) < 1e-9, `research 30% + account species 10% (${m.research})`);
+    s.permanent.mastery = 10; s.masteryCarry = 0; s.account = { species: 10 }; const m = masteryMultipliers(s); assert.ok(Math.abs(m.research - 1.33) < 1e-9, `research ×1.3 × account species ×1.02 → 1.33 (${m.research})`);
 });
 
 test('Research v2: online ticks and one offline settlement give the same result with every new research', () => {
