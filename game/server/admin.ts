@@ -14,6 +14,8 @@ import { DUNGEONS, STAGES } from '../data/world';
 import { PROGRESSION } from '../data/progression';
 import { skillById } from '../data/skills';
 import type { State } from '../types';
+import { ALTAR } from '../data/altar';
+import { offlineCapSeconds } from '../data/economy';
 import { SERVER_EVENTS, activeEvent, eventLabel, type ServerEvent } from '../data/events';
 import { readEventConfig, writeEventConfig, readClosures, writeClosures } from './events-config';
 
@@ -197,7 +199,26 @@ export type AdminStats = {
     /** v27.43 제단: 신 세대, 신이 깨어 있는지, 신의 자리 주인, 누적 기여도, 쌓인 몫(골드). */
     altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number };
     top: { name: string; level: number; rebirths: number; abyss: number }[];
+    /**
+     * v27.54 밸런스 점검 지표.
+     * godDepth: 첫 신과 같은 무릉도장 층, reached: 그 층 이상을 깬 모험가 수(모험가·몬스터 전투력은 잣대가 달라 비교하지 않습니다).
+     * god: 신 도전 합계(시도·승리·도전한 모험가·가장 많이 깎은 체력 비율). offline: 최근 부재중 정산 중 상한(6시간 + 긴 휴식)에 닿은 수.
+     * abyss: 무릉도장 최고 층 분포. burn: 화상 기술을 장착한 모험가 수.
+     */
+    balance: { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: { label: string; count: number }[]; burn: number };
 };
+/** v27.54 밸런스 지표. 통계 탭을 열 때만 돕니다. */
+function balanceStats(list: State[]): AdminStats['balance'] {
+    const tries = list.reduce((a, s) => a + (s.altar?.tries || 0), 0), wins = list.reduce((a, s) => a + (s.altar?.wins || 0), 0);
+    const settled = list.filter(s => s.lastOffline), capped = settled.filter(s => s.lastOffline!.seconds >= offlineCapSeconds(s));
+    return {
+        godDepth: ALTAR.firstGod.depth, reached: list.filter(s => (s.abyssBest || 0) >= ALTAR.firstGod.depth).length,
+        god: { tries, wins, players: list.filter(s => s.altar?.tries).length, best: Math.max(0, ...list.map(s => s.altar?.best || 0)) },
+        offline: { settled: settled.length, capped: capped.length },
+        abyss: bucketize(list.map(s => s.abyssBest || 0), [0, 1, 10, 25, 50, 75, 100], '층'),
+        burn: list.filter(s => (s.skills || []).some(id => skillById(id)?.effect === 'burn')).length,
+    };
+}
 const median = (xs: number[]) => { if (!xs.length) return 0; const a = [...xs].sort((x, y) => x - y), m = a.length >> 1; return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2); };
 const countBy = <T>(xs: T[], key: (x: T) => string | null) => { const m = new Map<string, number>(); for (const x of xs) { const k = key(x); if (k) m.set(k, (m.get(k) || 0) + 1); } return m; };
 const bucketize = (xs: number[], edges: number[], unit: string) => edges.map((lo, i) => { const hi = edges[i + 1]; return { label: hi === undefined ? `${lo}${unit} 이상` : lo + 1 === hi ? `${lo}${unit}` : `${lo}~${hi - 1}${unit}`, count: xs.filter(n => n >= lo && (hi === undefined || n < hi)).length }; });
@@ -228,6 +249,7 @@ export async function adminStats(now = Date.now()): Promise<AdminStats> {
         limitBreakers: list.filter(s => Object.values(s.limitBreaks || {}).some(n => n > 0)).length,
         inGuild: list.filter(s => s.guildMember?.id).length,
         altar: { gen: altar.gen, godAlive: altar.god_state === 'alive' && altar.god_until >= now, throne: altar.throne_name, points: altar.total_points, titheGold: altar.tithe_gold },
+        balance: balanceStats(list),
         top: [...list].sort((a, b) => (b.rebirths || 0) - (a.rebirths || 0) || b.level - a.level).slice(0, 10).map(s => ({ name: s.name, level: s.level, rebirths: s.rebirths || 0, abyss: s.abyssBest || 0 })),
     };
 }

@@ -11,7 +11,8 @@ type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
 type Tab = 'life' | 'events' | 'closures' | 'stats';
 type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };
-type Stats = { altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number }; at: number; accounts: number; saves: number; active: { hour: number; day: number; week: number }; running: number; inDungeon: number; level: { avg: number; max: number; buckets: Bucket[] }; rebirths: { avg: number; max: number; buckets: Bucket[] }; stages: Count[]; dungeons: Count[]; jobs: Count[]; totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number }; medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number; top: { name: string; level: number; rebirths: number; abyss: number }[] };
+type Balance = { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: Bucket[]; burn: number };
+type Stats = { balance: Balance; altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number }; at: number; accounts: number; saves: number; active: { hour: number; day: number; week: number }; running: number; inDungeon: number; level: { avg: number; max: number; buckets: Bucket[] }; rebirths: { avg: number; max: number; buckets: Bucket[] }; stages: Count[]; dungeons: Count[]; jobs: Count[]; totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number }; medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number; top: { name: string; level: number; rebirths: number; abyss: number }[] };
 const n = (v: number) => v.toLocaleString('ko-KR');
 /** v27.32 통계 카드 한 칸. */
 const Tile = ({ label, value, note }: { label: string; value: string; note?: string }) => <div className="panel" style={{ padding: 12 }}><div style={{ fontSize: 12, color: '#9bb3b0' }}>{label}</div><div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>{note && <div style={{ fontSize: 12, color: '#9bb3b0' }}>{note}</div>}</div>;
@@ -148,12 +149,20 @@ export default function AdminPage() {
                 <Tile label="길드 가입" value={n(stats.inGuild)} note={`한계돌파한 모험가 ${n(stats.limitBreakers)}`}/>
                 <Tile label="제단 누적 기여도" value={n(stats.altar.points)} note={`${stats.altar.gen}번째 신 ${stats.altar.godAlive ? '깨어 있음' : '잠듦'} · 신의 자리 ${stats.altar.throne || '비어 있음'} · 쌓인 몫 ${n(stats.altar.titheGold)} G`}/>
             </div>
+            <h2 style={{ fontSize: 15, margin: '4px 0 0' }}>밸런스 점검</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 10 }}>
+                <Tile label={`무릉도장 ${stats.balance.godDepth}층 이상`} value={n(stats.balance.reached)} note="첫 신(검은 마법사)과 같은 난이도를 깬 모험가"/>
+                <Tile label="신 도전" value={`${n(stats.balance.god.wins)}승 / ${n(stats.balance.god.tries)}회`} note={`도전한 모험가 ${n(stats.balance.god.players)} · 최고 ${Math.round(stats.balance.god.best * 100)}% 깎음`}/>
+                <Tile label="오프라인 상한 도달" value={`${n(stats.balance.offline.capped)} / ${n(stats.balance.offline.settled)}`} note="최근 부재중 정산이 상한(6시간 + 긴 휴식)에 닿은 모험가"/>
+                <Tile label="화상 기술 장착" value={n(stats.balance.burn)} note="플레임 디스차지 · 파이어 애로우 등"/>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 12 }}>
                 <Bars title="레벨 분포" rows={stats.level.buckets} total={stats.saves}/>
                 <Bars title="환생 횟수 분포" rows={stats.rebirths.buckets} total={stats.saves}/>
                 <Bars title="지금 있는 사냥터" rows={stats.stages.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
                 <Bars title="지금 있는 던전" rows={stats.dungeons.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
                 <Bars title="현재 직업 상위 15" rows={stats.jobs.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
+                <Bars title="무릉도장 최고 층 분포" rows={stats.balance.abyss} total={stats.saves}/>
                 <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>환생·레벨 상위 10</h2>
                     <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, display: 'grid', gap: 3 }}>{stats.top.map((p, i) => <li key={i}>{p.name} · 환생 {p.rebirths}회 · Lv.{p.level}{p.abyss ? ` · 무릉도장 ${p.abyss}층` : ''}</li>)}</ol></div>
             </div>
