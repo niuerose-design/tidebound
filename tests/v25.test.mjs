@@ -383,13 +383,15 @@ test('v27.27 shop gear resells for at most half its price; old shop items are es
     }
 });
 
-test('v27.27 runtime server events merge with code events and can disable them', async () => {
+test('v27.27·v27.73 server events come from the admin page only: no code events, admin events apply and a name-only event is a notice', async () => {
     const ev = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/events');
     const at = Date.parse('2026-10-05T12:00:00+09:00');
-    const before = ev.activeEvent(at); assert.ok(before && before.exp >= 2, 'open beta exp event is live');
-    ev.setRuntimeEvents([{ id: 'admin-test01', name: '주말', from: '2026-10-05T00:00:00+09:00', until: '2026-10-06T00:00:00+09:00', gold: 3 }], ['openbeta-exp']);
-    const now = ev.activeEvent(at); assert.equal(now.gold, 3, 'admin event applies'); assert.ok(!(now.exp > 1), 'disabled code event is off');
-    ev.setRuntimeEvents([], []); assert.ok(ev.activeEvent(at).exp >= 2, 'reset restores code events');
+    assert.deepEqual(ev.SERVER_EVENTS, [], 'v27.73 no coded events; server messages are made on the admin page');
+    assert.equal(ev.activeEvent(at), null, 'nothing is live without admin events');
+    ev.setRuntimeEvents([{ id: 'admin-test01', name: '주말', from: '2026-10-05T00:00:00+09:00', until: '2026-10-06T00:00:00+09:00', gold: 3 }, { id: 'admin-test02', name: '숨겨진 직업 하나가 개방되었습니다', from: '2026-10-05T00:00:00+09:00', until: '2026-10-06T00:00:00+09:00' }], ['openbeta-exp']);
+    const now = ev.activeEvent(at); assert.equal(now.gold, 3, 'admin event applies'); assert.equal(now.exp, 1);
+    assert.match(ev.eventLabel(now), /^주말 · 숨겨진 직업 하나가 개방되었습니다 · 골드 ×3 · 10\/6까지$/, 'notice text joins the banner');
+    ev.setRuntimeEvents([], []); assert.equal(ev.activeEvent(at), null, 'reset clears admin events');
 });
 
 test('v27.28 limit break raises level-table passives (+10%/stage), applies stage-3 AP cut to them, and scales count-based passives', async () => {
@@ -784,6 +786,24 @@ test('v27.69 monsters get level-based penetration and the ward: bosses/Lv.50+ cl
     const calm = { ...foe, cooldowns: {}, effects: {} };
     assert.ok(!/정화/.test(C.strike(calm, target, () => 0)), 'not used without an affliction');
     assert.ok(E.enemyStats(boss, true).penetration > 0, boss.id);
+});
+
+test('v27.73 skill pins and hidden skills live in the save: toggles, mutual exclusion, list import, and they survive rebirth, SP refund and a life restart', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), { restartLife } = await L.load('systems/actions/lifecycle');
+    const s = newState(0);
+    assert.equal(s.skillPins, undefined, 'a save that never pinned has no list (the screen migrates browser pins only then)');
+    act(s, { type: 'pinSkill', id: 'hook' }, 0); assert.deepEqual(s.skillPins, ['hook']);
+    act(s, { type: 'hideSkill', id: 'hook' }, 0); assert.deepEqual(s.skillHidden, ['hook']); assert.deepEqual(s.skillPins, [], 'hiding drops the pin');
+    act(s, { type: 'pinSkill', id: 'hook' }, 0); assert.deepEqual(s.skillPins, ['hook']); assert.deepEqual(s.skillHidden, [], 'pinning drops the hide');
+    act(s, { type: 'pinSkill', id: 'hook' }, 0); assert.deepEqual(s.skillPins, [], 'toggle off');
+    assert.throws(() => act(s, { type: 'hideSkill', id: 'nope' }, 0), /없는 스킬/); assert.throws(() => act(s, { type: 'pinSkill', id: '' }, 0), /없는 스킬/);
+    act(s, { type: 'hideSkill', id: 'pierce' }, 0);
+    act(s, { type: 'pinSkill', value: 'hook, pierce,hook,bogus' }, 0); assert.deepEqual(s.skillPins, ['hook', 'pierce'], 'import: known ids, deduplicated'); assert.deepEqual(s.skillHidden, [], 'imported pins leave the hidden list');
+    act(s, { type: 'hideSkill', id: 'pierce' }, 0); assert.deepEqual(s.skillPins, ['hook']); assert.deepEqual(s.skillHidden, ['pierce']);
+    act(s, { type: 'resetSkills' }, 0); assert.deepEqual([s.skillPins, s.skillHidden], [['hook'], ['pierce']], 'SP refund keeps marks');
+    s.level = 60; act(s, { type: 'rebirth' }, 0, () => .5); assert.deepEqual([s.skillPins, s.skillHidden], [['hook'], ['pierce']], 'rebirth keeps marks');
+    restartLife(s, 0); assert.deepEqual([s.skillPins, s.skillHidden], [['hook'], ['pierce']], 'admin life restart keeps marks');
+    assert.equal(canUse(s, 'hook'), true, 'hiding never changes usability');
 });
 
 test('v27.70 dungeon modes: normal/hell/nightmare tiers, entry value parsing, repeat keeps the mode, Mu Lung ignores it', async () => {

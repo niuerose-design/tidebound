@@ -1,5 +1,5 @@
 // 직업 개편 2단계: ??? 계열의 문과 숙달 규칙
-import { newState, act, canChangeJob, jobRequirements, jobMastered, jobMasteryTarget, doorsMod as doors, JOBS, assert, test } from './harness.mjs';
+import { newState, act, advance, canChangeJob, jobRequirements, jobMastered, jobMasteryTarget, doorsMod as doors, JOBS, assert, test } from './harness.mjs';
 
 const at = (y, mo, d, h, mi = 0) => Date.UTC(y, mo - 1, d, h - 9, mi); // KST 시각 → UTC 밀리초
 const ready = (level = 30) => { const s = newState(0); s.level = level; s.rebirths = 1; Object.assign(s.attributes, { str: 30, dex: 30, int: 30, vit: 30, wis: 30, luk: 30 }); return s; };
@@ -61,4 +61,24 @@ test('v25.23 a door seen open stays open: recordOpenDoors stores it and doorFor 
     t.deaths = 0; assert.deepEqual(doors.doorFor(t, 'undead', 0), { door: 'discovery', open: true });
     assert.deepEqual(doors.recordOpenDoors(t, 0), [], 'already recorded');
     assert.deepEqual(doors.doorFor({ unlockedJobs: [] }, 'undead', 0), { door: 'discovery', open: false });
+});
+
+test('v27.73 doors opened on the admin page: open for everyone while set, written to State.openDoors at sync, never recorded in doorsOpened, closed again when unset', () => {
+    assert.deepEqual(doors.DOOR_JOBS, [...doors.REBIRTH_DOOR_JOBS, ...doors.DISCOVERY_DOORS.map(d => d.job)]);
+    doors.setOpenDoors(['undead', 'voidcaller', 'skeleton', 'nope']);
+    try {
+        assert.deepEqual(doors.openDoorsSnapshot(), ['voidcaller', 'undead'], 'only door jobs, in door order');
+        const s = ready(); advance(s, 1000);
+        assert.deepEqual(s.openDoors, ['voidcaller', 'undead'], 'the server settlement (advance) writes the open list for the screen');
+        assert.deepEqual(doors.doorFor(s, 'undead'), { door: 'discovery', open: true }); assert.deepEqual(doors.doorFor(s, 'voidcaller'), { door: 'rebirth', open: true });
+        assert.deepEqual(doors.doorFor(s, 'clockmaker'), { door: 'discovery', open: false }, 'other doors keep their conditions');
+        assert.equal(canChangeJob(s, 'undead'), true, 'the job change goes through while the door is open');
+        assert.ok(!(s.doorsOpened || []).includes('undead'), 'an admin-opened door is not recorded as seen open');
+        assert.deepEqual(doors.recordOpenDoors(s), [], 'recordOpenDoors ignores admin-opened doors');
+        act(s, { type: 'job', id: 'undead' }, 2000); assert.equal(s.job, 'undead');
+        doors.setOpenDoors([]); advance(s, 3000);
+        assert.equal(s.openDoors, undefined, 'unset: the list is removed at the next settlement');
+        assert.equal(canChangeJob(s, 'undead'), true, 'a job entered while open stays available (unlockedJobs)');
+        assert.deepEqual(doors.doorFor(s, 'voidcaller'), { door: 'rebirth', open: false }, 'a door not entered closes again');
+    } finally { doors.setOpenDoors([]); }
 });
