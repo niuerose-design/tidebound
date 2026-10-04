@@ -354,12 +354,21 @@ for (const lineage of LINEAGES) lineage.name = MAPLE_LINEAGE_NAMES[lineage.id] ?
 for (const lineage of LINEAGES) lineage.summary = MAPLE_LINEAGE_SUMMARY[lineage.id] ?? lineage.summary;
 /** 직업의 계보 id. lineage가 있으면 그 값, 상위·하위가 없는 1차 직업은 `${tree}-independent`, 그 밖에는 루트 조상 id. */
 export function lineageOf(job: Job): string {
-    if (job.lineage) return job.lineage;
-    if (!job.parent && job.tier === 1 && !JOBS.some(j => j.parent === job.id)) return `${job.tree}-independent`;
-    let root = job;
-    for (let parent = JOBS.find(j => j.id === root.parent); parent; parent = JOBS.find(j => j.id === root.parent)) root = parent;
-    return root.id;
+    // v27.62 직업의 부모·계열은 데이터가 정해지면 바뀌지 않아 한 번 계산한 계보를 기억합니다(전직 화면이 렌더마다 수천 번 부름).
+    const hit = lineageCache.get(job);
+    if (hit) return hit;
+    let out: string;
+    if (job.lineage) out = job.lineage;
+    else if (!job.parent && job.tier === 1 && !JOBS.some(j => j.parent === job.id)) out = `${job.tree}-independent`;
+    else {
+        let root = job;
+        for (let parent = JOBS.find(j => j.id === root.parent); parent; parent = JOBS.find(j => j.id === root.parent)) root = parent;
+        out = root.id;
+    }
+    lineageCache.set(job, out);
+    return out;
 }
+const lineageCache = new WeakMap<Job, string>();
 /** 직업 성격 태그. tags가 없으면 role을 '·'로 나눕니다. */
 export const jobTags = (job: Job) => job.tags ?? job.role.split('·').map(x => x.trim()).filter(Boolean);
 

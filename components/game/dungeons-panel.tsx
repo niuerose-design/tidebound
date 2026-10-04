@@ -14,6 +14,7 @@ import { bookRevealed } from '@/game/systems/book';
 import { BOOK_REVEAL } from '@/game/data/book-traits';
 import { statDisplay } from '@/game/data/progression';
 import { Heading, Meter, format } from './shared';
+import { useSkillFx } from './skill-fx-setting';
 import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, useCombatFx } from './combat-fx';
 import { StatusBadges } from './combat-status';
 import { BattleLogLine } from './combat-log';
@@ -26,7 +27,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     const revealed = !!enemyFish && bookRevealed(s, enemyFish.id);
     const enemyProfile = enemyFish && revealed ? profile(enemyFish.id) : undefined;
     const activeWave = s.dungeon?.wave ?? 0;
-    const { effects: combatFx, combo: fxCombo } = useCombatFx(s.logs, s.name);
+    const skillFx = useSkillFx(), { effects: combatFx, combo: fxCombo } = useCombatFx(s.logs, s.name, skillFx);
     const [repeatChoice, setRepeatChoice] = useState<Record<string, string>>({});
     const repeat = s.dungeon?.repeat;
     const repeatStatus = repeat ? (repeat.until ? `반복 중 · ${repeat.until}층까지` : repeat.left === null ? '반복 중 · 실패할 때까지' : repeat.left === 0 ? '반복 중 · 마지막 도전' : `반복 중 · 이후 ${repeat.left}회 더`) : '';

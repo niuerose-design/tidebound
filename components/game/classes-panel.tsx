@@ -1,6 +1,6 @@
 'use client';
 import type { PanelProps } from './panel-props';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Compass, Search } from 'lucide-react';
 import { JOBS, JOB_TREES, LINEAGES, lineageOf, type JobTreeId, jobById } from '@/game/data/classes';
 import { jobMasteryTarget, jobMastered } from '@/game/systems/progression';
@@ -29,7 +29,11 @@ export function Classes({ s, send, busy }: PanelProps) {
     const [query, setQuery] = useState(''), [tag, setTag] = useState('');
     const [compareIds, setCompareIds] = useState<string[]>([]);
     const toggleCompare = (id: string) => setCompareIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : ids.length >= 3 ? ids : [...ids, id]);
-    const doors = openUnenteredDoors(s), doorJobs = doors.map(d => d.job);
+    // v27.62 문·빠른 찾기 개수는 상태가 바뀔 때만 다시 셉니다(직업 259개 × 조건 판정이라 검색 입력마다 세면 무거움).
+    const { doors, doorJobs, finderCounts } = useMemo(() => {
+        const doors = openUnenteredDoors(s), doorJobs = doors.map(d => d.job);
+        return { doors, doorJobs, finderCounts: Object.fromEntries((Object.keys(FINDER_LABEL) as Finder[]).map(kind => [kind, finderJobs(s, kind, doorJobs).length])) as Record<Finder, number> };
+    }, [s]);
     const searching = !!query.trim() || !!tag;
     const found = finder ? finderJobs(s, finder, doorJobs) : searching ? searchJobs(s, query, tag) : null;
     const foundTitle = finder ? `빠른 찾기 · ${FINDER_LABEL[finder]}` : `검색${query.trim() ? ` '${query.trim()}'` : ''}${tag ? ` #${tag}` : ''}`;
@@ -54,7 +58,7 @@ export function Classes({ s, send, busy }: PanelProps) {
     return <>
         <Heading eyebrow="VOCATION TREE" title="직업 계보도"/>
         <section className="panel job-current-summary"><Compass size={26}/><div><small>현재 직업</small><h2>{current.name}</h2><p>숙련 {format(s.jobMastery[s.job] || 0)} / {format(jobMasteryTarget(current))} · 전직해 본 직업 {s.unlockedJobs.length} / {JOBS.length} · 숙달 {JOBS.filter(j => jobMastered(s, j)).length}</p></div><button className="secondary small" onClick={showCurrent}>현재 직업 보기</button></section>
-        <div className="job-finder" role="group" aria-label="빠른 찾기">{(Object.keys(FINDER_LABEL) as Finder[]).map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{finderJobs(s, kind, doorJobs).length}</b></button>)}</div>
+        <div className="job-finder" role="group" aria-label="빠른 찾기">{(Object.keys(FINDER_LABEL) as Finder[]).map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{finderCounts[kind]}</b></button>)}</div>
         <div className="job-search">
             <label className="job-search-box"><Search size={15}/><input type="search" value={query} placeholder="직업 이름 검색" aria-label="직업 이름 검색" onChange={e => { setQuery(e.target.value); setFinder(null); }}/></label>
             <div className="job-tag-chips" aria-label="태그 필터">{TOP_TAGS.map(t => <button type="button" key={t} className={`job-tag-chip ${tag === t ? 'active' : ''}`} aria-pressed={tag === t} onClick={() => { setTag(tag === t ? '' : t); setFinder(null); }}>#{t}</button>)}</div>

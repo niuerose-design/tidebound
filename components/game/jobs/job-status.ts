@@ -19,7 +19,12 @@ export const STATUS_LABEL = (st: ReturnType<typeof jobStatus>) => st.status === 
 export const canEnter = (st: ReturnType<typeof jobStatus>) => st.status === 'mastered' || st.status === 'ready';
 
 export const treeName = (id: string) => JOB_TREES.find(t => t.id === id)?.name || id;
-export const lineageJobs = (lineageId: string) => JOBS.filter(j => lineageOf(j) === lineageId);
+/** 계보별 직업 목록(직업 데이터는 고정이라 한 번만 묶어 둡니다). */
+let lineageIndex: Map<string, Job[]> | undefined;
+export const lineageJobs = (lineageId: string) => {
+    if (!lineageIndex) { lineageIndex = new Map(); for (const j of JOBS) { const id = lineageOf(j); lineageIndex.set(id, [...(lineageIndex.get(id) || []), j]); } }
+    return lineageIndex.get(lineageId) || [];
+};
 
 /** 다른 계보(다른 계열 포함)에서 이어지는 직업이면 부모 표시: ↩ 부모명(계열). */
 export function crossParent(j: Job) {
