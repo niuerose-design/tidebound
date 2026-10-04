@@ -838,3 +838,20 @@ test('v27.70 nuri blessing: an altar gauge that multiplies the exp nuri spawn ch
         assert.ok(/누리 출현 ×3/.test(ev.eventLabel({ ...live, name: '테스트' })));
     } finally { ev.setAltarEvents([]); }
 });
+
+test('v27.71 evasion: non-dex sources are capped at 60%p raw, dex evasion stacks on top before the soft cap', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const LT = await L.load('data/long-term'), St = await L.load('systems/stats'), Sk = await L.load('data/skills');
+    assert.equal(LT.EVASION_SOURCE_CAP, .6);
+    const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} ≈ ${b}`); near(LT.evasionRaw(0, 1.4), .6); near(LT.evasionRaw(.7, 1.4), 1.3); near(LT.evasionRaw(.7, .1), .8); near(LT.evasionRaw(0, -.05), -.05);
+    const passives = Sk.SKILLS.filter(k => k.type === 'passive' && k.bonus?.evasion && !k.song && !k.rebirth && !k.unlockAfter).sort((a, b) => b.bonus.evasion - a.bonus.evasion).slice(0, 12);
+    // 계승한 스킬은 레벨·직업 조건 없이 장착되므로 1레벨 캐릭터에 회피 패시브를 잔뜩 끼운 상황을 그대로 만듭니다.
+    const wear = (s) => { s.skills = passives.map(k => k.id); for (const k of passives) { s.learned[k.id] = 1; s.skillInheritances[k.id] = true; if (k.unlockJobMastery) s.jobMastery[k.job] = k.unlockJobMastery; } return s; };
+    const dex0 = 5 * .0015, low = wear(newState(0)), lowEv = St.stats(low).evasion, lowRaw = passives.reduce((n, k) => n + k.bonus.evasion, 0);
+    assert.ok(lowRaw > .6, `the passive stack exceeds the cap raw (${lowRaw})`);
+    assert.ok(Math.abs(lowEv - LT.evasionRating(dex0 + .6)) < 1e-9 && lowEv < .6, `level 1 passive stack ${lowEv} = rating(cap + base dex)`);
+    const dexOnly = newState(0); dexOnly.level = 94; dexOnly.attributes.dex = 470; const dexEv = St.stats(dexOnly).evasion;
+    const both = wear(newState(0)); both.level = 94; both.attributes.dex = 470; const bothEv = St.stats(both).evasion;
+    assert.ok(dexEv > lowEv && bothEv > dexEv, `dex ${dexEv} beats passive-only ${lowEv}; both ${bothEv}`);
+    assert.ok(Math.abs(bothEv - LT.evasionRating(dex0 + 470 * .0015 + .6)) < 1e-9, 'dex stacks on top of the capped passive sum');
+});
