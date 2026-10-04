@@ -451,6 +451,8 @@ export type State = {
     wins: number;
     losses: number;
     bestStage: number;
+    /** 오프라인 정산 중에만 true인 임시 표시(저장 전에 지웁니다). */
+    catchingUp?: boolean;
     lastOffline: null | {
         seconds: number;
         kills: number;

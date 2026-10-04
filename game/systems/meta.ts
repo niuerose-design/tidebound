@@ -1,7 +1,7 @@
 import type { State } from '../types';
 import { ECONOMY, researchRank } from '../data/economy';
-import { MONSTER_TUNING, DUNGEON_TUNING, xpNeeded } from '../data/balance';
-import { SWARM_UNLOCK, fishExpAt } from '../data/world';
+import { MONSTER_TUNING, DUNGEON_TUNING } from '../data/balance';
+import { SWARM_UNLOCK, fishExpAt, fishGoldAt } from '../data/world';
 export const rebirthLevel = (s: State) => Math.min(ECONOMY.rebirthLevelCap, 30 + s.rebirths * ECONOMY.rebirthLevelStep);
 /** 요구 레벨을 넘겨 오래 버틴 항해의 추가 진주: 초과 레벨² ÷ 40. */
 export const deepVoyagePearls = (s: State) => { const over = s.level - rebirthLevel(s); return over > 0 ? Math.floor(over * over / 40) : 0; };
@@ -34,12 +34,18 @@ export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: n
     const rewardScale = f.rewardMultiplier || 1;
     return { exp: Math.round(f.exp * mult * tierReward(tier) * rewardScale), gold: Math.round(f.gold * mult * tierReward(tier) * rewardScale) };
 }
-/** v27.30 던전 포획 경험치(배율 적용 전). 보스는 권장 레벨 레벨업 경험치의 일정 비율, 일반 웨이브는 어종 레벨을 권장 레벨 + 2까지만 셉니다. 층 배율은 expTierCap에서 멈춥니다. */
-export function dungeonExp(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) {
-    const t = Math.min(tier, DUNGEON_TUNING.expTierCap);
-    if (boss) return Math.round(xpNeeded(dungeonLevel) * DUNGEON_TUNING.bossExpShare * tierReward(t));
-    return catchReward({ exp: fishExpAt(Math.min(f.level, dungeonLevel + DUNGEON_TUNING.expLevelOver)), gold: 0, rewardMultiplier: f.rewardMultiplier }, t).exp;
+/** v27.35 던전 보상에 쓰는 층 배율 단계(무릉도장은 rewardTierCap에서 멈춤). */
+export const dungeonRewardTier = (tier: number) => Math.min(tier, DUNGEON_TUNING.rewardTierCap);
+/** 던전 포획 보상(배율 적용 전). 보스는 권장 레벨 물고기 몇 마리분, 일반 웨이브는 어종 레벨을 권장 레벨 + 2까지만 셉니다. */
+export function dungeonCatchReward(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) {
+    const t = tierReward(dungeonRewardTier(tier));
+    if (boss) return { exp: Math.round(fishExpAt(dungeonLevel) * DUNGEON_TUNING.bossExpFish * t), gold: Math.round(fishGoldAt(dungeonLevel) * DUNGEON_TUNING.bossGoldFish * t) };
+    const level = Math.min(f.level, dungeonLevel + DUNGEON_TUNING.expLevelOver), scale = (f.rewardMultiplier || 1) * t;
+    return { exp: Math.round(fishExpAt(level) * scale), gold: Math.round(fishGoldAt(level) * scale) };
 }
+export const dungeonExp = (f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) => dungeonCatchReward(f, dungeonLevel, tier, boss).exp;
+/** 클리어 보너스 골드의 기준값(골드 배율·층 배율 적용 전): 권장 레벨 물고기 clearGoldFish마리분. */
+export const dungeonClearBase = (d: { level: number }) => fishGoldAt(d.level) * DUNGEON_TUNING.clearGoldFish;
 /** 이 어종으로 해당 무리 규모를 고를 수 있는지 (도감 포획 수 기준). */
 export const swarmUnlocked = (s: State, fishId: string, size: number) => (s.book[fishId] || 0) >= (SWARM_UNLOCK[size] ?? Infinity);
 export const tierHealth = (tier: number) => 1 + tier * .35 + Math.pow(Math.max(0, tier - 20), 2) * .006;

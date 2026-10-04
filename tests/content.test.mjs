@@ -43,7 +43,7 @@ test('Abyss pearls scale with depth and milestone SP is granted once and survive
  const {abyssPearls,ABYSS_SP_MILESTONES}=longTerm;
  assert.deepEqual([1,5,9,10,15,25,50].map(abyssPearls),[1,3,1,6,6,9,18]);
  const clearNext=(s)=>{act(s,{type:'dungeon',id:'abyss'},s.lastTick);let t=s.lastTick;for(let i=0;i<4000&&s.dungeon;i++){t+=2000;advance(s,t,rng);}assert.equal(s.dungeon,null);};
- const s=newState(0);s.level=60;s.rebirths=3;s.permanent.attack=3000;s.permanent.hp=3000;s.permanent.guard=1000;s.abyssBest=9;s.sp=0;s.hp=stats(s).hp;s.mana=stats(s).mana;
+ const s=newState(0);s.level=60;s.rebirths=3;s.permanent.attack=3000000;s.permanent.hp=3000000;s.permanent.guard=1000000;s.abyssBest=9;s.sp=0;s.hp=stats(s).hp;s.mana=stats(s).mana;
  act(s,{type:'sync'},s.lastTick);const pearls=s.pearls;clearNext(s);
  assert.equal(s.abyssBest,10);assert.equal(s.pearls-pearls,16,"v25.8: floor 6 + 10F first-break bonus 10");assert.equal(s.sp,1);assert.deepEqual(s.abyssMilestones,[10]);
  s.abyssBest=24;s.hp=stats(s).hp;clearNext(s);assert.equal(s.sp,2);assert.deepEqual(s.abyssMilestones,[10,25]);
@@ -69,7 +69,7 @@ test('Rebirth timing: deep voyage pearls and mastery, tailwind experience',()=>{
 });
 
 test('Dungeon repeat runs until its stop condition, then resumes idle fishing',()=>{
- const strong=()=>{const s=newState(0);s.level=60;s.rebirths=3;s.permanent.attack=3000;s.permanent.hp=3000;s.permanent.guard=1000;s.hp=stats(s).hp;s.mana=stats(s).mana;return s;};
+ const strong=()=>{const s=newState(0);s.level=60;s.rebirths=3;s.permanent.attack=3000000;s.permanent.hp=3000000;s.permanent.guard=1000000;s.hp=stats(s).hp;s.mana=stats(s).mana;return s;};
  const run=(s,limit=20000)=>{let t=s.lastTick;for(let i=0;i<limit&&s.dungeon;i++){t+=2000;advance(s,t,rng);}};
  const first=[...DUNGEONS].sort((a,b)=>a.level-b.level)[0];
  const s=strong();act(s,{type:'dungeon',id:first.id,value:'5'},0);assert.equal(s.dungeon.repeat.left,4);run(s);

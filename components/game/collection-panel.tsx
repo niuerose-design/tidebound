@@ -13,7 +13,8 @@ import { PROGRESSION, STAT_LABELS, statDisplay, percent } from '@/game/data/prog
 import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
 import { stats, mastery, goldMultiplier, hitChance, dropRate } from '@/game/systems/stats';
-import { ENEMY_SKILLS, profile, scaledEnemyStats } from '@/game/data/encounters';
+import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
+import { abyssReference } from '@/game/systems/encounter';
 import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel } from '@/game/systems/book';
 import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES } from '@/game/data/book-traits';
 import { VARIANTS } from '@/game/data/variants';
@@ -102,7 +103,7 @@ export function Collection({ s, send, busy }: PanelProps) {
         </details>)}<details className="book-section book-region boss-book-section">
         <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>던전 보스 도감</h2><span>{FISH.filter(f => f.boss && (s.book[f.id] || 0) >= bookComplete).length} / {FISH.filter(f => f.boss).length}종 완성</span></summary>
         <div className="book-grid">{FISH.filter(f => f.boss).map(f => {
-            const n = s.book[f.id] || 0, p = profile(f.id), enemy = scaledEnemyStats(f, { boss: true, wave: 4, tier: f.id === 'abyssSovereign' ? 3 : 0 }), researchDone = (s.bookClaims?.[f.id] || 0) >= BALANCE.bookMilestones.length;
+            const n = s.book[f.id] || 0, p = profile(f.id), enemy = f.id === 'abyssSovereign' ? abyssEnemyStats(f, abyssReference(), 1, { boss: true, wave: 4 }) : scaledEnemyStats(f, { boss: true, wave: 4, tier: 0 }), researchDone = (s.bookClaims?.[f.id] || 0) >= BALANCE.bookMilestones.length;
             return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={f.id}>
                 <div className="book-icon"><Swords size={34}/><span>{n >= bookComplete ? '완성' : `${n} / ${bookComplete} 포획`}</span></div>
                 <h3>{f.name} <small className="fish-rarity legendary">전설 보스</small><GoldenMark s={s} id={f.id}/></h3>

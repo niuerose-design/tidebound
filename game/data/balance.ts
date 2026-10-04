@@ -59,13 +59,20 @@ export function dungeonPressure(wave: number) {
 }
 /**
  * v27.30 던전 보상 기준.
- * - 보스 경험치 = 던전 권장 레벨의 레벨업 경험치 × bossExpShare(보스 레벨·보상 배수와 무관).
- * - 일반 웨이브 경험치는 어종 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
- * - 무릉도장 층 배율은 경험치에만 expTierCap 단계에서 멈춥니다(골드·진주는 그대로).
+ * - v27.35 보상은 '권장 레벨 물고기 몇 마리분'으로 정합니다. 보스 경험치 = 물고기 bossExpFish마리분, 보스 골드 = bossGoldFish마리분,
+ *   클리어 골드 = clearGoldFish마리분. 일반 웨이브는 어종 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
+ *   한 번 클리어(전투 5번)가 같은 레벨 낚시 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
+ * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(진주는 층 공식 그대로).
  * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
  * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
  */
-export const DUNGEON_TUNING = { bossExpShare: .2, expLevelOver: 2, expTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
+export const DUNGEON_TUNING = { bossExpFish: 6, bossGoldFish: 4, clearGoldFish: 6, expLevelOver: 2, rewardTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
+/**
+ * v27.35 무릉도장 적: 층마다 가파르게 강해지는 별도 공식(보상은 rewardTierCap에서 멈춤).
+ * 1층 일반 어종 체력 hp(10만)에서 층마다 ×hpGrowth, 공격은 기준 어종의 attack배에서 층마다 ×attackGrowth, 방어는 defense배에서 ×defenseGrowth.
+ * 어종·보스 사이의 상대 차이(성향·보스 배율)는 그대로 유지합니다.
+ */
+export const ABYSS_TUNING = { hp: 100000, hpGrowth: 1.15, attack: 4, attackGrowth: 1.08, defense: 2, defenseGrowth: 1.05 };
 export const dungeonOverlevel = (playerLevel: number, dungeonLevel: number) => {
     const over = Math.max(0, playerLevel - dungeonLevel - DUNGEON_TUNING.overlevelGrace);
     return Math.max(DUNGEON_TUNING.overlevelFloor, 1 - Math.ceil(over / DUNGEON_TUNING.overlevelStep) * DUNGEON_TUNING.overlevelCut);

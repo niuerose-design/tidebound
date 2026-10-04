@@ -3,7 +3,7 @@ import { BOSS_RESEARCH } from '../data/specializations';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus, TIDE_MILESTONES, TIDE_MILESTONE_PEARLS } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets } from './progression';
-import { catchReward, encounterTier, dungeonExp } from './meta';
+import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
@@ -20,7 +20,7 @@ import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
 import { saleValue } from './equipment';
 import { roughLevel, roughEnemy, anchorSeal, atAnchorTarget, anchorPayout, anchorTargetName, ANCHOR_CATCHES } from './vows';
-import { scaledEnemyStats, profile } from '../data/encounters';
+import { scaledEnemyStats, profile, abyssEnemyStats } from '../data/encounters';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -104,6 +104,9 @@ export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, 
     }
     return choices[choices.length - 1]?.id || ids[0];
 }
+/** 무릉도장 1층 기준 능력치(첫 어종). 한 번만 계산합니다. */
+let abyssRef: ReturnType<typeof scaledEnemyStats> | undefined;
+export const abyssReference = () => abyssRef ??= scaledEnemyStats(FISH.find(f => f.id === DUNGEONS.find(d => d.id === 'abyss')!.fish[0])!, { tier: 0, wave: 0 });
 export function spawn(s: State, rng: () => number) {
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
     const st = STAGES.find(x => x.id === s.stage)!;
@@ -111,14 +114,14 @@ export function spawn(s: State, rng: () => number) {
     const tier = encounterTier(s);
     const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
     // v27.22 숙련의 까미: 낚시터 입질마다 아주 드물게. 그 낚시터에서 가장 강한 어종의 몸집을 빌립니다.
-    const mimic = !dungeon && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills && rng() < mimicChance(tier, STAGES.indexOf(st));
+    const mimic = !dungeon && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills && rng() < mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1);
     const id = mimic ? MIMIC.id : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
     const top = mimic ? [...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0] : undefined;
     const f = mimic ? { ...FISH.find(x => x.id === MIMIC.id)!, level: top!.level, hp: Math.round(top!.hp * MIMIC.hp), attack: Math.round(top!.attack * MIMIC.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : FISH.find(x => x.id === id)!;
     const boss = finalWave;
-    const foe = scaledEnemyStats(dungeon || mimic ? f : stageStatFish(f, st.level), { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
-    const { gold } = catchReward(f, tier, boss);
-    const exp = dungeon ? dungeonExp(f, dungeon.level, tier, boss) : catchReward(f, tier, boss).exp;
+    const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
+        : scaledEnemyStats(dungeon || mimic ? f : stageStatFish(f, st.level), { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
+    const { exp, gold } = dungeon ? dungeonCatchReward(f, dungeon.level, tier, boss) : catchReward(f, tier, boss);
     // v25.19 변종: 어종을 10회 이상 포획한 낚시터 입질마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
     let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
     if (!dungeon && !mimic && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
@@ -227,7 +230,7 @@ export function reward(s: State, rng: () => number) {
         if (s.dungeon.wave >= d.fish.length) {
             // v27.30 권장 레벨보다 크게 높으면 클리어 골드와 반복 장비 확률이 줄어듭니다.
             const overlevel = dungeonOverlevel(s.level, d.level);
-            const bonusGold = Math.floor(dungeonClearGold(s, d.gold, encounterTier(s)) * overlevel);
+            const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase(d), dungeonRewardTier(encounterTier(s))) * overlevel);
             s.gold += bonusGold;
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;

@@ -1,6 +1,6 @@
 import { tierHealth, tierAttack } from '../systems/meta';
 import type { Skill, Stats } from '../types';
-import { bossLevelScale, monsterLevelScale, dungeonPressure, MONSTER_TUNING, DUNGEON_TUNING } from './balance';
+import { bossLevelScale, monsterLevelScale, dungeonPressure, MONSTER_TUNING, DUNGEON_TUNING, ABYSS_TUNING } from './balance';
 export const ENEMY_SKILLS: Skill[] = [
     { id: 'foeShock', name: '전류 방출', desc: '마법 공격', type: 'active', level: 1, chance: .3, cooldown: 3, multiplier: 1.5, damageType: 'magic', manaCost: 0 },
     { id: 'foeVenom', name: '독가시', desc: '피해 없이 중독 1중첩.', type: 'active', level: 1, chance: .25, cooldown: 4, multiplier: 1, effect: 'poison', statusTurns: 5, statusOnly: true, manaCost: 0 },
@@ -76,5 +76,22 @@ export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: {
     foe.resist = Math.round((foe.resist || 0) * pressure.defense);
     // v27.30 던전(특히 무릉도장)에서는 층 배율 1단계마다 속도 +2%: 속도만 올려 연속 행동으로 깊은 층을 밀던 빌드를 막습니다.
     if (options.wave !== undefined && options.tier) foe.speed = Math.round((foe.speed || 10) * (1 + options.tier * DUNGEON_TUNING.tierSpeed));
+    return foe;
+}
+
+/**
+ * v27.35 무릉도장 적 능력치. 층 배율(tier) 대신 ABYSS_TUNING 공식을 씁니다.
+ * ref는 심연 첫 어종의 1층 기준 능력치이고, 모든 어종에 같은 배수를 곱해 어종·보스 사이의 차이를 유지합니다.
+ */
+export function abyssEnemyStats(f: Parameters<typeof enemyStats>[0], ref: Stats, depth: number, options: { boss?: boolean; wave?: number } = {}): Stats {
+    const foe = scaledEnemyStats(f, { boss: options.boss, tier: 0, wave: options.wave ?? 0 });
+    const k = Math.max(0, depth - 1), hp = ABYSS_TUNING.hp * Math.pow(ABYSS_TUNING.hpGrowth, k) / Math.max(1, ref.hp);
+    const attack = ABYSS_TUNING.attack * Math.pow(ABYSS_TUNING.attackGrowth, k), defense = ABYSS_TUNING.defense * Math.pow(ABYSS_TUNING.defenseGrowth, k);
+    foe.hp = Math.round(foe.hp * hp);
+    foe.attack = Math.round(foe.attack * attack);
+    foe.magic = Math.round((foe.magic || 0) * attack);
+    foe.defense = Math.round(foe.defense * defense);
+    foe.resist = Math.round((foe.resist || 0) * defense);
+    foe.speed = Math.round((foe.speed || 10) * (1 + (depth + 2) * DUNGEON_TUNING.tierSpeed));
     return foe;
 }
