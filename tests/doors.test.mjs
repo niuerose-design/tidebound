@@ -63,7 +63,7 @@ test('v25.23 a door seen open stays open: recordOpenDoors stores it and doorFor 
     assert.deepEqual(doors.doorFor({ unlockedJobs: [] }, 'undead', 0), { door: 'discovery', open: false });
 });
 
-test('v27.72 doors opened on the admin page: open for everyone while set, written to State.openDoors at sync, never recorded in doorsOpened, closed again when unset', () => {
+test('v27.73 doors opened on the admin page: open for everyone while set, written to State.openDoors at sync, never recorded in doorsOpened, closed again when unset', () => {
     assert.deepEqual(doors.DOOR_JOBS, [...doors.REBIRTH_DOOR_JOBS, ...doors.DISCOVERY_DOORS.map(d => d.job)]);
     doors.setOpenDoors(['undead', 'voidcaller', 'skeleton', 'nope']);
     try {

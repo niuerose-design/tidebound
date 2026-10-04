@@ -2,7 +2,7 @@
  * v27.27 운영 페이지에서 바꾼 서버 이벤트(settings.events)와 v27.31 닫은 사냥터·던전(settings.closures)을
  * DB에서 읽어 게임 계산에 넣습니다. 인스턴스마다 30초 캐시라 두 설정 모두 30초에 한 번만 읽습니다.
  * v27.43 제단 축복(altar_gauges의 until)도 같은 30초 캐시로 읽습니다.
- * v27.72 운영 페이지에서 연 문(settings.doors)도 같은 30초 캐시로 읽습니다.
+ * v27.73 운영 페이지에서 연 문(settings.doors)도 같은 30초 캐시로 읽습니다.
  */
 import { db } from './db';
 import { setRuntimeEvents, setAltarEvents, SERVER_EVENTS, type ServerEvent } from '../data/events';
@@ -29,7 +29,7 @@ export async function readClosures(): Promise<Closures> {
 }
 const cleanClosures = (c: Closures): Closures => ({ dungeons: [...new Set(c.dungeons)].filter(id => DUNGEONS.some(d => d.id === id)), stages: [...new Set(c.stages)].filter(id => id !== STAGES[0].id && STAGES.some(st => st.id === id)) });
 const DOORS_KEY = 'doors';
-/** v27.72 운영 페이지에서 연 문의 직업 id 목록. 저장한 적이 없으면 비어 있습니다(모든 문이 조건대로). 문이 없는 직업 id는 버립니다. */
+/** v27.73 운영 페이지에서 연 문의 직업 id 목록. 저장한 적이 없으면 비어 있습니다(모든 문이 조건대로). 문이 없는 직업 id는 버립니다. */
 export async function readOpenDoors(): Promise<string[]> {
     const raw = await db().getSetting(DOORS_KEY);
     if (!raw) return [];

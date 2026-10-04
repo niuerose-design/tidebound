@@ -90,7 +90,7 @@
 .job-current-summary h2 { font-size:22px; margin:3px 0; }
 .job-current-summary p { margin:7px 0 0; font-size:13px; color:#a5bcb0; }
 .job-current-summary>button { margin-left:auto; flex-shrink:0; }
-/* v27.72 목표 직업 카드: 직업 상세에서 ‘목표로 설정’한 직업의 조건 진행과 전직 버튼. */
+/* v27.73 목표 직업 카드: 직업 상세에서 ‘목표로 설정’한 직업의 조건 진행과 전직 버튼. */
 .job-goal-summary { display:flex; align-items:center; gap:17px; padding:18px 26px; margin-bottom:14px; border-color:#d5b36c55; background:linear-gradient(110deg,#2a2f24,#152329); }
 .job-goal-summary>svg { color:var(--gold); flex-shrink:0; }
 .job-goal-summary small { font-size:12px; color:#a8bcb3; }

@@ -193,7 +193,7 @@ export async function setClosed(kind: string, id: string, closed: boolean) {
     return listClosures();
 }
 
-// ---------- v27.72 문 개방 ----------
+// ---------- v27.73 문 개방 ----------
 
 /** ??? 문이 있는 직업 목록과 운영자가 연 문. 윤회의 문 직업 → 발견의 문 직업 순서. */
 export async function listDoors() {

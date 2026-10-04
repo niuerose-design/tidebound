@@ -1,33 +1,35 @@
 'use client';
 import type { PanelProps } from './panel-props';
-import { Check, ChevronDown, ChevronUp, Compass, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, ChevronUp, Compass, HelpCircle, X } from 'lucide-react';
 import { STAGES, DUNGEONS } from '@/game/data/world';
 import { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, CHALLENGE_GROUP, achievementTotals, rewardText } from '@/game/data/achievements';
 import { goalText, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, type GoalBoard } from '@/game/data/goals';
 import { unclaimedAchievements } from '@/game/systems/progress';
-import { TUTORIAL_STEPS, tutorialProgress } from '@/game/systems/guidance';
+import { TUTORIAL_STEPS, tutorialProgress, tutorialStepDone, nextTutorialStep } from '@/game/systems/guidance';
 import { Heading, Meter } from './shared';
 
 
-/** 접을 수 있는 짧은 튜토리얼. 새 세이브에만 보이고, 완료한 단계는 저장 상태로 자동 인정합니다. 보상은 없습니다. */
+/** 접을 수 있는 짧은 튜토리얼. 새 세이브에만 보이고, 한 번 만족한 단계는 기록으로 남아 되돌아가지 않습니다. 보상은 없습니다. */
 export function TutorialCard({ s, send, busy, setView }: PanelProps) {
     if (!s.tutorial || s.tutorial.skipped) return null;
-    const done = tutorialProgress(s);
-    if (done >= TUTORIAL_STEPS.length) return null;
-    const next = TUTORIAL_STEPS.find(x => !x.done(s))!;
-    const hidden = !!s.tutorial.hidden;
+    const done = tutorialProgress(s), next = nextTutorialStep(s);
+    if (!next) return null;
+    const hidden = !!s.tutorial.hidden, index = TUTORIAL_STEPS.indexOf(next) + 1;
     return <section className={`panel tutorial-card ${hidden ? 'folded' : ''}`} aria-label="모험 안내">
         <div className="tutorial-head">
             <Compass size={16}/><strong>모험 안내 · {done} / {TUTORIAL_STEPS.length}</strong>
             <span>다음: {next.title}</span>
             <button className="icon-button" disabled={busy} aria-label={hidden ? '안내 펼치기' : '안내 접기'} onClick={() => send({ type: 'tutorial', id: hidden ? 'show' : 'hide' })}>{hidden ? <ChevronDown size={15}/> : <ChevronUp size={15}/>}</button>
-            <button className="icon-button" disabled={busy} aria-label="안내 건너뛰기" title="건너뛰기 (모험 기록 화면에서 다시 볼 수 있음)" onClick={() => send({ type: 'tutorial', id: 'skip' })}><X size={15}/></button>
+            <button className="icon-button" disabled={busy} aria-label="안내 건너뛰기" title="건너뛰기 (도감 · 업적 화면에서 다시 볼 수 있음)" onClick={() => send({ type: 'tutorial', id: 'skip' })}><X size={15}/></button>
         </div>
         {!hidden && <>
-            <ol className="tutorial-steps">{TUTORIAL_STEPS.map(step => { const ok = step.done(s); return <li key={step.id} className={ok ? 'done' : step.id === next.id ? 'current' : ''}>{ok ? <Check size={12}/> : <span/>}{step.title}</li>; })}</ol>
-            <p>{next.hint}</p>
-            {setView && next.view !== 'battle' && <button className="text-button" onClick={() => setView(next.view)}>{next.title} 화면 열기</button>}
-            <small>안내에는 보상이 없습니다. 이미 한 단계는 자동으로 완료 처리됩니다.</small>
+            <ol className="tutorial-steps">{TUTORIAL_STEPS.map(step => { const ok = tutorialStepDone(s, step); return <li key={step.id} className={ok ? 'done' : step.id === next.id ? 'current' : ''}>{ok ? <Check size={12}/> : <span/>}{step.title}</li>; })}</ol>
+            <p><b>{index}. {next.title}</b> — {next.hint}</p>
+            <div className="tutorial-actions">
+                {setView && next.view !== 'battle' && <button className="text-button" onClick={() => setView(next.view)}>{next.title} 화면 열기 <ChevronRight size={13}/></button>}
+                {setView && <button className="text-button" onClick={() => setView('help')}><HelpCircle size={13}/> 도움말</button>}
+            </div>
+            <small>안내에는 보상이 없습니다. 이미 한 단계는 자동으로 완료되고, 한 번 완료한 단계는 되돌아가지 않습니다.</small>
         </>}
     </section>;
 }

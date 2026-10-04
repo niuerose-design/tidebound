@@ -9,7 +9,7 @@ type EventRow = { id: string; name: string; from: string; until: string; exp?: n
 type EventList = { code: EventRow[]; extra: EventRow[]; banner: string; at: number };
 type ClosureRow = { id: string; name: string; closed: boolean; locked: boolean };
 type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
-/** v27.72 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
+/** v27.73 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
 type DoorRow = { id: string; name: string; door: string; hint: string; open: boolean };
 type DoorList = { doors: DoorRow[] };
 type Tab = 'life' | 'events' | 'closures' | 'doors' | 'stats';
@@ -111,7 +111,7 @@ export default function AdminPage() {
         const d = await call({ action: 'setClosed', kind, id: row.id, closed: !row.closed });
         if (d) { setClosures(d); setDone(`${row.name}을(를) ${row.closed ? '열었습니다' : '닫았습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
     };
-    /** v27.72 문 개방: 연 동안 모든 모험가에게 그 ??? 직업의 문이 열립니다. 닫으면 다시 조건대로(그 사이 전직한 모험가는 그대로). */
+    /** v27.73 문 개방: 연 동안 모든 모험가에게 그 ??? 직업의 문이 열립니다. 닫으면 다시 조건대로(그 사이 전직한 모험가는 그대로). */
     const loadDoors = async () => { const d = await call({ action: 'doors' }); if (d) setDoors(d); };
     const toggleDoor = async (row: DoorRow) => {
         if (!row.open && !confirm(`${row.door} · ${row.name}의 문을 모든 모험가에게 열까요?\n연 동안은 조건과 상관없이 전직할 수 있고, 다시 닫으면 조건대로 돌아갑니다(그 사이 전직한 모험가는 그대로).`)) return;

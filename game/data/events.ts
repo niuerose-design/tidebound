@@ -1,6 +1,6 @@
 /**
  * v26.1 서버 이벤트: 기간 동안 모든 모험가의 경험치·골드·드롭 배율을 올립니다.
- * v27.72부터 목록은 운영 페이지에서만 관리합니다(코드 목록은 비움). 서버가 동기화·정산 때 activeEvent(now)를 State.event에 적어 둡니다.
+ * v27.73부터 목록은 운영 페이지에서만 관리합니다(코드 목록은 비움). 서버가 동기화·정산 때 activeEvent(now)를 State.event에 적어 둡니다.
  * 틱 계산은 State.event만 보므로 오프라인 정산에도 같은 배율이 붙습니다. 시각은 ISO(한국 시간 +09:00) 문자열로 적습니다.
  */
 export type ServerEvent = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; /** v27.43 숙련의 까미 출현 배율(제단 축복). */ mimic?: number; /** v27.70 경험의 누리 출현 배율(제단 축복). */ nuri?: number };
@@ -19,7 +19,7 @@ export function offlineEvent(e: ActiveEvent | null): ActiveEvent | null {
 }
 
 /**
- * v27.72 코드에 든 이벤트는 없습니다. 이벤트·서버 메시지(배율 없는 공지)는 모두 운영 페이지(/admin)에서 만들어 DB 설정으로 적용합니다.
+ * v27.73 코드에 든 이벤트는 없습니다. 이벤트·서버 메시지(배율 없는 공지)는 모두 운영 페이지(/admin)에서 만들어 DB 설정으로 적용합니다.
  * 코드 이벤트가 다시 필요하면 여기에 적습니다. 이름은 배너 앞머리에 한 번씩만 붙고(배율은 뒤에 따로), 빈 이름은 생략됩니다.
  */
 export const SERVER_EVENTS: ServerEvent[] = [];

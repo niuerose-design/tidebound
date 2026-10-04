@@ -33,7 +33,7 @@ function routeNote(s: State, j: Job) {
 }
 
 /** ② 항로도: 계보의 직업을 차수(01~05) 순서로 위에서 아래로 잇습니다. 같은 차수에 여러 직업이면 나란히 둡니다. */
-/** v27.72 목표로 찍은 직업(직업 상세의 ‘목표로 설정’). 항로도·목록 카드에 깃발을 붙입니다. */
+/** v27.73 목표로 찍은 직업(직업 상세의 ‘목표로 설정’). 항로도·목록 카드에 깃발을 붙입니다. */
 const isGoal = (s: State, j: Job) => s.growthGoal?.kind === 'job' && s.growthGoal.id === j.id;
 export function RouteMap({ s, lineage, jobs, selectedId, onSelect }: { s: State; lineage: Lineage; jobs: Job[]; selectedId?: string; onSelect: (id: string) => void }) {
     const tiers = [...new Set(jobs.map(j => j.tier))].sort((a, b) => a - b);

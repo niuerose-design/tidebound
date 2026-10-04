@@ -34,7 +34,7 @@ test('Long-term goals: dungeon steps, one-time achievement notice, suggestions o
  const f=newState(0);const g=goalSuggestions(f);assert.equal(g.job,undefined);assert.equal(g.dungeon,undefined);
  for(const d of DUNGEONS){const x=newState(0);x.level=d.level;x.rebirths=d.rebirth;const sug=goalSuggestions(x).dungeon;if(sug)assert.ok(x.level>=sug.level&&x.rebirths>=sug.rebirth);}
 });
-test('v27.72 job goal: set from the job sheet, progress counts met requirements, entering the job marks it done once, "none" clears, unknown job refused',()=>{
+test('v27.73 job goal: set from the job sheet, progress counts met requirements, entering the job marks it done once, "none" clears, unknown job refused',()=>{
  const s=newState(0);act(s,{type:'growthGoal',id:'whaler',value:'job'},0);assert.deepEqual(s.growthGoal,{kind:'job',id:'whaler'});
  let p=goalProgress(s);assert.ok(p.title.endsWith(' 전직'),p.title);assert.equal(p.view,'classes');assert.equal(p.done,false);assert.ok(p.value<p.max&&p.detail.length>0);
  s.level=30;s.rebirths=1;Object.assign(s.attributes,{str:30,dex:30,int:30,vit:30,wis:30,luk:30});s.jobMastery[JOBS.find(j=>j.id==='whaler').parent]=75;p=goalProgress(s);assert.equal(p.value,p.max,'all requirements met');
@@ -54,12 +54,24 @@ test('SP is only earned once at 10000 catches; early codex rewards are gold',()=
  s.inventory.push({id:'book-item',slot:'rod',rarity:1,power:5,level:1,name:'test'});act(s,{type:'registerItem',id:'book-item'},0);assert.equal(s.itemBook['rod:1'],true);assert.equal(s.inventory.length,0);assert.throws(()=>act(s,{type:'registerItem',id:'book-item'},0));
 });
 
-test('v25.9 tutorial: 8 steps, dungeon/enhance steps complete by clears or enhancement, early phase ends at the job step', async () => {
-    const { TUTORIAL_STEPS, tutorialProgress, tutorialEarly } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/guidance');
-    assert.equal(TUTORIAL_STEPS.length, 8); assert.deepEqual(TUTORIAL_STEPS.map(x => x.id), ['catch', 'attribute', 'skill', 'dungeon', 'job', 'enhance', 'research', 'rebirth']);
-    const s = newState(0); assert.equal(tutorialEarly(s), true); assert.equal(tutorialProgress(s), 1, 'starter skill counts as equipped');
-    s.clears = { grotto: 1 }; assert.ok(TUTORIAL_STEPS.find(x => x.id === 'dungeon').done(s)); s.equipment.rod.enhance = 1; assert.ok(TUTORIAL_STEPS.find(x => x.id === 'enhance').done(s));
-    s.job = 'physical'; assert.equal(tutorialEarly(s), false); const r = newState(0); r.rebirths = 1; assert.equal(tutorialEarly(r), false, 'rebirth completes the early steps');
+test('v27.72 tutorial: 13 steps, completed steps are recorded and never regress, veterans are backfilled silently', async () => {
+    const { TUTORIAL_STEPS, tutorialProgress, tutorialEarly, tutorialStepDone, nextTutorialStep, syncTutorial } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/guidance');
+    assert.equal(TUTORIAL_STEPS.length, 13); assert.deepEqual(TUTORIAL_STEPS.map(x => x.id), ['catch', 'attribute', 'skill', 'stage', 'dungeon', 'job', 'enhance', 'book', 'achievement', 'altar', 'research', 'rebirth', 'tide']);
+    const s = newState(0); assert.equal(tutorialEarly(s), true); assert.equal(tutorialProgress(s), 1, 'starter skill counts as equipped'); assert.deepEqual(s.tutorial, { done: {} });
+    s.clears = { grotto: 1 }; assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'dungeon')));
+    // 강화한 장비를 팔아도 ‘장비 강화’는 기록으로 남습니다.
+    s.inventory.push({ id: 'e1', slot: 'rod', rarity: 0, power: 3, level: 1, name: 'rod', enhance: 1 }); act(s, { type: 'pause' }, 0);
+    assert.ok(s.tutorial.done.enhance > 0 && s.tutorial.done.dungeon > 0 && s.tutorial.done.skill > 0, 'met steps are recorded on sync');
+    s.inventory = s.inventory.filter(i => i.id !== 'e1'); assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'enhance')), 'selling the enhanced item keeps the step done');
+    s.stage = 'bay'; assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'stage'))); s.job = 'physical'; assert.equal(tutorialEarly(s), false);
+    s.altar = { offers: 1 }; assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'altar')));
+    // 환생하면 환생 전 단계는 모두 완료, 난이도 단계만 남습니다. 기록은 환생 뒤에도 유지됩니다.
+    const r = newState(0); r.level = 60; act(r, { type: 'rebirth' }, 0); assert.equal(tutorialEarly(r), false, 'rebirth completes the early steps');
+    assert.equal(nextTutorialStep(r).id, 'tide'); assert.equal(tutorialProgress(r), 12); r.tide = 1; act(r, { type: 'pause' }, 0); assert.equal(nextTutorialStep(r), undefined); r.tide = 0; assert.equal(tutorialProgress(r), 13, 'lowering the tide keeps the step');
+    // 개편 전 세이브: 환생 경험이 있으면 모두 채우고(안내 없음), 환생 전이면 지금 조건으로만 채웁니다.
+    const vet = newState(0); vet.tutorial = {}; vet.rebirths = 3; syncTutorial(vet); assert.equal(tutorialProgress(vet), 13);
+    const fresh = newState(0); fresh.tutorial = {}; fresh.kills = 5; syncTutorial(fresh); assert.deepEqual(Object.keys(fresh.tutorial.done).sort(), ['catch', 'skill']);
+    const none = newState(0); delete none.tutorial; syncTutorial(none); assert.equal(none.tutorial, undefined, 'saves without a tutorial object stay without one');
 });
 
 test('v26.8 registerItemAll registers one weakest unlocked item per missing slot/rarity and skips locked/relic', () => {

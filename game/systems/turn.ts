@@ -135,7 +135,7 @@ export function advance(s: State, now: number, rng = Math.random) {
     s.event = elapsed > 60000 ? offlineEvent(live) : live;
     // v27.31 닫힌 사냥터·던전 목록도 같이 적어 화면이 잠금 표시를 합니다.
     const closed = closuresSnapshot(); if (closed) s.closed = closed; else delete s.closed;
-    // v27.72 운영 페이지에서 연 문도 적어 둡니다(이 정산의 전직 판정과 화면이 봅니다).
+    // v27.73 운영 페이지에서 연 문도 적어 둡니다(이 정산의 전직 판정과 화면이 봅니다).
     const openDoors = openDoorsSnapshot(); if (openDoors) s.openDoors = openDoors; else delete s.openDoors;
     // 정산 상한은 정산을 시작할 때의 긴 휴식 단계로 정합니다(정산 중 연구가 바뀌지 않음).
     const cap = offlineCapSeconds(s);

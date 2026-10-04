@@ -8,7 +8,7 @@ import { serverNow, jobRevealed } from './job-status';
 
 const jobOf = (id?: string) => jobById(id);
 
-/** 윤회의 문 상태: 이번 생에 열린 직업(없으면 기록된 직업, 없으면 v27.72 운영자가 연 직업)과 안내 문구. */
+/** 윤회의 문 상태: 이번 생에 열린 직업(없으면 기록된 직업, 없으면 v27.73 운영자가 연 직업)과 안내 문구. */
 const KEPT_NOTE = '한 번 열린 문 · 계속 열려 있습니다.';
 const FORCED_NOTE = '운영 이벤트로 지금 열려 있습니다.';
 function rebirthDoorState(s: State) {

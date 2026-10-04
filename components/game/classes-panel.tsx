@@ -57,7 +57,7 @@ export function Classes({ s, send, busy }: PanelProps) {
         setLineageId(first?.id || '');
     };
     const showCurrent = () => { setTreeId(current.tree); setLineageId(lineageOf(current)); setSelectedId(current.id); };
-    // v27.72 목표 직업: 직업 상세에서 ‘목표로 설정’한 직업. 조건 진행과 전직 버튼을 화면 위에 모아 두어, 조건이 차면 상세를 열지 않고 바로 전직합니다.
+    // v27.73 목표 직업: 직업 상세에서 ‘목표로 설정’한 직업. 조건 진행과 전직 버튼을 화면 위에 모아 두어, 조건이 차면 상세를 열지 않고 바로 전직합니다.
     const goalJob = s.growthGoal?.kind === 'job' ? jobById(s.growthGoal.id) : undefined, goal = goalJob ? goalProgress(s) : null, goalSt = goalJob ? jobStatus(s, goalJob) : null;
     const goalReady = !!goalJob && !!goalSt && goalJob.id !== s.job && canEnter(goalSt);
     const showGoal = () => { if (!goalJob) return; clearFound(); setTreeId(goalJob.tree); setLineageId(lineageOf(goalJob)); select(goalJob.id); };

@@ -383,10 +383,10 @@ test('v27.27 shop gear resells for at most half its price; old shop items are es
     }
 });
 
-test('v27.27·v27.72 server events come from the admin page only: no code events, admin events apply and a name-only event is a notice', async () => {
+test('v27.27·v27.73 server events come from the admin page only: no code events, admin events apply and a name-only event is a notice', async () => {
     const ev = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/events');
     const at = Date.parse('2026-10-05T12:00:00+09:00');
-    assert.deepEqual(ev.SERVER_EVENTS, [], 'v27.72 no coded events; server messages are made on the admin page');
+    assert.deepEqual(ev.SERVER_EVENTS, [], 'v27.73 no coded events; server messages are made on the admin page');
     assert.equal(ev.activeEvent(at), null, 'nothing is live without admin events');
     ev.setRuntimeEvents([{ id: 'admin-test01', name: '주말', from: '2026-10-05T00:00:00+09:00', until: '2026-10-06T00:00:00+09:00', gold: 3 }, { id: 'admin-test02', name: '숨겨진 직업 하나가 개방되었습니다', from: '2026-10-05T00:00:00+09:00', until: '2026-10-06T00:00:00+09:00' }], ['openbeta-exp']);
     const now = ev.activeEvent(at); assert.equal(now.gold, 3, 'admin event applies'); assert.equal(now.exp, 1);
@@ -788,7 +788,7 @@ test('v27.69 monsters get level-based penetration and the ward: bosses/Lv.50+ cl
     assert.ok(E.enemyStats(boss, true).penetration > 0, boss.id);
 });
 
-test('v27.72 skill pins and hidden skills live in the save: toggles, mutual exclusion, list import, and they survive rebirth, SP refund and a life restart', async () => {
+test('v27.73 skill pins and hidden skills live in the save: toggles, mutual exclusion, list import, and they survive rebirth, SP refund and a life restart', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), { restartLife } = await L.load('systems/actions/lifecycle');
     const s = newState(0);
     assert.equal(s.skillPins, undefined, 'a save that never pinned has no list (the screen migrates browser pins only then)');

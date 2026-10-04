@@ -22,7 +22,7 @@ import { ENEMY_SKILLS } from '@/game/data/encounters';
 
 
 
-/** v27.72 카드 머리의 즐겨찾기·숨기기 버튼. 둘 다 세이브에 저장되어 기기를 옮겨도 따라갑니다. */
+/** v27.73 카드 머리의 즐겨찾기·숨기기 버튼. 둘 다 세이브에 저장되어 기기를 옮겨도 따라갑니다. */
 function MarkButtons({ pinned, hidden, onPin, onHide, name, disabled }: { pinned: boolean; hidden: boolean; onPin: () => void; onHide: () => void; name: string; disabled: boolean }) {
     return <span className="skill-title-tools">
         <button type="button" className={`skill-pin ${pinned ? 'active' : ''}`} disabled={disabled} aria-pressed={pinned} aria-label={`${name} ${pinned ? '즐겨찾기 해제' : '즐겨찾기'}`} title={pinned ? '즐겨찾기 해제' : '즐겨찾기에 고정'} onClick={onPin}><Pin size={14}/></button>
@@ -109,13 +109,13 @@ function skillDamageKind(sk: Skill): SkillDamage[] {
     return out;
 }
 
-/** v27.72 전 버전이 즐겨찾기를 두던 브라우저 저장소 키. 세이브에 즐겨찾기가 없을 때 한 번 옮기고 지웁니다. */
+/** v27.73 전 버전이 즐겨찾기를 두던 브라우저 저장소 키. 세이브에 즐겨찾기가 없을 때 한 번 옮기고 지웁니다. */
 const PIN_KEY = 'tidebound.skillPins';
 export function Skills({ s, send, busy }: PanelProps) {
     const [scope, setScope] = useState('current'), [filter, setFilter] = useState('all'), [view, setView] = useState('simple');
     const [query, setQuery] = useState(''), [kind, setKind] = useState<SkillKind>('all'), [damage, setDamage] = useState<SkillDamage>('all'), [sort, setSort] = useState<SkillSort>('default');
     const [grouped, setGrouped] = useState(false), [dragId, setDragId] = useState<string | null>(null);
-    // v27.72 즐겨찾기·숨김은 세이브에 저장됩니다(기기를 옮겨도 따라감). 게임 규칙에는 쓰지 않는 화면 편의 설정입니다.
+    // v27.73 즐겨찾기·숨김은 세이브에 저장됩니다(기기를 옮겨도 따라감). 게임 규칙에는 쓰지 않는 화면 편의 설정입니다.
     const pins = s.skillPins || [], hidden = s.skillHidden || [];
     // 전 버전의 브라우저 즐겨찾기를 세이브로 한 번 옮깁니다: 세이브에 목록이 없을 때만 보내고, 세이브에 목록이 생기면 브라우저 키를 지웁니다.
     const migrated = useRef(false);
@@ -154,7 +154,7 @@ export function Skills({ s, send, busy }: PanelProps) {
             if (scope === 'equipped' && !s.skills.includes(sk.id)) return false;
             if (scope === 'pinned' && !pins.includes(sk.id)) return false;
             if (scope === 'hidden') return hidden.includes(sk.id);
-            // v27.72 숨긴 스킬은 장착 중이 아니면 목록에서 빼고, 검색·‘숨김’ 탭에서만 보여 줍니다.
+            // v27.73 숨긴 스킬은 장착 중이 아니면 목록에서 빼고, 검색·‘숨김’ 탭에서만 보여 줍니다.
             if (hidden.includes(sk.id) && !s.skills.includes(sk.id)) return false;
         } else {
             const job = jobById(sk.job)?.name || '공용';
