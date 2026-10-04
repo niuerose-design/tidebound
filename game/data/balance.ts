@@ -3,7 +3,7 @@
 export const SAVE_VERSION = 8;
 export const BALANCE = {
     turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13, baseDefense: 3,
-    hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08, /** v27.44 황금 개체 기본 확률(처치마다). 시프 계열 패시브가 그 위에 더합니다. */ goldenBase: .002,
+    hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08, /** v27.45 황금 개체 기본 확률(처치마다). 시프 계열 패시브가 그 위에 더합니다. */ goldenBase: .002,
     // Stage hopping used to make the first rebirth arrive in under an hour.
     // See scripts/check-progression-pace.mjs for gearless routing samples;
     // completion times vary substantially with the chosen job and loadout.

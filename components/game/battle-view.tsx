@@ -5,6 +5,7 @@ import { TutorialCard } from './guidance-panels';
 import { tutorialActive } from './growth-goals';
 import { tutorialEarly } from '@/game/systems/guidance';
 import { DoorNotice } from './jobs/mystery-doors';
+import { AltarNotice } from './altar-notice';
 import { useEffect, useRef, useState } from 'react';
 import { tipAt } from '@/game/data/tips';
 import { eventLabel } from '@/game/data/events';
@@ -55,6 +56,8 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     const [filter, setFilter] = useState('battle');
     // v25.13 모바일: 캐릭터 열(상세·착용 장비)은 접어 두고 버튼으로 펼칩니다. 데스크톱에서는 늘 보입니다.
     const [fisherOpen, setFisherOpen] = useState(false);
+    /** v27.44 제단 축복이 섞이면 축복을 뺀 이벤트만 배너에(축복은 제단 알림 줄). */
+    const banner = s.event && s.event.banner !== undefined ? s.event.banner : s.event;
     // 항해 일지 접기(이 기기에 기억). 접힌 동안에도 오른쪽 전투 기록은 그대로 흐릅니다.
     // v25.17 맨 위 한 줄: 부재중 정산 → 던전 진행 → 번갈아 나오는 안내.
     const [tip, setTip] = useState(0);
@@ -78,8 +81,9 @@ export function BattleView({ s, busy, send, setView, saved, settings, setSetting
     <Heading eyebrow="THE ENDLESS VOYAGE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 사냥 진행 중' : '항해 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>
     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Waves size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>
     <SlotChips s={s} busy={busy} onSwitch={onSwitchSlot}/>
-    {s.event && <div className="event-banner" role="status"><Sparkles size={15}/><b>이벤트</b><span>{eventLabel(s.event)}</span></div>}
+    {banner && <div className="event-banner" role="status"><Sparkles size={15}/><b>이벤트</b><span>{eventLabel(banner)}</span></div>}
     <DoorNotice s={s} setView={setView}/>
+    <AltarNotice s={s} setView={setView}/>
     <div className="battle-hud" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
     <button type="button" className="mobile-fisher-toggle" aria-expanded={fisherOpen} onClick={() => setFisherOpen(v => !v)}>{fisherOpen ? '나의 모험가 상세 접기' : '나의 모험가 상세 · 착용 장비 · 능력치 배분'}<ChevronRight size={14} className={fisherOpen ? 'open' : ''}/></button>
     <div className={`battle-character-column ${fisherOpen ? 'mobile-open' : ''}`}><Player s={s} busy={busy} send={send} setView={setView}/></div>

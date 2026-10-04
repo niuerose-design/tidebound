@@ -5,7 +5,7 @@ type AdminSp = { have: number; research: { name: string; sp: number; claimed: bo
 type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number };
 type Preview = { before: AdminPlayer; after: AdminPlayer };
 type EventRow = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; mimic?: number; live: boolean; disabled?: boolean };
-type EventList = { code: EventRow[]; extra: EventRow[]; banner: string };
+type EventList = { code: EventRow[]; extra: EventRow[]; banner: string; at: number };
 type ClosureRow = { id: string; name: string; closed: boolean; locked: boolean };
 type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
 type Tab = 'life' | 'events' | 'closures' | 'stats';
@@ -28,6 +28,8 @@ const MULTS = [['exp', '경험치'], ['gold', '골드'], ['drop', '장비 드롭
 /** datetime-local(한국 시간으로 입력) → ISO. */
 const kstToIso = (v: string) => v ? `${v}:00+09:00` : '';
 const isoToKst = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 16);
+/** 진행 중 · 시작 전 · 종료됨(목록을 불러온 시각 기준). */
+const phase = (e: EventRow, at: number) => e.live ? ' · 진행 중' : Date.parse(e.from) > at ? ' · 시작 전' : ' · 종료됨';
 const when = (e: EventRow) => `${isoToKst(e.from).replace('T', ' ')} ~ ${isoToKst(e.until).replace('T', ' ')} (한국 시간)`;
 const mults = (e: EventRow) => MULTS.filter(([k]) => (e[k] ?? 1) !== 1).map(([k, label]) => `${label} ×${e[k]}`).join(' · ') || '배율 없음(공지)';
 const field = { padding: 8, borderRadius: 6, border: '1px solid #3b5458', background: '#0d1a1e', color: '#e6f1ee' } as const;
@@ -116,10 +118,10 @@ export default function AdminPage() {
         {tab === 'events' && events && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
             <div className="panel" style={{ padding: 12, fontSize: 13 }}>지금 배너: <b>{events.banner || '진행 중인 이벤트 없음'}</b></div>
             <div><h2 style={{ fontSize: 16 }}>코드에 들어 있는 이벤트</h2><ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{events.code.map(e => <li key={e.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', opacity: e.disabled ? .55 : 1 }}>
-                <span style={{ fontSize: 13 }}><b>{e.name || '(이름 없음)'}</b> · {mults(e)}{e.live && !e.disabled ? ' · 진행 중' : ''}<br/><small style={{ color: '#9bb3b0' }}>{when(e)}</small></span>
+                <span style={{ fontSize: 13 }}><b>{e.name || '(이름 없음)'}</b> · {mults(e)}{e.disabled ? ' · 꺼짐' : phase(e, events.at)}<br/><small style={{ color: '#9bb3b0' }}>{when(e)}</small></span>
                 <button className="secondary" disabled={busy} onClick={() => toggleEvent(e.id, !e.disabled)}>{e.disabled ? '다시 켜기' : '끄기'}</button></li>)}</ul></div>
             <div><h2 style={{ fontSize: 16 }}>운영 페이지에서 만든 이벤트</h2>{!events.extra.length && <p style={{ color: '#9bb3b0', fontSize: 13 }}>없습니다.</p>}<ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{events.extra.map(e => <li key={e.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
-                <span style={{ fontSize: 13 }}><b>{e.name || '(이름 없음)'}</b> · {mults(e)}{e.live ? ' · 진행 중' : ''}<br/><small style={{ color: '#9bb3b0' }}>{when(e)}</small></span>
+                <span style={{ fontSize: 13 }}><b>{e.name || '(이름 없음)'}</b> · {mults(e)}{phase(e, events.at)}<br/><small style={{ color: '#9bb3b0' }}>{when(e)}</small></span>
                 <button className="secondary" disabled={busy} onClick={() => removeEvent(e.id)}>삭제</button></li>)}</ul></div>
             <form className="panel" onSubmit={ev => { ev.preventDefault(); saveEvent(); }} style={{ padding: 14, display: 'grid', gap: 8 }}>
                 <h2 style={{ fontSize: 16, margin: 0 }}>새 이벤트</h2>
