@@ -11,7 +11,7 @@ const { xpNeeded } = await load('data/balance');
 
 /** mulberry32 계열 시드 난수. */
 export function random(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-export const totalXP = s => s.exp + Array.from({ length: s.level - 1 }, (_, i) => xpNeeded(i + 1)).reduce((a, b) => a + b, 0);
+export const totalXP = s => s.exp + Array.from({ length: s.level - 1 }, (_, i) => xpNeeded(i + 1, s.rebirths || 0)).reduce((a, b) => a + b, 0);
 export function gearScore(item, magic) { const v = itemStats(item); return (v[magic ? 'magic' : 'attack'] || 0) * 4 + (v.hp || 0) * .22 + (v.defense || 0) * 1.5 + (v.resist || 0) * 1.2 + (v.accuracy || 0) * 150 + (v.crit || 0) * 150; }
 
 /**

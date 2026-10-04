@@ -787,3 +787,10 @@
 .battle-tab-dot{width:6px;height:6px;border-radius:50%;background:#e7be71;display:inline-block;margin-left:2px}
 .battle-altar-throne{margin:6px 2px 0;color:#7f9c98;font-size:12px}
 .battle-selector-panel .section-title .text-button{white-space:nowrap;flex:none}
+/* v27.55 해역 난이도: 최소·최대 버튼과 슬라이더 */
+.tide-controls{display:grid;gap:6px;justify-items:stretch;min-width:0}
+.tide-controls .button-row{display:flex;align-items:center;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.tide-slider{width:100%;min-width:140px;accent-color:#d5b36c}
+.battle-console>.tide-selector{flex-wrap:wrap}
+.battle-console>.tide-selector>div:first-child{flex:1 1 300px;min-width:0}
+.battle-console>.tide-selector>.tide-controls{flex:0 1 300px;margin-left:auto}

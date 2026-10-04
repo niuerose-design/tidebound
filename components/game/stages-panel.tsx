@@ -1,5 +1,6 @@
 'use client';
 import { RegionProgress } from './book-research';
+import { levelGateOk } from '@/game/systems/meta';
 import { ArrowUpRight, Lock, MapPin } from 'lucide-react';
 import { STAGES, closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { mimicStageMultiplier } from '@/game/data/mimic';
@@ -17,7 +18,7 @@ export function Stages({ s, send, busy }: PanelProps) {
     {[...new Set(STAGES.map(st => st.region))].map(region => <section className="stage-region" key={region}>
     <h2 className="stage-region-title">{region}</h2>
     <div className="stage-grid">{STAGES.map((st, i) => st.region !== region ? null : (() => {
-                const closed = closedIn(s, 'stages', st.id), locked = closed || s.level < st.level || s.rebirths < st.rebirth;
+                const closed = closedIn(s, 'stages', st.id), locked = closed || !levelGateOk(s, st.level) || s.rebirths < st.rebirth;
                 const current = s.stage === st.id && !inDungeon;
                 return <button key={st.id} className={`stage-card ${current ? 'selected' : ''}`} disabled={busy || locked || inDungeon} onClick={() => send({ type: 'stage', id: st.id })} style={{ '--stage-color': st.tone } as React.CSSProperties}>
                 <div className="stage-top">

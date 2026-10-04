@@ -2,7 +2,16 @@ import type { State } from '../types';
 import { ECONOMY, researchRank } from '../data/economy';
 import { MONSTER_TUNING, DUNGEON_TUNING } from '../data/balance';
 import { fishExpAt, fishGoldAt } from '../data/world';
-export const rebirthLevel = (s: State) => Math.min(ECONOMY.rebirthLevelCap, 30 + s.rebirths * ECONOMY.rebirthLevelStep);
+/** 환생 요구 레벨: 30에서 환생마다 +5(Lv.60까지), 그 뒤로는 환생마다 +1(최대 Lv.80). */
+export const rebirthLevel = (s: Pick<State, 'rebirths'>) => {
+    const early = 30 + s.rebirths * ECONOMY.rebirthLevelStep;
+    if (early <= ECONOMY.rebirthLevelLateFrom) return early;
+    const extra = s.rebirths - (ECONOMY.rebirthLevelLateFrom - 30) / ECONOMY.rebirthLevelStep;
+    return Math.min(ECONOMY.rebirthLevelCap, ECONOMY.rebirthLevelLateFrom + Math.floor(extra * ECONOMY.rebirthLevelLateStep));
+};
+/** v27.55 환생 이 횟수부터 사냥터·던전의 레벨 제한이 없습니다(환생 횟수 조건은 그대로). */
+export const LEVEL_GATE_FREE_REBIRTHS = 5;
+export const levelGateOk = (s: Pick<State, 'level' | 'rebirths'>, level: number) => s.rebirths >= LEVEL_GATE_FREE_REBIRTHS || s.level >= level;
 /** 요구 레벨을 넘겨 오래 버틴 모험의 추가 세계석: 초과 레벨² ÷ 40. */
 export const deepVoyagePearls = (s: State) => { const over = s.level - rebirthLevel(s); return over > 0 ? Math.floor(over * over / 40) : 0; };
 /** 순풍의 기본 조건 폭(요구 레벨+5)과 기본 경험치 보너스(+50%). 실제 값은 tailwindWindow·tailwindExp를 쓰세요. */

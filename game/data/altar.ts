@@ -26,7 +26,8 @@ export const ALTAR = {
     /** 순위표 길이와 화면 캐시. */
     boardSize: 20, cacheMs: 15_000,
     /** 처음 깨어나는 신(자리 주인이 없을 때): 무릉도장 depth층 보스(무공)와 같은 능력치·기술. */
-    firstGod: { name: '검은 마법사', depth: 50 },
+    /** v27.54 신격: 공격·마법 ×attack, 방어 관통 penetration. 보통 모험가(체력 1만대·방어 1천대)는 한 방에 쓰러지고, 방어 특화만 몇 대 버팁니다. */
+    firstGod: { name: '검은 마법사', depth: 50, attack: 5, penetration: .5 },
     /** 자리 주인을 본뜬 신: 주인의 능력치에 체력 ×2, 공격·마법 ×1.15(신격). */
     godhood: { hp: 2, attack: 1.15 },
 } as const;
