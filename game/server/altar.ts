@@ -130,7 +130,7 @@ export async function commitOffering(account: string, id: string, name: string, 
 
 /** 신에게 도전. 결과는 한 번만 계산해 저장 충돌로 다시 돌아도 같은 결과를 적습니다. */
 export function makeChallenge(id: string) {
-    let outcome: { result: DuelResult; claimed: boolean; gen: number; god: string } | null = null;
+    let outcome: { result: DuelResult; claimed: boolean; gen: number; god: string; dealt: number } | null = null;
     return async (s: State, now: number) => {
         const last = s.altar?.challengeAt || 0;
         if (!outcome) {
@@ -140,11 +140,11 @@ export function makeChallenge(id: string) {
             if (now - last < ALTAR.challengeCooldownMs) throw new ApiError(`신에게는 ${Math.ceil((ALTAR.challengeCooldownMs - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
             const me = snapshot(s), result = duel(me, god, true, Math.random, ALTAR.godMaxTurns);
             const claimed = result.winner === 'player' && await db().claimAltarThrone(a.gen, id, s.name, JSON.stringify(me), now);
-            outcome = { result, claimed, gen: a.gen, god: god.name };
+            outcome = { result, claimed, gen: a.gen, god: god.name, dealt: Math.max(0, Math.min(1, 1 - result.opponentHp / Math.max(1, god.stats.hp))) };
             if (claimed) { invalidateAltar(); await announce(`${josa(s.name, '이가')} ${josa(god.name, '을를')} 쓰러뜨리고 신의 자리에 앉았습니다!`, now); }
         }
-        s.altar = { ...s.altar, challengeAt: now };
-        const { result, claimed, god } = outcome;
+        const { result, claimed, god, dealt } = outcome;
+        s.altar = { ...s.altar, challengeAt: now, tries: (s.altar?.tries || 0) + 1, wins: (s.altar?.wins || 0) + (result.winner === 'player' ? 1 : 0), best: Math.max(s.altar?.best || 0, dealt) };
         addLog(s, result.winner === 'player'
             ? claimed ? `✦ ${josa(god, '을를')} 쓰러뜨렸습니다! 이제 당신이 신의 자리에 앉습니다. 다른 모험가가 바치는 재화의 ${ALTAR.titheRate * 100}%가 쌓입니다.` : `${josa(god, '을를')} 쓰러뜨렸지만 한발 늦었습니다. 다른 모험가가 먼저 신의 자리에 앉았습니다.`
             : `${god}에게 도전했지만 ${result.winner === 'draw' ? `${result.turns}턴 안에 쓰러뜨리지 못했습니다` : '쓰러졌습니다'}.`, result.winner === 'player' ? 'reward' : 'system');

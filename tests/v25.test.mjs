@@ -598,3 +598,21 @@ test('v27.53 drops: 0.25% base, bonus 0.01 = +10%, rare or better, tide drop lev
     assert.equal(Enc.dropLevel({ level: 30 }, 25, 10), 40, 'capped at player + 10'); assert.equal(Enc.dropLevel({ level: 30 }, 50, 10), 50, 'never below the source level'); assert.equal(Enc.dropLevel({ level: 30 }, 25, 1), 30);
     const t = E.newState(0); Enc.drop(t, 10, () => 0); assert.equal(t.inventory[0].rarity, 1, 'no common drops');
 });
+test('v27.54 balance: burn stays between bleed and poison in real combat (normal and boss HP)', async () => {
+    const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const C = await G.load('systems/combat'), { SKILLS: list } = await G.load('data/skills');
+    const base = { attack: 300, magic: 300, defense: 0, resist: 0, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const tmpl = list.find(s => s.id === 'fireball');
+    for (const hp of [1e4, 1e6]) {
+        const dealt = {};
+        for (const effect of ['bleed', 'poison', 'burn']) {
+            list.push({ ...tmpl, id: 'testDot', effect, dotRatio: undefined, dotName: undefined, chance: 1, cooldown: 0, manaCost: 0, statusOnly: false });
+            const a = { name: 'A', stats: { ...base, hp: 1e9 }, hp: 1e9, mana: 1e6, skills: ['testDot'], cooldowns: {}, stun: 0, effects: {}, ranks: { testDot: 1 }, mastery: {}, practice: {} }, idle = { ...a, skills: [], ranks: {} };
+            const b = { name: 'B', stats: { ...base, hp }, hp: hp * 1000, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 0 };
+            let r = 0; const rng = () => (r = (r * 9301 + 49297) % 233280) / 233280;
+            for (let t = 0; t < 12; t++) { C.strike(t % 2 ? idle : a, b, rng); C.strike(b, idle, rng); }
+            dealt[effect] = hp * 1000 - b.hp; list.pop();
+        }
+        assert.ok(dealt.bleed < dealt.burn && dealt.burn < dealt.poison, `hp ${hp}: ${JSON.stringify(dealt)}`);
+    }
+});

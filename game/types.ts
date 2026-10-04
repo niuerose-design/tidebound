@@ -346,7 +346,7 @@ export type State = {
     /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위 보상을 한 번 정산합니다. */
     duelSeason?: { key: string; lastKey?: string; lastRank?: number };
     /** v27.43 제단: 마지막 신 도전 시각, 익명 기여 설정. 서버만 씁니다. */
-    altar?: { challengeAt?: number; anonymous?: boolean };
+    altar?: { challengeAt?: number; anonymous?: boolean; /** v27.54 신 도전 횟수·승리·가장 많이 깎은 신 체력 비율(0~1). 운영 통계용. */ tries?: number; wins?: number; best?: number };
     /** v27.44 제단 진행 요약(서버가 동기화마다 채우는 표시용). */
     altarStatus?: import('./data/altar').AltarStatus;
     /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */
