@@ -568,3 +568,23 @@ test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlemen
     assert.equal(Ev.offlineEvent({ id: 'e', name: '', until: 0, exp: 2, gold: 1, drop: 3, mastery: 2 }).exp, 1.5);
     assert.ok(on.event && on.event.gold === 10, 'event is set again after settlement');
 });
+test('v27.51 every final combat stat equals the sum of its shown breakdown rows', async () => {
+    const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const engine = await G.load('systems/engine'), S = await G.load('systems/stats'), { JOBS } = await G.load('data/classes'), { SKILLS } = await G.load('data/skills'), { FISH } = await G.load('data/world');
+    let seed = 11; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 40; i++) {
+        const s = engine.newState(0), job = JOBS[Math.floor(r() * JOBS.length)];
+        Object.assign(s, { level: 1 + Math.floor(r() * 80), rebirths: Math.floor(r() * 12), job: job.id, unlockedJobs: [job.id] });
+        s.skills = SKILLS.filter(k => k.job === job.id || !k.job).map(k => k.id).slice(0, 8);
+        for (const k of ['attack', 'hp', 'guard', 'crit', 'evasion', 'magicAttack', 'exp', 'gold', 'drop']) s.permanent[k] = Math.floor(r() * 20);
+        for (const f of FISH) if (r() < .5) s.book[f.id] = Math.floor(r() * 20000);
+        s.attributes = { str: Math.floor(r() * 200), dex: Math.floor(r() * 200), int: Math.floor(r() * 200), vit: Math.floor(r() * 200), wis: Math.floor(r() * 200), luk: Math.floor(r() * 200) };
+        s.jobMastery[job.id] = Math.floor(r() * 100000);
+        const trace = {}, a = S.stats(s, trace);
+        for (const [k, v] of Object.entries(a)) {
+            if (typeof v !== 'number') continue;
+            const shown = (trace[k] || []).filter(x => S.STAT_SOURCES.includes(x.source)).reduce((t, x) => t + x.delta, 0);
+            if ((trace[k] || []).length || v) assert.ok(Math.abs(shown - v) <= Math.max(1e-6, Math.abs(v) * 1e-6), `${job.id} ${k}: final ${v} vs rows ${shown}`);
+        }
+    }
+});

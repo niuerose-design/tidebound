@@ -15,14 +15,14 @@ export const voyageActions: ActionHandlers = {
     tide(s, { id }) {
         const tier = Number(id);
         if (!Number.isInteger(tier) || tier < 0 || tier > tideLimit(s) || s.dungeon)
-            throw Error('해역 난이도 조건을 확인하세요.');
+            throw Error('사냥터 난이도 조건을 확인하세요.');
         if (tier && s.vows?.seal)
-            throw Error('잠든 힘 봉인 중에는 해역 난이도가 0으로 고정됩니다.');
+            throw Error('잠든 힘 봉인 중에는 사냥터 난이도가 0으로 고정됩니다.');
         s.tide = tier;
         s.enemy = null;
         s.effects = {};
         s.playerStun = 0;
-        addLog(s, `해역 난이도 ${tier}단계`);
+        addLog(s, `사냥터 난이도 ${tier}단계`);
     },
     start(s, { now }) {
         s.running = true;
@@ -72,10 +72,10 @@ export const voyageActions: ActionHandlers = {
         const stage = STAGES.find(x => x.id === s.stage)!;
         if (id !== 'all' && !stage.fish.includes(id))
             throw Error('현재 사냥터의 몬스터를 선택하세요.');
-        // v26.5 해역 난이도 조건이 있는 몬스터는 그 난이도부터만 집중 사냥할 수 있습니다(조용히 무작위로 빠지지 않도록 막습니다).
+        // v26.5 사냥터 난이도 조건이 있는 몬스터는 그 난이도부터만 집중 사냥할 수 있습니다(조용히 무작위로 빠지지 않도록 막습니다).
         const need = id === 'all' ? 0 : FISH.find(f => f.id === id)?.minTier || 0;
         if (need > encounterTier(s))
-            throw Error(`${FISH.find(f => f.id === id)?.name}은(는) 해역 난이도 ${need}부터 나타납니다(지금 ${encounterTier(s)}).`);
+            throw Error(`${FISH.find(f => f.id === id)?.name}은(는) 사냥터 난이도 ${need}부터 나타납니다(지금 ${encounterTier(s)}).`);
         s.target = id === 'all' ? null : id;
         s.enemy = null;
     },

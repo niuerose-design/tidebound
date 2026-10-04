@@ -4,7 +4,7 @@ import { Skills } from './skills-panel';
 import { Classes } from './classes-panel';
 import { VoyageLog } from './guidance-panels';
 import { useEffect, useState } from 'react';
-import { BookOpen, Check, ChevronRight, HelpCircle, Map, RefreshCw, ShoppingBag, Target, Trophy, Users, Waves, Zap, Swords, Leaf } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, HelpCircle, Map, RefreshCw, ShoppingBag, Target, Trophy, Users, Zap, Swords, Leaf } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster, toast } from 'sonner';
 import { useGame } from './use-game';
@@ -67,7 +67,7 @@ export default function GameShell() {
         <MobileTabBar view={view} setView={setView}/>
         <footer className="app-footer">
         <span>판게아 RPG</span>
-        <span>행동력 없는 끝없는 모험 <Waves size={14}/>
+        <span>행동력 없는 끝없는 모험 <Leaf size={14}/>
         </span>
         </footer>
         </>}</div>

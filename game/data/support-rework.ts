@@ -216,9 +216,9 @@ export const SUPPORT_JOBS: NewJob[] = [
 
 /** 실루엣 카드 힌트. */
 export const SUPPORT_HINTS: Record<string, string> = {
-    headwindSailor: '다섯 번째 바다까지 거슬러 올라간 항해사에게.',
+    headwindSailor: '다섯 번째 사냥터까지 거슬러 올라간 모험가에게.',
     sunriseAngler: '열다섯 종의 몬스터를 처음 만난 아침에.',
-    barehandFisher: '무기 없이 열다섯 레벨을 넘긴 어부에게.',
+    barehandFisher: '무기 없이 열다섯 레벨을 넘긴 모험가에게.',
     noonDiver: '던전 다섯 번을 끝까지 잠수한 자에게.',
     mistSwordsman: '결투에서 세 번 이긴 뒤 안개가 걷힙니다.',
     nightHeron: '오백 마리를 낚고도 물가를 떠나지 않은 자에게.',

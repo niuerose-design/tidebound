@@ -39,7 +39,7 @@ export type FishDef = {
     spawnWeight?: number;
     rewardMultiplier?: number;
     boss?: boolean;
-    /** v25.8 변종 몬스터: 이 해역 난이도(차수) 이상에서만 나타납니다. */
+    /** v25.8 변종 몬스터: 이 사냥터 난이도(차수) 이상에서만 나타납니다. */
     minTier?: number;
 };
 const rows: [
@@ -97,8 +97,8 @@ const specialFish: Array<{
     { id: 'starKoi', name: '버블링', level: 46, lore: '별자리의 무늬를 비늘에 품은 외해의 희귀종.', rarity: 'rare' as const, spawnWeight: .1, rewardMultiplier: 1.8 },
     { id: 'prismRay', name: '옥토퍼스', level: 48, lore: '빛을 일곱 갈래로 쪼개며 헤엄친다.', rarity: 'epic' as const, spawnWeight: .065, rewardMultiplier: 2.2 },
     { id: 'voidGuppy', name: '스티지', level: 50, lore: '작은 몸 안에 깊이를 측정할 수 없는 어둠이 있다.', rarity: 'epic' as const, spawnWeight: .04, rewardMultiplier: 2.35 },
-    // v25.8 차수 변종: 해역 난이도 10·20·30 이상에서만 나타나는 희귀 변종. 도감 항목이 따로 있어 차수를 올릴 이유가 됩니다.
-    { id: 'stormBarracuda', name: '아이언 호그', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, spawnWeight: .08, rewardMultiplier: 2.4 }, // v26.6 해역 난이도 조건(10) 제거: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
+    // v25.8 차수 변종: 사냥터 난이도 10·20·30 이상에서만 나타나는 희귀 변종. 도감 항목이 따로 있어 차수를 올릴 이유가 됩니다.
+    { id: 'stormBarracuda', name: '아이언 호그', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, spawnWeight: .08, rewardMultiplier: 2.4 }, // v26.6 사냥터 난이도 조건(10) 제거: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
     { id: 'eclipseMoonfish', name: '레이스', level: 44, lore: '달이 가려진 밤, 심연의 빛을 등에 지고 떠오른다.', rarity: 'epic' as const, spawnWeight: .06, rewardMultiplier: 2.8, minTier: 20 },
     { id: 'novaManta', name: '와이번', level: 58, lore: '별이 터지는 순간의 빛을 날개에 새긴 외해의 전설.', rarity: 'legendary' as const, spawnWeight: .03, rewardMultiplier: 3.4, minTier: 30 },
     { id: 'cinderAngler', name: '크로코', level: 60, lore: '열수구의 불씨를 등불 삼아 어둠 속에서 입을 벌린다.', rarity: 'rare' as const, spawnWeight: .6, rewardMultiplier: 1.9 },

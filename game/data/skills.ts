@@ -80,7 +80,7 @@ SKILLS.push(
     { id: 'harvestEcho', name: '수확의 잔향', desc: '물리 공격 300% 피해. 피해의 일부를 회복하며 망인의 명중 페널티를 감수합니다.', type: 'active', level: 40, job: 'soulHarvester', chance: .4, cooldown: 3, multiplier: 3, effect: 'drain', cost: 5, manaCost: 6 },
     { id: 'soulTax', name: '영혼세', desc: '흡혈 +12%p, 치명 피해 +10%p.', type: 'passive', level: 40, job: 'soulHarvester', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { lifesteal: .16, critDamage: .2 } },
     { id: 'netWeave', name: '그물 짜기', desc: '흡혈 +6%p, 최대 체력 +60. 잡은 것은 놓치지 않는 안정적인 사냥을 돕습니다.', type: 'passive', level: 10, job: 'netWeaver', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { hp: 60, lifesteal: .06 } },
-    { id: 'fishWhisper', name: '물고기의 속삭임', desc: '마법 공격 +22, 방어 관통 +8%p, 마력 평타 계수 +30%p. 물결이 알려 주는 약점을 파고듭니다.', type: 'passive', level: 10, job: 'fishWhisperer', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { magic: 22, penetration: .08, arcaneRatioBonus: .3 } },
+    { id: 'fishWhisper', name: '물고기의 속삭임', desc: '마법 공격 +22, 방어 관통 +8%p, 마력 평타 계수 +30%p. 용이 알려 주는 약점을 파고듭니다.', type: 'passive', level: 10, job: 'fishWhisperer', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { magic: 22, penetration: .08, arcaneRatioBonus: .3 } },
     { id: 'driftwoodGuard', name: '유목 방벽', desc: '최대 체력 +100, 물리 방어 +18, 마법 방어 +14.', type: 'passive', level: 10, job: 'driftwoodHermit', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { hp: 100, defense: 18, resist: 14 , swarmFind: 0.3} },
     { id: 'salvageSense', name: '난파선 감식', desc: '골드 획득 +8%, 명중 +3%p, 치명타 +1%p. 장비 파밍용 독립 스킬.', type: 'passive', level: 10, job: 'relicScavenger', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { goldBonus: .08, accuracy: .03, crit: .01 } },
 );

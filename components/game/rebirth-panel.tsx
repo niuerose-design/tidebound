@@ -20,9 +20,9 @@ import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, typ
 import { useEffect, useState as useLocalState } from 'react';
 import { salvagePreview } from '@/game/systems/actions/lifecycle';
 const VOW_TEXT = {
-    anchor: (s: State) => `환생 때 사냥터·던전 하나가 지정되고, 그곳에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1 · 해역 난이도 0. 풀리면 쌓인 경험치 ×${anchorPayout(s)}. 언제든 포기 가능(보너스 없이 지급).`,
+    anchor: (s: State) => `환생 때 사냥터·던전 하나가 지정되고, 그곳에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1 · 사냥터 난이도 0. 풀리면 쌓인 경험치 ×${anchorPayout(s)}. 언제든 포기 가능(보너스 없이 지급).`,
     breath: (s: State) => `쓰러지면 이번 생을 처음부터 다시 시작(환생 횟수·세계석 변화 없음, 서약 해제). 한 번도 쓰러지지 않고 환생하면 환생 세계석 +${Math.round(breathBonus(s) * 100)}%.`,
-    rough: (s: State) => `선택 단계마다 적 체력·공격 +50%, 드롭·골드 +${Math.round(50 * vowBoost(s, 'rough'))}%. 해역 난이도와 별개입니다.`,
+    rough: (s: State) => `선택 단계마다 적 체력·공격 +50%, 드롭·골드 +${Math.round(50 * vowBoost(s, 'rough'))}%. 사냥터 난이도와 별개입니다.`,
 };
 /** 서약 연구 카드의 설명 팝업: 서약이 무엇인지, 어떻게 거는지, 이 서약의 제약과 보상. 누르면 열립니다(모바일 포함). */
 function VowInfo({ id, s }: { id: VowId; s: State }) {
@@ -118,7 +118,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0, salvage = salvagePreview(s);
     const projected = { ...s, level: Math.max(s.level, required) }, lifeBonus = nextLifeBonus(projected);
     const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
-    const lifeText = lifeBonus === 'deep' ? `깊은 항해 · 다음 생 동안 직업·스킬 숙련 기본 획득 +2` : lifeBonus === 'tailwind' ? `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : `없음 · Lv.${required + tailwindWindow(s)} 이하면 순풍, Lv.${DEEP_VOYAGE_LEVEL}이면 깊은 항해`;
+    const lifeText = lifeBonus === 'deep' ? `깊은 모험 · 다음 생 동안 직업·스킬 숙련 기본 획득 +2` : lifeBonus === 'tailwind' ? `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : `없음 · Lv.${required + tailwindWindow(s)} 이하면 순풍, Lv.${DEEP_VOYAGE_LEVEL}이면 깊은 모험`;
     return <>
         <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 모험을 마치고, 다음 생에 남길 힘을 선택하세요."/>
         <section className="panel port-resource-bar legacy-resource-bar">
@@ -132,25 +132,25 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
-                    {s.lifeBonus && <p className="footnote">이번 생 효과: {s.lifeBonus === 'deep' ? '깊은 항해 · 직업·스킬 숙련 기본 획득 +2' : tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : '순풍 (요구 레벨 도달로 종료)'}</p>}</div>
+                    {s.lifeBonus && <p className="footnote">이번 생 효과: {s.lifeBonus === 'deep' ? '깊은 모험 · 직업·스킬 숙련 기본 획득 +2' : tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%` : '순풍 (요구 레벨 도달로 종료)'}</p>}</div>
                 <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 세계석' : '환생 조건 달성 시 예상 세계석'}</span><strong><Sparkles size={26}/>{format(reward + breathExtra)}</strong>
                     <ConfirmButton label="환생하기" title="다음 모험을 시작할까요?" description="오른쪽 아래 '초기화되는 것'이 처음 상태로 돌아가고, '유지되는 것'은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>
             </section>
             <div className="rebirth-records rebirth-three">
                 <article className="panel ledger-gain"><h2>받는 보상</h2><ul>
-                    <li><b>세계석 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{parts.deep ? ` · 깊은 항해 ${parts.deep}` : ''}{breathExtra ? ` · 한 번의 숨 +${breathExtra}` : ''}</small></li>
+                    <li><b>세계석 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{parts.deep ? ` · 깊은 모험 ${parts.deep}` : ''}{breathExtra ? ` · 한 번의 숨 +${breathExtra}` : ''}</small></li>
                     <li><b>환생 영구 보너스: 체력·물리/마법 공격·물리/마법 방어</b><small>현재 +{memoryNow}% → 환생 후 +{memoryNext}%</small></li>
                     <li><b>영구 경험치 획득</b><small>현재 ×{permanentExp.toFixed(2)} → 환생 후 ×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</small></li>
                     <li><b>장착 AP {apGain ? '+1' : '+0'}</b><small>{apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`}</small></li>
                     <li><b>다음 생 효과</b><small>{lifeText}</small></li>
                     {salvage.rate > 0 && <li><b>환생 정리 · 장비 {salvage.count}개 {salvage.mode === 'dismantle' ? `분해 → 정수 +${format(salvage.essence)}` : `판매 → 시작 골드 +${format(salvage.gold)} G`}</b><small>효율 {Math.round(salvage.rate * 100)}% · <button type="button" className="text-button inline" disabled={busy} onClick={() => send({ type: 'salvageMode', value: salvage.mode === 'dismantle' ? 'sell' : 'dismantle' })}>{salvage.mode === 'dismantle' ? '판매로 바꾸기' : '분해로 바꾸기'}</button></small></li>}
-                    <li><b>해역 난이도 {tideLimit({ ...s, rebirths: s.rebirths + 1 })}까지 선택</b><small>다음 생 시작 골드 {format(100 + (s.permanent.starting || 0) * 500)} G</small></li>
+                    <li><b>사냥터 난이도 {tideLimit({ ...s, rebirths: s.rebirths + 1 })}까지 선택</b><small>다음 생 시작 골드 {format(100 + (s.permanent.starting || 0) * 500)} G</small></li>
                 </ul></article>
                 <article className="panel ledger-kept"><h2>유지되는 것</h2><ul><li>세계석 · 세계석 연구 · 몬스터와 장비 도감</li><li>스킬 해금·계승·성장·숙련 · 보유 SP · 장기 목표</li><li>직업 해금과 숙련 기록</li><li>환생 유물 · 유물 강화·옵션·보관 위치</li><li>길드 이름·명예 기부 기록 · 던전 정복 기록 · 무릉도장 최고 층</li><li>랭킹 점수와 전적</li></ul></article>
-                <article className="panel ledger-reset"><h2>초기화되는 것</h2><ul><li>레벨·경험치 · 현재 직업 → 초보자</li><li>능력치 배분</li><li>일반 장비와 해당 장비의 강화·옵션</li><li>골드 → 시작 골드</li><li>사냥터와 해역 난이도 선택</li><li>진행 중 전투·던전</li></ul></article>
+                <article className="panel ledger-reset"><h2>초기화되는 것</h2><ul><li>레벨·경험치 · 현재 직업 → 초보자</li><li>능력치 배분</li><li>일반 장비와 해당 장비의 강화·옵션</li><li>골드 → 시작 골드</li><li>사냥터와 사냥터 난이도 선택</li><li>진행 중 전투·던전</li></ul></article>
             </div>
-            <details className="panel legacy-roadmap legacy-fold"><summary>환생 이후에 열리는 콘텐츠</summary><p><b>1회</b> 윤회의 일격 · 건 마스터리 · 엘리니아 · 잊힌 마법 사원(Lv.30) · 윤회의 무기</p><p><b>2회</b> 요정의 축복 · 영혼의 보물 사냥꾼의 감</p><p><b>3회</b> 시공의 파동 · 심연의 눈 · 무릉도장(Lv.40)</p><p><b>5회</b> 커닝시티 · 지하 배수로(Lv.55) · 칭호 ‘되돌아온 모험가’ · 연구 해금 마무리</p><p><b>8회</b> 엘나스 · 자쿰의 제단(Lv.60)</p><p><b>10·20·30·50회</b> 윤회 칭호 ‘윤회의 항해자’ · ‘조류를 거스른 자’ · ‘심연을 건넌 자’ · ‘영원의 모험가’</p><p>무릉도장은 5연전 정복마다 다음 깊이를 엽니다. 깊을수록 층당 세계석이 늘고, 10·25·50·100층 첫 돌파 시 SP 1.</p></details>
+            <details className="panel legacy-roadmap legacy-fold"><summary>환생 이후에 열리는 콘텐츠</summary><p><b>1회</b> 윤회의 일격 · 건 마스터리 · 엘리니아 · 잊힌 마법 사원(Lv.30) · 윤회의 무기</p><p><b>2회</b> 요정의 축복 · 영혼의 보물 사냥꾼의 감</p><p><b>3회</b> 시공의 파동 · 심연의 눈 · 무릉도장(Lv.40)</p><p><b>5회</b> 커닝시티 · 지하 배수로(Lv.55) · 칭호 ‘되돌아온 모험가’ · 연구 해금 마무리</p><p><b>8회</b> 엘나스 · 자쿰의 제단(Lv.60)</p><p><b>10·20·30·50회</b> 윤회 칭호 ‘윤회의 여행자’ · ‘운명을 거스른 자’ · ‘심연을 건넌 자’ · ‘영원의 모험가’</p><p>무릉도장은 5연전 정복마다 다음 깊이를 엽니다. 깊을수록 층당 세계석이 늘고, 10·25·50·100층 첫 돌파 시 SP 1.</p></details>
             <details className="panel legacy-fold data-management"><summary>저장 데이터 관리</summary><p>전체 초기화는 환생과 다릅니다. 이름을 제외한 모든 성장 기록과 랭킹 방어 등록을 삭제하며 복구할 수 없습니다. 자동 사냥을 중단하고 던전에서 나온 뒤 진행하세요.</p><ConfirmButton label="전체 데이터 초기화" title="정말 모든 데이터를 초기화할까요?" description="레벨·장비·환생·세계석·도감·스킬·길드·랭킹을 모두 처음 상태로 되돌립니다. 이 작업은 되돌릴 수 없습니다." disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetData' })}/></details>
         </>}
         {tab === 'research' && <><p className="tab-intro">세계석 연구는 환생 후에도 유지됩니다. 카드에는 1단계당 증가량과 현재 → 다음 단계 효과를 표시합니다.</p>

@@ -53,7 +53,7 @@ export function cleanVows(s: Pick<State, 'permanent'>, v?: Vows): Vows {
 export const hasVows = (v?: Vows) => !!(v && (v.anchor || v.breath || v.rough || v.focus));
 /** v25.6 이번 생의 조건 카드. 연구 없이 환생 1회부터 고를 수 있고, 한 생에 하나입니다. */
 const FOCUS_KINDS = ['stage', 'tree', 'gold'] as const;
-export const FOCUS_NAMES: Record<'stage' | 'tree' | 'gold', string> = { stage: '해역 집중', tree: '계열 집중', gold: '황금 모험' };
+export const FOCUS_NAMES: Record<'stage' | 'tree' | 'gold', string> = { stage: '사냥터 집중', tree: '계열 집중', gold: '황금 모험' };
 /** 랭킹 배지용 목록. 예: ['anchor', 'rough2'] */
 export const vowBadges = (v?: Vows) => [v?.anchor ? 'anchor' : '', v?.breath ? 'breath' : '', v?.rough ? `rough${v.rough}` : ''].filter(Boolean);
 export const vowBadgeLabel = (badge: string) => badge.startsWith('rough') ? `${VOW_NAMES.rough} ${badge.slice(5)}` : VOW_NAMES[badge as VowId] || badge;

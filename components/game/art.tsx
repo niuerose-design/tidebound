@@ -161,3 +161,34 @@ export function JobArt({ job, size = 48, className = '' }: { job: Job; size?: nu
         )}
     </span>;
 }
+
+/**
+ * v27.51 전투 장면 배경(바다 그림 대체). 메이플 필드풍 언덕·숲·버섯 집 실루엣을 사냥터 색(--stage-tone)으로 물들입니다.
+ * 그림 파일 없이 SVG라 가볍고, 기존 연출(ocean-art 흔들림)을 그대로 받도록 같은 클래스를 씁니다.
+ */
+export function SceneBackdrop() {
+    return <svg className="ocean-art scene-backdrop" viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0c1d2b"/><stop offset=".62" stopColor="var(--stage-tone, #5c9dba)" stopOpacity=".55"/><stop offset="1" stopColor="#0b2029"/></linearGradient>
+            <radialGradient id="glow" cx=".72" cy=".24" r=".35"><stop offset="0" stopColor="#fff6d8" stopOpacity=".55"/><stop offset="1" stopColor="#fff6d8" stopOpacity="0"/></radialGradient>
+        </defs>
+        <rect width="1536" height="1024" fill="#0c1d2b"/>
+        <rect width="1536" height="1024" fill="url(#sky)"/>
+        <rect width="1536" height="1024" fill="url(#glow)"/>
+        <circle cx="1105" cy="245" r="58" fill="#fff4d0" opacity=".85"/>
+        <g fill="#fff" opacity=".5"><circle cx="210" cy="120" r="2"/><circle cx="420" cy="80" r="1.5"/><circle cx="640" cy="160" r="2"/><circle cx="860" cy="70" r="1.5"/><circle cx="1320" cy="130" r="2"/><circle cx="1460" cy="210" r="1.5"/><circle cx="120" cy="260" r="1.5"/></g>
+        <path d="M0 610 L130 470 L240 560 L380 400 L520 540 L640 450 L780 580 L930 430 L1080 560 L1230 420 L1380 540 L1536 460 V1024 H0Z" fill="var(--stage-tone, #5c9dba)" opacity=".22"/>
+        <path d="M0 700 C160 620 300 640 440 690 S760 610 920 660 S1240 700 1380 640 L1536 620 V1024 H0Z" fill="#10303a"/>
+        <g fill="#0d2830">
+            <path d="M150 700 l38-120 38 120z M200 690 l30-95 30 95z M1290 660 l40-130 40 130z M1350 655 l30-100 30 100z"/>
+            <path d="M560 690 c0-40 30-62 62-62s62 22 62 62z M598 690 h48 v40 h-48z"/>
+            <path d="M980 670 c0-30 22-46 46-46s46 16 46 46z M1008 670 h36 v30 h-36z"/>
+        </g>
+        <g fill="var(--stage-tone, #5c9dba)" opacity=".35">
+            <path d="M330 640 c-10-18 4-30 14-22 4-14 22-14 24 2 14-6 24 8 14 20 10 10-2 24-14 18-2 14-20 16-24 2-12 8-26-6-14-20z"/>
+            <path d="M1180 600 c-10-18 4-30 14-22 4-14 22-14 24 2 14-6 24 8 14 20 10 10-2 24-14 18-2 14-20 16-24 2-12 8-26-6-14-20z"/>
+            <path d="M760 560 c-8-14 3-24 11-17 3-11 17-11 19 2 11-5 19 6 11 16 8 8-2 19-11 14-2 11-16 13-19 2-10 6-21-5-11-17z"/>
+        </g>
+        <path d="M0 800 C220 760 420 790 640 810 S1100 770 1300 790 L1536 780 V1024 H0Z" fill="#0b2029"/>
+    </svg>;
+}

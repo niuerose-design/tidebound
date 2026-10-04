@@ -54,7 +54,7 @@ export function releaseAnchor(s: State, achieved: boolean) {
     return exp;
 }
 /** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 회복의 기억 1%p/단계. */
-/** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 해역 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘회복의 기억’은 1단계마다 +1%p. */
+/** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘회복의 기억’은 1단계마다 +1%p. */
 export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill - encounterTier(s) * BALANCE.healAfterKillTierDecay)) + researchRank(s, 'recovery') * .01;
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 export function rollRarity(rng: () => number, minRarity = 0) {
@@ -143,7 +143,7 @@ export function spawn(s: State, rng: () => number) {
         foe.magic = Math.round((foe.magic || 0) * vdef.attack);
         if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
-    // 험한 길: 적 체력·공격 ×(1 + 0.5 × 선택 단계). 해역 난이도와 별개로 곱합니다.
+    // 험한 길: 적 체력·공격 ×(1 + 0.5 × 선택 단계). 사냥터 난이도와 별개로 곱합니다.
     if (roughLevel(s)) {
         const m = roughEnemy(s);
         foe.hp = Math.round(foe.hp * m);
@@ -157,7 +157,7 @@ export function reward(s: State, rng: () => number) {
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
     const size = e.swarm || 1, vdef = variantById(e.variant), rewardMult = vdef?.reward || 1, expMult = vdef?.expMult || rewardMult, bookPer = vdef?.book || 1;
-    // v25.6 계열 집중 카드 ×2 · v27.14 서버 이벤트 · v27.21 해역 난이도(사냥터만). 정수로 유지하려고 올림 없이 곱한 뒤 연구 보정으로 넘깁니다.
+    // v25.6 계열 집중 카드 ×2 · v27.14 서버 이벤트 · v27.21 사냥터 난이도(사냥터만). 정수로 유지하려고 올림 없이 곱한 뒤 연구 보정으로 넘깁니다.
     const { focus: focusMastery, event: eventMastery, tide: tideMastery } = masteryMultipliers(s);
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * size * focusMastery * eventMastery * tideMastery)), practice = researched.total;
     const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult), exp = Math.floor(e.exp * expMultiplier(s) * expMult) * size;
@@ -205,14 +205,14 @@ export function reward(s: State, rng: () => number) {
     for (let i = 0; i < size * (vdef?.drops || 1); i++)
         drop(s, fish.level + encounterTier(s) * 5, rng);
     if (vdef?.guaranteed) drop(s, fish.level + encounterTier(s) * 5, rng, true);
-    // v25.8 해역 난이도 이정표: 사냥터에서 그 차수로 처음 처치하면 사이의 이정표 세계석을 한 번에 줍니다.
+    // v25.8 사냥터 난이도 이정표: 사냥터에서 그 차수로 처음 처치하면 사이의 이정표 세계석을 한 번에 줍니다.
     if (!s.dungeon && !seal) {
         const tier = encounterTier(s), best = s.tideBest?.[s.stage] || 0;
         if (tier > best) {
             (s.tideBest ??= {})[s.stage] = tier;
             let pearls = 0; const hit: number[] = [];
             TIDE_MILESTONES.forEach((n, i) => { if (best < n && n <= tier) { pearls += TIDE_MILESTONE_PEARLS[i]; hit.push(n); } });
-            if (pearls) { s.pearls += pearls; addLog(s, `해역 난이도 이정표 · ${STAGES.find(st => st.id === s.stage)?.name || s.stage} 차수 ${hit.join('·')} 첫 처치 · 세계석 +${pearls}`, 'reward'); }
+            if (pearls) { s.pearls += pearls; addLog(s, `사냥터 난이도 이정표 · ${STAGES.find(st => st.id === s.stage)?.name || s.stage} 차수 ${hit.join('·')} 첫 처치 · 세계석 +${pearls}`, 'reward'); }
         }
     }
     if (seal && seal.caught >= ANCHOR_CATCHES) releaseAnchor(s, true);

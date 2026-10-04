@@ -41,7 +41,7 @@ const SALE_FISH = [2, 6, 18, 50, 120, 300, 700], SALE_LEVEL_CAP = 65;
 /** v27.27 상점 구매품 되팔기 비율. */
 const SHOP_RESALE = .5;
 export const saleValue = (item: Item) => {
-    // 해역 난이도(차수)로 드롭 레벨이 몬스터 레벨보다 높아져도 판매가는 Lv.65까지만 따라갑니다(차수당 +5 레벨이 지수 곡선을 타고 폭주하지 않게).
+    // 사냥터 난이도(차수)로 드롭 레벨이 몬스터 레벨보다 높아져도 판매가는 Lv.65까지만 따라갑니다(차수당 +5 레벨이 지수 곡선을 타고 폭주하지 않게).
     const drop = fishGoldAt(Math.min(SALE_LEVEL_CAP, item.level || 1)) * (SALE_FISH[item.rarity] ?? 2);
     // v27.27 상점에서 산 장비(구매·감정)는 구매가의 절반까지만 받습니다. 예전 구매품(paid 없음, id shop-)은 그 레벨의 감정가로 어림합니다.
     const paid = item.paid ?? (item.id?.startsWith('shop-') ? ECONOMY.gambleBase + (item.level || 1) * ECONOMY.gamblePerLevel : undefined);

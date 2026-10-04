@@ -9,14 +9,14 @@ import { REBIRTH_TITLES } from './long-term';
 export type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '사냥'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
 export const TITLES: TitleDef[] = [
-    { id: 'novice', name: '🌱 초심자', desc: '항해를 시작한 모든 모험가', group: '시작' },
+    { id: 'novice', name: '🌱 초심자', desc: '모험을 시작한 모든 모험가', group: '시작' },
     ...REBIRTH_TITLES.map(t => ({ id: `rebirth:${t.rebirths}`, name: t.title, desc: `환생 ${t.rebirths}회`, group: '환생' as const, achievement: `rebirths:${t.rebirths}` })),
-    { id: 'playtime:100', name: '바다에 사는 자', desc: '누적 플레이 100시간', group: '도전', achievement: 'playtime:100' },
-    { id: 'playtime:500', name: '바다 그 자체', desc: '누적 플레이 500시간', group: '도전', achievement: 'playtime:500' },
-    { id: 'turns:1000000', name: '끝없는 항해자', desc: '전투 1,000,000턴', group: '도전', achievement: 'turns:1000000' },
+    { id: 'playtime:100', name: '메이플 월드에 사는 자', desc: '누적 플레이 100시간', group: '도전', achievement: 'playtime:100' },
+    { id: 'playtime:500', name: '세계 그 자체', desc: '누적 플레이 500시간', group: '도전', achievement: 'playtime:500' },
+    { id: 'turns:1000000', name: '끝없는 모험가', desc: '전투 1,000,000턴', group: '도전', achievement: 'turns:1000000' },
     { id: 'attr:500', name: '한 우물을 판 자', desc: '능력치 하나 500 돌파', group: '도전', achievement: 'attr:500' },
     { id: 'hpmax:200000', name: '거산', desc: '최대 체력 200,000', group: '도전', achievement: 'hpmax:200000' },
-    { id: 'manamax:50000', name: '마나의 바다', desc: '최대 마나 50,000', group: '도전', achievement: 'manamax:50000' },
+    { id: 'manamax:50000', name: '마나의 샘', desc: '최대 마나 50,000', group: '도전', achievement: 'manamax:50000' },
     { id: 'deaths:100', name: '일곱 번 넘어진 자', desc: '쓰러짐 100회', group: '도전', achievement: 'deaths:100' },
     { id: 'abyss:25', name: '무릉 수련자', desc: '무릉도장 25층', group: '무릉도장', achievement: 'abyss:25' },
     { id: 'abyss:100', name: '무릉의 주인', desc: '무릉도장 100층', group: '무릉도장', achievement: 'abyss:100' },

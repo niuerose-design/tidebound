@@ -41,14 +41,14 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
         const extra = masteryGainBonus(sk, skillLevel(sk, s.learned[id], skillMastery(s, id)));
         if (extra > bonus) { bonus = extra; source = sk.name; }
     }
-    // 깊은 항해(직전 생 Lv.100 완주) 동안 기본 숙련 +1 → +2. 보너스 한도는 그만큼 함께 올라갑니다.
+    // 깊은 모험(직전 생 Lv.100 완주) 동안 기본 숙련 +1 → +2. 보너스 한도는 그만큼 함께 올라갑니다.
     const base = s.lifeBonus === 'deep' ? 2 : 1;
     const amount = masteryPerVictory(bonus, base);
     return { amount, base, bonus: amount - base, source };
 }
 /**
  * 처치 숙련 배율(조건부 스킬 보너스 제외). 전투 보상과 능력치 화면이 같은 식을 씁니다.
- * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · tide: 해역 난이도(던전은 1) · research: 숙련의 기억 + 계정 몬스터 보너스(+5%/단계).
+ * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · tide: 사냥터 난이도(던전은 1) · research: 숙련의 기억 + 계정 몬스터 보너스(+5%/단계).
  */
 export function masteryMultipliers(s: State) {
     const focus = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
