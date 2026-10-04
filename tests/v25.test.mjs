@@ -189,7 +189,7 @@ test('v25.6 achievements pay out once with permanent bonuses; daily/weekly goals
     act(s, { type: 'claimAchievement', id: 'kills:100' }, 0); assert.equal(s.pearls - pearls, 1);
     act(s, { type: 'claimAchievement', id: 'all' }, 0); assert.equal(s.pearls - pearls, 1 + 2 + 1 + 3, 'claim all pays the rest once');
     assert.throws(() => act(s, { type: 'claimAchievement', id: 'all' }, 0), /없습니다/);
-    s.kills = 20000; syncAchievements(s, t => logs.push(t)); assert.ok(logs.at(-1).includes('처치 20,000마리'));
+    s.kills = 20000; syncAchievements(s, t => logs.push(t)); assert.ok(logs.some(t => t.includes('처치 20,000마리')) && logs.some(t => t.includes('일병 진급')), 'kills unlock the kill series and the rank series');
     act(s, { type: 'claimAchievement', id: 'all' }, 0);
     const totals = achievementTotals(s); assert.ok(totals.bonus.attack > 0 && totals.bonus.hp > 0);
     s.abyssBest = 25; syncAchievements(s, () => {}); act(s, { type: 'claimAchievement', id: 'abyss:25' }, 0); assert.equal(apCapacity(s), ap + 1, 'claimed achievement AP raises capacity');
@@ -203,6 +203,38 @@ test('v25.6 achievements pay out once with permanent bonuses; daily/weekly goals
     recordGoal(g, 'catch', undefined, catchGoal.target, () => {}); assert.ok(catchGoal.claimed); assert.equal(g.pearls - before, catchGoal.pearls);
     const weeklyCatch = g.weekly.goals.find(x => x.kind === 'catch'); assert.equal(weeklyCatch.progress, catchGoal.target, 'weekly board advances too');
     act(g, { type: 'sync' }, nextDay); assert.equal(g.daily.key, '2026-10-03'); assert.equal(g.daily.goals.find(x => x.kind === 'catch').progress, 0, 'new day resets'); assert.equal(g.weekly.key, '2026-W40', 'same week keeps weekly progress');
+});
+
+test('v27.81 goals reroll once per goal per KST day without duplicating board entries; claimed goals stay', async () => {
+    const { sameGoal } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/goals');
+    const noon = Date.UTC(2026, 9, 2, 3), nextDay = Date.UTC(2026, 9, 2, 15);
+    const g = newState(noon); g.level = 40; g.rebirths = 2; g.lastTick = noon; act(g, { type: 'sync' }, noon);
+    const before = g.daily.goals.map(x => ({ ...x })), species = g.daily.goals.find(x => x.kind === 'species');
+    species.progress = 7;
+    act(g, { type: 'rerollGoal', id: 'daily:species' }, noon);
+    const after = g.daily.goals.find(x => x.id === 'species');
+    assert.ok(!sameGoal(after, species), 'rerolled goal differs'); assert.equal(after.progress, 0); assert.equal(after.rerolled, '2026-10-02');
+    assert.ok(g.daily.goals.every((x, i) => g.daily.goals.findIndex(y => sameGoal(x, y)) === i), 'no duplicate goals on the board');
+    assert.equal(g.daily.goals.length, before.length);
+    assert.throws(() => act(g, { type: 'rerollGoal', id: 'daily:species' }, noon), /하루에 한 번/);
+    const duel = g.daily.goals.find(x => x.id === 'duel'); act(g, { type: 'rerollGoal', id: 'daily:duel' }, noon); assert.ok(g.daily.goals.find(x => x.id === 'duel').optional && !sameGoal(g.daily.goals.find(x => x.id === 'duel'), duel), 'optional flag is kept');
+    const weekly = g.weekly.goals.find(x => x.kind === 'catch'); weekly.claimed = true;
+    assert.throws(() => act(g, { type: 'rerollGoal', id: 'weekly:catch' }, noon), /달성한 목표/);
+    act(g, { type: 'rerollGoal', id: 'weekly:species' }, noon); assert.equal(g.weekly.goals.find(x => x.id === 'species').rerolled, '2026-10-02');
+    assert.throws(() => act(g, { type: 'rerollGoal', id: 'weekly:species' }, noon), /하루에 한 번/);
+    act(g, { type: 'rerollGoal', id: 'weekly:species' }, nextDay); assert.equal(g.weekly.goals.find(x => x.id === 'species').rerolled, '2026-10-03', 'weekly goals reroll again on the next day');
+    assert.throws(() => act(g, { type: 'rerollGoal', id: 'monthly:catch' }, nextDay), /목표판/);
+});
+
+test('v27.81 rank and dungeon-mode achievements: rank exp reaches cumulative needs, hell/nightmare clears are recorded per dungeon', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { ACHIEVEMENTS } = await L.load('data/achievements'), { syncAchievements } = await L.load('systems/progress'), { RANK_CUMULATIVE, RANKS } = await L.load('data/rank');
+    const rank = ACHIEVEMENTS.filter(a => a.group === '계급'); assert.ok(rank.length >= 8 && rank.some(a => a.id === 'rank:ltg' && a.target === RANK_CUMULATIVE[RANKS.length - 1]));
+    const s = newState(0); s.kills = RANK_CUMULATIVE[1]; syncAchievements(s, () => {}); assert.ok(s.achievements['rank:pvt1'] !== undefined && s.achievements['rank:sgt'] === undefined);
+    s.rank = { exp: RANK_CUMULATIVE[3], perks: { tally: 5 } }; syncAchievements(s, () => {}); assert.ok(s.achievements['rank:sgt'] !== undefined && s.achievements['rankPoints:5'] !== undefined, 'rank state wins over kills; spent points count');
+    const hell = ACHIEVEMENTS.find(a => a.id === 'hell:1'), nightmareAll = ACHIEVEMENTS.find(a => a.id === 'nightmareAll:3');
+    assert.equal(hell.progress(s), 0); s.modeClears = { hell: { grotto: 3 }, nightmare: { grotto: 1, a: 2, b: 1 } };
+    assert.equal(ACHIEVEMENTS.find(a => a.id === 'hell:10').progress(s), 3); assert.equal(nightmareAll.progress(s), 3); assert.equal(ACHIEVEMENTS.find(a => a.id === 'nightmare:1').progress(s), 4);
 });
 
 test('v25.6 focus cards change exp, gold and mastery for one life; weekly abyss depth is tracked per KST week', async () => {
@@ -367,7 +399,7 @@ test('v25.14 recommended loadout mixes passives and actives within AP', async ()
 
 test('v25.15 update log keeps only 3-5 entries, newest first; stat confirm setting toggles and survives rebirth', async () => {
     const { UPDATE_LOG } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/update-log');
-    assert.ok(UPDATE_LOG.length >= 3 && UPDATE_LOG.length <= 5, `update log has ${UPDATE_LOG.length} entries; keep 3-5`);
+    assert.ok(UPDATE_LOG.length === 3, `update log has ${UPDATE_LOG.length} entries; keep exactly 3`);
     const nums = UPDATE_LOG.map(e => e.version.split('.').map(Number)); for (let i = 1; i < nums.length; i++) assert.ok(nums[i - 1][0] > nums[i][0] || (nums[i - 1][0] === nums[i][0] && nums[i - 1][1] > nums[i][1]), 'newest first');
     const s = newState(0); assert.ok(!s.skipStatConfirm); act(s, { type: 'statConfirm', value: 'off' }, 0); assert.equal(s.skipStatConfirm, true);
     s.level = 30; act(s, { type: 'rebirth' }, 0); assert.equal(s.skipStatConfirm, true, 'setting is kept across rebirth'); act(s, { type: 'statConfirm', value: 'on' }, 0); assert.equal(s.skipStatConfirm, false);
@@ -668,7 +700,7 @@ test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% o
 test('v27.58 achievements: dungeon group replaces Mu Lung, new series per group with SP +1, old ids kept', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS } = await L.load('data/achievements'), { syncAchievements, claimAchievements } = await L.load('systems/progress');
-    assert.deepEqual([...ACHIEVEMENT_GROUPS], ['모험', '사냥', '숙련', '던전', '환생', '도전']);
+    assert.deepEqual([...ACHIEVEMENT_GROUPS], ['모험', '사냥', '숙련', '던전', '환생', '계급', '도전']);
     assert.ok(ACHIEVEMENTS.every(a => ACHIEVEMENT_GROUPS.includes(a.group)) && new Set(ACHIEVEMENTS.map(a => a.id)).size === ACHIEVEMENTS.length);
     for (const id of ['abyss:100', 'clears:1', 'dungeons:7', 'bosses:500']) assert.equal(ACHIEVEMENTS.find(a => a.id === id)?.group, '던전', id);
     assert.ok(ACHIEVEMENTS.some(a => a.id === 'codex:47'), 'codex id unchanged by the nuri');
@@ -981,4 +1013,17 @@ test('v27.79 rank: kills-only progression with perks (tally, drill, medal, suppl
     s.rank.perks = { tally: 2, drill: 3, medal: 5 }; assert.equal(R.rankPointsSpent(s), 2 + 3 + 5); assert.equal(M.victoryMastery(s, { id: 'minnow', boss: false }).base, 4, 'drill 3 → base mastery 4');
     s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, swarm: 10 }; const e0 = s.rank.exp, sp0 = s.sp; Enc.reward(s, () => 0); assert.equal(s.rank.exp, e0 + 30, 'swarm 10 × (1 + tally 2)'); assert.equal(s.sp, sp0 + 1, 'medal hit');
     const r = newState(0); r.level = 60; r.rank = { exp: 12345, perks: { supply: 1 } }; act(r, { type: 'rebirth' }, 0); assert.deepEqual(r.rank, { exp: 12345, perks: { supply: 1 } }, 'rank survives rebirth');
+});
+
+test('v27.80 badge choice (title/rank) and the 지겨운 환생 research restores mastered job, inherited skills and attribute ratio after rebirth', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Pr = await L.load('systems/progression'), E = await L.load('data/economy');
+    const s = newState(0); act(s, { type: 'badge', id: 'rank' }, 0); assert.equal(s.badge, 'rank'); act(s, { type: 'badge', id: 'title' }, 0); assert.equal(s.badge, undefined); assert.throws(() => act(s, { type: 'badge', id: 'x' }, 0));
+    const r = E.RESEARCH.find(x => x.id === 'habit'); assert.ok(r && r.max === 3 && r.rebirth === 2 && E.researchCost('habit', 0) === 6);
+    const make = (habit) => { const t = newState(0); t.level = 60; t.rebirths = 5; t.permanent.habit = habit; t.unlockedJobs.push('harpoon'); t.job = 'harpoon'; t.jobMastery.harpoon = 1e9; t.attributes = { str: 60, dex: 20, int: 0, vit: 20, wis: 0, luk: 0 }; t.learned.hook = 1; t.skillInheritances.hook = true; t.skills = ['hook']; return t; };
+    const a = make(0); act(a, { type: 'rebirth' }, 0); assert.equal(a.job, 'fisher', 'without research the job resets');
+    const b = make(1); assert.ok(Pr.canChangeJob(b, 'harpoon')); act(b, { type: 'rebirth' }, 0); assert.equal(b.job, 'harpoon', 'level 1: auto job change to the mastered job'); assert.ok(b.logs.some(l => /자동 전직/.test(l.text)));
+    const c = make(2); act(c, { type: 'rebirth' }, 0); assert.ok(c.skills.includes('hook'), 'level 2 keeps the inherited skill');
+    const d = make(3); d.permanent.starting = 10; act(d, { type: 'rebirth' }, 0); assert.equal(d.statPoints, 0); assert.ok(d.attributes.str >= 55 && d.attributes.dex >= 18 && d.attributes.vit >= 18 && d.attributes.int === 0, `ratio kept ${JSON.stringify(d.attributes)}`);
+    const e = make(1); e.jobMastery.harpoon = 0; act(e, { type: 'rebirth' }, 0); assert.equal(e.job, 'fisher', 'unmastered job is not restored');
 });
