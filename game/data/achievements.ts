@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { STAGES, DUNGEONS, FISH } from './world';
+import { PLACES as STAGES, DUNGEONS, FISH } from './world';
 import { JOBS } from './classes';
 import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedRegions } from '../systems/progression';
 import { MIMIC } from './mimic';

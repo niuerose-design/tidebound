@@ -8,13 +8,13 @@ import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
 import { rareSpawnBonus } from './book';
-import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize } from '../data/variants';
+import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
 import { MIMIC, rollMimicMastery, mimicChance, specialLuck } from '../data/mimic';
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue } from '../data/rank';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
-import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm } from '../data/world';
+import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm } from '../data/world';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
@@ -139,7 +139,8 @@ export function spawn(s: State, rng: () => number) {
     const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
     // v27.58 경험의 누리: 까미와 같은 난수 하나를 [까미 구간 | 누리 구간]으로 나눠 씁니다(난수 사용 횟수는 그대로).
-    const mimicOk = !dungeon && tier >= MIMIC.minTier && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && nuriEligible(s, tier);
+    // v27.80 무리 서식지에는 까미·누리가 나오지 않습니다(무리만 확정).
+    const mimicOk = !dungeon && !st.habitat && tier >= MIMIC.minTier && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && !st.habitat && nuriEligible(s, tier);
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
     const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1) * (s.event?.mimic ?? 1) * luck : 0;
@@ -162,7 +163,8 @@ export function spawn(s: State, rng: () => number) {
     const exp = Math.max(1, Math.round(base.exp * expLevelScale(rewardLevel, s.level)));
     // v25.19 변종: 몬스터를 10회 이상 처치한 사냥터 출현마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
     let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
-    if (!dungeon && !rare && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
+    if (!dungeon && !rare && st.habitat) { variant = 'swarm'; swarm = rollHabitatSwarm(rng, HABITAT.bigChance, HABITAT.sizes); }
+    else if (!dungeon && !rare && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
         const chances = variantChances(s);
         let roll = rng();
         for (const v of VARIANTS) { roll -= chances[v.id]; if (roll < 0) { variant = v.id; break; } }
@@ -226,6 +228,8 @@ export function reward(s: State, rng: () => number) {
         }
     }
     s.book[e.id] = (s.book[e.id] || 0) + size * bookPer;
+    // v27.80 도감 5·6단계 조건: 이 몬스터를 처치한 가장 높은 난이도(사냥터 난이도·던전 모드)를 기록합니다.
+    { const t = encounterTier(s); if (t > (s.bookTier?.[e.id] || 0)) (s.bookTier ??= {})[e.id] = t; }
     if (e.variant) { s.variantBook ??= {}; const row = (s.variantBook[e.id] ??= {}); row[e.variant] = (row[e.variant] || 0) + 1; }
     if (vdef?.pearls) { const pearls = vdef.pearls + (s.rebirths >= 3 ? 1 : 0); s.pearls += pearls; addLog(s, `${vdef.mark} ${vdef.name} · 세계석 +${pearls}`, 'reward'); }
     // v27.79 계급 특전: 사냥터 처치마다 SP·세계석 드롭(특전이 0이면 난수를 쓰지 않음).
@@ -264,7 +268,8 @@ export function reward(s: State, rng: () => number) {
         drop(s, dropLevel(s, fish.level, encounterTier(s)), rng);
     if (vdef?.guaranteed) drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, true);
     // v25.8 사냥터 난이도 이정표: 사냥터에서 그 차수로 처음 처치하면 사이의 이정표 세계석을 한 번에 줍니다.
-    if (!s.dungeon && !seal) {
+    // v27.80 무리 서식지는 이정표 세계석을 주지 않습니다(일반 사냥터의 이정표만).
+    if (!s.dungeon && !seal && !isHabitat(s.stage)) {
         const tier = encounterTier(s), best = s.tideBest?.[s.stage] || 0;
         if (tier > best) {
             (s.tideBest ??= {})[s.stage] = tier;

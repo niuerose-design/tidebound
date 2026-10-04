@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { FISH, STAGES, DUNGEONS } from './world';
+import { FISH, PLACES as STAGES, DUNGEONS } from './world';
 import { kst } from './doors';
 
 /**

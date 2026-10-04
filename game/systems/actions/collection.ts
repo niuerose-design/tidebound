@@ -11,10 +11,9 @@ function claimBookRewards(s: State, id: string) {
     const pending = bookPending(s, id);
     if (!pending.ranks.length)
         return false;
-    s.bookClaims[id] = pending.ranks.at(-1)! + 1;
+    s.bookClaims[id] = pending.upTo;
     s.sp += pending.sp;
-    s.gold += pending.gold;
-    addLog(s, `도감 연구 ${pending.ranks.length > 1 ? `${pending.ranks.length}단계 ` : ''}완료 · ${FISH.find(f => f.id === id)!.name} · 골드 +${pending.gold}${pending.sp ? ` · SP +${pending.sp}` : ''}`, 'reward');
+    addLog(s, `도감 연구 ${pending.ranks.length > 1 ? `${pending.ranks.length}단계 ` : ''}완료 · ${FISH.find(f => f.id === id)!.name} · SP +${pending.sp}`, 'reward');
     return true;
 }
 

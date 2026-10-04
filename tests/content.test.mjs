@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -104,16 +104,18 @@ test('All-rounder: allocated-point harmony damage, split mitigation and allocati
 
 test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; giant/abyssal/starlit change stats and rewards',()=>{
  const base=()=>{const s=newState(0);s.level=40;s.permanent.attack=300;s.permanent.hp=300;s.hp=stats(s).hp;act(s,{type:'stage',id:'brook'},0);act(s,{type:'target',id:'minnow'},0);return s;};
+ // v27.80 지역별 변종 배율이 있어 고정 난수 대신 이 사냥터의 실제 확률 구간 가운데를 씁니다(순서: 무리·거대·심연·별빛).
+ const ch=variantChances(base()),band=k=>{const o=['swarm','giant','abyssal','starlit'];let lo=0;for(const id of o){if(id===k)return lo+ch[id]/2;lo+=ch[id];}};
  const plain=base();plain.book.minnow=9;spawn(plain,()=>0);assert.equal(plain.enemy.variant,undefined,'no variant before 10 catches');assert.equal(plain.enemy.swarm,undefined);
  const sw=base();sw.book.minnow=10;spawn(sw,()=>0);assert.equal(sw.enemy.variant,'swarm');assert.equal(sw.enemy.swarm,5,'x5 only until 500 catches');assert.equal(sw.enemy.maxHp,plain.enemy.maxHp*5);assert.equal(sw.enemy.combatStats.attack,plain.enemy.combatStats.attack,'swarm attack stays at one fish');
  const mid=base();mid.book.minnow=5000;spawn(mid,()=>0.999);assert.equal(mid.enemy.variant,undefined,'roll above total chance is a normal fish');
  let calls=0;spawn(mid,()=>calls++===0?0:.999);assert.equal(mid.enemy.swarm,100,'x500 needs the swarmSense passive');
  const big=base();big.book.minnow=5000;big.job='rareTracker';big.learned.swarmSense=1;big.skills.push('swarmSense');calls=0;spawn(big,()=>calls++===0?0:.999);assert.equal(big.enemy.swarm,500);assert.equal(big.enemy.maxHp,Math.round(plain.enemy.maxHp*490),'x500 has 490x HP');assert.equal(big.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*490));assert.equal(big.enemy.combatStats.defense,plain.enemy.combatStats.defense);
- const g=base();g.book.minnow=10;spawn(g,()=>.05);assert.equal(g.enemy.variant,'giant');assert.equal(g.enemy.maxHp,Math.round(plain.enemy.maxHp*3));assert.equal(g.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*1.25));
+ const g=base();g.book.minnow=10;spawn(g,()=>band('giant'));assert.equal(g.enemy.variant,'giant');assert.equal(g.enemy.maxHp,Math.round(plain.enemy.maxHp*3));assert.equal(g.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*1.25));
  const kills=g.kills,gold=g.gold,book=g.book.minnow,mult=goldMultiplier(g);const e=g.enemy;g.running=true;let guard=0;while(g.enemy===e&&guard++<3000)tick(g,()=>.5);
  assert.equal(g.kills-kills,1);assert.equal(g.book.minnow-book,3,'giant counts 3 in the codex');assert.equal(g.gold-gold,Math.floor(e.gold*mult*4),'giant gold x4');assert.equal(g.variantBook.minnow.giant,1);
- const ab=base();ab.book.minnow=10;spawn(ab,()=>.062);assert.equal(ab.enemy.variant,'abyssal');assert.equal(ab.enemy.combatStats.speed,Math.round(plain.enemy.combatStats.speed*1.3));
- const st=base();st.book.minnow=10;st.rebirths=3;spawn(st,()=>.067);assert.equal(st.enemy.variant,'starlit');const pearls=st.pearls;const se=st.enemy;st.running=true;guard=0;while(st.enemy===se&&guard++<3000)tick(st,()=>.5);assert.equal(st.pearls-pearls,2,'starlit gives 2 pearls from rebirth 3');
+ const ab=base();ab.book.minnow=10;spawn(ab,()=>band('abyssal'));assert.equal(ab.enemy.variant,'abyssal');assert.equal(ab.enemy.combatStats.speed,Math.round(plain.enemy.combatStats.speed*1.3));
+ const st=base();st.book.minnow=10;st.rebirths=3;spawn(st,()=>band('starlit'));assert.equal(st.enemy.variant,'starlit');const pearls=st.pearls;const se=st.enemy;st.running=true;guard=0;while(st.enemy===se&&guard++<3000)tick(st,()=>.5);assert.equal(st.pearls-pearls,2,'starlit gives 2 pearls from rebirth 3');
  const dn=base();dn.book.minnow=100;act(dn,{type:'dungeon',id:'grotto'},0);spawn(dn,()=>0);assert.equal(dn.enemy.variant,undefined,'no variants in dungeons');
 });
 
@@ -137,22 +139,20 @@ test('Follow-up hits: each hit counted once, total equals HP lost, stops when th
  const crit=[];strike(mk(['arcane'],{crit:1}),{...mk([]),name:'B',hp:1e6},()=>0,crit);assert.equal(crit[0].hits[0].critical,true);assert.equal(crit[0].damageType,'magic');
 });
 
-test('Codex traits: each research stage grants its species trait; region themes replace the flat HP bonus; 50 catches reveal info',()=>{
+test('v27.81 codex: research stages grant no flat trait stats (ecology only); place themes still apply; 50 catches reveal info',()=>{
  const bookDelta=(s,k)=>{const t={};stats(s,t);return (t[k]||[]).filter(x=>x.source==='book'&&x.factor===undefined).reduce((a,x)=>a+x.delta,0);};
- const s=newState(0);s.book.minnow=500;
- assert.equal(bookDelta(s,'attack'),4);assert.equal(bookDelta(s,'magic'),0);assert.ok(Math.abs(bookDelta(s,'accuracy')-.006)<1e-9);
- s.book.eel=50;assert.equal(bookDelta(s,'magic'),2);assert.equal(bookDelta(s,'resist'),.5);
- s.book.grottoWarden=50;assert.equal(bookDelta(s,'attack'),5);assert.equal(bookDelta(s,'magic'),3);assert.equal(bookDelta(s,'hp'),5);
+ const s=newState(0);s.book.minnow=10000;s.book.eel=10000;s.book.grottoWarden=10000;
+ for(const k of ['attack','magic','accuracy','resist','hp','defense'])assert.equal(bookDelta(s,k),0,`no ${k} from traits`);
  const r=newState(0),exp=stats(r).expBonus;for(const id of STAGES[0].fish)r.book[id]=50;
  assert.ok(Math.abs(stats(r).expBonus-exp-.03)<1e-9);assert.equal(bookDelta(r,'hp'),0);
  const k=newState(0);assert.equal(bookMod.rareSpawnBonus(k),0);for(const id of STAGES.find(x=>x.id==='kelp').fish)k.book[id]=50;assert.equal(bookMod.rareSpawnBonus(k),.1);
  assert.equal(weightedFishId(['minnow','seahorse'],()=>.84),'minnow');assert.equal(weightedFishId(['minnow','seahorse'],()=>.84,.1),'seahorse');
  const v=newState(0);v.book.minnow=49;assert.equal(bookMod.bookRevealed(v,'minnow'),false);v.book.minnow=50;assert.equal(bookMod.bookRevealed(v,'minnow'),true);
 });
-test('Ecology research: from stage 2 only against that species, +2% dealt / -1% taken per stage',()=>{
+test('v27.81 ecology research: from stage 2 only against that species, 3·3·4·15·25% dealt / 1.5·1.5·2·7.5·12.5% taken, max +50% / -25%',()=>{
  const s=newState(0);s.book.minnow=499;assert.equal(bookMod.bookEcology(s,'minnow').stages,0);
- s.book.minnow=500;assert.deepEqual(bookMod.bookEcology(s,'minnow'),{stages:1,dealt:.02,taken:.01});
- s.book.minnow=10000;const e=bookMod.bookEcology(s,'minnow');assert.equal(e.stages,3);assert.ok(Math.abs(e.dealt-.06)<1e-9&&Math.abs(e.taken-.03)<1e-9);assert.equal(bookMod.bookEcology(s,'carp').stages,0);
+ s.book.minnow=500;assert.deepEqual(bookMod.bookEcology(s,'minnow'),{stages:1,dealt:.03,taken:.015});
+ s.book.minnow=10000;const e=bookMod.bookEcology(s,'minnow');assert.equal(e.stages,3);assert.ok(Math.abs(e.dealt-.1)<1e-9&&Math.abs(e.taken-.05)<1e-9);s.book.minnow=500000;s.bookTier={minnow:50};const full=bookMod.bookEcology(s,'minnow');assert.equal(full.stages,5);assert.ok(Math.abs(full.dealt-.5)<1e-9&&Math.abs(full.taken-.25)<1e-9,'max +50% / -25%');s.book.minnow=10000;assert.equal(bookMod.bookEcology(s,'carp').stages,0);
  const base={attack:1000,defense:0,hp:1e6,crit:0,accuracy:2,evasion:0,speed:10,mana:0,manaRegen:0,resist:0,penetration:0,lifesteal:0,critDamage:1.5,magic:0};
  const hit=(a,b)=>{const x={name:'a',stats:base,hp:1e6,skills:[],cooldowns:{},stun:0,...a},y={name:'b',stats:base,hp:1e6,skills:[],cooldowns:{},stun:0,...b};strike(x,y,()=>.5);return 1e6-y.hp;};
  assert.equal(hit({},{}),1000);assert.equal(hit({damageDealt:.06},{}),1060);assert.equal(hit({},{damageTaken:.03}),970);
