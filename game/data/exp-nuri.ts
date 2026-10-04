@@ -6,13 +6,15 @@
  */
 export const EXP_NURI = {
     id: 'expNuri',
-    /** 출현마다 누리가 나올 확률(사냥터, Lv.50 이상, 누적 처치 1,000마리 이상, Lv.100 미만). 사냥터 난이도 1단계마다 chancePerTier만큼 더합니다. */
+    /** 출현마다 누리가 나올 확률(사냥터 난이도 10 이상, Lv.50 이상, 누적 처치 1,000마리 이상, Lv.100 미만). 사냥터 난이도 1단계마다 chancePerTier만큼 더합니다. */
     chance: .0015,
     chancePerTier: .0001,
     /** 오프라인 정산 중 등장 확률 배율(까미와 같음). */
     offlineScale: .25,
     minLevel: 50,
     minKills: 1000,
+    /** v27.59 사냥터 난이도 이 값 이상에서만 등장(확률은 그대로). */
+    minTier: 10,
     /** 체력·공격 배율: 그 사냥터에서 가장 강한 몬스터 기준. 오래 버티지만 거의 아프지 않습니다. */
     hp: 3, attack: .4,
     /** 경험치 로또: 현재 레벨 필요 경험치의 pct. 앞에서부터 확률을 더해 판정합니다. 기댓값 약 1.35%. */
@@ -30,5 +32,5 @@ export function rollNuriTier(rng: () => number) {
 }
 /** 등장 확률 = 기본 + 사냥터 난이도 × 단계당. 예: 난이도 10 → 0.25%. */
 export const nuriChance = (tier: number) => EXP_NURI.chance + tier * EXP_NURI.chancePerTier;
-/** 누리가 나올 수 있는 모험가인지(레벨·누적 처치). */
-export const nuriEligible = (s: { level: number; kills: number }) => s.level >= EXP_NURI.minLevel && s.level < 100 && s.kills >= EXP_NURI.minKills;
+/** 누리가 나올 수 있는지(사냥터 난이도·레벨·누적 처치). */
+export const nuriEligible = (s: { level: number; kills: number }, tier: number) => tier >= EXP_NURI.minTier && s.level >= EXP_NURI.minLevel && s.level < 100 && s.kills >= EXP_NURI.minKills;

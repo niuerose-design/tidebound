@@ -120,7 +120,7 @@ export function spawn(s: State, rng: () => number) {
     const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
     // v27.58 경험의 누리: 까미와 같은 난수 하나를 [까미 구간 | 누리 구간]으로 나눠 씁니다(난수 사용 횟수는 그대로).
-    const mimicOk = !dungeon && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && nuriEligible(s);
+    const mimicOk = !dungeon && tier >= MIMIC.minTier && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && nuriEligible(s, tier);
     const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1) * (s.event?.mimic ?? 1) : 0;
     const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? EXP_NURI.offlineScale : 1) : 0;
     const special = mimicOk || nuriOk ? rng() : 1;

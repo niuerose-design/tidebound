@@ -276,7 +276,7 @@ test('v25.8 tide milestones pay per stage once, variant fish need the tier, abys
     const r = () => 0.999; assert.notEqual(weightedFishId(moon.fish, r, 0, 0), 'eclipseMoonfish', 'tier 0 never spawns the variant'); assert.ok(moon.fish.includes('eclipseMoonfish'));
     const picks = new Set(); let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); for (let i = 0; i < 400; i++) picks.add(weightedFishId(moon.fish, rng, 0, 20)); assert.ok(picks.has('eclipseMoonfish'), 'tier 20 spawns it');
     assert.equal(FISH.find(f => f.id === 'stormBarracuda').minTier, undefined, 'v26.6 아이언 호그는 난이도 0부터');
-    assert.ok(FISH.find(f => f.id === 'novaManta').minTier === 30 && ACHIEVEMENTS.some(a => a.id === 'tide:50') && ACHIEVEMENTS.some(a => a.id === `codex:${FISH.length}`));
+    assert.ok(FISH.find(f => f.id === 'novaManta').minTier === 30 && ACHIEVEMENTS.some(a => a.id === 'tide:50') && ACHIEVEMENTS.some(a => a.id === `codex:${FISH.filter(f => f.id !== 'expNuri').length}`), 'codex excludes the exp nuri so its id stays');
     const foe = (id, boss) => ({ id, name: id, hp: 0, maxHp: 1, attack: 1, defense: 0, exp: 0, gold: 0, boss, stun: 0, combatStats: {}, skills: [], cooldowns: {}, effects: {} });
     const s = newState(0); s.level = 30; s.rebirths = 12; s.stage = 'reef'; s.tide = 12; s.enemy = foe('lionfish', false);
     const pearls = s.pearls; reward(s, rng); assert.equal(s.tideBest.reef, 12); assert.equal(s.pearls - pearls, 3, 'tier 12 first catch pays milestones 5 and 10 at once');
@@ -465,8 +465,8 @@ test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is
 test('mimic appears at a quarter of the rate during offline catch-up', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic');
-    const roll = Mi.mimicChance(0, 0) * .5; // 온라인이면 등장, 오프라인(¼)이면 미등장
-    const make = () => { const s = newState(0); s.level = 20; s.kills = 500; s.stage = 'brook'; return s; };
+    const roll = Mi.mimicChance(5, 0) * .5; // 온라인이면 등장, 오프라인(¼)이면 미등장
+    const make = () => { const s = newState(0); s.level = 20; s.kills = 500; s.stage = 'brook'; s.tide = 5; return s; };
     const on = make(); Enc.spawn(on, () => roll); assert.equal(on.enemy.id, Mi.MIMIC.id);
     const off = make(); off.catchingUp = true; Enc.spawn(off, () => roll); assert.notEqual(off.enemy.id, Mi.MIMIC.id);
 });
@@ -641,20 +641,36 @@ test('v27.55 rebirth level keeps rising after Lv.60 (+1 per rebirth, cap 80); le
 test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% of the current level requirement', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri'), B = await L.load('data/balance');
-    const make = (level = 80) => { const s = newState(0); s.level = level; s.kills = 5000; s.stage = 'brook'; s.running = true; return s; };
-    const pm = Mi.mimicChance(0, 0);
+    const make = (level = 80) => { const s = newState(0); s.level = level; s.kills = 5000; s.stage = 'brook'; s.tide = 10; s.running = true; return s; };
+    const pm = Mi.mimicChance(10, 0);
     const a = make(); Enc.spawn(a, () => 0); assert.equal(a.enemy.id, Mi.MIMIC.id, 'roll 0 is still the mimic');
-    const b = make(); Enc.spawn(b, () => pm + N.nuriChance(0) / 2); assert.equal(b.enemy.id, N.EXP_NURI.id, 'right after the mimic band');
+    const b = make(); Enc.spawn(b, () => pm + N.nuriChance(10) / 2); assert.equal(b.enemy.id, N.EXP_NURI.id, 'right after the mimic band');
     assert.equal(b.enemy.name, '경험의 누리'); assert.ok(!b.enemy.variant && !b.enemy.swarm, 'no variants');
-    const c = make(); Enc.spawn(c, () => pm + N.nuriChance(0) * 1.5); assert.ok(![Mi.MIMIC.id, N.EXP_NURI.id].includes(c.enemy.id), 'past both bands');
-    const off = make(); off.catchingUp = true; Enc.spawn(off, () => pm * Mi.MIMIC.offlineScale + N.nuriChance(0) * .5); assert.notEqual(off.enemy.id, N.EXP_NURI.id, 'quarter rate offline');
-    for (const lv of [N.EXP_NURI.minLevel - 1, 100]) { const s = make(lv); Enc.spawn(s, () => pm + N.nuriChance(0) / 2); assert.notEqual(s.enemy.id, N.EXP_NURI.id, `not at Lv.${lv}`); }
-    const few = make(); few.kills = N.EXP_NURI.minKills - 1; Enc.spawn(few, () => pm + N.nuriChance(0) / 2); assert.notEqual(few.enemy.id, N.EXP_NURI.id, 'needs kills');
+    const c = make(); Enc.spawn(c, () => pm + N.nuriChance(10) * 1.5); assert.ok(![Mi.MIMIC.id, N.EXP_NURI.id].includes(c.enemy.id), 'past both bands');
+    const off = make(); off.catchingUp = true; Enc.spawn(off, () => pm * Mi.MIMIC.offlineScale + N.nuriChance(10) * .5); assert.notEqual(off.enemy.id, N.EXP_NURI.id, 'quarter rate offline');
+    for (const lv of [N.EXP_NURI.minLevel - 1, 100]) { const s = make(lv); Enc.spawn(s, () => pm + N.nuriChance(10) / 2); assert.notEqual(s.enemy.id, N.EXP_NURI.id, `not at Lv.${lv}`); }
+    const flat = make(); flat.tide = 9; Enc.spawn(flat, () => Mi.mimicChance(9, 0) + N.nuriChance(9) / 2); assert.notEqual(flat.enemy.id, N.EXP_NURI.id, 'v27.59 needs stage difficulty 10');
+    const few = make(); few.kills = N.EXP_NURI.minKills - 1; Enc.spawn(few, () => pm + N.nuriChance(10) / 2); assert.notEqual(few.enemy.id, N.EXP_NURI.id, 'needs kills');
     for (const [roll, pct] of [[0, .01], [.8, .02], [.99, .03]]) {
-        const s = make(); s.rebirths = 3; s.exp = 0; Enc.spawn(s, () => pm + N.nuriChance(0) / 2); s.enemy.hp = 0;
+        const s = make(); s.rebirths = 3; s.exp = 0; Enc.spawn(s, () => pm + N.nuriChance(10) / 2); s.enemy.hp = 0;
         const base = Math.floor(s.enemy.exp * (await L.load('systems/stats')).expMultiplier(s));
         Enc.reward(s, () => roll);
         assert.equal(s.exp, base + Math.floor(B.xpNeeded(80, 3) * pct), `tier ${pct}`);
         assert.equal(s.book[N.EXP_NURI.id], 1); assert.ok(s.logs.some(l => l.text.includes('경험의 누리')));
     }
+});
+
+test('v27.58 achievements: dungeon group replaces Mu Lung, new series per group with SP +1, old ids kept', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS } = await L.load('data/achievements'), { syncAchievements, claimAchievements } = await L.load('systems/progress');
+    assert.deepEqual([...ACHIEVEMENT_GROUPS], ['모험', '사냥', '숙련', '던전', '환생', '도전']);
+    assert.ok(ACHIEVEMENTS.every(a => ACHIEVEMENT_GROUPS.includes(a.group)) && new Set(ACHIEVEMENTS.map(a => a.id)).size === ACHIEVEMENTS.length);
+    for (const id of ['abyss:100', 'clears:1', 'dungeons:7', 'bosses:500']) assert.equal(ACHIEVEMENTS.find(a => a.id === id)?.group, '던전', id);
+    assert.ok(ACHIEVEMENTS.some(a => a.id === 'codex:47'), 'codex id unchanged by the nuri');
+    for (const g of ['모험', '사냥', '숙련', '던전', '도전']) assert.ok(ACHIEVEMENTS.filter(a => a.group === g && a.reward.sp === 1).length >= 3, `${g} has SP +1 rewards`);
+    const s = newState(0); syncAchievements(s, () => {});
+    s.peakLevel = 70; s.book.expNuri = 1; s.goldenBook = { snail: 100 }; s.gold = 1e10; s.altar = { wins: 1 }; s.turn = 5;
+    const sp = s.sp; syncAchievements(s, () => {});
+    for (const id of ['level:70', 'nuri:1', 'golden:100', 'gold:10000000000', 'god:1']) assert.ok(s.achievements[id] !== undefined, id);
+    claimAchievements(s, 'all'); assert.equal(s.sp - sp, 4, 'level:70 · golden:100 · gold:1e10 · god:1 each give SP +1');
 });
