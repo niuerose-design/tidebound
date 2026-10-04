@@ -1,7 +1,7 @@
 import type { State } from '../types';
 import { ECONOMY, researchRank } from '../data/economy';
-import { MONSTER_TUNING } from '../data/balance';
-import { SWARM_UNLOCK } from '../data/world';
+import { MONSTER_TUNING, DUNGEON_TUNING, xpNeeded } from '../data/balance';
+import { SWARM_UNLOCK, fishExpAt } from '../data/world';
 export const rebirthLevel = (s: State) => Math.min(ECONOMY.rebirthLevelCap, 30 + s.rebirths * ECONOMY.rebirthLevelStep);
 /** 요구 레벨을 넘겨 오래 버틴 항해의 추가 진주: 초과 레벨² ÷ 40. */
 export const deepVoyagePearls = (s: State) => { const over = s.level - rebirthLevel(s); return over > 0 ? Math.floor(over * over / 40) : 0; };
@@ -33,6 +33,12 @@ export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: n
     const mult = boss ? MONSTER_TUNING.bossRewardMultiplier : 1;
     const rewardScale = f.rewardMultiplier || 1;
     return { exp: Math.round(f.exp * mult * tierReward(tier) * rewardScale), gold: Math.round(f.gold * mult * tierReward(tier) * rewardScale) };
+}
+/** v27.30 던전 포획 경험치(배율 적용 전). 보스는 권장 레벨 레벨업 경험치의 일정 비율, 일반 웨이브는 어종 레벨을 권장 레벨 + 2까지만 셉니다. 층 배율은 expTierCap에서 멈춥니다. */
+export function dungeonExp(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) {
+    const t = Math.min(tier, DUNGEON_TUNING.expTierCap);
+    if (boss) return Math.round(xpNeeded(dungeonLevel) * DUNGEON_TUNING.bossExpShare * tierReward(t));
+    return catchReward({ exp: fishExpAt(Math.min(f.level, dungeonLevel + DUNGEON_TUNING.expLevelOver)), gold: 0, rewardMultiplier: f.rewardMultiplier }, t).exp;
 }
 /** 이 어종으로 해당 무리 규모를 고를 수 있는지 (도감 포획 수 기준). */
 export const swarmUnlocked = (s: State, fishId: string, size: number) => (s.book[fishId] || 0) >= (SWARM_UNLOCK[size] ?? Infinity);

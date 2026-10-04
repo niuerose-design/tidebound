@@ -406,3 +406,23 @@ test('v27.28 limit break raises level-table passives (+10%/stage), applies stage
     const before = stats(s).attack; s.limitBreaks = { [knack.id]: 1 }; const after = stats(s).attack;
     assert.ok(after > before, `count passive grows with limit break: ${before} → ${after}`); assert.ok(kmax > 0);
 });
+
+test('v27.30 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, overlevel cuts clear gold, stage enemies capped', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const W = await L.load('data/world'), B = await L.load('data/balance'), M = await L.load('systems/meta'), C = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), E = await L.load('data/encounters');
+    for (const lv of [1, 10, 25, 40]) assert.equal(W.fishGoldAt(lv), Math.round(7 * Math.pow(1.12, lv - 1)), `Lv.${lv} unchanged`);
+    assert.ok(W.fishGoldAt(60) < Math.round(7 * Math.pow(1.12, 59)) / 2, 'late fish gold at least halved');
+    const s = newState(0); s.level = 30; assert.ok(C.gambleCost(s) >= W.fishGoldAt(30) * 60 && C.shopCost(s) >= W.fishGoldAt(30) * 30, 'shop prices follow fish gold');
+    const item = level => ({ id: 'x', slot: 'rod', rarity: 3, level, power: 100, enhance: 0 });
+    assert.equal(Eq.enhanceCost(item(40)), Eq.enhanceCost(item(20)), 'no price scaling up to Lv.40');
+    assert.ok(Eq.enhanceCost(item(60)) > Eq.enhanceCost(item(40)) * 3, 'Lv.60 gear costs more to enhance');
+    const abyss = W.DUNGEONS.find(d => d.id === 'abyss'), boss = W.FISH.find(f => f.id === abyss.bossFish);
+    assert.equal(M.dungeonExp(boss, abyss.level, 0, true), Math.round(B.xpNeeded(abyss.level) * B.DUNGEON_TUNING.bossExpShare));
+    assert.equal(M.dungeonExp(boss, abyss.level, 80, true), M.dungeonExp(boss, abyss.level, B.DUNGEON_TUNING.expTierCap, true), 'abyss depth stops raising exp');
+    assert.ok(M.dungeonExp(boss, abyss.level, 80, true) < M.catchReward(boss, 80, true).exp / 10, 'far below the old uncapped boss exp');
+    assert.equal(B.dungeonOverlevel(18, 8), 1); assert.equal(B.dungeonOverlevel(30, 8), .7); assert.equal(B.dungeonOverlevel(100, 8), B.DUNGEON_TUNING.overlevelFloor);
+    const reef = W.STAGES.find(st => st.id === 'reef'), storm = W.FISH.find(f => f.id === 'stormBarracuda');
+    assert.equal(W.stageStatFish(storm, reef.level).level, reef.level + W.STAGE_ENEMY_LEVEL_OVER); assert.ok(W.stageStatFish(storm, reef.level).hp < storm.hp);
+    const fish = W.FISH.find(f => f.id === abyss.fish[0]);
+    assert.ok(E.scaledEnemyStats(fish, { tier: 50, wave: 0 }).speed > E.scaledEnemyStats(fish, { tier: 0, wave: 0 }).speed * 1.9, 'deep abyss enemies are faster');
+});
