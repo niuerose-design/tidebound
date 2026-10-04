@@ -51,7 +51,8 @@ if(!baseline){
  const sk=SKILLS.find(s=>s.id==='pierce');const practiced=refinementTargets(sk.masteryMilestones.at(-1))[0];
  assert(effectiveSkill(sk,5,4,undefined,practiced).multiplier>effectiveSkill(sk,5,4).multiplier);
  assert.equal(effectiveSkill(sk,5,4).penetrationBonus,.2);
- assert.equal(effectiveSkill(sk,5,4,'shatter').penetrationBonus,.45);
+ // 스킬 특화(shatter 등)는 v27 이후 효과가 없어졌습니다: 특화 인자를 넘겨도 결과가 같아야 합니다.
+ assert.equal(effectiveSkill(sk,5,4,'shatter').penetrationBonus,effectiveSkill(sk,5,4).penetrationBonus);
  assert(rebirthExperience(400)<rebirthExperience(20)*3);
  const full=newState(0),st=stats(full),healer={name:'test',stats:st,hp:st.hp,skills:['breath'],cooldowns:{},stun:0,mana:st.mana};const b={name:'dummy',stats:st,hp:st.hp,skills:[],cooldowns:{},stun:0};strike(healer,b,()=>0);assert.ok(healer.cooldowns.breath>0,'v21: heal skills also fire at full HP');
  const striker={...healer,skills:['twinHook'],cooldowns:{},stats:{...st,accuracy:1,attack:100}};const victim={...b,hp:10000};const rolls=[0,.9999,0,.99];let r=0;const log=strike(striker,victim,()=>rolls[r++]??0);assert(log.includes('본타 빗나감')&&victim.hp<10000);const fx=combatFxFromLog({id:1,type:'battle',text:log},'test');assert(fx.hits[0].miss&&fx.hits[1].value>0);
