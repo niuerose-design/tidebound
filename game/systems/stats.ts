@@ -72,6 +72,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     if (a.arcaneStrike > 0) add('arcaneRatioBonus', 'job', SKILL_FORMULA.arcaneRatioByTier[Math.min(j.tier, SKILL_FORMULA.arcaneRatioByTier.length - 1)] || 0);
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
     rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus); add('goldBonus', 'account', accountExpGold(s));
+    // v27.73 장비 드롭 보너스도 여기서 모읍니다(연구 ‘보물의 감각’ 1단계 = 0.01 = 드롭 확률 +10%, 행운, 물건도감). 전에는 dropRate에서만 더해 상세 능력치에 보이지 않았습니다.
+    a.dropBonus = researchRank(s, 'drop') * .01 + v.luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus;
+    rec('dropBonus', 'research', researchRank(s, 'drop') * .01); rec('dropBonus', 'attributes', v.luk * E.luk.dropBonus); rec('dropBonus', 'book', Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus);
     set('rebirthBonus', 'research', s.permanent.pearl || 0);
     set('dungeonGoldBonus', 'research', (s.permanent.dungeon || 0) * .08);
     // 세계석 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다.
@@ -171,9 +174,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     limit('lifesteal', Math.min(.3, a.lifesteal));
     return a;
 }
-/** 처치당 장비 드롭 확률. 기본 확률에 행운·물건도감·연구·드롭 보너스를 상대 증가로 곱합니다. */
+/** 처치당 장비 드롭 확률. 기본 확률에 드롭 보너스(행운·물건도감·연구·스킬·장비, stats에서 합산)를 상대 증가로 곱합니다. */
 export function dropRate(s: State) {
-    const bonus = attributes(s).luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + (stats(s).dropBonus || 0);
+    const bonus = stats(s).dropBonus || 0;
     // 험한 길 서약은 드롭 확률에도 곱합니다(서약이 없으면 ×1). 상한은 그대로입니다.
     return Math.min(BALANCE.dropChanceCap, BALANCE.dropChance * (1 + bonus / BALANCE.dropBonusScale) * roughReward(s) * (s.event?.drop || 1));
 }
