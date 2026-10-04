@@ -821,3 +821,20 @@ test('v27.70 the first god is the Mu Lung 50F boss with divinity (HP 9.3억, att
         assert.deepEqual([copy.stats.hp, copy.stats.attack, copy.stats.magic, copy.name], [20000, 1150, 575, '신이 된 왕'], 'impeach opponent = throne holder × godhood');
     }
 });
+
+test('v27.70 nuri blessing: an altar gauge that multiplies the exp nuri spawn chance like the mimic blessing', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const A = await L.load('data/altar'), ev = await L.load('data/events'), Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri');
+    const b = A.BLESSINGS.find(x => x.id === 'nuri');
+    assert.ok(b && A.GAUGE_IDS.includes('nuri') && A.blessingEffect(b, 1).nuri === 3 && A.blessingEffect(b, 3).nuri === 5 && /누리 출현 ×3/.test(A.blessingDesc(b, 1)));
+    const now = Date.now();
+    ev.setAltarEvents([{ id: 'altar-nuri', name: '', from: '2026-01-01T00:00:00+09:00', until: new Date(now + 3600_000).toISOString(), nuri: 3 }]);
+    try {
+        const live = ev.activeEvent(now); assert.equal(live.nuri, 3); assert.equal(live.mimic, 1);
+        const make = () => { const s = newState(0); s.level = 80; s.kills = 5000; s.stage = 'brook'; s.tide = 10; s.running = true; s.event = live; return s; };
+        const pm = Mi.mimicChance(10, 0), roll = pm + N.nuriChance(10) * 2; // 축복 없이는 누리 구간 밖, ×3이면 안
+        const on = make(); Enc.spawn(on, () => roll); assert.equal(on.enemy.id, N.EXP_NURI.id, 'blessing triples the nuri band');
+        const off = make(); off.event = null; Enc.spawn(off, () => roll); assert.notEqual(off.enemy.id, N.EXP_NURI.id);
+        assert.ok(/누리 출현 ×3/.test(ev.eventLabel({ ...live, name: '테스트' })));
+    } finally { ev.setAltarEvents([]); }
+});
