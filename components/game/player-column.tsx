@@ -11,7 +11,6 @@ import { Meter, SlotIcon, format } from './shared';
 import { xpNeeded, SLOTS, RARITIES } from '@/game/data/balance';
 import { jobById } from '@/game/data/classes';
 import { stats, power } from '@/game/systems/stats';
-import { StatusBadges } from './combat-status';
 import type { State, Action } from '@/game/types';
 export function Player({ s, busy, send, setView }: {
     s: State;
@@ -30,7 +29,7 @@ export function Player({ s, busy, send, setView }: {
     <Leaf size={36}/>
     <span>{s.level}</span>
     </div>
-    <div className="combatant-name character-name"><h3>{s.badge === 'rank' ? <small className="rebirth-title rank-badge" title={`계급 ${rankOf(s).name}`}><RankInsignia index={rankIndex(rankState(s).exp)} size={16}/>{rankOf(s).name}</small> : displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun}/></div>
+    <div className="combatant-name character-name"><h3>{s.badge === 'rank' ? <small className="rebirth-title rank-badge" title={`계급 ${rankOf(s).name}`}><RankInsignia index={rankIndex(rankState(s).exp)} size={16}/>{rankOf(s).name}</small> : displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</h3></div>
     <p className="job-label">{jobById(s.job)?.name} · 환생 {s.rebirths}회</p>
     {(() => { const owned = unlockedTitles(s); if (!owned.length) return null; const value = s.title === null ? 'none' : s.title === undefined ? 'auto' : titleById(s.title) ? s.title : 'auto'; return <label className="title-label"><span>칭호</span><select value={value} disabled={busy} onChange={e => send({ type: 'title', id: e.target.value })}><option value="auto">자동 · 최근 획득</option><option value="none">표시 안 함</option>{owned.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>; })()}
     <label className="title-label rank-label"><span>계급장</span><span className="rank-pick"><RankInsignia index={rankIndex(rankState(s).exp)} size={16}/>{rankOf(s).name}</span><select value={s.badge === 'rank' ? 'rank' : 'title'} disabled={busy} onChange={e => send({ type: 'badge', id: e.target.value })}><option value="title">칭호 표시</option><option value="rank">계급장 표시</option></select></label>
