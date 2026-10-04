@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Crown, Flame, Skull, Sparkles, Trophy, Coins, Gem, Droplets, EyeOff } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format } from './shared';
@@ -19,7 +20,7 @@ const num = (v: string) => Math.max(0, Math.floor(Number(v.replace(/[^0-9]/g, ''
  */
 export function Altar({ s, busy, info, error, load, act, result, clearResult }: Props) {
     const [gold, setGold] = useState(''), [pearls, setPearls] = useState(''), [essence, setEssence] = useState('');
-    const [gauge, setGauge] = useState<AltarGaugeId>('gold'), [anonymous, setAnonymous] = useState(!!s.altar?.anonymous), [now, setNow] = useState(() => Date.now());
+    const [gauge, setGauge] = useState<AltarGaugeId>('gold'), [anonymous, setAnonymous] = useState(!!s.altar?.anonymous), [now, setNow] = useState(() => Date.now()), [pane, setPane] = useState<'offer' | 'board'>('offer');
     useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
     useEffect(() => { const t = setInterval(() => setNow(stamp), 30_000); return () => clearInterval(t); }, []);
     const offer = { gold: num(gold), pearls: num(pearls), essence: num(essence) }, points = offeringPoints(offer);
@@ -47,13 +48,22 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 <p className="footnote">바칠 게이지를 고른 뒤 아래에서 재화를 바치세요. 축복은 쌓이며 최대 {ALTAR.blessingCapMs / 3600_000}시간까지 이어지고, 접속해 사냥하는 동안 적용됩니다(오프라인 정산 제외).</p>
             </section>
             <section className="panel altar-offer">
-                <div className="section-title"><h2><Coins size={16}/> 공물 바치기</h2><span className="micro">→ {info.gauges.find(g => g.id === gauge)?.name}</span></div>
+                <Tabs value={pane} onValueChange={v => setPane(v as typeof pane)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="offer"><Coins size={14}/> 공물 바치기</TabsTrigger><TabsTrigger value="board"><Trophy size={14}/> 이번 주 기여 순위</TabsTrigger></TabsList></Tabs>
+                {pane === 'offer' ? <>
+                <div className="section-title"><h2>→ {info.gauges.find(g => g.id === gauge)?.name}</h2><span className="micro">내 기여도 {format(info.me.points)}{info.me.rank ? ` · ${info.me.rank}위` : ''}</span></div>
                 <label className="altar-input"><Coins size={14}/><span>골드</span><input inputMode="numeric" value={gold} placeholder="0" onChange={e => setGold(e.target.value)}/><small>보유 {format(s.gold)}</small></label>
                 <label className="altar-input"><Gem size={14}/><span>세계석</span><input inputMode="numeric" value={pearls} placeholder="0" onChange={e => setPearls(e.target.value)}/><small>보유 {format(s.pearls)}</small></label>
                 <label className="altar-input"><Droplets size={14}/><span>정수</span><input inputMode="numeric" value={essence} placeholder="0" onChange={e => setEssence(e.target.value)}/><small>보유 {format(s.essence || 0)}</small></label>
                 <label className="altar-anon"><input type="checkbox" checked={anonymous} onChange={e => setAnonymous(e.target.checked)}/><EyeOff size={14}/> 익명으로 기여 (순위표에 ‘익명의 모험가’로 표시)</label>
                 <button className="primary" disabled={busy || points < 1 || short} onClick={() => void submit()}>바치기 · 기여도 +{format(points)}</button>
                 <p className="footnote">기여도: 골드 {ALTAR.goldPerPoint.toLocaleString()} = 1 · 세계석 1 = {ALTAR.pearlPoints} · 정수 1 = {ALTAR.essencePoints}. 바친 재화는 돌아오지 않습니다(신의 자리 주인에게 {ALTAR.titheRate * 100}%가 돌아갑니다).</p>
+                </> : <>
+            <div className="section-title"><h2><small className="micro">{info.week}</small></h2><span className="micro">내 기여도 {format(info.me.points)}{info.me.rank ? ` · ${info.me.rank}위` : ''}</span></div>
+            {info.board.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>기여도</TableHead></TableRow></TableHeader>
+                <TableBody>{info.board.map(r => <TableRow key={r.rank} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{format(r.points)}</b></TableCell></TableRow>)}</TableBody></Table>
+                : <p className="footnote">이번 주에 바친 모험가가 아직 없습니다.</p>}
+            <p className="footnote">순위는 월요일 0시(한국 시간)에 새로 시작합니다. 축복 {BLESSINGS.length}종 · 신 소환은 순위와 상관없이 함께 채웁니다.</p>
+                </>}
             </section>
             <section className="panel altar-god">
                 <div className="section-title"><h2><Skull size={16}/> 신</h2>{god && <span className="micro">{god.gen}번째 신</span>}</div>
@@ -82,12 +92,5 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 <p className="footnote">신의 자리 주인은 다른 모험가가 바치는 골드·세계석·정수의 {ALTAR.titheRate * 100}%를 거둡니다.</p>
             </section>
         </div>
-        <section className="panel guild-board">
-            <div className="section-title"><h2><Trophy size={16}/> 이번 주 기여 순위 <small className="micro">{info.week}</small></h2><span className="micro">내 기여도 {format(info.me.points)}{info.me.rank ? ` · ${info.me.rank}위` : ''}</span></div>
-            {info.board.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>기여도</TableHead></TableRow></TableHeader>
-                <TableBody>{info.board.map(r => <TableRow key={r.rank} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{format(r.points)}</b></TableCell></TableRow>)}</TableBody></Table>
-                : <p className="footnote">이번 주에 바친 모험가가 아직 없습니다.</p>}
-            <p className="footnote">순위는 월요일 0시(한국 시간)에 새로 시작합니다. 축복 {BLESSINGS.length}종 · 신 소환은 순위와 상관없이 함께 채웁니다.</p>
-        </section>
     </>;
 }
