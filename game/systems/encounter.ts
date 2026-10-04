@@ -30,8 +30,8 @@ export function victoryHeal(s: State) {
 }
 /** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
 export function gainLevels(s: State) {
-    while (s.exp >= xpNeeded(s.level) && s.level < 100) {
-        s.exp -= xpNeeded(s.level);
+    while (s.exp >= xpNeeded(s.level, s.rebirths) && s.level < 100) {
+        s.exp -= xpNeeded(s.level, s.rebirths);
         s.level++;
         s.statPoints += PROGRESSION.statPerLevel;
         if (s.level > s.peakLevel) {

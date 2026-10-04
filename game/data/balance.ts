@@ -182,7 +182,15 @@ export const STATUS_GUIDE = [
     { id: 'slow', name: '감속', kind: '속도 감소', description: `속도가 ${Math.round(STATUS_TUNING.slowMultiplier * 100)}% 낮아져 선공·명중 보정·연속 행동에 불리해집니다.`, detail: '선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
     { id: 'haste', name: '가속', kind: '속도 증가', description: `속도가 ${Math.round(STATUS_TUNING.hasteMultiplier * 100)}% 높아져 선공·명중 보정·연속 행동에 유리해집니다.`, detail: '상대보다 빨라지면 연속 행동 확률이 올라갑니다. 선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
 ] as const;
-export const xpNeeded = (level: number) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1));
+/**
+ * v27.54 필요 경험치 보정.
+ * - 환생 비례: 환생 1회마다 +perRebirth(20회까지), 이후 √(초과 횟수) × perRebirth. 환생 경험치 보너스(회당 +25%)가 요구치를 크게 앞질러 환생이 점점 빨라지던 것을 늦춥니다.
+ * - 통곡의 벽: wallLevel부터 레벨마다 ×wallGrowth 복리(Lv.80 약 ×11, Lv.90 약 ×108).
+ */
+export const XP_SCALING = { perRebirth: .15, wallLevel: 70, wallGrowth: 1.25 };
+export const xpRebirthFactor = (rebirths = 0) => 1 + XP_SCALING.perRebirth * (Math.min(20, rebirths) + Math.sqrt(Math.max(0, rebirths - 20)));
+export const xpWallFactor = (level: number) => level >= XP_SCALING.wallLevel ? Math.pow(XP_SCALING.wallGrowth, level - XP_SCALING.wallLevel + 1) : 1;
+export const xpNeeded = (level: number, rebirths = 0) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1) * xpRebirthFactor(rebirths) * xpWallFactor(level));
 // v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.
 export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }, { name: '신화', color: '#f08a6c', factor: 3.9 }, { name: '고대', color: '#5fd0b5', factor: 4.5 }, { name: '태초', color: '#ff6fb5', factor: 5.2 }];
 export const SLOTS = { rod: '무기', coat: '방어구', charm: '장신구' };

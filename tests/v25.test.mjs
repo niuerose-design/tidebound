@@ -616,3 +616,24 @@ test('v27.54 balance: burn stays between bleed and poison in real combat (normal
         assert.ok(dealt.bleed < dealt.burn && dealt.burn < dealt.poison, `hp ${hp}: ${JSON.stringify(dealt)}`);
     }
 });
+
+test('v27.54 xp needed grows with rebirths and walls off after Lv.70; the Black Mage hits with divine force', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const B = await L.load('data/balance');
+    assert.equal(B.xpNeeded(50, 0), B.xpNeeded(50)); assert.ok(Math.abs(B.xpNeeded(50, 10) / B.xpNeeded(50, 0) - 2.5) < .01, 'rebirth 10 = ×2.5');
+    assert.ok(B.xpNeeded(69) / B.xpNeeded(68) < 1.1 && B.xpNeeded(80) / B.xpNeeded(69) > 10, 'wall after Lv.70');
+    const D = await L.load('systems/duel'), Alt = D;
+    const base = { ...D.abyssBossSnapshot(50), name: '검은 마법사' }, god = Alt.divineFirstGod(base);
+    assert.equal(god.stats.attack, Math.round(base.stats.attack * 5)); assert.equal(god.stats.penetration, .5);
+    assert.equal(Alt.divineFirstGod(god).stats.attack, god.stats.attack, 'applied once');
+});
+
+test('v27.55 rebirth level keeps rising after Lv.60 (+1 per rebirth, cap 80); level gates lift from 5 rebirths', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const M = await L.load('systems/meta'), E = await L.load('systems/engine'), W = await L.load('data/world');
+    assert.deepEqual([0, 1, 6, 7, 10, 26, 40].map(r => M.rebirthLevel({ rebirths: r })), [30, 35, 60, 61, 64, 80, 80]);
+    const high = W.STAGES.filter(st => st.rebirth <= 4).sort((a, b) => b.level - a.level)[0];
+    const s4 = E.newState(0); s4.rebirths = 4; assert.throws(() => E.act(s4, { type: 'stage', id: high.id }, 0), /진입/);
+    const s5 = E.newState(0); s5.rebirths = 5; E.act(s5, { type: 'stage', id: high.id }, 0); assert.equal(s5.stage, high.id, 'Lv.1 with 5 rebirths enters');
+    const gated = W.STAGES.find(st => st.rebirth > 5); if (gated) assert.throws(() => E.act(s5, { type: 'stage', id: gated.id }, 0), 'rebirth gates stay');
+});

@@ -15,7 +15,7 @@ import { allow } from './throttle';
 import { weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
-import { duel, abyssBossSnapshot } from '../systems/duel';
+import { duel, abyssBossSnapshot, divineFirstGod } from '../systems/duel';
 import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, blessingDesc, GAUGE_IDS, gaugeCost, offeringPoints, tithe, type AltarGaugeId, type AltarInfo, type AltarStatus, type Offering } from '../data/altar';
 
 type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number }>; board: AltarOfferRow[] };
@@ -29,7 +29,7 @@ const parseGod = (a: AltarRow): Snapshot | null => { try { return a.god ? JSON.p
 export function nextGod(a: Pick<AltarRow, 'throne_snapshot' | 'throne_name'>): Snapshot {
     let holder: Snapshot | null = null;
     try { holder = a.throne_snapshot ? JSON.parse(a.throne_snapshot) as Snapshot : null; } catch { holder = null; }
-    if (!holder) return { ...abyssBossSnapshot(ALTAR.firstGod.depth), name: ALTAR.firstGod.name };
+    if (!holder) return divineFirstGod({ ...abyssBossSnapshot(ALTAR.firstGod.depth), name: ALTAR.firstGod.name });
     const m = ALTAR.godhood;
     const stats = { ...holder.stats, hp: Math.round(holder.stats.hp * m.hp), attack: Math.round(holder.stats.attack * m.attack), ...(holder.stats.magic ? { magic: Math.round(holder.stats.magic * m.attack) } : {}) };
     return { ...holder, name: `신이 된 ${a.throne_name}`, stats, power: power(stats), rating: 1000 };
@@ -66,7 +66,7 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
     const sh = await shared(now), database = db(), a = sh.altar;
     const mine = await database.getAltarOffer(sh.week, id);
     const rank = mine && mine.points > 0 ? await database.countAltarAbove(sh.week, mine.points) + 1 : 0;
-    const god = parseGod(a), isThrone = !!a.throne && a.throne === id;
+    const stored = parseGod(a), god = stored && divineFirstGod(stored), isThrone = !!a.throne && a.throne === id;
     return {
         week: sh.week,
         gauges: GAUGE_IDS.map(g => {
@@ -134,7 +134,7 @@ export function makeChallenge(id: string) {
     return async (s: State, now: number) => {
         const last = s.altar?.challengeAt || 0;
         if (!outcome) {
-            const a = (await shared(now, true)).altar, god = parseGod(a);
+            const a = (await shared(now, true)).altar, stored = parseGod(a), god = stored && divineFirstGod(stored);
             if (!god || !godAlive(a, now)) throw new ApiError('지금 깨어 있는 신이 없습니다.');
             if (a.throne === id) throw new ApiError('신의 자리에 앉아 있는 동안에는 도전할 수 없습니다.');
             if (now - last < ALTAR.challengeCooldownMs) throw new ApiError(`신에게는 ${Math.ceil((ALTAR.challengeCooldownMs - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);

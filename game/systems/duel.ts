@@ -6,6 +6,7 @@ import { Fighter, fighterSpeed, actTurn, constraintFields } from './combat';
 import { FISH, DUNGEONS } from '../data/world';
 import { abyssReference } from './encounter';
 import { scaledEnemyStats, abyssEnemyStats, profile } from '../data/encounters';
+import { ALTAR } from '../data/altar';
 /** 훈련 상대로 쓰는 던전 보스. 던전 마지막 웨이브와 같은 능력치·스킬로 섭니다(레벨 보정 0단계). */
 export const BOSS_OPPONENTS = FISH.filter(f => f.boss);
 export function bossSnapshot(id: string): Snapshot | null {
@@ -19,6 +20,13 @@ export function abyssBossSnapshot(depth: number): Snapshot {
     const d = DUNGEONS.find(x => x.id === 'abyss')!, f = FISH.find(x => x.id === d.bossFish)!;
     const stats = abyssEnemyStats(f, abyssReference(), depth, { boss: true, wave: d.fish.length - 1 });
     return { name: d.boss, level: f.level, job: 'boss', rebirths: 0, stats, skills: profile(f.id).skills, power: power(stats), rating: 1000 + f.level * 10 };
+}
+/** v27.54 검은 마법사 신격 보정(공격·마법 ×5, 방어 관통 50%). 이미 저장된 옛 검은 마법사에도 도전 때 한 번 적용됩니다(관통으로 적용 여부 판별). */
+export function divineFirstGod(god: Snapshot): Snapshot {
+    const f = ALTAR.firstGod;
+    if (god.name !== f.name || (god.stats.penetration || 0) >= f.penetration) return god;
+    const stats = { ...god.stats, attack: Math.round(god.stats.attack * f.attack), ...(god.stats.magic ? { magic: Math.round(god.stats.magic * f.attack) } : {}), penetration: f.penetration };
+    return { ...god, stats, power: power(stats) };
 }
 /** 테스트·점검용 표본 상대. 화면의 훈련 상대는 등록된 모험가와 던전 보스입니다. */
 export const TRAINING: Snapshot[] = [

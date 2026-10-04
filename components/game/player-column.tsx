@@ -38,7 +38,7 @@ export function Player({ s, busy, send, setView }: {
     </div>
     <Meter value={s.hp} max={a.hp} label="체력"/>
     <Meter value={s.mana} max={a.mana} label="마나" color="mana"/>
-    <Meter value={s.exp} max={xpNeeded(s.level)} label="경험치" color="gold"/>
+    <Meter value={s.exp} max={xpNeeded(s.level, s.rebirths)} label="경험치" color="gold"/>
     <div className="stat-grid">
     <div>
     <Swords />
