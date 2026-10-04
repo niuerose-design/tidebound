@@ -27,7 +27,7 @@ function BattleLogLineView({ log, index, playerName }: { log: Log; index?: boole
         <Icon size={12} className="log-icon" aria-label={`${WORD[ev.damageType]} 피해`}/>
         {chain}<b>{ev.actor}</b> · {ev.skillName}{' '}
         {ev.dot && <em className="dmg-dot">{ev.dot.name} {ev.dot.value}</em>}
-        {missed ? <em className="miss">빗나감</em> : ev.hits.map((h, i) => <em key={i} className={`${h.miss ? 'miss' : ''} ${h.critical ? 'crit' : ''}`}>{follows ? (i ? `추가타${ev.hits.length > 2 ? ` ${i}` : ''} ` : '본타 ') : ''}{h.miss ? '빗나감' : h.value.toLocaleString()}{h.critical ? ' 치명' : ''}</em>)}
+        {missed ? <em className="miss">빗나감</em> : ev.hits.map((h, i) => <em key={i} className={`${h.miss ? 'miss' : ''} ${h.critical ? 'crit' : ''}`}>{follows ? (i ? `추가타${ev.hits.length > 2 ? ` ${i}` : ''} ` : '본타 ') : ''}{h.miss ? '빗나감' : (h.raw ?? h.value).toLocaleString()}{h.critical ? ' 치명' : ''}</em>)}
         {!missed && ev.hits.length > 0 && <strong>{follows ? `합계 ${ev.total.toLocaleString()}` : ''} {WORD[ev.damageType]} 피해</strong>}
         {ev.healed > 0 && <em className="heal">회복 {ev.healed}</em>}
         {ev.drained > 0 && <em className="heal">흡혈 {ev.drained}</em>}
