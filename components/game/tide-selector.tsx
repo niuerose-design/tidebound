@@ -16,7 +16,7 @@ export const TideSelector = memo(function TideSelector({ s, send, busy }: PanelP
     return <section className="panel tide-selector" title={`환생 횟수만큼 올릴 수 있는 일반 사냥터 난이도입니다. 올릴수록 몬스터가 강해지고 레벨이 내 레벨 근처까지 오르며, 골드·장비 등급·정수·까미·누리가 늘어납니다. 지금 난이도 ${shown}: 장비 Lv.+${shown * 5} · 전설 이상 ${percent(rarityShareFrom(shown, 3), 0)} · ${tideEssence(shown).chance > 0 ? `정수 ${percent(tideEssence(shown).chance, 1)}(+${tideEssence(shown).amount})` : `정수는 난이도 ${BALANCE.tideLoot.essenceMinTier}부터`} · 처치 후 회복 ${percent(victoryHealRate({ ...s, tide: shown, dungeon: null }), 0)}. 수식은 도움말 ‘사냥터 난이도’에 있습니다.`}>
     <div>
     <h3>사냥터 난이도 {shown}</h3>
-    {/* v27.84 메인에는 골드·체력·공격·경험치 배율만. 장비 레벨·전설 확률·정수·까미·누리·몬스터 레벨은 카드 툴팁과 도움말에 둡니다. */}
+    {/* v27.86 메인에는 골드·체력·공격·경험치 배율만. 장비 레벨·전설 확률·정수·까미·누리·몬스터 레벨은 카드 툴팁과 도움말에 둡니다. */}
     <p>골드 ×{tierReward(shown).toFixed(1)} · 경험치 ×{tierExp(shown).toFixed(2)} · 몬스터 체력 ×{tierHealth(shown).toFixed(1)} · 공격 ×{tierAttack(shown).toFixed(1)}</p>
     </div>
     <div className="tide-controls">

@@ -15,7 +15,7 @@ import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } fr
 import { stats, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
 import { abyssReference, stageField } from '@/game/systems/encounter';
-import { bookEcology, nextEcology, bookRevealed, regionResearchStage } from '@/game/systems/book';
+import { bookEcology, nextEcology, bookRevealed, regionResearchStage, bookStage } from '@/game/systems/book';
 import { BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
 import { VARIANTS, regionSignature } from '@/game/data/variants';
 import type { State, Stats } from '@/game/types';
@@ -188,6 +188,12 @@ export function Collection({ s, send, busy }: PanelProps) {
     <summary><div><h2>생태 연구</h2><p>몬스터를 {BALANCE.bookMilestones.slice(BOOK_ECOLOGY.fromStage - 1).map(m => m.toLocaleString()).join(' · ')}회 처치할 때마다(6단계는 난이도 {BALANCE.bookTierReq[5]} 이상 처치 필요) 그 몬스터를 상대로 주는 피해가 오르고 받는 공격 피해가 줄어듭니다. 단계마다 {BOOK_ECOLOGY.dealt.map(pct).join('·')}% / {BOOK_ECOLOGY.taken.map(pct).join('·')}%, 최대 +{pct(BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0))}% / -{pct(BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0))}%.</p></div><span className="bonus-count">{eco.reduce((a, n) => a + n, 0)}<small> / {maxStage}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
     <ul className="bonus-grid">{BOOK_ECOLOGY.dealt.map((_, i) => { const n = eco.filter(x => x > i).length; return <li key={i} className={n ? 'active' : ''}><span>생태 {i + 1}단계 · 누적 +{pct(BOOK_ECOLOGY.dealt.slice(0, i + 1).reduce((a, x) => a + x, 0))}% / -{pct(BOOK_ECOLOGY.taken.slice(0, i + 1).reduce((a, x) => a + x, 0))}%</span><strong>{n} / {FISH.length}종</strong></li>; })}</ul>
+    <h3>몬스터별 진행 <small>장소별 · 칩의 숫자는 그 몬스터의 생태 단계({BOOK_ECOLOGY.dealt.length}단계가 최대)</small></h3>
+    <ul className="bonus-rows">{PLACES.map(st => { const ids = [...new Set(st.fish)], max = ids.length * BOOK_ECOLOGY.dealt.length, sum = ids.reduce((a, id) => a + bookEcology(s, id).stages, 0); return <li key={st.id} className={sum >= max ? 'done' : sum ? 'active' : ''}>
+        <div className="bonus-row-head"><strong>{st.name}</strong><small>{st.rebirth ? `환생 ${st.rebirth} · ` : ''}Lv.{st.level}</small><span className="bonus-count small">{sum}<small> / {max}</small></span></div>
+        <Meter value={sum} max={max}/>
+        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, e = bookEcology(s, id); return <span key={id} className={`bonus-chip ${e.stages >= BOOK_ECOLOGY.dealt.length ? 'done' : e.stages ? 'seen' : ''}`} title={n ? `${f.name} · 처치 ${n.toLocaleString()}회 · 주는 피해 +${pct(e.dealt)}% · 받는 공격 피해 -${pct(e.taken)}%` : '미발견'}>{n ? f.name : '???'}{n ? ` ${e.stages}/${BOOK_ECOLOGY.dealt.length}` : ''}</span>; })}</dd></dl>
+    </li>; })}</ul>
     </div>
     </details>
     <details className="bonus-block">
@@ -203,7 +209,12 @@ export function Collection({ s, send, busy }: PanelProps) {
     <details className="bonus-block">
     <summary><div><h2>지역 연구</h2><p>지역(리스항구 등)의 모든 몬스터가 연구 {REGION_RESEARCH_FROM}·{REGION_RESEARCH_FROM + 1}·{REGION_RESEARCH_FROM + 2}단계 이상이면 지역 연구 1·2·3단계입니다. 단계마다 지역 효과가 한 번씩 쌓입니다.</p></div><span className="bonus-count">{REGIONS.reduce((a, r) => a + regionResearchStage(s, r), 0)}<small> / {REGIONS.length * REGION_RESEARCH_MAX}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
-    <ul className="bonus-grid wide">{REGIONS.map(region => { const n = regionResearchStage(s, region), r = REGION_RESEARCH[region]; return <li key={region} className={n >= REGION_RESEARCH_MAX ? 'done' : ''}><span>{region} · {n} / {REGION_RESEARCH_MAX}단계</span><strong>단계마다 {r?.label}{n ? <em> · ×{n} 적용 중</em> : null}</strong></li>; })}</ul>
+    <ul className="bonus-rows">{REGIONS.map(region => { const n = regionResearchStage(s, region), r = REGION_RESEARCH[region], ids = regionFish(region), need = REGION_RESEARCH_FROM + n; return <li key={region} className={n >= REGION_RESEARCH_MAX ? 'done' : n ? 'active' : ''}>
+        <div className="bonus-row-head"><strong>{region}</strong><small>단계마다 {r?.label}{n ? ` · ×${n} 적용 중` : ''}</small><span className="bonus-count small">{n}<small> / {REGION_RESEARCH_MAX}단계</small></span></div>
+        <Meter value={n} max={REGION_RESEARCH_MAX}/>
+        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = FISH.find(x => x.id === id)!, k = s.book[id] || 0, stage = bookStage(s, id); return <span key={id} className={`bonus-chip ${stage >= REGION_RESEARCH_FROM + REGION_RESEARCH_MAX - 1 ? 'done' : stage >= need ? 'seen' : ''}`} title={k ? `${f.name} · 연구 ${stage}단계${n < REGION_RESEARCH_MAX ? ` · 다음 지역 연구에 ${need}단계 필요` : ''}` : '미발견'}>{k ? f.name : '???'}{k ? ` ${stage}단계` : ''}</span>; })}</dd></dl>
+        {n < REGION_RESEARCH_MAX && <p className="bonus-empty">다음 단계: 지역의 모든 몬스터가 연구 {need}단계 이상.</p>}
+    </li>; })}</ul>
     </div>
     </details>
     <details className="bonus-block">

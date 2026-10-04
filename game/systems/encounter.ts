@@ -46,7 +46,7 @@ export function gainLevels(s: State) {
         addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
     }
 }
-/** v27.84 옛 ‘잠든 힘’ 봉인이 남은 세이브: 쌓인 경험치를 그대로 지급하고 봉인을 지웁니다(서약은 던전 랜덤게임으로 바뀜). 레벨은 호출한 쪽에서 올립니다. */
+/** v27.86 옛 ‘잠든 힘’ 봉인이 남은 세이브: 쌓인 경험치를 그대로 지급하고 봉인을 지웁니다(서약은 던전 랜덤게임으로 바뀜). 레벨은 호출한 쪽에서 올립니다. */
 export function releaseLegacySeal(s: State) {
     const seal = s.vows?.seal;
     if (!seal) return 0;
@@ -57,7 +57,7 @@ export function releaseLegacySeal(s: State) {
 }
 /** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 회복의 기억 1%p/단계. */
 /** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘회복의 기억’은 1단계마다 +1%p. */
-/** 처치 후 회복 비율. v27.84 힘의 길 회복 봉쇄 ×(1 − 50·75·100%). */
+/** 처치 후 회복 비율. v27.86 힘의 길 회복 봉쇄 ×(1 − 50·75·100%). */
 export const victoryHealRate = (s: State) => ((s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill / (1 + encounterTier(s) / BALANCE.healAfterKillTideScale))) + researchRank(s, 'recovery') * .01) * roughHeal(s);
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 /** v27.76 난이도별 등급 가중치(일반 제외 표시용·판정용 공통). */
@@ -133,7 +133,7 @@ export function stageField(s: Pick<State, 'level'>, stageId: string, fishId: str
     return { field, foe, level: field.level, exp: Math.max(1, Math.round(base.exp * expLevelScale(field.level, s.level))), gold: base.gold, skills: foeSkills(f.id, field.level, !!f.boss) };
 }
 export function spawn(s: State, rng: () => number) {
-    // v27.84 랜덤게임: 해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다.
+    // v27.86 랜덤게임: 해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다.
     if (inRandomGame(s)) return spawnRandomGame(s, rng);
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
     const st = STAGES.find(x => x.id === s.stage)!;
@@ -189,7 +189,7 @@ export function spawn(s: State, rng: () => number) {
 }
 export function reward(s: State, rng: () => number) {
     const e = s.enemy!;
-    // v27.84 랜덤게임: 처치 경험치·골드·드롭·숙련 없이 처치 수·도감만 세고, 판돈을 쌓아 다음 웨이브로 갑니다.
+    // v27.86 랜덤게임: 처치 경험치·골드·드롭·숙련 없이 처치 수·도감만 세고, 판돈을 쌓아 다음 웨이브로 갑니다.
     if (inRandomGame(s)) {
         s.kills += 1;
         s.book[e.id] = (s.book[e.id] || 0) + 1;
@@ -266,7 +266,7 @@ export function reward(s: State, rng: () => number) {
     for (let i = 0; i < size * (vdef?.drops || 1); i++)
         drop(s, dropLevel(s, fish.level, encounterTier(s)), rng);
     if (vdef?.guaranteed) drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, true);
-    // v27.84 사냥터 난이도 이정표 세계석은 없앴습니다. 사냥터별 최고 난이도 기록(업적용)만 남깁니다.
+    // v27.86 사냥터 난이도 이정표 세계석은 없앴습니다. 사냥터별 최고 난이도 기록(업적용)만 남깁니다.
     if (!s.dungeon && !isHabitat(s.stage)) { const tier = encounterTier(s); if (tier > (s.tideBest?.[s.stage] || 0)) (s.tideBest ??= {})[s.stage] = tier; }
     gainLevels(s);
     for (const id of grantJobSkills(s)) {

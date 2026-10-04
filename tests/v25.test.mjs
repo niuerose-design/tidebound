@@ -301,7 +301,7 @@ test('v25.7 salvage research sells or dismantles all non-relic gear at rebirth w
     act(u, { type: 'salvageMode', value: 'dismantle' }, 0); act(u, { type: 'rebirth' }, 0); assert.equal(u.essence, 3 + dismantleEssence(gear(4)) + 2, 'dismantled at 100% (+ starter rod and coat, 1 essence each)'); assert.equal(u.gold, 100); assert.equal(u.salvageMode, 'dismantle', 'mode survives rebirth');
 });
 
-test('v27.84 tide best is recorded per stage (no milestone pearls), variant fish need the tier, abyss 10-floor bonus and AP milestones, abyss-only affixes', async () => {
+test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish need the tier, abyss 10-floor bonus and AP milestones, abyss-only affixes', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { weightedFishId, reward } = await mods.load('systems/encounter'); const { FISH, STAGES } = await mods.load('data/world'); const { rollAffixes, AFFIX_POOL } = await mods.load('data/gear');
     const { apCapacity } = await mods.load('systems/progression'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
@@ -312,7 +312,7 @@ test('v27.84 tide best is recorded per stage (no milestone pearls), variant fish
     assert.ok(FISH.find(f => f.id === 'novaManta').minTier === 30 && ACHIEVEMENTS.some(a => a.id === 'tide:50') && ACHIEVEMENTS.some(a => a.id === `codex:${FISH.filter(f => f.id !== 'expNuri').length}`), 'codex excludes the exp nuri so its id stays');
     const foe = (id, boss) => ({ id, name: id, hp: 0, maxHp: 1, attack: 1, defense: 0, exp: 0, gold: 0, boss, stun: 0, combatStats: {}, skills: [], cooldowns: {}, effects: {} });
     const s = newState(0); s.level = 30; s.rebirths = 12; s.stage = 'reef'; s.tide = 12; s.enemy = foe('lionfish', false);
-    // v27.84 사냥터 난이도 이정표 세계석은 없앴습니다. 사냥터별 최고 난이도 기록(업적용)만 남습니다.
+    // v27.86 사냥터 난이도 이정표 세계석은 없앴습니다. 사냥터별 최고 난이도 기록(업적용)만 남습니다.
     reward(s, rng); assert.equal(s.tideBest.reef, 12); assert.ok(!s.logs.some(l => l.text.includes('난이도 이정표')), 'no milestone pearls');
     s.tide = 20; s.enemy = foe('lionfish', false); reward(s, rng); assert.equal(s.tideBest.reef, 20);
     const u = newState(0); u.abyssBest = 29; u.abyssMilestones = []; const ap = apCapacity(u);

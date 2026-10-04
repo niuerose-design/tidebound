@@ -47,7 +47,7 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
 export function breathReset(s: State, now: number) {
     const running = s.running, runs = s.randomGameRuns;
     startLife(s, now, { pearls: s.pearls, rebirths: s.rebirths, lifeBonus: s.lifeBonus });
-    // v27.84 같은 생을 다시 시작하는 것이라 랜덤게임 입장 횟수는 그대로 둡니다.
+    // v27.86 같은 생을 다시 시작하는 것이라 랜덤게임 입장 횟수는 그대로 둡니다.
     if (runs) s.randomGameRuns = runs;
     delete s.vows;
     s.running = running;
@@ -96,7 +96,7 @@ export const lifecycleActions: ActionHandlers = {
         }
         if (hasVows(vows)) s.vows = vows;
         else delete s.vows;
-        // v27.84 절제: 새 생의 편성을 AP·장착 개수 상한에 맞춥니다.
+        // v27.86 절제: 새 생의 편성을 AP·장착 개수 상한에 맞춥니다.
         if (s.vows?.restraint) trimLoadout(s);
         // 윤회의 문: 이번 생에 열릴 ??? 직업을 게임 난수로 추첨해 저장합니다(후보가 없으면 난수를 쓰지 않음).
         const door = drawRebirthDoor(s, rng);

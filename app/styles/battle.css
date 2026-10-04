@@ -270,7 +270,10 @@
   .battle-heading-tools{gap:6px}
   .battle-heading-tools .battle-save-status{display:none}
   .battle-updates-link>span{display:none}
-  .battle-mobile-menu{display:inline-flex}
+  /* v27.84 모바일: 메뉴 열기 버튼을 맨 왼쪽에 크게 두고, 업데이트 내역 버튼은 오른쪽으로 보냅니다. */
+  .battle-mobile-menu{display:inline-flex;order:-1;margin-right:auto;width:44px;height:44px;border:1px solid #2d474a;border-radius:9px;background:#112329;color:#e1eeeb}
+  .battle-heading-tools .battle-mobile-menu svg{width:24px;height:24px}
+  .battle-updates-link{order:1}
   .voyage-brief{margin:-5px 0 12px;padding:8px 10px;font-size:11px}
   .voyage-brief span{white-space:normal}
   .battle-console>.session-metrics{grid-template-columns:repeat(3,minmax(0,1fr));padding:11px 0}

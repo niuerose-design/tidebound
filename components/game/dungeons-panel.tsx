@@ -93,7 +93,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     </>;
 }
 
-/** v27.84 랜덤게임 입장 카드: 목표 웨이브를 고르고 들어갑니다. 판돈 표는 목표까지 모두 깼을 때 받는 양(연구 배율 포함). */
+/** v27.86 랜덤게임 입장 카드: 목표 웨이브를 고르고 들어갑니다. 판돈 표는 목표까지 모두 깼을 때 받는 양(연구 배율 포함). */
 function RandomGameCard({ s, send, busy }: PanelProps) {
     const [target, setTarget] = useState<number>(10);
     const rank = randomGameRank(s), left = randomGameRunsLeft(s), m = randomGamePayout(s);

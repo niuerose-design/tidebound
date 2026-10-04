@@ -151,7 +151,7 @@ test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance p
 import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta, victoryHeal, apCapacity, expMultiplier as expMul, SKILLS as ALL_SKILLS } from './harness.mjs';
 const vowReady = (research = {}, next = {}) => { const s = newState(0); s.rebirths = 5; s.level = 60; Object.assign(s.permanent, research); s.nextVows = next; return s; };
 
-test('v27.84 vows: research entries, reservation rules (breath on/off, rough·restraint 0~3) and cleanup on full reset', () => {
+test('v27.86 vows: research entries, reservation rules (breath on/off, rough·restraint 0~3) and cleanup on full reset', () => {
     for (const id of ['vowAnchor', 'vowBreath', 'vowRough', 'vowRestraint']) { const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.group], [3, 10, 10, 5, 'vow']); assert.equal(economy.researchSpent(id, 3), 60); }
     const s = newState(0); assert.throws(() => act(s, { type: 'nextVow', id: 'rough', value: '1' }, 0), /연구가 필요/);
     assert.throws(() => act(s, { type: 'nextVow', id: 'anchor', value: 'on' }, 0), /서약을 확인/, 'sleeping anchor is no longer a vow');
@@ -163,12 +163,12 @@ test('v27.84 vows: research entries, reservation rules (breath on/off, rough·re
     act(w, { type: 'resetData' }, 0); for (const k of ['vows', 'nextVows', 'goldenBook', 'masteryCarry']) assert.equal(w[k], undefined, k);
 });
 
-test('v27.84 legacy sleeping-anchor saves: the seal is released (stored exp paid as is) on the next tick and the vow is gone', () => {
+test('v27.86 legacy sleeping-anchor saves: the seal is released (stored exp paid as is) on the next tick and the vow is gone', () => {
     const s = newState(0); s.vows = { anchor: true, seal: { kind: 'stage', id: 'brook', caught: 12, exp: 500 } }; advance(s, 0);
     assert.equal(s.vows.seal, undefined); assert.equal(s.vows.anchor, undefined); assert.ok(s.level > 1 || s.exp >= 500); assert.ok(s.logs.some(l => l.text.includes('+500 EXP')));
 });
 
-test('v27.84 random game: research-gated entries per life, random monsters by wave, stake grows per wave, target or leave cashes out, a fall loses everything', () => {
+test('v27.86 random game: research-gated entries per life, random monsters by wave, stake grows per wave, target or leave cashes out, a fall loses everything', () => {
     const s = newState(0); s.rebirths = 6; s.level = 60; s.running = true;
     assert.throws(() => act(s, { type: 'dungeon', id: 'randomGame', value: 'until:3' }, 0), /랜덤게임/);
     s.permanent.vowAnchor = 2;
@@ -187,7 +187,7 @@ test('v27.84 random game: research-gated entries per life, random monsters by wa
     // 나가기 = 받고 나가기.
     const t = newState(0); t.rebirths = 6; t.level = 60; t.permanent.vowAnchor = 1; act(t, { type: 'dungeon', id: 'randomGame' }, 0); t.recovery = 0;
     for (let w = 0; w < 10; w++) { spawn(t, () => .5); t.enemy.hp = 0; reward(t, () => .5); }
-    const tp = t.pearls; act(t, { type: 'leaveDungeon' }, 0); assert.equal(t.pearls, tp, 'v27.84 essence only'); assert.equal(t.essence, 165);
+    const tp = t.pearls; act(t, { type: 'leaveDungeon' }, 0); assert.equal(t.pearls, tp, 'v27.86 essence only'); assert.equal(t.essence, 165);
 });
 
 test('Vows · one breath: a fall soft-resets the life (online and offline); an unbroken life adds rebirth pearls', () => {
@@ -206,7 +206,7 @@ test('Vows · one breath: a fall soft-resets the life (online and offline); an u
     assert.equal((vowed.pearls - v0) - (plain.pearls - p0), base, 'rank 3 doubles rebirth pearls');
 });
 
-test('v27.84 strength path (rough): difficulty floor, gear -30/50/70%, recovery -50/75/100%; gold and drops ×(1+0.5n×boost) after the drop cap; snapshot badges', () => {
+test('v27.86 strength path (rough): difficulty floor, gear -30/50/70%, recovery -50/75/100%; gold and drops ×(1+0.5n×boost) after the drop cap; snapshot badges', () => {
     const base = newState(0); base.level = 20; base.equipment.rod = { id: 't', slot: 'rod', rarity: 2, power: 30, level: 20, name: 't', enhance: 0 };
     const rough = structuredClone(base); rough.permanent.vowRough = 1; rough.vows = { rough: 2 };
     spawn(base, () => .3); spawn(rough, () => .3); assert.equal(rough.enemy.maxHp, base.enemy.maxHp, 'enemies are not buffed any more');
@@ -220,7 +220,7 @@ test('v27.84 strength path (rough): difficulty floor, gear -30/50/70%, recovery 
     assert.equal('vows' in snapshot(newState(0)), false);
 });
 
-test('v27.84 restraint: equip AP -4/-8/-12 (min 1), actives·passives 3/2/1 each, exp ×(1 + 20/40/60% × boost)', async () => {
+test('v27.86 restraint: equip AP -4/-8/-12 (min 1), actives·passives 3/2/1 each, exp ×(1 + 20/40/60% × boost)', async () => {
     const progressionMod = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
     const s = newState(0); s.rebirths = 10; s.permanent.ap = 12; const ap = apCapacity(s); s.vows = { restraint: 2 }; assert.equal(apCapacity(s), ap - 8);
     const x = newState(0); x.vows = { restraint: 3 }; assert.equal(apCapacity(x), Math.max(1, apCapacity(newState(0)) - 12));
