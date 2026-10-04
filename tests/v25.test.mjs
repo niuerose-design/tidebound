@@ -785,3 +785,73 @@ test('v27.69 monsters get level-based penetration and the ward: bosses/Lv.50+ cl
     assert.ok(!/정화/.test(C.strike(calm, target, () => 0)), 'not used without an affliction');
     assert.ok(E.enemyStats(boss, true).penetration > 0, boss.id);
 });
+
+test('v27.70 dungeon modes: normal/hell/nightmare tiers, entry value parsing, repeat keeps the mode, Mu Lung ignores it', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const B = await L.load('data/balance'), M = await L.load('systems/meta'), DR = await L.load('systems/dungeon-run');
+    assert.deepEqual(B.DUNGEON_MODES.map(m => [m.id, m.tier]), [['normal', 0], ['hell', 50], ['nightmare', 200]]);
+    const s = newState(0); s.rebirths = 10; s.level = 60; s.tide = 30;
+    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'hell@fail'), { mode: 'hell', repeat: { left: null } });
+    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'fail'), { mode: 'normal', repeat: { left: null } });
+    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'nightmare@once'), { mode: 'nightmare', repeat: undefined });
+    assert.equal(DR.parseDungeonValue(s, 'abyss', 'hell@deeper:3').mode, 'normal', 'Mu Lung has no modes');
+    assert.throws(() => DR.parseDungeonValue(s, 'caldera', 'ultra@fail'), /난이도/);
+    act(s, { type: 'dungeon', id: 'caldera', value: 'nightmare@5' }, 0);
+    assert.equal(s.dungeon.mode, 'nightmare'); assert.equal(M.encounterTier(s), 200, 'mode tier, not the stage tide (30)');
+    assert.equal(M.dungeonLevelAt({ id: 'caldera', level: 26 }, M.encounterTier(s), 60), 60, 'nightmare lifts monsters to the player level');
+    DR.continueRepeat(s, 'caldera', s.dungeon.repeat); assert.equal(s.dungeon.mode, 'nightmare', 'repeat keeps the mode');
+    const n = newState(0); n.rebirths = 10; n.level = 60; act(n, { type: 'dungeon', id: 'caldera', value: 'fail' }, 0);
+    assert.equal(n.dungeon.mode, undefined); assert.equal(M.encounterTier(n), 0, 'normal = tier 0 even at stage tide 0');
+    const a = newState(0); a.rebirths = 10; a.level = 60; act(a, { type: 'dungeon', id: 'abyss', value: 'hell@once' }, 0);
+    assert.equal(M.encounterTier(a), (a.dungeon.depth || 1) + 2, 'Mu Lung keeps the floor formula');
+});
+
+test('v27.70 the first god is the Mu Lung 50F boss with divinity (HP 9.3억, attack ×5, 50% penetration), and the throne copy is the holder as is', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Du = await L.load('systems/duel'), A = await L.load('data/altar'), Alt = await L.load('server/altar').catch(() => null);
+    const boss = Du.abyssBossSnapshot(A.ALTAR.firstGod.depth).stats, god = Du.divineFirstGod({ ...Du.abyssBossSnapshot(A.ALTAR.firstGod.depth), name: A.ALTAR.firstGod.name });
+    assert.ok(boss.hp > 9e8 && boss.hp < 1e9, `50F boss HP ${boss.hp}`);
+    assert.equal(god.stats.hp, boss.hp); assert.equal(god.stats.attack, Math.round(boss.attack * A.ALTAR.firstGod.attack)); assert.equal(god.stats.penetration, A.ALTAR.firstGod.penetration);
+    assert.ok(god.skills.includes('foeWard'), 'the god wards against status effects');
+    if (Alt) {
+        const first = Alt.nextGod({ throne_snapshot: '', throne_name: '' });
+        assert.deepEqual({ hp: first.stats.hp, attack: first.stats.attack, pen: first.stats.penetration, name: first.name }, { hp: god.stats.hp, attack: god.stats.attack, pen: .5, name: A.ALTAR.firstGod.name }, 'summoned god = intended numbers');
+        const holder = { name: '왕', level: 80, job: 'x', rebirths: 10, stats: { hp: 10000, attack: 1000, magic: 500, defense: 100 }, skills: [], power: 1, rating: 1000 };
+        const copy = Alt.nextGod({ throne_snapshot: JSON.stringify(holder), throne_name: '왕' });
+        assert.deepEqual([copy.stats.hp, copy.stats.attack, copy.stats.magic, copy.name, copy.skills], [10000, 1000, 500, '신이 된 왕', []], 'impeach opponent = throne holder as is (no godhood)');
+    }
+});
+
+test('v27.70 nuri blessing: an altar gauge that multiplies the exp nuri spawn chance like the mimic blessing', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const A = await L.load('data/altar'), ev = await L.load('data/events'), Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri');
+    const b = A.BLESSINGS.find(x => x.id === 'nuri');
+    assert.ok(b && A.GAUGE_IDS.includes('nuri') && A.blessingEffect(b, 1).nuri === 3 && A.blessingEffect(b, 3).nuri === 5 && /누리 출현 ×3/.test(A.blessingDesc(b, 1)));
+    const now = Date.now();
+    ev.setAltarEvents([{ id: 'altar-nuri', name: '', from: '2026-01-01T00:00:00+09:00', until: new Date(now + 3600_000).toISOString(), nuri: 3 }]);
+    try {
+        const live = ev.activeEvent(now); assert.equal(live.nuri, 3); assert.equal(live.mimic, 1);
+        const make = () => { const s = newState(0); s.level = 80; s.kills = 5000; s.stage = 'brook'; s.tide = 10; s.running = true; s.event = live; return s; };
+        const pm = Mi.mimicChance(10, 0), roll = pm + N.nuriChance(10) * 2; // 축복 없이는 누리 구간 밖, ×3이면 안
+        const on = make(); Enc.spawn(on, () => roll); assert.equal(on.enemy.id, N.EXP_NURI.id, 'blessing triples the nuri band');
+        const off = make(); off.event = null; Enc.spawn(off, () => roll); assert.notEqual(off.enemy.id, N.EXP_NURI.id);
+        assert.ok(/누리 출현 ×3/.test(ev.eventLabel({ ...live, name: '테스트' })));
+    } finally { ev.setAltarEvents([]); }
+});
+
+test('v27.71 evasion: non-dex sources are capped at 60%p raw, dex evasion stacks on top before the soft cap', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const LT = await L.load('data/long-term'), St = await L.load('systems/stats'), Sk = await L.load('data/skills');
+    assert.equal(LT.EVASION_SOURCE_CAP, .6);
+    const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} ≈ ${b}`); near(LT.evasionRaw(0, 1.4), .6); near(LT.evasionRaw(.7, 1.4), 1.3); near(LT.evasionRaw(.7, .1), .8); near(LT.evasionRaw(0, -.05), -.05);
+    const passives = Sk.SKILLS.filter(k => k.type === 'passive' && k.bonus?.evasion && !k.song && !k.rebirth && !k.unlockAfter).sort((a, b) => b.bonus.evasion - a.bonus.evasion).slice(0, 12);
+    // 계승한 스킬은 레벨·직업 조건 없이 장착되므로 1레벨 캐릭터에 회피 패시브를 잔뜩 끼운 상황을 그대로 만듭니다.
+    const wear = (s) => { s.skills = passives.map(k => k.id); for (const k of passives) { s.learned[k.id] = 1; s.skillInheritances[k.id] = true; if (k.unlockJobMastery) s.jobMastery[k.job] = k.unlockJobMastery; } return s; };
+    const dex0 = 5 * .0015, low = wear(newState(0)), lowEv = St.stats(low).evasion, lowRaw = passives.reduce((n, k) => n + k.bonus.evasion, 0);
+    assert.ok(lowRaw > .6, `the passive stack exceeds the cap raw (${lowRaw})`);
+    assert.ok(Math.abs(lowEv - LT.evasionRating(dex0 + .6)) < 1e-9 && lowEv < .6, `level 1 passive stack ${lowEv} = rating(cap + base dex)`);
+    const dexOnly = newState(0); dexOnly.level = 94; dexOnly.attributes.dex = 470; const dexEv = St.stats(dexOnly).evasion;
+    const both = wear(newState(0)); both.level = 94; both.attributes.dex = 470; const bothEv = St.stats(both).evasion;
+    assert.ok(dexEv > lowEv && bothEv > dexEv, `dex ${dexEv} beats passive-only ${lowEv}; both ${bothEv}`);
+    assert.ok(Math.abs(bothEv - LT.evasionRating(dex0 + 470 * .0015 + .6)) < 1e-9, 'dex stacks on top of the capped passive sum');
+});

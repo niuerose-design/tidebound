@@ -1,6 +1,6 @@
 import { tailwindActive, tailwindExp, tierReward } from './meta';
 import { displayTitle } from '../data/titles';
-import { rebirthExperience, rebirthMemory, evasionRating, vocationTargets, thresholdRank } from '../data/long-term';
+import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTargets, thresholdRank } from '../data/long-term';
 import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS } from '../data/gear';
 import type { State, Snapshot, Stats, CombatStats } from '../types';
@@ -62,7 +62,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     set('critDamage', 'base', BALANCE.critMultiplier); add('critDamage', 'attributes', v.luk * E.luk.critDamage);
     set('goldenFind', 'base', BALANCE.goldenBase);
     set('accuracy', 'base', .92); add('accuracy', 'attributes', v.dex * E.dex.accuracy);
-    set('evasion', 'attributes', v.dex * E.dex.evasion);
+    const dexEvasion = v.dex * E.dex.evasion; set('evasion', 'attributes', dexEvasion);
     set('speed', 'base', 10); add('speed', 'attributes', v.dex * E.dex.speed);
     set('mana', 'base', 30); add('mana', 'attributes', v.wis * E.wis.mana); add('mana', 'attributes', v.int * E.int.mana);
     set('manaRegen', 'base', 2); add('manaRegen', 'attributes', v.wis * E.wis.manaRegen);
@@ -165,7 +165,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +1%.
     a.superCrit = Math.min(1, Math.max(0, a.crit - SKILL_FORMULA.critCap) * SKILL_FORMULA.superCritPerHundred); rec('superCrit', 'limit', a.superCrit);
     limit('crit', Math.min(SKILL_FORMULA.critCap, a.crit));
-    limit('evasion', evasionRating(a.evasion));
+    // v27.71 기민 외 회피 소스는 합쳐서 60%p까지만 세고, 그 위에 기민 회피를 더한 뒤 점감합니다(1레벨 패시브만으로 고기민 캐릭터를 따라잡지 못하게).
+    limit('evasion', evasionRating(evasionRaw(dexEvasion, a.evasion - dexEvasion)));
     limit('penetration', Math.min(.6, a.penetration));
     limit('lifesteal', Math.min(.3, a.lifesteal));
     return a;

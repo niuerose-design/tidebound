@@ -80,6 +80,13 @@ export const DUNGEON_TUNING = { bossExpFish: 6, bossGoldFish: 4, clearGoldFish: 
  * 몬스터·보스 사이의 상대 차이(성향·보스 배율)는 그대로 유지합니다.
  */
 export const ABYSS_TUNING = { hp: 100000, hpGrowth: 1.15, attack: 4, attackGrowth: 1.08, defense: 2, defenseGrowth: 1.05 };
+/**
+ * v27.70 던전 난이도(일반 던전): 입장할 때 고르는 세 단계. 사냥터 난이도와 별개입니다. tier는 사냥터 난이도와 같은 배율 공식(체력·공격·보상·숙련·몬스터 레벨 보정)에 넣는 값입니다.
+ * 노말 0(지금 난이도) · 헬 50(사냥터 난이도 50급: 체력 ×23.9 · 공격 ×11.8 · 보상 ×26 · 숙련 ×16) · 나이트메어 200(난이도 200급: 체력 ×265 · 공격 ×102 · 보상 ×101 · 숙련 ×61). 헬부터 몬스터 레벨이 내 레벨까지 올라갑니다.
+ */
+export const DUNGEON_MODES = [{ id: 'normal', name: '노말', tier: 0 }, { id: 'hell', name: '헬', tier: 50 }, { id: 'nightmare', name: '나이트메어', tier: 200 }] as const;
+export type DungeonMode = typeof DUNGEON_MODES[number]['id'];
+export const dungeonModeTier = (mode?: string) => DUNGEON_MODES.find(m => m.id === mode)?.tier ?? 0;
 export const dungeonOverlevel = (playerLevel: number, dungeonLevel: number) => {
     const over = Math.max(0, playerLevel - dungeonLevel - DUNGEON_TUNING.overlevelGrace);
     return Math.max(DUNGEON_TUNING.overlevelFloor, 1 - Math.ceil(over / DUNGEON_TUNING.overlevelStep) * DUNGEON_TUNING.overlevelCut);

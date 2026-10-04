@@ -123,7 +123,7 @@ export async function adjustCurrency(id: string, input: { gold?: unknown; pearls
 
 // ---------- v27.27 서버 이벤트 설정 ----------
 
-const MULTS = ['exp', 'gold', 'drop', 'mastery', 'mimic'] as const;
+const MULTS = ['exp', 'gold', 'drop', 'mastery', 'mimic', 'nuri'] as const;
 /** 이벤트 목록: 코드 이벤트(끔 여부)와 운영 페이지 이벤트, 지금 배너 문구. */
 export async function listEvents(now = Date.now()) {
     const config = await readEventConfig();

@@ -30,24 +30,24 @@ export const ALTAR = {
     firstGod: { name: '검은 마법사', depth: 50, attack: 5, penetration: .5 },
     /** v27.69 신의 자리 임기: 앉은 지 이만큼 지나면 자리와 쌓인 몫을 비웁니다(다음 신은 다시 처음 신). 깨어 있는 신은 남은 시간 동안 그대로. */
     throneTermMs: 7 * 24 * 3600_000,
-    /** 자리 주인을 본뜬 신: 주인의 능력치에 체력 ×2, 공격·마법 ×1.15(신격). */
-    godhood: { hp: 2, attack: 1.15 },
 } as const;
 
-export type BlessingId = 'gold' | 'mimic' | 'exp';
+export type BlessingId = 'gold' | 'mimic' | 'exp' | 'nuri';
 export type AltarGaugeId = BlessingId | 'god';
-type BlessingEffect = { gold?: number; mimic?: number; exp?: number };
+type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: number };
 /**
  * 축복: 게이지가 차면 서버 전체에 hours시간 동안 열립니다(1단계). 배율은 서버 이벤트와 곱해집니다.
  * v27.48 축복 단계: 진행 중에 게이지를 다시 채우면 단계가 오르고(최대 3단계) 시간도 hours만큼 늘어납니다.
  * 다음 단계 비용은 단계마다 ×LEVEL_STEP이라 3단계 유지는 비쌉니다. 축복이 끝나면 단계는 0으로 돌아갑니다.
- * 까미는 숙련과 직결돼 다른 축복보다 비쌉니다.
+ * 까미·누리는 숙련·경험치와 직결돼 다른 축복보다 비쌉니다.
  */
 export const BLESSING_MAX_LEVEL = 3, BLESSING_LEVEL_STEP = 1.5;
 export const BLESSINGS: { id: BlessingId; name: string; cost: number; hours: number; levels: BlessingEffect[] }[] = [
     { id: 'gold', name: '풍요의 축복', cost: 1200, hours: 1, levels: [{ gold: 2 }, { gold: 2.5 }, { gold: 3 }] },
     { id: 'exp', name: '성장의 축복', cost: 1500, hours: 1, levels: [{ exp: 1.5 }, { exp: 1.75 }, { exp: 2 }] },
     { id: 'mimic', name: '까미의 축복', cost: 2500, hours: 1, levels: [{ mimic: 3 }, { mimic: 4 }, { mimic: 5 }] },
+    // v27.70 누리의 축복: 경험의 누리 출현 배율. 레벨 경험치와 직결돼 까미와 같은 값입니다.
+    { id: 'nuri', name: '누리의 축복', cost: 2500, hours: 1, levels: [{ nuri: 3 }, { nuri: 4 }, { nuri: 5 }] },
 ];
 type Blessing = typeof BLESSINGS[number];
 /** 단계별 효과(1부터). */
@@ -55,7 +55,7 @@ export const blessingEffect = (b: Blessing, level: number) => b.levels[Math.max(
 /** 효과 설명. 예: 모든 모험가의 골드 획득 ×2.5 */
 export function blessingDesc(b: Blessing, level = 1) {
     const e = blessingEffect(b, level);
-    return e.gold ? `모든 모험가의 골드 획득 ×${e.gold}` : e.exp ? `모든 모험가의 경험치 ×${e.exp}` : `숙련의 까미 출현 ×${e.mimic}`;
+    return e.gold ? `모든 모험가의 골드 획득 ×${e.gold}` : e.exp ? `모든 모험가의 경험치 ×${e.exp}` : e.nuri ? `경험의 누리 출현 ×${e.nuri}` : `숙련의 까미 출현 ×${e.mimic}`;
 }
 /** 지금 게이지를 한 번 채우는 비용. 닫혀 있으면 기본(1단계로 열림), 진행 중이면 다음 단계(3단계면 시간 연장) 비용. */
 export const blessingCost = (b: Blessing, level: number, active: boolean) => Math.round(b.cost * Math.pow(BLESSING_LEVEL_STEP, active ? Math.min(level, BLESSING_MAX_LEVEL - 1) : 0));
@@ -72,8 +72,10 @@ export const tithe = (o: Offering): Offering => ({ gold: Math.floor(o.gold * ALT
 export type AltarInfo = {
     week: string;
     gauges: { id: AltarGaugeId; name: string; desc: string; points: number; cost: number; until: number; level: number; next: string }[];
-    god: { gen: number; alive: boolean; name: string; level: number; power: number; until: number; mine: boolean } | null;
-    throne: { id: string; name: string; since: number; mine: boolean; tithe?: Offering } | null;
+    /** v27.70 hp: 신의 최대 체력, attack: 공격(신격 포함). */
+    god: { gen: number; alive: boolean; name: string; level: number; power: number; hp: number; attack: number; until: number; mine: boolean } | null;
+    /** v27.70 power·hp: 탄핵 상대(자리 주인을 본뜬 신)의 전투력·체력. */
+    throne: { id: string; name: string; since: number; mine: boolean; power: number; hp: number; tithe?: Offering } | null;
     totals: Offering & { points: number };
     board: { rank: number; name: string; points: number; anonymous: boolean; self: boolean }[];
     me: { points: number; rank: number; anonymous: boolean; challengeAt: number };

@@ -28,7 +28,7 @@ export const ATTRIBUTE_EFFECTS = {
 } as const;
 const EFFECT_LABELS: Record<string, string> = { attack: '물리 공격', defense: '물리 방어', accuracy: '명중', evasion: '회피 수치', speed: '속도', magic: '마법 공격', mana: '최대 마나', hp: '최대 체력', resist: '마법 방어', manaRegen: '마나 회복', hpRegen: '턴당 체력 회복', crit: '치명타', critDamage: '치명 피해', dropBonus: '장비 드롭', goldBonus: '골드' };
 const RATIO_EFFECTS = new Set(['accuracy', 'evasion', 'crit', 'critDamage', 'dropBonus', 'goldBonus']);
-const describeEffects = (id: Attribute) => Object.entries(ATTRIBUTE_EFFECTS[id]).map(([k, n]) => `${EFFECT_LABELS[k]} +${k === 'dropBonus' ? `${dropPercent(n)}%` : RATIO_EFFECTS.has(k) ? `${Math.round(n * 1000) / 10}%p` : n}${k === 'evasion' ? '(50% 이후 점감)' : ''}`).join(' · ');
+const describeEffects = (id: Attribute) => Object.entries(ATTRIBUTE_EFFECTS[id]).map(([k, n]) => `${EFFECT_LABELS[k]} +${k === 'dropBonus' ? `${dropPercent(n)}%` : RATIO_EFFECTS.has(k) ? `${Math.round(n * 1000) / 10}%p` : n}${k === 'evasion' ? '(50% 이후 점감 · 기민 외 소스는 합산 60%p까지)' : ''}`).join(' · ');
 export const ATTRIBUTES: {
     id: Attribute;
     name: string;
