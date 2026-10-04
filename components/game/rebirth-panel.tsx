@@ -16,15 +16,15 @@ import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
-import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, type VowId, vowUnlocked, vowBoost, anchorPayout, breathBonus, roughEnemy, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '@/game/systems/vows';
+import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, ROUGH, RESTRAINT } from '@/game/systems/vows';
 import { BonusList } from './inventory-panel';
 import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, type VaultInfo } from '@/game/data/account';
 import { useEffect, useState as useLocalState } from 'react';
 import { salvagePreview } from '@/game/systems/actions/lifecycle';
-const VOW_TEXT = {
-    anchor: (s: State) => `환생 때 사냥터·던전 하나가 지정되고, 그곳에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1 · 사냥터 난이도 0. 풀리면 쌓인 경험치 ×${anchorPayout(s)}. 언제든 포기 가능(보너스 없이 지급).`,
+const VOW_TEXT: Record<VowId, (s: State) => string> = {
     breath: (s: State) => `쓰러지면 이번 생을 처음부터 다시 시작(환생 횟수·세계석 변화 없음, 서약 해제). 한 번도 쓰러지지 않고 환생하면 환생 세계석 +${Math.round(breathBonus(s) * 100)}%.`,
-    rough: (s: State) => `선택 단계마다 적 체력·공격 +50%, 드롭·골드 +${Math.round(50 * vowBoost(s, 'rough'))}%. 사냥터 난이도와 별개입니다.`,
+    rough: (s: State) => `단계(1·2·3)마다 사냥터 난이도 하한 ${ROUGH.floor.join('·')}(미만이면 보상 꺼짐), 장비 능력치 -${ROUGH.gear.map(n => n * 100).join('·')}%, 처치 후 회복·흡혈·체력 재생 -${ROUGH.heal.map(n => n * 100).join('·')}%. 보상: 골드·장비 드롭 확률 ×(1 + ${Math.round(50 * vowBoost(s, 'rough'))}% × 단계), 드롭 상한 뒤에 곱합니다.`,
+    restraint: (s: State) => `단계(1·2·3)마다 장착 AP -${RESTRAINT.ap.join('·')}, 액티브·패시브 장착 각각 최대 ${RESTRAINT.slots.join('·')}개. 보상: 경험치 ×${RESTRAINT.exp.map(n => (1 + n * vowBoost(s, 'restraint')).toFixed(1)).join('·')}(다른 경험치 배율과 곱연산).`,
 };
 /** 서약 연구 카드의 설명 팝업: 서약이 무엇인지, 어떻게 거는지, 이 서약의 제약과 보상. 누르면 열립니다(모바일 포함). */
 function VowInfo({ id, s }: { id: VowId; s: State }) {
@@ -90,22 +90,19 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
         <ul className="account-rows vault-rows">{row('pearls', '세계석', s.pearls, vault ? `이번 주 인출 가능 ${vault.pearlOutLeft}개` : undefined)}{row('essence', '정수', s.essence || 0)}</ul>
     </section>;
 }
-/** 환생 화면의 서약: 이번 생 서약과 잠든 힘 진행, 다음 생 서약 예약. */
+/** 환생 화면의 서약: 이번 생 서약, 다음 생 서약 예약. */
 function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
-    const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), seal = anchorSeal(s), now = s.vows, next = s.nextVows || {};
+    const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), now = s.vows, next = s.nextVows || {}, leveled = (id: VowId) => (LEVELED_VOWS as readonly string[]).includes(id);
     if (!unlocked.length && !now) return null;
     return <section className="panel vow-panel">
         <div className="section-title"><h2>서약</h2><span>제약을 걸고 고유 보상을 받습니다. 세계석 연구 유틸 탭에서 해금합니다.</span></div>
-        {now && <div className="vow-current"><strong>이번 생 서약</strong><span>{VOW_IDS.filter(id => now[id]).map(id => id === 'rough' ? `${VOW_NAMES.rough} ${now.rough}단계 (적 ×${roughEnemy(s)})` : VOW_NAMES[id]).join(' · ')}</span>
-            {seal && <div className="vow-seal"><Meter value={Math.min(seal.caught, ANCHOR_CATCHES)} max={ANCHOR_CATCHES} label={`잠든 힘 · ${anchorTargetName(seal)} ${seal.caught} / ${ANCHOR_CATCHES}마리 · 쌓인 경험치 ${format(seal.exp)}`}/>
-                <ConfirmButton label="잠든 힘 포기" title="잠든 힘을 포기할까요?" description={`봉인이 풀리고 쌓인 경험치 ${format(seal.exp)}를 보너스 없이 받습니다. 달성하면 ×${anchorPayout(s)}를 받을 수 있습니다.`} disabled={busy} onConfirm={() => send({ type: 'anchorGiveUp' })}/></div>}
-        </div>}
+        {now && VOW_IDS.some(id => now[id]) && <div className="vow-current"><strong>이번 생 서약</strong><span>{VOW_IDS.filter(id => now[id]).map(id => leveled(id) ? `${VOW_NAMES[id]} ${now[id]}단계` : VOW_NAMES[id]).join(' · ')}</span></div>}
         <div className="vow-grid">{VOW_IDS.map(id => {
             const open = vowUnlocked(s, id);
             return <article className={`vow-card ${open ? '' : 'locked'}`} key={id}>
                 <h3>{VOW_NAMES[id]}</h3><p>{VOW_TEXT[id](s)}</p>
-                {!open ? <small>세계석 연구에서 해금 (환생 5회)</small> : id === 'rough'
-                    ? <div className="vow-rough">{[0, 1, 2, 3].map(n => <button key={n} className={(next.rough || 0) === n ? 'primary' : 'secondary'} disabled={busy} onClick={() => send({ type: 'nextVow', id, value: String(n) })}>{n ? `${n}단계` : '끔'}</button>)}</div>
+                {!open ? <small>세계석 연구에서 해금 (환생 5회)</small> : leveled(id)
+                    ? <div className="vow-rough">{[0, 1, 2, 3].map(n => <button key={n} className={(Number(next[id]) || 0) === n ? 'primary' : 'secondary'} disabled={busy} onClick={() => send({ type: 'nextVow', id, value: String(n) })}>{n ? `${n}단계` : '끔'}</button>)}</div>
                     : <button className={next[id] ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!next[id]} onClick={() => send({ type: 'nextVow', id, value: next[id] ? 'off' : 'on' })}>{next[id] ? '다음 생에 걸기 · 켜짐' : '다음 생에 걸기 · 꺼짐'}</button>}
             </article>;
         })}</div>
@@ -142,7 +139,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             </section>
             <div className="rebirth-records rebirth-three">
                 <article className="panel ledger-gain"><h2>받는 보상</h2><ul>
-                    <li><b>세계석 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{parts.deep ? ` · 깊은 모험 ${parts.deep}` : ''}{breathExtra ? ` · 한 번의 숨 +${breathExtra}` : ''}</small></li>
+                    <li><b>세계석 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{parts.deep ? ` · 깊은 모험 ${parts.deep}` : ''}{breathExtra ? ` · 서약 +${breathExtra}` : ''}</small></li>
                     <li><b>환생 영구 보너스: 체력·물리/마법 공격·물리/마법 방어</b><small>현재 +{memoryNow}% → 환생 후 +{memoryNext}%</small></li>
                     <li><b>영구 경험치 획득</b><small>현재 ×{permanentExp.toFixed(2)} → 환생 후 ×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</small></li>
                     <li><b>장착 AP {apGain ? '+1' : '+0'}</b><small>{apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`}</small></li>

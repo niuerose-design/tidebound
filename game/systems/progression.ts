@@ -1,5 +1,6 @@
 import { refinementTargets, thresholdRank, REFINEMENT_STEP_BONUS } from '../data/long-term';
 import { rebirthAP } from './meta';
+import { restraintAP, restraintSlots } from './vows';
 import { accountAP } from '../data/account';
 import { abyssAP } from '../data/long-term';
 import type { State, Attribute, Skill, Stats } from '../types';
@@ -47,7 +48,8 @@ export function skillMasteryRewards(sk: Skill, rank = 1, mastery = 0) {
     return { ap: sk.masteryAP || 0, bonus: sk.masteryBonus || {} };
 }
 function apBonus(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk && canUse(s, id) ? skillMasteryRewards(sk, s.learned?.[id] || 1, skillMastery(s, id)).ap : 0); }, 0); }
-export function apCapacity(s: State, ids = s.skills) { return PROGRESSION.baseAP + rebirthAP(s) + (s.permanent.ap || 0) + completedRegions(s).length + achievementAP(s) + accountAP(s) + abyssAP(s) + apBonus(s, ids); }
+/** 장착 AP 한도. v27.86 절제 서약은 −2·−4·−6(최소 1). */
+export function apCapacity(s: State, ids = s.skills) { return Math.max(1, PROGRESSION.baseAP + rebirthAP(s) + (s.permanent.ap || 0) + completedRegions(s).length + achievementAP(s) + accountAP(s) + abyssAP(s) + apBonus(s, ids) - restraintAP(s)); }
 /** v25.6 업적 보상으로 늘어난 장착 AP. achievements.ts와 순환 의존을 피하려 여기서 직접 셉니다. */
 function achievementAP(s: Pick<State, 'achievementClaims'>) { let ap = 0; for (const id of Object.keys(s.achievementClaims || {})) ap += ACHIEVEMENT_AP[id] || 0; return ap; }
 export const ACHIEVEMENT_AP: Record<string, number> = {};
@@ -261,9 +263,19 @@ export function jobRequirements(s: State, j: Job) {
 }
 /** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. now는 서버 요청 시각입니다. */
 export function canChangeJob(s: State, id: string) { const j = jobById(id); return !!j && (jobMastered(s, j) || jobRequirements(s, j).every(x => x.met)); }
-export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && apUsed(s, ids) <= apCapacity(s, ids); }
+/** v27.86 절제: 액티브·패시브를 각각 몇 개까지 장착할 수 있는지 넘었는지. */
+export function overRestraint(s: State, ids: string[]) {
+    const cap = restraintSlots(s);
+    if (cap === null) return false;
+    const active = ids.filter(id => skillById(id)?.type === 'active').length;
+    return active > cap || ids.length - active > cap;
+}
+export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && !overRestraint(s, ids) && apUsed(s, ids) <= apCapacity(s, ids); }
 export function trimLoadout(s: State) {
     s.skills = [...new Set(s.skills)].filter(id => canUse(s, id));
+    // v27.86 절제: 액티브·패시브를 앞에서부터 상한 개수만 남깁니다.
+    const cap = restraintSlots(s);
+    if (cap !== null) { let a = 0, p = 0; s.skills = s.skills.filter(id => skillById(id)?.type === 'active' ? ++a <= cap : ++p <= cap); }
     // Evaluate the entire set so an AP-granting skill works in any priority position.
     while (s.skills.length && !validLoadout(s, s.skills)) {
         const index = s.skills.findLastIndex(id => {
