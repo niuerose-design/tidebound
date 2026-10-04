@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
+import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -104,16 +104,18 @@ test('All-rounder: allocated-point harmony damage, split mitigation and allocati
 
 test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; giant/abyssal/starlit change stats and rewards',()=>{
  const base=()=>{const s=newState(0);s.level=40;s.permanent.attack=300;s.permanent.hp=300;s.hp=stats(s).hp;act(s,{type:'stage',id:'brook'},0);act(s,{type:'target',id:'minnow'},0);return s;};
+ // v27.80 지역별 변종 배율이 있어 고정 난수 대신 이 사냥터의 실제 확률 구간 가운데를 씁니다(순서: 무리·거대·심연·별빛).
+ const ch=variantChances(base()),band=k=>{const o=['swarm','giant','abyssal','starlit'];let lo=0;for(const id of o){if(id===k)return lo+ch[id]/2;lo+=ch[id];}};
  const plain=base();plain.book.minnow=9;spawn(plain,()=>0);assert.equal(plain.enemy.variant,undefined,'no variant before 10 catches');assert.equal(plain.enemy.swarm,undefined);
  const sw=base();sw.book.minnow=10;spawn(sw,()=>0);assert.equal(sw.enemy.variant,'swarm');assert.equal(sw.enemy.swarm,5,'x5 only until 500 catches');assert.equal(sw.enemy.maxHp,plain.enemy.maxHp*5);assert.equal(sw.enemy.combatStats.attack,plain.enemy.combatStats.attack,'swarm attack stays at one fish');
  const mid=base();mid.book.minnow=5000;spawn(mid,()=>0.999);assert.equal(mid.enemy.variant,undefined,'roll above total chance is a normal fish');
  let calls=0;spawn(mid,()=>calls++===0?0:.999);assert.equal(mid.enemy.swarm,100,'x500 needs the swarmSense passive');
  const big=base();big.book.minnow=5000;big.job='rareTracker';big.learned.swarmSense=1;big.skills.push('swarmSense');calls=0;spawn(big,()=>calls++===0?0:.999);assert.equal(big.enemy.swarm,500);assert.equal(big.enemy.maxHp,Math.round(plain.enemy.maxHp*490),'x500 has 490x HP');assert.equal(big.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*490));assert.equal(big.enemy.combatStats.defense,plain.enemy.combatStats.defense);
- const g=base();g.book.minnow=10;spawn(g,()=>.05);assert.equal(g.enemy.variant,'giant');assert.equal(g.enemy.maxHp,Math.round(plain.enemy.maxHp*3));assert.equal(g.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*1.25));
+ const g=base();g.book.minnow=10;spawn(g,()=>band('giant'));assert.equal(g.enemy.variant,'giant');assert.equal(g.enemy.maxHp,Math.round(plain.enemy.maxHp*3));assert.equal(g.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*1.25));
  const kills=g.kills,gold=g.gold,book=g.book.minnow,mult=goldMultiplier(g);const e=g.enemy;g.running=true;let guard=0;while(g.enemy===e&&guard++<3000)tick(g,()=>.5);
  assert.equal(g.kills-kills,1);assert.equal(g.book.minnow-book,3,'giant counts 3 in the codex');assert.equal(g.gold-gold,Math.floor(e.gold*mult*4),'giant gold x4');assert.equal(g.variantBook.minnow.giant,1);
- const ab=base();ab.book.minnow=10;spawn(ab,()=>.062);assert.equal(ab.enemy.variant,'abyssal');assert.equal(ab.enemy.combatStats.speed,Math.round(plain.enemy.combatStats.speed*1.3));
- const st=base();st.book.minnow=10;st.rebirths=3;spawn(st,()=>.067);assert.equal(st.enemy.variant,'starlit');const pearls=st.pearls;const se=st.enemy;st.running=true;guard=0;while(st.enemy===se&&guard++<3000)tick(st,()=>.5);assert.equal(st.pearls-pearls,2,'starlit gives 2 pearls from rebirth 3');
+ const ab=base();ab.book.minnow=10;spawn(ab,()=>band('abyssal'));assert.equal(ab.enemy.variant,'abyssal');assert.equal(ab.enemy.combatStats.speed,Math.round(plain.enemy.combatStats.speed*1.3));
+ const st=base();st.book.minnow=10;st.rebirths=3;spawn(st,()=>band('starlit'));assert.equal(st.enemy.variant,'starlit');const pearls=st.pearls;const se=st.enemy;st.running=true;guard=0;while(st.enemy===se&&guard++<3000)tick(st,()=>.5);assert.equal(st.pearls-pearls,2,'starlit gives 2 pearls from rebirth 3');
  const dn=base();dn.book.minnow=100;act(dn,{type:'dungeon',id:'grotto'},0);spawn(dn,()=>0);assert.equal(dn.enemy.variant,undefined,'no variants in dungeons');
 });
 

@@ -301,7 +301,7 @@ test('v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) 
     for (const id of [...st.fish, ...d.fish, d.bossFish]) { assert.ok(FISH.some(f => f.id === id), id); assert.notEqual(profileId(id), undefined); }
     assert.ok(FISH.find(f => f.id === 'ventColossus').boss && ORIGIN_THEMES.duskVents && ORIGIN_THEMES.ventCathedral && REGION_THEMES.duskVents && BOSS_RESEARCH.ventCathedral.sp === 3);
     assert.ok(VOYAGE_LOG.some(x => x.id === 'stage:duskVents') && VOYAGE_LOG.some(x => x.id === 'dungeon:ventCathedral'));
-    assert.ok(ACHIEVEMENTS.some(a => a.id === `stages:${STAGES.length}`) && ACHIEVEMENTS.some(a => a.id === `dungeons:${DUNGEONS.length}`));
+    assert.ok(ACHIEVEMENTS.some(a => a.id === `stages:${STAGES.filter(st => !st.habitat).length}`) && ACHIEVEMENTS.some(a => a.id === `dungeons:${DUNGEONS.length}`));
     const s = newState(0); s.level = 60; s.rebirths = 4; assert.throws(() => act(s, { type: 'stage', id: 'duskVents' }, 0)); s.rebirths = 5; act(s, { type: 'stage', id: 'duskVents' }, 0); assert.equal(s.stage, 'duskVents');
     assert.throws(() => act(s, { type: 'dungeon', id: 'ventCathedral' }, 0)); s.rebirths = 8; act(s, { type: 'dungeon', id: 'ventCathedral' }, 0); assert.equal(s.dungeon.id, 'ventCathedral');
     assert.equal(rebirthTitle(4), ''); assert.equal(rebirthTitle(5), '되돌아온 모험가'); assert.equal(rebirthTitle(49), '심연을 건넌 자'); assert.equal(rebirthTitle(120), '영원의 모험가'); assert.equal(nextRebirthTitle(10).rebirths, 20); assert.equal(nextRebirthTitle(50), undefined);
@@ -923,6 +923,45 @@ test('v27.78 heal after kill keeps falling with tide; stageField matches spawn; 
     const star = W.STAGES.find(x => x.id === 'starfall').fish.map(id => W.FISH.find(f => f.id === id));
     const avg = star.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / star.reduce((a, f) => a + (f.spawnWeight ?? 1), 0);
     assert.ok(avg < 1.35, `starfall weighted reward multiplier ${avg}`);
+});
+
+test('v27.80 regional book: research 5·6 need 250k/500k kills plus difficulty 20/50, region research stacks per region, records survive rebirth', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const W = await L.load('data/world'), Bk = await L.load('systems/book'), P = await L.load('systems/progression'), St = await L.load('systems/stats'), E = await L.load('systems/encounter');
+    const s = newState(0);
+    s.book.minnow = 250000; assert.equal(Bk.bookStage(s, 'minnow'), 4, 'kills alone stop at 4');
+    s.bookTier = { minnow: 20 }; assert.equal(Bk.bookStage(s, 'minnow'), 5);
+    s.book.minnow = 500000; assert.equal(Bk.bookStage(s, 'minnow'), 5, 'stage 6 needs difficulty 50');
+    s.bookTier.minnow = 50; assert.equal(Bk.bookStage(s, 'minnow'), 6);
+    s.bookClaims = { minnow: 4 }; assert.deepEqual(P.bookPending(s, 'minnow').ranks, [4, 5]);
+    // 난이도 기록: 처치한 순간의 난이도(최고값만).
+    const k = newState(0); k.level = 40; k.stage = 'brook'; k.tide = 7; k.running = true; E.spawn(k, () => .5); const killed = k.enemy.id; k.enemy.hp = 0; E.reward(k, () => .5);
+    assert.equal(k.bookTier[killed], 7);
+    // 지역 연구: 리스항구 몬스터 전부 4단계 → 1단계, 경험치 +2%.
+    const r = newState(0), before = St.stats(r).expBonus;
+    for (const id of W.regionFish('리스항구')) r.book[id] = 10000;
+    assert.equal(Bk.regionResearchStage(r, '리스항구'), 1); assert.equal(Bk.regionResearchStage(r, '헤네시스'), 0);
+    assert.ok(Math.abs(St.stats(r).expBonus - before - .02) < 1e-9 + .03 + 1e-9, 'region research adds exp (place themes may add too)');
+    // 환생해도 변종·황금·난이도 이정표·최고 난이도 기록이 남습니다.
+    const rb = newState(0); rb.level = 30; rb.variantBook = { minnow: { giant: 2 } }; rb.goldenBook = { minnow: 1 }; rb.tideBest = { brook: 5 }; rb.bookTier = { minnow: 9 };
+    act(rb, { type: 'rebirth' }, 0);
+    assert.deepEqual([rb.variantBook, rb.goldenBook, rb.tideBest, rb.bookTier], [{ minnow: { giant: 2 } }, { minnow: 1 }, { brook: 5 }, { minnow: 9 }]);
+});
+
+test('v27.80 regional variants and swarm habitats: signature variant ×2.5, habitats spawn only ×100/×500 swarms without mimic or milestone pearls', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const W = await L.load('data/world'), V = await L.load('data/variants'), E = await L.load('systems/encounter');
+    const at = stage => { const s = newState(0); s.level = 60; s.rebirths = 10; s.stage = stage; return V.variantChances(s); };
+    const lith = at('brook'), hen = at('reef'), base = V.VARIANTS.find(v => v.id === 'swarm').chance;
+    assert.ok(Math.abs(lith.swarm - base * 2.5) < 1e-9 && Math.abs(hen.swarm - base * .8) < 1e-9, 'Lith Harbor favours swarms');
+    assert.ok(hen.giant > lith.giant * 3, 'Henesys favours giants');
+    assert.equal(W.REGIONS.length, 5); assert.equal(W.STAGES.filter(st => st.habitat).length, 5); assert.equal(W.PLACES.length, W.STAGES.length - 5);
+    const hab = W.STAGES.find(st => st.id === 'lithSwarm');
+    assert.deepEqual(hab.fish, W.regionFish('리스항구')); assert.ok(hab.rebirth >= W.HABITAT.minRebirth);
+    const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 20; s.running = true;
+    const sizes = new Set(); for (const roll of [0, .1, .3, .9]) { E.spawn(s, () => roll); assert.equal(s.enemy.variant, 'swarm'); sizes.add(s.enemy.swarm); assert.ok(!['masteryMimic', 'expNuri'].includes(s.enemy.id), 'no mimic or nuri in habitats'); }
+    assert.deepEqual([...sizes].sort((a, b) => a - b), [100, 500]);
+    const logs = s.logs.length; s.enemy.hp = 0; E.reward(s, () => .5); assert.ok(!s.logs.slice(logs).some(l => l.text.includes('이정표')), 'no tide milestone pearls in habitats'); assert.ok(!s.tideBest?.lithSwarm);
 });
 
 test('v27.79 rank: kills-only progression with perks (tally, drill, medal, supply), free reset, survives rebirth', async () => {

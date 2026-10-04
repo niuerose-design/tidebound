@@ -4,20 +4,20 @@ import { FishArt } from './art';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { SKILLS } from '@/game/data/skills';
-import { FISH, STAGES } from '@/game/data/world';
+import { FISH, STAGES, PLACES, REGIONS, regionFish } from '@/game/data/world';
 import { MIMIC, mimicChance, specialLuck } from '@/game/data/mimic';
 import { EXP_NURI, nuriChance } from '@/game/data/exp-nuri';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
 import { PROGRESSION, STAT_LABELS, statDisplay, percent } from '@/game/data/progression';
 import { completedRegions, itemKey } from '@/game/systems/progression';
-import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
+import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } from './book-research';
 import { stats, mastery, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
 import { abyssReference, stageField } from '@/game/systems/encounter';
-import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel } from '@/game/systems/book';
-import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES } from '@/game/data/book-traits';
-import { VARIANTS } from '@/game/data/variants';
+import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel, regionResearchStage } from '@/game/systems/book';
+import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
+import { VARIANTS, regionSignature } from '@/game/data/variants';
 import type { State, Stats } from '@/game/types';
 import { enemySkillBrief } from '@/game/systems/skill-description';
 
@@ -81,9 +81,14 @@ export function Collection({ s, send, busy }: PanelProps) {
             <p>{m ? FISH.find(f => f.id === EXP_NURI.id)!.lore : `사냥터 난이도 ${EXP_NURI.minTier} 이상, Lv.${EXP_NURI.minLevel}이 넘은 모험가 앞에 아주 드물게 나타난다고 합니다.`}</p>
             <div className="fish-trait"><strong>경험치 로또</strong><span>잡으면 지금 레벨에 필요한 경험치의 일부를 한 번에 얻습니다(경험치 배율·잠든 힘과 무관): {EXP_NURI.tiers.map(t => `${t.label} ${Math.round(t.pct * 100)}% (${Math.round(t.chance * 100)}%)`).join(' · ')}.</span><span>출현마다 {(EXP_NURI.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(EXP_NURI.chancePerTier * 100).toFixed(2)}%p · 지금(행운의 편지 포함) {(s.tide || 0) >= EXP_NURI.minTier ? `${(nuriChance(s.tide || 0) * luck * 100).toFixed(2)}%` : '등장 안 함'} · 사냥터 난이도 {EXP_NURI.minTier} 이상 · Lv.{EXP_NURI.minLevel}~99·누적 처치 {EXP_NURI.minKills.toLocaleString()}마리부터 · 던전 제외 · 오프라인 정산 중 ×{EXP_NURI.offlineScale} · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{EXP_NURI.hp}, 공격 ×{EXP_NURI.attack}).</span></div>
         </article></div>
-    </details>; })()}{STAGES.map(st => <details className="book-section book-region" key={st.id} open={st.id === s.stage}>
+    </details>; })()}{REGIONS.map(region => { const ids = regionFish(region), sig = regionSignature(region), here = STAGES.some(x => x.region === region && x.id === s.stage);
+    /* v27.80 도감: 지역 → 장소 2단. 지역 제목에 완성 종 수·지역 연구 단계·대표 변종. */
+    return <details className="book-section book-region book-area" key={region} open={here}>
+        <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>{region} <small>{ids.filter(id => (s.book[id] || 0) >= bookComplete).length} / {ids.length}종 완성 · 지역 연구 {regionResearchStage(s, region)} / {REGION_RESEARCH_MAX}단계{sig.length ? ` · 대표 변종 ${sig.map(v => `${v.mark} ${v.name}`).join('·')}` : ''}</small></h2></summary>
+        <RegionResearchLine s={s} region={region}/>
+        {PLACES.filter(st => st.region === region).map(st => <details className="book-section book-region" key={st.id} open={st.id === s.stage}>
         <summary className="section-title">
-        <h2><ChevronDown size={18} className="book-region-chevron"/>{st.name} <small>{st.fish.filter(id => (s.book[id] || 0) >= bookComplete).length} / {st.fish.length}종 완성</small></h2>
+        <h2><ChevronDown size={18} className="book-region-chevron"/>{st.place} <small>{st.fish.filter(id => (s.book[id] || 0) >= bookComplete).length} / {st.fish.length}종 완성</small></h2>
         <RegionProgress s={s} id={st.id}/>
         </summary>
         <div className="book-grid">{st.fish.map(id => {
@@ -106,7 +111,8 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 물리 {percent(hitChance(player, enemy))} · 마법 {percent(hitChance(player, enemy, true))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>처치 골드 {Math.floor(live.gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 난이도·골드 보너스 적용)</small></span><span>처치 경험치 {Math.floor(live.exp * expMultiplier(s)).toLocaleString()} <small>(기본 {f.exp} · 난이도·경험치 배율 적용)</small></span></div>{f.level >= 5 && p.skills.length > 0 ? <EnemySkillList ids={p.skills} enemy={enemy}/> : <p className="footnote">스킬 없이 기본 공격만 합니다 · 치명 {percent(enemy.crit || 0)}</p>}</details>}
                 {s.stage === st.id && !s.dungeon && <button className="text-button" disabled={busy} onClick={() => send({ type: 'target', id })}>{s.target === id ? '집중 사냥 대상' : '이 몬스터 집중 사냥'}</button>}</article>;
             })}</div>
-        </details>)}<details className="book-section book-region boss-book-section">
+        </details>)}
+    </details>; })}<details className="book-section book-region boss-book-section">
         <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>던전 보스 도감</h2><span>{FISH.filter(f => f.boss && (s.book[f.id] || 0) >= bookComplete).length} / {FISH.filter(f => f.boss).length}종 완성</span></summary>
         <div className="book-grid">{FISH.filter(f => f.boss).map(f => {
             const n = s.book[f.id] || 0, p = profile(f.id), enemy = f.id === 'abyssSovereign' ? abyssEnemyStats(f, abyssReference(), 1, { boss: true, wave: 4 }) : scaledEnemyStats(f, { boss: true, wave: 4, tier: 0 }), researchDone = (s.bookClaims?.[f.id] || 0) >= BALANCE.bookMilestones.length;
@@ -188,9 +194,9 @@ export function Collection({ s, send, busy }: PanelProps) {
     </div>
     </details>
     <details className="bonus-block">
-    <summary><div><h2>개체도감 완성</h2><p>몬스터를 {bookComplete}회 처치하면 완성입니다. 완성한 종은 지역 연구에 반영되고, {BOOK_REVEAL}회부터 적 정보가 열립니다. 종별 연구 앞 3단계는 골드, 마지막 단계는 SP +1을 줍니다.</p></div><span className="bonus-count">{complete}<small> / {FISH.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <summary><div><h2>개체도감 완성</h2><p>몬스터를 {bookComplete}회 처치하면 완성입니다. 완성한 종은 장소 연구에 반영되고, {BOOK_REVEAL}회부터 적 정보가 열립니다. 종별 연구 1~3단계는 골드, 4단계는 SP +1, 5·6단계는 그 몬스터를 난이도 {BALANCE.bookTierReq[4]}·{BALANCE.bookTierReq[5]} 이상에서 처치해야 열리고 골드와 SP +{PROGRESSION.bookSP[4]}·+{PROGRESSION.bookSP[5]}을 줍니다.</p></div><span className="bonus-count">{complete}<small> / {FISH.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
-    <ul className="bonus-rows">{STAGES.map(st => { const ids = [...new Set(st.fish)], done = ids.filter(id => (s.book[id] || 0) >= bookComplete).length; return <li key={st.id} className={done === ids.length ? 'done' : done ? 'active' : ''}>
+    <ul className="bonus-rows">{PLACES.map(st => { const ids = [...new Set(st.fish)], done = ids.filter(id => (s.book[id] || 0) >= bookComplete).length; return <li key={st.id} className={done === ids.length ? 'done' : done ? 'active' : ''}>
         <div className="bonus-row-head"><strong>{st.name}</strong><small>{st.rebirth ? `환생 ${st.rebirth} · ` : ''}Lv.{st.level}</small><span className="bonus-count small">{done}<small> / {ids.length}</small></span></div>
         <Meter value={done} max={ids.length}/>
         <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0; return <span key={id} className={`bonus-chip ${n >= bookComplete ? 'done' : n ? 'seen' : ''}`}>{n ? f.name : '???'}{n && n < bookComplete ? ` ${n}` : ''}</span>; })}</dd></dl>
@@ -198,9 +204,15 @@ export function Collection({ s, send, busy }: PanelProps) {
     </div>
     </details>
     <details className="bonus-block">
-    <summary><div><h2>지역 연구</h2><p>지역의 모든 종을 완성하면 지역 테마 보너스와 장착 AP +1을 받습니다.</p></div><span className="bonus-count">{regions.length}<small> / {STAGES.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <summary><div><h2>지역 연구</h2><p>지역(리스항구 등)의 모든 몬스터가 연구 {REGION_RESEARCH_FROM}·{REGION_RESEARCH_FROM + 1}·{REGION_RESEARCH_FROM + 2}단계 이상이면 지역 연구 1·2·3단계입니다. 단계마다 지역 효과가 한 번씩 쌓입니다.</p></div><span className="bonus-count">{REGIONS.reduce((a, r) => a + regionResearchStage(s, r), 0)}<small> / {REGIONS.length * REGION_RESEARCH_MAX}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
-    <ul className="bonus-grid wide">{STAGES.map(st => { const t = REGION_THEMES[st.id], done = regions.some(r => r.id === st.id); return <li key={st.id} className={done ? 'done' : ''}><span>{st.name}</span><strong>{t ? t.label : '테마 없음'}{done ? <em> · 적용 중</em> : null}</strong></li>; })}</ul>
+    <ul className="bonus-grid wide">{REGIONS.map(region => { const n = regionResearchStage(s, region), r = REGION_RESEARCH[region]; return <li key={region} className={n >= REGION_RESEARCH_MAX ? 'done' : ''}><span>{region} · {n} / {REGION_RESEARCH_MAX}단계</span><strong>단계마다 {r?.label}{n ? <em> · ×{n} 적용 중</em> : null}</strong></li>; })}</ul>
+    </div>
+    </details>
+    <details className="bonus-block">
+    <summary><div><h2>장소 연구</h2><p>사냥터(장소)의 모든 종을 완성하면 장소 테마 보너스와 장착 AP +1을 받습니다.</p></div><span className="bonus-count">{regions.length}<small> / {PLACES.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <div className="bonus-body">
+    <ul className="bonus-grid wide">{PLACES.map(st => { const t = REGION_THEMES[st.id], done = regions.some(r => r.id === st.id); return <li key={st.id} className={done ? 'done' : ''}><span>{st.name}</span><strong>{t ? t.label : '테마 없음'}{done ? <em> · 적용 중</em> : null}</strong></li>; })}</ul>
     </div>
     </details>
     </div>; })()}

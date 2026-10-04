@@ -199,7 +199,7 @@ export function Guide({ s }: { s?: State }) {
                     condition="단계가 오를수록 비용이 커집니다. 일부 연구는 정해진 환생 횟수 뒤에 열립니다."
                     limit={`탭별 재분배는 언제나 무료이며 쓴 세계석의 ${RESEARCH_RESET.refund * 100}%를 돌려받습니다. 자동 사냥·던전 중에는 할 수 없습니다.`}/>
                 <Rule icon={<BookOpen size={19}/>} title="몬스터 도감"
-                    effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 처치에 골드, 최종 단계에 SP 1. 단계마다 몬스터 성향의 능력치가 오르고 2단계부터 그 몬스터 상대 피해 보정이 붙습니다.`}
+                    effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 처치에 골드, 4단계부터 SP. 5·6단계는 그 몬스터를 난이도 ${BALANCE.bookTierReq[4]}·${BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다. 단계마다 몬스터 성향의 능력치가 오르고 2단계부터 그 몬스터 상대 피해 보정이 붙습니다. 지역의 모든 몬스터가 연구 4·5·6단계면 지역 연구 1·2·3단계로 지역 효과가 쌓입니다. 지역마다 자주 나오는 변종이 다르고, 지역 끝의 무리 서식지에서는 몬스터가 전부 ×100·×500 무리로 나옵니다.`}
                     condition={`${PROGRESSION.fishComplete}회 처치하면 완성이고 적 정보가 열립니다. 지역의 모든 종을 완성하면 AP +1과 지역 테마 보너스.`}
                     limit="보상은 도감에서 직접 받고 각 단계는 한 번만 줍니다. 합계는 도감 ‘연구 보너스’ 탭에서 봅니다."/>
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비"
