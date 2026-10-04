@@ -5,10 +5,10 @@ import type { Skill } from '../types';
  * v25 ??? 계열 특수 직업.
  *
  * 제로 (1차)(1차 독립, 시간의 문 · 모든 시간대)
- *   태엽 감기(자신 가속) · 늘어진 초침(피해 없이 감속) · 시차(속도 패시브) · 타임머신(나와 상대 모두 회복, 전투당 1회, 쓸 때마다 직업 숙련 +25).
+ *   문 스트라이크(자신 가속) · 피어스 쓰러스트(피해 없이 감속) · 시차(속도 패시브) · 타임 리와인드(나와 상대 모두 회복, 전투당 1회, 쓸 때마다 직업 숙련 +25).
  *   끝까지 숙달하면 4차급 독립 직업 '제로 (4차)'가 열립니다(문·레벨·환생 조건 없음).
  * 제로 (4차)(4차급 독립)
- *   정지된 시간(확정 기절) · 선행(곧바로 한 번 더 행동) · 역행(회복) · 시간의 주권(속도·회피·치명).
+ *   타임 디스토션(확정 기절) · 선행(곧바로 한 번 더 행동) · 역행(회복) · 얼티밋 타임(속도·회피·치명).
  *   확정 기절도 기절 뒤 면역 규칙을 따르므로 기절이 계속 이어지지는 않습니다.
  * 玄(1차 독립, 문 없음)
  *   일곱 글자 無·虛·斬·血·縛·刹·魂은 혼자 쓰면 손해만 있습니다(無는 혼자 새기면 전투당 1번만 버티고 회복도 없음). 앞 글자의 숙련 Lv.1을 달성하면 다음 글자가 열립니다.
@@ -27,11 +27,11 @@ const GLYPH_A = { ...A, ...physical, ...GLYPH, cost: 2, seal: true, rankEffects:
 
 /** 제로 (1차) 숙달 목표 = 제로 (4차) 전직 조건. */
 const CLOCKMAKER_MASTERY = 3000;
-/** 타임머신을 쓸 때마다 더하는 직업 숙련. */
+/** 타임 리와인드를 쓸 때마다 더하는 직업 숙련. */
 export const TIME_MACHINE_MASTERY = 25;
 
 export const V25_JOBS: NewJob[] = [
-    { id: 'clockmaker', name: '시계공', title: '고장 난 시간을 고친다', desc: '자신을 가속하고 상대를 감속하는 시간 직업. 가끔 타임머신이 작동해 나와 상대가 모두 처음 상태로 돌아갑니다. 끝까지 숙달하면 제로 (4차)가 열립니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, tier: 1, level: 10, mastery: 0, requires: { dex: 12, int: 10 }, role: '시간·속도', tree: 'mystery', branchless: true, hidden: true, fullKit: true, masteryTarget: CLOCKMAKER_MASTERY, masteryBoost: .2 },
+    { id: 'clockmaker', name: '시계공', title: '고장 난 시간을 고친다', desc: '자신을 가속하고 상대를 감속하는 시간 직업. 가끔 타임 리와인드가 작동해 나와 상대가 모두 처음 상태로 돌아갑니다. 끝까지 숙달하면 제로 (4차)가 열립니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, tier: 1, level: 10, mastery: 0, requires: { dex: 12, int: 10 }, role: '시간·속도', tree: 'mystery', branchless: true, hidden: true, fullKit: true, masteryTarget: CLOCKMAKER_MASTERY, masteryBoost: .2 },
     { id: 'chronarch', name: '시간의 지배자', title: '멈춘 시간 속을 홀로 걷는다', desc: '제로 (1차)를 숙달한 자에게만 열리는 4차급 독립 직업. 확정 기절과 확정 추가 행동으로 전투의 시간을 지배합니다.', ...neutral, attack: 1.3, magic: 1.3, hp: 1.12, defense: 1.08, resist: 1.08, crit: .08, tier: 4, level: 10, mastery: 0, requires: {}, requiresJobMastery: { clockmaker: CLOCKMAKER_MASTERY }, role: '시간·제어', tree: 'mystery', lineage: 'mystery-independent', hidden: true, fullKit: true, masteryTarget: 30000, masteryBoost: .35 },
     { id: 'glyphMonk', name: '玄', title: '일곱 글자를 몸에 새긴다', desc: '혼자 쓰면 손해뿐인 일곱 글자를 서로 맞물려 쓰는 조합 직업. 글자 하나를 익히면 다음 글자가 열리고, 일곱 글자가 모두 맞물리면 天이 깨어납니다.', ...neutral, bonus: { attack: 2, magic: 2 }, tier: 1, level: 10, mastery: 0, requires: { wis: 12, luk: 10 }, role: '조합·각성', tree: 'mystery', branchless: true, fullKit: true, masteryTarget: 5000, masteryBoost: .2 },
 ];

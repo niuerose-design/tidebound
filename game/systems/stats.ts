@@ -129,7 +129,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const [key, n] of Object.entries(j.penalties || {}))
         add(key as keyof CombatStats, 'job', n);
     const mastered = (s.jobMastery?.[s.job] || 0) >= jobMasteryTarget(j);
-    // 페널티 회복(끝나지 않는 골격 등): 1보다 낮은 직업 배율을 relief만큼 1 쪽으로 되돌립니다.
+    // 페널티 회복(쉐도우 서번트 등): 1보다 낮은 직업 배율을 relief만큼 1 쪽으로 되돌립니다.
     const mult = (n: number) => jobCombatMultiplier(j, n < 1 ? 1 - (1 - n) * (1 - Math.min(1, relief)) : n, mastered);
     // 1~3차 플러스 보정은 고정 수치로 더하고, 아래 배율은 마이너스 보정(1~3차)과 4·5차 보정에만 씁니다.
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) add(key, 'job', jobFlatBonus(j, key, mastered));
@@ -148,7 +148,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const t of themes)
         for (const [key, n] of Object.entries(t.scale || {}))
             mul(key as keyof CombatStats, [['book', n]]);
-    // 육중 조화: 공격력과 같은 연구·환생·직업 배율을 받고, 서로 다른 직업의 능력치 패시브를 빌려 올수록 강해집니다.
+    // 올라운드 밸런스: 공격력과 같은 연구·환생·직업 배율을 받고, 서로 다른 직업의 능력치 패시브를 빌려 올수록 강해집니다.
     mul('harmony', [['job', mult((j.attack + j.magic) / 2) * SKILL_FORMULA.harmonyScale], ['research', 1 + (s.permanent.attack || 0) * .05], ['rebirth', memory],
         ['skills', 1 + Math.min(SKILL_FORMULA.harmonyJobCap, passiveJobs.size) * SKILL_FORMULA.harmonyPerJob]]);
     // 반격은 방어 친화도만큼만 발휘됩니다.
@@ -181,7 +181,7 @@ export function snapshot(s: State): Snapshot { const a = stats(s); return { seas
 export const arcaneStrikeChance = (j: { magic: number; attack: number; tier: number }) => j.magic - j.attack >= .045 ? SKILL_FORMULA.arcaneStrikeChance[Math.min(j.tier, SKILL_FORMULA.arcaneStrikeChance.length - 1)] || 0 : 0;
 /** 직업의 물리 방어 배율로 정하는 방어 친화도(0.2~1). 방어 비례 피해·반격의 효율입니다. */
 export const guardAffinity = (defenseMultiplier: number) => Math.min(1, Math.max(SKILL_FORMULA.guardFloor, (defenseMultiplier - SKILL_FORMULA.guardBase) / SKILL_FORMULA.guardSpan));
-/** 육중 조화의 원시 피해. 직접 배분한 포인트(s.attributes)만 사용합니다. */
+/** 올라운드 밸런스의 원시 피해. 직접 배분한 포인트(s.attributes)만 사용합니다. */
 function harmonyPower(s: Pick<State, 'attributes'>) {
     const points = Object.values(s.attributes || {});
     if (!points.length) return 0;

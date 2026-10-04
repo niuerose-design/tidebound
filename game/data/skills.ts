@@ -1,4 +1,5 @@
 import { tuneActiveSkills } from './skill-balance';
+import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
 import { JOBS } from './classes';
 import { EXPANSION_SKILLS } from './expansion';
@@ -199,6 +200,9 @@ for (const sk of SKILLS) {
 
 // Apply the centralized player balance after assignment and mastery defaults.
 tuneActiveSkills(SKILLS, sk => JOBS.find(j => j.id === sk.job)?.tier ?? 0);
+
+// v27.40 메이플 스킬 이름: maple-skills.ts 한곳에서 덮어씁니다(id·효과는 그대로).
+for (const sk of SKILLS) sk.name = MAPLE_SKILL_NAMES[sk.id] ?? sk.name;
 
 /** id로 찾기(첫 항목 우선, SKILLS.find와 같은 결과). 모듈 초기화가 끝난 뒤 처음 부를 때 한 번 만듭니다. */
 let skillByIdMap: Map<string, Skill> | undefined;
