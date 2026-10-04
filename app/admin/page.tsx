@@ -8,7 +8,22 @@ type EventRow = { id: string; name: string; from: string; until: string; exp?: n
 type EventList = { code: EventRow[]; extra: EventRow[]; banner: string };
 type ClosureRow = { id: string; name: string; closed: boolean; locked: boolean };
 type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
-type Tab = 'life' | 'events' | 'closures';
+type Tab = 'life' | 'events' | 'closures' | 'stats';
+type Count = { name: string; count: number };
+type Bucket = { label: string; count: number };
+type Stats = { at: number; accounts: number; saves: number; active: { hour: number; day: number; week: number }; running: number; inDungeon: number; level: { avg: number; max: number; buckets: Bucket[] }; rebirths: { avg: number; max: number; buckets: Bucket[] }; stages: Count[]; dungeons: Count[]; jobs: Count[]; totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number }; medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number; top: { name: string; level: number; rebirths: number; abyss: number }[] };
+const n = (v: number) => v.toLocaleString('ko-KR');
+/** v27.32 통계 카드 한 칸. */
+const Tile = ({ label, value, note }: { label: string; value: string; note?: string }) => <div className="panel" style={{ padding: 12 }}><div style={{ fontSize: 12, color: '#9bb3b0' }}>{label}</div><div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>{note && <div style={{ fontSize: 12, color: '#9bb3b0' }}>{note}</div>}</div>;
+/** 막대 목록: 가장 큰 값을 100%로 봅니다. */
+function Bars({ title, rows, total }: { title: string; rows: { label: string; count: number }[]; total: number }) {
+    const max = Math.max(1, ...rows.map(r => r.count));
+    return <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>{title}</h2>{!rows.length && <p style={{ color: '#9bb3b0', fontSize: 13, margin: 0 }}>없습니다.</p>}
+        <div style={{ display: 'grid', gap: 5 }}>{rows.map(r => <div key={r.label} style={{ display: 'grid', gridTemplateColumns: 'minmax(90px, 140px) 1fr auto', gap: 8, alignItems: 'center', fontSize: 13 }}>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.label}</span>
+            <span style={{ height: 10, borderRadius: 5, background: '#1d3034' }}><span style={{ display: 'block', height: '100%', width: `${r.count / max * 100}%`, borderRadius: 5, background: '#6fb7a0' }}/></span>
+            <span style={{ color: '#c9dbd6', minWidth: 72, textAlign: 'right' }}>{n(r.count)}{total ? <small style={{ color: '#9bb3b0' }}> ({Math.round(r.count / total * 100)}%)</small> : null}</span></div>)}</div></div>;
+}
 const MULTS = [['exp', '경험치'], ['gold', '골드'], ['drop', '장비 드롭'], ['mastery', '숙련']] as const;
 /** datetime-local(한국 시간으로 입력) → ISO. */
 const kstToIso = (v: string) => v ? `${v}:00+09:00` : '';
@@ -35,7 +50,7 @@ const line = (p: AdminPlayer) => `${p.name} · Lv.${p.level} ${p.job} · 환생 
 /** v27.26 운영 도구: 낚시꾼 이름·아이디로 찾아 이번 생을 처음 상태로 되돌립니다(환생 횟수·진주·연구·유물·도감 유지). */
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
-    const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null);
+    const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [stats, setStats] = useState<Stats | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1' });
     const [spOpen, setSpOpen] = useState<string | null>(null);
     const [edit, setEdit] = useState<{ player: AdminPlayer; gold: string; pearls: string } | null>(null);
@@ -71,20 +86,21 @@ export default function AdminPage() {
     };
     const removeEvent = async (id: string) => { if (!confirm('이 이벤트를 삭제할까요?')) return; const d = await call({ action: 'deleteEvent', id }); if (d) setEvents(d); };
     const toggleEvent = async (id: string, disabled: boolean) => { const d = await call({ action: 'toggleEvent', id, disabled }); if (d) setEvents(d); };
+    const loadStats = async () => { const d = await call({ action: 'stats' }); if (d) setStats(d); };
     const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); };
     const toggleClosed = async (kind: keyof ClosureList, row: ClosureRow) => {
         if (!row.closed && !confirm(`${row.name}의 입장을 막을까요?\n안에 있던 낚시꾼은 다음 동기화 때 보상 없이 나옵니다${kind === 'stages' ? '(더 앞의 열린 낚시터로 옮김)' : ''}.`)) return;
         const d = await call({ action: 'setClosed', kind, id: row.id, closed: !row.closed });
         if (d) { setClosures(d); setDone(`${row.name}을(를) ${row.closed ? '열었습니다' : '닫았습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
     };
-    const tabButton = (id: Tab, label: string) => <button type="button" className={tab === id ? 'primary' : 'secondary'} onClick={() => { setTab(id); setError(''); setDone(''); if (id === 'events' && key) loadEvents(); if (id === 'closures' && key) loadClosures(); }}>{label}</button>;
+    const tabButton = (id: Tab, label: string) => <button type="button" className={tab === id ? 'primary' : 'secondary'} onClick={() => { setTab(id); setError(''); setDone(''); if (id === 'events' && key) loadEvents(); if (id === 'closures' && key) loadClosures(); if (id === 'stats' && key) loadStats(); }}>{label}</button>;
     const closureList = (kind: keyof ClosureList, title: string) => closures && <div><h2 style={{ fontSize: 16 }}>{title}</h2><ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{closures[kind].map(r => <li key={r.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
         <span style={{ fontSize: 13 }}><b>{r.name}</b> · {r.closed ? <b style={{ color: '#ff9a9a' }}>입장 막힘</b> : <span style={{ color: '#9ce8b4' }}>열림</span>}{r.locked ? <small style={{ color: '#9bb3b0' }}> · 첫 낚시터라 닫을 수 없음</small> : null}</span>
         {!r.locked && <button className={r.closed ? 'primary' : 'secondary'} disabled={busy} onClick={() => toggleClosed(kind, r)}>{r.closed ? '다시 열기' : '입장 막기'}</button>}</li>)}</ul></div>;
     return <main className="admin-tool" style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px', color: '#e6f1ee' }}>
         <h1 style={{ fontSize: 24, marginBottom: 8 }}>운영 도구</h1>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>{tabButton('life', '낚시꾼 관리')}{tabButton('events', '서버 이벤트')}{tabButton('closures', '입장 관리')}</div>
-        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·진주를 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·진주·연구·유물·도감·스킬 성장은 그대로입니다.' : tab === 'events' ? '기간 동안 모든 낚시꾼의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다.' : '점검할 낚시터·던전의 입장을 막습니다. 안에 있던 낚시꾼은 다음 동기화 때 보상 없이 나오고(낚시터는 더 앞의 열린 곳으로), 반복 도전도 멈춥니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.'}</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>{tabButton('life', '낚시꾼 관리')}{tabButton('events', '서버 이벤트')}{tabButton('closures', '입장 관리')}{tabButton('stats', '통계')}</div>
+        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·진주를 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·진주·연구·유물·도감·스킬 성장은 그대로입니다.' : tab === 'events' ? '기간 동안 모든 낚시꾼의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다.' : tab === 'stats' ? '모든 세이브를 읽어 집계합니다. 활동은 마지막 저장 시각 기준이라, 자동 낚시를 켜 둔 채 접속을 끊은 낚시꾼은 다시 접속할 때까지 세지 않습니다. 운영자가 불러올 때만 계산해 게임에는 부하가 없습니다.' : '점검할 낚시터·던전의 입장을 막습니다. 안에 있던 낚시꾼은 다음 동기화 때 보상 없이 나오고(낚시터는 더 앞의 열린 곳으로), 반복 도전도 멈춥니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.'}</p>
         <section className="panel" style={{ padding: 16, display: 'grid', gap: 10 }}>
             <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>운영자 키<input type="password" value={key} onChange={e => setKey(e.target.value)} autoComplete="off" placeholder="Vercel 환경 변수 TIDEBOUND_ADMIN_KEY 값" style={field}/></label>
             {tab === 'life' && <form onSubmit={e => { e.preventDefault(); search(); }} style={{ display: 'flex', gap: 8 }}>
@@ -92,6 +108,7 @@ export default function AdminPage() {
                 <button className="primary" disabled={busy || !key || !query.trim()}>찾기</button>
             </form>}
             {tab === 'events' && <button className="secondary" disabled={busy || !key} onClick={loadEvents}>이벤트 불러오기</button>}
+            {tab === 'stats' && <button className="secondary" disabled={busy || !key} onClick={loadStats}>{stats ? '새로고침' : '통계 불러오기'}</button>}
             {tab === 'closures' && <button className="secondary" disabled={busy || !key} onClick={loadClosures}>목록 불러오기</button>}
         </section>
         {error && <p role="alert" style={{ color: '#ff9a9a' }}>{error}</p>}
@@ -114,6 +131,29 @@ export default function AdminPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>{MULTS.map(([k, label]) => <label key={k} style={{ display: 'grid', gap: 4, fontSize: 13 }}>{label} 배율<input type="number" min={1} max={10} step={0.1} value={draft[k]} onChange={e => setDraft({ ...draft, [k]: e.target.value })} style={field}/></label>)}</div>
                 <button className="primary" disabled={busy || !draft.from || !draft.until}>이벤트 저장</button>
             </form>
+        </section>}
+        {tab === 'stats' && stats && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
+            <p style={{ color: '#9bb3b0', fontSize: 13, margin: 0 }}>{new Date(stats.at).toLocaleString('ko-KR')} 기준</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
+                <Tile label="가입 계정" value={n(stats.accounts)} note={`세이브(분신 포함) ${n(stats.saves)}개`}/>
+                <Tile label="최근 1시간 활동" value={n(stats.active.hour)} note={`24시간 ${n(stats.active.day)} · 7일 ${n(stats.active.week)}`}/>
+                <Tile label="자동 낚시 켜 둠" value={n(stats.running)} note={`던전 진행 중 ${n(stats.inDungeon)}`}/>
+                <Tile label="평균 레벨" value={String(stats.level.avg)} note={`최고 Lv.${stats.level.max}`}/>
+                <Tile label="평균 환생" value={`${stats.rebirths.avg}회`} note={`최고 ${stats.rebirths.max}회 · 심연 최고 ${stats.abyssBest}층`}/>
+                <Tile label="총 포획" value={n(stats.totals.kills)} note={`누적 플레이 ${n(stats.totals.playHours)}시간`}/>
+                <Tile label="보유 골드 합계" value={n(stats.totals.gold)} note={`중앙값 ${n(stats.medians.gold)}`}/>
+                <Tile label="보유 진주 합계" value={n(stats.totals.pearls)} note={`중앙값 ${n(stats.medians.pearls)} · 보유 SP 합계 ${n(stats.totals.sp)}`}/>
+                <Tile label="길드 가입" value={n(stats.inGuild)} note={`한계돌파한 낚시꾼 ${n(stats.limitBreakers)}`}/>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 12 }}>
+                <Bars title="레벨 분포" rows={stats.level.buckets} total={stats.saves}/>
+                <Bars title="환생 횟수 분포" rows={stats.rebirths.buckets} total={stats.saves}/>
+                <Bars title="지금 있는 낚시터" rows={stats.stages.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
+                <Bars title="지금 있는 던전" rows={stats.dungeons.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
+                <Bars title="현재 직업 상위 15" rows={stats.jobs.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
+                <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>환생·레벨 상위 10</h2>
+                    <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, display: 'grid', gap: 3 }}>{stats.top.map((p, i) => <li key={i}>{p.name} · 환생 {p.rebirths}회 · Lv.{p.level}{p.abyss ? ` · 심연 ${p.abyss}층` : ''}</li>)}</ol></div>
+            </div>
         </section>}
         {tab === 'closures' && closures && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>{closureList('dungeons', '던전')}{closureList('stages', '낚시터')}</section>}
         {tab === 'life' && players && <section style={{ marginTop: 16 }}>
