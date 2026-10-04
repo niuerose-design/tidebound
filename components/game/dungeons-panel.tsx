@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Lock, Swords } from 'lucide-react';
 import { FishArt } from './art';
 import { BALANCE, MONSTER_TUNING, dungeonOverlevel, DUNGEON_MODES, type DungeonMode } from '@/game/data/balance';
-import { FISH, DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
+import { FISH, DUNGEONS, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
 import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
 import { bookRevealed } from '@/game/systems/book';
@@ -20,6 +20,8 @@ import { StatusBadges } from './combat-status';
 import { BattleLogLine } from './combat-log';
 import { abyssPearls, nextAbyssMilestone, ABYSS_AP_MILESTONES } from '@/game/data/long-term';
 import type { PanelProps } from './panel-props';
+import { RANDOM_GAME, randomGameTier, waveStake, stakeUpTo } from '@/game/data/random-game';
+import { randomGameRank, randomGamePayout, randomGameRunsLeft, stakePayout } from '@/game/systems/random-game';
 export function Dungeons({ s, send, busy }: PanelProps) {
     const activeDungeon = s.dungeon ? DUNGEONS.find(d => d.id === s.dungeon?.id) : undefined;
     const playerStats = stats(s);
@@ -27,6 +29,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     const revealed = !!enemyFish && bookRevealed(s, enemyFish.id);
     const enemyProfile = enemyFish && revealed ? profile(enemyFish.id) : undefined;
     const activeWave = s.dungeon?.wave ?? 0;
+    const randomRun = activeDungeon?.id === RANDOM_GAME.id;
     const skillFx = useSkillFx(), { effects: combatFx, combo: fxCombo } = useCombatFx(s.logs, s.name, skillFx);
     const [repeatChoice, setRepeatChoice] = useState<Record<string, string>>({});
     // v27.70 던전 난이도(노말·헬·나이트메어)는 던전마다 고릅니다. 입장 값은 '<난이도>@<반복>'.
@@ -40,25 +43,26 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     <AutoRunStatus s={s}/>
     {activeDungeon && <section className="panel dungeon-run-panel">
         <div className="dungeon-run-header">
-        <div><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}{activeDungeon.id === 'abyss' && <b className="abyss-floor"> {s.dungeon!.depth || s.abyssBest + 1}층</b>}</h2><p>{activeDungeon.description}{activeDungeon.id === 'abyss' ? ` · 최고 기록 ${s.abyssBest}층` : ''}</p></div>
-        <button className="secondary" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</button>
+        <div><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}{activeDungeon.id === 'abyss' && <b className="abyss-floor"> {s.dungeon!.depth || s.abyssBest + 1}층</b>}{randomRun && <b className="abyss-floor"> {activeWave + 1}웨이브</b>}</h2><p>{activeDungeon.description}{activeDungeon.id === 'abyss' ? ` · 최고 기록 ${s.abyssBest}층` : ''}</p></div>
+        {randomRun ? <button className="gold-button" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>받고 나가기 · 정수 {stakePayout(s).essence}{stakePayout(s).pearls ? ` · 세계석 ${stakePayout(s).pearls}` : ''}</button> : <button className="secondary" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</button>}
         </div>
-        <div className="dungeon-wave-track">{activeDungeon.fish.map((id, index) => {
+        {randomRun ? <p className="random-game-stake">판돈 · 정수 {stakePayout(s).essence}{stakePayout(s).pearls ? ` · 세계석 ${stakePayout(s).pearls}` : ''} (×{randomGamePayout(s)}) · 다음 웨이브 돌파 시 정수 +{Math.floor(waveStake(activeWave + 1).essence * randomGamePayout(s))}{waveStake(activeWave + 1).pearls ? ` · 세계석 +${Math.floor(waveStake(activeWave + 1).pearls * randomGamePayout(s))}` : ''} · 난이도 {randomGameTier(activeWave)}{s.dungeon?.until ? ` · 목표 ${s.dungeon.until}웨이브에서 자동으로 받고 나감` : ' · 목표 없음'} · 쓰러지면 판돈 소멸</p> : <div className="dungeon-wave-track">{activeDungeon.fish.map((id, index) => {
             const isDone = s.dungeon!.wave > index;
             const isCurrent = s.dungeon!.wave === index;
             const isBoss = index === activeDungeon.fish.length - 1;
             const fish = isBoss && activeDungeon.bossFish ? FISH.find(f => f.id === activeDungeon.bossFish) : FISH.find(f => f.id === id);
             return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><FishArt id={fish?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{fish?.name || id}</strong></div>;
-        })}</div>
+        })}</div>}
         <div className="dungeon-combat-grid dungeon-combat-fx-host">
         <CombatFxOverlay effect={combatFx} combo={fxCombo}/>
         <div className="dungeon-combatant player-combatant"><span className="eyebrow">내 모험가</span><div className="combatant-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label="HP" color="teal"/><PlayerHitEffect effect={combatFx}/></div><Meter value={s.mana} max={playerStats.mana} label="MP" color="blue"/><small>속도 {playerStats.speed} · 명중 수치 {statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', playerStats.evasion || 0)}</small></div>
-        <div className="dungeon-vs">VS<span>{activeWave + 1}/{activeDungeon.fish.length}</span></div>
+        <div className="dungeon-vs">VS<span>{randomRun ? `${activeWave + 1}웨이브` : `${activeWave + 1}/${activeDungeon.fish.length}`}</span></div>
         <div className="dungeon-combatant enemy-combatant"><span className="eyebrow">{s.enemy?.boss ? 'BOSS ENCOUNTER' : 'CURRENT TARGET'}</span><div className="combatant-name"><h3>{s.enemy?.name || (s.recovery > 0 ? `출정 준비 · ${Math.ceil(s.recovery * BALANCE.turnMs / 1000)}초 남음` : '다음 몬스터를 기다리는 중')}</h3>{s.enemy && <StatusBadges effects={s.enemy.effects} stun={s.enemy.stun} recent={combatFx} target="enemy"/>}</div>{s.enemy ? <><div className="player-hp-anchor"><Meter value={s.enemy.hp} max={s.enemy.maxHp} label="HP" color="rose"/><CombatBarEffect effect={combatFx} target="enemy"/></div><small>{enemyProfile?.name || '미확인 개체'} · 속도 {s.enemy.combatStats?.speed || '-'}{revealed ? ` · 공격 스킬 ${s.enemy.skills?.map(id => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id)?.name || id).join(', ') || '기본 공격'}` : ` · 도감 ${BOOK_REVEAL}회 처치 시 성향·스킬 공개`}</small>{enemyProfile?.hint && <p className="dungeon-hint">{enemyProfile.hint}</p>}</> : <p className="dungeon-hint">{s.recovery > 0 ? '준비가 끝나면 체력·마나가 모두 회복되고 탐험이 시작됩니다.' : '자동 사냥이 다음 웨이브를 준비하고 있습니다.'}</p>}</div>
         </div>
         <div className="dungeon-combat-log"><div className="section-title"><h3>최근 전투 로그</h3><span>자동 갱신</span></div>{s.logs.filter(log => log.type === 'battle').slice(-6).reverse().map(log => <BattleLogLine key={log.id} log={log} playerName={s.name}/>)}</div>
     </section>}
-    <div className="stage-grid dungeon-grid">{[...DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
+    {!activeDungeon && <RandomGameCard s={s} send={send} busy={busy}/>}
+    <div className="stage-grid dungeon-grid">{[...PLAIN_DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
             const closed = closedIn(s, 'dungeons', d.id), locked = closed || !levelGateOk(s, d.level) || s.rebirths < d.rebirth;
             const mode = modeChoice[d.id] || 'normal', modeDef = DUNGEON_MODES.find(m => m.id === mode)!, tier = dungeonTier(d.id, s.abyssBest + 1, mode), dLevel = dungeonLevelAt(d, tier, s.level);
             const research = BOSS_RESEARCH[d.id], claimed = !!s.bossResearchClaims?.[d.id], active = s.dungeon?.id === d.id, overlevel = dungeonOverlevel(s.level, dLevel);
@@ -87,4 +91,21 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             </article>;
         })}</div>
     </>;
+}
+
+/** v27.82 랜덤게임 입장 카드: 목표 웨이브를 고르고 들어갑니다. 판돈 표는 목표까지 모두 깼을 때 받는 양(연구 배율 포함). */
+function RandomGameCard({ s, send, busy }: PanelProps) {
+    const [target, setTarget] = useState<number>(10);
+    const rank = randomGameRank(s), left = randomGameRunsLeft(s), m = randomGamePayout(s);
+    if (s.rebirths < 5 && !rank) return null;
+    const total = (n: number) => { const t = stakeUpTo(n); return `정수 ${Math.floor(t.essence * m)}${Math.floor(t.pearls * m) ? ` · 세계석 ${Math.floor(t.pearls * m)}` : ''}`; };
+    return <section className="panel random-game-card">
+        <div className="section-title"><h2>랜덤게임</h2><span>{rank ? `이번 생 남은 입장 ${left} / ${rank}회 · 판돈 ×${m}` : '세계석 연구 ‘랜덤게임’에서 해금 (환생 5회)'}</span></div>
+        <p>해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브마다 난이도 +{RANDOM_GAME.tierPerWave}, {RANDOM_GAME.bossEvery}웨이브마다 보스. 처치 경험치·골드·장비는 없고, 웨이브를 깰수록 판돈(정수 {RANDOM_GAME.essencePerWave}×웨이브, {RANDOM_GAME.pearlEvery}웨이브부터 세계석)이 쌓입니다. 목표 웨이브에 닿거나 ‘받고 나가기’를 누르면 받고, <b>쓰러지면 판돈을 모두 잃습니다.</b></p>
+        {rank > 0 && <>
+        <div className="button-row random-game-targets">{RANDOM_GAME.targets.map(n => <button key={n} className={target === n ? 'primary' : 'secondary'} disabled={busy} onClick={() => setTarget(n)}>{n ? `${n}웨이브` : '목표 없음'}</button>)}</div>
+        <p className="footnote">{target ? `${target}웨이브까지 모두 깨면 ${total(target)}` : '받고 나가기를 누르거나 쓰러질 때까지 계속합니다.'}</p>
+        <button className="gold-button" disabled={busy || !left || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: RANDOM_GAME.id, value: `until:${target}` })}>{left ? '랜덤게임 시작' : '이번 생 입장 횟수를 모두 썼습니다'}</button>
+        </>}
+    </section>;
 }

@@ -1,7 +1,7 @@
 /** 적 등장·드롭·승리 보상. */
 import { BOSS_RESEARCH } from '../data/specializations';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
-import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus, TIDE_MILESTONES, TIDE_MILESTONE_PEARLS } from '../data/long-term';
+import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
@@ -12,6 +12,8 @@ import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize,
 import { MIMIC, rollMimicMastery, mimicChance, specialLuck } from '../data/mimic';
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue } from '../data/rank';
+import { roughHeal } from './vows';
+import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
 import type { State, Item } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm } from '../data/world';
@@ -21,7 +23,6 @@ import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
 import { saleValue } from './equipment';
-import { roughLevel, roughEnemy, anchorSeal, atAnchorTarget, anchorPayout, anchorTargetName, ANCHOR_CATCHES } from './vows';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
@@ -45,19 +46,19 @@ export function gainLevels(s: State) {
         addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
     }
 }
-/** 잠든 힘 봉인 해제. 달성하면 쌓인 경험치 × 배율, 포기하면 그대로 지급합니다. 레벨은 호출한 쪽에서 gainLevels로 올립니다. */
-export function releaseAnchor(s: State, achieved: boolean) {
-    const seal = anchorSeal(s);
+/** v27.82 옛 ‘잠든 힘’ 봉인이 남은 세이브: 쌓인 경험치를 그대로 지급하고 봉인을 지웁니다(서약은 던전 랜덤게임으로 바뀜). 레벨은 호출한 쪽에서 올립니다. */
+export function releaseLegacySeal(s: State) {
+    const seal = s.vows?.seal;
     if (!seal) return 0;
-    const exp = achieved ? Math.floor(seal.exp * anchorPayout(s)) : seal.exp;
-    s.exp += exp;
-    s.vows!.seal = null;
-    addLog(s, achieved ? `잠든 힘 봉인 해제 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리 달성 · 쌓인 경험치 ×${anchorPayout(s)} = +${exp} EXP` : `잠든 힘 포기 · 쌓인 경험치 +${exp} EXP를 그대로 받았습니다.`, 'reward');
-    return exp;
+    s.exp += seal.exp;
+    delete s.vows!.seal; delete s.vows!.anchor;
+    addLog(s, `잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +${seal.exp} EXP`, 'reward');
+    return seal.exp;
 }
 /** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 회복의 기억 1%p/단계. */
 /** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘회복의 기억’은 1단계마다 +1%p. */
-export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill / (1 + encounterTier(s) / BALANCE.healAfterKillTideScale))) + researchRank(s, 'recovery') * .01;
+/** 처치 후 회복 비율. v27.82 힘의 길 회복 봉쇄 ×(1 − 50·75·100%). */
+export const victoryHealRate = (s: State) => ((s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill / (1 + encounterTier(s) / BALANCE.healAfterKillTideScale))) + researchRank(s, 'recovery') * .01) * roughHeal(s);
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 /** v27.76 난이도별 등급 가중치(일반 제외 표시용·판정용 공통). */
 export const rarityWeights = (tier: number, minRarity = 0) => DROP_RARITY.map((w, i) => i >= minRarity ? w * Math.pow(1 + BALANCE.tideLoot.rarityPerTier * Math.max(0, tier), Math.max(0, i - 1)) : 0);
@@ -132,6 +133,8 @@ export function stageField(s: Pick<State, 'level'>, stageId: string, fishId: str
     return { field, foe, level: field.level, exp: Math.max(1, Math.round(base.exp * expLevelScale(field.level, s.level))), gold: base.gold, skills: foeSkills(f.id, field.level, !!f.boss) };
 }
 export function spawn(s: State, rng: () => number) {
+    // v27.82 랜덤게임: 해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다.
+    if (inRandomGame(s)) return spawnRandomGame(s, rng);
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
     const st = STAGES.find(x => x.id === s.stage)!;
     const finalWave = !!dungeon && s.dungeon!.wave === dungeon.fish.length - 1;
@@ -182,17 +185,20 @@ export function spawn(s: State, rng: () => number) {
         foe.magic = Math.round((foe.magic || 0) * vdef.attack);
         if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
-    // 험한 길: 적 체력·공격 ×(1 + 0.5 × 선택 단계). 사냥터 난이도와 별개로 곱합니다.
-    if (roughLevel(s)) {
-        const m = roughEnemy(s);
-        foe.hp = Math.round(foe.hp * m);
-        foe.attack = Math.round(foe.attack * m);
-        foe.magic = Math.round((foe.magic || 0) * m);
-    }
     s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}), ...(variant ? { variant } : {}) };
 }
 export function reward(s: State, rng: () => number) {
     const e = s.enemy!;
+    // v27.82 랜덤게임: 처치 경험치·골드·드롭·숙련 없이 처치 수·도감만 세고, 판돈을 쌓아 다음 웨이브로 갑니다.
+    if (inRandomGame(s)) {
+        s.kills += 1;
+        s.book[e.id] = (s.book[e.id] || 0) + 1;
+        { const t = encounterTier(s); if (t > (s.bookTier?.[e.id] || 0)) (s.bookTier ??= {})[e.id] = t; }
+        { const max = stats(s).hp; s.hp = Math.min(max, s.hp + Math.floor(max * victoryHealRate(s))); }
+        s.enemy = null; s.effects = {}; s.playerStun = 0;
+        clearRandomWave(s);
+        return;
+    }
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
     const size = e.swarm || 1, vdef = variantById(e.variant), rewardMult = vdef?.reward || 1, expMult = vdef?.expMult || rewardMult, bookPer = vdef?.book || 1;
@@ -239,7 +245,7 @@ export function reward(s: State, rng: () => number) {
         if (supply > 0 && rng() < supply) { s.pearls += 1; addLog(s, '보급품 · 세계석 +1', 'reward'); }
     }
     // v27.76 사냥터 난이도 정수 드롭: 난이도 5 이상 사냥터에서 처치마다 확률 판정(확률 0이면 난수를 쓰지 않음).
-    if (!s.dungeon && !s.vows?.seal) {
+    if (!s.dungeon) {
         const te = tideEssence(encounterTier(s));
         if (te.chance > 0 && rng() < te.chance) { s.essence = (s.essence || 0) + te.amount; addLog(s, `사냥터 난이도 ${encounterTier(s)} · 정수 +${te.amount}`, 'reward'); }
     }
@@ -247,15 +253,8 @@ export function reward(s: State, rng: () => number) {
     recordGoal(s, 'catch', undefined, size, text => addLog(s, text, 'reward')); recordGoal(s, 'species', e.id, size, text => addLog(s, text, 'reward'));
     if (e.boss) recordGoal(s, 'boss', undefined, 1, text => addLog(s, text, 'reward'));
     if (size > 1) recordGoal(s, 'swarm', undefined, 1, text => addLog(s, text, 'reward'));
-    // 잠든 힘: 봉인 중에는 경험치를 따로 쌓고, 목표에서 300마리를 잡으면 배율을 곱해 한 번에 지급합니다.
-    const seal = anchorSeal(s);
-    if (seal) {
-        seal.exp += exp;
-        if (atAnchorTarget(s)) seal.caught += size;
-    }
-    else
-        s.exp += exp;
-    // v27.58 경험의 누리: 지금 레벨 필요 경험치의 1~3%. 배율·잠든 힘 봉인과 무관하게 바로 더합니다.
+    s.exp += exp;
+    // v27.58 경험의 누리: 지금 레벨 필요 경험치의 1~3%. 배율과 무관하게 바로 더합니다.
     if (e.id === EXP_NURI.id && s.level < 100) {
         const t = rollNuriTier(rng), bonus = Math.max(1, Math.floor(xpNeeded(s.level, s.rebirths) * t.pct));
         s.exp += bonus;
@@ -267,18 +266,8 @@ export function reward(s: State, rng: () => number) {
     for (let i = 0; i < size * (vdef?.drops || 1); i++)
         drop(s, dropLevel(s, fish.level, encounterTier(s)), rng);
     if (vdef?.guaranteed) drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, true);
-    // v25.8 사냥터 난이도 이정표: 사냥터에서 그 차수로 처음 처치하면 사이의 이정표 세계석을 한 번에 줍니다.
-    // v27.80 무리 서식지는 이정표 세계석을 주지 않습니다(일반 사냥터의 이정표만).
-    if (!s.dungeon && !seal && !isHabitat(s.stage)) {
-        const tier = encounterTier(s), best = s.tideBest?.[s.stage] || 0;
-        if (tier > best) {
-            (s.tideBest ??= {})[s.stage] = tier;
-            let pearls = 0; const hit: number[] = [];
-            TIDE_MILESTONES.forEach((n, i) => { if (best < n && n <= tier) { pearls += TIDE_MILESTONE_PEARLS[i]; hit.push(n); } });
-            if (pearls) { s.pearls += pearls; addLog(s, `사냥터 난이도 이정표 · ${STAGES.find(st => st.id === s.stage)?.name || s.stage} 차수 ${hit.join('·')} 첫 처치 · 세계석 +${pearls}`, 'reward'); }
-        }
-    }
-    if (seal && seal.caught >= ANCHOR_CATCHES) releaseAnchor(s, true);
+    // v27.82 사냥터 난이도 이정표 세계석은 없앴습니다. 사냥터별 최고 난이도 기록(업적용)만 남깁니다.
+    if (!s.dungeon && !isHabitat(s.stage)) { const tier = encounterTier(s); if (tier > (s.tideBest?.[s.stage] || 0)) (s.tideBest ??= {})[s.stage] = tier; }
     gainLevels(s);
     for (const id of grantJobSkills(s)) {
         const sk = skillById(id)!;

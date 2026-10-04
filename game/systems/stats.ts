@@ -1,4 +1,4 @@
-import { tailwindActive, tailwindExp, tierReward } from './meta';
+import { tailwindActive, tailwindExp, tierReward, encounterTier } from './meta';
 import { displayTitle } from '../data/titles';
 import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTargets, thresholdRank } from '../data/long-term';
 import { itemStats } from './equipment';
@@ -8,7 +8,7 @@ import { BALANCE, SAVE_VERSION, SKILL_FORMULA } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
 import { RESEARCH, researchRank } from '../data/economy';
-import { roughReward, vowBadges } from './vows';
+import { roughReward, roughGear, roughHeal, vowBadges } from './vows';
 import { skillById } from '../data/skills';
 import { regionThemes, bookStage } from './book';
 import { achievementTotals } from '../data/achievements';
@@ -93,7 +93,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
                 gear[key as keyof CombatStats] = (gear[key as keyof CombatStats] || 0) + n;
     }
     for (const [key, n] of Object.entries(gear))
-        add(key as keyof CombatStats, 'equipment', Math.min(n!, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity));
+        // v27.82 힘의 길: 장비 능력치 ×(1 − 30·50·70%).
+        add(key as keyof CombatStats, 'equipment', Math.min(n!, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity) * roughGear(s));
     const passiveJobs = new Set<string>();
     let relief = 0;
     // v24.2 진행도 기록: 진행도 비례 피해의 기준값과 perCount 패시브가 씁니다.
@@ -175,13 +176,15 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     limit('evasion', evasionRating(evasionRaw(dexEvasion, a.evasion - dexEvasion)));
     limit('penetration', Math.min(.6, a.penetration));
     limit('lifesteal', Math.min(.3, a.lifesteal));
+    // v27.82 힘의 길 회복 봉쇄: 흡혈·턴당 체력 회복 ×(1 − 50·75·100%). 처치 후 회복은 victoryHealRate에서 줄입니다.
+    if (roughHeal(s) < 1) { limit('lifesteal', a.lifesteal * roughHeal(s)); limit('hpRegen', Math.floor(a.hpRegen * roughHeal(s))); }
     return a;
 }
 /** 처치당 장비 드롭 확률. 기본 확률에 드롭 보너스(행운·물건도감·연구·스킬·장비, stats에서 합산)를 상대 증가로 곱합니다. */
 export function dropRate(s: State) {
     const bonus = stats(s).dropBonus || 0;
-    // 험한 길 서약은 드롭 확률에도 곱합니다(서약이 없으면 ×1). 상한은 그대로입니다.
-    return Math.min(BALANCE.dropChanceCap, BALANCE.dropChance * (1 + bonus / BALANCE.dropBonusScale) * roughReward(s) * (s.event?.drop || 1));
+    // v27.82 힘의 길 보상은 드롭 상한 뒤에 곱합니다(난이도 하한 미만이면 ×1).
+    return Math.min(BALANCE.dropChanceCap, BALANCE.dropChance * (1 + bonus / BALANCE.dropBonusScale) * (s.event?.drop || 1)) * roughReward(s, encounterTier(s));
 }
 export function power(v: Stats) { const a = normalizeStats(v); return Math.round(Math.max(a.attack, a.magic) * 7 + Math.min(a.attack, a.magic) * 2 + a.hp * .5 + (a.defense + a.resist) * 3 + a.crit * 200 + Math.max(0, a.accuracy - .8) * 220 + a.evasion * 200); }
 export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillSpecializations: { ...s.skillSpecializations }, skillPractice: { ...s.skillPractice }, power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
@@ -203,12 +206,12 @@ export function clampVitals(s: State) {
     s.hp = Math.min(s.hp, stats(s).hp);
     s.mana = Math.min(s.mana, stats(s).mana);
 }
-/** 골드 배율. 험한 길 서약은 처치·던전 골드를 함께 올립니다(서약이 없으면 ×1). */
+/** 골드 배율. 힘의 길 서약은 처치·던전 골드를 함께 올립니다(서약이 없거나 난이도 하한 미만이면 ×1). */
 /** v25.6 이번 생의 조건 카드 배율. 사냥터 집중은 그 사냥터에서만, 황금 모험은 생 전체. */
 export const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 // v27.79 계정(분신) 보너스는 곱연산 배율입니다(accountExpGold ≤ ×1.3).
-export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * accountExpGold(s) * roughReward(s) * focusGold(s) * (s.event?.gold || 1);
+export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
 export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus) * accountExpGold(s) * (tailwindActive(s) ? 1 + tailwindExp(s) : 1) * focusExp(s) * (s.event?.exp || 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 던전 정복 골드. 전투 보상과 던전 화면 표시가 같은 식을 씁니다. */

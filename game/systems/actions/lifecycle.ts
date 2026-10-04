@@ -13,8 +13,7 @@ import { drawRebirthDoor } from '../../data/doors';
 import { jobById, JOB_TREES } from '../../data/classes';
 import { STAGES } from '../../data/world';
 import { claimAchievements } from '../progress';
-import { gainLevels, releaseAnchor } from '../encounter';
-import { VOW_IDS, VOW_NAMES, type VowId, breathBonus, chooseAnchorTarget, cleanVows, hasVows, vowUnlocked, anchorSeal, anchorTargetName, ANCHOR_CATCHES } from '../vows';
+import { VOW_IDS, VOW_NAMES, LEVELED_VOWS, type VowId, breathBonus, restraintBonus, cleanVows, hasVows, vowUnlocked } from '../vows';
 
 /**
  * 새 생을 시작합니다. 환생과 소프트 리셋이 같은 초기화 범위를 씁니다(레벨·골드·일반 장비·직업·능력치 배분).
@@ -44,8 +43,10 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
  * 요구 레벨도 보지 않습니다. 모든 서약이 풀립니다. 자동 사냥 중이었다면 첫 사냥터에서 이어갑니다.
  */
 export function breathReset(s: State, now: number) {
-    const running = s.running;
+    const running = s.running, runs = s.randomGameRuns;
     startLife(s, now, { pearls: s.pearls, rebirths: s.rebirths, lifeBonus: s.lifeBonus });
+    // v27.82 같은 생을 다시 시작하는 것이라 랜덤게임 입장 횟수는 그대로 둡니다.
+    if (runs) s.randomGameRuns = runs;
     delete s.vows;
     s.running = running;
     addLog(s, '하드코어 · 쓰러져 이번 생을 처음부터 다시 시작합니다. 서약이 풀렸습니다.', 'system');
@@ -76,7 +77,8 @@ export const lifecycleActions: ActionHandlers = {
             throw Error(`레벨 ${rebirthLevel(s)}부터 환생할 수 있습니다.`);
         const base = rebirthReward(s, stats(s).rebirthBonus || 0), deepPearls = deepVoyagePearls(s), lifeBonus = nextLifeBonus(s);
         // 하드코어: 이번 생에 한 번도 쓰러지지 않고(쓰러지면 서약이 풀림) 환생하면 세계석 보너스.
-        const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, pearls = base + breath;
+        // v27.82 절제: AP를 줄인 단계만큼 환생 세계석 +15·+30·+45%.
+        const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, restraint = Math.floor(base * restraintBonus(s)), pearls = base + breath + restraint;
         const vows = cleanVows(s, s.nextVows);
         const salvage = salvagePreview(s);
         // v27.63 환생 기록: 이번 생에 걸린 실제 시간·사냥 시간·도달 레벨·받은 세계석. 다음 생 시작 시각을 새로 잽니다.
@@ -89,23 +91,17 @@ export const lifecycleActions: ActionHandlers = {
             if (salvage.mode === 'dismantle') { s.essence = (s.essence || 0) + salvage.essence; addLog(s, `환생 정리 · 장비 ${salvage.count}개 분해 · 정수 +${salvage.essence}`, 'reward'); }
             else { s.gold += salvage.gold; addLog(s, `환생 정리 · 장비 ${salvage.count}개 판매 · 다음 생 시작 골드 +${salvage.gold} G`, 'reward'); }
         }
-        if (hasVows(vows)) {
-            // 잠든 힘의 목표는 게임의 고정 난수로 고릅니다. 잠든 힘이 없으면 난수를 쓰지 않습니다.
-            s.vows = { ...vows, ...(vows.anchor ? { seal: { ...chooseAnchorTarget(s.rebirths, rng), caught: 0, exp: 0 } } : {}) };
-        }
+        if (hasVows(vows)) s.vows = vows;
         else delete s.vows;
         // 윤회의 문: 이번 생에 열릴 ??? 직업을 게임 난수로 추첨해 저장합니다(후보가 없으면 난수를 쓰지 않음).
         const door = drawRebirthDoor(s, rng);
         if (door) s.rebirthDoor = door; else delete s.rebirthDoor;
-        addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${deepPearls ? ` (깊은 모험 +${deepPearls} 포함)` : ''}${breath ? ` · 하드코어 +${breath}` : ''}`);
+        addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${deepPearls ? ` (깊은 모험 +${deepPearls} 포함)` : ''}${breath ? ` · 하드코어 +${breath}` : ''}${restraint ? ` · 절제 +${restraint}` : ''}`);
         if (lifeBonus === 'deep') addLog(s, 'Lv.100 완주 · 이번 생 동안 직업·스킬 숙련 기본 획득 +2', 'reward');
         if (lifeBonus === 'tailwind') addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%`, 'reward');
-        if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => id === 'rough' ? `${VOW_NAMES.rough} ${s.vows!.rough}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
+        if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => (LEVELED_VOWS as readonly string[]).includes(id) ? `${VOW_NAMES[id]} ${s.vows![id]}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
         if (s.rebirthDoor) addLog(s, `윤회의 문 · 이번 생에는 ${jobById(s.rebirthDoor)?.name}의 문이 열렸습니다.`, 'system');
-        const seal = anchorSeal(s);
-        if (seal) addLog(s, `잠든 힘 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리를 잡기 전까지 레벨 1에 머뭅니다.`, 'system');
     },
-    /** 다음 생 서약 예약. id: anchor·breath·rough, value: on/off 또는 험한 길 0~3. */
     /** v25.6 업적 보상 받기: id 또는 'all'. */
     claimAchievement(s, { id }) {
         const got = claimAchievements(s, id);
@@ -130,22 +126,15 @@ export const lifecycleActions: ActionHandlers = {
         if (!vowUnlocked(s, vow))
             throw Error(`${VOW_NAMES[vow]} 연구가 필요합니다.`);
         const next: Vows = { ...(s.nextVows || {}) };
-        if (vow === 'rough') {
+        if (vow === 'rough' || vow === 'restraint') {
             const level = Number(a.value);
             if (!Number.isInteger(level) || level < 0 || level > 3)
-                throw Error('험한 길은 0~3단계로 고르세요.');
-            if (level) next.rough = level; else delete next.rough;
+                throw Error(`${VOW_NAMES[vow]}은(는) 0~3단계로 고르세요.`);
+            if (level) next[vow] = level; else delete next[vow];
         }
-        else if (a.value === 'on') next[vow] = true;
-        else delete next[vow];
+        else if (a.value === 'on') next.breath = true;
+        else delete next.breath;
         if (hasVows(next)) s.nextVows = next; else delete s.nextVows;
-    },
-    /** 잠든 힘 포기: 봉인을 풀고 쌓인 경험치를 보너스 없이 받습니다. */
-    anchorGiveUp(s) {
-        if (!anchorSeal(s))
-            throw Error('잠든 힘 봉인 중이 아닙니다.');
-        releaseAnchor(s, false);
-        gainLevels(s);
     },
     resetData(s, { now }) {
         if (s.running || s.dungeon)

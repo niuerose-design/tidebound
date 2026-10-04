@@ -148,37 +148,46 @@ test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance p
 });
 
 // 세계석 연구 4단계: 서약 3개
-import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta } from './harness.mjs';
+import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta, victoryHeal, apCapacity } from './harness.mjs';
 const vowReady = (research = {}, next = {}) => { const s = newState(0); s.rebirths = 5; s.level = 60; Object.assign(s.permanent, research); s.nextVows = next; return s; };
-const catchOne = (s, id = 'minnow') => { s.enemy = { id, name: id, hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 10, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; reward(s, () => .99); };
 
-test('Vows: research entries, reservation rules and cleanup on full reset', () => {
-    for (const id of ['vowAnchor', 'vowBreath', 'vowRough']) { const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.group], [3, 10, 10, 5, 'vow']); assert.equal(economy.researchSpent(id, 3), 60); }
-    const s = newState(0); assert.throws(() => act(s, { type: 'nextVow', id: 'anchor', value: 'on' }, 0), /연구가 필요/);
-    s.permanent.vowAnchor = 1; s.permanent.vowRough = 1; act(s, { type: 'nextVow', id: 'anchor', value: 'on' }, 0); act(s, { type: 'nextVow', id: 'rough', value: '2' }, 0);
-    assert.deepEqual(s.nextVows, { anchor: true, rough: 2 }); assert.throws(() => act(s, { type: 'nextVow', id: 'rough', value: '4' }, 0));
-    act(s, { type: 'nextVow', id: 'anchor', value: 'off' }, 0); act(s, { type: 'nextVow', id: 'rough', value: '0' }, 0); assert.equal(s.nextVows, undefined);
-    assert.deepEqual([1, 2, 3].map(r => vowsMod.anchorPayout({ permanent: { vowAnchor: r } })), [1.5, 1.75, 2]);
+test('v27.82 vows: research entries, reservation rules (breath on/off, rough·restraint 0~3) and cleanup on full reset', () => {
+    for (const id of ['vowAnchor', 'vowBreath', 'vowRough', 'vowRestraint']) { const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.group], [3, 10, 10, 5, 'vow']); assert.equal(economy.researchSpent(id, 3), 60); }
+    const s = newState(0); assert.throws(() => act(s, { type: 'nextVow', id: 'rough', value: '1' }, 0), /연구가 필요/);
+    assert.throws(() => act(s, { type: 'nextVow', id: 'anchor', value: 'on' }, 0), /서약을 확인/, 'sleeping anchor is no longer a vow');
+    s.permanent.vowRestraint = 1; s.permanent.vowRough = 1; act(s, { type: 'nextVow', id: 'restraint', value: '3' }, 0); act(s, { type: 'nextVow', id: 'rough', value: '2' }, 0);
+    assert.deepEqual(s.nextVows, { restraint: 3, rough: 2 }); assert.throws(() => act(s, { type: 'nextVow', id: 'rough', value: '4' }, 0));
+    act(s, { type: 'nextVow', id: 'restraint', value: '0' }, 0); act(s, { type: 'nextVow', id: 'rough', value: '0' }, 0); assert.equal(s.nextVows, undefined);
     assert.deepEqual([1, 2, 3].map(r => vowsMod.breathBonus({ permanent: { vowBreath: r } })), [.5, .75, 1]);
     const w = vowReady({ vowRough: 1 }, { rough: 1 }); w.goldenBook = { minnow: 1 }; w.masteryCarry = 3; act(w, { type: 'rebirth' }, 0); assert.ok(w.vows);
     act(w, { type: 'resetData' }, 0); for (const k of ['vows', 'nextVows', 'goldenBook', 'masteryCarry']) assert.equal(w[k], undefined, k);
 });
 
-test('Vows · sleeping anchor: level 1 until 300 catches at the target, then stored exp ×1.5; tide locked; give up pays without bonus', () => {
-    const s = vowReady({ vowAnchor: 1 }, { anchor: true }); act(s, { type: 'rebirth' }, 0, () => 0);
-    assert.deepEqual(s.vows.seal, { kind: 'stage', id: 'brook', caught: 0, exp: 0 }); assert.deepEqual(s.nextVows, { anchor: true }, 'reservation stays for later lives');
-    assert.throws(() => act(s, { type: 'tide', id: '1' }, 0), /잠든 힘/); s.tide = 3; assert.equal(meta.encounterTier(s), 0); s.tide = 0;
-    s.stage = 'bay'; catchOne(s); const per = s.vows.seal.exp; assert.ok(per > 0); assert.equal(s.vows.seal.caught, 0, 'catches elsewhere do not count');
-    s.stage = 'brook'; for (let i = 0; i < 299; i++) catchOne(s);
-    assert.equal(s.level, 1); assert.equal(s.exp, 0); assert.equal(s.vows.seal.caught, 299);
-    catchOne(s); const expected = Math.floor(per * 301 * 1.5);
-    assert.equal(s.vows.seal, null); assert.ok(s.level > 1); assert.ok(s.logs.some(l => l.text.includes(`+${expected} EXP`)));
-    const g = vowReady({ vowAnchor: 3 }, { anchor: true }); act(g, { type: 'rebirth' }, 0, () => 0); g.stage = 'brook';
-    for (let i = 0; i < 50; i++) catchOne(g); const stored = g.vows.seal.exp;
-    act(g, { type: 'anchorGiveUp' }, 0); assert.equal(g.vows.seal, null); assert.ok(g.logs.some(l => l.text.includes(`+${stored} EXP`))); assert.ok(g.level > 1);
-    assert.throws(() => act(g, { type: 'anchorGiveUp' }, 0));
-    // 윤회의 문 후보를 하나로 줄여(직전 값 제외) 문 추첨도 난수를 쓰지 않게 한 뒤, 서약이 없으면 난수를 쓰지 않는지 봅니다.
-    const none = vowReady(); none.rebirthDoor = 'voidcaller'; const rng = counting(); act(none, { type: 'rebirth' }, 0, rng); assert.equal(rng.calls, 0); assert.equal(none.vows, undefined);
+test('v27.82 legacy sleeping-anchor saves: the seal is released (stored exp paid as is) on the next tick and the vow is gone', () => {
+    const s = newState(0); s.vows = { anchor: true, seal: { kind: 'stage', id: 'brook', caught: 12, exp: 500 } }; advance(s, 0);
+    assert.equal(s.vows.seal, undefined); assert.equal(s.vows.anchor, undefined); assert.ok(s.level > 1 || s.exp >= 500); assert.ok(s.logs.some(l => l.text.includes('+500 EXP')));
+});
+
+test('v27.82 random game: research-gated entries per life, random monsters by wave, stake grows per wave, target or leave cashes out, a fall loses everything', () => {
+    const s = newState(0); s.rebirths = 6; s.level = 60; s.running = true;
+    assert.throws(() => act(s, { type: 'dungeon', id: 'randomGame', value: 'until:3' }, 0), /랜덤게임/);
+    s.permanent.vowAnchor = 2;
+    act(s, { type: 'dungeon', id: 'randomGame', value: 'until:3' }, 0); assert.equal(s.dungeon.id, 'randomGame'); assert.equal(s.dungeon.until, 3); assert.equal(s.randomGameRuns, 1);
+    assert.equal(meta.encounterTier(s), 2, 'wave 1 = difficulty 2'); s.recovery = 0;
+    const p0 = s.pearls, e0 = s.essence || 0;
+    for (let w = 0; w < 3; w++) { spawn(s, () => .5); assert.equal(s.enemy.exp, 0); assert.equal(s.enemy.gold, 0); s.enemy.hp = 0; reward(s, () => .5); }
+    // 3웨이브 판돈: 정수 2+4+6 = 12, 세계석 0, 연구 2단계 ×1.5 → 정수 18. 목표 도달로 받고 나와 자동 사냥으로.
+    assert.equal(s.dungeon, null); assert.equal((s.essence || 0) - e0, 18); assert.equal(s.pearls, p0); assert.equal(s.running, true);
+    act(s, { type: 'dungeon', id: 'randomGame' }, 0); assert.equal(s.dungeon.until, undefined); s.recovery = 0;
+    spawn(s, () => .1); s.enemy.hp = 0; reward(s, () => .5); assert.equal(s.dungeon.wave, 1);
+    // 쓰러지면 판돈 소멸.
+    const e1 = s.essence; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 0, gold: 0, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
+    tick(s, () => .5); assert.equal(s.dungeon, null); assert.equal(s.essence, e1, 'stake lost on a fall');
+    assert.throws(() => act(s, { type: 'dungeon', id: 'randomGame' }, 0), /횟수/, 'rank 2 = two entries per life');
+    // 나가기 = 받고 나가기.
+    const t = newState(0); t.rebirths = 6; t.level = 60; t.permanent.vowAnchor = 1; act(t, { type: 'dungeon', id: 'randomGame' }, 0); t.recovery = 0;
+    for (let w = 0; w < 10; w++) { spawn(t, () => .5); t.enemy.hp = 0; reward(t, () => .5); }
+    const tp = t.pearls; act(t, { type: 'leaveDungeon' }, 0); assert.equal(t.pearls - tp, 1, 'wave 10 adds one pearl'); assert.equal(t.essence, 110);
 });
 
 test('Vows · one breath: a fall soft-resets the life (online and offline); an unbroken life adds rebirth pearls', () => {
@@ -197,14 +206,26 @@ test('Vows · one breath: a fall soft-resets the life (online and offline); an u
     assert.equal((vowed.pearls - v0) - (plain.pearls - p0), base, 'rank 3 doubles rebirth pearls');
 });
 
-test('Vows · rough sea: enemies ×(1+0.5n), gold and drops ×(1+0.5n×boost); snapshot carries ranking badges', () => {
-    const base = newState(0); base.level = 20; spawn(base, () => .3);
-    const rough = newState(0); rough.level = 20; rough.permanent.vowRough = 1; rough.vows = { rough: 2 }; spawn(rough, () => .3);
-    assert.equal(rough.enemy.id, base.enemy.id); assert.equal(rough.enemy.maxHp, Math.round(base.enemy.maxHp * 2)); assert.equal(rough.enemy.combatStats.attack, Math.round(base.enemy.combatStats.attack * 2));
+test('v27.82 strength path (rough): difficulty floor, gear -30/50/70%, recovery -50/75/100%; gold and drops ×(1+0.5n×boost) after the drop cap; snapshot badges', () => {
+    const base = newState(0); base.level = 20; base.equipment.rod = { id: 't', slot: 'rod', rarity: 2, power: 30, level: 20, name: 't', enhance: 0 };
+    const rough = structuredClone(base); rough.permanent.vowRough = 1; rough.vows = { rough: 2 };
+    spawn(base, () => .3); spawn(rough, () => .3); assert.equal(rough.enemy.maxHp, base.enemy.maxHp, 'enemies are not buffed any more');
+    close(goldMultiplier(rough) / goldMultiplier(base), 1, 'below the floor (20) no reward'); rough.tide = 20; base.tide = 20;
     close(goldMultiplier(rough) / goldMultiplier(base), 2); close(dropRate(rough) / dropRate(base), 2);
     rough.permanent.vowRough = 3; close(goldMultiplier(rough) / goldMultiplier(base), 3);
-    rough.vows = { rough: 2, anchor: true, breath: true }; assert.deepEqual(snapshot(rough).vows, ['anchor', 'breath', 'rough2']);
-    assert.equal('vows' in snapshot(base), false);
+    const gt = {}, bt = {}; stats(rough, gt); stats(base, bt); const gear = t => (t.attack || []).filter(x => x.source === 'equipment').reduce((a, x) => a + x.delta, 0);
+    if (gear(bt)) close(gear(gt) / gear(bt), .5, 'gear -50% at step 2');
+    close(victoryHeal(rough) / Math.max(1, victoryHeal(base)), .25, 'recovery -75% at step 2');
+    rough.vows = { rough: 2, restraint: 1, breath: true }; assert.deepEqual(snapshot(rough).vows, ['breath', 'rough2', 'restraint1']);
+    assert.equal('vows' in snapshot(newState(0)), false);
+});
+
+test('v27.82 restraint: equip AP -2/-4/-6, rebirth pearls +15/30/45% (×boost)', () => {
+    const s = newState(0); const ap = apCapacity(s); s.vows = { restraint: 2 }; assert.equal(apCapacity(s), ap - 4);
+    const plain = vowReady(), vowed = vowReady({ vowRestraint: 1 }); vowed.vows = { restraint: 3 }; const p0 = plain.pearls, v0 = vowed.pearls;
+    const base = rebirthReward(plain, stats(plain).rebirthBonus || 0);
+    act(plain, { type: 'rebirth' }, 0); act(vowed, { type: 'rebirth' }, 0);
+    assert.equal((vowed.pearls - v0) - (plain.pearls - p0), Math.floor(base * .45));
 });
 
 // 계승 스킬 레벨 조건 면제

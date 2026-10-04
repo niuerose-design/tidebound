@@ -5,7 +5,7 @@ import { ChatPanel } from './chat-panel';
 import { ChevronRight, Compass, Flame, Lock, Map, MessageCircle, Swords } from 'lucide-react';
 import { serverNow } from './jobs/job-status';
 import { Meter } from './shared';
-import { STAGES, DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
+import { STAGES, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { DUNGEON_MODES } from '@/game/data/balance';
 import { BattleLogLine } from './combat-log';
 import type { State, Action } from '@/game/types';
@@ -41,7 +41,7 @@ export function BattleRail({ s, base, busy, send, setView }: {
 type PlaceProps = { s: State; busy: boolean; send: (a: Action) => void; setView: (v: string) => void };
 /** 사냥터·던전·제단 선택판. 동기화 상태만 받아 전투 재생 프레임마다 다시 그리지 않습니다(v27.62). */
 const PlaceSelector = memo(function PlaceSelector({ s, busy, send, setView }: PlaceProps) {
-    const dungeons = [...DUNGEONS].sort((a, b) => a.level - b.level);
+    const dungeons = [...PLAIN_DUNGEONS].sort((a, b) => a.level - b.level);
     // 사냥터·던전을 한 창에서 탭으로 고릅니다. 던전에 들어가면 던전 탭으로 넘어갑니다.
     const [tab, setTab] = useState<'stage' | 'dungeon' | 'altar'>(s.dungeon ? 'dungeon' : 'stage');
     const inDungeon = !!s.dungeon;

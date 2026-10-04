@@ -364,3 +364,8 @@
   flex:1;
   min-width:0
 }
+
+/* v27.82 랜덤게임 */
+.random-game-card { margin-bottom: 18px; }
+.random-game-card .random-game-targets { flex-wrap: wrap; margin: 10px 0 6px; }
+.random-game-stake { margin: 6px 0 12px; font-size: 13px; color: var(--gold); }

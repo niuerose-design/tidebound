@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { FISH, PLACES as STAGES, DUNGEONS } from './world';
+import { FISH, PLACES as STAGES, DUNGEONS, PLAIN_DUNGEONS } from './world';
 import { kst } from './doors';
 
 /**
@@ -28,7 +28,7 @@ export const weekSeason = (key: string) => Number(key.replace('-W', ''));
 /** 지금 플레이어가 갈 수 있는 사냥터·던전 안에서 목표를 뽑습니다(환생·레벨 조건). */
 export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, key: string, weekly: boolean): Goal[] {
     const level = Math.max(s.level, s.peakLevel || 0, 10), seed = hash(key + (weekly ? ':w' : ':d'));
-    const stages = STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
+    const stages = STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = PLAIN_DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
     const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => FISH.some(f => f.id === id && !f.minTier));
     const scale = weekly ? 6 : 1;
     const goals: Goal[] = [

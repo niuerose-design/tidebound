@@ -1,5 +1,6 @@
 import { refinementTargets, thresholdRank, REFINEMENT_STEP_BONUS } from '../data/long-term';
 import { rebirthAP } from './meta';
+import { restraintAP } from './vows';
 import { accountAP } from '../data/account';
 import { abyssAP } from '../data/long-term';
 import type { State, Attribute, Skill, Stats } from '../types';
@@ -47,7 +48,8 @@ export function skillMasteryRewards(sk: Skill, rank = 1, mastery = 0) {
     return { ap: sk.masteryAP || 0, bonus: sk.masteryBonus || {} };
 }
 function apBonus(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk && canUse(s, id) ? skillMasteryRewards(sk, s.learned?.[id] || 1, skillMastery(s, id)).ap : 0); }, 0); }
-export function apCapacity(s: State, ids = s.skills) { return PROGRESSION.baseAP + rebirthAP(s) + (s.permanent.ap || 0) + completedRegions(s).length + achievementAP(s) + accountAP(s) + abyssAP(s) + apBonus(s, ids); }
+/** 장착 AP 한도. v27.82 절제 서약은 −2·−4·−6(최소 1). */
+export function apCapacity(s: State, ids = s.skills) { return Math.max(1, PROGRESSION.baseAP + rebirthAP(s) + (s.permanent.ap || 0) + completedRegions(s).length + achievementAP(s) + accountAP(s) + abyssAP(s) + apBonus(s, ids) - restraintAP(s)); }
 /** v25.6 업적 보상으로 늘어난 장착 AP. achievements.ts와 순환 의존을 피하려 여기서 직접 셉니다. */
 function achievementAP(s: Pick<State, 'achievementClaims'>) { let ap = 0; for (const id of Object.keys(s.achievementClaims || {})) ap += ACHIEVEMENT_AP[id] || 0; return ap; }
 export const ACHIEVEMENT_AP: Record<string, number> = {};

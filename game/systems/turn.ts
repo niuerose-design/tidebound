@@ -14,7 +14,8 @@ import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
 import { canUse, skillMasteryRanks } from './progression';
 import { addLog, endRun } from './state';
-import { spawn, reward } from './encounter';
+import { spawn, reward, releaseLegacySeal, gainLevels } from './encounter';
+import { inRandomGame, loseRandomGame } from './random-game';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
 import { breathReset } from './actions/lifecycle';
@@ -45,6 +46,8 @@ const STALEMATE_TURNS = 120;
  */
 function repairState(s: State, now?: number) {
     const fixed: string[] = [];
+    // v27.82 옛 ‘잠든 힘’ 봉인(서약이 던전 랜덤게임으로 바뀜): 쌓인 경험치를 지급하고 봉인을 지웁니다.
+    if (s.vows?.seal || s.vows?.anchor) { releaseLegacySeal(s); if (s.vows) { delete s.vows.anchor; delete s.vows.seal; } gainLevels(s); }
     if (now !== undefined && !Number.isFinite(s.lastTick)) { s.lastTick = now; fixed.push('시각'); }
     if (!Number.isFinite(s.recovery) || s.recovery < 0) { s.recovery = 0; fixed.push('회복 대기'); }
     if (!STAGES.some(x => x.id === s.stage)) { s.stage = STAGES[0].id; s.target = null; fixed.push('사냥터'); }
@@ -116,7 +119,8 @@ function tickTurn(s: State, rng: () => number) {
         s.effects = {};
         s.playerStun = 0;
         addLog(s, '몬스터를 놓쳤습니다. 잠시 회복합니다.');
-        if (s.dungeon) {
+        if (inRandomGame(s)) loseRandomGame(s);
+        else if (s.dungeon) {
             const repeating = !!s.dungeon.repeat;
             endRun(s, `${DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 사냥으로 전환' : ' · 멈춤'}`);
             s.dungeon = null;

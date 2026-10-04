@@ -39,7 +39,7 @@ export function Stages({ s, send, busy }: PanelProps) {
                 <span>Lv. {st.level}+{st.rebirth ? ` · 환생 ${st.rebirth}회` : ''}</span>
                 <span>{st.habitat ? `${st.fish.length}종 · 무리 ×${HABITAT.sizes[0]} ${Math.round((1 - HABITAT.bigChance) * 100)}% · ×${HABITAT.sizes[1]} ${Math.round(HABITAT.bigChance * 100)}% 확정 · 까미·누리 없음` : `${st.fish.length}종 서식 · 까미 ×${mimicStageMultiplier(i).toFixed(2)}`}</span>
                 </div>
-                {st.habitat ? <span className="region-research">고위험 고보상 · 처치 한 번에 마리 수만큼 보상·도감·드롭 · 난이도 이정표 세계석 없음</span> : <RegionProgress s={s} id={st.id}/>}
+                {st.habitat ? <span className="region-research">고위험 고보상 · 처치 한 번에 마리 수만큼 보상·도감·드롭</span> : <RegionProgress s={s} id={st.id}/>}
                 </button>;
         })}</div>
     </details>; })}

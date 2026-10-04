@@ -5,6 +5,8 @@ import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed } from '../../data/
 import { SWARM_CAPS } from '../../data/variants';
 import { JOBS } from '../../data/classes';
 import { SKILLS, skillById } from '../../data/skills';
+import { RANDOM_GAME } from '../../data/random-game';
+import { randomGameRank, randomGameRunsLeft, inRandomGame, cashOutRandomGame } from '../random-game';
 import type { ActionHandlers } from './types';
 import { researchRank, salvageRate } from '../../data/economy';
 import { addLog, endRun } from '../state';
@@ -16,8 +18,6 @@ export const voyageActions: ActionHandlers = {
         const tier = Number(id);
         if (!Number.isInteger(tier) || tier < 0 || tier > tideLimit(s) || s.dungeon)
             throw Error('사냥터 난이도 조건을 확인하세요.');
-        if (tier && s.vows?.seal)
-            throw Error('잠든 힘 봉인 중에는 사냥터 난이도가 0으로 고정됩니다.');
         s.tide = tier;
         s.enemy = null;
         s.effects = {};
@@ -55,12 +55,22 @@ export const voyageActions: ActionHandlers = {
             throw Error('던전 입장 조건을 충족하지 못했습니다.');
         if (dungeonClosed(d.id))
             throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);
-        const { mode, repeat } = parseDungeonValue(s, d.id, a.value);
-        enterDungeon(s, d.id, repeat, mode);
+        // v27.82 랜덤게임: 연구 단계만큼 생마다 입장. 값 'until:N'은 목표 웨이브(0이면 받고 나가기·쓰러짐까지).
+        if (d.id === RANDOM_GAME.id) {
+            if (!randomGameRank(s)) throw Error('세계석 연구 ‘랜덤게임’이 필요합니다.');
+            if (!randomGameRunsLeft(s)) throw Error('이번 생의 랜덤게임 입장 횟수를 모두 썼습니다.');
+            const until = Math.max(0, Math.min(999, Math.floor(Number(String(a.value || 'until:0').replace('until:', '')) || 0)));
+            enterDungeon(s, d.id);
+            s.dungeon = { ...s.dungeon!, stake: { essence: 0, pearls: 0 }, ...(until ? { until } : {}) };
+            s.randomGameRuns = (s.randomGameRuns || 0) + 1;
+        }
+        else { const { mode, repeat } = parseDungeonValue(s, d.id, a.value); enterDungeon(s, d.id, repeat, mode); }
         s.running = true;
         s.lastTick = now;
     },
     leaveDungeon(s) {
+        // v27.82 랜덤게임에서 나가면 지금까지의 판돈을 받습니다.
+        if (inRandomGame(s)) { cashOutRandomGame(s); return; }
         s.dungeon = null;
         s.enemy = null;
         s.running = false;
