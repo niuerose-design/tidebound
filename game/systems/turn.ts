@@ -46,7 +46,7 @@ const STALEMATE_TURNS = 120;
  */
 function repairState(s: State, now?: number) {
     const fixed: string[] = [];
-    // v27.82 옛 ‘잠든 힘’ 봉인(서약이 던전 랜덤게임으로 바뀜): 쌓인 경험치를 지급하고 봉인을 지웁니다.
+    // v27.84 옛 ‘잠든 힘’ 봉인(서약이 던전 랜덤게임으로 바뀜): 쌓인 경험치를 지급하고 봉인을 지웁니다.
     if (s.vows?.seal || s.vows?.anchor) { releaseLegacySeal(s); if (s.vows) { delete s.vows.anchor; delete s.vows.seal; } gainLevels(s); }
     if (now !== undefined && !Number.isFinite(s.lastTick)) { s.lastTick = now; fixed.push('시각'); }
     if (!Number.isFinite(s.recovery) || s.recovery < 0) { s.recovery = 0; fixed.push('회복 대기'); }

@@ -1,4 +1,4 @@
-/** v27.82 랜덤게임 진행: 무작위 몬스터 생성, 웨이브 판돈, 받고 나가기, 쓰러짐. */
+/** v27.84 랜덤게임 진행: 무작위 몬스터 생성, 웨이브 판돈, 받고 나가기, 쓰러짐. */
 import type { State } from '../types';
 import { RANDOM_GAME, randomGameBoss, waveStake } from '../data/random-game';
 import { FISH, PLACES, tideLiftFish } from '../data/world';

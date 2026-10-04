@@ -55,7 +55,7 @@ export const voyageActions: ActionHandlers = {
             throw Error('던전 입장 조건을 충족하지 못했습니다.');
         if (dungeonClosed(d.id))
             throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);
-        // v27.82 랜덤게임: 연구 단계만큼 생마다 입장. 값 'until:N'은 목표 웨이브(0이면 받고 나가기·쓰러짐까지).
+        // v27.84 랜덤게임: 연구 단계만큼 생마다 입장. 값 'until:N'은 목표 웨이브(0이면 받고 나가기·쓰러짐까지).
         if (d.id === RANDOM_GAME.id) {
             if (!randomGameRank(s)) throw Error('세계석 연구 ‘랜덤게임’이 필요합니다.');
             if (!randomGameRunsLeft(s)) throw Error('이번 생의 랜덤게임 입장 횟수를 모두 썼습니다.');
@@ -69,7 +69,7 @@ export const voyageActions: ActionHandlers = {
         s.lastTick = now;
     },
     leaveDungeon(s) {
-        // v27.82 랜덤게임에서 나가면 지금까지의 판돈을 받습니다.
+        // v27.84 랜덤게임에서 나가면 지금까지의 판돈을 받습니다.
         if (inRandomGame(s)) { cashOutRandomGame(s); return; }
         s.dungeon = null;
         s.enemy = null;

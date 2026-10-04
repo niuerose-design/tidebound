@@ -7,7 +7,7 @@ import { kst } from './doors';
  * 진행은 처치·정복 때 쌓이고, 다 채우면 보상(세계석·정수)을 바로 받습니다. 하루 목표를 모두 채우면 추가 세계석.
  */
 export type GoalKind = 'catch' | 'species' | 'dungeon' | 'boss' | 'swarm' | 'duel';
-export type Goal = { id: string; kind: GoalKind; target: number; /** species면 몬스터 id, dungeon이면 던전 id(빈 값은 아무 곳). */ subject?: string; pearls: number; essence?: number; /** v25.12 선택 목표: 모두 달성 보너스 계산에서 뺍니다(상대가 없을 수 있는 결투). */ optional?: boolean; progress: number; claimed?: boolean };
+export type Goal = { id: string; kind: GoalKind; target: number; /** species면 몬스터 id, dungeon이면 던전 id(빈 값은 아무 곳). */ subject?: string; pearls: number; essence?: number; /** v25.12 선택 목표: 모두 달성 보너스 계산에서 뺍니다(상대가 없을 수 있는 결투). */ optional?: boolean; progress: number; claimed?: boolean; /** v27.81 다시 뽑은 날짜 키(한국 시간). 목표마다 하루 1회만 다시 뽑습니다. */ rerolled?: string };
 export type GoalBoard = { key: string; goals: Goal[]; /** 모두 완료 보너스를 받았는지. */ bonus?: boolean };
 export const DAILY_ALL_BONUS = 3, WEEKLY_ALL_BONUS = 10;
 
@@ -40,6 +40,37 @@ export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, ke
     // v25.12 랭크 결투 승리 목표. 상대가 없는 서버도 있으니 선택 목표로 두고 모두 달성 보너스에는 세지 않습니다.
     goals.push({ id: 'duel', kind: 'duel', target: weekly ? 3 : 1, pearls: weekly ? 4 : 1, optional: true, progress: 0 });
     return goals;
+}
+/** v27.81 다시 뽑기 후보. 지금 갈 수 있는 사냥터·던전 기준이며 진행은 0부터입니다(결투는 후보에서 뺍니다). */
+export function goalCandidates(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, weekly: boolean): Omit<Goal, 'id' | 'progress'>[] {
+    const level = Math.max(s.level, s.peakLevel || 0, 10), scale = weekly ? 6 : 1;
+    const stages = STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
+    const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => FISH.some(f => f.id === id && !f.minTier));
+    return [
+        { kind: 'catch', target: 60 * scale, pearls: weekly ? 4 : 1 },
+        ...fishPool.map(id => ({ kind: 'species' as const, subject: id, target: 25 * scale, pearls: weekly ? 5 : 2 })),
+        ...dungeons.map(d => ({ kind: 'dungeon' as const, subject: d.id, target: weekly ? 5 : 1, pearls: weekly ? 7 : 2 })),
+        { kind: 'boss', target: weekly ? 6 : 1, pearls: weekly ? 6 : 1 },
+        { kind: 'swarm', target: weekly ? 12 : 3, pearls: weekly ? 5 : 2 },
+    ];
+}
+/** 같은 목표인지(종류와 대상). 다시 뽑을 때 겹침을 피하는 데 씁니다. */
+export const sameGoal = (a: Pick<Goal, 'kind' | 'subject'>, b: Pick<Goal, 'kind' | 'subject'>) => a.kind === b.kind && (a.subject || '') === (b.subject || '');
+/**
+ * v27.81 목표판의 목표 하나를 다시 뽑습니다. 같은 판의 다른 목표와 종류·대상이 겹치지 않는 후보 가운데 판 키·자리·날짜로 정해지는 씨앗으로 고르므로 난수를 쓰지 않습니다.
+ * 진행은 0으로 돌아가고 선택 목표(결투) 여부는 그대로입니다. 받은 목표나 오늘 이미 다시 뽑은 목표는 바꿀 수 없습니다.
+ */
+export function rerollGoal(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, board: GoalBoard, id: string, day: string, weekly: boolean): Goal {
+    const g = board.goals.find(x => x.id === id);
+    if (!g) throw Error('목표를 확인하세요.');
+    if (g.claimed) throw Error('이미 달성한 목표는 다시 뽑을 수 없습니다.');
+    if (g.rerolled === day) throw Error('목표마다 하루에 한 번만 다시 뽑을 수 있습니다.');
+    const pool = goalCandidates(s, weekly).filter(c => !board.goals.some(other => sameGoal(other, c)));
+    if (!pool.length) throw Error('바꿀 수 있는 다른 목표가 없습니다.');
+    const next = pick(pool, hash(`${board.key}:${id}:${day}:r`));
+    const fresh: Goal = { id: g.id, kind: next.kind, target: next.target, pearls: next.pearls, progress: 0, rerolled: day, ...(next.subject ? { subject: next.subject } : {}), ...(g.optional ? { optional: true } : {}) };
+    board.goals[board.goals.indexOf(g)] = fresh;
+    return fresh;
 }
 export function goalText(g: Goal) {
     const name = g.kind === 'species' ? FISH.find(f => f.id === g.subject)?.name || '지정 몬스터' : g.kind === 'dungeon' ? DUNGEONS.find(d => d.id === g.subject)?.name || '던전' : '';

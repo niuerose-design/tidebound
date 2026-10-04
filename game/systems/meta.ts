@@ -32,7 +32,7 @@ export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, v27.70 일반 던전은 입장 때 고른 난이도(노말 0 · 헬 50 · 나이트메어 200). */
 export const dungeonTier = (id: string, abyssDepth: number, mode?: string) => id === 'abyss' ? abyssDepth + 2 : dungeonModeTier(mode);
 /** 지금 전투의 난이도: 던전은 던전 난이도(무릉도장 층·모드·랜덤게임 웨이브), 사냥터는 사냥터 난이도. */
-/** v27.82 랜덤게임은 2 × 웨이브(randomGameTier). */
+/** v27.84 랜덤게임은 2 × 웨이브(randomGameTier). */
 export const encounterTier = (s: State) => s.dungeon ? (s.dungeon.id === RANDOM_GAME.id ? randomGameTier(s.dungeon.wave) : dungeonTier(s.dungeon.id, s.dungeon.depth || 1, s.dungeon.mode)) : (s.tide || 0);
 /**
  * v27.68 일반 던전도 고른 난이도만큼 레벨이 올라갑니다(tideLiftLevel, v27.70부터 던전 난이도 기준). 보상·클리어 골드·과레벨 감쇠·클리어 드롭은 이 레벨 기준.

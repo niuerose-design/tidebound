@@ -27,7 +27,7 @@ export const {goalProgress,goalSuggestions}=await load('game/systems/goals.js');
 export const {skillGrowthStages}=await load('game/systems/skill-description.js');
 export const {SKILLS}=await load('game/data/skills.js');
 const WORLD=await load('game/data/world.js');
-// v27.82 테스트의 DUNGEONS는 일반 던전(랜덤게임 제외)입니다.
+// v27.84 테스트의 DUNGEONS는 일반 던전(랜덤게임 제외)입니다.
 export const {STAGES,FISH,CLOSED_DUNGEONS,setClosures,closuresSnapshot}=WORLD, DUNGEONS=WORLD.PLAIN_DUNGEONS;
 // v27.25·v27.31 닫힌 사냥터·던전(기본: 무한 심연)은 라이브에서만 닫습니다. 테스트는 모두 엽니다(닫힘 자체는 content.test에서 따로 확인).
 setClosures({dungeons:[],stages:[]});

@@ -350,6 +350,8 @@ export type State = {
     achievements?: Record<string, number>;
     /** v26.1 장착한 칭호 id. undefined면 자동(가장 최근 달성), null이면 표시 안 함. */
     title?: string | null;
+    /** v27.80 이름 옆 표시: 칭호 또는 계급장(채팅도 같음). 없으면 칭호. */
+    badge?: 'title' | 'rank';
     /** v27.79 계급장: 처치 수로만 오르는 별도 레벨과 진급 포인트 특전. 환생해도 남습니다. 없으면 kills로 시작합니다. */
     rank?: import('./data/rank').RankState;
     /** v25.6 보상을 받은 업적 id. 영구 AP·배율은 받은 것만 셉니다. */
@@ -476,13 +478,15 @@ export type State = {
         repeat?: { left: number | null; until?: number };
         /** v27.70 일반 던전 난이도(DUNGEON_MODES). 없으면 노말. 무릉도장은 쓰지 않습니다. */
         mode?: import('./data/balance').DungeonMode;
-        /** v27.82 랜덤게임: 쌓인 판돈(배율 적용 전)과 목표 웨이브(0이면 없음). */
+        /** v27.84 랜덤게임: 쌓인 판돈(배율 적용 전)과 목표 웨이브(0이면 없음). */
         stake?: { essence: number; pearls: number };
         until?: number;
     };
-    /** v27.82 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). */
+    /** v27.84 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). */
     randomGameRuns?: number;
     clears: Record<string, number>;
+    /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
+    modeClears?: Partial<Record<import('./data/balance').DungeonMode, Record<string, number>>>;
     logs: Log[];
     logId: number;
     lastDuel: number;
@@ -502,7 +506,7 @@ export type State = {
     };
 };
 /** 서약. breath는 걸었는지, rough는 힘의 길·restraint는 절제 선택 단계(1~3). anchor·seal은 옛 잠든 힘(세이브 호환용). */
-/** v27.82 anchor·seal은 옛 ‘잠든 힘’(지금은 던전 랜덤게임) 세이브 호환용으로만 남깁니다. restraint는 절제(1~3단계). */
+/** v27.84 anchor·seal은 옛 ‘잠든 힘’(지금은 던전 랜덤게임) 세이브 호환용으로만 남깁니다. restraint는 절제(1~3단계). */
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };

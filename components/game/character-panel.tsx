@@ -4,7 +4,6 @@ import { ChevronDown, RefreshCw, Target } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
 import { attributes, apCapacity, apUsed } from '@/game/systems/progression';
 import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
-import { RankPanel } from './rank-panel';
 import { masteryMultipliers } from '@/game/systems/mastery';
 import { VARIANTS, VARIANT_BOOK_MIN, variantChances } from '@/game/data/variants';
 import {MONSTER_TUNING, BALANCE } from '@/game/data/balance';
@@ -14,7 +13,6 @@ import { roughReward } from '@/game/systems/vows';
 import { accountExpGold } from '@/game/data/account';
 import { tailwindActive, tailwindExp, encounterTier } from '@/game/systems/meta';
 import { Heading } from './shared';
-import { TITLES, unlockedTitles, displayTitle, titleById } from '@/game/data/titles';
 import type { PanelProps } from './panel-props';
 import type { State } from '@/game/types';
 /** 상세 능력치의 숙련도 획득 보너스. 펼치면 배율별 기여와 처치당 기대 숙련을 보여줍니다. */
@@ -39,10 +37,6 @@ export function Character({ s, send, busy }: PanelProps) {
     <div><span>직접 투자한 포인트<strong>{Object.values(s.attributes).reduce((a, n) => a + n, 0)}</strong></span></div>
     <div><span>레벨마다<strong>+{PROGRESSION.statPerLevel} <small>P</small></strong></span></div>
     </section>
-    <div className="identity-row">{(() => { const owned = new Set(unlockedTitles(s).map(t => t.id)), current = displayTitle(s), chosen = titleById(s.title); return <details className="panel title-panel"><summary><h2>칭호</h2><span>{current ? `표시 중 · ${current}` : '표시 안 함'} · {owned.size} / {TITLES.length} 획득 · 업적을 달성하면 얻습니다</span></summary>
-        <div className="title-actions"><button type="button" className={s.title === undefined ? 'primary small' : 'secondary small'} disabled={busy} onClick={() => send({ type: 'title', id: 'auto' })}>자동(최근 획득)</button><button type="button" className={s.title === null ? 'primary small' : 'secondary small'} disabled={busy} onClick={() => send({ type: 'title', id: 'none' })}>표시 안 함</button></div>
-        <div className="title-list">{TITLES.map(t => { const got = owned.has(t.id), on = chosen?.id === t.id; return <div key={t.id} className={`title-row ${got ? 'owned' : 'locked'} ${on ? 'on' : ''}`}><span className="title-name"><small className="rebirth-title">{t.name}</small></span><span className="title-desc">{t.group} · {t.desc}</span>{got ? <button type="button" className={on ? 'primary small' : 'secondary small'} disabled={busy || on} onClick={() => send({ type: 'title', id: t.id })}>{on ? '장착 중' : '장착'}</button> : <span className="title-locked">미획득</span>}</div>; })}</div>
-    </details>; })()}<RankPanel s={s} send={send} busy={busy}/></div>
     <div className="build-columns">
     <section className="panel attribute-panel">
     <div className="section-title">

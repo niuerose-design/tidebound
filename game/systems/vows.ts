@@ -2,7 +2,7 @@
 import type { State, Vows } from '../types';
 import { researchRank } from '../data/economy';
 
-/** v27.82 잠든 힘은 서약에서 빠지고 던전 ‘랜덤게임’이 되었습니다(연구 vowAnchor가 입장을 엽니다). 절제(AP 제한)가 새 서약입니다. */
+/** v27.84 잠든 힘은 서약에서 빠지고 던전 ‘랜덤게임’이 되었습니다(연구 vowAnchor가 입장을 엽니다). 절제(AP 제한)가 새 서약입니다. */
 export const VOW_IDS = ['breath', 'rough', 'restraint'] as const;
 export type VowId = typeof VOW_IDS[number];
 export const VOW_RESEARCH: Record<VowId, string> = { breath: 'vowBreath', rough: 'vowRough', restraint: 'vowRestraint' };
@@ -18,7 +18,7 @@ export const breathBonus = (s: Pick<State, 'permanent'>) => .5 * vowBoost(s, 'br
 /** 힘의 길(전 ‘험한 길’) 선택 단계(0~3). */
 export const roughLevel = (s: Pick<State, 'vows'>) => s.vows?.rough || 0;
 /**
- * v27.82 힘의 길: 난이도를 내려서 피할 수 없는 세 가지 제약.
+ * v27.84 힘의 길: 난이도를 내려서 피할 수 없는 세 가지 제약.
  * - 난이도 하한: 지금 난이도(사냥터 난이도·던전 모드·무릉도장 층)가 floor 미만이면 보상이 꺼집니다.
  * - 장비 의존 제한: 장비 능력치 ×(1 − gear).
  * - 회복 봉쇄: 처치 후 회복·흡혈·턴당 체력 회복 ×(1 − heal).
@@ -30,7 +30,7 @@ export const roughGear = (s: Pick<State, 'vows'>) => roughLevel(s) ? 1 - ROUGH.g
 export const roughHeal = (s: Pick<State, 'vows'>) => roughLevel(s) ? 1 - ROUGH.heal[roughLevel(s) - 1] : 1;
 /** 보상 배율. 단계가 없거나 지금 난이도가 하한 미만이면 정확히 1입니다(tier는 encounterTier). */
 export const roughReward = (s: Pick<State, 'vows' | 'permanent'>, tier: number) => roughLevel(s) && tier >= roughFloor(s) ? 1 + .5 * roughLevel(s) * vowBoost(s, 'rough') : 1;
-/** v27.82 절제: 장착 AP −2·−4·−6, 환생 세계석 +15·+30·+45% × 강화 배율. */
+/** v27.84 절제: 장착 AP −2·−4·−6, 환생 세계석 +15·+30·+45% × 강화 배율. */
 export const RESTRAINT = { ap: [2, 4, 6], pearls: [.15, .3, .45] };
 export const restraintLevel = (s: Pick<State, 'vows'>) => s.vows?.restraint || 0;
 export const restraintAP = (s: Pick<State, 'vows'>) => restraintLevel(s) ? RESTRAINT.ap[restraintLevel(s) - 1] : 0;

@@ -5,6 +5,8 @@ import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedReg
 import { MIMIC } from './mimic';
 import { EXP_NURI } from './exp-nuri';
 import { stats } from '../systems/stats';
+import { DUNGEON_MODES, type DungeonMode } from './balance';
+import { RANKS, RANK_CUMULATIVE, RANK_TOTAL_POINTS, rankState, rankPointsSpent } from './rank';
 
 /**
  * v25.6 업적: 조건을 처음 만족하면 한 번만 해금되고 보상을 바로 받습니다. 환생 후에도 유지됩니다.
@@ -13,7 +15,7 @@ import { stats } from '../systems/stats';
  * 조건 판정은 저장 상태만 보며 난수를 쓰지 않습니다. 기존 세이브는 이미 달성한 업적을 조용히 채우되 보상은 지급합니다.
  */
 export type AchievementReward = { pearls?: number; sp?: number; ap?: number; bonus?: Partial<Record<'attack' | 'magic' | 'hp' | 'defense' | 'resist', number>> };
-export type Achievement = { id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '도전'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
+export type Achievement = { id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '계급' | '도전'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
 
 const kills = (s: State) => s.kills || 0;
 /** 도감 업적 대상. v27.58 경험의 누리는 빼서 '도감 전체' 업적 id(codex:종 수)가 바뀌지 않게 합니다. */
@@ -29,6 +31,14 @@ const goldens = (s: State) => sum(s.goldenBook);
 const variants = (s: State) => Object.values(s.variantBook || {}).reduce((a, row) => a + sum(row as Record<string, number>), 0);
 const dungeonsAt = (n: number) => (s: State) => DUNGEONS.filter(d => (s.clears?.[d.id] || 0) >= n).length;
 const bestEnhance = (s: State) => Math.max(0, ...Object.values(s.equipment || {}).map(i => i?.enhance || 0));
+/** v27.81 헬·나이트메어 정복 기록(encounter가 modeClears에 쌓음). */
+const modeClears = (mode: DungeonMode) => (s: State) => sum(s.modeClears?.[mode]);
+const modeDungeons = (mode: DungeonMode) => (s: State) => Object.values(s.modeClears?.[mode] || {}).filter(n => (n || 0) > 0).length;
+const MODE_DUNGEONS = DUNGEONS.filter(d => d.id !== 'abyss').length;
+const modeName = (mode: DungeonMode) => DUNGEON_MODES.find(m => m.id === mode)!.name;
+/** v27.81 계급 업적: 계급 경험치(세어진 처치 수)가 그 계급의 누적 필요치에 닿으면 달성합니다. */
+const RANK_STEPS = ['pvt1', 'sgt', 'ssg', 'smaj', 'lt2', 'maj', 'bg', 'ltg'] as const;
+const rankAchievements: Achievement[] = RANK_STEPS.map((id, i) => { const index = RANKS.findIndex(r => r.id === id), r = RANKS[index]; return { id: `rank:${id}`, group: '계급' as const, title: `${r.name} 진급`, desc: `계급 ${r.name}에 오릅니다(세어진 처치 ${RANK_CUMULATIVE[index].toLocaleString()}마리).`, reward: [{ pearls: 2 }, { pearls: 4 }, { pearls: 6, bonus: { attack: .02, magic: .02 } }, { pearls: 10, sp: 1 }, { pearls: 12, bonus: { hp: .03 } }, { pearls: 15, ap: 1 }, { pearls: 25, sp: 1 }, { pearls: 40, ap: 1, sp: 1 }][i], progress: s => rankState(s).exp, target: RANK_CUMULATIVE[index] }; });
 const tiers = (s: State) => Math.max(0, ...(s.unlockedJobs || []).map(id => JOBS.find(j => j.id === id)?.tier || 0));
 
 const series = (prefix: string, group: Achievement['group'], title: (n: number) => string, desc: (n: number) => string, steps: number[], progress: (s: State) => number, reward: (i: number) => AchievementReward): Achievement[] =>
@@ -47,6 +57,13 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('tier', '숙련', n => `${n}차 전직`, n => `${n}차 직업에 처음 전직합니다.`, [2, 3, 4, 5], tiers, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6, bonus: { hp: .03 } }, { pearls: 10, ap: 1 }][i]),
     ...series('tide', '모험', n => `사냥터 난이도 ${n}`, n => `사냥터에서 사냥터 난이도 ${n} 이상으로 처치합니다.`, [5, 10, 20, 30, 50], tideBest, i => [{ pearls: 2 }, { pearls: 4, bonus: { attack: .02, magic: .02 } }, { pearls: 8, ap: 1 }, { pearls: 15, bonus: { hp: .04 } }, { pearls: 30, ap: 1, sp: 1 }][i]),
     ...series('abyss', '던전', n => `무릉도장 ${n}층`, n => `무릉도장 ${n}층을 정복합니다.`, [5, 10, 25, 50, 100, 200], s => s.abyssBest || 0, i => [{ pearls: 2 }, { pearls: 4, bonus: { defense: .02, resist: .02 } }, { pearls: 8, ap: 1 }, { pearls: 15, bonus: { attack: .03, magic: .03, hp: .03 } }, { pearls: 30, ap: 1, sp: 2 }, { pearls: 50, sp: 1 }][i]),
+    // v27.81 던전 난이도 업적: 헬·나이트메어 정복 횟수와 그 난이도로 정복한 던전 수(무릉도장 제외).
+    ...series('hell', '던전', n => `${modeName('hell')} 정복 ${n}회`, n => `던전을 ${modeName('hell')} 난이도로 ${n}회 정복합니다.`, [1, 10, 100], modeClears('hell'), i => [{ pearls: 3 }, { pearls: 8, bonus: { attack: .02, magic: .02 } }, { pearls: 15, sp: 1 }][i]),
+    ...series('nightmare', '던전', n => `${modeName('nightmare')} 정복 ${n}회`, n => `던전을 ${modeName('nightmare')} 난이도로 ${n}회 정복합니다.`, [1, 10, 100], modeClears('nightmare'), i => [{ pearls: 5 }, { pearls: 12, bonus: { hp: .03 } }, { pearls: 25, ap: 1, sp: 1 }][i]),
+    ...series('hellAll', '던전', n => `${modeName('hell')} 던전 ${n}곳`, n => `서로 다른 던전 ${n}곳을 ${modeName('hell')} 난이도로 정복합니다.`, [3, MODE_DUNGEONS], modeDungeons('hell'), i => [{ pearls: 5 }, { pearls: 12, sp: 1 }][i]),
+    ...series('nightmareAll', '던전', n => `${modeName('nightmare')} 던전 ${n}곳`, n => `서로 다른 던전 ${n}곳을 ${modeName('nightmare')} 난이도로 정복합니다.`, [3, MODE_DUNGEONS], modeDungeons('nightmare'), i => [{ pearls: 8, bonus: { defense: .02, resist: .02 } }, { pearls: 20, ap: 1 }][i]),
+    ...rankAchievements,
+    ...series('rankPoints', '계급', n => `진급 포인트 ${n}P 사용`, n => `특전에 진급 포인트를 ${n}P 쓰고 있습니다(초기화해도 달성 기록은 남음).`, [5, 20, RANK_TOTAL_POINTS], rankPointsSpent, i => [{ pearls: 3 }, { pearls: 8, bonus: { attack: .02, magic: .02 } }, { pearls: 20, sp: 1 }][i]),
     ...series('rebirths', '환생', n => `환생 ${n}회`, n => `${n}번째 환생을 마칩니다.`, [1, 3, 5, 10, 20, 50], s => s.rebirths || 0, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5, bonus: { hp: .03 } }, { pearls: 10, ap: 1 }, { pearls: 20, bonus: { attack: .03, magic: .03 } }, { pearls: 40, ap: 1, sp: 2 }][i]),
     // v25.21 ‘도전’ 탭: 플레이 시간과 장기 누적 기록. 다른 묶음과 달리 별도 탭에서 봅니다.
     ...series('playtime', '도전', n => `모험 ${n.toLocaleString()}시간`, n => `자동 사냥·던전으로 누적 ${n.toLocaleString()}시간을 보냅니다(부재중 정산 포함).`, [1, 10, 50, 100, 500, 1000], playHours, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6, bonus: { hp: .02 } }, { pearls: 10, ap: 1 }, { pearls: 20, bonus: { attack: .02, magic: .02 } }, { pearls: 40, sp: 1, ap: 1 }][i]),
@@ -77,7 +94,9 @@ for (const a of ACHIEVEMENTS) if (a.reward.ap) ACHIEVEMENT_AP[a.id] = a.reward.a
 export const achievementById = (id: string) => ACHIEVEMENTS.find(a => a.id === id);
 /** 업적 묶음. ‘도전’은 플레이 시간·전투 턴·능력치 돌파 같은 누적 기록입니다. */
 export const CHALLENGE_GROUP = '도전' as const;
-export const ACHIEVEMENT_GROUPS = ['모험', '사냥', '숙련', '던전', '환생', CHALLENGE_GROUP] as const;
+export const ACHIEVEMENT_GROUPS = ['모험', '사냥', '숙련', '던전', '환생', '계급', CHALLENGE_GROUP] as const;
+/** v27.81 받을 수 있는 모든 업적의 영구 보상 합계(업적 보너스 탭의 ‘최대’). */
+export const achievementMaxTotals = () => achievementTotals({ achievementClaims: Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, true])) });
 
 /** 받은 업적의 영구 보상 합계. 능력치 배율은 더해서 한 번 곱합니다(apCapacity·stats가 씀). */
 export function achievementTotals(s: Pick<State, 'achievementClaims'>) {
