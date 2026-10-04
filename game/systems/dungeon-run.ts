@@ -1,5 +1,6 @@
 /** 던전 입장과 반복 도전. */
 import type { State } from '../types';
+import { levelGateOk } from './meta';
 import { BALANCE, MONSTER_TUNING } from '../data/balance';
 import { DUNGEONS, dungeonClosed } from '../data/world';
 import { addLog, endRun } from './state';
@@ -36,7 +37,7 @@ function repeatLabel(r?: { left: number | null; until?: number }) {
 export function continueRepeat(s: State, id: string, repeat: { left: number | null; until?: number }) {
     const d = DUNGEONS.find(x => x.id === id)!;
     const reached = repeat.until !== undefined && s.abyssBest >= repeat.until;
-    const allowed = s.level >= d.level && s.rebirths >= d.rebirth && !dungeonClosed(d.id);
+    const allowed = levelGateOk(s, d.level) && s.rebirths >= d.rebirth && !dungeonClosed(d.id);
     if (!reached && allowed && (repeat.left === null || repeat.left > 0)) {
         enterDungeon(s, id, { left: repeat.left === null ? null : repeat.left - 1, ...(repeat.until !== undefined ? { until: repeat.until } : {}) });
         s.running = true;

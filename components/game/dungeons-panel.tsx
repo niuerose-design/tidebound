@@ -2,7 +2,7 @@
 import { AutoRunStatus } from './auto-run';
 import { BOSS_RESEARCH } from '@/game/data/specializations';
 import { dungeonClearGold, stats } from '@/game/systems/stats';
-import { dungeonTier, dungeonClearBase, dungeonRewardTier } from '@/game/systems/meta';
+import { dungeonTier, dungeonClearBase, dungeonRewardTier, levelGateOk } from '@/game/systems/meta';
 import { useState } from 'react';
 import { Lock, Swords } from 'lucide-react';
 import { FishArt } from './art';
@@ -56,7 +56,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
         <div className="dungeon-combat-log"><div className="section-title"><h3>최근 전투 로그</h3><span>자동 갱신</span></div>{s.logs.filter(log => log.type === 'battle').slice(-6).reverse().map(log => <BattleLogLine key={log.id} log={log} playerName={s.name}/>)}</div>
     </section>}
     <div className="stage-grid dungeon-grid">{[...DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
-            const closed = closedIn(s, 'dungeons', d.id), locked = closed || s.level < d.level || s.rebirths < d.rebirth;
+            const closed = closedIn(s, 'dungeons', d.id), locked = closed || !levelGateOk(s, d.level) || s.rebirths < d.rebirth;
             const tier = dungeonTier(d.id, s.abyssBest + 1);
             const research = BOSS_RESEARCH[d.id], claimed = !!s.bossResearchClaims?.[d.id], active = s.dungeon?.id === d.id, overlevel = dungeonOverlevel(s.level, d.level);
             return <article className={`stage-card dungeon-stage-card ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} key={d.id}>

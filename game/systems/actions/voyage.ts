@@ -1,6 +1,6 @@
 /** 모험 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
 import { skillPracticeTargets } from '../progression';
-import { tideLimit, encounterTier } from '../meta';
+import { tideLimit, encounterTier, levelGateOk } from '../meta';
 import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed } from '../../data/world';
 import { SWARM_CAPS } from '../../data/variants';
 import { JOBS } from '../../data/classes';
@@ -36,7 +36,7 @@ export const voyageActions: ActionHandlers = {
     },
     stage(s, { id }) {
         const st = STAGES.find(x => x.id === id);
-        if (!st || s.level < st.level || s.rebirths < st.rebirth)
+        if (!st || !levelGateOk(s, st.level) || s.rebirths < st.rebirth)
             throw Error('아직 진입할 수 없는 사냥터입니다.');
         if (stageClosed(st.id))
             throw Error(`${st.name}은(는) 점검 중이라 입장할 수 없습니다.`);
@@ -51,7 +51,7 @@ export const voyageActions: ActionHandlers = {
     },
     dungeon(s, { a, id, now }) {
         const d = DUNGEONS.find(x => x.id === id);
-        if (!d || s.level < d.level || s.rebirths < d.rebirth)
+        if (!d || !levelGateOk(s, d.level) || s.rebirths < d.rebirth)
             throw Error('던전 입장 조건을 충족하지 못했습니다.');
         if (dungeonClosed(d.id))
             throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);

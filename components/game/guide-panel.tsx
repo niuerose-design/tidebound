@@ -9,7 +9,7 @@ import type { State } from '@/game/types';
 import { SWARM_UNLOCK } from '@/game/data/world';
 import { VARIANTS, VARIANT_BOOK_MIN } from '@/game/data/variants';
 import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
-import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL, tailwindWindow, tailwindExp } from '@/game/systems/meta';
+import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL, tailwindWindow, tailwindExp, LEVEL_GATE_FREE_REBIRTHS } from '@/game/systems/meta';
 import { Heading } from './shared';
 import { JOB_TREES, LINEAGES } from '@/game/data/classes';
 
@@ -164,7 +164,7 @@ export function Guide({ s }: { s?: State }) {
             <div className="help-columns">
                 <Rule icon={<RefreshCw size={19}/>} title="환생"
                     effect="세계석 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스 + 깊은 모험 보너스. 영구 보너스(체력·공격·방어)는 2.5% × √환생 횟수, 영구 경험치는 환생마다 +25%."
-                    condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}, 최대 Lv.${ECONOMY.rebirthLevelCap}. 요구 레벨 +${s ? tailwindWindow(s) : TAILWIND_WINDOW} 안에 환생하면 다음 생 경험치 +${Math.round((s ? tailwindExp(s) : TAILWIND_EXP) * 100)}%(순풍), Lv.${DEEP_VOYAGE_LEVEL}에 환생하면 숙련 기본 획득 +2(깊은 모험).`}
+                    condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}(Lv.${ECONOMY.rebirthLevelLateFrom}까지), 그 뒤로는 환생마다 +${ECONOMY.rebirthLevelLateStep}(최대 Lv.${ECONOMY.rebirthLevelCap}). 환생 ${LEVEL_GATE_FREE_REBIRTHS}회부터는 사냥터·던전에 레벨 제한이 없습니다. 요구 레벨 +${s ? tailwindWindow(s) : TAILWIND_WINDOW} 안에 환생하면 다음 생 경험치 +${Math.round((s ? tailwindExp(s) : TAILWIND_EXP) * 100)}%(순풍), Lv.${DEEP_VOYAGE_LEVEL}에 환생하면 숙련 기본 획득 +2(깊은 모험).`}
                     limit={`횟수 보상은 20회까지 회당 세계석 1·경험치 +25%, 이후 완만해집니다. 환생 AP 최대 ${ECONOMY.rebirthAPCap}, 사냥터 난이도 최대 ${ECONOMY.tideCap}. 칭호는 업적(환생 횟수·도전·무릉도장)을 달성하면 얻고, 능력치 화면의 ‘칭호’에서 장착하거나 숨깁니다.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="세계석 연구"
                     effect="세계석으로 영구 능력을 올립니다. 환생해도 유지되며 전투·유틸·골드 탭으로 나뉩니다."
