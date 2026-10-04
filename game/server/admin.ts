@@ -17,7 +17,8 @@ import type { State } from '../types';
 import { ALTAR } from '../data/altar';
 import { offlineCapSeconds } from '../data/economy';
 import { SERVER_EVENTS, activeEvent, eventLabel, type ServerEvent } from '../data/events';
-import { readEventConfig, writeEventConfig, readClosures, writeClosures } from './events-config';
+import { readEventConfig, writeEventConfig, readClosures, writeClosures, readOpenDoors, writeOpenDoors } from './events-config';
+import { DISCOVERY_DOORS, DOORS, DOOR_JOBS, REBIRTH_DOOR_JOBS } from '../data/doors';
 import { invalidateAltar } from './altar';
 
 const digest = (v: string) => createHash('sha256').update(v).digest();
@@ -190,6 +191,28 @@ export async function setClosed(kind: string, id: string, closed: boolean) {
     await writeClosures({ ...c, [kind]: [...set] });
     console.info('admin closure', { kind, id, closed });
     return listClosures();
+}
+
+// ---------- v27.73 문 개방 ----------
+
+/** ??? 문이 있는 직업 목록과 운영자가 연 문. 윤회의 문 직업 → 발견의 문 직업 순서. */
+export async function listDoors() {
+    const open = await readOpenDoors();
+    return {
+        doors: DOOR_JOBS.map(id => {
+            const door = REBIRTH_DOOR_JOBS.includes(id) ? DOORS[0] : DOORS[1], hint = DISCOVERY_DOORS.find(d => d.job === id)?.hint || '환생할 때 추첨으로 열립니다.';
+            return { id, name: jobById(id)?.name || id, door: door.name, hint, open: open.includes(id) };
+        }),
+    };
+}
+/** 한 문을 열거나 닫습니다. 연 동안은 조건과 상관없이 모든 모험가에게 열리고, 닫으면 다시 조건대로입니다(그 사이 들어간 직업은 남음). */
+export async function setDoorOpen(id: string, open: boolean) {
+    if (!DOOR_JOBS.includes(id)) throw new ApiError('문이 있는 직업이 아닙니다.');
+    const set = new Set(await readOpenDoors());
+    if (open) set.add(id); else set.delete(id);
+    await writeOpenDoors([...set]);
+    console.info('admin door', { id, open });
+    return listDoors();
 }
 
 // ---------- v27.32 통계 ----------

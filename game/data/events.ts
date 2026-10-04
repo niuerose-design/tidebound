@@ -1,6 +1,6 @@
 /**
  * v26.1 서버 이벤트: 기간 동안 모든 모험가의 경험치·골드·드롭 배율을 올립니다.
- * 목록은 이 파일에서 관리하고(배포로 적용), 서버가 동기화·정산 때 activeEvent(now)를 State.event에 적어 둡니다.
+ * v27.73부터 목록은 운영 페이지에서만 관리합니다(코드 목록은 비움). 서버가 동기화·정산 때 activeEvent(now)를 State.event에 적어 둡니다.
  * 틱 계산은 State.event만 보므로 오프라인 정산에도 같은 배율이 붙습니다. 시각은 ISO(한국 시간 +09:00) 문자열로 적습니다.
  */
 export type ServerEvent = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; /** v27.43 숙련의 까미 출현 배율(제단 축복). */ mimic?: number; /** v27.70 경험의 누리 출현 배율(제단 축복). */ nuri?: number };
@@ -18,12 +18,11 @@ export function offlineEvent(e: ActiveEvent | null): ActiveEvent | null {
     return { ...e, exp: halfOf(e.exp)!, gold: halfOf(e.gold)!, drop: halfOf(e.drop)!, mastery: halfOf(e.mastery), mimic: halfOf(e.mimic), nuri: halfOf(e.nuri) };
 }
 
-export const SERVER_EVENTS: ServerEvent[] = [
-    { id: 'openbeta-exp', name: '오픈베타 기념', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', exp: 2 },
-    // 이름은 배너 앞머리에 한 번씩만 붙습니다(배율은 뒤에 따로 나오므로 이름에 적지 않습니다). 빈 이름은 생략. 배율 없는 공지형 이벤트도 됩니다.
-    { id: 'glyph-open', name: '숨겨진 직업 하나가 개방되었습니다', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00' },
-    { id: 'mastery-x2', name: '', from: '2026-10-03T00:00:00+09:00', until: '2026-10-18T23:59:59+09:00', mastery: 2 },
-];
+/**
+ * v27.73 코드에 든 이벤트는 없습니다. 이벤트·서버 메시지(배율 없는 공지)는 모두 운영 페이지(/admin)에서 만들어 DB 설정으로 적용합니다.
+ * 코드 이벤트가 다시 필요하면 여기에 적습니다. 이름은 배너 앞머리에 한 번씩만 붙고(배율은 뒤에 따로), 빈 이름은 생략됩니다.
+ */
+export const SERVER_EVENTS: ServerEvent[] = [];
 
 /** v27.27 운영 페이지에서 추가·끈 이벤트. 서버가 DB 설정을 읽어 채웁니다(코드 이벤트는 disabled로만 끌 수 있음). */
 let runtime: { extra: ServerEvent[]; disabled: string[] } = { extra: [], disabled: [] };

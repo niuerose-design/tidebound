@@ -1,15 +1,17 @@
 'use client';
 import type { PanelProps } from './panel-props';
 import { useMemo, useState } from 'react';
-import { Compass, Search } from 'lucide-react';
+import { Compass, Flag, Search } from 'lucide-react';
 import { JOBS, JOB_TREES, LINEAGES, lineageOf, type JobTreeId, jobById } from '@/game/data/classes';
 import { jobMasteryTarget, jobMastered } from '@/game/systems/progression';
+import { goalProgress } from '@/game/systems/goals';
+import { ConfirmButton } from './confirm-button';
 import { Heading, format } from './shared';
 import { LineageCard, RouteMap, JobList } from './jobs/lineage-view';
 import { JobCompare } from './jobs/job-compare';
 import { JobDetail } from './jobs/job-detail';
 import { DoorRow, openUnenteredDoors } from './jobs/mystery-doors';
-import { lineageJobs, finderJobs, searchJobs, secretJob, TOP_TAGS, type Finder } from './jobs/job-status';
+import { lineageJobs, finderJobs, searchJobs, secretJob, TOP_TAGS, jobStatus, canEnter, type Finder } from './jobs/job-status';
 
 const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', mastered: '숙달', near: '거의 다 됨', goal: '목표', doors: '문 열림' };
 
@@ -55,8 +57,21 @@ export function Classes({ s, send, busy }: PanelProps) {
         setLineageId(first?.id || '');
     };
     const showCurrent = () => { setTreeId(current.tree); setLineageId(lineageOf(current)); setSelectedId(current.id); };
+    // v27.73 목표 직업: 직업 상세에서 ‘목표로 설정’한 직업. 조건 진행과 전직 버튼을 화면 위에 모아 두어, 조건이 차면 상세를 열지 않고 바로 전직합니다.
+    const goalJob = s.growthGoal?.kind === 'job' ? jobById(s.growthGoal.id) : undefined, goal = goalJob ? goalProgress(s) : null, goalSt = goalJob ? jobStatus(s, goalJob) : null;
+    const goalReady = !!goalJob && !!goalSt && goalJob.id !== s.job && canEnter(goalSt);
+    const showGoal = () => { if (!goalJob) return; clearFound(); setTreeId(goalJob.tree); setLineageId(lineageOf(goalJob)); select(goalJob.id); };
     return <>
         <Heading eyebrow="VOCATION TREE" title="직업 계보도"/>
+        {goalJob && goal && <section className={`panel job-goal-summary ${goalReady ? 'ready' : ''} ${goal.done ? 'done' : ''}`} aria-label="목표 직업">
+            <Flag size={22}/>
+            <div><small>목표 직업{goalJob.id === s.job ? ' · 현재 직업' : goal.done ? ' · 전직한 적 있음' : goalReady ? ' · 전직 가능' : ` · 조건 ${goal.value} / ${goal.max}`}</small><h2>{goalJob.name}</h2><p>{goalJob.id === s.job ? '목표 직업으로 전직했습니다. 다음 목표를 정해 보세요.' : goal.detail}</p></div>
+            <div className="job-goal-actions">
+                {goalReady && <ConfirmButton label="이 직업으로 전직" title={`${goalJob.name}(으)로 전직할까요?`} description="새 직업의 기본 기술은 무료로 해금됩니다. 계승하지 않은 이전 직업의 기술은 해제되지만 해금·성장·숙련 기록은 남습니다. 전투 중이면 현재 적을 보상 없이 정리하고, 던전 중이면 보상 없이 귀환합니다." confirmLabel="전직하기" disabled={busy} onConfirm={() => send({ type: 'job', id: goalJob.id })}/>}
+                <button className="secondary small" onClick={showGoal}>상세 보기</button>
+                <button className="text-button" disabled={busy} onClick={() => send({ type: 'growthGoal', id: 'none' })}>목표 해제</button>
+            </div>
+        </section>}
         <section className="panel job-current-summary"><Compass size={26}/><div><small>현재 직업</small><h2>{current.name}</h2><p>숙련 {format(s.jobMastery[s.job] || 0)} / {format(jobMasteryTarget(current))} · 전직해 본 직업 {s.unlockedJobs.length} / {JOBS.length} · 숙달 {JOBS.filter(j => jobMastered(s, j)).length}</p></div><button className="secondary small" onClick={showCurrent}>현재 직업 보기</button></section>
         <div className="job-finder" role="group" aria-label="빠른 찾기">{(Object.keys(FINDER_LABEL) as Finder[]).map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{finderCounts[kind]}</b></button>)}</div>
         <div className="job-search">

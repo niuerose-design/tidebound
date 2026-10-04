@@ -1,5 +1,5 @@
 // 도감·능력치 추적·항해 기록·회복·장기 목표·능력치 포인트
-import { newState, act, tick, victoryHeal, encounterSource, stats, goalProgress, goalSuggestions, DUNGEONS, assert, rng, test } from './harness.mjs';
+import { newState, act, tick, victoryHeal, encounterSource, stats, goalProgress, goalSuggestions, DUNGEONS, JOBS, assert, rng, test } from './harness.mjs';
 test('Codex: crossing several thresholds claims all pending ranks once; claim-all spans species',()=>{
  const s=newState(0),g=s.gold;s.book.minnow=10000;s.book.carp=500;act(s,{type:'claimAllBooks'},0);
  assert.equal(s.bookClaims.minnow,4);assert.equal(s.bookClaims.carp,2);assert.equal(s.sp,1);assert.equal(s.gold,g+200+1000+5000+15000+200+1000);
@@ -33,6 +33,15 @@ test('Long-term goals: dungeon steps, one-time achievement notice, suggestions o
  act(s,{type:'sync'},0);assert.equal(s.logs.filter(l=>l.text.startsWith('장기 목표 달성')).length,1);
  const f=newState(0);const g=goalSuggestions(f);assert.equal(g.job,undefined);assert.equal(g.dungeon,undefined);
  for(const d of DUNGEONS){const x=newState(0);x.level=d.level;x.rebirths=d.rebirth;const sug=goalSuggestions(x).dungeon;if(sug)assert.ok(x.level>=sug.level&&x.rebirths>=sug.rebirth);}
+});
+test('v27.73 job goal: set from the job sheet, progress counts met requirements, entering the job marks it done once, "none" clears, unknown job refused',()=>{
+ const s=newState(0);act(s,{type:'growthGoal',id:'whaler',value:'job'},0);assert.deepEqual(s.growthGoal,{kind:'job',id:'whaler'});
+ let p=goalProgress(s);assert.ok(p.title.endsWith(' 전직'),p.title);assert.equal(p.view,'classes');assert.equal(p.done,false);assert.ok(p.value<p.max&&p.detail.length>0);
+ s.level=30;s.rebirths=1;Object.assign(s.attributes,{str:30,dex:30,int:30,vit:30,wis:30,luk:30});s.jobMastery[JOBS.find(j=>j.id==='whaler').parent]=75;p=goalProgress(s);assert.equal(p.value,p.max,'all requirements met');
+ act(s,{type:'job',id:'whaler'},0);assert.equal(s.job,'whaler');assert.equal(goalProgress(s).done,true);assert.equal(s.growthGoal.notified,true);
+ assert.equal(s.logs.filter(l=>l.text.startsWith('장기 목표 달성')).length,1);
+ act(s,{type:'growthGoal',id:'none'},0);assert.equal(s.growthGoal,null);
+ assert.throws(()=>act(s,{type:'growthGoal',id:'nope',value:'job'},0),/성장 목표/);
 });
 test('Stat points: 5 per level, old saves get the difference once, max button spends all',()=>{
  const s=newState(0);assert.equal(s.statRate,5);const old=newState(0);old.level=21;old.statPoints=10;old.attributes.str=70;delete old.statRate;act(old,{type:'pause'},0);assert.equal(old.statPoints,30);assert.equal(old.statRate,5);act(old,{type:'pause'},0);assert.equal(old.statPoints,30);
