@@ -7,7 +7,7 @@ import type { State } from '../types';
  */
 export const SLOT_COUNT = 3;
 /** 슬롯 해금 조건: 2번은 어느 캐릭터든 환생 1회, 3번은 계정 환생 합계 5회. */
-export const SLOT_UNLOCK = [0, 1, 5];
+const SLOT_UNLOCK = [0, 1, 5];
 export const ACCOUNT_RULES = {
     /** 계정 환생 합계 1회마다 경험치·골드 획득 +10%(최대 30회 · +300%). */
     rebirthStep: .10, rebirthCap: 30,
@@ -42,16 +42,16 @@ export function slotUnlocked(a: Pick<AccountSummary, 'rebirths' | 'slots'> | und
 }
 export const slotUnlockText = (slot: number) => slot === 2 ? '어느 캐릭터든 환생 1회' : `계정 환생 합계 ${SLOT_UNLOCK[slot - 1]}회`;
 const R = ACCOUNT_RULES;
-export const accountRebirthRank = (s: AccountState) => Math.min(R.rebirthCap, s.account?.rebirths || 0);
+const accountRebirthRank = (s: AccountState) => Math.min(R.rebirthCap, s.account?.rebirths || 0);
 /** 경험치·골드 가산 비율(0.1 = +10%). */
 export const accountExpGold = (s: AccountState) => accountRebirthRank(s) * R.rebirthStep;
 export const accountAP = (s: AccountState) => Math.min(R.masteredCap, Math.floor((s.account?.mastered || 0) / R.masteredPer));
-export const accountAbyssRank = (s: AccountState) => Math.min(R.abyssCap, Math.floor((s.account?.abyssBest || 0) / R.abyssPer));
+const accountAbyssRank = (s: AccountState) => Math.min(R.abyssCap, Math.floor((s.account?.abyssBest || 0) / R.abyssPer));
 /** 두 공격·최대 체력 배율 가산(0.01 = +1%). */
 export const accountPower = (s: AccountState) => accountAbyssRank(s) * R.abyssStep;
 /** 숙련 획득 보너스를 20분의 1 단위로(연구 '숙련'과 같은 단위, 1 = +5%). */
 export const accountMasteryTwentieths = (s: AccountState) => Math.min(R.speciesCap, Math.floor((s.account?.species || 0) / R.speciesPer));
-export const accountBossRank = (s: AccountState) => Math.min(R.bossCap, Math.floor((s.account?.bossKills || 0) / R.bossPer));
+const accountBossRank = (s: AccountState) => Math.min(R.bossCap, Math.floor((s.account?.bossKills || 0) / R.bossPer));
 export const accountCrit = (s: AccountState) => accountBossRank(s) * R.bossStep;
 export const pct = (n: number, digits = 0) => `${(n * 100).toFixed(digits)}%`;
 /** 환생 화면 계정 보너스 카드의 줄. */

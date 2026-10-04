@@ -23,7 +23,7 @@ export async function readClosures(): Promise<Closures> {
     try { const v = JSON.parse(raw); return cleanClosures({ dungeons: Array.isArray(v?.dungeons) ? v.dungeons : [], stages: Array.isArray(v?.stages) ? v.stages : [] }); }
     catch { return { dungeons: [...DEFAULT_CLOSURES.dungeons], stages: [...DEFAULT_CLOSURES.stages] }; }
 }
-export const cleanClosures = (c: Closures): Closures => ({ dungeons: [...new Set(c.dungeons)].filter(id => DUNGEONS.some(d => d.id === id)), stages: [...new Set(c.stages)].filter(id => id !== STAGES[0].id && STAGES.some(st => st.id === id)) });
+const cleanClosures = (c: Closures): Closures => ({ dungeons: [...new Set(c.dungeons)].filter(id => DUNGEONS.some(d => d.id === id)), stages: [...new Set(c.stages)].filter(id => id !== STAGES[0].id && STAGES.some(st => st.id === id)) });
 /** 동기화·정산 전에 부릅니다. 30초 안에는 DB를 다시 읽지 않습니다. 읽기에 실패하면 지난 값(없으면 코드 기본값)을 씁니다. */
 export async function refreshEvents(now = Date.now()) {
     if (cached && now - cached.at < TTL) return;

@@ -31,7 +31,7 @@ export const playerId = (account: string, slot: number) => slot > 1 ? `${account
 export async function identity(req: Request) { return (await session(req)).id; }
 const ACCOUNT_REFRESH_MS = 10 * 60_000;
 /** 슬롯 요약: 계정 보너스에 쓰는 기록만 담습니다. */
-export function slotSummary(s: State, slot: number, now: number): SlotSummary {
+function slotSummary(s: State, slot: number, now: number): SlotSummary {
     const bosses = FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
     return { slot, name: s.name, job: s.job, level: s.level, rebirths: s.rebirths || 0, mastered: JOBS.filter(j => jobMastered(s, j)).map(j => j.id), species: FISH.filter(f => (s.book?.[f.id] || 0) > 0).map(f => f.id), bossKills: bosses, abyssBest: s.abyssBest || 0, updatedAt: now };
 }
@@ -115,7 +115,7 @@ export async function syncDuelSeason(id: string, s: State, now: number) {
     if (!fresh) addLog(s, `새 결투 시즌 ${key} · 점수가 1000으로 돌아갑니다.`, 'system');
 }
 /** v25.6 주간 심연 기록판. 행 id는 abyss:<계정>, 시즌은 주 키 정수(예: 202640)라 낚시꾼 랭킹(시즌 = 세이브 버전)과 섞이지 않습니다. */
-export const abyssRowId = (id: string) => `abyss:${id}`;
+const abyssRowId = (id: string) => `abyss:${id}`;
 export async function listAbyssBoard(now: number) {
     const key = weekKey(now), rows = await db().listRankings(weekSeason(key), 100);
     return { key, rows: rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as { name: string; depth: number; job: string; rebirths: number; account: string }; return { rank: i + 1, id: snap.account, name: snap.name, depth: Number(snap.depth) || r.rating, job: snap.job, rebirths: snap.rebirths, updatedAt: r.updated_at }; }) };

@@ -27,7 +27,7 @@ export function enterDungeon(s: State, id: string, repeat?: { left: number | nul
     s.recovery = Math.max(s.recovery, MONSTER_TUNING.dungeonPreparationTurns);
     addLog(s, `${d.name} 입장 준비${repeatLabel(repeat)} · ${MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 후 체력·마나를 회복하고 출발합니다.`);
 }
-export function repeatLabel(r?: { left: number | null; until?: number }) {
+function repeatLabel(r?: { left: number | null; until?: number }) {
     if (!r) return '';
     if (r.until) return ` (반복 · ${r.until}층까지)`;
     return r.left === null ? ' (반복 · 실패할 때까지)' : r.left === 0 ? ' (반복 · 마지막 도전)' : ` (반복 · 이후 ${r.left}회 더)`;

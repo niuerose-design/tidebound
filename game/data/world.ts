@@ -58,14 +58,14 @@ const rows: [
 ];
 /** 레벨별 물고기 기본 골드. 장비 판매가도 이 곡선을 따릅니다. */
 /** v27.30 물고기 골드 곡선: Lv.40까지 레벨당 12% 복리, 그 뒤로는 6.5%. 후반 골드가 사용처 비용을 크게 앞지르던 인플레이션을 줄입니다. */
-export const GOLD_CURVE = { base: 7, early: 1.12, knee: 40, late: 1.065 };
+const GOLD_CURVE = { base: 7, early: 1.12, knee: 40, late: 1.065 };
 export const fishGoldAt = (level: number) => Math.round(GOLD_CURVE.base * Math.pow(GOLD_CURVE.early, Math.min(level, GOLD_CURVE.knee) - 1) * Math.pow(GOLD_CURVE.late, Math.max(0, level - GOLD_CURVE.knee)));
 /** v27.30 골드 사용처 가격 배율: Lv.40까지 1, 그 위로는 물고기 골드를 따라 커집니다(Lv.65에서 멈춤). */
 export const PRICE_LEVEL_CAP = 65;
 export const priceScale = (level: number) => Math.max(1, fishGoldAt(Math.min(PRICE_LEVEL_CAP, Math.max(1, level))) / fishGoldAt(GOLD_CURVE.knee));
 export const fishExpAt = (level: number) => Math.round(9 * Math.pow(1.15, level - 1));
 /** 어종 레벨별 기본 능력치(체력·공격·방어). FISH 정의와 같은 식입니다. */
-export const fishStatsAt = (level: number) => ({ hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8) });
+const fishStatsAt = (level: number) => ({ hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8) });
 /** v27.30 낚시터 적의 능력치는 입장 레벨 + STAGE_ENEMY_LEVEL_OVER까지만 셉니다(보상은 어종 레벨 그대로). 입장 직후 몇몇 고레벨 어종이 벽이 되던 구간 완화. */
 export const STAGE_ENEMY_LEVEL_OVER = 6;
 /** 낚시터에서 실제로 싸우는 능력치 기준 어종(레벨 상한 적용). 전투와 도감이 같은 값을 씁니다. */
@@ -122,7 +122,7 @@ for (const f of specialFish)
 export type Closures = { dungeons: string[]; stages: string[] };
 export const DEFAULT_CLOSURES: Closures = { dungeons: ['abyss'], stages: [] };
 export const CLOSED_DUNGEONS = new Set<string>(DEFAULT_CLOSURES.dungeons);
-export const CLOSED_STAGES = new Set<string>(DEFAULT_CLOSURES.stages);
+const CLOSED_STAGES = new Set<string>(DEFAULT_CLOSURES.stages);
 export const dungeonClosed = (id: string) => CLOSED_DUNGEONS.has(id);
 export const stageClosed = (id: string) => CLOSED_STAGES.has(id);
 /** 첫 낚시터는 닫을 수 없습니다(닫힌 낚시터에서 쫓겨난 낚시꾼이 돌아갈 곳). */

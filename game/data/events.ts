@@ -18,7 +18,7 @@ export const SERVER_EVENTS: ServerEvent[] = [
 let runtime: { extra: ServerEvent[]; disabled: string[] } = { extra: [], disabled: [] };
 export function setRuntimeEvents(extra: ServerEvent[], disabled: string[]) { runtime = { extra, disabled }; }
 /** 지금 적용 대상인 이벤트 목록: 코드 이벤트(끈 것 제외) + 운영 페이지 이벤트. */
-export const currentEvents = () => [...SERVER_EVENTS.filter(e => !runtime.disabled.includes(e.id)), ...runtime.extra];
+const currentEvents = () => [...SERVER_EVENTS.filter(e => !runtime.disabled.includes(e.id)), ...runtime.extra];
 export function activeEvent(now: number, events: ServerEvent[] = currentEvents()): ActiveEvent | null {
     const live = events.filter(e => Date.parse(e.from) <= now && now <= Date.parse(e.until));
     if (!live.length) return null;

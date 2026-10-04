@@ -5,7 +5,6 @@
  */
 import { FISH } from './world';
 
-export const ART_SIZE = { fish: 512, job: 512 } as const;
 export const fishArtSrc = (id: string) => `/art/fish/${id}.webp`;
 export const jobArtSrc = (lineageId: string) => `/art/jobs/${lineageId}.webp`;
 

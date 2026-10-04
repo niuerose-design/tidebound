@@ -97,7 +97,7 @@ function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number
 }
 const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합' } as const;
 /** 본타·추가타를 한 번씩만 적고, 추가타가 있을 때만 합계를 붙입니다. */
-export function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageType'>) {
+function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageType'>) {
     const word = DAMAGE_WORD[ev.damageType];
     if (!ev.hits.length) return '피해 없음';
     if (ev.hits.every(h => h.miss)) return '빗나감';

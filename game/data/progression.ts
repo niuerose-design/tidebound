@@ -50,7 +50,7 @@ export const CORE_STATS = ['hp', 'mana', 'hpRegen', 'manaRegen', 'attack', 'magi
 export const DETAIL_STATS = ['critDamage', 'penetration', 'lifesteal', 'expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus', 'rebirthBonus', 'harmony', 'thorns', 'dotBonus', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus', 'variantFind', 'goldenFind'] as const;
 /** 0보다 클 때만 상세 능력치에 보이는 항목. */
 export const OPTIONAL_STATS = new Set(['thorns', 'dotBonus', 'arcaneStrike', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus', 'variantFind', 'goldenFind']);
-export const STAT_ORDER: string[] = [...CORE_STATS, ...DETAIL_STATS];
+const STAT_ORDER: string[] = [...CORE_STATS, ...DETAIL_STATS];
 export const byStatOrder = <T extends [string, unknown]>(entries: T[]) => [...entries].sort((a, b) => (STAT_ORDER.indexOf(a[0]) + 1 || 99) - (STAT_ORDER.indexOf(b[0]) + 1 || 99));
 /** 명중·회피는 적중 확률이 아닌 수치입니다. 실제 적중률은 상대 회피·속도와 함께 1~99.5%로 계산됩니다. */
 export const RATING_STATS = new Set(['accuracy', 'evasion']);
