@@ -336,7 +336,8 @@ export type State = {
     /** 마지막으로 자동 진행(사냥·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
     runEnd?: { reason: string; turn: number } | null;
     /** 튜토리얼 카드. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. */
-    tutorial?: { hidden?: boolean; skipped?: boolean };
+    /** 모험 안내. done은 한 번 만족한 단계의 기록(턴)으로, 조건이 깨져도 되돌아가지 않습니다(v27.72). */
+    tutorial?: { hidden?: boolean; skipped?: boolean; done?: Record<string, number> };
     /** 해금한 항해 기록 id → 해금 턴(-1은 도입 전에 이미 달성해 조용히 채운 기록). 환생 후에도 유지됩니다. */
     voyage?: Record<string, number>;
     /** v25.6 해금한 업적 id → 해금 턴. 환생 후에도 유지되며 보상은 해금 때 바로 받습니다. */
@@ -355,7 +356,7 @@ export type State = {
     /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위 보상을 한 번 정산합니다. */
     duelSeason?: { key: string; lastKey?: string; lastRank?: number };
     /** v27.43 제단: 마지막 신 도전 시각, 익명 기여 설정. 서버만 씁니다. */
-    altar?: { challengeAt?: number; anonymous?: boolean; /** v27.54 신 도전 횟수·승리·가장 많이 깎은 신 체력 비율(0~1). 운영 통계용. */ tries?: number; wins?: number; best?: number };
+    altar?: { challengeAt?: number; anonymous?: boolean; /** v27.54 신 도전 횟수·승리·가장 많이 깎은 신 체력 비율(0~1). 운영 통계용. */ tries?: number; wins?: number; best?: number; /** v27.72 공물을 바친 횟수(안내 단계 판정). */ offers?: number };
     /** v27.44 제단 진행 요약(서버가 동기화마다 채우는 표시용). */
     altarStatus?: import('./data/altar').AltarStatus;
     /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */

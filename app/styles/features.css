@@ -121,6 +121,8 @@
 .tutorial-card { padding: 14px 18px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
 .tutorial-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
 .tutorial-head strong { color: var(--gold); }
+.tutorial-actions { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.tutorial-actions .text-button { display: inline-flex; align-items: center; gap: 4px; }
 .tutorial-head span { color: #9fb4af; flex: 1; }
 .tutorial-steps { list-style: none; padding: 0; margin: 12px 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
 .tutorial-steps li { display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 9px; border-radius: 12px; border: 1px solid var(--border); color: #7f9a9c; }
