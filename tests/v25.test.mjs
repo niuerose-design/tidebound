@@ -748,3 +748,17 @@ test('v27.66 exp level-gap cap: monsters more than 10 levels above the player gi
     assert.ok(d.enemy.exp < d2.enemy.exp, 'dungeons too');
     void Meta;
 });
+
+test('v27.67 lift completes at the mimic tide, and lifted monsters are normalized by the stage average reward multiplier', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const W = await L.load('data/world'), Mi = await L.load('data/mimic');
+    assert.equal(W.TIDE_LIFT_TIERS, Mi.MIMIC.minTier, 'every stage is fully lifted where the mimic starts appearing');
+    const neon = W.STAGES.find(st => st.fish.every(id => (W.FISH.find(f => f.id === id).rewardMultiplier || 1) > 1));
+    assert.ok(neon, 'a rare-only stage exists');
+    assert.equal(W.stageRewardNorm(neon.fish, 0), 1, 'no tide → no normalization');
+    const full = W.stageRewardNorm(neon.fish, W.TIDE_LIFT_TIERS), rows = neon.fish.map(id => W.FISH.find(f => f.id === id)).filter(f => !(f.minTier > W.TIDE_LIFT_TIERS));
+    const avg = rows.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / rows.reduce((a, f) => a + (f.spawnWeight ?? 1), 0);
+    assert.ok(Math.abs(full * avg - 1) < 1e-9, 'stage average becomes ×1 at full lift');
+    const plain = W.STAGES.find(st => st.fish.every(id => (W.FISH.find(f => f.id === id).rewardMultiplier || 1) === 1));
+    assert.equal(W.stageRewardNorm(plain.fish, 30), 1, 'stages of common monsters are untouched');
+});
