@@ -30,11 +30,14 @@ export const roughGear = (s: Pick<State, 'vows'>) => roughLevel(s) ? 1 - ROUGH.g
 export const roughHeal = (s: Pick<State, 'vows'>) => roughLevel(s) ? 1 - ROUGH.heal[roughLevel(s) - 1] : 1;
 /** 보상 배율. 단계가 없거나 지금 난이도가 하한 미만이면 정확히 1입니다(tier는 encounterTier). */
 export const roughReward = (s: Pick<State, 'vows' | 'permanent'>, tier: number) => roughLevel(s) && tier >= roughFloor(s) ? 1 + .5 * roughLevel(s) * vowBoost(s, 'rough') : 1;
-/** v27.84 절제: 장착 AP −2·−4·−6, 환생 세계석 +15·+30·+45% × 강화 배율. */
-export const RESTRAINT = { ap: [2, 4, 6], pearls: [.15, .3, .45] };
+/** v27.84 절제: 장착 AP −4·−8·−12, 경험치 +20·+40·+60% × 강화 배율(하드코어 세계석 · 힘의 길 골드·드롭 · 랜덤게임 정수와 겹치지 않게 경험치). */
+export const RESTRAINT = { ap: [4, 8, 12], exp: [.2, .4, .6], /** 장착 개수 상한: 액티브·패시브 각각 3·2·1개. */ slots: [3, 2, 1] };
 export const restraintLevel = (s: Pick<State, 'vows'>) => s.vows?.restraint || 0;
 export const restraintAP = (s: Pick<State, 'vows'>) => restraintLevel(s) ? RESTRAINT.ap[restraintLevel(s) - 1] : 0;
-export const restraintBonus = (s: Pick<State, 'vows' | 'permanent'>) => restraintLevel(s) ? RESTRAINT.pearls[restraintLevel(s) - 1] * vowBoost(s, 'restraint') : 0;
+/** 절제 장착 개수 상한(액티브·패시브 각각). 절제가 없으면 null. */
+export const restraintSlots = (s: Pick<State, 'vows'>) => restraintLevel(s) ? RESTRAINT.slots[restraintLevel(s) - 1] : null;
+/** 절제 경험치 보너스(곱연산 배율 − 1). */
+export const restraintExp = (s: Pick<State, 'vows' | 'permanent'>) => restraintLevel(s) ? RESTRAINT.exp[restraintLevel(s) - 1] * vowBoost(s, 'restraint') : 0;
 
 /** 다음 생 서약을 정리합니다: 해금한 서약만, 힘의 길·절제는 1~3단계. */
 export function cleanVows(s: Pick<State, 'permanent'>, v?: Vows): Vows {

@@ -13,7 +13,7 @@ import { drawRebirthDoor } from '../../data/doors';
 import { jobById, JOB_TREES } from '../../data/classes';
 import { jobMastered, canChangeJob, canUse, grantJobSkills, trimLoadout } from '../progression';
 import { STAGES } from '../../data/world';
-import { VOW_IDS, VOW_NAMES, LEVELED_VOWS, type VowId, breathBonus, restraintBonus, cleanVows, hasVows, vowUnlocked } from '../vows';
+import { VOW_IDS, VOW_NAMES, LEVELED_VOWS, type VowId, breathBonus, cleanVows, hasVows, vowUnlocked } from '../vows';
 import { claimAchievements, rerollBoardGoal } from '../progress';
 import { goalText } from '../../data/goals';
 
@@ -79,8 +79,7 @@ export const lifecycleActions: ActionHandlers = {
             throw Error(`레벨 ${rebirthLevel(s)}부터 환생할 수 있습니다.`);
         const base = rebirthReward(s, stats(s).rebirthBonus || 0), deepPearls = deepVoyagePearls(s), lifeBonus = nextLifeBonus(s);
         // 하드코어: 이번 생에 한 번도 쓰러지지 않고(쓰러지면 서약이 풀림) 환생하면 세계석 보너스.
-        // v27.84 절제: AP를 줄인 단계만큼 환생 세계석 +15·+30·+45%.
-        const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, restraint = Math.floor(base * restraintBonus(s)), pearls = base + breath + restraint;
+        const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, pearls = base + breath;
         const vows = cleanVows(s, s.nextVows);
         const salvage = salvagePreview(s);
         // v27.63 환생 기록: 이번 생에 걸린 실제 시간·사냥 시간·도달 레벨·받은 세계석. 다음 생 시작 시각을 새로 잽니다.
@@ -97,10 +96,12 @@ export const lifecycleActions: ActionHandlers = {
         }
         if (hasVows(vows)) s.vows = vows;
         else delete s.vows;
+        // v27.84 절제: 새 생의 편성을 AP·장착 개수 상한에 맞춥니다.
+        if (s.vows?.restraint) trimLoadout(s);
         // 윤회의 문: 이번 생에 열릴 ??? 직업을 게임 난수로 추첨해 저장합니다(후보가 없으면 난수를 쓰지 않음).
         const door = drawRebirthDoor(s, rng);
         if (door) s.rebirthDoor = door; else delete s.rebirthDoor;
-        addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${deepPearls ? ` (깊은 모험 +${deepPearls} 포함)` : ''}${breath ? ` · 하드코어 +${breath}` : ''}${restraint ? ` · 절제 +${restraint}` : ''}`);
+        addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${deepPearls ? ` (깊은 모험 +${deepPearls} 포함)` : ''}${breath ? ` · 하드코어 +${breath}` : ''}`);
         if (lifeBonus === 'deep') addLog(s, 'Lv.100 완주 · 이번 생 동안 직업·스킬 숙련 기본 획득 +2', 'reward');
         if (lifeBonus === 'tailwind') addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%`, 'reward');
         if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => (LEVELED_VOWS as readonly string[]).includes(id) ? `${VOW_NAMES[id]} ${s.vows![id]}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');

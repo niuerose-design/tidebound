@@ -16,7 +16,7 @@ import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
-import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, restraintBonus, ROUGH, RESTRAINT } from '@/game/systems/vows';
+import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, ROUGH, RESTRAINT } from '@/game/systems/vows';
 import { BonusList } from './inventory-panel';
 import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, type VaultInfo } from '@/game/data/account';
 import { useEffect, useState as useLocalState } from 'react';
@@ -24,7 +24,7 @@ import { salvagePreview } from '@/game/systems/actions/lifecycle';
 const VOW_TEXT: Record<VowId, (s: State) => string> = {
     breath: (s: State) => `쓰러지면 이번 생을 처음부터 다시 시작(환생 횟수·세계석 변화 없음, 서약 해제). 한 번도 쓰러지지 않고 환생하면 환생 세계석 +${Math.round(breathBonus(s) * 100)}%.`,
     rough: (s: State) => `단계(1·2·3)마다 사냥터 난이도 하한 ${ROUGH.floor.join('·')}(미만이면 보상 꺼짐), 장비 능력치 -${ROUGH.gear.map(n => n * 100).join('·')}%, 처치 후 회복·흡혈·체력 재생 -${ROUGH.heal.map(n => n * 100).join('·')}%. 보상: 골드·장비 드롭 확률 ×(1 + ${Math.round(50 * vowBoost(s, 'rough'))}% × 단계), 드롭 상한 뒤에 곱합니다.`,
-    restraint: (s: State) => `단계(1·2·3)마다 장착 AP -${RESTRAINT.ap.join('·')}. 보상: 환생 세계석 +${RESTRAINT.pearls.map(n => Math.round(n * vowBoost(s, 'restraint') * 100)).join('·')}%.`,
+    restraint: (s: State) => `단계(1·2·3)마다 장착 AP -${RESTRAINT.ap.join('·')}, 액티브·패시브 장착 각각 최대 ${RESTRAINT.slots.join('·')}개. 보상: 경험치 ×${RESTRAINT.exp.map(n => (1 + n * vowBoost(s, 'restraint')).toFixed(1)).join('·')}(다른 경험치 배율과 곱연산).`,
 };
 /** 서약 연구 카드의 설명 팝업: 서약이 무엇인지, 어떻게 거는지, 이 서약의 제약과 보상. 누르면 열립니다(모바일 포함). */
 function VowInfo({ id, s }: { id: VowId; s: State }) {
@@ -113,7 +113,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
     const [researchTab, setResearchTab] = useState<ResearchTab>('combat');
     const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
     const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }, bonus), permanentExp = 1 + permanentExpBonus(s);
-    const breathExtra = (s.vows?.breath ? Math.floor(reward * breathBonus(s)) : 0) + Math.floor(reward * restraintBonus(s));
+    const breathExtra = s.vows?.breath ? Math.floor(reward * breathBonus(s)) : 0;
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0, salvage = salvagePreview(s);
     const projected = { ...s, level: Math.max(s.level, required) }, lifeBonus = nextLifeBonus(projected);
     const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));

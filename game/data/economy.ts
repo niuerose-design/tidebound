@@ -55,7 +55,7 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'vowBreath', name: '하드코어', desc: '서약 해금. 2·3단계는 환생 세계석 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 환생 세계석 +50%', '환생 세계석 +75%', '환생 세계석 +100%'] },
     { id: 'vowRough', name: '힘의 길', desc: '서약 해금(난이도 하한·장비 능력치 감소·회복 봉쇄 대신 골드·드롭 곱연산). 2·3단계는 보상을 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 선택 단계당 드롭·골드 +50%', '선택 단계당 +75%', '선택 단계당 +100%'] },
     /** v27.84 절제: 장착 AP를 줄이는 서약. */
-    { id: 'vowRestraint', name: '절제', desc: '서약 해금(장착 AP -2·-4·-6 대신 환생 세계석 +15·+30·+45%). 2·3단계는 보상을 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 세계석 보너스 ×1', '세계석 보너스 ×1.5', '세계석 보너스 ×2'] },
+    { id: 'vowRestraint', name: '절제', desc: '서약 해금(장착 AP -4·-8·-12, 액티브·패시브 각각 3·2·1개까지 대신 경험치 ×1.2·×1.4·×1.6 곱연산). 2·3단계는 보상을 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 경험치 보너스 ×1', '경험치 보너스 ×1.5', '경험치 보너스 ×2'] },
     { id: 'mastery', name: '숙련의 기억', desc: '스킬·직업 숙련 획득 +3%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .03, unit: 'percent', label: '숙련 획득' },
     { id: 'gold', name: '황금 비', desc: '처치·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '처치·던전 골드' },
     { id: 'dungeon', name: '던전의 금고', desc: '던전 클리어 골드 +8%', max: 10, base: 5, step: 4, tab: 'gold', per: .08, unit: 'percent', label: '던전 클리어 골드' },

@@ -148,7 +148,7 @@ test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance p
 });
 
 // 세계석 연구 4단계: 서약 3개
-import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta, victoryHeal, apCapacity } from './harness.mjs';
+import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta, victoryHeal, apCapacity, expMultiplier as expMul, SKILLS as ALL_SKILLS } from './harness.mjs';
 const vowReady = (research = {}, next = {}) => { const s = newState(0); s.rebirths = 5; s.level = 60; Object.assign(s.permanent, research); s.nextVows = next; return s; };
 
 test('v27.84 vows: research entries, reservation rules (breath on/off, rough·restraint 0~3) and cleanup on full reset', () => {
@@ -176,8 +176,8 @@ test('v27.84 random game: research-gated entries per life, random monsters by wa
     assert.equal(meta.encounterTier(s), 2, 'wave 1 = difficulty 2'); s.recovery = 0;
     const p0 = s.pearls, e0 = s.essence || 0;
     for (let w = 0; w < 3; w++) { spawn(s, () => .5); assert.equal(s.enemy.exp, 0); assert.equal(s.enemy.gold, 0); s.enemy.hp = 0; reward(s, () => .5); }
-    // 3웨이브 판돈: 정수 2+4+6 = 12, 세계석 0, 연구 2단계 ×1.5 → 정수 18. 목표 도달로 받고 나와 자동 사냥으로.
-    assert.equal(s.dungeon, null); assert.equal((s.essence || 0) - e0, 18); assert.equal(s.pearls, p0); assert.equal(s.running, true);
+    // 3웨이브 판돈: 정수 3+6+9 = 18, 연구 2단계 ×1.5 → 정수 27. 목표 도달로 받고 나와 자동 사냥으로.
+    assert.equal(s.dungeon, null); assert.equal((s.essence || 0) - e0, 27); assert.equal(s.pearls, p0); assert.equal(s.running, true);
     act(s, { type: 'dungeon', id: 'randomGame' }, 0); assert.equal(s.dungeon.until, undefined); s.recovery = 0;
     spawn(s, () => .1); s.enemy.hp = 0; reward(s, () => .5); assert.equal(s.dungeon.wave, 1);
     // 쓰러지면 판돈 소멸.
@@ -187,7 +187,7 @@ test('v27.84 random game: research-gated entries per life, random monsters by wa
     // 나가기 = 받고 나가기.
     const t = newState(0); t.rebirths = 6; t.level = 60; t.permanent.vowAnchor = 1; act(t, { type: 'dungeon', id: 'randomGame' }, 0); t.recovery = 0;
     for (let w = 0; w < 10; w++) { spawn(t, () => .5); t.enemy.hp = 0; reward(t, () => .5); }
-    const tp = t.pearls; act(t, { type: 'leaveDungeon' }, 0); assert.equal(t.pearls - tp, 1, 'wave 10 adds one pearl'); assert.equal(t.essence, 110);
+    const tp = t.pearls; act(t, { type: 'leaveDungeon' }, 0); assert.equal(t.pearls, tp, 'v27.84 essence only'); assert.equal(t.essence, 165);
 });
 
 test('Vows · one breath: a fall soft-resets the life (online and offline); an unbroken life adds rebirth pearls', () => {
@@ -220,12 +220,16 @@ test('v27.84 strength path (rough): difficulty floor, gear -30/50/70%, recovery 
     assert.equal('vows' in snapshot(newState(0)), false);
 });
 
-test('v27.84 restraint: equip AP -2/-4/-6, rebirth pearls +15/30/45% (×boost)', () => {
-    const s = newState(0); const ap = apCapacity(s); s.vows = { restraint: 2 }; assert.equal(apCapacity(s), ap - 4);
-    const plain = vowReady(), vowed = vowReady({ vowRestraint: 1 }); vowed.vows = { restraint: 3 }; const p0 = plain.pearls, v0 = vowed.pearls;
-    const base = rebirthReward(plain, stats(plain).rebirthBonus || 0);
-    act(plain, { type: 'rebirth' }, 0); act(vowed, { type: 'rebirth' }, 0);
-    assert.equal((vowed.pearls - v0) - (plain.pearls - p0), Math.floor(base * .45));
+test('v27.84 restraint: equip AP -4/-8/-12 (min 1), actives·passives 3/2/1 each, exp ×(1 + 20/40/60% × boost)', async () => {
+    const progressionMod = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
+    const s = newState(0); s.rebirths = 10; s.permanent.ap = 12; const ap = apCapacity(s); s.vows = { restraint: 2 }; assert.equal(apCapacity(s), ap - 8);
+    const x = newState(0); x.vows = { restraint: 3 }; assert.equal(apCapacity(x), Math.max(1, apCapacity(newState(0)) - 12));
+    const actives = ALL_SKILLS.filter(k => k.type === 'active').slice(0, 3).map(k => k.id), passives = ALL_SKILLS.filter(k => k.type === 'passive').slice(0, 3).map(k => k.id);
+    const y = newState(0); y.vows = { restraint: 3 };
+    assert.ok(progressionMod.overRestraint(y, [actives[0], actives[1]]), 'two actives at step 3'); assert.ok(!progressionMod.overRestraint(y, [actives[0], passives[0]]), 'one of each is fine');
+    y.vows = { restraint: 1 }; assert.ok(!progressionMod.overRestraint(y, [...actives, ...passives])); assert.ok(progressionMod.overRestraint(y, [...ALL_SKILLS.filter(k => k.type === 'active').slice(0, 4).map(k => k.id)]));
+    const plain = newState(0), vowed = newState(0); vowed.permanent.vowRestraint = 3; vowed.vows = { restraint: 1 };
+    close(expMul(vowed) / expMul(plain), 1.4, 'step 1 × research boost 2 = +40%, multiplicative');
 });
 
 // 계승 스킬 레벨 조건 면제

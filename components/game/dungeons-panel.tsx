@@ -101,7 +101,7 @@ function RandomGameCard({ s, send, busy }: PanelProps) {
     const total = (n: number) => { const t = stakeUpTo(n); return `정수 ${Math.floor(t.essence * m)}${Math.floor(t.pearls * m) ? ` · 세계석 ${Math.floor(t.pearls * m)}` : ''}`; };
     return <section className="panel random-game-card">
         <div className="section-title"><h2>랜덤게임</h2><span>{rank ? `이번 생 남은 입장 ${left} / ${rank}회 · 판돈 ×${m}` : '세계석 연구 ‘랜덤게임’에서 해금 (환생 5회)'}</span></div>
-        <p>해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브마다 난이도 +{RANDOM_GAME.tierPerWave}, {RANDOM_GAME.bossEvery}웨이브마다 보스. 처치 경험치·골드·장비는 없고, 웨이브를 깰수록 판돈(정수 {RANDOM_GAME.essencePerWave}×웨이브, {RANDOM_GAME.pearlEvery}웨이브부터 세계석)이 쌓입니다. 목표 웨이브에 닿거나 ‘받고 나가기’를 누르면 받고, <b>쓰러지면 판돈을 모두 잃습니다.</b></p>
+        <p>해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브마다 난이도 +{RANDOM_GAME.tierPerWave}, {RANDOM_GAME.bossEvery}웨이브마다 보스. 처치 경험치·골드·장비는 없고, 웨이브를 깰수록 판돈(정수 {RANDOM_GAME.essencePerWave}×웨이브)이 쌓입니다. 목표 웨이브에 닿거나 ‘받고 나가기’를 누르면 받고, <b>쓰러지면 판돈을 모두 잃습니다.</b></p>
         {rank > 0 && <>
         <div className="button-row random-game-targets">{RANDOM_GAME.targets.map(n => <button key={n} className={target === n ? 'primary' : 'secondary'} disabled={busy} onClick={() => setTarget(n)}>{n ? `${n}웨이브` : '목표 없음'}</button>)}</div>
         <p className="footnote">{target ? `${target}웨이브까지 모두 깨면 ${total(target)}` : '받고 나가기를 누르거나 쓰러질 때까지 계속합니다.'}</p>
