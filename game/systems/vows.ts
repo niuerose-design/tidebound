@@ -6,7 +6,7 @@ import { STAGES, DUNGEONS } from '../data/world';
 export const VOW_IDS = ['anchor', 'breath', 'rough'] as const;
 export type VowId = typeof VOW_IDS[number];
 export const VOW_RESEARCH: Record<VowId, string> = { anchor: 'vowAnchor', breath: 'vowBreath', rough: 'vowRough' };
-export const VOW_NAMES: Record<VowId, string> = { anchor: '잠든 힘', breath: '한 번의 숨', rough: '험한 길' };
+export const VOW_NAMES: Record<VowId, string> = { anchor: '잠든 힘', breath: '하드코어', rough: '험한 길' };
 /** 잠든 힘: 목표에서 이만큼 잡으면 봉인이 풀립니다. */
 export const ANCHOR_CATCHES = 300;
 
@@ -15,7 +15,7 @@ export const vowBoost = (s: Pick<State, 'permanent'>, id: VowId) => 1 + Math.max
 export const vowUnlocked = (s: Pick<State, 'permanent'>, id: VowId) => researchRank(s, VOW_RESEARCH[id]) > 0;
 /** 잠든 힘 봉인 해제 배율: ×1.5 → ×1.75 → ×2. */
 export const anchorPayout = (s: Pick<State, 'permanent'>) => 1 + .5 * vowBoost(s, 'anchor');
-/** 한 번의 숨 환생 세계석 보너스: +50% → +75% → +100%. */
+/** 하드코어(전 ‘한 번의 숨’) 환생 세계석 보너스: +50% → +75% → +100%. */
 export const breathBonus = (s: Pick<State, 'permanent'>) => .5 * vowBoost(s, 'breath');
 /** 험한 길 선택 단계(0~3). */
 export const roughLevel = (s: Pick<State, 'vows'>) => s.vows?.rough || 0;

@@ -1,11 +1,10 @@
 'use client';
-import { catchReward } from '@/game/systems/meta';
 import { BookOpen, ChevronDown, Swords } from 'lucide-react';
 import { FishArt } from './art';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { SKILLS } from '@/game/data/skills';
-import { FISH, STAGES, stageStatFish } from '@/game/data/world';
+import { FISH, STAGES } from '@/game/data/world';
 import { MIMIC, mimicChance, specialLuck } from '@/game/data/mimic';
 import { EXP_NURI, nuriChance } from '@/game/data/exp-nuri';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
@@ -13,9 +12,9 @@ import { EQUIPMENT_NAMES } from '@/game/data/equipment';
 import { PROGRESSION, STAT_LABELS, statDisplay, percent } from '@/game/data/progression';
 import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, pendingBookCount } from './book-research';
-import { stats, mastery, goldMultiplier, hitChance, dropRate } from '@/game/systems/stats';
+import { stats, mastery, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
-import { abyssReference } from '@/game/systems/encounter';
+import { abyssReference, stageField } from '@/game/systems/encounter';
 import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel } from '@/game/systems/book';
 import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES } from '@/game/data/book-traits';
 import { VARIANTS } from '@/game/data/variants';
@@ -88,7 +87,7 @@ export function Collection({ s, send, busy }: PanelProps) {
         <RegionProgress s={s} id={st.id}/>
         </summary>
         <div className="book-grid">{st.fish.map(id => {
-                const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, researchDone = (s.bookClaims?.[id] || 0) >= BALANCE.bookMilestones.length, enemy = scaledEnemyStats(stageStatFish(f, st.level), { tier: s.tide || 0 }), p = profile(id);
+                const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, researchDone = (s.bookClaims?.[id] || 0) >= BALANCE.bookMilestones.length, tide = s.dungeon ? 0 : (s.tide || 0), live = stageField(s, st.id, id, tide), enemy = live.foe, p = profile(id);
                 return <article className={`panel book-card ${!n ? 'undiscovered' : ''}`} key={id}>
                 <div className="book-icon">
                 <FishArt id={id} size={56}/>
@@ -102,9 +101,9 @@ export function Collection({ s, send, busy }: PanelProps) {
                 </div> : <LockedInfo n={n}/>}
                 <BookTraitLine s={s} id={id}/>
                 <BookResearch s={s} id={id} send={send} busy={busy} swarm/>
-                {bookRevealed(s, id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{s.tide ? `사냥터 난이도 ${s.tide} 적용 · 일반 사냥터 기준` : '사냥터 난이도 0 · 일반 사냥터 기준'}</small></h4></summary>
+                {bookRevealed(s, id) && <details className="book-block book-enemy" open={!researchDone}><summary><h4>적 정보 <small>{`사냥터 난이도 ${tide} 기준 · Lv.${live.level}${live.level > f.level ? ` (기본 Lv.${f.level}에서 상승)` : ''}`}</small></h4></summary>
                 <div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><span>명중 수치 {statDisplay('accuracy', enemy.accuracy || 0)}</span><span>회피 수치 {statDisplay('evasion', enemy.evasion || 0)}</span></div>
-                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 물리 {percent(hitChance(player, enemy))} · 마법 {percent(hitChance(player, enemy, true))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>처치 골드 {Math.floor(catchReward(f, s.tide || 0).gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 사냥터·골드 보너스 적용)</small></span></div>{f.level >= 5 && p.skills.length > 0 ? <EnemySkillList ids={p.skills} enemy={enemy}/> : <p className="footnote">스킬 없이 기본 공격만 합니다 · 치명 {percent(enemy.crit || 0)}</p>}</details>}
+                <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 물리 {percent(hitChance(player, enemy))} · 마법 {percent(hitChance(player, enemy, true))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>처치 골드 {Math.floor(live.gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 난이도·골드 보너스 적용)</small></span><span>처치 경험치 {Math.floor(live.exp * expMultiplier(s)).toLocaleString()} <small>(기본 {f.exp} · 난이도·경험치 배율 적용)</small></span></div>{f.level >= 5 && p.skills.length > 0 ? <EnemySkillList ids={p.skills} enemy={enemy}/> : <p className="footnote">스킬 없이 기본 공격만 합니다 · 치명 {percent(enemy.crit || 0)}</p>}</details>}
                 {s.stage === st.id && !s.dungeon && <button className="text-button" disabled={busy} onClick={() => send({ type: 'target', id })}>{s.target === id ? '집중 사냥 대상' : '이 몬스터 집중 사냥'}</button>}</article>;
             })}</div>
         </details>)}<details className="book-section book-region boss-book-section">
