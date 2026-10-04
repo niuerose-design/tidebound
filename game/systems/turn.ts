@@ -38,12 +38,12 @@ export function syncStatRate(s: State) {
     if (bonus > 0) addLog(s, `레벨당 능력치 포인트가 ${PROGRESSION.statPerLevel}로 올라 지난 레벨분 +${bonus}포인트를 받았습니다.`, 'reward');
 }
 /** v27.16 전투가 멈춘 채로 남는 것을 막는 안전장치: 양쪽 체력이 이만큼 턴 동안 그대로면 물고기가 달아난 것으로 봅니다. */
-export const STALEMATE_TURNS = 120;
+const STALEMATE_TURNS = 120;
 /**
  * v27.16 세이브가 어떤 이유로든 진행 불가 상태(숫자가 아닌 체력·회복·시각, 없는 낚시터·어종, 체력 0 이하로 남은 적)가 되면 조용히 복구합니다.
  * 던전에 들어갔다 나오면 풀리던 '입질이 오지 않는' 현상의 안전망입니다. 복구한 내용은 일지에 남깁니다.
  */
-export function repairState(s: State, now?: number) {
+function repairState(s: State, now?: number) {
     const fixed: string[] = [];
     if (now !== undefined && !Number.isFinite(s.lastTick)) { s.lastTick = now; fixed.push('시각'); }
     if (!Number.isFinite(s.recovery) || s.recovery < 0) { s.recovery = 0; fixed.push('회복 대기'); }
@@ -53,7 +53,7 @@ export function repairState(s: State, now?: number) {
     if (fixed.length) addLog(s, `전투 상태를 복구했습니다 (${fixed.join('·')}).`, 'system');
     return fixed;
 }
-export function tickTurn(s: State, rng: () => number) {
+function tickTurn(s: State, rng: () => number) {
     s.turn++;
     s.playMs = (s.playMs || 0) + BALANCE.turnMs;
     repairState(s);
@@ -153,7 +153,7 @@ export function advance(s: State, now: number, rng = Math.random) {
     }
 }
 /** 편지병 골드: 레벨 × 500. */
-export const bottleGold = (level: number) => level * 500;
+const bottleGold = (level: number) => level * 500;
 /**
  * 병 속의 편지: 오프라인 정산의 온전한 1시간마다 4%p/단계 확률로 편지병을 줍습니다.
  * 내용은 골드 70% · 장비 25% · 진주 1개 5%. 0단계면 난수를 쓰지 않습니다.

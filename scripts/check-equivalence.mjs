@@ -20,7 +20,9 @@ const mastery = await load('game/systems/mastery.js');
 const guild = await load('game/systems/guild.js');
 const { SKILLS } = await load('game/data/skills.js');
 const { JOBS } = await load('game/data/classes.js');
-const { STAGES, DUNGEONS, FISH } = await load('game/data/world.js');
+const { STAGES, DUNGEONS, FISH, setClosures } = await load('game/data/world.js');
+// 라이브에서 닫힌 곳(기본: 무릉도장)도 검증하도록 모두 엽니다.
+setClosures({ dungeons: [], stages: [] });
 const { RESEARCH, SHOP, RELICS, GAMBLE_CATEGORIES } = await load('game/data/economy.js');
 const { scaledEnemyStats } = await load('game/data/encounters.js');
 
@@ -82,7 +84,7 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
 }
 // 3. 던전·심연 반복, 환생 연쇄
 {
-    const s = engine.newState(0), game = seeded(5); s.level = 60; s.rebirths = 3; s.permanent.attack = 200; s.permanent.hp = 200; s.permanent.guard = 50; s.hp = statsM.stats(s).hp;
+    const s = engine.newState(0), game = seeded(5); s.level = 60; s.rebirths = Math.max(...DUNGEONS.map(d => d.rebirth)); s.permanent.attack = 200; s.permanent.hp = 200; s.permanent.guard = 50; s.hp = statsM.stats(s).hp;
     let now = 0; const trace = [];
     for (const d of DUNGEONS) { engine.act(s, { type: 'dungeon', id: d.id, value: d.id === 'abyss' ? 'deeper:6' : '3' }, now, game); for (let i = 0; i < 6000 && s.dungeon; i++) { now += 2000; engine.advance(s, now, game); } trace.push(hash(s)); }
     for (let life = 0; life < 4; life++) { now += 8 * 3600_000; engine.advance(s, now, game); try { engine.act(s, { type: 'rebirth' }, now, game); } catch (e) { trace.push(String(e.message)); } engine.act(s, { type: 'start' }, now, game); trace.push(hash(s)); }

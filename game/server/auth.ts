@@ -2,7 +2,7 @@
 import { SLOT_COUNT } from '../data/account';
 import { db } from './db';
 
-export const SESSION_COOKIE = 'tb_session';
+const SESSION_COOKIE = 'tb_session';
 const SESSION_DAYS = 30, ITERATIONS = 120_000;
 export class AuthError extends Error { constructor(message: string, public status = 400) { super(message); } }
 
@@ -15,7 +15,7 @@ async function hashPassword(password: string, salt: string) {
 }
 function safeEqual(a: string, b: string) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
 
-export function normalizeUsername(raw: unknown) {
+function normalizeUsername(raw: unknown) {
     const name = String(raw ?? '').trim().toLowerCase();
     if (!/^[a-z0-9_]{3,20}$/.test(name)) throw new AuthError('아이디는 영문 소문자·숫자·밑줄 3~20자입니다.');
     return name;
@@ -71,7 +71,7 @@ export function clearSessionCookie(secure: boolean) {
     return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure ? '; Secure' : ''}`;
 }
 /** v25.6 현재 캐릭터 슬롯 쿠키. 없거나 범위 밖이면 1번. 로그인·가입 때 1번으로 돌아갑니다. */
-export const SLOT_COOKIE = 'tb_slot';
+const SLOT_COOKIE = 'tb_slot';
 export function readSlot(req: Request) {
     const m = (req.headers.get('cookie') || '').match(new RegExp(`(?:^|;\\s*)${SLOT_COOKIE}=([1-9])`));
     const slot = m ? Number(m[1]) : 1;

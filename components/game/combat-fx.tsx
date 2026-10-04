@@ -78,7 +78,7 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
 
 const SEAL_GLYPHS = ['無', '虛', '斬', '血', '縛', '刹', '魂'];
 /** v27.24 5차 궁극기 전용 장면 연출. kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. */
-export const ULTIMATES: Record<string, { kind: string; title: string; glyphs: string[] }> = {
+const ULTIMATES: Record<string, { kind: string; title: string; glyphs: string[] }> = {
     braveSlash: { kind: 'slash', title: '용사의 일격', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
     oceanWrath: { kind: 'wave', title: '대해의 분노', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
     genesis: { kind: 'light', title: '창세의 빛', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },

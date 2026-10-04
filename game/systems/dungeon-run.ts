@@ -3,13 +3,13 @@ import type { State } from '../types';
 import { BALANCE, MONSTER_TUNING } from '../data/balance';
 import { DUNGEONS, dungeonClosed } from '../data/world';
 import { addLog, endRun } from './state';
-/** 반복 설정 문자열: 'once' | 'fail' | 숫자(총 도전 횟수) | 'deeper:N'(무한 심연, 현재 최고 깊이 + N층까지). */
+/** 반복 설정 문자열: 'once' | 'fail' | 숫자(총 도전 횟수) | 'deeper:N'(무릉도장, 현재 최고 깊이 + N층까지). */
 export function parseRepeat(s: State, id: string, value?: string): { left: number | null; until?: number } | undefined {
     if (!value || value === 'once' || value === '1') return undefined;
     if (value === 'fail') return { left: null };
     if (id === 'abyss' && value.startsWith('deeper:')) {
         const more = Math.floor(Number(value.slice(7)));
-        if (!Number.isFinite(more) || more < 1 || more > 999) throw Error('목표 깊이를 확인하세요.');
+        if (!Number.isFinite(more) || more < 1 || more > 999) throw Error('목표 층을 확인하세요.');
         return more > 1 ? { left: null, until: s.abyssBest + more } : undefined;
     }
     const total = Math.floor(Number(value));
@@ -27,7 +27,7 @@ export function enterDungeon(s: State, id: string, repeat?: { left: number | nul
     s.recovery = Math.max(s.recovery, MONSTER_TUNING.dungeonPreparationTurns);
     addLog(s, `${d.name} 입장 준비${repeatLabel(repeat)} · ${MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 후 체력·마나를 회복하고 출발합니다.`);
 }
-export function repeatLabel(r?: { left: number | null; until?: number }) {
+function repeatLabel(r?: { left: number | null; until?: number }) {
     if (!r) return '';
     if (r.until) return ` (반복 · ${r.until}층까지)`;
     return r.left === null ? ' (반복 · 실패할 때까지)' : r.left === 0 ? ' (반복 · 마지막 도전)' : ` (반복 · 이후 ${r.left}회 더)`;

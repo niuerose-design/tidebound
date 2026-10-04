@@ -629,3 +629,6 @@
   .skill-view-toggle { width:100%; justify-content:space-between }
   .skill-view-toggle button { flex:1; padding:8px 4px }
 }
+/* v27.34 낚시터 지역 묶음 */
+.stage-region + .stage-region { margin-top: 26px; }
+.stage-region-title { font-size: 18px; margin: 0 0 12px; color: var(--gold); letter-spacing: .02em; }

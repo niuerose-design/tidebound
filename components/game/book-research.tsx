@@ -11,7 +11,7 @@ import { Meter } from './shared';
 
 const MILESTONES = BALANCE.bookMilestones;
 /** 연구 단계를 달성하면 바로 적용되는 전투 보상. 생태 연구는 2단계부터 붙습니다. */
-export function stepEffect(id: string, rank: number) {
+function stepEffect(id: string, rank: number) {
     const trait = BOOK_TRAITS[bookTrait(id)];
     const ecology = rank + 1 >= BOOK_ECOLOGY.fromStage ? ` · 생태 연구: 이 어종 상대 주는 피해 +${BOOK_ECOLOGY.dealtPerStage * 100}% · 받는 공격 피해 -${BOOK_ECOLOGY.takenPerStage * 100}%` : '';
     return `${trait.name} 연구 ${bonusLabel(trait.perStage)}${ecology}`;
@@ -43,7 +43,7 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
 }
 
 /** 한 지역의 연구 진행도와 지역 완성 보상. 낚시터 카드와 도감 지역 제목에서 같이 씁니다. */
-export function regionResearch(s: State, stageId: string) {
+function regionResearch(s: State, stageId: string) {
     const st = STAGES.find(x => x.id === stageId)!;
     const done = st.fish.filter(id => (s.book[id] || 0) >= PROGRESSION.fishComplete).length;
     const pending = st.fish.reduce((a, id) => a + bookPending(s, id).ranks.length, 0);

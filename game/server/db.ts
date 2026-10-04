@@ -8,7 +8,7 @@ export type RankingRow = { id: string; snapshot: string; rating: number; power: 
 export type AccountRow = { id: string; username: string; pass_hash: string; salt: string; created_at: number };
 /** v25.4 채팅 한 줄. 채널마다 최근 CHAT_KEEP개만 남깁니다. */
 export type ChatRow = { id: number; channel: string; account_id: string; name: string; text: string; created_at: number };
-export const CHAT_KEEP = 300;
+const CHAT_KEEP = 300;
 /** v25.11 공유 길드. 주간 합산(week가 현재 주와 다르면 0으로 보고 다시 셉니다). */
 export type GuildRow = { id: string; name: string; code: string; leader: string; treasury: number; created_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; points: number };
 export type GuildMemberRow = { account_id: string; guild_id: string; name: string; joined_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; claimed: string };
@@ -66,7 +66,7 @@ export interface Storage {
     setWallet(row: WalletRow): Promise<void>;
 }
 /** 주 키가 바뀌면 0으로 보는 주간 합산 갱신(파일 DB와 Neon이 같은 규칙). */
-export function applyDelta<T extends { week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number }>(row: T, week: string, d: GuildDelta): T {
+function applyDelta<T extends { week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number }>(row: T, week: string, d: GuildDelta): T {
     const same = row.week === week;
     const base = same ? row : { ...row, catches: 0, clears: 0, bosses: 0, abyss: 0, donated: 0 };
     return { ...base, week, catches: base.catches + (d.catches || 0), clears: base.clears + (d.clears || 0), bosses: base.bosses + (d.bosses || 0), abyss: Math.max(base.abyss, d.abyss || 0), donated: base.donated + (d.donated || 0) };

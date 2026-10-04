@@ -11,7 +11,7 @@ const POLL_MS = 8000, KEEP = 120, MAX_CHARS = 120;
  * 메시지는 서버가 채널당 최근 300줄만 보관합니다.
  */
 export type ChatChannel = 'global' | 'guild';
-export function useChat(open: boolean, channel: ChatChannel = 'global') {
+function useChat(open: boolean, channel: ChatChannel = 'global') {
     const [lines, setLines] = useState<ChatLine[]>([]), [error, setError] = useState(''), [sending, setSending] = useState(false);
     const last = useRef(0), inflight = useRef(false);
     const pull = useCallback(async () => {

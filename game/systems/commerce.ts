@@ -8,14 +8,12 @@ import { rollAffixes } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** 상점·뽑기 골드 가격. 항구 단골 할인(−2%/단계, 내림)을 적용합니다. */
 /** v27.30 확정 구매·감정 가격: 예전 정비례 가격과 '그 레벨 물고기 골드 × 배수' 중 큰 값. 감정은 매번 희귀 이상이라 드롭(포획당 0.1%)보다 훨씬 유리했습니다. */
-export const SHOP_FISH = { buy: 30, gamble: 60 };
+const SHOP_FISH = { buy: 30, gamble: 60 };
 const fishPrice = (s: State, n: number) => fishGoldAt(Math.min(PRICE_LEVEL_CAP, s.level)) * n;
 export const shopCost = (s: State) => Math.floor(Math.max(ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel, fishPrice(s, SHOP_FISH.buy)) * shopDiscount(s));
 /** v27.20 일반 등급(흰색) 장비 확정 구매: 도감용. 드롭 확률이 낮고 던전·보스 드롭은 희귀 이상이라 흰색을 따로 팝니다. */
 export const plainCost = (s: State) => Math.max(30, Math.floor(shopCost(s) * .2));
 export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, fishPrice(s, SHOP_FISH.gamble)) * shopDiscount(s));
-/** v27.19 환생 유물은 진주가 아니라 환생 횟수로 받습니다. 비용은 항상 0(옛 호출 호환). */
-export const relicCost = () => 0;
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: `희귀 ${o.name}`, slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
 /** 탭에 쓴 진주와 재분배 반환액. 첫 1회는 전액, 이후 90%(내림). */

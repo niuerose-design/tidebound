@@ -15,7 +15,7 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'foeShellRam', name: '비늘 들이받기', desc: '물리 공격 125% 피해.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.25, manaCost: 0 },
     { id: 'foeTideSlam', name: '조류 강타', desc: '복합 피해 120%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.2, damageType: 'split', manaCost: 0 },
 ];
-export const PROFILES: Record<string, {
+const PROFILES: Record<string, {
     name: string;
     hint: string;
     skills: string[];
@@ -74,13 +74,13 @@ export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: {
     foe.magic = Math.round((foe.magic || 0) * tierAttack(options.tier || 0) * pressure.attack);
     foe.defense = Math.round(foe.defense * pressure.defense);
     foe.resist = Math.round((foe.resist || 0) * pressure.defense);
-    // v27.30 던전(특히 무한 심연)에서는 층 배율 1단계마다 속도 +2%: 속도만 올려 연속 행동으로 깊은 층을 밀던 빌드를 막습니다.
+    // v27.30 던전(특히 무릉도장)에서는 층 배율 1단계마다 속도 +2%: 속도만 올려 연속 행동으로 깊은 층을 밀던 빌드를 막습니다.
     if (options.wave !== undefined && options.tier) foe.speed = Math.round((foe.speed || 10) * (1 + options.tier * DUNGEON_TUNING.tierSpeed));
     return foe;
 }
 
 /**
- * v27.35 무한 심연 적 능력치. 층 배율(tier) 대신 ABYSS_TUNING 공식을 씁니다.
+ * v27.35 무릉도장 적 능력치. 층 배율(tier) 대신 ABYSS_TUNING 공식을 씁니다.
  * ref는 심연 첫 어종의 1층 기준 능력치이고, 모든 어종에 같은 배수를 곱해 어종·보스 사이의 차이를 유지합니다.
  */
 export function abyssEnemyStats(f: Parameters<typeof enemyStats>[0], ref: Stats, depth: number, options: { boss?: boolean; wave?: number } = {}): Stats {

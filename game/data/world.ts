@@ -1,15 +1,16 @@
+/** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
 export const STAGES = [
-    { id: 'brook', name: '여명의 시냇가', subtitle: 'DAWN CREEK', level: 1, rebirth: 0, description: '물안개 너머, 첫 번째 입질이 찾아온다.', fish: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
-    { id: 'bay', name: '푸른 조개 만', subtitle: 'SHELL BAY', level: 5, rebirth: 0, description: '잔잔한 수면 아래 날카로운 비늘이 숨어 있다.', fish: ['mackerel', 'ray', 'puffer'], tone: '#68b6ce' },
-    { id: 'reef', name: '붉은 산호초', subtitle: 'CRIMSON REEF', level: 10, rebirth: 0, description: '붉게 물든 산호 사이로 포식자가 유영한다.', fish: ['lionfish', 'eel', 'barracuda', 'stormBarracuda'], tone: '#d49081' },
-    { id: 'kelp', name: '속삭이는 해초림', subtitle: 'WHISPERING KELP', level: 14, rebirth: 0, description: '해초의 미로에는 작지만 희귀한 생명들이 숨는다.', fish: ['seahorse', 'needlefish', 'tidejelly'], tone: '#72b89b' },
-    { id: 'wreck', name: '망각의 난파선', subtitle: 'FORGOTTEN WRECK', level: 18, rebirth: 0, description: '잊힌 선원의 낚싯줄은 아직 팽팽하다.', fish: ['ghost', 'angler', 'shark'], tone: '#9e96c8' },
-    { id: 'volcanic', name: '검은 화산수역', subtitle: 'BLACKWATER CALDERA', level: 24, rebirth: 0, description: '열수 분출구가 바다를 끓이고, 불씨를 품은 물고기가 떠오른다.', fish: ['emberEel', 'ashRay', 'magmaPuffer', 'cinderKoi'], tone: '#d17c62' },
-    { id: 'trench', name: '검은 해구', subtitle: 'BLACK TRENCH', level: 26, rebirth: 0, description: '빛이 닿지 않는 곳, 거대한 심장이 뛴다.', fish: ['viper', 'squid', 'leviathan'], tone: '#5c9dba' },
-    { id: 'moon', name: '달빛의 심연', subtitle: 'LUNAR ABYSS', /** v27.30 32 → 34: 평균 어종 레벨(36)에 맞춤. */ level: 34, rebirth: 1, description: '한 번의 생을 넘어선 낚시꾼만 닿는 바다.', fish: ['moonfish', 'dragon', 'ancient', 'eclipseMoonfish'], tone: '#b4afd6' },
-    { id: 'starfall', name: '별비의 외해', subtitle: 'STARFALL OPEN SEA', level: 46, rebirth: 2, description: '별이 바다에 떨어진 날 태어난 희귀종들이 밤을 가른다.', fish: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta', 'novaManta'], tone: '#9c8ed4' },
+    { id: 'brook', region: '리스항구', place: '선착장', name: '리스항구 · 선착장', subtitle: 'LITH HARBOR · PIER', level: 1, rebirth: 0, description: '빅토리아 아일랜드의 관문. 선착장 끝에서 첫 입질이 찾아온다.', fish: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
+    { id: 'bay', region: '리스항구', place: '조개 해안', name: '리스항구 · 조개 해안', subtitle: 'LITH HARBOR · SHELL COAST', level: 5, rebirth: 0, description: '항구 앞 얕은 바다. 잔잔한 수면 아래 날카로운 비늘이 숨어 있다.', fish: ['mackerel', 'ray', 'puffer'], tone: '#68b6ce' },
+    { id: 'reef', region: '헤네시스', place: '돼지의 해변', name: '헤네시스 · 돼지의 해변', subtitle: 'HENESYS · PIG BEACH', level: 10, rebirth: 0, description: '헤네시스 남쪽 해변. 붉게 물든 산호 사이로 포식자가 유영한다.', fish: ['lionfish', 'eel', 'barracuda', 'stormBarracuda'], tone: '#d49081' },
+    { id: 'kelp', region: '헤네시스', place: '버섯숲 연못', name: '헤네시스 · 버섯숲 연못', subtitle: 'HENESYS · MUSHROOM POND', level: 14, rebirth: 0, description: '버섯 마을 숲속의 연못. 물풀의 미로에 작지만 희귀한 생명들이 숨는다.', fish: ['seahorse', 'needlefish', 'tidejelly'], tone: '#72b89b' },
+    { id: 'wreck', region: '페리온', place: '유적 발굴지 수로', name: '페리온 · 유적 발굴지 수로', subtitle: 'PERION · EXCAVATION CANAL', level: 18, rebirth: 0, description: '발굴지 아래로 흐르는 수로. 잊힌 유물과 망령의 낚싯줄이 아직 팽팽하다.', fish: ['ghost', 'angler', 'shark'], tone: '#9e96c8' },
+    { id: 'volcanic', region: '페리온', place: '불타는 땅 화구호', name: '페리온 · 불타는 땅 화구호', subtitle: 'PERION · BURNING CRATER', level: 24, rebirth: 0, description: '바위산 너머 불타는 땅. 끓는 화구호에서 불씨를 품은 물고기가 떠오른다.', fish: ['emberEel', 'ashRay', 'magmaPuffer', 'cinderKoi'], tone: '#d17c62' },
+    { id: 'trench', region: '엘리니아', place: '깊은 숲 늪', name: '엘리니아 · 깊은 숲 늪', subtitle: 'ELLINIA · DEEP FOREST BOG', level: 26, rebirth: 0, description: '빛이 닿지 않는 숲 깊은 곳의 늪. 수면 아래에서 거대한 심장이 뛴다.', fish: ['viper', 'squid', 'leviathan'], tone: '#5c9dba' },
+    { id: 'moon', region: '엘리니아', place: '달빛 마법 호수', name: '엘리니아 · 달빛 마법 호수', subtitle: 'ELLINIA · MOONLIT LAKE', /** v27.30 32 → 34: 평균 어종 레벨(36)에 맞춤. */ level: 34, rebirth: 1, description: '마법사의 마을 위 달빛 호수. 한 번의 생을 넘어선 낚시꾼만 닿는다.', fish: ['moonfish', 'dragon', 'ancient', 'eclipseMoonfish'], tone: '#b4afd6' },
+    { id: 'starfall', region: '커닝시티', place: '네온 수로', name: '커닝시티 · 네온 수로', subtitle: 'KERNING CITY · NEON CANAL', level: 46, rebirth: 2, description: '네온이 별비처럼 쏟아지는 도시의 수로. 빛을 삼킨 희귀종들이 밤을 가른다.', fish: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta', 'novaManta'], tone: '#9c8ed4' },
     // v25.8 환생 5회부터. Lv.60 생이 반복되는 환생 중반의 새 땅.
-    { id: 'duskVents', name: '황혼의 열수구', subtitle: 'DUSK VENTS', level: 55, rebirth: 5, description: '해저에서 끓어오르는 물기둥 사이, 다섯 번의 생을 건넌 낚시꾼만 견디는 바다.', fish: ['ventCrab', 'glassSquid', 'sulfurEel', 'blindShark', 'cinderAngler', 'ventLeviathan'], tone: '#d88a5a' },
+    { id: 'duskVents', region: '커닝시티', place: '지하 배수로', name: '커닝시티 · 지하 배수로', subtitle: 'KERNING CITY · UNDERGROUND DRAIN', level: 55, rebirth: 5, description: '도시 아래 끓어오르는 배수로. 다섯 번의 생을 건넌 낚시꾼만 이 열기를 견딘다.', fish: ['ventCrab', 'glassSquid', 'sulfurEel', 'blindShark', 'cinderAngler', 'ventLeviathan'], tone: '#d88a5a' },
 ];
 /**
  * 무리 사냥: 도감을 완성한 어종을 집중 사냥할 때 무리 전체를 체력 ×N인 한 개체로 상대합니다.
@@ -57,14 +58,14 @@ const rows: [
 ];
 /** 레벨별 물고기 기본 골드. 장비 판매가도 이 곡선을 따릅니다. */
 /** v27.30 물고기 골드 곡선: Lv.40까지 레벨당 12% 복리, 그 뒤로는 6.5%. 후반 골드가 사용처 비용을 크게 앞지르던 인플레이션을 줄입니다. */
-export const GOLD_CURVE = { base: 7, early: 1.12, knee: 40, late: 1.065 };
+const GOLD_CURVE = { base: 7, early: 1.12, knee: 40, late: 1.065 };
 export const fishGoldAt = (level: number) => Math.round(GOLD_CURVE.base * Math.pow(GOLD_CURVE.early, Math.min(level, GOLD_CURVE.knee) - 1) * Math.pow(GOLD_CURVE.late, Math.max(0, level - GOLD_CURVE.knee)));
 /** v27.30 골드 사용처 가격 배율: Lv.40까지 1, 그 위로는 물고기 골드를 따라 커집니다(Lv.65에서 멈춤). */
 export const PRICE_LEVEL_CAP = 65;
 export const priceScale = (level: number) => Math.max(1, fishGoldAt(Math.min(PRICE_LEVEL_CAP, Math.max(1, level))) / fishGoldAt(GOLD_CURVE.knee));
 export const fishExpAt = (level: number) => Math.round(9 * Math.pow(1.15, level - 1));
 /** 어종 레벨별 기본 능력치(체력·공격·방어). FISH 정의와 같은 식입니다. */
-export const fishStatsAt = (level: number) => ({ hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8) });
+const fishStatsAt = (level: number) => ({ hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8) });
 /** v27.30 낚시터 적의 능력치는 입장 레벨 + STAGE_ENEMY_LEVEL_OVER까지만 셉니다(보상은 어종 레벨 그대로). 입장 직후 몇몇 고레벨 어종이 벽이 되던 구간 완화. */
 export const STAGE_ENEMY_LEVEL_OVER = 6;
 /** 낚시터에서 실제로 싸우는 능력치 기준 어종(레벨 상한 적용). 전투와 도감이 같은 값을 씁니다. */
@@ -102,26 +103,26 @@ const specialFish: Array<{
     { id: 'cinderAngler', name: '잿불 아귀', level: 60, lore: '열수구의 불씨를 등불 삼아 어둠 속에서 입을 벌린다.', rarity: 'rare' as const, spawnWeight: .6, rewardMultiplier: 1.9 },
     { id: 'ventLeviathan', name: '열수 레비아탄', level: 63, lore: '열수구를 통째로 둥지로 삼은 거대한 그림자.', rarity: 'epic' as const, spawnWeight: .3, rewardMultiplier: 2.5 },
     { id: 'abyssManta', name: '심연 만타', level: 54, lore: '날개를 펼치면 주변의 조류가 잠시 멎는다.', rarity: 'legendary' as const, spawnWeight: .018, rewardMultiplier: 2.8 },
-    { id: 'grottoWarden', name: '동굴의 수호 곰치', level: 14, lore: '동굴의 진주를 지키며 침묵의 전류를 뿜는다.', rarity: 'legendary' as const, rewardMultiplier: 2.6, boss: true },
-    { id: 'kelpHydra', name: '해초 히드라', level: 22, lore: '잘린 촉수마다 새로운 머리가 자라는 던전의 보스.', rarity: 'legendary' as const, rewardMultiplier: 3, boss: true },
-    { id: 'anchorWraith', name: '닻망령', level: 25, lore: '침몰한 닻을 갑옷 삼아 느린 저주를 건다.', rarity: 'legendary' as const, rewardMultiplier: 3.2, boss: true },
-    { id: 'magmaKraken', name: '용암 크라켄', level: 34, lore: '화산수역의 심장을 감싸는 다중 촉수의 주인.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
-    { id: 'templeOracle', name: '심해 신탁어', level: 38, lore: '환생자의 기억을 읽고 침묵의 파도를 부른다.', rarity: 'legendary' as const, rewardMultiplier: 3.8, boss: true },
-    { id: 'abyssSovereign', name: '심연의 주권자', level: 52, lore: '무한 심연의 가장 깊은 곳에서 다음 생을 기다린다.', rarity: 'legendary' as const, rewardMultiplier: 5, boss: true },
-    { id: 'ventColossus', name: '열수 거신', level: 66, lore: '열수 대성당의 기둥 자체가 움직이는 심해의 거인.', rarity: 'legendary' as const, rewardMultiplier: 6, boss: true },
-    { id: 'starfallSeraph', name: '별비 세라핌', level: 62, lore: '별비를 날개로 두른 외해 성역의 최종 수호자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
+    { id: 'grottoWarden', name: '머쉬맘', level: 14, lore: '버섯 동산을 다스리는 거대한 버섯. 짓누르는 몸통으로 침묵의 충격을 뿜는다.', rarity: 'legendary' as const, rewardMultiplier: 2.6, boss: true },
+    { id: 'kelpHydra', name: '킹 슬라임', level: 22, lore: '쪼개질 때마다 새 슬라임을 낳는 수로의 왕.', rarity: 'legendary' as const, rewardMultiplier: 3, boss: true },
+    { id: 'anchorWraith', name: '좀비 머쉬맘', level: 25, lore: '개미굴 깊은 곳에서 되살아난 머쉬맘. 느린 저주를 건다.', rarity: 'legendary' as const, rewardMultiplier: 3.2, boss: true },
+    { id: 'magmaKraken', name: '주니어 발록', level: 34, lore: '불의 제단을 지키는 마족. 불길을 휘감은 손톱으로 할퀸다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'templeOracle', name: '엘리쟈', level: 38, lore: '환생자의 기억을 읽고 침묵의 바람을 부르는 하늘의 마녀.', rarity: 'legendary' as const, rewardMultiplier: 3.8, boss: true },
+    { id: 'abyssSovereign', name: '무공', level: 52, lore: '무릉도장의 가장 높은 곳에서 다음 도전자를 기다리는 도장의 주인.', rarity: 'legendary' as const, rewardMultiplier: 5, boss: true },
+    { id: 'ventColossus', name: '자쿰', level: 66, lore: '엘나스 폐광의 제단에 봉인된 거대 석상. 여러 개의 팔이 따로 움직인다.', rarity: 'legendary' as const, rewardMultiplier: 6, boss: true },
+    { id: 'starfallSeraph', name: '파풀라투스', level: 62, lore: '루디브리엄 시계탑의 시간을 멈춘 차원의 침략자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
 ];
 for (const f of specialFish)
     FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: fishExpAt(f.level), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
 /**
  * v27.31 운영 페이지에서 닫은 낚시터·던전(입장 불가). 서버가 DB 설정(settings.closures)을 읽어 setClosures로 채웁니다.
- * 설정을 한 번도 저장하지 않았으면 DEFAULT_CLOSURES(무한 심연 닫힘)를 씁니다. 테스트는 harness에서 비웁니다.
+ * 설정을 한 번도 저장하지 않았으면 DEFAULT_CLOSURES(무릉도장 닫힘)를 씁니다. 테스트는 harness에서 비웁니다.
  * 서버 계산은 dungeonClosed·stageClosed를, 화면은 동기화 때 적힌 State.closed를 봅니다.
  */
 export type Closures = { dungeons: string[]; stages: string[] };
 export const DEFAULT_CLOSURES: Closures = { dungeons: ['abyss'], stages: [] };
 export const CLOSED_DUNGEONS = new Set<string>(DEFAULT_CLOSURES.dungeons);
-export const CLOSED_STAGES = new Set<string>(DEFAULT_CLOSURES.stages);
+const CLOSED_STAGES = new Set<string>(DEFAULT_CLOSURES.stages);
 export const dungeonClosed = (id: string) => CLOSED_DUNGEONS.has(id);
 export const stageClosed = (id: string) => CLOSED_STAGES.has(id);
 /** 첫 낚시터는 닫을 수 없습니다(닫힌 낚시터에서 쫓겨난 낚시꾼이 돌아갈 곳). */
@@ -136,12 +137,12 @@ export const closuresSnapshot = (): Closures | null => CLOSED_DUNGEONS.size || C
 export const closedIn = (s: { closed?: Closures | null }, kind: keyof Closures, id: string) => !!s.closed?.[kind]?.includes(id);
 export const CLOSED_NOTE = '점검 중 · 입장 불가';
 export const DUNGEONS = [
-    { id: 'abyss', name: '윤회의 무한 심연', level: 40, rebirth: 3, fish: ['moonfish', 'dragon', 'ancient', 'dragon', 'ancient'], bossFish: 'abyssSovereign', boss: '심연의 기억 · 심연의 주권자', gold: 12000, pearls: 1, description: '정복할 때마다 다음 깊이가 열립니다. 깊을수록 층마다 더 많은 진주를 얻고, 10·25·50·100층을 처음 돌파하면 SP 1을 받습니다.' },
-    { id: 'grotto', name: '조수의 동굴', level: 8, rebirth: 0, fish: ['ray', 'puffer', 'mackerel', 'ray', 'eel'], bossFish: 'grottoWarden', boss: '동굴의 주인 · 수호 곰치', gold: 350, pearls: 1, description: '다섯 번의 전투 끝에 잠든 수호자가 눈을 뜬다.' },
-    { id: 'kelpCatacomb', name: '해초 묘실', level: 14, rebirth: 0, fish: ['seahorse', 'needlefish', 'tidejelly', 'seahorse', 'needlefish'], bossFish: 'kelpHydra', boss: '촉수의 왕 · 해초 히드라', gold: 950, pearls: 1, description: '길을 잃은 탐험선이 해초 뿌리 아래에 잠들어 있다.' },
-    { id: 'cemetery', name: '닻의 묘지', level: 18, rebirth: 0, fish: ['ghost', 'angler', 'ghost', 'shark', 'shark'], bossFish: 'anchorWraith', boss: '침몰의 군주 · 닻망령', gold: 1600, pearls: 2, description: '돌아오지 못한 배들이 남긴 마지막 보물.' },
-    { id: 'caldera', name: '검은 화구 제단', level: 26, rebirth: 0, fish: ['emberEel', 'ashRay', 'magmaPuffer', 'cinderKoi', 'emberEel'], bossFish: 'magmaKraken', boss: '분출의 왕 · 용암 크라켄', gold: 4200, pearls: 3, description: '뜨거운 조류가 장비와 골드를 녹여 새로운 형태로 만든다.' },
-    { id: 'temple', name: '심해 신전', level: 30, rebirth: 1, fish: ['viper', 'squid', 'leviathan', 'moonfish', 'dragon'], bossFish: 'templeOracle', boss: '태고의 수호자 · 심해 신탁어', gold: 6000, pearls: 5, description: '환생의 기억을 지닌 자에게만 열리는 문.' },
-    { id: 'ventCathedral', name: '열수 대성당', level: 60, rebirth: 8, fish: ['ventCrab', 'sulfurEel', 'glassSquid', 'blindShark', 'ventLeviathan'], bossFish: 'ventColossus', boss: '기둥의 주인 · 열수 거신', gold: 30000, pearls: 12, description: '열수구 아래 가라앉은 대성당. 기둥 하나하나가 숨을 쉬는, 환생 8회의 탐험지.' },
-    { id: 'starSanctum', name: '별비 성소', level: 48, rebirth: 2, fish: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta', 'starKoi'], bossFish: 'starfallSeraph', boss: '별비의 수호자 · 세라핌', gold: 18000, pearls: 8, description: '희귀어의 서식지를 지나 별빛을 낚아 올리는 후반 탐험지.' },
+    { id: 'abyss', name: '무릉도장', level: 40, rebirth: 3, fish: ['moonfish', 'dragon', 'ancient', 'dragon', 'ancient'], bossFish: 'abyssSovereign', boss: '도장의 주인 · 무공', gold: 12000, pearls: 1, description: '오를 때마다 다음 층이 열립니다. 높을수록 층마다 더 많은 진주를 얻고, 10·25·50·100층을 처음 돌파하면 SP 1을 받습니다.' },
+    { id: 'grotto', name: '헤네시스 · 버섯 동산', level: 8, rebirth: 0, fish: ['ray', 'puffer', 'mackerel', 'ray', 'eel'], bossFish: 'grottoWarden', boss: '버섯 동산의 주인 · 머쉬맘', gold: 350, pearls: 1, description: '다섯 번의 전투 끝에 거대한 버섯이 눈을 뜬다.' },
+    { id: 'kelpCatacomb', name: '커닝시티 · 지하 수로', level: 14, rebirth: 0, fish: ['seahorse', 'needlefish', 'tidejelly', 'seahorse', 'needlefish'], bossFish: 'kelpHydra', boss: '수로의 왕 · 킹 슬라임', gold: 950, pearls: 1, description: '갈라지고 또 갈라지는 슬라임들이 도시 아래 수로를 메웠다.' },
+    { id: 'cemetery', name: '슬리피우드 · 개미굴', level: 18, rebirth: 0, fish: ['ghost', 'angler', 'ghost', 'shark', 'shark'], bossFish: 'anchorWraith', boss: '개미굴의 망령 · 좀비 머쉬맘', gold: 1600, pearls: 2, description: '깊은 개미굴 아래, 썩지 않는 버섯이 마지막 보물을 지킨다.' },
+    { id: 'caldera', name: '페리온 · 불의 제단', level: 26, rebirth: 0, fish: ['emberEel', 'ashRay', 'magmaPuffer', 'cinderKoi', 'emberEel'], bossFish: 'magmaKraken', boss: '불꽃의 마족 · 주니어 발록', gold: 4200, pearls: 3, description: '뜨거운 불길이 장비와 골드를 녹여 새로운 형태로 만든다.' },
+    { id: 'temple', name: '엘리니아 · 잊힌 마법 사원', level: 30, rebirth: 1, fish: ['viper', 'squid', 'leviathan', 'moonfish', 'dragon'], bossFish: 'templeOracle', boss: '하늘의 마녀 · 엘리쟈', gold: 6000, pearls: 5, description: '환생의 기억을 지닌 자에게만 열리는 문.' },
+    { id: 'ventCathedral', name: '엘나스 · 자쿰의 제단', level: 60, rebirth: 8, fish: ['ventCrab', 'sulfurEel', 'glassSquid', 'blindShark', 'ventLeviathan'], bossFish: 'ventColossus', boss: '폐광의 거대 석상 · 자쿰', gold: 30000, pearls: 12, description: '엘나스 폐광 깊은 곳의 제단. 팔 하나하나가 숨을 쉬는, 환생 8회의 탐험지.' },
+    { id: 'starSanctum', name: '루디브리엄 · 시계탑', level: 48, rebirth: 2, fish: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta', 'starKoi'], bossFish: 'starfallSeraph', boss: '시계탑의 주인 · 파풀라투스', gold: 18000, pearls: 8, description: '장난감 도시의 시계탑 꼭대기. 멈춘 시간 속에서 별빛을 낚아 올리는 후반 탐험지.' },
 ];

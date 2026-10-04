@@ -1,4 +1,5 @@
 import type { Stats } from '../types';
+import { STAGES, DUNGEONS } from './world';
 
 /**
  * v22 장비 옵션.
@@ -61,11 +62,11 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: .9, stat2: 'speed', base2: -4, description: '물리 방어가 크게 오르지만 느려집니다.' },
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .05, stat2: 'accuracy', base2: -.06, description: '치명타가 크게 오르지만 명중이 줄어듭니다.' },
     { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .035, stat2: 'hp', base2: -1.5, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 6%p).' },
-    // v25.8 심연 전용 옵션: 무한 심연 드롭에만 붙고 일반 옵션보다 강합니다.
-    { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '심연 전용. 물리 공격이 크게 오릅니다.' },
-    { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '심연 전용. 마법 공격이 크게 오릅니다.' },
-    { id: 'abyssBreath', name: '심연의 숨', stat: 'lifesteal', kind: 'percent', base: .018, onlyOrigin: 'abyss', description: '심연 전용. 흡혈이 오릅니다 (장비 흡혈 합계 최대 6%p).' },
-    { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', base: .04, onlyOrigin: 'abyss', description: '심연 전용. 방어 관통이 크게 오릅니다.' },
+    // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강합니다.
+    { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 물리 공격이 크게 오릅니다.' },
+    { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 마법 공격이 크게 오릅니다.' },
+    { id: 'abyssBreath', name: '심연의 숨', stat: 'lifesteal', kind: 'percent', base: .018, onlyOrigin: 'abyss', description: '무릉도장 전용. 흡혈이 오릅니다 (장비 흡혈 합계 최대 6%p).' },
+    { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', base: .04, onlyOrigin: 'abyss', description: '무릉도장 전용. 방어 관통이 크게 오릅니다.' },
     // 규칙 옵션 (영웅 이상, 장비당 1개)
     { id: 'concuss', name: '뇌진탕', stat: 'stunBonus', kind: 'rule', base: 1, minRarity: 3, description: '기절 지속 +1턴 (합계 최대 +1).' },
     { id: 'binding', name: '속박', stat: 'controlBonus', kind: 'rule', base: 1, minRarity: 3, description: '침묵·감속 지속 +1턴 (합계 최대 +1).' },
@@ -77,28 +78,29 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'reaper', name: '처형', stat: 'executeBonus', kind: 'rule', base: .05, minRarity: 3, description: '빈사 판정 기준 +5%p (합계 최대 +15%p).' },
 ];
 
-/** 낚시터·던전별로 잘 나오는 옵션(가중치 ×4). 명시되지 않은 곳은 균등합니다. */
-export const ORIGIN_THEMES: Record<string, { name: string; affixes: string[] }> = {
-    brook: { name: '여명의 시냇가', affixes: ['vigor', 'plating', 'precise'] },
-    bay: { name: '푸른 조개 만', affixes: ['ward', 'wellspring', 'scholar'] },
-    reef: { name: '붉은 산호초', affixes: ['lucky', 'brutal', 'gambit'] },
-    kelp: { name: '속삭이는 해초림', affixes: ['drift', 'swift', 'venom'] },
-    wreck: { name: '망각의 난파선', affixes: ['piercing', 'brutal', 'might', 'berserk'] },
-    volcanic: { name: '검은 화산수역', affixes: ['venom', 'arcana', 'spiked', 'lingering'] },
-    trench: { name: '검은 해구', affixes: ['leech', 'vigor', 'spiked', 'bloodPact'] },
-    moon: { name: '달빛의 심연', affixes: ['arcana', 'current', 'runic', 'glassCannon', 'runeCore'] },
-    starfall: { name: '별비의 외해', affixes: ['scholar', 'seeker', 'lucky', 'echoing'] },
-    grotto: { name: '조수의 동굴', affixes: ['swift', 'concuss', 'binding'] },
-    kelpCatacomb: { name: '해초 묘실', affixes: ['venom', 'saturate', 'mending'] },
-    cemetery: { name: '닻의 묘지', affixes: ['plating', 'spiked', 'bulwark'] },
-    caldera: { name: '검은 화구 제단', affixes: ['venom', 'lingering', 'saturate'] },
-    temple: { name: '심해 신전', affixes: ['arcana', 'wellspring', 'runeCore', 'mending'] },
-    starSanctum: { name: '별비 성소', affixes: ['echoing', 'reaper', 'concuss'] },
-    duskVents: { name: '황혼의 열수구', affixes: ['might', 'arcana', 'piercing', 'berserk', 'reaper'] },
-    ventCathedral: { name: '열수 대성당', affixes: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'] },
-    abyss: { name: '윤회의 무한 심연', affixes: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'] },
+/** 낚시터·던전별로 잘 나오는 옵션(가중치 ×4). 명시되지 않은 곳은 균등합니다. 이름은 STAGES·DUNGEONS에서 가져옵니다. */
+const ORIGIN_AFFIXES: Record<string, string[]> = {
+    brook: ['vigor', 'plating', 'precise'],
+    bay: ['ward', 'wellspring', 'scholar'],
+    reef: ['lucky', 'brutal', 'gambit'],
+    kelp: ['drift', 'swift', 'venom'],
+    wreck: ['piercing', 'brutal', 'might', 'berserk'],
+    volcanic: ['venom', 'arcana', 'spiked', 'lingering'],
+    trench: ['leech', 'vigor', 'spiked', 'bloodPact'],
+    moon: ['arcana', 'current', 'runic', 'glassCannon', 'runeCore'],
+    starfall: ['scholar', 'seeker', 'lucky', 'echoing'],
+    grotto: ['swift', 'concuss', 'binding'],
+    kelpCatacomb: ['venom', 'saturate', 'mending'],
+    cemetery: ['plating', 'spiked', 'bulwark'],
+    caldera: ['venom', 'lingering', 'saturate'],
+    temple: ['arcana', 'wellspring', 'runeCore', 'mending'],
+    starSanctum: ['echoing', 'reaper', 'concuss'],
+    duskVents: ['might', 'arcana', 'piercing', 'berserk', 'reaper'],
+    ventCathedral: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'],
+    abyss: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'],
 };
-export const THEME_WEIGHT = 4;
+export const ORIGIN_THEMES: Record<string, { name: string; affixes: string[] }> = Object.fromEntries(Object.entries(ORIGIN_AFFIXES).map(([id, affixes]) => [id, { name: [...STAGES, ...DUNGEONS].find(x => x.id === id)?.name || id, affixes }]));
+const THEME_WEIGHT = 4;
 
 /** 드롭 등급 확률(드롭이 일어났을 때). 합 1. */
 export const DROP_RARITY = [.5, .25, .13, .07, .035, .012, .003];

@@ -43,7 +43,7 @@ export function BattleRail({ s, busy, send, setView }: {
     {tab === 'stage' ? <div className="battle-stage-list">{STAGES.map((stage, index) => {
         const closed = closedIn(s, 'stages', stage.id), locked = closed || s.level < stage.level || s.rebirths < stage.rebirth;
         return <button type="button" key={stage.id} className={`battle-stage-button ${s.stage === stage.id && !s.dungeon ? 'selected' : ''} ${locked ? 'locked' : ''}`} disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'stage', id: stage.id })}>
-        <span className="battle-stage-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{stage.name}</strong><small>{closed ? CLOSED_NOTE : `Lv. ${stage.level}${stage.rebirth ? ` · 환생 ${stage.rebirth}` : ''}`}</small></span>{locked ? <Lock size={13}/> : s.stage === stage.id && !s.dungeon ? <span className="battle-selected-dot"/> : null}
+        <span className="battle-stage-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{stage.place}</strong><small>{closed ? CLOSED_NOTE : `${stage.region} · Lv. ${stage.level}${stage.rebirth ? ` · 환생 ${stage.rebirth}` : ''}`}</small></span>{locked ? <Lock size={13}/> : s.stage === stage.id && !s.dungeon ? <span className="battle-selected-dot"/> : null}
         </button>;
     })}</div>
     : <div className="battle-dungeon-list">{dungeons.map(dungeon => {

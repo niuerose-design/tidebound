@@ -38,7 +38,7 @@ assert.ok(/^\d{4}-\d{2}$/.test(data.season) && me.id.startsWith(`duel:${data.sea
 ({ data } = await call('/api/duel', { type: 'training', id: `user:${me.id}` }, { expect: 200 }));
 assert.equal(data.result.training, true); assert.equal(data.result.ratingChange, 0); assert.equal(data.state.wins + data.state.losses, 0);
 ({ data } = await call('/api/duel', { type: 'training', id: 'boss:grottoWarden' }, { expect: 200 }));
-assert.equal(data.result.opponent, '동굴의 수호 곰치');
+assert.equal(data.result.opponent, '머쉬맘');
 await call('/api/duel', { type: 'training', id: 'boss:minnow' }, { expect: 400 });
 await call('/api/duel', { type: 'training', id: '0' }, { expect: 400 });
 // 전체 채팅: 보내기·커서로 새 줄만 받기·길이·도배 제한.

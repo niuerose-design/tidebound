@@ -10,7 +10,7 @@ import { stats } from '../systems/stats';
  * 조건 판정은 저장 상태만 보며 난수를 쓰지 않습니다. 기존 세이브는 이미 달성한 업적을 조용히 채우되 보상은 지급합니다.
  */
 export type AchievementReward = { pearls?: number; sp?: number; ap?: number; bonus?: Partial<Record<'attack' | 'magic' | 'hp' | 'defense' | 'resist', number>> };
-export type Achievement = { id: string; group: '항해' | '사냥' | '숙련' | '심연' | '환생' | '도전'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
+export type Achievement = { id: string; group: '항해' | '사냥' | '숙련' | '무릉도장' | '환생' | '도전'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
 
 const kills = (s: State) => s.kills || 0;
 const codex = (s: State) => FISH.filter(f => (s.book?.[f.id] || 0) > 0).length;
@@ -28,7 +28,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('kills', '사냥', n => `포획 ${n.toLocaleString()}마리`, n => `누적 ${n.toLocaleString()}마리를 포획합니다.`, [100, 1000, 5000, 20000, 100000], kills, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 4, bonus: { attack: .02, magic: .02 } }, { pearls: 8, bonus: { hp: .03 } }, { pearls: 15, ap: 1 }][i]),
     ...series('codex', '항해', n => `도감 ${n}종`, n => `서로 다른 어종 ${n}종을 발견합니다.`, [10, 20, 30, FISH.length], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5, bonus: { defense: .03, resist: .03 } }, { pearls: 10, ap: 1 }][i]),
     ...series('stages', '항해', n => `해역 ${n}곳`, n => `낚시터 ${n}곳에서 낚시합니다.`, [3, 6, 9, STAGES.length], s => STAGES.filter(st => s.voyage?.[`stage:${st.id}`] !== undefined).length, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6, bonus: { hp: .03 } }, { pearls: 10, ap: 1 }][i]),
-    ...series('clears', '사냥', n => `던전 정복 ${n}회`, n => `던전을 ${n}회 정복합니다(무한 심연 포함).`, [1, 10, 50, 200, 1000], clears, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 5, bonus: { attack: .02, magic: .02 } }, { pearls: 8 }, { pearls: 15, ap: 1 }][i]),
+    ...series('clears', '사냥', n => `던전 정복 ${n}회`, n => `던전을 ${n}회 정복합니다(무릉도장 포함).`, [1, 10, 50, 200, 1000], clears, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 5, bonus: { attack: .02, magic: .02 } }, { pearls: 8 }, { pearls: 15, ap: 1 }][i]),
     ...series('bosses', '사냥', n => `보스 ${n}마리`, n => `보스를 ${n}마리 포획합니다.`, [10, 100, 500], bosses, i => [{ pearls: 2 }, { pearls: 5, bonus: { defense: .03, resist: .03 } }, { pearls: 10, sp: 1 }][i]),
     ...series('duels', '사냥', n => `결투 승리 ${n}회`, n => `랭크 결투에서 ${n}번 이깁니다.`, [10, 100, 500], s => s.wins || 0, i => [{ pearls: 2 }, { pearls: 5, bonus: { attack: .02, magic: .02 } }, { pearls: 10, ap: 1 }][i]),
     ...series('dungeons', '항해', n => `던전 ${n}곳 정복`, n => `서로 다른 던전 ${n}곳을 정복합니다.`, [3, 5, 7, DUNGEONS.length], s => DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).length, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 15, ap: 1 }][i]),
@@ -36,7 +36,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('skillsMax', '숙련', n => `스킬 최대 숙련 ${n}개`, n => `스킬 ${n}개의 실전 숙련을 8,000 이상 쌓습니다.`, [1, 5, 15, 40], masteredSkills, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 20, bonus: { attack: .03, magic: .03 } }][i]),
     ...series('tier', '숙련', n => `${n}차 전직`, n => `${n}차 직업에 처음 전직합니다.`, [2, 3, 4, 5], tiers, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6, bonus: { hp: .03 } }, { pearls: 10, ap: 1 }][i]),
     ...series('tide', '항해', n => `해역 난이도 ${n}`, n => `낚시터에서 해역 난이도 ${n} 이상으로 포획합니다.`, [5, 10, 20, 30, 50], tideBest, i => [{ pearls: 2 }, { pearls: 4, bonus: { attack: .02, magic: .02 } }, { pearls: 8, ap: 1 }, { pearls: 15, bonus: { hp: .04 } }, { pearls: 30, ap: 1, sp: 1 }][i]),
-    ...series('abyss', '심연', n => `심연 ${n}층`, n => `무한 심연 ${n}층을 정복합니다.`, [5, 10, 25, 50, 100], s => s.abyssBest || 0, i => [{ pearls: 2 }, { pearls: 4, bonus: { defense: .02, resist: .02 } }, { pearls: 8, ap: 1 }, { pearls: 15, bonus: { attack: .03, magic: .03, hp: .03 } }, { pearls: 30, ap: 1, sp: 2 }][i]),
+    ...series('abyss', '무릉도장', n => `무릉도장 ${n}층`, n => `무릉도장 ${n}층을 정복합니다.`, [5, 10, 25, 50, 100], s => s.abyssBest || 0, i => [{ pearls: 2 }, { pearls: 4, bonus: { defense: .02, resist: .02 } }, { pearls: 8, ap: 1 }, { pearls: 15, bonus: { attack: .03, magic: .03, hp: .03 } }, { pearls: 30, ap: 1, sp: 2 }][i]),
     ...series('rebirths', '환생', n => `환생 ${n}회`, n => `${n}번째 환생을 마칩니다.`, [1, 3, 5, 10, 20, 50], s => s.rebirths || 0, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5, bonus: { hp: .03 } }, { pearls: 10, ap: 1 }, { pearls: 20, bonus: { attack: .03, magic: .03 } }, { pearls: 40, ap: 1, sp: 2 }][i]),
     // v25.21 ‘도전’ 탭: 플레이 시간과 장기 누적 기록. 다른 묶음과 달리 별도 탭에서 봅니다.
     ...series('playtime', '도전', n => `항해 ${n.toLocaleString()}시간`, n => `자동 낚시·던전으로 누적 ${n.toLocaleString()}시간을 보냅니다(부재중 정산 포함).`, [1, 10, 50, 100, 500, 1000], playHours, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6, bonus: { hp: .02 } }, { pearls: 10, ap: 1 }, { pearls: 20, bonus: { attack: .02, magic: .02 } }, { pearls: 40, sp: 1, ap: 1 }][i]),
@@ -52,7 +52,7 @@ for (const a of ACHIEVEMENTS) if (a.reward.ap) ACHIEVEMENT_AP[a.id] = a.reward.a
 export const achievementById = (id: string) => ACHIEVEMENTS.find(a => a.id === id);
 /** 업적 묶음. ‘도전’은 플레이 시간·전투 턴·능력치 돌파 같은 누적 기록입니다. */
 export const CHALLENGE_GROUP = '도전' as const;
-export const ACHIEVEMENT_GROUPS = ['항해', '사냥', '숙련', '심연', '환생', CHALLENGE_GROUP] as const;
+export const ACHIEVEMENT_GROUPS = ['항해', '사냥', '숙련', '무릉도장', '환생', CHALLENGE_GROUP] as const;
 
 /** 받은 업적의 영구 보상 합계. 능력치 배율은 더해서 한 번 곱합니다(apCapacity·stats가 씀). */
 export function achievementTotals(s: Pick<State, 'achievementClaims'>) {

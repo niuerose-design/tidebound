@@ -7,13 +7,13 @@ import type { State } from '../types';
  */
 export const SLOT_COUNT = 3;
 /** 슬롯 해금 조건: 2번은 어느 캐릭터든 환생 1회, 3번은 계정 환생 합계 5회. */
-export const SLOT_UNLOCK = [0, 1, 5];
+const SLOT_UNLOCK = [0, 1, 5];
 export const ACCOUNT_RULES = {
     /** 계정 환생 합계 1회마다 경험치·골드 획득 +10%(최대 30회 · +300%). */
     rebirthStep: .10, rebirthCap: 30,
     /** 숙달한 직업(합집합) 5개마다 장착 AP +1(최대 +6). */
     masteredPer: 5, masteredCap: 6,
-    /** 계정 최고 심연 깊이 10층마다 두 공격·최대 체력 +1%(최대 +10%). */
+    /** 계정 최고 무릉도장 층 10층마다 두 공격·최대 체력 +1%(최대 +10%). */
     abyssPer: 10, abyssStep: .01, abyssCap: 10,
     /** 도감 발견 어종(합집합) 5종마다 직업·스킬 숙련 획득 +5%(최대 +35%). */
     speciesPer: 5, speciesCap: 7,
@@ -42,16 +42,16 @@ export function slotUnlocked(a: Pick<AccountSummary, 'rebirths' | 'slots'> | und
 }
 export const slotUnlockText = (slot: number) => slot === 2 ? '어느 캐릭터든 환생 1회' : `계정 환생 합계 ${SLOT_UNLOCK[slot - 1]}회`;
 const R = ACCOUNT_RULES;
-export const accountRebirthRank = (s: AccountState) => Math.min(R.rebirthCap, s.account?.rebirths || 0);
+const accountRebirthRank = (s: AccountState) => Math.min(R.rebirthCap, s.account?.rebirths || 0);
 /** 경험치·골드 가산 비율(0.1 = +10%). */
 export const accountExpGold = (s: AccountState) => accountRebirthRank(s) * R.rebirthStep;
 export const accountAP = (s: AccountState) => Math.min(R.masteredCap, Math.floor((s.account?.mastered || 0) / R.masteredPer));
-export const accountAbyssRank = (s: AccountState) => Math.min(R.abyssCap, Math.floor((s.account?.abyssBest || 0) / R.abyssPer));
+const accountAbyssRank = (s: AccountState) => Math.min(R.abyssCap, Math.floor((s.account?.abyssBest || 0) / R.abyssPer));
 /** 두 공격·최대 체력 배율 가산(0.01 = +1%). */
 export const accountPower = (s: AccountState) => accountAbyssRank(s) * R.abyssStep;
 /** 숙련 획득 보너스를 20분의 1 단위로(연구 '숙련'과 같은 단위, 1 = +5%). */
 export const accountMasteryTwentieths = (s: AccountState) => Math.min(R.speciesCap, Math.floor((s.account?.species || 0) / R.speciesPer));
-export const accountBossRank = (s: AccountState) => Math.min(R.bossCap, Math.floor((s.account?.bossKills || 0) / R.bossPer));
+const accountBossRank = (s: AccountState) => Math.min(R.bossCap, Math.floor((s.account?.bossKills || 0) / R.bossPer));
 export const accountCrit = (s: AccountState) => accountBossRank(s) * R.bossStep;
 export const pct = (n: number, digits = 0) => `${(n * 100).toFixed(digits)}%`;
 /** 환생 화면 계정 보너스 카드의 줄. */
@@ -61,7 +61,7 @@ export function accountBonusRows(s: AccountState) {
     return [
         { name: '계정 환생 합계', value: `${rebirths}회`, effect: `경험치·골드 획득 +${pct(accountExpGold(s))}`, next: rebirths >= R.rebirthCap ? '최대' : `1회마다 +${pct(R.rebirthStep)} · 최대 ${R.rebirthCap}회` },
         { name: '숙달한 직업(합집합)', value: `${mastered}개`, effect: `장착 AP +${accountAP(s)}`, next: `${R.masteredPer}개마다 +1 · ${next(mastered, R.masteredPer, R.masteredCap)}` },
-        { name: '계정 최고 심연 깊이', value: `${abyss}층`, effect: `두 공격·최대 체력 +${pct(accountPower(s))}`, next: `${R.abyssPer}층마다 +${pct(R.abyssStep)} · ${next(abyss, R.abyssPer, R.abyssCap)}` },
+        { name: '계정 최고 무릉도장 층', value: `${abyss}층`, effect: `두 공격·최대 체력 +${pct(accountPower(s))}`, next: `${R.abyssPer}층마다 +${pct(R.abyssStep)} · ${next(abyss, R.abyssPer, R.abyssCap)}` },
         { name: '발견한 어종(합집합)', value: `${species}종`, effect: `직업·스킬 숙련 획득 +${accountMasteryTwentieths(s) * 5}%`, next: `${R.speciesPer}종마다 +5% · ${next(species, R.speciesPer, R.speciesCap)}` },
         { name: '보스 포획 합계', value: `${boss}마리`, effect: `치명타 +${(accountCrit(s) * 100).toFixed(1)}%p`, next: `${R.bossPer}마리마다 +0.5%p · ${next(boss, R.bossPer, R.bossCap)}` },
     ];

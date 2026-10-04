@@ -32,7 +32,7 @@ export function BattleLogLine({ log, index, playerName }: { log: Log; index?: bo
 }
 
 /** 턴 경계. 로그 목록에서 턴이 바뀌는 자리에 끼웁니다. */
-export function LogTurnDivider({ turn }: { turn: number }) {
+function LogTurnDivider({ turn }: { turn: number }) {
     return <div className="log-turn-divider" role="separator" aria-label={`${turn}턴`}><span>{turn.toLocaleString()}턴</span></div>;
 }
 /** 턴 번호가 바뀌는 줄 앞에 구분선을 끼워 렌더합니다(최신순 목록 기준: 각 턴 묶음의 위에 선). 턴 정보가 없는 오래된 로그는 그대로. */

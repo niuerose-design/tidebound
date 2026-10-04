@@ -4,10 +4,10 @@ import type { Skill } from '../types';
 /**
  * v25 ??? 계열 특수 직업.
  *
- * 시계공(1차 독립, 시간의 문 · 모든 시간대)
+ * 제로 (1차)(1차 독립, 시간의 문 · 모든 시간대)
  *   태엽 감기(자신 가속) · 늘어진 초침(피해 없이 감속) · 시차(속도 패시브) · 타임머신(나와 상대 모두 회복, 전투당 1회, 쓸 때마다 직업 숙련 +25).
- *   끝까지 숙달하면 4차급 독립 직업 '시간의 지배자'가 열립니다(문·레벨·환생 조건 없음).
- * 시간의 지배자(4차급 독립)
+ *   끝까지 숙달하면 4차급 독립 직업 '제로 (4차)'가 열립니다(문·레벨·환생 조건 없음).
+ * 제로 (4차)(4차급 독립)
  *   정지된 시간(확정 기절) · 선행(곧바로 한 번 더 행동) · 역행(회복) · 시간의 주권(속도·회피·치명).
  *   확정 기절도 기절 뒤 면역 규칙을 따르므로 기절이 계속 이어지지는 않습니다.
  * 玄(1차 독립, 문 없음)
@@ -25,24 +25,24 @@ const physical = { damageType: 'physical' as const, manaCost: 0 };
 const GLYPH = { level: 10, job: 'glyphMonk', veiled: true, masteryMilestones: [120, 1500, 6000, 20000] };
 const GLYPH_A = { ...A, ...physical, ...GLYPH, cost: 2, seal: true, rankEffects: { apReduction: .5 } };
 
-/** 시계공 숙달 목표 = 시간의 지배자 전직 조건. */
-export const CLOCKMAKER_MASTERY = 3000;
+/** 제로 (1차) 숙달 목표 = 제로 (4차) 전직 조건. */
+const CLOCKMAKER_MASTERY = 3000;
 /** 타임머신을 쓸 때마다 더하는 직업 숙련. */
 export const TIME_MACHINE_MASTERY = 25;
 
 export const V25_JOBS: NewJob[] = [
-    { id: 'clockmaker', name: '시계공', title: '고장 난 시간을 고친다', desc: '자신을 가속하고 상대를 감속하는 시간 직업. 가끔 타임머신이 작동해 나와 상대가 모두 처음 상태로 돌아갑니다. 끝까지 숙달하면 시간의 지배자가 열립니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, tier: 1, level: 10, mastery: 0, requires: { dex: 12, int: 10 }, role: '시간·속도', tree: 'mystery', branchless: true, hidden: true, fullKit: true, masteryTarget: CLOCKMAKER_MASTERY, masteryBoost: .2 },
-    { id: 'chronarch', name: '시간의 지배자', title: '멈춘 시간 속을 홀로 걷는다', desc: '시계공을 숙달한 자에게만 열리는 4차급 독립 직업. 확정 기절과 확정 추가 행동으로 전투의 시간을 지배합니다.', ...neutral, attack: 1.3, magic: 1.3, hp: 1.12, defense: 1.08, resist: 1.08, crit: .08, tier: 4, level: 10, mastery: 0, requires: {}, requiresJobMastery: { clockmaker: CLOCKMAKER_MASTERY }, role: '시간·제어', tree: 'mystery', lineage: 'mystery-independent', hidden: true, fullKit: true, masteryTarget: 30000, masteryBoost: .35 },
+    { id: 'clockmaker', name: '시계공', title: '고장 난 시간을 고친다', desc: '자신을 가속하고 상대를 감속하는 시간 직업. 가끔 타임머신이 작동해 나와 상대가 모두 처음 상태로 돌아갑니다. 끝까지 숙달하면 제로 (4차)가 열립니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, tier: 1, level: 10, mastery: 0, requires: { dex: 12, int: 10 }, role: '시간·속도', tree: 'mystery', branchless: true, hidden: true, fullKit: true, masteryTarget: CLOCKMAKER_MASTERY, masteryBoost: .2 },
+    { id: 'chronarch', name: '시간의 지배자', title: '멈춘 시간 속을 홀로 걷는다', desc: '제로 (1차)를 숙달한 자에게만 열리는 4차급 독립 직업. 확정 기절과 확정 추가 행동으로 전투의 시간을 지배합니다.', ...neutral, attack: 1.3, magic: 1.3, hp: 1.12, defense: 1.08, resist: 1.08, crit: .08, tier: 4, level: 10, mastery: 0, requires: {}, requiresJobMastery: { clockmaker: CLOCKMAKER_MASTERY }, role: '시간·제어', tree: 'mystery', lineage: 'mystery-independent', hidden: true, fullKit: true, masteryTarget: 30000, masteryBoost: .35 },
     { id: 'glyphMonk', name: '玄', title: '일곱 글자를 몸에 새긴다', desc: '혼자 쓰면 손해뿐인 일곱 글자를 서로 맞물려 쓰는 조합 직업. 글자 하나를 익히면 다음 글자가 열리고, 일곱 글자가 모두 맞물리면 天이 깨어납니다.', ...neutral, bonus: { attack: 2, magic: 2 }, tier: 1, level: 10, mastery: 0, requires: { wis: 12, luk: 10 }, role: '조합·각성', tree: 'mystery', branchless: true, fullKit: true, masteryTarget: 5000, masteryBoost: .2 },
 ];
 
 export const V25_SKILLS: Skill[] = [
-    // ── 시계공 ──
+    // ── 제로 (1차) ──
     { ...A, ...physical, id: 'windUp', name: '태엽 감기', desc: '', level: 10, job: 'clockmaker', cost: 2, effect: 'haste' },
     { ...A, ...physical, id: 'slackHand', name: '늘어진 초침', desc: '', level: 10, job: 'clockmaker', cost: 2, effect: 'slow' },
     { ...P, id: 'timeLag', name: '시차', desc: '속도와 회피가 오릅니다. 속도 차이가 클수록 연속 행동이 잦아집니다.', level: 10, job: 'clockmaker', cost: 2, bonus: { speed: 6, evasion: .02 } },
     { ...A, ...physical, id: 'timeMachine', name: '타임머신', desc: '', level: 10, job: 'clockmaker', cost: 2, restoreAll: true, statusOnly: true },
-    // ── 시간의 지배자 ──
+    // ── 제로 (4차) ──
     { ...A, id: 'frozenTime', name: '정지된 시간', desc: '', level: 10, job: 'chronarch', cost: 5, damageType: 'split', scaling: 'dual', effect: 'stun', masteryMilestones: [2500, 12000, 40000, 100000] },
     { ...A, id: 'precede', name: '선행', desc: '', level: 10, job: 'chronarch', cost: 5, damageType: 'split', scaling: 'dual', extraTurn: true, masteryMilestones: [2500, 12000, 40000, 100000] },
     { ...A, id: 'rewind', name: '역행', desc: '', level: 10, job: 'chronarch', cost: 4, damageType: 'split', scaling: 'dual', effect: 'heal', masteryMilestones: [2500, 12000, 40000, 100000] },
@@ -64,7 +64,7 @@ export const V25_BALANCE: Record<string, Partial<Skill>> = {
     slackHand: { chance: .3, cooldown: 3, multiplier: 1 },
     timeMachine: { chance: .12, cooldown: 1, multiplier: 1 },
     frozenTime: { chance: 1, cooldown: 6, multiplier: 1.6, statusTurns: 2, manaCost: 8, sureHit: true },
-    // v25.2: 복합 피해 기술 규칙(발동 45% 이상)에 맞추고 시간의 지배자를 4차 중앙값으로 끌어올립니다.
+    // v25.2: 복합 피해 기술 규칙(발동 45% 이상)에 맞추고 제로 (4차)를 4차 중앙값으로 끌어올립니다.
     precede: { chance: .45, cooldown: 5, multiplier: 1.9, manaCost: 8 },
     rewind: { chance: .45, cooldown: 6, multiplier: 1.3, healRatio: .35, manaCost: 8 },
     // 虛: 체력을 1까지 걸고 건 체력에 비례한 피해. 無 없이 쓰면 다음 공격에 쓰러집니다.
@@ -86,6 +86,6 @@ export const V25_STATUS_ONLY = ['slackHand', 'glyphBind'];
 
 export const V25_HINTS: Record<string, string> = {
     clockmaker: '바다에서 열 시간을 보낸 뒤, 시계 소리가 들립니다.',
-    chronarch: '시계공의 모든 톱니를 맞춘 자에게.',
+    chronarch: '제로 (1차)의 모든 톱니를 맞춘 자에게.',
     glyphMonk: '일곱 글자를 품은 수행자. 누구에게나 열려 있습니다.',
 };
