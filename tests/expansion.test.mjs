@@ -111,5 +111,9 @@ test('v22 gear (v27.53 base 0.25%, rare or better): scarce drops, dismantle into
  const before=s.inventory[0].affixes.map(a=>a.id);act(s,{type:'reforge',id:'x',value:'1'},0,()=>.37);const after=s.inventory[0].affixes;
  assert.equal(after.length,4);assert.deepEqual([after[0].id,after[2].id,after[3].id],[before[0],before[2],before[3]]);assert.equal(new Set(after.map(a=>a.id)).size,4);assert.equal(s.essence,100-gear.rerollEssence(4));
  assert.throws(()=>act(s,{type:'reforge',id:'x',value:'9'},0));
+ // v27.74 단일 옵션(유물·상점·옛 장비) 재설정도 정수를 받습니다.
+ s.inventory.push({id:'relic1',slot:'coat',rarity:3,power:10,level:1,name:'유물',affix:{stat:'evasion',name:'영혼 회피',value:.12}});s.essence=0;
+ assert.throws(()=>act(s,{type:'reforge',id:'relic1'},0),/정수/);s.essence=20;const g0=s.gold;act(s,{type:'reforge',id:'relic1'},0,()=>.2);
+ assert.equal(s.essence,20-gear.rerollEssence(3),'single-affix reroll spends essence');assert.ok(s.gold<g0);assert.ok(s.inventory.find(i=>i.id==='relic1').affix);
  const reb=newState(0);reb.level=30;reb.essence=7;act(reb,{type:'rebirth'},0);assert.equal(reb.essence,7,'essence survives rebirth');
 });

@@ -3,7 +3,7 @@ import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
 import { apCapacity, apUsed } from './progression';
-import { rollAffix, enhanceCost, reforgeCost, bulkItems, saleValue, dismantleEssence, rerollCost, enhanceMaxFor } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, enhanceMaxFor } from './equipment';
 import { rollAffixes } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** 상점·뽑기 골드 가격. 상점 단골 할인(−2%/단계, 내림)을 적용합니다. */
@@ -123,11 +123,14 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (item.rarity < 1)
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');
         if (!item.affixes?.length) {
-            // v21 이전 장비·상점 장비·유물의 단일 옵션: 기존 방식(골드만).
-            const cost = reforgeCost(item, s);
-            spend(cost);
+            // v21 이전 장비·상점 장비·유물의 단일 옵션. v27.74 이 경로도 다중 옵션과 같이 골드 + 정수를 받습니다(전에는 골드만).
+            const cost = rerollCost(item, s);
+            if ((s.essence || 0) < cost.essence)
+                throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
+            spend(cost.gold);
+            s.essence = (s.essence || 0) - cost.essence;
             item.affix = rollAffix(item.rarity, rng);
-            return `${item.name} 옵션 재설정 · ${item.affix.name} · -${cost} G`;
+            return `${item.name} 옵션 재설정 · ${item.affix.name} · -${cost.gold} G · 정수 -${cost.essence}`;
         }
         // v22: 고른 옵션 하나만 다시 굴립니다. 나머지 옵션은 그대로이며 골드와 정수가 듭니다.
         const index = Number(a.value || '0');
