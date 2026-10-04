@@ -29,7 +29,7 @@
 | `bloodAngler` | 피낚시꾼 계보 | 상태이상 | blood angler with a red-stained hook line, grim focus, dark crimson accents |
 | `nerveNeedler` | 마비 침술사 계보 | 상태이상 | needler with rows of fine paralysis needles tucked in a leather bandolier, precise eyes |
 | `status-independent` | 독립 수련 (상태이상) | 상태이상 | quiet fisher mixing bait with strange herbs under a hanging lantern |
-| `fisher` | 견습 낚시꾼 | 복합 | young apprentice fisher with a simple rod and a hopeful look, first morning at sea |
+| `fisher` | 무직 | 복합 | young apprentice fisher with a simple rod and a hopeful look, first morning at sea |
 | `wanderer` | 이형 항해자 계보 | 복합 | strange navigator with mismatched gear, one eye glowing, half-sea half-human hints |
 | `spellbladeNovice` | 마검 수련생 계보 | 복합 | spellblade with runes glowing along a cutlass, one hand casting |
 | `tideLancer` | 조류 창기병 계보 | 복합 | lancer with a long tide-forged lance wreathed in water and light, dragon-scale pauldron |
