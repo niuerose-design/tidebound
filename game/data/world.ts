@@ -65,6 +65,12 @@ export const fishGoldAt = (level: number) => Math.round(GOLD_CURVE.base * Math.p
 export const PRICE_LEVEL_CAP = 65;
 export const priceScale = (level: number) => Math.max(1, fishGoldAt(Math.min(PRICE_LEVEL_CAP, Math.max(1, level))) / fishGoldAt(GOLD_CURVE.knee));
 export const fishExpAt = (level: number) => Math.round(9 * Math.pow(1.15, level - 1));
+/**
+ * v27.66 레벨 차 경험치 보정: 몬스터가 내 레벨보다 EXP_LEVEL_GAP 넘게 높으면 경험치를 ‘내 레벨 + EXP_LEVEL_GAP’ 몬스터 기준으로 줄입니다.
+ * 환생 5회부터 레벨 제한이 풀려 Lv.1이 최상위 사냥터·던전에서 몇 마리 만에 수십 레벨을 오르던 것(환생 반복으로 세계석 찍어 내기)을 막습니다. 골드는 그대로.
+ */
+export const EXP_LEVEL_GAP = 10;
+export const expLevelScale = (monsterLevel: number, playerLevel: number) => monsterLevel > playerLevel + EXP_LEVEL_GAP ? fishExpAt(playerLevel + EXP_LEVEL_GAP) / fishExpAt(monsterLevel) : 1;
 /** 몬스터 레벨별 기본 능력치(체력·공격·방어). FISH 정의와 같은 식입니다. */
 const fishStatsAt = (level: number) => ({ hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8) });
 /** v27.30 사냥터 적의 능력치는 입장 레벨 + STAGE_ENEMY_LEVEL_OVER까지만 셉니다(보상은 몬스터 레벨 그대로). 입장 직후 몇몇 고레벨 몬스터가 벽이 되던 구간 완화. */
