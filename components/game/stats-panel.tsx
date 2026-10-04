@@ -1,5 +1,5 @@
 'use client';
-/** v27.87 통계: 세이브에 쌓인 기록을 한 화면에 모아 보여 줍니다(계산만, 상태는 바꾸지 않음). */
+/** v27.88 통계: 세이브에 쌓인 기록을 한 화면에 모아 보여 줍니다(계산만, 상태는 바꾸지 않음). */
 import type { State } from '@/game/types';
 import { Heading, format } from './shared';
 import { RebirthHistory, formatDuration } from './rebirth-history';
@@ -30,7 +30,7 @@ export function Stats({ s }: { s: State }) {
             ['누적 처치', `${format(s.kills)}마리`],
             ['쓰러짐', `${format(s.deaths)}회`],
             ['환생', `${format(s.rebirths)}회`],
-            ['최고 레벨', `Lv.${s.peakLevel || s.level}`],
+            ['최고 레벨', `Lv.${Math.max(s.peakLevel || 0, s.level)}`],
             ['지금 레벨', `Lv.${s.level}`],
         ]}/>
         <Block title="재화" rows={[

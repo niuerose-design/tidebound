@@ -245,7 +245,7 @@ test('Inherited skills skip the level requirement; other skills explain why they
     const other = newState(0); assert.throws(() => act(other, { type: 'skill', id: sk.id }, 0), /전직하거나/);
 });
 
-test('v27.87 every vow is a next-life reservation: reserving rough/restraint/breath never changes the current life', () => {
+test('v27.88 every vow is a next-life reservation: reserving rough/restraint/breath never changes the current life', () => {
     const s = newState(0); s.rebirths = 6; s.level = 60; Object.assign(s.permanent, { vowRough: 1, vowRestraint: 1, vowBreath: 1 });
     const ap = apCapacity(s), gold = goldMultiplier(s);
     act(s, { type: 'nextVow', id: 'restraint', value: '3' }, 0); act(s, { type: 'nextVow', id: 'rough', value: '3' }, 0); act(s, { type: 'nextVow', id: 'breath', value: 'on' }, 0);
