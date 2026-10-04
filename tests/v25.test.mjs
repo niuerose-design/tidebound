@@ -929,16 +929,16 @@ test('v27.79 rank: kills-only progression with perks (tally, drill, medal, suppl
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const R = await L.load('data/rank'), Enc = await L.load('systems/encounter'), M = await L.load('systems/mastery');
     assert.equal(R.RANKS.length, 17); assert.equal(R.RANKS[0].name, '이등병'); assert.equal(R.RANKS.at(-1).name, '중장'); assert.equal(R.RANK_CUMULATIVE[1], 5000);
-    const total = R.RANKS.reduce((a, r) => a + r.need, 0); assert.ok(total > 2.0e6 && total < 2.5e6, `total kills to top ${total}`); assert.equal(R.RANK_TOTAL_POINTS, 41);
+    const total = R.RANKS.reduce((a, r) => a + r.need, 0); assert.ok(total > 2.0e6 && total < 2.5e6, `total kills to top ${total}`); assert.equal(R.RANK_TOTAL_POINTS, 41); assert.ok(R.RANK_PERKS.every(p => p.cost === 1), 'every perk costs 1P');
     for (let i = 1; i < R.RANKS.length; i++) { const g = R.RANKS[i].need / R.RANKS[i - 1].need; if (i > 1) assert.ok(g > 1.3 && g < 1.5, `growth ${g} at ${i}`); }
     const s = newState(0); s.kills = 4999; assert.equal(R.rankOf(s).name, '이등병', 'old saves start from their kill count');
     s.running = true; s.stage = 'brook'; s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0 };
     Enc.reward(s, () => .99); assert.equal(s.rank.exp, 5000); assert.equal(R.rankOf(s).name, '일병'); assert.ok(s.logs.some(l => /일병\(으\)로 진급/.test(l.text))); assert.equal(R.rankPointsFree(s), 1);
-    assert.throws(() => act(s, { type: 'rankPerk', id: 'tally' }, 0), /부족/); act(s, { type: 'rankPerk', id: 'supply' }, 0); assert.equal(R.rankPerkLevel(s, 'supply'), 1); assert.equal(R.rankPointsFree(s), 0);
+    act(s, { type: 'rankPerk', id: 'supply' }, 0); assert.equal(R.rankPerkLevel(s, 'supply'), 1); assert.equal(R.rankPointsFree(s), 0); assert.throws(() => act(s, { type: 'rankPerk', id: 'tally' }, 0), /부족/);
     s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0 }; const p0 = s.pearls; Enc.reward(s, () => 0); assert.equal(s.pearls, p0 + 1, 'supply 0.1% hit on rng 0');
     act(s, { type: 'rankPerk', id: 'reset' }, 0); assert.equal(R.rankPointsFree(s), 1); assert.deepEqual(s.rank.perks, {});
     s.rank.exp = R.RANK_CUMULATIVE[16]; assert.equal(R.rankOf(s).name, '중장'); assert.equal(R.rankPointsEarned(s), 41);
-    s.rank.perks = { tally: 2, drill: 3, medal: 5 }; assert.equal(R.rankPointsSpent(s), 4 + 12 + 15); assert.equal(M.victoryMastery(s, { id: 'minnow', boss: false }).base, 4, 'drill 3 → base mastery 4');
+    s.rank.perks = { tally: 2, drill: 3, medal: 5 }; assert.equal(R.rankPointsSpent(s), 2 + 3 + 5); assert.equal(M.victoryMastery(s, { id: 'minnow', boss: false }).base, 4, 'drill 3 → base mastery 4');
     s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, swarm: 10 }; const e0 = s.rank.exp, sp0 = s.sp; Enc.reward(s, () => 0); assert.equal(s.rank.exp, e0 + 30, 'swarm 10 × (1 + tally 2)'); assert.equal(s.sp, sp0 + 1, 'medal hit');
     const r = newState(0); r.level = 60; r.rank = { exp: 12345, perks: { supply: 1 } }; act(r, { type: 'rebirth' }, 0); assert.deepEqual(r.rank, { exp: 12345, perks: { supply: 1 } }, 'rank survives rebirth');
 });

@@ -51,7 +51,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         let running = before;
         for (const [source, n] of parts) { const next = running * n; rec(k, source, next - running, n); running = next; }
     };
-    set('expBonus', 'rebirth', permanentExpBonus(s)); add('expBonus', 'job', j.expBonus || 0);
+    // v27.80 모험의 기억(연구)을 환생 보너스와 분리해 기록합니다(합은 permanentExpBonus와 같음).
+    set('expBonus', 'rebirth', rebirthExperience(s.rebirths)); add('expBonus', 'research', (s.permanent.exp || 0) * .2); add('expBonus', 'job', j.expBonus || 0);
     for (const k of ['goldBonus', 'dropBonus', 'rebirthBonus', 'dungeonGoldBonus', 'penetration', 'lifesteal'] as const) a[k] = 0;
     set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * E.vit.hp);
     set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'attributes', v.str * E.str.attack);
@@ -204,8 +205,8 @@ export function clampVitals(s: State) {
 }
 /** 골드 배율. 험한 길 서약은 처치·던전 골드를 함께 올립니다(서약이 없으면 ×1). */
 /** v25.6 이번 생의 조건 카드 배율. 사냥터 집중은 그 사냥터에서만, 황금 모험은 생 전체. */
-const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
-const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
+export const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
+export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 // v27.79 계정(분신) 보너스는 곱연산 배율입니다(accountExpGold ≤ ×1.3).
 export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * accountExpGold(s) * roughReward(s) * focusGold(s) * (s.event?.gold || 1);
 export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus) * accountExpGold(s) * (tailwindActive(s) ? 1 + tailwindExp(s) : 1) * focusExp(s) * (s.event?.exp || 1);
