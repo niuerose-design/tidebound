@@ -9,7 +9,10 @@ type EventRow = { id: string; name: string; from: string; until: string; exp?: n
 type EventList = { code: EventRow[]; extra: EventRow[]; banner: string; at: number };
 type ClosureRow = { id: string; name: string; closed: boolean; locked: boolean };
 type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
-type Tab = 'life' | 'events' | 'closures' | 'stats';
+/** v27.70 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
+type DoorRow = { id: string; name: string; door: string; hint: string; open: boolean };
+type DoorList = { doors: DoorRow[] };
+type Tab = 'life' | 'events' | 'closures' | 'doors' | 'stats';
 type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };
 type Balance = { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: Bucket[]; burn: number };
@@ -58,7 +61,7 @@ const lifeLine = (p: AdminPlayer) => [p.lastRebirthAt ? `마지막 환생 ${new 
 /** v27.26 운영 도구: 모험가 이름·아이디로 찾아 이번 생을 처음 상태로 되돌립니다(환생 횟수·세계석·연구·유물·도감 유지). */
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
-    const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [stats, setStats] = useState<Stats | null>(null);
+    const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [doors, setDoors] = useState<DoorList | null>(null), [stats, setStats] = useState<Stats | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1' });
     const [spOpen, setSpOpen] = useState<string | null>(null);
     const [edit, setEdit] = useState<{ player: AdminPlayer; gold: string; pearls: string } | null>(null);
@@ -108,14 +111,21 @@ export default function AdminPage() {
         const d = await call({ action: 'setClosed', kind, id: row.id, closed: !row.closed });
         if (d) { setClosures(d); setDone(`${row.name}을(를) ${row.closed ? '열었습니다' : '닫았습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
     };
-    const tabButton = (id: Tab, label: string) => <button type="button" className={tab === id ? 'primary' : 'secondary'} onClick={() => { setTab(id); setError(''); setDone(''); if (id === 'events' && key) loadEvents(); if (id === 'closures' && key) loadClosures(); if (id === 'stats' && key) loadStats(); }}>{label}</button>;
+    /** v27.70 문 개방: 연 동안 모든 모험가에게 그 ??? 직업의 문이 열립니다. 닫으면 다시 조건대로(그 사이 전직한 모험가는 그대로). */
+    const loadDoors = async () => { const d = await call({ action: 'doors' }); if (d) setDoors(d); };
+    const toggleDoor = async (row: DoorRow) => {
+        if (!row.open && !confirm(`${row.door} · ${row.name}의 문을 모든 모험가에게 열까요?\n연 동안은 조건과 상관없이 전직할 수 있고, 다시 닫으면 조건대로 돌아갑니다(그 사이 전직한 모험가는 그대로).`)) return;
+        const d = await call({ action: 'setDoor', id: row.id, open: !row.open });
+        if (d) { setDoors(d); setDone(`${row.name}의 문을 ${row.open ? '닫았습니다. 다시 조건대로 열립니다' : '열었습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
+    };
+    const tabButton = (id: Tab, label: string) => <button type="button" className={tab === id ? 'primary' : 'secondary'} onClick={() => { setTab(id); setError(''); setDone(''); if (id === 'events' && key) loadEvents(); if (id === 'closures' && key) loadClosures(); if (id === 'doors' && key) loadDoors(); if (id === 'stats' && key) loadStats(); }}>{label}</button>;
     const closureList = (kind: keyof ClosureList, title: string) => closures && <div><h2 style={{ fontSize: 16 }}>{title}</h2><ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{closures[kind].map(r => <li key={r.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
         <span style={{ fontSize: 13 }}><b>{r.name}</b> · {r.closed ? <b style={{ color: '#ff9a9a' }}>입장 막힘</b> : <span style={{ color: '#9ce8b4' }}>열림</span>}{r.locked ? <small style={{ color: '#9bb3b0' }}> · 첫 사냥터라 닫을 수 없음</small> : null}</span>
         {!r.locked && <button className={r.closed ? 'primary' : 'secondary'} disabled={busy} onClick={() => toggleClosed(kind, r)}>{r.closed ? '다시 열기' : '입장 막기'}</button>}</li>)}</ul></div>;
     return <main className="admin-tool" style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px', color: '#e6f1ee' }}>
         <h1 style={{ fontSize: 24, marginBottom: 8 }}>운영 도구</h1>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>{tabButton('life', '모험가 관리')}{tabButton('events', '서버 이벤트')}{tabButton('closures', '입장 관리')}{tabButton('stats', '통계')}</div>
-        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·세계석을 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·세계석·연구·유물·도감·스킬 성장은 그대로입니다.' : tab === 'events' ? '기간 동안 모든 모험가의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다.' : tab === 'stats' ? '모든 세이브를 읽어 집계합니다. 활동은 마지막 저장 시각 기준이라, 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다. 운영자가 불러올 때만 계산해 게임에는 부하가 없습니다.' : '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나오고(사냥터는 더 앞의 열린 곳으로), 반복 도전도 멈춥니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.'}</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>{tabButton('life', '모험가 관리')}{tabButton('events', '서버 이벤트')}{tabButton('closures', '입장 관리')}{tabButton('doors', '문 개방')}{tabButton('stats', '통계')}</div>
+        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·세계석을 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·세계석·연구·유물·도감·스킬 성장은 그대로입니다.' : tab === 'events' ? '기간 동안 모든 모험가의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다. 배율 없이 이름만 적으면 공지(서버 메시지)로 배너에 뜹니다. 코드에 든 이벤트는 없고, 모든 서버 메시지는 이 페이지에서만 만듭니다.' : tab === 'doors' ? '??? 직업의 문을 조건과 상관없이 모든 모험가에게 엽니다(테스트용). 연 동안만 열리고, 닫으면 다시 각자의 조건대로 돌아갑니다. 그 사이 전직한 모험가는 그 직업을 그대로 가집니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.' : tab === 'stats' ? '모든 세이브를 읽어 집계합니다. 활동은 마지막 저장 시각 기준이라, 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다. 운영자가 불러올 때만 계산해 게임에는 부하가 없습니다.' : '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나오고(사냥터는 더 앞의 열린 곳으로), 반복 도전도 멈춥니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.'}</p>
         <section className="panel" style={{ padding: 16, display: 'grid', gap: 10 }}>
             <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>운영자 키<input type="password" value={key} onChange={e => setKey(e.target.value)} autoComplete="off" placeholder="Vercel 환경 변수 TIDEBOUND_ADMIN_KEY 값" style={field}/></label>
             {tab === 'life' && <form onSubmit={e => { e.preventDefault(); search(); }} style={{ display: 'flex', gap: 8 }}>
@@ -125,20 +135,21 @@ export default function AdminPage() {
             {tab === 'events' && <button className="secondary" disabled={busy || !key} onClick={loadEvents}>이벤트 불러오기</button>}
             {tab === 'stats' && <button className="secondary" disabled={busy || !key} onClick={loadStats}>{stats ? '새로고침' : '통계 불러오기'}</button>}
             {tab === 'closures' && <button className="secondary" disabled={busy || !key} onClick={loadClosures}>목록 불러오기</button>}
+            {tab === 'doors' && <button className="secondary" disabled={busy || !key} onClick={loadDoors}>목록 불러오기</button>}
         </section>
         {error && <p role="alert" style={{ color: '#ff9a9a' }}>{error}</p>}
         {done && <p role="status" style={{ color: '#9ce8b4' }}>{done}</p>}
         {tab === 'events' && events && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
             <div className="panel" style={{ padding: 12, fontSize: 13 }}>지금 배너: <b>{events.banner || '진행 중인 이벤트 없음'}</b></div>
-            <div><h2 style={{ fontSize: 16 }}>코드에 들어 있는 이벤트</h2><ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{events.code.map(e => <li key={e.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', opacity: e.disabled ? .55 : 1 }}>
+            {events.code.length > 0 && <div><h2 style={{ fontSize: 16 }}>코드에 들어 있는 이벤트</h2><ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{events.code.map(e => <li key={e.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', opacity: e.disabled ? .55 : 1 }}>
                 <span style={{ fontSize: 13 }}><b>{e.name || '(이름 없음)'}</b> · {mults(e)}{e.disabled ? ' · 꺼짐' : phase(e, events.at)}<br/><small style={{ color: '#9bb3b0' }}>{when(e)}</small></span>
-                <button className="secondary" disabled={busy} onClick={() => toggleEvent(e.id, !e.disabled)}>{e.disabled ? '다시 켜기' : '끄기'}</button></li>)}</ul></div>
-            <div><h2 style={{ fontSize: 16 }}>운영 페이지에서 만든 이벤트</h2>{!events.extra.length && <p style={{ color: '#9bb3b0', fontSize: 13 }}>없습니다.</p>}<ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{events.extra.map(e => <li key={e.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
+                <button className="secondary" disabled={busy} onClick={() => toggleEvent(e.id, !e.disabled)}>{e.disabled ? '다시 켜기' : '끄기'}</button></li>)}</ul></div>}
+            <div><h2 style={{ fontSize: 16 }}>운영 페이지에서 만든 이벤트 · 서버 메시지</h2>{!events.extra.length && <p style={{ color: '#9bb3b0', fontSize: 13 }}>없습니다.</p>}<ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{events.extra.map(e => <li key={e.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
                 <span style={{ fontSize: 13 }}><b>{e.name || '(이름 없음)'}</b> · {mults(e)}{phase(e, events.at)}<br/><small style={{ color: '#9bb3b0' }}>{when(e)}</small></span>
                 <button className="secondary" disabled={busy} onClick={() => removeEvent(e.id)}>삭제</button></li>)}</ul></div>
             <form className="panel" onSubmit={ev => { ev.preventDefault(); saveEvent(); }} style={{ padding: 14, display: 'grid', gap: 8 }}>
-                <h2 style={{ fontSize: 16, margin: 0 }}>새 이벤트</h2>
-                <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>배너 이름(배율은 자동으로 뒤에 붙습니다)<input value={draft.name} maxLength={40} onChange={e => setDraft({ ...draft, name: e.target.value })} placeholder="예: 주말 특별 이벤트" style={field}/></label>
+                <h2 style={{ fontSize: 16, margin: 0 }}>새 이벤트 · 서버 메시지</h2>
+                <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>배너 이름(배율은 자동으로 뒤에 붙습니다 · 배율을 모두 1로 두면 공지만 뜹니다)<input value={draft.name} maxLength={40} onChange={e => setDraft({ ...draft, name: e.target.value })} placeholder="예: 숨겨진 직업 하나가 개방되었습니다" style={field}/></label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
                     <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>시작(한국 시간)<input type="datetime-local" value={draft.from} onChange={e => setDraft({ ...draft, from: e.target.value })} style={field}/></label>
                     <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>종료(한국 시간)<input type="datetime-local" value={draft.until} onChange={e => setDraft({ ...draft, until: e.target.value })} style={field}/></label>
@@ -203,6 +214,12 @@ export default function AdminPage() {
             </div>
         </section>}
         {tab === 'closures' && closures && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>{closureList('dungeons', '던전')}{closureList('stages', '사냥터')}</section>}
+        {tab === 'doors' && doors && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
+            <div className="panel" style={{ padding: 12, fontSize: 13 }}>운영자가 연 문: <b>{doors.doors.filter(d => d.open).map(d => d.name).join(', ') || '없음(모두 조건대로)'}</b></div>
+            <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{doors.doors.map(r => <li key={r.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
+                <span style={{ fontSize: 13 }}><b>{r.name}</b> · {r.door} · {r.open ? <b style={{ color: '#9ce8b4' }}>모두에게 열림</b> : <span style={{ color: '#9bb3b0' }}>조건대로</span>}<br/><small style={{ color: '#9bb3b0' }}>{r.hint}</small></span>
+                <button className={r.open ? 'secondary' : 'primary'} disabled={busy} onClick={() => toggleDoor(r)}>{r.open ? '닫기' : '열기'}</button></li>)}</ul>
+        </section>}
         {tab === 'life' && players && <section style={{ marginTop: 16 }}>
             <h2 style={{ fontSize: 16 }}>검색 결과 {players.length}명{players.length === 30 ? ' (최대 30명까지 표시)' : ''}</h2>
             {!players.length && <p style={{ color: '#9bb3b0' }}>찾은 모험가가 없습니다.</p>}

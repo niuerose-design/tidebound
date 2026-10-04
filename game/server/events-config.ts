@@ -2,11 +2,13 @@
  * v27.27 운영 페이지에서 바꾼 서버 이벤트(settings.events)와 v27.31 닫은 사냥터·던전(settings.closures)을
  * DB에서 읽어 게임 계산에 넣습니다. 인스턴스마다 30초 캐시라 두 설정 모두 30초에 한 번만 읽습니다.
  * v27.43 제단 축복(altar_gauges의 until)도 같은 30초 캐시로 읽습니다.
+ * v27.70 운영 페이지에서 연 문(settings.doors)도 같은 30초 캐시로 읽습니다.
  */
 import { db } from './db';
 import { setRuntimeEvents, setAltarEvents, SERVER_EVENTS, type ServerEvent } from '../data/events';
 import { BLESSINGS, blessingEffect } from '../data/altar';
 import { DEFAULT_CLOSURES, DUNGEONS, STAGES, setClosures, type Closures } from '../data/world';
+import { DOOR_JOBS, setOpenDoors } from '../data/doors';
 
 export type EventConfig = { extra: ServerEvent[]; disabled: string[] };
 const KEY = 'events', TTL = 30_000;
@@ -26,12 +28,21 @@ export async function readClosures(): Promise<Closures> {
     catch { return { dungeons: [...DEFAULT_CLOSURES.dungeons], stages: [...DEFAULT_CLOSURES.stages] }; }
 }
 const cleanClosures = (c: Closures): Closures => ({ dungeons: [...new Set(c.dungeons)].filter(id => DUNGEONS.some(d => d.id === id)), stages: [...new Set(c.stages)].filter(id => id !== STAGES[0].id && STAGES.some(st => st.id === id)) });
+const DOORS_KEY = 'doors';
+/** v27.70 운영 페이지에서 연 문의 직업 id 목록. 저장한 적이 없으면 비어 있습니다(모든 문이 조건대로). 문이 없는 직업 id는 버립니다. */
+export async function readOpenDoors(): Promise<string[]> {
+    const raw = await db().getSetting(DOORS_KEY);
+    if (!raw) return [];
+    try { const v = JSON.parse(raw); return cleanDoors(Array.isArray(v) ? v : []); }
+    catch { return []; }
+}
+const cleanDoors = (ids: unknown[]) => DOOR_JOBS.filter(id => ids.includes(id));
 /** 동기화·정산 전에 부릅니다. 30초 안에는 DB를 다시 읽지 않습니다. 읽기에 실패하면 지난 값(없으면 코드 기본값)을 씁니다. */
 export async function refreshEvents(now = Date.now()) {
     if (cached && now - cached.at < TTL) return;
     try {
-        const [config, closures, blessings] = await Promise.all([readEventConfig(), readClosures(), altarBlessingEvents(now)]);
-        cached = { at: now, config }; setRuntimeEvents(config.extra, config.disabled); setClosures(closures); setAltarEvents(blessings);
+        const [config, closures, blessings, doors] = await Promise.all([readEventConfig(), readClosures(), altarBlessingEvents(now), readOpenDoors()]);
+        cached = { at: now, config }; setRuntimeEvents(config.extra, config.disabled); setClosures(closures); setAltarEvents(blessings); setOpenDoors(doors);
     }
     catch { cached = { at: now, config: cached?.config ?? { extra: [], disabled: [] } }; }
 }
@@ -39,6 +50,12 @@ export async function writeClosures(c: Closures, now = Date.now()) {
     const clean = cleanClosures(c);
     await db().setSetting(CLOSURES_KEY, JSON.stringify(clean), now);
     setClosures(clean);
+    return clean;
+}
+export async function writeOpenDoors(ids: string[], now = Date.now()) {
+    const clean = cleanDoors(ids);
+    await db().setSetting(DOORS_KEY, JSON.stringify(clean), now);
+    setOpenDoors(clean);
     return clean;
 }
 export async function writeEventConfig(config: EventConfig, now = Date.now()) {

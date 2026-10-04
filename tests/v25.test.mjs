@@ -383,13 +383,15 @@ test('v27.27 shop gear resells for at most half its price; old shop items are es
     }
 });
 
-test('v27.27 runtime server events merge with code events and can disable them', async () => {
+test('v27.27·v27.70 server events come from the admin page only: no code events, admin events apply and a name-only event is a notice', async () => {
     const ev = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/events');
     const at = Date.parse('2026-10-05T12:00:00+09:00');
-    const before = ev.activeEvent(at); assert.ok(before && before.exp >= 2, 'open beta exp event is live');
-    ev.setRuntimeEvents([{ id: 'admin-test01', name: '주말', from: '2026-10-05T00:00:00+09:00', until: '2026-10-06T00:00:00+09:00', gold: 3 }], ['openbeta-exp']);
-    const now = ev.activeEvent(at); assert.equal(now.gold, 3, 'admin event applies'); assert.ok(!(now.exp > 1), 'disabled code event is off');
-    ev.setRuntimeEvents([], []); assert.ok(ev.activeEvent(at).exp >= 2, 'reset restores code events');
+    assert.deepEqual(ev.SERVER_EVENTS, [], 'v27.70 no coded events; server messages are made on the admin page');
+    assert.equal(ev.activeEvent(at), null, 'nothing is live without admin events');
+    ev.setRuntimeEvents([{ id: 'admin-test01', name: '주말', from: '2026-10-05T00:00:00+09:00', until: '2026-10-06T00:00:00+09:00', gold: 3 }, { id: 'admin-test02', name: '숨겨진 직업 하나가 개방되었습니다', from: '2026-10-05T00:00:00+09:00', until: '2026-10-06T00:00:00+09:00' }], ['openbeta-exp']);
+    const now = ev.activeEvent(at); assert.equal(now.gold, 3, 'admin event applies'); assert.equal(now.exp, 1);
+    assert.match(ev.eventLabel(now), /^주말 · 숨겨진 직업 하나가 개방되었습니다 · 골드 ×3 · 10\/6까지$/, 'notice text joins the banner');
+    ev.setRuntimeEvents([], []); assert.equal(ev.activeEvent(at), null, 'reset clears admin events');
 });
 
 test('v27.28 limit break raises level-table passives (+10%/stage), applies stage-3 AP cut to them, and scales count-based passives', async () => {
