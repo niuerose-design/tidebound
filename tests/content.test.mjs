@@ -266,9 +266,10 @@ test('v27.21 tide tier multiplies catch mastery on stages only',()=>{
 
 test('v27.22 mastery mimic: rare stage-only spawn with the strongest local body, pays lottery mastery to job and equipped skills',()=>{
  const s=newState(0);s.level=20;s.kills=100;s.stage='reef';s.running=true;s.skills=['hook'];
- spawn(s,()=>0);assert.equal(s.enemy.id,'masteryMimic','roll 0 spawns the mimic');assert.equal(s.enemy.name,'숙련의 까미');assert.equal(mimicChanceOf(10,0),MIMIC_DATA.chance+10*MIMIC_DATA.chancePerTier,'tide raises the chance');assert.ok(Math.abs(mimicChanceOf(0,4)-MIMIC_DATA.chance*(1+4*MIMIC_DATA.stageStep))<1e-12,'later stages raise the chance');
+ const flat=newState(0);flat.level=20;flat.kills=100;flat.stage='reef';flat.tide=MIMIC_DATA.minTier-1;spawn(flat,()=>0);assert.notEqual(flat.enemy.id,'masteryMimic','v27.59 needs stage difficulty 5');
+ s.tide=MIMIC_DATA.minTier;spawn(s,()=>0);assert.equal(s.enemy.id,'masteryMimic','roll 0 spawns the mimic');assert.equal(s.enemy.name,'숙련의 까미');assert.equal(mimicChanceOf(10,0),MIMIC_DATA.chance+10*MIMIC_DATA.chancePerTier,'tide raises the chance');assert.ok(Math.abs(mimicChanceOf(0,4)-MIMIC_DATA.chance*(1+4*MIMIC_DATA.stageStep))<1e-12,'later stages raise the chance');
  const top=FISH.filter(f=>['lionfish','eel','barracuda','stormBarracuda'].includes(f.id)).sort((a,b)=>b.level-a.level)[0];assert.ok(s.enemy.maxHp>top.hp*2,'borrows the strongest local body');
- const low=newState(0);low.level=5;low.kills=500;low.stage='reef';spawn(low,()=>0);assert.notEqual(low.enemy.id,'masteryMimic','not before Lv.10');
+ const low=newState(0);low.level=5;low.kills=500;low.stage='reef';low.tide=5;spawn(low,()=>0);assert.notEqual(low.enemy.id,'masteryMimic','not before Lv.10');
  const d=newState(0);d.level=20;d.kills=500;d.dungeon={id:'grotto',wave:0};spawn(d,()=>0);assert.notEqual(d.enemy.id,'masteryMimic','never in dungeons');
  s.enemy.hp=0;reward(s,()=>.99);
  assert.ok((s.jobMastery.fisher||0)>=100000,'big ticket: '+s.jobMastery.fisher);assert.ok((s.skillPractice.hook||0)>=100000);assert.equal(s.book.masteryMimic,1);assert.ok(s.logs.some(l=>l.text.includes('숙련의 까미')));
