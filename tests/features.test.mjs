@@ -7,6 +7,8 @@ test('Codex: crossing several thresholds claims all pending ranks once; claim-al
 });
 test('Stat trace: per-source deltas sum to the final value and do not change the result',()=>{
  const s=newState(0);s.level=60;s.rebirths=4;s.attributes.str=40;s.attributes.vit=30;s.attributes.luk=20;s.permanent.hp=5;s.permanent.attack=7;s.permanent.guard=3;s.permanent.gold=2;s.book.minnow=600;
+ // v27.81 성향 능력치가 없어져 도감 기여는 장소 테마(네온 수로 체력·공격·방어 +2%)로 확인합니다.
+ for(const id of ['starKoi','prismRay','voidGuppy','abyssManta','novaManta'])s.book[id]=50;
  s.equipment.rod={id:'t',slot:'rod',rarity:2,power:30,level:20,name:'t',enhance:3};
  const plain=stats(s),trace={},traced=stats(s,trace);assert.deepEqual(traced,plain);
  for(const [k,v] of Object.entries(traced)){const sum=(trace[k]||[]).reduce((a,x)=>a+x.delta,0);assert.ok(Math.abs(sum-v)<1e-6,`${k}: ${sum} vs ${v}`);}

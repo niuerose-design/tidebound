@@ -5,16 +5,17 @@ import { FISH, STAGES, SWARM_SIZES, SWARM_UNLOCK } from '@/game/data/world';
 import { BALANCE } from '@/game/data/balance';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookPending, bookTierReq } from '@/game/systems/progression';
-import { bookTrait, bonusLabel, bookStage, regionResearchStage } from '@/game/systems/book';
-import { BOOK_TRAITS, BOOK_ECOLOGY, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
+import { bookStage, regionResearchStage } from '@/game/systems/book';
+import { BOOK_ECOLOGY, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
 import { Meter } from './shared';
 
 const MILESTONES = BALANCE.bookMilestones;
-/** 연구 단계를 달성하면 바로 적용되는 전투 보상. 생태 연구는 2단계부터 붙습니다. */
-function stepEffect(id: string, rank: number) {
-    const trait = BOOK_TRAITS[bookTrait(id)];
-    const ecology = rank + 1 >= BOOK_ECOLOGY.fromStage ? ` · 생태 연구: 이 몬스터 상대 주는 피해 +${BOOK_ECOLOGY.dealtPerStage * 100}% · 받는 공격 피해 -${BOOK_ECOLOGY.takenPerStage * 100}%` : '';
-    return `${trait.name} 연구 ${bonusLabel(trait.perStage)}${ecology}`;
+/** 연구 단계를 달성하면 바로 적용되는 전투 보상. v27.81 성향 능력치는 없애고, 2단계부터 생태 연구(이 몬스터 상대 보정)만 오릅니다. */
+function stepEffect(_id: string, rank: number) {
+    const i = rank + 1 - BOOK_ECOLOGY.fromStage, pct = (n: number) => Number((n * 100).toFixed(1));
+    if (i < 0) return '적 정보 공개';
+    const dealt = BOOK_ECOLOGY.dealt.slice(0, i + 1).reduce((a, n) => a + n, 0), taken = BOOK_ECOLOGY.taken.slice(0, i + 1).reduce((a, n) => a + n, 0);
+    return `생태 연구: 이 몬스터 상대 주는 피해 +${pct(BOOK_ECOLOGY.dealt[i])}% · 받는 공격 피해 -${pct(BOOK_ECOLOGY.taken[i])}% (누적 +${pct(dealt)}% / -${pct(taken)}%)`;
 }
 /** 이 연구 단계 구간(이전 목표 초과 ~ 이번 목표 이하)에서 열리는 무리 사냥 규모. 목표와 해금 수가 다르면 해금 수를 같이 적습니다. */
 const swarmAt = (rank: number, n: number) => SWARM_SIZES.filter(size => size > 1 && SWARM_UNLOCK[size] > (MILESTONES[rank - 1] || 0) && SWARM_UNLOCK[size] <= MILESTONES[rank])

@@ -9,14 +9,14 @@ import { MIMIC, mimicChance, specialLuck } from '@/game/data/mimic';
 import { EXP_NURI, nuriChance } from '@/game/data/exp-nuri';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
-import { PROGRESSION, STAT_LABELS, statDisplay, percent } from '@/game/data/progression';
+import { PROGRESSION, statDisplay, percent } from '@/game/data/progression';
 import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } from './book-research';
-import { stats, mastery, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
+import { stats, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
 import { abyssReference, stageField } from '@/game/systems/encounter';
-import { bookStage, bookStatBonus, bookTrait, bookEcology, bookRevealed, bonusLabel, regionResearchStage } from '@/game/systems/book';
-import { BOOK_TRAITS, BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
+import { bookEcology, nextEcology, bookRevealed, regionResearchStage } from '@/game/systems/book';
+import { BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
 import { VARIANTS, regionSignature } from '@/game/data/variants';
 import type { State, Stats } from '@/game/types';
 import { enemySkillBrief } from '@/game/systems/skill-description';
@@ -29,13 +29,13 @@ function EnemySkillList({ ids, enemy }: { ids: string[]; enemy: Stats }) {
         return <li key={id}><strong>{sk.name}</strong><span>{enemySkillBrief(sk)}</span><small>발동 {percent(sk.chance)} · 재사용 {sk.cooldown}턴</small></li>;
     })}</ul></div>;
 }
-/** 도감 카드의 플레이어 보상 요약: 성향 연구 능력치와 생태 연구 보정. */
-function BookTraitLine({ s, id }: { s: State; id: string }) {
-    const trait = BOOK_TRAITS[bookTrait(id)], eco = bookEcology(s, id);
-    return <div className="fish-trait book-trait-reward">
-        <strong>{trait.name} 연구</strong>
-        <span>단계마다 {bonusLabel(trait.perStage)}</span>
-        <span>{eco.stages ? <b className="positive">생태 연구 적용 중 · 이 몬스터 상대 주는 피해 +{Math.round(eco.dealt * 100)}% · 받는 공격 피해 -{Math.round(eco.taken * 100)}%</b> : `생태 연구(${BALANCE.bookMilestones[BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회~) · 이 몬스터 상대 주는 피해 +${BOOK_ECOLOGY.dealtPerStage * 100}% · 받는 공격 피해 -${BOOK_ECOLOGY.takenPerStage * 100}% (단계마다)`}</span>
+/** v27.81 생태 연구: 이 몬스터 상대 주는 피해·받는 공격 피해. 최대 +50% / -25%. */
+function EcologyLine({ s, id }: { s: State; id: string }) {
+    const eco = bookEcology(s, id), next = nextEcology(s, id), pct = (n: number) => Number((n * 100).toFixed(1));
+    const max = { dealt: BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0), taken: BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0) };
+    return <div className="fish-trait book-trait-line">
+        <strong>생태 연구 {eco.stages} / {BOOK_ECOLOGY.dealt.length}</strong>
+        <span>{eco.stages ? <b className="positive">이 몬스터 상대 주는 피해 +{pct(eco.dealt)}% · 받는 공격 피해 -{pct(eco.taken)}%</b> : `연구 ${BOOK_ECOLOGY.fromStage}단계(${BALANCE.bookMilestones[BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회)부터 적용`}{next ? ` · 다음 단계 +${pct(next.dealt)}% / -${pct(next.taken)}%` : ''} · 최대 +{pct(max.dealt)}% / -{pct(max.taken)}%</span>
     </div>;
 }
 /** v25.21 몬스터 이름 옆 변종 아이콘 줄. 잡은 변종은 색이 켜지고 횟수가 붙으며, 아직 못 만난 변종은 흐리게 자리만 보여 줍니다. */
@@ -108,7 +108,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <strong>{p.name}</strong>
                 <span>{p.hint}</span>
                 </div> : <LockedInfo n={n}/>}
-                <BookTraitLine s={s} id={id}/>
+                <EcologyLine s={s} id={id}/>
                 <BookResearch s={s} id={id} send={send} busy={busy} swarm/>
                 {bookRevealed(s, id) && <details className="book-block book-enemy"><summary><h4><ChevronDown size={14} className="book-enemy-chevron"/>적 정보 <small>{`사냥터 난이도 ${tide} 기준 · Lv.${live.level}${live.level > f.level ? ` (기본 Lv.${f.level}에서 상승)` : ''}`}</small></h4></summary>
                 <div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><span>명중 수치 {statDisplay('accuracy', enemy.accuracy || 0)}</span><span>회피 수치 {statDisplay('evasion', enemy.evasion || 0)}</span><EnemyStrike enemy={enemy}/></div>
@@ -125,7 +125,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <h3>{f.name} <small className="fish-rarity legendary">전설 보스</small><GoldenMark s={s} id={f.id}/></h3>
                 <p>{f.lore}</p>
                 {bookRevealed(s, f.id) ? <div className="fish-trait"><strong>{p.name}</strong><span>{p.hint}</span></div> : <LockedInfo n={n}/>}
-                <BookTraitLine s={s} id={f.id}/>
+                <EcologyLine s={s} id={f.id}/>
                 <BookResearch s={s} id={f.id} send={send} busy={busy}/>
                 {bookRevealed(s, f.id) && <details className="book-block book-enemy"><summary><h4><ChevronDown size={14} className="book-enemy-chevron"/>적 정보 <small>{f.id === 'abyssSovereign' ? '무릉도장 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><EnemyStrike enemy={enemy}/></div><EnemySkillList ids={p.skills} enemy={enemy}/></details>}
             </article>;
@@ -183,22 +183,15 @@ export function Collection({ s, send, busy }: PanelProps) {
         }))}</div>
     </TabsContent>
     <TabsContent value="bonus">
-    {(() => { const total = bookStatBonus(s), entries = (Object.entries(total) as [keyof Stats, number][]).sort((x, y) => Math.abs(y[1]) - Math.abs(x[1])), maxStage = FISH.length * BALANCE.bookMilestones.length; return <div className="bonus-stack">
+    {(() => { const eco = FISH.map(f => bookEcology(s, f.id).stages), maxStage = FISH.length * BOOK_ECOLOGY.dealt.length, pct = (n: number) => Number((n * 100).toFixed(1)); return <div className="bonus-stack">
     <details className="bonus-block" open>
-    <summary><div><h2>성향 연구</h2><p>몬스터를 {BALANCE.bookMilestones.map(m => m.toLocaleString()).join(' · ')}회 처치할 때마다 그 몬스터 성향의 능력치가 오릅니다. 2단계부터는 그 몬스터 상대 피해 보정도 붙습니다.</p></div><span className="bonus-count">{mastery(s)}<small> / {maxStage}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <summary><div><h2>생태 연구</h2><p>몬스터를 {BALANCE.bookMilestones.slice(BOOK_ECOLOGY.fromStage - 1).map(m => m.toLocaleString()).join(' · ')}회 처치할 때마다(5·6단계는 난이도 {BALANCE.bookTierReq[4]}·{BALANCE.bookTierReq[5]} 이상 처치 필요) 그 몬스터를 상대로 주는 피해가 오르고 받는 공격 피해가 줄어듭니다. 단계마다 {BOOK_ECOLOGY.dealt.map(pct).join('·')}% / {BOOK_ECOLOGY.taken.map(pct).join('·')}%, 최대 +{pct(BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0))}% / -{pct(BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0))}%.</p></div><span className="bonus-count">{eco.reduce((a, n) => a + n, 0)}<small> / {maxStage}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
-    <h3>능력치 합계 <small>능력치 화면의 ‘도감’ 기여와 같은 값</small></h3>
-    {entries.length ? <ul className="bonus-grid">{entries.map(([k, v]) => <li key={k}><span>{STAT_LABELS[k]}</span><strong>+{statDisplay(k, v)}</strong></li>)}</ul> : <p className="bonus-empty">아직 달성한 단계가 없습니다. 몬스터를 {BALANCE.bookMilestones[0]}회 처치하면 첫 단계가 열립니다.</p>}
-    <h3>성향별 진행</h3>
-    <ul className="bonus-rows">{(Object.keys(BOOK_TRAITS) as (keyof typeof BOOK_TRAITS)[]).map(g => { const ids = FISH.filter(f => bookTrait(f.id) === g).map(f => f.id), stages = ids.reduce((acc, id) => acc + bookStage(s, id), 0), max = ids.length * BALANCE.bookMilestones.length; return <li key={g} className={stages ? 'active' : ''}>
-        <div className="bonus-row-head"><strong>{BOOK_TRAITS[g].name}</strong><small>{ids.length}종</small><span className="bonus-count small">{stages}<small> / {max}</small></span></div>
-        <Meter value={stages} max={max}/>
-        <dl><dt>단계마다</dt><dd>{bonusLabel(BOOK_TRAITS[g].perStage)}</dd>{stages > 0 && <><dt>현재</dt><dd className="positive">{bonusLabel(BOOK_TRAITS[g].perStage, stages)}</dd></>}</dl>
-    </li>; })}</ul>
+    <ul className="bonus-grid">{BOOK_ECOLOGY.dealt.map((_, i) => { const n = eco.filter(x => x > i).length; return <li key={i} className={n ? 'active' : ''}><span>생태 {i + 1}단계 · 누적 +{pct(BOOK_ECOLOGY.dealt.slice(0, i + 1).reduce((a, x) => a + x, 0))}% / -{pct(BOOK_ECOLOGY.taken.slice(0, i + 1).reduce((a, x) => a + x, 0))}%</span><strong>{n} / {FISH.length}종</strong></li>; })}</ul>
     </div>
     </details>
     <details className="bonus-block">
-    <summary><div><h2>개체도감 완성</h2><p>몬스터를 {bookComplete}회 처치하면 완성입니다. 완성한 종은 장소 연구에 반영되고, {BOOK_REVEAL}회부터 적 정보가 열립니다. 종별 연구는 단계마다 성향 능력치가 오르고, 4·5·6단계는 SP +{PROGRESSION.bookSP[3]}·+{PROGRESSION.bookSP[4]}·+{PROGRESSION.bookSP[5]}을 줍니다. 5·6단계는 그 몬스터를 난이도 {BALANCE.bookTierReq[4]}·{BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다.</p></div><span className="bonus-count">{complete}<small> / {FISH.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <summary><div><h2>개체도감 완성</h2><p>몬스터를 {bookComplete}회 처치하면 완성입니다. 완성한 종은 장소 연구에 반영되고, {BOOK_REVEAL}회부터 적 정보가 열립니다. 종별 연구는 2단계부터 그 몬스터 상대 생태 연구가 오르고, 4·5·6단계는 SP +{PROGRESSION.bookSP[3]}·+{PROGRESSION.bookSP[4]}·+{PROGRESSION.bookSP[5]}을 줍니다. 5·6단계는 그 몬스터를 난이도 {BALANCE.bookTierReq[4]}·{BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다.</p></div><span className="bonus-count">{complete}<small> / {FISH.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
     <ul className="bonus-rows">{PLACES.map(st => { const ids = [...new Set(st.fish)], done = ids.filter(id => (s.book[id] || 0) >= bookComplete).length; return <li key={st.id} className={done === ids.length ? 'done' : done ? 'active' : ''}>
         <div className="bonus-row-head"><strong>{st.name}</strong><small>{st.rebirth ? `환생 ${st.rebirth} · ` : ''}Lv.{st.level}</small><span className="bonus-count small">{done}<small> / {ids.length}</small></span></div>

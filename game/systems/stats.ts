@@ -10,7 +10,7 @@ import { JOBS, jobById } from '../data/classes';
 import { RESEARCH, researchRank } from '../data/economy';
 import { roughReward, vowBadges } from './vows';
 import { skillById } from '../data/skills';
-import { bookStatBonus, regionThemes, bookStage } from './book';
+import { regionThemes, bookStage } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
 import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, skillMasteryRewards, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages } from './progression';
@@ -82,10 +82,10 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     add('crit', 'research', researchRank(s, 'crit') * .005); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
     add('penetration', 'research', researchRank(s, 'penetration') * .01); add('evasion', 'research', researchRank(s, 'evasion') * .006);
     add('lifesteal', 'research', researchRank(s, 'lifesteal') * .005);
-    // 도감: 몬스터 성향별 연구 능력치와 완성 지역의 테마 보너스(고정값). 배율은 아래에서 따로 적용합니다.
-    for (const bonus of [bookStatBonus(s), ...themes.map(t => t.add || {})])
+    // 도감: 완성 장소의 테마 보너스와 지역 연구(고정값). 배율은 아래에서 따로 적용합니다. v27.81 성향 연구 능력치는 없앴습니다.
+    for (const bonus of themes.map(t => t.add || {}))
         for (const [key, n] of Object.entries(bonus))
-            add(key as keyof CombatStats, 'book', n);
+            add(key as keyof CombatStats, 'book', n as number);
     const gear: Partial<Record<keyof CombatStats, number>> = {};
     for (const item of Object.values(s.equipment)) {
         if (item)
