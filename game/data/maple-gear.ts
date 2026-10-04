@@ -29,4 +29,4 @@ export const OLD_GEAR_NAMES = {
 } as const;
 /** 유물·옵션의 옛 이름 → 새 이름. */
 export const RENAMED_GEAR: Record<string, string> = { '윤회의 낚싯대': '윤회의 샤이닝 로드', '영혼의 잠수복': '영혼의 망토' };
-export const RENAMED_AFFIX: Record<string, string> = { '유영': '회피', '영혼 유영': '영혼 회피' };
+export const RENAMED_AFFIX: Record<string, string> = { '유영': '회피', '영혼 유영': '영혼 회피', '맹독': '고통' };

@@ -5,8 +5,10 @@
  */
 import { FISH } from './world';
 
-export const fishArtSrc = (id: string) => `/art/fish/${id}.webp`;
-export const jobArtSrc = (lineageId: string) => `/art/jobs/${lineageId}.webp`;
+import { FISH_ART, JOB_ART } from './art-manifest';
+/** v27.57 그림이 있으면 경로, 없으면 null(요청하지 않고 실루엣·아이콘). 목록은 node scripts/art-manifest.mjs 가 만듭니다. */
+export const fishArtSrc = (id: string) => FISH_ART[id] ? `/art/fish/${id}.${FISH_ART[id]}` : null;
+export const jobArtSrc = (lineageId: string) => JOB_ART[lineageId] ? `/art/jobs/${lineageId}.${JOB_ART[lineageId]}` : null;
 /** v27.40 스킬 아이콘(원작 도트 아이콘을 그대로 쓰려고 PNG). 있는 파일 목록은 art-manifest.ts. */
 export const skillArtSrc = (skillId: string) => `/art/skills/${skillId}.png`;
 

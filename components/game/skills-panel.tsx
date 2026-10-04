@@ -100,7 +100,7 @@ function skillDamageKind(sk: Skill): SkillDamage[] {
     if (sk.effect === 'heal' || sk.effect === 'drain' || sk.bonus?.lifesteal || sk.bonus?.hpRegen) out.push('heal');
     if (sk.type === 'passive' && (sk.bonus?.attack || sk.bonus?.crit || sk.bonus?.critDamage || sk.bonus?.penetration)) out.push('physical');
     if (sk.type === 'passive' && (sk.bonus?.magic || sk.bonus?.arcaneRatioBonus || sk.bonus?.mana || sk.bonus?.manaRegen)) out.push('magic');
-    if (sk.type === 'passive' && (sk.bonus?.dotBonus || sk.bonus?.stunBonus || sk.bonus?.controlBonus || sk.bonus?.dotTurnsBonus)) out.push('status');
+    if (sk.type === 'passive' && (sk.bonus?.dotBonus || sk.bonus?.bleedBonus || sk.bonus?.poisonBonus || sk.bonus?.burnBonus || sk.bonus?.stunBonus || sk.bonus?.controlBonus || sk.bonus?.dotTurnsBonus)) out.push('status');
     return out;
 }
 

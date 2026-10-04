@@ -135,29 +135,31 @@ const SHAPES: Record<FishShape, string[]> = {
     ],
 };
 
-/** 몬스터 그림. public/art/fish/{id}.webp 가 있으면 그 그림, 없으면 실루엣. */
+/** 몬스터 그림. public/art/fish/{id}.png|webp 가 목록(art-manifest)에 있으면 그 그림, 없으면 실루엣. */
 export function FishArt({ id, size = 48, className = '', boss = false }: { id: string; size?: number; className?: string; boss?: boolean }) {
-    const [state, setState] = useState<'pending' | 'ready' | 'missing'>('pending');
+    const src = fishArtSrc(id);
+    const [state, setState] = useState<'pending' | 'ready' | 'missing'>(src ? 'pending' : 'missing');
     const shape = fishShape(id);
     return <span className={`fish-art ${state} shape-${shape} ${boss ? 'boss' : ''} ${className}`} style={{ width: size, height: size }} aria-hidden>
         {state !== 'ready' && <svg viewBox="0 0 64 64" width={size} height={size} className="fish-silhouette">{SHAPES[shape].map((d, i) => <path key={i} d={d} fill="currentColor" fillRule="evenodd"/>)}</svg>}
-        {state !== 'missing' && (
+        {state !== 'missing' && src && (
             // eslint-disable-next-line @next/next/no-img-element -- 선택적 정적 파일: 없으면 onError로 실루엣에 머무릅니다.
-            <img src={fishArtSrc(id)} alt="" width={size} height={size} loading="lazy" decoding="async" onLoad={() => setState('ready')} onError={() => setState('missing')}/>
+            <img src={src} alt="" width={size} height={size} loading="lazy" decoding="async" onLoad={() => setState('ready')} onError={() => setState('missing')}/>
         )}
     </span>;
 }
 
 const TREE_ICON = { physical: Swords, magic: Wand2, defense: Shield, status: Droplets, hybrid: Atom, support: Coins, mystery: Sparkles } as const;
-/** 직업 그림. 계보 단위로 public/art/jobs/{lineageId}.webp 를 쓰고, 없으면 계열 아이콘. */
+/** 직업 그림. 계보 단위로 public/art/jobs/{lineageId}.png|webp 가 목록에 있으면 쓰고, 없으면 계열 아이콘. */
 export function JobArt({ job, size = 48, className = '' }: { job: Job; size?: number; className?: string }) {
-    const [state, setState] = useState<'pending' | 'ready' | 'missing'>('pending');
+    const src = jobArtSrc(lineageOf(job));
+    const [state, setState] = useState<'pending' | 'ready' | 'missing'>(src ? 'pending' : 'missing');
     const Icon = TREE_ICON[job.tree as keyof typeof TREE_ICON] ?? Compass;
     return <span className={`job-art ${state} tree-${job.tree} ${className}`} style={{ width: size, height: size }} aria-hidden>
         {state !== 'ready' && <Icon size={Math.round(size * .55)} className="job-silhouette"/>}
-        {state !== 'missing' && (
+        {state !== 'missing' && src && (
             // eslint-disable-next-line @next/next/no-img-element -- 선택적 정적 파일: 없으면 onError로 아이콘에 머무릅니다.
-            <img src={jobArtSrc(lineageOf(job))} alt="" width={size} height={size} loading="lazy" decoding="async" onLoad={() => setState('ready')} onError={() => setState('missing')}/>
+            <img src={src} alt="" width={size} height={size} loading="lazy" decoding="async" onLoad={() => setState('ready')} onError={() => setState('missing')}/>
         )}
     </span>;
 }

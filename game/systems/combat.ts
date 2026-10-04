@@ -430,7 +430,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         const turns = (chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus;
         const name = chosen.dotName || '출혈';
         // v27.3 틱 피해 = 위력 비례 + 대상 최대 체력 × dotMaxHpRatio(무리는 한 마리 기준). 방어·반격을 모두 무시하므로 탱커의 카운터입니다.
-        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)) + Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.dotMaxHpRatio));
+        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0) + (sa.bleedBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)) + Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.bleedHpRatio));
         // v27.17 출혈은 중첩되지 않습니다. 다시 걸면 더 강한 피해와 더 긴 지속으로 갱신합니다.
         const current = b.effects.dot;
         b.effects.dot = { damage: Math.max(tick, current?.damage || 0), turns: Math.max(turns, current?.turns || 0), name };
@@ -441,8 +441,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (landed && chosen?.effect === 'poison' && isImmune(b, 'poison')) { notes.push('중독 면역'); ev.immune = 'poison'; }
     else if (landed && chosen?.effect === 'poison') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.poisonTurns) + sa.dotTurnsBonus;
-        const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
-        const hpTick = Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.dotMaxHpRatio);
+        const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0) + (sa.poisonBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
+        const hpTick = Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.poisonHpRatio);
         const current = b.effects.poison;
         const stacks = Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, (current?.stacks || 0) + 1);
         b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpTick: Math.max(hpTick, current?.hpTick || 0) };
@@ -453,8 +453,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (landed && chosen?.effect === 'burn' && isImmune(b, 'burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
     else if (landed && chosen?.effect === 'burn') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus;
-        const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
-        const hpTick = Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.dotMaxHpRatio);
+        const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
+        const hpTick = Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.burnHpRatio);
         const current = b.effects.burn;
         const stacks = Math.min(STATUS_TUNING.burnMaxStacks, (current?.stacks || 0) + 1);
         b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpTick: Math.max(hpTick, current?.hpTick || 0) };

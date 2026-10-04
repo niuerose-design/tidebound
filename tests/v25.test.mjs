@@ -598,7 +598,7 @@ test('v27.53 drops: 0.25% base, bonus 0.01 = +10%, rare or better, tide drop lev
     assert.equal(Enc.dropLevel({ level: 30 }, 25, 10), 40, 'capped at player + 10'); assert.equal(Enc.dropLevel({ level: 30 }, 50, 10), 50, 'never below the source level'); assert.equal(Enc.dropLevel({ level: 30 }, 25, 1), 30);
     const t = E.newState(0); Enc.drop(t, 10, () => 0); assert.equal(t.inventory[0].rarity, 1, 'no common drops');
 });
-test('v27.54 balance: burn stays between bleed and poison in real combat (normal and boss HP)', async () => {
+test('v27.57 balance: bleed, poison and burn add about the same damage in real combat (normal and boss HP)', async () => {
     const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const C = await G.load('systems/combat'), { SKILLS: list } = await G.load('data/skills');
     const base = { attack: 300, magic: 300, defense: 0, resist: 0, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
@@ -613,7 +613,7 @@ test('v27.54 balance: burn stays between bleed and poison in real combat (normal
             for (let t = 0; t < 12; t++) { C.strike(t % 2 ? idle : a, b, rng); C.strike(b, idle, rng); }
             dealt[effect] = hp * 1000 - b.hp; list.pop();
         }
-        assert.ok(dealt.bleed < dealt.burn && dealt.burn < dealt.poison, `hp ${hp}: ${JSON.stringify(dealt)}`);
+        const v = Object.values(dealt); assert.ok(Math.max(...v) / Math.min(...v) <= 1.3, `hp ${hp}: ${JSON.stringify(dealt)}`);
     }
 });
 

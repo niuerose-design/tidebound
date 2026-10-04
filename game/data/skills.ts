@@ -1,6 +1,7 @@
 import { tuneActiveSkills } from './skill-balance';
 import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
+import { SKILL_FORMULA } from './balance';
 import { JOBS } from './classes';
 import { EXPANSION_SKILLS } from './expansion';
 import { LINEAGE_SKILLS } from './expansion-lineages';
@@ -196,6 +197,22 @@ for (const sk of SKILLS) {
     const curve = !job || job.tier === 0 ? [120, 600, 2400, 8000] : job.tier === 1 ? [250, 1200, 4500, 14000] : job.tier === 2 ? [600, 3000, 12000, 36000] : [1500, 7500, 28000, 75000];
     const longTerm = !!sk.scaling || !!sk.rankEffects?.apReduction || !!sk.masteryAP;
     sk.masteryMilestones = masteryTuning[sk.id] || sk.masteryMilestones || curve.map(n => Math.round(n * (longTerm ? 1.4 : 1)));
+}
+
+// v27.57 지속 피해 정리. ① 계열 패시브의 '지속 피해 증가'를 그 계열이 실제로 거는 상태이상 하나로 나눕니다
+// (불·독 마스터리류 → 중독, 이그나이트 → 화상, 데몬어벤져·일리움 → 출혈). 범용(칼리·약재상·독버섯·도트 퍼니셔)은 모든 지속 피해 그대로.
+// ② 기술마다 따로 적은 틱 비율(dotRatio)을 새 기본 비율에 맞춰 같은 비율로 옮깁니다(중독 0.14 → 0.075, 출혈 0.22 → 0.26).
+const DOT_TYPE: Record<string, 'bleedBonus' | 'poisonBonus' | 'burnBonus'> = {
+    toxinLore: 'poisonBonus', lethalDose: 'poisonBonus', pestilence: 'poisonBonus', plagueVessel: 'burnBonus',
+    bloodScent: 'bleedBonus', trailOfRed: 'bleedBonus', hemorrhage: 'bleedBonus', bloodFrenzy: 'bleedBonus', endlessBleed: 'bleedBonus',
+    philosopherSalt: 'bleedBonus', philosopherBrine: 'bleedBonus', elixirOfDepth: 'bleedBonus',
+};
+const DOT_WORD = { bleedBonus: '출혈 피해', poisonBonus: '중독 피해', burnBonus: '화상 피해' } as const;
+for (const sk of SKILLS) {
+    const to = DOT_TYPE[sk.id];
+    if (to && sk.bonus?.dotBonus) { const { dotBonus, ...rest } = sk.bonus; sk.bonus = { ...rest, [to]: dotBonus }; sk.desc = sk.desc.replace('지속 피해', DOT_WORD[to]); }
+    if (sk.dotRatio !== undefined && sk.effect === 'poison') sk.dotRatio = Math.round(sk.dotRatio * SKILL_FORMULA.poisonRatio / .14 * 1000) / 1000;
+    if (sk.dotRatio !== undefined && sk.effect === 'bleed') sk.dotRatio = Math.round(sk.dotRatio * SKILL_FORMULA.bleedRatio / .22 * 1000) / 1000;
 }
 
 // Apply the centralized player balance after assignment and mastery defaults.

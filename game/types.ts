@@ -29,8 +29,12 @@ export type Stats = {
     diceTrim?: number;
     /** v27.2 무리 조우 확률 증가(0.5 = +50%). 탱커 계보 패시브가 올립니다. */
     swarmFind?: number;
-    /** 출혈·중독 같은 지속 피해 증가율. 0.2 = +20%. */
+    /** 출혈·중독·화상 모두의 지속 피해 증가율. 0.2 = +20%. */
     dotBonus?: number;
+    /** v27.57 종류별 지속 피해 증가율(공용 dotBonus에 더해짐). */
+    bleedBonus?: number;
+    poisonBonus?: number;
+    burnBonus?: number;
     /** 방어 비례 피해·반격이 얼마나 제대로 발휘되는지(0.2~1). 방어 배율이 높은 수호 계열일수록 1에 가깝습니다. */
     guardAffinity?: number;
     /** v25.14 마법 방어 비례 피해가 발휘되는 정도(0.2~1). 마법 방어 배율이 높은 결계 계열일수록 1. */

@@ -50,7 +50,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'leech', name: '흡혈', stat: 'lifesteal', kind: 'percent', base: .01, description: '준 피해의 일부를 회복합니다 (장비 흡혈 합계 최대 6%p).' },
     { id: 'drift', name: '회피', stat: 'evasion', kind: 'percent', base: .02, description: '회피가 오릅니다.' },
     { id: 'swift', name: '신속', stat: 'speed', kind: 'percent', base: 2, description: '속도가 오릅니다.' },
-    { id: 'venom', name: '맹독', stat: 'dotBonus', kind: 'percent', base: .06, description: '출혈·중독·화상 피해가 늘어납니다.' },
+    { id: 'venom', name: '고통', stat: 'dotBonus', kind: 'percent', base: .06, description: '출혈·중독·화상 피해가 모두 늘어납니다.' },
     { id: 'spiked', name: '가시', stat: 'thorns', kind: 'percent', base: .04, description: '맞을 때 물리 방어 비례 반격 (방어 친화도 적용).' },
     { id: 'runic', name: '룬', stat: 'arcaneStrike', kind: 'percent', base: .03, description: '마법 직업의 마력 평타 확률이 오릅니다.' },
     { id: 'scholar', name: '학식', stat: 'expBonus', kind: 'percent', base: .03, description: '경험치 획득이 늘어납니다.' },

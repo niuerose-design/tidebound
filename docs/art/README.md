@@ -1,33 +1,38 @@
-# 이미지 작업 안내 (어종·보스 46 · 직업 계보 47)
+# 이미지 작업 안내 (몬스터·보스 47 · 직업 계보 47 · 스킬 아이콘 509)
 
-이미지는 외부 생성기(Midjourney, DALL·E, Stable Diffusion 등)로 만들고 아래 폴더에 넣기만 하면 됩니다.
-코드는 파일이 있으면 그림을 쓰고, 없으면 실루엣(어종)·계열 아이콘(직업)을 그대로 남깁니다. 한 장씩 채워도 됩니다.
+코드는 그림 목록(`game/data/art-manifest.ts`)에 있는 파일만 요청하고, 없으면 실루엣(몬스터)·계열 아이콘(직업)·기본 아이콘(스킬)을 그대로 씁니다. 한 장씩 채워도 됩니다.
+파일을 넣거나 지운 뒤에는 꼭 `node scripts/art-manifest.mjs`를 실행해 목록을 다시 만듭니다(v27.57부터 몬스터·직업 그림도 목록 기준).
+
+## 원작 그림 받기 (v27.57)
+
+`node scripts/fetch-maple-art.mjs` — maplestory.io에서 몬스터 이름으로 원작 몬스터를 찾아 `public/art/fish/{id}.png`로 저장하고 목록을 다시 만듭니다.
+- `--skills`를 붙이면 스킬 아이콘도 이름으로 찾습니다(원작과 이름이 같은 스킬만). `--force`는 이미 있는 파일도 다시 받습니다.
+- 이름이 다르거나 잘못 걸리는 몬스터는 스크립트 위쪽 `MOB_IDS`(원작 몬스터 번호)·`MOB_NAMES`(찾을 이름)에 적습니다.
+- 클라우드 세션에서는 환경의 네트워크 허용 목록에 `maplestory.io`가 있어야 합니다.
 
 ## 폴더와 파일 이름
 
 | 대상 | 경로 | 파일 이름 | 권장 크기 |
 |---|---|---|---|
-| 어종·보스 | `public/art/fish/` | `{어종 id}.webp` (예: `minnow.webp`, `magmaKraken.webp`) | 512×512, 정방형 |
-| 직업 계보 | `public/art/jobs/` | `{계보 id}.webp` (예: `harpoon.webp`, `brawnFisher.webp`) | 512×512, 정방형 |
-| 스킬 아이콘 | `public/art/skills/` | `{스킬 id}.png` (예: `hook.png`). 목록은 `docs/art/skill-icons.md` | 원작 도트 아이콘 그대로(32×32 등) |
+| 몬스터·보스 | `public/art/fish/` | `{몬스터 id}.png` 또는 `.webp` (예: `minnow.png`, `magmaKraken.webp`) | 원작 그림 그대로, 또는 512×512 |
+| 직업 계보 | `public/art/jobs/` | `{계보 id}.png` 또는 `.webp` | 512×512, 정방형 |
+| 스킬 아이콘 | `public/art/skills/` | `{스킬 id}.png`. 목록은 `docs/art/skill-icons.md` | 원작 도트 아이콘 그대로(32×32 등) |
 
-- id 목록은 `docs/art/fish-prompts.md`, `docs/art/job-prompts.md` 첫 열입니다. 대소문자를 그대로 지킵니다.
-- 형식은 WebP(품질 80 내외, 장당 60KB 이하 권장). PNG를 쓰려면 `game/data/art.ts`의 `fishArtSrc`/`jobArtSrc`에서 확장자만 바꿉니다.
-- 직업 그림은 계보 단위(47장)입니다. 직업 259개를 개별로 그리지 않고, 같은 계보의 1~5차가 한 그림을 공유합니다. 나중에 차수별로 늘리고 싶으면 `jobArtSrc`에 직업 id 우선 조회를 더하면 됩니다.
+- 몬스터 id는 `game/data/maple-monsters.ts`(원작 이름과 함께), 직업 계보 id는 `game/data/maple-names.ts`에 있습니다. 대소문자를 그대로 지킵니다.
+- 같은 id에 png·webp가 둘 다 있으면 png를 씁니다.
+- 직업 그림은 계보 단위(47장)입니다. 같은 계보의 1~5차가 한 그림을 공유합니다.
 
 ## 쓰이는 자리
 
-| 화면 | 어종 | 직업 |
+| 화면 | 몬스터 | 직업 |
 |---|---|---|
-| 자동 낚시 장면 | 적이 나타나면 오른쪽에 112px(보스 140px), 둥실 떠오르는 애니메이션 | — |
+| 자동 사냥 장면 | 적이 나타나면 오른쪽에 112px(보스 140px), 둥실 떠오르는 애니메이션 | — |
 | 도감 | 카드 머리 56px | — |
 | 던전 웨이브 트랙 | 28px 아이콘 | — |
 | 직업 상세 | — | 제목 왼쪽 44px |
 | 계보 목록 | — | 이름 앞 30px |
 
-스킬 아이콘은 파일을 넣은 뒤 `node scripts/art-manifest.mjs`를 실행해야 화면에 나옵니다(있는 파일만 요청하도록 목록을 만듭니다). 도트가 흐려지지 않게 그립니다.
-
-구현: `components/game/art.tsx`의 `FishArt`·`JobArt`, 스킬은 `components/game/shared.tsx`의 `SkillIcon`. 이미지가 로드되기 전과 실패 시에는 실루엣이 보이고, 로드되면 0.3초에 걸쳐 그림으로 바뀝니다. 미발견 어종(도감 `???`)은 그림이 있어도 실루엣만 보입니다.
+구현: `components/game/art.tsx`의 `FishArt`·`JobArt`, 스킬은 `components/game/shared.tsx`의 `SkillIcon`. 그림이 로드되기 전과 실패 시에는 실루엣이 보이고, 로드되면 0.3초에 걸쳐 그림으로 바뀝니다. 미발견 몬스터(도감 `???`)는 그림이 있어도 실루엣만 보입니다.
 
 ## 공통 스타일 (모든 프롬프트 앞에 붙임)
 
