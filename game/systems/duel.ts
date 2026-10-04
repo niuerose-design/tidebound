@@ -42,7 +42,7 @@ export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rn
 }
 
 /** v25.12 결투 점수 티어(표시용). */
-export const DUEL_TIERS = [{ id: 'shell', name: '조개', min: 0 }, { id: 'coral', name: '산호', min: 1000 }, { id: 'pearl', name: '진주', min: 1200 }, { id: 'deep', name: '심해', min: 1400 }, { id: 'abyss', name: '무릉도장', min: 1600 }] as const;
+export const DUEL_TIERS = [{ id: 'shell', name: '조개', min: 0 }, { id: 'coral', name: '산호', min: 1000 }, { id: 'pearl', name: '진주', min: 1200 }, { id: 'deep', name: '심해', min: 1400 }, { id: 'abyss', name: '심연', min: 1600 }] as const;
 export const duelTier = (rating: number) => [...DUEL_TIERS].reverse().find(t => rating >= t.min) || DUEL_TIERS[0];
 /** 지난 시즌 순위 보상(진주). 1위 60 · 2위 40 · 3위 30 · 10위 안 15 · 50위 안 6 · 참가 2. */
 export const duelSeasonPearls = (rank: number) => rank <= 1 ? 60 : rank === 2 ? 40 : rank === 3 ? 30 : rank <= 10 ? 15 : rank <= 50 ? 6 : 2;
