@@ -893,3 +893,19 @@ test('v27.75 hits record the computed damage: text and FX show it, value/HP bar/
     C.strike(cutter, prey, () => 0, evs); const dealt = evs[0].hits.reduce((n, h) => n + h.value, 0);
     assert.ok(evs[0].skillId === 'glyphCut' && dealt === 30, `glyphCut landed for ${dealt}`); assert.equal(cutter.hp, 1000 - Math.floor(30 * .5), 'recoil uses the actual HP removed');
 });
+
+test('v27.76 tide loot: rarity weights drift up conservatively with tier, essence drops on stages from tier 5', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Enc = await L.load('systems/encounter'), B = await L.load('data/balance');
+    const near = (a, b, eps = 1e-3) => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${b}`);
+    near(Enc.rarityShareFrom(0, 6), .006); near(Enc.rarityShareFrom(100, 6), .0102, 5e-4); near(Enc.rarityShareFrom(100, 3), .299, 5e-3);
+    assert.deepEqual(Enc.rarityWeights(0, 1).slice(0, 2), [0, .25]); assert.equal(Enc.rollRarity(() => .99999, 1, 200), 6); assert.equal(Enc.rollRarity(() => 0, 1, 200), 1);
+    assert.deepEqual(Enc.tideEssence(4), { chance: 0, amount: 0 }); assert.deepEqual(Enc.tideEssence(10), { chance: .03, amount: 2 }); assert.deepEqual(Enc.tideEssence(30), { chance: .09, amount: 4 });
+    const make = (tide, dungeon) => { const s = newState(0); s.rebirths = 40; s.tide = tide; s.running = true; s.stage = 'brook'; if (dungeon) s.dungeon = { id: 'grotto', wave: 0 }; s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0 }; return s; };
+    // rng 0 → 정수 드롭 판정 성공(황금 개체 확률 0이면 그 난수는 쓰지 않음), 드롭 확률 판정은 0이면 드롭이라 장비도 하나 떨어집니다.
+    const hit = make(30); Enc.reward(hit, () => 0); assert.equal(hit.essence, 4, 'tide 30 drops 4 essence'); assert.ok(hit.logs.some(l => /정수 \+4/.test(l.text)));
+    const miss = make(30); Enc.reward(miss, () => .5); assert.equal(miss.essence, 0);
+    const low = make(4); Enc.reward(low, () => 0); assert.equal(low.essence, 0, 'below tier 5 nothing');
+    const dun = make(30, true); dun.dungeon.mode = 'hell'; Enc.reward(dun, () => 0); assert.equal(dun.essence, 0, 'dungeons do not drop tide essence');
+    assert.equal(B.BALANCE.tideLoot.rarityPerTier, .0014);
+});

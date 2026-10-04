@@ -174,7 +174,7 @@ export function Guide({ s }: { s?: State }) {
                     condition={`도전 간격 ${ALTAR.challengeCooldownMs / 60_000}분. 신 카드에 최대 체력과 공격이 보이니 결투 전투력과 비교해 보세요. 신이 없을 때는 자리 주인을 ‘탄핵’할 수 있습니다: 주인이 신을 격파하던 당시의 능력치·스킬 그대로와 겨뤄 이기면 자리가 빕니다.`}
                     limit={`임기는 ${ALTAR.throneTermMs / 86_400_000}일. 자리가 비면 다음 신은 다시 ${ALTAR.firstGod.name}이고, 앉으려면 그 신을 쓰러뜨려야 합니다.`}/>
                 <Rule icon={<Gauge size={19}/>} title="사냥터 난이도 · 던전 난이도"
-                    effect={`사냥터 난이도는 환생 횟수만큼(최대 ${ECONOMY.tideCap}) 올릴 수 있습니다. 몬스터 체력·공격이 오르는 대신 골드·경험치 배율과 장비 레벨이 오르고, 난이도 ${MIMIC.minTier}부터 저레벨 사냥터의 몬스터도 내 레벨 근처까지 올라와 어느 사냥터든 보상이 비슷해집니다.`}
+                    effect={`사냥터 난이도는 환생 횟수만큼(최대 ${ECONOMY.tideCap}) 올릴 수 있습니다. 몬스터 체력·공격이 오르는 대신 골드·경험치 배율과 장비 레벨이 오르고, 드롭 장비의 상위 등급 비율이 조금씩 오르며(난이도 100에서 태초 0.6% → 1%), 난이도 ${BALANCE.tideLoot.essenceMinTier}부터 처치마다 정수가 떨어집니다(확률 난이도 × ${BALANCE.tideLoot.essenceChancePerTier * 100}%, 양 1 + 난이도 ÷ ${BALANCE.tideLoot.essenceEveryTiers}). 난이도 ${MIMIC.minTier}부터 저레벨 사냥터의 몬스터도 내 레벨 근처까지 올라와 어느 사냥터든 보상이 비슷해집니다.`}
                     condition={`일반 던전은 입장할 때 ${DUNGEON_MODES.map(m => m.name).join(' · ')} 중 하나를 고릅니다. 헬은 사냥터 난이도 ${DUNGEON_MODES[1].tier}급, 나이트메어는 ${DUNGEON_MODES[2].tier}급이고 몬스터 레벨도 내 레벨까지 올라옵니다.`}
                     limit="무릉도장은 층 수가 난이도입니다. 사냥터 난이도는 던전에 영향을 주지 않습니다."/>
                 <Rule icon={<Fish size={19}/>} title="숙련의 까미 · 경험의 누리"

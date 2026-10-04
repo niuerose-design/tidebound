@@ -58,8 +58,14 @@ export function releaseAnchor(s: State, achieved: boolean) {
 /** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘회복의 기억’은 1단계마다 +1%p. */
 export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill - encounterTier(s) * BALANCE.healAfterKillTierDecay)) + researchRank(s, 'recovery') * .01;
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
-export function rollRarity(rng: () => number, minRarity = 0) {
-    const weights = DROP_RARITY.map((w, i) => i >= minRarity ? w : 0);
+/** v27.76 난이도별 등급 가중치(일반 제외 표시용·판정용 공통). */
+export const rarityWeights = (tier: number, minRarity = 0) => DROP_RARITY.map((w, i) => i >= minRarity ? w * Math.pow(1 + BALANCE.tideLoot.rarityPerTier * Math.max(0, tier), Math.max(0, i - 1)) : 0);
+/** 등급 i 이상이 나올 비율(0~1). 난이도 선택기 표시용. */
+export const rarityShareFrom = (tier: number, from: number, minRarity = 1) => { const w = rarityWeights(tier, minRarity), total = w.reduce((a, b) => a + b, 0); return total ? w.slice(from).reduce((a, b) => a + b, 0) / total : 0; };
+/** v27.76 사냥터 난이도의 정수 드롭(사냥터만). 난이도가 낮으면 확률 0이라 난수를 쓰지 않습니다. */
+export const tideEssence = (tier: number) => { const t = BALANCE.tideLoot; return tier >= t.essenceMinTier ? { chance: Math.min(1, t.essenceChancePerTier * tier), amount: 1 + Math.floor(tier / t.essenceEveryTiers) } : { chance: 0, amount: 0 }; };
+export function rollRarity(rng: () => number, minRarity = 0, tier = 0) {
+    const weights = rarityWeights(tier, minRarity);
     let roll = rng() * weights.reduce((sum, w) => sum + w, 0);
     for (let i = 0; i < weights.length; i++) { roll -= weights[i]; if (roll < 0) return i; }
     return weights.length - 1;
@@ -70,7 +76,8 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     if (!guaranteed && rng() > dropRate(s))
         return;
     // v27.53 일반 처치 드롭도 희귀 이상만(일반 등급은 상점 기본 장비로).
-    const rarity = rollRarity(rng, 1);
+    // v27.76 사냥터·던전 난이도가 높을수록 상위 등급 가중치가 조금 오릅니다(보수적).
+    const rarity = rollRarity(rng, 1, encounterTier(s));
     const origin = s.dungeon?.id || s.stage;
     const slot = (['rod', 'coat', 'charm'] as const)[Math.floor(rng() * 3)];
     const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: '', power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
@@ -206,6 +213,11 @@ export function reward(s: State, rng: () => number) {
     s.book[e.id] = (s.book[e.id] || 0) + size * bookPer;
     if (e.variant) { s.variantBook ??= {}; const row = (s.variantBook[e.id] ??= {}); row[e.variant] = (row[e.variant] || 0) + 1; }
     if (vdef?.pearls) { const pearls = vdef.pearls + (s.rebirths >= 3 ? 1 : 0); s.pearls += pearls; addLog(s, `${vdef.mark} ${vdef.name} · 세계석 +${pearls}`, 'reward'); }
+    // v27.76 사냥터 난이도 정수 드롭: 난이도 5 이상 사냥터에서 처치마다 확률 판정(확률 0이면 난수를 쓰지 않음).
+    if (!s.dungeon && !s.vows?.seal) {
+        const te = tideEssence(encounterTier(s));
+        if (te.chance > 0 && rng() < te.chance) { s.essence = (s.essence || 0) + te.amount; addLog(s, `사냥터 난이도 ${encounterTier(s)} · 정수 +${te.amount}`, 'reward'); }
+    }
     s.gold += gold;
     recordGoal(s, 'catch', undefined, size, text => addLog(s, text, 'reward')); recordGoal(s, 'species', e.id, size, text => addLog(s, text, 'reward'));
     if (e.boss) recordGoal(s, 'boss', undefined, 1, text => addLog(s, text, 'reward'));
