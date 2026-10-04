@@ -367,7 +367,7 @@ test('v25.14 recommended loadout mixes passives and actives within AP', async ()
 
 test('v25.15 update log keeps only 3-5 entries, newest first; stat confirm setting toggles and survives rebirth', async () => {
     const { UPDATE_LOG } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/update-log');
-    assert.ok(UPDATE_LOG.length >= 3 && UPDATE_LOG.length <= 5, `update log has ${UPDATE_LOG.length} entries; keep 3-5`);
+    assert.ok(UPDATE_LOG.length === 3, `update log has ${UPDATE_LOG.length} entries; keep exactly 3`);
     const nums = UPDATE_LOG.map(e => e.version.split('.').map(Number)); for (let i = 1; i < nums.length; i++) assert.ok(nums[i - 1][0] > nums[i][0] || (nums[i - 1][0] === nums[i][0] && nums[i - 1][1] > nums[i][1]), 'newest first');
     const s = newState(0); assert.ok(!s.skipStatConfirm); act(s, { type: 'statConfirm', value: 'off' }, 0); assert.equal(s.skipStatConfirm, true);
     s.level = 30; act(s, { type: 'rebirth' }, 0); assert.equal(s.skipStatConfirm, true, 'setting is kept across rebirth'); act(s, { type: 'statConfirm', value: 'on' }, 0); assert.equal(s.skipStatConfirm, false);
