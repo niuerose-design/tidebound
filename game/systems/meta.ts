@@ -37,11 +37,9 @@ export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id,
  * 고레벨일수록 던전이 상대적으로 약해지고 보상이 낮게 고정되던 것(환생 40회 기준 사냥터의 1/3~1/7)을 맞춥니다. 무릉도장은 자체 층 공식 그대로.
  */
 export const dungeonLevelAt = (d: { id: string; level: number }, tier: number, playerLevel: number) => d.id === 'abyss' ? d.level : tideLiftLevel(d.level, tier, playerLevel);
-/** 사냥터 난이도 1단계당 처치 숙련 +30%. */
-const TIDE_MASTERY_PER_TIER = .3;
 export const tierReward = (tier: number) => 1 + tier * .5;
-/** v27.21 사냥터 난이도별 처치 숙련 배율. 적이 커져 시간당 처치가 줄어드는 만큼을 숙련으로 돌려줍니다. */
-export const tierMastery = (tier: number) => 1 + tier * TIDE_MASTERY_PER_TIER;
+// v27.74 사냥터·던전 난이도의 처치 숙련 배율(v27.21 tierMastery, 1 + 0.3×난이도)을 없앴습니다. 처치 숙련은 난이도와 무관하게 기본 1이고,
+// 난이도 5 이상의 숙련은 숙련의 까미가 맡습니다(난이도 10 기준 까미 기대 숙련이 처치 숙련의 수십 배라 배율의 몫은 몇 %에 불과했습니다).
 /** 처치 보상(골드 배율 적용 전). 전투 보상과 도감 화면 표시가 같은 식을 씁니다. */
 export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: number }, tier: number, boss = false) {
     const mult = boss ? MONSTER_TUNING.bossRewardMultiplier : 1;
