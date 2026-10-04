@@ -1,6 +1,6 @@
 import { tierHealth, tierAttack } from '../systems/meta';
 import type { Skill, Stats } from '../types';
-import { bossLevelScale, monsterLevelScale, dungeonPressure, MONSTER_TUNING } from './balance';
+import { bossLevelScale, monsterLevelScale, dungeonPressure, MONSTER_TUNING, DUNGEON_TUNING } from './balance';
 export const ENEMY_SKILLS: Skill[] = [
     { id: 'foeShock', name: '전류 방출', desc: '마법 공격', type: 'active', level: 1, chance: .3, cooldown: 3, multiplier: 1.5, damageType: 'magic', manaCost: 0 },
     { id: 'foeVenom', name: '독가시', desc: '피해 없이 중독 1중첩.', type: 'active', level: 1, chance: .25, cooldown: 4, multiplier: 1, effect: 'poison', statusTurns: 5, statusOnly: true, manaCost: 0 },
@@ -74,5 +74,7 @@ export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: {
     foe.magic = Math.round((foe.magic || 0) * tierAttack(options.tier || 0) * pressure.attack);
     foe.defense = Math.round(foe.defense * pressure.defense);
     foe.resist = Math.round((foe.resist || 0) * pressure.defense);
+    // v27.30 던전(특히 무릉도장)에서는 층 배율 1단계마다 속도 +2%: 속도만 올려 연속 행동으로 깊은 층을 밀던 빌드를 막습니다.
+    if (options.wave !== undefined && options.tier) foe.speed = Math.round((foe.speed || 10) * (1 + options.tier * DUNGEON_TUNING.tierSpeed));
     return foe;
 }

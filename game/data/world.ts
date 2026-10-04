@@ -7,7 +7,7 @@ export const STAGES = [
     { id: 'wreck', region: '페리온', place: '유적 발굴지 수로', name: '페리온 · 유적 발굴지 수로', subtitle: 'PERION · EXCAVATION CANAL', level: 18, rebirth: 0, description: '발굴지 아래로 흐르는 수로. 잊힌 유물과 망령의 낚싯줄이 아직 팽팽하다.', fish: ['ghost', 'angler', 'shark'], tone: '#9e96c8' },
     { id: 'volcanic', region: '페리온', place: '불타는 땅 화구호', name: '페리온 · 불타는 땅 화구호', subtitle: 'PERION · BURNING CRATER', level: 24, rebirth: 0, description: '바위산 너머 불타는 땅. 끓는 화구호에서 불씨를 품은 물고기가 떠오른다.', fish: ['emberEel', 'ashRay', 'magmaPuffer', 'cinderKoi'], tone: '#d17c62' },
     { id: 'trench', region: '엘리니아', place: '깊은 숲 늪', name: '엘리니아 · 깊은 숲 늪', subtitle: 'ELLINIA · DEEP FOREST BOG', level: 26, rebirth: 0, description: '빛이 닿지 않는 숲 깊은 곳의 늪. 수면 아래에서 거대한 심장이 뛴다.', fish: ['viper', 'squid', 'leviathan'], tone: '#5c9dba' },
-    { id: 'moon', region: '엘리니아', place: '달빛 마법 호수', name: '엘리니아 · 달빛 마법 호수', subtitle: 'ELLINIA · MOONLIT LAKE', level: 32, rebirth: 1, description: '마법사의 마을 위 달빛 호수. 한 번의 생을 넘어선 낚시꾼만 닿는다.', fish: ['moonfish', 'dragon', 'ancient', 'eclipseMoonfish'], tone: '#b4afd6' },
+    { id: 'moon', region: '엘리니아', place: '달빛 마법 호수', name: '엘리니아 · 달빛 마법 호수', subtitle: 'ELLINIA · MOONLIT LAKE', /** v27.30 32 → 34: 평균 어종 레벨(36)에 맞춤. */ level: 34, rebirth: 1, description: '마법사의 마을 위 달빛 호수. 한 번의 생을 넘어선 낚시꾼만 닿는다.', fish: ['moonfish', 'dragon', 'ancient', 'eclipseMoonfish'], tone: '#b4afd6' },
     { id: 'starfall', region: '커닝시티', place: '네온 수로', name: '커닝시티 · 네온 수로', subtitle: 'KERNING CITY · NEON CANAL', level: 46, rebirth: 2, description: '네온이 별비처럼 쏟아지는 도시의 수로. 빛을 삼킨 희귀종들이 밤을 가른다.', fish: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta', 'novaManta'], tone: '#9c8ed4' },
     // v25.8 환생 5회부터. Lv.60 생이 반복되는 환생 중반의 새 땅.
     { id: 'duskVents', region: '커닝시티', place: '지하 배수로', name: '커닝시티 · 지하 배수로', subtitle: 'KERNING CITY · UNDERGROUND DRAIN', level: 55, rebirth: 5, description: '도시 아래 끓어오르는 배수로. 다섯 번의 생을 건넌 낚시꾼만 이 열기를 견딘다.', fish: ['ventCrab', 'glassSquid', 'sulfurEel', 'blindShark', 'cinderAngler', 'ventLeviathan'], tone: '#d88a5a' },
@@ -57,8 +57,23 @@ const rows: [
     ['ventCrab', '열수 게', 55, '끓는 물줄기 옆에서 집게를 벼린다. 껍데기가 쇠처럼 울린다.'], ['glassSquid', '유리 오징어', 57, '몸이 투명해 심장의 박동만 보인다.'], ['sulfurEel', '유황 곰치', 59, '숨을 쉴 때마다 노란 연기가 물을 흐린다.'], ['blindShark', '눈먼 상어', 61, '빛을 잃은 대신 물살의 떨림으로 모든 것을 본다.'],
 ];
 /** 레벨별 물고기 기본 골드. 장비 판매가도 이 곡선을 따릅니다. */
-export const fishGoldAt = (level: number) => Math.round(7 * Math.pow(1.12, level - 1));
-export const FISH: FishDef[] = rows.map(([id, name, level, lore]) => ({ id, name, level, hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8), exp: Math.round(9 * Math.pow(1.15, level - 1)), gold: fishGoldAt(level), lore }));
+/** v27.30 물고기 골드 곡선: Lv.40까지 레벨당 12% 복리, 그 뒤로는 6.5%. 후반 골드가 사용처 비용을 크게 앞지르던 인플레이션을 줄입니다. */
+export const GOLD_CURVE = { base: 7, early: 1.12, knee: 40, late: 1.065 };
+export const fishGoldAt = (level: number) => Math.round(GOLD_CURVE.base * Math.pow(GOLD_CURVE.early, Math.min(level, GOLD_CURVE.knee) - 1) * Math.pow(GOLD_CURVE.late, Math.max(0, level - GOLD_CURVE.knee)));
+/** v27.30 골드 사용처 가격 배율: Lv.40까지 1, 그 위로는 물고기 골드를 따라 커집니다(Lv.65에서 멈춤). */
+export const PRICE_LEVEL_CAP = 65;
+export const priceScale = (level: number) => Math.max(1, fishGoldAt(Math.min(PRICE_LEVEL_CAP, Math.max(1, level))) / fishGoldAt(GOLD_CURVE.knee));
+export const fishExpAt = (level: number) => Math.round(9 * Math.pow(1.15, level - 1));
+/** 어종 레벨별 기본 능력치(체력·공격·방어). FISH 정의와 같은 식입니다. */
+export const fishStatsAt = (level: number) => ({ hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8) });
+/** v27.30 낚시터 적의 능력치는 입장 레벨 + STAGE_ENEMY_LEVEL_OVER까지만 셉니다(보상은 어종 레벨 그대로). 입장 직후 몇몇 고레벨 어종이 벽이 되던 구간 완화. */
+export const STAGE_ENEMY_LEVEL_OVER = 6;
+/** 낚시터에서 실제로 싸우는 능력치 기준 어종(레벨 상한 적용). 전투와 도감이 같은 값을 씁니다. */
+export function stageStatFish<F extends { level: number; hp: number; attack: number; defense: number }>(f: F, stageLevel: number): F {
+    const level = Math.min(f.level, stageLevel + STAGE_ENEMY_LEVEL_OVER);
+    return level < f.level ? { ...f, level, ...fishStatsAt(level) } : f;
+}
+export const FISH: FishDef[] = rows.map(([id, name, level, lore]) => ({ id, name, level, hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8), exp: fishExpAt(level), gold: fishGoldAt(level), lore }));
 const specialFish: Array<{
     id: string;
     name: string;
@@ -98,10 +113,10 @@ const specialFish: Array<{
     { id: 'starfallSeraph', name: '파풀라투스', level: 62, lore: '루디브리엄 시계탑의 시간을 멈춘 차원의 침략자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
 ];
 for (const f of specialFish)
-    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: Math.round(9 * Math.pow(1.15, f.level - 1)), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
+    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: fishExpAt(f.level), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
 /**
  * v27.31 운영 페이지에서 닫은 낚시터·던전(입장 불가). 서버가 DB 설정(settings.closures)을 읽어 setClosures로 채웁니다.
- * 설정을 한 번도 저장하지 않았으면 DEFAULT_CLOSURES(무한 심연 닫힘)를 씁니다. 테스트는 harness에서 비웁니다.
+ * 설정을 한 번도 저장하지 않았으면 DEFAULT_CLOSURES(무릉도장 닫힘)를 씁니다. 테스트는 harness에서 비웁니다.
  * 서버 계산은 dungeonClosed·stageClosed를, 화면은 동기화 때 적힌 State.closed를 봅니다.
  */
 export type Closures = { dungeons: string[]; stages: string[] };
