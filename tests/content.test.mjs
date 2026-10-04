@@ -149,10 +149,10 @@ test('v27.81 codex: research stages grant no flat trait stats (ecology only); pl
  assert.equal(weightedFishId(['minnow','seahorse'],()=>.84),'minnow');assert.equal(weightedFishId(['minnow','seahorse'],()=>.84,.1),'seahorse');
  const v=newState(0);v.book.minnow=49;assert.equal(bookMod.bookRevealed(v,'minnow'),false);v.book.minnow=50;assert.equal(bookMod.bookRevealed(v,'minnow'),true);
 });
-test('v27.81 ecology research: from stage 2 only against that species, 5·5·10·10·20% dealt / 2.5·2.5·5·5·10% taken, max +50% / -25%',()=>{
+test('v27.81 ecology research: from stage 2 only against that species, 3·3·4·15·25% dealt / 1.5·1.5·2·7.5·12.5% taken, max +50% / -25%',()=>{
  const s=newState(0);s.book.minnow=499;assert.equal(bookMod.bookEcology(s,'minnow').stages,0);
- s.book.minnow=500;assert.deepEqual(bookMod.bookEcology(s,'minnow'),{stages:1,dealt:.05,taken:.025});
- s.book.minnow=10000;const e=bookMod.bookEcology(s,'minnow');assert.equal(e.stages,3);assert.ok(Math.abs(e.dealt-.2)<1e-9&&Math.abs(e.taken-.1)<1e-9);s.book.minnow=500000;s.bookTier={minnow:50};const full=bookMod.bookEcology(s,'minnow');assert.equal(full.stages,5);assert.ok(Math.abs(full.dealt-.5)<1e-9&&Math.abs(full.taken-.25)<1e-9,'max +50% / -25%');s.book.minnow=10000;assert.equal(bookMod.bookEcology(s,'carp').stages,0);
+ s.book.minnow=500;assert.deepEqual(bookMod.bookEcology(s,'minnow'),{stages:1,dealt:.03,taken:.015});
+ s.book.minnow=10000;const e=bookMod.bookEcology(s,'minnow');assert.equal(e.stages,3);assert.ok(Math.abs(e.dealt-.1)<1e-9&&Math.abs(e.taken-.05)<1e-9);s.book.minnow=500000;s.bookTier={minnow:50};const full=bookMod.bookEcology(s,'minnow');assert.equal(full.stages,5);assert.ok(Math.abs(full.dealt-.5)<1e-9&&Math.abs(full.taken-.25)<1e-9,'max +50% / -25%');s.book.minnow=10000;assert.equal(bookMod.bookEcology(s,'carp').stages,0);
  const base={attack:1000,defense:0,hp:1e6,crit:0,accuracy:2,evasion:0,speed:10,mana:0,manaRegen:0,resist:0,penetration:0,lifesteal:0,critDamage:1.5,magic:0};
  const hit=(a,b)=>{const x={name:'a',stats:base,hp:1e6,skills:[],cooldowns:{},stun:0,...a},y={name:'b',stats:base,hp:1e6,skills:[],cooldowns:{},stun:0,...b};strike(x,y,()=>.5);return 1e6-y.hp;};
  assert.equal(hit({},{}),1000);assert.equal(hit({damageDealt:.06},{}),1060);assert.equal(hit({},{damageTaken:.03}),970);
