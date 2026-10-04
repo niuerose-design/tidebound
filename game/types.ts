@@ -262,7 +262,11 @@ export type Enemy = {
     stun: number;
 };
 /** 한 번의 행동 결과. 전투 화면은 문자열 대신 이 값으로 피해·치명·회피·추가타·흡혈을 표시합니다. */
-export type CombatHit = { kind: 'main' | 'follow'; value: number; critical: boolean; miss: boolean; /** v27.18 극 치명타 */ superCritical?: boolean };
+/**
+ * 타격 하나. value는 실제로 깎인 체력(남은 체력에 막힘)이고 규칙(반동·체력 막대·처치)이 씁니다.
+ * v27.74 raw는 계산된 피해(남은 체력에 막히기 전). value와 다를 때만 적고, 전투 기록·연출 숫자는 raw ?? value를 보여 줍니다.
+ */
+export type CombatHit = { kind: 'main' | 'follow'; value: number; raw?: number; critical: boolean; miss: boolean; /** v27.18 극 치명타 */ superCritical?: boolean };
 export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split';
     hits: CombatHit[]; total: number; healed: number; drained: number;
