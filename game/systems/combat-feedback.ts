@@ -195,7 +195,7 @@ export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMa
         units.forEach((logs, i) => {
             const ev = logs.find(l => l.type === 'battle')?.event;
             const side = ev ? ev.actor === next.name ? 'player' : 'enemy' : null;
-            // 체력 막대는 실제로 깎인 체력(value)만큼 움직입니다(v27.74 표시 숫자 raw와 다를 수 있음).
+            // 체력 막대는 실제로 깎인 체력(value)만큼 움직입니다(v27.75 표시 숫자 raw와 다를 수 있음).
             const dealt = ev ? ev.hits.reduce((n, h) => n + (h.miss ? 0 : h.value), 0) : 0;
             const self = ev ? ev.healed + ev.drained + (ev.regen || 0) - (ev.dot?.value || 0) - (ev.reflected || 0) : 0;
             const last = i === units.length - 1;

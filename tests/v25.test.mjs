@@ -876,7 +876,7 @@ test('v27.71 evasion: non-dex sources are capped at 60%p raw, dex evasion stacks
     assert.ok(Math.abs(bothEv - LT.evasionRating(dex0 + 470 * .0015 + .6)) < 1e-9, 'dex stacks on top of the capped passive sum');
 });
 
-test('v27.74 hits record the computed damage: text and FX show it, value/HP bar/recoil keep the actual HP removed', async () => {
+test('v27.75 hits record the computed damage: text and FX show it, value/HP bar/recoil keep the actual HP removed', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), C = await L.load('systems/combat'), FB = await L.load('systems/combat-feedback');
     const base = { hp: 1000, attack: 5000, defense: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0 };
     const mk = (skills, extra = {}) => ({ name: 'A', job: 'x', stats: { ...base }, hp: 1000, mana: 200, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {}, ...extra });

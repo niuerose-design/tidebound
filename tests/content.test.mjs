@@ -131,7 +131,7 @@ test('Follow-up hits: each hit counted once, total equals HP lost, stops when th
   assert.equal(e.drained,a.hp-500,'drain shown separately equals HP regained');assert.equal(e.healed,0);
   assert.match(text,/본타 \d+/);assert.match(text,/합계 \d+/);assert.ok(!text.includes('회복'),'drain is not labelled as heal');
  }
- const a=mk(['twinHook']),weak={...mk([]),name:'B',hp:5};const ev=[];strike(a,weak,()=>0,ev);assert.equal(ev[0].hits.length,1,'no follow-up after the target dies');assert.equal(ev[0].hits[0].value,5,'value = HP actually removed');assert.equal(ev[0].total,ev[0].hits[0].raw,'v27.74 the displayed total is the computed damage');assert.ok(ev[0].hits[0].raw>5);
+ const a=mk(['twinHook']),weak={...mk([]),name:'B',hp:5};const ev=[];strike(a,weak,()=>0,ev);assert.equal(ev[0].hits.length,1,'no follow-up after the target dies');assert.equal(ev[0].hits[0].value,5,'value = HP actually removed');assert.equal(ev[0].total,ev[0].hits[0].raw,'v27.75 the displayed total is the computed damage');assert.ok(ev[0].hits[0].raw>5);
  const rolls=[0,0];let r=0;const b2={...mk([]),name:'B',hp:1e6};const ev2=[];strike(mk(['twinHook']),b2,()=>rolls[r++]??.9999,ev2);
  assert.ok(ev2[0].hits.some(h=>h.kind==='follow'&&h.miss),'a follow-up can miss independently');
  const crit=[];strike(mk(['arcane'],{crit:1}),{...mk([]),name:'B',hp:1e6},()=>0,crit);assert.equal(crit[0].hits[0].critical,true);assert.equal(crit[0].damageType,'magic');

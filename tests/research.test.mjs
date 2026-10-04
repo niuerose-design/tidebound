@@ -27,7 +27,7 @@ test('Research v2: stat effects come from the research source and keep the exist
     const s = newState(0);
     Object.assign(s.permanent, { crit: 20, critDamage: 25, penetration: 15, evasion: 20, lifesteal: 20, manaRegen: 10 });
     close(researchDelta(s, 'crit'), .1); close(researchDelta(s, 'critDamage'), .5); close(researchDelta(s, 'penetration'), .15);
-    close(researchDelta(s, 'evasion'), .08); close(researchDelta(s, 'lifesteal'), .1); close(researchFactor(s, 'manaRegen'), 1.5);
+    close(researchDelta(s, 'evasion'), .12); close(researchDelta(s, 'lifesteal'), .1); close(researchFactor(s, 'manaRegen'), 1.5);
     const base = newState(0);
     close(stats(s).crit - stats(base).crit, .1); close(stats(s).lifesteal - stats(base).lifesteal, .1);
     s.permanent.penetration = 1000; s.permanent.lifesteal = 1000; assert.equal(stats(s).penetration, .6); assert.equal(stats(s).lifesteal, .3);
@@ -66,12 +66,14 @@ test('Research v2: long anchor line extends the offline cap by two hours per ran
     assert.equal(base.lastOffline.seconds, 6 * 3600); assert.equal(long.lastOffline.seconds, 12 * 3600);
 });
 
-test('Research v2: mastery memory adds +5% per rank with an integer carry and no random calls', () => {
+test('Research v2/v27.73: mastery memory adds +3% per rank with an integer carry (1/100) and no random calls', async () => {
+    const { masteryMultipliers } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/mastery');
     const s = newState(0); assert.deepEqual(researchMastery(s, 3), { total: 3, extra: 0 }); assert.equal(s.masteryCarry, undefined);
-    s.permanent.mastery = 1; let extra = 0; for (let i = 0; i < 20; i++) extra += researchMastery(s, 1).extra;
-    assert.equal(extra, 1); assert.equal(s.masteryCarry, 0);
-    s.permanent.mastery = 3; assert.deepEqual(researchMastery(s, 7), { total: 8, extra: 1 }); assert.equal(s.masteryCarry, 1);
-    s.permanent.mastery = 10; s.masteryCarry = 0; assert.deepEqual(researchMastery(s, 10), { total: 15, extra: 5 });
+    s.permanent.mastery = 1; let extra = 0; for (let i = 0; i < 100; i++) extra += researchMastery(s, 1).extra;
+    assert.equal(extra, 3); assert.equal(s.masteryCarry, 0);
+    s.permanent.mastery = 3; assert.deepEqual(researchMastery(s, 7), { total: 7, extra: 0 }); assert.equal(s.masteryCarry, 63);
+    s.permanent.mastery = 10; s.masteryCarry = 0; assert.deepEqual(researchMastery(s, 10), { total: 13, extra: 3 });
+    s.permanent.mastery = 10; s.masteryCarry = 0; s.account = { species: 10 }; const m = masteryMultipliers(s); assert.ok(Math.abs(m.research - 1.4) < 1e-9, `research 30% + account species 10% (${m.research})`);
 });
 
 test('Research v2: online ticks and one offline settlement give the same result with every new research', () => {
