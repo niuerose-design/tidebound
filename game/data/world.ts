@@ -1,6 +1,8 @@
 import { MAPLE_MONSTERS } from './maple-monsters';
 /** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
-export const STAGES = [
+/** 사냥터 정의. habitat는 v27.79 무리 서식지(지역마다 하나)입니다. */
+export type StageDef = { id: string; region: string; place: string; name: string; subtitle: string; level: number; rebirth: number; description: string; fish: string[]; tone: string; habitat?: boolean };
+const BASE_STAGES: StageDef[] = [
     { id: 'brook', region: '리스항구', place: '선착장', name: '리스항구 · 선착장', subtitle: 'LITH HARBOR · PIER', level: 1, rebirth: 0, description: '빅토리아 아일랜드의 관문. 선착장 끝에서 첫 몬스터가 찾아온다.', fish: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
     { id: 'bay', region: '리스항구', place: '조개 해안', name: '리스항구 · 조개 해안', subtitle: 'LITH HARBOR · SHELL COAST', level: 5, rebirth: 0, description: '항구 뒤 조개껍데기가 깔린 해안. 버섯과 슬라임이 파도 소리에 맞춰 통통 튄다.', fish: ['mackerel', 'ray', 'puffer'], tone: '#68b6ce' },
     { id: 'reef', region: '헤네시스', place: '돼지의 해변', name: '헤네시스 · 돼지의 해변', subtitle: 'HENESYS · PIG BEACH', level: 10, rebirth: 0, description: '헤네시스 남쪽 해변. 돼지 떼가 모래밭을 뛰놀고, 버섯이 그늘에서 덮칠 틈을 노린다.', fish: ['lionfish', 'eel', 'barracuda', 'stormBarracuda'], tone: '#d49081' },
@@ -13,6 +15,33 @@ export const STAGES = [
     // v25.8 환생 5회부터. Lv.60 생이 반복되는 환생 중반의 새 땅.
     { id: 'duskVents', region: '커닝시티', place: '지하 배수로', name: '커닝시티 · 지하 배수로', subtitle: 'KERNING CITY · UNDERGROUND DRAIN', level: 55, rebirth: 5, description: '도시 아래 끓어오르는 배수로. 다섯 번의 생을 건넌 모험가만 이 열기를 견딘다.', fish: ['ventCrab', 'glassSquid', 'sulfurEel', 'blindShark', 'cinderAngler', 'ventLeviathan'], tone: '#d88a5a' },
 ];
+/**
+ * v27.79 무리 서식지: 지역마다 하나. 그 지역 몬스터가 전부 무리로만 나옵니다(×100 75% · ×500 25%, 도감·패시브 조건 없음).
+ * 처치 한 번에 마리 수만큼 보상·도감·드롭 판정이 쌓이는 고위험 고보상 사냥터입니다. 까미·누리는 나오지 않습니다.
+ * 입장: 지역 사냥터의 최고 레벨 · (지역 사냥터 최고 환생 조건 + 2, 최소 2회).
+ */
+export const HABITAT = { sizes: [100, 500] as const, bigChance: .25, rebirthOver: 2, minRebirth: 2 };
+const HABITAT_META: Record<string, { id: string; subtitle: string; description: string; tone: string }> = {
+    '리스항구': { id: 'lithSwarm', subtitle: 'LITH HARBOR · SWARM NEST', description: '항구 뒤편 갯바위. 첫 바다의 몬스터들이 떼로 몰려와 한 덩어리로 덤빈다.', tone: '#5fa8a0' },
+    '헤네시스': { id: 'henesysSwarm', subtitle: 'HENESYS · SWARM MEADOW', description: '돼지와 버섯이 끝없이 몰려드는 들판. 한 번 휩쓸면 도감이 백 장씩 넘어간다.', tone: '#c98a6a' },
+    '페리온': { id: 'perionSwarm', subtitle: 'PERION · SWARM CANYON', description: '바위 협곡을 메운 멧돼지와 골렘 떼. 버티지 못하면 한꺼번에 밀려난다.', tone: '#b9744f' },
+    '엘리니아': { id: 'elliniaSwarm', subtitle: 'ELLINIA · SWARM HOLLOW', description: '숲의 그림자마다 몬스터가 겹겹이 숨어 있다. 망령까지 떼를 지어 떠오른다.', tone: '#8f88c4' },
+    '커닝시티': { id: 'kerningSwarm', subtitle: 'KERNING CITY · SWARM SEWER', description: '배수로 가득 차오른 몬스터의 물결. 다섯 번의 생으로도 모자란 곳.', tone: '#6d7fb0' },
+};
+/** 지역 이름 목록(사냥터 순서). */
+export const REGIONS = [...new Set(BASE_STAGES.map(st => st.region))];
+/** 지역의 일반 사냥터(무리 서식지 제외). */
+export const regionPlaces = (region: string) => BASE_STAGES.filter(st => st.region === region);
+/** 지역에 사는 몬스터(중복 없이, 사냥터 순서). */
+export const regionFish = (region: string) => [...new Set(regionPlaces(region).flatMap(st => st.fish))];
+const HABITATS: StageDef[] = REGIONS.map(region => {
+    const places = regionPlaces(region), meta = HABITAT_META[region];
+    return { id: meta.id, region, place: '무리 서식지', name: `${region} · 무리 서식지`, subtitle: meta.subtitle, level: Math.max(...places.map(st => st.level)), rebirth: Math.max(HABITAT.minRebirth, Math.max(...places.map(st => st.rebirth)) + HABITAT.rebirthOver), description: meta.description, fish: regionFish(region), tone: meta.tone, habitat: true };
+});
+export const STAGES: StageDef[] = [...BASE_STAGES, ...HABITATS];
+/** 일반 사냥터(무리 서식지 제외). 사냥터 수·도감·업적처럼 장소를 세는 곳에서 씁니다. */
+export const PLACES = BASE_STAGES;
+export const isHabitat = (id: string) => !!STAGES.find(st => st.id === id)?.habitat;
 /**
  * 무리 사냥: 도감을 완성한 몬스터를 집중 사냥할 때 무리 전체를 체력 ×N인 한 개체로 상대합니다.
  * ×5·×100은 공격이 한 마리와 같고, ×500은 공격도 490배인 도전 과제입니다.

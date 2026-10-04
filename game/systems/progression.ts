@@ -7,7 +7,7 @@ import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat } from '../data/p
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { Job, JobStatKey, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
-import { STAGES, FISH } from '../data/world';
+import { PLACES, FISH } from '../data/world';
 import { doorFor, DOORS } from '../data/doors';
 import { researchRank } from '../data/economy';
 export function initialProgress(level = 1) { return { attributes: emptyAttributes(), statPoints: PROGRESSION.startingStats + (level - 1) * PROGRESSION.statPerLevel, sp: PROGRESSION.startingSP, peakLevel: level, learned: { hook: 1 } as Record<string, number>, skillSpent: {} as Record<string, number>, skillInheritances: {} as Record<string, boolean>, skillPractice: {} as Record<string, number>, jobMastery: {} as Record<string, number>, unlockedJobs: ['fisher'], bookClaims: {} as Record<string, number>, itemBook: {} as Record<string, boolean>, target: null as string | null, presets: {} as State['presets'], mana: 40, effects: {}, playerStun: 0 }; }
@@ -273,12 +273,16 @@ export function trimLoadout(s: State) {
         s.skills.splice(index < 0 ? s.skills.length - 1 : index, 1);
     }
 }
-export function completedRegions(s: State) { return STAGES.filter(st => st.fish.every(id => (s.book[id] || 0) >= PROGRESSION.fishComplete)); }
-export function bookReward(s: State, id: string) { const rank = s.bookClaims?.[id] || 0; return { rank, required: BALANCE.bookMilestones[rank], sp: PROGRESSION.bookSP[rank] || 0, gold: PROGRESSION.bookGold[rank] || 0, ready: rank < BALANCE.bookMilestones.length && (s.book[id] || 0) >= BALANCE.bookMilestones[rank] }; }
+export function completedRegions(s: State) { return PLACES.filter(st => st.fish.every(id => (s.book[id] || 0) >= PROGRESSION.fishComplete)); }
+/** v27.79 연구 r단계(0부터)를 넘었는지: 처치 수와, 5단계부터는 그 몬스터를 잡은 최고 난이도 조건. */
+export const bookRankMet = (s: Pick<State, 'book' | 'bookTier'>, id: string, r: number) => r < BALANCE.bookMilestones.length && (s.book[id] || 0) >= BALANCE.bookMilestones[r] && (s.bookTier?.[id] || 0) >= (BALANCE.bookTierReq[r] || 0);
+/** 연구 r단계의 난이도 조건(없으면 0). */
+export const bookTierReq = (r: number) => BALANCE.bookTierReq[r] || 0;
+export function bookReward(s: State, id: string) { const rank = s.bookClaims?.[id] || 0; return { rank, required: BALANCE.bookMilestones[rank], tier: bookTierReq(rank), sp: PROGRESSION.bookSP[rank] || 0, gold: PROGRESSION.bookGold[rank] || 0, ready: bookRankMet(s, id, rank) }; }
 /** 이미 넘은 임계치 중 아직 받지 않은 연구 단계 전부. 여러 단계를 한 번에 넘었으면 모두 한 번에 받습니다. */
 export function bookPending(s: State, id: string) {
-    const claimed = s.bookClaims?.[id] || 0, n = s.book[id] || 0, ranks: number[] = [];
-    for (let r = claimed; r < BALANCE.bookMilestones.length && n >= BALANCE.bookMilestones[r]; r++) ranks.push(r);
+    const claimed = s.bookClaims?.[id] || 0, ranks: number[] = [];
+    for (let r = claimed; bookRankMet(s, id, r); r++) ranks.push(r);
     return { ranks, gold: ranks.reduce((a, r) => a + (PROGRESSION.bookGold[r] || 0), 0), sp: ranks.reduce((a, r) => a + (PROGRESSION.bookSP[r] || 0), 0) };
 }
 export function itemKey(slot: string, rarity: number) { return `${slot}:${rarity}`; }

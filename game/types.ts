@@ -452,6 +452,8 @@ export type State = {
     goldenBook?: Record<string, number>;
     /** v25.19 변종을 잡은 횟수(몬스터별 → 변종별). */
     variantBook?: Record<string, Partial<Record<'giant' | 'abyssal' | 'starlit' | 'swarm', number>>>;
+    /** v27.79 몬스터별로 처치한 가장 높은 난이도(사냥터 난이도·던전 모드). 도감 5·6단계 조건에 씁니다. 환생해도 유지됩니다. */
+    bookTier?: Record<string, number>;
     /** 이번 생에 걸린 서약. */
     vows?: Vows;
     /** 다음 생에 걸 서약 예약. 환생할 때 vows가 됩니다. */

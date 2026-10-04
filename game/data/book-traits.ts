@@ -46,3 +46,17 @@ export const REGION_THEMES: Record<string, { label: string; add?: StatBonus; sca
     starfall: { label: '체력·공격·방어 +2%', scale: { hp: 1.02, attack: 1.02, magic: 1.02, defense: 1.02, resist: 1.02 } },
     duskVents: { label: '방어 관통 +1%p · 치명 피해 +3%p', add: { penetration: .01, critDamage: .03 } },
 };
+
+/**
+ * v27.79 지역 연구: 지역(리스항구 등)의 모든 몬스터가 연구 4·5·6단계 이상이면 지역 연구 1·2·3단계.
+ * add는 단계마다 더하는 고정값, scale은 단계마다 더하는 배율(+3%면 .03 → 3단계 ×1.09).
+ */
+export const REGION_RESEARCH_FROM = 4;
+export const REGION_RESEARCH_MAX = 3;
+export const REGION_RESEARCH: Record<string, { label: string; add?: StatBonus; scale?: Partial<Record<'hp' | 'attack' | 'magic' | 'defense' | 'resist', number>> }> = {
+    '리스항구': { label: '경험치·골드 +2%', add: { expBonus: .02, goldBonus: .02 } },
+    '헤네시스': { label: '명중 +1%p · 치명 확률 +1%p', add: { accuracy: .01, crit: .01 } },
+    '페리온': { label: '최대 체력 +3% · 물리 방어 +2%', scale: { hp: .03, defense: .02 } },
+    '엘리니아': { label: '마법 공격 +3% · 턴당 마나 회복 +0.5', add: { manaRegen: .5 }, scale: { magic: .03 } },
+    '커닝시티': { label: '회피 +0.5%p · 치명 피해 +3%p', add: { evasion: .005, critDamage: .03 } },
+};

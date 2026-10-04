@@ -34,7 +34,7 @@ export function atAnchorTarget(s: Pick<State, 'vows' | 'dungeon' | 'stage'>) {
 /** 환생 횟수로 해금된 사냥터·던전 중 하나를 고정 난수로 고릅니다(입장 레벨 조건은 보지 않음). */
 export function chooseAnchorTarget(rebirths: number, rng: () => number) {
     const options = [
-        ...STAGES.filter(st => st.rebirth <= rebirths).map(st => ({ kind: 'stage' as const, id: st.id })),
+        ...STAGES.filter(st => st.rebirth <= rebirths && !st.habitat).map(st => ({ kind: 'stage' as const, id: st.id })),
         ...DUNGEONS.filter(d => d.rebirth <= rebirths).map(d => ({ kind: 'dungeon' as const, id: d.id })),
     ];
     return options[Math.min(options.length - 1, Math.floor(rng() * options.length))];

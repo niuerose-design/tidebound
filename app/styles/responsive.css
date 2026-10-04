@@ -632,3 +632,18 @@
 /* v27.34 낚시터 지역 묶음 */
 .stage-region + .stage-region { margin-top: 26px; }
 .stage-region-title { font-size: 18px; margin: 0 0 12px; color: var(--gold); letter-spacing: .02em; }
+/* v27.79 사냥터 지역 접기·펼치기, 무리 서식지 카드 */
+details.stage-region > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+details.stage-region > summary::-webkit-details-marker { display: none; }
+details.stage-region > summary small { font-size: 12px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+details.stage-region > summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 4px; }
+.stage-region-chevron { flex: none; transition: transform .15s ease; transform: rotate(-90deg); }
+details.stage-region[open] .stage-region-chevron { transform: rotate(0deg); }
+details.stage-region:not([open]) > summary { margin-bottom: 0; }
+details.stage-region > .region-research { display: block; margin: -4px 0 12px; font-size: 12px; color: var(--muted); }
+.stage-card.habitat { border-style: dashed; background: linear-gradient(140deg, #3a1f24, #1d1418); }
+.stage-card.habitat .eyebrow { color: #e6a28f; }
+@media (prefers-reduced-motion: reduce) { .stage-region-chevron { transition: none; } }
+/* v27.79 도감: 지역 안에 장소 묶음 */
+.book-area > .book-region { margin-left: 4px; padding-left: 12px; border-left: 1px solid #34464b; }
+.book-area > .region-research { display: block; margin: -4px 0 12px; font-size: 12px; color: var(--muted); }

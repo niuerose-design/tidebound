@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { SWARM_SIZES, SWARM_UNLOCK } from './world';
+import { SWARM_SIZES, SWARM_UNLOCK, STAGES } from './world';
 import { rareSpawnBonus } from '../systems/book';
 import { stats } from '../systems/stats';
 import { canUse } from '../systems/progression';
@@ -31,7 +31,19 @@ export const VARIANTS: VariantDef[] = [
     { id: 'starlit', name: '별빛 개체', mark: '✧', desc: '체력 ×1.5. 세계석 +1(환생 3회부터 +2), 경험치 ×5.', chance: .008, hp: 1.5, attack: 1, reward: 1, expMult: 5, drops: 1, book: 1, pearls: 1 },
 ];
 export const variantById = (id?: VariantId) => id ? VARIANTS.find(v => v.id === id) : undefined;
-/** 변종 확률 배율: 지역 테마(버섯숲 연못 +10%) × (1 + 변종 조우 확률 증가). 증가분은 섀도어 계보 패시브가 올립니다. */
+/** v27.79 지역별 변종: 지역마다 대표 변종은 ×2.5, 나머지는 ×0.8. 커닝시티는 무리·심연 변이 ×1.8. */
+export const REGION_VARIANTS: Record<string, Partial<Record<VariantId, number>>> = {
+    '리스항구': { swarm: 2.5, giant: .8, abyssal: .8, starlit: .8 },
+    '헤네시스': { giant: 2.5, swarm: .8, abyssal: .8, starlit: .8 },
+    '페리온': { abyssal: 2.5, swarm: .8, giant: .8, starlit: .8 },
+    '엘리니아': { starlit: 2.5, swarm: .8, giant: .8, abyssal: .8 },
+    '커닝시티': { swarm: 1.8, abyssal: 1.8, giant: .8, starlit: .8 },
+};
+/** 사냥터의 지역 변종 배율(지역 표가 없으면 1). */
+export const regionVariantScale = (stageId: string, id: VariantId) => REGION_VARIANTS[STAGES.find(st => st.id === stageId)?.region || '']?.[id] ?? 1;
+/** 지역의 대표 변종(배율이 가장 큰 것들). */
+export const regionSignature = (region: string) => { const row = REGION_VARIANTS[region] || {}, top = Math.max(...Object.values(row) as number[]); return VARIANTS.filter(v => (row[v.id] ?? 1) === top && top > 1); };
+/** 변종 확률 배율: 지역 테마(버섯숲 연못 +10%) × (1 + 변종 조우 확률 증가). 증가분은 섀도어 계보 패시브가 올립니다. 지역 변종 배율(REGION_VARIANTS)은 변종마다 따로 곱합니다. */
 function variantMultiplier(s: State) {
     return (1 + rareSpawnBonus(s)) * (1 + (stats(s).variantFind || 0));
 }
@@ -40,7 +52,7 @@ export function variantChances(s: State) {
     const m = variantMultiplier(s);
     // v27.2 무리는 탱커 패시브의 무리 조우 확률 증가(swarmFind)를 따로 곱합니다.
     const swarmBoost = 1 + (stats(s).swarmFind || 0);
-    return Object.fromEntries(VARIANTS.map(v => [v.id, Math.min(1, v.chance * m * (v.id === 'swarm' ? swarmBoost : 1))])) as Record<VariantId, number>;
+    return Object.fromEntries(VARIANTS.map(v => [v.id, Math.min(1, v.chance * m * (v.id === 'swarm' ? swarmBoost : 1) * regionVariantScale(s.stage, v.id))])) as Record<VariantId, number>;
 }
 /** 이 몬스터로 등장할 수 있는 무리 규모(도감 처치 수·패시브 기준). */
 function swarmSizesFor(s: State, fishId: string) {
@@ -63,3 +75,6 @@ export function rollSwarmSize(s: State, fishId: string, rng: () => number) {
     const cap = swarmCapOf(s);
     return size <= cap ? size : cap >= 5 ? cap : 1;
 }
+
+/** v27.79 무리 서식지의 무리 규모: ×500(HABITAT.bigChance) 아니면 ×100. 도감·패시브·설정 상한과 관계없이 확정입니다. */
+export const rollHabitatSwarm = (rng: () => number, big: number, sizes: readonly number[]) => rng() < big ? sizes[1] : sizes[0];
