@@ -909,3 +909,17 @@ test('v27.76 tide loot: rarity weights drift up conservatively with tier, essenc
     const dun = make(30, true); dun.dungeon.mode = 'hell'; Enc.reward(dun, () => 0); assert.equal(dun.essence, 0, 'dungeons do not drop tide essence');
     assert.equal(B.BALANCE.tideLoot.rarityPerTier, .0014);
 });
+
+test('v27.78 heal after kill keeps falling with tide; stageField matches spawn; starfall reward multipliers normalized', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Enc = await L.load('systems/encounter'), W = await L.load('data/world');
+    const at = tide => Enc.victoryHealRate({ ...newState(0), tide });
+    assert.ok(Math.abs(at(0) - .2) < 1e-9 && Math.abs(at(10) - .1) < 1e-9 && Math.abs(at(30) - .05) < 1e-9 && Math.abs(at(200) - .02) < 1e-9, `heal ${at(0)} ${at(10)} ${at(30)} ${at(200)}`);
+    const s = newState(0); s.level = 60; s.rebirths = 10; s.tide = 10; s.stage = 'wreck'; s.running = true; s.kills = 0; s.target = 'shark';
+    Enc.spawn(s, () => .5); const live = Enc.stageField(s, 'wreck', 'shark', 10);
+    assert.equal(s.enemy.id, 'shark'); assert.deepEqual([s.enemy.maxHp, s.enemy.attack, s.enemy.exp, s.enemy.gold], [live.foe.hp, live.foe.attack, live.exp, live.gold], 'codex preview equals the spawned foe');
+    assert.ok(live.level > 22 && live.level <= 60, `lifted level ${live.level}`);
+    const star = W.STAGES.find(x => x.id === 'starfall').fish.map(id => W.FISH.find(f => f.id === id));
+    const avg = star.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / star.reduce((a, f) => a + (f.spawnWeight ?? 1), 0);
+    assert.ok(avg < 1.35, `starfall weighted reward multiplier ${avg}`);
+});

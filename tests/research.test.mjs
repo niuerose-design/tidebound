@@ -187,13 +187,13 @@ test('Vows · one breath: a fall soft-resets the life (online and offline); an u
     s.running = true; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
     tick(s, () => .5);
     assert.equal(s.level, 1); assert.equal(s.gold, 100); assert.equal(s.pearls, 7); assert.equal(s.rebirths, rebirths); assert.equal(s.lifeBonus, lifeBonus);
-    assert.equal(s.deaths, deaths + 1); assert.equal(s.vows, undefined); assert.equal(s.running, true); assert.ok(s.logs.some(l => l.text.includes('한 번의 숨')));
+    assert.equal(s.deaths, deaths + 1); assert.equal(s.vows, undefined); assert.equal(s.running, true); assert.ok(s.logs.some(l => l.text.includes('하드코어')));
     const o = vowReady({ vowBreath: 1 }, { breath: true }); act(o, { type: 'rebirth' }, 0); act(o, { type: 'stage', id: 'brook' }, 0); o.stage = 'trench'; act(o, { type: 'start' }, 0);
     advance(o, 2 * 3600_000, seeded(9)); assert.equal(o.vows, undefined); assert.equal(o.stage, 'brook'); assert.ok(o.kills > 0 || o.deaths > 0);
     const plain = vowReady(), vowed = vowReady({ vowBreath: 3 }); vowed.vows = { breath: true }; const p0 = plain.pearls, v0 = vowed.pearls;
     const base = rebirthReward(plain, stats(plain).rebirthBonus || 0);
     act(plain, { type: 'rebirth' }, 0); act(vowed, { type: 'rebirth' }, 0);
-    // 둘 다 같은 업적 보상을 받으므로 차이가 한 번의 숨 보너스(= 기본 세계석)입니다.
+    // 둘 다 같은 업적 보상을 받으므로 차이가 하드코어 보너스(= 기본 세계석)입니다.
     assert.equal((vowed.pearls - v0) - (plain.pearls - p0), base, 'rank 3 doubles rebirth pearls');
 });
 

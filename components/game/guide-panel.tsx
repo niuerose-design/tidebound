@@ -158,7 +158,7 @@ export function Guide({ s }: { s?: State }) {
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                     limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 사냥터로 돌아옵니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
-                    effect={`처치 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 사냥터 난이도 1마다 ${percent(BALANCE.healAfterKillTierDecay)}p씩 줄어 최저 ${percent(BALANCE.healAfterKillMin)}까지 내려갑니다. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}
+                    effect={`처치 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 사냥터 난이도가 오를수록 줄어듭니다: 기본 ÷ (1 + 난이도 ÷ ${BALANCE.healAfterKillTideScale}) — 난이도 10에서 10%, 30에서 5%, 최저 ${percent(BALANCE.healAfterKillMin)}. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}
                     condition={`패배하면 잃는 것 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다. 자리를 비운 시간도 서버가 턴으로 계산합니다.`}
                     limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}, 가방은 기본 ${BALANCE.inventoryCap}칸${s ? `(지금 ${inventoryCap(s)}칸)` : ''}. 둘 다 세계석 연구로 늘어납니다.`}/>
             </div>
@@ -176,7 +176,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Gauge size={19}/>} title="사냥터 난이도 · 던전 난이도"
                     effect={`사냥터 난이도는 환생 횟수만큼(최대 ${ECONOMY.tideCap}) 올릴 수 있습니다. 몬스터 체력·공격이 오르는 대신 골드·경험치 배율과 장비 레벨이 오르고, 드롭 장비의 상위 등급 비율이 조금씩 오르며(난이도 100에서 태초 0.6% → 1%), 난이도 ${BALANCE.tideLoot.essenceMinTier}부터 처치마다 정수가 떨어집니다(확률 난이도 × ${BALANCE.tideLoot.essenceChancePerTier * 100}%, 양 1 + 난이도 ÷ ${BALANCE.tideLoot.essenceEveryTiers}). 난이도 ${MIMIC.minTier}부터 저레벨 사냥터의 몬스터도 내 레벨 근처까지 올라와 어느 사냥터든 보상이 비슷해집니다.`}
                     condition={`일반 던전은 입장할 때 ${DUNGEON_MODES.map(m => m.name).join(' · ')} 중 하나를 고릅니다. 헬은 사냥터 난이도 ${DUNGEON_MODES[1].tier}급, 나이트메어는 ${DUNGEON_MODES[2].tier}급이고 몬스터 레벨도 내 레벨까지 올라옵니다.`}
-                    limit="무릉도장은 층 수가 난이도입니다. 사냥터 난이도는 던전에 영향을 주지 않습니다."/>
+                    limit={`수식(난이도 t): 몬스터 체력 ×(1 + 0.35t + 0.006×(t−20)²) · 공격 ×(1 + 0.18t + 0.002×(t−20)²) · 몬스터 레벨은 난이도 5에서 내 레벨(사냥터 최고 레벨 + 6까지)까지 상승 · 골드 ×(1 + 0.5t) · 경험치 ×(1 + 0.1√t) · 처치 후 회복 ${percent(BALANCE.healAfterKill)} ÷ (1 + t ÷ ${BALANCE.healAfterKillTideScale}) · 드롭 장비 레벨 +5t(내 레벨 + ${BALANCE.dropLevelOver}까지) · 상위 등급 가중 (1 + ${BALANCE.tideLoot.rarityPerTier}t)^(등급−1) · 정수 확률 ${BALANCE.tideLoot.essenceChancePerTier * 100}% × t, 양 1 + t ÷ ${BALANCE.tideLoot.essenceEveryTiers}(난이도 ${BALANCE.tideLoot.essenceMinTier}부터). 무릉도장은 층 수가 난이도이고, 사냥터 난이도는 던전에 영향을 주지 않습니다.`}/>
                 <Rule icon={<Fish size={19}/>} title="숙련의 까미 · 경험의 누리"
                     effect={`까미: 사냥터 난이도 ${MIMIC.minTier} 이상 · Lv.${MIMIC.minLevel} 이상 · 누적 ${MIMIC.minKills}마리부터 드물게 나오고, 잡으면 현재 직업 숙련을 한 번에 줍니다(${MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()}`).join(' · ')}). 누리: 난이도 ${EXP_NURI.minTier} 이상 · Lv.${EXP_NURI.minLevel}~99 · 누적 ${EXP_NURI.minKills.toLocaleString()}마리부터 나오고, 잡으면 지금 레벨 필요 경험치의 ${EXP_NURI.tiers.map(t => `${t.pct * 100}%`).join('·')}를 한 번에 줍니다.`}
                     condition="둘 다 체력이 많고 거의 아프지 않습니다. 제단의 까미·누리 축복과 운영 이벤트가 출현 확률을 곱해 올립니다."

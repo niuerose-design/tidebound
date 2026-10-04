@@ -26,8 +26,8 @@ export const BALANCE = {
     // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
     /** v27.30 반복 정복 확정 장비 확률 5% → 1%(레벨 초과 감소 적용). 드롭률을 낮게 둔 의미가 없어지던 문제. */
     dungeonRepeatDrop: 0.01,
-    // 처치 후 회복률(근거: scripts/check-recovery.mjs). v27.8: 기본 20%, 사냥터 난이도 1마다 healAfterKillTierDecay만큼 줄고 healAfterKillMin 아래로는 내려가지 않습니다.
-    healAfterKill: 0.2, healAfterKillTierDecay: .01, healAfterKillMin: .05, recoveryTurns: 3,
+    // 처치 후 회복률(근거: scripts/check-recovery.mjs). v27.8 기본 20%, v27.78 난이도가 오를수록 1/(1+t/10)로 계속 줄고 healAfterKillMin 아래로는 내려가지 않습니다.
+    healAfterKill: 0.2, /** v27.78 난이도 t에서 처치 후 회복 = 기본 ÷ (1 + t ÷ healAfterKillTideScale), 최저 healAfterKillMin. 10에서 10%, 30에서 5%, 90부터 2%. */ healAfterKillTideScale: 10, healAfterKillMin: .02, recoveryTurns: 3,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
     bookMilestones: [50, 500, 2500, 10000], duelCooldownMs: 60000, duelMaxTurns: 80, /** v26.2 랭크 결투 하루 횟수와 같은 상대 하루 횟수. 연습 대결은 제한 없음. */ duelPerDay: 20, duelPerOpponentPerDay: 3,

@@ -56,7 +56,7 @@ export function releaseAnchor(s: State, achieved: boolean) {
 }
 /** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 회복의 기억 1%p/단계. */
 /** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘회복의 기억’은 1단계마다 +1%p. */
-export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill - encounterTier(s) * BALANCE.healAfterKillTierDecay)) + researchRank(s, 'recovery') * .01;
+export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill / (1 + encounterTier(s) / BALANCE.healAfterKillTideScale))) + researchRank(s, 'recovery') * .01;
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 /** v27.76 난이도별 등급 가중치(일반 제외 표시용·판정용 공통). */
 export const rarityWeights = (tier: number, minRarity = 0) => DROP_RARITY.map((w, i) => i >= minRarity ? w * Math.pow(1 + BALANCE.tideLoot.rarityPerTier * Math.max(0, tier), Math.max(0, i - 1)) : 0);
@@ -119,6 +119,17 @@ export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, 
 /** 무릉도장 1층 기준 능력치(첫 몬스터). 한 번만 계산합니다. */
 let abyssRef: ReturnType<typeof scaledEnemyStats> | undefined;
 export const abyssReference = () => abyssRef ??= scaledEnemyStats(FISH.find(f => f.id === DUNGEONS.find(d => d.id === 'abyss')!.fish[0])!, { tier: 0, wave: 0 });
+/**
+ * v27.78 일반 사냥터 몬스터의 실전 수치(난이도 적용): 사냥터 레벨 상한 → 난이도 레벨 보정 → 보상 정규화 → 능력치·스킬·경험치·골드.
+ * spawn과 도감 ‘적 정보’가 같은 식을 쓰므로 도감 수치가 실제 전투와 일치합니다. 변종·까미·누리·서약은 포함하지 않습니다.
+ */
+export function stageField(s: Pick<State, 'level'>, stageId: string, fishId: string, tier: number) {
+    const st = STAGES.find(x => x.id === stageId)!, f = FISH.find(x => x.id === fishId)!;
+    const capped = stageStatFish(f, st.level), lifted = tideLiftFish(capped, tier, s.level);
+    const field = lifted !== capped ? { ...lifted, rewardMultiplier: (lifted.rewardMultiplier || 1) * stageRewardNorm(st.fish, tier) } : lifted;
+    const foe = scaledEnemyStats(field, { tier }), base = catchReward(field, tier);
+    return { field, foe, level: field.level, exp: Math.max(1, Math.round(base.exp * expLevelScale(field.level, s.level))), gold: base.gold, skills: foeSkills(f.id, field.level, !!f.boss) };
+}
 export function spawn(s: State, rng: () => number) {
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
     const st = STAGES.find(x => x.id === s.stage)!;
@@ -140,9 +151,8 @@ export function spawn(s: State, rng: () => number) {
     const f = rare ? { ...FISH.find(x => x.id === rareId)!, level: top!.level, hp: Math.round(top!.hp * rareDef.hp), attack: Math.round(top!.attack * rareDef.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : FISH.find(x => x.id === id)!;
     const boss = finalWave;
     const normalDungeon = !!dungeon && dungeon.id !== 'abyss', dLevel = dungeon ? dungeonLevelAt(dungeon, tier, s.level) : 0;
-    const capped = dungeon || rare ? f : stageStatFish(f, st.level), lifted = normalDungeon ? tideLiftFish(f, tier, s.level) : dungeon || rare ? f : tideLiftFish(capped, tier, s.level);
-    // v27.67 레벨이 올라간 몬스터는 사냥터 평균 보상 배율로 나눠 사냥터 사이 보상을 맞춥니다(stageRewardNorm).
-    const field = lifted !== capped ? { ...lifted, rewardMultiplier: (lifted.rewardMultiplier || 1) * stageRewardNorm(st.fish, tier) } : lifted;
+    // v27.67 레벨이 올라간 몬스터는 사냥터 평균 보상 배율로 나눠 사냥터 사이 보상을 맞춥니다(stageRewardNorm). 일반 사냥터는 stageField(도감과 공용).
+    const field = !dungeon && !rare ? stageField(s, st.id, f.id, tier).field : normalDungeon ? tideLiftFish(f, tier, s.level) : f;
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
         : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
     const base = dungeon ? dungeonCatchReward(field, dLevel, tier, boss, dungeon.id) : catchReward(field, tier, boss), gold = base.gold;
