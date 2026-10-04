@@ -4,6 +4,7 @@ import type { State, Action, DuelResult, Snapshot } from '@/game/types';
 import { BALANCE } from '@/game/data/balance';
 import { stats } from '@/game/systems/stats';
 import { buildCombatReplay, type ReplayFrame } from '@/game/systems/combat-feedback';
+import { logKey, mergeLogs, type LogDelta } from '@/game/systems/log-delta';
 export type Ranking = Snapshot & {
     id: string;
     self: boolean;
@@ -19,6 +20,8 @@ export type AbyssRow = { rank: number; id: string; name: string; depth: number; 
 const SYNC_MS = 3000;
 /** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다. */
 const IDLE_SYNC_SKIP = 10;
+/** v27.62 전투를 보지 않는 화면(스킬·상점 등)에서는 자동 사냥 중에도 SYNC_MS × 이 값마다(9초). 전투 재생이 필요 없어 데이터·서버 부하를 줄입니다. */
+const BACKGROUND_SYNC_SKIP = 3;
 /** 턴이 서버에서 계산된 뒤 다음 동기화로 도착할 때까지의 여유. 이만큼 늦게 재생해야 턴 간격이 고르게 유지됩니다. */
 const REPLAY_LAG_MS = SYNC_MS + 500;
 /** 이보다 많은 턴이 밀리면(탭 복귀 등) 밀린 분은 건너뛰고 최신 상태로 맞춥니다. */
@@ -79,6 +82,8 @@ export function useGame() {
     const [state, setState] = useState<State | null>(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [saved, setSaved] = useState(false), [rows, setRows] = useState<Ranking[]>([]), [rankError, setRankError] = useState(''), [duel, setDuel] = useState<DuelResult | null>(null);
     const [needsLogin, setNeedsLogin] = useState(false);
     const lock = useRef(false), queue = useRef<Promise<unknown>>(Promise.resolve()), stateRef = useRef<State | null>(null);
+    /** v27.62 지금 화면이 전투(사냥·던전)를 보여 주는지. 아니면 동기화를 늦춥니다. */
+    const live = useRef(true);
     const [frames] = useState(createFrameStore), [replay] = useState(() => createReplay(frames.set));
     useEffect(() => replay.reset, [replay]);
     const request = useCallback(async (path: string, body?: unknown) => { const res = await fetch(path, { method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20000) }); const data = await res.json() as {
@@ -86,15 +91,19 @@ export function useGame() {
         state: State;
         result?: DuelResult;
         rows: Ranking[];
+        logDelta?: LogDelta;
     }; if (res.status === 401)
         setNeedsLogin(true); if (!res.ok)
         throw Error(data.error || '서버 연결에 실패했습니다.'); return data; }, []);
     const action = useCallback(async (a: Action, path = '/api/game') => { if (lock.current && a.type === 'sync')
         return; const previous = queue.current; let release!: () => void; queue.current = new Promise<void>(resolve => { release = resolve; }); await previous; lock.current = true; if (a.type !== 'sync')
         setBusy(true); try {
-        const data = await request(path, a);
+        // v27.62 동기화에는 가진 마지막 로그의 키를 붙여, 서버가 그 뒤 로그만 보내게 합니다(응답의 약 절반이 로그).
+        const known = a.type === 'sync' ? stateRef.current?.logs.at(-1) : undefined;
+        const data = await request(path, known ? { ...a, logKey: logKey(known) } : a);
         if (data.state) {
             const prev = stateRef.current;
+            if (data.logDelta) data.state.logs = mergeLogs(prev?.logs, data.state.logs, data.logDelta);
             stateRef.current = data.state;
             setState(data.state);
             // 동기화만 턴 단위로 재생합니다. 직접 한 행동과 오프라인 정산 결과는 지금처럼 바로 보여 줍니다.
@@ -189,7 +198,9 @@ export function useGame() {
     } }, [request, loadRanking, replay]);
     useEffect(() => { const first = setTimeout(() => send({ type: 'sync' }), 0); let ticks = 0; const timer = setInterval(() => { const s = stateRef.current; ticks++;
         // v25.21 자동 사냥이 꺼져 있고 던전도 아니면 10번에 한 번(30초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
-        if (document.visibilityState === 'visible' && (!s || s.running || s.dungeon || ticks % IDLE_SYNC_SKIP === 0))
+        // v27.62 진행 중이어도 전투를 보지 않는 화면이면 3번에 한 번(9초)만 동기화합니다.
+        const active = !!s && (s.running || !!s.dungeon);
+        if (document.visibilityState === 'visible' && (!s || (active && (live.current || ticks % BACKGROUND_SYNC_SKIP === 0)) || ticks % IDLE_SYNC_SKIP === 0))
         send({ type: 'sync' }); }, SYNC_MS); const visible = () => { if (document.visibilityState === 'visible')
         send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible); return () => { clearTimeout(first); clearInterval(timer); document.removeEventListener('visibilitychange', visible); }; }, [send]);
     useEffect(() => {
@@ -247,5 +258,7 @@ export function useGame() {
         replay.reset();
         setNeedsLogin(true);
     }, [replay]);
-    return { state, frames, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
+    /** 화면이 바뀔 때 GameShell이 부릅니다. 전투 화면으로 돌아오면 바로 한 번 동기화합니다. */
+    const setLive = useCallback((on: boolean) => { const was = live.current; live.current = on; if (on && !was) send({ type: 'sync' }); }, [send]);
+    return { state, frames, setLive, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
 }

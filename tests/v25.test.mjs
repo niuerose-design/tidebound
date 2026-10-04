@@ -674,3 +674,24 @@ test('v27.58 achievements: dungeon group replaces Mu Lung, new series per group 
     for (const id of ['level:70', 'nuri:1', 'golden:100', 'gold:10000000000', 'god:1']) assert.ok(s.achievements[id] !== undefined, id);
     claimAchievements(s, 'all'); assert.equal(s.sp - sp, 4, 'level:70 · golden:100 · gold:1e10 · god:1 each give SP +1');
 });
+
+test('v27.62 sync log delta: server sends only logs after the client key, client merge rebuilds the exact list', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const D = await L.load('systems/log-delta'), E = await L.load('systems/engine');
+    let x = 7; const rng = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const s = E.newState(0); E.act(s, { type: 'start' }, 0); E.advance(s, 120_000, rng);
+    const json = v => JSON.parse(JSON.stringify(v)), client = json(s.logs); // 클라이언트가 가진 목록(JSON으로 받은 것)
+    const firstBefore = s.logs[0].id;
+    E.advance(s, 130_000, rng); // 서버에서 로그가 몇 줄 더 쌓이고 앞쪽은 70줄 상한으로 빠짐
+    assert.ok(s.logs.length === 70 && s.logs[0].id > firstBefore, 'front logs dropped');
+    const cut = D.trimLogs(s.logs, D.logKey(client.at(-1)));
+    assert.ok(cut && cut.logs.length < s.logs.length && cut.logs.every(l => l.id > cut.delta.after), 'only newer logs are sent');
+    assert.deepEqual(D.mergeLogs(client, json(cut.logs), cut.delta), json(s.logs), 'merge equals the server list');
+    assert.equal(D.trimLogs(s.logs, 'nope'), null, 'unknown key → full list');
+    assert.equal(D.trimLogs(s.logs, undefined), null);
+    const reborn = E.newState(0); assert.equal(D.trimLogs(reborn.logs, D.logKey(client.at(-1))), null, 'restarted numbering → full list');
+    const gone = D.trimLogs(s.logs, D.logKey(s.logs.at(-1))); assert.deepEqual(gone.logs, [], 'nothing new');
+    assert.deepEqual(D.mergeLogs(s.logs, gone.logs, gone.delta), s.logs);
+    assert.deepEqual(D.mergeLogs([], cut.logs, cut.delta), cut.logs, 'missing base → just the new logs');
+    E.advance(s, 600_000, rng); assert.equal(D.trimLogs(s.logs, D.logKey(client.at(-1))), null, 'client fell behind the 70-log window → full list');
+});
