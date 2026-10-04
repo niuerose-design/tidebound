@@ -21,14 +21,14 @@ export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, 일반 던전은 0. */
 export const dungeonTier = (id: string, abyssDepth: number) => id === 'abyss' ? abyssDepth + 2 : 0;
-/** 잠든 닻 봉인 중에는 일반 낚시터 해역 난이도가 0으로 고정됩니다. */
+/** 잠든 닻 봉인 중에는 일반 사냥터 해역 난이도가 0으로 고정됩니다. */
 export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1) : s.vows?.seal ? 0 : (s.tide || 0);
-/** 해역 난이도 1단계당 포획 숙련 +30%. */
+/** 해역 난이도 1단계당 처치 숙련 +30%. */
 const TIDE_MASTERY_PER_TIER = .3;
 export const tierReward = (tier: number) => 1 + tier * .5;
-/** v27.21 해역 난이도별 포획 숙련 배율. 적이 커져 시간당 포획이 줄어드는 만큼을 숙련으로 돌려줍니다. */
+/** v27.21 해역 난이도별 처치 숙련 배율. 적이 커져 시간당 처치가 줄어드는 만큼을 숙련으로 돌려줍니다. */
 export const tierMastery = (tier: number) => 1 + tier * TIDE_MASTERY_PER_TIER;
-/** 포획 보상(골드 배율 적용 전). 전투 보상과 도감 화면 표시가 같은 식을 씁니다. */
+/** 처치 보상(골드 배율 적용 전). 전투 보상과 도감 화면 표시가 같은 식을 씁니다. */
 export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: number }, tier: number, boss = false) {
     const mult = boss ? MONSTER_TUNING.bossRewardMultiplier : 1;
     const rewardScale = f.rewardMultiplier || 1;
@@ -36,7 +36,7 @@ export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: n
 }
 /** v27.35 던전 보상에 쓰는 층 배율 단계(무릉도장은 rewardTierCap에서 멈춤). */
 export const dungeonRewardTier = (tier: number) => Math.min(tier, DUNGEON_TUNING.rewardTierCap);
-/** 던전 포획 보상(배율 적용 전). 보스는 권장 레벨 물고기 몇 마리분, 일반 웨이브는 어종 레벨을 권장 레벨 + 2까지만 셉니다. */
+/** 던전 처치 보상(배율 적용 전). 보스는 권장 레벨 몬스터 몇 마리분, 일반 웨이브는 몬스터 레벨을 권장 레벨 + 2까지만 셉니다. */
 export function dungeonCatchReward(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) {
     const t = tierReward(dungeonRewardTier(tier));
     if (boss) return { exp: Math.round(fishExpAt(dungeonLevel) * DUNGEON_TUNING.bossExpFish * t), gold: Math.round(fishGoldAt(dungeonLevel) * DUNGEON_TUNING.bossGoldFish * t) };
@@ -44,8 +44,8 @@ export function dungeonCatchReward(f: { level: number; rewardMultiplier?: number
     return { exp: Math.round(fishExpAt(level) * scale), gold: Math.round(fishGoldAt(level) * scale) };
 }
 export const dungeonExp = (f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) => dungeonCatchReward(f, dungeonLevel, tier, boss).exp;
-/** 클리어 보너스 골드의 기준값(골드 배율·층 배율 적용 전): 권장 레벨 물고기 clearGoldFish마리분. */
+/** 클리어 보너스 골드의 기준값(골드 배율·층 배율 적용 전): 권장 레벨 몬스터 clearGoldFish마리분. */
 export const dungeonClearBase = (d: { level: number }) => fishGoldAt(d.level) * DUNGEON_TUNING.clearGoldFish;
-/** 이 어종으로 해당 무리 규모를 고를 수 있는지 (도감 포획 수 기준). */
+/** 이 몬스터로 해당 무리 규모를 고를 수 있는지 (도감 처치 수 기준). */
 export const tierHealth = (tier: number) => 1 + tier * .35 + Math.pow(Math.max(0, tier - 20), 2) * .006;
 export const tierAttack = (tier: number) => 1 + tier * .18 + Math.pow(Math.max(0, tier - 20), 2) * .002;

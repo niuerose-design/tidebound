@@ -41,7 +41,7 @@ export async function POST(req: Request) { try {
     const player = await database.getPlayer(id);
     if (!player) throw new ApiError('먼저 게임을 시작하세요.');
     const state = JSON.parse(player.state) as State, title = displayTitle(state);
-    const name = `${title ? `[${title}] ` : ''}${String(state.name || '낚시꾼').slice(0, 20)}`;
+    const name = `${title ? `[${title}] ` : ''}${String(state.name || '모험가').slice(0, 20)}`;
     const row = await database.postChat({ channel, account_id: id, name, text, created_at: now });
     return Response.json({ row: { id: row.id, name: row.name, text: row.text, at: row.created_at, self: true }, now }, { headers: { 'Cache-Control': 'no-store' } });
 }

@@ -56,7 +56,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     useEffect(() => { if (!refreshed.current && me && !busy && Date.now() - me.updatedAt > 10 * 60 * 1000) { refreshed.current = true; register(); } }, [me, busy, register]);
     const detailLoadout = detail ? loadout(detail) : null, detailStats = detail ? normalizeStats(detail.stats) : null;
     return <>
-    <Heading eyebrow="ASYNC ARENA" title="낚시꾼의 명예" description="등록된 능력치와 스킬로 겨룹니다. 상대의 접속 여부와 관계없이 전투합니다.">
+    <Heading eyebrow="ASYNC ARENA" title="모험가의 명예" description="등록된 능력치와 스킬로 겨룹니다. 상대의 접속 여부와 관계없이 전투합니다.">
     <button className="primary" disabled={busy} onClick={register}>
     <ArrowUpRight size={17}/>내 전투 정보 등록</button>
     </Heading>
@@ -79,7 +79,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     </div>
     <Tabs defaultValue="ranking">
     <TabsList className="game-tabs">
-    <TabsTrigger value="ranking">낚시꾼 랭킹</TabsTrigger>
+    <TabsTrigger value="ranking">모험가 랭킹</TabsTrigger>
     <TabsTrigger value="training">훈련 상대</TabsTrigger>
     {s.rebirths >= 3 && <TabsTrigger value="abyss" onClick={() => { if (!abyss) loadAbyss(); }}>무릉도장 · 주간</TabsTrigger>}
     </TabsList>
@@ -92,13 +92,13 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     </div> : null; })()}
     <div className="panel ranking-panel">
     <div className="section-title">
-    <h2>등록된 낚시꾼 <small className="micro">최대 {BALANCE.duelMaxTurns}턴 · 무승부 지원 · 1분 간격</small></h2>
+    <h2>등록된 모험가 <small className="micro">최대 {BALANCE.duelMaxTurns}턴 · 무승부 지원 · 1분 간격</small></h2>
     <div className="ranking-sort" role="group" aria-label="정렬">{([['rating', '점수'], ['power', '전투력'], ['level', '레벨'], ['rebirths', '환생']] as const).map(([k, label]) => <button type="button" key={k} className={sort === k ? 'active' : ''} aria-pressed={sort === k} onClick={() => setSort(k)}>{label}</button>)}<button className="text-button" onClick={loadRanking}><RefreshCw size={14}/>새로고침</button></div>
     </div>{rankError ? <div className="error-box">{rankError}</div> : rows.length ? <Table>
         <TableHeader>
         <TableRow>
         <TableHead>순위</TableHead>
-        <TableHead>낚시꾼</TableHead>
+        <TableHead>모험가</TableHead>
         <TableHead>길드</TableHead>
         <TableHead>전투력</TableHead>
         <TableHead>점수</TableHead>
@@ -120,18 +120,18 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
             <button className="text-button" onClick={() => setDetail(r)}>상세보기</button>
             </TableCell>
             </TableRow>)}</TableBody>
-        </Table> : <Empty title="첫 번째 낚시꾼이 되어보세요" description="전투 정보를 등록하면 랭킹에 등장합니다. 다른 참가자가 없을 때는 훈련 상대와 대결할 수 있습니다."/>}</div>
+        </Table> : <Empty title="첫 번째 모험가가 되어보세요" description="전투 정보를 등록하면 랭킹에 등장합니다. 다른 참가자가 없을 때는 훈련 상대와 대결할 수 있습니다."/>}</div>
     </TabsContent>
     <TabsContent value="training">
-    <div className="section-title training-title"><h2><Users size={17}/> 등록된 낚시꾼</h2><span>방어용 등록 정보 그대로 · 점수·전적 변동 없음</span></div>
+    <div className="section-title training-title"><h2><Users size={17}/> 등록된 모험가</h2><span>방어용 등록 정보 그대로 · 점수·전적 변동 없음</span></div>
     {rows.length ? <div className="class-grid">{rows.map(r => <div className="panel training-card" key={r.id}>
         <Swords size={35}/>
-        <span className="badge">{r.self ? '내 등록 정보' : '등록된 낚시꾼'}</span>
+        <span className="badge">{r.self ? '내 등록 정보' : '등록된 모험가'}</span>
         <h2>{r.name}</h2>
         <p>Lv. {r.level} · {jobName(r.job)} · 환생 {r.rebirths}회</p>
         <MainStats stats={r.stats}/>
         <div className="training-actions"><button className="primary" disabled={busy} onClick={() => send({ type: 'training', id: `user:${r.id}` }, '/api/duel')}>연습 대결</button><button className="text-button" onClick={() => setDetail(r)}>상세보기</button></div>
-        </div>)}</div> : <p className="footnote">등록된 낚시꾼이 없어 던전 보스와 훈련합니다. 전투 정보를 등록하면 내 방어용 정보와도 연습할 수 있습니다.</p>}
+        </div>)}</div> : <p className="footnote">등록된 모험가가 없어 던전 보스와 훈련합니다. 전투 정보를 등록하면 내 방어용 정보와도 연습할 수 있습니다.</p>}
     <div className="section-title training-title"><h2><Fish size={17}/> 던전 보스</h2><span>던전 마지막 웨이브와 같은 능력치·스킬</span></div>
     <div className="class-grid">{BOSS_OPPONENTS.map(f => { const b = bossSnapshot(f.id)!, a = normalizeStats(b.stats); return <div className="panel training-card" key={f.id}>
         <Fish size={35}/>
@@ -189,8 +189,8 @@ function AbyssBoard({ s, abyss, reload }: { s: State; abyss: { week: string; row
         <div className="section-title"><h2><ArrowUpRight size={17}/> 이번 주 무릉도장 최고 층{abyss ? ` · ${abyss.week}` : ''}</h2><button className="text-button" onClick={reload}><RefreshCw size={13}/> 새로고침</button></div>
         <p className="footnote">무릉도장(환생 3회)에서 이번 주에 정복한 가장 깊은 층으로 겨룹니다. 한국 시간 월요일 0시에 새 주가 시작되고, 지난주 보상은 다음 행동 때 자동 지급: {rewards} · 참가 1진주. 내 기록은 심연을 정복하면 바로 올라갑니다.</p>
         {mine && <p className="abyss-mine">내 이번 주 기록 <b>{mine.best}층</b>{mine.dirty ? ' · 올리는 중' : ''}</p>}
-        {!abyss ? <p className="footnote">불러오는 중…</p> : !abyss.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 주에 무릉도장을 정복한 낚시꾼이 없습니다. 첫 기록을 남겨 보세요."/> :
-        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>낚시꾼</TableHead><TableHead>층</TableHead><TableHead>직업</TableHead><TableHead>환생</TableHead></TableRow></TableHeader>
+        {!abyss ? <p className="footnote">불러오는 중…</p> : !abyss.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 주에 무릉도장을 정복한 모험가가 없습니다. 첫 기록을 남겨 보세요."/> :
+        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>층</TableHead><TableHead>직업</TableHead><TableHead>환생</TableHead></TableRow></TableHeader>
         <TableBody>{abyss.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{r.depth}층</b></TableCell><TableCell>{jobName(r.job)}</TableCell><TableCell>{r.rebirths}</TableCell></TableRow>)}</TableBody></Table>}
     </section>;
 }

@@ -91,7 +91,7 @@ const ULTIMATES: Record<string, { kind: string; title: string; glyphs: string[] 
     frozenTime: { kind: 'time', title: '정지된 시간', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
 };
 /**
- * 낚시터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
+ * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
  * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)으로 충분하므로 배경에는 띄우지 않습니다.
  */
 export function SceneFx({ effect }: { effect: CombatFx[] }) {

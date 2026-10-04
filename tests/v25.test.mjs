@@ -101,7 +101,7 @@ test('v25.3 passive-route returns: the archivist passive scales with rebirths an
     assert.ok(gain(5, 'attack') - gain(0, 'attack') >= 25 && gain(5, 'attack') - gain(0, 'attack') <= 30, `+5 per rebirth before job scaling (${gain(5, 'attack') - gain(0, 'attack')})`);
     assert.ok(gain(12, 'hp') - gain(0, 'hp') >= 12 * 18); assert.equal(SKILLS.find(x => x.id === 'memoryOfTides').perCount[0].cap, 12, 'rebirth scaling caps at 12');
     assert.equal(stats({ ...s, rebirths: 3 }).rebirthBonus, 1);
-    // 떠돌이 낚시꾼: 숙달 직업 3개에서 발견의 문이 열리고, 패시브는 숙달 직업 수에 비례합니다.
+    // 떠돌이 모험가: 숙달 직업 3개에서 발견의 문이 열리고, 패시브는 숙달 직업 수에 비례합니다.
     const j = newState(0); j.level = 10; j.attributes = { str: 10, int: 10, vit: 10, dex: 0, wis: 0, luk: 0 };
     assert.equal(canChangeJob(j, 'journeyman'), false);
     for (const id of ['harpoon', 'tide', 'warden']) j.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
@@ -189,7 +189,7 @@ test('v25.6 achievements pay out once with permanent bonuses; daily/weekly goals
     act(s, { type: 'claimAchievement', id: 'kills:100' }, 0); assert.equal(s.pearls - pearls, 1);
     act(s, { type: 'claimAchievement', id: 'all' }, 0); assert.equal(s.pearls - pearls, 1 + 2 + 1 + 3, 'claim all pays the rest once');
     assert.throws(() => act(s, { type: 'claimAchievement', id: 'all' }, 0), /없습니다/);
-    s.kills = 20000; syncAchievements(s, t => logs.push(t)); assert.ok(logs.at(-1).includes('포획 20,000마리'));
+    s.kills = 20000; syncAchievements(s, t => logs.push(t)); assert.ok(logs.at(-1).includes('처치 20,000마리'));
     act(s, { type: 'claimAchievement', id: 'all' }, 0);
     const totals = achievementTotals(s); assert.ok(totals.bonus.attack > 0 && totals.bonus.hp > 0);
     s.abyssBest = 25; syncAchievements(s, () => {}); act(s, { type: 'claimAchievement', id: 'abyss:25' }, 0); assert.equal(apCapacity(s), ap + 1, 'claimed achievement AP raises capacity');
@@ -262,7 +262,7 @@ test('v25.7 salvage research sells or dismantles all non-relic gear at rebirth w
     assert.throws(() => act(s, { type: 'salvageMode', value: 'dismantle' }, 0), /연구/);
     act(s, { type: 'rebirth' }, 0); assert.equal(s.gold, 100, 'no research → nothing salvaged'); assert.equal(s.inventory.length, 1);
     const t = newState(0); t.level = 35; t.rebirths = 1; t.permanent = { salvage: 1 }; assert.equal(salvageRate(t), .4); t.inventory = [gear(1), gear(3)]; t.equipment.coat = gear(2);
-    const expected = Math.floor((saleValue(gear(1)) + saleValue(gear(3)) + saleValue(gear(2)) + saleValue(t.equipment.rod)) * .4); // 시작 낚싯대도 일반 장비라 함께 팝니다.
+    const expected = Math.floor((saleValue(gear(1)) + saleValue(gear(3)) + saleValue(gear(2)) + saleValue(t.equipment.rod)) * .4); // 시작 무기도 일반 장비라 함께 팝니다.
     act(t, { type: 'rebirth' }, 0); assert.equal(t.gold, 100 + expected, 'sold at 40% into next life gold'); assert.ok(t.logs.some(l => /환생 정리 · 장비 4개 판매/.test(l.text)));
     const u = newState(0); u.level = 40; u.rebirths = 2; u.permanent = { salvage: 5 }; assert.equal(salvageRate(u), 1); u.inventory = [gear(4)]; u.essence = 3;
     act(u, { type: 'salvageMode', value: 'dismantle' }, 0); act(u, { type: 'rebirth' }, 0); assert.equal(u.essence, 3 + dismantleEssence(gear(4)) + 2, 'dismantled at 100% (+ starter rod and coat, 1 essence each)'); assert.equal(u.gold, 100); assert.equal(u.salvageMode, 'dismantle', 'mode survives rebirth');
@@ -303,7 +303,7 @@ test('v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) 
     assert.ok(ACHIEVEMENTS.some(a => a.id === `stages:${STAGES.length}`) && ACHIEVEMENTS.some(a => a.id === `dungeons:${DUNGEONS.length}`));
     const s = newState(0); s.level = 60; s.rebirths = 4; assert.throws(() => act(s, { type: 'stage', id: 'duskVents' }, 0)); s.rebirths = 5; act(s, { type: 'stage', id: 'duskVents' }, 0); assert.equal(s.stage, 'duskVents');
     assert.throws(() => act(s, { type: 'dungeon', id: 'ventCathedral' }, 0)); s.rebirths = 8; act(s, { type: 'dungeon', id: 'ventCathedral' }, 0); assert.equal(s.dungeon.id, 'ventCathedral');
-    assert.equal(rebirthTitle(4), ''); assert.equal(rebirthTitle(5), '되돌아온 낚시꾼'); assert.equal(rebirthTitle(49), '심연을 건넌 자'); assert.equal(rebirthTitle(120), '영원의 낚시꾼'); assert.equal(nextRebirthTitle(10).rebirths, 20); assert.equal(nextRebirthTitle(50), undefined);
+    assert.equal(rebirthTitle(4), ''); assert.equal(rebirthTitle(5), '되돌아온 모험가'); assert.equal(rebirthTitle(49), '심연을 건넌 자'); assert.equal(rebirthTitle(120), '영원의 모험가'); assert.equal(nextRebirthTitle(10).rebirths, 20); assert.equal(nextRebirthTitle(50), undefined);
 });
 
 test('v25.11 guild goals scale with members, points formula, weekly stats accumulate and reset by week', async () => {
@@ -454,7 +454,7 @@ test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is
     assert.equal(W.stageStatFish(storm, reef.level).level, reef.level + W.STAGE_ENEMY_LEVEL_OVER); assert.ok(W.stageStatFish(storm, reef.level).hp < storm.hp);
     const fish = W.FISH.find(f => f.id === abyss.fish[0]);
     assert.ok(E.scaledEnemyStats(fish, { tier: 50, wave: 0 }).speed > E.scaledEnemyStats(fish, { tier: 0, wave: 0 }).speed * 1.9, 'deep dungeon tiers are faster');
-    // v27.35 무한 심연: 1층 체력 10만에서 층마다 가파르게, 보상은 상한에서 멈춤. 던전 클리어 골드는 권장 레벨 물고기 몇 마리분.
+    // v27.35 무한 심연: 1층 체력 10만에서 층마다 가파르게, 보상은 상한에서 멈춤. 던전 클리어 골드는 권장 레벨 몬스터 몇 마리분.
     const Enc = await L.load('systems/encounter'), ref = Enc.abyssReference();
     assert.equal(E.abyssEnemyStats(fish, ref, 1, { wave: 0 }).hp, B.ABYSS_TUNING.hp);
     assert.ok(E.abyssEnemyStats(fish, ref, 20, { wave: 0 }).hp > B.ABYSS_TUNING.hp * 10 && E.abyssEnemyStats(fish, ref, 20, { wave: 0 }).attack > E.abyssEnemyStats(fish, ref, 1, { wave: 0 }).attack * 4);

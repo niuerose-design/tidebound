@@ -7,7 +7,7 @@ import { rollAffix, enhanceCost, reforgeCost, bulkItems, saleValue, dismantleEss
 import { rollAffixes } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** 상점·뽑기 골드 가격. 항구 단골 할인(−2%/단계, 내림)을 적용합니다. */
-/** v27.30 확정 구매·감정 가격: 예전 정비례 가격과 '그 레벨 물고기 골드 × 배수' 중 큰 값. 감정은 매번 희귀 이상이라 드롭(포획당 0.1%)보다 훨씬 유리했습니다. */
+/** v27.30 확정 구매·감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 배수' 중 큰 값. 감정은 매번 희귀 이상이라 드롭(처치당 0.1%)보다 훨씬 유리했습니다. */
 const SHOP_FISH = { buy: 30, gamble: 60 };
 const fishPrice = (s: State, n: number) => fishGoldAt(Math.min(PRICE_LEVEL_CAP, s.level)) * n;
 export const shopCost = (s: State) => Math.floor(Math.max(ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel, fishPrice(s, SHOP_FISH.buy)) * shopDiscount(s));
@@ -176,7 +176,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (!tab)
             throw Error('연구 탭을 확인하세요.');
         if (s.running || s.dungeon)
-            throw Error('자동 낚시를 멈추고 던전에서 나온 뒤 재분배하세요.');
+            throw Error('자동 사냥을 멈추고 던전에서 나온 뒤 재분배하세요.');
         const { refund, ranks } = researchRefund(s, tab.id);
         if (refund <= 0)
             throw Error('돌려받을 진주가 없습니다.');

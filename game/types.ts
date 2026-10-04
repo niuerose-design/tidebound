@@ -48,20 +48,20 @@ export type Stats = {
     followUpBonus?: number;
     healBonus?: number;
     executeBonus?: number;
-    /** v24.2 진행도 비례 피해의 기준값(능력치 계산이 채움). 도감 종 수 · log10(누적 포획) · √(던전 클리어+보스 처치) · log10(보유 골드). */
+    /** v24.2 진행도 비례 피해의 기준값(능력치 계산이 채움). 도감 종 수 · log10(누적 처치) · √(던전 클리어+보스 처치) · log10(보유 골드). */
     codexPower?: number;
     catchPower?: number;
     huntPower?: number;
     goldPower?: number;
     /** v25.4 숙달한 직업 수(숙달 비례 피해의 기준값). */
     masteredPower?: number;
-    /** v25.23 √(변종·황금 포획 수). 변종 기록 비례 피해의 기준값. */
+    /** v25.23 √(변종·황금 처치 수). 변종 기록 비례 피해의 기준값. */
     variantPower?: number;
     /** v26.2 배분 능력치 원값(외길 계보의 능력치 비례 피해용). 능력치 계산이 채웁니다. */
     attrStr?: number; attrDex?: number; attrInt?: number; attrVit?: number; attrWis?: number; attrLuk?: number;
-    /** v25.23 변종 조우 확률 증가(0.5 = ×1.5). 난파선 수집가 계보 패시브. */
+    /** v25.23 변종 조우 확률 증가(0.5 = ×1.5). 섀도어 계보 패시브. */
     variantFind?: number;
-    /** v25.23 포획마다 황금 개체가 될 확률(그 한 마리 골드 10배). */
+    /** v25.23 처치마다 황금 개체가 될 확률(그 한 마리 골드 10배). */
     goldenFind?: number;
     /** v27.18 극 치명타 확률: 치명타 확률이 상한(60%)을 넘은 몫. 치명타가 뜬 뒤 이 확률로 극 치명타(치명 피해 × superCritBonus). */
     superCrit?: number;
@@ -113,7 +113,7 @@ export type Item = {
     };
     /** v22 등급 수만큼 붙는 옵션(0~6개). */
     affixes?: import('./data/gear').ItemAffix[];
-    /** 드롭한 낚시터·던전 id. */
+    /** 드롭한 사냥터·던전 id. */
     origin?: string;
     id: string;
     name: string;
@@ -195,7 +195,7 @@ export type Skill = {
     song?: boolean;
     /** v24.2 골드 투척: 보유 골드의 ratio(최대 cap)를 쓰고, 쓴 골드 × scale을 피해에 더합니다. */
     goldSpend?: { ratio: number; cap: number; scale: number };
-    /** v24.2 사냥감 연구: 보스·지정 어종에게 직접 피해 +preyBonus. */
+    /** v24.2 사냥감 연구: 보스·지정 몬스터에게 직접 피해 +preyBonus. */
     preyBonus?: number;
     scalingRatio?: number;
     statusTurns?: number;
@@ -231,7 +231,7 @@ export type Skill = {
     };
 };
 export type Enemy = {
-    /** v27.16 양쪽 체력이 그대로인 턴 수. 오래 이어지면 물고기가 달아난 것으로 보고 새 입질을 받습니다. */
+    /** v27.16 양쪽 체력이 그대로인 턴 수. 오래 이어지면 몬스터가 달아난 것으로 보고 새 몬스터를 맞이합니다. */
     stale?: number;
     /** 무리 규모(N). 무리 전체가 체력 ×N인 한 개체입니다. 없으면 한 마리. */
     swarm?: number;
@@ -317,12 +317,12 @@ export type State = {
     lifeBonus?: 'deep' | 'tailwind' | null;
     /** v26.1 지금 진행 중인 서버 이벤트(서버가 동기화 때 적음). 없으면 null. */
     event?: import('./data/events').ActiveEvent | null;
-    /** v27.31 운영 페이지에서 닫은 낚시터·던전(서버가 동기화 때 적음). 없으면 null. */
+    /** v27.31 운영 페이지에서 닫은 사냥터·던전(서버가 동기화 때 적음). 없으면 null. */
     closed?: import('./data/world').Closures | null;
     skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
     growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number; notified?: boolean } | null;
-    /** 마지막으로 자동 진행(낚시·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
+    /** 마지막으로 자동 진행(사냥·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
     runEnd?: { reason: string; turn: number } | null;
     /** 튜토리얼 카드. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. */
     tutorial?: { hidden?: boolean; skipped?: boolean };
@@ -339,7 +339,7 @@ export type State = {
     weekly?: import('./data/goals').GoalBoard;
     /** v25.6 이번 주 무릉도장 최고 깊이. settled는 보상을 정산한 지난주 키. */
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
-    /** v25.8 낚시터별 포획한 최고 해역 난이도(차수). 이정표 진주와 업적에 씁니다. */
+    /** v25.8 사냥터별 처치한 최고 해역 난이도(차수). 이정표 진주와 업적에 씁니다. */
     tideBest?: Record<string, number>;
     /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위 보상을 한 번 정산합니다. */
     duelSeason?: { key: string; lastKey?: string; lastRank?: number };
@@ -422,9 +422,9 @@ export type State = {
     salvageMode?: 'sell' | 'dismantle';
     /** v25.21 누적 플레이 시간(ms). 턴이 진행될 때마다 더하고 환생해도 유지합니다(‘도전’ 업적). */
     playMs?: number;
-    /** 황금 개체를 잡은 횟수(어종별). */
+    /** 황금 개체를 잡은 횟수(몬스터별). */
     goldenBook?: Record<string, number>;
-    /** v25.19 변종을 잡은 횟수(어종별 → 변종별). */
+    /** v25.19 변종을 잡은 횟수(몬스터별 → 변종별). */
     variantBook?: Record<string, Partial<Record<'giant' | 'abyssal' | 'starlit' | 'swarm', number>>>;
     /** 이번 생에 걸린 서약. */
     vows?: Vows;

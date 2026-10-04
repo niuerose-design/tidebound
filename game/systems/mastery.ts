@@ -15,7 +15,7 @@ export function masteryConditionText(sk: Skill) {
     return names ? `${names}${rule.bossOnly ? ' (보스)' : ''}` : rule.bossOnly ? '모든 보스' : '모든 적';
 }
 
-/** 포획당 숙련 획득량. base는 기본 획득(보통 1), bonus는 조건부 보너스. 스킬 설명과 실제 지급이 같은 식을 씁니다. */
+/** 처치당 숙련 획득량. base는 기본 획득(보통 1), bonus는 조건부 보너스. 스킬 설명과 실제 지급이 같은 식을 씁니다. */
 export const masteryPerVictory = (bonus: number, base = 1) => Math.min(PROGRESSION.maxMasteryPerVictory + base - 1, base + Math.max(0, Math.floor(bonus)));
 /**
  * 숙련의 기억: 숙련 획득 +5%/단계. 숙련은 정수라 소수점은 s.masteryCarry에 1/20 단위 정수로 누적합니다.
@@ -47,8 +47,8 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
     return { amount, base, bonus: amount - base, source };
 }
 /**
- * 포획 숙련 배율(조건부 스킬 보너스 제외). 전투 보상과 능력치 화면이 같은 식을 씁니다.
- * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · tide: 해역 난이도(던전은 1) · research: 숙련의 기억 + 계정 어종 보너스(+5%/단계).
+ * 처치 숙련 배율(조건부 스킬 보너스 제외). 전투 보상과 능력치 화면이 같은 식을 씁니다.
+ * focus: 계열 집중 카드 ×2 · event: 서버 이벤트 · tide: 해역 난이도(던전은 1) · research: 숙련의 기억 + 계정 몬스터 보너스(+5%/단계).
  */
 export function masteryMultipliers(s: State) {
     const focus = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;

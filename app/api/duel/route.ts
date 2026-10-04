@@ -14,8 +14,8 @@ export async function POST(req: Request) {
         let opponent: Snapshot;
         const training = a.type === 'training';
         if (training) {
-            // 훈련 상대: 등록된 낚시꾼(자기 자신 포함)의 방어 정보 또는 던전 보스. 점수·전적은 바뀌지 않습니다.
-            // 행 id에 ':'가 들어가므로(duel:<시즌>:<낚시꾼>) 첫 구분자에서만 나눕니다.
+            // 훈련 상대: 등록된 모험가(자기 자신 포함)의 방어 정보 또는 던전 보스. 점수·전적은 바뀌지 않습니다.
+            // 행 id에 ':'가 들어가므로(duel:<시즌>:<모험가>) 첫 구분자에서만 나눕니다.
             const raw = String(a.id || ''), cut = raw.indexOf(':'), kind = cut < 0 ? raw : raw.slice(0, cut), target = cut < 0 ? '' : raw.slice(cut + 1);
             if (kind === 'user') {
                 const row = await db().getRanking(target || '', seasonNo);
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
         }
         else {
             if (a.type !== 'ranked' || a.id === myRow || a.id === id)
-                throw new ApiError('다른 낚시꾼을 선택하세요.');
+                throw new ApiError('다른 모험가를 선택하세요.');
             const row = await db().getRanking(a.id || '', seasonNo);
             if (!row)
                 throw new ApiError('상대가 등록되지 않았습니다.');

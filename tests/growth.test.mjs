@@ -60,7 +60,7 @@ test('Level ups grant native skills but no SP',()=>{
 test('Combat feedback preserves both actors, healing target and follow-up misses',()=>{
  const logs=[
  {id:10,type:'battle',text:'나 · 쌍갈고리 [치명타] → 150 물리 피해 · 20 회복 · 추가타 50 · 추가타 2 빗나감'},
- {id:11,type:'battle',text:'물고기 · 기본 공격 → 8 물리 피해 · 침묵 중'},
+ {id:11,type:'battle',text:'몬스터 · 기본 공격 → 8 물리 피해 · 침묵 중'},
  {id:12,type:'battle',text:'나: 기절로 행동 불가.'}];
  const batch=combatFxBatch(logs,9,'나');assert.equal(batch.length,3);assert.deepEqual(batch.map(f=>f.actor),['player','enemy','player']);
  assert.deepEqual(batch[0].hits.map(h=>h.value),[100,50,0]);assert.equal(batch[0].kind,'physical');assert.equal(batch[0].target,'enemy');assert.equal(batch[0].healing,20);assert.equal(batch[0].hits[0].critical,true);

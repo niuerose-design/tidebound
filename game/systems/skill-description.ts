@@ -14,8 +14,8 @@ export const skillPercent = (n: number) => `${number(n * 100)}%`;
 export function skillBonusText(key: string, value: number) {
     return `${STAT_LABELS[key as keyof Stats] || key} ${statDeltaDisplay(key, value)}`;
 }
-const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '던전 클리어·보스 포획', species: '지정 어종 포획', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업', variant: '변종·황금 포획', str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
-const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 포획', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록' };
+const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '던전 클리어·보스 처치', species: '지정 몬스터 처치', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업', variant: '변종·황금 처치', str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
+const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록' };
 const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' };
 /** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */
 /** v27.15 도감의 적 스킬 한 줄: '물리 150%' · '출혈 5턴' · '물리 110% · 자신 가속 3턴'. 긴 문장은 쓰지 않습니다. */
@@ -56,7 +56,7 @@ export function skillBrief(sk: Skill): string {
     if (sk.gamble) parts.push([sk.gamble.min !== sk.gamble.max ? `주사위 ×${number(sk.gamble.min)}~${number(sk.gamble.max)}` : '', sk.gamble.accuracy ? `명중 ±${skillPercent(sk.gamble.accuracy)}p` : ''].filter(Boolean).join(' · '));
     if (sk.allIn) parts.push(`체력 ${skillPercent(sk.allIn.hpRatio)}·마나 전부 소모`);
     if (sk.goldSpend) parts.push(`골드 ${skillPercent(sk.goldSpend.ratio)} 투척`);
-    if (sk.preyBonus) parts.push(`보스·지정 어종 +${skillPercent(sk.preyBonus)}`);
+    if (sk.preyBonus) parts.push(`보스·지정 몬스터 +${skillPercent(sk.preyBonus)}`);
     return parts.join(' · ');
 }
 /** Describes the effective values used by combat, including HP/MP scaling and follow-ups. */
@@ -74,10 +74,10 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         const typeWord = sk.damageType === 'split' ? '복합 피해로 ' : '';
         const damage = `${typeWord}${base.length > 1 ? `(${base.join(' + ')})` : base[0]}의 ${number((sk.multiplier || 1) * 100)}%로 때립니다${sk.id === 'crush' ? `. 물리 방어 × ${number(SKILL_FORMULA.crushDefense)}를 더합니다` : ''}`;
         out.push(sk.restoreAll ? '직접 피해 없음. 나와 상대의 체력·마나를 모두 가득 채웁니다(전투당 1회, 쓸 때마다 직업 숙련 +25).' : sk.statusOnly ? '직접 피해 없음.' : `${damage}.`);
-        if (sk.scaling === 'codex') out.push(`도감 기록(발견한 어종 + 등록한 물건) 1개마다 피해가 ${skillPercent(sk.scalingRatio ?? 0)} 커집니다.`);
-        if (sk.scaling === 'catch') out.push(`피해 × (1 + log10(누적 포획 + 1) × ${number(sk.scalingRatio ?? 0)}) · 포획 10배마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
-        if (sk.scaling === 'hunt') out.push(`피해 × (1 + √(던전 클리어 + 보스 포획) × ${number(sk.scalingRatio ?? 0)})`);
-        if (sk.scaling === 'variant') out.push(`피해 × (1 + √(변종·황금 포획 수) × ${number(sk.scalingRatio ?? 0)})`);
+        if (sk.scaling === 'codex') out.push(`도감 기록(발견한 몬스터 + 등록한 물건) 1개마다 피해가 ${skillPercent(sk.scalingRatio ?? 0)} 커집니다.`);
+        if (sk.scaling === 'catch') out.push(`피해 × (1 + log10(누적 처치 + 1) × ${number(sk.scalingRatio ?? 0)}) · 처치 10배마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
+        if (sk.scaling === 'hunt') out.push(`피해 × (1 + √(던전 클리어 + 보스 처치) × ${number(sk.scalingRatio ?? 0)})`);
+        if (sk.scaling === 'variant') out.push(`피해 × (1 + √(변종·황금 처치 수) × ${number(sk.scalingRatio ?? 0)})`);
         if (sk.scaling === 'mastered') out.push(`숙달한 직업 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'luck') out.push(`물리 공격 × (치명 피해 배율 − 1) × ${number(sk.scalingRatio ?? 1)} 추가(행운 비례)`);
         if (sk.scaling === 'gold') out.push(`피해 × (1 + log10(보유 골드 + 1) × ${number(sk.scalingRatio ?? 0)}) · 골드 자릿수가 늘 때마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
@@ -92,7 +92,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.sealPower) out.push(`이번 전투에 새긴 인 1개마다 피해 +${skillPercent(sk.sealPower)}`);
         if (sk.selfEffect) out.push(`쓰고 나면 자신 ${{ stun: '기절', slow: '감속', weaken: '약화' }[sk.selfEffect.status]} ${sk.selfEffect.turns}턴${sk.selfEffect.waivedBy ? ` · ${skillById(sk.selfEffect.waivedBy)?.name || ''}을 장착하면 생략` : ''}`);
         if (sk.seal) out.push('쓰면 이번 전투의 인(印)을 하나 새깁니다');
-        if (sk.preyBonus) out.push(`보스와 지정 어종(전류 곰치·불씨 곰치·머쉬맘)에게는 직접 피해가 ${skillPercent(sk.preyBonus)} 커집니다.`);
+        if (sk.preyBonus) out.push(`보스와 지정 몬스터(전류 곰치·불씨 곰치·머쉬맘)에게는 직접 피해가 ${skillPercent(sk.preyBonus)} 커집니다.`);
         if (sk.damageType === 'split') out.push(`복합 피해는 물리 ${skillPercent(SKILL_FORMULA.splitPhysical)}·마법 ${skillPercent(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각의 방어를 적용합니다. 명중·치명 판정은 한 번이고, 장비·버프는 원시 피해에 들어가지 않습니다.`);
         if (sk.accuracyBonus) out.push(`이 기술은 명중이 ${skillPercent(sk.accuracyBonus)}p 높습니다.`);
         if (sk.penetrationBonus) out.push(`이 기술은 방어 관통이 ${skillPercent(sk.penetrationBonus)}p 높습니다(합계 최대 85%).`);
@@ -124,7 +124,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.perRebirth) out.push(`환생 1회마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);
     if (sk.penaltyRelief) out.push(`현재 직업의 마이너스 보정(체력·공격·방어 배율) ${skillPercent(sk.penaltyRelief)} 회복 · 여러 개면 가장 큰 값만`);
     if ((jobById(sk.job)?.tier || 0) >= SKILL_FORMULA.signatureTier) out.push(`전용 기술입니다. 계보 밖 직업이 계승하면 ${sk.type === 'active' ? '피해 배율' : '능력치'}이 ×${number(SKILL_FORMULA.signatureScale)}로 줄어듭니다.`);
-    if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 포획 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
+    if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 처치 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
     if (sk.type === 'passive' && !sk.song && !sk.levelEffects && SKILL_FORMULA.masteredPassiveAP) out.push(level >= maxSkillLevel(sk) ? `최대 성장을 마쳐 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어 있습니다.` : `최대 성장(Lv.${maxSkillLevel(sk)})에 닿으면 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어듭니다.`);
     const rewards = skillMasteryRewards(sk, level + 1);
     if (rewards.ap) out.push(`최대 성장 보상: 장착 AP 한도 +${rewards.ap}`);

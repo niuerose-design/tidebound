@@ -32,7 +32,7 @@ function repeatLabel(r?: { left: number | null; until?: number }) {
     if (r.until) return ` (반복 · ${r.until}층까지)`;
     return r.left === null ? ' (반복 · 실패할 때까지)' : r.left === 0 ? ' (반복 · 마지막 도전)' : ` (반복 · 이후 ${r.left}회 더)`;
 }
-/** 반복 도전이 끝나면 낚시터로 돌아가 자동 낚시를 이어갑니다. */
+/** 반복 도전이 끝나면 사냥터로 돌아가 자동 사냥을 이어갑니다. */
 export function continueRepeat(s: State, id: string, repeat: { left: number | null; until?: number }) {
     const d = DUNGEONS.find(x => x.id === id)!;
     const reached = repeat.until !== undefined && s.abyssBest >= repeat.until;
@@ -43,6 +43,6 @@ export function continueRepeat(s: State, id: string, repeat: { left: number | nu
         return;
     }
     s.running = true;
-    endRun(s, `${d.name} 반복 종료 · ${reached ? `목표 ${repeat.until}층 도달` : !allowed ? '입장 조건 미달' : '설정한 횟수 완료'} → 자동 낚시로 전환`);
-    addLog(s, `${d.name} 반복 도전 종료${reached ? ` · 목표 ${repeat.until}층 도달` : ''} · 낚시터에서 자동 낚시를 이어갑니다.`);
+    endRun(s, `${d.name} 반복 종료 · ${reached ? `목표 ${repeat.until}층 도달` : !allowed ? '입장 조건 미달' : '설정한 횟수 완료'} → 자동 사냥으로 전환`);
+    addLog(s, `${d.name} 반복 도전 종료${reached ? ` · 목표 ${repeat.until}층 도달` : ''} · 사냥터에서 자동 사냥을 이어갑니다.`);
 }

@@ -1,11 +1,11 @@
-/** 물고기 도감 보상: 성향별 연구 능력치, 생태 연구, 지역 테마, 정보 공개 기준. */
+/** 몬스터 도감 보상: 성향별 연구 능력치, 생태 연구, 지역 테마, 정보 공개 기준. */
 import type { CombatStats } from '../types';
 
 export type BookTraitGroup = 'swift' | 'armored' | 'arcane' | 'venom' | 'silencer' | 'controller' | 'frenzy' | 'boss';
 type StatBonus = Partial<CombatStats>;
 
 /**
- * 연구 단계(50·500·2500·10000회)마다 어종 성향에 맞는 능력치를 줍니다.
+ * 연구 단계(50·500·2500·10000회)마다 몬스터 성향에 맞는 능력치를 줍니다.
  * 직업·환생 배율 전에 더하는 고정값입니다(이전의 공격·마법 +1과 같은 위치).
  */
 export const BOOK_TRAITS: Record<BookTraitGroup, { name: string; perStage: StatBonus }> = {
@@ -18,19 +18,19 @@ export const BOOK_TRAITS: Record<BookTraitGroup, { name: string; perStage: StatB
     frenzy: { name: '광폭 포식자', perStage: { attack: 1, critDamage: .015 } },
     boss: { name: '던전 보스', perStage: { attack: 1, magic: 1, hp: 5 } },
 };
-/** 적 전투 성향 → 도감 보상 성향. 보스 어종은 성향과 관계없이 boss입니다. */
+/** 적 전투 성향 → 도감 보상 성향. 보스 몬스터는 성향과 관계없이 boss입니다. */
 export const PROFILE_TRAIT: Record<string, BookTraitGroup> = {
     swift: 'swift', armored: 'armored', arcane: 'arcane', venom: 'venom', silencer: 'silencer', controller: 'controller', frenzy: 'frenzy',
     stormEel: 'arcane', venomBoss: 'venom', arcaneBoss: 'arcane', boss: 'boss',
 };
 
 /**
- * 생태 연구: 2단계(500회)부터 해당 어종을 상대할 때만 적용합니다.
+ * 생태 연구: 2단계(500회)부터 해당 몬스터를 상대할 때만 적용합니다.
  * 달성한 단계마다(2·3·4단계) 주는 피해 +2%, 받는 공격 피해 -1% → 최대 +6% / -3%.
  */
 export const BOOK_ECOLOGY = { fromStage: 2, dealtPerStage: .02, takenPerStage: .01 };
 
-/** 포획 50회: 해당 어종의 성향·스킬·능력치 정보를 전투와 도감에 공개합니다. */
+/** 처치 50회: 해당 몬스터의 성향·스킬·능력치 정보를 전투와 도감에 공개합니다. */
 export const BOOK_REVEAL = 50;
 
 /** 지역 테마 보너스: 지역의 모든 종을 완성(50회)하면 적용됩니다. AP +1은 별도로 유지됩니다. */

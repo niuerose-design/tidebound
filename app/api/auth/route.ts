@@ -33,9 +33,9 @@ export async function POST(req: Request) { try {
     if (body.action === 'login' && !allow(`login:${clientIp(req)}`, 20, 5 * 60 * 1000)) throw new ApiError('로그인 시도가 너무 잦습니다. 잠시 뒤 다시 시도하세요.', 429);
     if (body.action !== 'signup' && body.action !== 'login')
         throw new ApiError('올바르지 않은 요청입니다.');
-    // v26.8 가입 때 낚시꾼 이름(2~16자)을 함께 받아 첫 캐릭터에 바로 적용합니다. 이름이 올바르지 않으면 계정을 만들기 전에 거절합니다.
+    // v26.8 가입 때 모험가 이름(2~16자)을 함께 받아 첫 캐릭터에 바로 적용합니다. 이름이 올바르지 않으면 계정을 만들기 전에 거절합니다.
     const fisherName = body.action === 'signup' ? String(body.name ?? '').trim() : '';
-    if (body.action === 'signup' && (fisherName.length < 2 || fisherName.length > 16)) throw new ApiError('낚시꾼 이름은 2~16자로 입력하세요.');
+    if (body.action === 'signup' && (fisherName.length < 2 || fisherName.length > 16)) throw new ApiError('모험가 이름은 2~16자로 입력하세요.');
     const session = body.action === 'signup' ? await signUp(body.username, body.password) : await logIn(body.username, body.password);
     if (body.action === 'signup') { const now = Date.now(); await db().createPlayerIfMissing(session.accountId, JSON.stringify({ ...newState(now), name: fisherName }), now); }
     const headers = new Headers({ 'Cache-Control': 'no-store' });

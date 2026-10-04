@@ -1,5 +1,5 @@
 /**
- * v27.27 운영 페이지에서 바꾼 서버 이벤트(settings.events)와 v27.31 닫은 낚시터·던전(settings.closures)을
+ * v27.27 운영 페이지에서 바꾼 서버 이벤트(settings.events)와 v27.31 닫은 사냥터·던전(settings.closures)을
  * DB에서 읽어 게임 계산에 넣습니다. 인스턴스마다 30초 캐시라 두 설정 모두 30초에 한 번만 읽습니다.
  */
 import { db } from './db';
@@ -16,7 +16,7 @@ export async function readEventConfig(): Promise<EventConfig> {
     catch { return { extra: [], disabled: [] }; }
 }
 const CLOSURES_KEY = 'closures';
-/** 저장한 적이 없으면 기본값(무릉도장 닫힘). 모르는 id와 첫 낚시터는 버립니다. */
+/** 저장한 적이 없으면 기본값(무릉도장 닫힘). 모르는 id와 첫 사냥터는 버립니다. */
 export async function readClosures(): Promise<Closures> {
     const raw = await db().getSetting(CLOSURES_KEY);
     if (!raw) return { dungeons: [...DEFAULT_CLOSURES.dungeons], stages: [...DEFAULT_CLOSURES.stages] };

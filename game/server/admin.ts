@@ -45,7 +45,7 @@ const view = (id: string, username: string, revision: number, updatedAt: number,
     return { id, username, slot: Number(slot || 1), name: s.name, level: s.level, job: jobById(s.job)?.name || s.job, rebirths: s.rebirths || 0, pearls: s.pearls || 0, gold: Math.floor(s.gold || 0), sp: spView(s), inDungeon: !!s.dungeon, revision, updatedAt };
 };
 
-/** 낚시꾼 이름(부분 일치) 또는 로그인 아이디(정확히)로 찾습니다. 최대 30명. */
+/** 모험가 이름(부분 일치) 또는 로그인 아이디(정확히)로 찾습니다. 최대 30명. */
 export async function searchPlayers(query: string) {
     const q = query.trim();
     if (q.length < 1 || q.length > 40) throw new ApiError('검색어는 1~40자입니다.');
@@ -162,9 +162,9 @@ export async function toggleCodeEvent(id: string, disabled: boolean) {
     return listEvents();
 }
 
-// ---------- v27.31 낚시터·던전 입장 막기 ----------
+// ---------- v27.31 사냥터·던전 입장 막기 ----------
 
-/** 낚시터·던전 목록과 닫힘 여부. 첫 낚시터는 닫을 수 없습니다. */
+/** 사냥터·던전 목록과 닫힘 여부. 첫 사냥터는 닫을 수 없습니다. */
 export async function listClosures() {
     const c = await readClosures();
     return {
@@ -172,11 +172,11 @@ export async function listClosures() {
         dungeons: DUNGEONS.map(d => ({ id: d.id, name: d.name, closed: c.dungeons.includes(d.id), locked: false })),
     };
 }
-/** 한 곳을 닫거나 엽니다. 안에 있던 낚시꾼은 다음 동기화 때 보상 없이 나옵니다. */
+/** 한 곳을 닫거나 엽니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나옵니다. */
 export async function setClosed(kind: string, id: string, closed: boolean) {
-    if (kind !== 'stages' && kind !== 'dungeons') throw new ApiError('낚시터나 던전을 고르세요.');
+    if (kind !== 'stages' && kind !== 'dungeons') throw new ApiError('사냥터나 던전을 고르세요.');
     if (kind === 'stages' ? !STAGES.some(st => st.id === id) : !DUNGEONS.some(d => d.id === id)) throw new ApiError('없는 곳입니다.');
-    if (kind === 'stages' && id === STAGES[0].id) throw new ApiError('첫 낚시터는 닫을 수 없습니다(닫힌 곳에서 나온 낚시꾼이 돌아갈 곳).');
+    if (kind === 'stages' && id === STAGES[0].id) throw new ApiError('첫 사냥터는 닫을 수 없습니다(닫힌 곳에서 나온 모험가가 돌아갈 곳).');
     const c = await readClosures(), set = new Set(c[kind]);
     if (closed) set.add(id); else set.delete(id);
     await writeClosures({ ...c, [kind]: [...set] });
@@ -201,7 +201,7 @@ const countBy = <T>(xs: T[], key: (x: T) => string | null) => { const m = new Ma
 const bucketize = (xs: number[], edges: number[], unit: string) => edges.map((lo, i) => { const hi = edges[i + 1]; return { label: hi === undefined ? `${lo}${unit} 이상` : lo + 1 === hi ? `${lo}${unit}` : `${lo}~${hi - 1}${unit}`, count: xs.filter(n => n >= lo && (hi === undefined || n < hi)).length }; });
 /**
  * 운영 페이지 통계: 모든 세이브를 한 번 읽어 집계합니다. 운영자가 탭을 열거나 새로고침할 때만 돕니다(게임 요청에는 부하 없음).
- * 활동은 마지막 저장 시각 기준이라 자동 낚시를 켜 둔 채 접속을 끊은 낚시꾼은 다시 접속할 때까지 세지 않습니다.
+ * 활동은 마지막 저장 시각 기준이라 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다.
  */
 export async function adminStats(now = Date.now()): Promise<AdminStats> {
     const database = db(), [accounts, rows] = await Promise.all([database.listAccounts(), database.listPlayers()]);

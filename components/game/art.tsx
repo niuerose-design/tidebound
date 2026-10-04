@@ -5,7 +5,7 @@ import type { Job } from '@/game/data/classes';
 import { lineageOf } from '@/game/data/classes';
 import { fishArtSrc, fishShape, jobArtSrc, type FishShape } from '@/game/data/art';
 
-/** 어종 실루엣(64×64). 이미지가 없거나 아직 안 왔을 때 그대로 남습니다. */
+/** 몬스터 실루엣(64×64). 이미지가 없거나 아직 안 왔을 때 그대로 남습니다. */
 const SHAPES: Record<FishShape, string> = {
     fish: 'M6 32c10-12 22-18 36-16l16-10-4 26 4 26-16-10C28 50 16 44 6 32zm38-5a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
     koi: 'M8 34c8-14 20-20 34-16 4-8 10-12 16-12-2 8-4 14-2 22 2 8 4 14 2 22-6 0-12-4-16-12-14 4-26-2-34-16zm32-6a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
@@ -22,7 +22,7 @@ const SHAPES: Record<FishShape, string> = {
     giant: 'M4 40c6-12 18-20 34-20l10-14 2 16c6 2 10 6 12 12-6 0-10 2-14 6l-2 10-8-6c-10 4-22 4-34-4zm38-14a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM20 20l6-10 2 10zm12-2 4-10 2 12z',
 };
 
-/** 어종 그림. public/art/fish/{id}.webp 가 있으면 그 그림, 없으면 실루엣. */
+/** 몬스터 그림. public/art/fish/{id}.webp 가 있으면 그 그림, 없으면 실루엣. */
 export function FishArt({ id, size = 48, className = '', boss = false }: { id: string; size?: number; className?: string; boss?: boolean }) {
     const [state, setState] = useState<'pending' | 'ready' | 'missing'>('pending');
     const shape = fishShape(id);

@@ -19,7 +19,7 @@ await call('/api/game', { type: 'sync' }, { expect: 401 });
 await call('/api/chat', undefined, { expect: 401 });
 assert.equal((await call('/api/auth')).data.loggedIn, false);
 await call('/api/auth', { action: 'signup', username: 'x', password: pw, name: '테스터' }, { expect: 400 });
-await call('/api/auth', { action: 'signup', username: user, password: pw, name: 'x' }, { expect: 400 }); // v26.8 낚시꾼 이름 2~16자
+await call('/api/auth', { action: 'signup', username: user, password: pw, name: 'x' }, { expect: 400 }); // v26.8 모험가 이름 2~16자
 await call('/api/auth', { action: 'signup', username: user, password: pw, name: '테스터까미' }, { expect: 200 });
 assert.ok(cookie.startsWith('tb_session='), 'session cookie set');
 assert.equal((await call('/api/auth')).data.loggedIn, true);
@@ -34,7 +34,7 @@ assert.ok(data.rows.some(r => r.self), 'own ranking row listed');
 const me = data.rows.find(r => r.self);
 assert.ok(me.rebirths !== undefined && me.stats && Array.isArray(me.skills), 'ranking row carries rebirths, stats and skills for the detail view');
 assert.ok(/^\d{4}-\d{2}$/.test(data.season) && me.id.startsWith(`duel:${data.season}:`), 'v25.12 monthly duel season row id');
-// 훈련 대결: 등록된 낚시꾼(자기 자신)과 던전 보스. 점수·전적은 바뀌지 않습니다.
+// 훈련 대결: 등록된 모험가(자기 자신)과 던전 보스. 점수·전적은 바뀌지 않습니다.
 ({ data } = await call('/api/duel', { type: 'training', id: `user:${me.id}` }, { expect: 200 }));
 assert.equal(data.result.training, true); assert.equal(data.result.ratingChange, 0); assert.equal(data.state.wins + data.state.losses, 0);
 ({ data } = await call('/api/duel', { type: 'training', id: 'boss:grottoWarden' }, { expect: 200 }));

@@ -1,7 +1,7 @@
 /**
- * v25.26 외길 계보: 능력치 하나만 올리는 낚시꾼을 위한 1~3차 계보 여섯 줄.
+ * v25.26 외길 계보: 능력치 하나만 올리는 모험가를 위한 1~3차 계보 여섯 줄.
  * 전직 조건이 그 능력치 하나뿐이고(20 → 60 → 110), 기술도 그 능력치가 올리는 수치만 씁니다.
- * 고르게 배분한 낚시꾼은 요구치에 닿지 못하므로, 몰아 찍는 플레이만의 길입니다. 성능은 같은 차수의 일반 직업 수준입니다.
+ * 고르게 배분한 모험가는 요구치에 닿지 못하므로, 몰아 찍는 플레이만의 길입니다. 성능은 같은 차수의 일반 직업 수준입니다.
  */
 import type { Job } from './classes';
 import type { Skill, Attribute } from '../types';
@@ -11,7 +11,7 @@ const attr = (a: Attribute, ratio: number) => ({ scaling: 'attr' as const, scali
 type NewJob = Omit<Job, 'masteryTarget' | 'masteryBoost'> & Partial<Pick<Job, 'masteryTarget' | 'masteryBoost'>>;
 const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0 };
 const T1 = { tier: 1, level: 10, mastery: 0, masteryTarget: 450, masteryBoost: .08 };
-// v27.1 외길 2차는 20레벨부터(일반 2차는 25). 한 능력치만 올린 낚시꾼이 18~24레벨 낚시터에서 1차로 버티던 구간을 없앱니다.
+// v27.1 외길 2차는 20레벨부터(일반 2차는 25). 한 능력치만 올린 모험가가 18~24레벨 사냥터에서 1차로 버티던 구간을 없앱니다.
 const T2 = { tier: 2, level: 20, mastery: 75, masteryTarget: 2800, masteryBoost: .18 };
 const T3 = { tier: 3, level: 40, mastery: 150, masteryTarget: 10000, masteryBoost: .3 };
 const T5 = { tier: 5, level: 70, rebirth: 2, mastery: 600, masteryTarget: 30000, masteryBoost: .35 };
