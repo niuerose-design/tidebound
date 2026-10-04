@@ -797,3 +797,17 @@
 .battle-console>.tide-selector{flex-wrap:wrap}
 .battle-console>.tide-selector>div:first-child{flex:1 1 300px;min-width:0}
 .battle-console>.tide-selector>.tide-controls{flex:0 1 300px;margin-left:auto}
+/* v27.61 모바일 전투 화면의 사냥터 난이도 카드: 세로 배치에서 300px 기준값이 높이로 늘어나(약 630px) 화면 밖으로 밀리던 것을
+   제목·조작 한 줄, 배율 한 줄, 이정표 한 줄, 슬라이더 순의 짧은 카드로 다시 짭니다. */
+@media (max-width:767px){
+.battle-console>.tide-selector{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 10px;padding:10px 12px}
+.battle-console>.tide-selector>div:first-child{display:contents}
+.battle-console>.tide-selector h3{grid-column:1;grid-row:1;margin:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.battle-console>.tide-selector p{grid-column:1/-1;grid-row:2;margin:0;font-size:11px;line-height:1.45;white-space:normal}
+.battle-console>.tide-selector small{grid-column:1/-1;grid-row:3;font-size:11px;color:#8fa8a3}
+.battle-console>.tide-selector>.tide-controls{display:contents}
+.battle-console>.tide-selector .button-row{grid-column:2;grid-row:1;flex-wrap:nowrap;gap:4px;justify-content:flex-end}
+.battle-console>.tide-selector .button-row button{padding:4px 9px;min-width:32px;min-height:32px}
+.battle-console>.tide-selector .button-row span{min-width:44px;font-size:12px}
+.battle-console>.tide-selector .tide-slider{grid-column:1/-1;grid-row:4;min-width:0;margin:4px 0 0;height:28px}
+}

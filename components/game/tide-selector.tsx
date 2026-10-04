@@ -12,7 +12,7 @@ export function TideSelector({ s, send, busy }: PanelProps) {
     const go = (n: number) => { const t = Math.max(0, Math.min(max, Math.round(n))); setDraft(null); if (t !== cur) send({ type: 'tide', id: String(t) }); };
     return <section className="panel tide-selector" title="환생마다 1단계 해금(최대 200). 일반 사냥터에만 적용하며 선택은 자유입니다.">
     <div>
-    <h3>환생 사냥터 · 난이도 {shown}</h3>
+    <h3>사냥터 난이도 {shown}</h3>
     <p>적 HP ×{tierHealth(shown).toFixed(2)} · 공격 ×{tierAttack(shown).toFixed(2)} · 골드/EXP ×{tierReward(shown).toFixed(2)} · 숙련 ×{tierMastery(shown).toFixed(2)} · 장비 레벨 +{shown * 5}(캐릭터 레벨 +10까지)</p>
     <small>{(() => { const best = s.tideBest?.[s.stage] || 0, next = nextTideMilestone(best); return `이 사냥터 최고 차수 ${best}${next ? ` · 다음 이정표 차수 ${next} 첫 처치 세계석 +${TIDE_MILESTONE_PEARLS[TIDE_MILESTONES.indexOf(next)]}` : ' · 이정표 모두 달성'}`; })()}</small>
     </div>
@@ -24,7 +24,7 @@ export function TideSelector({ s, send, busy }: PanelProps) {
     <button className="secondary" disabled={locked || cur >= max} onClick={() => go(cur + 1)}>+</button>
     <button className="secondary small" disabled={locked || cur >= max} onClick={() => go(max)}>최대</button>
     </div>
-    {max > 1 && <input type="range" className="tide-slider" min={0} max={max} step={1} value={shown} disabled={locked} aria-label="해역 난이도"
+    {max > 1 && <input type="range" className="tide-slider" min={0} max={max} step={1} value={shown} disabled={locked} aria-label="사냥터 난이도"
         onChange={e => setDraft(Number(e.target.value))}
         onPointerUp={e => go(Number((e.target as HTMLInputElement).value))}
         onKeyUp={e => go(Number((e.target as HTMLInputElement).value))}
