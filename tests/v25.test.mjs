@@ -717,3 +717,19 @@ test('v27.63 rebirth history: each rebirth records real/play time, level and pea
     old.level = Meta.rebirthLevel(old); E.act(old, { type: 'rebirth' }, 101 * H);
     assert.ok(old.rebirthLog[0].partial && old.rebirthLog[0].realMs === H && !old.lifeStart.partial, 'first measured rebirth is partial, the next life is full');
 });
+
+test('v27.64 tide lifts low-stage monster levels toward the top stage (capped by player level) so every stage is similar at high tide', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const W = await L.load('data/world'), Enc = await L.load('systems/encounter');
+    const cap = Math.max(...W.STAGES.map(st => st.level)) + W.STAGE_ENEMY_LEVEL_OVER;
+    assert.equal(W.tideLiftLevel(1, 0, 90), 1, 'no tide → no lift');
+    assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS, 90), cap, 'reaches the top-stage level at the lift tier');
+    assert.equal(W.tideLiftLevel(1, 40, 90), cap, 'never past the top stage');
+    assert.equal(W.tideLiftLevel(1, 40, 20), 20, 'never past the player level');
+    assert.equal(W.tideLiftLevel(50, 40, 20), 50, 'never lowers a monster');
+    assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS / 2, 90), Math.round(1 + (cap - 1) / 2), 'halfway at half the lift tier');
+    const f = W.FISH.find(x => x.level <= 3), up = W.tideLiftFish(f, W.TIDE_LIFT_TIERS, 90);
+    assert.ok(up.level === cap && up.hp > f.hp && up.exp >= f.exp && up.gold >= f.gold, 'stats and rewards follow the lifted level');
+    const spawnAt = tide => { const s = newState(0); s.level = 90; s.rebirths = 40; s.kills = 0; s.stage = W.STAGES[0].id; s.tide = tide; Enc.spawn(s, () => .99); return s.enemy; };
+    assert.ok(spawnAt(20).maxHp > spawnAt(0).maxHp * 50, 'first stage at high tide is far tougher than before');
+});

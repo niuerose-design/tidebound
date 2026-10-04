@@ -74,6 +74,24 @@ export function stageStatFish<F extends { level: number; hp: number; attack: num
     const level = Math.min(f.level, stageLevel + STAGE_ENEMY_LEVEL_OVER);
     return level < f.level ? { ...f, level, ...fishStatsAt(level) } : f;
 }
+/**
+ * v27.64 사냥터 난이도의 몬스터 레벨 보정: 난이도가 오를수록 몬스터 레벨이 목표 레벨(내 레벨·가장 높은 사냥터 수준 중 낮은 쪽)로 다가가 난이도 10에서 닿습니다.
+ * 전에는 난이도가 체력·공격 배율만 올려, 낮은 사냥터(리스항구)의 약한 몬스터를 고레벨이 순식간에 잡으며 난이도 숙련·까미 확률만 챙겼습니다.
+ * 이제 같은 난이도라면 어느 사냥터든 내 레벨 근처까지 단단해져, 사냥터를 취향대로 고를 수 있습니다. 경험치·골드도 올라간 레벨 기준(원래보다 낮아지지 않음).
+ */
+/** 난이도가 이 단계에 이르면 모든 사냥터 몬스터가 목표 레벨(내 레벨과 가장 높은 사냥터 수준 중 낮은 쪽)에 닿습니다. 그 전에는 남은 차이를 단계 비율만큼 메웁니다. */
+export const TIDE_LIFT_TIERS = 10;
+/** 목표 레벨의 상한: 가장 높은 사냥터 몬스터의 능력치 레벨(입장 레벨 + STAGE_ENEMY_LEVEL_OVER). 상위 사냥터의 난이도는 그대로 두고 낮은 사냥터만 따라 올라옵니다. */
+let liftCap = 0;
+const tideLiftCap = () => liftCap ||= Math.max(...STAGES.map(st => st.level)) + STAGE_ENEMY_LEVEL_OVER;
+export function tideLiftLevel(level: number, tier: number, playerLevel: number) {
+    const target = Math.min(playerLevel, tideLiftCap());
+    return target > level && tier > 0 ? Math.round(level + (target - level) * Math.min(1, tier / TIDE_LIFT_TIERS)) : level;
+}
+export function tideLiftFish<F extends { level: number; hp: number; attack: number; defense: number; exp: number; gold: number }>(f: F, tier: number, playerLevel: number): F {
+    const level = tideLiftLevel(f.level, tier, playerLevel);
+    return level > f.level ? { ...f, level, ...fishStatsAt(level), exp: Math.max(f.exp, fishExpAt(level)), gold: Math.max(f.gold, fishGoldAt(level)) } : f;
+}
 export const FISH: FishDef[] = rows.map(([id, name, level, lore]) => ({ id, name, level, hp: Math.round(35 + level * 12 + level * level * .65), attack: Math.round(3 + level * 2.2), defense: Math.floor(level * .8), exp: fishExpAt(level), gold: fishGoldAt(level), lore }));
 const specialFish: Array<{
     id: string;
