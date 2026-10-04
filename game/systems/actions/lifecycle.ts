@@ -1,7 +1,8 @@
 /** 환생, 한 번의 숨 소프트 리셋, 서약 선택과 전체 초기화 */
 import { deepVoyagePearls, nextLifeBonus, tailwindExp, rebirthLevel, rebirthReward } from '../meta';
 import { stats } from '../stats';
-import { salvageRate } from '../../data/economy';
+import { salvageRate, startingLevel } from '../../data/economy';
+import { PROGRESSION } from '../../data/progression';
 import { saleValue, dismantleEssence } from '../equipment';
 import type { State, Vows } from '../../types';
 import type { ActionHandlers } from './types';
@@ -19,7 +20,11 @@ import { VOW_IDS, VOW_NAMES, type VowId, breathBonus, chooseAnchorTarget, cleanV
  */
 function startLife(s: State, now: number, next: { pearls: number; rebirths: number; lifeBonus: State['lifeBonus'] }) {
     const fresh = newState(now);
-    fresh.gold = 100 + (s.permanent.starting || 0) * 500;
+    fresh.gold = 100;
+    // v27.60 모험가의 유산: 시작 레벨을 올리고 오른 레벨만큼 능력치 포인트를 줍니다(SP는 최고 레벨을 넘을 때만이라 주지 않음).
+    const level = startingLevel(s);
+    fresh.level = level;
+    fresh.statPoints += (level - 1) * PROGRESSION.statPerLevel;
     fresh.inventory = s.inventory.filter(i => i.relic);
     for (const [slot, item] of Object.entries(s.equipment)) {
         if (item?.relic)
