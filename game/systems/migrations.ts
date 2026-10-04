@@ -39,7 +39,7 @@ export function grantLimitBreakResearch(s: State) {
     return grant;
 }
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    if (s.version === SAVE_VERSION) { refundGoldenResearch(s); refundRelicPurchases(s); grantLimitBreakResearch(s); renameMapleGear(s); return s; }
+    if (s.version === SAVE_VERSION) { refundGoldenResearch(s); refundRelicPurchases(s); grantLimitBreakResearch(s); renameMapleGear(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -64,4 +64,9 @@ export function renameMapleGear(s: State) {
         for (const affix of [...(item.affixes || []), ...(item.affix ? [item.affix] : [])]) if (RENAMED_AFFIX[affix.name]) { affix.name = RENAMED_AFFIX[affix.name]; changed++; }
     }
     return changed;
+}
+/** v27.63 환생 통계: 이번 생 시작 기록이 없는 기존 세이브는 지금부터 잽니다(언제 시작했는지 몰라 partial로 표시). 한 번만 적용됩니다. */
+export function startLifeClock(s: State, now: number) {
+    if (s.lifeStart) return;
+    s.lifeStart = { at: now, playMs: s.playMs || 0, partial: true };
 }

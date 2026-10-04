@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
 import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, ECONOMY, researchCost, researchEffect, researchUnlocked, startingLevel, type ResearchDef, type ResearchTab } from '@/game/data/economy';
 import { PROGRESSION } from '@/game/data/progression';
+import { RebirthHistory } from './rebirth-history';
 import { BALANCE } from '@/game/data/balance';
 import { ownsRelic, researchRefund } from '@/game/systems/commerce';
 import { rebirthRewardParts, nextLifeBonus, tailwindActive, tailwindWindow, tailwindExp, DEEP_VOYAGE_LEVEL, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
@@ -128,7 +129,8 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             <div><span>영구 경험치 배율<strong>×{permanentExp.toFixed(2)}</strong></span></div>
             <div><span>현재 장착 AP<strong>{apCapacity(s)} <small>환생 +{rebirthAP(s)} · 연구 +{s.permanent.ap || 0}</small></strong></span></div>
         </section>
-        <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="prepare">환생 준비</TabsTrigger><TabsTrigger value="research">세계석 연구</TabsTrigger><TabsTrigger value="relics">환생 유물</TabsTrigger></TabsList></Tabs>
+        <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="prepare">환생 준비</TabsTrigger><TabsTrigger value="research">세계석 연구</TabsTrigger><TabsTrigger value="relics">환생 유물</TabsTrigger><TabsTrigger value="history">환생 기록</TabsTrigger></TabsList></Tabs>
+        {tab === 'history' && <RebirthHistory s={s}/>}
         {tab === 'prepare' && <>
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
             <section className="panel rebirth-ready">
