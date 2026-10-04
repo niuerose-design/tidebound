@@ -1,34 +1,14 @@
-/** 몬스터 도감 보상: 성향별 연구 능력치, 생태 연구, 지역 테마, 정보 공개 기준. */
+/** 몬스터 도감 보상: 생태 연구, 장소 테마, 지역 연구, 정보 공개 기준. */
 import type { CombatStats } from '../types';
 
-export type BookTraitGroup = 'swift' | 'armored' | 'arcane' | 'venom' | 'silencer' | 'controller' | 'frenzy' | 'boss';
 type StatBonus = Partial<CombatStats>;
 
 /**
- * 연구 단계(50·500·2500·10000회)마다 몬스터 성향에 맞는 능력치를 줍니다.
- * 직업·환생 배율 전에 더하는 고정값입니다(이전의 공격·마법 +1과 같은 위치).
- */
-export const BOOK_TRAITS: Record<BookTraitGroup, { name: string; perStage: StatBonus }> = {
-    swift: { name: '날쌘 개체', perStage: { attack: 2, accuracy: .003 } },
-    armored: { name: '단단한 껍질', perStage: { defense: 1, penetration: .0025 } },
-    arcane: { name: '마력 생물', perStage: { magic: 2, resist: .5 } },
-    venom: { name: '독성 생물', perStage: { hp: 12, lifesteal: .001 } },
-    silencer: { name: '침묵하는 생물', perStage: { mana: 3, manaRegen: .1 } },
-    controller: { name: '대지 제어자', perStage: { speed: .25, resist: 1 } },
-    frenzy: { name: '광폭한 짐승', perStage: { attack: 1, critDamage: .015 } },
-    boss: { name: '던전 보스', perStage: { attack: 1, magic: 1, hp: 5 } },
-};
-/** 적 전투 성향 → 도감 보상 성향. 보스 몬스터는 성향과 관계없이 boss입니다. */
-export const PROFILE_TRAIT: Record<string, BookTraitGroup> = {
-    swift: 'swift', armored: 'armored', arcane: 'arcane', venom: 'venom', silencer: 'silencer', controller: 'controller', frenzy: 'frenzy', blaze: 'frenzy',
-    stormEel: 'arcane', venomBoss: 'venom', arcaneBoss: 'arcane', boss: 'boss',
-};
-
-/**
  * 생태 연구: 2단계(500회)부터 해당 몬스터를 상대할 때만 적용합니다.
- * 달성한 단계마다(2·3·4단계) 주는 피해 +2%, 받는 공격 피해 -1% → 최대 +6% / -3%.
+ * v27.81 성향 능력치(체력·공격 등 고정값)는 없애고 생태 연구에 몰았습니다. 2~6단계에 단계별로 더해 최대 주는 피해 +50% · 받는 공격 피해 -25%.
+ * 쉽게 닿는 2~4단계는 작게(3·3·4%), 난이도 조건이 붙는 5·6단계에 크게(15·25%) 몰아 초장기 목표가 됩니다. 4단계 누적 +10%.
  */
-export const BOOK_ECOLOGY = { fromStage: 2, dealtPerStage: .02, takenPerStage: .01 };
+export const BOOK_ECOLOGY = { fromStage: 2, dealt: [.03, .03, .04, .15, .25], taken: [.015, .015, .02, .075, .125] };
 
 /** 처치 50회: 해당 몬스터의 성향·스킬·능력치 정보를 전투와 도감에 공개합니다. */
 export const BOOK_REVEAL = 50;

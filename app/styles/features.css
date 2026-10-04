@@ -369,3 +369,8 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .rebirth-stat-bar small{display:block;color:var(--muted);font-size:12px}
 /* v27.70 탄핵 버튼: 신의 자리 주인 이름 옆 */
 .altar-impeach{margin-left:10px;padding:3px 10px;font-size:12px;vertical-align:middle}
+/* v27.81 적 정보 접기: 화살표로 접힘 상태를 보여 줍니다(기본 접힘). */
+.book-enemy > summary h4 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.book-enemy-chevron { flex: none; transition: transform .15s ease; transform: rotate(-90deg); }
+.book-enemy[open] > summary .book-enemy-chevron { transform: rotate(0deg); }
+@media (prefers-reduced-motion: reduce) { .book-enemy-chevron { transition: none; } }
