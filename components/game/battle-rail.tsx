@@ -6,6 +6,7 @@ import { ChevronRight, Compass, Flame, Lock, Map, MessageCircle, Swords } from '
 import { serverNow } from './jobs/job-status';
 import { Meter } from './shared';
 import { STAGES, DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
+import { DUNGEON_MODES } from '@/game/data/balance';
 import { BattleLogLine } from './combat-log';
 import type { State, Action } from '@/game/types';
 const FEED_KEY = 'tidebound.railFeed';
@@ -65,7 +66,7 @@ const PlaceSelector = memo(function PlaceSelector({ s, busy, send, setView }: Pl
         const closed = closedIn(s, 'dungeons', dungeon.id), locked = closed || !levelGateOk(s, dungeon.level) || s.rebirths < dungeon.rebirth;
         const active = s.dungeon?.id === dungeon.id;
         return <button type="button" key={dungeon.id} className={`battle-dungeon-button ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} disabled={busy || locked || (!!s.dungeon && !active)} onClick={() => send({ type: 'dungeon', id: dungeon.id })}>
-        <span><strong>{dungeon.name}</strong><small>{closed ? CLOSED_NOTE : `Lv. ${dungeon.level}${dungeon.rebirth ? ` · 환생 ${dungeon.rebirth}` : ''}`}</small></span>{locked ? <Lock size={13}/> : active ? <span className="battle-dungeon-wave">{dungeon.id === 'abyss' ? `${s.dungeon?.depth || s.abyssBest + 1}F · ` : ''}W{(s.dungeon?.wave || 0) + 1}</span> : <Swords size={13}/>} 
+        <span><strong>{dungeon.name}</strong><small>{closed ? CLOSED_NOTE : `Lv. ${dungeon.level}${dungeon.rebirth ? ` · 환생 ${dungeon.rebirth}` : ''}`}</small></span>{locked ? <Lock size={13}/> : active ? <span className="battle-dungeon-wave">{dungeon.id === 'abyss' ? `${s.dungeon?.depth || s.abyssBest + 1}F · ` : s.dungeon?.mode && s.dungeon.mode !== 'normal' ? `${DUNGEON_MODES.find(m => m.id === s.dungeon!.mode)?.name} · ` : ''}W{(s.dungeon?.wave || 0) + 1}</span> : <Swords size={13}/>} 
         </button>;
     })}</div>}
     {tab === 'stage' && s.dungeon && <p className="battle-place-note">던전 탐험 중에는 사냥터를 바꿀 수 없습니다.</p>}

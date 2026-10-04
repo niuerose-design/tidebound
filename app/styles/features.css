@@ -351,3 +351,5 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .rebirth-history-table th{color:var(--muted);font-weight:600;font-size:12px}
 .rebirth-history-table small{color:var(--muted)}
 .rebirth-stat-bar small{display:block;color:var(--muted);font-size:12px}
+/* v27.70 탄핵 버튼: 신의 자리 주인 이름 옆 */
+.altar-impeach{margin-left:10px;padding:3px 10px;font-size:12px;vertical-align:middle}

@@ -1,7 +1,7 @@
 /** 던전 입장과 반복 도전. */
 import type { State } from '../types';
 import { levelGateOk } from './meta';
-import { BALANCE, MONSTER_TUNING } from '../data/balance';
+import { BALANCE, MONSTER_TUNING, DUNGEON_MODES, type DungeonMode } from '../data/balance';
 import { DUNGEONS, dungeonClosed } from '../data/world';
 import { addLog, endRun } from './state';
 /** 반복 설정 문자열: 'once' | 'fail' | 숫자(총 도전 횟수) | 'deeper:N'(무릉도장, 현재 최고 깊이 + N층까지). */
@@ -17,9 +17,16 @@ export function parseRepeat(s: State, id: string, value?: string): { left: numbe
     if (!Number.isFinite(total) || total < 1 || total > 999) throw Error('반복 횟수는 1~999회입니다.');
     return total > 1 ? { left: total - 1 } : undefined;
 }
-export function enterDungeon(s: State, id: string, repeat?: { left: number | null; until?: number }) {
+/** v27.70 입장 값 '<난이도>@<반복>' 또는 '<반복>'. 난이도는 DUNGEON_MODES id(없으면 노말), 반복은 parseRepeat 규칙. */
+export function parseDungeonValue(s: State, id: string, value?: string): { mode: DungeonMode; repeat?: { left: number | null; until?: number } } {
+    const [head, tail] = value && value.includes('@') ? value.split('@', 2) : ['', value];
+    const mode = (head || 'normal') as DungeonMode;
+    if (!DUNGEON_MODES.some(m => m.id === mode)) throw Error('던전 난이도를 확인하세요.');
+    return { mode: id === 'abyss' ? 'normal' : mode, repeat: parseRepeat(s, id, tail) };
+}
+export function enterDungeon(s: State, id: string, repeat?: { left: number | null; until?: number }, mode: DungeonMode = 'normal') {
     const d = DUNGEONS.find(x => x.id === id)!;
-    s.dungeon = { id, wave: 0, ...(id === 'abyss' ? { depth: s.abyssBest + 1 } : {}), ...(repeat ? { repeat } : {}) };
+    s.dungeon = { id, wave: 0, ...(id === 'abyss' ? { depth: s.abyssBest + 1 } : {}), ...(repeat ? { repeat } : {}), ...(mode !== 'normal' && id !== 'abyss' ? { mode } : {}) };
     s.enemy = null;
     // Preparation takes real turns: repeated entry cannot heal instantly.
     s.effects = {};
@@ -35,11 +42,11 @@ function repeatLabel(r?: { left: number | null; until?: number }) {
 }
 /** 반복 도전이 끝나면 사냥터로 돌아가 자동 사냥을 이어갑니다. */
 export function continueRepeat(s: State, id: string, repeat: { left: number | null; until?: number }) {
-    const d = DUNGEONS.find(x => x.id === id)!;
+    const d = DUNGEONS.find(x => x.id === id)!, mode = s.dungeon?.mode;
     const reached = repeat.until !== undefined && s.abyssBest >= repeat.until;
     const allowed = levelGateOk(s, d.level) && s.rebirths >= d.rebirth && !dungeonClosed(d.id);
     if (!reached && allowed && (repeat.left === null || repeat.left > 0)) {
-        enterDungeon(s, id, { left: repeat.left === null ? null : repeat.left - 1, ...(repeat.until !== undefined ? { until: repeat.until } : {}) });
+        enterDungeon(s, id, { left: repeat.left === null ? null : repeat.left - 1, ...(repeat.until !== undefined ? { until: repeat.until } : {}) }, mode);
         s.running = true;
         return;
     }

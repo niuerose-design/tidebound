@@ -459,6 +459,8 @@ export type State = {
         depth?: number;
         /** 반복 도전. left: 남은 추가 도전 횟수(null=실패할 때까지), until: 무릉도장 목표 깊이. */
         repeat?: { left: number | null; until?: number };
+        /** v27.70 일반 던전 난이도(DUNGEON_MODES). 없으면 노말. 무릉도장은 쓰지 않습니다. */
+        mode?: import('./data/balance').DungeonMode;
     };
     clears: Record<string, number>;
     logs: Log[];

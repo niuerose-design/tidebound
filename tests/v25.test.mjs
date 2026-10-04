@@ -785,3 +785,39 @@ test('v27.69 monsters get level-based penetration and the ward: bosses/Lv.50+ cl
     assert.ok(!/정화/.test(C.strike(calm, target, () => 0)), 'not used without an affliction');
     assert.ok(E.enemyStats(boss, true).penetration > 0, boss.id);
 });
+
+test('v27.70 dungeon modes: normal/hell/nightmare tiers, entry value parsing, repeat keeps the mode, Mu Lung ignores it', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const B = await L.load('data/balance'), M = await L.load('systems/meta'), DR = await L.load('systems/dungeon-run');
+    assert.deepEqual(B.DUNGEON_MODES.map(m => [m.id, m.tier]), [['normal', 0], ['hell', 50], ['nightmare', 200]]);
+    const s = newState(0); s.rebirths = 10; s.level = 60; s.tide = 30;
+    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'hell@fail'), { mode: 'hell', repeat: { left: null } });
+    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'fail'), { mode: 'normal', repeat: { left: null } });
+    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'nightmare@once'), { mode: 'nightmare', repeat: undefined });
+    assert.equal(DR.parseDungeonValue(s, 'abyss', 'hell@deeper:3').mode, 'normal', 'Mu Lung has no modes');
+    assert.throws(() => DR.parseDungeonValue(s, 'caldera', 'ultra@fail'), /난이도/);
+    act(s, { type: 'dungeon', id: 'caldera', value: 'nightmare@5' }, 0);
+    assert.equal(s.dungeon.mode, 'nightmare'); assert.equal(M.encounterTier(s), 200, 'mode tier, not the stage tide (30)');
+    assert.equal(M.dungeonLevelAt({ id: 'caldera', level: 26 }, M.encounterTier(s), 60), 60, 'nightmare lifts monsters to the player level');
+    DR.continueRepeat(s, 'caldera', s.dungeon.repeat); assert.equal(s.dungeon.mode, 'nightmare', 'repeat keeps the mode');
+    const n = newState(0); n.rebirths = 10; n.level = 60; act(n, { type: 'dungeon', id: 'caldera', value: 'fail' }, 0);
+    assert.equal(n.dungeon.mode, undefined); assert.equal(M.encounterTier(n), 0, 'normal = tier 0 even at stage tide 0');
+    const a = newState(0); a.rebirths = 10; a.level = 60; act(a, { type: 'dungeon', id: 'abyss', value: 'hell@once' }, 0);
+    assert.equal(M.encounterTier(a), (a.dungeon.depth || 1) + 2, 'Mu Lung keeps the floor formula');
+});
+
+test('v27.70 the first god is the Mu Lung 50F boss with divinity (HP 9.3억, attack ×5, 50% penetration), and the throne copy carries godhood', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Du = await L.load('systems/duel'), A = await L.load('data/altar'), Alt = await L.load('server/altar').catch(() => null);
+    const boss = Du.abyssBossSnapshot(A.ALTAR.firstGod.depth).stats, god = Du.divineFirstGod({ ...Du.abyssBossSnapshot(A.ALTAR.firstGod.depth), name: A.ALTAR.firstGod.name });
+    assert.ok(boss.hp > 9e8 && boss.hp < 1e9, `50F boss HP ${boss.hp}`);
+    assert.equal(god.stats.hp, boss.hp); assert.equal(god.stats.attack, Math.round(boss.attack * A.ALTAR.firstGod.attack)); assert.equal(god.stats.penetration, A.ALTAR.firstGod.penetration);
+    assert.ok(god.skills.includes('foeWard'), 'the god wards against status effects');
+    if (Alt) {
+        const first = Alt.nextGod({ throne_snapshot: '', throne_name: '' });
+        assert.deepEqual({ hp: first.stats.hp, attack: first.stats.attack, pen: first.stats.penetration, name: first.name }, { hp: god.stats.hp, attack: god.stats.attack, pen: .5, name: A.ALTAR.firstGod.name }, 'summoned god = intended numbers');
+        const holder = { name: '왕', level: 80, job: 'x', rebirths: 10, stats: { hp: 10000, attack: 1000, magic: 500, defense: 100 }, skills: [], power: 1, rating: 1000 };
+        const copy = Alt.nextGod({ throne_snapshot: JSON.stringify(holder), throne_name: '왕' });
+        assert.deepEqual([copy.stats.hp, copy.stats.attack, copy.stats.magic, copy.name], [20000, 1150, 575, '신이 된 왕'], 'impeach opponent = throne holder × godhood');
+    }
+});

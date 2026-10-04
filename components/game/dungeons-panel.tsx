@@ -2,11 +2,11 @@
 import { AutoRunStatus } from './auto-run';
 import { BOSS_RESEARCH } from '@/game/data/specializations';
 import { dungeonClearGold, stats } from '@/game/systems/stats';
-import { dungeonTier, dungeonClearBase, dungeonRewardTier, levelGateOk, dungeonLevelAt } from '@/game/systems/meta';
+import { dungeonTier, dungeonClearBase, dungeonRewardTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack, tierReward } from '@/game/systems/meta';
 import { useState } from 'react';
 import { Lock, Swords } from 'lucide-react';
 import { FishArt } from './art';
-import { BALANCE, MONSTER_TUNING, dungeonOverlevel } from '@/game/data/balance';
+import { BALANCE, MONSTER_TUNING, dungeonOverlevel, DUNGEON_MODES, type DungeonMode } from '@/game/data/balance';
 import { FISH, DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
 import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
@@ -29,6 +29,8 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     const activeWave = s.dungeon?.wave ?? 0;
     const skillFx = useSkillFx(), { effects: combatFx, combo: fxCombo } = useCombatFx(s.logs, s.name, skillFx);
     const [repeatChoice, setRepeatChoice] = useState<Record<string, string>>({});
+    // v27.70 던전 난이도(노말·헬·나이트메어)는 던전마다 고릅니다. 입장 값은 '<난이도>@<반복>'.
+    const [modeChoice, setModeChoice] = useState<Record<string, DungeonMode>>({});
     const repeat = s.dungeon?.repeat;
     const repeatStatus = repeat ? (repeat.until ? `반복 중 · ${repeat.until}층까지` : repeat.left === null ? '반복 중 · 실패할 때까지' : repeat.left === 0 ? '반복 중 · 마지막 도전' : `반복 중 · 이후 ${repeat.left}회 더`) : '';
 
@@ -58,7 +60,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     </section>}
     <div className="stage-grid dungeon-grid">{[...DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
             const closed = closedIn(s, 'dungeons', d.id), locked = closed || !levelGateOk(s, d.level) || s.rebirths < d.rebirth;
-            const tier = dungeonTier(d.id, s.abyssBest + 1, s.vows?.seal ? 0 : s.tide || 0), dLevel = dungeonLevelAt(d, tier, s.level);
+            const mode = modeChoice[d.id] || 'normal', modeDef = DUNGEON_MODES.find(m => m.id === mode)!, tier = dungeonTier(d.id, s.abyssBest + 1, mode), dLevel = dungeonLevelAt(d, tier, s.level);
             const research = BOSS_RESEARCH[d.id], claimed = !!s.bossResearchClaims?.[d.id], active = s.dungeon?.id === d.id, overlevel = dungeonOverlevel(s.level, dLevel);
             return <article className={`stage-card dungeon-stage-card ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} key={d.id}>
             <div className="stage-top"><span className="stage-num">{String(i + 1).padStart(2, '0')}</span>{locked ? <Lock size={20}/> : active ? <span className="badge">탐험 중</span> : d.id === 'abyss' ? <span className="badge">최고 {s.abyssBest}층</span> : s.clears[d.id] ? <span className="badge">{s.clears[d.id]}회 정복</span> : <span className="badge muted">미탐험</span>}</div>
@@ -68,18 +70,19 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">
                 <span><b>최초</b>{d.id === 'abyss' ? `${s.abyssBest + 1}층 세계석 ${abyssPearls(s.abyssBest + 1)} · 10층마다 보너스 세계석(층 수만큼)${nextAbyssMilestone(s.abyssBest) ? ` · ${nextAbyssMilestone(s.abyssBest)}층 SP 1` : ''}${ABYSS_AP_MILESTONES.find(n => n > s.abyssBest) ? ` · ${ABYSS_AP_MILESTONES.find(n => n > s.abyssBest)}층 AP 1` : ''}` : `세계석 ${d.pearls}${research ? ` · 연구 SP ${research.sp}` : ''}`}{d.id !== 'abyss' && s.clears[d.id] && (!research || claimed) ? ' · 받음' : ''}</span>
-                <span><b>반복</b>{format(Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel))} G{d.id !== 'abyss' && dLevel > d.level ? ` · 사냥터 난이도 ${tier}로 몬스터 Lv.${dLevel}` : ''} · 낮은 확률로 희귀 이상 장비{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''}</span>
+                <span><b>반복</b>{format(Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel))} G{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)} · 보상 ×${tierReward(tier).toFixed(1)}` : ''} · 낮은 확률로 희귀 이상 장비{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''}</span>
                 {overlevel < 1 && <span><b>레벨 초과</b>권장 레벨보다 높아 클리어 골드·반복 장비 확률 ×{overlevel.toFixed(1)}</span>}
             </div>
             {research && s.clears[d.id] && !claimed && <button className="gold-button" disabled={busy} onClick={() => send({ type: 'bossResearch', id: d.id })}>첫 정복 연구 받기 · SP {research.sp}</button>}
             <div className="stage-footer dungeon-actions">
                 <span>Lv. {d.level}+{d.rebirth ? ` · 환생 ${d.rebirth}회` : ''}</span>
+                {d.id !== 'abyss' && <select aria-label={`${d.name} 난이도`} value={mode} disabled={busy || locked || !!s.dungeon} onChange={e => setModeChoice({ ...modeChoice, [d.id]: e.target.value as DungeonMode })}>{DUNGEON_MODES.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select>}
                 <select aria-label={`${d.name} 반복 설정`} value={repeatChoice[d.id] || 'once'} disabled={busy || locked || !!s.dungeon} onChange={e => setRepeatChoice({ ...repeatChoice, [d.id]: e.target.value })}>
                     <option value="once">1회</option>
                     {d.id === 'abyss' ? [5, 10, 25].map(n => <option key={n} value={`deeper:${n}`}>{s.abyssBest + n}층까지</option>) : [5, 10, 25].map(n => <option key={n} value={String(n)}>{n}회</option>)}
                     <option value="fail">실패까지</option>
                 </select>
-                <button className="primary small" disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: d.id, value: repeatChoice[d.id] || 'once' })}>{locked ? <Lock size={14}/> : <Swords size={14}/>}도전</button>
+                <button className="primary small" disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: d.id, value: `${mode}@${repeatChoice[d.id] || 'once'}` })}>{locked ? <Lock size={14}/> : <Swords size={14}/>}도전</button>
             </div>
             </article>;
         })}</div>

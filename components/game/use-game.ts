@@ -13,7 +13,7 @@ export type Ranking = Snapshot & {
 /** v25.6 주간 심연 기록판 한 줄. */
 export type GuildInfo = import('@/game/server/guild').GuildInfo;
 export type AltarInfo = import('@/game/data/altar').AltarInfo;
-export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: number; logs: string[]; claimed: boolean };
+export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: number; logs: string[]; claimed: boolean; /** v27.70 탄핵 성공 */ impeached?: boolean };
 export type VaultInfo = import('@/game/data/account').VaultInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean };
 /** 동기화 주기(ms). */
@@ -163,7 +163,7 @@ export function useGame() {
         try {
             const d = await request('/api/altar', body) as unknown as { state?: State; info: AltarInfo; result?: AltarResult };
             if (d.state) { stateRef.current = d.state; setState(d.state); replay.reset(); setSaved(true); }
-            setAltar(d.info); setAltarError(''); if (body.action === 'challenge' && d.result) setAltarResult(d.result); return true;
+            setAltar(d.info); setAltarError(''); if ((body.action === 'challenge' || body.action === 'impeach') && d.result) setAltarResult(d.result); return true;
         }
         catch (e) { setAltarError((e as Error).message); return false; }
         finally { lock.current = false; setBusy(false); }

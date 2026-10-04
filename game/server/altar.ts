@@ -79,8 +79,8 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
             const next = !b ? '가득 차면 신이 깨어납니다' : !level ? `채우면 1단계로 열림 · ${blessingDesc(b, 1)} · ${b.hours}시간` : level < BLESSING_MAX_LEVEL ? `채우면 ${level + 1}단계 · ${blessingDesc(b, level + 1)} · +${b.hours}시간` : `최고 단계 · 채우면 +${b.hours}시간`;
             return { id: g, name: b ? b.name : '신 소환', desc: b ? blessingDesc(b, level || 1) : '가득 차면 신이 깨어납니다', points: sh.gauges[g]?.points || 0, cost: gaugeCost(g, level, level > 0), until: sh.gauges[g]?.until || 0, level, next };
         }),
-        god: god && a.gen > 0 ? { gen: a.gen, alive: godAlive(a, now), name: god.name, level: god.level, power: god.power, until: a.god_until, mine: isThrone && a.god_state === 'alive' } : null,
-        throne: a.throne ? { id: isThrone ? id : '', name: a.throne_name, since: a.throne_since, mine: isThrone, ...(isThrone ? { tithe: { gold: a.tithe_gold, pearls: a.tithe_pearls, essence: a.tithe_essence } } : {}) } : null,
+        god: god && a.gen > 0 ? { gen: a.gen, alive: godAlive(a, now), name: god.name, level: god.level, power: god.power, hp: god.stats.hp, attack: Math.max(god.stats.attack, god.stats.magic || 0), until: a.god_until, mine: isThrone && a.god_state === 'alive' } : null,
+        throne: a.throne ? { id: isThrone ? id : '', name: a.throne_name, since: a.throne_since, mine: isThrone, power: nextGod(a).power, hp: nextGod(a).stats.hp, ...(isThrone ? { tithe: { gold: a.tithe_gold, pearls: a.tithe_pearls, essence: a.tithe_essence } } : {}) } : null,
         totals: { gold: a.total_gold, pearls: a.total_pearls, essence: a.total_essence, points: a.total_points },
         board: sh.board.map((r, i) => ({ rank: i + 1, name: r.anonymous ? '익명의 모험가' : r.name, points: r.points, anonymous: !!r.anonymous, self: r.player_id === id })),
         me: { points: mine?.points || 0, rank, anonymous: !!s?.altar?.anonymous, challengeAt: s?.altar?.challengeAt || 0 },
@@ -154,6 +154,33 @@ export function makeChallenge(id: string) {
             ? claimed ? `✦ ${josa(god, '을를')} 쓰러뜨렸습니다! 이제 당신이 신의 자리에 앉습니다. 다른 모험가가 바치는 재화의 ${ALTAR.titheRate * 100}%가 쌓입니다.` : `${josa(god, '을를')} 쓰러뜨렸지만 한발 늦었습니다. 다른 모험가가 먼저 신의 자리에 앉았습니다.`
             : `${god}에게 도전했지만 ${result.winner === 'draw' ? `${result.turns}턴 안에 쓰러뜨리지 못했습니다` : '쓰러졌습니다'}.`, result.winner === 'player' ? 'reward' : 'system');
         return { winner: result.winner, turns: result.turns, logs: result.logs.slice(-40), claimed };
+    };
+}
+/**
+ * v27.70 탄핵: 신의 자리 주인을 본뜬 신(nextGod, 신격 포함)과 겨뤄 이기면 주인이 자리에서 내려옵니다(자리는 비고, 도전자가 앉지는 않음).
+ * 깨어 있는 신이 있을 때는 그 신에게 도전하면 되므로 막습니다. 도전 간격은 신 도전과 같습니다.
+ */
+export function makeImpeach(id: string) {
+    let outcome: { result: DuelResult; impeached: boolean; holder: string; dealt: number } | null = null;
+    return async (s: State, now: number) => {
+        const last = s.altar?.challengeAt || 0;
+        if (!outcome) {
+            const a = (await shared(now, true)).altar;
+            if (!a.throne) throw new ApiError('신의 자리가 비어 있습니다.');
+            if (a.throne === id) throw new ApiError('자신을 탄핵할 수는 없습니다.');
+            if (godAlive(a, now)) throw new ApiError('깨어 있는 신이 있습니다. 신에게 도전하세요.');
+            if (now - last < ALTAR.challengeCooldownMs) throw new ApiError(`${Math.ceil((ALTAR.challengeCooldownMs - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
+            const me = snapshot(s), god = nextGod(a), result = duel(me, god, true, Math.random, ALTAR.godMaxTurns);
+            const impeached = result.winner === 'player' && await db().vacateAltarThrone(a.throne);
+            outcome = { result, impeached, holder: a.throne_name, dealt: Math.max(0, Math.min(1, 1 - result.opponentHp / Math.max(1, god.stats.hp))) };
+            if (impeached) { invalidateAltar(); await announce(`${josa(s.name, '이가')} ${josa(a.throne_name, '을를')} 탄핵했습니다! 신의 자리가 비었습니다. 다음에 깨어나는 신은 ${ALTAR.firstGod.name}입니다.`, now); }
+        }
+        const { result, impeached, holder, dealt } = outcome;
+        s.altar = { ...s.altar, challengeAt: now, tries: (s.altar?.tries || 0) + 1, wins: (s.altar?.wins || 0) + (result.winner === 'player' ? 1 : 0), best: Math.max(s.altar?.best || 0, dealt) };
+        addLog(s, result.winner === 'player'
+            ? impeached ? `✦ ${josa(holder, '을를')} 탄핵했습니다! 신의 자리가 비었습니다. 다시 앉으려면 신을 소환해 쓰러뜨려야 합니다.` : `신이 된 ${josa(holder, '을를')} 이겼지만 자리가 이미 바뀌어 있었습니다.`
+            : `신이 된 ${holder}에게 도전했지만 ${result.winner === 'draw' ? `${result.turns}턴 안에 쓰러뜨리지 못했습니다` : '쓰러졌습니다'}.`, result.winner === 'player' ? 'reward' : 'system');
+        return { winner: result.winner, turns: result.turns, logs: result.logs.slice(-40), claimed: false, impeached };
     };
 }
 /** 신의 몫 거두기. DB에서는 한 번만 꺼내고, 저장 충돌로 다시 돌면 같은 양을 새 세이브에 넣습니다. */

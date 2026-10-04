@@ -72,8 +72,10 @@ export const tithe = (o: Offering): Offering => ({ gold: Math.floor(o.gold * ALT
 export type AltarInfo = {
     week: string;
     gauges: { id: AltarGaugeId; name: string; desc: string; points: number; cost: number; until: number; level: number; next: string }[];
-    god: { gen: number; alive: boolean; name: string; level: number; power: number; until: number; mine: boolean } | null;
-    throne: { id: string; name: string; since: number; mine: boolean; tithe?: Offering } | null;
+    /** v27.70 hp: 신의 최대 체력, attack: 공격(신격 포함). */
+    god: { gen: number; alive: boolean; name: string; level: number; power: number; hp: number; attack: number; until: number; mine: boolean } | null;
+    /** v27.70 power·hp: 탄핵 상대(자리 주인을 본뜬 신)의 전투력·체력. */
+    throne: { id: string; name: string; since: number; mine: boolean; power: number; hp: number; tithe?: Offering } | null;
     totals: Offering & { points: number };
     board: { rank: number; name: string; points: number; anonymous: boolean; self: boolean }[];
     me: { points: number; rank: number; anonymous: boolean; challengeAt: number };
