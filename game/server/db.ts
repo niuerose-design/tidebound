@@ -12,7 +12,7 @@ const CHAT_KEEP = 300;
 /** v25.11 공유 길드. 주간 합산(week가 현재 주와 다르면 0으로 보고 다시 셉니다). */
 export type GuildRow = { id: string; name: string; code: string; leader: string; treasury: number; created_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; points: number };
 export type GuildMemberRow = { account_id: string; guild_id: string; name: string; joined_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; claimed: string };
-/** v25.13 계정 공유 금고. pearl_out은 이번 주(week) 진주 인출 합계(주당 상한용). */
+/** v25.13 계정 공유 금고. pearl_out은 이번 주(week) 세계석 인출 합계(주당 상한용). */
 export type WalletRow = { account_id: string; pearls: number; essence: number; week: string; pearl_out: number };
 export type GuildDelta = { catches?: number; clears?: number; bosses?: number; abyss?: number; donated?: number };
 /** 저장소에 넣는 상태 문자열. 파일 DB는 개발 편의를 위해 평문을 유지하고, TIDEBOUND_PACK_STATE=1 이면 파일 DB도 압축합니다(e2e 검증용). */

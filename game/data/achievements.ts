@@ -6,7 +6,7 @@ import { stats } from '../systems/stats';
 
 /**
  * v25.6 업적: 조건을 처음 만족하면 한 번만 해금되고 보상을 바로 받습니다. 환생 후에도 유지됩니다.
- * 보상 종류: 진주(pearls), SP(sp), 영구 장착 AP(ap), 영구 능력치 배율(bonus: attack·magic·hp·defense·resist에 +비율).
+ * 보상 종류: 세계석(pearls), SP(sp), 영구 장착 AP(ap), 영구 능력치 배율(bonus: attack·magic·hp·defense·resist에 +비율).
  * 조건 판정은 저장 상태만 보며 난수를 쓰지 않습니다. 기존 세이브는 이미 달성한 업적을 조용히 채우되 보상은 지급합니다.
  */
 export type AchievementReward = { pearls?: number; sp?: number; ap?: number; bonus?: Partial<Record<'attack' | 'magic' | 'hp' | 'defense' | 'resist', number>> };
@@ -66,7 +66,7 @@ export function achievementTotals(s: Pick<State, 'achievementClaims'>) {
 }
 export function rewardText(r: AchievementReward) {
     const parts: string[] = [];
-    if (r.pearls) parts.push(`진주 +${r.pearls}`);
+    if (r.pearls) parts.push(`세계석 +${r.pearls}`);
     if (r.sp) parts.push(`SP +${r.sp}`);
     if (r.ap) parts.push(`장착 AP +${r.ap}`);
     const label: Record<string, string> = { attack: '물리 공격', magic: '마법 공격', hp: '최대 체력', defense: '물리 방어', resist: '마법 방어' };

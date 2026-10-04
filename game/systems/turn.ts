@@ -156,7 +156,7 @@ export function advance(s: State, now: number, rng = Math.random) {
 const bottleGold = (level: number) => level * 500;
 /**
  * 병 속의 편지: 오프라인 정산의 온전한 1시간마다 4%p/단계 확률로 편지병을 줍습니다.
- * 내용은 골드 70% · 장비 25% · 진주 1개 5%. 0단계면 난수를 쓰지 않습니다.
+ * 내용은 골드 70% · 장비 25% · 세계석 1개 5%. 0단계면 난수를 쓰지 않습니다.
  */
 export function messageBottles(s: State, hours: number, rng: () => number) {
     const rank = researchRank(s, 'messageBottle');
@@ -170,6 +170,6 @@ export function messageBottles(s: State, hours: number, rng: () => number) {
         else if (roll < .95) { drop(s, s.level, rng, true); found.items++; }
         else { s.pearls += 1; found.pearls++; }
     }
-    if (found.count) addLog(s, `병 속의 편지 ${found.count}개를 주웠습니다${found.gold ? ` · +${found.gold} G` : ''}${found.items ? ` · 장비 ${found.items}개` : ''}${found.pearls ? ` · 진주 +${found.pearls}` : ''}`, 'reward');
+    if (found.count) addLog(s, `병 속의 편지 ${found.count}개를 주웠습니다${found.gold ? ` · +${found.gold} G` : ''}${found.items ? ` · 장비 ${found.items}개` : ''}${found.pearls ? ` · 세계석 +${found.pearls}` : ''}`, 'reward');
     return found;
 }

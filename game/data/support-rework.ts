@@ -93,7 +93,7 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     portLedger: { desc: '골드 획득·장비 드롭·명중이 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03 } },
     tradeWind: { desc: '골드·던전 골드 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
     tradeEmpire: { desc: '골드·던전 골드·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
-    goldenEmpire: { desc: '골드·던전 골드·장비 드롭·환생 진주와 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
+    goldenEmpire: { desc: '골드·던전 골드·장비 드롭·환생 세계석과 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
     // 패스파인더 (1차): 경험치 + 처치·환생
     voyageReview: { desc: '획득 경험치 +8%. 누적 처치가 쌓일수록 두 공격이 오릅니다.', bonus: { expBonus: .08 }, perCount: [{ source: 'catch', per: 500, bonus: { attack: 1, magic: 1 }, cap: 10 }] },
     chronicleStudy: { desc: '획득 경험치 +12%, 두 공격 +16, 최대 체력 +60. 환생할 때마다, 그리고 도감 기록 5개마다 두 공격과 체력이 더 오릅니다.', bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 3, magic: 3, hp: 10 }, cap: 10 }, { source: 'codex', per: 5, bonus: { attack: 1, magic: 1, hp: 4 }, cap: 12 }] },
@@ -177,7 +177,7 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
     harborBroker: '경제 계보의 2차 직업입니다. 흥정 갈고리로 상대를 약화시키고, 패시브로 골드와 명중을 올립니다.',
     tradePrince: '경제 계보의 환생 후 3차 직업입니다. 배틀쉽 봄버 주문을 쓰고, 패시브로 골드와 던전 골드를 올립니다.',
     seaTradeKing: '캡틴 계보의 환생 후 4차 경제 직업입니다. 배틀쉽 봄버를 쓰고, 패시브로 골드와 던전 골드를 올립니다.',
-    goldEmperor: '캡틴 계보의 5차 직업입니다. 불릿 파티를 쓰고, 패시브로 골드·던전 골드·환생 진주를 올려 경제의 정점에 섭니다.',
+    goldEmperor: '캡틴 계보의 5차 직업입니다. 불릿 파티를 쓰고, 패시브로 골드·던전 골드·환생 세계석을 올려 경제의 정점에 섭니다.',
     voyageScribe: '경험치를 더 얻고, 누적 처치가 쌓일수록 조금씩 강해지는 기록 1차 직업입니다.',
     chronicleNavigator: '경험치 획득이 높고, 환생할 때마다 기록이 쌓여 강해지는 상위 기록사입니다.',
     logbookRunner: '기록 계보의 2차 직업입니다. 길 안내 질주로 자신을 가속하고, 패시브로 속도와 경험치를 올립니다.',

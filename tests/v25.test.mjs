@@ -93,7 +93,7 @@ test('v25.3 combat feedback marks heaven for the scene effect and build view pai
 
 test('v25.3 passive-route returns: the archivist passive scales with rebirths and the journeyman with mastered jobs', async () => {
     const { masteredJobCount } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
-    // 진주 기록관 직업은 비전투 그대로지만, 드래곤 링크는 환생마다 자라 어느 직업에서든 쓸 만합니다.
+    // 세계석 기록관 직업은 비전투 그대로지만, 드래곤 링크는 환생마다 자라 어느 직업에서든 쓸 만합니다.
     const a = JOBS.find(j => j.id === 'abyssArchivist'); assert.ok(a.attack < 1 && a.penalties.attack < 0, 'archivist stays a non-combat job');
     const s = newState(0); s.level = 50; s.job = 'harpoon'; s.learned.memoryOfTides = 1; s.skillInheritances.memoryOfTides = true; s.skills = ['memoryOfTides'];
     // 환생 자체의 능력치 보정과 구분하려고 같은 환생 수에서 패시브 유무 차이를 봅니다.
@@ -416,7 +416,7 @@ test('v27.31 limit break needs the pearl research "한계의 문"; old breaks ge
     assert.match(P.limitBreakNext(s, 'hook').reason, /한계의 문.*2단계/, 'research rank caps the next stage');
     // 연구를 재분배하면 효과는 멈추고 기록은 남습니다(다시 사면 돌아옴).
     const withBreak = P.skillMastery(s, 'hook'); s.permanent.limitBreak = 0; assert.equal(P.skillMastery(s, 'hook'), withBreak - 1); assert.equal(P.limitBreakOwned(s, 'hook'), 1);
-    // 이미 2단계를 한 옛 세이브: 연구 2단계를 무료로 받고, 재분배해도 무료 단계는 남고 진주로 돌려받지 않습니다.
+    // 이미 2단계를 한 옛 세이브: 연구 2단계를 무료로 받고, 재분배해도 무료 단계는 남고 세계석으로 돌려받지 않습니다.
     const old = newState(0); old.limitBreaks = { hook: 2, net: 1 }; delete old.researchGranted; old.permanent = {};
     assert.equal(M.grantLimitBreakResearch(old), 2); assert.equal(old.permanent.limitBreak, 2); assert.equal(M.grantLimitBreakResearch(old), 0, 'only once');
     assert.equal(C.researchRefund(old, 'utility').refund, 0, 'free ranks are not refundable');

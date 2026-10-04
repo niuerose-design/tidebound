@@ -62,7 +62,7 @@ export function dungeonPressure(wave: number) {
  * - v27.35 보상은 '권장 레벨 몬스터 몇 마리분'으로 정합니다. 보스 경험치 = 몬스터 bossExpFish마리분, 보스 골드 = bossGoldFish마리분,
  *   클리어 골드 = clearGoldFish마리분. 일반 웨이브는 몬스터 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
  *   한 번 클리어(전투 5번)가 같은 레벨 사냥 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
- * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(진주는 층 공식 그대로).
+ * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(세계석은 층 공식 그대로).
  * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
  * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
  */

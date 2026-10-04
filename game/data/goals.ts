@@ -4,7 +4,7 @@ import { kst } from './doors';
 
 /**
  * v25.6 일일·주간 항해 목표. 한국 시간 자정·월요일에 바뀌며, 날짜를 씨앗으로 정해지므로 서버·클라이언트가 같은 목표를 봅니다.
- * 진행은 처치·정복 때 쌓이고, 다 채우면 보상(진주·정수)을 바로 받습니다. 하루 목표를 모두 채우면 추가 진주.
+ * 진행은 처치·정복 때 쌓이고, 다 채우면 보상(세계석·정수)을 바로 받습니다. 하루 목표를 모두 채우면 추가 세계석.
  */
 export type GoalKind = 'catch' | 'species' | 'dungeon' | 'boss' | 'swarm' | 'duel';
 export type Goal = { id: string; kind: GoalKind; target: number; /** species면 몬스터 id, dungeon이면 던전 id(빈 값은 아무 곳). */ subject?: string; pearls: number; essence?: number; /** v25.12 선택 목표: 모두 달성 보너스 계산에서 뺍니다(상대가 없을 수 있는 결투). */ optional?: boolean; progress: number; claimed?: boolean };

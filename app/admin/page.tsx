@@ -45,9 +45,9 @@ function SpDetail({ sp }: { sp: AdminSp }) {
         {sp.logs.length > 0 && <ul style={{ margin: 0, paddingLeft: 18, ...small }}>{sp.logs.map((t, i) => <li key={i}>{t}</li>)}</ul>}
     </div>;
 }
-const line = (p: AdminPlayer) => `${p.name} · Lv.${p.level} ${p.job} · 환생 ${p.rebirths}회 · 진주 ${p.pearls} · SP ${p.sp.have} · 골드 ${p.gold.toLocaleString()}${p.inDungeon ? ' · 던전 진행 중' : ''}`;
+const line = (p: AdminPlayer) => `${p.name} · Lv.${p.level} ${p.job} · 환생 ${p.rebirths}회 · 세계석 ${p.pearls} · SP ${p.sp.have} · 골드 ${p.gold.toLocaleString()}${p.inDungeon ? ' · 던전 진행 중' : ''}`;
 
-/** v27.26 운영 도구: 모험가 이름·아이디로 찾아 이번 생을 처음 상태로 되돌립니다(환생 횟수·진주·연구·유물·도감 유지). */
+/** v27.26 운영 도구: 모험가 이름·아이디로 찾아 이번 생을 처음 상태로 되돌립니다(환생 횟수·세계석·연구·유물·도감 유지). */
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
     const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [stats, setStats] = useState<Stats | null>(null);
@@ -75,7 +75,7 @@ export default function AdminPage() {
     const adjust = async () => {
         if (!edit) return;
         const gold = edit.gold.replace(/[,\s]/g, ''), pearls = edit.pearls.replace(/[,\s]/g, '');
-        if (!confirm(`${edit.player.name}(${edit.player.username || '아이디 없음'} · ${edit.player.slot}번 슬롯)\n골드 ${edit.player.gold.toLocaleString()} → ${gold === '' ? '그대로' : Number(gold).toLocaleString()}\n진주 ${edit.player.pearls.toLocaleString()} → ${pearls === '' ? '그대로' : Number(pearls).toLocaleString()}\n이대로 바꿀까요?`)) return;
+        if (!confirm(`${edit.player.name}(${edit.player.username || '아이디 없음'} · ${edit.player.slot}번 슬롯)\n골드 ${edit.player.gold.toLocaleString()} → ${gold === '' ? '그대로' : Number(gold).toLocaleString()}\n세계석 ${edit.player.pearls.toLocaleString()} → ${pearls === '' ? '그대로' : Number(pearls).toLocaleString()}\n이대로 바꿀까요?`)) return;
         const d = await call({ action: 'adjust', id: edit.player.id, gold: gold === '' ? undefined : Number(gold), pearls: pearls === '' ? undefined : Number(pearls) });
         if (d) { setDone(`조정했습니다: ${line(d.after)} · 유저 화면은 다음 동기화(최대 30초) 때 바뀝니다.`); setEdit(null); setPlayers(ps => ps && ps.map(p => p.id === d.after.id ? d.after : p)); }
     };
@@ -100,7 +100,7 @@ export default function AdminPage() {
     return <main className="admin-tool" style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px', color: '#e6f1ee' }}>
         <h1 style={{ fontSize: 24, marginBottom: 8 }}>운영 도구</h1>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>{tabButton('life', '모험가 관리')}{tabButton('events', '서버 이벤트')}{tabButton('closures', '입장 관리')}{tabButton('stats', '통계')}</div>
-        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·진주를 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·진주·연구·유물·도감·스킬 성장은 그대로입니다.' : tab === 'events' ? '기간 동안 모든 모험가의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다.' : tab === 'stats' ? '모든 세이브를 읽어 집계합니다. 활동은 마지막 저장 시각 기준이라, 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다. 운영자가 불러올 때만 계산해 게임에는 부하가 없습니다.' : '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나오고(사냥터는 더 앞의 열린 곳으로), 반복 도전도 멈춥니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.'}</p>
+        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·세계석을 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·세계석·연구·유물·도감·스킬 성장은 그대로입니다.' : tab === 'events' ? '기간 동안 모든 모험가의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다.' : tab === 'stats' ? '모든 세이브를 읽어 집계합니다. 활동은 마지막 저장 시각 기준이라, 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다. 운영자가 불러올 때만 계산해 게임에는 부하가 없습니다.' : '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나오고(사냥터는 더 앞의 열린 곳으로), 반복 도전도 멈춥니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.'}</p>
         <section className="panel" style={{ padding: 16, display: 'grid', gap: 10 }}>
             <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>운영자 키<input type="password" value={key} onChange={e => setKey(e.target.value)} autoComplete="off" placeholder="Vercel 환경 변수 TIDEBOUND_ADMIN_KEY 값" style={field}/></label>
             {tab === 'life' && <form onSubmit={e => { e.preventDefault(); search(); }} style={{ display: 'flex', gap: 8 }}>
@@ -142,7 +142,7 @@ export default function AdminPage() {
                 <Tile label="평균 환생" value={`${stats.rebirths.avg}회`} note={`최고 ${stats.rebirths.max}회 · 무릉도장 최고 ${stats.abyssBest}층`}/>
                 <Tile label="총 처치" value={n(stats.totals.kills)} note={`누적 플레이 ${n(stats.totals.playHours)}시간`}/>
                 <Tile label="보유 골드 합계" value={n(stats.totals.gold)} note={`중앙값 ${n(stats.medians.gold)}`}/>
-                <Tile label="보유 진주 합계" value={n(stats.totals.pearls)} note={`중앙값 ${n(stats.medians.pearls)} · 보유 SP 합계 ${n(stats.totals.sp)}`}/>
+                <Tile label="보유 세계석 합계" value={n(stats.totals.pearls)} note={`중앙값 ${n(stats.medians.pearls)} · 보유 SP 합계 ${n(stats.totals.sp)}`}/>
                 <Tile label="길드 가입" value={n(stats.inGuild)} note={`한계돌파한 모험가 ${n(stats.limitBreakers)}`}/>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 12 }}>
@@ -163,7 +163,7 @@ export default function AdminPage() {
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 13 }}><b>{p.name}</b> · 아이디 {p.username || '?'} · {p.slot}번 슬롯<br/><small style={{ color: '#9bb3b0' }}>{line(p)} · 마지막 저장 {new Date(p.updatedAt).toLocaleString('ko-KR')}</small></span>
                 <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    <button className="secondary" disabled={busy} onClick={() => { setPreview(null); setDone(''); setEdit({ player: p, gold: String(p.gold), pearls: String(p.pearls) }); }}>골드·진주</button>
+                    <button className="secondary" disabled={busy} onClick={() => { setPreview(null); setDone(''); setEdit({ player: p, gold: String(p.gold), pearls: String(p.pearls) }); }}>골드·세계석</button>
                     <button className="secondary" disabled={busy} onClick={() => setSpOpen(spOpen === p.id ? null : p.id)} aria-expanded={spOpen === p.id}>SP 내역</button>
                     <button className="secondary" disabled={busy} onClick={() => look(p.id)}>초기화 미리 보기</button>
                 </span>
@@ -172,11 +172,11 @@ export default function AdminPage() {
             </li>)}</ul>
         </section>}
         {tab === 'life' && edit && <form className="panel" onSubmit={e => { e.preventDefault(); adjust(); }} style={{ padding: 16, marginTop: 16, display: 'grid', gap: 8 }}>
-            <h2 style={{ fontSize: 16, margin: 0 }}>골드·진주 조정 · {edit.player.name} ({edit.player.username || '?'} · {edit.player.slot}번 슬롯)</h2>
-            <p style={{ fontSize: 13, color: '#9bb3b0', margin: 0 }}>입력한 값으로 바뀝니다(더하기가 아니라 최종 값). 비워 두면 그대로 둡니다. 지금: 골드 {edit.player.gold.toLocaleString()} · 진주 {edit.player.pearls.toLocaleString()}</p>
+            <h2 style={{ fontSize: 16, margin: 0 }}>골드·세계석 조정 · {edit.player.name} ({edit.player.username || '?'} · {edit.player.slot}번 슬롯)</h2>
+            <p style={{ fontSize: 13, color: '#9bb3b0', margin: 0 }}>입력한 값으로 바뀝니다(더하기가 아니라 최종 값). 비워 두면 그대로 둡니다. 지금: 골드 {edit.player.gold.toLocaleString()} · 세계석 {edit.player.pearls.toLocaleString()}</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
                 <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>골드<input inputMode="numeric" value={edit.gold} onChange={e => setEdit({ ...edit, gold: e.target.value })} style={field}/></label>
-                <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>진주<input inputMode="numeric" value={edit.pearls} onChange={e => setEdit({ ...edit, pearls: e.target.value })} style={field}/></label>
+                <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>세계석<input inputMode="numeric" value={edit.pearls} onChange={e => setEdit({ ...edit, pearls: e.target.value })} style={field}/></label>
             </div>
             <div style={{ display: 'flex', gap: 8 }}><button className="primary" disabled={busy}>조정 적용</button><button type="button" className="secondary" disabled={busy} onClick={() => setEdit(null)}>취소</button></div>
         </form>}

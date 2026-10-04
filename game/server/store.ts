@@ -103,7 +103,7 @@ export async function syncDuelSeason(id: string, s: State, now: number) {
         const rows = await database.listRankings(monthSeason(previous), 100);
         rank = rows.findIndex(r => r.id === duelRowId(previous, id)) + 1;
         carry = rows[rank - 1] || await database.getRanking(duelRowId(previous, id), monthSeason(previous));
-        if (rank > 0) { const pearls = duelSeasonPearls(rank); s.pearls += pearls; addLog(s, `지난 시즌(${previous}) 결투 ${rank}위 · 진주 +${pearls}`, 'reward'); }
+        if (rank > 0) { const pearls = duelSeasonPearls(rank); s.pearls += pearls; addLog(s, `지난 시즌(${previous}) 결투 ${rank}위 · 세계석 +${pearls}`, 'reward'); }
     }
     carry ||= await database.getRanking(id, SAVE_VERSION); // v25.11 이전 영구 랭킹 행
     s.duelSeason = { key, ...(rank > 0 ? { lastKey: previous, lastRank: rank } : {}) };
@@ -138,7 +138,7 @@ export async function syncAbyssBoard(id: string, s: State, now: number) {
         const rows = await database.listRankings(weekSeason(previous), 100);
         const rank = rows.findIndex(r => r.id === abyssRowId(id)) + 1;
         week.settled = previous;
-        if (rank > 0) { const pearls = abyssWeeklyPearls(rank); s.pearls += pearls; addLog(s, `지난주 무릉도장 기록 ${rank}위(${rows[rank - 1].rating}층) · 진주 +${pearls}`, 'reward'); }
+        if (rank > 0) { const pearls = abyssWeeklyPearls(rank); s.pearls += pearls; addLog(s, `지난주 무릉도장 기록 ${rank}위(${rows[rank - 1].rating}층) · 세계석 +${pearls}`, 'reward'); }
     }
 }
 export function failure(e: unknown) {
