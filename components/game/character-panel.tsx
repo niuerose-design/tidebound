@@ -75,7 +75,7 @@ export function Character({ s, send, busy }: PanelProps) {
     <span>경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
     <span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong>
     </span>
-    <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}만큼 회복합니다. 기본 ${percent(BALANCE.healAfterKill)}에서 해역 난이도 1마다 ${percent(BALANCE.healAfterKillTierDecay)}p씩 줄고(최저 ${percent(BALANCE.healAfterKillMin)}), 연구 ‘잔잔한 물결’ 1단계마다 +1%p. 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 고정입니다.`}>처치 후 회복 (처치당)<strong>{percent(victoryHealRate(s))} · {victoryHeal(s).toLocaleString()} HP</strong>
+    <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}만큼 회복합니다. 기본 ${percent(BALANCE.healAfterKill)}에서 해역 난이도 1마다 ${percent(BALANCE.healAfterKillTierDecay)}p씩 줄고(최저 ${percent(BALANCE.healAfterKillMin)}), 연구 ‘회복의 기억’ 1단계마다 +1%p. 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 고정입니다.`}>처치 후 회복 (처치당)<strong>{percent(victoryHealRate(s))} · {victoryHeal(s).toLocaleString()} HP</strong>
     </span>
     </div>
     </section>

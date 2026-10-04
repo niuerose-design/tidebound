@@ -517,6 +517,41 @@ test('v27.45 golden monsters have a 0.2% base chance that thief passives add to'
     const { stats } = await L.load('systems/stats'), B = await L.load('data/balance');
     assert.equal(stats(newState(0)).goldenFind, B.BALANCE.goldenBase); assert.equal(B.BALANCE.goldenBase, .002);
 });
+test('v27.46 maple gear names: drops/shop use set names by style, old save names and affixes are renamed once', async () => {
+    const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const M = await G.load('data/maple-gear'), mig = await G.load('systems/migrations'), engine = await G.load('systems/engine');
+    assert.equal(M.gearName('rod', 6, 'magic'), '제네시스 스태프'); assert.equal(M.gearName('rod', 0), '목검'); assert.equal(M.gearName('charm', 3), '마이스터 링');
+    const s = engine.newState(0);
+    assert.equal(s.equipment.rod.name, '목검'); assert.equal(s.equipment.coat.name, '하얀 반팔 면티');
+    s.equipment.rod.name = '대나무 낚싯대'; s.equipment.coat.name = '낡은 구명조끼';
+    s.inventory.push({ id: 'a', slot: 'rod', style: 'balanced', rarity: 4, name: '폭풍 삼지창', power: 10, level: 1, affixes: [{ id: 'drift', name: '유영', stat: 'evasion', kind: 'percent', value: .02 }] },
+        { id: 'b', slot: 'charm', rarity: 3, name: '전설 정밀한 조류 나침반', power: 10, level: 1 },
+        { id: 'c', slot: 'rod', style: 'balanced', rarity: 3, name: '윤회의 낚싯대', relic: 'memoryRod', power: 45, level: 1, affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
+        { id: 'd', slot: 'coat', rarity: 2, name: '내가 붙인 이름', power: 5, level: 1 });
+    assert.ok(mig.renameMapleGear(s) >= 5);
+    assert.deepEqual([s.equipment.rod.name, s.equipment.coat.name, ...s.inventory.map(i => i.name)], ['목검', '하얀 반팔 면티', '앱솔랩스 샤이닝 로드', '마이스터 링', '윤회의 샤이닝 로드', '내가 붙인 이름']);
+    assert.equal(s.inventory[0].affixes[0].name, '회피');
+    assert.equal(mig.renameMapleGear(s), 0, 'idempotent');
+});
+test('v27.48 burn: stacks to 3, ticks like poison, adds half of bleed vulnerability, separate from bleed/poison', async () => {
+    const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { STATUS_TUNING, SKILL_FORMULA } = await G.load('data/balance');
+    const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const mk = (skills) => ({ name: 'A', stats: { ...base }, hp: 1e6, mana: 1000, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
+    const b = mk([]);
+    for (let i = 0; i < 5; i++) { const a = mk(['fireball']); strike(a, b, () => 0); }
+    assert.equal(b.effects.burn.stacks, STATUS_TUNING.burnMaxStacks, 'caps at 3 stacks');
+    assert.equal(b.effects.burn.turns, STATUS_TUNING.burnTurns);
+    const fang = mk(['toxicFang']), c = mk([]); strike(fang, c, () => 0); assert.equal(c.effects.burn.stacks, 1); assert.equal(c.effects.poison, undefined);
+    // 틱: 화상 중인 쪽이 행동하면 (중첩당 + 체력 비례) × 중첩만큼 깎입니다.
+    const before = b.hp, burn = { ...b.effects.burn }; strike(b, mk([]), () => .99);
+    assert.ok(before - b.hp >= (burn.perStack + burn.hpTick) * burn.stacks, 'burn ticks on action');
+    // 받는 직접 피해: 화상 +6%, 출혈 +12%, 둘 다면 합산.
+    const hit = (effects) => { const t = mk([]); t.effects = effects; strike(mk([]), t, () => .5); return 1e6 - t.hp; };
+    const plain = hit({}), burned = hit({ burn: { perStack: 0, stacks: 1, turns: 9, hpTick: 0 } });
+    assert.ok(Math.abs(burned / plain - (1 + SKILL_FORMULA.burnVulnerability)) < .02, `burn vulnerability ${burned / plain}`);
+    assert.ok(SKILL_FORMULA.burnVulnerability < SKILL_FORMULA.bleedVulnerability && SKILL_FORMULA.burnRatio > SKILL_FORMULA.poisonRatio && SKILL_FORMULA.burnRatio < SKILL_FORMULA.bleedRatio, 'between poison and bleed');
+});
 
 test('v27.48 altar blessing levels cost x1.5 per level; offline settlement ignores event multipliers', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();

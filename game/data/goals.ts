@@ -3,7 +3,7 @@ import { FISH, STAGES, DUNGEONS } from './world';
 import { kst } from './doors';
 
 /**
- * v25.6 일일·주간 항해 목표. 한국 시간 자정·월요일에 바뀌며, 날짜를 씨앗으로 정해지므로 서버·클라이언트가 같은 목표를 봅니다.
+ * v25.6 일일·주간 모험 목표. 한국 시간 자정·월요일에 바뀌며, 날짜를 씨앗으로 정해지므로 서버·클라이언트가 같은 목표를 봅니다.
  * 진행은 처치·정복 때 쌓이고, 다 채우면 보상(세계석·정수)을 바로 받습니다. 하루 목표를 모두 채우면 추가 세계석.
  */
 export type GoalKind = 'catch' | 'species' | 'dungeon' | 'boss' | 'swarm' | 'duel';

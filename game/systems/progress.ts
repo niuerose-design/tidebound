@@ -1,4 +1,4 @@
-/** v25.6 업적·일일/주간 항해 목표·주간 심연 기록. 난수를 쓰지 않고 저장 상태만 바꿉니다. */
+/** v25.6 업적·일일/주간 모험 목표·주간 심연 기록. 난수를 쓰지 않고 저장 상태만 바꿉니다. */
 import type { State } from '../types';
 import { ACHIEVEMENTS, achievementById } from '../data/achievements';
 import { makeGoals, dayKey, weekKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, goalText, type Goal, type GoalBoard, type GoalKind } from '../data/goals';
@@ -14,7 +14,7 @@ export function syncAchievements(s: State, log: (text: string) => void) {
         got.push(a.title);
     }
     if (!got.length) return;
-    if (first) log(`업적 ${got.length}개 달성 · 항해 기록 화면에서 보상을 받으세요.`);
+    if (first) log(`업적 ${got.length}개 달성 · 모험 기록 화면에서 보상을 받으세요.`);
     else for (const title of got) log(`업적 달성 · ${title} · 기록 화면에서 보상 받기`);
 }
 /** 해금했지만 아직 받지 않은 업적. */

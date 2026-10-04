@@ -1,4 +1,4 @@
-/** 항해 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
+/** 모험 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
 import { skillPracticeTargets } from '../progression';
 import { tideLimit, encounterTier } from '../meta';
 import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed } from '../../data/world';
@@ -17,7 +17,7 @@ export const voyageActions: ActionHandlers = {
         if (!Number.isInteger(tier) || tier < 0 || tier > tideLimit(s) || s.dungeon)
             throw Error('해역 난이도 조건을 확인하세요.');
         if (tier && s.vows?.seal)
-            throw Error('잠든 닻 봉인 중에는 해역 난이도가 0으로 고정됩니다.');
+            throw Error('잠든 힘 봉인 중에는 해역 난이도가 0으로 고정됩니다.');
         s.tide = tier;
         s.enemy = null;
         s.effects = {};
@@ -84,7 +84,7 @@ export const voyageActions: ActionHandlers = {
     },
     autoSell(s, { a }) {
         if (!researchRank(s, 'sortingNet'))
-            throw Error('선별의 그물 연구가 필요합니다.');
+            throw Error('선별의 눈 연구가 필요합니다.');
         s.autoSell = a.value === 'on';
     },
     doorNotice(s, { a }) {

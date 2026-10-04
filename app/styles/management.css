@@ -183,7 +183,7 @@
 .specialization-option strong, .specialization-option small { display: block; margin-bottom: 6px; }
 @media (max-width: 640px) { .growth-suggestions { flex-direction: column; } }
 
-/* 직업 항해도: 계열 칩 → 계보 카드 → 항로도 → 상세 패널(모바일은 아래에서 올라오는 창). */
+/* 직업 계보도: 계열 칩 → 계보 카드 → 항로도 → 상세 패널(모바일은 아래에서 올라오는 창). */
 /* 세 칸: ① 계보 카드 · ② 항로도 · ③ 직업 상세 */
 .job-columns { display:grid; grid-template-columns:minmax(250px,.95fr) minmax(260px,1fr) minmax(300px,1.1fr); gap:18px; align-items:start; }
 .job-columns>.panel, .job-lineage-column { min-width:0; padding:18px; display:flex; flex-direction:column; gap:12px; }

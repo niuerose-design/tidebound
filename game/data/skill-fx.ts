@@ -27,7 +27,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
     // 제로 (1차)·제로 (4차): 시간 갈래
     windUp: 'time', slackHand: 'time', timeMachine: 'time', precede: 'time', frozenTime: 'time', rewind: 'time',
     // 매지션(불,독)·부식 연성: 독 갈래
-    toxicFang: 'venom', venomDart: 'venom', doomMark: 'venom', miasma: 'venom', rotBloom: 'venom', rottenBait: 'venom', corrosiveBloom: 'venom', transmute: 'venom', grandTransmutation: 'venom',
+    toxicFang: 'fire', venomDart: 'venom', doomMark: 'venom', miasma: 'venom', rotBloom: 'venom', rottenBait: 'venom', corrosiveBloom: 'venom', transmute: 'venom', grandTransmutation: 'venom',
     // 팬텀 (1차): 먹물 갈래
     inkTrick: 'ink', smokeVeil: 'ink',
     // 망인 계보: 뼈 갈래

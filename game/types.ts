@@ -84,12 +84,14 @@ export type StatusEffects = {
     };
     /** v27.17 중독: 출혈과 별개 상태이상. 걸릴 때마다 한 중첩씩 쌓이고(상한 STATUS_TUNING.poisonMaxStacks + 포화) 지속이 갱신됩니다. 틱 피해 = (perStack + hpTick) × stacks. */
     poison?: { perStack: number; stacks: number; turns: number; hpTick: number };
+    /** v27.48 화상: 중독처럼 쌓이지만(최대 STATUS_TUNING.burnMaxStacks) 출혈처럼 받는 직접 피해를 키웁니다(burnVulnerability). */
+    burn?: { perStack: number; stacks: number; turns: number; hpTick: number };
     weaken?: number;
     silence?: number;
     slow?: number;
     haste?: number;
     /** 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 남은 턴(자기 행동마다 1씩 줄어듭니다). */
-    immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'weaken' | 'silence' | 'slow', number>>;
+    immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'silence' | 'slow', number>>;
     /** v25 일곱 글자: 이번 전투에 새긴 인. */
     seals?: string[];
     /** v25 타임 리와인드를 이번 전투에 썼는지. */
@@ -138,7 +140,7 @@ export type Skill = {
     chance: number;
     cooldown: number;
     multiplier: number;
-    effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste';
+    effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste';
     /** split: 원시 피해를 물리·마법 절반씩 나누어 각각 방어를 적용하는 한 번의 공격. */
     damageType?: 'physical' | 'magic' | 'split';
     cost?: number;
@@ -414,7 +416,7 @@ export type State = {
     researchGranted?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
-    /** 선별의 그물 자동 판매 켜짐 여부(설정). */
+    /** 선별의 눈 자동 판매 켜짐 여부(설정). */
     autoSell?: boolean;
     /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
     hideDoorNotice?: boolean;
@@ -466,7 +468,7 @@ export type State = {
         bottles?: { count: number; gold: number; items: number; pearls: number };
     };
 };
-/** 서약. anchor·breath는 걸었는지, rough는 거친 바다 선택 단계(1~3). seal은 잠든 닻 봉인 진행(이번 생만). */
+/** 서약. anchor·breath는 걸었는지, rough는 험한 길 선택 단계(1~3). seal은 잠든 힘 봉인 진행(이번 생만). */
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 해역 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };

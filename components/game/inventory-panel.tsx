@@ -131,7 +131,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     <div className="gear-list">{shown.slice(0, limit).map(i => row(i))}</div>
     {shown.length > limit && <button type="button" className="gear-more" onClick={() => setLimit(v => v + PAGE)}><ChevronDown size={15}/> 더 보기 · 남은 {shown.length - limit}개</button>}
     {limit > PAGE && shown.length <= limit && <button type="button" className="gear-more muted" onClick={() => setLimit(PAGE)}>접기</button>}
-    {!s.inventory.length ? <div className="notice">가방이 비어 있습니다. 사냥 또는 항구 상점에서 장비를 획득하세요.</div> : !shown.length && <div className="notice">조건에 맞는 장비가 없습니다.</div>}
+    {!s.inventory.length ? <div className="notice">가방이 비어 있습니다. 사냥 또는 상점에서 장비를 획득하세요.</div> : !shown.length && <div className="notice">조건에 맞는 장비가 없습니다.</div>}
     <details className="panel bulk-sale gear-bulk">
     <summary><h2>등급별 일괄판매 · 분해</h2><span>보호 장비·유물·착용 장비는 제외 · 분해 정수 등급별 {ESSENCE_BY_RARITY.join('·')}</span></summary>
     <p>가방 전체에서 선택한 등급만 판매하거나 분해합니다. 분해하면 옵션 재설정에 쓰는 정수를 얻습니다.</p>

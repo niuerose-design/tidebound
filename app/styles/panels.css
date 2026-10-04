@@ -351,7 +351,7 @@
   white-space:nowrap
 }
 
-/* v25.13 항해 일지 접기 */
+/* v25.13 모험 일지 접기 */
 .log-panel.folded > *:not(.section-title) { display:none; }
 .log-panel .section-title { flex-wrap:wrap; }
 .log-fold { display:inline-flex; align-items:center; gap:4px; margin-left:auto; padding:4px 9px; border:1px solid var(--border); border-radius:6px; background:#101c20; color:#9bb3b0; font-size:12px; cursor:pointer; }

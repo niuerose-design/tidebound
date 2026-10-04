@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Anchor } from 'lucide-react';
+import { Leaf } from 'lucide-react';
 
 /** 아이디·비밀번호 로그인/가입 화면. */
 export function LoginScreen({ onSubmit }: { onSubmit: (mode: 'signup' | 'login', username: string, password: string, fisherName?: string) => Promise<void> }) {
@@ -17,10 +17,10 @@ export function LoginScreen({ onSubmit }: { onSubmit: (mode: 'signup' | 'login',
         finally { setBusy(false); }
     };
     return <div className="loading-screen login-screen">
-        <Anchor size={48}/>
+        <Leaf size={48}/>
         <span className="beta-badge">OPEN BETA</span>
         <h1>판게아 RPG</h1>
-        <p>{mode === 'login' ? '아이디와 비밀번호로 항해를 이어가세요.' : '로그인용 아이디·비밀번호와, 게임에서 보일 모험가 이름을 정하세요.'}</p>
+        <p>{mode === 'login' ? '아이디와 비밀번호로 모험을 이어가세요.' : '로그인용 아이디·비밀번호와, 게임에서 보일 모험가 이름을 정하세요.'}</p>
         <form className="panel login-form" onSubmit={submit}>
             <label>아이디<input name="username" autoComplete="username" value={username} onChange={e => setUsername(e.target.value)} placeholder="영문 소문자·숫자·밑줄 3~20자" required/></label>
             <label>비밀번호<input name="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="8자 이상" required/></label>

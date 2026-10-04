@@ -3,11 +3,11 @@ import { ECONOMY, researchRank } from '../data/economy';
 import { MONSTER_TUNING, DUNGEON_TUNING } from '../data/balance';
 import { fishExpAt, fishGoldAt } from '../data/world';
 export const rebirthLevel = (s: State) => Math.min(ECONOMY.rebirthLevelCap, 30 + s.rebirths * ECONOMY.rebirthLevelStep);
-/** 요구 레벨을 넘겨 오래 버틴 항해의 추가 세계석: 초과 레벨² ÷ 40. */
+/** 요구 레벨을 넘겨 오래 버틴 모험의 추가 세계석: 초과 레벨² ÷ 40. */
 export const deepVoyagePearls = (s: State) => { const over = s.level - rebirthLevel(s); return over > 0 ? Math.floor(over * over / 40) : 0; };
 /** 순풍의 기본 조건 폭(요구 레벨+5)과 기본 경험치 보너스(+50%). 실제 값은 tailwindWindow·tailwindExp를 쓰세요. */
 export const TAILWIND_WINDOW = 5, TAILWIND_EXP = .5, DEEP_VOYAGE_LEVEL = 100;
-/** 순풍 경험치 보너스: +50% + 순풍의 돛 10%p/단계. 정수 연산 뒤 나눠 0단계는 정확히 0.5입니다. */
+/** 순풍 경험치 보너스: +50% + 순풍의 깃털 10%p/단계. 정수 연산 뒤 나눠 0단계는 정확히 0.5입니다. */
 export const tailwindExp = (s: Pick<State, 'permanent'>) => (TAILWIND_EXP * 10 + researchRank(s, 'tailwindSail')) / 10;
 /** 순풍 조건 폭: 요구 레벨 + 5 + 바람목 넓히기 1레벨/단계. */
 export const tailwindWindow = (s: Pick<State, 'permanent'>) => TAILWIND_WINDOW + researchRank(s, 'tailwindWindow');
@@ -21,7 +21,7 @@ export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, 일반 던전은 0. */
 export const dungeonTier = (id: string, abyssDepth: number) => id === 'abyss' ? abyssDepth + 2 : 0;
-/** 잠든 닻 봉인 중에는 일반 사냥터 해역 난이도가 0으로 고정됩니다. */
+/** 잠든 힘 봉인 중에는 일반 사냥터 해역 난이도가 0으로 고정됩니다. */
 export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1) : s.vows?.seal ? 0 : (s.tide || 0);
 /** 해역 난이도 1단계당 처치 숙련 +30%. */
 const TIDE_MASTERY_PER_TIER = .3;

@@ -238,7 +238,7 @@
 /* Short target-anchored feedback inspired by the supplied combat reference. */
 .tide-fx-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:6}
 .tide-fx{--fx:#efd28a;position:absolute;left:72%;top:53%;width:0;height:0;color:var(--fx)}
-.tide-fx-target-player{left:28%}.tide-fx-magic,.tide-fx-wave{--fx:#8ce4ed}.tide-fx-lightning,.tide-fx-stun{--fx:#ffe38b}.tide-fx-bleed{--fx:#fb8f97}.tide-fx-poison{--fx:#9af06a}.tide-fx-silence,.tide-fx-arcane{--fx:#c4b0ff}.tide-fx-slow{--fx:#a0d2ff}.tide-fx-haste,.tide-fx-heal{--fx:#a4e9ba}.tide-fx-weaken{--fx:#c2b7d8}.tide-fx-miss{--fx:#a6bdbb}
+.tide-fx-target-player{left:28%}.tide-fx-magic,.tide-fx-wave{--fx:#8ce4ed}.tide-fx-lightning,.tide-fx-stun{--fx:#ffe38b}.tide-fx-bleed{--fx:#fb8f97}.tide-fx-poison{--fx:#9af06a}.tide-fx-burn{--fx:#ff9a4a}.tide-fx-silence,.tide-fx-arcane{--fx:#c4b0ff}.tide-fx-slow{--fx:#a0d2ff}.tide-fx-haste,.tide-fx-heal{--fx:#a4e9ba}.tide-fx-weaken{--fx:#c2b7d8}.tide-fx-miss{--fx:#a6bdbb}
 .tide-fx i{display:block;position:absolute;pointer-events:none;font-style:normal}
 .tide-fx-trail{left:-120px;top:-2px;width:122px;height:3px;background:linear-gradient(90deg,transparent,var(--fx),#fff);box-shadow:0 0 8px var(--fx);animation:tideStrike .42s ease-out var(--fx-delay) both}
 .tide-fx-target-player .tide-fx-trail{left:0;transform-origin:right;background:linear-gradient(90deg,#fff,var(--fx),transparent)}
@@ -349,7 +349,7 @@
 .battle-target-strip .swarm-picker button{min-width:40px;padding:4px 8px;font-size:12px}
 .opponent-card .enemy-hint{color:#b9b07f;white-space:normal;line-height:1.5}
 
-/* 모바일 항해 안내: 장면 위에 한 번 더(데스크톱은 왼쪽 열에 있음) */
+/* 모바일 모험 안내: 장면 위에 한 번 더(데스크톱은 왼쪽 열에 있음) */
 .battle-mobile-tutorial{display:none}
 .battle-top-tutorial{order:-1;margin-bottom:12px}.battle-top-tutorial .tutorial-card{margin:0}
 @media(max-width:767px){.battle-mobile-tutorial{display:block;order:-1}.battle-mobile-tutorial .tutorial-card{margin-bottom:12px}}
@@ -379,7 +379,7 @@
 /* v25.3 배경까지 번지는 연출. 스킬은 섬광·물결 고리, 天은 어둠·일곱 글자·전체 섬광. */
 .scene-fx-layer{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
 .scene-fx{--fx:#efd28a;position:absolute;inset:0;color:var(--fx)}
-.scene-fx-wave,.scene-fx-magic{--fx:#8ce4ed}.scene-fx-lightning,.scene-fx-stun{--fx:#ffe38b}.scene-fx-bleed{--fx:#fb8f97}.scene-fx-poison{--fx:#9af06a}.scene-fx-arcane,.scene-fx-silence{--fx:#c4b0ff}.scene-fx-slow{--fx:#a0d2ff}.scene-fx-haste,.scene-fx-heal{--fx:#a4e9ba}.scene-fx-weaken{--fx:#c2b7d8}
+.scene-fx-wave,.scene-fx-magic{--fx:#8ce4ed}.scene-fx-lightning,.scene-fx-stun{--fx:#ffe38b}.scene-fx-bleed{--fx:#fb8f97}.scene-fx-poison{--fx:#9af06a}.scene-fx-burn{--fx:#ff9a4a}.scene-fx-arcane,.scene-fx-silence{--fx:#c4b0ff}.scene-fx-slow{--fx:#a0d2ff}.scene-fx-haste,.scene-fx-heal{--fx:#a4e9ba}.scene-fx-weaken{--fx:#c2b7d8}
 .scene-fx i,.scene-fx b{position:absolute;display:block;font-style:normal}
 .scene-fx-burst .scene-fx-flash{inset:0;background:radial-gradient(ellipse at 62% 48%,color-mix(in srgb,var(--fx) 42%,transparent),transparent 62%);animation:sceneFlash .9s ease-out var(--fx-delay) both;mix-blend-mode:screen}
 .scene-fx-burst.critical .scene-fx-flash{background:radial-gradient(ellipse at 62% 48%,color-mix(in srgb,var(--fx) 62%,transparent),transparent 70%)}
@@ -453,7 +453,7 @@
 @media(max-width:767px){.slot-chips{gap:6px}.slot-chip{padding:5px 8px}.slot-chip-text strong{font-size:11px}}
 .battle-shortcut-list .battle-stage-button strong{font-size:12px}.battle-shortcut-list .battle-stage-button small{display:block;font-size:10px;color:#8ea7a4}.battle-shortcut-list .battle-stage-button>svg:last-child{margin-left:auto;color:#678785}.battle-shortcut-list .battle-stage-index{display:grid;place-items:center;color:#a4e9ba}
 
-/* v25.15 세 열 아래쪽 맞춤: 가장 긴 열에 맞춰 왼쪽 패널·항해 일지·전투 기록이 늘어납니다. */
+/* v25.15 세 열 아래쪽 맞춤: 가장 긴 열에 맞춰 왼쪽 패널·모험 일지·전투 기록이 늘어납니다. */
 @media(min-width:901px){
 .battle-hud{align-items:stretch}
 .battle-character-column{display:flex;flex-direction:column}
@@ -778,6 +778,7 @@
 @keyframes ultFreeze{0%{filter:none}15%,70%{filter:grayscale(.8) sepia(.3) hue-rotate(180deg) brightness(.8)}100%{filter:none}}
 @media(prefers-reduced-motion:reduce){.scene-fx-ult .ult-a,.scene-fx-ult .ult-b,.scene-fx-ult .ult-frag{display:none}.scene-fx-ult .scene-fx-dark,.scene-fx-ult .scene-fx-flash,.ult-title{animation-name:tideReduced;animation-duration:1.4s}.battle-scene:has(.ult-slash) .ocean-art,.battle-scene:has(.ult-time) .ocean-art{animation:none}}
 .scene-top .scene-label{min-width:0}.scene-top .scene-label svg{flex-shrink:0}.scene-label-text{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.scene-top .scene-actions{flex-shrink:0}
+.tide-fx-burn .tide-fx-fragment{animation-name:tideFragmentUp;animation-duration:.9s;font-size:13px}
 /* v27.47 오른쪽 패널 제단 탭 */
 .battle-altar-list .battle-dungeon-button>span{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
 .battle-altar-list .battle-dungeon-button>span .meter{width:100%}

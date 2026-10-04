@@ -81,7 +81,7 @@ function tickImmunity(effects: StatusEffects) {
     }
     if (!Object.keys(effects.immune).length) delete effects.immune;
 }
-const ENEMY_STATUS: Record<string, ImmuneStatus> = { stun: 'stun', bleed: 'bleed', poison: 'poison', weaken: 'weaken', silence: 'silence', slow: 'slow' };
+const ENEMY_STATUS: Record<string, ImmuneStatus> = { stun: 'stun', bleed: 'bleed', poison: 'poison', burn: 'burn', weaken: 'weaken', silence: 'silence', slow: 'slow' };
 /** 상대에게 이미 걸려 있는 상태이상(중첩형 중독은 더 쌓을 수 있으므로 제외). */
 function alreadyAfflicted(b: Fighter, sk: { effect?: string }) {
     const key = sk.effect ? ENEMY_STATUS[sk.effect] : undefined;
@@ -89,6 +89,7 @@ function alreadyAfflicted(b: Fighter, sk: { effect?: string }) {
     if (key === 'stun') return b.stun > 0;
     if (key === 'bleed') return !!b.effects?.dot;
     if (key === 'poison') return false; // 중독은 계속 쌓입니다.
+    if (key === 'burn') return (b.effects?.burn?.stacks || 0) >= STATUS_TUNING.burnMaxStacks; // 화상은 최대 중첩까지 쌓습니다.
     return (b.effects?.[key] || 0) > 0;
 }
 const isImmune = (b: Fighter, key: ImmuneStatus) => (b.effects?.immune?.[key] || 0) > 0;
@@ -210,6 +211,17 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         if (poison.turns <= 0) { delete a.effects.poison; grantImmunity(a.effects, 'poison'); }
         if (a.hp <= 0 && !endure(a, sa, notes, ev, true)) { ev.defeated = true; return emit(`${a.name} · ${notes.join(' · ')} → 쓰러짐`); }
     }
+    // v27.48 화상 틱: 중독과 같은 방식(중첩 × (중첩당 피해 + 최대 체력 비례)). 출혈·중독과 함께 들어갑니다.
+    if (!forced && a.effects.burn && a.hp > 0) {
+        const burn = a.effects.burn;
+        const hit = (burn.perStack + burn.hpTick) * burn.stacks;
+        a.hp = Math.max(0, a.hp - hit);
+        notes.push(`화상 ×${burn.stacks} ${hit}`);
+        ev.dot = ev.dot ? { name: `${ev.dot.name}·화상`, value: ev.dot.value + hit } : { name: `화상 ×${burn.stacks}`, value: hit };
+        burn.turns--;
+        if (burn.turns <= 0) { delete a.effects.burn; grantImmunity(a.effects, 'burn'); }
+        if (a.hp <= 0 && !endure(a, sa, notes, ev, true)) { ev.defeated = true; return emit(`${a.name} · ${notes.join(' · ')} → 쓰러짐`); }
+    }
     const attackSpeed = fighterSpeed(a), targetSpeed = fighterSpeed(b);
     const weakened = forced ? (a.effects.weaken || 0) > 0 : consumeStatus(a.effects, 'weaken');
     const silenced = forced ? false : consumeStatus(a.effects, 'silence');
@@ -283,7 +295,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (chosen) {
         a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
         a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));
-        if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.poison; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
+        if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.poison; delete a.effects.burn; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
         if (chosen.effect === 'heal') {
             healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio) * (1 + sa.healBonus)));
             a.hp += healed;
@@ -367,13 +379,13 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const mitigated = (raw: number) => split
         ? Math.round(raw * SKILL_FORMULA.splitPhysical * 100 / (100 + sb.defense * pierce * 2)) + Math.round(raw * (1 - SKILL_FORMULA.splitPhysical) * 100 / (100 + sb.resist * pierce * 2))
         : Math.round(raw * 100 / (100 + defense * 2));
-    const linked = chosen?.damageBonusCondition === 'bleeding' ? !!(b.effects.dot || b.effects.poison) : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
+    const linked = chosen?.damageBonusCondition === 'bleeding' ? !!(b.effects.dot || b.effects.poison || b.effects.burn) : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
     const preyHit = !!(chosen?.preyBonus && b.prey);
     if (preyHit) notes.push('사냥감');
     const sealBoost = chosen?.sealPower ? 1 + chosen.sealPower * (a.effects.seals?.length || 0) : 1;
     if (chosen?.sealPower) notes.push(`인 ${a.effects.seals?.length || 0}개`);
-    // v27.17 출혈 중인 대상은 직접 피해를 더 받습니다(출혈은 중첩되지 않는 대신 이 보정).
-    const bleedBoost = b.effects.dot ? 1 + SKILL_FORMULA.bleedVulnerability : 1;
+    // v27.17 출혈 중인 대상은 직접 피해를 더 받습니다(출혈은 중첩되지 않는 대신 이 보정). v27.48 화상은 그 절반을 더합니다.
+    const bleedBoost = 1 + (b.effects.dot ? SKILL_FORMULA.bleedVulnerability : 0) + (b.effects.burn ? SKILL_FORMULA.burnVulnerability : 0);
     const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push('연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
@@ -436,6 +448,18 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpTick: Math.max(hpTick, current?.hpTick || 0) };
         notes.push(`중독 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'poison', turns });
+    }
+    // v27.48 화상: 걸릴 때마다 한 중첩(최대 burnMaxStacks), 지속 갱신, 중첩당 피해는 더 강한 쪽.
+    if (landed && chosen?.effect === 'burn' && isImmune(b, 'burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
+    else if (landed && chosen?.effect === 'burn') {
+        const turns = (chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus;
+        const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
+        const hpTick = Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.dotMaxHpRatio);
+        const current = b.effects.burn;
+        const stacks = Math.min(STATUS_TUNING.burnMaxStacks, (current?.stacks || 0) + 1);
+        b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpTick: Math.max(hpTick, current?.hpTick || 0) };
+        notes.push(`화상 ${stacks}중첩 ${turns}턴`);
+        ev.statuses.push({ id: 'burn', turns });
     }
     if (landed && chosen?.effect === 'weaken' && isImmune(b, 'weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
     else if (landed && chosen?.effect === 'weaken') {

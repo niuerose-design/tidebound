@@ -60,7 +60,7 @@ export const EXPANSION_JOBS: NewJob[] = [
     // ── 역병의 길 (상태이상 최상위: 아크메이지(불,독) (5차)) ────────────────
     { id: 'poisoner', name: '독술사', title: '한 방울이면 충분하다', desc: '방어를 무시하는 중독과 지속 피해 패시브를 익히는 상태이상 입문 직업입니다.', ...neutral, bonus: { attack: 2 }, crit: .02, tier: 1, level: 10, requires: { dex: 12, luk: 8 }, mastery: 0, role: '중독 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
     { id: 'venomAssassin', name: '독침 암살자', title: '상처는 작고 독은 깊다', desc: '6턴 동안 중독을 남기는 파이어 애로우로 지속 피해를 키웁니다.', ...neutral, bonus: { attack: 22 }, crit: .08, tier: 2, level: 25, parent: 'poisoner', requires: { dex: 32, luk: 20 }, mastery: 75, requiresSkillMastery: { venomDart: 2 }, role: '중독·치명', tree: 'status', masteryTarget: 2800, masteryBoost: .18 },
-    { id: 'plagueDoctor', name: '역병술사', title: '병을 다루는 의사', desc: '독침·파이어 애로우로 걸어 둔 중독에 포이즌 미스트로 큰 피해를 더하는 연계 3차 직업입니다.', ...neutral, bonus: { attack: 50, magic: 18, hp: 30 }, crit: .05, tier: 3, level: 40, parent: 'venomAssassin', requires: { dex: 45, int: 30 }, mastery: 150, requiresSkillMastery: { toxicFang: 3 }, role: '역병·연계', tree: 'status', masteryTarget: 10000, masteryBoost: .3 },
+    { id: 'plagueDoctor', name: '역병술사', title: '병을 다루는 의사', desc: '독침·파이어 애로우로 걸어 둔 중독·화상에 포이즌 미스트로 큰 피해를 더하는 연계 3차 직업입니다.', ...neutral, bonus: { attack: 50, magic: 18, hp: 30 }, crit: .05, tier: 3, level: 40, parent: 'venomAssassin', requires: { dex: 45, int: 30 }, mastery: 150, requiresSkillMastery: { toxicFang: 3 }, role: '역병·연계', tree: 'status', masteryTarget: 10000, masteryBoost: .3 },
     { id: 'plagueLord', name: '역병의 군주', title: '썩어 가는 바다의 왕', desc: '미스트 이럽션으로 지속 피해와 연계를 함께 키우는 환생 후 4차 직업입니다.', ...neutral, attack: 1.29, magic: 1.14, hp: 1.11, crit: .06, tier: 4, ...T4, parent: 'plagueDoctor', requires: { dex: 52, int: 35, luk: 28 }, requiresSkillMastery: { miasma: 3 }, role: '역병·지속', tree: 'status' },
     { id: 'apostle', name: '파멸의 사도', title: '모든 것은 끝난다', desc: '5턴 포이즌 노바와 극대화한 지속 피해로 상태이상 계열의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.39, magic: 1.18, hp: 1.18, crit: .06, tier: 5, ...T5, parent: 'plagueLord', requires: { dex: 65, int: 40, luk: 35 }, requiresSkillMastery: { rotBloom: 3 }, role: '상태이상 최상위', tree: 'status' },
 
@@ -130,7 +130,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'endlessVerse', name: '끝없는 절', desc: '마법 공격·최대 마나·마나 회복·치명 피해가 크게 오릅니다.', level: 70, job: 'thousandChants', cost: 3, bonus: { magic: 110, mana: 120, manaRegen: 4, critDamage: .15 }, masteryMilestones: M5 },
     { ...A, ...magic, id: 'manaBolt', name: '마력 화살', desc: '', level: 10, job: 'apprentice', chance: .55, cooldown: 2, multiplier: 1.45, cost: 2, manaCost: 8 },
     { ...P, id: 'arcaneStudy', name: '마법 이론', desc: '마법 공격이 오릅니다.', level: 10, job: 'apprentice', cost: 2, bonus: { magic: 16 } },
-    { ...A, ...magic, id: 'fireball', name: '화염구', desc: '', level: 25, job: 'mage', chance: .55, cooldown: 3, multiplier: 1.5, cost: 3, manaCost: 14, effect: 'bleed', dotName: '화상', dotRatio: .2 },
+    { ...A, ...magic, id: 'fireball', name: '화염구', desc: '', level: 25, job: 'mage', chance: .55, cooldown: 3, multiplier: 1.5, cost: 3, manaCost: 14, effect: 'burn' },
     { ...P, id: 'spellFocus', name: '주문 집중', desc: '마법 공격과 최대 마나가 오릅니다.', level: 25, job: 'mage', cost: 2, bonus: { magic: 22, mana: 20 } },
     { ...A, ...magic, id: 'meteor', name: '메테오', desc: '', level: 40, job: 'archmage', chance: .5, cooldown: 5, multiplier: 2.9, cost: 5, manaCost: 26, effect: 'stun' },
     { ...P, id: 'arcanePierce', name: '마력 관통', desc: '방어 관통과 마법 공격이 오릅니다.', level: 40, job: 'archmage', cost: 3, bonus: { penetration: .06, magic: 30 } },
@@ -163,7 +163,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     // 역병의 길
     { ...A, ...physical, id: 'venomDart', name: '독침', desc: '', level: 10, job: 'poisoner', chance: .28, cooldown: 3, multiplier: 1, cost: 2, effect: 'poison', dotRatio: .12 },
     { ...P, id: 'toxinLore', name: '독물학', desc: '지속 피해가 늘어납니다.', level: 10, job: 'poisoner', cost: 2, bonus: { dotBonus: .1 } },
-    { ...A, ...physical, id: 'toxicFang', name: '맹독 송곳니', desc: '', level: 25, job: 'venomAssassin', chance: .28, cooldown: 3, multiplier: 1.25, cost: 3, effect: 'poison', dotRatio: .15, statusTurns: 4 },
+    { ...A, ...physical, id: 'toxicFang', name: '맹독 송곳니', desc: '', level: 25, job: 'venomAssassin', chance: .28, cooldown: 3, multiplier: 1.25, cost: 3, effect: 'burn' },
     { ...P, id: 'lethalDose', name: '치사량', desc: '지속 피해와 치명타가 오릅니다.', level: 25, job: 'venomAssassin', cost: 2, bonus: { dotBonus: .15, crit: .03 } },
     { ...A, ...physical, id: 'miasma', name: '역병 안개', desc: '', level: 40, job: 'plagueDoctor', chance: .27, cooldown: 4, multiplier: 1.5, cost: 4, effect: 'poison', dotRatio: .15, statusTurns: 4, damageBonusCondition: 'bleeding', conditionalDamageBonus: .4 },
     { ...P, id: 'plagueVessel', name: '역병의 그릇', desc: '지속 피해와 방어 관통이 오릅니다.', level: 40, job: 'plagueDoctor', cost: 3, bonus: { dotBonus: .2, penetration: .04 } },

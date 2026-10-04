@@ -15,7 +15,7 @@ import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel } from '.
 import { FISH, STAGES, DUNGEONS, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish } from '../data/world';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
-import { EQUIPMENT_NAMES } from '../data/equipment';
+import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
 import { saleValue } from './equipment';
@@ -43,18 +43,18 @@ export function gainLevels(s: State) {
         addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
     }
 }
-/** 잠든 닻 봉인 해제. 달성하면 쌓인 경험치 × 배율, 포기하면 그대로 지급합니다. 레벨은 호출한 쪽에서 gainLevels로 올립니다. */
+/** 잠든 힘 봉인 해제. 달성하면 쌓인 경험치 × 배율, 포기하면 그대로 지급합니다. 레벨은 호출한 쪽에서 gainLevels로 올립니다. */
 export function releaseAnchor(s: State, achieved: boolean) {
     const seal = anchorSeal(s);
     if (!seal) return 0;
     const exp = achieved ? Math.floor(seal.exp * anchorPayout(s)) : seal.exp;
     s.exp += exp;
     s.vows!.seal = null;
-    addLog(s, achieved ? `잠든 닻 봉인 해제 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리 달성 · 쌓인 경험치 ×${anchorPayout(s)} = +${exp} EXP` : `잠든 닻 포기 · 쌓인 경험치 +${exp} EXP를 그대로 받았습니다.`, 'reward');
+    addLog(s, achieved ? `잠든 힘 봉인 해제 · ${anchorTargetName(seal)}에서 ${ANCHOR_CATCHES}마리 달성 · 쌓인 경험치 ×${anchorPayout(s)} = +${exp} EXP` : `잠든 힘 포기 · 쌓인 경험치 +${exp} EXP를 그대로 받았습니다.`, 'reward');
     return exp;
 }
-/** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 잔잔한 물결 1%p/단계. */
-/** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 해역 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘잔잔한 물결’은 1단계마다 +1%p. */
+/** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 회복의 기억 1%p/단계. */
+/** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 해역 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘회복의 기억’은 1단계마다 +1%p. */
 export const victoryHealRate = (s: State) => (s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill - encounterTier(s) * BALANCE.healAfterKillTierDecay)) + researchRank(s, 'recovery') * .01;
 /** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 export function rollRarity(rng: () => number, minRarity = 0) {
@@ -69,17 +69,18 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     const rarity = rollRarity(rng, guaranteed ? 1 : 0);
     const origin = s.dungeon?.id || s.stage;
     const slot = (['rod', 'coat', 'charm'] as const)[Math.floor(rng() * 3)];
-    const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: EQUIPMENT_NAMES[slot][rarity], power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
+    const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: '', power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
     if (rarity > 0)
         item.affixes = rollAffixes(rarity, item.power, origin, rng);
     item.origin = origin;
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
-    // 선별의 그물: 켜 두면 1단계는 일반, 2단계는 희귀 이하를 바로 팝니다. 유물·장비 도감에 없는 종류는 남깁니다.
+    item.name = gearName(slot, rarity, item.style);
+    // 선별의 눈: 켜 두면 1단계는 일반, 2단계는 희귀 이하를 바로 팝니다. 유물·장비 도감에 없는 종류는 남깁니다.
     const net = researchRank(s, 'sortingNet');
     if (net && s.autoSell && !item.relic && item.rarity < net && s.itemBook?.[itemKey(slot, rarity)]) {
         s.gold += saleValue(item);
-        addLog(s, `선별의 그물: ${item.name} 자동 판매 +${saleValue(item)} G`, 'reward');
+        addLog(s, `선별의 눈: ${item.name} 자동 판매 +${saleValue(item)} G`, 'reward');
         return;
     }
     if (s.inventory.length >= inventoryCap(s)) {
@@ -142,7 +143,7 @@ export function spawn(s: State, rng: () => number) {
         foe.magic = Math.round((foe.magic || 0) * vdef.attack);
         if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
-    // 거친 바다: 적 체력·공격 ×(1 + 0.5 × 선택 단계). 해역 난이도와 별개로 곱합니다.
+    // 험한 길: 적 체력·공격 ×(1 + 0.5 × 선택 단계). 해역 난이도와 별개로 곱합니다.
     if (roughLevel(s)) {
         const m = roughEnemy(s);
         foe.hp = Math.round(foe.hp * m);
@@ -190,7 +191,7 @@ export function reward(s: State, rng: () => number) {
     recordGoal(s, 'catch', undefined, size, text => addLog(s, text, 'reward')); recordGoal(s, 'species', e.id, size, text => addLog(s, text, 'reward'));
     if (e.boss) recordGoal(s, 'boss', undefined, 1, text => addLog(s, text, 'reward'));
     if (size > 1) recordGoal(s, 'swarm', undefined, 1, text => addLog(s, text, 'reward'));
-    // 잠든 닻: 봉인 중에는 경험치를 따로 쌓고, 목표에서 300마리를 잡으면 배율을 곱해 한 번에 지급합니다.
+    // 잠든 힘: 봉인 중에는 경험치를 따로 쌓고, 목표에서 300마리를 잡으면 배율을 곱해 한 번에 지급합니다.
     const seal = anchorSeal(s);
     if (seal) {
         seal.exp += exp;

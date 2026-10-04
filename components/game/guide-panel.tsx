@@ -35,13 +35,13 @@ function Topic({ icon, title, note, open = false, children }: { icon: ReactNode;
 
 const STATUS_GROUPS = [
     { title: '행동 방해', ids: ['stun', 'silence', 'weaken'] },
-    { title: '지속 피해 · 속도', ids: ['bleed', 'poison', 'slow', 'haste'] },
+    { title: '지속 피해 · 속도', ids: ['bleed', 'poison', 'burn', 'slow', 'haste'] },
 ] as const;
 
 export function Guide({ s }: { s?: State }) {
     const swarm = VARIANTS.find(v => v.id === 'swarm')!;
     return <>
-        <Heading eyebrow="CAPTAIN'S MANUAL" title="항해 도움말" description="제목을 누르면 접고 펼칩니다."/>
+        <Heading eyebrow="ADVENTURER'S MANUAL" title="모험 도움말" description="제목을 누르면 접고 펼칩니다."/>
         <Topic open icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분. 직업·장비·스킬이 더해집니다.">
             <div className="help-stat-grid">{ATTRIBUTES.map(a => <article className="panel help-stat-card" key={a.id}><strong>{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
             <Rule icon={<Swords size={19}/>} title="계보와 전직"
@@ -77,7 +77,7 @@ export function Guide({ s }: { s?: State }) {
                 <div className="help-columns">
                     <Rule icon={<Swords size={19}/>} title="물리 피해"
                         effect="물리 공격 × 스킬 배율. 상대의 물리 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 물리 방어 × 2)."
-                        condition="명중은 기본 공식 그대로(회피 전부 적용). 기본 공격과 대부분의 작살·격투 계열 기술이 여기에 속합니다."
+                        condition="명중은 기본 공식 그대로(회피 전부 적용). 기본 공격과 대부분의 검·격투 계열 기술이 여기에 속합니다."
                         limit={`방어 관통은 최대 85%. 관통만큼 상대 방어를 무시합니다.`}/>
                     <Rule icon={<Droplets size={19}/>} title="지속 피해 (고정 피해)"
                         effect="출혈·중독·화상·부식은 물리도 마법도 아닌 고정 피해입니다. 걸릴 때 시전자의 공격력으로 틱 피해가 정해지고, 그 뒤로는 걸린 쪽이 행동할 때마다 그 값이 체력에서 그대로 빠집니다."

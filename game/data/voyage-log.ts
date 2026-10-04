@@ -1,4 +1,4 @@
-/** 항해 기록: 처음 겪는 순간에 한 번만 해금되는 짧은 기록. 보상은 없고 환생 후에도 유지됩니다. */
+/** 모험 기록: 처음 겪는 순간에 한 번만 해금되는 짧은 기록. 보상은 없고 환생 후에도 유지됩니다. */
 export type VoyageEntry = { id: string; title: string; text: string; group: '사냥터' | '던전' | '환생' | '무릉도장' };
 export const VOYAGE_LOG: VoyageEntry[] = [
     { id: 'stage:brook', group: '사냥터', title: '리스항구 · 선착장', text: '리스항구 선착장 끝에서 첫 달팽이를 쓰러뜨렸다. 이 길이 빅토리아 아일랜드 전체로 이어진다는 걸 아직은 모른다.' },
@@ -19,7 +19,7 @@ export const VOYAGE_LOG: VoyageEntry[] = [
     { id: 'dungeon:starSanctum', group: '던전', title: '루디브리엄 · 시계탑 정복', text: '파풀라투스가 쓰러지자 멈췄던 시계가 다시 움직였다. 손바닥이 오래도록 따뜻했다.' },
     { id: 'dungeon:ventCathedral', group: '던전', title: '엘나스 · 자쿰의 제단 정복', text: '자쿰의 마지막 팔이 내려앉자 제단은 그냥 돌이 되었다. 숨 쉬던 것은 석상이 아니라 폐광이었다.' },
     { id: 'dungeon:abyss', group: '던전', title: '무릉도장 첫 정복', text: '끝이 없다는 말은 사실이었다. 그래서 한 층을 더 오르기로 했다.' },
-    { id: 'rebirth:1', group: '환생', title: '첫 환생', text: '모든 것을 내려놓았는데 손에 쥔 세계석은 남았다. 두 번째 항해가 시작된다.' },
+    { id: 'rebirth:1', group: '환생', title: '첫 환생', text: '모든 것을 내려놓았는데 손에 쥔 세계석은 남았다. 두 번째 모험이 시작된다.' },
     { id: 'abyss:10', group: '무릉도장', title: '무릉도장 10층', text: '아래층의 함성이 들리지 않는다. 이제 나를 지켜보는 건 나 자신뿐이다.' },
     { id: 'abyss:25', group: '무릉도장', title: '무릉도장 25층', text: '도장의 문지기들이 나를 먼저 알아본다. 이 높이에서 나는 더 이상 손님이 아니다.' },
     { id: 'abyss:50', group: '무릉도장', title: '무릉도장 50층', text: '층을 셀수록 기억이 흐려진다. 몇 번째 삶이었는지 세는 것을 그만두었다.' },

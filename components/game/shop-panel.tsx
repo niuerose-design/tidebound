@@ -13,7 +13,7 @@ export function Shop({ s, send, busy }: PanelProps) {
     const [tab, setTab] = useState('gamble');
     const cost = shopCost(s), plain = plainCost(s), gamble = gambleCost(s), cap = inventoryCap(s), full = s.inventory.length >= cap;
     return <>
-        <Heading eyebrow="HARBOR MARKET" title="항구 상점" description="장비를 고르고, 감정하고, 단련하는 곳."/>
+        <Heading eyebrow="ITEM SHOP" title="상점" description="장비를 고르고, 감정하고, 단련하는 곳."/>
         <WalletBar s={s} label="상점 재화와 보관함" extra={<div><span>현재 구매 장비<strong>Lv.{s.level}</strong></span></div>}/>
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="gamble">장비 감정</TabsTrigger><TabsTrigger value="buy">확정 구매</TabsTrigger><TabsTrigger value="forge">장비 강화</TabsTrigger></TabsList></Tabs>
         {tab === 'gamble' && <section aria-label="부위별 장비 감정">

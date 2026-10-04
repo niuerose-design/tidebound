@@ -24,7 +24,7 @@ export type StatSource = typeof STAT_SOURCES[number];
 const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '세계석 연구', book: '도감', achievement: '업적', account: '계정 보너스', equipment: '장비', limit: '상한·정수 처리' };
 /** 세계석 연구가 올리는 능력치 → 연구 id. 물리·마법 공격과 방어는 각각 다른 연구입니다. */
 const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', rebirthBonus: 'pearl', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
-/** 능력치 분해의 원인 이름. 세계석 연구는 해당 연구 이름까지 붙입니다(예: 세계석 연구 · 심해 등불의 기억). */
+/** 능력치 분해의 원인 이름. 세계석 연구는 해당 연구 이름까지 붙입니다(예: 세계석 연구 · 마력의 기억). */
 export function statSourceLabel(k: keyof CombatStats, source: StatSource) {
     const name = source === 'research' ? RESEARCH.find(r => r.id === RESEARCH_BY_STAT[k])?.name : undefined;
     return name ? `${STAT_SOURCE_LABELS.research} · ${name}` : STAT_SOURCE_LABELS[source];
@@ -173,7 +173,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
 /** 처치당 장비 드롭 확률. 기본 확률에 행운·물건도감·연구·드롭 보너스를 상대 증가로 곱합니다. */
 export function dropRate(s: State) {
     const bonus = attributes(s).luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus + (s.permanent.drop || 0) * .01 + (stats(s).dropBonus || 0);
-    // 거친 바다 서약은 드롭 확률에도 곱합니다(서약이 없으면 ×1). 상한은 그대로입니다.
+    // 험한 길 서약은 드롭 확률에도 곱합니다(서약이 없으면 ×1). 상한은 그대로입니다.
     return Math.min(BALANCE.dropChanceCap, BALANCE.dropChance * (1 + bonus / BALANCE.dropBonusScale) * roughReward(s) * (s.event?.drop || 1));
 }
 export function power(v: Stats) { const a = normalizeStats(v); return Math.round(Math.max(a.attack, a.magic) * 7 + Math.min(a.attack, a.magic) * 2 + a.hp * .5 + (a.defense + a.resist) * 3 + a.crit * 200 + Math.max(0, a.accuracy - .8) * 220 + a.evasion * 200); }
@@ -189,15 +189,15 @@ function harmonyPower(s: Pick<State, 'attributes'>) {
     const total = points.reduce((sum, n) => sum + n, 0), lowest = Math.min(...points);
     return SKILL_FORMULA.harmonyBase + total * SKILL_FORMULA.harmonyPerPoint + lowest * SKILL_FORMULA.harmonyPerLowest;
 }
-/** 환생 횟수와 세계석 연구(항해의 기억)로 얻는 영구 경험치 보너스. 직업 보너스는 제외. */
+/** 환생 횟수와 세계석 연구(모험의 기억)로 얻는 영구 경험치 보너스. 직업 보너스는 제외. */
 export const permanentExpBonus = (s: State) => rebirthExperience(s.rebirths) + (s.permanent.exp || 0) * .2;
 /** 최대치가 바뀐 뒤 현재 체력·마나를 새 최대치 이하로 맞춥니다. */
 export function clampVitals(s: State) {
     s.hp = Math.min(s.hp, stats(s).hp);
     s.mana = Math.min(s.mana, stats(s).mana);
 }
-/** 골드 배율. 거친 바다 서약은 처치·던전 골드를 함께 올립니다(서약이 없으면 ×1). */
-/** v25.6 이번 생의 조건 카드 배율. 해역 집중은 그 해역에서만, 황금 항해는 생 전체. */
+/** 골드 배율. 험한 길 서약은 처치·던전 골드를 함께 올립니다(서약이 없으면 ×1). */
+/** v25.6 이번 생의 조건 카드 배율. 해역 집중은 그 해역에서만, 황금 모험은 생 전체. */
 const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * roughReward(s) * focusGold(s) * (s.event?.gold || 1);
