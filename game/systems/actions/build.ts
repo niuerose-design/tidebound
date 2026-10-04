@@ -6,7 +6,8 @@ import type { Attribute } from '../../types';
 import { jobById } from '../../data/classes';
 import { skillById } from '../../data/skills';
 import { emptyAttributes } from '../../data/progression';
-import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery, limitBreakNext } from '../progression';
+import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, overRestraint, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery, limitBreakNext } from '../progression';
+import { restraintSlots } from '../vows';
 import type { ActionHandlers } from './types';
 import { addLog, endRun } from '../state';
 
@@ -86,6 +87,8 @@ export const buildActions: ActionHandlers = {
         else {
             if (!canUse(s, id))
                 throw Error(skillBlockReason(s, id) || '사용할 수 없는 스킬입니다.');
+            if (overRestraint(s, [...s.skills, id]))
+                throw Error(`절제 서약 중에는 액티브·패시브를 각각 ${restraintSlots(s)}개까지만 장착할 수 있습니다.`);
             if (!validLoadout(s, [...s.skills, id]))
                 throw Error('총 장착 AP 한도를 초과합니다.');
             s.skills.push(id);
@@ -185,6 +188,7 @@ export const buildActions: ActionHandlers = {
     setSkills(s, { a }) {
         const ids = [...new Set((a.value || '').split(',').map(x => x.trim()).filter(Boolean))];
         for (const id of ids) if (!canUse(s, id)) throw Error(skillBlockReason(s, id) || '사용할 수 없는 스킬이 있습니다.');
+        if (overRestraint(s, ids)) throw Error(`절제 서약 중에는 액티브·패시브를 각각 ${restraintSlots(s)}개까지만 장착할 수 있습니다.`);
         if (!validLoadout(s, ids)) throw Error('총 장착 AP 한도를 초과합니다.');
         s.skills = ids;
         clampVitals(s);

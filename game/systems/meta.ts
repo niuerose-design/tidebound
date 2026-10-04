@@ -1,4 +1,5 @@
 import type { State } from '../types';
+import { RANDOM_GAME, randomGameTier } from '../data/random-game';
 import { ECONOMY, researchRank } from '../data/economy';
 import { MONSTER_TUNING, DUNGEON_TUNING, dungeonModeTier } from '../data/balance';
 import { fishExpAt, fishGoldAt, tideLiftLevel } from '../data/world';
@@ -30,8 +31,9 @@ export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, v27.70 일반 던전은 입장 때 고른 난이도(노말 0 · 헬 50 · 나이트메어 200). */
 export const dungeonTier = (id: string, abyssDepth: number, mode?: string) => id === 'abyss' ? abyssDepth + 2 : dungeonModeTier(mode);
-/** 잠든 힘 봉인 중에는 사냥터 난이도가 0으로 고정됩니다. 던전은 고른 난이도를 그대로 씁니다. */
-export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1, s.dungeon.mode) : s.vows?.seal ? 0 : (s.tide || 0);
+/** 지금 전투의 난이도: 던전은 던전 난이도(무릉도장 층·모드·랜덤게임 웨이브), 사냥터는 사냥터 난이도. */
+/** v27.86 랜덤게임은 2 × 웨이브(randomGameTier). */
+export const encounterTier = (s: State) => s.dungeon ? (s.dungeon.id === RANDOM_GAME.id ? randomGameTier(s.dungeon.wave) : dungeonTier(s.dungeon.id, s.dungeon.depth || 1, s.dungeon.mode)) : (s.tide || 0);
 /**
  * v27.68 일반 던전도 고른 난이도만큼 레벨이 올라갑니다(tideLiftLevel, v27.70부터 던전 난이도 기준). 보상·클리어 골드·과레벨 감쇠·클리어 드롭은 이 레벨 기준.
  * 고레벨일수록 던전이 상대적으로 약해지고 보상이 낮게 고정되던 것(환생 40회 기준 사냥터의 1/3~1/7)을 맞춥니다. 무릉도장은 자체 층 공식 그대로.

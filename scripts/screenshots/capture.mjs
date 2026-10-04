@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 const [base = 'http://localhost:5173', dir = 'shots'] = process.argv.slice(2);
 mkdirSync(dir, { recursive: true });
-// 왼쪽 메뉴의 현재 이름(v27.86 기준). 메뉴 하나에 윗줄 탭이 여럿이면 아래 루프가 탭마다 따로 찍습니다.
+// 왼쪽 메뉴의 현재 이름(v27.87 기준). 메뉴 하나에 윗줄 탭이 여럿이면 아래 루프가 탭마다 따로 찍습니다.
 const views = [['battle', '자동 사냥'], ['stages', '사냥터·던전'], ['altar', '제단'], ['character', '능력치 · 치장'], ['shop', '상점'], ['inventory', '장비 보관함'], ['skills', '스킬 · 전직'], ['rebirth', '환생 · 분신'], ['book', '도감 · 업적'], ['help', '도움말 · 업데이트']];
 const browser = await chromium.launch();
 // 데스크톱 메뉴로 화면을 연 뒤 같은 페이지를 각 크기로 캡처합니다 (모바일 메뉴 조작 없이).
