@@ -13,9 +13,22 @@ const ids = new Set(SKILLS.map(s => s.id));
 const have = files.filter(f => ids.has(f)).sort();
 const stray = files.filter(f => !ids.has(f));
 
-writeFileSync('game/data/art-manifest.ts', `// 자동 생성 파일: node scripts/art-manifest.mjs 가 public/art/skills/*.png 를 훑어 다시 씁니다. 손으로 고치지 마세요.
+// v27.57 몬스터(public/art/fish)·직업 계보(public/art/jobs) 그림도 목록으로: png·webp 중 있는 것(둘 다면 png).
+const { FISH } = await load('game/data/world.js');
+const scan = (folder, valid) => {
+    const out = {};
+    if (!existsSync(folder)) return out;
+    for (const f of readdirSync(folder).sort()) { const m = f.match(/^(.+)\.(png|webp)$/); if (m && valid.has(m[1]) && out[m[1]] !== 'png') out[m[1]] = m[2]; }
+    return out;
+};
+const fishArt = scan('public/art/fish', new Set(FISH.map(f => f.id))), jobArt = scan('public/art/jobs', new Set(LINEAGES.map(l => l.id)));
+writeFileSync('game/data/art-manifest.ts', `// 자동 생성 파일: node scripts/art-manifest.mjs 가 public/art/{skills,fish,jobs} 를 훑어 다시 씁니다. 손으로 고치지 마세요.
 /** 아이콘 이미지가 있는 스킬 id. 없는 스킬은 기본 아이콘을 씁니다(없는 파일을 요청하지 않음). */
 export const SKILL_ART: ReadonlySet<string> = new Set<string>(${JSON.stringify(have)});
+/** 그림이 있는 몬스터 id → 확장자. 없는 몬스터는 실루엣(없는 파일을 요청하지 않음). */
+export const FISH_ART: Readonly<Record<string, 'png' | 'webp'>> = ${JSON.stringify(fishArt)};
+/** 그림이 있는 직업 계보 id → 확장자. 없으면 계열 아이콘. */
+export const JOB_ART: Readonly<Record<string, 'png' | 'webp'>> = ${JSON.stringify(jobArt)};
 `);
 
 const haveSet = new Set(have);
@@ -41,4 +54,4 @@ for (const [lineage, rows] of groups) {
     md += '\n';
 }
 writeFileSync('docs/art/skill-icons.md', md);
-console.log(`스킬 아이콘 ${have.length} / ${SKILLS.length}${stray.length ? ` · 맞는 스킬이 없는 파일: ${stray.join(', ')}` : ''}`);
+console.log(`몬스터 그림 ${Object.keys(fishArt).length} / ${FISH.length} · 직업 그림 ${Object.keys(jobArt).length} / ${LINEAGES.length} · 스킬 아이콘 ${have.length} / ${SKILLS.length}${stray.length ? ` · 맞는 스킬이 없는 파일: ${stray.join(', ')}` : ''}`);
