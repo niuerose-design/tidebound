@@ -116,10 +116,12 @@ test('Research v3: tailwind sail and window scale the tailwind bonus, its condit
 test('Research v3: sorting net sells only known, low-rarity drops while the setting is on', () => {
     const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /선별의 눈/);
     s.permanent.sortingNet = 1; act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoSell, true);
+    // v27.53 드롭은 희귀 이상만: 1단계는 희귀, 2단계는 영웅 이하를 팝니다.
     drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'unregistered kind is kept');
-    s.itemBook['rod:0'] = true; const gold = s.gold; drop(s, 5, () => 0); assert.equal(s.inventory.length, 1); assert.ok(s.gold > gold);
-    s.itemBook['rod:1'] = true; drop(s, 5, () => 0, true); assert.equal(s.inventory.length, 2, 'rank 1 keeps rare');
-    s.permanent.sortingNet = 2; drop(s, 5, () => 0, true); assert.equal(s.inventory.length, 2, 'rank 2 sells rare');
+    s.itemBook['rod:1'] = true; const gold = s.gold; drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'rank 1 sells rare'); assert.ok(s.gold > gold);
+    const hero = () => { const v = [.6, 0]; let i = 0; return () => v[i++] ?? 0; }; // 등급 굴림 .6 → 영웅, 부위 굴림 0 → 낚싯대
+    s.itemBook['rod:2'] = true; drop(s, 5, hero(), true); assert.equal(s.inventory.at(-1).rarity, 2); assert.equal(s.inventory.length, 2, 'rank 1 keeps hero');
+    s.permanent.sortingNet = 2; drop(s, 5, hero(), true); assert.equal(s.inventory.length, 2, 'rank 2 sells hero');
     act(s, { type: 'autoSell', value: 'off' }, 0); drop(s, 5, () => 0); assert.equal(s.inventory.length, 3, 'off keeps everything');
 });
 

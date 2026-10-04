@@ -63,10 +63,13 @@ export function rollRarity(rng: () => number, minRarity = 0) {
     for (let i = 0; i < weights.length; i++) { roll -= weights[i]; if (roll < 0) return i; }
     return weights.length - 1;
 }
+/** v27.53 드롭 장비 레벨: 기준 레벨 + 해역 난이도(층) × 5, 단 캐릭터 레벨 + dropLevelOver까지(기준 레벨보다 낮아지지는 않음). */
+export const dropLevel = (s: Pick<State, 'level'>, base: number, tier: number) => Math.max(base, Math.min(base + tier * 5, s.level + BALANCE.dropLevelOver));
 export function drop(s: State, level: number, rng: () => number, guaranteed = false) {
     if (!guaranteed && rng() > dropRate(s))
         return;
-    const rarity = rollRarity(rng, guaranteed ? 1 : 0);
+    // v27.53 일반 처치 드롭도 희귀 이상만(일반 등급은 상점 기본 장비로).
+    const rarity = rollRarity(rng, 1);
     const origin = s.dungeon?.id || s.stage;
     const slot = (['rod', 'coat', 'charm'] as const)[Math.floor(rng() * 3)];
     const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: '', power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
@@ -78,7 +81,7 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     item.name = gearName(slot, rarity, item.style);
     // 선별의 눈: 켜 두면 1단계는 일반, 2단계는 희귀 이하를 바로 팝니다. 유물·장비 도감에 없는 종류는 남깁니다.
     const net = researchRank(s, 'sortingNet');
-    if (net && s.autoSell && !item.relic && item.rarity < net && s.itemBook?.[itemKey(slot, rarity)]) {
+    if (net && s.autoSell && !item.relic && item.rarity <= net && s.itemBook?.[itemKey(slot, rarity)]) {
         s.gold += saleValue(item);
         addLog(s, `선별의 눈: ${item.name} 자동 판매 +${saleValue(item)} G`, 'reward');
         return;
@@ -203,8 +206,8 @@ export function reward(s: State, rng: () => number) {
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
     const fish = FISH.find(f => f.id === e.id)!;
     for (let i = 0; i < size * (vdef?.drops || 1); i++)
-        drop(s, fish.level + encounterTier(s) * 5, rng);
-    if (vdef?.guaranteed) drop(s, fish.level + encounterTier(s) * 5, rng, true);
+        drop(s, dropLevel(s, fish.level, encounterTier(s)), rng);
+    if (vdef?.guaranteed) drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, true);
     // v25.8 사냥터 난이도 이정표: 사냥터에서 그 차수로 처음 처치하면 사이의 이정표 세계석을 한 번에 줍니다.
     if (!s.dungeon && !seal) {
         const tier = encounterTier(s), best = s.tideBest?.[s.stage] || 0;
@@ -259,7 +262,7 @@ export function reward(s: State, rng: () => number) {
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다, 반복 정복은 낮은 확률.
             if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop * overlevel)
-                drop(s, d.level + encounterTier(s) * 5, rng, true);
+                drop(s, dropLevel(s, d.level, encounterTier(s)), rng, true);
             addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;
             s.dungeon = null;
