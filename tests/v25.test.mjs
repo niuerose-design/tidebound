@@ -470,3 +470,12 @@ test('mimic appears at a quarter of the rate during offline catch-up', async () 
     const on = make(); Enc.spawn(on, () => roll); assert.equal(on.enemy.id, Mi.MIMIC.id);
     const off = make(); off.catchingUp = true; Enc.spawn(off, () => roll); assert.notEqual(off.enemy.id, Mi.MIMIC.id);
 });
+
+test('v27.36 high-rarity gear is damped and enhancement gives +10% per level', async () => {
+    const Eq = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
+    const rod = rarity => Eq.itemStats({ id: 'r', slot: 'rod', rarity, power: 100, level: 50, enhance: 10, style: 'physical' }).attack;
+    assert.ok(Math.abs(rod(1) - 100 * 2 * 1.4) < 1e-9, '+10 doubles power');
+    assert.ok(Math.abs(rod(6) - rod(1) * Eq.GEAR_RARITY_SCALE[6]) < 1e-9, 'primal damped');
+    const flat = Eq.itemStats({ id: 'r', slot: 'coat', rarity: 5, power: 100, level: 50, affixes: [{ id: 'might', name: 'm', stat: 'attack', value: 50 }, { id: 'x', name: 'x', stat: 'crit', value: .05 }] });
+    assert.ok(Math.abs(flat.attack - 50 * Eq.GEAR_RARITY_SCALE[5]) < 1e-9 && flat.crit === .05, 'flat options damped, percent options untouched');
+});
