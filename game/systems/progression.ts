@@ -159,6 +159,22 @@ export function canSpendSkill(s: State, id: string) {
 /** v27.28 한계돌파 단계(최대 성장을 넘은 만큼)에 따른 패시브 배율: 단계마다 +10%. */
 export const limitBreakScale = (broken: number) => 1 + Math.max(0, broken) * PROGRESSION.limitBreak.passive;
 export const brokenStages = (sk: Skill, rank = 1, mastery = 0) => Math.max(0, skillLevel(sk, rank, mastery) - maxSkillLevel(sk));
+/**
+ * v3.4 누적·환생 비례 패시브(perCount · perRebirth)의 지금 수치. 능력치 계산(stats.ts)과 같은 식(시그니처 · 한계돌파 배율 포함)으로,
+ * 스킬 카드 간단히 보기에 고정 효과와 합쳐 보여 줍니다.
+ */
+export function passiveGrowthBonus(s: State, sk: Skill, counts: Record<string, number> = progressCounts(s)) {
+    const out: Record<string, number> = {};
+    if (!sk.perCount && !sk.perRebirth) return out;
+    const scale = signatureScale(sk, s.job) * limitBreakScale(brokenStages(sk, s.learned?.[sk.id] || 1, skillMastery(s, sk.id)));
+    for (const pc of sk.perCount || []) {
+        const times = Math.min(pc.cap, Math.floor((counts[pc.source] || 0) / pc.per));
+        if (times > 0) for (const [key, n] of Object.entries(pc.bonus)) out[key] = (out[key] || 0) + (n as number) * times * scale;
+    }
+    const rebirths = Math.min(s.rebirths || 0, SKILL_FORMULA.perRebirthCap);
+    if (sk.perRebirth && rebirths > 0) for (const [key, n] of Object.entries(sk.perRebirth)) out[key] = (out[key] || 0) + (n as number) * rebirths * scale;
+    return out;
+}
 /** 스킬의 실제 효과. _specialization은 호출 호환용으로만 남긴 자리입니다(특화는 효과 수치를 바꾸지 않음 · check-combat-depth가 검사). */
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, _specialization?: string, practice = 0): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];

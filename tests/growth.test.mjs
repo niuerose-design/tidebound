@@ -185,3 +185,16 @@ test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-
  s.level = 30; doAct(s, { type: 'rebirth' }, 0); assert.ok(inh(s, t5.id), 'survives rebirth');
  const n = fresh(0); n.skillPractice = { [t5.id]: 5000 }; migrate(n); assert.ok(!inh(n, t5.id), 'new saves use the new bar');
 });
+
+test('v3.4 skill simple view: growth passives show their current count/rebirth stats and list the rules under 기타', () => {
+ const { passiveGrowthBonus: growth, skillExtraNotes: notes, newState: fresh } = H95;
+ const sk = SKILLS.find(x => x.id === 'voyageReview'), s = fresh(0);
+ assert.deepEqual(growth(s, sk), {}, 'no kills yet');
+ s.book = { [H95.FISH[0].id]: 1e6 }; s.job = sk.job; s.learned[sk.id] = 1;
+ const g = growth(s, sk); assert.ok(g.attack > 0 && g.magic > 0, JSON.stringify(g));
+ // 처치 500마다 +1, 최대 10회(능력치 계산 stats.ts와 같은 식).
+ assert.deepEqual(g, { attack: 10, magic: 10 });
+ assert.equal(notes(sk).length, 1); assert.match(notes(sk)[0], /누적 처치 500마다/);
+ assert.match(notes(SKILLS.find(x => x.id === 'chronicleStudy'))[0], /^환생마다/, 'per 1 reads as 마다');
+ assert.deepEqual(notes(SKILLS.find(x => x.type === 'active')), []);
+});
