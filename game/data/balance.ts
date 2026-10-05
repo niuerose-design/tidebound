@@ -223,7 +223,7 @@ export const xpWallFactor = (level: number) => level >= XP_SCALING.wallLevel ? M
 export const xpNeeded = (level: number, rebirths = 0) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1) * xpRebirthFactor(rebirths) * xpWallFactor(level));
 // v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.
 export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }, { name: '신화', color: '#f08a6c', factor: 3.9 }, { name: '고대', color: '#5fd0b5', factor: 4.5 }, { name: '태초', color: '#ff6fb5', factor: 5.2 }];
-export const SLOTS = { rod: '무기', coat: '방어구', charm: '장신구' };
+export const SLOTS = { rod: '무기', coat: '방어구', charm: '장신구', cape: '망토' };
 /** 응급처치(공용 패시브): 처치 1회당 최대 체력 회복 비율. 무리 규모와 관계없이 한 번만 발동합니다. */
 
 /** v26.6 주사위 배율 범위: 손가락 자르기 단계(trim)만큼 양 끝을 안쪽으로 좁힌 [최저, 최고]. */

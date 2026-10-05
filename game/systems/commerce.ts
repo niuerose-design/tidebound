@@ -75,7 +75,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 const power = Math.round((s.level + 2) * RARITIES[rarity].factor);
                 const base: Item = { ...item };
                 delete base.affix;
-                item = { ...base, name: gearName(offer.slot, rarity, base.style), rarity, power, affixes: rollAffixes(rarity, power, undefined, rng) };
+                item = { ...base, name: gearName(offer.slot, rarity, base.style), rarity, power, affixes: rollAffixes(rarity, power, undefined, rng, [], offer.slot, s.level) };
             }
             item.paid = cost;
             s.inventory.push(item);
@@ -156,11 +156,11 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
             spend(cost.gold);
             s.essence = (s.essence || 0) - cost.essence;
-            const next = refineOption(x, item.power, item.rarity, rng);
+            const next = refineOption(x, item.power, item.rarity, rng, item.level);
             item.affixes = item.affixes!.map((o, i) => i === index ? next : o);
             return `${item.name} ${x.name} 수치 재련 · ${x.value} → ${next.value} · -${cost.gold} G · 정수 -${cost.essence}`;
         }
-        // v27.96 유물은 이식 옵션(affixes)이 있어도 재설정은 고유 옵션(affix) 한 줄만 굴립니다. 이식 옵션은 다시 이식해 덮어씁니다.
+        // v3.3 유물은 이식 옵션(affixes)이 있어도 재설정은 고유 옵션(affix) 한 줄만 굴립니다. 이식 옵션은 다시 이식해 덮어씁니다.
         if (!item.affixes?.length || item.relic) {
             // v21 이전 장비·상점 장비·유물의 단일 옵션. v27.74 이 경로도 다중 옵션과 같이 골드 + 정수를 받습니다(전에는 골드만).
             const cost = rerollCost(item, s);
@@ -183,7 +183,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         s.essence = (s.essence || 0) - cost.essence;
         item.rerolls = (item.rerolls || 0) + 1;
         const others = item.affixes.filter((_, i) => i !== index);
-        const next = rollAffixes(others.length + 1, item.power, item.origin, rng, others).at(-1)!;
+        const next = rollAffixes(others.length + 1, item.power, item.origin, rng, others, item.slot, item.level).at(-1)!;
         const before = item.affixes[index].name;
         item.affixes = item.affixes.map((x, i) => i === index ? next : x);
         return `${item.name} 옵션 재설정 · ${before} → ${next.name} · -${cost.gold} G · 정수 -${cost.essence}`;
@@ -250,7 +250,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         return `${r.name} 수령 · 환생 ${r.rebirth}회 달성 보상`;
     }
     if (a.type === 'imprintRelic') {
-        // v27.96 옵션 이식: value = '소비 장비 id:옵션 번호:이식 칸(0~2)'. 같은 부위의 가방 장비 하나를 소비해 그 옵션 한 줄을 유물에 새깁니다(골드, 덮어쓰기 가능, 환생 유지).
+        // v3.3 옵션 이식: value = '소비 장비 id:옵션 번호:이식 칸(0~2)'. 같은 부위의 가방 장비 하나를 소비해 그 옵션 한 줄을 유물에 새깁니다(골드, 덮어쓰기 가능, 환생 유지).
         const relic = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
         if (!relic?.relic)
             throw Error('유물을 찾을 수 없습니다.');

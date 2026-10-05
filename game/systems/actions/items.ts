@@ -16,7 +16,7 @@ export const itemActions: ActionHandlers = {
         s.hp = Math.min(s.hp, stats(s).hp);
     },
     unequip(s, { id }) {
-        if (!['rod', 'coat', 'charm'].includes(id) || !s.equipment[id])
+        if (!['rod', 'coat', 'charm', 'cape'].includes(id) || !s.equipment[id])
             throw Error('장착한 장비가 없습니다.');
         if (s.inventory.length >= inventoryCap(s))
             throw Error('가방이 가득 찼습니다.');

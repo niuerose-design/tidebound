@@ -44,6 +44,8 @@ export type Stats = {
     /** 마법 직업의 기본 공격이 마력 평타(마법 공격 × arcaneStrikeRatio, 마나 없음)로 바뀔 확률. */
     arcaneStrike?: number;
     /** v22 장비 규칙 옵션. 기존 기술 규칙의 숫자 하나만 바꿉니다(상한은 data/gear.ts RULE_CAPS). */
+    /** v3.4 상태이상 저항: 몬스터가 거는 기절·침묵·출혈·중독·화상·약화·감속을 이 확률로 무효화합니다(망토 전용 옵션, 최대 50%). */
+    statusResist?: number;
     stunBonus?: number;
     controlBonus?: number;
     dotTurnsBonus?: number;
@@ -128,7 +130,7 @@ export type Item = {
     origin?: string;
     id: string;
     name: string;
-    slot: 'rod' | 'coat' | 'charm';
+    slot: 'rod' | 'coat' | 'charm' | 'cape';
     rarity: number;
     power: number;
     level: number;
@@ -278,6 +280,8 @@ export type CombatEvent = {
     statuses: { id: string; turns: number; onSelf?: boolean }[];
     /** 면역으로 막힌 상태이상(있을 때만). */
     immune?: string;
+    /** v3.4 상태이상 저항으로 막힌 상태이상(있을 때만). */
+    resisted?: string;
     /** 도박 기술의 피해 배율 굴림(있을 때만). */
     gamble?: number;
     /** v26.4 굴린 주사위 눈(있을 때만). */

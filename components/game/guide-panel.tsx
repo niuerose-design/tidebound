@@ -117,7 +117,7 @@ export function Guide({ s }: { s?: State }) {
                     <small>{status.detail}</small>
                 </article>)}</div>
             </div>)}
-            <p className="footnote help-status-rules"><b>공통</b> 이미 걸린 상태이상은 다시 걸지 않고 그 기술을 건너뜁니다(중독은 계속 쌓임). 풀린 뒤 기절 {STATUS_TUNING.immuneTurns.stun}턴, 그 밖 {STATUS_TUNING.immuneTurns.slow}턴은 같은 상태이상에 면역입니다.</p>
+            <p className="footnote help-status-rules"><b>공통</b> 이미 걸린 상태이상은 다시 걸지 않고 그 기술을 건너뜁니다(중독은 계속 쌓임). 망토의 ‘불굴’ 옵션은 몬스터가 거는 상태이상을 그 확률로 저항합니다(최대 50%). 풀린 뒤 기절 {STATUS_TUNING.immuneTurns.stun}턴, 그 밖 {STATUS_TUNING.immuneTurns.slow}턴은 같은 상태이상에 면역입니다.</p>
         </Topic>
         <Topic icon={<Zap size={19}/>} title="스킬" note="발동, 습득·계승, 숙련과 연마.">
             <div className="help-columns">
@@ -211,7 +211,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비"
                     effect={`감정은 희귀 이상을 보장하고, 확정 구매는 표시된 등급 그대로입니다. 강화는 스타포스(v3.0): 전설 이상 ${STARFORCE.max}성 · 영웅 이하 ${STARFORCE.maxLow}성까지, 1~${STARFORCE.gainHighFrom}성 +${STARFORCE.gainLow * 100}%/성 · 그 위 +${STARFORCE.gainHigh * 100}%/성. 성마다 성공률이 정해져 있고(${STARFORCE.gainHighFrom}성부터 30%), ${STARFORCE.dropFrom}성부터 실패 시 1성 하락(${STARFORCE.safeStars.join('·')}성 유지), 15성부터 파괴 확률(일반 장비는 소멸, 유물은 ${STARFORCE.relicResetStar}성으로). 하락 2번 연속이면 찬스 타임(100%), 15·16성은 파괴 방지(비용 ×2)를 고를 수 있습니다. 비용은 12성까지 전과 같고 13성부터 성마다 ×${STARFORCE.growth}.`}
                     condition="판매가는 등급·레벨에 비례하고 강화 비용의 30%를 돌려받습니다. 분해는 골드 대신 정수를 줍니다. 정수는 옵션 재설정(옵션 종류를 바꿈, 같은 장비에서 할 때마다 비용 +10%·상한 없음)과 수치 재련(종류는 그대로 수치만 다시 굴림, 재설정 기본 비용의 절반·오르지 않음)에 씁니다."
-                    limit={`구매·옵션 변경 비용은 돌려받지 않습니다. 일반 장비는 환생 때 정리됩니다(판매/분해는 설정에서 고름). 유물은 남고 환생마다 위력 +${RELIC_GROWTH.perRebirth * 100}%, 같은 부위 장비를 소비해 옵션을 ${RELIC_GROWTH.imprintSlots}줄까지 이식합니다(별·이식 옵션 유지).`}/>
+                    limit={`부위는 무기·방어구·장신구·망토(v3.4: 회피·체력, 망토 전용 옵션 ‘불굴’이 몬스터 상태이상을 저항). 구매·옵션 변경 비용은 돌려받지 않습니다. 일반 장비는 환생 때 정리됩니다(판매/분해는 설정에서 고름). 유물은 남고 환생마다 위력 +${RELIC_GROWTH.perRebirth * 100}%, 같은 부위 장비를 소비해 옵션을 ${RELIC_GROWTH.imprintSlots}줄까지 이식합니다(별·이식 옵션 유지).`}/>
             </div>
         </Topic>
         <Topic icon={<Gauge size={19}/>} title="저장 데이터" note="초기화 규칙.">
