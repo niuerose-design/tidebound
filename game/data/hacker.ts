@@ -59,8 +59,14 @@ export const HACKER = {
     },
     /** v3.25 프로그램 메모리: 기본 4 + 권한 등급 5마다 1. */
     memory: (grade: number) => 4 + Math.floor(grade / 5),
-    /** v3.26 신원 조작(옛 애드가드): 숙련 단계 = 하루 횟수, 3단계부터 2시간. 비트 10. */
-    spoof: { minutes: (level: number) => level >= 3 ? 120 : 60, perDay: (level: number) => Math.max(0, level), bits: 10, exp: 20 },
+    /** v3.26 신원 조작(옛 애드가드): 숙련 단계 = 하루 횟수, 비트 10. v3.27 기간은 해커가 정합니다(시간, 0 = 무기한, 최대 1년). */
+    spoof: { maxHours: 24 * 365, perDay: (level: number) => Math.max(0, level), bits: 10, exp: 20 },
+    /**
+     * v3.27 해커끼리 견제(해커 순위 행에서). 해커만 쓰고(화이트 해커는 쓰지 않음), 각각 하루 1회. 화이트 해커 방화벽이 하루 한 번 막습니다.
+     * 역추적: 대상의 오늘 침투 작전 입장 −1(대상에게 하루 최소 1회는 남김, 하루 최대 −3). 과부하: 대상의 브루트포스 비트 절반(2시간).
+     */
+    trace: { bits: 30, exp: 40, maxPerDay: 3 },
+    overload: { bits: 40, exp: 40, minutes: 120, rate: .5 },
 } as const;
 /** v3.25 해킹 실행 비트 비용(되돌린 해킹의 현상금 계산에도 씁니다). */
 export const HACK_BITS: Record<string, number> = { broadcast: HACKER.broadcast.bits, crack: HACKER.crack.bits, tamper: HACKER.tamper.bits, down: HACKER.down.bits };

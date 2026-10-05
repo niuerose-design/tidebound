@@ -3,7 +3,7 @@ import type { ActionHandlers } from './types';
 import { HACKER, PRIVACY_FIELDS, HACK_TIER, programById, type PrivacyField } from '../../data/hacker';
 import { STAGES, DUNGEONS } from '../../data/world';
 import { BLESSINGS, RAIDS } from '../../data/altar';
-import { hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed } from '../hacker';
+import { entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed } from '../hacker';
 import { addLog } from '../state';
 
 const needHacker = (s: Parameters<ActionHandlers[string]>[0]) => { if (!isHacker(s)) throw Error('해커 직업일 때만 할 수 있습니다.'); };
@@ -33,7 +33,9 @@ export const hackerActions: ActionHandlers = {
         needHacker(s);
         const h = rollHackerDay(s, now);
         if (h.infil) throw Error('진행 중인 침투 작전이 있습니다.');
-        if ((h.entries || 0) >= HACKER.infil.entriesPerDay) throw Error(`오늘의 침투 작전 입장(${HACKER.infil.entriesPerDay}회)을 모두 썼습니다.`);
+        // v3.27 다른 해커의 역추적만큼 오늘 입장이 줄어듭니다(최소 1회).
+        const cap = entriesCap(s, now);
+        if ((h.entries || 0) >= cap) throw Error(`오늘의 침투 작전 입장(${cap}회)을 모두 썼습니다.`);
         h.entries = (h.entries || 0) + 1;
         h.runs = (h.runs || 0) + 1;
         const seed = Math.floor(rng() * 2 ** 31);
@@ -155,22 +157,39 @@ export const hackerActions: ActionHandlers = {
             return;
         }
         if (id === 'spoof') {
-            // v3.26 신원 조작(옛 애드가드): 값 = 대상(랭킹 행 id 또는 self)|공개할 항목(쉼표). 숙련 1단계는 전부 숨김.
+            // v3.26 신원 조작(옛 애드가드): 값 = 대상(랭킹 행 id 또는 self)|공개할 항목(쉼표)|시간(0 = 무기한). 숙련 1단계는 전부 숨김.
             const level = adguardLevel(s);
             if (level < 1) throw Error('신원 조작을 장착하고 숙련 1단계를 달성하세요.');
-            const [target, fields = ''] = value.split('|');
+            const [target, fields = '', hoursRaw = '0'] = value.split('|'), hours = Math.floor(Number(hoursRaw));
             if (!target) throw Error('신원을 조작할 대상을 고르세요.');
+            if (!Number.isFinite(hours) || hours < 0 || hours > HACKER.spoof.maxHours) throw Error(`기간은 0(무기한)~${HACKER.spoof.maxHours}시간으로 정하세요.`);
             const show = level >= 2 ? [...new Set(fields.split(',').map(x => x.trim()).filter((x): x is PrivacyField => (PRIVACY_FIELDS as readonly string[]).includes(x)))] : [];
             daily('spoof', HACKER.spoof.perDay(level), '신원 조작'); pay(HACKER.spoof.bits);
-            h.pending = { kind: 'spoof', value: `${target}|${show.join(',')}`, minutes: HACKER.spoof.minutes(level) };
+            h.pending = { kind: 'spoof', value: `${target}|${show.join(',')}`, minutes: hours * 60 };
             gainHacker(s, 0, HACKER.spoof.exp); bumpSeason(s, now, { hacks: 1 });
+            return;
+        }
+        if (id === 'unspoof') {
+            // v3.27 내가 건 신원 조작을 거둡니다(무료, 횟수 없음). 값 = 대상 id 또는 self.
+            if (!value) throw Error('거둘 대상을 고르세요.');
+            h.pending = { kind: 'unspoof', value, minutes: 0 };
+            return;
+        }
+        if (id === 'trace' || id === 'overload') {
+            // v3.27 해커끼리 견제(해커 순위 행에서). 값 = 대상 모험가 id.
+            offense(); need(1);
+            if (!value) throw Error('대상 해커를 고르세요.');
+            const def = id === 'trace' ? HACKER.trace : HACKER.overload;
+            daily(id, 1, id === 'trace' ? '역추적' : '과부하'); pay(def.bits);
+            h.pending = { kind: id, value, minutes: id === 'overload' ? HACKER.overload.minutes : 0 };
+            gainHacker(s, 0, def.exp); bumpSeason(s, now, { hacks: 1 });
             return;
         }
         if (id === 'restore') {
             // 값: broadcast | down:stage:<id> | down:dungeon:<id> | tamper:<이벤트id>
             if (!white) throw Error('해킹 되돌리기는 화이트 해커만 할 수 있습니다.');
             const kind = value.split(':')[0];
-            if (!['broadcast', 'down', 'tamper'].includes(kind)) throw Error('되돌릴 해킹을 고르세요.');
+            if (!['broadcast', 'down', 'tamper', 'mask'].includes(kind)) throw Error('되돌릴 해킹을 고르세요.');
             need(Math.max(1, HACK_TIER[kind] || 1));
             daily('restore', HACKER.white.restore.perDay(n), '해킹 되돌리기'); pay(HACKER.white.restore.bits);
             h.pending = { kind: 'restore', value, minutes: 0 };

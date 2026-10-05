@@ -5,7 +5,7 @@ import type { PanelProps } from './panel-props';
 import { Heading, Meter, format, useNow } from './shared';
 import { ConfirmButton } from './confirm-button';
 import { HACKER, PRIVACY_FIELDS, PRIVACY_LABELS, PROGRAMS, gradeNeed, isHackerJob, type PrivacyField } from '@/game/data/hacker';
-import { gradeTotal, adguardLevel, memoryCap, memoryUsed, traceKeep } from '@/game/systems/hacker';
+import { entriesCap, gradeTotal, adguardLevel, memoryCap, memoryUsed, traceKeep } from '@/game/systems/hacker';
 import { STAGES, DUNGEONS } from '@/game/data/world';
 import { BLESSINGS, RAIDS } from '@/game/data/altar';
 import { dayKey } from '@/game/data/goals';
@@ -15,7 +15,7 @@ const ROMAN = 'I II III IV V VI VII VIII IX X'.split(' ');
 export function Hacker({ s, send, busy, setView }: PanelProps) {
     const h = s.hacker || { bits: 0, exp: 0, grade: 1, tier: 0 };
     const now = useNow(60_000), isHacker = isHackerJob(s.job), white = s.job === 'whiteHacker', today = h.day === dayKey(now);
-    const entriesLeft = HACKER.infil.entriesPerDay - (today ? h.entries || 0 : 0), used = today ? h.used || {} : {};
+    const cap = entriesCap(s, now), entriesLeft = cap - (today ? h.entries || 0 : 0), used = today ? h.used || {} : {};
     const base = gradeTotal(h.grade), need = gradeNeed(h.grade), into = Math.max(0, h.exp - base);
     const [convert, setConvert] = useState<{ id: 'sp' | 'pearls'; n: string }>({ id: 'pearls', n: '10' });
     const [guess, setGuess] = useState(''), [message, setMessage] = useState(''), [target, setTarget] = useState('');
@@ -24,9 +24,10 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
     const events = s.hackFeed?.events || [], feedDown = s.hackFeed?.down || [];
     const [tamper, setTamper] = useState({ id: '', time: '+', rate: '+' }), [place, setPlace] = useState(PLACES[0].value), [gauge, setGauge] = useState(GAUGES[0].id), [restore, setRestore] = useState('');
     const downMinutes = Math.round(HACKER.down.minutes(n) * (h.loadout?.includes('exploitKit') ? 1.2 : 1));
-    const targets = [...(s.hackFeed?.broadcast ? [{ value: 'broadcast', label: `방송 탈취 · ${s.hackFeed.broadcast.by}` }] : []), ...feedDown.map(d => ({ value: `down:${d.kind}:${d.id}`, label: `서버 다운 · ${placeLabel(d.kind, d.id)} · ${d.by}` })), ...events.filter(e => e.tampered).map(e => ({ value: `tamper:${e.id}`, label: `이벤트 변조 · ${e.name}` }))];
+    const targets = [...(s.hackFeed?.broadcast ? [{ value: 'broadcast', label: `방송 탈취 · ${s.hackFeed.broadcast.by}` }] : []), ...feedDown.map(d => ({ value: `down:${d.kind}:${d.id}`, label: `서버 다운 · ${placeLabel(d.kind, d.id)} · ${d.by}` })), ...events.filter(e => e.tampered).map(e => ({ value: `tamper:${e.id}`, label: `이벤트 변조 · ${e.name}` })), ...(s.hackFeed?.masks || []).filter(m => !m.mine).map(m => ({ value: `mask:${m.target}`, label: `신원 조작 · ${m.target} · ${m.by}` }))];
+    const myMasks = (s.hackFeed?.masks || []).filter(m => m.mine);
     const programs = h.programs || [], loadout = h.loadout || [], mem = memoryCap(s);
-    const level = adguardLevel(s), [showList, setShowList] = useState<PrivacyField[]>([]), show = new Set(showList), [spoofTarget, setSpoofTarget] = useState('');
+    const level = adguardLevel(s), [showList, setShowList] = useState<PrivacyField[]>([]), show = new Set(showList), [spoofTarget, setSpoofTarget] = useState(''), [spoofHours, setSpoofHours] = useState('0');
     const togglePrivacy = (f: PrivacyField) => setShowList(list => list.includes(f) ? list.filter(x => x !== f) : [...list, f]);
     const convertN = Math.max(0, Math.floor(Number(convert.n) || 0));
     return <>
@@ -38,11 +39,12 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
             <div className="hacker-stat"><small>해킹 단계</small><strong>{n ? ROMAN[n - 1] : '-'}</strong></div>
             <div className="hacker-stat"><small>침투 최고 깊이</small><strong>{h.bestDepth || 0}</strong></div>
             <Meter value={Math.min(need, into)} max={need} label="다음 권한 등급까지"/>
+            {(s.hackFeed?.overloadUntil || 0) > now && <p className="footnote negative">다른 해커의 과부하 · {new Date(s.hackFeed!.overloadUntil!).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}까지 브루트포스 비트 절반</p>}
             {isHacker && <p className="footnote">{s.running ? '브루트포스 실행 중' : '자동 사냥을 켜면 브루트포스가 돌아갑니다'} · 2초마다 비트 +{Number((HACKER.brute.bits * (loadout.includes('cryptoMiner') ? 1.3 : 1)).toFixed(3))} · 권한 +{HACKER.brute.exp} (오프라인 정산 포함)</p>}
         </section>
 
         <section className="panel hacker-section">
-            <div className="section-title"><h2>침투 작전</h2><span>오늘 남은 입장 {Math.max(0, entriesLeft)} / {HACKER.infil.entriesPerDay}</span></div>
+            <div className="section-title"><h2>침투 작전</h2><span>오늘 남은 입장 {Math.max(0, entriesLeft)} / {cap}{cap < HACKER.infil.entriesPerDay ? ' (역추적당함)' : ''}</span></div>
             {!infil ? <>
                 <p className="footnote">서버 노드를 한 칸씩 뚫습니다. 방화벽(서로 다른 숫자 자물쇠: 자리·숫자가 맞으면 S, 숫자만 맞으면 B) · 포트 스캔(UP·DOWN) · 수열(다음 수) · 진법 변환(2진수·16진수를 10진수로) · 암호 해독(알파벳을 몇 칸 밀어 둔 단어)이 섞여 나옵니다. 깊을수록 보상이 커지고, 언제든 이탈해 쌓인 보상을 받습니다. 시도를 다 쓰면 추적당해 {Math.round(traceKeep(s) * 100)}%만 회수합니다.</p>
                 <button className="primary" disabled={busy || !isHacker || entriesLeft <= 0} onClick={() => send({ type: 'infilStart' })}>침투 시작</button>
@@ -111,7 +113,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
                 {white && <>
                 <div className="hack-card">
                     <b>해킹 되돌리기 · 화이트</b>
-                    <small>다른 해커의 방송 탈취·서버 다운·이벤트 변조를 되돌리고 그 해킹 비용의 {Math.round(HACKER.white.restore.bounty * 100)}%를 현상금 비트로 받습니다. 해킹 단계가 그 해킹 이상이어야 합니다. 비트 {HACKER.white.restore.bits} · 오늘 {used.restore || 0}/{HACKER.white.restore.perDay(n)}</small>
+                    <small>다른 해커의 방송 탈취·서버 다운·이벤트 변조·신원 조작을 되돌리고 그 해킹 비용의 {Math.round(HACKER.white.restore.bounty * 100)}%를 현상금 비트로 받습니다. 해킹 단계가 그 해킹 이상이어야 합니다. 비트 {HACKER.white.restore.bits} · 오늘 {used.restore || 0}/{HACKER.white.restore.perDay(n)}</small>
                     {targets.length ? <div className="hack-form"><select value={restore || targets[0].value} onChange={e => setRestore(e.target.value)} aria-label="되돌릴 해킹">{targets.map(x => <option key={x.value} value={x.value}>{x.label}</option>)}</select>
                         <button className="primary" disabled={busy || (used.restore || 0) >= HACKER.white.restore.perDay(n) || h.bits < HACKER.white.restore.bits} onClick={() => run('restore', restore || targets[0].value)}>되돌리기</button></div> : <small>지금 되돌릴 해킹이 없습니다.</small>}
                 </div>
@@ -147,13 +149,15 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
 
         <section className="panel hacker-section">
             <div className="section-title"><h2>신원 조작</h2><span>{level >= 3 ? '3단계 · 항목 선택 · 2시간' : level === 2 ? '2단계 · 항목 선택' : level === 1 ? '1단계 · 전부 숨김' : '꺼짐(장착·숙련 1단계 필요)'}</span></div>
-            <p className="footnote">고른 모험가 한 명(나도 가능)의 랭킹·무릉도장·해커 순위 정보를 ???로 가립니다. 결투 계산에는 영향이 없고, 크래킹을 당하면 그동안 풀립니다. 랭킹 행의 ‘신원 조작’ 버튼으로도 쓸 수 있습니다. 비트 {HACKER.spoof.bits} · 오늘 {used.spoof || 0}/{HACKER.spoof.perDay(level)} · {HACKER.spoof.minutes(level)}분</p>
+            <p className="footnote">고른 모험가 한 명(나도 가능)의 랭킹·무릉도장·해커 순위 정보를 ???로 가립니다. 기간은 시간 단위로 정하고 0이면 무기한입니다. 결투 계산에는 영향이 없고, 크래킹을 당하면 그동안 풀리며, 화이트 해커가 되돌릴 수 있습니다. 랭킹 행의 ‘신원 조작’ 버튼은 무기한으로 겁니다. 비트 {HACKER.spoof.bits} · 오늘 {used.spoof || 0}/{HACKER.spoof.perDay(level)}</p>
             {level >= 2 && <div className="skill-chip-group" role="group" aria-label="공개로 남길 항목">{PRIVACY_FIELDS.map(f => <button type="button" key={f} className={`skill-chip ${show.has(f) ? 'active' : ''}`} aria-pressed={show.has(f)} disabled={busy} onClick={() => togglePrivacy(f)}>{PRIVACY_LABELS[f]} {show.has(f) ? '공개' : '숨김'}</button>)}</div>}
-            {level >= 1 && <form className="hack-form" onSubmit={e => { e.preventDefault(); if (!spoofTarget.trim()) return; run('spoof', `${spoofTarget.trim()}|${[...show].join(',')}`); setSpoofTarget(''); }}>
+            {level >= 1 && <form className="hack-form" onSubmit={e => { e.preventDefault(); if (!spoofTarget.trim()) return; run('spoof', `${spoofTarget.trim()}|${[...show].join(',')}|${Number(spoofHours) || 0}`); setSpoofTarget(''); }}>
                 <input value={spoofTarget} onChange={e => setSpoofTarget(e.target.value.slice(0, 120))} placeholder="랭킹 행 id" aria-label="신원 조작 대상"/>
+                <input className="spoof-hours" value={spoofHours} onChange={e => setSpoofHours(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" aria-label="기간(시간, 0 = 무기한)" title="기간(시간). 0이면 무기한"/><small>{Number(spoofHours) ? `${spoofHours}시간` : '무기한'}</small>
                 <button className="primary" disabled={busy || !isHacker || !spoofTarget.trim() || (used.spoof || 0) >= HACKER.spoof.perDay(level) || h.bits < HACKER.spoof.bits}>대상 조작</button>
-                <button type="button" className="secondary" disabled={busy || !isHacker || (used.spoof || 0) >= HACKER.spoof.perDay(level) || h.bits < HACKER.spoof.bits} onClick={() => run('spoof', `self|${[...show].join(',')}`)}>내 정보 가리기</button>
+                <button type="button" className="secondary" disabled={busy || !isHacker || (used.spoof || 0) >= HACKER.spoof.perDay(level) || h.bits < HACKER.spoof.bits} onClick={() => run('spoof', `self|${[...show].join(',')}|${Number(spoofHours) || 0}`)}>내 정보 가리기</button>
             </form>}
+            {!!myMasks.length && <ul className="mask-list">{myMasks.map(m => <li key={m.target}><code>{m.target}</code><span>{m.until ? `${new Date(m.until).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}까지` : '무기한'}</span><button type="button" className="text-button" disabled={busy} onClick={() => run('unspoof', m.target)}>거두기</button></li>)}</ul>}
             {s.hackFeed?.crackedUntil && <p className="footnote negative">크래킹당했습니다 · {new Date(s.hackFeed.crackedUntil).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}까지 정보가 드러납니다.</p>}
         </section>
     </>;

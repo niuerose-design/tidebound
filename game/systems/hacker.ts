@@ -62,8 +62,14 @@ export const gradeTotal = (grade: number) => { let n = 0; for (let g = 1; g < gr
 
 /** 브루트포스(방치): 자동 사냥 대신 해커가 돌리는 작업. 틱마다 비트·권한 경험치를 조금씩. */
 export function hackerTick(s: State) {
-    // v3.25 크립토 마이너: 비트 +30%.
-    gainHacker(s, HACKER.brute.bits * (programOn(s, 'cryptoMiner') ? 1.3 : 1), HACKER.brute.exp, true);
+    // v3.25 크립토 마이너: 비트 +30%. v3.27 다른 해커의 과부하 동안은 비트 절반.
+    const overloaded = (s.hackFeed?.overloadUntil || 0) > (s.lastTick || 0);
+    gainHacker(s, HACKER.brute.bits * (programOn(s, 'cryptoMiner') ? 1.3 : 1) * (overloaded ? HACKER.overload.rate : 1), HACKER.brute.exp, true);
+}
+/** v3.27 오늘 침투 작전 입장 한도: 기본 − 다른 해커의 역추적(최소 1). */
+export function entriesCap(s: Pick<State, 'hackFeed'>, now: number) {
+    const t = s.hackFeed?.traced, cut = t && t.day === dayKey(now) ? t.n : 0;
+    return Math.max(1, HACKER.infil.entriesPerDay - cut);
 }
 /** v3.25 추적당했을 때 회수하는 비율(백신 회피 75%). */
 export const traceKeep = (s: Pick<State, 'job' | 'hacker'>) => programOn(s, 'avEvasion') ? .75 : HACKER.infil.traceKeep;
