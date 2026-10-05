@@ -118,7 +118,7 @@
 .auto-run-state.off { color: #e3c28d; background: #2c2618; }
 .auto-run-status { margin-bottom: 18px; }
 .auto-run-card { padding: 20px 22px; }
-/* v3.22 던전 화면 자동 진행 카드: 랜덤게임 카드와 같은 짜임(머리 · 칩 · 아이콘 목록 · 오른쪽 게이지). */
+/* v3.23 던전 화면 자동 진행 카드: 랜덤게임 카드와 같은 짜임(머리 · 칩 · 아이콘 목록 · 오른쪽 게이지). */
 .auto-run-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .auto-run-head h2 { margin: 2px 0 0; font-size: 20px; }
 .auto-run-chips { display: flex; gap: 6px; flex-wrap: wrap; }

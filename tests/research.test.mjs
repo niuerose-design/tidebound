@@ -117,7 +117,7 @@ test('Research v3: tailwind sail and window scale the tailwind bonus, its condit
 });
 
 test('Research v3: sorting net sells only known, low-rarity drops while the setting is on', () => {
-    const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /선별의 눈/);
+    const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /자동 분해기/);
     s.permanent.sortingNet = 1; act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoSell, true);
     // v27.53 드롭은 희귀 이상만: 1단계는 희귀, 2단계는 영웅 이하를 팝니다.
     drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'unregistered kind is kept');

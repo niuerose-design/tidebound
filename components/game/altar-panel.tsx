@@ -42,6 +42,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
     const [gauge, setGauge] = useState<AltarGaugeId>('gold'), [anonymous, setAnonymous] = useState(!!s.altar?.anonymous), [now, setNow] = useState(() => Date.now()), [pane, setPane] = useState<'offer' | 'board' | 'total'>('offer');
     // v27.91 게이지는 축복 / 소환(신 + 월드보스 셋) 탭으로 나눠 봅니다. 고른 게이지가 다른 탭에 있으면 탭을 따라갑니다.
     const [gaugeTab, setGaugeTab] = useState<'bless' | 'summon'>('bless');
+    const [raidTab, setRaidTab] = useState<string>(RAIDS[0].id);
     // v3.16 슬라이더·비율 버튼 기준: 고른 게이지를 채우는 데 필요한 양 / 내 보유량(수천억 골드를 한 번에 바칠 때).
     const [basis, setBasis] = useState<'need' | 'have'>('need');
     // v3.16 단계 점핑: 축복 게이지에서 목표 단계를 고르면 그 단계까지의 총 비용이 '채우는 데 필요한 양'이 됩니다(서버는 기여도가 닿는 만큼 한 번에 올림). 0 = 다음 단계만.
@@ -61,7 +62,9 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
     const over = offer.gold > ALTAR.maxGold || offer.pearls > ALTAR.maxPearls || offer.essence > ALTAR.maxEssence;
     const submit = async () => { if (await act({ action: 'offer', ...offer, gauge, anonymous })) { setGold(''); setPearls(''); setEssence(''); setNow(stamp); } };
     const myPower = power(stats(s)), wait = (s.altar?.challengeAt || 0) + ALTAR.challengeCooldownMs - now;
-    const god = info?.god, throne = info?.throne, raid = info?.raid, raidWait = (s.altar?.raidAt || 0) + RAID.cooldownMs - now;
+    const god = info?.god, throne = info?.throne;
+    // v3.22 월드보스 탭(발록·자쿰·혼테일): 보스마다 소환·전투·도전 간격이 따로입니다. 고른 탭에 보스가 없으면 그 보스의 소환 게이지를 보여 줍니다.
+    const raid = info?.raids.find(r => r.id === raidTab), raidGauge = info?.gauges.find(g => g.id === raidTab), raidWait = (s.altar?.raidAtBy?.[raidTab] || 0) + RAID.cooldownMs - now;
     if (!info) return <><Heading eyebrow="ALTAR OF THE WORLD" title="제단" description="불러오는 중…"/>{error && <p className="login-error" role="alert">{error}</p>}</>;
     return <>
         <Heading eyebrow="ALTAR OF THE WORLD" title="세계의 제단" description="모든 모험가가 함께 채우는 제단입니다. 골드·세계석·정수를 바쳐 서버 전체에 축복을 열거나, 신을 깨워 그 자리를 차지하세요.">
@@ -125,11 +128,12 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
             </section>
             <section className="panel altar-raid">
                 <div className="section-title"><h2><Swords size={16}/> 월드보스</h2>{raid && <span className="micro">{raid.gen}번째 · 참여 {raid.participants}명</span>}</div>
+                <Tabs value={raidTab} onValueChange={setRaidTab}><TabsList className="game-tabs altar-tabs">{RAIDS.map(r => { const x = info.raids.find(y => y.id === r.id); return <TabsTrigger key={r.id} value={r.id}>{r.name}{x?.alive ? ' · 출현' : x?.slain ? ' · 격파' : ''}</TabsTrigger>; })}</TabsList></Tabs>
                 {raid ? <>
                     <div className="altar-god-card"><strong>{raid.name}</strong><span>Lv.{raid.level} · 공격 {format(raid.attack)} · 방어 {format(raid.defense)} · 전투력 {format(raid.power)}</span>
                         <Meter value={raid.hp} max={raid.hpMax} label={`공유 체력 ${format(raid.hp)} / ${format(raid.hpMax)}`} color={raid.alive ? 'enemy' : 'gold'}/>
                         <small>{raid.alive ? `떠나기까지 ${left(raid.until - now)} · 모든 모험가의 피해가 함께 쌓입니다` : `격파! 마지막 일격 ${raid.slayer || '—'} · 참여한 모험가는 다음 동기화 때 보상을 받습니다`}</small></div>
-                    {raid.alive && <button className="primary" disabled={busy || raidWait > 0} onClick={() => void act({ action: 'raid' })}>{raidWait > 0 ? `${left(raidWait)} 뒤 다시 도전` : '월드보스에게 도전'}</button>}
+                    {raid.alive && <button className="primary" disabled={busy || raidWait > 0} onClick={() => void act({ action: 'raid', id: raid.id })}>{raidWait > 0 ? `${left(raidWait)} 뒤 다시 도전` : '월드보스에게 도전'}</button>}
                     <p className="footnote">도전은 {RAID.cooldownMs / 60000}분에 한 번, 한 번에 최대 {RAID.maxTurns}턴. 깎은 체력은 그대로 남아 다음 모험가가 이어서 때립니다. 격파 보상 · {format(raid.reward.gold)} G · 세계석 +{raid.reward.pearls}{raid.reward.sp ? ` · SP +${raid.reward.sp}` : ''} (한 번이라도 때린 모험가 전원) · 마지막 일격 세계석 +{raid.slayerBonus.pearls}{raid.slayerBonus.sp ? ` · SP +${raid.slayerBonus.sp}` : ''} 추가 · 서버 전체 축복.</p>
                     {result && result.dealt !== undefined && <div className={`altar-result ${result.slain ? 'win' : 'lose'}`}>
                         <strong>{result.slain ? result.slayer ? '격파 · 마지막 일격!' : '격파 · 함께 쓰러뜨렸습니다' : `피해 ${format(result.dealt)} · 남은 체력 ${format(result.remaining || 0)}`}</strong>
@@ -140,7 +144,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                     {raid.board.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>피해</TableHead><TableHead>횟수</TableHead></TableRow></TableHeader>
                         <TableBody>{raid.board.map(r => <TableRow key={r.rank} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{format(r.dealt)}</b></TableCell><TableCell>{r.hits}</TableCell></TableRow>)}</TableBody></Table>
                         : <p className="footnote">아직 아무도 때리지 않았습니다. 첫 피해를 넣어 보세요.</p>}
-                </> : <p className="footnote">지금 나타난 월드보스가 없습니다. 소환 탭의 게이지({RAIDS.map(r => `${r.name} ${format(r.cost)}`).join(' · ')})가 차면 그 보스가 나타나고(발록 6 · 자쿰 12 · 혼테일 24시간), 모든 모험가의 피해가 하나의 체력에 쌓입니다. 격파하면 때린 모험가 전원이 골드·세계석(·SP)을 받고 서버 전체에 축복이 열립니다.</p>}
+                </> : <p className="footnote">{RAIDS.find(r => r.id === raidTab)?.name}은(는) 지금 나타나 있지 않습니다. 소환 게이지 {format(raidGauge?.points || 0)} / {format(raidGauge?.cost || 0)} · {raidGauge?.next || ''}. 보스마다 따로 소환되고(발록 6 · 자쿰 12 · 혼테일 24시간 머묾), 여러 보스가 동시에 나타날 수 있습니다. 모든 모험가의 피해가 하나의 체력에 쌓이고, 격파하면 때린 모험가 전원이 보상을 받습니다.</p>}
             </section>
             <section className="panel altar-throne">
                 <div className="section-title"><h2><Crown size={16}/> 신의 자리</h2></div>

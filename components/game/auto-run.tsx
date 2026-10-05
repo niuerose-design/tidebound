@@ -22,7 +22,7 @@ export function AutoRunStatus({ s, compact }: { s: State; compact?: boolean }) {
     if (compact) return <details className="panel battle-rail-panel auto-run-status compact" aria-label="자동 진행 상태">
         <summary><Activity size={14}/><b>자동 진행</b><span>{d || s.running ? stop : '멈춤'}</span></summary>{rows}
     </details>;
-    // v3.22 던전 화면 카드: 랜덤게임 카드처럼 머리(활동 이름 + 상태 칩) · 왼쪽 아이콘 목록 · 오른쪽 진행 게이지.
+    // v3.23 던전 화면 카드: 랜덤게임 카드처럼 머리(활동 이름 + 상태 칩) · 왼쪽 아이콘 목록 · 오른쪽 진행 게이지.
     const random = !!d && 'random' in d && !!d.random, until = s.dungeon?.until || 0;
     const wave = d ? (random ? s.dungeon!.wave + 1 : Math.min(s.dungeon!.wave + 1, d.fish.length)) : 0;
     const meter = random ? { label: '진행 웨이브', big: wave.toLocaleString(), unit: until ? `/ ${until} 웨이브` : '웨이브', ratio: until ? (wave - 1) / until : undefined }
