@@ -1,5 +1,5 @@
 'use client';
-import { Activity } from 'lucide-react';
+import { Activity, Flag, History, Repeat } from 'lucide-react';
 import type { State } from '@/game/types';
 import { DUNGEONS, FISH, STAGES } from '@/game/data/world';
 
@@ -22,8 +22,35 @@ export function AutoRunStatus({ s, compact }: { s: State; compact?: boolean }) {
     if (compact) return <details className="panel battle-rail-panel auto-run-status compact" aria-label="자동 진행 상태">
         <summary><Activity size={14}/><b>자동 진행</b><span>{d || s.running ? stop : '멈춤'}</span></summary>{rows}
     </details>;
-    return <section className="panel auto-run-status" aria-label="자동 진행 상태">
-        <div className="section-title"><h2><Activity size={15}/> 자동 진행</h2><span className={`auto-run-state ${s.running ? 'on' : 'off'}`}>{s.running ? '진행 중' : '멈춤'}</span></div>
-        {rows}
+    // v3.22 던전 화면 카드: 랜덤게임 카드처럼 머리(활동 이름 + 상태 칩) · 왼쪽 아이콘 목록 · 오른쪽 진행 게이지.
+    const random = !!d && 'random' in d && !!d.random, until = s.dungeon?.until || 0;
+    const wave = d ? (random ? s.dungeon!.wave + 1 : Math.min(s.dungeon!.wave + 1, d.fish.length)) : 0;
+    const meter = random ? { label: '진행 웨이브', big: wave.toLocaleString(), unit: until ? `/ ${until} 웨이브` : '웨이브', ratio: until ? (wave - 1) / until : undefined }
+        : d ? { label: d.id === 'abyss' ? `${s.dungeon!.depth || s.abyssBest + 1}층 진행` : '진행 웨이브', big: String(wave), unit: `/ ${d.fish.length} 웨이브`, ratio: s.dungeon!.wave / d.fish.length }
+        : s.running ? { label: '누적 처치', big: s.kills.toLocaleString(), unit: '마리', ratio: undefined }
+        : { label: '대기 중', big: '—', unit: '', ratio: undefined };
+    const mode = d ? (r ? (r.until !== undefined ? `${r.until}층까지` : r.left === null ? '실패까지 반복' : r.left === 0 ? '마지막 도전' : `이후 ${r.left}회 더`) : random ? (until ? `목표 ${until}웨이브` : '목표 없음') : '1회 도전') : s.running ? '자동 사냥' : '';
+    return <section className={`panel auto-run-status auto-run-card ${s.running ? 'on' : 'off'}`} aria-label="자동 진행 상태">
+        <div className="auto-run-head">
+            <div><span className="eyebrow">AUTO RUN · 자동 진행</span><h2>{goal}</h2></div>
+            <div className="auto-run-chips">
+                <span className={`chip ${s.running ? 'on' : 'off'}`}><i aria-hidden="true"/>{s.running ? '진행 중' : '멈춤'}</span>
+                {s.recovery > 0 && <span className="chip">{d ? '입장 준비 중' : '회복 중'}</span>}
+                {mode && <span className="chip gold">{mode}</span>}
+            </div>
+        </div>
+        <div className="auto-run-body">
+            <ul className="auto-run-rules">
+                <li><Activity size={14}/><span><small>진행 상황</small>{progress}</span></li>
+                <li><Flag size={14}/><span><small>중단 조건</small>{stop}</span></li>
+                <li><History size={14}/><span><small>마지막 종료 사유</small>{s.runEnd ? s.runEnd.reason : '기록 없음'}</span></li>
+            </ul>
+            <div className="auto-run-meter">
+                <div className="auto-run-meter-label"><Repeat size={13}/>{meter.label}</div>
+                <div className="auto-run-meter-value"><b>{meter.big}</b>{meter.unit && <small>{meter.unit}</small>}</div>
+                {meter.ratio !== undefined ? <div className="auto-run-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.max(0, Math.min(1, meter.ratio)) * 100)}><i style={{ width: `${Math.max(0, Math.min(1, meter.ratio)) * 100}%` }}/></div>
+                    : <div className="auto-run-bar idle"><i/></div>}
+            </div>
+        </div>
     </section>;
 }

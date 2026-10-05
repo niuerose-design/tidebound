@@ -117,6 +117,36 @@
 .auto-run-state.on { color: #b6e0cc; background: #13302a; }
 .auto-run-state.off { color: #e3c28d; background: #2c2618; }
 .auto-run-status { margin-bottom: 18px; }
+.auto-run-card { padding: 20px 22px; }
+/* v3.22 던전 화면 자동 진행 카드: 랜덤게임 카드와 같은 짜임(머리 · 칩 · 아이콘 목록 · 오른쪽 게이지). */
+.auto-run-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.auto-run-head h2 { margin: 2px 0 0; font-size: 20px; }
+.auto-run-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.auto-run-chips .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; background: #0f2227; color: #a9c5bd; font-size: 12px; white-space: nowrap; }
+.auto-run-chips .chip i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.auto-run-chips .chip.on { color: #a4e9ba; border-color: #3f6b5e; } .auto-run-chips .chip.on i { animation: auto-run-pulse 1.6s ease-in-out infinite; }
+.auto-run-chips .chip.off { color: #e3c28d; border-color: #6b5a36; }
+.auto-run-chips .chip.gold { color: var(--gold); border-color: #6b6236; }
+@keyframes auto-run-pulse { 50% { opacity: .35; } }
+.auto-run-body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
+.auto-run-rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.auto-run-rules li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.6; color: #d4e0d6; }
+.auto-run-rules li svg { flex: none; margin-top: 4px; color: #9bc8b5; }
+.auto-run-rules li span { display: grid; min-width: 0; }
+.auto-run-rules li small { font-size: 11px; color: #7f9c98; line-height: 1.4; }
+.auto-run-meter { display: grid; align-content: center; gap: 8px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: #0f2227; }
+.auto-run-card.on .auto-run-meter { border-color: #3f6b5e; background: linear-gradient(160deg, #13302a, #0f2227 70%); }
+.auto-run-meter-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8ea7a4; }
+.auto-run-meter-value { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.auto-run-meter-value b { font-size: 28px; line-height: 1; color: #f1f6f3; font-variant-numeric: tabular-nums; }
+.auto-run-meter-value small { font-size: 12px; color: #9bb3b0; }
+.auto-run-bar { height: 6px; border-radius: 999px; background: #1a2d33; overflow: hidden; }
+.auto-run-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7fd0c0, #d5b36c); transition: width .4s ease; }
+.auto-run-bar.idle i { width: 100%; opacity: .25; background: #2d474a; }
+.auto-run-card.on .auto-run-bar.idle i { width: 30%; opacity: 1; background: linear-gradient(90deg, transparent, #7fd0c0, transparent); animation: auto-run-sweep 1.8s linear infinite; }
+@keyframes auto-run-sweep { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+@media (max-width: 767px) { .auto-run-card { padding: 16px; } .auto-run-body { grid-template-columns: 1fr; gap: 14px; } }
+@media (prefers-reduced-motion: reduce) { .auto-run-chips .chip.on i, .auto-run-card.on .auto-run-bar.idle i { animation: none; } }
 /* 튜토리얼·모험 기록 */
 .tutorial-card { padding: 14px 18px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
 .tutorial-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
