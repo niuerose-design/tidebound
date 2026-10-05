@@ -54,7 +54,7 @@ export const BLESSING_HIGH_COSTS = [300_000_000, 1_000_000_000, 3_000_000_000];
  * v3.16 상위 단계는 짧게: 4·5·6단계는 올린 순간부터 BLESSING_HIGH_MINUTES만큼만 유지되고(겹치지 않음, 다시 채우면 새로 셈)
  * 지나면 3단계로 내려와 남은 시간 동안 이어집니다. 상위 단계를 올릴 때는 전체 시간이 +hours로 늘지 않고 최소 그 단계 시간까지만 보장됩니다.
  */
-export const BLESSING_HIGH_MINUTES = [30, 15, 10];
+export const BLESSING_HIGH_MINUTES = [60, 40, 30];
 /** 단계 n(1부터)에 오를 때 그 단계가 유지되는 시간(ms). 1~3단계는 hours, 4~6단계는 짧은 전용 시간. */
 export const blessingLevelMs = (hours: number, level: number) => level > BLESSING_HIGH_FROM ? BLESSING_HIGH_MINUTES[Math.min(level - BLESSING_HIGH_FROM - 1, BLESSING_HIGH_MINUTES.length - 1)] * 60_000 : hours * 3600_000;
 /** 지금 살아 있는 단계: 축복이 닫혔으면 0, 상위 단계 시간이 지났으면 3단계로. */
