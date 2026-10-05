@@ -147,7 +147,7 @@ export function Guide({ s }: { s?: State }) {
         </Topic>
         <Topic icon={<Fish size={19}/>} title="사냥 · 던전 · 생존" note="변종, 던전 반복, 회복과 방치 진행.">
             <div className="help-columns">
-                <Rule icon={<Fish size={19}/>} title="변종(희귀어)"
+                <Rule icon={<Fish size={19}/>} title="변종"
                     effect={<>같은 몬스터인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b> {percent(v.chance, 1)} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 처치 순간 따로 판정, 그 한 마리 골드 10배. 섀도어 계보 패시브(메소 마스터리·메소 가드·섀도우 파트너·메소 익스플로전 강화)가 확률을 올립니다.</>}
                     condition={`사냥터에서 그 몬스터를 ${VARIANT_BOOK_MIN}회 이상 처치한 뒤부터 출현마다 판정합니다. 버섯숲 연못 테마 +10%. 섀도어 계보 패시브가 확률을 올립니다(픽파킷 +20% · 무리 감지 +50% · 메소 익스플로전 강화 +100% 등).`}
                     limit="던전과 보스에는 변종이 없습니다. 지금 확률은 능력치 화면 아래 ‘변종 조우 확률’에서 봅니다."/>
