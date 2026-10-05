@@ -24,7 +24,7 @@ export const SKILLS: Skill[] = [
     { id: 'fortress', name: '산호의 의지', desc: '최대 체력 22% 회복, 공격력 200% 피해.', type: 'active', level: 20, job: 'warden', chance: .4, cooldown: 4, multiplier: 2, effect: 'heal' },
     { id: 'focus', name: '낚시꾼의 집중', desc: '치명타 확률 +7%. 팬텀 계열의 불안정한 고점을 보완합니다.', type: 'passive', level: 2, job: 'squidJester', chance: 0, cooldown: 0, multiplier: 0, bonus: { crit: .07 } },
     { id: 'scales', name: '비늘 갑옷', desc: '물리 방어 +6, 치명 피해 +15%p. 비늘 가시로 받아치는 반격형 방벽입니다.', type: 'passive', level: 5, job: 'warden', chance: 0, cooldown: 0, multiplier: 0, bonus: { defense: 6, critDamage: .15 } },
-    { id: 'vital', name: '바다의 생명력', desc: '최대 체력 +170, 턴당 체력 회복 +2. 방어형 직업의 긴 전투를 돕습니다.', type: 'passive', level: 12, job: 'warden', chance: 0, cooldown: 0, multiplier: 0, bonus: { hp: 170, hpRegen: 2 } },
+    { id: 'vital', name: '바다의 생명력', desc: '최대 체력 +170, 턴당 체력 회복 +2, 쓰러진 뒤 회복 대기 -5턴. 방어형 직업의 긴 전투를 돕습니다.', type: 'passive', level: 12, job: 'warden', chance: 0, cooldown: 0, multiplier: 0, revive: 5, bonus: { hp: 170, hpRegen: 2 } },
     { id: 'resolve', name: '심연의 결의', desc: '물리 공격 +25. 맹세의 전사가 전하는 성장 패시브입니다.', type: 'passive', level: 24, job: 'harpoon', chance: 0, cooldown: 0, multiplier: 0, bonus: { attack: 25 } },
 ];
 // 장착 AP와 턴당 마나 비용. 기존 ID를 유지하여 저장 호환성을 지킵니다.
@@ -152,7 +152,7 @@ SKILLS.push(...MONOSTAT_SKILLS);
 SKILLS.push(...SUPPORT_SKILLS);
 // v25 ??? 특수 직업 기술.
 SKILLS.push(...V25_SKILLS);
-// v3.17 해커 전용 패시브(애드가드).
+// v3.18 해커 전용 패시브(애드가드).
 SKILLS.push(...HACKER_SKILLS);
 for (const sk of SKILLS) if (SUPPORT_PASSIVES[sk.id]) Object.assign(sk, SUPPORT_PASSIVES[sk.id]);
 // v21 회복 기술은 체력 조건 없이 시도합니다. 회복이 필요 없을 때의 피해 감소는 combat.ts에서 처리합니다.

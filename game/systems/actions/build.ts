@@ -40,7 +40,7 @@ export const buildActions: ActionHandlers = {
             endRun(s, fromDungeon ? '전직으로 던전 정리 · 멈춤' : '전직으로 전투 정리 · 멈춤');
             addLog(s, fromDungeon ? '전직을 위해 진행 중인 던전을 보상 없이 정리하고 귀환했습니다.' : '전직을 위해 진행 중인 전투를 정리했습니다. 현재 몬스터는 사라집니다.');
         }
-        // v3.17 해커로 갈 때 장착 스킬을 맡겨 두고, 해커에서 나올 때 되살립니다(해커는 해커 스킬만 장착).
+        // v3.18 해커로 갈 때 장착 스킬을 맡겨 두고, 해커에서 나올 때 되살립니다(해커는 해커 스킬만 장착).
         const wasHacker = s.job === HACKER_ID;
         if (id === HACKER_ID && !wasHacker) (s.hacker ??= { bits: 0, exp: 0, grade: 1, tier: 0 }).savedSkills = [...s.skills];
         s.job = id;
@@ -144,7 +144,7 @@ export const buildActions: ActionHandlers = {
         clampVitals(s);
     },
     attribute(s, { a, id }) {
-        // v3.17 해커 제약: 능력치 투자 불가(포인트는 쌓아 둡니다).
+        // v3.18 해커 제약: 능력치 투자 불가(포인트는 쌓아 둡니다).
         if (s.job === HACKER_ID)
             throw Error('해커는 능력치에 투자할 수 없습니다. 포인트는 전직한 뒤 쓸 수 있습니다.');
         if (!['str', 'dex', 'int', 'vit', 'wis', 'luk'].includes(id))

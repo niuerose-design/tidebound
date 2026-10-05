@@ -67,7 +67,7 @@ export function checkOrigin(req: Request) {
 export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
     const database = db(), now = Date.now();
     await refreshEvents(now);
-    // v3.17 침투 작전 정답 키(인스턴스마다 한 번).
+    // v3.18 침투 작전 정답 키(인스턴스마다 한 번).
     await ensurePuzzleKey(now);
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = await database.getPlayer(id);
@@ -90,7 +90,7 @@ export const duelRowId = (seasonKey: string, id: string) => `duel:${seasonKey}:$
 export async function register(id: string) {
     const now = Date.now(), key = duelSeasonKey(now);
     const { state } = await mutate(id, { type: 'sync' }, s => syncDuelSeason(id, s, now));
-    // v3.17 해커는 결투 정보를 새로 등록하지 않습니다. 이전 직업으로 등록해 둔 기록은 그대로 두고, 애드가드 숨김 정보만 갱신합니다.
+    // v3.18 해커는 결투 정보를 새로 등록하지 않습니다. 이전 직업으로 등록해 둔 기록은 그대로 두고, 애드가드 숨김 정보만 갱신합니다.
     if (isHacker(state)) {
         const row = await db().getRanking(duelRowId(key, id), monthSeason(key));
         if (!row) throw new ApiError('해커는 결투 정보를 등록할 수 없습니다. 다른 직업으로 등록해 두면 그 기록이 남습니다.');

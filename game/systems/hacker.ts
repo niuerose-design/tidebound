@@ -1,5 +1,5 @@
 /**
- * v3.17 해커 규칙(1단계). 데이터는 data/hacker.ts, 행동은 actions/hacker.ts, 서버 공유(방송·크래킹)는 server/hacks.ts.
+ * v3.18 해커 규칙(1단계). 데이터는 data/hacker.ts, 행동은 actions/hacker.ts, 서버 공유(방송·크래킹)는 server/hacks.ts.
  * 침투 작전의 정답은 서버 키(setPuzzleKey)와 판 시드로 만든 해시라, 세이브(클라이언트에 보내는 상태)에는 정답이 없습니다.
  */
 import type { State, HackerState, HackerInfil } from '../types';
@@ -9,7 +9,7 @@ import { canUse, skillMastery } from './progression';
 import { addLog } from './state';
 
 export const isHacker = (s: Pick<State, 'job'>) => s.job === HACKER_ID;
-/** v3.17 해커는 전투 콘텐츠(결투·월드보스·신 도전)에 참여하지 않습니다. 막을 때의 문구, 아니면 빈 문자열. */
+/** v3.18 해커는 전투 콘텐츠(결투·월드보스·신 도전)에 참여하지 않습니다. 막을 때의 문구, 아니면 빈 문자열. */
 export const hackerCombatBlock = (s: Pick<State, 'job'>) => isHacker(s) ? '해커는 전투에 참여할 수 없습니다. 다른 직업으로 전직한 뒤 도전하세요.' : '';
 
 export function hackerState(s: State): HackerState {

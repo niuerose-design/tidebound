@@ -174,6 +174,8 @@ export type Skill = {
     condition?: 'wounded' | 'healthyTarget' | 'afflicted';
     /** v27.69 사용하면 이만큼의 턴 동안 모든 상태이상 면역(몬스터 각성). */
     wardTurns?: number;
+    /** v3.17 장착 패시브: 쓰러진 뒤 회복 대기를 이만큼(턴) 줄입니다(환생 10회 이상). */
+    revive?: number;
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. swap: 피해 유형과 반대 공격력을 기준값으로(물리 계수 마법 피해 등). */
     scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr';
     /** v26.2 scaling 'attr'가 비례하는 능력치. 기준값 += 능력치 × scalingRatio. */
@@ -519,11 +521,11 @@ export type State = {
     randomGameRuns?: number;
     /** v27.88 랜덤게임 기록: 가장 멀리 간 웨이브·총 입장·받고 나간 횟수(환생해도 유지). */
     randomGameStats?: { best: number; runs: number; cashed: number };
-    /** v3.17 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
+    /** v3.18 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
     hacker?: HackerState;
-    /** v3.17 애드가드 2단계에서 고른 공개 항목(없으면 전부 숨김). */
+    /** v3.18 애드가드 2단계에서 고른 공개 항목(없으면 전부 숨김). */
     privacy?: { show: import('./data/hacker').PrivacyField[] };
-    /** v3.17 서버 해킹 소식(동기화 때 서버가 적음): 진행 중인 방송 탈취, 내가 크래킹당한 시각. */
+    /** v3.18 서버 해킹 소식(동기화 때 서버가 적음): 진행 중인 방송 탈취, 내가 크래킹당한 시각. */
     hackFeed?: { broadcast?: { text: string; by: string; until: number }; crackedUntil?: number };
     clears: Record<string, number>;
     /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
@@ -539,6 +541,8 @@ export type State = {
     bestStage: number;
     /** 오프라인 정산 중에만 true인 임시 표시(저장 전에 지웁니다). */
     catchingUp?: boolean;
+    /** v3.17 부재중 정산을 요청당 CATCH_UP_CHUNK턴씩 나눠 돌릴 때 남은 턴. 0이거나 없으면 밀린 정산이 없습니다. */
+    catchUpLeft?: number;
     lastOffline: null | {
         seconds: number;
         kills: number;
@@ -551,7 +555,7 @@ export type State = {
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };
-/** v3.17 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
+/** v3.18 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
 export type HackerInfil = {
     seed: number;
     /** 뚫은 노드 수. 지금 노드는 depth + 1번째. */
@@ -580,7 +584,7 @@ export type HackerState = {
     pending?: { kind: 'broadcast' | 'crack'; value: string; minutes: number };
 };
 export type Snapshot = {
-    /** v3.17 애드가드: 순위표에서 숨길 정보(서버가 보낼 때 가림, 결투 계산에는 원본). */
+    /** v3.18 애드가드: 순위표에서 숨길 정보(서버가 보낼 때 가림, 결투 계산에는 원본). */
     privacy?: { show: string[] };
     /** v26.1 표시 칭호 이름(랭킹). */
     title?: string;

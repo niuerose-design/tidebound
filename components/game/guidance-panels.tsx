@@ -31,12 +31,12 @@ export function TutorialCard({ s, send, busy, setView }: PanelProps) {
         </div>
         {!hidden && <>
             <ol className="tutorial-steps">{TUTORIAL_STEPS.map(step => { const ok = tutorialStepDone(s, step); return <li key={step.id} className={ok ? 'done' : step.id === next.id ? 'current' : ''}>{ok ? <Check size={12}/> : <span/>}{step.title}</li>; })}</ol>
-            <p><b>{index}. {next.title}</b> — {next.hint}</p>
+            <p><b>{index}. {next.title}</b> — {next.hint}{next.reward && <em className="tutorial-reward"> · 보상 {[next.reward.pearls ? `세계석 ${next.reward.pearls}` : '', next.reward.sp ? `SP ${next.reward.sp}` : ''].filter(Boolean).join(' · ')}</em>}</p>
             <div className="tutorial-actions">
                 {setView && next.view !== 'battle' && <button className="text-button" onClick={() => setView(next.view)}>{next.title} 화면 열기 <ChevronRight size={13}/></button>}
                 {setView && <button className="text-button" onClick={() => setView('help')}><HelpCircle size={13}/> 도움말</button>}
             </div>
-            <small>안내에는 보상이 없습니다. 이미 한 단계는 자동으로 완료되고, 한 번 완료한 단계는 되돌아가지 않습니다.</small>
+            <small>강제는 아니지만 단계를 완료하면 보상(세계석·SP)이 바로 들어옵니다. 이미 한 단계는 자동으로 완료되고, 한 번 완료한 단계는 되돌아가지 않습니다.</small>
         </>}
     </section>;
 }

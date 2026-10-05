@@ -31,7 +31,7 @@ export async function POST(req: Request) { try {
     }
     if (action !== 'challenge' && action !== 'harvest' && action !== 'impeach' && action !== 'raid') throw new ApiError('올바르지 않은 요청입니다.');
     const run = action === 'challenge' ? makeChallenge(id) : action === 'impeach' ? makeImpeach(id) : action === 'raid' ? makeRaid(id) : makeHarvest(id);
-    // v3.17 해커는 신·월드보스 도전과 탄핵에 참여하지 않습니다(바치기·몫 거두기는 그대로).
+    // v3.18 해커는 신·월드보스 도전과 탄핵에 참여하지 않습니다(바치기·몫 거두기는 그대로).
     const payload = await mutate(id, { type: 'sync' }, async s => { if (action !== 'harvest') { const block = hackerCombatBlock(s); if (block) throw new ApiError(block); } await syncAccount(account, slot, s, now); result = await run(s, now); });
     return Response.json({ state: payload.state, result, info: await altarInfo(id, payload.state, Date.now()) }, { headers });
 }

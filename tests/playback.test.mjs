@@ -1,6 +1,7 @@
 // 전투 화면 재생(표시 전용): 동기화 사이 로그를 턴으로 묶어 프레임을 만들고, 마지막 프레임은 서버 상태와 같아야 합니다. 전용 난수를 써서 공유 난수 순서에 영향을 주지 않습니다.
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 import { newState, act, tick, stats, BALANCE, assert, test } from './harness.mjs';
+const { deathRecoveryTurns } = await loadGame().load('data/sprout');
 const { buildCombatReplay, groupReplayTurns, combatFxBatch, combatFxSkipped, FX_BEAT_MS } = await loadGame().load('game/systems/combat-feedback.js');
 const seeded = seed => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
 const clone = s => structuredClone(s);
@@ -60,7 +61,7 @@ test('battle replay: field defeat counts recovery down one turn at a time', () =
     let seen = false;
     for (const { replay } of replaySession(s, 40, rng, [1, 2])) {
         const values = replay.map(t => t.frames.at(-1).recovery);
-        if (values.some(v => v === BALANCE.recoveryTurns)) seen = true;
+        if (values.some(v => v === deathRecoveryTurns(s))) seen = true;
         for (let i = 1; i < values.length; i++) if (values[i - 1] > 0 && values[i] > 0) assert.equal(values[i], values[i - 1] - 1);
     }
     assert.ok(seen, 'defeat happened and was replayed');

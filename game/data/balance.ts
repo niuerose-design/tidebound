@@ -27,7 +27,7 @@ export const BALANCE = {
     /** v27.30 반복 정복 확정 장비 확률 5% → 1%(레벨 초과 감소 적용). 드롭률을 낮게 둔 의미가 없어지던 문제. */
     dungeonRepeatDrop: 0.01,
     // 처치 후 회복률(근거: scripts/check-recovery.mjs). v27.8 기본 20%, v27.78 난이도가 오를수록 1/(1+t/10)로 계속 줄고 healAfterKillMin 아래로는 내려가지 않습니다.
-    healAfterKill: 0.2, /** v27.78 난이도 t에서 처치 후 회복 = 기본 ÷ (1 + t ÷ healAfterKillTideScale), 최저 healAfterKillMin. 10에서 10%, 30에서 5%, 90부터 2%. */ healAfterKillTideScale: 10, healAfterKillMin: .02, recoveryTurns: 3,
+    healAfterKill: 0.2, /** v27.78 난이도 t에서 처치 후 회복 = 기본 ÷ (1 + t ÷ healAfterKillTideScale), 최저 healAfterKillMin. 10에서 10%, 30에서 5%, 90부터 2%. */ healAfterKillTideScale: 10, healAfterKillMin: .02, /** v3.17 쓰러진 뒤 회복 대기(턴): 3 → 25(50초). 환생 10회 미만은 SPROUT.recoveryTurns(3). */ recoveryTurns: 25,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.
     // Individual research is a long-term collection track, not an early SP faucet.
     bookMilestones: [50, 500, 2500, 10000, 250000, 500000], /** v27.80 연구 단계별 난이도 조건: 그 몬스터를 이 난이도 이상에서 처치한 적이 있어야 합니다(v27.81 6단계만 50, 5단계는 처치 수만). */ bookTierReq: [0, 0, 0, 0, 0, 50], duelCooldownMs: 60000, duelMaxTurns: 80, /** v26.2 랭크 결투 하루 횟수와 같은 상대 하루 횟수. 연습 대결은 제한 없음. */ duelPerDay: 20, duelPerOpponentPerDay: 3,

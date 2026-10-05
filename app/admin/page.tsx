@@ -13,6 +13,7 @@ type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
 type DoorRow = { id: string; name: string; door: string; hint: string; open: boolean };
 type DoorList = { doors: DoorRow[] };
 type Tab = 'life' | 'events' | 'closures' | 'doors' | 'stats';
+const BLESS_NAMES: Record<string, string> = { gold: '풍요의 축복', exp: '성장의 축복', mimic: '까미의 축복', nuri: '누리의 축복' };
 type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };
 type Balance = { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: Bucket[]; burn: number };
@@ -106,8 +107,16 @@ export default function AdminPage() {
         const d = await call({ action: 'altarReset', kind });
         if (d) { setStats(d); setDone(kind === 'offers' ? '제단 공물을 초기화했습니다. 유저 화면에는 최대 15초 뒤 반영됩니다.' : '신을 초기화했습니다. 유저 화면에는 최대 15초 뒤 반영됩니다.'); }
     };
+    /** v3.17 축복 단계 설정: 축복·단계·유지 시간(분, 비우면 기본). */
+    const [blessId, setBlessId] = useState('gold'), [blessLevel, setBlessLevel] = useState(3), [blessMinutes, setBlessMinutes] = useState('');
+    const setBlessing = async () => {
+        const mins = blessMinutes.trim() ? Number(blessMinutes) : undefined;
+        if (!confirm(`${BLESS_NAMES[blessId]}을(를) ${blessLevel ? `${blessLevel}단계로 ${mins ? `${mins}분` : '기본 시간'} 동안 열까요` : '끌까요'}?\n모든 모험가에게 바로 적용됩니다(화면에는 최대 15~30초 뒤).`)) return;
+        const d = await call({ action: 'setBlessing', id: blessId, level: blessLevel, minutes: mins });
+        if (d) { setStats(d); setDone(`${BLESS_NAMES[blessId]} ${blessLevel ? `${blessLevel}단계 설정` : '끔'} 완료.`); }
+    };
     const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); const h = await call({ action: 'hacks' }); if (h) setBroadcast(h.broadcast); };
-    /** v3.17 해커의 방송 탈취 지우기. */
+    /** v3.18 해커의 방송 탈취 지우기. */
     const removeBroadcast = async () => {
         if (!broadcast || !confirm(`[해커 ${broadcast.by}] ${broadcast.text}\n이 방송을 지울까요?`)) return;
         const d = await call({ action: 'clearBroadcast' });
@@ -187,6 +196,14 @@ export default function AdminPage() {
                     <button className="secondary" disabled={busy} onClick={() => resetAltar('offers')}>공물 초기화(게이지 0)</button>
                     <button className="secondary" disabled={busy} onClick={() => resetAltar('god')}>신 초기화(신·신의 자리·몫 비우기)</button>
                 </div>
+                <h3 style={{ fontSize: 14, margin: '6px 0 0' }}>축복 단계 설정</h3>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <select value={blessId} onChange={e => setBlessId(e.target.value)} aria-label="축복">{Object.entries(BLESS_NAMES).map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
+                    <select value={blessLevel} onChange={e => setBlessLevel(Number(e.target.value))} aria-label="단계">{[0, 1, 2, 3, 4, 5, 6].map(l => <option key={l} value={l}>{l ? `${l}단계` : '끄기(0)'}</option>)}</select>
+                    <input value={blessMinutes} onChange={e => setBlessMinutes(e.target.value.replace(/[^0-9]/g, ''))} placeholder="유지 분(비우면 기본)" inputMode="numeric" style={{ width: 150 }} aria-label="유지 시간(분)"/>
+                    <button className="primary" disabled={busy || !key} onClick={() => void setBlessing()}>적용</button>
+                </div>
+                <p style={{ color: '#9bb3b0', fontSize: 12, margin: 0 }}>기여도(게이지)는 건드리지 않고 단계·시간만 둡니다. 기본 시간: 1~3단계는 단계 × 1시간, 4·5·6단계는 4·2·1시간 뒤 3단계로 내려와 12시간. 분을 적으면 그 단계가 그만큼 유지됩니다.</p>
             </div>
             <h2 style={{ fontSize: 15, margin: '4px 0 0' }}>밸런스 점검</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 10 }}>

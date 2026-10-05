@@ -4,7 +4,12 @@ import { loadGame } from '../scripts/lib/game-modules.mjs';
 import assert from 'node:assert/strict';
 export { assert };
 const {load}=loadGame();
-export const {newState,act,advance,tick,victoryHeal,rollRarity}=await load('game/systems/engine.js');
+const engine=await load('game/systems/engine.js');
+export const {act,tick,victoryHeal,rollRarity}=engine;
+/** v3.17 분할 정산: 테스트의 advance는 남은 턴이 없을 때까지 이어 돌려 전처럼 한 번에 다 정산한 결과를 줍니다(분할 자체는 v25 테스트가 systems/turn을 직접 검사). */
+export const advance=(s,now,rng)=>{do{engine.advance(s,now,rng);}while(s.catchUpLeft);};
+/** v3.17 테스트 상태는 모험 안내를 끕니다(단계 완료 보상 세계석·SP가 재화 검증에 섞이지 않게). 안내를 검사하는 테스트는 s.tutorial을 직접 둡니다. */
+export const newState=(...a)=>{const s=engine.newState(...a);delete s.tutorial;return s;};
 export const encounterSource=await readFile('game/systems/encounter.ts','utf8');
 export const {stats,snapshot,expMultiplier,normalizeStats}=await load('game/systems/stats.js');
 export const {victoryMastery}=await load('game/systems/mastery.js');

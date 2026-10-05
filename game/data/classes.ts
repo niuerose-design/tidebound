@@ -228,7 +228,7 @@ JOBS.push(...(DEFENSE_JOBS as Job[]));
 JOBS.push(...(INVERSION_JOBS as Job[]));
 // v25.26 외길 계보: 능력치 하나만으로 전직하는 1~3차. 자세한 설계는 expansion-monostat.ts.
 JOBS.push(...(MONOSTAT_JOBS as Job[]));
-// v3.17 해커: 전투 대신 서버를 해킹하는 ??? 독립 직업. 자세한 설계는 hacker.ts·docs/concept.md 9장.
+// v3.18 해커: 전투 대신 서버를 해킹하는 ??? 독립 직업. 자세한 설계는 hacker.ts·docs/concept.md 9장.
 JOBS.push(...(HACKER_JOBS as Job[]));
 for (const job of JOBS) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
 
