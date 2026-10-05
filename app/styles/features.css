@@ -390,3 +390,16 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .cosmetics-fold > summary .achievement-chevron { margin-left:8px; }
 .cosmetics-fold:not([open]) > summary { margin-bottom:0; }
 .cosmetics-fold:not([open]) { align-self:start; }
+
+/* v3.15 계급 흐름도 */
+.rank-flow-title { font-size: 14px; margin: 14px 0 8px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.rank-flow-title small { color: var(--muted, #9fb7b0); font-weight: 400; font-size: 12px; }
+.rank-flow { list-style: none; margin: 0; padding: 4px 0 8px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+.rank-step { position: relative; flex: 0 0 auto; width: 92px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px 8px; border: 1px solid rgba(127, 211, 195, .14); border-radius: 10px; background: #0d1d22; text-align: center; }
+.rank-step + .rank-step::before { content: '›'; position: absolute; left: -7px; top: 50%; translate: 0 -55%; color: #4d7a70; font-size: 16px; }
+.rank-step b { font-size: 12px; white-space: nowrap; }
+.rank-step small { font-size: 11px; color: var(--muted, #9fb7b0); white-space: nowrap; }
+.rank-step em { position: absolute; top: -8px; left: 50%; translate: -50% 0; font-style: normal; font-size: 10px; padding: 1px 7px; border-radius: 999px; background: #e8d39a; color: #1a1a1a; font-weight: 700; }
+.rank-step.locked { opacity: .5; filter: grayscale(.4); }
+.rank-step.current { border-color: #e8d39a; box-shadow: 0 0 0 1px #e8d39a33, 0 0 16px #e8d39a22; opacity: 1; }
+.rank-step.passed { border-color: rgba(127, 211, 195, .35); }

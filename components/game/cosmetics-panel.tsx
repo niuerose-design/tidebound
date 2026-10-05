@@ -1,7 +1,7 @@
 'use client';
 import type { PanelProps } from './panel-props';
 import { TITLES, unlockedTitles, displayTitle, titleById } from '@/game/data/titles';
-import { RANKS, RANK_PERKS, rankProgress, rankPointsEarned, rankPointsFree, rankPerkLevel } from '@/game/data/rank';
+import { RANKS, RANK_CUMULATIVE, RANK_PERKS, rankProgress, rankPointsEarned, rankPointsFree, rankPerkLevel } from '@/game/data/rank';
 import { RankInsignia } from './rank-insignia';
 import { Heading, Meter } from './shared';
 import { ChevronDown } from 'lucide-react';
@@ -27,6 +27,13 @@ export function Cosmetics({ s, send, busy }: PanelProps) {
         <div className="rank-head-text"><b>{p.rank.name}</b><small>{p.next ? `${p.next.name}까지 ${(p.need - p.have).toLocaleString()}마리` : '최고 계급'} · 누적 처치 {p.exp.toLocaleString()}마리 (무리는 마릿수만큼, 환생해도 유지)</small>{p.next && <Meter value={p.have} max={p.need} label=""/>}</div>
     </div>
     <div className="title-list">{RANK_PERKS.map(perk => { const level = rankPerkLevel(s, perk.id), maxed = level >= perk.max; return <div key={perk.id} className={`title-row ${level ? 'owned' : 'locked'}`}><span className="title-name"><small className="rebirth-title">{perk.name} {level}/{perk.max}</small></span><span className="title-desc">{perk.desc(Math.max(1, level))}{level ? '' : ' (1단계 기준)'}</span><button type="button" className={maxed ? 'secondary small' : 'primary small'} disabled={busy || maxed || free < perk.cost} onClick={() => send({ type: 'rankPerk', id: perk.id })}>{maxed ? '최대' : '올리기 · 1P'}</button></div>; })}</div>
+    <h3 className="rank-flow-title">계급 흐름도 <small>계급 이름 아래는 그 계급에 오르는 누적 처치 수</small></h3>
+    <ol className="rank-flow" aria-label="계급 흐름도">{RANKS.map((r, i) => <li key={r.id} className={`rank-step ${i < p.index ? 'passed' : i === p.index ? 'current' : 'locked'} group-${r.group}`} title={`${r.name} · ${r.group} · 진급 포인트 +${r.points}`}>
+        <RankInsignia index={i} size={34} title={r.name}/>
+        <b>{r.name}</b>
+        <small>{i ? `${RANK_CUMULATIVE[i].toLocaleString()}마리` : '시작'}</small>
+        {i === p.index && <em>현재</em>}
+    </li>)}</ol>
     <p className="footnote">진급 포인트는 병 1 · 부사관 2 · 장교 3 · 장성 4(합계 41)이고 특전은 단계당 1P입니다. 언제든 무료로 초기화합니다.</p>
     </details>
     </div>

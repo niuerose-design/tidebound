@@ -178,7 +178,8 @@ export function applyOffering(s: State, o: Offering, points: number, gauge: Alta
     s.gold -= o.gold; s.pearls -= o.pearls; s.essence = (s.essence || 0) - o.essence;
     s.altar = { ...s.altar, anonymous, offers: (s.altar?.offers || 0) + 1 };
     const parts = [o.gold ? `${o.gold.toLocaleString()} G` : '', o.pearls ? `세계석 ${o.pearls.toLocaleString()}` : '', o.essence ? `정수 ${o.essence.toLocaleString()}` : ''].filter(Boolean).join(' · ');
-    addLog(s, `제단에 공물을 바쳤습니다 · ${parts} · 기여도 +${points.toLocaleString()} (${gauge === 'god' ? '신 소환' : BLESSINGS.find(b => b.id === gauge)!.name})`, 'system');
+    // v3.15 월드보스 게이지(발록·자쿰·혼테일)는 축복 목록에 없어 여기서 예외가 나며 503이 됐습니다 → gaugeName으로 통일.
+    addLog(s, `제단에 공물을 바쳤습니다 · ${parts} · 기여도 +${points.toLocaleString()} (${gaugeName(gauge)})`, 'system');
 }
 /** 저장이 끝난 뒤 한 번: 기여·합계·게이지를 더하고, 가득 찬 게이지를 처리합니다. */
 export async function commitOffering(account: string, id: string, name: string, o: Offering, points: number, gauge: AltarGaugeId, anonymous: boolean, now: number) {

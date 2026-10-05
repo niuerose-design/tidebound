@@ -412,3 +412,9 @@
 
 .onyx-item-card .item-icon{color:var(--rarity)}
 .onyx-item-card.unregistered .onyx-art{opacity:.35;filter:grayscale(.7)}
+
+/* v3.15 물건 도감 접기·등급 필터 */
+.item-book-section>summary h2{display:flex;align-items:center;gap:6px}
+.item-filter{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
+.item-filter button{display:inline-flex;align-items:center;gap:6px}
+.item-filter-dot{width:8px;height:8px;border-radius:50%;background:var(--rarity,#9ab4b5);box-shadow:0 0 6px var(--rarity,#9ab4b5)}
