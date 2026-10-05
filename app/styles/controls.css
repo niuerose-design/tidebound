@@ -55,7 +55,7 @@
 .help-status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.help-status-card{padding:18px}.help-status-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.help-status-top strong{font-size:17px;color:#d6b879}.help-status-top span{font-size:11px;color:#9bc8b5;border:1px solid #49615e;border-radius:99px;padding:3px 7px;white-space:nowrap}.help-status-card p{font-size:13px;line-height:1.7;color:#d1dfd9;margin:11px 0 7px}.help-status-card small{font-size:12px;line-height:1.65;color:#8fa9a7;display:block}@media(max-width:900px){.help-status-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.help-status-grid{grid-template-columns:1fr}}
 /* v22 장비 옵션 줄: 이름·수치 / 설명 / 재설정 버튼 */
 .gear-option-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:6px 0;border-top:1px solid #9ab4b51a}.gear-option-row small{grid-column:1;color:#93a7a5;font-size:12px}.gear-option-row button{grid-column:2;grid-row:1/span 2;font-size:12px;padding:4px 10px}
-/* v27.93 옵션 줄 버튼 묶음(재설정·재련)과 수치 위치(%). */
+/* v27.94 옵션 줄 버튼 묶음(재설정·재련)과 수치 위치(%). */
 .gear-option-actions{grid-column:2;grid-row:1/span 2;display:flex;gap:6px}.affix-quality{font-style:normal;color:#93a7a5;font-size:12px}
 @media(max-width:520px){.item-grid{grid-template-columns:1fr}.gear-option-row{grid-template-columns:1fr}.gear-option-row button{grid-column:1;grid-row:auto;justify-self:start;margin-top:4px}.gear-option-actions{grid-column:1;grid-row:auto}}
 
@@ -138,3 +138,6 @@
 .altar-quick{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.altar-quick button.small{padding:3px 9px;font-size:12px;min-height:0}
 /* v27.91 월드보스 카드 */
 .altar-raid [data-slot=table-container]{max-height:320px;overflow:auto}.altar-raid .altar-god-card .meter{margin:6px 0 2px}
+/* v27.93 스타포스 */
+.star-row{display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-bottom:8px}.star-row i{width:9px;height:9px;border-radius:50%;background:#28403f;border:1px solid #3d5a58}.star-row i.on{background:var(--gold);border-color:#f0d58a;box-shadow:0 0 4px #e8d39a88}.star-row b{margin-left:6px;font-size:12px;color:var(--gold)}
+.star-odds{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 8px;font-size:12px}.star-odds div{display:flex;gap:5px}.star-odds dt{color:#7f9c98}.star-odds dd{margin:0;color:#c5d8d2}.star-odds dd.positive{color:#a4e9ba}.star-odds dd.negative{color:#f0a08a}.forge-actions .footnote.positive{color:#a4e9ba}

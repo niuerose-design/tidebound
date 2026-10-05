@@ -278,11 +278,12 @@ test('v27.79 account bonuses are low multiplicative factors (AP unchanged); slot
 test('v25.7 legend+ enhances to +12, others stop at +10; sale value follows the fish gold curve and refunds 30% of enhancement', async () => {
     const { enhanceMaxFor, saleValue, enhanceCost } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
     const { fishGoldAt } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
-    assert.equal(enhanceMaxFor({ rarity: 2 }), 10); assert.equal(enhanceMaxFor({ rarity: 3 }), 12); assert.equal(enhanceMaxFor({ rarity: 6 }), 12);
-    const s = newState(0); s.gold = 1e9; const hero = { id: 'h', name: 'h', slot: 'coat', rarity: 2, power: 60, level: 30, enhance: 10 }, legend = { id: 'l', name: 'l', slot: 'coat', rarity: 3, power: 90, level: 30, enhance: 10 }; s.inventory = [hero, legend];
-    assert.throws(() => act(s, { type: 'enhance', id: 'h' }, 0), /최대 강화/); act(s, { type: 'enhance', id: 'l' }, 0); act(s, { type: 'enhance', id: 'l' }, 0); assert.equal(legend.enhance, 12); assert.throws(() => act(s, { type: 'enhance', id: 'l' }, 0), /최대 강화/);
+    assert.equal(enhanceMaxFor({ rarity: 2 }), 15); assert.equal(enhanceMaxFor({ rarity: 3 }), 22); assert.equal(enhanceMaxFor({ rarity: 6 }), 22);
+    const s = newState(0); s.gold = 1e9; const hero = { id: 'h', name: 'h', slot: 'coat', rarity: 2, power: 60, level: 30, enhance: 15 }, legend = { id: 'l', name: 'l', slot: 'coat', rarity: 3, power: 90, level: 30, enhance: 20 }; s.inventory = [hero, legend];
+    const win = () => 0;
+    assert.throws(() => act(s, { type: 'enhance', id: 'h' }, 0, win), /최대 강화/); act(s, { type: 'enhance', id: 'l' }, 0, win); act(s, { type: 'enhance', id: 'l' }, 0, win); assert.equal(legend.enhance, 22); assert.throws(() => act(s, { type: 'enhance', id: 'l' }, 0, win), /최대 강화/);
     assert.equal(saleValue({ rarity: 3, level: 30, power: 90 }), fishGoldAt(30) * 50); assert.equal(saleValue({ rarity: 0, level: 1, power: 2 }), 14);
-    let spent = 0; for (let e = 0; e < 12; e++) spent += enhanceCost({ ...legend, enhance: e }); assert.equal(saleValue(legend), Math.floor(fishGoldAt(30) * 50 + spent * .3), 'enhancement refund 30%');
+    let spent = 0; for (let e = 0; e < legend.enhance; e++) spent += enhanceCost({ ...legend, enhance: e }); assert.equal(saleValue(legend), Math.floor(fishGoldAt(30) * 50 + spent * .3), 'enhancement refund 30%');
     assert.ok(saleValue({ rarity: 3, level: 60, power: 200 }) > saleValue({ rarity: 3, level: 30, power: 90 }) * 10, 'late-game sale keeps pace with exponential gold');
     assert.equal(saleValue({ rarity: 0, level: 160, power: 10 }), saleValue({ rarity: 0, level: 65, power: 10 }), 'tier-boosted drop levels stop at the Lv.65 sale cap');
 });
@@ -1055,7 +1056,7 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
     try {
         const database = DB.db();
         const now = Date.now(), hpMax = 1e9;
-        assert.ok(await database.summonAltarRaid('balrog', hpMax, now + A.RAID.lifetimeMs, now));
+        assert.ok(await database.summonAltarRaid('balrog', hpMax, now + A.RAIDS[0].lifetimeHours * 3600_000, now)); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 24]); assert.equal(A.RAID.respawnMs, 2 * 3600_000);
         assert.equal(await database.summonAltarRaid('zakum', 5, now + 1000, now), false, 'one raid at a time');
         const a = newState(now); a.name = '첫째'; a.level = 60; a.attributes.str = 400; a.kills = 1; a.lastTick = now;
         const r1 = await Alt.makeRaid('p1')(a, now);
@@ -1077,4 +1078,28 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
         const c = newState(now); const cg = c.gold; await Alt.syncAltarStatus(c, now + 10, 'p3'); assert.equal(c.gold, cg, 'non-participants get nothing'); assert.equal(c.altar.raidClaimed, row.raid_gen);
         const gauges = await database.listAltarGauges(); assert.ok(gauges.some(g => g.id === 'gold' && g.until > now) && gauges.some(g => g.id === 'exp' && g.until > now), 'kill opens the blessings');
     } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});
+
+test('v27.93 star force: per-star odds, drops from 10 (15/20 safe), destruction from 15 (relics reset to 12), chance time, safeguard, cost growth after 12', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const SF = await L.load('data/starforce'), { enhanceCost, itemStats } = await L.load('systems/equipment');
+    assert.equal(SF.starSuccess(0), .95); assert.equal(SF.starSuccess(15), .3); assert.equal(SF.starMax(3), 22); assert.equal(SF.starMax(2), 15);
+    assert.ok(!SF.starDrops(9) && SF.starDrops(10) && !SF.starDrops(15) && SF.starDrops(16) && !SF.starDrops(20) && SF.starDrops(21));
+    assert.equal(SF.starDestroy(14), 0); assert.equal(SF.starDestroy(15), .021); assert.equal(SF.starDestroy(15, true), 0); assert.equal(SF.starDestroy(20, true), .07, 'safeguard only at 15·16');
+    assert.ok(Math.abs(SF.starMultiplier(12) - 2.2) < 1e-9 && Math.abs(SF.starMultiplier(15) - 2.5) < 1e-9 && Math.abs(SF.starMultiplier(22) - 3.55) < 1e-9);
+    const base = { id: 'x', name: 'x', slot: 'coat', rarity: 3, power: 100, level: 30 };
+    assert.ok(Math.abs(enhanceCost({ ...base, enhance: 13 }) - enhanceCost({ ...base, enhance: 12 }) * SF.STARFORCE.growth) <= 1); assert.ok(enhanceCost({ ...base, enhance: 21 }) > enhanceCost({ ...base, enhance: 12 }) * 7);
+    assert.ok(itemStats({ ...base, enhance: 22 }).hp > itemStats({ ...base, enhance: 12 }).hp * 1.5);
+    const s = newState(0); s.gold = 1e12;
+    const it = { ...base, enhance: 11 }; s.inventory = [it];
+    act(s, { type: 'enhance', id: 'x' }, 0, () => .99); assert.equal(it.enhance, 10, 'fail at 11 drops'); assert.equal(it.starFails, 1);
+    act(s, { type: 'enhance', id: 'x' }, 0, () => .99); assert.equal(it.enhance, 9); assert.equal(it.starFails, 2);
+    act(s, { type: 'enhance', id: 'x' }, 0, () => .99); assert.equal(it.enhance, 10, 'chance time succeeds regardless of the roll'); assert.equal(it.starFails, 0);
+    it.enhance = 15; act(s, { type: 'enhance', id: 'x' }, 0, () => .99); assert.equal(it.enhance, 15, '15 is safe on fail'); assert.equal(it.starFails, 0);
+    const g = s.gold; act(s, { type: 'enhance', id: 'x', value: 'safeguard' }, 0, () => .31); assert.equal(it.enhance, 15, 'roll in the destroy band but safeguarded = plain fail'); assert.equal(g - s.gold, enhanceCost({ ...base, enhance: 15 }) * 2);
+    act(s, { type: 'enhance', id: 'x' }, 0, () => .31); assert.equal(s.inventory.length, 0, 'destroyed: item gone');
+    const relic = { ...base, id: 'r', enhance: 16, relic: 'memoryRod' }; s.inventory = [relic]; s.equipment.coat = relic;
+    act(s, { type: 'enhance', id: 'r' }, 0, () => .31); assert.equal(relic.enhance, 12, 'relic resets to 12 instead of breaking'); assert.ok(s.inventory.length === 1 && s.equipment.coat === relic);
+    const worn = { ...base, id: 'w', enhance: 20 }; s.inventory = [worn]; s.equipment.coat = worn;
+    act(s, { type: 'enhance', id: 'w' }, 0, () => .35); assert.equal(s.equipment.coat, null, 'destroyed while equipped: slot emptied');
 });

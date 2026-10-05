@@ -44,7 +44,7 @@ test('Research v2: recovery, shop and smith discounts use the state-aware functi
     const item = { id: 'forge', slot: 'coat', rarity: 1, power: 10, level: 10, name: 'forge', affix: { stat: 'hp', name: '생명', value: 15 } };
     s.inventory.push(item); s.permanent.enhance = 15;
     assert.equal(enhanceCost(item), 240); assert.equal(enhanceCost(item, s), 168); assert.equal(reforgeCost(item, s), Math.floor(reforgeCost(item) * .7));
-    const g = s.gold; act(s, { type: 'enhance', id: 'forge' }, 0); assert.equal(g - s.gold, 168);
+    const g = s.gold; act(s, { type: 'enhance', id: 'forge' }, 0, () => 0); assert.equal(g - s.gold, 168);
     s.permanent.enhance = 0; assert.equal(enhanceCost(item, s), enhanceCost(item));
 });
 

@@ -109,11 +109,11 @@ export const rarityQuality = (rarity: number) => 1 + rarity * .1;
 /** 분해 시 얻는 정수와 옵션 재설정에 드는 정수. */
 export const ESSENCE_BY_RARITY = [1, 2, 4, 8, 16, 32, 64];
 export const rerollEssence = (rarity: number) => 2 + rarity * 2;
-/** v27.93 같은 장비를 재설정할수록 골드·정수 비용이 오릅니다. 1회마다 기본 비용의 +10%(선형, 상한 없음). */
+/** v27.94 같은 장비를 재설정할수록 골드·정수 비용이 오릅니다. 1회마다 기본 비용의 +10%(선형, 상한 없음). */
 export const REROLL_STEP_PCT = 10;
 /** 기본 비용에 곱해 올림·내림하기 전 값. 정수 % 단위로 계산해 1.1 같은 소수 오차로 정수가 1 더 붙지 않게 합니다. */
 export const rerollScaled = (base: number, rerolls = 0) => base * (100 + REROLL_STEP_PCT * Math.max(0, Math.floor(rerolls))) / 100;
-/** v27.93 수치 재련: 옵션 종류는 그대로 두고 수치(0.6~1.4배 굴림)만 다시 굴립니다. 비용은 재설정 기본 비용의 절반(올림)이고 오르지 않습니다. */
+/** v27.94 수치 재련: 옵션 종류는 그대로 두고 수치(0.6~1.4배 굴림)만 다시 굴립니다. 비용은 재설정 기본 비용의 절반(올림)이고 오르지 않습니다. */
 export const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity) / 2);
 const ROLL_MIN = .6, ROLL_SPAN = .8;
 
@@ -139,13 +139,13 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
     }
     return out;
 }
-/** v27.93 수치 재련: 같은 옵션의 수치만 다시 굴립니다. 양날 옵션의 손해 쪽은 고정이라 그대로입니다. */
+/** v27.94 수치 재련: 같은 옵션의 수치만 다시 굴립니다. 양날 옵션의 손해 쪽은 고정이라 그대로입니다. */
 export function refineOption(x: ItemAffix, power: number, rarity: number, rng: () => number): ItemAffix {
     const def = affixDef(x.id);
     if (!def || x.rule || def.kind === 'rule') return x;
     return { ...x, value: rollOption(def, power, rarity, rng).value };
 }
-/** v27.93 옵션 수치가 굴림 범위에서 어디쯤인지(0 = 최저, 1 = 최고). 규칙 옵션·알 수 없는 옵션은 null. */
+/** v27.94 옵션 수치가 굴림 범위에서 어디쯤인지(0 = 최저, 1 = 최고). 규칙 옵션·알 수 없는 옵션은 null. */
 export function affixQuality(x: ItemAffix, power: number, rarity: number): number | null {
     const def = affixDef(x.id);
     if (!def || x.rule || def.kind === 'rule' || !def.base) return null;

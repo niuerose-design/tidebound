@@ -7,6 +7,7 @@ import { SLOTS, RARITIES } from '@/game/data/balance';
 import { shopCost, gambleCost, shopPreview, plainCost, GAMBLE_COUNTS } from '@/game/systems/commerce';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 import type { PanelProps } from './panel-props';
+import { starLabel } from '@/game/data/starforce';
 import { BonusList } from './inventory-panel';
 import { EquipmentForge } from './inventory-panel';
 export function Shop({ s, send, busy }: PanelProps) {
@@ -33,7 +34,7 @@ export function Shop({ s, send, busy }: PanelProps) {
             <div className="section-title"><h2>착용 장비 강화</h2><span>보관 중인 장비는 장비 보관함에서 강화</span></div>
             <div className="port-gamble-grid">{Object.entries(SLOTS).map(([slot, name]) => {
                 const item = s.equipment[slot as keyof typeof s.equipment];
-                return <article className="panel market-card forge-card" key={slot}><SlotIcon slot={slot}/><small>{name}</small>{item ? <><h2>{item.name} <span className="gold-text">+{item.enhance || 0}</span></h2><BonusList item={item}/><EquipmentForge s={s} send={send} busy={busy} item={item}/></> : <><h2>착용 장비 없음</h2><p>장비 보관함에서 {name}을 장착하세요.</p></>}</article>;
+                return <article className="panel market-card forge-card" key={slot}><SlotIcon slot={slot}/><small>{name}</small>{item ? <><h2>{item.name} <span className="gold-text">{starLabel(item.enhance || 0)}</span></h2><BonusList item={item}/><EquipmentForge s={s} send={send} busy={busy} item={item}/></> : <><h2>착용 장비 없음</h2><p>장비 보관함에서 {name}을 장착하세요.</p></>}</article>;
             })}</div>
         </section>}
         {full && <div className="notice">가방이 가득 찼습니다. 장비를 정리하면 다시 구매·감정할 수 있습니다.</div>}

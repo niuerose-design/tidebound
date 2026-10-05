@@ -106,11 +106,14 @@ export type StatusEffects = {
 export type Item = {
     /** v27.27 상점에서 산 장비의 구매가(골드). 판매가는 이 값의 절반을 넘지 않습니다. */
     paid?: number;
+    /** 강화 단계(v27.93부터 스타포스 성 수). */
     enhance?: number;
+    /** v27.93 연속 하락 횟수(2면 찬스 타임). 성공·파괴 때 0. */
+    starFails?: number;
     style?: "physical" | "magic" | "balanced";
     description?: string;
     locked?: boolean;
-    /** v27.93 이 장비의 옵션 재설정 횟수. 많을수록 다음 재설정 비용이 오릅니다. */
+    /** v27.94 이 장비의 옵션 재설정 횟수. 많을수록 다음 재설정 비용이 오릅니다. */
     rerolls?: number;
     relic?: string;
     /** v21 이전 장비와 유물의 단일 옵션. */

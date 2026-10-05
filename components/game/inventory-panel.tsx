@@ -9,6 +9,7 @@ import { SLOTS, RARITIES } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '@/game/data/progression';
 import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor } from '@/game/systems/equipment';
 import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT } from '@/game/data/gear';
+import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
 import { stats, power } from '@/game/systems/stats';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 const PAGE = 12;
@@ -23,7 +24,7 @@ export function BonusList({ item }: {
 /** v22 장비 옵션 목록. 옵션마다 이득·손해 수치와 한 줄 재설정 버튼을 보여줍니다. */
 function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
     const cost = rerollCost(item, s), canPay = s.gold >= cost.gold && (s.essence || 0) >= cost.essence;
-    // v27.93 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다(재설정 기본 비용의 절반, 오르지 않음).
+    // v27.94 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다(재설정 기본 비용의 절반, 오르지 않음).
     const refine = refineCost(item, s), canRefine = s.gold >= refine.gold && (s.essence || 0) >= refine.essence;
     const quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity); return q === null ? null : Math.round(q * 100); };
     return <div className="affix-explanation">
@@ -66,7 +67,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     const upgrades = SLOT_IDS.map(best).filter((i): i is Item => !!i);
     const q = query.trim().toLowerCase();
     const shown = s.inventory.map((item, index) => ({ item, index })).filter(({ item }) => (slot === 'all' || item.slot === slot) && (rarity < 0 || item.rarity === rarity) && (!upgradesOnly || (preview.get(item.id)?.gain || 0) > 0) && (!q || item.name.toLowerCase().includes(q) || RARITIES[item.rarity].name.includes(q) || SLOTS[item.slot].includes(q) || (item.relic ? '유물'.includes(q) : false)))
-        .sort((a, b) => sort === 'power' ? b.item.power * (1 + (b.item.enhance || 0) * ECONOMY.enhanceGain) - a.item.power * (1 + (a.item.enhance || 0) * ECONOMY.enhanceGain) || b.item.rarity - a.item.rarity : sort === 'rarity' ? b.item.rarity - a.item.rarity || b.item.power - a.item.power : sort === 'level' ? b.item.level - a.item.level || b.item.power - a.item.power : sort === 'recent' ? b.index - a.index : a.item.name.localeCompare(b.item.name, 'ko'))
+        .sort((a, b) => sort === 'power' ? b.item.power * starMultiplier(b.item.enhance || 0) - a.item.power * starMultiplier(a.item.enhance || 0) || b.item.rarity - a.item.rarity : sort === 'rarity' ? b.item.rarity - a.item.rarity || b.item.power - a.item.power : sort === 'level' ? b.item.level - a.item.level || b.item.power - a.item.power : sort === 'recent' ? b.index - a.index : a.item.name.localeCompare(b.item.name, 'ko'))
         .map(x => x.item);
     const gainBadge = (gain: number) => <span className={`gear-gain ${gain > 0 ? 'positive' : gain < 0 ? 'negative' : 'neutral'}`} title="교체 후 종합 전투력 변화">{gain > 0 ? `전투력 +${format(gain)}` : gain < 0 ? `전투력 −${format(-gain)}` : '전투력 변화 없음'}</span>;
     const topStats = (item: Item) => byStatOrder(Object.entries(itemStats(item))).slice(0, STAT_PREVIEW).map(([key, value]) => <span key={key}>{STAT_LABELS[key as keyof Stats]} <b>{statDeltaDisplay(key, value as number)}</b></span>);
@@ -100,7 +101,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
         return <article key={item.id} className={`panel gear-row ${expanded ? 'expanded' : ''} ${equipped ? 'equipped' : ''}`} style={{ '--rarity': RARITIES[item.rarity].color } as React.CSSProperties}>
             <button type="button" className="gear-row-main" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : item.id)}>
                 <span className="gear-row-icon"><SlotIcon slot={item.slot} size={20}/></span>
-                <span className="gear-row-name"><strong>{item.name} <span className="gold-text">+{item.enhance || 0}</span>{item.locked && <Lock size={12} aria-label="보호"/>}{item.relic && <Sparkles size={12} aria-label="환생 보존 유물"/>}</strong><small>{RARITIES[item.rarity].name} · {SLOTS[item.slot]} · 위력 {item.power} · {item.relic ? '유물' : `Lv.${item.level}`}{item.affixes?.length ? ` · 옵션 ${item.affixes.length}` : ''}</small></span>
+                <span className="gear-row-name"><strong>{item.name} <span className="gold-text">{starLabel(item.enhance || 0)}</span>{item.locked && <Lock size={12} aria-label="보호"/>}{item.relic && <Sparkles size={12} aria-label="환생 보존 유물"/>}</strong><small>{RARITIES[item.rarity].name} · {SLOTS[item.slot]} · 위력 {item.power} · {item.relic ? '유물' : `Lv.${item.level}`}{item.affixes?.length ? ` · 옵션 ${item.affixes.length}` : ''}</small></span>
                 <span className="gear-row-stats">{topStats(item)}</span>
                 <span className="gear-row-gain">{equipped ? <span className="gear-gain neutral">착용 중</span> : gainBadge(gain)}</span>
                 <ChevronDown size={16} className="gear-row-chevron"/>
@@ -146,10 +147,18 @@ export function Inventory({ s, send, busy }: PanelProps) {
 }
 
 export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Item }) {
-    const rank = item.enhance || 0, cost = enhanceCost(item, s), max = enhanceMaxFor(item);
+    // v27.93 스타포스: 성공·실패(유지/하락)·파괴 확률과 찬스 타임, 15·16성 파괴 방지(비용 2배).
+    const [safeguard, setSafeguard] = useState(false);
+    const star = item.enhance || 0, max = enhanceMaxFor(item), chance = chanceTime(item), guard = safeguard && canSafeguard(star);
+    const cost = enhanceCost(item, s) * (guard ? STARFORCE.safeguardCost : 1);
+    const p = chance ? 1 : starSuccess(star), d = chance ? 0 : starDestroy(star, guard), f = Math.max(0, 1 - p - d), pct = (n: number) => `${Math.round(n * 1000) / 10}%`;
     return <div className="forge-actions">
-        <p className="footnote">강화 1회당 기본 수치 +{ECONOMY.enhanceGain * 100}%. 실패·파괴 없이 최대 +{max}{item.rarity >= 3 ? '(전설 이상)' : ` · 전설 이상은 +${ECONOMY.enhanceMaxLegend}`}. 추가 옵션은 그대로이고, 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 넘는 몫 100%p마다 극 치명타 확률 +1%.' : ''}</p>
-        <button className="primary" disabled={busy || rank >= max || s.gold < cost} onClick={() => send({ type: 'enhance', id: item.id })}>{rank >= max ? '최대 강화' : `+${rank + 1} 강화 · ${format(cost)} G`}</button>
+        <div className="star-row" aria-label={`${star} / ${max}성`}>{Array.from({ length: max }, (_, i) => <i key={i} className={i < star ? 'on' : ''}/>)}<b>{star} / {max}성</b></div>
+        {star < max && <dl className="star-odds"><div><dt>성공</dt><dd className="positive">{pct(p)}</dd></div><div><dt>실패</dt><dd>{pct(f)} · {starDrops(star) ? '1성 하락' : '유지'}</dd></div>{(d > 0 || canSafeguard(star)) && <div><dt>파괴</dt><dd className={d > 0 ? 'negative' : ''}>{pct(d)}</dd></div>}</dl>}
+        {chance && star < max && <p className="footnote positive">찬스 타임 · 하락이 두 번 이어져 다음 시도는 100% 성공합니다.</p>}
+        {canSafeguard(star) && <label className="altar-anon"><input type="checkbox" checked={safeguard} onChange={e => setSafeguard(e.target.checked)}/> 파괴 방지 (비용 ×{STARFORCE.safeguardCost})</label>}
+        <button className="primary" disabled={busy || star >= max || s.gold < cost} onClick={() => send({ type: 'enhance', id: item.id, ...(guard ? { value: 'safeguard' } : {}) })}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${format(cost)} G`}</button>
+        <p className="footnote">1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}성부터 +{STARFORCE.gainHigh * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. 파괴된 장비는 사라지고 유물은 {STARFORCE.relicResetStar}성으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p>
         {item.affixes?.length ? <p className="footnote">옵션은 위 옵션 목록에서 하나씩 재설정합니다.</p> : <ConfirmButton label={`옵션 재설정 · ${format(rerollCost(item, s).gold)} G + 정수 ${rerollCost(item, s).essence}`} title="추가 옵션을 무작위로 바꿀까요?" description={`이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다. 골드 ${format(rerollCost(item, s).gold)} G와 정수 ${rerollCost(item, s).essence}(보유 ${s.essence || 0})를 사용합니다.`} disabled={busy || item.rarity === 0 || s.gold < rerollCost(item, s).gold || (s.essence || 0) < rerollCost(item, s).essence} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}
     </div>;
 }

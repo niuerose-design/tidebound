@@ -117,7 +117,7 @@ test('v22 gear (v27.53 base 0.25%, rare or better): scarce drops, dismantle into
  assert.equal(s.essence,20-gear.rerollEssence(3),'single-affix reroll spends essence');assert.ok(s.gold<g0);assert.ok(s.inventory.find(i=>i.id==='relic1').affix);
  const reb=newState(0);reb.level=30;reb.essence=7;act(reb,{type:'rebirth'},0);assert.equal(reb.essence,7,'essence survives rebirth');
 });
-test('v27.93 essence sinks: rerolling the same item costs +10% each time without a cap, refine rerolls only the value',()=>{
+test('v27.94 essence sinks: rerolling the same item costs +10% each time without a cap, refine rerolls only the value',()=>{
  const s=newState(0);s.gold=1e12;s.essence=1e6;
  s.inventory=[{id:'x',slot:'rod',style:'physical',rarity:4,power:300,level:40,name:'x',affixes:gear.rollAffixes(4,300,undefined,rng)}];
  const item=()=>s.inventory[0],base=gear.rerollEssence(4);

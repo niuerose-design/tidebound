@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, DUNGEON_MODES } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
 import { ECONOMY, RESEARCH_RESET, offlineCapSeconds, inventoryCap } from '@/game/data/economy';
+import { STARFORCE } from '@/game/data/starforce';
 import { victoryHealRate } from '@/game/systems/encounter';
 import type { State } from '@/game/types';
 import { SWARM_UNLOCK } from '@/game/data/world';
@@ -176,7 +177,7 @@ export function Guide({ s }: { s?: State }) {
                     condition={`도전 간격 ${ALTAR.challengeCooldownMs / 60_000}분. 신 카드에 최대 체력과 공격이 보이니 결투 전투력과 비교해 보세요. 신이 없을 때는 자리 주인을 ‘탄핵’할 수 있습니다: 주인이 신을 격파하던 당시의 능력치·스킬 그대로와 겨뤄 이기면 자리가 빕니다.`}
                     limit={`임기는 ${ALTAR.throneTermMs / 86_400_000}일. 자리가 비면 다음 신은 다시 ${ALTAR.firstGod.name}이고, 앉으려면 그 신을 쓰러뜨려야 합니다.`}/>
                 <Rule icon={<Swords size={19}/>} title="월드보스"
-                    effect={`소환 탭의 월드보스 게이지(${RAIDS.map(r => `${r.name} ${r.cost.toLocaleString()}`).join(' · ')})가 차면 그 보스가 ${RAID.lifetimeMs / 3600_000}시간 나타납니다. 체력은 서버가 함께 쓰는 하나의 값이라 모든 모험가의 피해가 누적되고, 0이 되면 격파입니다.`}
+                    effect={`소환 탭의 월드보스 게이지(${RAIDS.map(r => `${r.name} ${r.cost.toLocaleString()}`).join(' · ')})가 차면 그 보스가 나타납니다(${RAIDS.map(r => `${r.name} ${r.lifetimeHours}시간`).join(' · ')}, 격파 뒤 ${RAID.respawnMs / 3600_000}시간 대기). 체력은 서버가 함께 쓰는 하나의 값이라 모든 모험가의 피해가 누적되고, 0이 되면 격파입니다.`}
                     condition={`도전은 ${RAID.cooldownMs / 60_000}분에 한 번, 한 번에 최대 ${RAID.maxTurns}턴. 격파하면 한 번이라도 때린 모험가 전원이 골드·세계석(·SP)을 다음 동기화 때 받고, 마지막 일격은 보너스를 더 받으며, 서버 전체에 축복이 열립니다. 피해 순위는 제단의 월드보스 카드에서 봅니다.`}
                     limit="한 번에 한 마리만 나타납니다. 시간 안에 못 잡으면 떠나고 게이지는 다시 채워야 합니다. 신 소환과는 별개입니다."/>
                 <Rule icon={<Gauge size={19}/>} title="사냥터 난이도 · 던전 난이도"
@@ -208,7 +209,7 @@ export function Guide({ s }: { s?: State }) {
                     condition={`${PROGRESSION.fishComplete}회 처치하면 완성이고 적 정보가 열립니다. 지역의 모든 종을 완성하면 AP +1과 지역 테마 보너스.`}
                     limit="보상은 도감에서 직접 받고 각 단계는 한 번만 줍니다. 합계는 도감 ‘연구 보너스’ 탭에서 봅니다."/>
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비"
-                    effect={`감정은 희귀 이상을 보장하고, 확정 구매는 표시된 등급 그대로입니다. 강화 1회당 기본 수치 +${percent(ECONOMY.enhanceGain)}, 최대 +${ECONOMY.enhanceMax}(전설 이상 +${ECONOMY.enhanceMaxLegend}).`}
+                    effect={`감정은 희귀 이상을 보장하고, 확정 구매는 표시된 등급 그대로입니다. 강화는 스타포스(v27.93): 전설 이상 ${STARFORCE.max}성 · 영웅 이하 ${STARFORCE.maxLow}성까지, 1~${STARFORCE.gainHighFrom}성 +${STARFORCE.gainLow * 100}%/성 · 그 위 +${STARFORCE.gainHigh * 100}%/성. 성마다 성공률이 정해져 있고(${STARFORCE.gainHighFrom}성부터 30%), ${STARFORCE.dropFrom}성부터 실패 시 1성 하락(${STARFORCE.safeStars.join('·')}성 유지), 15성부터 파괴 확률(일반 장비는 소멸, 유물은 ${STARFORCE.relicResetStar}성으로). 하락 2번 연속이면 찬스 타임(100%), 15·16성은 파괴 방지(비용 ×2)를 고를 수 있습니다. 비용은 12성까지 전과 같고 13성부터 성마다 ×${STARFORCE.growth}.`}
                     condition="판매가는 등급·레벨에 비례하고 강화 비용의 30%를 돌려받습니다. 분해는 골드 대신 정수를 줍니다. 정수는 옵션 재설정(옵션 종류를 바꿈, 같은 장비에서 할 때마다 비용 +10%·상한 없음)과 수치 재련(종류는 그대로 수치만 다시 굴림, 재설정 기본 비용의 절반·오르지 않음)에 씁니다."
                     limit="구매·옵션 변경 비용은 돌려받지 않습니다. 일반 장비는 환생 때 정리됩니다(판매/분해는 설정에서 고름)."/>
             </div>

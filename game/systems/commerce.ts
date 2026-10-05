@@ -4,6 +4,7 @@ import { RARITIES } from '../data/balance';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
 import { apCapacity, apUsed } from './progression';
 import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor } from './equipment';
+import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** 상점·뽑기 골드 가격. 상점 단골 할인(−2%/단계, 내림)을 적용합니다. */
@@ -113,17 +114,35 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
         if (a.type === 'enhance') {
-            if ((item.enhance || 0) >= enhanceMaxFor(item))
+            // v27.93 스타포스: 성공률·하락·파괴·찬스 타임·파괴 방지(value 'safeguard', 15·16성 비용 2배). 규칙은 data/starforce.ts.
+            const star = item.enhance || 0;
+            if (star >= enhanceMaxFor(item))
                 throw Error('최대 강화입니다.');
-            const cost = enhanceCost(item, s);
+            const safeguard = a.value === 'safeguard' && canSafeguard(star);
+            const cost = enhanceCost(item, s) * (safeguard ? STARFORCE.safeguardCost : 1);
             spend(cost);
-            item.enhance = (item.enhance || 0) + 1;
-            return `${item.name} +${item.enhance} 강화 성공 · -${cost} G`;
+            const chance = chanceTime(item), roll = rng(), p = starSuccess(star), d = starDestroy(star, safeguard);
+            if (chance || roll < p) {
+                item.enhance = star + 1; item.starFails = 0;
+                return `${item.name} ${item.enhance}성 강화 성공${chance ? ' (찬스 타임)' : ''} · -${cost} G`;
+            }
+            if (roll < p + d) {
+                item.starFails = 0;
+                if (item.relic) { item.enhance = STARFORCE.relicResetStar; return `${item.name} 강화 실패 · 파괴! 유물이라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G`; }
+                s.inventory = s.inventory.filter(x => x.id !== item.id);
+                for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
+                return `${item.name} 강화 실패 · 장비가 파괴되었습니다 · -${cost} G`;
+            }
+            if (starDrops(star)) {
+                item.enhance = star - 1; item.starFails = (item.starFails || 0) + 1;
+                return `${item.name} 강화 실패 · ${item.enhance}성으로 하락${chanceTime(item) ? ' · 다음 시도는 찬스 타임(100%)' : ''} · -${cost} G`;
+            }
+            return `${item.name} 강화 실패 · ${star}성 유지 · -${cost} G`;
         }
         if (item.rarity < 1)
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');
         if (a.type === 'refine') {
-            // v27.93 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. 비용은 재설정의 절반이고 오르지 않습니다.
+            // v27.94 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. 비용은 재설정의 절반이고 오르지 않습니다.
             const index = Number(a.value || '0');
             const x = item.affixes?.[index];
             if (!x || !Number.isInteger(index))

@@ -2,6 +2,7 @@ import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, smithDiscount } from '../data/economy';
 import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence } from '../data/gear';
 import { fishGoldAt, priceScale } from '../data/world';
+import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
 /** 장신구: 위력 1당 치명타 +0.2%p. */
 /** v27.36 장신구 치명타: 레벨·위력과 무관한 등급 고정값 × (1 + 강화 × CHARM_CRIT_ENHANCE). 예전 위력 × 0.2%는 Lv.60 전설 +10 하나로 100%를 넘었습니다. */
@@ -12,7 +13,7 @@ export const GEAR_RARITY_SCALE = [1, 1, 1, .85, .68, .58, .52];
 const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
 export function itemStats(item: Item): Partial<Stats> {
     const damp = GEAR_RARITY_SCALE[item.rarity] ?? 1;
-    const p = item.power * (1 + (item.enhance || 0) * ECONOMY.enhanceGain) * damp;
+    const p = item.power * starMultiplier(item.enhance || 0) * damp;
     const result: Partial<Stats> = {};
     if (item.slot === 'rod') {
         result.attack = p * (item.style === 'magic' ? .4 : item.style === 'physical' ? 1.4 : 1);
@@ -35,7 +36,8 @@ export function itemStats(item: Item): Partial<Stats> {
     return result;
 }
 /** v25.7 전설(등급 3) 이상은 +12, 그 아래는 +10까지 강화합니다. */
-export const enhanceMaxFor = (item: Pick<Item, 'rarity'>) => item.rarity >= 3 ? ECONOMY.enhanceMaxLegend : ECONOMY.enhanceMax;
+/** v27.93 스타포스 상한: 전설 이상 22성, 영웅 이하 15성. */
+export const enhanceMaxFor = (item: Pick<Item, 'rarity'>) => starMax(item.rarity);
 /** v25.7 판매가: 그 레벨 몬스터 골드 × 등급별 마리 수 + 강화에 쓴 골드의 30%. 분해(정수)와 판매(골드)가 실제 선택이 되도록 분해만 유리하던 식(위력×3)을 바꿨습니다. */
 const SALE_FISH = [2, 6, 18, 50, 120, 300, 700], SALE_LEVEL_CAP = 65;
 /** v27.27 상점 구매품 되팔기 비율. */
@@ -53,13 +55,14 @@ export const saleValue = (item: Item) => {
 /** 대장장이의 기억 할인. 상태를 넘기지 않으면(도감·미리보기) 할인 전 가격입니다. */
 const smith = (cost: number, s?: Pick<State, 'permanent'>) => s ? Math.floor(cost * smithDiscount(s)) : cost;
 // v27.30 강화·옵션 재설정 비용은 Lv.40 위 장비부터 몬스터 골드 곡선(priceScale)만큼 커집니다.
-export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((120 + item.power * 12) * (1 + (item.enhance || 0)) ** 1.6 * priceScale(item.level || 1)), s);
+/** 강화 1회 비용. 12성까지 전 공식, 13성부터 12성 비용 × growth^(성−12)(v27.93 스타포스). */
+export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'>) => { const n = item.enhance || 0, base = Math.min(n, STARFORCE.growthFrom); return smith(Math.floor((120 + item.power * 12) * (1 + base) ** 1.6 * priceScale(item.level || 1) * Math.pow(STARFORCE.growth, Math.max(0, n - STARFORCE.growthFrom))), s); };
 export const reforgeCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((250 + item.power * 25) * priceScale(item.level || 1)), s);
 /** 분해로 얻는 정수와 옵션 하나 재설정에 드는 정수. */
 export const dismantleEssence = (item: Item) => ESSENCE_BY_RARITY[item.rarity] ?? 1;
-/** v27.93 재설정 비용은 이 장비를 재설정한 횟수만큼 오릅니다(1회마다 +10%, 상한 없음). */
+/** v27.94 재설정 비용은 이 장비를 재설정한 횟수만큼 오릅니다(1회마다 +10%, 상한 없음). */
 export const rerollCost = (item: Item, s?: Pick<State, 'permanent'>) => ({ gold: Math.floor(rerollScaled(reforgeCost(item, s), item.rerolls)), essence: Math.ceil(rerollScaled(rerollEssence(item.rarity), item.rerolls)) });
-/** v27.93 수치 재련 비용: 재설정 기본 비용의 절반, 횟수에 따라 오르지 않습니다. */
+/** v27.94 수치 재련 비용: 재설정 기본 비용의 절반, 횟수에 따라 오르지 않습니다. */
 export const refineCost = (item: Item, s?: Pick<State, 'permanent'>) => ({ gold: Math.floor(reforgeCost(item, s) / 2), essence: refineEssence(item.rarity) });
 export const itemDescription = (item: Item) => item.description || (item.slot === 'rod' ? (item.style === 'magic' ? '마법 특화' : item.style === 'physical' ? '물리 특화' : '물리·마법 겸용') + ' 낚싯대.' : item.slot === 'coat' ? '최대 체력·물리 방어·마법 방어를 높이는 방어구.' : '치명타 확률을 높이는 장신구.');
 export function rollAffix(rarity: number, rng: () => number) { const x = AFFIXES[Math.floor(rng() * AFFIXES.length)]; return { stat: x.stat, name: x.name, value: x.value * Math.max(1, rarity) }; }
