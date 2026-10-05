@@ -4,7 +4,7 @@ import { BOSS_RESEARCH } from '@/game/data/specializations';
 import { dungeonClearGold, stats } from '@/game/systems/stats';
 import { dungeonTier, dungeonClearBase, dungeonRewardTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack, tierReward, tierExp } from '@/game/systems/meta';
 import { useState } from 'react';
-import { Lock, Swords } from 'lucide-react';
+import { Lock, Swords, Gem, Skull } from 'lucide-react';
 import { FishArt } from './art';
 import { BALANCE, MONSTER_TUNING, dungeonOverlevel, DUNGEON_MODES, type DungeonMode } from '@/game/data/balance';
 import { FISH, DUNGEONS, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
@@ -93,19 +93,32 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     </>;
 }
 
-/** v27.86 랜덤게임 입장 카드: 목표 웨이브를 고르고 들어갑니다. 판돈 표는 목표까지 모두 깼을 때 받는 양(연구 배율 포함). */
+/** v27.86 랜덤게임 입장 카드. v27.91 두 칸 구성: 왼쪽 규칙 세 줄, 오른쪽 목표 웨이브 칩(받는 판돈 표시)과 시작 버튼. 판돈 표는 목표까지 모두 깼을 때 받는 양(연구 배율 포함). */
 function RandomGameCard({ s, send, busy }: PanelProps) {
     const [target, setTarget] = useState<number>(10);
     const rank = randomGameRank(s), left = randomGameRunsLeft(s), m = randomGamePayout(s);
     if (s.rebirths < 5 && !rank) return null;
-    const total = (n: number) => { const t = stakeUpTo(n); return `정수 ${Math.floor(t.essence * m)}${Math.floor(t.pearls * m) ? ` · 세계석 ${Math.floor(t.pearls * m)}` : ''}`; };
-    return <section className="panel random-game-card">
-        <div className="section-title"><h2>랜덤게임</h2><span>{rank ? `이번 생 남은 입장 ${left} / ${rank}회 · 판돈 ×${m}` : '세계석 연구 ‘랜덤게임’에서 해금 (환생 5회)'}</span></div>
-        <p>해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브마다 난이도 +{RANDOM_GAME.tierPerWave}, {RANDOM_GAME.bossEvery}웨이브마다 보스. 처치 경험치·골드·장비는 없고, 웨이브를 깰수록 판돈(정수 {RANDOM_GAME.essencePerWave}×웨이브)이 쌓입니다. 목표 웨이브에 닿거나 ‘받고 나가기’를 누르면 받고, <b>쓰러지면 판돈을 모두 잃습니다.</b></p>
-        {rank > 0 && <>
-        <div className="button-row random-game-targets">{RANDOM_GAME.targets.map(n => <button key={n} className={target === n ? 'primary' : 'secondary'} disabled={busy} onClick={() => setTarget(n)}>{n ? `${n}웨이브` : '목표 없음'}</button>)}</div>
-        <p className="footnote">{target ? `${target}웨이브까지 모두 깨면 ${total(target)}` : '받고 나가기를 누르거나 쓰러질 때까지 계속합니다.'}</p>
-        <button className="gold-button" disabled={busy || !left || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: RANDOM_GAME.id, value: `until:${target}` })}>{left ? '랜덤게임 시작' : '이번 생 입장 횟수를 모두 썼습니다'}</button>
-        </>}
+    const total = (n: number) => { const t = stakeUpTo(n); return { essence: Math.floor(t.essence * m), pearls: Math.floor(t.pearls * m) }; };
+    const payout = (n: number) => { const t = total(n); return `정수 ${t.essence}${t.pearls ? ` · 세계석 ${t.pearls}` : ''}`; };
+    return <section className={`panel random-game ${rank ? '' : 'locked'}`}>
+        <div className="random-game-head">
+            <div><span className="eyebrow">RANDOM GAME · 던전</span><h2>랜덤게임</h2></div>
+            <div className="random-game-chips">{rank ? <><span className={left ? 'chip on' : 'chip'}>남은 입장 {left} / {rank}</span><span className="chip gold">판돈 ×{m}</span></> : <span className="chip">세계석 연구 ‘랜덤게임’에서 해금 · 환생 5회</span>}</div>
+        </div>
+        <div className="random-game-body">
+            <ul className="random-game-rules">
+                <li><Swords size={14}/><span>해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브마다 난이도 +{RANDOM_GAME.tierPerWave}, {RANDOM_GAME.bossEvery}웨이브마다 보스.</span></li>
+                <li><Gem size={14}/><span>처치 경험치·골드·장비는 없습니다. 웨이브를 깰 때마다 판돈(정수 {RANDOM_GAME.essencePerWave} × 웨이브)이 쌓입니다.</span></li>
+                <li><Skull size={14}/><span>목표 웨이브에 닿거나 ‘받고 나가기’를 누르면 받습니다. <b>쓰러지면 판돈을 모두 잃습니다.</b></span></li>
+            </ul>
+            {rank > 0 && <div className="random-game-pick">
+                <div className="random-game-pick-title">목표 웨이브 <small>칩의 숫자는 목표까지 모두 깼을 때 받는 정수</small></div>
+                <div className="random-game-targets" role="radiogroup" aria-label="목표 웨이브">{RANDOM_GAME.targets.map(n => <button key={n} type="button" role="radio" aria-checked={target === n} className={`random-game-target ${target === n ? 'on' : ''}`} disabled={busy} onClick={() => setTarget(n)}><b>{n ? `${n}` : '∞'}</b><small>{n ? `정수 ${total(n).essence}` : '목표 없음'}</small></button>)}</div>
+                <div className="random-game-go">
+                    <span>{target ? `${target}웨이브까지 모두 깨면 ${payout(target)}` : '받고 나가기를 누르거나 쓰러질 때까지 계속합니다.'}</span>
+                    <button className="gold-button" disabled={busy || !left || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: RANDOM_GAME.id, value: `until:${target}` })}>{left ? '랜덤게임 시작' : '이번 생 입장 횟수를 모두 썼습니다'}</button>
+                </div>
+            </div>}
+        </div>
     </section>;
 }
