@@ -77,7 +77,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
         return <div className="gear-detail">
             <p>{itemDescription(item)}</p>
             <BonusList item={item}/>
-            <p className="footnote">직업 배율 적용 전 장비 기여 수치 · 강화 +{(item.enhance || 0) * 15}%{item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</p>
+            <p className="footnote">직업 배율 적용 전 장비 기여 수치 · {starLabel(item.enhance || 0, true)} (기본 수치 ×{starMultiplier(item.enhance || 0).toFixed(2)}){item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</p>
             {!!item.affixes?.length && <GearOptions s={s} send={send} busy={busy} item={item}/>}
             {item.affix && <div className="affix-explanation">
                 <b>추가 옵션 · {item.affix.name}</b>
@@ -118,7 +118,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     <WalletBar s={s} label="보관함 재화와 가방" extra={<div><Swords size={22}/><span>종합 전투력<strong>{format(currentPower)}</strong></span></div>}/>
     <section className="gear-slots" aria-label="착용 장비">{SLOT_IDS.map(id => { const worn = s.equipment[id], up = best(id); return <article key={id} className="panel gear-slot" style={{ '--rarity': worn ? RARITIES[worn.rarity].color : '#5a6f71' } as React.CSSProperties}>
         <div className="gear-slot-head"><SlotIcon slot={id} size={18}/><span>{SLOTS[id]}</span>{worn && <button type="button" className="text-button" disabled={busy} onClick={() => send({ type: 'unequip', id })}>해제</button>}</div>
-        {worn ? <button type="button" className="gear-slot-item" onClick={() => setOpen(open === worn.id ? null : worn.id)} aria-expanded={open === worn.id}><strong>{worn.name} <span className="gold-text">+{worn.enhance || 0}</span></strong><small>{RARITIES[worn.rarity].name} · 위력 {worn.power}</small><span className="gear-row-stats">{topStats(worn)}</span></button> : <p className="gear-slot-empty">비어 있음</p>}
+        {worn ? <button type="button" className="gear-slot-item" onClick={() => setOpen(open === worn.id ? null : worn.id)} aria-expanded={open === worn.id}><strong>{worn.name} <span className="gold-text">{starLabel(worn.enhance || 0, true)}</span></strong><small>{RARITIES[worn.rarity].name} · 위력 {worn.power}</small><span className="gear-row-stats">{topStats(worn)}</span></button> : <p className="gear-slot-empty">비어 있음</p>}
         {up ? <div className="gear-slot-upgrade"><span><ArrowUpRight size={13}/>추천 <b>{up.name}</b> {gainBadge(preview.get(up.id)!.gain)}</span><button className="primary small" disabled={busy} onClick={() => send({ type: 'equip', id: up.id })}>바로 장착</button></div> : <p className="gear-slot-upgrade muted">가방에 더 좋은 {SLOTS[id]} 없음</p>}
         {worn && open === worn.id && detail(worn, true)}
     </article>; })}</section>
