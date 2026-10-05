@@ -25,6 +25,10 @@ export const REGION_THEMES: Record<string, { label: string; add?: StatBonus; sca
     moon: { label: '턴당 마나 회복 +0.5', add: { manaRegen: .5 } },
     starfall: { label: '체력·공격·방어 +2%', scale: { hp: 1.02, attack: 1.02, magic: 1.02, defense: 1.02, resist: 1.02 } },
     duskVents: { label: '방어 관통 +1%p · 치명 피해 +3%p', add: { penetration: .01, critDamage: .03 } },
+    coralForest: { label: '회피 +1%p · 명중 +1%p', add: { evasion: .01, accuracy: .01 } },
+    dragonNest: { label: '물리 공격 +3% · 물리 방어 +2%', scale: { attack: 1.03, defense: 1.02 } },
+    memoryLane: { label: '경험치 +4%', add: { expBonus: .04 } },
+    vanishingJourney: { label: '체력·공격·방어 +3%', scale: { hp: 1.03, attack: 1.03, magic: 1.03, defense: 1.03, resist: 1.03 } },
 };
 
 /**
@@ -40,4 +44,8 @@ export const REGION_RESEARCH: Record<string, { label: string; add?: StatBonus; s
     '페리온': { label: '최대 체력 +3% · 물리 방어 +2%', scale: { hp: .03, defense: .02 } },
     '엘리니아': { label: '마법 공격 +3% · 턴당 마나 회복 +0.5', add: { manaRegen: .5 }, scale: { magic: .03 } },
     '커닝시티': { label: '회피 +0.5%p · 치명 피해 +3%p', add: { evasion: .005, critDamage: .03 } },
+    '아쿠아로드': { label: '회피 +1%p · 명중 +1%p', add: { evasion: .01, accuracy: .01 } },
+    '리프레': { label: '물리·마법 공격 +3%', scale: { attack: .03, magic: .03 } },
+    '시간의 신전': { label: '경험치 +3% · 턴당 마나 회복 +0.5', add: { expBonus: .03, manaRegen: .5 } },
+    '아케인 리버': { label: '체력·공격·방어 +2%', scale: { hp: .02, attack: .02, magic: .02, defense: .02, resist: .02 } },
 };

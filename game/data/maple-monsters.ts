@@ -53,4 +53,28 @@ export const MAPLE_MONSTERS: Record<string, { name: string; lore: string }> = {
     blindShark: { name: '리게이터', lore: '빛을 잃은 대신 물살의 떨림으로 모든 것을 본다.' },
     cinderAngler: { name: '크로코', lore: '배수구의 불씨를 등불 삼아 어둠 속에서 입을 벌린다.' },
     ventLeviathan: { name: '다크 와이번', lore: '도시 아래 배수로를 통째로 둥지로 삼은 검은 비룡.' },
+    // v3.10 아쿠아로드 · 산호 숲 (Lv.68~74)
+    aqSeaco: { name: '씨코', lore: '산호 사이를 미끄러지듯 헤엄치는 물개. 장난치듯 덤비지만 이빨은 진심이다.' },
+    aqShark: { name: '샤크', lore: '산호 숲의 포식자. 피 냄새보다 발소리를 먼저 듣는다.' },
+    aqSquid: { name: '스퀴드', lore: '먹물로 시야를 가린 뒤 촉수로 감는다.' },
+    aqFlower: { name: '플라워피쉬', lore: '꽃처럼 피어 있다가 가까이 오면 독가시를 세운다.' },
+    aqGuard: { name: '바다 수호병', lore: '깊은 바다의 문을 지키는 갑주 병사. 삼지창이 물살을 가른다.' },
+    // v3.10 리프레 · 용의 둥지 (Lv.78~84)
+    lfBlueTurtle: { name: '블루 드래곤 터틀', lore: '바위처럼 엎드린 용거북. 등껍질에 부딪힌 검이 먼저 부러진다.' },
+    lfRedTurtle: { name: '레드 드래곤 터틀', lore: '붉은 등껍질 아래 불을 품은 용거북. 화를 내면 숲이 탄다.' },
+    lfWyvern: { name: '블루 와이번', lore: '절벽을 돌며 둥지를 지키는 비룡. 바람을 타고 내리꽂힌다.' },
+    lfSkelegon: { name: '스켈레곤', lore: '뼈만 남고도 날개를 접지 않은 용. 죽음이 아직 끝나지 않았다.' },
+    lfManticore: { name: '맨티코어', lore: '사자의 몸에 전갈의 꼬리. 독침 한 번이면 오래 앓는다.' },
+    // v3.10 시간의 신전 · 기억의 길 (Lv.88~94)
+    ttMonitor: { name: '메모리 모니터', lore: '회랑 천장에 매달려 기억을 들여다보는 파수꾼.' },
+    ttGuardian: { name: '기억의 수호병', lore: '신전의 대회랑을 지키는 돌갑주 병사. 지나온 생을 묻는다.' },
+    ttChimera: { name: '키메라', lore: '여러 짐승의 기억이 한 몸에 겹친 괴물.' },
+    ttDodo: { name: '도도', lore: '시간이 멈춘 신전에서만 아직 살아 있는 새.' },
+    ttLyka: { name: '릴리노우흐', lore: '신전의 늑대. 발소리 없이 기억의 길을 달린다.' },
+    // v3.10 아케인 리버 · 소멸의 여로 (Lv.98~104)
+    arErdaSpirit: { name: '에르다 스피릿', lore: '세계의 힘 에르다가 뭉쳐 영혼의 모양을 얻었다.' },
+    arMemoryGuard: { name: '추억의 수호병', lore: '누군가의 잊힌 기억이 강가에서 병사의 형상으로 선다.' },
+    arMysticErda: { name: '신비한 에르다', lore: '강 한가운데서만 빛나는 순수한 에르다 덩어리.' },
+    arVanishSoul: { name: '소멸의 영혼', lore: '강에 흩어지다 만 영혼. 붙잡으면 함께 흩어지려 든다.' },
+    arTrueErda: { name: '트루 에르다', lore: '소멸의 여로 끝에 맺힌 에르다의 결정. 세계의 끝이 여기서 시작된다.' },
 };

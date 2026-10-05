@@ -14,6 +14,11 @@ const BASE_STAGES: StageDef[] = [
     { id: 'starfall', region: '커닝시티', place: '네온 수로', name: '커닝시티 · 네온 수로', subtitle: 'KERNING CITY · NEON CANAL', level: 46, rebirth: 2, description: '네온이 별비처럼 쏟아지는 도시의 수로. 거품과 박쥐, 비룡이 밤하늘을 가른다.', fish: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta', 'novaManta'], tone: '#9c8ed4' },
     // v25.8 환생 5회부터. Lv.60 생이 반복되는 환생 중반의 새 땅.
     { id: 'duskVents', region: '커닝시티', place: '지하 배수로', name: '커닝시티 · 지하 배수로', subtitle: 'KERNING CITY · UNDERGROUND DRAIN', level: 55, rebirth: 5, description: '도시 아래 끓어오르는 배수로. 다섯 번의 생을 건넌 모험가만 이 열기를 견딘다.', fish: ['ventCrab', 'glassSquid', 'sulfurEel', 'blindShark', 'cinderAngler', 'ventLeviathan'], tone: '#d88a5a' },
+    // v3.10 고레벨 사냥터 4곳(Lv.70·80·90·100). 환생 요구 레벨 곡선(12회 66 · 20회 74 · 35회 89 · 50회 100)에 맞춰 엽니다.
+    { id: 'coralForest', region: '아쿠아로드', place: '산호 숲', name: '아쿠아로드 · 산호 숲', subtitle: 'AQUA ROAD · CORAL FOREST', level: 70, rebirth: 12, description: '빛이 산호 사이로 부서지는 바다 밑 숲. 씨코와 상어가 물결을 가르고, 수호병이 깊은 곳을 지킨다.', fish: ['aqSeaco', 'aqShark', 'aqSquid', 'aqFlower', 'aqGuard'], tone: '#4fa3c7' },
+    { id: 'dragonNest', region: '리프레', place: '용의 둥지', name: '리프레 · 용의 둥지', subtitle: 'LEAFRE · DRAGON NEST', level: 80, rebirth: 20, description: '용의 숲 깊은 곳의 둥지. 드래곤 터틀이 바위처럼 엎드려 있고 와이번이 절벽을 돈다.', fish: ['lfBlueTurtle', 'lfRedTurtle', 'lfWyvern', 'lfSkelegon', 'lfManticore'], tone: '#7fb069' },
+    { id: 'memoryLane', region: '시간의 신전', place: '기억의 길', name: '시간의 신전 · 기억의 길', subtitle: 'TEMPLE OF TIME · MEMORY LANE', level: 90, rebirth: 35, description: '시간이 멈춘 신전의 회랑. 기억의 수호병과 키메라가 지나온 생을 묻는다.', fish: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo', 'ttLyka'], tone: '#c9a85c' },
+    { id: 'vanishingJourney', region: '아케인 리버', place: '소멸의 여로', name: '아케인 리버 · 소멸의 여로', subtitle: 'ARCANE RIVER · VANISHING JOURNEY', level: 100, rebirth: 50, description: '세계의 끝에서 흐르는 강. 에르다가 영혼이 되어 떠돌고, 쉰 번의 생을 건넌 모험가만 이 강을 거슬러 오른다.', fish: ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul', 'arTrueErda'], tone: '#8b7fd6' },
 ];
 /**
  * v27.80 무리 서식지: 지역마다 하나. 그 지역 몬스터가 전부 무리로만 나옵니다(×100 75% · ×500 25%, 도감·패시브 조건 없음).
@@ -27,6 +32,10 @@ const HABITAT_META: Record<string, { id: string; subtitle: string; description: 
     '페리온': { id: 'perionSwarm', subtitle: 'PERION · SWARM CANYON', description: '바위 협곡을 메운 멧돼지와 골렘 떼. 버티지 못하면 한꺼번에 밀려난다.', tone: '#b9744f' },
     '엘리니아': { id: 'elliniaSwarm', subtitle: 'ELLINIA · SWARM HOLLOW', description: '숲의 그림자마다 몬스터가 겹겹이 숨어 있다. 망령까지 떼를 지어 떠오른다.', tone: '#8f88c4' },
     '커닝시티': { id: 'kerningSwarm', subtitle: 'KERNING CITY · SWARM SEWER', description: '배수로 가득 차오른 몬스터의 물결. 다섯 번의 생으로도 모자란 곳.', tone: '#6d7fb0' },
+    '아쿠아로드': { id: 'aquaSwarm', subtitle: 'AQUA ROAD · SWARM REEF', description: '산호초를 뒤덮은 바다 몬스터의 떼. 물결이 통째로 덤벼든다.', tone: '#3f8fb5' },
+    '리프레': { id: 'leafreSwarm', subtitle: 'LEAFRE · SWARM VALLEY', description: '용의 숲 골짜기를 메운 비룡과 터틀의 무리. 날개 소리만으로 땅이 울린다.', tone: '#6b9d58' },
+    '시간의 신전': { id: 'templeSwarm', subtitle: 'TEMPLE OF TIME · SWARM HALL', description: '신전의 대회랑에 줄지어 선 수호병과 키메라. 한 번의 생이 통째로 몰려온다.', tone: '#b8944a' },
+    '아케인 리버': { id: 'arcaneSwarm', subtitle: 'ARCANE RIVER · SWARM CURRENT', description: '에르다의 급류. 소멸한 영혼들이 강 전체가 되어 밀려온다.', tone: '#7a6fc4' },
 };
 /** 지역 이름 목록(사냥터 순서). */
 export const REGIONS = [...new Set(BASE_STAGES.map(st => st.region))];
@@ -91,6 +100,11 @@ const rows: [
     ['viper', '심연 독사고기', 26, '눈보다 송곳니가 먼저 빛난다.'], ['squid', '거대 오징어', 28, '오래된 해도 위의 괴물은 실재했다.'], ['leviathan', '어린 레비아탄', 30, '이 거대한 그림자가 아직 어린 개체라니.'],
     ['moonfish', '월광 개복치', 32, '달의 파편을 삼켜 빛을 품었다.'], ['dragon', '해룡', 36, '물살을 뒤집고 조류를 지배한다.'], ['ancient', '태고의 실러캔스', 40, '바다가 처음 생긴 날을 기억한다.'],
     // v25.8 황혼의 열수구(환생 5회, Lv.55)
+    // v3.10 고레벨 사냥터(Lv.68~104). 이름·설명은 maple-monsters.ts가 덮어씁니다.
+    ['aqSeaco', '씨코', 68, '산호 숲의 물개.'], ['aqShark', '샤크', 70, '산호 숲의 상어.'], ['aqSquid', '스퀴드', 71, '먹물을 뿜는 오징어.'], ['aqFlower', '플라워피쉬', 72, '꽃처럼 피는 물고기.'], ['aqGuard', '바다 수호병', 74, '깊은 바다의 수호자.'],
+    ['lfBlueTurtle', '블루 드래곤 터틀', 78, '푸른 등껍질의 용거북.'], ['lfRedTurtle', '레드 드래곤 터틀', 80, '붉은 등껍질의 용거북.'], ['lfWyvern', '블루 와이번', 81, '절벽을 도는 비룡.'], ['lfSkelegon', '스켈레곤', 82, '뼈만 남은 용.'], ['lfManticore', '맨티코어', 84, '사자의 몸에 전갈의 꼬리.'],
+    ['ttMonitor', '메모리 모니터', 88, '기억을 지키는 파수꾼.'], ['ttGuardian', '기억의 수호병', 90, '회랑을 지키는 병사.'], ['ttChimera', '키메라', 91, '여러 짐승이 합쳐진 괴물.'], ['ttDodo', '도도', 92, '시간을 잊은 새.'], ['ttLyka', '릴리노우흐', 94, '신전의 늑대.'],
+    ['arErdaSpirit', '에르다 스피릿', 98, '에르다가 뭉친 영혼.'], ['arMemoryGuard', '추억의 수호병', 100, '잊힌 기억의 병사.'], ['arMysticErda', '신비한 에르다', 101, '빛나는 에르다.'], ['arVanishSoul', '소멸의 영혼', 102, '강에 흩어지는 영혼.'], ['arTrueErda', '트루 에르다', 104, '순수한 에르다의 결정.'],
     ['ventCrab', '열수 게', 55, '끓는 물줄기 옆에서 집게를 벼린다. 껍데기가 쇠처럼 울린다.'], ['glassSquid', '유리 오징어', 57, '몸이 투명해 심장의 박동만 보인다.'], ['sulfurEel', '유황 곰치', 59, '숨을 쉴 때마다 노란 연기가 물을 흐린다.'], ['blindShark', '눈먼 상어', 61, '빛을 잃은 대신 물살의 떨림으로 모든 것을 본다.'],
 ];
 /** 레벨별 몬스터 기본 골드. 장비 판매가도 이 곡선을 따릅니다. */

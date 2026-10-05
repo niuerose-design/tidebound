@@ -49,7 +49,7 @@ const series = (prefix: string, group: Achievement['group'], title: (n: number) 
 
 export const ACHIEVEMENTS: Achievement[] = [
     ...series('kills', '사냥', n => `처치 ${n.toLocaleString()}마리`, n => `누적 ${n.toLocaleString()}마리를 처치합니다.`, [100, 1000, 5000, 20000, 100000, 500000], kills, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 4, bonus: { attack: .02, magic: .02 } }, { pearls: 8, bonus: { hp: .03 } }, { pearls: 15, ap: 1 }, { pearls: 30, sp: 1 }][i]),
-    ...series('codex', '모험', n => `도감 ${n}종`, n => `서로 다른 몬스터 ${n}종을 발견합니다.`, [10, 20, 30, CODEX_FISH.length], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5, bonus: { defense: .03, resist: .03 } }, { pearls: 10, ap: 1 }][i]),
+    ...series('codex', '모험', n => `도감 ${n}종`, n => `서로 다른 몬스터 ${n}종을 발견합니다.`, [10, 20, 30, 47, CODEX_FISH.length], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5, bonus: { defense: .03, resist: .03 } }, { pearls: 10, ap: 1 }, { pearls: 15, sp: 1 }][i]),
     ...series('stages', '모험', n => `사냥터 ${n}곳`, n => `사냥터 ${n}곳에서 사냥합니다.`, [3, 6, 9, STAGES.length], s => STAGES.filter(st => s.voyage?.[`stage:${st.id}`] !== undefined).length, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6, bonus: { hp: .03 } }, { pearls: 10, ap: 1 }][i]),
     ...series('clears', '던전', n => `던전 정복 ${n}회`, n => `던전을 ${n}회 정복합니다(무릉도장 포함).`, [1, 10, 50, 200, 1000], clears, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 5, bonus: { attack: .02, magic: .02 } }, { pearls: 8 }, { pearls: 15, ap: 1 }][i]),
     ...series('bosses', '던전', n => `보스 ${n.toLocaleString()}마리`, n => `던전 보스를 ${n.toLocaleString()}마리 처치합니다.`, [10, 100, 500, 2000], bosses, i => [{ pearls: 2 }, { pearls: 5, bonus: { defense: .03, resist: .03 } }, { pearls: 10, sp: 1 }, { pearls: 20, sp: 1 }][i]),

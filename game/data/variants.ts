@@ -38,6 +38,10 @@ export const REGION_VARIANTS: Record<string, Partial<Record<VariantId, number>>>
     '페리온': { abyssal: 2.5, swarm: .8, giant: .8, starlit: .8 },
     '엘리니아': { starlit: 2.5, swarm: .8, giant: .8, abyssal: .8 },
     '커닝시티': { swarm: 1.8, abyssal: 1.8, giant: .8, starlit: .8 },
+    '아쿠아로드': { swarm: 2.5, giant: .8, abyssal: .8, starlit: .8 },
+    '리프레': { giant: 2.5, swarm: .8, abyssal: .8, starlit: .8 },
+    '시간의 신전': { starlit: 2.5, swarm: .8, giant: .8, abyssal: .8 },
+    '아케인 리버': { abyssal: 1.8, swarm: 1.8, giant: .8, starlit: .8 },
 };
 /** 사냥터의 지역 변종 배율(지역 표가 없으면 1). */
 export const regionVariantScale = (stageId: string, id: VariantId) => REGION_VARIANTS[STAGES.find(st => st.id === stageId)?.region || '']?.[id] ?? 1;

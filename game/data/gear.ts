@@ -104,6 +104,10 @@ const ORIGIN_AFFIXES: Record<string, string[]> = {
     temple: ['arcana', 'wellspring', 'runeCore', 'mending'],
     starSanctum: ['echoing', 'reaper', 'concuss'],
     duskVents: ['might', 'arcana', 'piercing', 'berserk', 'reaper'],
+    coralForest: ['drift', 'precise', 'leech', 'swift'],
+    dragonNest: ['might', 'plating', 'berserk', 'spiked'],
+    memoryLane: ['scholar', 'current', 'arcana', 'runic'],
+    vanishingJourney: ['piercing', 'brutal', 'reaper', 'echoing'],
     ventCathedral: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'],
     abyss: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'],
 };
