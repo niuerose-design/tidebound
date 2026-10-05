@@ -34,6 +34,20 @@ function statusLabel(sk: Skill) {
  * 짧은 효과 요약: 직업 상세·비교처럼 한 줄만 보여 줄 때 씁니다. 피해(또는 피해 없음) → 상태이상 → 추가타·회복·흡혈·연계 순서.
  * 자세한 계산식은 skillEffectLines에 있습니다.
  */
+/**
+ * v27.96 간단히 보기의 ‘기타’ 칸: 고정 수치 칩으로 다 못 보여 주는 조건·규칙(누적·환생 비례, 조건부 숙련, 특수 규칙).
+ * 비어 있으면 기타 칸을 그리지 않습니다.
+ */
+export function skillExtraNotes(sk: Skill): string[] {
+    if (sk.type === 'active') return [];
+    const notes: string[] = [];
+    if (sk.perRebirth) notes.push(`환생마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);
+    for (const pc of sk.perCount || []) notes.push(`${COUNT_WORD[pc.source]}${pc.per === 1 ? '' : ` ${pc.per.toLocaleString()}`}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
+    if (sk.masteryGain) notes.push('지정한 적 처치 시 숙련 추가 획득');
+    const special = sk.cooldownReset || sk.lastStand || sk.sealFinale;
+    if (special && sk.desc) notes.push(sk.desc);
+    return notes;
+}
 export function skillBrief(sk: Skill): string {
     if (sk.type !== 'active') {
         const parts = byStatOrder(Object.entries(sk.levelEffects?.[0]?.bonus ?? sk.bonus ?? {})).map(([key, n]) => skillBonusText(key, n as number));

@@ -98,6 +98,11 @@
   grid-template-columns:repeat(3,1fr);
   gap:17px
 }
+/* v27.96 카드 내용(기타 칸의 긴 규칙 문구 등)이 열 너비를 밀어내지 않게 합니다. */
+.skill-grid > .skill-card { min-width:0 }
+.skill-grid > .skill-card .skill-actions-v2 > button { min-width:0; white-space:normal; overflow-wrap:anywhere }
+/* 장착할 수 없는 이유처럼 긴 문구는 한 줄을 다 씁니다. */
+.skill-grid > .skill-card .skill-actions-v2 > button.skill-action-wide { flex-basis:100% }
 
 .skill-card {
   padding:21px;
