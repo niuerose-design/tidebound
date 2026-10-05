@@ -6,6 +6,7 @@ import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { SAVE_VERSION } from '../data/balance';
 import { newState } from './engine';
 import { SKILLS, skillMasteryScale } from '../data/skills';
+import { RANKS, RANK_LEGACY_NEED, rankIndex, rankState } from '../data/rank';
 import { OLD_GEAR_NAMES, RENAMED_GEAR, RENAMED_AFFIX, gearName } from '../data/maple-gear';
 /**
  * v8(게임 v20.5): 골드 훈련 삭제와 함께 이전 버전의 세이브는 이름만 남기고 새로 시작합니다.
@@ -57,8 +58,25 @@ export function keepLegacyInheritance(s: State) {
     if (kept) addLog(s, `숙련 요구치가 올라 이미 계승한 스킬 ${kept}개는 계승을 그대로 유지합니다.`, 'system');
     return kept;
 }
+/**
+ * v3.19 계급장 필요 처치 재조정(부사관 ×10 · 장교 ×100 · 장성 ×200): 계급 경험치는 그대로 두고 계급만 새 기준으로 다시 셉니다.
+ * 강등된 세이브는 찍어 둔 특전을 모두 되돌립니다(진급 포인트는 새 계급 기준으로 다시 찍음). 한 번만 처리합니다.
+ */
+export function rescaleRanks(s: State) {
+    if (s.rankRescaled) return false;
+    s.rankRescaled = true;
+    const rk = rankState(s);
+    let cum = 0, oldIndex = 0;
+    RANK_LEGACY_NEED.forEach((n, i) => { cum += n; if (i > 0 && rk.exp >= cum) oldIndex = i; });
+    const now = rankIndex(rk.exp);
+    if (now >= oldIndex) return false;
+    const spent = Object.values(rk.perks || {}).some(n => (n || 0) > 0);
+    s.rank = { ...rk, perks: {} };
+    addLog(s, `계급장 진급 기준이 크게 늘어 ${RANKS[oldIndex].name} → ${RANKS[now].name}(으)로 조정되었습니다.${spent ? ' 찍어 둔 특전을 모두 되돌렸으니 진급 포인트를 다시 배분하세요.' : ''}`, 'system');
+    return true;
+}
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    if (s.version === SAVE_VERSION) { keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
