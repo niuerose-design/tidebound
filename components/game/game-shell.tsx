@@ -37,7 +37,7 @@ type NavItem = { id: string; name: string; Icon: React.ComponentType<{ size?: nu
 /** 합친 화면의 탭별 제목(상단 빵부스러기). 없으면 메뉴 이름을 씁니다. */
 const VIEW_TITLES: Record<string, string> = { hacker: '해킹', slots: '분신', stats: '통계', character: '능력치', cosmetics: '치장', stages: '사냥터', dungeons: '던전 탐험', altar: '제단', skills: '스킬', classes: '전직', book: '몬스터 도감', voyage: '목표 · 업적', help: '도움말', updates: '업데이트 내역' };
 /**
- * v3.25 해커 계열(해커·화이트 해커)은 싸우지 않으니 쓸 일이 없는 메뉴를 숨기고, 해킹 메뉴는 해커 계열에게만 보입니다.
+ * v3.25 해커 계열(해커·화이트 해커, v3.28 블랙 해커)은 싸우지 않으니 쓸 일이 없는 메뉴를 숨기고, 해킹 메뉴는 해커 계열에게만 보입니다.
  * v3.27 제단은 백도어 대상이라 다시 보이고, 길드·환생은 숨깁니다(레벨이 멈춰 환생할 일이 없음). 분신(슬롯 바꾸기)은 따로 보입니다.
  * 숨긴 화면에 머물러 있었다면 자동 사냥(해커는 브루트포스) 화면을 보여 줍니다. 한 화면이 여러 메뉴에 걸려 있으면 하나라도 보이면 열립니다.
  */

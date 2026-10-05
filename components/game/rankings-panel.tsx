@@ -21,7 +21,7 @@ import type { Ranking, AbyssRow } from './use-game';
 import { abyssWeeklyPearls } from '@/game/systems/progress';
 import type { PanelProps } from './panel-props';
 import { isHackerJob } from '@/game/data/hacker';
-import { adguardLevel } from '@/game/systems/hacker';
+import { adguardLevel, canAttack, hackCost, hackCap } from '@/game/systems/hacker';
 import { HACKER } from '@/game/data/hacker';
 import { dayKey } from '@/game/data/goals';
 
@@ -126,7 +126,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
             <TableCell className="ranking-actions">
             {(() => { const a = duelAllowance(s, now, r.id); return <><button className="secondary small" disabled={busy || r.self || a.cooldown > 0 || a.left <= 0 || a.vs <= 0} title={r.self ? undefined : `이 상대와 오늘 ${a.vs}회 남음`} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>{r.self ? '내 캐릭터' : `대결 ${a.vs}/${a.perOpponent}`}</button><button className="secondary small" disabled={busy || r.self} title="점수·전적이 바뀌지 않는 연습 대결" onClick={() => send({ type: 'training', id: `user:${r.id}` }, '/api/duel')}>연습</button></>; })()}
             <button className="text-button" onClick={() => setDetail(r)}>상세보기</button>
-            {r.masked && s.job === 'hacker' && (s.hacker?.tier || 0) >= 1 && <button className="secondary small" disabled={busy} title="신원 조작을 1시간 동안 풉니다(비트 소모)" onClick={() => send({ type: 'hackRun', id: 'crack', value: r.id }, '/api/hack')}>크래킹</button>}
+            {r.masked && canAttack(s) && (s.hacker?.tier || 0) >= 1 && <button className="secondary small" disabled={busy} title="신원 조작을 1시간 동안 풉니다(비트 소모)" onClick={() => send({ type: 'hackRun', id: 'crack', value: r.id }, '/api/hack')}>크래킹</button>}
             {!r.masked && !r.self && isHackerJob(s.job) && adguardLevel(s) >= 1 && <button className="secondary small" disabled={busy} title="이 모험가의 정보를 무기한 ???로 가립니다(전부 가림, 비트 소모). 기간·공개 항목은 해킹 화면에서 정합니다" onClick={() => send({ type: 'hackRun', id: 'spoof', value: `${r.id}||0` }, '/api/hack')}>신원 조작</button>}
             </TableCell>
             </TableRow>)}</TableBody>
@@ -216,14 +216,15 @@ function HackerBoard({ s, send, busy }: { s: State; send: PanelProps['send']; bu
         return () => { alive = false; };
     }, [nonce]);
     const mine = s.hacker?.season, clock = useNow(60_000);
-    // v3.27 해커(화이트 해커 제외)는 다른 해커를 견제합니다(역추적·과부하, 각각 하루 1회).
-    const rival = s.job === 'hacker' && (s.hacker?.tier || 0) >= 1, today = s.hacker?.day === dayKey(clock), used = today ? s.hacker?.used || {} : {}, bits = s.hacker?.bits || 0;
+    // v3.27 해커(화이트 해커 제외)는 다른 해커를 견제합니다(역추적·과부하, 각각 하루 1회). v3.28 블랙 해커는 2회.
+    // v3.28 블랙 해커도 견제합니다(비트 두 배).
+    const rival = canAttack(s) && (s.hacker?.tier || 0) >= 1, today = s.hacker?.day === dayKey(clock), used = today ? s.hacker?.used || {} : {}, bits = s.hacker?.bits || 0;
     return <section className="panel ranking-panel abyss-board">
         <div className="section-title"><h2><ArrowUpRight size={17}/> 이번 달 해커 순위{board ? ` · ${board.month}` : ''}</h2><button className="text-button" onClick={load}><RefreshCw size={13}/> 새로고침</button></div>
-        <p className="footnote">점수 = 침투 작전 최고 깊이 ×10 + 해킹 실행 ×5 + 화이트 해커 복구 ×5. 한국 시간 매월 1일에 새로 셉니다. 신원 조작으로 가린 이름은 ???로 보입니다. 해커는 다른 해커를 역추적(오늘 침투 입장 −1)하거나 과부하(브루트포스 비트 절반 2시간)로 견제할 수 있습니다(각각 하루 1회, 화이트 해커 방화벽이 하루 한 번 막음).</p>
+        <p className="footnote">점수 = 침투 작전 최고 깊이 ×10 + 해킹 실행 ×5 + 화이트 해커 복구 ×5. 한국 시간 매월 1일에 새로 셉니다. 신원 조작으로 가린 이름은 ???로 보입니다. 해커·블랙 해커는 다른 해커를 역추적(오늘 침투 입장 −1)하거나 과부하(브루트포스 비트 절반 2시간)로 견제할 수 있습니다(각각 하루 1회, 블랙 해커는 2회, 화이트 해커 방화벽이 하루 한 번 막음).</p>
         {mine && <p className="abyss-mine">내 이번 달 기록 <b>깊이 {mine.depth} · 해킹 {mine.hacks} · 복구 {mine.restores}</b></p>}
         {error ? <p className="footnote negative">{error}</p> : !board ? <p className="footnote">불러오는 중…</p> : !board.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 달에 침투 작전·해킹을 한 해커가 없습니다."/> :
         <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>해커</TableHead><TableHead>점수</TableHead><TableHead>깊이</TableHead><TableHead>해킹</TableHead><TableHead>복구</TableHead>{rival && <TableHead>견제</TableHead>}</TableRow></TableHeader>
-        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}{r.job === 'whiteHacker' && !r.masked?.includes('job') ? <small> · 화이트</small> : null}</TableCell><TableCell><b>{format(r.score)}</b></TableCell><TableCell>{r.depth}</TableCell><TableCell>{r.hacks}</TableCell><TableCell>{r.restores}</TableCell>{rival && <TableCell className="ranking-actions">{!r.self && <><button className="secondary small" disabled={busy || (used.trace || 0) >= 1 || bits < HACKER.trace.bits} title={`이 해커의 오늘 침투 작전 입장 −1(하루 1회, 비트 ${HACKER.trace.bits})`} onClick={() => send({ type: 'hackRun', id: 'trace', value: r.id }, '/api/hack')}>역추적</button><button className="secondary small" disabled={busy || (used.overload || 0) >= 1 || bits < HACKER.overload.bits} title={`이 해커의 브루트포스 비트를 ${HACKER.overload.minutes / 60}시간 동안 절반으로(하루 1회, 비트 ${HACKER.overload.bits})`} onClick={() => send({ type: 'hackRun', id: 'overload', value: r.id }, '/api/hack')}>과부하</button></>}</TableCell>}</TableRow>)}</TableBody></Table>}
+        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}{r.job === 'whiteHacker' && !r.masked?.includes('job') ? <small> · 화이트</small> : r.job === 'blackHacker' && !r.masked?.includes('job') ? <small> · 블랙</small> : null}</TableCell><TableCell><b>{format(r.score)}</b></TableCell><TableCell>{r.depth}</TableCell><TableCell>{r.hacks}</TableCell><TableCell>{r.restores}</TableCell>{rival && <TableCell className="ranking-actions">{!r.self && <><button className="secondary small" disabled={busy || (used.trace || 0) >= hackCap(s, 1) || bits < hackCost(s, HACKER.trace.bits)} title={`이 해커의 오늘 침투 작전 입장 −1(하루 ${hackCap(s, 1)}회, 비트 ${hackCost(s, HACKER.trace.bits)})`} onClick={() => send({ type: 'hackRun', id: 'trace', value: r.id }, '/api/hack')}>역추적</button><button className="secondary small" disabled={busy || (used.overload || 0) >= hackCap(s, 1) || bits < hackCost(s, HACKER.overload.bits)} title={`이 해커의 브루트포스 비트를 ${HACKER.overload.minutes / 60}시간 동안 절반으로(하루 ${hackCap(s, 1)}회, 비트 ${hackCost(s, HACKER.overload.bits)})`} onClick={() => send({ type: 'hackRun', id: 'overload', value: r.id }, '/api/hack')}>과부하</button></>}</TableCell>}</TableRow>)}</TableBody></Table>}
     </section>;
 }
