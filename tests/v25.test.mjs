@@ -297,7 +297,7 @@ test('v25.7 salvage research sells or dismantles all non-relic gear at rebirth w
     act(s, { type: 'rebirth' }, 0); assert.equal(s.gold, 100, 'no research → nothing salvaged'); assert.equal(s.inventory.length, 1);
     const t = newState(0); t.level = 35; t.rebirths = 1; t.permanent = { salvage: 1 }; assert.equal(salvageRate(t), .4); t.inventory = [gear(1), gear(3)]; t.equipment.coat = gear(2);
     const expected = Math.floor((saleValue(gear(1)) + saleValue(gear(3)) + saleValue(gear(2)) + saleValue(t.equipment.rod)) * .4); // 시작 무기도 일반 장비라 함께 팝니다.
-    act(t, { type: 'rebirth' }, 0); assert.equal(t.gold, 100 + expected, 'sold at 40% into next life gold'); assert.ok(t.logs.some(l => /환생 정리 · 장비 4개 판매/.test(l.text)));
+    act(t, { type: 'rebirth' }, 0); assert.equal(t.gold, 100 + expected, 'sold at 40% into next life gold'); assert.ok(t.logs.some(l => /청산 · 장비 4개 판매/.test(l.text)));
     const u = newState(0); u.level = 40; u.rebirths = 2; u.permanent = { salvage: 5 }; assert.equal(salvageRate(u), 1); u.inventory = [gear(4)]; u.essence = 3;
     act(u, { type: 'salvageMode', value: 'dismantle' }, 0); act(u, { type: 'rebirth' }, 0); assert.equal(u.essence, 3 + dismantleEssence(gear(4)) + 2, 'dismantled at 100% (+ starter rod and coat, 1 essence each)'); assert.equal(u.gold, 100); assert.equal(u.salvageMode, 'dismantle', 'mode survives rebirth');
 });
@@ -1070,26 +1070,39 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
     try {
         const database = DB.db();
         const now = Date.now(), hpMax = 1e9;
-        assert.ok(await database.summonAltarRaid('balrog', hpMax, now + A.RAIDS[0].lifetimeHours * 3600_000, now)); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 24]); assert.equal(A.RAID.respawnMs, 2 * 3600_000);
-        assert.equal(await database.summonAltarRaid('zakum', 5, now + 1000, now), false, 'one raid at a time');
+        const R = A.RAID.respawnMs;
+        assert.ok(await database.summonAltarRaid('balrog', hpMax, now + A.RAIDS[0].lifetimeHours * 3600_000, now, R)); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 24]); assert.equal(R, 2 * 3600_000);
+        assert.equal(await database.summonAltarRaid('balrog', 5, now + 1000, now, R), 0, 'the same boss once at a time');
+        // v3.22 보스마다 따로: 발록이 떠 있어도 자쿰은 나타납니다.
+        const zGen = await database.summonAltarRaid('zakum', 5e9, now + 3600_000, now, R); assert.ok(zGen > 0, 'zakum alongside balrog');
+        const raid = async id => (await database.listAltarRaids()).find(r => r.id === id);
         const a = newState(now); a.name = '첫째'; a.level = 60; a.attributes.str = 400; a.kills = 1; a.lastTick = now;
-        const r1 = await Alt.makeRaid('p1')(a, now);
+        const r1 = await Alt.makeRaid('p1', 'balrog')(a, now);
         assert.ok(r1.dealt > 0 && r1.remaining === Math.max(0, hpMax - r1.dealt), `damage is taken off the shared hp (${r1.dealt})`);
-        assert.equal(a.altar.raidAt, now); assert.equal(a.altar.raidHits, 1);
-        await assert.rejects(Alt.makeRaid('p1')(a, now + 1000), /분 뒤에/, 'cooldown');
-        let row = await database.getAltar(); assert.equal(row.raid_hp, r1.remaining); assert.equal((await database.getRaidHit(row.raid_gen, 'p1')).dealt, r1.dealt);
+        assert.equal(a.altar.raidAtBy.balrog, now); assert.equal(a.altar.raidHits, 1);
+        await assert.rejects(Alt.makeRaid('p1', 'balrog')(a, now + 1000), /분 뒤에/, 'cooldown per boss');
+        const z1 = await Alt.makeRaid('p1', 'zakum')(a, now + 1000); assert.ok(z1 && a.altar.raidAtBy.zakum === now + 1000, 'another boss is not on cooldown');
+        await assert.rejects(Alt.makeRaid('p1', 'horntail')(a, now + 2000), /나타나 있지 않습니다/);
+        let row = await raid('balrog'); assert.equal(row.hp, r1.remaining); assert.equal((await database.getRaidHit(row.gen, 'p1')).dealt, r1.dealt);
         // 다른 모험가들이 깎은 셈 치고 체력을 1만 남긴 뒤, 둘째가 마지막 일격을 넣습니다.
-        assert.equal(await database.hitAltarRaid(row.raid_gen, r1.remaining - 1), 1);
+        assert.equal(await database.hitAltarRaid('balrog', row.gen, r1.remaining - 1), 1);
         const b = newState(now); b.name = '둘째'; b.level = 60; b.attributes.str = 400; b.lastTick = now;
-        const last = await Alt.makeRaid('p2')(b, now + 1_000_000);
-        assert.equal(await database.hitAltarRaid(row.raid_gen, 5), null, 'no hits after the kill');
-        row = await database.getAltar(); assert.equal(row.raid_state, 'slain'); assert.equal(row.raid_hp, 0); assert.equal(row.raid_slayer, 'p2'); assert.ok(last.slain && last.slayer);
-        const info = await Alt.altarInfo('p1', a, now + 5); assert.ok(info.raid && info.raid.slain && info.raid.participants === 2 && info.raid.board[0].dealt >= info.raid.board[1].dealt && info.raid.slayer === '둘째');
+        const last = await Alt.makeRaid('p2', 'balrog')(b, now + 1_000_000);
+        assert.equal(await database.hitAltarRaid('balrog', row.gen, 5), null, 'no hits after the kill');
+        row = await raid('balrog'); assert.equal(row.state, 'slain'); assert.equal(row.hp, 0); assert.equal(row.slayer, 'p2'); assert.ok(last.slain && last.slayer);
+        assert.equal((await raid('zakum')).state, 'alive', 'killing balrog leaves zakum up');
+        assert.equal(await database.summonAltarRaid('balrog', 5, now + 1000, now + 1_000_000 + 1000, R), 0, 'balrog respawn wait');
+        Alt.invalidateAltar();
+        const info = await Alt.altarInfo('p1', a, now + 5); const ib = info.raids.find(x => x.id === 'balrog');
+        assert.ok(ib && ib.slain && ib.participants === 2 && ib.board[0].dealt >= ib.board[1].dealt && ib.slayer === '둘째'); assert.ok(info.raids.some(x => x.id === 'zakum' && x.alive));
+        const zakumGauge = info.gauges.find(g => g.id === 'zakum'), balrogGauge = info.gauges.find(g => g.id === 'balrog');
+        assert.ok(/대기/.test(balrogGauge.next) && !/대기/.test(zakumGauge.next), 'respawn wait only on the slain boss');
         const gold = a.gold, pearls = a.pearls; Alt.invalidateAltar(); await Alt.syncAltarStatus(a, now + 10, 'p1');
-        assert.equal(a.gold - gold, A.RAIDS[0].reward.gold); assert.equal(a.pearls - pearls, A.RAIDS[0].reward.pearls); assert.equal(a.altar.raidClaimed, row.raid_gen);
+        assert.equal(a.gold - gold, A.RAIDS[0].reward.gold); assert.equal(a.pearls - pearls, A.RAIDS[0].reward.pearls); assert.equal(a.altar.raidClaimedBy.balrog, row.gen);
+        assert.ok(a.altarStatus.raids.some(x => x.id === 'zakum'));
         await Alt.syncAltarStatus(a, now + 20, 'p1'); assert.equal(a.gold - gold, A.RAIDS[0].reward.gold, 'paid once');
         const bg = b.gold, bp = b.pearls; await Alt.syncAltarStatus(b, now + 10, 'p2'); assert.equal(b.pearls - bp, A.RAIDS[0].reward.pearls + A.RAIDS[0].slayer.pearls, 'slayer bonus'); assert.equal(b.gold - bg, A.RAIDS[0].reward.gold);
-        const c = newState(now); const cg = c.gold; await Alt.syncAltarStatus(c, now + 10, 'p3'); assert.equal(c.gold, cg, 'non-participants get nothing'); assert.equal(c.altar.raidClaimed, row.raid_gen);
+        const c = newState(now); const cg = c.gold; await Alt.syncAltarStatus(c, now + 10, 'p3'); assert.equal(c.gold, cg, 'non-participants get nothing'); assert.equal(c.altar.raidClaimedBy.balrog, row.gen);
         const gauges = await database.listAltarGauges(); assert.ok(gauges.some(g => g.id === 'gold' && g.until > now) && gauges.some(g => g.id === 'exp' && g.until > now), 'kill opens the blessings');
     } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });

@@ -91,11 +91,11 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
-    // 선별의 눈: 켜 두면 1단계는 일반, 2단계는 희귀 이하를 바로 팝니다. 유물·장비 도감에 없는 종류는 남깁니다.
+    // 자동 분해기: 켜 두면 1단계는 일반, 2단계는 희귀 이하를 바로 팝니다. 유물·장비 도감에 없는 종류는 남깁니다.
     const net = researchRank(s, 'sortingNet');
     if (net && s.autoSell && !item.relic && item.rarity <= net && s.itemBook?.[itemKey(slot, rarity)]) {
         s.gold += saleValue(item);
-        addLog(s, `선별의 눈: ${item.name} 자동 판매 +${saleValue(item)} G`, 'reward');
+        addLog(s, `자동 분해기: ${item.name} 자동 판매 +${saleValue(item)} G`, 'reward');
         return;
     }
     if (s.inventory.length >= inventoryCap(s)) {

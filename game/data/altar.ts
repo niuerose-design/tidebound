@@ -133,9 +133,10 @@ export type AltarInfo = {
     /** v3.19 누적 기여 순위(모든 주 합계)와 내 누적 기여·순위. */
     allTime?: { rank: number; name: string; points: number; anonymous: boolean; self: boolean }[];
     total?: { points: number; rank: number };
-    me: { points: number; rank: number; anonymous: boolean; challengeAt: number; /** v27.91 월드보스 마지막 도전 시각 */ raidAt: number };
+    me: { points: number; rank: number; anonymous: boolean; challengeAt: number; /** v27.91 월드보스 마지막 도전 시각 */ raidAt: number; /** v3.22 보스별 마지막 도전 시각 */ raidAtBy: Record<string, number> };
     /** v27.91 지금 나타난(또는 방금 격파된) 월드보스. 없으면 null. */
-    raid: AltarRaidInfo | null;
+    /** v3.22 보스마다 따로: 지금 나타났거나 방금 격파된 월드보스들(발록·자쿰·혼테일 순). */
+    raids: AltarRaidInfo[];
 };
 export type AltarRaidInfo = {
     id: RaidId; gen: number; name: string; level: number; alive: boolean; slain: boolean; hp: number; hpMax: number; attack: number; defense: number; power: number; until: number;
@@ -155,6 +156,9 @@ export type AltarStatus = {
     blessings: { id: BlessingId; name: string; desc: string; until: number; level: number }[];
     god: { gen: number; name: string; until: number } | null;
     /** v27.91 살아 있는 월드보스(체력 비율 0~1). */
+    /** v3.22 살아 있는 월드보스들(알림용). */
+    raids?: { id: string; gen: number; name: string; until: number; pct: number }[];
+    /** 예전 세이브 호환: 첫 번째 살아 있는 보스. */
     raid: { gen: number; name: string; until: number; pct: number } | null;
     throne: string;
     gauges: { id: AltarGaugeId; name: string; pct: number }[];
