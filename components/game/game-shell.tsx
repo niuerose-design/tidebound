@@ -28,6 +28,7 @@ import { SettingsDialog } from './settings-dialog';
 import { Navigation } from './navigation';
 import { ViewTabs } from './view-tabs';
 import { BattleView } from './battle-view';
+import { useFeedLiveRates } from './live-rates';
 import { MobileTabBar } from './mobile-tab-bar';
 import { slotUnlocked } from '@/game/data/account';
 type NavItem = { id: string; name: string; Icon: React.ComponentType<{ size?: number }>; unlock?: (s: State) => string | null; views?: string[] };
@@ -38,6 +39,8 @@ export const NAV: { label: string; items: NavItem[] }[] = [{ label: '모험', it
 export default function GameShell() {
     const game = useGame();
     const { state: s, error, busy, saved, send, loadRanking } = game;
+    // v3.13 실시간 효율: 동기화로 받은 원본 상태만 흘려 넣습니다(브라우저 계산, 서버 요청 없음).
+    useFeedLiveRates(s);
     const [view, setView] = useState('battle'), [name, setName] = useState(''), [settings, setSettings] = useState(false);
     // v27.11 분신 탭은 계정 기준으로 엽니다. 새 슬롯(환생 0회)으로 바꾼 뒤에도 원래 캐릭터로 돌아갈 수 있어야 합니다.
     const slotsOpen = !!s && (!!s.rebirths || slotUnlocked(s.account, 2));
