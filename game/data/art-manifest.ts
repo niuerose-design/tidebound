@@ -6,4 +6,4 @@ export const FISH_ART: Readonly<Record<string, 'png' | 'webp'>> = {"expNuri":"we
 /** 그림이 있는 직업 계보 id → 확장자. 없으면 계열 아이콘. */
 export const JOB_ART: Readonly<Record<string, 'png' | 'webp'>> = {};
 /** v3.14 그림이 있는 칠흑 장신구(보스 id) → 확장자. 없으면 SVG 그림. */
-export const ONYX_ART: Readonly<Record<string, 'png' | 'webp'>> = {"onyxDunkel":"png","onyxDusk":"png","onyxHilla":"png","onyxLucid":"png","onyxSeren":"png","onyxWill":"png"};
+export const ONYX_ART: Readonly<Record<string, 'png' | 'webp'>> = {"onyxBlackMage":"png","onyxDunkel":"png","onyxDusk":"png","onyxHilla":"png","onyxLucid":"png","onyxSeren":"png","onyxWill":"png"};
