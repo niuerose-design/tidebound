@@ -9,6 +9,8 @@ import { canUse, skillMastery } from './progression';
 import { addLog } from './state';
 
 export const isHacker = (s: Pick<State, 'job'>) => s.job === HACKER_ID;
+/** v3.17 해커는 전투 콘텐츠(결투·월드보스·신 도전)에 참여하지 않습니다. 막을 때의 문구, 아니면 빈 문자열. */
+export const hackerCombatBlock = (s: Pick<State, 'job'>) => isHacker(s) ? '해커는 전투에 참여할 수 없습니다. 다른 직업으로 전직한 뒤 도전하세요.' : '';
 
 export function hackerState(s: State): HackerState {
     s.hacker ??= { bits: 0, exp: 0, grade: 1, tier: 0 };

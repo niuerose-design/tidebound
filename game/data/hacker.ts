@@ -42,9 +42,9 @@ export const PRIVACY_FIELDS = ['job', 'level', 'gear', 'skills', 'title', 'guild
 export type PrivacyField = typeof PRIVACY_FIELDS[number];
 export const PRIVACY_LABELS: Record<PrivacyField, string> = { job: '직업', level: '레벨', gear: '장비', skills: '장착 스킬', title: '칭호', guild: '길드' };
 
-/** 해커(1차, ??? 계열 독립 직업). 제약: 두 공격 −99% · 체력 −75%, 능력치 투자·다른 스킬 장착 불가. */
+/** 해커(1차, ??? 계열 독립 직업). 능력치 보정은 없고 규칙으로 막습니다: 전투(사냥·던전·결투·월드보스·신 도전) 불가, 능력치 투자·다른 스킬 장착 불가. */
 export const HACKER_JOBS = [
-    { id: HACKER_ID, name: '해커', title: '게임의 헛점을 파고든다', desc: '전투 능력은 전무합니다. 사냥 대신 침투 작전으로 비트와 권한을 쌓고, 서버의 방송을 탈취하고 다른 모험가의 숨김을 깨뜨립니다.', attack: .01, magic: .01, hp: .25, defense: 1, resist: 1, crit: 0, tier: 1, level: 30, rebirth: 3, mastery: 0, requires: {}, role: '해킹·서버', tree: 'mystery' as const, lineage: 'mystery-independent', hidden: true, hint: '세 번의 윤회를 넘긴 자에게 서버의 틈이 보입니다.', masteryTarget: 3000, masteryBoost: 0, constraint: { label: '해커', desc: '전투 능력이 없습니다. 능력치 투자와 해커 전용이 아닌 스킬 장착이 막히고, 해커로 있는 동안 레벨·경험치가 멈춥니다. 대신 비트와 권한 등급으로 자랍니다.', devices: { firstStrike: true } } },
+    { id: HACKER_ID, name: '해커', title: '게임의 헛점을 파고든다', desc: '전투 능력은 전무합니다. 사냥·던전·결투·월드보스·신 도전에 참여할 수 없고, 능력치 투자와 해커 전용이 아닌 스킬 장착이 막히며, 해커로 있는 동안 레벨·경험치가 멈춥니다. 대신 침투 작전으로 비트와 권한을 쌓고, 서버의 방송을 탈취하고 다른 모험가의 숨김을 깨뜨립니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 30, rebirth: 3, mastery: 0, requires: {}, role: '해킹·서버', tree: 'mystery' as const, lineage: 'mystery-independent', hidden: true, hint: '세 번의 윤회를 넘긴 자에게 서버의 틈이 보입니다.', masteryTarget: 3000, masteryBoost: 0 },
 ];
 
 /** 애드가드: 해커 전용 패시브(계승 가능). 1단계 이름 숨김, 2단계 공개 항목 선택. 숙련은 해커 활동(침투·브루트포스·해킹)으로 오릅니다. */

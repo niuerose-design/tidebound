@@ -11,7 +11,7 @@ import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
 import { refreshEvents } from './events-config';
 import { ensurePuzzleKey } from './hacks';
-import { privacyOf } from '../systems/hacker';
+import { privacyOf, isHacker } from '../systems/hacker';
 import { accountFromRequest, AuthError, readSlot } from './auth';
 import { FISH } from '../data/world';
 import { JOBS } from '../data/classes';
@@ -90,6 +90,15 @@ export const duelRowId = (seasonKey: string, id: string) => `duel:${seasonKey}:$
 export async function register(id: string) {
     const now = Date.now(), key = duelSeasonKey(now);
     const { state } = await mutate(id, { type: 'sync' }, s => syncDuelSeason(id, s, now));
+    // v3.17 해커는 결투 정보를 새로 등록하지 않습니다. 이전 직업으로 등록해 둔 기록은 그대로 두고, 애드가드 숨김 정보만 갱신합니다.
+    if (isHacker(state)) {
+        const row = await db().getRanking(duelRowId(key, id), monthSeason(key));
+        if (!row) throw new ApiError('해커는 결투 정보를 등록할 수 없습니다. 다른 직업으로 등록해 두면 그 기록이 남습니다.');
+        const { privacy: _old, ...rest } = JSON.parse(row.snapshot) as Snapshot; void _old;
+        const privacy = privacyOf(state);
+        await db().upsertRanking({ ...row, snapshot: JSON.stringify({ ...rest, ...(privacy ? { privacy } : {}) }) });
+        return state;
+    }
     const snap = { ...snapshot(state), season: monthSeason(key), seasonRank: state.duelSeason?.lastKey === previousMonthKey(key) ? state.duelSeason?.lastRank : undefined };
     await db().upsertRanking({ id: duelRowId(key, id), snapshot: JSON.stringify(snap), rating: snap.rating, power: snap.power, updated_at: now });
     return state;

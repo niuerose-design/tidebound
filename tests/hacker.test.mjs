@@ -1,14 +1,17 @@
 // v3.17 해커 1단계: 제약 · 재화 분리 · 침투 작전(서버 키 정답) · 해킹 I · 애드가드
-import { newState, act, tick, stats, snapshot, JOBS, SKILLS, assert, test } from './harness.mjs';
+import { newState, act, tick, snapshot, JOBS, SKILLS, assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 const { load } = loadGame();
 const H = await load('game/systems/hacker.js'), D = await load('game/data/hacker.js');
 
 const hacker = () => { const s = newState(0); s.level = 40; s.rebirths = 5; s.sp = 10; s.pearls = 500; act(s, { type: 'job', id: 'hacker' }, 0); return s; };
 
-test('v3.17 hacker job: hidden mystery tier-1 constraint job with adguard as its only skill', () => {
+test('v3.17 hacker job: hidden mystery tier-1 job without stat penalties (combat is blocked by rule), adguard as its only skill', () => {
     const j = JOBS.find(x => x.id === 'hacker');
-    assert.ok(j && j.hidden && j.tree === 'mystery' && j.tier === 1 && j.rebirth === 3 && j.constraint);
+    assert.ok(j && j.hidden && j.tree === 'mystery' && j.tier === 1 && j.rebirth === 3);
+    // v3.17 몹을 만나지 않으니 능력치 보정은 없고, 전투 참여를 규칙으로 막습니다.
+    assert.deepEqual([j.attack, j.magic, j.hp, j.defense, j.resist], [1, 1, 1, 1, 1]); assert.ok(!j.constraint);
+    assert.ok(H.hackerCombatBlock({ job: 'hacker' }) && !H.hackerCombatBlock({ job: 'fisher' }));
     assert.deepEqual(SKILLS.filter(sk => sk.job === 'hacker').map(sk => sk.id), ['adGuard']);
     const s = newState(0); s.level = 40; s.rebirths = 2; assert.throws(() => act(s, { type: 'job', id: 'hacker' }, 0));
 });
@@ -21,7 +24,6 @@ test('v3.17 hacker constraints: no stat allocation, no dungeons, loadout parked 
     assert.deepEqual(s.skills, [], 'non-hacker skills come off'); assert.deepEqual(s.hacker.savedSkills, before);
     assert.throws(() => act(s, { type: 'attribute', id: 'str' }, 0), /능력치/);
     assert.throws(() => act(s, { type: 'dungeon', id: 'abyss' }, 0), /던전/);
-    assert.ok(stats(s).attack < 5, 'attack −99%');
     const lv = s.level, exp = s.exp, kills = s.kills, gold = s.gold;
     act(s, { type: 'start' }, 0); for (let i = 0; i < 1800; i++) tick(s, () => .5);
     assert.equal(s.level, lv); assert.equal(s.exp, exp); assert.equal(s.kills, kills); assert.equal(s.gold, gold); assert.ok(!s.enemy, 'no combat');

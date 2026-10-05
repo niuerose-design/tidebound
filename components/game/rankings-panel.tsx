@@ -59,8 +59,8 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     const detailLoadout = detail ? loadout(detail) : null, detailStats = detail ? normalizeStats(detail.stats) : null;
     return <>
     <Heading eyebrow="ASYNC ARENA" title="모험가의 명예" description="등록된 능력치와 스킬로 겨룹니다. 상대의 접속 여부와 관계없이 전투합니다.">
-    <button className="primary" disabled={busy} onClick={register}>
-    <ArrowUpRight size={17}/>내 전투 정보 등록</button>
+    <button className="primary" disabled={busy} onClick={register} title={s.job === 'hacker' ? '해커는 결투 정보를 새로 등록하지 않고, 이전에 등록한 기록의 애드가드 숨김 정보만 갱신합니다.' : undefined}>
+    <ArrowUpRight size={17}/>{s.job === 'hacker' ? '숨김 정보 갱신' : '내 전투 정보 등록'}</button>
     </Heading>
     <p className="arena-season" title={`지난 시즌 순위 보상: 1위 ${duelSeasonPearls(1)} · 2위 ${duelSeasonPearls(2)} · 3위 ${duelSeasonPearls(3)} · 10위 안 ${duelSeasonPearls(10)} · 50위 안 ${duelSeasonPearls(50)} · 참가 ${duelSeasonPearls(99)}세계석. 첫 행동 때 받습니다.`}>결투 시즌 <b>{season || '—'}</b> · 매달 1일 0시(한국 시간) 점수 1000으로 초기화 · 순위 보상은 다음 시즌 첫 행동 때 지급</p>
     <div className="arena-stats">
