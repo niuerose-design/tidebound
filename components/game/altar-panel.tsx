@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format } from './shared';
-import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_LEVEL_STEP, RAID, RAIDS, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, type AltarGaugeId } from '@/game/data/altar';
+import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, RAID, RAIDS, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, type AltarGaugeId } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
