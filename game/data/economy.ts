@@ -57,7 +57,7 @@ export const RESEARCH: ResearchDef[] = [
     /** v27.86 절제: 장착 AP를 줄이는 서약. */
     { id: 'vowRestraint', name: '절제', desc: '서약 해금(장착 AP -4·-8·-12, 액티브·패시브 각각 3·2·1개까지 대신 경험치 ×1.2·×1.4·×1.6 곱연산). 2·3단계는 보상을 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 경험치 보너스 ×1', '경험치 보너스 ×1.5', '경험치 보너스 ×2'] },
     /** v3.7 자동 강화: 보관함에서 목표 별·골드 한도를 정해 스타포스를 한 번에 자동 시도(확률·비용은 그대로). */
-    { id: 'autoStar', name: '자동 강화', desc: '장비 보관함의 강화 칸에서 목표 별과 골드 한도를 정하면 스타포스를 한 번에 자동으로 시도합니다(확률·비용은 수동과 같고 파괴되면 멈춤)', max: 1, base: 100, step: 0, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '자동 강화', levels: ['없음', '해금'] },
+    { id: 'autoStar', name: '자동 강화', desc: '장비 보관함의 강화 칸에서 목표 별과 골드 한도를 정하면 스타포스를 한 번에 자동으로 시도합니다(확률·비용은 수동과 같고 파괴되면 멈춤)', max: 1, base: 10, step: 0, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '자동 강화', levels: ['없음', '해금'] },
     { id: 'mastery', name: '숙련의 기억', desc: '스킬·직업 숙련 획득 +3%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .03, unit: 'percent', label: '숙련 획득' },
     { id: 'gold', name: '황금 비', desc: '처치·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '처치·던전 골드' },
     { id: 'dungeon', name: '던전의 금고', desc: '던전 클리어 골드 +8%', max: 10, base: 5, step: 4, tab: 'gold', per: .08, unit: 'percent', label: '던전 클리어 골드' },

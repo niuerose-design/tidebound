@@ -57,7 +57,7 @@ export function keepLegacyInheritance(s: State) {
     return kept;
 }
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    if (s.version === SAVE_VERSION) { keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -70,6 +70,15 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
  * v27.46 장비 이름 메이플 개편: 가방·착용 장비의 옛 이름(낚싯대·구명조끼·나침반 …)과 옵션 이름(유영)을 새 이름으로 바꿉니다.
  * 옛 이름만 골라 바꾸므로 여러 번 불러도 같고, 바꿀 게 없으면 아무것도 하지 않습니다. 능력치·등급·옵션 값은 그대로입니다.
  */
+/** v3.8 자동 강화 연구 비용 100 → 10: 이미 찍은 세이브에 차액 90을 한 번 돌려줍니다. */
+export const AUTO_STAR_REFUND = 90;
+export function refundAutoStar(s: State) {
+    if (s.autoStarRefunded) return 0;
+    s.autoStarRefunded = true;
+    if (!(s.permanent?.autoStar >= 1)) return 0;
+    s.pearls += AUTO_STAR_REFUND;
+    return AUTO_STAR_REFUND;
+}
 export function renameMapleGear(s: State) {
     let changed = 0;
     for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) {
