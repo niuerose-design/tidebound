@@ -37,18 +37,19 @@ export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' 
 /** v27.13 한 번에 감정할 수 있는 개수. */
 export const GAMBLE_COUNTS = [1, 5, 10];
 /** v27.93 스타포스 한 번 시도. 비용을 쓰고 성공·파괴·하락·유지 중 하나를 적용합니다. v3.7 자동 강화도 같은 함수를 돌립니다. */
-export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, rng: () => number, spend: (cost: number) => void): { outcome: 'success' | 'destroy' | 'drop' | 'keep'; cost: number; message: string } {
+export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, rng: () => number, spend: (cost: number) => void, caught = false): { outcome: 'success' | 'destroy' | 'drop' | 'keep'; cost: number; message: string } {
     const star = item.enhance || 0;
     const safeguard = wantSafeguard && canSafeguard(star);
     const cost = enhanceCost(item, s) * (safeguard ? STARFORCE.safeguardCost : 1);
     spend(cost);
     const sf = s.starforce ??= { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
     sf.tries++; sf.gold += cost;
-    const chance = chanceTime(item), roll = rng(), p = starSuccess(star), d = starDestroy(star, safeguard);
+    // v3.8 스타캐치 성공은 성공률 +catchBonus(파괴 확률은 그대로, 실패 몫에서 뺌).
+    const chance = chanceTime(item), roll = rng(), p = Math.min(1, starSuccess(star) + (caught ? STARFORCE.catchBonus : 0)), d = starDestroy(star, safeguard);
     if (chance || roll < p) {
         sf.success++;
         item.enhance = star + 1; item.starFails = 0;
-        return { outcome: 'success', cost, message: `${item.name} ${item.enhance}성 강화 성공${chance ? ' (찬스 타임)' : ''} · -${cost} G` };
+        return { outcome: 'success', cost, message: `${item.name} ${item.enhance}성 강화 성공${chance ? ' (찬스 타임)' : caught ? ' (스타캐치)' : ''} · -${cost} G` };
     }
     if (roll < p + d) {
         sf.destroy++;
@@ -148,7 +149,9 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             // v27.93 스타포스: 성공률·하락·파괴·찬스 타임·파괴 방지(value 'safeguard', 15·16성 비용 2배). 규칙은 data/starforce.ts.
             if ((item.enhance || 0) >= enhanceMaxFor(item))
                 throw Error('최대 강화입니다.');
-            return starForceAttempt(s, item, a.value === 'safeguard', rng, spend).message;
+            // value는 'safeguard'·'catch'를 쉼표로 묶은 목록(v3.8 스타캐치는 수동 강화 전용).
+            const flags = new Set(String(a.value || '').split(','));
+            return starForceAttempt(s, item, flags.has('safeguard'), rng, spend, flags.has('catch')).message;
         }
         if (item.rarity < 1)
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');

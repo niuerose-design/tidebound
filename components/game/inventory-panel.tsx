@@ -1,6 +1,8 @@
 'use client';
 import { ConfirmButton } from './confirm-button';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { StarCatch } from './star-catch';
+import { useStarSetting, starSound } from './star-catch-setting';
 import { ArrowUpRight, ChevronDown, Lock, Search, Sparkles, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Item, Stats } from '@/game/types';
@@ -199,14 +201,28 @@ export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Ite
     // v27.93 스타포스: 성공·실패(유지/하락)·파괴 확률과 찬스 타임, 15·16성 파괴 방지(비용 2배).
     const [safeguard, setSafeguard] = useState(false);
     const star = item.enhance || 0, max = enhanceMaxFor(item), chance = chanceTime(item), guard = safeguard && canSafeguard(star);
+    // v3.8 스타캐치: 설정이 켜져 있으면 강화 버튼이 미니게임을 띄우고, 잡으면 value에 'catch'를 붙여 보냅니다. 결과 연출은 별 수·시도 횟수 변화로 판정합니다.
+    const catchOn = useStarSetting('catch');
+    const [catching, setCatching] = useState(false), [fx, setFx] = useState('');
+    const prev = useRef({ star, tries: s.starforce?.tries || 0 });
+    useEffect(() => {
+        const tries = s.starforce?.tries || 0, before = prev.current;
+        if (tries !== before.tries) {
+            const kind = star > before.star ? 'success' : star < before.star ? 'drop' : 'keep';
+            setFx(`fx-${kind}`); starSound(kind); const t = setTimeout(() => setFx(''), 900);
+            prev.current = { star, tries }; return () => clearTimeout(t);
+        }
+        prev.current = { star, tries };
+    }, [star, s.starforce?.tries]);
+    const fire = (caught: boolean) => { setCatching(false); const flags = [guard ? 'safeguard' : '', caught ? 'catch' : ''].filter(Boolean).join(','); send({ type: 'enhance', id: item.id, ...(flags ? { value: flags } : {}) }); };
     const cost = enhanceCost(item, s) * (guard ? STARFORCE.safeguardCost : 1);
     const p = chance ? 1 : starSuccess(star), d = chance ? 0 : starDestroy(star, guard), f = Math.max(0, 1 - p - d), pct = (n: number) => `${Math.round(n * 1000) / 10}%`;
     return <div className="forge-actions">
-        <div className="star-row" aria-label={`${star} / ${max}성`}>{Array.from({ length: max }, (_, i) => <i key={i} className={i < star ? 'on' : ''} aria-hidden>{i < star ? '★' : '☆'}</i>)}<b>{star} / {max}성</b></div>
+        <div className={`star-row ${fx}`} aria-label={`${star} / ${max}성`}>{Array.from({ length: max }, (_, i) => <i key={i} className={i < star ? 'on' : ''} aria-hidden>{i < star ? '★' : '☆'}</i>)}<b>{star} / {max}성</b></div>
         {star < max && <dl className="star-odds"><div><dt>성공</dt><dd className="positive">{pct(p)}</dd></div><div><dt>실패</dt><dd>{pct(f)} · {starDrops(star) ? '1성 하락' : '유지'}</dd></div>{(d > 0 || canSafeguard(star)) && <div><dt>파괴</dt><dd className={d > 0 ? 'negative' : ''}>{pct(d)}</dd></div>}</dl>}
         {chance && star < max && <p className="footnote positive">찬스 타임 · 하락이 두 번 이어져 다음 시도는 100% 성공합니다.</p>}
         {canSafeguard(star) && <label className="altar-anon"><input type="checkbox" checked={safeguard} onChange={e => setSafeguard(e.target.checked)}/> 파괴 방지 (비용 ×{STARFORCE.safeguardCost})</label>}
-        <button className="primary" disabled={busy || star >= max || s.gold < cost} onClick={() => send({ type: 'enhance', id: item.id, ...(guard ? { value: 'safeguard' } : {}) })}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${format(cost)} G`}</button>
+        {catching ? <StarCatch bonus={STARFORCE.catchBonus} onResult={fire}/> : <button className="primary" disabled={busy || star >= max || s.gold < cost} onClick={() => catchOn && !chance ? setCatching(true) : fire(false)}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${format(cost)} G${catchOn && !chance ? ' · 스타캐치' : ''}`}</button>}
         <p className="footnote">1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}성부터 +{STARFORCE.gainHigh * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. 파괴된 장비는 사라지고 유물은 {STARFORCE.relicResetStar}성으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p>
         {star < max && researchRank(s, 'autoStar') > 0 && <AutoStar s={s} send={send} busy={busy} item={item} safeguard={guard}/>}
         <GearLevelUp s={s} send={send} busy={busy} item={item}/>

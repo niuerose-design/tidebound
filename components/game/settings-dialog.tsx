@@ -1,5 +1,6 @@
 'use client';
 import { useSkillFx, setSkillFx } from './skill-fx-setting';
+import { useStarSetting, setStarSetting } from './star-catch-setting';
 import { Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import type { State, Action } from '@/game/types';
@@ -46,6 +47,8 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                 <button className={s.autoSell ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoSell} onClick={() => send({ type: 'autoSell', value: s.autoSell ? 'off' : 'on' })}>{s.autoSell ? '켜짐' : '꺼짐'}</button>
             </div>}
             <SkillFxToggle/>
+            <StarToggle id="catch" title="스타캐치 미니게임" desc="수동 강화 때 좌우로 오가는 별을 가운데에서 잡으면 성공률 +10%p. 끄면 바로 강화합니다(자동 강화에는 없음)."/>
+            <StarToggle id="sound" title="강화 효과음" desc="스타캐치와 강화 성공·하락·파괴 효과음입니다. 이 기기에만 저장됩니다."/>
             {s && <div className="setting-toggle">
                 <div><strong>문 알림</strong><p>전투 화면 맨 위 ‘문이 열렸습니다’ 줄입니다. 꺼도 전직 화면의 ??? 탭에서 열린 문을 볼 수 있습니다.</p></div>
                 <button className={s.hideDoorNotice ? 'secondary' : 'primary'} disabled={busy} aria-pressed={!s.hideDoorNotice} onClick={() => send({ type: 'doorNotice', value: s.hideDoorNotice ? 'on' : 'off' })}>{s.hideDoorNotice ? '꺼짐' : '켜짐'}</button>
@@ -79,6 +82,13 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
 }
 
 /** v27.62 스킬 이펙트 켜기/끄기(이 기기에만 저장). 모바일은 꺼짐, 데스크톱은 켜짐이 기본입니다. */
+function StarToggle({ id, title, desc }: { id: 'catch' | 'sound'; title: string; desc: string }) {
+    const on = useStarSetting(id);
+    return <div className="setting-toggle">
+        <div><strong>{title}</strong><p>{desc}</p></div>
+        <button className={on ? 'primary' : 'secondary'} aria-pressed={on} onClick={() => setStarSetting(id, !on)}>{on ? '켜짐' : '꺼짐'}</button>
+    </div>;
+}
 function SkillFxToggle() {
     const on = useSkillFx();
     return <div className="setting-toggle">
