@@ -41,6 +41,13 @@ const HABITATS: StageDef[] = REGIONS.map(region => {
 export const STAGES: StageDef[] = [...BASE_STAGES, ...HABITATS];
 /** 일반 사냥터(무리 서식지 제외). 사냥터 수·도감·업적처럼 장소를 세는 곳에서 씁니다. */
 export const PLACES = BASE_STAGES;
+/**
+ * v3.9 깊이 계수: 난이도 레벨 보정으로 사냥터가 평준화된 뒤에도 뒤 사냥터가 조금 더 어렵고 조금 더 주도록, 입장 레벨 순서(0부터)마다 +DEPTH_SCALE을 체력·공격·골드·경험치에 곱합니다.
+ * 서식지는 자기 레벨 자리, 일반 던전은 지역 던전 순서 기준. 무릉도장·랜덤게임·까미·누리는 1.
+ */
+export const DEPTH_SCALE = .04;
+const placeLevels = () => [...new Set(PLACES.map(st => st.level))].sort((a, b) => a - b);
+export const stageDepth = (stageId: string) => { const st = STAGES.find(x => x.id === stageId); return st ? 1 + DEPTH_SCALE * placeLevels().filter(l => l < st.level).length : 1; };
 export const isHabitat = (id: string) => !!STAGES.find(st => st.id === id)?.habitat;
 /**
  * 무리 사냥: 도감을 완성한 몬스터를 집중 사냥할 때 무리 전체를 체력 ×N인 한 개체로 상대합니다.
@@ -221,3 +228,6 @@ export const DUNGEONS = [
 ];
 /** v27.86 랜덤게임을 뺀 일반 던전(목록·업적·목표·점검용). */
 export const PLAIN_DUNGEONS = DUNGEONS.filter(d => !('random' in d && d.random));
+/** v3.9 지역 던전(까미·누리·무릉도장·랜덤게임 제외)의 입장 레벨 순서 깊이 계수. */
+const REGION_DUNGEONS = () => PLAIN_DUNGEONS.filter(d => d.id !== 'abyss' && d.id !== 'masteryMimic' && d.id !== 'expNuri');
+export const dungeonDepth = (id: string) => { const d = REGION_DUNGEONS().find(x => x.id === id); return d ? 1 + DEPTH_SCALE * [...new Set(REGION_DUNGEONS().map(x => x.level))].filter(l => l < d.level).length : 1; };

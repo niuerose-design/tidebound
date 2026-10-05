@@ -8,7 +8,7 @@ import { ECONOMY, RESEARCH_RESET, RELIC_GROWTH, offlineCapSeconds, inventoryCap 
 import { STARFORCE } from '@/game/data/starforce';
 import { victoryHealRate } from '@/game/systems/encounter';
 import type { State } from '@/game/types';
-import { SWARM_UNLOCK } from '@/game/data/world';
+import { SWARM_UNLOCK, DEPTH_SCALE } from '@/game/data/world';
 import { VARIANTS, VARIANT_BOOK_MIN } from '@/game/data/variants';
 import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
 import { RANKS, RANK_PERKS, RANK_TOTAL_POINTS } from '@/game/data/rank';
@@ -182,7 +182,7 @@ export function Guide({ s }: { s?: State }) {
                     limit="한 번에 한 마리만 나타납니다. 시간 안에 못 잡으면 떠나고 게이지는 다시 채워야 합니다. 신 소환과는 별개입니다."/>
                 <Rule icon={<Gauge size={19}/>} title="사냥터 난이도 · 던전 난이도"
                     effect={`사냥터 난이도는 환생 횟수만큼(최대 ${ECONOMY.tideCap}) 올릴 수 있습니다. 몬스터 체력·공격이 오르는 대신 골드·경험치 배율과 장비 레벨이 오르고, 드롭 장비의 상위 등급 비율이 조금씩 오르며(난이도 100에서 태초 0.6% → 1%), 난이도 ${BALANCE.tideLoot.essenceMinTier}부터 처치마다 정수가 떨어집니다(확률 난이도 × ${BALANCE.tideLoot.essenceChancePerTier * 100}%, 양 1 + 난이도 ÷ ${BALANCE.tideLoot.essenceEveryTiers}). 난이도 ${MIMIC.minTier}부터 저레벨 사냥터의 몬스터도 내 레벨 근처까지 올라와 어느 사냥터든 보상이 비슷해집니다.`}
-                    condition={`일반 던전은 입장할 때 ${DUNGEON_MODES.map(m => m.name).join(' · ')} 중 하나를 고릅니다. 헬은 사냥터 난이도 ${DUNGEON_MODES[1].tier}급, 나이트메어는 ${DUNGEON_MODES[2].tier}급이고 몬스터 레벨도 내 레벨까지 올라옵니다.`}
+                    condition={`일반 던전은 입장할 때 ${DUNGEON_MODES.map(m => m.name).join(' · ')} 중 하나를 고릅니다. 헬은 사냥터 난이도 ${DUNGEON_MODES[1].tier}급, 나이트메어는 ${DUNGEON_MODES[2].tier}급이고 몬스터 레벨도 내 레벨까지 올라옵니다. 깊이 계수(v3.9): 사냥터·지역 던전은 입장 레벨 순서마다 체력·공격·골드·경험치 +${DEPTH_SCALE * 100}%라 뒤로 갈수록 조금 더 어렵고 조금 더 줍니다(무릉도장·랜덤게임·까미·누리 제외).`}
                     limit={`수식(난이도 t): 몬스터 체력 ×(1 + 0.35t + 0.006×(t−20)²) · 공격 ×(1 + 0.18t + 0.002×(t−20)²) · 몬스터 레벨은 난이도 5에서 내 레벨(사냥터 최고 레벨 + 6까지)까지 상승 · 골드 ×(1 + 0.5t) · 경험치 ×(1 + 0.1√t) · 처치 후 회복 ${percent(BALANCE.healAfterKill)} ÷ (1 + t ÷ ${BALANCE.healAfterKillTideScale}) · 드롭 장비 레벨 +5t(내 레벨 + ${BALANCE.dropLevelOver}까지) · 상위 등급 가중 (1 + ${BALANCE.tideLoot.rarityPerTier}t)^(등급−1) · 정수 확률 ${BALANCE.tideLoot.essenceChancePerTier * 100}% × t, 양 1 + t ÷ ${BALANCE.tideLoot.essenceEveryTiers}(난이도 ${BALANCE.tideLoot.essenceMinTier}부터). 무릉도장은 층 수가 난이도이고, 사냥터 난이도는 던전에 영향을 주지 않습니다.`}/>
                 <Rule icon={<Fish size={19}/>} title="숙련의 까미 · 경험의 누리"
                     effect={`까미: 사냥터 난이도 ${MIMIC.minTier} 이상 · Lv.${MIMIC.minLevel} 이상 · 누적 ${MIMIC.minKills}마리부터 드물게 나오고, 잡으면 현재 직업 숙련을 한 번에 줍니다(${MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()}`).join(' · ')}). 누리: 난이도 ${EXP_NURI.minTier} 이상 · Lv.${EXP_NURI.minLevel}~99 · 누적 ${EXP_NURI.minKills.toLocaleString()}마리부터 나오고, 잡으면 지금 레벨 필요 경험치의 ${EXP_NURI.tiers.map(t => `${t.pct * 100}%`).join('·')}를 한 번에 줍니다.`}
