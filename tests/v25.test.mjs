@@ -1200,3 +1200,20 @@ test('v3.6 star force records: tries/success/fail/destroy/gold persist through r
     assert.ok(TITLES.some(t => t.id === 'star:22' && t.name.startsWith('★') && t.achievement === 'star:22'));
     s.level = Meta.rebirthLevel(s); const before = { ...s.starforce }; act(s, { type: 'rebirth' }, 0); assert.deepEqual(s.starforce, before, 'records survive rebirth');
 });
+
+test('v3.7 auto enhance: needs the autoStar research, loops until target/limit/destroy, and sums the star force records', async () => {
+    const s = newState(0); s.gold = 1e9; const item = { id: 'g', name: 'x', slot: 'rod', rarity: 3, power: 50, level: 10, enhance: 0 }; s.inventory.push(item);
+    const autoLog = () => [...s.logs].reverse().find(l => l.text.includes('자동 강화')).text;
+    assert.throws(() => act(s, { type: 'autoEnhance', id: 'g', value: '5' }, 0, () => 0), /자동 강화/);
+    s.permanent.autoStar = 1;
+    assert.throws(() => act(s, { type: 'autoEnhance', id: 'g', value: '0' }, 0, () => 0), /목표 별/);
+    act(s, { type: 'autoEnhance', id: 'g', value: '5' }, 0, () => 0); assert.equal(item.enhance, 5); assert.equal(s.starforce.tries, 5); assert.equal(s.starforce.success, 5);
+    assert.ok(autoLog().includes('목표 달성') && autoLog().includes('시도 5회'), autoLog());
+    // 골드 한도: 한도 안에서만 시도하고 멈춥니다.
+    const { enhanceCost } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
+    const gold = s.gold, two = enhanceCost(item, s) + enhanceCost({ ...item, enhance: 6 }, s);
+    act(s, { type: 'autoEnhance', id: 'g', value: `12:${two + 1}:0` }, 0, () => 0); assert.equal(item.enhance, 7, 'two attempts fit the cap'); assert.equal(gold - s.gold, two);
+    assert.ok(autoLog().includes('골드 한도'));
+    // 파괴되면 멈춥니다(16성, 파괴 굴림).
+    item.enhance = 16; act(s, { type: 'autoEnhance', id: 'g', value: '22' }, 0, () => .31); assert.ok(!s.inventory.some(i => i.id === 'g'), 'destroyed item is gone'); assert.ok(autoLog().includes('파괴') && autoLog().includes('소멸'));
+});
