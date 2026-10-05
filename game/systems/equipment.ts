@@ -1,6 +1,6 @@
 import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, smithDiscount } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollEssence } from '../data/gear';
+import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence } from '../data/gear';
 import { fishGoldAt, priceScale } from '../data/world';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
 /** 장신구: 위력 1당 치명타 +0.2%p. */
@@ -57,7 +57,10 @@ export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(M
 export const reforgeCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((250 + item.power * 25) * priceScale(item.level || 1)), s);
 /** 분해로 얻는 정수와 옵션 하나 재설정에 드는 정수. */
 export const dismantleEssence = (item: Item) => ESSENCE_BY_RARITY[item.rarity] ?? 1;
-export const rerollCost = (item: Item, s?: Pick<State, 'permanent'>) => ({ gold: reforgeCost(item, s), essence: rerollEssence(item.rarity) });
+/** v27.93 재설정 비용은 이 장비를 재설정한 횟수만큼 오릅니다(1회마다 +10%, 상한 없음). */
+export const rerollCost = (item: Item, s?: Pick<State, 'permanent'>) => ({ gold: Math.floor(rerollScaled(reforgeCost(item, s), item.rerolls)), essence: Math.ceil(rerollScaled(rerollEssence(item.rarity), item.rerolls)) });
+/** v27.93 수치 재련 비용: 재설정 기본 비용의 절반, 횟수에 따라 오르지 않습니다. */
+export const refineCost = (item: Item, s?: Pick<State, 'permanent'>) => ({ gold: Math.floor(reforgeCost(item, s) / 2), essence: refineEssence(item.rarity) });
 export const itemDescription = (item: Item) => item.description || (item.slot === 'rod' ? (item.style === 'magic' ? '마법 특화' : item.style === 'physical' ? '물리 특화' : '물리·마법 겸용') + ' 낚싯대.' : item.slot === 'coat' ? '최대 체력·물리 방어·마법 방어를 높이는 방어구.' : '치명타 확률을 높이는 장신구.');
 export function rollAffix(rarity: number, rng: () => number) { const x = AFFIXES[Math.floor(rng() * AFFIXES.length)]; return { stat: x.stat, name: x.name, value: x.value * Math.max(1, rarity) }; }
 export function bulkItems(s: State, rarity: number) { return s.inventory.filter(i => i.rarity === rarity && !i.locked && !i.relic); }

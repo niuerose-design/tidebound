@@ -110,6 +110,8 @@ export type Item = {
     style?: "physical" | "magic" | "balanced";
     description?: string;
     locked?: boolean;
+    /** v27.93 이 장비의 옵션 재설정 횟수. 많을수록 다음 재설정 비용이 오릅니다. */
+    rerolls?: number;
     relic?: string;
     /** v21 이전 장비와 유물의 단일 옵션. */
     affix?: {
