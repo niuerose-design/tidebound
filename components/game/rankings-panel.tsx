@@ -25,7 +25,7 @@ import type { PanelProps } from './panel-props';
 const MAIN_STATS = ['hp', 'attack', 'magic', 'defense', 'resist', 'speed'] as const;
 const DETAIL_STATS = ['hp', 'hpRegen', 'attack', 'magic', 'defense', 'resist', 'speed', 'accuracy', 'evasion', 'crit', 'critDamage', 'mana', 'manaRegen', 'penetration', 'lifesteal'] as const;
 const SHORT: Record<typeof MAIN_STATS[number], string> = { hp: '체력', attack: '물공', magic: '마공', defense: '물방', resist: '마방', speed: '속도' };
-/** v3.16 애드가드로 가린 항목이면 ???로 그립니다. */
+/** v3.17 애드가드로 가린 항목이면 ???로 그립니다. */
 const hid = (r: { masked?: string[] }, f: string) => !!r.masked?.includes(f);
 const jobName = (id: string) => id === 'boss' ? '던전 보스' : jobById(id)?.name || '??';
 /** 등록 시점의 스킬 편성: 액티브는 판정 순서대로, 패시브는 그 뒤에. 성장 레벨은 등록된 SP·숙련으로 계산합니다. */

@@ -107,7 +107,7 @@ export default function AdminPage() {
         if (d) { setStats(d); setDone(kind === 'offers' ? '제단 공물을 초기화했습니다. 유저 화면에는 최대 15초 뒤 반영됩니다.' : '신을 초기화했습니다. 유저 화면에는 최대 15초 뒤 반영됩니다.'); }
     };
     const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); const h = await call({ action: 'hacks' }); if (h) setBroadcast(h.broadcast); };
-    /** v3.16 해커의 방송 탈취 지우기. */
+    /** v3.17 해커의 방송 탈취 지우기. */
     const removeBroadcast = async () => {
         if (!broadcast || !confirm(`[해커 ${broadcast.by}] ${broadcast.text}\n이 방송을 지울까요?`)) return;
         const d = await call({ action: 'clearBroadcast' });

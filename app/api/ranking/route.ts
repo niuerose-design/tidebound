@@ -10,7 +10,7 @@ export async function GET(req: Request) { try {
     // v25.6 ?board=abyss: 이번 주 무릉도장 최고 층 기록판.
     if (new URL(req.url).searchParams.get('board') === 'abyss') { const now = Date.now(), { key, rows } = await listAbyssBoard(now), hacks = await readHacks(now); return Response.json({ week: key, rows: rows.map(r => { const self = r.id === id, out = self ? r : maskSnapshot(r, r.id, hacks, now); const { privacy: _privacy, ...rest } = out as typeof out & { privacy?: unknown }; void _privacy; return { ...rest, self }; }) }, { headers: { 'Cache-Control': 'no-store' } }); }
     const now = Date.now(), season = duelSeasonKey(now), rows = await db().listRankings(monthSeason(season), 100), hacks = await readHacks(now);
-    // v3.16 애드가드: 다른 모험가가 숨긴 이름·정보는 가려서 보냅니다(크래킹당한 동안·내 행은 그대로).
+    // v3.17 애드가드: 다른 모험가가 숨긴 이름·정보는 가려서 보냅니다(크래킹당한 동안·내 행은 그대로).
     return Response.json({ season, rows: rows.map(r => { const self = r.id === duelRowId(season, id), raw = JSON.parse(r.snapshot), snap = self ? raw : maskSnapshot(raw, playerOfRow(r.id), hacks, now), gearHidden = !!snap.masked?.includes('gear'); delete snap.privacy; return { ...snap, vows: vowList(snap.vows), id: r.id, rating: r.rating, power: gearHidden ? 0 : r.power, updatedAt: r.updated_at, self }; }) }, { headers: { 'Cache-Control': 'no-store' } });
 }
 catch (e) {

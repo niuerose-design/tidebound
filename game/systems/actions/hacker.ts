@@ -1,4 +1,4 @@
-/** v3.16 해커 행동: 재화 변환(단방향), 침투 작전, 해킹 단계 해금, 애드가드 공개 항목, 해킹 실행(서버 공유는 /api/hack에서). */
+/** v3.17 해커 행동: 재화 변환(단방향), 침투 작전, 해킹 단계 해금, 애드가드 공개 항목, 해킹 실행(서버 공유는 /api/hack에서). */
 import type { ActionHandlers } from './types';
 import { HACKER, PRIVACY_FIELDS, type PrivacyField } from '../../data/hacker';
 import { hackerState, rollHackerDay, isHacker, gainHacker, makeNode, judge, nodeAnswer, adguardLevel } from '../hacker';

@@ -1,5 +1,5 @@
 'use client';
-/** v3.16 해커 화면: 권한 등급·비트, 재화 변환(단방향), 침투 작전, 해킹 I(방송 탈취·크래킹), 애드가드 공개 항목. */
+/** v3.17 해커 화면: 권한 등급·비트, 재화 변환(단방향), 침투 작전, 해킹 I(방송 탈취·크래킹), 애드가드 공개 항목. */
 import { useState } from 'react';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format, useNow } from './shared';

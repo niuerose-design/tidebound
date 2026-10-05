@@ -17,7 +17,7 @@ export async function POST(req: Request) { try {
     if (body.action === 'stats') return Response.json(await adminStats(), { headers });
     // v27.69 제단 초기화 { kind: 'offers' | 'god' } → 새 통계
     if (body.action === 'altarReset') return Response.json(await resetAltar(String(body.kind ?? '')), { headers });
-    // v3.16 해커의 방송 탈취 보기·지우기.
+    // v3.17 해커의 방송 탈취 보기·지우기.
     if (body.action === 'hacks') { const h = await readHacks(0); return Response.json({ broadcast: h.broadcast || null }, { headers }); }
     if (body.action === 'clearBroadcast') { await clearBroadcast(Date.now()); return Response.json({ ok: true }, { headers }); }
     if (body.action === 'closures') return Response.json(await listClosures(), { headers });

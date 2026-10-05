@@ -1,5 +1,5 @@
 /**
- * v3.16 해커 규칙(1단계). 데이터는 data/hacker.ts, 행동은 actions/hacker.ts, 서버 공유(방송·크래킹)는 server/hacks.ts.
+ * v3.17 해커 규칙(1단계). 데이터는 data/hacker.ts, 행동은 actions/hacker.ts, 서버 공유(방송·크래킹)는 server/hacks.ts.
  * 침투 작전의 정답은 서버 키(setPuzzleKey)와 판 시드로 만든 해시라, 세이브(클라이언트에 보내는 상태)에는 정답이 없습니다.
  */
 import type { State, HackerState, HackerInfil } from '../types';

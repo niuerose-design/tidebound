@@ -67,7 +67,7 @@ export function checkOrigin(req: Request) {
 export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
     const database = db(), now = Date.now();
     await refreshEvents(now);
-    // v3.16 침투 작전 정답 키(인스턴스마다 한 번).
+    // v3.17 침투 작전 정답 키(인스턴스마다 한 번).
     await ensurePuzzleKey(now);
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = await database.getPlayer(id);

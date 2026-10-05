@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) { try {
     checkOrigin(req);
     const { account, slot, id } = await session(req), a = await actionBody(req);
-    // v3.16 해킹 실행은 서버 공유 설정에 써야 해서 /api/hack에서만 받습니다.
+    // v3.17 해킹 실행은 서버 공유 설정에 써야 해서 /api/hack에서만 받습니다.
     if (a.type === 'hackRun') throw new ApiError('해킹은 해킹 화면에서 실행하세요.');
     try {
         const out = await mutate(id, a, async s => { const now = Date.now(); await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncHackFeed(s, id, now); });

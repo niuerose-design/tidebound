@@ -519,11 +519,11 @@ export type State = {
     randomGameRuns?: number;
     /** v27.88 랜덤게임 기록: 가장 멀리 간 웨이브·총 입장·받고 나간 횟수(환생해도 유지). */
     randomGameStats?: { best: number; runs: number; cashed: number };
-    /** v3.16 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
+    /** v3.17 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
     hacker?: HackerState;
-    /** v3.16 애드가드 2단계에서 고른 공개 항목(없으면 전부 숨김). */
+    /** v3.17 애드가드 2단계에서 고른 공개 항목(없으면 전부 숨김). */
     privacy?: { show: import('./data/hacker').PrivacyField[] };
-    /** v3.16 서버 해킹 소식(동기화 때 서버가 적음): 진행 중인 방송 탈취, 내가 크래킹당한 시각. */
+    /** v3.17 서버 해킹 소식(동기화 때 서버가 적음): 진행 중인 방송 탈취, 내가 크래킹당한 시각. */
     hackFeed?: { broadcast?: { text: string; by: string; until: number }; crackedUntil?: number };
     clears: Record<string, number>;
     /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
@@ -551,7 +551,7 @@ export type State = {
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };
-/** v3.16 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
+/** v3.17 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
 export type HackerInfil = {
     seed: number;
     /** 뚫은 노드 수. 지금 노드는 depth + 1번째. */
@@ -580,7 +580,7 @@ export type HackerState = {
     pending?: { kind: 'broadcast' | 'crack'; value: string; minutes: number };
 };
 export type Snapshot = {
-    /** v3.16 애드가드: 순위표에서 숨길 정보(서버가 보낼 때 가림, 결투 계산에는 원본). */
+    /** v3.17 애드가드: 순위표에서 숨길 정보(서버가 보낼 때 가림, 결투 계산에는 원본). */
     privacy?: { show: string[] };
     /** v26.1 표시 칭호 이름(랭킹). */
     title?: string;

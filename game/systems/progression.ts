@@ -288,7 +288,7 @@ export function overRestraint(s: State, ids: string[]) {
     const active = ids.filter(id => skillById(id)?.type === 'active').length;
     return active > cap || ids.length - active > cap;
 }
-/** v3.16 해커는 해커 전용 스킬(애드가드)만 장착합니다. */
+/** v3.17 해커는 해커 전용 스킬(애드가드)만 장착합니다. */
 const hackerLoadoutOk = (s: State, ids: string[]) => s.job !== HACKER_ID || ids.every(id => skillById(id)?.job === HACKER_ID);
 export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && hackerLoadoutOk(s, ids) && !overRestraint(s, ids) && apUsed(s, ids) <= apCapacity(s, ids); }
 export function trimLoadout(s: State) {
