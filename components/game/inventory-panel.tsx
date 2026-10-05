@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { ArrowUpRight, ChevronDown, Lock, Search, Sparkles, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Item, Stats } from '@/game/types';
-import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP } from '@/game/data/economy';
+import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, researchRank } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '@/game/data/progression';
 import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
@@ -178,6 +178,23 @@ function GearLevelUp({ s, send, busy, item }: PanelProps & { item: Item }) {
     </div>;
 }
 
+/** v3.7 자동 강화(세계석 연구 ‘자동 강화’): 목표 별과 골드 한도를 정해 한 번에 시도합니다. 확률·비용은 수동과 같고 파괴되면 멈춥니다. */
+function AutoStar({ s, send, busy, item, safeguard }: PanelProps & { item: Item; safeguard: boolean }) {
+    const star = item.enhance || 0, max = enhanceMaxFor(item);
+    const [target, setTarget] = useState(Math.min(max, star + 1)), [cap, setCap] = useState('');
+    const goal = Math.min(max, Math.max(star + 1, target)), limit = cap.trim() ? Number(cap.replace(/[^\d]/g, '')) : s.gold;
+    const ok = Number.isFinite(limit) && limit > 0;
+    return <div className="relic-imprint auto-star">
+        <b>자동 강화 · 목표까지 연속 시도</b>
+        <div className="auto-star-row">
+            <label className="gear-select">목표<select value={goal} onChange={e => setTarget(Number(e.target.value))}>{Array.from({ length: max - star }, (_, i) => star + 1 + i).map(n => <option key={n} value={n}>★{n}</option>)}</select></label>
+            <label className="gear-select">골드 한도<input type="text" inputMode="numeric" placeholder={`보유 ${format(s.gold)}`} value={cap} onChange={e => setCap(e.target.value)}/></label>
+        </div>
+        <ConfirmButton label={`★${goal}까지 자동 강화`} title={`★${goal}까지 자동으로 강화할까요?`} description={`한도 ${format(Math.min(limit || 0, s.gold))} G 안에서 목표에 닿을 때까지 계속 시도합니다. 하락·파괴도 그대로 일어나며 파괴되면 멈춥니다.${safeguard ? ' 파괴 방지가 적용됩니다.' : ''}`} disabled={busy || !ok} onConfirm={() => send({ type: 'autoEnhance', id: item.id, value: `${goal}:${Math.min(limit, s.gold)}:${safeguard ? 1 : 0}` })}/>
+        <p className="footnote">결과는 전투 기록에 한 줄(시도·성공·하락·유지·파괴·쓴 골드)로 남습니다. 한 번에 최대 2,000회.</p>
+    </div>;
+}
+
 export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Item }) {
     // v27.93 스타포스: 성공·실패(유지/하락)·파괴 확률과 찬스 타임, 15·16성 파괴 방지(비용 2배).
     const [safeguard, setSafeguard] = useState(false);
@@ -191,6 +208,7 @@ export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Ite
         {canSafeguard(star) && <label className="altar-anon"><input type="checkbox" checked={safeguard} onChange={e => setSafeguard(e.target.checked)}/> 파괴 방지 (비용 ×{STARFORCE.safeguardCost})</label>}
         <button className="primary" disabled={busy || star >= max || s.gold < cost} onClick={() => send({ type: 'enhance', id: item.id, ...(guard ? { value: 'safeguard' } : {}) })}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${format(cost)} G`}</button>
         <p className="footnote">1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}성부터 +{STARFORCE.gainHigh * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. 파괴된 장비는 사라지고 유물은 {STARFORCE.relicResetStar}성으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p>
+        {star < max && researchRank(s, 'autoStar') > 0 && <AutoStar s={s} send={send} busy={busy} item={item} safeguard={guard}/>}
         <GearLevelUp s={s} send={send} busy={busy} item={item}/>
         {item.relic && <RelicImprint s={s} send={send} busy={busy} item={item}/>}
         {item.affixes?.length && !item.relic ? <p className="footnote">옵션은 위 옵션 목록에서 하나씩 재설정합니다.</p> : <ConfirmButton label={`옵션 재설정 · ${format(rerollCost(item, s).gold)} G + 정수 ${rerollCost(item, s).essence}`} title="추가 옵션을 무작위로 바꿀까요?" description={`이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다. 골드 ${format(rerollCost(item, s).gold)} G와 정수 ${rerollCost(item, s).essence}(보유 ${s.essence || 0})를 사용합니다.`} disabled={busy || item.rarity === 0 || s.gold < rerollCost(item, s).gold || (s.essence || 0) < rerollCost(item, s).essence} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}

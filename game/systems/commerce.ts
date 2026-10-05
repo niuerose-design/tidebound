@@ -1,7 +1,7 @@
 import { gearName } from '../data/maple-gear';
 import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
-import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
+import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, ECONOMY, researchRank, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
 import { apCapacity, apUsed } from './progression';
 import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
@@ -10,6 +10,8 @@ import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** 상점·뽑기 골드 가격. 상점 단골 할인(−2%/단계, 내림)을 적용합니다. */
 /** v27.30 확정 구매·감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 배수' 중 큰 값. 감정은 매번 희귀 이상이라 드롭(처치당 0.1%)보다 훨씬 유리했습니다. */
 const SHOP_FISH = { buy: 30, gamble: 60 };
+/** v3.7 자동 강화 한 번에 돌리는 최대 시도 수(렉 방지). */
+const AUTO_STAR_MAX_TRIES = 2000;
 const fishPrice = (s: State, n: number) => fishGoldAt(Math.min(PRICE_LEVEL_CAP, s.level)) * n;
 export const shopCost = (s: State) => Math.floor(Math.max(ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel, fishPrice(s, SHOP_FISH.buy)) * shopDiscount(s));
 /** v27.20 일반 등급(흰색) 장비 확정 구매: 도감용. 드롭 확률이 낮고 던전·보스 드롭은 희귀 이상이라 흰색을 따로 팝니다. */
@@ -34,6 +36,35 @@ export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' 
 /** All spend checks happen before mutations. null means action belongs to another system. */
 /** v27.13 한 번에 감정할 수 있는 개수. */
 export const GAMBLE_COUNTS = [1, 5, 10];
+/** v27.93 스타포스 한 번 시도. 비용을 쓰고 성공·파괴·하락·유지 중 하나를 적용합니다. v3.7 자동 강화도 같은 함수를 돌립니다. */
+export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, rng: () => number, spend: (cost: number) => void): { outcome: 'success' | 'destroy' | 'drop' | 'keep'; cost: number; message: string } {
+    const star = item.enhance || 0;
+    const safeguard = wantSafeguard && canSafeguard(star);
+    const cost = enhanceCost(item, s) * (safeguard ? STARFORCE.safeguardCost : 1);
+    spend(cost);
+    const sf = s.starforce ??= { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
+    sf.tries++; sf.gold += cost;
+    const chance = chanceTime(item), roll = rng(), p = starSuccess(star), d = starDestroy(star, safeguard);
+    if (chance || roll < p) {
+        sf.success++;
+        item.enhance = star + 1; item.starFails = 0;
+        return { outcome: 'success', cost, message: `${item.name} ${item.enhance}성 강화 성공${chance ? ' (찬스 타임)' : ''} · -${cost} G` };
+    }
+    if (roll < p + d) {
+        sf.destroy++;
+        item.starFails = 0;
+        if (item.relic) { item.enhance = STARFORCE.relicResetStar; return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! 유물이라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G` }; }
+        s.inventory = s.inventory.filter(x => x.id !== item.id);
+        for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
+        return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 장비가 파괴되었습니다 · -${cost} G` };
+    }
+    sf.fail++;
+    if (starDrops(star)) {
+        item.enhance = star - 1; item.starFails = (item.starFails || 0) + 1;
+        return { outcome: 'drop', cost, message: `${item.name} 강화 실패 · ${item.enhance}성으로 하락${chanceTime(item) ? ' · 다음 시도는 찬스 타임(100%)' : ''} · -${cost} G` };
+    }
+    return { outcome: 'keep', cost, message: `${item.name} 강화 실패 · ${star}성 유지 · -${cost} G` };
+}
 export function commerce(s: State, a: Action, rng: () => number): string | null {
     const id = a.id || '';
     const spend = (cost: number) => { if (!Number.isFinite(cost) || s.gold < cost)
@@ -115,34 +146,9 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error('장비를 찾을 수 없습니다.');
         if (a.type === 'enhance') {
             // v27.93 스타포스: 성공률·하락·파괴·찬스 타임·파괴 방지(value 'safeguard', 15·16성 비용 2배). 규칙은 data/starforce.ts.
-            const star = item.enhance || 0;
-            if (star >= enhanceMaxFor(item))
+            if ((item.enhance || 0) >= enhanceMaxFor(item))
                 throw Error('최대 강화입니다.');
-            const safeguard = a.value === 'safeguard' && canSafeguard(star);
-            const cost = enhanceCost(item, s) * (safeguard ? STARFORCE.safeguardCost : 1);
-            spend(cost);
-            const sf = s.starforce ??= { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
-            sf.tries++; sf.gold += cost;
-            const chance = chanceTime(item), roll = rng(), p = starSuccess(star), d = starDestroy(star, safeguard);
-            if (chance || roll < p) {
-                sf.success++;
-                item.enhance = star + 1; item.starFails = 0;
-                return `${item.name} ${item.enhance}성 강화 성공${chance ? ' (찬스 타임)' : ''} · -${cost} G`;
-            }
-            if (roll < p + d) {
-                sf.destroy++;
-                item.starFails = 0;
-                if (item.relic) { item.enhance = STARFORCE.relicResetStar; return `${item.name} 강화 실패 · 파괴! 유물이라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G`; }
-                s.inventory = s.inventory.filter(x => x.id !== item.id);
-                for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
-                return `${item.name} 강화 실패 · 장비가 파괴되었습니다 · -${cost} G`;
-            }
-            sf.fail++;
-            if (starDrops(star)) {
-                item.enhance = star - 1; item.starFails = (item.starFails || 0) + 1;
-                return `${item.name} 강화 실패 · ${item.enhance}성으로 하락${chanceTime(item) ? ' · 다음 시도는 찬스 타임(100%)' : ''} · -${cost} G`;
-            }
-            return `${item.name} 강화 실패 · ${star}성 유지 · -${cost} G`;
+            return starForceAttempt(s, item, a.value === 'safeguard', rng, spend).message;
         }
         if (item.rarity < 1)
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');
@@ -253,6 +259,36 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         s.inventory.push({ id: nextId(), name: r.name, slot: r.slot, style: r.style, power: r.power, rarity: 3, level: 1, relic: r.id, locked: true, description: r.description, affix: { ...r.affix } });
         syncRelicPower(s);
         return `${r.name} 수령 · 환생 ${r.rebirth}회 달성 보상`;
+    }
+    if (a.type === 'autoEnhance') {
+        // v3.7 자동 강화(세계석 연구 autoStar): value = '목표 별:골드 한도:safeguard(1/0)'. 목표에 닿거나 한도·골드가 모자라거나 파괴되면 멈추고 한 줄로 요약합니다.
+        if (!researchRank(s, 'autoStar'))
+            throw Error('세계석 연구 ‘자동 강화’가 필요합니다.');
+        const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        if (!item)
+            throw Error('장비를 찾을 수 없습니다.');
+        const [targetText, capText, guardText] = String(a.value || '').split(':');
+        const target = Number(targetText), cap = capText ? Number(capText) : s.gold, safeguard = guardText === '1';
+        const from = item.enhance || 0, max = enhanceMaxFor(item);
+        if (!Number.isInteger(target) || target <= from || target > max)
+            throw Error(`목표 별은 ${from + 1}~${max}성 사이여야 합니다.`);
+        if (!Number.isFinite(cap) || cap <= 0)
+            throw Error('골드 한도를 확인하세요.');
+        const budget = Math.min(cap, s.gold), floor = s.gold - budget;
+        const count = { tries: 0, success: 0, drop: 0, keep: 0, destroy: 0, gold: 0 };
+        let stop = '';
+        for (let i = 0; i < AUTO_STAR_MAX_TRIES; i++) {
+            if ((item.enhance || 0) >= target) { stop = '목표 달성'; break; }
+            const cost = enhanceCost(item, s) * (safeguard && canSafeguard(item.enhance || 0) ? STARFORCE.safeguardCost : 1);
+            if (s.gold - cost < floor) { stop = count.tries ? '골드 한도 도달' : '골드 부족'; break; }
+            const r = starForceAttempt(s, item, safeguard, rng, spend);
+            count.tries++; count.gold += r.cost; count[r.outcome]++;
+            if (r.outcome === 'destroy') { stop = item.relic ? `파괴 · 유물 ${STARFORCE.relicResetStar}성 회귀` : '파괴'; break; }
+        }
+        if (!stop) stop = `시도 ${AUTO_STAR_MAX_TRIES}회 한도`;
+        if (!count.tries) throw Error(stop === '골드 부족' ? '골드가 부족합니다.' : stop);
+        const now = s.inventory.includes(item) || Object.values(s.equipment).includes(item) ? `★${item.enhance || 0}` : '소멸';
+        return `${item.name} 자동 강화 · ${stop} · ★${from} → ${now} · 시도 ${count.tries}회(성공 ${count.success} · 하락 ${count.drop} · 유지 ${count.keep}${count.destroy ? ` · 파괴 ${count.destroy}` : ''}) · -${count.gold.toLocaleString()} G`;
     }
     if (a.type === 'levelUp') {
         // v3.5 장비 레벨 올리기(+10, 내 레벨까지). 위력이 오르고 별은 0으로 돌아갑니다.
