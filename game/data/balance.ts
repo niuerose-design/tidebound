@@ -217,8 +217,15 @@ export const STATUS_GUIDE = [
  * 통곡의 벽(Lv.70부터 레벨당 ×wallGrowth)은 요구 레벨 상한을 80 → 100으로 올리면서 1.25 → 1.10으로 낮췄습니다(지수 복리는 유지: Lv.100 약 ×19. 1.25면 Lv.100까지 수백 시간).
  * 전에는 1 + 0.15 × (min(20, r) + √(r−20))로, 환생 경험치 보너스(+25%/회)에 못 미쳐 환생이 쌓일수록 한 생이 짧아졌습니다.
  */
-export const XP_SCALING = { base: 4, perRebirth: 1, lateFrom: 20, latePerRebirth: .1, wallLevel: 70, wallGrowth: 1.1 };
-export const xpRebirthFactor = (rebirths = 0) => XP_SCALING.base + XP_SCALING.perRebirth * Math.min(XP_SCALING.lateFrom, rebirths) + XP_SCALING.latePerRebirth * Math.max(0, rebirths - XP_SCALING.lateFrom);
+/**
+ * v3.21 환생 20회 이후 필요 경험치가 거의 오르지 않아(회당 +0.1), 난이도 상한을 따라 마리당 경험치가 커지는 원킬 빌드의 한 생이
+ * 환생할수록 짧아지던 것(환생 55회 0.3시간): 20회 이후 회당 +latePerRebirth로 올리고, 환생 50회·100회에 벽(rebirthWalls, 그 회차부터 곱함)을 둡니다.
+ * 목표(원킬 빌드, 최대 난이도): 환생 50회 약 4.5시간 → 99회 약 5시간, 100회부터 하루에 한 번(약 20시간). 50회 미만은 원킬 폭증 구간으로 둡니다.
+ */
+export const XP_SCALING = { base: 4, perRebirth: 1, lateFrom: 20, latePerRebirth: .5, wallLevel: 70, wallGrowth: 1.1, rebirthWalls: [[50, 8.9], [100, 35]] as [number, number][] };
+/** 환생 벽 배율: 지난 벽 중 가장 큰 값(50회부터 ×8.9, 100회부터 ×35). */
+export const xpRebirthWall = (rebirths = 0) => XP_SCALING.rebirthWalls.reduce((m, [from, x]) => rebirths >= from ? x : m, 1);
+export const xpRebirthFactor = (rebirths = 0) => (XP_SCALING.base + XP_SCALING.perRebirth * Math.min(XP_SCALING.lateFrom, rebirths) + XP_SCALING.latePerRebirth * Math.max(0, rebirths - XP_SCALING.lateFrom)) * xpRebirthWall(rebirths);
 export const xpWallFactor = (level: number) => level >= XP_SCALING.wallLevel ? Math.pow(XP_SCALING.wallGrowth, level - XP_SCALING.wallLevel + 1) : 1;
 export const xpNeeded = (level: number, rebirths = 0) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1) * xpRebirthFactor(rebirths) * xpWallFactor(level));
 // v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.

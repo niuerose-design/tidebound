@@ -664,7 +664,9 @@ test('v27.57 balance: bleed, poison and burn add about the same damage in real c
 test('v27.54 xp needed grows with rebirths and walls off after Lv.70; the Black Mage hits with divine force', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const B = await L.load('data/balance');
-    assert.equal(B.xpNeeded(50, 0), B.xpNeeded(50)); assert.ok(Math.abs(B.xpNeeded(50, 10) / B.xpNeeded(50, 0) - 14 / 4) < .01, 'v27.77 rebirth 10 = (4+10)/4'); assert.ok(Math.abs(B.xpRebirthFactor(100) - 32) < 1e-9 && B.xpRebirthFactor(60) < B.xpRebirthFactor(100), 'keeps growing past the level cap');
+    assert.equal(B.xpNeeded(50, 0), B.xpNeeded(50)); assert.ok(Math.abs(B.xpNeeded(50, 10) / B.xpNeeded(50, 0) - 14 / 4) < .01, 'v27.77 rebirth 10 = (4+10)/4'); assert.ok(B.xpRebirthFactor(60) < B.xpRebirthFactor(100) && B.xpRebirthFactor(150) < B.xpRebirthFactor(200), 'keeps growing past the level cap');
+    // v3.21 환생 50회·100회 벽, 20회 이후 회당 +0.5.
+    assert.equal(B.xpRebirthFactor(49), 4 + 20 + .5 * 29); assert.equal(B.xpRebirthFactor(50), (4 + 20 + .5 * 30) * 8.9); assert.equal(B.xpRebirthFactor(100), (4 + 20 + .5 * 80) * 35);
     assert.ok(B.xpNeeded(69) / B.xpNeeded(68) < 1.1 && B.xpNeeded(80) / B.xpNeeded(69) > 3 && B.xpNeeded(100) / B.xpNeeded(69) > 30, 'v27.77 wall after Lv.70 (1.10/level up to Lv.100)');
     const D = await L.load('systems/duel'), Alt = D;
     const base = { ...D.abyssBossSnapshot(50), name: '검은 마법사' }, god = Alt.divineFirstGod(base);
@@ -1417,4 +1419,12 @@ test('v3.20 starforce flow achievements: 10★+ success streak, fail streak, dro
     const ids = A.ACHIEVEMENTS.map(a => a.id);
     for (const id of ['starStreak:3', 'starFailStreak:5', 'starDrops:10', 'starChance:1', 'starCatch:10', 'starHigh:10']) assert.ok(ids.includes(id), id);
     assert.equal(A.ACHIEVEMENTS.find(a => a.id === 'starStreak:5').progress(s), 6);
+});
+
+test('v3.21 difficulty exp and gold bend to √ above difficulty 30; rebirth walls at 50 and 100', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), M = await L.load('systems/meta'), B = await L.load('data/balance');
+    for (const t of [0, 10, 20, 30]) { assert.ok(Math.abs(M.tierExp(t) - (1 + .3 * t + .005 * Math.max(0, t - 20) ** 2)) < 1e-9, `exp ${t} unchanged`); assert.equal(M.tierReward(t), 1 + .5 * t, `gold ${t} unchanged`); }
+    assert.ok(Math.abs(M.tierExp(55) - (10.5 + 1.5 * 5)) < 1e-9); assert.ok(Math.abs(M.tierReward(55) - (16 + 1.5 * 5)) < 1e-9);
+    assert.ok(M.tierExp(200) < 31 && M.tierReward(200) < 36, 'no runaway with the difficulty cap');
+    assert.ok(B.xpRebirthFactor(50) / B.xpRebirthFactor(49) > 8 && B.xpRebirthFactor(100) / B.xpRebirthFactor(99) > 3.5, 'walls');
 });
