@@ -1256,7 +1256,7 @@ test('v3.11 monster exp curve knee: unchanged up to Lv.66, dropped and slower-gr
     const top = W.FISH.find(f => f.id === 'arTrueErda'); assert.equal(top.exp, W.fishExpAt(top.level), 'monster rows use the curve');
 });
 
-test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 30% accessory drop with 5-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards', async () => {
+test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0.3% accessory drop with 400-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const O = await L.load('data/onyx'), W = await L.load('data/world'), Enc = await L.load('systems/encounter'), Meta = await L.load('systems/meta'), T = await L.load('systems/turn');
     assert.equal(O.ONYX_BOSSES.length, 7); assert.ok(O.onyxBossFor('리스항구') && !O.onyxBossFor('아쿠아로드'));
@@ -1271,11 +1271,11 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 3
     const E = await L.load('data/encounters');
     const skillSets = O.ONYX_BOSSES.map(b => E.profile(b.id).skills.join(',')); assert.equal(new Set(skillSets).size, 7, 'each onyx boss has its own skill set');
     for (const b of O.ONYX_BOSSES) { const own = E.profile(b.id).skills.filter(id => id.startsWith('onyx')); assert.equal(own.length, 1, b.id); assert.ok(E.ENEMY_SKILLS.some(sk => sk.id === own[0]), own[0]); assert.ok(s.enemy.onyx !== b.id || s.enemy.skills.includes(own[0]) && s.enemy.skills.includes('foeWard')); }
-    // 드랍 30%: 미획득이면 연속 횟수만 오르고 5번째 격파는 확정.
-    s.enemy.hp = 0; const pearls = s.pearls; Enc.reward(s, () => .5); assert.ok(!s.inventory.some(i => i.onyx), 'roll .5 misses the 30% drop'); assert.equal(s.onyxMiss.onyxDusk, 1); assert.equal(s.onyxBook.onyxDusk, 1); assert.ok(s.logs.some(l => l.text.includes('남기지 않았습니다')));
+    // 드랍 0.3%: 미획득이면 연속 횟수만 오르고 400번째 격파는 확정.
+    s.enemy.hp = 0; const pearls = s.pearls; Enc.reward(s, () => .5); assert.ok(!s.inventory.some(i => i.onyx), 'roll .5 misses the 0.3% drop'); assert.equal(s.onyxMiss.onyxDusk, 1); assert.equal(s.onyxBook.onyxDusk, 1); assert.ok(s.logs.some(l => l.text.includes('남기지 않았습니다')));
     for (let i = 0; i < 3; i++) { Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); } assert.equal(s.onyxMiss.onyxDusk, 4); assert.ok(!s.inventory.some(i => i.onyx));
-    Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); assert.ok(s.inventory.some(i => i.onyx), '5th kill is guaranteed'); assert.equal(s.onyxMiss.onyxDusk, 0); assert.equal(s.onyxBook.onyxDusk, 5);
-    const s2 = newState(0); s2.level = 60; s2.rebirths = 10; s2.kills = 5000; s2.stage = 'lithSwarm'; s2.tide = 0; Enc.spawn(s2, () => 0); s2.enemy.hp = 0; Enc.reward(s2, () => .1); assert.ok(s2.inventory.some(i => i.onyx), 'roll .1 drops');
+    s.onyxMiss.onyxDusk = O.ONYX.dropPity - 1; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); assert.ok(s.inventory.some(i => i.onyx), `${O.ONYX.dropPity}th kill is guaranteed`); assert.equal(s.onyxMiss.onyxDusk, 0); assert.equal(s.onyxBook.onyxDusk, 5);
+    const s2 = newState(0); s2.level = 60; s2.rebirths = 10; s2.kills = 5000; s2.stage = 'lithSwarm'; s2.tide = 0; Enc.spawn(s2, () => 0); s2.enemy.hp = 0; Enc.reward(s2, () => .001); assert.ok(s2.inventory.some(i => i.onyx), 'roll .001 drops');
     const acc = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(acc && acc.slot === 'charm' && acc.rarity === 6 && acc.locked && acc.affixes.length === 6 && acc.affixes[0].rule && acc.affixes[0].stat === 'thorns', JSON.stringify(acc));
     assert.equal(s.pearls, pearls);
     Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .5); assert.equal(s.inventory.filter(i => i.onyx).length, 1, 'one per boss'); assert.equal(s.pearls, pearls + O.ONYX.duplicatePearls);

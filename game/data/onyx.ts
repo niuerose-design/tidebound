@@ -7,9 +7,10 @@ import { RARITIES } from './balance';
  * v3.12 칠흑의 보스: 무리 서식지에서만 아주 드물게 나오는 지역 보스. 집중 사냥 대상이 될 수 없고 변종·까미·누리와 겹치지 않습니다.
  * 능력치는 그 서식지에서 가장 강한 몬스터(난이도 보정 뒤)의 체력 ×hp, 공격 ×attack인 단일 개체이고, turns턴 안에 못 잡으면 떠납니다(도망 보상 없음).
  * 처치하면 drop 확률로 그 보스의 칠흑 장신구 1개를 받습니다(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석 duplicatePearls). 장신구는 환생해도 남습니다.
+ * 엔드 콘텐츠 기준: 서식지 방치 시 출현 약 180회/시간 → 보스 약 13회/일(난이도 0). drop .003 · 천장 400이면 장신구 1개에 기대 약 18일, 최장 약 31일(난이도 50에서는 절반). 7종 완성은 반년 남짓.
  * 보스마다 고유 성향·기술이 있습니다(data/encounters PROFILES onyx*).
  */
-export const ONYX = { chance: .003, chancePerTier: 1 / 50, pity: 2000, hp: 100, attack: 3, turns: 80, drop: .3, dropPity: 5, duplicatePearls: 5, power: 5.2, affixes: 5 };
+export const ONYX = { chance: .003, chancePerTier: 1 / 50, pity: 2000, hp: 100, attack: 3, turns: 80, drop: .003, dropPity: 400, duplicatePearls: 5, power: 5.2, affixes: 5 };
 export type OnyxBoss = { id: string; name: string; region: string; accessory: { name: string; desc: string; affix: ItemAffix } };
 export const ONYX_BOSSES: OnyxBoss[] = [
     { id: 'onyxDusk', name: '더스크', region: '리스항구', accessory: { name: '거대한 공포', desc: '더스크를 쓰러뜨린 증표. 가시 반격이 크게 오릅니다.', affix: { id: 'onyxThorns', name: '공포의 가시', stat: 'thorns', value: .1, rule: true } } },
