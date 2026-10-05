@@ -41,7 +41,7 @@ export const encounterTier = (s: State) => s.dungeon ? (s.dungeon.id === RANDOM_
 export const dungeonLevelAt = (d: { id: string; level: number }, tier: number, playerLevel: number) => d.id === 'abyss' ? d.level : tideLiftLevel(d.level, tier, playerLevel);
 export const tierReward = (tier: number) => 1 + tier * .5;
 /** v27.77 경험치의 난이도 배율. 골드(tierReward, 1 + 0.5t)와 분리해 1 + 0.1√t로 눌렀습니다: 난이도 17 ×1.41, 100 ×2. 전에는 난이도 100에서 ×51이라 19마리면 환생이었습니다. */
-export const tierExp = (tier: number) => 1 + .1 * Math.sqrt(Math.max(0, tier));
+export const tierExp = (tier: number) => 1 + tier * .3 + Math.pow(Math.max(0, tier - 20), 2) * .005;
 // v27.74 사냥터·던전 난이도의 처치 숙련 배율(v27.21 tierMastery, 1 + 0.3×난이도)을 없앴습니다. 처치 숙련은 난이도와 무관하게 기본 1이고,
 // 난이도 5 이상의 숙련은 숙련의 까미가 맡습니다(난이도 10 기준 까미 기대 숙련이 처치 숙련의 수십 배라 배율의 몫은 몇 %에 불과했습니다).
 /** 처치 보상(골드 배율 적용 전). 전투 보상과 도감 화면 표시가 같은 식을 씁니다. */
@@ -64,4 +64,5 @@ export const dungeonExp = (f: { level: number; rewardMultiplier?: number }, dung
 export const dungeonClearBase = (d: { level: number }) => fishGoldAt(d.level) * DUNGEON_TUNING.clearGoldFish;
 /** 이 몬스터로 해당 무리 규모를 고를 수 있는지 (도감 처치 수 기준). */
 export const tierHealth = (tier: number) => 1 + tier * .35 + Math.pow(Math.max(0, tier - 20), 2) * .006;
+/** v3.11 경험치 배율은 체력 배율과 같은 꼴(선형 + 20 이후 제곱)로 올려, 체력 1만당 경험치가 난이도 200에서도 난이도 0의 84% 안에 머뭅니다(전에는 1 + 0.1√t라 난이도 30에서 1/8). */
 export const tierAttack = (tier: number) => 1 + tier * .18 + Math.pow(Math.max(0, tier - 20), 2) * .002;

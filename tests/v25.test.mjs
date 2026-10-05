@@ -1247,3 +1247,11 @@ test('v3.9 depth coefficient: later stages/dungeons are +4% per entry-level step
     const a = E.stageField(s, first.id, first.fish[0], 50), b = E.stageField(s, last.id, last.fish[0], 50);
     assert.equal(a.level, b.level, 'difficulty 50 lifts both to the same level'); assert.ok(Math.abs(b.foe.hp / a.foe.hp - 1.36) < .02, `hp ratio ${b.foe.hp / a.foe.hp}`); assert.ok(b.gold > a.gold * 1.15, 'gold rises with the coefficient (stage reward normalization keeps it below the raw ×1.36)');
 });
+
+test('v3.11 monster exp curve knee: unchanged up to Lv.66, dropped and slower-growing above (so Lv.66→100 idling takes hours, not minutes)', async () => {
+    const W = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
+    const old = l => Math.round(9 * Math.pow(1.15, l - 1));
+    for (const l of [1, 30, 61, 66]) assert.equal(W.fishExpAt(l), old(l), `Lv.${l} unchanged`);
+    assert.ok(W.fishExpAt(67) < W.fishExpAt(66), 'drop right above the knee'); assert.ok(W.fishExpAt(100) / old(100) < .25 && W.fishExpAt(100) > W.fishExpAt(90) * 2, 'Lv.100 well below the old curve but still rising');
+    const top = W.FISH.find(f => f.id === 'arTrueErda'); assert.equal(top.exp, W.fishExpAt(top.level), 'monster rows use the curve');
+});

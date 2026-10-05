@@ -114,7 +114,9 @@ export const fishGoldAt = (level: number) => Math.round(GOLD_CURVE.base * Math.p
 /** v27.30 골드 사용처 가격 배율: Lv.40까지 1, 그 위로는 몬스터 골드를 따라 커집니다(Lv.65에서 멈춤). */
 export const PRICE_LEVEL_CAP = 65;
 export const priceScale = (level: number) => Math.max(1, fishGoldAt(Math.min(PRICE_LEVEL_CAP, Math.max(1, level))) / fishGoldAt(GOLD_CURVE.knee));
-export const fishExpAt = (level: number) => Math.round(9 * Math.pow(1.15, level - 1));
+/** v3.11 몬스터 경험치 곡선: Lv.66까지 레벨당 15% 복리, 그 위로는 EXP_CURVE.late(고레벨 사냥터에서 환생이 너무 빨라지지 않게). 플레이어 필요 경험치 곡선과는 별개입니다. */
+export const EXP_CURVE = { knee: 66, drop: .35, late: 1.115 };
+export const fishExpAt = (level: number) => Math.round(9 * Math.pow(1.15, Math.min(level, EXP_CURVE.knee) - 1) * (level > EXP_CURVE.knee ? EXP_CURVE.drop * Math.pow(EXP_CURVE.late, level - EXP_CURVE.knee) : 1));
 /**
  * v27.66 레벨 차 경험치 보정: 몬스터가 내 레벨보다 EXP_LEVEL_GAP 넘게 높으면 경험치를 ‘내 레벨 + EXP_LEVEL_GAP’ 몬스터 기준으로 줄입니다.
  * 환생 5회부터 레벨 제한이 풀려 Lv.1이 최상위 사냥터·던전에서 몇 마리 만에 수십 레벨을 오르던 것(환생 반복으로 세계석 찍어 내기)을 막습니다. 골드는 그대로.
