@@ -701,7 +701,7 @@ test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% o
 test('v27.58 achievements: dungeon group replaces Mu Lung, new series per group with SP +1, old ids kept', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS } = await L.load('data/achievements'), { syncAchievements, claimAchievements } = await L.load('systems/progress');
-    assert.deepEqual([...ACHIEVEMENT_GROUPS], ['모험', '사냥', '숙련', '던전', '환생', '계급', '도전']);
+    assert.deepEqual([...ACHIEVEMENT_GROUPS], ['모험', '사냥', '숙련', '던전', '환생', '계급', '강화', '도전']);
     assert.ok(ACHIEVEMENTS.every(a => ACHIEVEMENT_GROUPS.includes(a.group)) && new Set(ACHIEVEMENTS.map(a => a.id)).size === ACHIEVEMENTS.length);
     for (const id of ['abyss:100', 'clears:1', 'dungeons:7', 'bosses:500']) assert.equal(ACHIEVEMENTS.find(a => a.id === id)?.group, '던전', id);
     assert.ok(ACHIEVEMENTS.some(a => a.id === 'codex:47'), 'codex id unchanged by the nuri');
@@ -1185,4 +1185,18 @@ test('v3.5 gear level-up: +10 up to player level, power/flat affixes scale, star
     act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 11); assert.equal(relic.enhance, 0); assert.equal(enhanceMaxFor(relic), 13);
     assert.equal(relic.power, Eco.relicPower(45, 10, 11)); assert.ok(enhanceCost({ ...relic, enhance: 5 }, s) > cheap, 'relic star cost rises with its level');
     for (let i = 0; i < 8; i++) act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 91); assert.equal(enhanceMaxFor(relic), 21); assert.throws(() => act(s, { type: 'levelUp', id: relic.id }, 0), /내 레벨/, 'Lv.101 would pass the player');
+});
+
+test('v3.6 star force records: tries/success/fail/destroy/gold persist through rebirth and feed the 강화 achievements and star titles', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { ACHIEVEMENTS } = await L.load('data/achievements'), { TITLES } = await L.load('data/titles'), Meta = await L.load('systems/meta');
+    const s = newState(0); s.gold = 1e12; const item = { id: 'g', name: 'x', slot: 'rod', rarity: 3, power: 50, level: 10, enhance: 0 }; s.inventory.push(item);
+    act(s, { type: 'enhance', id: 'g' }, 0, () => 0); assert.deepEqual([s.starforce.tries, s.starforce.success, s.starforce.fail, s.starforce.destroy], [1, 1, 0, 0]); assert.ok(s.starforce.gold > 0);
+    item.enhance = 11; act(s, { type: 'enhance', id: 'g' }, 0, () => .99); assert.equal(item.enhance, 10, 'dropped'); assert.deepEqual([s.starforce.tries, s.starforce.fail], [2, 1]);
+    item.enhance = 16; act(s, { type: 'enhance', id: 'g' }, 0, () => .31); assert.equal(s.starforce.destroy, 1); assert.equal(s.starforce.fail, 1, 'destruction is not a plain failure');
+    const by = id => ACHIEVEMENTS.find(a => a.id === id); assert.equal(by('starDestroy:1').progress(s), 1); assert.equal(by('starTries:100').progress(s), 3); assert.ok(by('starGold:10000000').progress(s) === s.starforce.gold);
+    s.inventory.push({ id: 'w', name: 'w', slot: 'coat', rarity: 6, power: 50, level: 10, enhance: 22 }); assert.equal(by('star:22').progress(s), 22);
+    assert.ok(ACHIEVEMENTS.filter(a => a.group === '강화').length >= 19);
+    assert.ok(TITLES.some(t => t.id === 'star:22' && t.name.startsWith('★') && t.achievement === 'star:22'));
+    s.level = Meta.rebirthLevel(s); const before = { ...s.starforce }; act(s, { type: 'rebirth' }, 0); assert.deepEqual(s.starforce, before, 'records survive rebirth');
 });

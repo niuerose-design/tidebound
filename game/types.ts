@@ -435,6 +435,8 @@ export type State = {
     turn: number;
     kills: number;
     deaths: number;
+    /** v3.6 스타포스 누적 기록(환생해도 남음): 시도·성공·실패(하락/유지)·파괴·쓴 골드. 업적·칭호가 봅니다. */
+    starforce?: { tries: number; success: number; fail: number; destroy: number; gold: number };
     recovery: number;
     lastTick: number;
     skills: string[];

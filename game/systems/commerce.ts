@@ -121,18 +121,23 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             const safeguard = a.value === 'safeguard' && canSafeguard(star);
             const cost = enhanceCost(item, s) * (safeguard ? STARFORCE.safeguardCost : 1);
             spend(cost);
+            const sf = s.starforce ??= { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
+            sf.tries++; sf.gold += cost;
             const chance = chanceTime(item), roll = rng(), p = starSuccess(star), d = starDestroy(star, safeguard);
             if (chance || roll < p) {
+                sf.success++;
                 item.enhance = star + 1; item.starFails = 0;
                 return `${item.name} ${item.enhance}성 강화 성공${chance ? ' (찬스 타임)' : ''} · -${cost} G`;
             }
             if (roll < p + d) {
+                sf.destroy++;
                 item.starFails = 0;
                 if (item.relic) { item.enhance = STARFORCE.relicResetStar; return `${item.name} 강화 실패 · 파괴! 유물이라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G`; }
                 s.inventory = s.inventory.filter(x => x.id !== item.id);
                 for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
                 return `${item.name} 강화 실패 · 장비가 파괴되었습니다 · -${cost} G`;
             }
+            sf.fail++;
             if (starDrops(star)) {
                 item.enhance = star - 1; item.starFails = (item.starFails || 0) + 1;
                 return `${item.name} 강화 실패 · ${item.enhance}성으로 하락${chanceTime(item) ? ' · 다음 시도는 찬스 타임(100%)' : ''} · -${cost} G`;
