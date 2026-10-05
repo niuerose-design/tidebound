@@ -148,7 +148,7 @@ export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Ite
     const cost = enhanceCost(item, s) * (guard ? STARFORCE.safeguardCost : 1);
     const p = chance ? 1 : starSuccess(star), d = chance ? 0 : starDestroy(star, guard), f = Math.max(0, 1 - p - d), pct = (n: number) => `${Math.round(n * 1000) / 10}%`;
     return <div className="forge-actions">
-        <div className="star-row" aria-label={`${star} / ${max}성`}>{Array.from({ length: max }, (_, i) => <i key={i} className={i < star ? 'on' : ''}/>)}<b>{star} / {max}성</b></div>
+        <div className="star-row" aria-label={`${star} / ${max}성`}>{Array.from({ length: max }, (_, i) => <i key={i} className={i < star ? 'on' : ''} aria-hidden>{i < star ? '★' : '☆'}</i>)}<b>{star} / {max}성</b></div>
         {star < max && <dl className="star-odds"><div><dt>성공</dt><dd className="positive">{pct(p)}</dd></div><div><dt>실패</dt><dd>{pct(f)} · {starDrops(star) ? '1성 하락' : '유지'}</dd></div>{(d > 0 || canSafeguard(star)) && <div><dt>파괴</dt><dd className={d > 0 ? 'negative' : ''}>{pct(d)}</dd></div>}</dl>}
         {chance && star < max && <p className="footnote positive">찬스 타임 · 하락이 두 번 이어져 다음 시도는 100% 성공합니다.</p>}
         {canSafeguard(star) && <label className="altar-anon"><input type="checkbox" checked={safeguard} onChange={e => setSafeguard(e.target.checked)}/> 파괴 방지 (비용 ×{STARFORCE.safeguardCost})</label>}
