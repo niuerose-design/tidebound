@@ -24,6 +24,7 @@ test('Voyage log: unlocks once, survives rebirth, silent backfill for old saves;
 });
 test('Recovery v27.8: 20% after a win minus 1%p per sea tier (min 5%), 8% in dungeons; first aid is free at Lv.2 and gives hp regen',()=>{
  const s=newState(0);assert.equal((s.learned.firstAid||0),0);s.level=2;act(s,{type:'sync'},0);assert.equal(s.learned.firstAid,1);assert.equal(s.sp,0);
+ s.rebirths=5; // v27.89 환생 5회 미만은 새싹 생존 보조(처치 후 회복 +5%p)가 붙어 기본 규칙은 5회로 봅니다.
  const max=stats(s).hp;s.skills=[];assert.equal(victoryHeal(s),Math.floor(max*.2));const regen0=stats(s).hpRegen;s.skills=['firstAid'];assert.equal(victoryHeal(s),Math.floor(stats(s).hp*.2),'first aid no longer adds victory heal');assert.ok(stats(s).hpRegen>regen0,'first aid gives hp regen');
  s.skills=[];s.tide=10;assert.equal(victoryHeal(s),Math.floor(max*.1));s.tide=30;assert.equal(victoryHeal(s),Math.floor(max*.05),'floor 5%');s.tide=0;
  s.dungeon={id:'grotto',wave:0};assert.equal(victoryHeal(s),Math.floor(max*.08));

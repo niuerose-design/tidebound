@@ -16,6 +16,7 @@ import { canUse, skillMasteryRanks } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, reward, releaseLegacySeal, gainLevels } from './encounter';
 import { inRandomGame, loseRandomGame } from './random-game';
+import { deathRecoveryTurns } from '../data/sprout';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
 import { breathReset } from './actions/lifecycle';
@@ -113,7 +114,8 @@ function tickTurn(s: State, rng: () => number) {
         s.deaths++;
         // 하드코어: 쓰러지면 즉시 이번 생을 처음부터 다시 시작합니다(오프라인 정산 중에도 같은 규칙).
         if (s.vows?.breath) { breathReset(s, s.lastTick); return; }
-        s.recovery = BALANCE.recoveryTurns;
+        // v27.89 초반 생존 보조: 환생 5회 미만은 회복 대기 절반.
+        s.recovery = deathRecoveryTurns(s);
         s.enemy = null;
         s.cooldowns = {};
         s.effects = {};
