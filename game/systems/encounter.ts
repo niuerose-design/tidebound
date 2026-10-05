@@ -15,9 +15,9 @@ import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue } from '../da
 import { roughHeal } from './vows';
 import { sproutHeal } from '../data/sprout';
 import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
-import type { State, Item } from '../types';
+import type { State, Item, Stats } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
-import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm } from '../data/world';
+import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth } from '../data/world';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
@@ -131,7 +131,14 @@ export function stageField(s: Pick<State, 'level'>, stageId: string, fishId: str
     const capped = stageStatFish(f, st.level), lifted = tideLiftFish(capped, tier, s.level);
     const field = lifted !== capped ? { ...lifted, rewardMultiplier: (lifted.rewardMultiplier || 1) * stageRewardNorm(st.fish, tier) } : lifted;
     const foe = scaledEnemyStats(field, { tier }), base = catchReward(field, tier);
+    applyDepth(foe, base, stageDepth(st.id));
     return { field, foe, level: field.level, exp: Math.max(1, Math.round(base.exp * expLevelScale(field.level, s.level))), gold: base.gold, skills: foeSkills(f.id, field.level, !!f.boss) };
+}
+/** v3.9 깊이 계수를 몬스터 체력·공격·마법과 보상 골드·경험치에 곱합니다(제자리 수정). */
+function applyDepth(foe: Stats, base: { exp: number; gold: number }, k: number) {
+    if (k === 1) return;
+    foe.hp = Math.round(foe.hp * k); foe.attack = Math.round(foe.attack * k); foe.magic = Math.round((foe.magic || 0) * k);
+    base.exp = Math.round(base.exp * k); base.gold = Math.round(base.gold * k);
 }
 export function spawn(s: State, rng: () => number) {
     // v27.86 랜덤게임: 해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다.
@@ -161,7 +168,10 @@ export function spawn(s: State, rng: () => number) {
     const field = !dungeon && !rare ? stageField(s, st.id, f.id, tier).field : normalDungeon ? tideLiftFish(f, tier, s.level) : f;
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
         : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
-    const base = dungeon ? dungeonCatchReward(field, dLevel, tier, boss, dungeon.id) : catchReward(field, tier, boss), gold = base.gold;
+    const base = dungeon ? dungeonCatchReward(field, dLevel, tier, boss, dungeon.id) : catchReward(field, tier, boss);
+    // v3.9 깊이 계수(뒤 사냥터·던전일수록 조금 더 어렵고 더 줌). 무릉도장·랜덤게임·까미·누리는 1.
+    applyDepth(foe, base, dungeon ? dungeonDepth(dungeon.id) : stageDepth(st.id));
+    const gold = base.gold;
     // v27.66 레벨 차 경험치 보정(EXP_LEVEL_GAP). 던전은 보상에 쓰는 몬스터 레벨(권장 + expLevelOver, 보스는 권장 레벨), 사냥터는 실제 몬스터 레벨 기준.
     const rewardLevel = dungeon ? (boss ? dLevel : Math.min(field.level, dLevel + DUNGEON_TUNING.expLevelOver)) : field.level;
     const exp = Math.max(1, Math.round(base.exp * expLevelScale(rewardLevel, s.level)));
@@ -284,7 +294,7 @@ export function reward(s: State, rng: () => number) {
         if (s.dungeon.wave >= d.fish.length) {
             // v27.30 권장 레벨보다 크게 높으면 클리어 골드와 반복 장비 확률이 줄어듭니다.
             const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level), overlevel = dungeonOverlevel(s.level, dLevel);
-            const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel);
+            const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel * dungeonDepth(d.id));
             s.gold += bonusGold;
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
