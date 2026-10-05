@@ -1,4 +1,4 @@
-/** v3.18 해커 행동: 재화 변환(단방향), 침투 작전, 해킹 단계 해금, 애드가드 공개 항목, 해킹 실행(서버 공유는 /api/hack에서). */
+/** v3.18 해커 행동: 재화 변환(단방향), 침투 작전, 해킹 단계 해금, 신원 조작, 해킹 실행(서버 공유는 /api/hack에서). */
 import type { ActionHandlers } from './types';
 import { HACKER, PRIVACY_FIELDS, HACK_TIER, programById, type PrivacyField } from '../../data/hacker';
 import { STAGES, DUNGEONS } from '../../data/world';
@@ -36,7 +36,8 @@ export const hackerActions: ActionHandlers = {
         if ((h.entries || 0) >= HACKER.infil.entriesPerDay) throw Error(`오늘의 침투 작전 입장(${HACKER.infil.entriesPerDay}회)을 모두 썼습니다.`);
         h.entries = (h.entries || 0) + 1;
         h.runs = (h.runs || 0) + 1;
-        h.infil = { seed: Math.floor(rng() * 2 ** 31), depth: 0, bank: { bits: 0, exp: 0 }, node: makeNode(0, nodeExtra(s)) };
+        const seed = Math.floor(rng() * 2 ** 31);
+        h.infil = { seed, depth: 0, bank: { bits: 0, exp: 0 }, node: makeNode(seed, 0, nodeExtra(s)) };
         addLog(s, '침투 작전 시작 · 방화벽 1층', 'system');
     },
     infilGuess(s, { a, now }) {
@@ -50,7 +51,7 @@ export const hackerActions: ActionHandlers = {
             const r = HACKER.infil.reward(run.depth + 1);
             run.bank.bits += r.bits; run.bank.exp += r.exp; run.depth++;
             h.bestDepth = Math.max(h.bestDepth || 0, run.depth);
-            run.node = makeNode(run.depth, nodeExtra(s));
+            run.node = makeNode(run.seed, run.depth, nodeExtra(s));
             bumpSeason(s, now, { depth: run.depth });
             addLog(s, `노드 ${run.depth} 돌파 · 쌓인 보상 비트 ${run.bank.bits} · 권한 ${run.bank.exp}`, 'reward');
             return;
@@ -78,12 +79,6 @@ export const hackerActions: ActionHandlers = {
         if (h.bits < next.bits) throw Error(`비트 ${next.bits}가 필요합니다.`);
         h.bits -= next.bits; h.tier++;
         addLog(s, `해킹 ${'I II III IV V VI VII VIII IX X'.split(' ')[h.tier - 1]} 해금 · 비트 -${next.bits}`, 'reward');
-    },
-    /** 애드가드 2단계: 공개할 항목(쉼표 구분). 빈 값이면 전부 숨김. */
-    privacy(s, { a }) {
-        if (adguardLevel(s) < 2) throw Error('애드가드 숙련 2단계부터 공개 항목을 고를 수 있습니다.');
-        const show = String(a.value || '').split(',').map(x => x.trim()).filter((x): x is PrivacyField => (PRIVACY_FIELDS as readonly string[]).includes(x));
-        s.privacy = { show: [...new Set(show)] };
     },
     /**
      * 해킹 실행: 조건·비용을 확인하고 h.pending에 적습니다. 서버 공유 설정에 쓰는 일은 /api/hack이 저장 직전에 하고 pending을 지웁니다.
@@ -157,6 +152,18 @@ export const hackerActions: ActionHandlers = {
             daily(`backdoor:${value}`, 1, '이 게이지의 백도어'); pay(HACKER.backdoor.bits);
             h.pending = { kind: 'backdoor', value, minutes: 0, n };
             gainHacker(s, 0, HACKER.backdoor.exp); bumpSeason(s, now, { hacks: 1 });
+            return;
+        }
+        if (id === 'spoof') {
+            // v3.26 신원 조작(옛 애드가드): 값 = 대상(랭킹 행 id 또는 self)|공개할 항목(쉼표). 숙련 1단계는 전부 숨김.
+            const level = adguardLevel(s);
+            if (level < 1) throw Error('신원 조작을 장착하고 숙련 1단계를 달성하세요.');
+            const [target, fields = ''] = value.split('|');
+            if (!target) throw Error('신원을 조작할 대상을 고르세요.');
+            const show = level >= 2 ? [...new Set(fields.split(',').map(x => x.trim()).filter((x): x is PrivacyField => (PRIVACY_FIELDS as readonly string[]).includes(x)))] : [];
+            daily('spoof', HACKER.spoof.perDay(level), '신원 조작'); pay(HACKER.spoof.bits);
+            h.pending = { kind: 'spoof', value: `${target}|${show.join(',')}`, minutes: HACKER.spoof.minutes(level) };
+            gainHacker(s, 0, HACKER.spoof.exp); bumpSeason(s, now, { hacks: 1 });
             return;
         }
         if (id === 'restore') {

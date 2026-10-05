@@ -7,7 +7,7 @@
 import { randomBytes } from 'node:crypto';
 import { db } from './db';
 import type { State, Snapshot } from '../types';
-import { setPuzzleKey, gainHacker, privacyOf, isHacker, seasonScore, programOn } from '../systems/hacker';
+import { setPuzzleKey, gainHacker, isHacker, seasonScore, programOn } from '../systems/hacker';
 import { addLog } from '../systems/state';
 import { HACKER, HACK_BITS, FIREWALL_ID } from '../data/hacker';
 import { currentEvents, setEventTamper } from '../data/events';
@@ -28,6 +28,8 @@ export type Hacks = {
     patched: Record<string, number>;
     /** 모험가 id → 화이트 해커 방화벽이 크래킹을 막은 날(하루 한 번). */
     shielded: Record<string, string>;
+    /** v3.26 신원 조작: 모험가 id → 숨김(공개 항목 show 말고는 ???)과 끝나는 시각. */
+    masked: Record<string, { until: number; show: string[]; by: string; byId: string }>;
 };
 const KEY = 'hacks', TTL = 30_000, TAMPER_KEEP = 30 * 86400_000;
 let cached: { at: number; hacks: Hacks } | null = null;
@@ -36,9 +38,9 @@ const obj = <T>(v: unknown): Record<string, T> => v && typeof v === 'object' && 
 function parse(raw: string | null): Hacks {
     try {
         const v = raw ? JSON.parse(raw) : null;
-        return { broadcast: v?.broadcast && typeof v.broadcast.text === 'string' ? v.broadcast : undefined, cracked: obj<number>(v?.cracked), tamper: obj<Tamper>(v?.tamper), down: Array.isArray(v?.down) ? v.down.filter((d: Down) => d && typeof d.id === 'string') : [], patched: obj<number>(v?.patched), shielded: obj<string>(v?.shielded) };
+        return { broadcast: v?.broadcast && typeof v.broadcast.text === 'string' ? v.broadcast : undefined, cracked: obj<number>(v?.cracked), tamper: obj<Tamper>(v?.tamper), down: Array.isArray(v?.down) ? v.down.filter((d: Down) => d && typeof d.id === 'string') : [], patched: obj<number>(v?.patched), shielded: obj<string>(v?.shielded), masked: obj<Hacks['masked'][string]>(v?.masked) };
     }
-    catch { return { cracked: {}, tamper: {}, down: [], patched: {}, shielded: {} }; }
+    catch { return { cracked: {}, tamper: {}, down: [], patched: {}, shielded: {}, masked: {} }; }
 }
 /** 게임 계산에 넣습니다(이벤트 변조 · 서버 다운 · 패치). */
 function applyRuntime(h: Hacks) {
@@ -56,6 +58,7 @@ export async function readHacks(now: number): Promise<Hacks> {
 async function writeHacks(h: Hacks, now: number) {
     for (const [id, until] of Object.entries(h.cracked)) if (!(until > now)) delete h.cracked[id];
     for (const [id, until] of Object.entries(h.patched)) if (!(until > now)) delete h.patched[id];
+    for (const [id, m] of Object.entries(h.masked)) if (!(m.until > now)) delete h.masked[id];
     for (const [id, t] of Object.entries(h.tamper)) if (!(now - t.at < TAMPER_KEEP)) delete h.tamper[id];
     const today = dayKey(now);
     for (const [id, day] of Object.entries(h.shielded)) if (day !== today) delete h.shielded[id];
@@ -124,6 +127,12 @@ export async function applyPendingHack(s: State, id: string, now: number) {
         }
         else h.cracked[target] = now + pending.minutes * 60_000;
     }
+    else if (pending.kind === 'spoof') {
+        const [raw, fields] = pending.value.split('|'), target = raw === 'self' ? id : playerOfRow(raw);
+        if (!target) throw Error('신원을 조작할 대상을 확인하세요.');
+        h.masked[target] = { until: now + pending.minutes * 60_000, show: (fields || '').split(',').filter(Boolean), by, byId: id };
+        addLog(s, `신원 조작 · ${target === id ? '내 정보' : '대상의 정보'}를 ${pending.minutes}분 동안 가렸습니다${fields ? `(공개: ${fields})` : ''}.`, 'reward');
+    }
     else if (pending.kind === 'tamper') {
         const [eventId, timeSign, rateSign] = pending.value.split('|'), ev = liveEvents(now).find(e => e.id === eventId);
         if (!ev) throw Error('지금 진행 중인 이벤트가 아닙니다.');
@@ -184,6 +193,11 @@ export async function applyPendingHack(s: State, id: string, now: number) {
     delete hk.pending;
 }
 
+/** v3.26 해커 계열 전직을 전체 채팅에 알립니다(이름은 밝히지 않음). 채팅 화면은 account_id 'system-hacker'를 빨간 줄로 그립니다. */
+export async function announceHacker(job: string, now: number) {
+    const text = `누군가가 ${job === 'whiteHacker' ? '화이트 해커' : '해커'}로 전직했습니다.`;
+    try { await db().postChat({ channel: 'global', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 채팅은 부가 기능 */ }
+}
 /** 운영 페이지: 진행 중인 방송 탈취를 지웁니다. */
 export async function clearBroadcast(now: number) {
     const h = parse(await db().getSetting(KEY));
@@ -203,17 +217,21 @@ export async function syncHackerBoard(id: string, s: State, now: number) {
     const x = s.hacker?.season;
     if (!x?.dirty) return;
     delete x.dirty;
-    const score = seasonScore(x), privacy = privacyOf(s);
-    await db().upsertRanking({ id: `hacker:${id}`, snapshot: JSON.stringify({ season: hackerSeason(x.key), board: 'hacker', account: id, name: s.name, job: s.job, depth: x.depth, hacks: x.hacks, restores: x.restores, grade: s.hacker?.grade || 1, ...(privacy ? { privacy } : {}) }), rating: score, power: x.depth, updated_at: now });
+    const score = seasonScore(x);
+    await db().upsertRanking({ id: `hacker:${id}`, snapshot: JSON.stringify({ season: hackerSeason(x.key), board: 'hacker', account: id, name: s.name, job: s.job, depth: x.depth, hacks: x.hacks, restores: x.restores, grade: s.hacker?.grade || 1 }), rating: score, power: x.depth, updated_at: now });
 }
 export async function listHackerBoard(key: string) {
     const rows = await db().listRankings(hackerSeason(key), 50);
     return rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as { account: string; name: string; job: string; depth: number; hacks: number; restores: number; grade: number; privacy?: { show: string[] } }; return { rank: i + 1, id: snap.account, name: snap.name, job: snap.job, depth: snap.depth, hacks: snap.hacks, restores: snap.restores, grade: snap.grade, score: r.rating, ...(snap.privacy ? { privacy: snap.privacy } : {}) }; });
 }
 
-/** 애드가드: 순위표에 보낼 스냅샷에서 숨긴 정보를 가립니다(크래킹당한 동안은 그대로). 결투 계산용 원본은 DB에 그대로 둡니다. */
+/**
+ * 순위표에 보낼 스냅샷에서 숨긴 정보를 가립니다(크래킹당한 동안은 그대로). 결투 계산용 원본은 DB에 그대로 둡니다.
+ * v3.26 숨김은 스냅샷의 privacy(옛 애드가드)가 아니라 해커의 신원 조작(hacks.masked)에서 옵니다. 옛 privacy는 버립니다.
+ */
 export function maskSnapshot<T extends Partial<Snapshot> & { name?: string }>(snap: T, playerId: string, hacks: Hacks, now: number): T & { masked?: string[] } {
-    const privacy = snap.privacy;
+    const m = hacks.masked[playerId], privacy = m && m.until > now ? { show: m.show } : null;
+    if ('privacy' in snap) { snap = { ...snap }; delete snap.privacy; }
     if (!privacy || (hacks.cracked[playerId] || 0) > now) return snap;
     // 값은 지우고(브라우저에서도 못 보게) 0·빈 값으로 채운 뒤, 화면은 masked 목록을 보고 ???로 그립니다.
     const show = new Set(privacy.show || []), masked = ['name', ...PRIVACY_KEYS.filter(f => !show.has(f))], out: Record<string, unknown> = { ...snap, name: '???', masked };

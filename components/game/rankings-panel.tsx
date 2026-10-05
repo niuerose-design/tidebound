@@ -21,12 +21,13 @@ import type { Ranking, AbyssRow } from './use-game';
 import { abyssWeeklyPearls } from '@/game/systems/progress';
 import type { PanelProps } from './panel-props';
 import { isHackerJob } from '@/game/data/hacker';
+import { adguardLevel } from '@/game/systems/hacker';
 
 /** 랭킹 줄과 상세보기에 보여 주는 주요 능력치. */
 const MAIN_STATS = ['hp', 'attack', 'magic', 'defense', 'resist', 'speed'] as const;
 const DETAIL_STATS = ['hp', 'hpRegen', 'attack', 'magic', 'defense', 'resist', 'speed', 'accuracy', 'evasion', 'crit', 'critDamage', 'mana', 'manaRegen', 'penetration', 'lifesteal'] as const;
 const SHORT: Record<typeof MAIN_STATS[number], string> = { hp: '체력', attack: '물공', magic: '마공', defense: '물방', resist: '마방', speed: '속도' };
-/** v3.18 애드가드로 가린 항목이면 ???로 그립니다. */
+/** v3.18 가린 항목(v3.26 신원 조작)이면 ???로 그립니다. */
 const hid = (r: { masked?: string[] }, f: string) => !!r.masked?.includes(f);
 const jobName = (id: string) => id === 'boss' ? '던전 보스' : jobById(id)?.name || '??';
 /** 등록 시점의 스킬 편성: 액티브는 판정 순서대로, 패시브는 그 뒤에. 성장 레벨은 등록된 SP·숙련으로 계산합니다. */
@@ -60,8 +61,8 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     const detailLoadout = detail ? loadout(detail) : null, detailStats = detail ? normalizeStats(detail.stats) : null;
     return <>
     <Heading eyebrow="ASYNC ARENA" title="모험가의 명예" description="등록된 능력치와 스킬로 겨룹니다. 상대의 접속 여부와 관계없이 전투합니다.">
-    <button className="primary" disabled={busy} onClick={register} title={isHackerJob(s.job) ? '해커는 결투 정보를 새로 등록하지 않고, 이전에 등록한 기록의 애드가드 숨김 정보만 갱신합니다.' : undefined}>
-    <ArrowUpRight size={17}/>{isHackerJob(s.job) ? '숨김 정보 갱신' : '내 전투 정보 등록'}</button>
+    <button className="primary" disabled={busy || isHackerJob(s.job)} onClick={register} title={isHackerJob(s.job) ? '해커는 결투 정보를 등록하지 않습니다. 다른 직업으로 등록해 둔 기록은 그대로 남습니다.' : undefined}>
+    <ArrowUpRight size={17}/>{isHackerJob(s.job) ? '해커는 등록 불가' : '내 전투 정보 등록'}</button>
     </Heading>
     <p className="arena-season" title={`지난 시즌 순위 보상: 1위 ${duelSeasonPearls(1)} · 2위 ${duelSeasonPearls(2)} · 3위 ${duelSeasonPearls(3)} · 10위 안 ${duelSeasonPearls(10)} · 50위 안 ${duelSeasonPearls(50)} · 참가 ${duelSeasonPearls(99)}세계석. 첫 행동 때 받습니다.`}>결투 시즌 <b>{season || '—'}</b> · 매달 1일 0시(한국 시간) 점수 1000으로 초기화 · 순위 보상은 다음 시즌 첫 행동 때 지급</p>
     <div className="arena-stats">
@@ -123,7 +124,8 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
             <TableCell className="ranking-actions">
             {(() => { const a = duelAllowance(s, now, r.id); return <><button className="secondary small" disabled={busy || r.self || a.cooldown > 0 || a.left <= 0 || a.vs <= 0} title={r.self ? undefined : `이 상대와 오늘 ${a.vs}회 남음`} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>{r.self ? '내 캐릭터' : `대결 ${a.vs}/${a.perOpponent}`}</button><button className="secondary small" disabled={busy || r.self} title="점수·전적이 바뀌지 않는 연습 대결" onClick={() => send({ type: 'training', id: `user:${r.id}` }, '/api/duel')}>연습</button></>; })()}
             <button className="text-button" onClick={() => setDetail(r)}>상세보기</button>
-            {r.masked && s.job === 'hacker' && (s.hacker?.tier || 0) >= 1 && <button className="secondary small" disabled={busy} title="애드가드를 1시간 동안 풉니다(비트 소모)" onClick={() => send({ type: 'hackRun', id: 'crack', value: r.id }, '/api/hack')}>크래킹</button>}
+            {r.masked && s.job === 'hacker' && (s.hacker?.tier || 0) >= 1 && <button className="secondary small" disabled={busy} title="신원 조작을 1시간 동안 풉니다(비트 소모)" onClick={() => send({ type: 'hackRun', id: 'crack', value: r.id }, '/api/hack')}>크래킹</button>}
+            {!r.masked && !r.self && isHackerJob(s.job) && adguardLevel(s) >= 1 && <button className="secondary small" disabled={busy} title="이 모험가의 정보를 ???로 가립니다(해킹 화면에서 고른 공개 항목 없이 전부 가림, 비트 소모)" onClick={() => send({ type: 'hackRun', id: 'spoof', value: `${r.id}|` }, '/api/hack')}>신원 조작</button>}
             </TableCell>
             </TableRow>)}</TableBody>
         </Table> : <Empty title="첫 번째 모험가가 되어보세요" description="전투 정보를 등록하면 랭킹에 등장합니다. 다른 참가자가 없을 때는 훈련 상대와 대결할 수 있습니다."/>}</div>

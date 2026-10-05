@@ -3,7 +3,7 @@
  * 침투 작전의 정답은 서버 키(setPuzzleKey)와 판 시드로 만든 해시라, 세이브(클라이언트에 보내는 상태)에는 정답이 없습니다.
  */
 import type { State, HackerState, HackerInfil } from '../types';
-import { HACKER, WHITE_HACKER_ID, ADGUARD_ID, gradeNeed, isHackerJob, programById, type PrivacyField, type ProgramId, PRIVACY_FIELDS } from '../data/hacker';
+import { HACKER, WHITE_HACKER_ID, ADGUARD_ID, gradeNeed, isHackerJob, programById, type ProgramId } from '../data/hacker';
 import { monthKey } from '../data/goals';
 import { dayKey } from '../data/goals';
 import { canUse, skillMastery } from './progression';
@@ -39,7 +39,7 @@ export function rollHackerDay(s: State, now: number) {
     return h;
 }
 /**
- * 비트·권한 경험치 지급. 권한 등급을 올리고, 해커 직업 숙련과 장착한 해커 스킬(애드가드) 숙련에 같은 양(정수)을 더합니다.
+ * 비트·권한 경험치 지급. 권한 등급을 올리고, 해커 직업 숙련과 장착한 해커 스킬(신원 조작) 숙련에 같은 양(정수)을 더합니다.
  * 해커로 있는 동안 SP·세계석·골드·경험치는 생기지 않습니다(재화 분리).
  */
 export function gainHacker(s: State, bits: number, exp: number, quiet = false) {
@@ -84,22 +84,62 @@ function nodeRng(run: Pick<HackerInfil, 'seed' | 'depth'>) {
     let x = hash(`${puzzleKey}:${run.seed}:${run.depth}`) % 4294967296;
     return () => { x = (x + 0x6D2B79F5) >>> 0; let t = x; t = Math.imul(t ^ t >>> 15, 1 | t); t ^= t + Math.imul(t ^ t >>> 7, 61 | t); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 }
-/** 지금 노드의 정답(서버만 계산). 자물쇠는 서로 다른 숫자 size자리, 포트는 1~size. */
+/** v3.26 키로만 만들 수 있는 보조 난수(salt마다 다른 흐름). 노드 종류(k)와 새 퍼즐 문제(p)에 씁니다. 자물쇠·포트 정답은 예전 흐름 그대로. */
+function saltRng(seed: number, depth: number, salt: string) {
+    let x = hash(`${puzzleKey}:${seed}:${depth}:${salt}`) % 4294967296;
+    return () => { x = (x + 0x6D2B79F5) >>> 0; let t = x; t = Math.imul(t ^ t >>> 15, 1 | t); t ^= t + Math.imul(t ^ t >>> 7, 61 | t); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+const pick = (r: () => number, lo: number, hi: number) => lo + Math.floor(r() * (hi - lo + 1));
+/** v3.26 암호 해독 단어(영문 대문자). */
+const CIPHER_WORDS = ['ROOT', 'ADMIN', 'SHELL', 'PROXY', 'TOKEN', 'CACHE', 'LOGIN', 'KERNEL', 'ROUTER', 'SOCKET', 'PACKET', 'BINARY', 'CIPHER', 'ACCESS', 'SERVER', 'CLIENT', 'SCRIPT', 'BUFFER', 'MATRIX', 'FIREWALL', 'BACKDOOR', 'EXPLOIT'];
+const shiftWord = (w: string, k: number) => [...w].map(c => String.fromCharCode(65 + (c.charCodeAt(0) - 65 + k) % 26)).join('');
+/** v3.26 새 퍼즐(수열 · 진법 변환 · 암호 해독)의 문제와 정답. 서버 키로만 같은 문제가 나옵니다. */
+function puzzleOf(seed: number, depth: number, kind: 'seq' | 'bin' | 'cipher'): { prompt: string; answer: string } {
+    const r = saltRng(seed, depth, 'p'), d = depth + 1;
+    if (kind === 'seq') {
+        const types = ['add', ...(d >= 3 ? ['mul'] : []), ...(d >= 5 ? ['alt'] : []), ...(d >= 7 ? ['fib'] : []), ...(d >= 9 ? ['square'] : [])], type = types[Math.floor(r() * types.length)];
+        let terms: number[];
+        if (type === 'mul') { const a = pick(r, 1, 5), k = pick(r, 2, 3); terms = Array.from({ length: 6 }, (_, i) => a * k ** i); }
+        else if (type === 'alt') { const a = pick(r, 1, 20), p = pick(r, 2, 9), q = pick(r, 2, 9); terms = [a]; for (let i = 1; i < 6; i++) terms.push(terms[i - 1] + (i % 2 ? p : q)); }
+        else if (type === 'fib') { terms = [pick(r, 1, 9), pick(r, 1, 9)]; for (let i = 2; i < 6; i++) terms.push(terms[i - 1] + terms[i - 2]); }
+        else if (type === 'square') { const k = pick(r, 1, 5), c = pick(r, 0, 9); terms = Array.from({ length: 6 }, (_, i) => (k + i) ** 2 + c); }
+        else { const a = pick(r, 1, 30), step = pick(r, 2, 9 + d); terms = Array.from({ length: 6 }, (_, i) => a + step * i); }
+        return { prompt: `${terms.slice(0, 5).join(', ')}, ?`, answer: String(terms[5]) };
+    }
+    if (kind === 'bin') {
+        const bits = Math.min(12, 5 + Math.floor(d / 3)), value = pick(r, 2 ** (bits - 1), 2 ** bits - 1), hex = d >= 8 && r() < .5;
+        return { prompt: hex ? `0x${value.toString(16).toUpperCase()}` : `0b${value.toString(2)}`, answer: String(value) };
+    }
+    const word = CIPHER_WORDS[Math.floor(r() * CIPHER_WORDS.length)], max = d < 6 ? 3 : 25, k = pick(r, 1, max);
+    return { prompt: `${shiftWord(word, k)} (알파벳을 1~${max}칸 밀어 둔 단어)`, answer: word };
+}
+/** v3.26 노드 종류: 1번째는 방화벽, 2번째는 포트 스캔, 3번째부터 홀수 칸은 방화벽·암호 해독, 짝수 칸은 포트 스캔·수열·진법 변환. */
+function nodeKind(seed: number, depth: number): HackerInfil['node']['kind'] {
+    const next = depth + 1;
+    if (next <= 2) return next === 1 ? 'lock' : 'port';
+    const x = saltRng(seed, depth, 'k')();
+    return next % 2 === 1 ? (x < .6 ? 'lock' : 'cipher') : x < .4 ? 'port' : x < .7 ? 'seq' : 'bin';
+}
+/** 지금 노드의 정답(서버만 계산). 자물쇠는 서로 다른 숫자 size자리, 포트는 1~size, 수열·진법·암호는 문제와 함께 만든 답. */
 export function nodeAnswer(run: HackerInfil) {
+    const kind = run.node.kind;
+    if (kind === 'seq' || kind === 'bin' || kind === 'cipher') return puzzleOf(run.seed, run.depth, kind).answer;
     const r = nodeRng(run);
-    if (run.node.kind === 'port') return String(1 + Math.floor(r() * run.node.size));
+    if (kind === 'port') return String(1 + Math.floor(r() * run.node.size));
     const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     for (let i = digits.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [digits[i], digits[j]] = [digits[j], digits[i]]; }
     return digits.slice(0, run.node.size).join('');
 }
-/** extra: 노드마다 더 주는 시도(v3.25 포트 스캐너 +1). */
-export function makeNode(depth: number, extra = 0): HackerInfil['node'] {
-    const next = depth + 1;
-    if (next % 2 === 1) { const l = HACKER.infil.lock(next); return { kind: 'lock', size: l.digits, tries: 0, max: l.tries + extra, history: [] }; }
-    const p = HACKER.infil.port(next); return { kind: 'port', size: p.range, tries: 0, max: p.tries + extra, history: [] };
+/** extra: 노드마다 더 주는 시도(v3.25 포트 스캐너 +1). v3.26 판 시드로 노드 종류를 고르고, 새 퍼즐은 문제(prompt)를 함께 적습니다. */
+export function makeNode(seed: number, depth: number, extra = 0): HackerInfil['node'] {
+    const next = depth + 1, kind = nodeKind(seed, depth);
+    if (kind === 'lock') { const l = HACKER.infil.lock(next); return { kind, size: l.digits, tries: 0, max: l.tries + extra, history: [] }; }
+    if (kind === 'port') { const p = HACKER.infil.port(next); return { kind, size: p.range, tries: 0, max: p.tries + extra, history: [] }; }
+    const q = puzzleOf(seed, depth, kind);
+    return { kind, size: q.answer.length, tries: 0, max: HACKER.infil.tries[kind] + extra, history: [], prompt: q.prompt };
 }
 export const nodeExtra = (s: Pick<State, 'job' | 'hacker'>) => programOn(s, 'portScanner') ? 1 : 0;
-/** 추측을 채점합니다. 자물쇠: 자리·숫자 모두 맞으면 S, 숫자만 맞으면 B. 포트: 정답이 더 크면 UP, 작으면 DOWN. */
+/** 추측을 채점합니다. 자물쇠: 자리·숫자 모두 맞으면 S, 숫자만 맞으면 B. 포트·수열·진법: 정답이 더 크면 UP, 작으면 DOWN. 암호: 자리가 맞은 글자 수. */
 export function judge(run: HackerInfil, guess: string) {
     const answer = nodeAnswer(run), node = run.node;
     if (node.kind === 'lock') {
@@ -108,20 +148,21 @@ export function judge(run: HackerInfil, guess: string) {
         for (let i = 0; i < guess.length; i++) { if (guess[i] === answer[i]) strike++; else if (answer.includes(guess[i])) ball++; }
         return { solved: strike === node.size, hint: strike === node.size ? 'OPEN' : `${strike}S ${ball}B` };
     }
+    if (node.kind === 'cipher') {
+        const g = guess.toUpperCase();
+        if (!/^[A-Z]+$/.test(g) || g.length !== answer.length) throw Error(`영문 ${answer.length}글자 단어를 입력하세요.`);
+        const same = [...g].filter((c, i) => c === answer[i]).length;
+        return { solved: g === answer, hint: g === answer ? 'OPEN' : `${same}/${answer.length} 일치` };
+    }
     const n = Number(guess);
-    if (!Number.isInteger(n) || n < 1 || n > node.size) throw Error(`1~${node.size} 사이의 포트 번호를 입력하세요.`);
+    if (node.kind === 'port' && (!Number.isInteger(n) || n < 1 || n > node.size)) throw Error(`1~${node.size} 사이의 포트 번호를 입력하세요.`);
+    if (!Number.isInteger(n) || n < 0) throw Error('0 이상의 정수를 입력하세요.');
     const a = Number(answer);
     return { solved: n === a, hint: n === a ? 'OPEN' : a > n ? 'UP' : 'DOWN' };
 }
 
-// ── 애드가드 ──────────────────────────────────────────────
-/** 장착·사용 가능한 애드가드의 숙련 단계(0 = 꺼짐). */
+// ── 신원 조작(옛 애드가드) ──────────────────────────────────────────────
+/** 장착·사용 가능한 신원 조작(옛 애드가드)의 숙련 단계(0 = 꺼짐). v3.26 해커 계열일 때만 씁니다. */
 export function adguardLevel(s: State) {
     return s.skills.includes(ADGUARD_ID) && canUse(s, ADGUARD_ID) ? skillMastery(s, ADGUARD_ID) : 0;
-}
-/** 순위표에 실을 숨김 설정. 1단계: 이름과 모든 항목 숨김, 2단계: 고른 항목만 공개. 애드가드가 꺼져 있으면 undefined. */
-export function privacyOf(s: State): { show: PrivacyField[] } | undefined {
-    const level = adguardLevel(s);
-    if (level < 1) return undefined;
-    return { show: level >= 2 ? (s.privacy?.show || []).filter((x): x is PrivacyField => (PRIVACY_FIELDS as readonly string[]).includes(x)) : [] };
 }

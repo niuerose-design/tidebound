@@ -1,5 +1,5 @@
 'use client';
-/** v3.18 해커 화면: 권한 등급·비트, 재화 변환(단방향), 침투 작전, 해킹 I(방송 탈취·크래킹), 애드가드 공개 항목. v3.25 해킹 II~V · 화이트 해커 · 프로그램. */
+/** v3.18 해커 화면: 권한 등급·비트, 재화 변환(단방향), 침투 작전, 해킹 I(방송 탈취·크래킹), v3.26 신원 조작(옛 애드가드). v3.25 해킹 II~V · 화이트 해커 · 프로그램. */
 import { useState } from 'react';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format, useNow } from './shared';
@@ -26,8 +26,8 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
     const downMinutes = Math.round(HACKER.down.minutes(n) * (h.loadout?.includes('exploitKit') ? 1.2 : 1));
     const targets = [...(s.hackFeed?.broadcast ? [{ value: 'broadcast', label: `방송 탈취 · ${s.hackFeed.broadcast.by}` }] : []), ...feedDown.map(d => ({ value: `down:${d.kind}:${d.id}`, label: `서버 다운 · ${placeLabel(d.kind, d.id)} · ${d.by}` })), ...events.filter(e => e.tampered).map(e => ({ value: `tamper:${e.id}`, label: `이벤트 변조 · ${e.name}` }))];
     const programs = h.programs || [], loadout = h.loadout || [], mem = memoryCap(s);
-    const level = adguardLevel(s), show = new Set(s.privacy?.show || []);
-    const togglePrivacy = (f: PrivacyField) => { const nextShow = new Set(show); if (nextShow.has(f)) nextShow.delete(f); else nextShow.add(f); send({ type: 'privacy', value: [...nextShow].join(',') }); };
+    const level = adguardLevel(s), [showList, setShowList] = useState<PrivacyField[]>([]), show = new Set(showList), [spoofTarget, setSpoofTarget] = useState('');
+    const togglePrivacy = (f: PrivacyField) => setShowList(list => list.includes(f) ? list.filter(x => x !== f) : [...list, f]);
     const convertN = Math.max(0, Math.floor(Number(convert.n) || 0));
     return <>
         <Heading eyebrow="HACKER" title="해킹" description="싸우는 대신 서버를 건드립니다. 해커로 있는 동안 레벨·경험치는 멈추고, 비트와 권한 등급으로 자랍니다."/>
@@ -44,13 +44,14 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
         <section className="panel hacker-section">
             <div className="section-title"><h2>침투 작전</h2><span>오늘 남은 입장 {Math.max(0, entriesLeft)} / {HACKER.infil.entriesPerDay}</span></div>
             {!infil ? <>
-                <p className="footnote">서버 노드를 한 칸씩 뚫습니다. 홀수 칸은 방화벽(서로 다른 숫자 자물쇠: 자리·숫자가 맞으면 S, 숫자만 맞으면 B), 짝수 칸은 포트 스캔(UP·DOWN). 깊을수록 보상이 커지고, 언제든 이탈해 쌓인 보상을 받습니다. 시도를 다 쓰면 추적당해 {Math.round(traceKeep(s) * 100)}%만 회수합니다.</p>
+                <p className="footnote">서버 노드를 한 칸씩 뚫습니다. 방화벽(서로 다른 숫자 자물쇠: 자리·숫자가 맞으면 S, 숫자만 맞으면 B) · 포트 스캔(UP·DOWN) · 수열(다음 수) · 진법 변환(2진수·16진수를 10진수로) · 암호 해독(알파벳을 몇 칸 밀어 둔 단어)이 섞여 나옵니다. 깊을수록 보상이 커지고, 언제든 이탈해 쌓인 보상을 받습니다. 시도를 다 쓰면 추적당해 {Math.round(traceKeep(s) * 100)}%만 회수합니다.</p>
                 <button className="primary" disabled={busy || !isHacker || entriesLeft <= 0} onClick={() => send({ type: 'infilStart' })}>침투 시작</button>
             </> : <div className="infil-run">
-                <div className="infil-head"><b>노드 {infil.depth + 1} · {infil.node.kind === 'lock' ? `방화벽 · 숫자 ${infil.node.size}자리` : `포트 스캔 · 1~${format(infil.node.size)}`}</b><span>남은 시도 {infil.node.max - infil.node.tries} · 쌓인 보상 비트 {infil.bank.bits} · 권한 {infil.bank.exp}</span></div>
+                <div className="infil-head"><b>노드 {infil.depth + 1} · {NODE_LABEL[infil.node.kind](infil.node.size)}</b><span>남은 시도 {infil.node.max - infil.node.tries} · 쌓인 보상 비트 {infil.bank.bits} · 권한 {infil.bank.exp}</span></div>
+                {infil.node.prompt && <p className="infil-prompt"><code>{infil.node.prompt}</code></p>}
                 <ol className="infil-history">{infil.node.history.map((x, i) => <li key={i}><code>{x.guess}</code><b className={x.hint === 'OPEN' ? 'ok' : ''}>{x.hint}</b></li>)}</ol>
                 <form className="infil-form" onSubmit={e => { e.preventDefault(); if (!guess.trim()) return; send({ type: 'infilGuess', value: guess.trim() }); setGuess(''); }}>
-                    <input value={guess} onChange={e => setGuess(e.target.value.replace(/\D/g, '').slice(0, infil.node.kind === 'lock' ? infil.node.size : 5))} inputMode="numeric" placeholder={infil.node.kind === 'lock' ? `서로 다른 숫자 ${infil.node.size}자리` : `1~${infil.node.size}`} aria-label="추측"/>
+                    <input value={guess} onChange={e => setGuess(infil.node.kind === 'cipher' ? e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, infil.node.size) : e.target.value.replace(/\D/g, '').slice(0, infil.node.kind === 'lock' ? infil.node.size : 7))} inputMode={infil.node.kind === 'cipher' ? 'text' : 'numeric'} placeholder={NODE_HINT[infil.node.kind](infil.node.size)} aria-label="추측"/>
                     <button className="primary" disabled={busy || !guess}>입력</button>
                     <button type="button" className="secondary" disabled={busy} onClick={() => send({ type: 'infilCashout' })}>이탈 · 보상 받기</button>
                 </form>
@@ -72,7 +73,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
                 </div>
                 <div className="hack-card">
                     <b>크래킹 · I</b>
-                    <small>애드가드로 숨은 모험가 한 명의 정보를 {HACKER.crack.minutes}분 동안 드러냅니다. 화이트 해커의 방화벽은 하루 한 번 막아 냅니다. 비트 {HACKER.crack.bits} · 오늘 {used.crack || 0}/{HACKER.crack.perDay(n)}</small>
+                    <small>신원 조작으로 가려진 모험가 한 명의 정보를 {HACKER.crack.minutes}분 동안 드러냅니다. 화이트 해커의 방화벽은 하루 한 번 막아 냅니다. 비트 {HACKER.crack.bits} · 오늘 {used.crack || 0}/{HACKER.crack.perDay(n)}</small>
                     <form onSubmit={e => { e.preventDefault(); if (!target.trim()) return; run('crack', target.trim()); setTarget(''); }}>
                         <input value={target} onChange={e => setTarget(e.target.value.slice(0, 120))} placeholder="랭킹 행 id" aria-label="크래킹 대상"/>
                         <button className="primary" disabled={busy || !isHacker || !target.trim() || (used.crack || 0) >= HACKER.crack.perDay(n) || h.bits < HACKER.crack.bits}>크래킹</button>
@@ -145,9 +146,14 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
         </section>
 
         <section className="panel hacker-section">
-            <div className="section-title"><h2>애드가드</h2><span>{level >= 2 ? '2단계 · 공개 항목 선택' : level === 1 ? '1단계 · 이름·정보 전부 숨김' : '꺼짐(장착·숙련 1단계 필요)'}</span></div>
-            <p className="footnote">랭킹·무릉도장 기록판에서 이름을 ???로 숨깁니다. 결투 계산에는 영향이 없고, 크래킹을 당하면 1시간 동안 풀립니다. 다른 직업도 숙련 계승으로 쓸 수 있습니다.</p>
-            {level >= 2 && <div className="skill-chip-group" role="group" aria-label="공개 항목">{PRIVACY_FIELDS.map(f => <button type="button" key={f} className={`skill-chip ${show.has(f) ? 'active' : ''}`} aria-pressed={show.has(f)} disabled={busy} onClick={() => togglePrivacy(f)}>{PRIVACY_LABELS[f]} {show.has(f) ? '공개' : '숨김'}</button>)}</div>}
+            <div className="section-title"><h2>신원 조작</h2><span>{level >= 3 ? '3단계 · 항목 선택 · 2시간' : level === 2 ? '2단계 · 항목 선택' : level === 1 ? '1단계 · 전부 숨김' : '꺼짐(장착·숙련 1단계 필요)'}</span></div>
+            <p className="footnote">고른 모험가 한 명(나도 가능)의 랭킹·무릉도장·해커 순위 정보를 ???로 가립니다. 결투 계산에는 영향이 없고, 크래킹을 당하면 그동안 풀립니다. 랭킹 행의 ‘신원 조작’ 버튼으로도 쓸 수 있습니다. 비트 {HACKER.spoof.bits} · 오늘 {used.spoof || 0}/{HACKER.spoof.perDay(level)} · {HACKER.spoof.minutes(level)}분</p>
+            {level >= 2 && <div className="skill-chip-group" role="group" aria-label="공개로 남길 항목">{PRIVACY_FIELDS.map(f => <button type="button" key={f} className={`skill-chip ${show.has(f) ? 'active' : ''}`} aria-pressed={show.has(f)} disabled={busy} onClick={() => togglePrivacy(f)}>{PRIVACY_LABELS[f]} {show.has(f) ? '공개' : '숨김'}</button>)}</div>}
+            {level >= 1 && <form className="hack-form" onSubmit={e => { e.preventDefault(); if (!spoofTarget.trim()) return; run('spoof', `${spoofTarget.trim()}|${[...show].join(',')}`); setSpoofTarget(''); }}>
+                <input value={spoofTarget} onChange={e => setSpoofTarget(e.target.value.slice(0, 120))} placeholder="랭킹 행 id" aria-label="신원 조작 대상"/>
+                <button className="primary" disabled={busy || !isHacker || !spoofTarget.trim() || (used.spoof || 0) >= HACKER.spoof.perDay(level) || h.bits < HACKER.spoof.bits}>대상 조작</button>
+                <button type="button" className="secondary" disabled={busy || !isHacker || (used.spoof || 0) >= HACKER.spoof.perDay(level) || h.bits < HACKER.spoof.bits} onClick={() => run('spoof', `self|${[...show].join(',')}`)}>내 정보 가리기</button>
+            </form>}
             {s.hackFeed?.crackedUntil && <p className="footnote negative">크래킹당했습니다 · {new Date(s.hackFeed.crackedUntil).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}까지 정보가 드러납니다.</p>}
         </section>
     </>;
@@ -161,3 +167,7 @@ function PlaceSelect({ value, onChange }: { value: string; onChange: (v: string)
 }
 /** v3.25 백도어 대상: 축복 · 신 소환 · 월드보스 게이지. */
 const GAUGES = [...BLESSINGS.map(b => ({ id: b.id as string, name: b.name })), { id: 'god', name: '신 소환' }, ...RAIDS.map(r => ({ id: r.id as string, name: `${r.name} 소환` }))];
+
+/** v3.26 침투 작전 노드 이름과 입력 안내. */
+const NODE_LABEL: Record<string, (size: number) => string> = { lock: n => `방화벽 · 숫자 ${n}자리`, port: n => `포트 스캔 · 1~${format(n)}`, seq: () => '수열 · 다음 수는?', bin: () => '진법 변환 · 10진수로', cipher: n => `암호 해독 · ${n}글자` };
+const NODE_HINT: Record<string, (size: number) => string> = { lock: n => `서로 다른 숫자 ${n}자리`, port: n => `1~${n}`, seq: () => '다음 수', bin: () => '10진수', cipher: n => `영문 ${n}글자` };

@@ -43,6 +43,8 @@ export const buildActions: ActionHandlers = {
         // v3.18 해커로 갈 때 장착 스킬을 맡겨 두고, 해커에서 나올 때 되살립니다(해커는 해커 스킬만 장착).
         // v3.25 해커 계열(해커·화이트 해커) 사이를 오갈 때는 맡긴 스킬을 그대로 둡니다.
         const wasHacker = isHackerJob(s.job);
+        // v3.26 해커 계열로 새로 전직하면 서버 채팅에 빨간 알림(누가 했는지는 밝히지 않음). /api/game이 저장 전에 읽고 지웁니다.
+        if (isHackerJob(id) && s.job !== id) s.jobAnnounce = id;
         if (isHackerJob(id) && !wasHacker) (s.hacker ??= { bits: 0, exp: 0, grade: 1, tier: 0 }).savedSkills = [...s.skills];
         s.job = id;
         if (!s.unlockedJobs.includes(id))

@@ -11,7 +11,7 @@ import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
 import { refreshEvents } from './events-config';
 import { ensurePuzzleKey, readHacks, syncHackerBoard } from './hacks';
-import { privacyOf, isHacker } from '../systems/hacker';
+import { isHacker } from '../systems/hacker';
 import { accountFromRequest, AuthError, readSlot } from './auth';
 import { FISH } from '../data/world';
 import { JOBS } from '../data/classes';
@@ -93,15 +93,8 @@ export const duelRowId = (seasonKey: string, id: string) => `duel:${seasonKey}:$
 export async function register(id: string) {
     const now = Date.now(), key = duelSeasonKey(now);
     const { state } = await mutate(id, { type: 'sync' }, s => syncDuelSeason(id, s, now));
-    // v3.18 해커는 결투 정보를 새로 등록하지 않습니다. 이전 직업으로 등록해 둔 기록은 그대로 두고, 애드가드 숨김 정보만 갱신합니다.
-    if (isHacker(state)) {
-        const row = await db().getRanking(duelRowId(key, id), monthSeason(key));
-        if (!row) throw new ApiError('해커는 결투 정보를 등록할 수 없습니다. 다른 직업으로 등록해 두면 그 기록이 남습니다.');
-        const { privacy: _old, ...rest } = JSON.parse(row.snapshot) as Snapshot; void _old;
-        const privacy = privacyOf(state);
-        await db().upsertRanking({ ...row, snapshot: JSON.stringify({ ...rest, ...(privacy ? { privacy } : {}) }) });
-        return state;
-    }
+    // v3.18 해커는 결투 정보를 새로 등록하지 않습니다(이전 직업으로 등록해 둔 기록은 그대로). v3.26 숨김 정보는 해커의 신원 조작이 서버 설정에 둡니다.
+    if (isHacker(state)) throw new ApiError('해커는 결투 정보를 등록할 수 없습니다. 다른 직업으로 등록해 두면 그 기록이 남습니다.');
     const snap = { ...snapshot(state), season: monthSeason(key), seasonRank: state.duelSeason?.lastKey === previousMonthKey(key) ? state.duelSeason?.lastRank : undefined };
     await db().upsertRanking({ id: duelRowId(key, id), snapshot: JSON.stringify(snap), rating: snap.rating, power: snap.power, updated_at: now });
     return state;
@@ -145,7 +138,7 @@ export async function syncAbyssBoard(id: string, s: State, now: number) {
     if (!week) return;
     const database = db(), current = weekKey(now);
     if (week.dirty && week.key === current) {
-        await database.upsertRanking({ id: abyssRowId(id), snapshot: JSON.stringify({ season: weekSeason(current), board: 'abyss', account: id, name: s.name, depth: week.best, job: s.job, rebirths: s.rebirths, ...(privacyOf(s) ? { privacy: privacyOf(s) } : {}) }), rating: week.best, power: week.best, updated_at: now });
+        await database.upsertRanking({ id: abyssRowId(id), snapshot: JSON.stringify({ season: weekSeason(current), board: 'abyss', account: id, name: s.name, depth: week.best, job: s.job, rebirths: s.rebirths }), rating: week.best, power: week.best, updated_at: now });
         delete week.dirty;
     }
     const previous = weekKey(now - 7 * 86400000);

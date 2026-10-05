@@ -62,8 +62,8 @@ test('v3.18 infiltration: the answer is never in the save, lock/port puzzles gra
     act(s, { type: 'infilGuess', value: a2 }, 0); const banked = s.hacker.infil.bank.bits, b0 = s.hacker.bits, p = Number(H.nodeAnswer(s.hacker.infil));
     const tries = s.hacker.infil.node.max; for (let i = 0; i < tries; i++) act(s, { type: 'infilGuess', value: String(p === 1 ? 2 : 1) }, 0);
     assert.equal(s.hacker.infil, null); assert.equal(s.hacker.bits, b0 + Math.floor(banked * D.HACKER.infil.traceKeep));
-    act(s, { type: 'infilStart' }, 0); act(s, { type: 'infilCashout' }, 0);
-    assert.throws(() => act(s, { type: 'infilStart' }, 0), /입장/, 'three entries a day');
+    for (let i = 0; i < 3; i++) { act(s, { type: 'infilStart' }, 0); act(s, { type: 'infilCashout' }, 0); }
+    assert.throws(() => act(s, { type: 'infilStart' }, 0), /입장/, 'v3.26 five entries a day');
     act(s, { type: 'infilStart' }, 86400000 * 2); assert.ok(s.hacker.infil, 'next day resets');
 });
 
@@ -80,14 +80,17 @@ test('v3.18 hack I: unlock with grade and bits, broadcast/crack charge bits and 
     assert.deepEqual([1, 3, 10].map(n => D.HACKER.broadcast.minutes(n)), [30, 36, 57]); assert.deepEqual([1, 3, 10].map(n => D.HACKER.broadcast.perDay(n)), [1, 2, 4]);
 });
 
-test('v3.18 adguard: mastery from hacker activity, level 1 hides everything, level 2 shows chosen fields; survives rebirth', () => {
+test('v3.26 identity spoof (old adguard): hacker-only, mastery sets daily uses and options, leaves a pending write; snapshots carry no self privacy', () => {
     const s = hacker(); act(s, { type: 'skill', id: 'adGuard' }, 0); assert.ok(s.skills.includes('adGuard'));
-    assert.equal(snapshot(s).privacy, undefined, 'mastery 0: off');
-    H.gainHacker(s, 0, 300); assert.ok(s.skillPractice.adGuard >= 250); assert.deepEqual(snapshot(s).privacy, { show: [] });
-    assert.throws(() => act(s, { type: 'privacy', value: 'job' }, 0), /2단계/);
-    H.gainHacker(s, 0, 1000); act(s, { type: 'privacy', value: 'job,level,nope' }, 0); assert.deepEqual(snapshot(s).privacy, { show: ['job', 'level'] });
+    assert.equal(SKILLS.find(sk => sk.id === 'adGuard').name, '신원 조작'); assert.equal(snapshot(s).privacy, undefined);
+    s.hacker.bits = 100;
+    assert.throws(() => act(s, { type: 'hackRun', id: 'spoof', value: 'abyss:x|' }, 0), /숙련 1단계/);
+    H.gainHacker(s, 0, 300); assert.equal(H.adguardLevel(s), 1);
+    act(s, { type: 'hackRun', id: 'spoof', value: 'abyss:x|job,level' }, 0); assert.deepEqual(s.hacker.pending, { kind: 'spoof', value: 'abyss:x|', minutes: 60 }, 'level 1 hides everything'); delete s.hacker.pending;
+    assert.throws(() => act(s, { type: 'hackRun', id: 'spoof', value: 'self|' }, 0), /횟수/, 'level 1: once a day');
+    H.gainHacker(s, 0, 1000); act(s, { type: 'hackRun', id: 'spoof', value: 'self|job,nope' }, 0); assert.deepEqual(s.hacker.pending, { kind: 'spoof', value: 'self|job', minutes: 60 });
     assert.ok(s.hacker.grade > 1, 'grade rises with exp');
-    s.level = 200; act(s, { type: 'rebirth' }, 0); assert.ok(s.hacker && s.hacker.grade > 1 && s.privacy, 'hacker progress survives rebirth');
+    s.level = 200; act(s, { type: 'rebirth' }, 0); assert.ok(s.hacker && s.hacker.grade > 1, 'hacker progress survives rebirth');
 });
 
 // ── v3.25 해커 2단계: 해킹 II~V · 프로그램 · 화이트 해커 · 해커 순위 ──
@@ -193,8 +196,44 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.ok(c.logs.some(l => l.text.includes('방화벽')), 'blocked once'); c.hacker.used.crack = 0;
         act(c, { type: 'hackRun', id: 'crack', value: 'victim' }, now); await Hk.applyPendingHack(c, 'acct_c', now);
         assert.ok((await Hk.readHacks(now + 60_000)).cracked.victim > now, 'second crack lands');
+        // 신원 조작: 서버 설정의 masked가 순위표 스냅샷을 가리고, 크래킹하면 풀립니다. 스냅샷의 옛 privacy는 버립니다.
+        const T = Date.now(), h = hacker(); h.hacker.bits = 100; act(h, { type: 'skill', id: 'adGuard' }, 0); H.gainHacker(h, 0, 300);
+        act(h, { type: 'hackRun', id: 'spoof', value: 'abyss:spoofed|' }, T); await Hk.applyPendingHack(h, 'acct_h', T);
+        const hk = await Hk.readHacks(T + 31_000), snap = { name: '피해자', job: 'fisher', level: 50, privacy: { show: ['job'] } };
+        const out = Hk.maskSnapshot(snap, 'spoofed', hk, T + 1); assert.equal(out.name, '???'); assert.equal(out.job, ''); assert.ok(!('privacy' in out));
+        assert.deepEqual(Hk.maskSnapshot(snap, 'other', hk, T + 1), { name: '피해자', job: 'fisher', level: 50 }, 'old self privacy ignored');
+        hk.cracked.spoofed = 9e15; assert.equal(Hk.maskSnapshot(snap, 'spoofed', hk, T + 1).name, '피해자');
         // 순위표.
         await Hk.syncHackerBoard('acct_a', a, now); const board = await Hk.listHackerBoard(a.hacker.season.key);
         assert.equal(board[0].id, 'acct_a'); assert.equal(board[0].score, H.seasonScore(a.hacker.season)); assert.equal(Hk.playerOfRow('hacker:acct_a'), 'acct_a');
     } finally { Ev.setRuntimeEvents([], []); Ev.setEventTamper({}); W.setHackDown([]); delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});
+
+test('v3.26 infiltration puzzles: first lock then port, later nodes mix in sequence, base conversion and cipher graded by the server', () => {
+    H.setPuzzleKey('test-key-puzzles');
+    const kinds = new Set();
+    for (let seed = 0; seed < 60; seed++) for (let depth = 0; depth < 12; depth++) {
+        const node = H.makeNode(seed, depth), run = { seed, depth, bank: { bits: 0, exp: 0 }, node }, answer = H.nodeAnswer(run);
+        kinds.add(node.kind);
+        if (depth === 0) assert.equal(node.kind, 'lock'); if (depth === 1) assert.equal(node.kind, 'port');
+        if (depth >= 2) assert.ok((depth + 1) % 2 === 1 ? ['lock', 'cipher'].includes(node.kind) : ['port', 'seq', 'bin'].includes(node.kind));
+        assert.ok(H.judge(run, answer).solved, `${node.kind} answer opens`);
+        if (node.kind === 'bin') assert.equal(Number(node.prompt.startsWith('0x') ? parseInt(node.prompt.slice(2), 16) : parseInt(node.prompt.slice(2), 2)), Number(answer));
+        if (node.kind === 'seq') { assert.ok(node.prompt.endsWith('?')); const g = String(Number(answer) + 1); assert.equal(H.judge(run, g).hint, 'DOWN'); }
+        if (node.kind === 'cipher') { assert.equal(node.size, answer.length); const wrong = 'Z'.repeat(answer.length); assert.match(H.judge(run, wrong).hint, /일치/); assert.throws(() => H.judge(run, 'AB1')); }
+    }
+    assert.deepEqual([...kinds].sort(), ['bin', 'cipher', 'lock', 'port', 'seq']);
+    assert.deepEqual([3, 5, 6, 12, 13].map(d => D.HACKER.infil.lock(d).digits), [3, 3, 4, 4, 5]);
+});
+
+test('v3.26 becoming a hacker flags an anonymous red chat line; the server posts it as system-hacker', async () => {
+    const s = newState(0); s.level = 40; s.rebirths = 5; act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.jobAnnounce, 'hacker');
+    delete s.jobAnnounce; act(s, { type: 'job', id: 'fisher' }, 0); assert.equal(s.jobAnnounce, undefined, 'leaving is quiet');
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-announce-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const Hk = await load('game/server/hacks.js'), DB = await load('game/server/db.js');
+    try {
+        await Hk.announceHacker('hacker', 1000); const rows = await DB.db().listChat('global', 0, 10);
+        assert.equal(rows.at(-1).account_id, 'system-hacker'); assert.equal(rows.at(-1).text, '누군가가 해커로 전직했습니다.');
+    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });

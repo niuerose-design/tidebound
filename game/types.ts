@@ -533,7 +533,9 @@ export type State = {
     randomGameStats?: { best: number; runs: number; cashed: number };
     /** v3.18 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
     hacker?: HackerState;
-    /** v3.18 애드가드 2단계에서 고른 공개 항목(없으면 전부 숨김). */
+    /** v3.26 저장 전에 /api/game이 읽고 지우는 임시 표시: 해커 계열로 전직함(채팅 알림). */
+    jobAnnounce?: string;
+    /** v3.18 옛 애드가드 공개 항목(v3.26부터 쓰지 않음, 세이브 호환). */
     privacy?: { show: import('./data/hacker').PrivacyField[] };
     /** v3.18 서버 해킹 소식(동기화 때 서버가 적음): 진행 중인 방송 탈취, 내가 크래킹당한 시각. */
     hackFeed?: { broadcast?: { text: string; by: string; until: number }; crackedUntil?: number;
@@ -577,7 +579,8 @@ export type HackerInfil = {
     depth: number;
     /** 뽑아 나가면 받는 보상(추적되면 일부만). */
     bank: { bits: number; exp: number };
-    node: { kind: 'lock' | 'port'; size: number; tries: number; max: number; history: { guess: string; hint: string }[] };
+    /** v3.26 seq(수열) · bin(진법 변환) · cipher(암호 해독) 추가. 새 퍼즐은 문제(prompt)를 함께 적습니다(정답은 서버 키로만 계산). */
+    node: { kind: 'lock' | 'port' | 'seq' | 'bin' | 'cipher'; size: number; tries: number; max: number; history: { guess: string; hint: string }[]; prompt?: string };
 };
 export type HackerState = {
     bits: number;
@@ -605,9 +608,9 @@ export type HackerState = {
     /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
     season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };
-export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch';
+export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof';
 export type Snapshot = {
-    /** v3.18 애드가드: 순위표에서 숨길 정보(서버가 보낼 때 가림, 결투 계산에는 원본). */
+    /** v3.18 옛 애드가드 숨김 정보(v3.26부터 스냅샷에 싣지 않고 서버 설정 hacks.masked로 가림). */
     privacy?: { show: string[] };
     /** v26.1 표시 칭호 이름(랭킹). */
     title?: string;
