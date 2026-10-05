@@ -113,10 +113,29 @@
 .auto-run-status dl > div { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
 .auto-run-status dt { color: var(--muted); font-size: 12px; }
 .auto-run-status dd { margin: 0; color: #d4e0d6; line-height: 1.5; }
-.auto-run-state { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
-.auto-run-state.on { color: #b6e0cc; background: #13302a; }
-.auto-run-state.off { color: #e3c28d; background: #2c2618; }
+.auto-run-state { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: #0f2227; white-space: nowrap; }
+.auto-run-state i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.auto-run-state.on { color: #a4e9ba; border-color: #3f6b5e; }
+.auto-run-state.on i { box-shadow: 0 0 0 0 #a4e9ba88; animation: auto-run-pulse 1.8s ease-out infinite; }
+.auto-run-state.off { color: #e3c28d; border-color: #6b6236; }
+@keyframes auto-run-pulse { 0% { box-shadow: 0 0 0 0 #a4e9ba88; } 70%, 100% { box-shadow: 0 0 0 6px #a4e9ba00; } }
+@media (prefers-reduced-motion: reduce) { .auto-run-state.on i { animation: none; } }
 .auto-run-status { margin-bottom: 18px; }
+.auto-run-status:not(.compact) { padding: 20px 22px; }
+.auto-run-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.auto-run-head h2 { display: flex; align-items: center; gap: 8px; margin: 2px 0 0; font-size: 20px; }
+.auto-run-head h2 svg { color: #9bc8b5; }
+.auto-run-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.auto-run-tile { display: grid; align-content: start; gap: 6px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: #0f2227; min-width: 0; }
+.auto-run-label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #7f9c98; }
+.auto-run-label svg { flex: none; color: #9bc8b5; }
+.auto-run-tile p { margin: 0; font-size: 13px; line-height: 1.55; color: #dbe9e3; word-break: keep-all; overflow-wrap: anywhere; }
+.auto-run-tile.goal { border-color: #3f6b5e; background: #12292a; }
+.auto-run-tile.goal p { font-weight: 600; color: #fff; }
+.auto-run-tile.warn p { color: #e3c28d; } .auto-run-tile.warn .auto-run-label svg { color: #e3c28d; }
+.auto-run-tile.muted p { color: #a9bdb8; }
+@media (max-width: 1100px) { .auto-run-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .auto-run-status:not(.compact) { padding: 16px; } .auto-run-grid { grid-template-columns: 1fr; } }
 /* 튜토리얼·모험 기록 */
 .tutorial-card { padding: 14px 18px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
 .tutorial-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
