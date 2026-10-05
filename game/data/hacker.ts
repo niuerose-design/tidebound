@@ -36,8 +36,9 @@ export const HACKER = {
         tries: { seq: 3, bin: 3, cipher: 4 },
         port: (depth: number) => { const range = depth <= 4 ? 64 : depth <= 10 ? 256 : 1024; return { range, tries: Math.ceil(Math.log2(range)) + (depth <= 4 ? 2 : depth <= 10 ? 1 : 0) }; },
     },
-    /** 해킹 단계(I~X): 단계마다 필요한 권한 등급과 비트. v3.25 2단계 구현으로 V까지 엽니다. */
-    tiers: [{ grade: 1, bits: 150 }, { grade: 4, bits: 400 }, { grade: 6, bits: 800 }, { grade: 8, bits: 1300 }, { grade: 10, bits: 2000 }] as { grade: number; bits: number }[],
+    /** 해킹 단계(I~X): 단계마다 필요한 권한 등급과 비트. v3.25 2단계 구현으로 V까지, v3.28 3단계로 X까지 엽니다. */
+    tiers: [{ grade: 1, bits: 150 }, { grade: 4, bits: 400 }, { grade: 6, bits: 800 }, { grade: 8, bits: 1300 }, { grade: 10, bits: 2000 },
+        { grade: 12, bits: 3000 }, { grade: 14, bits: 4200 }, { grade: 16, bits: 5600 }, { grade: 18, bits: 7500 }, { grade: 20, bits: 10000 }] as { grade: number; bits: number }[],
     /** 해킹 실행: 하루 횟수·지속·비용. n = 해킹 단계. */
     broadcast: { maxLength: 40, minutes: (n: number) => 30 + 3 * (n - 1), perDay: (n: number) => 1 + Math.floor(n / 3), bits: 20, exp: 40 },
     crack: { minutes: 60, perDay: (n: number) => 1 + Math.floor(n / 4), bits: 15, exp: 30 },
@@ -67,11 +68,26 @@ export const HACKER = {
      */
     trace: { bits: 30, exp: 40, maxPerDay: 3 },
     overload: { bits: 40, exp: 40, minutes: 120, rate: .5 },
+    /**
+     * v3.28 해킹 VI 패킷 가로채기: 떠 있는 월드보스 하나에 걸어 두고, 그 보스가 쓰러지면 격파 보상 가치의 10%×(n−5)를 비트로 받습니다.
+     * 보상 가치 = 골드/1,000 + 세계석×40 + SP×400(비트 환산). 보스가 쓰러지지 않고 떠나면 아무것도 받지 못합니다. 하루 1회.
+     */
+    intercept: { share: (n: number) => .1 * Math.max(1, n - 5), value: (r: { gold: number; pearls: number; sp: number }) => Math.floor(r.gold / 1000 + r.pearls * 40 + r.sp * 400), perDay: () => 1, bits: 50, exp: 80 },
+    /** v3.28 해킹 VII 세이브 스캠: 떠 있는 월드보스 체력 되감기(깎인 체력의 5%×(n−6) 회복) 또는 빨리감기(남은 체력의 3%×(n−6) 감소, 쓰러뜨리지는 못함). 하루 1회, 보스 한 마리(세대)당 서버 전체 1회, 전체 채팅 공지. */
+    savescum: { rewind: (n: number) => .05 * Math.max(1, n - 6), forward: (n: number) => .03 * Math.max(1, n - 6), perDay: () => 1, bits: 60, exp: 100 },
+    /** v3.28 해킹 VIII 봇넷: 3시간 동안 브루트포스(비트·권한)와 그동안 시작한 패킷 스니핑 정산 ×2, 오늘 침투 작전 입장 +2. 하루 1회(세이브 안에서만 계산, 서버 쓰기 없음). */
+    botnet: { hours: 3, rate: 2, entries: 2, perDay: () => 1, bits: 80, exp: 60 },
+    /** v3.28 해킹 IX DDoS: 서버 이벤트 하나(경험치·골드·드롭 중 선택, ×1.2, 2시간)를 강제로 엽니다. 주 1회, 서버에 하나만. */
+    ddos: { kinds: ['exp', 'gold', 'drop'] as const, rate: 1.2, hours: 2, perWeek: () => 1, bits: 150, exp: 200 },
+    /** v3.28 해킹 X 루트 권한: 하루 1회 오늘의 해킹 횟수를 모두 되돌림(주간 DDoS 제외) + 10분 동안 서버 전체에 ROOT 연출 + 영구 칭호 root. */
+    root: { perDay: () => 1, bits: 100, exp: 300, showMinutes: 10 },
 } as const;
 /** v3.25 해킹 실행 비트 비용(되돌린 해킹의 현상금 계산에도 씁니다). */
-export const HACK_BITS: Record<string, number> = { broadcast: HACKER.broadcast.bits, crack: HACKER.crack.bits, tamper: HACKER.tamper.bits, down: HACKER.down.bits };
-/** v3.25 해킹마다 필요한 단계. */
-export const HACK_TIER: Record<string, number> = { broadcast: 1, crack: 1, tamper: 2, down: 3, sniff: 4, backdoor: 5 };
+export const HACK_BITS: Record<string, number> = { broadcast: HACKER.broadcast.bits, crack: HACKER.crack.bits, tamper: HACKER.tamper.bits, down: HACKER.down.bits, ddos: HACKER.ddos.bits };
+/** v3.25 해킹마다 필요한 단계. v3.28 VI~X. */
+export const HACK_TIER: Record<string, number> = { broadcast: 1, crack: 1, tamper: 2, down: 3, sniff: 4, backdoor: 5, intercept: 6, savescum: 7, botnet: 8, ddos: 9, root: 10 };
+/** v3.28 해킹 이름(공지·로그). */
+export const HACK_NAMES: Record<string, string> = { broadcast: '방송 탈취', crack: '크래킹', tamper: '이벤트 변조', down: '서버 다운', sniff: '패킷 스니핑', backdoor: '백도어', intercept: '패킷 가로채기', savescum: '세이브 스캠', botnet: '봇넷', ddos: 'DDoS', root: '루트 권한', trace: '역추적', overload: '과부하' };
 
 /** v3.25 프로그램: 스킬 대신 메모리 한도 안에서 장착하는 해커의 빌드. 비트로 한 번 사면 영구. */
 export type ProgramId = 'portScanner' | 'rootkit' | 'cryptoMiner' | 'exploitKit' | 'avEvasion';

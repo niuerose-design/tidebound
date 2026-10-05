@@ -99,12 +99,14 @@ const W = await load('game/data/world.js'), Ev = await load('game/data/events.js
 const veteran = (tier = 5) => { const s = hacker(); Object.assign(s.hacker, { bits: 10000, grade: 10, tier }); return s; };
 
 test('v3.25 hack tiers II–V: grade and bits gates, each hack needs its tier', () => {
-    assert.deepEqual(D.HACKER.tiers.map(t => t.grade), [1, 4, 6, 8, 10]);
+    assert.deepEqual(D.HACKER.tiers.map(t => t.grade), [1, 4, 6, 8, 10, 12, 14, 16, 18, 20], 'v3.28 up to X');
     const s = hacker(); s.hacker.bits = 1e5; act(s, { type: 'hackUnlock' }, 0);
     assert.throws(() => act(s, { type: 'hackUnlock' }, 0), /권한 등급 4/);
     assert.throws(() => act(s, { type: 'hackRun', id: 'tamper', value: 'e|+|+' }, 0), /해킹 II/);
     s.hacker.grade = 10; for (let i = 0; i < 4; i++) act(s, { type: 'hackUnlock' }, 0);
-    assert.equal(s.hacker.tier, 5); assert.throws(() => act(s, { type: 'hackUnlock' }, 0), /모두/);
+    assert.equal(s.hacker.tier, 5); assert.throws(() => act(s, { type: 'hackUnlock' }, 0), /권한 등급 12/);
+    s.hacker.grade = 20; for (let i = 0; i < 5; i++) act(s, { type: 'hackUnlock' }, 0);
+    assert.equal(s.hacker.tier, 10); assert.throws(() => act(s, { type: 'hackUnlock' }, 0), /모두/);
 });
 
 test('v3.25 tamper, down, backdoor leave pending writes; sniff runs in the save; daily caps and first stage protected', () => {

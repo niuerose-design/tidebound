@@ -23,6 +23,7 @@ export const TITLES: TitleDef[] = [
     { id: 'starDestroy:50', name: '☆ 별이 부서져도', desc: '강화로 장비 50개를 잃고도 계속 두드림', group: '강화', achievement: 'starDestroy:50' },
     { id: 'abyss:25', name: '무릉 수련자', desc: '무릉도장 25층', group: '무릉도장', achievement: 'abyss:25' },
     { id: 'abyss:100', name: '무릉의 주인', desc: '무릉도장 100층', group: '무릉도장', achievement: 'abyss:100' },
+    { id: 'hacker:root', name: 'root', desc: '해킹 X 루트 권한', group: '도전', achievement: 'hacker:root' },
 ];
 export const titleById = (id?: string | null) => id ? TITLES.find(t => t.id === id) : undefined;
 /** 달성한 업적 기준으로 얻은 칭호. 환생 칭호는 업적 기록이 없어도 환생 횟수로 인정합니다. */

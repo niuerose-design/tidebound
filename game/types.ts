@@ -548,6 +548,11 @@ export type State = {
         /** v3.27 다른 해커가 건 견제: 오늘 줄어든 침투 입장(trace), 브루트포스 과부하가 끝나는 시각. */
         traced?: { day: string; n: number };
         overloadUntil?: number;
+        /** v3.28 해킹 X 루트 권한 연출(모두에게), 해킹 IX DDoS로 열린 이벤트(모두에게). */
+        root?: { by: string; until: number };
+        ddos?: { kind: string; by: string; until: number };
+        /** v3.28 해커 계열에게만: 세이브 스캠이 이미 걸린 월드보스 세대. */
+        scummed?: number[];
     };
     clears: Record<string, number>;
     /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
@@ -608,12 +613,22 @@ export type HackerState = {
     /** v3.25 산 프로그램(영구)과 장착한 프로그램(메모리 한도 안). */
     programs?: string[];
     loadout?: string[];
-    /** v3.25 패킷 스니핑: 이 시각부터 활동한 모험가 수로 끝난 뒤 정산합니다. */
-    sniff?: { from: number; until: number; n: number } | null;
+    /** v3.25 패킷 스니핑: 이 시각부터 활동한 모험가 수로 끝난 뒤 정산합니다. v3.28 mult: 봇넷 중에 시작하면 2. */
+    sniff?: { from: number; until: number; n: number; mult?: number } | null;
+    /** v3.28 해킹 VI 패킷 가로채기: 걸어 둔 월드보스와 그 세대. 쓰러진 뒤 정산합니다. */
+    intercept?: { raid: string; gen: number; n: number } | null;
+    /** v3.28 해킹 VIII 봇넷: 끝나는 시각과 건 날(그날 침투 입장 +2). */
+    botnet?: { until: number; day: string };
+    /** v3.28 해킹 IX DDoS를 쓴 주(weekKey)와 그 주 횟수. */
+    ddos?: { week: string; n: number };
+    /** v3.28 해킹 X 루트 권한을 쓴 횟수(칭호 root). */
+    roots?: number;
     /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
     season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };
-export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof' | 'unspoof' | 'trace' | 'overload';
+export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof' | 'unspoof' | 'trace' | 'overload'
+    /** v3.28 해킹 VI~X(봇넷은 세이브 안에서만 계산). */
+    | 'intercept' | 'interceptClaim' | 'savescum' | 'ddos' | 'root';
 export type Snapshot = {
     /** v3.18 옛 애드가드 숨김 정보(v3.26부터 스냅샷에 싣지 않고 서버 설정 hacks.masked로 가림). */
     privacy?: { show: string[] };
