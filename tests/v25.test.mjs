@@ -520,7 +520,7 @@ test('v27.36 high-rarity gear is damped and enhancement gives +10% per level', a
 test('v27.43 altar: offering points, tithe, blessing events skip offline catch-up, mimic multiplier', async () => {
     const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const A = await G.load('data/altar'), ev = await G.load('data/events'), engine = await G.load('systems/engine');
-    assert.equal(A.offeringPoints({ gold: 2999, pearls: 2, essence: 3 }), 2 + 100 + 9);
+    assert.equal(A.offeringPoints({ gold: 2999, pearls: 2, essence: 3 }), 2 + 1000 + 90, 'v3.17 pearl 500 · essence 30');
     assert.deepEqual(A.tithe({ gold: 12345, pearls: 9, essence: 30 }), { gold: 1234, pearls: 0, essence: 3 });
     assert.ok(A.GAUGE_IDS.includes('god') && A.BLESSINGS.every(b => A.gaugeCost(b.id) === b.cost));
     const now = Date.parse('2027-01-05T12:00:00+09:00');
@@ -603,7 +603,7 @@ test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlemen
     assert.equal(A.blessingJumpCost('gold', 0, 3), 12000 + 24000 + 48000, 'jump 0→3 sums each step'); assert.equal(A.blessingJumpCost('gold', 2, 4), 48000 + 3e8); assert.equal(A.blessingJumpCost('gold', 0, 6), 84000 + 3e8 + 1e9 + 3e9); assert.equal(A.blessingJumpCost('gold', 3, 3), 3e8, 'target at or below live = next step');
     const now = 1_000_000; assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 6, high_until: now + 1 }, now), 6); assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 6, high_until: now }, now), 3, 'expired high level falls back to 3'); assert.equal(A.effectiveBlessingLevel({ until: now, level: 6, high_until: now + 1 }, now), 0); assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 2 }, now), 2);
     assert.equal(A.blessingEffect(gold, 3).gold, 3); assert.ok(A.BLESSINGS.find(b => b.id === 'mimic').cost > A.BLESSINGS.find(b => b.id === 'exp').cost, 'mimic costs most');
-    assert.equal(A.gaugeCost('god'), 40000); assert.equal(A.ALTAR.essencePoints, 3);
+    assert.equal(A.gaugeCost('god'), 40000); assert.equal(A.ALTAR.essencePoints, 30); assert.equal(A.ALTAR.pearlPoints, 500);
     // 오프라인 정산: 골드 ×10 이벤트는 정산 중 ×5.5(절반)로 적용됩니다.
     const E = await L.load('systems/engine'), t0 = Date.parse('2030-01-01T00:00:00Z');
     const run = withEvent => { Ev.setRuntimeEvents(withEvent ? [{ id: 'admin-x', name: 'x', from: '2000-01-01T00:00:00Z', until: '2100-01-01T00:00:00Z', gold: 10 }] : [], []); const s = E.newState(t0); E.act(s, { type: 'start' }, t0); s.hp = 1e9; let n = 7; T.advance(s, t0 + 3600_000, () => ((n = (n * 9301 + 49297) % 233280) / 233280)); return s; };
@@ -1041,10 +1041,13 @@ test('v27.89 sprout support: exp ×(1 + 0.2 × (10 − rebirths)) below 10 rebir
     const Sp = await L.load('data/sprout'), Enc = await L.load('systems/encounter'), B = await L.load('data/balance');
     assert.deepEqual([0, 1, 5, 9, 10, 30].map(r => Number(Sp.sproutExp(r).toFixed(2))), [3, 2.8, 2, 1.2, 1, 1]);
     const at = r => { const s = newState(0); s.rebirths = r; return s; };
-    assert.equal(Sp.deathRecoveryTurns(at(4)), Math.ceil(B.BALANCE.recoveryTurns / 2)); assert.equal(Sp.deathRecoveryTurns(at(5)), B.BALANCE.recoveryTurns);
+    // v3.17 환생 10회 미만은 3턴, 10회부터 기본 25턴. 연구 ‘불굴의 의지’ -3턴/단계, 패시브 revive, 최저 10턴. 경험치 손실은 10회부터 필요량의 2%.
+    assert.equal(Sp.deathRecoveryTurns(at(4)), Sp.SPROUT.recoveryTurns); assert.equal(Sp.deathRecoveryTurns(at(9)), 3); assert.equal(Sp.deathRecoveryTurns(at(10)), B.BALANCE.recoveryTurns); assert.equal(B.BALANCE.recoveryTurns, 25);
+    { const v = at(20); v.permanent = { revive: 5 }; v.skills = ['vital']; assert.equal(Sp.deathRecoveryTurns(v), Math.max(10, 25 - 15 - 5)); v.permanent = { revive: 2 }; v.skills = []; assert.equal(Sp.deathRecoveryTurns(v), 19); }
+    { const v = at(9); v.level = 50; v.exp = 1e9; assert.equal(Sp.deathExpLoss(v), 0, 'no exp loss under rebirth 10'); const w = at(10); w.level = 50; w.exp = 1e9; assert.equal(Sp.deathExpLoss(w), Math.floor(B.xpNeeded(50, 10) * .02)); w.exp = 5; assert.equal(Sp.deathExpLoss(w), 5, 'never below 0'); }
     assert.ok(Math.abs(Enc.victoryHealRate(at(4)) - Enc.victoryHealRate(at(5)) - .05) < 1e-9);
     const s = at(2); s.running = true; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 0, gold: 0, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
-    tick(s, () => .5); assert.equal(s.recovery, Math.ceil(B.BALANCE.recoveryTurns / 2));
+    tick(s, () => .5); assert.equal(s.recovery, Sp.SPROUT.recoveryTurns);
 });
 
 test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challenge accumulates damage and pays the whole party on the kill', async () => {
@@ -1361,4 +1364,24 @@ test('v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-pie
     const steps = ACHIEVEMENTS.filter(a => a.id.startsWith('onyx:')); assert.deepEqual(steps.map(a => a.target), [1, 2, 3, 4, 5, 6, 7]);
     for (const a of steps) assert.ok((a.reward.sp || 0) + (a.reward.ap || 0) >= 1, `${a.id} grants SP or AP`);
     const last = steps.at(-1); assert.ok(last.reward.sp >= 2 && last.reward.ap >= 2 && last.reward.bonus.attack >= .05, 'completion reward is strong');
+});
+
+test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per request and continues next sync (same total, summary accumulates)', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), B = await L.load('data/balance');
+    const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 100; s.stage = 'brook'; s.running = true; s.lastTick = 0; s.hp = 1e9;
+    const hours = 4, now = hours * 3600_000, total = now / B.BALANCE.turnMs;
+    T.advance(s, now, () => .5);
+    assert.equal(s.catchUpLeft, total - T.CATCH_UP_CHUNK, 'remaining turns recorded'); assert.equal(s.lastTick, T.CATCH_UP_CHUNK * B.BALANCE.turnMs); assert.ok(s.lastOffline && s.lastOffline.kills > 0);
+    const firstKills = s.lastOffline.kills; let rounds = 1;
+    while (s.catchUpLeft) { T.advance(s, now, () => .5); rounds++; }
+    assert.equal(rounds, Math.ceil(total / T.CATCH_UP_CHUNK)); assert.equal(s.lastTick, now, 'caught up to now'); assert.ok(s.lastOffline.kills > firstKills, 'summary accumulates across chunks'); assert.equal(s.lastOffline.seconds, hours * 3600);
+    T.advance(s, now + 2000, () => .5); assert.equal(s.catchUpLeft, undefined); assert.equal(s.turn > 0, true);
+});
+test('v3.17 tutorial rewards: a step completed by its condition pays once; silent back-fill for veteran saves pays nothing', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const G = await L.load('systems/guidance');
+    assert.ok(G.TUTORIAL_STEPS.length >= 21); assert.ok(G.TUTORIAL_STEPS.every(st => st.reward && (st.reward.pearls || st.reward.sp)));
+    const s = newState(0); s.tutorial = { done: {} }; const pearls = s.pearls; const logs = [];
+    G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1, 'the starter skill step (equipped from the start) pays once');
+    s.kills = 1; G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 2); assert.ok(logs.some(t => t.includes('첫 처치'))); G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 2, 'paid once');
+    const vet = newState(0); vet.rebirths = 5; vet.kills = 10; vet.tutorial = {}; const vp = vet.pearls; G.syncTutorial(vet); assert.equal(vet.pearls, vp, 'back-fill pays nothing'); assert.ok(vet.tutorial.done.rebirth);
 });

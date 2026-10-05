@@ -174,6 +174,8 @@ export type Skill = {
     condition?: 'wounded' | 'healthyTarget' | 'afflicted';
     /** v27.69 사용하면 이만큼의 턴 동안 모든 상태이상 면역(몬스터 각성). */
     wardTurns?: number;
+    /** v3.17 장착 패시브: 쓰러진 뒤 회복 대기를 이만큼(턴) 줄입니다(환생 10회 이상). */
+    revive?: number;
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. swap: 피해 유형과 반대 공격력을 기준값으로(물리 계수 마법 피해 등). */
     scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr';
     /** v26.2 scaling 'attr'가 비례하는 능력치. 기준값 += 능력치 × scalingRatio. */
@@ -533,6 +535,8 @@ export type State = {
     bestStage: number;
     /** 오프라인 정산 중에만 true인 임시 표시(저장 전에 지웁니다). */
     catchingUp?: boolean;
+    /** v3.17 부재중 정산을 요청당 CATCH_UP_CHUNK턴씩 나눠 돌릴 때 남은 턴. 0이거나 없으면 밀린 정산이 없습니다. */
+    catchUpLeft?: number;
     lastOffline: null | {
         seconds: number;
         kills: number;

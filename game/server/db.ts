@@ -96,6 +96,8 @@ export interface Storage {
     takeAltarTithe(id: string): Promise<AltarAmounts | null>;
     /** v27.69 운영: 모든 게이지에 쌓인 기여도를 0으로(열려 있는 축복의 남은 시간·단계는 그대로). */
     resetAltarGauges(): Promise<void>;
+    /** v3.17 운영: 축복 게이지의 단계·종료 시각·상위 단계 유지 시각을 직접 둡니다(기여도는 그대로). */
+    setAltarBlessing(id: string, level: number, until: number, highUntil: number): Promise<void>;
     /** v27.69 운영: 깨어난 신·신의 자리 주인·쌓인 몫을 비웁니다(세대 수 gen과 누적 합계는 유지). */
     resetAltarGod(): Promise<void>;
     /** v27.69 신의 자리 임기 만료: before보다 먼저 앉은 자리와 쌓인 몫만 비웁니다(조건부라 막 앉은 자리는 건드리지 않음). 비웠으면 true. */
@@ -265,6 +267,7 @@ function neonStorage(url: string): Storage {
         async summonAltarGod(god, until, now) { const r = await q("UPDATE altar SET gen=gen+1, god_state='alive', god=$1, god_until=$2 WHERE id='main' AND (god_state<>'alive' OR god_until<$3)", [god, until, now]); return r.rowCount === 1; },
         async claimAltarThrone(gen, id, name, snapshot, now) { const r = await q("UPDATE altar SET god_state='slain', throne=$2, throne_name=$3, throne_snapshot=$4, throne_since=$5, tithe_gold=0, tithe_pearls=0, tithe_essence=0 WHERE id='main' AND gen=$1 AND god_state='alive' AND god_until>=$5", [gen, id, name, snapshot, now]); return r.rowCount === 1; },
         async resetAltarGauges() { await q('UPDATE altar_gauges SET points=0'); },
+        async setAltarBlessing(id, level, until, highUntil) { await q('INSERT INTO altar_gauges (id,points,until,level,high_until) VALUES ($1,0,$3,$2,$4) ON CONFLICT (id) DO UPDATE SET level=EXCLUDED.level, until=EXCLUDED.until, high_until=EXCLUDED.high_until', [id, level, until, highUntil]); },
         async resetAltarGod() { await q("UPDATE altar SET god_state='none', god='', god_until=0, throne='', throne_name='', throne_since=0, throne_snapshot='', tithe_gold=0, tithe_pearls=0, tithe_essence=0, raid_state='none', raid_hp=0 WHERE id='main'"); },
         async summonAltarRaid(raidId, hpMax, until, now) { const r = await q("UPDATE altar SET raid_gen=raid_gen+1, raid_id=$1, raid_state='alive', raid_hp=$2, raid_hp_max=$2, raid_until=$3, raid_slayer='', raid_slain_at=0 WHERE id='main' AND (raid_state<>'alive' OR raid_until<$4)", [raidId, hpMax, until, now]); return r.rowCount === 1; },
         async hitAltarRaid(gen, dealt) { const { rows } = await q<{ raid_hp: string }>("UPDATE altar SET raid_hp=GREATEST(0, raid_hp-$2) WHERE id='main' AND raid_gen=$1 AND raid_state='alive' AND raid_hp>0 RETURNING raid_hp", [gen, Math.max(0, Math.floor(dealt))]); return rows[0] ? Number(rows[0].raid_hp) : null; },
@@ -371,6 +374,7 @@ function fileStorage(): Storage {
             Object.assign(r, { god_state: 'slain', throne: id, throne_name: name, throne_snapshot: snapshot, throne_since: now, tithe_gold: 0, tithe_pearls: 0, tithe_essence: 0 }); return true;
         }),
         resetAltarGauges: () => tx(db => { for (const g of Object.values(db.altarGauges || {})) g.points = 0; }),
+        setAltarBlessing: (id, level, until, highUntil) => tx(db => { const g = (db.altarGauges ??= {})[id] ??= { id, points: 0, until: 0 }; g.level = level; g.until = until; g.high_until = highUntil; }),
         resetAltarGod: () => tx(db => { db.altar = { ...ALTAR_EMPTY, ...db.altar, god_state: 'none', god: '', god_until: 0, throne: '', throne_name: '', throne_since: 0, throne_snapshot: '', tithe_gold: 0, tithe_pearls: 0, tithe_essence: 0, raid_state: 'none', raid_hp: 0 }; }),
         summonAltarRaid: (raidId, hpMax, until, now) => tx(db => { const r = db.altar = { ...ALTAR_EMPTY, ...db.altar }; if (r.raid_state === 'alive' && r.raid_until >= now) return false; Object.assign(r, { raid_gen: r.raid_gen + 1, raid_id: raidId, raid_state: 'alive', raid_hp: hpMax, raid_hp_max: hpMax, raid_until: until, raid_slayer: '', raid_slain_at: 0 }); return true; }),
         hitAltarRaid: (gen, dealt) => tx(db => { const r = db.altar; if (!r || r.raid_gen !== gen || r.raid_state !== 'alive' || r.raid_hp <= 0) return null; r.raid_hp = Math.max(0, r.raid_hp - Math.max(0, Math.floor(dealt))); return r.raid_hp; }),

@@ -16,7 +16,7 @@ import { canUse, skillMasteryRanks } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, reward, releaseLegacySeal, gainLevels } from './encounter';
 import { inRandomGame, loseRandomGame } from './random-game';
-import { deathRecoveryTurns } from '../data/sprout';
+import { deathRecoveryTurns, deathExpLoss } from '../data/sprout';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
 import { breathReset } from './actions/lifecycle';
@@ -116,13 +116,16 @@ function tickTurn(s: State, rng: () => number) {
         s.deaths++;
         // 하드코어: 쓰러지면 즉시 이번 생을 처음부터 다시 시작합니다(오프라인 정산 중에도 같은 규칙).
         if (s.vows?.breath) { breathReset(s, s.lastTick); return; }
-        // v27.89 초반 생존 보조: 환생 5회 미만은 회복 대기 절반.
+        // v3.17 사망 페널티: 회복 대기(기본 25턴 = 50초, 연구 ‘불굴의 의지’·패시브로 단축, 최저 10턴)와 경험치 손실(지금 레벨 필요량의 2%).
+        // 환생 10회 미만(새싹)은 전처럼 3턴·손실 없음(사다리 걷어차기 방지).
         s.recovery = deathRecoveryTurns(s);
+        const lost = deathExpLoss(s);
+        if (lost > 0) s.exp = Math.max(0, s.exp - lost);
         s.enemy = null;
         s.cooldowns = {};
         s.effects = {};
         s.playerStun = 0;
-        addLog(s, '몬스터를 놓쳤습니다. 잠시 회복합니다.');
+        addLog(s, `몬스터를 놓쳤습니다. ${Math.round(s.recovery * BALANCE.turnMs / 1000)}초 동안 회복합니다.${lost > 0 ? ` 경험치 -${lost.toLocaleString()}` : ''}`);
         if (inRandomGame(s)) loseRandomGame(s);
         else if (s.dungeon) {
             const repeating = !!s.dungeon.repeat;
@@ -133,6 +136,8 @@ function tickTurn(s: State, rng: () => number) {
         }
     }
 }
+/** v3.17 요청 하나에서 돌리는 부재중 정산 턴 상한(약 1~2초). */
+export const CATCH_UP_CHUNK = 1500;
 export function advance(s: State, now: number, rng = Math.random) {
     repairState(s, now);
     now = Math.max(now, s.lastTick);
@@ -147,19 +152,26 @@ export function advance(s: State, now: number, rng = Math.random) {
     const openDoors = openDoorsSnapshot(); if (openDoors) s.openDoors = openDoors; else delete s.openDoors;
     // 정산 상한은 정산을 시작할 때의 긴 휴식 단계로 정합니다(정산 중 연구가 바뀌지 않음).
     const cap = offlineCapSeconds(s);
-    const count = Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
+    // v3.17 긴 부재중 정산은 요청 하나에서 다 돌리지 않고 CATCH_UP_CHUNK턴씩 나눕니다(6~30시간 = 1만~5만 턴을 한 요청에서 돌리면 수십 초가 걸려
+    // 클라이언트 20초 제한에 걸리고 서버가 멈춘 것처럼 보였음). 남은 턴은 catchUpLeft에 적어 다음 동기화가 이어 돌립니다. 총 턴 수는 전과 같습니다.
+    const continuing = (s.catchUpLeft || 0) > 0;
+    const budget = continuing ? Math.min(s.catchUpLeft!, Math.floor(elapsed / BALANCE.turnMs)) : Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
+    const count = Math.min(budget, CATCH_UP_CHUNK), truncated = count < budget;
     const before = { kills: s.kills, gold: s.gold, exp: s.exp };
     // 1분 넘게 밀린 정산은 오프라인 정산으로 봅니다(저장하지 않는 임시 표시).
-    if (elapsed > 60000) s.catchingUp = true;
+    const offline = elapsed > 60000 || continuing;
+    if (offline) s.catchingUp = true;
     try {
         for (let i = 0; i < count; i++)
             tick(s, rng);
     }
     finally { delete s.catchingUp; }
-    if (elapsed > 60000) s.event = live;
-    s.lastTick = elapsed > cap * 1000 ? now : now - (elapsed % BALANCE.turnMs);
+    if (offline) s.event = live;
+    if (truncated) { s.catchUpLeft = budget - count; s.lastTick = s.lastTick + count * BALANCE.turnMs; }
+    else { delete s.catchUpLeft; s.lastTick = elapsed > cap * 1000 || continuing ? now : now - (elapsed % BALANCE.turnMs); }
     recordOpenDoors(s);
-    if (elapsed > 60000 && s.kills > before.kills) {
-        s.lastOffline = { seconds: Math.min(cap, Math.floor(elapsed / 1000)), kills: s.kills - before.kills, gold: s.gold - before.gold, exp: Math.max(0, s.exp - before.exp) };
+    if (offline && s.kills > before.kills) {
+        const prev = continuing && s.lastOffline ? s.lastOffline : null;
+        s.lastOffline = { seconds: prev ? prev.seconds : Math.min(cap, Math.floor(elapsed / 1000)), kills: (prev?.kills || 0) + s.kills - before.kills, gold: (prev?.gold || 0) + s.gold - before.gold, exp: (prev?.exp || 0) + Math.max(0, s.exp - before.exp) };
     }
 }
