@@ -142,7 +142,7 @@ export function makeRaid(id: string) {
                 slayer = await database.slayAltarRaid(a.raid_gen, id, s.name, now);
                 if (slayer) {
                     // 격파 축복: 보스가 정한 축복을 1단계로 blessingHours만큼 엽니다(진행 중이면 시간만 늘어남).
-                    for (const b of raid.blessings) await database.extendAltarGauge(b, now, raid.blessingHours * 3600_000, ALTAR.blessingCapMs);
+                    for (const b of raid.blessings) { await database.addAltarGauge(b, 0); await database.extendAltarGauge(b, now, raid.blessingHours * 3600_000, ALTAR.blessingCapMs); }
                     await refreshAltarEvents(now);
                     await announce(`✦ ${josa(s.name, '이가')} 월드보스 ${josa(raid.name, '을를')} 쓰러뜨렸습니다! 함께 싸운 모험가 모두 보상을 받고, ${raid.blessings.map(gaugeName).join('·')}이 ${raid.blessingHours}시간 열립니다.`, now);
                 }
