@@ -8,6 +8,11 @@ export const PROGRESSION = {
     baseAP: 6, fishComplete: 50, skillMastery: 120,
     skillMasteryMilestones: [120, 600, 2400, 8000],
     jobMastery: 150, advancedMastery: 75,
+    /**
+     * v27.95 숙련 인플레 조정: 차수별 요구 숙련 배율(인덱스 = 직업 차수 0~5). 1·2차는 그대로, 3차 ×3 · 4차 ×15 · 5차 ×50(직업 숙달),
+     * 스킬 숙련 단계(계승 = 1단계)는 3차 ×3 · 4차 ×10 · 5차 ×25. 데이터에 적힌 값에 곱해 classes.ts·skills.ts에서 한 번만 적용합니다.
+     */
+    jobMasteryTierScale: [1, 1, 1, 3, 15, 50], skillMasteryTierScale: [1, 1, 1, 3, 10, 25],
     // Legacy rank includes the free base (rank 1 = growth Lv.0).
     maxSkillRank: 5, rankMultiplier: .08, rankPassive: .15, masteryChance: .015,
     maxMasteryPerVictory: 10,

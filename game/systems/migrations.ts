@@ -3,6 +3,7 @@ import { addLog } from './state';
 import { RELICS } from '../data/economy';
 import { SAVE_VERSION } from '../data/balance';
 import { newState } from './engine';
+import { SKILLS, skillMasteryScale } from '../data/skills';
 import { OLD_GEAR_NAMES, RENAMED_GEAR, RENAMED_AFFIX, gearName } from '../data/maple-gear';
 /**
  * v8(게임 v20.5): 골드 훈련 삭제와 함께 이전 버전의 세이브는 이름만 남기고 새로 시작합니다.
@@ -38,8 +39,24 @@ export function grantLimitBreakResearch(s: State) {
     if (grant > 0) { s.permanent.limitBreak = have + grant; addLog(s, `한계돌파에 세계석 연구 ‘한계의 문’이 필요해져, 이미 한 한계돌파만큼 ${have + grant}단계를 무료로 받았습니다.`, 'system'); }
     return grant;
 }
+/**
+ * v27.95 숙련 요구치 상향(3차 이상 스킬 숙련 단계 ×3~×25): 옛 기준 1단계(= 숙련 계승)를 이미 넘긴 스킬은 계승을 유지합니다.
+ * 한 번만 처리하고(masteryRescaled), 직업 숙달·스킬 숙련 단계 자체는 새 기준을 따릅니다.
+ */
+export function keepLegacyInheritance(s: State) {
+    if (s.masteryRescaled) return 0;
+    s.masteryRescaled = true;
+    let kept = 0;
+    for (const sk of SKILLS) {
+        const scale = skillMasteryScale(sk), first = sk.masteryMilestones?.[0];
+        if (scale <= 1 || !first || (s.skillPractice?.[sk.id] || 0) < first / scale || (s.skillPractice?.[sk.id] || 0) >= first) continue;
+        (s.legacyInherited ??= {})[sk.id] = true; kept++;
+    }
+    if (kept) addLog(s, `숙련 요구치가 올라 이미 계승한 스킬 ${kept}개는 계승을 그대로 유지합니다.`, 'system');
+    return kept;
+}
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    if (s.version === SAVE_VERSION) { refundGoldenResearch(s); refundRelicPurchases(s); grantLimitBreakResearch(s); renameMapleGear(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); grantLimitBreakResearch(s); renameMapleGear(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
