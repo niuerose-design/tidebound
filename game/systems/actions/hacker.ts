@@ -140,7 +140,7 @@ export const hackerActions: ActionHandlers = {
             if (h.sniff) throw Error(h.sniff.until > now ? `패킷 스니핑이 ${Math.ceil((h.sniff.until - now) / 60000)}분 남았습니다.` : '끝난 패킷 스니핑을 먼저 정산하세요.');
             daily('sniff', HACKER.sniff.perDay(), '패킷 스니핑'); pay(HACKER.sniff.bits);
             h.sniff = { from: now, until: now + HACKER.sniff.minutes * 60_000, n };
-            addLog(s, `패킷 스니핑 시작 · ${HACKER.sniff.minutes}분 동안 서버에서 활동한 모험가 1명당 권한 경험치 +${HACKER.sniff.perPlayer(n)}`, 'system');
+            addLog(s, `패킷 스니핑 시작 · ${HACKER.sniff.minutes}분 동안 서버에서 활동한 모험가 1명당 권한 경험치 +${HACKER.sniff.perPlayer(n)} · 비트 +${HACKER.sniff.bitsPerPlayer(n)}`, 'system');
             bumpSeason(s, now, { hacks: 1 });
             return;
         }

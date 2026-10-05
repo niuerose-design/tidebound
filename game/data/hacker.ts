@@ -41,8 +41,11 @@ export const HACKER = {
     tamper: { minutes: (n: number) => 20 * n, rate: (n: number) => .1 * n, perDay: () => 1, bits: 30, exp: 60 },
     /** v3.25 해킹 III 서버 다운: 사냥터·던전 하나를 15분 + 5분×(n−3) 동안 새 입장 불가(첫 사냥터 제외, 이미 들어간 모험가는 계속). */
     down: { minutes: (n: number) => 15 + 5 * Math.max(0, n - 3), perDay: (n: number) => 1 + Math.floor(Math.max(0, n - 3) / 3), bits: 40, exp: 80 },
-    /** v3.25 해킹 IV 패킷 스니핑: 1시간 동안 서버에서 활동한 다른 모험가 1명당 권한 경험치 2×n(상한 300×n). 끝난 뒤 정산. */
-    sniff: { minutes: 60, perPlayer: (n: number) => 2 * n, cap: (n: number) => 300 * n, perDay: () => 1, bits: 25, exp: 0 },
+    /**
+     * v3.25 해킹 IV 패킷 스니핑: 1시간 동안 서버에서 활동한 다른 모험가 1명당 권한 경험치 10×n + 비트 n(상한 1,000×n · 비트 100×n). 끝난 뒤 정산.
+     * 동접 30명이면 단계 V에서 권한 1,500(등급 10→11에 필요한 3,800의 약 40%) · 비트 150. 하루 한 번 받는 후반 성장 축입니다.
+     */
+    sniff: { minutes: 60, perPlayer: (n: number) => 10 * n, cap: (n: number) => 1000 * n, bitsPerPlayer: (n: number) => n, bitsCap: (n: number) => 100 * n, perDay: () => 1, bits: 25, exp: 0 },
     /** v3.25 해킹 V 백도어: 제단 게이지 하나를 그 게이지 비용의 2%×(n−4)만큼 채움(기여 순위 제외). 게이지마다 하루 1회. */
     backdoor: { share: (n: number) => .02 * Math.max(1, n - 4), bits: 30, exp: 50 },
     /** v3.25 화이트 해커: 해킹 되돌리기(방송·서버 다운·이벤트 변조), 사냥터 패치(해킹 면역), 방화벽 패시브(하루 한 번 크래킹 막음). */

@@ -185,7 +185,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         // 스니핑: 지금 이후 저장된 다른 모험가 수.
         await database.createPlayerIfMissing('p1', '{}', now + 10); await database.createPlayerIfMissing('p2', '{}', now - 10);
         a.hacker.sniff = { from: now, until: now, n: 5 }; act(a, { type: 'hackRun', id: 'sniffClaim' }, now); const e0 = a.hacker.exp;
-        await Hk.applyPendingHack(a, 'acct_a', now); assert.equal(a.hacker.exp - e0, 10, '1 active player × 2×5'); assert.equal(a.hacker.sniff, null);
+        const b0 = a.hacker.bits; await Hk.applyPendingHack(a, 'acct_a', now); assert.equal(a.hacker.exp - e0, 50, '1 active player × 10×5'); assert.equal(a.hacker.bits - b0, 5); assert.equal(a.hacker.sniff, null);
         // 방화벽: 화이트 해커가 장착하면 하루 한 번 크래킹을 막습니다.
         await database.createPlayerIfMissing('victim', JSON.stringify({ job: 'whiteHacker', skills: ['firewall'] }), now - 1e6);
         const c = veteran(); c.name = '크래커';

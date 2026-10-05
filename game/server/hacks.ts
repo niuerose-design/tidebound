@@ -139,10 +139,10 @@ export async function applyPendingHack(s: State, id: string, now: number) {
         addLog(s, `서버 다운 · ${placeName(k, place)} · ${pending.minutes}분 동안 새 입장 불가`, 'reward');
     }
     else if (pending.kind === 'sniffClaim') {
-        const players = await database.countActivePlayers(Number(pending.value), id), exp = Math.min(HACKER.sniff.cap(n), players * HACKER.sniff.perPlayer(n));
+        const players = await database.countActivePlayers(Number(pending.value), id), exp = Math.min(HACKER.sniff.cap(n), players * HACKER.sniff.perPlayer(n)), bits = Math.min(HACKER.sniff.bitsCap(n), players * HACKER.sniff.bitsPerPlayer(n));
         hk.sniff = null;
-        gainHacker(s, 0, exp);
-        addLog(s, `패킷 스니핑 정산 · 활동한 모험가 ${players}명 · 권한 경험치 +${exp}`, 'reward');
+        gainHacker(s, bits, exp);
+        addLog(s, `패킷 스니핑 정산 · 활동한 모험가 ${players}명 · 권한 경험치 +${exp} · 비트 +${bits}`, 'reward');
         write = false;
     }
     else if (pending.kind === 'backdoor') {

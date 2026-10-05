@@ -97,7 +97,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
                 </>}
                 {n >= 4 && <div className="hack-card">
                     <b>패킷 스니핑 · IV</b>
-                    <small>{HACKER.sniff.minutes}분 동안 서버를 엿봅니다. 끝나면 그동안 활동한 다른 모험가 1명당 권한 경험치 +{HACKER.sniff.perPlayer(n)}(최대 {HACKER.sniff.cap(n)}). 다른 모험가는 아무것도 잃지 않습니다. 하루 1회 · 비트 {HACKER.sniff.bits}</small>
+                    <small>{HACKER.sniff.minutes}분 동안 서버를 엿봅니다. 끝나면 그동안 활동한 다른 모험가 1명당 권한 경험치 +{HACKER.sniff.perPlayer(n)} · 비트 +{HACKER.sniff.bitsPerPlayer(n)}(최대 {format(HACKER.sniff.cap(n))} · {format(HACKER.sniff.bitsCap(n))}). 다른 모험가는 아무것도 잃지 않습니다. 하루 1회 · 비트 {HACKER.sniff.bits}</small>
                     {h.sniff ? h.sniff.until > now ? <small>스니핑 중 · {Math.ceil((h.sniff.until - now) / 60000)}분 남음</small> : <button className="primary" disabled={busy} onClick={() => run('sniffClaim')}>스니핑 정산</button>
                         : <button className="primary" disabled={busy || (used.sniff || 0) >= HACKER.sniff.perDay() || h.bits < HACKER.sniff.bits} onClick={() => run('sniff')}>스니핑 시작</button>}
                 </div>}
