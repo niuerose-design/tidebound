@@ -4,12 +4,21 @@
  * - 초반 생존 보조(환생 5회 미만): 쓰러진 뒤 회복 대기 절반, 처치 후 회복 +5%p.
  */
 import type { State } from '../types';
-import { BALANCE } from './balance';
+import { BALANCE, xpNeeded } from './balance';
+import { skillById } from './skills';
 
-export const SPROUT = { expUntil: 10, expPerRebirth: .2, survivalUntil: 5, recoveryScale: .5, healBonus: .05 };
+/** v3.17 회복 대기는 환생 10회 미만까지 전처럼 3턴(6초)이고 경험치 손실도 없습니다. 처치 후 회복 +5%p는 그대로 5회 미만. */
+export const SPROUT = { expUntil: 10, expPerRebirth: .2, survivalUntil: 5, recoveryUntil: 10, recoveryTurns: 3, recoveryScale: .5, healBonus: .05, deathExpLoss: .02, recoveryMin: 10 };
 export const sproutExp = (rebirths = 0) => rebirths < SPROUT.expUntil ? 1 + SPROUT.expPerRebirth * (SPROUT.expUntil - Math.max(0, rebirths)) : 1;
 export const sproutSurvival = (rebirths = 0) => rebirths < SPROUT.survivalUntil;
-/** 쓰러진 뒤 회복 대기 턴. 환생 5회 미만은 절반(올림). */
-export const deathRecoveryTurns = (s: Pick<State, 'rebirths'>) => sproutSurvival(s.rebirths) ? Math.ceil(BALANCE.recoveryTurns * SPROUT.recoveryScale) : BALANCE.recoveryTurns;
+/** v3.17 쓰러진 뒤 회복 대기 턴. 환생 10회 미만은 3턴. 그 뒤는 기본 25턴에서 연구 ‘불굴의 의지’(단계당 -3턴)와 장착 패시브의 revive(턴)를 빼고 최저 10턴. */
+export const deathRecoveryTurns = (s: Pick<State, 'rebirths'> & Partial<Pick<State, 'permanent' | 'skills'>>) => {
+    if ((s.rebirths || 0) < SPROUT.recoveryUntil) return SPROUT.recoveryTurns;
+    const research = (s.permanent?.revive || 0) * 3;
+    const passive = (s.skills || []).reduce((a, id) => a + (skillById(id)?.revive || 0), 0);
+    return Math.max(SPROUT.recoveryMin, BALANCE.recoveryTurns - research - passive);
+};
+/** v3.17 쓰러질 때 잃는 경험치: 지금 레벨 필요량의 2%(환생 10회 미만 0). 골드·숙련은 잃지 않습니다. */
+export const deathExpLoss = (s: Pick<State, 'rebirths' | 'level' | 'exp'>) => (s.rebirths || 0) < SPROUT.recoveryUntil ? 0 : Math.min(Math.floor(s.exp || 0), Math.floor(xpNeeded(s.level, s.rebirths) * SPROUT.deathExpLoss));
 /** 처치 후 회복에 더하는 비율. */
 export const sproutHeal = (s: Pick<State, 'rebirths'>) => sproutSurvival(s.rebirths) ? SPROUT.healBonus : 0;

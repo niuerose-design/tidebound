@@ -1,15 +1,21 @@
 'use client';
+import { useEffect, useState } from 'react';
 import type { PanelProps } from './panel-props';
 import { TITLES, unlockedTitles, displayTitle, titleById } from '@/game/data/titles';
 import { RANKS, RANK_CUMULATIVE, RANK_PERKS, rankProgress, rankPointsEarned, rankPointsFree, rankPerkLevel } from '@/game/data/rank';
 import { RankInsignia } from './rank-insignia';
 import { Heading, Meter } from './shared';
 import { ChevronDown } from 'lucide-react';
+const FLOW_KEY = 'tidebound.rankFlow';
 
 /** v27.80 치장: 칭호와 계급. 능력치 화면의 ‘기본 능력치 / 최종 전투 능력치’와 같은 두 칸 구성입니다. */
 export function Cosmetics({ s, send, busy }: PanelProps) {
     const owned = new Set(unlockedTitles(s).map(t => t.id)), current = displayTitle(s), chosen = titleById(s.title), badge = s.badge || 'title';
     const p = rankProgress(s), earned = rankPointsEarned(s), free = rankPointsFree(s);
+    // v3.18 계급 흐름도 방향(세로 기본). 이 기기에 기억.
+    const [flow, setFlow] = useState<'column' | 'row'>('column');
+    useEffect(() => { const t = setTimeout(() => { try { if (localStorage.getItem(FLOW_KEY) === 'row') setFlow('row'); } catch { /* 저장소 없음 */ } }, 0); return () => clearTimeout(t); }, []);
+    const pickFlow = (v: 'column' | 'row') => { setFlow(v); try { localStorage.setItem(FLOW_KEY, v); } catch { /* 저장소 없음 */ } };
     return <>
     <Heading eyebrow="APPEARANCE" title="칭호와 계급" description="이름 옆에는 칭호나 계급장 중 하나를 보여 줍니다(채팅도 같음). 칭호는 업적으로, 계급은 처치한 마릿수로 얻습니다."/>
     <div className="build-columns">
@@ -27,11 +33,12 @@ export function Cosmetics({ s, send, busy }: PanelProps) {
         <div className="rank-head-text"><b>{p.rank.name}</b><small>{p.next ? `${p.next.name}까지 ${(p.need - p.have).toLocaleString()}마리` : '최고 계급'} · 누적 처치 {p.exp.toLocaleString()}마리 (무리는 마릿수만큼, 환생해도 유지)</small>{p.next && <Meter value={p.have} max={p.need} label=""/>}</div>
     </div>
     <div className="title-list">{RANK_PERKS.map(perk => { const level = rankPerkLevel(s, perk.id), maxed = level >= perk.max; return <div key={perk.id} className={`title-row ${level ? 'owned' : 'locked'}`}><span className="title-name"><small className="rebirth-title">{perk.name} {level}/{perk.max}</small></span><span className="title-desc">{perk.desc(Math.max(1, level))}{level ? '' : ' (1단계 기준)'}</span><button type="button" className={maxed ? 'secondary small' : 'primary small'} disabled={busy || maxed || free < perk.cost} onClick={() => send({ type: 'rankPerk', id: perk.id })}>{maxed ? '최대' : '올리기 · 1P'}</button></div>; })}</div>
-    <h3 className="rank-flow-title">계급 흐름도 <small>계급 이름 아래는 그 계급에 오르는 누적 처치 수</small></h3>
-    <ol className="rank-flow" aria-label="계급 흐름도">{RANKS.map((r, i) => <li key={r.id} className={`rank-step ${i < p.index ? 'passed' : i === p.index ? 'current' : 'locked'} group-${r.group}`} title={`${r.name} · ${r.group} · 진급 포인트 +${r.points}`}>
-        <RankInsignia index={i} size={34} title={r.name}/>
+    <h3 className="rank-flow-title">계급 흐름도 <small>계급 이름 아래는 그 계급에 오르는 누적 처치 수</small><span className="rank-flow-switch" role="tablist" aria-label="흐름도 방향"><button type="button" role="tab" aria-selected={flow === 'column'} className={flow === 'column' ? 'primary small' : 'secondary small'} onClick={() => pickFlow('column')}>세로</button><button type="button" role="tab" aria-selected={flow === 'row'} className={flow === 'row' ? 'primary small' : 'secondary small'} onClick={() => pickFlow('row')}>가로</button></span></h3>
+    <ol className={`rank-flow ${flow}`} aria-label="계급 흐름도">{RANKS.map((r, i) => <li key={r.id} className={`rank-step ${i < p.index ? 'passed' : i === p.index ? 'current' : 'locked'} group-${r.group}`} title={`${r.name} · ${r.group} · 진급 포인트 +${r.points}`}>
+        <RankInsignia index={i} size={flow === 'row' ? 34 : 30} title={r.name}/>
         <b>{r.name}</b>
         <small>{i ? `${RANK_CUMULATIVE[i].toLocaleString()}마리` : '시작'}</small>
+        {flow === 'column' && <span className="rank-step-meta">{r.group} · 진급 +{r.points}P{i === p.index && p.next ? ` · ${p.next.name}까지 ${(p.need - p.have).toLocaleString()}마리` : ''}</span>}
         {i === p.index && <em>현재</em>}
     </li>)}</ol>
     <p className="footnote">진급 포인트는 병 1 · 부사관 2 · 장교 3 · 장성 4(합계 41)이고 특전은 단계당 1P입니다. 언제든 무료로 초기화합니다.</p>

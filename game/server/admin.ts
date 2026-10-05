@@ -15,7 +15,8 @@ import { DUNGEONS, STAGES } from '../data/world';
 import { PROGRESSION } from '../data/progression';
 import { skillById } from '../data/skills';
 import type { State } from '../types';
-import { ALTAR } from '../data/altar';
+import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs } from '../data/altar';
+import { refreshAltarEvents } from './events-config';
 import { offlineCapSeconds } from '../data/economy';
 import { SERVER_EVENTS, activeEvent, eventLabel, type ServerEvent } from '../data/events';
 import { readEventConfig, writeEventConfig, readClosures, writeClosures, readOpenDoors, writeOpenDoors } from './events-config';
@@ -321,6 +322,21 @@ export async function adminStats(now = Date.now()): Promise<AdminStats> {
     };
 }
 
+/** v3.17 운영: 축복 단계 설정. level 0이면 끄기. minutes가 없으면 그 단계의 기본 유지 시간(1~3단계 1시간/단계 누적, 4~6단계는 전용 시간 + 12시간). */
+export async function setAltarBlessingLevel(id: string, level: number, minutes?: number, now = Date.now()) {
+    const b = BLESSINGS.find(x => x.id === id);
+    if (!b) throw new ApiError('축복을 고르세요(gold · exp · mimic · nuri).');
+    const lv = Math.max(0, Math.min(BLESSING_MAX_LEVEL, Math.floor(level)));
+    if (lv === 0) await db().setAltarBlessing(id, 0, 0, 0);
+    else {
+        const high = lv > BLESSING_HIGH_FROM, highMs = high ? (minutes && minutes > 0 ? minutes * 60_000 : blessingLevelMs(b.hours, lv)) : 0;
+        const until = high ? now + highMs + ALTAR.blessingCapMs : now + (minutes && minutes > 0 ? minutes * 60_000 : Math.min(lv, BLESSING_HIGH_FROM) * b.hours * 3600_000);
+        await db().setAltarBlessing(id, lv, until, high ? now + highMs : 0);
+    }
+    invalidateAltar();
+    await refreshAltarEvents(now);
+    return adminStats();
+}
 /** v27.69 운영: 제단 초기화. offers = 게이지에 쌓인 공물(기여도) 0으로, god = 신·신의 자리·몫 비우기. 바뀐 통계를 돌려줍니다. */
 export async function resetAltar(kind: string) {
     if (kind !== 'offers' && kind !== 'god') throw new ApiError('초기화할 대상을 고르세요(offers 또는 god).');

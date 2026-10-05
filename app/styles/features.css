@@ -394,7 +394,18 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 /* v3.15 계급 흐름도 */
 .rank-flow-title { font-size: 14px; margin: 14px 0 8px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .rank-flow-title small { color: var(--muted, #9fb7b0); font-weight: 400; font-size: 12px; }
-.rank-flow { list-style: none; margin: 0; padding: 4px 0 8px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+.rank-flow { list-style: none; margin: 0; padding: 4px 0 8px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; min-width: 0; max-width: 100%; }
+/* v3.18 흐름도가 옆 칭호 칸을 밀지 않게(격자 자식의 최소 너비) + 세로 보기 */
+.build-columns > .cosmetics-fold { min-width: 0; }
+.rank-flow-switch { margin-left: auto; display: inline-flex; gap: 4px; }
+.rank-flow.column { flex-direction: column; gap: 4px; overflow: visible; }
+.rank-flow.column .rank-step { width: auto; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; padding: 7px 10px 7px 12px; text-align: left; }
+.rank-flow.column .rank-step + .rank-step::before { content: '▾'; left: 50%; top: -9px; translate: -50% 0; font-size: 11px; }
+.rank-flow.column .rank-step b { min-width: 44px; }
+.rank-flow.column .rank-step small { min-width: 86px; }
+.rank-flow.column .rank-step-meta { font-size: 11px; color: var(--muted, #9fb7b0); margin-left: auto; text-align: right; white-space: nowrap; }
+.rank-flow.column .rank-step em { position: static; translate: none; margin-left: 6px; }
+@media (max-width: 767px) { .rank-flow.column .rank-step-meta { white-space: normal; } }
 .rank-step { position: relative; flex: 0 0 auto; width: 92px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px 8px; border: 1px solid rgba(127, 211, 195, .14); border-radius: 10px; background: #0d1d22; text-align: center; }
 .rank-step + .rank-step::before { content: '›'; position: absolute; left: -7px; top: 50%; translate: 0 -55%; color: #4d7a70; font-size: 16px; }
 .rank-step b { font-size: 12px; white-space: nowrap; }
@@ -413,3 +424,10 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .altar-jump { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 4px 0 8px; }
 .altar-jump > span { font-size: 12px; color: var(--muted, #9fb7b0); }
 .altar-jump small { flex-basis: 100%; font-size: 11px; color: var(--muted, #9fb7b0); }
+
+/* v3.17 모험 안내 보상 */
+.tutorial-reward { font-style: normal; color: #e8d39a; }
+
+/* v3.18 월드보스 알림 줄 */
+.raid-notice { border-color: #8a3b3b; background: linear-gradient(90deg, #2a1414, #1b1212); }
+.raid-notice .altar-notice-open b { color: #ff9d8a; }
