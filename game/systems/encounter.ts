@@ -3,7 +3,7 @@ import { BOSS_RESEARCH } from '../data/specializations';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets } from './progression';
-import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt } from './meta';
+import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
@@ -23,7 +23,7 @@ import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
-import { saleValue } from './equipment';
+import { dismantleEssence } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
 import { recordGoal, recordAbyssDepth } from './progress';
@@ -35,8 +35,8 @@ export function victoryHeal(s: State) {
 }
 /** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
 export function gainLevels(s: State) {
-    while (s.exp >= xpNeeded(s.level, s.rebirths) && s.level < 100) {
-        s.exp -= xpNeeded(s.level, s.rebirths);
+    while (s.exp >= xpNeeded(s.level, s.rebirths, xpWall(s)) && s.level < 100) {
+        s.exp -= xpNeeded(s.level, s.rebirths, xpWall(s));
         s.level++;
         s.statPoints += PROGRESSION.statPerLevel;
         if (s.level > s.peakLevel) {
@@ -91,11 +91,12 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
-    // 자동 분해기: 켜 두면 1단계는 일반, 2단계는 희귀 이하를 바로 팝니다. 유물·장비 도감에 없는 종류는 남깁니다.
+    // 자동 분해기: 켜 두면 1단계는 희귀, 2단계는 영웅 이하를 바로 분해합니다. v3.23 골드 대신 정수. 유물·장비 도감에 없는 종류는 남깁니다.
     const net = researchRank(s, 'sortingNet');
     if (net && s.autoSell && !item.relic && item.rarity <= net && s.itemBook?.[itemKey(slot, rarity)]) {
-        s.gold += saleValue(item);
-        addLog(s, `자동 분해기: ${item.name} 자동 판매 +${saleValue(item)} G`, 'reward');
+        const essence = dismantleEssence(item);
+        s.essence = (s.essence || 0) + essence;
+        addLog(s, `자동 분해기: ${item.name} 분해 · 정수 +${essence}`, 'reward');
         return;
     }
     if (s.inventory.length >= inventoryCap(s)) {
@@ -276,7 +277,7 @@ export function reward(s: State, rng: () => number) {
     s.exp += exp;
     // v27.58 경험의 누리: 지금 레벨 필요 경험치의 1~3%. 배율과 무관하게 바로 더합니다.
     if (e.id === EXP_NURI.id && s.level < 100) {
-        const t = rollNuriTier(rng), bonus = Math.max(1, Math.floor(xpNeeded(s.level, s.rebirths) * t.pct));
+        const t = rollNuriTier(rng), bonus = Math.max(1, Math.floor(xpNeeded(s.level, s.rebirths, xpWall(s)) * t.pct));
         s.exp += bonus;
         addLog(s, `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} (Lv.${s.level} 필요량의 ${Math.round(t.pct * 100)}%)`, 'reward');
     }

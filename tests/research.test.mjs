@@ -108,20 +108,19 @@ test('Research v3: four special entries match the plan table and sit in the util
     }
 });
 
-test('Research v3: tailwind sail and window scale the tailwind bonus, its condition and the rebirth log', () => {
-    const s = newState(0); assert.equal(metaMod.tailwindExp(s), .5); assert.equal(metaMod.tailwindWindow(s), 5);
-    s.permanent.tailwindSail = 3; s.permanent.tailwindWindow = 2; close(metaMod.tailwindExp(s), .8); assert.equal(metaMod.tailwindWindow(s), 7);
-    s.rebirths = 6; s.level = 67; assert.equal(metaMod.nextLifeBonus(s), 'tailwind'); s.level = 68; assert.equal(metaMod.nextLifeBonus(s), null);
-    s.level = 67; act(s, { type: 'rebirth' }, 0); assert.equal(s.lifeBonus, 'tailwind'); assert.ok(s.logs.some(l => l.text.includes('경험치 +80%')));
-    close(expMultiplier(s) / expMultiplier({ ...s, lifeBonus: null }), 1.8);
+test('Research v3.23: tailwind sail raises the additive bonus, the wall research softens the over-target growth', () => {
+    const s = newState(0); assert.equal(metaMod.tailwindExp(s), .5); close(metaMod.xpWall(s).growth, 1.6);
+    s.permanent.tailwindSail = 3; s.permanent.tailwindWindow = 2; close(metaMod.tailwindExp(s), .8); close(metaMod.xpWall(s).growth, 1.56);
+    s.rebirths = 6; s.level = 67; act(s, { type: 'rebirth' }, 0); assert.ok(s.logs.some(l => l.text.includes('경험치 +80%')));
+    const e = stats(s).expBonus; close(expMultiplier(s) / expMultiplier({ ...s, level: metaMod.rebirthLevel(s) }), (1 + e + .8) / (1 + e));
 });
 
-test('Research v3: sorting net sells only known, low-rarity drops while the setting is on', () => {
+test('Research v3: sorting net dismantles only known, low-rarity drops into essence while the setting is on', () => {
     const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /자동 분해기/);
     s.permanent.sortingNet = 1; act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoSell, true);
     // v27.53 드롭은 희귀 이상만: 1단계는 희귀, 2단계는 영웅 이하를 팝니다.
     drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'unregistered kind is kept');
-    s.itemBook['rod:1'] = true; const gold = s.gold; drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'rank 1 sells rare'); assert.ok(s.gold > gold);
+    s.itemBook['rod:1'] = true; const gold = s.gold, essence = s.essence || 0; drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'rank 1 dismantles rare'); assert.equal(s.gold, gold, 'no gold'); assert.equal((s.essence || 0) - essence, 2, 'rare → essence 2');
     const hero = () => { const v = [.6, 0]; let i = 0; return () => v[i++] ?? 0; }; // 등급 굴림 .6 → 영웅, 부위 굴림 0 → 낚싯대
     s.itemBook['rod:2'] = true; drop(s, 5, hero(), true); assert.equal(s.inventory.at(-1).rarity, 2); assert.equal(s.inventory.length, 2, 'rank 1 keeps hero');
     s.permanent.sortingNet = 2; drop(s, 5, hero(), true); assert.equal(s.inventory.length, 2, 'rank 2 sells hero');

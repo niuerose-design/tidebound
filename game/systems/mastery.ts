@@ -43,8 +43,8 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
         const extra = masteryGainBonus(sk, skillLevel(sk, s.learned[id], skillMastery(s, id)));
         if (extra > bonus) { bonus = extra; source = sk.name; }
     }
-    // 깊은 모험(직전 생 Lv.100 완주) 동안 기본 숙련 +1 → +2. 보너스 한도는 그만큼 함께 올라갑니다.
-    const base = (s.lifeBonus === 'deep' ? 2 : 1) + rankPerkLevel(s, 'drill');
+    // 기본 숙련 1 + 계급 특전 숙련 훈련. 보너스 한도는 그만큼 함께 올라갑니다. (v3.23 깊은 모험 +1은 삭제)
+    const base = 1 + rankPerkLevel(s, 'drill');
     const amount = masteryPerVictory(bonus, base);
     return { amount, base, bonus: amount - base, source };
 }
@@ -57,6 +57,6 @@ export function masteryMultipliers(s: State) {
     const focus = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     const event = s.event?.mastery || 1;
     const research = 1 + masteryResearchHundredths(s) / 100;
-    const base = (s.lifeBonus === 'deep' ? 2 : 1) + rankPerkLevel(s, 'drill');
+    const base = 1 + rankPerkLevel(s, 'drill');
     return { base, focus, event, research, total: focus * event * research };
 }

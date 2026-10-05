@@ -1,7 +1,7 @@
 import type { State } from '../types';
 import { RANDOM_GAME, randomGameTier } from '../data/random-game';
 import { ECONOMY, researchRank } from '../data/economy';
-import { MONSTER_TUNING, DUNGEON_TUNING, dungeonModeTier } from '../data/balance';
+import { MONSTER_TUNING, DUNGEON_TUNING, dungeonModeTier, OVER_TARGET, type XpTargetWall } from '../data/balance';
 import { fishExpAt, fishGoldAt, tideLiftLevel } from '../data/world';
 /** 환생 요구 레벨: 30에서 환생마다 +5(Lv.60까지), 그 뒤로는 환생마다 +1(v27.77 최대 Lv.100, 환생 46회에 도달). */
 export const rebirthLevel = (s: Pick<State, 'rebirths'>) => {
@@ -13,20 +13,17 @@ export const rebirthLevel = (s: Pick<State, 'rebirths'>) => {
 /** v27.55 환생 이 횟수부터 사냥터·던전의 레벨 제한이 없습니다(환생 횟수 조건은 그대로). */
 export const LEVEL_GATE_FREE_REBIRTHS = 5;
 export const levelGateOk = (s: Pick<State, 'level' | 'rebirths'>, level: number) => s.rebirths >= LEVEL_GATE_FREE_REBIRTHS || s.level >= level;
-/** 요구 레벨을 넘겨 오래 버틴 모험의 추가 세계석: 초과 레벨² ÷ 40. */
-export const deepVoyagePearls = (s: State) => { const over = s.level - rebirthLevel(s); return over > 0 ? Math.floor(over * over / 40) : 0; };
-/** 순풍의 기본 조건 폭(요구 레벨+5)과 기본 경험치 보너스(+50%). 실제 값은 tailwindWindow·tailwindExp를 쓰세요. */
-export const TAILWIND_WINDOW = 5, TAILWIND_EXP = .5, DEEP_VOYAGE_LEVEL = 100;
+/** v3.23 순풍 기본 경험치 보너스(+50%). 실제 값은 tailwindExp. */
+export const TAILWIND_EXP = .5;
 /** 순풍 경험치 보너스: +50% + 순풍의 깃털 10%p/단계. 정수 연산 뒤 나눠 0단계는 정확히 0.5입니다. */
 export const tailwindExp = (s: Pick<State, 'permanent'>) => (TAILWIND_EXP * 10 + researchRank(s, 'tailwindSail')) / 10;
-/** 순풍 조건 폭: 요구 레벨 + 5 + 바람목 넓히기 1레벨/단계. */
-export const tailwindWindow = (s: Pick<State, 'permanent'>) => TAILWIND_WINDOW + researchRank(s, 'tailwindWindow');
-/** 이번 환생으로 다음 생에 얻는 효과. Lv.100 완주는 깊은 모험, 요구 레벨 + 순풍 조건 폭 이내는 순풍. */
-export const nextLifeBonus = (s: State): 'deep' | 'tailwind' | null => s.level >= DEEP_VOYAGE_LEVEL ? 'deep' : s.level <= rebirthLevel(s) + tailwindWindow(s) ? 'tailwind' : null;
-export const tailwindActive = (s: State) => s.lifeBonus === 'tailwind' && s.level < rebirthLevel(s);
-export const rebirthReward = (s: State, bonus = 0) => deepVoyagePearls(s) + Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) + Math.max(0, Math.floor(bonus));
+/** v3.23 순풍은 조건 없이 환생 뒤 목표 레벨까지 켜지고, 다른 경험치 보너스와 더합니다(전에는 요구 레벨+5 안에 환생해야 다음 생에 켜지고 따로 곱했음). */
+export const tailwindActive = (s: Pick<State, 'rebirths' | 'level'>) => (s.rebirths || 0) > 0 && s.level < rebirthLevel(s);
+/** v3.23 목표 레벨 너머 벽(OVER_TARGET). 역풍 견디기 연구(옛 바람목 넓히기)가 레벨당 배율을 단계마다 0.02 낮춥니다. */
+export const xpWall = (s: Pick<State, 'rebirths' | 'permanent'>): XpTargetWall => ({ target: rebirthLevel(s), growth: OVER_TARGET.growth - OVER_TARGET.perResearch * researchRank(s, 'tailwindWindow') });
+export const rebirthReward = (s: State, bonus = 0) => Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) + Math.max(0, Math.floor(bonus));
 /** 환생 세계석의 구성. 합계는 rebirthReward와 같습니다. */
-export const rebirthRewardParts = (s: State, bonus = 0) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))), bonus: Math.max(0, Math.floor(bonus)), deep: deepVoyagePearls(s) });
+export const rebirthRewardParts = (s: State, bonus = 0) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))), bonus: Math.max(0, Math.floor(bonus)) });
 export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, v27.70 일반 던전은 입장 때 고른 난이도(노말 0 · 헬 50 · 나이트메어 200). */

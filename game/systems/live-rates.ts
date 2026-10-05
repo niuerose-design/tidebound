@@ -4,7 +4,7 @@
  * 동기화가 GAP_RESET_MS 넘게 끊기면(탭 숨김·부재중 정산) 창을 새로 시작해 정산 몫이 실측에 섞이지 않습니다. 환생하면 창을 새로 시작합니다.
  */
 import type { Log, State } from '../types';
-import { xpNeeded } from '../data/balance';
+import { xpNeeded , type XpTargetWall } from '../data/balance';
 /** 플레이어 최대 레벨(encounter의 레벨업 상한과 같음). */
 export const LEVEL_CAP = 100;
 
@@ -73,16 +73,16 @@ export function createLiveRates() {
 }
 
 /** 경험치 gain을 받으면 어디까지 가는지(최대 레벨에서 멈춤). 시간당 레벨·N시간 뒤 예상 레벨에 씁니다. */
-export function projectLevel(level: number, exp: number, rebirths: number, gain: number) {
+export function projectLevel(level: number, exp: number, rebirths: number, gain: number, wall?: XpTargetWall) {
     let lv = Math.max(1, level), xp = Math.max(0, exp) + Math.max(0, gain);
-    while (lv < LEVEL_CAP && xp >= xpNeeded(lv, rebirths)) { xp -= xpNeeded(lv, rebirths); lv++; }
+    while (lv < LEVEL_CAP && xp >= xpNeeded(lv, rebirths, wall)) { xp -= xpNeeded(lv, rebirths, wall); lv++; }
     if (lv >= LEVEL_CAP) return { level: LEVEL_CAP, exp: 0, capped: true, progress: 1 };
-    return { level: lv, exp: xp, capped: false, progress: xp / xpNeeded(lv, rebirths) };
+    return { level: lv, exp: xp, capped: false, progress: xp / xpNeeded(lv, rebirths, wall) };
 }
 /** 지금 경험치 속도로 최대 레벨까지 걸리는 시간(ms). 0 속도면 Infinity. */
-export function msToCap(level: number, exp: number, rebirths: number, perHour: number) {
+export function msToCap(level: number, exp: number, rebirths: number, perHour: number, wall?: XpTargetWall) {
     if (perHour <= 0) return Infinity;
     let need = -Math.max(0, exp);
-    for (let lv = Math.max(1, level); lv < LEVEL_CAP; lv++) need += xpNeeded(lv, rebirths);
+    for (let lv = Math.max(1, level); lv < LEVEL_CAP; lv++) need += xpNeeded(lv, rebirths, wall);
     return Math.max(0, need) / perHour * 3_600_000;
 }

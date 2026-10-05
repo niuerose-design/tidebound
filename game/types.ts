@@ -477,7 +477,7 @@ export type State = {
     researchGranted?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
-    /** 자동 분해기 자동 판매 켜짐 여부(설정). */
+    /** 자동 분해기 켜짐 여부(설정). v3.23부터 정수로 분해. */
     autoSell?: boolean;
     /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
     hideDoorNotice?: boolean;

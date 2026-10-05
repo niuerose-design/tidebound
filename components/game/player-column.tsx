@@ -13,6 +13,7 @@ import { xpNeeded, SLOTS, RARITIES } from '@/game/data/balance';
 import { jobById } from '@/game/data/classes';
 import { stats, power } from '@/game/systems/stats';
 import type { State, Action } from '@/game/types';
+import { xpWall } from '@/game/systems/meta';
 export function Player({ s, busy, send, setView }: {
     s: State;
     busy: boolean;
@@ -41,7 +42,7 @@ export function Player({ s, busy, send, setView }: {
     </div>
     <Meter value={s.hp} max={a.hp} label="체력"/>
     <Meter value={s.mana} max={a.mana} label="마나" color="mana"/>
-    <Meter value={s.exp} max={xpNeeded(s.level, s.rebirths)} label="경험치" color="gold"/>
+    <Meter value={s.exp} max={xpNeeded(s.level, s.rebirths, xpWall(s))} label="경험치" color="gold"/>
     <div className="stat-grid">
     <div>
     <Swords />

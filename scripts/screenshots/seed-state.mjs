@@ -9,7 +9,7 @@ const s = newState(now - 3 * 3600_000);
 s.name = '스크린샷 선장'; s.level = 44; s.rebirths = 3; s.pearls = 180; s.gold = 250000; s.sp = 3; s.abyssBest = 12; s.abyssMilestones = [10];
 s.attributes = { str: 30, dex: 28, int: 26, vit: 30, wis: 22, luk: 20 }; s.statPoints = 16;
 s.permanent = { attack: 8, hp: 6, guard: 3, gold: 2, ap: 2 };
-s.lifeBonus = 'tailwind';
+
 for (const f of FISH.slice(0, 14)) s.book[f.id] = Math.floor(rng() * 700);
 s.jobMastery = { fisher: 900, wanderer: 2600, harpoon: 400 }; s.unlockedJobs = ['fisher', 'wanderer', 'harpoon'];
 s.job = 'wanderer';
