@@ -1,5 +1,5 @@
 'use client';
-import { Activity } from 'lucide-react';
+import { Activity, Flag, Gauge, History, Target } from 'lucide-react';
 import type { State } from '@/game/types';
 import { DUNGEONS, FISH, STAGES } from '@/game/data/world';
 
@@ -22,8 +22,19 @@ export function AutoRunStatus({ s, compact }: { s: State; compact?: boolean }) {
     if (compact) return <details className="panel battle-rail-panel auto-run-status compact" aria-label="자동 진행 상태">
         <summary><Activity size={14}/><b>자동 진행</b><span>{d || s.running ? stop : '멈춤'}</span></summary>{rows}
     </details>;
-    return <section className="panel auto-run-status" aria-label="자동 진행 상태">
-        <div className="section-title"><h2><Activity size={15}/> 자동 진행</h2><span className={`auto-run-state ${s.running ? 'on' : 'off'}`}>{s.running ? '진행 중' : '멈춤'}</span></div>
-        {rows}
+    const items = [
+        { icon: <Target size={14}/>, label: '현재 활동', value: goal, tone: 'goal' },
+        { icon: <Gauge size={14}/>, label: '진행 상황', value: progress, tone: s.recovery > 0 ? 'warn' : '' },
+        { icon: <Flag size={14}/>, label: '중단 조건', value: stop, tone: '' },
+        { icon: <History size={14}/>, label: '마지막 종료 사유', value: s.runEnd ? s.runEnd.reason : '기록 없음', tone: 'muted' },
+    ];
+    return <section className={`panel auto-run-status ${s.running ? 'running' : ''}`} aria-label="자동 진행 상태">
+        <div className="auto-run-head">
+            <div><span className="eyebrow">AUTO RUN · 사냥 · 던전</span><h2><Activity size={18}/> 자동 진행</h2></div>
+            <span className={`auto-run-state ${s.running ? 'on' : 'off'}`}><i/>{s.running ? '진행 중' : '멈춤'}</span>
+        </div>
+        <div className="auto-run-grid">{items.map(x => <div key={x.label} className={`auto-run-tile ${x.tone}`}>
+            <span className="auto-run-label">{x.icon}{x.label}</span><p>{x.value}</p>
+        </div>)}</div>
     </section>;
 }
