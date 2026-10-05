@@ -38,7 +38,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
             <div className="hacker-stat"><small>해킹 단계</small><strong>{n ? ROMAN[n - 1] : '-'}</strong></div>
             <div className="hacker-stat"><small>침투 최고 깊이</small><strong>{h.bestDepth || 0}</strong></div>
             <Meter value={Math.min(need, into)} max={need} label="다음 권한 등급까지"/>
-            {isHacker && <p className="footnote">{s.running ? '브루트포스 실행 중' : '자동 사냥을 켜면 브루트포스가 돌아갑니다'} · 2초마다 비트 +{HACKER.brute.bits} · 권한 +{HACKER.brute.exp} (오프라인 정산 포함)</p>}
+            {isHacker && <p className="footnote">{s.running ? '브루트포스 실행 중' : '자동 사냥을 켜면 브루트포스가 돌아갑니다'} · 2초마다 비트 +{Number((HACKER.brute.bits * (loadout.includes('cryptoMiner') ? 1.3 : 1)).toFixed(3))} · 권한 +{HACKER.brute.exp} (오프라인 정산 포함)</p>}
         </section>
 
         <section className="panel hacker-section">
