@@ -3,12 +3,28 @@
  * 침투 작전의 정답은 서버 키(setPuzzleKey)와 판 시드로 만든 해시라, 세이브(클라이언트에 보내는 상태)에는 정답이 없습니다.
  */
 import type { State, HackerState, HackerInfil } from '../types';
-import { HACKER, HACKER_ID, ADGUARD_ID, gradeNeed, type PrivacyField, PRIVACY_FIELDS } from '../data/hacker';
+import { HACKER, WHITE_HACKER_ID, ADGUARD_ID, gradeNeed, isHackerJob, programById, type PrivacyField, type ProgramId, PRIVACY_FIELDS } from '../data/hacker';
+import { monthKey } from '../data/goals';
 import { dayKey } from '../data/goals';
 import { canUse, skillMastery } from './progression';
 import { addLog } from './state';
 
-export const isHacker = (s: Pick<State, 'job'>) => s.job === HACKER_ID;
+/** v3.25 해커 계열(해커·화이트 해커). 같은 제약(전투 불가, 레벨 정지)을 받습니다. */
+export const isHacker = (s: Pick<State, 'job'>) => isHackerJob(s.job);
+export const isWhiteHacker = (s: Pick<State, 'job'>) => s.job === WHITE_HACKER_ID;
+/** v3.25 장착한 프로그램인지(해커 계열일 때만 켜짐). */
+export const programOn = (s: Pick<State, 'job' | 'hacker'>, id: ProgramId) => isHacker(s) && !!s.hacker?.loadout?.includes(id);
+export const memoryCap = (s: Pick<State, 'hacker'>) => HACKER.memory(s.hacker?.grade || 1);
+export const memoryUsed = (ids: string[]) => ids.reduce((n, id) => n + (programById(id)?.memory || 0), 0);
+/** v3.25 해커 순위(월) 기록을 올립니다. 저장 전에 /api 쪽이 dirty를 보고 순위표에 씁니다. */
+export function bumpSeason(s: State, now: number, d: { depth?: number; hacks?: number; restores?: number }) {
+    const h = hackerState(s), key = monthKey(now);
+    if (h.season?.key !== key) h.season = { key, depth: 0, hacks: 0, restores: 0 };
+    const x = h.season;
+    x.depth = Math.max(x.depth, d.depth || 0); x.hacks += d.hacks || 0; x.restores += d.restores || 0; x.dirty = true;
+}
+/** 순위 점수: 깊이 ×10 + 해킹 ×5 + 복구 ×5. */
+export const seasonScore = (x: { depth: number; hacks: number; restores: number }) => x.depth * 10 + x.hacks * 5 + x.restores * 5;
 /** v3.18 해커는 전투 콘텐츠(결투·월드보스·신 도전)에 참여하지 않습니다. 막을 때의 문구, 아니면 빈 문자열. */
 export const hackerCombatBlock = (s: Pick<State, 'job'>) => isHacker(s) ? '해커는 전투에 참여할 수 없습니다. 다른 직업으로 전직한 뒤 도전하세요.' : '';
 
@@ -36,7 +52,8 @@ export function gainHacker(s: State, bits: number, exp: number, quiet = false) {
     }
     const practice = Math.floor(h.exp) - before;
     if (practice > 0 && isHacker(s)) {
-        s.jobMastery[HACKER_ID] = (s.jobMastery[HACKER_ID] || 0) + practice;
+        // v3.25 지금 해커 계열 직업(해커·화이트 해커)의 숙련에 더합니다.
+        s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practice;
         for (const id of s.skills) if (canUse(s, id) && id === ADGUARD_ID) s.skillPractice[id] = (s.skillPractice[id] || 0) + practice;
     }
 }
@@ -45,8 +62,11 @@ export const gradeTotal = (grade: number) => { let n = 0; for (let g = 1; g < gr
 
 /** 브루트포스(방치): 자동 사냥 대신 해커가 돌리는 작업. 틱마다 비트·권한 경험치를 조금씩. */
 export function hackerTick(s: State) {
-    gainHacker(s, HACKER.brute.bits, HACKER.brute.exp, true);
+    // v3.25 크립토 마이너: 비트 +30%.
+    gainHacker(s, HACKER.brute.bits * (programOn(s, 'cryptoMiner') ? 1.3 : 1), HACKER.brute.exp, true);
 }
+/** v3.25 추적당했을 때 회수하는 비율(백신 회피 75%). */
+export const traceKeep = (s: Pick<State, 'job' | 'hacker'>) => programOn(s, 'avEvasion') ? .75 : HACKER.infil.traceKeep;
 
 // ── 침투 작전 ─────────────────────────────────────────────
 let puzzleKey = 'tidebound-local-puzzle-key';
@@ -72,11 +92,13 @@ export function nodeAnswer(run: HackerInfil) {
     for (let i = digits.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [digits[i], digits[j]] = [digits[j], digits[i]]; }
     return digits.slice(0, run.node.size).join('');
 }
-export function makeNode(depth: number): HackerInfil['node'] {
+/** extra: 노드마다 더 주는 시도(v3.25 포트 스캐너 +1). */
+export function makeNode(depth: number, extra = 0): HackerInfil['node'] {
     const next = depth + 1;
-    if (next % 2 === 1) { const l = HACKER.infil.lock(next); return { kind: 'lock', size: l.digits, tries: 0, max: l.tries, history: [] }; }
-    const p = HACKER.infil.port(next); return { kind: 'port', size: p.range, tries: 0, max: p.tries, history: [] };
+    if (next % 2 === 1) { const l = HACKER.infil.lock(next); return { kind: 'lock', size: l.digits, tries: 0, max: l.tries + extra, history: [] }; }
+    const p = HACKER.infil.port(next); return { kind: 'port', size: p.range, tries: 0, max: p.tries + extra, history: [] };
 }
+export const nodeExtra = (s: Pick<State, 'job' | 'hacker'>) => programOn(s, 'portScanner') ? 1 : 0;
 /** 추측을 채점합니다. 자물쇠: 자리·숫자 모두 맞으면 S, 숫자만 맞으면 B. 포트: 정답이 더 크면 UP, 작으면 DOWN. */
 export function judge(run: HackerInfil, guess: string) {
     const answer = nodeAnswer(run), node = run.node;

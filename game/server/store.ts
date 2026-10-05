@@ -10,7 +10,7 @@ import type { RankingRow } from './db';
 import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
 import { refreshEvents } from './events-config';
-import { ensurePuzzleKey } from './hacks';
+import { ensurePuzzleKey, readHacks, syncHackerBoard } from './hacks';
 import { privacyOf, isHacker } from '../systems/hacker';
 import { accountFromRequest, AuthError, readSlot } from './auth';
 import { FISH } from '../data/world';
@@ -67,8 +67,9 @@ export function checkOrigin(req: Request) {
 export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
     const database = db(), now = Date.now();
     await refreshEvents(now);
-    // v3.18 침투 작전 정답 키(인스턴스마다 한 번).
+    // v3.18 침투 작전 정답 키(인스턴스마다 한 번). v3.25 해킹 효과(이벤트 변조·서버 다운)도 30초 캐시로 반영합니다.
     await ensurePuzzleKey(now);
+    await readHacks(now);
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = await database.getPlayer(id);
         // v25.10 처음 보는 모험가일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
@@ -79,6 +80,8 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
         advance(s, now);
         act(s, action, now);
         const result = extra ? await extra(s) : null;
+        // v3.25 해커 순위(월): 기록이 바뀌었을 때만 한 번 씁니다.
+        await syncHackerBoard(id, s, now);
         if (await database.updatePlayer(id, JSON.stringify(s), now, row.revision))
             return { state: s, result };
     }

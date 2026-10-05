@@ -357,6 +357,8 @@ export const LINEAGES: Lineage[] = [
     { id: 'undead', name: '망인 계보', tree: 'mystery', summary: '불리한 몸을 숙련으로 극복하는 골격·골령 계보입니다.' },
     { id: 'voidcaller', name: '공허의 기록자 계보', tree: 'mystery', summary: '환생 이후에 드러나는 마나 비례 히든 계보입니다.' },
     { id: 'krakenkin', name: '크라켄 혈족', tree: 'mystery', summary: '몬스터의 피를 이은 추가타 직업입니다.' },
+    /** v3.25 해커 계열: 해커 → 화이트 해커. 싸우지 않고 서버를 건드리는 계보입니다. */
+    { id: 'hacker', name: '해커 계보', tree: 'mystery', summary: '전투 대신 침투 작전과 해킹으로 자라는 계보입니다. 화이트 해커는 해킹을 되돌리고 서버를 지킵니다.' },
     independent('mystery'),
     ...MONOSTAT_LINEAGES,
 ];

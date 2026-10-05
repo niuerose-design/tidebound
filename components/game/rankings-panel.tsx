@@ -20,6 +20,7 @@ import { BattleLogLine, withTurnDividers } from './combat-log';
 import type { Ranking, AbyssRow } from './use-game';
 import { abyssWeeklyPearls } from '@/game/systems/progress';
 import type { PanelProps } from './panel-props';
+import { isHackerJob } from '@/game/data/hacker';
 
 /** 랭킹 줄과 상세보기에 보여 주는 주요 능력치. */
 const MAIN_STATS = ['hp', 'attack', 'magic', 'defense', 'resist', 'speed'] as const;
@@ -59,8 +60,8 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     const detailLoadout = detail ? loadout(detail) : null, detailStats = detail ? normalizeStats(detail.stats) : null;
     return <>
     <Heading eyebrow="ASYNC ARENA" title="모험가의 명예" description="등록된 능력치와 스킬로 겨룹니다. 상대의 접속 여부와 관계없이 전투합니다.">
-    <button className="primary" disabled={busy} onClick={register} title={s.job === 'hacker' ? '해커는 결투 정보를 새로 등록하지 않고, 이전에 등록한 기록의 애드가드 숨김 정보만 갱신합니다.' : undefined}>
-    <ArrowUpRight size={17}/>{s.job === 'hacker' ? '숨김 정보 갱신' : '내 전투 정보 등록'}</button>
+    <button className="primary" disabled={busy} onClick={register} title={isHackerJob(s.job) ? '해커는 결투 정보를 새로 등록하지 않고, 이전에 등록한 기록의 애드가드 숨김 정보만 갱신합니다.' : undefined}>
+    <ArrowUpRight size={17}/>{isHackerJob(s.job) ? '숨김 정보 갱신' : '내 전투 정보 등록'}</button>
     </Heading>
     <p className="arena-season" title={`지난 시즌 순위 보상: 1위 ${duelSeasonPearls(1)} · 2위 ${duelSeasonPearls(2)} · 3위 ${duelSeasonPearls(3)} · 10위 안 ${duelSeasonPearls(10)} · 50위 안 ${duelSeasonPearls(50)} · 참가 ${duelSeasonPearls(99)}세계석. 첫 행동 때 받습니다.`}>결투 시즌 <b>{season || '—'}</b> · 매달 1일 0시(한국 시간) 점수 1000으로 초기화 · 순위 보상은 다음 시즌 첫 행동 때 지급</p>
     <div className="arena-stats">
@@ -84,8 +85,10 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <TabsTrigger value="ranking">모험가 랭킹</TabsTrigger>
     <TabsTrigger value="training">훈련 상대</TabsTrigger>
     {s.rebirths >= 3 && <TabsTrigger value="abyss" onClick={() => { if (!abyss) loadAbyss(); }}>무릉도장 · 주간</TabsTrigger>}
+    {(s.hacker || s.rebirths >= 3) && <TabsTrigger value="hacker">해커 · 월간</TabsTrigger>}
     </TabsList>
     <TabsContent value="abyss"><AbyssBoard s={s} abyss={abyss} reload={loadAbyss}/></TabsContent>
+    <TabsContent value="hacker"><HackerBoard s={s}/></TabsContent>
     <TabsContent value="ranking">
     {(() => { const picks = recommendOpponents(rows, s.rating); return picks.length ? <div className="panel ranking-panel recommend-panel">
         <div className="section-title"><h2>추천 상대</h2><span>내 점수 ±{RECOMMEND_RANGE} 안에서 가까운 순</span></div>
@@ -195,5 +198,26 @@ function AbyssBoard({ s, abyss, reload }: { s: State; abyss: { week: string; row
         {!abyss ? <p className="footnote">불러오는 중…</p> : !abyss.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 주에 무릉도장을 정복한 모험가가 없습니다. 첫 기록을 남겨 보세요."/> :
         <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>층</TableHead><TableHead>직업</TableHead><TableHead>환생</TableHead></TableRow></TableHeader>
         <TableBody>{abyss.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{r.depth}층</b></TableCell><TableCell>{hid(r, 'job') ? '???' : jobName(r.job)}</TableCell><TableCell>{hid(r, 'level') ? '???' : r.rebirths}</TableCell></TableRow>)}</TableBody></Table>}
+    </section>;
+}
+
+type HackerRow = { rank: number; id: string; name: string; job: string; depth: number; hacks: number; restores: number; grade: number; score: number; self: boolean; masked?: string[] };
+/** v3.25 해커 순위(월): 침투 작전 최고 깊이 ×10 + 해킹 실행 ×5 + 화이트 해커 복구 ×5. 탭을 열 때 한 번 불러옵니다. */
+function HackerBoard({ s }: { s: State }) {
+    const [board, setBoard] = useState<{ month: string; rows: HackerRow[] } | null>(null), [error, setError] = useState('');
+    const [nonce, setNonce] = useState(0), load = () => setNonce(n => n + 1);
+    useEffect(() => {
+        let alive = true;
+        fetch('/api/ranking?board=hacker', { cache: 'no-store' }).then(async r => { const d = await r.json(); if (!r.ok) throw Error(d.error || '불러오지 못했습니다.'); if (alive) { setBoard(d); setError(''); } }).catch(e => { if (alive) setError(e instanceof Error ? e.message : '불러오지 못했습니다.'); });
+        return () => { alive = false; };
+    }, [nonce]);
+    const mine = s.hacker?.season;
+    return <section className="panel ranking-panel abyss-board">
+        <div className="section-title"><h2><ArrowUpRight size={17}/> 이번 달 해커 순위{board ? ` · ${board.month}` : ''}</h2><button className="text-button" onClick={load}><RefreshCw size={13}/> 새로고침</button></div>
+        <p className="footnote">점수 = 침투 작전 최고 깊이 ×10 + 해킹 실행 ×5 + 화이트 해커 복구 ×5. 한국 시간 매월 1일에 새로 셉니다. 애드가드로 숨긴 이름은 ???로 보입니다.</p>
+        {mine && <p className="abyss-mine">내 이번 달 기록 <b>깊이 {mine.depth} · 해킹 {mine.hacks} · 복구 {mine.restores}</b></p>}
+        {error ? <p className="footnote negative">{error}</p> : !board ? <p className="footnote">불러오는 중…</p> : !board.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 달에 침투 작전·해킹을 한 해커가 없습니다."/> :
+        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>해커</TableHead><TableHead>점수</TableHead><TableHead>깊이</TableHead><TableHead>해킹</TableHead><TableHead>복구</TableHead></TableRow></TableHeader>
+        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}{r.job === 'whiteHacker' && !r.masked?.includes('job') ? <small> · 화이트</small> : null}</TableCell><TableCell><b>{format(r.score)}</b></TableCell><TableCell>{r.depth}</TableCell><TableCell>{r.hacks}</TableCell><TableCell>{r.restores}</TableCell></TableRow>)}</TableBody></Table>}
     </section>;
 }

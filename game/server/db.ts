@@ -44,6 +44,8 @@ export interface Storage {
     listAccounts(): Promise<{ id: string; username: string }[]>;
     /** v27.26 운영 도구용: 모든 세이브(압축 해제된 상태 문자열). */
     listPlayers(): Promise<{ id: string; state: string; revision: number; updated_at: number }[]>;
+    /** v3.25 패킷 스니핑: since 이후 저장된(활동한) 모험가 수(나 제외). */
+    countActivePlayers(since: number, except: string): Promise<number>;
     /** v27.27 운영 설정(서버 이벤트 등) 키-값. */
     getSetting(key: string): Promise<string | null>;
     setSetting(key: string, value: string, now: number): Promise<void>;
@@ -215,6 +217,7 @@ function neonStorage(url: string): Storage {
         async createAccount(a) { const r = await q('INSERT INTO accounts (id,username,pass_hash,salt,created_at) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (username) DO NOTHING', [a.id, a.username, a.pass_hash, a.salt, a.created_at]); return r.rowCount === 1; },
         async getAccountByName(username) { const { rows } = await q<AccountRow>('SELECT id,username,pass_hash,salt,created_at FROM accounts WHERE username=$1', [username]); return rows[0] ? num(rows[0]) as AccountRow : null; },
         async listAccounts() { const { rows } = await q<{ id: string; username: string }>('SELECT id, username FROM accounts'); return rows; },
+        async countActivePlayers(since, except) { const { rows } = await q<{ n: string }>('SELECT COUNT(*) AS n FROM players WHERE updated_at>=$1 AND id<>$2', [since, except]); return Number(rows[0]?.n || 0); },
         async listPlayers() { const { rows } = await q<{ id: string; state: string; revision: number; updated_at: number }>('SELECT id, state, revision, updated_at FROM players'); return rows.map(r => ({ id: r.id, state: unpackState(r.state), revision: Number(r.revision), updated_at: Number(r.updated_at) })); },
         async getSetting(key) { const { rows } = await q<{ value: string }>('SELECT value FROM settings WHERE key=$1', [key]); return rows[0]?.value ?? null; },
         async setSetting(key, value, now) { await q('INSERT INTO settings (key,value,updated_at) VALUES ($1,$2,$3) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at', [key, value, now]); },
@@ -361,6 +364,7 @@ function fileStorage(): Storage {
         createAccount: a => tx(db => { if (Object.values(db.accounts).some(x => x.username === a.username)) return false; db.accounts[a.id] = a; return true; }),
         getAccountByName: username => tx(db => Object.values(db.accounts).find(x => x.username === username) || null),
         listAccounts: () => tx(db => Object.values(db.accounts).map(a => ({ id: a.id, username: a.username }))),
+        countActivePlayers: (since, except) => tx(db => Object.entries(db.players).filter(([id, p]) => id !== except && p.updated_at >= since).length),
         listPlayers: () => tx(db => Object.entries(db.players).map(([id, p]) => ({ id, state: unpackState(p.state), revision: p.revision, updated_at: p.updated_at }))),
         getSetting: key => tx(db => db.settings?.[key]?.value ?? null),
         setSetting: (key, value, now) => tx(db => { (db.settings ??= {})[key] = { value, updated_at: now }; }),

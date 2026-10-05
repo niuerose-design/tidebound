@@ -536,7 +536,12 @@ export type State = {
     /** v3.18 애드가드 2단계에서 고른 공개 항목(없으면 전부 숨김). */
     privacy?: { show: import('./data/hacker').PrivacyField[] };
     /** v3.18 서버 해킹 소식(동기화 때 서버가 적음): 진행 중인 방송 탈취, 내가 크래킹당한 시각. */
-    hackFeed?: { broadcast?: { text: string; by: string; until: number }; crackedUntil?: number };
+    hackFeed?: { broadcast?: { text: string; by: string; until: number }; crackedUntil?: number;
+        /** v3.25 해커 계열에게만: 변조할 수 있는 이벤트, 지금 다운된 곳, 변조된 이벤트(화이트 해커 복구 대상). */
+        events?: { id: string; name: string; until: number; tampered?: boolean }[];
+        down?: { kind: 'stage' | 'dungeon'; id: string; until: number; by: string; patched?: boolean }[];
+        patched?: Record<string, number>;
+    };
     clears: Record<string, number>;
     /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
     modeClears?: Partial<Record<import('./data/balance').DungeonMode, Record<string, number>>>;
@@ -590,9 +595,17 @@ export type HackerState = {
     runs?: number;
     /** 해커로 전직하기 전 장착 스킬(돌아갈 때 되살림). */
     savedSkills?: string[];
-    /** 저장 직전 /api/hack이 서버 공유 설정에 반영하고 지우는 해킹 실행. */
-    pending?: { kind: 'broadcast' | 'crack'; value: string; minutes: number };
+    /** 저장 직전 /api/hack이 서버 공유 설정에 반영하고 지우는 해킹 실행. v3.25 해킹 II~V·화이트 해커 복구·패치·스니핑 정산. */
+    pending?: { kind: HackKind; value: string; minutes: number; n?: number; bits?: number };
+    /** v3.25 산 프로그램(영구)과 장착한 프로그램(메모리 한도 안). */
+    programs?: string[];
+    loadout?: string[];
+    /** v3.25 패킷 스니핑: 이 시각부터 활동한 모험가 수로 끝난 뒤 정산합니다. */
+    sniff?: { from: number; until: number; n: number } | null;
+    /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
+    season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };
+export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch';
 export type Snapshot = {
     /** v3.18 애드가드: 순위표에서 숨길 정보(서버가 보낼 때 가림, 결투 계산에는 원본). */
     privacy?: { show: string[] };

@@ -1,12 +1,12 @@
 /** 모험 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
 import { skillPracticeTargets } from '../progression';
 import { tideLimit, encounterTier, levelGateOk } from '../meta';
-import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed } from '../../data/world';
+import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed, hackDownOf } from '../../data/world';
 import { SWARM_CAPS } from '../../data/variants';
 import { JOBS } from '../../data/classes';
 import { SKILLS, skillById } from '../../data/skills';
 import { RANDOM_GAME } from '../../data/random-game';
-import { HACKER_ID } from '../../data/hacker';
+import { isHackerJob } from '../../data/hacker';
 import { randomGameRank, randomGameRunsLeft, randomGameUsed, inRandomGame, cashOutRandomGame } from '../random-game';
 import { dayKey } from '../../data/goals';
 import type { ActionHandlers } from './types';
@@ -29,19 +29,21 @@ export const voyageActions: ActionHandlers = {
     start(s, { now }) {
         s.running = true;
         s.lastTick = now;
-        addLog(s, s.job === HACKER_ID ? '브루트포스를 시작했습니다(방치 중 비트·권한 경험치).' : '자동 사냥을 시작했습니다.');
+        addLog(s, isHackerJob(s.job) ? '브루트포스를 시작했습니다(방치 중 비트·권한 경험치).' : '자동 사냥을 시작했습니다.');
     },
     pause(s) {
         s.running = false;
         endRun(s, '직접 멈춤');
         addLog(s, '사냥을 잠시 멈췄습니다.');
     },
-    stage(s, { id }) {
+    stage(s, { id, now }) {
         const st = STAGES.find(x => x.id === id);
         if (!st || !levelGateOk(s, st.level) || s.rebirths < st.rebirth)
             throw Error('아직 진입할 수 없는 사냥터입니다.');
         if (stageClosed(st.id))
             throw Error(`${st.name}은(는) 점검 중이라 입장할 수 없습니다.`);
+        // v3.25 해킹 III 서버 다운: 새로 들어오는 것만 막습니다(지금 있는 사냥터는 계속).
+        { const down = s.stage === st.id ? undefined : hackDownOf('stage', st.id, now); if (down) throw Error(`${st.name}은(는) ${down.by}의 해킹으로 서버가 다운되어 ${Math.ceil((down.until - now) / 60000)}분 동안 입장할 수 없습니다.`); }
         s.stage = id;
         s.target = null;
         s.effects = {};
@@ -52,13 +54,14 @@ export const voyageActions: ActionHandlers = {
         addLog(s, `${st.name}(으)로 이동했습니다.`);
     },
     dungeon(s, { a, id, now }) {
-        if (s.job === HACKER_ID)
+        if (isHackerJob(s.job))
             throw Error('해커는 던전에 들어가지 않습니다. 침투 작전으로 성장하세요.');
         const d = DUNGEONS.find(x => x.id === id);
         if (!d || !levelGateOk(s, d.level) || s.rebirths < d.rebirth)
             throw Error('던전 입장 조건을 충족하지 못했습니다.');
         if (dungeonClosed(d.id))
             throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);
+        { const down = hackDownOf('dungeon', d.id, now); if (down) throw Error(`${d.name}은(는) ${down.by}의 해킹으로 서버가 다운되어 ${Math.ceil((down.until - now) / 60000)}분 동안 입장할 수 없습니다.`); }
         // v27.86 랜덤게임: 연구 단계만큼 생마다 입장(v3.24 하루가 바뀌어도 다시 채워짐). 값 'until:N'은 목표 웨이브(0이면 받고 나가기·쓰러짐까지).
         if (d.id === RANDOM_GAME.id) {
             if (!randomGameRank(s)) throw Error('세계석 연구 ‘랜덤게임’이 필요합니다.');
