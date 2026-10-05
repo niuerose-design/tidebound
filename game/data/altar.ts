@@ -129,6 +129,9 @@ export type AltarInfo = {
     throne: { id: string; name: string; since: number; mine: boolean; power: number; hp: number; tithe?: Offering } | null;
     totals: Offering & { points: number };
     board: { rank: number; name: string; points: number; anonymous: boolean; self: boolean }[];
+    /** v3.19 누적 기여 순위(모든 주 합계)와 내 누적 기여·순위. */
+    allTime?: { rank: number; name: string; points: number; anonymous: boolean; self: boolean }[];
+    total?: { points: number; rank: number };
     me: { points: number; rank: number; anonymous: boolean; challengeAt: number; /** v27.91 월드보스 마지막 도전 시각 */ raidAt: number };
     /** v27.91 지금 나타난(또는 방금 격파된) 월드보스. 없으면 null. */
     raid: AltarRaidInfo | null;

@@ -8,7 +8,7 @@
  * - 신과의 전투는 결투 엔진으로 서버에서 한 번 계산(최대 80턴)하고, 모험가마다 10분에 한 번만 도전할 수 있습니다.
  */
 import type { State, Snapshot, DuelResult } from '../types';
-import { db, type AltarRow, type AltarOfferRow } from './db';
+import { db, type AltarRow, type AltarOfferRow, type AltarTotalRow } from './db';
 import { ApiError } from './store';
 import { refreshAltarEvents } from './events-config';
 import { allow } from './throttle';
@@ -18,7 +18,7 @@ import { snapshot } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot } from '../systems/duel';
 import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
 
-type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[] };
+type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[]; allTime: AltarTotalRow[] };
 /** 진행 중인 축복의 단계(끝났으면 0). */
 const liveLevel = (g: { until: number; level: number; high_until?: number } | undefined, now: number) => effectiveBlessingLevel(g, now);
 /** v3.16 축복이 보이는 종료 시각: 4단계 이상이면 그 단계의 유지 시각(지나면 3단계로 이어짐). */
@@ -67,7 +67,7 @@ async function shared(now: number, force = false): Promise<Shared> {
     const week = weekKey(now);
     if (!force && cache && cache.week === week && now - cache.at < ALTAR.cacheMs) return cache;
     const database = db();
-    const [altar, gauges, board] = await Promise.all([database.getAltar(), database.listAltarGauges(), database.listAltarOffers(week, ALTAR.boardSize)]);
+    const [altar, gauges, board, allTime] = await Promise.all([database.getAltar(), database.listAltarGauges(), database.listAltarOffers(week, ALTAR.boardSize), database.listAltarOffersAllTime(ALTAR.boardSize)]);
     // v27.69 신의 자리 임기(ALTAR.throneTermMs)가 지나면 자리와 몫을 비웁니다. 다음에 깨어나는 신은 다시 처음 신입니다.
     if (altar.throne && now - altar.throne_since >= ALTAR.throneTermMs && await database.expireAltarThrone(now - ALTAR.throneTermMs)) {
         await announce(`${josa(altar.throne_name, '이가')} 신의 자리에서 내려왔습니다. 다음에 깨어나는 신은 ${ALTAR.firstGod.name}입니다.`, now);
@@ -78,7 +78,7 @@ async function shared(now: number, force = false): Promise<Shared> {
     // v27.91 떠날 시각이 지난 월드보스는 보내고, 소환 게이지가 찼으면 새로 부릅니다.
     if (altar.raid_state === 'alive' && altar.raid_until < now && await database.expireAltarRaid(now)) { await announce(`월드보스 ${josa(raidById(altar.raid_id)?.name || altar.raid_id, '이가')} 떠났습니다.`, now); return shared(now, true); }
     if (await trySummonRaid(altar, map, now)) return shared(now, true);
-    return cache = { at: now, week, altar, gauges: map, board };
+    return cache = { at: now, week, altar, gauges: map, board, allTime };
 }
 export const invalidateAltar = () => { cache = null; };
 
@@ -89,7 +89,7 @@ async function announce(text: string, now: number) {
 
 export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now: number): Promise<AltarInfo> {
     const sh = await shared(now), database = db(), a = sh.altar;
-    const mine = await database.getAltarOffer(sh.week, id);
+    const [mine, total] = await Promise.all([database.getAltarOffer(sh.week, id), database.sumAltarOffers(id)]);
     const rank = mine && mine.points > 0 ? await database.countAltarAbove(sh.week, mine.points) + 1 : 0;
     const stored = parseGod(a), god = stored && divineFirstGod(stored), isThrone = !!a.throne && a.throne === id;
     return {
@@ -105,6 +105,8 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
         throne: a.throne ? { id: isThrone ? id : '', name: a.throne_name, since: a.throne_since, mine: isThrone, power: nextGod(a).power, hp: nextGod(a).stats.hp, ...(isThrone ? { tithe: { gold: a.tithe_gold, pearls: a.tithe_pearls, essence: a.tithe_essence } } : {}) } : null,
         totals: { gold: a.total_gold, pearls: a.total_pearls, essence: a.total_essence, points: a.total_points },
         board: sh.board.map((r, i) => ({ rank: i + 1, name: r.anonymous ? '익명의 모험가' : r.name, points: r.points, anonymous: !!r.anonymous, self: r.player_id === id })),
+        allTime: sh.allTime.map((r, i) => ({ rank: i + 1, name: r.anonymous ? '익명의 모험가' : r.name, points: r.points, anonymous: !!r.anonymous, self: r.player_id === id })),
+        total: { points: total.points, rank: total.points > 0 ? total.above + 1 : 0 },
         me: { points: mine?.points || 0, rank, anonymous: !!s?.altar?.anonymous, challengeAt: s?.altar?.challengeAt || 0, raidAt: s?.altar?.raidAt || 0 },
         raid: await raidInfo(a, id, now),
     };

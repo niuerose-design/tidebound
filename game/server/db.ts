@@ -19,6 +19,7 @@ export type AltarRow = { /** v27.91 월드보스: 세대·종류·상태(none/al
 /** 제단 게이지(축복·신 소환). until은 축복이 열려 있는 시각(신 소환은 쓰지 않음). */
 export type AltarGaugeRow = { id: string; points: number; until: number; level?: number; /** v3.16 4단계 이상이 유지되는 시각. 지나면 3단계로 봅니다. */ high_until?: number };
 /** 이번 주 제단 기여. id는 주:모험가. anonymous=1이면 순위표에 이름을 숨깁니다. */
+export type AltarTotalRow = { player_id: string; name: string; anonymous: number; points: number };
 export type AltarOfferRow = { id: string; week: string; player_id: string; account_id: string; name: string; anonymous: number; points: number; gold: number; pearls: number; essence: number; updated_at: number };
 export type AltarAmounts = { gold: number; pearls: number; essence: number };
 /** v27.91 월드보스 피해 기록. id는 세대:모험가. */
@@ -106,6 +107,9 @@ export interface Storage {
     vacateAltarThrone(id: string): Promise<boolean>;
     bumpAltarOffer(row: Omit<AltarOfferRow, 'id' | 'points' | 'gold' | 'pearls' | 'essence'>, add: AltarAmounts & { points: number }): Promise<void>;
     listAltarOffers(week: string, limit: number): Promise<AltarOfferRow[]>;
+    /** v3.19 누적 기여 순위: 모든 주를 합친 기여도(이름·익명은 가장 최근 기록). */
+    listAltarOffersAllTime(limit: number): Promise<AltarTotalRow[]>;
+    sumAltarOffers(playerId: string): Promise<{ points: number; above: number }>;
     getAltarOffer(week: string, playerId: string): Promise<AltarOfferRow | null>;
     /** 이번 주 기여도가 points보다 높은 모험가 수(내 순위 = 이 값 + 1). */
     countAltarAbove(week: string, points: number): Promise<number>;
@@ -289,12 +293,31 @@ function neonStorage(url: string): Storage {
         },
         async listAltarOffers(week, limit) { const { rows } = await q<AltarOfferRow>('SELECT * FROM altar_offers WHERE week=$1 ORDER BY points DESC, updated_at ASC LIMIT $2', [week, limit]); return rows.map(numOffer); },
         async getAltarOffer(week, playerId) { const { rows } = await q<AltarOfferRow>('SELECT * FROM altar_offers WHERE id=$1', [`${week}:${playerId}`]); return rows[0] ? numOffer(rows[0]) : null; },
+        async listAltarOffersAllTime(limit) {
+            const { rows } = await q<AltarTotalRow>('SELECT player_id, SUM(points) AS points, (ARRAY_AGG(name ORDER BY updated_at DESC))[1] AS name, (ARRAY_AGG(anonymous ORDER BY updated_at DESC))[1] AS anonymous FROM altar_offers GROUP BY player_id ORDER BY SUM(points) DESC, MIN(updated_at) ASC LIMIT $1', [limit]);
+            return rows.map(r => ({ player_id: r.player_id, name: r.name, anonymous: Number(r.anonymous), points: Number(r.points) }));
+        },
+        async sumAltarOffers(playerId) {
+            const { rows } = await q<{ points: string; above: string }>('WITH t AS (SELECT player_id, SUM(points) AS points FROM altar_offers GROUP BY player_id) SELECT COALESCE((SELECT points FROM t WHERE player_id=$1),0) AS points, (SELECT COUNT(*) FROM t WHERE points > COALESCE((SELECT points FROM t WHERE player_id=$1),0)) AS above', [playerId]);
+            return { points: Number(rows[0]?.points || 0), above: Number(rows[0]?.above || 0) };
+        },
         async countAltarAbove(week, points) { const { rows } = await q<{ n: string }>('SELECT COUNT(*) AS n FROM altar_offers WHERE week=$1 AND points>$2', [week, points]); return Number(rows[0]?.n || 0); },
         async setWallet(w) { await q('INSERT INTO wallets (account_id,pearls,essence,week,pearl_out) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (account_id) DO UPDATE SET pearls=EXCLUDED.pearls, essence=EXCLUDED.essence, week=EXCLUDED.week, pearl_out=EXCLUDED.pearl_out', [w.account_id, w.pearls, w.essence, w.week, w.pearl_out]); },
     };
 }
 
 // ---------- 개발용 로컬 파일 ----------
+/** v3.19 파일 DB 누적 기여: 모험가별 합계, 이름·익명은 가장 최근 주의 기록. */
+function altarTotals(db: FileDb): AltarTotalRow[] {
+    const out = new Map<string, AltarTotalRow & { at: number; first: number }>();
+    for (const o of Object.values(db.altarOffers || {})) {
+        const r = out.get(o.player_id) || { player_id: o.player_id, name: o.name, anonymous: o.anonymous, points: 0, at: 0, first: o.updated_at };
+        r.points += o.points; r.first = Math.min(r.first, o.updated_at);
+        if (o.updated_at >= r.at) { r.at = o.updated_at; r.name = o.name; r.anonymous = o.anonymous; }
+        out.set(o.player_id, r);
+    }
+    return [...out.values()].sort((a, b) => b.points - a.points || a.first - b.first).map(({ player_id, name, anonymous, points }) => ({ player_id, name, anonymous, points }));
+}
 type FileDb = { settings?: Record<string, { value: string; updated_at: number }>; players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; wallets?: Record<string, WalletRow>; altar?: AltarRow; altarGauges?: Record<string, AltarGaugeRow>; altarOffers?: Record<string, AltarOfferRow>; altarRaidHits?: Record<string, AltarRaidHitRow>; chat?: ChatRow[]; chatSeq?: number };
 function fileStorage(): Storage {
     const path = process.env.TIDEBOUND_DEV_DB || '.data/dev-db.json';
@@ -392,6 +415,8 @@ function fileStorage(): Storage {
             const key = `${r.week}:${r.player_id}`, old = (db.altarOffers ??= {})[key];
             db.altarOffers[key] = { ...r, id: key, points: (old?.points || 0) + a.points, gold: (old?.gold || 0) + a.gold, pearls: (old?.pearls || 0) + a.pearls, essence: (old?.essence || 0) + a.essence };
         }),
+        listAltarOffersAllTime: limit => tx(db => altarTotals(db).slice(0, limit)),
+        sumAltarOffers: playerId => tx(db => { const all = altarTotals(db), mine = all.find(r => r.player_id === playerId)?.points || 0; return { points: mine, above: all.filter(r => r.points > mine).length }; }),
         listAltarOffers: (week, limit) => tx(db => Object.values(db.altarOffers || {}).filter(o => o.week === week).sort((a, b) => b.points - a.points || a.updated_at - b.updated_at).slice(0, limit).map(o => ({ ...o }))),
         getAltarOffer: (week, playerId) => tx(db => db.altarOffers?.[`${week}:${playerId}`] ? { ...db.altarOffers[`${week}:${playerId}`] } : null),
         countAltarAbove: (week, points) => tx(db => Object.values(db.altarOffers || {}).filter(o => o.week === week && o.points > points).length),
