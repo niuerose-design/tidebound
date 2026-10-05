@@ -95,14 +95,15 @@ function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy
     const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), now = s.vows, next = s.nextVows || {}, leveled = (id: VowId) => (LEVELED_VOWS as readonly string[]).includes(id);
     if (!unlocked.length && !now) return null;
     return <section className="panel vow-panel">
-        <div className="section-title"><h2>서약</h2><span>제약을 걸고 고유 보상을 받습니다. 세계석 연구 유틸 탭에서 해금합니다.</span></div>
+        <div className="section-title"><h2>서약</h2><span>제약을 걸고 고유 보상을 받습니다. 모든 서약은 다음 생에 걸리고(환생할 때 적용), 이번 생 도중에는 바꿀 수 없습니다. 세계석 연구 유틸 탭에서 해금합니다.</span></div>
         {now && VOW_IDS.some(id => now[id]) && <div className="vow-current"><strong>이번 생 서약</strong><span>{VOW_IDS.filter(id => now[id]).map(id => leveled(id) ? `${VOW_NAMES[id]} ${now[id]}단계` : VOW_NAMES[id]).join(' · ')}</span></div>}
         <div className="vow-grid">{VOW_IDS.map(id => {
             const open = vowUnlocked(s, id);
             return <article className={`vow-card ${open ? '' : 'locked'}`} key={id}>
                 <h3>{VOW_NAMES[id]}</h3><p>{VOW_TEXT[id](s)}</p>
                 {!open ? <small>세계석 연구에서 해금 (환생 5회)</small> : leveled(id)
-                    ? <div className="vow-rough">{[0, 1, 2, 3].map(n => <button key={n} className={(Number(next[id]) || 0) === n ? 'primary' : 'secondary'} disabled={busy} onClick={() => send({ type: 'nextVow', id, value: String(n) })}>{n ? `${n}단계` : '끔'}</button>)}</div>
+                    ? <><small className="vow-next-label">다음 생에 걸기 · {Number(next[id]) ? `${next[id]}단계 예약` : '꺼짐'}{now?.[id] ? ` · 이번 생 ${now[id]}단계 적용 중` : ''}</small>
+                    <div className="vow-rough">{[0, 1, 2, 3].map(n => <button key={n} className={(Number(next[id]) || 0) === n ? 'primary' : 'secondary'} disabled={busy} aria-pressed={(Number(next[id]) || 0) === n} onClick={() => send({ type: 'nextVow', id, value: String(n) })}>{n ? `${n}단계` : '끔'}</button>)}</div></>
                     : <button className={next[id] ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!next[id]} onClick={() => send({ type: 'nextVow', id, value: next[id] ? 'off' : 'on' })}>{next[id] ? '다음 생에 걸기 · 켜짐' : '다음 생에 걸기 · 꺼짐'}</button>}
             </article>;
         })}</div>

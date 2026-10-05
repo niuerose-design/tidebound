@@ -34,9 +34,10 @@ test('Research v2: stat effects come from the research source and keep the exist
 });
 
 test('Research v2: recovery, shop and smith discounts use the state-aware functions', () => {
-    const s = newState(0); s.permanent.recovery = 5;
+    // v27.89 환생 5회 미만은 새싹 생존 보조(+5%p)가 붙어 기본 규칙은 환생 5회로 봅니다.
+    const s = newState(0); s.rebirths = 5; s.permanent.recovery = 5;
     close(victoryHealRate({ ...s, dungeon: null }), .25); close(victoryHealRate({ ...s, dungeon: { id: 'grotto', wave: 0 } }), .13);
-    close(victoryHealRate({ ...newState(0), dungeon: null }), .2);
+    close(victoryHealRate({ ...newState(0), rebirths: 5, dungeon: null }), .2); close(victoryHealRate({ ...newState(0), dungeon: null }), .25, 'sprout +5%p');
     s.level = 10; const full = shopCost(s), fullGamble = gambleCost(s);
     s.permanent.shop = 10; assert.equal(shopCost(s), Math.floor(full * .8)); assert.equal(gambleCost(s), Math.floor(fullGamble * .8));
     s.gold = 1e6; const before = s.gold; act(s, { type: 'buy', id: 'coat' }, 0); assert.equal(before - s.gold, shopCost(s));
@@ -148,7 +149,7 @@ test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance p
 });
 
 // 세계석 연구 4단계: 서약 3개
-import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta, victoryHeal, apCapacity, expMultiplier as expMul, SKILLS as ALL_SKILLS } from './harness.mjs';
+import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta, apCapacity, expMultiplier as expMul, SKILLS as ALL_SKILLS } from './harness.mjs';
 const vowReady = (research = {}, next = {}) => { const s = newState(0); s.rebirths = 5; s.level = 60; Object.assign(s.permanent, research); s.nextVows = next; return s; };
 
 test('v27.86 vows: research entries, reservation rules (breath on/off, rough·restraint 0~3) and cleanup on full reset', () => {
@@ -207,7 +208,7 @@ test('Vows · one breath: a fall soft-resets the life (online and offline); an u
 });
 
 test('v27.86 strength path (rough): difficulty floor, gear -30/50/70%, recovery -50/75/100%; gold and drops ×(1+0.5n×boost) after the drop cap; snapshot badges', () => {
-    const base = newState(0); base.level = 20; base.equipment.rod = { id: 't', slot: 'rod', rarity: 2, power: 30, level: 20, name: 't', enhance: 0 };
+    const base = newState(0); base.level = 20; base.rebirths = 5; base.equipment.rod = { id: 't', slot: 'rod', rarity: 2, power: 30, level: 20, name: 't', enhance: 0 };
     const rough = structuredClone(base); rough.permanent.vowRough = 1; rough.vows = { rough: 2 };
     spawn(base, () => .3); spawn(rough, () => .3); assert.equal(rough.enemy.maxHp, base.enemy.maxHp, 'enemies are not buffed any more');
     close(goldMultiplier(rough) / goldMultiplier(base), 1, 'below the floor (20) no reward'); rough.tide = 20; base.tide = 20;
@@ -215,7 +216,7 @@ test('v27.86 strength path (rough): difficulty floor, gear -30/50/70%, recovery 
     rough.permanent.vowRough = 3; close(goldMultiplier(rough) / goldMultiplier(base), 3);
     const gt = {}, bt = {}; stats(rough, gt); stats(base, bt); const gear = t => (t.attack || []).filter(x => x.source === 'equipment').reduce((a, x) => a + x.delta, 0);
     if (gear(bt)) close(gear(gt) / gear(bt), .5, 'gear -50% at step 2');
-    close(victoryHeal(rough) / Math.max(1, victoryHeal(base)), .25, 'recovery -75% at step 2');
+    close(victoryHealRate(rough) / victoryHealRate(base), .25, 'recovery -75% at step 2');
     rough.vows = { rough: 2, restraint: 1, breath: true }; assert.deepEqual(snapshot(rough).vows, ['breath', 'rough2', 'restraint1']);
     assert.equal('vows' in snapshot(newState(0)), false);
 });
@@ -243,4 +244,13 @@ test('Inherited skills skip the level requirement; other skills explain why they
     const n = newState(0); n.learned[native.id] = 1;
     assert.throws(() => act(n, { type: 'skill', id: native.id }, 0), new RegExp(`Lv\\.${native.level}부터`));
     const other = newState(0); assert.throws(() => act(other, { type: 'skill', id: sk.id }, 0), /전직하거나/);
+});
+
+test('v27.88 every vow is a next-life reservation: reserving rough/restraint/breath never changes the current life', () => {
+    const s = newState(0); s.rebirths = 6; s.level = 60; Object.assign(s.permanent, { vowRough: 1, vowRestraint: 1, vowBreath: 1 });
+    const ap = apCapacity(s), gold = goldMultiplier(s);
+    act(s, { type: 'nextVow', id: 'restraint', value: '3' }, 0); act(s, { type: 'nextVow', id: 'rough', value: '3' }, 0); act(s, { type: 'nextVow', id: 'breath', value: 'on' }, 0);
+    assert.equal(s.vows, undefined); assert.equal(apCapacity(s), ap); assert.equal(goldMultiplier(s), gold);
+    act(s, { type: 'nextVow', id: 'restraint', value: '0' }, 0); assert.equal(s.vows, undefined);
+    act(s, { type: 'rebirth' }, 0); assert.deepEqual(s.vows, { rough: 3, breath: true });
 });

@@ -55,7 +55,7 @@ test('battle replay: same-enemy turns step HP exactly by logged damage', () => {
     assert.ok(checked > 5);
 });
 test('battle replay: field defeat counts recovery down one turn at a time', () => {
-    const rng = seeded(3), s = newState(0); act(s, { type: 'start' }, 0);
+    const rng = seeded(3), s = newState(0); s.rebirths = 5; act(s, { type: 'start' }, 0); // v27.89 환생 5회 미만은 회복 대기 절반이라 기본 규칙은 5회로 봅니다.
     s.hp = 1;
     let seen = false;
     for (const { replay } of replaySession(s, 40, rng, [1, 2])) {

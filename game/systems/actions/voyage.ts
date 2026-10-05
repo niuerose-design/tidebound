@@ -63,6 +63,7 @@ export const voyageActions: ActionHandlers = {
             enterDungeon(s, d.id);
             s.dungeon = { ...s.dungeon!, stake: { essence: 0, pearls: 0 }, ...(until ? { until } : {}) };
             s.randomGameRuns = (s.randomGameRuns || 0) + 1;
+            s.randomGameStats ??= { best: 0, runs: 0, cashed: 0 }; s.randomGameStats.runs++;
         }
         else { const { mode, repeat } = parseDungeonValue(s, d.id, a.value); enterDungeon(s, d.id, repeat, mode); }
         s.running = true;

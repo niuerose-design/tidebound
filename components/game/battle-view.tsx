@@ -8,6 +8,7 @@ import { AltarNotice } from './altar-notice';
 import { memo, useEffect, useRef, useState } from 'react';
 import { tipAt } from '@/game/data/tips';
 import { eventLabel } from '@/game/data/events';
+import { SPROUT, sproutExp, sproutSurvival } from '@/game/data/sprout';
 import { UPDATE_LOG } from '@/game/data/update-log';
 import { FishArt, SceneBackdrop } from './art';
 import { MIMIC } from '@/game/data/mimic';
@@ -89,6 +90,8 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     <NoticeStack>
     {s.lastOffline &&     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Leaf size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>}
     {banner && <div className="event-banner" role="status"><Sparkles size={15}/><b>이벤트</b><span>{eventLabel(banner)}</span></div>}
+    {/* v27.89 새싹 지원(환생 10회 미만) */}
+    {sproutExp(s.rebirths) > 1 && <div className="event-banner sprout-banner" role="status"><Sparkles size={15}/><b>새싹의 축복</b><span>경험치 ×{sproutExp(s.rebirths).toFixed(1)}{sproutSurvival(s.rebirths) ? ` · 쓰러진 뒤 회복 대기 절반 · 처치 후 회복 +${Math.round(SPROUT.healBonus * 100)}%p` : ''} · 환생 {SPROUT.expUntil}회 전까지 (환생할수록 줄어듦)</span></div>}
     <DoorNotice s={s} setView={setView}/>
     <AltarNotice s={s} setView={setView}/>
     {!s.lastOffline &&     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Leaf size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>}
