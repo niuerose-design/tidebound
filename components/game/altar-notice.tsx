@@ -18,17 +18,18 @@ export function AltarNotice({ s, setView }: { s: State; setView: (view: string) 
     const a = s.altarStatus;
     if (!a) return null;
     const now = serverNow(s), filling = a.gauges.filter(g => g.pct > 0).sort((x, y) => y.pct - x.pct).slice(0, 2);
-    if (!a.blessings.length && !a.god && !a.throne && !filling.length) return null;
-    const key = `${a.blessings.map(b => `${b.id}:${b.until}`).join(',')}|${a.god?.gen || 0}|${a.throne}`;
+    if (!a.blessings.length && !a.god && !a.raid && !a.throne && !filling.length) return null;
+    const key = `${a.blessings.map(b => `${b.id}:${b.until}`).join(',')}|${a.god?.gen || 0}|${a.throne}|r${a.raid?.gen || 0}`;
     if (seen === key) return null;
     const parts = [
         ...a.blessings.map(b => `${b.name} 진행 중(${b.desc}) · ${left(b.until - now)} 남음`),
         a.god ? `${josa(a.god.name, '이가')} 깨어나 있습니다 · ${left(a.god.until - now)} 뒤 떠남` : '',
-        !a.blessings.length && !a.god ? filling.map(g => `${g.name} ${g.pct}%`).join(' · ') : '',
+        a.raid ? `월드보스 ${a.raid.name} 체력 ${Math.round(a.raid.pct * 100)}% · ${left(a.raid.until - now)} 뒤 떠남` : '',
+        !a.blessings.length && !a.god && !a.raid ? filling.map(g => `${g.name} ${g.pct}%`).join(' · ') : '',
         a.throne ? `신의 자리 · ${a.throne}` : '',
     ].filter(Boolean);
     const dismiss = () => { setSeen(key); try { localStorage.setItem(NOTICE_KEY, key); } catch { /* 저장소 없음 */ } };
-    return <div className={`altar-notice ${a.blessings.length || a.god ? 'live' : ''}`} role="status">
+    return <div className={`altar-notice ${a.blessings.length || a.god || a.raid ? 'live' : ''}`} role="status">
         <button type="button" className="altar-notice-open" onClick={() => setView('altar')}><Flame size={14}/><b>제단</b><span>{parts.join(' · ')}</span></button>
         <button type="button" className="altar-notice-dismiss" aria-label="제단 알림 닫기" onClick={dismiss}><X size={14}/></button>
     </div>;

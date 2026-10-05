@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Crown, Flame, Skull, Sparkles, Trophy, Coins, Gem, Droplets, EyeOff } from 'lucide-react';
+import { Crown, Flame, Skull, Sparkles, Trophy, Coins, Gem, Droplets, EyeOff, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format } from './shared';
-import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_LEVEL_STEP, offeringPoints, type AltarGaugeId } from '@/game/data/altar';
+import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_LEVEL_STEP, RAID, RAIDS, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, type AltarGaugeId } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
@@ -39,6 +39,9 @@ function AmountRow({ icon, label, have, cap, value, setValue, unit = 1 }: { icon
 export function Altar({ s, busy, info, error, load, act, result, clearResult }: Props) {
     const [gold, setGold] = useState(''), [pearls, setPearls] = useState(''), [essence, setEssence] = useState('');
     const [gauge, setGauge] = useState<AltarGaugeId>('gold'), [anonymous, setAnonymous] = useState(!!s.altar?.anonymous), [now, setNow] = useState(() => Date.now()), [pane, setPane] = useState<'offer' | 'board'>('offer');
+    // v27.91 게이지는 축복 / 소환(신 + 월드보스 셋) 탭으로 나눠 봅니다. 고른 게이지가 다른 탭에 있으면 탭을 따라갑니다.
+    const [gaugeTab, setGaugeTab] = useState<'bless' | 'summon'>('bless');
+    const pickGauge = (id: AltarGaugeId) => { setGauge(id); setGaugeTab(SUMMON_GAUGE_IDS.includes(id) ? 'summon' : 'bless'); };
     useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
     useEffect(() => { const t = setInterval(() => setNow(stamp), 30_000); return () => clearInterval(t); }, []);
     const offer = { gold: num(gold), pearls: num(pearls), essence: num(essence) }, points = offeringPoints(offer);
@@ -49,7 +52,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
     const short = offer.gold > s.gold || offer.pearls > s.pearls || offer.essence > (s.essence || 0);
     const submit = async () => { if (await act({ action: 'offer', ...offer, gauge, anonymous })) { setGold(''); setPearls(''); setEssence(''); setNow(stamp); } };
     const myPower = power(stats(s)), wait = (s.altar?.challengeAt || 0) + ALTAR.challengeCooldownMs - now;
-    const god = info?.god, throne = info?.throne;
+    const god = info?.god, throne = info?.throne, raid = info?.raid, raidWait = (s.altar?.raidAt || 0) + RAID.cooldownMs - now;
     if (!info) return <><Heading eyebrow="ALTAR OF THE WORLD" title="제단" description="불러오는 중…"/>{error && <p className="login-error" role="alert">{error}</p>}</>;
     return <>
         <Heading eyebrow="ALTAR OF THE WORLD" title="세계의 제단" description="모든 모험가가 함께 채우는 제단입니다. 골드·세계석·정수를 바쳐 서버 전체에 축복을 열거나, 신을 깨워 그 자리를 차지하세요.">
@@ -59,10 +62,11 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
         <div className="altar-grid">
             <section className="panel altar-gauges">
                 <div className="section-title"><h2><Flame size={16}/> 제단의 게이지</h2><span className="micro">누적 기여도 {format(info.totals.points)}</span></div>
-                {info.gauges.map(g => {
-                    const open = g.until > now;
-                    return <button key={g.id} type="button" className={`altar-gauge ${gauge === g.id ? 'selected' : ''} ${g.id === 'god' ? 'god' : ''}`} onClick={() => setGauge(g.id)} aria-pressed={gauge === g.id}>
-                        <div className="altar-gauge-head"><strong>{g.id === 'god' ? <Skull size={14}/> : <Sparkles size={14}/>} {g.name}{open && g.level ? ` · ${g.level}단계` : ''}</strong>{open ? <em className="altar-open">진행 중 · {g.desc} · {left(g.until - now)} 남음</em> : <small>{g.desc}</small>}</div>
+                <Tabs value={gaugeTab} onValueChange={v => setGaugeTab(v as typeof gaugeTab)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="bless"><Sparkles size={14}/> 축복</TabsTrigger><TabsTrigger value="summon"><Skull size={14}/> 소환</TabsTrigger></TabsList></Tabs>
+                {info.gauges.filter(g => (gaugeTab === 'summon') === SUMMON_GAUGE_IDS.includes(g.id)).map(g => {
+                    const open = g.until > now, summon = SUMMON_GAUGE_IDS.includes(g.id);
+                    return <button key={g.id} type="button" className={`altar-gauge ${gauge === g.id ? 'selected' : ''} ${summon ? 'god' : ''}`} onClick={() => pickGauge(g.id)} aria-pressed={gauge === g.id}>
+                        <div className="altar-gauge-head"><strong>{g.id === 'god' ? <Skull size={14}/> : isRaidGauge(g.id) ? <Swords size={14}/> : <Sparkles size={14}/>} {g.name}{open && g.level ? ` · ${g.level}단계` : ''}</strong>{open ? <em className="altar-open">진행 중 · {g.desc} · {left(g.until - now)} 남음</em> : <small>{g.desc}</small>}</div>
                         <Meter value={Math.min(g.points, g.cost)} max={g.cost} color={g.id === 'god' ? 'gold' : 'teal'}/>
                         <small className="micro">{format(g.points)} / {format(g.cost)}{g.points >= g.cost && g.id === 'god' ? ' · 신이 떠나면 바로 깨어납니다' : g.id !== 'god' ? ` · ${g.next}` : ''}</small>
                     </button>;
@@ -95,11 +99,30 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                         : <button className="primary" disabled={busy || wait > 0} onClick={() => void act({ action: 'challenge' })}>{wait > 0 ? `${left(wait)} 뒤 다시 도전` : '신에게 도전'}</button>}
                     <p className="footnote">가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉습니다. 도전은 {ALTAR.challengeCooldownMs / 60000}분에 한 번, 무릉도장처럼 끝까지(최대 {ALTAR.godMaxTurns}턴) 겨룹니다.</p>
                 </> : <p className="footnote">{god ? '신이 잠들어 있습니다.' : '아직 깨어난 신이 없습니다.'} 신 소환 게이지({format(ALTAR.godCost)})가 차면 신이 깨어납니다. 처음 깨어나는 신은 {ALTAR.firstGod.name}(무릉도장 {ALTAR.firstGod.depth}층 보스급), 그 뒤로는 신의 자리 주인을 본뜬 신이 깨어납니다.</p>}
-                {result && <div className={`altar-result ${result.winner === 'player' ? 'win' : 'lose'}`}>
+                {result && result.dealt === undefined && <div className={`altar-result ${result.winner === 'player' ? 'win' : 'lose'}`}>
                     <strong>{result.winner === 'player' ? result.impeached ? '승리 · 탄핵 성공, 신의 자리가 비었습니다' : result.claimed ? '승리 · 신의 자리에 앉았습니다!' : '승리 · 하지만 한발 늦었습니다' : result.winner === 'draw' ? `${result.turns}턴 안에 쓰러뜨리지 못했습니다` : '패배'}</strong>
                     <details><summary>전투 기록 ({result.turns}턴)</summary><ol>{result.logs.map((l, i) => <li key={i}>{l}</li>)}</ol></details>
                     <button className="text-button" onClick={clearResult}>닫기</button>
                 </div>}
+            </section>
+            <section className="panel altar-raid">
+                <div className="section-title"><h2><Swords size={16}/> 월드보스</h2>{raid && <span className="micro">{raid.gen}번째 · 참여 {raid.participants}명</span>}</div>
+                {raid ? <>
+                    <div className="altar-god-card"><strong>{raid.name}</strong><span>Lv.{raid.level} · 공격 {format(raid.attack)} · 방어 {format(raid.defense)} · 전투력 {format(raid.power)}</span>
+                        <Meter value={raid.hp} max={raid.hpMax} label={`공유 체력 ${format(raid.hp)} / ${format(raid.hpMax)}`} color={raid.alive ? 'enemy' : 'gold'}/>
+                        <small>{raid.alive ? `떠나기까지 ${left(raid.until - now)} · 모든 모험가의 피해가 함께 쌓입니다` : `격파! 마지막 일격 ${raid.slayer || '—'} · 참여한 모험가는 다음 동기화 때 보상을 받습니다`}</small></div>
+                    {raid.alive && <button className="primary" disabled={busy || raidWait > 0} onClick={() => void act({ action: 'raid' })}>{raidWait > 0 ? `${left(raidWait)} 뒤 다시 도전` : '월드보스에게 도전'}</button>}
+                    <p className="footnote">도전은 {RAID.cooldownMs / 60000}분에 한 번, 한 번에 최대 {RAID.maxTurns}턴. 깎은 체력은 그대로 남아 다음 모험가가 이어서 때립니다. 격파 보상 · {format(raid.reward.gold)} G · 세계석 +{raid.reward.pearls}{raid.reward.sp ? ` · SP +${raid.reward.sp}` : ''} (한 번이라도 때린 모험가 전원) · 마지막 일격 세계석 +{raid.slayerBonus.pearls}{raid.slayerBonus.sp ? ` · SP +${raid.slayerBonus.sp}` : ''} 추가 · 서버 전체 축복.</p>
+                    {result && result.dealt !== undefined && <div className={`altar-result ${result.slain ? 'win' : 'lose'}`}>
+                        <strong>{result.slain ? result.slayer ? '격파 · 마지막 일격!' : '격파 · 함께 쓰러뜨렸습니다' : `피해 ${format(result.dealt)} · 남은 체력 ${format(result.remaining || 0)}`}</strong>
+                        <details><summary>전투 기록 ({result.turns}턴)</summary><ol>{result.logs.map((l, i) => <li key={i}>{l}</li>)}</ol></details>
+                        <button className="text-button" onClick={clearResult}>닫기</button>
+                    </div>}
+                    <div className="section-title"><h2><Trophy size={14}/> 피해 순위</h2><span className="micro">{raid.me.dealt ? `내 피해 ${format(raid.me.dealt)} · ${raid.me.rank}위 · ${raid.me.hits}회` : '아직 때리지 않음'}</span></div>
+                    {raid.board.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>피해</TableHead><TableHead>횟수</TableHead></TableRow></TableHeader>
+                        <TableBody>{raid.board.map(r => <TableRow key={r.rank} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{format(r.dealt)}</b></TableCell><TableCell>{r.hits}</TableCell></TableRow>)}</TableBody></Table>
+                        : <p className="footnote">아직 아무도 때리지 않았습니다. 첫 피해를 넣어 보세요.</p>}
+                </> : <p className="footnote">지금 나타난 월드보스가 없습니다. 소환 탭의 게이지({RAIDS.map(r => `${r.name} ${format(r.cost)}`).join(' · ')})가 차면 그 보스가 {RAID.lifetimeMs / 3600_000}시간 나타나고, 모든 모험가의 피해가 하나의 체력에 쌓입니다. 격파하면 때린 모험가 전원이 골드·세계석(·SP)을 받고 서버 전체에 축복이 열립니다.</p>}
             </section>
             <section className="panel altar-throne">
                 <div className="section-title"><h2><Crown size={16}/> 신의 자리</h2></div>

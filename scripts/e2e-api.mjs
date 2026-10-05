@@ -61,7 +61,7 @@ await call('/api/vault', { action: 'deposit', kind: 'gold', amount: 1 }, { expec
 // v25.11 공유 길드: 무소속 상태의 정보·제한. 창설·가입은 골드와 두 계정이 필요해 별도 스크립트로 확인합니다.
 // v27.43 제단: 정보, 잘못된 요청, 재화 부족, 신 없음, 자리 주인 아님.
 ({ data } = await call('/api/altar', undefined, { expect: 200 }));
-assert.ok(data.gauges.length === 5 && data.gauges.some(g => g.id === 'god') && data.gauges.some(g => g.id === 'nuri') && /^\d{4}-W\d{2}$/.test(data.week) && data.me.points === 0, 'altar info');
+assert.ok(data.gauges.length === 8 && data.gauges.some(g => g.id === 'god') && data.gauges.some(g => g.id === 'horntail') && data.raid === null && data.gauges.some(g => g.id === 'nuri') && /^\d{4}-W\d{2}$/.test(data.week) && data.me.points === 0, 'altar info');
 await call('/api/altar', { action: 'offer', gold: 0, gauge: 'gold' }, { expect: 400 });
 await call('/api/altar', { action: 'offer', pearls: 1, gauge: 'nope' }, { expect: 400 });
 ({ data } = await call('/api/altar', { action: 'offer', pearls: 99999, gauge: 'gold' }, { expect: 400 })); assert.match(data.error, /세계석이 부족/);

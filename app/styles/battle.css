@@ -862,3 +862,15 @@
   .battle-console>.log-panel:not(.folded) .log-list{flex:none;height:220px;min-height:0}
   .mobile-tab-bar{backface-visibility:hidden}
 }
+@media(max-width:767px){
+  /* v27.91 모바일 대결 카드: 체력 숫자·상태이상 유무에 따라 칸이 넓어졌다 좁아졌다 하지 않도록 열 폭은 반반 고정, 높이는 최소치 고정, 이름 줄은 한 줄. */
+  .battle-console .battle-opponent-strip{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .battle-console .opponent-card{min-height:176px;overflow:hidden}
+  .battle-console .opponent-card .combatant-name{flex-wrap:nowrap;min-height:30px;overflow:hidden}
+  .battle-console .opponent-card .combatant-name>strong{flex:1 1 auto;min-width:0}
+  .battle-console .opponent-card .name-statuses{flex:none;flex-wrap:nowrap;overflow:hidden;max-width:60%}
+  .battle-console .opponent-card .meter-label,.battle-console .opponent-card small{font-variant-numeric:tabular-nums}
+  /* 이벤트 배너의 ‘이벤트’ 글자가 세로로 쪼개지던 문제. */
+  .event-banner b{flex:none;white-space:nowrap}
+  .event-banner span{flex:1;min-width:0}
+}

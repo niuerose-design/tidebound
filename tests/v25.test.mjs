@@ -596,7 +596,7 @@ test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlemen
     const gold = A.BLESSINGS.find(b => b.id === 'gold');
     assert.deepEqual([A.blessingCost(gold, 0, false), A.blessingCost(gold, 1, true), A.blessingCost(gold, 2, true), A.blessingCost(gold, 3, true)], [1200, 1800, 2700, 2700]);
     assert.equal(A.blessingEffect(gold, 3).gold, 3); assert.ok(A.BLESSINGS.find(b => b.id === 'mimic').cost > A.BLESSINGS.find(b => b.id === 'exp').cost, 'mimic costs most');
-    assert.equal(A.gaugeCost('god'), 10000); assert.equal(A.ALTAR.essencePoints, 3);
+    assert.equal(A.gaugeCost('god'), 40000); assert.equal(A.ALTAR.essencePoints, 3);
     // 오프라인 정산: 골드 ×10 이벤트는 정산 중 ×5.5(절반)로 적용됩니다.
     const E = await L.load('systems/engine'), t0 = Date.parse('2030-01-01T00:00:00Z');
     const run = withEvent => { Ev.setRuntimeEvents(withEvent ? [{ id: 'admin-x', name: 'x', from: '2000-01-01T00:00:00Z', until: '2100-01-01T00:00:00Z', gold: 10 }] : [], []); const s = E.newState(t0); E.act(s, { type: 'start' }, t0); s.hp = 1e9; let n = 7; T.advance(s, t0 + 3600_000, () => ((n = (n * 9301 + 49297) % 233280) / 233280)); return s; };
@@ -1037,4 +1037,43 @@ test('v27.89 sprout support: exp ×(1 + 0.2 × (10 − rebirths)) below 10 rebir
     assert.ok(Math.abs(Enc.victoryHealRate(at(4)) - Enc.victoryHealRate(at(5)) - .05) < 1e-9);
     const s = at(2); s.running = true; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 0, gold: 0, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
     tick(s, () => .5); assert.equal(s.recovery, Math.ceil(B.BALANCE.recoveryTurns / 2));
+});
+
+test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challenge accumulates damage and pays the whole party on the kill', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const A = await L.load('data/altar'), Du = await L.load('systems/duel');
+    assert.equal(A.RAIDS.length, 3); assert.deepEqual(A.SUMMON_GAUGE_IDS, ['god', 'balrog', 'zakum', 'horntail']); assert.equal(A.GAUGE_IDS.length, 8);
+    assert.ok(A.RAIDS[0].stats.hp < A.RAIDS[1].stats.hp && A.RAIDS[1].stats.hp < A.RAIDS[2].stats.hp && A.RAIDS[0].cost < A.RAIDS[1].cost && A.RAIDS[1].cost < A.RAIDS[2].cost);
+    assert.equal(A.gaugeCost('zakum'), 5000); assert.equal(A.gaugeName('balrog'), '발록 소환'); assert.equal(A.ALTAR.godCost, 40000); assert.ok(A.RAID.maxTurns <= 100);
+    const full = Du.raidBossSnapshot(A.RAIDS[0]), partial = Du.raidBossSnapshot(A.RAIDS[0], 1234);
+    assert.equal(full.stats.hp, A.RAIDS[0].stats.hp); assert.equal(partial.stats.hp, 1234); assert.ok(full.skills.includes('foeWard'));
+    // 서버 흐름(파일 DB): 소환 → 두 모험가가 때림 → 마지막 일격 → 참여 보상.
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-raid-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const Alt = await L.load('server/altar'), DB = await L.load('server/db');
+    try {
+        const database = DB.db();
+        const now = Date.now(), hpMax = 1e9;
+        assert.ok(await database.summonAltarRaid('balrog', hpMax, now + A.RAID.lifetimeMs, now));
+        assert.equal(await database.summonAltarRaid('zakum', 5, now + 1000, now), false, 'one raid at a time');
+        const a = newState(now); a.name = '첫째'; a.level = 60; a.attributes.str = 400; a.kills = 1; a.lastTick = now;
+        const r1 = await Alt.makeRaid('p1')(a, now);
+        assert.ok(r1.dealt > 0 && r1.remaining === Math.max(0, hpMax - r1.dealt), `damage is taken off the shared hp (${r1.dealt})`);
+        assert.equal(a.altar.raidAt, now); assert.equal(a.altar.raidHits, 1);
+        await assert.rejects(Alt.makeRaid('p1')(a, now + 1000), /분 뒤에/, 'cooldown');
+        let row = await database.getAltar(); assert.equal(row.raid_hp, r1.remaining); assert.equal((await database.getRaidHit(row.raid_gen, 'p1')).dealt, r1.dealt);
+        // 다른 모험가들이 깎은 셈 치고 체력을 1만 남긴 뒤, 둘째가 마지막 일격을 넣습니다.
+        assert.equal(await database.hitAltarRaid(row.raid_gen, r1.remaining - 1), 1);
+        const b = newState(now); b.name = '둘째'; b.level = 60; b.attributes.str = 400; b.lastTick = now;
+        const last = await Alt.makeRaid('p2')(b, now + 1_000_000);
+        assert.equal(await database.hitAltarRaid(row.raid_gen, 5), null, 'no hits after the kill');
+        row = await database.getAltar(); assert.equal(row.raid_state, 'slain'); assert.equal(row.raid_hp, 0); assert.equal(row.raid_slayer, 'p2'); assert.ok(last.slain && last.slayer);
+        const info = await Alt.altarInfo('p1', a, now + 5); assert.ok(info.raid && info.raid.slain && info.raid.participants === 2 && info.raid.board[0].dealt >= info.raid.board[1].dealt && info.raid.slayer === '둘째');
+        const gold = a.gold, pearls = a.pearls; Alt.invalidateAltar(); await Alt.syncAltarStatus(a, now + 10, 'p1');
+        assert.equal(a.gold - gold, A.RAIDS[0].reward.gold); assert.equal(a.pearls - pearls, A.RAIDS[0].reward.pearls); assert.equal(a.altar.raidClaimed, row.raid_gen);
+        await Alt.syncAltarStatus(a, now + 20, 'p1'); assert.equal(a.gold - gold, A.RAIDS[0].reward.gold, 'paid once');
+        const bg = b.gold, bp = b.pearls; await Alt.syncAltarStatus(b, now + 10, 'p2'); assert.equal(b.pearls - bp, A.RAIDS[0].reward.pearls + A.RAIDS[0].slayer.pearls, 'slayer bonus'); assert.equal(b.gold - bg, A.RAIDS[0].reward.gold);
+        const c = newState(now); const cg = c.gold; await Alt.syncAltarStatus(c, now + 10, 'p3'); assert.equal(c.gold, cg, 'non-participants get nothing'); assert.equal(c.altar.raidClaimed, row.raid_gen);
+        const gauges = await database.listAltarGauges(); assert.ok(gauges.some(g => g.id === 'gold' && g.until > now) && gauges.some(g => g.id === 'exp' && g.until > now), 'kill opens the blessings');
+    } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });

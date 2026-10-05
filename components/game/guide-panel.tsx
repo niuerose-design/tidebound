@@ -11,7 +11,7 @@ import { SWARM_UNLOCK } from '@/game/data/world';
 import { VARIANTS, VARIANT_BOOK_MIN } from '@/game/data/variants';
 import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
 import { RANKS, RANK_PERKS, RANK_TOTAL_POINTS } from '@/game/data/rank';
-import { ALTAR, BLESSINGS } from '@/game/data/altar';
+import { ALTAR, BLESSINGS, RAID, RAIDS } from '@/game/data/altar';
 import { MIMIC } from '@/game/data/mimic';
 import { EXP_NURI } from '@/game/data/exp-nuri';
 import { TAILWIND_WINDOW, TAILWIND_EXP, DEEP_VOYAGE_LEVEL, tailwindWindow, tailwindExp, LEVEL_GATE_FREE_REBIRTHS } from '@/game/systems/meta';
@@ -175,6 +175,10 @@ export function Guide({ s }: { s?: State }) {
                     effect={`신 소환 게이지(기여도 ${ALTAR.godCost.toLocaleString()})가 차면 신이 ${ALTAR.godLifetimeMs / 3600_000}시간 깨어납니다. 신을 처음 쓰러뜨린 모험가가 신의 자리에 앉아 다른 모험가가 바치는 재화의 ${ALTAR.titheRate * 100}%를 거둡니다.`}
                     condition={`도전 간격 ${ALTAR.challengeCooldownMs / 60_000}분. 신 카드에 최대 체력과 공격이 보이니 결투 전투력과 비교해 보세요. 신이 없을 때는 자리 주인을 ‘탄핵’할 수 있습니다: 주인이 신을 격파하던 당시의 능력치·스킬 그대로와 겨뤄 이기면 자리가 빕니다.`}
                     limit={`임기는 ${ALTAR.throneTermMs / 86_400_000}일. 자리가 비면 다음 신은 다시 ${ALTAR.firstGod.name}이고, 앉으려면 그 신을 쓰러뜨려야 합니다.`}/>
+                <Rule icon={<Swords size={19}/>} title="월드보스"
+                    effect={`소환 탭의 월드보스 게이지(${RAIDS.map(r => `${r.name} ${r.cost.toLocaleString()}`).join(' · ')})가 차면 그 보스가 ${RAID.lifetimeMs / 3600_000}시간 나타납니다. 체력은 서버가 함께 쓰는 하나의 값이라 모든 모험가의 피해가 누적되고, 0이 되면 격파입니다.`}
+                    condition={`도전은 ${RAID.cooldownMs / 60_000}분에 한 번, 한 번에 최대 ${RAID.maxTurns}턴. 격파하면 한 번이라도 때린 모험가 전원이 골드·세계석(·SP)을 다음 동기화 때 받고, 마지막 일격은 보너스를 더 받으며, 서버 전체에 축복이 열립니다. 피해 순위는 제단의 월드보스 카드에서 봅니다.`}
+                    limit="한 번에 한 마리만 나타납니다. 시간 안에 못 잡으면 떠나고 게이지는 다시 채워야 합니다. 신 소환과는 별개입니다."/>
                 <Rule icon={<Gauge size={19}/>} title="사냥터 난이도 · 던전 난이도"
                     effect={`사냥터 난이도는 환생 횟수만큼(최대 ${ECONOMY.tideCap}) 올릴 수 있습니다. 몬스터 체력·공격이 오르는 대신 골드·경험치 배율과 장비 레벨이 오르고, 드롭 장비의 상위 등급 비율이 조금씩 오르며(난이도 100에서 태초 0.6% → 1%), 난이도 ${BALANCE.tideLoot.essenceMinTier}부터 처치마다 정수가 떨어집니다(확률 난이도 × ${BALANCE.tideLoot.essenceChancePerTier * 100}%, 양 1 + 난이도 ÷ ${BALANCE.tideLoot.essenceEveryTiers}). 난이도 ${MIMIC.minTier}부터 저레벨 사냥터의 몬스터도 내 레벨 근처까지 올라와 어느 사냥터든 보상이 비슷해집니다.`}
                     condition={`일반 던전은 입장할 때 ${DUNGEON_MODES.map(m => m.name).join(' · ')} 중 하나를 고릅니다. 헬은 사냥터 난이도 ${DUNGEON_MODES[1].tier}급, 나이트메어는 ${DUNGEON_MODES[2].tier}급이고 몬스터 레벨도 내 레벨까지 올라옵니다.`}

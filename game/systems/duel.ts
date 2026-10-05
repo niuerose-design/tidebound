@@ -6,7 +6,7 @@ import { Fighter, fighterSpeed, actTurn, constraintFields } from './combat';
 import { FISH, DUNGEONS } from '../data/world';
 import { abyssReference } from './encounter';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
-import { ALTAR } from '../data/altar';
+import { ALTAR, type RaidDef } from '../data/altar';
 /** 훈련 상대로 쓰는 던전 보스. 던전 마지막 웨이브와 같은 능력치·스킬로 섭니다(레벨 보정 0단계). */
 export const BOSS_OPPONENTS = FISH.filter(f => f.boss);
 export function bossSnapshot(id: string): Snapshot | null {
@@ -20,6 +20,11 @@ export function abyssBossSnapshot(depth: number): Snapshot {
     const d = DUNGEONS.find(x => x.id === 'abyss')!, f = FISH.find(x => x.id === d.bossFish)!;
     const stats = abyssEnemyStats(f, abyssReference(), depth, { boss: true, wave: d.fish.length - 1 });
     return { name: d.boss, level: f.level, job: 'boss', rebirths: 0, stats, skills: foeSkills(f.id, f.level, true), power: power(stats), rating: 1000 + f.level * 10 };
+}
+/** v27.91 월드보스 결투 상대. hp는 서버가 들고 있는 남은 공유 체력(없으면 최대 체력)이라, 남은 체력이 적으면 한 번의 도전으로 쓰러집니다. */
+export function raidBossSnapshot(raid: RaidDef, hp = raid.stats.hp): Snapshot {
+    const stats = { ...raid.stats, hp: Math.max(1, Math.floor(hp)), mana: 100, manaRegen: 10 };
+    return { name: raid.name, level: raid.level, job: 'boss', rebirths: 0, stats, skills: foeSkills(raid.fish, raid.level, true), power: power(stats), rating: 1000 + raid.level * 10 };
 }
 /** v27.54 검은 마법사 신격 보정(공격·마법 ×5, 방어 관통 50%). 이미 저장된 옛 검은 마법사에도 도전 때 한 번 적용됩니다(관통으로 적용 여부 판별). */
 export function divineFirstGod(god: Snapshot): Snapshot {
