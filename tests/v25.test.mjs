@@ -1400,3 +1400,21 @@ test('v3.19 rank rescale: old saves are re-ranked once; demoted saves get their 
     assert.equal(Mi.rescaleRanks(low), false, '병 계급은 그대로'); assert.deepEqual(low.rank.perks, { tally: 2 });
     assert.equal(R.rankPerkLevel({ rank: { exp: 0, perks: { tally: 18 } } }, 'tally'), 10, 'old tally 18 clamps to the new max');
 });
+
+test('v3.20 starforce flow achievements: 10★+ success streak, fail streak, drops, chance time, star catch, 15★+ successes', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), C = await L.load('systems/commerce'), A = await L.load('data/achievements');
+    const s = newState(0); s.gold = 1e15;
+    const item = { id: 'sf', name: '시험 장비', slot: 'rod', rarity: 4, power: 100, level: 50, enhance: 10 };
+    const spend = c => { s.gold -= c; };
+    for (let i = 0; i < 5; i++) C.starForceAttempt(s, item, false, () => 0, spend);
+    assert.equal(item.enhance, 15); assert.equal(s.starforce.bestStreak, 5); assert.equal(s.starforce.high || 0, 0, '15★+ not yet');
+    C.starForceAttempt(s, item, false, () => 0, spend, true); assert.equal(s.starforce.high, 1); assert.equal(s.starforce.catches, 1); assert.equal(s.starforce.bestStreak, 6);
+    // 16★: 실패(유지·하락) 두 번 → 연속 실패 2, 하락 횟수, 다음은 찬스 타임으로 성공.
+    const keepRoll = () => .9;
+    C.starForceAttempt(s, item, false, keepRoll, spend); C.starForceAttempt(s, item, false, keepRoll, spend);
+    assert.equal(s.starforce.streak, 0, 'failure breaks the streak'); assert.equal(s.starforce.bestFailStreak, 2); assert.ok((s.starforce.drops || 0) >= 1);
+    if (item.starFails >= 2) { C.starForceAttempt(s, item, false, keepRoll, spend); assert.equal(s.starforce.chance, 1); assert.equal(s.starforce.failStreak, 0); }
+    const ids = A.ACHIEVEMENTS.map(a => a.id);
+    for (const id of ['starStreak:3', 'starFailStreak:5', 'starDrops:10', 'starChance:1', 'starCatch:10', 'starHigh:10']) assert.ok(ids.includes(id), id);
+    assert.equal(A.ACHIEVEMENTS.find(a => a.id === 'starStreak:5').progress(s), 6);
+});

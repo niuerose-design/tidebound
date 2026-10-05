@@ -458,7 +458,11 @@ export type State = {
     /** v3.12 보스별 연속 미획득 격파 수(dropPity 천장용). */
     onyxMiss?: Record<string, number>;
     /** v3.6 스타포스 누적 기록(환생해도 남음): 시도·성공·실패(하락/유지)·파괴·쓴 골드. 업적·칭호가 봅니다. */
-    starforce?: { tries: number; success: number; fail: number; destroy: number; gold: number };
+    starforce?: {
+        tries: number; success: number; fail: number; destroy: number; gold: number;
+        /** v3.20 업적용 흐름 기록: 10성 이상 연속 성공(지금·최고), 연속 실패(유지·하락·파괴, 지금·최고), 하락, 찬스 타임, 스타캐치 성공, 15성 이상 성공. */
+        streak?: number; bestStreak?: number; failStreak?: number; bestFailStreak?: number; drops?: number; chance?: number; catches?: number; high?: number;
+    };
     recovery: number;
     lastTick: number;
     skills: string[];
