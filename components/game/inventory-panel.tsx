@@ -3,7 +3,7 @@ import { ConfirmButton } from './confirm-button';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StarCatch } from './star-catch';
 import { useStarSetting, starSound } from './star-catch-setting';
-import { ArrowUpRight, ChevronDown, Lock, Search, Sparkles, Swords } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Gem, Lock, Search, Sparkles, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Item, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, researchRank } from '@/game/data/economy';
@@ -34,7 +34,7 @@ function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
         {item.affixes!.map((x, i) => <div key={x.id + i} className="gear-option-row">
             <span>{x.rule ? '◆ ' : ''}<b>{x.name}</b> · {STAT_LABELS[x.stat]} {statDeltaDisplay(x.stat, x.value)}{x.stat2 && x.value2 ? ` · ${STAT_LABELS[x.stat2]} ${statDeltaDisplay(x.stat2, x.value2)}` : ''}{quality(x) !== null && <em className="affix-quality"> · 수치 {quality(x)}%</em>}</span>
             <small>{affixDef(x.id)?.description}</small>
-            {!item.relic && <span className="gear-option-actions"><ConfirmButton label="재설정" title={`${x.name} 옵션을 다시 굴릴까요?`} description={`이 옵션 하나만 바뀌고 나머지 옵션은 그대로입니다. 골드 ${format(cost.gold)} G와 정수 ${cost.essence}를 사용합니다. 같은 옵션은 중복되지 않고, 규칙 옵션(◆)은 장비당 1개까지입니다.`} disabled={busy || !canPay} onConfirm={() => send({ type: 'reforge', id: item.id, value: String(i) })}/>
+            {!item.relic && !(item.onyx && x.rule) && <span className="gear-option-actions"><ConfirmButton label="재설정" title={`${x.name} 옵션을 다시 굴릴까요?`} description={`이 옵션 하나만 바뀌고 나머지 옵션은 그대로입니다. 골드 ${format(cost.gold)} G와 정수 ${cost.essence}를 사용합니다. 같은 옵션은 중복되지 않고, 규칙 옵션(◆)은 장비당 1개까지입니다.`} disabled={busy || !canPay} onConfirm={() => send({ type: 'reforge', id: item.id, value: String(i) })}/>
                 {!x.rule && <ConfirmButton label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다. 지금보다 낮아질 수도 있습니다. 골드 ${format(refine.gold)} G와 정수 ${refine.essence}를 사용하며, 재련 비용은 오르지 않습니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
             </span>}
         </div>)}
@@ -103,7 +103,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
         return <article key={item.id} className={`panel gear-row ${expanded ? 'expanded' : ''} ${equipped ? 'equipped' : ''}`} style={{ '--rarity': RARITIES[item.rarity].color } as React.CSSProperties}>
             <button type="button" className="gear-row-main" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : item.id)}>
                 <span className="gear-row-icon"><SlotIcon slot={item.slot} size={20}/></span>
-                <span className="gear-row-name"><strong>{item.name} <span className="gold-text">{starLabel(item.enhance || 0)}</span>{item.locked && <Lock size={12} aria-label="보호"/>}{item.relic && <Sparkles size={12} aria-label="환생 보존 유물"/>}</strong><small>{RARITIES[item.rarity].name} · {SLOTS[item.slot]} · 위력 {item.power} · {item.relic ? '유물' : `Lv.${item.level}`}{item.affixes?.length ? ` · 옵션 ${item.affixes.length}` : ''}</small></span>
+                <span className="gear-row-name"><strong>{item.name} <span className="gold-text">{starLabel(item.enhance || 0)}</span>{item.locked && <Lock size={12} aria-label="보호"/>}{item.relic && <Sparkles size={12} aria-label="환생 보존 유물"/>}{item.onyx && <Gem size={12} aria-label="칠흑 장신구"/>}</strong><small>{RARITIES[item.rarity].name} · {SLOTS[item.slot]} · 위력 {item.power} · {item.relic ? '유물' : `Lv.${item.level}`}{item.affixes?.length ? ` · 옵션 ${item.affixes.length}` : ''}</small></span>
                 <span className="gear-row-stats">{topStats(item)}</span>
                 <span className="gear-row-gain">{equipped ? <span className="gear-gain neutral">착용 중</span> : gainBadge(gain)}</span>
                 <ChevronDown size={16} className="gear-row-chevron"/>

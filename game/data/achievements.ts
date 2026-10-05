@@ -6,6 +6,7 @@ import { MIMIC } from './mimic';
 import { EXP_NURI } from './exp-nuri';
 import { stats } from '../systems/stats';
 import { DUNGEON_MODES, type DungeonMode } from './balance';
+import { ownedOnyx } from './onyx';
 import { RANKS, RANK_CUMULATIVE, RANK_TOTAL_POINTS, rankState, rankPointsSpent } from './rank';
 
 /**
@@ -28,6 +29,7 @@ const tideBest = (s: State) => Math.max(0, ...Object.values(s.tideBest || {}));
 const playHours = (s: State) => Math.floor((s.playMs || 0) / 3_600_000);
 const sum = (r?: Record<string, number>) => Object.values(r || {}).reduce((a, b) => a + (b || 0), 0);
 const goldens = (s: State) => sum(s.goldenBook);
+const onyxOwned = (s: State) => ownedOnyx(s).size;
 /** v3.6 스타포스 누적 기록과 보유 장비(가방·착용) 중 가장 높은 별. */
 const sf = (s: State) => s.starforce || { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
 const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
@@ -81,6 +83,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('starDestroy', '강화', n => `장비 파괴 ${n}회`, n => `스타포스 강화로 장비를 ${n}번 잃습니다(유물의 12성 회귀 포함).`, [1, 10, 50], s => sf(s).destroy, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 12, bonus: { hp: .02 } }][i]),
     ...series('starGold', '강화', n => `강화에 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `스타포스 강화에 골드를 누적 ${n.toLocaleString()} G 씁니다.`, [1e7, 1e8, 1e9, 1e10], s => sf(s).gold, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, sp: 1 }, { pearls: 20, ap: 1 }][i]),
     ...series('star', '강화', n => `${n}성 달성`, n => `장비 하나를 ${n}성까지 강화합니다(가방·착용 장비 기준).`, [10, 15, 20, 22], bestStar, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 8, sp: 1 }, { pearls: 15, bonus: { attack: .03, magic: .03 } }][i]),
+    // v3.12 칠흑 장신구 수집(보유 수, 환생 유지).
+    ...series('onyx', '사냥', n => `칠흑 장신구 ${n}종`, n => `무리 서식지의 칠흑 보스를 쓰러뜨려 칠흑 장신구 ${n}종을 보유합니다.`, [1, 3, 5, 7], onyxOwned, i => [{ pearls: 3 }, { pearls: 8, sp: 1 }, { pearls: 15, ap: 1 }, { pearls: 30, sp: 1, bonus: { attack: .03, magic: .03, hp: .03 } }][i]),
     ...series('deaths', '도전', n => `쓰러짐 ${n}회`, n => `${n}번 쓰러지고도 다시 출항합니다.`, [10, 100, 1000], s => s.deaths || 0, i => [{ pearls: 1 }, { pearls: 3, bonus: { hp: .02 } }, { pearls: 8 }][i]),
     // v27.58 업적 확장: 묶음마다 새 기록을 늘리고, 마지막 단계에 SP +1을 붙였습니다.
     ...series('level', '모험', n => `Lv.${n}`, n => `최고 레벨 ${n}에 도달합니다(환생 전 기록 포함).`, [30, 50, 70, 85, 100], s => s.peakLevel || s.level, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 12, ap: 1 }, { pearls: 25, sp: 1 }][i]),

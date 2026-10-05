@@ -202,6 +202,14 @@ const specialFish: Array<{
     { id: 'templeOracle', name: '엘리쟈', level: 38, lore: '환생자의 기억을 읽고 침묵의 바람을 부르는 하늘의 마녀.', rarity: 'legendary' as const, rewardMultiplier: 3.8, boss: true },
     { id: 'abyssSovereign', name: '무공', level: 52, lore: '무릉도장의 가장 높은 곳에서 다음 도전자를 기다리는 도장의 주인.', rarity: 'legendary' as const, rewardMultiplier: 5, boss: true },
     { id: 'ventColossus', name: '자쿰', level: 66, lore: '엘나스 폐광의 제단에 봉인된 거대 석상. 여러 개의 팔이 따로 움직인다.', rarity: 'legendary' as const, rewardMultiplier: 6, boss: true },
+    // v3.12 칠흑의 보스(무리 서식지 전용). 능력치는 서식지 최강 몬스터 기준이라 레벨은 도감·기술용입니다.
+    { id: 'onyxDusk', name: '더스크', level: 11, lore: '리스항구 갯바위에 안개처럼 내려앉은 공포. 형체가 없는데 눈이 많다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'onyxDunkel', name: '듄켈', level: 20, lore: '헤네시스 들판을 가르는 검은 검의 지휘관. 베인 자리마다 들불이 번진다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'onyxWill', name: '윌', level: 30, lore: '페리온 협곡에 거미줄을 친 거울의 마법사. 거울 속에도 윌이 있다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'onyxLucid', name: '루시드', level: 40, lore: '엘리니아 숲의 꿈을 다스리는 요정 여왕. 나비 한 마리마다 악몽이 깃든다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'onyxHilla', name: '진 힐라', level: 61, lore: '커닝시티 배수로 아래 되살아난 사령술사. 죽은 것들이 그녀의 숨으로 움직인다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'onyxSeren', name: '세렌', level: 96, lore: '시간의 신전에 내려온 태양의 수호자. 미트라의 분노가 회랑을 태운다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'onyxBlackMage', name: '검은 마법사', level: 106, lore: '아케인 리버의 끝에서 세계를 다시 쓰려는 초월자. 그의 뒤에는 창세의 빛이 있다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
     { id: 'starfallSeraph', name: '파풀라투스', level: 62, lore: '루디브리엄 시계탑의 시간을 멈춘 차원의 침략자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
 ];
 for (const f of specialFish)

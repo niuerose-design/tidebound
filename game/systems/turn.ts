@@ -105,6 +105,8 @@ function tickTurn(s: State, rng: () => number) {
     e.cooldowns = enemy.cooldowns;
     // v27.16 교착 안전장치: 양쪽 체력이 그대로인 턴이 이어지면 몬스터가 달아난 것으로 보고 새 몬스터를 맞이합니다.
     if (e.hp > 0 && s.hp > 0) {
+        // v3.12 칠흑 보스는 정해진 턴이 지나면 떠납니다(도망 보상 없음).
+        if (e.onyx && e.leavesAt !== undefined && s.turn >= e.leavesAt && e.hp > 0) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${e.name}이(가) 어둠 속으로 사라졌습니다. 다음에 다시 만나세요.`); return; }
         e.stale = e.hp === enemyHpBefore && s.hp === playerHpBefore ? (e.stale || 0) + 1 : 0;
         if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${e.name}이(가) 줄을 끊고 달아났습니다. 다음 몬스터를 기다립니다.`); return; }
     }

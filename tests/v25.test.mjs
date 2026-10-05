@@ -994,7 +994,7 @@ test('v27.80 regional variants and swarm habitats: signature variant ×2.5, habi
     const hab = W.STAGES.find(st => st.id === 'lithSwarm');
     assert.deepEqual(hab.fish, W.regionFish('리스항구')); assert.ok(hab.rebirth >= W.HABITAT.minRebirth);
     const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 20; s.running = true;
-    const sizes = new Set(); for (const roll of [0, .1, .3, .9]) { E.spawn(s, () => roll); assert.equal(s.enemy.variant, 'swarm'); sizes.add(s.enemy.swarm); assert.ok(!['masteryMimic', 'expNuri'].includes(s.enemy.id), 'no mimic or nuri in habitats'); }
+    const sizes = new Set(); for (const roll of [.01, .1, .3, .9]) { E.spawn(s, () => roll); assert.equal(s.enemy.variant, 'swarm'); sizes.add(s.enemy.swarm); assert.ok(!['masteryMimic', 'expNuri'].includes(s.enemy.id), 'no mimic or nuri in habitats'); }
     assert.deepEqual([...sizes].sort((a, b) => a - b), [100, 500]);
     const logs = s.logs.length; s.enemy.hp = 0; E.reward(s, () => .5); assert.ok(!s.logs.slice(logs).some(l => l.text.includes('이정표')), 'no tide milestone pearls in habitats'); assert.ok(!s.tideBest?.lithSwarm);
 });
@@ -1254,4 +1254,30 @@ test('v3.11 monster exp curve knee: unchanged up to Lv.66, dropped and slower-gr
     for (const l of [1, 30, 61, 66]) assert.equal(W.fishExpAt(l), old(l), `Lv.${l} unchanged`);
     assert.ok(W.fishExpAt(67) < W.fishExpAt(66), 'drop right above the knee'); assert.ok(W.fishExpAt(100) / old(100) < .25 && W.fishExpAt(100) > W.fishExpAt(90) * 2, 'Lv.100 well below the old curve but still rising');
     const top = W.FISH.find(f => f.id === 'arTrueErda'); assert.equal(top.exp, W.fishExpAt(top.level), 'monster rows use the curve');
+});
+
+test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, accessory drop once (then pearls), kept through rebirth, set bonuses and guards', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const O = await L.load('data/onyx'), W = await L.load('data/world'), Enc = await L.load('systems/encounter'), Meta = await L.load('systems/meta'), T = await L.load('systems/turn');
+    assert.equal(O.ONYX_BOSSES.length, 7); assert.ok(O.onyxBossFor('리스항구') && !O.onyxBossFor('아쿠아로드'));
+    assert.equal(O.onyxChance(0, 0), .003); assert.ok(Math.abs(O.onyxChance(50, 0) - .006) < 1e-9); assert.equal(O.onyxChance(0, O.ONYX.pity), 1, 'pity guarantees');
+    for (const b of O.ONYX_BOSSES) assert.ok(W.FISH.find(f => f.id === b.id)?.boss, `${b.id} is a boss monster`);
+    // 서식지에서만 나옵니다. 첫 난수(까미·누리 없음 → 칠흑 판정)가 0이면 출현.
+    const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 0;
+    Enc.spawn(s, () => 0); assert.equal(s.enemy.onyx, 'onyxDusk'); assert.ok(s.enemy.boss && s.enemy.swarm === undefined, 'single boss body'); assert.equal(s.enemy.leavesAt, s.turn + O.ONYX.turns); assert.equal(s.onyxSeen['리스항구'], 0);
+    const plain = newState(0); plain.level = 60; plain.rebirths = 10; plain.stage = 'brook'; Enc.spawn(plain, () => 0); assert.ok(!plain.enemy.onyx, 'never outside habitats');
+    const miss = newState(0); miss.level = 60; miss.rebirths = 10; miss.stage = 'lithSwarm'; Enc.spawn(miss, () => .5); assert.ok(!miss.enemy.onyx); assert.equal(miss.onyxSeen['리스항구'], 1, 'pity counter grows');
+    // 처치: 장신구 1개(태초, 고유 옵션 + 5줄), 두 번째는 세계석.
+    s.enemy.hp = 0; const pearls = s.pearls; Enc.reward(s, () => .5);
+    const acc = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(acc && acc.slot === 'charm' && acc.rarity === 6 && acc.locked && acc.affixes.length === 6 && acc.affixes[0].rule && acc.affixes[0].stat === 'thorns', JSON.stringify(acc));
+    assert.equal(s.onyxBook.onyxDusk, 1); assert.equal(s.pearls, pearls);
+    Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .5); assert.equal(s.inventory.filter(i => i.onyx).length, 1, 'one per boss'); assert.equal(s.pearls, pearls + O.ONYX.duplicatePearls);
+    // 떠남: leavesAt 이후 턴에 사라집니다.
+    Enc.spawn(s, () => 0); s.enemy.hp = s.enemy.maxHp; s.turn = s.enemy.leavesAt; s.running = true; s.hp = stats(s).hp; T.tick(s, () => .5); assert.ok(!s.enemy || !s.enemy.onyx, 'boss left'); assert.ok(s.logs.some(l => l.text.includes('어둠 속으로')));
+    // 세트 보너스·스탯·환생 유지·보호.
+    const before = stats(s).attack; s.inventory.push({ ...acc, id: 'x2', onyx: 'onyxDunkel' }); assert.ok(Math.abs(stats(s).bossDamage - .05) < 1e-9, '2 pieces: boss damage +5%');
+    for (const id of ['onyxWill', 'onyxLucid', 'onyxHilla', 'onyxSeren', 'onyxBlackMage']) s.inventory.push({ ...acc, id: 'x-' + id, onyx: id, affixes: [] });
+    assert.ok(Math.abs(stats(s).allStats - .03) < 1e-9 && stats(s).attack > before, '7 pieces: all stats +3%');
+    assert.throws(() => act(s, { type: 'sell', id: acc.id }, 0), /칠흑/); assert.throws(() => act(s, { type: 'reforge', id: acc.id, value: '0' }, 0), /고유 옵션/);
+    s.level = Meta.rebirthLevel(s); act(s, { type: 'rebirth' }, 0); assert.equal(s.inventory.filter(i => i.onyx).length, 7, 'accessories survive rebirth'); assert.equal(s.onyxBook.onyxDusk, 2);
 });

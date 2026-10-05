@@ -14,6 +14,8 @@ import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } from './book-research';
 import { stats, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
+import { ONYX, ONYX_BOSSES, ONYX_SET, ownedOnyx } from '@/game/data/onyx';
+import { affixDef } from '@/game/data/gear';
 import { abyssReference, stageField } from '@/game/systems/encounter';
 import { bookEcology, nextEcology, bookRevealed, regionResearchStage, bookStage } from '@/game/systems/book';
 import { BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
@@ -130,6 +132,17 @@ export function Collection({ s, send, busy }: PanelProps) {
                 {bookRevealed(s, f.id) && <details className="book-block book-enemy"><summary><h4><ChevronDown size={14} className="book-enemy-chevron"/>적 정보 <small>{f.id === 'abyssSovereign' ? '무릉도장 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><EnemyStrike enemy={enemy}/></div><EnemySkillList ids={p.skills} enemy={enemy}/></details>}
             </article>;
         })}</div>
+        </details><details className="book-section book-region boss-book-section onyx-book-section">
+        <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>칠흑의 보스</h2><span>{ONYX_BOSSES.filter(b => ownedOnyx(s).has(b.id)).length} / {ONYX_BOSSES.length} 장신구 보유</span></summary>
+        <p className="footnote">무리 서식지에서만 출현마다 {Math.round(ONYX.chance * 1000) / 10}%(난이도 50마다 +100%, {ONYX.pity.toLocaleString()}회 못 보면 확정)로 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 무작위 {ONYX.affixes}줄)를 확정으로 받고, 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}).</p>
+        <ul className="bonus-rows">{ONYX_SET.map(b => <li key={b.count} className={ownedOnyx(s).size >= b.count ? 'done' : ''}><b>{b.count}종 보유</b><span>{b.label}</span></li>)}</ul>
+        <div className="book-grid">{ONYX_BOSSES.map(b => { const f = FISH.find(x => x.id === b.id)!, n = s.onyxBook?.[b.id] || 0, got = ownedOnyx(s).has(b.id), def = affixDef(b.accessory.affix.id);
+            return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={b.id}>
+                <div className="book-icon"><Swords size={34}/><span>{n ? `${n}회 격파` : '미발견'}</span></div>
+                <h3>{b.name} <small className="fish-rarity legendary">{b.region} 서식지</small></h3>
+                <p>{f.lore}</p>
+                <div className="fish-trait"><strong>{got ? '✓ ' : ''}{b.accessory.name}</strong><span>{def?.description || b.accessory.desc}</span></div>
+            </article>; })}</div>
         </details></TabsContent>
     <TabsContent value="items">
     <div className="notice">
