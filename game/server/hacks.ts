@@ -10,11 +10,11 @@ import type { State, Snapshot } from '../types';
 import { setPuzzleKey, gainHacker, isHacker, seasonScore, programOn } from '../systems/hacker';
 import { addLog } from '../systems/state';
 import { HACKER, HACK_BITS, FIREWALL_ID } from '../data/hacker';
-import { currentEvents, setEventTamper } from '../data/events';
+import { currentEvents, setEventTamper, setHackEvents } from '../data/events';
 import { STAGES, DUNGEONS, setHackDown, placeKey } from '../data/world';
-import { gaugeCost, type AltarGaugeId } from '../data/altar';
+import { gaugeCost, raidById, josa, type AltarGaugeId } from '../data/altar';
 import { dayKey } from '../data/goals';
-import { backdoorGauge } from './altar';
+import { backdoorGauge, raidAlive, invalidateAltar } from './altar';
 
 type Down = { kind: 'stage' | 'dungeon'; id: string; until: number; by: string; byId: string };
 type Tamper = { minutes: number; rate: number; by: string; byId: string; at: number };
@@ -32,24 +32,33 @@ export type Hacks = {
     masked: Record<string, { until: number; show: string[]; by: string; byId: string }>;
     /** v3.27 해커끼리 견제: 모험가 id → 오늘 역추적 횟수(day 기준)와 과부하가 끝나는 시각. */
     rival: Record<string, { day?: string; trace?: number; overloadUntil?: number }>;
+    /** v3.28 해킹 IX DDoS로 연 서버 이벤트(서버에 하나). */
+    ddos?: { kind: string; rate: number; from: number; until: number; by: string; byId: string };
+    /** v3.28 해킹 X 루트 권한 연출(모두에게 배너). */
+    root?: { by: string; byId: string; until: number };
+    /** v3.28 해킹 VII 세이브 스캠: 월드보스 세대 → 건 시각(보스 한 마리당 서버 전체 1회). */
+    scummed: Record<string, number>;
 };
 /** v3.27 신원 조작이 지금 걸려 있는지(until 0 = 무기한). */
 const maskLive = (m: { until: number } | undefined, now: number) => !!m && (!m.until || m.until > now);
-const KEY = 'hacks', TTL = 30_000, TAMPER_KEEP = 30 * 86400_000;
+const KEY = 'hacks', TTL = 30_000, TAMPER_KEEP = 30 * 86400_000, SCUM_KEEP = 3 * 86400_000;
 let cached: { at: number; hacks: Hacks } | null = null;
 const obj = <T>(v: unknown): Record<string, T> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, T> : {};
 
 function parse(raw: string | null): Hacks {
     try {
         const v = raw ? JSON.parse(raw) : null;
-        return { broadcast: v?.broadcast && typeof v.broadcast.text === 'string' ? v.broadcast : undefined, cracked: obj<number>(v?.cracked), tamper: obj<Tamper>(v?.tamper), down: Array.isArray(v?.down) ? v.down.filter((d: Down) => d && typeof d.id === 'string') : [], patched: obj<number>(v?.patched), shielded: obj<string>(v?.shielded), masked: obj<Hacks['masked'][string]>(v?.masked), rival: obj<Hacks['rival'][string]>(v?.rival) };
+        return { broadcast: v?.broadcast && typeof v.broadcast.text === 'string' ? v.broadcast : undefined, cracked: obj<number>(v?.cracked), tamper: obj<Tamper>(v?.tamper), down: Array.isArray(v?.down) ? v.down.filter((d: Down) => d && typeof d.id === 'string') : [], patched: obj<number>(v?.patched), shielded: obj<string>(v?.shielded), masked: obj<Hacks['masked'][string]>(v?.masked), rival: obj<Hacks['rival'][string]>(v?.rival),
+            ddos: v?.ddos && (HACKER.ddos.kinds as readonly string[]).includes(v.ddos.kind) ? v.ddos : undefined, root: v?.root && typeof v.root.until === 'number' ? v.root : undefined, scummed: obj<number>(v?.scummed) };
     }
-    catch { return { cracked: {}, tamper: {}, down: [], patched: {}, shielded: {}, masked: {}, rival: {} }; }
+    catch { return { cracked: {}, tamper: {}, down: [], patched: {}, shielded: {}, masked: {}, rival: {}, scummed: {} }; }
 }
-/** 게임 계산에 넣습니다(이벤트 변조 · 서버 다운 · 패치). */
+/** 게임 계산에 넣습니다(이벤트 변조 · 서버 다운 · 패치 · v3.28 DDoS 이벤트). */
 function applyRuntime(h: Hacks) {
     setEventTamper(Object.fromEntries(Object.entries(h.tamper).map(([id, t]) => [id, { minutes: t.minutes, rate: t.rate }])));
     setHackDown(h.down, h.patched);
+    const d = h.ddos;
+    setHackEvents(d ? [{ id: 'hack-ddos', name: `DDoS(해커 ${d.by})`, from: new Date(d.from).toISOString(), until: new Date(d.until).toISOString(), [d.kind]: d.rate }] : []);
 }
 /** 30초 캐시. 읽기에 실패하면 지난 값(없으면 빈 값)을 씁니다. */
 export async function readHacks(now: number): Promise<Hacks> {
@@ -67,6 +76,9 @@ async function writeHacks(h: Hacks, now: number) {
     for (const [id, r] of Object.entries(h.rival)) if (r.day !== today && !((r.overloadUntil || 0) > now)) delete h.rival[id];
     for (const [id, t] of Object.entries(h.tamper)) if (!(now - t.at < TAMPER_KEEP)) delete h.tamper[id];
     for (const [id, day] of Object.entries(h.shielded)) if (day !== today) delete h.shielded[id];
+    for (const [gen, at] of Object.entries(h.scummed)) if (!(now - at < SCUM_KEEP)) delete h.scummed[gen];
+    if (h.ddos && !(h.ddos.until > now)) delete h.ddos;
+    if (h.root && !(h.root.until > now)) delete h.root;
     h.down = h.down.filter(d => d.until > now);
     if (h.broadcast && !(h.broadcast.until > now)) delete h.broadcast;
     await db().setSetting(KEY, JSON.stringify(h), now);
@@ -93,7 +105,7 @@ export const playerOfRow = (rowId: string) => rowId.startsWith('duel:') ? rowId.
 
 const placeName = (kind: string, id: string) => (kind === 'stage' ? STAGES.find(st => st.id === id)?.name : DUNGEONS.find(d => d.id === id)?.name) || id;
 /** 이벤트 변조 대상: 운영 이벤트(제단 축복 제외) 중 지금 진행 중인 것. 변조 뒤의 종료 시각으로 봅니다. */
-const liveEvents = (now: number) => currentEvents(false).filter(e => !e.id.startsWith('altar-') && Date.parse(e.from) <= now && now <= Date.parse(e.until));
+const liveEvents = (now: number) => currentEvents(false).filter(e => !e.id.startsWith('altar-') && !e.id.startsWith('hack-') && Date.parse(e.from) <= now && now <= Date.parse(e.until));
 
 /** 동기화 때 화면에 보여 줄 해킹 소식을 상태에 적습니다(캐시만 읽음). 해커 계열에게는 변조·다운·패치 정보도 적습니다. */
 export async function syncHackFeed(s: State, id: string, now: number) {
@@ -105,10 +117,13 @@ export async function syncHackFeed(s: State, id: string, now: number) {
         down: h.down.filter(d => d.until > now).map(d => ({ kind: d.kind, id: d.id, until: d.until, by: d.by, ...((h.patched[placeKey(d.kind, d.id)] || 0) > now ? { patched: true } : {}) })),
         patched: Object.fromEntries(Object.entries(h.patched).filter(([, until]) => until > now)),
         masks: Object.entries(h.masked).filter(([, m]) => maskLive(m, now)).map(([target, m]) => ({ target, until: m.until, by: m.by, ...(m.byId === id ? { mine: true } : {}) })),
+        scummed: Object.keys(h.scummed).map(Number),
     } : {};
+    // v3.28 루트 권한 연출과 DDoS 이벤트는 모두에게 보입니다.
+    const root = h.root && h.root.until > now ? { root: { by: h.root.by, until: h.root.until } } : {}, ddos = h.ddos && h.ddos.until > now ? { ddos: { kind: h.ddos.kind, by: h.ddos.by, until: h.ddos.until } } : {};
     // v3.27 다른 해커가 나에게 건 견제(역추적·과부하). 틱 계산과 침투 입장 한도가 이 값을 봅니다.
     const r = h.rival[id], rival = { ...(r?.day === dayKey(now) && r.trace ? { traced: { day: r.day, n: r.trace } } : {}), ...((r?.overloadUntil || 0) > now ? { overloadUntil: r!.overloadUntil } : {}) };
-    if (broadcast || crackedUntil || isHacker(s)) s.hackFeed = { ...(broadcast ? { broadcast } : {}), ...(crackedUntil ? { crackedUntil } : {}), ...hacker, ...rival };
+    if (broadcast || crackedUntil || isHacker(s) || root.root || ddos.ddos) s.hackFeed = { ...(broadcast ? { broadcast } : {}), ...(crackedUntil ? { crackedUntil } : {}), ...hacker, ...rival, ...root, ...ddos };
     else delete s.hackFeed;
 }
 
@@ -184,11 +199,59 @@ export async function applyPendingHack(s: State, id: string, now: number) {
         addLog(s, `서버 다운 · ${placeName(k, place)} · ${pending.minutes}분 동안 새 입장 불가`, 'reward');
     }
     else if (pending.kind === 'sniffClaim') {
-        const players = await database.countActivePlayers(Number(pending.value), id), exp = Math.min(HACKER.sniff.cap(n), players * HACKER.sniff.perPlayer(n)), bits = Math.min(HACKER.sniff.bitsCap(n), players * HACKER.sniff.bitsPerPlayer(n));
+        // v3.28 봇넷 중에 시작한 스니핑은 ×2(상한도 ×2). 배수는 pending.bits에 실려 옵니다.
+        const mult = pending.bits || 1, players = await database.countActivePlayers(Number(pending.value), id), exp = Math.min(HACKER.sniff.cap(n) * mult, players * HACKER.sniff.perPlayer(n) * mult), bits = Math.min(HACKER.sniff.bitsCap(n) * mult, players * HACKER.sniff.bitsPerPlayer(n) * mult);
         hk.sniff = null;
         gainHacker(s, bits, exp);
-        addLog(s, `패킷 스니핑 정산 · 활동한 모험가 ${players}명 · 권한 경험치 +${exp} · 비트 +${bits}`, 'reward');
+        addLog(s, `패킷 스니핑 정산 · 활동한 모험가 ${players}명 · 권한 경험치 +${exp} · 비트 +${bits}${mult > 1 ? ' (봇넷 ×2)' : ''}`, 'reward');
         write = false;
+    }
+    else if (pending.kind === 'intercept') {
+        // v3.28 해킹 VI: 떠 있는 보스의 세대를 적어 둡니다. 월드보스 표는 해킹할 때만 한 번 읽습니다.
+        const r = (await database.listAltarRaids()).find(x => x.id === pending.value), raid = raidById(pending.value);
+        if (!raid || !raidAlive(r, now)) throw Error('그 월드보스는 지금 나타나 있지 않습니다.');
+        hk.intercept = { raid: raid.id, gen: r!.gen, n };
+        addLog(s, `패킷 가로채기 · ${raid.name} 격파 보상의 ${Math.round(HACKER.intercept.share(n) * 100)}%를 노립니다. 쓰러진 뒤 정산하세요.`, 'system');
+        write = false;
+    }
+    else if (pending.kind === 'interceptClaim') {
+        const ic = hk.intercept!, raid = raidById(ic.raid), r = (await database.listAltarRaids()).find(x => x.id === ic.raid);
+        if (r && r.gen === ic.gen && raidAlive(r, now)) throw Error(`${raid?.name || '월드보스'}이(가) 아직 쓰러지지 않았습니다.`);
+        hk.intercept = null;
+        if (raid && r && r.gen === ic.gen && r.state === 'slain') {
+            const bits = Math.max(1, Math.floor(HACKER.intercept.value(raid.reward) * HACKER.intercept.share(ic.n)));
+            gainHacker(s, bits, 0);
+            addLog(s, `패킷 가로채기 정산 · ${raid.name} 격파 보상에서 비트 +${bits}`, 'reward');
+        }
+        else addLog(s, `패킷 가로채기 실패 · ${raid?.name || '월드보스'}이(가) 쓰러지지 않고 떠났습니다.`, 'system');
+        write = false;
+    }
+    else if (pending.kind === 'savescum') {
+        // v3.28 해킹 VII: 체력은 한 문장 UPDATE로 1 ~ 최대 체력 안에서만 바꿉니다(쓰러뜨리지 않음). 보스 한 마리당 서버 전체 1회.
+        const [raidId, mode] = pending.value.split('|'), raid = raidById(raidId), r = (await database.listAltarRaids()).find(x => x.id === raidId);
+        if (!raid || !r || !raidAlive(r, now)) throw Error('그 월드보스는 지금 나타나 있지 않습니다.');
+        if (h.scummed[String(r.gen)]) throw Error(`${raid.name}은(는) 이미 세이브 스캠당했습니다(보스당 1회).`);
+        const rewind = mode === 'rewind', delta = rewind ? Math.floor((r.hp_max - r.hp) * HACKER.savescum.rewind(n)) : -Math.floor(r.hp * HACKER.savescum.forward(n));
+        if (!delta) throw Error(rewind ? '되감을 체력이 없습니다(아직 깎인 체력이 없음).' : '빨리감을 체력이 없습니다.');
+        const hp = await database.shiftAltarRaid(raidId, r.gen, delta);
+        if (hp === null) throw Error('그 월드보스는 지금 나타나 있지 않습니다.');
+        h.scummed[String(r.gen)] = now;
+        invalidateAltar();
+        const text = `세이브 스캠 · ${raid.name} 체력 ${rewind ? '되감기' : '빨리감기'} ${rewind ? '+' : '−'}${Math.abs(hp - r.hp).toLocaleString()}`;
+        addLog(s, text, 'reward');
+        await hackNotice(`[해커 ${by}] ${text}`, now);
+    }
+    else if (pending.kind === 'ddos') {
+        // v3.28 해킹 IX: 서버 이벤트 하나를 강제로 엽니다(서버에 하나). 30초 캐시로 모든 인스턴스에 퍼집니다.
+        if (h.ddos && h.ddos.until > now) throw Error(`다른 DDoS 이벤트가 ${Math.ceil((h.ddos.until - now) / 60000)}분 남았습니다.`);
+        h.ddos = { kind: pending.value, rate: HACKER.ddos.rate, from: now, until: now + pending.minutes * 60_000, by, byId: id };
+        const label = { exp: '경험치', gold: '골드', drop: '장비 드롭' }[pending.value] || pending.value;
+        addLog(s, `DDoS · ${label} ×${HACKER.ddos.rate} 이벤트를 ${pending.minutes / 60}시간 동안 열었습니다.`, 'reward');
+        await hackNotice(`[해커 ${by}] DDoS · 서버 이벤트 ${label} ×${HACKER.ddos.rate}이(가) ${pending.minutes / 60}시간 동안 열렸습니다.`, now);
+    }
+    else if (pending.kind === 'root') {
+        h.root = { by, byId: id, until: now + pending.minutes * 60_000 };
+        await hackNotice(`⚠ ROOT ACCESS · ${josa(`해커 ${by}`, '이가')} 서버의 루트 권한을 얻었습니다.`, now);
     }
     else if (pending.kind === 'backdoor') {
         const gauge = pending.value as AltarGaugeId, points = Math.max(1, Math.floor(gaugeCost(gauge, 0) * HACKER.backdoor.share(n)));
@@ -209,6 +272,11 @@ export async function applyPendingHack(s: State, id: string, now: number) {
             if (i < 0) throw Error('되돌릴 서버 다운이 없습니다.');
             if (h.down[i].byId === id) throw Error('내 해킹은 되돌릴 수 없습니다.');
             h.down.splice(i, 1); bounty = HACK_BITS.down; label = `서버 다운(${placeName(k, place)})`;
+        }
+        else if (kind === 'ddos') {
+            if (!h.ddos || h.ddos.until <= now) throw Error('되돌릴 DDoS 이벤트가 없습니다.');
+            if (h.ddos.byId === id) throw Error('내 해킹은 되돌릴 수 없습니다.');
+            delete h.ddos; bounty = HACK_BITS.ddos; label = 'DDoS 이벤트';
         }
         else if (kind === 'mask') {
             const target = rest.join(':'), m = h.masked[target];
@@ -235,6 +303,10 @@ export async function applyPendingHack(s: State, id: string, now: number) {
     delete hk.pending;
 }
 
+/** v3.28 해킹 공지(세이브 스캠 · DDoS · 루트 권한)를 전체 채팅에 빨간 줄로 남깁니다(실패해도 해킹은 그대로). */
+async function hackNotice(text: string, now: number) {
+    try { await db().postChat({ channel: 'global', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 채팅은 부가 기능 */ }
+}
 /** v3.26 해커 계열 전직을 전체 채팅에 알립니다(이름은 밝히지 않음). 채팅 화면은 account_id 'system-hacker'를 빨간 줄로 그립니다. */
 export async function announceHacker(job: string, now: number) {
     const text = `누군가가 ${job === 'whiteHacker' ? '화이트 해커' : '해커'}로 전직했습니다.`;
@@ -249,7 +321,7 @@ export async function clearBroadcast(now: number) {
 /** v3.25 운영 페이지: 이벤트 변조·서버 다운·패치를 모두 지웁니다. */
 export async function clearHackEffects(now: number) {
     const h = parse(await db().getSetting(KEY));
-    h.tamper = {}; h.down = []; h.patched = {};
+    h.tamper = {}; h.down = []; h.patched = {}; delete h.ddos;
     await writeHacks(h, now);
 }
 

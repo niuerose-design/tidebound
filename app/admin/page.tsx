@@ -63,7 +63,7 @@ const lifeLine = (p: AdminPlayer) => [p.lastRebirthAt ? `마지막 환생 ${new 
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
     const [broadcast, setBroadcast] = useState<{ text: string; by: string; until: number } | null>(null);
-    const [hackFx, setHackFx] = useState<{ tamper: number; down: number; patched: number } | null>(null);
+    const [hackFx, setHackFx] = useState<{ tamper: number; down: number; patched: number; ddos?: number } | null>(null);
     const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [doors, setDoors] = useState<DoorList | null>(null), [stats, setStats] = useState<Stats | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' });
     const [spOpen, setSpOpen] = useState<string | null>(null);
@@ -121,7 +121,7 @@ export default function AdminPage() {
     const removeHackEffects = async () => {
         if (!confirm('이벤트 변조·서버 다운·패치를 모두 지울까요?')) return;
         const d = await call({ action: 'clearHackEffects' });
-        if (d) { setHackFx({ tamper: 0, down: 0, patched: 0 }); setDone('해킹 효과를 모두 지웠습니다. 모든 서버에 반영되기까지 최대 30초 걸립니다.'); }
+        if (d) { setHackFx({ tamper: 0, down: 0, patched: 0, ddos: 0 }); setDone('해킹 효과를 모두 지웠습니다. 모든 서버에 반영되기까지 최대 30초 걸립니다.'); }
     };
     /** v3.18 해커의 방송 탈취 지우기. */
     const removeBroadcast = async () => {
@@ -250,7 +250,7 @@ export default function AdminPage() {
         </section>}
         {tab === 'closures' && closures && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
             <div className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13 }}><b>해커 방송</b> · {broadcast ? <>[해커 {broadcast.by}] {broadcast.text} <small style={{ color: '#9bb3b0' }}>· {new Date(broadcast.until).toLocaleTimeString()}까지</small></> : <span style={{ color: '#9bb3b0' }}>없음</span>}</span>{broadcast && <button className="secondary" disabled={busy} onClick={removeBroadcast}>방송 지우기</button>}</div>
-            <div className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13 }}><b>해킹 효과</b> · {hackFx ? `이벤트 변조 ${hackFx.tamper} · 서버 다운 ${hackFx.down} · 패치 ${hackFx.patched}` : '-'}</span>{hackFx && hackFx.tamper + hackFx.down + hackFx.patched > 0 && <button className="secondary" disabled={busy} onClick={removeHackEffects}>모두 지우기</button>}</div>
+            <div className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13 }}><b>해킹 효과</b> · {hackFx ? `이벤트 변조 ${hackFx.tamper} · 서버 다운 ${hackFx.down} · 패치 ${hackFx.patched} · DDoS ${hackFx.ddos || 0}` : '-'}</span>{hackFx && hackFx.tamper + hackFx.down + hackFx.patched + (hackFx.ddos || 0) > 0 && <button className="secondary" disabled={busy} onClick={removeHackEffects}>모두 지우기</button>}</div>
             {closureList('dungeons', '던전')}{closureList('stages', '사냥터')}</section>}
         {tab === 'doors' && doors && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
             <div className="panel" style={{ padding: 12, fontSize: 13 }}>운영자가 연 문: <b>{doors.doors.filter(d => d.open).map(d => d.name).join(', ') || '없음(모두 조건대로)'}</b></div>

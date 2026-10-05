@@ -123,6 +123,8 @@ export interface Storage {
     summonAltarRaid(raidId: string, hpMax: number, until: number, now: number, respawnMs: number): Promise<number>;
     /** 그 보스의 gen 세대가 살아 있을 때만 피해를 빼고 남은 체력을 돌려줍니다(0 이하는 0). 아니면 null. */
     hitAltarRaid(raidId: string, gen: number, dealt: number): Promise<number | null>;
+    /** v3.28 해킹 VII 세이브 스캠: 살아 있는 gen 세대 보스의 체력에 delta를 더합니다(1 ~ 최대 체력, 쓰러뜨리지 않음). 바꾼 뒤 체력, 아니면 null. */
+    shiftAltarRaid(raidId: string, gen: number, delta: number): Promise<number | null>;
     /** 체력이 0이 된 gen 세대 보스를 격파 처리하고 마지막 일격 모험가 id를 적습니다. 먼저 온 한 명만 true. */
     slayAltarRaid(raidId: string, gen: number, id: string, name: string, now: number): Promise<boolean>;
     /** 떠나는 시각이 지난 그 보스를 보냅니다(gone). 바꿨으면 true. */
@@ -289,6 +291,7 @@ function neonStorage(url: string): Storage {
             return Number(rows[0]?.gen || 0);
         },
         async hitAltarRaid(raidId, gen, dealt) { const { rows } = await q<{ hp: string }>("UPDATE altar_raids SET hp=GREATEST(0, hp-$3) WHERE id=$1 AND gen=$2 AND state='alive' AND hp>0 RETURNING hp", [raidId, gen, Math.max(0, Math.floor(dealt))]); return rows[0] ? Number(rows[0].hp) : null; },
+        async shiftAltarRaid(raidId, gen, delta) { const { rows } = await q<{ hp: string }>("UPDATE altar_raids SET hp=LEAST(hp_max, GREATEST(1, hp+$3)) WHERE id=$1 AND gen=$2 AND state='alive' AND hp>0 RETURNING hp", [raidId, gen, Math.trunc(delta)]); return rows[0] ? Number(rows[0].hp) : null; },
         async slayAltarRaid(raidId, gen, id, name, now) { void name; const r = await q("UPDATE altar_raids SET state='slain', slayer=$3, slain_at=$4 WHERE id=$1 AND gen=$2 AND state='alive' AND hp<=0", [raidId, gen, id, now]); return r.rowCount === 1; },
         async expireAltarRaid(raidId, now) { const r = await q("UPDATE altar_raids SET state='gone' WHERE id=$1 AND state='alive' AND until<$2", [raidId, now]); return r.rowCount === 1; },
         async bumpRaidHit(gen, playerId, name, dealt, now) { await q('INSERT INTO altar_raid_hits (id,gen,player_id,name,dealt,hits,updated_at) VALUES ($1,$2,$3,$4,$5,1,$6) ON CONFLICT (id) DO UPDATE SET dealt=altar_raid_hits.dealt+EXCLUDED.dealt, hits=altar_raid_hits.hits+1, name=EXCLUDED.name, updated_at=EXCLUDED.updated_at', [`${gen}:${playerId}`, gen, playerId, name, Math.max(0, Math.floor(dealt)), now]); },
@@ -423,6 +426,7 @@ function fileStorage(): Storage {
         listAltarRaids: () => tx(db => Object.values(fileRaids(db)).map(r => ({ ...r }))),
         summonAltarRaid: (raidId, hpMax, until, now, respawnMs) => tx(db => { const raids = fileRaids(db), r = raids[raidId]; if (r && ((r.state === 'alive' && r.until >= now) || (r.state === 'slain' && r.slain_at > now - respawnMs))) return 0; const a = db.altar = { ...ALTAR_EMPTY, ...db.altar }; a.raid_gen += 1; raids[raidId] = { id: raidId, gen: a.raid_gen, state: 'alive', hp: hpMax, hp_max: hpMax, until, slayer: '', slain_at: 0 }; return a.raid_gen; }),
         hitAltarRaid: (raidId, gen, dealt) => tx(db => { const r = fileRaids(db)[raidId]; if (!r || r.gen !== gen || r.state !== 'alive' || r.hp <= 0) return null; r.hp = Math.max(0, r.hp - Math.max(0, Math.floor(dealt))); return r.hp; }),
+        shiftAltarRaid: (raidId, gen, delta) => tx(db => { const r = fileRaids(db)[raidId]; if (!r || r.gen !== gen || r.state !== 'alive' || r.hp <= 0) return null; r.hp = Math.min(r.hp_max, Math.max(1, r.hp + Math.trunc(delta))); return r.hp; }),
         slayAltarRaid: (raidId, gen, id, name, now) => tx(db => { void name; const r = fileRaids(db)[raidId]; if (!r || r.gen !== gen || r.state !== 'alive' || r.hp > 0) return false; Object.assign(r, { state: 'slain', slayer: id, slain_at: now }); return true; }),
         expireAltarRaid: (raidId, now) => tx(db => { const r = fileRaids(db)[raidId]; if (!r || r.state !== 'alive' || r.until >= now) return false; r.state = 'gone'; return true; }),
         bumpRaidHit: (gen, playerId, name, dealt, now) => tx(db => { const key = `${gen}:${playerId}`, old = (db.altarRaidHits ??= {})[key]; db.altarRaidHits[key] = { id: key, gen, player_id: playerId, name, dealt: (old?.dealt || 0) + Math.max(0, Math.floor(dealt)), hits: (old?.hits || 0) + 1, updated_at: now }; }),

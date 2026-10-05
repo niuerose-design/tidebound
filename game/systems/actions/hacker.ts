@@ -245,10 +245,10 @@ export const hackerActions: ActionHandlers = {
             return;
         }
         if (id === 'restore') {
-            // 값: broadcast | down:stage:<id> | down:dungeon:<id> | tamper:<이벤트id>
+            // 값: broadcast | down:stage:<id> | down:dungeon:<id> | tamper:<이벤트id> | mask:<대상> | v3.28 ddos
             if (!white) throw Error('해킹 되돌리기는 화이트 해커만 할 수 있습니다.');
             const kind = value.split(':')[0];
-            if (!['broadcast', 'down', 'tamper', 'mask'].includes(kind)) throw Error('되돌릴 해킹을 고르세요.');
+            if (!['broadcast', 'down', 'tamper', 'mask', 'ddos'].includes(kind)) throw Error('되돌릴 해킹을 고르세요.');
             need(Math.max(1, HACK_TIER[kind] || 1));
             daily('restore', HACKER.white.restore.perDay(n), '해킹 되돌리기'); pay(HACKER.white.restore.bits);
             h.pending = { kind: 'restore', value, minutes: 0 };

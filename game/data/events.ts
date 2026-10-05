@@ -44,7 +44,10 @@ export function tamperedEvent(e: ServerEvent): ServerEvent {
     if (!t) return e;
     return { ...e, until: new Date(Date.parse(e.until) + t.minutes * 60_000).toISOString(), exp: tweak(e.exp, t.rate), gold: tweak(e.gold, t.rate), drop: tweak(e.drop, t.rate), mastery: tweak(e.mastery, t.rate) };
 }
-export const currentEvents = (withAltar = true) => [...SERVER_EVENTS.filter(e => !runtime.disabled.includes(e.id)), ...runtime.extra].map(tamperedEvent).concat(withAltar ? altar : []);
+/** v3.28 해킹 IX DDoS로 열린 이벤트(id는 hack-로 시작). 서버가 해킹 설정(hacks)을 읽어 채웁니다. 변조 대상이 아닙니다. */
+let hacked: ServerEvent[] = [];
+export function setHackEvents(list: ServerEvent[]) { hacked = list; }
+export const currentEvents = (withAltar = true) => [...SERVER_EVENTS.filter(e => !runtime.disabled.includes(e.id)), ...runtime.extra].map(tamperedEvent).concat(hacked, withAltar ? altar : []);
 export function activeEvent(now: number, events: ServerEvent[] = currentEvents()): ActiveEvent | null {
     const live = events.filter(e => Date.parse(e.from) <= now && now <= Date.parse(e.until));
     if (!live.length) return null;
