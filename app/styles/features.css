@@ -408,3 +408,8 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .altar-basis { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 4px 0 10px; }
 .altar-basis > span { font-size: 12px; color: var(--muted, #9fb7b0); }
 .altar-basis small { flex-basis: 100%; font-size: 11px; color: var(--muted, #9fb7b0); }
+
+/* v3.16 제단 목표 단계(점핑) */
+.altar-jump { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 4px 0 8px; }
+.altar-jump > span { font-size: 12px; color: var(--muted, #9fb7b0); }
+.altar-jump small { flex-basis: 100%; font-size: 11px; color: var(--muted, #9fb7b0); }

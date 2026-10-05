@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format } from './shared';
-import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, RAID, RAIDS, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, type AltarGaugeId } from '@/game/data/altar';
+import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
@@ -44,12 +44,16 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
     const [gaugeTab, setGaugeTab] = useState<'bless' | 'summon'>('bless');
     // v3.16 슬라이더·비율 버튼 기준: 고른 게이지를 채우는 데 필요한 양 / 내 보유량(수천억 골드를 한 번에 바칠 때).
     const [basis, setBasis] = useState<'need' | 'have'>('need');
-    const pickGauge = (id: AltarGaugeId) => { setGauge(id); setGaugeTab(SUMMON_GAUGE_IDS.includes(id) ? 'summon' : 'bless'); };
+    // v3.16 단계 점핑: 축복 게이지에서 목표 단계를 고르면 그 단계까지의 총 비용이 '채우는 데 필요한 양'이 됩니다(서버는 기여도가 닿는 만큼 한 번에 올림). 0 = 다음 단계만.
+    const [jump, setJump] = useState(0);
+    const pickGauge = (id: AltarGaugeId) => { setGauge(id); setJump(0); setGaugeTab(SUMMON_GAUGE_IDS.includes(id) ? 'summon' : 'bless'); };
     useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
     useEffect(() => { const t = setInterval(() => setNow(stamp), 30_000); return () => clearInterval(t); }, []);
     const offer = { gold: num(gold), pearls: num(pearls), essence: num(essence) }, points = offeringPoints(offer);
     // v27.51 고른 게이지가 가득 찰 때까지 남은 기여도. 다른 칸에 넣은 양을 빼고 각 재화로 환산한 만큼이 슬라이더의 100%입니다.
-    const target = info?.gauges.find(g => g.id === gauge), need = target ? Math.max(0, target.cost - target.points) : Infinity;
+    const target = info?.gauges.find(g => g.id === gauge), isBless = !!target && BLESSINGS.some(b => b.id === gauge), live = target && target.until > now ? target.level : 0;
+    const jumpTo = isBless && jump > live + 1 ? Math.min(jump, BLESSING_MAX_LEVEL) : 0, totalCost = target ? (jumpTo ? blessingJumpCost(gauge as BlessingId, live, jumpTo) : target.cost) : 0;
+    const need = target ? Math.max(0, totalCost - target.points) : Infinity;
     const rest = (except: keyof typeof offer) => need === Infinity || need <= 0 ? Infinity : Math.max(0, need - offeringPoints({ ...offer, [except]: 0 }));
     const caps = { gold: rest('gold') * ALTAR.goldPerPoint, pearls: Math.ceil(rest('pearls') / ALTAR.pearlPoints), essence: Math.ceil(rest('essence') / ALTAR.essencePoints) };
     const short = offer.gold > s.gold || offer.pearls > s.pearls || offer.essence > (s.essence || 0);
@@ -80,6 +84,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 <Tabs value={pane} onValueChange={v => setPane(v as typeof pane)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="offer"><Coins size={14}/> 공물 바치기</TabsTrigger><TabsTrigger value="board"><Trophy size={14}/> 이번 주 기여 순위</TabsTrigger></TabsList></Tabs>
                 {pane === 'offer' ? <>
                 <div className="section-title"><h2>→ {info.gauges.find(g => g.id === gauge)?.name}</h2><span className="micro">내 기여도 {format(info.me.points)}{info.me.rank ? ` · ${info.me.rank}위` : ''}</span></div>
+                {isBless && <div className="altar-jump" role="tablist" aria-label="목표 단계"><span>목표 단계</span>{Array.from({ length: BLESSING_MAX_LEVEL }, (_, i) => i + 1).map(lv => { const reached = lv <= live, nextOne = lv === live + 1, on = jumpTo ? lv === jumpTo : nextOne; return <button key={lv} type="button" role="tab" aria-selected={on} disabled={reached} className={on ? 'primary small' : 'secondary small'} title={reached ? '이미 도달' : `${lv}단계까지 총 기여도 ${format(blessingJumpCost(gauge as BlessingId, live, lv))}`} onClick={() => setJump(nextOne ? 0 : lv)}>{lv}단계{lv > BLESSING_HIGH_FROM ? ` · ${BLESSING_HIGH_MINUTES[lv - BLESSING_HIGH_FROM - 1] / 60}시간` : ''}</button>; })}<small>{jumpTo ? `${live ? `${live}단계에서 ` : ''}${jumpTo}단계까지 한 번에 · 총 기여도 ${format(totalCost)} (골드 ${format(totalCost * ALTAR.goldPerPoint)} 상당) · 지금 게이지 ${format(target!.points)} 포함` : `다음 단계(${live + 1}단계)만 · 더 높은 단계를 고르면 그 단계까지의 총 비용을 한 번에 바칩니다`}</small></div>}
                 <div className="altar-basis" role="tablist" aria-label="비율 기준"><span>비율 기준</span><button type="button" role="tab" aria-selected={basis === 'need'} className={basis === 'need' ? 'primary small' : 'secondary small'} onClick={() => setBasis('need')}>채우는 데 필요한 양</button><button type="button" role="tab" aria-selected={basis === 'have'} className={basis === 'have' ? 'primary small' : 'secondary small'} onClick={() => setBasis('have')}>내 보유량</button><small>{basis === 'need' ? '100% = 고른 게이지를 채우는 양(보유량 이하)' : '100% = 지금 가진 전부 · 남는 기여도는 다음 단계로 이어집니다'}</small></div>
                 <AmountRow icon={<Coins size={14}/>} label="골드" have={s.gold} cap={caps.gold} value={gold} setValue={setGold} unit={ALTAR.goldPerPoint} basis={basis}/>
                 <AmountRow icon={<Gem size={14}/>} label="세계석" have={s.pearls} cap={caps.pearls} value={pearls} setValue={setPearls} basis={basis}/>
