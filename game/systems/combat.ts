@@ -32,7 +32,7 @@ export type Fighter = {
     gold?: number;
     /** v24.2 사냥감 연구 대상 여부(보스·지정 몬스터). */
     prey?: boolean;
-    /** v3.4 몬스터(사냥터·던전·월드보스). 이 전투원이 거는 상태이상은 상대의 상태이상 저항에 막힐 수 있습니다. */
+    /** v3.5 몬스터(사냥터·던전·월드보스). 이 전투원이 거는 상태이상은 상대의 상태이상 저항에 막힐 수 있습니다. */
     foe?: boolean;
     /** v25.2 기본 공격이 마법 피해(마력 생물). 마법 공격 수치로 치고 상대 마법 방어로 막습니다. */
     magicBasic?: boolean;
@@ -95,7 +95,7 @@ function alreadyAfflicted(b: Fighter, sk: { effect?: string }) {
     return (b.effects?.[key] || 0) > 0;
 }
 const isImmune = (b: Fighter, key: ImmuneStatus) => (b.effects?.immune?.[key] || 0) > 0;
-/** v3.4 상태이상 저항이 막는 상태이상과 표시 이름. */
+/** v3.5 상태이상 저항이 막는 상태이상과 표시 이름. */
 const RESISTABLE = new Set(['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow']);
 const RESIST_LABELS: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속' };
 function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number) {
@@ -435,7 +435,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
     if (!statusOnly || !landed) ev.hits.push(landed ? hitRecord('main', actual, damage, crit, superCrit) : { kind: 'main', value: 0, critical: false, miss: true });
     if (healOnly) notes.push(`회복 ${healed}`);
-    // v3.4 상태이상 저항: 몬스터가 거는 해로운 상태이상을 대상의 statusResist 확률로 무효화합니다(저항이 0이면 난수를 쓰지 않음).
+    // v3.5 상태이상 저항: 몬스터가 거는 해로운 상태이상을 대상의 statusResist 확률로 무효화합니다(저항이 0이면 난수를 쓰지 않음).
     const harmful = chosen?.effect && RESISTABLE.has(chosen.effect) ? chosen.effect : undefined;
     const resisted = !!(landed && harmful && a.foe && sb.statusResist > 0 && !isImmune(b, harmful as ImmuneStatus) && rng() < sb.statusResist);
     if (resisted) { notes.push(`${RESIST_LABELS[harmful!]} 저항`); ev.resisted = harmful; }

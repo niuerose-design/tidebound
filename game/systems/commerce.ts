@@ -250,7 +250,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         return `${r.name} 수령 · 환생 ${r.rebirth}회 달성 보상`;
     }
     if (a.type === 'levelUp') {
-        // v3.4 장비 레벨 올리기(+10, 내 레벨까지). 위력이 오르고 별은 0으로 돌아갑니다.
+        // v3.5 장비 레벨 올리기(+10, 내 레벨까지). 위력이 오르고 별은 0으로 돌아갑니다.
         const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');

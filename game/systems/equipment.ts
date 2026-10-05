@@ -7,7 +7,7 @@ import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
 /** 장신구: 위력 1당 치명타 +0.2%p. */
 /** v27.36 장신구 치명타: 레벨·위력과 무관한 등급 고정값 × (1 + 강화 × CHARM_CRIT_ENHANCE). 예전 위력 × 0.2%는 Lv.60 전설 +10 하나로 100%를 넘었습니다. */
 const CHARM_CRIT = [.03, .05, .07, .10, .12, .14, .16], CHARM_CRIT_ENHANCE = .05;
-/** v3.4 망토 회피: 등급 고정값 × (1 + 별 × CAPE_EVASION_ENHANCE). 기민 외 회피 60%p 상한과 50% 이후 점감이 그대로 적용됩니다(태초 22성 ≈ +28%p). 속도는 주지 않습니다. */
+/** v3.5 망토 회피: 등급 고정값 × (1 + 별 × CAPE_EVASION_ENHANCE). 기민 외 회피 60%p 상한과 50% 이후 점감이 그대로 적용됩니다(태초 22성 ≈ +28%p). 속도는 주지 않습니다. */
 const CAPE_EVASION = [.04, .06, .08, .11, .13, .15, .17], CAPE_EVASION_ENHANCE = .03;
 export const capeEvasion = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CAPE_EVASION[item.rarity] ?? CAPE_EVASION[0]) * (1 + (item.enhance || 0) * CAPE_EVASION_ENHANCE) * 10000) / 10000;
 const charmCrit = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CHARM_CRIT[item.rarity] ?? CHARM_CRIT[0]) * (1 + (item.enhance || 0) * CHARM_CRIT_ENHANCE) * 10000) / 10000;
@@ -34,7 +34,7 @@ export function itemStats(item: Item): Partial<Stats> {
     if (item.affix)
         result[item.affix.stat] = (result[item.affix.stat] || 0) + scaled(item.affix.stat, item.affix.value);
     for (const affix of item.affixes || []) {
-        // v3.4 상태이상 저항만 별 보정(별당 +3%)을 받고 장비 합계 50%에서 막힙니다.
+        // v3.5 상태이상 저항만 별 보정(별당 +3%)을 받고 장비 합계 50%에서 막힙니다.
         const value = affix.stat === 'statusResist' ? Math.min(GEAR_CAPS.statusResist!, affix.value * (1 + (item.enhance || 0) * STATUS_RESIST_STAR)) : scaled(affix.stat, affix.value);
         result[affix.stat] = (result[affix.stat] || 0) + value;
         if (affix.stat2 && affix.value2) result[affix.stat2] = (result[affix.stat2] || 0) + affix.value2;
@@ -43,7 +43,7 @@ export function itemStats(item: Item): Partial<Stats> {
 }
 /** v25.7 전설(등급 3) 이상은 +12, 그 아래는 +10까지 강화합니다. */
 /** v27.93 스타포스 상한: 전설 이상 22성, 영웅 이하 15성. */
-/** v3.4 유물은 레벨이 별 상한을 정합니다: 12 + 레벨 ÷ 10(Lv.1 12성 · Lv.100 22성). 레벨 1인 유물에 22성을 싸게 박아 두는 것을 막습니다. */
+/** v3.5 유물은 레벨이 별 상한을 정합니다: 12 + 레벨 ÷ 10(Lv.1 12성 · Lv.100 22성). 레벨 1인 유물에 22성을 싸게 박아 두는 것을 막습니다. */
 export const enhanceMaxFor = (item: Pick<Item, 'rarity' | 'relic' | 'level'>) => item.relic ? Math.min(starMax(item.rarity), RELIC_GROWTH.starBase + Math.floor((item.level || 1) / 10)) : starMax(item.rarity);
 /** v25.7 판매가: 그 레벨 몬스터 골드 × 등급별 마리 수 + 강화에 쓴 골드의 30%. 분해(정수)와 판매(골드)가 실제 선택이 되도록 분해만 유리하던 식(위력×3)을 바꿨습니다. */
 const SALE_FISH = [2, 6, 18, 50, 120, 300, 700], SALE_LEVEL_CAP = 65;
@@ -73,7 +73,7 @@ export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebir
         if (item && base) item.power = relicPower(base.power, s.rebirths || 0, item.level || 1);
     }
 }
-/** v3.4 레벨 올리기 목표 레벨: 지금 레벨 + step, 내 레벨까지. 더 올릴 수 없으면 null. */
+/** v3.5 레벨 올리기 목표 레벨: 지금 레벨 + step, 내 레벨까지. 더 올릴 수 없으면 null. */
 export const levelUpTarget = (item: Pick<Item, 'level'>, s: Pick<State, 'level'>) => { const next = (item.level || 1) + GEAR_LEVEL_UP.step; return next <= s.level ? next : null; };
 export const levelUpCost = (item: Item, s: Pick<State, 'permanent' | 'level'>) => { const next = levelUpTarget(item, s) ?? (item.level || 1) + GEAR_LEVEL_UP.step; return smith(Math.floor((250 + item.power * 25) * priceScale(next) * GEAR_LEVEL_UP.costMultiplier), s); };
 /** 레벨 올리기 적용: 위력·고정 수치 옵션은 (새 레벨 + 2) ÷ (옛 레벨 + 2)배, 유물 위력은 relicPower로 다시 계산, 별·하락 횟수는 0. */

@@ -1163,7 +1163,7 @@ test('v27.95 cape slot: evasion/hp base, steadfast affix only on capes with leve
     const E = await L.load('systems/engine'); const t = E.newState(0); assert.equal(t.equipment.cape, null, 'new saves start with an empty cape slot');
 });
 
-test('v3.4 gear level-up: +10 up to player level, power/flat affixes scale, stars reset, relic star cap and power follow level', async () => {
+test('v3.5 gear level-up: +10 up to player level, power/flat affixes scale, stars reset, relic star cap and power follow level', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { levelUpTarget, levelUpCost, enhanceMaxFor, enhanceCost } = await L.load('systems/equipment'), Eco = await L.load('data/economy');
     const s = newState(0); s.level = 25; s.gold = 1e9;

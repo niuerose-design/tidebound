@@ -168,7 +168,7 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     </div>;
 }
 
-/** v3.4 레벨 올리기: +10씩 내 레벨까지. 위력·고정 수치 옵션이 레벨 비례로 오르고 별은 0으로 돌아갑니다. 유물은 레벨이 별 상한(12 + 레벨 ÷ 10)을 정합니다. */
+/** v3.5 레벨 올리기: +10씩 내 레벨까지. 위력·고정 수치 옵션이 레벨 비례로 오르고 별은 0으로 돌아갑니다. 유물은 레벨이 별 상한(12 + 레벨 ÷ 10)을 정합니다. */
 function GearLevelUp({ s, send, busy, item }: PanelProps & { item: Item }) {
     const next = levelUpTarget(item, s), cost = levelUpCost(item, s), star = item.enhance || 0;
     return <div className="relic-imprint">

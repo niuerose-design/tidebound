@@ -24,9 +24,9 @@ export type AffixDef = {
     minRarity?: number;
     /** v25.8 이 출처(던전 id)에서 떨어진 장비에만 붙는 옵션. */
     onlyOrigin?: string;
-    /** v3.4 이 부위에만 붙는 옵션. */
+    /** v3.5 이 부위에만 붙는 옵션. */
     onlySlot?: string;
-    /** v3.4 percent 수치에 (장비 레벨 ÷ 100)^levelPower를 곱합니다(저레벨 장비에서는 아주 낮게). */
+    /** v3.5 percent 수치에 (장비 레벨 ÷ 100)^levelPower를 곱합니다(저레벨 장비에서는 아주 낮게). */
     levelPower?: number;
     description: string;
 };
@@ -38,7 +38,7 @@ export const RULE_CAPS: Partial<Record<GearStat, number>> = {
     stunBonus: 1, controlBonus: 1, dotTurnsBonus: 2, poisonStackBonus: 3, arcaneRatioBonus: .3, followUpBonus: .3, healBonus: .5, executeBonus: .15,
 };
 
-/** v3.4 불굴(상태이상 저항) 기본값: Lv.100 태초(품질 1.6) 22성(×1.66) 평균 굴림에서 상한 50%에 닿는 값. */
+/** v3.5 불굴(상태이상 저항) 기본값: Lv.100 태초(품질 1.6) 22성(×1.66) 평균 굴림에서 상한 50%에 닿는 값. */
 export const STATUS_RESIST_BASE = .188, STATUS_RESIST_STAR = .03;
 export const AFFIX_POOL: AffixDef[] = [
     // 능력치 옵션
@@ -68,7 +68,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: .9, stat2: 'speed', base2: -4, description: '물리 방어가 크게 오르지만 느려집니다.' },
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .05, stat2: 'accuracy', base2: -.06, description: '치명타가 크게 오르지만 명중이 줄어듭니다.' },
     { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .035, stat2: 'hp', base2: -1.5, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 6%p).' },
-    // v3.4 망토 전용 옵션: 몬스터 상태이상 저항. 수치 = 18.8% × (레벨/100)² × 등급 품질 × 굴림, 착용 시 별당 +3%(다른 옵션과 달리 별 보정), 합계 최대 50%(Lv.100 태초 22성 ≈ 50%).
+    // v3.5 망토 전용 옵션: 몬스터 상태이상 저항. 수치 = 18.8% × (레벨/100)² × 등급 품질 × 굴림, 착용 시 별당 +3%(다른 옵션과 달리 별 보정), 합계 최대 50%(Lv.100 태초 22성 ≈ 50%).
     { id: 'steadfast', name: '불굴', stat: 'statusResist', kind: 'percent', base: STATUS_RESIST_BASE, onlySlot: 'cape', levelPower: 2, description: '망토 전용. 몬스터가 거는 기절·침묵·출혈·중독·화상·약화·감속을 이 확률로 무효화합니다. 별마다 +3%, 최대 50%.' },
     // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강합니다.
     { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 물리 공격이 크게 오릅니다.' },
@@ -124,7 +124,7 @@ export const rerollScaled = (base: number, rerolls = 0) => base * (100 + REROLL_
 /** v27.94 수치 재련: 옵션 종류는 그대로 두고 수치(0.6~1.4배 굴림)만 다시 굴립니다. 비용은 재설정 기본 비용의 절반(올림)이고 오르지 않습니다. */
 export const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity) / 2);
 const ROLL_MIN = .6, ROLL_SPAN = .8;
-/** v3.4 레벨 비례 옵션(불굴): (장비 레벨 ÷ 100)^levelPower, Lv.100 이상은 1. */
+/** v3.5 레벨 비례 옵션(불굴): (장비 레벨 ÷ 100)^levelPower, Lv.100 이상은 1. */
 const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
 
 function pickAffix(pool: AffixDef[], origin: string | undefined, rng: () => number) {
@@ -136,7 +136,7 @@ function pickAffix(pool: AffixDef[], origin: string | undefined, rng: () => numb
 }
 export function rollOption(def: AffixDef, power: number, rarity: number, rng: () => number, level = 1): ItemAffix {
     if (def.kind === 'rule') return { id: def.id, name: def.name, stat: def.stat, value: def.base, rule: true };
-    // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.4 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
+    // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
     const roll = (ROLL_MIN + rng() * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
     const round = (n: number) => def.kind === 'flat' ? Math.round(n) : Math.round(n * 10000) / 10000;
@@ -163,7 +163,7 @@ export function affixQuality(x: ItemAffix, power: number, rarity: number, level 
     const roll = x.value / (def.base * scale * rarityQuality(rarity) * levelScale(def, level));
     return Math.min(1, Math.max(0, (roll - ROLL_MIN) / ROLL_SPAN));
 }
-/** v3.4 레벨 올리기 뒤 옵션 수치 보정: 고정 수치는 위력 비례(ratio), 레벨 비례 옵션(불굴)은 레벨 보정 비율, 비율·규칙 옵션은 그대로. */
+/** v3.5 레벨 올리기 뒤 옵션 수치 보정: 고정 수치는 위력 비례(ratio), 레벨 비례 옵션(불굴)은 레벨 보정 비율, 비율·규칙 옵션은 그대로. */
 export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newLevel: number): ItemAffix {
     const def = affixDef(x.id);
     if (!def || x.rule || def.kind === 'rule') return x;

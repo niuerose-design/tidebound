@@ -10,13 +10,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
-import { lineage, skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason, limitBreakOf, limitBreakOwned, limitBreakNext } from '@/game/systems/progression';
+import { lineage, skillRefinementTargets, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason, limitBreakOf, limitBreakOwned, limitBreakNext, passiveGrowthBonus } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon } from './shared';
 import { hanjaReading } from '@/game/systems/skill-description';
 import { masteryConditionText } from '@/game/systems/mastery';
 import { recommendLoadout } from '@/game/systems/loadout';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { skillGrowthStages, skillEffectLines, skillBonusText, skillPercent, skillBrief } from '@/game/systems/skill-description';
+import { skillGrowthStages, skillEffectLines, skillBonusText, skillPercent, skillBrief, skillExtraNotes } from '@/game/systems/skill-description';
 
 import { ENEMY_SKILLS } from '@/game/data/encounters';
 
@@ -43,6 +43,11 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false
     const inheritanceText = !acquired ? unlockText : !sk.job ? '공용' : isInherited ? (mastery > 0 ? '숙련 계승' : 'SP 계승') : sk.job === s.job ? '현재 직업 전용' : '계승 필요';
     const hint = skillRankHint(sk, rank || 1, mastery, s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0);
     const effects = skillEffectLines(effective, level);
+    // v3.5 간단히 보기: 고정 효과 + 누적·환생 비례 수치(지금 기준)를 칩으로 합치고, 칩으로 못 담는 조건은 ‘기타’ 칸에 모읍니다.
+    const growthNow = sk.type === 'passive' ? passiveGrowthBonus(s, sk) : {}, growing = new Set(Object.keys(growthNow));
+    const passiveChips: Record<string, number> = { ...(effective.bonus || {}) as Record<string, number> };
+    for (const [key, n] of Object.entries(growthNow)) passiveChips[key] = (passiveChips[key] || 0) + n;
+    const extraNotes = [...skillExtraNotes(sk), ...(sk.type === 'passive' && !Object.keys(passiveChips).length && sk.desc && !skillExtraNotes(sk).length ? [sk.desc] : [])];
     const growth = skillGrowthStages(sk);
     const refinement = skillRefinementTargets(sk), refined = thresholdRank(practice, refinement);
     const lb = limitBreakOf(s, sk.id), lbOwned = limitBreakOwned(s, sk.id), lbNext = limitBreakNext(s, sk.id);
@@ -68,7 +73,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false
         {detailed && (sk.sourceEnemySkill && <div className="skill-origin">몬스터 원형: {ENEMY_SKILLS.find(x => x.id === sk.sourceEnemySkill)?.name}</div>)}
         {detailed && sk.masteryGain && <div className="skill-unlock-note"><b>대상 처치 시 숙련 ×{1 + masteryGainBonus(sk, level)}</b><span>{masteryConditionText(sk)}</span><small>현재 직업·장착 스킬에 적용 · 가장 높은 보너스 하나만 · 최대 ×10</small></div>}
         {detailed && <Meter value={Math.min(practice, nextMastery || milestones[max - 1])} max={nextMastery || milestones[max - 1]} label={level >= max ? '실전 숙련 · 최대 성장 완료' : `실전 숙련 · Lv.${level + 1}까지 ${Math.max(0, nextGrowth - practice).toLocaleString()} 남음 (또는 1 SP)`}/>}
-        {!detailed && <div className="skill-brief-stats"><span>{sk.type === 'active' ? '액티브' : '패시브'}</span><span className={cost < 0 ? 'ap-gain' : ''}>장착 AP {cost}{cost < 0 ? ` · 여유 +${-cost}` : ''}</span>{sk.type === 'active' && <><span>발동 {skillPercent(effective.chance)}</span><span>마나 {effective.manaCost ?? 0}</span></>}{sk.type === 'passive' && Object.entries(effective.bonus || {}).map(([key, n]) => <span className={n < 0 ? 'negative' : ''} key={key}>{skillBonusText(key, n)}</span>)}</div>}
+        {!detailed && <div className="skill-brief-stats"><span>{sk.type === 'active' ? '액티브' : '패시브'}</span><span className={cost < 0 ? 'ap-gain' : ''}>장착 AP {cost}{cost < 0 ? ` · 여유 +${-cost}` : ''}</span>{sk.type === 'active' && <><span>발동 {skillPercent(effective.chance)}</span><span>마나 {effective.manaCost ?? 0}</span></>}{sk.type === 'passive' && Object.entries(passiveChips).map(([key, n]) => <span className={`${n < 0 ? 'negative' : ''} ${growing.has(key) ? 'skill-chip-growing' : ''}`} key={key} title={growing.has(key) ? '누적·환생 비례 수치 포함(지금 기준)' : undefined}>{skillBonusText(key, n)}</span>)}{extraNotes.length > 0 && <span className="skill-chip-extra" title={extraNotes.join('\n')}><b>기타</b>{extraNotes.map(x => <small key={x}>{x}</small>)}</span>}</div>}
         {!detailed && <div className="skill-compact-growth"><span>{acquired ? `성장 Lv.${level} / ${max}` : unlockText}</span><span>{nextMastery ? `숙련 ${practice.toLocaleString()} / ${nextMastery.toLocaleString()}` : '숙련 완료'}</span></div>}
         {!detailed && acquired && <Meter value={Math.min(practice, nextMastery || milestones[max - 1])} max={nextMastery || milestones[max - 1]}/>}
         {detailed && <>
@@ -81,7 +86,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false
             {sk.job && acquired && !isInherited && <ConfirmButton label="계승 · 1 SP" description={`${sk.name}을 다른 직업에서도 사용할 수 있게 합니다. 성장 레벨과 숙련도는 변하지 않습니다. 숙련도 ${milestones[0].toLocaleString()}을 쌓으면 SP 없이도 계승됩니다.`} disabled={busy || !canInheritSkill(s, sk.id) || s.sp < 1} onConfirm={() => send({ type: 'inheritSkill', id: sk.id })}/>}
             {acquired && mastery - lb >= max && lbNext.stage <= PROGRESSION.limitBreak.max && <ConfirmButton label={`한계돌파 ${lbNext.stage}단계 · SP ${lbNext.sp}`} description={lbNext.ok ? `${sk.name} 성장 Lv.${level} → Lv.${level + 1}. 발동 +${Math.round((PROGRESSION.masteryChance + PROGRESSION.limitBreak.chance) * 1000) / 10}%p, 배율·패시브 한 단계 더${lbNext.stage >= PROGRESSION.limitBreak.max ? ', 장착 AP -1' : ''}. 환생해도 유지됩니다.` : `조건: ${lbNext.reason}`} disabled={busy || !lbNext.ok} onConfirm={() => send({ type: 'limitBreak', id: sk.id })}/>}
             {acquired && <ConfirmButton label={level >= max ? '최대 레벨' : '강화 · 1 SP'} description={`${sk.name} 성장 Lv.${level} → Lv.${level + 1}. ${hint} 숙련은 계속 쌓이며 SP와 효과가 중첩되지는 않습니다. 이 강화만으로 계승되지는 않습니다.`} disabled={busy || !canSpendSkill(s, sk.id) || s.sp < 1} onConfirm={() => send({ type: 'learn', id: sk.id })}/>}
-            <button className={equipped ? 'secondary' : 'primary'} disabled={busy || !usable || !equipAllowed} title={equipped && !equipAllowed ? 'AP를 지원하는 스킬입니다. 다른 기술을 먼저 해제하세요.' : undefined} onClick={() => send({ type: 'skill', id: sk.id })}>{equipLabel}</button>
+            <button className={`${equipped ? 'secondary' : 'primary'} ${equipLabel.length > 12 ? 'skill-action-wide' : ''}`} disabled={busy || !usable || !equipAllowed} title={equipped && !equipAllowed ? 'AP를 지원하는 스킬입니다. 다른 기술을 먼저 해제하세요.' : undefined} onClick={() => send({ type: 'skill', id: sk.id })}>{equipLabel}</button>
         </div>
         {acquired && lbOwned > lb && <p className="footnote limit-break-reason" role="note">한계돌파 {lbOwned}단계를 했지만 세계석 연구 ‘한계의 문’이 {lb}단계라 {lb}단계까지만 적용됩니다.</p>}
         {acquired && mastery - lb >= max && lbNext.stage <= PROGRESSION.limitBreak.max && !lbNext.ok && <p className="footnote limit-break-reason" role="note">한계돌파 {lbNext.stage}단계 조건: {lbNext.reason}. 장착 여부와 관계없이, 조건을 채우면 버튼이 켜집니다.</p>}
