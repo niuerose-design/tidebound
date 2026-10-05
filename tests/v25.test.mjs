@@ -1342,3 +1342,17 @@ test('v3.15 level projection: counts level-ups through xpNeeded, stops at the ca
     assert.ok(R.projectLevel(1, 0, 0, 1e18).capped); assert.equal(R.projectLevel(100, 0, 0, 0).level, 100);
     assert.equal(R.msToCap(99, 0, 0, B.xpNeeded(99, 0)), 3_600_000, 'one hour at exactly one level of exp per hour'); assert.equal(R.msToCap(50, 0, 0, 0), Infinity); assert.equal(R.msToCap(100, 0, 0, 100), 0);
 });
+
+test('v3.15 altar: offering to a world-boss gauge no longer throws (503) and logs the gauge name', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const A = await L.load('server/altar'), D = await L.load('data/altar');
+    const s = newState(0); s.gold = 1e6; const raid = D.RAIDS[0];
+    A.applyOffering(s, { gold: 100000, pearls: 0, essence: 0 }, 100, raid.id, false);
+    assert.ok(s.logs.at(-1).text.includes(D.gaugeName(raid.id)), s.logs.at(-1).text); assert.equal(s.gold, 1e6 - 100000);
+    A.applyOffering(s, { gold: 1000, pearls: 0, essence: 0 }, 1, 'god', false); assert.ok(s.logs.at(-1).text.includes('신 소환'));
+});
+test('v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-piece reward', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const { ACHIEVEMENTS } = await L.load('data/achievements');
+    const steps = ACHIEVEMENTS.filter(a => a.id.startsWith('onyx:')); assert.deepEqual(steps.map(a => a.target), [1, 2, 3, 4, 5, 6, 7]);
+    for (const a of steps) assert.ok((a.reward.sp || 0) + (a.reward.ap || 0) >= 1, `${a.id} grants SP or AP`);
+    const last = steps.at(-1); assert.ok(last.reward.sp >= 2 && last.reward.ap >= 2 && last.reward.bonus.attack >= .05, 'completion reward is strong');
+});

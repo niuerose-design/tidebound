@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { BookOpen, ChevronDown, Swords } from 'lucide-react';
 import { FishArt } from './art';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -62,6 +63,8 @@ export function Collection({ s, send, busy }: PanelProps) {
     const complete = FISH.filter(f => (s.book[f.id] || 0) >= bookComplete).length, regions = completedRegions(s), pendingBooks = pendingBookCount(s);
     // v26.8 물건도감: 표시 확률은 전체 장비 드롭 확률(행운·연구·이벤트 포함) 기준. 한 종류 더 등록했을 때의 증가분을 %p로 보여 줍니다.
     const registeredCount = Object.keys(s.itemBook).length, currentDrop = dropRate(s);
+    /** v3.15 물건 도감 등급별 보기: 전체 · 등급 · 칠흑. */
+    const [itemFilter, setItemFilter] = useState<'all' | 'onyx' | number>('all');
     const perEntryDrop = Math.max(0, dropRate({ ...s, itemBook: { ...s.itemBook, ['preview:next']: true } }) - currentDrop);
     const bulkCandidates = Object.keys(SLOTS).flatMap(slot => RARITIES.map((_, i) => s.itemBook[itemKey(slot, i)] ? null : s.inventory.filter(x => x.slot === slot && x.rarity === i && !x.locked && !x.relic).sort((a, b) => a.power - b.power || (a.enhance || 0) - (b.enhance || 0))[0] || null)).filter((x): x is NonNullable<typeof x> => !!x);
 
@@ -166,7 +169,15 @@ export function Collection({ s, send, busy }: PanelProps) {
     </AlertDialogContent>
     </AlertDialog>
     </div>
+    <details className="book-section item-book-section" open>
+    <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>장비 종류</h2><span>{itemFilter === 'all' ? `${registeredCount} / ${Object.keys(SLOTS).length * RARITIES.length + ONYX_BOSSES.length}종 등록` : itemFilter === 'onyx' ? `칠흑 ${ONYX_BOSSES.filter(b => s.itemBook[onyxCodexKey(b.id)]).length} / ${ONYX_BOSSES.length}` : `${RARITIES[itemFilter].name} ${Object.keys(SLOTS).filter(slot => s.itemBook[itemKey(slot, itemFilter)]).length} / ${Object.keys(SLOTS).length}`}</span></summary>
+    <div className="item-filter" role="tablist" aria-label="등급별 보기">
+        <button type="button" role="tab" aria-selected={itemFilter === 'all'} className={itemFilter === 'all' ? 'primary small' : 'secondary small'} onClick={() => setItemFilter('all')}>전체</button>
+        {RARITIES.map((r, i) => <button type="button" role="tab" key={r.name} aria-selected={itemFilter === i} className={itemFilter === i ? 'primary small' : 'secondary small'} style={{ '--rarity': r.color } as React.CSSProperties} onClick={() => setItemFilter(i)}><i className="item-filter-dot"/>{r.name}</button>)}
+        <button type="button" role="tab" aria-selected={itemFilter === 'onyx'} className={itemFilter === 'onyx' ? 'primary small' : 'secondary small'} onClick={() => setItemFilter('onyx')}>◆ 칠흑</button>
+    </div>
     <div className="item-grid">{Object.entries(SLOTS).flatMap(([slot, label]) => RARITIES.map((rarity, i) => {
+            if (itemFilter !== 'all' && itemFilter !== i) return null;
             const key = itemKey(slot, i), registered = s.itemBook[key], candidate = s.inventory.find(item => item.slot === slot && item.rarity === i && !item.locked && !item.relic);
             return <article className="panel item-card" style={{ '--rarity': rarity.color } as React.CSSProperties} key={key}>
             <div className="item-top">
@@ -194,7 +205,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             </AlertDialogContent>
             </AlertDialog>
             </article>;
-        }))}{ONYX_BOSSES.map(b => { const registered = !!s.itemBook[onyxCodexKey(b.id)], top = RARITIES[RARITIES.length - 1];
+        }))}{(itemFilter === 'all' || itemFilter === 'onyx') && ONYX_BOSSES.map(b => { const registered = !!s.itemBook[onyxCodexKey(b.id)], top = RARITIES[RARITIES.length - 1];
             return <article className={`panel item-card onyx-item-card ${registered ? '' : 'unregistered'}`} style={{ '--rarity': top.color } as React.CSSProperties} key={b.id}>
             <div className="item-top"><span>{top.name} · 칠흑</span><small>{registered ? '등록 완료' : '미획득'}</small></div>
             <div className="item-icon"><OnyxArt id={b.id} size={36}/></div>
@@ -202,6 +213,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             <p>{b.name} 격파 보상 · 장비 드롭 확률 +{percent(perEntryDrop, 4)}p</p>
             <button className="secondary" disabled>{registered ? '영구 보너스 적용 중' : '얻으면 자동 등록(소모 없음)'}</button>
             </article>; })}</div>
+    </details>
     </TabsContent>
     <TabsContent value="bonus">
     {(() => { const eco = FISH.map(f => bookEcology(s, f.id).stages), maxStage = FISH.length * BOOK_ECOLOGY.dealt.length, pct = (n: number) => Number((n * 100).toFixed(1)); return <div className="bonus-stack">
