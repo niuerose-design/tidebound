@@ -596,11 +596,11 @@ test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlemen
     const A = await L.load('data/altar'), Ev = await L.load('data/events'), T = await L.load('systems/turn');
     const gold = A.BLESSINGS.find(b => b.id === 'gold');
     // v3.16 4~6단계는 절대 비용(골드 3,000억 · 1조 · 3조 상당), 6단계 연장도 6단계 값.
-    assert.deepEqual([A.blessingCost(gold, 0, false), A.blessingCost(gold, 1, true), A.blessingCost(gold, 2, true), A.blessingCost(gold, 3, true), A.blessingCost(gold, 4, true), A.blessingCost(gold, 5, true), A.blessingCost(gold, 6, true)], [1200, 1800, 2700, 3e8, 1e9, 3e9, 3e9]);
+    assert.deepEqual([A.blessingCost(gold, 0, false), A.blessingCost(gold, 1, true), A.blessingCost(gold, 2, true), A.blessingCost(gold, 3, true), A.blessingCost(gold, 4, true), A.blessingCost(gold, 5, true), A.blessingCost(gold, 6, true)], [12000, 24000, 48000, 3e8, 1e9, 3e9, 3e9]);
     assert.equal(A.BLESSING_MAX_LEVEL, 6); assert.ok(A.BLESSINGS.every(b => b.levels.length === 6)); assert.equal(A.blessingEffect(gold, 6).gold, 5); assert.equal(A.ALTAR.maxGold, 1e13);
     // 상위 단계 유지 시간: 4단계 30분 · 5단계 15분 · 6단계 10분, 지나면 3단계로.
     assert.deepEqual([1, 3, 4, 5, 6].map(l => A.blessingLevelMs(1, l) / 60_000), [60, 60, 240, 120, 60]);
-    assert.equal(A.blessingJumpCost('gold', 0, 3), 1200 + 1800 + 2700, 'jump 0→3 sums each step'); assert.equal(A.blessingJumpCost('gold', 2, 4), 2700 + 3e8); assert.equal(A.blessingJumpCost('gold', 0, 6), 5700 + 3e8 + 1e9 + 3e9); assert.equal(A.blessingJumpCost('gold', 3, 3), 3e8, 'target at or below live = next step');
+    assert.equal(A.blessingJumpCost('gold', 0, 3), 12000 + 24000 + 48000, 'jump 0→3 sums each step'); assert.equal(A.blessingJumpCost('gold', 2, 4), 48000 + 3e8); assert.equal(A.blessingJumpCost('gold', 0, 6), 84000 + 3e8 + 1e9 + 3e9); assert.equal(A.blessingJumpCost('gold', 3, 3), 3e8, 'target at or below live = next step');
     const now = 1_000_000; assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 6, high_until: now + 1 }, now), 6); assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 6, high_until: now }, now), 3, 'expired high level falls back to 3'); assert.equal(A.effectiveBlessingLevel({ until: now, level: 6, high_until: now + 1 }, now), 0); assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 2 }, now), 2);
     assert.equal(A.blessingEffect(gold, 3).gold, 3); assert.ok(A.BLESSINGS.find(b => b.id === 'mimic').cost > A.BLESSINGS.find(b => b.id === 'exp').cost, 'mimic costs most');
     assert.equal(A.gaugeCost('god'), 40000); assert.equal(A.ALTAR.essencePoints, 3);
