@@ -388,7 +388,7 @@ export type State = {
     /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위 보상을 한 번 정산합니다. */
     duelSeason?: { key: string; lastKey?: string; lastRank?: number };
     /** v27.43 제단: 마지막 신 도전 시각, 익명 기여 설정. 서버만 씁니다. */
-    altar?: { challengeAt?: number; anonymous?: boolean; /** v27.54 신 도전 횟수·승리·가장 많이 깎은 신 체력 비율(0~1). 운영 통계용. */ tries?: number; wins?: number; best?: number; /** v27.72 공물을 바친 횟수(안내 단계 판정). */ offers?: number; /** v27.91 월드보스: 마지막 도전 시각, 보상을 정산한 세대, 누적 참여·피해(통계). */ raidAt?: number; raidClaimed?: number; raidHits?: number; raidDealt?: number };
+    altar?: { challengeAt?: number; anonymous?: boolean; /** v27.54 신 도전 횟수·승리·가장 많이 깎은 신 체력 비율(0~1). 운영 통계용. */ tries?: number; wins?: number; best?: number; /** v27.72 공물을 바친 횟수(안내 단계 판정). */ offers?: number; /** v27.91 월드보스: 마지막 도전 시각, 보상을 정산한 세대, 누적 참여·피해(통계). */ raidAt?: number; raidClaimed?: number; raidHits?: number; raidDealt?: number; /** v3.22 보스별 마지막 도전 시각과 보상을 정산한 세대. */ raidAtBy?: Record<string, number>; raidClaimedBy?: Record<string, number> };
     /** v27.44 제단 진행 요약(서버가 동기화마다 채우는 표시용). */
     altarStatus?: import('./data/altar').AltarStatus;
     /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */
@@ -477,7 +477,7 @@ export type State = {
     researchGranted?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
-    /** 선별의 눈 자동 판매 켜짐 여부(설정). */
+    /** 자동 분해기 자동 판매 켜짐 여부(설정). */
     autoSell?: boolean;
     /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
     hideDoorNotice?: boolean;
@@ -485,7 +485,7 @@ export type State = {
     skipStatConfirm?: boolean;
     /** v27.32 설정: 만날 무리의 최대 규모(0이면 무리 끔). 없으면 제한 없음. 상한을 넘게 뽑힌 무리는 상한 규모로 나옵니다. */
     swarmCap?: number;
-    /** v25.7 환생 정리 방식(설정). 없으면 판매. */
+    /** v25.7 청산 방식(설정). 없으면 판매. */
     salvageMode?: 'sell' | 'dismantle';
     /** v25.21 누적 플레이 시간(ms). 턴이 진행될 때마다 더하고 환생해도 유지합니다(‘도전’ 업적). */
     playMs?: number;

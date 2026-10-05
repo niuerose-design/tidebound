@@ -44,7 +44,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                 <button className="primary" disabled={busy || !s || name.trim().length < 2} onClick={() => { send({ type: 'rename', value: name }); onOpenChange(false); }}>변경</button>
             </div>
             {s && researchRank(s, 'sortingNet') > 0 && <div className="setting-toggle">
-                <div><strong>선별의 눈 자동 판매</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 팝니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
+                <div><strong>자동 분해기 자동 판매</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 팝니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
                 <button className={s.autoSell ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoSell} onClick={() => send({ type: 'autoSell', value: s.autoSell ? 'off' : 'on' })}>{s.autoSell ? '켜짐' : '꺼짐'}</button>
             </div>}
             <SkillFxToggle/>
@@ -64,7 +64,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                 <div className="swarm-cap-buttons" role="group" aria-label="무리 최대 규모">{SWARM_CAPS.map(cap => <button key={cap} className={swarmCapOf(s) === cap ? 'primary' : 'secondary'} disabled={busy} aria-pressed={swarmCapOf(s) === cap} onClick={() => send({ type: 'swarmCap', value: String(cap) })}>{cap === 0 ? '끔' : cap >= 500 ? '제한 없음' : `×${cap}까지`}</button>)}</div>
             </div>}
             {s && salvageRate(s) > 0 && <div className="setting-toggle">
-                <div><strong>환생 정리 방식</strong><p>환생할 때 유물을 뺀 보관함·착용 장비 전부를 효율 {Math.round(salvageRate(s) * 100)}%로 {s.salvageMode === 'dismantle' ? '분해해 정수를 받습니다.' : '판매해 다음 생 시작 골드에 더합니다.'}</p></div>
+                <div><strong>청산 방식</strong><p>환생할 때 유물을 뺀 보관함·착용 장비 전부를 효율 {Math.round(salvageRate(s) * 100)}%로 {s.salvageMode === 'dismantle' ? '분해해 정수를 받습니다.' : '판매해 다음 생 시작 골드에 더합니다.'}</p></div>
                 <button className="secondary" disabled={busy} onClick={() => send({ type: 'salvageMode', value: s.salvageMode === 'dismantle' ? 'sell' : 'dismantle' })}>{s.salvageMode === 'dismantle' ? '분해' : '판매'}</button>
             </div>}
             {s && onSwitchSlot && <div className="slot-section">

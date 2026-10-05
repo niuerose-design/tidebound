@@ -99,7 +99,7 @@ export const voyageActions: ActionHandlers = {
     },
     autoSell(s, { a }) {
         if (!researchRank(s, 'sortingNet'))
-            throw Error('선별의 눈 연구가 필요합니다.');
+            throw Error('자동 분해기 연구가 필요합니다.');
         s.autoSell = a.value === 'on';
     },
     doorNotice(s, { a }) {
@@ -117,7 +117,7 @@ export const voyageActions: ActionHandlers = {
     },
     salvageMode(s, { a }) {
         if (!salvageRate(s))
-            throw Error('환생 정리 연구가 필요합니다.');
+            throw Error('청산 연구가 필요합니다.');
         if (a.value !== 'sell' && a.value !== 'dismantle')
             throw Error('정리 방식은 판매 또는 분해입니다.');
         s.salvageMode = a.value;

@@ -19,7 +19,7 @@ export function AltarNotice({ s, setView }: { s: State; setView: (view: string) 
     if (!a) return null;
     const now = serverNow(s), filling = a.gauges.filter(g => g.pct > 0 && !/^(balrog|zakum|horntail)$/.test(g.id)).sort((x, y) => y.pct - x.pct).slice(0, 2);
     // v3.18 제단 줄은 축복 이름(단계 포함)과 남은 시간만, 신·신의 자리는 짧게. 월드보스는 아래 별도 줄.
-    const altarKey = `${a.blessings.map(b => `${b.id}:${b.until}`).join(',')}|${a.god?.gen || 0}|${a.throne}`, raidKey = `raid:${a.raid?.gen || 0}:${a.raid?.until || 0}`;
+    const altarKey = `${a.blessings.map(b => `${b.id}:${b.until}`).join(',')}|${a.god?.gen || 0}|${a.throne}`, raids = a.raids ?? (a.raid ? [{ id: '', ...a.raid }] : []), raidKey = `raid:${raids.map(r => `${r.gen}:${r.until}`).join(',')}`;
     const [seenAltar, seenRaid] = seen.split('||');
     const altarParts = [
         ...a.blessings.map(b => `${b.name} · ${left(b.until - now)} 남음`),
@@ -27,7 +27,7 @@ export function AltarNotice({ s, setView }: { s: State; setView: (view: string) 
         !a.blessings.length && !a.god ? filling.map(g => `${g.name} ${g.pct}%`).join(' · ') : '',
         a.throne ? `신의 자리 · ${a.throne}` : '',
     ].filter(Boolean);
-    const showAltar = altarParts.length > 0 && seenAltar !== altarKey, showRaid = !!a.raid && seenRaid !== raidKey;
+    const showAltar = altarParts.length > 0 && seenAltar !== altarKey, showRaid = raids.length > 0 && seenRaid !== raidKey;
     if (!showAltar && !showRaid) return null;
     const save = (next: string) => { setSeen(next); try { localStorage.setItem(NOTICE_KEY, next); } catch { /* 저장소 없음 */ } };
     const dismissAltar = () => save(`${altarKey}||${seenRaid || ''}`), dismissRaid = () => save(`${seenAltar || ''}||${raidKey}`);
@@ -36,8 +36,8 @@ export function AltarNotice({ s, setView }: { s: State; setView: (view: string) 
             <button type="button" className="altar-notice-open" onClick={() => setView('altar')}><Flame size={14}/><b>제단</b><span>{altarParts.join(' · ')}</span></button>
             <button type="button" className="altar-notice-dismiss" aria-label="제단 알림 닫기" onClick={dismissAltar}><X size={14}/></button>
         </div>}
-        {showRaid && a.raid && <div className="altar-notice live raid-notice" role="status">
-            <button type="button" className="altar-notice-open" onClick={() => setView('altar')}><Swords size={14}/><b>월드보스</b><span>{a.raid.name} · 체력 {Math.round(a.raid.pct * 100)}% · {left(a.raid.until - now)} 뒤 떠남</span></button>
+        {showRaid && <div className="altar-notice live raid-notice" role="status">
+            <button type="button" className="altar-notice-open" onClick={() => setView('altar')}><Swords size={14}/><b>월드보스</b><span>{raids.map(r => `${r.name} · 체력 ${Math.round(r.pct * 100)}% · ${left(r.until - now)} 뒤 떠남`).join(' / ')}</span></button>
             <button type="button" className="altar-notice-dismiss" aria-label="월드보스 알림 닫기" onClick={dismissRaid}><X size={14}/></button>
         </div>}
     </>;

@@ -68,7 +68,7 @@ export function restartLife(s: State, now: number) {
     addLog(s, '운영 조치로 이번 생을 처음부터 다시 시작합니다. 환생 횟수·세계석·연구·유물·도감은 그대로입니다.', 'system');
 }
 
-/** v25.7 환생 정리: 유물을 뺀 보관함·착용 장비 전부를 연구 효율만큼 판매하거나 분해합니다. 연구가 없으면 count 0. */
+/** v25.7 청산: 유물을 뺀 보관함·착용 장비 전부를 연구 효율만큼 판매하거나 분해합니다. 연구가 없으면 count 0. */
 export function salvagePreview(s: State) {
     const rate = salvageRate(s), mode = s.salvageMode || 'sell';
     const items = rate ? [...s.inventory, ...Object.values(s.equipment)].filter((i): i is NonNullable<typeof i> => !!i && !i.relic) : [];
@@ -92,8 +92,8 @@ export const lifecycleActions: ActionHandlers = {
         s.rebirthLog = [...(s.rebirthLog || []), record].slice(-REBIRTH_LOG_KEEP);
         s.lifeStart = { at: now, playMs: s.playMs || 0 };
         if (salvage.count) {
-            if (salvage.mode === 'dismantle') { s.essence = (s.essence || 0) + salvage.essence; addLog(s, `환생 정리 · 장비 ${salvage.count}개 분해 · 정수 +${salvage.essence}`, 'reward'); }
-            else { s.gold += salvage.gold; addLog(s, `환생 정리 · 장비 ${salvage.count}개 판매 · 다음 생 시작 골드 +${salvage.gold} G`, 'reward'); }
+            if (salvage.mode === 'dismantle') { s.essence = (s.essence || 0) + salvage.essence; addLog(s, `청산 · 장비 ${salvage.count}개 분해 · 정수 +${salvage.essence}`, 'reward'); }
+            else { s.gold += salvage.gold; addLog(s, `청산 · 장비 ${salvage.count}개 판매 · 다음 생 시작 골드 +${salvage.gold} G`, 'reward'); }
         }
         if (hasVows(vows)) s.vows = vows;
         else delete s.vows;
