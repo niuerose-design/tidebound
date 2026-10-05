@@ -451,6 +451,8 @@ export type State = {
     /** v3.12 칠흑 보스: 서식지별로 보스를 못 본 출현 횟수(천장)와 보스별 처치 수. 환생해도 남습니다. */
     onyxSeen?: Record<string, number>;
     onyxBook?: Record<string, number>;
+    /** v3.12 보스별 연속 미획득 격파 수(dropPity 천장용). */
+    onyxMiss?: Record<string, number>;
     /** v3.6 스타포스 누적 기록(환생해도 남음): 시도·성공·실패(하락/유지)·파괴·쓴 골드. 업적·칭호가 봅니다. */
     starforce?: { tries: number; success: number; fail: number; destroy: number; gold: number };
     recovery: number;

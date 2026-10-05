@@ -282,11 +282,14 @@ export function reward(s: State, rng: () => number) {
     }
     addLog(s, `${golden ? '✦ 황금 ' : ''}${vdef && e.variant !== 'swarm' ? `${vdef.mark} ${vdef.name} ` : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 처치 · +${gold} G · +${exp} EXP${golden ? ' · 황금 개체 골드 10배' : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
-    // v3.12 칠흑 보스 처치: 그 보스의 장신구 1개 확정(종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
+    // v3.12 칠흑 보스 처치: drop 확률로 그 보스의 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
     if (e.onyx) {
-        const bossDef = onyxById(e.onyx)!; s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1;
+        const bossDef = onyxById(e.onyx)!; s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1; s.onyxMiss ??= {};
+        const miss = s.onyxMiss[e.onyx] || 0, dropRoll = rng();
         if (ownedOnyx(s).has(e.onyx)) { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
+        else if (dropRoll >= ONYX.drop && miss + 1 < ONYX.dropPity) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · 장신구를 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
         else {
+            s.onyxMiss[e.onyx] = 0;
             const stageLevel = STAGES.find(x => x.id === s.stage)?.level || fishLevelOf(e.id), item = onyxAccessory(bossDef, `onyx-${e.onyx}-${s.turn}`, stageLevel);
             item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', stageLevel);
             s.inventory.push(item);

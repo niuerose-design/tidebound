@@ -18,7 +18,7 @@ export const TITLES: TitleDef[] = [
     { id: 'hpmax:200000', name: '거산', desc: '최대 체력 200,000', group: '도전', achievement: 'hpmax:200000' },
     { id: 'manamax:50000', name: '마나의 샘', desc: '최대 마나 50,000', group: '도전', achievement: 'manamax:50000' },
     { id: 'deaths:100', name: '일곱 번 넘어진 자', desc: '쓰러짐 100회', group: '도전', achievement: 'deaths:100' },
-    { id: 'onyx:7', name: '◆ 칠흑을 모은 자', desc: '칠흑 장신구 7종 보유', group: '사냥', achievement: 'onyx:7' },
+    { id: 'onyx:7', name: '◆ 칠흑보다 어두운 자', desc: '칠흑 장신구 7종 보유', group: '사냥', achievement: 'onyx:7' },
     { id: 'star:22', name: '★ 별을 다 채운 자', desc: '장비 하나를 22성까지 강화', group: '강화', achievement: 'star:22' },
     { id: 'starDestroy:50', name: '☆ 별이 부서져도', desc: '강화로 장비 50개를 잃고도 계속 두드림', group: '강화', achievement: 'starDestroy:50' },
     { id: 'abyss:25', name: '무릉 수련자', desc: '무릉도장 25층', group: '무릉도장', achievement: 'abyss:25' },
