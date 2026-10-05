@@ -2,6 +2,7 @@
 import type { ActionHandlers } from './types';
 import { HACKER, PRIVACY_FIELDS, HACK_TIER, HACK_NAMES, WIPE_TRACE_ID, programById, type PrivacyField } from '../../data/hacker';
 import { canUse } from '../progression';
+import { JOBS } from '../../data/classes';
 import { STAGES, DUNGEONS } from '../../data/world';
 import { BLESSINGS, RAIDS } from '../../data/altar';
 import { entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn, isBlackHacker } from '../hacker';
@@ -17,6 +18,20 @@ function parsePlace(value: string) {
     if (kind === 'stage' && STAGES.some(st => st.id === id) && id !== STAGES[0].id) return `stage:${id}`;
     if (kind === 'dungeon' && DUNGEONS.some(d => d.id === id)) return `dungeon:${id}`;
     throw Error('사냥터나 던전을 고르세요(첫 사냥터 제외).');
+}
+
+/** v3.28 미끼 이름: 12자까지, 구분 문자(| ,)·줄바꿈·꺾쇠 제외, ???는 쓸 수 없음. */
+export const DECOY_NAME = /^[^\n\r<>|,]{1,12}$/;
+/** v3.28 미끼 정보 검사(숙련 3단계). 공개로 남긴 항목은 미끼를 쓰지 않습니다. 돌려주는 값: '이름|직업|레벨' 또는 ''(미끼 없음). */
+function parseDecoy(level: number, show: PrivacyField[], name: string, job: string, lv: string) {
+    if (!name && !job && !lv) return '';
+    if (level < HACKER.spoof.decoyLevel) throw Error(`미끼 정보는 신원 조작 숙련 ${HACKER.spoof.decoyLevel}단계부터 쓸 수 있습니다.`);
+    if (name && (!DECOY_NAME.test(name) || name.includes('???'))) throw Error('미끼 이름은 1~12자(줄바꿈·꺾쇠·|·쉼표 제외)로 쓰세요.');
+    if (job && !JOBS.some(j => j.id === job && !j.hidden)) throw Error('미끼 직업을 다시 고르세요(숨은 직업 제외).');
+    const n = lv ? Number(lv) : 0;
+    if (lv && (!Number.isInteger(n) || n < 1 || n > HACKER.spoof.decoyMaxLevel)) throw Error(`미끼 레벨은 1~${HACKER.spoof.decoyMaxLevel}로 쓰세요.`);
+    const out = [name, show.includes('job') ? '' : job, show.includes('level') || !n ? '' : String(n)];
+    return out.some(Boolean) ? out.join('|') : '';
 }
 
 export const hackerActions: ActionHandlers = {
@@ -94,7 +109,7 @@ export const hackerActions: ActionHandlers = {
         const h = rollHackerDay(s, now), n = h.tier, white = isWhiteHacker(s), black = isBlackHacker(s);
         const used = h.used ??= {}, value = String(a.value || '').trim();
         // v3.28 블랙 해커가 추적당한 동안은 해킹할 수 없습니다(정산·신원 조작 거두기는 가능).
-        if ((h.bustedUntil || 0) > now && !['sniffClaim', 'interceptClaim', 'unspoof'].includes(id || '')) throw Error(`추적당해 ${Math.ceil((h.bustedUntil! - now) / 60000)}분 동안 해킹할 수 없습니다.`);
+        if ((h.bustedUntil || 0) > now && !['sniffClaim', 'interceptClaim', 'spoof', 'unspoof'].includes(id || '')) throw Error(`추적당해 ${Math.ceil((h.bustedUntil! - now) / 60000)}분 동안 해킹할 수 없습니다.`);
         const need = (tier: number) => { if (n < tier) throw Error(`해킹 ${ROMAN[tier - 1]}을 먼저 해금하세요.`); };
         // v3.28 블랙 해커는 해킹 비트·하루 횟수가 두 배(scale = false: 신원 조작, 대상마다 걸린 1회, 루트 권한 횟수).
         const pay = (bits: number, scale = true) => { const cost = black && scale ? bits * HACKER.black.cost : bits; if (h.bits < cost) throw Error(`비트 ${cost}가 필요합니다.`); h.bits -= cost; };
@@ -239,14 +254,16 @@ export const hackerActions: ActionHandlers = {
         }
         if (id === 'spoof') {
             // v3.26 신원 조작(옛 애드가드): 값 = 대상(랭킹 행 id 또는 self)|공개할 항목(쉼표)|시간(0 = 무기한). 숙련 1단계는 전부 숨김.
+            // v3.28 숙련 3단계 미끼 정보: |미끼 이름|미끼 직업 id|미끼 레벨(모두 선택). 가린 항목 대신 ???가 아닌 가짜 값을 보여 줍니다.
             const level = adguardLevel(s);
             if (level < 1) throw Error('신원 조작을 장착하고 숙련 1단계를 달성하세요.');
-            const [target, fields = '', hoursRaw = '0'] = value.split('|'), hours = Math.floor(Number(hoursRaw));
+            const [target, fields = '', hoursRaw = '0', decoyName = '', decoyJob = '', decoyLevel = ''] = value.split('|'), hours = Math.floor(Number(hoursRaw));
             if (!target) throw Error('신원을 조작할 대상을 고르세요.');
             if (!Number.isFinite(hours) || hours < 0 || hours > HACKER.spoof.maxHours) throw Error(`기간은 0(무기한)~${HACKER.spoof.maxHours}시간으로 정하세요.`);
             const show = level >= 2 ? [...new Set(fields.split(',').map(x => x.trim()).filter((x): x is PrivacyField => (PRIVACY_FIELDS as readonly string[]).includes(x)))] : [];
+            const decoy = parseDecoy(level, show, decoyName.trim(), decoyJob.trim(), decoyLevel.trim());
             daily('spoof', HACKER.spoof.perDay(level), '신원 조작', false); pay(HACKER.spoof.bits, false);
-            h.pending = { kind: 'spoof', value: `${target}|${show.join(',')}`, minutes: hours * 60 };
+            h.pending = { kind: 'spoof', value: `${target}|${show.join(',')}${decoy ? `|${decoy}` : ''}`, minutes: hours * 60 };
             gainHacker(s, 0, HACKER.spoof.exp); bumpSeason(s, now, { hacks: 1 });
             return;
         }

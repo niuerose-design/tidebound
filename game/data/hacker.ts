@@ -64,8 +64,11 @@ export const HACKER = {
     },
     /** v3.25 프로그램 메모리: 기본 4 + 권한 등급 5마다 1. */
     memory: (grade: number) => 4 + Math.floor(grade / 5),
-    /** v3.26 신원 조작(옛 애드가드): 숙련 단계 = 하루 횟수, 비트 10. v3.27 기간은 해커가 정합니다(시간, 0 = 무기한, 최대 1년). */
-    spoof: { maxHours: 24 * 365, perDay: (level: number) => Math.max(0, level), bits: 10, exp: 20 },
+    /**
+     * v3.26 신원 조작(옛 애드가드): 숙련 단계 = 하루 횟수, 비트 10. v3.27 기간은 해커가 정합니다(시간, 0 = 무기한, 최대 1년).
+     * v3.28 숙련 3단계(옛 2시간)부터 미끼 정보: 가린 이름·직업·레벨 자리에 ??? 대신 해커가 정한 가짜 값을 보여 줍니다(크래킹하면 진짜가 드러남).
+     */
+    spoof: { maxHours: 24 * 365, perDay: (level: number) => Math.max(0, level), bits: 10, exp: 20, decoyLevel: 3, decoyMaxLevel: 999 },
     /**
      * v3.27 해커끼리 견제(해커 순위 행에서). 해커만 쓰고(화이트 해커는 쓰지 않음), 각각 하루 1회. 화이트 해커 방화벽이 하루 한 번 막습니다.
      * 역추적: 대상의 오늘 침투 작전 입장 −1(대상에게 하루 최소 1회는 남김, 하루 최대 −3). 과부하: 대상의 브루트포스 비트 절반(2시간).
@@ -128,7 +131,7 @@ export const HACKER_JOBS = [
 /** 해커 계열 스킬: 신원 조작(id adGuard, 옛 애드가드)과 화이트 해커 방화벽. 숙련은 해커 활동(침투·브루트포스·해킹)으로 오릅니다. */
 export const HACKER_SKILLS: Skill[] = [
     /** v3.26 애드가드 → 신원 조작: 나를 숨기는 패시브가 아니라 해커가 남의(또는 내) 공개 여부를 바꾸는 스킬. id는 세이브 호환으로 그대로. */
-    { id: ADGUARD_ID, name: '신원 조작', desc: '해커 전용. 고른 모험가 한 명(나도 가능)의 랭킹 정보 공개 여부를 바꿉니다. 숙련 1단계: 이름과 모든 정보를 ???로 1시간 가림. 숙련 2단계: 가릴 항목을 고름. 숙련 3단계: 2시간. 하루 횟수는 숙련 단계만큼. 크래킹을 당하면 그동안 풀립니다.', type: 'passive', level: 30, job: HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 5, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
+    { id: ADGUARD_ID, name: '신원 조작', desc: '해커 전용. 고른 모험가 한 명(나도 가능)의 랭킹 정보 공개 여부를 바꿉니다. 숙련 1단계: 이름과 모든 정보를 ???로 1시간 가림. 숙련 2단계: 가릴 항목을 고름. 숙련 3단계: 가린 이름·직업·레벨 자리에 미끼 정보(가짜 값)를 보여 줌. 하루 횟수는 숙련 단계만큼. 크래킹을 당하면 그동안 풀립니다.', type: 'passive', level: 30, job: HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 5, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
     /** v3.25 화이트 해커 전용 패시브. 장착하면 하루 한 번 크래킹을 막아 냅니다(막힌 해커의 비트·횟수는 그대로 씀). */
     { id: FIREWALL_ID, name: '방화벽', desc: '하루 한 번, 나를 노린 크래킹을 막아 냅니다. 숙련은 해커 활동으로 오릅니다.', type: 'passive', level: 30, job: WHITE_HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
     /** v3.28 블랙 해커 전용 패시브. 장착하면 해킹에 실패해 추적당하는 시간이 6시간 → 3시간. */

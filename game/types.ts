@@ -544,7 +544,7 @@ export type State = {
         down?: { kind: 'stage' | 'dungeon'; id: string; until: number; by: string; patched?: boolean }[];
         patched?: Record<string, number>;
         /** v3.27 신원 조작 목록(해커 계열에게만). until 0 = 무기한, mine = 내가 건 것. */
-        masks?: { target: string; until: number; by: string; mine?: boolean }[];
+        masks?: { target: string; until: number; by: string; mine?: boolean; /** v3.28 내가 건 미끼 이름 */ decoy?: string }[];
         /** v3.27 다른 해커가 건 견제: 오늘 줄어든 침투 입장(trace), 브루트포스 과부하가 끝나는 시각. */
         traced?: { day: string; n: number };
         overloadUntil?: number;

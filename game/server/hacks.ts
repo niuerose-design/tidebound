@@ -29,7 +29,7 @@ export type Hacks = {
     /** 모험가 id → 화이트 해커 방화벽이 크래킹을 막은 날(하루 한 번). */
     shielded: Record<string, string>;
     /** v3.26 신원 조작: 모험가 id → 숨김(공개 항목 show 말고는 ???)과 끝나는 시각. v3.27 until 0 = 무기한. */
-    masked: Record<string, { until: number; show: string[]; by: string; byId: string }>;
+    masked: Record<string, { until: number; show: string[]; by: string; byId: string; /** v3.28 미끼 정보(가린 항목 자리에 보여 줄 가짜 값). */ decoy?: { name?: string; job?: string; level?: number } }>;
     /** v3.27 해커끼리 견제: 모험가 id → 오늘 역추적 횟수(day 기준)와 과부하가 끝나는 시각. */
     rival: Record<string, { day?: string; trace?: number; overloadUntil?: number }>;
     /** v3.28 해킹 IX DDoS로 연 서버 이벤트(서버에 하나). */
@@ -116,7 +116,7 @@ export async function syncHackFeed(s: State, id: string, now: number) {
         events: liveEvents(now).map(e => ({ id: e.id, name: e.name || e.id, until: Date.parse(e.until), ...(h.tamper[e.id] ? { tampered: true } : {}) })),
         down: h.down.filter(d => d.until > now).map(d => ({ kind: d.kind, id: d.id, until: d.until, by: d.by, ...((h.patched[placeKey(d.kind, d.id)] || 0) > now ? { patched: true } : {}) })),
         patched: Object.fromEntries(Object.entries(h.patched).filter(([, until]) => until > now)),
-        masks: Object.entries(h.masked).filter(([, m]) => maskLive(m, now)).map(([target, m]) => ({ target, until: m.until, by: m.by, ...(m.byId === id ? { mine: true } : {}) })),
+        masks: Object.entries(h.masked).filter(([, m]) => maskLive(m, now)).map(([target, m]) => ({ target, until: m.until, by: m.by, ...(m.byId === id ? { mine: true, ...(m.decoy?.name ? { decoy: m.decoy.name } : {}) } : {}) })),
         scummed: Object.keys(h.scummed).map(Number),
     } : {};
     // v3.28 루트 권한 연출과 DDoS 이벤트는 모두에게 보입니다.
@@ -151,9 +151,10 @@ export async function applyPendingHack(s: State, id: string, now: number) {
         else h.cracked[target] = now + pending.minutes * 60_000;
     }
     else if (pending.kind === 'spoof') {
-        const [raw, fields] = pending.value.split('|'), target = raw === 'self' ? id : playerOfRow(raw);
+        const [raw, fields, dName, dJob, dLevel] = pending.value.split('|'), target = raw === 'self' ? id : playerOfRow(raw);
         if (!target) throw Error('신원을 조작할 대상을 확인하세요.');
-        h.masked[target] = { until: pending.minutes ? now + pending.minutes * 60_000 : 0, show: (fields || '').split(',').filter(Boolean), by, byId: id };
+        const decoy = { ...(dName ? { name: dName } : {}), ...(dJob ? { job: dJob } : {}), ...(Number(dLevel) > 0 ? { level: Number(dLevel) } : {}) };
+        h.masked[target] = { until: pending.minutes ? now + pending.minutes * 60_000 : 0, show: (fields || '').split(',').filter(Boolean), by, byId: id, ...(Object.keys(decoy).length ? { decoy } : {}) };
         addLog(s, `신원 조작 · ${target === id ? '내 정보' : '대상의 정보'}를 ${pending.minutes ? `${Math.round(pending.minutes / 60)}시간 동안` : '무기한으로'} 가렸습니다${fields ? `(공개: ${fields})` : ''}.`, 'reward');
     }
     else if (pending.kind === 'unspoof') {
@@ -353,9 +354,12 @@ export function maskSnapshot<T extends Partial<Snapshot> & { name?: string }>(sn
     if ('privacy' in snap) { snap = { ...snap }; delete snap.privacy; }
     if (!privacy || (hacks.cracked[playerId] || 0) > now) return snap;
     // 값은 지우고(브라우저에서도 못 보게) 0·빈 값으로 채운 뒤, 화면은 masked 목록을 보고 ???로 그립니다.
-    const show = new Set(privacy.show || []), masked = ['name', ...PRIVACY_KEYS.filter(f => !show.has(f))], out: Record<string, unknown> = { ...snap, name: '???', masked };
-    if (!show.has('job')) out.job = '';
-    if (!show.has('level')) { out.level = 0; out.rebirths = 0; }
+    // v3.28 미끼 정보가 있는 항목은 ??? 대신 가짜 값을 싣고 masked 목록에서도 뺍니다(진짜 정보처럼 보임).
+    const show = new Set(privacy.show || []), decoy = m.decoy || {}, out: Record<string, unknown> = { ...snap, name: decoy.name || '???' };
+    const masked = [...(decoy.name ? [] : ['name']), ...PRIVACY_KEYS.filter(f => !show.has(f) && !(f === 'job' && decoy.job) && !(f === 'level' && decoy.level))];
+    if (masked.length) out.masked = masked;
+    if (!show.has('job')) out.job = decoy.job || '';
+    if (!show.has('level')) { out.level = decoy.level || 0; out.rebirths = 0; }
     if (!show.has('gear')) { out.stats = {}; out.power = 0; }
     if (!show.has('skills')) { out.skills = []; out.skillRanks = {}; out.skillMastery = {}; out.skillSpecializations = {}; out.skillPractice = {}; }
     if (!show.has('title')) out.title = undefined;
