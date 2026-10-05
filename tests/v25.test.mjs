@@ -701,7 +701,7 @@ test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% o
         const s = make(); s.rebirths = 3; s.exp = 0; Enc.spawn(s, () => pm + N.nuriChance(10) / 2); s.enemy.hp = 0;
         const base = Math.floor(s.enemy.exp * (await L.load('systems/stats')).expMultiplier(s));
         Enc.reward(s, () => roll);
-        assert.equal(s.exp, base + Math.floor(B.xpNeeded(80, 3) * pct), `tier ${pct}`);
+        assert.equal(s.exp, base + Math.floor(B.xpNeeded(80, 3, (await L.load('systems/meta')).xpWall(s)) * pct), `tier ${pct}`);
         assert.equal(s.book[N.EXP_NURI.id], 1); assert.ok(s.logs.some(l => l.text.includes('경험의 누리')));
     }
 });

@@ -6,6 +6,7 @@
 import type { State } from '../types';
 import { BALANCE, xpNeeded } from './balance';
 import { skillById } from './skills';
+import { xpWall } from '../systems/meta';
 
 /** v3.17 회복 대기는 환생 10회 미만까지 전처럼 3턴(6초)이고 경험치 손실도 없습니다. 처치 후 회복 +5%p는 그대로 5회 미만. */
 export const SPROUT = { expUntil: 10, expPerRebirth: .2, survivalUntil: 5, recoveryUntil: 10, recoveryTurns: 3, recoveryScale: .5, healBonus: .05, deathExpLoss: .02, recoveryMin: 10 };
@@ -19,6 +20,6 @@ export const deathRecoveryTurns = (s: Pick<State, 'rebirths'> & Partial<Pick<Sta
     return Math.max(SPROUT.recoveryMin, BALANCE.recoveryTurns - research - passive);
 };
 /** v3.17 쓰러질 때 잃는 경험치: 지금 레벨 필요량의 2%(환생 10회 미만 0). 골드·숙련은 잃지 않습니다. */
-export const deathExpLoss = (s: Pick<State, 'rebirths' | 'level' | 'exp'>) => (s.rebirths || 0) < SPROUT.recoveryUntil ? 0 : Math.min(Math.floor(s.exp || 0), Math.floor(xpNeeded(s.level, s.rebirths) * SPROUT.deathExpLoss));
+export const deathExpLoss = (s: Pick<State, 'rebirths' | 'level' | 'exp' | 'permanent'>) => (s.rebirths || 0) < SPROUT.recoveryUntil ? 0 : Math.min(Math.floor(s.exp || 0), Math.floor(xpNeeded(s.level, s.rebirths, xpWall(s)) * SPROUT.deathExpLoss));
 /** 처치 후 회복에 더하는 비율. */
 export const sproutHeal = (s: Pick<State, 'rebirths'>) => sproutSurvival(s.rebirths) ? SPROUT.healBonus : 0;

@@ -75,7 +75,7 @@ test('PvP snapshots use the same purchased or mastered active levels',()=>{
 });
 
 test('Experience bonus is additive, visible and included only for usable equipped skills',()=>{
- const s=newState(0);s.level=25;s.job='voyageScribe';s.rebirths=2;s.permanent.exp=3;s.learned.voyageReview=1;s.skills=['voyageReview'];
+ const s=newState(0);s.level=40;/* v3.23 환생 목표 레벨(40)에 닿아 순풍 없음 */s.job='voyageScribe';s.rebirths=2;s.permanent.exp=3;s.learned.voyageReview=1;s.skills=['voyageReview'];
  assert.ok(Math.abs(stats(s).expBonus-1.21)<1e-9);/* v27.89 새싹 ×2.6 제외 */assert.ok(Math.abs(expMultiplier(s)/2.6-2.21)<1e-9);
  s.skills=[];assert.ok(Math.abs(expMultiplier(s)/2.6-2.13)<1e-9);
  s.job='fisher';s.skills=['voyageReview'];assert.ok(Math.abs(expMultiplier(s)/2.6-2.1)<1e-9);
