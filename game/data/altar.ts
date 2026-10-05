@@ -11,7 +11,8 @@ export const ALTAR = {
     /** 기여도 환산: 골드 1,000 = 1, 세계석 1 = 50, 정수 1 = 3. v27.48 정수 5 → 3: 분해로 정수 1개를 얻을 때 포기하는 판매 골드가 Lv.45 전후 약 2,400~6,000이라 그 중간에 맞춤. */
     goldPerPoint: 1000, pearlPoints: 50, essencePoints: 3,
     /** 한 번에 바칠 수 있는 최소·최대. 최대는 실수와 정수 넘침을 막는 값입니다. */
-    minPoints: 1, maxGold: 1e12, maxPearls: 100_000, maxEssence: 1_000_000,
+    /** v3.16 축복 4~6단계(수천억~조 단위)를 한 번에 바칠 수 있게 골드 상한 1조 → 10조. */
+    minPoints: 1, maxGold: 1e13, maxPearls: 100_000, maxEssence: 1_000_000,
     /** 같은 계정의 바치기 간격(서버 메모리 속도 제한). */
     offerCooldownMs: 3000,
     /** 신의 자리 주인이 거두는 몫: 다른 모험가가 바친 재화의 10%. 자리가 바뀌면 거두지 않은 몫은 사라집니다. */
@@ -43,13 +44,28 @@ type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: numb
  * 다음 단계 비용은 단계마다 ×LEVEL_STEP이라 3단계 유지는 비쌉니다. 축복이 끝나면 단계는 0으로 돌아갑니다.
  * 까미·누리는 숙련·경험치와 직결돼 다른 축복보다 비쌉니다.
  */
-export const BLESSING_MAX_LEVEL = 3, BLESSING_LEVEL_STEP = 1.5;
+/**
+ * v3.16 축복 4~6단계: 수백억 골드를 굴리는 고레벨 모험가의 싱크. 1~3단계는 그대로(×1.5), 4단계부터는 기여도 절대값
+ * BLESSING_HIGH_COSTS(골드 3,000억 · 1조 · 3조 상당)이고 6단계 유지(연장)도 6단계 값입니다.
+ */
+/** v3.16 1~3단계 비용 상향: 기본 ×10, 단계 승수 1.5 → 2(4~6단계에 비해 너무 쌌음). */
+export const BLESSING_MAX_LEVEL = 6, BLESSING_LEVEL_STEP = 2, BLESSING_HIGH_FROM = 3;
+export const BLESSING_HIGH_COSTS = [300_000_000, 1_000_000_000, 3_000_000_000];
+/**
+ * v3.16 상위 단계는 짧게: 4·5·6단계는 올린 순간부터 BLESSING_HIGH_MINUTES만큼만 유지되고(겹치지 않음, 다시 채우면 새로 셈)
+ * 지나면 3단계로 내려와 그때부터 blessingCapMs(12시간) 동안 이어집니다(상위 단계를 올릴 때 전체 시간 = 그 단계 시간 + 12시간 보장).
+ */
+export const BLESSING_HIGH_MINUTES = [240, 120, 60];
+/** 단계 n(1부터)에 오를 때 그 단계가 유지되는 시간(ms). 1~3단계는 hours, 4~6단계는 짧은 전용 시간. */
+export const blessingLevelMs = (hours: number, level: number) => level > BLESSING_HIGH_FROM ? BLESSING_HIGH_MINUTES[Math.min(level - BLESSING_HIGH_FROM - 1, BLESSING_HIGH_MINUTES.length - 1)] * 60_000 : hours * 3600_000;
+/** 지금 살아 있는 단계: 축복이 닫혔으면 0, 상위 단계 시간이 지났으면 3단계로. */
+export const effectiveBlessingLevel = (g: { until: number; level?: number; high_until?: number } | undefined, now: number) => !g || g.until <= now ? 0 : Math.max(1, (g.high_until || 0) > now ? g.level || 1 : Math.min(g.level || 1, BLESSING_HIGH_FROM));
 export const BLESSINGS: { id: BlessingId; name: string; cost: number; hours: number; levels: BlessingEffect[] }[] = [
-    { id: 'gold', name: '풍요의 축복', cost: 1200, hours: 1, levels: [{ gold: 2 }, { gold: 2.5 }, { gold: 3 }] },
-    { id: 'exp', name: '성장의 축복', cost: 1500, hours: 1, levels: [{ exp: 1.5 }, { exp: 1.75 }, { exp: 2 }] },
-    { id: 'mimic', name: '까미의 축복', cost: 2500, hours: 1, levels: [{ mimic: 3 }, { mimic: 4 }, { mimic: 5 }] },
+    { id: 'gold', name: '풍요의 축복', cost: 12_000, hours: 1, levels: [{ gold: 2 }, { gold: 2.5 }, { gold: 3 }, { gold: 3.5 }, { gold: 4 }, { gold: 5 }] },
+    { id: 'exp', name: '성장의 축복', cost: 15_000, hours: 1, levels: [{ exp: 1.5 }, { exp: 1.75 }, { exp: 2 }, { exp: 2.25 }, { exp: 2.5 }, { exp: 3 }] },
+    { id: 'mimic', name: '까미의 축복', cost: 25_000, hours: 1, levels: [{ mimic: 3 }, { mimic: 4 }, { mimic: 5 }, { mimic: 6 }, { mimic: 7 }, { mimic: 8 }] },
     // v27.70 누리의 축복: 경험의 누리 출현 배율. 레벨 경험치와 직결돼 까미와 같은 값입니다.
-    { id: 'nuri', name: '누리의 축복', cost: 2500, hours: 1, levels: [{ nuri: 3 }, { nuri: 4 }, { nuri: 5 }] },
+    { id: 'nuri', name: '누리의 축복', cost: 25_000, hours: 1, levels: [{ nuri: 3 }, { nuri: 4 }, { nuri: 5 }, { nuri: 6 }, { nuri: 7 }, { nuri: 8 }] },
 ];
 type Blessing = typeof BLESSINGS[number];
 /** 단계별 효과(1부터). */
@@ -60,7 +76,10 @@ export function blessingDesc(b: Blessing, level = 1) {
     return e.gold ? `모든 모험가의 골드 획득 ×${e.gold}` : e.exp ? `모든 모험가의 경험치 ×${e.exp}` : e.nuri ? `경험의 누리 출현 ×${e.nuri}` : `숙련의 까미 출현 ×${e.mimic}`;
 }
 /** 지금 게이지를 한 번 채우는 비용. 닫혀 있으면 기본(1단계로 열림), 진행 중이면 다음 단계(3단계면 시간 연장) 비용. */
-export const blessingCost = (b: Blessing, level: number, active: boolean) => Math.round(b.cost * Math.pow(BLESSING_LEVEL_STEP, active ? Math.min(level, BLESSING_MAX_LEVEL - 1) : 0));
+export const blessingCost = (b: Blessing, level: number, active: boolean) => {
+    const step = active ? Math.min(level, BLESSING_MAX_LEVEL - 1) : 0;
+    return step >= BLESSING_HIGH_FROM ? BLESSING_HIGH_COSTS[Math.min(step - BLESSING_HIGH_FROM, BLESSING_HIGH_COSTS.length - 1)] : Math.round(b.cost * Math.pow(BLESSING_LEVEL_STEP, step));
+};
 /**
  * v27.91 월드보스. 소환 게이지가 차면 서버 전체에 한 마리가 lifetimeHours 동안 나타나고(v27.93 발록 6 · 자쿰 12 · 혼테일 24시간, 격파 뒤 2시간 대기), 모든 모험가의 피해가 체력 하나에 누적됩니다(공유 체력).
  * 도전은 결투 엔진으로 maxTurns 안에서 한 번 계산하고(부하·렉 방지), 모험가마다 cooldown 간격으로 다시 때립니다.
@@ -88,6 +107,8 @@ export const isRaidGauge = (id: string): id is RaidId => RAIDS.some(r => r.id ==
 /** 소환 게이지(신 + 월드보스 셋)와 축복 게이지. 화면의 축복/소환 탭이 이 둘로 나뉩니다. */
 export const SUMMON_GAUGE_IDS: AltarGaugeId[] = ['god', ...RAIDS.map(r => r.id)];
 export const GAUGE_IDS: AltarGaugeId[] = [...BLESSINGS.map(b => b.id), ...SUMMON_GAUGE_IDS];
+/** v3.16 단계 점핑: 지금 live 단계(0 = 닫힘)에서 target 단계까지 한 번에 가는 총 기여도(단계마다 그때의 비용을 더함). */
+export const blessingJumpCost = (id: BlessingId, live: number, target: number) => { let sum = 0; for (let lv = live; lv < Math.min(target, BLESSING_MAX_LEVEL); lv++) sum += gaugeCost(id, lv, lv > 0); return target <= live ? gaugeCost(id, live, live > 0) : sum; };
 export const gaugeCost = (id: AltarGaugeId, level = 0, active = false) => id === 'god' ? ALTAR.godCost : isRaidGauge(id) ? raidById(id)!.cost : blessingCost(BLESSINGS.find(b => b.id === id)!, level, active);
 export const gaugeName = (id: AltarGaugeId) => id === 'god' ? '신 소환' : isRaidGauge(id) ? `${raidById(id)!.name} 소환` : BLESSINGS.find(b => b.id === id)!.name;
 

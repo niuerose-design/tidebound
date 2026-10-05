@@ -17,7 +17,7 @@ export type WalletRow = { account_id: string; pearls: number; essence: number; w
 /** v27.43 제단(서버에 한 줄). god_state: none(깨어난 적 없음)·alive·slain·gone(시간이 지나 떠남은 god_until로 판단). */
 export type AltarRow = { /** v27.91 월드보스: 세대·종류·상태(none/alive/slain/gone)·남은/최대 공유 체력·떠나는 시각·마지막 일격·격파 시각 */ raid_gen: number; raid_id: string; raid_state: string; raid_hp: number; raid_hp_max: number; raid_until: number; raid_slayer: string; raid_slain_at: number; gen: number; god_state: string; god: string; god_until: number; throne: string; throne_name: string; throne_since: number; throne_snapshot: string; tithe_gold: number; tithe_pearls: number; tithe_essence: number; total_gold: number; total_pearls: number; total_essence: number; total_points: number };
 /** 제단 게이지(축복·신 소환). until은 축복이 열려 있는 시각(신 소환은 쓰지 않음). */
-export type AltarGaugeRow = { id: string; points: number; until: number; level?: number };
+export type AltarGaugeRow = { id: string; points: number; until: number; level?: number; /** v3.16 4단계 이상이 유지되는 시각. 지나면 3단계로 봅니다. */ high_until?: number };
 /** 이번 주 제단 기여. id는 주:모험가. anonymous=1이면 순위표에 이름을 숨깁니다. */
 export type AltarOfferRow = { id: string; week: string; player_id: string; account_id: string; name: string; anonymous: number; points: number; gold: number; pearls: number; essence: number; updated_at: number };
 export type AltarAmounts = { gold: number; pearls: number; essence: number };
@@ -86,7 +86,8 @@ export interface Storage {
     extendAltarGauge(id: string, now: number, ms: number, cap: number): Promise<number>;
     /** v27.48 축복 한 칸: 게이지에서 cost를 빼고, 진행 중이면 단계 +1(최대 max)·아니면 1단계로 열고, 시간을 ms만큼 늘립니다(지금부터 cap까지).
      *  expectLevel(진행 중이 아니면 0)이 그대로일 때만 적용해 비용 계산과 동시 바치기가 어긋나지 않게 합니다. 실패하면 null. */
-    levelAltarBlessing(id: string, cost: number, expectLevel: number, now: number, ms: number, cap: number, max: number): Promise<{ level: number; until: number } | null>;
+    /** v3.16 highMs > 0이면 상위 단계: high_until = now + highMs, 전체 until은 now + highMs + cap 이상 보장(상위 단계가 끝나면 3단계가 cap 동안 이어짐, ms는 0으로). highFrom 이하가 '기본 단계'. */
+    levelAltarBlessing(id: string, cost: number, expectLevel: number, now: number, ms: number, cap: number, max: number, highMs?: number, highFrom?: number): Promise<{ level: number; until: number } | null>;
     /** 살아 있는 신이 없을 때만 새 신을 깨웁니다(세대 +1). */
     summonAltarGod(god: string, until: number, now: number): Promise<boolean>;
     /** gen 세대의 신이 아직 살아 있으면 쓰러뜨린 모험가를 자리에 앉히고 몫을 비웁니다. 먼저 온 한 명만 true. */
@@ -151,6 +152,8 @@ const SCHEMA = [
     'CREATE TABLE IF NOT EXISTS altar_gauges (id TEXT PRIMARY KEY, points BIGINT NOT NULL DEFAULT 0, until BIGINT NOT NULL DEFAULT 0)',
     // v27.48 축복 단계(끝난 축복은 until이 지나 단계를 0으로 봅니다).
     'ALTER TABLE altar_gauges ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 0',
+    // v3.16 상위 단계(4~6)의 유지 시각.
+    'ALTER TABLE altar_gauges ADD COLUMN IF NOT EXISTS high_until BIGINT NOT NULL DEFAULT 0',
     'CREATE TABLE IF NOT EXISTS altar_offers (id TEXT PRIMARY KEY, week TEXT NOT NULL, player_id TEXT NOT NULL, account_id TEXT NOT NULL, name TEXT NOT NULL, anonymous INTEGER NOT NULL DEFAULT 0, points BIGINT NOT NULL DEFAULT 0, gold BIGINT NOT NULL DEFAULT 0, pearls BIGINT NOT NULL DEFAULT 0, essence BIGINT NOT NULL DEFAULT 0, updated_at BIGINT NOT NULL)',
     'CREATE INDEX IF NOT EXISTS altar_offers_week_points_idx ON altar_offers (week, points)',
     // v27.91 월드보스(공유 체력)와 피해 기록.
@@ -249,9 +252,11 @@ function neonStorage(url: string): Storage {
         async addAltar(offerer, a, t) {
             await q("UPDATE altar SET total_gold=total_gold+$2, total_pearls=total_pearls+$3, total_essence=total_essence+$4, total_points=total_points+$5, tithe_gold=tithe_gold+CASE WHEN throne<>'' AND throne<>$1 THEN $6 ELSE 0 END, tithe_pearls=tithe_pearls+CASE WHEN throne<>'' AND throne<>$1 THEN $7 ELSE 0 END, tithe_essence=tithe_essence+CASE WHEN throne<>'' AND throne<>$1 THEN $8 ELSE 0 END WHERE id='main'", [offerer, a.gold, a.pearls, a.essence, a.points, t.gold, t.pearls, t.essence]);
         },
-        async listAltarGauges() { const { rows } = await q<AltarGaugeRow>('SELECT id,points,until,level FROM altar_gauges'); return rows.map(r => ({ id: r.id, points: Number(r.points), until: Number(r.until), level: Number(r.level || 0) })); },
-        async levelAltarBlessing(id, cost, expectLevel, now, ms, cap, max) {
-            const { rows } = await q<{ level: string; until: string }>('UPDATE altar_gauges SET points=points-$2, level=CASE WHEN until>$4 THEN LEAST(level+1,$7) ELSE 1 END, until=LEAST(GREATEST(until,$4)+$5,$4+$6) WHERE id=$1 AND points>=$2 AND (CASE WHEN until>$4 THEN level ELSE 0 END)=$3 RETURNING level, until', [id, cost, expectLevel, now, ms, cap, max]);
+        async listAltarGauges() { const { rows } = await q<AltarGaugeRow>('SELECT id,points,until,level,high_until FROM altar_gauges'); return rows.map(r => ({ id: r.id, points: Number(r.points), until: Number(r.until), level: Number(r.level || 0), high_until: Number(r.high_until || 0) })); },
+        async levelAltarBlessing(id, cost, expectLevel, now, ms, cap, max, highMs = 0, highFrom = 3) {
+            // 살아 있는 단계(eff): 닫혔으면 0, 상위 단계 시간이 지났으면 highFrom으로 내려 봅니다.
+            const eff = 'CASE WHEN until>$4 THEN (CASE WHEN high_until>$4 THEN level ELSE LEAST(level,$9) END) ELSE 0 END';
+            const { rows } = await q<{ level: string; until: string }>(`UPDATE altar_gauges SET points=points-$2, level=LEAST(${eff}+1,$7), high_until=CASE WHEN $8>0 THEN $4+$8 ELSE high_until END, until=GREATEST(LEAST(GREATEST(until,$4)+$5,$4+$6), CASE WHEN $8>0 THEN $4+$8+$6 ELSE 0 END) WHERE id=$1 AND points>=$2 AND ${eff}=$3 RETURNING level, until`, [id, cost, expectLevel, now, ms, cap, max, highMs, highFrom]);
             return rows[0] ? { level: Number(rows[0].level), until: Number(rows[0].until) } : null;
         },
         async addAltarGauge(id, points) { await q('INSERT INTO altar_gauges (id,points,until) VALUES ($1,$2,0) ON CONFLICT (id) DO UPDATE SET points=altar_gauges.points+EXCLUDED.points', [id, points]); },
@@ -350,10 +355,13 @@ function fileStorage(): Storage {
         addAltarGauge: (id, points) => tx(db => { const g = (db.altarGauges ??= {})[id] ??= { id, points: 0, until: 0 }; g.points += points; }),
         spendAltarGauge: (id, cost) => tx(db => { const g = db.altarGauges?.[id]; if (!g || g.points < cost) return false; g.points -= cost; return true; }),
         extendAltarGauge: (id, now, ms, cap) => tx(db => { const g = db.altarGauges?.[id]; if (!g) return 0; g.until = Math.min(Math.max(g.until, now) + ms, now + cap); return g.until; }),
-        levelAltarBlessing: (id, cost, expectLevel, now, ms, cap, max) => tx(db => {
+        levelAltarBlessing: (id, cost, expectLevel, now, ms, cap, max, highMs = 0, highFrom = 3) => tx(db => {
             const g = db.altarGauges?.[id]; if (!g || g.points < cost) return null;
-            const active = g.until > now; if ((active ? g.level || 0 : 0) !== expectLevel) return null;
-            g.points -= cost; g.level = active ? Math.min((g.level || 0) + 1, max) : 1; g.until = Math.min(Math.max(g.until, now) + ms, now + cap);
+            const eff = g.until > now ? ((g.high_until || 0) > now ? g.level || 0 : Math.min(g.level || 0, highFrom)) : 0; if (eff !== expectLevel) return null;
+            g.points -= cost; g.level = Math.min(eff + 1, max);
+            if (highMs > 0) g.high_until = now + highMs;
+            // 상위 단계: 그 단계 시간 뒤 3단계가 cap(12시간) 동안 이어지도록 전체 시간을 보장합니다.
+            g.until = Math.max(Math.min(Math.max(g.until, now) + ms, now + cap), highMs > 0 ? now + highMs + cap : 0);
             return { level: g.level, until: g.until };
         }),
         summonAltarGod: (god, until, now) => tx(db => { const r = db.altar = { ...ALTAR_EMPTY, ...db.altar }; if (r.god_state === 'alive' && r.god_until >= now) return false; Object.assign(r, { gen: r.gen + 1, god_state: 'alive', god, god_until: until }); return true; }),
