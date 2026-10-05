@@ -1301,13 +1301,13 @@ test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/m
     assert.equal(R.gainsOf({ id: 4, type: 'battle', text: '나 · 기본 공격 → 500 물리 피해', event: { actor: '나', total: 500 } }, '나').dmg, 500);
     assert.equal(R.gainsOf({ id: 5, type: 'battle', text: '적 · 기본 공격 → 50 물리 피해', event: { actor: '적', total: 50 } }, '나').dmg, 0, 'enemy damage is not mine');
     const store = R.createLiveRates(); let n = 0; store.subscribe(() => n++);
-    const mk = (lastTick, kills, logs, rebirths = 1) => ({ lastTick, kills, logs, rebirths, name: '나' });
+    const mk = (lastTick, kills, logs, rebirths = 1, mastery = 0) => ({ lastTick, kills, logs, rebirths, name: '나', jobMastery: { harpoon: mastery } });
     store.feed(mk(0, 10, [{ id: 1, type: 'reward', text: '이미 지난 줄 · +999 G · +999 EXP' }])); assert.equal(store.get().ready, false); assert.equal(n, 1);
     store.feed(mk(0, 10, [])); assert.equal(n, 1, 'same tick adds nothing');
     store.feed(mk(10_000, 12, [{ id: 2, type: 'reward', text: '달팽이 처치 · +100 G · +200 EXP' }, { id: 3, type: 'battle', text: '', event: { actor: '나', total: 1000 } }]));
     assert.equal(store.get().ready, false, '10s is below the minimum'); assert.deepEqual(store.get().total, { exp: 200, gold: 100, kills: 2, dmg: 1000, mastery: 0 });
-    store.feed(mk(30_000, 13, [{ id: 3, type: 'battle', text: '', event: { actor: '나', total: 1000 } }, { id: 4, type: 'skill', text: '처치 · 직업·장착 스킬 숙련 +4' }]));
-    const r = store.get(); assert.ok(r.ready); assert.equal(r.elapsedMs, 30_000); assert.equal(r.total.dmg, 1000, 'old log ids are not re-added'); assert.equal(r.perHour.exp, 200 * 120); assert.equal(r.perHour.kills, 3 * 120); assert.equal(r.perHour.mastery, 4 * 120); assert.ok(Math.abs(r.dps - 1000 / 30) < 1e-9);
+    store.feed(mk(30_000, 13, [{ id: 3, type: 'battle', text: '', event: { actor: '나', total: 1000 } }], 1, 4));
+    const r = store.get(); assert.ok(r.ready); assert.equal(r.elapsedMs, 30_000); assert.equal(r.total.dmg, 1000, 'old log ids are not re-added'); assert.equal(r.perHour.exp, 200 * 120); assert.equal(r.perHour.kills, 3 * 120); assert.equal(r.perHour.mastery, 4 * 120, 'mastery from job mastery delta'); assert.ok(Math.abs(r.dps - 1000 / 30) < 1e-9);
     // 5분 창: 오래된 표본은 버립니다.
     for (let at = 90_000; at < R.RATE_WINDOW_MS + 30_000; at += 60_000) store.feed(mk(at, 13, []));
     store.feed(mk(R.RATE_WINDOW_MS + 30_000, 14, [{ id: 5, type: 'reward', text: '달팽이 처치 · +10 G · +10 EXP' }]));
@@ -1332,4 +1332,13 @@ test('v3.14 plain 태초 charm renamed to 제네시스 펜던트 by migration; o
     assert.equal(G.ACCESSORY_NAMES[6], '제네시스 펜던트');
     const s = newState(0); s.inventory.push({ id: 'a', name: '창세의 뱃지', slot: 'charm', rarity: 6, level: 100, power: 500, affixes: [] }, { id: 'b', name: '창세의 뱃지', slot: 'charm', rarity: 6, level: 100, power: 500, affixes: [], onyx: 'onyxBlackMage' });
     Mig.renameMapleGear(s); assert.equal(s.inventory.find(i => i.id === 'a').name, '제네시스 펜던트'); assert.equal(s.inventory.find(i => i.id === 'b').name, '창세의 뱃지');
+});
+
+test('v3.15 level projection: counts level-ups through xpNeeded, stops at the cap, and msToCap sums the remaining need', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const R = await L.load('systems/live-rates'), B = await L.load('data/balance');
+    const need1 = B.xpNeeded(1, 0), need2 = B.xpNeeded(2, 0);
+    assert.deepEqual(R.projectLevel(1, 0, 0, 0), { level: 1, exp: 0, capped: false, progress: 0 });
+    const p = R.projectLevel(1, 0, 0, need1 + need2 + 5); assert.equal(p.level, 3); assert.equal(p.exp, 5);
+    assert.ok(R.projectLevel(1, 0, 0, 1e18).capped); assert.equal(R.projectLevel(100, 0, 0, 0).level, 100);
+    assert.equal(R.msToCap(99, 0, 0, B.xpNeeded(99, 0)), 3_600_000, 'one hour at exactly one level of exp per hour'); assert.equal(R.msToCap(50, 0, 0, 0), Infinity); assert.equal(R.msToCap(100, 0, 0, 100), 0);
 });
