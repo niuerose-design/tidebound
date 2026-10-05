@@ -1,9 +1,10 @@
 /** v3.18 해커 행동: 재화 변환(단방향), 침투 작전, 해킹 단계 해금, 신원 조작, 해킹 실행(서버 공유는 /api/hack에서). */
 import type { ActionHandlers } from './types';
-import { HACKER, PRIVACY_FIELDS, HACK_TIER, programById, type PrivacyField } from '../../data/hacker';
+import { HACKER, PRIVACY_FIELDS, HACK_TIER, HACK_NAMES, WIPE_TRACE_ID, programById, type PrivacyField } from '../../data/hacker';
+import { canUse } from '../progression';
 import { STAGES, DUNGEONS } from '../../data/world';
 import { BLESSINGS, RAIDS } from '../../data/altar';
-import { entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn } from '../hacker';
+import { entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn, isBlackHacker } from '../hacker';
 import { dayKey, weekKey } from '../../data/goals';
 import { addLog } from '../state';
 
@@ -88,19 +89,31 @@ export const hackerActions: ActionHandlers = {
      * 일반 행동 경로(/api/game)로는 받지 않습니다(route에서 거절).
      * v3.25 해킹 II~V(이벤트 변조·서버 다운·패킷 스니핑·백도어)와 화이트 해커(복구·패치). 화이트 해커는 공격 해킹(I~III)을 쓰지 않습니다.
      */
-    hackRun(s, { a, id, now }) {
+    hackRun(s, { a, id, now, rng }) {
         needHacker(s);
-        const h = rollHackerDay(s, now), n = h.tier, white = isWhiteHacker(s);
+        const h = rollHackerDay(s, now), n = h.tier, white = isWhiteHacker(s), black = isBlackHacker(s);
         const used = h.used ??= {}, value = String(a.value || '').trim();
+        // v3.28 블랙 해커가 추적당한 동안은 해킹할 수 없습니다(정산·신원 조작 거두기는 가능).
+        if ((h.bustedUntil || 0) > now && !['sniffClaim', 'interceptClaim', 'unspoof'].includes(id || '')) throw Error(`추적당해 ${Math.ceil((h.bustedUntil! - now) / 60000)}분 동안 해킹할 수 없습니다.`);
         const need = (tier: number) => { if (n < tier) throw Error(`해킹 ${ROMAN[tier - 1]}을 먼저 해금하세요.`); };
-        const pay = (bits: number) => { if (h.bits < bits) throw Error(`비트 ${bits}가 필요합니다.`); h.bits -= bits; };
-        const daily = (key: string, cap: number, label: string) => { if ((used[key] || 0) >= cap) throw Error(`오늘의 ${label} 횟수를 모두 썼습니다.`); used[key] = (used[key] || 0) + 1; };
+        // v3.28 블랙 해커는 해킹 비트·하루 횟수가 두 배(scale = false: 신원 조작, 대상마다 걸린 1회, 루트 권한 횟수).
+        const pay = (bits: number, scale = true) => { const cost = black && scale ? bits * HACKER.black.cost : bits; if (h.bits < cost) throw Error(`비트 ${cost}가 필요합니다.`); h.bits -= cost; };
+        const daily = (key: string, cap: number, label: string, scale = true) => { if ((used[key] || 0) >= (black && scale ? cap * HACKER.black.cap : cap)) throw Error(`오늘의 ${label} 횟수를 모두 썼습니다.`); used[key] = (used[key] || 0) + 1; };
         const offense = () => { if (white) throw Error('화이트 해커는 공격 해킹을 쓰지 않습니다. 해커로 전직하면 쓸 수 있습니다.'); };
+        /** v3.28 블랙 해커의 실패: 비트·횟수는 쓰이고 효과는 없습니다. 추적되어 이름이 공지되고(서버) 6시간 동안 해킹할 수 없습니다. */
+        const busted = () => {
+            if (!black || rng() >= HACKER.black.fail(n)) return false;
+            const label = HACK_NAMES[id || ''] || '해킹', hours = s.skills.includes(WIPE_TRACE_ID) && canUse(s, WIPE_TRACE_ID) ? HACKER.black.wipedHours : HACKER.black.traceHours;
+            h.bustedUntil = now + hours * 3600_000;
+            h.pending = { kind: 'busted', value: label, minutes: hours * 60 };
+            addLog(s, `${label} 실패 · 추적당했습니다! ${hours}시간 동안 해킹할 수 없고, 전체 채팅에 이름이 공지됩니다.`, 'system');
+            return true;
+        };
         if (id === 'broadcast') {
             offense(); need(HACK_TIER.broadcast);
             if (!BROADCAST_PATTERN.test(value)) throw Error(`방송 문구는 1~${HACKER.broadcast.maxLength}자(줄바꿈·꺾쇠 제외)로 쓰세요.`);
-            if ((used.broadcast || 0) >= HACKER.broadcast.perDay(n)) throw Error('오늘의 방송 탈취 횟수를 모두 썼습니다.');
-            pay(HACKER.broadcast.bits); used.broadcast = (used.broadcast || 0) + 1;
+            daily('broadcast', HACKER.broadcast.perDay(n), '방송 탈취'); pay(HACKER.broadcast.bits);
+            if (busted()) return;
             h.pending = { kind: 'broadcast', value, minutes: HACKER.broadcast.minutes(n) };
             gainHacker(s, 0, HACKER.broadcast.exp); bumpSeason(s, now, { hacks: 1 });
             return;
@@ -108,8 +121,8 @@ export const hackerActions: ActionHandlers = {
         if (id === 'crack') {
             offense(); need(HACK_TIER.crack);
             if (!value) throw Error('크래킹할 대상을 고르세요.');
-            if ((used.crack || 0) >= HACKER.crack.perDay(n)) throw Error('오늘의 크래킹 횟수를 모두 썼습니다.');
-            pay(HACKER.crack.bits); used.crack = (used.crack || 0) + 1;
+            daily('crack', HACKER.crack.perDay(n), '크래킹'); pay(HACKER.crack.bits);
+            if (busted()) return;
             h.pending = { kind: 'crack', value, minutes: HACKER.crack.minutes };
             gainHacker(s, 0, HACKER.crack.exp); bumpSeason(s, now, { hacks: 1 });
             return;
@@ -120,6 +133,7 @@ export const hackerActions: ActionHandlers = {
             const [eventId, time, rate] = value.split('|');
             if (!eventId || eventId.startsWith('altar-') || eventId.startsWith('hack-') || !['+', '-'].includes(time) || !['+', '-'].includes(rate)) throw Error('변조할 이벤트와 방향을 고르세요.');
             daily('tamper', HACKER.tamper.perDay(), '이벤트 변조'); pay(HACKER.tamper.bits);
+            if (busted()) return;
             h.pending = { kind: 'tamper', value: `${eventId}|${time === '+' ? 1 : -1}|${rate === '+' ? 1 : -1}`, minutes: HACKER.tamper.minutes(n), n };
             gainHacker(s, 0, HACKER.tamper.exp); bumpSeason(s, now, { hacks: 1 });
             return;
@@ -128,6 +142,7 @@ export const hackerActions: ActionHandlers = {
             offense(); need(HACK_TIER.down);
             const place = parsePlace(value);
             daily('down', HACKER.down.perDay(n), '서버 다운'); pay(HACKER.down.bits);
+            if (busted()) return;
             const minutes = Math.round(HACKER.down.minutes(n) * (h.loadout?.includes('exploitKit') ? 1.2 : 1));
             h.pending = { kind: 'down', value: place, minutes, n };
             gainHacker(s, 0, HACKER.down.exp); bumpSeason(s, now, { hacks: 1 });
@@ -137,6 +152,7 @@ export const hackerActions: ActionHandlers = {
             need(HACK_TIER.sniff);
             if (h.sniff) throw Error(h.sniff.until > now ? `패킷 스니핑이 ${Math.ceil((h.sniff.until - now) / 60000)}분 남았습니다.` : '끝난 패킷 스니핑을 먼저 정산하세요.');
             daily('sniff', HACKER.sniff.perDay(), '패킷 스니핑'); pay(HACKER.sniff.bits);
+            if (busted()) return;
             // v3.28 봇넷 중에 시작한 스니핑은 정산 ×2(상한도 ×2).
             const mult = botnetOn(s, now) ? HACKER.botnet.rate : 1;
             h.sniff = { from: now, until: now + HACKER.sniff.minutes * 60_000, n, ...(mult > 1 ? { mult } : {}) };
@@ -157,6 +173,7 @@ export const hackerActions: ActionHandlers = {
             if (!RAIDS.some(r => r.id === value)) throw Error('가로챌 월드보스를 고르세요.');
             if (h.intercept) throw Error('걸어 둔 패킷 가로채기를 먼저 정산하세요.');
             daily('intercept', HACKER.intercept.perDay(), '패킷 가로채기'); pay(HACKER.intercept.bits);
+            if (busted()) return;
             h.pending = { kind: 'intercept', value, minutes: 0, n };
             gainHacker(s, 0, HACKER.intercept.exp); bumpSeason(s, now, { hacks: 1 });
             return;
@@ -172,6 +189,7 @@ export const hackerActions: ActionHandlers = {
             const [raid, mode] = value.split('|');
             if (!RAIDS.some(r => r.id === raid) || !['rewind', 'forward'].includes(mode)) throw Error('월드보스와 되감기·빨리감기를 고르세요.');
             daily('savescum', HACKER.savescum.perDay(), '세이브 스캠'); pay(HACKER.savescum.bits);
+            if (busted()) return;
             h.pending = { kind: 'savescum', value: `${raid}|${mode}`, minutes: 0, n };
             gainHacker(s, 0, HACKER.savescum.exp); bumpSeason(s, now, { hacks: 1 });
             return;
@@ -180,6 +198,7 @@ export const hackerActions: ActionHandlers = {
             // v3.28 해킹 VIII 봇넷: 세이브 안에서만 계산합니다(서버 쓰기 없음).
             need(HACK_TIER.botnet);
             daily('botnet', HACKER.botnet.perDay(), '봇넷'); pay(HACKER.botnet.bits);
+            if (busted()) return;
             h.botnet = { until: Math.max(h.botnet?.until || 0, now) + HACKER.botnet.hours * 3600_000, day: dayKey(now) };
             gainHacker(s, 0, HACKER.botnet.exp); bumpSeason(s, now, { hacks: 1 });
             addLog(s, `봇넷 가동 · ${HACKER.botnet.hours}시간 동안 브루트포스·패킷 스니핑 ×${HACKER.botnet.rate}, 오늘 침투 작전 입장 +${HACKER.botnet.entries}`, 'reward');
@@ -190,8 +209,9 @@ export const hackerActions: ActionHandlers = {
             need(HACK_TIER.ddos);
             if (!(HACKER.ddos.kinds as readonly string[]).includes(value)) throw Error('열 이벤트(경험치·골드·드롭)를 고르세요.');
             const week = weekKey(now), done = h.ddos?.week === week ? h.ddos.n : 0;
-            if (done >= HACKER.ddos.perWeek()) throw Error('이번 주의 DDoS 횟수를 모두 썼습니다.');
+            if (done >= HACKER.ddos.perWeek() * (black ? HACKER.black.cap : 1)) throw Error('이번 주의 DDoS 횟수를 모두 썼습니다.');
             pay(HACKER.ddos.bits); h.ddos = { week, n: done + 1 };
+            if (busted()) return;
             h.pending = { kind: 'ddos', value, minutes: HACKER.ddos.hours * 60, n };
             gainHacker(s, 0, HACKER.ddos.exp); bumpSeason(s, now, { hacks: 1 });
             return;
@@ -199,7 +219,8 @@ export const hackerActions: ActionHandlers = {
         if (id === 'root') {
             // v3.28 해킹 X 루트 권한: 오늘의 해킹 횟수를 모두 되돌립니다(루트 권한 자신과 주간 DDoS는 그대로).
             need(HACK_TIER.root);
-            daily('root', HACKER.root.perDay(), '루트 권한'); pay(HACKER.root.bits);
+            daily('root', HACKER.root.perDay(), '루트 권한', false); pay(HACKER.root.bits);
+            if (busted()) return;
             h.used = { root: used.root };
             h.roots = (h.roots || 0) + 1;
             h.pending = { kind: 'root', value: '', minutes: HACKER.root.showMinutes, n };
@@ -210,7 +231,8 @@ export const hackerActions: ActionHandlers = {
         if (id === 'backdoor') {
             need(HACK_TIER.backdoor);
             if (![...BLESSINGS.map(b => b.id), 'god', ...RAIDS.map(r => r.id)].includes(value)) throw Error('채울 제단 게이지를 고르세요.');
-            daily(`backdoor:${value}`, 1, '이 게이지의 백도어'); pay(HACKER.backdoor.bits);
+            daily(`backdoor:${value}`, 1, '이 게이지의 백도어', false); pay(HACKER.backdoor.bits);
+            if (busted()) return;
             h.pending = { kind: 'backdoor', value, minutes: 0, n };
             gainHacker(s, 0, HACKER.backdoor.exp); bumpSeason(s, now, { hacks: 1 });
             return;
@@ -223,7 +245,7 @@ export const hackerActions: ActionHandlers = {
             if (!target) throw Error('신원을 조작할 대상을 고르세요.');
             if (!Number.isFinite(hours) || hours < 0 || hours > HACKER.spoof.maxHours) throw Error(`기간은 0(무기한)~${HACKER.spoof.maxHours}시간으로 정하세요.`);
             const show = level >= 2 ? [...new Set(fields.split(',').map(x => x.trim()).filter((x): x is PrivacyField => (PRIVACY_FIELDS as readonly string[]).includes(x)))] : [];
-            daily('spoof', HACKER.spoof.perDay(level), '신원 조작'); pay(HACKER.spoof.bits);
+            daily('spoof', HACKER.spoof.perDay(level), '신원 조작', false); pay(HACKER.spoof.bits, false);
             h.pending = { kind: 'spoof', value: `${target}|${show.join(',')}`, minutes: hours * 60 };
             gainHacker(s, 0, HACKER.spoof.exp); bumpSeason(s, now, { hacks: 1 });
             return;
@@ -240,6 +262,7 @@ export const hackerActions: ActionHandlers = {
             if (!value) throw Error('대상 해커를 고르세요.');
             const def = id === 'trace' ? HACKER.trace : HACKER.overload;
             daily(id, 1, id === 'trace' ? '역추적' : '과부하'); pay(def.bits);
+            if (busted()) return;
             h.pending = { kind: id, value, minutes: id === 'overload' ? HACKER.overload.minutes : 0 };
             gainHacker(s, 0, def.exp); bumpSeason(s, now, { hacks: 1 });
             return;

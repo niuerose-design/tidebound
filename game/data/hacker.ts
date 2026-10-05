@@ -11,8 +11,12 @@ export const HACKER_ID = 'hacker';
 export const ADGUARD_ID = 'adGuard';
 /** v3.25 화이트 해커(해커 계열 2차). 해커와 같은 제약을 받고, 해킹을 되돌리고 사냥터를 패치합니다. */
 export const WHITE_HACKER_ID = 'whiteHacker';
-export const HACKER_LINE: readonly string[] = [HACKER_ID, WHITE_HACKER_ID];
+/** v3.28 블랙 해커(해커 계열 2차). 해커와 같은 제약을 받고, 해킹을 더 자주·더 비싸게 쓰되 실패하면 추적됩니다. */
+export const BLACK_HACKER_ID = 'blackHacker';
+export const HACKER_LINE: readonly string[] = [HACKER_ID, WHITE_HACKER_ID, BLACK_HACKER_ID];
 export const FIREWALL_ID = 'firewall';
+/** v3.28 블랙 해커 전용 패시브: 실패해 추적당하는 시간을 절반으로. */
+export const WIPE_TRACE_ID = 'wipeTrace';
 export const isHackerJob = (id: string) => HACKER_LINE.includes(id);
 
 export const HACKER = {
@@ -81,6 +85,12 @@ export const HACKER = {
     ddos: { kinds: ['exp', 'gold', 'drop'] as const, rate: 1.2, hours: 2, perWeek: () => 1, bits: 150, exp: 200 },
     /** v3.28 해킹 X 루트 권한: 하루 1회 오늘의 해킹 횟수를 모두 되돌림(주간 DDoS 제외) + 10분 동안 서버 전체에 ROOT 연출 + 영구 칭호 root. */
     root: { perDay: () => 1, bits: 100, exp: 300, showMinutes: 10 },
+    /**
+     * v3.28 블랙 해커: 하루(주) 횟수 두 배(쿨다운 절반) · 해킹 비트 두 배 · 실패 확률 35% − 3%×n(최소 5%).
+     * 실패하면 비트·횟수는 쓰이고 효과는 없으며, 추적되어 전체 채팅에 이름이 공지되고 6시간 동안 해킹할 수 없습니다.
+     * 대상·보스·게이지마다 걸린 1회 제한과 루트 권한(하루 1회)은 그대로입니다.
+     */
+    black: { cost: 2, cap: 2, fail: (n: number) => Math.max(.05, .35 - .03 * n), traceHours: 6, wipedHours: 3 },
 } as const;
 /** v3.25 해킹 실행 비트 비용(되돌린 해킹의 현상금 계산에도 씁니다). */
 export const HACK_BITS: Record<string, number> = { broadcast: HACKER.broadcast.bits, crack: HACKER.crack.bits, tamper: HACKER.tamper.bits, down: HACKER.down.bits, ddos: HACKER.ddos.bits };
@@ -111,6 +121,7 @@ export const PRIVACY_LABELS: Record<PrivacyField, string> = { job: '직업', lev
 /** 해커(1차, ??? 계열 독립 직업). 능력치 보정은 없고 규칙으로 막습니다: 전투(사냥·던전·결투·월드보스·신 도전) 불가, 능력치 투자·다른 스킬 장착 불가. */
 export const HACKER_JOBS = [
     { id: HACKER_ID, name: '해커', title: '게임의 헛점을 파고든다', desc: '전투 능력은 전무합니다. 사냥·던전·결투·월드보스·신 도전에 참여할 수 없고, 능력치 투자와 해커 전용이 아닌 스킬 장착이 막히며, 해커로 있는 동안 레벨·경험치가 멈춥니다. 대신 침투 작전으로 비트와 권한을 쌓고, 서버의 방송을 탈취하고 다른 모험가의 숨김을 깨뜨립니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 30, rebirth: 3, mastery: 0, requires: {}, role: '해킹·서버', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '세 번의 윤회를 넘긴 자에게 서버의 틈이 보입니다.', masteryTarget: 3000, masteryBoost: 0 },
+    { id: BLACK_HACKER_ID, name: '블랙 해커', title: '흔적을 남기지 않는 자', desc: '해커와 같은 제약(전투 불가, 레벨·경험치 정지)을 받습니다. 해킹의 하루 횟수가 두 배(쿨다운 절반)지만 비트도 두 배로 들고, 해킹마다 실패 확률(35% − 단계×3%, 최소 5%)이 있습니다. 실패하면 비트·횟수만 쓰이고, 추적되어 전체 채팅에 이름이 공지되며 6시간 동안 해킹할 수 없습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, rebirth: 3, parent: HACKER_ID, mastery: 1500, requires: {}, role: '고위험 해킹', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '해커로 서버를 충분히 들여다본 자에게 더 어두운 길이 보입니다.', masteryTarget: 6000, masteryBoost: 0 },
     { id: WHITE_HACKER_ID, name: '화이트 해커', title: '뚫린 곳을 막는 자', desc: '해커와 같은 제약(전투 불가, 레벨·경험치 정지)을 받습니다. 공격 해킹(방송 탈취·크래킹·이벤트 변조·서버 다운) 대신 다른 해커의 해킹을 되돌리고(현상금으로 비트), 사냥터·던전을 패치해 한 시간 동안 서버 다운을 막습니다. 전용 패시브 방화벽은 하루 한 번 크래킹을 막아 냅니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, rebirth: 3, parent: HACKER_ID, mastery: 1500, requires: {}, role: '복구·패치', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '해커로 서버를 충분히 들여다본 자에게 반대편 길이 보입니다.', masteryTarget: 6000, masteryBoost: 0 },
 ];
 
@@ -120,4 +131,6 @@ export const HACKER_SKILLS: Skill[] = [
     { id: ADGUARD_ID, name: '신원 조작', desc: '해커 전용. 고른 모험가 한 명(나도 가능)의 랭킹 정보 공개 여부를 바꿉니다. 숙련 1단계: 이름과 모든 정보를 ???로 1시간 가림. 숙련 2단계: 가릴 항목을 고름. 숙련 3단계: 2시간. 하루 횟수는 숙련 단계만큼. 크래킹을 당하면 그동안 풀립니다.', type: 'passive', level: 30, job: HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 5, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
     /** v3.25 화이트 해커 전용 패시브. 장착하면 하루 한 번 크래킹을 막아 냅니다(막힌 해커의 비트·횟수는 그대로 씀). */
     { id: FIREWALL_ID, name: '방화벽', desc: '하루 한 번, 나를 노린 크래킹을 막아 냅니다. 숙련은 해커 활동으로 오릅니다.', type: 'passive', level: 30, job: WHITE_HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
+    /** v3.28 블랙 해커 전용 패시브. 장착하면 해킹에 실패해 추적당하는 시간이 6시간 → 3시간. */
+    { id: WIPE_TRACE_ID, name: '흔적 지우기', desc: '해킹에 실패해 추적당했을 때 해킹할 수 없는 시간이 6시간에서 3시간으로 줄어듭니다.', type: 'passive', level: 30, job: BLACK_HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
 ];

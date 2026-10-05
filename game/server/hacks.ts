@@ -249,6 +249,11 @@ export async function applyPendingHack(s: State, id: string, now: number) {
         addLog(s, `DDoS · ${label} ×${HACKER.ddos.rate} 이벤트를 ${pending.minutes / 60}시간 동안 열었습니다.`, 'reward');
         await hackNotice(`[해커 ${by}] DDoS · 서버 이벤트 ${label} ×${HACKER.ddos.rate}이(가) ${pending.minutes / 60}시간 동안 열렸습니다.`, now);
     }
+    else if (pending.kind === 'busted') {
+        // v3.28 블랙 해커 실패: 루트킷이 있어도 진짜 이름을 공지합니다.
+        await hackNotice(`🚨 블랙 해커 ${josa(s.name, '이가')} ${pending.value} 중 추적당했습니다. ${pending.minutes / 60}시간 동안 해킹할 수 없습니다.`, now);
+        write = false;
+    }
     else if (pending.kind === 'root') {
         h.root = { by, byId: id, until: now + pending.minutes * 60_000 };
         await hackNotice(`⚠ ROOT ACCESS · ${josa(`해커 ${by}`, '이가')} 서버의 루트 권한을 얻었습니다.`, now);
@@ -309,7 +314,7 @@ async function hackNotice(text: string, now: number) {
 }
 /** v3.26 해커 계열 전직을 전체 채팅에 알립니다(이름은 밝히지 않음). 채팅 화면은 account_id 'system-hacker'를 빨간 줄로 그립니다. */
 export async function announceHacker(job: string, now: number) {
-    const text = `누군가가 ${job === 'whiteHacker' ? '화이트 해커' : '해커'}로 전직했습니다.`;
+    const text = `누군가가 ${job === 'whiteHacker' ? '화이트 해커' : job === 'blackHacker' ? '블랙 해커' : '해커'}로 전직했습니다.`;
     try { await db().postChat({ channel: 'global', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 채팅은 부가 기능 */ }
 }
 /** 운영 페이지: 진행 중인 방송 탈취를 지웁니다. */

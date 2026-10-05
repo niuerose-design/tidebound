@@ -623,12 +623,16 @@ export type HackerState = {
     ddos?: { week: string; n: number };
     /** v3.28 해킹 X 루트 권한을 쓴 횟수(칭호 root). */
     roots?: number;
+    /** v3.28 블랙 해커가 해킹에 실패해 추적당한 동안(이 시각까지 해킹 불가). */
+    bustedUntil?: number;
     /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
     season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };
 export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof' | 'unspoof' | 'trace' | 'overload'
     /** v3.28 해킹 VI~X(봇넷은 세이브 안에서만 계산). */
-    | 'intercept' | 'interceptClaim' | 'savescum' | 'ddos' | 'root';
+    | 'intercept' | 'interceptClaim' | 'savescum' | 'ddos' | 'root'
+    /** v3.28 블랙 해커 실패(추적 공지만). */
+    | 'busted';
 export type Snapshot = {
     /** v3.18 옛 애드가드 숨김 정보(v3.26부터 스냅샷에 싣지 않고 서버 설정 hacks.masked로 가림). */
     privacy?: { show: string[] };

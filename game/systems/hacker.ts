@@ -3,7 +3,7 @@
  * 침투 작전의 정답은 서버 키(setPuzzleKey)와 판 시드로 만든 해시라, 세이브(클라이언트에 보내는 상태)에는 정답이 없습니다.
  */
 import type { State, HackerState, HackerInfil } from '../types';
-import { HACKER, WHITE_HACKER_ID, ADGUARD_ID, gradeNeed, isHackerJob, programById, type ProgramId } from '../data/hacker';
+import { HACKER, WHITE_HACKER_ID, BLACK_HACKER_ID, ADGUARD_ID, gradeNeed, isHackerJob, programById, type ProgramId } from '../data/hacker';
 import { monthKey } from '../data/goals';
 import { dayKey } from '../data/goals';
 import { canUse, skillMastery } from './progression';
@@ -12,6 +12,13 @@ import { addLog } from './state';
 /** v3.25 해커 계열(해커·화이트 해커). 같은 제약(전투 불가, 레벨 정지)을 받습니다. */
 export const isHacker = (s: Pick<State, 'job'>) => isHackerJob(s.job);
 export const isWhiteHacker = (s: Pick<State, 'job'>) => s.job === WHITE_HACKER_ID;
+/** v3.28 블랙 해커: 하루 횟수 ×2, 해킹 비트 ×2, 실패 확률. */
+export const isBlackHacker = (s: Pick<State, 'job'>) => s.job === BLACK_HACKER_ID;
+/** v3.28 공격 해킹(방송·크래킹·변조·다운·견제)을 쓰는 직업: 해커 · 블랙 해커. */
+export const canAttack = (s: Pick<State, 'job'>) => isHacker(s) && !isWhiteHacker(s);
+/** v3.28 해킹 비트 비용과 하루(주) 횟수: 블랙 해커는 둘 다 두 배. */
+export const hackCost = (s: Pick<State, 'job'>, bits: number) => isBlackHacker(s) ? bits * HACKER.black.cost : bits;
+export const hackCap = (s: Pick<State, 'job'>, cap: number) => isBlackHacker(s) ? cap * HACKER.black.cap : cap;
 /** v3.25 장착한 프로그램인지(해커 계열일 때만 켜짐). */
 export const programOn = (s: Pick<State, 'job' | 'hacker'>, id: ProgramId) => isHacker(s) && !!s.hacker?.loadout?.includes(id);
 export const memoryCap = (s: Pick<State, 'hacker'>) => HACKER.memory(s.hacker?.grade || 1);
