@@ -86,9 +86,10 @@ test('v3.26 identity spoof (old adguard): hacker-only, mastery sets daily uses a
     s.hacker.bits = 100;
     assert.throws(() => act(s, { type: 'hackRun', id: 'spoof', value: 'abyss:x|' }, 0), /숙련 1단계/);
     H.gainHacker(s, 0, 300); assert.equal(H.adguardLevel(s), 1);
-    act(s, { type: 'hackRun', id: 'spoof', value: 'abyss:x|job,level' }, 0); assert.deepEqual(s.hacker.pending, { kind: 'spoof', value: 'abyss:x|', minutes: 60 }, 'level 1 hides everything'); delete s.hacker.pending;
+    act(s, { type: 'hackRun', id: 'spoof', value: 'abyss:x|job,level|5' }, 0); assert.deepEqual(s.hacker.pending, { kind: 'spoof', value: 'abyss:x|', minutes: 300 }, 'level 1 hides everything; 5 hours'); delete s.hacker.pending;
     assert.throws(() => act(s, { type: 'hackRun', id: 'spoof', value: 'self|' }, 0), /횟수/, 'level 1: once a day');
-    H.gainHacker(s, 0, 1000); act(s, { type: 'hackRun', id: 'spoof', value: 'self|job,nope' }, 0); assert.deepEqual(s.hacker.pending, { kind: 'spoof', value: 'self|job', minutes: 60 });
+    H.gainHacker(s, 0, 1000); act(s, { type: 'hackRun', id: 'spoof', value: 'self|job,nope|0' }, 0); assert.deepEqual(s.hacker.pending, { kind: 'spoof', value: 'self|job', minutes: 0 }, 'v3.27 0 = indefinite');
+    delete s.hacker.pending; s.hacker.used.spoof = 0; assert.throws(() => act(s, { type: 'hackRun', id: 'spoof', value: 'self||99999' }, 0), /기간/);
     assert.ok(s.hacker.grade > 1, 'grade rises with exp');
     s.level = 200; act(s, { type: 'rebirth' }, 0); assert.ok(s.hacker && s.hacker.grade > 1, 'hacker progress survives rebirth');
 });
@@ -172,7 +173,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
     const Hk = await load('game/server/hacks.js'), DB = await load('game/server/db.js'), A = await load('game/data/altar.js');
     try {
         const database = DB.db(), now = Date.now();
-        Ev.setRuntimeEvents([{ id: 'ev1', name: '테스트', from: new Date(now - 3600_000).toISOString(), until: new Date(now + 3600_000).toISOString(), exp: 2 }], []);
+        Ev.setAltarEvents([]); Ev.setEventTamper({}); Ev.setRuntimeEvents([{ id: 'ev1', name: '테스트', from: new Date(now - 3600_000).toISOString(), until: new Date(now + 3600_000).toISOString(), exp: 2 }], []);
         const a = veteran(); a.name = '검은손';
         act(a, { type: 'hackRun', id: 'tamper', value: 'ev1|+|+' }, now); await Hk.applyPendingHack(a, 'acct_a', now);
         assert.equal(Ev.activeEvent(now).exp, 2.5, 'tier V tamper +50%p'); assert.ok(!a.hacker.pending);
@@ -203,6 +204,23 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         const out = Hk.maskSnapshot(snap, 'spoofed', hk, T + 1); assert.equal(out.name, '???'); assert.equal(out.job, ''); assert.ok(!('privacy' in out));
         assert.deepEqual(Hk.maskSnapshot(snap, 'other', hk, T + 1), { name: '피해자', job: 'fisher', level: 50 }, 'old self privacy ignored');
         hk.cracked.spoofed = 9e15; assert.equal(Hk.maskSnapshot(snap, 'spoofed', hk, T + 1).name, '피해자');
+        // v3.27 무기한 신원 조작 · 거두기 · 화이트 해커 되돌리기.
+        h.hacker.used.spoof = 0; act(h, { type: 'hackRun', id: 'spoof', value: 'abyss:forever||0' }, T); await Hk.applyPendingHack(h, 'acct_h', T);
+        assert.equal(Hk.maskSnapshot(snap, 'forever', await Hk.readHacks(T), T + 1e12).name, '???', 'indefinite');
+        const other = veteran(); act(other, { type: 'hackRun', id: 'unspoof', value: 'abyss:forever' }, T); await assert.rejects(Hk.applyPendingHack(other, 'acct_o', T), /내가 건/);
+        act(h, { type: 'hackRun', id: 'unspoof', value: 'abyss:forever' }, T); await Hk.applyPendingHack(h, 'acct_h', T); assert.equal(Hk.maskSnapshot(snap, 'forever', await Hk.readHacks(T), T + 1).name, '피해자');
+        // v3.27 해커 견제: 역추적은 대상의 오늘 침투 입장을 줄이고, 과부하는 브루트포스 비트를 절반으로.
+        await database.createPlayerIfMissing('rival', JSON.stringify({ job: 'hacker', hacker: { bits: 0, exp: 0, grade: 1, tier: 0 } }), T);
+        const att = veteran(); act(att, { type: 'hackRun', id: 'trace', value: 'hacker:rival' }, T); await Hk.applyPendingHack(att, 'acct_att', T);
+        act(att, { type: 'hackRun', id: 'overload', value: 'hacker:rival' }, T); await Hk.applyPendingHack(att, 'acct_att', T);
+        assert.throws(() => act(att, { type: 'hackRun', id: 'trace', value: 'hacker:rival' }, T), /횟수/, 'once a day');
+        const rv = veteran(); await Hk.syncHackFeed(rv, 'rival', T); assert.deepEqual(rv.hackFeed.traced, { day: rv.hackFeed.traced.day, n: 1 }); assert.ok(rv.hackFeed.overloadUntil > T);
+        assert.equal(H.entriesCap(rv, T), D.HACKER.infil.entriesPerDay - 1);
+        rv.lastTick = T; const b1 = rv.hacker.bits; H.hackerTick(rv); assert.ok(Math.abs(rv.hacker.bits - b1 - D.HACKER.brute.bits * .5) < 1e-9, 'overloaded brute force');
+        const wh = veteran(); wh.jobMastery.hacker = 1500; act(wh, { type: 'job', id: 'whiteHacker' }, T); assert.throws(() => act(wh, { type: 'hackRun', id: 'trace', value: 'hacker:rival' }, T), /화이트/);
+        // v3.26 해커 전직 알림(익명, system-hacker). 파일 DB를 쓰는 테스트는 동시에 돌면 서로의 파일을 바꾸므로 한 테스트에 모읍니다.
+        await Hk.announceHacker('hacker', now); const chat = await database.listChat('global', 0, 300);
+        assert.equal(chat.at(-1).account_id, 'system-hacker'); assert.equal(chat.at(-1).text, '누군가가 해커로 전직했습니다.');
         // 순위표.
         await Hk.syncHackerBoard('acct_a', a, now); const board = await Hk.listHackerBoard(a.hacker.season.key);
         assert.equal(board[0].id, 'acct_a'); assert.equal(board[0].score, H.seasonScore(a.hacker.season)); assert.equal(Hk.playerOfRow('hacker:acct_a'), 'acct_a');
@@ -226,14 +244,8 @@ test('v3.26 infiltration puzzles: first lock then port, later nodes mix in seque
     assert.deepEqual([3, 5, 6, 12, 13].map(d => D.HACKER.infil.lock(d).digits), [3, 3, 4, 4, 5]);
 });
 
-test('v3.26 becoming a hacker flags an anonymous red chat line; the server posts it as system-hacker', async () => {
+test('v3.26 becoming a hacker flags an anonymous red chat line (posted by the server test above)', () => {
     const s = newState(0); s.level = 40; s.rebirths = 5; act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.jobAnnounce, 'hacker');
     delete s.jobAnnounce; act(s, { type: 'job', id: 'fisher' }, 0); assert.equal(s.jobAnnounce, undefined, 'leaving is quiet');
-    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
-    const file = path.join(os.tmpdir(), `tb-announce-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
-    const Hk = await load('game/server/hacks.js'), DB = await load('game/server/db.js');
-    try {
-        await Hk.announceHacker('hacker', 1000); const rows = await DB.db().listChat('global', 0, 10);
-        assert.equal(rows.at(-1).account_id, 'system-hacker'); assert.equal(rows.at(-1).text, '누군가가 해커로 전직했습니다.');
-    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
+

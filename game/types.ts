@@ -543,6 +543,11 @@ export type State = {
         events?: { id: string; name: string; until: number; tampered?: boolean }[];
         down?: { kind: 'stage' | 'dungeon'; id: string; until: number; by: string; patched?: boolean }[];
         patched?: Record<string, number>;
+        /** v3.27 신원 조작 목록(해커 계열에게만). until 0 = 무기한, mine = 내가 건 것. */
+        masks?: { target: string; until: number; by: string; mine?: boolean }[];
+        /** v3.27 다른 해커가 건 견제: 오늘 줄어든 침투 입장(trace), 브루트포스 과부하가 끝나는 시각. */
+        traced?: { day: string; n: number };
+        overloadUntil?: number;
     };
     clears: Record<string, number>;
     /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
@@ -608,7 +613,7 @@ export type HackerState = {
     /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
     season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };
-export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof';
+export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof' | 'unspoof' | 'trace' | 'overload';
 export type Snapshot = {
     /** v3.18 옛 애드가드 숨김 정보(v3.26부터 스냅샷에 싣지 않고 서버 설정 hacks.masked로 가림). */
     privacy?: { show: string[] };

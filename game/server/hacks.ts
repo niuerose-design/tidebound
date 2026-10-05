@@ -28,9 +28,13 @@ export type Hacks = {
     patched: Record<string, number>;
     /** 모험가 id → 화이트 해커 방화벽이 크래킹을 막은 날(하루 한 번). */
     shielded: Record<string, string>;
-    /** v3.26 신원 조작: 모험가 id → 숨김(공개 항목 show 말고는 ???)과 끝나는 시각. */
+    /** v3.26 신원 조작: 모험가 id → 숨김(공개 항목 show 말고는 ???)과 끝나는 시각. v3.27 until 0 = 무기한. */
     masked: Record<string, { until: number; show: string[]; by: string; byId: string }>;
+    /** v3.27 해커끼리 견제: 모험가 id → 오늘 역추적 횟수(day 기준)와 과부하가 끝나는 시각. */
+    rival: Record<string, { day?: string; trace?: number; overloadUntil?: number }>;
 };
+/** v3.27 신원 조작이 지금 걸려 있는지(until 0 = 무기한). */
+const maskLive = (m: { until: number } | undefined, now: number) => !!m && (!m.until || m.until > now);
 const KEY = 'hacks', TTL = 30_000, TAMPER_KEEP = 30 * 86400_000;
 let cached: { at: number; hacks: Hacks } | null = null;
 const obj = <T>(v: unknown): Record<string, T> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, T> : {};
@@ -38,9 +42,9 @@ const obj = <T>(v: unknown): Record<string, T> => v && typeof v === 'object' && 
 function parse(raw: string | null): Hacks {
     try {
         const v = raw ? JSON.parse(raw) : null;
-        return { broadcast: v?.broadcast && typeof v.broadcast.text === 'string' ? v.broadcast : undefined, cracked: obj<number>(v?.cracked), tamper: obj<Tamper>(v?.tamper), down: Array.isArray(v?.down) ? v.down.filter((d: Down) => d && typeof d.id === 'string') : [], patched: obj<number>(v?.patched), shielded: obj<string>(v?.shielded), masked: obj<Hacks['masked'][string]>(v?.masked) };
+        return { broadcast: v?.broadcast && typeof v.broadcast.text === 'string' ? v.broadcast : undefined, cracked: obj<number>(v?.cracked), tamper: obj<Tamper>(v?.tamper), down: Array.isArray(v?.down) ? v.down.filter((d: Down) => d && typeof d.id === 'string') : [], patched: obj<number>(v?.patched), shielded: obj<string>(v?.shielded), masked: obj<Hacks['masked'][string]>(v?.masked), rival: obj<Hacks['rival'][string]>(v?.rival) };
     }
-    catch { return { cracked: {}, tamper: {}, down: [], patched: {}, shielded: {}, masked: {} }; }
+    catch { return { cracked: {}, tamper: {}, down: [], patched: {}, shielded: {}, masked: {}, rival: {} }; }
 }
 /** 게임 계산에 넣습니다(이벤트 변조 · 서버 다운 · 패치). */
 function applyRuntime(h: Hacks) {
@@ -56,11 +60,12 @@ export async function readHacks(now: number): Promise<Hacks> {
     return cached.hacks;
 }
 async function writeHacks(h: Hacks, now: number) {
+    const today = dayKey(now);
     for (const [id, until] of Object.entries(h.cracked)) if (!(until > now)) delete h.cracked[id];
     for (const [id, until] of Object.entries(h.patched)) if (!(until > now)) delete h.patched[id];
-    for (const [id, m] of Object.entries(h.masked)) if (!(m.until > now)) delete h.masked[id];
+    for (const [id, m] of Object.entries(h.masked)) if (!maskLive(m, now)) delete h.masked[id];
+    for (const [id, r] of Object.entries(h.rival)) if (r.day !== today && !((r.overloadUntil || 0) > now)) delete h.rival[id];
     for (const [id, t] of Object.entries(h.tamper)) if (!(now - t.at < TAMPER_KEEP)) delete h.tamper[id];
-    const today = dayKey(now);
     for (const [id, day] of Object.entries(h.shielded)) if (day !== today) delete h.shielded[id];
     h.down = h.down.filter(d => d.until > now);
     if (h.broadcast && !(h.broadcast.until > now)) delete h.broadcast;
@@ -99,8 +104,11 @@ export async function syncHackFeed(s: State, id: string, now: number) {
         events: liveEvents(now).map(e => ({ id: e.id, name: e.name || e.id, until: Date.parse(e.until), ...(h.tamper[e.id] ? { tampered: true } : {}) })),
         down: h.down.filter(d => d.until > now).map(d => ({ kind: d.kind, id: d.id, until: d.until, by: d.by, ...((h.patched[placeKey(d.kind, d.id)] || 0) > now ? { patched: true } : {}) })),
         patched: Object.fromEntries(Object.entries(h.patched).filter(([, until]) => until > now)),
+        masks: Object.entries(h.masked).filter(([, m]) => maskLive(m, now)).map(([target, m]) => ({ target, until: m.until, by: m.by, ...(m.byId === id ? { mine: true } : {}) })),
     } : {};
-    if (broadcast || crackedUntil || isHacker(s)) s.hackFeed = { ...(broadcast ? { broadcast } : {}), ...(crackedUntil ? { crackedUntil } : {}), ...hacker };
+    // v3.27 다른 해커가 나에게 건 견제(역추적·과부하). 틱 계산과 침투 입장 한도가 이 값을 봅니다.
+    const r = h.rival[id], rival = { ...(r?.day === dayKey(now) && r.trace ? { traced: { day: r.day, n: r.trace } } : {}), ...((r?.overloadUntil || 0) > now ? { overloadUntil: r!.overloadUntil } : {}) };
+    if (broadcast || crackedUntil || isHacker(s)) s.hackFeed = { ...(broadcast ? { broadcast } : {}), ...(crackedUntil ? { crackedUntil } : {}), ...hacker, ...rival };
     else delete s.hackFeed;
 }
 
@@ -130,8 +138,36 @@ export async function applyPendingHack(s: State, id: string, now: number) {
     else if (pending.kind === 'spoof') {
         const [raw, fields] = pending.value.split('|'), target = raw === 'self' ? id : playerOfRow(raw);
         if (!target) throw Error('신원을 조작할 대상을 확인하세요.');
-        h.masked[target] = { until: now + pending.minutes * 60_000, show: (fields || '').split(',').filter(Boolean), by, byId: id };
-        addLog(s, `신원 조작 · ${target === id ? '내 정보' : '대상의 정보'}를 ${pending.minutes}분 동안 가렸습니다${fields ? `(공개: ${fields})` : ''}.`, 'reward');
+        h.masked[target] = { until: pending.minutes ? now + pending.minutes * 60_000 : 0, show: (fields || '').split(',').filter(Boolean), by, byId: id };
+        addLog(s, `신원 조작 · ${target === id ? '내 정보' : '대상의 정보'}를 ${pending.minutes ? `${Math.round(pending.minutes / 60)}시간 동안` : '무기한으로'} 가렸습니다${fields ? `(공개: ${fields})` : ''}.`, 'reward');
+    }
+    else if (pending.kind === 'unspoof') {
+        const target = pending.value === 'self' ? id : playerOfRow(pending.value), m = h.masked[target];
+        if (!maskLive(m, now)) throw Error('걸려 있는 신원 조작이 없습니다.');
+        if (m.byId !== id) throw Error('내가 건 신원 조작만 거둘 수 있습니다.');
+        delete h.masked[target];
+        addLog(s, '신원 조작을 거뒀습니다.', 'system');
+    }
+    else if (pending.kind === 'trace' || pending.kind === 'overload') {
+        const target = playerOfRow(pending.value);
+        if (!target || target === id) throw Error('다른 해커를 고르세요.');
+        const row = await database.getPlayer(target), victim = row ? JSON.parse(row.state) as State : null;
+        if (!victim?.hacker) throw Error('해커 기록이 있는 모험가만 견제할 수 있습니다.');
+        const today = dayKey(now), r = h.rival[target] ??= {};
+        if (victim.skills?.includes(FIREWALL_ID) && h.shielded[target] !== today) {
+            h.shielded[target] = today;
+            addLog(s, `${pending.kind === 'trace' ? '역추적' : '과부하'}이(가) 화이트 해커의 방화벽에 막혔습니다.`, 'system');
+        }
+        else if (pending.kind === 'trace') {
+            if (r.day !== today) { r.day = today; r.trace = 0; }
+            if ((r.trace || 0) >= HACKER.trace.maxPerDay) throw Error('이 해커는 오늘 더 역추적할 수 없습니다.');
+            r.trace = (r.trace || 0) + 1;
+            addLog(s, `역추적 · 대상의 오늘 침투 작전 입장 −1 (오늘 ${r.trace}회째)`, 'reward');
+        }
+        else {
+            r.overloadUntil = Math.max(r.overloadUntil || 0, now) + pending.minutes * 60_000;
+            addLog(s, `과부하 · 대상의 브루트포스 비트가 ${pending.minutes}분 동안 절반이 됩니다.`, 'reward');
+        }
     }
     else if (pending.kind === 'tamper') {
         const [eventId, timeSign, rateSign] = pending.value.split('|'), ev = liveEvents(now).find(e => e.id === eventId);
@@ -173,6 +209,12 @@ export async function applyPendingHack(s: State, id: string, now: number) {
             if (i < 0) throw Error('되돌릴 서버 다운이 없습니다.');
             if (h.down[i].byId === id) throw Error('내 해킹은 되돌릴 수 없습니다.');
             h.down.splice(i, 1); bounty = HACK_BITS.down; label = `서버 다운(${placeName(k, place)})`;
+        }
+        else if (kind === 'mask') {
+            const target = rest.join(':'), m = h.masked[target];
+            if (!maskLive(m, now)) throw Error('되돌릴 신원 조작이 없습니다.');
+            if (m.byId === id) throw Error('내 해킹은 되돌릴 수 없습니다.');
+            delete h.masked[target]; bounty = HACKER.spoof.bits; label = '신원 조작';
         }
         else {
             const eventId = rest.join(':'), t = h.tamper[eventId];
@@ -230,7 +272,7 @@ export async function listHackerBoard(key: string) {
  * v3.26 숨김은 스냅샷의 privacy(옛 애드가드)가 아니라 해커의 신원 조작(hacks.masked)에서 옵니다. 옛 privacy는 버립니다.
  */
 export function maskSnapshot<T extends Partial<Snapshot> & { name?: string }>(snap: T, playerId: string, hacks: Hacks, now: number): T & { masked?: string[] } {
-    const m = hacks.masked[playerId], privacy = m && m.until > now ? { show: m.show } : null;
+    const m = hacks.masked[playerId], privacy = maskLive(m, now) ? { show: m.show } : null;
     if ('privacy' in snap) { snap = { ...snap }; delete snap.privacy; }
     if (!privacy || (hacks.cracked[playerId] || 0) > now) return snap;
     // 값은 지우고(브라우저에서도 못 보게) 0·빈 값으로 채운 뒤, 화면은 masked 목록을 보고 ???로 그립니다.
