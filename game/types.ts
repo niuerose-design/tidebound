@@ -401,6 +401,10 @@ export type State = {
     limitBreaks?: Record<string, number>;
     /** v27.19 환생 유물이 세계석 구매에서 환생 횟수 제공으로 바뀌며, 이미 산 유물의 세계석을 돌려준 뒤 true. */
     relicRefunded?: boolean;
+    /** v27.95 숙련 요구치 상향 전 기준으로 이미 숙련 계승한 스킬(새 기준에 못 미쳐도 계승 유지). 환생해도 남습니다. */
+    legacyInherited?: Record<string, true>;
+    /** v27.95 숙련 요구치 상향의 계승 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
+    masteryRescaled?: boolean;
     jobMastery: Record<string, number>;
     unlockedJobs: string[];
     bookClaims: Record<string, number>;

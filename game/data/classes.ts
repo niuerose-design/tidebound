@@ -1,4 +1,5 @@
 import type { Attribute, Stats } from '../types';
+import { PROGRESSION } from './progression';
 import { EXPANSION_JOBS } from './expansion';
 import { LINEAGE_JOBS, NEW_LINEAGES, LINEAGE_HINTS } from './expansion-lineages';
 import { V24_JOBS, V24_HINTS } from './expansion-v24';
@@ -282,6 +283,12 @@ for (const job of JOBS) {
     const tuning = JOB_MASTERY_TUNING[job.id] || { target: job.tier >= 3 ? 12000 : job.tier === 2 ? 3000 : 300, boost: job.tier >= 3 ? .3 : job.tier === 2 ? .18 : .08 };
     job.masteryTarget ??= tuning.target;
     job.masteryBoost ??= tuning.boost;
+}
+// v27.95 차수별 요구 숙련 상향(1·2차 그대로). 5차 전직은 선행 직업 숙달(올린 숙달 수치)이 필요합니다.
+for (const job of JOBS) job.masteryTarget = Math.round(job.masteryTarget! * (PROGRESSION.jobMasteryTierScale[job.tier] ?? 1));
+for (const job of JOBS) {
+    const parent = job.tier >= 5 && job.parent ? JOBS.find(j => j.id === job.parent) : undefined;
+    if (parent) job.mastery = Math.max(job.mastery || 0, parent.masteryTarget!);
 }
 
 /** 히든·??? 문 직업의 힌트. 이름·조건을 숨긴 실루엣 카드에 한 줄로 보입니다. */

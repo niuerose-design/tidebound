@@ -109,7 +109,7 @@ export function jobFactor(job: Job, key: JobStatKey) {
     const flat = job.bonus?.[key] || 0, ref = SKILL_FORMULA.jobFlatReference[Math.min(3, Math.max(1, job.tier))]?.[key];
     return job[key] + (flat && ref ? flat / (ref * jobTierScale(job)) : 0);
 }
-export function inherited(s: State, id: string) { const sk = skillById(id); return !!sk && (!!s.skillInheritances?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
+export function inherited(s: State, id: string) { const sk = skillById(id); return !!sk && (!!s.skillInheritances?.[id] || !!s.legacyInherited?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
 function classAccess(s: State, sk: Skill) { return (!sk.song || songAccess(s)) && (!sk.job || s.job === sk.job || inherited(s, sk.id)); }
 /** v24.2 노래 패시브는 음유시인 계보(엔젤릭버스터 (1차)의 후속 직업)만 장착합니다. */
 function songAccess(s: Pick<State, 'job'>) { return lineage(s.job).includes('bard'); }
