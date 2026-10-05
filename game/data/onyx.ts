@@ -23,6 +23,8 @@ export const ONYX_BOSSES: OnyxBoss[] = [
 ];
 export const onyxBossFor = (region: string) => ONYX_BOSSES.find(b => b.region === region);
 export const onyxById = (id: string) => ONYX_BOSSES.find(b => b.id === id);
+/** v3.14 물건 도감 키: 칠흑 장신구는 얻는 순간 자동 등록(장비 소모 없음, 환생 유지). */
+export const onyxCodexKey = (bossId: string) => `onyx:${bossId}`;
 /** 보유한 칠흑 장신구의 보스 id 집합(가방·착용). */
 export const ownedOnyx = (s: Pick<State, 'inventory' | 'equipment'>) => new Set([...s.inventory, ...Object.values(s.equipment)].map(i => i?.onyx).filter((x): x is string => !!x));
 /** v3.12 칠흑 세트: 착용이 아니라 보유 수 기준(장신구 칸이 하나라서). 환생해도 남는 영구 보너스. */

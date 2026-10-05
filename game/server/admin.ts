@@ -9,6 +9,7 @@ import { allow, clientIp } from './throttle';
 import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
+import { RANKS, RANK_PERKS, rankIndex, rankState, rankPerkLevel, rankPointsFree } from '../data/rank';
 import { BOSS_RESEARCH } from '../data/specializations';
 import { DUNGEONS, STAGES } from '../data/world';
 import { PROGRESSION } from '../data/progression';
@@ -228,6 +229,8 @@ export type AdminStats = {
     /** v27.43 제단: 신 세대, 신이 깨어 있는지, 신의 자리 주인, 누적 기여도, 쌓인 몫(골드). */
     altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number };
     top: { name: string; level: number; rebirths: number; abyss: number }[];
+    /** v3.14 계급장: 계급별 인원(계급 순서), 최고 계급, 진급 특전별 찍은 인원·평균 단계, 안 쓴 진급 포인트 합계. */
+    ranks: { dist: { name: string; count: number }[]; top: string; perks: { name: string; count: number; avg: number; max: number }[]; freePoints: number };
     /**
      * v27.54 밸런스 점검 지표.
      * godDepth: 첫 신과 같은 무릉도장 층, reached: 그 층 이상을 깬 모험가 수(모험가·몬스터 전투력은 잣대가 달라 비교하지 않습니다).
@@ -297,6 +300,15 @@ export async function adminStats(now = Date.now()): Promise<AdminStats> {
         stages: named(countBy(list, s => s.dungeon ? null : s.stage), id => STAGES.find(x => x.id === id)?.name || id),
         dungeons: named(countBy(list, s => s.dungeon?.id || null), id => DUNGEONS.find(x => x.id === id)?.name || id),
         jobs: named(countBy(list, s => s.job), id => jobById(id)?.name || id).slice(0, 15),
+        ranks: (() => {
+            const idx = list.map(s => rankIndex(rankState(s).exp)), by = countBy(idx, i => String(i));
+            return {
+                dist: RANKS.map((r, i) => ({ name: `${r.name} (${r.group})`, count: by.get(String(i)) || 0 })),
+                top: list.length ? RANKS[Math.max(...idx)].name : '-',
+                perks: RANK_PERKS.map(p => { const lv = list.map(s => rankPerkLevel(s, p.id)), users = lv.filter(v => v > 0); return { name: p.name, count: users.length, avg: users.length ? Math.round(users.reduce((x, y) => x + y, 0) / users.length * 10) / 10 : 0, max: p.max }; }),
+                freePoints: sum(s => rankPointsFree(s)),
+            };
+        })(),
         totals: { kills: sum(s => s.kills), playHours: Math.round(sum(s => s.playMs || 0) / 3600_000), gold: Math.floor(sum(s => s.gold)), pearls: sum(s => s.pearls), sp: sum(s => s.sp) },
         medians: { gold: median(list.map(s => Math.floor(s.gold || 0))), pearls: median(list.map(s => s.pearls || 0)) },
         abyssBest: Math.max(0, ...list.map(s => s.abyssBest || 0)),

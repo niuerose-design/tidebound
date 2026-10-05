@@ -402,8 +402,13 @@
 
 /* v3.12 칠흑 장신구 그림 */
 .onyx-icon{background:radial-gradient(circle at 50% 40%,#2a1b3d,#0b0a12)}
-.onyx-art{filter:drop-shadow(0 0 3px rgba(190,120,255,.45))}
+.onyx-art{display:inline-flex;align-items:center;justify-content:center;position:relative;filter:drop-shadow(0 0 3px rgba(190,120,255,.45))}
+.onyx-art img{display:block;image-rendering:pixelated;object-fit:contain}
+.onyx-art.pending img{position:absolute;inset:0;opacity:0}
 .onyx-book-icon{justify-content:flex-start;gap:10px}
 .onyx-book-icon .onyx-art{margin-left:auto;margin-right:8px}
 .onyx-book-icon .onyx-art:not(.owned){opacity:.45;filter:grayscale(.6)}
 .undiscovered .onyx-book-icon .onyx-art{opacity:.2}
+
+.onyx-item-card .item-icon{color:var(--rarity)}
+.onyx-item-card.unregistered .onyx-art{opacity:.35;filter:grayscale(.7)}

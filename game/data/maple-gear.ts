@@ -15,7 +15,7 @@ export const WEAPON_NAMES: Record<'physical' | 'magic' | 'balanced', readonly st
 export const ARMOR_NAMES = ['하얀 반팔 면티', '메이플 아머', '자쿰의 투구', '루타비스 슈트', '앱솔랩스 슈트', '아케인셰이드 슈트', '에테르넬 아머'] as const;
 /** v3.5 망토(회피·체력 소량, 상태이상 저항 전용 옵션). */
 export const CAPE_NAMES = ['낡은 천 망토', '메이플 케이프', '피에르의 망토', '타일런트 히아데스 클록', '앱솔랩스 케이프', '아케인셰이드 케이프', '에테르넬 케이프'] as const;
-export const ACCESSORY_NAMES = ['나무 귀고리', '메이플 펜던트', '혼테일의 목걸이', '마이스터 링', '도미네이터 펜던트', '여명의 가디언 엔젤 링', '창세의 뱃지'] as const;
+export const ACCESSORY_NAMES = ['나무 귀고리', '메이플 펜던트', '혼테일의 목걸이', '마이스터 링', '도미네이터 펜던트', '여명의 가디언 엔젤 링', '제네시스 펜던트'] as const;
 
 /** 새로 얻는 장비의 이름. 무기는 공격 계열(style)을 정한 뒤 부릅니다(없으면 물리형). */
 export function gearName(slot: Item['slot'], rarity: number, style?: Item['style']) {
@@ -31,5 +31,6 @@ export const OLD_GEAR_NAMES = {
 } as const;
 /** 유물·옵션의 옛 이름 → 새 이름. */
 /** v3.3 망토 부위가 생기면서 방어구의 ‘망토’ 이름(메이플 망토 · 영혼의 망토)을 바꿉니다. */
-export const RENAMED_GEAR: Record<string, string> = { '윤회의 낚싯대': '윤회의 샤이닝 로드', '영혼의 잠수복': '영혼의 갑주', '영혼의 망토': '영혼의 갑주', '메이플 망토': '메이플 아머' };
+/** v3.14 일반 태초 장신구 ‘창세의 뱃지’ → ‘제네시스 펜던트’(칠흑 장신구와 이름이 겹침). 칠흑 장신구(item.onyx)는 바꾸지 않습니다(renameMapleGear). */
+export const RENAMED_GEAR: Record<string, string> = { '윤회의 낚싯대': '윤회의 샤이닝 로드', '영혼의 잠수복': '영혼의 갑주', '영혼의 망토': '영혼의 갑주', '메이플 망토': '메이플 아머', '창세의 뱃지': '제네시스 펜던트' };
 export const RENAMED_AFFIX: Record<string, string> = { '유영': '회피', '영혼 유영': '영혼 회피', '맹독': '고통' };

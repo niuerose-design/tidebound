@@ -14,7 +14,7 @@ import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } from './book-research';
 import { stats, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
-import { ONYX, ONYX_BOSSES, ONYX_SET, ownedOnyx } from '@/game/data/onyx';
+import { ONYX, ONYX_BOSSES, ONYX_SET, ownedOnyx, onyxCodexKey } from '@/game/data/onyx';
 import { OnyxArt } from './onyx-art';
 import { affixDef } from '@/game/data/gear';
 import { abyssReference, stageField } from '@/game/systems/encounter';
@@ -194,7 +194,14 @@ export function Collection({ s, send, busy }: PanelProps) {
             </AlertDialogContent>
             </AlertDialog>
             </article>;
-        }))}</div>
+        }))}{ONYX_BOSSES.map(b => { const registered = !!s.itemBook[onyxCodexKey(b.id)], top = RARITIES[RARITIES.length - 1];
+            return <article className={`panel item-card onyx-item-card ${registered ? '' : 'unregistered'}`} style={{ '--rarity': top.color } as React.CSSProperties} key={b.id}>
+            <div className="item-top"><span>{top.name} · 칠흑</span><small>{registered ? '등록 완료' : '미획득'}</small></div>
+            <div className="item-icon"><OnyxArt id={b.id} size={36}/></div>
+            <h3>{b.accessory.name}</h3>
+            <p>{b.name} 격파 보상 · 장비 드롭 확률 +{percent(perEntryDrop, 4)}p</p>
+            <button className="secondary" disabled>{registered ? '영구 보너스 적용 중' : '얻으면 자동 등록(소모 없음)'}</button>
+            </article>; })}</div>
     </TabsContent>
     <TabsContent value="bonus">
     {(() => { const eco = FISH.map(f => bookEcology(s, f.id).stages), maxStage = FISH.length * BOOK_ECOLOGY.dealt.length, pct = (n: number) => Number((n * 100).toFixed(1)); return <div className="bonus-stack">

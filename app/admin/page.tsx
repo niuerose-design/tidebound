@@ -16,7 +16,7 @@ type Tab = 'life' | 'events' | 'closures' | 'doors' | 'stats';
 type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };
 type Balance = { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: Bucket[]; burn: number };
-type Stats = { rebirthPace: RebirthPace; balance: Balance; altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number }; at: number; accounts: number; saves: number; active: { hour: number; day: number; week: number }; running: number; inDungeon: number; level: { avg: number; max: number; buckets: Bucket[] }; rebirths: { avg: number; max: number; buckets: Bucket[] }; stages: Count[]; dungeons: Count[]; jobs: Count[]; totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number }; medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number; top: { name: string; level: number; rebirths: number; abyss: number }[] };
+type Stats = { rebirthPace: RebirthPace; balance: Balance; altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number }; at: number; accounts: number; saves: number; active: { hour: number; day: number; week: number }; running: number; inDungeon: number; level: { avg: number; max: number; buckets: Bucket[] }; rebirths: { avg: number; max: number; buckets: Bucket[] }; stages: Count[]; dungeons: Count[]; jobs: Count[]; totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number }; medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number; top: { name: string; level: number; rebirths: number; abyss: number }[]; ranks: { dist: { name: string; count: number }[]; top: string; perks: { name: string; count: number; avg: number; max: number }[]; freePoints: number } };
 const n = (v: number) => v.toLocaleString('ko-KR');
 /** v27.63 걸린 시간: 2일 3시간 · 5시간 12분 · 37분. */
 const dur = (ms: number) => { const m = Math.max(0, Math.floor(ms / 60_000)), h = Math.floor(m / 60), d = Math.floor(h / 24); return d ? `${d}일 ${h % 24}시간` : h ? `${h}시간 ${m % 60}분` : `${m}분`; };
@@ -170,6 +170,7 @@ export default function AdminPage() {
                 <Tile label="보유 골드 합계" value={n(stats.totals.gold)} note={`중앙값 ${n(stats.medians.gold)}`}/>
                 <Tile label="보유 세계석 합계" value={n(stats.totals.pearls)} note={`중앙값 ${n(stats.medians.pearls)} · 보유 SP 합계 ${n(stats.totals.sp)}`}/>
                 <Tile label="길드 가입" value={n(stats.inGuild)} note={`한계돌파한 모험가 ${n(stats.limitBreakers)}`}/>
+                <Tile label="최고 계급" value={stats.ranks.top} note={`안 쓴 진급 포인트 합계 ${n(stats.ranks.freePoints)} · ${stats.ranks.perks.map(p => `${p.name} ${n(p.count)}명`).join(' · ')}`}/>
                 <Tile label="제단 누적 기여도" value={n(stats.altar.points)} note={`${stats.altar.gen}번째 신 ${stats.altar.godAlive ? '깨어 있음' : '잠듦'} · 신의 자리 ${stats.altar.throne || '비어 있음'} · 쌓인 몫 ${n(stats.altar.titheGold)} G`}/>
             </div>
             <div className="panel" style={{ padding: 14, display: 'grid', gap: 8 }}>
@@ -208,6 +209,9 @@ export default function AdminPage() {
                 <Bars title="지금 있는 사냥터" rows={stats.stages.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
                 <Bars title="지금 있는 던전" rows={stats.dungeons.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
                 <Bars title="현재 직업 상위 15" rows={stats.jobs.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
+                <Bars title="계급장 분포(계급 순)" rows={stats.ranks.dist.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
+                <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>진급 특전 선택</h2>
+                    <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}><tbody>{stats.ranks.perks.map(p => <tr key={p.name}><td style={{ padding: '3px 0' }}>{p.name}</td><td style={{ textAlign: 'right' }}>{n(p.count)}명{stats.saves ? <small style={{ color: '#9bb3b0' }}> ({Math.round(p.count / stats.saves * 100)}%)</small> : null}</td><td style={{ textAlign: 'right', color: '#9bb3b0' }}>평균 {p.avg} / {p.max}단계</td></tr>)}</tbody></table></div>
                 <Bars title="무릉도장 최고 층 분포" rows={stats.balance.abyss} total={stats.saves}/>
                 <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>환생·레벨 상위 10</h2>
                     <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, display: 'grid', gap: 3 }}>{stats.top.map((p, i) => <li key={i}>{p.name} · 환생 {p.rebirths}회 · Lv.{p.level}{p.abyss ? ` · 무릉도장 ${p.abyss}층` : ''}</li>)}</ol></div>

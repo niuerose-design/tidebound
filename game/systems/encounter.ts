@@ -25,7 +25,7 @@ import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
 import { saleValue } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
-import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus } from '../data/onyx';
+import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -292,8 +292,8 @@ export function reward(s: State, rng: () => number) {
             s.onyxMiss[e.onyx] = 0;
             const stageLevel = STAGES.find(x => x.id === s.stage)?.level || fishLevelOf(e.id), item = onyxAccessory(bossDef, `onyx-${e.onyx}-${s.turn}`, stageLevel);
             item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', stageLevel);
-            s.inventory.push(item);
-            addLog(s, `✦ ${bossDef.name} 격파 · 칠흑 장신구 ‘${item.name}’ 획득! 환생해도 남습니다 (보유 ${ownedOnyx(s).size}/7종)`, 'reward');
+            s.inventory.push(item); s.itemBook ??= {}; s.itemBook[onyxCodexKey(e.onyx)] = true;
+            addLog(s, `✦ ${bossDef.name} 격파 · 칠흑 장신구 ‘${item.name}’ 획득! 환생해도 남습니다 (보유 ${ownedOnyx(s).size}/7종) · 물건 도감 자동 등록`, 'reward');
         }
     }
     const fish = FISH.find(f => f.id === e.id)!;
