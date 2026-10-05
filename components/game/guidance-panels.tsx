@@ -8,20 +8,25 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { unclaimedAchievements } from '@/game/systems/progress';
 import { TUTORIAL_STEPS, tutorialProgress, tutorialStepDone, nextTutorialStep } from '@/game/systems/guidance';
 import { Heading, Meter } from './shared';
+import { useState } from 'react';
+import { useIsMobile } from './use-mobile';
 import type { State } from '@/game/types';
 
 
 /** 접을 수 있는 짧은 튜토리얼. 새 세이브에만 보이고, 한 번 만족한 단계는 기록으로 남아 되돌아가지 않습니다. 보상은 없습니다. */
 export function TutorialCard({ s, send, busy, setView }: PanelProps) {
+    // v27.88 모바일(767px 이하)은 접힌 한 줄로 시작하고 이 화면에서만 펼칩니다(서버 저장 없음). 데스크톱은 전처럼 서버에 접힘을 기억합니다.
+    const mobile = useIsMobile(), [expanded, setExpanded] = useState(false);
     if (!s.tutorial || s.tutorial.skipped) return null;
     const done = tutorialProgress(s), next = nextTutorialStep(s);
     if (!next) return null;
-    const hidden = !!s.tutorial.hidden, index = TUTORIAL_STEPS.indexOf(next) + 1;
+    const hidden = mobile ? !expanded : !!s.tutorial.hidden, index = TUTORIAL_STEPS.indexOf(next) + 1;
+    const toggle = () => { if (mobile) setExpanded(v => !v); else send({ type: 'tutorial', id: hidden ? 'show' : 'hide' }); };
     return <section className={`panel tutorial-card ${hidden ? 'folded' : ''}`} aria-label="모험 안내">
         <div className="tutorial-head">
             <Compass size={16}/><strong>모험 안내 · {done} / {TUTORIAL_STEPS.length}</strong>
             <span>다음: {next.title}</span>
-            <button className="icon-button" disabled={busy} aria-label={hidden ? '안내 펼치기' : '안내 접기'} onClick={() => send({ type: 'tutorial', id: hidden ? 'show' : 'hide' })}>{hidden ? <ChevronDown size={15}/> : <ChevronUp size={15}/>}</button>
+            <button className="icon-button" disabled={busy} aria-label={hidden ? '안내 펼치기' : '안내 접기'} onClick={toggle}>{hidden ? <ChevronDown size={15}/> : <ChevronUp size={15}/>}</button>
             <button className="icon-button" disabled={busy} aria-label="안내 건너뛰기" title="건너뛰기 (도감 · 업적 화면에서 다시 볼 수 있음)" onClick={() => send({ type: 'tutorial', id: 'skip' })}><X size={15}/></button>
         </div>
         {!hidden && <>

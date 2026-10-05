@@ -1,8 +1,9 @@
 'use client';
 import { memo, useEffect, useState } from 'react';
+import { useIsMobile } from './use-mobile';
 import { levelGateOk } from '@/game/systems/meta';
 import { ChatPanel } from './chat-panel';
-import { ChevronRight, Compass, Flame, Lock, Map, MessageCircle, Swords } from 'lucide-react';
+import { ChevronDown, ChevronRight, Compass, Flame, Lock, Map, MessageCircle, Swords } from 'lucide-react';
 import { serverNow } from './jobs/job-status';
 import { Meter } from './shared';
 import { STAGES, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
@@ -23,14 +24,16 @@ export function BattleRail({ s, base, busy, send, setView }: {
     // v25.4 전투 기록 ↔ 채팅 토글. 선택은 이 기기에 남깁니다.
     const [feed, setFeed] = useState<'log' | 'chat'>('log');
     useEffect(() => { const timer = window.setTimeout(() => { try { if (localStorage.getItem(FEED_KEY) === 'chat') setFeed('chat'); } catch { /* 저장소 없음 */ } }, 0); return () => window.clearTimeout(timer); }, []);
-    const pickFeed = (v: 'log' | 'chat') => { setFeed(v); try { localStorage.setItem(FEED_KEY, v); } catch { /* 저장소 없음 */ } };
+    const pickFeed = (v: 'log' | 'chat') => { setFeed(v); setOpened(true); try { localStorage.setItem(FEED_KEY, v); } catch { /* 저장소 없음 */ } };
+    // v27.88 모바일: 전투 기록·채팅 패널은 장면 바로 아래에 접힌 채로 두고 화살표로 펼칩니다(채팅은 펼쳤을 때만 불러옴). 데스크톱은 늘 펼침.
+    const mobile = useIsMobile(), [opened, setOpened] = useState(false), feedOpen = !mobile || opened;
     return <aside className="battle-utility-rail" aria-label="전투 보조 패널">
-    <section className={`panel battle-rail-panel battle-feed ${feed === 'chat' ? 'feed-chat' : ''}`}>
+    <section className={`panel battle-rail-panel battle-feed ${feed === 'chat' ? 'feed-chat' : ''} ${feedOpen ? '' : 'folded'}`}>
     <div className="section-title"><div className="battle-place-tabs feed-tabs" role="tablist" aria-label="전투 기록 · 채팅">
         <button type="button" role="tab" aria-selected={feed === 'log'} className={feed === 'log' ? 'active' : ''} onClick={() => pickFeed('log')}><Swords size={14}/>전투 기록</button>
         <button type="button" role="tab" aria-selected={feed === 'chat'} className={feed === 'chat' ? 'active' : ''} onClick={() => pickFeed('chat')}><MessageCircle size={14}/>채팅</button>
-    </div><span className="micro">{feed === 'chat' ? 'CHAT' : 'LIVE'}</span></div>
-    {feed === 'log' ? <div className="battle-feed-list" role="log" aria-label="최근 전투 메시지">
+    </div><span className="micro">{feed === 'chat' ? 'CHAT' : 'LIVE'}</span><button type="button" className="feed-fold" aria-expanded={feedOpen} aria-label={feedOpen ? '전투 기록 접기' : '전투 기록 펼치기'} onClick={() => setOpened(v => !v)}><ChevronDown size={15} className={feedOpen ? 'open' : ''}/></button></div>
+    {!feedOpen ? null : feed === 'log' ? <div className="battle-feed-list" role="log" aria-label="최근 전투 메시지">
     {battleLogs.length ? battleLogs.map(log => <BattleLogLine key={log.id} log={log} index playerName={s.name}/>) : <p className="battle-feed-empty">자동 사냥을 시작하면 전투 기록이 표시됩니다.</p>}
     </div> : <ChatPanel open={feed === 'chat'} playerName={s.name} guildName={s.guildMember?.name}/>}
     </section>
