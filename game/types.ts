@@ -590,7 +590,8 @@ export type HackerInfil = {
     /** 뽑아 나가면 받는 보상(추적되면 일부만). */
     bank: { bits: number; exp: number };
     /** v3.26 seq(수열) · bin(진법 변환) · cipher(암호 해독) 추가. 새 퍼즐은 문제(prompt)를 함께 적습니다(정답은 서버 키로만 계산). */
-    node: { kind: 'lock' | 'port' | 'seq' | 'bin' | 'cipher'; size: number; tries: number; max: number; history: { guess: string; hint: string }[]; prompt?: string };
+    /** v3.28 path(최단 경로) · anagram(패스워드 재조합) 추가. */
+    node: { kind: 'lock' | 'port' | 'seq' | 'bin' | 'cipher' | 'path' | 'anagram'; size: number; tries: number; max: number; history: { guess: string; hint: string }[]; prompt?: string };
 };
 export type HackerState = {
     bits: number;

@@ -108,9 +108,25 @@ const pick = (r: () => number, lo: number, hi: number) => lo + Math.floor(r() * 
 /** v3.26 암호 해독 단어(영문 대문자). */
 const CIPHER_WORDS = ['ROOT', 'ADMIN', 'SHELL', 'PROXY', 'TOKEN', 'CACHE', 'LOGIN', 'KERNEL', 'ROUTER', 'SOCKET', 'PACKET', 'BINARY', 'CIPHER', 'ACCESS', 'SERVER', 'CLIENT', 'SCRIPT', 'BUFFER', 'MATRIX', 'FIREWALL', 'BACKDOOR', 'EXPLOIT'];
 const shiftWord = (w: string, k: number) => [...w].map(c => String.fromCharCode(65 + (c.charCodeAt(0) - 65 + k) % 26)).join('');
-/** v3.26 새 퍼즐(수열 · 진법 변환 · 암호 해독)의 문제와 정답. 서버 키로만 같은 문제가 나옵니다. */
-function puzzleOf(seed: number, depth: number, kind: 'seq' | 'bin' | 'cipher'): { prompt: string; answer: string } {
+type PromptKind = 'seq' | 'bin' | 'cipher' | 'path' | 'anagram';
+const isPromptKind = (kind: string): kind is PromptKind => ['seq', 'bin', 'cipher', 'path', 'anagram'].includes(kind);
+/** v3.26 새 퍼즐(수열 · 진법 변환 · 암호 해독)의 문제와 정답. 서버 키로만 같은 문제가 나옵니다. v3.28 최단 경로 · 패스워드 재조합. */
+function puzzleOf(seed: number, depth: number, kind: PromptKind): { prompt: string; answer: string } {
     const r = saltRng(seed, depth, 'p'), d = depth + 1;
+    if (kind === 'path') {
+        // 숫자 격자에서 왼쪽 위 → 오른쪽 아래(오른쪽·아래로만) 지나는 칸 합의 최솟값. 깊이 10부터 4×4.
+        const n = d < 10 ? 3 : 4, grid = Array.from({ length: n }, () => Array.from({ length: n }, () => pick(r, 1, 9)));
+        const best = grid.map(row => row.map(() => 0));
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) best[y][x] = grid[y][x] + (y || x ? Math.min(y ? best[y - 1][x] : Infinity, x ? best[y][x - 1] : Infinity) : 0);
+        return { prompt: grid.map(row => row.join(' ')).join(' / '), answer: String(best[n - 1][n - 1]) };
+    }
+    if (kind === 'anagram') {
+        // 글자 순서를 섞은 단어. 섞은 결과가 원래 단어와 같으면 한 칸 돌립니다.
+        const word = CIPHER_WORDS[Math.floor(r() * CIPHER_WORDS.length)], letters = [...word];
+        for (let i = letters.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [letters[i], letters[j]] = [letters[j], letters[i]]; }
+        const mixed = letters.join('') === word ? word.slice(1) + word[0] : letters.join('');
+        return { prompt: `${mixed} (글자 순서를 섞은 단어)`, answer: word };
+    }
     if (kind === 'seq') {
         const types = ['add', ...(d >= 3 ? ['mul'] : []), ...(d >= 5 ? ['alt'] : []), ...(d >= 7 ? ['fib'] : []), ...(d >= 9 ? ['square'] : [])], type = types[Math.floor(r() * types.length)];
         let terms: number[];
@@ -128,17 +144,21 @@ function puzzleOf(seed: number, depth: number, kind: 'seq' | 'bin' | 'cipher'): 
     const word = CIPHER_WORDS[Math.floor(r() * CIPHER_WORDS.length)], max = d < 6 ? 3 : 25, k = pick(r, 1, max);
     return { prompt: `${shiftWord(word, k)} (알파벳을 1~${max}칸 밀어 둔 단어)`, answer: word };
 }
-/** v3.26 노드 종류: 1번째는 방화벽, 2번째는 포트 스캔, 3번째부터 홀수 칸은 방화벽·암호 해독, 짝수 칸은 포트 스캔·수열·진법 변환. */
+/**
+ * v3.26 노드 종류: 1번째는 방화벽, 2번째는 포트 스캔, 3번째부터 홀수 칸은 방화벽·암호 해독, 짝수 칸은 포트 스캔·수열·진법 변환.
+ * v3.28 5번째부터 홀수 칸에 패스워드 재조합, 6번째부터 짝수 칸에 최단 경로가 섞입니다.
+ */
 function nodeKind(seed: number, depth: number): HackerInfil['node']['kind'] {
     const next = depth + 1;
     if (next <= 2) return next === 1 ? 'lock' : 'port';
     const x = saltRng(seed, depth, 'k')();
-    return next % 2 === 1 ? (x < .6 ? 'lock' : 'cipher') : x < .4 ? 'port' : x < .7 ? 'seq' : 'bin';
+    if (next % 2 === 1) return next < 5 ? (x < .6 ? 'lock' : 'cipher') : x < .45 ? 'lock' : x < .75 ? 'cipher' : 'anagram';
+    return next < 6 ? (x < .4 ? 'port' : x < .7 ? 'seq' : 'bin') : x < .3 ? 'port' : x < .55 ? 'seq' : x < .78 ? 'bin' : 'path';
 }
 /** 지금 노드의 정답(서버만 계산). 자물쇠는 서로 다른 숫자 size자리, 포트는 1~size, 수열·진법·암호는 문제와 함께 만든 답. */
 export function nodeAnswer(run: HackerInfil) {
     const kind = run.node.kind;
-    if (kind === 'seq' || kind === 'bin' || kind === 'cipher') return puzzleOf(run.seed, run.depth, kind).answer;
+    if (isPromptKind(kind)) return puzzleOf(run.seed, run.depth, kind).answer;
     const r = nodeRng(run);
     if (kind === 'port') return String(1 + Math.floor(r() * run.node.size));
     const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -154,7 +174,7 @@ export function makeNode(seed: number, depth: number, extra = 0): HackerInfil['n
     return { kind, size: q.answer.length, tries: 0, max: HACKER.infil.tries[kind] + extra, history: [], prompt: q.prompt };
 }
 export const nodeExtra = (s: Pick<State, 'job' | 'hacker'>) => programOn(s, 'portScanner') ? 1 : 0;
-/** 추측을 채점합니다. 자물쇠: 자리·숫자 모두 맞으면 S, 숫자만 맞으면 B. 포트·수열·진법: 정답이 더 크면 UP, 작으면 DOWN. 암호: 자리가 맞은 글자 수. */
+/** 추측을 채점합니다. 자물쇠: 자리·숫자 모두 맞으면 S, 숫자만 맞으면 B. 포트·수열·진법·경로: 정답이 더 크면 UP, 작으면 DOWN. 암호·재조합: 자리가 맞은 글자 수. */
 export function judge(run: HackerInfil, guess: string) {
     const answer = nodeAnswer(run), node = run.node;
     if (node.kind === 'lock') {
@@ -163,7 +183,7 @@ export function judge(run: HackerInfil, guess: string) {
         for (let i = 0; i < guess.length; i++) { if (guess[i] === answer[i]) strike++; else if (answer.includes(guess[i])) ball++; }
         return { solved: strike === node.size, hint: strike === node.size ? 'OPEN' : `${strike}S ${ball}B` };
     }
-    if (node.kind === 'cipher') {
+    if (node.kind === 'cipher' || node.kind === 'anagram') {
         const g = guess.toUpperCase();
         if (!/^[A-Z]+$/.test(g) || g.length !== answer.length) throw Error(`영문 ${answer.length}글자 단어를 입력하세요.`);
         const same = [...g].filter((c, i) => c === answer[i]).length;

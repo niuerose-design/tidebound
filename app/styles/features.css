@@ -467,6 +467,8 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .hack-card{display:grid;gap:8px;align-content:start;padding:12px;border:1px solid #9ab4b522;border-radius:6px}.hack-card small{color:#9bb3b0;font-size:12px;line-height:1.5}
 .event-banner.hack-banner{border-color:#7fe08c66;color:#bff5c6;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 .infil-prompt{margin:0;font-size:18px;letter-spacing:.06em}.infil-prompt code{color:#8fe3c4}
+/* v3.28 최단 경로 격자 */
+.infil-prompt small{display:block;font-size:12px;letter-spacing:0;color:var(--muted)}.infil-grid{margin:6px 0 0;font-family:ui-monospace,monospace;color:#8fe3c4;line-height:1.5;letter-spacing:.4em}
 .mask-list{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:12px}.mask-list li{display:flex;gap:8px;align-items:center}.mask-list span{color:#9bb3b0}
 .hack-form input.spoof-hours{flex:0 0 64px}
 .hack-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.hack-form select{flex:1 1 140px;min-width:0}

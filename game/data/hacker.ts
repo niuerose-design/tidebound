@@ -36,8 +36,8 @@ export const HACKER = {
         /** 노드 종류: 홀수 깊이는 방화벽(숫자 자물쇠), 짝수 깊이는 포트 스캔. */
         /** v3.26 숫자 야구를 쉽게: 3자리는 깊이 5까지(시도 9), 4자리는 12까지(10), 그 뒤 5자리(12). */
         lock: (depth: number) => ({ digits: depth <= 5 ? 3 : depth <= 12 ? 4 : 5, tries: depth <= 5 ? 9 : depth <= 12 ? 10 : 12 }),
-        /** v3.26 새 퍼즐의 시도 횟수: 수열(다음 수) · 진법 변환(2진수·16진수 → 10진수) · 암호 해독(시저 암호). */
-        tries: { seq: 3, bin: 3, cipher: 4 },
+        /** v3.26 새 퍼즐의 시도 횟수: 수열(다음 수) · 진법 변환(2진수·16진수 → 10진수) · 암호 해독(시저 암호). v3.28 최단 경로 · 패스워드 재조합. */
+        tries: { seq: 3, bin: 3, cipher: 4, path: 3, anagram: 4 },
         port: (depth: number) => { const range = depth <= 4 ? 64 : depth <= 10 ? 256 : 1024; return { range, tries: Math.ceil(Math.log2(range)) + (depth <= 4 ? 2 : depth <= 10 ? 1 : 0) }; },
     },
     /** 해킹 단계(I~X): 단계마다 필요한 권한 등급과 비트. v3.25 2단계 구현으로 V까지, v3.28 3단계로 X까지 엽니다. */

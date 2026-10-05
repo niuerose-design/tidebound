@@ -46,14 +46,16 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
         <section className="panel hacker-section">
             <div className="section-title"><h2>침투 작전</h2><span>오늘 남은 입장 {Math.max(0, entriesLeft)} / {cap}{cap < HACKER.infil.entriesPerDay ? ' (역추적당함)' : ''}</span></div>
             {!infil ? <>
-                <p className="footnote">서버 노드를 한 칸씩 뚫습니다. 방화벽(서로 다른 숫자 자물쇠: 자리·숫자가 맞으면 S, 숫자만 맞으면 B) · 포트 스캔(UP·DOWN) · 수열(다음 수) · 진법 변환(2진수·16진수를 10진수로) · 암호 해독(알파벳을 몇 칸 밀어 둔 단어)이 섞여 나옵니다. 깊을수록 보상이 커지고, 언제든 이탈해 쌓인 보상을 받습니다. 시도를 다 쓰면 추적당해 {Math.round(traceKeep(s) * 100)}%만 회수합니다.</p>
+                <p className="footnote">서버 노드를 한 칸씩 뚫습니다. 방화벽(서로 다른 숫자 자물쇠: 자리·숫자가 맞으면 S, 숫자만 맞으면 B) · 포트 스캔(UP·DOWN) · 수열(다음 수) · 진법 변환(2진수·16진수를 10진수로) · 암호 해독(알파벳을 몇 칸 밀어 둔 단어)이 섞여 나오고, 깊이 5부터 패스워드 재조합(글자 순서를 섞은 단어) · 최단 경로(숫자 격자에서 가장 작은 합)도 나옵니다. 깊을수록 보상이 커지고, 언제든 이탈해 쌓인 보상을 받습니다. 시도를 다 쓰면 추적당해 {Math.round(traceKeep(s) * 100)}%만 회수합니다.</p>
                 <button className="primary" disabled={busy || !isHacker || entriesLeft <= 0} onClick={() => send({ type: 'infilStart' })}>침투 시작</button>
             </> : <div className="infil-run">
                 <div className="infil-head"><b>노드 {infil.depth + 1} · {NODE_LABEL[infil.node.kind](infil.node.size)}</b><span>남은 시도 {infil.node.max - infil.node.tries} · 쌓인 보상 비트 {infil.bank.bits} · 권한 {infil.bank.exp}</span></div>
-                {infil.node.prompt && <p className="infil-prompt"><code>{infil.node.prompt}</code></p>}
+                {infil.node.prompt && (infil.node.kind === 'path'
+                    ? <div className="infil-prompt"><small>왼쪽 위에서 오른쪽 아래까지 오른쪽·아래로만 움직일 때, 지나는 칸(처음·끝 포함) 합의 최솟값</small><pre className="infil-grid">{infil.node.prompt.split(' / ').join('\n')}</pre></div>
+                    : <p className="infil-prompt"><code>{infil.node.prompt}</code></p>)}
                 <ol className="infil-history">{infil.node.history.map((x, i) => <li key={i}><code>{x.guess}</code><b className={x.hint === 'OPEN' ? 'ok' : ''}>{x.hint}</b></li>)}</ol>
                 <form className="infil-form" onSubmit={e => { e.preventDefault(); if (!guess.trim()) return; send({ type: 'infilGuess', value: guess.trim() }); setGuess(''); }}>
-                    <input value={guess} onChange={e => setGuess(infil.node.kind === 'cipher' ? e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, infil.node.size) : e.target.value.replace(/\D/g, '').slice(0, infil.node.kind === 'lock' ? infil.node.size : 7))} inputMode={infil.node.kind === 'cipher' ? 'text' : 'numeric'} placeholder={NODE_HINT[infil.node.kind](infil.node.size)} aria-label="추측"/>
+                    <input value={guess} onChange={e => setGuess(LETTER_NODES.includes(infil.node.kind) ? e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, infil.node.size) : e.target.value.replace(/\D/g, '').slice(0, infil.node.kind === 'lock' ? infil.node.size : 7))} inputMode={LETTER_NODES.includes(infil.node.kind) ? 'text' : 'numeric'} placeholder={NODE_HINT[infil.node.kind](infil.node.size)} aria-label="추측"/>
                     <button className="primary" disabled={busy || !guess}>입력</button>
                     <button type="button" className="secondary" disabled={busy} onClick={() => send({ type: 'infilCashout' })}>이탈 · 보상 받기</button>
                 </form>
@@ -173,5 +175,7 @@ function PlaceSelect({ value, onChange }: { value: string; onChange: (v: string)
 const GAUGES = [...BLESSINGS.map(b => ({ id: b.id as string, name: b.name })), { id: 'god', name: '신 소환' }, ...RAIDS.map(r => ({ id: r.id as string, name: `${r.name} 소환` }))];
 
 /** v3.26 침투 작전 노드 이름과 입력 안내. */
-const NODE_LABEL: Record<string, (size: number) => string> = { lock: n => `방화벽 · 숫자 ${n}자리`, port: n => `포트 스캔 · 1~${format(n)}`, seq: () => '수열 · 다음 수는?', bin: () => '진법 변환 · 10진수로', cipher: n => `암호 해독 · ${n}글자` };
-const NODE_HINT: Record<string, (size: number) => string> = { lock: n => `서로 다른 숫자 ${n}자리`, port: n => `1~${n}`, seq: () => '다음 수', bin: () => '10진수', cipher: n => `영문 ${n}글자` };
+/** v3.28 최단 경로 · 패스워드 재조합 추가. */
+const NODE_LABEL: Record<string, (size: number) => string> = { lock: n => `방화벽 · 숫자 ${n}자리`, port: n => `포트 스캔 · 1~${format(n)}`, seq: () => '수열 · 다음 수는?', bin: () => '진법 변환 · 10진수로', cipher: n => `암호 해독 · ${n}글자`, path: () => '최단 경로 · 지나는 칸 합의 최솟값', anagram: n => `패스워드 재조합 · ${n}글자` };
+const NODE_HINT: Record<string, (size: number) => string> = { lock: n => `서로 다른 숫자 ${n}자리`, port: n => `1~${n}`, seq: () => '다음 수', bin: () => '10진수', cipher: n => `영문 ${n}글자`, path: () => '최소 합', anagram: n => `영문 ${n}글자` };
+const LETTER_NODES = ['cipher', 'anagram'];

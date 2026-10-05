@@ -236,13 +236,19 @@ test('v3.26 infiltration puzzles: first lock then port, later nodes mix in seque
         const node = H.makeNode(seed, depth), run = { seed, depth, bank: { bits: 0, exp: 0 }, node }, answer = H.nodeAnswer(run);
         kinds.add(node.kind);
         if (depth === 0) assert.equal(node.kind, 'lock'); if (depth === 1) assert.equal(node.kind, 'port');
-        if (depth >= 2) assert.ok((depth + 1) % 2 === 1 ? ['lock', 'cipher'].includes(node.kind) : ['port', 'seq', 'bin'].includes(node.kind));
+        // v3.28 5번째부터 홀수 칸에 패스워드 재조합, 6번째부터 짝수 칸에 최단 경로.
+        if (depth >= 2) assert.ok((depth + 1) % 2 === 1 ? ['lock', 'cipher', ...(depth >= 4 ? ['anagram'] : [])].includes(node.kind) : ['port', 'seq', 'bin', ...(depth >= 5 ? ['path'] : [])].includes(node.kind), `${depth}: ${node.kind}`);
         assert.ok(H.judge(run, answer).solved, `${node.kind} answer opens`);
         if (node.kind === 'bin') assert.equal(Number(node.prompt.startsWith('0x') ? parseInt(node.prompt.slice(2), 16) : parseInt(node.prompt.slice(2), 2)), Number(answer));
         if (node.kind === 'seq') { assert.ok(node.prompt.endsWith('?')); const g = String(Number(answer) + 1); assert.equal(H.judge(run, g).hint, 'DOWN'); }
+        if (node.kind === 'anagram') { const word = node.prompt.split(' ')[0]; assert.equal([...word].sort().join(''), [...answer].sort().join('')); assert.notEqual(word, answer); assert.match(H.judge(run, 'Z'.repeat(answer.length)).hint, /일치/); }
+        if (node.kind === 'path') {
+            const g = node.prompt.split(' / ').map(row => row.split(' ').map(Number)), n = g.length, best = (y, x) => g[y][x] + (y === n - 1 && x === n - 1 ? 0 : Math.min(y < n - 1 ? best(y + 1, x) : Infinity, x < n - 1 ? best(y, x + 1) : Infinity));
+            assert.equal(best(0, 0), Number(answer), 'min path sum'); assert.equal(n, depth + 1 < 10 ? 3 : 4); assert.equal(H.judge(run, String(Number(answer) - 1)).hint, 'UP');
+        }
         if (node.kind === 'cipher') { assert.equal(node.size, answer.length); const wrong = 'Z'.repeat(answer.length); assert.match(H.judge(run, wrong).hint, /일치/); assert.throws(() => H.judge(run, 'AB1')); }
     }
-    assert.deepEqual([...kinds].sort(), ['bin', 'cipher', 'lock', 'port', 'seq']);
+    assert.deepEqual([...kinds].sort(), ['anagram', 'bin', 'cipher', 'lock', 'path', 'port', 'seq']);
     assert.deepEqual([3, 5, 6, 12, 13].map(d => D.HACKER.infil.lock(d).digits), [3, 3, 4, 4, 5]);
 });
 
