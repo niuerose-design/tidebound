@@ -5,7 +5,7 @@ import { Sparkles, RefreshCw, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
-import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, ECONOMY, researchCost, researchEffect, researchUnlocked, startingLevel, type ResearchDef, type ResearchTab } from '@/game/data/economy';
+import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, RELIC_GROWTH, relicPower, ECONOMY, researchCost, researchEffect, researchUnlocked, startingLevel, type ResearchDef, type ResearchTab } from '@/game/data/economy';
 import { PROGRESSION } from '@/game/data/progression';
 import { RebirthHistory } from './rebirth-history';
 import { BALANCE } from '@/game/data/balance';
@@ -157,9 +157,9 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         {tab === 'research' && <><p className="tab-intro">세계석 연구는 환생 후에도 유지됩니다. 카드에는 1단계당 증가량과 현재 → 다음 단계 효과를 표시합니다.</p>
             <Tabs value={researchTab} onValueChange={v => setResearchTab(v as ResearchTab)}><TabsList className="game-tabs research-tabs">{RESEARCH_TABS.map(t => <TabsTrigger key={t.id} value={t.id}>{t.name}</TabsTrigger>)}</TabsList></Tabs>
             <ResearchTabView tab={researchTab} s={s} send={send} busy={busy}/></>}
-        {tab === 'relics' && <><p className="tab-intro">환생해도 강화와 옵션까지 남는 장비입니다. 세계석 없이 환생 횟수를 채우면 받을 수 있고, 종류당 하나만 보유할 수 있습니다.</p><div className="port-gamble-grid">{RELICS.map(r => {
+        {tab === 'relics' && <><p className="tab-intro">환생을 가로질러 자라는 장비입니다. 위력은 환생마다 +{RELIC_GROWTH.perRebirth * 100}%(지금 ×{(1 + s.rebirths * RELIC_GROWTH.perRebirth).toFixed(2)}), 별과 이식한 옵션(최대 {RELIC_GROWTH.imprintSlots}줄)은 환생해도 남고, 강화 파괴 대신 12성으로 돌아갑니다. 옵션 이식은 장비 보관함에서 같은 부위 장비를 소비해 합니다. 세계석 없이 환생 횟수를 채우면 받을 수 있고, 종류당 하나만 보유할 수 있습니다.</p><div className="port-gamble-grid">{RELICS.map(r => {
             const owned = ownsRelic(s, r.id);
-            return <article className="panel market-card" key={r.id}><SlotIcon slot={r.slot} size={28}/><span className="badge">환생 {r.rebirth}회</span><h2>{r.name}</h2><p>{r.description}</p><BonusList item={{ ...r, id: r.id, rarity: 3, level: 1 }}/><button className="primary" disabled={busy || owned || s.rebirths < r.rebirth || s.inventory.length >= BALANCE.inventoryCap} onClick={() => send({ type: 'buyRelic', id: r.id })}>{owned ? '보유 중' : s.rebirths < r.rebirth ? `환생 ${r.rebirth}회 필요` : '수령'}</button></article>;
+            return <article className="panel market-card" key={r.id}><SlotIcon slot={r.slot} size={28}/><span className="badge">환생 {r.rebirth}회</span><h2>{r.name}</h2><p>{r.description}</p><BonusList item={{ ...r, id: r.id, rarity: 3, level: 1, power: relicPower(r.power, s.rebirths) }}/><button className="primary" disabled={busy || owned || s.rebirths < r.rebirth || s.inventory.length >= BALANCE.inventoryCap} onClick={() => send({ type: 'buyRelic', id: r.id })}>{owned ? '보유 중' : s.rebirths < r.rebirth ? `환생 ${r.rebirth}회 필요` : '수령'}</button></article>;
         })}</div></>}
     </>;
 }

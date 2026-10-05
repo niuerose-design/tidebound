@@ -1,5 +1,5 @@
 import type { Item, Stats, State } from '../types';
-import { ECONOMY, AFFIXES, smithDiscount } from '../data/economy';
+import { ECONOMY, AFFIXES, RELICS, RELIC_GROWTH, relicPower, smithDiscount } from '../data/economy';
 import { ESSENCE_BY_RARITY, rerollEssence } from '../data/gear';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
@@ -57,6 +57,15 @@ const smith = (cost: number, s?: Pick<State, 'permanent'>) => s ? Math.floor(cos
 // v27.30 강화·옵션 재설정 비용은 Lv.40 위 장비부터 몬스터 골드 곡선(priceScale)만큼 커집니다.
 /** 강화 1회 비용. 12성까지 전 공식, 13성부터 12성 비용 × growth^(성−12)(v27.93 스타포스). */
 export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'>) => { const n = item.enhance || 0, base = Math.min(n, STARFORCE.growthFrom); return smith(Math.floor((120 + item.power * 12) * (1 + base) ** 1.6 * priceScale(item.level || 1) * Math.pow(STARFORCE.growth, Math.max(0, n - STARFORCE.growthFrom))), s); };
+/** v27.94 유물 옵션 이식 비용: 소비하는 장비의 옵션 재설정 골드 × RELIC_GROWTH.imprintCost. */
+export const imprintCost = (source: Item, s?: Pick<State, 'permanent'>) => reforgeCost(source, s) * RELIC_GROWTH.imprintCost;
+/** v27.94 유물 위력을 환생 횟수에 맞춥니다(기본 × (1 + 환생 × 4%)). 불러오기·환생·수령 때 불러 저장된 위력을 고칩니다. */
+export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebirths'>) {
+    for (const item of [...s.inventory, ...Object.values(s.equipment)]) {
+        const base = item?.relic && RELICS.find(r => r.id === item.relic);
+        if (item && base) item.power = relicPower(base.power, s.rebirths || 0);
+    }
+}
 export const reforgeCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((250 + item.power * 25) * priceScale(item.level || 1)), s);
 /** 분해로 얻는 정수와 옵션 하나 재설정에 드는 정수. */
 export const dismantleEssence = (item: Item) => ESSENCE_BY_RARITY[item.rarity] ?? 1;

@@ -1,6 +1,7 @@
 import type { State } from '../types';
 import { addLog } from './state';
 import { RELICS } from '../data/economy';
+import { syncRelicPower } from './equipment';
 import { SAVE_VERSION } from '../data/balance';
 import { newState } from './engine';
 import { OLD_GEAR_NAMES, RENAMED_GEAR, RENAMED_AFFIX, gearName } from '../data/maple-gear';
@@ -39,7 +40,7 @@ export function grantLimitBreakResearch(s: State) {
     return grant;
 }
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    if (s.version === SAVE_VERSION) { refundGoldenResearch(s); refundRelicPurchases(s); grantLimitBreakResearch(s); renameMapleGear(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { refundGoldenResearch(s); refundRelicPurchases(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

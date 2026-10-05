@@ -1103,3 +1103,38 @@ test('v27.93 star force: per-star odds, drops from 10 (15/20 safe), destruction 
     const worn = { ...base, id: 'w', enhance: 20 }; s.inventory = [worn]; s.equipment.coat = worn;
     act(s, { type: 'enhance', id: 'w' }, 0, () => .35); assert.equal(s.equipment.coat, null, 'destroyed while equipped: slot emptied');
 });
+
+test('v27.94 growing relics: power follows rebirths, imprint consumes a same-slot item and survives rebirth, reforge only rerolls the fixed affix', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Eco = await L.load('data/economy'), { syncRelicPower, imprintCost } = await L.load('systems/equipment'), M = await L.load('systems/migrations'), Meta = await L.load('systems/meta');
+    assert.equal(Eco.relicPower(45, 0), 45); assert.equal(Eco.relicPower(45, 25), 90); assert.equal(Eco.relicPower(45, 50), 135);
+    const s = newState(0); s.rebirths = 10; s.gold = 1e9;
+    act(s, { type: 'buyRelic', id: 'memoryRod' }, 0);
+    const relic = s.inventory.find(i => i.relic === 'memoryRod');
+    assert.equal(relic.power, Eco.relicPower(45, 10), 'bought relic starts at the current rebirth power');
+    relic.power = 45; M.migrateState(s, 0); assert.equal(relic.power, 63, 'loading an old save syncs relic power');
+    const src = (id, affixes, extra = {}) => ({ id, name: `원본 ${id}`, slot: 'rod', rarity: 3, power: 100, level: 40, affixes, ...extra });
+    s.inventory.push(src('a', [{ id: 'might', name: '맹공', stat: 'attack', value: 30 }, { id: 'swift', name: '신속', stat: 'speed', value: 2 }]));
+    s.inventory.push(src('b', [{ id: 'might', name: '맹공', stat: 'attack', value: 50 }], { locked: true }), { ...src('c', [{ id: 'lucky', name: '행운', stat: 'crit', value: .02 }]), slot: 'coat' });
+    assert.throws(() => act(s, { type: 'imprintRelic', id: relic.id, value: 'b:0:0' }, 0), /보호/);
+    assert.throws(() => act(s, { type: 'imprintRelic', id: relic.id, value: 'c:0:0' }, 0), /같은 부위/);
+    assert.throws(() => act(s, { type: 'imprintRelic', id: relic.id, value: 'a:5:0' }, 0), /옵션을 고르세요/);
+    assert.throws(() => act(s, { type: 'imprintRelic', id: relic.id, value: 'a:0:3' }, 0), /칸을 고르세요/);
+    const cost = imprintCost(s.inventory.find(i => i.id === 'a'), s), gold = s.gold;
+    act(s, { type: 'imprintRelic', id: relic.id, value: 'a:1:0' }, 0);
+    assert.equal(s.gold, gold - cost); assert.ok(!s.inventory.some(i => i.id === 'a'), 'source item is consumed');
+    assert.deepEqual(relic.affixes.map(x => x.id), ['swift']); assert.equal(relic.affix.stat, 'goldBonus', 'fixed affix stays');
+    s.inventory.push(src('d', [{ id: 'swift', name: '신속', stat: 'speed', value: 3 }, { id: 'arcana', name: '신비', stat: 'magic', value: 20 }]));
+    assert.throws(() => act(s, { type: 'imprintRelic', id: relic.id, value: 'd:0:1' }, 0), /이미 같은 옵션/);
+    act(s, { type: 'imprintRelic', id: relic.id, value: 'd:0:0' }, 0); assert.equal(relic.affixes[0].value, 3, 'same slot overwrites');
+    s.inventory.push(src('e', [{ id: 'arcana', name: '신비', stat: 'magic', value: 20 }]));
+    act(s, { type: 'imprintRelic', id: relic.id, value: 'e:0:1' }, 0); assert.deepEqual(relic.affixes.map(x => x.id), ['swift', 'arcana']);
+    assert.ok(stats({ ...s, equipment: { ...s.equipment, rod: relic } }).magic > stats(s).magic, 'imprinted lines count in stats');
+    s.essence = 50; act(s, { type: 'reforge', id: relic.id, value: '0' }, 0, () => .2);
+    assert.deepEqual(relic.affixes.map(x => x.id), ['swift', 'arcana'], 'reforge on a relic leaves imprinted lines alone'); assert.ok(relic.affix);
+    s.equipment.rod = relic; s.inventory = s.inventory.filter(i => i.id !== relic.id); relic.enhance = 14;
+    s.level = Meta.rebirthLevel(s); act(s, { type: 'rebirth' }, 0);
+    const kept = s.equipment.rod; assert.equal(kept?.relic, 'memoryRod'); assert.equal(kept.enhance, 14); assert.deepEqual(kept.affixes.map(x => x.id), ['swift', 'arcana']);
+    assert.equal(kept.power, Eco.relicPower(45, 11), 'rebirth bumps relic power');
+    syncRelicPower(s); assert.equal(kept.power, Eco.relicPower(45, 11));
+});
