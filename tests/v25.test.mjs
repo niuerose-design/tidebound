@@ -1381,7 +1381,7 @@ test('v3.17 tutorial rewards: a step completed by its condition pays once; silen
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const G = await L.load('systems/guidance');
     assert.ok(G.TUTORIAL_STEPS.length >= 21); assert.ok(G.TUTORIAL_STEPS.every(st => st.reward && (st.reward.pearls || st.reward.sp)));
     const s = newState(0); s.tutorial = { done: {} }; const pearls = s.pearls; const logs = [];
-    G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1, 'the starter skill step (equipped from the start) pays once');
-    s.kills = 1; G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 2); assert.ok(logs.some(t => t.includes('첫 처치'))); G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 2, 'paid once');
+    G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls, 'the starter skill alone pays nothing (new accounts start with 0 pearls)'); assert.ok(s.tutorial.done.skill, 'but the step counts as done');
+    s.kills = 1; G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1); assert.ok(logs.some(t => t.includes('첫 처치'))); G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1, 'paid once');
     const vet = newState(0); vet.rebirths = 5; vet.kills = 10; vet.tutorial = {}; const vp = vet.pearls; G.syncTutorial(vet); assert.equal(vet.pearls, vp, 'back-fill pays nothing'); assert.ok(vet.tutorial.done.rebirth);
 });
