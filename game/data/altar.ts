@@ -18,7 +18,8 @@ export const ALTAR = {
     titheRate: .1,
     /** 신 소환에 드는 기여도, 신이 머무는 시간, 모험가별 도전 간격. */
     /** v27.48 30,000 → 10,000(골드 1,000만). */
-    godCost: 10_000, godLifetimeMs: 24 * 3600_000, challengeCooldownMs: 10 * 60_000,
+    /** v27.91 월드보스가 생기면서 신 소환은 훨씬 비싸졌습니다(10,000 → 40,000). */
+    godCost: 40_000, godLifetimeMs: 24 * 3600_000, challengeCooldownMs: 10 * 60_000,
     /** 신과의 전투 턴 상한. 무릉도장 보스전에는 턴 제한이 없어 결투(80턴)보다 넉넉히 둡니다. */
     godMaxTurns: 1000,
     /** 축복 시간은 쌓이지만 지금부터 최대 12시간까지만. */
@@ -33,7 +34,8 @@ export const ALTAR = {
 } as const;
 
 export type BlessingId = 'gold' | 'mimic' | 'exp' | 'nuri';
-export type AltarGaugeId = BlessingId | 'god';
+export type RaidId = 'balrog' | 'zakum' | 'horntail';
+export type AltarGaugeId = BlessingId | 'god' | RaidId;
 type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: number };
 /**
  * 축복: 게이지가 차면 서버 전체에 hours시간 동안 열립니다(1단계). 배율은 서버 이벤트와 곱해집니다.
@@ -59,8 +61,34 @@ export function blessingDesc(b: Blessing, level = 1) {
 }
 /** 지금 게이지를 한 번 채우는 비용. 닫혀 있으면 기본(1단계로 열림), 진행 중이면 다음 단계(3단계면 시간 연장) 비용. */
 export const blessingCost = (b: Blessing, level: number, active: boolean) => Math.round(b.cost * Math.pow(BLESSING_LEVEL_STEP, active ? Math.min(level, BLESSING_MAX_LEVEL - 1) : 0));
-export const GAUGE_IDS: AltarGaugeId[] = [...BLESSINGS.map(b => b.id), 'god'];
-export const gaugeCost = (id: AltarGaugeId, level = 0, active = false) => id === 'god' ? ALTAR.godCost : blessingCost(BLESSINGS.find(b => b.id === id)!, level, active);
+/**
+ * v27.91 월드보스. 소환 게이지가 차면 서버 전체에 한 마리가 24시간 나타나고, 모든 모험가의 피해가 체력 하나에 누적됩니다(공유 체력).
+ * 도전은 결투 엔진으로 maxTurns 안에서 한 번 계산하고(부하·렉 방지), 모험가마다 cooldown 간격으로 다시 때립니다.
+ * 격파하면 그 보스를 한 번이라도 때린 모험가 전원이 다음 동기화 때 보상을 받고, 서버 전체에 축복이 열립니다. 마지막 일격을 넣은 모험가는 보너스를 더 받습니다.
+ * 셋은 입문(0환생도 기여 가능) · 중급 · 상급 순으로 체력이 크게 뜁니다. 공격·방어는 완만하고 체력은 공유를 감안해 큽니다(수치는 밸런스용이라 화면에는 기준을 적지 않음).
+ */
+export type RaidDef = {
+    id: RaidId; name: string; /** 전투 기술·외형을 빌리는 몬스터 id */ fish: string; level: number; cost: number;
+    stats: { hp: number; attack: number; magic: number; defense: number; resist: number; speed: number; crit: number; accuracy: number; penetration: number; evasion: number };
+    /** 참여자 보상(격파 뒤 다음 동기화 때) · 마지막 일격 보너스 · 축복 시간. */
+    reward: { gold: number; pearls: number; sp: number }; slayer: { pearls: number; sp: number }; blessings: BlessingId[]; blessingHours: number;
+};
+export const RAID = { lifetimeMs: 24 * 3600_000, cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10 } as const;
+export const RAIDS: RaidDef[] = [
+    { id: 'balrog', name: '발록', fish: 'magmaKraken', level: 30, cost: 2_000, stats: { hp: 500_000, attack: 90, magic: 90, defense: 25, resist: 25, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
+        reward: { gold: 30_000, pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 }, blessings: ['gold', 'exp'], blessingHours: 1 },
+    { id: 'zakum', name: '자쿰', fish: 'ventColossus', level: 70, cost: 5_000, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 900, resist: 900, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
+        reward: { gold: 500_000, pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 }, blessings: ['gold', 'exp'], blessingHours: 2 },
+    { id: 'horntail', name: '혼테일', fish: 'abyssSovereign', level: 120, cost: 12_000, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 15_000, resist: 15_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
+        reward: { gold: 5_000_000, pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 }, blessings: ['gold', 'exp', 'mimic', 'nuri'], blessingHours: 3 },
+];
+export const raidById = (id: string) => RAIDS.find(r => r.id === id);
+export const isRaidGauge = (id: string): id is RaidId => RAIDS.some(r => r.id === id);
+/** 소환 게이지(신 + 월드보스 셋)와 축복 게이지. 화면의 축복/소환 탭이 이 둘로 나뉩니다. */
+export const SUMMON_GAUGE_IDS: AltarGaugeId[] = ['god', ...RAIDS.map(r => r.id)];
+export const GAUGE_IDS: AltarGaugeId[] = [...BLESSINGS.map(b => b.id), ...SUMMON_GAUGE_IDS];
+export const gaugeCost = (id: AltarGaugeId, level = 0, active = false) => id === 'god' ? ALTAR.godCost : isRaidGauge(id) ? raidById(id)!.cost : blessingCost(BLESSINGS.find(b => b.id === id)!, level, active);
+export const gaugeName = (id: AltarGaugeId) => id === 'god' ? '신 소환' : isRaidGauge(id) ? `${raidById(id)!.name} 소환` : BLESSINGS.find(b => b.id === id)!.name;
 
 export type Offering = { gold: number; pearls: number; essence: number };
 /** 바친 재화의 기여도. 골드는 1,000 단위로 내림합니다. */
@@ -78,7 +106,15 @@ export type AltarInfo = {
     throne: { id: string; name: string; since: number; mine: boolean; power: number; hp: number; tithe?: Offering } | null;
     totals: Offering & { points: number };
     board: { rank: number; name: string; points: number; anonymous: boolean; self: boolean }[];
-    me: { points: number; rank: number; anonymous: boolean; challengeAt: number };
+    me: { points: number; rank: number; anonymous: boolean; challengeAt: number; /** v27.91 월드보스 마지막 도전 시각 */ raidAt: number };
+    /** v27.91 지금 나타난(또는 방금 격파된) 월드보스. 없으면 null. */
+    raid: AltarRaidInfo | null;
+};
+export type AltarRaidInfo = {
+    id: RaidId; gen: number; name: string; level: number; alive: boolean; slain: boolean; hp: number; hpMax: number; attack: number; defense: number; power: number; until: number;
+    /** 참여자 수와 마지막 일격 */ participants: number; slayer: string;
+    /** 피해 순위(상위 RAID.boardSize)와 내 기록 */ board: { rank: number; name: string; dealt: number; hits: number; self: boolean }[]; me: { dealt: number; hits: number; rank: number };
+    reward: RaidDef['reward']; slayerBonus: RaidDef['slayer'];
 };
 
 /** 받침에 맞는 조사(이/가, 을/를, 은/는, 과/와). 한글이 아니면 받침 없음으로 봅니다. */
@@ -91,6 +127,8 @@ export function josa(word: string, pair: '이가' | '을를' | '은는' | '과�
 export type AltarStatus = {
     blessings: { id: BlessingId; name: string; desc: string; until: number; level: number }[];
     god: { gen: number; name: string; until: number } | null;
+    /** v27.91 살아 있는 월드보스(체력 비율 0~1). */
+    raid: { gen: number; name: string; until: number; pct: number } | null;
     throne: string;
     gauges: { id: AltarGaugeId; name: string; pct: number }[];
 };

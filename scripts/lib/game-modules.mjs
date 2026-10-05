@@ -1,4 +1,4 @@
-// game/의 TypeScript(server/ 제외)를 임시 폴더에 ESM으로 변환해 Node 스크립트·테스트에서 불러옵니다.
+// game/의 TypeScript를 임시 폴더에 ESM으로 변환해 Node 스크립트·테스트에서 불러옵니다. v27.91부터 server/도 포함(상대 경로·node 내장 모듈만 쓰므로 그대로 돌아감; DB는 TIDEBOUND_DEV_DB 파일).
 import ts from 'typescript';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -11,7 +11,7 @@ export function loadGame() {
     if (cache) return cache;
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tidebound-game-'));
     for (const file of fs.readdirSync('game', { recursive: true })) {
-        if (!file.endsWith('.ts') || file.startsWith('server')) continue;
+        if (!file.endsWith('.ts')) continue;
         const js = ts.transpileModule(fs.readFileSync(path.join('game', file), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText
             .replace(/from (['"])(\.\.?\/[^'"]+)\1/g, (_, q, p) => `from ${q}${p}.js${q}`);
         const out = path.join(dir, file.replace(/\.ts$/, '.js'));
