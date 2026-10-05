@@ -1229,3 +1229,10 @@ test('v3.8 star catch: enhance value "catch" adds +10%p success (destroy unchang
     const gold = s.gold; item.enhance = 15; act(s, { type: 'enhance', id: 'g', value: 'safeguard,catch' }, 0, () => .39); assert.equal(item.enhance, 16); assert.ok(gold - s.gold > 0);
     item.enhance = 16; act(s, { type: 'enhance', id: 'g', value: 'catch' }, 0, () => .405); assert.ok(!s.inventory.some(i => i.id === 'g'), 'destroy band (.4~.421) is unchanged by the catch bonus');
 });
+
+test('v3.8 auto enhance research costs 10 pearls; saves that paid 100 get 90 back once', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const Eco = await L.load('data/economy'), M = await L.load('systems/migrations');
+    assert.equal(Eco.researchCost('autoStar', 0), 10);
+    const s = newState(0); s.autoStarRefunded = false; s.permanent.autoStar = 1; s.pearls = 5; assert.equal(M.refundAutoStar(s), 90); assert.equal(s.pearls, 95); assert.equal(M.refundAutoStar(s), 0, 'only once');
+    const t = newState(0); t.autoStarRefunded = false; assert.equal(M.refundAutoStar(t), 0); assert.equal(t.autoStarRefunded, true); t.permanent.autoStar = 1; assert.equal(M.refundAutoStar(t), 0, 'buying later at 10 gets no refund');
+});
