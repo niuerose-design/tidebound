@@ -29,11 +29,35 @@ type RateState = Pick<State, 'lastTick' | 'logs' | 'kills' | 'rebirths' | 'name'
 const masteryOf = (s: RateState) => Object.values(s.jobMastery || {}).reduce((a, n) => a + (n || 0), 0);
 /** 로그 한 줄에서 얻은 경험치·골드·숙련·내가 준 피해. 처치 줄(+G · +EXP), 누리(경험치 +N), 숙련 줄(숙련 +N), 전투 이벤트(total). */
 export function gainsOf(log: Log, player: string) {
-    const exp = log.type === 'reward' ? num(log.text.match(/\+([\d,]+) EXP/)) + num(log.text.match(/경험치 \+([\d,]+)/)) : 0;
+    const exp = log.type === 'reward' ? num(log.text.match(/\+([\d,]+) EXP/)) + num(log.text.match(/경험치 \+([\d,]+)(?![\d,]| EXP)/)) : 0;
     const gold = log.type === 'reward' ? num(log.text.match(/\+([\d,]+) G(?![a-zA-Z])/)) : 0;
     const mastery = log.type === 'skill' ? num(log.text.match(/숙련 \+([\d,]+)/)) : 0;
     const dmg = log.type === 'battle' && log.event && log.event.actor === player ? log.event.total || 0 : 0;
     return { exp, gold, mastery, dmg };
+}
+/** 처치 줄인지(+N EXP). 봉인 해제·정산 줄도 EXP를 쓰므로 ‘처치 ·’를 함께 봅니다. */
+const isKillLine = (l: Log) => l.type === 'reward' && /처치 · \+[\d,]+ G · \+[\d,]+ EXP/.test(l.text);
+export type RecentKill = { exp: number; gold: number; mastery: number; id: number };
+/**
+ * v3.22 가장 최근 처치로 얻은 양. 처치 줄(+G · +EXP · 숙련 +N, 숙련은 까미 당첨분 포함)에 같은 처치에서 찍힌 경험의 누리 줄(경험치 +N)을 더합니다.
+ * 같은 처치 = 같은 턴에서 직전 처치 줄 뒤부터 이 처치 줄까지. 처치 줄에 숙련이 없는 옛 로그는 바로 뒤 숙련 줄과 까미 줄로 맞춥니다.
+ * 로그가 밀려나 처치 줄이 없으면 null.
+ */
+export function recentKill(logs: Log[], player: string): RecentKill | null {
+    let k = -1;
+    for (let i = logs.length - 1; i >= 0; i--) if (isKillLine(logs[i])) { k = i; break; }
+    if (k < 0) return null;
+    const kill = logs[k], before: Log[] = [];
+    for (let i = k - 1; i >= 0 && kill.turn !== undefined && logs[i].turn === kill.turn && !isKillLine(logs[i]); i--) before.push(logs[i]);
+    const g = gainsOf(kill, player);
+    let exp = g.exp, mastery = num(kill.text.match(/숙련 \+([\d,]+)/));
+    for (const l of before) if (l.type === 'reward' && /경험의 누리/.test(l.text)) exp += gainsOf(l, player).exp;
+    if (!mastery) {
+        const next = logs[k + 1];
+        if (next?.type === 'skill' && next.turn === kill.turn) mastery += gainsOf(next, player).mastery;
+        for (const l of before) if (/숙련의 까미/.test(l.text)) mastery += num(l.text.match(/숙련 \+([\d,]+)/));
+    }
+    return { exp, gold: g.gold, mastery, id: kill.id };
 }
 export function createLiveRates() {
     let samples: Totals[] = [], lastLogId = -1, lastKills = 0, lastRebirths = -1, snapshot: LiveRates = EMPTY_RATES;

@@ -3,13 +3,14 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Activity, ChevronDown, Coins, Fish, Sparkles, Swords, Zap } from 'lucide-react';
 import type { State } from '@/game/types';
+import type { RecentKill } from '@/game/systems/live-rates';
 import { projectLevel, msToCap, LEVEL_CAP } from '@/game/systems/live-rates';
 import { xpNeeded } from '@/game/data/balance';
 const xpNeededSafe = (level: number, rebirths: number) => level >= LEVEL_CAP ? 1 : xpNeeded(level, rebirths);
 import { short, format } from './shared';
-import { gainsOf, RATE_WINDOW_MS, useLiveRates } from './live-rates';
+import { recentKill, RATE_WINDOW_MS, useLiveRates } from './live-rates';
 const FOLD_KEY = 'tidebound.liveRates';
-type Recent = { exp: number; gold: number; mastery: number; id: number } | null;
+type Recent = RecentKill | null;
 /** 마지막 처치 획득량. 로그가 밀려나도 남고, 화면을 오가도 유지됩니다(앱 전체 하나). */
 const recentStore = (() => { let value: Recent = null; const subs = new Set<() => void>(); return { get: () => value, set: (v: Recent) => { value = v; subs.forEach(fn => fn()); }, subscribe: (fn: () => void) => { subs.add(fn); return () => { subs.delete(fn); }; } }; })();
 const HORIZONS: [label: string, hours: number][] = [['1시간', 1], ['6시간', 6], ['24시간', 24]];
@@ -20,10 +21,10 @@ export function LiveRatesCard({ s, compact = false }: { s: State; compact?: bool
     const [open, setOpen] = useState(true);
     useEffect(() => { if (!compact) return; const t = setTimeout(() => { try { if (localStorage.getItem(FOLD_KEY) === 'folded') setOpen(false); } catch { /* 저장소 없음 */ } }, 0); return () => clearTimeout(t); }, [compact]);
     const toggle = () => setOpen(v => { try { localStorage.setItem(FOLD_KEY, v ? 'folded' : 'open'); } catch { /* 저장소 없음 */ } return !v; });
-    // 최근 처치 한 줄: 마지막 처치 줄의 경험치·골드와 그 뒤 숙련 줄. 로그가 밀려나도 마지막 값은 남겨 둡니다.
-    const lastKill = s.logs.findLast(l => l.type === 'reward' && /\+[\d,]+ EXP/.test(l.text)), lastSkill = lastKill ? s.logs.find(l => l.id > lastKill.id && l.type === 'skill' && /숙련 \+/.test(l.text)) : undefined;
+    // 최근 처치 한 줄: 같은 턴의 처치·누리·숙련 줄을 한 처치로 묶은 값(v3.22). 로그가 밀려나도 마지막 값은 남겨 둡니다.
+    const latest = recentKill(s.logs, s.name);
     const recent = useSyncExternalStore(recentStore.subscribe, recentStore.get, recentStore.get);
-    useEffect(() => { if (lastKill && (!recent || lastKill.id > recent.id || lastSkill && !recent.mastery)) recentStore.set({ ...gainsOf(lastKill, s.name), mastery: lastSkill ? gainsOf(lastSkill, s.name).mastery : 0, id: lastKill.id }); }, [lastKill, lastSkill, recent, s.name]);
+    useEffect(() => { if (latest && (!recent || latest.id !== recent.id)) recentStore.set(latest); }, [latest, recent]);
     // 경험치는 '지금 레벨 필요량의 %' 대신 시간당 몇 레벨, 최대 레벨까지 얼마나 걸리는지로 보여 줍니다(환생 직후 %가 수천이 되던 문제).
     const after1h = projectLevel(s.level, s.exp, s.rebirths, r.perHour.exp), capMs = msToCap(s.level, s.exp, s.rebirths, r.perHour.exp), atCap = s.level >= LEVEL_CAP;
     const levelGain = after1h.level + after1h.progress - (s.level + s.exp / xpNeededSafe(s.level, s.rebirths));
@@ -39,7 +40,7 @@ export function LiveRatesCard({ s, compact = false }: { s: State; compact?: bool
     return <section className={`panel live-rates ${compact ? 'compact' : ''} ${open ? '' : 'folded'} ${r.ready ? 'ready' : 'warming'}`} aria-label="실시간 효율">
         <div className="section-title">
             <h2><Activity size={16}/> 실시간 효율 <span className="micro">{status}</span></h2>
-            {recent && <span className="live-recent" key={recent.id} title="가장 최근 처치로 얻은 양">최근 처치 <b>+{format(recent.exp)} EXP</b><b>+{format(recent.gold)} G</b></span>}
+            {recent && <span className="live-recent" key={recent.id} title="가장 최근 처치로 얻은 양(경험의 누리·숙련의 까미 당첨분 포함)">최근 처치 <b>+{format(recent.exp)} EXP</b><b>+{format(recent.gold)} G</b>{recent.mastery > 0 && <b>숙련 +{format(recent.mastery)}</b>}</span>}
             {compact && <button type="button" className="log-fold" aria-expanded={open} onClick={toggle} title={open ? '접기' : '펼치기'}><ChevronDown size={16}/></button>}
         </div>
         {open && <>

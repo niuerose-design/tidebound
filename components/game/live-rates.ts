@@ -3,7 +3,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import type { State } from '@/game/types';
 import { createLiveRates, EMPTY_RATES } from '@/game/systems/live-rates';
-export { gainsOf, RATE_WINDOW_MS, RATE_MIN_MS } from '@/game/systems/live-rates';
+export { gainsOf, recentKill, RATE_WINDOW_MS, RATE_MIN_MS } from '@/game/systems/live-rates';
 const store = createLiveRates();
 const getServer = () => EMPTY_RATES;
 export function useLiveRates() { return useSyncExternalStore(store.subscribe, store.get, getServer); }

@@ -1332,6 +1332,25 @@ test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/m
     store.feed(mk(R.RATE_WINDOW_MS + 30_000 + R.GAP_RESET_MS + 50_001, 0, [], 2)); assert.equal(store.get().elapsedMs, 0, 'rebirth restarts');
 });
 
+test('v3.22 recent kill: mastery on the kill line (mimic jackpot included), nuri exp folded in, no double count on EXP lines', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const R = await L.load('systems/live-rates');
+    assert.equal(R.gainsOf({ id: 1, type: 'reward', text: '잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +500 EXP' }, '나').exp, 500, 'not counted twice');
+    assert.equal(R.gainsOf({ id: 2, type: 'reward', text: '✦ 경험의 누리 · 대박당첨! 경험치 +1,500 (Lv.50 필요량의 3%)' }, '나').exp, 1500);
+    assert.equal(R.recentKill([], '나'), null);
+    const logs = [
+        { id: 1, turn: 7, type: 'reward', text: '달팽이 처치 · +5 G · +9 EXP · 숙련 +3' },
+        { id: 2, turn: 7, type: 'reward', text: '✦ 경험의 누리 · 대박당첨! 경험치 +1,500 (Lv.50 필요량의 3%)' },
+        { id: 3, turn: 7, type: 'reward', text: '경험의 누리 처치 · +20 G · +40 EXP · 숙련 +4' },
+        { id: 4, turn: 7, type: 'skill', text: '처치 · 직업·장착 스킬 숙련 +4 (기본 2 + 보너스 2)' },
+    ];
+    assert.deepEqual(R.recentKill(logs, '나'), { exp: 1540, gold: 20, mastery: 4, id: 3 }, 'nuri exp folded in, earlier kill in the same turn excluded');
+    const mimic = [{ id: 9, turn: 8, type: 'reward', text: '✦ 숙련의 까미 · 1등 당첨! 직업·장착 스킬 숙련 +5,000' }, { id: 10, turn: 8, type: 'reward', text: '숙련의 까미 처치 · +1 G · +2 EXP · 숙련 +5006' }];
+    assert.deepEqual(R.recentKill(mimic, '나'), { exp: 2, gold: 1, mastery: 5006, id: 10 }, 'kill line already holds the jackpot');
+    const old = [{ id: 9, turn: 8, type: 'reward', text: '✦ 숙련의 까미 · 1등 당첨! 직업·장착 스킬 숙련 +5,000' }, { id: 10, turn: 8, type: 'reward', text: '숙련의 까미 처치 · +1 G · +2 EXP' }, { id: 11, turn: 8, type: 'skill', text: '처치 · 직업·장착 스킬 숙련 +6 (기본 4 + 보너스 2)' }];
+    assert.equal(R.recentKill(old, '나').mastery, 5006, 'old logs: skill line + jackpot line');
+});
+
 test('v3.13 level-up never dead-ends: +10 is capped at my level (Lv.91 relic → Lv.100 at max level, star cap 22)', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const E = await L.load('systems/equipment');
     assert.equal(E.levelUpTarget({ level: 91 }, { level: 100 }), 100); assert.equal(E.levelUpTarget({ level: 100 }, { level: 100 }), null); assert.equal(E.levelUpTarget({ level: 80 }, { level: 100 }), 90); assert.equal(E.levelUpTarget({ level: 95 }, { level: 97 }), 97); assert.equal(E.levelUpTarget({ level: 50 }, { level: 50 }), null);
