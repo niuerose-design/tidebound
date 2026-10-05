@@ -2,6 +2,7 @@ import type { State } from '../types';
 import { addLog } from './state';
 import { RELICS } from '../data/economy';
 import { syncRelicPower } from './equipment';
+import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { SAVE_VERSION } from '../data/balance';
 import { newState } from './engine';
 import { SKILLS, skillMasteryScale } from '../data/skills';
@@ -57,7 +58,7 @@ export function keepLegacyInheritance(s: State) {
     return kept;
 }
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    if (s.version === SAVE_VERSION) { keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -72,6 +73,8 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
  */
 /** v3.8 자동 강화 연구 비용 100 → 10: 이미 찍은 세이브에 차액 90을 한 번 돌려줍니다. */
 export const AUTO_STAR_REFUND = 90;
+/** v3.14 이미 가진 칠흑 장신구를 물건 도감에 자동 등록합니다(장비 소모 없음). */
+export function registerOnyxCodex(s: State) { for (const id of ownedOnyx(s)) { s.itemBook ??= {}; s.itemBook[onyxCodexKey(id)] = true; } }
 export function refundAutoStar(s: State) {
     if (s.autoStarRefunded) return 0;
     s.autoStarRefunded = true;
@@ -82,7 +85,7 @@ export function refundAutoStar(s: State) {
 export function renameMapleGear(s: State) {
     let changed = 0;
     for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) {
-        if (!item) continue;
+        if (!item || item.onyx) continue;
         const old = OLD_GEAR_NAMES[item.slot as keyof typeof OLD_GEAR_NAMES] as readonly string[] | undefined;
         // 감정으로 얻은 옛 장비는 '전설 작살형 낚싯대'처럼 등급 + 상점 이름이었습니다.
         const tier = old ? old.indexOf(item.name) : -1, shop = /^(일반|희귀|영웅|전설|신화|고대|태초) (작살형 낚싯대|해류 지팡이|항해사의 방어구|정밀한 조류 나침반)$/.test(item.name);

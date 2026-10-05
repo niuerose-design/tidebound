@@ -409,3 +409,6 @@
 .onyx-book-icon .onyx-art{margin-left:auto;margin-right:8px}
 .onyx-book-icon .onyx-art:not(.owned){opacity:.45;filter:grayscale(.6)}
 .undiscovered .onyx-book-icon .onyx-art{opacity:.2}
+
+.onyx-item-card .item-icon{color:var(--rarity)}
+.onyx-item-card.unregistered .onyx-art{opacity:.35;filter:grayscale(.7)}

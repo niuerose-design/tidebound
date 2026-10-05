@@ -1277,7 +1277,8 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     s.enemy.hp = 0; const pearls = s.pearls; Enc.reward(s, () => .5); assert.ok(!s.inventory.some(i => i.onyx), 'roll .5 misses the 0.3% drop'); assert.equal(s.onyxMiss.onyxDusk, 1); assert.equal(s.onyxBook.onyxDusk, 1); assert.ok(s.logs.some(l => l.text.includes('남기지 않았습니다')));
     for (let i = 0; i < 3; i++) { Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); } assert.equal(s.onyxMiss.onyxDusk, 4); assert.ok(!s.inventory.some(i => i.onyx));
     s.onyxMiss.onyxDusk = O.ONYX.dropPity - 1; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); assert.ok(s.inventory.some(i => i.onyx), `${O.ONYX.dropPity}th kill is guaranteed`); assert.equal(s.onyxMiss.onyxDusk, 0); assert.equal(s.onyxBook.onyxDusk, 5);
-    const s2 = newState(0); s2.level = 60; s2.rebirths = 10; s2.kills = 5000; s2.stage = 'lithSwarm'; s2.tide = 0; Enc.spawn(s2, () => 0); s2.enemy.hp = 0; Enc.reward(s2, () => .001); assert.ok(s2.inventory.some(i => i.onyx), 'roll .001 drops');
+    const s2 = newState(0); s2.level = 60; s2.rebirths = 10; s2.kills = 5000; s2.stage = 'lithSwarm'; s2.tide = 0; Enc.spawn(s2, () => 0); s2.enemy.hp = 0; Enc.reward(s2, () => .001); assert.ok(s2.inventory.some(i => i.onyx), 'roll .001 drops'); assert.equal(s2.itemBook['onyx:onyxDusk'], true, 'v3.14 auto-registered in the item codex');
+    const Mig = await L.load('systems/migrations'); const s3 = newState(0); s3.inventory.push({ ...s2.inventory.find(i => i.onyx), id: 'mig' }); Mig.registerOnyxCodex(s3); assert.equal(s3.itemBook['onyx:onyxDusk'], true, 'existing owners get the codex entry');
     const acc = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(acc && acc.slot === 'charm' && acc.rarity === 6 && acc.locked && acc.affixes.length === 6 && acc.affixes[0].rule && acc.affixes[0].stat === 'thorns', JSON.stringify(acc));
     assert.equal(s.pearls, pearls);
     Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .5); assert.equal(s.inventory.filter(i => i.onyx).length, 1, 'one per boss'); assert.equal(s.pearls, pearls + O.ONYX.duplicatePearls);
@@ -1324,4 +1325,11 @@ test('v3.13 level-up never dead-ends: +10 is capped at my level (Lv.91 relic →
     const item = { id: 'r91', name: '유물', slot: 'rod', rarity: 5, level: 91, power: 500, affixes: [], relic: relic?.relic, enhance: 15 }; s.inventory.push(item);
     act(s, { type: 'levelUp', id: 'r91' }, 0); assert.equal(item.level, 100); assert.equal(item.enhance, 0); assert.equal(E.enhanceMaxFor(item), item.relic ? 22 : E.enhanceMaxFor({ ...item, relic: undefined }));
     assert.throws(() => act(s, { type: 'levelUp', id: 'r91' }, 0), /내 레벨/);
+});
+
+test('v3.14 plain 태초 charm renamed to 제네시스 펜던트 by migration; onyx 창세의 뱃지 keeps its name', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const Mig = await L.load('systems/migrations'), G = await L.load('data/maple-gear');
+    assert.equal(G.ACCESSORY_NAMES[6], '제네시스 펜던트');
+    const s = newState(0); s.inventory.push({ id: 'a', name: '창세의 뱃지', slot: 'charm', rarity: 6, level: 100, power: 500, affixes: [] }, { id: 'b', name: '창세의 뱃지', slot: 'charm', rarity: 6, level: 100, power: 500, affixes: [], onyx: 'onyxBlackMage' });
+    Mig.renameMapleGear(s); assert.equal(s.inventory.find(i => i.id === 'a').name, '제네시스 펜던트'); assert.equal(s.inventory.find(i => i.id === 'b').name, '창세의 뱃지');
 });
