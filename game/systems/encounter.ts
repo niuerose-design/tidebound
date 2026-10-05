@@ -25,6 +25,7 @@ import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
 import { saleValue } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
+import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus } from '../data/onyx';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -157,7 +158,12 @@ export function spawn(s: State, rng: () => number) {
     const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1) * (s.event?.mimic ?? 1) * luck : 0;
     const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? EXP_NURI.offlineScale : 1) * (s.event?.nuri ?? 1) * luck : 0;
     const special = mimicOk || nuriOk ? rng() : 1;
-    const mimic = special < mimicP, nuri = !mimic && special < mimicP + nuriP, rare = mimic || nuri, rareId = mimic ? MIMIC.id : EXP_NURI.id, rareDef = mimic ? MIMIC : EXP_NURI;
+    const mimic = special < mimicP, nuri = !mimic && special < mimicP + nuriP;
+    // v3.12 칠흑의 보스: 무리 서식지 출현마다 아주 드물게(천장 있음). 집중 사냥 대상이 아니며 그 서식지 최강 몬스터의 몸집(×100 무리급 체력, 공격 ×3)을 빌립니다.
+    const onyxDef = !dungeon && st.habitat ? onyxBossFor(st.region) : undefined;
+    let onyx = false;
+    if (onyxDef) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; }
+    const rare = mimic || nuri || onyx, rareId = onyx ? onyxDef!.id : mimic ? MIMIC.id : EXP_NURI.id, rareDef = onyx ? { hp: ONYX.hp, attack: ONYX.attack } : mimic ? MIMIC : EXP_NURI;
     const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
     // v27.64 사냥터 몬스터는 난이도만큼 레벨이 올라갑니다(내 레벨까지, tideLiftFish). 까미·누리는 올라간 가장 강한 몬스터의 몸집을 빌립니다.
     const top = rare ? tideLiftFish([...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0], tier, s.level) : undefined;
@@ -196,8 +202,9 @@ export function spawn(s: State, rng: () => number) {
         foe.magic = Math.round((foe.magic || 0) * vdef.attack);
         if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss, stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}), ...(variant ? { variant } : {}) };
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}), ...(variant ? { variant } : {}) };
 }
+const fishLevelOf = (id: string) => FISH.find(f => f.id === id)?.level || 1;
 export function reward(s: State, rng: () => number) {
     const e = s.enemy!;
     // v27.86 랜덤게임: 처치 경험치·골드·드롭·숙련 없이 처치 수·도감만 세고, 판돈을 쌓아 다음 웨이브로 갑니다.
@@ -216,7 +223,9 @@ export function reward(s: State, rng: () => number) {
     // v25.6 계열 집중 카드 ×2 · v27.14 서버 이벤트. v27.74 사냥터 난이도 배율은 없앴습니다. 정수로 유지하려고 올림 없이 곱한 뒤 연구 보정으로 넘깁니다.
     const { focus: focusMastery, event: eventMastery } = masteryMultipliers(s);
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * size * focusMastery * eventMastery)), practice = researched.total;
-    const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult), exp = Math.floor(e.exp * expMultiplier(s) * expMult) * size;
+    // v3.12 칠흑 세트 4종: 무리 서식지 골드·경험치 +15%.
+    const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
+    const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult * onyxSet), exp = Math.floor(e.exp * expMultiplier(s) * expMult * onyxSet) * size;
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
     const goldenChance = stats(s).goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
     const gold = perFish * size + (golden ? perFish * 9 : 0);
@@ -273,6 +282,20 @@ export function reward(s: State, rng: () => number) {
     }
     addLog(s, `${golden ? '✦ 황금 ' : ''}${vdef && e.variant !== 'swarm' ? `${vdef.mark} ${vdef.name} ` : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 처치 · +${gold} G · +${exp} EXP${golden ? ' · 황금 개체 골드 10배' : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
+    // v3.12 칠흑 보스 처치: drop 확률로 그 보스의 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
+    if (e.onyx) {
+        const bossDef = onyxById(e.onyx)!; s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1; s.onyxMiss ??= {};
+        const miss = s.onyxMiss[e.onyx] || 0, dropRoll = rng();
+        if (ownedOnyx(s).has(e.onyx)) { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
+        else if (dropRoll >= ONYX.drop && miss + 1 < ONYX.dropPity) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · 장신구를 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
+        else {
+            s.onyxMiss[e.onyx] = 0;
+            const stageLevel = STAGES.find(x => x.id === s.stage)?.level || fishLevelOf(e.id), item = onyxAccessory(bossDef, `onyx-${e.onyx}-${s.turn}`, stageLevel);
+            item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', stageLevel);
+            s.inventory.push(item);
+            addLog(s, `✦ ${bossDef.name} 격파 · 칠흑 장신구 ‘${item.name}’ 획득! 환생해도 남습니다 (보유 ${ownedOnyx(s).size}/7종)`, 'reward');
+        }
+    }
     const fish = FISH.find(f => f.id === e.id)!;
     for (let i = 0; i < size * (vdef?.drops || 1); i++)
         drop(s, dropLevel(s, fish.level, encounterTier(s)), rng);

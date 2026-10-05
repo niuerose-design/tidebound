@@ -94,4 +94,4 @@ export const rerollCost = (item: Item, s?: Pick<State, 'permanent'>) => ({ gold:
 export const refineCost = (item: Item, s?: Pick<State, 'permanent'>) => ({ gold: Math.floor(reforgeCost(item, s) / 2), essence: refineEssence(item.rarity) });
 export const itemDescription = (item: Item) => item.description || (item.slot === 'rod' ? (item.style === 'magic' ? '마법 특화' : item.style === 'physical' ? '물리 특화' : '물리·마법 겸용') + ' 낚싯대.' : item.slot === 'coat' ? '최대 체력·물리 방어·마법 방어를 높이는 방어구.' : item.slot === 'cape' ? '회피와 체력을 조금 높이는 망토. 상태이상 저항 옵션은 망토에만 붙습니다.' : '치명타 확률을 높이는 장신구.');
 export function rollAffix(rarity: number, rng: () => number) { const x = AFFIXES[Math.floor(rng() * AFFIXES.length)]; return { stat: x.stat, name: x.name, value: x.value * Math.max(1, rarity) }; }
-export function bulkItems(s: State, rarity: number) { return s.inventory.filter(i => i.rarity === rarity && !i.locked && !i.relic); }
+export function bulkItems(s: State, rarity: number) { return s.inventory.filter(i => i.rarity === rarity && !i.locked && !i.relic && !i.onyx); }

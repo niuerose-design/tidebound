@@ -17,6 +17,14 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'foeInkBurst', name: '어둠의 기운', desc: '마법 공격 115% 피해 + 3턴 약화.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.15, damageType: 'magic', effect: 'weaken', statusTurns: 3, manaCost: 0 },
     { id: 'foeShellRam', name: '돌진', desc: '물리 공격 125% 피해.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.25, manaCost: 0 },
     { id: 'foeTideSlam', name: '대지 강타', desc: '복합 피해 120%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.2, damageType: 'split', manaCost: 0 },
+    // v3.12 칠흑의 보스 고유 기술: 보스마다 하나씩, 성향(PROFILES onyx*)과 함께 공격 패턴을 가릅니다.
+    { id: 'onyxDread', name: '공포의 포효', desc: '물리 공격 130% 피해 + 3턴 약화.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.3, effect: 'weaken', statusTurns: 3, manaCost: 0 },
+    { id: 'onyxCommand', name: '지휘관의 돌격', desc: '물리 공격 120% 피해 후 2회의 추가타.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.2, extraAttacks: 2, extraAttackMultiplier: .6, manaCost: 0 },
+    { id: 'onyxWeb', name: '거미줄', desc: '복합 피해 110% + 5턴 감속.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.1, damageType: 'split', effect: 'slow', statusTurns: 5, manaCost: 0 },
+    { id: 'onyxNightmare', name: '악몽', desc: '마법 공격 135% 피해 + 4턴 침묵.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.35, damageType: 'magic', effect: 'silence', statusTurns: 4, manaCost: 0 },
+    { id: 'onyxSoulDrain', name: '사령 흡수', desc: '마법 공격 120% 피해, 깎은 체력의 60%를 흡혈.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.2, damageType: 'magic', effect: 'drain', drainRatio: .6, manaCost: 0 },
+    { id: 'onyxSunfire', name: '태양의 불꽃', desc: '마법 공격 140% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.4, damageType: 'magic', effect: 'burn', manaCost: 0 },
+    { id: 'onyxGenesis', name: '창세', desc: '복합 피해 170%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 6, multiplier: 1.7, damageType: 'split', manaCost: 0 },
 ];
 const PROFILES: Record<string, {
     name: string;
@@ -48,11 +56,20 @@ const PROFILES: Record<string, {
     // v27 혼돈 생물: 기본 공격부터 복합 피해. 물리·마법 방어 중 하나만 높은 빌드에 부담을 줍니다.
     tidal: { name: '혼돈 생물', hint: '기본 공격이 복합 피해라 물리·마법 방어를 고루 갖춰야 합니다.', skills: ['foeTideSlam', 'foeInkBurst'], splitBasic: true, defense: .9, resist: .9, evasion: .04, speed: 1 },
     stormEel: { name: '전격 짐승', hint: '기본 공격부터 마법(전격) 피해. 플레이어도 배울 수 있는 감속 전격을 사용합니다.', skills: ['electricBite', 'foeSilence'], magicBasic: true, power: .82, defense: .85, resist: 1.1, evasion: .04, speed: 1.05 },
+    // v3.12 칠흑의 보스 성향: 보스마다 다른 공격 패턴. 모두 보스라 각성(foeWard)이 더해집니다.
+    onyxDusk: { name: '거대한 공포', hint: '약화와 출혈을 걸고 기절로 짓누르는 물리 보스. 상태이상 저항과 회복을 챙기세요.', skills: ['onyxDread', 'foeBarbs', 'foeCrush'], defense: 1.5, resist: 1.1, evasion: .05, speed: .95 },
+    onyxDunkel: { name: '어둠의 지휘관', hint: '빠르고 추가타가 잦은 물리 보스. 가속까지 걸면 연타가 쏟아지니 방어·회피로 버티세요.', skills: ['onyxCommand', 'foeHaste', 'foeShellRam'], defense: 1.3, resist: 1.2, evasion: .08, speed: 1.3 },
+    onyxWill: { name: '거미의 왕', hint: '기본 공격부터 복합 피해. 감속·기절·침묵으로 턴 우선권을 빼앗습니다.', skills: ['onyxWeb', 'foeCrush', 'foeSilence'], splitBasic: true, defense: 1.3, resist: 1.3, evasion: .04, speed: .9 },
+    onyxLucid: { name: '꿈의 여왕', hint: '마법 피해만 줍니다. 침묵·약화에 대비해 마법 방어를 올리세요.', skills: ['onyxNightmare', 'foeShock', 'foeInkBurst'], magicBasic: true, defense: .9, resist: 1.6, evasion: .1, speed: 1.1 },
+    onyxHilla: { name: '사령술사', hint: '중독을 걸고 흡혈로 체력을 되찾는 마법 보스. 빨리 끝내거나 중독에 대비하세요.', skills: ['onyxSoulDrain', 'foeVenom', 'foeInkBurst'], magicBasic: true, defense: 1.1, resist: 1.4, evasion: .05, speed: 1.05 },
+    onyxSeren: { name: '태양의 사제', hint: '화상을 쌓고 가속으로 몰아치는 마법 보스. 화상 중에는 받는 피해가 커지니 회복을 준비하세요.', skills: ['onyxSunfire', 'foeBurn', 'foeHaste'], magicBasic: true, defense: 1.2, resist: 1.3, evasion: .06, speed: 1.2 },
+    onyxBlackMage: { name: '창세의 마법사', hint: '기본 공격부터 복합 피해. 침묵·감속·약화에 170% 복합 강타까지 모두 씁니다. 물리·마법 방어를 고루 갖추세요.', skills: ['onyxGenesis', 'foeSilence', 'foeSlow', 'foeInkBurst', 'foeTideSlam'], splitBasic: true, defense: 1.4, resist: 1.4, evasion: .08, speed: 1.05 },
 };
 const profileIds: Record<string, string> = {
     masteryMimic: 'armored', expNuri: 'armored', minnow: 'swift', carp: 'armored', perch: 'tidal', mackerel: 'swift', ray: 'tidal', puffer: 'venom', lionfish: 'venom', eel: 'arcane', barracuda: 'swift', ghost: 'arcane', angler: 'arcane', shark: 'armored', viper: 'venom', squid: 'arcane', leviathan: 'armored', moonfish: 'arcane', dragon: 'swift', ancient: 'armored',
     seahorse: 'silencer', needlefish: 'swift', tidejelly: 'tidal', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venomBoss', cinderKoi: 'blaze', starKoi: 'arcane', prismRay: 'tidal', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored',
     aqSeaco: 'swift', aqShark: 'frenzy', aqSquid: 'arcane', aqFlower: 'venom', aqGuard: 'armored', lfBlueTurtle: 'armored', lfRedTurtle: 'blaze', lfWyvern: 'swift', lfSkelegon: 'controller', lfManticore: 'venom', ttMonitor: 'silencer', ttGuardian: 'armored', ttChimera: 'tidal', ttDodo: 'swift', ttLyka: 'frenzy', arErdaSpirit: 'arcane', arMemoryGuard: 'controller', arMysticErda: 'stormEel', arVanishSoul: 'silencer', arTrueErda: 'tidal',
+    onyxDusk: 'onyxDusk', onyxDunkel: 'onyxDunkel', onyxWill: 'onyxWill', onyxLucid: 'onyxLucid', onyxHilla: 'onyxHilla', onyxSeren: 'onyxSeren', onyxBlackMage: 'onyxBlackMage',
     ventColossus: 'boss', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'blaze', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
 };
 export const profileId = (id: string) => profileIds[id] || 'armored';

@@ -190,6 +190,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const index = Number(a.value || '0');
         if (!Number.isInteger(index) || index < 0 || index >= item.affixes.length)
             throw Error('재설정할 옵션을 고르세요.');
+        if (item.onyx && item.affixes[index].rule)
+            throw Error('칠흑 장신구의 고유 옵션은 바꿀 수 없습니다.');
         const cost = rerollCost(item, s);
         if ((s.essence || 0) < cost.essence)
             throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
@@ -207,7 +209,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const items = a.type === 'dismantle' ? s.inventory.filter(i => i.id === id) : bulkItems(s, Number(id));
         if (a.type === 'dismantle' && !items.length)
             throw Error('가방에 있는 장비를 선택하세요.');
-        if (items.some(i => i.locked || i.relic))
+        if (items.some(i => i.locked || i.relic || i.onyx))
             throw Error('보호 장비와 유물은 분해할 수 없습니다.');
         if (!items.length)
             throw Error('분해할 장비가 없습니다.');
@@ -314,7 +316,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const [sourceId, indexText, slotText] = String(a.value || '').split(':');
         const index = Number(indexText), slot = Number(slotText);
         const source = s.inventory.find(x => x.id === sourceId);
-        if (!source || source.relic)
+        if (!source || source.relic || source.onyx)
             throw Error('소비할 장비를 가방에서 고르세요.');
         if (source.slot !== relic.slot)
             throw Error('같은 부위의 장비만 이식할 수 있습니다.');

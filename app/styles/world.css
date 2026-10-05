@@ -399,3 +399,11 @@
 .random-game-go { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid #9ab4b522; font-size: 13px; color: #a9c5bd; }
 .random-game-go .gold-button { white-space: nowrap; }
 @media (max-width: 767px) { .random-game { padding: 16px; } .random-game-body { grid-template-columns: 1fr; gap: 14px; } .random-game-targets { grid-template-columns: repeat(4, minmax(0, 1fr)); } .random-game-go .gold-button { width: 100%; } }
+
+/* v3.12 칠흑 장신구 그림 */
+.onyx-icon{background:radial-gradient(circle at 50% 40%,#2a1b3d,#0b0a12)}
+.onyx-art{filter:drop-shadow(0 0 3px rgba(190,120,255,.45))}
+.onyx-book-icon{justify-content:flex-start;gap:10px}
+.onyx-book-icon .onyx-art{margin-left:auto;margin-right:8px}
+.onyx-book-icon .onyx-art:not(.owned){opacity:.45;filter:grayscale(.6)}
+.undiscovered .onyx-book-icon .onyx-art{opacity:.2}

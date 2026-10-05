@@ -70,6 +70,14 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .035, stat2: 'hp', base2: -1.5, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 6%p).' },
     // v3.5 망토 전용 옵션: 몬스터 상태이상 저항. 수치 = 18.8% × (레벨/100)² × 등급 품질 × 굴림, 착용 시 별당 +3%(다른 옵션과 달리 별 보정), 합계 최대 50%(Lv.100 태초 22성 ≈ 50%).
     { id: 'steadfast', name: '불굴', stat: 'statusResist', kind: 'percent', base: STATUS_RESIST_BASE, onlySlot: 'cape', levelPower: 2, description: '망토 전용. 몬스터가 거는 기절·침묵·출혈·중독·화상·약화·감속을 이 확률로 무효화합니다. 별마다 +3%, 최대 50%.' },
+    // v3.12 칠흑 장신구 고유 옵션(규칙). onlyOrigin 'onyx'라 어디서도 굴리지 않고 onyxAccessory가 직접 붙입니다.
+    { id: 'onyxThorns', name: '공포의 가시', stat: 'thorns', kind: 'rule', base: .1, onlyOrigin: 'onyx', description: '칠흑. 맞을 때 물리 방어 비례 반격 +10%p.' },
+    { id: 'onyxChain', name: '지휘관의 박자', stat: 'chainBonus', kind: 'rule', base: .1, onlyOrigin: 'onyx', description: '칠흑. 연속 행동 확률 +10%p(속도와 무관).' },
+    { id: 'onyxControl', name: '거미의 실', stat: 'statusResist', kind: 'rule', base: .15, stat2: 'controlBonus', base2: 1, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +15%p, 내 기절·침묵·감속 지속 +1턴.' },
+    { id: 'onyxArcane', name: '몽환의 마력', stat: 'arcaneStrike', kind: 'rule', base: .1, stat2: 'arcaneRatioBonus', base2: .1, onlyOrigin: 'onyx', description: '칠흑. 마력 평타 확률 +10%p, 마력 평타 배율 +10%p.' },
+    { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', kind: 'rule', base: .2, stat2: 'hpRegen', base2: 15, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +20%p, 턴당 체력 회복 +15.' },
+    { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', kind: 'rule', base: .15, onlyOrigin: 'onyx', description: '칠흑. 보스·사냥감에게 주는 피해 +15%.' },
+    { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', kind: 'rule', base: .05, onlyOrigin: 'onyx', description: '칠흑. 체력·물리/마법 공격·물리/마법 방어 +5%.' },
     // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강합니다.
     { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 물리 공격이 크게 오릅니다.' },
     { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 마법 공격이 크게 오릅니다.' },

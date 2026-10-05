@@ -46,6 +46,12 @@ export type Stats = {
     /** v22 장비 규칙 옵션. 기존 기술 규칙의 숫자 하나만 바꿉니다(상한은 data/gear.ts RULE_CAPS). */
     /** v3.5 상태이상 저항: 몬스터가 거는 기절·침묵·출혈·중독·화상·약화·감속을 이 확률로 무효화합니다(망토 전용 옵션, 최대 50%). */
     statusResist?: number;
+    /** v3.12 연속 행동 확률 가산(칠흑 장신구). */
+    chainBonus?: number;
+    /** v3.12 보스·사냥감에게 주는 피해 증가율. */
+    bossDamage?: number;
+    /** v3.12 체력·물리/마법 공격·물리/마법 방어 배율 가산(0.05 = +5%). */
+    allStats?: number;
     stunBonus?: number;
     controlBonus?: number;
     dotTurnsBonus?: number;
@@ -118,6 +124,8 @@ export type Item = {
     /** v27.94 이 장비의 옵션 재설정 횟수. 많을수록 다음 재설정 비용이 오릅니다. */
     rerolls?: number;
     relic?: string;
+    /** v3.12 칠흑 장신구(보스 id). 종당 1개, 환생해도 남고 판매·분해·이식 재료 불가. */
+    onyx?: string;
     /** v21 이전 장비와 유물의 단일 옵션. */
     affix?: {
         stat: keyof Stats;
@@ -248,6 +256,9 @@ export type Skill = {
 export type Enemy = {
     /** v27.16 양쪽 체력이 그대로인 턴 수. 오래 이어지면 몬스터가 달아난 것으로 보고 새 몬스터를 맞이합니다. */
     stale?: number;
+    /** v3.12 칠흑 보스 id와 떠나는 턴(s.turn 기준). */
+    onyx?: string;
+    leavesAt?: number;
     /** 무리 규모(N). 무리 전체가 체력 ×N인 한 개체입니다. 없으면 한 마리. */
     swarm?: number;
     /** v25.19 변종 종류(무리·거대·심연 변이·별빛). 없으면 보통 개체. */
@@ -437,6 +448,11 @@ export type State = {
     deaths: number;
     /** v3.8 자동 강화 연구 비용 인하(100 → 10) 차액 환급을 처리한 세이브. */
     autoStarRefunded?: boolean;
+    /** v3.12 칠흑 보스: 서식지별로 보스를 못 본 출현 횟수(천장)와 보스별 처치 수. 환생해도 남습니다. */
+    onyxSeen?: Record<string, number>;
+    onyxBook?: Record<string, number>;
+    /** v3.12 보스별 연속 미획득 격파 수(dropPity 천장용). */
+    onyxMiss?: Record<string, number>;
     /** v3.6 스타포스 누적 기록(환생해도 남음): 시도·성공·실패(하락/유지)·파괴·쓴 골드. 업적·칭호가 봅니다. */
     starforce?: { tries: number; success: number; fail: number; destroy: number; gold: number };
     recovery: number;

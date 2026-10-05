@@ -33,6 +33,7 @@ export const FISH_SHAPES: Record<string, FishShape> = {
     ttMonitor: 'eye', ttGuardian: 'statue', ttChimera: 'demon', ttDodo: 'bat', ttLyka: 'croc', arErdaSpirit: 'ghost', arMemoryGuard: 'statue', arMysticErda: 'bubble', arVanishSoul: 'ghost', arTrueErda: 'bubble',
     // 까미 · 보스
     masteryMimic: 'chest', expNuri: 'ghost',
+    onyxDusk: 'ghost', onyxDunkel: 'fighter', onyxWill: 'mage', onyxLucid: 'mage', onyxHilla: 'mage', onyxSeren: 'fighter', onyxBlackMage: 'mage',
     grottoWarden: 'mushroom', kelpHydra: 'slime', anchorWraith: 'mushroom', magmaKraken: 'demon', templeOracle: 'mage', abyssSovereign: 'fighter', ventColossus: 'statue', starfallSeraph: 'clock',
 };
 export const fishShape = (id: string): FishShape => FISH_SHAPES[id] ?? 'slime';

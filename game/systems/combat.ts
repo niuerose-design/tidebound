@@ -126,7 +126,9 @@ export function fighterSpeed(f: Fighter) {
 /** 연속 행동 확률: min(1, max(0, 계수 × log2(내 속도 / 상대 속도))). 같거나 느리면 0. */
 export function chainChance(a: Fighter, b: Fighter) {
     const sa = fighterSpeed(a), sb = fighterSpeed(b);
-    return sa > sb ? Math.min(1, Math.max(0, BALANCE.chainCoefficient * Math.log2(sa / sb))) : 0;
+    // v3.12 연속 행동 가산(칠흑 장신구)은 속도와 무관하게 더합니다.
+    const bonus = a.stats.chainBonus || 0;
+    return Math.min(1, Math.max(0, (sa > sb ? BALANCE.chainCoefficient * Math.log2(sa / sb) : 0) + bonus));
 }
 /**
  * 한 전투원의 턴: 행동한 뒤 연속 행동 확률로 다시 행동합니다(연쇄). 턴당 최대 chainMaxActions번, 어느 쪽이든 쓰러지면 즉시 멈춥니다.
@@ -403,7 +405,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (chosen?.sealPower) notes.push(`인 ${a.effects.seals?.length || 0}개`);
     // v27.17 출혈 중인 대상은 직접 피해를 더 받습니다(출혈은 중첩되지 않는 대신 이 보정). v27.48 화상은 그 절반을 더합니다.
     const bleedBoost = 1 + (b.effects.dot ? SKILL_FORMULA.bleedVulnerability : 0) + (b.effects.burn ? SKILL_FORMULA.burnVulnerability : 0);
-    const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
+    const linkMultiplier = (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push('연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly || healOnly;

@@ -40,7 +40,7 @@ export const collectionActions: ActionHandlers = {
         const item = s.inventory.find(x => x.id === id);
         if (!item)
             throw Error('가방에 있는 장비를 선택하세요.');
-        if (item.locked || item.relic)
+        if (item.locked || item.relic || item.onyx)
             throw Error('보호 장비와 유물은 등록할 수 없습니다.');
         const key = itemKey(item.slot, item.rarity);
         if (s.itemBook[key])
@@ -55,7 +55,7 @@ export const collectionActions: ActionHandlers = {
         for (const slot of Object.keys(SLOTS)) for (let rarity = 0; rarity < RARITIES.length; rarity++) {
             const key = itemKey(slot, rarity);
             if (s.itemBook[key]) continue;
-            const candidate = s.inventory.filter(x => x.slot === slot && x.rarity === rarity && !x.locked && !x.relic).sort((a, b) => a.power - b.power || (a.enhance || 0) - (b.enhance || 0))[0];
+            const candidate = s.inventory.filter(x => x.slot === slot && x.rarity === rarity && !x.locked && !x.relic && !x.onyx).sort((a, b) => a.power - b.power || (a.enhance || 0) - (b.enhance || 0))[0];
             if (!candidate) continue;
             s.itemBook[key] = true;
             s.inventory = s.inventory.filter(x => x.id !== candidate.id);
