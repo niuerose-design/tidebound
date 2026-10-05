@@ -126,7 +126,7 @@ export function Guide({ s }: { s?: State }) {
                     condition="마나·재사용 대기·스킬별 조건(체력 비율 등)을 채워야 합니다."
                     limit={`장착 개수 제한은 없고 총 AP만 제한합니다. 추가타는 최대 ${STATUS_TUNING.maxExtraAttacks}회.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="습득 · 계승 · 강화"
-                    effect="전직하면 그 직업의 기술을 Lv.0으로 얻습니다. 장착한 채 처치해 첫 숙련을 채우면 다른 직업에서도 씁니다."
+                    effect="전직하면 그 직업의 기술을 Lv.0으로 얻습니다. 장착한 채 처치해 첫 숙련을 채우면 다른 직업에서도 씁니다. 3차 이상 스킬은 숙련 단계가 높습니다(3차 ×3 · 4차 ×10 · 5차 ×25)."
                     condition="해금한 기술에 한해 계승·강화에 각각 1 SP."
                     limit="SP는 도감 최종 연구, 던전 첫 정복 연구, 무릉도장 이정표에서만 얻습니다."/>
                 <Rule icon={<Target size={19}/>} title="숙련 · 연마"
@@ -141,7 +141,7 @@ export function Guide({ s }: { s?: State }) {
         <Topic icon={<Shield size={19}/>} title="직업" note="숙달하면 그 직업의 보너스가 커집니다.">
             <div className="help-columns">
                 <Rule icon={<Shield size={19}/>} title="직업 숙달"
-                    effect="직업별 숙련 목표를 채우면 그 직업의 체력·공격·방어 보너스가 강화됩니다. 전직 화면에서 전후를 비교할 수 있습니다."
+                    effect="직업별 숙련 목표를 채우면 그 직업의 체력·공격·방어 보너스가 강화됩니다. 전직 화면에서 전후를 비교할 수 있습니다. 3차부터 목표가 크게 늘어(3차 ×3 · 4차 30만~45만 · 5차 150만), 5차 전직에는 선행 직업 숙달이 필요합니다."
                     condition="그 직업을 쓰는 동안만 적용됩니다. 숙달한 직업은 조건 없이 다시 전직할 수 있습니다."
                     limit="페널티·치명타·경험치 보너스는 숙달로 변하지 않습니다."/>
             </div>
@@ -210,7 +210,7 @@ export function Guide({ s }: { s?: State }) {
                     limit="보상은 도감에서 직접 받고 각 단계는 한 번만 줍니다. 합계는 도감 ‘연구 보너스’ 탭에서 봅니다."/>
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비"
                     effect={`감정은 희귀 이상을 보장하고, 확정 구매는 표시된 등급 그대로입니다. 강화는 스타포스(v27.93): 전설 이상 ${STARFORCE.max}성 · 영웅 이하 ${STARFORCE.maxLow}성까지, 1~${STARFORCE.gainHighFrom}성 +${STARFORCE.gainLow * 100}%/성 · 그 위 +${STARFORCE.gainHigh * 100}%/성. 성마다 성공률이 정해져 있고(${STARFORCE.gainHighFrom}성부터 30%), ${STARFORCE.dropFrom}성부터 실패 시 1성 하락(${STARFORCE.safeStars.join('·')}성 유지), 15성부터 파괴 확률(일반 장비는 소멸, 유물은 ${STARFORCE.relicResetStar}성으로). 하락 2번 연속이면 찬스 타임(100%), 15·16성은 파괴 방지(비용 ×2)를 고를 수 있습니다. 비용은 12성까지 전과 같고 13성부터 성마다 ×${STARFORCE.growth}.`}
-                    condition="판매가는 등급·레벨에 비례하고 강화 비용의 30%를 돌려받습니다. 분해는 골드 대신 정수를 줍니다."
+                    condition="판매가는 등급·레벨에 비례하고 강화 비용의 30%를 돌려받습니다. 분해는 골드 대신 정수를 줍니다. 정수는 옵션 재설정(옵션 종류를 바꿈, 같은 장비에서 할 때마다 비용 +10%·상한 없음)과 수치 재련(종류는 그대로 수치만 다시 굴림, 재설정 기본 비용의 절반·오르지 않음)에 씁니다."
                     limit={`구매·옵션 변경 비용은 돌려받지 않습니다. 일반 장비는 환생 때 정리됩니다(판매/분해는 설정에서 고름). 유물은 남고 환생마다 위력 +${RELIC_GROWTH.perRebirth * 100}%, 같은 부위 장비를 소비해 옵션을 ${RELIC_GROWTH.imprintSlots}줄까지 이식합니다(별·이식 옵션 유지).`}/>
             </div>
         </Topic>

@@ -37,7 +37,7 @@ const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
 const dual = { damageType: 'split' as const, scaling: 'dual' as const };
 const M3 = [1500, 7000, 25000, 60000], M4 = [2500, 12000, 40000, 100000], M5 = [4000, 18000, 60000, 150000];
-/** 대기만성: 숙련 10,000 / 100,000 / 500,000. 단계마다 AP가 줄고 보상이 크게 오릅니다(팔라딘 (5차) 어드밴스드 차지와 같은 규칙). */
+/** 대기만성: 숙련 10,000 / 100,000 / 500,000(v27.95부터 5차 ×25 = 25만 / 250만 / 1,250만). 단계마다 AP가 줄고 보상이 크게 오릅니다(팔라딘 (5차) 어드밴스드 차지와 같은 규칙). */
 const LATE = [10000, 100000, 500000];
 const lateBloomer = { masteryMilestones: LATE, rankEffects: { bonusScale: 1.6, apReduction: 2 } };
 

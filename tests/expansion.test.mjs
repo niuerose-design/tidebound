@@ -117,3 +117,22 @@ test('v22 gear (v27.53 base 0.25%, rare or better): scarce drops, dismantle into
  assert.equal(s.essence,20-gear.rerollEssence(3),'single-affix reroll spends essence');assert.ok(s.gold<g0);assert.ok(s.inventory.find(i=>i.id==='relic1').affix);
  const reb=newState(0);reb.level=30;reb.essence=7;act(reb,{type:'rebirth'},0);assert.equal(reb.essence,7,'essence survives rebirth');
 });
+test('v27.94 essence sinks: rerolling the same item costs +10% each time without a cap, refine rerolls only the value',()=>{
+ const s=newState(0);s.gold=1e12;s.essence=1e6;
+ s.inventory=[{id:'x',slot:'rod',style:'physical',rarity:4,power:300,level:40,name:'x',affixes:gear.rollAffixes(4,300,undefined,rng)}];
+ const item=()=>s.inventory[0],base=gear.rerollEssence(4);
+ for(let n=0;n<30;n++){const e=s.essence,g=s.gold;act(s,{type:'reforge',id:'x',value:'0'},0);assert.equal(e-s.essence,Math.ceil(base*(10+n)/10),'essence step '+n);assert.ok(s.gold<g);}
+ assert.equal(item().rerolls,30);assert.equal(Math.ceil(base*4),Math.ceil(gear.rerollScaled(base,30)),'no cap: 30 rerolls = x4');
+ // 실패한 재설정(정수 부족)은 횟수를 올리지 않습니다.
+ s.essence=0;assert.throws(()=>act(s,{type:'reforge',id:'x',value:'0'},0),/정수/);assert.equal(item().rerolls,30);
+ // 수치 재련: 종류는 그대로, 수치만 바뀌고, 비용은 재설정 기본 비용의 절반이며 오르지 않습니다.
+ s.essence=1000;const ids=item().affixes.map(a=>a.id),idx=item().affixes.findIndex(a=>!a.rule);
+ const spent=[];for(const r of [.0,.999,.5]){const e=s.essence;act(s,{type:'refine',id:'x',value:String(idx)},0,()=>r);spent.push(e-s.essence);}
+ assert.deepEqual(spent,[gear.refineEssence(4),gear.refineEssence(4),gear.refineEssence(4)]);assert.equal(gear.refineEssence(4),Math.ceil(base/2));
+ assert.deepEqual(item().affixes.map(a=>a.id),ids,'refine keeps every option kind');assert.equal(item().rerolls,30,'refine does not raise the reroll cost');
+ const def=gear.affixDef(ids[idx]),lo=gear.refineOption({...item().affixes[idx]},300,4,()=>0),hi=gear.refineOption({...item().affixes[idx]},300,4,()=>.999999);
+ assert.ok(hi.value>lo.value,def.id);assert.ok(gear.affixQuality(lo,300,4)<.02);assert.ok(gear.affixQuality(hi,300,4)>.98);
+ // 규칙 옵션은 재련할 수 없습니다.
+ s.inventory.push({id:'r',slot:'rod',rarity:6,power:300,level:40,name:'r',affixes:[{id:'rr',name:'규칙',stat:'attack',value:1,rule:true}]});
+ assert.throws(()=>act(s,{type:'refine',id:'r',value:'0'},0),/규칙/);assert.throws(()=>act(s,{type:'refine',id:'x',value:'9'},0),/재련할 옵션/);
+});

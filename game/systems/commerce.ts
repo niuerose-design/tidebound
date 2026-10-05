@@ -3,9 +3,9 @@ import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
 import { apCapacity, apUsed } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, enhanceMaxFor, imprintCost, syncRelicPower } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
-import { rollAffixes } from '../data/gear';
+import { rollAffixes, refineOption } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** 상점·뽑기 골드 가격. 상점 단골 할인(−2%/단계, 내림)을 적용합니다. */
 /** v27.30 확정 구매·감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 배수' 중 큰 값. 감정은 매번 희귀 이상이라 드롭(처치당 0.1%)보다 훨씬 유리했습니다. */
@@ -109,7 +109,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         s.gold += gold;
         return `${RARITIES[rarity].name} ${items.length}개 일괄판매 · +${gold} G`;
     }
-    if (a.type === 'enhance' || a.type === 'reforge') {
+    if (a.type === 'enhance' || a.type === 'reforge' || a.type === 'refine') {
         const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
@@ -141,7 +141,26 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         }
         if (item.rarity < 1)
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');
-        // v27.94 유물은 이식 옵션(affixes)이 있어도 재설정은 고유 옵션(affix) 한 줄만 굴립니다. 이식 옵션은 다시 이식해 덮어씁니다.
+        if (a.type === 'refine') {
+            // v27.94 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. 비용은 재설정의 절반이고 오르지 않습니다.
+            const index = Number(a.value || '0');
+            const x = item.affixes?.[index];
+            if (item.relic)
+                throw Error('유물의 이식 옵션은 재련 대신 다시 이식해 바꿉니다.');
+            if (!x || !Number.isInteger(index))
+                throw Error('재련할 옵션을 고르세요.');
+            if (x.rule)
+                throw Error('규칙 옵션(◆)은 수치가 고정이라 재련할 수 없습니다.');
+            const cost = refineCost(item, s);
+            if ((s.essence || 0) < cost.essence)
+                throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
+            spend(cost.gold);
+            s.essence = (s.essence || 0) - cost.essence;
+            const next = refineOption(x, item.power, item.rarity, rng);
+            item.affixes = item.affixes!.map((o, i) => i === index ? next : o);
+            return `${item.name} ${x.name} 수치 재련 · ${x.value} → ${next.value} · -${cost.gold} G · 정수 -${cost.essence}`;
+        }
+        // v27.96 유물은 이식 옵션(affixes)이 있어도 재설정은 고유 옵션(affix) 한 줄만 굴립니다. 이식 옵션은 다시 이식해 덮어씁니다.
         if (!item.affixes?.length || item.relic) {
             // v21 이전 장비·상점 장비·유물의 단일 옵션. v27.74 이 경로도 다중 옵션과 같이 골드 + 정수를 받습니다(전에는 골드만).
             const cost = rerollCost(item, s);
@@ -149,6 +168,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
             spend(cost.gold);
             s.essence = (s.essence || 0) - cost.essence;
+            item.rerolls = (item.rerolls || 0) + 1;
             item.affix = rollAffix(item.rarity, rng);
             return `${item.name} 옵션 재설정 · ${item.affix.name} · -${cost.gold} G · 정수 -${cost.essence}`;
         }
@@ -161,6 +181,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
         spend(cost.gold);
         s.essence = (s.essence || 0) - cost.essence;
+        item.rerolls = (item.rerolls || 0) + 1;
         const others = item.affixes.filter((_, i) => i !== index);
         const next = rollAffixes(others.length + 1, item.power, item.origin, rng, others).at(-1)!;
         const before = item.affixes[index].name;
@@ -229,7 +250,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         return `${r.name} 수령 · 환생 ${r.rebirth}회 달성 보상`;
     }
     if (a.type === 'imprintRelic') {
-        // v27.94 옵션 이식: value = '소비 장비 id:옵션 번호:이식 칸(0~2)'. 같은 부위의 가방 장비 하나를 소비해 그 옵션 한 줄을 유물에 새깁니다(골드, 덮어쓰기 가능, 환생 유지).
+        // v27.96 옵션 이식: value = '소비 장비 id:옵션 번호:이식 칸(0~2)'. 같은 부위의 가방 장비 하나를 소비해 그 옵션 한 줄을 유물에 새깁니다(골드, 덮어쓰기 가능, 환생 유지).
         const relic = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
         if (!relic?.relic)
             throw Error('유물을 찾을 수 없습니다.');

@@ -141,9 +141,9 @@ test('v24 per-rebirth passives grow with rebirths up to the cap', () => {
  assert.ok(r10 > r0 && r30 > r10); assert.equal(r60, r30, 'rebirths beyond the cap add nothing');
 });
 
-test('v24 late-bloomer passives start expensive and pay off at 10k/100k/500k mastery', () => {
+test('v24 late-bloomer passives start expensive and pay off at 10k/100k/500k mastery (v27.95 5th-tier x25)', () => {
  const sk = SKILLS.find(x => x.id === 'abyssalPatience');
- assert.deepEqual(masteryMilestonesFor(sk), [10000, 100000, 500000]);
+ assert.deepEqual(masteryMilestonesFor(sk), [10000, 100000, 500000].map(n => n * 25));
  const costs = [0, 1, 2, 3].map(lv => effectiveSkill(sk, 1, lv).cost), atk = [0, 1, 2, 3].map(lv => effectiveSkill(sk, 1, lv).bonus.attack);
  assert.deepEqual(costs, [8, 7, 5, 2]);
  for (let i = 1; i < 4; i++) assert.ok(atk[i] > atk[i - 1] * 1.8, `level ${i} pays off`);
@@ -166,4 +166,22 @@ test('v24 loadout priority moves only among skills of the same type', () => {
  const s = newState(0); s.skills = ['hook', 'focus', 'breath', 'pierce'];
  act(s, { type: 'skillUp', id: 'breath' }, 0); assert.deepEqual(s.skills, ['breath', 'focus', 'hook', 'pierce'], 'active jumps over the passive to the previous active');
  act(s, { type: 'skillUp', id: 'breath' }, 0); assert.deepEqual(s.skills, ['breath', 'focus', 'hook', 'pierce'], 'first active stays first');
+});
+
+const H95 = await import('./harness.mjs');
+test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-2 stay, old inheritance is kept', () => {
+ const { JOBS: J, PROGRESSION: P, jobMasteryTarget: target, masteryMilestonesFor: ms, inherited: inh, migrateState: migrate, newState: fresh, act: doAct } = H95;
+ assert.deepEqual(P.jobMasteryTierScale, [1, 1, 1, 3, 15, 50]); assert.deepEqual(P.skillMasteryTierScale, [1, 1, 1, 3, 10, 25]);
+ assert.equal(target('harpoon'), 180, 'tier 1 unchanged'); assert.equal(target('whaler'), 1200, 'tier 2 unchanged'); assert.equal(target('krakenSlayer'), 27000, 'tier 3 x3');
+ for (const j of J.filter(j => j.tier === 4)) assert.ok([300000, 450000].includes(target(j)), j.id);
+ for (const j of J.filter(j => j.tier === 5)) { assert.equal(target(j), 1500000, j.id); if (j.parent) assert.ok(j.mastery >= target(j.parent), `${j.id} needs the parent mastered`); }
+ const t5 = SKILLS.find(x => J.find(j => j.id === x.job)?.tier === 5 && ms(x).length === 4);
+ assert.deepEqual(ms(t5), [4000, 18000, 60000, 150000].map(n => n * 25));
+ // 옛 기준(4,000)은 넘겼지만 새 기준(100,000)에 못 미친 스킬은 계승을 유지하고, 그보다 낮은 스킬은 새 기준을 따릅니다.
+ const low = SKILLS.find(x => x !== t5 && J.find(j => j.id === x.job)?.tier === 5 && ms(x)[0] === 100000);
+ const s = fresh(0); delete s.masteryRescaled; s.skillPractice = { [t5.id]: 5000, [low.id]: 3000 };
+ assert.ok(!inh(s, t5.id)); migrate(s); assert.ok(inh(s, t5.id), 'kept'); assert.ok(!inh(s, low.id), 'below the old bar');
+ const again = s.logs.length; migrate(s); assert.equal(s.logs.length, again, 'runs once');
+ s.level = 30; doAct(s, { type: 'rebirth' }, 0); assert.ok(inh(s, t5.id), 'survives rebirth');
+ const n = fresh(0); n.skillPractice = { [t5.id]: 5000 }; migrate(n); assert.ok(!inh(n, t5.id), 'new saves use the new bar');
 });

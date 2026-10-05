@@ -7,8 +7,8 @@ import type { Item, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '@/game/data/progression';
-import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, enhanceMaxFor, imprintCost } from '@/game/systems/equipment';
-import { ORIGIN_THEMES, affixDef, ESSENCE_BY_RARITY } from '@/game/data/gear';
+import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost } from '@/game/systems/equipment';
+import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT } from '@/game/data/gear';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
 import { stats, power } from '@/game/systems/stats';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
@@ -24,14 +24,19 @@ export function BonusList({ item }: {
 /** v22 장비 옵션 목록. 옵션마다 이득·손해 수치와 한 줄 재설정 버튼을 보여줍니다. */
 function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
     const cost = rerollCost(item, s), canPay = s.gold >= cost.gold && (s.essence || 0) >= cost.essence;
+    // v27.94 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다(재설정 기본 비용의 절반, 오르지 않음).
+    const refine = refineCost(item, s), canRefine = s.gold >= refine.gold && (s.essence || 0) >= refine.essence;
+    const quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity); return q === null ? null : Math.round(q * 100); };
     return <div className="affix-explanation">
         <b>{item.relic ? `이식 옵션 ${item.affixes!.length}/${RELIC_GROWTH.imprintSlots}줄` : `추가 옵션 ${item.affixes!.length}개`}{item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</b>
         {item.affixes!.map((x, i) => <div key={x.id + i} className="gear-option-row">
-            <span>{x.rule ? '◆ ' : ''}<b>{x.name}</b> · {STAT_LABELS[x.stat]} {statDeltaDisplay(x.stat, x.value)}{x.stat2 && x.value2 ? ` · ${STAT_LABELS[x.stat2]} ${statDeltaDisplay(x.stat2, x.value2)}` : ''}</span>
+            <span>{x.rule ? '◆ ' : ''}<b>{x.name}</b> · {STAT_LABELS[x.stat]} {statDeltaDisplay(x.stat, x.value)}{x.stat2 && x.value2 ? ` · ${STAT_LABELS[x.stat2]} ${statDeltaDisplay(x.stat2, x.value2)}` : ''}{quality(x) !== null && <em className="affix-quality"> · 수치 {quality(x)}%</em>}</span>
             <small>{affixDef(x.id)?.description}</small>
-            {!item.relic && <ConfirmButton label="재설정" title={`${x.name} 옵션을 다시 굴릴까요?`} description={`이 옵션 하나만 바뀌고 나머지 옵션은 그대로입니다. 골드 ${format(cost.gold)} G와 정수 ${cost.essence}를 사용합니다. 같은 옵션은 중복되지 않고, 규칙 옵션(◆)은 장비당 1개까지입니다.`} disabled={busy || !canPay} onConfirm={() => send({ type: 'reforge', id: item.id, value: String(i) })}/>}
+            {!item.relic && <span className="gear-option-actions"><ConfirmButton label="재설정" title={`${x.name} 옵션을 다시 굴릴까요?`} description={`이 옵션 하나만 바뀌고 나머지 옵션은 그대로입니다. 골드 ${format(cost.gold)} G와 정수 ${cost.essence}를 사용합니다. 같은 옵션은 중복되지 않고, 규칙 옵션(◆)은 장비당 1개까지입니다.`} disabled={busy || !canPay} onConfirm={() => send({ type: 'reforge', id: item.id, value: String(i) })}/>
+                {!x.rule && <ConfirmButton label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다. 지금보다 낮아질 수도 있습니다. 골드 ${format(refine.gold)} G와 정수 ${refine.essence}를 사용하며, 재련 비용은 오르지 않습니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
+            </span>}
         </div>)}
-        <p className="footnote">{item.relic ? '이식 옵션은 환생해도 남고, 같은 칸에 다시 이식하면 덮어씁니다. 위 수치는 장비 기여 수치에 포함됩니다.' : `옵션 재설정 · ${format(cost.gold)} G + 정수 ${cost.essence} (보유 ${s.essence || 0}) · 위 수치는 장비 기여 수치에 포함됩니다.`}</p>
+        <p className="footnote">{item.relic ? '이식 옵션은 환생해도 남고, 같은 칸에 다시 이식하면 덮어씁니다. 위 수치는 장비 기여 수치에 포함됩니다.' : <>옵션 재설정 · {format(cost.gold)} G + 정수 {cost.essence}{item.rerolls ? ` (이 장비 ${item.rerolls}회 재설정 · 1회마다 +${REROLL_STEP_PCT}%)` : ` (재설정할 때마다 +${REROLL_STEP_PCT}%)`} · 수치 재련 · {format(refine.gold)} G + 정수 {refine.essence} · 보유 정수 {s.essence || 0}</>}</p>
     </div>;
 }
 
@@ -141,7 +146,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     </details></>;
 }
 
-/** v27.94 유물 옵션 이식: 같은 부위의 가방 장비(보호 제외) 하나를 소비해 옵션 한 줄을 유물의 칸(최대 RELIC_GROWTH.imprintSlots)에 새깁니다. 환생해도 남습니다. */
+/** v27.96 유물 옵션 이식: 같은 부위의 가방 장비(보호 제외) 하나를 소비해 옵션 한 줄을 유물의 칸(최대 RELIC_GROWTH.imprintSlots)에 새깁니다. 환생해도 남습니다. */
 function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     const sources = s.inventory.filter(x => x.slot === item.slot && !x.relic && !x.locked && x.affixes?.length);
     const choices = sources.flatMap(x => x.affixes!.map((a, i) => ({ key: `${x.id}:${i}`, item: x, affix: a, index: i })));

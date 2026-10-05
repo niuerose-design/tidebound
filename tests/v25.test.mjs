@@ -1104,7 +1104,7 @@ test('v27.93 star force: per-star odds, drops from 10 (15/20 safe), destruction 
     act(s, { type: 'enhance', id: 'w' }, 0, () => .35); assert.equal(s.equipment.coat, null, 'destroyed while equipped: slot emptied');
 });
 
-test('v27.94 growing relics: power follows rebirths, imprint consumes a same-slot item and survives rebirth, reforge only rerolls the fixed affix', async () => {
+test('v27.96 growing relics: power follows rebirths, imprint consumes a same-slot item and survives rebirth, reforge only rerolls the fixed affix', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Eco = await L.load('data/economy'), { syncRelicPower, imprintCost } = await L.load('systems/equipment'), M = await L.load('systems/migrations'), Meta = await L.load('systems/meta');
     assert.equal(Eco.relicPower(45, 0), 45); assert.equal(Eco.relicPower(45, 25), 90); assert.equal(Eco.relicPower(45, 50), 135);

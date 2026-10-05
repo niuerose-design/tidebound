@@ -3,6 +3,7 @@ import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
 import { SKILL_FORMULA } from './balance';
 import { JOBS } from './classes';
+import { PROGRESSION } from './progression';
 import { EXPANSION_SKILLS } from './expansion';
 import { LINEAGE_SKILLS } from './expansion-lineages';
 import { V24_SKILLS } from './expansion-v24';
@@ -197,6 +198,9 @@ for (const sk of SKILLS) {
     const curve = !job || job.tier === 0 ? [120, 600, 2400, 8000] : job.tier === 1 ? [250, 1200, 4500, 14000] : job.tier === 2 ? [600, 3000, 12000, 36000] : [1500, 7500, 28000, 75000];
     const longTerm = !!sk.scaling || !!sk.rankEffects?.apReduction || !!sk.masteryAP;
     sk.masteryMilestones = masteryTuning[sk.id] || sk.masteryMilestones || curve.map(n => Math.round(n * (longTerm ? 1.4 : 1)));
+    // v27.95 차수별 요구 숙련 상향(3차 ×3 · 4차 ×10 · 5차 ×25). 공용·1·2차 스킬은 그대로입니다.
+    const scale = skillMasteryScale(sk);
+    sk.masteryMilestones = sk.masteryMilestones.map(n => n * scale);
 }
 
 // v27.57 지속 피해 정리. ① 계열 패시브의 '지속 피해 증가'를 그 계열이 실제로 거는 상태이상 하나로 나눕니다
@@ -226,4 +230,10 @@ let skillByIdMap: Map<string, Skill> | undefined;
 export function skillById(id: string | undefined) {
     if (!skillByIdMap) { skillByIdMap = new Map(); for (const x of SKILLS) if (!skillByIdMap.has(x.id)) skillByIdMap.set(x.id, x); }
     return id === undefined ? undefined : skillByIdMap.get(id);
+}
+
+/** v27.95 스킬 숙련 단계 배율: 그 스킬 전용 직업의 차수로 정합니다(공용 스킬은 1). 옛 세이브의 계승 보존(migrations)도 이 값으로 옛 기준을 되돌립니다. */
+export function skillMasteryScale(sk: Pick<Skill, 'job'>) {
+    const tier = sk.job ? JOBS.find(j => j.id === sk.job)?.tier ?? 0 : 0;
+    return PROGRESSION.skillMasteryTierScale[tier] ?? 1;
 }
