@@ -448,7 +448,10 @@
 /* v26.7 두 줄 구조: 윗줄 칭호·이름·시간, 아랫줄 본문 전체 폭. 긴 이름이 본문 정렬을 흐트러뜨리지 않습니다. */
 .chat-line{display:flex;flex-direction:column;gap:1px;margin:0;padding:5px 0;border-bottom:1px solid #263f42;font-size:11px;line-height:1.5;color:#c2d3cd}
 .chat-head{display:flex;align-items:baseline;gap:6px;min-width:0}
-.chat-line:last-child{border-bottom:0}.chat-line.self .chat-name{color:#a4e9ba}
+.chat-line:last-child{border-bottom:0}
+/* v3.26 해커 전직 알림 */
+.chat-line.hacker-alert .chat-name,.chat-line.hacker-alert .chat-text{color:#ff6b6b;font-weight:600}
+.chat-line.self .chat-name{color:#a4e9ba}
 .chat-time{font:9px/1.5 monospace;color:#5d7e7e;flex:none}.chat-name{color:#e8d39a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.chat-text{word-break:break-word;overflow-wrap:anywhere}
 .chat-empty{display:flex;align-items:center;gap:6px;color:#718c90;font-size:11px;padding:18px 0}
 .chat-error{font-size:11px;color:#e39b8d;margin:0}

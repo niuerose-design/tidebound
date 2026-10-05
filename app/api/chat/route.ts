@@ -21,7 +21,7 @@ export async function GET(req: Request) { try {
     const requested = url.searchParams.get('channel') || 'global', after = Math.max(0, Math.floor(Number(url.searchParams.get('after')) || 0));
     if (!CHANNELS.has(requested)) throw new ApiError('없는 채널입니다.');
     const rows = await db().listChat(await resolveChannel(account, requested), after, CHAT_PAGE);
-    return Response.json({ rows: rows.map(r => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, self: r.account_id === id })), now: Date.now() }, { headers: { 'Cache-Control': 'no-store' } });
+    return Response.json({ rows: rows.map(r => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, self: r.account_id === id, ...(r.account_id === 'system-hacker' ? { kind: 'hacker' } : {}) })), now: Date.now() }, { headers: { 'Cache-Control': 'no-store' } });
 }
 catch (e) {
     return failure(e);

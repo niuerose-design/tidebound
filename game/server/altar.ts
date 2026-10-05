@@ -82,6 +82,15 @@ async function shared(now: number, force = false): Promise<Shared> {
     return cache = { at: now, week, altar, gauges: map, board, allTime, raids };
 }
 export const invalidateAltar = () => { cache = null; };
+/**
+ * v3.25 해킹 V 백도어: 게이지를 조금 채웁니다(기여 순위·합계에는 넣지 않음). 신·월드보스 게이지가 차면 바로 깨어나고,
+ * 축복 게이지는 다음 바치기 때 단계가 오릅니다.
+ */
+export async function backdoorGauge(gauge: AltarGaugeId, points: number, now: number) {
+    await db().addAltarGauge(gauge, points);
+    invalidateAltar();
+    await shared(now, true);
+}
 
 /** 전체 채팅에 제단 소식을 남깁니다(실패해도 본 처리는 그대로). */
 async function announce(text: string, now: number) {

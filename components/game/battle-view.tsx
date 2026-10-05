@@ -44,6 +44,7 @@ import { Player } from './player-column';
 import { BattleRail } from './battle-rail';
 import { MobileFisherStrip } from './mobile-fisher-strip';
 import { useNotices } from './notice-settings';
+import { isHackerJob } from '@/game/data/hacker';
 /** 로그 탭별 종류: 전투 탭은 전투·시스템(회복·이동), 획득 탭은 보상·스킬 해금. */
 const LOG_TABS: Record<string, Log['type'][]> = { battle: ['battle', 'system'], reward: ['reward', 'skill'] };
 export function BattleView({ s: base, frames, busy, send, setView, saved, settings, setSettings, name, setName, onSwitchSlot }: {
@@ -93,7 +94,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     <NoticeStack>
     {s.lastOffline && show('offline') &&     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Leaf size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>}
     {banner && show('event') && <div className="event-banner" role="status"><Sparkles size={15}/><b>이벤트</b><span>{eventLabel(banner)}</span></div>}
-    {s.job === 'hacker' && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>해커</b><span>{s.running ? '브루트포스 실행 중 · 사냥 대신 비트·권한 경험치를 쌓습니다.' : '해커는 사냥하지 않습니다. 시작하면 브루트포스가 돌아갑니다.'} 침투 작전·해킹은 ‘해킹’ 메뉴에서.</span></div>}
+    {isHackerJob(s.job) && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>해커</b><span>{s.running ? '브루트포스 실행 중 · 사냥 대신 비트·권한 경험치를 쌓습니다.' : '해커는 사냥하지 않습니다. 시작하면 브루트포스가 돌아갑니다.'} 침투 작전·해킹은 ‘해킹’ 메뉴에서.</span></div>}
     {/* v3.18 해커의 방송 탈취: 서명이 고정된 문구를 이벤트 배너 자리에 띄웁니다. */}
     {s.hackFeed?.broadcast && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>[해커 {s.hackFeed.broadcast.by}]</b><span>{s.hackFeed.broadcast.text}</span></div>}
     {/* v3.19 새싹의 축복 알림은 뺐습니다(효과는 그대로, 능력치 화면 경험치 내역에 표시). */}
