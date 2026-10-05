@@ -61,6 +61,7 @@ const lifeLine = (p: AdminPlayer) => [p.lastRebirthAt ? `마지막 환생 ${new 
 /** v27.26 운영 도구: 모험가 이름·아이디로 찾아 이번 생을 처음 상태로 되돌립니다(환생 횟수·세계석·연구·유물·도감 유지). */
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
+    const [broadcast, setBroadcast] = useState<{ text: string; by: string; until: number } | null>(null);
     const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [doors, setDoors] = useState<DoorList | null>(null), [stats, setStats] = useState<Stats | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' });
     const [spOpen, setSpOpen] = useState<string | null>(null);
@@ -105,7 +106,13 @@ export default function AdminPage() {
         const d = await call({ action: 'altarReset', kind });
         if (d) { setStats(d); setDone(kind === 'offers' ? '제단 공물을 초기화했습니다. 유저 화면에는 최대 15초 뒤 반영됩니다.' : '신을 초기화했습니다. 유저 화면에는 최대 15초 뒤 반영됩니다.'); }
     };
-    const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); };
+    const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); const h = await call({ action: 'hacks' }); if (h) setBroadcast(h.broadcast); };
+    /** v3.16 해커의 방송 탈취 지우기. */
+    const removeBroadcast = async () => {
+        if (!broadcast || !confirm(`[해커 ${broadcast.by}] ${broadcast.text}\n이 방송을 지울까요?`)) return;
+        const d = await call({ action: 'clearBroadcast' });
+        if (d) { setBroadcast(null); setDone('방송을 지웠습니다. 모든 서버에 반영되기까지 최대 30초 걸립니다.'); }
+    };
     const toggleClosed = async (kind: keyof ClosureList, row: ClosureRow) => {
         if (!row.closed && !confirm(`${row.name}의 입장을 막을까요?\n안에 있던 모험가는 다음 동기화 때 보상 없이 나옵니다${kind === 'stages' ? '(더 앞의 열린 사냥터로 옮김)' : ''}.`)) return;
         const d = await call({ action: 'setClosed', kind, id: row.id, closed: !row.closed });
@@ -217,7 +224,9 @@ export default function AdminPage() {
                     <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, display: 'grid', gap: 3 }}>{stats.top.map((p, i) => <li key={i}>{p.name} · 환생 {p.rebirths}회 · Lv.{p.level}{p.abyss ? ` · 무릉도장 ${p.abyss}층` : ''}</li>)}</ol></div>
             </div>
         </section>}
-        {tab === 'closures' && closures && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>{closureList('dungeons', '던전')}{closureList('stages', '사냥터')}</section>}
+        {tab === 'closures' && closures && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
+            <div className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13 }}><b>해커 방송</b> · {broadcast ? <>[해커 {broadcast.by}] {broadcast.text} <small style={{ color: '#9bb3b0' }}>· {new Date(broadcast.until).toLocaleTimeString()}까지</small></> : <span style={{ color: '#9bb3b0' }}>없음</span>}</span>{broadcast && <button className="secondary" disabled={busy} onClick={removeBroadcast}>방송 지우기</button>}</div>
+            {closureList('dungeons', '던전')}{closureList('stages', '사냥터')}</section>}
         {tab === 'doors' && doors && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
             <div className="panel" style={{ padding: 12, fontSize: 13 }}>운영자가 연 문: <b>{doors.doors.filter(d => d.open).map(d => d.name).join(', ') || '없음(모두 조건대로)'}</b></div>
             <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{doors.doors.map(r => <li key={r.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>

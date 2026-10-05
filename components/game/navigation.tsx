@@ -23,7 +23,7 @@ export function Navigation({ view, setView, s, onLogout }: {
     </SidebarHeader>
     <SidebarContent>{NAV.map(group => <SidebarGroup key={group.label}>
         <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-        <SidebarMenu>{group.items.map(({ id, name, Icon, unlock, views }) => { const lock = s && unlock ? unlock(s) : null, active = views ? views.includes(view) : view === id; return <SidebarMenuItem key={id}>
+        <SidebarMenu>{group.items.filter(item => !(s && item.hidden?.(s))).map(({ id, name, Icon, unlock, views }) => { const lock = s && unlock ? unlock(s) : null, active = views ? views.includes(view) : view === id; return <SidebarMenuItem key={id}>
             <SidebarMenuButton isActive={active} className={lock ? 'nav-locked' : ''} title={lock ? `${lock}부터 쓸 수 있는 화면입니다. 미리 볼 수는 있습니다.` : undefined} onClick={() => { setView(id); setOpenMobile(false); }}>
             <Icon />
             <span>{name}</span>{lock ? <small className="nav-lock"><Lock size={11}/>{lock}</small> : active && <ChevronRight className="nav-arrow"/>}</SidebarMenuButton>

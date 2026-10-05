@@ -20,9 +20,12 @@ import { deathRecoveryTurns } from '../data/sprout';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
 import { breathReset } from './actions/lifecycle';
+import { isHacker, hackerTick } from './hacker';
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
+    // v3.16 해커는 전투하지 않습니다: 자동 사냥 대신 브루트포스로 비트·권한 경험치만 쌓습니다.
+    if (isHacker(s)) { hackerTick(s); return; }
     syncStatRate(s);
     syncGoals(s, s.lastTick);
     tickTurn(s, rng);

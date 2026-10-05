@@ -6,6 +6,8 @@ import { stats } from '@/game/systems/stats';
 import { buildCombatReplay, type ReplayFrame } from '@/game/systems/combat-feedback';
 import { logKey, mergeLogs, type LogDelta } from '@/game/systems/log-delta';
 export type Ranking = Snapshot & {
+    /** v3.16 애드가드로 가린 항목(name · job · level · gear · skills · title · guild). */
+    masked?: string[];
     id: string;
     self: boolean;
     updatedAt: number;
@@ -15,7 +17,7 @@ export type GuildInfo = import('@/game/server/guild').GuildInfo;
 export type AltarInfo = import('@/game/data/altar').AltarInfo;
 export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: number; logs: string[]; claimed: boolean; /** v27.70 탄핵 성공 */ impeached?: boolean; /** v27.91 월드보스: 준 피해·남은 공유 체력·격파 여부·내가 마지막 일격인지 */ dealt?: number; remaining?: number; slain?: boolean; slayer?: boolean };
 export type VaultInfo = import('@/game/data/account').VaultInfo;
-export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean };
+export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean; masked?: string[] };
 /** 동기화 주기(ms). */
 const SYNC_MS = 3000;
 /** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다. */

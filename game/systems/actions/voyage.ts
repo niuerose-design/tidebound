@@ -6,6 +6,7 @@ import { SWARM_CAPS } from '../../data/variants';
 import { JOBS } from '../../data/classes';
 import { SKILLS, skillById } from '../../data/skills';
 import { RANDOM_GAME } from '../../data/random-game';
+import { HACKER_ID } from '../../data/hacker';
 import { randomGameRank, randomGameRunsLeft, inRandomGame, cashOutRandomGame } from '../random-game';
 import type { ActionHandlers } from './types';
 import { researchRank, salvageRate } from '../../data/economy';
@@ -27,7 +28,7 @@ export const voyageActions: ActionHandlers = {
     start(s, { now }) {
         s.running = true;
         s.lastTick = now;
-        addLog(s, '자동 사냥을 시작했습니다.');
+        addLog(s, s.job === HACKER_ID ? '브루트포스를 시작했습니다(방치 중 비트·권한 경험치).' : '자동 사냥을 시작했습니다.');
     },
     pause(s) {
         s.running = false;
@@ -50,6 +51,8 @@ export const voyageActions: ActionHandlers = {
         addLog(s, `${st.name}(으)로 이동했습니다.`);
     },
     dungeon(s, { a, id, now }) {
+        if (s.job === HACKER_ID)
+            throw Error('해커는 던전에 들어가지 않습니다. 침투 작전으로 성장하세요.');
         const d = DUNGEONS.find(x => x.id === id);
         if (!d || !levelGateOk(s, d.level) || s.rebirths < d.rebirth)
             throw Error('던전 입장 조건을 충족하지 못했습니다.');

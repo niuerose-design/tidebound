@@ -25,6 +25,8 @@ import type { PanelProps } from './panel-props';
 const MAIN_STATS = ['hp', 'attack', 'magic', 'defense', 'resist', 'speed'] as const;
 const DETAIL_STATS = ['hp', 'hpRegen', 'attack', 'magic', 'defense', 'resist', 'speed', 'accuracy', 'evasion', 'crit', 'critDamage', 'mana', 'manaRegen', 'penetration', 'lifesteal'] as const;
 const SHORT: Record<typeof MAIN_STATS[number], string> = { hp: '체력', attack: '물공', magic: '마공', defense: '물방', resist: '마방', speed: '속도' };
+/** v3.16 애드가드로 가린 항목이면 ???로 그립니다. */
+const hid = (r: { masked?: string[] }, f: string) => !!r.masked?.includes(f);
 const jobName = (id: string) => id === 'boss' ? '던전 보스' : jobById(id)?.name || '??';
 /** 등록 시점의 스킬 편성: 액티브는 판정 순서대로, 패시브는 그 뒤에. 성장 레벨은 등록된 SP·숙련으로 계산합니다. */
 function loadout(snap: Snapshot) {
@@ -87,7 +89,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <TabsContent value="ranking">
     {(() => { const picks = recommendOpponents(rows, s.rating); return picks.length ? <div className="panel ranking-panel recommend-panel">
         <div className="section-title"><h2>추천 상대</h2><span>내 점수 ±{RECOMMEND_RANGE} 안에서 가까운 순</span></div>
-        <div className="recommend-list">{picks.map(r => <div key={r.id} className="recommend-row"><div><strong>{r.name}</strong><small>Lv. {r.level} · {jobName(r.job)} · 점수 {r.rating} <span className={`duel-tier tier-${duelTier(r.rating).id}`}>{duelTier(r.rating).name}</span></small></div>
+        <div className="recommend-list">{picks.map(r => <div key={r.id} className="recommend-row"><div><strong>{r.name}</strong><small>Lv. {hid(r, 'level') ? '???' : r.level} · {hid(r, 'job') ? '???' : jobName(r.job)} · 점수 {r.rating} <span className={`duel-tier tier-${duelTier(r.rating).id}`}>{duelTier(r.rating).name}</span></small></div>
             <button className="secondary small" disabled={busy || now - s.lastDuel < BALANCE.duelCooldownMs} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>대결</button></div>)}</div>
     </div> : null; })()}
     <div className="panel ranking-panel">
@@ -108,16 +110,17 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
         <TableBody>{sorted.map((r, i) => <TableRow key={r.id}>
             <TableCell className="rank-number">{i + 1}</TableCell>
             <TableCell className="ranking-who">
-            <strong>{(r.title ?? rebirthTitle(r.rebirths)) ? <small className="rebirth-title">{r.title ?? rebirthTitle(r.rebirths)}</small> : null}{r.seasonRank && r.seasonRank <= 3 ? <small className="rebirth-title season-rank">지난 시즌 {r.seasonRank}위</small> : null}{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
-            <small className="block">Lv. {r.level} · {jobName(r.job)} · 환생 {r.rebirths}회 · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
-            <MainStats stats={r.stats}/>
+            <strong>{!r.masked && (r.title ?? rebirthTitle(r.rebirths)) ? <small className="rebirth-title">{r.title ?? rebirthTitle(r.rebirths)}</small> : null}{r.seasonRank && r.seasonRank <= 3 ? <small className="rebirth-title season-rank">지난 시즌 {r.seasonRank}위</small> : null}{r.name}{r.self ? ' (나)' : ''}</strong>{r.vows?.map(v => <small key={v} className={`vow-badge vow-${v.replace(/\d/, '')}`}>{vowBadgeLabel(v)}</small>)}
+            <small className="block">Lv. {hid(r, 'level') ? '???' : r.level} · {hid(r, 'job') ? '???' : jobName(r.job)} · 환생 {hid(r, 'level') ? '???' : r.rebirths}회 · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
+            {hid(r, 'gear') ? <small className="block ranking-main-stats">능력치 ???</small> : <MainStats stats={r.stats}/>}
             </TableCell>
-            <TableCell data-label="길드"><span className="ranking-guild">{r.guild || '무소속'}</span></TableCell>
-            <TableCell data-label="전투력">{format(r.power)}</TableCell>
+            <TableCell data-label="길드"><span className="ranking-guild">{hid(r, 'guild') ? '???' : r.guild || '무소속'}</span></TableCell>
+            <TableCell data-label="전투력">{hid(r, 'gear') ? '???' : format(r.power)}</TableCell>
             <TableCell data-label="점수">{r.rating} <span className={`duel-tier tier-${duelTier(r.rating).id}`}>{duelTier(r.rating).name}</span></TableCell>
             <TableCell className="ranking-actions">
             {(() => { const a = duelAllowance(s, now, r.id); return <><button className="secondary small" disabled={busy || r.self || a.cooldown > 0 || a.left <= 0 || a.vs <= 0} title={r.self ? undefined : `이 상대와 오늘 ${a.vs}회 남음`} onClick={() => send({ type: 'ranked', id: r.id }, '/api/duel')}>{r.self ? '내 캐릭터' : `대결 ${a.vs}/${a.perOpponent}`}</button><button className="secondary small" disabled={busy || r.self} title="점수·전적이 바뀌지 않는 연습 대결" onClick={() => send({ type: 'training', id: `user:${r.id}` }, '/api/duel')}>연습</button></>; })()}
             <button className="text-button" onClick={() => setDetail(r)}>상세보기</button>
+            {r.masked && s.job === 'hacker' && (s.hacker?.tier || 0) >= 1 && <button className="secondary small" disabled={busy} title="애드가드를 1시간 동안 풉니다(비트 소모)" onClick={() => send({ type: 'hackRun', id: 'crack', value: r.id }, '/api/hack')}>크래킹</button>}
             </TableCell>
             </TableRow>)}</TableBody>
         </Table> : <Empty title="첫 번째 모험가가 되어보세요" description="전투 정보를 등록하면 랭킹에 등장합니다. 다른 참가자가 없을 때는 훈련 상대와 대결할 수 있습니다."/>}</div>
@@ -128,8 +131,8 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
         <Swords size={35}/>
         <span className="badge">{r.self ? '내 등록 정보' : '등록된 모험가'}</span>
         <h2>{r.name}</h2>
-        <p>Lv. {r.level} · {jobName(r.job)} · 환생 {r.rebirths}회</p>
-        <MainStats stats={r.stats}/>
+        <p>Lv. {hid(r, 'level') ? '???' : r.level} · {hid(r, 'job') ? '???' : jobName(r.job)} · 환생 {hid(r, 'level') ? '???' : r.rebirths}회</p>
+        {hid(r, 'gear') ? <small className="block ranking-main-stats">능력치 ???</small> : <MainStats stats={r.stats}/>}
         <div className="training-actions"><button className="primary" disabled={busy} onClick={() => send({ type: 'training', id: `user:${r.id}` }, '/api/duel')}>연습 대결</button><button className="text-button" onClick={() => setDetail(r)}>상세보기</button></div>
         </div>)}</div> : <p className="footnote">등록된 모험가가 없어 던전 보스와 훈련합니다. 전투 정보를 등록하면 내 방어용 정보와도 연습할 수 있습니다.</p>}
     <div className="section-title training-title"><h2><Fish size={17}/> 던전 보스</h2><span>던전 마지막 웨이브와 같은 능력치·스킬</span></div>
@@ -147,7 +150,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <DialogContent className="duel-dialog ranking-detail">
     <DialogHeader>
     <DialogTitle>{detail?.name}{detail?.self ? ' (나)' : ''}</DialogTitle>
-    <DialogDescription>{detail && `Lv. ${detail.level} · ${jobName(detail.job)} · 환생 ${detail.rebirths}회 · ${detail.guild || '무소속'} · 전투력 ${format(detail.power)} · 점수 ${detail.rating} · ${new Date(detail.updatedAt).toLocaleString('ko-KR')} 등록`}</DialogDescription>
+    <DialogDescription>{detail && `Lv. ${hid(detail, 'level') ? '???' : detail.level} · ${hid(detail, 'job') ? '???' : jobName(detail.job)} · 환생 ${hid(detail, 'level') ? '???' : detail.rebirths}회 · ${hid(detail, 'guild') ? '???' : detail.guild || '무소속'} · 전투력 ${hid(detail, 'gear') ? '???' : format(detail.power)} · 점수 ${detail.rating} · ${new Date(detail.updatedAt).toLocaleString('ko-KR')} 등록`}</DialogDescription>
     </DialogHeader>
     {detailStats && <div className="ranking-detail-stats">{DETAIL_STATS.map(k => <span key={k}><small>{STAT_LABELS[k]}</small><b>{statDisplay(k, detailStats[k])}</b></span>)}</div>}
     {detailLoadout && <div className="ranking-detail-skills">
@@ -191,6 +194,6 @@ function AbyssBoard({ s, abyss, reload }: { s: State; abyss: { week: string; row
         {mine && <p className="abyss-mine">내 이번 주 기록 <b>{mine.best}층</b>{mine.dirty ? ' · 올리는 중' : ''}</p>}
         {!abyss ? <p className="footnote">불러오는 중…</p> : !abyss.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 주에 무릉도장을 정복한 모험가가 없습니다. 첫 기록을 남겨 보세요."/> :
         <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>층</TableHead><TableHead>직업</TableHead><TableHead>환생</TableHead></TableRow></TableHeader>
-        <TableBody>{abyss.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{r.depth}층</b></TableCell><TableCell>{jobName(r.job)}</TableCell><TableCell>{r.rebirths}</TableCell></TableRow>)}</TableBody></Table>}
+        <TableBody>{abyss.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{r.depth}층</b></TableCell><TableCell>{hid(r, 'job') ? '???' : jobName(r.job)}</TableCell><TableCell>{hid(r, 'level') ? '???' : r.rebirths}</TableCell></TableRow>)}</TableBody></Table>}
     </section>;
 }

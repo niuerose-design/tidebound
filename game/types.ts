@@ -519,6 +519,12 @@ export type State = {
     randomGameRuns?: number;
     /** v27.88 랜덤게임 기록: 가장 멀리 간 웨이브·총 입장·받고 나간 횟수(환생해도 유지). */
     randomGameStats?: { best: number; runs: number; cashed: number };
+    /** v3.16 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
+    hacker?: HackerState;
+    /** v3.16 애드가드 2단계에서 고른 공개 항목(없으면 전부 숨김). */
+    privacy?: { show: import('./data/hacker').PrivacyField[] };
+    /** v3.16 서버 해킹 소식(동기화 때 서버가 적음): 진행 중인 방송 탈취, 내가 크래킹당한 시각. */
+    hackFeed?: { broadcast?: { text: string; by: string; until: number }; crackedUntil?: number };
     clears: Record<string, number>;
     /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
     modeClears?: Partial<Record<import('./data/balance').DungeonMode, Record<string, number>>>;
@@ -545,7 +551,37 @@ export type State = {
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };
+/** v3.16 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
+export type HackerInfil = {
+    seed: number;
+    /** 뚫은 노드 수. 지금 노드는 depth + 1번째. */
+    depth: number;
+    /** 뽑아 나가면 받는 보상(추적되면 일부만). */
+    bank: { bits: number; exp: number };
+    node: { kind: 'lock' | 'port'; size: number; tries: number; max: number; history: { guess: string; hint: string }[] };
+};
+export type HackerState = {
+    bits: number;
+    /** 권한 경험치(누적, 등급은 grade). */
+    exp: number;
+    grade: number;
+    /** 해금한 해킹 단계(0 = 없음, 1 = I …). */
+    tier: number;
+    day?: string;
+    /** 오늘 쓴 침투 입장·해킹 횟수. */
+    entries?: number;
+    used?: Record<string, number>;
+    infil?: HackerInfil | null;
+    bestDepth?: number;
+    runs?: number;
+    /** 해커로 전직하기 전 장착 스킬(돌아갈 때 되살림). */
+    savedSkills?: string[];
+    /** 저장 직전 /api/hack이 서버 공유 설정에 반영하고 지우는 해킹 실행. */
+    pending?: { kind: 'broadcast' | 'crack'; value: string; minutes: number };
+};
 export type Snapshot = {
+    /** v3.16 애드가드: 순위표에서 숨길 정보(서버가 보낼 때 가림, 결투 계산에는 원본). */
+    privacy?: { show: string[] };
     /** v26.1 표시 칭호 이름(랭킹). */
     title?: string;
     /** v25.12 지난 시즌 순위(상위 3위만 배지). 시즌 이월 때 서버가 넣습니다. */

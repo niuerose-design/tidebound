@@ -10,6 +10,8 @@ import type { RankingRow } from './db';
 import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
 import { refreshEvents } from './events-config';
+import { ensurePuzzleKey } from './hacks';
+import { privacyOf } from '../systems/hacker';
 import { accountFromRequest, AuthError, readSlot } from './auth';
 import { FISH } from '../data/world';
 import { JOBS } from '../data/classes';
@@ -65,6 +67,8 @@ export function checkOrigin(req: Request) {
 export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
     const database = db(), now = Date.now();
     await refreshEvents(now);
+    // v3.16 침투 작전 정답 키(인스턴스마다 한 번).
+    await ensurePuzzleKey(now);
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = await database.getPlayer(id);
         // v25.10 처음 보는 모험가일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
@@ -118,7 +122,7 @@ export async function syncDuelSeason(id: string, s: State, now: number) {
 const abyssRowId = (id: string) => `abyss:${id}`;
 export async function listAbyssBoard(now: number) {
     const key = weekKey(now), rows = await db().listRankings(weekSeason(key), 100);
-    return { key, rows: rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as { name: string; depth: number; job: string; rebirths: number; account: string }; return { rank: i + 1, id: snap.account, name: snap.name, depth: Number(snap.depth) || r.rating, job: snap.job, rebirths: snap.rebirths, updatedAt: r.updated_at }; }) };
+    return { key, rows: rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as { name: string; depth: number; job: string; rebirths: number; account: string; privacy?: { show: string[] } }; return { rank: i + 1, id: snap.account, name: snap.name, depth: Number(snap.depth) || r.rating, job: snap.job, rebirths: snap.rebirths, updatedAt: r.updated_at, ...(snap.privacy ? { privacy: snap.privacy } : {}) }; }) };
 }
 /**
  * 행동 처리 뒤 저장 전에 한 번: 이번 주 심연 기록이 새로 깊어졌으면 올리고, 주가 바뀌었으면 지난주 순위 보상을 한 번 정산합니다.
@@ -129,7 +133,7 @@ export async function syncAbyssBoard(id: string, s: State, now: number) {
     if (!week) return;
     const database = db(), current = weekKey(now);
     if (week.dirty && week.key === current) {
-        await database.upsertRanking({ id: abyssRowId(id), snapshot: JSON.stringify({ season: weekSeason(current), board: 'abyss', account: id, name: s.name, depth: week.best, job: s.job, rebirths: s.rebirths }), rating: week.best, power: week.best, updated_at: now });
+        await database.upsertRanking({ id: abyssRowId(id), snapshot: JSON.stringify({ season: weekSeason(current), board: 'abyss', account: id, name: s.name, depth: week.best, job: s.job, rebirths: s.rebirths, ...(privacyOf(s) ? { privacy: privacyOf(s) } : {}) }), rating: week.best, power: week.best, updated_at: now });
         delete week.dirty;
     }
     const previous = weekKey(now - 7 * 86400000);
