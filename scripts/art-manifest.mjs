@@ -21,14 +21,17 @@ const scan = (folder, valid) => {
     for (const f of readdirSync(folder).sort()) { const m = f.match(/^(.+)\.(png|webp)$/); if (m && valid.has(m[1]) && out[m[1]] !== 'png') out[m[1]] = m[2]; }
     return out;
 };
-const fishArt = scan('public/art/fish', new Set(FISH.map(f => f.id))), jobArt = scan('public/art/jobs', new Set(LINEAGES.map(l => l.id)));
-writeFileSync('game/data/art-manifest.ts', `// 자동 생성 파일: node scripts/art-manifest.mjs 가 public/art/{skills,fish,jobs} 를 훑어 다시 씁니다. 손으로 고치지 마세요.
+const { ONYX_BOSSES } = await load('game/data/onyx.js');
+const fishArt = scan('public/art/fish', new Set(FISH.map(f => f.id))), jobArt = scan('public/art/jobs', new Set(LINEAGES.map(l => l.id))), onyxArt = scan('public/art/onyx', new Set(ONYX_BOSSES.map(b => b.id)));
+writeFileSync('game/data/art-manifest.ts', `// 자동 생성 파일: node scripts/art-manifest.mjs 가 public/art/{skills,fish,jobs,onyx} 를 훑어 다시 씁니다. 손으로 고치지 마세요.
 /** 아이콘 이미지가 있는 스킬 id. 없는 스킬은 기본 아이콘을 씁니다(없는 파일을 요청하지 않음). */
 export const SKILL_ART: ReadonlySet<string> = new Set<string>(${JSON.stringify(have)});
 /** 그림이 있는 몬스터 id → 확장자. 없는 몬스터는 실루엣(없는 파일을 요청하지 않음). */
 export const FISH_ART: Readonly<Record<string, 'png' | 'webp'>> = ${JSON.stringify(fishArt)};
 /** 그림이 있는 직업 계보 id → 확장자. 없으면 계열 아이콘. */
 export const JOB_ART: Readonly<Record<string, 'png' | 'webp'>> = ${JSON.stringify(jobArt)};
+/** v3.14 그림이 있는 칠흑 장신구(보스 id) → 확장자. 없으면 SVG 그림. */
+export const ONYX_ART: Readonly<Record<string, 'png' | 'webp'>> = ${JSON.stringify(onyxArt)};
 `);
 
 const haveSet = new Set(have);

@@ -1,5 +1,6 @@
 'use client';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { onyxArtSrc } from '@/game/data/art';
 /**
  * v3.12 칠흑 장신구 그림(64×64 SVG). 원작 장신구의 생김새를 본떠 직접 그린 실루엣·채색이며 원본 이미지는 쓰지 않습니다.
  * 거대한 공포(검붉은 결정과 눈) · 커맨더 포스 이어링(가시 달린 검은 귀걸이) · 루즈 컨트롤 머신 마크(톱니 메달) ·
@@ -67,8 +68,16 @@ const ART: Record<string, ReactNode> = {
         <path d="M26 24l-2-6M38 24l2-6" stroke="#e9c46a" strokeWidth="1.5" strokeLinecap="round"/>
     </>,
 };
+/** v3.14 public/art/onyx 에 그림이 있으면 그 그림(원작 도트, 확대 시 픽셀 유지), 없거나 못 불러오면 SVG. */
 export function OnyxArt({ id, size = 48, className = '' }: { id: string; size?: number; className?: string }) {
-    const art = ART[id];
-    if (!art) return null;
-    return <svg className={`onyx-art ${className}`} width={size} height={size} viewBox="0 0 64 64" role="img" aria-hidden="true">{art}</svg>;
+    const art = ART[id], src = onyxArtSrc(id);
+    const [state, setState] = useState<'pending' | 'ready' | 'missing'>(src ? 'pending' : 'missing');
+    if (!art && !src) return null;
+    return <span className={`onyx-art ${state} ${className}`} style={{ width: size, height: size }} aria-hidden="true">
+        {state !== 'ready' && art && <svg width={size} height={size} viewBox="0 0 64 64" role="img">{art}</svg>}
+        {state !== 'missing' && src && (
+            // eslint-disable-next-line @next/next/no-img-element -- 선택적 정적 파일: 없으면 onError로 SVG에 머무릅니다.
+            <img src={src} alt="" width={size} height={size} loading="lazy" decoding="async" onLoad={() => setState('ready')} onError={() => setState('missing')}/>
+        )}
+    </span>;
 }
