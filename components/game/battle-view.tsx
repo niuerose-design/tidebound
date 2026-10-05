@@ -39,6 +39,7 @@ import type { State, Action, Log } from '@/game/types';
 import { TideSelector } from './tide-selector';
 import { SettingsDialog } from './settings-dialog';
 import { SlotChips } from './slot-chips';
+import { NoticeStack } from './notice-stack';
 import { Player } from './player-column';
 import { BattleRail } from './battle-rail';
 import { MobileFisherStrip } from './mobile-fisher-strip';
@@ -85,13 +86,17 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     const noticeText = s.lastOffline ? `부재중 사냥 정산 · ${Math.floor(s.lastOffline.seconds / 60)}분 동안 ${s.lastOffline.kills}마리 처치 · +${format(s.lastOffline.gold)} G` : d ? `${d.name} ${s.dungeon!.wave + 1}번째 전투 · 보스 전까지 항로를 유지합니다.` : tipAt(tip);
     return <>
     <Heading eyebrow="THE ENDLESS ADVENTURE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className={`status-pill ${s.running ? 'active' : ''}`}>{s.running ? '자동 사냥 진행 중' : '모험 준비 완료'}</span><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>
-    <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Leaf size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>
-    <SlotChips s={s} busy={busy} onSwitch={onSwitchSlot}/>
+    {/* v27.88 알림은 한 묶음: 부재중 정산이 있으면 맨 앞, 그다음 이벤트 → 문 → 제단 → 안내 팁. 모바일에서는 첫 줄만 보이고 나머지는 펼칩니다. */}
+    <NoticeStack>
+    {s.lastOffline &&     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Leaf size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>}
     {banner && <div className="event-banner" role="status"><Sparkles size={15}/><b>이벤트</b><span>{eventLabel(banner)}</span></div>}
     {/* v27.89 새싹 지원(환생 10회 미만) */}
     {sproutExp(s.rebirths) > 1 && <div className="event-banner sprout-banner" role="status"><Sparkles size={15}/><b>새싹의 축복</b><span>경험치 ×{sproutExp(s.rebirths).toFixed(1)}{sproutSurvival(s.rebirths) ? ` · 쓰러진 뒤 회복 대기 절반 · 처치 후 회복 +${Math.round(SPROUT.healBonus * 100)}%p` : ''} · 환생 {SPROUT.expUntil}회 전까지 (환생할수록 줄어듦)</span></div>}
     <DoorNotice s={s} setView={setView}/>
     <AltarNotice s={s} setView={setView}/>
+    {!s.lastOffline &&     <div className={`voyage-brief ${s.lastOffline ? 'has-offline' : ''}`}><Leaf size={16}/><span>{noticeText}</span>{s.lastOffline && <button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button>}</div>}
+    </NoticeStack>
+    <SlotChips s={s} busy={busy} onSwitch={onSwitchSlot}/>
     <div className="battle-hud" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
     <button type="button" className="mobile-fisher-toggle" aria-expanded={fisherOpen} onClick={() => setFisherOpen(v => !v)}>{fisherOpen ? '나의 모험가 상세 접기' : '나의 모험가 상세 · 착용 장비 · 능력치 배분'}<ChevronRight size={14} className={fisherOpen ? 'open' : ''}/></button>
     <div className={`battle-character-column ${fisherOpen ? 'mobile-open' : ''}`}><Player s={s} busy={busy} send={send} setView={setView}/></div>

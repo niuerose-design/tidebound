@@ -384,3 +384,9 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .book-enemy[open] > summary .book-enemy-chevron { transform: rotate(0deg); }
 @media (prefers-reduced-motion: reduce) { .book-enemy-chevron { transition: none; } }
 .bonus-feats { margin-top:16px; }
+/* v27.88 치장: 칭호·계급 칸 접기 */
+.cosmetics-fold > summary { cursor:pointer; list-style:none; align-items:center; }
+.cosmetics-fold > summary::-webkit-details-marker { display:none; }
+.cosmetics-fold > summary .achievement-chevron { margin-left:8px; }
+.cosmetics-fold:not([open]) > summary { margin-bottom:0; }
+.cosmetics-fold:not([open]) { align-self:start; }
