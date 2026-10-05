@@ -2,6 +2,7 @@ import { SKILLS } from '../data/skills';
 import { SKILL_FX } from '../data/skill-fx';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { BALANCE } from '../data/balance';
+import { deathRecoveryTurns } from '../data/sprout';
 import { jobById } from '../data/classes';
 import type { Enemy, Log, State, StatusEffects } from '../types';
 
@@ -155,7 +156,7 @@ export function groupReplayTurns(logs: Log[]): Log[][] {
 }
 
 /** 각 로그 묶음이 몇 번째 턴에 일어났는지. 회복 대기 턴은 로그가 없으므로 회복 카운트로 자리를 잡고, 어긋나면 마지막 턴들에 붙입니다. */
-function placeTurns(groups: Log[][], count: number, recovery: number): number[] | null {
+function placeTurns(groups: Log[][], count: number, recovery: number, recoveryTurns = BALANCE.recoveryTurns): number[] | null {
     if (groups.length > count) return null;
     const at: number[] = [];
     let r = recovery, g = 0;
@@ -165,7 +166,7 @@ function placeTurns(groups: Log[][], count: number, recovery: number): number[] 
             if (r === 0 && groups[g][0].text === RECOVERED) at[g++] = k;
             continue;
         }
-        if (groups[g].some(l => l.text === LOST)) r = BALANCE.recoveryTurns;
+        if (groups[g].some(l => l.text === LOST)) r = recoveryTurns;
         at[g++] = k;
     }
     return g === groups.length ? at : groups.map((_, i) => count - groups.length + 1 + i);
@@ -183,7 +184,7 @@ export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMa
     const fresh = next.logs.filter(l => l.id > prevLast);
     if (count < 0 || next.logId < prev.logId || next.logId - prevLast !== fresh.length) return null;
     if (count === 0) return fresh.length ? null : [];
-    const groups = groupReplayTurns(fresh), at = placeTurns(groups, count, prev.recovery);
+    const groups = groupReplayTurns(fresh), at = placeTurns(groups, count, prev.recovery, deathRecoveryTurns(prev));
     if (!at) return null;
     // 타격 하나가 한 박자. 보상·패배·회복 줄은 그 턴의 마지막 박자에 함께 드러냅니다.
     const beats: Beat[] = [];
@@ -259,7 +260,7 @@ export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMa
             for (; b < beats.length && beats[b].turn === k; b++) {
                 const beat = beats[b];
                 if (beat.recovered) r = 0;
-                if (beat.lost) r = BALANCE.recoveryTurns;
+                if (beat.lost) r = deathRecoveryTurns(prev);
                 const enemy = beat.side ? foes[b] : fallen ? null : frame.enemy;
                 frame = { ...frame, offset: beat.index * beat.beatMs, hp: hp[b], mana: mana[b], recovery: r, enemy, lastLogId: beat.logs.at(-1)!.id };
                 frames.push(frame);

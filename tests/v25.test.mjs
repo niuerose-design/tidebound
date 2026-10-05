@@ -946,7 +946,7 @@ test('v27.76 tide loot: rarity weights drift up conservatively with tier, essenc
 test('v27.78 heal after kill keeps falling with tide; stageField matches spawn; starfall reward multipliers normalized', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Enc = await L.load('systems/encounter'), W = await L.load('data/world');
-    const at = tide => Enc.victoryHealRate({ ...newState(0), tide });
+    const at = tide => Enc.victoryHealRate({ ...newState(0), rebirths: 5, tide }); // v27.89 새싹 보조(+5%p)를 뺀 기본 곡선
     assert.ok(Math.abs(at(0) - .2) < 1e-9 && Math.abs(at(10) - .1) < 1e-9 && Math.abs(at(30) - .05) < 1e-9 && Math.abs(at(200) - .02) < 1e-9, `heal ${at(0)} ${at(10)} ${at(30)} ${at(200)}`);
     const s = newState(0); s.level = 60; s.rebirths = 10; s.tide = 10; s.stage = 'wreck'; s.running = true; s.kills = 0; s.target = 'shark';
     Enc.spawn(s, () => .5); const live = Enc.stageField(s, 'wreck', 'shark', 10);
@@ -1026,4 +1026,15 @@ test('v27.80 badge choice (title/rank) and the 지겨운 환생 research restore
     const c = make(2); act(c, { type: 'rebirth' }, 0); assert.ok(c.skills.includes('hook'), 'level 2 keeps the inherited skill');
     const d = make(3); d.permanent.starting = 10; act(d, { type: 'rebirth' }, 0); assert.equal(d.statPoints, 0); assert.ok(d.attributes.str >= 55 && d.attributes.dex >= 18 && d.attributes.vit >= 18 && d.attributes.int === 0, `ratio kept ${JSON.stringify(d.attributes)}`);
     const e = make(1); e.jobMastery.harpoon = 0; act(e, { type: 'rebirth' }, 0); assert.equal(e.job, 'fisher', 'unmastered job is not restored');
+});
+
+test('v27.89 sprout support: exp ×(1 + 0.2 × (10 − rebirths)) below 10 rebirths, half death recovery and +5%p kill heal below 5', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Sp = await L.load('data/sprout'), Enc = await L.load('systems/encounter'), B = await L.load('data/balance');
+    assert.deepEqual([0, 1, 5, 9, 10, 30].map(r => Number(Sp.sproutExp(r).toFixed(2))), [3, 2.8, 2, 1.2, 1, 1]);
+    const at = r => { const s = newState(0); s.rebirths = r; return s; };
+    assert.equal(Sp.deathRecoveryTurns(at(4)), Math.ceil(B.BALANCE.recoveryTurns / 2)); assert.equal(Sp.deathRecoveryTurns(at(5)), B.BALANCE.recoveryTurns);
+    assert.ok(Math.abs(Enc.victoryHealRate(at(4)) - Enc.victoryHealRate(at(5)) - .05) < 1e-9);
+    const s = at(2); s.running = true; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 0, gold: 0, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
+    tick(s, () => .5); assert.equal(s.recovery, Math.ceil(B.BALANCE.recoveryTurns / 2));
 });
