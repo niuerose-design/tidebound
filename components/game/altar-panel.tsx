@@ -18,12 +18,12 @@ const QUICK = [10, 25, 50, 100];
  * v27.44 바칠 양: 좌우 슬라이더 · 빠른 비율 버튼 · 직접 입력. unit을 주면(골드 1,000 = 기여도 1) 그 배수로 내려 맞춰 자투리가 버려지지 않습니다.
  * v27.51 슬라이더·비율 버튼의 100%는 보유량이 아니라 '고른 게이지를 채우는 데 필요한 양'(cap, 보유량 이하)입니다. 직접 입력하면 그보다 더 바칠 수 있습니다.
  */
-function AmountRow({ icon, label, have, cap, value, setValue, unit = 1, basis = 'need' }: { icon: React.ReactNode; label: string; have: number; cap: number; value: string; setValue: (v: string) => void; unit?: number; /** v3.16 비율 기준: 채우는 데 필요한 양(need) 또는 내 보유량(have). */ basis?: 'need' | 'have' }) {
+function AmountRow({ icon, label, have, cap, value, setValue, unit = 1, basis = 'need', most = Infinity }: { icon: React.ReactNode; label: string; have: number; cap: number; value: string; setValue: (v: string) => void; unit?: number; /** v3.19 한 번에 바칠 수 있는 최대(서버 상한). 넘으면 서버가 ‘수량을 확인하세요’로 거절하던 문제. */ most?: number; /** v3.16 비율 기준: 채우는 데 필요한 양(need) 또는 내 보유량(have). */ basis?: 'need' | 'have' }) {
     const limit = basis === 'have' ? Infinity : cap;
-    const top = Math.max(0, Math.min(have, limit)), fine = top <= 1000, n = Math.min(num(value), top), max = fine ? top : 1000;
+    const top = Math.max(0, Math.min(Math.floor(have), limit, most)), fine = top <= 1000, n = Math.min(num(value), top), max = fine ? top : 1000;
     const set = (amount: number) => { const up = Math.ceil(Math.max(0, Math.min(top, amount)) / unit) * unit, v = up > top ? Math.floor(top / unit) * unit : up; setValue(v ? v.toLocaleString() : ''); };
     return <div className="altar-amount">
-        <label className="altar-input">{icon}<span>{label}</span><input inputMode="numeric" value={value} placeholder="0" onChange={e => setValue(e.target.value)}/><small>보유 {format(have)}{limit < have ? ` · 채우기 ${format(top)}` : ''}</small></label>
+        <label className="altar-input">{icon}<span>{label}</span><input inputMode="numeric" value={value} placeholder="0" onChange={e => setValue(e.target.value)}/><small>보유 {format(Math.floor(have))}{limit < have ? ` · 채우기 ${format(top)}` : most < have ? ` · 한 번에 최대 ${format(most)}` : ''}</small></label>
         <div className="altar-slide">
             <input type="range" min={0} max={max || 1} step={1} value={top ? (fine ? n : Math.round(n / top * 1000)) : 0} disabled={!top} aria-label={`${label} 바칠 양`}
                 onChange={e => set(fine ? Number(e.target.value) : top * Number(e.target.value) / 1000)}/>
@@ -39,7 +39,7 @@ function AmountRow({ icon, label, have, cap, value, setValue, unit = 1, basis = 
  */
 export function Altar({ s, busy, info, error, load, act, result, clearResult }: Props) {
     const [gold, setGold] = useState(''), [pearls, setPearls] = useState(''), [essence, setEssence] = useState('');
-    const [gauge, setGauge] = useState<AltarGaugeId>('gold'), [anonymous, setAnonymous] = useState(!!s.altar?.anonymous), [now, setNow] = useState(() => Date.now()), [pane, setPane] = useState<'offer' | 'board'>('offer');
+    const [gauge, setGauge] = useState<AltarGaugeId>('gold'), [anonymous, setAnonymous] = useState(!!s.altar?.anonymous), [now, setNow] = useState(() => Date.now()), [pane, setPane] = useState<'offer' | 'board' | 'total'>('offer');
     // v27.91 게이지는 축복 / 소환(신 + 월드보스 셋) 탭으로 나눠 봅니다. 고른 게이지가 다른 탭에 있으면 탭을 따라갑니다.
     const [gaugeTab, setGaugeTab] = useState<'bless' | 'summon'>('bless');
     // v3.16 슬라이더·비율 버튼 기준: 고른 게이지를 채우는 데 필요한 양 / 내 보유량(수천억 골드를 한 번에 바칠 때).
@@ -57,6 +57,8 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
     const rest = (except: keyof typeof offer) => need === Infinity || need <= 0 ? Infinity : Math.max(0, need - offeringPoints({ ...offer, [except]: 0 }));
     const caps = { gold: rest('gold') * ALTAR.goldPerPoint, pearls: Math.ceil(rest('pearls') / ALTAR.pearlPoints), essence: Math.ceil(rest('essence') / ALTAR.essencePoints) };
     const short = offer.gold > s.gold || offer.pearls > s.pearls || offer.essence > (s.essence || 0);
+    // v3.19 직접 입력도 한 번에 바칠 수 있는 상한을 넘으면 버튼에서 알려 줍니다(서버는 넘으면 거절).
+    const over = offer.gold > ALTAR.maxGold || offer.pearls > ALTAR.maxPearls || offer.essence > ALTAR.maxEssence;
     const submit = async () => { if (await act({ action: 'offer', ...offer, gauge, anonymous })) { setGold(''); setPearls(''); setEssence(''); setNow(stamp); } };
     const myPower = power(stats(s)), wait = (s.altar?.challengeAt || 0) + ALTAR.challengeCooldownMs - now;
     const god = info?.god, throne = info?.throne, raid = info?.raid, raidWait = (s.altar?.raidAt || 0) + RAID.cooldownMs - now;
@@ -81,17 +83,24 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 <p className="footnote">{gaugeTab === 'bless' ? `축복은 최대 ${BLESSING_MAX_LEVEL}단계 · 최대 ${ALTAR.blessingCapMs / 3600_000}시간까지 쌓이고, 끝나면 단계는 처음으로 돌아갑니다.` : `게이지가 차면 바로 나타납니다. ${RAIDS.map(r => `${r.name} ${r.lifetimeHours}시간`).join(' · ')} 머물고, 쓰러지면 ${RAID.respawnMs / 3600_000}시간 뒤에 다시 소환할 수 있습니다. 신은 ${ALTAR.godLifetimeMs / 3600_000}시간.`}</p>
             </section>
             <section className="panel altar-offer">
-                <Tabs value={pane} onValueChange={v => setPane(v as typeof pane)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="offer"><Coins size={14}/> 공물 바치기</TabsTrigger><TabsTrigger value="board"><Trophy size={14}/> 이번 주 기여 순위</TabsTrigger></TabsList></Tabs>
+                <Tabs value={pane} onValueChange={v => setPane(v as typeof pane)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="offer"><Coins size={14}/> 공물 바치기</TabsTrigger><TabsTrigger value="board"><Trophy size={14}/> 이번 주 기여 순위</TabsTrigger><TabsTrigger value="total"><Trophy size={14}/> 누적 기여 순위</TabsTrigger></TabsList></Tabs>
                 {pane === 'offer' ? <>
                 <div className="section-title"><h2>→ {info.gauges.find(g => g.id === gauge)?.name}</h2><span className="micro">내 기여도 {format(info.me.points)}{info.me.rank ? ` · ${info.me.rank}위` : ''}</span></div>
                 {isBless && <div className="altar-jump" role="tablist" aria-label="목표 단계"><span>목표 단계</span>{Array.from({ length: BLESSING_MAX_LEVEL }, (_, i) => i + 1).map(lv => { const reached = lv <= live, nextOne = lv === live + 1, on = jumpTo ? lv === jumpTo : nextOne; return <button key={lv} type="button" role="tab" aria-selected={on} disabled={reached} className={on ? 'primary small' : 'secondary small'} title={reached ? '이미 도달' : `${lv}단계까지 총 기여도 ${format(blessingJumpCost(gauge as BlessingId, live, lv))}`} onClick={() => setJump(nextOne ? 0 : lv)}>{lv}단계{lv > BLESSING_HIGH_FROM ? ` · ${BLESSING_HIGH_MINUTES[lv - BLESSING_HIGH_FROM - 1] / 60}시간` : ''}</button>; })}<small>{jumpTo ? `${live ? `${live}단계에서 ` : ''}${jumpTo}단계까지 한 번에 · 총 기여도 ${format(totalCost)} (골드 ${format(totalCost * ALTAR.goldPerPoint)} 상당) · 지금 게이지 ${format(target!.points)} 포함` : `다음 단계(${live + 1}단계)만 · 더 높은 단계를 고르면 그 단계까지의 총 비용을 한 번에 바칩니다`}</small></div>}
                 <div className="altar-basis" role="tablist" aria-label="비율 기준"><span>비율 기준</span><button type="button" role="tab" aria-selected={basis === 'need'} className={basis === 'need' ? 'primary small' : 'secondary small'} onClick={() => setBasis('need')}>채우는 데 필요한 양</button><button type="button" role="tab" aria-selected={basis === 'have'} className={basis === 'have' ? 'primary small' : 'secondary small'} onClick={() => setBasis('have')}>내 보유량</button><small>{basis === 'need' ? '100% = 고른 게이지를 채우는 양(보유량 이하)' : '100% = 지금 가진 전부 · 남는 기여도는 다음 단계로 이어집니다'}</small></div>
-                <AmountRow icon={<Coins size={14}/>} label="골드" have={s.gold} cap={caps.gold} value={gold} setValue={setGold} unit={ALTAR.goldPerPoint} basis={basis}/>
-                <AmountRow icon={<Gem size={14}/>} label="세계석" have={s.pearls} cap={caps.pearls} value={pearls} setValue={setPearls} basis={basis}/>
-                <AmountRow icon={<Droplets size={14}/>} label="정수" have={s.essence || 0} cap={caps.essence} value={essence} setValue={setEssence} basis={basis}/>
+                <AmountRow icon={<Coins size={14}/>} label="골드" have={s.gold} cap={caps.gold} value={gold} setValue={setGold} unit={ALTAR.goldPerPoint} basis={basis} most={ALTAR.maxGold}/>
+                <AmountRow icon={<Gem size={14}/>} label="세계석" have={s.pearls} cap={caps.pearls} value={pearls} setValue={setPearls} basis={basis} most={ALTAR.maxPearls}/>
+                <AmountRow icon={<Droplets size={14}/>} label="정수" have={s.essence || 0} cap={caps.essence} value={essence} setValue={setEssence} basis={basis} most={ALTAR.maxEssence}/>
                 <label className="altar-anon"><input type="checkbox" checked={anonymous} onChange={e => setAnonymous(e.target.checked)}/><EyeOff size={14}/> 익명으로 기여 (순위표에 ‘익명의 모험가’로 표시)</label>
-                <button className="primary" disabled={busy || points < 1 || short} onClick={() => void submit()}>바치기 · 기여도 +{format(points)}</button>
+                <button className="primary" disabled={busy || points < 1 || short || over} onClick={() => void submit()}>{over ? `한 번에 골드 ${format(ALTAR.maxGold)} · 세계석 ${format(ALTAR.maxPearls)} · 정수 ${format(ALTAR.maxEssence)}까지` : short ? '보유량이 부족합니다' : `바치기 · 기여도 +${format(points)}`}</button>
                 <p className="footnote">기여도: 골드 {ALTAR.goldPerPoint.toLocaleString()} = 1 · 세계석 1 = {ALTAR.pearlPoints} · 정수 1 = {ALTAR.essencePoints}. 바친 재화는 돌아오지 않습니다(신의 자리 주인에게 {ALTAR.titheRate * 100}%가 돌아갑니다).</p>
+                </> : pane === 'total' ? <>
+            {/* v3.19 누적 기여 순위: 모든 주의 기여를 합친 순위(이름·익명은 가장 최근 기록). */}
+            <div className="section-title"><h2><small className="micro">지금까지 모든 주 합계</small></h2><span className="micro">내 누적 기여도 {format(info.total?.points || 0)}{info.total?.rank ? ` · ${info.total.rank}위` : ''}</span></div>
+            {info.allTime?.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>누적 기여도</TableHead></TableRow></TableHeader>
+                <TableBody>{info.allTime.map(r => <TableRow key={r.rank} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{format(r.points)}</b></TableCell></TableRow>)}</TableBody></Table>
+                : <p className="footnote">아직 바친 모험가가 없습니다.</p>}
+            <p className="footnote">주간 순위와 달리 초기화되지 않습니다. 익명 여부와 이름은 가장 최근에 바친 주의 설정을 따릅니다.</p>
                 </> : <>
             <div className="section-title"><h2><small className="micro">{info.week}</small></h2><span className="micro">내 기여도 {format(info.me.points)}{info.me.rank ? ` · ${info.me.rank}위` : ''}</span></div>
             {info.board.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>기여도</TableHead></TableRow></TableHeader>

@@ -422,6 +422,8 @@ export type State = {
     legacyInherited?: Record<string, true>;
     /** v27.95 숙련 요구치 상향의 계승 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     masteryRescaled?: boolean;
+    /** v3.19 계급장 필요 처치 재조정(강등 시 특전 되돌리기)을 이미 처리한 세이브(새 세이브는 처음부터 true). */
+    rankRescaled?: boolean;
     jobMastery: Record<string, number>;
     unlockedJobs: string[];
     bookClaims: Record<string, number>;

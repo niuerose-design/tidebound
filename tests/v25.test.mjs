@@ -1009,8 +1009,11 @@ test('v27.79 rank: kills-only progression with perks (tally, drill, medal, suppl
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const R = await L.load('data/rank'), Enc = await L.load('systems/encounter'), M = await L.load('systems/mastery');
     assert.equal(R.RANKS.length, 17); assert.equal(R.RANKS[0].name, '이등병'); assert.equal(R.RANKS.at(-1).name, '중장'); assert.equal(R.RANK_CUMULATIVE[1], 5000);
-    const total = R.RANKS.reduce((a, r) => a + r.need, 0); assert.ok(total > 2.0e6 && total < 2.5e6, `total kills to top ${total}`); assert.equal(R.RANK_TOTAL_POINTS, 41); assert.ok(R.RANK_PERKS.every(p => p.cost === 1), 'every perk costs 1P'); assert.equal(R.RANK_PERKS.reduce((a, p) => a + p.max * p.cost, 0), R.RANK_TOTAL_POINTS, 'all perks maxed = all points');
-    for (let i = 1; i < R.RANKS.length; i++) { const g = R.RANKS[i].need / R.RANKS[i - 1].need; if (i > 1) assert.ok(g > 1.3 && g < 1.5, `growth ${g} at ${i}`); }
+    const total = R.RANKS.reduce((a, r) => a + r.need, 0); assert.ok(total > 1.8e8 && total < 2.0e8, `total kills to top ${total}`);
+    // v3.19 무리 없이 처치 상한(시간당 1,800) × 전과 기록 최대(×11)로 24시간 돌려도 1년 이상.
+    const tallyMax = R.RANK_PERKS.find(p => p.id === 'tally').max; assert.equal(tallyMax, 10); assert.ok(total / (1800 * (1 + tallyMax)) > 8760, 'at least a year at the cap'); assert.equal(R.RANK_TOTAL_POINTS, 41); assert.ok(R.RANK_PERKS.every(p => p.cost === 1), 'every perk costs 1P'); assert.equal(R.RANK_PERKS.reduce((a, p) => a + p.max * p.cost, 0), R.RANK_TOTAL_POINTS, 'all perks maxed = all points');
+    // 같은 계급 그룹 안에서는 약 ×1.38씩, 그룹이 바뀌는 진급(하사·소위·준장)은 그룹 배율만큼 뜁니다.
+    for (let i = 2; i < R.RANKS.length; i++) { const a = R.RANKS[i - 1], b = R.RANKS[i], g = (b.need / R.RANK_GROUP_SCALE[b.group]) / (a.need / R.RANK_GROUP_SCALE[a.group]); assert.ok(g > 1.3 && g < 1.5, `growth ${g} at ${i}`); }
     const s = newState(0); s.kills = 4999; assert.equal(R.rankOf(s).name, '이등병', 'old saves start from their kill count');
     s.running = true; s.stage = 'brook'; s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0 };
     Enc.reward(s, () => .99); assert.equal(s.rank.exp, 5000); assert.equal(R.rankOf(s).name, '일병'); assert.ok(s.logs.some(l => /일병\(으\)로 진급/.test(l.text))); assert.equal(R.rankPointsFree(s), 1);
@@ -1384,4 +1387,16 @@ test('v3.17 tutorial rewards: a step completed by its condition pays once; silen
     G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls, 'the starter skill alone pays nothing (new accounts start with 0 pearls)'); assert.ok(s.tutorial.done.skill, 'but the step counts as done');
     s.kills = 1; G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1); assert.ok(logs.some(t => t.includes('첫 처치'))); G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1, 'paid once');
     const vet = newState(0); vet.rebirths = 5; vet.kills = 10; vet.tutorial = {}; const vp = vet.pearls; G.syncTutorial(vet); assert.equal(vet.pearls, vp, 'back-fill pays nothing'); assert.ok(vet.tutorial.done.rebirth);
+});
+
+test('v3.19 rank rescale: old saves are re-ranked once; demoted saves get their perks back, others keep them', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), R = await L.load('data/rank'), Mi = await L.load('systems/migrations');
+    const oldCum = n => R.RANK_LEGACY_NEED.slice(0, n + 1).reduce((a, x) => a + x, 0);
+    const high = newState(0); delete high.rankRescaled; high.rank = { exp: oldCum(14), perks: { tally: 10, drill: 5 } };
+    assert.ok(Mi.rescaleRanks(high), 'demoted'); assert.deepEqual(high.rank.perks, {}, 'perks refunded'); assert.equal(high.rank.exp, oldCum(14), 'rank exp kept');
+    assert.ok(R.rankIndex(high.rank.exp) < 14); assert.ok(high.logs.some(l => /계급장 진급 기준/.test(l.text)));
+    assert.equal(Mi.rescaleRanks(high), false, 'once');
+    const low = newState(0); delete low.rankRescaled; low.rank = { exp: oldCum(3), perks: { tally: 2 } };
+    assert.equal(Mi.rescaleRanks(low), false, '병 계급은 그대로'); assert.deepEqual(low.rank.perks, { tally: 2 });
+    assert.equal(R.rankPerkLevel({ rank: { exp: 0, perks: { tally: 18 } } }, 'tally'), 10, 'old tally 18 clamps to the new max');
 });

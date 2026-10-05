@@ -823,6 +823,14 @@
 
 /* v27.88 알림 묶음·전투 기록 접기 버튼: 데스크톱은 전처럼(토글 숨김). */
 .notice-stack-toggle{display:none}
+/* v3.19 알림 순환: 하나씩 보여 주고(data-notice-off는 숨김) 아래에 점·모두 보기. 모바일·데스크톱 같은 규칙. */
+.notice-stack.rotating .notice-stack-list>[data-notice-off]{display:none}
+.notice-stack.rotating.folded .notice-stack-list>:not([data-notice-off]){animation:notice-in .35s ease}
+@keyframes notice-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.notice-stack-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-4px 0 10px}
+.notice-stack-dots{display:flex;gap:5px}.notice-stack-dots button{width:7px;height:7px;padding:0;border:0;border-radius:50%;background:#2d474a;cursor:pointer}.notice-stack-dots button.on{background:#7fd0c0}
+.notice-stack.rotating .notice-stack-toggle{display:flex;align-items:center;gap:6px;margin-left:auto;padding:3px 8px;border:1px dashed #2d474a;border-radius:7px;background:transparent;color:#9bb3b0;font-size:12px}
+.notice-stack.open .notice-stack-toggle svg{transform:rotate(180deg)}
 .feed-fold{display:none;align-items:center;justify-content:center;width:26px;height:26px;margin-left:6px;border:1px solid var(--border);border-radius:6px;background:#101c20;color:#9bc8b5}
 .feed-fold svg{transition:transform .15s}.feed-fold svg.open{transform:rotate(180deg)}
 /* v27.88 전투 연출은 자기 상자 안에서만 섞이도록(mix-blend-mode가 바깥 고정 요소(모바일 하단 탭)까지 합성 그룹에 끌어들여 깜빡이던 문제). */
@@ -830,7 +838,6 @@
 @media(max-width:767px){
   /* v27.88 모바일 자동 사냥 정리: 알림은 첫 줄만, 분신 칩 숨김, 장면 카드 낮게, 전투 기록·채팅은 장면 아래 접힌 패널로, 모험 일지는 짧게. */
   .notice-stack{margin-bottom:10px}
-  .notice-stack.folded .notice-stack-list>:not(:first-child){display:none}
   .notice-stack-toggle{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:6px;padding:6px 10px;border:1px dashed #2d474a;border-radius:7px;background:transparent;color:#9bb3b0;font-size:12px}
   .notice-stack.open .notice-stack-toggle svg{transform:rotate(180deg)}
   .notice-stack .voyage-brief,.notice-stack .event-banner,.notice-stack .door-notice,.notice-stack .altar-notice{margin:0 0 8px}

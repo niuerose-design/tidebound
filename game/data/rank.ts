@@ -2,10 +2,17 @@ import type { State } from '../types';
 
 /**
  * v27.79 계급장: 처치한 마릿수로만 오르는 별도 레벨. 환생·분신과 무관하게 캐릭터에 쌓입니다.
- * 이등병 → 중장 16번 진급. 다음 계급까지 필요한 처치 수는 일병 5,000에서 단계마다 약 ×1.38로 늘어 중장까지 합계 약 226만 마리
- * (무리 없이 시간당 500마리를 24시간 돌려도 약 190일, 평균적인 사냥으로는 1~2년). 진급마다 진급 포인트를 주고 포인트는 언제든 무료로 초기화합니다.
+ * 이등병 → 중장 16번 진급. 진급마다 진급 포인트를 주고 포인트는 언제든 무료로 초기화합니다.
+ * v3.19 초장기 콘텐츠로 재조정: 계급 그룹마다 필요 처치 배율 병 ×1 · 부사관 ×10 · 장교 ×100 · 장성 ×80(RANK_GROUP_SCALE).
+ * 중장까지 합계 약 1억 8,770만. 무리 없이 처치 상한(2초 턴당 1마리 = 시간당 1,800마리)에 전과 기록 최대(10단계, ×11)로
+ * 24시간 쉬지 않아도 약 1.08년 걸립니다(환생 200회 이후의 경험치 환산은 나중에 따로).
+ * v3.19 특전 최대: 전과 기록 18 → 10, 숙련 훈련 8 → 12, 전공 훈장 5 → 9(합계 41 = 총 진급 포인트 그대로).
  */
 export type RankDef = { id: string; name: string; /** 이전 계급에서 이 계급까지 필요한 처치 수 */ need: number; /** 이 계급에 오를 때 받는 진급 포인트 */ points: number; group: '병' | '부사관' | '장교' | '장성' };
+/** v3.19 계급 그룹별 필요 처치 배율. */
+export const RANK_GROUP_SCALE: Record<RankDef['group'], number> = { 병: 1, 부사관: 10, 장교: 100, 장성: 80 };
+/** v3.19 조정 전 필요 처치(옛 세이브의 강등 판정용). */
+export const RANK_LEGACY_NEED = [0, 5_000, 6_900, 9_500, 13_100, 18_100, 25_000, 34_500, 47_600, 65_700, 90_700, 125_000, 173_000, 238_000, 329_000, 454_000, 626_000];
 export const RANKS: RankDef[] = [
     { id: 'pvt2', name: '이등병', need: 0, points: 0, group: '병' },
     { id: 'pvt1', name: '일병', need: 5_000, points: 1, group: '병' },
@@ -25,6 +32,7 @@ export const RANKS: RankDef[] = [
     { id: 'mg', name: '소장', need: 454_000, points: 4, group: '장성' },
     { id: 'ltg', name: '중장', need: 626_000, points: 4, group: '장성' },
 ];
+for (const r of RANKS) r.need *= RANK_GROUP_SCALE[r.group];
 /** 계급 i에 오르기까지 누적 필요 처치 수. */
 export const RANK_CUMULATIVE: number[] = RANKS.reduce<number[]>((acc, r, i) => { acc.push((acc[i - 1] || 0) + r.need); return acc; }, []);
 export const RANK_TOTAL_POINTS = RANKS.reduce((a, r) => a + r.points, 0);
@@ -33,9 +41,9 @@ export const RANK_TOTAL_POINTS = RANKS.reduce((a, r) => a + r.points, 0);
 export type RankPerkDef = { id: RankPerkId; name: string; desc: (level: number) => string; max: number; cost: number; per: number };
 export type RankPerkId = 'tally' | 'drill' | 'medal' | 'supply';
 export const RANK_PERKS: RankPerkDef[] = [
-    { id: 'tally', name: '전과 기록', desc: l => `처치 1마리를 계급 경험치 ${1 + l}마리로 셉니다(무리는 마릿수만큼)`, max: 18, cost: 1, per: 1 },
-    { id: 'drill', name: '숙련 훈련', desc: l => `처치 숙련 기본 획득 +${l}(직업·장착 스킬 모두, 배율과 무관한 고정값)`, max: 8, cost: 1, per: 1 },
-    { id: 'medal', name: '전공 훈장', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 SP +1`, max: 5, cost: 1, per: .001 },
+    { id: 'tally', name: '전과 기록', desc: l => `처치 1마리를 계급 경험치 ${1 + l}마리로 셉니다(무리는 마릿수만큼)`, max: 10, cost: 1, per: 1 },
+    { id: 'drill', name: '숙련 훈련', desc: l => `처치 숙련 기본 획득 +${l}(직업·장착 스킬 모두, 배율과 무관한 고정값)`, max: 12, cost: 1, per: 1 },
+    { id: 'medal', name: '전공 훈장', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 SP +1`, max: 9, cost: 1, per: .001 },
     { id: 'supply', name: '보급품', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 세계석 +1`, max: 10, cost: 1, per: .001 },
 ];
 export type RankState = { /** 계급 경험치(세어진 처치 수) */ exp: number; perks: Partial<Record<RankPerkId, number>> };

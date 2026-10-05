@@ -43,6 +43,7 @@ type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: numb
  * 축복: 게이지가 차면 서버 전체에 hours시간 동안 열립니다(1단계). 배율은 서버 이벤트와 곱해집니다.
  * v27.48 축복 단계: 진행 중에 게이지를 다시 채우면 단계가 오르고(최대 3단계) 시간도 hours만큼 늘어납니다.
  * 다음 단계 비용은 단계마다 ×LEVEL_STEP이라 3단계 유지는 비쌉니다. 축복이 끝나면 단계는 0으로 돌아갑니다.
+ * v3.19 1·2·3단계 모두 유지 12시간(hours 12 = blessingCapMs): 열 때와 단계를 올릴 때마다 지금부터 12시간으로 맞춥니다.
  * 까미·누리는 숙련·경험치와 직결돼 다른 축복보다 비쌉니다.
  */
 /**
@@ -62,11 +63,11 @@ export const blessingLevelMs = (hours: number, level: number) => level > BLESSIN
 /** 지금 살아 있는 단계: 축복이 닫혔으면 0, 상위 단계 시간이 지났으면 3단계로. */
 export const effectiveBlessingLevel = (g: { until: number; level?: number; high_until?: number } | undefined, now: number) => !g || g.until <= now ? 0 : Math.max(1, (g.high_until || 0) > now ? g.level || 1 : Math.min(g.level || 1, BLESSING_HIGH_FROM));
 export const BLESSINGS: { id: BlessingId; name: string; cost: number; hours: number; levels: BlessingEffect[] }[] = [
-    { id: 'gold', name: '풍요의 축복', cost: 12_000, hours: 1, levels: [{ gold: 2 }, { gold: 2.5 }, { gold: 3 }, { gold: 3.5 }, { gold: 4 }, { gold: 5 }] },
-    { id: 'exp', name: '성장의 축복', cost: 15_000, hours: 1, levels: [{ exp: 1.5 }, { exp: 1.75 }, { exp: 2 }, { exp: 2.25 }, { exp: 2.5 }, { exp: 3 }] },
-    { id: 'mimic', name: '까미의 축복', cost: 25_000, hours: 1, levels: [{ mimic: 3 }, { mimic: 4 }, { mimic: 5 }, { mimic: 6 }, { mimic: 7 }, { mimic: 8 }] },
+    { id: 'gold', name: '풍요의 축복', cost: 12_000, hours: 12, levels: [{ gold: 2 }, { gold: 2.5 }, { gold: 3 }, { gold: 3.5 }, { gold: 4 }, { gold: 5 }] },
+    { id: 'exp', name: '성장의 축복', cost: 15_000, hours: 12, levels: [{ exp: 1.5 }, { exp: 1.75 }, { exp: 2 }, { exp: 2.25 }, { exp: 2.5 }, { exp: 3 }] },
+    { id: 'mimic', name: '까미의 축복', cost: 25_000, hours: 12, levels: [{ mimic: 3 }, { mimic: 4 }, { mimic: 5 }, { mimic: 6 }, { mimic: 7 }, { mimic: 8 }] },
     // v27.70 누리의 축복: 경험의 누리 출현 배율. 레벨 경험치와 직결돼 까미와 같은 값입니다.
-    { id: 'nuri', name: '누리의 축복', cost: 25_000, hours: 1, levels: [{ nuri: 3 }, { nuri: 4 }, { nuri: 5 }, { nuri: 6 }, { nuri: 7 }, { nuri: 8 }] },
+    { id: 'nuri', name: '누리의 축복', cost: 25_000, hours: 12, levels: [{ nuri: 3 }, { nuri: 4 }, { nuri: 5 }, { nuri: 6 }, { nuri: 7 }, { nuri: 8 }] },
 ];
 type Blessing = typeof BLESSINGS[number];
 /** 단계별 효과(1부터). */
@@ -129,6 +130,9 @@ export type AltarInfo = {
     throne: { id: string; name: string; since: number; mine: boolean; power: number; hp: number; tithe?: Offering } | null;
     totals: Offering & { points: number };
     board: { rank: number; name: string; points: number; anonymous: boolean; self: boolean }[];
+    /** v3.19 누적 기여 순위(모든 주 합계)와 내 누적 기여·순위. */
+    allTime?: { rank: number; name: string; points: number; anonymous: boolean; self: boolean }[];
+    total?: { points: number; rank: number };
     me: { points: number; rank: number; anonymous: boolean; challengeAt: number; /** v27.91 월드보스 마지막 도전 시각 */ raidAt: number };
     /** v27.91 지금 나타난(또는 방금 격파된) 월드보스. 없으면 null. */
     raid: AltarRaidInfo | null;

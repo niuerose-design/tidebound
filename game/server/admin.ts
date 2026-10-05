@@ -330,7 +330,7 @@ export async function setAltarBlessingLevel(id: string, level: number, minutes?:
     if (lv === 0) await db().setAltarBlessing(id, 0, 0, 0);
     else {
         const high = lv > BLESSING_HIGH_FROM, highMs = high ? (minutes && minutes > 0 ? minutes * 60_000 : blessingLevelMs(b.hours, lv)) : 0;
-        const until = high ? now + highMs + ALTAR.blessingCapMs : now + (minutes && minutes > 0 ? minutes * 60_000 : Math.min(lv, BLESSING_HIGH_FROM) * b.hours * 3600_000);
+        const until = high ? now + highMs + ALTAR.blessingCapMs : now + (minutes && minutes > 0 ? minutes * 60_000 : b.hours * 3600_000);
         await db().setAltarBlessing(id, lv, until, high ? now + highMs : 0);
     }
     invalidateAltar();
