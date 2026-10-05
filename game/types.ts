@@ -479,6 +479,8 @@ export type State = {
     masteryCarry?: number;
     /** 자동 분해기 켜짐 여부(설정). v3.23부터 정수로 분해. */
     autoSell?: boolean;
+    /** v3.24 자동 판매기 켜짐 여부(설정). autoSell과 동시에 켜지지 않습니다. */
+    autoVend?: boolean;
     /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
     hideDoorNotice?: boolean;
     /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */
@@ -523,8 +525,10 @@ export type State = {
         stake?: { essence: number; pearls: number };
         until?: number;
     };
-    /** v27.86 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). */
+    /** v27.86 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). v3.24 randomGameDay와 날이 다르면 0으로 봅니다. */
     randomGameRuns?: number;
+    /** v3.24 randomGameRuns를 센 날(한국 시간 dayKey). */
+    randomGameDay?: string;
     /** v27.88 랜덤게임 기록: 가장 멀리 간 웨이브·총 입장·받고 나간 횟수(환생해도 유지). */
     randomGameStats?: { best: number; runs: number; cashed: number };
     /** v3.18 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */

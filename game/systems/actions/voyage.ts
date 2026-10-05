@@ -7,7 +7,8 @@ import { JOBS } from '../../data/classes';
 import { SKILLS, skillById } from '../../data/skills';
 import { RANDOM_GAME } from '../../data/random-game';
 import { HACKER_ID } from '../../data/hacker';
-import { randomGameRank, randomGameRunsLeft, inRandomGame, cashOutRandomGame } from '../random-game';
+import { randomGameRank, randomGameRunsLeft, randomGameUsed, inRandomGame, cashOutRandomGame } from '../random-game';
+import { dayKey } from '../../data/goals';
 import type { ActionHandlers } from './types';
 import { researchRank, salvageRate } from '../../data/economy';
 import { addLog, endRun } from '../state';
@@ -58,14 +59,14 @@ export const voyageActions: ActionHandlers = {
             throw Error('던전 입장 조건을 충족하지 못했습니다.');
         if (dungeonClosed(d.id))
             throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);
-        // v27.86 랜덤게임: 연구 단계만큼 생마다 입장. 값 'until:N'은 목표 웨이브(0이면 받고 나가기·쓰러짐까지).
+        // v27.86 랜덤게임: 연구 단계만큼 생마다 입장(v3.24 하루가 바뀌어도 다시 채워짐). 값 'until:N'은 목표 웨이브(0이면 받고 나가기·쓰러짐까지).
         if (d.id === RANDOM_GAME.id) {
             if (!randomGameRank(s)) throw Error('세계석 연구 ‘랜덤게임’이 필요합니다.');
-            if (!randomGameRunsLeft(s)) throw Error('이번 생의 랜덤게임 입장 횟수를 모두 썼습니다.');
+            if (!randomGameRunsLeft(s, now)) throw Error('오늘(이번 생)의 랜덤게임 입장 횟수를 모두 썼습니다. 하루가 지나거나 환생하면 다시 채워집니다.');
             const until = Math.max(0, Math.min(999, Math.floor(Number(String(a.value || 'until:0').replace('until:', '')) || 0)));
             enterDungeon(s, d.id);
             s.dungeon = { ...s.dungeon!, stake: { essence: 0, pearls: 0 }, ...(until ? { until } : {}) };
-            s.randomGameRuns = (s.randomGameRuns || 0) + 1;
+            s.randomGameRuns = randomGameUsed(s, now) + 1; s.randomGameDay = dayKey(now);
             s.randomGameStats ??= { best: 0, runs: 0, cashed: 0 }; s.randomGameStats.runs++;
         }
         else { const { mode, repeat } = parseDungeonValue(s, d.id, a.value); enterDungeon(s, d.id, repeat, mode); }
@@ -101,6 +102,14 @@ export const voyageActions: ActionHandlers = {
         if (!researchRank(s, 'sortingNet'))
             throw Error('자동 분해기 연구가 필요합니다.');
         s.autoSell = a.value === 'on';
+        // v3.24 자동 판매기와는 하나만 켭니다.
+        if (s.autoSell) s.autoVend = false;
+    },
+    autoVend(s, { a }) {
+        if (!researchRank(s, 'autoVend'))
+            throw Error('자동 판매기 연구가 필요합니다.');
+        s.autoVend = a.value === 'on';
+        if (s.autoVend) s.autoSell = false;
     },
     doorNotice(s, { a }) {
         s.hideDoorNotice = a.value === 'off';

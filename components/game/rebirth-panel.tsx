@@ -1,7 +1,7 @@
 'use client';
 import { ConfirmButton } from './confirm-button';
 import { useState } from 'react';
-import { Sparkles, RefreshCw, Info } from 'lucide-react';
+import { Sparkles, RefreshCw, Info, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
@@ -54,11 +54,14 @@ function ResearchTabView({ tab, s, send, busy }: { tab: ResearchTab; s: State; s
     const list = RESEARCH.filter(r => r.tab === tab), name = RESEARCH_TABS.find(x => x.id === tab)!.name;
     const groups = tab === 'combat' ? (['attack', 'defense'] as const) : tab === 'utility' ? (['basic', 'special', 'vow'] as const) : [undefined];
     const { refund, spent } = researchRefund(s, tab);
+    // v3.24 묶음(공격·방어·기본·특별·서약)을 화살표로 접고 펼칩니다. 탭을 바꿔도 접어 둔 묶음은 그대로입니다.
+    const [folded, setFolded] = useState<Record<string, boolean>>({});
     return <>
-        {groups.map(g => <section key={g || 'all'} className="research-group">
-            {g && <h3 className="research-group-title">{RESEARCH_GROUPS[g]}</h3>}
-            <div className="research-grid">{list.filter(r => !g || r.group === g).map(r => <ResearchCard key={r.id} r={r} s={s} send={send} busy={busy}/>)}</div>
-        </section>)}
+        {groups.map(g => { const items = list.filter(r => !g || r.group === g), open = !g || !folded[g], done = items.reduce((n, r) => n + Math.min(r.max, s.permanent[r.id] || 0), 0), total = items.reduce((n, r) => n + r.max, 0);
+            return <section key={g || 'all'} className={`research-group ${open ? '' : 'folded'}`}>
+                {g && <h3 className="research-group-title"><button type="button" className="research-group-toggle" aria-expanded={open} onClick={() => setFolded(f => ({ ...f, [g]: open }))}><ChevronDown size={16} className="research-group-arrow"/>{RESEARCH_GROUPS[g]}<small>{items.length}개 · 연구 {done} / {total}</small></button></h3>}
+                {open && <div className="research-grid">{items.map(r => <ResearchCard key={r.id} r={r} s={s} send={send} busy={busy}/>)}</div>}
+            </section>; })}
         <div className="panel research-reset">
             <div><strong>{name} 연구 재분배</strong><p>{spent ? `이 탭에 쓴 세계석 ${spent}개 중 ${refund}개를 돌려받고 ${name} 연구 단계를 모두 0으로 되돌립니다.` : `${name} 탭에 쓴 세계석이 없습니다.`} 재분배는 언제나 무료이며 쓴 세계석을 모두 돌려받습니다. 자동 사냥과 던전을 멈춘 상태에서만 할 수 있습니다.</p></div>
             <ConfirmButton label={`재분배 · 세계석 +${refund}`} title={`${name} 연구를 재분배할까요?`} description={`${name} 탭의 연구 단계가 모두 0이 되고 세계석 ${refund}개를 모두 돌려받습니다.`} disabled={busy || refund <= 0 || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetResearch', id: tab })}/>
