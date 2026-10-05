@@ -8,6 +8,7 @@ import { tutorialEarly } from '@/game/systems/guidance';
 import { BookOpen, ChevronRight, Flag, Heart, Shield, ShoppingBag, Swords, Target, Trophy, Users, Zap, Leaf, Flame } from 'lucide-react';
 import { goalSummary } from '@/game/systems/progress';
 import { Meter, SlotIcon, format } from './shared';
+import { OnyxArt } from './onyx-art';
 import { xpNeeded, SLOTS, RARITIES } from '@/game/data/balance';
 import { jobById } from '@/game/data/classes';
 import { stats, power } from '@/game/systems/stats';
@@ -85,7 +86,7 @@ export function Player({ s, busy, send, setView }: {
             const item = s.equipment[id];
             return <button key={id} onClick={() => setView('inventory')}>
             <div className="mini-slot" style={{ color: item ? RARITIES[item.rarity].color : undefined }}>
-            <SlotIcon slot={id} size={19}/>
+            {item?.onyx ? <OnyxArt id={item.onyx} size={24}/> : <SlotIcon slot={id} size={19}/>}
             </div>
             <span>
             <small>{label}</small>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StarCatch } from './star-catch';
 import { useStarSetting, starSound } from './star-catch-setting';
 import { ArrowUpRight, ChevronDown, Gem, Lock, Search, Sparkles, Swords } from 'lucide-react';
+import { OnyxArt } from './onyx-art';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Item, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, researchRank } from '@/game/data/economy';
@@ -102,7 +103,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
         const gain = equipped ? 0 : preview.get(item.id)?.gain || 0, expanded = open === item.id;
         return <article key={item.id} className={`panel gear-row ${expanded ? 'expanded' : ''} ${equipped ? 'equipped' : ''}`} style={{ '--rarity': RARITIES[item.rarity].color } as React.CSSProperties}>
             <button type="button" className="gear-row-main" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : item.id)}>
-                <span className="gear-row-icon"><SlotIcon slot={item.slot} size={20}/></span>
+                <span className={`gear-row-icon${item.onyx ? ' onyx-icon' : ''}`}>{item.onyx ? <OnyxArt id={item.onyx} size={30}/> : <SlotIcon slot={item.slot} size={20}/>}</span>
                 <span className="gear-row-name"><strong>{item.name} <span className="gold-text">{starLabel(item.enhance || 0)}</span>{item.locked && <Lock size={12} aria-label="보호"/>}{item.relic && <Sparkles size={12} aria-label="환생 보존 유물"/>}{item.onyx && <Gem size={12} aria-label="칠흑 장신구"/>}</strong><small>{RARITIES[item.rarity].name} · {SLOTS[item.slot]} · 위력 {item.power} · {item.relic ? '유물' : `Lv.${item.level}`}{item.affixes?.length ? ` · 옵션 ${item.affixes.length}` : ''}</small></span>
                 <span className="gear-row-stats">{topStats(item)}</span>
                 <span className="gear-row-gain">{equipped ? <span className="gear-gain neutral">착용 중</span> : gainBadge(gain)}</span>

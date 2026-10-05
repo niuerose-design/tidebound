@@ -15,6 +15,7 @@ import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } fr
 import { stats, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
 import { ONYX, ONYX_BOSSES, ONYX_SET, ownedOnyx } from '@/game/data/onyx';
+import { OnyxArt } from './onyx-art';
 import { affixDef } from '@/game/data/gear';
 import { abyssReference, stageField } from '@/game/systems/encounter';
 import { bookEcology, nextEcology, bookRevealed, regionResearchStage, bookStage } from '@/game/systems/book';
@@ -138,7 +139,7 @@ export function Collection({ s, send, busy }: PanelProps) {
         <ul className="bonus-rows">{ONYX_SET.map(b => <li key={b.count} className={ownedOnyx(s).size >= b.count ? 'done' : ''}><b>{b.count}종 보유</b> · <span>{b.label}</span>{ownedOnyx(s).size >= b.count ? ' ✓' : ''}</li>)}</ul>
         <div className="book-grid">{ONYX_BOSSES.map(b => { const f = FISH.find(x => x.id === b.id)!, n = s.onyxBook?.[b.id] || 0, got = ownedOnyx(s).has(b.id), def = affixDef(b.accessory.affix.id);
             return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={b.id}>
-                <div className="book-icon"><Swords size={34}/><span>{n ? `${n}회 격파` : '미발견'}</span></div>
+                <div className="book-icon onyx-book-icon"><FishArt id={b.id} size={48} boss/><OnyxArt id={b.id} size={44} className={got ? 'owned' : ''}/><span>{n ? `${n}회 격파` : '미발견'}</span></div>
                 <h3>{b.name} <small className="fish-rarity legendary">{b.region} 서식지</small></h3>
                 <p>{f.lore}</p>
                 <div className="fish-trait"><strong>{got ? '✓ ' : ''}{b.accessory.name}</strong><span>{def?.description || b.accessory.desc}</span></div>
