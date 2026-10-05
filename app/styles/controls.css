@@ -140,4 +140,5 @@
 .altar-raid [data-slot=table-container]{max-height:320px;overflow:auto}.altar-raid .altar-god-card .meter{margin:6px 0 2px}
 /* v27.93 스타포스 */
 .star-row{display:flex;align-items:center;flex-wrap:wrap;gap:1px;margin-bottom:8px}.star-row i{font-style:normal;font-size:14px;line-height:1;color:#3d5a58}.star-row i:nth-child(5n+1):not(:first-child){margin-left:6px}.star-row i.on{color:var(--gold);text-shadow:0 0 4px #e8d39a88}.star-row b{margin-left:6px;font-size:12px;color:var(--gold)}
+.relic-imprint{display:grid;gap:8px;margin:10px 0;padding:10px;border:1px solid #9ab4b52a;border-radius:10px}.relic-imprint>b{font-size:13px}.relic-imprint-slots{display:grid;gap:4px;font-size:12px}.relic-imprint-slots label.on{color:var(--gold)}
 .star-odds{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 8px;font-size:12px}.star-odds div{display:flex;gap:5px}.star-odds dt{color:#7f9c98}.star-odds dd{margin:0;color:#c5d8d2}.star-odds dd.positive{color:#a4e9ba}.star-odds dd.negative{color:#f0a08a}.forge-actions .footnote.positive{color:#a4e9ba}

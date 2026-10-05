@@ -186,7 +186,7 @@ test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-
  const n = fresh(0); n.skillPractice = { [t5.id]: 5000 }; migrate(n); assert.ok(!inh(n, t5.id), 'new saves use the new bar');
 });
 
-test('v27.96 skill simple view: growth passives show their current count/rebirth stats and list the rules under 기타', () => {
+test('v3.4 skill simple view: growth passives show their current count/rebirth stats and list the rules under 기타', () => {
  const { passiveGrowthBonus: growth, skillExtraNotes: notes, newState: fresh } = H95;
  const sk = SKILLS.find(x => x.id === 'voyageReview'), s = fresh(0);
  assert.deepEqual(growth(s, sk), {}, 'no kills yet');

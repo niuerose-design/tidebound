@@ -160,7 +160,7 @@ export function canSpendSkill(s: State, id: string) {
 export const limitBreakScale = (broken: number) => 1 + Math.max(0, broken) * PROGRESSION.limitBreak.passive;
 export const brokenStages = (sk: Skill, rank = 1, mastery = 0) => Math.max(0, skillLevel(sk, rank, mastery) - maxSkillLevel(sk));
 /**
- * v27.96 누적·환생 비례 패시브(perCount · perRebirth)의 지금 수치. 능력치 계산(stats.ts)과 같은 식(시그니처 · 한계돌파 배율 포함)으로,
+ * v3.4 누적·환생 비례 패시브(perCount · perRebirth)의 지금 수치. 능력치 계산(stats.ts)과 같은 식(시그니처 · 한계돌파 배율 포함)으로,
  * 스킬 카드 간단히 보기에 고정 효과와 합쳐 보여 줍니다.
  */
 export function passiveGrowthBonus(s: State, sk: Skill, counts: Record<string, number> = progressCounts(s)) {

@@ -220,7 +220,7 @@
 .skill-level-line>span{font-size:12px;color:#adc0c0;border:1px solid #456061;border-radius:4px;padding:4px 7px}
 .skill-level-line>span.inherited{color:#aee1bc;border-color:#4a8063}.skill-card .meter{margin:0}
 .skill-card .skill-brief-stats span{font-size:13px}.skill-card .skill-brief-stats .ap-gain{color:#a9e1bd;border-color:#478663}
-/* v27.96 간단히 보기: 누적 비례 수치가 섞인 칩(점선)과 조건·규칙을 모은 ‘기타’ 칸(한 줄 전체). */
+/* v3.4 간단히 보기: 누적 비례 수치가 섞인 칩(점선)과 조건·규칙을 모은 ‘기타’ 칸(한 줄 전체). */
 .skill-card .skill-brief-stats .skill-chip-growing{border-style:dashed}.skill-card .skill-brief-stats .skill-chip-extra{flex-basis:100%;max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;display:grid;gap:2px;text-align:left;line-height:1.4}.skill-chip-extra b{font-size:12px;color:#9bb3b0;font-weight:600}.skill-chip-extra small{font-size:12px;color:#c9d6d3}.skill-actions-v2{flex-wrap:wrap}.skill-actions-v2>button{flex:1 1 100px;font-size:14px;min-height:38px}
 .skill-stage-table-wrap{overflow:auto;margin:12px 0}.skill-stage-table{border-collapse:collapse;width:100%;font-size:12px;text-align:center}.skill-stage-table caption{text-align:left;color:#d1c79f;margin-bottom:8px;font-size:14px}.skill-stage-table th,.skill-stage-table td{padding:8px 5px;border-bottom:1px solid #31494a;white-space:nowrap}.skill-stage-table tr.current{color:#dcd3a4;background:#233831}
 

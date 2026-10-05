@@ -143,7 +143,7 @@ export function Collection({ s, send, busy }: PanelProps) {
     <AlertDialogContent>
     <AlertDialogHeader>
     <AlertDialogTitle>미등록 {bulkCandidates.length}종을 한 번에 등록할까요?</AlertDialogTitle>
-    <AlertDialogDescription>종류마다 가방에서 가장 약한 장비 1개를 골라 소모합니다: {bulkCandidates.map(c => `${c.name}${c.enhance ? ` +${c.enhance}` : ''}`).join(', ')}. 보호 장비와 유물은 제외되며 돌려받을 수 없습니다.</AlertDialogDescription>
+    <AlertDialogDescription>종류마다 가방에서 가장 약한 장비 1개를 골라 소모합니다: {bulkCandidates.map(c => `${c.name}${c.enhance ? ` ★${c.enhance}` : ''}`).join(', ')}. 보호 장비와 유물은 제외되며 돌려받을 수 없습니다.</AlertDialogDescription>
     </AlertDialogHeader>
     <AlertDialogFooter>
     <AlertDialogCancel>취소</AlertDialogCancel>
@@ -171,7 +171,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             <AlertDialogContent>
             <AlertDialogHeader>
             <AlertDialogTitle>장비를 도감에 등록할까요?</AlertDialogTitle>
-            <AlertDialogDescription>{candidate?.name} (+{candidate?.enhance || 0} 강화) 한 개를 소모합니다. 등록 보너스는 환생 후에도 유지되며 장비를 돌려받을 수 없습니다.</AlertDialogDescription>
+            <AlertDialogDescription>{candidate?.name} (★{candidate?.enhance || 0}) 한 개를 소모합니다. 등록 보너스는 환생 후에도 유지되며 장비를 돌려받을 수 없습니다.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
