@@ -232,7 +232,7 @@ export const xpWallFactor = (level: number) => level >= XP_SCALING.wallLevel ? M
  * 목표 50이면 50→51 ×1.6, 54→55 ×10.5, 59→60 ×110. 순풍(목표까지 경험치 +)으로 빠르게 복구하고, 목표를 넘기면 숨이 막히게.
  * 목표 레벨은 환생 46회부터 Lv.100(최대)이라 그 뒤로는 이 벽이 걸리지 않습니다(환생 50·100회 벽이 맡음).
  */
-export const OVER_TARGET = { growth: 1.6, perResearch: .02 };
+export const OVER_TARGET = { growth: 1.6 };
 export type XpTargetWall = { target: number; growth: number };
 export const overTargetFactor = (level: number, wall?: XpTargetWall) => wall && level >= wall.target ? Math.pow(wall.growth, level - wall.target + 1) : 1;
 export const xpNeeded = (level: number, rebirths = 0, wall?: XpTargetWall) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1) * xpRebirthFactor(rebirths) * xpWallFactor(level) * overTargetFactor(level, wall));

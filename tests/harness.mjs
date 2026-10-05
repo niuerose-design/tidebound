@@ -27,6 +27,7 @@ export const {diceMultiplier,diceRange}=await load('game/data/balance.js');
 export const {variantChances}=await load('game/data/variants.js');
 export const {combatFxFromLog,combatFxBatch}=await load('game/systems/combat-feedback.js');
 export const {migrateState}=await load('game/systems/migrations.js');
+export const {randomGameRunsLeft}=await load('game/systems/random-game.js');
 export const {passiveGrowthBonus,jobMastered,apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,skillRankDeltas,skillMasteryLevel,masteryMilestonesFor,jobRequirements,validLoadout,skillLevel,maxSkillLevel,inherited,trimLoadout,jobMasteryTarget,jobCombatMultiplier,limitBreakNext,skillMastery}=await load('game/systems/progression.js');
 export const {goalProgress,goalSuggestions}=await load('game/systems/goals.js');
 export const {skillGrowthStages,skillExtraNotes}=await load('game/systems/skill-description.js');

@@ -23,7 +23,7 @@ import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey } from './progression';
-import { dismantleEssence } from './equipment';
+import { dismantleEssence, saleValue } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
 import { recordGoal, recordAbyssDepth } from './progress';
@@ -97,6 +97,14 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         const essence = dismantleEssence(item);
         s.essence = (s.essence || 0) + essence;
         addLog(s, `자동 분해기: ${item.name} 분해 · 정수 +${essence}`, 'reward');
+        return;
+    }
+    // v3.24 자동 판매기: 같은 조건의 드롭을 골드로 팝니다.
+    const vend = researchRank(s, 'autoVend');
+    if (vend && s.autoVend && !s.autoSell && !item.relic && item.rarity <= vend && s.itemBook?.[itemKey(slot, rarity)]) {
+        const gold = saleValue(item);
+        s.gold += gold;
+        addLog(s, `자동 판매기: ${item.name} 판매 +${gold} G`, 'reward');
         return;
     }
     if (s.inventory.length >= inventoryCap(s)) {

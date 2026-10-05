@@ -80,6 +80,12 @@
 .research-tabs.game-tabs { margin-bottom:16px; }
 .research-group { margin-bottom:18px; }
 .research-group-title { font-size:14px; color:#b9cfc6; margin:0 0 10px; letter-spacing:.04em; }
+/* v3.24 연구 묶음 접기·펼치기 */
+.research-group.folded { margin-bottom:8px; }
+.research-group-toggle { display:flex; align-items:center; gap:6px; width:100%; padding:4px 0; background:none; border:0; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; text-align:left; }
+.research-group-toggle small { margin-left:auto; font-size:12px; color:#86a097; letter-spacing:0; }
+.research-group-arrow { flex:none; transition:transform .15s ease; }
+.research-group.folded .research-group-arrow { transform:rotate(-90deg); }
 .research-reset { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; margin-top:6px; }
 .research-reset p { font-size:13px; color:#a5bfb1; margin:6px 0 0; line-height:1.7; }
 .research-reset button { flex-shrink:0; }

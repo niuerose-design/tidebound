@@ -46,10 +46,10 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
  * 요구 레벨도 보지 않습니다. 모든 서약이 풀립니다. 자동 사냥 중이었다면 첫 사냥터에서 이어갑니다.
  */
 export function breathReset(s: State, now: number) {
-    const running = s.running, runs = s.randomGameRuns;
+    const running = s.running, runs = s.randomGameRuns, runDay = s.randomGameDay;
     startLife(s, now, { pearls: s.pearls, rebirths: s.rebirths, lifeBonus: s.lifeBonus });
     // v27.86 같은 생을 다시 시작하는 것이라 랜덤게임 입장 횟수는 그대로 둡니다.
-    if (runs) s.randomGameRuns = runs;
+    if (runs) { s.randomGameRuns = runs; s.randomGameDay = runDay; }
     delete s.vows;
     s.running = running;
     addLog(s, '하드코어 · 쓰러져 이번 생을 처음부터 다시 시작합니다. 서약이 풀렸습니다.', 'system');
@@ -164,6 +164,6 @@ export const lifecycleActions: ActionHandlers = {
         const name = s.name;
         Object.assign(s, newState(now), { name });
         // newState에 없는 선택 필드도 함께 지웁니다(계정당 첫 재분배 사용 여부는 유지).
-        for (const key of ['vows', 'nextVows', 'goldenBook', 'variantBook', 'tideBest', 'bookTier', 'randomGameStats', 'masteryCarry', 'autoSell', 'rebirthDoor'] as const) delete s[key];
+        for (const key of ['vows', 'nextVows', 'goldenBook', 'variantBook', 'tideBest', 'bookTier', 'randomGameStats', 'masteryCarry', 'autoSell', 'autoVend', 'rebirthDoor'] as const) delete s[key];
     },
 };

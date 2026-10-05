@@ -63,7 +63,6 @@ test('v3.23 Rebirth: tailwind adds +50% to the exp bonus until the target, then 
  const w=meta.xpWall(f);assert.deepEqual(w,{target:meta.rebirthLevel(f),growth:1.6});
  assert.equal(xpNeeded(w.target-1,f.rebirths,w),xpNeeded(w.target-1,f.rebirths),'below the target: unchanged');
  for(const [lv,x] of [[w.target,1.6],[w.target+1,1.6**2],[w.target+4,1.6**5]])assert.ok(Math.abs(xpNeeded(lv,f.rebirths,w)/xpNeeded(lv,f.rebirths)-x)/x<1e-3,`Lv.${lv}`);
- f.permanent.tailwindWindow=5;assert.ok(Math.abs(meta.xpWall(f).growth-1.5)<1e-9,'research softens the wall');
 });
 
 test('Dungeon repeat runs until its stop condition, then resumes idle fishing',()=>{
