@@ -4,7 +4,7 @@ import { rareSpawnBonus } from '../systems/book';
 import { stats } from '../systems/stats';
 import { canUse } from '../systems/progression';
 
-/** 변종(희귀어): 같은 몬스터인데 특이한 개체. 사냥터에서 몬스터를 VARIANT_BOOK_MIN회 처치한 뒤부터 출현마다 판정합니다. 황금 개체는 처치 순간에 따로 판정(섀도어 계보 패시브의 ‘황금 개체 확률’). */
+/** 변종: 같은 몬스터인데 특이한 개체. 사냥터에서 몬스터를 VARIANT_BOOK_MIN회 처치한 뒤부터 출현마다 판정합니다. 황금 개체는 처치 순간에 따로 판정(섀도어 계보 패시브의 ‘황금 개체 확률’). */
 export type VariantId = 'giant' | 'abyssal' | 'starlit' | 'swarm';
 export type VariantDef = {
     id: VariantId; name: string; mark: string; desc: string;

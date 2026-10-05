@@ -18,7 +18,7 @@ export const REGION_THEMES: Record<string, { label: string; add?: StatBonus; sca
     brook: { label: '경험치 +3%', add: { expBonus: .03 } },
     bay: { label: '골드 +5%', add: { goldBonus: .05 } },
     reef: { label: '치명 피해 +5%p', add: { critDamage: .05 } },
-    kelp: { label: '희귀어 출현 +10%', rareSpawn: .1 },
+    kelp: { label: '변종 출현 +10%', rareSpawn: .1 },
     wreck: { label: '장비 드롭 확률 +5%', add: { dropBonus: .005 } },
     volcanic: { label: '방어 관통 +2%p', add: { penetration: .02 } },
     trench: { label: '최대 체력 +3%', scale: { hp: 1.03 } },
@@ -31,7 +31,8 @@ export const REGION_THEMES: Record<string, { label: string; add?: StatBonus; sca
  * v27.80 지역 연구: 지역(리스항구 등)의 모든 몬스터가 연구 4·5·6단계 이상이면 지역 연구 1·2·3단계.
  * add는 단계마다 더하는 고정값, scale은 단계마다 더하는 배율(+3%면 .03 → 3단계 ×1.09).
  */
-export const REGION_RESEARCH_FROM = 4;
+/** v27.92 지역 연구는 몬스터 연구 1·2·3단계부터(전에는 4·5·6: 효과에 비해 너무 멀었음). */
+export const REGION_RESEARCH_FROM = 1;
 export const REGION_RESEARCH_MAX = 3;
 export const REGION_RESEARCH: Record<string, { label: string; add?: StatBonus; scale?: Partial<Record<'hp' | 'attack' | 'magic' | 'defense' | 'resist', number>> }> = {
     '리스항구': { label: '경험치·골드 +2%', add: { expBonus: .02, goldBonus: .02 } },

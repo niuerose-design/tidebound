@@ -970,9 +970,10 @@ test('v27.80 regional book: research 5·6 need 250k/500k kills (stage 6 also dif
     // 난이도 기록: 처치한 순간의 난이도(최고값만).
     const k = newState(0); k.level = 40; k.stage = 'brook'; k.tide = 7; k.running = true; E.spawn(k, () => .5); const killed = k.enemy.id; k.enemy.hp = 0; E.reward(k, () => .5);
     assert.equal(k.bookTier[killed], 7);
-    // 지역 연구: 리스항구 몬스터 전부 4단계 → 1단계, 경험치 +2%.
+    // 지역 연구(v27.92): 리스항구 몬스터 전부 연구 1단계 → 지역 연구 1단계, 경험치 +2%. 4단계면 최대 3단계.
     const r = newState(0), before = St.stats(r).expBonus;
-    for (const id of W.regionFish('리스항구')) r.book[id] = 10000;
+    for (const id of W.regionFish('리스항구')) r.book[id] = 50;
+    const r3 = newState(0); for (const id of W.regionFish('리스항구')) r3.book[id] = 10000; assert.equal(Bk.regionResearchStage(r3, '리스항구'), 3);
     assert.equal(Bk.regionResearchStage(r, '리스항구'), 1); assert.equal(Bk.regionResearchStage(r, '헤네시스'), 0);
     assert.ok(Math.abs(St.stats(r).expBonus - before - .02) < 1e-9 + .03 + 1e-9, 'region research adds exp (place themes may add too)');
     // 환생해도 변종·황금·난이도 이정표·최고 난이도 기록이 남습니다.
