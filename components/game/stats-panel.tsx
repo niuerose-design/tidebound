@@ -6,6 +6,7 @@ import { RebirthHistory, formatDuration } from './rebirth-history';
 import { FISH, PLACES, PLAIN_DUNGEONS } from '@/game/data/world';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookEcology } from '@/game/systems/book';
+import { LiveRatesCard } from './live-rates-card';
 
 type Row = [label: string, value: string];
 function Block({ title, rows, note }: { title: string; rows: Row[]; note?: string }) {
@@ -25,6 +26,7 @@ export function Stats({ s }: { s: State }) {
     const duels = s.wins + s.losses;
     return <>
         <Heading eyebrow="STATISTICS" title="통계" description="지금까지 쌓은 모험의 기록입니다."/>
+        <LiveRatesCard s={s}/>
         <Block title="모험" rows={[
             ['사냥 시간(부재중 정산 포함)', formatDuration(s.playMs || 0)],
             ['누적 처치', `${format(s.kills)}마리`],

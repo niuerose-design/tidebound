@@ -1173,7 +1173,7 @@ test('v3.5 gear level-up: +10 up to player level, power/flat affixes scale, star
     act(s, { type: 'levelUp', id: 'g' }, 0);
     assert.equal(item.level, 18); assert.equal(item.power, 200, 'power × (20/10)'); assert.equal(item.affixes[0].value, 60, 'flat affix scales'); assert.equal(item.affixes[1].value, .03, 'percent affix stays');
     assert.equal(item.enhance, 0); assert.equal(item.starFails, 0); assert.equal(s.gold, gold - cost);
-    assert.equal(levelUpTarget(item, s), null, 'cannot pass the player level'); assert.throws(() => act(s, { type: 'levelUp', id: 'g' }, 0), /내 레벨/);
+    assert.equal(levelUpTarget(item, s), 25, 'v3.13: capped at my level instead of null'); s.level = 18; assert.equal(levelUpTarget(item, s), null, 'cannot pass the player level'); assert.throws(() => act(s, { type: 'levelUp', id: 'g' }, 0), /내 레벨/);
     s.level = 100; assert.equal(levelUpTarget(item, s), 28);
     // 불굴은 레벨 보정 비율로 다시 계산합니다.
     const cape = { id: 'c', name: 'c', slot: 'cape', rarity: 6, power: 100, level: 50, affixes: [{ id: 'steadfast', name: '불굴', stat: 'statusResist', value: .1 }] }; s.inventory.push(cape);
@@ -1184,7 +1184,9 @@ test('v3.5 gear level-up: +10 up to player level, power/flat affixes scale, star
     const cheap = enhanceCost({ ...relic, enhance: 5 }, s);
     act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 11); assert.equal(relic.enhance, 0); assert.equal(enhanceMaxFor(relic), 13);
     assert.equal(relic.power, Eco.relicPower(45, 10, 11)); assert.ok(enhanceCost({ ...relic, enhance: 5 }, s) > cheap, 'relic star cost rises with its level');
-    for (let i = 0; i < 8; i++) act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 91); assert.equal(enhanceMaxFor(relic), 21); assert.throws(() => act(s, { type: 'levelUp', id: relic.id }, 0), /내 레벨/, 'Lv.101 would pass the player');
+    for (let i = 0; i < 8; i++) act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 91); assert.equal(enhanceMaxFor(relic), 21);
+    // v3.13 Lv.91 → Lv.100(내 레벨까지), 별 상한 22. 전에는 Lv.101을 요구해 영원히 막혔습니다.
+    act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 100); assert.equal(enhanceMaxFor(relic), 22); assert.throws(() => act(s, { type: 'levelUp', id: relic.id }, 0), /내 레벨/, 'already at my level');
 });
 
 test('v3.6 star force records: tries/success/fail/destroy/gold persist through rebirth and feed the 강화 achievements and star titles', async () => {
@@ -1287,4 +1289,39 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     assert.ok(Math.abs(stats(s).allStats - .03) < 1e-9 && stats(s).attack > before, '7 pieces: all stats +3%');
     assert.throws(() => act(s, { type: 'sell', id: acc.id }, 0), /칠흑/); assert.throws(() => act(s, { type: 'reforge', id: acc.id, value: '0' }, 0), /고유 옵션/);
     s.level = Meta.rebirthLevel(s); act(s, { type: 'rebirth' }, 0); assert.equal(s.inventory.filter(i => i.onyx).length, 7, 'accessories survive rebirth'); assert.equal(s.onyxBook.onyxDusk, 6); assert.deepEqual(s.onyxMiss, { onyxDusk: 0 }, 'miss counter kept');
+});
+
+test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/mastery/dps per hour), min time, gap and rebirth restart', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const R = await L.load('systems/live-rates');
+    const g = R.gainsOf({ id: 1, type: 'reward', text: '달팽이 처치 · +120 G · +340 EXP' }, '나'); assert.deepEqual(g, { exp: 340, gold: 120, mastery: 0, dmg: 0 });
+    assert.equal(R.gainsOf({ id: 2, type: 'reward', text: '✦ 경험의 누리 · 대박당첨! 경험치 +12,345 (Lv.50 필요량의 3%)' }, '나').exp, 12345);
+    assert.equal(R.gainsOf({ id: 3, type: 'skill', text: '처치 · 직업·장착 스킬 숙련 +7 (기본 5 + 보너스 2)' }, '나').mastery, 7);
+    assert.equal(R.gainsOf({ id: 4, type: 'battle', text: '나 · 기본 공격 → 500 물리 피해', event: { actor: '나', total: 500 } }, '나').dmg, 500);
+    assert.equal(R.gainsOf({ id: 5, type: 'battle', text: '적 · 기본 공격 → 50 물리 피해', event: { actor: '적', total: 50 } }, '나').dmg, 0, 'enemy damage is not mine');
+    const store = R.createLiveRates(); let n = 0; store.subscribe(() => n++);
+    const mk = (lastTick, kills, logs, rebirths = 1) => ({ lastTick, kills, logs, rebirths, name: '나' });
+    store.feed(mk(0, 10, [{ id: 1, type: 'reward', text: '이미 지난 줄 · +999 G · +999 EXP' }])); assert.equal(store.get().ready, false); assert.equal(n, 1);
+    store.feed(mk(0, 10, [])); assert.equal(n, 1, 'same tick adds nothing');
+    store.feed(mk(10_000, 12, [{ id: 2, type: 'reward', text: '달팽이 처치 · +100 G · +200 EXP' }, { id: 3, type: 'battle', text: '', event: { actor: '나', total: 1000 } }]));
+    assert.equal(store.get().ready, false, '10s is below the minimum'); assert.deepEqual(store.get().total, { exp: 200, gold: 100, kills: 2, dmg: 1000, mastery: 0 });
+    store.feed(mk(30_000, 13, [{ id: 3, type: 'battle', text: '', event: { actor: '나', total: 1000 } }, { id: 4, type: 'skill', text: '처치 · 직업·장착 스킬 숙련 +4' }]));
+    const r = store.get(); assert.ok(r.ready); assert.equal(r.elapsedMs, 30_000); assert.equal(r.total.dmg, 1000, 'old log ids are not re-added'); assert.equal(r.perHour.exp, 200 * 120); assert.equal(r.perHour.kills, 3 * 120); assert.equal(r.perHour.mastery, 4 * 120); assert.ok(Math.abs(r.dps - 1000 / 30) < 1e-9);
+    // 5분 창: 오래된 표본은 버립니다.
+    for (let at = 90_000; at < R.RATE_WINDOW_MS + 30_000; at += 60_000) store.feed(mk(at, 13, []));
+    store.feed(mk(R.RATE_WINDOW_MS + 30_000, 14, [{ id: 5, type: 'reward', text: '달팽이 처치 · +10 G · +10 EXP' }]));
+    assert.equal(store.get().elapsedMs, R.RATE_WINDOW_MS, 'window trimmed to 5 minutes'); assert.equal(store.get().total.exp, 10, 'the first kill fell out of the window'); assert.equal(store.get().total.kills, 1, 'kills at the window edge are excluded');
+    // 90초 넘게 끊기면(탭 숨김) 다시 시작, 환생해도 다시 시작.
+    store.feed(mk(R.RATE_WINDOW_MS + 30_000 + R.GAP_RESET_MS + 1, 99, [{ id: 6, type: 'reward', text: '정산 · +99999 G · +99999 EXP' }])); assert.equal(store.get().ready, false); assert.equal(store.get().elapsedMs, 0);
+    store.feed(mk(R.RATE_WINDOW_MS + 30_000 + R.GAP_RESET_MS + 40_001, 100, [{ id: 7, type: 'reward', text: '달팽이 처치 · +1 G · +1 EXP' }])); assert.equal(store.get().total.exp, 1, 'settlement line was skipped');
+    store.feed(mk(R.RATE_WINDOW_MS + 30_000 + R.GAP_RESET_MS + 50_001, 0, [], 2)); assert.equal(store.get().elapsedMs, 0, 'rebirth restarts');
+});
+
+test('v3.13 level-up never dead-ends: +10 is capped at my level (Lv.91 relic → Lv.100 at max level, star cap 22)', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const E = await L.load('systems/equipment');
+    assert.equal(E.levelUpTarget({ level: 91 }, { level: 100 }), 100); assert.equal(E.levelUpTarget({ level: 100 }, { level: 100 }), null); assert.equal(E.levelUpTarget({ level: 80 }, { level: 100 }), 90); assert.equal(E.levelUpTarget({ level: 95 }, { level: 97 }), 97); assert.equal(E.levelUpTarget({ level: 50 }, { level: 50 }), null);
+    const s = newState(0); s.level = 100; s.gold = 1e12; const relic = s.inventory.find(i => i.relic) || null;
+    const item = { id: 'r91', name: '유물', slot: 'rod', rarity: 5, level: 91, power: 500, affixes: [], relic: relic?.relic, enhance: 15 }; s.inventory.push(item);
+    act(s, { type: 'levelUp', id: 'r91' }, 0); assert.equal(item.level, 100); assert.equal(item.enhance, 0); assert.equal(E.enhanceMaxFor(item), item.relic ? 22 : E.enhanceMaxFor({ ...item, relic: undefined }));
+    assert.throws(() => act(s, { type: 'levelUp', id: 'r91' }, 0), /내 레벨/);
 });

@@ -876,3 +876,43 @@
   .event-banner b{flex:none;white-space:nowrap}
   .event-banner span{flex:1;min-width:0}
 }
+/* v3.13 실시간 효율 */
+.live-rates{container-type:inline-size;margin-bottom:12px;padding:12px 14px;border:1px solid #2f5658;background:linear-gradient(160deg,#0f2329,#0c1a1f 70%)}
+.live-rates .section-title{margin-bottom:8px;gap:10px;flex-wrap:wrap}
+.live-rates .section-title h2{display:flex;align-items:center;gap:7px}
+.live-rates .section-title h2 .micro{color:#7fb3a6;letter-spacing:0;font-weight:500}
+.live-rates.warming .section-title h2 .micro{color:#c8b46a}
+.live-recent{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#a9bdb8;padding:3px 8px;border:1px solid #2f5658;border-radius:999px;background:#0b171b;animation:liveRecentPop .5s ease-out}
+.live-recent b{font-weight:700;color:#ffe9a8}.live-recent b:nth-of-type(2){color:#ffd76a}.live-recent b:nth-of-type(3){color:#a4e9ba}
+@keyframes liveRecentPop{0%{transform:scale(.92);background:#2a3b1f}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+.live-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.live-tile{position:relative;display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:8px;border:1px solid #ffffff14;background:#0b171bcc;min-width:0;overflow:hidden}
+.live-tile::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--tone,#7fb3a6)}
+.live-tile svg{position:absolute;right:10px;top:10px;color:var(--tone,#7fb3a6);opacity:.85}
+.live-tile span{font-size:11px;color:#8fa9a3;letter-spacing:.5px}
+.live-tile strong{font-size:22px;font-weight:800;color:#f1f6f3;font-variant-numeric:tabular-nums;line-height:1.1;text-shadow:0 0 14px color-mix(in srgb,var(--tone,#7fb3a6) 40%,transparent)}
+.live-tile small{font-size:11px;color:#7fb3a6;min-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-tile.tone-exp{--tone:#8fd3ff}.live-tile.tone-gold{--tone:#ffd76a}.live-tile.tone-kills{--tone:#a4e9ba}.live-tile.tone-dps{--tone:#ff8f7a}
+.live-rates.warming .live-tile strong{color:#5f7d78;text-shadow:none}
+.live-forecast{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.live-forecast th,.live-forecast td{padding:5px 8px;text-align:right;border-top:1px solid #ffffff0f;white-space:nowrap}
+.live-forecast thead th{color:#7fb3a6;font-weight:600;border-top:0;font-size:11px;letter-spacing:.5px}
+.live-forecast tbody th{text-align:left;color:#a9bdb8;font-weight:600}
+.live-forecast td{color:#e6efe9}.live-forecast td em{font-style:normal;color:#8fd3ff;font-size:11px}
+.live-rates .footnote{display:flex;gap:6px;align-items:flex-start;margin:10px 0 0}
+.live-rates.compact.folded{padding-bottom:10px}
+@container(max-width:640px){.live-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.live-tile strong{font-size:19px}}
+@media(max-width:720px){.live-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.live-tile strong{font-size:19px}.live-recent{order:3;width:100%}}
+/* v3.13 까미·누리 처치 연출(등장 연출과 구분: 어두워지지 않고 금빛 고리가 퍼지며 보상 문구가 뜹니다) */
+.scene-fx-kkami.scene-fx-kkami-kill .scene-fx-dark{display:none}
+.scene-fx-kkami.scene-fx-kkami-kill .scene-fx-flash{background:radial-gradient(circle at 62% 50%,#fff8dc 0%,#ffd76a66 18%,transparent 40%);animation:sceneKkamiKillFlash 1.6s ease-out both}
+.scene-fx-kkami-ring{position:absolute;left:62%;top:50%;width:40px;height:40px;border:3px solid #ffe9a8;border-radius:50%;translate:-50% -50%;box-shadow:0 0 18px #ffd76a;animation:sceneKkamiKillRing 1.4s ease-out both}
+.scene-fx-kkami-ring:nth-child(3){animation-delay:.18s;border-color:#fff3c8}
+.scene-fx-kkami-kill .scene-fx-kkami-coin{top:50%;left:calc(62% + (var(--i) - 3.5) * 26px);animation:sceneKkamiKillCoin 1.5s ease-out calc(var(--i) * .06s) both}
+.scene-fx-kkami-kill .scene-fx-kkami-title{animation:sceneKkamiKillTitle 2.8s ease-out both}
+.scene-fx-nuri.scene-fx-kkami-kill .scene-fx-kkami-ring{border-color:#fffdf4;box-shadow:0 0 18px #ffe39a}
+@keyframes sceneKkamiKillFlash{0%{opacity:0;scale:.4}20%{opacity:1;scale:1}100%{opacity:0;scale:1.6}}
+@keyframes sceneKkamiKillRing{0%{opacity:1;scale:.3}100%{opacity:0;scale:7}}
+@keyframes sceneKkamiKillCoin{0%{opacity:0;transform:translateY(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-110px) translateX(calc((var(--i) - 3.5) * 14px)) scale(1.2) rotate(300deg)}}
+@keyframes sceneKkamiKillTitle{0%{opacity:0;scale:.6}15%,78%{opacity:1;scale:1}100%{opacity:0;scale:1.1}}
+@media(prefers-reduced-motion:reduce){.scene-fx-kkami-ring{display:none}}
