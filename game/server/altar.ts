@@ -16,11 +16,13 @@ import { weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { snapshot } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot } from '../systems/duel';
-import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
+import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
 
-type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number }>; board: AltarOfferRow[] };
+type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[] };
 /** 진행 중인 축복의 단계(끝났으면 0). */
-const liveLevel = (g: { until: number; level: number } | undefined, now: number) => g && g.until > now ? Math.max(1, g.level || 1) : 0;
+const liveLevel = (g: { until: number; level: number; high_until?: number } | undefined, now: number) => effectiveBlessingLevel(g, now);
+/** v3.16 축복이 보이는 종료 시각: 4단계 이상이면 그 단계의 유지 시각(지나면 3단계로 이어짐). */
+const liveUntil = (g: { until: number; level: number; high_until?: number } | undefined, now: number) => !g ? 0 : liveLevel(g, now) > BLESSING_HIGH_FROM ? Math.min(g.until, g.high_until || 0) : g.until;
 let cache: Shared | null = null;
 export const godAlive = (a: AltarRow, now: number) => a.god_state === 'alive' && a.god_until >= now;
 const parseGod = (a: AltarRow): Snapshot | null => { try { return a.god ? JSON.parse(a.god) as Snapshot : null; } catch { return null; } };
@@ -71,7 +73,7 @@ async function shared(now: number, force = false): Promise<Shared> {
         await announce(`${josa(altar.throne_name, '이가')} 신의 자리에서 내려왔습니다. 다음에 깨어나는 신은 ${ALTAR.firstGod.name}입니다.`, now);
         return shared(now, true);
     }
-    const map = Object.fromEntries(gauges.map(g => [g.id, { points: g.points, until: g.until, level: g.level || 0 }]));
+    const map = Object.fromEntries(gauges.map(g => [g.id, { points: g.points, until: g.until, level: g.level || 0, high_until: g.high_until || 0 }]));
     if (await trySummon(altar, map.god?.points || 0, now)) return shared(now, true);
     // v27.91 떠날 시각이 지난 월드보스는 보내고, 소환 게이지가 찼으면 새로 부릅니다.
     if (altar.raid_state === 'alive' && altar.raid_until < now && await database.expireAltarRaid(now)) { await announce(`월드보스 ${josa(raidById(altar.raid_id)?.name || altar.raid_id, '이가')} 떠났습니다.`, now); return shared(now, true); }
@@ -95,7 +97,8 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
         gauges: GAUGE_IDS.map(g => {
             const b = BLESSINGS.find(x => x.id === g), level = liveLevel(sh.gauges[g], now);
             if (isRaidGauge(g)) { const raid = raidById(g)!, waiting = a.raid_state === 'slain' && now - a.raid_slain_at < RAID.respawnMs; return { id: g, name: gaugeName(g), desc: `가득 차면 ${raid.name}(Lv.${raid.level})이 ${raid.lifetimeHours}시간 나타납니다`, points: sh.gauges[g]?.points || 0, cost: raid.cost, until: 0, level: 0, next: raidAlive(a, now) ? '지금 나타난 보스가 떠나거나 쓰러진 뒤에 나타납니다' : waiting ? `격파 뒤 대기 중 · ${Math.ceil((RAID.respawnMs - (now - a.raid_slain_at)) / 60000)}분 뒤 소환 가능` : '가득 차면 바로 나타납니다' }; }
-            const next = !b ? '가득 차면 신이 깨어납니다' : !level ? `채우면 1단계로 열림 · ${blessingDesc(b, 1)} · ${b.hours}시간` : level < BLESSING_MAX_LEVEL ? `채우면 ${level + 1}단계 · ${blessingDesc(b, level + 1)} · +${b.hours}시간` : `최고 단계 · 채우면 +${b.hours}시간`;
+            const mins = (lv: number) => { const m = blessingLevelMs(b!.hours, lv) / 60_000; return m >= 60 ? `${m / 60}시간` : `${m}분`; };
+            const next = !b ? '가득 차면 신이 깨어납니다' : !level ? `채우면 1단계로 열림 · ${blessingDesc(b, 1)} · ${b.hours}시간` : level < BLESSING_MAX_LEVEL ? `채우면 ${level + 1}단계 · ${blessingDesc(b, level + 1)} · ${level + 1 > BLESSING_HIGH_FROM ? `${mins(level + 1)} 유지 뒤 3단계로` : `+${b.hours}시간`}` : `최고 단계 · 채우면 ${mins(level)} 다시 유지`;
             return { id: g, name: b ? b.name : '신 소환', desc: b ? blessingDesc(b, level || 1) : '가득 차면 신이 깨어납니다', points: sh.gauges[g]?.points || 0, cost: gaugeCost(g, level, level > 0), until: sh.gauges[g]?.until || 0, level, next };
         }),
         god: god && a.gen > 0 ? { gen: a.gen, alive: godAlive(a, now), name: god.name, level: god.level, power: god.power, hp: god.stats.hp, attack: Math.max(god.stats.attack, god.stats.magic || 0), until: a.god_until, mine: isThrone && a.god_state === 'alive' } : null,
@@ -194,13 +197,15 @@ export async function commitOffering(account: string, id: string, name: string, 
         // v27.48 한 칸 찰 때마다: 닫혀 있으면 1단계로 열고, 진행 중이면 단계 +1(최대 3)·시간 +1시간. 비용은 단계마다 ×1.5.
         let opened = 0, until = 0, level = 0, wasLive = false, before = 0;
         for (let i = 0; i < 12; i++) {
-            const g = (await database.listAltarGauges()).find(x => x.id === b.id), live = g && g.until > now ? Math.max(1, g.level || 1) : 0;
+            const g = (await database.listAltarGauges()).find(x => x.id === b.id), live = effectiveBlessingLevel(g, now);
             if (i === 0) { wasLive = live > 0; before = live; }
-            const r = await database.levelAltarBlessing(b.id, gaugeCost(b.id, live, live > 0), live, now, b.hours * 3600_000, ALTAR.blessingCapMs, BLESSING_MAX_LEVEL);
+            // v3.16 다음 단계가 4 이상이면 전체 시간은 늘지 않고 그 단계의 짧은 유지 시간만 새로 셉니다.
+            const target = Math.min(live + 1, BLESSING_MAX_LEVEL), high = target > BLESSING_HIGH_FROM;
+            const r = await database.levelAltarBlessing(b.id, gaugeCost(b.id, live, live > 0), live, now, high ? 0 : b.hours * 3600_000, ALTAR.blessingCapMs, BLESSING_MAX_LEVEL, high ? blessingLevelMs(b.hours, target) : 0, BLESSING_HIGH_FROM);
             if (!r) break;
             opened++; until = r.until; level = r.level;
         }
-        if (opened) { await refreshAltarEvents(now); await announce(`${name}의 공물로 ${josa(b.name, '이가')} ${!wasLive ? `열렸습니다${level > 1 ? `(${level}단계)` : ''}` : level > before ? `${level}단계가 되었습니다` : `${level}단계로 ${opened}시간 연장되었습니다`}! ${blessingDesc(b, level)} · ${new Date(until + 9 * 3600_000).toISOString().slice(11, 16)}까지`, now); }
+        if (opened) { await refreshAltarEvents(now); await announce(`${name}의 공물로 ${josa(b.name, '이가')} ${!wasLive ? `열렸습니다${level > 1 ? `(${level}단계)` : ''}` : level > before ? `${level}단계가 되었습니다` : (level > BLESSING_HIGH_FROM ? `${level}단계가 ${Math.round(blessingLevelMs(b.hours, level) / 60_000)}분 다시 유지됩니다` : `${level}단계로 ${opened}시간 연장되었습니다`)}! ${blessingDesc(b, level)} · ${new Date(until + 9 * 3600_000).toISOString().slice(11, 16)}까지`, now); }
     }
     invalidateAltar();
     await shared(now, true); // 신 소환 게이지가 찼으면 여기서 깨어납니다.
@@ -275,7 +280,7 @@ export async function syncAltarStatus(s: State, now: number, id = '') {
     try {
         const sh = await shared(now), a = sh.altar, god = parseGod(a);
         const status: AltarStatus = {
-            blessings: BLESSINGS.filter(b => liveLevel(sh.gauges[b.id], now) > 0).map(b => { const level = liveLevel(sh.gauges[b.id], now); return { id: b.id, name: `${b.name} ${level}단계`, desc: blessingDesc(b, level), until: sh.gauges[b.id].until, level }; }),
+            blessings: BLESSINGS.filter(b => liveLevel(sh.gauges[b.id], now) > 0).map(b => { const level = liveLevel(sh.gauges[b.id], now); return { id: b.id, name: `${b.name} ${level}단계`, desc: blessingDesc(b, level), until: liveUntil(sh.gauges[b.id], now), level }; }),
             god: god && godAlive(a, now) ? { gen: a.gen, name: god.name, until: a.god_until } : null,
             raid: raidAlive(a, now) && raidById(a.raid_id) ? { gen: a.raid_gen, name: raidById(a.raid_id)!.name, until: a.raid_until, pct: a.raid_hp_max ? Math.max(0, Math.min(1, a.raid_hp / a.raid_hp_max)) : 0 } : null,
             throne: a.throne_name,

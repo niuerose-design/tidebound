@@ -50,6 +50,15 @@ type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: numb
  */
 export const BLESSING_MAX_LEVEL = 6, BLESSING_LEVEL_STEP = 1.5, BLESSING_HIGH_FROM = 3;
 export const BLESSING_HIGH_COSTS = [300_000_000, 1_000_000_000, 3_000_000_000];
+/**
+ * v3.16 상위 단계는 짧게: 4·5·6단계는 올린 순간부터 BLESSING_HIGH_MINUTES만큼만 유지되고(겹치지 않음, 다시 채우면 새로 셈)
+ * 지나면 3단계로 내려와 남은 시간 동안 이어집니다. 상위 단계를 올릴 때는 전체 시간이 +hours로 늘지 않고 최소 그 단계 시간까지만 보장됩니다.
+ */
+export const BLESSING_HIGH_MINUTES = [30, 15, 10];
+/** 단계 n(1부터)에 오를 때 그 단계가 유지되는 시간(ms). 1~3단계는 hours, 4~6단계는 짧은 전용 시간. */
+export const blessingLevelMs = (hours: number, level: number) => level > BLESSING_HIGH_FROM ? BLESSING_HIGH_MINUTES[Math.min(level - BLESSING_HIGH_FROM - 1, BLESSING_HIGH_MINUTES.length - 1)] * 60_000 : hours * 3600_000;
+/** 지금 살아 있는 단계: 축복이 닫혔으면 0, 상위 단계 시간이 지났으면 3단계로. */
+export const effectiveBlessingLevel = (g: { until: number; level?: number; high_until?: number } | undefined, now: number) => !g || g.until <= now ? 0 : Math.max(1, (g.high_until || 0) > now ? g.level || 1 : Math.min(g.level || 1, BLESSING_HIGH_FROM));
 export const BLESSINGS: { id: BlessingId; name: string; cost: number; hours: number; levels: BlessingEffect[] }[] = [
     { id: 'gold', name: '풍요의 축복', cost: 1200, hours: 1, levels: [{ gold: 2 }, { gold: 2.5 }, { gold: 3 }, { gold: 3.5 }, { gold: 4 }, { gold: 5 }] },
     { id: 'exp', name: '성장의 축복', cost: 1500, hours: 1, levels: [{ exp: 1.5 }, { exp: 1.75 }, { exp: 2 }, { exp: 2.25 }, { exp: 2.5 }, { exp: 3 }] },
