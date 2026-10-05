@@ -11,6 +11,7 @@ import { SKILLS, skillById } from '../data/skills';
 import { PLACES, FISH } from '../data/world';
 import { doorFor, DOORS } from '../data/doors';
 import { researchRank } from '../data/economy';
+import { HACKER_ID } from '../data/hacker';
 export function initialProgress(level = 1) { return { attributes: emptyAttributes(), statPoints: PROGRESSION.startingStats + (level - 1) * PROGRESSION.statPerLevel, sp: PROGRESSION.startingSP, peakLevel: level, learned: { hook: 1 } as Record<string, number>, skillSpent: {} as Record<string, number>, skillInheritances: {} as Record<string, boolean>, skillPractice: {} as Record<string, number>, jobMastery: {} as Record<string, number>, unlockedJobs: ['fisher'], bookClaims: {} as Record<string, number>, itemBook: {} as Record<string, boolean>, target: null as string | null, presets: {} as State['presets'], mana: 40, effects: {}, playerStun: 0 }; }
 export function attributes(s: State) {
     const out = emptyAttributes();
@@ -287,7 +288,9 @@ export function overRestraint(s: State, ids: string[]) {
     const active = ids.filter(id => skillById(id)?.type === 'active').length;
     return active > cap || ids.length - active > cap;
 }
-export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && !overRestraint(s, ids) && apUsed(s, ids) <= apCapacity(s, ids); }
+/** v3.18 해커는 해커 전용 스킬(애드가드)만 장착합니다. */
+const hackerLoadoutOk = (s: State, ids: string[]) => s.job !== HACKER_ID || ids.every(id => skillById(id)?.job === HACKER_ID);
+export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && hackerLoadoutOk(s, ids) && !overRestraint(s, ids) && apUsed(s, ids) <= apCapacity(s, ids); }
 export function trimLoadout(s: State) {
     s.skills = [...new Set(s.skills)].filter(id => canUse(s, id));
     // v27.86 절제: 액티브·패시브를 앞에서부터 상한 개수만 남깁니다.

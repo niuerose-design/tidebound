@@ -12,6 +12,7 @@ import { INVERSION_SKILLS } from './expansion-inversion';
 import { MONOSTAT_SKILLS } from './expansion-monostat';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
+import { HACKER_SKILLS } from './hacker';
 export const SKILLS: Skill[] = [
     { id: 'hook', name: '강철 챔질', desc: '공격력 180% 피해.', type: 'active', level: 1, chance: .35, cooldown: 2, multiplier: 1.8 },
     { id: 'breath', name: '고요한 호흡', desc: '공격하지 않고 최대 체력 18%를 회복합니다.', type: 'active', level: 6, chance: .3, cooldown: 5, multiplier: 0, effect: 'heal', healOnly: true },
@@ -151,6 +152,8 @@ SKILLS.push(...MONOSTAT_SKILLS);
 SKILLS.push(...SUPPORT_SKILLS);
 // v25 ??? 특수 직업 기술.
 SKILLS.push(...V25_SKILLS);
+// v3.18 해커 전용 패시브(애드가드).
+SKILLS.push(...HACKER_SKILLS);
 for (const sk of SKILLS) if (SUPPORT_PASSIVES[sk.id]) Object.assign(sk, SUPPORT_PASSIVES[sk.id]);
 // v21 회복 기술은 체력 조건 없이 시도합니다. 회복이 필요 없을 때의 피해 감소는 combat.ts에서 처리합니다.
 for (const sk of SKILLS) if (sk.effect === 'heal') delete sk.condition;

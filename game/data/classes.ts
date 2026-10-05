@@ -8,6 +8,7 @@ import { V25_JOBS, V25_HINTS } from './expansion-v25';
 import { DEFENSE_JOBS, DEFENSE_HINTS, DEFENSE_LINEAGES } from './expansion-defense';
 import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
 import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
+import { HACKER_JOBS } from './hacker';
 import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
 import { MAPLE_JOB_FLAVOR, MAPLE_LINEAGE_SUMMARY } from './maple-flavor';
 export type Job = {
@@ -227,6 +228,8 @@ JOBS.push(...(DEFENSE_JOBS as Job[]));
 JOBS.push(...(INVERSION_JOBS as Job[]));
 // v25.26 외길 계보: 능력치 하나만으로 전직하는 1~3차. 자세한 설계는 expansion-monostat.ts.
 JOBS.push(...(MONOSTAT_JOBS as Job[]));
+// v3.18 해커: 전투 대신 서버를 해킹하는 ??? 독립 직업. 자세한 설계는 hacker.ts·docs/concept.md 9장.
+JOBS.push(...(HACKER_JOBS as Job[]));
 for (const job of JOBS) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
 
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.

@@ -5,6 +5,7 @@ import { addLog } from '@/game/systems/state';
 import { snapshot } from '@/game/systems/stats';
 import { duel, bossSnapshot, rankedDuelBlock, recordRankedDuel } from '@/game/systems/duel';
 import type { Snapshot } from '@/game/types';
+import { hackerCombatBlock } from '@/game/systems/hacker';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
     try {
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
                 throw new ApiError('상대가 등록되지 않았습니다.');
             opponent = { ...JSON.parse(row.snapshot), rating: row.rating };
         }
-        const payload = await mutate(id, { type: 'sync' }, async (s) => { await syncDuelSeason(id, s, now); if (!training) { const block = rankedDuelBlock(s, now, String(a.id)); if (block) throw new ApiError(block); } const result = duel(snapshot(s), opponent, training); if (!training) {
+        const payload = await mutate(id, { type: 'sync' }, async (s) => { { const block = hackerCombatBlock(s); if (block) throw new ApiError(block); } await syncDuelSeason(id, s, now); if (!training) { const block = rankedDuelBlock(s, now, String(a.id)); if (block) throw new ApiError(block); } const result = duel(snapshot(s), opponent, training); if (!training) {
             s.lastDuel = now; recordRankedDuel(s, now, String(a.id));
             s.rating = Math.max(0, s.rating + result.ratingChange);
             if (result.winner === 'player') { s.wins++; recordGoal(s, 'duel', undefined, 1, text => addLog(s, text, 'reward')); }

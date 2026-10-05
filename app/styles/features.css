@@ -431,3 +431,20 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 /* v3.18 월드보스 알림 줄 */
 .raid-notice { border-color: #8a3b3b; background: linear-gradient(90deg, #2a1414, #1b1212); }
 .raid-notice .altar-notice-open b { color: #ff9d8a; }
+
+/* v3.18 해커 화면: 상태 칸, 침투 작전(기록·입력), 해킹 카드, 재화 변환, 방송 탈취 배너. */
+.hacker-section{padding:18px;margin-bottom:16px;display:grid;gap:10px;min-width:0}
+.hacker-status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+.hacker-status .meter,.hacker-status .footnote{grid-column:1/-1}
+.hacker-stat{display:grid;gap:2px}.hacker-stat small{color:#9bb3b0;font-size:12px}.hacker-stat strong{font-size:22px;font-variant-numeric:tabular-nums;color:#9ce8b4}
+.infil-run{display:grid;gap:10px}
+.infil-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px}.infil-head span{color:#9bb3b0;font-size:13px}
+.infil-history{list-style:none;margin:0;padding:10px;display:grid;gap:4px;background:#0c1a1d;border:1px solid #9ab4b522;border-radius:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;max-height:220px;overflow:auto}
+.infil-history:empty{display:none}
+.infil-history li{display:flex;justify-content:space-between;gap:10px}.infil-history b{color:#d9c187}.infil-history b.ok{color:#9ce8b4}
+.infil-form,.hack-card form,.hacker-convert{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.infil-form input,.hack-card input,.hacker-convert input,.hacker-convert select{flex:1 1 140px;min-width:0}
+.hack-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hack-card{display:grid;gap:8px;align-content:start;padding:12px;border:1px solid #9ab4b522;border-radius:6px}.hack-card small{color:#9bb3b0;font-size:12px;line-height:1.5}
+.event-banner.hack-banner{border-color:#7fe08c66;color:#bff5c6;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media(max-width:640px){.hacker-status{grid-template-columns:repeat(2,minmax(0,1fr))}.hack-list{grid-template-columns:1fr}}

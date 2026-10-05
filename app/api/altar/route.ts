@@ -1,6 +1,7 @@
 import { session, checkOrigin, mutate, failure, readJson, ApiError, syncAccount, db } from '@/game/server/store';
 import { altarInfo, parseOffering, applyOffering, commitOffering, makeChallenge, makeHarvest, makeImpeach, makeRaid } from '@/game/server/altar';
 import type { State } from '@/game/types';
+import { hackerCombatBlock } from '@/game/systems/hacker';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
 /** v27.43 제단 정보: 게이지·신·신의 자리·이번 주 기여 순위·내 기여. 세이브는 읽기만 합니다. */
@@ -30,7 +31,8 @@ export async function POST(req: Request) { try {
     }
     if (action !== 'challenge' && action !== 'harvest' && action !== 'impeach' && action !== 'raid') throw new ApiError('올바르지 않은 요청입니다.');
     const run = action === 'challenge' ? makeChallenge(id) : action === 'impeach' ? makeImpeach(id) : action === 'raid' ? makeRaid(id) : makeHarvest(id);
-    const payload = await mutate(id, { type: 'sync' }, async s => { await syncAccount(account, slot, s, now); result = await run(s, now); });
+    // v3.18 해커는 신·월드보스 도전과 탄핵에 참여하지 않습니다(바치기·몫 거두기는 그대로).
+    const payload = await mutate(id, { type: 'sync' }, async s => { if (action !== 'harvest') { const block = hackerCombatBlock(s); if (block) throw new ApiError(block); } await syncAccount(account, slot, s, now); result = await run(s, now); });
     return Response.json({ state: payload.state, result, info: await altarInfo(id, payload.state, Date.now()) }, { headers });
 }
 catch (e) {

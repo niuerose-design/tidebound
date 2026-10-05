@@ -3,11 +3,11 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 259); assert.equal(new Set(JOBS.map(j => j.id)).size, 259);
+    assert.equal(JOBS.length, 260); assert.equal(new Set(JOBS.map(j => j.id)).size, 260);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 41, magic: 42, defense: 41, status: 29, hybrid: 33, support: 41, mystery: 32 });
+    assert.deepEqual(count, { physical: 41, magic: 42, defense: 41, status: 29, hybrid: 33, support: 41, mystery: 33 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {

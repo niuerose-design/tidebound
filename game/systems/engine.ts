@@ -15,13 +15,14 @@ import { buildActions } from './actions/build';
 import { collectionActions } from './actions/collection';
 import { itemActions } from './actions/items';
 import { lifecycleActions } from './actions/lifecycle';
+import { hackerActions } from './actions/hacker';
 
 export { addLog, newState } from './state';
 export { tick, advance, syncStatRate } from './turn';
 export { victoryHeal, rollRarity } from './encounter';
 export { parseRepeat } from './dungeon-run';
 
-const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions };
+const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions, ...hackerActions };
 
 export function act(s: State, a: Action, now: number, rng = Math.random) {
     syncStatRate(s);
