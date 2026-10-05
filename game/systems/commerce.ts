@@ -46,7 +46,17 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
     sf.tries++; sf.gold += cost;
     // v3.8 스타캐치 성공은 성공률 +catchBonus(파괴 확률은 그대로, 실패 몫에서 뺌).
     const chance = chanceTime(item), roll = rng(), p = Math.min(1, starSuccess(star) + (caught ? STARFORCE.catchBonus : 0)), d = starDestroy(star, safeguard);
-    if (chance || roll < p) {
+    // v3.20 업적용 흐름 기록. 연속 성공은 10성 이상 시도만 세고(그 아래는 거의 다 성공이라 건너뜀), 실패·파괴가 나면 끊깁니다.
+    const succeeded = chance || roll < p, failed = () => { sf.streak = 0; sf.failStreak = (sf.failStreak || 0) + 1; sf.bestFailStreak = Math.max(sf.bestFailStreak || 0, sf.failStreak); };
+    if (chance) sf.chance = (sf.chance || 0) + 1;
+    if (caught) sf.catches = (sf.catches || 0) + 1;
+    if (succeeded) {
+        sf.failStreak = 0;
+        if (star >= 10) { sf.streak = (sf.streak || 0) + 1; sf.bestStreak = Math.max(sf.bestStreak || 0, sf.streak); }
+        if (star >= 15) sf.high = (sf.high || 0) + 1;
+    }
+    else failed();
+    if (succeeded) {
         sf.success++;
         item.enhance = star + 1; item.starFails = 0;
         return { outcome: 'success', cost, message: `${item.name} ${item.enhance}성 강화 성공${chance ? ' (찬스 타임)' : caught ? ' (스타캐치)' : ''} · -${cost} G` };
@@ -61,6 +71,7 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
     }
     sf.fail++;
     if (starDrops(star)) {
+        sf.drops = (sf.drops || 0) + 1;
         item.enhance = star - 1; item.starFails = (item.starFails || 0) + 1;
         return { outcome: 'drop', cost, message: `${item.name} 강화 실패 · ${item.enhance}성으로 하락${chanceTime(item) ? ' · 다음 시도는 찬스 타임(100%)' : ''} · -${cost} G` };
     }

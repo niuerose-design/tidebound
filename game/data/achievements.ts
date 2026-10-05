@@ -82,6 +82,13 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('starFail', '강화', n => `강화 실패 ${n.toLocaleString()}회`, n => `스타포스 강화에 누적 ${n.toLocaleString()}번 실패(유지·하락)합니다. 실패도 모험입니다.`, [50, 500, 5000], s => sf(s).fail, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
     ...series('starDestroy', '강화', n => `장비 파괴 ${n}회`, n => `스타포스 강화로 장비를 ${n}번 잃습니다(유물의 12성 회귀 포함).`, [1, 10, 50], s => sf(s).destroy, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 12, bonus: { hp: .02 } }][i]),
     ...series('starGold', '강화', n => `강화에 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `스타포스 강화에 골드를 누적 ${n.toLocaleString()} G 씁니다.`, [1e7, 1e8, 1e9, 1e10], s => sf(s).gold, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, sp: 1 }, { pearls: 20, ap: 1 }][i]),
+    // v3.20 스타포스 흐름 업적: 연속 성공(10성 이상) · 연속 실패 · 하락 · 찬스 타임 · 스타캐치 · 15성 이상 성공.
+    ...series('starStreak', '강화', n => `${n}연속 성공`, n => `10성 이상에서 스타포스 강화를 ${n}번 연속으로 성공합니다(실패·파괴가 나면 다시 셉니다).`, [3, 5, 8], s => sf(s).bestStreak || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, sp: 1 }][i]),
+    ...series('starFailStreak', '강화', n => `${n}연속 실패`, n => `스타포스 강화에 ${n}번 연속으로 실패합니다(유지·하락·파괴). 불운도 기록입니다.`, [5, 10, 15], s => sf(s).bestFailStreak || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, bonus: { hp: .02 } }][i]),
+    ...series('starDrops', '강화', n => `강화 하락 ${n.toLocaleString()}회`, n => `스타포스 강화 실패로 별이 ${n.toLocaleString()}번 떨어집니다.`, [10, 100, 1000], s => sf(s).drops || 0, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
+    ...series('starChance', '강화', n => `찬스 타임 ${n.toLocaleString()}회`, n => `두 번 연속 하락 뒤 찾아오는 찬스 타임(100% 성공)을 ${n.toLocaleString()}번 씁니다.`, [1, 10, 100], s => sf(s).chance || 0, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
+    ...series('starCatch', '강화', n => `스타캐치 ${n.toLocaleString()}회`, n => `스타캐치 미니게임에서 별을 ${n.toLocaleString()}번 잡고 강화합니다.`, [10, 100, 1000], s => sf(s).catches || 0, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, sp: 1 }][i]),
+    ...series('starHigh', '강화', n => `고성 강화 ${n.toLocaleString()}회 성공`, n => `15성 이상에서 스타포스 강화에 ${n.toLocaleString()}번 성공합니다.`, [10, 50, 200], s => sf(s).high || 0, i => [{ pearls: 3 }, { pearls: 8 }, { pearls: 20, bonus: { attack: .02, magic: .02 } }][i]),
     ...series('star', '강화', n => `${n}성 달성`, n => `장비 하나를 ${n}성까지 강화합니다(가방·착용 장비 기준).`, [10, 15, 20, 22], bestStar, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 8, sp: 1 }, { pearls: 15, bonus: { attack: .03, magic: .03 } }][i]),
     // v3.12 칠흑 장신구 수집(보유 수, 환생 유지).
     // v3.15 칠흑은 한 종마다 업적(SP·AP 번갈아), 7종 완성은 큰 보상.
