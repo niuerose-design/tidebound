@@ -1239,11 +1239,11 @@ test('v3.8 auto enhance research costs 10 pearls; saves that paid 100 get 90 bac
 
 test('v3.9 depth coefficient: later stages/dungeons are +4% per entry-level step in stats and rewards; abyss, random game, mimic and nuri are untouched', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const W = await L.load('data/world'), E = await L.load('systems/encounter');
-    assert.equal(W.stageDepth('brook'), 1); assert.ok(Math.abs(W.stageDepth(W.PLACES.at(-1).id) - (1 + .04 * 9)) < 1e-9, 'tenth place is ×1.36');
+    assert.equal(W.stageDepth('brook'), 1); assert.ok(Math.abs(W.stageDepth(W.PLACES[9].id) - (1 + .04 * 9)) < 1e-9, 'tenth place is ×1.36'); assert.ok(Math.abs(W.stageDepth('vanishingJourney') - 1.52) < 1e-9, 'v3.10 fourteenth place is ×1.52');
     const habitat = W.STAGES.find(s => s.habitat); assert.ok(W.stageDepth(habitat.id) > 1, 'habitats take their level slot');
     assert.equal(W.dungeonDepth('abyss'), 1); assert.equal(W.dungeonDepth('randomGame'), 1); assert.equal(W.dungeonDepth('masteryMimic'), 1); assert.equal(W.dungeonDepth('expNuri'), 1); assert.equal(W.dungeonDepth('grotto'), 1);
     assert.ok(Math.abs(W.dungeonDepth('ventCathedral') - 1.24) < 1e-9);
-    const first = W.PLACES[0], last = W.PLACES.at(-1), s = { level: 66 };
+    const first = W.PLACES[0], last = W.PLACES[9], s = { level: 200 };
     const a = E.stageField(s, first.id, first.fish[0], 50), b = E.stageField(s, last.id, last.fish[0], 50);
     assert.equal(a.level, b.level, 'difficulty 50 lifts both to the same level'); assert.ok(Math.abs(b.foe.hp / a.foe.hp - 1.36) < .02, `hp ratio ${b.foe.hp / a.foe.hp}`); assert.ok(b.gold > a.gold * 1.15, 'gold rises with the coefficient (stage reward normalization keeps it below the raw ×1.36)');
 });
