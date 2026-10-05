@@ -3,7 +3,7 @@ import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
 import { apCapacity, apUsed } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
@@ -248,6 +248,19 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         s.inventory.push({ id: nextId(), name: r.name, slot: r.slot, style: r.style, power: r.power, rarity: 3, level: 1, relic: r.id, locked: true, description: r.description, affix: { ...r.affix } });
         syncRelicPower(s);
         return `${r.name} 수령 · 환생 ${r.rebirth}회 달성 보상`;
+    }
+    if (a.type === 'levelUp') {
+        // v3.4 장비 레벨 올리기(+10, 내 레벨까지). 위력이 오르고 별은 0으로 돌아갑니다.
+        const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        if (!item)
+            throw Error('장비를 찾을 수 없습니다.');
+        const next = levelUpTarget(item, s);
+        if (!next)
+            throw Error(`내 레벨(${s.level})까지만 올릴 수 있습니다.`);
+        const cost = levelUpCost(item, s), stars = item.enhance || 0, before = item.power;
+        spend(cost);
+        applyLevelUp(item, next, s);
+        return `${item.name} Lv.${next} · 위력 ${before} → ${item.power}${stars ? ` · ★${stars} 초기화` : ''} · -${cost} G`;
     }
     if (a.type === 'imprintRelic') {
         // v3.3 옵션 이식: value = '소비 장비 id:옵션 번호:이식 칸(0~2)'. 같은 부위의 가방 장비 하나를 소비해 그 옵션 한 줄을 유물에 새깁니다(골드, 덮어쓰기 가능, 환생 유지).

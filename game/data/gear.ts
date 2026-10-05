@@ -163,6 +163,16 @@ export function affixQuality(x: ItemAffix, power: number, rarity: number, level 
     const roll = x.value / (def.base * scale * rarityQuality(rarity) * levelScale(def, level));
     return Math.min(1, Math.max(0, (roll - ROLL_MIN) / ROLL_SPAN));
 }
+/** v3.4 레벨 올리기 뒤 옵션 수치 보정: 고정 수치는 위력 비례(ratio), 레벨 비례 옵션(불굴)은 레벨 보정 비율, 비율·규칙 옵션은 그대로. */
+export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newLevel: number): ItemAffix {
+    const def = affixDef(x.id);
+    if (!def || x.rule || def.kind === 'rule') return x;
+    const out = { ...x };
+    if (def.kind === 'flat') out.value = Math.round(x.value * ratio);
+    else if (def.levelPower) out.value = Math.round(x.value * levelScale(def, newLevel) / levelScale(def, oldLevel) * 10000) / 10000;
+    if (def.stat2 && out.value2 && ['hp', 'attack', 'magic', 'defense', 'resist', 'mana'].includes(def.stat2)) out.value2 = Math.round(out.value2 * ratio);
+    return out;
+}
 /** 등급 번호만큼 옵션을 굴립니다. 같은 옵션은 한 번만, 규칙 옵션은 장비당 최대 1개. */
 export function rollAffixes(rarity: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = [], slot?: string, level = 1): ItemAffix[] {
     const out = [...keep];

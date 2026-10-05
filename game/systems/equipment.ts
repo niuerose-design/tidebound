@@ -1,6 +1,6 @@
 import type { Item, Stats, State } from '../types';
-import { ECONOMY, AFFIXES, RELICS, RELIC_GROWTH, relicPower, smithDiscount } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence, GEAR_CAPS, STATUS_RESIST_STAR } from '../data/gear';
+import { ECONOMY, AFFIXES, RELICS, RELIC_GROWTH, GEAR_LEVEL_UP, relicPower, smithDiscount } from '../data/economy';
+import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence, GEAR_CAPS, STATUS_RESIST_STAR, rescaleAffix } from '../data/gear';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
@@ -43,7 +43,8 @@ export function itemStats(item: Item): Partial<Stats> {
 }
 /** v25.7 전설(등급 3) 이상은 +12, 그 아래는 +10까지 강화합니다. */
 /** v27.93 스타포스 상한: 전설 이상 22성, 영웅 이하 15성. */
-export const enhanceMaxFor = (item: Pick<Item, 'rarity'>) => starMax(item.rarity);
+/** v3.4 유물은 레벨이 별 상한을 정합니다: 12 + 레벨 ÷ 10(Lv.1 12성 · Lv.100 22성). 레벨 1인 유물에 22성을 싸게 박아 두는 것을 막습니다. */
+export const enhanceMaxFor = (item: Pick<Item, 'rarity' | 'relic' | 'level'>) => item.relic ? Math.min(starMax(item.rarity), RELIC_GROWTH.starBase + Math.floor((item.level || 1) / 10)) : starMax(item.rarity);
 /** v25.7 판매가: 그 레벨 몬스터 골드 × 등급별 마리 수 + 강화에 쓴 골드의 30%. 분해(정수)와 판매(골드)가 실제 선택이 되도록 분해만 유리하던 식(위력×3)을 바꿨습니다. */
 const SALE_FISH = [2, 6, 18, 50, 120, 300, 700], SALE_LEVEL_CAP = 65;
 /** v27.27 상점 구매품 되팔기 비율. */
@@ -69,8 +70,20 @@ export const imprintCost = (source: Item, s?: Pick<State, 'permanent'>) => refor
 export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebirths'>) {
     for (const item of [...s.inventory, ...Object.values(s.equipment)]) {
         const base = item?.relic && RELICS.find(r => r.id === item.relic);
-        if (item && base) item.power = relicPower(base.power, s.rebirths || 0);
+        if (item && base) item.power = relicPower(base.power, s.rebirths || 0, item.level || 1);
     }
+}
+/** v3.4 레벨 올리기 목표 레벨: 지금 레벨 + step, 내 레벨까지. 더 올릴 수 없으면 null. */
+export const levelUpTarget = (item: Pick<Item, 'level'>, s: Pick<State, 'level'>) => { const next = (item.level || 1) + GEAR_LEVEL_UP.step; return next <= s.level ? next : null; };
+export const levelUpCost = (item: Item, s: Pick<State, 'permanent' | 'level'>) => { const next = levelUpTarget(item, s) ?? (item.level || 1) + GEAR_LEVEL_UP.step; return smith(Math.floor((250 + item.power * 25) * priceScale(next) * GEAR_LEVEL_UP.costMultiplier), s); };
+/** 레벨 올리기 적용: 위력·고정 수치 옵션은 (새 레벨 + 2) ÷ (옛 레벨 + 2)배, 유물 위력은 relicPower로 다시 계산, 별·하락 횟수는 0. */
+export function applyLevelUp(item: Item, next: number, s: Pick<State, 'rebirths'>) {
+    const old = item.level || 1, ratio = (next + 2) / (old + 2);
+    item.level = next;
+    const base = item.relic && RELICS.find(r => r.id === item.relic);
+    item.power = base ? relicPower(base.power, s.rebirths || 0, next) : Math.max(2, Math.round(item.power * ratio));
+    if (item.affixes) item.affixes = item.affixes.map(x => rescaleAffix(x, ratio, old, next));
+    item.enhance = 0; item.starFails = 0;
 }
 export const reforgeCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((250 + item.power * 25) * priceScale(item.level || 1)), s);
 /** 분해로 얻는 정수와 옵션 하나 재설정에 드는 정수. */

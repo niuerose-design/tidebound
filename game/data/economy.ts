@@ -125,8 +125,11 @@ export const RELICS = [
     { id: 'tideCape', name: '조류의 망토', slot: 'cape', style: 'balanced', power: 60, cost: 36, rebirth: 4, description: '조류를 타고 환생을 건너는 유물. 상태이상 저항은 이식으로 새깁니다.', affix: { stat: 'dropBonus', name: '조류의 흐름', value: .1 } },
 ] as const;
 /** v3.3 성장하는 유물: 위력은 환생마다 +perRebirth(기본 × (1 + 환생 × perRebirth)), 같은 부위 장비를 소비해 옵션을 imprintSlots줄까지 이식(비용 = 그 장비 옵션 재설정 골드 × imprintCost). 성·이식 옵션은 환생해도 남습니다. */
-export const RELIC_GROWTH = { perRebirth: .04, imprintSlots: 3, imprintCost: 5 };
-export const relicPower = (base: number, rebirths: number) => Math.round(base * (1 + Math.max(0, rebirths) * RELIC_GROWTH.perRebirth));
+export const RELIC_GROWTH = { perRebirth: .04, imprintSlots: 3, imprintCost: 5, perLevel: .01, starBase: 12 };
+/** v3.4 유물 위력 = 기본 × (1 + 환생 × 4%) × (1 + (레벨 − 1) × 1%). 레벨은 ‘레벨 올리기’로만 오릅니다(Lv.100 ×2). */
+export const relicPower = (base: number, rebirths: number, level = 1) => Math.round(base * (1 + Math.max(0, rebirths) * RELIC_GROWTH.perRebirth) * (1 + Math.max(0, level - 1) * RELIC_GROWTH.perLevel));
+/** v3.4 장비 레벨 올리기: 한 번에 step 레벨, 내 레벨까지. 위력(과 고정 수치 옵션)이 레벨 비례로 오르고 별은 0으로 돌아갑니다(저레벨에서 싸게 별을 올려 고레벨로 가져가는 것을 막음). 비용 = (250 + 위력 × 25) × 가격 보정(새 레벨) × costMultiplier. */
+export const GEAR_LEVEL_UP = { step: 10, costMultiplier: 2 };
 /** v25.7 환생 정리 효율(0 = 연구 없음). 1단계 40%, 단계당 +15%, 5단계 100%. */
 export const salvageRate = (s: Pick<State, 'permanent'>) => { const rank = researchRank(s, 'salvage'); return rank ? Math.min(1, .25 + rank * .15) : 0; };
 /** v27.60 모험가의 유산: 새 생의 시작 레벨(Lv.1 + 2/단계, 10단계 Lv.21). */
