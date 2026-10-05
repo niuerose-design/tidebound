@@ -15,7 +15,7 @@ import { RANKS, RANK_CUMULATIVE, RANK_TOTAL_POINTS, rankState, rankPointsSpent }
  * 조건 판정은 저장 상태만 보며 난수를 쓰지 않습니다. 기존 세이브는 이미 달성한 업적을 조용히 채우되 보상은 지급합니다.
  */
 export type AchievementReward = { pearls?: number; sp?: number; ap?: number; bonus?: Partial<Record<'attack' | 'magic' | 'hp' | 'defense' | 'resist', number>> };
-export type Achievement = { id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '계급' | '도전'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
+export type Achievement = { id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '계급' | '도전' | '강화'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
 
 const kills = (s: State) => s.kills || 0;
 /** 도감 업적 대상. v27.58 경험의 누리는 빼서 '도감 전체' 업적 id(codex:종 수)가 바뀌지 않게 합니다. */
@@ -28,6 +28,9 @@ const tideBest = (s: State) => Math.max(0, ...Object.values(s.tideBest || {}));
 const playHours = (s: State) => Math.floor((s.playMs || 0) / 3_600_000);
 const sum = (r?: Record<string, number>) => Object.values(r || {}).reduce((a, b) => a + (b || 0), 0);
 const goldens = (s: State) => sum(s.goldenBook);
+/** v3.6 스타포스 누적 기록과 보유 장비(가방·착용) 중 가장 높은 별. */
+const sf = (s: State) => s.starforce || { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
+const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
 const variants = (s: State) => Object.values(s.variantBook || {}).reduce((a, row) => a + sum(row as Record<string, number>), 0);
 const dungeonsAt = (n: number) => (s: State) => DUNGEONS.filter(d => (s.clears?.[d.id] || 0) >= n).length;
 const bestEnhance = (s: State) => Math.max(0, ...Object.values(s.equipment || {}).map(i => i?.enhance || 0));
@@ -71,6 +74,13 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('attr', '도전', n => `능력치 ${n} 돌파`, n => `기본 능력치 하나를 ${n} 이상으로 올립니다(직접 투자 + 성장).`, [100, 300, 500], s => Math.max(0, ...Object.values(attributes(s))), i => [{ pearls: 3 }, { pearls: 8, ap: 1 }, { pearls: 20, sp: 1, ap: 1 }][i]),
     ...series('hpmax', '도전', n => `최대 체력 ${n.toLocaleString()}`, n => `최종 최대 체력이 ${n.toLocaleString()}을 넘습니다.`, [10000, 50000, 200000], s => stats(s).hp, i => [{ pearls: 3 }, { pearls: 10, bonus: { hp: .02 } }, { pearls: 25, ap: 1 }][i]),
     ...series('manamax', '도전', n => `최대 마나 ${n.toLocaleString()}`, n => `최종 최대 마나가 ${n.toLocaleString()}을 넘습니다.`, [5000, 50000], s => stats(s).mana, i => [{ pearls: 3 }, { pearls: 12, ap: 1 }][i]),
+    // v3.6 스타포스 업적: 시도·성공·실패·파괴·쓴 골드·최고 별. 기록은 환생해도 남습니다.
+    ...series('starTries', '강화', n => `스타포스 ${n.toLocaleString()}회 시도`, n => `스타포스 강화를 누적 ${n.toLocaleString()}번 시도합니다.`, [100, 1000, 10000], s => sf(s).tries, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, sp: 1 }][i]),
+    ...series('starSuccess', '강화', n => `강화 성공 ${n.toLocaleString()}회`, n => `스타포스 강화에 누적 ${n.toLocaleString()}번 성공합니다.`, [50, 500, 5000], s => sf(s).success, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, bonus: { attack: .02, magic: .02 } }][i]),
+    ...series('starFail', '강화', n => `강화 실패 ${n.toLocaleString()}회`, n => `스타포스 강화에 누적 ${n.toLocaleString()}번 실패(유지·하락)합니다. 실패도 모험입니다.`, [50, 500, 5000], s => sf(s).fail, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
+    ...series('starDestroy', '강화', n => `장비 파괴 ${n}회`, n => `스타포스 강화로 장비를 ${n}번 잃습니다(유물의 12성 회귀 포함).`, [1, 10, 50], s => sf(s).destroy, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 12, bonus: { hp: .02 } }][i]),
+    ...series('starGold', '강화', n => `강화에 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `스타포스 강화에 골드를 누적 ${n.toLocaleString()} G 씁니다.`, [1e7, 1e8, 1e9, 1e10], s => sf(s).gold, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, sp: 1 }, { pearls: 20, ap: 1 }][i]),
+    ...series('star', '강화', n => `${n}성 달성`, n => `장비 하나를 ${n}성까지 강화합니다(가방·착용 장비 기준).`, [10, 15, 20, 22], bestStar, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 8, sp: 1 }, { pearls: 15, bonus: { attack: .03, magic: .03 } }][i]),
     ...series('deaths', '도전', n => `쓰러짐 ${n}회`, n => `${n}번 쓰러지고도 다시 출항합니다.`, [10, 100, 1000], s => s.deaths || 0, i => [{ pearls: 1 }, { pearls: 3, bonus: { hp: .02 } }, { pearls: 8 }][i]),
     // v27.58 업적 확장: 묶음마다 새 기록을 늘리고, 마지막 단계에 SP +1을 붙였습니다.
     ...series('level', '모험', n => `Lv.${n}`, n => `최고 레벨 ${n}에 도달합니다(환생 전 기록 포함).`, [30, 50, 70, 85, 100], s => s.peakLevel || s.level, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 12, ap: 1 }, { pearls: 25, sp: 1 }][i]),
@@ -94,7 +104,7 @@ for (const a of ACHIEVEMENTS) if (a.reward.ap) ACHIEVEMENT_AP[a.id] = a.reward.a
 export const achievementById = (id: string) => ACHIEVEMENTS.find(a => a.id === id);
 /** 업적 묶음. ‘도전’은 플레이 시간·전투 턴·능력치 돌파 같은 누적 기록입니다. */
 export const CHALLENGE_GROUP = '도전' as const;
-export const ACHIEVEMENT_GROUPS = ['모험', '사냥', '숙련', '던전', '환생', '계급', CHALLENGE_GROUP] as const;
+export const ACHIEVEMENT_GROUPS = ['모험', '사냥', '숙련', '던전', '환생', '계급', '강화', CHALLENGE_GROUP] as const;
 /** v27.81 받을 수 있는 모든 업적의 영구 보상 합계(업적 보너스 탭의 ‘최대’). */
 export const achievementMaxTotals = () => achievementTotals({ achievementClaims: Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, true])) });
 
