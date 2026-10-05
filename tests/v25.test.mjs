@@ -595,7 +595,9 @@ test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlemen
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const A = await L.load('data/altar'), Ev = await L.load('data/events'), T = await L.load('systems/turn');
     const gold = A.BLESSINGS.find(b => b.id === 'gold');
-    assert.deepEqual([A.blessingCost(gold, 0, false), A.blessingCost(gold, 1, true), A.blessingCost(gold, 2, true), A.blessingCost(gold, 3, true)], [1200, 1800, 2700, 2700]);
+    // v3.16 4~6단계는 절대 비용(골드 3,000억 · 1조 · 3조 상당), 6단계 연장도 6단계 값.
+    assert.deepEqual([A.blessingCost(gold, 0, false), A.blessingCost(gold, 1, true), A.blessingCost(gold, 2, true), A.blessingCost(gold, 3, true), A.blessingCost(gold, 4, true), A.blessingCost(gold, 5, true), A.blessingCost(gold, 6, true)], [1200, 1800, 2700, 3e8, 1e9, 3e9, 3e9]);
+    assert.equal(A.BLESSING_MAX_LEVEL, 6); assert.ok(A.BLESSINGS.every(b => b.levels.length === 6)); assert.equal(A.blessingEffect(gold, 6).gold, 5); assert.equal(A.ALTAR.maxGold, 1e13);
     assert.equal(A.blessingEffect(gold, 3).gold, 3); assert.ok(A.BLESSINGS.find(b => b.id === 'mimic').cost > A.BLESSINGS.find(b => b.id === 'exp').cost, 'mimic costs most');
     assert.equal(A.gaugeCost('god'), 40000); assert.equal(A.ALTAR.essencePoints, 3);
     // 오프라인 정산: 골드 ×10 이벤트는 정산 중 ×5.5(절반)로 적용됩니다.

@@ -172,7 +172,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Flame size={19}/>} title="제단 · 축복"
                     effect={`골드·세계석·정수를 바치면 기여도(골드 ${ALTAR.goldPerPoint.toLocaleString()} = 1 · 세계석 1 = ${ALTAR.pearlPoints} · 정수 1 = ${ALTAR.essencePoints})가 고른 게이지에 쌓입니다. 축복 게이지가 차면 모든 모험가에게 ${BLESSINGS[0].hours}시간 동안 효과가 켜집니다: ${BLESSINGS.map(b => b.name).join(' · ')}.`}
                     condition="게이지는 서버 전체가 공유합니다. 혼자 다 채울 필요가 없고, 바친 만큼 주간 기여 순위에 오릅니다(익명 선택 가능)."
-                    limit={`축복은 3단계까지 겹쳐 세지고 시간이 지나면 꺼집니다. 바치기 간격 ${ALTAR.offerCooldownMs / 1000}초.`}/>
+                    limit={`축복은 6단계까지 겹쳐 세지고 시간이 지나면 꺼집니다. 1~3단계는 기본 비용 ×1.5씩, 4·5·6단계는 골드 3,000억 · 1조 · 3조 상당(6단계 연장도 같음). 바치기 간격 ${ALTAR.offerCooldownMs / 1000}초.`}/>
                 <Rule icon={<Swords size={19}/>} title="신 소환 · 신의 자리 · 탄핵"
                     effect={`신 소환 게이지(기여도 ${ALTAR.godCost.toLocaleString()})가 차면 신이 ${ALTAR.godLifetimeMs / 3600_000}시간 깨어납니다. 신을 처음 쓰러뜨린 모험가가 신의 자리에 앉아 다른 모험가가 바치는 재화의 ${ALTAR.titheRate * 100}%를 거둡니다.`}
                     condition={`도전 간격 ${ALTAR.challengeCooldownMs / 60_000}분. 신 카드에 최대 체력과 공격이 보이니 결투 전투력과 비교해 보세요. 신이 없을 때는 자리 주인을 ‘탄핵’할 수 있습니다: 주인이 신을 격파하던 당시의 능력치·스킬 그대로와 겨뤄 이기면 자리가 빕니다.`}
