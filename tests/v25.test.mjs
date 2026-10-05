@@ -1217,3 +1217,15 @@ test('v3.7 auto enhance: needs the autoStar research, loops until target/limit/d
     // 파괴되면 멈춥니다(16성, 파괴 굴림).
     item.enhance = 16; act(s, { type: 'autoEnhance', id: 'g', value: '22' }, 0, () => .31); assert.ok(!s.inventory.some(i => i.id === 'g'), 'destroyed item is gone'); assert.ok(autoLog().includes('파괴') && autoLog().includes('소멸'));
 });
+
+test('v3.8 star catch: enhance value "catch" adds +10%p success (destroy unchanged), flags combine with safeguard, auto enhance never catches', async () => {
+    const { STARFORCE } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/starforce');
+    assert.equal(STARFORCE.catchBonus, .1);
+    const s = newState(0); s.gold = 1e9; const item = { id: 'g', name: 'x', slot: 'rod', rarity: 3, power: 50, level: 10, enhance: 15 }; s.inventory.push(item);
+    act(s, { type: 'enhance', id: 'g' }, 0, () => .35); assert.equal(item.enhance, 15, '35% roll fails at 30%');
+    act(s, { type: 'enhance', id: 'g', value: 'catch' }, 0, () => .35); assert.equal(item.enhance, 16, 'same roll succeeds with the catch bonus');
+    assert.ok([...s.logs].reverse().find(l => l.text.includes('강화 성공')).text.includes('스타캐치'));
+    act(s, { type: 'enhance', id: 'g', value: 'safeguard,catch' }, 0, () => .41); assert.equal(item.enhance, 15, '41% is past 30%+10%p and safeguard removes destruction: drops to 15');
+    const gold = s.gold; item.enhance = 15; act(s, { type: 'enhance', id: 'g', value: 'safeguard,catch' }, 0, () => .39); assert.equal(item.enhance, 16); assert.ok(gold - s.gold > 0);
+    item.enhance = 16; act(s, { type: 'enhance', id: 'g', value: 'catch' }, 0, () => .405); assert.ok(!s.inventory.some(i => i.id === 'g'), 'destroy band (.4~.421) is unchanged by the catch bonus');
+});

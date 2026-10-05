@@ -11,6 +11,8 @@ import type { Item } from '../types';
  */
 export const STARFORCE = {
     max: 22, maxLow: 15,
+    /** v3.8 스타캐치: 수동 강화 때 좌우로 오가는 별을 가운데에서 잡으면 성공률 +catchBonus(%p). 자동 강화에는 없습니다. */
+    catchBonus: .1,
     success: [.95, .9, .85, .85, .8, .75, .7, .65, .6, .55, .5, .45, .4, .35, .3, .3, .3, .3, .3, .3, .3, .3],
     dropFrom: 10, safeStars: [15, 20],
     destroy: { 15: .021, 16: .021, 17: .021, 18: .028, 19: .028, 20: .07, 21: .07 } as Record<number, number>,
