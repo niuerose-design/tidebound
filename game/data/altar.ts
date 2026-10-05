@@ -62,24 +62,25 @@ export function blessingDesc(b: Blessing, level = 1) {
 /** 지금 게이지를 한 번 채우는 비용. 닫혀 있으면 기본(1단계로 열림), 진행 중이면 다음 단계(3단계면 시간 연장) 비용. */
 export const blessingCost = (b: Blessing, level: number, active: boolean) => Math.round(b.cost * Math.pow(BLESSING_LEVEL_STEP, active ? Math.min(level, BLESSING_MAX_LEVEL - 1) : 0));
 /**
- * v27.91 월드보스. 소환 게이지가 차면 서버 전체에 한 마리가 24시간 나타나고, 모든 모험가의 피해가 체력 하나에 누적됩니다(공유 체력).
+ * v27.91 월드보스. 소환 게이지가 차면 서버 전체에 한 마리가 lifetimeHours 동안 나타나고(v27.93 발록 6 · 자쿰 12 · 혼테일 24시간, 격파 뒤 2시간 대기), 모든 모험가의 피해가 체력 하나에 누적됩니다(공유 체력).
  * 도전은 결투 엔진으로 maxTurns 안에서 한 번 계산하고(부하·렉 방지), 모험가마다 cooldown 간격으로 다시 때립니다.
  * 격파하면 그 보스를 한 번이라도 때린 모험가 전원이 다음 동기화 때 보상을 받고, 서버 전체에 축복이 열립니다. 마지막 일격을 넣은 모험가는 보너스를 더 받습니다.
  * 셋은 입문(0환생도 기여 가능) · 중급 · 상급 순으로 체력이 크게 뜁니다. 공격·방어는 완만하고 체력은 공유를 감안해 큽니다(수치는 밸런스용이라 화면에는 기준을 적지 않음).
  */
 export type RaidDef = {
-    id: RaidId; name: string; /** 전투 기술·외형을 빌리는 몬스터 id */ fish: string; level: number; cost: number;
+    id: RaidId; name: string; /** 전투 기술·외형을 빌리는 몬스터 id */ fish: string; level: number; cost: number; /** 머무는 시간 */ lifetimeHours: number;
     stats: { hp: number; attack: number; magic: number; defense: number; resist: number; speed: number; crit: number; accuracy: number; penetration: number; evasion: number };
     /** 참여자 보상(격파 뒤 다음 동기화 때) · 마지막 일격 보너스 · 축복 시간. */
     reward: { gold: number; pearls: number; sp: number }; slayer: { pearls: number; sp: number }; blessings: BlessingId[]; blessingHours: number;
 };
-export const RAID = { lifetimeMs: 24 * 3600_000, cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10 } as const;
+/** v27.93 머무는 시간은 보스마다(lifetimeHours), 격파 뒤 다음 소환까지 respawnMs 대기. */
+export const RAID = { cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10, respawnMs: 2 * 3600_000 } as const;
 export const RAIDS: RaidDef[] = [
-    { id: 'balrog', name: '발록', fish: 'magmaKraken', level: 30, cost: 2_000, stats: { hp: 500_000, attack: 90, magic: 90, defense: 25, resist: 25, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
+    { id: 'balrog', name: '발록', fish: 'magmaKraken', level: 30, cost: 2_000, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 25, resist: 25, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
         reward: { gold: 30_000, pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 }, blessings: ['gold', 'exp'], blessingHours: 1 },
-    { id: 'zakum', name: '자쿰', fish: 'ventColossus', level: 70, cost: 5_000, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 900, resist: 900, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
+    { id: 'zakum', name: '자쿰', fish: 'ventColossus', level: 70, cost: 5_000, lifetimeHours: 12, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 900, resist: 900, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
         reward: { gold: 500_000, pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 }, blessings: ['gold', 'exp'], blessingHours: 2 },
-    { id: 'horntail', name: '혼테일', fish: 'abyssSovereign', level: 120, cost: 12_000, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 15_000, resist: 15_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
+    { id: 'horntail', name: '혼테일', fish: 'abyssSovereign', level: 120, cost: 12_000, lifetimeHours: 24, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 15_000, resist: 15_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
         reward: { gold: 5_000_000, pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 }, blessings: ['gold', 'exp', 'mimic', 'nuri'], blessingHours: 3 },
 ];
 export const raidById = (id: string) => RAIDS.find(r => r.id === id);

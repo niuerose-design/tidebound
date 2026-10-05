@@ -48,12 +48,14 @@ async function trySummon(a: AltarRow, godPoints: number, now: number) {
 export const raidAlive = (a: AltarRow, now: number) => a.raid_state === 'alive' && a.raid_until >= now;
 async function trySummonRaid(a: AltarRow, gauges: Record<string, { points: number }>, now: number) {
     if (raidAlive(a, now)) return false;
+    // v27.93 격파된 뒤에는 respawnMs 동안 다음 소환을 기다립니다(떠난 보스는 바로).
+    if (a.raid_state === 'slain' && now - a.raid_slain_at < RAID.respawnMs) return false;
     const database = db();
     for (const raid of RAIDS) {
         if ((gauges[raid.id]?.points || 0) < raid.cost) continue;
         if (!await database.spendAltarGauge(raid.id, raid.cost)) continue;
-        if (!await database.summonAltarRaid(raid.id, raid.stats.hp, now + RAID.lifetimeMs, now)) { await database.addAltarGauge(raid.id, raid.cost); return false; }
-        await announce(`월드보스 ${josa(raid.name, '이가')} 나타났습니다! 모든 모험가의 피해가 하나의 체력에 쌓입니다. ${RAID.lifetimeMs / 3600_000}시간 안에 함께 쓰러뜨리세요.`, now);
+        if (!await database.summonAltarRaid(raid.id, raid.stats.hp, now + raid.lifetimeHours * 3600_000, now)) { await database.addAltarGauge(raid.id, raid.cost); return false; }
+        await announce(`월드보스 ${josa(raid.name, '이가')} 나타났습니다! 모든 모험가의 피해가 하나의 체력에 쌓입니다. ${raid.lifetimeHours}시간 안에 함께 쓰러뜨리세요.`, now);
         return true;
     }
     return false;
@@ -92,7 +94,7 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
         week: sh.week,
         gauges: GAUGE_IDS.map(g => {
             const b = BLESSINGS.find(x => x.id === g), level = liveLevel(sh.gauges[g], now);
-            if (isRaidGauge(g)) { const raid = raidById(g)!; return { id: g, name: gaugeName(g), desc: `가득 차면 ${raid.name}(Lv.${raid.level})이 ${RAID.lifetimeMs / 3600_000}시간 나타납니다`, points: sh.gauges[g]?.points || 0, cost: raid.cost, until: 0, level: 0, next: raidAlive(a, now) ? '지금 나타난 보스가 떠나거나 쓰러진 뒤에 나타납니다' : '가득 차면 바로 나타납니다' }; }
+            if (isRaidGauge(g)) { const raid = raidById(g)!, waiting = a.raid_state === 'slain' && now - a.raid_slain_at < RAID.respawnMs; return { id: g, name: gaugeName(g), desc: `가득 차면 ${raid.name}(Lv.${raid.level})이 ${raid.lifetimeHours}시간 나타납니다`, points: sh.gauges[g]?.points || 0, cost: raid.cost, until: 0, level: 0, next: raidAlive(a, now) ? '지금 나타난 보스가 떠나거나 쓰러진 뒤에 나타납니다' : waiting ? `격파 뒤 대기 중 · ${Math.ceil((RAID.respawnMs - (now - a.raid_slain_at)) / 60000)}분 뒤 소환 가능` : '가득 차면 바로 나타납니다' }; }
             const next = !b ? '가득 차면 신이 깨어납니다' : !level ? `채우면 1단계로 열림 · ${blessingDesc(b, 1)} · ${b.hours}시간` : level < BLESSING_MAX_LEVEL ? `채우면 ${level + 1}단계 · ${blessingDesc(b, level + 1)} · +${b.hours}시간` : `최고 단계 · 채우면 +${b.hours}시간`;
             return { id: g, name: b ? b.name : '신 소환', desc: b ? blessingDesc(b, level || 1) : '가득 차면 신이 깨어납니다', points: sh.gauges[g]?.points || 0, cost: gaugeCost(g, level, level > 0), until: sh.gauges[g]?.until || 0, level, next };
         }),

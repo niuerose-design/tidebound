@@ -71,7 +71,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                         <small className="micro">{format(g.points)} / {format(g.cost)}{g.points >= g.cost && g.id === 'god' ? ' · 신이 떠나면 바로 깨어납니다' : g.id !== 'god' ? ` · ${g.next}` : ''}</small>
                     </button>;
                 })}
-                <p className="footnote">바칠 게이지를 고른 뒤 아래에서 재화를 바치세요. 축복이 진행 중일 때 게이지를 다시 채우면 단계가 오릅니다(최대 {BLESSING_MAX_LEVEL}단계, 다음 단계 비용 ×{BLESSING_LEVEL_STEP}, 채울 때마다 +1시간, 최대 {ALTAR.blessingCapMs / 3600_000}시간). 축복이 끝나면 단계는 처음으로 돌아갑니다. 축복과 이벤트 배율은 화면을 띄워 두고 사냥하는 동안 그대로 적용되고, 오프라인 정산(창을 닫거나 탭을 백그라운드로 둔 시간)에는 절반만 적용됩니다.</p>
+                <p className="footnote">{gaugeTab === 'bless' ? `축복은 최대 ${BLESSING_MAX_LEVEL}단계 · 최대 ${ALTAR.blessingCapMs / 3600_000}시간까지 쌓이고, 끝나면 단계는 처음으로 돌아갑니다.` : `게이지가 차면 바로 나타납니다. ${RAIDS.map(r => `${r.name} ${r.lifetimeHours}시간`).join(' · ')} 머물고, 쓰러지면 ${RAID.respawnMs / 3600_000}시간 뒤에 다시 소환할 수 있습니다. 신은 ${ALTAR.godLifetimeMs / 3600_000}시간.`}</p>
             </section>
             <section className="panel altar-offer">
                 <Tabs value={pane} onValueChange={v => setPane(v as typeof pane)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="offer"><Coins size={14}/> 공물 바치기</TabsTrigger><TabsTrigger value="board"><Trophy size={14}/> 이번 주 기여 순위</TabsTrigger></TabsList></Tabs>
@@ -122,7 +122,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                     {raid.board.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>피해</TableHead><TableHead>횟수</TableHead></TableRow></TableHeader>
                         <TableBody>{raid.board.map(r => <TableRow key={r.rank} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{format(r.dealt)}</b></TableCell><TableCell>{r.hits}</TableCell></TableRow>)}</TableBody></Table>
                         : <p className="footnote">아직 아무도 때리지 않았습니다. 첫 피해를 넣어 보세요.</p>}
-                </> : <p className="footnote">지금 나타난 월드보스가 없습니다. 소환 탭의 게이지({RAIDS.map(r => `${r.name} ${format(r.cost)}`).join(' · ')})가 차면 그 보스가 {RAID.lifetimeMs / 3600_000}시간 나타나고, 모든 모험가의 피해가 하나의 체력에 쌓입니다. 격파하면 때린 모험가 전원이 골드·세계석(·SP)을 받고 서버 전체에 축복이 열립니다.</p>}
+                </> : <p className="footnote">지금 나타난 월드보스가 없습니다. 소환 탭의 게이지({RAIDS.map(r => `${r.name} ${format(r.cost)}`).join(' · ')})가 차면 그 보스가 나타나고(발록 6 · 자쿰 12 · 혼테일 24시간), 모든 모험가의 피해가 하나의 체력에 쌓입니다. 격파하면 때린 모험가 전원이 골드·세계석(·SP)을 받고 서버 전체에 축복이 열립니다.</p>}
             </section>
             <section className="panel altar-throne">
                 <div className="section-title"><h2><Crown size={16}/> 신의 자리</h2></div>
