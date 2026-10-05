@@ -269,6 +269,7 @@
 @media(max-width:767px){
   .battle-heading-tools{gap:6px}
   .battle-heading-tools .battle-save-status{display:none}
+  .battle-heading-tools .status-pill{display:none}
   .battle-updates-link>span{display:none}
   /* v27.84 모바일: 메뉴 열기 버튼을 맨 왼쪽에 크게 두고, 업데이트 내역 버튼은 오른쪽으로 보냅니다. */
   .battle-mobile-menu{display:inline-flex;order:-1;margin-right:auto;width:44px;height:44px;border:1px solid #2d474a;border-radius:9px;background:#112329;color:#e1eeeb}
@@ -309,6 +310,10 @@
 .mobile-fisher-head strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mobile-fisher-head small{flex:1;min-width:0;font-size:11px;color:#8faaa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mobile-fisher-head em{flex:none;font-style:normal;font-size:11px;color:#e0c27d}
+/* v27.88 자동 사냥 상태는 머리글 알약 대신 요약 줄 끝의 작은 표식으로(모바일). */
+.mobile-fisher-state{flex:none;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:#7f9c98}
+.mobile-fisher-state::before{content:'';width:6px;height:6px;border-radius:50%;background:#4f6a66}
+.mobile-fisher-state.on{color:#a4e9ba}.mobile-fisher-state.on::before{background:#7fe0a3;box-shadow:0 0 6px #7fe0a3}
 .mobile-fisher-bar{position:relative;display:block;height:16px;border-radius:4px;background:#0a171b;overflow:hidden}
 .mobile-fisher-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
 .mobile-fisher-bar small{position:relative;display:block;padding:0 6px;font:600 10px/16px monospace;color:#eef3ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

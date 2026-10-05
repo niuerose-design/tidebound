@@ -13,7 +13,7 @@ export function MobileFisherStrip({ s, setView }: { s: State; setView: (v: strin
     return <button type="button" className="mobile-fisher-strip" onClick={() => setView('character')} aria-label="나의 모험가 능력치 보기">
         <span className="mobile-fisher-badge"><Leaf size={15}/><b>Lv.{s.level}</b></span>
         <span className="mobile-fisher-main">
-            <span className="mobile-fisher-head"><strong>{s.name}</strong><small>{jobById(s.job)?.name} · 환생 {s.rebirths}회</small><em>전투력 {format(power(a))}</em></span>
+            <span className="mobile-fisher-head"><strong>{s.name}</strong><small>{jobById(s.job)?.name} · 환생 {s.rebirths}회</small><em>전투력 {format(power(a))}</em><b className={`mobile-fisher-state ${s.running ? 'on' : ''}`}>{s.running ? '사냥 중' : '대기'}</b></span>
             <span className="mobile-fisher-bar exp" aria-label={`경험치 ${Math.floor(exp * 100)}%`}><i style={{ width: bar(s.exp, need) }}/><small>EXP {(exp * 100).toFixed(1)}% · {format(s.exp)} / {format(need)}</small></span>
             <span className="mobile-fisher-mini"><span className="mobile-fisher-bar hp"><i style={{ width: bar(s.hp, a.hp) }}/><small>HP {format(Math.ceil(s.hp))}</small></span><span className="mobile-fisher-bar mana"><i style={{ width: bar(s.mana, a.mana) }}/><small>MP {format(Math.floor(s.mana))}</small></span></span>
         </span>
