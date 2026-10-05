@@ -12,7 +12,7 @@ export const WEAPON_NAMES: Record<'physical' | 'magic' | 'balanced', readonly st
     magic: ['나무 스태프', '메이플 스태프', '자쿰의 스태프', '파프니르 스태프', '앱솔랩스 스태프', '아케인셰이드 스태프', '제네시스 스태프'],
     balanced: ['수련용 샤이닝 로드', '메이플 샤이닝 로드', '자쿰의 샤이닝 로드', '파프니르 샤이닝 로드', '앱솔랩스 샤이닝 로드', '아케인셰이드 샤이닝 로드', '제네시스 샤이닝 로드'],
 };
-export const ARMOR_NAMES = ['하얀 반팔 면티', '메이플 망토', '자쿰의 투구', '루타비스 슈트', '앱솔랩스 슈트', '아케인셰이드 슈트', '에테르넬 아머'] as const;
+export const ARMOR_NAMES = ['하얀 반팔 면티', '메이플 아머', '자쿰의 투구', '루타비스 슈트', '앱솔랩스 슈트', '아케인셰이드 슈트', '에테르넬 아머'] as const;
 export const ACCESSORY_NAMES = ['나무 귀고리', '메이플 펜던트', '혼테일의 목걸이', '마이스터 링', '도미네이터 펜던트', '여명의 가디언 엔젤 링', '창세의 뱃지'] as const;
 
 /** 새로 얻는 장비의 이름. 무기는 공격 계열(style)을 정한 뒤 부릅니다(없으면 물리형). */
@@ -28,5 +28,6 @@ export const OLD_GEAR_NAMES = {
     charm: ['조개 부적', '청옥 나침반', '월광 진주', '바다의 심장', '별의 나침반', '고대 해도', '태초의 눈'],
 } as const;
 /** 유물·옵션의 옛 이름 → 새 이름. */
-export const RENAMED_GEAR: Record<string, string> = { '윤회의 낚싯대': '윤회의 샤이닝 로드', '영혼의 잠수복': '영혼의 망토' };
+/** v3.3 망토 부위가 생기면서 방어구의 ‘망토’ 이름(메이플 망토 · 영혼의 망토)을 바꿉니다. */
+export const RENAMED_GEAR: Record<string, string> = { '윤회의 낚싯대': '윤회의 샤이닝 로드', '영혼의 잠수복': '영혼의 갑주', '영혼의 망토': '영혼의 갑주', '메이플 망토': '메이플 아머' };
 export const RENAMED_AFFIX: Record<string, string> = { '유영': '회피', '영혼 유영': '영혼 회피', '맹독': '고통' };

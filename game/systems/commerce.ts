@@ -1,9 +1,9 @@
 import { gearName } from '../data/maple-gear';
 import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
-import { SHOP, GAMBLE_CATEGORIES, RELICS, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
+import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, ECONOMY, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, inventoryCap, shopDiscount } from '../data/economy';
 import { apCapacity, apUsed } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
@@ -145,6 +145,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             // v27.94 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. 비용은 재설정의 절반이고 오르지 않습니다.
             const index = Number(a.value || '0');
             const x = item.affixes?.[index];
+            if (item.relic)
+                throw Error('유물의 이식 옵션은 재련 대신 다시 이식해 바꿉니다.');
             if (!x || !Number.isInteger(index))
                 throw Error('재련할 옵션을 고르세요.');
             if (x.rule)
@@ -158,7 +160,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             item.affixes = item.affixes!.map((o, i) => i === index ? next : o);
             return `${item.name} ${x.name} 수치 재련 · ${x.value} → ${next.value} · -${cost.gold} G · 정수 -${cost.essence}`;
         }
-        if (!item.affixes?.length) {
+        // v27.96 유물은 이식 옵션(affixes)이 있어도 재설정은 고유 옵션(affix) 한 줄만 굴립니다. 이식 옵션은 다시 이식해 덮어씁니다.
+        if (!item.affixes?.length || item.relic) {
             // v21 이전 장비·상점 장비·유물의 단일 옵션. v27.74 이 경로도 다중 옵션과 같이 골드 + 정수를 받습니다(전에는 골드만).
             const cost = rerollCost(item, s);
             if ((s.essence || 0) < cost.essence)
@@ -243,7 +246,40 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error('이미 보유한 유물입니다.');
         room();
         s.inventory.push({ id: nextId(), name: r.name, slot: r.slot, style: r.style, power: r.power, rarity: 3, level: 1, relic: r.id, locked: true, description: r.description, affix: { ...r.affix } });
+        syncRelicPower(s);
         return `${r.name} 수령 · 환생 ${r.rebirth}회 달성 보상`;
+    }
+    if (a.type === 'imprintRelic') {
+        // v27.96 옵션 이식: value = '소비 장비 id:옵션 번호:이식 칸(0~2)'. 같은 부위의 가방 장비 하나를 소비해 그 옵션 한 줄을 유물에 새깁니다(골드, 덮어쓰기 가능, 환생 유지).
+        const relic = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        if (!relic?.relic)
+            throw Error('유물을 찾을 수 없습니다.');
+        const [sourceId, indexText, slotText] = String(a.value || '').split(':');
+        const index = Number(indexText), slot = Number(slotText);
+        const source = s.inventory.find(x => x.id === sourceId);
+        if (!source || source.relic)
+            throw Error('소비할 장비를 가방에서 고르세요.');
+        if (source.slot !== relic.slot)
+            throw Error('같은 부위의 장비만 이식할 수 있습니다.');
+        if (source.locked)
+            throw Error('보호된 장비는 소비할 수 없습니다.');
+        const affix = Number.isInteger(index) ? source.affixes?.[index] : undefined;
+        if (!affix)
+            throw Error('이식할 옵션을 고르세요.');
+        if (!Number.isInteger(slot) || slot < 0 || slot >= RELIC_GROWTH.imprintSlots)
+            throw Error('이식할 칸을 고르세요.');
+        const lines = [...(relic.affixes || [])];
+        if (lines.some((x, i) => i !== slot && x.id === affix.id))
+            throw Error('이미 같은 옵션이 새겨져 있습니다.');
+        if (affix.rule && lines.some((x, i) => i !== slot && x.rule))
+            throw Error('규칙 옵션은 유물당 하나만 새길 수 있습니다.');
+        const cost = imprintCost(source, s);
+        spend(cost);
+        const before = lines[slot];
+        lines[slot] = { ...affix };
+        relic.affixes = lines.filter(Boolean);
+        s.inventory = s.inventory.filter(x => x.id !== source.id);
+        return `${relic.name} 옵션 이식 · ${affix.name}${before ? ` (${before.name} 대체)` : ''} · ${source.name} 소비 · -${cost} G`;
     }
     return null;
 }

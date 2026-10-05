@@ -29,4 +29,5 @@ export const canSafeguard = (n: number) => (STARFORCE.safeguardStars as readonly
 export const starMultiplier = (n: number) => 1 + STARFORCE.gainLow * Math.min(n, STARFORCE.gainHighFrom) + STARFORCE.gainHigh * Math.max(0, n - STARFORCE.gainHighFrom);
 /** 찬스 타임(하락 2번 연속 뒤)인지. */
 export const chanceTime = (item: Pick<Item, 'starFails'>) => (item.starFails || 0) >= STARFORCE.chanceTimeFails;
-export const starLabel = (n: number) => n > 0 ? `${n}성` : '';
+/** 별 수 표기: ★12. 0이면 빈 문자열(always면 ★0). */
+export const starLabel = (n: number, always = false) => n > 0 || always ? `★${n}` : '';
