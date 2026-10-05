@@ -4,10 +4,10 @@ import { useMemo, useState } from 'react';
 import { ArrowUpRight, ChevronDown, Lock, Search, Sparkles, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Item, Stats } from '@/game/types';
-import { ECONOMY, AFFIXES, RELIC_GROWTH } from '@/game/data/economy';
+import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '@/game/data/progression';
-import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost } from '@/game/systems/equipment';
+import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
 import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT } from '@/game/data/gear';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
 import { stats, power } from '@/game/systems/stats';
@@ -26,7 +26,7 @@ function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
     const cost = rerollCost(item, s), canPay = s.gold >= cost.gold && (s.essence || 0) >= cost.essence;
     // v27.94 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다(재설정 기본 비용의 절반, 오르지 않음).
     const refine = refineCost(item, s), canRefine = s.gold >= refine.gold && (s.essence || 0) >= refine.essence;
-    const quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity); return q === null ? null : Math.round(q * 100); };
+    const quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity, item.level); return q === null ? null : Math.round(q * 100); };
     return <div className="affix-explanation">
         <b>{item.relic ? `이식 옵션 ${item.affixes!.length}/${RELIC_GROWTH.imprintSlots}줄` : `추가 옵션 ${item.affixes!.length}개`}{item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</b>
         {item.affixes!.map((x, i) => <div key={x.id + i} className="gear-option-row">
@@ -146,7 +146,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     </details></>;
 }
 
-/** v27.96 유물 옵션 이식: 같은 부위의 가방 장비(보호 제외) 하나를 소비해 옵션 한 줄을 유물의 칸(최대 RELIC_GROWTH.imprintSlots)에 새깁니다. 환생해도 남습니다. */
+/** v3.3 유물 옵션 이식: 같은 부위의 가방 장비(보호 제외) 하나를 소비해 옵션 한 줄을 유물의 칸(최대 RELIC_GROWTH.imprintSlots)에 새깁니다. 환생해도 남습니다. */
 function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     const sources = s.inventory.filter(x => x.slot === item.slot && !x.relic && !x.locked && x.affixes?.length);
     const choices = sources.flatMap(x => x.affixes!.map((a, i) => ({ key: `${x.id}:${i}`, item: x, affix: a, index: i })));
@@ -168,6 +168,16 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     </div>;
 }
 
+/** v3.5 레벨 올리기: +10씩 내 레벨까지. 위력·고정 수치 옵션이 레벨 비례로 오르고 별은 0으로 돌아갑니다. 유물은 레벨이 별 상한(12 + 레벨 ÷ 10)을 정합니다. */
+function GearLevelUp({ s, send, busy, item }: PanelProps & { item: Item }) {
+    const next = levelUpTarget(item, s), cost = levelUpCost(item, s), star = item.enhance || 0;
+    return <div className="relic-imprint">
+        <b>레벨 올리기 · Lv.{item.level || 1}{next ? ` → Lv.${next}` : ''}{item.relic ? ` · 별 상한 ${enhanceMaxFor(item)}성` : ''}</b>
+        {next ? <ConfirmButton label={`Lv.${next}로 올리기 · ${format(cost)} G`} title={`${item.name}을(를) Lv.${next}로 올릴까요?`} description={`위력과 고정 수치 옵션이 레벨에 맞춰 오릅니다.${star ? ` 지금 ★${star}은 0으로 돌아갑니다(강화 비용은 돌려받지 않음).` : ''}${item.relic ? ` 유물 별 상한이 ${RELIC_GROWTH.starBase + Math.floor(next / 10)}성이 됩니다.` : ''} 골드 ${format(cost)} G를 사용합니다.`} disabled={busy || s.gold < cost} onConfirm={() => send({ type: 'levelUp', id: item.id })}/> : <p className="footnote">내 레벨(Lv.{s.level})까지 올릴 수 있습니다.</p>}
+        <p className="footnote">한 번에 +{GEAR_LEVEL_UP.step}. 올리면 별이 0으로 돌아가니 별은 레벨을 다 올린 뒤에 쌓으세요.{item.relic ? ' 유물 위력은 환생 횟수와 레벨을 함께 따릅니다(Lv.100 ×2).' : ''}</p>
+    </div>;
+}
+
 export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Item }) {
     // v27.93 스타포스: 성공·실패(유지/하락)·파괴 확률과 찬스 타임, 15·16성 파괴 방지(비용 2배).
     const [safeguard, setSafeguard] = useState(false);
@@ -181,6 +191,7 @@ export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Ite
         {canSafeguard(star) && <label className="altar-anon"><input type="checkbox" checked={safeguard} onChange={e => setSafeguard(e.target.checked)}/> 파괴 방지 (비용 ×{STARFORCE.safeguardCost})</label>}
         <button className="primary" disabled={busy || star >= max || s.gold < cost} onClick={() => send({ type: 'enhance', id: item.id, ...(guard ? { value: 'safeguard' } : {}) })}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${format(cost)} G`}</button>
         <p className="footnote">1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}성부터 +{STARFORCE.gainHigh * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. 파괴된 장비는 사라지고 유물은 {STARFORCE.relicResetStar}성으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p>
+        <GearLevelUp s={s} send={send} busy={busy} item={item}/>
         {item.relic && <RelicImprint s={s} send={send} busy={busy} item={item}/>}
         {item.affixes?.length && !item.relic ? <p className="footnote">옵션은 위 옵션 목록에서 하나씩 재설정합니다.</p> : <ConfirmButton label={`옵션 재설정 · ${format(rerollCost(item, s).gold)} G + 정수 ${rerollCost(item, s).essence}`} title="추가 옵션을 무작위로 바꿀까요?" description={`이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다. 골드 ${format(rerollCost(item, s).gold)} G와 정수 ${rerollCost(item, s).essence}(보유 ${s.essence || 0})를 사용합니다.`} disabled={busy || item.rarity === 0 || s.gold < rerollCost(item, s).gold || (s.essence || 0) < rerollCost(item, s).essence} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}
     </div>;

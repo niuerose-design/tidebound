@@ -13,12 +13,14 @@ export const WEAPON_NAMES: Record<'physical' | 'magic' | 'balanced', readonly st
     balanced: ['수련용 샤이닝 로드', '메이플 샤이닝 로드', '자쿰의 샤이닝 로드', '파프니르 샤이닝 로드', '앱솔랩스 샤이닝 로드', '아케인셰이드 샤이닝 로드', '제네시스 샤이닝 로드'],
 };
 export const ARMOR_NAMES = ['하얀 반팔 면티', '메이플 아머', '자쿰의 투구', '루타비스 슈트', '앱솔랩스 슈트', '아케인셰이드 슈트', '에테르넬 아머'] as const;
+/** v3.5 망토(회피·체력 소량, 상태이상 저항 전용 옵션). */
+export const CAPE_NAMES = ['낡은 천 망토', '메이플 케이프', '피에르의 망토', '타일런트 히아데스 클록', '앱솔랩스 케이프', '아케인셰이드 케이프', '에테르넬 케이프'] as const;
 export const ACCESSORY_NAMES = ['나무 귀고리', '메이플 펜던트', '혼테일의 목걸이', '마이스터 링', '도미네이터 펜던트', '여명의 가디언 엔젤 링', '창세의 뱃지'] as const;
 
 /** 새로 얻는 장비의 이름. 무기는 공격 계열(style)을 정한 뒤 부릅니다(없으면 물리형). */
 export function gearName(slot: Item['slot'], rarity: number, style?: Item['style']) {
     const r = Math.max(0, Math.min(GEAR_SETS.length - 1, rarity));
-    return slot === 'rod' ? WEAPON_NAMES[style || 'physical'][r] : slot === 'coat' ? ARMOR_NAMES[r] : ACCESSORY_NAMES[r];
+    return slot === 'rod' ? WEAPON_NAMES[style || 'physical'][r] : slot === 'coat' ? ARMOR_NAMES[r] : slot === 'cape' ? CAPE_NAMES[r] : ACCESSORY_NAMES[r];
 }
 
 /** v27.46 이전 이름 → 등급. 세이브의 옛 장비 이름을 바꿀 때만 씁니다. */

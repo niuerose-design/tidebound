@@ -74,7 +74,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('deaths', '도전', n => `쓰러짐 ${n}회`, n => `${n}번 쓰러지고도 다시 출항합니다.`, [10, 100, 1000], s => s.deaths || 0, i => [{ pearls: 1 }, { pearls: 3, bonus: { hp: .02 } }, { pearls: 8 }][i]),
     // v27.58 업적 확장: 묶음마다 새 기록을 늘리고, 마지막 단계에 SP +1을 붙였습니다.
     ...series('level', '모험', n => `Lv.${n}`, n => `최고 레벨 ${n}에 도달합니다(환생 전 기록 포함).`, [30, 50, 70, 85, 100], s => s.peakLevel || s.level, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 12, ap: 1 }, { pearls: 25, sp: 1 }][i]),
-    ...series('items', '모험', n => `물건도감 ${n}종`, n => `물건도감에 장비 ${n}종(부위 × 등급)을 등록합니다.`, [6, 12, 21], s => Object.keys(s.itemBook || {}).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
+    ...series('items', '모험', n => `물건도감 ${n}종`, n => `물건도감에 장비 ${n}종(부위 × 등급)을 등록합니다.`, [8, 16, 28], s => Object.keys(s.itemBook || {}).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('regions', '모험', n => `지역 연구 ${n}곳 완성`, n => `사냥터 ${n}곳의 모든 몬스터 도감을 완성합니다.`, [1, 4, STAGES.length], s => completedRegions(s).length, i => [{ pearls: 2 }, { pearls: 6, bonus: { hp: .02 } }, { pearls: 12, sp: 1 }][i]),
     ...series('golden', '사냥', n => `황금 개체 ${n}마리`, n => `황금 개체를 ${n}마리 처치합니다.`, [1, 10, 100], goldens, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('variants', '사냥', n => `변종 ${n.toLocaleString()}마리`, n => `거대·심연·별빛·무리 변종을 ${n.toLocaleString()}번 처치합니다.`, [10, 100, 1000], variants, i => [{ pearls: 2 }, { pearls: 5, bonus: { attack: .02, magic: .02 } }, { pearls: 10, sp: 1 }][i]),

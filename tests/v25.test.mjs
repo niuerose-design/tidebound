@@ -1098,7 +1098,7 @@ test('v27.93 star force: per-star odds, drops from 10 (15/20 safe), destruction 
     it.enhance = 15; act(s, { type: 'enhance', id: 'x' }, 0, () => .99); assert.equal(it.enhance, 15, '15 is safe on fail'); assert.equal(it.starFails, 0);
     const g = s.gold; act(s, { type: 'enhance', id: 'x', value: 'safeguard' }, 0, () => .31); assert.equal(it.enhance, 15, 'roll in the destroy band but safeguarded = plain fail'); assert.equal(g - s.gold, enhanceCost({ ...base, enhance: 15 }) * 2);
     act(s, { type: 'enhance', id: 'x' }, 0, () => .31); assert.equal(s.inventory.length, 0, 'destroyed: item gone');
-    const relic = { ...base, id: 'r', enhance: 16, relic: 'memoryRod' }; s.inventory = [relic]; s.equipment.coat = relic;
+    const relic = { ...base, id: 'r', enhance: 16, relic: 'memoryRod', level: 100 }; s.inventory = [relic]; s.equipment.coat = relic;
     act(s, { type: 'enhance', id: 'r' }, 0, () => .31); assert.equal(relic.enhance, 12, 'relic resets to 12 instead of breaking'); assert.ok(s.inventory.length === 1 && s.equipment.coat === relic);
     const worn = { ...base, id: 'w', enhance: 20 }; s.inventory = [worn]; s.equipment.coat = worn;
     act(s, { type: 'enhance', id: 'w' }, 0, () => .35); assert.equal(s.equipment.coat, null, 'destroyed while equipped: slot emptied');
@@ -1137,4 +1137,52 @@ test('v27.96 growing relics: power follows rebirths, imprint consumes a same-slo
     const kept = s.equipment.rod; assert.equal(kept?.relic, 'memoryRod'); assert.equal(kept.enhance, 14); assert.deepEqual(kept.affixes.map(x => x.id), ['swift', 'arcana']);
     assert.equal(kept.power, Eco.relicPower(45, 11), 'rebirth bumps relic power');
     syncRelicPower(s); assert.equal(kept.power, Eco.relicPower(45, 11));
+});
+
+test('v27.95 cape slot: evasion/hp base, steadfast affix only on capes with level² scaling and star bonus (cap 50%), monsters\' statuses are resisted', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { itemStats, capeEvasion } = await L.load('systems/equipment'), G = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear'), { SLOTS } = await L.load('data/balance');
+    assert.deepEqual(Object.keys(SLOTS), ['rod', 'coat', 'charm', 'cape']); assert.equal(gearName('cape', 6), '에테르넬 케이프');
+    const cape = { id: 'c', name: 'x', slot: 'cape', rarity: 6, power: 100, level: 100, enhance: 22 };
+    assert.equal(capeEvasion({ rarity: 6, enhance: 22 }), Math.round(.17 * 1.66 * 10000) / 10000); assert.equal(itemStats(cape).hp, Math.round(100 * 3.55 * .52 * 2 * 1000) / 1000 || itemStats(cape).hp);
+    assert.ok(itemStats(cape).evasion > .28 && itemStats(cape).evasion < .283); assert.equal(itemStats(cape).speed, undefined, 'capes give no speed');
+    const def = G.AFFIX_POOL.find(a => a.id === 'steadfast'); assert.equal(def.onlySlot, 'cape');
+    for (let i = 0; i < 40; i++) assert.ok(!G.rollAffixes(6, 100, undefined, () => (i % 7) / 7, [], 'rod', 100).some(a => a.id === 'steadfast'), 'never on weapons');
+    const avg = (level, rarity) => G.rollOption(def, 100, rarity, () => .5, level).value;
+    assert.ok(Math.abs(avg(100, 6) - .188 * 1.6) < .001, 'Lv.100 primordial average = 30.1%'); assert.ok(Math.abs(avg(50, 3) - .188 * .25 * 1.3) < .001, 'Lv.50 legend = 6.1%'); assert.ok(avg(30, 2) < .03, 'low level is tiny');
+    const worn = { ...cape, affixes: [{ id: 'steadfast', name: '불굴', stat: 'statusResist', value: avg(100, 6) }] };
+    assert.ok(Math.abs(itemStats(worn).statusResist - .5) < .002, '22 stars push Lv.100 primordial to the 50% cap'); assert.ok(Math.abs(itemStats({ ...worn, enhance: 0 }).statusResist - .3008) < .001, 'no stars: 30%');
+    const s = newState(0); s.equipment.cape = worn; assert.ok(Math.abs(stats(s).statusResist - .5) < .002); s.equipment.cape = { ...worn, affixes: [{ id: 'steadfast', name: '불굴', stat: 'statusResist', value: .9 }] }; assert.equal(stats(s).statusResist, .5, 'player cap 50%');
+    // 전투: 몬스터(foe)가 거는 기절은 저항 확률로 막히고, 플레이어·결투 상대의 기절은 그대로 걸립니다.
+    const foe = fighter(['frozenTime']); foe.foe = true;
+    const guarded = target(); guarded.stats.statusResist = 1; strike(foe, guarded, () => .99); assert.equal(guarded.stun, 0, 'resisted'); 
+    const open = target(); strike(fighter(['frozenTime']), open, () => .99); assert.ok(open.stun >= 2, 'a non-monster attacker is not resisted');
+    let calls = 0; const counting = () => { calls++; return .99; };
+    const none = target(); strike(fighter(['frozenTime'], {}), none, counting); const base0 = calls; calls = 0;
+    const zero = target(); zero.stats.statusResist = 0; const f2 = fighter(['frozenTime']); f2.foe = true; strike(f2, zero, counting); assert.equal(calls, base0, 'resist 0 draws no extra random number');
+    const E = await L.load('systems/engine'); const t = E.newState(0); assert.equal(t.equipment.cape, null, 'new saves start with an empty cape slot');
+});
+
+test('v3.5 gear level-up: +10 up to player level, power/flat affixes scale, stars reset, relic star cap and power follow level', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { levelUpTarget, levelUpCost, enhanceMaxFor, enhanceCost } = await L.load('systems/equipment'), Eco = await L.load('data/economy');
+    const s = newState(0); s.level = 25; s.gold = 1e9;
+    const item = { id: 'g', name: 'x', slot: 'rod', rarity: 3, power: 100, level: 8, enhance: 7, starFails: 1, affixes: [{ id: 'might', name: '맹공', stat: 'attack', value: 30 }, { id: 'precise', name: '정밀', stat: 'accuracy', value: .03 }] };
+    s.inventory.push(item);
+    assert.equal(levelUpTarget(item, s), 18); const cost = levelUpCost(item, s), gold = s.gold;
+    act(s, { type: 'levelUp', id: 'g' }, 0);
+    assert.equal(item.level, 18); assert.equal(item.power, 200, 'power × (20/10)'); assert.equal(item.affixes[0].value, 60, 'flat affix scales'); assert.equal(item.affixes[1].value, .03, 'percent affix stays');
+    assert.equal(item.enhance, 0); assert.equal(item.starFails, 0); assert.equal(s.gold, gold - cost);
+    assert.equal(levelUpTarget(item, s), null, 'cannot pass the player level'); assert.throws(() => act(s, { type: 'levelUp', id: 'g' }, 0), /내 레벨/);
+    s.level = 100; assert.equal(levelUpTarget(item, s), 28);
+    // 불굴은 레벨 보정 비율로 다시 계산합니다.
+    const cape = { id: 'c', name: 'c', slot: 'cape', rarity: 6, power: 100, level: 50, affixes: [{ id: 'steadfast', name: '불굴', stat: 'statusResist', value: .1 }] }; s.inventory.push(cape);
+    act(s, { type: 'levelUp', id: 'c' }, 0); assert.ok(Math.abs(cape.affixes[0].value - .1 * (.36 / .25)) < .001, 'Lv.50 → Lv.60: ×(0.6²/0.5²)');
+    // 유물: 레벨이 별 상한과 위력을 정합니다.
+    s.rebirths = 10; act(s, { type: 'buyRelic', id: 'memoryRod' }, 0); const relic = s.inventory.find(i => i.relic === 'memoryRod');
+    assert.equal(enhanceMaxFor(relic), 12, 'Lv.1 relic caps at 12 stars'); relic.enhance = 12; assert.throws(() => act(s, { type: 'enhance', id: relic.id }, 0, () => 0), /최대 강화/);
+    const cheap = enhanceCost({ ...relic, enhance: 5 }, s);
+    act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 11); assert.equal(relic.enhance, 0); assert.equal(enhanceMaxFor(relic), 13);
+    assert.equal(relic.power, Eco.relicPower(45, 10, 11)); assert.ok(enhanceCost({ ...relic, enhance: 5 }, s) > cheap, 'relic star cost rises with its level');
+    for (let i = 0; i < 8; i++) act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 91); assert.equal(enhanceMaxFor(relic), 21); assert.throws(() => act(s, { type: 'levelUp', id: relic.id }, 0), /내 레벨/, 'Lv.101 would pass the player');
 });

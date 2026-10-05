@@ -43,7 +43,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false
     const inheritanceText = !acquired ? unlockText : !sk.job ? '공용' : isInherited ? (mastery > 0 ? '숙련 계승' : 'SP 계승') : sk.job === s.job ? '현재 직업 전용' : '계승 필요';
     const hint = skillRankHint(sk, rank || 1, mastery, s.skillSpecializations?.[sk.id], s.skillPractice[sk.id] || 0);
     const effects = skillEffectLines(effective, level);
-    // v3.4 간단히 보기: 고정 효과 + 누적·환생 비례 수치(지금 기준)를 칩으로 합치고, 칩으로 못 담는 조건은 ‘기타’ 칸에 모읍니다.
+    // v3.5 간단히 보기: 고정 효과 + 누적·환생 비례 수치(지금 기준)를 칩으로 합치고, 칩으로 못 담는 조건은 ‘기타’ 칸에 모읍니다.
     const growthNow = sk.type === 'passive' ? passiveGrowthBonus(s, sk) : {}, growing = new Set(Object.keys(growthNow));
     const passiveChips: Record<string, number> = { ...(effective.bonus || {}) as Record<string, number> };
     for (const [key, n] of Object.entries(growthNow)) passiveChips[key] = (passiveChips[key] || 0) + n;

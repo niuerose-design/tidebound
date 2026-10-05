@@ -82,10 +82,10 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     // v27.76 사냥터·던전 난이도가 높을수록 상위 등급 가중치가 조금 오릅니다(보수적).
     const rarity = rollRarity(rng, 1, encounterTier(s));
     const origin = s.dungeon?.id || s.stage;
-    const slot = (['rod', 'coat', 'charm'] as const)[Math.floor(rng() * 3)];
+    const slot = (['rod', 'coat', 'charm', 'cape'] as const)[Math.floor(rng() * 4)];
     const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: '', power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
     if (rarity > 0)
-        item.affixes = rollAffixes(rarity, item.power, origin, rng);
+        item.affixes = rollAffixes(rarity, item.power, origin, rng, [], slot, level);
     item.origin = origin;
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';

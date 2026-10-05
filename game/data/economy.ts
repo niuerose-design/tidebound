@@ -108,22 +108,28 @@ export const SHOP = [
     { id: 'magic', name: '스태프', slot: 'rod', style: 'magic', description: '마법 스킬을 위한 무기.' },
     { id: 'coat', name: '모험가의 갑옷', slot: 'coat', style: 'balanced', description: '체력과 두 방어를 보강합니다.' },
     { id: 'charm', name: '정밀한 귀고리', slot: 'charm', style: 'balanced', description: '치명타를 높이고 정밀 옵션으로 명중을 보강합니다.' },
+    { id: 'cape', name: '여행자의 망토', slot: 'cape', style: 'balanced', description: '회피와 체력을 조금 보강합니다.' },
 ] as const;
 /** 감정은 부위를 먼저 고릅니다. 무기의 공격 계열은 같은 확률입니다. */
 export const GAMBLE_CATEGORIES = [
     { id: 'rod', name: '무기', slot: 'rod', offers: ['physical', 'magic'], description: '물리형·마법형 중 하나를 같은 확률로 획득합니다.' },
     { id: 'coat', name: '방어구', slot: 'coat', offers: ['coat'], description: '최대 체력과 물리·마법 방어를 보강합니다.' },
     { id: 'charm', name: '장신구', slot: 'charm', offers: ['charm'], description: '등급에 따라 정해진 치명타 확률(전설 10%, 태초 16%, 강화할수록 조금씩 상승)과 무작위 추가 옵션을 얻습니다. 치명타 100%를 넘으면 극 치명타 확률이 생깁니다.' },
+    { id: 'cape', name: '망토', slot: 'cape', offers: ['cape'], description: '등급에 따라 정해진 회피(전설 11%, 태초 17%, 강화할수록 상승)와 체력 소량. 망토에만 상태이상 저항 옵션이 붙습니다.' },
 ] as const;
 /** v27.19 환생 유물: 환생 횟수(rebirth)를 채우면 세계석 없이 받습니다. cost는 v27.19 이전 구매자 환불 기준값입니다. */
 export const RELICS = [
     { id: 'memoryRod', name: '윤회의 샤이닝 로드', slot: 'rod', style: 'balanced', power: 45, cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
     { id: 'soulCoat', name: '영혼의 갑주', slot: 'coat', style: 'balanced', power: 55, cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 회피', value: .12 } },
     { id: 'abyssCharm', name: '심연의 눈', slot: 'charm', style: 'balanced', power: 70, cost: 28, rebirth: 3, description: '깊은 심연에 도전하는 모험가의 정밀 유물.', affix: { stat: 'accuracy', name: '심연 통찰', value: .2 } },
+    { id: 'tideCape', name: '조류의 망토', slot: 'cape', style: 'balanced', power: 60, cost: 36, rebirth: 4, description: '조류를 타고 환생을 건너는 유물. 상태이상 저항은 이식으로 새깁니다.', affix: { stat: 'dropBonus', name: '조류의 흐름', value: .1 } },
 ] as const;
-/** v27.96 성장하는 유물: 위력은 환생마다 +perRebirth(기본 × (1 + 환생 × perRebirth)), 같은 부위 장비를 소비해 옵션을 imprintSlots줄까지 이식(비용 = 그 장비 옵션 재설정 골드 × imprintCost). 성·이식 옵션은 환생해도 남습니다. */
-export const RELIC_GROWTH = { perRebirth: .04, imprintSlots: 3, imprintCost: 5 };
-export const relicPower = (base: number, rebirths: number) => Math.round(base * (1 + Math.max(0, rebirths) * RELIC_GROWTH.perRebirth));
+/** v3.3 성장하는 유물: 위력은 환생마다 +perRebirth(기본 × (1 + 환생 × perRebirth)), 같은 부위 장비를 소비해 옵션을 imprintSlots줄까지 이식(비용 = 그 장비 옵션 재설정 골드 × imprintCost). 성·이식 옵션은 환생해도 남습니다. */
+export const RELIC_GROWTH = { perRebirth: .04, imprintSlots: 3, imprintCost: 5, perLevel: .01, starBase: 12 };
+/** v3.5 유물 위력 = 기본 × (1 + 환생 × 4%) × (1 + (레벨 − 1) × 1%). 레벨은 ‘레벨 올리기’로만 오릅니다(Lv.100 ×2). */
+export const relicPower = (base: number, rebirths: number, level = 1) => Math.round(base * (1 + Math.max(0, rebirths) * RELIC_GROWTH.perRebirth) * (1 + Math.max(0, level - 1) * RELIC_GROWTH.perLevel));
+/** v3.5 장비 레벨 올리기: 한 번에 step 레벨, 내 레벨까지. 위력(과 고정 수치 옵션)이 레벨 비례로 오르고 별은 0으로 돌아갑니다(저레벨에서 싸게 별을 올려 고레벨로 가져가는 것을 막음). 비용 = (250 + 위력 × 25) × 가격 보정(새 레벨) × costMultiplier. */
+export const GEAR_LEVEL_UP = { step: 10, costMultiplier: 2 };
 /** v25.7 환생 정리 효율(0 = 연구 없음). 1단계 40%, 단계당 +15%, 5단계 100%. */
 export const salvageRate = (s: Pick<State, 'permanent'>) => { const rank = researchRank(s, 'salvage'); return rank ? Math.min(1, .25 + rank * .15) : 0; };
 /** v27.60 모험가의 유산: 새 생의 시작 레벨(Lv.1 + 2/단계, 10단계 Lv.21). */

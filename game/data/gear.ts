@@ -24,16 +24,22 @@ export type AffixDef = {
     minRarity?: number;
     /** v25.8 이 출처(던전 id)에서 떨어진 장비에만 붙는 옵션. */
     onlyOrigin?: string;
+    /** v3.5 이 부위에만 붙는 옵션. */
+    onlySlot?: string;
+    /** v3.5 percent 수치에 (장비 레벨 ÷ 100)^levelPower를 곱합니다(저레벨 장비에서는 아주 낮게). */
+    levelPower?: number;
     description: string;
 };
 export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean };
 /** 장비에서 오는 수치의 합계 상한. 흡혈은 장비 합계 6%p까지만 인정합니다. */
-export const GEAR_CAPS: Partial<Record<GearStat, number>> = { lifesteal: .06 };
+export const GEAR_CAPS: Partial<Record<GearStat, number>> = { lifesteal: .06, statusResist: .5 };
 
 export const RULE_CAPS: Partial<Record<GearStat, number>> = {
     stunBonus: 1, controlBonus: 1, dotTurnsBonus: 2, poisonStackBonus: 3, arcaneRatioBonus: .3, followUpBonus: .3, healBonus: .5, executeBonus: .15,
 };
 
+/** v3.5 불굴(상태이상 저항) 기본값: Lv.100 태초(품질 1.6) 22성(×1.66) 평균 굴림에서 상한 50%에 닿는 값. */
+export const STATUS_RESIST_BASE = .188, STATUS_RESIST_STAR = .03;
 export const AFFIX_POOL: AffixDef[] = [
     // 능력치 옵션
     { id: 'might', name: '맹공', stat: 'attack', kind: 'flat', base: .3, description: '물리 공격이 오릅니다.' },
@@ -62,6 +68,8 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: .9, stat2: 'speed', base2: -4, description: '물리 방어가 크게 오르지만 느려집니다.' },
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .05, stat2: 'accuracy', base2: -.06, description: '치명타가 크게 오르지만 명중이 줄어듭니다.' },
     { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .035, stat2: 'hp', base2: -1.5, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 6%p).' },
+    // v3.5 망토 전용 옵션: 몬스터 상태이상 저항. 수치 = 18.8% × (레벨/100)² × 등급 품질 × 굴림, 착용 시 별당 +3%(다른 옵션과 달리 별 보정), 합계 최대 50%(Lv.100 태초 22성 ≈ 50%).
+    { id: 'steadfast', name: '불굴', stat: 'statusResist', kind: 'percent', base: STATUS_RESIST_BASE, onlySlot: 'cape', levelPower: 2, description: '망토 전용. 몬스터가 거는 기절·침묵·출혈·중독·화상·약화·감속을 이 확률로 무효화합니다. 별마다 +3%, 최대 50%.' },
     // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강합니다.
     { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 물리 공격이 크게 오릅니다.' },
     { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 마법 공격이 크게 오릅니다.' },
@@ -116,6 +124,8 @@ export const rerollScaled = (base: number, rerolls = 0) => base * (100 + REROLL_
 /** v27.94 수치 재련: 옵션 종류는 그대로 두고 수치(0.6~1.4배 굴림)만 다시 굴립니다. 비용은 재설정 기본 비용의 절반(올림)이고 오르지 않습니다. */
 export const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity) / 2);
 const ROLL_MIN = .6, ROLL_SPAN = .8;
+/** v3.5 레벨 비례 옵션(불굴): (장비 레벨 ÷ 100)^levelPower, Lv.100 이상은 1. */
+const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
 
 function pickAffix(pool: AffixDef[], origin: string | undefined, rng: () => number) {
     const theme = new Set(ORIGIN_THEMES[origin || '']?.affixes || []);
@@ -124,10 +134,10 @@ function pickAffix(pool: AffixDef[], origin: string | undefined, rng: () => numb
     for (let i = 0; i < pool.length; i++) { roll -= weights[i]; if (roll <= 0) return pool[i]; }
     return pool[pool.length - 1];
 }
-export function rollOption(def: AffixDef, power: number, rarity: number, rng: () => number): ItemAffix {
+export function rollOption(def: AffixDef, power: number, rarity: number, rng: () => number, level = 1): ItemAffix {
     if (def.kind === 'rule') return { id: def.id, name: def.name, stat: def.stat, value: def.base, rule: true };
-    // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다.
-    const roll = (ROLL_MIN + rng() * ROLL_SPAN) * rarityQuality(rarity);
+    // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
+    const roll = (ROLL_MIN + rng() * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
     const round = (n: number) => def.kind === 'flat' ? Math.round(n) : Math.round(n * 10000) / 10000;
     const out: ItemAffix = { id: def.id, name: def.name, stat: def.stat, value: round(def.base * scale * roll) };
@@ -140,27 +150,37 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
     return out;
 }
 /** v27.94 수치 재련: 같은 옵션의 수치만 다시 굴립니다. 양날 옵션의 손해 쪽은 고정이라 그대로입니다. */
-export function refineOption(x: ItemAffix, power: number, rarity: number, rng: () => number): ItemAffix {
+export function refineOption(x: ItemAffix, power: number, rarity: number, rng: () => number, level = 1): ItemAffix {
     const def = affixDef(x.id);
     if (!def || x.rule || def.kind === 'rule') return x;
-    return { ...x, value: rollOption(def, power, rarity, rng).value };
+    return { ...x, value: rollOption(def, power, rarity, rng, level).value };
 }
 /** v27.94 옵션 수치가 굴림 범위에서 어디쯤인지(0 = 최저, 1 = 최고). 규칙 옵션·알 수 없는 옵션은 null. */
-export function affixQuality(x: ItemAffix, power: number, rarity: number): number | null {
+export function affixQuality(x: ItemAffix, power: number, rarity: number, level = 1): number | null {
     const def = affixDef(x.id);
     if (!def || x.rule || def.kind === 'rule' || !def.base) return null;
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
-    const roll = x.value / (def.base * scale * rarityQuality(rarity));
+    const roll = x.value / (def.base * scale * rarityQuality(rarity) * levelScale(def, level));
     return Math.min(1, Math.max(0, (roll - ROLL_MIN) / ROLL_SPAN));
 }
+/** v3.5 레벨 올리기 뒤 옵션 수치 보정: 고정 수치는 위력 비례(ratio), 레벨 비례 옵션(불굴)은 레벨 보정 비율, 비율·규칙 옵션은 그대로. */
+export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newLevel: number): ItemAffix {
+    const def = affixDef(x.id);
+    if (!def || x.rule || def.kind === 'rule') return x;
+    const out = { ...x };
+    if (def.kind === 'flat') out.value = Math.round(x.value * ratio);
+    else if (def.levelPower) out.value = Math.round(x.value * levelScale(def, newLevel) / levelScale(def, oldLevel) * 10000) / 10000;
+    if (def.stat2 && out.value2 && ['hp', 'attack', 'magic', 'defense', 'resist', 'mana'].includes(def.stat2)) out.value2 = Math.round(out.value2 * ratio);
+    return out;
+}
 /** 등급 번호만큼 옵션을 굴립니다. 같은 옵션은 한 번만, 규칙 옵션은 장비당 최대 1개. */
-export function rollAffixes(rarity: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = []): ItemAffix[] {
+export function rollAffixes(rarity: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = [], slot?: string, level = 1): ItemAffix[] {
     const out = [...keep];
     while (out.length < rarity) {
         const hasRule = out.some(a => a.rule);
-        const pool = AFFIX_POOL.filter(a => !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (a.kind !== 'rule' || (!hasRule && rarity >= (a.minRarity || 0))));
+        const pool = AFFIX_POOL.filter(a => !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (!a.onlySlot || a.onlySlot === slot) && (a.kind !== 'rule' || (!hasRule && rarity >= (a.minRarity || 0))));
         if (!pool.length) break;
-        out.push(rollOption(pickAffix(pool, origin, rng), power, rarity, rng));
+        out.push(rollOption(pickAffix(pool, origin, rng), power, rarity, rng, level));
     }
     return out;
 }

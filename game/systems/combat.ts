@@ -32,6 +32,8 @@ export type Fighter = {
     gold?: number;
     /** v24.2 사냥감 연구 대상 여부(보스·지정 몬스터). */
     prey?: boolean;
+    /** v3.5 몬스터(사냥터·던전·월드보스). 이 전투원이 거는 상태이상은 상대의 상태이상 저항에 막힐 수 있습니다. */
+    foe?: boolean;
     /** v25.2 기본 공격이 마법 피해(마력 생물). 마법 공격 수치로 치고 상대 마법 방어로 막습니다. */
     magicBasic?: boolean;
     /** v27 기본 공격이 복합 피해(혼돈 생물). (물리+마법)/2로 치고 물리·마법 방어를 절반씩 적용합니다. */
@@ -93,6 +95,9 @@ function alreadyAfflicted(b: Fighter, sk: { effect?: string }) {
     return (b.effects?.[key] || 0) > 0;
 }
 const isImmune = (b: Fighter, key: ImmuneStatus) => (b.effects?.immune?.[key] || 0) > 0;
+/** v3.5 상태이상 저항이 막는 상태이상과 표시 이름. */
+const RESISTABLE = new Set(['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow']);
+const RESIST_LABELS: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속' };
 function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number) {
     effects[key] = Math.max(effects[key] || 0, turns);
 }
@@ -430,15 +435,20 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
     if (!statusOnly || !landed) ev.hits.push(landed ? hitRecord('main', actual, damage, crit, superCrit) : { kind: 'main', value: 0, critical: false, miss: true });
     if (healOnly) notes.push(`회복 ${healed}`);
-    if (landed && chosen?.effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
-    else if (landed && chosen?.effect === 'stun') {
+    // v3.5 상태이상 저항: 몬스터가 거는 해로운 상태이상을 대상의 statusResist 확률로 무효화합니다(저항이 0이면 난수를 쓰지 않음).
+    const harmful = chosen?.effect && RESISTABLE.has(chosen.effect) ? chosen.effect : undefined;
+    const resisted = !!(landed && harmful && a.foe && sb.statusResist > 0 && !isImmune(b, harmful as ImmuneStatus) && rng() < sb.statusResist);
+    if (resisted) { notes.push(`${RESIST_LABELS[harmful!]} 저항`); ev.resisted = harmful; }
+    const effect = resisted ? undefined : chosen?.effect;
+    if (landed && chosen && effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
+    else if (landed && chosen && effect === 'stun') {
         const turns = (chosen.statusTurns ?? 1) + sa.stunBonus;
         b.stun = Math.max(b.stun, turns);
         notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
         ev.statuses.push({ id: 'stun', turns });
     }
-    if (landed && chosen?.effect === 'bleed' && isImmune(b, 'bleed')) { notes.push('출혈 면역'); ev.immune = 'bleed'; }
-    else if (landed && chosen?.effect === 'bleed') {
+    if (landed && chosen && effect === 'bleed' && isImmune(b, 'bleed')) { notes.push('출혈 면역'); ev.immune = 'bleed'; }
+    else if (landed && chosen && effect === 'bleed') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus;
         const name = chosen.dotName || '출혈';
         // v27.3 틱 피해 = 위력 비례 + 대상 최대 체력 × dotMaxHpRatio(무리는 한 마리 기준). 방어·반격을 모두 무시하므로 탱커의 카운터입니다.
@@ -450,8 +460,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         ev.statuses.push({ id: 'bleed', turns });
     }
     // v27.17 중독: 출혈과 별개의 중첩형 지속 피해. 걸릴 때마다 한 중첩, 지속 갱신, 중첩당 피해는 더 강한 쪽.
-    if (landed && chosen?.effect === 'poison' && isImmune(b, 'poison')) { notes.push('중독 면역'); ev.immune = 'poison'; }
-    else if (landed && chosen?.effect === 'poison') {
+    if (landed && chosen && effect === 'poison' && isImmune(b, 'poison')) { notes.push('중독 면역'); ev.immune = 'poison'; }
+    else if (landed && chosen && effect === 'poison') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.poisonTurns) + sa.dotTurnsBonus;
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0) + (sa.poisonBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
         const hpTick = Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.poisonHpRatio);
@@ -462,8 +472,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         ev.statuses.push({ id: 'poison', turns });
     }
     // v27.48 화상: 걸릴 때마다 한 중첩(최대 burnMaxStacks), 지속 갱신, 중첩당 피해는 더 강한 쪽.
-    if (landed && chosen?.effect === 'burn' && isImmune(b, 'burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
-    else if (landed && chosen?.effect === 'burn') {
+    if (landed && chosen && effect === 'burn' && isImmune(b, 'burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
+    else if (landed && chosen && effect === 'burn') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus;
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
         const hpTick = Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.burnHpRatio);
@@ -473,22 +483,22 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         notes.push(`화상 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'burn', turns });
     }
-    if (landed && chosen?.effect === 'weaken' && isImmune(b, 'weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
-    else if (landed && chosen?.effect === 'weaken') {
+    if (landed && chosen && effect === 'weaken' && isImmune(b, 'weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
+    else if (landed && chosen && effect === 'weaken') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.weakenTurns;
         extendStatus(b.effects, 'weaken', turns);
         notes.push(`공격 약화 ${turns}턴`);
         ev.statuses.push({ id: 'weaken', turns });
     }
-    if (landed && chosen?.effect === 'silence' && isImmune(b, 'silence')) { notes.push('침묵 면역'); ev.immune = 'silence'; }
-    else if (landed && chosen?.effect === 'silence') {
+    if (landed && chosen && effect === 'silence' && isImmune(b, 'silence')) { notes.push('침묵 면역'); ev.immune = 'silence'; }
+    else if (landed && chosen && effect === 'silence') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.silenceTurns) + sa.controlBonus;
         extendStatus(b.effects, 'silence', turns);
         notes.push(`침묵 ${turns}턴`);
         ev.statuses.push({ id: 'silence', turns });
     }
-    if (landed && chosen?.effect === 'slow' && isImmune(b, 'slow')) { notes.push('감속 면역'); ev.immune = 'slow'; }
-    else if (landed && chosen?.effect === 'slow') {
+    if (landed && chosen && effect === 'slow' && isImmune(b, 'slow')) { notes.push('감속 면역'); ev.immune = 'slow'; }
+    else if (landed && chosen && effect === 'slow') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.slowTurns) + sa.controlBonus;
         extendStatus(b.effects, 'slow', turns);
         notes.push(`감속 ${turns}턴`);

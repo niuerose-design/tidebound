@@ -1,7 +1,7 @@
 'use client';
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond } from 'lucide-react';
+import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond, Feather } from 'lucide-react';
 import type { State } from '@/game/types';
 import { inventoryCap } from '@/game/data/economy';
 import { skillArtSrc } from '@/game/data/art';
@@ -43,7 +43,7 @@ export function SkillIcon({ id, size = 24 }: {
 export function SlotIcon({ slot, size = 24 }: {
     slot: string;
     size?: number;
-}) { const Icon = slot === 'rod' ? Sword : slot === 'coat' ? Shield : Diamond; return <Icon size={size}/>; }
+}) { const Icon = slot === 'rod' ? Sword : slot === 'coat' ? Shield : slot === 'cape' ? Feather : Diamond; return <Icon size={size}/>; }
 export function Empty({ title, description }: {
     title: string;
     description: string;

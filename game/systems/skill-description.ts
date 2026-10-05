@@ -35,7 +35,7 @@ function statusLabel(sk: Skill) {
  * 자세한 계산식은 skillEffectLines에 있습니다.
  */
 /**
- * v3.4 간단히 보기의 ‘기타’ 칸: 고정 수치 칩으로 다 못 보여 주는 조건·규칙(누적·환생 비례, 조건부 숙련, 특수 규칙).
+ * v3.5 간단히 보기의 ‘기타’ 칸: 고정 수치 칩으로 다 못 보여 주는 조건·규칙(누적·환생 비례, 조건부 숙련, 특수 규칙).
  * 비어 있으면 기타 칸을 그리지 않습니다.
  */
 export function skillExtraNotes(sk: Skill): string[] {

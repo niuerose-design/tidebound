@@ -50,6 +50,7 @@ export function newState(now: number): State {
             rod: { id: 'starter', name: '목검', slot: 'rod', rarity: 0, power: 2, level: 1 },
             coat: { id: 'starter-coat', name: '하얀 반팔 면티', slot: 'coat', rarity: 0, power: 2, level: 1 },
             charm: null,
+            cape: null,
         },
         permanent: { attack: 0, hp: 0, gold: 0 },
         dungeon: null,
