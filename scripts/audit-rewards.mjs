@@ -19,6 +19,7 @@ const PROFILES = [
     { name: '환생 0 · Lv.30', rebirths: 0, level: 30, research: { attack: 5, hp: 5, guard: 3 } },
     { name: '환생 10 · Lv.64', rebirths: 10, level: 64, research: { attack: 60, magicAttack: 20, hp: 60, guard: 30, magicGuard: 20, crit: 10, critDamage: 10, penetration: 8, exp: 6, gold: 8, drop: 5, mastery: 5 } },
     { name: '환생 40 · Lv.80', rebirths: 40, level: 80, research: { attack: 200, magicAttack: 80, hp: 200, guard: 100, magicGuard: 80, crit: 20, critDamage: 25, penetration: 15, lifesteal: 20, recovery: 10, evasion: 20, exp: 10, gold: 20, drop: 10, mastery: 10 } },
+    { name: '환생 60 · Lv.100', rebirths: 60, level: 100, research: { attack: 260, magicAttack: 100, hp: 260, guard: 130, magicGuard: 100, crit: 25, critDamage: 30, penetration: 18, lifesteal: 25, exp: 10, gold: 12, drop: 8 } },
 ];
 function build(p) {
     const rng = random(7), s = newState(0);

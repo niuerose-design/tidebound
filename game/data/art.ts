@@ -28,6 +28,9 @@ export const FISH_SHAPES: Record<string, FishShape> = {
     cinderKoi: 'drake', ancient: 'drake', novaManta: 'drake', ventLeviathan: 'drake',
     // 커닝시티
     starKoi: 'bubble', prismRay: 'octopus', voidGuppy: 'bat', ventCrab: 'crab', sulfurEel: 'snake', blindShark: 'croc', cinderAngler: 'croc',
+    // v3.10 아쿠아로드 · 리프레 · 시간의 신전 · 아케인 리버
+    aqSeaco: 'pig', aqShark: 'croc', aqSquid: 'octopus', aqFlower: 'mushroom', aqGuard: 'fighter', lfBlueTurtle: 'golem', lfRedTurtle: 'golem', lfWyvern: 'drake', lfSkelegon: 'skeleton', lfManticore: 'boar',
+    ttMonitor: 'eye', ttGuardian: 'statue', ttChimera: 'demon', ttDodo: 'bat', ttLyka: 'croc', arErdaSpirit: 'ghost', arMemoryGuard: 'statue', arMysticErda: 'bubble', arVanishSoul: 'ghost', arTrueErda: 'bubble',
     // 까미 · 보스
     masteryMimic: 'chest', expNuri: 'ghost',
     grottoWarden: 'mushroom', kelpHydra: 'slime', anchorWraith: 'mushroom', magmaKraken: 'demon', templeOracle: 'mage', abyssSovereign: 'fighter', ventColossus: 'statue', starfallSeraph: 'clock',

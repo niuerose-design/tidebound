@@ -761,12 +761,12 @@ test('v27.64 tide lifts low-stage monster levels toward the top stage (capped by
     const W = await L.load('data/world'), Enc = await L.load('systems/encounter');
     const cap = Math.max(...W.STAGES.map(st => st.level)) + W.STAGE_ENEMY_LEVEL_OVER;
     assert.equal(W.tideLiftLevel(1, 0, 90), 1, 'no tide → no lift');
-    assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS, 90), cap, 'reaches the top-stage level at the lift tier');
-    assert.equal(W.tideLiftLevel(1, 40, 90), cap, 'never past the top stage');
+    assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS, 200), cap, 'reaches the top-stage level at the lift tier');
+    assert.equal(W.tideLiftLevel(1, 40, 200), cap, 'never past the top stage'); assert.equal(cap, 106, 'v3.10 cap = Lv.100 stage + 6');
     assert.equal(W.tideLiftLevel(1, 40, 20), 20, 'never past the player level');
     assert.equal(W.tideLiftLevel(50, 40, 20), 50, 'never lowers a monster');
-    assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS / 2, 90), Math.round(1 + (cap - 1) / 2), 'halfway at half the lift tier');
-    const f = W.FISH.find(x => x.level <= 3), up = W.tideLiftFish(f, W.TIDE_LIFT_TIERS, 90);
+    assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS / 2, 200), Math.round(1 + (cap - 1) / 2), 'halfway at half the lift tier');
+    const f = W.FISH.find(x => x.level <= 3), up = W.tideLiftFish(f, W.TIDE_LIFT_TIERS, 200);
     assert.ok(up.level === cap && up.hp > f.hp && up.exp >= f.exp && up.gold >= f.gold, 'stats and rewards follow the lifted level');
     const spawnAt = tide => { const s = newState(0); s.level = 90; s.rebirths = 40; s.kills = 0; s.stage = W.STAGES[0].id; s.tide = tide; Enc.spawn(s, () => .99); return s.enemy; };
     assert.ok(spawnAt(20).maxHp > spawnAt(0).maxHp * 50, 'first stage at high tide is far tougher than before');
@@ -990,7 +990,7 @@ test('v27.80 regional variants and swarm habitats: signature variant ×2.5, habi
     const lith = at('brook'), hen = at('reef'), base = V.VARIANTS.find(v => v.id === 'swarm').chance;
     assert.ok(Math.abs(lith.swarm - base * 2.5) < 1e-9 && Math.abs(hen.swarm - base * .8) < 1e-9, 'Lith Harbor favours swarms');
     assert.ok(hen.giant > lith.giant * 3, 'Henesys favours giants');
-    assert.equal(W.REGIONS.length, 5); assert.equal(W.STAGES.filter(st => st.habitat).length, 5); assert.equal(W.PLACES.length, W.STAGES.length - 5);
+    assert.equal(W.REGIONS.length, 9); assert.equal(W.STAGES.filter(st => st.habitat).length, 9); assert.equal(W.PLACES.length, W.STAGES.length - 9);
     const hab = W.STAGES.find(st => st.id === 'lithSwarm');
     assert.deepEqual(hab.fish, W.regionFish('리스항구')); assert.ok(hab.rebirth >= W.HABITAT.minRebirth);
     const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 20; s.running = true;
