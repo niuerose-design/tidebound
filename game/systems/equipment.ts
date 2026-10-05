@@ -74,7 +74,8 @@ export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebir
     }
 }
 /** v3.5 레벨 올리기 목표 레벨: 지금 레벨 + step, 내 레벨까지. 더 올릴 수 없으면 null. */
-export const levelUpTarget = (item: Pick<Item, 'level'>, s: Pick<State, 'level'>) => { const next = (item.level || 1) + GEAR_LEVEL_UP.step; return next <= s.level ? next : null; };
+/** v3.13 +step이 내 레벨을 넘으면 내 레벨까지만 올립니다(전에는 Lv.91 장비가 최대 레벨 100에서 Lv.101을 요구해 영원히 막혔음). */
+export const levelUpTarget = (item: Pick<Item, 'level'>, s: Pick<State, 'level'>) => { const cur = item.level || 1, next = Math.min(cur + GEAR_LEVEL_UP.step, s.level); return next > cur ? next : null; };
 export const levelUpCost = (item: Item, s: Pick<State, 'permanent' | 'level'>) => { const next = levelUpTarget(item, s) ?? (item.level || 1) + GEAR_LEVEL_UP.step; return smith(Math.floor((250 + item.power * 25) * priceScale(next) * GEAR_LEVEL_UP.costMultiplier), s); };
 /** 레벨 올리기 적용: 위력·고정 수치 옵션은 (새 레벨 + 2) ÷ (옛 레벨 + 2)배, 유물 위력은 relicPower로 다시 계산, 별·하락 횟수는 0. */
 export function applyLevelUp(item: Item, next: number, s: Pick<State, 'rebirths'>) {
