@@ -41,10 +41,7 @@ export function gainLevels(s: State) {
         s.exp -= xpNeeded(s.level, s.rebirths, xpWall(s));
         s.level++;
         s.statPoints += PROGRESSION.statPerLevel;
-        if (s.level > s.peakLevel) {
-            s.sp += (s.level - s.peakLevel) * PROGRESSION.spPerPeakLevel;
-            s.peakLevel = s.level;
-        }
+        if (s.level > s.peakLevel) s.peakLevel = s.level;
         s.mana = stats(s).mana;
         s.hp = stats(s).hp;
         addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);

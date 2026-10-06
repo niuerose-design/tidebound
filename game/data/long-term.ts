@@ -33,4 +33,3 @@ export const REBIRTH_TITLES: { rebirths: number; title: string }[] = [
     { rebirths: 5, title: '되돌아온 모험가' }, { rebirths: 10, title: '윤회의 여행자' }, { rebirths: 20, title: '운명을 거스른 자' }, { rebirths: 30, title: '심연을 건넌 자' }, { rebirths: 50, title: '영원의 모험가' },
 ];
 export const rebirthTitle = (rebirths: number) => [...REBIRTH_TITLES].reverse().find(x => rebirths >= x.rebirths)?.title || '';
-export const nextRebirthTitle = (rebirths: number) => REBIRTH_TITLES.find(x => x.rebirths > rebirths);

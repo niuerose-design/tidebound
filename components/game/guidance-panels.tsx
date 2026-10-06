@@ -1,7 +1,7 @@
 'use client';
 import type { PanelProps } from './panel-props';
 import { Check, ChevronDown, ChevronRight, ChevronUp, Compass, HelpCircle, RefreshCw, X } from 'lucide-react';
-import { STAGES, DUNGEONS } from '@/game/data/world';
+import { PLACES, DUNGEONS } from '@/game/data/world';
 import { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, CHALLENGE_GROUP, achievementTotals, achievementMaxTotals, rewardText } from '@/game/data/achievements';
 import { goalText, dayKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, type GoalBoard } from '@/game/data/goals';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -62,7 +62,7 @@ function GoalBoardView({ title, which, board, bonus, today, send, busy }: { titl
 function AchievementGroups({ s, send, busy }: PanelProps) {
     const got = s.voyage || {}, feats = s.achievements || {}, claimed = s.achievementClaims || {};
     /** 업적 ‘사냥터 N곳’·‘던전 N곳’ 카드에 붙는 방문 기록(이전 ‘모험 기록’ 해금을 여기로 통합). */
-    const visited = (a: { id: string }) => a.id.startsWith('stages:') ? STAGES.filter(st => got[`stage:${st.id}`] !== undefined).map(st => st.name) : a.id.startsWith('dungeons:') ? DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).map(d => d.name) : null;
+    const visited = (a: { id: string }) => a.id.startsWith('stages:') ? PLACES.filter(st => got[`stage:${st.id}`] !== undefined).map(st => st.name) : a.id.startsWith('dungeons:') ? DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).map(d => d.name) : null;
     return <>{ACHIEVEMENT_GROUPS.map(g => { const items = ACHIEVEMENTS.filter(a => a.group === g), doneCount = items.filter(a => feats[a.id] !== undefined).length, claimable = items.filter(a => feats[a.id] !== undefined && !claimed[a.id]).length; return <details key={g} className="achievement-group" open={claimable > 0}><summary><h3>{g}</h3><span>{doneCount} / {items.length}{claimable ? ` · 받을 보상 ${claimable}개` : ''}{g === CHALLENGE_GROUP ? ` · 플레이 ${Math.floor((s.playMs || 0) / 3_600_000).toLocaleString()}시간 · ${(s.turn || 0).toLocaleString()}턴 · 쓰러짐 ${(s.deaths || 0).toLocaleString()}회` : ''}</span><ChevronDown size={15} className="achievement-chevron"/></summary><div className="voyage-list achievement-list">{items.map(a => { const done = feats[a.id] !== undefined, got = !!claimed[a.id], p = Math.min(a.target, a.progress(s)); return <article key={a.id} className={`panel voyage-entry achievement ${done ? 'done' : ''} ${done && !got ? 'claimable' : ''}`}><div className="achievement-top"><strong>{a.title}</strong>{got ? <Check size={14}/> : done ? <button className="primary small" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: a.id })}>보상 받기</button> : null}</div><p>{a.desc}</p>{(() => { const v = visited(a); return v && v.length ? <small className="achievement-visited">다녀온 곳: {v.join(' · ')}</small> : null; })()}<Meter value={p} max={a.target} label="달성"/><small className="achievement-reward">{rewardText(a.reward)}</small></article>; })}</div></details>; })}</>;
 }
 

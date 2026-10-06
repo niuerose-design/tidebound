@@ -1,10 +1,8 @@
 /** 모험 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
-import { skillPracticeTargets } from '../progression';
 import { tideLimit, encounterTier, levelGateOk } from '../meta';
 import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed, hackDownOf } from '../../data/world';
 import { SWARM_CAPS } from '../../data/variants';
 import { JOBS } from '../../data/classes';
-import { SKILLS, skillById } from '../../data/skills';
 import { RANDOM_GAME } from '../../data/random-game';
 import { isHackerJob } from '../../data/hacker';
 import { randomGameRank, randomGameRunsLeft, randomGameUsed, inRandomGame, cashOutRandomGame } from '../random-game';
@@ -68,7 +66,7 @@ export const voyageActions: ActionHandlers = {
             if (!randomGameRunsLeft(s, now)) throw Error('오늘(이번 생)의 랜덤게임 입장 횟수를 모두 썼습니다. 하루가 지나거나 환생하면 다시 채워집니다.');
             const until = Math.max(0, Math.min(999, Math.floor(Number(String(a.value || 'until:0').replace('until:', '')) || 0)));
             enterDungeon(s, d.id);
-            s.dungeon = { ...s.dungeon!, stake: { essence: 0, pearls: 0 }, ...(until ? { until } : {}) };
+            s.dungeon = { ...s.dungeon!, stake: { essence: 0 }, ...(until ? { until } : {}) };
             s.randomGameRuns = randomGameUsed(s, now) + 1; s.randomGameDay = dayKey(now);
             s.randomGameStats ??= { best: 0, runs: 0, cashed: 0 }; s.randomGameStats.runs++;
         }
@@ -147,11 +145,9 @@ export const voyageActions: ActionHandlers = {
         else if (id === 'skip') s.tutorial.skipped = true;
         else throw Error('알 수 없는 안내 설정입니다.');
     },
-    growthGoal(s, { a, id }) {
-        const kind = a.value;
+    growthGoal(s, { id }) {
         if (id === 'none') { s.growthGoal = null; return; }
-        const valid = kind === 'skill' ? SKILLS.some(x => x.id === id) : kind === 'job' ? JOBS.some(x => x.id === id) : kind === 'dungeon' ? DUNGEONS.some(x => x.id === id) : false;
-        if (!valid) throw Error('성장 목표를 확인하세요.');
-        s.growthGoal = { kind: kind as 'skill' | 'job' | 'dungeon', id, ...(kind === 'skill' ? { target: Math.min(skillPracticeTargets(skillById(id)!).length, skillPracticeTargets(skillById(id)!).filter(n => (s.skillPractice[id] || 0) >= n).length + 1) } : {}) };
+        if (!JOBS.some(x => x.id === id)) throw Error('성장 목표를 확인하세요.');
+        s.growthGoal = { kind: 'job', id };
     },
 };

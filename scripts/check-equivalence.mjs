@@ -46,7 +46,7 @@ function pickAction(s, r) {
         () => ({ type: 'loadPreset', id: String(Math.floor(r() * 3)) }), () => ({ type: 'equip', id: pick(inv) }), () => ({ type: 'unequip', id: pick(['rod', 'coat', 'charm']) }),
         () => ({ type: 'sell', id: pick(inv) }), () => ({ type: 'rebirth' }),
         () => ({ type: 'bossResearch', id: pick(DUNGEONS).id }),
-        () => ({ type: 'growthGoal', id: pick(skillIds), value: 'skill' }), () => ({ type: 'offlineDismiss' }),
+        () => ({ type: 'growthGoal', id: pick(JOBS).id, value: 'job' }), () => ({ type: 'offlineDismiss' }),
         () => ({ type: 'buy', id: pick(SHOP).id }), () => ({ type: 'gamble', id: pick(GAMBLE_CATEGORIES).id }), () => ({ type: 'enhance', id: pick(inv) }),
         () => ({ type: 'reforge', id: pick(inv) }), () => ({ type: 'lockItem', id: pick(inv) }), () => ({ type: 'sellRarity', id: String(Math.floor(r() * 4)) }),
         () => ({ type: 'permanent', id: pick(RESEARCH).id }), () => ({ type: 'buyRelic', id: pick(RELICS).id }),

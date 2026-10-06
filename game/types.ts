@@ -235,8 +235,6 @@ export type Skill = {
     /** 공용 기술 중 SP 없이 레벨 조건만으로 자동 습득하는 기술. */
     freeCommon?: boolean;
     masteryMilestones?: number[];
-    masteryAP?: number;
-    masteryBonus?: Partial<Stats>;
     /** Exact growth stages; index 0 is the free job skill. Negative AP is allowed. */
     levelEffects?: { cost?: number; bonus?: Partial<Stats>; penaltyRelief?: number }[];
     /** 환생 1회마다 더하는 능력치(최대 SKILL_FORMULA.perRebirthCap회). 환생할수록 강해지는 패시브에 씁니다. */
@@ -331,21 +329,6 @@ export type Log = {
     /** 전투 로그의 구조화된 결과. 오래된 로그에는 없을 수 있습니다. */
     event?: CombatEvent;
 };
-export type GuildState = {
-    name: string;
-    level: number;
-    xp: number;
-    treasury: number;
-    contribution: number;
-    medals: number;
-    research: Record<string, number>;
-    missionKills: number;
-    missionDungeons: number;
-    missionClaimed: Record<string, boolean>;
-    raidTier: number;
-    raidBest: number;
-    lastRaid: number;
-};
 export type State = {
     version: number;
     /** SP를 지급한 무릉도장 이정표 깊이. 환생해도 유지됩니다. */
@@ -361,7 +344,7 @@ export type State = {
     /** v27.73 운영 페이지에서 연 문의 ??? 직업 id(서버가 동기화 때 적음). 없으면 null. 열려 있는 동안만 문이 열리고 doorsOpened에는 남지 않습니다. */
     openDoors?: string[] | null;
     bossResearchClaims?: Record<string, boolean>;
-    growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number; notified?: boolean } | null;
+    growthGoal?: { kind: 'job'; id: string; notified?: boolean } | null;
     /** 마지막으로 자동 진행(사냥·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
     runEnd?: { reason: string; turn: number } | null;
     /** 튜토리얼 카드. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. */
@@ -405,7 +388,6 @@ export type State = {
     shopSerial: number;
     /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
     essence?: number;
-    guild: GuildState;
     attributes: Record<Attribute, number>;
     statPoints: number;
     sp: number;
@@ -529,7 +511,7 @@ export type State = {
         /** v27.70 일반 던전 난이도(DUNGEON_MODES). 없으면 노말. 무릉도장은 쓰지 않습니다. */
         mode?: import('./data/balance').DungeonMode;
         /** v27.86 랜덤게임: 쌓인 판돈(배율 적용 전)과 목표 웨이브(0이면 없음). */
-        stake?: { essence: number; pearls: number };
+        stake?: { essence: number };
         until?: number;
     };
     /** v27.86 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). v3.24 randomGameDay와 날이 다르면 0으로 봅니다. */

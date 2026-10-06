@@ -199,7 +199,7 @@ for (const sk of SKILLS) {
     const job = JOBS.find(j => j.id === sk.job);
     if (job) sk.level = job.tier === 0 ? sk.level : job.level;
     const curve = !job || job.tier === 0 ? [120, 600, 2400, 8000] : job.tier === 1 ? [250, 1200, 4500, 14000] : job.tier === 2 ? [600, 3000, 12000, 36000] : [1500, 7500, 28000, 75000];
-    const longTerm = !!sk.scaling || !!sk.rankEffects?.apReduction || !!sk.masteryAP;
+    const longTerm = !!sk.scaling || !!sk.rankEffects?.apReduction;
     sk.masteryMilestones = masteryTuning[sk.id] || sk.masteryMilestones || curve.map(n => Math.round(n * (longTerm ? 1.4 : 1)));
     // v27.95 차수별 요구 숙련 상향(3차 ×3 · 4차 ×10 · 5차 ×25). 공용·1·2차 스킬은 그대로입니다.
     const scale = skillMasteryScale(sk);

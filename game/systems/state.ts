@@ -6,7 +6,6 @@ import { BALANCE, SAVE_VERSION } from '../data/balance';
 import { type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { initialProgress, grantJobSkills } from './progression';
-import { newGuild } from '../data/guild';
 export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'system' | 'skill' = 'system', event?: CombatEvent) {
     s.logs.push({ id: ++s.logId, text, type, turn: s.turn, ...(event ? { event } : {}) });
     if (s.logs.length > 70)
@@ -26,7 +25,6 @@ export function newState(now: number): State {
         abyssBest: 0,
         shopSerial: 0,
         essence: 0,
-        guild: newGuild(),
         name: '초보 모험가',
         level: 1,
         exp: 0,

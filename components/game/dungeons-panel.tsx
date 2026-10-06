@@ -44,9 +44,9 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     {activeDungeon && <section className="panel dungeon-run-panel">
         <div className="dungeon-run-header">
         <div><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}{activeDungeon.id === 'abyss' && <b className="abyss-floor"> {s.dungeon!.depth || s.abyssBest + 1}층</b>}{randomRun && <b className="abyss-floor"> {activeWave + 1}웨이브</b>}</h2><p>{activeDungeon.description}{activeDungeon.id === 'abyss' ? ` · 최고 기록 ${s.abyssBest}층` : ''}</p></div>
-        {randomRun ? <button className="gold-button" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>받고 나가기 · 정수 {stakePayout(s).essence}{stakePayout(s).pearls ? ` · 세계석 ${stakePayout(s).pearls}` : ''}</button> : <button className="secondary" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</button>}
+        {randomRun ? <button className="gold-button" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>받고 나가기 · 정수 {stakePayout(s)}</button> : <button className="secondary" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</button>}
         </div>
-        {randomRun ? <p className="random-game-stake">판돈 · 정수 {stakePayout(s).essence}{stakePayout(s).pearls ? ` · 세계석 ${stakePayout(s).pearls}` : ''} (×{randomGamePayout(s)}) · 다음 웨이브 돌파 시 정수 +{Math.floor(waveStake(activeWave + 1).essence * randomGamePayout(s))}{waveStake(activeWave + 1).pearls ? ` · 세계석 +${Math.floor(waveStake(activeWave + 1).pearls * randomGamePayout(s))}` : ''} · 난이도 {randomGameTier(activeWave)}{s.dungeon?.until ? ` · 목표 ${s.dungeon.until}웨이브에서 자동으로 받고 나감` : ' · 목표 없음'} · 쓰러지면 판돈 소멸</p> : <div className="dungeon-wave-track">{activeDungeon.fish.map((id, index) => {
+        {randomRun ? <p className="random-game-stake">판돈 · 정수 {stakePayout(s)} (×{randomGamePayout(s)}) · 다음 웨이브 돌파 시 정수 +{Math.floor(waveStake(activeWave + 1) * randomGamePayout(s))} · 난이도 {randomGameTier(activeWave)}{s.dungeon?.until ? ` · 목표 ${s.dungeon.until}웨이브에서 자동으로 받고 나감` : ' · 목표 없음'} · 쓰러지면 판돈 소멸</p> : <div className="dungeon-wave-track">{activeDungeon.fish.map((id, index) => {
             const isDone = s.dungeon!.wave > index;
             const isCurrent = s.dungeon!.wave === index;
             const isBoss = index === activeDungeon.fish.length - 1;
@@ -98,8 +98,7 @@ function RandomGameCard({ s, send, busy }: PanelProps) {
     const [target, setTarget] = useState<number>(10), now = useNow(60_000);
     const rank = randomGameRank(s), left = randomGameRunsLeft(s, now), m = randomGamePayout(s);
     if (s.rebirths < 5 && !rank) return null;
-    const total = (n: number) => { const t = stakeUpTo(n); return { essence: Math.floor(t.essence * m), pearls: Math.floor(t.pearls * m) }; };
-    const payout = (n: number) => { const t = total(n); return `정수 ${t.essence}${t.pearls ? ` · 세계석 ${t.pearls}` : ''}`; };
+    const payout = (n: number) => `정수 ${Math.floor(stakeUpTo(n) * m)}`;
     return <section className={`panel random-game ${rank ? '' : 'locked'}`}>
         <div className="random-game-head">
             <div><span className="eyebrow">RANDOM GAME · 던전</span><h2>랜덤게임</h2></div>
@@ -113,7 +112,7 @@ function RandomGameCard({ s, send, busy }: PanelProps) {
             </ul>
             {rank > 0 && <div className="random-game-pick">
                 <div className="random-game-pick-title">목표 웨이브 <small>칩의 숫자는 목표까지 모두 깼을 때 받는 정수</small></div>
-                <div className="random-game-targets" role="radiogroup" aria-label="목표 웨이브">{RANDOM_GAME.targets.map(n => <button key={n} type="button" role="radio" aria-checked={target === n} className={`random-game-target ${target === n ? 'on' : ''}`} disabled={busy} onClick={() => setTarget(n)}><b>{n ? `${n}` : '∞'}</b><small>{n ? `정수 ${total(n).essence}` : '목표 없음'}</small></button>)}</div>
+                <div className="random-game-targets" role="radiogroup" aria-label="목표 웨이브">{RANDOM_GAME.targets.map(n => <button key={n} type="button" role="radio" aria-checked={target === n} className={`random-game-target ${target === n ? 'on' : ''}`} disabled={busy} onClick={() => setTarget(n)}><b>{n ? `${n}` : '∞'}</b><small>{n ? payout(n) : '목표 없음'}</small></button>)}</div>
                 <div className="random-game-go">
                     <span>{target ? `${target}웨이브까지 모두 깨면 ${payout(target)}` : '받고 나가기를 누르거나 쓰러질 때까지 계속합니다.'}</span>
                     <button className="gold-button" disabled={busy || !left || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: RANDOM_GAME.id, value: `until:${target}` })}>{left ? '랜덤게임 시작' : '오늘 입장 횟수를 모두 썼습니다 · 내일 또는 환생 뒤 다시'}</button>

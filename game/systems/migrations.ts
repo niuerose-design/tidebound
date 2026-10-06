@@ -88,6 +88,9 @@ export function rescaleRanks(s: State) {
 export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
+    // v3.35 성장 목표는 직업만 남았습니다. 예전 스킬·던전 목표와 쓰지 않던 개인 길드 기록(guild)은 지웁니다.
+    if (s.growthGoal && s.growthGoal.kind !== 'job') s.growthGoal = null;
+    if ('guild' in s) delete (s as Record<string, unknown>).guild;
     if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);

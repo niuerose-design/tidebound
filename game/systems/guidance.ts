@@ -1,6 +1,5 @@
 import type { State } from '../types';
-import { VOYAGE_LOG } from '../data/voyage-log';
-import { ABYSS_SP_MILESTONES } from '../data/long-term';
+import { PLACES } from '../data/world';
 
 export type TutorialStep = { id: string; title: string; hint: string; view: string; done: (s: State) => boolean; /** v3.17 보상 조건(없으면 done). 환생으로 자동 완료되는 단계는 실제로 해냈을 때만 보상합니다. */ earned?: (s: State) => boolean; /** v3.17 완료 보상(완료되는 순간 자동 지급, 한 번). */ reward?: { pearls?: number; sp?: number } };
 /**
@@ -29,7 +28,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     { id: 'abyss', title: '무릉도장', hint: '‘사냥터·던전’의 무릉도장은 층마다 강해지는 끝없는 도전입니다. 최고 층 기록은 환생해도 남고 주간 순위 세계석과 SP 이정표가 있습니다.', view: 'dungeons', done: s => (s.abyssBest || 0) >= 1, reward: { pearls: 3 } },
     { id: 'cosmetics', title: '칭호 · 계급장', hint: '‘능력치 · 치장’의 치장 탭에서 얻은 칭호나 계급장을 이름 옆에 표시하세요. 계급은 누적 처치로 오르고 진급 포인트로 특전을 찍습니다.', view: 'cosmetics', done: s => !!s.title || Object.values(s.rank?.perks || {}).some(n => (n || 0) > 0), reward: { pearls: 2 } },
     { id: 'duel', title: '결투', hint: '‘랭킹 · 결투’에서 다른 모험가의 편성과 겨룹니다. 월 시즌 순위에 따라 세계석을 받습니다.', view: 'ranking', done: s => (s.wins || 0) + (s.losses || 0) > 0, reward: { pearls: 2 } },
-    { id: 'guild', title: '길드', hint: '‘길드’에 가입하거나 만들면 길드 연구 보너스와 주간 기록판을 함께 씁니다.', view: 'guild', done: s => !!s.guildMember || !!s.guild?.name, reward: { pearls: 2 } },
+    { id: 'guild', title: '길드', hint: '‘길드’에 가입하거나 만들면 길드원과 주간 목표를 함께 채워 세계석을 받습니다.', view: 'guild', done: s => !!s.guildMember, reward: { pearls: 2 } },
     { id: 'raid', title: '월드보스 · 신', hint: '제단의 소환 게이지가 차면 월드보스(발록 · 자쿰 · 혼테일)나 신이 나타납니다. 월드보스는 모두의 피해가 하나의 체력에 쌓이고, 신을 처음 쓰러뜨리면 신의 자리에 앉습니다.', view: 'altar', done: s => (s.altar?.raidHits || 0) > 0 || (s.altar?.tries || 0) > 0, reward: { pearls: 3 } },
 ];
 /** 기록된 완료 또는 지금 조건 만족. */
@@ -60,27 +59,13 @@ export function syncTutorial(s: State, log?: (text: string) => void) {
     }
 }
 
-/** 지금 조건을 만족한 모험 기록 id. */
-function metVoyage(s: State): string[] {
-    const ids: string[] = [];
-    if (s.running && !s.dungeon) ids.push(`stage:${s.stage}`);
-    for (const [id, n] of Object.entries(s.clears || {})) if (n > 0) ids.push(`dungeon:${id}`);
-    if (s.rebirths > 0) ids.push('rebirth:1');
-    for (const d of ABYSS_SP_MILESTONES) if (s.abyssBest >= d) ids.push(`abyss:${d}`);
-    return ids;
-}
 /**
- * 새로 해금된 모험 기록을 저장하고 한 줄 알림을 남깁니다. 전투를 멈추지 않고 난수도 쓰지 않습니다.
- * 기록이 없던 세이브는 이미 달성한 기록을 조용히 채웁니다(알림 없음, 기존 유저에게 강제 노출하지 않음).
+ * 사냥한 일반 사냥터를 기록합니다(업적 ‘사냥터 N곳’과 그 방문 목록). 알림 없이 조용히 남고 환생 후에도 유지됩니다.
+ * v3.35 쓰이지 않던 던전·환생·무릉도장 기록과 항해 일지 본문은 없앴습니다(던전 업적은 s.clears로 셉니다).
  */
 export function syncVoyage(s: State, log?: (text: string) => void) {
     syncTutorial(s, log);
-    // v25.13 알림 없이 조용히 기록만 남깁니다(업적 ‘사냥터 N곳’·‘던전 N곳’의 방문 기록으로만 쓰임).
-    void log;
-    const silent = !s.voyage;
     s.voyage ??= {};
-    for (const id of metVoyage(s)) {
-        if (s.voyage[id] !== undefined || !VOYAGE_LOG.some(x => x.id === id)) continue;
-        s.voyage[id] = silent ? -1 : s.turn;
-    }
+    const key = `stage:${s.stage}`;
+    if (s.running && !s.dungeon && s.voyage[key] === undefined && PLACES.some(st => st.id === s.stage)) s.voyage[key] = s.turn;
 }

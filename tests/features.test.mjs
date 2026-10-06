@@ -1,5 +1,5 @@
 // 도감·능력치 추적·항해 기록·회복·장기 목표·능력치 포인트
-import { newState, act, tick, victoryHeal, encounterSource, stats, goalProgress, goalSuggestions, DUNGEONS, JOBS, assert, rng, test } from './harness.mjs';
+import { newState, act, tick, victoryHeal, encounterSource, stats, goalProgress, migrateState, JOBS, assert, rng, test } from './harness.mjs';
 test('Codex: crossing several thresholds claims all pending ranks once; claim-all spans species',()=>{
  const s=newState(0),g=s.gold;s.book.minnow=10000;s.book.carp=500;act(s,{type:'claimAllBooks'},0);
  assert.equal(s.bookClaims.minnow,4);assert.equal(s.bookClaims.carp,undefined,'v27.81 ranks without SP have nothing to claim');assert.equal(s.sp,1);assert.equal(s.gold,g,'v27.81 no gold from the codex');
@@ -16,13 +16,11 @@ test('Stat trace: per-source deltas sum to the final value and do not change the
  for(const [k,v] of Object.entries(traced)){const sum=(trace[k]||[]).reduce((a,x)=>a+x.delta,0);assert.ok(Math.abs(sum-v)<1e-6,`${k}: ${sum} vs ${v}`);}
  assert.ok(trace.hp.some(x=>x.source==='research'&&x.factor>1));assert.ok(trace.hp.some(x=>x.source==='rebirth'));assert.ok(trace.attack.some(x=>x.source==='book'));assert.ok(trace.attack.some(x=>x.source==='equipment')||trace.magic.some(x=>x.source==='equipment')||Object.values(trace).flat().some(x=>x.source==='equipment'));
 });
-test('Voyage log: unlocks once, survives rebirth, silent backfill for old saves; tutorial has no rewards',()=>{
+test('Stage visits: recorded silently for plain stages only, survive rebirth; tutorial skip grants nothing',()=>{
  const s=newState(0);act(s,{type:'start'},0);tick(s,rng);assert.ok(s.voyage['stage:brook']>=0);assert.equal(s.logs.filter(l=>l.text.includes('항해 기록')).length,0,'v25.13: visits are recorded silently');
- for(let i=0;i<5;i++)tick(s,rng);assert.ok(s.voyage['stage:brook']>=0);
- const old=newState(0);delete old.voyage;delete old.tutorial;old.clears.grotto=2;old.rebirths=1;old.abyssBest=30;act(old,{type:'pause'},0);
- assert.equal(old.voyage['dungeon:grotto'],-1);assert.equal(old.voyage['abyss:25'],-1);assert.equal(old.voyage['abyss:50'],undefined);assert.ok(!old.logs.some(l=>l.text.includes('항해 기록')));assert.equal(old.tutorial,undefined);
+ const h=newState(0);h.rebirths=2;h.level=60;act(h,{type:'stage',id:'lithSwarm'},0);act(h,{type:'start'},0);tick(h,rng);assert.equal(h.voyage['stage:lithSwarm'],undefined,'habitats are not plain stages');
  const r=newState(0);r.level=60;r.voyage={'stage:reef':12};const before={sp:r.sp,gold:r.gold};act(r,{type:'tutorial',id:'skip'},0);assert.equal(r.tutorial.skipped,true);assert.equal(r.sp,before.sp);assert.equal(r.gold,before.gold);
- act(r,{type:'rebirth'},0);assert.equal(r.voyage['stage:reef'],12);assert.ok(r.voyage['rebirth:1']>=0);assert.equal(r.tutorial.skipped,true);
+ act(r,{type:'rebirth'},0);assert.equal(r.voyage['stage:reef'],12);assert.equal(r.tutorial.skipped,true);
 });
 test('Recovery v27.8: 20% after a win minus 1%p per sea tier (min 5%), 8% in dungeons; first aid is free at Lv.2 and gives hp regen',()=>{
  const s=newState(0);assert.equal((s.learned.firstAid||0),0);s.level=2;act(s,{type:'sync'},0);assert.equal(s.learned.firstAid,1);assert.equal(s.sp,0);
@@ -32,12 +30,10 @@ test('Recovery v27.8: 20% after a win minus 1%p per sea tier (min 5%), 8% in dun
  s.dungeon={id:'grotto',wave:0};assert.equal(victoryHeal(s),Math.floor(max*.08));
  const src=encounterSource.slice(encounterSource.indexOf('function reward('));const end=src.indexOf('\nexport function ');assert.equal(((end<0?src:src.slice(0,end)).match(/victoryHeal\(/g)||[]).length,1);
 });
-test('Long-term goals: dungeon steps, one-time achievement notice, suggestions only what is open now',()=>{
- const s=newState(0);act(s,{type:'growthGoal',id:'grotto',value:'dungeon'},0);let p=goalProgress(s);assert.equal(p.max,3);assert.equal(p.value,0);
- s.level=60;s.clears.grotto=1;s.bossResearchClaims.grotto=true;act(s,{type:'sync'},0);assert.equal(goalProgress(s).done,true);assert.equal(s.growthGoal.notified,true);
- act(s,{type:'sync'},0);assert.equal(s.logs.filter(l=>l.text.startsWith('장기 목표 달성')).length,1);
- const f=newState(0);const g=goalSuggestions(f);assert.equal(g.job,undefined);assert.equal(g.dungeon,undefined);
- for(const d of DUNGEONS){const x=newState(0);x.level=d.level;x.rebirths=d.rebirth;const sug=goalSuggestions(x).dungeon;if(sug)assert.ok(x.level>=sug.level&&x.rebirths>=sug.rebirth);}
+test('v3.35 growth goal is job-only: skill/dungeon goals are refused and old ones cleared on load',()=>{
+ const s=newState(0);assert.throws(()=>act(s,{type:'growthGoal',id:'grotto',value:'dungeon'},0),/성장 목표/);
+ s.growthGoal={kind:'skill',id:'slash',target:1};migrateState(s,0);assert.equal(s.growthGoal,null);assert.equal(goalProgress(s),null);
+ s.guild={name:'',level:3};migrateState(s,0);assert.equal('guild' in s,false,'legacy personal guild record removed');
 });
 test('v27.73 job goal: set from the job sheet, progress counts met requirements, entering the job marks it done once, "none" clears, unknown job refused',()=>{
  const s=newState(0);act(s,{type:'growthGoal',id:'whaler',value:'job'},0);assert.deepEqual(s.growthGoal,{kind:'job',id:'whaler'});
