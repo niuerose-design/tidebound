@@ -7,14 +7,17 @@ test('Job trees: seven trees, no job left in the old other tree, v24 job counts 
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 41, magic: 43, defense: 41, status: 29, hybrid: 34, support: 42, mystery: 26 });
+    assert.deepEqual(count, { physical: 45, magic: 43, defense: 41, status: 29, hybrid: 35, support: 42, mystery: 21 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
     const tree = id => JOBS.find(j => j.id === id).tree;
     for (const id of ['fisher', 'wanderer', 'chimera', 'clockworkAngler', 'allRounder', 'bloodTide', 'spellbladeNovice', 'spellblade', 'runeKnight', 'swordSaint', 'celestialBlade']) assert.equal(tree(id), 'hybrid', id);
     for (const id of ['squidJester', 'gambler', 'relicScavenger', 'salvageMerchant', 'rareTracker', 'memoryMerchant', 'voyageScribe', 'chronicleNavigator', 'bossNaturalist', 'speciesChronicler']) assert.equal(tree(id), 'support', id);
-    for (const id of ['undead', 'skeleton', 'bonecaster', 'soulHarvester', 'voidcaller', 'manaLeviathan', 'rebirthFisher', 'krakenkin']) assert.equal(tree(id), 'mystery', id);
+    for (const id of ['undead', 'skeleton', 'bonecaster', 'soulHarvester', 'voidcaller', 'manaLeviathan', 'glyphMonk', 'glassHarpooner', 'clockmaker']) assert.equal(tree(id), 'mystery', id);
+    // v3.65 은월은 공개 물리 계보로(3차부터 숨은 단계), 윤회의 나그네는 초보자 계보의 환생 가지로.
+    for (const id of ['stormEel', 'krakenkin', 'leviathanAvatar']) assert.equal(tree(id), 'physical', id);
+    assert.equal(tree('rebirthFisher'), 'hybrid');
     for (const id of ['abyssArchivist', 'abyssMimic']) assert.equal(tree(id), 'magic', id);
 });
 
@@ -36,11 +39,13 @@ test('Lineages: every job belongs to exactly one lineage inside its own tree; in
 });
 
 test('Job counts stay close: trees within 1.5× of each other (??? 14 or more), named lineages 4–10 (매지션 11) and all reach tier 5', () => {
-    const sizes = JOB_TREES.filter(t => t.id !== 'mystery').map(t => JOBS.filter(j => j.tree === t.id).length);
+    // v3.65 다른 계열에 붙은 히든 직업(은월 3차~ 등)은 ??? 탭에 나오므로 계열 크기 비교에서 뺍니다.
+    const sizes = JOB_TREES.filter(t => t.id !== 'mystery').map(t => JOBS.filter(j => j.tree === t.id && !j.hidden).length);
     assert.ok(Math.max(...sizes) <= Math.min(...sizes) * 1.5, sizes.join(','));
     assert.ok(JOBS.filter(j => j.tree === 'mystery').length >= 14);
     // v3.25 해커 계보는 단계적으로 늘리는 중이라(해커 → 화이트 해커, 3단계에 블랙 해커) 직업 수 검사에서 뺍니다.
-    for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent') && l.id !== 'fisher' && l.id !== 'hacker')) {
+    // v3.65 특수 계보(제약 · 방랑 · 제로)는 일부러 짧습니다.
+    for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent') && !['fisher', 'hacker', 'restraint', 'wander', 'zero'].includes(l.id))) {
         const jobs = JOBS.filter(j => lineageOf(j) === l.id);
         // v25.26 외길 계보는 의도적으로 1~3차 세 직업입니다.
         if (jobs.every(j => j.role?.startsWith('외길'))) { assert.ok(jobs.length === 3 || jobs.length === 4, l.id); assert.ok([3, 5].includes(Math.max(...jobs.map(j => j.tier))), `${l.id} ends at tier 3 or 5`); continue; }
@@ -76,9 +81,9 @@ test('v3.47 secret skills: server-only table registered by the engine, missing f
     const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Sk = await load('data/skills'), { SECRET_SKILLS } = await load('secret/skills'), { SECRET_JOBS } = await load('secret/jobs');
     const secretJobs = new Set(SECRET_JOBS.map(j => j.id));
-    assert.equal(SECRET_SKILLS.length, 55); assert.ok(SECRET_SKILLS.every(sk => secretJobs.has(sk.job)), 'every secret skill belongs to a secret job');
+    assert.equal(SECRET_SKILLS.length, 52); assert.ok(SECRET_SKILLS.every(sk => secretJobs.has(sk.job)), 'every secret skill belongs to a secret job');
     assert.ok(SECRET_SKILLS.every(sk => Sk.skillById(sk.id) === sk), 'the engine registered the finished objects');
-    assert.equal(Sk.SKILLS.filter(sk => secretJobs.has(sk.job)).length, 55, 'full table on the server');
+    assert.equal(Sk.SKILLS.filter(sk => secretJobs.has(sk.job)).length, 52, 'full table on the server');
     // 공개 표(game/data)에는 정의가 없습니다. 보스도 쓰는 tentacleBarrage만 예외.
     const fs = await import('node:fs'), src = fs.readdirSync('game/data').filter(f => f.endsWith('.ts')).map(f => fs.readFileSync(`game/data/${f}`, 'utf8')).join('\n');
     assert.deepEqual(SECRET_SKILLS.filter(sk => src.includes(`id: '${sk.id}'`)).map(sk => sk.id), ['tentacleBarrage']);
