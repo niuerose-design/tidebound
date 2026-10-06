@@ -1,5 +1,5 @@
 /** 적 등장·드롭·승리 보상. */
-import { rollAffixes } from '../data/gear';
+import { rollAffixes, syncOrnateName } from '../data/gear';
 import { ODDS } from '../data/odds';
 import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, extremeBroken } from './progression';
@@ -25,7 +25,7 @@ import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
-import { dismantleEssence, saleValue, keepsAcrossLives } from './equipment';
+import { dismantleEssence, saleValue, keepsAcrossLives, equippedAffixTotal } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
 import { recordGoal, recordAbyssDepth } from './progress';
@@ -93,11 +93,12 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
+    syncOrnateName(item);
     // 자동 분해기: v3.23 골드 대신 정수. 유물·장비 도감에 없는 종류는 남깁니다.
     // v3.35 설정에서 고른 등급(여러 개)만 처리합니다. 칠흑·잠금 장비는 어떤 경우에도 처리하지 않습니다.
     const keep = item.locked || keepsAcrossLives(item) || !s.itemBook?.[itemKey(slot, rarity)];
     if (!keep && s.autoSell && autoGrades(s, 'salvage').includes(item.rarity)) {
-        const essence = dismantleEssence(item);
+        const essence = dismantleEssence(item, s);
         s.essence = (s.essence || 0) + essence;
         addLog(s, `자동 정리: ${item.name} 분해 · 정수 +${essence}`, 'reward');
         return;
@@ -250,8 +251,10 @@ export function reward(s: State, rng: () => number) {
     const rk = rankState(s), rankBefore = rankIndex(rk.exp);
     s.kills += size;
     // v3.46 무리는 마리 수 대신 싸운 턴 × 규모별 턴당 값(swarmRankKills, 마리 수 상한). 소수점은 이월합니다.
-    if (size > 1) { const raw = swarmRankKills(size, swarmTurns) * (1 + rankPerkLevel(s, 'tally')) + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
-    else rk.exp += 1 + rankPerkLevel(s, 'tally');
+    // v3.75 전공 옵션: 처치 수 1마리당 +1(전과 기록 배율 전).
+    const valor = 1 + Math.floor(equippedAffixTotal(s, 'rankFlat'));
+    if (size > 1) { const raw = swarmRankKills(size, swarmTurns) * valor * (1 + rankPerkLevel(s, 'tally')) + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
+    else rk.exp += valor * (1 + rankPerkLevel(s, 'tally'));
     s.rank = rk;
     if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 빌드 화면의 계급에서 사용)`, 'reward'); }
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.30 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.

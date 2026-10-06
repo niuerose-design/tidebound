@@ -6,7 +6,7 @@ import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence
 import { apCapacity, apUsed, itemKey } from './progression';
 import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, keepsAcrossLives, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
-import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL } from '../data/gear';
+import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** v27.30 감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 확정 구매를 없애고 환생 배율(v3.68 10^(환생/60)과 1 + 환생 × 0.45 중 낮은 쪽)을 곱합니다. */
 const GAMBLE_FISH = 60;
@@ -18,7 +18,7 @@ export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase +
 export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
 /** v3.58 각인으로 고를 수 있는 옵션: 그 부위에 붙을 수 있는 일반 옵션(규칙 옵션·출신 전용 옵션 제외). */
 /** 각인 감정으로 고를 수 있는 옵션: 일반 옵션(규칙 · 전용 출처 · v3.71 고대 이상 전용 제외), 부위 제한 맞는 것. */
-export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.onlyOrigin && !a.minRarity && !a.retired && (!a.onlySlot || a.onlySlot === slot));
+export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.junk && !a.rare && !a.onlyOrigin && !a.minRarity && !a.retired && (!a.onlySlot || a.onlySlot === slot));
 const appraisalState = (s: State) => (s.appraisal ??= { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 0, ancient: 0, primal: 0 } });
 /** v3.58 다음 감정에서 천장이 터지는 등급(없으면 0). */
 export const pityRarity = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.reduce((r, p) => (s.appraisal?.pity[p.key] || 0) + 1 >= p.count ? Math.max(r, p.rarity) : r, 0);
@@ -40,7 +40,7 @@ function appraiseOnce(s: State, rng: () => number, cost: number, imprint?: strin
     const power = Math.round((s.level + 2) * RARITIES[rarity].factor), base: Item = { ...shopPreview(s, offer.id), id: `shop-${++s.shopSerial}` };
     delete base.affix;
     const fixed = imprint ? [rollOption(affixDef(imprint)!, power, rarity, rng, s.level)] : [];
-    return { ...base, name: gearName(offer.slot, rarity, base.style), rarity, power, affixes: rollAffixes(rarity, power, undefined, rng, fixed, offer.slot, s.level), paid: cost, ...(imprint ? { imprinted: imprint } : {}) };
+    return syncOrnateName({ ...base, name: gearName(offer.slot, rarity, base.style), rarity, power, affixes: rollAffixes(rarity, power, undefined, rng, fixed, offer.slot, s.level), paid: cost, ...(imprint ? { imprinted: imprint } : {}) });
 }
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: gearName(o.slot, 1, o.style), slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
@@ -184,7 +184,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             if (item.rarity >= target) { s.inventory.push(item); hit = item; break; }
             const key = itemKey(item.slot, item.rarity);
             if (!s.itemBook?.[key]) { (s.itemBook ??= {})[key] = true; registered++; continue; }
-            const gain = dismantleEssence(item); s.essence = (s.essence || 0) + gain; essence += gain;
+            const gain = dismantleEssence(item, s); s.essence = (s.essence || 0) + gain; essence += gain;
         }
         const parts = tally.map((k, r) => [r, k] as const).filter(([, k]) => k).reverse().map(([r, k]) => `${RARITIES[r].name} ${k}`).join(' · ');
         return `자동 뽑기 ${tries}회 · ${parts} · -${spent.toLocaleString()} G${each.essence ? ` · 정수 -${(each.essence * tries).toLocaleString()}` : ''}${essence ? ` · 분해 정수 +${essence}` : ''}${registered ? ` · 도감 등록 ${registered}` : ''} · ${hit ? `목표 달성: ${hit.name}` : tries >= AUTO_APPRAISAL_MAX ? `최대 ${AUTO_APPRAISAL_MAX}회까지 돌렸습니다` : '골드·정수 한도에 닿아 멈췄습니다'}`;
@@ -232,6 +232,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error('재련할 옵션을 고르세요.');
             if (x.rule)
                 throw Error('규칙 옵션(◆)은 수치가 고정이라 재련할 수 없습니다.');
+            if (affixDef(x.id)?.fixed)
+                throw Error(`${x.name} 옵션은 수치가 고정이라 재련해도 바뀌지 않습니다.`);
             const cost = refineCost(item, s);
             if ((s.essence || 0) < cost.essence)
                 throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
@@ -269,6 +271,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const next = rollAffixes(others.length + 1, item.power, item.origin, rng, others, item.slot, item.level).at(-1)!;
         const before = item.affixes[index].name;
         item.affixes = item.affixes.map((x, i) => i === index ? next : x);
+        syncOrnateName(item);
         return `${item.name} 옵션 재설정 · ${before} → ${next.name} · -${cost.gold} G · 정수 -${cost.essence}`;
     }
     if (a.type === 'dismantle' || a.type === 'dismantleRarity') {

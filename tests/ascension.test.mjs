@@ -431,3 +431,30 @@ test('v3.73 options: crit damage drawn at 0.4 weight, force/guardian roll both d
     s.equipment.cape = { id: 'k', slot: 'cape', rarity: 4, power: 10, level: 10, affixes: [pact] };
     assert.ok(Math.abs(S.stats(s).lifesteal - capped - .08) < 1e-9, 'blood pact adds on top of the cap');
 });
+test('v3.75 rare primal/onyx options (drill/valor fixed +1, apex super crit, distill essence) and junk options (ornate name, pinch +1 hp)', async () => {
+    const G = await L.load('data/gear'), Co = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), S = await L.load('systems/stats'), M = await L.load('systems/mastery'), T = await L.load('systems/turn'), O = await L.load('data/odds');
+    const rare = ['drill', 'valor', 'apex', 'distill'];
+    for (const id of rare) { const d = G.affixDef(id); assert.equal(d.minRarity, 6); assert.ok(d.rare); assert.ok(!Co.imprintChoices('rod').some(a => a.id === id)); }
+    assert.ok(O.ODDS.affix.rare > 0 && O.ODDS.affix.rare < .01 && O.ODDS.affix.junk > 0, 'server odds loaded');
+    let x = 3; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 3000; i++) assert.ok(!G.rollAffixes(5, 500, undefined, rng, [], 'rod', 100).some(a => rare.includes(a.id)), 'never below primal');
+    const drill = G.rollOption(G.affixDef('drill'), 500, 6, () => .9, 100); assert.equal(drill.value, 1, 'fixed, not rolled');
+    assert.deepEqual(G.refineOption(drill, 500, 6, () => 0, 100), drill); assert.equal(G.affixQuality(drill, 500, 6, 100), null);
+    const s = newState(0); s.gold = 1e9; s.essence = 1e6; s.inventory = [{ id: 'p', slot: 'rod', style: 'physical', rarity: 6, power: 500, level: 100, name: 'p', affixes: [drill] }];
+    assert.throws(() => act(s, { type: 'refine', id: 'p', value: '0' }, 0, rng), /고정/);
+    const base = M.victoryMastery(s, { id: 'minnow', boss: false }).base;
+    s.equipment.rod = s.inventory.pop(); assert.equal(M.victoryMastery(s, { id: 'minnow', boss: false }).base, base + 1, 'drill +1 mastery per kill');
+    const apex = G.rollOption(G.affixDef('apex'), 500, 6, () => .5, 100), sc = S.stats(s).superCrit;
+    s.equipment.charm = { id: 'c', slot: 'charm', rarity: 6, power: 10, level: 10, affixes: [apex] }; assert.ok(Math.abs(S.stats(s).superCrit - sc - apex.value) < 1e-9, 'apex adds super crit');
+    const junkFree = Eq.dismantleEssence({ rarity: 6 }, s); s.equipment.cape = { id: 'k', slot: 'cape', rarity: 6, power: 10, level: 10, affixes: [{ id: 'distill', name: '정수', stat: 'essenceBonus', value: .5 }] };
+    assert.equal(Eq.dismantleEssence({ rarity: 6 }, s), Math.round(junkFree * 1.5), 'distill +50% essence');
+    const rankGain = valor => { const t = newState(0); t.level = 20; t.running = true; if (valor) t.equipment.coat = { id: 'v', slot: 'coat', rarity: 6, power: 10, level: 10, affixes: [{ id: 'valor', name: '전공', stat: 'rankFlat', value: 1 }] };
+        t.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0 }; const before = t.rank?.exp || 0; T.tick(t, () => .5); return (t.rank?.exp || 0) - before; };
+    assert.equal(rankGain(true), rankGain(false) * 2, 'valor doubles rank kills');
+    const junk = G.rollAffixes(6, 500, undefined, () => 0, [], 'rod', 100); assert.equal(junk.filter(a => G.affixDef(a.id).junk).length, 1, 'at most one junk line');
+    assert.ok(!G.rollAffixes(6, 500, 'onyx', () => 0, [], 'charm', 100).some(a => G.affixDef(a.id).junk), 'no junk on onyx');
+    const named = G.syncOrnateName({ name: '창', affixes: [{ id: 'ornate', name: '장식', stat: 'ornament', value: 1 }] }); assert.equal(named.name, '반짝이는 창');
+    named.affixes = []; assert.equal(G.syncOrnateName(named).name, '창');
+    const pinch = G.rollOption(G.affixDef('pinch'), 500, 6, () => .9, 100); assert.equal(Eq.itemStats({ id: 'c', slot: 'charm', rarity: 6, power: 10, level: 10, affixes: [pinch] }).hp, 1, 'pinch is a flat +1 hp');
+    for (const id of ['ornate', 'pinch']) assert.ok(!Co.imprintChoices('rod').some(a => a.id === id));
+});
