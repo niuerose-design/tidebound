@@ -291,8 +291,8 @@ export function jobRequirements(s: State, j: Job) {
     }
     return list;
 }
-/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. now는 서버 요청 시각입니다. */
-export function canChangeJob(s: State, id: string) { const j = jobById(id); return !!j && (jobMastered(s, j) || jobRequirements(s, j).every(x => x.met)); }
+/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. v3.66 옛 수련(retired)은 전직할 수 없습니다. now는 서버 요청 시각입니다. */
+export function canChangeJob(s: State, id: string) { const j = jobById(id); return !!j && !j.retired && (jobMastered(s, j) || jobRequirements(s, j).every(x => x.met)); }
 /** v27.86 절제: 액티브·패시브를 각각 몇 개까지 장착할 수 있는지 넘었는지. */
 export function overRestraint(s: State, ids: string[]) {
     const cap = restraintSlots(s);

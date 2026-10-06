@@ -1,3 +1,4 @@
+import { trainingFor } from '../data/training';
 import type { State } from '../types';
 import { addLog } from './state';
 import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
@@ -171,6 +172,17 @@ export function retireHiddenJobs(s: State) {
     if (s.skillHidden) s.skillHidden = drop(s.skillHidden);
     for (const p of Object.values(s.presets || {})) p.skills = drop(p.skills)!;
 }
+/**
+ * v3.66 독립 수련 통합(data/training.ts): 지금 옛 수련 직업이면 새 수련 직업으로 옮깁니다(스킬은 id 그대로 새 직업 것이라 편성·습득은 그대로).
+ * 옛 직업의 숙련·숙달 기록은 지우지 않습니다(숙달 수에 셈). 여러 번 불러도 같습니다.
+ */
+export function moveToTraining(s: State) {
+    const next = trainingFor(s.job);
+    if (!next) return;
+    s.job = next;
+    if (!s.unlockedJobs.includes(next)) s.unlockedJobs.push(next);
+    s.jobMastery[next] ??= 0;
+}
 export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
@@ -188,7 +200,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
