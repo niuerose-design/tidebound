@@ -160,7 +160,7 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     const blocked = !picked ? '' : lines.some((x, i) => i !== slot && x.id === picked.affix.id) ? '이미 같은 옵션이 새겨져 있습니다.' : picked.affix.rule && lines.some((x, i) => i !== slot && x.rule) ? '규칙 옵션은 유물당 하나만 새길 수 있습니다.' : s.gold < cost ? '골드가 부족합니다.' : '';
     const label = (a: NonNullable<Item['affixes']>[number]) => `${a.name} · ${STAT_LABELS[a.stat]} ${statDeltaDisplay(a.stat, a.value)}`;
     return <div className="relic-imprint">
-        <b>옵션 이식 · 환생 {s.rebirths}회 위력 배율 ×{heirFactor('relic', s.rebirths).toFixed(2)}</b>
+        <b>옵션 이식 · 환생 {s.rebirths}회 위력 배율 ×{heirFactor('relic', s.rebirths).toFixed(2)}{item.relicLegacy ? ' · 다음 승천까지 예전 공식과 새 공식 중 높은 쪽' : ''}</b>
         <div className="relic-imprint-slots">{Array.from({ length: RELIC_GROWTH.imprintSlots }, (_, i) => <label key={i} className={`altar-anon${slot === i ? ' on' : ''}`}><input type="radio" name={`imprint-${item.id}`} checked={slot === i} onChange={() => setSlot(i)}/> {i + 1}번 칸 · {lines[i] ? label(lines[i]) : '비어 있음'}</label>)}</div>
         {choices.length ? <>
             <label className="gear-select">소비할 장비·옵션<select value={key} onChange={e => setChoice(e.target.value)}>{choices.map(c => <option key={c.key} value={c.key}>{c.item.name}{starLabel(c.item.enhance || 0) ? ` ${starLabel(c.item.enhance || 0)}` : ''} › {label(c.affix)}</option>)}</select></label>

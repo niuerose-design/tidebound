@@ -352,3 +352,17 @@ test('v3.64 heir gear: relic power follows (level + 2) × rebirth factor; awaken
     const C = await L.load('systems/commerce'), SF = await L.load('data/starforce');
     p.enhance = 21; const r = C.starForceAttempt(s, p, false, () => SF.starSuccess(21) + 1e-9, () => {}); assert.equal(r.outcome, 'destroy'); assert.ok(s.inventory.includes(p)); assert.equal(p.enhance, SF.STARFORCE.relicResetStar);
 });
+test('v3.64 relics owned before the update keep the higher of the old and new power formulas until ascension', async () => {
+    const M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment');
+    const s = newState(0); s.rebirths = 150; s.level = 100; delete s.relicRule;
+    const relic = { id: 'r', name: 'r', slot: 'rod', style: 'balanced', rarity: 3, level: 100, power: 1, relic: 'memoryRod', locked: true };
+    s.inventory = [relic]; M.migrateState(s, 0);
+    assert.equal(relic.relicLegacy, true); assert.equal(s.relicRule, true);
+    assert.equal(relic.power, Math.max(Ec.heirPower('relic', 150, 100), Ec.legacyRelicPower('memoryRod', 150, 100))); assert.ok(relic.power > Ec.heirPower('relic', 150, 100), 'old formula is higher at high rebirths');
+    // 새로 받는 유물은 새 공식만, 새 캐릭터는 처음부터 이전 처리 완료.
+    assert.equal(newState(0).relicRule, true);
+    const fresh = { ...relic, id: 'f', relicLegacy: undefined }; s.inventory.push(fresh); Eq.syncRelicPower(s); assert.equal(fresh.power, Ec.heirPower('relic', 150, 100));
+    // 승천하면 유물은 사라지고 규칙 표시는 남아 다시 받은 유물은 새 공식입니다.
+    s.rebirths = 200; Lc.ascend(s, 0); assert.equal(s.relicRule, true); assert.ok(!s.inventory.some(x => x.relic));
+});
+

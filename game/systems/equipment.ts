@@ -1,5 +1,5 @@
 import type { Item, Stats, State } from '../types';
-import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, heirPower, smithDiscount, type HeirKind } from '../data/economy';
+import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, heirPower, legacyRelicPower, smithDiscount, type HeirKind } from '../data/economy';
 import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence, GEAR_CAPS, STATUS_RESIST_STAR, rescaleAffix } from '../data/gear';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
@@ -13,9 +13,9 @@ export const capeEvasion = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.roun
 const charmCrit = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CHARM_CRIT[item.rarity] ?? CHARM_CRIT[0]) * (1 + (item.enhance || 0) * CHARM_CRIT_ENHANCE) * 10000) / 10000;
 /**
  * v27.36 등급별 고정 수치 감쇠(기본 수치와 고정 수치 옵션에 곱함). 고대·태초 장비가 최종 능력치의 대부분을 차지하던 것을 줄입니다. 저장된 위력은 그대로라 기존 장비에도 바로 적용됩니다.
- * v3.64 22성 4부위 전투력(실제 전투식)이 전설 ×9.1 < 신화 ×9.8 < 고대 ×10.9 < 태초 ×12.3(장비 없음 대비)으로 오르도록 전설·신화를 낮추고 태초를 조금 올렸습니다(전에는 전설이 신화보다 높았음). 큰 격차는 계승 장비(heir)에 둡니다.
+ * v3.64 전투력(실제 전투식)에서 0성·22성 모두 전설 < 신화 < 고대 < 태초가 되도록 고대 .58 → .62, 태초 .52 → .56으로 올렸습니다(내린 등급 없음). 큰 격차는 계승 장비(heir)에 둡니다.
  */
-export const GEAR_RARITY_SCALE = [1, 1, 1, .75, .638, .58, .54];
+export const GEAR_RARITY_SCALE = [1, 1, 1, .85, .68, .62, .56];
 const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
 export function itemStats(item: Item): Partial<Stats> {
     const damp = GEAR_RARITY_SCALE[item.rarity] ?? 1;
@@ -73,12 +73,14 @@ export const imprintCost = (source: Item, s?: Pick<State, 'permanent'>) => refor
 export const keepsAcrossLives = (item: Pick<Item, 'relic' | 'onyx' | 'heir'>) => !!(item.relic || item.onyx || item.heir);
 /** v3.64 계승 위력 종류: 유물은 relic, 계승 장비는 heir 값. 일반 장비는 null. */
 export const heirKind = (item: Pick<Item, 'relic' | 'heir'>): HeirKind | null => item.relic ? 'relic' : item.heir || null;
+/** 유물·계승 장비의 위력. 예전부터 가진 유물(relicLegacy)은 예전 공식과 새 공식 중 높은 쪽입니다. */
+export const heirItemPower = (item: Pick<Item, 'relic' | 'heir' | 'relicLegacy'>, kind: HeirKind, rebirths: number, level: number) => Math.max(heirPower(kind, rebirths, level), item.relic && item.relicLegacy ? legacyRelicPower(item.relic, rebirths, level) : 0);
 /** v3.3 유물 · v3.64 계승 장비 위력을 환생 횟수와 레벨에 맞춥니다(heirPower). 불러오기·환생·수령·계승 때 불러 저장된 위력을 고칩니다. 계승 장비의 고정 수치 옵션은 위력 비율만큼 함께 바뀝니다(유물 이식 옵션은 그대로). */
 export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebirths'>) {
     for (const item of [...s.inventory, ...Object.values(s.equipment)]) {
         const kind = item && heirKind(item);
         if (!item || !kind) continue;
-        const next = heirPower(kind, s.rebirths || 0, item.level || 1), before = item.power;
+        const next = heirItemPower(item, kind, s.rebirths || 0, item.level || 1), before = item.power;
         if (next === before) continue;
         item.power = next;
         if (item.heir && item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1));
@@ -93,7 +95,7 @@ export function applyLevelUp(item: Item, next: number, s: Pick<State, 'rebirths'
     const old = item.level || 1, ratio = (next + 2) / (old + 2);
     item.level = next;
     const kind = heirKind(item);
-    item.power = kind ? heirPower(kind, s.rebirths || 0, next) : Math.max(2, Math.round(item.power * ratio));
+    item.power = kind ? heirItemPower(item, kind, s.rebirths || 0, next) : Math.max(2, Math.round(item.power * ratio));
     if (item.affixes) item.affixes = item.affixes.map(x => rescaleAffix(x, ratio, old, next));
     item.enhance = 0; item.starFails = 0;
 }

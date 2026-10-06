@@ -42,10 +42,10 @@ console.log(`사냥 드롭(기준: 처치당 ${(rate * 100).toFixed(2)}%, 시간
 for (const rb of [0, 100, 200]) { const s = newState(0); s.level = 100; s.rebirths = rb; const c = C.gambleCost(s), p = Ec.APPRAISAL.at(-1).chance || .0005; console.log(`감정 환생 ${rb}: 1회 ${fmt(c)} G · 태초 기대 ${fmt(c / p)} · 천장 ${fmt(c * Ec.APPRAISAL_PITY.at(-1).count)} G`); }
 console.log('칠흑 장신구: 기대 약 18일 · 최장 약 31일(data/onyx.ts 머리 주석, 서식지 방치 기준)');
 
-// 사다리(docs/gear-endgame.md 7절, v3.64 전투력 기준): 22성에서 전설 < 신화 < 고대 < 태초, 유물(환생 200)은 신화와 고대 사이,
+// 사다리(docs/gear-endgame.md 7절, v3.64 전투력 기준): 0성·22성 모두 전설 < 신화 < 고대 < 태초, 유물(환생 200)은 신화와 고대 사이,
 // 원시 고대(환생 200)는 신화의 1.35~1.65배, 계승 태초(환생 200)는 신화의 1.8~2.2배. 계승 장비는 환생할수록 강해집니다.
 const t22 = r => tier[`${r}:22`], myth = t22(4);
-assert.ok(t22(3) < t22(4) && t22(4) < t22(5) && t22(5) < t22(6), `등급 순서: ${[3, 4, 5, 6].map(t22).map(x => x.toFixed(2))}`);
+for (const star of [0, 22]) { const t = r => tier[`${r}:${star}`]; assert.ok(t(3) < t(4) && t(4) < t(5) && t(5) < t(6), `${star}성 등급 순서: ${[3, 4, 5, 6].map(t).map(x => x.toFixed(2))}`); }
 assert.ok(heir.relic[2] > myth && heir.relic[2] < t22(5), `유물(환생 200) ×${heir.relic[2].toFixed(2)}이 신화(×${myth.toFixed(2)})·고대(×${t22(5).toFixed(2)}) 사이 밖`);
 assert.ok(heir.ancient[2] / myth >= 1.35 && heir.ancient[2] / myth <= 1.65, `원시 고대(환생 200) 신화의 ${(heir.ancient[2] / myth).toFixed(2)}배`);
 assert.ok(heir.primal[2] / myth >= 1.8 && heir.primal[2] / myth <= 2.2, `계승 태초(환생 200) 신화의 ${(heir.primal[2] / myth).toFixed(2)}배`);

@@ -133,6 +133,8 @@ export type Item = {
     relic?: string;
     /** v3.64 계승 장비: 원시 각성한 고대(ancient) · 게이지로 계승한 태초(primal). 환생해도 남고 판매·분해·등록 불가, 위력은 환생마다 오릅니다(data/economy HEIR_GROWTH). 부위마다 종류별 1개. */
     heir?: 'ancient' | 'primal';
+    /** v3.64 업데이트 전부터 가진 유물: 다음 승천까지 예전 위력 공식과 새 공식 중 높은 쪽(data/economy RELIC_LEGACY). */
+    relicLegacy?: boolean;
     /** v3.12 칠흑 장신구(보스 id). 종당 1개, 환생해도 남고 판매·분해·이식 재료 불가. */
     onyx?: string;
     /** v21 이전 장비와 유물의 단일 옵션. */
@@ -494,6 +496,8 @@ export type State = {
     primalDropPity?: number;
     /** v3.64 태초 계승 게이지: 태초 장비를 분해할 때마다 +1(PRIMAL_INHERIT.gauge만큼 모이면 태초 하나를 계승). 환생 유지, 승천 초기화. */
     primalGauge?: number;
+    /** v3.64 유물 위력 규칙 이전 표시(true면 이미 처리함). 새 캐릭터·승천 뒤에는 처음부터 true. */
+    relicRule?: boolean;
     /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
     plainCodex?: boolean;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
