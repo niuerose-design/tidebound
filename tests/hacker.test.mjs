@@ -298,6 +298,27 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.ok(JSON.parse((await database.getCrew(crewId)).data).members.m_2.offSince > 0);
         for (const [mid, m] of [['m_boss', boss], ['m_0', dep], ['m_2', leaver], ['m_3', members[3]]]) (await Cr.leaveCrew(mid, m, now))(m);
         assert.equal(await database.getCrew(crewId), null, 'empty crew is deleted'); assert.equal(boss.hacker.crew, undefined);
+        // v3.30 합동 작전: 침투 노드·해킹 수를 세이브에 쌓았다가 침투가 끝난 뒤 한 번에 올리고, 단계마다 조직 자금과 (1노드 이상 뚫은) 조직원 보상.
+        const lead = veteran(1); lead.name = '작전장'; (await Cr.createCrew('o_lead', lead, '작전조', 'gray', now))(lead);
+        const opId = lead.hacker.crew.id, opCode = (await database.getCrew(opId)).code, runner = veteran(1); runner.name = '러너';
+        (await Cr.joinCrew('o_run', runner, opCode, now))(runner);
+        assert.equal(CD.opGoal(2, 1), 60); assert.equal(CD.opGoal(5, 20), 225); assert.deepEqual([29, 30, 60, 90].map(n => CD.opSteps(n, 60)), [0, 1, 2, 3]);
+        H.setPuzzleKey('crew-op'); act(runner, { type: 'infilStart' }, now, () => .4); act(runner, { type: 'infilGuess', value: H.nodeAnswer(runner.hacker.infil) }, now);
+        assert.deepEqual(runner.hacker.crewPending, { nodes: 1, hacks: 0 }); assert.equal(await Cr.flushCrew('o_run', runner, now), null, 'waits until the run ends');
+        act(runner, { type: 'infilCashout' }, now); runner.hacker.crewPending.nodes = 30; runner.hacker.crewPending.hacks = 2;
+        const rb = runner.hacker.bits, apply = await Cr.flushCrew('o_run', runner, now); apply(runner); apply(runner);
+        assert.equal(runner.hacker.crewPending, undefined, 're-applying after a save conflict does not double count');
+        let od = JSON.parse((await database.getCrew(opId)).data);
+        assert.deepEqual([od.week.nodes, od.week.hacks, od.week.steps, od.vault], [30, 2, 1, CD.CREW.op.reward(1).fund]);
+        assert.equal(runner.hacker.bits - rb, CD.CREW.op.reward(1).bits, 'step 1 reward once'); assert.equal(await Cr.flushCrew('o_run', runner, now), null, 'nothing to send: no query');
+        lead.hacker.crew.syncedAt = 0; const lb = lead.hacker.bits; await Cr.syncCrew('o_lead', lead, now + 61_000); assert.equal(lead.hacker.bits, lb, 'no nodes: no reward');
+        // 다음 주로 넘어가도 지난주 단계 보상은 받을 수 있습니다.
+        runner.hacker.crewPending = { nodes: 40, hacks: 0 }; delete runner.hacker.crewClaimed; const rb2 = runner.hacker.bits;
+        (await Cr.flushCrew('o_run', runner, now + 7 * 86400_000))(runner);
+        od = JSON.parse((await database.getCrew(opId)).data); assert.equal(od.prev.nodes, 30); assert.equal(od.week.nodes, 40); assert.equal(od.week.steps, 1);
+        assert.equal(runner.hacker.bits - rb2, CD.CREW.op.reward(1).bits * 2, 'last week and this week step 1');
+        const oinfo = await Cr.crewInfo('o_run', runner, now + 7 * 86400_000); assert.deepEqual([oinfo.crew.op.nodes, oinfo.crew.op.targets, oinfo.crew.op.mine], [40, [30, 60, 90], 40]);
+        (await Cr.leaveCrew('o_run', runner, now))(runner); (await Cr.leaveCrew('o_lead', lead, now))(lead);
         // v3.26 해커 전직 알림(익명, system-hacker). 파일 DB를 쓰는 테스트는 동시에 돌면 서로의 파일을 바꾸므로 한 테스트에 모읍니다.
         await Hk.announceHacker('hacker', now); const chat = await database.listChat('global', 0, 300);
         assert.equal(chat.at(-1).account_id, 'system-hacker'); assert.equal(chat.at(-1).text, '누군가가 해커로 전직했습니다.');

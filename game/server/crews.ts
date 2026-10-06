@@ -9,10 +9,10 @@
 import type { State } from '../types';
 import { db, type CrewRow } from './db';
 import { ApiError } from './store';
-import { dayKey } from '../data/goals';
+import { dayKey, weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
-import { hackerState, isHacker } from '../systems/hacker';
-import { CREW, CREW_CODE_CHARS, CREW_SIDES, cleanCrewName, crewGrade, crewGradeProgress, crewSide, normalizeCrewCode, sideAllows, type CrewData, type CrewSide } from '../data/crew';
+import { gainHacker, hackerState, isHacker } from '../systems/hacker';
+import { CREW, CREW_CODE_CHARS, CREW_SIDES, cleanCrewName, crewGrade, crewGradeProgress, crewSide, normalizeCrewCode, opGoal, opSteps, sideAllows, type CrewData, type CrewSide, type CrewWeek } from '../data/crew';
 
 const CACHE_MS = 30_000, ATTEMPTS = 3;
 const cache = new Map<string, { at: number; row: CrewRow | null }>();
@@ -42,12 +42,20 @@ export function tidyCrew(c: CrewData, now: number) {
     }
 }
 
+/** v3.30 합동 작전 주 넘기기: 이번 주가 아니면 지난주로 옮기고, 그 주 시작 때 조직원 수·등급으로 목표를 정합니다. */
+export function rollWeek(c: CrewData, now: number) {
+    const key = weekKey(now);
+    if (c.week?.key === key) return c.week;
+    if (c.week) c.prev = c.week;
+    return c.week = { key, goal: opGoal(Object.keys(c.members).length, crewGrade(c.exp)), nodes: 0, hacks: 0, steps: 0, by: {} };
+}
 /** 행을 다시 읽어 고치고 revision 비교로 저장합니다. change가 던지면 아무것도 쓰지 않습니다. 조직원이 없어지면 조직을 지웁니다. */
 async function updateCrew(crewId: string, now: number, change: (c: CrewData, row: CrewRow) => string | void) {
     const database = db();
     for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
         const row = await database.getCrew(crewId), c = parse(row);
         if (!row || !c) throw new ApiError('조직을 찾을 수 없습니다.');
+        rollWeek(c, now);
         const code = change(c, row) || row.code;
         tidyCrew(c, now);
         if (!Object.keys(c.members).length) { await database.deleteCrew(crewId); cache.delete(crewId); return null; }
@@ -56,13 +64,32 @@ async function updateCrew(crewId: string, now: number, change: (c: CrewData, row
     throw new ApiError('다른 조직원이 동시에 고치고 있습니다. 다시 시도하세요.', 409);
 }
 
+/**
+ * v3.30 합동 작전 단계 보상 수령(쓰기 없음): 이번 주·지난주에 1노드 이상 뚫었으면, 그 주에 도달한 단계 중 아직 받지 않은 만큼 받습니다.
+ * 받은 기록은 세이브(crewClaimed, 조직 id:주)에 두어 같은 단계를 두 번 받지 않습니다.
+ */
+export function claimOp(s: State, crewId: string, c: CrewData, me: string) {
+    const h = hackerState(s), claimed = h.crewClaimed ??= {}, keep = new Set<string>();
+    for (const w of [c.prev, c.week].filter((x): x is CrewWeek => !!x)) {
+        const key = `${crewId}:${w.key}`, got = claimed[key] || 0;
+        keep.add(key);
+        if (!(w.by[me]?.nodes > 0) || w.steps <= got) continue;
+        for (let i = got + 1; i <= w.steps; i++) { const r = CREW.op.reward(i); gainHacker(s, r.bits, r.exp); }
+        const total = Array.from({ length: w.steps - got }, (_, k) => CREW.op.reward(got + 1 + k)).reduce((a, r) => ({ bits: a.bits + r.bits, exp: a.exp + r.exp }), { bits: 0, exp: 0 });
+        addLog(s, `합동 작전 ${w.steps}단계 보상(${w.key}) · 비트 +${total.bits} · 권한 경험치 +${total.exp}`, 'reward');
+        claimed[key] = w.steps;
+    }
+    for (const key of Object.keys(claimed)) if (!keep.has(key)) delete claimed[key];
+}
 const setCache = (s: State, id: string, c: CrewData, me: string, now: number) => { hackerState(s).crew = { id, name: c.name, side: c.side, grade: crewGrade(c.exp), leader: c.leader === me, syncedAt: now }; };
 const requireCrew = (s: State) => { const c = s.hacker?.crew; if (!c) throw new ApiError('조직에 들어가 있지 않습니다.'); return c; };
 const requireHackerLine = (s: State) => { if (!isHacker(s)) throw new ApiError('해커 계열 직업일 때만 할 수 있습니다.'); };
 
 export type CrewInfo = {
     crew: null | { id: string; name: string; side: CrewSide; sideName: string; code: string; leader: boolean; vault: number; exp: number; grade: number; into: number; need: number; capacity: number;
-        members: { id: string; name: string; leader: boolean; self: boolean; joined: number; deposited: number; idleDays: number; off: boolean }[]; depositLeft: number };
+        members: { id: string; name: string; leader: boolean; self: boolean; joined: number; deposited: number; idleDays: number; off: boolean; nodes: number }[]; depositLeft: number;
+        /** v3.30 이번 주 합동 작전: 목표·합계·도달 단계·단계별 목표, 내가 올린 노드와 아직 올리지 않은 노드. */
+        op: { key: string; goal: number; nodes: number; hacks: number; steps: number; targets: number[]; mine: number; pending: number } };
     sides: { id: CrewSide; name: string; allowed: boolean }[];
 };
 /** 조직 화면 정보(열 때와 행동 뒤에만). 초대 코드는 조직원 모두에게 보입니다. */
@@ -71,9 +98,12 @@ export async function crewInfo(me: string, s: State, now: number): Promise<CrewI
     const cached = s.hacker?.crew, row = cached ? await readCrew(cached.id, now, true) : null, c = parse(row);
     if (!cached || !row || !c || !c.members[me]) return { crew: null, sides };
     const p = crewGradeProgress(c.exp), h = s.hacker!, used = h.crewDeposit?.day === dayKey(now) ? h.crewDeposit.n : 0;
+    // 화면용으로만 주를 넘겨 봅니다(저장하지 않음).
+    const w = rollWeek(JSON.parse(row.data) as CrewData, now);
     return { sides, crew: { id: row.id, name: c.name, side: c.side, sideName: crewSide(c.side)?.name || c.side, code: row.code, leader: c.leader === me, vault: c.vault, exp: c.exp, grade: p.grade, into: p.into, need: p.need, capacity: CREW.capacity(p.grade),
-        members: Object.entries(c.members).sort(([a], [b]) => (b === c.leader ? 1 : 0) - (a === c.leader ? 1 : 0)).map(([id, m]) => ({ id, name: m.name, leader: id === c.leader, self: id === me, joined: m.joined, deposited: m.deposited, idleDays: Math.floor((now - m.seen) / 86400_000), off: m.offSince !== undefined })),
-        depositLeft: Math.max(0, CREW.depositPerDay(h.grade) - used) } };
+        members: Object.entries(c.members).sort(([a], [b]) => (b === c.leader ? 1 : 0) - (a === c.leader ? 1 : 0)).map(([id, m]) => ({ id, name: m.name, leader: id === c.leader, self: id === me, joined: m.joined, deposited: m.deposited, idleDays: Math.floor((now - m.seen) / 86400_000), off: m.offSince !== undefined, nodes: w.by[id]?.nodes || 0 })),
+        depositLeft: Math.max(0, CREW.depositPerDay(h.grade) - used),
+        op: { key: w.key, goal: w.goal, nodes: w.nodes, hacks: w.hacks, steps: w.steps, targets: CREW.op.steps.map(r => Math.ceil(w.goal * r)), mine: w.by[me]?.nodes || 0, pending: h.crewPending?.nodes || 0 } } };
 }
 
 /**
@@ -84,15 +114,43 @@ export async function syncCrew(me: string, s: State, now: number) {
     const cached = s.hacker?.crew;
     if (!cached || now - cached.syncedAt < CREW.refreshMs) return;
     const c = parse(await readCrew(cached.id, now)), m = c?.members[me];
-    if (!c || !m) { delete s.hacker!.crew; addLog(s, `해커 조직 ‘${cached.name}’에서 빠졌습니다.`, 'system'); return; }
+    if (!c || !m) { delete s.hacker!.crew; delete s.hacker!.crewPending; addLog(s, `해커 조직 ‘${cached.name}’에서 빠졌습니다.`, 'system'); return; }
     const hacker = isHacker(s);
     if (now - m.seen >= CREW.seenMs || hacker === (m.offSince !== undefined) || m.name !== s.name) {
         const next = await updateCrew(cached.id, now, x => { const mm = x.members[me]; if (!mm) return; mm.seen = now; mm.name = s.name; if (hacker) delete mm.offSince; else mm.offSince ??= now; }).catch(() => c);
         if (!next?.members[me]) { delete s.hacker!.crew; return; }
-        setCache(s, cached.id, next, me, now);
+        setCache(s, cached.id, next, me, now); claimOp(s, cached.id, next, me);
         return;
     }
-    setCache(s, cached.id, c, me, now);
+    setCache(s, cached.id, c, me, now); claimOp(s, cached.id, c, me);
+}
+
+/**
+ * v3.30 합동 작전 기여 올리기: 세이브에 쌓인 침투 노드·해킹 수를 침투 작전이 끝난 뒤(진행 중이 아닐 때) 한 번에 조직 행에 더합니다.
+ * 올릴 것이 없으면 질의 0. 실패하면(동시 수정) 세이브에 그대로 두고 다음 동기화 때 다시 올립니다. 돌려준 apply는 저장 충돌로 다시 돌 때도 씁니다.
+ */
+export async function flushCrew(me: string, s: State, now: number): Promise<CrewApply | null> {
+    const h = s.hacker, p = h?.crewPending, cached = h?.crew;
+    if (!h || !cached || !p || (!p.nodes && !p.hacks) || h.infil) return null;
+    const sent = { nodes: p.nodes, hacks: p.hacks };
+    let reached = 0;
+    const c = await updateCrew(cached.id, now, x => {
+        if (!x.members[me]) return;
+        const w = x.week!, mine = w.by[me] ??= { nodes: 0, hacks: 0 }, before = w.steps;
+        mine.nodes += sent.nodes; mine.hacks += sent.hacks; w.nodes += sent.nodes; w.hacks += sent.hacks; x.members[me].seen = now;
+        w.steps = opSteps(w.nodes, w.goal);
+        for (let i = before + 1; i <= w.steps; i++) x.vault += CREW.op.reward(i).fund;
+        reached = w.steps > before ? w.steps : 0;
+    }).catch(() => undefined);
+    if (c === undefined) return null;
+    return st => {
+        const hk = hackerState(st), q = hk.crewPending;
+        if (q) { q.nodes = Math.max(0, q.nodes - sent.nodes); q.hacks = Math.max(0, q.hacks - sent.hacks); if (!q.nodes && !q.hacks) delete hk.crewPending; }
+        if (!c || !c.members[me]) { delete hk.crew; return; }
+        setCache(st, cached.id, c, me, now);
+        if (reached) addLog(st, `합동 작전 ${reached}단계 달성 · 조직 자금 +${CREW.op.reward(reached).fund}`, 'reward');
+        claimOp(st, cached.id, c, me);
+    };
 }
 
 /** 아래 행동은 /api/crew가 mutate 안에서 부릅니다. DB 쓰기를 한 번 한 뒤, 세이브에 적용할 변화(apply)를 돌려줍니다(저장 충돌로 다시 돌면 apply만 다시). */
@@ -128,6 +186,8 @@ export async function joinCrew(me: string, s: State, rawCode: unknown, now: numb
         const cap = CREW.capacity(crewGrade(x.exp));
         if (Object.keys(x.members).length >= cap) throw new ApiError(`조직 정원(${cap}명)이 찼습니다.`);
         x.members[me] = { name: s.name, joined: now, seen: now, deposited: 0 };
+        // v3.30 가입하면 이번 주 합동 작전 목표를 늘어난 인원 기준으로 올립니다(탈퇴로는 내려가지 않음).
+        x.week!.goal = Math.max(x.week!.goal, opGoal(Object.keys(x.members).length, crewGrade(x.exp)));
     });
     return st => { setCache(st, row.id, c!, me, now); addLog(st, `해커 조직 ‘${c!.name}’ 가입`, 'reward'); };
 }
@@ -136,7 +196,7 @@ export async function leaveCrew(me: string, s: State, now: number): Promise<Crew
     const cached = requireCrew(s);
     // 마지막 조직원이 나가면 조직이 사라집니다. 조직장이 나가면 tidyCrew가 다음 조직장을 고릅니다.
     await updateCrew(cached.id, now, x => { delete x.members[me]; }).catch(e => { if (!(e instanceof ApiError && /찾을 수 없/.test(e.message))) throw e; });
-    return st => { if (st.hacker) delete st.hacker.crew; addLog(st, `해커 조직 ‘${cached.name}’ 탈퇴`, 'system'); };
+    return st => { if (st.hacker) { delete st.hacker.crew; delete st.hacker.crewPending; } addLog(st, `해커 조직 ‘${cached.name}’ 탈퇴`, 'system'); };
 }
 
 /** 조직장 행동: kick(내보내기) · delegate(위임) · code(초대 코드 재발급). */
