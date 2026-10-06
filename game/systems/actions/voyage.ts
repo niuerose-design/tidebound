@@ -112,9 +112,6 @@ export const voyageActions: ActionHandlers = {
         s.autoVend = a.value === 'on';
         if (s.autoVend) s.autoSell = false;
     },
-    doorNotice(s, { a }) {
-        s.hideDoorNotice = a.value === 'off';
-    },
     statConfirm(s, { a }) {
         s.skipStatConfirm = a.value === 'off';
     },

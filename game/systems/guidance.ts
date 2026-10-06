@@ -35,8 +35,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 export const tutorialStepDone = (s: State, step: TutorialStep) => !!s.tutorial?.done?.[step.id] || step.done(s);
 export const tutorialProgress = (s: State) => TUTORIAL_STEPS.filter(x => tutorialStepDone(s, x)).length;
 export const nextTutorialStep = (s: State) => TUTORIAL_STEPS.find(x => !tutorialStepDone(s, x));
-/** v25.9 전직 단계까지는 안내 카드를 전투 화면 맨 위에 둡니다. */
-export const tutorialEarly = (s: State) => !tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'job')!);
 /**
  * v27.72 만족한 단계를 기록합니다. 기록이 없던 세이브(개편 전)는 환생 경험이 있으면 모든 단계를 조용히 채워
  * 기존 유저에게 안내를 다시 띄우지 않고, 환생 전 세이브는 지금 조건으로만 채웁니다.

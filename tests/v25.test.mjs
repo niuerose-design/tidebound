@@ -1,5 +1,5 @@
 // v25 ??? 특수 직업: 시계공·시간의 지배자·玄
-import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, doorsMod as doors, combatFxFromLog, act, jobMasteryTarget, assert, test } from './harness.mjs';
+import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, doorsMod as doors, combatFxFromLog, act, jobMasteryTarget, migrateState, assert, test } from './harness.mjs';
 const { actTurn } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/combat');
 const { skillVeiled, skillBlockReason } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
 
@@ -383,9 +383,9 @@ test('v25.14 defense expansion: 11 jobs wired, resist scaling uses ward affinity
     assert.ok(withWard > withoutWard, 'resist scaling is multiplied by ward affinity');
 });
 
-test('v25.14 door notice setting toggles and survives rebirth', () => {
-    const s = newState(0); act(s, { type: 'doorNotice', value: 'off' }, 0); assert.equal(s.hideDoorNotice, true); s.level = 30; act(s, { type: 'rebirth' }, 0); assert.equal(s.hideDoorNotice, true, 'setting is kept like autoSell');
-    act(s, { type: 'doorNotice', value: 'on' }, 0); assert.equal(s.hideDoorNotice, false);
+test('v3.36 door notice server setting is gone: the action is refused and old saves drop the field', () => {
+    const s = newState(0); assert.throws(() => act(s, { type: 'doorNotice', value: 'off' }, 0), /지원하지 않는/);
+    s.hideDoorNotice = true; migrateState(s, 0); assert.equal('hideDoorNotice' in s, false);
 });
 
 test('v25.14 recommended loadout mixes passives and actives within AP', async () => {

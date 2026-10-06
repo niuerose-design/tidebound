@@ -64,11 +64,7 @@
 .battle-rail-panel .section-title h2{font-size:13px;gap:7px}
 .battle-rail-panel .section-title h2 svg{color:#8bb6a7}
 .battle-rail-panel .section-title .text-button{font-size:10px;gap:2px}
-.battle-feed-list{max-height:190px;overflow:auto;padding-right:3px;scrollbar-width:thin;scrollbar-color:#395454 transparent}
-.battle-feed-list p{display:grid;grid-template-columns:27px 1fr;gap:7px;margin:0;padding:7px 0;border-bottom:1px solid #263f42;font-size:10px;line-height:1.55;color:#a8bbb5}
-.battle-feed-list p:last-child{border-bottom:0}
-.battle-feed-list p>span{font:9px/1.5 monospace;color:#5d7e7e}
-.battle-feed-empty{display:block!important;color:#718c90!important}
+
 .battle-stage-list,.battle-dungeon-list{display:flex;flex-direction:column;gap:4px;max-height:248px;overflow:auto;scrollbar-width:thin;scrollbar-color:#395454 transparent}
 .battle-stage-button,.battle-dungeon-button{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:8px 7px;text-align:left;border:1px solid transparent;border-radius:5px;background:#0e2026;color:#a9c3bb}
 .battle-stage-button:hover,.battle-dungeon-button:hover{border-color:#4b7365;background:#193236}
@@ -91,7 +87,7 @@
 
 .battle-hud button:focus-visible{outline:2px solid #d4b876;outline-offset:2px}
 @media(max-width:1500px){.battle-hud{grid-template-columns:222px minmax(0,1fr) 238px;gap:14px}.battle-character-column .player-panel{padding:16px 14px 12px}.battle-character-column .stat-grid{gap:11px 7px}.battle-rail-panel{padding:12px 10px}.battle-console .battle-scene{height:250px}.battle-console .scene-copy h2{font-size:26px}}
-@media(max-width:1180px){.battle-hud{grid-template-columns:220px minmax(0,1fr)}.battle-utility-rail{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1fr;align-items:start}.battle-feed-list{max-height:160px}.battle-stage-list,.battle-dungeon-list{max-height:180px}}
+@media(max-width:1180px){.battle-hud{grid-template-columns:220px minmax(0,1fr)}.battle-utility-rail{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1fr;align-items:start}.battle-stage-list,.battle-dungeon-list{max-height:180px}}
 @media(max-width:900px){.battle-hud{display:flex;flex-direction:column}.battle-console{order:1;width:100%}.battle-utility-rail{order:2;width:100%;display:grid;grid-template-columns:1fr 1fr}.battle-character-column{order:3;width:100%}.battle-character-column .player-column{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:0}.battle-character-column .player-avatar{display:none}.battle-character-column .player-panel>h3,.battle-character-column .job-label{text-align:left}.battle-character-column .player-panel>h3{margin-top:0}.battle-character-column .player-panel>.section-title{margin-bottom:12px}.battle-character-column .mini-equipment{display:flex;gap:10px}.battle-character-column .mini-equipment button{width:auto}.battle-character-column .player-panel .stat-grid{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console>.session-metrics{grid-template-columns:repeat(3,1fr)}.battle-console>.session-metrics>div{padding:0 9px}.battle-console>.session-metrics strong{font-size:16px}.battle-console>.session-metrics span{font-size:10px}.battle-console>.session-metrics svg{display:none}.battle-opponent-strip{grid-template-columns:1fr;gap:6px}.opponent-vs{flex-direction:row;gap:7px;height:22px}.opponent-vs svg{width:14px}.battle-console .battle-scene{height:405px}.battle-console .scene-copy{top:86px}.battle-console .scene-copy h2{font-size:28px}.battle-item-row{grid-template-columns:repeat(2,minmax(0,1fr))}.battle-utility-rail{display:flex}.battle-stage-list,.battle-dungeon-list{max-height:210px}.battle-character-column .player-column{display:block}.battle-character-column .player-avatar{display:flex}.battle-character-column .player-panel>h3,.battle-character-column .job-label{text-align:center}.battle-character-column .player-panel>h3{margin-top:18px}.battle-character-column .mini-equipment{display:block}.battle-character-column .mini-equipment button{width:100%}}
 
@@ -133,9 +129,7 @@
 .battle-rail-panel .section-title{margin-bottom:13px}
 .battle-rail-panel .section-title h2{font-size:15px;gap:8px}
 .battle-rail-panel .section-title .text-button{font-size:12px}
-.battle-feed-list{max-height:420px}
-.battle-feed-list p{grid-template-columns:32px 1fr;gap:9px;padding:9px 0;font-size:12px;line-height:1.6}
-.battle-feed-list p>span{font-size:10px}
+
 /* v26.7 낚시터·던전 목록을 촘촘하게(채팅 두 줄 구조에 맞춰 세로 폭 축소). */
 .battle-stage-list,.battle-dungeon-list{gap:3px;max-height:306px}
 .battle-stage-button,.battle-dungeon-button{gap:8px;padding:6px 9px}
@@ -147,9 +141,9 @@
 .battle-selected-dot{width:7px;height:7px}
 .battle-dungeon-wave{padding:4px 6px;font-size:10px}
 
-@media(max-width:1500px){.battle-hud{grid-template-columns:248px minmax(0,1fr) 294px;gap:17px}.battle-rail-panel{padding:16px 14px}.battle-feed-list p{font-size:11px}.battle-stage-button,.battle-dungeon-button{padding:6px 8px}.battle-stage-button strong,.battle-dungeon-button strong{font-size:11px}.battle-stage-button small,.battle-dungeon-button small{font-size:10px}.battle-console .battle-scene{height:260px}.battle-console .scene-copy h2{font-size:29px}}
-@media(max-width:1180px){.battle-workspace{padding-left:22px;padding-right:22px}.battle-hud{grid-template-columns:236px minmax(0,1fr);gap:17px}.battle-utility-rail{gap:13px}.battle-rail-panel{padding:16px 14px}.battle-feed-list{max-height:190px}.battle-stage-list,.battle-dungeon-list{max-height:230px}}
-@media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console .battle-scene{height:420px}.battle-console .scene-copy h2{font-size:30px}.battle-console .scene-copy p{font-size:13px}.battle-rail-panel{padding:16px 14px}.battle-feed-list{max-height:220px}.battle-stage-list,.battle-dungeon-list{max-height:250px}}
+@media(max-width:1500px){.battle-hud{grid-template-columns:248px minmax(0,1fr) 294px;gap:17px}.battle-rail-panel{padding:16px 14px}.battle-stage-button,.battle-dungeon-button{padding:6px 8px}.battle-stage-button strong,.battle-dungeon-button strong{font-size:11px}.battle-stage-button small,.battle-dungeon-button small{font-size:10px}.battle-console .battle-scene{height:260px}.battle-console .scene-copy h2{font-size:29px}}
+@media(max-width:1180px){.battle-workspace{padding-left:22px;padding-right:22px}.battle-hud{grid-template-columns:236px minmax(0,1fr);gap:17px}.battle-utility-rail{gap:13px}.battle-rail-panel{padding:16px 14px}.battle-stage-list,.battle-dungeon-list{max-height:230px}}
+@media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console .battle-scene{height:420px}.battle-console .scene-copy h2{font-size:30px}.battle-console .scene-copy p{font-size:13px}.battle-rail-panel{padding:16px 14px}.battle-stage-list,.battle-dungeon-list{max-height:250px}}
 
 /* Regions keep their own tone without fragmenting the shared battle frame. */
 .battle-hud{--stage-tone:#81cbb4}
@@ -193,7 +187,7 @@
 /* Battle view uses the first row for navigation context instead of a second
    global header.  Currency stays beside the session totals where it is used. */
 .battle-heading-tools{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
-.battle-heading-tools .status-pill{display:flex}
+
 .battle-updates-link{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .battle-updates-link small{color:var(--gold);font-size:11px}
 .battle-save-status{border-left:0;padding-left:0}
@@ -268,7 +262,7 @@
 @media(max-width:767px){
   .battle-heading-tools{gap:6px}
   .battle-heading-tools .battle-save-status{display:none}
-  .battle-heading-tools .status-pill{display:none}
+
   .battle-updates-link>span{display:none}
   /* v27.84 모바일: 메뉴 열기 버튼을 맨 왼쪽에 크게 두고, 업데이트 내역 버튼은 오른쪽으로 보냅니다. */
   .battle-mobile-menu{display:inline-flex;order:-1;margin-right:auto;width:44px;height:44px;border:1px solid #2d474a;border-radius:9px;background:#112329;color:#e1eeeb}
@@ -310,9 +304,7 @@
 .mobile-fisher-head small{flex:1;min-width:0;font-size:11px;color:#8faaa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mobile-fisher-head em{flex:none;font-style:normal;font-size:11px;color:#e0c27d}
 /* v27.88 자동 사냥 상태는 머리글 알약 대신 요약 줄 끝의 작은 표식으로(모바일). */
-.mobile-fisher-state{flex:none;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:#7f9c98}
-.mobile-fisher-state::before{content:'';width:6px;height:6px;border-radius:50%;background:#4f6a66}
-.mobile-fisher-state.on{color:#a4e9ba}.mobile-fisher-state.on::before{background:#7fe0a3;box-shadow:0 0 6px #7fe0a3}
+
 .mobile-fisher-bar{position:relative;display:block;height:16px;border-radius:4px;background:#0a171b;overflow:hidden}
 .mobile-fisher-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
 .mobile-fisher-bar small{position:relative;display:block;padding:0 6px;font:600 10px/16px monospace;color:#eef3ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -360,9 +352,8 @@
 .battle-console .opponent-card .enemy-hint{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;height:3em}
 
 /* 모바일 모험 안내: 장면 위에 한 번 더(데스크톱은 왼쪽 열에 있음) */
-.battle-mobile-tutorial{display:none}
+
 .battle-top-tutorial{order:-1;margin-bottom:12px}.battle-top-tutorial .tutorial-card{margin:0}
-@media(max-width:767px){.battle-mobile-tutorial{display:block;order:-1}.battle-mobile-tutorial .tutorial-card{margin-bottom:12px}}
 
 /* v25.3 연속 행동 카운터는 연속으로 행동한 쪽 카드에 붙습니다(데스크톱: 플레이어 왼쪽·상대 오른쪽, 모바일: 위·아래). */
 .tide-fx-combo small{display:block;width:100%;font-size:10px;letter-spacing:.5px;color:#9cb3af;margin-bottom:1px}
@@ -438,7 +429,7 @@
 @media(prefers-reduced-motion:reduce){.scene-fx-burst,.scene-fx-slash,.scene-fx-seal,.scene-fx-ring{display:none}.scene-fx-dark,.scene-fx-flash,.scene-fx-heaven,.scene-fx-title{animation-name:tideReduced;animation-duration:1.4s}.battle-scene:has(.scene-fx-finale) .ocean-art{animation:none}}
 
 /* v25.4 전투 보조 패널의 채팅 토글. 전투 기록과 같은 높이에서 바꿔 끼웁니다. */
-.feed-tabs{margin-right:auto}
+
 .chat-panel{display:flex;flex-direction:column;gap:7px}
 .chat-list{max-height:420px;min-height:120px;overflow:auto;padding-right:3px;scrollbar-width:thin;scrollbar-color:#395454 transparent}
 /* v26.7 두 줄 구조: 윗줄 칭호·이름·시간, 아랫줄 본문 전체 폭. 긴 이름이 본문 정렬을 흐트러뜨리지 않습니다. */
@@ -467,7 +458,6 @@
 .slot-chip-index{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#1a2d33;font-size:11px;font-weight:700}
 .slot-chip-text{display:grid;line-height:1.2}.slot-chip-text strong{font-size:12px}.slot-chip-text small{font-size:10px;color:#8ea7a4}
 @media(max-width:767px){.slot-chips{gap:6px}.slot-chip{padding:5px 8px}.slot-chip-text strong{font-size:11px}}
-.battle-shortcut-list .battle-stage-button>span:nth-child(2){display:flex;flex-direction:column;flex:1;min-width:0}.battle-shortcut-list .battle-stage-button strong{font-size:12px;white-space:normal;overflow:visible}.battle-shortcut-list .battle-stage-button small{display:block;font-size:10px;color:#8ea7a4}.battle-shortcut-list .battle-stage-button>svg:last-child{margin-left:auto;color:#678785}.battle-shortcut-list .battle-stage-index{display:grid;place-items:center;color:#a4e9ba}
 
 /* v25.15 세 열 아래쪽 맞춤: 가장 긴 열에 맞춰 왼쪽 패널·모험 일지·전투 기록이 늘어납니다. */
 @media(min-width:901px){
@@ -476,11 +466,14 @@
 .battle-character-column .player-column{display:flex;flex-direction:column;flex:1}
 .battle-character-column .player-panel{flex:1}
 .battle-console>.log-panel{flex:1;display:flex;flex-direction:column;min-height:0;margin-bottom:0}
+/* v3.36 전투 기록은 모험 일지 한 곳에만 있어 데스크톱에서 최소 높이를 넉넉히 둡니다. */
 .battle-console>.log-panel:not(.folded) .log-list{flex:1 1 0;height:auto;min-height:120px}
+@media(min-width:768px){.battle-console>.log-panel:not(.folded) .log-list{min-height:360px}}
+.battle-feed.feed-chat>.section-title h2{margin-right:auto}
 /* v25.19 전투 기록·채팅은 내용만큼만(최대 9줄 정도), 남는 높이는 낚시터·던전 목록이 채워 빈 공간이 없게 합니다. */
 /* v26.7 전투 기록·채팅 패널이 남는 세로 공간을 채워 오른쪽 열 하단이 가운데 열과 맞습니다. */
 .battle-utility-rail>.battle-feed{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
-.battle-utility-rail>.battle-feed .battle-feed-list{flex:1 1 0;max-height:none;min-height:220px}
+
 .battle-utility-rail>.battle-feed .chat-panel,.battle-utility-rail>.battle-feed .chat-feed{flex:1 1 auto;min-height:0}
 .battle-utility-rail>.battle-feed .chat-list{flex:1 1 0;max-height:none;min-height:180px}
 .battle-utility-rail>.battle-feed .chat-list{display:flex;flex-direction:column}
@@ -505,14 +498,10 @@
 .battle-character-column .equipment-title{margin:8px 0 2px}
 .battle-character-column .mini-equipment button{margin:6px 0}
 .battle-character-column .mini-slot{width:32px;height:32px}
-.battle-character-column .shortcut-title{margin:12px 0 6px}
-.battle-character-column .battle-shortcut-list{gap:4px}
-.battle-character-column .battle-shortcut-list .battle-stage-button{padding:7px 8px}
-.battle-character-column .battle-shortcut-list .battle-stage-button small{font-size:10px}
+
 }
 /* v25.15 빠른 이동: 왼쪽 ‘착용 장비’ 아래 */
-.shortcut-title{margin:18px 0 8px}
-.player-panel .battle-shortcut-list{max-height:none;overflow:visible}
+
 /* v25.15 설정 버튼: 톱니 + 이름 */
 .settings-button{width:auto;height:34px;gap:6px;padding:0 12px 0 10px;border:1px solid #4b7365;background:#193236;color:#dbe9e3;font-size:13px;font-weight:600}
 .settings-button svg{color:#a4e9ba}
@@ -796,12 +785,9 @@
 .scene-top .scene-label{min-width:0}.scene-top .scene-label svg{flex-shrink:0}.scene-label-text{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.scene-top .scene-actions{flex-shrink:0}
 .tide-fx-burn .tide-fx-fragment{animation-name:tideFragmentUp;animation-duration:.9s;font-size:13px}
 /* v27.47 오른쪽 패널 제단 탭 */
-.battle-altar-list .battle-dungeon-button>span{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
-.battle-altar-list .battle-dungeon-button>span .meter{width:100%}
+
 .battle-selector-panel .battle-place-tabs button{white-space:nowrap;padding:6px 9px}
-.battle-altar-gauge .meter{margin-top:5px}
-.battle-tab-dot{width:6px;height:6px;border-radius:50%;background:#e7be71;display:inline-block;margin-left:2px}
-.battle-altar-throne{margin:6px 2px 0;color:#7f9c98;font-size:12px}
+
 .battle-selector-panel .section-title .text-button{white-space:nowrap;flex:none}
 /* v27.55 해역 난이도: 최소·최대 버튼과 슬라이더 */
 .tide-controls{display:grid;gap:6px;justify-items:stretch;min-width:0}
@@ -872,14 +858,14 @@
   .battle-utility-rail>.battle-selector-panel{order:9;width:100%;margin-bottom:12px}
   .battle-hud>.mobile-fisher-toggle{order:10}
   .battle-hud>.battle-character-column{order:11}
-  .battle-mobile-tutorial{order:-1}
+
   .battle-console .scene-copy{top:62px}
   .battle-console .scene-copy h2{font-size:24px}
   .battle-console .scene-copy p{font-size:12px;max-width:260px}
   .battle-feed .section-title{margin-bottom:0}
   .battle-feed:not(.folded) .section-title{margin-bottom:10px}
   .feed-fold{display:inline-flex}
-  .battle-feed-list{max-height:240px}
+
   .battle-console>.log-panel:not(.folded) .log-list{flex:none;height:220px;min-height:0}
   .mobile-tab-bar{backface-visibility:hidden}
 }

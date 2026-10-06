@@ -109,7 +109,7 @@ export function ascend(s: State, now: number) {
         name: s.name, rank: s.rank, title: s.title, badge: s.badge, achievements: s.achievements, achievementClaims: s.achievementClaims,
         rebirthLog: s.rebirthLog, kills: s.kills, deaths: s.deaths, playMs: s.playMs || 0, bestStage: s.bestStage, tideBest: s.tideBest, clears: s.clears, modeClears: s.modeClears, randomGameStats: s.randomGameStats, starforce: s.starforce, rating: s.rating, wins: s.wins, losses: s.losses, duelDay: s.duelDay,
         guildMember: s.guildMember, guildStats: s.guildStats, altar: s.altar, daily: s.daily, weekly: s.weekly, duelSeason: s.duelSeason,
-        privacy: s.privacy, autoSell: s.autoSell, autoVend: s.autoVend, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, hideDoorNotice: s.hideDoorNotice, skipStatConfirm: s.skipStatConfirm, swarmCap: s.swarmCap,
+        privacy: s.privacy, autoSell: s.autoSell, autoVend: s.autoVend, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, skipStatConfirm: s.skipStatConfirm, swarmCap: s.swarmCap,
         account: s.account, hacker: s.hacker, hackFeed: s.hackFeed, doorsOpened: s.doorsOpened, shopSerial: s.shopSerial, logId: s.logId,
         relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled,
         jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, skillPractice: s.skillPractice, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited,

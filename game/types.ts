@@ -471,7 +471,6 @@ export type State = {
     /** v3.24 자동 판매기 켜짐 여부(설정). autoSell과 동시에 켜지지 않습니다. */
     autoVend?: boolean;
     /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
-    hideDoorNotice?: boolean;
     /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */
     skipStatConfirm?: boolean;
     /** v27.32 설정: 만날 무리의 최대 규모(0이면 무리 끔). 없으면 제한 없음. 상한을 넘게 뽑힌 무리는 상한 규모로 나옵니다. */

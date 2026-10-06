@@ -50,19 +50,19 @@ test('Stat points: 5 per level, old saves get the difference once, max button sp
 });
 
 test('v27.72 tutorial: 21 steps, completed steps are recorded and never regress, veterans are backfilled silently', async () => {
-    const { TUTORIAL_STEPS, tutorialProgress, tutorialEarly, tutorialStepDone, nextTutorialStep, syncTutorial } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/guidance');
+    const { TUTORIAL_STEPS, tutorialProgress, tutorialStepDone, nextTutorialStep, syncTutorial } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/guidance');
     // v3.17 21단계(중후반 8단계 추가).
     assert.equal(TUTORIAL_STEPS.length, 21); assert.deepEqual(TUTORIAL_STEPS.map(x => x.id), ['catch', 'attribute', 'skill', 'stage', 'dungeon', 'job', 'enhance', 'book', 'achievement', 'altar', 'research', 'rebirth', 'tide', 'habitat', 'star', 'relic', 'abyss', 'cosmetics', 'duel', 'guild', 'raid']);
-    const s = newState(0); s.tutorial = { done: {} }; assert.equal(tutorialEarly(s), true); assert.equal(tutorialProgress(s), 1, 'starter skill counts as equipped'); assert.deepEqual(s.tutorial, { done: {} });
+    const s = newState(0); s.tutorial = { done: {} }; assert.equal(tutorialProgress(s), 1, 'starter skill counts as equipped'); assert.deepEqual(s.tutorial, { done: {} });
     s.clears = { grotto: 1 }; assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'dungeon')));
     // 강화한 장비를 팔아도 ‘장비 강화’는 기록으로 남습니다.
     s.inventory.push({ id: 'e1', slot: 'rod', rarity: 0, power: 3, level: 1, name: 'rod', enhance: 1 }); act(s, { type: 'pause' }, 0);
     assert.ok(s.tutorial.done.enhance > 0 && s.tutorial.done.dungeon > 0 && s.tutorial.done.skill > 0, 'met steps are recorded on sync');
     s.inventory = s.inventory.filter(i => i.id !== 'e1'); assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'enhance')), 'selling the enhanced item keeps the step done');
-    s.stage = 'bay'; assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'stage'))); s.job = 'physical'; assert.equal(tutorialEarly(s), false);
+    s.stage = 'bay'; assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'stage'))); s.job = 'physical';
     s.altar = { offers: 1 }; assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'altar')));
     // 환생하면 환생 전 단계는 모두 완료, 난이도 단계만 남습니다. 기록은 환생 뒤에도 유지됩니다.
-    const r = newState(0); r.tutorial = { done: {} }; r.level = 60; act(r, { type: 'rebirth' }, 0); assert.equal(tutorialEarly(r), false, 'rebirth completes the early steps');
+    const r = newState(0); r.tutorial = { done: {} }; r.level = 60; act(r, { type: 'rebirth' }, 0); assert.ok(tutorialStepDone(r, TUTORIAL_STEPS.find(x => x.id === 'job')), 'rebirth completes the early steps');
     assert.equal(nextTutorialStep(r).id, 'tide'); assert.equal(tutorialProgress(r), 12); r.tide = 1; act(r, { type: 'pause' }, 0); assert.equal(nextTutorialStep(r).id, 'habitat', 'v3.17 mid-game steps follow'); r.tide = 0; assert.equal(tutorialProgress(r), 13, 'lowering the tide keeps the step');
     // 개편 전 세이브: 환생 경험이 있으면 모두 채우고(안내 없음), 환생 전이면 지금 조건으로만 채웁니다.
     const vet = newState(0); vet.tutorial = {}; vet.rebirths = 3; syncTutorial(vet); assert.equal(tutorialProgress(vet), 21);

@@ -91,6 +91,8 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.35 성장 목표는 직업만 남았습니다. 예전 스킬·던전 목표와 쓰지 않던 개인 길드 기록(guild)은 지웁니다.
     if (s.growthGoal && s.growthGoal.kind !== 'job') s.growthGoal = null;
     if ('guild' in s) delete (s as Record<string, unknown>).guild;
+    // v3.36 문 알림 끄기는 설정 → 화면 알림(이 기기) 하나로 합쳤습니다.
+    if ('hideDoorNotice' in s) delete (s as Record<string, unknown>).hideDoorNotice;
     if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);

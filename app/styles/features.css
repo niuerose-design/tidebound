@@ -52,8 +52,7 @@
 .login-error { color: #f09b95; font-size: 13px; margin: 0; }
 .login-note { margin-top: 12px; color: var(--muted); font-size: 12px; }
 .login-hint { font-size: 11px; line-height: 1.5; color: var(--muted); opacity: .85; }
-.battle-feed-list p.battle-line { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; }
-.battle-feed-list p.battle-line > span { min-width: 27px; }
+
 .log-line .battle-line { flex: 1; }
 /* 도감 연구: 연구 진행(플레이어 보상)과 적 정보를 분리 */
 .book-research { background: #0f2026; border: 1px solid #2c4a45; border-radius: 6px; padding: 12px; }
@@ -268,8 +267,6 @@
 .achievement-top { display:flex; justify-content:space-between; align-items:center; } .achievement-top svg { color:#8fd9b9; }
 .voyage-entry.achievement p { margin:0; font-size:12px; } .achievement-reward { font-size:12px; color:#e8d39a; }
 
-
-
 .abyss-board .abyss-mine { font-size:14px; color:#c5d8d2; margin:6px 0 12px; } .abyss-board .abyss-mine b { color:#e8d39a; }
 .abyss-board tr.self td { color:#a4e9ba; }
 @media (max-width: 767px) { .goal-boards { grid-template-columns:1fr; } .feat-bonus-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
@@ -310,7 +307,7 @@
 .rank-badge { background: #1f2d3a; color: #a9cdf0; display: inline-flex; align-items: center; gap: 4px; }
 .rank-badge .rank-insignia { width: 16px; height: 16px; }
 .rank-head { display: flex; align-items: center; gap: 12px; margin: 10px 0 12px; }
-.rank-pick { display: inline-flex; align-items: center; gap: 4px; color: #a9cdf0; }
+
 .rank-head-text { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .rank-head-text b { font-size: 1.05rem; }
 .rank-head-text small { color: var(--muted, #9fb7b0); }
@@ -332,8 +329,6 @@
 /* v26.2 칭호 글꼴·메인 화면 칭호 선택 */
 .title-row .title-desc, .title-row .title-locked { font-size: .82rem; color: #9fb7b0; }
 
-.title-label { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px auto 0; max-width: 220px; font-size: .82rem; color: #9fb7b0; }
-.title-label select { flex: 1; min-width: 0; background: #101c20; color: #e8d39a; border: 1px solid var(--border, #1f3338); border-radius: 6px; padding: 3px 6px; font-size: .82rem; }
 .metric-hint { display: inline-block; width: 15px; height: 15px; line-height: 13px; text-align: center; border: 1px solid rgba(159, 183, 176, .5); border-radius: 999px; font-size: 10px; color: #9fb7b0; margin-left: 4px; cursor: help; }
 
 /* v27.11 어종·직업 그림 자리. 이미지가 없으면 실루엣/아이콘이 남습니다. */
