@@ -13,9 +13,13 @@ import { jobById, lineageOf, type Job, type Lineage } from '../data/classes';
 import { SECRET_JOBS, SECRET_LINEAGES } from '../secret/jobs';
 import { SECRET_SKILLS } from '../secret/skills';
 import { SERVER_ODDS } from '../secret/odds';
+import { stageRewardAvgTable } from '../data/world';
 
 const KEY = 'secrecy', TTL = 30_000;
 const ODDS_KEY = createHash('sha1').update(JSON.stringify(SERVER_ODDS)).digest('base64url');
+/** v3.54 사냥터별 평균 보상 배율 표: 바뀌지 않으므로 처음 한 번 만들고, 키에는 지문만 더합니다. */
+let stageAvg: { table: ReturnType<typeof stageRewardAvgTable>; key: string } | undefined;
+const stageAvgOnce = () => stageAvg ??= (t => ({ table: t, key: createHash('sha1').update(JSON.stringify(t)).digest('base64url') }))(stageRewardAvgTable());
 let cached: { at: number; on: boolean } | null = null;
 export async function secrecyOn(now: number) {
     const env = process.env.TIDEBOUND_SECRECY;
@@ -48,6 +52,7 @@ export async function buildCatalog(s: State, now: number, known?: unknown): Prom
     const skills = SECRET_SKILLS.filter(sk => !secret || (sk.job && shown.has(sk.job)) || mine(sk.id));
     const body: Catalog = { secret, doors: doorView(s), revealed, jobs, lineages, skills };
     // v3.52 드롭·확률 수치는 비공개가 꺼져 있을 때만 싣습니다. 바뀌지 않는 값이라 키에는 미리 만든 지문만 더합니다(동기화마다 다시 해시하지 않음).
-    const key = createHash('sha1').update(JSON.stringify(body)).update(secret ? '' : ODDS_KEY).digest('base64url').slice(0, 16);
-    return key === known ? null : { ...body, ...(secret ? {} : { odds: SERVER_ODDS }), key };
+    const avg = stageAvgOnce();
+    const key = createHash('sha1').update(JSON.stringify(body)).update(secret ? '' : ODDS_KEY).update(avg.key).digest('base64url').slice(0, 16);
+    return key === known ? null : { ...body, ...(secret ? {} : { odds: SERVER_ODDS }), stageAvg: avg.table, key };
 }

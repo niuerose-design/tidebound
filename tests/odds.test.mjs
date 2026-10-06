@@ -35,3 +35,16 @@ test('v3.52 odds: the catalog carries the odds only while secrecy is off', async
         assert.ok(!('odds' in closed)); assert.notEqual(closed.key, open.key);
     } finally { if (before === undefined) delete process.env.TIDEBOUND_SECRECY; else process.env.TIDEBOUND_SECRECY = before; }
 });
+
+test('v3.54 spawn weights: server-only, and the per-stage average table reproduces the server reward norm for the screen', async () => {
+    const W = await load('data/world'), { SERVER_ODDS } = await load('secret/odds');
+    assert.equal(W.FISH.find(f => f.id === 'abyssManta').spawnWeight, SERVER_ODDS.spawn.abyssManta);
+    assert.equal(W.FISH.find(f => f.id === 'masteryMimic').spawnWeight, 0);
+    const table = W.stageRewardAvgTable();
+    for (const st of W.STAGES) for (const tier of [0, 1, 5, 10, 20, 35, 60, 100, 200]) {
+        const fromTable = 1 / Math.pow(Math.max(1, W.stageAvgAt(table[st.id], tier)), Math.min(1, tier / W.TIDE_LIFT_TIERS));
+        assert.ok(Math.abs(fromTable - W.stageRewardNorm(st.fish, tier)) < 1e-12, `${st.id} t${tier}`);
+    }
+    const src = fs.readFileSync('game/data/world.ts', 'utf8');
+    assert.ok(!/spawnWeight: \.\d/.test(src), 'no weight literals left in world.ts');
+});
