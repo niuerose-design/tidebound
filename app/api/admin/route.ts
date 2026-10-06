@@ -1,5 +1,5 @@
 import { checkOrigin, failure, readJson } from '@/game/server/store';
-import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats, resetAltar, setAltarBlessingLevel, listDoors, setDoorOpen } from '@/game/server/admin';
+import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats, resetAltar, setAltarBlessingLevel, listDoors, setDoorOpen, adminIncome } from '@/game/server/admin';
 import { readHacks, clearBroadcast, clearHackEffects } from '@/game/server/hacks';
 import { postNewsSample, recentNews } from '@/game/server/news';
 import { secrecyOn, setSecrecy } from '@/game/server/secrecy';
@@ -16,6 +16,8 @@ export async function POST(req: Request) { try {
     if (body.action === 'saveEvent') return Response.json(await saveEvent((body.event && typeof body.event === 'object' ? body.event : {}) as Record<string, unknown>), { headers });
     if (body.action === 'deleteEvent') return Response.json(await deleteEvent(String(body.id ?? '')), { headers });
     if (body.action === 'toggleEvent') return Response.json(await toggleCodeEvent(String(body.id ?? ''), !!body.disabled), { headers });
+    // v3.55 사냥 골드 수입 통계(시간당) · query로 특정 모험가의 시간별 기록.
+    if (body.action === 'income') return Response.json(await adminIncome(String(body.query ?? '')), { headers });
     if (body.action === 'stats') return Response.json(await adminStats(), { headers });
     // v27.69 제단 초기화 { kind: 'offers' | 'god' } → 새 통계
     if (body.action === 'altarReset') return Response.json(await resetAltar(String(body.kind ?? '')), { headers });

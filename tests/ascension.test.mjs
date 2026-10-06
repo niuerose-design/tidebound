@@ -267,3 +267,16 @@ test('v3.54 healers turn overflowing heals into damage on the enemy (healers onl
     const f2 = foe(), ev2 = []; C.strike(caster(0), f2, () => 0, ev2); assert.equal(ev2[0].holy, undefined, 'non-healers do not');
     assert.ok(B.SKILL_FORMULA.overhealDamage > 0);
 });
+test('v3.55 gold income is logged per play hour (24 buckets) and survives rebirth', async () => {
+    const In = await L.load('systems/income');
+    const s = newState(0); s.playMs = 0; s.goldLog = undefined;
+    In.recordIncome(s, 100); In.recordIncome(s, 50); assert.deepEqual(s.goldLog, [{ h: 0, g: 150 }]); assert.equal(s.goldEarned, 150);
+    In.recordIncome(s, -30); In.recordIncome(s, 0); assert.equal(s.goldEarned, 150, 'spending is not income');
+    s.playMs = 3600_000 * 1.5; In.recordIncome(s, 600);
+    assert.deepEqual(In.incomeRate(s), { perHour: 150, hours: 1, estimated: false }, 'completed hours only');
+    for (let h = 2; h < 40; h++) { s.playMs = h * 3600_000; In.recordIncome(s, h); }
+    assert.equal(s.goldLog.length, In.INCOME_HOURS); assert.equal(s.goldLog.at(-1).h, 39);
+    const t = newState(0); act(t, { type: 'start' }, 0); const g0 = t.gold; advance(t, 600_000, () => .5);
+    assert.ok((t.goldEarned || 0) >= t.gold - g0 && t.goldLog?.length >= 1, 'hunting ticks record income');
+    t.level = 60; t.goldLog = [{ h: 0, g: 9 }]; act(t, { type: 'rebirth' }, 700_000); assert.deepEqual(t.goldLog, [{ h: 0, g: 9 }], 'kept through rebirth');
+});

@@ -487,6 +487,10 @@ export type State = {
     researchGranted?: Record<string, number>;
     /** v3.42 가격 인상(RESEARCH_GROWTH) 전에 이미 산 연구 단계. 재분배 때 이 단계까지는 전 가격으로 돌려줍니다. 승천·재분배하면 비웁니다. */
     researchLegacy?: Record<string, number>;
+    /** v3.55 사냥 골드 수입: 플레이 시간 1시간 칸(h = playMs ÷ 1시간)마다 번 골드. 최근 24칸(systems/income.ts). */
+    goldLog?: { h: number; g: number }[];
+    /** v3.55 기록을 시작한 뒤 사냥으로 번 골드 합계. */
+    goldEarned?: number;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
     /** 자동 정리 · 분해 방식(설정). v3.23부터 정수로 분해. */
