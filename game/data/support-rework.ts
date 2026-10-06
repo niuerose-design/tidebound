@@ -30,7 +30,8 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     loadedHook: { multiplier: 1.05, gamble: { min: .3, max: 1.9, accuracy: .1 }, scaling: 'luck', scalingRatio: .4 },
     allIn: { chance: .26, cooldown: 5, multiplier: 1.6, drainRatio: .35, allIn: { hpRatio: .2, hpScale: 1.2, manaScale: 2 }, scaling: 'luck', scalingRatio: .5 },
     fateRoll: { multiplier: 2.5, gamble: { min: .2, max: 1.8, accuracy: .15 }, scaling: 'luck', scalingRatio: .6 },
-    jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 }, scaling: 'luck', scalingRatio: .8 },
+    // v3.89 조커 행운 비례 비율 .8 → .3: 치명 피해 ×4 안팎의 엔드에서 다른 5차 최상위(보우마스터)를 넘지 않게. 파이널 컷(체력 · 마나 올인)은 그대로.
+    jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 }, scaling: 'luck', scalingRatio: .3 },
     allOrNothing: { chance: .24, cooldown: 6, multiplier: 2.6, drainRatio: .35, allIn: { hpRatio: .3, hpScale: 1.6, manaScale: 3 }, gamble: { min: .6, max: 1.8 }, scaling: 'luck', scalingRatio: .8 },
     // ── 로그(섀도어): 변종 기록(√변종·황금 처치 수) 비례 ──
     relicToss: { chance: .26, cooldown: 3, multiplier: 1.3, scaling: 'variant', scalingRatio: .03 },
