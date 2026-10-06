@@ -367,3 +367,18 @@ test('v3.66 relics owned before the update keep the higher of the old and new po
     s.rebirths = 200; Lc.ascend(s, 0); assert.equal(s.relicRule, true); assert.ok(!s.inventory.some(x => x.relic));
 });
 
+test('v3.69 options: quality 1 + 0.2 × rarity, ancient+ only options (not on lower grades, not imprintable), two-edged options scaled both ways', async () => {
+    const G = await L.load('data/gear'), Co = await L.load('systems/commerce');
+    assert.equal(G.rarityQuality(6), 2.2); assert.equal(G.rarityQuality(4), 1.8);
+    const ancientOnly = G.AFFIX_POOL.filter(a => a.minRarity === 5).map(a => a.id).sort();
+    assert.deepEqual(ancientOnly, ['hunter', 'ruin', 'tempo', 'transcend']);
+    for (let i = 0; i < 60; i++) {
+        const r = (i % 6) / 6 + .01;
+        assert.ok(!G.rollAffixes(4, 400, undefined, () => r, [], 'rod', 100).some(a => ancientOnly.includes(a.id)), 'never on myth');
+    }
+    const seen = new Set(); for (let i = 0; i < 400; i++) { let x = i * 7919 % 1000 / 1000; for (const a of G.rollAffixes(6, 500, undefined, () => (x = (x * 9301 + .4927) % 1), [], 'rod', 100)) seen.add(a.id); }
+    assert.ok(ancientOnly.some(id => seen.has(id)), 'primal rolls can carry ancient+ options');
+    for (const slot of ['rod', 'coat', 'charm', 'cape']) assert.ok(!Co.imprintChoices(slot).some(a => ancientOnly.includes(a.id)), 'imprint appraisal cannot pick them');
+    const berserk = G.affixDef('berserk'); assert.equal(berserk.base, 1.35); assert.equal(berserk.base2, -.675);
+    assert.equal(G.GEAR_CAPS.lifesteal, .1);
+});

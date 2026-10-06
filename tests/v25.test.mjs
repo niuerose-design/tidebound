@@ -1166,7 +1166,7 @@ test('v27.95 cape slot: evasion/hp base, steadfast affix only on capes with leve
     const def = G.AFFIX_POOL.find(a => a.id === 'steadfast'); assert.equal(def.onlySlot, 'cape');
     for (let i = 0; i < 40; i++) assert.ok(!G.rollAffixes(6, 100, undefined, () => (i % 7) / 7, [], 'rod', 100).some(a => a.id === 'steadfast'), 'never on weapons');
     const avg = (level, rarity) => G.rollOption(def, 100, rarity, () => .5, level).value;
-    assert.ok(Math.abs(avg(100, 6) - .188 * 1.6) < .001, 'Lv.100 primordial average = 30.1%'); assert.ok(Math.abs(avg(50, 3) - .188 * .25 * 1.3) < .001, 'Lv.50 legend = 6.1%'); assert.ok(avg(30, 2) < .03, 'low level is tiny');
+    assert.ok(Math.abs(avg(100, 6) - G.STATUS_RESIST_BASE * G.rarityQuality(6)) < .001 && Math.abs(avg(100, 6) - .301) < .002, 'Lv.100 primordial average ≈ 30%'); assert.ok(Math.abs(avg(50, 3) - G.STATUS_RESIST_BASE * .25 * G.rarityQuality(3)) < .001, 'Lv.50 legend = level² × quality'); assert.ok(avg(30, 2) < .03, 'low level is tiny');
     const worn = { ...cape, affixes: [{ id: 'steadfast', name: '불굴', stat: 'statusResist', value: avg(100, 6) }] };
     assert.ok(Math.abs(itemStats(worn).statusResist - .5) < .002, '22 stars push Lv.100 primordial to the 50% cap'); assert.ok(Math.abs(itemStats({ ...worn, enhance: 0 }).statusResist - .3008) < .001, 'no stars: 30%');
     const s = newState(0); s.equipment.cape = worn; assert.ok(Math.abs(stats(s).statusResist - .5) < .002); s.equipment.cape = { ...worn, affixes: [{ id: 'steadfast', name: '불굴', stat: 'statusResist', value: .9 }] }; assert.equal(stats(s).statusResist, .5, 'player cap 50%');
