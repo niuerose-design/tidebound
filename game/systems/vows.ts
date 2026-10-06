@@ -1,6 +1,7 @@
 /** 서약(세계석 연구 4단계): 스스로 제약을 걸고 고유 보상을 받습니다. 계산만 두고, 상태 변경은 각 시스템에서 합니다. */
 import type { State, Vows } from '../types';
 import { researchRank } from '../data/economy';
+import { ascensionVow } from '../data/ascension';
 
 /** v27.86 잠든 힘은 서약에서 빠지고 던전 ‘랜덤게임’이 되었습니다(연구 vowAnchor가 입장을 엽니다). 절제(AP 제한)가 새 서약입니다. */
 export const VOW_IDS = ['breath', 'rough', 'restraint'] as const;
@@ -10,8 +11,8 @@ export const VOW_NAMES: Record<VowId, string> = { breath: '하드코어', rough:
 /** 단계를 고르는 서약(1~3단계). */
 export const LEVELED_VOWS = ['rough', 'restraint'] as const;
 
-/** 서약 보너스 강화 배율: 연구 1단계 ×1, 2단계 ×1.5, 3단계 ×2. 서약이 걸린 뒤 연구를 되돌려도 ×1은 유지합니다. */
-export const vowBoost = (s: Pick<State, 'permanent'>, id: VowId) => 1 + Math.max(0, researchRank(s, VOW_RESEARCH[id]) - 1) * .5;
+/** 서약 보너스 강화 배율: 연구 1단계 ×1, 2단계 ×1.5, 3단계 ×2. 서약이 걸린 뒤 연구를 되돌려도 ×1은 유지합니다. v3.30 승천 1회당 ×1.2씩(5회 ×2) 더 곱합니다. */
+export const vowBoost = (s: Pick<State, 'permanent'> & Partial<Pick<State, 'ascension'>>, id: VowId) => (1 + Math.max(0, researchRank(s, VOW_RESEARCH[id]) - 1) * .5) * ascensionVow(s);
 export const vowUnlocked = (s: Pick<State, 'permanent'>, id: VowId) => researchRank(s, VOW_RESEARCH[id]) > 0;
 /** 하드코어(전 ‘한 번의 숨’) 환생 세계석 보너스: +50% → +75% → +100%. */
 export const breathBonus = (s: Pick<State, 'permanent'>) => .5 * vowBoost(s, 'breath');

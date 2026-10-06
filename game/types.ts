@@ -320,6 +320,8 @@ export type CombatEvent = {
 export type LifeStart = { at: number; playMs: number; partial?: boolean };
 /** 환생 한 번의 기록. realMs: 생 시작부터 환생까지 실제 시간, playMs: 그동안 사냥이 진행된 시간(부재중 정산 포함). */
 export type RebirthRecord = { n: number; at: number; realMs: number; playMs: number; level: number; pearls: number; partial?: boolean };
+/** v3.30 승천 기록: 몇 번째 승천인지, 그때의 환생 횟수·무릉도장 최고층·걸린 시간. */
+export type AscensionRecord = { n: number; at: number; rebirths: number; abyssBest: number; realMs: number; kills: number };
 export type Log = {
     id: number;
     text: string;
@@ -414,6 +416,12 @@ export type State = {
     /** Paid inheritance is independent of growth and never fabricates mastery wins. */
     skillInheritances: Record<string, boolean>;
     skillPractice: Record<string, number>;
+    /** v3.30 승천할 때의 스킬 숙련. 연마 단계·한계 돌파 조건은 이 값 위로 쌓인 숙련만 셉니다(refinePractice). */
+    refineBase?: Record<string, number>;
+    /** v3.30 승천 횟수와 기록, 이번 승천의 시작 시각. */
+    ascension?: number;
+    ascensionLog?: AscensionRecord[];
+    ascensionStart?: number;
     /** v27.6 한계돌파 단계(기술 id → 0~limitBreak.max). 환생해도 유지됩니다. */
     limitBreaks?: Record<string, number>;
     /** v27.19 환생 유물이 세계석 구매에서 환생 횟수 제공으로 바뀌며, 이미 산 유물의 세계석을 돌려준 뒤 true. */

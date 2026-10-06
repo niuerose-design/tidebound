@@ -100,7 +100,7 @@ import { reward, expMultiplier, metaMod, mimicChanceOf, migrateState, randomGame
 const counting = (value = .99) => { const f = () => { f.calls++; return typeof value === 'function' ? value(f.calls) : value; }; f.calls = 0; return f; };
 
 test('Research v3: four special entries match the plan table and sit in the utility special group', () => {
-    const table = { tailwindSail: [5, 8, 5, 2, 90], sortingNet: [2, 10, 10, 2, 30], autoVend: [2, 10, 10, 2, 30], messageBottle: [5, 6, 4, 3, 70] };
+    const table = { tailwindSail: [5, 8, 5, 2, 90], sortingNet: [2, 10, 10, 2, 30], autoVend: [2, 10, 10, 2, 30], messageBottle: [10, 6, 4, 3, 240] }; // v3.30 행운의 편지 최대 10단계(6~10단계는 승천 후)
     for (const [id, [max, base, step, rebirth, total]] of Object.entries(table)) {
         const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.tab, r.group], [max, base, step, rebirth, 'utility', 'special'], id);
         assert.equal(economy.researchSpent(id, max), total, id);

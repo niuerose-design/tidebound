@@ -5,7 +5,7 @@ import { Sparkles, RefreshCw, Info, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
-import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, RELIC_GROWTH, relicPower, ECONOMY, researchCost, researchEffect, researchUnlocked, startingLevel, type ResearchDef, type ResearchTab } from '@/game/data/economy';
+import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, RELIC_GROWTH, relicPower, ECONOMY, researchCost, researchEffect, researchUnlocked, researchMaxFor, startingLevel, type ResearchDef, type ResearchTab } from '@/game/data/economy';
 import { PROGRESSION } from '@/game/data/progression';
 import { RebirthHistory } from './rebirth-history';
 import { BALANCE } from '@/game/data/balance';
@@ -21,6 +21,8 @@ import { BonusList } from './inventory-panel';
 import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, type VaultInfo } from '@/game/data/account';
 import { useEffect, useState as useLocalState } from 'react';
 import { salvagePreview } from '@/game/systems/actions/lifecycle';
+import { AscensionPanel } from './ascension-panel';
+import { ASCENSION } from '@/game/data/ascension';
 const VOW_TEXT: Record<VowId, (s: State) => string> = {
     breath: (s: State) => `쓰러지면 이번 생을 처음부터 다시 시작(환생 횟수·세계석 변화 없음, 서약 해제). 한 번도 쓰러지지 않고 환생하면 환생 세계석 +${Math.round(breathBonus(s) * 100)}%.`,
     rough: (s: State) => `단계(1·2·3)마다 사냥터 난이도 하한 ${ROUGH.floor.join('·')}(미만이면 보상 꺼짐), 장비 능력치 -${ROUGH.gear.map(n => n * 100).join('·')}%, 처치 후 회복·흡혈·체력 재생 -${ROUGH.heal.map(n => n * 100).join('·')}%. 보상: 골드·장비 드롭 확률 ×(1 + ${Math.round(50 * vowBoost(s, 'rough'))}% × 단계), 드롭 상한 뒤에 곱합니다.`,
@@ -42,12 +44,13 @@ function VowInfo({ id, s }: { id: VowId; s: State }) {
 const VOW_BY_RESEARCH = Object.fromEntries(VOW_IDS.map(id => [VOW_RESEARCH[id], id])) as Record<string, VowId>;
 /** 세계석 연구 카드: 현재 → 다음 효과, 잠긴 연구는 해금 환생 횟수를 보여줍니다. */
 function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a: Action) => void; busy: boolean }) {
-    const rank = s.permanent[r.id] || 0, cost = researchCost(r.id, rank), unlocked = researchUnlocked(s.rebirths, r), maxed = rank >= r.max;
+    // v3.30 승천해야 열리는 단계(행운의 편지 6~10)와 환생 200회부터의 연구 구매 잠금.
+    const rank = s.permanent[r.id] || 0, cost = researchCost(r.id, rank), unlocked = researchUnlocked(s.rebirths, r), maxed = rank >= r.max, capped = !maxed && rank >= researchMaxFor(s, r), locked200 = s.rebirths >= ASCENSION.researchLockAt;
     return <article className={`panel research-card ${unlocked ? '' : 'locked'}`}>
         <div><h2>{r.name}{VOW_BY_RESEARCH[r.id] && <VowInfo id={VOW_BY_RESEARCH[r.id]} s={s}/>}</h2><p>{r.desc}{r.levels ? '' : <small> (1단계당)</small>}</p>
             <p className="research-effect">{maxed ? `${researchEffect(r, rank)} · 최대` : `${rank || r.levels ? researchEffect(r, rank) : `${r.label} +0`} → ${researchEffect(r, rank + 1)}`}</p>
-            <small>연구 {rank} / {r.max}</small></div>
-        <button className="secondary" disabled={busy || !unlocked || maxed || s.pearls < cost} onClick={() => send({ type: 'permanent', id: r.id })}>{!unlocked ? `환생 ${r.rebirth}회 필요` : maxed ? '연구 완료' : `${cost} 세계석`}</button>
+            <small>연구 {rank} / {r.max}{r.ascendAbove !== undefined ? ` · ${r.ascendAbove + 1}단계부터 승천 후` : ''}</small></div>
+        <button className="secondary" disabled={busy || !unlocked || maxed || capped || locked200 || s.pearls < cost} onClick={() => send({ type: 'permanent', id: r.id })}>{!unlocked ? `환생 ${r.rebirth}회 필요` : maxed ? '연구 완료' : capped ? '승천 후 열림' : locked200 ? `환생 ${ASCENSION.researchLockAt}회 · 구매 잠김` : `${cost} 세계석`}</button>
     </article>;
 }
 function ResearchTabView({ tab, s, send, busy }: { tab: ResearchTab; s: State; send: (a: Action) => void; busy: boolean }) {
@@ -133,12 +136,13 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="prepare">환생 준비</TabsTrigger><TabsTrigger value="research">세계석 연구</TabsTrigger><TabsTrigger value="relics">환생 유물</TabsTrigger><TabsTrigger value="history">환생 기록</TabsTrigger></TabsList></Tabs>
         {tab === 'history' && <RebirthHistory s={s}/>}
         {tab === 'prepare' && <>
+            <AscensionPanel s={s} send={send} busy={busy}/>
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
             <section className="panel rebirth-ready">
-                <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.level >= required ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
+                <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.rebirths >= ASCENSION.rebirthCap ? `환생은 ${ASCENSION.rebirthCap}회까지입니다. 위의 승천으로 다시 오를 수 있습니다` : s.level >= required ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
                     {s.rebirths > 0 && <p className="footnote">이번 생 효과: {tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산)` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</p>}</div>
                 <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 세계석' : '환생 조건 달성 시 예상 세계석'}</span><strong><Sparkles size={26}/>{format(reward + breathExtra)}</strong>
-                    <ConfirmButton label="환생하기" title="다음 모험을 시작할까요?" description="오른쪽 아래 '초기화되는 것'이 처음 상태로 돌아가고, '유지되는 것'은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required} onConfirm={() => send({ type: 'rebirth' })}/>
+                    <ConfirmButton label="환생하기" title="다음 모험을 시작할까요?" description="오른쪽 아래 '초기화되는 것'이 처음 상태로 돌아가고, '유지되는 것'은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required || s.rebirths >= ASCENSION.rebirthCap} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>
             </section>
             <div className="rebirth-records rebirth-three">
@@ -157,7 +161,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             <details className="panel legacy-roadmap legacy-fold"><summary>환생 이후에 열리는 콘텐츠</summary><p><b>1회</b> 윤회의 일격 · 건 마스터리 · 엘리니아 · 잊힌 마법 사원(Lv.30) · 윤회의 무기</p><p><b>2회</b> 요정의 축복 · 영혼의 보물 사냥꾼의 감</p><p><b>3회</b> 시공의 파동 · 심연의 눈 · 무릉도장(Lv.40)</p><p><b>5회</b> 커닝시티 · 지하 배수로(Lv.55) · 칭호 ‘되돌아온 모험가’ · 연구 해금 마무리</p><p><b>8회</b> 엘나스 · 자쿰의 제단(Lv.60)</p><p><b>10·20·30·50회</b> 윤회 칭호 ‘윤회의 여행자’ · ‘운명을 거스른 자’ · ‘심연을 건넌 자’ · ‘영원의 모험가’</p><p>무릉도장은 5연전 정복마다 다음 깊이를 엽니다. 깊을수록 층당 세계석이 늘고, 10·25·50·100층 첫 돌파 시 SP 1.</p></details>
             <details className="panel legacy-fold data-management"><summary>저장 데이터 관리</summary><p>전체 초기화는 환생과 다릅니다. 이름을 제외한 모든 성장 기록과 랭킹 방어 등록을 삭제하며 복구할 수 없습니다. 자동 사냥을 중단하고 던전에서 나온 뒤 진행하세요.</p><ConfirmButton label="전체 데이터 초기화" title="정말 모든 데이터를 초기화할까요?" description="레벨·장비·환생·세계석·도감·스킬·길드·랭킹을 모두 처음 상태로 되돌립니다. 이 작업은 되돌릴 수 없습니다." disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetData' })}/></details>
         </>}
-        {tab === 'research' && <><p className="tab-intro">세계석 연구는 환생 후에도 유지됩니다. 카드에는 1단계당 증가량과 현재 → 다음 단계 효과를 표시합니다.</p>
+        {tab === 'research' && <><p className="tab-intro">세계석 연구는 환생 후에도 유지됩니다(승천하면 초기화되고 편의 연구는 자동으로 열림). 환생 200회부터는 구매가 잠깁니다. 카드에는 1단계당 증가량과 현재 → 다음 단계 효과를 표시합니다.</p>
             <Tabs value={researchTab} onValueChange={v => setResearchTab(v as ResearchTab)}><TabsList className="game-tabs research-tabs">{RESEARCH_TABS.map(t => <TabsTrigger key={t.id} value={t.id}>{t.name}</TabsTrigger>)}</TabsList></Tabs>
             <ResearchTabView tab={researchTab} s={s} send={send} busy={busy}/></>}
         {tab === 'relics' && <><p className="tab-intro">환생을 가로질러 자라는 장비입니다. 위력은 환생마다 +{RELIC_GROWTH.perRebirth * 100}%(지금 ×{(1 + s.rebirths * RELIC_GROWTH.perRebirth).toFixed(2)}), 별과 이식한 옵션(최대 {RELIC_GROWTH.imprintSlots}줄)은 환생해도 남고, 강화 파괴 대신 12성으로 돌아갑니다. 옵션 이식은 장비 보관함에서 같은 부위 장비를 소비해 합니다. 세계석 없이 환생 횟수를 채우면 받을 수 있고, 종류당 하나만 보유할 수 있습니다.</p><div className="port-gamble-grid">{RELICS.map(r => {

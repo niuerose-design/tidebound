@@ -36,6 +36,8 @@ export interface Storage {
     createPlayerIfMissing(id: string, state: string, now: number): Promise<void>;
     updatePlayer(id: string, state: string, now: number, revision: number): Promise<boolean>;
     upsertRanking(row: RankingRow): Promise<void>;
+    /** v3.30 승천: 결투·무릉도장 주간 기록판에서 즉시 빠질 때 씁니다. */
+    deleteRanking(id: string): Promise<void>;
     listRankings(season: number, limit: number): Promise<RankingRow[]>;
     getRanking(id: string, season: number): Promise<RankingRow | null>;
     updateRating(id: string, rating: number): Promise<void>;
@@ -222,6 +224,7 @@ function neonStorage(url: string): Storage {
         async createPlayerIfMissing(id, state, now) { await q('INSERT INTO players (id,state,revision,updated_at) VALUES ($1,$2,0,$3) ON CONFLICT (id) DO NOTHING', [id, packState(state), now]); },
         async updatePlayer(id, state, now, revision) { const r = await q('UPDATE players SET state=$1, revision=revision+1, updated_at=$2 WHERE id=$3 AND revision=$4', [packState(state), now, id, revision]); return r.rowCount === 1; },
         async upsertRanking(r) { await q('INSERT INTO rankings (id,snapshot,rating,power,updated_at) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (id) DO UPDATE SET snapshot=EXCLUDED.snapshot, rating=EXCLUDED.rating, power=EXCLUDED.power, updated_at=EXCLUDED.updated_at', [r.id, r.snapshot, r.rating, r.power, r.updated_at]); },
+        async deleteRanking(id) { await q('DELETE FROM rankings WHERE id=$1', [id]); },
         async listRankings(season, limit) { const { rows } = await q<RankingRow>("SELECT id,snapshot,rating,power,updated_at FROM rankings WHERE (snapshot::jsonb->>'season')::int=$1 ORDER BY rating DESC, power DESC LIMIT $2", [season, limit]); return rows.map(r => num(r) as RankingRow); },
         async getRanking(id, season) { const { rows } = await q<RankingRow>("SELECT id,snapshot,rating,power,updated_at FROM rankings WHERE id=$1 AND (snapshot::jsonb->>'season')::int=$2", [id, season]); return rows[0] ? num(rows[0]) as RankingRow : null; },
         async updateRating(id, rating) { await q('UPDATE rankings SET rating=$1 WHERE id=$2', [rating, id]); },
@@ -378,6 +381,7 @@ function fileStorage(): Storage {
         createPlayerIfMissing: (id, state, now) => tx(db => { db.players[id] ??= { state: packing(false) ? packState(state) : state, revision: 0, updated_at: now }; }),
         updatePlayer: (id, state, now, revision) => tx(db => { const p = db.players[id]; if (!p || p.revision !== revision) return false; db.players[id] = { state: packing(false) ? packState(state) : state, revision: revision + 1, updated_at: now }; return true; }),
         upsertRanking: r => tx(db => { db.rankings[r.id] = r; }),
+        deleteRanking: id => tx(db => { delete db.rankings[id]; }),
         listRankings: (s, limit) => tx(db => Object.values(db.rankings).filter(r => season(r) === s).sort((a, b) => b.rating - a.rating || b.power - a.power).slice(0, limit)),
         getRanking: (id, s) => tx(db => db.rankings[id] && season(db.rankings[id]) === s ? db.rankings[id] : null),
         updateRating: (id, rating) => tx(db => { if (db.rankings[id]) db.rankings[id].rating = rating; }),

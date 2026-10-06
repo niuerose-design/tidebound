@@ -15,5 +15,6 @@ await import('./chain.test.mjs');
 await import('./support.test.mjs');
 await import('./v25.test.mjs');
 await import('./hacker.test.mjs');
+await import('./ascension.test.mjs');
 await settled();
 console.log(`${results.passed} gameplay tests passed.`);

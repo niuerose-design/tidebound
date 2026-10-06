@@ -4,6 +4,7 @@ import { migrateState } from '../systems/migrations';
 import { snapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
 import { db, ConfigError, type SlotRow } from './db';
+import { ascended, ascensionOf, lifetimeRebirths } from '../data/ascension';
 import { weekKey, weekSeason, monthKey, monthSeason, previousMonthKey } from '../data/goals';
 import { duelSeasonPearls } from '../systems/duel';
 import type { RankingRow } from './db';
@@ -35,10 +36,10 @@ const ACCOUNT_REFRESH_MS = 10 * 60_000;
 /** 슬롯 요약: 계정 보너스에 쓰는 기록만 담습니다. */
 function slotSummary(s: State, slot: number, now: number): SlotSummary {
     const bosses = FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
-    return { slot, name: s.name, job: s.job, level: s.level, rebirths: s.rebirths || 0, mastered: JOBS.filter(j => jobMastered(s, j)).map(j => j.id), species: FISH.filter(f => (s.book?.[f.id] || 0) > 0).map(f => f.id), bossKills: bosses, abyssBest: s.abyssBest || 0, updatedAt: now };
+    return { slot, name: s.name, job: s.job, level: s.level, rebirths: s.rebirths || 0, lifetimeRebirths: lifetimeRebirths(s), ascension: ascensionOf(s), mastered: JOBS.filter(j => jobMastered(s, j)).map(j => j.id), species: FISH.filter(f => (s.book?.[f.id] || 0) > 0).map(f => f.id), bossKills: bosses, abyssBest: s.abyssBest || 0, updatedAt: now };
 }
 /** 보너스 단계가 바뀌는 값만 비교해, 레벨업·처치마다 올리지 않습니다. */
-const summaryKey = (x: SlotSummary) => `${x.rebirths}|${x.mastered.join(',')}|${x.species.length}|${Math.floor(x.bossKills / ACCOUNT_RULES.bossPer)}|${Math.floor(x.abyssBest / ACCOUNT_RULES.abyssPer)}`;
+const summaryKey = (x: SlotSummary) => `${x.lifetimeRebirths ?? x.rebirths}|${x.ascension || 0}|${x.rebirths}|${x.mastered.join(',')}|${x.species.length}|${Math.floor(x.bossKills / ACCOUNT_RULES.bossPer)}|${Math.floor(x.abyssBest / ACCOUNT_RULES.abyssPer)}`;
 const parseSlots = (rows: SlotRow[]) => rows.flatMap(r => { try { return [JSON.parse(r.summary) as SlotSummary]; } catch { return []; } });
 /**
  * 행동 처리 뒤 저장 전에 한 번: 내 슬롯 요약이 보너스 단계상 바뀌었거나 10분이 지났으면 올리고, 모든 슬롯을 합쳐 s.account 에 캐시합니다.
@@ -50,7 +51,9 @@ export async function syncAccount(account: string, slot: number, s: State, now: 
     const database = db();
     await database.upsertSlot({ account_id: account, slot, summary: JSON.stringify(own), updated_at: now });
     const others = parseSlots(await database.listSlots(account)).filter(x => x.slot !== slot);
-    s.account = { ...mergeSlots(slot, [...others, own], now), ownKey: key };
+    const merged = mergeSlots(slot, [...others, own], now);
+    // v3.30 승천한 모험가의 계정 보너스는 자기 기록으로만 다시 채웁니다(슬롯 목록·해금은 계정 전체 그대로).
+    s.account = ascended(s) ? { ...mergeSlots(slot, [own], now), slots: merged.slots, lifetimeRebirths: merged.lifetimeRebirths, ownKey: key } : { ...merged, ownKey: key };
 }
 /** 슬롯 전환: 열린 슬롯인지 저장된 요약으로 확인합니다. */
 export async function switchSlot(account: string, slot: number, now: number) {
@@ -122,6 +125,16 @@ export async function syncDuelSeason(id: string, s: State, now: number) {
         await database.upsertRanking({ id: duelRowId(key, id), snapshot: JSON.stringify(snap), rating: 1000, power: carry.power, updated_at: now });
     }
     if (!fresh) addLog(s, `새 결투 시즌 ${key} · 점수가 1000으로 돌아갑니다.`, 'system');
+}
+/**
+ * v3.30 승천 직후 서버 정리(docs/balance-rebirth.md 10·12절): 계정 금고를 비우고, 이번 달 결투 기록판과 이번 주 무릉도장 기록판에서 즉시 뺍니다.
+ * 금고는 계정 공용이라 다른 분신이 넣어 둔 몫도 함께 사라집니다(의도).
+ */
+export async function afterAscend(account: string, id: string, now: number) {
+    const database = db();
+    await database.setWallet({ account_id: account, pearls: 0, essence: 0, week: weekKey(now), pearl_out: 0 });
+    await database.deleteRanking(duelRowId(duelSeasonKey(now), id));
+    await database.deleteRanking(abyssRowId(id));
 }
 /** v25.6 주간 심연 기록판. 행 id는 abyss:<계정>, 시즌은 주 키 정수(예: 202640)라 모험가 랭킹(시즌 = 세이브 버전)과 섞이지 않습니다. */
 const abyssRowId = (id: string) => `abyss:${id}`;

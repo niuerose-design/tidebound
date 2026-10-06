@@ -25,6 +25,17 @@ export function skillRefinementTargets(sk: Skill) {
     return sk.type === 'active' || positive ? refinementTargets(masteryMilestonesFor(sk).at(-1)!) : [];
 }
 export const skillPracticeTargets = (sk: Skill) => [...masteryMilestonesFor(sk), ...skillRefinementTargets(sk)];
+/**
+ * v3.30 연마·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
+ * 성장 레벨(숙련 1~4단계)은 원래 숙련 그대로라 바뀌지 않습니다. 기준점이 없으면 원래 숙련과 같습니다.
+ */
+export function refinePractice(s: Pick<State, 'skillPractice' | 'refineBase'>, id: string) {
+    const practice = s.skillPractice?.[id] || 0, base = s.refineBase?.[id];
+    if (!base) return practice;
+    const last = masteryMilestonesFor(skillById(id)).at(-1)!;
+    return Math.max(Math.min(practice, last), practice - Math.max(0, base - last));
+}
+export const refinePractices = (s: Pick<State, 'skillPractice' | 'refineBase'>) => Object.fromEntries(Object.keys(s.skillPractice || {}).map(id => [id, refinePractice(s, id)]));
 export function maxSkillLevel(sk: Skill) { return masteryMilestonesFor(sk).length; }
 /** 실제로 한 한계돌파 단계(연구 상한 적용 전). 다음 단계 계산에 씁니다. */
 export function limitBreakOwned(s: Pick<State, 'limitBreaks'>, id: string) { return Math.min(PROGRESSION.limitBreak.max, s.limitBreaks?.[id] || 0); }
@@ -37,7 +48,7 @@ export function limitBreakOf(s: Pick<State, 'limitBreaks' | 'permanent'>, id: st
 export function limitBreakNext(s: State, id: string) {
     const sk = skillById(id), stage = limitBreakOwned(s, id) + 1, lb = PROGRESSION.limitBreak;
     if (!sk || stage > lb.max) return { stage, sp: 0, practice: 0, ok: false, reason: stage > lb.max ? '한계돌파 최대 단계입니다.' : '스킬을 찾을 수 없습니다.' };
-    const last = masteryMilestonesFor(sk).at(-1)!, practice = last * lb.practiceMultiple[stage - 1], sp = lb.sp[stage - 1], have = s.skillPractice?.[id] || 0;
+    const last = masteryMilestonesFor(sk).at(-1)!, practice = last * lb.practiceMultiple[stage - 1], sp = lb.sp[stage - 1], have = refinePractice(s, id);
     const reason = !(s.learned?.[id] > 0) ? '먼저 습득해야 합니다.' : skillMasteryLevel(have, masteryMilestonesFor(sk)) < maxSkillLevel(sk) ? '실전 숙련을 끝까지 채워야 합니다.' : researchRank(s, 'limitBreak') < stage ? `세계석 연구 ‘한계의 문’ ${stage}단계 필요 (지금 ${researchRank(s, 'limitBreak')}단계)` : have < practice ? `실전 숙련 ${practice.toLocaleString()} 필요 (지금 ${have.toLocaleString()})` : s.sp < sp ? `SP ${sp} 필요` : '';
     return { stage, sp, practice, ok: !reason, reason };
 }

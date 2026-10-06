@@ -17,6 +17,8 @@ export type ResearchDef = {
     negative?: boolean;
     /** 단계마다 효과가 수치가 아니라 설명으로 바뀌는 연구(자동 분해기·서약)의 단계별 문구. [0]은 0단계. */
     levels?: string[];
+    /** v3.30 이 단계를 넘는 단계는 승천한 모험가만 살 수 있습니다(행운의 편지 6~10단계). */
+    ascendAbove?: number;
 };
 export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '전투' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
 export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본', special: '특별', vow: '서약' };
@@ -49,7 +51,7 @@ export const RESEARCH: ResearchDef[] = [
     /** v3.24 자동 판매기: 자동 분해기와 같은 등급의 드롭을 골드로 팝니다. 설정에서 둘 중 하나만 켭니다. */
     { id: 'autoVend', name: '자동 판매기', desc: '1단계 희귀, 2단계 영웅 이하 드롭을 골드로 자동 판매 (설정에서 켜고 끔, 자동 분해기와는 하나만 켤 수 있음)', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 판매 등급', suffix: '단계', levels: ['자동 판매 없음', '희귀 자동 판매', '영웅 이하 자동 판매'] },
     // v27.60 병 속의 편지(오프라인 편지병) → 행운의 편지. id는 그대로라 찍어 둔 단계가 이어집니다.
-    { id: 'messageBottle', name: '행운의 편지', desc: '숙련의 까미·경험의 누리 등장 확률 +15%', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
+    { id: 'messageBottle', name: '행운의 편지', desc: '숙련의 까미·경험의 누리 등장 확률 +15%. 6~10단계는 승천 후: 6단계 부재중 정산 중 확률 ×0.25 → ×0.5, 8단계 까미 ‘대’ 당첨 5% → 7.5%, 10단계 편지 수신인(까미 당첨 숙련의 1%를 해금한 미숙달 직업 하나에 덤)', max: 10, ascendAbove: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
     { id: 'limitBreak', name: '한계의 문', desc: '스킬 한계돌파 해금. 연구 단계까지만 한계돌파할 수 있고, 이미 한 한계돌파도 연구 단계까지만 효과가 납니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '한계돌파 상한', suffix: '단계', levels: ['잠김 · 한계돌파 불가', '한계돌파 1단계까지', '한계돌파 2단계까지', '한계돌파 3단계까지'] },
     /** v27.86 잠든 힘 → 랜덤게임(던전). id는 세이브 호환을 위해 그대로 둡니다. */
     { id: 'vowAnchor', name: '랜덤게임', desc: '던전 ‘랜덤게임’ 입장 해금. 하루마다(그리고 환생하면) 연구 단계만큼 입장할 수 있고, 2·3단계는 판돈을 50%씩 키웁니다(×1 → ×1.5 → ×2). 쓰러지면 판돈은 모두 사라집니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '랜덤게임 단계', suffix: '단계', levels: ['잠김', '해금 · 생마다 1회 · 판돈 ×1', '생마다 2회 · 판돈 ×1.5', '생마다 3회 · 판돈 ×2'] },
@@ -73,6 +75,8 @@ export const researchCost = (id: string, rank: number) => { const r = RESEARCH.f
 /** rank 단계까지 쓴 세계석 합계(0 → rank). 재분배 반환액 계산에 씁니다. */
 export const researchSpent = (id: string, rank: number) => { let sum = 0; for (let i = 0; i < rank; i++) sum += researchCost(id, i); return sum; };
 export const researchUnlocked = (rebirths: number, r: Pick<ResearchDef, 'rebirth'>) => rebirths >= (r.rebirth || 0);
+/** v3.30 지금 살 수 있는 최대 단계: 승천하지 않았으면 ascendAbove까지. */
+export const researchMaxFor = (s: { ascension?: number }, r: Pick<ResearchDef, 'max' | 'ascendAbove'>) => r.ascendAbove !== undefined && !((s.ascension || 0) > 0) ? Math.min(r.max, r.ascendAbove) : r.max;
 /** rank 단계의 총 효과 표시. 예: 물리 공격 +10% */
 export function researchEffect(r: ResearchDef, rank: number) {
     if (r.levels) return r.levels[Math.min(rank, r.levels.length - 1)];

@@ -2,14 +2,15 @@
 import { BOSS_RESEARCH } from '../data/specializations';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus } from '../data/long-term';
-import { jobMasteryTarget, skillRefinementTargets } from './progression';
+import { jobMasteryTarget, skillRefinementTargets, refinePractice } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
-import { MIMIC, rollMimicMastery, mimicChance, specialLuck } from '../data/mimic';
+import { MIMIC, LETTER, letterRank, rollMimicMastery, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
+import { ascended, ascensionMastery } from '../data/ascension';
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue } from '../data/rank';
 import { roughHeal } from './vows';
@@ -19,10 +20,11 @@ import type { State, Item, Stats } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth } from '../data/world';
 import { jobById } from '../data/classes';
+import { HACKER_ID } from '../data/hacker';
 import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
-import { canUse, grantJobSkills, itemKey } from './progression';
+import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
 import { dismantleEssence, saleValue } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
@@ -161,11 +163,12 @@ export function spawn(s: State, rng: () => number) {
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
     // v27.58 경험의 누리: 까미와 같은 난수 하나를 [까미 구간 | 누리 구간]으로 나눠 씁니다(난수 사용 횟수는 그대로).
     // v27.80 무리 서식지에는 까미·누리가 나오지 않습니다(무리만 확정).
-    const mimicOk = !dungeon && !st.habitat && tier >= MIMIC.minTier && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && !st.habitat && nuriEligible(s, tier);
+    // v3.30 승천한 모험가에게는 까미·누리가 난이도 0부터 나옵니다(난이도 조건만 없앰, 레벨·처치 수 조건은 그대로).
+    const asc = ascended(s), mimicOk = !dungeon && !st.habitat && (asc || tier >= MIMIC.minTier) && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && !st.habitat && nuriEligible(s, asc ? Math.max(tier, EXP_NURI.minTier) : tier);
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
-    const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? MIMIC.offlineScale : 1) * (s.event?.mimic ?? 1) * luck : 0;
-    const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? EXP_NURI.offlineScale : 1) * (s.event?.nuri ?? 1) * luck : 0;
+    const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
+    const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
     const special = mimicOk || nuriOk ? rng() : 1;
     const mimic = special < mimicP, nuri = !mimic && special < mimicP + nuriP;
     // v3.12 칠흑의 보스: 무리 서식지 출현마다 아주 드물게(천장 있음). 집중 사냥 대상이 아니며 그 서식지 최강 몬스터의 몸집(×100 무리급 체력, 공격 ×3)을 빌립니다.
@@ -246,8 +249,18 @@ export function reward(s: State, rng: () => number) {
     if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 빌드 화면의 계급에서 사용)`, 'reward'); }
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.29 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
     let mimicBonus = 0;
-    if (e.id === MIMIC.id) { const t = rollMimicMastery(rng); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
-    const practiceTotal = practice + mimicBonus;
+    if (e.id === MIMIC.id) { const t = rollMimicMastery(rng, s); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
+    // v3.30 승천 숙련 배율(1회당 +100%, 5회 ×6)은 까미 당첨분까지 합친 이번 처치 숙련 전체에 곱합니다. 다른 배율은 까미에 걸지 않습니다.
+    const practiceTotal = Math.floor((practice + mimicBonus) * ascensionMastery(s));
+    // v3.30 행운의 편지 10단계 · 편지 수신인: 까미 당첨 숙련(승천 배율 적용 뒤)의 1%를 해금했지만 숙달하지 않은 다른 직업 하나에 덤으로 줍니다.
+    if (mimicBonus && letterRank(s) >= LETTER.recipientRank) {
+        const pool = s.unlockedJobs.filter(id => id !== s.job && id !== HACKER_ID && jobById(id) && !jobMastered(s, jobById(id)!));
+        if (pool.length) {
+            const to = pool[Math.floor(rng() * pool.length)], gift = Math.max(1, Math.floor(mimicBonus * ascensionMastery(s) * LETTER.recipientShare));
+            s.jobMastery[to] = (s.jobMastery[to] || 0) + gift;
+            addLog(s, `편지 수신인 · ${jobById(to)!.name} 숙련 +${gift.toLocaleString()}`, 'skill');
+        }
+    }
     const jobTargets = vocationTargets(jobMasteryTarget(jobById(s.job)!));
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
     s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practiceTotal;
@@ -256,9 +269,9 @@ export function reward(s: State, rng: () => number) {
     for (const id of s.skills) {
         if (canUse(s, id)) {
             const sk = skillById(id)!, targets = skillRefinementTargets(sk);
-            const before = thresholdRank(s.skillPractice[id] || 0, targets);
+            const before = thresholdRank(refinePractice(s, id), targets);
             s.skillPractice[id] = (s.skillPractice[id] || 0) + practiceTotal;
-            const after = thresholdRank(s.skillPractice[id], targets);
+            const after = thresholdRank(refinePractice(s, id), targets);
             if (after > before) addLog(s, `${sk.name} 연마 ${after}/${targets.length}단계 달성 · 직접 피해·양수 패시브 누적 ${refinementBonusLabel(after)}`, 'skill');
         }
     }
