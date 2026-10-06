@@ -19,7 +19,7 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     // ── 매지션 계보: 아크메이지(썬,콜) · 요정 사제 ──
     wave: '매직 클로', spring: '마나 리커버리', maelstrom: '썬더 볼트', abyssMind: '스펠 마스터리',
     pearlPrayer: '요정의 기도', soulTide: '요정의 가호', runeCurrent: '룬 볼트', tidalScript: '룬 각인',
-    lifeCurrentFlow: '마나 순환', eternalWave: '시공의 파동', thunderPsalm: '체인 라이트닝', overcast: '엘리멘트 앰플리피케이션',
+    lifeCurrentFlow: '마나 순환', thunderPsalm: '체인 라이트닝', overcast: '엘리멘트 앰플리피케이션',
     moonTide: '달빛 치유', tidalFate: '달의 가호', tidalCollapse: '블리자드', currentDominion: '엘리멘탈 리셋',
     oceanWrath: '썬더 브레이크', willOfSea: '아이스 에이지', tideOfAges: '익스트림 매직',
 
@@ -41,12 +41,7 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     keenEye: '매의 눈', showmanship: '관중의 환호', netThrow: '그물 던지기', oathShout: '맹세의 함성', rottenBait: '썩은 덫',
     arcane: '버블 볼트', hushCurrent: '침묵의 봉인', undertow: '끌어내리는 봉인', insight: '마나 통찰', flow: '마나 순환술',
     chartedCurrents: '지형 측량', bookwise: '박식', stillMind: '고요한 마음', currentJam: '지형 교란',
-    soulHook: '윤회의 일격', glassLance: '유리 창', glassHeart: '유리 심장', headwindTack: '역풍 돌파', galeLegs: '돌풍 걸음',
-    dawnFlare: '여명 섬광', morningCalm: '아침 고요', bareGrab: '맨손 붙잡기', ironGrip: '쇠 손아귀', sunDive: '한낮 돌진', brineLungs: '단련된 폐',
-    mistSlash: '안개 베기', fogVeil: '안개 장막', heronStill: '왜가리의 정적', nightEyes: '밤눈', emptyPalm: '빈손 장타', vowOfPoverty: '청빈 서약',
-    encyclopediaBolt: '도감 낭독', marginNotes: '여백 메모', riseAgain: '다시 일어서기', scarTissue: '아문 상처',
-    thousandHands: '천 개의 손놀림', wayfarerKnack: '떠돌이의 요령', borrowedForm: '배운 대로', hundredKnacks: '백 가지 요령',
-    thousandLives: '천 번의 삶', everyLife: '모든 생의 기억', mercenaryCraft: '용병의 요령', patchwork: '덧댄 솜씨', twoHanded: '양손 무기 숙련',
+    mercenaryCraft: '용병의 요령', patchwork: '덧댄 솜씨', twoHanded: '양손 무기 숙련',
     bitterBrew: '쓴 달임약', sporePouch: '포자 주머니', inkSplash: '표창 세례', nimbleStep: '가벼운 발',
 
     // ── 섀도어 계보 · 보물 사냥꾼 ──
@@ -64,8 +59,6 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     lightHarpoon: '아포칼립스', sanctifiedSea: '다크 크레센도', seaOfLightDescent: '진리의 문', oceanOfLight: '리버레이션 오브',
 
     // ── 제로 계보 ──
-    windUp: '문 스트라이크', slackHand: '피어스 쓰러스트', timeLag: '타임 홀딩', timeMachine: '타임 리와인드',
-    frozenTime: '타임 디스토션', precede: '쉐도우 레인', rewind: '리와인드', chronoSovereign: '얼티밋 타임',
 
     // ── 캡틴 계보 · 무역상 ──
     salvageContract: '해적의 계약', coinToss: '더블 파이어', goldMemory: '건 마스터리', hagglingHook: '흥정 갈고리', portLedger: '무역 장부',
@@ -73,21 +66,15 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     goldenStorm: '불릿 파티', goldenEmpire: '캡틴의 위엄',
 
     // ── 아델 계보 · 허공 방랑자 ──
-    voidLance: '샤드', echoMemory: '에테르', leviathanEquation: '디바이드', deepReservoir: '크리에이션',
-    nullStep: '허공 걸음', phaseCloak: '위상 망토', abyssDecree: '그레이브', silentAbyss: '레조넌스', voidCollapse: '인피니트', endlessVoid: '루인',
 
     // ── 나이트워커 계보 · 골령술사 ──
-    graveHook: '다크 엘리멘트', boneLegacy: '쉐도우 서번트', marrowGuard: '쉐도우 배트', ossuaryRite: '골령 의식',
-    harvestEcho: '다크니스 오멘', soulTax: '쉐도우 메이크', soulTyranny: '쉐도우 스피어', undyingThrone: '다크니스 블레싱',
-    soulReap: '쉐도우 바이트', undeathThrone: '도미니언',
 
     // ── 스트라이커 계보 · 썬더 브레이커 ──
     wakeFist: '질풍', anchorBreak: '벽력 돌파', roughLine: '라이트닝 매듭', twinHook: '선풍', surgeCombo: '벽력', flowingFists: '연속 공격',
     tsunamiRush: '태풍', stormBody: '뇌성', oceanCombo: '교룡연격', endlessCombo: '해신강림',
 
     // ── 은월 계보 · 구미호 ──
-    electricBite: '귀참', galvanicScales: '여우령', tentacleBarrage: '폭류권', abyssalGrip: '정령의 힘', maulingTide: '파쇄철조',
-    abyssHide: '소혼 장막', devour: '여우불 포식', gorgedMaw: '구미호의 꼬리', worldTentacle: '파쇄 연권', primordialBlood: '귀문진',
+    electricBite: '귀참', galvanicScales: '여우령', tentacleBarrage: '폭류권',
 
     // ── 일리움 계보 · 크리스탈 연성사 ──
     rippleGlyph: '크래프트: 자벨린', currentNotes: '라이트 오브 레프', saltCatalyst: '크래프트: 오브', volatileFormula: '리액션: 디스트럭션',

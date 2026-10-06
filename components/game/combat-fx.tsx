@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
 import type { Log } from '@/game/types';
+import { skillById } from '@/game/data/skills';
 import { combatFxBatch, combatFxSkipped, type CombatFx } from '@/game/systems/combat-feedback';
 
 /** 연출을 띄워 두는 시간(마지막 타격 뒤). */
@@ -80,18 +81,18 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
 }
 
 const SEAL_GLYPHS = ['無', '虛', '斬', '血', '縛', '刹', '魂'];
-/** v27.24 5차 궁극기 전용 장면 연출. kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. */
-const ULTIMATES: Record<string, { kind: string; title: string; glyphs: string[] }> = {
+/** v27.24 5차 궁극기 전용 장면 연출. kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. v3.46 title이 없으면 스킬 이름(비밀 직업 스킬은 카탈로그로 받은 이름). */
+const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[] }> = {
     braveSlash: { kind: 'slash', title: '소드 오브 버닝 소울', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
     oceanWrath: { kind: 'wave', title: '썬더 브레이크', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
     genesis: { kind: 'light', title: '인피니티 플레임 서클', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
     doomMark: { kind: 'venom', title: '포이즌 노바', glyphs: ['●', '◌', '●', '◌', '●', '◌', '●', '◌'] },
     aegisJudgment: { kind: 'judgment', title: '소드 오브 라이트', glyphs: ['⬡', '✦', '⬡', '✦', '⬡', '✦', '⬡', '✦'] },
     redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
-    worldTentacle: { kind: 'tentacle', title: '파쇄 연권', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
-    soulReap: { kind: 'soul', title: '쉐도우 바이트', glyphs: ['☠', '◌', '☠', '◌', '☠', '◌', '☠', '◌'] },
+    worldTentacle: { kind: 'tentacle', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
+    soulReap: { kind: 'soul', glyphs: ['☠', '◌', '☠', '◌', '☠', '◌', '☠', '◌'] },
     jackpotStrike: { kind: 'jackpot', title: '조커', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },
-    frozenTime: { kind: 'time', title: '타임 디스토션', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
+    frozenTime: { kind: 'time', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
 };
 /**
  * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
@@ -102,7 +103,7 @@ export function SceneFx({ effect }: { effect: CombatFx[] }) {
     return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = fx.skillId ? ULTIMATES[fx.skillId] : undefined; return ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
-        <strong className="ult-title">{ult.title}</strong>
+        <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>
     </div> : fx.finale ? <div key={fx.id} className="scene-fx scene-fx-finale" style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="scene-fx-slash"/><i className="scene-fx-ring"/><i className="scene-fx-ring late"/>
         {SEAL_GLYPHS.map((g, i) => <b key={g} className="scene-fx-seal" style={fxStyle(fx.delay + i * 70, { '--seal-angle': `${i * 360 / 7 - 90}deg` })}>{g}</b>)}

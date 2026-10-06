@@ -5,7 +5,6 @@
  * - 침투 작전: 서버가 낸 자물쇠 퍼즐을 한 칸씩 뚫는 로그라이트. 정답은 서버 키로만 만들 수 있어 세이브에 남지 않습니다.
  * - 해킹 I: 방송 탈취 · 크래킹(서버 공유 설정 hacks, 30초 캐시). v3.26 신원 조작(옛 애드가드): 해커가 고른 모험가의 순위표 정보 공개 여부를 바꿈.
  */
-import type { Skill } from '../types';
 
 export const HACKER_ID = 'hacker';
 export const ADGUARD_ID = 'adGuard';
@@ -123,12 +122,4 @@ export const PRIVACY_LABELS: Record<PrivacyField, string> = { job: '직업', lev
 
 /** v3.44 해커 계열 직업(해커·화이트 해커·블랙 해커)은 비밀 직업이라 game/secret/jobs.ts로 옮겼습니다(서버 전용). */
 
-/** 해커 계열 스킬: 신원 조작(id adGuard, 옛 애드가드)과 화이트 해커 방화벽. 숙련은 해커 활동(침투·브루트포스·해킹)으로 오릅니다. */
-export const HACKER_SKILLS: Skill[] = [
-    /** v3.26 애드가드 → 신원 조작: 나를 숨기는 패시브가 아니라 해커가 남의(또는 내) 공개 여부를 바꾸는 스킬. id는 세이브 호환으로 그대로. */
-    { id: ADGUARD_ID, name: '신원 조작', desc: '해커 전용. 고른 모험가 한 명(나도 가능)의 랭킹 정보 공개 여부를 바꿉니다. 숙련 1단계: 이름과 모든 정보를 ???로 1시간 가림. 숙련 2단계: 가릴 항목을 고름. 숙련 3단계: 가린 이름·직업·레벨 자리에 미끼 정보(가짜 값)를 보여 줌. 하루 횟수는 숙련 단계만큼. 크래킹을 당하면 그동안 풀립니다.', type: 'passive', level: 30, job: HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 5, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
-    /** v3.25 화이트 해커 전용 패시브. 장착하면 하루 한 번 크래킹을 막아 냅니다(막힌 해커의 비트·횟수는 그대로 씀). */
-    { id: FIREWALL_ID, name: '방화벽', desc: '하루 한 번, 나를 노린 크래킹을 막아 냅니다. 숙련은 해커 활동으로 오릅니다.', type: 'passive', level: 30, job: WHITE_HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
-    /** v3.28 블랙 해커 전용 패시브. 장착하면 해킹에 실패해 추적당하는 시간이 6시간 → 3시간. */
-    { id: WIPE_TRACE_ID, name: '흔적 지우기', desc: '해킹에 실패해 추적당했을 때 해킹할 수 없는 시간이 6시간에서 3시간으로 줄어듭니다.', type: 'passive', level: 30, job: BLACK_HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
-];
+/** v3.46 해커 계열 스킬(신원 조작·방화벽·흔적 지우기)도 비밀 직업의 스킬이라 game/secret/skills.ts로 옮겼습니다(서버 전용). id는 위 상수로 씁니다. */

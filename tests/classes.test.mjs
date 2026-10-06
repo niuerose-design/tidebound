@@ -70,3 +70,20 @@ test('v3.44 registerJobs: adds a batch once with the same finishing steps (hint,
     assert.equal(C.registerJobs([{ ...fake }]), 0, 'same id twice is skipped');
     C.JOBS.splice(C.JOBS.indexOf(got), 1); assert.equal(C.JOBS.length, before);
 });
+
+test('v3.46 secret skills: server-only table registered by the engine, missing from the public table, registerSkills upserts by id', async () => {
+    const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Sk = await load('data/skills'), { SECRET_SKILLS } = await load('secret/skills'), { SECRET_JOBS } = await load('secret/jobs');
+    const secretJobs = new Set(SECRET_JOBS.map(j => j.id));
+    assert.equal(SECRET_SKILLS.length, 67); assert.ok(SECRET_SKILLS.every(sk => secretJobs.has(sk.job)), 'every secret skill belongs to a secret job');
+    assert.ok(SECRET_SKILLS.every(sk => Sk.skillById(sk.id) === sk), 'the engine registered the finished objects');
+    assert.equal(Sk.SKILLS.filter(sk => secretJobs.has(sk.job)).length, 67, 'full table on the server');
+    // 공개 표(game/data)에는 정의가 없습니다. 보스도 쓰는 tentacleBarrage만 예외.
+    const fs = await import('node:fs'), src = fs.readdirSync('game/data').filter(f => f.endsWith('.ts')).map(f => fs.readFileSync(`game/data/${f}`, 'utf8')).join('\n');
+    assert.deepEqual(SECRET_SKILLS.filter(sk => src.includes(`id: '${sk.id}'`)).map(sk => sk.id), ['tentacleBarrage']);
+    const fake = { ...SECRET_SKILLS[0], id: 'zzSkillTest' };
+    Sk.registerSkills([fake]); assert.equal(Sk.skillById('zzSkillTest'), fake);
+    const again = { ...fake, name: '바뀐 이름' }; const n = Sk.SKILLS.length; Sk.registerSkills([again]);
+    assert.equal(Sk.SKILLS.length, n, 'same id replaces'); assert.equal(Sk.skillById('zzSkillTest').name, '바뀐 이름');
+    Sk.SKILLS.splice(Sk.SKILLS.indexOf(again), 1); Sk.registerSkills([]);
+});

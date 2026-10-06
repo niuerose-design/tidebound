@@ -12,7 +12,6 @@ import { INVERSION_SKILLS } from './expansion-inversion';
 import { MONOSTAT_SKILLS } from './expansion-monostat';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
-import { HACKER_SKILLS } from './hacker';
 export const SKILLS: Skill[] = [
     { id: 'hook', name: '강철 챔질', desc: '공격력 180% 피해.', type: 'active', level: 1, chance: .35, cooldown: 2, multiplier: 1.8 },
     { id: 'breath', name: '고요한 호흡', desc: '공격하지 않고 최대 체력 18%를 회복합니다.', type: 'active', level: 6, chance: .3, cooldown: 5, multiplier: 0, effect: 'heal', healOnly: true },
@@ -39,8 +38,8 @@ for (const sk of SKILLS)
 SKILLS.push({ id: 'swarmSense', name: '무리 감지', desc: '변종 조우 확률 +50%, 명중 +2%p. 도감 5,000회 몬스터에서 ×500 무리를 만날 수 있습니다. 시프 패시브(Lv.30).', type: 'passive', level: 30, job: 'rareTracker', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { accuracy: .02, variantFind: .5 } });
 SKILLS.push({ id: 'firstAid', name: '응급처치', desc: '행동할 때마다 체력을 조금 회복합니다. SP 없이 Lv.2에 자동 습득하는 공용 패시브입니다.', type: 'passive', level: 2, chance: 0, cooldown: 0, multiplier: 0, cost: 2, freeCommon: true, bonus: { hpRegen: 3 } });
 SKILLS.push({ id: 'arcane', name: '해류 탄환', desc: '마법 공격 170% 피해. 버블 매지션의 기초 공격기.', type: 'active', level: 2, chance: .4, cooldown: 2, multiplier: 1.7, damageType: 'magic', cost: 2, manaCost: 5 }, { id: 'cut', name: '갈고리 상처', desc: '물리 공격 130% 피해 + 공격력 30% 출혈, 3턴.', type: 'active', level: 5, chance: .3, cooldown: 4, multiplier: 1.3, effect: 'bleed', cost: 3, manaCost: 4 }, { id: 'hushCurrent', name: '침묵의 조류', desc: '마법 공격 125% 피해. 적을 2턴 침묵시켜 액티브를 막습니다.', type: 'active', level: 8, chance: .38, cooldown: 4, multiplier: 1.25, effect: 'silence', damageType: 'magic', cost: 3, manaCost: 7, statusTurns: 2 }, { id: 'undertow', name: '끌어내리는 저류', desc: '마법 공격 135% 피해. 적을 3턴 감속해 속도를 35% 낮춥니다.', type: 'active', level: 10, chance: .42, cooldown: 3, multiplier: 1.35, effect: 'slow', damageType: 'magic', cost: 3, manaCost: 6, statusTurns: 3 }, { id: 'rushCurrent', name: '질주하는 물결', desc: '물리 공격 115% 피해. 자신을 3턴 가속해 속도를 35% 높입니다.', type: 'active', level: 12, chance: .45, cooldown: 3, multiplier: 1.15, effect: 'haste', cost: 2, manaCost: 3, statusTurns: 3 }, { id: 'insight', name: '조류 통찰', desc: '마법 공격 +28.', type: 'passive', level: 5, chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { magic: 28 } }, { id: 'flow', name: '마나 순환', desc: '최대 마나 +30, 턴당 마나 회복 +3, 마력 평타 계수 +30%p.', type: 'passive', level: 8, chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { mana: 30, manaRegen: 3, arcaneRatioBonus: .3 } }, { id: 'precision', name: '수면 읽기', desc: '명중 +12%p, 회피 +4%p.', type: 'passive', level: 10, chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { accuracy: .12, evasion: .04 } }, { id: 'whaleStrike', name: '거경 관통', desc: '물리 공격 450% 피해. 체력 60% 이상인 적에게만 시도.', type: 'active', level: 25, job: 'whaler', chance: .4, cooldown: 5, multiplier: 4.5, condition: 'healthyTarget', cost: 6, manaCost: 14 }, { id: 'barb', name: '미늘의 지배', desc: '방어 관통 +10%p, 치명 피해 +8%p.', type: 'passive', level: 25, job: 'whaler', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { penetration: .1, critDamage: .08 } }, { id: 'razor', name: '갈래바람', desc: '물리 공격 260% 피해 + 공격력 30% 출혈, 3턴.', type: 'active', level: 25, job: 'corsair', chance: .45, cooldown: 3, multiplier: 2.6, effect: 'bleed', cost: 5, manaCost: 9 }, { id: 'drift', name: '유령 발걸음', desc: '회피 +9%p, 속도 +10.', type: 'passive', level: 25, chance: 0, cooldown: 0, multiplier: 0, job: 'corsair', cost: 3, bonus: { evasion: .09, speed: 10 } }, { id: 'maelstrom', name: '대소용돌이', desc: '마법 공격 360% 피해, 적의 공격을 3턴간 25% 약화.', type: 'active', level: 25, job: 'tempest', chance: .35, cooldown: 4, multiplier: 3.6, effect: 'weaken', cost: 6, manaCost: 18 }, { id: 'abyssMind', name: '폭풍의 정신', desc: '마법 공격 +30, 치명 피해 +10%p.', type: 'passive', level: 25, job: 'tempest', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { magic: 30, critDamage: .1 } }, { id: 'pearlPrayer', name: '진주의 기도', desc: '체력 22% 회복, 마법 공격 230% 피해. 체력 70% 이하에서만 시도.', type: 'active', level: 25, chance: .65, cooldown: 3, multiplier: 2.3, effect: 'heal', condition: 'wounded', job: 'oracle', cost: 5, manaCost: 12 }, { id: 'soulTide', name: '영혼의 조수', desc: '흡혈 +8%p, 마법 방어 +20.', type: 'passive', level: 25, chance: 0, cooldown: 0, multiplier: 0, job: 'oracle', cost: 3, bonus: { lifesteal: .08, resist: 20 } }, { id: 'crush', name: '해저 분쇄', desc: '물리 공격 200% + 물리 방어 150% 피해, 1턴 기절.', type: 'active', level: 25, job: 'bulwark', chance: .35, cooldown: 4, multiplier: 2, effect: 'stun', cost: 5, manaCost: 10 }, { id: 'ironWill', name: '부동의 산호', desc: '물리 방어 +25, 마법 방어 +15, 방어 비례 반격.', type: 'passive', level: 25, chance: 0, cooldown: 0, multiplier: 0, job: 'bulwark', cost: 3, bonus: { defense: 25, resist: 15, thorns: .3 , swarmFind: 0.5} }, { id: 'oath', name: '성해의 일격', desc: '물리·마법 공격 중 높은 수치로 300% 피해, 피해의 25% 회복.', type: 'active', level: 25, job: 'paladin', chance: .4, cooldown: 4, multiplier: 3, effect: 'drain', cost: 5, manaCost: 12 }, { id: 'balance', name: '두 바다의 서약', desc: '물리·마법 공격 각각 +20.', type: 'passive', level: 25, chance: 0, cooldown: 0, multiplier: 0, job: 'paladin', cost: 3, bonus: { attack: 20, magic: 20 } });
-SKILLS.push({ id: 'soulHook', name: '윤회의 챔질', desc: '물리 공격 280% 피해, 피해의 25% 회복.', type: 'active', level: 10, rebirth: 1, chance: .4, cooldown: 3, multiplier: 2.8, effect: 'drain', cost: 4, manaCost: 8 }, { id: 'goldMemory', name: '황금의 기억', desc: '처치·던전 골드 +15%, 명중 +5%p.', type: 'passive', level: 5, rebirth: 1, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { goldBonus: .15, accuracy: .05 } }, { id: 'eternalWave', name: '영원의 해류', desc: '마법 공격 420% 피해, 적을 3턴간 25% 약화.', type: 'active', level: 25, rebirth: 3, chance: .4, cooldown: 4, multiplier: 4.2, effect: 'weaken', damageType: 'magic', cost: 6, manaCost: 18 }, { id: 'soulShell', name: '영혼의 비늘', desc: '회피 +8%p, 마법 방어 +30, 최대 체력 +150.', type: 'passive', level: 20, rebirth: 2, chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { evasion: .08, resist: 30, hp: 150 } });
-SKILLS.push({ id: 'vitalSurge', name: '생명 쇄도', desc: '최대 체력의 8%를 추가해 물리 피해를 입히고 18% 회복.', type: 'active', level: 25, job: 'chimera', chance: .35, cooldown: 4, multiplier: 2.2, effect: 'drain', cost: 5, manaCost: 10, scaling: 'hp', scalingRatio: .08 }, { id: 'adaptiveCore', name: '적응하는 심장', desc: '최대 체력 +120, 최대 마나 +20, 명중 +5%p.', type: 'passive', level: 25, job: 'chimera', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { hp: 120, mana: 20, accuracy: .05 } }, { id: 'voidLance', name: '공허의 창', desc: '마나의 45%를 추가해 마법 피해를 입히는 히든 스킬.', type: 'active', level: 25, rebirth: 1, job: 'voidcaller', chance: .4, cooldown: 4, multiplier: 2.6, damageType: 'magic', cost: 5, manaCost: 16, scaling: 'mana', scalingRatio: .45 }, { id: 'echoMemory', name: '잔향의 기억', desc: '마나 +35, 발동 확률 +4%p, 회피 +5%p.', type: 'passive', level: 25, rebirth: 1, job: 'voidcaller', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { mana: 35, accuracy: .04, evasion: .05 } }, { id: 'glassLance', name: '유리 작살', desc: '물리 공격 240% 피해. 체력이 낮을수록(빈사) 피해가 커집니다.', type: 'active', level: 10, job: 'glassHarpooner', chance: .3, cooldown: 4, multiplier: 2.4, cost: 3, damageBonusCondition: 'lowHp', conditionalDamageBonus: .5 }, { id: 'glassHeart', name: '유리 심장', desc: '치명타 +10%p, 치명 피해 +30%p. 계승하면 어느 직업이든 한 방이 매워집니다.', type: 'passive', level: 10, job: 'glassHarpooner', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { crit: .1, critDamage: .3 } }, { id: 'graveHook', name: '무덤의 챔질', desc: '마법 공격 230% 피해. 명중 시 적의 공격을 3턴 약화.', type: 'active', level: 10, job: 'undead', chance: .28, cooldown: 4, multiplier: 2.3, effect: 'weaken', damageType: 'magic', cost: 2, manaCost: 9 }, { id: 'boneLegacy', name: '끝나지 않는 골격', desc: '기본: AP 6 · 최대 체력 -60 · 물리 방어 -8. 숙련할수록 현재 직업의 마이너스 보정을 되찾습니다(Lv.1 15% · Lv.2 50% · Lv.3 100%). 성장 Lv.3: AP -3 · 최대 체력 +450 · 물리 방어 +45 · 물리·마법 공격 +45. 음수 AP는 편성 여유를 늘립니다.', type: 'passive', level: 10, job: 'undead', chance: 0, cooldown: 0, multiplier: 0, cost: 6, bonus: { hp: -60, defense: -8 }, levelEffects: [ { cost: 6, bonus: { hp: -60, defense: -8 } }, { cost: 6, bonus: { hp: -40, defense: -5 }, penaltyRelief: .15 }, { cost: 2, bonus: { hp: 100, defense: 12 }, penaltyRelief: .5 }, { cost: -3, bonus: { hp: 450, defense: 45, attack: 45, magic: 45 }, penaltyRelief: 1 } ] }, { id: 'marrowGuard', name: '골수 방패', desc: '뼈 방패로 받아치며 1턴 기절, 발동 시 자신의 출혈·감속 해제.', type: 'active', level: 25, job: 'skeleton', chance: .32, cooldown: 4, multiplier: 1.8, effect: 'stun', cleanseSelf: true, cost: 3, manaCost: 7 }, { id: 'ossuaryRite', name: '납골당의 의식', desc: '마법 공격 +32, 마법 방어 +18, 최대 마나 +18.', type: 'passive', level: 25, job: 'bonecaster', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { magic: 32, resist: 18, mana: 18 } });
+SKILLS.push({ id: 'goldMemory', name: '황금의 기억', desc: '처치·던전 골드 +15%, 명중 +5%p.', type: 'passive', level: 5, rebirth: 1, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { goldBonus: .15, accuracy: .05 } }, { id: 'soulShell', name: '영혼의 비늘', desc: '회피 +8%p, 마법 방어 +30, 최대 체력 +150.', type: 'passive', level: 20, rebirth: 2, chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { evasion: .08, resist: 30, hp: 150 } });
+SKILLS.push({ id: 'vitalSurge', name: '생명 쇄도', desc: '최대 체력의 8%를 추가해 물리 피해를 입히고 18% 회복.', type: 'active', level: 25, job: 'chimera', chance: .35, cooldown: 4, multiplier: 2.2, effect: 'drain', cost: 5, manaCost: 10, scaling: 'hp', scalingRatio: .08 }, { id: 'adaptiveCore', name: '적응하는 심장', desc: '최대 체력 +120, 최대 마나 +20, 명중 +5%p.', type: 'passive', level: 25, job: 'chimera', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { hp: 120, mana: 20, accuracy: .05 } }, );
 
 // 신규 직업 스킬은 모두 데이터로 선언합니다. 한 직업에 1개만 주거나 패시브 2개만 주는 것도 허용합니다.
 SKILLS.push(
@@ -78,10 +77,6 @@ SKILLS.push(
     { id: 'riskDividend', name: '위험 배당', desc: '치명 피해 +25%p, 골드 획득 +15%.', type: 'passive', level: 25, job: 'gambler', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { critDamage: .25, goldBonus: .15 } },
     { id: 'redWake', name: '붉은 조류', desc: '현재 체력 12%를 추가한 물리 공격 220% 피해와 흡혈.', type: 'active', level: 40, job: 'bloodTide', chance: .35, cooldown: 4, multiplier: 2.2, effect: 'drain', scaling: 'hp', scalingRatio: .12, cost: 5, manaCost: 5 },
     { id: 'bloodEngine', name: '혈류 기관', desc: '흡혈 +10%p, 최대 체력 +100.', type: 'passive', level: 40, job: 'bloodTide', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { lifesteal: .1, hp: 100 } },
-    { id: 'leviathanEquation', name: '레비아탄의 셈', desc: '현재 마나 75%를 더해 마법 공격 360% 피해와 약화를 겁니다.', type: 'active', level: 40, rebirth: 2, job: 'manaLeviathan', chance: .36, cooldown: 5, multiplier: 3.6, effect: 'weaken', damageType: 'magic', scaling: 'mana', scalingRatio: .75, cost: 6, manaCost: 20 },
-    { id: 'deepReservoir', name: '마나 저수지', desc: '최대 마나 +100, 턴당 마나 회복 +4, 방어 관통 +8%p.', type: 'passive', level: 40, rebirth: 2, job: 'manaLeviathan', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { mana: 100, manaRegen: 4, penetration: .08 } },
-    { id: 'harvestEcho', name: '수확의 잔향', desc: '물리 공격 300% 피해. 피해의 일부를 회복하며 망인의 명중 페널티를 감수합니다.', type: 'active', level: 40, job: 'soulHarvester', chance: .4, cooldown: 3, multiplier: 3, effect: 'drain', cost: 5, manaCost: 6 },
-    { id: 'soulTax', name: '영혼세', desc: '흡혈 +12%p, 치명 피해 +10%p.', type: 'passive', level: 40, job: 'soulHarvester', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { lifesteal: .16, critDamage: .2 } },
     { id: 'netWeave', name: '그물 짜기', desc: '흡혈 +6%p, 최대 체력 +60. 잡은 것은 놓치지 않는 안정적인 사냥을 돕습니다.', type: 'passive', level: 10, job: 'netWeaver', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { hp: 60, lifesteal: .06 } },
     { id: 'fishWhisper', name: '물고기의 속삭임', desc: '마법 공격 +22, 방어 관통 +8%p, 마력 평타 계수 +30%p. 용이 알려 주는 약점을 파고듭니다.', type: 'passive', level: 10, job: 'fishWhisperer', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { magic: 22, penetration: .08, arcaneRatioBonus: .3 } },
     { id: 'driftwoodGuard', name: '유목 방벽', desc: '최대 체력 +100, 물리 방어 +18, 마법 방어 +14.', type: 'passive', level: 10, job: 'driftwoodHermit', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { hp: 100, defense: 18, resist: 14 , swarmFind: 0.3} },
@@ -105,12 +100,12 @@ SKILLS.push(
 // 직업 전직으로 얻고, 장착 처치로 계승 자격을 만든 뒤 SP로 보강합니다.
 // 저장된 스킬 ID는 그대로 유지되므로 기존 세이브도 안전하게 읽힙니다.
 const skillJobAssignments: Record<string, string> = {
-    breath: 'fisher', arcane: 'bubbleMage', cut: 'barbSkirmisher', soulHook: 'rebirthFisher',
+    breath: 'fisher', arcane: 'bubbleMage', cut: 'barbSkirmisher',
     focus: 'squidJester', scales: 'scaleKnight', vital: 'lifeTender', resolve: 'oathAngler',
     hunt: 'stormHunter', spring: 'tideMender', fortress: 'coralBuilder',
     hushCurrent: 'stillwaterBinder', undertow: 'stillwaterBinder', rushCurrent: 'wakeRunner',
     insight: 'manaScribe', flow: 'manaScribe', precision: 'wanderer',
-    goldMemory: 'memoryMerchant', eternalWave: 'eternalNavigator', soulShell: 'coralSaint', twinHook: 'twinAngler',
+    goldMemory: 'memoryMerchant', soulShell: 'coralSaint', twinHook: 'twinAngler',
 };
 for (const sk of SKILLS) {
     const job = skillJobAssignments[sk.id];
@@ -152,8 +147,6 @@ SKILLS.push(...MONOSTAT_SKILLS);
 SKILLS.push(...SUPPORT_SKILLS);
 // v25 ??? 특수 직업 기술.
 SKILLS.push(...V25_SKILLS);
-// v3.18 해커 계열 스킬(신원 조작·방화벽).
-SKILLS.push(...HACKER_SKILLS);
 for (const sk of SKILLS) if (SUPPORT_PASSIVES[sk.id]) Object.assign(sk, SUPPORT_PASSIVES[sk.id]);
 // v21 회복 기술은 체력 조건 없이 시도합니다. 회복이 필요 없을 때의 피해 감소는 combat.ts에서 처리합니다.
 for (const sk of SKILLS) if (sk.effect === 'heal') delete sk.condition;
@@ -161,13 +154,11 @@ for (const sk of SKILLS) if (sk.effect === 'heal') delete sk.condition;
 const masteryTuning: Record<string, number[]> = {
     hook: [120, 600, 2400, 8000],
     breath: [200, 1000, 4000, 12000],
-    boneLegacy: [2500, 25000, 125000],
     pierce: [350, 1800, 7000, 20000], anchor: [400, 2000, 8000, 24000],
-    whaleStrike: [800, 4000, 16000, 45000], marrowGuard: [1000, 6000, 22000, 60000],
-    voidLance: [1000, 6000, 22000, 60000], vitalSurge: [800, 5000, 18000, 50000],
+    whaleStrike: [800, 4000, 16000, 45000],
+    vitalSurge: [800, 5000, 18000, 50000],
     pearlLedger: [1200, 7000, 24000, 65000],
     memoryOfTides: [2500, 15000, 50000, 100000],
-    leviathanEquation: [2500, 15000, 50000, 100000],
 };
 // 랭크별 성장 방향은 스킬별 데이터로 조정합니다. 수치는 랭크가 1 오를 때마다 적용됩니다.
 const rankEffects: Record<string, Skill['rankEffects']> = {
@@ -177,8 +168,8 @@ const rankEffects: Record<string, Skill['rankEffects']> = {
     arcane: { chanceIncrease: .05, manaReduction: 1 }, cut: { chanceIncrease: .04 }, hushCurrent: { chanceIncrease: .04, manaReduction: 1 }, undertow: { chanceIncrease: .04 }, rushCurrent: { chanceIncrease: .05, cooldownReduction: 1 }, insight: { bonusScale: .3 }, flow: { bonusScale: .3 }, precision: { bonusScale: .3 },
     whaleStrike: { apReduction: 1 }, barb: { bonusScale: .3 }, razor: { chanceIncrease: .05 }, drift: { bonusScale: .3 }, maelstrom: { manaReduction: 2 }, abyssMind: { bonusScale: .3 },
     pearlPrayer: { chanceIncrease: .05, manaReduction: 1 }, soulTide: { bonusScale: .3 }, crush: { apReduction: 1 }, ironWill: { bonusScale: .3 }, oath: { chanceIncrease: .05, manaReduction: 1 }, balance: { bonusScale: .3 },
-    soulHook: { chanceIncrease: .05 }, goldMemory: { bonusScale: .3 }, eternalWave: { manaReduction: 2 }, soulShell: { bonusScale: .3 },
-    vitalSurge: { chanceIncrease: .05, manaReduction: 1 }, adaptiveCore: { bonusScale: .3 }, voidLance: { chanceIncrease: .05, manaReduction: 2 }, echoMemory: { bonusScale: .3 }, graveHook: { chanceIncrease: .04, manaReduction: 1 }, boneLegacy: { bonusScale: .3 }, marrowGuard: { apReduction: 1 }, ossuaryRite: { bonusScale: .3 },
+    goldMemory: { bonusScale: .3 }, soulShell: { bonusScale: .3 },
+    vitalSurge: { chanceIncrease: .05, manaReduction: 1 }, adaptiveCore: { bonusScale: .3 },
     wakeFist: { chanceIncrease: .05 }, rippleGlyph: { chanceIncrease: .04, manaReduction: 1 }, greenTide: { chanceIncrease: .05, manaReduction: 1 }, inkTrick: { chanceIncrease: .05 },
     tideUppercut: { chanceIncrease: .03, multiplierScale: .12 }, callousedHands: { bonusScale: .3 }, anchorBreak: { apReduction: 1 }, roughLine: { bonusScale: .3 },
     krakenBore: { chanceIncrease: .04, multiplierScale: .18 }, deepWeakpoint: { bonusScale: .3 }, needleStep: { chanceIncrease: .05 }, afterimage: { bonusScale: .3 },
@@ -187,8 +178,8 @@ const rankEffects: Record<string, Skill['rankEffects']> = {
     reefPulse: { chanceIncrease: .05, manaReduction: 1 }, symbioticCoral: { bonusScale: .3 }, bellCrash: { apReduction: 1 }, shellEcho: { bonusScale: .3 },
     sanctuaryShell: { bonusScale: .3 }, saintTide: { bonusScale: .3 }, thornCounter: { chanceIncrease: .05 }, reefFortress: { bonusScale: .3 },
     windupCast: { chanceIncrease: .04, manaReduction: 1 }, springLoaded: { bonusScale: .3 }, loadedHook: { chanceIncrease: .04, cooldownReduction: 1 }, riskDividend: { bonusScale: .3 },
-    redWake: { chanceIncrease: .04 }, bloodEngine: { bonusScale: .3 }, leviathanEquation: { chanceIncrease: .04, manaReduction: 2 }, deepReservoir: { bonusScale: .3 },
-    harvestEcho: { chanceIncrease: .04 }, soulTax: { bonusScale: .3 }, netWeave: { bonusScale: .3 }, fishWhisper: { bonusScale: .3 }, driftwoodGuard: { bonusScale: .3 }, salvageSense: { bonusScale: .3 },
+    redWake: { chanceIncrease: .04 }, bloodEngine: { bonusScale: .3 },
+    netWeave: { bonusScale: .3 }, fishWhisper: { bonusScale: .3 }, driftwoodGuard: { bonusScale: .3 }, salvageSense: { bonusScale: .3 },
     twinHook: { chanceIncrease: .04, cooldownReduction: 1 }, chartedCurrents: { bonusScale: .3 }, pearlLedger: { bonusScale: .3 }, salvageContract: { bonusScale: .3 }, rareSense: { bonusScale: .3 }, memoryOfTides: { bonusScale: .3 }, electricBite: { chanceIncrease: .04, manaReduction: 1 }, tentacleBarrage: { chanceIncrease: .03, cooldownReduction: 1 },
 };
 for (const sk of SKILLS)
@@ -233,6 +224,18 @@ let skillByIdMap: Map<string, Skill> | undefined;
 export function skillById(id: string | undefined) {
     if (!skillByIdMap) { skillByIdMap = new Map(); for (const x of SKILLS) if (!skillByIdMap.has(x.id)) skillByIdMap.set(x.id, x); }
     return id === undefined ? undefined : skillByIdMap.get(id);
+}
+
+/**
+ * v3.46 정보 비공개(docs/concept.md 10장): 비밀 직업의 스킬을 나중에 더합니다. 서버는 game/secret/register.ts, 화면은 카탈로그(catalog.ts).
+ * 이미 완성된 모양(위 후처리를 거친 값)이라 그대로 넣고, 같은 id가 있으면 바꿉니다. id 찾기 캐시는 비웁니다.
+ */
+export function registerSkills(list: Skill[]) {
+    for (const sk of list) {
+        const at = SKILLS.findIndex(x => x.id === sk.id);
+        if (at >= 0) SKILLS[at] = sk; else SKILLS.push(sk);
+    }
+    skillByIdMap = undefined;
 }
 
 /** v27.95 스킬 숙련 단계 배율: 그 스킬 전용 직업의 차수로 정합니다(공용 스킬은 1). 옛 세이브의 계승 보존(migrations)도 이 값으로 옛 기준을 되돌립니다. */

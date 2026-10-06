@@ -3,6 +3,8 @@ import type React from 'react';
 import { Compass, Sparkles, Swords, Wind } from 'lucide-react';
 import type { Log } from '@/game/types';
 import { STATUS_NAMES } from '@/game/systems/combat-feedback';
+// v3.46 비밀 직업 스킬 이름은 카탈로그로 받은 스킬 표에서 읽습니다(번들에 이름을 두지 않음).
+import { skillById } from '@/game/data/skills';
 
 /** 기록판 탭별 로그 종류. */
 export const LOG_TABS: Record<'battle' | 'reward', Log['type'][]> = { battle: ['battle', 'system'], reward: ['reward', 'skill'] };
@@ -36,7 +38,7 @@ function BattleLogLineView({ log, index, playerName }: { log: Log; index?: boole
         {ev.drained > 0 && <em className="heal">흡혈 {ev.drained}</em>}
         {ev.statuses.map(st => <em key={st.id} className="status">{STATUS_NAMES[st.id] || st.id} {st.turns}턴{st.onSelf ? '(자신)' : ''}</em>)}
         {ev.linked && <em className="status">연계</em>}{ev.cleansed && <em className="heal">정화</em>}{ev.silenced && <em className="status">침묵 중</em>}
-        {ev.gamble !== undefined ? <em className="status">🎲 {ev.dice ? ev.dice.map(f => '⚀⚁⚂⚃⚄⚅'[f - 1]).join('') + ' ' : ''}×{ev.gamble.toFixed(2)}</em> : null}{ev.reflected ? <em className="dmg-dot">반격 {ev.reflected}</em> : null}{ev.reflectHeal ? <em className="heal">반격 흡혈 {ev.reflectHeal}</em> : null}{ev.endured && <em className="heal">無 체력 1로 버팀{ev.endured.heal ? ` +${ev.endured.heal.toLocaleString()}` : ''}</em>}{ev.finale && <em className="crit">天 일곱 인 해방</em>}{ev.cooldownReset && <em className="status">대기 초기화 {ev.cooldownReset.join('·')}</em>}{ev.multicast && <em className="crit">동시 시전 {ev.multicast.index + 1}/{ev.multicast.count}</em>}{ev.restored && <em className="heal">타임 리와인드</em>}{ev.extraTurn && <em className="status">추가 행동</em>}
+        {ev.gamble !== undefined ? <em className="status">🎲 {ev.dice ? ev.dice.map(f => '⚀⚁⚂⚃⚄⚅'[f - 1]).join('') + ' ' : ''}×{ev.gamble.toFixed(2)}</em> : null}{ev.reflected ? <em className="dmg-dot">반격 {ev.reflected}</em> : null}{ev.reflectHeal ? <em className="heal">반격 흡혈 {ev.reflectHeal}</em> : null}{ev.endured && <em className="heal">無 체력 1로 버팀{ev.endured.heal ? ` +${ev.endured.heal.toLocaleString()}` : ''}</em>}{ev.finale && <em className="crit">天 일곱 인 해방</em>}{ev.cooldownReset && <em className="status">대기 초기화 {ev.cooldownReset.join('·')}</em>}{ev.multicast && <em className="crit">동시 시전 {ev.multicast.index + 1}/{ev.multicast.count}</em>}{ev.restored && <em className="heal">{skillById('rewind')?.name ?? '되감기'}</em>}{ev.extraTurn && <em className="status">추가 행동</em>}
     </p>;
 }
 

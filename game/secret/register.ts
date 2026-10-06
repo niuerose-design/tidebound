@@ -3,7 +3,11 @@
  * 서버와 테스트에서는 언제나 전체 직업 표를 씁니다. 화면 코드는 이 파일을 가져가면 안 됩니다.
  */
 import { registerJobs, registerLineages } from '../data/classes';
+import { registerSkills } from '../data/skills';
 import { SECRET_JOBS, SECRET_LINEAGES } from './jobs';
+import { SECRET_SKILLS } from './skills';
 
 registerLineages(SECRET_LINEAGES);
 registerJobs(SECRET_JOBS, true);
+// v3.46 비밀 직업의 스킬(완성된 모양).
+registerSkills(SECRET_SKILLS);
