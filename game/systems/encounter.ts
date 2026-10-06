@@ -6,7 +6,7 @@ import { jobMasteryTarget, extremeBroken } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
-import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY, heirPower } from '../data/economy';
+import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
 import { MIMIC, LETTER, letterRank, rollMimicMastery, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
@@ -324,8 +324,7 @@ export function reward(s: State, rng: () => number) {
         else {
             s.onyxMiss[e.onyx] = 0;
             const stageLevel = STAGES.find(x => x.id === s.stage)?.level || fishLevelOf(e.id), item = onyxAccessory(bossDef, `onyx-${e.onyx}-${s.turn}`, stageLevel);
-            // v3.77 칠흑 장신구는 계승 태초와 같은 위력(환생 성장)이고 무작위 옵션은 최고 굴림입니다.
-            item.power = heirPower('primal', s.rebirths || 0, stageLevel);
+            // v3.77 칠흑 장신구의 무작위 옵션은 최고 굴림입니다. 위력은 그대로 (레벨 + 2) × 5.2이고 골드로 레벨을 올려 키웁니다.
             item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', stageLevel);
             tuneOnyx(item);
             s.inventory.push(item); s.itemBook ??= {}; s.itemBook[onyxCodexKey(e.onyx)] = true;

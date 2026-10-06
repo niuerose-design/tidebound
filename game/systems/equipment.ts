@@ -74,8 +74,7 @@ export const imprintCost = (source: Item, s?: Pick<State, 'permanent'>) => refor
 /** v3.66 환생해도 남는 장비: 유물 · 칠흑 장신구 · 계승 장비(원시 고대 · 계승 태초). 판매·분해·도감 등록·청산 대상이 아닙니다. */
 export const keepsAcrossLives = (item: Pick<Item, 'relic' | 'onyx' | 'heir'>) => !!(item.relic || item.onyx || item.heir);
 /** v3.66 계승 위력 종류: 유물은 relic, 계승 장비는 heir 값. 일반 장비는 null. */
-/** v3.77 칠흑 장신구도 계승 태초와 같은 위력 성장(primal)입니다. */
-export const heirKind = (item: Pick<Item, 'relic' | 'heir' | 'onyx'>): HeirKind | null => item.relic ? 'relic' : item.heir || (item.onyx ? 'primal' : null);
+export const heirKind = (item: Pick<Item, 'relic' | 'heir'>): HeirKind | null => item.relic ? 'relic' : item.heir || null;
 /** 유물·계승 장비의 위력. 예전부터 가진 유물(relicLegacy)은 예전 공식과 새 공식 중 높은 쪽입니다. */
 export const heirItemPower = (item: Pick<Item, 'relic' | 'heir' | 'relicLegacy'>, kind: HeirKind, rebirths: number, level: number) => Math.max(heirPower(kind, rebirths, level), item.relic && item.relicLegacy ? legacyRelicPower(item.relic, rebirths, level) : 0);
 /** v3.3 유물 · v3.66 계승 장비 위력을 환생 횟수와 레벨에 맞춥니다(heirPower). 불러오기·환생·수령·계승 때 불러 저장된 위력을 고칩니다. 계승 장비의 고정 수치 옵션은 위력 비율만큼 함께 바뀝니다(유물 이식 옵션은 그대로). */
@@ -86,7 +85,7 @@ export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebir
         const next = heirItemPower(item, kind, s.rebirths || 0, item.level || 1), before = item.power;
         if (next === before) continue;
         item.power = next;
-        if ((item.heir || item.onyx) && item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1));
+        if (item.heir && item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1));
     }
 }
 /** v3.77 칠흑 장신구의 무작위 옵션을 최고 굴림으로 맞춥니다(고유 규칙 옵션은 그대로). 얻을 때 한 번, 이전 장신구는 불러올 때 한 번(onyxTuned). */

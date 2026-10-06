@@ -6,7 +6,7 @@ import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine'), { stats, power, dropRate } = await load('systems/stats');
-const { RARITIES } = await load('data/balance'), Ec = await load('data/economy');
+const { RARITIES } = await load('data/balance'), Ec = await load('data/economy'), { ONYX } = await load('data/onyx');
 const { starMultiplier } = await load('data/starforce'), { rarityShareFrom } = await load('systems/encounter'), { gearName } = await load('data/maple-gear');
 const { rollAffixes } = await load('data/gear'), C = await load('systems/commerce');
 
@@ -31,7 +31,7 @@ for (const [kind, rarity, name] of [['relic', 3, '유물'], ['ancient', 5, '원�
     heir[kind] = [0, 100, 200].map(rb => share(rarity, 22, kind, rb));
     console.log(`${name} 장비 몫(22성 4부위) 환생 0/100/200: ${heir[kind].map(x => `×${x.toFixed(2)}`).join(' / ')} · Lv.100 위력 ${[0, 100, 200].map(rb => Ec.heirPower(kind, rb, 100)).join('/')}`);
 }
-console.log(`칠흑 장신구 위력(v3.77 계승 태초와 같은 성장) 환생 0/100/200: ${[0, 100, 200].map(rb => Ec.heirPower('primal', rb, 100)).join('/')} · 원시 각성 정수 환생 0/100/200: ${[0, 100, 200].map(rb => Ec.awakenEssence(rb).toLocaleString()).join(' / ')} · 태초 계승 게이지 ${Ec.PRIMAL_INHERIT.gauge}`);
+console.log(`칠흑 장신구 위력 Lv.100 ${Math.round(102 * ONYX.power)}(환생 성장 없음, 옵션 최고 굴림) · 원시 각성 정수 환생 0/100/200: ${[0, 100, 200].map(rb => Ec.awakenEssence(rb).toLocaleString()).join(' / ')} · 태초 계승 게이지 ${Ec.PRIMAL_INHERIT.gauge}`);
 
 // 3. 획득: 사냥 드롭(기준 캐릭터) · 감정 · 칠흑.
 const book = Object.fromEntries(SLOTS.flatMap(s => [0, 1, 2, 3, 4, 5, 6].map(r => [`${s}:${r}`, true])));
