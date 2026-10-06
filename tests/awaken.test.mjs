@@ -100,3 +100,12 @@ test('v3.86 extra roll costs 12 AP, needs the world-stone research and is droppe
     act(s, { type: 'extraRoll', value: '0' }, 0);
     assert.equal(s.extraRolls, undefined);
 });
+
+test('v3.87 extra roll raises the multicast bundle cap by its level instead of rolling again after a bundle', () => {
+    const ids = ['twinSpark', 'emberVerse', 'frostLance', 'voidRay', 'stormChant'];
+    const bundle = rolls => { const a = fighter(ids, { extraRolls: rolls }), ev = []; strike(a, dummy(), () => 0, ev); return { first: ev[0].multicast, followUps: ev.filter(e => e.followUp).length }; };
+    assert.equal(bundle(0).first.count, SKILL_FORMULA.multicast.max);
+    const on = bundle(1);
+    assert.equal(on.first.count, SKILL_FORMULA.multicast.max + 1, 'one more member per extra-roll level');
+    assert.equal(on.followUps, 0, 'no separate extra roll after a bundle');
+});
