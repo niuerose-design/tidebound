@@ -1448,3 +1448,28 @@ test('v3.21 difficulty exp and gold bend to √ above difficulty 30', async () =
     assert.ok(Math.abs(M.tierExp(55) - (10.5 + 1.5 * 5)) < 1e-9); assert.ok(Math.abs(M.tierReward(55) - (16 + 1.5 * 5)) < 1e-9);
     assert.ok(M.tierExp(200) < 31 && M.tierReward(200) < 36, 'no runaway with the difficulty cap');
 });
+
+test('v3.85 altar: a blessing re-opens by itself when the gauge already holds the next cost (no extra offering needed)', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), A = await L.load('data/altar');
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-bless-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const Alt = await L.load('server/altar'), DB = await L.load('server/db');
+    try {
+        const database = DB.db(), now = Date.now(), gauge = async id => (await database.listAltarGauges()).find(g => g.id === id);
+        // 3단계가 끝나 닫혔는데 1단계 비용보다 많이 쌓여 있음 → 정보를 읽으면 바로 열립니다(남는 기여도는 그대로 둠).
+        const base = A.gaugeCost('gold', 0, false);
+        await database.setAltarBlessing('gold', 3, now - 1000, 0); await database.addAltarGauge('gold', base + 5);
+        Alt.invalidateAltar(); const info = await Alt.altarInfo('p1', null, now);
+        let g = await gauge('gold'); assert.equal(A.effectiveBlessingLevel(g, now), 1); assert.equal(g.points, 5); assert.equal(info.gauges.find(x => x.id === 'gold').level, 1);
+        // 4단계 유지 시간이 지나 3단계로 내려왔고 4단계 비용이 쌓여 있음 → 다시 4단계.
+        const high = A.gaugeCost('exp', 3, true);
+        await database.setAltarBlessing('exp', 4, now + 3600_000, now - 1000); await database.addAltarGauge('exp', high);
+        Alt.invalidateAltar(); await Alt.altarInfo('p1', null, now);
+        g = await gauge('exp'); assert.equal(A.effectiveBlessingLevel(g, now), 4); assert.equal(g.points, 0);
+        // 모자라면 그대로(닫힌 채로 기다림).
+        await database.setAltarBlessing('mimic', 0, 0, 0); await database.addAltarGauge('mimic', A.gaugeCost('mimic', 0, false) - 1);
+        Alt.invalidateAltar(); await Alt.altarInfo('p1', null, now);
+        assert.equal(A.effectiveBlessingLevel(await gauge('mimic'), now), 0);
+        const news = await database.listChat('news', 0, 20); assert.ok(news.some(m => m.text.includes('쌓여 있던 공물로')), 'news says it opened from the stored offerings');
+    } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});
