@@ -34,7 +34,7 @@ export function crossParent(j: Job) {
 }
 /** 계보 요약: 해금 n / m · 전직 가능 k, 차수 점. */
 export function lineageSummary(s: State, lineageId: string) {
-    const jobs = lineageJobs(lineageId);
+    const jobs = shownLineageJobs(s, lineageId);
     const unlocked = jobs.filter(j => s.unlockedJobs.includes(j.id)).length;
     const ready = jobs.filter(j => { const st = jobStatus(s, j).status; return st === 'ready' || st === 'mastered'; }).length;
     const tiers = [...new Set(jobs.map(j => j.tier))].sort((a, b) => a - b).map(tier => ({ tier, reached: jobs.some(j => j.tier === tier && s.unlockedJobs.includes(j.id)) }));
@@ -70,16 +70,24 @@ export const secretJob = (j: Job) => !!j.hidden || unlockFor({}, j.id) !== null;
 export function jobRevealed(s: State, j: Job) {
     return !secretJob(j) || s.unlockedJobs.includes(j.id) || catalogRevealed(j.id);
 }
+/** v3.63 히든 직업은 드러나기 전에는 어디에도 보이지 않습니다(실루엣 없음). 화면에 보이는 직업과 계보별로 보이는 직업. */
+export const shownJobs = (s: State) => JOBS.filter(j => jobRevealed(s, j));
+export const shownLineageJobs = (s: State, lineageId: string) => lineageJobs(lineageId).filter(j => jobRevealed(s, j));
+/** v3.63 ??? 탭: ??? 계열 계보와, 드러난 히든 직업이 있는 다른 계열의 계보(예: 시공의 위자드가 드러나면 그 계보). */
+export const inMysteryTab = (s: State, l: { id: string; tree: string }) => {
+    const jobs = shownLineageJobs(s, l.id);
+    return l.tree === 'mystery' ? jobs.length > 0 : jobs.some(secretJob);
+};
 
-/** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 미발견 실루엣은 이름을 드러내지 않도록 목록에서 뺍니다. */
+/** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 드러나지 않은 히든 직업은 뺍니다. */
 export type Finder = 'ready' | 'mastered' | 'near';
 export function finderJobs(s: State, kind: Finder) {
-    const visible = JOBS.filter(j => jobRevealed(s, j));
+    const visible = shownJobs(s);
     // 숙달: 직업 숙련이 숙달 목표에 닿아 조건 없이 언제든 돌아갈 수 있는 직업(현재 직업 포함).
     if (kind === 'mastered') return JOBS.filter(j => jobMastered(s, j));
     return visible.filter(j => { const st = jobStatus(s, j).status; return kind === 'ready' ? st === 'ready' || st === 'mastered' : st === 'near'; });
 }
-/** 이름 검색과 태그 필터(미발견 실루엣은 제외). */
+/** 이름 검색과 태그 필터(드러나지 않은 히든 직업은 제외). */
 export function searchJobs(s: State, query: string, tag: string) {
     const q = query.trim();
     return JOBS.filter(j => jobRevealed(s, j) && (!q || j.name.includes(q)) && (!tag || jobTags(j).includes(tag)));
