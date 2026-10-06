@@ -52,3 +52,14 @@ test('v25 hidden jobs without gates are shown; the chronarch appears once the cl
     assert.equal(ui.jobRevealed(s, job('chronarch')), false);
     s.jobMastery.clockmaker = 3000; assert.ok(ui.jobRevealed(s, job('chronarch')));
 });
+
+test('v3.63 hidden jobs stay out of sight until revealed, then show up in the ??? tab (other-tree hidden jobs bring their lineage along)', () => {
+    const s = newState(0), shown = () => ui.shownJobs(s).map(j => j.id);
+    assert.ok(!shown().includes('undead') && !shown().includes('eternalNavigator'), 'no silhouettes: unrevealed hidden jobs are not listed');
+    assert.ok(!ui.shownLineageJobs(s, 'undead').length && !ui.inMysteryTab(s, { id: 'undead', tree: 'mystery' }), 'an unrevealed ??? lineage is not shown');
+    assert.ok(!ui.shownLineageJobs(s, 'tide').some(j => j.id === 'eternalNavigator'), 'the hidden branch is left out of its own lineage too');
+    s.deaths = 10; assert.ok(ui.inMysteryTab(s, { id: 'undead', tree: 'mystery' }) && ui.shownLineageJobs(s, 'undead').map(j => j.id).includes('undead'), 'condition met → appears in the ??? tab');
+    assert.ok(!ui.shownLineageJobs(s, 'undead').map(j => j.id).includes('skeleton'), 'later hidden jobs wait for their own gates');
+    assert.equal(ui.inMysteryTab(s, { id: 'tide', tree: 'magic' }), false, 'a public lineage joins the ??? tab only with a revealed hidden job');
+    const t = newState(0); t.unlockedJobs.push('eternalNavigator'); assert.equal(ui.inMysteryTab(t, { id: 'tide', tree: 'magic' }), true);
+});
