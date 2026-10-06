@@ -2,7 +2,7 @@ import { tuneActiveSkills } from './skill-balance';
 import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
 import { SKILL_FORMULA } from './balance';
-import { JOBS, type Job } from './classes';
+import { JOBS, lineageOf, type Job } from './classes';
 import { subRoleOf } from './roles';
 import { PROGRESSION } from './progression';
 import { EXPANSION_SKILLS } from './expansion';
@@ -119,11 +119,11 @@ for (const sk of SKILLS) {
 
 // 탐구 직업의 수치는 데이터만 수정해 확장합니다. 조건부 숙련은 가장 큰 효과 하나만 적용합니다.
 SKILLS.push(
-    { id: 'voyageReview', name: '항해 복기', desc: '획득 경험치 +8%. 공격용 AP를 비워 두는 대신 항해의 성장을 앞당깁니다.', type: 'passive', level: 10, job: 'voyageScribe', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { expBonus: .08 }, masteryMilestones: [600, 3000, 12000, 40000], rankEffects: { bonusScale: .375 } },
-    { id: 'chronicleStudy', name: '겹쳐 읽는 항해', desc: '획득 경험치 +12%. 여러 삶의 기록을 대조하는 장기 성장 패시브입니다.', type: 'passive', level: 25, job: 'chronicleNavigator', chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { expBonus: .12 }, masteryMilestones: [1500, 7000, 25000, 80000], rankEffects: { bonusScale: .375 }, levelEffects: [{ cost: 4, bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 } }, { cost: 4, bonus: { expBonus: .15, attack: 22, magic: 22, hp: 80 } }, { cost: 3, bonus: { expBonus: .18, attack: 30, magic: 30, hp: 110 } }, { cost: 1, bonus: { expBonus: .22, attack: 40, magic: 40, hp: 150 } }, { cost: -1, bonus: { expBonus: .26, attack: 52, magic: 52, hp: 200 } }] },
+    { id: 'voyageReview', name: '항해 복기', desc: '획득 경험치 +12%. 공격용 AP를 비워 두는 대신 항해의 성장을 앞당깁니다.', type: 'passive', level: 10, job: 'voyageScribe', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { expBonus: .08 }, masteryMilestones: [600, 3000, 12000, 40000], rankEffects: { bonusScale: .375 } },
+    { id: 'chronicleStudy', name: '겹쳐 읽는 항해', desc: '획득 경험치 +18%. 여러 삶의 기록을 대조하는 장기 성장 패시브입니다.', type: 'passive', level: 25, job: 'chronicleNavigator', chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { expBonus: .12 }, masteryMilestones: [1500, 7000, 25000, 80000], rankEffects: { bonusScale: .375 }, levelEffects: [{ cost: 4, bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 } }, { cost: 4, bonus: { expBonus: .15, attack: 22, magic: 22, hp: 80 } }, { cost: 3, bonus: { expBonus: .18, attack: 30, magic: 30, hp: 110 } }, { cost: 1, bonus: { expBonus: .22, attack: 40, magic: 40, hp: 150 } }, { cost: -1, bonus: { expBonus: .26, attack: 52, magic: 52, hp: 200 } }] },
     { id: 'titanFieldNotes', name: '거수 관찰일지', desc: '보스 처치 시 직업과 장착 스킬의 숙련도를 추가 획득합니다. 숙련할수록 장착 AP가 4 → 0으로 줄고 체력·두 공격이 오릅니다.', type: 'passive', level: 10, job: 'bossNaturalist', chance: 0, cooldown: 0, multiplier: 0, cost: 4, masteryGain: { bossOnly: true, bonusByLevel: [2, 3, 4, 5, 7] }, masteryMilestones: [1000, 5000, 18000, 60000], levelEffects: [{ cost: 4, bonus: {} }, { cost: 4, bonus: { hp: 30 } }, { cost: 3, bonus: { hp: 60, attack: 6, magic: 6 } }, { cost: 2, bonus: { hp: 100, attack: 12, magic: 12 } }, { cost: 0, bonus: { hp: 160, attack: 20, magic: 20 } }] },
     { id: 'serpentFolklore', name: '전류 비늘 해독', desc: '지정 몬스터(리본 돼지·파이어보어·머쉬맘) 처치에서 직업과 장착 스킬의 숙련도를 추가 획득합니다. 숙련할수록 장착 AP가 4 → 0으로 줄고 마법 공격·마법 방어가 오릅니다.', type: 'passive', level: 25, job: 'speciesChronicler', chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { magic: 24, resist: 8 }, masteryGain: { enemyIds: ['eel', 'emberEel', 'grottoWarden'], bonusByLevel: [3, 4, 5, 7, 9] }, masteryMilestones: [2000, 9000, 30000, 90000], levelEffects: [{ cost: 4, bonus: { magic: 24, resist: 8 } }, { cost: 4, bonus: { magic: 32, resist: 11 } }, { cost: 3, bonus: { magic: 44, resist: 15 } }, { cost: 2, bonus: { magic: 60, resist: 20 } }, { cost: 0, bonus: { magic: 80, resist: 26, mana: 30 } }] },
-    { id: 'echoReview', name: '메아리 복기', desc: '획득 경험치 +4%, 마법 공격 +30, 최대 마나 +15, 마력 평타 계수 +20%p. 보스의 목소리를 이해할 때까지 얻는 배움입니다.', type: 'passive', level: 25, job: 'echoTamer', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { expBonus: .04, magic: 30, mana: 15, arcaneRatioBonus: .2 }, masteryMilestones: [1200, 6000, 24000, 70000], rankEffects: { bonusScale: .375 } },
+    { id: 'echoReview', name: '메아리 복기', desc: '획득 경험치 +6%, 마법 공격 +30, 최대 마나 +15, 마력 평타 계수 +20%p. 보스의 목소리를 이해할 때까지 얻는 배움입니다.', type: 'passive', level: 25, job: 'echoTamer', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { expBonus: .04, magic: 30, mana: 15, arcaneRatioBonus: .2 }, masteryMilestones: [1200, 6000, 24000, 70000], rankEffects: { bonusScale: .375 } },
     { id: 'sovereignSilence', name: '메아리의 무음 포효', desc: '보스에게서 배운 주문. 마법 공격 115% 피해와 2턴 침묵을 가합니다.', type: 'active', level: 25, job: 'echoTamer', chance: .23, cooldown: 5, multiplier: 1.15, damageType: 'magic', effect: 'silence', statusTurns: 2, cost: 5, manaCost: 14, sourceEnemySkill: 'foeSilence', unlockJobMastery: 6000, masteryMilestones: [5000, 20000, 60000, 120000], rankEffects: { chanceIncrease: .025, manaReduction: 1, multiplierScale: .08 } },
     { id: 'abyssObservation', name: '심연의 몸짓 읽기', desc: '지정 심연 보스 처치에서 직업과 장착 스킬의 숙련도를 추가 획득합니다. 숙련할수록 장착 AP가 5 → −1로 줄고 공격·체력·명중이 크게 오릅니다.', type: 'passive', level: 40, job: 'abyssMimic', rebirth: 1, chance: 0, cooldown: 0, multiplier: 0, cost: 5, bonus: { attack: 36, hp: 120, accuracy: .03 }, masteryGain: { bossOnly: true, enemyIds: ['kelpHydra', 'magmaKraken', 'abyssSovereign'], bonusByLevel: [4, 5, 6, 8, 9] }, masteryMilestones: [4000, 16000, 50000, 120000], levelEffects: [{ cost: 5, bonus: { attack: 36, hp: 120, accuracy: .03 } }, { cost: 5, bonus: { attack: 48, hp: 160, accuracy: .04 } }, { cost: 4, bonus: { attack: 64, hp: 210, accuracy: .05 } }, { cost: 2, bonus: { attack: 84, hp: 270, accuracy: .06 } }, { cost: -1, bonus: { attack: 110, hp: 340, accuracy: .08, crit: .03 } }] },
     { id: 'borrowedTentacles', name: '모사한 촉수 난무', desc: '보스에게서 배운 연격. 물리 공격 135% 피해 후 그 위력의 70%로 한 번 더 공격합니다.', type: 'active', level: 40, job: 'abyssMimic', rebirth: 1, chance: .22, cooldown: 5, multiplier: 1.35, damageType: 'physical', extraAttacks: 1, extraAttackMultiplier: .7, cost: 6, manaCost: 18, sourceEnemySkill: 'foeFrenzy', unlockJobMastery: 20000, masteryMilestones: [10000, 40000, 100000, 200000], rankEffects: { chanceIncrease: .02, apReduction: .5, manaReduction: 1, multiplierScale: .1 } },
@@ -311,6 +311,30 @@ export function normalizeSkillMastery(list: Skill[]) {
     }
 }
 normalizeSkillMastery(SKILLS);
+/**
+ * v3.83 유틸리티 획득 강화(docs/concept.md 11.9 5-1): 유틸리티 직업 스킬의 골드·경험치·장비 드롭 보너스 ×1.5.
+ * 원본 수치는 그대로 두고 불러올 때 한 번 곱합니다(같은 객체를 두 번 곱하지 않음). 설명 글의 숫자는 곱한 값으로 적습니다.
+ * 변종·황금 확률 · 숙련 획득 같은 다른 유틸리티 효과는 그대로입니다.
+ */
+export const UTILITY_GAIN_SCALE = 1.5;
+const GAIN_KEYS = new Set(['goldBonus', 'expBonus', 'dropBonus']);
+const gainScaled = new WeakSet<object>();
+export function scaleUtilityGain(list: Skill[]) {
+    const walk = (o: unknown) => {
+        if (!o || typeof o !== 'object' || gainScaled.has(o)) return;
+        gainScaled.add(o);
+        const rec = o as Record<string, unknown>;
+        for (const [k, v] of Object.entries(rec)) {
+            if (GAIN_KEYS.has(k) && typeof v === 'number') rec[k] = Math.round(v * UTILITY_GAIN_SCALE * 10000) / 10000;
+            else walk(v);
+        }
+    };
+    for (const sk of list) {
+        const job = JOBS.find(j => j.id === sk.job);
+        if (job && subRoleOf(job, lineageOf(job)) === 'utility') walk(sk);
+    }
+}
+scaleUtilityGain(SKILLS);
 export const MASTERY_ALIGN = { ratio: .4, keep: /^(str|dex|int|vit|wis|luk)Training[123]$|[hH]acker$/ };
 export const LEGACY_MASTERY_TARGET: Record<string, number> = {};
 const roundTarget = (n: number) => n >= 10_000 ? Math.round(n / 1000) * 1000 : Math.round(n / 100) * 100;
