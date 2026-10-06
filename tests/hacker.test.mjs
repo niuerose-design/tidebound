@@ -262,6 +262,42 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         act(bk, { type: 'hackRun', id: 'broadcast', value: '들켰다' }, now, () => .01); await Hk.applyPendingHack(bk, 'acct_bk', now);
         assert.ok((await database.listChat('global', 0, 300)).some(c => c.account_id === 'system-hacker' && c.text.includes('블랙 해커 그림자가 방송 탈취 중 추적당했습니다')), 'busted notice names the black hacker');
         assert.notEqual((await Hk.readHacks(now)).broadcast?.text, '들켰다', 'failed hack has no effect');
+        // v3.29 해커 조직(4-a): 창설·가입(초대 코드)·성향 제한·정원·비트 기여·위임·강퇴·코드 재발급·탈퇴, 소속 캐시 동기화.
+        const Cr = await load('game/server/crews.js'), CD = await load('game/data/crew.js');
+        const boss = veteran(1); boss.name = '조직장';
+        await assert.rejects(Cr.createCrew('m_boss', boss, 'x', 'gray', now), /2~12/);
+        await assert.rejects(Cr.createCrew('m_boss', boss, '그림자단', 'white', now + 1).then(f => f(boss)).then(() => Cr.createCrew('m_boss', boss, '또', 'gray', now)), /이미/);
+        const crewId = boss.hacker.crew.id, row0 = await database.getCrew(crewId);
+        assert.equal(boss.hacker.bits, 10000 - CD.CREW.createBits); assert.equal(boss.hacker.crew.leader, true); assert.equal(row0.code.length, 6);
+        const blackie = veteran(1); blackie.jobMastery.hacker = 1500; act(blackie, { type: 'job', id: 'blackHacker' }, now);
+        await assert.rejects(Cr.joinCrew('m_black', blackie, row0.code, now), /화이트/, 'white crew: no black hackers');
+        await assert.rejects(Cr.joinCrew('m_x', newState(0), row0.code, now), /해커 계열/);
+        const members = [];
+        for (let i = 0; i < 4; i++) { const m = veteran(1); m.name = `조직원${i}`; (await Cr.joinCrew(`m_${i}`, m, row0.code.toLowerCase(), now))(m); members.push(m); }
+        await assert.rejects(Cr.joinCrew('m_full', veteran(1), row0.code, now), /정원\(5명\)/);
+        assert.equal(members[0].hacker.crew.id, crewId); assert.equal(members[0].hacker.crew.leader, false);
+        // 비트 기여: 하루 상한 = 권한 등급 × 50, 기여한 만큼 조직 자금·조직 경험치.
+        const dep = members[0]; dep.hacker.grade = 10;
+        await assert.rejects(Cr.depositCrew('m_0', dep, 501, now), /500까지/);
+        (await Cr.depositCrew('m_0', dep, 500, now))(dep); assert.equal(dep.hacker.crewDeposit.n, 500); assert.equal(dep.hacker.bits, 10000 - 500);
+        await assert.rejects(Cr.depositCrew('m_0', dep, 1, now), /0까지/);
+        let info = await Cr.crewInfo('m_0', dep, now); assert.equal(info.crew.vault, 500); assert.equal(info.crew.members.length, 5); assert.equal(info.crew.depositLeft, 0);
+        assert.deepEqual([1, 2, 4, 20].map(g => CD.CREW.capacity(g)), [5, 6, 7, 10]); assert.equal(CD.crewGrade(CD.CREW.gradeNeed(1)), 2);
+        // 조직장만: 코드 재발급(옛 코드 무효)·위임·강퇴.
+        await assert.rejects(Cr.leaderAct('m_0', dep, 'kick', 'm_1', now), /조직장만/);
+        (await Cr.leaderAct('m_boss', boss, 'code', '', now))(boss);
+        const row1 = await database.getCrew(crewId); assert.notEqual(row1.code, row0.code); await assert.rejects(Cr.joinCrew('m_late', veteran(1), row0.code, now), /초대 코드/);
+        (await Cr.leaderAct('m_boss', boss, 'kick', 'm_1', now))(boss);
+        members[1].hacker.crew.syncedAt = 0; await Cr.syncCrew('m_1', members[1], now + 31_000); assert.equal(members[1].hacker.crew, undefined, 'kicked member drops the cache on sync');
+        (await Cr.leaderAct('m_boss', boss, 'delegate', 'm_0', now))(boss); assert.equal(boss.hacker.crew.leader, false);
+        // 정리: 조직장이 14일 활동이 없으면 기여가 가장 많은 조직원에게, 해커 계열이 아닌 채로 30일이면 자동 탈퇴.
+        const tidy = { leader: 'a', members: { a: { seen: 0, deposited: 0, joined: 0 }, b: { seen: 0, deposited: 5, joined: 1 }, c: { seen: 0, deposited: 9, joined: 2, offSince: 0 } } };
+        Cr.tidyCrew(tidy, 30 * 86400_000); assert.deepEqual(Object.keys(tidy.members), ['a', 'b']); assert.equal(tidy.leader, 'b');
+        // 동기화: 해커 계열을 떠나면 offSince가 적히고, 마지막 조직원이 나가면 조직이 사라집니다.
+        const leaver = members[2]; act(leaver, { type: 'job', id: 'fisher' }, now); leaver.hacker.crew.syncedAt = 0; await Cr.syncCrew('m_2', leaver, now + 61_000);
+        assert.ok(JSON.parse((await database.getCrew(crewId)).data).members.m_2.offSince > 0);
+        for (const [mid, m] of [['m_boss', boss], ['m_0', dep], ['m_2', leaver], ['m_3', members[3]]]) (await Cr.leaveCrew(mid, m, now))(m);
+        assert.equal(await database.getCrew(crewId), null, 'empty crew is deleted'); assert.equal(boss.hacker.crew, undefined);
         // v3.26 해커 전직 알림(익명, system-hacker). 파일 DB를 쓰는 테스트는 동시에 돌면 서로의 파일을 바꾸므로 한 테스트에 모읍니다.
         await Hk.announceHacker('hacker', now); const chat = await database.listChat('global', 0, 300);
         assert.equal(chat.at(-1).account_id, 'system-hacker'); assert.equal(chat.at(-1).text, '누군가가 해커로 전직했습니다.');

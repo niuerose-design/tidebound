@@ -44,7 +44,7 @@ function VowInfo({ id, s }: { id: VowId; s: State }) {
 const VOW_BY_RESEARCH = Object.fromEntries(VOW_IDS.map(id => [VOW_RESEARCH[id], id])) as Record<string, VowId>;
 /** 세계석 연구 카드: 현재 → 다음 효과, 잠긴 연구는 해금 환생 횟수를 보여줍니다. */
 function ResearchCard({ r, s, send, busy }: { r: ResearchDef; s: State; send: (a: Action) => void; busy: boolean }) {
-    // v3.30 승천해야 열리는 단계(행운의 편지 6~10)와 환생 200회부터의 연구 구매 잠금.
+    // v3.31 승천해야 열리는 단계(행운의 편지 6~10)와 환생 200회부터의 연구 구매 잠금.
     const rank = s.permanent[r.id] || 0, cost = researchCost(r.id, rank), unlocked = researchUnlocked(s.rebirths, r), maxed = rank >= r.max, capped = !maxed && rank >= researchMaxFor(s, r), locked200 = s.rebirths >= ASCENSION.researchLockAt;
     return <article className={`panel research-card ${unlocked ? '' : 'locked'}`}>
         <div><h2>{r.name}{VOW_BY_RESEARCH[r.id] && <VowInfo id={VOW_BY_RESEARCH[r.id]} s={s}/>}</h2><p>{r.desc}{r.levels ? '' : <small> (1단계당)</small>}</p>

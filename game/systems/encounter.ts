@@ -163,7 +163,7 @@ export function spawn(s: State, rng: () => number) {
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
     // v27.58 경험의 누리: 까미와 같은 난수 하나를 [까미 구간 | 누리 구간]으로 나눠 씁니다(난수 사용 횟수는 그대로).
     // v27.80 무리 서식지에는 까미·누리가 나오지 않습니다(무리만 확정).
-    // v3.30 승천한 모험가에게는 까미·누리가 난이도 0부터 나옵니다(난이도 조건만 없앰, 레벨·처치 수 조건은 그대로).
+    // v3.31 승천한 모험가에게는 까미·누리가 난이도 0부터 나옵니다(난이도 조건만 없앰, 레벨·처치 수 조건은 그대로).
     const asc = ascended(s), mimicOk = !dungeon && !st.habitat && (asc || tier >= MIMIC.minTier) && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && !st.habitat && nuriEligible(s, asc ? Math.max(tier, EXP_NURI.minTier) : tier);
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
@@ -247,12 +247,12 @@ export function reward(s: State, rng: () => number) {
     s.kills += size;
     rk.exp += size * (1 + rankPerkLevel(s, 'tally')); s.rank = rk;
     if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 빌드 화면의 계급에서 사용)`, 'reward'); }
-    // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.29 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
+    // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.30 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
     let mimicBonus = 0;
     if (e.id === MIMIC.id) { const t = rollMimicMastery(rng, s); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
-    // v3.30 승천 숙련 배율(1회당 +100%, 5회 ×6)은 까미 당첨분까지 합친 이번 처치 숙련 전체에 곱합니다. 다른 배율은 까미에 걸지 않습니다.
+    // v3.31 승천 숙련 배율(1회당 +100%, 5회 ×6)은 까미 당첨분까지 합친 이번 처치 숙련 전체에 곱합니다. 다른 배율은 까미에 걸지 않습니다.
     const practiceTotal = Math.floor((practice + mimicBonus) * ascensionMastery(s));
-    // v3.30 행운의 편지 10단계 · 편지 수신인: 까미 당첨 숙련(승천 배율 적용 뒤)의 1%를 해금했지만 숙달하지 않은 다른 직업 하나에 덤으로 줍니다.
+    // v3.31 행운의 편지 10단계 · 편지 수신인: 까미 당첨 숙련(승천 배율 적용 뒤)의 1%를 해금했지만 숙달하지 않은 다른 직업 하나에 덤으로 줍니다.
     if (mimicBonus && letterRank(s) >= LETTER.recipientRank) {
         const pool = s.unlockedJobs.filter(id => id !== s.job && id !== HACKER_ID && jobById(id) && !jobMastered(s, jobById(id)!));
         if (pool.length) {

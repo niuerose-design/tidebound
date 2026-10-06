@@ -1,4 +1,4 @@
-// v3.30 승천 · 환생 200회 상한 · 까미 확률 상한 · 행운의 편지 10단계(docs/balance-rebirth.md 8·9·11·13·14절).
+// v3.31 승천 · 환생 200회 상한 · 까미 확률 상한 · 행운의 편지 10단계(docs/balance-rebirth.md 8·9·11·13·14절).
 // 공유 난수를 쓰지 않습니다(직접 만든 난수만). run.mjs 맨 끝에 둡니다.
 import { newState, act, expMultiplier, assert, test } from './harness.mjs';
 const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
@@ -9,7 +9,7 @@ const W = await L.load('data/world');
 const { skillById } = await L.load('data/skills');
 const SKILL = id => skillById(id);
 
-test('v3.30 mimic chance stops growing at difficulty 20 and the dragon nest', () => {
+test('v3.31 mimic chance stops growing at difficulty 20 and the dragon nest', () => {
     const nest = W.STAGES.findIndex(x => x.id === 'dragonNest'), last = W.STAGES.findIndex(x => x.id === 'vanishingJourney');
     assert.equal(Mi.MIMIC_STAGE_CAP_INDEX, nest);
     assert.ok(Math.abs(Mi.mimicChance(20, nest) - .043125) < 1e-12, 'max ≈ 4.3%');
@@ -18,14 +18,14 @@ test('v3.30 mimic chance stops growing at difficulty 20 and the dragon nest', ()
     assert.ok(Mi.mimicChance(5, 9) < Mi.mimicChance(20, nest), 'still grows below the cap');
 });
 
-test('v3.30 rebirth stops at 200 and world-stone research purchases lock from 200', () => {
+test('v3.31 rebirth stops at 200 and world-stone research purchases lock from 200', () => {
     const s = newState(0); s.rebirths = 200; s.level = 100; s.pearls = 1e6;
     assert.throws(() => act(s, { type: 'rebirth' }, 0), /200회까지/);
     assert.throws(() => act(s, { type: 'permanent', id: 'attack' }, 0), /살 수 없습니다/);
     s.rebirths = 199; act(s, { type: 'permanent', id: 'attack' }, 0); assert.equal(s.permanent.attack, 1, 'below 200 still buys');
 });
 
-test('v3.30 ascend: requirement steps, keeps mastery/achievements/rank/records, resets the rest, refunds achievement currency', () => {
+test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, resets the rest, refunds achievement currency', () => {
     const s = newState(0);
     s.rebirths = 99; s.level = 100;
     assert.throws(() => act(s, { type: 'ascend' }, 1000), /환생 100회부터/);
@@ -55,7 +55,7 @@ test('v3.30 ascend: requirement steps, keeps mastery/achievements/rank/records, 
 });
 
 
-test('v3.30 refinement and limit-break progress restart from the ascension base; growth levels stay', () => {
+test('v3.31 refinement and limit-break progress restart from the ascension base; growth levels stay', () => {
     const sk = skillById('hook'), last = P.masteryMilestonesFor(sk).at(-1), targets = P.skillRefinementTargets(sk);
     const s = { skillPractice: { hook: last + 40_000 }, refineBase: { hook: last + 40_000 } };
     assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 0, 'refinement back to 0');
@@ -64,7 +64,7 @@ test('v3.30 refinement and limit-break progress restart from the ascension base;
     assert.equal(P.skillMasteryLevel(s.skillPractice.hook, P.masteryMilestonesFor(sk)), P.masteryMilestonesFor(sk).length, 'growth level kept');
 });
 
-test('v3.30 ascended effects: no sprout, ×2 early exp, vow and random-game bonus ×1.2 per ascension, mastery ×(1+n)', () => {
+test('v3.31 ascended effects: no sprout, ×2 early exp, vow and random-game bonus ×1.2 per ascension, mastery ×(1+n)', () => {
     const fresh = newState(0), asc = { ...newState(0), ascension: 1 };
     assert.equal(Sp.sproutCount(fresh), 0); assert.equal(Sp.sproutCount(asc), Infinity);
     assert.ok(Math.abs(expMultiplier(asc) / expMultiplier(fresh) - Asc.ASCENSION.earlyExp / Sp.sproutExp(0)) < 1e-9, 'sprout ×3 replaced by ×2');
@@ -76,7 +76,7 @@ test('v3.30 ascended effects: no sprout, ×2 early exp, vow and random-game bonu
     assert.equal(Asc.ascensionMastery({}), 1); assert.equal(Asc.ascensionMastery({ ascension: 2 }), 3); assert.equal(Asc.ascensionMastery({ ascension: 9 }), 6, 'capped at 5');
 });
 
-test('v3.30 ascended hunters meet the mimic at difficulty 0 and its jackpot gets the ascension multiplier', () => {
+test('v3.31 ascended hunters meet the mimic at difficulty 0 and its jackpot gets the ascension multiplier', () => {
     const s = newState(0); s.ascension = 1; s.level = 20; s.kills = 500; s.stage = 'brook'; s.tide = 0; s.running = true; s.hp = 1e9;
     E.spawn(s, () => 0);
     assert.equal(s.enemy?.id, Mi.MIMIC.id, 'mimic spawns at difficulty 0 after ascending');
@@ -86,7 +86,7 @@ test('v3.30 ascended hunters meet the mimic at difficulty 0 and its jackpot gets
     assert.ok((s.jobMastery[s.job] || 0) - before >= 2 * 1000, 'jackpot 1,000 × 2');
 });
 
-test('v3.30 lucky letter: ranks 6–10 need an ascension; offline ×0.5, jackpot 7.5%, letter recipient 1%', () => {
+test('v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.5, jackpot 7.5%, letter recipient 1%', () => {
     const s = newState(0); s.rebirths = 10; s.pearls = 1e6; s.permanent.messageBottle = 5;
     assert.throws(() => act(s, { type: 'permanent', id: 'messageBottle' }, 0), /승천한 뒤/);
     s.ascension = 1; act(s, { type: 'permanent', id: 'messageBottle' }, 0); assert.equal(s.permanent.messageBottle, 6);
@@ -99,7 +99,7 @@ test('v3.30 lucky letter: ranks 6–10 need an ascension; offline ×0.5, jackpot
     assert.equal(r.jobMastery.wanderer, Math.floor(1000 * 2 * .01), 'recipient gets 1% of the multiplied jackpot');
 });
 
-test('v3.30 slot unlocks use lifetime rebirths so an ascension never closes a slot', () => {
+test('v3.31 slot unlocks use lifetime rebirths so an ascension never closes a slot', () => {
     const own = { slot: 1, name: 'a', job: 'fisher', level: 1, rebirths: 0, lifetimeRebirths: 120, mastered: [], species: [], bossKills: 0, abyssBest: 0, updatedAt: 0 };
     const merged = Ac.mergeSlots(1, [own], 0);
     assert.equal(merged.rebirths, 0); assert.equal(merged.lifetimeRebirths, 120);

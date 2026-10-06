@@ -354,7 +354,7 @@
 .altar-notice-open { display:flex; align-items:center; gap:8px; flex:1; min-width:0; padding:7px 12px; color:#f3dcb8; text-align:left; }
 .altar-notice-open span { color:#d9c3a3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .altar-notice-dismiss { padding:0 10px; color:#c4a989; }
-/* v3.30 승천 카드: 환생 준비 탭 맨 위. 환생 카드와 같은 짜임에 금빛 테두리. */
+/* v3.31 승천 카드: 환생 준비 탭 맨 위. 환생 카드와 같은 짜임에 금빛 테두리. */
 .ascension-panel { margin-bottom: 18px; padding: 0; border-color: #6b6236; background: linear-gradient(160deg, #1c1a12, #101a1d 60%); }
 .ascension-panel .ascension-ready { padding: 24px 28px 8px; }
 .ascension-panel .ascension-ready .eyebrow { color: #e3c28d; }

@@ -22,7 +22,7 @@ export function LiveRatesCard({ s, compact = false }: { s: State; compact?: bool
     const [open, setOpen] = useState(true);
     useEffect(() => { if (!compact) return; const t = setTimeout(() => { try { if (localStorage.getItem(FOLD_KEY) === 'folded') setOpen(false); } catch { /* 저장소 없음 */ } }, 0); return () => clearTimeout(t); }, [compact]);
     const toggle = () => setOpen(v => { try { localStorage.setItem(FOLD_KEY, v ? 'folded' : 'open'); } catch { /* 저장소 없음 */ } return !v; });
-    // 최근 처치 한 줄: 같은 턴의 처치·누리·숙련 줄을 한 처치로 묶은 값(v3.29). 로그가 밀려나도 마지막 값은 남겨 둡니다.
+    // 최근 처치 한 줄: 같은 턴의 처치·누리·숙련 줄을 한 처치로 묶은 값(v3.30). 로그가 밀려나도 마지막 값은 남겨 둡니다.
     const latest = recentKill(s.logs, s.name);
     const recent = useSyncExternalStore(recentStore.subscribe, recentStore.get, recentStore.get);
     useEffect(() => { if (latest && (!recent || latest.id !== recent.id)) recentStore.set(latest); }, [latest, recent]);

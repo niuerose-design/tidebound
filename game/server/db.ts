@@ -36,7 +36,7 @@ export interface Storage {
     createPlayerIfMissing(id: string, state: string, now: number): Promise<void>;
     updatePlayer(id: string, state: string, now: number, revision: number): Promise<boolean>;
     upsertRanking(row: RankingRow): Promise<void>;
-    /** v3.30 승천: 결투·무릉도장 주간 기록판에서 즉시 빠질 때 씁니다. */
+    /** v3.31 승천: 결투·무릉도장 주간 기록판에서 즉시 빠질 때 씁니다. */
     deleteRanking(id: string): Promise<void>;
     listRankings(season: number, limit: number): Promise<RankingRow[]>;
     getRanking(id: string, season: number): Promise<RankingRow | null>;
@@ -47,7 +47,7 @@ export interface Storage {
     listAccounts(): Promise<{ id: string; username: string }[]>;
     /** v27.26 운영 도구용: 모든 세이브(압축 해제된 상태 문자열). */
     listPlayers(): Promise<{ id: string; state: string; revision: number; updated_at: number }[]>;
-    /** v3.28 해커 조직: 행 읽기·코드로 찾기·전체 목록(순위)·revision 비교 저장(새 조직은 revision −1). */
+    /** v3.28 해커 조직: 행 읽기·코드로 찾기·전체 목록(순위)·revision 비교 저장(새 조직은 revision −1). v3.29 저장 때 코드도 함께 바꿈(다른 조직과 겹치면 false). */
     getCrew(id: string): Promise<CrewRow | null>;
     getCrewByCode(code: string): Promise<CrewRow | null>;
     listCrews(): Promise<CrewRow[]>;
@@ -236,7 +236,7 @@ function neonStorage(url: string): Storage {
         async listCrews() { const { rows } = await q<CrewRow>('SELECT id,code,data,revision FROM crews ORDER BY updated_at DESC LIMIT 500'); return rows.map(r => ({ ...r, revision: Number(r.revision) })); },
         async putCrew(id, code, data, revision, now) {
             if (revision < 0) { try { const r = await q('INSERT INTO crews (id,code,data,revision,updated_at) VALUES ($1,$2,$3,0,$4) ON CONFLICT DO NOTHING', [id, code, data, now]); return r.rowCount === 1; } catch { return false; } }
-            const r = await q('UPDATE crews SET data=$1, revision=revision+1, updated_at=$2 WHERE id=$3 AND revision=$4', [data, now, id, revision]); return r.rowCount === 1;
+            try { const r = await q('UPDATE crews SET data=$1, code=$5, revision=revision+1, updated_at=$2 WHERE id=$3 AND revision=$4', [data, now, id, revision, code]); return r.rowCount === 1; } catch { return false; }
         },
         async deleteCrew(id) { await q('DELETE FROM crews WHERE id=$1', [id]); },
         async countActivePlayers(since, except) { const { rows } = await q<{ n: string }>('SELECT COUNT(*) AS n FROM players WHERE updated_at>=$1 AND id<>$2', [since, except]); return Number(rows[0]?.n || 0); },
@@ -394,8 +394,8 @@ function fileStorage(): Storage {
         putCrew: (id, code, data, revision, now) => tx(db => {
             const crews = db.crews ??= {}, cur = crews[id];
             if (revision < 0) { if (cur || Object.values(crews).some(c => c.code === code)) return false; crews[id] = { id, code, data, revision: 0, updated_at: now }; return true; }
-            if (!cur || cur.revision !== revision) return false;
-            crews[id] = { ...cur, data, revision: revision + 1, updated_at: now }; return true;
+            if (!cur || cur.revision !== revision || Object.values(crews).some(c => c.id !== id && c.code === code)) return false;
+            crews[id] = { ...cur, code, data, revision: revision + 1, updated_at: now }; return true;
         }),
         deleteCrew: id => tx(db => { delete db.crews?.[id]; }),
         countActivePlayers: (since, except) => tx(db => Object.entries(db.players).filter(([id, p]) => id !== except && p.updated_at >= since).length),

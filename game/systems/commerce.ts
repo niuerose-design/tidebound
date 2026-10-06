@@ -238,7 +238,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error(`${r.name} ${(r.ascendAbove || 0) + 1}단계부터는 승천한 뒤에 살 수 있습니다.`);
         if (!researchUnlocked(s.rebirths, r))
             throw Error(`환생 ${r.rebirth}회 이후에 열리는 연구입니다.`);
-        // v3.30 환생 200회부터는 세계석 연구를 더 살 수 없습니다(승천하면 연구가 초기화되며 다시 열림).
+        // v3.31 환생 200회부터는 세계석 연구를 더 살 수 없습니다(승천하면 연구가 초기화되며 다시 열림).
         if (s.rebirths >= ASCENSION.researchLockAt)
             throw Error(`환생 ${ASCENSION.researchLockAt}회부터는 세계석 연구를 살 수 없습니다. 승천하면 다시 살 수 있습니다.`);
         const cost = researchCost(id, rank);

@@ -39,7 +39,7 @@ export function gainsOf(log: Log, player: string) {
 const isKillLine = (l: Log) => l.type === 'reward' && /처치 · \+[\d,]+ G · \+[\d,]+ EXP/.test(l.text);
 export type RecentKill = { exp: number; gold: number; mastery: number; id: number };
 /**
- * v3.29 가장 최근 처치로 얻은 양. 처치 줄(+G · +EXP · 숙련 +N, 숙련은 까미 당첨분 포함)에 같은 처치에서 찍힌 경험의 누리 줄(경험치 +N)을 더합니다.
+ * v3.30 가장 최근 처치로 얻은 양. 처치 줄(+G · +EXP · 숙련 +N, 숙련은 까미 당첨분 포함)에 같은 처치에서 찍힌 경험의 누리 줄(경험치 +N)을 더합니다.
  * 같은 처치 = 같은 턴에서 직전 처치 줄 뒤부터 이 처치 줄까지. 처치 줄에 숙련이 없는 옛 로그는 바로 뒤 숙련 줄과 까미 줄로 맞춥니다.
  * 로그가 밀려나 처치 줄이 없으면 null.
  */

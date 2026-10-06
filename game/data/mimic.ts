@@ -11,7 +11,7 @@ export const MIMIC = {
     chancePerTier: .0005,
     /** 사냥터 순서(0부터)마다 등장 확률 배율 +stageStep. 낮은 사냥터는 빨리 많이 잡고, 높은 사냥터는 한 번의 확률이 높습니다. */
     stageStep: .25,
-    /** v3.30 까미 확률 상한: 난이도 항은 tierCap에서, 사냥터 항은 stageCap 사냥터(환생 20회에 열리는 리프레 · 용의 둥지)에서 멈춥니다.
+    /** v3.31 까미 확률 상한: 난이도 항은 tierCap에서, 사냥터 항은 stageCap 사냥터(환생 20회에 열리는 리프레 · 용의 둥지)에서 멈춥니다.
      * 환생 20회 단계에서 확률이 최대가 되어, 그 위의 숙련 속도는 환생 횟수가 아니라 승천이 맡습니다(docs/balance-rebirth.md 6.5). */
     tierCap: 20, stageCap: 'dragonNest',
     /** 오프라인 정산(1분 넘게 쌓인 틱을 한꺼번에 돌릴 때) 중 등장 확률 배율. */
@@ -29,7 +29,7 @@ export const MIMIC = {
         { mastery: 100000, chance: .05, label: '대' },
     ],
 } as const;
-/** v3.30 행운의 편지 6~10단계(승천 후) 기능. */
+/** v3.31 행운의 편지 6~10단계(승천 후) 기능. */
 export const LETTER = { offlineRank: 6, offlineScale: .5, jackpotRank: 8, jackpotChance: .075, recipientRank: 10, recipientShare: .01 } as const;
 type LetterState = { permanent?: Record<string, number> };
 export const letterRank = (s?: LetterState) => s?.permanent?.messageBottle || 0;

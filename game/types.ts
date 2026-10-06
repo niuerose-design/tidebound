@@ -320,7 +320,7 @@ export type CombatEvent = {
 export type LifeStart = { at: number; playMs: number; partial?: boolean };
 /** 환생 한 번의 기록. realMs: 생 시작부터 환생까지 실제 시간, playMs: 그동안 사냥이 진행된 시간(부재중 정산 포함). */
 export type RebirthRecord = { n: number; at: number; realMs: number; playMs: number; level: number; pearls: number; partial?: boolean };
-/** v3.30 승천 기록: 몇 번째 승천인지, 그때의 환생 횟수·무릉도장 최고층·걸린 시간. */
+/** v3.31 승천 기록: 몇 번째 승천인지, 그때의 환생 횟수·무릉도장 최고층·걸린 시간. */
 export type AscensionRecord = { n: number; at: number; rebirths: number; abyssBest: number; realMs: number; kills: number };
 export type Log = {
     id: number;
@@ -415,9 +415,9 @@ export type State = {
     /** Paid inheritance is independent of growth and never fabricates mastery wins. */
     skillInheritances: Record<string, boolean>;
     skillPractice: Record<string, number>;
-    /** v3.30 승천할 때의 스킬 숙련. 연마 단계·한계 돌파 조건은 이 값 위로 쌓인 숙련만 셉니다(refinePractice). */
+    /** v3.31 승천할 때의 스킬 숙련. 연마 단계·한계 돌파 조건은 이 값 위로 쌓인 숙련만 셉니다(refinePractice). */
     refineBase?: Record<string, number>;
-    /** v3.30 승천 횟수와 기록, 이번 승천의 시작 시각. */
+    /** v3.31 승천 횟수와 기록, 이번 승천의 시작 시각. */
     ascension?: number;
     ascensionLog?: AscensionRecord[];
     ascensionStart?: number;
@@ -633,6 +633,10 @@ export type HackerState = {
     roots?: number;
     /** v3.28 블랙 해커가 해킹에 실패해 추적당한 동안(이 시각까지 해킹 불가). */
     bustedUntil?: number;
+    /** v3.29 해커 조직 소속 캐시(동기화 때 10분마다 서버의 crews 행과 맞춤). */
+    crew?: { id: string; name: string; side: string; grade: number; leader: boolean; syncedAt: number };
+    /** v3.29 오늘 조직에 기여한 비트(하루 상한). */
+    crewDeposit?: { day: string; n: number };
     /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
     season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };

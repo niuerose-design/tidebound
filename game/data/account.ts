@@ -24,9 +24,9 @@ export const ACCOUNT_RULES = {
     bossPer: 100, bossStep: .01, bossCap: 10,
 } as const;
 /** 슬롯 하나의 기록 요약. 서버가 저장 전에 계산해 올립니다. */
-export type SlotSummary = { slot: number; name: string; job: string; level: number; rebirths: number; mastered: string[]; species: string[]; bossKills: number; abyssBest: number; updatedAt: number; /** v3.30 모든 승천을 합친 누적 환생(슬롯 해금 판정)과 승천 횟수. */ lifetimeRebirths?: number; ascension?: number };
+export type SlotSummary = { slot: number; name: string; job: string; level: number; rebirths: number; mastered: string[]; species: string[]; bossKills: number; abyssBest: number; updatedAt: number; /** v3.31 모든 승천을 합친 누적 환생(슬롯 해금 판정)과 승천 횟수. */ lifetimeRebirths?: number; ascension?: number };
 /** 세이브에 캐시되는 계정 합계. slots 는 설정 화면의 슬롯 목록용, ownKey 는 마지막으로 올린 내 요약의 비교 키. */
-export type AccountSummary = { slot: number; rebirths: number; mastered: number; species: number; bossKills: number; abyssBest: number; slots: SlotSummary[]; syncedAt: number; ownKey?: string; /** v3.30 누적 환생 합계(슬롯 해금 판정). */ lifetimeRebirths?: number };
+export type AccountSummary = { slot: number; rebirths: number; mastered: number; species: number; bossKills: number; abyssBest: number; slots: SlotSummary[]; syncedAt: number; ownKey?: string; /** v3.31 누적 환생 합계(슬롯 해금 판정). */ lifetimeRebirths?: number };
 export type AccountState = Pick<State, 'account'>;
 export const accountSlot = (s: AccountState) => s.account?.slot || 1;
 export function mergeSlots(slot: number, slots: SlotSummary[], now: number): AccountSummary {
@@ -36,7 +36,7 @@ export function mergeSlots(slot: number, slots: SlotSummary[], now: number): Acc
     return { slot, rebirths, mastered: mastered.size, species: species.size, bossKills, abyssBest, slots: [...slots].sort((a, b) => a.slot - b.slot), syncedAt: now, lifetimeRebirths };
 }
 /** 슬롯 n(1~3)이 열렸는지. 1번은 항상. */
-/** v3.30 슬롯 해금은 누적 환생으로 판정합니다(승천해도 한 번 열린 슬롯은 열려 있음). */
+/** v3.31 슬롯 해금은 누적 환생으로 판정합니다(승천해도 한 번 열린 슬롯은 열려 있음). */
 export function slotUnlocked(a: Pick<AccountSummary, 'rebirths' | 'slots' | 'lifetimeRebirths'> | undefined, slot: number) {
     if (slot < 1 || slot > SLOT_COUNT) return false;
     if (slot === 1) return true;

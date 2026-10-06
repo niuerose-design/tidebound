@@ -1,5 +1,5 @@
 'use client';
-/** v3.30 승천 카드: 환생 화면 '환생 준비' 탭. 조건·지금 받는 배율·받는 보상·유지되는 것·초기화되는 것과 확인 창. 설계는 docs/balance-rebirth.md 8·11·14절. */
+/** v3.31 승천 카드: 환생 화면 '환생 준비' 탭. 조건·지금 받는 배율·받는 보상·유지되는 것·초기화되는 것과 확인 창. 설계는 docs/balance-rebirth.md 8·11·14절. */
 import { Crown } from 'lucide-react';
 import { ConfirmButton } from './confirm-button';
 import { Meter, format } from './shared';

@@ -86,7 +86,7 @@ export function rescaleRanks(s: State) {
     return true;
 }
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    // v3.30 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
+    // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
     if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;

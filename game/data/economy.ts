@@ -17,7 +17,7 @@ export type ResearchDef = {
     negative?: boolean;
     /** 단계마다 효과가 수치가 아니라 설명으로 바뀌는 연구(자동 분해기·서약)의 단계별 문구. [0]은 0단계. */
     levels?: string[];
-    /** v3.30 이 단계를 넘는 단계는 승천한 모험가만 살 수 있습니다(행운의 편지 6~10단계). */
+    /** v3.31 이 단계를 넘는 단계는 승천한 모험가만 살 수 있습니다(행운의 편지 6~10단계). */
     ascendAbove?: number;
 };
 export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '전투' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
@@ -75,7 +75,7 @@ export const researchCost = (id: string, rank: number) => { const r = RESEARCH.f
 /** rank 단계까지 쓴 세계석 합계(0 → rank). 재분배 반환액 계산에 씁니다. */
 export const researchSpent = (id: string, rank: number) => { let sum = 0; for (let i = 0; i < rank; i++) sum += researchCost(id, i); return sum; };
 export const researchUnlocked = (rebirths: number, r: Pick<ResearchDef, 'rebirth'>) => rebirths >= (r.rebirth || 0);
-/** v3.30 지금 살 수 있는 최대 단계: 승천하지 않았으면 ascendAbove까지. */
+/** v3.31 지금 살 수 있는 최대 단계: 승천하지 않았으면 ascendAbove까지. */
 export const researchMaxFor = (s: { ascension?: number }, r: Pick<ResearchDef, 'max' | 'ascendAbove'>) => r.ascendAbove !== undefined && !((s.ascension || 0) > 0) ? Math.min(r.max, r.ascendAbove) : r.max;
 /** rank 단계의 총 효과 표시. 예: 물리 공격 +10% */
 export function researchEffect(r: ResearchDef, rank: number) {

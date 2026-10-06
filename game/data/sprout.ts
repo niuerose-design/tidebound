@@ -10,7 +10,7 @@ import { xpWall } from '../systems/meta';
 
 /** v3.17 회복 대기는 환생 10회 미만까지 전처럼 3턴(6초)이고 경험치 손실도 없습니다. 처치 후 회복 +5%p는 그대로 5회 미만. */
 export const SPROUT = { expUntil: 10, expPerRebirth: .2, survivalUntil: 5, recoveryUntil: 10, recoveryTurns: 3, recoveryScale: .5, healBonus: .05, deathExpLoss: .02, recoveryMin: 10 };
-/** v3.30 새싹 판정에 쓰는 환생 횟수. 승천한 모험가는 새싹이 아닙니다(경험치 축복·생존 보조 모두 꺼짐, 대신 승천 초반 가속). */
+/** v3.31 새싹 판정에 쓰는 환생 횟수. 승천한 모험가는 새싹이 아닙니다(경험치 축복·생존 보조 모두 꺼짐, 대신 승천 초반 가속). */
 export const sproutCount = (s: { rebirths: number; ascension?: number }) => (s.ascension || 0) > 0 ? Infinity : (s.rebirths || 0);
 export const sproutExp = (rebirths = 0) => rebirths < SPROUT.expUntil ? 1 + SPROUT.expPerRebirth * (SPROUT.expUntil - Math.max(0, rebirths)) : 1;
 export const sproutSurvival = (rebirths = 0) => rebirths < SPROUT.survivalUntil;

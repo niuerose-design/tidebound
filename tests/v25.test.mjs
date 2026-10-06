@@ -1340,7 +1340,7 @@ test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/m
     store.feed(mk(R.RATE_WINDOW_MS + 30_000 + R.GAP_RESET_MS + 50_001, 0, [], 2)); assert.equal(store.get().elapsedMs, 0, 'rebirth restarts');
 });
 
-test('v3.29 recent kill: mastery on the kill line (mimic jackpot included), nuri exp folded in, no double count on EXP lines', async () => {
+test('v3.30 recent kill: mastery on the kill line (mimic jackpot included), nuri exp folded in, no double count on EXP lines', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const R = await L.load('systems/live-rates');
     assert.equal(R.gainsOf({ id: 1, type: 'reward', text: '잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +500 EXP' }, '나').exp, 500, 'not counted twice');

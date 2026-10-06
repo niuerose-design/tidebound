@@ -26,7 +26,7 @@ export function skillRefinementTargets(sk: Skill) {
 }
 export const skillPracticeTargets = (sk: Skill) => [...masteryMilestonesFor(sk), ...skillRefinementTargets(sk)];
 /**
- * v3.30 연마·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
+ * v3.31 연마·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
  * 성장 레벨(숙련 1~4단계)은 원래 숙련 그대로라 바뀌지 않습니다. 기준점이 없으면 원래 숙련과 같습니다.
  */
 export function refinePractice(s: Pick<State, 'skillPractice' | 'refineBase'>, id: string) {
@@ -188,7 +188,7 @@ export function passiveGrowthBonus(s: State, sk: Skill, counts: Record<string, n
     if (sk.perRebirth && rebirths > 0) for (const [key, n] of Object.entries(sk.perRebirth)) out[key] = (out[key] || 0) + (n as number) * rebirths * scale;
     return out;
 }
-/** 스킬의 실제 효과. practice는 연마 단계에 쓰는 숙련(refinePractice). v3.30 효과가 없던 스킬 특화 인자는 지웠습니다. */
+/** 스킬의 실제 효과. practice는 연마 단계에 쓰는 숙련(refinePractice). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
     // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.

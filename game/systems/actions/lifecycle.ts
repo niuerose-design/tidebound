@@ -79,14 +79,14 @@ export function salvagePreview(s: State) {
     const items = rate ? [...s.inventory, ...Object.values(s.equipment)].filter((i): i is NonNullable<typeof i> => !!i && !i.relic) : [];
     return { mode, rate, count: items.length, gold: Math.floor(items.reduce((sum, i) => sum + saleValue(i), 0) * rate), essence: Math.floor(items.reduce((sum, i) => sum + dismantleEssence(i), 0) * rate) };
 }
-/** v3.30 승천 직후 다시 받는 업적 재화: 받은 업적의 세계석·SP 합계. 영구 효과(능력치·AP)는 업적 기록에서 그대로 나옵니다. */
+/** v3.31 승천 직후 다시 받는 업적 재화: 받은 업적의 세계석·SP 합계. 영구 효과(능력치·AP)는 업적 기록에서 그대로 나옵니다. */
 export function achievementRefund(s: Pick<State, 'achievementClaims'>) {
     let pearls = 0, sp = 0;
     for (const id of Object.keys(s.achievementClaims || {})) { const a = achievementById(id); if (!a) continue; pearls += a.reward.pearls || 0; sp += a.reward.sp || 0; }
     return { pearls, sp };
 }
 /**
- * v3.30 승천(docs/balance-rebirth.md 8절): 환생·장비·연구·도감·재화(골드 포함, 새 캐릭터와 같은 100 G)를 지우고, 직업·스킬 숙련과 업적·계급장·칭호·기록만 남겨 처음부터 다시 오릅니다.
+ * v3.31 승천(docs/balance-rebirth.md 8절): 환생·장비·연구·도감·재화(골드 포함, 새 캐릭터와 같은 100 G)를 지우고, 직업·스킬 숙련과 업적·계급장·칭호·기록만 남겨 처음부터 다시 오릅니다.
  * - 스킬 연마 단계와 한계 돌파는 지웁니다: 그때의 숙련을 기준점(refineBase)으로 두고, 한계 돌파 단계는 0으로.
  * - SP로 올린 스킬 단계는 1로(배운 스킬 목록은 유지). 업적 세계석·SP는 다시 지급합니다.
  * - 편의 연구는 자동 해제(ASCENSION_RESEARCH), 튜토리얼은 건너뜁니다.
@@ -137,10 +137,10 @@ export function ascend(s: State, now: number) {
     addLog(s, `승천 · 업적 보상 다시 지급 · 세계석 +${refund.pearls} · SP +${refund.sp} · 편의 연구 자동 해제`, 'reward');
 }
 export const lifecycleActions: ActionHandlers = {
-    /** v3.30 승천. */
+    /** v3.31 승천. */
     ascend(s, { now }) { ascend(s, now); },
     rebirth(s, { now, rng }) {
-        // v3.30 환생 상한: 200회부터는 환생할 수 없고 승천만 할 수 있습니다.
+        // v3.31 환생 상한: 200회부터는 환생할 수 없고 승천만 할 수 있습니다.
         if (s.rebirths >= ASCENSION.rebirthCap)
             throw Error(`환생은 ${ASCENSION.rebirthCap}회까지입니다. 승천할 수 있습니다.`);
         if (s.level < rebirthLevel(s))

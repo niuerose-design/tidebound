@@ -14,6 +14,7 @@ export type Ranking = Snapshot & {
 };
 /** v25.6 주간 심연 기록판 한 줄. */
 export type GuildInfo = import('@/game/server/guild').GuildInfo;
+export type CrewInfo = import('@/game/server/crews').CrewInfo;
 export type AltarInfo = import('@/game/data/altar').AltarInfo;
 export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: number; logs: string[]; claimed: boolean; /** v27.70 탄핵 성공 */ impeached?: boolean; /** v27.91 월드보스: 준 피해·남은 공유 체력·격파 여부·내가 마지막 일격인지 */ dealt?: number; remaining?: number; slain?: boolean; slayer?: boolean };
 export type VaultInfo = import('@/game/data/account').VaultInfo;
@@ -157,6 +158,19 @@ export function useGame() {
         catch (e) { setGuildError((e as Error).message); return false; }
         finally { lock.current = false; setBusy(false); }
     }, [request, replay]);
+    /** v3.29 해커 조직: 정보는 조직 화면을 열 때와 행동 뒤에만 읽습니다. */
+    const [crew, setCrew] = useState<CrewInfo | null>(null), [crewError, setCrewError] = useState('');
+    const loadCrew = useCallback(async () => { try { setCrew(await request('/api/crew') as unknown as CrewInfo); setCrewError(''); } catch (e) { setCrewError((e as Error).message); } }, [request]);
+    const crewAct = useCallback(async (body: Record<string, unknown>) => {
+        if (lock.current) return false; lock.current = true; setBusy(true);
+        try {
+            const d = await request('/api/crew', body) as unknown as { state?: State; info: CrewInfo };
+            if (d.state) { stateRef.current = d.state; setState(d.state); replay.reset(); setSaved(true); }
+            setCrew(d.info); setCrewError(''); return true;
+        }
+        catch (e) { setCrewError((e as Error).message); return false; }
+        finally { lock.current = false; setBusy(false); }
+    }, [request, replay]);
     /** v27.43 제단: 정보는 제단 화면을 열 때와 행동 뒤에만 읽습니다(주기 폴링 없음). 도전 결과는 altarResult로 보여 줍니다. */
     const [altar, setAltar] = useState<AltarInfo | null>(null), [altarError, setAltarError] = useState(''), [altarResult, setAltarResult] = useState<AltarResult | null>(null);
     const loadAltar = useCallback(async () => { try { setAltar(await request('/api/altar') as unknown as AltarInfo); setAltarError(''); } catch (e) { setAltarError((e as Error).message); } }, [request]);
@@ -262,5 +276,5 @@ export function useGame() {
     }, [replay]);
     /** 화면이 바뀔 때 GameShell이 부릅니다. 전투 화면으로 돌아오면 바로 한 번 동기화합니다. */
     const setLive = useCallback((on: boolean) => { const was = live.current; live.current = on; if (on && !was) send({ type: 'sync' }); }, [send]);
-    return { state, frames, setLive, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
+    return { state, frames, setLive, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, crew, crewError, loadCrew, crewAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
 }

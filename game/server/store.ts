@@ -52,7 +52,7 @@ export async function syncAccount(account: string, slot: number, s: State, now: 
     await database.upsertSlot({ account_id: account, slot, summary: JSON.stringify(own), updated_at: now });
     const others = parseSlots(await database.listSlots(account)).filter(x => x.slot !== slot);
     const merged = mergeSlots(slot, [...others, own], now);
-    // v3.30 승천한 모험가의 계정 보너스는 자기 기록으로만 다시 채웁니다(슬롯 목록·해금은 계정 전체 그대로).
+    // v3.31 승천한 모험가의 계정 보너스는 자기 기록으로만 다시 채웁니다(슬롯 목록·해금은 계정 전체 그대로).
     s.account = ascended(s) ? { ...mergeSlots(slot, [own], now), slots: merged.slots, lifetimeRebirths: merged.lifetimeRebirths, ownKey: key } : { ...merged, ownKey: key };
 }
 /** 슬롯 전환: 열린 슬롯인지 저장된 요약으로 확인합니다. */
@@ -127,7 +127,7 @@ export async function syncDuelSeason(id: string, s: State, now: number) {
     if (!fresh) addLog(s, `새 결투 시즌 ${key} · 점수가 1000으로 돌아갑니다.`, 'system');
 }
 /**
- * v3.30 승천 직후 서버 정리(docs/balance-rebirth.md 10·12절): 계정 금고를 비우고, 이번 달 결투 기록판과 이번 주 무릉도장 기록판에서 즉시 뺍니다.
+ * v3.31 승천 직후 서버 정리(docs/balance-rebirth.md 10·12절): 계정 금고를 비우고, 이번 달 결투 기록판과 이번 주 무릉도장 기록판에서 즉시 뺍니다.
  * 금고는 계정 공용이라 다른 분신이 넣어 둔 몫도 함께 사라집니다(의도).
  */
 export async function afterAscend(account: string, id: string, now: number) {
