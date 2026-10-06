@@ -1,11 +1,13 @@
 import { session, checkOrigin, mutate, failure, readJson, ApiError, syncAccount, db } from '@/game/server/store';
-import { altarInfo, parseOffering, applyOffering, commitOffering, makeChallenge, makeHarvest, makeImpeach, makeRaid } from '@/game/server/altar';
+import { altarInfo, parseOffering, applyOffering, commitOffering, makeChallenge, makeHarvest, makeImpeach, makeRaid, raidLog } from '@/game/server/altar';
 import type { State } from '@/game/types';
 import { hackerCombatBlock } from '@/game/systems/hacker';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
-/** v27.43 제단 정보: 게이지·신·신의 자리·이번 주 기여 순위·내 기여. 세이브는 읽기만 합니다. */
+/** v27.43 제단 정보: 게이지·신·신의 자리·이번 주 기여 순위·내 기여. 세이브는 읽기만 합니다. v3.84 ?raidLog=보스&rank=순위 → 그 순위 모험가의 최근 월드보스 도전 기록. */
 export async function GET(req: Request) { try {
+    const url = new URL(req.url), raidId = url.searchParams.get('raidLog');
+    if (raidId) { await session(req); return Response.json(await raidLog(raidId, Number(url.searchParams.get('rank')), Date.now()), { headers }); }
     const { id } = await session(req), row = await db().getPlayer(id);
     let s: State | null = null;
     try { s = row ? JSON.parse(row.state) as State : null; } catch { s = null; }

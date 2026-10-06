@@ -1,11 +1,11 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Crown, Flame, Skull, Sparkles, Trophy, Coins, Gem, Droplets, EyeOff, Swords } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format, formatRemaining } from './shared';
-import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId } from '@/game/data/altar';
+import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
@@ -34,6 +34,33 @@ function AmountRow({ icon, label, have, cap, value, setValue, unit = 1, basis = 
 }
 
 /**
+ * v3.84 월드보스 피해 순위의 최근 도전 기록: 출처별 피해(기술 · 지속 피해 · 반격 등) 요약과 전투 기록(누르면 서버에서 불러옴).
+ * 다른 모험가가 얼마나 · 어떻게 넣었는지 볼 수 있습니다.
+ */
+function RaidHitLog({ raidId, rank, last }: { raidId: string; rank: number; last?: RaidHitSummary }) {
+    const [logs, setLogs] = useState<string[] | null>(null), [error, setError] = useState(''), [loading, setLoading] = useState(false);
+    const total = last ? last.sources.reduce((n, x) => n + x.value, 0) || 1 : 1;
+    const fetchLogs = async () => {
+        setLoading(true); setError('');
+        try {
+            const res = await fetch(`/api/altar?raidLog=${encodeURIComponent(raidId)}&rank=${rank}`, { cache: 'no-store' }), body = await res.json() as { logs?: string[]; error?: string };
+            if (!res.ok) throw new Error(body.error || '기록을 불러오지 못했습니다.');
+            setLogs(body.logs || []);
+        } catch (e) { setError(e instanceof Error ? e.message : '기록을 불러오지 못했습니다.'); }
+        finally { setLoading(false); }
+    };
+    return <div className="altar-raid-log">
+        {last ? <>
+            <p className="micro">최근 도전 · 피해 <b>{format(last.dealt)}</b> · {last.turns}턴{last.died ? ' · 쓰러짐' : ''} · {last.job} · 전투력 {format(last.power)}</p>
+            {last.sources.map(x => <Meter key={x.label} value={x.value} max={total} label={`${x.label} ${format(x.value)} (${Math.round(x.value / total * 100)}%)`} color="gold"/>)}
+        </> : <p className="micro">최근 도전 기록이 없습니다(기록 기능이 생기기 전의 도전).</p>}
+        {logs ? <details open><summary>전투 기록 (끝 {logs.length}줄)</summary><ol>{logs.map((l, i) => <li key={i}>{l}</li>)}</ol></details>
+            : <button type="button" className="secondary small" disabled={loading} onClick={() => void fetchLogs()}>{loading ? '불러오는 중…' : '전투 기록 보기'}</button>}
+        {error && <p className="footnote">{error}</p>}
+    </div>;
+}
+
+/**
  * v27.43 제단. 모든 모험가가 함께 채우는 게이지(축복 셋 · 신 소환), 신 도전, 신의 자리와 몫, 이번 주 기여 순위.
  * 정보는 화면을 열 때와 버튼을 누른 뒤에만 읽습니다(새로고침 버튼 별도). 서버 쪽 공용 정보는 15초 캐시입니다.
  */
@@ -43,6 +70,8 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
     // v27.91 게이지는 축복 / 소환(신 + 월드보스 셋) 탭으로 나눠 봅니다. 고른 게이지가 다른 탭에 있으면 탭을 따라갑니다.
     const [gaugeTab, setGaugeTab] = useState<'bless' | 'summon'>('bless');
     const [raidTab, setRaidTab] = useState<string>(RAIDS[0].id);
+    // v3.84 피해 순위에서 펼친 모험가의 최근 도전 기록('보스:순위').
+    const [openHit, setOpenHit] = useState('');
     // v3.16 슬라이더·비율 버튼 기준: 고른 게이지를 채우는 데 필요한 양 / 내 보유량(수천억 골드를 한 번에 바칠 때).
     const [basis, setBasis] = useState<'need' | 'have'>('need');
     // v3.16 단계 점핑: 축복 게이지에서 목표 단계를 고르면 그 단계까지의 총 비용이 '채우는 데 필요한 양'이 됩니다(서버는 기여도가 닿는 만큼 한 번에 올림). 0 = 다음 단계만.
@@ -142,7 +171,8 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                     </div>}
                     <div className="section-title"><h2><Trophy size={14}/> 피해 순위</h2><span className="micro">{raid.me.dealt ? `내 피해 ${format(raid.me.dealt)} · ${raid.me.rank}위 · ${raid.me.hits}회` : '아직 때리지 않음'}</span></div>
                     {raid.board.length ? <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>피해</TableHead><TableHead>횟수</TableHead></TableRow></TableHeader>
-                        <TableBody>{raid.board.map(r => <TableRow key={r.rank} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{format(r.dealt)}</b></TableCell><TableCell>{r.hits}</TableCell></TableRow>)}</TableBody></Table>
+                        <TableBody>{raid.board.map(r => <Fragment key={r.rank}><TableRow className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''} <button type="button" className="text-button" aria-expanded={openHit === `${raid.id}:${r.rank}`} onClick={() => setOpenHit(openHit === `${raid.id}:${r.rank}` ? '' : `${raid.id}:${r.rank}`)}>{openHit === `${raid.id}:${r.rank}` ? '접기' : '기록'}</button></TableCell><TableCell><b>{format(r.dealt)}</b></TableCell><TableCell>{r.hits}</TableCell></TableRow>
+                            {openHit === `${raid.id}:${r.rank}` && <TableRow><TableCell colSpan={4}><RaidHitLog key={`${raid.gen}:${r.rank}:${r.last?.at || 0}`} raidId={raid.id} rank={r.rank} last={r.last}/></TableCell></TableRow>}</Fragment>)}</TableBody></Table>
                         : <p className="footnote">아직 아무도 때리지 않았습니다. 첫 피해를 넣어 보세요.</p>}
                 </> : <p className="footnote">{RAIDS.find(r => r.id === raidTab)?.name}은(는) 지금 나타나 있지 않습니다. 소환 게이지 {format(raidGauge?.points || 0)} / {format(raidGauge?.cost || 0)} · {raidGauge?.next || ''}. 보스마다 따로 소환되고(발록 6 · 자쿰 12 · 혼테일 24시간 머묾), 여러 보스가 동시에 나타날 수 있습니다. 모든 모험가의 피해가 하나의 체력에 쌓이고, 격파하면 때린 모험가 전원이 보상을 받습니다.</p>}
             </section>

@@ -95,7 +95,9 @@ export type RaidDef = {
     reward: { gold: number; pearls: number; sp: number }; slayer: { pearls: number; sp: number }; blessings: BlessingId[]; blessingHours: number;
 };
 /** v27.93 머무는 시간은 보스마다(lifetimeHours), 격파 뒤 다음 소환까지 respawnMs 대기. */
-export const RAID = { cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10, respawnMs: 2 * 3600_000 } as const;
+export const RAID = { cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10, respawnMs: 2 * 3600_000, /** v3.84 순위에서 보는 최근 도전 전투 기록 줄 수(끝에서부터). */ logLines: 160 } as const;
+/** v3.84 월드보스 도전 한 번의 요약. 피해 순위에서 다른 모험가도 이 모험가가 얼마나 · 어떻게 넣었는지 봅니다. */
+export type RaidHitSummary = { at: number; dealt: number; turns: number; died: boolean; job: string; power: number; sources: { label: string; value: number }[] };
 /**
  * v3.83 방어 재조정: 체력은 그대로 두고, 목표 몸의 중앙 직업이 한 번 도전(80턴)에 깎는 양으로 필요한 도전 횟수를 맞춥니다
  * (scripts/check-tier5.mjs --only raid): 발록 환생 0급 약 10번 · 자쿰 환생 50급 약 100번 · 혼테일 환생 100급 약 1,500번(방어 1,000, 운영 결정).
@@ -146,7 +148,7 @@ export type AltarInfo = {
 export type AltarRaidInfo = {
     id: RaidId; gen: number; name: string; level: number; alive: boolean; slain: boolean; hp: number; hpMax: number; attack: number; defense: number; power: number; until: number;
     /** 참여자 수와 마지막 일격 */ participants: number; slayer: string;
-    /** 피해 순위(상위 RAID.boardSize)와 내 기록 */ board: { rank: number; name: string; dealt: number; hits: number; self: boolean }[]; me: { dealt: number; hits: number; rank: number };
+    /** 피해 순위(상위 RAID.boardSize)와 내 기록 */ board: { rank: number; name: string; dealt: number; hits: number; self: boolean; /** v3.84 가장 최근 도전 요약 */ last?: RaidHitSummary }[]; me: { dealt: number; hits: number; rank: number };
     reward: RaidDef['reward']; slayerBonus: RaidDef['slayer'];
 };
 

@@ -16,8 +16,9 @@ import { weekKey } from '../data/goals';
 import { kstIso } from '../data/time';
 import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
-import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot } from '../systems/duel';
-import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
+import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot, raidBreakdown } from '../systems/duel';
+import { jobById } from '../data/classes';
+import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, type RaidHitSummary, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
 
 type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[]; allTime: AltarTotalRow[]; raids: Record<string, AltarRaidRow> };
 /** 진행 중인 축복의 단계(끝났으면 0). */
@@ -127,6 +128,20 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
         raids: (await Promise.all(RAIDS.map(r => raidInfo(sh.raids[r.id], id, now)))).filter((x): x is AltarRaidInfo => !!x),
     };
 }
+const parseSummary = (text: string): RaidHitSummary | null => { try { const v = JSON.parse(text) as RaidHitSummary; return v && typeof v.dealt === 'number' ? v : null; } catch { return null; } };
+/** v3.84 피해 순위 rank위 모험가의 가장 최근 도전 기록(요약 + 전투 기록). 지금 떠 있거나 방금 격파된 그 보스의 세대만 봅니다. */
+export async function raidLog(raidId: string, rank: number, now: number) {
+    const r = (await shared(now)).raids[raidId], raid = raidById(raidId);
+    if (!r || !raid || r.gen <= 0) throw new ApiError('그 월드보스 기록이 없습니다.');
+    const n = Math.floor(rank);
+    if (!(n >= 1 && n <= RAID.boardSize)) throw new ApiError('순위를 확인하세요.');
+    const database = db(), hit = (await database.listRaidHits(r.gen, RAID.boardSize))[n - 1];
+    if (!hit) throw new ApiError('그 순위의 기록이 없습니다.');
+    const row = await database.getRaidLog(r.gen, hit.player_id);
+    let logs: string[] = [];
+    try { logs = row ? JSON.parse(row.logs) as string[] : []; } catch { logs = []; }
+    return { raid: raid.name, rank: n, name: hit.name, dealt: hit.dealt, hits: hit.hits, last: row ? parseSummary(row.summary) : null, logs: Array.isArray(logs) ? logs.slice(-RAID.logLines).map(String) : [] };
+}
 /** v27.91 월드보스 카드 정보: 공유 체력·남은 시간·참여자 수·피해 순위·내 기록. 보스가 없거나 떠났으면 null, 격파된 보스는 다음 보스가 올 때까지 결과로 남습니다. */
 async function raidInfo(r: AltarRaidRow | undefined, id: string, now: number): Promise<AltarRaidInfo | null> {
     const raid = r && raidById(r.id);
@@ -134,12 +149,14 @@ async function raidInfo(r: AltarRaidRow | undefined, id: string, now: number): P
     const database = db(), alive = raidAlive(r, now), slain = r.state === 'slain';
     if (!alive && !slain) return null;
     const [hits, participants, mine, slayerHit] = await Promise.all([database.listRaidHits(r.gen, RAID.boardSize), database.countRaidHits(r.gen), database.getRaidHit(r.gen, id), r.slayer ? database.getRaidHit(r.gen, r.slayer) : null]);
+    // v3.84 순위에 있는 모험가의 가장 최근 도전 요약(전투 기록 본문은 raidLog로 따로).
+    const summaries = new Map((await database.listRaidSummaries(r.gen, hits.map(h => h.player_id))).map(x => [x.player_id, parseSummary(x.summary)]));
     const rank = mine ? await database.countRaidAbove(r.gen, mine.dealt) + 1 : 0;
     const snap = raidBossSnapshot(raid);
     return {
         id: raid.id, gen: r.gen, name: raid.name, level: raid.level, alive, slain, hp: Math.max(0, r.hp), hpMax: r.hp_max || raid.stats.hp, attack: raid.stats.attack, defense: raid.stats.defense, power: snap.power, until: r.until,
         participants, slayer: slayerHit?.name || '',
-        board: hits.map((h, i) => ({ rank: i + 1, name: h.name, dealt: h.dealt, hits: h.hits, self: h.player_id === id })), me: { dealt: mine?.dealt || 0, hits: mine?.hits || 0, rank },
+        board: hits.map((h, i) => ({ rank: i + 1, name: h.name, dealt: h.dealt, hits: h.hits, self: h.player_id === id, ...(summaries.get(h.player_id) ? { last: summaries.get(h.player_id)! } : {}) })), me: { dealt: mine?.dealt || 0, hits: mine?.hits || 0, rank },
         reward: raid.reward, slayerBonus: raid.slayer,
     };
 }
@@ -161,6 +178,9 @@ export function makeRaid(id: string, raidId: string) {
             const database = db(), remaining = await database.hitAltarRaid(raidId, r.gen, dealt);
             if (remaining === null) throw new ApiError('월드보스가 방금 떠났거나 쓰러졌습니다.');
             await database.bumpRaidHit(r.gen, id, s.name, dealt, now);
+            // v3.84 가장 최근 도전 기록(피해 순위에서 다른 모험가도 봄): 출처별 피해 요약 + 전투 기록 끝 RAID.logLines줄.
+            const summary: RaidHitSummary = { at: now, dealt, turns: result.turns, died: result.playerHp <= 0, job: jobById(s.job)?.name || s.job, power: me.power, sources: raidBreakdown(result, me.name) };
+            await database.putRaidLog(r.gen, id, JSON.stringify(summary), JSON.stringify(result.logs.slice(-RAID.logLines)), now);
             const slain = remaining <= 0; let slayer = false;
             if (slain) {
                 slayer = await database.slayAltarRaid(raidId, r.gen, id, s.name, now);
