@@ -13,6 +13,7 @@ import { MONOSTAT_SKILLS } from './expansion-monostat';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
 import { SPECIAL_SKILLS } from './specials';
+import { STAT_TRAINING_SKILLS } from './stat-training';
 import { trainingSkillOwner, scaleTrainingBonus, TRAINING_PASSIVE, TRAINING_DESC } from './training';
 export const SKILLS: Skill[] = [
     { id: 'hook', name: '강철 챔질', desc: '공격력 180% 피해.', type: 'active', level: 1, chance: .35, cooldown: 2, multiplier: 1.8 },
@@ -258,3 +259,5 @@ for (const sk of SKILLS) {
     sk.masteryMilestones = [...TRAINING_PASSIVE.milestones];
     sk.desc = TRAINING_DESC[sk.id] ?? sk.desc;
 }
+// v3.70 능력치 수련 패시브(data/stat-training.ts).
+registerSkills(STAT_TRAINING_SKILLS);

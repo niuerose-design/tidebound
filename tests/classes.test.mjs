@@ -3,13 +3,15 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 262); assert.equal(new Set(JOBS.map(j => j.id)).size, 262);
+    assert.equal(JOBS.length, 280); assert.equal(new Set(JOBS.map(j => j.id)).size, 280);
     // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
-    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 235);
+    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 253);
+    // v3.70 능력치 수련 I~III 18개(계열마다 3개, 수련 계보).
+    assert.equal(JOBS.filter(j => /^(str|dex|int|vit|wis|luk)Training[123]$/.test(j.id)).length, 18);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 46, magic: 44, defense: 42, status: 30, hybrid: 36, support: 43, mystery: 21 });
+    assert.deepEqual(count, { physical: 49, magic: 47, defense: 45, status: 33, hybrid: 39, support: 46, mystery: 21 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
@@ -30,7 +32,8 @@ test('Lineages: every job belongs to exactly one lineage inside its own tree; in
         const matches = LINEAGES.filter(l => l.id === lineageOf(j));
         assert.equal(matches.length, 1, `${j.id} → ${lineageOf(j)}`);
         assert.equal(matches[0].tree, j.tree, `${j.id} lineage tree`);
-        if (lineageOf(j).endsWith('-independent')) assert.ok((j.tier === 1 || j.fullKit) && !j.parent && !JOBS.some(c => c.parent === j.id), j.id);
+        // v3.70 수련 계보 안의 능력치 수련 I~III은 수련 직업에서 이어집니다(부모도 같은 수련 계보).
+        if (lineageOf(j).endsWith('-independent')) assert.ok(j.parent ? lineageOf(JOBS.find(p => p.id === j.parent)) === lineageOf(j) : (j.tier === 1 || j.fullKit) && (j.subRole === 'training' || !JOBS.some(c => c.parent === j.id)), j.id);
     }
     for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent'))) assert.ok(JOBS.some(j => lineageOf(j) === l.id), `${l.id} has jobs`);
     assert.equal(lineageOf(JOBS.find(j => j.id === 'celestialBlade')), 'spellbladeNovice');

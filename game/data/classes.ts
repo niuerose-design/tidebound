@@ -12,6 +12,7 @@ import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
 import { MAPLE_JOB_FLAVOR, MAPLE_LINEAGE_SUMMARY } from './maple-flavor';
 import { SPECIAL_JOBS, RESTRAINT_LINEAGE } from './specials';
 import { TRAINING_JOBS, RETIRED_TRAINING } from './training';
+import { STAT_TRAINING_JOBS } from './stat-training';
 export type Job = {
     id: string;
     name: string;
@@ -420,3 +421,5 @@ export function jobById(id: string | undefined) {
 }
 // v3.65 공개 특수 직업(유리 대포 · 윤회의 나그네, data/specials.ts).
 registerJobs(SPECIAL_JOBS, true);
+// v3.70 능력치 수련 I~III(data/stat-training.ts, 완성된 모양).
+registerJobs(STAT_TRAINING_JOBS, true);
