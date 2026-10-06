@@ -10,6 +10,7 @@ import { MIMIC, MIMIC_STAGE_CAP_INDEX, mimicChance, specialLuck } from '@/game/d
 import { EXP_NURI, nuriChance } from '@/game/data/exp-nuri';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
+import { keepsAcrossLives } from '@/game/systems/equipment';
 import { PROGRESSION, statDisplay, percent } from '@/game/data/progression';
 import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } from './book-research';
@@ -69,7 +70,7 @@ export function Collection({ s, send, busy }: PanelProps) {
     const [itemFilter, setItemFilter] = useState<'all' | 'onyx' | number>('all');
     const perEntryBonus = Math.round(PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 1000) / 10;
     const perEntryDrop = Math.max(0, dropRate({ ...s, itemBook: { ...s.itemBook, ['preview:next']: true } }) - currentDrop);
-    const bulkCandidates = Object.keys(SLOTS).flatMap(slot => RARITIES.map((_, i) => s.itemBook[itemKey(slot, i)] ? null : s.inventory.filter(x => x.slot === slot && x.rarity === i && !x.locked && !x.relic).sort((a, b) => a.power - b.power || (a.enhance || 0) - (b.enhance || 0))[0] || null)).filter((x): x is NonNullable<typeof x> => !!x);
+    const bulkCandidates = Object.keys(SLOTS).flatMap(slot => RARITIES.map((_, i) => s.itemBook[itemKey(slot, i)] ? null : s.inventory.filter(x => x.slot === slot && x.rarity === i && !x.locked && !keepsAcrossLives(x)).sort((a, b) => a.power - b.power || (a.enhance || 0) - (b.enhance || 0))[0] || null)).filter((x): x is NonNullable<typeof x> => !!x);
 
     return <>
     <Heading eyebrow="ARCHIVE & RESEARCH" title="기록이 힘이 되는 도감" description="개체도감으로 편성의 폭을 넓히고, 물건도감으로 다음 장비를 만날 확률을 높이세요."/>

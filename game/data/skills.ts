@@ -247,5 +247,5 @@ export function skillMasteryScale(sk: Pick<Skill, 'job'>) {
 }
 // v3.65 공개 특수 직업의 스킬(data/specials.ts, 완성된 모양).
 registerSkills(SPECIAL_SKILLS);
-// v3.66 옛 독립 수련의 스킬은 id 그대로 새 수련 직업이 가집니다(data/training.ts).
+// v3.67 옛 독립 수련의 스킬은 id 그대로 새 수련 직업이 가집니다(data/training.ts).
 for (const sk of SKILLS) { const owner = trainingSkillOwner(sk.id, sk.job); if (owner) sk.job = owner; }

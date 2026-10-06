@@ -318,3 +318,51 @@ test('v3.59 primal drops: weight cut to ~0.054% of drops and a pity at PRIMAL_DR
     Enc.drop(s, 50, () => 0, true); assert.equal(s.inventory.at(-1).rarity, 6, 'pity drop is primal'); assert.equal(s.primalDropPity, 0);
     const r = newState(0); r.level = 60; r.primalDropPity = 123; act(r, { type: 'rebirth' }, 0); assert.equal(r.primalDropPity, 123);
 });
+test('v3.66 heir gear: relic power follows (level + 2) × rebirth factor; awakened ancients and inherited primals survive rebirth, grow, cap one per slot', async () => {
+    const Eq = await L.load('systems/equipment'), { rollAffixes, affixQuality } = await L.load('data/gear');
+    const gear = (id, rarity, slot = 'rod', level = 100) => { const power = Math.round((level + 2) * [1, 1.5, 2.2, 3.3, 3.9, 4.5, 5.2][rarity]); return { id, name: id, slot, style: 'physical', rarity, power, level, enhance: 0, affixes: rollAffixes(rarity, power, undefined, () => .3, [], slot, level) }; };
+    // 위력 배율은 환생 200까지 곧게 오르고, 종류마다 유물 < 원시 고대 < 계승 태초입니다.
+    for (const rb of [0, 100, 200]) assert.ok(Ec.heirFactor('relic', rb) < Ec.heirFactor('ancient', rb) && Ec.heirFactor('ancient', rb) < Ec.heirFactor('primal', rb), `order at ${rb}`);
+    assert.ok(Ec.awakenEssence(0) === Ec.AWAKENING.essenceBase && Ec.awakenEssence(120) === Ec.AWAKENING.essenceBase * 10);
+    // 원시 각성: 정수를 쓰고, 옵션은 최고 수치, 위력은 계승 공식, 보호됩니다.
+    const s = newState(0); s.level = 100; s.rebirths = 50; s.permanent.inventory = 8; s.inventory = [gear('a1', 5), gear('a2', 5), gear('p1', 6), gear('p2', 6), gear('p3', 6), gear('p4', 6, 'coat')];
+    assert.throws(() => act(s, { type: 'awaken', id: 'a1' }, 0), /정수가 부족/);
+    assert.throws(() => act(s, { type: 'awaken', id: 'p1' }, 0), /고대 등급/);
+    s.essence = Ec.awakenEssence(50) * 2;
+    act(s, { type: 'awaken', id: 'a1' }, 0); const a1 = s.inventory.find(x => x.id === 'a1');
+    assert.equal(a1.heir, 'ancient'); assert.equal(a1.locked, true); assert.equal(a1.power, Ec.heirPower('ancient', 50, 100)); assert.equal(s.essence, Ec.awakenEssence(50));
+    assert.ok(a1.affixes.every(x => x.rule || affixQuality(x, a1.power, 5, 100) > .99), 'options fixed at the top roll');
+    assert.throws(() => act(s, { type: 'awaken', id: 'a1' }, 0), /이미 계승/);
+    assert.throws(() => act(s, { type: 'dismantle', id: 'a1' }, 0), /분해할 수 없/); assert.throws(() => act(s, { type: 'sell', id: 'a1' }, 0), /판매할 수 없/);
+    // 같은 부위 두 번째 각성: 예전 것은 이번 생 장비로 돌아갑니다(부위마다 1개).
+    act(s, { type: 'awaken', id: 'a2' }, 0); assert.equal(s.inventory.find(x => x.id === 'a1').heir, undefined); assert.equal(s.inventory.find(x => x.id === 'a2').heir, 'ancient');
+    // 태초 계승: 태초 분해 3개가 게이지를 채웁니다(칠흑 장신구는 세지 않음).
+    assert.throws(() => act(s, { type: 'inheritPrimal', id: 'p1' }, 0), /게이지가 부족/);
+    for (const id of ['p2', 'p3', 'p4']) act(s, { type: 'dismantle', id }, 0);
+    assert.equal(s.primalGauge, Ec.PRIMAL_INHERIT.gauge); assert.equal(Eq.primalGaugeOf({ rarity: 6, onyx: 'x' }), 0);
+    act(s, { type: 'inheritPrimal', id: 'p1' }, 0); const p1 = s.inventory.find(x => x.id === 'p1');
+    assert.equal(p1.heir, 'primal'); assert.equal(s.primalGauge, 0); assert.ok(p1.power > s.inventory.find(x => x.id === 'a2').power);
+    // 환생: 계승 장비만 남고(a1은 일반 고대로 돌아가 사라짐), 위력과 고정 수치 옵션이 새 환생 배율을 따릅니다. 게이지는 남습니다.
+    s.primalGauge = 2; const flat = p1.affixes.find(x => !x.rule && ['attack', 'hp', 'defense', 'magic', 'resist'].includes(x.stat)); const before = flat?.value, oldPower = p1.power;
+    s.rebirths = 199; s.level = 300; act(s, { type: 'rebirth' }, 0);
+    const kept = s.inventory.filter(x => x.heir).map(x => x.id).sort(); assert.deepEqual(kept, ['a2', 'p1']); assert.ok(!s.inventory.some(x => x.id === 'a1'));
+    const p = s.inventory.find(x => x.id === 'p1'); assert.equal(p.power, Ec.heirPower('primal', 200, 100)); assert.equal(s.primalGauge, 2);
+    if (flat) assert.equal(p.affixes.find(x => x.id === flat.id).value, Math.round(before * p.power / oldPower), 'flat options follow the power');
+    // 별이 파괴되면 계승 장비는 유물처럼 12성으로 돌아갑니다.
+    const C = await L.load('systems/commerce'), SF = await L.load('data/starforce');
+    p.enhance = 21; const r = C.starForceAttempt(s, p, false, () => SF.starSuccess(21) + 1e-9, () => {}); assert.equal(r.outcome, 'destroy'); assert.ok(s.inventory.includes(p)); assert.equal(p.enhance, SF.STARFORCE.relicResetStar);
+});
+test('v3.66 relics owned before the update keep the higher of the old and new power formulas until ascension', async () => {
+    const M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment');
+    const s = newState(0); s.rebirths = 150; s.level = 100; delete s.relicRule;
+    const relic = { id: 'r', name: 'r', slot: 'rod', style: 'balanced', rarity: 3, level: 100, power: 1, relic: 'memoryRod', locked: true };
+    s.inventory = [relic]; M.migrateState(s, 0);
+    assert.equal(relic.relicLegacy, true); assert.equal(s.relicRule, true);
+    assert.equal(relic.power, Math.max(Ec.heirPower('relic', 150, 100), Ec.legacyRelicPower('memoryRod', 150, 100))); assert.ok(relic.power > Ec.heirPower('relic', 150, 100), 'old formula is higher at high rebirths');
+    // 새로 받는 유물은 새 공식만, 새 캐릭터는 처음부터 이전 처리 완료.
+    assert.equal(newState(0).relicRule, true);
+    const fresh = { ...relic, id: 'f', relicLegacy: undefined }; s.inventory.push(fresh); Eq.syncRelicPower(s); assert.equal(fresh.power, Ec.heirPower('relic', 150, 100));
+    // 승천하면 유물은 사라지고 규칙 표시는 남아 다시 받은 유물은 새 공식입니다.
+    s.rebirths = 200; Lc.ascend(s, 0); assert.equal(s.relicRule, true); assert.ok(!s.inventory.some(x => x.relic));
+});
+

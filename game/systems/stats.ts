@@ -187,7 +187,30 @@ export function dropRate(s: State) {
     // v27.86 힘의 길 보상은 드롭 상한 뒤에 곱합니다(난이도 하한 미만이면 ×1).
     return Math.min(BALANCE.dropChanceCap, BALANCE.dropChance * (1 + bonus / BALANCE.dropBonusScale) * (s.event?.drop || 1)) * roughReward(s, encounterTier(s));
 }
-export function power(v: Stats) { const a = normalizeStats(v); return Math.round(Math.max(a.attack, a.magic) * 7 + Math.min(a.attack, a.magic) * 2 + a.hp * .5 + (a.defense + a.resist) * 3 + a.crit * 200 + Math.max(0, a.accuracy - .8) * 220 + a.evasion * 200); }
+/**
+ * v3.66 전투력: 실제 전투식에 맞춘 공격 기대값과 버티는 힘의 기하평균. 예전 식(공격·체력·방어를 단순 합산)은 치명타 피해·극 치명타·관통·연속 행동이 빠지고
+ * 방어가 피해를 곱으로 줄이는 것을 반영하지 못했습니다. 기준 몬스터(명중 1.1 · 회피 0.1 · 방어는 관통 계산용 근사)를 상대로 계산합니다.
+ *   공격 = 주 공격력(+ 보조 2/7) × 치명타 기대 배율(1 + 치명 × (치명 피해 − 1) + 극 치명 × 치명 피해 × (극 치명 배율 − 1)) × 명중 × 관통 × (1 + 연속 행동 가산) × (1 + 보스 피해 ÷ 2)
+ *   버티는 힘 = 체력 × 방어 경감(물리·마법 조화 평균, 피해 = 원래 × 100 ÷ (100 + 방어 × 2)) ÷ (1 − 회피) × (1 + 흡혈)
+ * 레벨 1 새 캐릭터가 예전 전투력과 비슷하도록 POWER_SCALE을 맞췄습니다. scripts/check-power.mjs가 실제 전투 판정(strike)과 비교합니다.
+ */
+export const POWER_REF = { accuracy: 1.1, evasion: .1, penetrationWeight: .6 } as const;
+const POWER_SCALE = 6;
+export function powerParts(v: Stats) {
+    const a = normalizeStats(v);
+    const main = Math.max(a.attack, a.magic) + Math.min(a.attack, a.magic) * 2 / 7;
+    const crit = Math.min(1, Math.max(0, a.crit)), critDamage = Math.max(1, a.critDamage || BALANCE.critMultiplier);
+    const critFactor = 1 + crit * (critDamage - 1) + (a.superCrit || 0) * critDamage * (SKILL_FORMULA.superCritBonus - 1);
+    const hit = Math.min(.995, Math.max(.05, (a.accuracy ?? 1) - POWER_REF.evasion));
+    const pierce = 1 / (1 - POWER_REF.penetrationWeight * Math.min(.85, Math.max(0, a.penetration || 0)));
+    const offense = main * critFactor * hit * pierce * (1 + (a.chainBonus || 0)) * (1 + (a.bossDamage || 0) / 2);
+    const guard = (n: number) => 1 + Math.max(0, n) * .02;
+    const armor = 2 / (1 / guard(a.defense) + 1 / guard(a.resist));
+    const dodge = Math.min(.9, Math.max(0, (a.evasion || 0) - (POWER_REF.accuracy - 1)));
+    const durability = Math.max(1, a.hp) * armor / (1 - dodge) * (1 + Math.max(0, a.lifesteal || 0));
+    return { offense, durability, critFactor, hit, pierce, armor, dodge };
+}
+export function power(v: Stats) { const p = powerParts(v); return Math.round(POWER_SCALE * Math.sqrt(p.offense * p.durability)); }
 export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillPractice: refinePractices(s), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
 /** 마법 직업이면 1(기본 공격이 항상 마력 평타), 아니면 0. */
 export const arcaneStrikeChance = (j: { magic: number; attack: number; tier: number }) => j.magic - j.attack >= .045 ? SKILL_FORMULA.arcaneStrikeChance[Math.min(j.tier, SKILL_FORMULA.arcaneStrikeChance.length - 1)] || 0 : 0;
@@ -212,7 +235,7 @@ export function clampVitals(s: State) {
 export const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 // v27.79 계정(분신) 보너스는 곱연산 배율입니다(accountExpGold ≤ ×1.3).
-/** v3.66 수련 직업으로 사냥할 때의 처치 보상 배율(data/training.ts). */
+/** v3.67 수련 직업으로 사냥할 때의 처치 보상 배율(data/training.ts). */
 const jobReward = (s: State) => jobById(s.job)?.rewardScale ?? 1;
 export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * jobReward(s) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
 // v3.23 순풍은 다른 경험치 보너스와 더합니다(전에는 따로 곱해 폭증).

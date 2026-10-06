@@ -173,7 +173,7 @@ export function retireHiddenJobs(s: State) {
     for (const p of Object.values(s.presets || {})) p.skills = drop(p.skills)!;
 }
 /**
- * v3.66 독립 수련 통합(data/training.ts): 지금 옛 수련 직업이면 새 수련 직업으로 옮깁니다(스킬은 id 그대로 새 직업 것이라 편성·습득은 그대로).
+ * v3.67 독립 수련 통합(data/training.ts): 지금 옛 수련 직업이면 새 수련 직업으로 옮깁니다(스킬은 id 그대로 새 직업 것이라 편성·습득은 그대로).
  * 옛 직업의 숙련·숙달 기록은 지우지 않습니다(숙달 수에 셈). 여러 번 불러도 같습니다.
  */
 export function moveToTraining(s: State) {
@@ -193,6 +193,8 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if ('hideDoorNotice' in s) delete (s as Record<string, unknown>).hideDoorNotice;
     // v3.60 뒤 정리: 쓰지 않던 옛 값(무리 규모 선택 swarm, 생 보너스 lifeBonus, 애드가드 공개 항목 privacy)을 지웁니다.
     for (const key of ['swarm', 'lifeBonus', 'privacy']) if (key in s) delete (s as Record<string, unknown>)[key];
+    // v3.66 유물 위력 공식 변경: 이미 가진 유물은 다음 승천까지 예전 공식과 새 공식 중 높은 쪽을 씁니다(약해지지 않게).
+    if (!s.relicRule) { for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) if (item?.relic) item.relicLegacy = true; s.relicRule = true; }
     // v3.38 던전 첫 정복 SP(옛 보스 연구)는 업적 firstClear:던전 id로 옮겼습니다. 이미 받은 것은 받은 업적으로 옮겨 두 번 받지 않습니다.
     const bossClaims = (s as { bossResearchClaims?: Record<string, boolean> }).bossResearchClaims;
     if (bossClaims) {

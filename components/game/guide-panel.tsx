@@ -5,7 +5,7 @@ import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Flame, Gauge, Heart, Ref
 import type { ReactNode } from 'react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, DUNGEON_MODES, XP_SCALING } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
-import { ECONOMY, RESEARCH_RESET, RELIC_GROWTH, APPRAISAL_PITY, offlineCapSeconds, inventoryCap } from '@/game/data/economy';
+import { ECONOMY, RESEARCH_RESET, RELIC_GROWTH, HEIR_GROWTH, PRIMAL_INHERIT, APPRAISAL_PITY, offlineCapSeconds, inventoryCap } from '@/game/data/economy';
 import { STARFORCE } from '@/game/data/starforce';
 import { victoryHealRate } from '@/game/systems/encounter';
 import { catalogNow } from '@/game/data/catalog';
@@ -220,7 +220,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비"
                     effect={`감정은 희귀 이상을 보장하고, 신화·고대·태초는 천장(${APPRAISAL_PITY.map(p => `${p.count}회`).join('·')})이 있습니다. 가격은 레벨과 환생 횟수(10^(환생/60)배)를 따릅니다. 각인 감정은 고른 옵션 하나를 반드시 붙이고, 자동 감정은 목표 등급까지 반복합니다. 강화는 스타포스(v3.0): 전설 이상 ${STARFORCE.max}성 · 영웅 이하 ${STARFORCE.maxLow}성까지, 1~${STARFORCE.gainHighFrom}성 +${STARFORCE.gainLow * 100}%/성 · 그 위 +${STARFORCE.gainHigh * 100}%/성. 성마다 성공률이 정해져 있고(${STARFORCE.gainHighFrom}성부터 30%), ${STARFORCE.dropFrom}성부터 실패 시 1성 하락(${STARFORCE.safeStars.join('·')}성 유지), 15성부터 파괴 확률(일반 장비는 소멸, 유물은 ${STARFORCE.relicResetStar}성으로). 하락 2번 연속이면 찬스 타임(100%), 수동 강화의 스타캐치(별이 가운데 올 때 누르기)는 성공률 +10%p, 15·16성은 파괴 방지(비용 ×2)를 고를 수 있습니다. 비용은 12성까지 전과 같고 13성부터 성마다 ×${STARFORCE.growth}.`}
                     condition="판매가는 등급·레벨에 비례하고 강화 비용의 30%를 돌려받습니다. 분해는 골드 대신 정수를 줍니다. 정수는 옵션 재설정(옵션 종류를 바꿈, 같은 장비에서 할 때마다 비용 +10%·상한 없음)과 수치 재련(종류는 그대로 수치만 다시 굴림, 재설정 기본 비용의 절반·오르지 않음)에 씁니다."
-                    limit={`부위는 무기·방어구·장신구·망토(v3.5: 회피·체력, 망토 전용 옵션 ‘불굴’이 몬스터 상태이상을 저항). 레벨 올리기(+10, 내 레벨까지)는 위력을 올리고 별을 0으로 되돌리며, 유물 별 상한은 12 + 레벨 ÷ 10입니다. 구매·옵션 변경 비용은 돌려받지 않습니다. 일반 장비는 환생 때 정리됩니다(판매/분해는 설정에서 고름). 유물은 남고 환생마다 위력 +${RELIC_GROWTH.perRebirth * 100}%, 같은 부위 장비를 소비해 옵션을 ${RELIC_GROWTH.imprintSlots}줄까지 이식합니다(별·이식 옵션 유지).`}/>
+                    limit={`부위는 무기·방어구·장신구·망토(v3.5: 회피·체력, 망토 전용 옵션 ‘불굴’이 몬스터 상태이상을 저항). 레벨 올리기(+10, 내 레벨까지)는 위력을 올리고 별을 0으로 되돌리며, 유물 별 상한은 12 + 레벨 ÷ 10입니다. 구매·옵션 변경 비용은 돌려받지 않습니다. 일반 장비는 환생 때 정리됩니다(판매/분해는 설정에서 고름). 유물은 남고 위력 = (레벨 + 2) × 환생 배율(환생 ${HEIR_GROWTH.toRebirth}회까지 오름), 같은 부위 장비를 소비해 옵션을 ${RELIC_GROWTH.imprintSlots}줄까지 이식합니다(별·이식 옵션 유지). 고대는 정수로 원시 각성, 태초는 분해 게이지 ${PRIMAL_INHERIT.gauge}로 계승하면 환생해도 남고 환생마다 강해집니다(부위마다 종류별 1개, 승천하면 사라짐).`}/>
             </div>
         </Topic>
         <Topic icon={<Gauge size={19}/>} title="저장 데이터" note="초기화 규칙.">

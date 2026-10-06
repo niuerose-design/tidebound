@@ -14,7 +14,7 @@ test('Job UI: every hidden or hidden-unlock job has a one-line hint', () => {
     assert.ok(secret.length >= 10);
     for (const j of secret) assert.ok(j.hint && !j.hint.includes('\n') && !j.hint.includes(j.name), `${j.id} hint`);
     assert.ok(JOBS.filter(j => !ui.secretJob(j) && !j.retired).every(j => ui.jobRevealed(newState(0), j)), 'ordinary jobs are always shown');
-    assert.ok(JOBS.filter(j => j.retired).every(j => !ui.jobRevealed(newState(0), j)), 'v3.66 retired training jobs are never shown');
+    assert.ok(JOBS.filter(j => j.retired).every(j => !ui.jobRevealed(newState(0), j)), 'v3.67 retired training jobs are never shown');
 });
 
 test('Job UI: a silhouette reveals its name when its hidden condition is met or all gate conditions are met', () => {

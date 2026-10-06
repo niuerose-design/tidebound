@@ -2,11 +2,11 @@ import { gearName } from '../data/maple-gear';
 import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { ASCENSION } from '../data/ascension';
-import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap } from '../data/economy';
+import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap } from '../data/economy';
 import { apCapacity, apUsed, itemKey } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, keepsAcrossLives, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
-import { rollAffixes, refineOption, rollOption, affixDef, AFFIX_POOL } from '../data/gear';
+import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** v27.30 감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 확정 구매를 없애고 환생 배율(10^(환생/60))을 곱합니다. */
 const GAMBLE_FISH = 60;
@@ -115,7 +115,7 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
     if (roll < p + d) {
         sf.destroy++;
         item.starFails = 0;
-        if (item.relic) { item.enhance = STARFORCE.relicResetStar; return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! 유물이라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G` }; }
+        if (item.relic || item.heir) { item.enhance = STARFORCE.relicResetStar; return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! ${item.relic ? '유물' : '계승 장비'}라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G` }; }
         s.inventory = s.inventory.filter(x => x.id !== item.id);
         for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
         return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 장비가 파괴되었습니다 · -${cost} G` };
@@ -274,14 +274,14 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const items = a.type === 'dismantle' ? s.inventory.filter(i => i.id === id) : bulkItems(s, Number(id));
         if (a.type === 'dismantle' && !items.length)
             throw Error('가방에 있는 장비를 선택하세요.');
-        if (items.some(i => i.locked || i.relic || i.onyx))
-            throw Error('보호 장비와 유물은 분해할 수 없습니다.');
+        if (items.some(i => i.locked || keepsAcrossLives(i)))
+            throw Error('보호 장비와 유물·계승 장비는 분해할 수 없습니다.');
         if (!items.length)
             throw Error('분해할 장비가 없습니다.');
-        const ids = new Set(items.map(i => i.id)), gained = items.reduce((sum, i) => sum + dismantleEssence(i), 0);
+        const ids = new Set(items.map(i => i.id));
         s.inventory = s.inventory.filter(i => !ids.has(i.id));
-        s.essence = (s.essence || 0) + gained;
-        return `${items.length === 1 ? items[0].name : `${items.length}개`} 분해 · 정수 +${gained}`;
+        const got = dismantleInto(s, items);
+        return `${items.length === 1 ? items[0].name : `${items.length}개`} 분해 · 정수 +${got.essence}${got.gauge ? ` · 태초 계승 게이지 +${got.gauge} (${s.primalGauge}/${PRIMAL_INHERIT.gauge})` : ''}`;
     }
     if (a.type === 'permanent')
         return buyResearch(s, id);
@@ -316,7 +316,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (ownsRelic(s, id))
             throw Error('이미 보유한 유물입니다.');
         room();
-        s.inventory.push({ id: nextId(), name: r.name, slot: r.slot, style: r.style, power: r.power, rarity: 3, level: 1, relic: r.id, locked: true, description: r.description, affix: { ...r.affix } });
+        s.inventory.push({ id: nextId(), name: r.name, slot: r.slot, style: r.style, power: heirPower('relic', s.rebirths, 1), rarity: 3, level: 1, relic: r.id, locked: true, description: r.description, affix: { ...r.affix } });
         syncRelicPower(s);
         return `${r.name} 수령 · 환생 ${r.rebirth}회 달성 보상`;
     }
@@ -343,7 +343,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             if (s.gold - cost < floor) { stop = count.tries ? '골드 한도 도달' : '골드 부족'; break; }
             const r = starForceAttempt(s, item, safeguard, rng, spend);
             count.tries++; count.gold += r.cost; count[r.outcome]++;
-            if (r.outcome === 'destroy') { stop = item.relic ? `파괴 · 유물 ${STARFORCE.relicResetStar}성 회귀` : '파괴'; break; }
+            if (r.outcome === 'destroy') { stop = item.relic || item.heir ? `파괴 · ${item.relic ? '유물' : '계승 장비'} ${STARFORCE.relicResetStar}성 회귀` : '파괴'; break; }
         }
         if (!stop) stop = `시도 ${AUTO_STAR_MAX_TRIES}회 한도`;
         if (!count.tries) throw Error(stop === '골드 부족' ? '골드가 부족합니다.' : stop);
@@ -371,7 +371,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const [sourceId, indexText, slotText] = String(a.value || '').split(':');
         const index = Number(indexText), slot = Number(slotText);
         const source = s.inventory.find(x => x.id === sourceId);
-        if (!source || source.relic || source.onyx)
+        if (!source || keepsAcrossLives(source))
             throw Error('소비할 장비를 가방에서 고르세요.');
         if (source.slot !== relic.slot)
             throw Error('같은 부위의 장비만 이식할 수 있습니다.');
@@ -394,6 +394,36 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         relic.affixes = lines.filter(Boolean);
         s.inventory = s.inventory.filter(x => x.id !== source.id);
         return `${relic.name} 옵션 이식 · ${affix.name}${before ? ` (${before.name} 대체)` : ''} · ${source.name} 소비 · -${cost} G`;
+    }
+    if (a.type === 'awaken' || a.type === 'inheritPrimal') {
+        // v3.66 계승: 원시 각성(고대, 정수) · 태초 계승(태초, 분해 게이지). 옵션 수치는 최고 굴림으로 고정되고, 환생해도 남으며 위력이 환생마다 오릅니다.
+        const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        const kind = a.type === 'awaken' ? 'ancient' : 'primal', rarity = kind === 'ancient' ? 5 : 6;
+        if (!item)
+            throw Error('장비를 찾을 수 없습니다.');
+        if (item.rarity !== rarity || item.relic || item.onyx)
+            throw Error(kind === 'ancient' ? '원시 각성은 고대 등급 장비만 할 수 있습니다.' : '태초 계승은 태초 등급 장비만 할 수 있습니다(칠흑 장신구 제외).');
+        if (item.heir)
+            throw Error('이미 계승한 장비입니다.');
+        if (kind === 'ancient') {
+            const cost = awakenEssence(s.rebirths);
+            if ((s.essence || 0) < cost)
+                throw Error(`정수가 부족합니다(필요 ${cost.toLocaleString()}).`);
+            s.essence = (s.essence || 0) - cost;
+        }
+        else {
+            if ((s.primalGauge || 0) < PRIMAL_INHERIT.gauge)
+                throw Error(`태초 계승 게이지가 부족합니다(${s.primalGauge || 0}/${PRIMAL_INHERIT.gauge}). 태초 장비를 분해하면 찹니다.`);
+            s.primalGauge = (s.primalGauge || 0) - PRIMAL_INHERIT.gauge;
+        }
+        // 부위마다 종류별 1개: 같은 부위의 예전 계승 장비는 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐).
+        const old = [...s.inventory, ...Object.values(s.equipment)].find(x => x && x !== item && x.heir === kind && x.slot === item.slot);
+        if (old) { delete old.heir; const was = old.power; old.power = Math.round((old.level + 2) * RARITIES[old.rarity].factor); if (old.affixes && was > 0) old.affixes = old.affixes.map(x => rescaleAffix(x, old.power / was, old.level, old.level)); }
+        item.heir = kind; item.locked = true;
+        if (item.affixes) item.affixes = item.affixes.map(x => refineOption(x, item.power, item.rarity, () => 1, item.level));
+        syncRelicPower(s);
+        const what = kind === 'ancient' ? `원시 각성 · 정수 -${awakenEssence(s.rebirths).toLocaleString()}` : `태초 계승 · 게이지 -${PRIMAL_INHERIT.gauge}`;
+        return `${item.name} ${what} · 위력 ${item.power} · 옵션 최고 수치로 고정 · 환생해도 남습니다${old ? ` · 예전 ${old.name}은 이번 생 장비로 돌아갑니다` : ''}`;
     }
     return null;
 }
