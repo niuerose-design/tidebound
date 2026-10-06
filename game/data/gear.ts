@@ -1,5 +1,6 @@
 import type { Stats } from '../types';
 import { STAGES, DUNGEONS } from './world';
+import { ODDS } from './odds';
 
 /**
  * v22 장비 옵션.
@@ -30,6 +31,12 @@ export type AffixDef = {
     weight?: number;
     /** v3.73 장비 합계 상한(GEAR_CAPS)을 받지 않는 옵션(피의 계약의 흡혈). 전체 능력치 상한은 그대로입니다. */
     uncapped?: boolean;
+    /** v3.75 굴림 없이 base 그대로 붙는 옵션(수련 · 전공 · 꽝). 재련해도 바뀌지 않고, 레벨 올리기에도 그대로입니다. */
+    fixed?: boolean;
+    /** v3.75 아주 드문 옵션: 뽑힐 가중치는 서버 전용 ODDS.affix.rare(태초 · 칠흑에서만). */
+    rare?: boolean;
+    /** v3.75 꽝 옵션: 일반 추첨 대신 ODDS.affix.junk 확률로 한 장비에 최대 1줄 끼어듭니다(저격으로 고른 줄 · 칠흑 제외). */
+    junk?: boolean;
     /** v25.8 이 출처(던전 id)에서 떨어진 장비에만 붙는 옵션. */
     onlyOrigin?: string;
     /** v3.5 이 부위에만 붙는 옵션. */
@@ -90,6 +97,14 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, description: '고대 이상. 연속 행동 확률이 오릅니다(속도와 무관).' },
     { id: 'bounty', name: '풍요', stat: 'expBonus', kind: 'percent', base: .04, stat2: 'goldBonus', base2: .05, rollBoth: true, minRarity: 5, description: '고대 이상. 경험치와 골드 획득이 함께 늘어납니다.' },
     // v3.5 망토 전용 옵션: 몬스터 상태이상 저항. 수치 = 18.8% × (레벨/100)² × 등급 품질 × 굴림, 착용 시 별당 +3%(다른 옵션과 달리 별 보정), 합계 최대 50%(Lv.100 태초 22성 ≈ 50%).
+    // v3.75 태초 · 칠흑 전용 희귀 옵션(옵션 6줄짜리 장비에서만, 출현은 ODDS.affix.rare). 수련 · 전공은 고정 +1.
+    { id: 'drill', name: '수련', stat: 'masteryFlat', kind: 'percent', base: 1, fixed: true, rare: true, minRarity: 6, description: '태초 · 칠흑. 처치당 스킬 숙련 +1(고정).' },
+    { id: 'valor', name: '전공', stat: 'rankFlat', kind: 'percent', base: 1, fixed: true, rare: true, minRarity: 6, description: '태초 · 칠흑. 처치당 계급장 처치 수 +1(고정).' },
+    { id: 'apex', name: '극치명', stat: 'superCrit', kind: 'percent', base: .014, rare: true, minRarity: 6, description: '태초 · 칠흑. 극 치명타 확률이 오릅니다.' },
+    { id: 'distill', name: '정수', stat: 'essenceBonus', kind: 'percent', base: .23, rare: true, minRarity: 6, description: '태초 · 칠흑. 장비를 분해할 때 받는 정수가 늘어납니다.' },
+    // v3.75 꽝 옵션: 효과가 거의 없는 줄. 옵션 재설정으로 바꿉니다.
+    { id: 'ornate', name: '장식', stat: 'ornament', kind: 'percent', base: 1, fixed: true, junk: true, description: '꽝. 효과는 없고 장비 이름 앞에 ‘반짝이는’이 붙습니다.' },
+    { id: 'pinch', name: '한 줌', stat: 'hp', kind: 'flat', base: 1, fixed: true, junk: true, description: '꽝. 최대 체력 +1(장비 위력과 무관).' },
     { id: 'steadfast', name: '불굴', stat: 'statusResist', kind: 'percent', base: STATUS_RESIST_BASE, onlySlot: 'cape', levelPower: 2, description: '망토 전용. 몬스터가 거는 기절·침묵·출혈·중독·화상·약화·감속을 이 확률로 무효화합니다. 별마다 +3%, 최대 50%.' },
     // v3.12 칠흑 장신구 고유 옵션(규칙). onlyOrigin 'onyx'라 어디서도 굴리지 않고 onyxAccessory가 직접 붙입니다.
     { id: 'onyxThorns', name: '공포의 가시', stat: 'thorns', kind: 'rule', base: .1, onlyOrigin: 'onyx', description: '칠흑. 맞을 때 물리 방어 비례 반격 +10%p.' },
@@ -163,13 +178,14 @@ const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(M
 
 function pickAffix(pool: AffixDef[], origin: string | undefined, rng: () => number) {
     const theme = new Set(ORIGIN_THEMES[origin || '']?.affixes || []);
-    const weights = pool.map(a => (theme.has(a.id) ? THEME_WEIGHT : 1) * (a.weight ?? 1));
+    const weights = pool.map(a => (theme.has(a.id) ? THEME_WEIGHT : 1) * (a.rare ? ODDS.affix.rare : a.weight ?? 1));
     let roll = rng() * weights.reduce((sum, w) => sum + w, 0);
     for (let i = 0; i < pool.length; i++) { roll -= weights[i]; if (roll <= 0) return pool[i]; }
     return pool[pool.length - 1];
 }
 export function rollOption(def: AffixDef, power: number, rarity: number, rng: () => number, level = 1): ItemAffix {
     if (def.kind === 'rule') return { id: def.id, name: def.name, stat: def.stat, value: def.base, rule: true };
+    if (def.fixed) return { id: def.id, name: def.name, stat: def.stat, value: def.base };
     // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
     const roll = (ROLL_MIN + rng() * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
@@ -186,7 +202,7 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
 /** v27.94 수치 재련: 같은 옵션의 수치만 다시 굴립니다. 양날 옵션의 손해 쪽은 고정이라 그대로입니다. */
 export function refineOption(x: ItemAffix, power: number, rarity: number, rng: () => number, level = 1): ItemAffix {
     const def = affixDef(x.id);
-    if (!def || x.rule || def.kind === 'rule') return x;
+    if (!def || x.rule || def.kind === 'rule' || def.fixed) return x;
     const next = rollOption(def, power, rarity, rng, level);
     // v3.72 이중 옵션(rollBoth, 예: 감각)은 두 수치를 같은 굴림으로 함께 바꿉니다.
     return def.rollBoth ? { ...x, value: next.value, value2: next.value2 } : { ...x, value: next.value };
@@ -194,7 +210,7 @@ export function refineOption(x: ItemAffix, power: number, rarity: number, rng: (
 /** v27.94 옵션 수치가 굴림 범위에서 어디쯤인지(0 = 최저, 1 = 최고). 규칙 옵션·알 수 없는 옵션은 null. */
 export function affixQuality(x: ItemAffix, power: number, rarity: number, level = 1): number | null {
     const def = affixDef(x.id);
-    if (!def || x.rule || def.kind === 'rule' || !def.base) return null;
+    if (!def || x.rule || def.kind === 'rule' || def.fixed || !def.base) return null;
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
     const roll = x.value / (def.base * scale * rarityQuality(rarity) * levelScale(def, level));
     return Math.min(1, Math.max(0, (roll - ROLL_MIN) / ROLL_SPAN));
@@ -202,7 +218,7 @@ export function affixQuality(x: ItemAffix, power: number, rarity: number, level 
 /** v3.5 레벨 올리기 뒤 옵션 수치 보정: 고정 수치는 위력 비례(ratio), 레벨 비례 옵션(불굴)은 레벨 보정 비율, 비율·규칙 옵션은 그대로. */
 export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newLevel: number): ItemAffix {
     const def = affixDef(x.id);
-    if (!def || x.rule || def.kind === 'rule') return x;
+    if (!def || x.rule || def.kind === 'rule' || def.fixed) return x;
     const out = { ...x };
     if (def.kind === 'flat') out.value = Math.round(x.value * ratio);
     else if (def.levelPower) out.value = Math.round(x.value * levelScale(def, newLevel) / levelScale(def, oldLevel) * 10000) / 10000;
@@ -214,10 +230,20 @@ export function rollAffixes(rarity: number, power: number, origin: string | unde
     const out = [...keep];
     while (out.length < rarity) {
         const hasRule = out.some(a => a.rule);
-        const pool = AFFIX_POOL.filter(a => !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (!a.onlySlot || a.onlySlot === slot) && !a.retired && rarity >= (a.minRarity || 0) && (a.kind !== 'rule' || !hasRule));
+        // v3.75 꽝: 한 장비에 최대 1줄, 칠흑 제외. 확률이 0이면(화면 · 비공개) 난수를 쓰지 않습니다.
+        if (ODDS.affix.junk > 0 && origin !== 'onyx' && !out.some(a => affixDef(a.id)?.junk) && rng() < ODDS.affix.junk) { out.push(rollOption(JUNK_AFFIXES[Math.floor(rng() * JUNK_AFFIXES.length)], power, rarity, rng, level)); continue; }
+        const pool = AFFIX_POOL.filter(a => !a.junk && !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (!a.onlySlot || a.onlySlot === slot) && !a.retired && rarity >= (a.minRarity || 0) && (a.kind !== 'rule' || !hasRule));
         if (!pool.length) break;
         out.push(rollOption(pickAffix(pool, origin, rng), power, rarity, rng, level));
     }
     return out;
 }
 export const affixDef = (id: string) => AFFIX_POOL.find(a => a.id === id);
+const JUNK_AFFIXES = AFFIX_POOL.filter(a => a.junk);
+/** v3.75 장식(꽝)이 붙은 장비 이름 앞에 붙는 말. 옵션이 바뀌면 syncOrnateName으로 맞춥니다. */
+export const ORNATE_PREFIX = '반짝이는 ';
+export function syncOrnateName<T extends { name: string; affixes?: ItemAffix[] }>(item: T): T {
+    const base = item.name.startsWith(ORNATE_PREFIX) ? item.name.slice(ORNATE_PREFIX.length) : item.name;
+    item.name = item.affixes?.some(a => a.id === 'ornate') ? ORNATE_PREFIX + base : base;
+    return item;
+}

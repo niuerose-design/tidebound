@@ -40,6 +40,8 @@ const canaries = {
         ...Object.entries(SERVER_ODDS.variant.region).map(([region, row]) => `"${region}":{${Object.entries(row).map(([k, v]) => `${k}:${n(v)}`).join(',')}}`),
         // v3.55 몬스터 출현 가중치(옛 world.ts 모양 spawnWeight:.18).
         ...Object.values(SERVER_ODDS.spawn).filter(v => v > 0).map(v => `spawnWeight:${n(v)}`),
+        // v3.75 희귀 · 꽝 옵션 확률.
+        `rare:${n(SERVER_ODDS.affix.rare)},junk:${n(SERVER_ODDS.affix.junk)}`,
     ],
 };
 let leaked = 0;

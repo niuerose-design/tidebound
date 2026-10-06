@@ -25,7 +25,7 @@ test('v3.61 roles: lineage assignments follow the plan (§11.6-1), with job-leve
         if (JOBS.some(j => j.id === id)) assert.equal(sub(id), want, id);
 });
 
-test('v3.75 role-unique effects stay with their role (docs/concept.md 11.3): swarm/thorns tanks, DoT boosts status dealers, gold/exp/drop buffers, heal actives healers, dealers own at most one control active', async () => {
+test('v3.76 role-unique effects stay with their role (docs/concept.md 11.3): swarm/thorns tanks, DoT boosts status dealers, gold/exp/drop buffers, heal actives healers, dealers own at most one control active', async () => {
     const { JOBS, lineageOf } = await load('data/classes'), { SKILLS } = await load('data/skills'), { subRoleOf, roleOf } = await load('data/roles');
     // 의도한 예외: 아이돌 연습생(힐러도 버퍼라 경험치 강점) · 제로(역할 경계 직업) · 수련 직업(계승 재료).
     const ALLOW = new Set(['harmonics', 'rewind']);
