@@ -111,7 +111,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.preyBonus) out.push(`보스와 지정 몬스터(리본 돼지·파이어보어·머쉬맘)에게는 직접 피해가 ${skillPercent(sk.preyBonus)} 커집니다.`);
         if (sk.damageType === 'split') out.push(`복합 피해는 물리 ${skillPercent(SKILL_FORMULA.splitPhysical)}·마법 ${skillPercent(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각의 방어를 적용합니다. 명중·치명 판정은 한 번이고, 장비·버프는 원시 피해에 들어가지 않습니다.`);
         if (sk.accuracyBonus) out.push(`이 기술은 명중이 ${skillPercent(sk.accuracyBonus)}p 높습니다.`);
-        if (sk.penetrationBonus) out.push(`이 기술은 방어 관통이 ${skillPercent(sk.penetrationBonus)}p 높습니다(합계 최대 85%).`);
+        if (sk.penetrationBonus) out.push(`이 기술은 방어 관통이 ${skillPercent(sk.penetrationBonus)}p 높습니다(합계 최대 90%).`);
         if (sk.cleanseSelf) out.push('발동하면 내 출혈·중독·감속이 풀립니다.');
         if (sk.scaling === 'resist') out.push('결계 친화도: 직업의 마법 방어 배율이 높을수록 1에 가깝고(결계 계열), 다른 직업이 계승하면 최소 20%만 발휘');
         if (sk.scaling === 'defense') out.push('방어 친화도: 직업의 물리 방어 배율이 높을수록 1에 가깝고(수호 계열), 다른 직업이 계승하면 최소 20%만 발휘');

@@ -7,7 +7,7 @@ import { RELICS, RESEARCH_GROWTH } from '../data/economy';
 import { syncRelicPower, tuneOnyx, fixRelicImprints } from './equipment';
 import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
-import { SAVE_VERSION } from '../data/balance';
+import { SAVE_VERSION, PENETRATION } from '../data/balance';
 import { newState } from './engine';
 import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
 import { RANKS, RANK_LEGACY_NEED, rankIndex, rankState } from '../data/rank';
@@ -233,7 +233,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -274,4 +274,17 @@ export function renameMapleGear(s: State) {
 export function startLifeClock(s: State, now: number) {
     if (s.lifeStart) return;
     s.lifeStart = { at: now, playMs: s.playMs || 0, partial: true };
+}
+
+/** v3.84 관통 장비 옵션 ×1.5(PENETRATION.gearScale): 새로 굴리는 옵션은 기본값이 이미 1.5배라, 지금 가진 장비(가방 · 착용 · 유물 이식 줄)의 관통 줄만 한 번 맞춥니다. */
+export function boostPenetrationAffixes(s: State) {
+    if (s.penetrationBoosted) return 0;
+    let n = 0;
+    const scale = (v: number) => Math.round(v * PENETRATION.gearScale * 10000) / 10000;
+    for (const item of [...s.inventory, ...Object.values(s.equipment)]) for (const x of item?.affixes || []) {
+        if (x.stat === 'penetration' && x.value > 0) { x.value = scale(x.value); n++; }
+        if (x.stat2 === 'penetration' && (x.value2 ?? 0) > 0) { x.value2 = scale(x.value2!); n++; }
+    }
+    s.penetrationBoosted = true;
+    return n;
 }

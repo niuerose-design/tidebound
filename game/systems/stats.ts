@@ -5,7 +5,7 @@ import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS, affixDef } from '../data/gear';
 import { ownedOnyx, onyxSetBonus } from '../data/onyx';
 import type { State, Snapshot, Stats, CombatStats } from '../types';
-import { BALANCE, SAVE_VERSION, SKILL_FORMULA } from '../data/balance';
+import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
 import { RESEARCH, researchRank } from '../data/economy';
@@ -55,7 +55,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     };
     const a = { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, hp: 0, attack: 0, magic: 0, defense: 0, resist: 0, crit: 0, critDamage: 0, superCrit: 0, accuracy: 0, evasion: 0, speed: 0, mana: 0, manaRegen: 0, hpRegen: 0, penetration: 0, lifesteal: 0, harmony: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, bleedBonus: 0, poisonBonus: 0, burnBonus: 0, guardAffinity: 0, wardAffinity: 0, healFocus: 0, arcaneStrike: 0, statusResist: 0, chainBonus: 0, bossDamage: 0, allStats: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, masteryFlat: 0, rankFlat: 0, essenceBonus: 0, ornament: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0 } as CombatStats;
     const set = (k: keyof CombatStats, source: StatSource, n: number) => { a[k] = n; rec(k, source, n); };
-    const add = (k: keyof CombatStats, source: StatSource, n: number) => { a[k] += n; rec(k, source, n); };
+    // v3.84 관통은 출처끼리 곱연산(PENETRATION · stackPenetration).
+    const add = (k: keyof CombatStats, source: StatSource, n: number) => { if (k === 'penetration') { const next = stackPenetration(a.penetration, n); rec(k, source, next - a.penetration); a.penetration = next; return; } a[k] += n; rec(k, source, n); };
     /** 곱셈은 원래 식처럼 한 번에 적용하고, 증감은 원인별 배율 비율로 나눠 기록합니다. */
     const mul = (k: keyof CombatStats, parts: [StatSource, number][]) => {
         const before = a[k], f = parts.reduce((x, [, n]) => x * n, 1);
@@ -90,9 +91,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     a.dropBonus = researchRank(s, 'drop') * .01 + v.luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus;
     rec('dropBonus', 'research', researchRank(s, 'drop') * .01); rec('dropBonus', 'attributes', v.luk * E.luk.dropBonus); rec('dropBonus', 'book', Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus);
     set('rebirthBonus', 'research', (s.permanent.pearl || 0) * 2);
-    // 세계석 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다.
+    // 세계석 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다(v3.84 관통 단계당 2%, 곱연산).
     add('crit', 'research', researchRank(s, 'crit') * .005); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
-    add('penetration', 'research', researchRank(s, 'penetration') * .01); add('evasion', 'research', researchRank(s, 'evasion') * .006);
+    add('penetration', 'research', researchRank(s, 'penetration') * PENETRATION.researchPerRank); add('evasion', 'research', researchRank(s, 'evasion') * .006);
     add('lifesteal', 'research', researchRank(s, 'lifesteal') * .005);
     // 도감: 완성 장소의 테마 보너스와 지역 연구(고정값). 배율은 아래에서 따로 적용합니다. v27.81 성향 연구 능력치는 없앴습니다.
     for (const bonus of themes.map(t => t.add || {}))
@@ -190,7 +191,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     limit('crit', Math.min(SKILL_FORMULA.critCap, a.crit));
     // v27.71 기민 외 회피 소스는 합쳐서 60%p까지만 세고, 그 위에 기민 회피를 더한 뒤 점감합니다(1레벨 패시브만으로 고기민 캐릭터를 따라잡지 못하게).
     limit('evasion', evasionRating(evasionRaw(dexEvasion, a.evasion - dexEvasion)));
-    limit('penetration', Math.min(.6, a.penetration));
+    limit('penetration', Math.min(PENETRATION.cap, a.penetration));
     limit('statusResist', Math.min(.5, a.statusResist || 0));
     // v3.12 창세의 힘·칠흑 세트: 체력·양 공격·양 방어 배율.
     if (a.allStats) for (const k of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(k, [['equipment', 1 + a.allStats]]);
@@ -221,7 +222,7 @@ export function powerParts(v: Stats) {
     const crit = Math.min(1, Math.max(0, a.crit)), critDamage = Math.max(1, a.critDamage || BALANCE.critMultiplier);
     const critFactor = 1 + crit * (critDamage - 1) + (a.superCrit || 0) * critDamage * (SKILL_FORMULA.superCritBonus - 1);
     const hit = Math.min(.995, Math.max(.05, (a.accuracy ?? 1) - POWER_REF.evasion));
-    const pierce = 1 / (1 - POWER_REF.penetrationWeight * Math.min(.85, Math.max(0, a.penetration || 0)));
+    const pierce = 1 / (1 - POWER_REF.penetrationWeight * Math.min(PENETRATION.cap, Math.max(0, a.penetration || 0)));
     const offense = main * critFactor * hit * pierce * (1 + (a.chainBonus || 0)) * (1 + (a.bossDamage || 0) / 2);
     const guard = (n: number) => 1 + Math.max(0, n) * .02;
     const armor = 2 / (1 / guard(a.defense) + 1 / guard(a.resist));

@@ -117,3 +117,16 @@ test('v3.83 utility gain ×1.5: gold/exp/drop bonuses of utility job skills only
     assert.equal(bonus('harmonics').expBonus, .04, 'border jobs unchanged');
     Sk.scaleUtilityGain(SKILLS); assert.equal(bonus('tradeEmpire').goldBonus, .3, 'calling again does not scale twice');
 });
+
+test('v3.84 penetration: sources stack multiplicatively (no 0.6 wall), research 2% per rank, owned gear lines ×1.5 once', async () => {
+    const B = await load('game/data/balance.js');
+    assert.ok(Math.abs(B.stackPenetration(.3, .2) - .44) < 1e-9, '1 − 0.7 × 0.8');
+    assert.ok(Math.abs(B.stackPenetration(.5, -.1) - .4) < 1e-9, 'penalties still subtract');
+    const s = newState(0); s.permanent.penetration = 15;
+    assert.ok(Math.abs(stats(s).penetration - .3) < 1e-9, 'research 15 ranks = 30%');
+    const old = newState(0); delete old.penetrationBoosted;
+    old.inventory.push({ id: 'p1', slot: 'rod', style: 'physical', rarity: 6, power: 530, level: 100, enhance: 0, name: 't', affixes: [{ id: 'piercing', name: '관통', stat: 'penetration', value: .05 }, { id: 'might', name: '힘', stat: 'attack', value: 10 }] });
+    migrateState(old);
+    assert.equal(old.inventory[0].affixes[0].value, .075); assert.equal(old.inventory[0].affixes[1].value, 10, 'other lines untouched');
+    migrateState(old); assert.equal(old.inventory[0].affixes[0].value, .075, 'only once');
+});

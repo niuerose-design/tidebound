@@ -1,7 +1,7 @@
 import { SKILLS, skillById } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { jobById } from '../data/classes';
-import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier } from '../data/balance';
+import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier, PENETRATION } from '../data/balance';
 import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute } from '../types';
 const ATTR_KEY: Record<Attribute, 'attrStr' | 'attrDex' | 'attrInt' | 'attrVit' | 'attrWis' | 'attrLuk'> = { str: 'attrStr', dex: 'attrDex', int: 'attrInt', vit: 'attrVit', wis: 'attrWis', luk: 'attrLuk' };
 export type { CombatEvent, CombatHit } from '../types';
@@ -416,7 +416,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hybridHpScaling) + sa.mana * ((chosen.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2);
     if (chosen?.id === 'crush')
         base += sa.defense * SKILL_FORMULA.crushDefense / (chosen.multiplier || 1);
-    const pierce = 1 - Math.min(.85, sa.penetration + (chosen?.penetrationBonus || 0));
+    // v3.84 능력치 관통(출처끼리 곱연산)에 스킬 관통 보너스는 예전처럼 더합니다(곱하면 관통이 낮은 캐릭터의 스킬 보너스가 줄어듦). 안전 상한 PENETRATION.cap.
+    const pierce = 1 - Math.min(PENETRATION.cap, sa.penetration + (chosen?.penetrationBonus || 0));
     const defense = (magical ? sb.resist : sb.defense) * pierce;
     // 복합(split) 피해: 한 번의 명중·치명 판정 뒤 물리·마법 절반씩 각각의 방어를 적용합니다.
     const mitigated = (raw: number) => split

@@ -71,7 +71,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .2, stat2: 'manaRegen', base2: .012, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, weight: .4, description: '치명 피해가 오릅니다.' },
-    { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', base: .025, description: '방어 관통이 오릅니다.' },
+    { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', /* v3.84 .025 × 1.5 */ base: .0375, description: '방어 관통이 오릅니다.' },
     { id: 'leech', name: '흡혈', stat: 'lifesteal', kind: 'percent', base: .015, description: '준 피해의 일부를 회복합니다 (장비 흡혈 합계 최대 10%p).' },
     { id: 'drift', name: '회피', stat: 'evasion', kind: 'percent', base: .02, retired: true, description: '회피가 오릅니다. (v3.72 감각으로 통합, 새로 붙지 않음)' },
     // v3.72 명중 · 회피 통합 옵션: 두 수치를 함께 굴립니다(예전 정밀 · 회피 한 줄씩과 같은 크기).
@@ -118,7 +118,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 물리 공격이 크게 오릅니다.' },
     { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 마법 공격이 크게 오릅니다.' },
     { id: 'abyssBreath', name: '심연의 숨', stat: 'lifesteal', kind: 'percent', base: .018, onlyOrigin: 'abyss', description: '무릉도장 전용. 흡혈이 오릅니다 (장비 흡혈 합계 최대 10%p).' },
-    { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', base: .04, onlyOrigin: 'abyss', description: '무릉도장 전용. 방어 관통이 크게 오릅니다.' },
+    { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', /* v3.84 .04 × 1.5 */ base: .06, onlyOrigin: 'abyss', description: '무릉도장 전용. 방어 관통이 크게 오릅니다.' },
     // 규칙 옵션 (영웅 이상, 장비당 1개)
     { id: 'concuss', name: '뇌진탕', stat: 'stunBonus', kind: 'rule', base: 1, minRarity: 3, description: '기절 지속 +1턴 (합계 최대 +1).' },
     { id: 'binding', name: '속박', stat: 'controlBonus', kind: 'rule', base: 1, minRarity: 3, description: '침묵·감속 지속 +1턴 (합계 최대 +1).' },

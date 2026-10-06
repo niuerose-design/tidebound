@@ -60,6 +60,14 @@ export function bossLevelScale(level: number) {
     return { hp: 2.1 + (MONSTER_TUNING.bossMultiplier - 2.1) * growth, attack: 1.2 + .25 * growth, magic: 1.08 + .17 * growth };
 }
 /** v27.30 던전 적 압박: 같은 레벨 사냥터보다 단단하게(체력 1.3~1.62배, 공격 1.12~1.32배, 방어 1.08~1.24배). */
+/**
+ * v3.84 방어 관통 개편(docs/concept.md 11.9): 출처끼리 곱연산(남은 방어의 x%를 무시)으로 합치고, 고정 상한 0.6을 없앴습니다.
+ * 곱연산이라 1에 닿지 않아 출처를 더할 때마다 피해가 거의 일정하게 늘어납니다. 스킬 관통 보너스는 그 위에 더하고(예전과 같음), 안전 상한만 cap으로 둡니다.
+ * 피해식(공격 대비 B안)을 바꾸더라도 관통은 '방어 × (1 − 관통)'으로 그대로 쓸 수 있습니다.
+ */
+export const PENETRATION = { cap: .9, researchPerRank: .02, gearScale: 1.5 } as const;
+/** 관통 두 값을 곱연산으로 합칩니다(음수는 그대로 빼서 손해 옵션도 반영). */
+export const stackPenetration = (a: number, b: number) => b >= 0 ? 1 - (1 - a) * (1 - Math.min(1, b)) : a + b;
 export function dungeonPressure(wave: number) {
     const index = Math.max(0, Math.min(4, wave));
     return { hp: 1.3 + index * .08, attack: 1.12 + index * .05, defense: 1.08 + index * .04 };
