@@ -345,6 +345,20 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.equal(H.memoryCap({ job: 'hacker', hacker: { grade: 1, crew: { modules: ['sharedMemory'] } } }), D.HACKER.memory(1) + 1);
         assert.equal(H.memoryCap({ job: 'fisher', hacker: { grade: 1, crew: { modules: ['sharedMemory'] } } }), D.HACKER.memory(1), 'hacker line only');
         (await Cr.leaveCrew('k_mem', km, now))(km); (await Cr.leaveCrew('k_lead', ml, now))(ml);
+        // v3.34 조직 순위(주간)·조직 태그: 점수 = 노드 ×10 + 해킹 ×2, 방송 서명·해커 순위에 [조직], 신원 조작으로 이름을 가리면 태그도 가림.
+        const ba = veteran(1); ba.name = '보드장A'; (await Cr.createCrew('b_a', ba, '보드A', 'gray', now))(ba);
+        const bb = veteran(1); bb.name = '보드장B'; (await Cr.createCrew('b_b', bb, '보드B', 'gray', now))(bb);
+        ba.hacker.crewPending = { nodes: 10, hacks: 1 }; (await Cr.flushCrew('b_a', ba, now))(ba);
+        bb.hacker.crewPending = { nodes: 5, hacks: 0 }; (await Cr.flushCrew('b_b', bb, now))(bb);
+        const cb = await Cr.crewBoard(now), mineA = cb.rows.find(r => r.name === '보드A'), mineB = cb.rows.find(r => r.name === '보드B');
+        assert.equal(mineA.score, 102); assert.equal(mineB.score, 50); assert.ok(mineA.rank < mineB.rank); assert.equal(CD.crewScore({ nodes: 3, hacks: 4 }), 38);
+        ba.hacker.used = {}; ba.hacker.tier = 1; ba.hacker.bits = 1000;
+        await Hk.clearBroadcast(now); act(ba, { type: 'hackRun', id: 'broadcast', value: '조직 방송' }, now); await Hk.applyPendingHack(ba, 'b_a', now);
+        assert.equal((await Hk.readHacks(now)).broadcast.by, '보드장A [보드A]', 'crew tag in the signature');
+        await Hk.syncHackerBoard('b_a', ba, now); const hrow = (await Hk.listHackerBoard(ba.hacker.season.key)).find(r => r.id === 'b_a'); assert.equal(hrow.crew, '보드A');
+        const tagHacks = { masked: { b_a: { until: 0, show: ['job'], by: 'x', byId: 'y' } }, cracked: {} };
+        assert.ok(!('crew' in Hk.maskSnapshot(hrow, 'b_a', tagHacks, now)), 'masked name hides the crew tag');
+        for (const [mid, m] of [['b_a', ba], ['b_b', bb]]) (await Cr.leaveCrew(mid, m, now))(m);
         // v3.26 해커 전직 알림(익명, system-hacker). 파일 DB를 쓰는 테스트는 동시에 돌면 서로의 파일을 바꾸므로 한 테스트에 모읍니다.
         await Hk.announceHacker('hacker', now); const chat = await database.listChat('global', 0, 300);
         assert.equal(chat.at(-1).account_id, 'system-hacker'); assert.equal(chat.at(-1).text, '누군가가 해커로 전직했습니다.');
