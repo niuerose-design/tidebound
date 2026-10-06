@@ -27,8 +27,6 @@ export const ascensionMastery = (s: AscensionState) => 1 + Math.min(ASCENSION.ma
 export const ascensionVow = (s: AscensionState) => 1 + Math.min(ASCENSION.vowCap, ascensionOf(s)) * ASCENSION.vowPer;
 /** 승천한 모험가의 초반 경험치 배율. */
 export const ascensionEarlyExp = (s: AscensionState & { rebirths: number }) => ascended(s) && s.rebirths < ASCENSION.earlyExpUntil ? ASCENSION.earlyExp : 1;
-/** 승천 화면 표시용 이름. 예: "2승천". */
-export const ascensionLabel = (s: AscensionState) => ascended(s) ? `${ascensionOf(s)}승천` : '';
 
 /**
  * 승천하면 자동으로 주는 세계석 연구(14.2). 순수 편의는 최대 단계, 콘텐츠를 여는 연구(서약 셋·랜덤게임)는 1단계.

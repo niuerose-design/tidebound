@@ -1,8 +1,6 @@
 /* 기능별 추가 스타일: 던전 반복·무리 사냥·전투 결과·로그인·도감·능력치 상세·안내·목표 등. */
 
 /* 무리 사냥 선택 */
-.swarm-picker { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; font-size: 13px; color: var(--muted); }
-.swarm-picker button { min-width: 44px; padding: 4px 10px; font-size: 13px; }
 
 /* 화면 설명 정리 */
 .derived-details { margin-top: 12px; }
@@ -151,8 +149,7 @@
 .tutorial-steps li.current span { background: var(--gold); }
 .tutorial-card p { font-size: 13px; margin: 0 0 6px; }
 .tutorial-card small { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
-.voyage-notice { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px; padding: 7px 12px; border: 1px solid #4a4230; background: #221f16; border-radius: 5px; color: #e0cfa2; font-size: 12px; text-align: left; cursor: pointer; }
-.voyage-notice span { color: #bfb38e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+
 .voyage-section { margin-top: 22px; }
 .voyage-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .voyage-entry { padding: 16px; }
@@ -163,12 +160,7 @@
 .growth-goals.folded { display: flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 13px; color: #9fb4af; }
 .growth-goals.folded span { flex: 1; }
 .growth-goals h2 { display: flex; align-items: center; gap: 6px; }
-.goal-steps { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 4px; font-size: 13px; }
-.goal-steps li { display: flex; align-items: center; gap: 6px; color: #8faead; }
-.goal-steps li span { width: 7px; height: 7px; border-radius: 50%; background: #3b5153; margin: 0 2.5px; }
-.goal-steps li.done { color: #b6e0cc; }
-.growth-goal-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-.growth-none { font-size: 13px; color: var(--muted); }
+
 /* 정리: 숫자 줄임 표기는 부모 글꼴을 그대로 사용, 자동 진행 레일 접기, 왼쪽 안내 슬롯 */
 .num-short { font: inherit !important; color: inherit !important; line-height: inherit !important; white-space: nowrap; }
 .auto-run-status.compact { padding: 12px 16px; margin-bottom: 0; }
@@ -194,10 +186,7 @@
 .skill-compact-growth { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #9fb4af; margin: 10px 0 6px; }
 .skill-card.compact .skill-current-description { margin: 8px 0; }
 .skill-card.compact .skill-actions { margin-top: 14px; }
-details.mastery-stack-note { display: block; }
-details.mastery-stack-note > summary { cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #c1d0bf; list-style: none; }
-details.mastery-stack-note > summary::-webkit-details-marker { display: none; }
-details.mastery-stack-note > span { display: block; margin-top: 8px; }
+
 /* 전직 상세 간결 보기 */
 .job-compact .requirements span small { color: #8faead; margin-left: 3px; font-size: 10px; }
 .job-compact .meter { margin-top: 10px; }
@@ -288,10 +277,9 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .voyage-entry.achievement.done { border-left:3px solid #8fd9b9; } .voyage-entry.achievement:not(.done) strong { color:#c9d3cf; }
 .achievement-top { display:flex; justify-content:space-between; align-items:center; } .achievement-top svg { color:#8fd9b9; }
 .voyage-entry.achievement p { margin:0; font-size:12px; } .achievement-reward { font-size:12px; color:#e8d39a; }
-.goal-chip { display:flex; align-items:center; gap:7px; width:100%; margin-bottom:8px; padding:8px 10px; border:1px solid #3d675a; border-radius:6px; background:#13262c; color:#c5d8d2; font-size:12px; cursor:pointer; }
-.goal-chip span { flex:1; text-align:left; } .goal-chip svg:first-child { color:#a4e9ba; }
-.focus-panel .vow-card.chosen { border-color:#d5b36c; background:#223329; }
-.focus-panel select { background:#101c20; border:1px solid var(--border); border-radius:6px; color:#e8efe9; padding:7px 8px; font:inherit; font-size:13px; }
+
+
+
 .abyss-board .abyss-mine { font-size:14px; color:#c5d8d2; margin:6px 0 12px; } .abyss-board .abyss-mine b { color:#e8d39a; }
 .abyss-board tr.self td { color:#a4e9ba; }
 @media (max-width: 767px) { .goal-boards { grid-template-columns:1fr; } .feat-bonus-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
@@ -336,15 +324,7 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .rank-head-text { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .rank-head-text b { font-size: 1.05rem; }
 .rank-head-text small { color: var(--muted, #9fb7b0); }
-.rank-perks { display: flex; flex-wrap: wrap; gap: 6px; }
-.rank-perk { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: inherit; font-size: 12px; cursor: pointer; }
-.rank-perk.on { border-color: var(--gold); }
-.rank-perk b { color: var(--gold); }
-.rank-perk:disabled { opacity: .55; cursor: default; }
-.rank-reset { color: #9fb4af; }
-.title-panel summary { display: flex; align-items: center; gap: 14px; padding: 2px 4px; cursor: pointer; list-style: none; }
-.title-panel summary h2 { margin: 0; font-size: 1.05rem; }
-.title-panel summary span { color: var(--muted, #9fb7b0); font-size: .85rem; }
+
 .title-actions { display: flex; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; }
 .title-list { display: grid; gap: 6px; }
 .title-row { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr auto; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid rgba(127, 211, 195, .14); border-radius: 10px; }
@@ -361,7 +341,7 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 
 /* v26.2 칭호 글꼴·메인 화면 칭호 선택 */
 .title-row .title-desc, .title-row .title-locked { font-size: .82rem; color: #9fb7b0; }
-.title-panel summary span { font-size: .82rem; }
+
 .title-label { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px auto 0; max-width: 220px; font-size: .82rem; color: #9fb7b0; }
 .title-label select { flex: 1; min-width: 0; background: #101c20; color: #e8d39a; border: 1px solid var(--border, #1f3338); border-radius: 6px; padding: 3px 6px; font-size: .82rem; }
 .metric-hint { display: inline-block; width: 15px; height: 15px; line-height: 13px; text-align: center; border: 1px solid rgba(159, 183, 176, .5); border-radius: 999px; font-size: 10px; color: #9fb7b0; margin-left: 4px; cursor: help; }
