@@ -33,17 +33,17 @@ test('SP inheritance is separate, costs one, and refund preserves natural inheri
  act(s,{type:'inheritSkill',id:'pierce'},0);s.skillPractice.pierce=masteryMilestonesFor(SKILLS.find(sk=>sk.id==='pierce'))[0];act(s,{type:'resetSkills'},0);
  assert.equal(s.sp,5);assert.equal(canUse(s,'pierce'),true);
 });
-// v3.79 제약형(AP를 돌려주는 스킬)은 천만 단위: 100만 · 1,000만 · 5,000만.
+// v3.79 본 레거시는 제약형 개별 예외: 10만 · 100만 · 500만(제약형 기본 5,000만에서 0 하나씩 뗌).
 test('Bone growth boundaries flip penalties and AP exactly at 1M/10M/50M wins',()=>{
- const bone=SKILLS.find(sk=>sk.id==='boneLegacy');assert.deepEqual(masteryMilestonesFor(bone),[1e6,1e7,5e7]);
- for(const [wins,lv,cost] of [[0,0,6],[999999,0,6],[1e6,1,6],[1e7-1,1,6],[1e7,2,2],[5e7-1,2,2],[5e7,3,-3]]){
+ const bone=SKILLS.find(sk=>sk.id==='boneLegacy');assert.deepEqual(masteryMilestonesFor(bone),[1e5,1e6,5e6]);
+ for(const [wins,lv,cost] of [[0,0,6],[99999,0,6],[1e5,1,6],[1e6-1,1,6],[1e6,2,2],[5e6-1,2,2],[5e6,3,-3]]){
   const natural=skillMasteryLevel(wins,bone.masteryMilestones);assert.equal(natural,lv);
   const fx=effectiveSkill(bone,1,natural);assert.equal(fx.cost,cost);if(lv<2)assert.ok(fx.bonus.hp<0&&fx.bonus.defense<0);else assert.ok(fx.bonus.hp>0&&fx.bonus.defense>0);
  }
  assert.deepEqual(effectiveSkill(bone,4,0),effectiveSkill(bone,1,3));assert.equal(maxSkillLevel(bone),3);
 });
 test('Negative AP works independent of priority and cannot be removed to overflow AP',()=>{
- const s=newState(0);s.level=30;s.learned={hook:1,pierce:1,focus:1,boneLegacy:1};s.skillInheritances={pierce:true,focus:true};s.skillPractice.boneLegacy=5e7;
+ const s=newState(0);s.level=30;s.learned={hook:1,pierce:1,focus:1,boneLegacy:1};s.skillInheritances={pierce:true,focus:true};s.skillPractice.boneLegacy=5e6;
  s.skills=['hook','pierce','focus','boneLegacy'];assert.equal(apUsed(s),5);assert.equal(validLoadout(s,s.skills),true);
  trimLoadout(s);assert.equal(s.skills.length,4);assert.throws(()=>act(s,{type:'skill',id:'boneLegacy'},0));assert.equal(s.skills.length,4);
  act(s,{type:'skill',id:'pierce'},0);act(s,{type:'skill',id:'boneLegacy'},0);assert.ok(apUsed(s)<=apCapacity(s));
@@ -128,7 +128,7 @@ test('Bone mastery relieves only the current job\'s negative multipliers',()=>{
  const jobHpFactor=st=>{const trace={};stats(st,trace);return (trace.hp||[]).filter(t=>t.source==='job'&&t.factor!==undefined).reduce((x,t)=>x*t.factor,1);};
  const s=newState(0);s.level=40;s.job='skeleton';s.learned.boneLegacy=1;s.skills=['boneLegacy'];
  const hp=JOBS.find(j=>j.id==='skeleton').hp;assert.ok(hp<1);
- for(const [wins,relief] of [[0,0],[1e6,.15],[1e7,.5],[5e7,1]]){s.skillPractice.boneLegacy=wins;assert.ok(Math.abs(jobHpFactor(s)-(1-(1-hp)*(1-relief)))<1e-9,String(wins));}
+ for(const [wins,relief] of [[0,0],[1e5,.15],[1e6,.5],[5e6,1]]){s.skillPractice.boneLegacy=wins;assert.ok(Math.abs(jobHpFactor(s)-(1-(1-hp)*(1-relief)))<1e-9,String(wins));}
  // 장착하지 않으면 숙련만으로는 회복하지 않습니다.
  s.skills=[];assert.ok(Math.abs(jobHpFactor(s)-hp)<1e-9);
 });

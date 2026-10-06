@@ -280,6 +280,8 @@ export const SKILL_CURVE_BAND = .5;
  * 숙련 요구치를 천만 단위로 둡니다: AP를 돌려주는(음수) 스킬 5,000만 · 그 밖 1,000만(같은 모양 비율). 직업 숙달 목표 계산에서는 뺍니다.
  */
 export const CONSTRAINT_MASTERY = { free: 10_000_000, refund: 50_000_000 };
+/** v3.79 개별 예외: 본 레거시는 마지막 단계 500만(10만 · 100만 · 500만). 환생 100 유저가 아직 없어 0 하나씩 뗐습니다. */
+export const CONSTRAINT_MASTERY_BY_SKILL: Record<string, number> = { boneLegacy: 5_000_000 };
 const CONSTRAINT_JOBS = new Set(['glassHarpooner', 'glyphMonk']);
 /** 최대 숙련(한계돌파 전)에서의 AP. progression.effectiveSkill과 같은 식입니다(순환 참조를 피해 여기서 계산). */
 export function costAtMastery(sk: Skill) {
@@ -298,7 +300,7 @@ export function normalizeSkillMastery(list: Skill[]) {
         const curve = SKILL_TIER_CURVE[Math.min(5, job.tier)], longTerm = !!sk.scaling || !!sk.rankEffects?.apReduction;
         const ms = sk.masteryMilestones, ratio = ms.at(-1)! / curve.at(-1)!;
         if (isConstraintSkill(sk)) {
-            const last = costAtMastery(sk) < 0 ? CONSTRAINT_MASTERY.refund : CONSTRAINT_MASTERY.free;
+            const last = CONSTRAINT_MASTERY_BY_SKILL[sk.id] ?? (costAtMastery(sk) < 0 ? CONSTRAINT_MASTERY.refund : CONSTRAINT_MASTERY.free);
             if (ms.at(-1) !== last) { LEGACY_FIRST_MILESTONE[sk.id] = ms[0]; sk.masteryMilestones = ms.map(n => round2(n * last / ms.at(-1)!)); }
             continue;
         }
