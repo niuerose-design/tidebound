@@ -74,7 +74,7 @@ export const swarmAttackMultiplier = (size: number) => size >= 500 ? swarmHpMult
 export const swarmDropRolls = (size: number) => size > 1 ? Math.round(Math.sqrt(size)) : 1;
 /** v3.42 덜 굴린 드롭 판정은 기대 장비 수 × 이 값만큼 정수로 바꿉니다(희귀·영웅 분해 정수의 중간값). */
 export const SWARM_ESSENCE_PER_ITEM = 3;
-/** v3.42 ×500 도전 무리(공격도 490배)의 추가 보상: 경험치·골드·숙련 ×1.5, 드롭 판정 ×2(44번). */
+/** v3.42 ×500 도전 무리(공격도 490배)의 추가 보상: 경험치·골드 ×1.5(v3.48 숙련은 swarmMasteryKills로), 드롭 판정 ×2(44번). */
 export const SWARM_BIG = { size: 500, reward: 1.5, drops: 2 } as const;
 export const swarmRewardMultiplier = (size: number) => size >= SWARM_BIG.size ? SWARM_BIG.reward : 1;
 export type FishDef = {
