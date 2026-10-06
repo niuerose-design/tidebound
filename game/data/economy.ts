@@ -12,9 +12,14 @@ export const PRIMAL_DROP_PITY = 3200;
 /** v3.58 감정 천장: 이 등급 이상이 마지막으로 나온 뒤 이 횟수째 감정은 그 등급 이상이 확정입니다(신화 150 · 고대 1,000 · 태초 3,000). 환생해도 남고 승천하면 초기화. */
 export const APPRAISAL_PITY = [{ rarity: 4, key: 'myth', count: 150 }, { rarity: 5, key: 'ancient', count: 1000 }, { rarity: 6, key: 'primal', count: 3000 }] as const;
 export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];
-/** v3.58 감정 가격의 환생 배율: 10^(환생 / 60). 환생 50 ×6.8 · 100 ×46 · 200 ×2,154. 현재 환생 횟수 기준이라 승천하면 다시 낮아집니다. */
-export const APPRAISAL_REBIRTH_SCALE = 60;
-export const appraisalRebirthFactor = (rebirths: number) => Math.pow(10, Math.max(0, rebirths) / APPRAISAL_REBIRTH_SCALE);
+/**
+ * 감정 가격의 환생 배율(현재 환생 횟수 기준이라 승천하면 다시 낮아집니다).
+ * v3.58 10^(환생 / 60)은 환생 200에서 ×2,150으로 골드 수입(환생 30 → 200에 약 12배)을 크게 앞질러 후반 감정이 사실상 막혔습니다.
+ * v3.68 예전 배율과 직선 1 + 환생 × perRebirth 중 낮은 쪽: 환생 100까지는 예전 그대로(어느 구간도 비싸지지 않음), 그 위로는 직선(환생 200 ×91).
+ * 감정 태초 기대 비용이 환생 100 이상에서도 그 구간 시간당 골드의 약 5일분(사냥 태초와 비슷)으로 남습니다.
+ */
+export const APPRAISAL_REBIRTH = { scale: 60, perRebirth: .45 };
+export const appraisalRebirthFactor = (rebirths: number) => { const r = Math.max(0, rebirths); return Math.min(Math.pow(10, r / APPRAISAL_REBIRTH.scale), 1 + r * APPRAISAL_REBIRTH.perRebirth); };
 /** v3.58 각인 감정: 고른 옵션 하나가 반드시 붙습니다. 골드는 감정 × goldMultiplier, 정수 essence가 더 듭니다. */
 export const IMPRINT_APPRAISAL = { goldMultiplier: 2, essence: 10 };
 /** v3.58 자동 감정 한 번에 최대 시도 수(렉 방지). */

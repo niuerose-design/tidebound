@@ -8,7 +8,7 @@ import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismant
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
-/** v27.30 감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 확정 구매를 없애고 환생 배율(10^(환생/60))을 곱합니다. */
+/** v27.30 감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 확정 구매를 없애고 환생 배율(v3.68 10^(환생/60)과 1 + 환생 × 0.45 중 낮은 쪽)을 곱합니다. */
 const GAMBLE_FISH = 60;
 /** v3.7 자동 강화 한 번에 돌리는 최대 시도 수(렉 방지). */
 const AUTO_STAR_MAX_TRIES = 2000;

@@ -280,10 +280,11 @@ test('v3.58 gold income is logged per play hour (24 buckets) and survives rebirt
     assert.ok((t.goldEarned || 0) >= t.gold - g0 && t.goldLog?.length >= 1, 'hunting ticks record income');
     t.level = 60; t.goldLog = [{ h: 0, g: 9 }]; act(t, { type: 'rebirth' }, 700_000); assert.deepEqual(t.goldLog, [{ h: 0, g: 9 }], 'kept through rebirth');
 });
-test('v3.58 appraisal: price × 10^(rebirths/60), pity at 150/1000/3000 kept through rebirth and reset by ascension', async () => {
+test('v3.58 appraisal: price × rebirth factor (v3.68 linear), pity at 150/1000/3000 kept through rebirth and reset by ascension', async () => {
     const Co = await L.load('systems/commerce'), Ec = await L.load('data/economy');
     const s = newState(0); s.level = 100; const base = Co.gambleCost(s);
-    s.rebirths = 60; assert.equal(Co.gambleCost(s), Math.floor(base * 10)); s.rebirths = 0;
+    s.rebirths = 60; assert.equal(Co.gambleCost(s), Math.floor(base * 10), 'unchanged below 100 rebirths');
+    assert.equal(Ec.appraisalRebirthFactor(200), 1 + 200 * .45, 'v3.68 linear above ~100 rebirths'); assert.ok(Ec.appraisalRebirthFactor(100) <= Math.pow(10, 100 / 60)); s.rebirths = 0;
     s.gold = 1e12; s.permanent.inventory = 8; s.inventory = [];
     s.appraisal = { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 148, ancient: 0, primal: 0 } };
     act(s, { type: 'gamble', id: 'all', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 1, 'below pity: rolls as usual');
