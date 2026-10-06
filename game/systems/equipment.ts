@@ -1,6 +1,7 @@
 import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, heirPower, legacyRelicPower, smithDiscount, type HeirKind } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence, GEAR_CAPS, STATUS_RESIST_STAR, rescaleAffix, affixDef, refineOption } from '../data/gear';
+import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence, GEAR_CAPS, STATUS_RESIST_STAR, rescaleAffix, affixDef, refineOption, rarityQuality, type ItemAffix } from '../data/gear';
+import { RARITIES } from '../data/balance';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
@@ -68,7 +69,9 @@ export const saleValue = (item: Item) => {
 const smith = (cost: number, s?: Pick<State, 'permanent'>) => s ? Math.floor(cost * smithDiscount(s)) : cost;
 // v27.30 강화·옵션 재설정 비용은 Lv.40 위 장비부터 몬스터 골드 곡선(priceScale)만큼 커집니다.
 /** 강화 1회 비용. 12성까지 전 공식, 13성부터 12성 비용 × growth^(성−12)(v27.93 스타포스). */
-export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'>) => { const n = item.enhance || 0, base = Math.min(n, STARFORCE.growthFrom); return smith(Math.floor((120 + item.power * 12) * (1 + base) ** 1.6 * priceScale(item.level || 1) * Math.pow(STARFORCE.growth, Math.max(0, n - STARFORCE.growthFrom))), s); };
+/** v3.81 영구 장비(유물 · 계승 · 칠흑) 강화 비용 배율: 1 + 환생 × permanentPerRebirth. 일반 장비는 1. */
+export const permanentStarScale = (item: Pick<Item, 'relic' | 'onyx' | 'heir'>, s?: Partial<Pick<State, 'rebirths'>>) => keepsAcrossLives(item) ? 1 + Math.max(0, s?.rebirths || 0) * STARFORCE.permanentPerRebirth : 1;
+export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'> & Partial<Pick<State, 'rebirths'>>) => { const n = item.enhance || 0, base = Math.min(n, STARFORCE.growthFrom); return smith(Math.floor((120 + item.power * 12) * (1 + base) ** 1.6 * priceScale(item.level || 1) * Math.pow(STARFORCE.growth, Math.max(0, n - STARFORCE.growthFrom)) * permanentStarScale(item, s)), s); };
 /** v3.3 유물 옵션 이식 비용: 소비하는 장비의 옵션 재설정 골드 × RELIC_GROWTH.imprintCost. */
 export const imprintCost = (source: Item, s?: Pick<State, 'permanent'>) => reforgeCost(source, s) * RELIC_GROWTH.imprintCost;
 /** v3.66 환생해도 남는 장비: 유물 · 칠흑 장신구 · 계승 장비(원시 고대 · 계승 태초). 판매·분해·도감 등록·청산 대상이 아닙니다. */
@@ -93,6 +96,31 @@ export function tuneOnyx(item: Item) {
     if (!item.onyx || item.onyxTuned) return;
     item.affixes = (item.affixes || []).map(x => x.rule ? x : refineOption(x, item.power, item.rarity, () => 1, item.level || 1));
     item.onyxTuned = true;
+}
+/**
+ * v3.82 유물 옵션 이식: 고정 수치(공격 · 체력 · 방어 · 마나)의 이득 쪽은 장비 등급 감쇠를 받는데, 이식 줄은 유물(전설)의 감쇠 .85를 받아
+ * 태초 · 고대에서 옮긴 이득이 원래보다 1.4~1.5배 커졌습니다. 이식할 때 '원래 장비 감쇠 ÷ 유물 감쇠'를 곱해 원래 장비에서와 같은 실효 수치로 맞춥니다.
+ * 손해 쪽(음수)은 감쇠를 받지 않아 그대로입니다. srcRarity는 원래 장비 등급(맞춘 표시).
+ */
+export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: number): ItemAffix {
+    const ratio = (GEAR_RARITY_SCALE[srcRarity] ?? 1) / (GEAR_RARITY_SCALE[relicRarity] ?? 1);
+    const fix = (stat: string | undefined, n: number | undefined) => stat && n && n > 0 && FLAT_GEAR_STATS.has(stat) ? Math.round(n * ratio) : n;
+    return { ...affix, value: fix(affix.stat, affix.value)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2) } : {}), srcRarity };
+}
+/** v3.82 원래 등급이 기록되지 않은 예전 이식 줄: 그 수치가 나올 수 있는 가장 낮은 등급(Lv.100 · 최고 굴림 기준)으로 봅니다. 실제보다 덜 깎이는 쪽입니다. */
+export function guessImprintRarity(affix: ItemAffix, relicRarity: number) {
+    const def = affixDef(affix.id);
+    if (!def || def.kind !== 'flat' || !FLAT_GEAR_STATS.has(affix.stat) || !(affix.value > 0)) return relicRarity;
+    for (let r = 0; r < RARITIES.length; r++) if (def.base * 102 * RARITIES[r].factor * 1.4 * rarityQuality(r) >= affix.value) return r;
+    return RARITIES.length - 1;
+}
+/** v3.82 예전 유물 이식 줄을 한 번 맞춥니다(srcRarity가 없는 줄만). 전설보다 높은 등급에서 온 것이 확실한 줄만 줄어듭니다. */
+export function fixRelicImprints(s: Pick<State, 'inventory' | 'equipment'>) {
+    for (const item of [...s.inventory, ...Object.values(s.equipment)]) {
+        if (!item?.relic || !item.affixes?.length) continue;
+        // 짐작이 유물 등급보다 낮으면 올리지 않습니다(예전 줄은 깎기만, 잘못 짐작해 키우지 않음).
+        item.affixes = item.affixes.map(x => x.srcRarity === undefined ? imprintAffix(x, Math.max(item.rarity, guessImprintRarity(x, item.rarity)), item.rarity) : x);
+    }
 }
 /** v3.5 레벨 올리기 목표 레벨: 지금 레벨 + step, 내 레벨까지. 더 올릴 수 없으면 null. */
 /** v3.13 +step이 내 레벨을 넘으면 내 레벨까지만 올립니다(전에는 Lv.91 장비가 최대 레벨 100에서 Lv.101을 요구해 영원히 막혔음). */

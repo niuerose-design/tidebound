@@ -107,7 +107,7 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
     migrateState(s); assert.ok(s.legacyInherited?.emptyPalm && !s.legacyInherited?.riseAgain, 'kept only above the old first stage');
 });
 
-test('v3.81 utility gain ×1.5: gold/exp/drop bonuses of utility job skills only, applied once', async () => {
+test('v3.83 utility gain ×1.5: gold/exp/drop bonuses of utility job skills only, applied once', async () => {
     const Sk = await load('game/data/skills.js');
     const bonus = id => SKILLS.find(sk => sk.id === id).bonus;
     assert.equal(Sk.UTILITY_GAIN_SCALE, 1.5);

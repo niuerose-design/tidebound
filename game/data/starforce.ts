@@ -18,6 +18,8 @@ export const STARFORCE = {
     destroy: { 15: .021, 16: .021, 17: .021, 18: .028, 19: .028, 20: .07, 21: .07 } as Record<number, number>,
     chanceTimeFails: 2, safeguardStars: [15, 16], safeguardCost: 2,
     growth: 1.25, growthFrom: 12, gainLow: .1, gainHigh: .15, gainHighFrom: 15, relicResetStar: 12,
+    /** v3.81 환생해도 남는 장비(유물 · 계승 · 칠흑)의 강화 비용 × (1 + 환생 × permanentPerRebirth). 환생 60 계승 태초 0→22성 기대 약 460억. 일반 장비는 그대로. */
+    permanentPerRebirth: .21,
 } as const;
 export const starMax = (rarity: number) => rarity >= 3 ? STARFORCE.max : STARFORCE.maxLow;
 /** n성에서 n+1성 시도 성공률. */

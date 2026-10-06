@@ -76,7 +76,7 @@ test('PvP snapshots use the same purchased or mastered active levels',()=>{
 
 test('Experience bonus is additive, visible and included only for usable equipped skills',()=>{
  const s=newState(0);s.level=40;/* v3.23 환생 목표 레벨(40)에 닿아 순풍 없음 */s.job='voyageScribe';s.rebirths=2;s.permanent.exp=3;s.learned.voyageReview=1;s.skills=['voyageReview'];
- assert.ok(Math.abs(stats(s).expBonus-1.25)<1e-9);/* v27.89 새싹 ×2.6 제외 · v3.81 유틸리티 획득 ×1.5(+8% → +12%) */assert.ok(Math.abs(expMultiplier(s)/2.6-2.25)<1e-9);
+ assert.ok(Math.abs(stats(s).expBonus-1.25)<1e-9);/* v27.89 새싹 ×2.6 제외 · v3.83 유틸리티 획득 ×1.5(+8% → +12%) */assert.ok(Math.abs(expMultiplier(s)/2.6-2.25)<1e-9);
  s.skills=[];assert.ok(Math.abs(expMultiplier(s)/2.6-2.13)<1e-9);
  s.job='fisher';s.skills=['voyageReview'];assert.ok(Math.abs(expMultiplier(s)/2.6-2.1)<1e-9);
  s.skillInheritances.voyageReview=true;assert.ok(Math.abs(expMultiplier(s)/2.6-2.22)<1e-9);
@@ -85,7 +85,7 @@ test('Experience bonus is additive, visible and included only for usable equippe
 test('Experience payout uses the same bonus displayed on the character',()=>{
  const s=newState(0);s.level=25;s.job='voyageScribe';s.learned.voyageReview=1;s.skills=['voyageReview'];s.running=true;s.hp=stats(s).hp;
  s.enemy={id:'minnow',name:'test',hp:1,maxHp:1,attack:0,defense:0,exp:100,gold:1,boss:false,stun:0};
- const expected=Math.floor(100*expMultiplier(s));tick(s,()=>.5);assert.equal(s.exp,expected);assert.equal(expected,345,'115 × 새싹의 축복 ×3(환생 0회, v3.81 항해 복기 +12%)');
+ const expected=Math.floor(100*expMultiplier(s));tick(s,()=>.5);assert.equal(s.exp,expected);assert.equal(expected,345,'115 × 새싹의 축복 ×3(환생 0회, v3.83 항해 복기 +12%)');
 });
 test('Mastery bonuses match boss and species, use the strongest one and cap at ten',()=>{
  const s=newState(0);s.level=50;s.rebirths=1;s.job='bossNaturalist';s.learned.titanFieldNotes=1;s.skills=['titanFieldNotes'];

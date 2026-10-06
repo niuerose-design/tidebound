@@ -312,7 +312,7 @@ export function normalizeSkillMastery(list: Skill[]) {
 }
 normalizeSkillMastery(SKILLS);
 /**
- * v3.81 유틸리티 획득 강화(docs/concept.md 11.9 5-1): 유틸리티 직업 스킬의 골드·경험치·장비 드롭 보너스 ×1.5.
+ * v3.83 유틸리티 획득 강화(docs/concept.md 11.9 5-1): 유틸리티 직업 스킬의 골드·경험치·장비 드롭 보너스 ×1.5.
  * 원본 수치는 그대로 두고 불러올 때 한 번 곱합니다(같은 객체를 두 번 곱하지 않음). 설명 글의 숫자는 곱한 값으로 적습니다.
  * 변종·황금 확률 · 숙련 획득 같은 다른 유틸리티 효과는 그대로입니다.
  */

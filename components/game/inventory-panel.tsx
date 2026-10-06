@@ -10,7 +10,7 @@ import type { Item, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, HEIR_GROWTH, AWAKENING, PRIMAL_INHERIT, heirFactor, awakenEssence, researchRank } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay, HIDDEN_STATS } from '@/game/data/progression';
-import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, primalGaugeOf, keepsAcrossLives, heirKind, rerollCost, refineCost, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
+import { itemStats, itemDescription, enhanceCost, permanentStarScale, imprintAffix, bulkItems, saleValue, dismantleEssence, primalGaugeOf, keepsAcrossLives, heirKind, rerollCost, refineCost, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
 import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT } from '@/game/data/gear';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
 import { stats, power } from '@/game/systems/stats';
@@ -148,16 +148,30 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     const key = picked?.key || '';
     const lines = item.affixes || [], cost = picked ? imprintCost(picked.item, s) : 0;
     const blocked = !picked ? '' : lines.some((x, i) => i !== slot && x.id === picked.affix.id) ? '이미 같은 옵션이 새겨져 있습니다.' : picked.affix.rule && lines.some((x, i) => i !== slot && x.rule) ? '규칙 옵션은 유물당 하나만 새길 수 있습니다.' : s.gold < cost ? '골드가 부족합니다.' : '';
-    const label = (a: NonNullable<Item['affixes']>[number]) => `${a.name} · ${STAT_LABELS[a.stat]} ${statDeltaDisplay(a.stat, a.value)}`;
+    // v3.82 양날 옵션(유리 대포 등)은 손해 쪽까지 함께 보여 줍니다.
+    const label = (a: NonNullable<Item['affixes']>[number]) => `${a.name} · ${STAT_LABELS[a.stat]} ${statDeltaDisplay(a.stat, a.value)}${a.stat2 && a.value2 ? ` · ${STAT_LABELS[a.stat2]} ${statDeltaDisplay(a.stat2, a.value2)}` : ''}`;
+    // v3.82 미리보기: 이식한 유물을 그 부위에 장착했을 때 최종 능력치 · 전투력 변화(직업 · 연구 배율까지 반영).
+    const preview = (() => {
+        if (!picked) return null;
+        const next = [...lines]; next[slot] = imprintAffix(picked.affix, picked.item.rarity, item.rarity);
+        const withRelic = (affixes: Item['affixes']) => ({ ...s, equipment: { ...s.equipment, [item.slot]: { ...item, affixes } } });
+        const before = stats(withRelic(lines)), after = stats(withRelic(next.filter(Boolean)));
+        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - before[k as keyof Stats]) > .001)).map(([k, n]) => [k, n - before[k as keyof Stats]] as const);
+        return { delta, gain: power(after) - power(before) };
+    })();
     return <div className="relic-imprint">
         <b>옵션 이식 · 환생 {s.rebirths}회 위력 배율 ×{heirFactor('relic', s.rebirths).toFixed(2)}{item.relicLegacy ? ' · 다음 승천까지 예전 공식과 새 공식 중 높은 쪽' : ''}</b>
-        <div className="relic-imprint-slots">{Array.from({ length: RELIC_GROWTH.imprintSlots }, (_, i) => <label key={i} className={`altar-anon${slot === i ? ' on' : ''}`}><input type="radio" name={`imprint-${item.id}`} checked={slot === i} onChange={() => setSlot(i)}/> {i + 1}번 칸 · {lines[i] ? label(lines[i]) : '비어 있음'}</label>)}</div>
+        <div className="relic-imprint-slots">{Array.from({ length: RELIC_GROWTH.imprintSlots }, (_, i) => <div key={i} className="relic-imprint-slot"><label className={`altar-anon${slot === i ? ' on' : ''}`}><input type="radio" name={`imprint-${item.id}`} checked={slot === i} onChange={() => setSlot(i)}/> {i + 1}번 칸 · {lines[i] ? label(lines[i]) : '비어 있음'}</label>{lines[i] && <ConfirmButton label="지우기" title={`${lines[i].name} 이식 옵션을 지울까요?`} description="이 칸이 비고 옵션은 사라집니다(되돌릴 수 없음). 비용은 없고, 다시 이식할 수 있습니다." disabled={busy} onConfirm={() => send({ type: 'removeImprint', id: item.id, value: String(i) })}/>}</div>)}</div>
         {choices.length ? <>
-            <label className="gear-select">소비할 장비·옵션<select value={key} onChange={e => setChoice(e.target.value)}>{choices.map(c => <option key={c.key} value={c.key}>{c.item.name}{starLabel(c.item.enhance || 0) ? ` ${starLabel(c.item.enhance || 0)}` : ''} › {label(c.affix)}</option>)}</select></label>
+            <label className="gear-select">소비할 장비·옵션<select value={key} onChange={e => setChoice(e.target.value)}>{choices.map(c => <option key={c.key} value={c.key}>{c.item.name}{starLabel(c.item.enhance || 0) ? ` ${starLabel(c.item.enhance || 0)}` : ''} › {label(imprintAffix(c.affix, c.item.rarity, item.rarity))}</option>)}</select></label>
             <ConfirmButton label={`이식 · ${format(cost)} G`} title={`${picked!.affix.name} 옵션을 ${slot + 1}번 칸에 이식할까요?`} description={`${picked!.item.name}이(가) 사라지고 ${picked!.affix.name} 옵션이 유물에 남습니다.${lines[slot] ? ` ${lines[slot].name} 옵션을 덮어씁니다.` : ''} 골드 ${format(cost)} G를 사용합니다.`} disabled={busy || !!blocked} onConfirm={() => send({ type: 'imprintRelic', id: item.id, value: `${picked!.key}:${slot}` })}/>
+            {picked && <div className="relic-imprint-preview">
+                <small>{affixDef(picked.affix.id)?.description}</small>
+                {preview && <div className="equipment-comparison"><small>이 유물을 {SLOTS[item.slot]} 칸에 장착했을 때 최종 능력치 변화 · 전투력 {preview.gain >= 0 ? '+' : '−'}{format(Math.abs(preview.gain))}</small>{preview.delta.length ? preview.delta.map(([k, d]) => <span key={k} className={d > 0 ? 'positive' : 'negative'}>{STAT_LABELS[k as keyof Stats]} {statDeltaDisplay(k, d)}</span>) : <span>변화 없음</span>}</div>}
+            </div>}
             {blocked && <p className="footnote negative">{blocked}</p>}
         </> : <p className="footnote">같은 부위의 옵션 달린 장비(보호 제외)가 가방에 있어야 이식할 수 있습니다.</p>}
-        <p className="footnote">이식 비용은 소비하는 장비의 옵션 재설정 골드 ×{RELIC_GROWTH.imprintCost}. 이식 옵션과 성은 환생해도 남고, 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다.</p>
+        <p className="footnote">고정 수치 옵션은 원래 장비에서와 같은 효과가 되도록 유물 등급에 맞춰 환산해 새깁니다(목록의 수치가 새겨질 값). 이식 비용은 소비하는 장비의 옵션 재설정 골드 ×{RELIC_GROWTH.imprintCost}. 이식 옵션과 성은 환생해도 남고, 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다.</p>
     </div>;
 }
 
@@ -248,7 +262,7 @@ export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Ite
             {canSafeguard(star) && <label className="altar-anon"><input type="checkbox" checked={safeguard} onChange={e => setSafeguard(e.target.checked)}/> 파괴 방지 (비용 ×{STARFORCE.safeguardCost})</label>}
             {catching ? <StarCatch bonus={STARFORCE.catchBonus} onResult={fire}/> : <button className="primary" disabled={busy || star >= max || s.gold < cost} onClick={() => catchOn && !chance ? setCatching(true) : fire(false)}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${format(cost)} G${catchOn && !chance ? ' · 스타캐치' : ''}`}</button>}
             {star < max && researchRank(s, 'autoStar') > 0 && <AutoStar s={s} send={send} busy={busy} item={item} safeguard={guard}/>}
-            <details className="forge-rules"><summary>강화 규칙</summary><p>1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}성부터 +{STARFORCE.gainHigh * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. 파괴된 장비는 사라지고 유물은 {STARFORCE.relicResetStar}성으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p></details>
+            <details className="forge-rules"><summary>강화 규칙</summary><p>1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}성부터 +{STARFORCE.gainHigh * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. 파괴된 장비는 사라지고 유물은 {STARFORCE.relicResetStar}성으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다. 환생해도 남는 장비(유물 · 계승 · 칠흑)는 강화 비용이 환생 1회마다 +{Math.round(STARFORCE.permanentPerRebirth * 100)}%입니다{keepsAcrossLives(item) ? ` (지금 ×${permanentStarScale(item, s).toFixed(1)})` : ''}.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p></details>
         </section>
         <GearLevelUp s={s} send={send} busy={busy} item={item}/>
         {item.relic && <RelicImprint s={s} send={send} busy={busy} item={item}/>}

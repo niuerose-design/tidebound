@@ -4,7 +4,7 @@ import type { State } from '../types';
 import { addLog } from './state';
 import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
 import { RELICS, RESEARCH_GROWTH } from '../data/economy';
-import { syncRelicPower, tuneOnyx } from './equipment';
+import { syncRelicPower, tuneOnyx, fixRelicImprints } from './equipment';
 import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { SAVE_VERSION } from '../data/balance';
@@ -233,7 +233,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

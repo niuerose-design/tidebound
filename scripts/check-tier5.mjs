@@ -1,4 +1,4 @@
-// v3.81 5차 직업 비교(docs/concept.md 11.9 5단계): 엔드 콘텐츠 기준으로 5차 직업끼리만 견줍니다.
+// v3.83 5차 직업 비교(docs/concept.md 11.9 5단계): 엔드 콘텐츠 기준으로 5차 직업끼리만 견줍니다.
 // 모두 같은 몸(Lv.100 · 환생 100 · 같은 능력치 총량 · 같은 장비 4부위 · 스킬 숙련 완료)에서 상황별로 잽니다.
 //   사냥터  마지막 사냥터(소멸의 여로) 일반 몬스터 1:1 — 처치 턴 · 승률
 //   무리100 ×100 무리(체력 98배, 공격 1배) — 처치 턴(지면 깎은 체력) · 승률, 턴 상한 3,000
@@ -30,7 +30,7 @@ const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.index
 const SEEDS = Number(arg('--seeds', 20)), TIER = Number(arg('--tier', 30)), RARITY = Number(arg('--rarity', 6)), STAR = Number(arg('--star', 22));
 // 환생 100 무렵의 흔한 연구(전투 탭 약 75%, 물리·마법 같은 단계라 직업 사이 공정). 숫자를 바꾸면 절대값만 달라지고 비율은 거의 그대로입니다.
 const RESEARCH_FULL = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 15, critDamage: 20, penetration: 10, evasion: 15, lifesteal: 15, manaRegen: 8, recovery: 8, ap: 12 };
-// v3.81 --level · --rebirths · --research(연구 비율, 1 = 위 표) · --job-tier · --raid로 다른 몸(예: 환생 0 · 50)과 월드보스를 잽니다.
+// v3.83 --level · --rebirths · --research(연구 비율, 1 = 위 표) · --job-tier · --raid로 다른 몸(예: 환생 0 · 50)과 월드보스를 잽니다.
 const LEVEL = Number(arg('--level', 100)), REBIRTHS = Number(arg('--rebirths', 100)), JOB_TIER = Number(arg('--job-tier', 5)), RESEARCH_SCALE = Number(arg('--research', 1));
 const RESEARCH = Object.fromEntries(Object.entries(RESEARCH_FULL).map(([k, v]) => [k, Math.round(v * RESEARCH_SCALE)]));
 const MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg('--dungeon-tier', TIER * 2)), SWARM500_TIER = Number(arg('--swarm500-tier', 0)), PEN = arg('--pen') === undefined ? null : Number(arg('--pen'));

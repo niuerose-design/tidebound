@@ -13,7 +13,7 @@ test('v24.2 progress passives count codex, catches, hunts, species, gold and reb
     const after = stats(s);
     assert.equal(after.codexPower, 4); assert.ok(Math.abs(after.catchPower - Math.log10(8)) < 1e-9);
     assert.equal(after.attack, before.attack, 'four codex records → chronicleStudy codex step (per 5) not yet'); s.itemBook = { a: 1, b: 1, c: 1 }; assert.ok(stats(s).attack > after.attack && stats(s).magic > after.magic, 'five codex records → chronicleStudy +1');
-    const sk = SKILLS.find(x => x.id === 'chronicleStudy'); assert.equal(sk.perCount[0].source, 'rebirth'); assert.equal(sk.bonus.expBonus, .18, 'scribe keeps its EXP bonus (v3.81 ×1.5)');
+    const sk = SKILLS.find(x => x.id === 'chronicleStudy'); assert.equal(sk.perCount[0].source, 'rebirth'); assert.equal(sk.bonus.expBonus, .18, 'scribe keeps its EXP bonus (v3.83 ×1.5)');
     for (const id of ['salvageSense', 'rareSense', 'deepSalvage', 'kingsHoard', 'legendHoard']) { const b = SKILLS.find(x => x.id === id).bonus || {}; assert.ok(!b.goldBonus && !b.dropBonus, id + ' moved gold/drop to the merchant line'); assert.ok(b.variantFind > 0, id + ' raises variant odds'); }
     for (const id of ['salvageContract', 'goldMemory', 'portLedger', 'tradeWind', 'tradeEmpire', 'goldenEmpire']) assert.ok(SKILLS.find(x => x.id === id).bonus.dropBonus > 0, id);
 });
