@@ -171,3 +171,45 @@ test('v3.41 job rotation (ascension 2 fixed at vocation 1; more choices later): 
     assert.ok(s.skills.length > 0, 'loadout equipped'); assert.ok(s.logs.some(l => l.text.startsWith('숙련 순회 전직')));
     s.rebirths = Asc.ASCENSION.requirements[2]; Lc.ascend(s, 0); assert.deepEqual(s.rotation, { on: true, at: 1 }, 'rotation survives ascension');
 });
+
+// v3.42 무리 드롭 √N 판정 · ×500 무리 보상 · 세계석 연구 21번째 단계부터 ×1.06 복리
+const Mig = await L.load('systems/migrations'), Co = await L.load('systems/commerce');
+const swarmKill = size => {
+    const s = newState(0); s.level = 30; s.stage = 'brook'; s.tide = 0; s.permanent.inventory = 8; s.inventory = [];
+    E.spawn(s, () => .99); s.enemy.swarm = size; s.enemy.variant = 'swarm'; s.enemy.hp = 0;
+    const exp = s.exp, gold = s.gold, essence = s.essence || 0;
+    E.reward(s, () => 0);
+    return { items: s.inventory.length, exp: s.exp - exp, gold: s.gold - gold, essence: (s.essence || 0) - essence, logs: s.logs.map(l => l.text) };
+};
+test('v3.42 swarm drops roll √N times (×500 doubled) and the skipped rolls pay essence', () => {
+    assert.deepEqual([1, 5, 100, 500].map(W.swarmDropRolls), [1, 2, 10, 22]);
+    const five = swarmKill(5), hundred = swarmKill(100), big = swarmKill(500);
+    assert.equal(five.items, 2); assert.equal(hundred.items, 10); assert.equal(big.items, 44, '22 rolls × 2 for ×500');
+    assert.ok(hundred.essence >= 1 && big.essence >= 1, 'skipped rolls become essence');
+    assert.ok(big.logs.some(t => t.includes('무리 전리품 · 정수')));
+});
+test('v3.42 ×500 swarms pay exp · gold ×1.5 on top of the head count', () => {
+    const hundred = swarmKill(100), big = swarmKill(500);
+    assert.ok(Math.abs(big.exp / hundred.exp - 7.5) < .05, `exp ratio ${big.exp / hundred.exp}`);
+    // 난수 0이면 황금 개체(한 마리 골드 10배)도 뜨므로 그 몫(+9마리분)은 빼고 비교합니다.
+    const golden = hundred.logs.some(t => t.includes('황금 개체 골드 10배')), perFish = hundred.gold / (100 + (golden ? 9 : 0));
+    assert.equal(big.gold, Math.floor(perFish * 500 * 1.5) + (golden ? perFish * 9 : 0), 'gold ×500 × 1.5');
+    assert.ok(big.logs.some(t => t.includes('큰 무리 보상 ×1.5')));
+    assert.equal(W.swarmRewardMultiplier(100), 1); assert.equal(W.swarmRewardMultiplier(500), 1.5);
+});
+test('v3.42 research ranks from the 21st cost ×1.06 compounding; ranks bought before refund at the old price', () => {
+    for (let k = 0; k < 20; k++) assert.equal(Ec.researchCost('attack', k), Ec.researchLegacyCost('attack', k));
+    assert.equal(Ec.researchCost('attack', 20), Math.round(Ec.researchLegacyCost('attack', 20) * 1.06));
+    assert.equal(Ec.researchCost('attack', 40), Math.round(Ec.researchLegacyCost('attack', 40) * 1.06 ** 21));
+    assert.equal(Ec.researchSpent('attack', 40), 5813); assert.equal(Ec.researchSpent('attack', 40, 40), 2780, 'old total');
+    const s = newState(0); s.rebirths = 50; s.permanent = { attack: 40, hp: 12 }; delete s.researchLegacy;
+    Mig.stampResearchLegacy(s); assert.deepEqual(s.researchLegacy, { attack: 40 }, 'only ranks past 20 need the old price');
+    Mig.stampResearchLegacy(s); assert.deepEqual(s.researchLegacy, { attack: 40 }, 'once');
+    s.pearls = 1e6; act(s, { type: 'permanent', id: 'attack' }, 0); assert.equal(s.permanent.attack, 41);
+    const tab = Ec.RESEARCH.find(r => r.id === 'attack').tab, legacyHp = Ec.researchSpent('hp', 12);
+    const { spent } = Co.researchRefund(s, tab);
+    assert.equal(spent, Ec.researchSpent('attack', 40, 40) + Ec.researchCost('attack', 40) + legacyHp, 'old price up to the stamp, new price after');
+    const pearls = s.pearls; act(s, { type: 'resetResearch', id: tab }, 0);
+    assert.equal(s.pearls - pearls, spent, 'first reset refunds everything paid'); assert.equal(s.researchLegacy.attack, undefined, 'stamp cleared by the reset');
+    assert.deepEqual(newState(0).researchLegacy, {}, 'new saves pay the new price');
+});

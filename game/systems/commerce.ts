@@ -45,7 +45,7 @@ export function buyResearch(s: State, id: string) {
     return `${r.name} 연구 ${rank + 1}단계 · -${cost} 세계석`;
 }
 /** 탭에 쓴 세계석과 재분배 반환액. 첫 1회는 전액, 이후 90%(내림). */
-export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' | 'researchGranted'>, tab: string) {
+export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' | 'researchGranted' | 'researchLegacy'>, tab: string) {
     const ranks: Record<string, number> = {};
     let spent = 0;
     for (const r of RESEARCH) {
@@ -53,7 +53,9 @@ export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' 
         if (r.tab !== tab || !rank) continue;
         ranks[r.id] = rank;
         // v27.31 무료로 받은 앞 단계는 반환하지 않습니다.
-        spent += researchSpent(r.id, rank) - researchSpent(r.id, Math.min(rank, s.researchGranted?.[r.id] || 0));
+        // v3.42 가격 인상 전에 산 단계(researchLegacy)는 전 가격으로 돌려줍니다.
+        const legacy = s.researchLegacy?.[r.id] || 0;
+        spent += researchSpent(r.id, rank, legacy) - researchSpent(r.id, Math.min(rank, s.researchGranted?.[r.id] || 0), legacy);
     }
     const rate = s.researchResetUsed ? RESEARCH_RESET.refund : RESEARCH_RESET.firstRefund;
     return { spent, refund: Math.floor(spent * rate), ranks, first: !s.researchResetUsed };
@@ -274,6 +276,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         for (const k of Object.keys(ranks)) {
             const kept = Math.min(ranks[k], s.researchGranted?.[k] || 0);
             if (kept) s.permanent[k] = kept; else delete s.permanent[k];
+            if (s.researchLegacy) delete s.researchLegacy[k];
         }
         s.researchResetUsed = true;
         s.pearls += refund;

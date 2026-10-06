@@ -68,9 +68,13 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'pearl', name: '윤회의 연금술', desc: '환생 세계석 +2', max: 5, base: 6, step: 5, tab: 'gold', per: 2, unit: 'flat', label: '환생 세계석' },
     { id: 'enhance', name: '대장장이의 기억', desc: '강화·옵션 재설정 골드 비용 -2%', max: 15, base: 3, step: 2, tab: 'gold', rebirth: 5, per: .02, unit: 'percent', label: '강화·재설정 비용', negative: true },
 ];
-export const researchCost = (id: string, rank: number) => { const r = RESEARCH.find(x => x.id === id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
-/** rank 단계까지 쓴 세계석 합계(0 → rank). 재분배 반환액 계산에 씁니다. */
-export const researchSpent = (id: string, rank: number) => { let sum = 0; for (let i = 0; i < rank; i++) sum += researchCost(id, i); return sum; };
+/** v3.42 21번째 단계(rank 20)부터 가격이 단계마다 ×1.06 복리로 오릅니다. 효과는 그대로입니다. */
+export const RESEARCH_GROWTH = { from: 20, rate: 1.06 } as const;
+/** v3.42 전 가격(기본 + 단계 × 증가분 + 20단계 뒤 제곱 항). 그때 산 단계(researchLegacy)를 재분배할 때 이 가격으로 돌려줍니다. */
+export const researchLegacyCost = (id: string, rank: number) => { const r = RESEARCH.find(x => x.id === id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
+export const researchCost = (id: string, rank: number) => { const old = researchLegacyCost(id, rank); return rank < RESEARCH_GROWTH.from ? old : Math.round(old * Math.pow(RESEARCH_GROWTH.rate, rank - RESEARCH_GROWTH.from + 1)); };
+/** rank 단계까지 쓴 세계석 합계(0 → rank). 재분배 반환액 계산에 씁니다. legacy 단계 아래는 전 가격으로 셉니다. */
+export const researchSpent = (id: string, rank: number, legacy = 0) => { let sum = 0; for (let i = 0; i < rank; i++) sum += i < legacy ? researchLegacyCost(id, i) : researchCost(id, i); return sum; };
 export const researchUnlocked = (rebirths: number, r: Pick<ResearchDef, 'rebirth'>) => rebirths >= (r.rebirth || 0);
 /** v3.31 지금 살 수 있는 최대 단계: 승천하지 않았으면 ascendAbove까지. */
 export const researchMaxFor = (s: { ascension?: number }, r: Pick<ResearchDef, 'max' | 'ascendAbove'>) => r.ascendAbove !== undefined && !((s.ascension || 0) > 0) ? Math.min(r.max, r.ascendAbove) : r.max;

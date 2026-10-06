@@ -476,6 +476,8 @@ export type State = {
     researchResetUsed?: boolean;
     /** v27.31 무료로 받은 세계석 연구 단계(재분배 때 반환하지 않음). limitBreak: 이미 한 한계돌파만큼 ‘한계의 문’을 무료로 받음. */
     researchGranted?: Record<string, number>;
+    /** v3.42 가격 인상(RESEARCH_GROWTH) 전에 이미 산 연구 단계. 재분배 때 이 단계까지는 전 가격으로 돌려줍니다. 승천·재분배하면 비웁니다. */
+    researchLegacy?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
     /** 자동 정리 · 분해 방식(설정). v3.23부터 정수로 분해. */

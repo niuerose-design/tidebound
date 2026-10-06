@@ -20,6 +20,7 @@ export function newState(now: number): State {
         rankRescaled: true,
         // v27.31 새 세이브는 무료로 받을 한계의 문 단계가 없습니다(옛 세이브만 migrations에서 한 번 받음).
         researchGranted: { limitBreak: 0 },
+        researchLegacy: {},
         abyssMilestones: [], tutorial: { done: {} }, voyage: {}, achievements: {}, achievementClaims: {}, statRate: PROGRESSION.statPerLevel,
         tide: 0,
         abyssBest: 0,

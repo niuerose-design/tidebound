@@ -17,7 +17,7 @@ import { sproutHeal } from '../data/sprout';
 import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
 import type { State, Item, Stats } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
-import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth } from '../data/world';
+import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth } from '../data/world';
 import { jobById } from '../data/classes';
 import { HACKER_ID } from '../data/hacker';
 import { skillById } from '../data/skills';
@@ -230,13 +230,15 @@ export function reward(s: State, rng: () => number) {
     const size = e.swarm || 1, vdef = variantById(e.variant), rewardMult = vdef?.reward || 1, expMult = vdef?.expMult || rewardMult, bookPer = vdef?.book || 1;
     // v25.6 계열 집중 카드 ×2 · v27.14 서버 이벤트. v27.74 사냥터 난이도 배율은 없앴습니다. 정수로 유지하려고 올림 없이 곱한 뒤 연구 보정으로 넘깁니다.
     const { focus: focusMastery, event: eventMastery } = masteryMultipliers(s);
-    const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * size * focusMastery * eventMastery)), practice = researched.total;
+    // v3.42 ×500 도전 무리는 경험치·골드·숙련 ×1.5(swarmRewardMultiplier).
+    const big = swarmRewardMultiplier(size);
+    const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * size * big * focusMastery * eventMastery)), practice = researched.total;
     // v3.12 칠흑 세트 4종: 무리 서식지 골드·경험치 +15%.
     const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
-    const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult * onyxSet), exp = Math.floor(e.exp * expMultiplier(s) * expMult * onyxSet) * size;
+    const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s) * expMult * onyxSet) * size * big);
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
     const goldenChance = stats(s).goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
-    const gold = perFish * size + (golden ? perFish * 9 : 0);
+    const gold = Math.floor(perFish * size * big) + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     // v27.79 계급장: 처치 수(무리는 마릿수)만큼 계급 경험치. ‘전과 기록’ 특전이 마리당 더 셉니다. 기록이 없던 세이브는 지금까지의 처치 수에서 시작합니다. 진급하면 알립니다.
     const rk = rankState(s), rankBefore = rankIndex(rk.exp);
@@ -300,7 +302,7 @@ export function reward(s: State, rng: () => number) {
         s.exp += bonus;
         addLog(s, `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} (Lv.${s.level} 필요량의 ${Math.round(t.pct * 100)}%)`, 'reward');
     }
-    addLog(s, `${golden ? '✦ 황금 ' : ''}${vdef && e.variant !== 'swarm' ? `${vdef.mark} ${vdef.name} ` : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
+    addLog(s, `${golden ? '✦ 황금 ' : ''}${vdef && e.variant !== 'swarm' ? `${vdef.mark} ${vdef.name} ` : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · ×${size}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
     // v3.12 칠흑 보스 처치: drop 확률로 그 보스의 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
     if (e.onyx) {
@@ -317,8 +319,14 @@ export function reward(s: State, rng: () => number) {
         }
     }
     const fish = FISH.find(f => f.id === e.id)!;
-    for (let i = 0; i < size * (vdef?.drops || 1); i++)
+    // v3.42 무리는 마리 수 N 대신 √N번만 드롭을 판정하고(×500은 2배), 덜 굴린 판정은 기대 장비 수만큼 정수로 바꿉니다.
+    const rolls = swarmDropRolls(size) * (size >= SWARM_BIG.size ? SWARM_BIG.drops : 1);
+    for (let i = 0; i < rolls * (vdef?.drops || 1); i++)
         drop(s, dropLevel(s, fish.level, encounterTier(s)), rng);
+    if (size > rolls) {
+        const owed = (size - rolls) * dropRate(s) * SWARM_ESSENCE_PER_ITEM, essence = Math.floor(owed) + (rng() < owed % 1 ? 1 : 0);
+        if (essence > 0) { s.essence = (s.essence || 0) + essence; addLog(s, `무리 전리품 · 정수 +${essence}`, 'reward'); }
+    }
     if (vdef?.guaranteed) drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, true);
     // v27.86 사냥터 난이도 이정표 세계석은 없앴습니다. 사냥터별 최고 난이도 기록(업적용)만 남깁니다.
     if (!s.dungeon && !isHabitat(s.stage)) { const tier = encounterTier(s); if (tier > (s.tideBest?.[s.stage] || 0)) (s.tideBest ??= {})[s.stage] = tier; }
