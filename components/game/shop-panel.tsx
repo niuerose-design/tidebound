@@ -74,9 +74,9 @@ export function Shop({ s, send, busy }: PanelProps) {
         </section>}
         {tab === 'forge' && <section aria-label="장비 강화">
             {/* v3.76 부위 고르기 + 작업대 하나: 카드 네 장을 늘어놓던 때와 달리 높이가 들쭉날쭉하지 않고 옵션 재설정까지 한 곳에서 합니다. */}
-            <div className="forge-picker" aria-label="강화할 부위">{(Object.keys(SLOTS) as (keyof typeof SLOTS)[]).map(id => { const it = s.equipment[id as keyof typeof s.equipment]; return <button type="button" key={id} aria-pressed={forgeSlot === id} className={`forge-pick${forgeSlot === id ? ' on' : ''}`} style={{ '--rarity': it ? RARITIES[it.rarity].color : '#5a6f71' } as React.CSSProperties} onClick={() => setForgeSlot(id)}>
-                <SlotIcon slot={id} size={18}/><span><small>{SLOTS[id]}</small><b>{it ? it.name : '비어 있음'}</b></span>{it && <em className="gold-text">★{it.enhance || 0}</em>}</button>; })}</div>
-            {forgeItem ? <article className="panel forge-panel" style={{ '--rarity': RARITIES[forgeItem.rarity].color } as React.CSSProperties}><ForgeHead item={forgeItem}/><ForgeBench s={s} send={send} busy={busy} item={forgeItem}/></article>
+            <div className="forge-picker" aria-label="강화할 부위">{(Object.keys(SLOTS) as (keyof typeof SLOTS)[]).map(id => { const it = s.equipment[id as keyof typeof s.equipment]; return <button type="button" key={id} aria-pressed={forgeSlot === id} className={`forge-pick${forgeSlot === id ? ' on' : ''}${it?.onyx ? ' onyx-frame' : ''}`} style={{ '--rarity': it ? RARITIES[it.rarity].color : '#5a6f71' } as React.CSSProperties} onClick={() => setForgeSlot(id)}>
+                <SlotIcon slot={id} size={18}/><span><small>{SLOTS[id]}</small><b className={it?.onyx ? 'onyx-name' : ''}>{it ? it.name : '비어 있음'}</b></span>{it && <em className="gold-text">★{it.enhance || 0}</em>}</button>; })}</div>
+            {forgeItem ? <article className={`panel forge-panel${forgeItem.onyx ? ' onyx-frame' : ''}`} style={{ '--rarity': RARITIES[forgeItem.rarity].color } as React.CSSProperties}><ForgeHead item={forgeItem}/><ForgeBench s={s} send={send} busy={busy} item={forgeItem}/></article>
                 : <div className="notice">착용한 {SLOTS[forgeSlot as keyof typeof SLOTS]}이 없습니다. 장비 보관함에서 장착하면 여기서 강화할 수 있습니다.</div>}
             <p className="footnote">보관 중인 장비는 장비 보관함에서 줄을 펼쳐 강화합니다.</p>
         </section>}

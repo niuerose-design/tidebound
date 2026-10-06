@@ -7,10 +7,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
 import { RESEARCH, RESEARCH_TABS, RESEARCH_GROUPS, RELICS, RELIC_GROWTH, HEIR_GROWTH, heirFactor, heirPower, ECONOMY, researchCost, researchEffect, researchUnlocked, researchMaxFor, startingLevel, type ResearchDef, type ResearchTab } from '@/game/data/economy';
-import { PROGRESSION } from '@/game/data/progression';
+import { PROGRESSION, STAT_LABELS, statDeltaDisplay } from '@/game/data/progression';
+import { STARFORCE, starLabel } from '@/game/data/starforce';
+import { inventoryCap } from '@/game/data/economy';
 import { RebirthHistory } from './rebirth-history';
-import { BALANCE } from '@/game/data/balance';
-import { ownsRelic, researchRefund } from '@/game/systems/commerce';
+import { SLOTS } from '@/game/data/balance';
+import { researchRefund } from '@/game/systems/commerce';
 import { rebirthRewardParts, tailwindActive, tailwindExp, xpWall, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
 import { stats, permanentExpBonus } from '@/game/systems/stats';
 import { apCapacity } from '@/game/systems/progression';
@@ -167,10 +169,39 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             <Tabs value={researchTab} onValueChange={v => setResearchTab(v as ResearchTab)}><TabsList className="game-tabs research-tabs">{RESEARCH_TABS.map(t => <TabsTrigger key={t.id} value={t.id}>{t.name}</TabsTrigger>)}</TabsList></Tabs>
             {showAutomation(s) && <ResearchPlanPanel s={s} send={send} busy={busy}/>}
             <ResearchTabView tab={researchTab} s={s} send={send} busy={busy}/></>}
-        {tab === 'relics' && <><p className="tab-intro">환생을 가로질러 자라는 장비입니다. 위력은 (레벨 + 2) × 배율이고 배율이 환생마다 오릅니다(지금 ×{heirFactor('relic', s.rebirths).toFixed(2)}, 환생 {HEIR_GROWTH.toRebirth}회 ×{HEIR_GROWTH.relic.to}). 별과 이식한 옵션(최대 {RELIC_GROWTH.imprintSlots}줄)은 환생해도 남고, 강화 파괴 대신 12성으로 돌아갑니다. 옵션 이식은 장비 보관함에서 같은 부위 장비를 소비해 합니다. 세계석 없이 환생 횟수를 채우면 받을 수 있고, 종류당 하나만 보유할 수 있습니다.</p><div className="port-gamble-grid">{RELICS.map(r => {
-            const owned = ownsRelic(s, r.id);
-            return <article className="panel market-card" key={r.id}><SlotIcon slot={r.slot} size={28}/><span className="badge">환생 {r.rebirth}회</span><h2>{r.name}</h2><p>{r.description}</p><BonusList item={{ ...r, id: r.id, rarity: 3, level: 1, power: heirPower('relic', s.rebirths, 1) }}/><button className="primary" disabled={busy || owned || s.rebirths < r.rebirth || s.inventory.length >= BALANCE.inventoryCap} onClick={() => send({ type: 'buyRelic', id: r.id })}>{owned ? '보유 중' : s.rebirths < r.rebirth ? `환생 ${r.rebirth}회 필요` : '수령'}</button></article>;
-        })}</div></>}
+        {tab === 'relics' && <RelicTab s={s} send={send} busy={busy}/>}
+    </>;
+}
+
+/** v3.78 환생 유물 탭: 규칙은 한 줄 요약 칩으로, 유물은 4열 카드(받기 전에는 Lv.1 수령 수치, 보유 중이면 지금 레벨 · 별 · 이식 옵션). */
+function RelicTab({ s, send, busy }: PanelProps) {
+    const full = s.inventory.length >= inventoryCap(s);
+    const owned = (id: string) => [...s.inventory, ...Object.values(s.equipment)].find(x => x?.relic === id) || null;
+    return <>
+        <p className="tab-intro">환생을 가로질러 자라는 장비입니다. 세계석 없이 환생 횟수를 채우면 받고, 별과 이식 옵션은 환생해도 남습니다. 강화 · 레벨 올리기 · 옵션 이식은 장비 보관함에서 합니다.</p>
+        <div className="relic-facts">
+            <span>위력 <b>(레벨 + 2) × 배율</b></span>
+            <span>지금 배율 <b>×{heirFactor('relic', s.rebirths).toFixed(2)}</b> <small>환생 {HEIR_GROWTH.toRebirth}회 ×{HEIR_GROWTH.relic.to}</small></span>
+            <span>이식 옵션 <b>최대 {RELIC_GROWTH.imprintSlots}줄</b> <small>같은 부위 장비 소비</small></span>
+            <span>강화 파괴 시 <b>{STARFORCE.relicResetStar}성</b>으로</span>
+            <span>종류당 <b>1개</b></span>
+        </div>
+        <div className="relic-grid">{RELICS.map(r => {
+            const item = owned(r.id), ready = s.rebirths >= r.rebirth;
+            const state = item ? '보유 중' : ready ? '받을 수 있음' : `환생 ${r.rebirth}회 필요`;
+            return <article className={`panel relic-card${item ? ' owned' : ready ? ' ready' : ''}`} key={r.id}>
+                <header><SlotIcon slot={r.slot} size={22}/><div><h2>{r.name}</h2><small>{SLOTS[r.slot]} · 환생 {r.rebirth}회부터</small></div></header>
+                <span className="relic-state">{state}</span>
+                <p className="relic-desc">{r.description}</p>
+                <p className="relic-affix">고유 옵션 · <b>{r.affix.name}</b> {STAT_LABELS[r.affix.stat]} {statDeltaDisplay(r.affix.stat, r.affix.value)}</p>
+                {item ? <div className="relic-owned">
+                    <b>Lv.{item.level || 1} <span className="gold-text">{starLabel(item.enhance || 0)}</span> · 위력 {item.power}</b>
+                    <small>이식 옵션 {item.affixes?.length || 0}/{RELIC_GROWTH.imprintSlots}줄{item.affixes?.length ? ` · ${item.affixes.map(x => x.name).join(' · ')}` : ''}</small>
+                    <BonusList item={item}/>
+                </div> : <div className="relic-preview"><small>받을 때(Lv.1) 능력치</small><BonusList item={{ ...r, id: r.id, rarity: 3, level: 1, power: heirPower('relic', s.rebirths, 1) }}/></div>}
+                {!item && <button className="primary" disabled={busy || !ready || full} onClick={() => send({ type: 'buyRelic', id: r.id })}>{!ready ? `환생 ${r.rebirth}회 필요` : full ? '가방이 가득 참' : '수령'}</button>}
+            </article>;
+        })}</div>
     </>;
 }
 

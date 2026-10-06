@@ -411,6 +411,12 @@
 .undiscovered .onyx-book-icon .onyx-art{opacity:.2}
 
 .onyx-item-card .item-icon{color:var(--rarity)}
+/* v3.78 칠흑: 태초(분홍)와 구분되는 검은 테두리 + 은빛 · 보랏빛 이름(◆). 도감 · 보관함 · 착용 칸 · 강화 작업대가 같은 표시를 씁니다. */
+.onyx-name{background:linear-gradient(90deg,#f6f2ff 0%,#b48cff 50%,#6fe0d8 100%);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+.onyx-name::before{content:'◆ ';color:#d9ccf7;-webkit-text-fill-color:#d9ccf7}
+.onyx-frame{--rarity:#c9b3f5!important;border:1px solid #000!important;border-top:2px solid #000!important;background:linear-gradient(160deg,#17121d,#0e1518 60%)!important;box-shadow:inset 0 0 0 1px #2f2840,0 0 16px rgba(170,140,230,.12)}
+.onyx-item-card .item-top>span{color:#cdbdf2}
+.gear-row.onyx-frame{border-left:3px solid #000!important}
 .onyx-item-card.unregistered .onyx-art{opacity:.35;filter:grayscale(.7)}
 
 /* v3.15 물건 도감 접기·등급 필터 */
