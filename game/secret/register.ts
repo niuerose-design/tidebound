@@ -8,8 +8,12 @@ import { registerJobs, registerLineages } from '../data/classes';
 import { registerSkills } from '../data/skills';
 import { SECRET_JOBS, SECRET_LINEAGES } from './jobs';
 import { SECRET_SKILLS } from './skills';
+import { setOdds } from '../data/odds';
+import { SERVER_ODDS } from './odds';
 
 registerLineages(SECRET_LINEAGES);
 registerJobs(SECRET_JOBS, true);
 // v3.47 비밀 직업의 스킬(완성된 모양).
 registerSkills(SECRET_SKILLS);
+// v3.52 드롭·확률 수치.
+setOdds(SERVER_ODDS);

@@ -24,6 +24,9 @@ export function loadGame() {
     }
     fs.writeFileSync(path.join(dir, 'package.json'), '{"type":"module"}');
     process.on('exit', () => fs.rmSync(dir, { recursive: true, force: true }));
-    const load = p => import(pathToFileURL(path.join(dir, p.replace(/^game\//, '').replace(/\.js$/, '') + '.js')).href);
+    const file = p => pathToFileURL(path.join(dir, p.replace(/^game\//, '').replace(/\.js$/, '') + '.js')).href;
+    // v3.52 서버 전용 값(비밀 직업·스킬·드롭 확률)을 먼저 채웁니다. 엔진 없이 모듈 하나만 불러 쓰는 테스트·스크립트도 서버와 같은 값을 봅니다.
+    let ready;
+    const load = async p => { await (ready ??= import(file('secret/register'))); return import(file(p)); };
     return cache = { dir, load };
 }
