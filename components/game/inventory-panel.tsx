@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Item, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, HEIR_GROWTH, AWAKENING, PRIMAL_INHERIT, heirFactor, awakenEssence, researchRank } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
-import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '@/game/data/progression';
+import { STAT_LABELS, byStatOrder, statDeltaDisplay, HIDDEN_STATS } from '@/game/data/progression';
 import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, primalGaugeOf, keepsAcrossLives, heirKind, rerollCost, refineCost, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
 import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT } from '@/game/data/gear';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
@@ -33,7 +33,7 @@ function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
     return <div className="affix-explanation">
         <b>{item.relic ? `이식 옵션 ${item.affixes!.length}/${RELIC_GROWTH.imprintSlots}줄` : `추가 옵션 ${item.affixes!.length}개`}{item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</b>
         {item.affixes!.map((x, i) => <div key={x.id + i} className="gear-option-row">
-            <span>{x.rule ? '◆ ' : ''}<b>{x.name}</b> · {STAT_LABELS[x.stat]} {statDeltaDisplay(x.stat, x.value)}{x.stat2 && x.value2 ? ` · ${STAT_LABELS[x.stat2]} ${statDeltaDisplay(x.stat2, x.value2)}` : ''}{quality(x) !== null && <em className="affix-quality"> · 수치 {quality(x)}%</em>}</span>
+            <span>{x.rule ? '◆ ' : ''}<b>{x.name}</b>{!HIDDEN_STATS.has(x.stat) && <> · {STAT_LABELS[x.stat]} {statDeltaDisplay(x.stat, x.value)}</>}{x.stat2 && x.value2 ? ` · ${STAT_LABELS[x.stat2]} ${statDeltaDisplay(x.stat2, x.value2)}` : ''}{quality(x) !== null && <em className="affix-quality"> · 수치 {quality(x)}%</em>}</span>
             <small>{affixDef(x.id)?.description}</small>
             {!item.relic && !(item.onyx && x.rule) && <span className="gear-option-actions"><ConfirmButton label="재설정" title={`${x.name} 옵션을 다시 굴릴까요?`} description={`이 옵션 하나만 바뀌고 나머지 옵션은 그대로입니다. 골드 ${format(cost.gold)} G와 정수 ${cost.essence}를 사용합니다. 같은 옵션은 중복되지 않고, 규칙 옵션(◆)은 장비당 1개까지입니다.`} disabled={busy || !canPay} onConfirm={() => send({ type: 'reforge', id: item.id, value: String(i) })}/>
                 {!x.rule && !affixDef(x.id)?.fixed && <ConfirmButton label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다. 지금보다 낮아질 수도 있습니다. 골드 ${format(refine.gold)} G와 정수 ${refine.essence}를 사용하며, 재련 비용은 오르지 않습니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
@@ -76,28 +76,17 @@ export function Inventory({ s, send, busy }: PanelProps) {
     const topStats = (item: Item) => byStatOrder(Object.entries(itemStats(item))).slice(0, STAT_PREVIEW).map(([key, value]) => <span key={key}>{STAT_LABELS[key as keyof Stats]} <b>{statDeltaDisplay(key, value as number)}</b></span>);
     const detail = (item: Item, equipped: boolean) => {
         const after = equipped ? current : preview.get(item.id)!.after;
-        const delta = Object.entries(after).filter(([k, n]) => Math.abs(n - current[k as keyof Stats]) > .001);
-        return <div className="gear-detail">
-            <p>{itemDescription(item)}</p>
-            <BonusList item={item}/>
-            <p className="footnote">직업 배율 적용 전 장비 기여 수치 · {starLabel(item.enhance || 0, true)} (기본 수치 ×{starMultiplier(item.enhance || 0).toFixed(2)}){item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</p>
-            {!!item.affixes?.length && <GearOptions s={s} send={send} busy={busy} item={item}/>}
-            {item.affix && <div className="affix-explanation">
-                <b>추가 옵션 · {item.affix.name}</b>
-                <span>{STAT_LABELS[item.affix.stat]} {statDeltaDisplay(item.affix.stat, item.affix.value)}</span>
-                <p>{AFFIXES.find(a => a.stat === item.affix?.stat)?.description || '장착 시 해당 능력치에 더해집니다.'} 위 수치에 포함됩니다.</p>
-            </div>}
-            {!equipped && <div className="equipment-comparison">
-                <small>교체 후 최종 능력치 변화</small>{delta.length ? byStatOrder(delta).map(([k, n]) => { const d = n - current[k as keyof Stats]; return <span key={k} className={d > 0 ? 'positive' : 'negative'}>{STAT_LABELS[k as keyof Stats]} {statDeltaDisplay(k, d)}</span>; }) : <span>변화 없음</span>}</div>}
+        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - current[k as keyof Stats]) > .001));
+        // v3.76 상세는 작업대 하나: 왼쪽 능력치 · 옵션(가방 장비는 교체 비교 · 판매/분해), 오른쪽 강화.
+        return <div className="gear-detail"><ForgeBench s={s} send={send} busy={busy} item={item} extra={!equipped && <>
+            <div className="equipment-comparison">
+                <small>교체 후 최종 능력치 변화</small>{delta.length ? delta.map(([k, n]) => { const d = n - current[k as keyof Stats]; return <span key={k} className={d > 0 ? 'positive' : 'negative'}>{STAT_LABELS[k as keyof Stats]} {statDeltaDisplay(k, d)}</span>; }) : <span>변화 없음</span>}</div>
             <div className="button-row">
-                {!equipped && <>
-                    <button className="secondary small" disabled={busy} onClick={() => send({ type: 'lockItem', id: item.id })}>{item.locked ? '보호 해제' : '보호'}</button>
-                    <ConfirmButton label={`${format(saleValue(item))} G 판매`} title={`${item.name}을(를) 판매할까요?`} description={`${format(saleValue(item))} G를 받고 장비가 사라집니다.`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'sell', id: item.id })}/>
-                    <ConfirmButton label={`분해 · 정수 +${dismantleEssence(item)}${primalGaugeOf(item) ? ' · 계승 게이지 +1' : ''}`} title={`${item.name}을(를) 분해할까요?`} description={`정수 ${dismantleEssence(item)}를 얻고 장비가 사라집니다.${primalGaugeOf(item) ? ` 태초 계승 게이지가 1 찹니다(${(s.primalGauge || 0) + 1}/${PRIMAL_INHERIT.gauge}).` : ''}`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'dismantle', id: item.id })}/>
-                </>}
+                <button className="secondary small" disabled={busy} onClick={() => send({ type: 'lockItem', id: item.id })}>{item.locked ? '보호 해제' : '보호'}</button>
+                <ConfirmButton label={`${format(saleValue(item))} G 판매`} title={`${item.name}을(를) 판매할까요?`} description={`${format(saleValue(item))} G를 받고 장비가 사라집니다.`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'sell', id: item.id })}/>
+                <ConfirmButton label={`분해 · 정수 +${dismantleEssence(item, s)}${primalGaugeOf(item) ? ' · 계승 게이지 +1' : ''}`} title={`${item.name}을(를) 분해할까요?`} description={`정수 ${dismantleEssence(item, s)}를 얻고 장비가 사라집니다.${primalGaugeOf(item) ? ` 태초 계승 게이지가 1 찹니다(${(s.primalGauge || 0) + 1}/${PRIMAL_INHERIT.gauge}).` : ''}`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'dismantle', id: item.id })}/>
             </div>
-            <details className="forge-details"><summary>{item.relic ? '강화 · 옵션 이식' : '강화 · 옵션 재설정'}</summary><EquipmentForge s={s} send={send} busy={busy} item={item}/></details>
-        </div>;
+        </>}/></div>;
     };
     const row = (item: Item, equipped = false) => {
         const gain = equipped ? 0 : preview.get(item.id)?.gain || 0, expanded = open === item.id;
@@ -121,10 +110,11 @@ export function Inventory({ s, send, busy }: PanelProps) {
     <WalletBar s={s} label="보관함 재화와 가방" extra={<div><Swords size={22}/><span>종합 전투력<strong>{format(currentPower)}</strong></span></div>}/>
     <section className="gear-slots" aria-label="착용 장비">{SLOT_IDS.map(id => { const worn = s.equipment[id], up = best(id); return <article key={id} className="panel gear-slot" style={{ '--rarity': worn ? RARITIES[worn.rarity].color : '#5a6f71' } as React.CSSProperties}>
         <div className="gear-slot-head"><SlotIcon slot={id} size={18}/><span>{SLOTS[id]}</span>{worn && <button type="button" className="text-button" disabled={busy} onClick={() => send({ type: 'unequip', id })}>해제</button>}</div>
-        {worn ? <button type="button" className="gear-slot-item" onClick={() => setOpen(open === worn.id ? null : worn.id)} aria-expanded={open === worn.id}><strong>{worn.name} <span className="gold-text">{starLabel(worn.enhance || 0, true)}</span></strong><small>{RARITIES[worn.rarity].name} · 위력 {worn.power}</small><span className="gear-row-stats">{topStats(worn)}</span></button> : <p className="gear-slot-empty">비어 있음</p>}
+        {worn ? <button type="button" className={`gear-slot-item${open === worn.id ? ' open' : ''}`} onClick={() => { const next = open === worn.id ? null : worn.id; setOpen(next); if (next && window.innerWidth <= 900) requestAnimationFrame(() => document.getElementById('gear-slot-open')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }} aria-expanded={open === worn.id}><strong>{worn.name} <span className="gold-text">{starLabel(worn.enhance || 0, true)}</span></strong><small>{RARITIES[worn.rarity].name} · 위력 {worn.power}</small><span className="gear-row-stats">{topStats(worn)}</span></button> : <p className="gear-slot-empty">비어 있음</p>}
         {up ? <div className="gear-slot-upgrade"><span><ArrowUpRight size={13}/>추천 <b>{up.name}</b> {gainBadge(preview.get(up.id)!.gain)}</span><button className="primary small" disabled={busy} onClick={() => send({ type: 'equip', id: up.id })}>바로 장착</button></div> : <p className="gear-slot-upgrade muted">가방에 더 좋은 {SLOTS[id]} 없음</p>}
-        {worn && open === worn.id && detail(worn, true)}
     </article>; })}</section>
+    {(() => { const worn = SLOT_IDS.map(id => s.equipment[id]).find(w => w && w.id === open); return worn && <article id="gear-slot-open" className="panel gear-slot-open" style={{ '--rarity': RARITIES[worn.rarity].color } as React.CSSProperties} aria-label={`${worn.name} 상세 · 강화`}>
+        <ForgeHead item={worn} onClose={() => setOpen(null)}/>{detail(worn, true)}</article>; })()}
     {upgrades.length > 1 && <p className="gear-upgrade-all"><ArrowUpRight size={14}/>{upgrades.length}개 칸에 더 좋은 장비가 있습니다. 각 칸의 ‘바로 장착’으로 하나씩 바꾸세요.</p>}
     <section className="gear-toolbar" aria-label="가방 필터">
         <label className="job-search-box gear-search"><Search size={15}/><input type="search" value={query} placeholder="장비 이름·등급·부위 검색" aria-label="장비 검색" onChange={e => setQuery(e.target.value)}/></label>
@@ -202,9 +192,11 @@ function HeirPanel({ s, send, busy, item }: PanelProps & { item: Item }) {
 /** v3.5 레벨 올리기: +10씩 내 레벨까지(v3.13 마지막 단은 내 레벨까지만). 위력·고정 수치 옵션이 레벨 비례로 오르고 별은 0으로 돌아갑니다. 유물은 레벨이 별 상한(12 + 레벨 ÷ 10)을 정합니다. */
 function GearLevelUp({ s, send, busy, item }: PanelProps & { item: Item }) {
     const next = levelUpTarget(item, s), cost = levelUpCost(item, s), star = item.enhance || 0;
+    // v3.76 더 올릴 레벨이 없으면 상자 대신 한 줄만 보여 줍니다.
+    if (!next) return <p className="forge-note">레벨 올리기 · Lv.{item.level || 1} · 내 레벨(Lv.{s.level})까지 올렸습니다{item.relic ? ` · 별 상한 ${enhanceMaxFor(item)}성` : ''}</p>;
     return <div className="relic-imprint">
-        <b>레벨 올리기 · Lv.{item.level || 1}{next ? ` → Lv.${next}` : ''}{item.relic ? ` · 별 상한 ${enhanceMaxFor(item)}성` : ''}</b>
-        {next ? <ConfirmButton label={`Lv.${next}로 올리기 · ${format(cost)} G`} title={`${item.name}을(를) Lv.${next}로 올릴까요?`} description={`위력과 고정 수치 옵션이 레벨에 맞춰 오릅니다.${star ? ` 지금 ★${star}은 0으로 돌아갑니다(강화 비용은 돌려받지 않음).` : ''}${item.relic ? ` 유물 별 상한이 ${RELIC_GROWTH.starBase + Math.floor(next / 10)}성이 됩니다.` : ''} 골드 ${format(cost)} G를 사용합니다.`} disabled={busy || s.gold < cost} onConfirm={() => send({ type: 'levelUp', id: item.id })}/> : <p className="footnote">내 레벨(Lv.{s.level})까지 올릴 수 있습니다.</p>}
+        <b>레벨 올리기 · Lv.{item.level || 1} → Lv.{next}{item.relic ? ` · 별 상한 ${enhanceMaxFor(item)}성` : ''}</b>
+        <ConfirmButton label={`Lv.${next}로 올리기 · ${format(cost)} G`} title={`${item.name}을(를) Lv.${next}로 올릴까요?`} description={`위력과 고정 수치 옵션이 레벨에 맞춰 오릅니다.${star ? ` 지금 ★${star}은 0으로 돌아갑니다(강화 비용은 돌려받지 않음).` : ''}${item.relic ? ` 유물 별 상한이 ${RELIC_GROWTH.starBase + Math.floor(next / 10)}성이 됩니다.` : ''} 골드 ${format(cost)} G를 사용합니다.`} disabled={busy || s.gold < cost} onConfirm={() => send({ type: 'levelUp', id: item.id })}/>
         <p className="footnote">한 번에 +{GEAR_LEVEL_UP.step}. 올리면 별이 0으로 돌아가니 별은 레벨을 다 올린 뒤에 쌓으세요.{heirKind(item) ? ' 유물·계승 장비 위력은 (레벨 + 2) × 환생 배율입니다.' : ''}</p>
     </div>;
 }
@@ -246,17 +238,49 @@ export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Ite
     const fire = (caught: boolean) => { setCatching(false); const flags = [guard ? 'safeguard' : '', caught ? 'catch' : ''].filter(Boolean).join(','); send({ type: 'enhance', id: item.id, ...(flags ? { value: flags } : {}) }); };
     const cost = enhanceCost(item, s) * (guard ? STARFORCE.safeguardCost : 1);
     const p = chance ? 1 : starSuccess(star), d = chance ? 0 : starDestroy(star, guard), f = Math.max(0, 1 - p - d), pct = (n: number) => `${Math.round(n * 1000) / 10}%`;
+    const legacyReroll = !(item.affixes?.length && !item.relic), reroll = rerollCost(item, s);
     return <div className="forge-actions">
-        <div className={`star-row ${fx}`} aria-label={`${star} / ${max}성`}>{Array.from({ length: max }, (_, i) => <i key={i} className={i < star ? 'on' : ''} aria-hidden>{i < star ? '★' : '☆'}</i>)}<b>{star} / {max}성</b></div>
-        {star < max && <dl className="star-odds"><div><dt>성공</dt><dd className="positive">{pct(p)}</dd></div><div><dt>실패</dt><dd>{pct(f)} · {starDrops(star) ? '1성 하락' : '유지'}</dd></div>{(d > 0 || canSafeguard(star)) && <div><dt>파괴</dt><dd className={d > 0 ? 'negative' : ''}>{pct(d)}</dd></div>}</dl>}
-        {chance && star < max && <p className="footnote positive">찬스 타임 · 하락이 두 번 이어져 다음 시도는 100% 성공합니다.</p>}
-        {canSafeguard(star) && <label className="altar-anon"><input type="checkbox" checked={safeguard} onChange={e => setSafeguard(e.target.checked)}/> 파괴 방지 (비용 ×{STARFORCE.safeguardCost})</label>}
-        {catching ? <StarCatch bonus={STARFORCE.catchBonus} onResult={fire}/> : <button className="primary" disabled={busy || star >= max || s.gold < cost} onClick={() => catchOn && !chance ? setCatching(true) : fire(false)}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${format(cost)} G${catchOn && !chance ? ' · 스타캐치' : ''}`}</button>}
-        <p className="footnote">1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}성부터 +{STARFORCE.gainHigh * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. 파괴된 장비는 사라지고 유물은 {STARFORCE.relicResetStar}성으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p>
-        {star < max && researchRank(s, 'autoStar') > 0 && <AutoStar s={s} send={send} busy={busy} item={item} safeguard={guard}/>}
+        <section className="forge-star" aria-label="스타포스">
+            <div className="forge-star-head"><b>스타포스</b><span className="gold-text">★{star} / {max}성</span></div>
+            <div className={`star-row ${fx}`} aria-label={`${star} / ${max}성`}>{Array.from({ length: max }, (_, i) => <i key={i} className={i < star ? 'on' : ''} aria-hidden>{i < star ? '★' : '☆'}</i>)}</div>
+            {star < max && <dl className="star-odds"><div><dt>성공</dt><dd className="positive">{pct(p)}</dd></div><div><dt>실패</dt><dd>{pct(f)} · {starDrops(star) ? '1성 하락' : '유지'}</dd></div>{(d > 0 || canSafeguard(star)) && <div><dt>파괴</dt><dd className={d > 0 ? 'negative' : ''}>{pct(d)}</dd></div>}</dl>}
+            {chance && star < max && <p className="footnote positive">찬스 타임 · 하락이 두 번 이어져 다음 시도는 100% 성공합니다.</p>}
+            {canSafeguard(star) && <label className="altar-anon"><input type="checkbox" checked={safeguard} onChange={e => setSafeguard(e.target.checked)}/> 파괴 방지 (비용 ×{STARFORCE.safeguardCost})</label>}
+            {catching ? <StarCatch bonus={STARFORCE.catchBonus} onResult={fire}/> : <button className="primary" disabled={busy || star >= max || s.gold < cost} onClick={() => catchOn && !chance ? setCatching(true) : fire(false)}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${format(cost)} G${catchOn && !chance ? ' · 스타캐치' : ''}`}</button>}
+            {star < max && researchRank(s, 'autoStar') > 0 && <AutoStar s={s} send={send} busy={busy} item={item} safeguard={guard}/>}
+            <details className="forge-rules"><summary>강화 규칙</summary><p>1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}성부터 +{STARFORCE.gainHigh * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. 파괴된 장비는 사라지고 유물은 {STARFORCE.relicResetStar}성으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p></details>
+        </section>
         <GearLevelUp s={s} send={send} busy={busy} item={item}/>
         {item.relic && <RelicImprint s={s} send={send} busy={busy} item={item}/>}
         {(item.rarity === 5 || item.rarity === 6) && !item.relic && !item.onyx && <HeirPanel s={s} send={send} busy={busy} item={item}/>}
-        {item.affixes?.length && !item.relic ? <p className="footnote">옵션은 위 옵션 목록에서 하나씩 재설정합니다.</p> : <ConfirmButton label={`옵션 재설정 · ${format(rerollCost(item, s).gold)} G + 정수 ${rerollCost(item, s).essence}`} title="추가 옵션을 무작위로 바꿀까요?" description={`이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다. 골드 ${format(rerollCost(item, s).gold)} G와 정수 ${rerollCost(item, s).essence}(보유 ${s.essence || 0})를 사용합니다.`} disabled={busy || item.rarity === 0 || s.gold < rerollCost(item, s).gold || (s.essence || 0) < rerollCost(item, s).essence} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}
+        {legacyReroll && <ConfirmButton label={`옵션 재설정 · ${format(reroll.gold)} G + 정수 ${reroll.essence}`} title="추가 옵션을 무작위로 바꿀까요?" description={`이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다. 골드 ${format(reroll.gold)} G와 정수 ${reroll.essence}(보유 ${s.essence || 0})를 사용합니다.`} disabled={busy || item.rarity === 0 || s.gold < reroll.gold || (s.essence || 0) < reroll.essence} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}
+    </div>;
+}
+
+/** v3.76 장비 이름 · 등급 · 위력 머리줄(상점 강화 탭과 착용 장비 상세가 같이 씁니다). */
+export function ForgeHead({ item, onClose }: { item: Item; onClose?: () => void }) {
+    return <header className="forge-head">
+        <span className={`gear-row-icon${item.onyx ? ' onyx-icon' : ''}`}>{item.onyx ? <OnyxArt id={item.onyx} size={30}/> : <SlotIcon slot={item.slot} size={20}/>}</span>
+        <div><h2>{item.name} <span className="gold-text">{starLabel(item.enhance || 0)}</span></h2><small>{RARITIES[item.rarity].name} · {SLOTS[item.slot]} · 위력 {item.power} · {item.relic ? '유물 · ' : item.heir ? `${HEIR_LABEL[item.heir]} · ` : ''}Lv.{item.level}{item.affixes?.length ? ` · 옵션 ${item.affixes.length}` : ''}</small></div>
+        {onClose && <button type="button" className="text-button" onClick={onClose}>닫기</button>}
+    </header>;
+}
+
+/** v3.76 장비 작업대: 왼쪽 능력치 · 옵션(재설정 · 재련), 오른쪽 스타포스 · 레벨 · 계승. 좁은 화면에서는 위아래로 쌓입니다. */
+export function ForgeBench({ s, send, busy, item, extra }: PanelProps & { item: Item; extra?: React.ReactNode }) {
+    return <div className="forge-bench">
+        <div className="forge-bench-info">
+            <p className="forge-desc">{itemDescription(item)}</p>
+            <BonusList item={item}/>
+            <p className="footnote">직업 배율 적용 전 장비 기여 수치 · {starLabel(item.enhance || 0, true)} (기본 수치 ×{starMultiplier(item.enhance || 0).toFixed(2)}){item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</p>
+            {!!item.affixes?.length && <GearOptions s={s} send={send} busy={busy} item={item}/>}
+            {item.affix && <div className="affix-explanation">
+                <b>추가 옵션 · {item.affix.name}</b>
+                <span>{STAT_LABELS[item.affix.stat]} {statDeltaDisplay(item.affix.stat, item.affix.value)}</span>
+                <p>{AFFIXES.find(a => a.stat === item.affix?.stat)?.description || '장착 시 해당 능력치에 더해집니다.'} 위 수치에 포함됩니다.</p>
+            </div>}
+            {extra}
+        </div>
+        <div className="forge-bench-work"><EquipmentForge s={s} send={send} busy={busy} item={item}/></div>
     </div>;
 }

@@ -60,7 +60,9 @@ export const DETAIL_STATS = ['statusResist', 'chainBonus', 'bossDamage', 'allSta
 /** 0보다 클 때만 상세 능력치에 보이는 항목. */
 export const OPTIONAL_STATS = new Set(['thorns', 'dotBonus', 'bleedBonus', 'poisonBonus', 'burnBonus', 'arcaneStrike', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'followUpBonus', 'healBonus', 'executeBonus', 'variantFind', 'goldenFind']);
 const STAT_ORDER: string[] = [...CORE_STATS, ...DETAIL_STATS];
-export const byStatOrder = <T extends [string, unknown]>(entries: T[]) => [...entries].sort((a, b) => (STAT_ORDER.indexOf(a[0]) + 1 || 99) - (STAT_ORDER.indexOf(b[0]) + 1 || 99));
+/** v3.76 화면에 숫자로 보이지 않는 능력치(꽝 옵션 장식은 이름 앞 '반짝이는'으로만 보입니다). */
+export const HIDDEN_STATS = new Set(['ornament']);
+export const byStatOrder = <T extends [string, unknown]>(entries: T[]) => entries.filter(e => !HIDDEN_STATS.has(e[0])).sort((a, b) => (STAT_ORDER.indexOf(a[0]) + 1 || 99) - (STAT_ORDER.indexOf(b[0]) + 1 || 99));
 /** 명중·회피는 적중 확률이 아닌 수치입니다. 실제 적중률은 상대 회피·속도와 함께 1~99.5%로 계산됩니다. */
 export const RATING_STATS = new Set(['accuracy', 'evasion']);
 /** 최종 능력치 표시: 확률·보너스는 %, 명중·회피는 수치, 치명 피해는 배율, 나머지는 고정 수치. */
