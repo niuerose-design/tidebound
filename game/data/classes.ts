@@ -230,10 +230,9 @@ JOBS.push(...(INVERSION_JOBS as Job[]));
 JOBS.push(...(MONOSTAT_JOBS as Job[]));
 // v3.18 해커: 전투 대신 서버를 해킹하는 ??? 독립 직업. 자세한 설계는 hacker.ts·docs/concept.md 9장.
 JOBS.push(...(HACKER_JOBS as Job[]));
-for (const job of JOBS) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
 
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
-for (const id of ['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger', 'tideSaint', 'lifeOcean']) JOBS.find(j => j.id === id)!.healer = true;
+const HEALERS = new Set(['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger', 'tideSaint', 'lifeOcean']);
 
 // 특정 스킬/직업을 마스터해야만 열리는 교차 전직 조건입니다.
 // 값은 스킬 숙련 단계(1~4) 또는 직업 숙련 승수로 작성합니다.
@@ -261,8 +260,6 @@ const advancedRequirements: Record<string, Pick<Job, 'requiresSkillMastery' | 'r
     abyssArchivist: { requiresSkillMastery: { pearlLedger: 4 }, requiresJobMastery: { pearlBroker: 150 } },
     krakenkin: { requiresSkillMastery: { electricBite: 4 }, requiresJobMastery: { stormEel: 150 } },
 };
-for (const job of JOBS)
-    Object.assign(job, advancedRequirements[job.id] || {});
 
 /**
  * Job mastery is intentionally not a single 150-win switch.  The target and
@@ -282,17 +279,6 @@ const JOB_MASTERY_TUNING: Record<string, { target: number; boost: number }> = {
     reefBrawler: { target: 2400, boost: .18 }, lineBreaker: { target: 2800, boost: .19 }, runeSwell: { target: 2800, boost: .19 }, saltAlchemist: { target: 3300, boost: .2 }, reefMedic: { target: 3200, boost: .2 }, bellTurtle: { target: 3600, boost: .21 }, clockworkAngler: { target: 5200, boost: .23 }, gambler: { target: 9000, boost: .27 }, pearlBroker: { target: 8000, boost: .26 }, rareTracker: { target: 8500, boost: .27 }, stormEel: { target: 7000, boost: .25 },
     krakenSlayer: { target: 9000, boost: .3 }, needleDancer: { target: 8500, boost: .29 }, stormScribe: { target: 11000, boost: .32 }, lunarOracle: { target: 10000, boost: .3 }, coralSaint: { target: 12000, boost: .33 }, brineThorn: { target: 13000, boost: .34 }, bloodTide: { target: 45000, boost: .38 }, manaLeviathan: { target: 90000, boost: .4 }, soulHarvester: { target: 70000, boost: .4 }, abyssArchivist: { target: 100000, boost: .42 }, krakenkin: { target: 100000, boost: .42 },
 };
-for (const job of JOBS) {
-    const tuning = JOB_MASTERY_TUNING[job.id] || { target: job.tier >= 3 ? 12000 : job.tier === 2 ? 3000 : 300, boost: job.tier >= 3 ? .3 : job.tier === 2 ? .18 : .08 };
-    job.masteryTarget ??= tuning.target;
-    job.masteryBoost ??= tuning.boost;
-}
-// v27.95 차수별 요구 숙련 상향(1·2차 그대로). 5차 전직은 선행 직업 숙달(올린 숙달 수치)이 필요합니다.
-for (const job of JOBS) job.masteryTarget = Math.round(job.masteryTarget! * (PROGRESSION.jobMasteryTierScale[job.tier] ?? 1));
-for (const job of JOBS) {
-    const parent = job.tier >= 5 && job.parent ? JOBS.find(j => j.id === job.parent) : undefined;
-    if (parent) job.mastery = Math.max(job.mastery || 0, parent.masteryTarget!);
-}
 
 /** 히든·??? 문 직업의 힌트. 이름·조건을 숨긴 실루엣 카드에 한 줄로 보입니다. */
 const JOB_HINTS: Record<string, string> = {
@@ -308,12 +294,47 @@ const JOB_HINTS: Record<string, string> = {
     rebirthFisher: '환생 뒤, 윤회의 문이 이 이름을 부를 때.',
     abyssMimic: '메아리를 오래 길들인 자에게 보스의 그림자가 닿습니다.',
 };
-for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id] ?? V25_HINTS[job.id] ?? DEFENSE_HINTS[job.id];
-// v27.36 메이플 직업 이름: maple-names.ts 한곳에서 덮어씁니다(id는 그대로).
-const MAPLE_JOB_NAMES = mapleJobNames(JOBS);
-for (const job of JOBS) job.name = MAPLE_JOB_NAMES[job.id] ?? job.name;
-// v27.51 칭호·설명·힌트의 바다 표현: maple-flavor.ts.
-for (const job of JOBS) Object.assign(job, MAPLE_JOB_FLAVOR[job.id]);
+
+/**
+ * v3.41 직업 표 후처리를 한곳에 모았습니다(docs/concept.md 10장). 불러올 때 기본 직업 표에 한 번,
+ * 그 뒤 서버 전용 비밀 직업이나 화면이 받은 카탈로그 직업을 registerJobs로 더할 때 그 묶음에만 다시 적용합니다.
+ * 순서가 결과를 정하므로 바꾸지 마세요: 설명 → 회복 → 교차 조건 → 숙련 목표 → 차수 배율 → 5차 선행 숙련 → 힌트 → 메이플 이름 → 칭호·설명.
+ */
+function finishJobs(list: Job[]) {
+    for (const job of list) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
+    for (const job of list) if (HEALERS.has(job.id)) job.healer = true;
+    for (const job of list) Object.assign(job, advancedRequirements[job.id] || {});
+    for (const job of list) {
+        const tuning = JOB_MASTERY_TUNING[job.id] || { target: job.tier >= 3 ? 12000 : job.tier === 2 ? 3000 : 300, boost: job.tier >= 3 ? .3 : job.tier === 2 ? .18 : .08 };
+        job.masteryTarget ??= tuning.target;
+        job.masteryBoost ??= tuning.boost;
+    }
+    // v27.95 차수별 요구 숙련 상향(1·2차 그대로). 5차 전직은 선행 직업 숙달(올린 숙달 수치)이 필요합니다.
+    for (const job of list) job.masteryTarget = Math.round(job.masteryTarget! * (PROGRESSION.jobMasteryTierScale[job.tier] ?? 1));
+    for (const job of list) {
+        const parent = job.tier >= 5 && job.parent ? JOBS.find(j => j.id === job.parent) : undefined;
+        if (parent) job.mastery = Math.max(job.mastery || 0, parent.masteryTarget!);
+    }
+    for (const job of list) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id] ?? V25_HINTS[job.id] ?? DEFENSE_HINTS[job.id];
+    // v27.36 메이플 직업 이름: maple-names.ts 한곳에서 덮어씁니다(id는 그대로).
+    const names = mapleJobNames(list);
+    for (const job of list) job.name = names[job.id] ?? job.name;
+    // v27.51 칭호·설명·힌트의 바다 표현: maple-flavor.ts.
+    for (const job of list) Object.assign(job, MAPLE_JOB_FLAVOR[job.id]);
+}
+finishJobs(JOBS);
+/**
+ * v3.41 직업 더하기: 서버는 비밀 직업 표를, 화면은 서버가 보낸 카탈로그 직업을 여기로 넣습니다.
+ * 이미 있는 id는 건너뜁니다(같은 묶음을 두 번 받아도 안전). 더한 직업 수를 돌려줍니다.
+ */
+export function registerJobs(list: Job[], finished = false) {
+    const fresh = list.filter(j => !JOBS.some(x => x.id === j.id));
+    if (!fresh.length) return 0;
+    JOBS.push(...fresh);
+    if (!finished) finishJobs(fresh);
+    jobByIdMap = undefined; lineageCache = new WeakMap();
+    return fresh.length;
+}
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };
@@ -380,7 +401,7 @@ export function lineageOf(job: Job): string {
     lineageCache.set(job, out);
     return out;
 }
-const lineageCache = new WeakMap<Job, string>();
+let lineageCache = new WeakMap<Job, string>();
 /** 직업 성격 태그. tags가 없으면 role을 '·'로 나눕니다. */
 export const jobTags = (job: Job) => job.tags ?? job.role.split('·').map(x => x.trim()).filter(Boolean);
 

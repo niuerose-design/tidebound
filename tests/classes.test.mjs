@@ -60,3 +60,13 @@ test('v27.4 constraint framework: every job with a multiplier ≤ 0.3 declares a
     strike(fast, slow, () => .5); assert.equal(slow.hp, 1, 'job last stand keeps 1 hp'); strike(fast, slow, () => .5); assert.equal(slow.hp, 1); strike(fast, slow, () => .5); assert.equal(slow.hp, 0, 'two charges only');
     const s = newState(0); s.level = 10; s.unlockedJobs.push('glassHarpooner'); const before = stats(s).evasion; s.job = 'glassHarpooner'; assert.ok(Math.abs(stats(s).evasion - before - .3) < 1e-9, 'evasion device applied');
 });
+
+test('v3.41 registerJobs: adds a batch once with the same finishing steps (hint, mastery target, maple name), existing ids are skipped', async () => {
+    const C = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/classes');
+    assert.equal(C.registerJobs([JOBS[0]]), 0, 'already there');
+    const before = C.JOBS.length, fake = { id: 'zzSecretTest', name: '시험 직업', title: '', desc: '', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, mastery: 0, requires: {}, role: '시험', tree: 'mystery', hidden: true };
+    assert.equal(C.registerJobs([fake]), 1); assert.equal(C.JOBS.length, before + 1);
+    const got = C.jobById('zzSecretTest'); assert.ok(got && got.masteryTarget > 0 && got.masteryBoost > 0, 'mastery tuning applied');
+    assert.equal(C.registerJobs([{ ...fake }]), 0, 'same id twice is skipped');
+    C.JOBS.splice(C.JOBS.indexOf(got), 1); assert.equal(C.JOBS.length, before);
+});
