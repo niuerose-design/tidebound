@@ -167,7 +167,7 @@ test('v3.25 white hacker: needs hacker mastery, same constraints, keeps adguard,
     assert.equal(s.hacker.season.restores, 1);
     act(s, { type: 'hackRun', id: 'patch', value: `dungeon:${W.DUNGEONS[0].id}` }, 0); assert.equal(s.hacker.pending.minutes, 60);
     const m = s.jobMastery.whiteHacker || 0; H.gainHacker(s, 0, 50); assert.ok(s.jobMastery.whiteHacker > m, 'mastery goes to the white hacker job');
-    act(s, { type: 'job', id: 'fisher' }, 0); assert.ok(!s.skills.includes('adGuard') || s.skills.length, 'leaves the hacker line');
+    act(s, { type: 'job', id: 'fisher' }, 0); assert.equal(s.job, 'fisher', 'leaves the hacker line'); assert.ok(!s.skills.includes('adGuard'), 'hacker skills are unequipped');
 });
 
 test('v3.25 server: pending hacks write the shared config, white hackers restore for a bounty, sniffing counts active players, board rows', async () => {

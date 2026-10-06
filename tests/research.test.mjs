@@ -84,7 +84,8 @@ test('Research v2: online ticks and one offline settlement give the same result 
     };
     // 까미는 오프라인 정산 중 확률이 ¼이라(v27.35) 이 비교에서는 끕니다.
     const minLevel = MIMIC_DATA.minLevel, nuriLevel = NURI_DATA.minLevel; MIMIC_DATA.minLevel = 999; NURI_DATA.minLevel = 999;
-    const offline = make(), online = make(), end = 3600_000;
+    // 20분이면 처치 100마리와 숙련 나머지(masteryCarry)를 넘깁니다.
+    const offline = make(), online = make(), end = 20 * 60_000;
     try {
         advance(offline, end, seeded(42));
         const rng = seeded(42); for (let t = 2000; t <= end; t += 2000) advance(online, t, rng);
@@ -98,7 +99,7 @@ test('Research v2: online ticks and one offline settlement give the same result 
 import { reward, expMultiplier, metaMod, mimicChanceOf, migrateState, randomGameRunsLeft } from './harness.mjs';
 const counting = (value = .99) => { const f = () => { f.calls++; return typeof value === 'function' ? value(f.calls) : value; }; f.calls = 0; return f; };
 
-test('Research v3: four special entries match the plan table and sit in the utility special group', () => {
+test('Research v3: three special entries match the plan table and sit in the utility special group', () => {
     const table = { tailwindSail: [5, 8, 5, 2, 90], sortingNet: [2, 10, 10, 2, 30], messageBottle: [10, 6, 4, 3, 240] }; // v3.31 행운의 편지 최대 10단계(6~10단계는 승천 후)
     for (const [id, [max, base, step, rebirth, total]] of Object.entries(table)) {
         const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.tab, r.group], [max, base, step, rebirth, 'utility', 'special'], id);
@@ -192,13 +193,14 @@ test('v27.86 random game: research-gated entries per life, random monsters by wa
 
 test('Vows · one breath: a fall soft-resets the life (online and offline); an unbroken life adds rebirth pearls', () => {
     const s = vowReady({ vowBreath: 1 }, { breath: true }); act(s, { type: 'rebirth' }, 0); assert.equal(s.vows.breath, true);
-    s.level = 20; s.gold = 5000; s.pearls = 7; const rebirths = s.rebirths, lifeBonus = s.lifeBonus, deaths = s.deaths;
+    s.level = 20; s.gold = 5000; s.pearls = 7; const rebirths = s.rebirths, deaths = s.deaths;
     s.running = true; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
     tick(s, () => .5);
-    assert.equal(s.level, 1); assert.equal(s.gold, 100); assert.equal(s.pearls, 7); assert.equal(s.rebirths, rebirths); assert.equal(s.lifeBonus, lifeBonus);
+    assert.equal(s.level, 1); assert.equal(s.gold, 100); assert.equal(s.pearls, 7); assert.equal(s.rebirths, rebirths);
     assert.equal(s.deaths, deaths + 1); assert.equal(s.vows, undefined); assert.equal(s.running, true); assert.ok(s.logs.some(l => l.text.includes('하드코어')));
     const o = vowReady({ vowBreath: 1 }, { breath: true }); act(o, { type: 'rebirth' }, 0); act(o, { type: 'stage', id: 'brook' }, 0); o.stage = 'trench'; act(o, { type: 'start' }, 0);
-    advance(o, 2 * 3600_000, seeded(9)); assert.equal(o.vows, undefined); assert.equal(o.stage, 'brook'); assert.ok(o.kills > 0 || o.deaths > 0);
+    // 깊은 사냥터에서는 10분 안에 쓰러집니다(2시간을 돌리던 것을 줄임).
+    advance(o, 10 * 60_000, seeded(9)); assert.equal(o.vows, undefined); assert.equal(o.stage, 'brook'); assert.ok(o.kills > 0 || o.deaths > 0);
     const plain = vowReady(), vowed = vowReady({ vowBreath: 3 }); vowed.vows = { breath: true }; const p0 = plain.pearls, v0 = vowed.pearls;
     const base = rebirthReward(plain, stats(plain).rebirthBonus || 0);
     act(plain, { type: 'rebirth' }, 0); act(vowed, { type: 'rebirth' }, 0);

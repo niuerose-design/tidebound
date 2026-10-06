@@ -328,17 +328,9 @@
     gap:7px
   }
 
-  .log-panel {
-    padding:17px 14px 10px
-  }
-
   .section-title h2 {
     font-size:14px;
     gap:8px
-  }
-
-  .log-panel .micro {
-    display:none
   }
 
   .log-line {

@@ -11,7 +11,9 @@ export const DOORS: { id: DoorId; name: string; summary: string }[] = [
     { id: 'discovery', name: '발견의 문', summary: '숨은 조건을 처음 만족하면 열리고, 그 뒤로 계속 열려 있습니다.' },
 ];
 
-const KST = 9 * 3600_000;
+/** 한국 시간(UTC+9) 오프셋. kstIso(t)는 그 시각의 한국 시간을 ISO 문자열로(끝의 Z는 무시하고 앞부분만 잘라 씁니다). */
+export const KST = 9 * 3600_000;
+export const kstIso = (t: number) => new Date(t + KST).toISOString();
 /** 한국 시간 기준 시(0~23)와 날짜 키(YYYY-MM-DD). */
 export function kst(now: number) {
     const d = new Date(now + KST);

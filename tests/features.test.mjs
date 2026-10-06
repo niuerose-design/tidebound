@@ -14,7 +14,7 @@ test('Stat trace: per-source deltas sum to the final value and do not change the
  s.equipment.rod={id:'t',slot:'rod',rarity:2,power:30,level:20,name:'t',enhance:3};
  const plain=stats(s),trace={},traced=stats(s,trace);assert.deepEqual(traced,plain);
  for(const [k,v] of Object.entries(traced)){const sum=(trace[k]||[]).reduce((a,x)=>a+x.delta,0);assert.ok(Math.abs(sum-v)<1e-6,`${k}: ${sum} vs ${v}`);}
- assert.ok(trace.hp.some(x=>x.source==='research'&&x.factor>1));assert.ok(trace.hp.some(x=>x.source==='rebirth'));assert.ok(trace.attack.some(x=>x.source==='book'));assert.ok(trace.attack.some(x=>x.source==='equipment')||trace.magic.some(x=>x.source==='equipment')||Object.values(trace).flat().some(x=>x.source==='equipment'));
+ assert.ok(trace.hp.some(x=>x.source==='research'&&x.factor>1));assert.ok(trace.hp.some(x=>x.source==='rebirth'));assert.ok(trace.attack.some(x=>x.source==='book'));assert.ok(Object.values(trace).flat().some(x=>x.source==='equipment'));
 });
 test('Stage visits: recorded silently for plain stages only, survive rebirth; tutorial skip grants nothing',()=>{
  const s=newState(0);act(s,{type:'start'},0);tick(s,rng);assert.ok(s.voyage['stage:brook']>=0);assert.equal(s.logs.filter(l=>l.text.includes('항해 기록')).length,0,'v25.13: visits are recorded silently');
@@ -30,9 +30,12 @@ test('Recovery v27.8: 20% after a win minus 1%p per sea tier (min 5%), 8% in dun
  s.dungeon={id:'grotto',wave:0};assert.equal(victoryHeal(s),Math.floor(max*.08));
  const src=encounterSource.slice(encounterSource.indexOf('function reward('));const end=src.indexOf('\nexport function ');assert.equal(((end<0?src:src.slice(0,end)).match(/victoryHeal\(/g)||[]).length,1);
 });
-test('v3.38 growth goal is gone: the action is refused and old saves drop the field and the legacy guild record',()=>{
- const s=newState(0);assert.throws(()=>act(s,{type:'growthGoal',id:'whaler',value:'job'},0),/지원하지 않는/);
- s.growthGoal={kind:'job',id:'whaler'};s.guild={name:'',level:3};migrateState(s,0);assert.equal('growthGoal' in s,false);assert.equal('guild' in s,false);
+test('removed features: their actions are refused and old saves drop the leftover fields',()=>{
+ // v3.37 문 알림 설정(doorNotice) · v3.38 성장 목표(growthGoal)
+ for(const a of [{type:'growthGoal',id:'whaler',value:'job'},{type:'doorNotice',value:'off'}])assert.throws(()=>act(newState(0),a,0),/지원하지 않는/,a.type);
+ // v3.36 개인 길드 기록 · v3.37 문 알림 끄기 · v3.38 성장 목표 · v3.60 뒤 정리: 무리 규모 선택·생 보너스·애드가드 공개 항목
+ const s=newState(0);Object.assign(s,{growthGoal:{kind:'job',id:'whaler'},guild:{name:'',level:3},hideDoorNotice:true,swarm:100,lifeBonus:'tailwind',privacy:{show:['job']}});migrateState(s,0);
+ for(const key of ['growthGoal','guild','hideDoorNotice','swarm','lifeBonus','privacy'])assert.equal(key in s,false,key);
 });
 test('v3.38 AP sources: the breakdown sums to the cap and abyss floors no longer give AP',async()=>{
  const P=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');

@@ -1,7 +1,7 @@
 /** v25.6 업적·일일/주간 모험 목표·주간 심연 기록. 난수를 쓰지 않고 저장 상태만 바꿉니다. */
 import type { State } from '../types';
 import { ACHIEVEMENTS, achievementById } from '../data/achievements';
-import { makeGoals, rerollGoal, dayKey, weekKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, goalText, type Goal, type GoalBoard, type GoalKind } from '../data/goals';
+import { makeGoals, rerollGoal, dayKey, weekKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, goalText, type GoalBoard, type GoalKind } from '../data/goals';
 
 /** 새로 달성한 업적을 해금합니다. 보상은 기록 화면에서 받습니다(claimAchievement). 기록이 없던 세이브는 이미 달성한 업적을 조용히 채웁니다. */
 export function syncAchievements(s: State, log: (text: string) => void) {
@@ -70,8 +70,6 @@ export function rerollBoardGoal(s: State, id: string, now: number) {
     const weekly = which === 'weekly', b = board(s, weekly, now);
     return { weekly, goal: rerollGoal(s, b, goalId || '', dayKey(now), weekly) };
 }
-export const goalSummary = (b?: GoalBoard) => b ? { done: b.goals.filter(g => g.claimed).length, total: b.goals.length } : { done: 0, total: 0 };
-export type { Goal, GoalBoard };
 
 /** 주간 심연 기록: 이번 주 가장 깊은 층. dirty는 서버가 랭킹에 올릴 때까지 남습니다. */
 export function recordAbyssDepth(s: State, depth: number, now: number) {

@@ -14,8 +14,8 @@ import 'server-only';
 import type { State } from '../types';
 import { FISH } from './world';
 import { masteredJobCount } from '../systems/progression';
-import { DOORS, kst, setDoorSource, type DoorId } from './door-info';
-export { DOORS, kst, type DoorId };
+import { DOORS, setDoorSource, type DoorId } from './door-info';
+export { DOORS, type DoorId };
 
 /** 윤회의 문: 환생할 때 한 직업을 골라 다음 생 동안 엽니다. */
 export const REBIRTH_DOOR_JOBS = ['rebirthFisher', 'voidcaller'];

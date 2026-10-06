@@ -344,10 +344,6 @@ export type State = {
     version: number;
     /** SP를 지급한 무릉도장 이정표 깊이. 환생해도 유지됩니다. */
     abyssMilestones?: number[];
-    /** (구) 선택한 무리 사냥 규모. v25.19부터 무리는 변종으로 무작위 등장하며 이 값은 쓰지 않습니다. */
-    swarm?: number;
-    /** 직전 환생 방식에 따른 이번 생의 효과. 다음 환생 때 다시 정해집니다. */
-    lifeBonus?: 'deep' | 'tailwind' | null;
     /** v26.1 지금 진행 중인 서버 이벤트(서버가 동기화 때 적음). 없으면 null. */
     event?: import('./data/events').ActiveEvent | null;
     /** v27.31 운영 페이지에서 닫은 사냥터·던전(서버가 동기화 때 적음). 없으면 null. */
@@ -356,8 +352,7 @@ export type State = {
     openDoors?: string[] | null;
     /** 마지막으로 자동 진행(사냥·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
     runEnd?: { reason: string; turn: number } | null;
-    /** 튜토리얼 카드. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. */
-    /** 모험 안내. done은 한 번 만족한 단계의 기록(턴)으로, 조건이 깨져도 되돌아가지 않습니다(v27.72). */
+    /** 모험 안내. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. done은 한 번 만족한 단계의 기록(턴)으로, 조건이 깨져도 되돌아가지 않습니다(v27.72). */
     tutorial?: { hidden?: boolean; skipped?: boolean; done?: Record<string, number> };
     /** 해금한 항해 기록 id → 해금 턴(-1은 도입 전에 이미 달성해 조용히 채운 기록). 환생 후에도 유지됩니다. */
     voyage?: Record<string, number>;
@@ -508,7 +503,6 @@ export type State = {
     /** v3.35 자동 분해기·자동 판매기가 처리할 등급(1 희귀 ~ 5 고대). 없으면 연구 단계 기본값(1단계 희귀, 2단계 영웅 이하). 한 등급은 한 장치에만. */
     autoSellGrades?: number[];
     autoVendGrades?: number[];
-    /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
     /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */
     skipStatConfirm?: boolean;
     /** v27.32 설정: 만날 무리의 최대 규모(0이면 무리 끔). 없으면 제한 없음. 상한을 넘게 뽑힌 무리는 상한 규모로 나옵니다. */
@@ -561,8 +555,6 @@ export type State = {
     hacker?: HackerState;
     /** v3.26 저장 전에 /api/game이 읽고 지우는 임시 표시: 해커 계열로 전직함(채팅 알림). */
     jobAnnounce?: string;
-    /** v3.18 옛 애드가드 공개 항목(v3.26부터 쓰지 않음, 세이브 호환). */
-    privacy?: { show: import('./data/hacker').PrivacyField[] };
     /** v3.18 서버 해킹 소식(동기화 때 서버가 적음): 진행 중인 방송 탈취, 내가 크래킹당한 시각. */
     hackFeed?: { broadcast?: { text: string; by: string; until: number }; crackedUntil?: number;
         /** v3.25 해커 계열에게만: 변조할 수 있는 이벤트, 지금 다운된 곳, 변조된 이벤트(화이트 해커 복구 대상). */
@@ -603,8 +595,7 @@ export type State = {
         exp: number;
     };
 };
-/** 서약. breath는 걸었는지, rough는 힘의 길·restraint는 절제 선택 단계(1~3). anchor·seal은 옛 잠든 힘(세이브 호환용). */
-/** v27.86 anchor·seal은 옛 ‘잠든 힘’(지금은 던전 랜덤게임) 세이브 호환용으로만 남깁니다. restraint는 절제(1~3단계). */
+/** 서약. breath는 걸었는지, rough는 힘의 길 선택 단계. v27.86 anchor·seal은 옛 ‘잠든 힘’(지금은 던전 랜덤게임) 세이브 호환용으로만 남깁니다. restraint는 절제(1~3단계). */
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };

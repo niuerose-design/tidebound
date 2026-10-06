@@ -82,6 +82,23 @@ function createReplay(render: (frame: ReplayFrame | null) => void) {
     };
     return { push, reset };
 }
+/** 길드·조직·제단·금고처럼 서버 공유 정보를 읽고(load) 행동(act)하는 화면의 공통 상태. 행동은 한 번에 하나(lock)이고, 응답에 세이브가 오면 adopt로 반영합니다. */
+type SharedInfoContext = { request: (path: string, body?: unknown) => Promise<unknown>; lockRef: { current: boolean }; setBusy: (busy: boolean) => void; adopt: (state: State) => void };
+function useSharedInfo<T, Extra = object>(path: string, { request, lockRef, setBusy, adopt }: SharedInfoContext, onResult?: (body: Record<string, unknown>, data: Extra) => void) {
+    const [info, setInfo] = useState<T | null>(null), [error, setError] = useState('');
+    const load = useCallback(async () => { try { setInfo(await request(path) as T); setError(''); } catch (e) { setError((e as Error).message); } }, [request, path]);
+    const act = useCallback(async (body: Record<string, unknown>) => {
+        if (lockRef.current) return false; lockRef.current = true; setBusy(true);
+        try {
+            const d = await request(path, body) as { state?: State; info: T } & Extra;
+            if (d.state) adopt(d.state);
+            setInfo(d.info); setError(''); onResult?.(body, d); return true;
+        }
+        catch (e) { setError((e as Error).message); return false; }
+        finally { lockRef.current = false; setBusy(false); }
+    }, [request, path, lockRef, setBusy, adopt, onResult]);
+    return { info, error, load, act };
+}
 export function useGame() {
     const [state, setState] = useState<State | null>(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [saved, setSaved] = useState(false), [rows, setRows] = useState<Ranking[]>([]), [rankError, setRankError] = useState(''), [duel, setDuel] = useState<DuelResult | null>(null);
     const [needsLogin, setNeedsLogin] = useState(false);
@@ -153,54 +170,19 @@ export function useGame() {
     catch (e) {
         setRankError((e as Error).message);
     } }, [request]);
+    /** 공유 정보 화면(길드·조직·제단·금고)이 받은 세이브를 반영합니다. */
+    const adopt = useCallback((next: State) => { stateRef.current = next; setState(next); replay.reset(); setSaved(true); }, [replay]);
+    const shared = { request, lockRef: lock, setBusy, adopt };
     /** v25.11 공유 길드: 정보는 길드 화면을 열 때 읽고, 행동은 세이브와 함께 저장됩니다. */
-    const [guild, setGuild] = useState<GuildInfo | null>(null), [guildError, setGuildError] = useState('');
-    const loadGuild = useCallback(async () => { try { setGuild(await request('/api/guild') as unknown as GuildInfo); setGuildError(''); } catch (e) { setGuildError((e as Error).message); } }, [request]);
-    const guildAct = useCallback(async (body: Record<string, unknown>) => {
-        if (lock.current) return false; lock.current = true; setBusy(true);
-        try {
-            const d = await request('/api/guild', body) as unknown as { state?: State; info: GuildInfo };
-            if (d.state) { stateRef.current = d.state; setState(d.state); replay.reset(); setSaved(true); }
-            setGuild(d.info); setGuildError(''); return true;
-        }
-        catch (e) { setGuildError((e as Error).message); return false; }
-        finally { lock.current = false; setBusy(false); }
-    }, [request, replay]);
+    const { info: guild, error: guildError, load: loadGuild, act: guildAct } = useSharedInfo<GuildInfo>('/api/guild', shared);
     /** v3.29 해커 조직: 정보는 조직 화면을 열 때와 행동 뒤에만 읽습니다. */
-    const [crew, setCrew] = useState<CrewInfo | null>(null), [crewError, setCrewError] = useState('');
-    const loadCrew = useCallback(async () => { try { setCrew(await request('/api/crew') as unknown as CrewInfo); setCrewError(''); } catch (e) { setCrewError((e as Error).message); } }, [request]);
-    const crewAct = useCallback(async (body: Record<string, unknown>) => {
-        if (lock.current) return false; lock.current = true; setBusy(true);
-        try {
-            const d = await request('/api/crew', body) as unknown as { state?: State; info: CrewInfo };
-            if (d.state) { stateRef.current = d.state; setState(d.state); replay.reset(); setSaved(true); }
-            setCrew(d.info); setCrewError(''); return true;
-        }
-        catch (e) { setCrewError((e as Error).message); return false; }
-        finally { lock.current = false; setBusy(false); }
-    }, [request, replay]);
+    const { info: crew, error: crewError, load: loadCrew, act: crewAct } = useSharedInfo<CrewInfo>('/api/crew', shared);
     /** v27.43 제단: 정보는 제단 화면을 열 때와 행동 뒤에만 읽습니다(주기 폴링 없음). 도전 결과는 altarResult로 보여 줍니다. */
-    const [altar, setAltar] = useState<AltarInfo | null>(null), [altarError, setAltarError] = useState(''), [altarResult, setAltarResult] = useState<AltarResult | null>(null);
-    const loadAltar = useCallback(async () => { try { setAltar(await request('/api/altar') as unknown as AltarInfo); setAltarError(''); } catch (e) { setAltarError((e as Error).message); } }, [request]);
-    const altarAct = useCallback(async (body: Record<string, unknown>) => {
-        if (lock.current) return false; lock.current = true; setBusy(true);
-        try {
-            const d = await request('/api/altar', body) as unknown as { state?: State; info: AltarInfo; result?: AltarResult };
-            if (d.state) { stateRef.current = d.state; setState(d.state); replay.reset(); setSaved(true); }
-            setAltar(d.info); setAltarError(''); if ((body.action === 'challenge' || body.action === 'impeach' || body.action === 'raid') && d.result) setAltarResult(d.result); return true;
-        }
-        catch (e) { setAltarError((e as Error).message); return false; }
-        finally { lock.current = false; setBusy(false); }
-    }, [request, replay]);
+    const [altarResult, setAltarResult] = useState<AltarResult | null>(null);
+    const onAltar = useCallback((body: Record<string, unknown>, d: { result?: AltarResult }) => { if ((body.action === 'challenge' || body.action === 'impeach' || body.action === 'raid') && d.result) setAltarResult(d.result); }, []);
+    const { info: altar, error: altarError, load: loadAltar, act: altarAct } = useSharedInfo<AltarInfo, { result?: AltarResult }>('/api/altar', shared, onAltar);
     /** v25.13 계정 공유 금고. */
-    const [vault, setVault] = useState<VaultInfo | null>(null), [vaultError, setVaultError] = useState('');
-    const loadVault = useCallback(async () => { try { setVault(await request('/api/vault') as unknown as VaultInfo); setVaultError(''); } catch (e) { setVaultError((e as Error).message); } }, [request]);
-    const vaultAct = useCallback(async (body: Record<string, unknown>) => {
-        if (lock.current) return false; lock.current = true; setBusy(true);
-        try { const d = await request('/api/vault', body) as unknown as { state?: State; info: VaultInfo }; if (d.state) { stateRef.current = d.state; setState(d.state); replay.reset(); setSaved(true); } setVault(d.info); setVaultError(''); return true; }
-        catch (e) { setVaultError((e as Error).message); return false; }
-        finally { lock.current = false; setBusy(false); }
-    }, [request, replay]);
+    const { info: vault, error: vaultError, load: loadVault, act: vaultAct } = useSharedInfo<VaultInfo>('/api/vault', shared);
     const [abyss, setAbyss] = useState<{ week: string; rows: AbyssRow[] } | null>(null);
     const loadAbyss = useCallback(async () => { try { const d = await request('/api/ranking?board=abyss') as unknown as { week: string; rows: AbyssRow[] }; setAbyss({ week: d.week, rows: d.rows }); } catch (e) { setRankError((e as Error).message); } }, [request]);
     const register = useCallback(async () => { if (lock.current)
