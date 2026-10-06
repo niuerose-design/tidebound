@@ -8,7 +8,7 @@
 import { setDoorSource, type DoorId } from './door-info';
 import { upsertJobs, registerLineages, type Job, type Lineage } from './classes';
 import { registerSkills } from './skills';
-import { setOdds, type Odds } from './odds';
+import { setOdds, setStageRewardAvg, type Odds, type StageRewardAvg } from './odds';
 import type { Skill } from '../types';
 
 export type CatalogDoors = {
@@ -31,6 +31,8 @@ export type Catalog = {
     skills?: Skill[];
     /** v3.52 드롭·확률 수치. 비공개가 꺼져 있을 때만. */
     odds?: Odds;
+    /** v3.55 사냥터별 평균 보상 배율 구간 표(출현 가중치에서 서버가 만든 값). 비공개와 관계없이 실어 도감 ‘적 정보’가 실제와 같게 합니다. */
+    stageAvg?: StageRewardAvg;
     /** 내용 키. 화면이 가진 키와 같으면 서버는 카탈로그를 다시 보내지 않습니다. */
     key?: string;
 };
@@ -44,6 +46,7 @@ export function applyCatalog(c: Catalog) {
     if (c.jobs?.length) upsertJobs(c.jobs);
     if (c.skills?.length) registerSkills(c.skills);
     if (c.odds) setOdds(c.odds);
+    if (c.stageAvg) setStageRewardAvg(c.stageAvg);
     const states = c.doors?.states || {};
     // 브라우저에서만 문 창구를 카탈로그로 바꿉니다(서버·테스트는 doors.ts의 실제 판정을 그대로 씀).
     if (typeof window !== 'undefined') setDoorSource({ doorFor: (_s, jobId) => states[jobId] ?? null });

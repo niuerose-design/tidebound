@@ -13,7 +13,7 @@ import { BonusList } from './inventory-panel';
 import { EquipmentForge } from './inventory-panel';
 import type { State } from '@/game/types';
 
-/** v3.55 감정 천장 현황: 신화·고대·태초 이상까지 남은 감정 수와 지금까지 감정 기록. */
+/** v3.58 감정 천장 현황: 신화·고대·태초 이상까지 남은 감정 수와 지금까지 감정 기록. */
 function PityBar({ s }: { s: State }) {
     const rec = s.appraisal;
     return <div className="appraisal-pity">

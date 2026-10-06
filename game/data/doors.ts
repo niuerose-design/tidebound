@@ -30,19 +30,19 @@ const HOUR = 3600_000;
  */
 export type DiscoveryDoor = { job: string; hint: string; test: (s: State) => boolean };
 export const DISCOVERY_DOORS: DiscoveryDoor[] = ([
-    { job: 'undead', hint: '열 번 쓰러져 본 모험가에게 죽음이 말을 겁니다.', test: s => (s.deaths || 0) >= 10 },
-    { job: 'clockmaker', hint: '사냥터에서 열 시간을 보낸 뒤, 시계 소리가 들립니다.', test: s => (s.playMs || 0) >= 10 * HOUR },
-    { job: 'headwindSailor', hint: '다섯 번째 사냥터까지 거슬러 올라간 모험가에게.', test: s => (s.bestStage || 0) >= 4 },
-    { job: 'sunriseAngler', hint: '열다섯 종의 몬스터를 처음 만난 아침에.', test: s => speciesCount(s) >= 15 },
-    { job: 'barehandFisher', hint: '무기 없이 열다섯 레벨을 넘긴 모험가에게.', test: s => s.level >= 15 && !s.equipment?.rod },
-    { job: 'noonDiver', hint: '던전 다섯 번을 끝까지 잠수한 자에게.', test: s => dungeonClears(s) >= 5 },
-    { job: 'mistSwordsman', hint: '결투에서 세 번 이긴 뒤 안개가 걷힙니다.', test: s => (s.wins || 0) >= 3 },
-    { job: 'nightHeron', hint: '오백 마리를 낚고도 물가를 떠나지 않은 자에게.', test: s => (s.kills || 0) >= 500 },
-    { job: 'krakenkin', hint: '보스 열 마리의 피를 묻힌 모험가에게 혈족이 찾아옵니다.', test: s => bossCatches(s) >= 10 },
+    { job: 'undead', hint: '몇 번이고 쓰러져 본 모험가에게 죽음이 말을 겁니다.', test: s => (s.deaths || 0) >= 10 },
+    { job: 'clockmaker', hint: '사냥터에서 오랜 시간을 보낸 뒤, 시계 소리가 들립니다.', test: s => (s.playMs || 0) >= 10 * HOUR },
+    { job: 'headwindSailor', hint: '먼 사냥터까지 거슬러 올라간 모험가에게.', test: s => (s.bestStage || 0) >= 4 },
+    { job: 'sunriseAngler', hint: '여러 종의 몬스터를 처음 만난 아침에.', test: s => speciesCount(s) >= 15 },
+    { job: 'barehandFisher', hint: '무기 없이도 제법 자란 모험가에게.', test: s => s.level >= 15 && !s.equipment?.rod },
+    { job: 'noonDiver', hint: '던전을 여러 번 끝까지 잠수한 자에게.', test: s => dungeonClears(s) >= 5 },
+    { job: 'mistSwordsman', hint: '결투에서 이겨 본 뒤 안개가 걷힙니다.', test: s => (s.wins || 0) >= 3 },
+    { job: 'nightHeron', hint: '수많은 몬스터를 잡고도 물가를 떠나지 않은 자에게.', test: s => (s.kills || 0) >= 500 },
+    { job: 'krakenkin', hint: '보스의 피를 숱하게 묻힌 모험가에게 혈족이 찾아옵니다.', test: s => bossCatches(s) >= 10 },
     { job: 'poorMonk', hint: '어느 정도 성장했는데도 주머니가 거의 비어 있을 때.', test: s => s.level >= 15 && (s.gold || 0) < 100 },
-    { job: 'codexReader', hint: '도감에 기록이 서른 개 넘게 쌓였을 때.', test: s => codexCount(s) >= 30 },
-    { job: 'fallenAngler', hint: '서른 번쯤 쓰러져 본 모험가에게.', test: s => (s.deaths || 0) >= 30 },
-    { job: 'journeyman', hint: '직업 셋을 끝까지 숙달한 모험가에게.', test: s => masteredJobCount(s) >= 3 },
+    { job: 'codexReader', hint: '도감에 기록이 두툼하게 쌓였을 때.', test: s => codexCount(s) >= 30 },
+    { job: 'fallenAngler', hint: '수없이 쓰러지고도 다시 일어선 모험가에게.', test: s => (s.deaths || 0) >= 30 },
+    { job: 'journeyman', hint: '여러 직업을 끝까지 숙달한 모험가에게.', test: s => masteredJobCount(s) >= 3 },
 ] as DiscoveryDoor[]);
 
 /** 문이 열리는 모든 ??? 직업. */

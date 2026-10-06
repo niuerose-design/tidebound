@@ -35,3 +35,37 @@ test('v3.52 odds: the catalog carries the odds only while secrecy is off', async
         assert.ok(!('odds' in closed)); assert.notEqual(closed.key, open.key);
     } finally { if (before === undefined) delete process.env.TIDEBOUND_SECRECY; else process.env.TIDEBOUND_SECRECY = before; }
 });
+
+test('v3.55 spawn weights: server-only, and the per-stage average table reproduces the server reward norm for the screen', async () => {
+    const W = await load('data/world'), { SERVER_ODDS } = await load('secret/odds');
+    assert.equal(W.FISH.find(f => f.id === 'abyssManta').spawnWeight, SERVER_ODDS.spawn.abyssManta);
+    assert.equal(W.FISH.find(f => f.id === 'masteryMimic').spawnWeight, 0);
+    const table = W.stageRewardAvgTable();
+    for (const st of W.STAGES) for (const tier of [0, 1, 5, 10, 20, 35, 60, 100, 200]) {
+        const fromTable = 1 / Math.pow(Math.max(1, W.stageAvgAt(table[st.id], tier)), Math.min(1, tier / W.TIDE_LIFT_TIERS));
+        assert.ok(Math.abs(fromTable - W.stageRewardNorm(st.fish, tier)) < 1e-12, `${st.id} t${tier}`);
+    }
+    const src = fs.readFileSync('game/data/world.ts', 'utf8');
+    assert.ok(!/spawnWeight: \.\d/.test(src), 'no weight literals left in world.ts');
+});
+
+test('v3.57 info hacking: leaks are built from the data, skip known ones and entered jobs, and every discovery door has an exact condition', async () => {
+    const { leakPool, DOOR_CONDITIONS } = await load('secret/leaks'), { DISCOVERY_DOORS } = await load('data/doors'), { newState: fresh } = await load('systems/state');
+    assert.deepEqual(Object.keys(DOOR_CONDITIONS).sort(), DISCOVERY_DOORS.map(d => d.job).sort());
+    const s = fresh(0), all = leakPool(s, new Set());
+    assert.ok(all.some(l => l.id === 'drop:base' && l.text.includes('0.25%')) && all.some(l => l.id === 'job:undead' && l.text.includes('10번 쓰러지기')) && all.some(l => l.id === 'spawn:abyssManta'));
+    assert.equal(new Set(all.map(l => l.id)).size, all.length, 'leak ids are unique');
+    assert.ok(!leakPool(s, new Set(['drop:base'])).some(l => l.id === 'drop:base'), 'known leaks are skipped');
+    s.unlockedJobs.push('undead'); assert.ok(!leakPool(s, new Set()).some(l => l.id === 'job:undead'), 'jobs already entered are skipped');
+});
+
+test('v3.57 info hacking: hackRun leak charges bits, counts per day, stores the fragment and refuses when nothing is left', async () => {
+    const { newState: fresh } = await load('systems/state'), { act } = await import('./harness.mjs'), D = await load('data/hacker'), { leakPool } = await load('secret/leaks');
+    const s = fresh(0); s.level = 40; s.rebirths = 5; s.sp = 10; s.pearls = 500; act(s, { type: 'job', id: 'hacker' }, 0);
+    s.hacker.tier = 1; s.hacker.bits = 1000;
+    act(s, { type: 'hackRun', id: 'leak' }, 0, () => 0);
+    assert.equal(s.hacker.bits, 1000 - D.HACKER.leak.bits); assert.equal(s.hacker.leaks.length, 1); assert.equal(s.hacker.used.leak, 1);
+    assert.throws(() => act(s, { type: 'hackRun', id: 'leak' }, 0), /횟수/, 'tier I: once a day');
+    s.hacker.leaks = leakPool(s, new Set()).map(l => ({ ...l, at: 0 })); s.hacker.used = {};
+    assert.throws(() => act(s, { type: 'hackRun', id: 'leak' }, 86400000), /더 알아낼/);
+});

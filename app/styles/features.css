@@ -423,6 +423,11 @@
 .infil-form input,.hack-card input,.hacker-convert input,.hacker-convert select{flex:1 1 140px;min-width:0}
 .hack-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .hack-card{display:grid;gap:8px;align-content:start;padding:12px;border:1px solid #9ab4b522;border-radius:6px}.hack-card small{color:#9bb3b0;font-size:12px;line-height:1.5}
+/* v3.57 정보 해킹: 알아낸 비밀 조각 목록 */
+.hacker-leaks>.primary{justify-self:start;margin:4px 0 10px}
+.hack-leaks{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:320px;overflow:auto}
+.hack-leaks li{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:8px 10px;border:1px solid #9ab4b522;border-radius:6px;font-size:13px;line-height:1.5;color:#d6e6e2}
+.hack-leaks li .text-button{flex:none}
 .event-banner.hack-banner{border-color:#7fe08c66;color:#bff5c6;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 /* v3.28 루트 권한 연출 */
 .event-banner.root-banner{border-color:#ff6b6b88;color:#ffd0d0;background:linear-gradient(90deg,rgba(255,80,80,.16),rgba(255,80,80,.03))}.event-banner.root-banner b{letter-spacing:.12em}

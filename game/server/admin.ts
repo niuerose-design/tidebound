@@ -346,7 +346,7 @@ export async function resetAltar(kind: string) {
     return adminStats();
 }
 
-/** v3.55 사냥 골드 수입 통계: 플레이 시간 기준 시간당 골드(최근 다 채운 3시간 평균). query가 있으면 그 모험가들의 시간별 기록도 줍니다. */
+/** v3.58 사냥 골드 수입 통계: 플레이 시간 기준 시간당 골드(최근 다 채운 3시간 평균). query가 있으면 그 모험가들의 시간별 기록도 줍니다. */
 export type IncomeRow = { id: string; name: string; username: string; rebirths: number; ascension: number; level: number; place: string; tide: number; perHour: number; hours: number; estimated: boolean; gold: number; earned: number; running: boolean; updatedAt: number };
 export async function adminIncome(query = '', now = Date.now()) {
     const database = db(), accounts = new Map((await database.listAccounts()).map(a => [a.id, a.username]));

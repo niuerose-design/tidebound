@@ -1,18 +1,18 @@
-import { ODDS } from './odds';
+import { ODDS, oddsKnown, oddsPercent } from './odds';
 import type { Item, State } from '../types';
 import { BALANCE } from './balance';
 /** 가격·확률·영구 성장 수치의 단일 설정. 모두 게임 내 재화 전용. */
 export const ECONOMY = { /** v27.93 강화 상한·성당 배율은 data/starforce.ts(STARFORCE)로 옮김. 판매 때 돌려받는 강화 비용 비율. */ saleEnhanceRefund: .3, shopBase: 180, shopPerLevel: 35, gambleBase: 300, gamblePerLevel: 45, rebirthAPCap: 12, rebirthLevelStep: 5, /** v27.55 Lv.60(환생 6회) 뒤로는 환생마다 +1, 최대 Lv.80. */ rebirthLevelCap: 100, rebirthLevelLateFrom: 60, rebirthLevelLateStep: 1, rebirthExp: .25, tideCap: 200 };
 // v22: 감정은 희귀 이상. 드물게 신화·고대·태초가 나옵니다(등급 수 = 옵션 수).
-/** v3.55 감정 천장: 이 등급 이상이 마지막으로 나온 뒤 이 횟수째 감정은 그 등급 이상이 확정입니다(신화 150 · 고대 1,000 · 태초 3,000). 환생해도 남고 승천하면 초기화. */
+/** v3.58 감정 천장: 이 등급 이상이 마지막으로 나온 뒤 이 횟수째 감정은 그 등급 이상이 확정입니다(신화 150 · 고대 1,000 · 태초 3,000). 환생해도 남고 승천하면 초기화. */
 export const APPRAISAL_PITY = [{ rarity: 4, key: 'myth', count: 150 }, { rarity: 5, key: 'ancient', count: 1000 }, { rarity: 6, key: 'primal', count: 3000 }] as const;
 export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];
-/** v3.55 감정 가격의 환생 배율: 10^(환생 / 60). 환생 50 ×6.8 · 100 ×46 · 200 ×2,154. 현재 환생 횟수 기준이라 승천하면 다시 낮아집니다. */
+/** v3.58 감정 가격의 환생 배율: 10^(환생 / 60). 환생 50 ×6.8 · 100 ×46 · 200 ×2,154. 현재 환생 횟수 기준이라 승천하면 다시 낮아집니다. */
 export const APPRAISAL_REBIRTH_SCALE = 60;
 export const appraisalRebirthFactor = (rebirths: number) => Math.pow(10, Math.max(0, rebirths) / APPRAISAL_REBIRTH_SCALE);
-/** v3.55 각인 감정: 고른 옵션 하나가 반드시 붙습니다. 골드는 감정 × goldMultiplier, 정수 essence가 더 듭니다. */
+/** v3.58 각인 감정: 고른 옵션 하나가 반드시 붙습니다. 골드는 감정 × goldMultiplier, 정수 essence가 더 듭니다. */
 export const IMPRINT_APPRAISAL = { goldMultiplier: 2, essence: 10 };
-/** v3.55 자동 감정 한 번에 최대 시도 수(렉 방지). */
+/** v3.58 자동 감정 한 번에 최대 시도 수(렉 방지). */
 export const AUTO_APPRAISAL_MAX = 1000;
 /** 감정 등급(희귀 ~ 태초). v3.52 확률은 서버 전용(game/secret/odds.ts, ODDS.appraisal). */
 export const APPRAISAL: readonly { rarity: number; readonly chance: number }[] = [1, 2, 3, 4, 5, 6].map((rarity, i) => ({ rarity, get chance() { return ODDS.appraisal[i]; } }));
@@ -62,7 +62,7 @@ export const RESEARCH: ResearchDef[] = [
     // v3.38 자동 분해기 + 자동 판매기 연구를 ‘자동 정리’ 하나로 합쳤습니다(id는 sortingNet). 두 장치는 그대로 따로 켜고 등급을 나눠 고릅니다(v3.35).
     { id: 'sortingNet', name: '자동 정리', desc: '자동 분해기(정수)와 자동 판매기(골드)를 함께 엽니다. 설정에서 장치마다 등급을 여러 개 고름(1단계 희귀~전설, 2단계 신화·고대까지). 같은 등급은 한 장치에만, 태초·칠흑·잠금·유물·도감 미등록 종류는 처리하지 않음', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 정리 등급', suffix: '단계', levels: ['자동 정리 없음', '희귀 ~ 전설', '신화 · 고대까지'] },
     // v27.60 병 속의 편지(오프라인 편지병) → 행운의 편지. id는 그대로라 찍어 둔 단계가 이어집니다.
-    { id: 'messageBottle', name: '행운의 편지', desc: '숙련의 까미·경험의 누리 등장 확률 +15%. 6~10단계는 승천 후: 6단계 부재중 정산 중 확률 ×0.25 → ×0.5, 8단계 까미 ‘대’ 당첨 5% → 7.5%, 10단계 편지 수신인(까미 당첨 숙련의 1%를 해금한 미숙달 직업 하나에 덤)', max: 10, ascendAbove: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
+    { id: 'messageBottle', name: '행운의 편지', /** v3.56 ‘대’ 당첨 확률 수치는 서버 전용(비공개가 켜져 있으면 ‘확률 상승’). */ get desc() { return `숙련의 까미·경험의 누리 등장 확률 +15%. 6~10단계는 승천 후: 6단계 부재중 정산 중 확률 ×0.25 → ×0.5, 8단계 까미 ‘대’ 당첨 ${oddsKnown() ? `${oddsPercent(ODDS.mimic.tiers[2], '')} → ${oddsPercent(ODDS.mimic.letterJackpot, '')}` : '확률 상승'}, 10단계 편지 수신인(까미 당첨 숙련의 1%를 해금한 미숙달 직업 하나에 덤)`; }, max: 10, ascendAbove: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
     { id: 'limitBreak', name: '한계의 문', desc: '스킬 한계돌파 해금. 연구 단계까지만 한계돌파할 수 있고, 이미 한 한계돌파도 연구 단계까지만 효과가 납니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '한계돌파 상한', suffix: '단계', levels: ['잠김 · 한계돌파 불가', '한계돌파 1단계까지', '한계돌파 2단계까지', '한계돌파 3단계까지'] },
     /** v27.86 잠든 힘 → 랜덤게임(던전). id는 세이브 호환을 위해 그대로 둡니다. */
     { id: 'vowAnchor', name: '랜덤게임', desc: '던전 ‘랜덤게임’ 입장 해금. 하루마다(그리고 환생하면) 연구 단계만큼 입장할 수 있고, 2·3단계는 판돈을 50%씩 키웁니다(×1 → ×1.5 → ×2). 쓰러지면 판돈은 모두 사라집니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '랜덤게임 단계', suffix: '단계', levels: ['잠김', '해금 · 생마다 1회 · 판돈 ×1', '생마다 2회 · 판돈 ×1.5', '생마다 3회 · 판돈 ×2'] },

@@ -253,7 +253,7 @@ test('v27.19 relics come from rebirth count, and pearls spent before the change 
  const u=newState(0);assert.equal(migrations.refundRelicPurchases(u),0);assert.equal(u.relicRefunded,true);
 });
 
-test('v3.55 plain (white) codex entries start registered now that the plain purchase is gone',()=>{
+test('v3.58 plain (white) codex entries start registered now that the plain purchase is gone',()=>{
  const s=newState(0);for(const slot of ['rod','coat','charm','cape'])assert.equal(s.itemBook[`${slot}:0`],true);
  assert.throws(()=>act(s,{type:'buy',id:'charm',value:'plain'},0));
 });

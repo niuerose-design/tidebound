@@ -117,7 +117,7 @@ export type StatusEffects = {
     lastStand?: number;
 };
 export type Item = {
-    /** v3.55 각인 감정으로 고른 옵션 id(표시용). */
+    /** v3.58 각인 감정으로 고른 옵션 id(표시용). */
     imprinted?: string;
     /** v27.27 상점에서 산 장비의 구매가(골드). 판매가는 이 값의 절반을 넘지 않습니다. */
     paid?: number;
@@ -489,13 +489,13 @@ export type State = {
     researchGranted?: Record<string, number>;
     /** v3.42 가격 인상(RESEARCH_GROWTH) 전에 이미 산 연구 단계. 재분배 때 이 단계까지는 전 가격으로 돌려줍니다. 승천·재분배하면 비웁니다. */
     researchLegacy?: Record<string, number>;
-    /** v3.55 사냥 골드 수입: 플레이 시간 1시간 칸(h = playMs ÷ 1시간)마다 번 골드. 최근 24칸(systems/income.ts). */
+    /** v3.58 사냥 골드 수입: 플레이 시간 1시간 칸(h = playMs ÷ 1시간)마다 번 골드. 최근 24칸(systems/income.ts). */
     goldLog?: { h: number; g: number }[];
-    /** v3.55 기록을 시작한 뒤 사냥으로 번 골드 합계. */
+    /** v3.58 기록을 시작한 뒤 사냥으로 번 골드 합계. */
     goldEarned?: number;
-    /** v3.55 감정 기록: 총 횟수, 등급별 횟수(0~6), 천장 카운트(그 등급 이상이 마지막으로 나온 뒤 감정 수). 환생해도 남고 승천하면 초기화. */
+    /** v3.58 감정 기록: 총 횟수, 등급별 횟수(0~6), 천장 카운트(그 등급 이상이 마지막으로 나온 뒤 감정 수). 환생해도 남고 승천하면 초기화. */
     appraisal?: { count: number; byRarity: number[]; pity: { myth: number; ancient: number; primal: number } };
-    /** v3.55 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
+    /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
     plainCodex?: boolean;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
@@ -650,6 +650,8 @@ export type HackerState = {
     roots?: number;
     /** v3.28 블랙 해커가 해킹에 실패해 추적당한 동안(이 시각까지 해킹 불가). */
     bustedUntil?: number;
+    /** v3.57 정보 해킹으로 알아낸 비밀 조각(최근 것이 앞, HACKER.leak.keep개까지). */
+    leaks?: { id: string; text: string; at: number }[];
     /** v3.29 해커 조직 소속 캐시(동기화 때 10분마다 서버의 crews 행과 맞춤). */
     crew?: { id: string; name: string; side: string; grade: number; leader: boolean; syncedAt: number; /** v3.33 켠 조직 모듈 */ modules?: string[] };
     /** v3.29 오늘 조직에 기여한 비트(하루 상한). */

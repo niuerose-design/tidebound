@@ -93,13 +93,18 @@ export const HACKER = {
      * 대상·보스·게이지마다 걸린 1회 제한과 루트 권한(하루 1회)은 그대로입니다.
      */
     black: { cost: 2, cap: 2, fail: (n: number) => Math.max(.05, .35 - .03 * n), traceHours: 6, wipedHours: 3 },
+    /**
+     * v3.57 정보 해킹(해킹 I부터, 화이트 해커도 씀): 아직 모르는 비밀 조각 하나(드롭·확률 수치 · 몬스터 출현 가중치 · 히든 직업 전직 조건 · 발견의 문 조건)를 알아냅니다.
+     * 하루 1 + 단계÷3회, 알아낸 조각은 최근 keep개까지 해킹 화면에 남습니다. 퍼뜨리기는 방송 탈취·채팅으로.
+     */
+    leak: { perDay: (n: number) => 1 + Math.floor(n / 3), bits: 25, exp: 40, keep: 120 },
 } as const;
 /** v3.25 해킹 실행 비트 비용(되돌린 해킹의 현상금 계산에도 씁니다). */
 export const HACK_BITS: Record<string, number> = { broadcast: HACKER.broadcast.bits, crack: HACKER.crack.bits, tamper: HACKER.tamper.bits, down: HACKER.down.bits, ddos: HACKER.ddos.bits };
 /** v3.25 해킹마다 필요한 단계. v3.28 VI~X. */
-export const HACK_TIER: Record<string, number> = { broadcast: 1, crack: 1, tamper: 2, down: 3, sniff: 4, backdoor: 5, intercept: 6, savescum: 7, botnet: 8, ddos: 9, root: 10 };
+export const HACK_TIER: Record<string, number> = { broadcast: 1, crack: 1, leak: 1, tamper: 2, down: 3, sniff: 4, backdoor: 5, intercept: 6, savescum: 7, botnet: 8, ddos: 9, root: 10 };
 /** v3.28 해킹 이름(공지·로그). */
-export const HACK_NAMES: Record<string, string> = { broadcast: '방송 탈취', crack: '크래킹', tamper: '이벤트 변조', down: '서버 다운', sniff: '패킷 스니핑', backdoor: '백도어', intercept: '패킷 가로채기', savescum: '세이브 스캠', botnet: '봇넷', ddos: 'DDoS', root: '루트 권한', trace: '역추적', overload: '과부하' };
+export const HACK_NAMES: Record<string, string> = { broadcast: '방송 탈취', crack: '크래킹', leak: '정보 해킹', tamper: '이벤트 변조', down: '서버 다운', sniff: '패킷 스니핑', backdoor: '백도어', intercept: '패킷 가로채기', savescum: '세이브 스캠', botnet: '봇넷', ddos: 'DDoS', root: '루트 권한', trace: '역추적', overload: '과부하' };
 
 /** v3.25 프로그램: 스킬 대신 메모리 한도 안에서 장착하는 해커의 빌드. 비트로 한 번 사면 영구. */
 export type ProgramId = 'portScanner' | 'rootkit' | 'cryptoMiner' | 'exploitKit' | 'avEvasion';

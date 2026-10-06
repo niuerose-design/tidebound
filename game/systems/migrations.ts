@@ -134,7 +134,7 @@ export function stampResearchLegacy(s: State) {
     s.researchLegacy = Object.fromEntries(Object.entries(s.permanent || {}).filter(([, rank]) => rank > RESEARCH_GROWTH.from));
     return Object.keys(s.researchLegacy).length;
 }
-/** v3.55 확정 구매(일반 등급 구매)를 없애며 물건 도감 ‘일반’ 4칸을 한 번 등록해 줍니다(이미 등록한 칸은 그대로). */
+/** v3.58 확정 구매(일반 등급 구매)를 없애며 물건 도감 ‘일반’ 4칸을 한 번 등록해 줍니다(이미 등록한 칸은 그대로). */
 export function registerPlainCodex(s: State) {
     if (s.plainCodex) return 0;
     s.plainCodex = true;

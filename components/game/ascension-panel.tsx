@@ -6,6 +6,7 @@ import { Meter, format } from './shared';
 import type { PanelProps } from './panel-props';
 import { ASCENSION, ASCENSION_RESEARCH, ascensionOf, ascensionRequirement, ascensionMastery, ascensionVow, lifetimeRebirths } from '@/game/data/ascension';
 import { RESEARCH } from '@/game/data/economy';
+import { ODDS, oddsPercent } from '@/game/data/odds';
 import { achievementRefund } from '@/game/systems/actions/lifecycle';
 
 /** 환생 50회부터(또는 한 번이라도 승천했으면) 보입니다. */
@@ -37,7 +38,7 @@ export function AscensionPanel({ s, send, busy }: PanelProps) {
                 <li><b>업적 보상 다시 지급 · 세계석 {format(refund.pearls)} · SP {refund.sp}</b><small>받은 업적의 영구 효과(능력치·AP)는 그대로 남습니다.</small></li>
                 <li><b>편의 연구 자동 해제</b><small>{auto}. 서약·랜덤게임은 1단계가 바로 열립니다.</small></li>
                 <li><b>초반 가속 · 까미·누리</b><small>환생 {ASCENSION.earlyExpUntil}회 전까지 경험치 ×{ASCENSION.earlyExp}(새싹의 축복 대신). 까미·누리가 사냥터 난이도 0부터 나옵니다.</small></li>
-                {!n && <li><b>행운의 편지 6~10단계</b><small>오프라인 확률 ×0.5 · 까미 ‘대’ 7.5% · 편지 수신인.</small></li>}
+                {!n && <li><b>행운의 편지 6~10단계</b><small>오프라인 확률 ×0.5 · 까미 ‘대’ {oddsPercent(ODDS.mimic.letterJackpot, '당첨 확률 상승')} · 편지 수신인.</small></li>}
             </ul></article>
             <article className="panel ledger-kept"><h2>유지되는 것</h2><ul><li>직업 숙련 · 숙달 · 직업 단련 · 해금한 직업</li><li>스킬 숙련(성장 레벨) · 계승 · 배운 스킬</li><li>업적과 그 영구 효과 · 계급장 · 칭호</li><li>기록(누적 처치·환생 기록·결투 전적·스타포스 기록 등)</li><li>분신 슬롯 · 길드 · 해커 · 설정</li></ul></article>
             <article className="panel ledger-reset"><h2>초기화되는 것</h2><ul><li>환생 횟수 · 레벨 · 직업(초보자) · 능력치 배분</li><li>골드 · 세계석 · 세계석 연구 · SP · 정수</li><li>스킬 연마 단계 · 한계 돌파 · SP로 올린 스킬 단계</li><li>모든 장비(유물 · 칠흑 포함) · 몬스터·장비 도감</li><li>무릉도장(최고층은 승천 기록에 남음) · 계정 금고 · 서약</li><li>계정 보너스(이 캐릭터의 기록으로 다시 채움)</li></ul></article>

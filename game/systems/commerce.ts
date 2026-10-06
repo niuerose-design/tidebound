@@ -8,23 +8,23 @@ import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollC
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption, rollOption, affixDef, AFFIX_POOL } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
-/** v27.30 감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.55 확정 구매를 없애고 환생 배율(10^(환생/60))을 곱합니다. */
+/** v27.30 감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 확정 구매를 없애고 환생 배율(10^(환생/60))을 곱합니다. */
 const GAMBLE_FISH = 60;
 /** v3.7 자동 강화 한 번에 돌리는 최대 시도 수(렉 방지). */
 const AUTO_STAR_MAX_TRIES = 2000;
 const fishPrice = (s: State, n: number) => fishGoldAt(Math.min(PRICE_LEVEL_CAP, s.level)) * n;
 export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, fishPrice(s, GAMBLE_FISH)) * appraisalRebirthFactor(s.rebirths || 0));
-/** v3.55 각인 감정 비용(한 번): 골드 = 감정 × 2, 정수 10. */
+/** v3.58 각인 감정 비용(한 번): 골드 = 감정 × 2, 정수 10. */
 export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
-/** v3.55 각인으로 고를 수 있는 옵션: 그 부위에 붙을 수 있는 일반 옵션(규칙 옵션·출신 전용 옵션 제외). */
+/** v3.58 각인으로 고를 수 있는 옵션: 그 부위에 붙을 수 있는 일반 옵션(규칙 옵션·출신 전용 옵션 제외). */
 export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.onlyOrigin && (!a.onlySlot || a.onlySlot === slot));
 const gambleCategory = (id: string) => GAMBLE_CATEGORIES.find(x => x.id === id) as { slot: string; offers: readonly string[] } | undefined ?? (SHOP.some(x => x.id === id) ? { slot: SHOP.find(x => x.id === id)!.slot, offers: [id] } : undefined);
 const appraisalState = (s: State) => (s.appraisal ??= { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 0, ancient: 0, primal: 0 } });
-/** v3.55 다음 감정에서 천장이 터지는 등급(없으면 0). */
+/** v3.58 다음 감정에서 천장이 터지는 등급(없으면 0). */
 export const pityRarity = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.reduce((r, p) => (s.appraisal?.pity[p.key] || 0) + 1 >= p.count ? Math.max(r, p.rarity) : r, 0);
-/** v3.55 천장까지 남은 감정 수(이번 감정 포함). */
+/** v3.58 천장까지 남은 감정 수(이번 감정 포함). */
 export const pityLeft = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.map(p => ({ ...p, left: Math.max(1, p.count - (s.appraisal?.pity[p.key] || 0)) }));
-/** v3.55 감정 한 번: 확률표로 등급을 뽑고 천장을 적용한 뒤 장비를 만듭니다. 골드·정수는 부르는 쪽이 냅니다. */
+/** v3.58 감정 한 번: 확률표로 등급을 뽑고 천장을 적용한 뒤 장비를 만듭니다. 골드·정수는 부르는 쪽이 냅니다. */
 function appraiseOnce(s: State, offers: readonly string[], rng: () => number, cost: number, imprint?: string): Item {
     const offerId = offers[offers.length > 1 ? Math.min(offers.length - 1, Math.floor(rng() * offers.length)) : 0], offer = SHOP.find(x => x.id === offerId)!;
     const roll = rng();
@@ -132,7 +132,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     const room = () => { if (s.inventory.length >= inventoryCap(s))
         throw Error('가방을 비운 뒤 구매하세요.'); };
     const nextId = () => `shop-${++s.shopSerial}`;
-    // v3.55 확정 구매는 없앴습니다. 감정(1·5·10개)과 각인 감정은 부위를 고르고, 골드·정수·가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다.
+    // v3.58 확정 구매는 없앴습니다. 감정(1·5·10개)과 각인 감정은 부위를 고르고, 골드·정수·가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다.
     if (a.type === 'gamble' || a.type === 'imprintGamble') {
         // 부위(rod·coat·charm·cape) 대신 상품 id(physical·magic …)를 넘기면 그 상품 하나로 감정합니다(기존 호출 호환).
         const category = gambleCategory(id);
@@ -157,7 +157,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const best = results.reduce((b, i) => (i.rarity || 0) > (b.rarity || 0) ? i : b, results[0]);
         return `${word} ${count}개 · ${tally.map(([r, k]) => `${RARITIES[r].name} ${k}`).join(' · ')} · 최고 ${best.name} · -${each.gold * count} G${each.essence ? ` · 정수 -${each.essence * count}` : ''}`;
     }
-    // v3.55 자동 감정: value = '목표 등급|골드 한도|각인 옵션(선택)'. 목표 등급 이상이 나오면 가방에 넣고 멈춥니다.
+    // v3.58 자동 감정: value = '목표 등급|골드 한도|각인 옵션(선택)'. 목표 등급 이상이 나오면 가방에 넣고 멈춥니다.
     // 목표 미만은 물건 도감에 없는 종류면 도감에 등록하고, 나머지는 분해해 정수로 받습니다. 최대 AUTO_APPRAISAL_MAX번.
     if (a.type === 'autoGamble') {
         const category = gambleCategory(id);
