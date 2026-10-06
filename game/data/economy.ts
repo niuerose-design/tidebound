@@ -21,7 +21,7 @@ export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];
 export const APPRAISAL_REBIRTH = { scale: 60, perRebirth: .45 };
 export const appraisalRebirthFactor = (rebirths: number) => { const r = Math.max(0, rebirths); return Math.min(Math.pow(10, r / APPRAISAL_REBIRTH.scale), 1 + r * APPRAISAL_REBIRTH.perRebirth); };
 /** v3.58 각인 감정: 고른 옵션 하나가 반드시 붙습니다. 골드는 감정 × goldMultiplier, 정수 essence가 더 듭니다. */
-export const IMPRINT_APPRAISAL = { goldMultiplier: 2, essence: 10 };
+export const IMPRINT_APPRAISAL = { goldMultiplier: 5, essence: 50 };
 /** v3.58 자동 감정 한 번에 최대 시도 수(렉 방지). */
 export const AUTO_APPRAISAL_MAX = 1000;
 /** 감정 등급(희귀 ~ 태초). v3.52 확률은 서버 전용(game/secret/odds.ts, ODDS.appraisal). */
@@ -161,7 +161,7 @@ export const RELIC_GROWTH = { imprintSlots: 3, imprintCost: 5, starBase: 12 };
  * docs/gear-endgame.md 7절: Lv.100 · 22성 4부위 전투력(v3.66 실제 전투식)이 환생 200에서 유물 ≈ 신화 × 1.05(신화와 고대 사이),
  * 원시 고대 ≈ 신화 × 1.5, 계승 태초 ≈ 신화 × 2가 되도록 scripts/check-gear-ladder.mjs로 맞춘 값입니다. 환생 0에서는 유물이 신화의 약 0.75배, 계승 장비는 일반 고대·태초와 비슷합니다.
  */
-export const HEIR_GROWTH = { toRebirth: 200, relic: { from: 2.57, to: 3.65 }, ancient: { from: 4.5, to: 5.92 }, primal: { from: 5.18, to: 7.73 } } as const;
+export const HEIR_GROWTH = { toRebirth: 200, relic: { from: 2.57, to: 3.75 }, ancient: { from: 4.5, to: 5.92 }, primal: { from: 5.18, to: 7.73 } } as const;
 /**
  * v3.66 예전 유물 위력(기본 × (1 + 환생 × 4%) × (1 + (레벨 − 1) × 1%)). 이 업데이트 전에 이미 가진 유물(relicLegacy)은 다음 승천까지
  * 예전 공식과 새 공식 중 높은 쪽을 씁니다(유저가 가진 유물이 갑자기 약해지지 않게). 승천 뒤 다시 받는 유물은 새 공식만 씁니다.

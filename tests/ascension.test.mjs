@@ -295,13 +295,13 @@ test('v3.58 appraisal: price × rebirth factor (v3.68 linear), pity at 150/1000/
     assert.deepEqual(Co.pityLeft(s).map(p => p.left), Ec.APPRAISAL_PITY.map(p => p.count));
     const r = newState(0); r.level = 60; r.appraisal = { count: 7, byRarity: [0, 7, 0, 0, 0, 0, 0], pity: { myth: 7, ancient: 7, primal: 7 } }; act(r, { type: 'rebirth' }, 0); assert.equal(r.appraisal.count, 7, 'kept through rebirth');
 });
-test('v3.58 imprint appraisal always carries the chosen option and costs 2× gold + essence; auto appraisal stops at the target', async () => {
+test('v3.58 imprint appraisal always carries the chosen option and costs v3.73 5× gold + 50 essence; auto appraisal stops at the target', async () => {
     const Co = await L.load('systems/commerce'), Ec = await L.load('data/economy');
-    const s = newState(0); s.level = 50; s.gold = 1e9; s.essence = 15; s.permanent.inventory = 8; s.inventory = [];
-    const cost = Co.imprintGambleCost(s); assert.equal(cost.gold, Co.gambleCost(s) * 2); assert.equal(cost.essence, Ec.IMPRINT_APPRAISAL.essence);
+    const s = newState(0); s.level = 50; s.gold = 1e9; s.essence = 75; s.permanent.inventory = 8; s.inventory = [];
+    const cost = Co.imprintGambleCost(s); assert.equal(cost.gold, Co.gambleCost(s) * 5); assert.equal(Ec.IMPRINT_APPRAISAL.essence, 50); assert.equal(cost.essence, Ec.IMPRINT_APPRAISAL.essence);
     let x = 1; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647);
     act(s, { type: 'imprintGamble', id: 'charm', value: 'brutal|1' }, 0, rng);
-    const it = s.inventory.at(-1); assert.ok(it.affixes.some(a => a.id === 'brutal'), 'chosen option'); assert.equal(it.imprinted, 'brutal'); assert.equal(s.essence, 5);
+    const it = s.inventory.at(-1); assert.ok(it.affixes.some(a => a.id === 'brutal'), 'chosen option'); assert.equal(it.imprinted, 'brutal'); assert.equal(s.essence, 25);
     assert.throws(() => act(s, { type: 'imprintGamble', id: 'charm', value: 'brutal|1' }, 0, rng), /정수/);
     assert.throws(() => act(s, { type: 'imprintGamble', id: 'charm', value: 'nope|1' }, 0, rng), /옵션/);
     assert.ok(!Co.imprintChoices('charm').some(a => a.kind === 'rule'), 'no rule options to imprint');
@@ -371,7 +371,7 @@ test('v3.71 options: quality 1 + 0.2 × rarity, ancient+ only options (not on lo
     const G = await L.load('data/gear'), Co = await L.load('systems/commerce');
     assert.equal(G.rarityQuality(6), 2.2); assert.equal(G.rarityQuality(4), 1.8);
     const ancientOnly = G.AFFIX_POOL.filter(a => a.minRarity === 5).map(a => a.id).sort();
-    assert.deepEqual(ancientOnly, ['hunter', 'ruin', 'tempo', 'transcend']);
+    assert.deepEqual(ancientOnly, ['bounty', 'hunter', 'ruin', 'tempo', 'transcend']);
     for (let i = 0; i < 60; i++) {
         const r = (i % 6) / 6 + .01;
         assert.ok(!G.rollAffixes(4, 400, undefined, () => r, [], 'rod', 100).some(a => ancientOnly.includes(a.id)), 'never on myth');
@@ -394,4 +394,26 @@ test('v3.72 draws: accuracy+evasion merged into sense (both rolled), precise/dri
     const refined = G.refineOption(hi, 100, 6, () => 0, 100); assert.ok(refined.value2 < hi.value2, 'refine rerolls both values');
     const s = newState(0); s.level = 50; s.permanent.inventory = 8; s.inventory = []; s.gold = Co.gambleCost(s) * 3;
     act(s, { type: 'autoGamble', id: 'rod', value: '6|max' }, 0, () => 0); assert.equal(s.appraisal.count, 3, 'uses all the gold'); assert.ok(s.gold < Co.gambleCost(s));
+});
+test('v3.73 options: crit damage drawn at 0.4 weight, force/guardian roll both damped stats, mana pair merged into flow, bounty is ancient+, blood pact ignores the gear lifesteal cap', async () => {
+    const G = await L.load('data/gear'), Co = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), S = await L.load('systems/stats');
+    assert.equal(G.affixDef('brutal').weight, .4); assert.equal(G.affixDef('ruin').weight, .4);
+    let x = 7, brutal = 0; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 4000; i++) if (G.rollAffixes(1, 100, undefined, rng, [], 'rod', 100).some(a => a.id === 'brutal')) brutal++;
+    const general = Co.imprintChoices('rod').length; assert.ok(brutal / 4000 < 1.6 / general, `brutal rate ${brutal / 4000} vs uniform ${1 / general}`);
+    for (const id of ['force', 'guardian']) {
+        const def = G.affixDef(id), a = G.rollOption(def, 100, 4, () => .5, 100); assert.ok(a.value > 0 && a.value2 === a.value, `${id} rolls both`);
+        const st = Eq.itemStats({ id: 'x', slot: 'charm', rarity: 4, power: 100, level: 100, affixes: [a] });
+        assert.ok(Math.abs(st[def.stat2] - a.value2 * Eq.GEAR_RARITY_SCALE[4]) < 1e-9, `${id} second stat damped`);
+    }
+    for (const id of ['might', 'arcana', 'plating', 'ward']) assert.ok(!G.affixDef(id).retired, `${id} kept`);
+    for (const id of ['wellspring', 'current']) { assert.equal(G.affixDef(id).retired, true); assert.ok(!Co.imprintChoices('rod').some(a => a.id === id)); }
+    assert.equal(G.affixDef('flow').stat2, 'manaRegen'); assert.ok(Co.imprintChoices('rod').some(a => a.id === 'flow'));
+    assert.equal(G.affixDef('bounty').minRarity, 5); assert.ok(!Co.imprintChoices('rod').some(a => a.id === 'bounty'));
+    const s = newState(0), base = S.stats(s).lifesteal;
+    const pact = { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', value: .08, stat2: 'hp', value2: -1 }, leech = { id: 'leech', name: '흡혈', stat: 'lifesteal', value: .08 };
+    s.equipment.charm = { id: 'c', slot: 'charm', rarity: 4, power: 10, level: 10, affixes: [leech, { ...leech }] };
+    const capped = S.stats(s).lifesteal; assert.ok(Math.abs(capped - base - G.GEAR_CAPS.lifesteal) < 1e-9, 'plain lifesteal stops at the gear cap');
+    s.equipment.cape = { id: 'k', slot: 'cape', rarity: 4, power: 10, level: 10, affixes: [pact] };
+    assert.ok(Math.abs(S.stats(s).lifesteal - capped - .08) < 1e-9, 'blood pact adds on top of the cap');
 });

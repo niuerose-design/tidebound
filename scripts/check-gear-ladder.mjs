@@ -10,7 +10,7 @@ const { RARITIES } = await load('data/balance'), Ec = await load('data/economy')
 const { starMultiplier } = await load('data/starforce'), { rarityShareFrom } = await load('systems/encounter'), { gearName } = await load('data/maple-gear');
 const { rollAffixes } = await load('data/gear'), C = await load('systems/commerce');
 
-const KILLS_PER_HOUR = 1730, SAMPLES = 60, SLOTS = ['rod', 'coat', 'charm', 'cape'];
+const KILLS_PER_HOUR = 1730, SAMPLES = 240, SLOTS = ['rod', 'coat', 'charm', 'cape'];
 const fmt = v => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
 console.log(`등급 배율 ${RARITIES.map(r => `${r.name}×${r.factor}`).join(' ')} · 칠흑 ×${ONYX.power} · 22성 ×${starMultiplier(22).toFixed(2)}`);
 

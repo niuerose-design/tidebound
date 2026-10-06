@@ -86,7 +86,7 @@ test('v22 gear: rarity = option count, at most one rule option, themed origins a
  assert.equal(RARITIES.length,7);let r=0;const seq=()=>{r=(r*16807+11)%2147483647;return r/2147483647;};r=7;
  for(let rarity=0;rarity<=6;rarity++)for(let n=0;n<200;n++){const opts=gear.rollAffixes(rarity,500,'moon',seq);assert.equal(opts.length,rarity);assert.equal(new Set(opts.map(o=>o.id)).size,rarity);assert.ok(opts.filter(o=>o.rule).length<=(rarity>=3?1:0));}
  // 테마 옵션은 더 자주 나옵니다.
- let themed=0,plain=0;for(let n=0;n<4000;n++){const o=gear.rollAffixes(1,500,'moon',seq)[0];if(['arcana','current','runic','glassCannon'].includes(o.id))themed++;if(['might','vigor','plating','ward'].includes(o.id))plain++;}assert.ok(themed>plain*2,themed+' vs '+plain);
+ let themed=0,plain=0;for(let n=0;n<4000;n++){const o=gear.rollAffixes(1,500,'moon',seq)[0];if(['arcana','flow','glassCannon'].includes(o.id))themed++;if(['might','vigor','plating','ward'].includes(o.id))plain++;}assert.ok(themed>plain*2,themed+' vs '+plain);
  const def=gear.affixDef('might'),lo=gear.rollOption(def,1000,1,()=>0),hi=gear.rollOption(def,1000,1,()=>.9999);assert.ok(hi.value>lo.value*2);assert.equal(lo.value,Math.round(1000*def.base*.6*gear.rarityQuality(1)));
  const berserk=gear.rollOption(gear.affixDef('berserk'),1000,3,()=>.5);assert.ok(berserk.value>0&&berserk.value2<0&&berserk.stat2==='defense');
  assert.ok([0,.5,.999].map(x=>rollRarity(()=>x,1)).every(x=>x>=1));assert.equal(rollRarity(()=>0),0);assert.equal(rollRarity(()=>.99999),6);
@@ -94,7 +94,7 @@ test('v22 gear: rarity = option count, at most one rule option, themed origins a
 test('v22 gear: rule options change existing rules within caps and apply from equipment',()=>{
  const s=newState(0);const add=(stat,value)=>({id:'r'+stat,slot:'charm',rarity:3,power:10,level:1,name:'r',affixes:[{id:stat,name:stat,stat,value,rule:true}]});
  s.equipment.charm=add('stunBonus',1);s.equipment.rod={...add('stunBonus',1),slot:'rod',style:'balanced'};assert.equal(stats(s).stunBonus,1,'same rule is capped');
- const leech=slot=>({id:'l'+slot,slot,rarity:6,power:10,level:1,name:'l',affixes:[{id:'bloodPact',name:'b',stat:'lifesteal',value:.05}]});const s2=newState(0);s2.equipment={rod:{...leech('rod'),style:'balanced'},coat:leech('coat'),charm:leech('charm')};assert.ok(Math.abs(stats(s2).lifesteal-gear.GEAR_CAPS.lifesteal)<1e-9,'gear lifesteal is capped');
+ const leech=slot=>({id:'l'+slot,slot,rarity:6,power:10,level:1,name:'l',affixes:[{id:'leech',name:'b',stat:'lifesteal',value:.05}]});const s2=newState(0);s2.equipment={rod:{...leech('rod'),style:'balanced'},coat:leech('coat'),charm:leech('charm')};assert.ok(Math.abs(stats(s2).lifesteal-gear.GEAR_CAPS.lifesteal)<1e-9,'gear lifesteal is capped');
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
  let b=mk([]);strike(mk(['anchor'],{stunBonus:1}),b,()=>0);assert.equal(b.stun,3);
