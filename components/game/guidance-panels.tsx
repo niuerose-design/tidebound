@@ -2,7 +2,7 @@
 import type { PanelProps } from './panel-props';
 import { Check, ChevronDown, ChevronRight, ChevronUp, Compass, HelpCircle, RefreshCw, X } from 'lucide-react';
 import { PLACES, DUNGEONS } from '@/game/data/world';
-import { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, CHALLENGE_GROUP, achievementTotals, achievementMaxTotals, rewardText } from '@/game/data/achievements';
+import { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, CHALLENGE_GROUP, achievementTotals, achievementMaxTotals, rewardText, ACHIEVEMENT_BONUS_PER } from '@/game/data/achievements';
 import { goalText, dayKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, type GoalBoard } from '@/game/data/goals';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { unclaimedAchievements } from '@/game/systems/progress';
@@ -66,13 +66,13 @@ function AchievementGroups({ s, send, busy }: PanelProps) {
     return <>{ACHIEVEMENT_GROUPS.map(g => { const items = ACHIEVEMENTS.filter(a => a.group === g), doneCount = items.filter(a => feats[a.id] !== undefined).length, claimable = items.filter(a => feats[a.id] !== undefined && !claimed[a.id]).length; return <details key={g} className="achievement-group" open={claimable > 0}><summary><h3>{g}</h3><span>{doneCount} / {items.length}{claimable ? ` · 받을 보상 ${claimable}개` : ''}{g === CHALLENGE_GROUP ? ` · 플레이 ${Math.floor((s.playMs || 0) / 3_600_000).toLocaleString()}시간 · ${(s.turn || 0).toLocaleString()}턴 · 쓰러짐 ${(s.deaths || 0).toLocaleString()}회` : ''}</span><ChevronDown size={15} className="achievement-chevron"/></summary><div className="voyage-list achievement-list">{items.map(a => { const done = feats[a.id] !== undefined, got = !!claimed[a.id], p = Math.min(a.target, a.progress(s)); return <article key={a.id} className={`panel voyage-entry achievement ${done ? 'done' : ''} ${done && !got ? 'claimable' : ''}`}><div className="achievement-top"><strong>{a.title}</strong>{got ? <Check size={14}/> : done ? <button className="primary small" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: a.id })}>보상 받기</button> : null}</div><p>{a.desc}</p>{(() => { const v = visited(a); return v && v.length ? <small className="achievement-visited">다녀온 곳: {v.join(' · ')}</small> : null; })()}<Meter value={p} max={a.target} label="달성"/><small className="achievement-reward">{rewardText(a.reward)}</small></article>; })}</div></details>; })}</>;
 }
 
-/** 업적 보너스 탭: 받은 영구 보너스 합계(최대와 비교), 받은 세계석·SP, 영구 보너스가 붙은 업적 목록. */
+/** 업적 보너스 탭: 받은 업적 수에 따른 업적 보너스(최대와 비교), 장착 AP, 받은 세계석·SP, 장착 AP가 붙은 업적 목록. */
 function AchievementBonus({ s }: { s: State }) {
     const feats = s.achievements || {}, claimed = s.achievementClaims || {};
     const totals = achievementTotals(s), max = achievementMaxTotals();
     const claimedList = ACHIEVEMENTS.filter(a => claimed[a.id]);
     const pearls = claimedList.reduce((a, x) => a + (x.reward.pearls || 0), 0), sp = claimedList.reduce((a, x) => a + (x.reward.sp || 0), 0);
-    const permanent = ACHIEVEMENTS.filter(a => a.reward.ap || a.reward.bonus);
+    const permanent = ACHIEVEMENTS.filter(a => a.reward.ap);
     const pct = (n: number) => `${Math.round(n * 100)}%`;
     return <>
         <section className="panel bonus-summary">
@@ -81,11 +81,11 @@ function AchievementBonus({ s }: { s: State }) {
                 <div><dt>장착 AP</dt><dd>+{totals.ap}<small> / {max.ap}</small></dd></div>
                 {BONUS_KEYS.map(k => <div key={k}><dt>{BONUS_LABEL[k]}</dt><dd>+{pct(totals.bonus[k])}<small> / {pct(max.bonus[k])}</small></dd></div>)}
             </dl>
-            <p className="footnote">능력치 배율은 종류별로 더해 최종 능력치에 한 번 곱합니다. 받은 업적 {claimedList.length} / {ACHIEVEMENTS.length}개 · 세계석 {pearls.toLocaleString()} · SP {sp} 수령.</p>
+            <p className="footnote">업적 보너스는 받은 업적 1개마다 {BONUS_KEYS.map(k => `${BONUS_LABEL[k]} +${(ACHIEVEMENT_BONUS_PER[k] * 100).toFixed(2)}%`).join(' · ')}씩 쌓이고, 최종 능력치에 한 번 곱합니다. 받은 업적 {claimedList.length} / {ACHIEVEMENTS.length}개 · 세계석 {pearls.toLocaleString()} · SP {sp} 수령.</p>
         </section>
         <details className="achievement-group bonus-feats" open>
-            <summary><h3>영구 보너스가 붙은 업적</h3><span>{permanent.filter(a => claimed[a.id]).length} / {permanent.length} 수령</span><ChevronDown size={15} className="achievement-chevron"/></summary>
-            <div className="voyage-list achievement-list">{permanent.map(a => { const done = feats[a.id] !== undefined, got = !!claimed[a.id]; return <article key={a.id} className={`panel voyage-entry achievement ${got ? 'done' : ''} ${done && !got ? 'claimable' : ''}`}><div className="achievement-top"><strong>{a.title}</strong>{got ? <Check size={14}/> : <small>{done ? '받기 전' : '미달성'}</small>}</div><p>{a.desc}</p><small className="achievement-reward">{rewardText({ ap: a.reward.ap, bonus: a.reward.bonus })}</small></article>; })}</div>
+            <summary><h3>장착 AP가 붙은 업적</h3><span>{permanent.filter(a => claimed[a.id]).length} / {permanent.length} 수령</span><ChevronDown size={15} className="achievement-chevron"/></summary>
+            <div className="voyage-list achievement-list">{permanent.map(a => { const done = feats[a.id] !== undefined, got = !!claimed[a.id]; return <article key={a.id} className={`panel voyage-entry achievement ${got ? 'done' : ''} ${done && !got ? 'claimable' : ''}`}><div className="achievement-top"><strong>{a.title}</strong>{got ? <Check size={14}/> : <small>{done ? '받기 전' : '미달성'}</small>}</div><p>{a.desc}</p><small className="achievement-reward">{rewardText({ ap: a.reward.ap })}</small></article>; })}</div>
         </details>
     </>;
 }

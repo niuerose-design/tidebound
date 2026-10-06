@@ -80,7 +80,6 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     a.dropBonus = researchRank(s, 'drop') * .01 + v.luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus;
     rec('dropBonus', 'research', researchRank(s, 'drop') * .01); rec('dropBonus', 'attributes', v.luk * E.luk.dropBonus); rec('dropBonus', 'book', Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus);
     set('rebirthBonus', 'research', (s.permanent.pearl || 0) * 2);
-    set('dungeonGoldBonus', 'research', (s.permanent.dungeon || 0) * .08);
     // 세계석 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다.
     add('crit', 'research', researchRank(s, 'crit') * .005); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
     add('penetration', 'research', researchRank(s, 'penetration') * .01); add('evasion', 'research', researchRank(s, 'evasion') * .006);
@@ -99,7 +98,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         // v27.86 힘의 길: 장비 능력치 ×(1 − 30·50·70%).
         add(key as keyof CombatStats, 'equipment', Math.min(n!, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity) * roughGear(s));
     // v3.12 칠흑 세트(보유 수 기준, 영구).
-    { const b = onyxSetBonus(ownedOnyx(s).size); if (b.bossDamage) add('bossDamage', 'book', b.bossDamage); if (b.statusResist) add('statusResist', 'book', b.statusResist); if (b.allStats) add('allStats', 'book', b.allStats); }
+    // v3.37 칠흑 세트는 장비 출처로 표시합니다(전에는 ‘도감’으로 잘못 묶였음).
+    { const b = onyxSetBonus(ownedOnyx(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); if (b.allStats) add('allStats', 'equipment', b.allStats); }
     const passiveJobs = new Set<string>();
     let relief = 0;
     // v24.2 진행도 기록: 진행도 비례 피해의 기준값과 perCount 패시브가 씁니다.

@@ -5,7 +5,6 @@ import { clampVitals } from './stats';
 import { grantJobSkills } from './progression';
 import { syncGoals, syncAchievements } from './progress';
 import { syncVoyage } from './guidance';
-import { syncGoal } from './goals';
 import { addLog } from './state';
 import { syncStatRate } from './turn';
 import type { ActionHandlers } from './actions/types';
@@ -28,7 +27,6 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
     syncGoals(s, now);
     dispatch(s, a, now, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
-    syncGoal(s, text => addLog(s, text, 'reward'));
     syncAchievements(s, text => addLog(s, text, 'reward'));
 }
 function dispatch(s: State, a: Action, now: number, rng: () => number) {

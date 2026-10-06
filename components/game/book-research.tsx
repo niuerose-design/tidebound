@@ -6,7 +6,7 @@ import { BALANCE } from '@/game/data/balance';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookPending, bookTierReq } from '@/game/systems/progression';
 import { bookStage, regionResearchStage } from '@/game/systems/book';
-import { BOOK_ECOLOGY, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
+import { BOOK_ECOLOGY, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
 import { Meter } from './shared';
 
 const MILESTONES = BALANCE.bookMilestones;
@@ -51,7 +51,7 @@ function regionResearch(s: State, stageId: string) {
     const st = STAGES.find(x => x.id === stageId)!;
     const done = st.fish.filter(id => (s.book[id] || 0) >= PROGRESSION.fishComplete).length;
     const pending = st.fish.reduce((a, id) => a + bookPending(s, id).ranks.length, 0);
-    return { done, total: st.fish.length, complete: done === st.fish.length, pending, reward: `${REGION_THEMES[st.id]?.label ? REGION_THEMES[st.id].label + ' · ' : ''}AP +1` };
+    return { done, total: st.fish.length, complete: done === st.fish.length, pending, reward: '장착 AP +1' };
 }
 
 export function pendingBookCount(s: State) { return FISH.reduce((a, f) => a + bookPending(s, f.id).ranks.length, 0); }
@@ -65,5 +65,5 @@ export function RegionProgress({ s, id }: { s: State; id: string }) {
 export function RegionResearchLine({ s, region }: { s: State; region: string }) {
     const n = regionResearchStage(s, region), r = REGION_RESEARCH[region];
     if (!r) return null;
-    return <span className="region-research">{n ? <b className="positive">지역 연구 {n} / {REGION_RESEARCH_MAX}단계 · {r.label} ×{n} 적용 중</b> : `지역 연구 0 / ${REGION_RESEARCH_MAX}단계`}{n < REGION_RESEARCH_MAX && ` · 다음: 지역 몬스터 전부 연구 ${REGION_RESEARCH_FROM + n}단계 → ${r.label} 한 번 더`}</span>;
+    return <span className="region-research">{n ? <b className="positive">지역 연구 {n} / {REGION_RESEARCH_MAX}단계 · {r.first.label} · {r.label} ×{n} 적용 중</b> : `지역 연구 0 / ${REGION_RESEARCH_MAX}단계`}{n < REGION_RESEARCH_MAX && ` · 다음: 지역 몬스터 전부 연구 ${REGION_RESEARCH_FROM + n}단계 → ${n ? `${r.label} 한 번 더` : `첫 보너스 ${r.first.label} · ${r.label}`}`}</span>;
 }

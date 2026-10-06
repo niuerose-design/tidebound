@@ -327,12 +327,12 @@ test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish
 test('v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) are wired into profiles, themes, research and logs; rebirth titles', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { STAGES, DUNGEONS, FISH } = await mods.load('data/world'); const { profileId } = await mods.load('data/encounters'); const { ORIGIN_THEMES } = await mods.load('data/gear');
-    const { REGION_THEMES } = await mods.load('data/book-traits'); const { BOSS_RESEARCH } = await mods.load('data/boss-research');
+    const { FIRST_CLEAR_SP } = await mods.load('data/achievements');
     const { rebirthTitle } = await mods.load('data/long-term'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
     const st = STAGES.find(x => x.id === 'duskVents'), d = DUNGEONS.find(x => x.id === 'ventCathedral');
     assert.ok(st && st.rebirth === 5 && st.level === 55 && d && d.rebirth === 8 && d.level === 60);
     for (const id of [...st.fish, ...d.fish, d.bossFish]) { assert.ok(FISH.some(f => f.id === id), id); assert.notEqual(profileId(id), undefined); }
-    assert.ok(FISH.find(f => f.id === 'ventColossus').boss && ORIGIN_THEMES.duskVents && ORIGIN_THEMES.ventCathedral && REGION_THEMES.duskVents && BOSS_RESEARCH.ventCathedral.sp === 3);
+    assert.ok(FISH.find(f => f.id === 'ventColossus').boss && ORIGIN_THEMES.duskVents && ORIGIN_THEMES.ventCathedral && FIRST_CLEAR_SP.ventCathedral === 3);
     assert.ok(ACHIEVEMENTS.some(a => a.id === `stages:${STAGES.filter(st => !st.habitat).length}`) && ACHIEVEMENTS.some(a => a.id === `dungeons:${DUNGEONS.filter(d => !d.random).length}`));
     const s = newState(0); s.level = 60; s.rebirths = 4; assert.throws(() => act(s, { type: 'stage', id: 'duskVents' }, 0)); s.rebirths = 5; act(s, { type: 'stage', id: 'duskVents' }, 0); assert.equal(s.stage, 'duskVents');
     assert.throws(() => act(s, { type: 'dungeon', id: 'ventCathedral' }, 0)); s.rebirths = 8; act(s, { type: 'dungeon', id: 'ventCathedral' }, 0); assert.equal(s.dungeon.id, 'ventCathedral');
@@ -1385,7 +1385,7 @@ test('v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-pie
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const { ACHIEVEMENTS } = await L.load('data/achievements');
     const steps = ACHIEVEMENTS.filter(a => a.id.startsWith('onyx:')); assert.deepEqual(steps.map(a => a.target), [1, 2, 3, 4, 5, 6, 7]);
     for (const a of steps) assert.ok((a.reward.sp || 0) + (a.reward.ap || 0) >= 1, `${a.id} grants SP or AP`);
-    const last = steps.at(-1); assert.ok(last.reward.sp >= 2 && last.reward.ap >= 2 && last.reward.bonus.attack >= .05, 'completion reward is strong');
+    const last = steps.at(-1); assert.ok(last.reward.sp >= 2 && last.reward.ap >= 2 && last.reward.pearls >= 50, 'completion reward is strong');
 });
 
 test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per request and continues next sync (same total, summary accumulates)', async () => {
@@ -1401,7 +1401,7 @@ test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per
 });
 test('v3.17 tutorial rewards: a step completed by its condition pays once; silent back-fill for veteran saves pays nothing', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const G = await L.load('systems/guidance');
-    assert.ok(G.TUTORIAL_STEPS.length >= 21); assert.ok(G.TUTORIAL_STEPS.every(st => st.reward && (st.reward.pearls || st.reward.sp)));
+    assert.equal(G.TUTORIAL_STEPS.length, 13); assert.ok(G.TUTORIAL_STEPS.every(st => st.reward && (st.reward.pearls || st.reward.sp)));
     const s = newState(0); s.tutorial = { done: {} }; const pearls = s.pearls; const logs = [];
     G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls, 'the starter skill alone pays nothing (new accounts start with 0 pearls)'); assert.ok(s.tutorial.done.skill, 'but the step counts as done');
     s.kills = 1; G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1); assert.ok(logs.some(t => t.includes('첫 처치'))); G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1, 'paid once');

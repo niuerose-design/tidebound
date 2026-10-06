@@ -44,12 +44,8 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                 <button className="primary" disabled={busy || !s || name.trim().length < 2} onClick={() => { send({ type: 'rename', value: name }); onOpenChange(false); }}>변경</button>
             </div>
             {s && researchRank(s, 'sortingNet') > 0 && <div className="setting-toggle">
-                <div><strong>자동 분해기</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 정수로 분해합니다. 자동 판매기를 켜면 꺼집니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
-                <button className={s.autoSell ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoSell} onClick={() => send({ type: 'autoSell', value: s.autoSell ? 'off' : 'on' })}>{s.autoSell ? '켜짐' : '꺼짐'}</button>
-            </div>}
-            {s && researchRank(s, 'autoVend') > 0 && <div className="setting-toggle">
-                <div><strong>자동 판매기</strong><p>{researchRank(s, 'autoVend') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 골드로 팝니다. 자동 분해기를 켜면 꺼집니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
-                <button className={s.autoVend ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoVend} onClick={() => send({ type: 'autoVend', value: s.autoVend ? 'off' : 'on' })}>{s.autoVend ? '켜짐' : '꺼짐'}</button>
+                <div><strong>자동 정리</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 분해(정수)하거나 판매(골드)합니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
+                <div className="setting-choice" role="radiogroup" aria-label="자동 정리 방식">{([['off', '끔'], ['dismantle', '분해'], ['sell', '판매']] as const).map(([id, label]) => { const on = id === 'dismantle' ? !!s.autoSell : id === 'sell' ? !s.autoSell && !!s.autoVend : !s.autoSell && !s.autoVend; return <button key={id} type="button" role="radio" aria-checked={on} className={on ? 'primary' : 'secondary'} disabled={busy} onClick={() => send({ type: 'autoSort', value: id })}>{label}</button>; })}</div>
             </div>}
             <SkillFxToggle/>
             <NoticeToggles/>

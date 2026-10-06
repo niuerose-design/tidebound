@@ -73,6 +73,8 @@
 .setting-toggle { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 0; border-top:1px solid #9ab4b522; margin-top:12px; }
 .setting-toggle p { font-size:12px; color:#a5bfb1; margin:4px 0 0; line-height:1.6; }
 .setting-toggle button { flex-shrink:0; min-width:64px; }
+.setting-choice { display:flex; gap:6px; flex-shrink:0; }
+.setting-choice button { min-width:52px; }
 .swarm-cap-setting { flex-direction:column; align-items:stretch; }
 .swarm-cap-buttons { display:flex; flex-wrap:wrap; gap:6px; }
 .swarm-cap-buttons button { flex:1 1 0; min-width:72px; }
@@ -95,18 +97,6 @@
 .job-current-summary h2 { font-size:22px; margin:3px 0; }
 .job-current-summary p { margin:7px 0 0; font-size:13px; color:#a5bcb0; }
 .job-current-summary>button { margin-left:auto; flex-shrink:0; }
-/* v27.73 목표 직업 카드: 직업 상세에서 ‘목표로 설정’한 직업의 조건 진행과 전직 버튼. */
-.job-goal-summary { display:flex; align-items:center; gap:17px; padding:18px 26px; margin-bottom:14px; border-color:#d5b36c55; background:linear-gradient(110deg,#2a2f24,#152329); }
-.job-goal-summary>svg { color:var(--gold); flex-shrink:0; }
-.job-goal-summary small { font-size:12px; color:#a8bcb3; }
-.job-goal-summary h2 { font-size:19px; margin:3px 0; }
-.job-goal-summary p { margin:5px 0 0; font-size:13px; color:#a5bcb0; overflow-wrap:anywhere; }
-.job-goal-summary.ready { border-color:#6fb7a0aa; }
-.job-goal-summary.ready small { color:#9ce8b4; }
-.job-goal-summary.done small { color:#e8d39a; }
-.job-goal-actions { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; flex-shrink:0; }
-.job-goal-summary.ready .job-goal-actions>button:first-child { background:#6fb7a0; color:#0d1a1e; border-color:#6fb7a0; }
-.route-goal { color:var(--gold); margin-left:4px; vertical-align:-1px; }
 .job-inspector { min-width:0; }
 .job-family-description { font-size:13px; color:#9db5ab; line-height:1.85; margin:0 0 14px; }
 .job-inspector { padding:25px; }
@@ -181,19 +171,15 @@
     .rebirth-reward { border-left:0; border-top:1px solid var(--border); padding:20px 0 0; }
     .job-current-summary { padding:20px; flex-wrap:wrap; gap:12px; }
     .job-current-summary>button { margin-left:38px; }
-    .job-goal-summary { padding:18px 20px; flex-wrap:wrap; gap:12px; }
-    .job-goal-actions { margin-left:0; width:100%; justify-content:flex-start; }
+
     .skill-grid-detailed .skill-card { padding:20px; }
     .skill-growth-table th,.skill-growth-table td { padding:10px; font-size:12px; }
     .skill-grid-detailed .skill-actions { flex-wrap:wrap; }
     .skill-grid-detailed .skill-actions>button { flex:1 1 100px; }
 }
 
-/* Growth goals and optional tactical choices follow the existing game panels. */
-.growth-goals { margin-bottom: 16px; padding: 18px; min-width: 0; }
-.growth-goals p { margin: 8px 0; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
-.growth-goals small { display: block; margin-top: 10px; color: var(--muted-foreground); font-size: 13px; }
-.growth-goals summary, .skill-specialization summary { cursor: pointer; padding: 10px 0; font-size: 14px; }
+/* 스킬 장기 연마 접기 상자. */
+.skill-specialization summary{ cursor: pointer; padding: 10px 0; font-size: 14px; }
 
 .skill-specialization { margin: 12px 0; border-top: 1px solid var(--border); }
 .skill-specialization p{ font-size: 14px; line-height: 1.6; }

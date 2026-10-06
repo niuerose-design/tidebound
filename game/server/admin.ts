@@ -10,7 +10,7 @@ import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
 import { RANKS, RANK_PERKS, rankIndex, rankState, rankPerkLevel, rankPointsFree } from '../data/rank';
-import { BOSS_RESEARCH } from '../data/boss-research';
+import { FIRST_CLEAR_SP } from '../data/achievements';
 import { DUNGEONS, STAGES } from '../data/world';
 import { PROGRESSION } from '../data/progression';
 import { skillById } from '../data/skills';
@@ -42,7 +42,7 @@ export type AdminSp = { have: number; research: { name: string; sp: number; clai
 export type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
 const spView = (s: State): AdminSp => ({
     have: s.sp || 0,
-    research: DUNGEONS.filter(d => BOSS_RESEARCH[d.id] && (s.clears?.[d.id] || 0) > 0).map(d => ({ name: d.name, sp: BOSS_RESEARCH[d.id].sp, claimed: !!s.bossResearchClaims?.[d.id] })),
+    research: DUNGEONS.filter(d => FIRST_CLEAR_SP[d.id] && (s.clears?.[d.id] || 0) > 0).map(d => ({ name: d.name, sp: FIRST_CLEAR_SP[d.id], claimed: !!s.achievementClaims?.[`firstClear:${d.id}`] })),
     spentSkills: Object.entries(s.skillSpent || {}).filter(([, n]) => n > 0).map(([id, n]) => ({ name: skillById(id)?.name || id, sp: n })),
     limitBreaks: Object.entries(s.limitBreaks || {}).filter(([, n]) => n > 0).map(([id, n]) => ({ name: `${skillById(id)?.name || id} ${n}단계`, sp: PROGRESSION.limitBreak.sp.slice(0, n).reduce((a, b) => a + b, 0) })),
     logs: (s.logs || []).filter(l => /SP [+-]|SP 계승/.test(l.text)).slice(-10).map(l => l.text),

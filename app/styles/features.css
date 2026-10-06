@@ -152,17 +152,10 @@
 .voyage-entry p { font-size: 13px; line-height: 1.7; margin: 6px 0 0; color: #a9bdb8; }
 .voyage-entry.locked strong, .voyage-entry.locked p { color: #5f7577; }
 /* 장기 목표 */
-.growth-goals.folded { display: flex; align-items: center; gap: 8px; padding: 10px 16px; font-size: 13px; color: #9fb4af; }
-.growth-goals.folded span { flex: 1; }
-.growth-goals h2 { display: flex; align-items: center; gap: 6px; }
 
 /* 정리: 숫자 줄임 표기는 부모 글꼴을 그대로 사용, 왼쪽 안내 슬롯 */
 .num-short { font: inherit !important; color: inherit !important; line-height: inherit !important; white-space: nowrap; }
-.player-column > .tutorial-card, .player-column > .growth-goals { margin: 16px 0 0; padding: 16px; }
-.player-column > .tutorial-card .tutorial-head span { display: none; }
-.player-column > .tutorial-card .tutorial-steps li { font-size: 11px; padding: 2px 7px; }
-.player-column > .growth-goals .section-title h2 { font-size: 15px; }
-.player-column > .growth-goals p { font-size: 13px; }
+
 .battle-console>.session-metrics>div{padding:0 12px;gap:8px;min-width:0}
 .battle-console>.session-metrics span{white-space:nowrap;min-width:0}
 @media(min-width:768px) and (max-width:1600px){.battle-console>.session-metrics>div>svg{display:none}}

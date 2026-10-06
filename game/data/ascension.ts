@@ -33,7 +33,7 @@ export const ascensionEarlyExp = (s: AscensionState & { rebirths: number }) => a
  * 무료로 준 단계는 researchGranted에 적어 재분배 때 세계석으로 돌려주지 않습니다.
  */
 export const ASCENSION_RESEARCH: Record<string, number> = {
-    habit: 3, inventory: 8, offline: 12, salvage: 5, sortingNet: 2, autoVend: 2, autoStar: 1, revive: 5,
+    habit: 3, inventory: 8, offline: 12, salvage: 5, sortingNet: 2, autoStar: 1, revive: 5,
     vowAnchor: 1, vowBreath: 1, vowRough: 1, vowRestraint: 1,
 };
 /** 승천 기록을 세이브에 남기는 수. */

@@ -31,7 +31,6 @@ export const {combatFxFromLog,combatFxBatch}=await load('game/systems/combat-fee
 export const {migrateState}=await load('game/systems/migrations.js');
 export const {randomGameRunsLeft}=await load('game/systems/random-game.js');
 export const {passiveGrowthBonus,jobMastered,apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,skillRankDeltas,skillMasteryLevel,masteryMilestonesFor,jobRequirements,validLoadout,skillLevel,maxSkillLevel,inherited,trimLoadout,jobMasteryTarget,jobCombatMultiplier,limitBreakNext,skillMastery}=await load('game/systems/progression.js');
-export const {goalProgress}=await load('game/systems/goals.js');
 export const {skillGrowthStages,skillExtraNotes}=await load('game/systems/skill-description.js');
 export const {SKILLS}=await load('game/data/skills.js');
 const WORLD=await load('game/data/world.js');

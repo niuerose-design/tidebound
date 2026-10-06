@@ -136,13 +136,16 @@ test('Follow-up hits: each hit counted once, total equals HP lost, stops when th
  const crit=[];strike(mk(['arcane'],{crit:1}),{...mk([]),name:'B',hp:1e6},()=>0,crit);assert.equal(crit[0].hits[0].critical,true);assert.equal(crit[0].damageType,'magic');
 });
 
-test('v27.81 codex: research stages grant no flat trait stats (ecology only); place themes still apply; 50 catches reveal info',()=>{
+test('v27.81 codex: research stages grant no flat trait stats (ecology only); v3.37 place themes moved into region research tier 1; 50 catches reveal info',()=>{
  const bookDelta=(s,k)=>{const t={};stats(s,t);return (t[k]||[]).filter(x=>x.source==='book'&&x.factor===undefined).reduce((a,x)=>a+x.delta,0);};
  const s=newState(0);s.book.minnow=10000;s.book.eel=10000;s.book.grottoWarden=10000;
  for(const k of ['attack','magic','accuracy','resist','hp','defense'])assert.equal(bookDelta(s,k),0,`no ${k} from traits`);
  const r=newState(0),exp=stats(r).expBonus;for(const id of STAGES[0].fish)r.book[id]=50;
- assert.ok(Math.abs(stats(r).expBonus-exp-.03)<1e-9);assert.equal(bookDelta(r,'hp'),0);
- const k=newState(0);assert.equal(bookMod.rareSpawnBonus(k),0);for(const id of STAGES.find(x=>x.id==='kelp').fish)k.book[id]=50;assert.equal(bookMod.rareSpawnBonus(k),.1);
+ assert.ok(Math.abs(stats(r).expBonus-exp)<1e-9,'one place alone gives no theme bonus now');
+ for(const id of STAGES[1].fish)r.book[id]=50;
+ assert.ok(Math.abs(stats(r).expBonus-exp-.05)<1e-9,'리스항구 tier 1: first +3% and tier +2%');assert.equal(bookDelta(r,'hp'),0);
+ const k=newState(0);assert.equal(bookMod.rareSpawnBonus(k),0);for(const id of STAGES.find(x=>x.id==='kelp').fish)k.book[id]=50;assert.equal(bookMod.rareSpawnBonus(k),0);
+ for(const id of STAGES.find(x=>x.id==='reef').fish)k.book[id]=50;assert.equal(bookMod.rareSpawnBonus(k),.1,'헤네시스 tier 1 brings the old kelp rare-spawn bonus');
  assert.equal(weightedFishId(['minnow','seahorse'],()=>.84),'minnow');assert.equal(weightedFishId(['minnow','seahorse'],()=>.84,.1),'seahorse');
  const v=newState(0);v.book.minnow=49;assert.equal(bookMod.bookRevealed(v,'minnow'),false);v.book.minnow=50;assert.equal(bookMod.bookRevealed(v,'minnow'),true);
 });

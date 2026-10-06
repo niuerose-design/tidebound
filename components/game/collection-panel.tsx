@@ -20,7 +20,7 @@ import { OnyxArt } from './onyx-art';
 import { affixDef } from '@/game/data/gear';
 import { abyssReference, stageField } from '@/game/systems/encounter';
 import { bookEcology, nextEcology, bookRevealed, regionResearchStage, bookStage } from '@/game/systems/book';
-import { BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
+import { BOOK_ECOLOGY, BOOK_REVEAL, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
 import { VARIANTS, regionSignature } from '@/game/data/variants';
 import type { State, Stats } from '@/game/types';
 import { enemySkillBrief } from '@/game/systems/skill-description';
@@ -240,10 +240,10 @@ export function Collection({ s, send, busy }: PanelProps) {
     </div>
     </details>
     <details className="bonus-block">
-    <summary><div><h2>지역 연구</h2><p>지역(리스항구 등)의 모든 몬스터가 연구 {REGION_RESEARCH_FROM}·{REGION_RESEARCH_FROM + 1}·{REGION_RESEARCH_FROM + 2}단계 이상이면 지역 연구 1·2·3단계입니다. 단계마다 지역 효과가 한 번씩 쌓입니다.</p></div><span className="bonus-count">{REGIONS.reduce((a, r) => a + regionResearchStage(s, r), 0)}<small> / {REGIONS.length * REGION_RESEARCH_MAX}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <summary><div><h2>지역 연구</h2><p>지역(리스항구 등)의 모든 몬스터가 연구 {REGION_RESEARCH_FROM}·{REGION_RESEARCH_FROM + 1}·{REGION_RESEARCH_FROM + 2}단계 이상이면 지역 연구 1·2·3단계입니다. 1단계에 지역 첫 보너스가 붙고, 단계마다 지역 효과가 한 번씩 쌓입니다.</p></div><span className="bonus-count">{REGIONS.reduce((a, r) => a + regionResearchStage(s, r), 0)}<small> / {REGIONS.length * REGION_RESEARCH_MAX}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
     <ul className="bonus-rows">{REGIONS.map(region => { const n = regionResearchStage(s, region), r = REGION_RESEARCH[region], ids = regionFish(region), need = REGION_RESEARCH_FROM + n; return <li key={region} className={n >= REGION_RESEARCH_MAX ? 'done' : n ? 'active' : ''}>
-        <div className="bonus-row-head"><strong>{region}</strong><small>단계마다 {r?.label}{n ? ` · ×${n} 적용 중` : ''}</small><span className="bonus-count small">{n}<small> / {REGION_RESEARCH_MAX}단계</small></span></div>
+        <div className="bonus-row-head"><strong>{region}</strong><small>1단계 첫 보너스 {r?.first.label} · 단계마다 {r?.label}{n ? ` · ×${n} 적용 중` : ''}</small><span className="bonus-count small">{n}<small> / {REGION_RESEARCH_MAX}단계</small></span></div>
         <Meter value={n} max={REGION_RESEARCH_MAX}/>
         <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = FISH.find(x => x.id === id)!, k = s.book[id] || 0, stage = bookStage(s, id); return <span key={id} className={`bonus-chip ${stage >= REGION_RESEARCH_FROM + REGION_RESEARCH_MAX - 1 ? 'done' : stage >= need ? 'seen' : ''}`} title={k ? `${f.name} · 연구 ${stage}단계${n < REGION_RESEARCH_MAX ? ` · 다음 지역 연구에 ${need}단계 필요` : ''}` : '미발견'}>{k ? f.name : '???'}{k ? ` ${stage}단계` : ''}</span>; })}</dd></dl>
         {n < REGION_RESEARCH_MAX && <p className="bonus-empty">다음 단계: 지역의 모든 몬스터가 연구 {need}단계 이상.</p>}
@@ -251,9 +251,9 @@ export function Collection({ s, send, busy }: PanelProps) {
     </div>
     </details>
     <details className="bonus-block">
-    <summary><div><h2>장소 연구</h2><p>사냥터(장소)의 모든 종을 완성하면 장소 테마 보너스와 장착 AP +1을 받습니다.</p></div><span className="bonus-count">{regions.length}<small> / {PLACES.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <summary><div><h2>장소 연구</h2><p>사냥터(장소)의 모든 종을 완성(처치 50회)하면 장착 AP +1을 받습니다. 예전 장소 테마 보너스는 지역 연구 1단계 첫 보너스로 옮겼습니다.</p></div><span className="bonus-count">{regions.length}<small> / {PLACES.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
-    <ul className="bonus-grid wide">{PLACES.map(st => { const t = REGION_THEMES[st.id], done = regions.some(r => r.id === st.id); return <li key={st.id} className={done ? 'done' : ''}><span>{st.name}</span><strong>{t ? t.label : '테마 없음'}{done ? <em> · 적용 중</em> : null}</strong></li>; })}</ul>
+    <ul className="bonus-grid wide">{PLACES.map(st => { const done = regions.some(r => r.id === st.id); return <li key={st.id} className={done ? 'done' : ''}><span>{st.name}</span><strong>장착 AP +1{done ? <em> · 적용 중</em> : null}</strong></li>; })}</ul>
     </div>
     </details>
     </div>; })()}

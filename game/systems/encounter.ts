@@ -1,5 +1,4 @@
 /** 적 등장·드롭·승리 보상. */
-import { BOSS_RESEARCH } from '../data/boss-research';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, refinePractice } from './progression';
@@ -90,20 +89,18 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
-    // 자동 분해기: 켜 두면 1단계는 희귀, 2단계는 영웅 이하를 바로 분해합니다. v3.23 골드 대신 정수. 유물·장비 도감에 없는 종류는 남깁니다.
+    // 자동 정리(v3.37 옛 자동 분해기·자동 판매기): 1단계는 희귀, 2단계는 영웅 이하를 바로 분해(정수, autoSell) 또는 판매(골드, autoVend). 유물·장비 도감에 없는 종류는 남깁니다.
     const net = researchRank(s, 'sortingNet');
     if (net && s.autoSell && !item.relic && item.rarity <= net && s.itemBook?.[itemKey(slot, rarity)]) {
         const essence = dismantleEssence(item);
         s.essence = (s.essence || 0) + essence;
-        addLog(s, `자동 분해기: ${item.name} 분해 · 정수 +${essence}`, 'reward');
+        addLog(s, `자동 정리: ${item.name} 분해 · 정수 +${essence}`, 'reward');
         return;
     }
-    // v3.24 자동 판매기: 같은 조건의 드롭을 골드로 팝니다.
-    const vend = researchRank(s, 'autoVend');
-    if (vend && s.autoVend && !s.autoSell && !item.relic && item.rarity <= vend && s.itemBook?.[itemKey(slot, rarity)]) {
+    if (net && s.autoVend && !s.autoSell && !item.relic && item.rarity <= net && s.itemBook?.[itemKey(slot, rarity)]) {
         const gold = saleValue(item);
         s.gold += gold;
-        addLog(s, `자동 판매기: ${item.name} 판매 +${gold} G`, 'reward');
+        addLog(s, `자동 정리: ${item.name} 판매 +${gold} G`, 'reward');
         return;
     }
     if (s.inventory.length >= inventoryCap(s)) {
@@ -358,7 +355,6 @@ export function reward(s: State, rng: () => number) {
                     addLog(s, `무릉도장 ${depth}층 첫 돌파 이정표 · SP +1`, 'reward');
                 }
             }
-            if (first && BOSS_RESEARCH[d.id]) addLog(s, `${d.name} 첫 정복! 던전 화면에서 연구 보상 SP ${BOSS_RESEARCH[d.id].sp}을 받으세요.`, 'reward');
             if (first && d.id !== 'abyss')
                 s.pearls += d.pearls;
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;

@@ -1,7 +1,7 @@
 'use client';
 import { displayTitle } from '@/game/data/titles';
 import { TutorialCard } from './guidance-panels';
-import { tutorialActive } from './growth-goals';
+import { tutorialActive } from '@/game/systems/guidance';
 import { DoorNotice } from './jobs/mystery-doors';
 import { AltarNotice } from './altar-notice';
 import { memo, useEffect, useRef, useState } from 'react';

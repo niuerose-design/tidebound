@@ -343,8 +343,6 @@ export type State = {
     closed?: import('./data/world').Closures | null;
     /** v27.73 운영 페이지에서 연 문의 ??? 직업 id(서버가 동기화 때 적음). 없으면 null. 열려 있는 동안만 문이 열리고 doorsOpened에는 남지 않습니다. */
     openDoors?: string[] | null;
-    bossResearchClaims?: Record<string, boolean>;
-    growthGoal?: { kind: 'job'; id: string; notified?: boolean } | null;
     /** 마지막으로 자동 진행(사냥·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
     runEnd?: { reason: string; turn: number } | null;
     /** 튜토리얼 카드. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. */
@@ -466,9 +464,9 @@ export type State = {
     researchGranted?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
-    /** 자동 분해기 켜짐 여부(설정). v3.23부터 정수로 분해. */
+    /** 자동 정리 · 분해 방식(설정). v3.23부터 정수로 분해. */
     autoSell?: boolean;
-    /** v3.24 자동 판매기 켜짐 여부(설정). autoSell과 동시에 켜지지 않습니다. */
+    /** 자동 정리 · 판매 방식(설정). autoSell과 동시에 켜지지 않습니다. */
     autoVend?: boolean;
     /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
     /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */

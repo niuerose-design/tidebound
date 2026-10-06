@@ -2,7 +2,6 @@
 import { tideLimit, encounterTier, levelGateOk } from '../meta';
 import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed, hackDownOf } from '../../data/world';
 import { SWARM_CAPS } from '../../data/variants';
-import { JOBS } from '../../data/classes';
 import { RANDOM_GAME } from '../../data/random-game';
 import { isHackerJob } from '../../data/hacker';
 import { randomGameRank, randomGameRunsLeft, randomGameUsed, inRandomGame, cashOutRandomGame } from '../random-game';
@@ -99,18 +98,13 @@ export const voyageActions: ActionHandlers = {
     offlineDismiss(s) {
         s.lastOffline = null;
     },
-    autoSell(s, { a }) {
+    /** v3.37 자동 정리: off · dismantle(정수, autoSell) · sell(골드, autoVend). 둘은 동시에 켜지지 않습니다. */
+    autoSort(s, { a }) {
         if (!researchRank(s, 'sortingNet'))
-            throw Error('자동 분해기 연구가 필요합니다.');
-        s.autoSell = a.value === 'on';
-        // v3.24 자동 판매기와는 하나만 켭니다.
-        if (s.autoSell) s.autoVend = false;
-    },
-    autoVend(s, { a }) {
-        if (!researchRank(s, 'autoVend'))
-            throw Error('자동 판매기 연구가 필요합니다.');
-        s.autoVend = a.value === 'on';
-        if (s.autoVend) s.autoSell = false;
+            throw Error('자동 정리 연구가 필요합니다.');
+        if (!['off', 'dismantle', 'sell'].includes(a.value || '')) throw Error('자동 정리 방식을 확인하세요.');
+        s.autoSell = a.value === 'dismantle';
+        s.autoVend = a.value === 'sell';
     },
     statConfirm(s, { a }) {
         s.skipStatConfirm = a.value === 'off';
@@ -141,10 +135,5 @@ export const voyageActions: ActionHandlers = {
         else if (id === 'show') { s.tutorial.hidden = false; s.tutorial.skipped = false; }
         else if (id === 'skip') s.tutorial.skipped = true;
         else throw Error('알 수 없는 안내 설정입니다.');
-    },
-    growthGoal(s, { id }) {
-        if (id === 'none') { s.growthGoal = null; return; }
-        if (!JOBS.some(x => x.id === id)) throw Error('성장 목표를 확인하세요.');
-        s.growthGoal = { kind: 'job', id };
     },
 };
