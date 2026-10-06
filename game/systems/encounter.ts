@@ -2,7 +2,7 @@
 import { rollAffixes } from '../data/gear';
 import { ODDS } from '../data/odds';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
-import { jobMasteryTarget, skillRefinementTargets, refinePractice } from './progression';
+import { jobMasteryTarget, skillRefinementTargets, refinePractice, limitBreakOf } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
@@ -281,7 +281,7 @@ export function reward(s: State, rng: () => number) {
             const before = thresholdRank(refinePractice(s, id), targets);
             s.skillPractice[id] = (s.skillPractice[id] || 0) + practiceTotal;
             const after = thresholdRank(refinePractice(s, id), targets);
-            if (after > before) addLog(s, `${sk.name} 연마 ${after}/${targets.length}단계 달성 · 직접 피해·양수 패시브 누적 ${refinementBonusLabel(after)}`, 'skill');
+            if (after > before && limitBreakOf(s, id) >= PROGRESSION.limitBreak.max) addLog(s, `${sk.name} 극한돌파 ${after}/${targets.length}단계 달성 · 직접 피해·양수 패시브 누적 ${refinementBonusLabel(after)}`, 'skill');
         }
     }
     s.book[e.id] = (s.book[e.id] || 0) + size * bookPer;
