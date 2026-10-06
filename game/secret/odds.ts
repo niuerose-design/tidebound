@@ -65,4 +65,14 @@ export const SERVER_ODDS: Odds = {
     },
     /** 상점 감정 등급 확률: 희귀 · 영웅 · 전설 · 신화 · 고대 · 태초. */
     appraisal: [.55, .33, .09, .025, .004, .001],
+    /**
+     * v3.54 몬스터 출현 가중치(world.ts specialFish에서 옮김). 표에 없는 몬스터는 1. 까미·누리는 0(일반 출현 판정에서 빠지고 따로 판정).
+     * 희귀 몬스터 출현 증가(도감 특성·패시브)는 encounter.ts weightedFishId가 이 위에 곱합니다.
+     */
+    spawn: {
+        masteryMimic: 0, expNuri: 0,
+        seahorse: .18, needlefish: .12, tidejelly: .07, emberEel: .14, ashRay: .1, magmaPuffer: .06, cinderKoi: .045,
+        starKoi: .1, prismRay: .065, voidGuppy: .04, stormBarracuda: .08, eclipseMoonfish: .06, novaManta: .03,
+        cinderAngler: .6, ventLeviathan: .3, abyssManta: .018,
+    },
 };

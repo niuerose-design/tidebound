@@ -18,6 +18,8 @@ export type Odds = {
     variant: { chance: Record<string, number>; region: Record<string, Record<string, number>>; swarmWeights: number[]; habitatBig: number };
     /** 상점 감정 등급 확률(APPRAISAL 순서: 희귀 · 영웅 · 전설 · 신화 · 고대 · 태초). */
     appraisal: number[];
+    /** v3.54 몬스터 출현 가중치(희귀 몬스터 id → 가중치, 없으면 1). */
+    spawn: Record<string, number>;
 };
 const empty = (): Odds => ({
     drop: { chance: 0, cap: 0, dungeonRepeat: 0, goldenBase: 0, rarity: [0, 0, 0, 0, 0, 0, 0], tideRarityPerTier: 0, essenceChancePerTier: 0, essenceEveryTiers: 1 },
@@ -26,6 +28,7 @@ const empty = (): Odds => ({
     onyx: { chance: 0, perTier: 0, pity: Infinity, drop: 0, dropPity: Infinity },
     variant: { chance: {}, region: {}, swarmWeights: [0, 0, 0], habitatBig: 0 },
     appraisal: [0, 0, 0, 0, 0, 0],
+    spawn: {},
 });
 /** 지금 쓰는 값. 서버는 늘 진짜 값, 화면은 카탈로그로 받았을 때만. */
 export const ODDS: Odds = empty();
@@ -33,3 +36,11 @@ let known = false;
 export function setOdds(o: Odds) { Object.assign(ODDS, JSON.parse(JSON.stringify(o)) as Odds); known = true; }
 /** 진짜 값을 받았는지(화면: 비공개가 켜져 있으면 false). */
 export const oddsKnown = () => known;
+
+/**
+ * v3.54 사냥터 평균 보상 배율(출현 가중 평균, world.ts stageRewardNorm). 출현 가중치는 비밀이지만 도감 ‘적 정보’가 실제 전투와 같은 값을 보여야 하므로,
+ * 서버가 사냥터마다 [이 난이도부터, 평균] 구간 표로 만들어 카탈로그에 늘 싣습니다(가중치 하나하나는 드러나지 않음). 화면은 진짜 값을 모를 때 이 표를 씁니다.
+ */
+export type StageRewardAvg = Record<string, [tier: number, avg: number][]>;
+export const STAGE_REWARD_AVG: StageRewardAvg = {};
+export function setStageRewardAvg(table: StageRewardAvg) { for (const k of Object.keys(STAGE_REWARD_AVG)) delete STAGE_REWARD_AVG[k]; Object.assign(STAGE_REWARD_AVG, table); }
