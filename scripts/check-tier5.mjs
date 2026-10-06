@@ -135,7 +135,7 @@ const rows = JOBS.filter(j => j.tier === JOB_TIER && !j.retired && (j.level || 0
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 for (const k of KEYS) { const m = median(rows.map(r => r.out[k].score)) || 1; for (const r of rows) r[k] = r.out[k].score / m; }
 const f2 = n => n.toFixed(2), pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : `${Math.round(n / 1e4)}만`;
-console.log(`5차 직업 비교 (Lv.${LEVEL} · 환생 ${REBIRTHS} · 전투 연구 약 75% · ${RARITIES[RARITY].name} ${STAR}성 4부위 · 사냥터 난이도 ${TIER} · 던전 난이도 ${DUNGEON_TIER} · ×500 무리 난이도 ${SWARM500_TIER} ${PEN === null ? '' : ` · 관통 ${PEN}`} · 시드 ${SEEDS}, 5차 중앙값 = 1.00)`);
+console.log(`5차 직업 비교 (Lv.${LEVEL} · 환생 ${REBIRTHS} · 전투 연구 약 ${Math.round(75 * RESEARCH_SCALE)}% · ${RARITIES[RARITY].name} ${STAR}성 4부위 · 사냥터 난이도 ${TIER} · 던전 난이도 ${DUNGEON_TIER} · ×500 무리 난이도 ${SWARM500_TIER} ${PEN === null ? '' : ` · 관통 ${PEN}`} · 시드 ${SEEDS}, 5차 중앙값 = 1.00)`);
 console.log('직업'.padEnd(16, '　') + '역할　　　 사냥터(턴·승) 무리100(턴·승) 무리500(턴·승) 던전(판·체력) 보스(턴·승) 월드보스(피해)');
 for (const r of [...rows].sort((a, b) => a.sub.localeCompare(b.sub) || b.hunt - a.hunt)) {
     const o = r.out;
