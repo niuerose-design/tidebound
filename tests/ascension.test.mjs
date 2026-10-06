@@ -294,10 +294,11 @@ test('v3.58 gold income is logged per play hour (24 buckets) and survives rebirt
     assert.ok((t.goldEarned || 0) >= t.gold - g0 && t.goldLog?.length >= 1, 'hunting ticks record income');
     t.level = 60; t.goldLog = [{ h: 0, g: 9 }]; act(t, { type: 'rebirth' }, 700_000); assert.deepEqual(t.goldLog, [{ h: 0, g: 9 }], 'kept through rebirth');
 });
-test('v3.58 appraisal: price × rebirth factor (v3.68 linear), pity at 150/1000/3000 kept through rebirth and reset by ascension', async () => {
+test('v3.58 appraisal: price × rebirth factor (v3.68 linear, v3.81 scale 30), pity at 150/1000/3000 kept through rebirth and reset by ascension', async () => {
     const Co = await L.load('systems/commerce'), Ec = await L.load('data/economy');
     const s = newState(0); s.level = 100; const base = Co.gambleCost(s);
-    s.rebirths = 60; assert.equal(Co.gambleCost(s), Math.floor(base * 10), 'unchanged below 100 rebirths');
+    s.rebirths = 30; assert.equal(Co.gambleCost(s), Math.floor(base * 10), 'v3.81 10^(30/30) at 30 rebirths');
+    s.rebirths = 60; assert.equal(Co.gambleCost(s), Math.floor(base * (1 + 60 * .45)), 'v3.81 linear from ~38 rebirths');
     assert.equal(Ec.appraisalRebirthFactor(200), 1 + 200 * .45, 'v3.68 linear above ~100 rebirths'); assert.ok(Ec.appraisalRebirthFactor(100) <= Math.pow(10, 100 / 60)); s.rebirths = 0;
     s.gold = 1e12; s.permanent.inventory = 8; s.inventory = [];
     s.appraisal = { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 148, ancient: 0, primal: 0 } };
@@ -469,4 +470,15 @@ test('v3.77 onyx accessories carry max-rolled options (power still grows only by
     const tuned = JSON.stringify(it.affixes); M.migrateState(s, 0); assert.equal(JSON.stringify(it.affixes), tuned, 'tuned once');
     it.enhance = 21; const r = C.starForceAttempt(s, it, false, () => SF.starSuccess(21) + 1e-9, () => {});
     assert.equal(r.outcome, 'destroy'); assert.ok(s.inventory.includes(it), 'not lost'); assert.equal(it.enhance, SF.STARFORCE.relicResetStar);
+});
+test('v3.81 permanent gear (relic / heir / onyx) star force costs × (1 + 0.21 × rebirths); normal gear unchanged; appraisal price is linear from ~38 rebirths', async () => {
+    const Eq = await L.load('systems/equipment'), SF = await L.load('data/starforce'), Ec = await L.load('data/economy');
+    const base = { id: 'x', slot: 'rod', style: 'physical', rarity: 6, power: 530, level: 100, enhance: 15, name: 'x', affixes: [] };
+    const s = newState(0); s.rebirths = 60;
+    const plain = Eq.enhanceCost(base, s), heir = Eq.enhanceCost({ ...base, heir: 'primal' }, s), onyx = Eq.enhanceCost({ ...base, onyx: 'onyxDusk' }, s);
+    assert.equal(plain, Eq.enhanceCost(base, { ...s, rebirths: 0 }), 'normal gear ignores rebirths');
+    assert.ok(Math.abs(heir / plain - (1 + 60 * SF.STARFORCE.permanentPerRebirth)) < .01, `heir ×${heir / plain}`);
+    assert.ok(Math.abs(onyx / heir - 1) < .001, 'onyx priced like heir gear');
+    assert.equal(Eq.enhanceCost({ ...base, heir: 'primal' }, { ...s, rebirths: 0 }), plain, 'no extra cost at 0 rebirths');
+    assert.equal(Ec.appraisalRebirthFactor(60), 1 + 60 * .45); assert.ok(Ec.appraisalRebirthFactor(30) < 1 + 30 * .45); assert.equal(Ec.appraisalRebirthFactor(200), 1 + 200 * .45);
 });
