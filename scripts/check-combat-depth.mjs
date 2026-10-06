@@ -48,8 +48,10 @@ if(!baseline){
  assert(hitChance({accuracy:.1,speed:10},{evasion:.2,speed:10})<.35);
  assert(hitChance({accuracy:1.5},{evasion:.6})>hitChance({accuracy:1.2},{evasion:.6}));
  assert(evasionRating(.8)>.5&&evasionRating(.8)<.8);
- const sk=SKILLS.find(s=>s.id==='pierce');const practiced=refinementTargets(sk.masteryMilestones.at(-1))[0];
- assert(effectiveSkill(sk,5,4,practiced).multiplier>effectiveSkill(sk,5,4).multiplier);
+ // v3.73 극한돌파(옛 연마): 한계돌파 3단계(숙련 레벨 4 + 3)를 마친 스킬만, 한계돌파 마지막 숙련(× 8) 위로 셉니다.
+ const sk=SKILLS.find(s=>s.id==='pierce');const practiced=refinementTargets(sk.masteryMilestones.at(-1)*8)[0];
+ assert(effectiveSkill(sk,5,7,practiced).multiplier>effectiveSkill(sk,5,7).multiplier);
+ assert.equal(effectiveSkill(sk,5,4,practiced).multiplier,effectiveSkill(sk,5,4).multiplier);
  assert.equal(effectiveSkill(sk,5,4).penetrationBonus,.2);
  assert(rebirthExperience(400)<rebirthExperience(20)*3);
  const full=newState(0),st=stats(full),healer={name:'test',stats:st,hp:st.hp,skills:['breath'],cooldowns:{},stun:0,mana:st.mana};const b={name:'dummy',stats:st,hp:st.hp,skills:[],cooldowns:{},stun:0};strike(healer,b,()=>0);assert.ok(healer.cooldowns.breath>0,'v21: heal skills also fire at full HP');

@@ -60,13 +60,13 @@ test('v3.31 refinement and limit-break progress restart from the ascension base;
     const s = { skillPractice: { hook: last + 40_000 }, refineBase: { hook: last + 40_000 } };
     assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 0, 'refinement back to 0');
     assert.equal(P.refinePractice({ skillPractice: { hook: last + 40_000 } }, 'hook'), last + 40_000, 'no base → unchanged');
-    // v3.71 극한돌파(옛 연마): 한계돌파 마지막 숙련(마지막 단계 × 8) 위로 5,000부터.
+    // v3.73 극한돌파(옛 연마): 한계돌파 마지막 숙련(마지막 단계 × 8) 위로 5,000부터.
     s.skillPractice.hook += last * 7 + 4_999; assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 0, 'not before the last limit-break practice + 5k');
     s.skillPractice.hook += 1; assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 1, 'first step after 5k more');
     assert.equal(P.skillMasteryLevel(s.skillPractice.hook, P.masteryMilestonesFor(sk)), P.masteryMilestonesFor(sk).length, 'growth level kept');
 });
 
-test('v3.71 extreme break (old refinement) counts only after all three limit breaks; requirement labels use thousands separators', () => {
+test('v3.73 extreme break (old refinement) counts only after all three limit breaks; requirement labels use thousands separators', () => {
     const sk = skillById('hook'), max = P.maxSkillLevel(sk), targets = P.skillRefinementTargets(sk), far = targets.at(-1);
     const plain = P.effectiveSkill(sk, 1, max, 0).multiplier;
     assert.equal(P.effectiveSkill(sk, 1, max, far).multiplier, plain, 'no limit break: no extreme break bonus');

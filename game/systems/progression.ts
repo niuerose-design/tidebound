@@ -24,12 +24,12 @@ export function attributes(s: State) {
 export function masteryMilestonesFor(sk?: Skill) { return sk?.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones; }
 export function skillRefinementTargets(sk: Skill) {
     const positive = Object.values(sk.bonus || {}).some(n => n > 0) || Object.values(sk.levelEffects || {}).some(row => Object.values(row.bonus || {}).some(n => n > 0));
-    // v3.71 극한돌파: 한계돌파 마지막 단계의 숙련(마지막 숙련 단계 × 한계돌파 마지막 배수) 위로 연마 30단계만큼 더 쌓습니다.
+    // v3.73 극한돌파: 한계돌파 마지막 단계의 숙련(마지막 숙련 단계 × 한계돌파 마지막 배수) 위로 연마 30단계만큼 더 쌓습니다.
     const lb = PROGRESSION.limitBreak;
     return sk.type === 'active' || positive ? refinementTargets(masteryMilestonesFor(sk).at(-1)! * lb.practiceMultiple[lb.max - 1]) : [];
 }
 /**
- * v3.31 극한돌파(v3.71, 옛 연마)·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
+ * v3.31 극한돌파(v3.73, 옛 연마)·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
  * 성장 레벨(숙련 1~4단계)은 원래 숙련 그대로라 바뀌지 않습니다. 기준점이 없으면 원래 숙련과 같습니다.
  */
 export function refinePractice(s: Pick<State, 'skillPractice' | 'refineBase'>, id: string) {
@@ -215,7 +215,7 @@ export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): 
         bonus,
         penaltyRelief: override?.penaltyRelief ?? sk.penaltyRelief,
     };
-    // v3.71 극한돌파(옛 연마): 한계돌파를 끝까지 한 스킬만 셉니다. AP·발동률은 늘지 않습니다.
+    // v3.73 극한돌파(옛 연마): 한계돌파를 끝까지 한 스킬만 셉니다. AP·발동률은 늘지 않습니다.
     const refinement = broken >= lb.max ? thresholdRank(practice, skillRefinementTargets(sk)) : 0;
     result.multiplier *= 1 + refinement * REFINEMENT_STEP_BONUS;
     if (refinement && result.bonus) result.bonus = Object.fromEntries(Object.entries(result.bonus).map(([k, n]) => [k, n > 0 ? n * (1 + refinement * REFINEMENT_STEP_BONUS) : n]));
