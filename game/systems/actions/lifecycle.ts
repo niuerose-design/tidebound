@@ -1,12 +1,13 @@
 /** 환생, 하드코어 소프트 리셋, 서약 선택과 전체 초기화 */
 import { tailwindExp, rebirthLevel, rebirthReward } from '../meta';
-import { ASCENSION, ASCENSION_RESEARCH, ASCENSION_LOG_KEEP, ascensionOf, ascensionRequirement } from '../../data/ascension';
+import { ASCENSION, ASCENSION_RESEARCH, ASCENSION_LOG_KEEP, ASCENSION_PERKS, ascensionOf, ascensionPerk, ascensionRequirement } from '../../data/ascension';
+import { AUTO_REBIRTH_LEVELS, RESEARCH_PLAN_MAX, runResearchPlan } from '../research-plan';
 import { achievementById } from '../../data/achievements';
 import { masteryMilestonesFor } from '../progression';
 import { skillById } from '../../data/skills';
 import { TUTORIAL_STEPS } from '../guidance';
 import { stats } from '../stats';
-import { salvageRate, startingLevel, researchRank } from '../../data/economy';
+import { salvageRate, startingLevel, researchRank, RESEARCH } from '../../data/economy';
 import { PROGRESSION } from '../../data/progression';
 import { saleValue, dismantleEssence, syncRelicPower } from '../equipment';
 import type { State, Vows, RebirthRecord, AscensionRecord } from '../../types';
@@ -44,6 +45,55 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
     syncRelicPower(s);
     s.hp = stats(s).hp;
     s.mana = stats(s).mana;
+}
+
+/** 환생: 요구 레벨을 넘긴 생을 마치고 다음 생을 시작합니다. v3.40 자동 환생(systems/automation)도 이 함수를 씁니다. */
+export function rebirthNow(s: State, now: number, rng: () => number) {
+    // v3.31 환생 상한: 200회부터는 환생할 수 없고 승천만 할 수 있습니다.
+    if (s.rebirths >= ASCENSION.rebirthCap)
+        throw Error(`환생은 ${ASCENSION.rebirthCap}회까지입니다. 승천할 수 있습니다.`);
+    if (s.level < rebirthLevel(s))
+        throw Error(`레벨 ${rebirthLevel(s)}부터 환생할 수 있습니다.`);
+    // v3.23 깊은 모험(Lv.100 완주 보너스)은 삭제, 순풍은 조건 없이 매 생 목표 레벨까지 켜집니다.
+    const base = rebirthReward(s, stats(s).rebirthBonus || 0), lifeBonus = null;
+    // 하드코어: 이번 생에 한 번도 쓰러지지 않고(쓰러지면 서약이 풀림) 환생하면 세계석 보너스.
+    const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, pearls = base + breath;
+    const vows = cleanVows(s, s.nextVows);
+    const salvage = salvagePreview(s);
+    // v27.63 환생 기록: 이번 생에 걸린 실제 시간·사냥 시간·도달 레벨·받은 세계석. 다음 생 시작 시각을 새로 잽니다.
+    const life = s.lifeStart || { at: now, playMs: s.playMs || 0, partial: true };
+    const record: RebirthRecord = { n: s.rebirths + 1, at: now, realMs: Math.max(0, now - life.at), playMs: Math.max(0, (s.playMs || 0) - life.playMs), level: s.level, pearls, ...(life.partial ? { partial: true } : {}) };
+    // v27.80 지겨운 환생: 직전 직업·스킬·능력치 비율을 기억했다가 숙달한 것만 복원합니다.
+    const habit = researchRank(s, 'habit'), prevJob = jobById(s.job), prevMastered = !!prevJob && jobMastered(s, prevJob), prevSkills = [...s.skills], prevAttr = { ...s.attributes };
+    startLife(s, now, { pearls: s.pearls + pearls, rebirths: s.rebirths + 1, lifeBonus });
+    s.rebirthLog = [...(s.rebirthLog || []), record].slice(-REBIRTH_LOG_KEEP);
+    s.lifeStart = { at: now, playMs: s.playMs || 0 };
+    if (salvage.count) {
+        if (salvage.mode === 'dismantle') { s.essence = (s.essence || 0) + salvage.essence; addLog(s, `청산 · 장비 ${salvage.count}개 분해 · 정수 +${salvage.essence}`, 'reward'); }
+        else { s.gold += salvage.gold; addLog(s, `청산 · 장비 ${salvage.count}개 판매 · 다음 생 시작 골드 +${salvage.gold} G`, 'reward'); }
+    }
+    if (hasVows(vows)) s.vows = vows;
+    else delete s.vows;
+    // v27.86 절제: 새 생의 편성을 AP·장착 개수 상한에 맞춥니다.
+    if (s.vows?.restraint) trimLoadout(s);
+    // 윤회의 문: 이번 생에 열릴 ??? 직업을 게임 난수로 추첨해 저장합니다(후보가 없으면 난수를 쓰지 않음).
+    const door = drawRebirthDoor(s, rng);
+    if (door) s.rebirthDoor = door; else delete s.rebirthDoor;
+    addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${breath ? ` · 하드코어 +${breath}` : ''}`);
+    addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 필요 경험치가 레벨마다 크게 늘어납니다`, 'reward');
+    if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => (LEVELED_VOWS as readonly string[]).includes(id) ? `${VOW_NAMES[id]} ${s.vows![id]}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
+    if (s.rebirthDoor) addLog(s, `윤회의 문 · 이번 생에는 ${jobById(s.rebirthDoor)?.name}의 문이 열렸습니다.`, 'system');
+    if (habit >= 1 && prevJob && prevMastered && prevJob.id !== s.job && canChangeJob(s, prevJob.id)) {
+        s.job = prevJob.id; if (!s.unlockedJobs.includes(prevJob.id)) s.unlockedJobs.push(prevJob.id); grantJobSkills(s);
+        addLog(s, `지겨운 환생 · 숙달한 ${prevJob.name}(으)로 자동 전직`, 'system');
+    }
+    if (habit >= 2) {
+        const kept = prevSkills.filter(id => canUse(s, id)); if (kept.length) { s.skills = [...new Set([...kept, ...s.skills])]; trimLoadout(s); addLog(s, `지겨운 환생 · 스킬 편성 ${s.skills.length}개 유지`, 'system'); }
+    }
+    if (habit >= 3) {
+        const total = Object.values(prevAttr).reduce((a, b) => a + b, 0);
+        if (total > 0 && s.statPoints > 0) { const points = s.statPoints; let used = 0; for (const key of Object.keys(prevAttr) as (keyof typeof prevAttr)[]) { const n = Math.floor(points * prevAttr[key] / total); s.attributes[key] += n; used += n; } s.statPoints -= used; if (used) addLog(s, `지겨운 환생 · 능력치 ${used}포인트를 이전 비율로 배분`, 'system'); }
+    }
 }
 
 /**
@@ -111,7 +161,7 @@ export function ascend(s: State, now: number) {
         guildMember: s.guildMember, guildStats: s.guildStats, altar: s.altar, daily: s.daily, weekly: s.weekly, duelSeason: s.duelSeason,
         privacy: s.privacy, autoSell: s.autoSell, autoVend: s.autoVend, autoSellGrades: s.autoSellGrades, autoVendGrades: s.autoVendGrades, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, skipStatConfirm: s.skipStatConfirm, swarmCap: s.swarmCap,
         account: s.account, hacker: s.hacker, hackFeed: s.hackFeed, doorsOpened: s.doorsOpened, shopSerial: s.shopSerial, logId: s.logId,
-        newsMark: s.newsMark, letterLog: s.letterLog, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled,
+        newsMark: s.newsMark, letterLog: s.letterLog, autoRebirth: s.autoRebirth, researchPlan: s.researchPlan, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled,
         jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, skillPractice: s.skillPractice, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited,
         learned: Object.fromEntries(Object.keys(s.learned || {}).map(id => [id, 1])),
         // 튜토리얼은 건너뜁니다: 모든 단계를 완료로 적어 안내도, 단계 보상도 다시 나오지 않게 합니다.
@@ -139,52 +189,37 @@ export function ascend(s: State, now: number) {
 export const lifecycleActions: ActionHandlers = {
     /** v3.31 승천. */
     ascend(s, { now }) { ascend(s, now); },
-    rebirth(s, { now, rng }) {
-        // v3.31 환생 상한: 200회부터는 환생할 수 없고 승천만 할 수 있습니다.
-        if (s.rebirths >= ASCENSION.rebirthCap)
-            throw Error(`환생은 ${ASCENSION.rebirthCap}회까지입니다. 승천할 수 있습니다.`);
-        if (s.level < rebirthLevel(s))
-            throw Error(`레벨 ${rebirthLevel(s)}부터 환생할 수 있습니다.`);
-        // v3.23 깊은 모험(Lv.100 완주 보너스)은 삭제, 순풍은 조건 없이 매 생 목표 레벨까지 켜집니다.
-        const base = rebirthReward(s, stats(s).rebirthBonus || 0), lifeBonus = null;
-        // 하드코어: 이번 생에 한 번도 쓰러지지 않고(쓰러지면 서약이 풀림) 환생하면 세계석 보너스.
-        const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, pearls = base + breath;
-        const vows = cleanVows(s, s.nextVows);
-        const salvage = salvagePreview(s);
-        // v27.63 환생 기록: 이번 생에 걸린 실제 시간·사냥 시간·도달 레벨·받은 세계석. 다음 생 시작 시각을 새로 잽니다.
-        const life = s.lifeStart || { at: now, playMs: s.playMs || 0, partial: true };
-        const record: RebirthRecord = { n: s.rebirths + 1, at: now, realMs: Math.max(0, now - life.at), playMs: Math.max(0, (s.playMs || 0) - life.playMs), level: s.level, pearls, ...(life.partial ? { partial: true } : {}) };
-        // v27.80 지겨운 환생: 직전 직업·스킬·능력치 비율을 기억했다가 숙달한 것만 복원합니다.
-        const habit = researchRank(s, 'habit'), prevJob = jobById(s.job), prevMastered = !!prevJob && jobMastered(s, prevJob), prevSkills = [...s.skills], prevAttr = { ...s.attributes };
-        startLife(s, now, { pearls: s.pearls + pearls, rebirths: s.rebirths + 1, lifeBonus });
-        s.rebirthLog = [...(s.rebirthLog || []), record].slice(-REBIRTH_LOG_KEEP);
-        s.lifeStart = { at: now, playMs: s.playMs || 0 };
-        if (salvage.count) {
-            if (salvage.mode === 'dismantle') { s.essence = (s.essence || 0) + salvage.essence; addLog(s, `청산 · 장비 ${salvage.count}개 분해 · 정수 +${salvage.essence}`, 'reward'); }
-            else { s.gold += salvage.gold; addLog(s, `청산 · 장비 ${salvage.count}개 판매 · 다음 생 시작 골드 +${salvage.gold} G`, 'reward'); }
+    rebirth(s, { now, rng }) { rebirthNow(s, now, rng); },
+    /** v3.40 자동 환생(승천 1회): id 'on' · 'off', value = 목표 레벨(AUTO_REBIRTH_LEVELS, 0이면 요구 레벨). */
+    autoRebirth(s, { id, a }) {
+        if (!ascensionPerk(s, 'autoRebirth')) throw Error(`자동 환생은 승천 ${ASCENSION_PERKS.autoRebirth}회부터 쓸 수 있습니다.`);
+        const level = a.value === undefined ? s.autoRebirth?.level || 0 : Number(a.value);
+        if (!(AUTO_REBIRTH_LEVELS as readonly number[]).includes(level)) throw Error('자동 환생 목표 레벨을 확인하세요.');
+        if (id !== 'on' && id !== 'off') throw Error('자동 환생 설정을 확인하세요.');
+        s.autoRebirth = { on: id === 'on', level };
+    },
+    /**
+     * v3.40 연구 구매 예약(승천 1회). id: 'on' · 'off' · 'add'(value '연구 id:목표 단계') · 'remove' · 'up' · 'down'(value 칸 번호) · 'clear'.
+     * 같은 연구를 다시 넣으면 목표 단계만 바꿉니다. 켜 두면 바로 한 번 처리합니다.
+     */
+    researchPlan(s, { id, a }) {
+        if (!ascensionPerk(s, 'researchPlan')) throw Error(`연구 구매 예약은 승천 ${ASCENSION_PERKS.researchPlan}회부터 쓸 수 있습니다.`);
+        const plan = s.researchPlan || { on: false, items: [] }, items = [...plan.items], index = Number(a.value);
+        if (id === 'on' || id === 'off') plan.on = id === 'on';
+        else if (id === 'add') {
+            const [rid, to] = String(a.value || '').split(':'), r = RESEARCH.find(x => x.id === rid), target = Number(to);
+            if (!r || !Number.isInteger(target) || target < 1 || target > r.max) throw Error('예약할 연구와 목표 단계를 확인하세요.');
+            const at = items.findIndex(x => x.id === rid);
+            if (at >= 0) items[at] = { id: rid, to: target };
+            else { if (items.length >= RESEARCH_PLAN_MAX) throw Error(`연구 구매 예약은 ${RESEARCH_PLAN_MAX}칸까지입니다.`); items.push({ id: rid, to: target }); }
         }
-        if (hasVows(vows)) s.vows = vows;
-        else delete s.vows;
-        // v27.86 절제: 새 생의 편성을 AP·장착 개수 상한에 맞춥니다.
-        if (s.vows?.restraint) trimLoadout(s);
-        // 윤회의 문: 이번 생에 열릴 ??? 직업을 게임 난수로 추첨해 저장합니다(후보가 없으면 난수를 쓰지 않음).
-        const door = drawRebirthDoor(s, rng);
-        if (door) s.rebirthDoor = door; else delete s.rebirthDoor;
-        addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${breath ? ` · 하드코어 +${breath}` : ''}`);
-        addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 필요 경험치가 레벨마다 크게 늘어납니다`, 'reward');
-        if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => (LEVELED_VOWS as readonly string[]).includes(id) ? `${VOW_NAMES[id]} ${s.vows![id]}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
-        if (s.rebirthDoor) addLog(s, `윤회의 문 · 이번 생에는 ${jobById(s.rebirthDoor)?.name}의 문이 열렸습니다.`, 'system');
-        if (habit >= 1 && prevJob && prevMastered && prevJob.id !== s.job && canChangeJob(s, prevJob.id)) {
-            s.job = prevJob.id; if (!s.unlockedJobs.includes(prevJob.id)) s.unlockedJobs.push(prevJob.id); grantJobSkills(s);
-            addLog(s, `지겨운 환생 · 숙달한 ${prevJob.name}(으)로 자동 전직`, 'system');
-        }
-        if (habit >= 2) {
-            const kept = prevSkills.filter(id => canUse(s, id)); if (kept.length) { s.skills = [...new Set([...kept, ...s.skills])]; trimLoadout(s); addLog(s, `지겨운 환생 · 스킬 편성 ${s.skills.length}개 유지`, 'system'); }
-        }
-        if (habit >= 3) {
-            const total = Object.values(prevAttr).reduce((a, b) => a + b, 0);
-            if (total > 0 && s.statPoints > 0) { const points = s.statPoints; let used = 0; for (const key of Object.keys(prevAttr) as (keyof typeof prevAttr)[]) { const n = Math.floor(points * prevAttr[key] / total); s.attributes[key] += n; used += n; } s.statPoints -= used; if (used) addLog(s, `지겨운 환생 · 능력치 ${used}포인트를 이전 비율로 배분`, 'system'); }
-        }
+        else if (id === 'clear') items.length = 0;
+        else if (!Number.isInteger(index) || index < 0 || index >= items.length) throw Error('예약 칸을 확인하세요.');
+        else if (id === 'remove') items.splice(index, 1);
+        else if (id === 'up' || id === 'down') { const to = id === 'up' ? index - 1 : index + 1; if (to >= 0 && to < items.length) [items[index], items[to]] = [items[to], items[index]]; }
+        else throw Error('연구 구매 예약 설정을 확인하세요.');
+        s.researchPlan = { on: plan.on, items };
+        if (s.researchPlan.on) { const n = runResearchPlan(s); if (!n && id === 'on') addLog(s, '연구 구매 예약을 켰습니다. 세계석이 모이면 순서대로 삽니다.', 'system'); }
     },
     /** v25.6 업적 보상 받기: id 또는 'all'. */
     claimAchievement(s, { id }) {

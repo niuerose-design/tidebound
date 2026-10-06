@@ -445,6 +445,10 @@ export type State = {
     newsMark?: import('./systems/news').NewsMark;
     /** v3.40 편지 수신인 기록(최근 10건). */
     letterLog?: { job: string; gift: number; turn: number }[];
+    /** v3.40 자동 환생(승천 1회): 켜짐과 목표 레벨(0 = 요구 레벨). */
+    autoRebirth?: { on: boolean; level: number };
+    /** v3.40 연구 구매 예약(승천 1회): 순서대로 목표 단계까지 자동 구매. */
+    researchPlan?: { on: boolean; items: { id: string; to: number }[] };
     /** v3.12 칠흑 보스: 서식지별로 보스를 못 본 출현 횟수(천장)와 보스별 처치 수. 환생해도 남습니다. */
     onyxSeen?: Record<string, number>;
     onyxBook?: Record<string, number>;
