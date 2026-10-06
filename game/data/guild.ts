@@ -1,11 +1,3 @@
-// 길드는 이름·가입·명예 기부 기록만 남깁니다. research·mission·raid·medals 필드는 이전 기록 보존용입니다.
-export const guildLevelXp = (level: number) => level * 1000;
-export const newGuild = () => ({
-    name: '', level: 0, xp: 0, treasury: 0, contribution: 0, medals: 0,
-    research: {} as Record<string, number>, missionKills: 0, missionDungeons: 0,
-    missionClaimed: {} as Record<string, boolean>, raidTier: 1, raidBest: 0, lastRaid: 0,
-});
-
 /**
  * v25.11 공유 길드: 서버의 guilds·guild_members 테이블에 사는 진짜 길드입니다(계정 단위, 최대 20명).
  * 개인 능력치 보너스는 없고(v20.7 결정 유지), 주간 길드 목표 달성 시 길드원 각자가 세계석을 받습니다.

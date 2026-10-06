@@ -235,8 +235,6 @@ export type Skill = {
     /** 공용 기술 중 SP 없이 레벨 조건만으로 자동 습득하는 기술. */
     freeCommon?: boolean;
     masteryMilestones?: number[];
-    masteryAP?: number;
-    masteryBonus?: Partial<Stats>;
     /** Exact growth stages; index 0 is the free job skill. Negative AP is allowed. */
     levelEffects?: { cost?: number; bonus?: Partial<Stats>; penaltyRelief?: number }[];
     /** 환생 1회마다 더하는 능력치(최대 SKILL_FORMULA.perRebirthCap회). 환생할수록 강해지는 패시브에 씁니다. */
@@ -331,21 +329,6 @@ export type Log = {
     /** 전투 로그의 구조화된 결과. 오래된 로그에는 없을 수 있습니다. */
     event?: CombatEvent;
 };
-export type GuildState = {
-    name: string;
-    level: number;
-    xp: number;
-    treasury: number;
-    contribution: number;
-    medals: number;
-    research: Record<string, number>;
-    missionKills: number;
-    missionDungeons: number;
-    missionClaimed: Record<string, boolean>;
-    raidTier: number;
-    raidBest: number;
-    lastRaid: number;
-};
 export type State = {
     version: number;
     /** SP를 지급한 무릉도장 이정표 깊이. 환생해도 유지됩니다. */
@@ -360,8 +343,6 @@ export type State = {
     closed?: import('./data/world').Closures | null;
     /** v27.73 운영 페이지에서 연 문의 ??? 직업 id(서버가 동기화 때 적음). 없으면 null. 열려 있는 동안만 문이 열리고 doorsOpened에는 남지 않습니다. */
     openDoors?: string[] | null;
-    bossResearchClaims?: Record<string, boolean>;
-    growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number; notified?: boolean } | null;
     /** 마지막으로 자동 진행(사냥·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
     runEnd?: { reason: string; turn: number } | null;
     /** 튜토리얼 카드. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. */
@@ -405,7 +386,6 @@ export type State = {
     shopSerial: number;
     /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
     essence?: number;
-    guild: GuildState;
     attributes: Record<Attribute, number>;
     statPoints: number;
     sp: number;
@@ -459,6 +439,10 @@ export type State = {
     deaths: number;
     /** v3.8 자동 강화 연구 비용 인하(100 → 10) 차액 환급을 처리한 세이브. */
     autoStarRefunded?: boolean;
+    /** v3.38 장소 완성 AP를 업적(지역 연구 N곳 완성)으로 옮겼는지. */
+    placeApMoved?: boolean;
+    /** v3.39 소식 비교용 지난 표시(systems/news.ts). */
+    newsMark?: import('./systems/news').NewsMark;
     /** v3.12 칠흑 보스: 서식지별로 보스를 못 본 출현 횟수(천장)와 보스별 처치 수. 환생해도 남습니다. */
     onyxSeen?: Record<string, number>;
     onyxBook?: Record<string, number>;
@@ -484,7 +468,7 @@ export type State = {
     researchGranted?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
-    /** 자동 분해기 켜짐 여부(설정). v3.23부터 정수로 분해. */
+    /** 자동 정리 · 분해 방식(설정). v3.23부터 정수로 분해. */
     autoSell?: boolean;
     /** v3.24 자동 판매기 켜짐 여부(설정). v3.35부터 자동 분해기와 함께 켤 수 있습니다(같은 등급이면 분해 우선). */
     autoVend?: boolean;
@@ -492,7 +476,6 @@ export type State = {
     autoSellGrades?: number[];
     autoVendGrades?: number[];
     /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
-    hideDoorNotice?: boolean;
     /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */
     skipStatConfirm?: boolean;
     /** v27.32 설정: 만날 무리의 최대 규모(0이면 무리 끔). 없으면 제한 없음. 상한을 넘게 뽑힌 무리는 상한 규모로 나옵니다. */
@@ -532,7 +515,7 @@ export type State = {
         /** v27.70 일반 던전 난이도(DUNGEON_MODES). 없으면 노말. 무릉도장은 쓰지 않습니다. */
         mode?: import('./data/balance').DungeonMode;
         /** v27.86 랜덤게임: 쌓인 판돈(배율 적용 전)과 목표 웨이브(0이면 없음). */
-        stake?: { essence: number; pearls: number };
+        stake?: { essence: number };
         until?: number;
     };
     /** v27.86 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). v3.24 randomGameDay와 날이 다르면 0으로 봅니다. */

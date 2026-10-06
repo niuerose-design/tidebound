@@ -242,7 +242,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         act(top, { type: 'hackRun', id: 'savescum', value: 'balrog|forward' }, now); await Hk.applyPendingHack(top, 'acct_top', now);
         assert.equal((await database.listAltarRaids()).find(r => r.id === 'balrog').hp, 1000 - Math.floor(1000 * .03 * 4), 'forward: 3%×(n−6) of the remaining hp');
         const sc = veteran(10); act(sc, { type: 'hackRun', id: 'savescum', value: 'balrog|rewind' }, now); await assert.rejects(Hk.applyPendingHack(sc, 'acct_sc', now), /이미/, 'once per boss');
-        assert.ok((await database.listChat('global', 0, 300)).some(c => c.account_id === 'system-hacker' && c.text.includes('세이브 스캠')), 'announced');
+        assert.ok((await database.listChat('news', 0, 300)).some(c => c.account_id === 'system-hacker' && c.text.includes('세이브 스캠')), 'announced');
         assert.equal(await database.shiftAltarRaid('balrog', gen, -1e9), 1, 'save scum never slays');
         await database.hitAltarRaid('balrog', gen, 10); await database.slayAltarRaid('balrog', gen, 'p1', 'x', now);
         const ib = top.hacker.bits; act(top, { type: 'hackRun', id: 'interceptClaim' }, now); await Hk.applyPendingHack(top, 'acct_top', now);
@@ -260,7 +260,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         // v3.28 블랙 해커 실패: 효과 없이 전체 채팅에 이름 공지(루트킷이 있어도).
         const bk = veteran(); bk.name = '그림자'; bk.jobMastery.hacker = 1500; act(bk, { type: 'job', id: 'blackHacker' }, now); bk.hacker.loadout = ['rootkit']; bk.hacker.programs = ['rootkit'];
         act(bk, { type: 'hackRun', id: 'broadcast', value: '들켰다' }, now, () => .01); await Hk.applyPendingHack(bk, 'acct_bk', now);
-        assert.ok((await database.listChat('global', 0, 300)).some(c => c.account_id === 'system-hacker' && c.text.includes('블랙 해커 그림자가 방송 탈취 중 추적당했습니다')), 'busted notice names the black hacker');
+        assert.ok((await database.listChat('news', 0, 300)).some(c => c.account_id === 'system-hacker' && c.text.includes('블랙 해커 그림자가 방송 탈취 중 추적당했습니다')), 'busted notice names the black hacker');
         assert.notEqual((await Hk.readHacks(now)).broadcast?.text, '들켰다', 'failed hack has no effect');
         // v3.29 해커 조직(4-a): 창설·가입(초대 코드)·성향 제한·정원·비트 기여·위임·강퇴·코드 재발급·탈퇴, 소속 캐시 동기화.
         const Cr = await load('game/server/crews.js'), CD = await load('game/data/crew.js');
@@ -360,7 +360,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.ok(!('crew' in Hk.maskSnapshot(hrow, 'b_a', tagHacks, now)), 'masked name hides the crew tag');
         for (const [mid, m] of [['b_a', ba], ['b_b', bb]]) (await Cr.leaveCrew(mid, m, now))(m);
         // v3.26 해커 전직 알림(익명, system-hacker). 파일 DB를 쓰는 테스트는 동시에 돌면 서로의 파일을 바꾸므로 한 테스트에 모읍니다.
-        await Hk.announceHacker('hacker', now); const chat = await database.listChat('global', 0, 300);
+        await Hk.announceHacker('hacker', now); const chat = await database.listChat('news', 0, 300);
         assert.equal(chat.at(-1).account_id, 'system-hacker'); assert.equal(chat.at(-1).text, '누군가가 해커로 전직했습니다.');
         // 순위표.
         await Hk.syncHackerBoard('acct_a', a, now); const board = await Hk.listHackerBoard(a.hacker.season.key);

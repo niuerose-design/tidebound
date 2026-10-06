@@ -80,7 +80,7 @@ export const HACKER = {
      * 보상 가치 = 골드/1,000 + 세계석×40 + SP×400(비트 환산). 보스가 쓰러지지 않고 떠나면 아무것도 받지 못합니다. 하루 1회.
      */
     intercept: { share: (n: number) => .1 * Math.max(1, n - 5), value: (r: { gold: number; pearls: number; sp: number }) => Math.floor(r.gold / 1000 + r.pearls * 40 + r.sp * 400), perDay: () => 1, bits: 50, exp: 80 },
-    /** v3.28 해킹 VII 세이브 스캠: 떠 있는 월드보스 체력 되감기(깎인 체력의 5%×(n−6) 회복) 또는 빨리감기(남은 체력의 3%×(n−6) 감소, 쓰러뜨리지는 못함). 하루 1회, 보스 한 마리(세대)당 서버 전체 1회, 전체 채팅 공지. */
+    /** v3.28 해킹 VII 세이브 스캠: 떠 있는 월드보스 체력 되감기(깎인 체력의 5%×(n−6) 회복) 또는 빨리감기(남은 체력의 3%×(n−6) 감소, 쓰러뜨리지는 못함). 하루 1회, 보스 한 마리(세대)당 서버 전체 1회, 소식 공지. */
     savescum: { rewind: (n: number) => .05 * Math.max(1, n - 6), forward: (n: number) => .03 * Math.max(1, n - 6), perDay: () => 1, bits: 60, exp: 100 },
     /** v3.28 해킹 VIII 봇넷: 3시간 동안 브루트포스(비트·권한)와 그동안 시작한 패킷 스니핑 정산 ×2, 오늘 침투 작전 입장 +2. 하루 1회(세이브 안에서만 계산, 서버 쓰기 없음). */
     botnet: { hours: 3, rate: 2, entries: 2, perDay: () => 1, bits: 80, exp: 60 },
@@ -90,7 +90,7 @@ export const HACKER = {
     root: { perDay: () => 1, bits: 100, exp: 300, showMinutes: 10 },
     /**
      * v3.28 블랙 해커: 하루(주) 횟수 두 배(쿨다운 절반) · 해킹 비트 두 배 · 실패 확률 35% − 3%×n(최소 5%).
-     * 실패하면 비트·횟수는 쓰이고 효과는 없으며, 추적되어 전체 채팅에 이름이 공지되고 6시간 동안 해킹할 수 없습니다.
+     * 실패하면 비트·횟수는 쓰이고 효과는 없으며, 추적되어 소식에 이름이 공지되고 6시간 동안 해킹할 수 없습니다.
      * 대상·보스·게이지마다 걸린 1회 제한과 루트 권한(하루 1회)은 그대로입니다.
      */
     black: { cost: 2, cap: 2, fail: (n: number) => Math.max(.05, .35 - .03 * n), traceHours: 6, wipedHours: 3 },
@@ -124,7 +124,7 @@ export const PRIVACY_LABELS: Record<PrivacyField, string> = { job: '직업', lev
 /** 해커(1차, ??? 계열 독립 직업). 능력치 보정은 없고 규칙으로 막습니다: 전투(사냥·던전·결투·월드보스·신 도전) 불가, 능력치 투자·다른 스킬 장착 불가. */
 export const HACKER_JOBS = [
     { id: HACKER_ID, name: '해커', title: '게임의 헛점을 파고든다', desc: '전투 능력은 전무합니다. 사냥·던전·결투·월드보스·신 도전에 참여할 수 없고, 능력치 투자와 해커 전용이 아닌 스킬 장착이 막히며, 해커로 있는 동안 레벨·경험치가 멈춥니다. 대신 침투 작전으로 비트와 권한을 쌓고, 서버의 방송을 탈취하고 다른 모험가의 숨김을 깨뜨립니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 30, rebirth: 3, mastery: 0, requires: {}, role: '해킹·서버', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '세 번의 윤회를 넘긴 자에게 서버의 틈이 보입니다.', masteryTarget: 3000, masteryBoost: 0 },
-    { id: BLACK_HACKER_ID, name: '블랙 해커', title: '흔적을 남기지 않는 자', desc: '해커와 같은 제약(전투 불가, 레벨·경험치 정지)을 받습니다. 해킹의 하루 횟수가 두 배(쿨다운 절반)지만 비트도 두 배로 들고, 해킹마다 실패 확률(35% − 단계×3%, 최소 5%)이 있습니다. 실패하면 비트·횟수만 쓰이고, 추적되어 전체 채팅에 이름이 공지되며 6시간 동안 해킹할 수 없습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, rebirth: 3, parent: HACKER_ID, mastery: 1500, requires: {}, role: '고위험 해킹', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '해커로 서버를 충분히 들여다본 자에게 더 어두운 길이 보입니다.', masteryTarget: 6000, masteryBoost: 0 },
+    { id: BLACK_HACKER_ID, name: '블랙 해커', title: '흔적을 남기지 않는 자', desc: '해커와 같은 제약(전투 불가, 레벨·경험치 정지)을 받습니다. 해킹의 하루 횟수가 두 배(쿨다운 절반)지만 비트도 두 배로 들고, 해킹마다 실패 확률(35% − 단계×3%, 최소 5%)이 있습니다. 실패하면 비트·횟수만 쓰이고, 추적되어 소식에 이름이 공지되며 6시간 동안 해킹할 수 없습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, rebirth: 3, parent: HACKER_ID, mastery: 1500, requires: {}, role: '고위험 해킹', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '해커로 서버를 충분히 들여다본 자에게 더 어두운 길이 보입니다.', masteryTarget: 6000, masteryBoost: 0 },
     { id: WHITE_HACKER_ID, name: '화이트 해커', title: '뚫린 곳을 막는 자', desc: '해커와 같은 제약(전투 불가, 레벨·경험치 정지)을 받습니다. 공격 해킹(방송 탈취·크래킹·이벤트 변조·서버 다운) 대신 다른 해커의 해킹을 되돌리고(현상금으로 비트), 사냥터·던전을 패치해 한 시간 동안 서버 다운을 막습니다. 전용 패시브 방화벽은 하루 한 번 크래킹을 막아 냅니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, rebirth: 3, parent: HACKER_ID, mastery: 1500, requires: {}, role: '복구·패치', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '해커로 서버를 충분히 들여다본 자에게 반대편 길이 보입니다.', masteryTarget: 6000, masteryBoost: 0 },
 ];
 

@@ -1,5 +1,5 @@
 // v25 ??? 특수 직업: 시계공·시간의 지배자·玄
-import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, doorsMod as doors, combatFxFromLog, act, jobMasteryTarget, assert, test } from './harness.mjs';
+import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, doorsMod as doors, combatFxFromLog, act, jobMasteryTarget, migrateState, assert, test } from './harness.mjs';
 const { actTurn } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/combat');
 const { skillVeiled, skillBlockReason } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
 
@@ -318,7 +318,7 @@ test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish
     s.tide = 20; s.enemy = foe('lionfish', false); reward(s, rng); assert.equal(s.tideBest.reef, 20);
     const u = newState(0); u.abyssBest = 29; u.abyssMilestones = []; const ap = apCapacity(u);
     u.dungeon = { id: 'abyss', wave: 4, depth: 30 }; u.enemy = foe('abyssSovereign', true);
-    const before = u.pearls; reward(u, rng); assert.equal(u.abyssBest, 30); assert.ok(u.abyssMilestones.includes(30)); assert.equal(apCapacity(u), ap + 1, '30F → AP +1'); assert.ok(u.pearls - before >= 30 + 12, '30F pays floor pearls (4×3) + bonus 30');
+    const before = u.pearls; reward(u, rng); assert.equal(u.abyssBest, 30); assert.equal(apCapacity(u), ap, 'v3.38 30F no longer adds AP'); assert.ok(u.pearls - before >= 30 + 12, '30F pays floor pearls (4×3) + bonus 30');
     assert.ok(AFFIX_POOL.filter(a => a.onlyOrigin === 'abyss').length === 4);
     for (let i = 0; i < 200; i++) assert.ok(rollAffixes(3, 100, 'temple', rng).every(a => !a.id.startsWith('abyss')), 'abyss-only affixes never roll elsewhere');
     let found = false; for (let i = 0; i < 200 && !found; i++) found = rollAffixes(3, 100, 'abyss', rng).some(a => a.id.startsWith('abyss')); assert.ok(found, 'abyss drops roll abyss-only affixes');
@@ -327,17 +327,16 @@ test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish
 test('v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) are wired into profiles, themes, research and logs; rebirth titles', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { STAGES, DUNGEONS, FISH } = await mods.load('data/world'); const { profileId } = await mods.load('data/encounters'); const { ORIGIN_THEMES } = await mods.load('data/gear');
-    const { REGION_THEMES } = await mods.load('data/book-traits'); const { BOSS_RESEARCH } = await mods.load('data/boss-research'); const { VOYAGE_LOG } = await mods.load('data/voyage-log');
-    const { rebirthTitle, nextRebirthTitle } = await mods.load('data/long-term'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
+    const { FIRST_CLEAR_SP } = await mods.load('data/achievements');
+    const { rebirthTitle } = await mods.load('data/long-term'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
     const st = STAGES.find(x => x.id === 'duskVents'), d = DUNGEONS.find(x => x.id === 'ventCathedral');
     assert.ok(st && st.rebirth === 5 && st.level === 55 && d && d.rebirth === 8 && d.level === 60);
     for (const id of [...st.fish, ...d.fish, d.bossFish]) { assert.ok(FISH.some(f => f.id === id), id); assert.notEqual(profileId(id), undefined); }
-    assert.ok(FISH.find(f => f.id === 'ventColossus').boss && ORIGIN_THEMES.duskVents && ORIGIN_THEMES.ventCathedral && REGION_THEMES.duskVents && BOSS_RESEARCH.ventCathedral.sp === 3);
-    assert.ok(VOYAGE_LOG.some(x => x.id === 'stage:duskVents') && VOYAGE_LOG.some(x => x.id === 'dungeon:ventCathedral'));
+    assert.ok(FISH.find(f => f.id === 'ventColossus').boss && ORIGIN_THEMES.duskVents && ORIGIN_THEMES.ventCathedral && FIRST_CLEAR_SP.ventCathedral === 3);
     assert.ok(ACHIEVEMENTS.some(a => a.id === `stages:${STAGES.filter(st => !st.habitat).length}`) && ACHIEVEMENTS.some(a => a.id === `dungeons:${DUNGEONS.filter(d => !d.random).length}`));
     const s = newState(0); s.level = 60; s.rebirths = 4; assert.throws(() => act(s, { type: 'stage', id: 'duskVents' }, 0)); s.rebirths = 5; act(s, { type: 'stage', id: 'duskVents' }, 0); assert.equal(s.stage, 'duskVents');
     assert.throws(() => act(s, { type: 'dungeon', id: 'ventCathedral' }, 0)); s.rebirths = 8; act(s, { type: 'dungeon', id: 'ventCathedral' }, 0); assert.equal(s.dungeon.id, 'ventCathedral');
-    assert.equal(rebirthTitle(4), ''); assert.equal(rebirthTitle(5), '되돌아온 모험가'); assert.equal(rebirthTitle(49), '심연을 건넌 자'); assert.equal(rebirthTitle(120), '영원의 모험가'); assert.equal(nextRebirthTitle(10).rebirths, 20); assert.equal(nextRebirthTitle(50), undefined);
+    assert.equal(rebirthTitle(4), ''); assert.equal(rebirthTitle(5), '되돌아온 모험가'); assert.equal(rebirthTitle(49), '심연을 건넌 자'); assert.equal(rebirthTitle(120), '영원의 모험가');
 });
 
 test('v25.11 guild goals scale with members, points formula, weekly stats accumulate and reset by week', async () => {
@@ -384,9 +383,9 @@ test('v25.14 defense expansion: 11 jobs wired, resist scaling uses ward affinity
     assert.ok(withWard > withoutWard, 'resist scaling is multiplied by ward affinity');
 });
 
-test('v25.14 door notice setting toggles and survives rebirth', () => {
-    const s = newState(0); act(s, { type: 'doorNotice', value: 'off' }, 0); assert.equal(s.hideDoorNotice, true); s.level = 30; act(s, { type: 'rebirth' }, 0); assert.equal(s.hideDoorNotice, true, 'setting is kept like autoSell');
-    act(s, { type: 'doorNotice', value: 'on' }, 0); assert.equal(s.hideDoorNotice, false);
+test('v3.37 door notice server setting is gone: the action is refused and old saves drop the field', () => {
+    const s = newState(0); assert.throws(() => act(s, { type: 'doorNotice', value: 'off' }, 0), /지원하지 않는/);
+    s.hideDoorNotice = true; migrateState(s, 0); assert.equal('hideDoorNotice' in s, false);
 });
 
 test('v25.14 recommended loadout mixes passives and actives within AP', async () => {
@@ -1386,7 +1385,7 @@ test('v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-pie
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const { ACHIEVEMENTS } = await L.load('data/achievements');
     const steps = ACHIEVEMENTS.filter(a => a.id.startsWith('onyx:')); assert.deepEqual(steps.map(a => a.target), [1, 2, 3, 4, 5, 6, 7]);
     for (const a of steps) assert.ok((a.reward.sp || 0) + (a.reward.ap || 0) >= 1, `${a.id} grants SP or AP`);
-    const last = steps.at(-1); assert.ok(last.reward.sp >= 2 && last.reward.ap >= 2 && last.reward.bonus.attack >= .05, 'completion reward is strong');
+    const last = steps.at(-1); assert.ok(last.reward.sp >= 2 && last.reward.ap >= 2 && last.reward.pearls >= 50, 'completion reward is strong');
 });
 
 test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per request and continues next sync (same total, summary accumulates)', async () => {
@@ -1402,7 +1401,7 @@ test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per
 });
 test('v3.17 tutorial rewards: a step completed by its condition pays once; silent back-fill for veteran saves pays nothing', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const G = await L.load('systems/guidance');
-    assert.ok(G.TUTORIAL_STEPS.length >= 21); assert.ok(G.TUTORIAL_STEPS.every(st => st.reward && (st.reward.pearls || st.reward.sp)));
+    assert.equal(G.TUTORIAL_STEPS.length, 13); assert.ok(G.TUTORIAL_STEPS.every(st => st.reward && (st.reward.pearls || st.reward.sp)));
     const s = newState(0); s.tutorial = { done: {} }; const pearls = s.pearls; const logs = [];
     G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls, 'the starter skill alone pays nothing (new accounts start with 0 pearls)'); assert.ok(s.tutorial.done.skill, 'but the step counts as done');
     s.kills = 1; G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1); assert.ok(logs.some(t => t.includes('첫 처치'))); G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1, 'paid once');

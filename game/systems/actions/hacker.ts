@@ -124,7 +124,7 @@ export const hackerActions: ActionHandlers = {
             const label = HACK_NAMES[id || ''] || '해킹', hours = s.skills.includes(WIPE_TRACE_ID) && canUse(s, WIPE_TRACE_ID) ? HACKER.black.wipedHours : HACKER.black.traceHours;
             h.bustedUntil = now + hours * 3600_000;
             h.pending = { kind: 'busted', value: launder && h.crew ? `${label}|${h.crew.name}` : label, minutes: hours * 60 };
-            addLog(s, `${label} 실패 · 추적당했습니다! ${hours}시간 동안 해킹할 수 없고, 전체 채팅에 이름이 공지됩니다.`, 'system');
+            addLog(s, `${label} 실패 · 추적당했습니다! ${hours}시간 동안 해킹할 수 없고, 소식에 이름이 공지됩니다.`, 'system');
             return true;
         };
         if (id === 'broadcast') {

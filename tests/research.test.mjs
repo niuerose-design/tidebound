@@ -1,15 +1,15 @@
 // 세계석 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
 import { newState, act, advance, rawAdvance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, MIMIC_DATA, NURI_DATA, assert, test } from './harness.mjs';
 
-const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'shop', 'enhance'];
+const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'enhance'];
 const research = id => economy.RESEARCH.find(r => r.id === id);
 const researchDelta = (s, k) => { const t = {}; stats(s, t); return (t[k] || []).filter(x => x.source === 'research' && x.factor === undefined).reduce((a, x) => a + x.delta, 0); };
 const researchFactor = (s, k) => { const t = {}; stats(s, t); return (t[k] || []).filter(x => x.source === 'research' && x.factor !== undefined).reduce((a, x) => a * x.factor, 1); };
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
 const seeded = seed => { let x = seed >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296); };
 
-test('Research v2: 12 new entries match the plan table and are refused before unlock and at the cap', () => {
-    const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 4, 3, 5, 1020], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], inventory: [8, 3, 3, 2, 108], offline: [12, 3, 2, 2, 168], mastery: [10, 3, 3, 5, 165], shop: [10, 3, 2, 2, 120], enhance: [15, 3, 2, 5, 255] };
+test('Research v2: 11 new entries (v3.38 shop removed) match the plan table and are refused before unlock and at the cap', () => {
+    const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 4, 3, 5, 1020], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], inventory: [8, 3, 3, 2, 108], offline: [12, 3, 2, 2, 168], mastery: [10, 3, 3, 5, 165], enhance: [15, 3, 2, 5, 255] };
     for (const id of NEW) {
         const r = research(id), [max, base, step, rebirth, total] = table[id];
         assert.deepEqual([r.max, r.base, r.step, r.rebirth], [max, base, step, rebirth], id);
@@ -33,13 +33,13 @@ test('Research v2: stat effects come from the research source and keep the exist
     s.permanent.penetration = 1000; s.permanent.lifesteal = 1000; assert.equal(stats(s).penetration, .6); assert.equal(stats(s).lifesteal, .3);
 });
 
-test('Research v2: recovery, shop and smith discounts use the state-aware functions', () => {
+test('Research v2: recovery and smith discounts use the state-aware functions', () => {
     // v27.89 환생 5회 미만은 새싹 생존 보조(+5%p)가 붙어 기본 규칙은 환생 5회로 봅니다.
     const s = newState(0); s.rebirths = 5; s.permanent.recovery = 5;
     close(victoryHealRate({ ...s, dungeon: null }), .25); close(victoryHealRate({ ...s, dungeon: { id: 'grotto', wave: 0 } }), .13);
     close(victoryHealRate({ ...newState(0), rebirths: 5, dungeon: null }), .2); close(victoryHealRate({ ...newState(0), dungeon: null }), .25, 'sprout +5%p');
     s.level = 10; const full = shopCost(s), fullGamble = gambleCost(s);
-    s.permanent.shop = 10; assert.equal(shopCost(s), Math.floor(full * .8)); assert.equal(gambleCost(s), Math.floor(fullGamble * .8));
+    s.permanent.shop = 10; assert.equal(shopCost(s), full, 'v3.38 상점 단골 삭제'); assert.equal(gambleCost(s), fullGamble);
     s.gold = 1e6; const before = s.gold; act(s, { type: 'buy', id: 'coat' }, 0); assert.equal(before - s.gold, shopCost(s));
     const item = { id: 'forge', slot: 'coat', rarity: 1, power: 10, level: 10, name: 'forge', affix: { stat: 'hp', name: '생명', value: 15 } };
     s.inventory.push(item); s.permanent.enhance = 15;
@@ -80,7 +80,7 @@ test('Research v2/v27.73: mastery memory adds +3% per rank with an integer carry
 test('Research v2: online ticks and one offline settlement give the same result with every new research', () => {
     const make = () => {
         const s = newState(0); s.level = 30; s.rebirths = 6; s.hp = 1e9;
-        Object.assign(s.permanent, { crit: 5, critDamage: 5, penetration: 5, manaRegen: 5, evasion: 5, lifesteal: 5, recovery: 5, inventory: 2, offline: 3, mastery: 3, shop: 2, enhance: 2 });
+        Object.assign(s.permanent, { crit: 5, critDamage: 5, penetration: 5, manaRegen: 5, evasion: 5, lifesteal: 5, recovery: 5, inventory: 2, offline: 3, mastery: 3, enhance: 2 });
         act(s, { type: 'stage', id: 'bay' }, 0); act(s, { type: 'start' }, 0); s.hp = stats(s).hp; return s;
     };
     // 까미는 오프라인 정산 중 확률이 ¼이라(v27.35) 이 비교에서는 끕니다.
@@ -100,7 +100,7 @@ import { reward, expMultiplier, metaMod, mimicChanceOf, migrateState, randomGame
 const counting = (value = .99) => { const f = () => { f.calls++; return typeof value === 'function' ? value(f.calls) : value; }; f.calls = 0; return f; };
 
 test('Research v3: four special entries match the plan table and sit in the utility special group', () => {
-    const table = { tailwindSail: [5, 8, 5, 2, 90], sortingNet: [2, 10, 10, 2, 30], autoVend: [2, 10, 10, 2, 30], messageBottle: [10, 6, 4, 3, 240] }; // v3.31 행운의 편지 최대 10단계(6~10단계는 승천 후)
+    const table = { tailwindSail: [5, 8, 5, 2, 90], sortingNet: [2, 10, 10, 2, 30], messageBottle: [10, 6, 4, 3, 240] }; // v3.31 행운의 편지 최대 10단계(6~10단계는 승천 후)
     for (const [id, [max, base, step, rebirth, total]] of Object.entries(table)) {
         const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.tab, r.group], [max, base, step, rebirth, 'utility', 'special'], id);
         assert.equal(economy.researchSpent(id, max), total, id);
@@ -116,7 +116,7 @@ test('Research v3.23: tailwind sail raises the additive bonus, the over-target w
 });
 
 test('Research v3: sorting net dismantles only known, low-rarity drops into essence while the setting is on', () => {
-    const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /자동 분해기/);
+    const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /자동 정리/);
     s.permanent.sortingNet = 1; act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoSell, true);
     // v27.53 드롭은 희귀 이상만: 1단계는 희귀, 2단계는 영웅 이하를 팝니다.
     drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'unregistered kind is kept');
@@ -255,9 +255,9 @@ test('v27.88 every vow is a next-life reservation: reserving rough/restraint/bre
     act(s, { type: 'rebirth' }, 0); assert.deepEqual(s.vows, { rough: 3, breath: true });
 });
 
-test('v3.24 auto vend sells known low-rarity drops for gold; v3.35 it can run together with the auto dismantler (dismantler wins on the same grade)', () => {
-    const s = newState(0); assert.throws(() => act(s, { type: 'autoVend', value: 'on' }, 0), /자동 판매기/);
-    s.permanent.autoVend = 1; s.permanent.sortingNet = 1; s.itemBook['rod:1'] = true;
+test('v3.24 auto vend sells known low-rarity drops for gold; v3.38 one research (자동 정리) opens both; v3.35 it can run together with the auto dismantler (dismantler wins on the same grade)', () => {
+    const s = newState(0); assert.throws(() => act(s, { type: 'autoVend', value: 'on' }, 0), /자동 정리/);
+    s.permanent.sortingNet = 1; s.itemBook['rod:1'] = true;
     act(s, { type: 'autoVend', value: 'on' }, 0); assert.equal(s.autoVend, true);
     const gold = s.gold, essence = s.essence || 0; drop(s, 5, () => 0); assert.equal(s.inventory.length, 0); assert.ok(s.gold > gold, 'sold for gold'); assert.equal(s.essence || 0, essence);
     act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoVend, true, 'both can be on');
@@ -267,7 +267,7 @@ test('v3.24 auto vend sells known low-rarity drops for gold; v3.35 it can run to
 
 test('v3.35 auto devices pick several grades: rank 1 up to legendary, rank 2 up to ancient, one device per grade, primordial/onyx/locked never processed', () => {
     const rarityRng = r => { for (let v = 0; v < 1; v += .0005) { const t = newState(0); drop(t, 5, (() => { const q = [v, 0]; let i = 0; return () => q[i++] ?? 0; })(), true); if (t.inventory[0]?.rarity === r) return () => { const q = [v, 0]; let i = 0; return () => q[i++] ?? 0; }; } throw Error(`no roll for ${r}`); };
-    const s = newState(0); s.level = 200; s.permanent.sortingNet = 1; s.permanent.autoVend = 1;
+    const s = newState(0); s.level = 200; s.permanent.sortingNet = 1;
     for (let r = 1; r <= 5; r++) s.itemBook[`rod:${r}`] = true;
     assert.throws(() => act(s, { type: 'autoGrade', id: 'salvage', value: '4' }, 0), /전설까지/);
     assert.throws(() => act(s, { type: 'autoGrade', id: 'nope', value: '1' }, 0), /고르세요/);
@@ -281,7 +281,19 @@ test('v3.35 auto devices pick several grades: rank 1 up to legendary, rank 2 up 
     act(s, { type: 'autoGrade', id: 'salvage', value: '3' }, 0); drop(s, 5, legend(), true); assert.equal(s.inventory.at(-1).rarity, 3, 'unpicked grade is kept');
     assert.throws(() => act(s, { type: 'autoGrade', id: 'salvage', value: '6' }, 0), /고를 수 없는/, 'primordial (onyx) cannot be picked');
     // 칠흑·잠금 장비는 등급과 상관없이 남깁니다(칠흑은 원래 드롭 경로가 아니지만 한 번 더 막음).
-    s.permanent.sortingNet = 0; s.permanent.autoVend = 0; assert.deepEqual(economy.autoGrades(s, 'salvage'), [], 'no research, no grades');
+    s.permanent.sortingNet = 0; assert.deepEqual(economy.autoGrades(s, 'salvage'), [], 'no research, no grades');
+});
+
+test('v3.38 research cleanup refunds paid ranks once: dungeon vault, shop regular, and the vend half of auto sort', () => {
+    const s = newState(0); s.version = 8; s.pearls = 0;
+    s.permanent.dungeon = 3; s.permanent.shop = 2; s.permanent.sortingNet = 2; s.permanent.autoVend = 1; s.autoVend = true;
+    migrateState(s, 0);
+    // 던전의 금고 5+9+13 = 27, 상점 단골 3+5 = 8, 자동 판매기 1단계 10(자동 정리 2단계는 그대로) → 45
+    assert.equal(s.pearls, 45); assert.equal(s.permanent.sortingNet, 2); assert.equal('autoVend' in s.permanent, false); assert.equal('dungeon' in s.permanent, false); assert.equal('shop' in s.permanent, false);
+    assert.equal(s.autoVend, true, 'sell mode stays'); migrateState(s, 0); assert.equal(s.pearls, 45, 'once');
+    const v = newState(0); v.version = 8; v.pearls = 0; v.permanent.autoVend = 2; migrateState(v, 0); assert.equal(v.permanent.sortingNet, 2); assert.equal(v.pearls, 0, 'vend-only rank moves over, nothing to refund');
+    const g = newState(0); g.version = 8; g.pearls = 0; g.permanent.sortingNet = 2; g.permanent.autoVend = 2; g.researchGranted = { sortingNet: 2, autoVend: 2, limitBreak: 0 }; migrateState(g, 0);
+    assert.equal(g.pearls, 0, 'ascension-granted ranks are free'); assert.deepEqual(g.researchGranted, { sortingNet: 2, limitBreak: 0 });
 });
 
 test('v3.24 removed research tailwindWindow refunds every pearl once', () => {

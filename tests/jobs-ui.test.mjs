@@ -27,12 +27,11 @@ test('Job UI: quick finder and search never leak silhouette names', () => {
     const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
     const hidden = JOBS.filter(j => !ui.jobRevealed(s, j)).map(j => j.id);
     assert.ok(hidden.length > 0);
-    for (const kind of ['ready', 'near', 'goal']) assert.ok(ui.finderJobs(s, kind, []).every(j => !hidden.includes(j.id)), kind);
+    for (const kind of ['ready', 'near']) assert.ok(ui.finderJobs(s, kind, []).every(j => !hidden.includes(j.id)), kind);
     assert.ok(ui.searchJobs(s, '', '').every(j => !hidden.includes(j.id)));
     assert.equal(ui.searchJobs(s, job('voidcaller').name, '').length, 0, 'searching a hidden name finds nothing');
     const tag = ui.TOP_TAGS[0]; assert.ok(ui.searchJobs(s, '', tag).length > 0 && ui.searchJobs(s, '', tag).every(j => ui.jobRevealed(s, j)));
     assert.deepEqual(ui.finderJobs(s, 'doors', ['undead']).map(j => j.id), ['undead']);
-    s.growthGoal = { kind: 'job', id: 'whaler' }; assert.deepEqual(ui.finderJobs(s, 'goal', []).map(j => j.id), ['whaler']);
 });
 
 test('Job UI: a discovery door reveals its job while the condition holds and keeps it once recorded', () => {

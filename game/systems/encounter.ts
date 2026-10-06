@@ -1,7 +1,6 @@
 /** 적 등장·드롭·승리 보상. */
-import { BOSS_RESEARCH } from '../data/boss-research';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
-import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus } from '../data/long-term';
+import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, refinePractice } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
@@ -41,10 +40,7 @@ export function gainLevels(s: State) {
         s.exp -= xpNeeded(s.level, s.rebirths, xpWall(s));
         s.level++;
         s.statPoints += PROGRESSION.statPerLevel;
-        if (s.level > s.peakLevel) {
-            s.sp += (s.level - s.peakLevel) * PROGRESSION.spPerPeakLevel;
-            s.peakLevel = s.level;
-        }
+        if (s.level > s.peakLevel) s.peakLevel = s.level;
         s.mana = stats(s).mana;
         s.hp = stats(s).hp;
         addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
@@ -99,14 +95,14 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     if (!keep && s.autoSell && autoGrades(s, 'salvage').includes(item.rarity)) {
         const essence = dismantleEssence(item);
         s.essence = (s.essence || 0) + essence;
-        addLog(s, `자동 분해기: ${item.name} 분해 · 정수 +${essence}`, 'reward');
+        addLog(s, `자동 정리: ${item.name} 분해 · 정수 +${essence}`, 'reward');
         return;
     }
     // v3.24 자동 판매기: 같은 조건의 드롭을 골드로 팝니다. v3.35 자동 분해기와 함께 켤 수 있고, 같은 등급이면 위에서 분해가 먼저입니다.
     if (!keep && s.autoVend && autoGrades(s, 'vend').includes(item.rarity)) {
         const gold = saleValue(item);
         s.gold += gold;
-        addLog(s, `자동 판매기: ${item.name} 판매 +${gold} G`, 'reward');
+        addLog(s, `자동 정리: ${item.name} 판매 +${gold} G`, 'reward');
         return;
     }
     if (s.inventory.length >= inventoryCap(s)) {
@@ -352,16 +348,14 @@ export function reward(s: State, rng: () => number) {
                 s.pearls += pearls;
                 addLog(s, `무릉도장 ${depth}층 정복 · 세계석 +${pearls}`, 'reward');
                 s.abyssMilestones ??= [];
-                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 세계석), 30·60·90층 첫 돌파 장착 AP +1.
+                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 세계석). v3.38 30·60·90층 장착 AP 이정표는 없앴습니다.
                 if (deeper && abyssFloorBonus(depth)) { s.pearls += abyssFloorBonus(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 · 보너스 세계석 +${abyssFloorBonus(depth)}`, 'reward'); }
-                if (ABYSS_AP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) { s.abyssMilestones.push(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 이정표 · 장착 AP +1`, 'reward'); }
                 if (ABYSS_SP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) {
                     s.abyssMilestones.push(depth);
                     s.sp += 1;
                     addLog(s, `무릉도장 ${depth}층 첫 돌파 이정표 · SP +1`, 'reward');
                 }
             }
-            if (first && BOSS_RESEARCH[d.id]) addLog(s, `${d.name} 첫 정복! 던전 화면에서 연구 보상 SP ${BOSS_RESEARCH[d.id].sp}을 받으세요.`, 'reward');
             if (first && d.id !== 'abyss')
                 s.pearls += d.pearls;
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;

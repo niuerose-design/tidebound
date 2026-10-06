@@ -6,7 +6,6 @@ import { BALANCE, SAVE_VERSION } from '../data/balance';
 import { type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { initialProgress, grantJobSkills } from './progression';
-import { newGuild } from '../data/guild';
 export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'system' | 'skill' = 'system', event?: CombatEvent) {
     s.logs.push({ id: ++s.logId, text, type, turn: s.turn, ...(event ? { event } : {}) });
     if (s.logs.length > 70)
@@ -16,17 +15,16 @@ export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
         version: SAVE_VERSION,
-        relicRefunded: true, autoStarRefunded: true,
+        relicRefunded: true, autoStarRefunded: true, placeApMoved: true,
         masteryRescaled: true,
         rankRescaled: true,
         // v27.31 새 세이브는 무료로 받을 한계의 문 단계가 없습니다(옛 세이브만 migrations에서 한 번 받음).
         researchGranted: { limitBreak: 0 },
-        bossResearchClaims: {}, abyssMilestones: [], growthGoal: null, tutorial: { done: {} }, voyage: {}, achievements: {}, achievementClaims: {}, statRate: PROGRESSION.statPerLevel,
+        abyssMilestones: [], tutorial: { done: {} }, voyage: {}, achievements: {}, achievementClaims: {}, statRate: PROGRESSION.statPerLevel,
         tide: 0,
         abyssBest: 0,
         shopSerial: 0,
         essence: 0,
-        guild: newGuild(),
         name: '초보 모험가',
         level: 1,
         exp: 0,

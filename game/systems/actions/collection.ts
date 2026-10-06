@@ -1,7 +1,6 @@
 /** 도감·연구 보상 */
-import { BOSS_RESEARCH } from '../../data/boss-research';
 import type { State } from '../../types';
-import { FISH, DUNGEONS } from '../../data/world';
+import { FISH } from '../../data/world';
 import { SLOTS, RARITIES } from '../../data/balance';
 import { bookPending, itemKey } from '../progression';
 import type { ActionHandlers } from './types';
@@ -18,14 +17,6 @@ function claimBookRewards(s: State, id: string) {
 }
 
 export const collectionActions: ActionHandlers = {
-    bossResearch(s, { id }) {
-        const reward = BOSS_RESEARCH[id];
-        if (!reward || !s.clears[id] || s.bossResearchClaims?.[id]) throw Error('아직 정복하지 않았거나 이미 연구 보상을 받았습니다.');
-        s.bossResearchClaims ??= {};
-        s.bossResearchClaims[id] = true;
-        s.sp += reward.sp;
-        addLog(s, `${DUNGEONS.find(x => x.id === id)!.name} 연구 완료 · SP +${reward.sp}`);
-    },
     claimBook(s, { id }) {
         if (!FISH.some(f => f.id === id))
             throw Error('몬스터를 찾을 수 없습니다.');

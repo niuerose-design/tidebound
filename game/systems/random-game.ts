@@ -18,8 +18,8 @@ export const randomGamePayout = (s: Pick<State, 'permanent'> & Partial<Pick<Stat
 export const randomGameUsed = (s: Pick<State, 'randomGameRuns' | 'randomGameDay'>, now?: number) => now !== undefined && s.randomGameDay !== dayKey(now) ? 0 : (s.randomGameRuns || 0);
 export const randomGameRunsLeft = (s: Pick<State, 'permanent' | 'randomGameRuns' | 'randomGameDay'>, now?: number) => Math.max(0, randomGameRank(s) - randomGameUsed(s, now));
 export const inRandomGame = (s: Pick<State, 'dungeon'>) => s.dungeon?.id === RANDOM_GAME.id;
-/** 받을 판돈(배율 적용, 내림). */
-export const stakePayout = (s: Pick<State, 'permanent' | 'dungeon'>) => { const st = s.dungeon?.stake || { essence: 0, pearls: 0 }, m = randomGamePayout(s); return { essence: Math.floor(st.essence * m), pearls: Math.floor(st.pearls * m) }; };
+/** 받을 판돈 정수(배율 적용, 내림). */
+export const stakePayout = (s: Pick<State, 'permanent' | 'dungeon'>) => Math.floor((s.dungeon?.stake?.essence || 0) * randomGamePayout(s));
 
 /** 해금한 일반 사냥터의 몬스터 중 하나를 무작위로 골라 지금 웨이브 난이도로 세웁니다. 처치 경험치·골드는 0입니다. */
 export function spawnRandomGame(s: State, rng: () => number) {
@@ -35,9 +35,8 @@ export function clearRandomWave(s: State) {
     const d = s.dungeon!, w = d.wave + 1, add = waveStake(w);
     d.wave = w;
     s.randomGameStats ??= { best: 0, runs: 0, cashed: 0 }; s.randomGameStats.best = Math.max(s.randomGameStats.best, w);
-    d.stake = { essence: (d.stake?.essence || 0) + add.essence, pearls: (d.stake?.pearls || 0) + add.pearls };
-    const now = stakePayout(s);
-    addLog(s, `랜덤게임 ${w}웨이브 돌파 · 판돈 정수 ${now.essence}${now.pearls ? ` · 세계석 ${now.pearls}` : ''}`, 'reward');
+    d.stake = { essence: (d.stake?.essence || 0) + add };
+    addLog(s, `랜덤게임 ${w}웨이브 돌파 · 판돈 정수 ${stakePayout(s)}`, 'reward');
     if (d.until && w >= d.until) cashOutRandomGame(s, `목표 ${d.until}웨이브 도달`);
 }
 
@@ -45,12 +44,11 @@ export function clearRandomWave(s: State) {
 export function cashOutRandomGame(s: State, reason = '받고 나가기') {
     const got = stakePayout(s), wave = s.dungeon?.wave || 0;
     s.randomGameStats ??= { best: 0, runs: 0, cashed: 0 }; s.randomGameStats.cashed++;
-    s.essence = (s.essence || 0) + got.essence;
-    s.pearls += got.pearls;
+    s.essence = (s.essence || 0) + got;
     s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0;
     s.running = true;
     endRun(s, `랜덤게임 ${wave}웨이브 · ${reason} → 자동 사냥으로 전환`);
-    addLog(s, `랜덤게임 ${reason} · ${wave}웨이브 · 정수 +${got.essence}${got.pearls ? ` · 세계석 +${got.pearls}` : ''}`, 'reward');
+    addLog(s, `랜덤게임 ${reason} · ${wave}웨이브 · 정수 +${got}`, 'reward');
 }
 
 /** 쓰러짐: 판돈을 모두 잃고 사냥터로 돌아갑니다. */
@@ -59,5 +57,5 @@ export function loseRandomGame(s: State) {
     s.dungeon = null;
     s.running = false;
     endRun(s, `랜덤게임 ${wave}웨이브에서 쓰러짐 · 판돈 소멸 · 멈춤`);
-    addLog(s, `랜덤게임 ${wave + 1}웨이브에서 쓰러졌습니다 · 판돈(정수 ${lost.essence}${lost.pearls ? ` · 세계석 ${lost.pearls}` : ''})을 모두 잃었습니다.`, 'system');
+    addLog(s, `랜덤게임 ${wave + 1}웨이브에서 쓰러졌습니다 · 판돈(정수 ${lost})을 모두 잃었습니다.`, 'system');
 }

@@ -1,10 +1,7 @@
 /** 모험 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
-import { skillPracticeTargets } from '../progression';
 import { tideLimit, encounterTier, levelGateOk } from '../meta';
 import { STAGES, DUNGEONS, FISH , dungeonClosed, stageClosed, hackDownOf } from '../../data/world';
 import { SWARM_CAPS } from '../../data/variants';
-import { JOBS } from '../../data/classes';
-import { SKILLS, skillById } from '../../data/skills';
 import { RANDOM_GAME } from '../../data/random-game';
 import { isHackerJob } from '../../data/hacker';
 import { randomGameRank, randomGameRunsLeft, randomGameUsed, inRandomGame, cashOutRandomGame } from '../random-game';
@@ -69,7 +66,7 @@ export const voyageActions: ActionHandlers = {
             if (!randomGameRunsLeft(s, now)) throw Error('오늘(이번 생)의 랜덤게임 입장 횟수를 모두 썼습니다. 하루가 지나거나 환생하면 다시 채워집니다.');
             const until = Math.max(0, Math.min(999, Math.floor(Number(String(a.value || 'until:0').replace('until:', '')) || 0)));
             enterDungeon(s, d.id);
-            s.dungeon = { ...s.dungeon!, stake: { essence: 0, pearls: 0 }, ...(until ? { until } : {}) };
+            s.dungeon = { ...s.dungeon!, stake: { essence: 0 }, ...(until ? { until } : {}) };
             s.randomGameRuns = randomGameUsed(s, now) + 1; s.randomGameDay = dayKey(now);
             s.randomGameStats ??= { best: 0, runs: 0, cashed: 0 }; s.randomGameStats.runs++;
         }
@@ -102,15 +99,16 @@ export const voyageActions: ActionHandlers = {
     offlineDismiss(s) {
         s.lastOffline = null;
     },
+    /** v3.38 자동 분해기·자동 판매기는 연구 ‘자동 정리’(sortingNet) 하나로 함께 열립니다. */
     autoSell(s, { a }) {
         if (!researchRank(s, 'sortingNet'))
-            throw Error('자동 분해기 연구가 필요합니다.');
+            throw Error('자동 정리 연구가 필요합니다.');
         // v3.35 자동 판매기와 함께 켤 수 있습니다(등급을 나눠 쓰고, 같은 등급이면 분해 우선).
         s.autoSell = a.value === 'on';
     },
     autoVend(s, { a }) {
-        if (!researchRank(s, 'autoVend'))
-            throw Error('자동 판매기 연구가 필요합니다.');
+        if (!researchRank(s, 'sortingNet'))
+            throw Error('자동 정리 연구가 필요합니다.');
         s.autoVend = a.value === 'on';
     },
     /**
@@ -121,7 +119,7 @@ export const voyageActions: ActionHandlers = {
         const device = id === 'vend' ? 'vend' : id === 'salvage' ? 'salvage' : '';
         if (!device) throw Error('자동 분해기나 자동 판매기를 고르세요.');
         const rank = researchRank(s, AUTO_RESEARCH[device]), grade = Number(a.value), max = autoMaxGrade(rank);
-        if (!rank) throw Error(device === 'salvage' ? '자동 분해기 연구가 필요합니다.' : '자동 판매기 연구가 필요합니다.');
+        if (!rank) throw Error('자동 정리 연구가 필요합니다.');
         if (!Number.isInteger(grade) || grade < 1 || grade > max) throw Error(max < 5 ? `지금 연구 단계로는 ${RARITIES[max].name}까지 고를 수 있습니다.` : '고를 수 없는 등급입니다.');
         const mine = autoGrades(s, device), other: AutoDevice = device === 'salvage' ? 'vend' : 'salvage';
         // 두 장치의 기본값이 겹치면(둘 다 희귀) 누른 쪽으로 옮기기만 합니다.
@@ -129,9 +127,6 @@ export const voyageActions: ActionHandlers = {
         const next = shared ? mine : mine.includes(grade) ? mine.filter(g => g !== grade) : [...mine, grade].sort((x, y) => x - y);
         if (device === 'salvage') s.autoSellGrades = next; else s.autoVendGrades = next;
         if (next.includes(grade) && researchRank(s, AUTO_RESEARCH[other])) { const rest = autoGrades(s, other).filter(g => g !== grade); if (other === 'salvage') s.autoSellGrades = rest; else s.autoVendGrades = rest; }
-    },
-    doorNotice(s, { a }) {
-        s.hideDoorNotice = a.value === 'off';
     },
     statConfirm(s, { a }) {
         s.skipStatConfirm = a.value === 'off';
@@ -162,12 +157,5 @@ export const voyageActions: ActionHandlers = {
         else if (id === 'show') { s.tutorial.hidden = false; s.tutorial.skipped = false; }
         else if (id === 'skip') s.tutorial.skipped = true;
         else throw Error('알 수 없는 안내 설정입니다.');
-    },
-    growthGoal(s, { a, id }) {
-        const kind = a.value;
-        if (id === 'none') { s.growthGoal = null; return; }
-        const valid = kind === 'skill' ? SKILLS.some(x => x.id === id) : kind === 'job' ? JOBS.some(x => x.id === id) : kind === 'dungeon' ? DUNGEONS.some(x => x.id === id) : false;
-        if (!valid) throw Error('성장 목표를 확인하세요.');
-        s.growthGoal = { kind: kind as 'skill' | 'job' | 'dungeon', id, ...(kind === 'skill' ? { target: Math.min(skillPracticeTargets(skillById(id)!).length, skillPracticeTargets(skillById(id)!).filter(n => (s.skillPractice[id] || 0) >= n).length + 1) } : {}) };
     },
 };

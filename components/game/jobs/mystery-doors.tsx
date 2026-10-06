@@ -62,7 +62,7 @@ export function DoorNotice({ s, setView }: { s: State; setView: (view: string) =
     const open = openUnenteredDoors(s);
     const key = open.map(d => `${d.door.id}:${d.job}`).join(',') + `@${kst(serverNow(s)).date}`;
     // v25.9 전직이 열리는 Lv.10 전(첫 생)에는 문 알림을 띄우지 않습니다.
-    if (s.hideDoorNotice || !open.length || seen === key || (s.level < 10 && !s.rebirths)) return null;
+    if (!open.length || seen === key || (s.level < 10 && !s.rebirths)) return null;
     const dismiss = () => { setSeen(key); try { localStorage.setItem(NOTICE_KEY, key); } catch {} };
     return <div className="door-notice" role="status">
         <button type="button" className="door-notice-open" onClick={() => setView('classes')}><DoorOpen size={14}/><b>문이 열렸습니다</b><span>{[...new Set(open.map(d => d.door.name))].join(' · ')} {open.length}개 — 직업 화면 ??? 탭에서 확인하세요.</span></button>

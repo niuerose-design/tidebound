@@ -1,5 +1,6 @@
 import type { State } from '../types';
 import { addLog } from './state';
+import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
 import { RELICS } from '../data/economy';
 import { syncRelicPower } from './equipment';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
@@ -20,6 +21,47 @@ function refundGoldenResearch(s: State) {
     for (let i = 0; i < rank; i++) spent += 8 + 5 * i;
     s.pearls = (s.pearls || 0) + spent;
     delete (s.permanent as Record<string, number | undefined>).goldenFish;
+}
+/**
+ * v3.38 연구 정리: 던전의 금고(dungeon, base 5·step 4)와 상점 단골(shop, base 3·step 2)을 지우고,
+ * 자동 판매기(autoVend)를 자동 정리(옛 자동 분해기 sortingNet)로 합칩니다(두 연구 모두 base 10·step 10, 새 단계 = 둘 중 큰 값).
+ * 직접 산(무료로 받지 않은) 단계의 세계석은 차액을 모두 돌려줍니다. 지운 키가 없으면 아무것도 하지 않습니다.
+ */
+export function mergeResearch337(s: State) {
+    const perm = s.permanent as Record<string, number | undefined> | undefined;
+    if (!perm) return 0;
+    const granted = { ...(s.researchGranted || {}) };
+    const paid = (from: number, to: number, base: number, step: number) => { let n = 0; for (let i = from; i < to; i++) n += base + step * i; return n; };
+    let refund = 0;
+    for (const [id, base, step] of [['dungeon', 5, 4], ['shop', 3, 2]] as const) {
+        if (!(id in perm)) continue;
+        const rank = perm[id] || 0;
+        refund += paid(Math.min(rank, granted[id] || 0), rank, base, step);
+        delete perm[id]; delete granted[id];
+    }
+    if ('autoVend' in perm) {
+        const net = perm.sortingNet || 0, vend = perm.autoVend || 0, keep = Math.max(net, vend), free = Math.min(keep, Math.max(granted.sortingNet || 0, granted.autoVend || 0));
+        const before = paid(Math.min(net, granted.sortingNet || 0), net, 10, 10) + paid(Math.min(vend, granted.autoVend || 0), vend, 10, 10);
+        refund += Math.max(0, before - paid(free, keep, 10, 10));
+        perm.sortingNet = keep; delete perm.autoVend;
+        if (free) granted.sortingNet = free;
+        delete granted.autoVend;
+    }
+    if (s.researchGranted) s.researchGranted = granted;
+    if (refund) { s.pearls = (s.pearls || 0) + refund; addLog(s, `연구 정리(던전의 금고·상점 단골 삭제, 자동 분해기·판매기 → 자동 정리): 세계석 ${refund}개를 돌려받았습니다.`, 'system'); }
+    return refund;
+}
+/** v3.38 장소 완성 장착 AP를 업적 ‘지역 연구 N곳 완성’으로 옮깁니다. 이미 완성한 곳의 업적은 바로 받은 것으로 처리해 AP가 줄지 않습니다(한 번만). */
+export function movePlaceAp(s: State) {
+    if (s.placeApMoved) return 0;
+    s.placeApMoved = true;
+    const had = new Set(Object.keys(s.achievements || {}));
+    syncAchievements(s, () => {});
+    // 이번에 새로 채운 지역 업적은 가장 오래된 기록(0)으로 둡니다. 자동 칭호가 새 명예 칭호로 바뀌지 않게 합니다.
+    for (const id of Object.keys(s.achievements || {})) if (!had.has(id) && id.startsWith('regions:')) s.achievements![id] = 0;
+    const ids = unclaimedAchievements(s).filter(id => id.startsWith('regions:'));
+    for (const id of ids) claimAchievements(s, id);
+    return ids.length;
 }
 /** v3.24 세계석 연구 ‘역풍 견디기’(옛 바람목 넓히기, base 6·step 4) 삭제: 투자한 세계석을 전액 돌려줍니다. */
 export function refundTailwindWindow(s: State) {
@@ -88,7 +130,19 @@ export function rescaleRanks(s: State) {
 export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
+    // v3.36 쓰지 않던 개인 길드 기록(guild)을 지웁니다. v3.38 성장 목표(growthGoal)도 없앴습니다.
+    if ('growthGoal' in s) delete (s as Record<string, unknown>).growthGoal;
+    if ('guild' in s) delete (s as Record<string, unknown>).guild;
+    // v3.37 문 알림 끄기는 설정 → 화면 알림(이 기기) 하나로 합쳤습니다.
+    if ('hideDoorNotice' in s) delete (s as Record<string, unknown>).hideDoorNotice;
+    // v3.38 던전 첫 정복 SP(옛 보스 연구)는 업적 firstClear:던전 id로 옮겼습니다. 이미 받은 것은 받은 업적으로 옮겨 두 번 받지 않습니다.
+    const bossClaims = (s as { bossResearchClaims?: Record<string, boolean> }).bossResearchClaims;
+    if (bossClaims) {
+        s.achievements ??= {}; s.achievementClaims ??= {};
+        for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
+        delete (s as Record<string, unknown>).bossResearchClaims;
+    }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
