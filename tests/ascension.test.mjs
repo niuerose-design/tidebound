@@ -173,7 +173,7 @@ test('v3.41 job rotation (ascension 2 fixed at vocation 1; more choices later): 
 });
 
 // v3.42 무리 드롭 √N 판정 · ×500 무리 보상 · 세계석 연구 21번째 단계부터 ×1.06 복리
-const Mig = await L.load('systems/migrations'), Co = await L.load('systems/commerce');
+const Mig = await L.load('systems/migrations'), Co = await L.load('systems/commerce'), Rk = await L.load('data/rank');
 const swarmKill = size => {
     const s = newState(0); s.level = 30; s.stage = 'brook'; s.tide = 0; s.permanent.inventory = 8; s.inventory = [];
     E.spawn(s, () => .99); s.enemy.swarm = size; s.enemy.variant = 'swarm'; s.enemy.hp = 0;
@@ -212,4 +212,16 @@ test('v3.42 research ranks from the 21st cost ×1.06 compounding; ranks bought b
     const pearls = s.pearls; act(s, { type: 'resetResearch', id: tab }, 0);
     assert.equal(s.pearls - pearls, spent, 'first reset refunds everything paid'); assert.equal(s.researchLegacy.attack, undefined, 'stamp cleared by the reset');
     assert.deepEqual(newState(0).researchLegacy, {}, 'new saves pay the new price');
+});
+test('v3.46 swarm rank exp = fought turns × per-size rate, capped at the head count, fractions carried', () => {
+    const R = Rk;
+    assert.equal(R.swarmRankKills(1, 5), 1); assert.equal(R.swarmRankKills(100, 1), 1.32); assert.equal(R.swarmRankKills(500, 1), 1.98);
+    assert.equal(R.swarmRankKills(5, 50), 5, 'never more than the head count'); assert.equal(R.swarmRankKills(500, 0), 1.98, 'at least one turn');
+    // 한 마리만 잡는 처치 상한(턴당 1마리) 대비: ×100 412/300배 · ×500 412/200배 ≈ 1.37 · 2.06(턴당 0.96마리 기준 1.32 · 1.98)
+    const single = 1730 / 1800;
+    assert.ok(Math.abs(R.SWARM_RANK_PER_TURN[100] / single - 412 / 300) < .02 && Math.abs(R.SWARM_RANK_PER_TURN[500] / single - 412 / 200) < .02);
+    const s = newState(0); s.level = 30; s.stage = 'brook'; s.tide = 0; s.rank = { exp: 0, perks: {} };
+    for (let i = 0; i < 3; i++) { E.spawn(s, () => .99); s.enemy.swarm = 100; s.enemy.variant = 'swarm'; s.enemy.born = s.turn; s.enemy.hp = 0; E.reward(s, () => .99); }
+    assert.equal(s.rank.exp, 3, '3 one-turn ×100 swarms = 3.96 → 3'); assert.ok(Math.abs(s.rank.frac - .96) < 1e-9);
+    assert.equal(s.kills, 300, 'kill count (achievements) still counts heads');
 });

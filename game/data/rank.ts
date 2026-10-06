@@ -5,7 +5,7 @@ import type { State } from '../types';
  * 이등병 → 중장 16번 진급. 진급마다 진급 포인트를 주고 포인트는 언제든 무료로 초기화합니다.
  * v3.19 초장기 콘텐츠로 재조정: 계급 그룹마다 필요 처치 배율 병 ×1 · 부사관 ×10 · 장교 ×100 · 장성 ×80(RANK_GROUP_SCALE).
  * 중장까지 합계 약 1억 8,770만. 무리 없이 처치 상한(2초 턴당 1마리 = 시간당 1,800마리)에 전과 기록 최대(10단계, ×11)로
- * 24시간 쉬지 않아도 약 1.08년 걸립니다(환생 200회 이후의 경험치 환산은 나중에 따로).
+ * 24시간 쉬지 않아도 약 1.08년 걸립니다(환생 200회 이후의 경험치 환산은 나중에 따로). v3.46 무리는 SWARM_RANK_PER_TURN.
  * v3.19 특전 최대: 전과 기록 18 → 10, 숙련 훈련 8 → 12, 전공 훈장 5 → 9(합계 41 = 총 진급 포인트 그대로).
  */
 export type RankDef = { id: string; name: string; /** 이전 계급에서 이 계급까지 필요한 처치 수 */ need: number; /** 이 계급에 오를 때 받는 진급 포인트 */ points: number; group: '병' | '부사관' | '장교' | '장성' };
@@ -41,12 +41,19 @@ export const RANK_TOTAL_POINTS = RANKS.reduce((a, r) => a + r.points, 0);
 export type RankPerkDef = { id: RankPerkId; name: string; desc: (level: number) => string; max: number; cost: number; per: number };
 export type RankPerkId = 'tally' | 'drill' | 'medal' | 'supply';
 export const RANK_PERKS: RankPerkDef[] = [
-    { id: 'tally', name: '전과 기록', desc: l => `처치 1마리를 계급 경험치 ${1 + l}마리로 셉니다(무리는 마릿수만큼)`, max: 10, cost: 1, per: 1 },
+    { id: 'tally', name: '전과 기록', desc: l => `처치 1마리를 계급 경험치 ${1 + l}마리로 셉니다(무리는 싸운 턴 × 규모별 값)`, max: 10, cost: 1, per: 1 },
     { id: 'drill', name: '숙련 훈련', desc: l => `처치 숙련 기본 획득 +${l}(직업·장착 스킬 모두, 배율과 무관한 고정값)`, max: 12, cost: 1, per: 1 },
     { id: 'medal', name: '전공 훈장', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 SP +1`, max: 9, cost: 1, per: .001 },
     { id: 'supply', name: '보급품', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 세계석 +1`, max: 10, cost: 1, per: .001 },
 ];
-export type RankState = { /** 계급 경험치(세어진 처치 수) */ exp: number; perks: Partial<Record<RankPerkId, number>> };
+export type RankState = { /** 계급 경험치(세어진 처치 수) */ exp: number; perks: Partial<Record<RankPerkId, number>>; /** v3.46 무리 계급 경험치의 소수점 이월분(0~1). */ frac?: number };
+/**
+ * v3.46 무리 계급 경험치: 마리 수 대신 무리와 싸운 턴 수 × 규모별 턴당 값(마리 수 상한). 한 마리는 그대로 1.
+ * 처치 상한(2초 턴당 1마리)으로 한 마리만 잡으면 중장까지 약 412일인데, 무리만 잡으면 ×100 약 300일 · ×500 약 200일이 되게 맞췄습니다(전과 기록은 똑같이 곱함).
+ * 캐릭터가 얼마나 강하든 턴당 속도는 같고, 느리게 잡는 캐릭터도 같은 턴당 값을 받습니다.
+ */
+export const SWARM_RANK_PER_TURN: Record<number, number> = { 5: 1.1, 100: 1.32, 500: 1.98 };
+export const swarmRankKills = (size: number, turns: number) => size <= 1 ? 1 : Math.min(size, Math.max(1, turns) * (SWARM_RANK_PER_TURN[size] ?? 1));
 export type RankSource = Pick<State, 'rank' | 'kills'>;
 
 export const rankState = (s: RankSource): RankState => s.rank ?? { exp: s.kills || 0, perks: {} };
