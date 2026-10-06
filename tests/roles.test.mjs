@@ -21,6 +21,28 @@ test('v3.61 roles: lineage assignments follow the plan (§11.6-1), with job-leve
     for (const [lineage, want] of [['harpoon', 'physical'], ['tide', 'magic'], ['poisoner', 'status'], ['warden', 'reflect'], ['martialArtist', 'control'], ['wanderer', 'drain'], ['seagrassKeeper', 'healer'], ['fishWhisperer', 'utility']])
         for (const j of JOBS.filter(x => lineageOf(x) === lineage && !x.subRole)) if (!['oracle', 'lunarOracle', 'coralSaint', 'tideMender', 'coralBuilder', 'tidalSinger', 'reefBrawler', 'inkMime', 'crystalCaster', 'deckGunner', 'clockworkAngler', 'allRounder', 'glyphMonk'].includes(j.id)) assert.equal(sub(j.id), want, `${lineage}/${j.id}`);
     // 곁가지 예외(§11.6-1)와 히든(§11.7-2)
-    for (const [id, want] of [['coralSaint', 'healer'], ['reefBrawler', 'drain'], ['clockworkAngler', 'physical'], ['allRounder', 'physical'], ['codexReader', 'utility'], ['poorMonk', 'reflect'], ['fallenAngler', 'drain'], ['clockmaker', 'border']])
+    for (const [id, want] of [['tidalSinger', 'borderBuffer'], ['coralSaint', 'healer'], ['reefBrawler', 'drain'], ['clockworkAngler', 'physical'], ['allRounder', 'physical'], ['codexReader', 'utility'], ['poorMonk', 'reflect'], ['fallenAngler', 'drain'], ['clockmaker', 'border']])
         if (JOBS.some(j => j.id === id)) assert.equal(sub(id), want, id);
+});
+
+test('v3.80 role-unique effects stay with their role (docs/concept.md 11.3): swarm/thorns tanks, DoT boosts status dealers, gold/exp/drop buffers, heal actives healers, dealers own at most one control active', async () => {
+    const { JOBS, lineageOf } = await load('data/classes'), { SKILLS } = await load('data/skills'), { subRoleOf, roleOf } = await load('data/roles');
+    // 역할 경계 직업(제로 · v3.80 아이돌 연습생)과 수련 직업(계승 재료)은 점검에서 뺍니다.
+    const CAT = [
+        { keys: ['swarmFind', 'thorns'], ok: (sub, role) => role === 'tank' },
+        { keys: ['dotBonus', 'bleedBonus', 'poisonBonus', 'burnBonus', 'dotTurnsBonus', 'poisonStackBonus'], ok: sub => sub === 'status' },
+        { keys: ['goldBonus', 'expBonus', 'dropBonus', 'variantFind', 'goldenFind', 'rebirthBonus', 'dungeonGoldBonus'], ok: sub => sub === 'utility' },
+    ];
+    const bad = [];
+    for (const j of JOBS.filter(j => !j.retired && j.subRole !== 'training' && j.id !== 'fisher')) {
+        const sub = subRoleOf(j, lineageOf(j)), role = roleOf(sub), own = SKILLS.filter(sk => sk.job === j.id);
+        if (role === 'border') continue;
+        for (const sk of own) {
+            const b = { ...(sk.bonus || {}), ...(sk.levelEffects?.at(-1)?.bonus || {}) };
+            for (const c of CAT) if (c.keys.some(k => (b[k] || 0) > 0) && !c.ok(sub, role)) bad.push(`${j.id}/${sk.id}`);
+            if (sk.type === 'active' && sk.effect === 'heal' && sub !== 'healer') bad.push(`${j.id}/${sk.id} heal`);
+        }
+        if (role === 'dealer' && own.filter(sk => sk.type === 'active' && ['stun', 'slow', 'silence'].includes(sk.effect)).length > 1) bad.push(`${j.id} control×2+`);
+    }
+    assert.deepEqual(bad, []);
 });
