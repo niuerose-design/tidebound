@@ -9,7 +9,7 @@ import { allow, clientIp } from './throttle';
 import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
-import { RANKS, RANK_PERKS, rankIndex, rankState, rankPerkLevel, rankPointsFree } from '../data/rank';
+import { RANKS, RANK_PERKS, rankIndex, rankOf, rankState, rankPerkLevel, rankPointsFree } from '../data/rank';
 import { FIRST_CLEAR_SP } from '../data/achievements';
 import { DUNGEONS, STAGES } from '../data/world';
 import { PROGRESSION } from '../data/progression';
@@ -39,8 +39,8 @@ export function requireAdmin(req: Request) {
 
 /** v27.28 SP 확인용: 보유 SP, 보스 첫 정복 연구 상태, 스킬에 쓴 SP, 남아 있는 SP 기록. */
 export type AdminSp = { have: number; research: { name: string; sp: number; claimed: boolean }[]; spentSkills: { name: string; sp: number }[]; limitBreaks: { name: string; sp: number }[]; logs: string[] };
-/** v27.63 lastRebirthAt: 마지막 환생 시각, lifeMs: 이번 생 경과(실제 시간, partial이면 업데이트 이후), paceMs: 최근 환생 평균 실제 시간(일부 기록 제외). */
-export type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
+/** rank: 지금 계급 이름. v27.63 lastRebirthAt: 마지막 환생 시각, lifeMs: 이번 생 경과(실제 시간, partial이면 업데이트 이후), paceMs: 최근 환생 평균 실제 시간(일부 기록 제외). */
+export type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rank: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
 const spView = (s: State): AdminSp => ({
     have: s.sp || 0,
     research: DUNGEONS.filter(d => FIRST_CLEAR_SP[d.id] && (s.clears?.[d.id] || 0) > 0).map(d => ({ name: d.name, sp: FIRST_CLEAR_SP[d.id], claimed: !!s.achievementClaims?.[`firstClear:${d.id}`] })),
@@ -54,7 +54,7 @@ const lifeView = (s: State, at: number) => {
 };
 const view = (id: string, username: string, revision: number, updatedAt: number, s: State): AdminPlayer => {
     const [, slot] = id.split('#');
-    return { id, username, slot: Number(slot || 1), name: s.name, level: s.level, job: jobById(s.job)?.name || s.job, rebirths: s.rebirths || 0, pearls: s.pearls || 0, gold: Math.floor(s.gold || 0), sp: spView(s), inDungeon: !!s.dungeon, revision, updatedAt, ...lifeView(s, updatedAt) };
+    return { id, username, slot: Number(slot || 1), name: s.name, level: s.level, job: jobById(s.job)?.name || s.job, rank: rankOf(s).name, rebirths: s.rebirths || 0, pearls: s.pearls || 0, gold: Math.floor(s.gold || 0), sp: spView(s), inDungeon: !!s.dungeon, revision, updatedAt, ...lifeView(s, updatedAt) };
 };
 
 /** 모험가 이름(부분 일치) 또는 로그인 아이디(정확히)로 찾습니다. 최대 30명. */

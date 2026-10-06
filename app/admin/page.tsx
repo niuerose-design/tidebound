@@ -2,7 +2,7 @@
 import { useState } from 'react';
 
 type AdminSp = { have: number; research: { name: string; sp: number; claimed: boolean }[]; spentSkills: { name: string; sp: number }[]; limitBreaks: { name: string; sp: number }[]; logs: string[] };
-type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
+type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rank: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
 type RebirthPace = { recent: { day: number; week: number }; measured: number; real: { avg: number; median: number }; play: { avg: number; median: number }; byCount: { label: string; count: number; real: number; play: number }[]; latest: { name: string; n: number; at: number; realMs: number; playMs: number; level: number; partial: boolean }[] };
 type Preview = { before: AdminPlayer; after: AdminPlayer };
 type EventRow = { id: string; name: string; from: string; until: string; exp?: number; gold?: number; drop?: number; mastery?: number; mimic?: number; nuri?: number; live: boolean; disabled?: boolean };
@@ -80,7 +80,7 @@ function SpDetail({ sp }: { sp: AdminSp }) {
     </div>;
 }
 const line = (p: AdminPlayer) => `${p.name} · ${brief(p)}`;
-const brief = (p: AdminPlayer) => `Lv.${p.level} ${p.job} · 환생 ${p.rebirths}회 · 세계석 ${p.pearls} · SP ${p.sp.have} · 골드 ${p.gold.toLocaleString()}${p.inDungeon ? ' · 던전 진행 중' : ''}`;
+const brief = (p: AdminPlayer) => `Lv.${p.level} ${p.job} · ${p.rank} · 환생 ${p.rebirths}회 · 세계석 ${p.pearls} · SP ${p.sp.have} · 골드 ${p.gold.toLocaleString()}${p.inDungeon ? ' · 던전 진행 중' : ''}`;
 /** v27.63 환생 시간: 이번 생 경과 · 평균 환생 시간. */
 const lifeLine = (p: AdminPlayer) => [p.lifeMs !== null ? `이번 생 ${dur(p.lifeMs)}${p.lifePartial ? '(업데이트 이후)' : ''}` : '', p.paceMs !== null ? `평균 환생 ${dur(p.paceMs)}` : ''].filter(Boolean).join(' · ');
 
