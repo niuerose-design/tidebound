@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GAMBLE_CATEGORIES, APPRAISAL, APPRAISAL_PITY, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, inventoryCap } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
-import { gambleCost, imprintGambleCost, imprintChoices, pityLeft, GAMBLE_COUNTS } from '@/game/systems/commerce';
+import { gambleCost, imprintGambleCost, imprintChoices, pityLeft, GAMBLE_COUNTS, APPRAISAL_ALL } from '@/game/systems/commerce';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 import type { PanelProps } from './panel-props';
 import { starLabel } from '@/game/data/starforce';
@@ -33,21 +33,22 @@ export function Shop({ s, send, busy }: PanelProps) {
     const [autoImprint, setAutoImprint] = useState(false);
     const autoEach = autoImprint ? imprint.gold : gamble, limitGold = Number(limit.replace(/[^0-9]/g, '')) || 0;
     return <>
-        <Heading eyebrow="ITEM SHOP" title="상점" description="장비를 감정하고, 원하는 옵션을 새겨 감정하고, 단련하는 곳."/>
+        <Heading eyebrow="ITEM SHOP" title="상점" description="모든 부위가 나오는 장비 감정, 부위와 옵션을 골라 새기는 각인 감정, 고른 부위를 목표 등급까지 돌리는 자동 감정, 그리고 강화."/>
         <WalletBar s={s} label="상점 재화와 보관함" extra={<div><span>감정 장비 레벨<strong>Lv.{s.level}</strong></span><span>환생 {s.rebirths} · 감정 가격 ×{(gamble / Math.max(1, gambleCost({ ...s, rebirths: 0 }))).toFixed(1)}</span></div>}/>
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="gamble">장비 감정</TabsTrigger><TabsTrigger value="imprint">각인 감정</TabsTrigger><TabsTrigger value="auto">자동 감정</TabsTrigger><TabsTrigger value="forge">장비 강화</TabsTrigger></TabsList></Tabs>
         {tab !== 'forge' && <PityBar s={s}/>}
-        {tab === 'gamble' && <section aria-label="부위별 장비 감정">
+        {tab === 'gamble' && <section aria-label="장비 감정">
             {!secret && <div className="appraisal-odds"><span>감정 등급 확률</span>{APPRAISAL.map(r => <b key={r.rarity} style={{ color: RARITIES[r.rarity].color }}>{RARITIES[r.rarity].name} {Math.round(r.chance * 10000) / 100}%</b>)}</div>}
-            <div className="port-gamble-grid">{GAMBLE_CATEGORIES.map(o => <article className="panel market-card gamble-card" key={o.id}>
-                <div className="gamble-icon"><SlotIcon slot={o.slot} size={34}/></div>
-                <div><span className="eyebrow">미확인 장비</span><h2>{o.name}</h2></div><p>{o.description}</p>
+            <article className="panel market-card gamble-card gamble-single">
+                <div className="gamble-icon-row">{GAMBLE_CATEGORIES.map(o => <span className="gamble-icon" key={o.id} title={o.name}><SlotIcon slot={o.slot} size={30}/></span>)}</div>
+                <div><span className="eyebrow">미확인 장비</span><h2>장비 감정</h2></div>
+                <p>무기 · 방어구 · 장신구 · 망토 중 하나가 같은 확률로 나옵니다(무기는 물리·마법 중 하나). 등급 수만큼 옵션이 붙고, 영웅 이상은 규칙 옵션이 붙을 수 있습니다.</p>
                 <span className="gamble-guarantee">Lv.{s.level} · 희귀 이상 · 등급 수만큼 옵션 1~6개</span>
-                <div className="gamble-count-row">{GAMBLE_COUNTS.map(n => { const total = gamble * n, noRoom = s.inventory.length + n > cap; return <ConfirmButton key={n} label={`${n}개 · ${format(total)} G`} title={`${o.name} ${n}개를 감정할까요?`} description={`골드 ${format(total)} G를 사용합니다. ${odds}${o.description} 등급 수만큼 옵션이 붙고(영웅 이상은 규칙 옵션 가능), 결과는 가방에 보관됩니다.${n > 1 ? ` 가방 ${n}칸이 필요합니다.` : ''}`} disabled={busy || s.gold < total || noRoom} onConfirm={() => send({ type: 'gamble', id: o.id, value: String(n) })}/>; })}</div>
-            </article>)}</div>
+                <div className="gamble-count-row">{GAMBLE_COUNTS.map(n => { const total = gamble * n, noRoom = s.inventory.length + n > cap; return <ConfirmButton key={n} label={`${n}개 · ${format(total)} G`} title={`장비 ${n}개를 감정할까요?`} description={`골드 ${format(total)} G를 사용합니다. ${odds}부위는 무작위이고, 결과는 가방에 보관됩니다.${n > 1 ? ` 가방 ${n}칸이 필요합니다.` : ''}`} disabled={busy || s.gold < total || noRoom} onConfirm={() => send({ type: 'gamble', id: APPRAISAL_ALL, value: String(n) })}/>; })}</div>
+            </article>
         </section>}
         {tab === 'imprint' && <section aria-label="각인 감정" className="panel market-card imprint-card">
-            <p>부위와 옵션 하나를 고르면 그 옵션이 반드시 붙은 장비를 감정합니다. 나머지 옵션과 등급은 일반 감정과 같고, 천장도 함께 쌓입니다. 한 번에 골드 {format(imprint.gold)} G(감정의 {IMPRINT_APPRAISAL.goldMultiplier}배)와 정수 {imprint.essence}개가 듭니다.</p>
+            <p>부위와 옵션 하나를 고르면 그 옵션이 반드시 붙은 장비를 감정합니다. 나머지 옵션과 등급은 장비 감정과 같고, 천장도 함께 쌓입니다. 한 번에 골드 {format(imprint.gold)} G(감정의 {IMPRINT_APPRAISAL.goldMultiplier}배)와 정수 {imprint.essence}개가 듭니다.</p>
             <div className="imprint-row">
                 <label>부위<select value={slot} onChange={e => setSlot(e.target.value)}>{GAMBLE_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
                 <label>새길 옵션<select value={pick} onChange={e => setAffix(e.target.value)}>{choices.map(c => <option key={c.id} value={c.id}>{c.name} · {c.description}</option>)}</select></label>
@@ -55,7 +56,7 @@ export function Shop({ s, send, busy }: PanelProps) {
             <div className="gamble-count-row">{GAMBLE_COUNTS.map(n => { const gold = imprint.gold * n, ess = imprint.essence * n, noRoom = s.inventory.length + n > cap; return <ConfirmButton key={n} label={`${n}개 · ${format(gold)} G · 정수 ${ess}`} title={`각인 감정 ${n}개를 할까요?`} description={`골드 ${format(gold)} G와 정수 ${ess}개를 사용합니다. ${odds}고른 옵션이 반드시 붙습니다.${n > 1 ? ` 가방 ${n}칸이 필요합니다.` : ''}`} disabled={busy || !pick || s.gold < gold || (s.essence || 0) < ess || noRoom} onConfirm={() => send({ type: 'imprintGamble', id: slot, value: `${pick}|${n}` })}/>; })}</div>
         </section>}
         {tab === 'auto' && <section aria-label="자동 감정" className="panel market-card imprint-card">
-            <p>목표 등급 이상이 나올 때까지 골드 한도 안에서 감정을 반복합니다(한 번에 최대 {format(AUTO_APPRAISAL_MAX)}회). 목표 미만은 물건 도감에 없는 종류면 도감에 등록하고, 나머지는 분해해 정수로 받습니다. 목표 장비는 가방에 들어가고 거기서 멈춥니다.</p>
+            <p>고른 부위에서 목표 등급 이상이 나올 때까지 골드 한도 안에서 감정을 반복합니다(한 번에 최대 {format(AUTO_APPRAISAL_MAX)}회). 목표 미만은 물건 도감에 없는 종류면 도감에 등록하고, 나머지는 분해해 정수로 받습니다. 목표 장비는 가방에 들어가고 거기서 멈춥니다.</p>
             <div className="imprint-row">
                 <label>부위<select value={slot} onChange={e => setSlot(e.target.value)}>{GAMBLE_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
                 <label>목표 등급<select value={target} onChange={e => setTarget(Number(e.target.value))}>{APPRAISAL.map(r => <option key={r.rarity} value={r.rarity}>{RARITIES[r.rarity].name} 이상</option>)}</select></label>

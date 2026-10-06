@@ -18,14 +18,17 @@ export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase +
 export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
 /** v3.58 각인으로 고를 수 있는 옵션: 그 부위에 붙을 수 있는 일반 옵션(규칙 옵션·출신 전용 옵션 제외). */
 export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.onlyOrigin && (!a.onlySlot || a.onlySlot === slot));
-const gambleCategory = (id: string) => GAMBLE_CATEGORIES.find(x => x.id === id) as { slot: string; offers: readonly string[] } | undefined ?? (SHOP.some(x => x.id === id) ? { slot: SHOP.find(x => x.id === id)!.slot, offers: [id] } : undefined);
 const appraisalState = (s: State) => (s.appraisal ??= { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 0, ancient: 0, primal: 0 } });
 /** v3.58 다음 감정에서 천장이 터지는 등급(없으면 0). */
 export const pityRarity = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.reduce((r, p) => (s.appraisal?.pity[p.key] || 0) + 1 >= p.count ? Math.max(r, p.rarity) : r, 0);
 /** v3.58 천장까지 남은 감정 수(이번 감정 포함). */
 export const pityLeft = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.map(p => ({ ...p, left: Math.max(1, p.count - (s.appraisal?.pity[p.key] || 0)) }));
-/** v3.58 감정 한 번: 확률표로 등급을 뽑고 천장을 적용한 뒤 장비를 만듭니다. 골드·정수는 부르는 쪽이 냅니다. */
-function appraiseOnce(s: State, offers: readonly string[], rng: () => number, cost: number, imprint?: string): Item {
+/** v3.60 장비 감정은 부위를 고르지 않습니다(id 'all'): 부위는 같은 확률로 무작위, 무기는 물리·마법 중 같은 확률. 각인 감정·자동 감정은 부위를 고릅니다. */
+export const APPRAISAL_ALL = 'all';
+const slotCategory = (id: string) => GAMBLE_CATEGORIES.find(c => c.id === id);
+/** v3.58 감정 한 번: 부위(장비 감정은 무작위, 각인·자동 감정은 고른 부위)와 등급을 뽑고 천장을 적용한 뒤 장비를 만듭니다. 골드·정수는 부르는 쪽이 냅니다. */
+function appraiseOnce(s: State, rng: () => number, cost: number, imprint?: string, slot?: string): Item {
+    const category = (slot && slotCategory(slot)) || GAMBLE_CATEGORIES[Math.min(GAMBLE_CATEGORIES.length - 1, Math.floor(rng() * GAMBLE_CATEGORIES.length))], offers = category.offers;
     const offerId = offers[offers.length > 1 ? Math.min(offers.length - 1, Math.floor(rng() * offers.length)) : 0], offer = SHOP.find(x => x.id === offerId)!;
     const roll = rng();
     let threshold = 0;
@@ -134,11 +137,11 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     const nextId = () => `shop-${++s.shopSerial}`;
     // v3.58 확정 구매는 없앴습니다. 감정(1·5·10개)과 각인 감정은 부위를 고르고, 골드·정수·가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다.
     if (a.type === 'gamble' || a.type === 'imprintGamble') {
-        // 부위(rod·coat·charm·cape) 대신 상품 id(physical·magic …)를 넘기면 그 상품 하나로 감정합니다(기존 호출 호환).
-        const category = gambleCategory(id);
-        if (!category) throw Error('감정할 부위를 확인하세요.');
-        const [affix, n] = a.type === 'imprintGamble' ? (a.value || '').split('|') : [undefined, a.value];
-        if (affix !== undefined && !imprintChoices(category.slot).some(x => x.id === affix)) throw Error('각인할 옵션을 고르세요.');
+        // v3.60 장비 감정은 부위를 고르지 않고(모든 부위가 나오는 감정 하나), 각인 감정은 부위를 고릅니다.
+        const imprinting = a.type === 'imprintGamble', category = imprinting ? slotCategory(id) : undefined;
+        if (imprinting ? !category : id !== APPRAISAL_ALL) throw Error(imprinting ? '각인할 부위를 고르세요.' : '장비 감정은 부위를 고르지 않습니다.');
+        const [affix, n] = imprinting ? (a.value || '').split('|') : [undefined, a.value];
+        if (affix !== undefined && !imprintChoices(category!.slot).some(x => x.id === affix)) throw Error('각인할 옵션을 고르세요.');
         const count = Number(n || 1);
         if (!GAMBLE_COUNTS.includes(count)) throw Error('감정 개수는 1·5·10개 중 하나입니다.');
         const each = affix ? imprintGambleCost(s) : { gold: gambleCost(s), essence: 0 };
@@ -148,7 +151,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const results: Item[] = [];
         for (let i = 0; i < count; i++) {
             spend(each.gold); s.essence = (s.essence || 0) - each.essence;
-            const item = appraiseOnce(s, category.offers, rng, each.gold, affix);
+            const item = appraiseOnce(s, rng, each.gold, affix, category?.id);
             s.inventory.push(item); results.push(item);
         }
         const word = affix ? `각인 감정(${affixDef(affix)!.name})` : '감정';
@@ -160,8 +163,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     // v3.58 자동 감정: value = '목표 등급|골드 한도|각인 옵션(선택)'. 목표 등급 이상이 나오면 가방에 넣고 멈춥니다.
     // 목표 미만은 물건 도감에 없는 종류면 도감에 등록하고, 나머지는 분해해 정수로 받습니다. 최대 AUTO_APPRAISAL_MAX번.
     if (a.type === 'autoGamble') {
-        const category = gambleCategory(id);
-        if (!category) throw Error('감정할 부위를 확인하세요.');
+        const category = slotCategory(id);
+        if (!category) throw Error('감정할 부위를 고르세요.');
         const [targetText, limitText, affixText] = (a.value || '').split('|'), target = Number(targetText), limit = Number(limitText), affix = affixText || undefined;
         if (!APPRAISAL.some(r => r.rarity === target)) throw Error('목표 등급을 고르세요.');
         if (!(limit > 0) || !Number.isFinite(limit)) throw Error('골드 한도를 정하세요.');
@@ -174,7 +177,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const tally = [0, 0, 0, 0, 0, 0, 0];
         while (tries < AUTO_APPRAISAL_MAX && s.gold >= each.gold && spent + each.gold <= limit && (s.essence || 0) >= each.essence) {
             spend(each.gold); spent += each.gold; s.essence = (s.essence || 0) - each.essence; tries++;
-            const item = appraiseOnce(s, category.offers, rng, each.gold, affix);
+            const item = appraiseOnce(s, rng, each.gold, affix, category.id);
             tally[item.rarity]++;
             if (item.rarity >= target) { s.inventory.push(item); hit = item; break; }
             const key = itemKey(item.slot, item.rarity);

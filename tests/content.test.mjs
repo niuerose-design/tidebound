@@ -9,13 +9,12 @@ test('Name statuses include bleed, show consumed stun and target haste at its ac
  assert.equal(visibleStatuses({},0,[haste],'enemy')[0].id,'haste');assert.equal(visibleStatuses({},0,[haste],'player').length,0);
 });
 
-test('Category appraisal rolls rod style and rarity separately, charging once',()=>{
- for(const [styleRoll,style] of [[0,'physical'],[.499,'physical'],[.5,'magic'],[.999,'magic']]){
-  const s=newState(0);s.gold=10000;const rolls=[styleRoll,.95,.2];act(s,{type:'gamble',id:'rod'},0,()=>rolls.shift()??0);
-  assert.equal(s.inventory.length,1);assert.equal(s.inventory[0].slot,'rod');assert.equal(s.inventory[0].style,style);assert.equal(s.inventory[0].rarity,3);assert.equal(s.gold,10000-gambleCost(s));
+test('v3.60 one appraisal for all slots: slot, rod style and rarity are rolled in that order, charging once',()=>{
+ for(const [slotRoll,styleRoll,slot,style] of [[0,0,'rod','physical'],[.2,.5,'rod','magic'],[.3,.5,'coat','balanced'],[.6,.5,'charm','balanced'],[.9,.5,'cape','balanced']]){
+  const s=newState(0);s.gold=10000;const rolls=slot==='rod'?[slotRoll,styleRoll,.95,.2]:[slotRoll,.95,.2];act(s,{type:'gamble',id:'all'},0,()=>rolls.shift()??0);
+  assert.equal(s.inventory.length,1);assert.equal(s.inventory[0].slot,slot);assert.equal(s.inventory[0].style,style);assert.equal(s.inventory[0].rarity,3);assert.equal(s.gold,10000-gambleCost(s));
  }
- for(const slot of ['coat','charm']){const s=newState(0);s.gold=10000;act(s,{type:'gamble',id:slot},0,()=>.6);assert.equal(s.inventory[0].slot,slot);assert.equal(s.inventory[0].rarity,2);}
- const s=newState(0);s.gold=10000;const before=JSON.stringify(s);assert.throws(()=>act(s,{type:'gamble',id:'unknown'},0));assert.equal(JSON.stringify(s),before);
+ for(const id of ['unknown','rod','coat']){const s=newState(0);s.gold=10000;const before=JSON.stringify(s);assert.throws(()=>act(s,{type:'gamble',id},0),/부위/);assert.equal(JSON.stringify(s),before,'no slot choice');}
 });
 test('Job mastery strengthens only the currently selected job and never its penalties',()=>{
  const s=newState(0);s.level=50;s.permanent.attack=100;s.skills=[];s.job='harpoon';const strip=a=>Object.fromEntries(Object.entries(a).filter(([k])=>k!=='masteredPower'));const base=strip(stats(s));
@@ -196,14 +195,14 @@ test('v27.11 art: every fish has a silhouette shape and the shape table has no s
 
 test('v27.13 batch appraisal: 5 or 10 at once, all-or-nothing on gold and bag room, same rolls as singles',()=>{
  const s=newState(0);s.gold=100000;const seq=()=>.55;
- act(s,{type:'gamble',id:'rod',value:'5'},0,seq);assert.equal(s.inventory.length,5);assert.ok(s.inventory.every(i=>i.slot==='rod'&&i.rarity>=1));
+ act(s,{type:'gamble',id:'all',value:'5'},0,seq);assert.equal(s.inventory.length,5);assert.ok(s.inventory.every(i=>i.rarity>=1));
  assert.match(s.logs.at(-1).text,/감정 5개/);
- const t=newState(0);t.gold=10;assert.throws(()=>act(t,{type:'gamble',id:'rod',value:'5'},0,seq),/골드/);assert.equal(t.inventory.length,0);assert.equal(t.gold,10,'nothing spent when short');
+ const t=newState(0);t.gold=10;assert.throws(()=>act(t,{type:'gamble',id:'all',value:'5'},0,seq),/골드/);assert.equal(t.inventory.length,0);assert.equal(t.gold,10,'nothing spent when short');
  const u=newState(0);u.gold=100000;u.inventory=Array.from({length:inventoryCapOf(u)-3},(_,i)=>({id:'x'+i,name:'x',slot:'rod',power:1,level:1}));
- assert.throws(()=>act(u,{type:'gamble',id:'rod',value:'5'},0,seq),/가방에 5칸/);assert.throws(()=>act(u,{type:'gamble',id:'rod',value:'7'},0,seq),/1·5·10/);
- act(u,{type:'gamble',id:'rod',value:'1'},0,seq);assert.equal(u.inventory.length,inventoryCapOf(u)-2);
+ assert.throws(()=>act(u,{type:'gamble',id:'all',value:'5'},0,seq),/가방에 5칸/);assert.throws(()=>act(u,{type:'gamble',id:'all',value:'7'},0,seq),/1·5·10/);
+ act(u,{type:'gamble',id:'all',value:'1'},0,seq);assert.equal(u.inventory.length,inventoryCapOf(u)-2);
  const a=newState(0),b=newState(0);a.gold=b.gold=100000;const seqA=[.2,.7,.1,.9,.3,.4,.6,.8,.05,.5],seqB=[...seqA];
- act(a,{type:'gamble',id:'coat',value:'1'},0,()=>seqA.shift()??.5);act(b,{type:'gamble',id:'coat'},0,()=>seqB.shift()??.5);
+ act(a,{type:'gamble',id:'all',value:'1'},0,()=>seqA.shift()??.5);act(b,{type:'gamble',id:'all'},0,()=>seqB.shift()??.5);
  assert.deepEqual({...a.inventory[0],id:0},{...b.inventory[0],id:0},'value 1 equals the old single appraisal');
 });
 

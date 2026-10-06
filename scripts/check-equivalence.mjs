@@ -45,7 +45,7 @@ function pickAction(s, r) {
         () => ({ type: 'loadPreset', id: String(Math.floor(r() * 3)) }), () => ({ type: 'equip', id: pick(inv) }), () => ({ type: 'unequip', id: pick(['rod', 'coat', 'charm']) }),
         () => ({ type: 'sell', id: pick(inv) }), () => ({ type: 'rebirth' }),
         () => ({ type: 'offlineDismiss' }),
-        () => ({ type: 'gamble', id: pick(GAMBLE_CATEGORIES).id }), () => ({ type: 'imprintGamble', id: pick(GAMBLE_CATEGORIES).id, value: 'might|1' }), () => ({ type: 'autoGamble', id: pick(GAMBLE_CATEGORIES).id, value: `4|${Math.floor(r() * 1e6)}` }), () => ({ type: 'enhance', id: pick(inv) }),
+        () => ({ type: 'gamble', id: 'all' }), () => ({ type: 'imprintGamble', id: pick(GAMBLE_CATEGORIES).id, value: 'might|1' }), () => ({ type: 'autoGamble', id: pick(GAMBLE_CATEGORIES).id, value: `4|${Math.floor(r() * 1e6)}` }), () => ({ type: 'enhance', id: pick(inv) }),
         () => ({ type: 'reforge', id: pick(inv) }), () => ({ type: 'lockItem', id: pick(inv) }), () => ({ type: 'sellRarity', id: String(Math.floor(r() * 4)) }),
         () => ({ type: 'permanent', id: pick(RESEARCH).id }), () => ({ type: 'buyRelic', id: pick(RELICS).id }),
     ];
@@ -112,7 +112,7 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
         for (const f of FISH) display.push(prog.bookReward(s, f.id));
     }
     for (const f of FISH) for (const tier of [0, 5, 25, 60]) display.push(scaledEnemyStats(f, { tier }), scaledEnemyStats(f, { boss: true, tier, wave: 4 }));
-    const s = samples[2], game = seeded(9); for (let i = 0; i < 20; i++) { try { engine.act(s, { type: 'gamble', id: GAMBLE_CATEGORIES[i % GAMBLE_CATEGORIES.length].id }, 0, game); } catch { } }
+    const s = samples[2], game = seeded(9); for (let i = 0; i < 20; i++) { try { engine.act(s, { type: 'gamble', id: 'all' }, 0, game); } catch { } }
     for (const it of s.inventory) display.push(equipment.itemStats(it), equipment.enhanceCost(it), equipment.reforgeCost(it), equipment.saleValue(it), equipment.itemDescription(it));
     const fighter = { name: 'A', stats: statsM.stats(s), hp: 100, skills: [], cooldowns: {}, stun: 0 };
     display.push(statsM.hitChance(fighter.stats, statsM.stats(samples[0])));
