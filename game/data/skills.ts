@@ -12,6 +12,7 @@ import { INVERSION_SKILLS } from './expansion-inversion';
 import { MONOSTAT_SKILLS } from './expansion-monostat';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
+import { SPECIAL_SKILLS } from './specials';
 export const SKILLS: Skill[] = [
     { id: 'hook', name: '강철 챔질', desc: '공격력 180% 피해.', type: 'active', level: 1, chance: .35, cooldown: 2, multiplier: 1.8 },
     { id: 'breath', name: '고요한 호흡', desc: '공격하지 않고 최대 체력 18%를 회복합니다.', type: 'active', level: 6, chance: .3, cooldown: 5, multiplier: 0, effect: 'heal', healOnly: true },
@@ -243,3 +244,5 @@ export function skillMasteryScale(sk: Pick<Skill, 'job'>) {
     const tier = sk.job ? JOBS.find(j => j.id === sk.job)?.tier ?? 0 : 0;
     return PROGRESSION.skillMasteryTierScale[tier] ?? 1;
 }
+// v3.65 공개 특수 직업의 스킬(data/specials.ts, 완성된 모양).
+registerSkills(SPECIAL_SKILLS);

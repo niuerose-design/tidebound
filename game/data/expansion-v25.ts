@@ -29,7 +29,7 @@ const GLYPH_A = { ...A, ...physical, ...GLYPH, cost: 2, seal: true, rankEffects:
 export const TIME_MACHINE_MASTERY = 25;
 
 export const V25_JOBS: NewJob[] = [
-    { id: 'glyphMonk', name: '玄', title: '일곱 글자를 몸에 새긴다', desc: '혼자 쓰면 손해뿐인 일곱 글자를 서로 맞물려 쓰는 조합 직업. 글자 하나를 익히면 다음 글자가 열리고, 일곱 글자가 모두 맞물리면 天이 깨어납니다.', ...neutral, bonus: { attack: 2, magic: 2 }, tier: 1, level: 10, mastery: 0, requires: { wis: 12, luk: 10 }, role: '조합·각성', tree: 'mystery', branchless: true, fullKit: true, masteryTarget: 5000, masteryBoost: .2 },
+    { id: 'glyphMonk', name: '玄', title: '일곱 글자를 몸에 새긴다', desc: '혼자 쓰면 손해뿐인 일곱 글자를 서로 맞물려 쓰는 조합 직업. 글자 하나를 익히면 다음 글자가 열리고, 일곱 글자가 모두 맞물리면 天이 깨어납니다.', ...neutral, bonus: { attack: 2, magic: 2 }, tier: 1, level: 10, mastery: 0, requires: { wis: 12, luk: 10 }, role: '조합·각성', tree: 'mystery', lineage: 'restraint', fullKit: true, masteryTarget: 5000, masteryBoost: .2 },
 ];
 
 export const V25_SKILLS: Skill[] = [
