@@ -1,4 +1,4 @@
-import { refinementTargets, thresholdRank, REFINEMENT_STEP_BONUS } from '../data/long-term';
+import { EXTREME_BREAK_PRACTICE } from '../data/long-term';
 import { rebirthAP } from './meta';
 import { restraintAP, restraintSlots } from './vows';
 import { accountAP } from '../data/account';
@@ -22,11 +22,15 @@ export function attributes(s: State) {
     return out;
 }
 export function masteryMilestonesFor(sk?: Skill) { return sk?.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones; }
-export function skillRefinementTargets(sk: Skill) {
-    const positive = Object.values(sk.bonus || {}).some(n => n > 0) || Object.values(sk.levelEffects || {}).some(row => Object.values(row.bonus || {}).some(n => n > 0));
-    // v3.73 극한돌파: 한계돌파 마지막 단계의 숙련(마지막 숙련 단계 × 한계돌파 마지막 배수) 위로 연마 30단계만큼 더 쌓습니다.
+/** v3.73 극한돌파 목표 숙련: 한계돌파 마지막 단계의 숙련(마지막 숙련 단계 × 한계돌파 마지막 배수) + 옛 연마 30단계만큼(EXTREME_BREAK_PRACTICE). */
+export function extremeBreakTarget(sk: Skill) {
     const lb = PROGRESSION.limitBreak;
-    return sk.type === 'active' || positive ? refinementTargets(masteryMilestonesFor(sk).at(-1)! * lb.practiceMultiple[lb.max - 1]) : [];
+    return masteryMilestonesFor(sk).at(-1)! * lb.practiceMultiple[lb.max - 1] + EXTREME_BREAK_PRACTICE;
+}
+/** v3.73 극한돌파 달성: 한계돌파 3단계(연구 적용분)를 마치고 목표 숙련을 넘었는지. 지금은 효과가 없습니다(운영자 문의). */
+export function extremeBroken(s: State, id: string) {
+    const sk = skillById(id);
+    return !!sk && limitBreakOf(s, id) >= PROGRESSION.limitBreak.max && refinePractice(s, id) >= extremeBreakTarget(sk);
 }
 /**
  * v3.31 극한돌파(v3.73, 옛 연마)·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
@@ -196,7 +200,7 @@ export function passiveGrowthBonus(s: State, sk: Skill, counts: Record<string, n
     if (sk.perRebirth && rebirths > 0) for (const [key, n] of Object.entries(sk.perRebirth)) out[key] = (out[key] || 0) + (n as number) * rebirths * scale;
     return out;
 }
-/** 스킬의 실제 효과. practice는 극한돌파(옛 연마) 단계에 쓰는 숙련(refinePractice). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
+/** 스킬의 실제 효과. practice(refinePractice)는 v3.73부터 효과에 쓰지 않습니다(옛 연마 삭제). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
     // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.
@@ -215,10 +219,8 @@ export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): 
         bonus,
         penaltyRelief: override?.penaltyRelief ?? sk.penaltyRelief,
     };
-    // v3.73 극한돌파(옛 연마): 한계돌파를 끝까지 한 스킬만 셉니다. AP·발동률은 늘지 않습니다.
-    const refinement = broken >= lb.max ? thresholdRank(practice, skillRefinementTargets(sk)) : 0;
-    result.multiplier *= 1 + refinement * REFINEMENT_STEP_BONUS;
-    if (refinement && result.bonus) result.bonus = Object.fromEntries(Object.entries(result.bonus).map(([k, n]) => [k, n > 0 ? n * (1 + refinement * REFINEMENT_STEP_BONUS) : n]));
+    // v3.73 옛 연마 보너스는 없앴습니다(극한돌파는 아직 효과 없음). practice 인자는 호출부 호환을 위해 남깁니다.
+    void practice;
     return result;
 }
 export type SkillRankDelta = { label: string; from: string; to: string; };

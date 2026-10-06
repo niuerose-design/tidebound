@@ -6,7 +6,7 @@ const Asc = await L.load('data/ascension'), Mi = await L.load('data/mimic'), Lc 
 const P = await L.load('systems/progression'), LT = await L.load('data/long-term'), V = await L.load('systems/vows'), Sp = await L.load('data/sprout');
 const E = await L.load('systems/encounter'), Ac = await L.load('data/account'), Ec = await L.load('data/economy'), RG = await L.load('systems/random-game');
 const W = await L.load('data/world'), AmMod = await L.load('systems/automation'), RpMod = await L.load('systems/research-plan');
-const { skillById } = await L.load('data/skills');
+const { skillById } = await L.load('data/skills'), Ac2 = await L.load('data/achievements');
 const SKILL = id => skillById(id);
 
 test('v3.31 mimic chance stops growing at difficulty 20 and the dragon nest', () => {
@@ -55,26 +55,27 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
 });
 
 
-test('v3.31 refinement and limit-break progress restart from the ascension base; growth levels stay', () => {
-    const sk = skillById('hook'), last = P.masteryMilestonesFor(sk).at(-1), targets = P.skillRefinementTargets(sk);
+test('v3.31 extreme-break and limit-break progress restart from the ascension base; growth levels stay', () => {
+    const sk = skillById('hook'), last = P.masteryMilestonesFor(sk).at(-1);
     const s = { skillPractice: { hook: last + 40_000 }, refineBase: { hook: last + 40_000 } };
-    assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 0, 'refinement back to 0');
+    assert.equal(P.refinePractice(s, 'hook'), last, 'progress back to the last milestone');
     assert.equal(P.refinePractice({ skillPractice: { hook: last + 40_000 } }, 'hook'), last + 40_000, 'no base → unchanged');
-    // v3.73 극한돌파(옛 연마): 한계돌파 마지막 숙련(마지막 단계 × 8) 위로 5,000부터.
-    s.skillPractice.hook += last * 7 + 4_999; assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 0, 'not before the last limit-break practice + 5k');
-    s.skillPractice.hook += 1; assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 1, 'first step after 5k more');
     assert.equal(P.skillMasteryLevel(s.skillPractice.hook, P.masteryMilestonesFor(sk)), P.masteryMilestonesFor(sk).length, 'growth level kept');
 });
 
-test('v3.73 extreme break (old refinement) counts only after all three limit breaks; requirement labels use thousands separators', () => {
-    const sk = skillById('hook'), max = P.maxSkillLevel(sk), targets = P.skillRefinementTargets(sk), far = targets.at(-1);
-    const plain = P.effectiveSkill(sk, 1, max, 0).multiplier;
-    assert.equal(P.effectiveSkill(sk, 1, max, far).multiplier, plain, 'no limit break: no extreme break bonus');
-    assert.equal(P.effectiveSkill(sk, 1, max + 2, far).multiplier, P.effectiveSkill(sk, 1, max + 2, 0).multiplier, 'two limit breaks: still none');
-    const lb3 = P.effectiveSkill(sk, 1, max + 3, 0).multiplier;
-    assert.ok(Math.abs(P.effectiveSkill(sk, 1, max + 3, far).multiplier / lb3 - (1 + targets.length * LT.REFINEMENT_STEP_BONUS)) < 1e-9, 'all three: +0.8% per step');
-    const j = JOBS.find(x => x.id === 'strTraining1'), s = newState(0);
-    assert.ok(P.jobRequirements(s, j).some(r => r.label.endsWith('숙련 1,000,000')), 'parent mastery shown as 1,000,000');
+test('v3.73 extreme break: after all three limit breaks, the same extra practice for every skill (old refinement total); no effect yet, an honor achievement without reward', () => {
+    const sk = skillById('hook'), last = P.masteryMilestonesFor(sk).at(-1), target = P.extremeBreakTarget(sk);
+    assert.equal(target - last * 8, LT.EXTREME_BREAK_PRACTICE, 'same extra amount for any skill');
+    assert.equal(target - last * 8, P.extremeBreakTarget(skillById('pierce')) - P.masteryMilestonesFor(skillById('pierce')).at(-1) * 8);
+    const s = newState(0); s.learned.hook = 1; s.skillPractice.hook = target; s.permanent.limitBreak = 3; s.limitBreaks = { hook: 2 };
+    assert.equal(P.extremeBroken(s, 'hook'), false, 'two limit breaks are not enough');
+    s.limitBreaks.hook = 3; assert.equal(P.extremeBroken(s, 'hook'), true);
+    s.skillPractice.hook = target - 1; assert.equal(P.extremeBroken(s, 'hook'), false);
+    const max = P.maxSkillLevel(sk); assert.equal(P.effectiveSkill(sk, 1, max + 3, target * 2).multiplier, P.effectiveSkill(sk, 1, max + 3, 0).multiplier, 'no old refinement bonus');
+    const { ACHIEVEMENTS } = Ac2, a = ACHIEVEMENTS.find(x => x.id === 'extremeBreak');
+    assert.ok(a && a.honor && !Object.keys(a.reward).length && a.desc.includes('운영자에게 문의해주세요')); s.skillPractice.hook = target; assert.equal(a.progress(s), 1);
+    const j = JOBS.find(x => x.id === 'strTraining1');
+    assert.ok(P.jobRequirements(newState(0), j).some(r => r.label.endsWith('숙련 1,000,000')), 'parent mastery shown as 1,000,000');
 });
 
 test('v3.31 ascended effects: no sprout, ×2 early exp, vow and random-game bonus ×1.2 per ascension, mastery ×(1+n)', () => {

@@ -1,8 +1,8 @@
 /** 적 등장·드롭·승리 보상. */
 import { rollAffixes } from '../data/gear';
 import { ODDS } from '../data/odds';
-import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
-import { jobMasteryTarget, skillRefinementTargets, refinePractice, limitBreakOf } from './progression';
+import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
+import { jobMasteryTarget, extremeBroken } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
@@ -277,11 +277,10 @@ export function reward(s: State, rng: () => number) {
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {
         if (canUse(s, id)) {
-            const sk = skillById(id)!, targets = skillRefinementTargets(sk);
-            const before = thresholdRank(refinePractice(s, id), targets);
+            // v3.73 극한돌파: 달성한 순간 한 번 알립니다(효과는 아직 없음, 운영자 문의).
+            const before = extremeBroken(s, id);
             s.skillPractice[id] = (s.skillPractice[id] || 0) + practiceTotal;
-            const after = thresholdRank(refinePractice(s, id), targets);
-            if (after > before && limitBreakOf(s, id) >= PROGRESSION.limitBreak.max) addLog(s, `${sk.name} 극한돌파 ${after}/${targets.length}단계 달성 · 직접 피해·양수 패시브 누적 ${refinementBonusLabel(after)}`, 'skill');
+            if (!before && extremeBroken(s, id)) addLog(s, `${skillById(id)!.name} 극한돌파 달성! 운영자에게 문의해 주세요.`, 'reward');
         }
     }
     s.book[e.id] = (s.book[e.id] || 0) + size * bookPer;
