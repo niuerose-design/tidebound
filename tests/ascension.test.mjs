@@ -1,12 +1,12 @@
 // v3.31 승천 · 환생 200회 상한 · 까미 확률 상한 · 행운의 편지 10단계(docs/balance-rebirth.md 8·9·11·13·14절).
 // 공유 난수를 쓰지 않습니다(직접 만든 난수만). run.mjs 맨 끝에 둡니다.
-import { newState, act, advance, rebirthLevel, expMultiplier, assert, test } from './harness.mjs';
+import { newState, act, advance, rebirthLevel, expMultiplier, JOBS, assert, test } from './harness.mjs';
 const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
 const Asc = await L.load('data/ascension'), Mi = await L.load('data/mimic'), Lc = await L.load('systems/actions/lifecycle');
 const P = await L.load('systems/progression'), LT = await L.load('data/long-term'), V = await L.load('systems/vows'), Sp = await L.load('data/sprout');
 const E = await L.load('systems/encounter'), Ac = await L.load('data/account'), Ec = await L.load('data/economy'), RG = await L.load('systems/random-game');
 const W = await L.load('data/world'), AmMod = await L.load('systems/automation'), RpMod = await L.load('systems/research-plan');
-const { skillById } = await L.load('data/skills');
+const { skillById } = await L.load('data/skills'), Ac2 = await L.load('data/achievements');
 const SKILL = id => skillById(id);
 
 test('v3.31 mimic chance stops growing at difficulty 20 and the dragon nest', () => {
@@ -55,13 +55,27 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
 });
 
 
-test('v3.31 refinement and limit-break progress restart from the ascension base; growth levels stay', () => {
-    const sk = skillById('hook'), last = P.masteryMilestonesFor(sk).at(-1), targets = P.skillRefinementTargets(sk);
+test('v3.31 extreme-break and limit-break progress restart from the ascension base; growth levels stay', () => {
+    const sk = skillById('hook'), last = P.masteryMilestonesFor(sk).at(-1);
     const s = { skillPractice: { hook: last + 40_000 }, refineBase: { hook: last + 40_000 } };
-    assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 0, 'refinement back to 0');
+    assert.equal(P.refinePractice(s, 'hook'), last, 'progress back to the last milestone');
     assert.equal(P.refinePractice({ skillPractice: { hook: last + 40_000 } }, 'hook'), last + 40_000, 'no base → unchanged');
-    s.skillPractice.hook += 5_000; assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 1, 'first step after 5k more');
     assert.equal(P.skillMasteryLevel(s.skillPractice.hook, P.masteryMilestonesFor(sk)), P.masteryMilestonesFor(sk).length, 'growth level kept');
+});
+
+test('v3.74 extreme break: active skills only, after all three limit breaks at 100M practice; no effect yet, an honor achievement without reward', () => {
+    const sk = skillById('hook'), target = P.extremeBreakTarget(sk);
+    assert.equal(target, 100_000_000, '1억 for every active skill'); assert.equal(P.extremeBreakTarget(skillById('pierce')), 100_000_000);
+    assert.equal(P.extremeBreakTarget(skillById('axeArm')), null, 'passives have no extreme break');
+    const s = newState(0); s.learned.hook = 1; s.skillPractice.hook = target; s.permanent.limitBreak = 3; s.limitBreaks = { hook: 2 };
+    assert.equal(P.extremeBroken(s, 'hook'), false, 'two limit breaks are not enough');
+    s.limitBreaks.hook = 3; assert.equal(P.extremeBroken(s, 'hook'), true);
+    s.skillPractice.hook = target - 1; assert.equal(P.extremeBroken(s, 'hook'), false);
+    const max = P.maxSkillLevel(sk); assert.equal(P.effectiveSkill(sk, 1, max + 3, target * 2).multiplier, P.effectiveSkill(sk, 1, max + 3, 0).multiplier, 'no old refinement bonus');
+    const { ACHIEVEMENTS } = Ac2, a = ACHIEVEMENTS.find(x => x.id === 'extremeBreak');
+    assert.ok(a && a.honor && !Object.keys(a.reward).length && a.desc.includes('운영자에게 문의해주세요')); s.skillPractice.hook = target; assert.equal(a.progress(s), 1);
+    const j = JOBS.find(x => x.id === 'strTraining1');
+    assert.ok(P.jobRequirements(newState(0), j).some(r => r.label.endsWith('숙련 1,000,000')), 'parent mastery shown as 1,000,000');
 });
 
 test('v3.31 ascended effects: no sprout, ×2 early exp, vow and random-game bonus ×1.2 per ascension, mastery ×(1+n)', () => {

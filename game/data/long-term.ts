@@ -2,11 +2,12 @@
 // 6단계(+4%)를 30단계(+0.8%)로 분할. 최종 목표(+3,000만)와 총량(+24%)은 동일하며,
 // 어느 숙련 수치에서도 이전 6단계보다 누적 보너스가 낮아지지 않습니다.
 export const REFINEMENT_OFFSETS = [5000, 11000, 20000, 30000, 44000, 61000, 83000, 111000, 148000, 194000, 254000, 330000, 427000, 553000, 713000, 918000, 1181000, 1519000, 1950000, 2504000, 3212000, 4120000, 5283000, 6773000, 8682000, 11127000, 14260000, 18273000, 23414000, 30000000];
-/** 연마 단계당 직접 피해 배율·양수 패시브 증가량 (합연산). */
-export const REFINEMENT_STEP_BONUS = .008;
-export const refinementBonusLabel = (ranks = 1) => `+${Math.round(ranks * REFINEMENT_STEP_BONUS * 1000) / 10}%`;
+/**
+ * v3.74 극한돌파: 한계돌파 3단계를 마친 액티브 스킬의 숙련이 1억에 닿으면 달성합니다(어떤 스킬이든 같은 값).
+ * 한 가지 스킬만 파는 모험가를 위한 보상으로 설계 중이라 지금은 효과가 없고, 달성하면 운영자에게 문의합니다(업적은 보상 없음).
+ */
+export const EXTREME_BREAK_PRACTICE = 100_000_000;
 export const VOCATION_OFFSETS = [5000, 25000, 100000, 400000, 1500000, 5000000, 15000000];
-export const refinementTargets = (base: number) => REFINEMENT_OFFSETS.map(n => base + n);
 export const vocationTargets = (base: number) => VOCATION_OFFSETS.map(n => base + n);
 export const thresholdRank = (practice: number, targets: number[]) => targets.filter(n => practice >= n).length;
 // Early lives keep their original rewards. Later lives still help, but cannot

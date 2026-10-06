@@ -1,4 +1,4 @@
-import { refinementTargets, thresholdRank, REFINEMENT_STEP_BONUS } from '../data/long-term';
+import { EXTREME_BREAK_PRACTICE } from '../data/long-term';
 import { rebirthAP } from './meta';
 import { restraintAP, restraintSlots } from './vows';
 import { accountAP } from '../data/account';
@@ -22,12 +22,15 @@ export function attributes(s: State) {
     return out;
 }
 export function masteryMilestonesFor(sk?: Skill) { return sk?.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones; }
-export function skillRefinementTargets(sk: Skill) {
-    const positive = Object.values(sk.bonus || {}).some(n => n > 0) || Object.values(sk.levelEffects || {}).some(row => Object.values(row.bonus || {}).some(n => n > 0));
-    return sk.type === 'active' || positive ? refinementTargets(masteryMilestonesFor(sk).at(-1)!) : [];
+/** v3.74 극한돌파 목표 숙련: 모든 액티브 스킬이 같은 1억(EXTREME_BREAK_PRACTICE). 패시브는 극한돌파가 없습니다(null). */
+export function extremeBreakTarget(sk: Skill) { return sk.type === 'active' ? EXTREME_BREAK_PRACTICE : null; }
+/** v3.74 극한돌파 달성: 액티브 스킬이 한계돌파 3단계(연구 적용분)를 마치고 숙련 1억을 넘었는지. 지금은 효과가 없습니다(운영자 문의). */
+export function extremeBroken(s: State, id: string) {
+    const sk = skillById(id), target = sk && extremeBreakTarget(sk);
+    return !!target && limitBreakOf(s, id) >= PROGRESSION.limitBreak.max && refinePractice(s, id) >= target;
 }
 /**
- * v3.31 연마·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
+ * v3.31 극한돌파(v3.74, 옛 연마)·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
  * 성장 레벨(숙련 1~4단계)은 원래 숙련 그대로라 바뀌지 않습니다. 기준점이 없으면 원래 숙련과 같습니다.
  */
 export function refinePractice(s: Pick<State, 'skillPractice' | 'refineBase'>, id: string) {
@@ -194,7 +197,7 @@ export function passiveGrowthBonus(s: State, sk: Skill, counts: Record<string, n
     if (sk.perRebirth && rebirths > 0) for (const [key, n] of Object.entries(sk.perRebirth)) out[key] = (out[key] || 0) + (n as number) * rebirths * scale;
     return out;
 }
-/** 스킬의 실제 효과. practice는 연마 단계에 쓰는 숙련(refinePractice). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
+/** 스킬의 실제 효과. practice(refinePractice)는 v3.74부터 효과에 쓰지 않습니다(옛 연마 삭제). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
     // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.
@@ -213,10 +216,8 @@ export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): 
         bonus,
         penaltyRelief: override?.penaltyRelief ?? sk.penaltyRelief,
     };
-    const refinement = thresholdRank(practice, skillRefinementTargets(sk));
-    // Only actual practice refines a skill; neither AP/cost nor mastery multipliers scale.
-    result.multiplier *= 1 + refinement * REFINEMENT_STEP_BONUS;
-    if (refinement && result.bonus) result.bonus = Object.fromEntries(Object.entries(result.bonus).map(([k, n]) => [k, n > 0 ? n * (1 + refinement * REFINEMENT_STEP_BONUS) : n]));
+    // v3.74 옛 연마 보너스는 없앴습니다(극한돌파는 아직 효과 없음). practice 인자는 호출부 호환을 위해 남깁니다.
+    void practice;
     return result;
 }
 export type SkillRankDelta = { label: string; from: string; to: string; };
@@ -272,18 +273,18 @@ export function jobRequirements(s: State, j: Job) {
         for (const [key, n] of Object.entries(j.requiresAllocated || {}))
             list.push({ label: `배분 ${ATTRIBUTE_NAMES[key as Attribute]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n, value: s.attributes?.[key as Attribute] || 0, target: n });
         if (j.parent)
-            list.push({ label: `${jobById(j.parent)?.name} 숙련 ${j.mastery}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery, value: s.jobMastery?.[j.parent] || 0, target: j.mastery });
+            list.push({ label: `${jobById(j.parent)?.name} 숙련 ${j.mastery.toLocaleString()}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery, value: s.jobMastery?.[j.parent] || 0, target: j.mastery });
         for (const [jobId, mastery] of Object.entries(j.requiresJobMastery || {})) {
             const job = jobById(jobId);
             // 선행 직업과 같은 조건이면 한 번만 표시합니다(판정은 같음).
             if (!(jobId === j.parent && mastery === j.mastery))
-                list.push({ label: `${job?.name || jobId} 숙련 ${mastery}`, met: (s.jobMastery?.[jobId] || 0) >= mastery, value: s.jobMastery?.[jobId] || 0, target: mastery });
+                list.push({ label: `${job?.name || jobId} 숙련 ${mastery.toLocaleString()}`, met: (s.jobMastery?.[jobId] || 0) >= mastery, value: s.jobMastery?.[jobId] || 0, target: mastery });
         }
         if (j.requiresMastered)
             list.push({ label: `숙달한 직업 ${j.requiresMastered}개`, met: masteredJobCount(s) >= j.requiresMastered, value: masteredJobCount(s), target: j.requiresMastered });
         for (const [skillId, mastery] of Object.entries(j.requiresSkillMastery || {})) {
             const skill = skillById(skillId), milestones = masteryMilestonesFor(skill), target = milestones[Math.max(0, mastery - 1)] || milestones[milestones.length - 1];
-            list.push({ label: `${skill?.name || skillId} 숙련 ${mastery}단계 (${target})`, met: skillMastery(s, skillId) >= mastery, value: skillMastery(s, skillId), target: mastery });
+            list.push({ label: `${skill?.name || skillId} 숙련 ${mastery}단계 (${target.toLocaleString()})`, met: skillMastery(s, skillId) >= mastery, value: skillMastery(s, skillId), target: mastery });
         }
         // v3.62 숨은 전직: 플레이 기록 조건(서버 전용 secret/unlocks.ts)을 만족해야 합니다(한 번 들어간 직업은 제외).
         const unlock = unlockFor(s, j.id);
