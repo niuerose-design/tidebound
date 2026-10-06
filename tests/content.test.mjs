@@ -105,8 +105,9 @@ test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; 
  const plain=base();plain.book.minnow=9;spawn(plain,()=>0);assert.equal(plain.enemy.variant,undefined,'no variant before 10 catches');assert.equal(plain.enemy.swarm,undefined);
  const sw=base();sw.book.minnow=10;spawn(sw,()=>0);assert.equal(sw.enemy.variant,'swarm');assert.equal(sw.enemy.swarm,5,'x5 only until 500 catches');assert.equal(sw.enemy.maxHp,plain.enemy.maxHp*5);assert.equal(sw.enemy.combatStats.attack,plain.enemy.combatStats.attack,'swarm attack stays at one fish');
  const mid=base();mid.book.minnow=5000;spawn(mid,()=>0.999);assert.equal(mid.enemy.variant,undefined,'roll above total chance is a normal fish');
- let calls=0;spawn(mid,()=>calls++===0?0:.999);assert.equal(mid.enemy.swarm,100,'x500 needs the swarmSense passive');
- const big=base();big.book.minnow=5000;big.job='rareTracker';big.learned.swarmSense=1;big.skills.push('swarmSense');calls=0;spawn(big,()=>calls++===0?0:.999);assert.equal(big.enemy.swarm,500);assert.equal(big.enemy.maxHp,Math.round(plain.enemy.maxHp*490),'x500 has 490x HP');assert.equal(big.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*490));assert.equal(big.enemy.combatStats.defense,plain.enemy.combatStats.defense);
+ let calls=0;spawn(mid,()=>calls++===0?0:.999);assert.equal(mid.enemy.swarm,100,'x100 from 500 catches');
+ // v3.87 일반 사냥터 무리는 ×100까지: 도감 5,000회 · 무리 감지를 갖춰도 ×500은 나오지 않습니다(×500은 무리 서식지에서만).
+ const big=base();big.book.minnow=5000;big.job='rareTracker';big.learned.swarmSense=1;big.skills.push('swarmSense');calls=0;spawn(big,()=>calls++===0?0:.999);assert.equal(big.enemy.swarm,100,'no x500 outside habitats');
  const g=base();g.book.minnow=10;spawn(g,()=>band('giant'));assert.equal(g.enemy.variant,'giant');assert.equal(g.enemy.maxHp,Math.round(plain.enemy.maxHp*3));assert.equal(g.enemy.combatStats.attack,Math.round(plain.enemy.combatStats.attack*1.25));
  const kills=g.kills,gold=g.gold,book=g.book.minnow,mult=goldMultiplier(g);const e=g.enemy;g.running=true;let guard=0;while(g.enemy===e&&guard++<3000)tick(g,()=>.5);
  assert.equal(g.kills-kills,1);assert.equal(g.book.minnow-book,3,'giant counts 3 in the codex');assert.equal(g.gold-gold,Math.floor(e.gold*mult*4),'giant gold x4');assert.equal(g.variantBook.minnow.giant,1);

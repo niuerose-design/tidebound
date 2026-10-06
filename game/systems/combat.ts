@@ -2,7 +2,7 @@ import { SKILLS, skillById } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { jobById } from '../data/classes';
 import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier, PENETRATION } from '../data/balance';
-import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute } from '../types';
+import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute, Skill } from '../types';
 const ATTR_KEY: Record<Attribute, 'attrStr' | 'attrDex' | 'attrInt' | 'attrVit' | 'attrWis' | 'attrLuk'> = { str: 'attrStr', dex: 'attrDex', int: 'attrInt', vit: 'attrVit', wis: 'attrWis', luk: 'attrLuk' };
 export type { CombatEvent, CombatHit } from '../types';
 import { normalizeStats, hitChance } from './stats';
@@ -14,8 +14,13 @@ export type Fighter = {
     stats: Stats;
     hp: number;
     skills: string[];
+    /** 재사용 대기(행동 단위). v3.86 각성기는 턴 단위로 같은 칸에 두고, '~id' 칸에 실패한 판정 수를 셉니다. */
     cooldowns: Record<string, number>;
     stun: number;
+    /** v3.86 추가 판정 단계(액티브가 발동한 행동에서 아래 액티브로 더 굴리는 횟수). 플레이어만. */
+    extraRolls?: number;
+    /** v3.86 한 턴에 나갈 수 있는 각성기 수(없으면 SKILL_FORMULA.awaken.perTurn). 승천 연구로 늘릴 자리입니다. */
+    awakenPerTurn?: number;
     mana?: number;
     ranks?: Record<string, number>;
     mastery?: Record<string, number>;
@@ -143,21 +148,24 @@ export function chainChance(a: Fighter, b: Fighter) {
 export function actTurn(a: Fighter, b: Fighter, rng: () => number, onAction: (text: string, event: CombatEvent) => void) {
     for (let chain = 1; ; chain++) {
         const events: CombatEvent[] = [];
-        const text = strike(a, b, rng, events, false, chain > 1), ev = events[0];
+        const text = act(a, b, rng, events, false, chain > 1), ev = events[0];
         if (chain > 1) ev.chain = chain;
         onAction(chain > 1 ? `${text} · 연속 ${chain}` : text, ev);
         // v25.5 동시 시전: 첫 줄에 적힌 기술들을 같은 행동 안에서 이어서 씁니다(행동 시작 효과 없이).
         if (ev?.multicast?.ids) for (const [i, id] of ev.multicast.ids.entries()) {
             if (a.hp <= 0 || b.hp <= 0) break;
             const more: CombatEvent[] = [];
-            const t = strike(a, b, rng, more, false, chain > 1, { id, index: i + 1, count: ev.multicast.count });
+            const t = act(a, b, rng, more, false, chain > 1, { id, index: i + 1, count: ev.multicast.count });
             onAction(`${t} · 동시 시전 ${i + 2}/${ev.multicast.count}`, more[0]);
         }
-        // v25 확정 추가 행동(선행·찰): 연속 행동 횟수와 별개로 한 번 더 행동합니다. 추가 행동에서 다시 생기지는 않습니다.
+        // v3.86 추가 판정 · 각성기(턴의 첫 행동만, 연속 행동은 턴을 세지 않음).
+        afterAction(a, b, rng, ev, chain === 1, onAction);
+        // v25 확정 추가 행동(선행·찰): 연속 행동 횟수와 별개로 한 번 더 행동합니다. 추가 행동에서 다시 생기지는 않습니다. v3.86 각성기에는 한 턴으로 셉니다.
         if (ev?.extraTurn && a.hp > 0 && b.hp > 0) {
             const extra: CombatEvent[] = [];
-            const t2 = strike(a, b, rng, extra, true);
+            const t2 = act(a, b, rng, extra, true);
             onAction(`${t2} · 추가 행동`, extra[0]);
+            afterAction(a, b, rng, extra[0], true, onAction);
         }
         if (a.hp <= 0 || b.hp <= 0 || chain >= BALANCE.chainMaxActions) return;
         const p = chainChance(a, b);
@@ -201,10 +209,114 @@ export function mitigate(raw: number, defense: number, attackStat: number) {
     if (m.kind === 'constant') return raw * m.k / (m.k + defense * 2);
     return raw * 100 / (100 + defense * 2);
 }
-/** Shared PvE/PvP action. Recovery, status, conditional proc, MP, accuracy, defense and crit. */
-/** v25.5 동시 시전 묶음의 2번째 이후 줄: 행동 시작 효과(회복·지속 피해·대기 감소·기절)를 건너뛰고 정해진 기술을 바로 씁니다. */
-export type ForcedCast = { id: string; index: number; count: number };
+/** v3.86 각성기의 실패한 판정 수를 적는 재사용 대기 칸: '~' + 기술 id. */
+const AWAKEN_PITY = '~';
+const isAwaken = (id: string) => id.startsWith(AWAKEN_PITY) || !!skillById(id)?.awaken;
+/** 기술의 실제 효과(숙련·계보 밖 효율 반영). */
+function skillOf(a: Fighter, id: string) {
+    const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
+    if (!base) return undefined;
+    const c = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0);
+    c.multiplier *= signatureScale(base, a.job);
+    return c;
+}
+/**
+ * 편성 순서대로 액티브 발동 판정을 굴려 처음 성공한 기술을 고릅니다. from부터 봅니다(추가 판정은 앞서 고른 기술 아래부터).
+ * 각성기는 따로 굴리므로 여기서 빼고, 쓸 수 없는 상황(대기·조건·마나·이미 걸린 상태이상·면역)은 굴리지 않고 넘어갑니다.
+ */
+function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rng: () => number, blocked: Set<string>, bonusAction: boolean, from = 0) {
+    for (const id of a.skills.slice(from)) {
+        const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
+        if (!base || base.type !== 'active' || base.awaken || blocked.has(id))
+            continue;
+        const candidate = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0);
+        candidate.multiplier *= signatureScale(base, a.job);
+        // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
+        if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)
+            continue;
+        if (candidate.condition === 'healthyTarget' && b.hp < sb.hp * .6)
+            continue;
+        if (candidate.condition === 'afflicted' && !(a.effects?.dot || a.effects?.poison || a.effects?.burn || a.effects?.slow || a.effects?.weaken))
+            continue;
+        if ((a.mana ?? 0) < (candidate.manaCost || 0))
+            continue;
+        // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
+        if (alreadyAfflicted(b, candidate))
+            continue;
+        if (candidate.restoreAll && a.effects?.timeUsed)
+            continue;
+        if (bonusAction && candidate.extraTurn)
+            continue;
+        if (candidate.statusOnly && candidate.effect && ENEMY_STATUS[candidate.effect] && isImmune(b, ENEMY_STATUS[candidate.effect]))
+            continue;
+        if (rng() < candidate.chance)
+            return candidate;
+    }
+    return undefined;
+}
+/** v3.86 행동 뒤에 붙는 줄: 추가 판정(액티브가 발동한 행동)과, 턴을 세는 행동(턴의 첫 행동·확정 추가 행동)이면 각성기. */
+function afterAction(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | undefined, turn: boolean, onAction: (text: string, event: CombatEvent) => void) {
+    followUps(a, b, rng, first, onAction);
+    if (turn) awaken(a, b, rng, first, onAction);
+}
+/** v3.86 추가 판정: 액티브가 발동한 행동에서 그 아래 액티브로 단계 수만큼 더 굴려, 성공하면 줄어든 위력으로 바로 씁니다. 동시 시전 묶음으로 나간 행동에는 굴리지 않고, 대신 v3.87부터 묶음 최대 개수가 단계만큼 늘어납니다. */
+function followUps(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | undefined, onAction: (text: string, event: CombatEvent) => void) {
+    const R = SKILL_FORMULA.extraRoll, rolls = Math.min(R.power.length, a.extraRolls || 0);
+    if (!rolls || !first?.skillId || first.multicast || a.hp <= 0 || b.hp <= 0) return;
+    let from = a.skills.indexOf(first.skillId) + 1;
+    for (let i = 0; i < rolls && from > 0 && a.hp > 0 && b.hp > 0; i++) {
+        const sa = normalizeStats(a.stats), sb = normalizeStats(b.stats);
+        // 확정 추가 행동 기술은 추가 판정에서 쓰지 않습니다(추가 행동이 붙지 않으므로).
+        const next = pickActive(a, b, sa, sb, rng, new Set(Object.keys(a.cooldowns).filter(k => a.cooldowns[k] > 0)), true, from);
+        if (!next) return;
+        from = a.skills.indexOf(next.id) + 1;
+        const more: CombatEvent[] = [];
+        const text = act(a, b, rng, more, false, false, { id: next.id, index: i + 1, count: 1, kind: 'followUp', power: R.power[i] });
+        onAction(`${text} · 추가 판정${rolls > 1 ? ` ${i + 1}` : ''} (위력 ${Math.round(R.power[i] * 100)}%)`, more[0]);
+    }
+}
+/**
+ * v3.86 각성기: 턴마다 대기를 1 줄이고, 대기가 끝난 각성기를 편성 순서대로 굴려 한 턴에 perTurn개(기본 1)까지 씁니다.
+ * 처음(대기 칸이 비어 있으면)은 awaken.start 턴을 기다립니다. 실패하면 다음 판정 확률에 기본 발동률을 더하고(최대 100%), 쓰면 초기화합니다.
+ * 기절·침묵인 턴과 마나가 모자란 턴은 굴리지 않습니다(대기는 줄어듦).
+ */
+function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | undefined, onAction: (text: string, event: CombatEvent) => void) {
+    let fired = 0;
+    const limit = a.awakenPerTurn ?? SKILL_FORMULA.awaken.perTurn;
+    for (const id of a.skills) {
+        const base = skillById(id);
+        if (!base?.awaken) continue;
+        if (a.cooldowns[id] === undefined) a.cooldowns[id] = base.awaken.start;
+        if (a.cooldowns[id] > 0) { a.cooldowns[id]--; continue; }
+        if (fired >= limit || a.hp <= 0 || b.hp <= 0 || first?.stunned || first?.silenced) continue;
+        const sk = skillOf(a, id)!;
+        if ((a.mana ?? 0) < (sk.manaCost || 0)) continue;
+        const key = AWAKEN_PITY + id, misses = a.cooldowns[key] || 0;
+        if (rng() >= Math.min(1, sk.chance * (1 + misses))) { a.cooldowns[key] = misses + 1; continue; }
+        delete a.cooldowns[key];
+        fired++;
+        const more: CombatEvent[] = [];
+        const text = act(a, b, rng, more, false, false, { id, index: 0, count: 1, kind: 'awaken' });
+        // 각성기로 쓰러뜨리면 대기를 kill턴만 둡니다(짧은 사냥에서 남는 피해로 버려지는 몫을 돌려줌).
+        if (b.hp <= 0) a.cooldowns[id] = Math.min(a.cooldowns[id] ?? 0, SKILL_FORMULA.awaken.kill);
+        onAction(`${text} · 각성`, more[0]);
+    }
+}
+/**
+ * Shared PvE/PvP action. Recovery, status, conditional proc, MP, accuracy, defense and crit.
+ * v3.86 한 행동에 이어 추가 판정과 각성기(턴의 첫 행동·확정 추가 행동이면)까지 처리합니다. 이어진 줄의 결과는 events에 차례로 쌓입니다.
+ * 연속 행동(chained)은 턴을 세지 않습니다. 점검 도구는 이 함수를 한 턴으로 씁니다.
+ */
 export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false, forced?: ForcedCast) {
+    const list = events ?? [], start = list.length;
+    const text = act(a, b, rng, list, bonusAction, chained, forced);
+    if (!forced) afterAction(a, b, rng, list[start], !chained, (_, ev) => list.push(ev));
+    return text;
+}
+/** v25.5 동시 시전 묶음의 2번째 이후 줄: 행동 시작 효과(회복·지속 피해·대기 감소·기절)를 건너뛰고 정해진 기술을 바로 씁니다.
+ * v3.86 kind: 'awaken'(각성기) · 'followUp'(추가 판정, power = 위력 배율)도 같은 방식으로 씁니다. */
+export type ForcedCast = { id: string; index: number; count: number; kind?: 'awaken' | 'followUp'; power?: number };
+function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false, forced?: ForcedCast) {
     const sa = normalizeStats(a.stats), sb = normalizeStats(b.stats);
     a.effects ??= {};
     b.effects ??= {};
@@ -264,63 +376,39 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     }
     const blocked = new Set(Object.keys(a.cooldowns).filter(k => a.cooldowns[k] > 0));
     if (!forced) for (const k of Object.keys(a.cooldowns))
-        a.cooldowns[k] = Math.max(0, a.cooldowns[k] - 1);
+        if (!isAwaken(k)) a.cooldowns[k] = Math.max(0, a.cooldowns[k] - 1);
     if (!forced && a.stun > 0) {
         a.stun--;
         if (a.stun === 0) grantImmunity(a.effects, 'stun');
         ev.stunned = true;
         return emit(`${a.name}: 기절로 행동 불가.${notes.length ? ' ' + notes.join(' · ') : ''}`);
     }
-    const skillOf = (id: string) => { const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id); if (!base) return undefined; const c = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0); c.multiplier *= signatureScale(base, a.job); return c; };
-    let chosen;
-    if (forced) chosen = skillOf(forced.id);
-    else if (!silenced) {
-        for (const id of a.skills) {
-            const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
-            if (!base || base.type !== 'active' || blocked.has(id))
-                continue;
-            const candidate = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0);
-            candidate.multiplier *= signatureScale(base, a.job);
-            // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
-            if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)
-                continue;
-            if (candidate.condition === 'healthyTarget' && b.hp < sb.hp * .6)
-                continue;
-            if (candidate.condition === 'afflicted' && !(a.effects.dot || a.effects.poison || a.effects.burn || a.effects.slow || a.effects.weaken))
-                continue;
-            if ((a.mana ?? 0) < (candidate.manaCost || 0))
-                continue;
-            // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
-            if (alreadyAfflicted(b, candidate))
-                continue;
-            if (candidate.restoreAll && a.effects.timeUsed)
-                continue;
-            if (bonusAction && candidate.extraTurn)
-                continue;
-            if (candidate.statusOnly && candidate.effect && ENEMY_STATUS[candidate.effect] && isImmune(b, ENEMY_STATUS[candidate.effect]))
-                continue;
-            if (rng() < candidate.chance) {
-                chosen = candidate;
-                break;
-            }
-        }
+    let chosen: Skill | undefined;
+    if (forced) {
+        chosen = skillOf(a, forced.id);
+        if (chosen && forced.power) chosen.multiplier *= forced.power;
     }
+    else if (!silenced) chosen = pickActive(a, b, sa, sb, rng, blocked, bonusAction);
     // v25.5 동시 시전: 첫 성공이 multicast 기술이면 편성의 다른 multicast 액티브도 각자 발동률로 굴려 함께 나갑니다. 묶음 전체의 가중 마나를 감당할 수 있을 때까지 뒤에서부터 뺍니다.
     const MC = SKILL_FORMULA.multicast;
     let castCount = forced?.count || 1;
     if (chosen?.multicast && !forced) {
+        // v3.87 추가 판정 단계만큼 묶음 최대 개수가 늘어납니다(동시 시전으로 나간 행동에는 추가 판정을 따로 굴리지 않음).
+        const maxCast = MC.max + Math.min(SKILL_FORMULA.extraRoll.power.length, a.extraRolls || 0);
         const extras: { id: string; mana: number }[] = [];
         for (const id of a.skills) {
-            if (id === chosen.id || extras.length + 1 >= MC.max || blocked.has(id)) continue;
-            const c = skillOf(id);
-            if (!c || c.type !== 'active' || !c.multicast || c.statusOnly && c.effect && ENEMY_STATUS[c.effect] && isImmune(b, ENEMY_STATUS[c.effect])) continue;
+            if (id === chosen.id || extras.length + 1 >= maxCast || blocked.has(id)) continue;
+            const c = skillOf(a, id);
+            if (!c || c.type !== 'active' || !c.multicast || c.awaken || c.statusOnly && c.effect && ENEMY_STATUS[c.effect] && isImmune(b, ENEMY_STATUS[c.effect])) continue;
             if (rng() < c.chance) extras.push({ id, mana: c.manaCost || 0 });
         }
         const manaFor = (n: number) => Math.ceil(((chosen!.manaCost || 0) + extras.slice(0, n - 1).reduce((s, e) => s + e.mana, 0)) * (1 + (n - 1) * MC.manaScale));
         while (extras.length && (a.mana ?? 0) < manaFor(extras.length + 1)) extras.pop();
         if (extras.length) { castCount = extras.length + 1; ev.multicast = { index: 0, count: castCount, ids: extras.map(e => e.id) }; notes.push(`동시 시전 1/${castCount}`); }
     }
-    if (forced) ev.multicast = { index: forced.index, count: forced.count };
+    if (forced?.kind === 'awaken') ev.awaken = true;
+    else if (forced?.kind === 'followUp') ev.followUp = { index: forced.index, power: forced.power ?? 1 };
+    else if (forced) ev.multicast = { index: forced.index, count: forced.count };
     // 마력 평타: 마법 직업은 기본 공격 대신 마법 공격 × 계수의 마법 피해를 줍니다(v25.22부터 확률 없이 항상).
     const arcane = !chosen && sa.arcaneStrike > 0;
     let healed = 0, overheal = 0;
@@ -437,7 +525,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // v27.18 극 치명타: 같은 난수로 판정합니다(치명타 확률 상한을 넘은 몫 = superCrit). 치명 피해에 superCritBonus를 더 곱합니다.
     const critRoll = landed && !statusOnly ? rng() : 1;
     const crit = critRoll < sa.crit, superCrit = crit && critRoll < (sa.superCrit || 0);
-    // v3.85 행운 비례(scaling 'luck', 팬텀 계열)는 위력에 이미 치명 피해를 넣으므로, 치명타가 터져도 치명 피해를 다시 곱하지 않습니다(제곱 방지).
+    // v3.88 행운 비례(scaling 'luck', 팬텀 계열)는 위력에 이미 치명 피해를 넣으므로, 치명타가 터져도 치명 피해를 다시 곱하지 않습니다(제곱 방지).
     const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - actual);
@@ -469,16 +557,18 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (resisted) { notes.push(`${RESIST_LABELS[harmful!]} 저항`); ev.resisted = harmful; }
     const effect = resisted ? undefined : chosen?.effect;
     const onset: { name: string; value: number }[] = [];
+    // v3.86 각성기가 거는 상태이상은 지속(패시브 보너스 포함)에 awaken.statusScale을 곱합니다.
+    const lasting = (turns: number) => forced?.kind === 'awaken' && chosen?.awaken?.statusScale ? Math.round(turns * chosen.awaken.statusScale) : turns;
     if (landed && chosen && effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
     else if (landed && chosen && effect === 'stun') {
-        const turns = (chosen.statusTurns ?? 1) + sa.stunBonus;
+        const turns = lasting((chosen.statusTurns ?? 1) + sa.stunBonus);
         b.stun = Math.max(b.stun, turns);
         notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
         ev.statuses.push({ id: 'stun', turns });
     }
     if (landed && chosen && effect === 'bleed' && isImmune(b, 'bleed')) { notes.push('출혈 면역'); ev.immune = 'bleed'; }
     else if (landed && chosen && effect === 'bleed') {
-        const turns = (chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus;
+        const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus);
         const name = chosen.dotName || '출혈';
         // v27.3 틱 피해 = 위력 비례 + 대상 체력 비례(v3.54 틱 때 현재 체력 × bleedHpRatio, 무리는 × swarmDotShare). 방어·반격을 모두 무시하므로 탱커의 카운터입니다.
         const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0) + (sa.bleedBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
@@ -495,7 +585,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // v27.17 중독: 출혈과 별개의 중첩형 지속 피해. 걸릴 때마다 한 중첩, 지속 갱신, 중첩당 피해는 더 강한 쪽.
     if (landed && chosen && effect === 'poison' && isImmune(b, 'poison')) { notes.push('중독 면역'); ev.immune = 'poison'; }
     else if (landed && chosen && effect === 'poison') {
-        const turns = (chosen.statusTurns ?? STATUS_TUNING.poisonTurns) + sa.dotTurnsBonus;
+        const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.poisonTurns) + sa.dotTurnsBonus);
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0) + (sa.poisonBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
         const hpRatio = SKILL_FORMULA.poisonHpRatio * swarmDotShare(b.swarm);
         const current = b.effects.poison;
@@ -509,7 +599,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // v27.48 화상: 걸릴 때마다 한 중첩(최대 burnMaxStacks), 지속 갱신, 중첩당 피해는 더 강한 쪽.
     if (landed && chosen && effect === 'burn' && isImmune(b, 'burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
     else if (landed && chosen && effect === 'burn') {
-        const turns = (chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus;
+        const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus);
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
         const hpRatio = SKILL_FORMULA.burnHpRatio * swarmDotShare(b.swarm);
         const current = b.effects.burn;
@@ -533,21 +623,21 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     }
     if (landed && chosen && effect === 'weaken' && isImmune(b, 'weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
     else if (landed && chosen && effect === 'weaken') {
-        const turns = chosen.statusTurns ?? STATUS_TUNING.weakenTurns;
+        const turns = lasting(chosen.statusTurns ?? STATUS_TUNING.weakenTurns);
         extendStatus(b.effects, 'weaken', turns);
         notes.push(`공격 약화 ${turns}턴`);
         ev.statuses.push({ id: 'weaken', turns });
     }
     if (landed && chosen && effect === 'silence' && isImmune(b, 'silence')) { notes.push('침묵 면역'); ev.immune = 'silence'; }
     else if (landed && chosen && effect === 'silence') {
-        const turns = (chosen.statusTurns ?? STATUS_TUNING.silenceTurns) + sa.controlBonus;
+        const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.silenceTurns) + sa.controlBonus);
         extendStatus(b.effects, 'silence', turns);
         notes.push(`침묵 ${turns}턴`);
         ev.statuses.push({ id: 'silence', turns });
     }
     if (landed && chosen && effect === 'slow' && isImmune(b, 'slow')) { notes.push('감속 면역'); ev.immune = 'slow'; }
     else if (landed && chosen && effect === 'slow') {
-        const turns = (chosen.statusTurns ?? STATUS_TUNING.slowTurns) + sa.controlBonus;
+        const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.slowTurns) + sa.controlBonus);
         extendStatus(b.effects, 'slow', turns);
         notes.push(`감속 ${turns}턴`);
         ev.statuses.push({ id: 'slow', turns });
@@ -633,7 +723,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             const waiting = a.skills.filter(x => (a.cooldowns[x] || 0) > 0 && skillById(x)?.type === 'active');
             if (!waiting.length) continue;
             const picked = rule.pick === 'all' ? waiting : rule.pick === 'first' ? [waiting[0]] : [waiting.reduce((best, x) => a.cooldowns[x] > a.cooldowns[best] ? x : best, waiting[0])];
-            for (const x of picked) a.cooldowns[x] = 0;
+            // v3.86 각성기는 턴 단위 대기를 awaken.reset턴만 줄입니다(0이 되면 다음 턴에 판정).
+            for (const x of picked) a.cooldowns[x] = skillById(x)?.awaken ? Math.max(0, a.cooldowns[x] - SKILL_FORMULA.awaken.reset) : 0;
             ev.cooldownReset = [...(ev.cooldownReset || []), ...picked.map(x => skillById(x)?.name || x)];
             notes.push(`대기 초기화 · ${picked.map(x => skillById(x)?.name || x).join('·')} (${skillById(id)?.name})`);
         }

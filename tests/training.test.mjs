@@ -144,3 +144,13 @@ test('v3.84 boss damage: direct hits on bosses only (world bosses included), nev
     const dealt = bd => { const r = duel({ ...me, stats: { ...me.stats, bossDamage: bd } }, raidBossSnapshot(raid), true, () => .5, 5); return raid.stats.hp - r.opponentHp; };
     assert.ok(dealt(.5) > dealt(0) * 1.4, 'world boss counts as a boss');
 });
+
+test('v3.88 luck-scaling skills (Phantom line) put crit damage into power once: a crit does not multiply it again', async () => {
+    const { strike } = await load('game/systems/combat.js'), { SKILL_FORMULA } = await load('game/data/balance.js');
+    assert.equal(SKILL_FORMULA.luckScalingScale, 2.8);
+    const base = { hp: 1e9, attack: 1000, magic: 1000, defense: 0, resist: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 3 };
+    const mk = (skills, crit) => ({ name: 'A', stats: { ...base, crit }, hp: 1e9, mana: 1e6, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
+    const hit = (skills, crit) => { const b = mk([], 0); strike(mk(skills, crit), b, () => 0); return 1e9 - b.hp; };
+    assert.equal(hit(['fateRoll'], 1), hit(['fateRoll'], 0), 'Ultimate Drive: same damage with or without a crit');
+    assert.ok(hit([], 1) > hit([], 0) * 2.5, 'a normal attack still multiplies crit damage');
+});

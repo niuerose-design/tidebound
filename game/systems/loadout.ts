@@ -1,7 +1,7 @@
 import type { Skill, State } from '../types';
 import { SKILLS } from '../data/skills';
 import { stats } from './stats';
-import { lineage, apCapacity, canUse, effectiveSkill, skillMastery, skillVeiled, refinePractice } from './progression';
+import { lineage, apCapacity, extraRollAP, canUse, effectiveSkill, skillMastery, skillVeiled, refinePractice } from './progression';
 
 /**
  * 추천 편성: 현재 직업 전용 → 선행 계보 → 공용 → 계승한 다른 직업 순으로, 액티브는 발동률 × 위력, 패시브는 양수 수치 합이 큰 순서대로 AP 안에서 채웁니다. 패시브 몫(총 AP의 약 40%)을 먼저 채웁니다.
@@ -20,7 +20,8 @@ export function recommendLoadout(s: State) {
     // pool은 모두 사용 가능하고 중복이 없어 validLoadout(s, [...out, id])와 같은 결과입니다.
     const costs = new Map(pool.map(sk => [sk.id, effectiveSkill(sk, s.learned?.[sk.id] || 1, skillMastery(s, sk.id)).cost!]));
     const cost = (sk: Skill) => costs.get(sk.id)!;
-    const cap = apCapacity(s);
+    // v3.86 추가 판정이 쓰는 AP는 빼고 채웁니다.
+    const cap = apCapacity(s) - extraRollAP(s);
     let used = 0;
     const fits = (sk: Skill) => used + cost(sk) <= cap;
     const take = (sk: Skill) => { used += cost(sk); out.push(sk.id); };

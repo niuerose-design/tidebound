@@ -11,7 +11,7 @@ import { DUNGEONS, FISH, STAGES, dungeonClosed, stageClosed, closuresSnapshot } 
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
-import { canUse, skillMasteryRanks, refinePractices } from './progression';
+import { canUse, skillMasteryRanks, refinePractices, extraRollLevel } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, reward, releaseLegacySeal, gainLevels } from './encounter';
 import { inRandomGame, loseRandomGame } from './random-game';
@@ -92,7 +92,7 @@ function tickTurn(s: State, rng: () => number) {
     const e = s.enemy!;
     const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
-    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), practice: refinePractices(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
+    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), practice: refinePractices(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
     const enemy: Fighter = { foe: true, name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
