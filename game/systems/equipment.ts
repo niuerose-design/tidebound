@@ -38,7 +38,7 @@ export function itemStats(item: Item): Partial<Stats> {
         result[item.affix.stat] = (result[item.affix.stat] || 0) + scaled(item.affix.stat, item.affix.value);
     for (const affix of item.affixes || []) {
         // v3.5 상태이상 저항만 별 보정(별당 +3%)을 받고 장비 합계 50%에서 막힙니다.
-        // v3.74 고정 옵션(한 줌)은 등급 감쇠 없이 그대로입니다.
+        // v3.75 고정 옵션(한 줌)은 등급 감쇠 없이 그대로입니다.
         const value = affixDef(affix.id)?.fixed ? affix.value : affix.stat === 'statusResist' ? Math.min(GEAR_CAPS.statusResist!, affix.value * (1 + (item.enhance || 0) * STATUS_RESIST_STAR)) : scaled(affix.stat, affix.value);
         result[affix.stat] = (result[affix.stat] || 0) + value;
         // v3.73 이중 옵션(위력 · 수호)의 둘째 고정 수치도 등급 감쇠를 받습니다. 양날 옵션의 손해(음수)는 그대로입니다.
@@ -103,9 +103,9 @@ export function applyLevelUp(item: Item, next: number, s: Pick<State, 'rebirths'
 }
 export const reforgeCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((250 + item.power * 25) * priceScale(item.level || 1)), s);
 /** 분해로 얻는 정수와 옵션 하나 재설정에 드는 정수. */
-/** v3.74 착용 장비 옵션 합계(희귀 옵션 수련 · 전공 · 정수처럼 능력치 계산 밖에서 쓰는 값). */
+/** v3.75 착용 장비 옵션 합계(희귀 옵션 수련 · 전공 · 정수처럼 능력치 계산 밖에서 쓰는 값). */
 export const equippedAffixTotal = (s: Pick<State, 'equipment'> | undefined, stat: string) => Object.values(s?.equipment || {}).reduce((sum, item) => sum + (item?.affixes || []).reduce((n, a) => n + (a.stat === stat ? a.value : 0), 0), 0);
-/** 분해 정수. v3.74 착용 장비의 정수 옵션만큼 늘어납니다(장비마다 반올림). */
+/** 분해 정수. v3.75 착용 장비의 정수 옵션만큼 늘어납니다(장비마다 반올림). */
 export const dismantleEssence = (item: Item, s?: Pick<State, 'equipment'>) => Math.round((ESSENCE_BY_RARITY[item.rarity] ?? 1) * (1 + equippedAffixTotal(s, 'essenceBonus')));
 /** v3.66 태초 계승 게이지에 쌓이는 분해: 태초 등급(칠흑 장신구 제외)이면 1. */
 export const primalGaugeOf = (item: Pick<Item, 'rarity' | 'onyx'>) => item.rarity >= 6 && !item.onyx ? 1 : 0;

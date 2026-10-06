@@ -183,7 +183,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // 장비 규칙 옵션은 같은 규칙끼리 상한까지만 합산합니다.
     for (const [key, cap] of Object.entries(RULE_CAPS)) limit(key as keyof CombatStats, Math.min(cap!, a[key as keyof CombatStats] || 0));
     // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +1%.
-    // v3.74 장비 극치명 옵션의 극 치명타 확률은 상한을 넘은 치명타 몫에 더합니다.
+    // v3.75 장비 극치명 옵션의 극 치명타 확률은 상한을 넘은 치명타 몫에 더합니다.
     a.superCrit = Math.min(1, (a.superCrit || 0) + Math.max(0, a.crit - SKILL_FORMULA.critCap) * SKILL_FORMULA.superCritPerHundred); rec('superCrit', 'limit', a.superCrit);
     // v27.79 계정 보스 보너스는 치명타 확률 배율(곱연산).
     mul('crit', [['account', accountCrit(s)]]);

@@ -60,7 +60,7 @@ export type Stats = {
     followUpBonus?: number;
     healBonus?: number;
     executeBonus?: number;
-    /** v3.74 장비 희귀 옵션: 처치당 스킬 숙련 +N(수련) · 계급 처치 수 +N(전공) · 분해 정수 비율(정수). 장식(꽝)은 효과 없는 표시용. */
+    /** v3.75 장비 희귀 옵션: 처치당 스킬 숙련 +N(수련) · 계급 처치 수 +N(전공) · 분해 정수 비율(정수). 장식(꽝)은 효과 없는 표시용. */
     masteryFlat?: number;
     rankFlat?: number;
     essenceBonus?: number;
