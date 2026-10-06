@@ -3,6 +3,7 @@ import { syncGuild } from '@/game/server/guild';
 import { syncAltarStatus } from '@/game/server/altar';
 import { syncHackFeed } from '@/game/server/hacks';
 import { syncCrew, flushCrew, type CrewApply } from '@/game/server/crews';
+import { buildCatalog } from '@/game/server/secrecy';
 import { trimLogs } from '@/game/systems/log-delta';
 import { announceHacker } from '@/game/server/hacks';
 import { postPlayerNews } from '@/game/server/news';
@@ -27,7 +28,9 @@ export async function POST(req: Request) { try {
         if (news.length) await postPlayerNews(id, out.state, news, Date.now());
         // v27.62 동기화는 클라이언트가 가진 마지막 로그 뒤의 로그만 보냅니다(log-delta.ts).
         const trimmed = a.type === 'sync' ? trimLogs(out.state.logs, (a as { logKey?: unknown }).logKey) : null;
-        return Response.json(trimmed ? { ...out, state: { ...out.state, logs: trimmed.logs }, logDelta: trimmed.delta } : out, { headers: { 'Cache-Control': 'no-store' } });
+        // v3.40 정보 비공개 카탈로그(docs/concept.md 10장). 화면은 단계마다 비밀 표 대신 이것을 읽게 됩니다.
+        const catalog = await buildCatalog(out.state, Date.now());
+        return Response.json(trimmed ? { ...out, state: { ...out.state, logs: trimmed.logs }, logDelta: trimmed.delta, catalog } : { ...out, catalog }, { headers: { 'Cache-Control': 'no-store' } });
     }
     catch (e) {
         if (e instanceof ApiError)

@@ -5,6 +5,7 @@ import { BALANCE } from '@/game/data/balance';
 import { stats } from '@/game/systems/stats';
 import { buildCombatReplay, type ReplayFrame } from '@/game/systems/combat-feedback';
 import { logKey, mergeLogs, type LogDelta } from '@/game/systems/log-delta';
+import { OPEN_CATALOG, type Catalog } from '@/game/data/catalog';
 export type Ranking = Snapshot & {
     /** v3.18 가린 항목(v3.26 신원 조작)(name · job · level · gear · skills · title · guild). */
     masked?: string[];
@@ -87,6 +88,8 @@ export function useGame() {
     const lock = useRef(false), queue = useRef<Promise<unknown>>(Promise.resolve()), stateRef = useRef<State | null>(null);
     /** v27.62 지금 화면이 전투(사냥·던전)를 보여 주는지. 아니면 동기화를 늦춥니다. */
     const live = useRef(true);
+    /** v3.40 정보 비공개 카탈로그(docs/concept.md 10장). 받기 전에는 오픈 베타와 같은 전체 공개. */
+    const [catalog, setCatalog] = useState<Catalog>(OPEN_CATALOG);
     const [frames] = useState(createFrameStore), [replay] = useState(() => createReplay(frames.set));
     useEffect(() => replay.reset, [replay]);
     const request = useCallback(async (path: string, body?: unknown) => { const res = await fetch(path, { method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20000) }); const data = await res.json() as {
@@ -95,6 +98,8 @@ export function useGame() {
         result?: DuelResult;
         rows: Ranking[];
         logDelta?: LogDelta;
+        /** v3.40 정보 비공개 카탈로그(/api/game 응답). */
+        catalog?: Catalog;
     }; if (res.status === 401)
         setNeedsLogin(true); if (!res.ok)
         throw Error(data.error || '서버 연결에 실패했습니다.'); return data; }, []);
@@ -116,6 +121,7 @@ export function useGame() {
         }
         if (data.result)
             setDuel(data.result);
+        if (data.catalog) setCatalog(data.catalog);
         if (a.type === 'resetData') {
             setRows([]);
             setDuel(null);
@@ -276,5 +282,5 @@ export function useGame() {
     }, [replay]);
     /** 화면이 바뀔 때 GameShell이 부릅니다. 전투 화면으로 돌아오면 바로 한 번 동기화합니다. */
     const setLive = useCallback((on: boolean) => { const was = live.current; live.current = on; if (on && !was) send({ type: 'sync' }); }, [send]);
-    return { state, frames, setLive, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, crew, crewError, loadCrew, crewAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
+    return { state, catalog, frames, setLive, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, crew, crewError, loadCrew, crewAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
 }

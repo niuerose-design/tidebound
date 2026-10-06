@@ -63,6 +63,8 @@ const lifeLine = (p: AdminPlayer) => [p.lastRebirthAt ? `마지막 환생 ${new 
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
     const [broadcast, setBroadcast] = useState<{ text: string; by: string; until: number } | null>(null);
+    /** v3.40 정보 비공개 스위치(docs/concept.md 10장). env가 있으면 환경 변수가 우선합니다. */
+    const [secrecy, setSecrecyState] = useState<{ on: boolean; env: string | null } | null>(null);
     const [hackFx, setHackFx] = useState<{ tamper: number; down: number; patched: number; ddos?: number } | null>(null);
     const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [doors, setDoors] = useState<DoorList | null>(null), [stats, setStats] = useState<Stats | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' });
@@ -116,7 +118,13 @@ export default function AdminPage() {
         const d = await call({ action: 'setBlessing', id: blessId, level: blessLevel, minutes: mins });
         if (d) { setStats(d); setDone(`${BLESS_NAMES[blessId]} ${blessLevel ? `${blessLevel}단계 설정` : '끔'} 완료.`); }
     };
-    const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); const h = await call({ action: 'hacks' }); if (h) { setBroadcast(h.broadcast); setHackFx(h.effects || null); } };
+    const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); const h = await call({ action: 'hacks' }); if (h) { setBroadcast(h.broadcast); setHackFx(h.effects || null); } const sc = await call({ action: 'secrecy' }); if (sc) setSecrecyState(sc); };
+    const toggleSecrecy = async () => {
+        if (!secrecy) return;
+        if (!confirm(secrecy.on ? '정보 비공개를 끌까요? 모든 모험가에게 전체 정보(오픈 베타 화면)가 보입니다.' : '정보 비공개를 켤까요? 모험가는 스스로 알아낸 정보만 보게 됩니다(아직 옮기지 않은 화면은 그대로).')) return;
+        const d = await call({ action: 'secrecy', on: !secrecy.on });
+        if (d) { setSecrecyState(d); setDone(`정보 비공개를 ${d.on ? '켰' : '껐'}습니다. 모든 서버에 반영되기까지 최대 30초 걸립니다.${d.env ? ` (환경 변수 TIDEBOUND_SECRECY=${d.env}가 있어 실제로는 그 값이 우선합니다)` : ''}`); }
+    };
     /** v3.25 해킹 효과(이벤트 변조·서버 다운·패치) 모두 지우기. */
     const removeHackEffects = async () => {
         if (!confirm('이벤트 변조·서버 다운·패치를 모두 지울까요?')) return;
@@ -250,6 +258,7 @@ export default function AdminPage() {
         </section>}
         {tab === 'closures' && closures && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
             <div className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13 }}><b>해커 방송</b> · {broadcast ? <>[해커 {broadcast.by}] {broadcast.text} <small style={{ color: '#9bb3b0' }}>· {new Date(broadcast.until).toLocaleTimeString()}까지</small></> : <span style={{ color: '#9bb3b0' }}>없음</span>}</span>{broadcast && <button className="secondary" disabled={busy} onClick={removeBroadcast}>방송 지우기</button>}</div>
+            <div className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13 }}><b>정보 비공개</b> · {secrecy ? `${secrecy.on ? '켜짐' : '꺼짐(오픈 베타)'}${secrecy.env ? ` · 환경 변수 ${secrecy.env} 우선` : ''}` : '-'}</span>{secrecy && <button className="secondary" disabled={busy || !!secrecy.env} onClick={toggleSecrecy}>{secrecy.on ? '끄기' : '켜기'}</button>}</div>
             <div className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13 }}><b>해킹 효과</b> · {hackFx ? `이벤트 변조 ${hackFx.tamper} · 서버 다운 ${hackFx.down} · 패치 ${hackFx.patched} · DDoS ${hackFx.ddos || 0}` : '-'}</span>{hackFx && hackFx.tamper + hackFx.down + hackFx.patched + (hackFx.ddos || 0) > 0 && <button className="secondary" disabled={busy} onClick={removeHackEffects}>모두 지우기</button>}</div>
             {closureList('dungeons', '던전')}{closureList('stages', '사냥터')}</section>}
         {tab === 'doors' && doors && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>

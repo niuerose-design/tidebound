@@ -359,6 +359,12 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         const tagHacks = { masked: { b_a: { until: 0, show: ['job'], by: 'x', byId: 'y' } }, cracked: {} };
         assert.ok(!('crew' in Hk.maskSnapshot(hrow, 'b_a', tagHacks, now)), 'masked name hides the crew tag');
         for (const [mid, m] of [['b_a', ba], ['b_b', bb]]) (await Cr.leaveCrew(mid, m, now))(m);
+        // v3.40 정보 비공개 스위치: 서버 설정(30초 캐시)으로 켜고 끄고, 환경 변수 TIDEBOUND_SECRECY가 있으면 그것이 우선. 카탈로그에 실립니다.
+        const Sc = await load('game/server/secrecy.js');
+        assert.equal(await Sc.secrecyOn(now), false, 'off by default (open beta)'); assert.deepEqual(await Sc.buildCatalog(newState(0), now), { secret: false });
+        await Sc.setSecrecy(true, now); assert.equal(await Sc.secrecyOn(now + 1), true); assert.equal(await database.getSetting('secrecy'), 'on');
+        process.env.TIDEBOUND_SECRECY = 'off'; assert.equal(await Sc.secrecyOn(now + 2), false, 'env wins'); delete process.env.TIDEBOUND_SECRECY;
+        await Sc.setSecrecy(false, now); assert.equal((await Sc.buildCatalog(newState(0), now + 3)).secret, false);
         // v3.26 해커 전직 알림(익명, system-hacker). 파일 DB를 쓰는 테스트는 동시에 돌면 서로의 파일을 바꾸므로 한 테스트에 모읍니다.
         await Hk.announceHacker('hacker', now); const chat = await database.listChat('news', 0, 300);
         assert.equal(chat.at(-1).account_id, 'system-hacker'); assert.equal(chat.at(-1).text, '누군가가 해커로 전직했습니다.');
