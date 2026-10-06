@@ -415,3 +415,15 @@
 /* v3.60 장비 감정 하나(모든 부위) */
 .gamble-single { max-width:720px; }
 .gamble-icon-row { display:flex; gap:10px; }
+
+/* 운영 도구: 화살표로 접었다 펴는 칸 · 도움말. */
+.admin-tool .admin-fold > summary, .admin-tool .admin-help > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; flex-wrap:wrap; user-select:none }
+.admin-tool .admin-fold > summary::-webkit-details-marker, .admin-tool .admin-help > summary::-webkit-details-marker { display:none }
+.admin-tool .admin-fold > summary { padding:12px 14px; font-size:15px }
+.admin-tool .admin-fold > summary small { color:#9bb3b0; font-size:12px; font-weight:400 }
+.admin-tool .admin-fold > summary:hover { background:rgba(255,255,255,.03) }
+.admin-tool .admin-fold-arrow { display:inline-block; font-size:10px; color:#9bb3b0; transition:transform .15s }
+.admin-tool details[open] > summary .admin-fold-arrow { transform:rotate(90deg) }
+.admin-tool .admin-fold-body { padding:0 14px 14px }
+.admin-tool .admin-help > summary { font-size:13px; color:#9bb3b0; width:max-content }
+.admin-tool .admin-help p { margin:6px 0 0; font-size:13px; color:#9bb3b0; line-height:1.6 }
