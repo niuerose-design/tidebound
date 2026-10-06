@@ -47,9 +47,9 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'offline', name: '긴 휴식', desc: '오프라인 정산 상한 +2시간', max: 12, base: 3, step: 2, tab: 'utility', group: 'basic', rebirth: 2, per: 2, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
     { id: 'tailwindSail', name: '순풍의 깃털', desc: '순풍 경험치 보너스 +10%p (기본 +50%, 합연산, 환생 뒤 요구 레벨까지)', max: 5, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 2, per: .1, unit: 'pp', label: '순풍 경험치 보너스' },
     { id: 'salvage', name: '청산', desc: '환생할 때 보관함과 착용 중인 일반 장비를 모두 판매(골드는 다음 생 시작 골드에 더함)하거나 분해(정수)합니다. 방식(판매/분해)은 환생 화면의 ‘받는 보상’ 줄이나 설정(톱니바퀴)에서 고르고, 효율은 1단계 40%부터 단계당 +15%', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 1, per: 15, unit: 'percent', label: '청산 효율', levels: ['정리 없음', '효율 40%', '효율 55%', '효율 70%', '효율 85%', '효율 100%'] },
-    { id: 'sortingNet', name: '자동 분해기', desc: '1단계 희귀, 2단계 영웅 이하 드롭을 정수로 자동 분해 (설정에서 켜고 끔, 자동 판매기와는 하나만 켤 수 있음)', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 분해 등급', suffix: '단계', levels: ['자동 분해 없음', '희귀 자동 분해', '영웅 이하 자동 분해'] },
+    { id: 'sortingNet', name: '자동 분해기', desc: '드롭을 정수로 자동 분해. 설정에서 등급을 여러 개 고름(1단계 희귀~전설, 2단계 신화·고대까지). 자동 판매기와 함께 켤 수 있고 같은 등급이면 분해 우선. 태초·칠흑은 처리하지 않음', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 분해 등급', suffix: '단계', levels: ['자동 분해 없음', '희귀~전설 중 선택', '희귀~고대 중 선택'] },
     /** v3.24 자동 판매기: 자동 분해기와 같은 등급의 드롭을 골드로 팝니다. 설정에서 둘 중 하나만 켭니다. */
-    { id: 'autoVend', name: '자동 판매기', desc: '1단계 희귀, 2단계 영웅 이하 드롭을 골드로 자동 판매 (설정에서 켜고 끔, 자동 분해기와는 하나만 켤 수 있음)', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 판매 등급', suffix: '단계', levels: ['자동 판매 없음', '희귀 자동 판매', '영웅 이하 자동 판매'] },
+    { id: 'autoVend', name: '자동 판매기', desc: '드롭을 골드로 자동 판매. 설정에서 등급을 여러 개 고름(1단계 희귀~전설, 2단계 신화·고대까지). 자동 분해기와 함께 켤 수 있고 같은 등급이면 분해 우선. 태초·칠흑은 처리하지 않음', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 판매 등급', suffix: '단계', levels: ['자동 판매 없음', '희귀~전설 중 선택', '희귀~고대 중 선택'] },
     // v27.60 병 속의 편지(오프라인 편지병) → 행운의 편지. id는 그대로라 찍어 둔 단계가 이어집니다.
     { id: 'messageBottle', name: '행운의 편지', desc: '숙련의 까미·경험의 누리 등장 확률 +15%. 6~10단계는 승천 후: 6단계 부재중 정산 중 확률 ×0.25 → ×0.5, 8단계 까미 ‘대’ 당첨 5% → 7.5%, 10단계 편지 수신인(까미 당첨 숙련의 1%를 해금한 미숙달 직업 하나에 덤)', max: 10, ascendAbove: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
     { id: 'limitBreak', name: '한계의 문', desc: '스킬 한계돌파 해금. 연구 단계까지만 한계돌파할 수 있고, 이미 한 한계돌파도 연구 단계까지만 효과가 납니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '한계돌파 상한', suffix: '단계', levels: ['잠김 · 한계돌파 불가', '한계돌파 1단계까지', '한계돌파 2단계까지', '한계돌파 3단계까지'] },
@@ -143,3 +143,17 @@ export const GEAR_LEVEL_UP = { step: 10, costMultiplier: 2 };
 export const salvageRate = (s: Pick<State, 'permanent'>) => { const rank = researchRank(s, 'salvage'); return rank ? Math.min(1, .25 + rank * .15) : 0; };
 /** v27.60 모험가의 유산: 새 생의 시작 레벨(Lv.1 + 2/단계, 10단계 Lv.21). */
 export const startingLevel = (s: Pick<State, 'permanent'>) => 1 + researchRank(s, 'starting') * 2;
+
+/**
+ * v3.35 자동 분해기·자동 판매기 등급 선택. 연구 단계는 그대로(최대 2) 두고, 산 단계로 고를 수 있는 등급만 정합니다.
+ * 1단계: 희귀·영웅·전설, 2단계: 신화·고대까지. 태초(칠흑 포함)는 고를 수 없습니다.
+ * 고른 적이 없으면 예전과 같은 기본값(1단계 희귀, 2단계 영웅 이하).
+ */
+export type AutoDevice = 'salvage' | 'vend';
+export const AUTO_RESEARCH: Record<AutoDevice, string> = { salvage: 'sortingNet', vend: 'autoVend' };
+export const autoMaxGrade = (rank: number) => rank >= 2 ? 5 : rank >= 1 ? 3 : 0;
+export function autoGrades(s: Pick<State, 'permanent' | 'autoSellGrades' | 'autoVendGrades'>, device: AutoDevice) {
+    const rank = researchRank(s, AUTO_RESEARCH[device]), max = autoMaxGrade(rank), chosen = device === 'salvage' ? s.autoSellGrades : s.autoVendGrades;
+    const list = chosen ?? Array.from({ length: rank }, (_, i) => i + 1);
+    return [...new Set(list)].filter(g => Number.isInteger(g) && g >= 1 && g <= max).sort((a, b) => a - b);
+}

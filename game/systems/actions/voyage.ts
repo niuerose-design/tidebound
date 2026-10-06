@@ -10,7 +10,8 @@ import { isHackerJob } from '../../data/hacker';
 import { randomGameRank, randomGameRunsLeft, randomGameUsed, inRandomGame, cashOutRandomGame } from '../random-game';
 import { dayKey } from '../../data/goals';
 import type { ActionHandlers } from './types';
-import { researchRank, salvageRate } from '../../data/economy';
+import { researchRank, salvageRate, autoGrades, autoMaxGrade, AUTO_RESEARCH, type AutoDevice } from '../../data/economy';
+import { RARITIES } from '../../data/balance';
 import { addLog, endRun } from '../state';
 import { parseDungeonValue, enterDungeon } from '../dungeon-run';
 
@@ -104,15 +105,30 @@ export const voyageActions: ActionHandlers = {
     autoSell(s, { a }) {
         if (!researchRank(s, 'sortingNet'))
             throw Error('자동 분해기 연구가 필요합니다.');
+        // v3.35 자동 판매기와 함께 켤 수 있습니다(등급을 나눠 쓰고, 같은 등급이면 분해 우선).
         s.autoSell = a.value === 'on';
-        // v3.24 자동 판매기와는 하나만 켭니다.
-        if (s.autoSell) s.autoVend = false;
     },
     autoVend(s, { a }) {
         if (!researchRank(s, 'autoVend'))
             throw Error('자동 판매기 연구가 필요합니다.');
         s.autoVend = a.value === 'on';
-        if (s.autoVend) s.autoSell = false;
+    },
+    /**
+     * v3.35 자동 분해기·자동 판매기 등급 고르기: id = salvage | vend, value = 등급(1 희귀 ~ 5 고대). 누를 때마다 넣고 뺍니다.
+     * 한 등급은 한 장치에만: 한쪽에 넣으면 다른 쪽에서 뺍니다. 고를 수 있는 등급은 연구 단계로 정해집니다(1단계 전설까지, 2단계 고대까지).
+     */
+    autoGrade(s, { a, id }) {
+        const device = id === 'vend' ? 'vend' : id === 'salvage' ? 'salvage' : '';
+        if (!device) throw Error('자동 분해기나 자동 판매기를 고르세요.');
+        const rank = researchRank(s, AUTO_RESEARCH[device]), grade = Number(a.value), max = autoMaxGrade(rank);
+        if (!rank) throw Error(device === 'salvage' ? '자동 분해기 연구가 필요합니다.' : '자동 판매기 연구가 필요합니다.');
+        if (!Number.isInteger(grade) || grade < 1 || grade > max) throw Error(max < 5 ? `지금 연구 단계로는 ${RARITIES[max].name}까지 고를 수 있습니다.` : '고를 수 없는 등급입니다.');
+        const mine = autoGrades(s, device), other: AutoDevice = device === 'salvage' ? 'vend' : 'salvage';
+        // 두 장치의 기본값이 겹치면(둘 다 희귀) 누른 쪽으로 옮기기만 합니다.
+        const shared = mine.includes(grade) && autoGrades(s, other).includes(grade);
+        const next = shared ? mine : mine.includes(grade) ? mine.filter(g => g !== grade) : [...mine, grade].sort((x, y) => x - y);
+        if (device === 'salvage') s.autoSellGrades = next; else s.autoVendGrades = next;
+        if (next.includes(grade) && researchRank(s, AUTO_RESEARCH[other])) { const rest = autoGrades(s, other).filter(g => g !== grade); if (other === 'salvage') s.autoSellGrades = rest; else s.autoVendGrades = rest; }
     },
     doorNotice(s, { a }) {
         s.hideDoorNotice = a.value === 'off';

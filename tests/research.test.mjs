@@ -255,13 +255,33 @@ test('v27.88 every vow is a next-life reservation: reserving rough/restraint/bre
     act(s, { type: 'rebirth' }, 0); assert.deepEqual(s.vows, { rough: 3, breath: true });
 });
 
-test('v3.24 auto vend sells known low-rarity drops for gold; it and the auto dismantler are never on together', () => {
+test('v3.24 auto vend sells known low-rarity drops for gold; v3.35 it can run together with the auto dismantler (dismantler wins on the same grade)', () => {
     const s = newState(0); assert.throws(() => act(s, { type: 'autoVend', value: 'on' }, 0), /자동 판매기/);
     s.permanent.autoVend = 1; s.permanent.sortingNet = 1; s.itemBook['rod:1'] = true;
-    act(s, { type: 'autoSell', value: 'on' }, 0); act(s, { type: 'autoVend', value: 'on' }, 0); assert.equal(s.autoVend, true); assert.equal(s.autoSell, false, 'vend turns the dismantler off');
+    act(s, { type: 'autoVend', value: 'on' }, 0); assert.equal(s.autoVend, true);
     const gold = s.gold, essence = s.essence || 0; drop(s, 5, () => 0); assert.equal(s.inventory.length, 0); assert.ok(s.gold > gold, 'sold for gold'); assert.equal(s.essence || 0, essence);
-    act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoVend, false, 'dismantler turns vend off');
-    s.level = 30; act(s, { type: 'rebirth' }, 0); act(s, { type: 'autoVend', value: 'on' }, 0); s.level = 35; act(s, { type: 'rebirth' }, 0); assert.equal(s.autoVend, true, 'kept across rebirth');
+    act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoVend, true, 'both can be on');
+    const e0 = s.essence || 0, g0 = s.gold; drop(s, 5, () => 0); assert.ok((s.essence || 0) > e0 && s.gold === g0, 'same default grade: dismantler first');
+    s.level = 30; act(s, { type: 'rebirth' }, 0); s.level = 35; act(s, { type: 'rebirth' }, 0); assert.equal(s.autoVend, true, 'kept across rebirth');
+});
+
+test('v3.35 auto devices pick several grades: rank 1 up to legendary, rank 2 up to ancient, one device per grade, primordial/onyx/locked never processed', () => {
+    const rarityRng = r => { for (let v = 0; v < 1; v += .0005) { const t = newState(0); drop(t, 5, (() => { const q = [v, 0]; let i = 0; return () => q[i++] ?? 0; })(), true); if (t.inventory[0]?.rarity === r) return () => { const q = [v, 0]; let i = 0; return () => q[i++] ?? 0; }; } throw Error(`no roll for ${r}`); };
+    const s = newState(0); s.level = 200; s.permanent.sortingNet = 1; s.permanent.autoVend = 1;
+    for (let r = 1; r <= 5; r++) s.itemBook[`rod:${r}`] = true;
+    assert.throws(() => act(s, { type: 'autoGrade', id: 'salvage', value: '4' }, 0), /전설까지/);
+    assert.throws(() => act(s, { type: 'autoGrade', id: 'nope', value: '1' }, 0), /고르세요/);
+    act(s, { type: 'autoGrade', id: 'salvage', value: '2' }, 0); act(s, { type: 'autoGrade', id: 'salvage', value: '3' }, 0);
+    assert.deepEqual(s.autoSellGrades, [1, 2, 3]); act(s, { type: 'autoGrade', id: 'vend', value: '1' }, 0);
+    assert.deepEqual([s.autoVendGrades, s.autoSellGrades], [[1], [2, 3]], 'one device per grade');
+    act(s, { type: 'autoSell', value: 'on' }, 0); act(s, { type: 'autoVend', value: 'on' }, 0);
+    const legend = rarityRng(3), e0 = s.essence || 0; drop(s, 5, legend(), true); assert.equal(s.inventory.length, 0, 'legendary dismantled'); assert.ok((s.essence || 0) > e0);
+    const g0 = s.gold; drop(s, 5, rarityRng(1)(), true); assert.ok(s.gold > g0, 'rare sold');
+    s.permanent.sortingNet = 2; act(s, { type: 'autoGrade', id: 'salvage', value: '5' }, 0); assert.deepEqual(s.autoSellGrades, [2, 3, 5]);
+    act(s, { type: 'autoGrade', id: 'salvage', value: '3' }, 0); drop(s, 5, legend(), true); assert.equal(s.inventory.at(-1).rarity, 3, 'unpicked grade is kept');
+    assert.throws(() => act(s, { type: 'autoGrade', id: 'salvage', value: '6' }, 0), /고를 수 없는/, 'primordial (onyx) cannot be picked');
+    // 칠흑·잠금 장비는 등급과 상관없이 남깁니다(칠흑은 원래 드롭 경로가 아니지만 한 번 더 막음).
+    s.permanent.sortingNet = 0; s.permanent.autoVend = 0; assert.deepEqual(economy.autoGrades(s, 'salvage'), [], 'no research, no grades');
 });
 
 test('v3.24 removed research tailwindWindow refunds every pearl once', () => {
