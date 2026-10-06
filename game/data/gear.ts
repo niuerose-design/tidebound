@@ -68,7 +68,8 @@ export const AFFIX_POOL: AffixDef[] = [
     // v3.73 이중 옵션: 위력(물공+마공) · 수호(물방+마방)는 한쪽 옵션보다 각 수치가 낮은 대신 두 쪽을 함께 올립니다. 마력은 샘물+순환 통합.
     { id: 'force', name: '위력', stat: 'attack', kind: 'flat', base: .2, stat2: 'magic', base2: .2, rollBoth: true, description: '물리 공격과 마법 공격이 함께 오릅니다.' },
     { id: 'guardian', name: '수호', stat: 'defense', kind: 'flat', base: .2, stat2: 'resist', base2: .2, rollBoth: true, description: '물리 방어와 마법 방어가 함께 오릅니다.' },
-    { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .2, stat2: 'manaRegen', base2: .012, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
+    // v3.87 최대 마나 위력 ×0.2 → ×0.225(생명 ×1.5의 15%: 체력 2,000 옵션이 뜨는 장비에서 마나 약 200~400).
+    { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .225, stat2: 'manaRegen', base2: .012, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, weight: .4, description: '치명 피해가 오릅니다.' },
     { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', /* v3.84 .025 × 2 */ base: .05, description: '방어 관통이 오릅니다.' },
@@ -92,7 +93,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -2.25, uncapped: true, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다. 이 흡혈은 장비 · 전체 흡혈 상한을 받지 않습니다. 체력 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
     // v3.71 고대 이상 전용 옵션(minRarity 5): 고대 · 태초에서만 굴려지는 강한 옵션. 각인 감정으로는 고를 수 없습니다(낮은 등급이 나올 수 있어서).
     { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, weight: .4, description: '고대 이상. 치명 피해가 크게 오릅니다.' },
-    { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, description: '고대 이상. 체력 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },
+    { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, description: '고대 이상. 체력 · 마나 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },
     { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, description: '고대 이상. 보스 · 사냥감에게 주는 직접 피해가 오릅니다(다른 보스 피해와 곱연산, 지속 피해에는 붙지 않음).' },
     { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, description: '고대 이상. 연속 행동 확률이 오릅니다(속도와 무관).' },
     { id: 'bounty', name: '풍요', stat: 'expBonus', kind: 'percent', base: .04, stat2: 'goldBonus', base2: .05, rollBoth: true, minRarity: 5, description: '고대 이상. 경험치와 골드 획득이 함께 늘어납니다.' },
@@ -113,7 +114,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'onyxArcane', name: '몽환의 마력', stat: 'arcaneStrike', kind: 'rule', base: .1, stat2: 'arcaneRatioBonus', base2: .1, onlyOrigin: 'onyx', description: '칠흑. 마력 평타 확률 +10%p, 마력 평타 배율 +10%p.' },
     { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', kind: 'rule', base: .2, stat2: 'hpRegen', base2: 15, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +20%p, 턴당 체력 회복 +15.' },
     { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', kind: 'rule', base: .15, onlyOrigin: 'onyx', description: '칠흑. 보스·사냥감에게 주는 피해 +15%.' },
-    { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', kind: 'rule', base: .05, onlyOrigin: 'onyx', description: '칠흑. 체력·물리/마법 공격·물리/마법 방어 +5%.' },
+    { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', kind: 'rule', base: .05, onlyOrigin: 'onyx', description: '칠흑. 체력·마나·물리/마법 공격·물리/마법 방어 +5%.' },
     // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강합니다.
     { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 물리 공격이 크게 오릅니다.' },
     { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 마법 공격이 크게 오릅니다.' },

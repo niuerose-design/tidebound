@@ -28,14 +28,14 @@ export function itemStats(item: Item): Partial<Stats> {
     }
     if (item.slot === 'coat') {
         result.hp = p * 6;
-        // v3.87 체력을 주는 부위(방어구 · 망토)는 최대 마나도 줍니다. 장비가 올려 주는 마나 비율이 체력 비율의 절반쯤 되게 맞춘 값입니다.
-        result.mana = p * .5;
+        // v3.87 체력을 주는 부위(방어구 · 망토)는 최대 마나도 줍니다(방어구 위력 ×1 · 망토 ×0.3, 최대 마나가 체력의 약 0.2배가 되게).
+        result.mana = p;
         result.defense = p;
         result.resist = p * .5;
     }
     // v27.18 장신구 치명타에 더는 15% 상한이 없습니다. 전체 치명타가 60%를 넘으면 그 몫은 극 치명타 확률이 됩니다.
     if (item.slot === 'charm') result.crit = charmCrit(item);
-    if (item.slot === 'cape') { result.evasion = capeEvasion(item); result.hp = p * 2; result.mana = p * .2; }
+    if (item.slot === 'cape') { result.evasion = capeEvasion(item); result.hp = p * 2; result.mana = p * .3; }
     const scaled = (stat: string, n: number) => FLAT_GEAR_STATS.has(stat) && n > 0 ? n * damp : n;
     if (item.affix)
         result[item.affix.stat] = (result[item.affix.stat] || 0) + scaled(item.affix.stat, item.affix.value);

@@ -46,11 +46,14 @@ export type ResearchDef = {
 };
 export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '전투' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
 export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본', special: '특별', vow: '서약' };
+/** v3.87 연구 ‘샘의 기억’ 단계당 최대 마나 배율(깊은 숨결의 최대 체력과 같은 +8%). */
+export const MANA_RESEARCH_PER = .08;
 export const RESEARCH: ResearchDef[] = [
     // The first purchase is reachable after a normal first rebirth, but later
     // ranks are deliberately expensive so pearls remain a meaningful choice.
     { id: 'attack', name: '날카로운 기억', desc: '물리 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '물리 공격' },
     { id: 'magicAttack', name: '마력의 기억', desc: '마법 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '마법 공격' },
+    { id: 'mana', name: '샘의 기억', desc: '최대 마나 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: MANA_RESEARCH_PER, unit: 'percent', label: '최대 마나' },
     { id: 'crit', name: '예리한 눈', desc: '치명 확률 +0.5%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .005, unit: 'pp', label: '치명 확률' },
     { id: 'manaRegen', name: '고요한 호흡', desc: '턴당 마나 회복 +5%', max: 10, base: 3, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .05, unit: 'percent', label: '턴당 마나 회복' },
     { id: 'critDamage', name: '치명의 일격', desc: '치명 피해 +2%p', max: 25, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 5, per: .02, unit: 'pp', label: '치명 피해' },

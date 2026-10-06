@@ -19,7 +19,7 @@ test('Research v2: 11 new entries (v3.38 shop removed) match the plan table and 
         s.rebirths = rebirth; act(s, { type: 'permanent', id }, 0); assert.equal(s.permanent[id], 1);
         s.permanent[id] = max; assert.throws(() => act(s, { type: 'permanent', id }, 0), /한도/);
     }
-    assert.deepEqual(economy.RESEARCH.filter(r => r.tab === 'combat' && r.group === 'attack').map(r => r.id), ['attack', 'magicAttack', 'crit', 'manaRegen', 'critDamage', 'penetration']);
+    assert.deepEqual(economy.RESEARCH.filter(r => r.tab === 'combat' && r.group === 'attack').map(r => r.id), ['attack', 'magicAttack', 'mana', 'crit', 'manaRegen', 'critDamage', 'penetration']);
     assert.deepEqual(economy.RESEARCH.filter(r => r.tab === 'combat' && r.group === 'defense').map(r => r.id), ['hp', 'guard', 'magicGuard', 'recovery', 'evasion', 'lifesteal']);
 });
 
@@ -301,4 +301,17 @@ test('v3.24 removed research tailwindWindow refunds every pearl once', () => {
     const s = newState(0); s.permanent.tailwindWindow = 3; const p = s.pearls;
     migrateState(s); assert.equal(s.pearls - p, 6 + 10 + 14); assert.equal(s.permanent.tailwindWindow, undefined);
     migrateState(s); assert.equal(s.pearls - p, 30, 'only once');
+});
+
+test('v3.87 max mana: base grows with level, research ‘샘의 기억’ ×(1 + 8%/rank), account · rebirth multipliers, coat/cape mana, ~0.2 of max HP', () => {
+    const s = newState(0);
+    const lv1 = stats(s).mana; s.level = 11; assert.equal(stats(s).mana - lv1, 30, '+3 per level');
+    const r = research('mana'); assert.deepEqual([r.max, r.base, r.step, r.rebirth || 0, r.tab, r.group], [200, 2, 2, 0, 'combat', 'attack']);
+    s.permanent.mana = 10; close(researchFactor(s, 'mana'), 1.8);
+    const t = {}; s.rebirths = 100; stats(s, t); assert.ok(t.mana.some(x => x.source === 'rebirth' && x.factor > 1), 'rebirth memory multiplies mana');
+    const coat = { id: 'c', slot: 'coat', style: 'balanced', rarity: 0, power: 100, level: 100, name: 'c', affixes: [] };
+    const bare = newState(0); bare.equipment.coat = null; const before = stats(bare).mana; bare.equipment.coat = coat; assert.ok(stats(bare).mana > before, 'coat gives max mana');
+    // 같은 연구를 찍은 균형 캐릭터는 최대 마나가 최대 체력의 약 0.2배입니다.
+    const b = newState(0); b.level = 100; b.rebirths = 100; Object.assign(b.attributes, { int: 120, wis: 60, vit: 60, str: 30, dex: 30 }); Object.assign(b.permanent, { hp: 100, mana: 100 });
+    const st = stats(b), ratio = st.mana / st.hp; assert.ok(ratio > .15 && ratio < .35, `mana/hp ${ratio.toFixed(3)}`);
 });
