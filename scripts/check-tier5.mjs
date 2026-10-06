@@ -13,7 +13,8 @@ import { random } from './lib/sim.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
 const { stats, snapshot } = await load('systems/stats');
-const { strike, fighterSpeed } = await load('systems/combat');
+const { strike, fighterSpeed, setDefenseModel } = await load('systems/combat');
+const { tierAttack } = await load('systems/meta');
 const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf } = await load('data/classes');
 const { FISH, swarmHpMultiplier, swarmAttackMultiplier } = await load('data/world');
@@ -36,6 +37,10 @@ const RESEARCH = Object.fromEntries(Object.entries(RESEARCH_FULL).map(([k, v]) =
 const MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg('--dungeon-tier', TIER * 2)), SWARM500_TIER = Number(arg('--swarm500-tier', 0)), PEN = arg('--pen') === undefined ? null : Number(arg('--pen'));
 // --swarm500-atk: ×500 무리 공격 배율 실험(n = 지금 490배 · 숫자 = 고정 배율 · sqrt = √N · thin = 남은 마리 비례 · thin-sqrt = √(남은 마리)). --only 키: 그 상황만 잽니다.
 const SWARM_ATK = arg('--swarm500-atk', 'n'), ONLY = arg('--only');
+// v3.84 방어 피해식 비교: --model legacy | ratio:c | constant:k, --mdef s(몬스터·월드보스 방어 배율), --mdef-tier(몬스터 방어도 난이도 공격 배율만큼 오름, B안).
+const MODEL = arg('--model', 'legacy'), MDEF = Number(arg('--mdef', 1)), MDEF_TIER = process.argv.includes('--mdef-tier');
+{ const [kind, v] = MODEL.split(':'); setDefenseModel(kind === 'ratio' ? { kind, c: Number(v) } : kind === 'constant' ? { kind, k: Number(v) } : { kind: 'legacy' }); }
+const monsterDef = (st, tier) => { const k = MDEF * (MDEF_TIER ? tierAttack(tier) : 1); return k === 1 ? st : { ...st, defense: Math.round(st.defense * k), resist: Math.round(st.resist * k) }; };
 // --pen: 관통을 이 값으로 맞춘 몸(장비 관통 옵션을 챙긴 경우 · 전체 상한 0.6)으로 잽니다.
 const FOES = ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul'], BOSS = 'arTrueErda', RAID_ID = arg('--raid', 'horntail'), RAID_DEF = arg('--raid-def') === undefined ? null : Number(arg('--raid-def'));
 
@@ -73,7 +78,7 @@ function body(j) {
 }
 const player = (st, s, hp = st.hp, mana = st.mana) => ({ name: 'player', stats: st, hp, mana, skills: s.skills, cooldowns: {}, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice });
 function foe(id, { swarm = 1, boss = false, wave, tier = TIER } = {}) {
-    const base = scaledEnemyStats(FISH.find(f => f.id === id), { tier, boss, ...(wave !== undefined ? { wave } : {}) });
+    const base = monsterDef(scaledEnemyStats(FISH.find(f => f.id === id), { tier, boss, ...(wave !== undefined ? { wave } : {}) }), tier);
     const st = swarm > 1 ? { ...base, hp: Math.round(base.hp * swarmHpMultiplier(swarm)), attack: Math.round(base.attack * swarmAttackMultiplier(swarm)), magic: Math.round((base.magic ?? base.attack) * swarmAttackMultiplier(swarm)) } : base;
     return { name: 'foe', foe: true, stats: st, hp: st.hp, mana: 100, skills: profile(id).skills, magicBasic: profile(id).magicBasic, cooldowns: {}, stun: 0, effects: {}, ...(swarm > 1 ? { swarm } : {}) };
 }
@@ -124,18 +129,19 @@ function measure(j) {
         cleared += (ok ? w : w - 1) / WAVES; hpEnd += ok ? Math.max(0, hp) / st.hp : 0;
     }
     out.dungeon = { cleared: cleared / SEEDS, hpLeft: hpEnd / SEEDS, turns: turns / SEEDS, score: cleared / SEEDS / Math.max(1, turns / SEEDS) };
-    const raid = RAID_DEF === null ? raidById(RAID_ID) : { ...raidById(RAID_ID), stats: { ...raidById(RAID_ID).stats, defense: RAID_DEF, resist: RAID_DEF } }; let dealt = 0, died = 0, lasted = 0;
+    const raw0 = raidById(RAID_ID), rdef = Math.round((RAID_DEF ?? raw0.stats.defense) * MDEF), raid = { ...raw0, stats: { ...raw0.stats, defense: rdef, resist: rdef } }; let dealt = 0, died = 0, lasted = 0;
     for (let seed = 1; seed <= SEEDS; seed++) { const snap = snapshot(s); if (PEN !== null) snap.stats = st; const r = pvpDuel(snap, raidBossSnapshot(raid), true, random(seed), RAID.maxTurns); dealt += raid.stats.hp - Math.max(0, r.opponentHp); died += r.playerHp <= 0 ? 1 : 0; lasted += r.turns; }
     out.raid = { dealt: dealt / SEEDS, died: died / SEEDS, turns: lasted / SEEDS, score: dealt / SEEDS };
     const sub = subRoleOf(j, lineageOf(j));
     return { id: j.id, name: j.name, lineage: lineageOf(j), sub, out };
 }
 const KEYS = ['hunt', 'swarm100', 'swarm500', 'dungeon', 'boss', 'raid'];
+if (process.argv.includes('--body')) { for (const j of JOBS.filter(j => j.tier === JOB_TIER && !j.retired).slice(0, 34)) { const st = stats(body(j)); console.log(j.name, 'atk', Math.round(st.attack), 'mag', Math.round(st.magic), 'def', Math.round(st.defense), 'res', Math.round(st.resist), 'hp', Math.round(st.hp), 'pen', st.penetration.toFixed(2)); } process.exit(0); }
 const rows = JOBS.filter(j => j.tier === JOB_TIER && !j.retired && (j.level || 0) <= LEVEL && (j.rebirth || 0) <= REBIRTHS).map(measure);
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 for (const k of KEYS) { const m = median(rows.map(r => r.out[k].score)) || 1; for (const r of rows) r[k] = r.out[k].score / m; }
 const f2 = n => n.toFixed(2), pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : `${Math.round(n / 1e4)}만`;
-console.log(`5차 직업 비교 (Lv.${LEVEL} · 환생 ${REBIRTHS} · 전투 연구 약 ${Math.round(75 * RESEARCH_SCALE)}% · ${RARITIES[RARITY].name} ${STAR}성 4부위 · 사냥터 난이도 ${TIER} · 던전 난이도 ${DUNGEON_TIER} · ×500 무리 난이도 ${SWARM500_TIER} ${PEN === null ? '' : ` · 관통 ${PEN}`} · 시드 ${SEEDS}, 5차 중앙값 = 1.00)`);
+console.log(`5차 직업 비교 [피해식 ${MODEL}${MDEF !== 1 ? ` · 몬스터 방어 ×${MDEF}` : ''}${MDEF_TIER ? ' · 난이도 비례' : ''}] (Lv.${LEVEL} · 환생 ${REBIRTHS} · 전투 연구 약 ${Math.round(75 * RESEARCH_SCALE)}% · ${RARITIES[RARITY].name} ${STAR}성 4부위 · 사냥터 난이도 ${TIER} · 던전 난이도 ${DUNGEON_TIER} · ×500 무리 난이도 ${SWARM500_TIER} ${PEN === null ? '' : ` · 관통 ${PEN}`} · 시드 ${SEEDS}, 5차 중앙값 = 1.00)`);
 console.log('직업'.padEnd(16, '　') + '역할　　　 사냥터(턴·승) 무리100(턴·승) 무리500(턴·승) 던전(판·체력) 보스(턴·승) 월드보스(피해)');
 for (const r of [...rows].sort((a, b) => a.sub.localeCompare(b.sub) || b.hunt - a.hunt)) {
     const o = r.out;
