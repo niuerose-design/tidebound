@@ -12,7 +12,7 @@ import { ApiError } from './store';
 import { dayKey, weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { gainHacker, hackerState, isHacker } from '../systems/hacker';
-import { CREW, CREW_CODE_CHARS, CREW_SIDES, cleanCrewName, crewGrade, crewGradeProgress, crewSide, normalizeCrewCode, opGoal, opSteps, sideAllows, type CrewData, type CrewSide, type CrewWeek } from '../data/crew';
+import { CREW, CREW_CODE_CHARS, CREW_SIDES, cleanCrewName, crewGrade, crewGradeProgress, crewSide, normalizeCrewCode, opGoal, opSteps, sideAllows, crewModule, moduleSlots, upkeepOf, type CrewData, type CrewSide, type CrewWeek } from '../data/crew';
 
 const CACHE_MS = 30_000, ATTEMPTS = 3;
 const cache = new Map<string, { at: number; row: CrewRow | null }>();
@@ -47,6 +47,10 @@ export function rollWeek(c: CrewData, now: number) {
     const key = weekKey(now);
     if (c.week?.key === key) return c.week;
     if (c.week) c.prev = c.week;
+    // v3.33 주가 바뀌면 켠 모듈의 유지비를 조직 자금에서 냅니다. 모자라면 뒤에 켠 모듈부터 끕니다.
+    const mods = [...(c.modules || [])];
+    while (mods.length && upkeepOf(mods) > c.vault) mods.pop();
+    c.vault -= upkeepOf(mods); c.modules = mods;
     return c.week = { key, goal: opGoal(Object.keys(c.members).length, crewGrade(c.exp)), nodes: 0, hacks: 0, steps: 0, by: {} };
 }
 /** 행을 다시 읽어 고치고 revision 비교로 저장합니다. change가 던지면 아무것도 쓰지 않습니다. 조직원이 없어지면 조직을 지웁니다. */
@@ -81,13 +85,15 @@ export function claimOp(s: State, crewId: string, c: CrewData, me: string) {
     }
     for (const key of Object.keys(claimed)) if (!keep.has(key)) delete claimed[key];
 }
-const setCache = (s: State, id: string, c: CrewData, me: string, now: number) => { hackerState(s).crew = { id, name: c.name, side: c.side, grade: crewGrade(c.exp), leader: c.leader === me, syncedAt: now }; };
+const setCache = (s: State, id: string, c: CrewData, me: string, now: number) => { hackerState(s).crew = { id, name: c.name, side: c.side, grade: crewGrade(c.exp), leader: c.leader === me, syncedAt: now, modules: [...(c.modules || [])] }; };
 const requireCrew = (s: State) => { const c = s.hacker?.crew; if (!c) throw new ApiError('조직에 들어가 있지 않습니다.'); return c; };
 const requireHackerLine = (s: State) => { if (!isHacker(s)) throw new ApiError('해커 계열 직업일 때만 할 수 있습니다.'); };
 
 export type CrewInfo = {
     crew: null | { id: string; name: string; side: CrewSide; sideName: string; code: string; leader: boolean; vault: number; exp: number; grade: number; into: number; need: number; capacity: number;
         members: { id: string; name: string; leader: boolean; self: boolean; joined: number; deposited: number; idleDays: number; off: boolean; nodes: number }[]; depositLeft: number;
+        /** v3.33 켠 모듈·슬롯·다음 주 유지비. */
+        modules: string[]; slots: number; upkeep: number;
         /** v3.32 이번 주 합동 작전: 목표·합계·도달 단계·단계별 목표, 내가 올린 노드와 아직 올리지 않은 노드. */
         op: { key: string; goal: number; nodes: number; hacks: number; steps: number; targets: number[]; mine: number; pending: number } };
     sides: { id: CrewSide; name: string; allowed: boolean }[];
@@ -103,6 +109,7 @@ export async function crewInfo(me: string, s: State, now: number): Promise<CrewI
     return { sides, crew: { id: row.id, name: c.name, side: c.side, sideName: crewSide(c.side)?.name || c.side, code: row.code, leader: c.leader === me, vault: c.vault, exp: c.exp, grade: p.grade, into: p.into, need: p.need, capacity: CREW.capacity(p.grade),
         members: Object.entries(c.members).sort(([a], [b]) => (b === c.leader ? 1 : 0) - (a === c.leader ? 1 : 0)).map(([id, m]) => ({ id, name: m.name, leader: id === c.leader, self: id === me, joined: m.joined, deposited: m.deposited, idleDays: Math.floor((now - m.seen) / 86400_000), off: m.offSince !== undefined, nodes: w.by[id]?.nodes || 0 })),
         depositLeft: Math.max(0, CREW.depositPerDay(h.grade) - used),
+        modules: [...(c.modules || [])], slots: moduleSlots(p.grade), upkeep: upkeepOf(c.modules || []),
         op: { key: w.key, goal: w.goal, nodes: w.nodes, hacks: w.hacks, steps: w.steps, targets: CREW.op.steps.map(r => Math.ceil(w.goal * r)), mine: w.by[me]?.nodes || 0, pending: h.crewPending?.nodes || 0 } } };
 }
 
@@ -199,14 +206,25 @@ export async function leaveCrew(me: string, s: State, now: number): Promise<Crew
     return st => { if (st.hacker) { delete st.hacker.crew; delete st.hacker.crewPending; } addLog(st, `해커 조직 ‘${cached.name}’ 탈퇴`, 'system'); };
 }
 
-/** 조직장 행동: kick(내보내기) · delegate(위임) · code(초대 코드 재발급). */
-export async function leaderAct(me: string, s: State, kind: 'kick' | 'delegate' | 'code', rawTarget: unknown, now: number): Promise<CrewApply> {
+/** 조직장 행동: kick(내보내기) · delegate(위임) · code(초대 코드 재발급) · v3.33 module(조직 모듈 켜기·끄기, target = 모듈 id). */
+export async function leaderAct(me: string, s: State, kind: 'kick' | 'delegate' | 'code' | 'module', rawTarget: unknown, now: number): Promise<CrewApply> {
     const cached = requireCrew(s), target = String(rawTarget ?? '');
     let label = '';
     const c = await updateCrew(cached.id, now, x => {
         if (x.leader !== me) throw new ApiError('조직장만 할 수 있습니다.', 403);
         x.members[me].seen = now;
         if (kind === 'code') { label = '초대 코드를 새로 만들었습니다(옛 코드는 무효).'; return randomCode(); }
+        if (kind === 'module') {
+            const mod = crewModule(target), mods = x.modules ??= [];
+            if (!mod) throw new ApiError('알 수 없는 조직 모듈입니다.');
+            if (mods.includes(mod.id)) { x.modules = mods.filter(id => id !== mod.id); label = `조직 모듈 ${mod.name}을(를) 껐습니다(낸 유지비는 돌려받지 않음).`; return; }
+            if (mod.side && mod.side !== x.side) throw new ApiError('이 조직 성향에서는 쓸 수 없는 모듈입니다.');
+            const slots = moduleSlots(crewGrade(x.exp));
+            if (mods.length >= slots) throw new ApiError(`모듈 슬롯(${slots}개, 조직 등급만큼)이 찼습니다.`);
+            if (x.vault < mod.upkeep) throw new ApiError(`조직 자금이 부족합니다(이번 주 유지비 ${mod.upkeep}).`);
+            x.vault -= mod.upkeep; mods.push(mod.id); label = `조직 모듈 ${mod.name} 가동 · 조직 자금 -${mod.upkeep}(이번 주 유지비)`;
+            return;
+        }
         const m = x.members[target];
         if (!m || target === me) throw new ApiError('대상 조직원을 확인하세요.');
         if (kind === 'kick') { delete x.members[target]; label = `${m.name}을(를) 조직에서 내보냈습니다.`; }

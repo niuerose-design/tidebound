@@ -634,7 +634,7 @@ export type HackerState = {
     /** v3.28 블랙 해커가 해킹에 실패해 추적당한 동안(이 시각까지 해킹 불가). */
     bustedUntil?: number;
     /** v3.29 해커 조직 소속 캐시(동기화 때 10분마다 서버의 crews 행과 맞춤). */
-    crew?: { id: string; name: string; side: string; grade: number; leader: boolean; syncedAt: number };
+    crew?: { id: string; name: string; side: string; grade: number; leader: boolean; syncedAt: number; /** v3.33 켠 조직 모듈 */ modules?: string[] };
     /** v3.29 오늘 조직에 기여한 비트(하루 상한). */
     crewDeposit?: { day: string; n: number };
     /** v3.32 아직 조직에 올리지 않은 합동 작전 기여(침투 노드·해킹). 침투 작전이 끝난 뒤 한 번에 올립니다. */

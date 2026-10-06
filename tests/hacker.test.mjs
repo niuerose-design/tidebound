@@ -319,6 +319,32 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.equal(runner.hacker.bits - rb2, CD.CREW.op.reward(1).bits * 2, 'last week and this week step 1');
         const oinfo = await Cr.crewInfo('o_run', runner, now + 7 * 86400_000); assert.deepEqual([oinfo.crew.op.nodes, oinfo.crew.op.targets, oinfo.crew.op.mine], [40, [30, 60, 90], 40]);
         (await Cr.leaveCrew('o_run', runner, now))(runner); (await Cr.leaveCrew('o_lead', lead, now))(lead);
+        // v3.33 조직 모듈: 조직장이 등급만큼 켜고, 켤 때·주가 바뀔 때 조직 자금에서 유지비. 성향 전용 모듈, 프록시 체인(조직원끼리 불가·외부 견제 하루 1회 막음).
+        const ml = veteran(1); ml.name = '모듈장'; ml.hacker.grade = 10; (await Cr.createCrew('k_lead', ml, '모듈조', 'gray', now))(ml);
+        const kId = ml.hacker.crew.id, km = veteran(1); km.name = '모듈원'; (await Cr.joinCrew('k_mem', km, (await database.getCrew(kId)).code, now))(km);
+        await assert.rejects(Cr.leaderAct('k_lead', ml, 'module', 'distributed', now), /조직 자금/);
+        (await Cr.depositCrew('k_lead', ml, 500, now))(ml);
+        await assert.rejects(Cr.leaderAct('k_lead', ml, 'module', 'launder', now), /성향/);
+        await assert.rejects(Cr.leaderAct('k_mem', km, 'module', 'distributed', now), /조직장만/);
+        (await Cr.leaderAct('k_lead', ml, 'module', 'distributed', now))(ml);
+        await assert.rejects(Cr.leaderAct('k_lead', ml, 'module', 'sharedMemory', now), /슬롯\(1개/);
+        let kd = JSON.parse((await database.getCrew(kId)).data); assert.deepEqual([kd.modules, kd.vault], [['distributed'], 350]);
+        km.hacker.crew.syncedAt = 0; await Cr.syncCrew('k_mem', km, now + 31_000); assert.deepEqual(km.hacker.crew.modules, ['distributed']);
+        km.lastTick = now; const kb = km.hacker.bits; H.hackerTick(km); assert.ok(Math.abs(km.hacker.bits - kb - D.HACKER.brute.bits * 1.1) < 1e-9, 'distributed +10%');
+        (await Cr.leaderAct('k_lead', ml, 'module', 'distributed', now))(ml); (await Cr.leaderAct('k_lead', ml, 'module', 'proxyChain', now))(ml);
+        assert.equal(JSON.parse((await database.getCrew(kId)).data).vault, 100, 'no refund when turned off');
+        km.hacker.crew.syncedAt = 0; await Cr.syncCrew('k_mem', km, now + 62_000); km.hacker.used = {};
+        await database.createPlayerIfMissing('k_lead', JSON.stringify(ml), now); await database.createPlayerIfMissing('k_mem', JSON.stringify(km), now);
+        act(km, { type: 'hackRun', id: 'crack', value: 'k_lead' }, now); await assert.rejects(Hk.applyPendingHack(km, 'k_mem', now), /같은 조직원/); delete km.hacker.pending;
+        const outsider = veteran(); act(outsider, { type: 'hackRun', id: 'trace', value: 'hacker:k_mem' }, now); await Hk.applyPendingHack(outsider, 'acct_out', now);
+        assert.ok(outsider.logs.some(l => l.text.includes('프록시 체인')), 'first outside trace is blocked crew-wide');
+        assert.equal((await Hk.readHacks(now)).rival.k_mem?.trace || 0, 0);
+        // 주가 바뀌면 유지비: 조직 자금 100 < 프록시 체인 250이라 꺼집니다.
+        kd = JSON.parse((await database.getCrew(kId)).data); Cr.rollWeek(kd, now + 7 * 86400_000); assert.deepEqual([kd.modules, kd.vault], [[], 100]);
+        assert.equal(H.entriesCap({ job: 'hacker', hacker: { crew: { modules: ['detour'] } } }, now), D.HACKER.infil.entriesPerDay + 1, 'detour +1 entry');
+        assert.equal(H.memoryCap({ job: 'hacker', hacker: { grade: 1, crew: { modules: ['sharedMemory'] } } }), D.HACKER.memory(1) + 1);
+        assert.equal(H.memoryCap({ job: 'fisher', hacker: { grade: 1, crew: { modules: ['sharedMemory'] } } }), D.HACKER.memory(1), 'hacker line only');
+        (await Cr.leaveCrew('k_mem', km, now))(km); (await Cr.leaveCrew('k_lead', ml, now))(ml);
         // v3.26 해커 전직 알림(익명, system-hacker). 파일 DB를 쓰는 테스트는 동시에 돌면 서로의 파일을 바꾸므로 한 테스트에 모읍니다.
         await Hk.announceHacker('hacker', now); const chat = await database.listChat('global', 0, 300);
         assert.equal(chat.at(-1).account_id, 'system-hacker'); assert.equal(chat.at(-1).text, '누군가가 해커로 전직했습니다.');
@@ -405,4 +431,13 @@ test('v3.28 identity spoof decoys: mastery 3, validated name/job/level, shown fi
     for (const bad of ['abyss:x||0|???', 'abyss:x||0|' + '가'.repeat(13), 'abyss:x||0||hacker', 'abyss:x||0||nope', 'abyss:x||0|||0', 'abyss:x||0|||1000']) assert.throws(() => act(s, { type: 'hackRun', id: 'spoof', value: bad }, 0), /미끼/, bad);
     act(s, { type: 'hackRun', id: 'spoof', value: 'abyss:x|job|0|가짜|fisher|7' }, 0);
     assert.deepEqual(s.hacker.pending, { kind: 'spoof', value: 'abyss:x|job|가짜||7', minutes: 0 }, 'shown job keeps its real value');
+});
+
+test('v3.33 crew modules in the save: launder lowers black hacker failure and names the crew, joint patch adds 30 minutes', () => {
+    const b = veteran(10); b.jobMastery.hacker = 1500; act(b, { type: 'job', id: 'blackHacker' }, 0); b.hacker.crew = { id: 'c_x', name: '그림자', side: 'black', grade: 1, leader: true, syncedAt: 0, modules: ['launder'] };
+    act(b, { type: 'hackRun', id: 'broadcast', value: 'hi' }, 0, () => .051); assert.equal(b.hacker.pending.kind, 'broadcast', '5.1% roll passes at tier X with launder (floor 5%)'); delete b.hacker.pending;
+    b.hacker.tier = 1; act(b, { type: 'hackRun', id: 'crack', value: 'abyss:x' }, 0, () => .30); assert.equal(b.hacker.pending.kind, 'crack', 'tier I: 32% − 3%p = 29%');
+    delete b.hacker.pending; act(b, { type: 'hackRun', id: 'crack', value: 'abyss:x' }, 0, () => .01); assert.deepEqual(b.hacker.pending, { kind: 'busted', value: '크래킹|그림자', minutes: 360 });
+    const w = veteran(3); w.jobMastery.hacker = 1500; act(w, { type: 'job', id: 'whiteHacker' }, 0); w.hacker.crew = { id: 'c_w', name: '방패', side: 'white', grade: 1, leader: true, syncedAt: 0, modules: ['jointPatch'] };
+    act(w, { type: 'hackRun', id: 'patch', value: `stage:${W.STAGES[1].id}` }, 0); assert.equal(w.hacker.pending.minutes, D.HACKER.white.patch.minutes + 30);
 });
