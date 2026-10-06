@@ -50,11 +50,14 @@ const monsterDef = (st, tier) => { const k = MDEF * (MDEF_TIER ? tierAttack(tier
 // --pen: 관통을 이 값으로 맞춘 몸(장비 관통 옵션을 챙긴 경우 · 전체 상한 0.6)으로 잽니다.
 const FOES = ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul'], BOSS = 'arTrueErda', RAID_ID = arg('--raid', 'horntail'), RAID_DEF = arg('--raid-def') === undefined ? null : Number(arg('--raid-def'));
 
+const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
 function attributesFor(j) {
     const own = SKILLS.filter(sk => sk.job === j.id && sk.type === 'active');
     const ownMagic = own.filter(sk => (sk.damageType === 'magic') !== (sk.scaling === 'swap')).length, ownPhysical = own.length - ownMagic;
     const magic = ownMagic !== ownPhysical ? ownMagic > ownPhysical : jobFactor(j, 'magic') > jobFactor(j, 'attack');
-    const total = 5 + (LEVEL - 1) * 5, w = magic ? { int: 45, wis: 20, vit: 25, dex: 10 } : { str: 45, dex: 20, vit: 25, wis: 10 };
+    // v3.84 외길 계열(근력 · 기민 · 지능 · 정신 · 체질 · 행운)은 check-roles처럼 그 능력치에 몰아 배분합니다(행운 비례 나이트로드 등).
+    const single = ONE_STAT[lineageOf(j)];
+    const total = 5 + (LEVEL - 1) * 5, w = single ? { [single]: 100 } : magic ? { int: 45, wis: 20, vit: 25, dex: 10 } : { str: 45, dex: 20, vit: 25, wis: 10 };
     const out = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; let used = 0;
     for (const [k, p] of Object.entries(w)) { out[k] = Math.floor(total * p / 100); used += out[k]; }
     out.vit += total - used;
@@ -150,7 +153,12 @@ function measure(j) {
 }
 const KEYS = ['hunt', 'swarm100', 'swarm500', 'dungeon', 'boss', 'raid'];
 if (process.argv.includes('--body')) { for (const j of JOBS.filter(j => j.tier === JOB_TIER && !j.retired).slice(0, 34)) { const st = stats(body(j)); console.log(j.name, 'atk', Math.round(st.attack), 'mag', Math.round(st.magic), 'def', Math.round(st.defense), 'res', Math.round(st.resist), 'hp', Math.round(st.hp), 'pen', st.penetration.toFixed(2)); } process.exit(0); }
-const rows = JOBS.filter(j => (!ONE_JOB || j.id === ONE_JOB) && j.tier === JOB_TIER && !j.retired && (j.level || 0) <= LEVEL && (j.rebirth || 0) <= REBIRTHS).map(measure);
+// v3.88 --jobs id,id: 그 직업만 잽니다(배율 조정용). --scale '{"jobId":1.5}': 그 직업 고유 액티브 배율을 실험으로 곱합니다(게임 데이터는 그대로).
+const ONLY_JOBS = arg('--jobs') ? new Set(arg('--jobs').split(',')) : null;
+if (arg('--scale')) for (const [id, f] of Object.entries(JSON.parse(arg('--scale')))) for (const sk of SKILLS) if (sk.job === id && sk.type === 'active' && sk.multiplier) sk.multiplier *= f;
+// v3.88 --jscale '{"jobId":1.3}': 그 직업의 공격 · 마법 계수를 실험으로 곱합니다.
+if (arg('--jscale')) for (const [id, f] of Object.entries(JSON.parse(arg('--jscale')))) { const j = JOBS.find(x => x.id === id); if (j) { j.attack *= f; j.magic *= f; } }
+const rows = JOBS.filter(j => (!ONE_JOB || j.id === ONE_JOB) && (!ONLY_JOBS || ONLY_JOBS.has(j.id)) && j.tier === JOB_TIER && !j.retired && (j.level || 0) <= LEVEL && (j.rebirth || 0) <= REBIRTHS).map(measure);
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 for (const k of KEYS) { const m = median(rows.map(r => r.out[k].score)) || 1; for (const r of rows) r[k] = r.out[k].score / m; }
 const f2 = n => n.toFixed(2), pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : `${Math.round(n / 1e4)}만`;
