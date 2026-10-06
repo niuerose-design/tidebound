@@ -18,7 +18,7 @@ export async function POST(req: Request) { try {
     // v27.69 제단 초기화 { kind: 'offers' | 'god' } → 새 통계
     if (body.action === 'altarReset') return Response.json(await resetAltar(String(body.kind ?? '')), { headers });
     // v3.18 해커의 방송 탈취 보기·지우기.
-    if (body.action === 'hacks') { const now = Date.now(), h = await readHacks(0); return Response.json({ broadcast: h.broadcast || null, effects: { tamper: Object.keys(h.tamper).length, down: h.down.filter(d => d.until > now).length, patched: Object.values(h.patched).filter(u => u > now).length } }, { headers }); }
+    if (body.action === 'hacks') { const now = Date.now(), h = await readHacks(0); return Response.json({ broadcast: h.broadcast || null, effects: { tamper: Object.keys(h.tamper).length, down: h.down.filter(d => d.until > now).length, patched: Object.values(h.patched).filter(u => u > now).length, ddos: h.ddos && h.ddos.until > now ? 1 : 0 } }, { headers }); }
     // v3.25 해킹 II~III 효과(이벤트 변조·서버 다운)와 패치를 모두 지웁니다.
     if (body.action === 'clearHackEffects') { await clearHackEffects(Date.now()); return Response.json({ ok: true }, { headers }); }
     if (body.action === 'clearBroadcast') { await clearBroadcast(Date.now()); return Response.json({ ok: true }, { headers }); }

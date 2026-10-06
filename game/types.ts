@@ -544,10 +544,15 @@ export type State = {
         down?: { kind: 'stage' | 'dungeon'; id: string; until: number; by: string; patched?: boolean }[];
         patched?: Record<string, number>;
         /** v3.27 신원 조작 목록(해커 계열에게만). until 0 = 무기한, mine = 내가 건 것. */
-        masks?: { target: string; until: number; by: string; mine?: boolean }[];
+        masks?: { target: string; until: number; by: string; mine?: boolean; /** v3.28 내가 건 미끼 이름 */ decoy?: string }[];
         /** v3.27 다른 해커가 건 견제: 오늘 줄어든 침투 입장(trace), 브루트포스 과부하가 끝나는 시각. */
         traced?: { day: string; n: number };
         overloadUntil?: number;
+        /** v3.28 해킹 X 루트 권한 연출(모두에게), 해킹 IX DDoS로 열린 이벤트(모두에게). */
+        root?: { by: string; until: number };
+        ddos?: { kind: string; by: string; until: number };
+        /** v3.28 해커 계열에게만: 세이브 스캠이 이미 걸린 월드보스 세대. */
+        scummed?: number[];
     };
     clears: Record<string, number>;
     /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
@@ -585,7 +590,8 @@ export type HackerInfil = {
     /** 뽑아 나가면 받는 보상(추적되면 일부만). */
     bank: { bits: number; exp: number };
     /** v3.26 seq(수열) · bin(진법 변환) · cipher(암호 해독) 추가. 새 퍼즐은 문제(prompt)를 함께 적습니다(정답은 서버 키로만 계산). */
-    node: { kind: 'lock' | 'port' | 'seq' | 'bin' | 'cipher'; size: number; tries: number; max: number; history: { guess: string; hint: string }[]; prompt?: string };
+    /** v3.28 path(최단 경로) · anagram(패스워드 재조합) 추가. */
+    node: { kind: 'lock' | 'port' | 'seq' | 'bin' | 'cipher' | 'path' | 'anagram'; size: number; tries: number; max: number; history: { guess: string; hint: string }[]; prompt?: string };
 };
 export type HackerState = {
     bits: number;
@@ -608,12 +614,26 @@ export type HackerState = {
     /** v3.25 산 프로그램(영구)과 장착한 프로그램(메모리 한도 안). */
     programs?: string[];
     loadout?: string[];
-    /** v3.25 패킷 스니핑: 이 시각부터 활동한 모험가 수로 끝난 뒤 정산합니다. */
-    sniff?: { from: number; until: number; n: number } | null;
+    /** v3.25 패킷 스니핑: 이 시각부터 활동한 모험가 수로 끝난 뒤 정산합니다. v3.28 mult: 봇넷 중에 시작하면 2. */
+    sniff?: { from: number; until: number; n: number; mult?: number } | null;
+    /** v3.28 해킹 VI 패킷 가로채기: 걸어 둔 월드보스와 그 세대. 쓰러진 뒤 정산합니다. */
+    intercept?: { raid: string; gen: number; n: number } | null;
+    /** v3.28 해킹 VIII 봇넷: 끝나는 시각과 건 날(그날 침투 입장 +2). */
+    botnet?: { until: number; day: string };
+    /** v3.28 해킹 IX DDoS를 쓴 주(weekKey)와 그 주 횟수. */
+    ddos?: { week: string; n: number };
+    /** v3.28 해킹 X 루트 권한을 쓴 횟수(칭호 root). */
+    roots?: number;
+    /** v3.28 블랙 해커가 해킹에 실패해 추적당한 동안(이 시각까지 해킹 불가). */
+    bustedUntil?: number;
     /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
     season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };
-export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof' | 'unspoof' | 'trace' | 'overload';
+export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof' | 'unspoof' | 'trace' | 'overload'
+    /** v3.28 해킹 VI~X(봇넷은 세이브 안에서만 계산). */
+    | 'intercept' | 'interceptClaim' | 'savescum' | 'ddos' | 'root'
+    /** v3.28 블랙 해커 실패(추적 공지만). */
+    | 'busted';
 export type Snapshot = {
     /** v3.18 옛 애드가드 숨김 정보(v3.26부터 스냅샷에 싣지 않고 서버 설정 hacks.masked로 가림). */
     privacy?: { show: string[] };

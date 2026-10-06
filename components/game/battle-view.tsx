@@ -97,6 +97,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     {isHackerJob(s.job) && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>해커</b><span>{s.running ? '브루트포스 실행 중 · 사냥 대신 비트·권한 경험치를 쌓습니다.' : '해커는 사냥하지 않습니다. 시작하면 브루트포스가 돌아갑니다.'} 침투 작전·해킹은 ‘해킹’ 메뉴에서.</span></div>}
     {/* v3.18 해커의 방송 탈취: 서명이 고정된 문구를 이벤트 배너 자리에 띄웁니다. */}
     {s.hackFeed?.broadcast && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>[해커 {s.hackFeed.broadcast.by}]</b><span>{s.hackFeed.broadcast.text}</span></div>}
+    {s.hackFeed?.root && show('hacker') && <div className="event-banner hack-banner root-banner" role="status"><Sparkles size={15}/><b>ROOT ACCESS</b><span>[해커 {s.hackFeed.root.by}]이(가) 서버의 루트 권한을 얻었습니다.</span></div>}
     {/* v3.19 새싹의 축복 알림은 뺐습니다(효과는 그대로, 능력치 화면 경험치 내역에 표시). */}
     {show('door') && <DoorNotice s={s} setView={setView}/>}
     {show('altar') && <AltarNotice s={s} setView={setView}/>}

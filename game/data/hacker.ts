@@ -11,8 +11,12 @@ export const HACKER_ID = 'hacker';
 export const ADGUARD_ID = 'adGuard';
 /** v3.25 화이트 해커(해커 계열 2차). 해커와 같은 제약을 받고, 해킹을 되돌리고 사냥터를 패치합니다. */
 export const WHITE_HACKER_ID = 'whiteHacker';
-export const HACKER_LINE: readonly string[] = [HACKER_ID, WHITE_HACKER_ID];
+/** v3.28 블랙 해커(해커 계열 2차). 해커와 같은 제약을 받고, 해킹을 더 자주·더 비싸게 쓰되 실패하면 추적됩니다. */
+export const BLACK_HACKER_ID = 'blackHacker';
+export const HACKER_LINE: readonly string[] = [HACKER_ID, WHITE_HACKER_ID, BLACK_HACKER_ID];
 export const FIREWALL_ID = 'firewall';
+/** v3.28 블랙 해커 전용 패시브: 실패해 추적당하는 시간을 절반으로. */
+export const WIPE_TRACE_ID = 'wipeTrace';
 export const isHackerJob = (id: string) => HACKER_LINE.includes(id);
 
 export const HACKER = {
@@ -32,12 +36,13 @@ export const HACKER = {
         /** 노드 종류: 홀수 깊이는 방화벽(숫자 자물쇠), 짝수 깊이는 포트 스캔. */
         /** v3.26 숫자 야구를 쉽게: 3자리는 깊이 5까지(시도 9), 4자리는 12까지(10), 그 뒤 5자리(12). */
         lock: (depth: number) => ({ digits: depth <= 5 ? 3 : depth <= 12 ? 4 : 5, tries: depth <= 5 ? 9 : depth <= 12 ? 10 : 12 }),
-        /** v3.26 새 퍼즐의 시도 횟수: 수열(다음 수) · 진법 변환(2진수·16진수 → 10진수) · 암호 해독(시저 암호). */
-        tries: { seq: 3, bin: 3, cipher: 4 },
+        /** v3.26 새 퍼즐의 시도 횟수: 수열(다음 수) · 진법 변환(2진수·16진수 → 10진수) · 암호 해독(시저 암호). v3.28 최단 경로 · 패스워드 재조합. */
+        tries: { seq: 3, bin: 3, cipher: 4, path: 3, anagram: 4 },
         port: (depth: number) => { const range = depth <= 4 ? 64 : depth <= 10 ? 256 : 1024; return { range, tries: Math.ceil(Math.log2(range)) + (depth <= 4 ? 2 : depth <= 10 ? 1 : 0) }; },
     },
-    /** 해킹 단계(I~X): 단계마다 필요한 권한 등급과 비트. v3.25 2단계 구현으로 V까지 엽니다. */
-    tiers: [{ grade: 1, bits: 150 }, { grade: 4, bits: 400 }, { grade: 6, bits: 800 }, { grade: 8, bits: 1300 }, { grade: 10, bits: 2000 }] as { grade: number; bits: number }[],
+    /** 해킹 단계(I~X): 단계마다 필요한 권한 등급과 비트. v3.25 2단계 구현으로 V까지, v3.28 3단계로 X까지 엽니다. */
+    tiers: [{ grade: 1, bits: 150 }, { grade: 4, bits: 400 }, { grade: 6, bits: 800 }, { grade: 8, bits: 1300 }, { grade: 10, bits: 2000 },
+        { grade: 12, bits: 3000 }, { grade: 14, bits: 4200 }, { grade: 16, bits: 5600 }, { grade: 18, bits: 7500 }, { grade: 20, bits: 10000 }] as { grade: number; bits: number }[],
     /** 해킹 실행: 하루 횟수·지속·비용. n = 해킹 단계. */
     broadcast: { maxLength: 40, minutes: (n: number) => 30 + 3 * (n - 1), perDay: (n: number) => 1 + Math.floor(n / 3), bits: 20, exp: 40 },
     crack: { minutes: 60, perDay: (n: number) => 1 + Math.floor(n / 4), bits: 15, exp: 30 },
@@ -59,19 +64,43 @@ export const HACKER = {
     },
     /** v3.25 프로그램 메모리: 기본 4 + 권한 등급 5마다 1. */
     memory: (grade: number) => 4 + Math.floor(grade / 5),
-    /** v3.26 신원 조작(옛 애드가드): 숙련 단계 = 하루 횟수, 비트 10. v3.27 기간은 해커가 정합니다(시간, 0 = 무기한, 최대 1년). */
-    spoof: { maxHours: 24 * 365, perDay: (level: number) => Math.max(0, level), bits: 10, exp: 20 },
+    /**
+     * v3.26 신원 조작(옛 애드가드): 숙련 단계 = 하루 횟수, 비트 10. v3.27 기간은 해커가 정합니다(시간, 0 = 무기한, 최대 1년).
+     * v3.28 숙련 3단계(옛 2시간)부터 미끼 정보: 가린 이름·직업·레벨 자리에 ??? 대신 해커가 정한 가짜 값을 보여 줍니다(크래킹하면 진짜가 드러남).
+     */
+    spoof: { maxHours: 24 * 365, perDay: (level: number) => Math.max(0, level), bits: 10, exp: 20, decoyLevel: 3, decoyMaxLevel: 999 },
     /**
      * v3.27 해커끼리 견제(해커 순위 행에서). 해커만 쓰고(화이트 해커는 쓰지 않음), 각각 하루 1회. 화이트 해커 방화벽이 하루 한 번 막습니다.
      * 역추적: 대상의 오늘 침투 작전 입장 −1(대상에게 하루 최소 1회는 남김, 하루 최대 −3). 과부하: 대상의 브루트포스 비트 절반(2시간).
      */
     trace: { bits: 30, exp: 40, maxPerDay: 3 },
     overload: { bits: 40, exp: 40, minutes: 120, rate: .5 },
+    /**
+     * v3.28 해킹 VI 패킷 가로채기: 떠 있는 월드보스 하나에 걸어 두고, 그 보스가 쓰러지면 격파 보상 가치의 10%×(n−5)를 비트로 받습니다.
+     * 보상 가치 = 골드/1,000 + 세계석×40 + SP×400(비트 환산). 보스가 쓰러지지 않고 떠나면 아무것도 받지 못합니다. 하루 1회.
+     */
+    intercept: { share: (n: number) => .1 * Math.max(1, n - 5), value: (r: { gold: number; pearls: number; sp: number }) => Math.floor(r.gold / 1000 + r.pearls * 40 + r.sp * 400), perDay: () => 1, bits: 50, exp: 80 },
+    /** v3.28 해킹 VII 세이브 스캠: 떠 있는 월드보스 체력 되감기(깎인 체력의 5%×(n−6) 회복) 또는 빨리감기(남은 체력의 3%×(n−6) 감소, 쓰러뜨리지는 못함). 하루 1회, 보스 한 마리(세대)당 서버 전체 1회, 전체 채팅 공지. */
+    savescum: { rewind: (n: number) => .05 * Math.max(1, n - 6), forward: (n: number) => .03 * Math.max(1, n - 6), perDay: () => 1, bits: 60, exp: 100 },
+    /** v3.28 해킹 VIII 봇넷: 3시간 동안 브루트포스(비트·권한)와 그동안 시작한 패킷 스니핑 정산 ×2, 오늘 침투 작전 입장 +2. 하루 1회(세이브 안에서만 계산, 서버 쓰기 없음). */
+    botnet: { hours: 3, rate: 2, entries: 2, perDay: () => 1, bits: 80, exp: 60 },
+    /** v3.28 해킹 IX DDoS: 서버 이벤트 하나(경험치·골드·드롭 중 선택, ×1.2, 2시간)를 강제로 엽니다. 주 1회, 서버에 하나만. */
+    ddos: { kinds: ['exp', 'gold', 'drop'] as const, rate: 1.2, hours: 2, perWeek: () => 1, bits: 150, exp: 200 },
+    /** v3.28 해킹 X 루트 권한: 하루 1회 오늘의 해킹 횟수를 모두 되돌림(주간 DDoS 제외) + 10분 동안 서버 전체에 ROOT 연출 + 영구 칭호 root. */
+    root: { perDay: () => 1, bits: 100, exp: 300, showMinutes: 10 },
+    /**
+     * v3.28 블랙 해커: 하루(주) 횟수 두 배(쿨다운 절반) · 해킹 비트 두 배 · 실패 확률 35% − 3%×n(최소 5%).
+     * 실패하면 비트·횟수는 쓰이고 효과는 없으며, 추적되어 전체 채팅에 이름이 공지되고 6시간 동안 해킹할 수 없습니다.
+     * 대상·보스·게이지마다 걸린 1회 제한과 루트 권한(하루 1회)은 그대로입니다.
+     */
+    black: { cost: 2, cap: 2, fail: (n: number) => Math.max(.05, .35 - .03 * n), traceHours: 6, wipedHours: 3 },
 } as const;
 /** v3.25 해킹 실행 비트 비용(되돌린 해킹의 현상금 계산에도 씁니다). */
-export const HACK_BITS: Record<string, number> = { broadcast: HACKER.broadcast.bits, crack: HACKER.crack.bits, tamper: HACKER.tamper.bits, down: HACKER.down.bits };
-/** v3.25 해킹마다 필요한 단계. */
-export const HACK_TIER: Record<string, number> = { broadcast: 1, crack: 1, tamper: 2, down: 3, sniff: 4, backdoor: 5 };
+export const HACK_BITS: Record<string, number> = { broadcast: HACKER.broadcast.bits, crack: HACKER.crack.bits, tamper: HACKER.tamper.bits, down: HACKER.down.bits, ddos: HACKER.ddos.bits };
+/** v3.25 해킹마다 필요한 단계. v3.28 VI~X. */
+export const HACK_TIER: Record<string, number> = { broadcast: 1, crack: 1, tamper: 2, down: 3, sniff: 4, backdoor: 5, intercept: 6, savescum: 7, botnet: 8, ddos: 9, root: 10 };
+/** v3.28 해킹 이름(공지·로그). */
+export const HACK_NAMES: Record<string, string> = { broadcast: '방송 탈취', crack: '크래킹', tamper: '이벤트 변조', down: '서버 다운', sniff: '패킷 스니핑', backdoor: '백도어', intercept: '패킷 가로채기', savescum: '세이브 스캠', botnet: '봇넷', ddos: 'DDoS', root: '루트 권한', trace: '역추적', overload: '과부하' };
 
 /** v3.25 프로그램: 스킬 대신 메모리 한도 안에서 장착하는 해커의 빌드. 비트로 한 번 사면 영구. */
 export type ProgramId = 'portScanner' | 'rootkit' | 'cryptoMiner' | 'exploitKit' | 'avEvasion';
@@ -95,13 +124,16 @@ export const PRIVACY_LABELS: Record<PrivacyField, string> = { job: '직업', lev
 /** 해커(1차, ??? 계열 독립 직업). 능력치 보정은 없고 규칙으로 막습니다: 전투(사냥·던전·결투·월드보스·신 도전) 불가, 능력치 투자·다른 스킬 장착 불가. */
 export const HACKER_JOBS = [
     { id: HACKER_ID, name: '해커', title: '게임의 헛점을 파고든다', desc: '전투 능력은 전무합니다. 사냥·던전·결투·월드보스·신 도전에 참여할 수 없고, 능력치 투자와 해커 전용이 아닌 스킬 장착이 막히며, 해커로 있는 동안 레벨·경험치가 멈춥니다. 대신 침투 작전으로 비트와 권한을 쌓고, 서버의 방송을 탈취하고 다른 모험가의 숨김을 깨뜨립니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 30, rebirth: 3, mastery: 0, requires: {}, role: '해킹·서버', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '세 번의 윤회를 넘긴 자에게 서버의 틈이 보입니다.', masteryTarget: 3000, masteryBoost: 0 },
+    { id: BLACK_HACKER_ID, name: '블랙 해커', title: '흔적을 남기지 않는 자', desc: '해커와 같은 제약(전투 불가, 레벨·경험치 정지)을 받습니다. 해킹의 하루 횟수가 두 배(쿨다운 절반)지만 비트도 두 배로 들고, 해킹마다 실패 확률(35% − 단계×3%, 최소 5%)이 있습니다. 실패하면 비트·횟수만 쓰이고, 추적되어 전체 채팅에 이름이 공지되며 6시간 동안 해킹할 수 없습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, rebirth: 3, parent: HACKER_ID, mastery: 1500, requires: {}, role: '고위험 해킹', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '해커로 서버를 충분히 들여다본 자에게 더 어두운 길이 보입니다.', masteryTarget: 6000, masteryBoost: 0 },
     { id: WHITE_HACKER_ID, name: '화이트 해커', title: '뚫린 곳을 막는 자', desc: '해커와 같은 제약(전투 불가, 레벨·경험치 정지)을 받습니다. 공격 해킹(방송 탈취·크래킹·이벤트 변조·서버 다운) 대신 다른 해커의 해킹을 되돌리고(현상금으로 비트), 사냥터·던전을 패치해 한 시간 동안 서버 다운을 막습니다. 전용 패시브 방화벽은 하루 한 번 크래킹을 막아 냅니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, rebirth: 3, parent: HACKER_ID, mastery: 1500, requires: {}, role: '복구·패치', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '해커로 서버를 충분히 들여다본 자에게 반대편 길이 보입니다.', masteryTarget: 6000, masteryBoost: 0 },
 ];
 
 /** 해커 계열 스킬: 신원 조작(id adGuard, 옛 애드가드)과 화이트 해커 방화벽. 숙련은 해커 활동(침투·브루트포스·해킹)으로 오릅니다. */
 export const HACKER_SKILLS: Skill[] = [
     /** v3.26 애드가드 → 신원 조작: 나를 숨기는 패시브가 아니라 해커가 남의(또는 내) 공개 여부를 바꾸는 스킬. id는 세이브 호환으로 그대로. */
-    { id: ADGUARD_ID, name: '신원 조작', desc: '해커 전용. 고른 모험가 한 명(나도 가능)의 랭킹 정보 공개 여부를 바꿉니다. 숙련 1단계: 이름과 모든 정보를 ???로 1시간 가림. 숙련 2단계: 가릴 항목을 고름. 숙련 3단계: 2시간. 하루 횟수는 숙련 단계만큼. 크래킹을 당하면 그동안 풀립니다.', type: 'passive', level: 30, job: HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 5, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
+    { id: ADGUARD_ID, name: '신원 조작', desc: '해커 전용. 고른 모험가 한 명(나도 가능)의 랭킹 정보 공개 여부를 바꿉니다. 숙련 1단계: 이름과 모든 정보를 ???로 1시간 가림. 숙련 2단계: 가릴 항목을 고름. 숙련 3단계: 가린 이름·직업·레벨 자리에 미끼 정보(가짜 값)를 보여 줌. 하루 횟수는 숙련 단계만큼. 크래킹을 당하면 그동안 풀립니다.', type: 'passive', level: 30, job: HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 5, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
     /** v3.25 화이트 해커 전용 패시브. 장착하면 하루 한 번 크래킹을 막아 냅니다(막힌 해커의 비트·횟수는 그대로 씀). */
     { id: FIREWALL_ID, name: '방화벽', desc: '하루 한 번, 나를 노린 크래킹을 막아 냅니다. 숙련은 해커 활동으로 오릅니다.', type: 'passive', level: 30, job: WHITE_HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
+    /** v3.28 블랙 해커 전용 패시브. 장착하면 해킹에 실패해 추적당하는 시간이 6시간 → 3시간. */
+    { id: WIPE_TRACE_ID, name: '흔적 지우기', desc: '해킹에 실패해 추적당했을 때 해킹할 수 없는 시간이 6시간에서 3시간으로 줄어듭니다.', type: 'passive', level: 30, job: BLACK_HACKER_ID, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: {}, masteryMilestones: [250, 1200, 4500, 14000] } as Skill,
 ];

@@ -3,7 +3,7 @@
  * 침투 작전의 정답은 서버 키(setPuzzleKey)와 판 시드로 만든 해시라, 세이브(클라이언트에 보내는 상태)에는 정답이 없습니다.
  */
 import type { State, HackerState, HackerInfil } from '../types';
-import { HACKER, WHITE_HACKER_ID, ADGUARD_ID, gradeNeed, isHackerJob, programById, type ProgramId } from '../data/hacker';
+import { HACKER, WHITE_HACKER_ID, BLACK_HACKER_ID, ADGUARD_ID, gradeNeed, isHackerJob, programById, type ProgramId } from '../data/hacker';
 import { monthKey } from '../data/goals';
 import { dayKey } from '../data/goals';
 import { canUse, skillMastery } from './progression';
@@ -12,6 +12,13 @@ import { addLog } from './state';
 /** v3.25 해커 계열(해커·화이트 해커). 같은 제약(전투 불가, 레벨 정지)을 받습니다. */
 export const isHacker = (s: Pick<State, 'job'>) => isHackerJob(s.job);
 export const isWhiteHacker = (s: Pick<State, 'job'>) => s.job === WHITE_HACKER_ID;
+/** v3.28 블랙 해커: 하루 횟수 ×2, 해킹 비트 ×2, 실패 확률. */
+export const isBlackHacker = (s: Pick<State, 'job'>) => s.job === BLACK_HACKER_ID;
+/** v3.28 공격 해킹(방송·크래킹·변조·다운·견제)을 쓰는 직업: 해커 · 블랙 해커. */
+export const canAttack = (s: Pick<State, 'job'>) => isHacker(s) && !isWhiteHacker(s);
+/** v3.28 해킹 비트 비용과 하루(주) 횟수: 블랙 해커는 둘 다 두 배. */
+export const hackCost = (s: Pick<State, 'job'>, bits: number) => isBlackHacker(s) ? bits * HACKER.black.cost : bits;
+export const hackCap = (s: Pick<State, 'job'>, cap: number) => isBlackHacker(s) ? cap * HACKER.black.cap : cap;
 /** v3.25 장착한 프로그램인지(해커 계열일 때만 켜짐). */
 export const programOn = (s: Pick<State, 'job' | 'hacker'>, id: ProgramId) => isHacker(s) && !!s.hacker?.loadout?.includes(id);
 export const memoryCap = (s: Pick<State, 'hacker'>) => HACKER.memory(s.hacker?.grade || 1);
@@ -62,14 +69,16 @@ export const gradeTotal = (grade: number) => { let n = 0; for (let g = 1; g < gr
 
 /** 브루트포스(방치): 자동 사냥 대신 해커가 돌리는 작업. 틱마다 비트·권한 경험치를 조금씩. */
 export function hackerTick(s: State) {
-    // v3.25 크립토 마이너: 비트 +30%. v3.27 다른 해커의 과부하 동안은 비트 절반.
-    const overloaded = (s.hackFeed?.overloadUntil || 0) > (s.lastTick || 0);
-    gainHacker(s, HACKER.brute.bits * (programOn(s, 'cryptoMiner') ? 1.3 : 1) * (overloaded ? HACKER.overload.rate : 1), HACKER.brute.exp, true);
+    // v3.25 크립토 마이너: 비트 +30%. v3.27 다른 해커의 과부하 동안은 비트 절반. v3.28 봇넷 동안 비트·권한 ×2.
+    const overloaded = (s.hackFeed?.overloadUntil || 0) > (s.lastTick || 0), botnet = botnetOn(s, s.lastTick || 0) ? HACKER.botnet.rate : 1;
+    gainHacker(s, HACKER.brute.bits * (programOn(s, 'cryptoMiner') ? 1.3 : 1) * (overloaded ? HACKER.overload.rate : 1) * botnet, HACKER.brute.exp * botnet, true);
 }
-/** v3.27 오늘 침투 작전 입장 한도: 기본 − 다른 해커의 역추적(최소 1). */
-export function entriesCap(s: Pick<State, 'hackFeed'>, now: number) {
-    const t = s.hackFeed?.traced, cut = t && t.day === dayKey(now) ? t.n : 0;
-    return Math.max(1, HACKER.infil.entriesPerDay - cut);
+/** v3.28 해킹 VIII 봇넷이 돌고 있는지. */
+export const botnetOn = (s: Pick<State, 'hacker'>, now: number) => (s.hacker?.botnet?.until || 0) > now;
+/** v3.27 오늘 침투 작전 입장 한도: 기본 − 다른 해커의 역추적(최소 1). v3.28 봇넷을 건 날은 +2. */
+export function entriesCap(s: Pick<State, 'hackFeed' | 'hacker'>, now: number) {
+    const t = s.hackFeed?.traced, cut = t && t.day === dayKey(now) ? t.n : 0, bonus = s.hacker?.botnet?.day === dayKey(now) ? HACKER.botnet.entries : 0;
+    return Math.max(1, HACKER.infil.entriesPerDay - cut) + bonus;
 }
 /** v3.25 추적당했을 때 회수하는 비율(백신 회피 75%). */
 export const traceKeep = (s: Pick<State, 'job' | 'hacker'>) => programOn(s, 'avEvasion') ? .75 : HACKER.infil.traceKeep;
@@ -99,9 +108,25 @@ const pick = (r: () => number, lo: number, hi: number) => lo + Math.floor(r() * 
 /** v3.26 암호 해독 단어(영문 대문자). */
 const CIPHER_WORDS = ['ROOT', 'ADMIN', 'SHELL', 'PROXY', 'TOKEN', 'CACHE', 'LOGIN', 'KERNEL', 'ROUTER', 'SOCKET', 'PACKET', 'BINARY', 'CIPHER', 'ACCESS', 'SERVER', 'CLIENT', 'SCRIPT', 'BUFFER', 'MATRIX', 'FIREWALL', 'BACKDOOR', 'EXPLOIT'];
 const shiftWord = (w: string, k: number) => [...w].map(c => String.fromCharCode(65 + (c.charCodeAt(0) - 65 + k) % 26)).join('');
-/** v3.26 새 퍼즐(수열 · 진법 변환 · 암호 해독)의 문제와 정답. 서버 키로만 같은 문제가 나옵니다. */
-function puzzleOf(seed: number, depth: number, kind: 'seq' | 'bin' | 'cipher'): { prompt: string; answer: string } {
+type PromptKind = 'seq' | 'bin' | 'cipher' | 'path' | 'anagram';
+const isPromptKind = (kind: string): kind is PromptKind => ['seq', 'bin', 'cipher', 'path', 'anagram'].includes(kind);
+/** v3.26 새 퍼즐(수열 · 진법 변환 · 암호 해독)의 문제와 정답. 서버 키로만 같은 문제가 나옵니다. v3.28 최단 경로 · 패스워드 재조합. */
+function puzzleOf(seed: number, depth: number, kind: PromptKind): { prompt: string; answer: string } {
     const r = saltRng(seed, depth, 'p'), d = depth + 1;
+    if (kind === 'path') {
+        // 숫자 격자에서 왼쪽 위 → 오른쪽 아래(오른쪽·아래로만) 지나는 칸 합의 최솟값. 깊이 10부터 4×4.
+        const n = d < 10 ? 3 : 4, grid = Array.from({ length: n }, () => Array.from({ length: n }, () => pick(r, 1, 9)));
+        const best = grid.map(row => row.map(() => 0));
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) best[y][x] = grid[y][x] + (y || x ? Math.min(y ? best[y - 1][x] : Infinity, x ? best[y][x - 1] : Infinity) : 0);
+        return { prompt: grid.map(row => row.join(' ')).join(' / '), answer: String(best[n - 1][n - 1]) };
+    }
+    if (kind === 'anagram') {
+        // 글자 순서를 섞은 단어. 섞은 결과가 원래 단어와 같으면 한 칸 돌립니다.
+        const word = CIPHER_WORDS[Math.floor(r() * CIPHER_WORDS.length)], letters = [...word];
+        for (let i = letters.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [letters[i], letters[j]] = [letters[j], letters[i]]; }
+        const mixed = letters.join('') === word ? word.slice(1) + word[0] : letters.join('');
+        return { prompt: `${mixed} (글자 순서를 섞은 단어)`, answer: word };
+    }
     if (kind === 'seq') {
         const types = ['add', ...(d >= 3 ? ['mul'] : []), ...(d >= 5 ? ['alt'] : []), ...(d >= 7 ? ['fib'] : []), ...(d >= 9 ? ['square'] : [])], type = types[Math.floor(r() * types.length)];
         let terms: number[];
@@ -119,17 +144,21 @@ function puzzleOf(seed: number, depth: number, kind: 'seq' | 'bin' | 'cipher'): 
     const word = CIPHER_WORDS[Math.floor(r() * CIPHER_WORDS.length)], max = d < 6 ? 3 : 25, k = pick(r, 1, max);
     return { prompt: `${shiftWord(word, k)} (알파벳을 1~${max}칸 밀어 둔 단어)`, answer: word };
 }
-/** v3.26 노드 종류: 1번째는 방화벽, 2번째는 포트 스캔, 3번째부터 홀수 칸은 방화벽·암호 해독, 짝수 칸은 포트 스캔·수열·진법 변환. */
+/**
+ * v3.26 노드 종류: 1번째는 방화벽, 2번째는 포트 스캔, 3번째부터 홀수 칸은 방화벽·암호 해독, 짝수 칸은 포트 스캔·수열·진법 변환.
+ * v3.28 5번째부터 홀수 칸에 패스워드 재조합, 6번째부터 짝수 칸에 최단 경로가 섞입니다.
+ */
 function nodeKind(seed: number, depth: number): HackerInfil['node']['kind'] {
     const next = depth + 1;
     if (next <= 2) return next === 1 ? 'lock' : 'port';
     const x = saltRng(seed, depth, 'k')();
-    return next % 2 === 1 ? (x < .6 ? 'lock' : 'cipher') : x < .4 ? 'port' : x < .7 ? 'seq' : 'bin';
+    if (next % 2 === 1) return next < 5 ? (x < .6 ? 'lock' : 'cipher') : x < .45 ? 'lock' : x < .75 ? 'cipher' : 'anagram';
+    return next < 6 ? (x < .4 ? 'port' : x < .7 ? 'seq' : 'bin') : x < .3 ? 'port' : x < .55 ? 'seq' : x < .78 ? 'bin' : 'path';
 }
 /** 지금 노드의 정답(서버만 계산). 자물쇠는 서로 다른 숫자 size자리, 포트는 1~size, 수열·진법·암호는 문제와 함께 만든 답. */
 export function nodeAnswer(run: HackerInfil) {
     const kind = run.node.kind;
-    if (kind === 'seq' || kind === 'bin' || kind === 'cipher') return puzzleOf(run.seed, run.depth, kind).answer;
+    if (isPromptKind(kind)) return puzzleOf(run.seed, run.depth, kind).answer;
     const r = nodeRng(run);
     if (kind === 'port') return String(1 + Math.floor(r() * run.node.size));
     const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -145,7 +174,7 @@ export function makeNode(seed: number, depth: number, extra = 0): HackerInfil['n
     return { kind, size: q.answer.length, tries: 0, max: HACKER.infil.tries[kind] + extra, history: [], prompt: q.prompt };
 }
 export const nodeExtra = (s: Pick<State, 'job' | 'hacker'>) => programOn(s, 'portScanner') ? 1 : 0;
-/** 추측을 채점합니다. 자물쇠: 자리·숫자 모두 맞으면 S, 숫자만 맞으면 B. 포트·수열·진법: 정답이 더 크면 UP, 작으면 DOWN. 암호: 자리가 맞은 글자 수. */
+/** 추측을 채점합니다. 자물쇠: 자리·숫자 모두 맞으면 S, 숫자만 맞으면 B. 포트·수열·진법·경로: 정답이 더 크면 UP, 작으면 DOWN. 암호·재조합: 자리가 맞은 글자 수. */
 export function judge(run: HackerInfil, guess: string) {
     const answer = nodeAnswer(run), node = run.node;
     if (node.kind === 'lock') {
@@ -154,7 +183,7 @@ export function judge(run: HackerInfil, guess: string) {
         for (let i = 0; i < guess.length; i++) { if (guess[i] === answer[i]) strike++; else if (answer.includes(guess[i])) ball++; }
         return { solved: strike === node.size, hint: strike === node.size ? 'OPEN' : `${strike}S ${ball}B` };
     }
-    if (node.kind === 'cipher') {
+    if (node.kind === 'cipher' || node.kind === 'anagram') {
         const g = guess.toUpperCase();
         if (!/^[A-Z]+$/.test(g) || g.length !== answer.length) throw Error(`영문 ${answer.length}글자 단어를 입력하세요.`);
         const same = [...g].filter((c, i) => c === answer[i]).length;
