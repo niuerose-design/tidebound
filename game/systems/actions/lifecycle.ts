@@ -16,7 +16,7 @@ import type { State, Vows, RebirthRecord, AscensionRecord } from '../../types';
 export const REBIRTH_LOG_KEEP = 20;
 import type { ActionHandlers } from './types';
 import { addLog, newState } from '../state';
-import { drawRebirthDoor } from '../../data/doors';
+import { drawRebirthDoor } from '../../data/door-info';
 import { jobById, JOB_TREES } from '../../data/classes';
 import { jobMastered, canChangeJob, canUse, grantJobSkills, trimLoadout } from '../progression';
 import { STAGES } from '../../data/world';

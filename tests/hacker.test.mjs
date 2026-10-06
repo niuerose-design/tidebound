@@ -359,6 +359,22 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         const tagHacks = { masked: { b_a: { until: 0, show: ['job'], by: 'x', byId: 'y' } }, cracked: {} };
         assert.ok(!('crew' in Hk.maskSnapshot(hrow, 'b_a', tagHacks, now)), 'masked name hides the crew tag');
         for (const [mid, m] of [['b_a', ba], ['b_b', bb]]) (await Cr.leaveCrew(mid, m, now))(m);
+        // v3.43 정보 비공개 스위치: 서버 설정(30초 캐시)으로 켜고 끄고, 환경 변수 TIDEBOUND_SECRECY가 있으면 그것이 우선. 카탈로그에 실립니다.
+        const Sc = await load('game/server/secrecy.js');
+        assert.equal(await Sc.secrecyOn(now), false, 'off by default (open beta)'); const cat0 = await Sc.buildCatalog(newState(0), now); assert.equal(cat0.secret, false); assert.ok(cat0.doors.discovery.length >= 10 && cat0.doors.discovery.every(d => !d.open), 'v3.44 doors judged on the server'); assert.ok(!('test' in cat0.doors.discovery[0]), 'no door conditions in the catalog'); assert.ok(Array.isArray(cat0.revealed));
+        await Sc.setSecrecy(true, now); assert.equal(await Sc.secrecyOn(now + 1), true); assert.equal(await database.getSetting('secrecy'), 'on');
+        process.env.TIDEBOUND_SECRECY = 'off'; assert.equal(await Sc.secrecyOn(now + 2), false, 'env wins'); delete process.env.TIDEBOUND_SECRECY;
+        await Sc.setSecrecy(false, now); assert.equal((await Sc.buildCatalog(newState(0), now + 3)).secret, false);
+        // v3.44 비밀 직업: 비공개가 꺼져 있으면 전체, 켜면 드러난 것만 전체·나머지는 실루엣(이름·설명·조건·능력치 없음). 같은 키면 다시 보내지 않음.
+        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 35); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
+        assert.equal(await Sc.buildCatalog(newState(0), now + 4, openCat.key), null, 'same key: nothing to send');
+        process.env.TIDEBOUND_SECRECY = 'on';
+        const veiledCat = await Sc.buildCatalog(newState(0), now + 5), lich = veiledCat.jobs.find(j => j.id === 'lichKing');
+        assert.ok(lich.veiled && lich.name === '???' && !lich.desc && !lich.rebirth && lich.hint, 'silhouette keeps only place and hint');
+        assert.ok(veiledCat.lineages.every(l => l.name === '???'), 'unrevealed secret lineages are veiled'); assert.notEqual(veiledCat.key, openCat.key);
+        const opened = newState(0); opened.rebirthDoor = 'voidcaller'; const voidCat = await Sc.buildCatalog(opened, now + 6);
+        assert.ok(voidCat.revealed.includes('voidcaller') && !voidCat.jobs.find(j => j.id === 'voidcaller').veiled, 'an open door reveals the job in full');
+        delete process.env.TIDEBOUND_SECRECY;
         // v3.26 해커 전직 알림(익명, system-hacker). 파일 DB를 쓰는 테스트는 동시에 돌면 서로의 파일을 바꾸므로 한 테스트에 모읍니다.
         await Hk.announceHacker('hacker', now); const chat = await database.listChat('news', 0, 300);
         assert.equal(chat.at(-1).account_id, 'system-hacker'); assert.equal(chat.at(-1).text, '누군가가 해커로 전직했습니다.');

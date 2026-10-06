@@ -8,7 +8,6 @@ import { V25_JOBS, V25_HINTS } from './expansion-v25';
 import { DEFENSE_JOBS, DEFENSE_HINTS, DEFENSE_LINEAGES } from './expansion-defense';
 import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
 import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
-import { HACKER_JOBS } from './hacker';
 import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
 import { MAPLE_JOB_FLAVOR, MAPLE_LINEAGE_SUMMARY } from './maple-flavor';
 export type Job = {
@@ -60,6 +59,8 @@ export type Job = {
     tags?: string[];
     /** 미발견 히든·문 직업의 실루엣 카드에 보이는 한 줄 힌트. */
     hint?: string;
+    /** v3.44 카탈로그 실루엣: 이름·조건·능력치를 뺀 비밀 직업(화면 전용, 서버 표에는 없음). */
+    veiled?: boolean;
     /**
      * v27.4 제약 직업 틀. 체력 ×0.01처럼 큰 마이너스 배율을 가진 직업이 "어떻게 살아남는지"를 데이터로 선언합니다.
      * PvE 밸런스 대상이 아니라 기술 계승·예능·결투 저격용입니다. 새 제약 직업은 attack/hp/defense 배율 + 이 필드만 적으면 됩니다.
@@ -129,12 +130,7 @@ export const JOBS: Job[] = [
     { id: 'paladin', name: '성해 기사', title: '빛과 작살의 서약', desc: '두 공격·체력·두 방어가 고르게 오르는 하이브리드 전투형.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { attack: 22, magic: 24, hp: 100, defense: 8, resist: 7 }, tier: 2, level: 25, parent: 'warden', requires: { str: 25, wis: 25 }, mastery: 75, role: '복합·흡혈', tree: 'defense', lineage: 'paladin' },
     { id: 'wanderer', name: '이형 항해자', title: '어느 깃발에도 속하지 않는 자', desc: '서플러스 서플라이로 명중과 회피를 익히는 복합 입문 직업. 다른 직업에서 계승한 기술의 빈틈을 보완합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 1, magic: 1, hp: 5 }, tier: 1, level: 10, requires: { str: 10, int: 10, vit: 10 }, mastery: 0, role: '복합 입문', tree: 'hybrid' },
     { id: 'chimera', name: '두 바다 융합자', title: '살과 마나를 한 덩어리로', desc: '최대 체력과 마나를 공격으로 바꾸는 대기만성형 직업.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { attack: 33, magic: 36, hp: 125, defense: 3, resist: 4 }, tier: 2, level: 25, parent: 'wanderer', requires: { str: 25, int: 25, vit: 20 }, mastery: 75, role: 'HP·MP 복합', tree: 'hybrid' },
-    { id: 'voidcaller', name: '공허의 기록자', title: '기록되지 않은 파도의 목소리', desc: '환생 이후에 드러나는 히든 직업. 마나 비례 주문과 높은 발동 확률.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .1, bonus: { magic: 42, hp: 20, resist: 7 }, tier: 2, level: 25, parent: 'wanderer', requires: { int: 30, luk: 30 }, mastery: 75, role: '히든·MP', tree: 'mystery', lineage: 'voidcaller', hidden: true, rebirth: 1 },
-    { id: 'undead', name: '망인', title: '죽음과 함께 걷는 모험가', desc: '체력이 절반이고 마법·방어도 크게 불리합니다. 쉐도우 서번트를 숙련하면 직업 페널티를 단계별로 되찾고, 3단계에서는 모두 되찾습니다.', attack: 0.95, magic: 0.75, hp: 0.5, defense: 0.8, resist: 0.7, crit: .02, tier: 1, level: 10, requires: { vit: 14, luk: 14 }, mastery: 0, role: '페널티·숙련', tree: 'mystery', hidden: true, penalties: { accuracy: -.08, mana: -10, resist: -3 } },
     // v27.4 제약 직업 틀의 참고 구현: 체력 ×0.01 유리 대포. 선공·최후의 버팀 2회·회피 +30%로 "맞기 전에 끝내는" 직업. PvE 밸런스 대상 아님.
-    { id: 'glassHarpooner', name: '유리 작살꾼', title: '한 번 맞으면 깨지는 몸', desc: '최대 체력이 1%뿐인 제약 직업입니다. 항상 먼저 움직이고, 쓰러질 피해를 전투당 두 번 체력 1로 버티며, 회피 +30%p로 피합니다. 물리 공격 ×2.2·치명타 +15%로 맞기 전에 끝내는 결투·계승용 직업입니다.', attack: 2.2, magic: 1, hp: .01, defense: 1, resist: 1, crit: .15, tier: 1, level: 10, requires: { dex: 14, luk: 14 }, mastery: 0, role: '제약·유리 대포', tree: 'mystery', hidden: true, branchless: true, hint: '한 대도 맞을 수 없는 몸으로 먼저 찌르는 모험가.', constraint: { label: '유리 몸', desc: '최대 체력 1%. 선공·최후의 버팀·회피로만 살아남습니다.', devices: { firstStrike: true, lastStand: { charges: 2 }, evasion: .3 } } },
-    { id: 'skeleton', name: '해골 기사', title: '부서져도 다시 선다', desc: '최대 체력은 낮지만 방어와 골격의 힘으로 버티는 페널티 극복형 직업.', attack: 1, magic: 0.6, hp: 0.5, defense: 1, resist: 0.6, crit: .04, bonus: { attack: 19, defense: 8 }, tier: 2, level: 25, parent: 'undead', requires: { str: 32, vit: 24 }, mastery: 75, role: '골격·방어', tree: 'mystery', hidden: true, penalties: { accuracy: -.1, mana: -14, resist: -5 } },
-    { id: 'bonecaster', name: '골령술사', title: '마나로 뼈를 세우는 자', desc: '약한 육체와 낮은 명중을 감수하고 마나·마법 방어·숙련 보상에 투자하는 히든 직업.', attack: 0.6, magic: 1, hp: 0.5, defense: 0.6, resist: 1, crit: .06, bonus: { magic: 33, resist: 5 }, tier: 2, level: 25, parent: 'undead', requires: { int: 32, wis: 24 }, mastery: 75, role: '골령·마법', tree: 'mystery', hidden: true, penalties: { accuracy: -.12, mana: -6, defense: -3 } },
 ];
 
 // 직업은 전투 공식과 분리된 데이터입니다. 숫자를 낮추거나 조건을 바꿔도 저장 형식은 변하지 않습니다.
@@ -159,8 +155,6 @@ JOBS.push(
     { id: 'clockworkAngler', name: '태엽 낚시꾼', title: '한 턴을 미리 감는다', desc: '속도·명중·HP·MP 비례를 섞어 어느 편성에도 들어가는 복합 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 7, magic: 7, hp: 10 }, tier: 2, level: 25, parent: 'wanderer', requires: { dex: 28, int: 22 }, mastery: 75, role: '속도·복합', tree: 'hybrid' },
     { id: 'gambler', name: '바다 도박사', title: '확률을 이기는 대신 대가를 건다', desc: '치명 피해와 골드가 오르지만 명중이 흔들리는 고위험 직업입니다.', attack: 1, magic: 1, hp: .92, defense: 1, resist: 1, crit: .1, bonus: { attack: 2, magic: 2 }, tier: 2, level: 25, parent: 'squidJester', requires: { luk: 36, dex: 28 }, mastery: 75, role: '치명·경제', tree: 'support', penalties: { accuracy: -.04 } },
     { id: 'bloodTide', name: '혈조의 군주', title: '피를 조류로 바꾼다', desc: 'HP 비례 피해와 흡혈이 동시에 성장하는 대기만성형 3차 직업입니다.', attack: 1, magic: .9, hp: 1, defense: 1, resist: 1, crit: .1, bonus: { attack: 59, hp: 235, defense: 5 }, tier: 3, level: 40, parent: 'chimera', requires: { str: 45, vit: 35 }, mastery: 150, role: 'HP·흡혈', tree: 'hybrid' },
-    { id: 'manaLeviathan', name: '마나 레비아탄', title: '바다 전체를 주문으로 삼킨다', desc: 'MP 비례 주문을 극단까지 밀어붙이는 환생 후 3차 히든 직업입니다.', attack: .92, magic: 1, hp: 1, defense: 1, resist: 1, crit: .12, bonus: { magic: 102, resist: 12 }, tier: 3, level: 40, parent: 'voidcaller', requires: { int: 50, wis: 38 }, mastery: 150, role: 'MP·히든', tree: 'mystery', lineage: 'voidcaller', hidden: true, rebirth: 2 },
-    { id: 'soulHarvester', name: '영혼 수확자', title: '쓰러진 적의 파도를 거둔다', desc: '망인 계열의 페널티를 치명타와 흡혈로 뒤집는 히든 3차 직업입니다.', attack: 1, magic: 0.7, hp: 0.7, defense: 1, resist: 0.7, crit: .18, bonus: { attack: 59, defense: 7 }, tier: 3, level: 40, parent: 'skeleton', requires: { str: 44, luk: 38 }, mastery: 150, role: '치명·영혼', tree: 'mystery', hidden: true },
     { id: 'netWeaver', name: '그물 직조가', title: '잡은 몬스터를 놓치지 않는다', desc: '상위 전직 없이 수집과 안정성을 택하는 독립 1차 직업입니다. 낮은 확률로 길게 감속시키는 그물 던지기를 함께 익힙니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 6, hp: 20 }, tier: 1, level: 10, requires: { dex: 10, luk: 10 }, mastery: 0, role: '독립·수집', tree: 'physical', branchless: true },
     { id: 'fishWhisperer', name: '물고기 말벗', title: '물결의 의지를 듣는다', desc: '상위 전직 없이 낮은 비용 주문과 마나 회전을 연구하는 독립 1차 직업입니다. 마법 직업이라 마력 평타가 나갑니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 8, resist: 2 }, tier: 1, level: 10, requires: { int: 10, wis: 10 }, mastery: 0, role: '독립·순환', tree: 'magic', branchless: true },
     { id: 'driftwoodHermit', name: '유목 은둔자', title: '혼자서도 버티는 법', desc: '상위 전직 없이 체력과 저항을 차곡차곡 쌓는 독립 1차 직업입니다. 낮은 확률로 길게 기절시키는 통나무 밀치기를 함께 익힙니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { hp: 30, defense: 3, resist: 3 }, tier: 1, level: 10, requires: { vit: 10, wis: 10 }, mastery: 0, role: '독립·생존', tree: 'defense', branchless: true },
@@ -171,7 +165,6 @@ JOBS.push(
     { id: 'rareTracker', name: '변종 추적자', title: '한 번뿐인 흔적을 놓치지 않는다', desc: '픽파킷을 완성한 2차 파밍 직업입니다. 메소 마스터리로 장비 드롭과 골드 보상을 늘립니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, tier: 2, level: 25, parent: 'relicScavenger', requires: { dex: 28, luk: 28 }, mastery: 75, role: '변종·황금 개체', tree: 'support' },
     { id: 'stormEel', name: '폭풍 곰치 혈족', title: '몬스터의 전류를 배운 자', desc: '여우령의 귀참으로 물어뜯는 물리 기술을 계승하는 몬스터 계열 2차 직업입니다. 감속과 속도 패시브로 선공을 잡습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .04, bonus: { attack: 24, hp: 20, resist: 1 }, tier: 2, level: 25, parent: 'tidalBrawler', requires: { str: 28, dex: 22 }, mastery: 75, role: '몬스터·물리 감속', tree: 'physical' },
     { id: 'abyssArchivist', name: '진주 기록관', title: '다음 생의 장부를 보관한다', desc: '마법 잔해를 끝까지 숙련해 환생과 던전 경제를 함께 키우는 후반 비전투 직업입니다. 직업 자체는 약하지만, 드래곤 링크는 환생을 거듭할수록 어느 직업에서든 힘이 되는 패시브입니다.', attack: .9, magic: .95, hp: .98, defense: .95, resist: 1, crit: 0, bonus: { resist: 1 }, tier: 3, level: 40, parent: 'pearlBroker', requires: { int: 45, wis: 35, luk: 30 }, mastery: 150, role: '환생·기록', tree: 'magic', penalties: { attack: -8, magic: -6, accuracy: -.04 }, rebirth: 1 },
-    { id: 'krakenkin', name: '크라켄 혈족', title: '보스의 촉수를 의지로 묶는다', desc: '은월 (2차)의 계승을 마친 뒤 보스의 다중 공격을 사용할 수 있는 몬스터 계열 물리 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .08, bonus: { attack: 70, hp: 90, defense: 1 }, tier: 3, level: 40, parent: 'stormEel', requires: { str: 38, dex: 30 }, mastery: 150, role: '몬스터·추가타', tree: 'mystery', lineage: 'krakenkin', penalties: { accuracy: -.04 }, hidden: true, rebirth: 1 },
 );
 
 // 한 직업의 기본 기술은 1~2개에 집중합니다. 성장 경로를 공유하더라도
@@ -189,9 +182,7 @@ JOBS.push(
     { id: 'stillwaterBinder', name: '정수 봉인사', title: '움직이지 않는 수면', desc: '침묵의 봉인으로 상대 액티브를 오래 막고, 끌어내리는 봉인으로 공격하며 감속시키는 방해형 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 4, resist: 1 }, tier: 1, level: 10, requires: { int: 12, wis: 12 }, mastery: 0, role: '침묵·감속', tree: 'magic', masteryTarget: 2200, masteryBoost: .12 },
     { id: 'manaScribe', name: '마나 서기관', title: '흐름을 잊지 않는 기록', desc: '마나 통찰과 마나 순환술을 익히는 패시브 전용 직업. 마력 평타로 싸우며 다른 직업의 공격 주문을 받쳐 줄 기반을 만듭니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 8 }, tier: 1, level: 10, requires: { int: 10, wis: 14 }, mastery: 0, role: '독립·마나 패시브', tree: 'magic', branchless: true, masteryTarget: 1800, masteryBoost: .1 },
     { id: 'twinAngler', name: '쌍줄 낚시꾼', title: '한 번의 챔질, 두 번의 상처', desc: '선풍의 추가타를 전담합니다. 큰 단일타와 짧은 연타 사이에서 빌드 방향을 고릅니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 9 }, tier: 2, level: 25, parent: 'tidalBrawler', requires: { str: 22, dex: 28 }, mastery: 450, requiresSkillMastery: { wakeFist: 2 }, role: '추가타·연속 공격', tree: 'physical', masteryTarget: 5500, masteryBoost: .2 },
-    { id: 'eternalNavigator', name: '영겁의 항로술사', title: '세 번째 삶에 만난 해류', desc: '환생으로 시공의 파동에 도달하는 상위 직업. 상대를 쓰러뜨리면 대기 중인 모든 기술이 돌아와, 연속 처치가 끊기지 않는 방치형 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .04, bonus: { magic: 92, resist: 6 }, tier: 3, level: 40, rebirth: 3, parent: 'tempest', requires: { int: 45, wis: 40 }, mastery: 3000, requiresSkillMastery: { maelstrom: 3 }, role: '환생·상위 주문', tree: 'magic', hidden: true, masteryTarget: 60000, masteryBoost: .36 },
     { id: 'memoryMerchant', name: '기억의 환전상', title: '지난 생의 금빛 장부', desc: '건 마스터리를 보관하는 경제형 분기. 직접 전투보다 장기 처치 보상에 투자합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 14, hp: 30 }, tier: 2, level: 25, rebirth: 1, parent: 'salvageMerchant', requires: { luk: 28, wis: 22 }, mastery: 600, requiresSkillMastery: { salvageContract: 2 }, role: '환생·골드', tree: 'support', masteryTarget: 10000, masteryBoost: .22 },
-    { id: 'rebirthFisher', name: '윤회의 뱃사공', title: '다시 던지는 첫 낚싯줄', desc: '윤회의 일격을 배우는 환생 전용 독립 직업. 회복을 동반하는 공격기를 다음 삶의 편성에 남깁니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { attack: 1, hp: 5 }, tier: 1, level: 10, rebirth: 1, requires: { str: 10, wis: 12 }, mastery: 0, role: '독립·환생 흡혈', tree: 'mystery', branchless: true, masteryTarget: 6000, masteryBoost: .15 },
 );
 
 // 경험치·조건부 숙련·보스 기술을 분리한 탐구 계열입니다.
@@ -228,12 +219,11 @@ JOBS.push(...(DEFENSE_JOBS as Job[]));
 JOBS.push(...(INVERSION_JOBS as Job[]));
 // v25.26 외길 계보: 능력치 하나만으로 전직하는 1~3차. 자세한 설계는 expansion-monostat.ts.
 JOBS.push(...(MONOSTAT_JOBS as Job[]));
-// v3.18 해커: 전투 대신 서버를 해킹하는 ??? 독립 직업. 자세한 설계는 hacker.ts·docs/concept.md 9장.
-JOBS.push(...(HACKER_JOBS as Job[]));
-for (const job of JOBS) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
+// v3.18 해커 계열과 v3.44부터 모든 히든·??? 문 직업은 서버 전용 game/secret/jobs.ts에 있습니다(docs/concept.md 10장).
+// 서버는 game/secret/register.ts로, 화면은 카탈로그(catalog.ts)로 registerJobs를 거쳐 이 표에 더합니다.
 
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
-for (const id of ['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger', 'tideSaint', 'lifeOcean']) JOBS.find(j => j.id === id)!.healer = true;
+const HEALERS = new Set(['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger', 'tideSaint', 'lifeOcean']);
 
 // 특정 스킬/직업을 마스터해야만 열리는 교차 전직 조건입니다.
 // 값은 스킬 숙련 단계(1~4) 또는 직업 숙련 승수로 작성합니다.
@@ -253,16 +243,11 @@ const advancedRequirements: Record<string, Pick<Job, 'requiresSkillMastery' | 'r
     clockworkAngler: { requiresSkillMastery: { precision: 3 } },
     gambler: { requiresSkillMastery: { inkTrick: 3 } },
     bloodTide: { requiresSkillMastery: { vitalSurge: 4 }, requiresJobMastery: { wanderer: 150 } },
-    manaLeviathan: { requiresSkillMastery: { voidLance: 4 }, requiresJobMastery: { tide: 150 } },
-    soulHarvester: { requiresSkillMastery: { marrowGuard: 4, boneLegacy: 3 }, requiresJobMastery: { undead: 150 } },
     pearlBroker: { requiresSkillMastery: { fishWhisper: 3 }, requiresJobMastery: { fishWhisperer: 75 } },
     rareTracker: { requiresSkillMastery: { salvageSense: 3 }, requiresJobMastery: { relicScavenger: 75 } },
     stormEel: { requiresSkillMastery: { wakeFist: 2 } },
     abyssArchivist: { requiresSkillMastery: { pearlLedger: 4 }, requiresJobMastery: { pearlBroker: 150 } },
-    krakenkin: { requiresSkillMastery: { electricBite: 4 }, requiresJobMastery: { stormEel: 150 } },
 };
-for (const job of JOBS)
-    Object.assign(job, advancedRequirements[job.id] || {});
 
 /**
  * Job mastery is intentionally not a single 150-win switch.  The target and
@@ -276,44 +261,70 @@ const JOB_MASTERY_TUNING: Record<string, { target: number; boost: number }> = {
     fisher: { target: 150, boost: 0 },
     harpoon: { target: 180, boost: .06 }, tide: { target: 180, boost: .06 }, warden: { target: 180, boost: .06 }, wanderer: { target: 1200, boost: .1 },
     tidalBrawler: { target: 260, boost: .07 }, currentScholar: { target: 260, boost: .07 }, seagrassKeeper: { target: 300, boost: .08 }, squidJester: { target: 420, boost: .09 },
-    undead: { target: 2400, boost: .16 }, netWeaver: { target: 800, boost: .12 }, fishWhisperer: { target: 900, boost: .12 }, driftwoodHermit: { target: 850, boost: .12 }, relicScavenger: { target: 1200, boost: .14 }, tideSurveyor: { target: 1500, boost: .16 }, salvageMerchant: { target: 1700, boost: .17 },
+    netWeaver: { target: 800, boost: .12 }, fishWhisperer: { target: 900, boost: .12 }, driftwoodHermit: { target: 850, boost: .12 }, relicScavenger: { target: 1200, boost: .14 }, tideSurveyor: { target: 1500, boost: .16 }, salvageMerchant: { target: 1700, boost: .17 },
     whaler: { target: 1200, boost: .14 }, corsair: { target: 1200, boost: .14 }, tempest: { target: 1400, boost: .16 }, oracle: { target: 1500, boost: .17 }, bulwark: { target: 1600, boost: .17 }, paladin: { target: 1800, boost: .18 },
-    chimera: { target: 6500, boost: .24 }, voidcaller: { target: 12000, boost: .28 }, skeleton: { target: 9000, boost: .26 }, bonecaster: { target: 10000, boost: .28 },
+    chimera: { target: 6500, boost: .24 },
     reefBrawler: { target: 2400, boost: .18 }, lineBreaker: { target: 2800, boost: .19 }, runeSwell: { target: 2800, boost: .19 }, saltAlchemist: { target: 3300, boost: .2 }, reefMedic: { target: 3200, boost: .2 }, bellTurtle: { target: 3600, boost: .21 }, clockworkAngler: { target: 5200, boost: .23 }, gambler: { target: 9000, boost: .27 }, pearlBroker: { target: 8000, boost: .26 }, rareTracker: { target: 8500, boost: .27 }, stormEel: { target: 7000, boost: .25 },
-    krakenSlayer: { target: 9000, boost: .3 }, needleDancer: { target: 8500, boost: .29 }, stormScribe: { target: 11000, boost: .32 }, lunarOracle: { target: 10000, boost: .3 }, coralSaint: { target: 12000, boost: .33 }, brineThorn: { target: 13000, boost: .34 }, bloodTide: { target: 45000, boost: .38 }, manaLeviathan: { target: 90000, boost: .4 }, soulHarvester: { target: 70000, boost: .4 }, abyssArchivist: { target: 100000, boost: .42 }, krakenkin: { target: 100000, boost: .42 },
+    krakenSlayer: { target: 9000, boost: .3 }, needleDancer: { target: 8500, boost: .29 }, stormScribe: { target: 11000, boost: .32 }, lunarOracle: { target: 10000, boost: .3 }, coralSaint: { target: 12000, boost: .33 }, brineThorn: { target: 13000, boost: .34 }, bloodTide: { target: 45000, boost: .38 }, abyssArchivist: { target: 100000, boost: .42 },
 };
-for (const job of JOBS) {
-    const tuning = JOB_MASTERY_TUNING[job.id] || { target: job.tier >= 3 ? 12000 : job.tier === 2 ? 3000 : 300, boost: job.tier >= 3 ? .3 : job.tier === 2 ? .18 : .08 };
-    job.masteryTarget ??= tuning.target;
-    job.masteryBoost ??= tuning.boost;
-}
-// v27.95 차수별 요구 숙련 상향(1·2차 그대로). 5차 전직은 선행 직업 숙달(올린 숙달 수치)이 필요합니다.
-for (const job of JOBS) job.masteryTarget = Math.round(job.masteryTarget! * (PROGRESSION.jobMasteryTierScale[job.tier] ?? 1));
-for (const job of JOBS) {
-    const parent = job.tier >= 5 && job.parent ? JOBS.find(j => j.id === job.parent) : undefined;
-    if (parent) job.mastery = Math.max(job.mastery || 0, parent.masteryTarget!);
-}
 
 /** 히든·??? 문 직업의 힌트. 이름·조건을 숨긴 실루엣 카드에 한 줄로 보입니다. */
 const JOB_HINTS: Record<string, string> = {
-    voidcaller: '한 번의 윤회를 넘긴 제논 (1차)에게 윤회의 문이 속삭입니다.',
-    undead: '열 번 쓰러져 본 모험가에게 죽음이 말을 겁니다.',
-    skeleton: '망인의 뼈가 단단해질 때 드러납니다.',
-    bonecaster: '망인의 뼈에 마나를 새길 때 드러납니다.',
-    manaLeviathan: '공허와 조류를 모두 익히고 두 번의 윤회를 건넌 자에게.',
-    soulHarvester: '나이트워커 (2차)와 망인의 기억이 깊이 쌓일 때.',
     abyssArchivist: '마법 잔해를 끝까지 적은 중개인에게 열립니다.',
-    krakenkin: '보스 열 마리의 피를 묻힌 모험가에게 혈족이 찾아옵니다.',
-    eternalNavigator: '세 번의 윤회와 폭풍을 모두 건넌 술사에게.',
-    rebirthFisher: '환생 뒤, 윤회의 문이 이 이름을 부를 때.',
     abyssMimic: '메아리를 오래 길들인 자에게 보스의 그림자가 닿습니다.',
 };
-for (const job of JOBS) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id] ?? V25_HINTS[job.id] ?? DEFENSE_HINTS[job.id];
-// v27.36 메이플 직업 이름: maple-names.ts 한곳에서 덮어씁니다(id는 그대로).
-const MAPLE_JOB_NAMES = mapleJobNames(JOBS);
-for (const job of JOBS) job.name = MAPLE_JOB_NAMES[job.id] ?? job.name;
-// v27.51 칭호·설명·힌트의 바다 표현: maple-flavor.ts.
-for (const job of JOBS) Object.assign(job, MAPLE_JOB_FLAVOR[job.id]);
+
+/**
+ * v3.44 직업 표 후처리를 한곳에 모았습니다(docs/concept.md 10장). 불러올 때 기본 직업 표에 한 번,
+ * 그 뒤 서버 전용 비밀 직업이나 화면이 받은 카탈로그 직업을 registerJobs로 더할 때 그 묶음에만 다시 적용합니다.
+ * 순서가 결과를 정하므로 바꾸지 마세요: 설명 → 회복 → 교차 조건 → 숙련 목표 → 차수 배율 → 5차 선행 숙련 → 힌트 → 메이플 이름 → 칭호·설명.
+ */
+function finishJobs(list: Job[]) {
+    for (const job of list) if (SUPPORT_JOB_DESC[job.id]) job.desc = SUPPORT_JOB_DESC[job.id];
+    for (const job of list) if (HEALERS.has(job.id)) job.healer = true;
+    for (const job of list) Object.assign(job, advancedRequirements[job.id] || {});
+    for (const job of list) {
+        const tuning = JOB_MASTERY_TUNING[job.id] || { target: job.tier >= 3 ? 12000 : job.tier === 2 ? 3000 : 300, boost: job.tier >= 3 ? .3 : job.tier === 2 ? .18 : .08 };
+        job.masteryTarget ??= tuning.target;
+        job.masteryBoost ??= tuning.boost;
+    }
+    // v27.95 차수별 요구 숙련 상향(1·2차 그대로). 5차 전직은 선행 직업 숙달(올린 숙달 수치)이 필요합니다.
+    for (const job of list) job.masteryTarget = Math.round(job.masteryTarget! * (PROGRESSION.jobMasteryTierScale[job.tier] ?? 1));
+    for (const job of list) {
+        const parent = job.tier >= 5 && job.parent ? JOBS.find(j => j.id === job.parent) : undefined;
+        if (parent) job.mastery = Math.max(job.mastery || 0, parent.masteryTarget!);
+    }
+    for (const job of list) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id] ?? V25_HINTS[job.id] ?? DEFENSE_HINTS[job.id];
+    // v27.36 메이플 직업 이름: maple-names.ts 한곳에서 덮어씁니다(id는 그대로).
+    const names = mapleJobNames(list);
+    for (const job of list) job.name = names[job.id] ?? job.name;
+    // v27.51 칭호·설명·힌트의 바다 표현: maple-flavor.ts.
+    for (const job of list) Object.assign(job, MAPLE_JOB_FLAVOR[job.id]);
+}
+finishJobs(JOBS);
+/**
+ * v3.44 직업 더하기: 서버는 비밀 직업 표를, 화면은 서버가 보낸 카탈로그 직업을 여기로 넣습니다.
+ * 이미 있는 id는 건너뜁니다(같은 묶음을 두 번 받아도 안전). 더한 직업 수를 돌려줍니다.
+ */
+export function registerJobs(list: Job[], finished = false) {
+    const fresh = list.filter(j => !JOBS.some(x => x.id === j.id));
+    if (!fresh.length) return 0;
+    JOBS.push(...fresh);
+    if (!finished) finishJobs(fresh);
+    jobByIdMap = undefined; lineageCache = new WeakMap();
+    return fresh.length;
+}
+/** v3.44 화면: 카탈로그 직업(완성된 모양)을 넣거나 실루엣을 드러난 직업으로 바꿉니다. 바뀐 수를 돌려줍니다. */
+export function upsertJobs(list: Job[]) {
+    let changed = 0;
+    for (const j of list) {
+        const i = JOBS.findIndex(x => x.id === j.id);
+        if (i < 0) { JOBS.push(j); changed++; }
+        else if (JSON.stringify(JOBS[i]) !== JSON.stringify(j)) { JOBS[i] = j; changed++; }
+    }
+    if (changed) { jobByIdMap = undefined; lineageCache = new WeakMap(); }
+    return changed;
+}
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };
@@ -354,16 +365,18 @@ export const LINEAGES: Lineage[] = [
     { id: 'bossNaturalist', name: '거수 생태학자 계보', tree: 'support', summary: '보스와 지정 몬스터의 숙련을 빠르게 쌓는 계보입니다.' },
     { id: 'bard', name: '방랑 음유시인 계보', tree: 'support', summary: '가속·경험치·보상으로 성장을 보조하는 계보입니다.' },
     independent('support'),
-    { id: 'undead', name: '망인 계보', tree: 'mystery', summary: '불리한 몸을 숙련으로 극복하는 골격·골령 계보입니다.' },
-    { id: 'voidcaller', name: '공허의 기록자 계보', tree: 'mystery', summary: '환생 이후에 드러나는 마나 비례 히든 계보입니다.' },
-    { id: 'krakenkin', name: '크라켄 혈족', tree: 'mystery', summary: '몬스터의 피를 이은 추가타 직업입니다.' },
     /** v3.25 해커 계열: 해커 → 화이트 해커. 싸우지 않고 서버를 건드리는 계보입니다. v3.28 블랙 해커. */
-    { id: 'hacker', name: '해커 계보', tree: 'mystery', summary: '전투 대신 침투 작전과 해킹으로 자라는 계보입니다. 화이트 해커는 해킹을 되돌리고 서버를 지키고, 블랙 해커는 더 자주·더 비싸게 해킹하다 추적당할 위험을 집니다.' },
     independent('mystery'),
     ...MONOSTAT_LINEAGES,
 ];
 for (const lineage of LINEAGES) lineage.name = MAPLE_LINEAGE_NAMES[lineage.id] ?? lineage.name;
 for (const lineage of LINEAGES) lineage.summary = MAPLE_LINEAGE_SUMMARY[lineage.id] ?? lineage.summary;
+/**
+ * v3.44 계보 더하기·바꾸기(비밀 계보: 서버는 전체, 화면은 카탈로그의 것). 같은 id는 내용을 바꿉니다.
+ */
+export function registerLineages(list: Lineage[]) {
+    for (const l of list) { const i = LINEAGES.findIndex(x => x.id === l.id); if (i >= 0) LINEAGES[i] = l; else LINEAGES.splice(LINEAGES.findIndex(x => x.id === 'mystery-independent'), 0, l); }
+}
 /** 직업의 계보 id. lineage가 있으면 그 값, 상위·하위가 없는 1차 직업은 `${tree}-independent`, 그 밖에는 루트 조상 id. */
 export function lineageOf(job: Job): string {
     // v27.62 직업의 부모·계열은 데이터가 정해지면 바뀌지 않아 한 번 계산한 계보를 기억합니다(전직 화면이 렌더마다 수천 번 부름).
@@ -380,7 +393,7 @@ export function lineageOf(job: Job): string {
     lineageCache.set(job, out);
     return out;
 }
-const lineageCache = new WeakMap<Job, string>();
+let lineageCache = new WeakMap<Job, string>();
 /** 직업 성격 태그. tags가 없으면 role을 '·'로 나눕니다. */
 export const jobTags = (job: Job) => job.tags ?? job.role.split('·').map(x => x.trim()).filter(Boolean);
 

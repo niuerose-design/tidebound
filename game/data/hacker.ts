@@ -121,12 +121,7 @@ export const PRIVACY_FIELDS = ['job', 'level', 'gear', 'skills', 'title', 'guild
 export type PrivacyField = typeof PRIVACY_FIELDS[number];
 export const PRIVACY_LABELS: Record<PrivacyField, string> = { job: '직업', level: '레벨', gear: '장비', skills: '장착 스킬', title: '칭호', guild: '길드' };
 
-/** 해커(1차, ??? 계열 독립 직업). 능력치 보정은 없고 규칙으로 막습니다: 전투(사냥·던전·결투·월드보스·신 도전) 불가, 능력치 투자·다른 스킬 장착 불가. */
-export const HACKER_JOBS = [
-    { id: HACKER_ID, name: '해커', title: '게임의 헛점을 파고든다', desc: '전투 능력은 전무합니다. 사냥·던전·결투·월드보스·신 도전에 참여할 수 없고, 능력치 투자와 해커 전용이 아닌 스킬 장착이 막히며, 해커로 있는 동안 레벨·경험치가 멈춥니다. 대신 침투 작전으로 비트와 권한을 쌓고, 서버의 방송을 탈취하고 다른 모험가의 숨김을 깨뜨립니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 30, rebirth: 3, mastery: 0, requires: {}, role: '해킹·서버', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '세 번의 윤회를 넘긴 자에게 서버의 틈이 보입니다.', masteryTarget: 3000, masteryBoost: 0 },
-    { id: BLACK_HACKER_ID, name: '블랙 해커', title: '흔적을 남기지 않는 자', desc: '해커와 같은 제약(전투 불가, 레벨·경험치 정지)을 받습니다. 해킹의 하루 횟수가 두 배(쿨다운 절반)지만 비트도 두 배로 들고, 해킹마다 실패 확률(35% − 단계×3%, 최소 5%)이 있습니다. 실패하면 비트·횟수만 쓰이고, 추적되어 소식에 이름이 공지되며 6시간 동안 해킹할 수 없습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, rebirth: 3, parent: HACKER_ID, mastery: 1500, requires: {}, role: '고위험 해킹', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '해커로 서버를 충분히 들여다본 자에게 더 어두운 길이 보입니다.', masteryTarget: 6000, masteryBoost: 0 },
-    { id: WHITE_HACKER_ID, name: '화이트 해커', title: '뚫린 곳을 막는 자', desc: '해커와 같은 제약(전투 불가, 레벨·경험치 정지)을 받습니다. 공격 해킹(방송 탈취·크래킹·이벤트 변조·서버 다운) 대신 다른 해커의 해킹을 되돌리고(현상금으로 비트), 사냥터·던전을 패치해 한 시간 동안 서버 다운을 막습니다. 전용 패시브 방화벽은 하루 한 번 크래킹을 막아 냅니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 30, rebirth: 3, parent: HACKER_ID, mastery: 1500, requires: {}, role: '복구·패치', tree: 'mystery' as const, lineage: 'hacker', hidden: true, hint: '해커로 서버를 충분히 들여다본 자에게 반대편 길이 보입니다.', masteryTarget: 6000, masteryBoost: 0 },
-];
+/** v3.44 해커 계열 직업(해커·화이트 해커·블랙 해커)은 비밀 직업이라 game/secret/jobs.ts로 옮겼습니다(서버 전용). */
 
 /** 해커 계열 스킬: 신원 조작(id adGuard, 옛 애드가드)과 화이트 해커 방화벽. 숙련은 해커 활동(침투·브루트포스·해킹)으로 오릅니다. */
 export const HACKER_SKILLS: Skill[] = [

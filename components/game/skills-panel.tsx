@@ -19,6 +19,7 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { skillGrowthStages, skillEffectLines, skillBonusText, skillPercent, skillBrief, skillExtraNotes } from '@/game/systems/skill-description';
 
 import { ENEMY_SKILLS } from '@/game/data/encounters';
+import { catalogNow } from '@/game/data/catalog';
 
 
 
@@ -149,8 +150,16 @@ export function Skills({ s, send, busy }: PanelProps) {
     /** 계보별 묶기: 현재 직업 → 선행 직업(가까운 순) → 공용 → 다른 직업(계승). */
     const groupOf = (sk: Skill) => !sk.job ? { key: 'common', order: line.length + 1, name: '공용' } : sk.job === s.job ? { key: sk.job, order: 0, name: `${currentJob.name} · 현재 직업` } : line.includes(sk.job) ? { key: sk.job, order: line.indexOf(sk.job), name: `${jobById(sk.job)?.name} · 선행 직업` } : { key: sk.job, order: line.length + 2, name: `${jobById(sk.job)?.name} · 계승` };
     const q = query.trim().toLowerCase();
+    /**
+     * v3.45 정보 비공개(docs/concept.md 10장): 비공개가 켜져 있으면 만나 본 직업의 스킬만 목록·검색에 나옵니다.
+     * 공용 스킬, 현재 직업과 그 계보, 들어가 본 직업(숙달 포함), 이미 배웠거나 장착한 스킬. 오픈 베타(꺼짐)에는 지금처럼 전부.
+     */
+    const secret = catalogNow().secret;
+    const known = (sk: Skill) => !secret || !sk.job || sk.job === s.job || line.includes(sk.job) || s.unlockedJobs.includes(sk.job) || (s.learned[sk.id] || 0) > 0 || s.skills.includes(sk.id);
+    const unknownCount = secret ? SKILLS.filter(sk => !known(sk)).length : 0;
     // 검색어가 있으면 범위(현재 직업·해금 등)를 무시하고 모든 기술에서 찾습니다. 이름·설명·직업 이름·효과 설명을 대상으로 합니다.
     const list = SKILLS.filter(sk => {
+        if (!known(sk)) return false;
         const acquired = (s.learned[sk.id] || 0) > 0;
         if (!q) {
             if (scope === 'current' && sk.job !== s.job && !(s.job === 'fisher' && !sk.job)) return false;
@@ -202,7 +211,7 @@ export function Skills({ s, send, busy }: PanelProps) {
                 <div className="skill-chip-group" role="group" aria-label="효과">{(Object.keys(DAMAGE_LABEL) as SkillDamage[]).map(k => <button type="button" key={k} className={`skill-chip ${damage === k ? 'active' : ''}`} aria-pressed={damage === k} onClick={() => setDamage(k)}>{DAMAGE_LABEL[k]}</button>)}</div>
                 <label className="gear-select">정렬<select value={sort} onChange={e => setSort(e.target.value as SkillSort)} aria-label="스킬 정렬">{(Object.keys(SORT_LABEL) as SkillSort[]).map(k => <option key={k} value={k}>{SORT_LABEL[k]}</option>)}</select></label>
                 {filtersOn && <button type="button" className="text-button" onClick={() => { setQuery(''); setKind('all'); setDamage('all'); setSort('default'); setFilter('all'); }}>필터 초기화</button>}
-                <span className="gear-count">{list.length}종 표시{q ? ' · 검색 중에는 모든 직업의 기술을 봅니다' : ''}</span>
+                <span className="gear-count">{list.length}종 표시{q ? ` · 검색 중에는 ${secret ? '만나 본 ' : '모든 '}직업의 기술을 봅니다` : ''}{unknownCount ? ` · 아직 들어가 보지 않은 직업의 스킬 ${unknownCount}개는 그 직업에 들어가면 보입니다` : ''}</span>
             </div>
         </section>
         <div className="skill-view-toolbar"><Tabs value={scope} onValueChange={setScope}><TabsList className="game-tabs"><TabsTrigger value="current">{currentJob.name} 전용</TabsTrigger><TabsTrigger value="equipped">장착 중 {s.skills.length}</TabsTrigger><TabsTrigger value="pinned">즐겨찾기 {pins.length}</TabsTrigger><TabsTrigger value="owned">해금한 스킬</TabsTrigger><TabsTrigger value="common">공용</TabsTrigger><TabsTrigger value="all">전체 계보</TabsTrigger><TabsTrigger value="hidden">숨김 {hidden.length}</TabsTrigger></TabsList></Tabs><div className="skill-view-toggle" role="group" aria-label="스킬 보기 방식"><button className={view === 'simple' ? 'active' : ''} aria-pressed={view === 'simple'} onClick={() => setView('simple')}>간단히 보기</button><button className={view === 'detail' ? 'active' : ''} aria-pressed={view === 'detail'} onClick={() => setView('detail')}>자세히 보기</button><button className={grouped ? 'active' : ''} aria-pressed={grouped} onClick={() => setGrouped(v => !v)}>계보별 묶기</button></div></div>

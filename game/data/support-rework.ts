@@ -16,8 +16,6 @@ import type { Skill } from '../types';
  * 패시브 수치(SUPPORT_PASSIVES)는 skills.ts에서 기술 목록을 다 모은 뒤 덮어씁니다.
  */
 type NewJob = Omit<Job, 'masteryTarget' | 'masteryBoost'> & Partial<Pick<Job, 'masteryTarget' | 'masteryBoost'>>;
-const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0 };
-const DOOR_T1 = { ...neutral, tier: 1, level: 10, mastery: 0, tree: 'mystery' as const, branchless: true, hidden: true, masteryTarget: 2000, masteryBoost: .12 };
 const A = { type: 'active' as const, chance: .26, cooldown: 3, multiplier: 1 };
 const P = { type: 'passive' as const, chance: 0, cooldown: 0, multiplier: 0 };
 const physical = { damageType: 'physical' as const, manaCost: 0 };
@@ -200,32 +198,8 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
 
 /** ??? 문 직업. 모두 상위·하위가 없는 독립 1차이며 문(doors.ts)이 열릴 때만 전직할 수 있습니다. */
 export const SUPPORT_JOBS: NewJob[] = [
-    { id: 'headwindSailor', name: '역풍 항해사', title: '거꾸로 부는 바람을 탄다', desc: '다섯 번째 바다에 닿은 자에게 열리는 항해사. 스스로 가속하는 태킹과 속도·회피 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, hp: 5 }, requires: { dex: 12, luk: 10 }, role: '시간·속도', penalties: { defense: -2 } },
-    { id: 'sunriseAngler', name: '해돋이 낚시꾼', title: '첫 햇살에 줄을 던진다', desc: '열다섯 종을 만난 자에게 열리는 술사. 여명 섬광과 마나 회복 패시브로 주문을 자주 씁니다.', ...DOOR_T1, bonus: { magic: 5 }, requires: { int: 12, wis: 10 }, role: '시간·마나', penalties: { attack: -2 } },
-    { id: 'barehandFisher', name: '맨손 어부', title: '무기도 필요 없다', desc: '무기 없이 버틴 자에게 열리는 어부. 방어를 버리고 맨손으로 큰 한 방을 노립니다.', ...DOOR_T1, bonus: { attack: 4 }, requires: { str: 14 }, role: '시간·공격', penalties: { defense: -3, mana: -4 } },
-    { id: 'noonDiver', name: '한낮 잠수부', title: '뜨거운 해 아래 가장 깊이', desc: '던전을 다섯 번 정복한 자에게 열리는 잠수부. 최대 체력에 비례하는 잠수 공격과 체력·방어 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, defense: 1 }, requires: { vit: 14 }, role: '시간·체력', penalties: { speed: -2 } },
-    { id: 'mistSwordsman', name: '안개 검객', title: '보이지 않는 칼끝', desc: '결투에서 이겨 본 자에게 열리는 검객. 명중이 높은 안개 베기와 회피·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 3 }, crit: .02, requires: { dex: 12, str: 10 }, role: '시간·회피', penalties: { hp: -10 } },
-    { id: 'nightHeron', name: '밤왜가리 사냥꾼', title: '움직이지 않고 기다린다', desc: '오백 마리를 낚은 자에게 열리는 사냥꾼. 피해 없이 감속을 거는 정적과 명중·치명 패시브를 가집니다.', ...DOOR_T1, bonus: { attack: 2, magic: 1 }, requires: { dex: 10, luk: 12 }, role: '시간·감속', penalties: { resist: -2 } },
-    { id: 'poorMonk', name: '청빈 수도승', title: '가진 것이 없어 잃을 것도 없다', desc: '빈손으로 싸우는 수도승. 흡혈하는 빈손 장타와 골드를 내려놓는 대신 단단해지는 서약을 가집니다.', ...DOOR_T1, bonus: { hp: 10, resist: 1 }, requires: { vit: 12, wis: 12 }, role: '발견·생존', penalties: { crit: -.01 } },
-    { id: 'codexReader', name: '바다 백과 독자', title: '모든 몬스터를 읽었다', desc: '도감을 깊이 읽은 자에게 열리는 술사. 도감 기록에 비례하는 주문과 패시브를 가집니다.', ...DOOR_T1, bonus: { magic: 5, resist: 1 }, requires: { int: 14 }, role: '발견·도감', penalties: { hp: -10 } },
-    { id: 'journeyman', name: '떠돌이 낚시꾼', title: '배운 것은 몸에 남는다', desc: '직업 셋을 끝까지 숙달한 자에게 열리는 패시브 전용 직업. 두 패시브가 숙달한 직업 수에 비례해 자라며, 계승하면 어느 직업에서든 그대로 힘이 됩니다.', ...DOOR_T1, bonus: { attack: 2, magic: 2, hp: 10 }, requires: { str: 10, int: 10, vit: 10 }, role: '숙달·누적', fullKit: true, masteryTarget: 4000, masteryBoost: .15 },
-    { id: 'polymath', name: '팔방 어부', title: '여덟 가지 삶을 한 몸에', desc: '직업 여덟을 숙달한 떠돌이 모험가에게 열리는 2차급 독립 직업. 숙달한 직업 수에 비례하는 복합 일격과 패시브를 가집니다.', ...neutral, crit: .02, bonus: { attack: 4, magic: 4, hp: 20 }, tier: 2, level: 25, mastery: 0, requires: { str: 20, int: 20, vit: 20 }, requiresJobMastery: { journeyman: 4000 }, requiresMastered: 8, role: '숙달·복합', tree: 'mystery', lineage: 'mystery-independent', branchless: true, hidden: true, fullKit: true, masteryTarget: 12000, masteryBoost: .2 },
-    { id: 'hundredLives', name: '백수', title: '모든 생을 기억하는 모험가', desc: '직업 열다섯을 숙달한 자에게 열리는 3차급 독립 직업. 숙달한 직업 수만큼 강해지는 천 번의 삶과 패시브로 모든 숙련의 결산을 받습니다.', ...neutral, hp: 1.02, crit: .03, bonus: { attack: 12, magic: 12, hp: 60, defense: 3, resist: 3 }, tier: 3, level: 40, mastery: 0, requires: { str: 30, int: 30, vit: 30 }, requiresJobMastery: { polymath: 12000 }, requiresMastered: 15, role: '숙달·결산', tree: 'mystery', lineage: 'mystery-independent', branchless: true, hidden: true, fullKit: true, masteryTarget: 40000, masteryBoost: .3 },
-    { id: 'fallenAngler', name: '칠전팔기 낚시꾼', title: '넘어진 만큼 일어선다', desc: '여러 번 쓰러져 본 자에게 열리는 직업. 흡혈하는 일어서기와 체력·흡혈 패시브를 가집니다.', ...DOOR_T1, bonus: { hp: 15, attack: 1 }, requires: { vit: 12, str: 10 }, role: '발견·흡혈', penalties: { speed: -2 } },
 ];
 
 /** 실루엣 카드 힌트. */
 export const SUPPORT_HINTS: Record<string, string> = {
-    headwindSailor: '다섯 번째 사냥터까지 거슬러 올라간 모험가에게.',
-    sunriseAngler: '열다섯 종의 몬스터를 처음 만난 아침에.',
-    barehandFisher: '무기 없이 열다섯 레벨을 넘긴 모험가에게.',
-    noonDiver: '던전 다섯 번을 끝까지 잠수한 자에게.',
-    mistSwordsman: '결투에서 세 번 이긴 뒤 안개가 걷힙니다.',
-    nightHeron: '오백 마리를 낚고도 물가를 떠나지 않은 자에게.',
-    poorMonk: '어느 정도 성장했는데도 주머니가 거의 비어 있을 때.',
-    codexReader: '도감에 기록이 서른 개 넘게 쌓였을 때.',
-    fallenAngler: '서른 번쯤 쓰러져 본 모험가에게.',
-    journeyman: '직업 셋을 끝까지 숙달한 모험가에게.',
-    polymath: '떠돌이 모험가가 여덟 가지 삶을 모두 숙달했을 때.',
-    hundredLives: '만능 모험가가 열다섯 가지 삶을 모두 숙달했을 때.',
 };

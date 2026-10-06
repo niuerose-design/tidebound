@@ -27,7 +27,7 @@ export async function postPlayerNews(id: string, s: State, events: NewsEvent[], 
     for (const e of events) await postNews(e.text(name), now);
 }
 
-/** v3.43 운영 페이지 소식 테스트: 종류별 예시 줄을 실제 소식과 같은 문장·발신자로 올립니다. */
+/** 운영 페이지 소식 테스트: 종류별 예시 줄을 실제 소식과 같은 문장·발신자로 올립니다. */
 export const NEWS_SAMPLES = [
     { id: 'onyx', label: '칠흑 장신구' }, { id: 'ascend', label: '승천' }, { id: 'tier5', label: '5차 전직' }, { id: 'abyss', label: '무릉도장 50층' },
     { id: 'star22', label: '22성 강화' }, { id: 'general', label: '장성 진급' }, { id: 'hacker', label: '해커 전직(빨간 줄)' },

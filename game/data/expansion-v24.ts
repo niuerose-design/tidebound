@@ -70,16 +70,12 @@ export const V24_JOBS: NewJob[] = [
     // ── 4차에서 끝나던 계보의 5차 ─────────────────────────
     { id: 'curseQueen', name: '저주의 여왕', title: '모든 저주가 무릎 꿇는다', desc: '침묵을 걸며 제어된 적을 무너뜨리는 보이드 버스트와 마법 공격·지속 피해 패시브로 칼리 계보의 정점에 선 5차 직업입니다.', ...neutral, defense: 1.08, magic: 1.7, hp: 1.2, resist: 1.3, crit: .08, ...T5, parent: 'calamityShrine', requires: { int: 70, wis: 54 }, requiresSkillMastery: { calamityRite: 3 }, role: '저주 최상위', tree: 'status' },
     { id: 'seaDragonGod', name: '좀비 루팡신', title: '바다를 감고 하늘에 오른다', desc: '기절을 거는 다크나이트 (5차)의 창과 두 공격·체력 패시브로 다크나이트 계보의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.5, magic: 1.5, hp: 1.25, defense: 1.08, resist: 1.08, crit: .06, ...T5, parent: 'abyssDragonLord', requires: { str: 64, wis: 62 }, requiresSkillMastery: { leviathanCharge: 3 }, role: '복합 최상위·좀비 루팡', tree: 'hybrid' },
-    { id: 'deathEmperor', name: '불멸의 사령제', title: '죽음조차 거느리는 황제', desc: '영혼을 거두며 흡혈하는 쉐도우 바이트와 치명·흡혈·공격 패시브로 망인 계보의 정점에 선 히든 5차 직업입니다.', ...neutral, attack: 1.55, magic: 1.1, hp: 1.12, defense: 1.15, crit: .2, ...T5, parent: 'lichKing', requires: { str: 68, luk: 54 }, requiresSkillMastery: { soulTyranny: 3 }, role: '치명·영혼 최상위', tree: 'mystery', lineage: 'undead', hidden: true },
-    { id: 'voidIncarnate', name: '공허의 화신', title: '아무것도 없는 곳에서 모든 것이', desc: '최대 마나에 비례하는 인피니트와 거대한 마나·마법 공격 패시브로 아델 계보의 정점에 선 히든 5차 직업입니다.', ...neutral, defense: 1.08, magic: 1.75, hp: 1.18, resist: 1.3, crit: .12, ...T5, rebirth: 3, parent: 'voidSovereign', requires: { int: 74, wis: 56 }, requiresSkillMastery: { abyssDecree: 3 }, role: 'MP 최상위·히든', tree: 'mystery', lineage: 'voidcaller', hidden: true },
 ];
 
 /** 히든 직업 실루엣 카드의 힌트. */
 export const V24_HINTS: Record<string, string> = {
     samsaraArchivist: '마법 잔해를 끝까지 적은 기록관이 지난 생을 세기 시작할 때.',
     aeonChronicler: '세 번의 윤회를 넘어 서클 오브 썬더가 짙어질 때.',
-    deathEmperor: '나이트워커 (4차)가 영혼의 폭정을 완성한 날.',
-    voidIncarnate: '세 번의 윤회 끝에 공허의 칙령이 완성될 때.',
 };
 
 const P = { type: 'passive' as const, chance: 0, cooldown: 0, multiplier: 0, rankEffects: { bonusScale: .3 } };
