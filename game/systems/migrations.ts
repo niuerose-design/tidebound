@@ -188,7 +188,7 @@ export function keepTrainingInheritance(s: State) {
     if (kept) addLog(s, `수련 패시브의 숙련 요구치가 올라, 이미 계승한 수련 패시브 ${kept}개는 계승을 그대로 유지합니다.`, 'system');
     return kept;
 }
-/** v3.76 직업 숙달 목표 상향(data/skills.ts alignJobMastery): 예전 목표로 이미 숙달한 직업은 숙달로 남깁니다. 한 번만 처리합니다. */
+/** v3.77 직업 숙달 목표 상향(data/skills.ts alignJobMastery): 예전 목표로 이미 숙달한 직업은 숙달로 남깁니다. 한 번만 처리합니다. */
 export function keepMasteredJobs(s: State) {
     if (s.masteryAligned) return 0;
     s.masteryAligned = true;

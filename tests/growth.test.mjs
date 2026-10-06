@@ -171,7 +171,7 @@ const H95 = await import('./harness.mjs');
 test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-2 stay, old inheritance is kept', () => {
  const { JOBS: J, PROGRESSION: P, jobMasteryTarget: target, masteryMilestonesFor: ms, inherited: inh, migrateState: migrate, newState: fresh, act: doAct } = H95;
  assert.deepEqual(P.jobMasteryTierScale, [1, 1, 1, 3, 15, 50]); assert.deepEqual(P.skillMasteryTierScale, [1, 1, 1, 3, 10, 25]);
- // v3.76 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계(최대) × 40%(능력치 수련·해커는 따로).
+ // v3.77 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계(최대) × 40%(능력치 수련·해커는 따로).
  const own = id => SKILLS.filter(x => x.job === id && !x.song).map(x => ms(x).at(-1));
  for (const j of J.filter(j => j.tier >= 1 && !j.retired && own(j.id).length && !/Training[123]$|[hH]acker$/.test(j.id))) {
   const want = Math.max(...own(j.id)) * .4, got = target(j); assert.ok(Math.abs(got - want) <= (want >= 10000 ? 500 : 50), `${j.id} ${got} vs ${want}`);

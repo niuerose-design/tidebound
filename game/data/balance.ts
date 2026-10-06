@@ -156,7 +156,7 @@ export const SKILL_FORMULA = {
     arcaneRatioByTier: [0, 0, 0, .03, .05, .05],
     // v21.2 전용 기술: signatureTier 이상 직업의 기술은 자기 계보(조상·후손 직업)에서 온전히,
     // 계보 밖에서 계승하면 배율·패시브 수치가 signatureScale 배로 발휘됩니다. 1~3차 기술은 자유롭게 조합됩니다.
-    // v3.76 시작 차수 4 → 5(docs/concept.md 11.3): 4차 기술은 계보 밖에서도 온전히 씁니다.
+    // v3.77 시작 차수 4 → 5(docs/concept.md 11.3): 4차 기술은 계보 밖에서도 온전히 씁니다.
     signatureTier: 5, signatureScale: .7,
     // v24.2 지정 몬스터 연구(와일드헌터 계보)의 대상: 리본 돼지·파이어보어·머쉬맘.
     designatedSpecies: ['eel', 'emberEel', 'grottoWarden'],

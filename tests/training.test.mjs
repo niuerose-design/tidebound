@@ -9,7 +9,7 @@ test('v3.69 training: six training jobs absorb the 27 old independents; every ol
     const ids = Object.keys(T.TRAINING_GROUPS);
     assert.equal(ids.length, 6); assert.equal(T.RETIRED_TRAINING.length, 27); assert.equal(new Set(T.RETIRED_TRAINING).size, 27);
     for (const id of ids) { const j = job(id); assert.ok(j && j.tier === 1 && lineageOf(j) === `${j.tree}-independent` && j.subRole === 'training' && !j.retired, id); }
-    // v3.76 숙달 목표 = 패시브 마지막 숙련 단계(225,000) × 40%.
+    // v3.77 숙달 목표 = 패시브 마지막 숙련 단계(225,000) × 40%.
     for (const id of ids) assert.equal(P.jobMasteryTarget(job(id)), 90_000, id);
     for (const old of T.RETIRED_TRAINING) { assert.ok(job(old).retired, old); assert.equal(SKILLS.filter(sk => sk.job === old).length, 0, `${old} owns nothing now`); }
     // 지도 제작자는 둘로: 교란 → 마법 수련, 측량(드롭) → 보조 수련. 척후병의 출혈·중독 → 상태이상 수련.
@@ -76,7 +76,7 @@ test('v3.70 stat training I-III: opened by 1M training mastery, each step needs 
     assert.deepEqual([1, 2, 3].map(n => SKILLS.find(sk => sk.id === `strDrill${n}`).cost), [4, 6, 8], 'high AP cost'); assert.ok(stats(h).attack > before);
 });
 
-test('v3.76 job mastery targets follow skill milestones (40% of the last); jobs mastered under the old target stay mastered', async () => {
+test('v3.77 job mastery targets follow skill milestones (40% of the last); jobs mastered under the old target stay mastered', async () => {
     const Sk = await load('game/data/skills.js');
     const whaler = job('whaler'), old = Sk.LEGACY_MASTERY_TARGET.whaler;
     assert.ok(old < P.jobMasteryTarget(whaler), 'target went up');

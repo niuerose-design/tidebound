@@ -14,10 +14,40 @@
 .appraisal-odds b { font-weight:500; }
 .gamble-icon { display:flex; align-items:center; justify-content:center; width:66px; height:66px; border:1px solid #507361; border-radius:14px; background:#203b36; color:#c3d3ad; margin-bottom:5px; }
 .gamble-guarantee { font-size:12px; color:#a8bcb4; }
-.forge-card h2 { font-size:18px; line-height:1.65; }
 .forge-actions { display:flex; flex-direction:column; gap:10px; margin-top:auto; }
 .forge-actions>p { margin:0 0 2px; }
 .forge-actions>button { width:100%; font-size:13px; }
+/* v3.76 장비 작업대: 상점 강화 탭(부위 고르기 + 작업대)과 착용 장비 상세가 같은 틀을 씁니다. */
+.forge-picker { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+.forge-pick { display:flex; align-items:center; gap:10px; min-width:0; padding:10px 12px; border:1px solid var(--border); border-top:2px solid var(--rarity); border-radius:10px; background:#0f1d21; color:inherit; text-align:left; cursor:pointer; }
+.forge-pick svg { color:var(--rarity); flex:none; }
+.forge-pick span { display:grid; min-width:0; flex:1; }
+.forge-pick small { font-size:11px; color:#8fa6a4; }
+.forge-pick b { font-size:13px; color:var(--rarity); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.forge-pick em { font-style:normal; font-size:12px; flex:none; }
+.forge-pick.on { background:#16302f; border-color:var(--rarity); box-shadow:inset 0 0 0 1px var(--rarity); }
+.forge-panel, .gear-slot-open { padding:18px 20px; border-top:2px solid var(--rarity); margin-bottom:14px; }
+.forge-head { display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid #9ab4b51a; }
+.forge-head>div { min-width:0; }
+.forge-head h2 { margin:0; font-size:18px; line-height:1.4; color:var(--rarity); }
+.forge-head small { font-size:12px; color:#8fa6a4; }
+.forge-head .text-button { margin-left:auto; }
+.forge-bench { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:24px; align-items:start; margin-top:14px; }
+.forge-bench-info, .forge-bench-work { min-width:0; }
+.forge-bench-info .equipment-numbers { margin:12px 0; }
+.forge-desc { margin:0; font-size:13px; color:#b8cbc5; }
+.forge-star { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; padding:12px 14px; border:1px solid #9ab4b52a; border-radius:10px; background:#0f1d21; }
+.forge-star-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.forge-star-head b { font-size:14px; }
+.forge-star .star-row { flex-wrap:nowrap; margin:0; }
+.forge-star .star-row i { flex:1 1 0; min-width:0; text-align:center; font-size:clamp(10px,1.4vw,16px); }
+.forge-star .star-odds { margin:0; }
+.forge-star .relic-imprint { margin:4px 0 0; }
+.forge-note { margin:0; font-size:12px; color:#7f9596; }
+.forge-rules summary { cursor:pointer; font-size:12px; color:#8fa6a4; }
+.forge-rules p { margin:6px 0 0; font-size:12px; line-height:1.6; color:#9fb5b2; }
+.gear-slot-open .gear-detail { padding:0; border-top:0; }
+.gear-slot:has(.gear-slot-item.open) { box-shadow:inset 0 0 0 1px var(--rarity); }
 .legacy-resource-bar { grid-template-columns:.8fr .8fr 1fr 1.3fr; }
 .legacy-resource-bar>div:last-child strong small { display:block; margin-top:4px; line-height:1.5; }
 .rebirth-ready { display:grid; grid-template-columns:minmax(0,1fr) 245px; gap:30px; padding:28px; }
@@ -142,6 +172,10 @@
 }
 @media (max-width:1000px) {
     .port-gamble-grid { grid-template-columns:1fr; }
+    .forge-bench { grid-template-columns:minmax(0,1fr); }
+    .forge-bench-work { order:-1; }
+    .forge-picker { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .forge-star .star-row i { font-size:clamp(10px,3.6vw,16px); }
 }
 @media (max-width:767px) {
     .port-resource-bar { padding:20px; gap:18px; grid-template-columns:repeat(2,minmax(0,1fr)); }

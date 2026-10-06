@@ -262,7 +262,7 @@ for (const sk of SKILLS) {
 // v3.70 능력치 수련 패시브(data/stat-training.ts).
 registerSkills(STAT_TRAINING_SKILLS);
 /**
- * v3.76 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계 중 가장 큰 값 × 40%(MASTERY_ALIGN.ratio). 스킬 숙련 기준과 같이 오르도록 맞춥니다.
+ * v3.77 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계 중 가장 큰 값 × 40%(MASTERY_ALIGN.ratio). 스킬 숙련 기준과 같이 오르도록 맞춥니다.
  * 예전 목표는 LEGACY_MASTERY_TARGET에 남겨, 그 기준으로 이미 숙달한 직업은 숙달로 둡니다(migrations.keepMasteredJobs).
  * 능력치 수련(목표를 따로 정함) · 해커(처치 숙련 없음) · 스킬이 없는 직업은 그대로입니다. 5차 전직 조건(부모 숙달)도 새 목표를 따릅니다.
  * 비밀 직업은 서버가 등록한 뒤(secret/register.ts) 같은 함수로 맞춥니다.
