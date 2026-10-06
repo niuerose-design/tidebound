@@ -269,10 +269,10 @@ Lv.100, 같은 직업 계보(모두 숙달), 전설 장비 4부위, 연구는 �
 | 초기화: 무릉도장 | 최고층, 층 이정표(첫 도달 보상), 주간 기록. 승천 기록에 이번 승천 최고층을 남긴 뒤 0 | `abyssBest`, `abyssMilestones`, `abyssWeek` |
 | 초기화: 계정 보너스 | 승천한 캐릭터의 계정 보너스 계산. 슬롯 목록과 해금은 유지 | `account` (보너스 계산부만) |
 | 초기화: 환생 | 환생 횟수, 생 보너스(순풍·깊은 모험), 서약 | `rebirths` → 0, `lifeBonus`, `vows`, `nextVows` |
-| 초기화: 세계석 | 세계석, 세계석 연구, 연구 초기화 사용 기록 | `pearls`, `permanent`, `researchResetUsed`, `researchGranted` |
+| 초기화: 골드·세계석 | 골드(새 캐릭터와 같은 100 G), 세계석, 세계석 연구, 연구 초기화 사용 기록 | `gold`, `pearls`, `permanent`, `researchResetUsed`, `researchGranted` |
 | 초기화: SP·정수 | SP, 스킬 SP 투자, 정수, **최고 레벨(레벨 SP 판정용)** | `sp`, `skillSpent`, `essence`, `peakLevel` |
 | 유지: 해커 | 해킹 단계, 권한 등급, 비트, 애드가드 | `hacker` |
-| **유지: 직업·숙련** | 직업 숙련·숙달·단련, 해금 직업, 스킬 숙련(성장 레벨), 계승, 전문화 | `jobMastery`, `unlockedJobs`, `skillPractice`, `skillInheritances`, `legacyInherited`, `skillSpecializations` |
+| **유지: 직업·숙련** | 직업 숙련·숙달·단련, 해금 직업, 스킬 숙련(성장 레벨), 계승 | `jobMastery`, `unlockedJobs`, `skillPractice`, `skillInheritances`, `legacyInherited` (스킬 전문화는 삭제된 콘텐츠라 v3.30에서 세이브에서도 지움) |
 | 초기화: 스킬 연마·한계 돌파 | 연마 단계(30단계, 최대 +24%)와 한계 돌파 레벨(최대 3). 숙련 수치는 두고 기준점만 옮긴다(8.5) | `limitBreaks`, 새 필드 `refineBase` |
 | 초기화: SP 투자 | SP로 올린 스킬 단계는 1로, 투자 기록은 비움. 배운 스킬 목록은 유지 | `learned`(단계만), `skillSpent` |
 | 초기화: 장비 | 유물, 칠흑 장신구, 보관함 | `inventory`, `equipment` |

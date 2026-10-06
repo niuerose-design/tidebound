@@ -19,7 +19,6 @@ export type Fighter = {
     mana?: number;
     ranks?: Record<string, number>;
     mastery?: Record<string, number>;
-    specializations?: Record<string, string>;
     practice?: Record<string, number>;
     effects?: StatusEffects;
     /** 무리 사냥 개체의 규모. 자기 최대 체력 비례 공격은 한 마리 체력 기준으로 계산합니다. */
@@ -250,7 +249,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         ev.stunned = true;
         return emit(`${a.name}: 기절로 행동 불가.${notes.length ? ' ' + notes.join(' · ') : ''}`);
     }
-    const skillOf = (id: string) => { const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id); if (!base) return undefined; const c = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.specializations?.[id], a.practice?.[id] || 0); c.multiplier *= signatureScale(base, a.job); return c; };
+    const skillOf = (id: string) => { const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id); if (!base) return undefined; const c = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0); c.multiplier *= signatureScale(base, a.job); return c; };
     let chosen;
     if (forced) chosen = skillOf(forced.id);
     else if (!silenced) {
@@ -258,7 +257,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
             if (!base || base.type !== 'active' || blocked.has(id))
                 continue;
-            const candidate = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.specializations?.[id], a.practice?.[id] || 0);
+            const candidate = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0);
             candidate.multiplier *= signatureScale(base, a.job);
             // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
             if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)

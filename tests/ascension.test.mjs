@@ -29,7 +29,7 @@ test('v3.30 ascend: requirement steps, keeps mastery/achievements/rank/records, 
     const s = newState(0);
     s.rebirths = 99; s.level = 100;
     assert.throws(() => act(s, { type: 'ascend' }, 1000), /환생 100회부터/);
-    s.rebirths = 100; s.pearls = 5000; s.sp = 40; s.essence = 300; s.permanent = { attack: 30, hp: 20, gold: 5, messageBottle: 5 };
+    s.rebirths = 100; s.pearls = 5000; s.sp = 40; s.essence = 300; s.gold = 9e9; s.skillSpecializations = { hook: 'shatter' }; s.vows = { rough: 2 }; s.nextVows = { breath: true }; s.variantBook = { slime: { giant: 3 } }; s.onyxBook = { onyxDusk: 1 }; s.abyssWeek = { key: 'w', best: 30 }; s.ascensionLog = []; s.permanent = { attack: 30, hp: 20, gold: 5, messageBottle: 5 };
     s.jobMastery = { fisher: 500, wanderer: 99999 }; s.unlockedJobs = ['fisher', 'wanderer'];
     const hook = P.masteryMilestonesFor(SKILL('hook')).at(-1);
     s.skillPractice = { hook: hook + 50_000 }; s.learned = { hook: 4 }; s.skillSpent = { hook: 3 }; s.limitBreaks = { hook: 2 };
@@ -43,7 +43,8 @@ test('v3.30 ascend: requirement steps, keeps mastery/achievements/rank/records, 
     assert.equal(s.skillPractice.hook, hook + 50_000, 'skill practice kept'); assert.equal(s.learned.hook, 1, 'SP ranks reset'); assert.deepEqual(s.skillSpent, {});
     assert.deepEqual(s.limitBreaks, {}, 'limit breaks reset'); assert.equal(s.refineBase.hook, hook + 50_000, 'refinement base moved');
     assert.equal(s.rank.exp, 12345); assert.ok(s.achievementClaims['rebirths:3'], 'achievements kept'); assert.equal(s.kills, 777, 'records kept');
-    assert.deepEqual(s.book, {}, 'codex reset'); assert.equal(s.abyssBest, 0); assert.deepEqual(s.abyssMilestones, []); assert.equal(s.essence, 0);
+    assert.deepEqual(s.book, {}, 'codex reset'); assert.equal(s.abyssBest, 0); assert.deepEqual(s.abyssMilestones, []); assert.equal(s.essence, 0); assert.equal(s.gold, 100, 'gold back to a new character'); assert.equal('skillSpecializations' in s, false, 'deleted content is not carried');
+    for (const key of ['vows', 'nextVows', 'variantBook', 'onyxBook', 'abyssWeek']) assert.equal(key in s, false, `${key} reset`);
     assert.equal(s.inventory.length, 0, 'relics reset too');
     const refund = Lc.achievementRefund(s); assert.equal(refund.pearls, 1 + 3); assert.equal(s.pearls, refund.pearls, 'achievement pearls refunded');
     assert.equal(s.permanent.attack || 0, 0, 'combat research reset'); assert.equal(s.permanent.messageBottle || 0, 0, 'lucky letter must be rebought');

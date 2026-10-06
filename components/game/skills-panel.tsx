@@ -36,12 +36,12 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false
     const practice = s.skillPractice[sk.id] || 0, mastery = skillMastery(s, sk.id);
     const level = skillLevel(sk, rank || 1, mastery), max = maxSkillLevel(sk), milestones = masteryMilestonesFor(sk);
     const nextMastery = milestones[mastery], nextGrowth = milestones[level];
-    const effective = effectiveSkill(sk, rank || 1, mastery, s.skillSpecializations?.[sk.id], refinePractice(s, sk.id)), cost = effective.cost ?? 2;
+    const effective = effectiveSkill(sk, rank || 1, mastery, refinePractice(s, sk.id)), cost = effective.cost ?? 2;
     const equipped = s.skills.includes(sk.id), usable = canUse(s, sk.id), isInherited = inherited(s, sk.id);
     const paidInheritance = !!s.skillInheritances[sk.id];
     const unlockText = sk.unlockAfter && skillMastery(s, sk.unlockAfter.skill) < sk.unlockAfter.level ? `${skillById(sk.unlockAfter.skill)?.name || ''} 숙련 Lv.${sk.unlockAfter.level} 필요` : !skillUnlockReady(s, sk) ? `직업 숙련 ${sk.unlockJobMastery!.toLocaleString()} 필요` : sk.job !== s.job ? '전직 필요' : s.rebirths < (sk.rebirth || 0) ? `환생 ${sk.rebirth}회 필요` : `Lv.${sk.level}에 자동 해금`;
     const inheritanceText = !acquired ? unlockText : !sk.job ? '공용' : isInherited ? (mastery > 0 ? '숙련 계승' : 'SP 계승') : sk.job === s.job ? '현재 직업 전용' : '계승 필요';
-    const hint = skillRankHint(sk, rank || 1, mastery, s.skillSpecializations?.[sk.id], refinePractice(s, sk.id));
+    const hint = skillRankHint(sk, rank || 1, mastery, refinePractice(s, sk.id));
     const effects = skillEffectLines(effective, level);
     // v3.5 간단히 보기: 고정 효과 + 누적·환생 비례 수치(지금 기준)를 칩으로 합치고, 칩으로 못 담는 조건은 ‘기타’ 칸에 모읍니다.
     const growthNow = sk.type === 'passive' ? passiveGrowthBonus(s, sk) : {}, growing = new Set(Object.keys(growthNow));
@@ -163,7 +163,7 @@ export function Skills({ s, send, busy }: PanelProps) {
             if (hidden.includes(sk.id) && !s.skills.includes(sk.id)) return false;
         } else {
             const job = jobById(sk.job)?.name || '공용';
-            const effects = skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), s.skillSpecializations?.[sk.id], refinePractice(s, sk.id)), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ');
+            const effects = skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id)), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ');
             if (![sk.name, sk.desc, job, effects].some(x => x.toLowerCase().includes(q))) return false;
         }
         if (kind !== 'all' && sk.type !== kind) return false;
@@ -171,7 +171,7 @@ export function Skills({ s, send, busy }: PanelProps) {
         return filter === 'unlearned' ? !acquired : filter === 'usable' ? canUse(s, sk.id) : true;
     }).sort((a, b) => {
         if (sort === 'default') return 0;
-        const fx = (sk: Skill) => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), s.skillSpecializations?.[sk.id], refinePractice(s, sk.id));
+        const fx = (sk: Skill) => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id));
         if (sort === 'ap') return (fx(a).cost ?? 2) - (fx(b).cost ?? 2);
         if (sort === 'chance') return (fx(b).chance || 0) - (fx(a).chance || 0);
         if (sort === 'level') return skillLevel(b, s.learned[b.id] || 1, skillMastery(s, b.id)) - skillLevel(a, s.learned[a.id] || 1, skillMastery(s, a.id));
@@ -189,7 +189,7 @@ export function Skills({ s, send, busy }: PanelProps) {
             return <div className={`loadout-column loadout-${type}`} key={type}><h3>{type === 'active' ? '액티브' : '패시브'}<small>{type === 'active' ? '위에서부터 먼저 판정 · 처음 성공한 하나만 사용' : '장착 효과 · 순서 무관'}</small></h3>
                 <ol className="loadout-row">{ids.map((id, i) => {
                     const sk = skillById(id)!;
-                    const rank = s.learned[id] || 1, mastery = skillMastery(s, id), fx = effectiveSkill(sk, rank, mastery, s.skillSpecializations?.[id], refinePractice(s, id));
+                    const rank = s.learned[id] || 1, mastery = skillMastery(s, id), fx = effectiveSkill(sk, rank, mastery, refinePractice(s, id));
                     return <li className={`loadout-skill ${type === 'active' ? 'draggable' : ''} ${dragId === id ? 'dragging' : ''}`} key={id} draggable={type === 'active' && !busy} onDragStart={e => { setDragId(id); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDragId(null)} onDragOver={e => { if (type === 'active' && dragId) e.preventDefault(); }} onDrop={e => { e.preventDefault(); dropOn(id); setDragId(null); }}>{type === 'active' && <span className="loadout-grip" aria-hidden="true" title="끌어서 순서 변경"><GripVertical size={14}/></span>}{type === 'active' && <span className="loadout-order" aria-label={`판정 ${i + 1}순위`}>{i + 1}</span>}<SkillIcon id={id}/><div><strong>{sk.name} · Lv.{skillLevel(sk, rank, mastery)}</strong><small>AP {fx.cost}{type === 'active' ? ` · 발동 ${Math.round((fx.chance || 0) * 100)}%` : ''}</small></div>{type === 'active' && i > 0 && <button className="icon-button" aria-label={`${sk.name} 우선순위 올리기`} title="먼저 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id })}><ArrowUp size={16}/></button>}{type === 'active' && i < ids.length - 1 && <button className="icon-button" aria-label={`${sk.name} 우선순위 내리기`} title="나중에 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id: ids[i + 1] })}><ArrowDown size={16}/></button>}<button className="text-button" disabled={busy || !validLoadout(s, s.skills.filter(x => x !== id))} onClick={() => send({ type: 'skill', id })}>해제</button></li>;
                 })}</ol>
                 {!ids.length && <p className="loadout-empty">{type === 'active' ? '액티브가 없으면 기본 공격만 합니다.' : '장착한 패시브가 없습니다.'}</p>}

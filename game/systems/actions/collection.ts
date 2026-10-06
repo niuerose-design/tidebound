@@ -1,5 +1,5 @@
 /** 도감·연구 보상 */
-import { BOSS_RESEARCH } from '../../data/specializations';
+import { BOSS_RESEARCH } from '../../data/boss-research';
 import type { State } from '../../types';
 import { FISH, DUNGEONS } from '../../data/world';
 import { SLOTS, RARITIES } from '../../data/balance';

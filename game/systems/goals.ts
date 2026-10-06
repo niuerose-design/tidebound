@@ -2,7 +2,7 @@ import type { State } from '../types';
 import { JOBS, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { DUNGEONS } from '../data/world';
-import { BOSS_RESEARCH } from '../data/specializations';
+import { BOSS_RESEARCH } from '../data/boss-research';
 import { skillPracticeTargets, canUse, jobRequirements, masteryMilestonesFor, refinePractice } from './progression';
 
 export type GoalProgress = { title: string; detail: string; value: number; max: number; done: boolean; view: string; steps?: { label: string; done: boolean }[] };

@@ -10,7 +10,7 @@ import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
 import { RANKS, RANK_PERKS, rankIndex, rankState, rankPerkLevel, rankPointsFree } from '../data/rank';
-import { BOSS_RESEARCH } from '../data/specializations';
+import { BOSS_RESEARCH } from '../data/boss-research';
 import { DUNGEONS, STAGES } from '../data/world';
 import { PROGRESSION } from '../data/progression';
 import { skillById } from '../data/skills';

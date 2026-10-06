@@ -40,7 +40,7 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
     }
     fresh.abyssBest = s.abyssBest;
     fresh.shopSerial = s.shopSerial;
-    Object.assign(s, { ...fresh, skillSpecializations: s.skillSpecializations, limitBreaks: s.limitBreaks, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus: next.lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: next.pearls, essence: s.essence || 0, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, book: s.book, /** v27.80 변종·황금 개체·난이도 이정표·최고 난이도 기록도 환생 뒤에 남깁니다(전에는 초기화되던 버그). */ variantBook: s.variantBook, goldenBook: s.goldenBook, tideBest: s.tideBest, bookTier: s.bookTier, randomGameStats: s.randomGameStats, clears: s.clears, kills: s.kills, rank: s.rank, badge: s.badge, playMs: s.playMs || 0, lifeStart: s.lifeStart, rebirthLog: s.rebirthLog, deaths: s.deaths, starforce: s.starforce, onyxSeen: s.onyxSeen, onyxBook: s.onyxBook, onyxMiss: s.onyxMiss, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited, hacker: s.hacker, privacy: s.privacy, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
+    Object.assign(s, { ...fresh, limitBreaks: s.limitBreaks, bossResearchClaims: s.bossResearchClaims, abyssMilestones: s.abyssMilestones, lifeBonus: next.lifeBonus, growthGoal: s.growthGoal, name: s.name, pearls: next.pearls, essence: s.essence || 0, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, book: s.book, /** v27.80 변종·황금 개체·난이도 이정표·최고 난이도 기록도 환생 뒤에 남깁니다(전에는 초기화되던 버그). */ variantBook: s.variantBook, goldenBook: s.goldenBook, tideBest: s.tideBest, bookTier: s.bookTier, randomGameStats: s.randomGameStats, clears: s.clears, kills: s.kills, rank: s.rank, badge: s.badge, playMs: s.playMs || 0, lifeStart: s.lifeStart, rebirthLog: s.rebirthLog, deaths: s.deaths, starforce: s.starforce, onyxSeen: s.onyxSeen, onyxBook: s.onyxBook, onyxMiss: s.onyxMiss, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited, hacker: s.hacker, privacy: s.privacy, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, guild: s.guild, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
     syncRelicPower(s);
     s.hp = stats(s).hp;
     s.mana = stats(s).mana;
@@ -86,7 +86,7 @@ export function achievementRefund(s: Pick<State, 'achievementClaims'>) {
     return { pearls, sp };
 }
 /**
- * v3.30 승천(docs/balance-rebirth.md 8절): 환생·장비·연구·도감·재화를 지우고, 직업·스킬 숙련과 업적·계급장·칭호·기록만 남겨 처음부터 다시 오릅니다.
+ * v3.30 승천(docs/balance-rebirth.md 8절): 환생·장비·연구·도감·재화(골드 포함, 새 캐릭터와 같은 100 G)를 지우고, 직업·스킬 숙련과 업적·계급장·칭호·기록만 남겨 처음부터 다시 오릅니다.
  * - 스킬 연마 단계와 한계 돌파는 지웁니다: 그때의 숙련을 기준점(refineBase)으로 두고, 한계 돌파 단계는 0으로.
  * - SP로 올린 스킬 단계는 1로(배운 스킬 목록은 유지). 업적 세계석·SP는 다시 지급합니다.
  * - 편의 연구는 자동 해제(ASCENSION_RESEARCH), 튜토리얼은 건너뜁니다.
@@ -112,11 +112,13 @@ export function ascend(s: State, now: number) {
         privacy: s.privacy, autoSell: s.autoSell, autoVend: s.autoVend, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, hideDoorNotice: s.hideDoorNotice, skipStatConfirm: s.skipStatConfirm, swarmCap: s.swarmCap,
         account: s.account, hacker: s.hacker, hackFeed: s.hackFeed, doorsOpened: s.doorsOpened, shopSerial: s.shopSerial, logId: s.logId,
         relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled,
-        jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, skillPractice: s.skillPractice, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited, skillSpecializations: s.skillSpecializations,
+        jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, skillPractice: s.skillPractice, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited,
         learned: Object.fromEntries(Object.keys(s.learned || {}).map(id => [id, 1])),
         // 튜토리얼은 건너뜁니다: 모든 단계를 완료로 적어 안내도, 단계 보상도 다시 나오지 않게 합니다.
         tutorial: { ...(s.tutorial || {}), skipped: true, done: { ...Object.fromEntries(TUTORIAL_STEPS.map(x => [x.id, 1])), ...(s.tutorial?.done || {}) } },
     };
+    // 기존 항목을 모두 지운 뒤 새 캐릭터 + 유지 항목만 채웁니다(새 캐릭터에 기본값이 없는 서약·변종 도감·칠흑 기록 등이 남지 않게).
+    for (const key of Object.keys(s)) delete (s as Record<string, unknown>)[key];
     Object.assign(s, fresh, keep);
     for (const key of Object.keys(s) as (keyof State)[]) if (s[key] === undefined) delete s[key];
     s.ascension = n + 1;

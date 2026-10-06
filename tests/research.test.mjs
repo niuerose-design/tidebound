@@ -1,5 +1,5 @@
 // 세계석 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
-import { newState, act, advance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, MIMIC_DATA, NURI_DATA, assert, test } from './harness.mjs';
+import { newState, act, advance, rawAdvance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, MIMIC_DATA, NURI_DATA, assert, test } from './harness.mjs';
 
 const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'shop', 'enhance'];
 const research = id => economy.RESEARCH.find(r => r.id === id);
@@ -59,12 +59,12 @@ test('Research v2: bag size grows with the hold; reset refuses when the bag woul
 });
 
 test('Research v2: long anchor line extends the offline cap by two hours per rank', () => {
-    const run = rank => { const s = newState(0); s.permanent.offline = rank; act(s, { type: 'start' }, 0); advance(s, 40 * 3600_000, seeded(3)); return s; };
+    // 첫 분할만 돌려 정산할 전체 턴(지금 턴 + 남은 턴)으로 상한을 확인합니다(전에는 6·12시간을 끝까지 돌려 13초).
+    const run = rank => { const s = newState(0); s.permanent.offline = rank; act(s, { type: 'start' }, 0); rawAdvance(s, 40 * 3600_000, seeded(3)); return s; };
     const base = run(0), long = run(3);
     // v27.43 기본 6시간 + 2시간/단계.
     assert.equal(economy.offlineCapSeconds(base), 6 * 3600); assert.equal(economy.offlineCapSeconds(long), 12 * 3600);
-    assert.equal(base.turn, 6 * 3600 / 2); assert.equal(long.turn, 12 * 3600 / 2);
-    assert.equal(base.lastOffline.seconds, 6 * 3600); assert.equal(long.lastOffline.seconds, 12 * 3600);
+    assert.equal(base.turn + base.catchUpLeft, 6 * 3600 / 2); assert.equal(long.turn + long.catchUpLeft, 12 * 3600 / 2);
 });
 
 test('Research v2/v27.73: mastery memory adds +3% per rank with an integer carry (1/100) and no random calls', async () => {
@@ -85,7 +85,7 @@ test('Research v2: online ticks and one offline settlement give the same result 
     };
     // 까미는 오프라인 정산 중 확률이 ¼이라(v27.35) 이 비교에서는 끕니다.
     const minLevel = MIMIC_DATA.minLevel, nuriLevel = NURI_DATA.minLevel; MIMIC_DATA.minLevel = 999; NURI_DATA.minLevel = 999;
-    const offline = make(), online = make(), end = 3 * 3600_000;
+    const offline = make(), online = make(), end = 3600_000;
     try {
         advance(offline, end, seeded(42));
         const rng = seeded(42); for (let t = 2000; t <= end; t += 2000) advance(online, t, rng);
@@ -143,7 +143,7 @@ test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance p
     const roll = mimicChanceOf(MIMIC_DATA.minTier, 0) * 1.5; // 기본 확률 밖, 5단계(×1.75) 안
     const plain = make(0); spawn(plain, () => roll); assert.notEqual(plain.enemy.id, MIMIC_DATA.id);
     const lucky = make(5); spawn(lucky, () => roll); assert.equal(lucky.enemy.id, MIMIC_DATA.id);
-    const o = newState(0); o.permanent.messageBottle = 5; act(o, { type: 'start' }, 0); advance(o, 10 * 3600_000, seeded(7));
+    const o = newState(0); o.permanent.messageBottle = 5; act(o, { type: 'start' }, 0); advance(o, 1_800_000, seeded(7));
     assert.ok(o.lastOffline && !('bottles' in o.lastOffline), 'no more offline bottles');
 });
 

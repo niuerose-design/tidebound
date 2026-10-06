@@ -1,5 +1,5 @@
 /** 적 등장·드롭·승리 보상. */
-import { BOSS_RESEARCH } from '../data/specializations';
+import { BOSS_RESEARCH } from '../data/boss-research';
 import { DROP_RARITY, rollAffixes } from '../data/gear';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, refinePractice } from './progression';

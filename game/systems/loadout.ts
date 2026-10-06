@@ -10,7 +10,7 @@ import { lineage, apCapacity, canUse, effectiveSkill, skillMastery, skillMastery
 export function recommendLoadout(s: State) {
     const line = lineage(s.job), magic = stats(s).magic > stats(s).attack;
     const rank = (sk: Skill) => sk.job === s.job ? 0 : sk.job && line.includes(sk.job) ? 1 : !sk.job ? 2 : 3;
-    const fx = (sk: Skill) => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), s.skillSpecializations?.[sk.id], refinePractice(s, sk.id));
+    const fx = (sk: Skill) => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id));
     const worth = (sk: Skill) => { const e = fx(sk); if (sk.type === 'active') return (e.chance || 0) * Math.max(1, e.multiplier || 1) * (sk.damageType === 'magic' ? (magic ? 1 : .4) : sk.damageType === 'physical' ? (magic ? .4 : 1) : 1) * (sk.statusOnly ? .5 : 1); return Object.values(e.bonus || {}).reduce((n, v) => n + (v > 0 ? 1 : 0), 0) + ((e.cost ?? 2) <= 0 ? 10 : 0); };
     // v27.62 정렬 비교마다 worth(효과 계산)를 다시 부르지 않도록 한 번씩만 계산해 둡니다(결과는 같음, 스킬 화면 렉 원인).
     const usable = SKILLS.filter(sk => canUse(s, sk.id) && !skillVeiled(s, sk)), score = new Map(usable.map(sk => [sk.id, worth(sk)]));

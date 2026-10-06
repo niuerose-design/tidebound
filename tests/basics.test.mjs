@@ -1,7 +1,8 @@
 // 기본 상태·전직·SP·환급 규칙
-import { newState, act, advance, stats, apCapacity, apUsed, canUse, canChangeJob, masteryMilestonesFor, jobRequirements, SKILLS, STAGES, PROGRESSION, JOBS, assert, rng, test } from './harness.mjs';
+import { newState, act, advance, rawAdvance, stats, apCapacity, apUsed, canUse, canChangeJob, masteryMilestonesFor, jobRequirements, SKILLS, STAGES, PROGRESSION, JOBS, assert, rng, test } from './harness.mjs';
 test('Fresh state, stage and job restrictions',()=>{const s=newState(0);assert.equal(s.hp,stats(s).hp);assert.throws(()=>act(s,{type:'stage',id:'moon'},0));assert.throws(()=>act(s,{type:'job',id:'harpoon'},0));assert.throws(()=>act(s,{type:'skill',id:'pierce'},0));});
-test('Server elapsed time, capped offline progress, no repeated rewards',()=>{const s=newState(0);s.permanent.offline=9;act(s,{type:'start'},0);advance(s,86_400_000,rng);assert.equal(s.turn,43200);assert.ok(s.kills>100);const serialized=JSON.stringify(s);advance(s,86_400_000,rng);assert.equal(JSON.stringify(s),serialized);assert.ok(s.inventory.length<=60);assert.ok(s.hp>=0&&s.hp<=stats(s).hp);});
+// 정산 상한은 첫 분할(CATCH_UP_CHUNK턴)만 돌려 남은 턴 수로 확인합니다(전에는 24시간 4만 턴을 다 돌려 16초). 같은 시각 재정산은 30분 부재로 확인합니다.
+test('Server elapsed time, capped offline progress, no repeated rewards',()=>{const s=newState(0);s.permanent.offline=9;act(s,{type:'start'},0);rawAdvance(s,86_400_000,rng);assert.equal(s.turn+s.catchUpLeft,43200,'24h absence capped at 6h + 9×2h');assert.ok(s.kills>10);const t=newState(0);act(t,{type:'start'},0);advance(t,1_800_000,rng);assert.equal(t.turn,900);const serialized=JSON.stringify(t);advance(t,1_800_000,rng);assert.equal(JSON.stringify(t),serialized);assert.ok(t.inventory.length<=60);assert.ok(t.hp>=0&&t.hp<=stats(t).hp);});
 test('Pause does not accumulate rewards',()=>{const s=newState(0);advance(s,600000,rng);assert.equal(s.kills,0);act(s,{type:'start'},600000);advance(s,602000,rng);assert.equal(s.turn,1)});
 test('Job skills are free and SP cannot buy an unvisited job skill',()=>{
  const s=newState(0);s.level=25;s.sp=10;s.attributes.str=30;s.attributes.dex=20;

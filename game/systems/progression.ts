@@ -188,8 +188,8 @@ export function passiveGrowthBonus(s: State, sk: Skill, counts: Record<string, n
     if (sk.perRebirth && rebirths > 0) for (const [key, n] of Object.entries(sk.perRebirth)) out[key] = (out[key] || 0) + (n as number) * rebirths * scale;
     return out;
 }
-/** 스킬의 실제 효과. _specialization은 호출 호환용으로만 남긴 자리입니다(특화는 효과 수치를 바꾸지 않음 · check-combat-depth가 검사). */
-export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, _specialization?: string, practice = 0): Skill {
+/** 스킬의 실제 효과. practice는 연마 단계에 쓰는 숙련(refinePractice). v3.30 효과가 없던 스킬 특화 인자는 지웠습니다. */
+export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
     // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.
     const broken = Math.max(0, steps - maxSkillLevel(sk)), lb = PROGRESSION.limitBreak;
@@ -237,16 +237,16 @@ export function masteryGainBonus(sk: Skill, level: number) {
     const stages = sk.masteryGain?.bonusByLevel;
     return stages?.[Math.min(level, stages.length - 1)] ?? 0;
 }
-export function skillRankDeltas(sk: Skill, rank: number, mastery = 0, specialization?: string, practice = 0): SkillRankDelta[] {
+export function skillRankDeltas(sk: Skill, rank: number, mastery = 0, practice = 0): SkillRankDelta[] {
     const level = skillLevel(sk, rank, mastery);
     if (level >= maxSkillLevel(sk))
         return [];
-    const deltas = skillDeltas(effectiveSkill(sk, level + 1, mastery, specialization, practice), effectiveSkill(sk, level + 2, mastery, specialization, practice));
+    const deltas = skillDeltas(effectiveSkill(sk, level + 1, mastery, practice), effectiveSkill(sk, level + 2, mastery, practice));
     if (sk.masteryGain) deltas.push({ label: '조건 충족 시 추가 숙련', from: `+${masteryGainBonus(sk, level)}`, to: `+${masteryGainBonus(sk, level + 1)}` });
     return deltas;
 }
-export function skillRankHint(sk: Skill, rank: number, mastery = 0, specialization?: string, practice = 0) {
-    const rows = skillRankDeltas(sk, Math.max(1, rank), mastery, specialization, practice);
+export function skillRankHint(sk: Skill, rank: number, mastery = 0, practice = 0) {
+    const rows = skillRankDeltas(sk, Math.max(1, rank), mastery, practice);
     return rows.length ? rows.map(x => `${x.label} ${x.from} → ${x.to}`).join(' · ') : '최대 강화 레벨입니다.';
 }
 export function skillMasteryHint(sk: Skill, level: number, rank = 1) {

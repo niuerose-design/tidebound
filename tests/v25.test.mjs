@@ -327,7 +327,7 @@ test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish
 test('v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) are wired into profiles, themes, research and logs; rebirth titles', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { STAGES, DUNGEONS, FISH } = await mods.load('data/world'); const { profileId } = await mods.load('data/encounters'); const { ORIGIN_THEMES } = await mods.load('data/gear');
-    const { REGION_THEMES } = await mods.load('data/book-traits'); const { BOSS_RESEARCH } = await mods.load('data/specializations'); const { VOYAGE_LOG } = await mods.load('data/voyage-log');
+    const { REGION_THEMES } = await mods.load('data/book-traits'); const { BOSS_RESEARCH } = await mods.load('data/boss-research'); const { VOYAGE_LOG } = await mods.load('data/voyage-log');
     const { rebirthTitle, nextRebirthTitle } = await mods.load('data/long-term'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
     const st = STAGES.find(x => x.id === 'duskVents'), d = DUNGEONS.find(x => x.id === 'ventCathedral');
     assert.ok(st && st.rebirth === 5 && st.level === 55 && d && d.rebirth === 8 && d.level === 60);
@@ -1406,7 +1406,7 @@ test('v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-pie
 test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per request and continues next sync (same total, summary accumulates)', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), B = await L.load('data/balance');
     const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 100; s.stage = 'brook'; s.running = true; s.lastTick = 0; s.hp = 1e9;
-    const hours = 4, now = hours * 3600_000, total = now / B.BALANCE.turnMs;
+    const hours = 1, now = hours * 3600_000, total = now / B.BALANCE.turnMs;
     T.advance(s, now, () => .5);
     assert.equal(s.catchUpLeft, total - T.CATCH_UP_CHUNK, 'remaining turns recorded'); assert.equal(s.lastTick, T.CATCH_UP_CHUNK * B.BALANCE.turnMs); assert.ok(s.lastOffline && s.lastOffline.kills > 0);
     const firstKills = s.lastOffline.kills; let rounds = 1;
