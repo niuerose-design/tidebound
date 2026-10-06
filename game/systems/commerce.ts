@@ -18,7 +18,7 @@ export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase +
 export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
 /** v3.58 각인으로 고를 수 있는 옵션: 그 부위에 붙을 수 있는 일반 옵션(규칙 옵션·출신 전용 옵션 제외). */
 /** 각인 감정으로 고를 수 있는 옵션: 일반 옵션(규칙 · 전용 출처 · v3.69 고대 이상 전용 제외), 부위 제한 맞는 것. */
-export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.onlyOrigin && !a.minRarity && (!a.onlySlot || a.onlySlot === slot));
+export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.onlyOrigin && !a.minRarity && !a.retired && (!a.onlySlot || a.onlySlot === slot));
 const appraisalState = (s: State) => (s.appraisal ??= { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 0, ancient: 0, primal: 0 } });
 /** v3.58 다음 감정에서 천장이 터지는 등급(없으면 0). */
 export const pityRarity = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.reduce((r, p) => (s.appraisal?.pity[p.key] || 0) + 1 >= p.count ? Math.max(r, p.rarity) : r, 0);
@@ -140,7 +140,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     if (a.type === 'gamble' || a.type === 'imprintGamble') {
         // v3.60 장비 감정은 부위를 고르지 않고(모든 부위가 나오는 감정 하나), 각인 감정은 부위를 고릅니다.
         const imprinting = a.type === 'imprintGamble', category = imprinting ? slotCategory(id) : undefined;
-        if (imprinting ? !category : id !== APPRAISAL_ALL) throw Error(imprinting ? '각인할 부위를 고르세요.' : '장비 감정은 부위를 고르지 않습니다.');
+        if (imprinting ? !category : id !== APPRAISAL_ALL) throw Error(imprinting ? '저격 뽑기는 부위를 고르세요.' : '랜덤 뽑기는 부위를 고르지 않습니다.');
         const [affix, n] = imprinting ? (a.value || '').split('|') : [undefined, a.value];
         if (affix !== undefined && !imprintChoices(category!.slot).some(x => x.id === affix)) throw Error('각인할 옵션을 고르세요.');
         const count = Number(n || 1);
@@ -155,7 +155,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             const item = appraiseOnce(s, rng, each.gold, affix, category?.id);
             s.inventory.push(item); results.push(item);
         }
-        const word = affix ? `각인 감정(${affixDef(affix)!.name})` : '감정';
+        const word = affix ? `저격 뽑기(${affixDef(affix)!.name})` : '랜덤 뽑기';
         if (count === 1) return `${word} · ${results[0].name} · 옵션 ${results[0].rarity}개 · -${each.gold} G${each.essence ? ` · 정수 -${each.essence}` : ''}`;
         const tally = [...APPRAISAL].map(r => r.rarity).sort((x, y) => y - x).map(r => [r, results.filter(i => i.rarity === r).length] as const).filter(([, k]) => k);
         const best = results.reduce((b, i) => (i.rarity || 0) > (b.rarity || 0) ? i : b, results[0]);
@@ -166,9 +166,10 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     if (a.type === 'autoGamble') {
         const category = slotCategory(id);
         if (!category) throw Error('감정할 부위를 고르세요.');
-        const [targetText, limitText, affixText] = (a.value || '').split('|'), target = Number(targetText), limit = Number(limitText), affix = affixText || undefined;
+        // v3.70 자동 뽑기는 골드 한도 없이 가진 골드 · 정수를 모두 쓸 수 있습니다(한도 'max' 또는 생략). 숫자 한도도 그대로 받습니다.
+        const [targetText, limitText, affixText] = (a.value || '').split('|'), target = Number(targetText), limit = !limitText || limitText === 'max' ? Infinity : Number(limitText), affix = affixText || undefined;
         if (!APPRAISAL.some(r => r.rarity === target)) throw Error('목표 등급을 고르세요.');
-        if (!(limit > 0) || !Number.isFinite(limit)) throw Error('골드 한도를 정하세요.');
+        if (!(limit > 0)) throw Error('골드 한도를 정하세요.');
         if (affix && !imprintChoices(category.slot).some(x => x.id === affix)) throw Error('각인할 옵션을 고르세요.');
         if (s.inventory.length >= inventoryCap(s)) throw Error('가방에 한 칸이 필요합니다. 장비를 정리하세요.');
         const each = affix ? imprintGambleCost(s) : { gold: gambleCost(s), essence: 0 };
@@ -186,7 +187,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             const gain = dismantleEssence(item); s.essence = (s.essence || 0) + gain; essence += gain;
         }
         const parts = tally.map((k, r) => [r, k] as const).filter(([, k]) => k).reverse().map(([r, k]) => `${RARITIES[r].name} ${k}`).join(' · ');
-        return `자동 감정 ${tries}회 · ${parts} · -${spent.toLocaleString()} G${each.essence ? ` · 정수 -${(each.essence * tries).toLocaleString()}` : ''}${essence ? ` · 분해 정수 +${essence}` : ''}${registered ? ` · 도감 등록 ${registered}` : ''} · ${hit ? `목표 달성: ${hit.name}` : tries >= AUTO_APPRAISAL_MAX ? `최대 ${AUTO_APPRAISAL_MAX}회까지 돌렸습니다` : '골드·정수 한도에 닿아 멈췄습니다'}`;
+        return `자동 뽑기 ${tries}회 · ${parts} · -${spent.toLocaleString()} G${each.essence ? ` · 정수 -${(each.essence * tries).toLocaleString()}` : ''}${essence ? ` · 분해 정수 +${essence}` : ''}${registered ? ` · 도감 등록 ${registered}` : ''} · ${hit ? `목표 달성: ${hit.name}` : tries >= AUTO_APPRAISAL_MAX ? `최대 ${AUTO_APPRAISAL_MAX}회까지 돌렸습니다` : '골드·정수 한도에 닿아 멈췄습니다'}`;
     }
     if (a.type === 'lockItem') {
         const item = s.inventory.find(x => x.id === id);

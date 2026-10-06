@@ -382,3 +382,16 @@ test('v3.69 options: quality 1 + 0.2 × rarity, ancient+ only options (not on lo
     const berserk = G.affixDef('berserk'); assert.equal(berserk.base, 1.35); assert.equal(berserk.base2, -.675);
     assert.equal(G.GEAR_CAPS.lifesteal, .1);
 });
+test('v3.70 draws: accuracy+evasion merged into sense (both rolled), precise/drift/runic retired but still readable, auto draw spends everything with limit "max"', async () => {
+    const G = await L.load('data/gear'), Co = await L.load('systems/commerce'), Eq = await L.load('systems/equipment');
+    const sense = G.affixDef('sense'), lo = G.rollOption(sense, 100, 6, () => 0, 100), hi = G.rollOption(sense, 100, 6, () => 1, 100);
+    assert.equal(sense.stat, 'accuracy'); assert.equal(sense.stat2, 'evasion'); assert.ok(hi.value2 > lo.value2 && lo.value2 > 0, 'evasion part is rolled too');
+    for (const id of ['precise', 'drift', 'runic']) assert.equal(G.affixDef(id).retired, true);
+    for (let i = 0; i < 200; i++) { const r = (i * 37 % 100) / 100 + .001; assert.ok(!G.rollAffixes(6, 500, undefined, () => r, [], 'rod', 100).some(a => ['precise', 'drift', 'runic'].includes(a.id))); }
+    for (const slot of ['rod', 'cape']) assert.ok(!Co.imprintChoices(slot).some(a => a.retired));
+    const old = Eq.itemStats({ id: 'x', slot: 'rod', rarity: 3, power: 10, level: 10, affixes: [{ id: 'precise', name: '정밀', stat: 'accuracy', value: .05 }] });
+    assert.ok(old.accuracy >= .05, 'old items keep working');
+    const refined = G.refineOption(hi, 100, 6, () => 0, 100); assert.ok(refined.value2 < hi.value2, 'refine rerolls both values');
+    const s = newState(0); s.level = 50; s.permanent.inventory = 8; s.inventory = []; s.gold = Co.gambleCost(s) * 3;
+    act(s, { type: 'autoGamble', id: 'rod', value: '6|max' }, 0, () => 0); assert.equal(s.appraisal.count, 3, 'uses all the gold'); assert.ok(s.gold < Co.gambleCost(s));
+});

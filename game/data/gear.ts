@@ -22,6 +22,10 @@ export type AffixDef = {
     stat2?: GearStat;
     base2?: number;
     minRarity?: number;
+    /** v3.70 더는 새로 굴리지 않는 옵션(이미 붙은 장비에서는 그대로 작동·표시). */
+    retired?: boolean;
+    /** v3.70 stat2도 굴림 · 등급 품질을 받는 이중 옵션(양날 옵션의 손해 쪽은 고정이라 false). */
+    rollBoth?: boolean;
     /** v25.8 이 출처(던전 id)에서 떨어진 장비에만 붙는 옵션. */
     onlyOrigin?: string;
     /** v3.5 이 부위에만 붙는 옵션. */
@@ -49,16 +53,19 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'ward', name: '정신', stat: 'resist', kind: 'flat', base: .3, description: '마법 방어가 오릅니다.' },
     { id: 'wellspring', name: '샘물', stat: 'mana', kind: 'flat', base: .2, description: '최대 마나가 오릅니다.' },
     { id: 'current', name: '순환', stat: 'manaRegen', kind: 'flat', base: .012, description: '턴당 마나 회복이 오릅니다.' },
-    { id: 'precise', name: '정밀', stat: 'accuracy', kind: 'percent', base: .03, description: '명중이 오릅니다.' },
+    { id: 'precise', name: '정밀', stat: 'accuracy', kind: 'percent', base: .03, retired: true, description: '명중이 오릅니다. (v3.70 감각으로 통합, 새로 붙지 않음)' },
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, description: '치명 피해가 오릅니다.' },
     { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', base: .025, description: '방어 관통이 오릅니다.' },
     { id: 'leech', name: '흡혈', stat: 'lifesteal', kind: 'percent', base: .015, description: '준 피해의 일부를 회복합니다 (장비 흡혈 합계 최대 10%p).' },
-    { id: 'drift', name: '회피', stat: 'evasion', kind: 'percent', base: .02, description: '회피가 오릅니다.' },
+    { id: 'drift', name: '회피', stat: 'evasion', kind: 'percent', base: .02, retired: true, description: '회피가 오릅니다. (v3.70 감각으로 통합, 새로 붙지 않음)' },
+    // v3.70 명중 · 회피 통합 옵션: 두 수치를 함께 굴립니다(예전 정밀 · 회피 한 줄씩과 같은 크기).
+    { id: 'sense', name: '감각', stat: 'accuracy', kind: 'percent', base: .03, stat2: 'evasion', base2: .02, rollBoth: true, description: '명중과 회피가 함께 오릅니다.' },
     { id: 'swift', name: '신속', stat: 'speed', kind: 'percent', base: 2, description: '속도가 오릅니다.' },
     { id: 'venom', name: '고통', stat: 'dotBonus', kind: 'percent', base: .06, description: '출혈·중독·화상 피해가 모두 늘어납니다.' },
     { id: 'spiked', name: '가시', stat: 'thorns', kind: 'percent', base: .04, description: '맞을 때 물리 방어 비례 반격 (방어 친화도 적용).' },
-    { id: 'runic', name: '룬', stat: 'arcaneStrike', kind: 'percent', base: .03, description: '마법 직업의 마력 평타 확률이 오릅니다.' },
+    // v3.70 룬은 마력 평타가 켜짐/꺼짐 판정이라 마법 직업에는 효과가 없고 물리 직업은 평타가 마력 평타로 바뀌어 손해였습니다. 새로 붙지 않습니다.
+    { id: 'runic', name: '룬', stat: 'arcaneStrike', kind: 'percent', base: .03, retired: true, description: '마법 직업의 마력 평타 확률이 오릅니다. (v3.70 새로 붙지 않음)' },
     { id: 'scholar', name: '학식', stat: 'expBonus', kind: 'percent', base: .03, description: '경험치 획득이 늘어납니다.' },
     { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '처치·던전 골드가 늘어납니다.' },
     { id: 'seeker', name: '탐색', stat: 'dropBonus', kind: 'percent', base: .01, description: '장비 드롭 확률이 늘어납니다(상대 증가).' },
@@ -101,14 +108,14 @@ export const AFFIX_POOL: AffixDef[] = [
 
 /** 사냥터·던전별로 잘 나오는 옵션(가중치 ×4). 명시되지 않은 곳은 균등합니다. 이름은 STAGES·DUNGEONS에서 가져옵니다. */
 const ORIGIN_AFFIXES: Record<string, string[]> = {
-    brook: ['vigor', 'plating', 'precise'],
+    brook: ['vigor', 'plating', 'sense'],
     bay: ['ward', 'wellspring', 'scholar'],
     reef: ['lucky', 'brutal', 'gambit'],
-    kelp: ['drift', 'swift', 'venom'],
+    kelp: ['sense', 'swift', 'venom'],
     wreck: ['piercing', 'brutal', 'might', 'berserk'],
     volcanic: ['venom', 'arcana', 'spiked', 'lingering'],
     trench: ['leech', 'vigor', 'spiked', 'bloodPact'],
-    moon: ['arcana', 'current', 'runic', 'glassCannon', 'runeCore'],
+    moon: ['arcana', 'current', 'glassCannon', 'runeCore'],
     starfall: ['scholar', 'seeker', 'lucky', 'echoing'],
     grotto: ['swift', 'concuss', 'binding'],
     kelpCatacomb: ['venom', 'saturate', 'mending'],
@@ -117,9 +124,9 @@ const ORIGIN_AFFIXES: Record<string, string[]> = {
     temple: ['arcana', 'wellspring', 'runeCore', 'mending'],
     starSanctum: ['echoing', 'reaper', 'concuss'],
     duskVents: ['might', 'arcana', 'piercing', 'berserk', 'reaper'],
-    coralForest: ['drift', 'precise', 'leech', 'swift'],
+    coralForest: ['sense', 'leech', 'swift'],
     dragonNest: ['might', 'plating', 'berserk', 'spiked'],
-    memoryLane: ['scholar', 'current', 'arcana', 'runic'],
+    memoryLane: ['scholar', 'current', 'arcana'],
     vanishingJourney: ['piercing', 'brutal', 'reaper', 'echoing'],
     ventCathedral: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'],
     abyss: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'],
@@ -163,7 +170,7 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
         // 체력·공격·방어 같은 고정 수치 손해는 위력 비례, 속도·명중 같은 손해는 고정 폭입니다.
         const flatStat = ['hp', 'attack', 'magic', 'defense', 'resist', 'mana'].includes(def.stat2);
         out.stat2 = def.stat2;
-        out.value2 = flatStat ? Math.round(def.base2 * Math.max(1, power)) : Math.round(def.base2 * 10000) / 10000;
+        out.value2 = def.rollBoth ? (flatStat ? Math.round(def.base2 * Math.max(1, power) * roll) : Math.round(def.base2 * roll * 10000) / 10000) : flatStat ? Math.round(def.base2 * Math.max(1, power)) : Math.round(def.base2 * 10000) / 10000;
     }
     return out;
 }
@@ -171,7 +178,9 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
 export function refineOption(x: ItemAffix, power: number, rarity: number, rng: () => number, level = 1): ItemAffix {
     const def = affixDef(x.id);
     if (!def || x.rule || def.kind === 'rule') return x;
-    return { ...x, value: rollOption(def, power, rarity, rng, level).value };
+    const next = rollOption(def, power, rarity, rng, level);
+    // v3.70 이중 옵션(rollBoth, 예: 감각)은 두 수치를 같은 굴림으로 함께 바꿉니다.
+    return def.rollBoth ? { ...x, value: next.value, value2: next.value2 } : { ...x, value: next.value };
 }
 /** v27.94 옵션 수치가 굴림 범위에서 어디쯤인지(0 = 최저, 1 = 최고). 규칙 옵션·알 수 없는 옵션은 null. */
 export function affixQuality(x: ItemAffix, power: number, rarity: number, level = 1): number | null {
@@ -196,7 +205,7 @@ export function rollAffixes(rarity: number, power: number, origin: string | unde
     const out = [...keep];
     while (out.length < rarity) {
         const hasRule = out.some(a => a.rule);
-        const pool = AFFIX_POOL.filter(a => !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (!a.onlySlot || a.onlySlot === slot) && rarity >= (a.minRarity || 0) && (a.kind !== 'rule' || !hasRule));
+        const pool = AFFIX_POOL.filter(a => !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (!a.onlySlot || a.onlySlot === slot) && !a.retired && rarity >= (a.minRarity || 0) && (a.kind !== 'rule' || !hasRule));
         if (!pool.length) break;
         out.push(rollOption(pickAffix(pool, origin, rng), power, rarity, rng, level));
     }
