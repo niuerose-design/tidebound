@@ -34,6 +34,12 @@ test('v3.37 growth goal is gone: the action is refused and old saves drop the fi
  const s=newState(0);assert.throws(()=>act(s,{type:'growthGoal',id:'whaler',value:'job'},0),/지원하지 않는/);
  s.growthGoal={kind:'job',id:'whaler'};s.guild={name:'',level:3};migrateState(s,0);assert.equal('growthGoal' in s,false);assert.equal('guild' in s,false);
 });
+test('v3.37 AP sources: the breakdown sums to the cap and abyss floors no longer give AP',async()=>{
+ const P=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
+ const s=newState(0);s.rebirths=5;s.permanent.ap=3;s.abyssMilestones=[30,60,90];const src=P.apSources(s);
+ assert.equal(src.reduce((a,x)=>a+x.value,0),P.apCapacity(s));assert.equal(src.find(x=>x.id==='rebirth').value,5);assert.equal(src.some(x=>/무릉/.test(x.label)),false);
+ const t=newState(0);t.abyssMilestones=[30,60,90];assert.equal(P.apCapacity(t),P.apCapacity(newState(0)),'abyss milestones add nothing');
+});
 test('v3.37 first-clear SP is an achievement; old boss-research claims move over as claimed (no double SP)',()=>{
  const s=newState(0);s.clears.grotto=1;act(s,{type:'sync'},0);assert.ok(s.achievements['firstClear:grotto']!==undefined);const sp=s.sp;act(s,{type:'claimAchievement',id:'firstClear:grotto'},0);assert.equal(s.sp,sp+1);
  assert.throws(()=>act(s,{type:'bossResearch',id:'grotto'},0),/지원하지 않는/);

@@ -2,7 +2,6 @@ import { refinementTargets, thresholdRank, REFINEMENT_STEP_BONUS } from '../data
 import { rebirthAP } from './meta';
 import { restraintAP, restraintSlots } from './vows';
 import { accountAP } from '../data/account';
-import { abyssAP } from '../data/long-term';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
@@ -55,7 +54,19 @@ export function limitBreakNext(s: State, id: string) {
 /** SP and mastery unlock the SAME stages. Neither locks out the other. v27.6 숙련(한계돌파 포함)이 최대를 넘으면 그만큼 더 올라갑니다. */
 export function skillLevel(sk: Skill, rank = 1, mastery = 0) { const max = maxSkillLevel(sk); return Math.min(max + Math.min(PROGRESSION.limitBreak.max, Math.max(0, mastery - max)), Math.max(0, rank - 1, mastery)); }
 /** 장착 AP 한도. v27.86 절제 서약은 −2·−4·−6(최소 1). */
-export function apCapacity(s: State) { return Math.max(1, PROGRESSION.baseAP + rebirthAP(s) + (s.permanent.ap || 0) + completedRegions(s).length + achievementAP(s) + accountAP(s) + abyssAP(s) - restraintAP(s)); }
+/** v3.37 장착 AP 내역(능력치 화면 표시와 apCapacity가 같은 목록을 씁니다). 무릉도장 30·60·90층 AP는 없앴습니다. */
+export function apSources(s: State): { id: string; label: string; value: number }[] {
+    return [
+        { id: 'base', label: '기본', value: PROGRESSION.baseAP },
+        { id: 'rebirth', label: '환생 횟수', value: rebirthAP(s) },
+        { id: 'research', label: '세계석 연구 ‘영혼의 그릇’', value: s.permanent.ap || 0 },
+        { id: 'places', label: '장소 완성(도감)', value: completedRegions(s).length },
+        { id: 'achievement', label: '업적', value: achievementAP(s) },
+        { id: 'account', label: '계정(분신 숙달 직업)', value: accountAP(s) },
+        { id: 'restraint', label: '절제 서약', value: -restraintAP(s) },
+    ];
+}
+export function apCapacity(s: State) { return Math.max(1, apSources(s).reduce((a, x) => a + x.value, 0)); }
 /** v25.6 업적 보상으로 늘어난 장착 AP. achievements.ts와 순환 의존을 피하려 여기서 직접 셉니다. */
 function achievementAP(s: Pick<State, 'achievementClaims'>) { let ap = 0; for (const id of Object.keys(s.achievementClaims || {})) ap += ACHIEVEMENT_AP[id] || 0; return ap; }
 export const ACHIEVEMENT_AP: Record<string, number> = {};

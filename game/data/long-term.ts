@@ -24,10 +24,8 @@ export const abyssPearls = (depth: number) => (1 + Math.floor(depth / 10)) * (de
 export const ABYSS_SP_MILESTONES = [10, 25, 50, 100];
 export const nextAbyssMilestone = (best: number) => ABYSS_SP_MILESTONES.find(n => n > best);
 
-/** v25.8 무릉도장 10층마다 첫 돌파 보너스 세계석(층 수만큼)와 장착 AP +1 이정표. */
+/** v25.8 무릉도장 10층마다 첫 돌파 보너스 세계석(층 수만큼). v3.37 장착 AP 이정표는 없앴습니다. */
 export const abyssFloorBonus = (depth: number) => depth % 10 === 0 ? depth : 0;
-export const ABYSS_AP_MILESTONES = [30, 60, 90];
-export const abyssAP = (s: { abyssMilestones?: number[] }) => (s.abyssMilestones || []).filter(d => ABYSS_AP_MILESTONES.includes(d)).length;
 /** v25.8 윤회 칭호: 환생 횟수로 얻는 영구 칭호. 랭킹·채팅·전투 화면에 이름과 함께 표시됩니다. */
 export const REBIRTH_TITLES: { rebirths: number; title: string }[] = [
     { rebirths: 5, title: '되돌아온 모험가' }, { rebirths: 10, title: '윤회의 여행자' }, { rebirths: 20, title: '운명을 거스른 자' }, { rebirths: 30, title: '심연을 건넌 자' }, { rebirths: 50, title: '영원의 모험가' },

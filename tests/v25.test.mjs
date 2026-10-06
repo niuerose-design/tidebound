@@ -318,7 +318,7 @@ test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish
     s.tide = 20; s.enemy = foe('lionfish', false); reward(s, rng); assert.equal(s.tideBest.reef, 20);
     const u = newState(0); u.abyssBest = 29; u.abyssMilestones = []; const ap = apCapacity(u);
     u.dungeon = { id: 'abyss', wave: 4, depth: 30 }; u.enemy = foe('abyssSovereign', true);
-    const before = u.pearls; reward(u, rng); assert.equal(u.abyssBest, 30); assert.ok(u.abyssMilestones.includes(30)); assert.equal(apCapacity(u), ap + 1, '30F → AP +1'); assert.ok(u.pearls - before >= 30 + 12, '30F pays floor pearls (4×3) + bonus 30');
+    const before = u.pearls; reward(u, rng); assert.equal(u.abyssBest, 30); assert.equal(apCapacity(u), ap, 'v3.37 30F no longer adds AP'); assert.ok(u.pearls - before >= 30 + 12, '30F pays floor pearls (4×3) + bonus 30');
     assert.ok(AFFIX_POOL.filter(a => a.onlyOrigin === 'abyss').length === 4);
     for (let i = 0; i < 200; i++) assert.ok(rollAffixes(3, 100, 'temple', rng).every(a => !a.id.startsWith('abyss')), 'abyss-only affixes never roll elsewhere');
     let found = false; for (let i = 0; i < 200 && !found; i++) found = rollAffixes(3, 100, 'abyss', rng).some(a => a.id.startsWith('abyss')); assert.ok(found, 'abyss drops roll abyss-only affixes');

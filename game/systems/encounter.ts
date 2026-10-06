@@ -1,6 +1,6 @@
 /** 적 등장·드롭·승리 보상. */
 import { DROP_RARITY, rollAffixes } from '../data/gear';
-import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, ABYSS_AP_MILESTONES, abyssFloorBonus } from '../data/long-term';
+import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, refinePractice } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
@@ -346,9 +346,8 @@ export function reward(s: State, rng: () => number) {
                 s.pearls += pearls;
                 addLog(s, `무릉도장 ${depth}층 정복 · 세계석 +${pearls}`, 'reward');
                 s.abyssMilestones ??= [];
-                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 세계석), 30·60·90층 첫 돌파 장착 AP +1.
+                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 세계석). v3.37 30·60·90층 장착 AP 이정표는 없앴습니다.
                 if (deeper && abyssFloorBonus(depth)) { s.pearls += abyssFloorBonus(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 · 보너스 세계석 +${abyssFloorBonus(depth)}`, 'reward'); }
-                if (ABYSS_AP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) { s.abyssMilestones.push(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 이정표 · 장착 AP +1`, 'reward'); }
                 if (ABYSS_SP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) {
                     s.abyssMilestones.push(depth);
                     s.sp += 1;
