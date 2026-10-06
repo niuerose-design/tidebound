@@ -13,7 +13,7 @@ s.permanent = { attack: 8, hp: 6, guard: 3, gold: 2, ap: 2 };
 for (const f of FISH.slice(0, 14)) s.book[f.id] = Math.floor(rng() * 700);
 s.jobMastery = { fisher: 900, wanderer: 2600, harpoon: 400 }; s.unlockedJobs = ['fisher', 'wanderer', 'harpoon'];
 s.job = 'wanderer';
-for (let i = 0; i < 25; i++) { try { act(s, { type: 'gamble', id: ['rod', 'coat', 'charm', 'cape'][i % 4] }, now, rng); } catch { } }
+for (let i = 0; i < 25; i++) { try { act(s, { type: 'gamble', id: 'all' }, now, rng); } catch { } }
 act(s, { type: 'stage', id: 'reef' }, now); act(s, { type: 'start' }, now);
 advance(s, now, rng);
 s.lastTick = now;

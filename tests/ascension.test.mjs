@@ -286,10 +286,10 @@ test('v3.58 appraisal: price × 10^(rebirths/60), pity at 150/1000/3000 kept thr
     s.rebirths = 60; assert.equal(Co.gambleCost(s), Math.floor(base * 10)); s.rebirths = 0;
     s.gold = 1e12; s.permanent.inventory = 8; s.inventory = [];
     s.appraisal = { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 148, ancient: 0, primal: 0 } };
-    act(s, { type: 'gamble', id: 'coat', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 1, 'below pity: rolls as usual');
-    act(s, { type: 'gamble', id: 'coat', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 4, '150th appraisal is myth or better');
+    act(s, { type: 'gamble', id: 'all', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 1, 'below pity: rolls as usual');
+    act(s, { type: 'gamble', id: 'all', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 4, '150th appraisal is myth or better');
     assert.equal(s.appraisal.pity.myth, 0); assert.equal(s.appraisal.pity.ancient, 2); assert.equal(s.appraisal.count, 2);
-    s.appraisal.pity.primal = 2999; act(s, { type: 'gamble', id: 'charm', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 6, 'primal pity');
+    s.appraisal.pity.primal = 2999; act(s, { type: 'gamble', id: 'all', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 6, 'primal pity');
     assert.deepEqual(s.appraisal.pity, { myth: 0, ancient: 0, primal: 0 });
     assert.deepEqual(Co.pityLeft(s).map(p => p.left), Ec.APPRAISAL_PITY.map(p => p.count));
     const r = newState(0); r.level = 60; r.appraisal = { count: 7, byRarity: [0, 7, 0, 0, 0, 0, 0], pity: { myth: 7, ancient: 7, primal: 7 } }; act(r, { type: 'rebirth' }, 0); assert.equal(r.appraisal.count, 7, 'kept through rebirth');

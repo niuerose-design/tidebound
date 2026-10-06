@@ -409,7 +409,7 @@ test('v27.27 shop gear resells for at most half its price; old shop items are es
     const { saleValue } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
     for (const level of [30, 60, 90]) {
         const s = newState(0); s.level = level; s.gold = 1e12; s.inventory = [];
-        act(s, { type: 'gamble', id: 'rod', value: 10 }, 0);
+        act(s, { type: 'gamble', id: 'all', value: 10 }, 0);
         assert.equal(s.inventory.length, 10, `Lv.${level} gamble x10`);
         for (const item of s.inventory) { assert.ok(item.paid > 0); assert.ok(saleValue(item) <= item.paid * .5, `Lv.${level} ${item.name} sells ${saleValue(item)} for ${item.paid}`); }
         const legacy = { ...s.inventory[0] }; delete legacy.paid; assert.ok(saleValue(legacy) <= s.inventory[0].paid, `legacy shop- item ${saleValue(legacy)} vs ${s.inventory[0].paid}`);
