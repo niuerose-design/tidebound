@@ -1,4 +1,4 @@
-import { ODDS } from './odds';
+import { ODDS, oddsKnown, STAGE_REWARD_AVG, type StageRewardAvg } from './odds';
 import { MAPLE_MONSTERS } from './maple-monsters';
 /** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
 /** 사냥터 정의. habitat는 v27.80 무리 서식지(지역마다 하나)입니다. */
@@ -164,10 +164,25 @@ export function tideLiftLevel(level: number, tier: number, playerLevel: number) 
  * 반환값은 rewardMultiplier에 곱할 값(올라간 정도만큼 점점 적용).
  */
 export function stageRewardNorm(stageFish: readonly string[], tier: number) {
+    // v3.55 출현 가중치를 모르는 화면(비공개 켬)은 서버가 카탈로그로 보낸 사냥터별 평균 표를 씁니다.
+    const stage = oddsKnown() ? undefined : STAGES.find(st => st.fish === stageFish), table = stage && STAGE_REWARD_AVG[stage.id];
+    const avg = table ? stageAvgAt(table, tier) : stageRewardAvg(stageFish, tier);
+    return 1 / Math.pow(Math.max(1, avg), Math.min(1, tier / TIDE_LIFT_TIERS));
+}
+/** v3.55 구간 표에서 난이도 tier의 평균(그 난이도 이하의 마지막 구간). */
+export const stageAvgAt = (table: [number, number][], tier: number) => [...table].reverse().find(([from]) => from <= tier)?.[1] ?? 1;
+/** 사냥터 평균 보상 배율(출현 가중, 그 난이도에서 나오는 몬스터). 서버는 진짜 가중치로 계산합니다. */
+function stageRewardAvg(stageFish: readonly string[], tier: number) {
     const rows = stageFish.map(id => FISH.find(f => f.id === id)!).filter(f => f && (f.minTier || 0) <= tier);
     const weight = rows.reduce((a, f) => a + (f.spawnWeight ?? 1), 0);
-    const avg = weight ? rows.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / weight : 1;
-    return 1 / Math.pow(Math.max(1, avg), Math.min(1, tier / TIDE_LIFT_TIERS));
+    return weight ? rows.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / weight : 1;
+}
+/** v3.55 서버: 카탈로그에 실을 사냥터별 [이 난이도부터, 평균 보상 배율] 구간 표. 몬스터의 minTier마다 평균이 바뀝니다. */
+export function stageRewardAvgTable(): StageRewardAvg {
+    return Object.fromEntries(STAGES.map(st => {
+        const from = [...new Set([0, ...st.fish.map(id => FISH.find(f => f.id === id)?.minTier || 0)])].sort((a, b) => a - b);
+        return [st.id, from.map(tier => [tier, stageRewardAvg(st.fish, tier)] as [number, number])];
+    }));
 }
 export function tideLiftFish<F extends { level: number; hp: number; attack: number; defense: number; exp: number; gold: number }>(f: F, tier: number, playerLevel: number): F {
     const level = tideLiftLevel(f.level, tier, playerLevel);
@@ -180,30 +195,29 @@ const specialFish: Array<{
     level: number;
     lore: string;
     rarity: 'common' | 'rare' | 'epic' | 'legendary';
-    spawnWeight?: number;
     rewardMultiplier?: number;
     boss?: boolean;
     minTier?: number;
 }> = [
-    { id: 'masteryMimic', name: '숙련의 까미', level: 10, lore: '보물상자인 척 입을 벌리고 있다. 잡으면 오래 쌓은 숙련이 한꺼번에 밀려온다.', rarity: 'legendary' as const, spawnWeight: 0, rewardMultiplier: 1 },
-    { id: 'expNuri', name: '경험의 누리', level: 50, lore: '후광을 두른 하얀 강아지. 금빛 날개로 사냥터 위를 신나게 날아다니다가, 붙잡히면 품고 있던 경험을 한꺼번에 쏟아 낸다.', rarity: 'legendary' as const, spawnWeight: 0, rewardMultiplier: 1 },
-    { id: 'seahorse', name: '파란 버섯', level: 15, lore: '투명한 몸 안에서 작은 별빛이 흔들린다.', rarity: 'rare' as const, spawnWeight: .18, rewardMultiplier: 1.35 },
-    { id: 'needlefish', name: '뿔버섯', level: 16, lore: '해초 사이를 화살처럼 가르는 희귀한 사냥꾼.', rarity: 'rare' as const, spawnWeight: .12, rewardMultiplier: 1.45 },
-    { id: 'tidejelly', name: '좀비버섯', level: 17, lore: '빛나는 촉수가 물살의 방향을 바꾼다.', rarity: 'epic' as const, spawnWeight: .07, rewardMultiplier: 1.75 },
-    { id: 'emberEel', name: '파이어보어', level: 24, lore: '열수 분출구에서 태어난 붉은 전류의 뱀.', rarity: 'rare' as const, spawnWeight: .14, rewardMultiplier: 1.5 },
-    { id: 'ashRay', name: '다크 스톤골렘', level: 26, lore: '화산재를 날개처럼 두르고 수면을 가른다.', rarity: 'rare' as const, spawnWeight: .1, rewardMultiplier: 1.55 },
-    { id: 'magmaPuffer', name: '믹스 골렘', level: 27, lore: '몸속에 뜨거운 독을 저장한 위험한 희귀종.', rarity: 'epic' as const, spawnWeight: .06, rewardMultiplier: 1.9 },
-    { id: 'cinderKoi', name: '레드 드레이크', level: 29, lore: '비늘 사이로 식지 않은 불꽃이 흐른다.', rarity: 'epic' as const, spawnWeight: .045, rewardMultiplier: 2.1 },
-    { id: 'starKoi', name: '버블링', level: 46, lore: '별자리의 무늬를 비늘에 품은 외해의 희귀종.', rarity: 'rare' as const, spawnWeight: .1, rewardMultiplier: 1 },
-    { id: 'prismRay', name: '옥토퍼스', level: 48, lore: '빛을 일곱 갈래로 쪼개며 헤엄친다.', rarity: 'epic' as const, spawnWeight: .065, rewardMultiplier: 1.2 },
-    { id: 'voidGuppy', name: '스티지', level: 50, lore: '작은 몸 안에 깊이를 측정할 수 없는 어둠이 있다.', rarity: 'epic' as const, spawnWeight: .04, rewardMultiplier: 1.3 },
+    { id: 'masteryMimic', name: '숙련의 까미', level: 10, lore: '보물상자인 척 입을 벌리고 있다. 잡으면 오래 쌓은 숙련이 한꺼번에 밀려온다.', rarity: 'legendary' as const, rewardMultiplier: 1 },
+    { id: 'expNuri', name: '경험의 누리', level: 50, lore: '후광을 두른 하얀 강아지. 금빛 날개로 사냥터 위를 신나게 날아다니다가, 붙잡히면 품고 있던 경험을 한꺼번에 쏟아 낸다.', rarity: 'legendary' as const, rewardMultiplier: 1 },
+    { id: 'seahorse', name: '파란 버섯', level: 15, lore: '투명한 몸 안에서 작은 별빛이 흔들린다.', rarity: 'rare' as const, rewardMultiplier: 1.35 },
+    { id: 'needlefish', name: '뿔버섯', level: 16, lore: '해초 사이를 화살처럼 가르는 희귀한 사냥꾼.', rarity: 'rare' as const, rewardMultiplier: 1.45 },
+    { id: 'tidejelly', name: '좀비버섯', level: 17, lore: '빛나는 촉수가 물살의 방향을 바꾼다.', rarity: 'epic' as const, rewardMultiplier: 1.75 },
+    { id: 'emberEel', name: '파이어보어', level: 24, lore: '열수 분출구에서 태어난 붉은 전류의 뱀.', rarity: 'rare' as const, rewardMultiplier: 1.5 },
+    { id: 'ashRay', name: '다크 스톤골렘', level: 26, lore: '화산재를 날개처럼 두르고 수면을 가른다.', rarity: 'rare' as const, rewardMultiplier: 1.55 },
+    { id: 'magmaPuffer', name: '믹스 골렘', level: 27, lore: '몸속에 뜨거운 독을 저장한 위험한 희귀종.', rarity: 'epic' as const, rewardMultiplier: 1.9 },
+    { id: 'cinderKoi', name: '레드 드레이크', level: 29, lore: '비늘 사이로 식지 않은 불꽃이 흐른다.', rarity: 'epic' as const, rewardMultiplier: 2.1 },
+    { id: 'starKoi', name: '버블링', level: 46, lore: '별자리의 무늬를 비늘에 품은 외해의 희귀종.', rarity: 'rare' as const, rewardMultiplier: 1 },
+    { id: 'prismRay', name: '옥토퍼스', level: 48, lore: '빛을 일곱 갈래로 쪼개며 헤엄친다.', rarity: 'epic' as const, rewardMultiplier: 1.2 },
+    { id: 'voidGuppy', name: '스티지', level: 50, lore: '작은 몸 안에 깊이를 측정할 수 없는 어둠이 있다.', rarity: 'epic' as const, rewardMultiplier: 1.3 },
     // v25.8 차수 변종: 사냥터 난이도 10·20·30 이상에서만 나타나는 희귀 변종. 도감 항목이 따로 있어 차수를 올릴 이유가 됩니다.
-    { id: 'stormBarracuda', name: '아이언 호그', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, spawnWeight: .08, rewardMultiplier: 2.4 }, // v26.6 사냥터 난이도 조건(10) 제거: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
-    { id: 'eclipseMoonfish', name: '레이스', level: 44, lore: '달이 가려진 밤, 심연의 빛을 등에 지고 떠오른다.', rarity: 'epic' as const, spawnWeight: .06, rewardMultiplier: 2.8, minTier: 20 },
-    { id: 'novaManta', name: '와이번', level: 58, lore: '별이 터지는 순간의 빛을 날개에 새긴 외해의 전설.', rarity: 'legendary' as const, spawnWeight: .03, rewardMultiplier: 2, minTier: 30 },
-    { id: 'cinderAngler', name: '크로코', level: 60, lore: '열수구의 불씨를 등불 삼아 어둠 속에서 입을 벌린다.', rarity: 'rare' as const, spawnWeight: .6, rewardMultiplier: 1.5 },
-    { id: 'ventLeviathan', name: '다크 와이번', level: 63, lore: '열수구를 통째로 둥지로 삼은 거대한 그림자.', rarity: 'epic' as const, spawnWeight: .3, rewardMultiplier: 1.8 },
-    { id: 'abyssManta', name: '와일드 카고', level: 54, lore: '날개를 펼치면 주변의 조류가 잠시 멎는다.', rarity: 'legendary' as const, spawnWeight: .018, rewardMultiplier: 1.6 },
+    { id: 'stormBarracuda', name: '아이언 호그', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, rewardMultiplier: 2.4 }, // v26.6 사냥터 난이도 조건(10) 제거: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
+    { id: 'eclipseMoonfish', name: '레이스', level: 44, lore: '달이 가려진 밤, 심연의 빛을 등에 지고 떠오른다.', rarity: 'epic' as const, rewardMultiplier: 2.8, minTier: 20 },
+    { id: 'novaManta', name: '와이번', level: 58, lore: '별이 터지는 순간의 빛을 날개에 새긴 외해의 전설.', rarity: 'legendary' as const, rewardMultiplier: 2, minTier: 30 },
+    { id: 'cinderAngler', name: '크로코', level: 60, lore: '열수구의 불씨를 등불 삼아 어둠 속에서 입을 벌린다.', rarity: 'rare' as const, rewardMultiplier: 1.5 },
+    { id: 'ventLeviathan', name: '다크 와이번', level: 63, lore: '열수구를 통째로 둥지로 삼은 거대한 그림자.', rarity: 'epic' as const, rewardMultiplier: 1.8 },
+    { id: 'abyssManta', name: '와일드 카고', level: 54, lore: '날개를 펼치면 주변의 조류가 잠시 멎는다.', rarity: 'legendary' as const, rewardMultiplier: 1.6 },
     { id: 'grottoWarden', name: '머쉬맘', level: 14, lore: '버섯 동산을 다스리는 거대한 버섯. 짓누르는 몸통으로 침묵의 충격을 뿜는다.', rarity: 'legendary' as const, rewardMultiplier: 2.6, boss: true },
     { id: 'kelpHydra', name: '킹 슬라임', level: 22, lore: '쪼개질 때마다 새 슬라임을 낳는 수로의 왕.', rarity: 'legendary' as const, rewardMultiplier: 3, boss: true },
     { id: 'anchorWraith', name: '좀비 머쉬맘', level: 25, lore: '개미굴 깊은 곳에서 되살아난 머쉬맘. 느린 저주를 건다.', rarity: 'legendary' as const, rewardMultiplier: 3.2, boss: true },
@@ -222,7 +236,7 @@ const specialFish: Array<{
     { id: 'starfallSeraph', name: '파풀라투스', level: 62, lore: '루디브리엄 시계탑의 시간을 멈춘 차원의 침략자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
 ];
 for (const f of specialFish)
-    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: fishExpAt(f.level), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, spawnWeight: f.spawnWeight, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
+    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: fishExpAt(f.level), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, /** v3.55 출현 가중치는 서버 전용(ODDS.spawn). */ get spawnWeight() { return ODDS.spawn[f.id]; }, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
 // v27.41 메이플 몬스터 이름: maple-monsters.ts 한곳에서 이름·설명을 덮어씁니다(id·능력치는 그대로).
 for (const f of FISH) { const m = MAPLE_MONSTERS[f.id]; if (m) { f.name = m.name; f.lore = m.lore; } }
 /**

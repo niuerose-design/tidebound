@@ -33,11 +33,13 @@ const canaries = {
     // v3.44 발견의 문 조건(압축된 모양). doors.ts가 서버 전용이 되면 0이어야 합니다.
     '발견의 문 조건': ['deaths||0)>=10', 'deaths||0)>=30', 'wins||0)>=3', 'kills||0)>=500', 'gold||0)<100', 'bestStage||0)>=4'],
     // v3.52 드롭·확률 수치(서버 전용 game/secret/odds.ts). 압축기가 쓰는 모양(0.5 → .5, 쉼표 뒤 공백 없음)으로 표와 키:값을 찾습니다(하한).
-    // 키 이름(dropChanceCap 등)은 공개 표의 getter로 남아 있어도 값이 없으므로 셈하지 않습니다. 몬스터 출현 가중치(spawnWeight)는 아직 공개 표에 있습니다(다음 단계).
+    // 키 이름(dropChanceCap 등)은 공개 표의 getter로 남아 있어도 값이 없으므로 셈하지 않습니다.
     '드롭·확률 수치(하한)': [
         num(SERVER_ODDS.drop.rarity), num(SERVER_ODDS.appraisal), `rarity:1,chance:${n(SERVER_ODDS.appraisal[0])}`,
         `rarityPerTier:${n(SERVER_ODDS.drop.tideRarityPerTier)}`, `essenceChancePerTier:${n(SERVER_ODDS.drop.essenceChancePerTier)}`,
         ...Object.entries(SERVER_ODDS.variant.region).map(([region, row]) => `"${region}":{${Object.entries(row).map(([k, v]) => `${k}:${n(v)}`).join(',')}}`),
+        // v3.55 몬스터 출현 가중치(옛 world.ts 모양 spawnWeight:.18).
+        ...Object.values(SERVER_ODDS.spawn).filter(v => v > 0).map(v => `spawnWeight:${n(v)}`),
     ],
 };
 let leaked = 0;

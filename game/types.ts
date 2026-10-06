@@ -640,6 +640,8 @@ export type HackerState = {
     roots?: number;
     /** v3.28 블랙 해커가 해킹에 실패해 추적당한 동안(이 시각까지 해킹 불가). */
     bustedUntil?: number;
+    /** v3.57 정보 해킹으로 알아낸 비밀 조각(최근 것이 앞, HACKER.leak.keep개까지). */
+    leaks?: { id: string; text: string; at: number }[];
     /** v3.29 해커 조직 소속 캐시(동기화 때 10분마다 서버의 crews 행과 맞춤). */
     crew?: { id: string; name: string; side: string; grade: number; leader: boolean; syncedAt: number; /** v3.33 켠 조직 모듈 */ modules?: string[] };
     /** v3.29 오늘 조직에 기여한 비트(하루 상한). */
