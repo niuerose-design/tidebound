@@ -3,6 +3,7 @@ import { monthSeason } from '@/game/data/goals';
 import { readHacks, maskSnapshot, playerOfRow, listHackerBoard } from '@/game/server/hacks';
 import { monthKey } from '@/game/data/goals';
 import { crewBoard } from '@/game/server/crews';
+import { power } from '@/game/systems/stats';
 export const dynamic = 'force-dynamic';
 /** 서약 배지: 알려진 배지 문자열만 통과시킵니다(서약 이전 스냅샷은 빈 목록). */
 const VOW_BADGES = new Set(['anchor', 'breath', 'rough1', 'rough2', 'rough3']);
@@ -17,7 +18,8 @@ export async function GET(req: Request) { try {
     if (new URL(req.url).searchParams.get('board') === 'crew') { const b = await crewBoard(Date.now()); return Response.json({ week: b.week, rows: b.rows }, { headers: { 'Cache-Control': 'no-store' } }); }
     const now = Date.now(), season = duelSeasonKey(now), rows = await db().listRankings(monthSeason(season), 100), hacks = await readHacks(now);
     // v3.18 숨긴 이름·정보(v3.26부터 해커의 신원 조작)는 가려서 보냅니다(크래킹당한 동안·내 행은 그대로).
-    return Response.json({ season, rows: rows.map(r => { const self = r.id === duelRowId(season, id), raw = JSON.parse(r.snapshot), snap = self ? raw : maskSnapshot(raw, playerOfRow(r.id), hacks, now), gearHidden = !!snap.masked?.includes('gear'); delete snap.privacy; return { ...snap, vows: vowList(snap.vows), id: r.id, rating: r.rating, power: gearHidden ? 0 : r.power, updatedAt: r.updated_at, self }; }) }, { headers: { 'Cache-Control': 'no-store' } });
+    // v3.64 전투력은 저장된 값 대신 스냅샷 능력치로 다시 계산합니다(공식이 바뀌어도 예전 행이 옛 숫자로 남지 않게).
+    return Response.json({ season, rows: rows.map(r => { const self = r.id === duelRowId(season, id), raw = JSON.parse(r.snapshot), snap = self ? raw : maskSnapshot(raw, playerOfRow(r.id), hacks, now), gearHidden = !!snap.masked?.includes('gear'); delete snap.privacy; return { ...snap, vows: vowList(snap.vows), id: r.id, rating: r.rating, power: gearHidden ? 0 : raw.stats ? power(raw.stats) : r.power, updatedAt: r.updated_at, self }; }) }, { headers: { 'Cache-Control': 'no-store' } });
 }
 catch (e) {
     return failure(e);

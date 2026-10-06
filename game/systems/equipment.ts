@@ -13,9 +13,9 @@ export const capeEvasion = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.roun
 const charmCrit = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CHARM_CRIT[item.rarity] ?? CHARM_CRIT[0]) * (1 + (item.enhance || 0) * CHARM_CRIT_ENHANCE) * 10000) / 10000;
 /**
  * v27.36 등급별 고정 수치 감쇠(기본 수치와 고정 수치 옵션에 곱함). 고대·태초 장비가 최종 능력치의 대부분을 차지하던 것을 줄입니다. 저장된 위력은 그대로라 기존 장비에도 바로 적용됩니다.
- * v3.64 22성 4부위 장비 몫이 전설 ×2.8 < 신화 ×2.86 < 고대 ×2.95 < 태초 ×3.0으로 오르도록 전설·신화를 낮췄습니다(전에는 전설 3.07 > 신화 2.99). 큰 격차는 계승 장비(heir)에 둡니다.
+ * v3.64 22성 4부위 전투력(실제 전투식)이 전설 ×9.1 < 신화 ×9.8 < 고대 ×10.9 < 태초 ×12.3(장비 없음 대비)으로 오르도록 전설·신화를 낮추고 태초를 조금 올렸습니다(전에는 전설이 신화보다 높았음). 큰 격차는 계승 장비(heir)에 둡니다.
  */
-export const GEAR_RARITY_SCALE = [1, 1, 1, .75, .638, .58, .5];
+export const GEAR_RARITY_SCALE = [1, 1, 1, .75, .638, .58, .54];
 const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
 export function itemStats(item: Item): Partial<Stats> {
     const damp = GEAR_RARITY_SCALE[item.rarity] ?? 1;
