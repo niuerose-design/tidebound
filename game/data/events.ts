@@ -1,3 +1,4 @@
+import { KST } from './door-info';
 /**
  * v26.1 서버 이벤트: 기간 동안 모든 모험가의 경험치·골드·드롭 배율을 올립니다.
  * v27.73부터 목록은 운영 페이지에서만 관리합니다(코드 목록은 비움). 서버가 동기화·정산 때 activeEvent(now)를 State.event에 적어 둡니다.
@@ -62,6 +63,6 @@ export function activeEvent(now: number, events: ServerEvent[] = currentEvents()
 /** 이벤트 배너 문구: 배율과 종료일. */
 export function eventLabel(e: ActiveEvent) {
     const parts = [e.exp !== 1 ? `경험치 ×${e.exp}` : '', e.gold !== 1 ? `골드 ×${e.gold}` : '', e.drop !== 1 ? `장비 드롭 ×${e.drop}` : '', (e.mastery ?? 1) !== 1 ? `숙련 ×${e.mastery}` : '', (e.mimic ?? 1) !== 1 ? `까미 출현 ×${e.mimic}` : '', (e.nuri ?? 1) !== 1 ? `누리 출현 ×${e.nuri}` : ''].filter(Boolean);
-    const d = new Date(e.until + 9 * 3600_000);
+    const d = new Date(e.until + KST);
     return [e.name, ...parts, `${d.getUTCMonth() + 1}/${d.getUTCDate()}까지`].join(' · ');
 }

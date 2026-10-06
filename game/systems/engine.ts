@@ -17,10 +17,9 @@ import { itemActions } from './actions/items';
 import { lifecycleActions } from './actions/lifecycle';
 import { hackerActions } from './actions/hacker';
 
-export { addLog, newState } from './state';
-export { tick, advance, syncStatRate } from './turn';
+export { newState } from './state';
+export { tick, advance } from './turn';
 export { victoryHeal, rollRarity } from './encounter';
-export { parseRepeat } from './dungeon-run';
 
 const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions, ...hackerActions };
 

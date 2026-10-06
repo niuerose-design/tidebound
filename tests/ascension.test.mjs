@@ -5,7 +5,7 @@ const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
 const Asc = await L.load('data/ascension'), Mi = await L.load('data/mimic'), Lc = await L.load('systems/actions/lifecycle');
 const P = await L.load('systems/progression'), LT = await L.load('data/long-term'), V = await L.load('systems/vows'), Sp = await L.load('data/sprout');
 const E = await L.load('systems/encounter'), Ac = await L.load('data/account'), Ec = await L.load('data/economy'), RG = await L.load('systems/random-game');
-const W = await L.load('data/world'), AmMod = await L.load('systems/automation');
+const W = await L.load('data/world'), AmMod = await L.load('systems/automation'), RpMod = await L.load('systems/research-plan');
 const { skillById } = await L.load('data/skills');
 const SKILL = id => skillById(id);
 
@@ -131,8 +131,8 @@ test('v3.40 research plan (ascension 1): buys in order up to targets, waits when
     const cost = (id, from, to) => { let n = 0; for (let i = from; i < to; i++) n += Ec.researchCost(id, i); return n; };
     s.pearls = cost('attack', 0, 2) + Ec.researchCost('hp', 0); act(s, { type: 'researchPlan', id: 'on' }, 0);
     assert.equal(s.permanent.attack, 2); assert.equal(s.permanent.hp || 0, 1); assert.equal(s.permanent.crit || 0, 0, 'locked research is skipped'); assert.equal(s.pearls, 0);
-    s.pearls = Ec.researchCost('hp', 1) - 1; AmMod.runResearchPlan(s); assert.equal(s.permanent.hp, 1, 'waits for pearls');
-    s.pearls += 1; AmMod.runResearchPlan(s); assert.equal(s.permanent.hp, 2);
+    s.pearls = Ec.researchCost('hp', 1) - 1; RpMod.runResearchPlan(s); assert.equal(s.permanent.hp, 1, 'waits for pearls');
+    s.pearls += 1; RpMod.runResearchPlan(s); assert.equal(s.permanent.hp, 2);
     act(s, { type: 'researchPlan', id: 'up', value: '2' }, 0); assert.deepEqual(s.researchPlan.items.map(x => x.id), ['crit', 'hp', 'attack']);
     act(s, { type: 'researchPlan', id: 'remove', value: '0' }, 0); assert.deepEqual(s.researchPlan.items.map(x => x.id), ['hp', 'attack']);
     s.rebirths = Asc.ASCENSION.requirements[1]; Lc.ascend(s, 0); assert.deepEqual(s.researchPlan, { on: true, items: [{ id: 'hp', to: 2 }, { id: 'attack', to: 2 }] }, 'plan survives ascension');

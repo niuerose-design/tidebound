@@ -4,6 +4,7 @@
  * 아래는 서버와 화면이 함께 쓰는 순수 규칙입니다.
  */
 import { HACKER_ID, WHITE_HACKER_ID, BLACK_HACKER_ID } from './hacker';
+import { normalizeInviteCode } from './guild';
 
 export const CREW = {
     /** 창설 비트(해킹 I 해금 필요). */
@@ -64,9 +65,8 @@ export function crewGradeProgress(exp: number) {
     for (let g = 1; g < grade; g++) base += CREW.gradeNeed(g);
     return { grade, into: exp - base, need: grade >= CREW.maxGrade ? 0 : CREW.gradeNeed(grade) };
 }
-/** 초대 코드 글자(헷갈리는 0·O·1·I 제외). */
-export const CREW_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-export const normalizeCrewCode = (code: string) => code.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CREW.codeLength);
+/** 초대 코드(글자 규칙은 길드 가입 코드와 같음). */
+export const normalizeCrewCode = (code: string) => normalizeInviteCode(code, CREW.codeLength);
 /** 조직 이름: 제어 문자·꺾쇠·대괄호 제외, 공백 정리. */
 export const cleanCrewName = (name: unknown) => String(name ?? '').replace(/[\u0000-\u001f\u007f<>[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, CREW.nameMax);
 

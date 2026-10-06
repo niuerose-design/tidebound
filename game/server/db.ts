@@ -1,4 +1,5 @@
 import { packState, unpackState } from './pack';
+import { CHAT_KEEP } from '../data/chat';
 /**
  * 저장소 계층. DATABASE_URL(또는 POSTGRES_URL)이 있으면 Neon Postgres의 HTTP 쿼리 엔드포인트를,
  * 없으면 개발용 로컬 JSON 파일(.data/dev-db.json)을 사용합니다. 추가 패키지 없이 fetch만 씁니다.
@@ -9,7 +10,6 @@ export type AccountRow = { id: string; username: string; pass_hash: string; salt
 /** v25.4 채팅 한 줄. 채널마다 최근 CHAT_KEEP개만 남깁니다. */
 export type CrewRow = { id: string; code: string; data: string; revision: number };
 export type ChatRow = { id: number; channel: string; account_id: string; name: string; text: string; created_at: number };
-const CHAT_KEEP = 300;
 /** v25.11 공유 길드. 주간 합산(week가 현재 주와 다르면 0으로 보고 다시 셉니다). */
 export type GuildRow = { id: string; name: string; code: string; leader: string; treasury: number; created_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; points: number };
 export type GuildMemberRow = { account_id: string; guild_id: string; name: string; joined_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; claimed: string };

@@ -3,7 +3,7 @@ import { rebirthAP } from './meta';
 import { restraintAP, restraintSlots } from './vows';
 import { accountAP } from '../data/account';
 import type { State, Attribute, Skill, Stats } from '../types';
-import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat } from '../data/progression';
+import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { Job, JobStatKey, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
@@ -26,7 +26,6 @@ export function skillRefinementTargets(sk: Skill) {
     const positive = Object.values(sk.bonus || {}).some(n => n > 0) || Object.values(sk.levelEffects || {}).some(row => Object.values(row.bonus || {}).some(n => n > 0));
     return sk.type === 'active' || positive ? refinementTargets(masteryMilestonesFor(sk).at(-1)!) : [];
 }
-export const skillPracticeTargets = (sk: Skill) => [...masteryMilestonesFor(sk), ...skillRefinementTargets(sk)];
 /**
  * v3.31 연마·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
  * 성장 레벨(숙련 1~4단계)은 원래 숙련 그대로라 바뀌지 않습니다. 기준점이 없으면 원래 숙련과 같습니다.
@@ -256,12 +255,6 @@ export function skillRankHint(sk: Skill, rank: number, mastery = 0, practice = 0
     const rows = skillRankDeltas(sk, Math.max(1, rank), mastery, practice);
     return rows.length ? rows.map(x => `${x.label} ${x.from} → ${x.to}`).join(' · ') : '최대 강화 레벨입니다.';
 }
-export function skillMasteryHint(sk: Skill, level: number, rank = 1) {
-    const milestones = masteryMilestonesFor(sk), current = skillLevel(sk, rank, level);
-    if (current >= milestones.length)
-        return '최대 강화 완료 · 실전 숙련과 전직 조건은 계속 기록됩니다.';
-    return `${milestones[current].toLocaleString()} 또는 1 SP → Lv.${current + 1} · ${skillRankHint(sk, rank, level)}`;
-}
 /** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다. */
 export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
 /** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 발견의 문이 셉니다. */
@@ -275,9 +268,9 @@ export function jobRequirements(s: State, j: Job) {
         list.push({ label: `환생 ${j.rebirth}회`, met: s.rebirths >= j.rebirth, value: s.rebirths, target: j.rebirth });
     if (!unlocked) {
         for (const [key, n] of Object.entries(j.requires))
-            list.push({ label: `${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: a[key as Attribute] >= n, value: a[key as Attribute], target: n });
+            list.push({ label: `${ATTRIBUTE_NAMES[key as Attribute]} ${n}`, met: a[key as Attribute] >= n, value: a[key as Attribute], target: n });
         for (const [key, n] of Object.entries(j.requiresAllocated || {}))
-            list.push({ label: `배분 ${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[key]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n, value: s.attributes?.[key as Attribute] || 0, target: n });
+            list.push({ label: `배분 ${ATTRIBUTE_NAMES[key as Attribute]} ${n}`, met: (s.attributes?.[key as Attribute] || 0) >= n, value: s.attributes?.[key as Attribute] || 0, target: n });
         if (j.parent)
             list.push({ label: `${jobById(j.parent)?.name} 숙련 ${j.mastery}`, met: (s.jobMastery?.[j.parent] || 0) >= j.mastery, value: s.jobMastery?.[j.parent] || 0, target: j.mastery });
         for (const [jobId, mastery] of Object.entries(j.requiresJobMastery || {})) {

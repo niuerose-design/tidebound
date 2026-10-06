@@ -4,7 +4,7 @@ import { ApiError } from './store';
 import { weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { guildStatsFor } from '../systems/progress';
-import { GUILD_MAX_MEMBERS, GUILD_CREATE_COST, GUILD_RENAME_COST, GUILD_DONATIONS, GUILD_CODE_CHARS, normalizeGuildCode, makeGuildGoals, guildGoalProgress, guildPoints, emptyTotals, type GuildTotals } from '../data/guild';
+import { GUILD_MAX_MEMBERS, GUILD_CREATE_COST, GUILD_RENAME_COST, GUILD_DONATIONS, GUILD_CODE_LENGTH, randomInviteCode, normalizeGuildCode, makeGuildGoals, guildGoalProgress, guildPoints, emptyTotals, type GuildTotals } from '../data/guild';
 
 /**
  * v25.11 공유 길드 서비스. 길드는 계정 단위(캐릭터 슬롯 공통)이고, 세이브에는 소속 캐시(guildMember)와 이번 주 기여(guildStats)만 둡니다.
@@ -12,7 +12,7 @@ import { GUILD_MAX_MEMBERS, GUILD_CREATE_COST, GUILD_RENAME_COST, GUILD_DONATION
  */
 const UPLOAD_MS = 5 * 60_000, REFRESH_MS = 10 * 60_000, BOARD_SIZE = 20;
 const cleanName = (name: unknown) => String(name ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 16);
-const randomCode = () => { const bytes = crypto.getRandomValues(new Uint8Array(6)); return Array.from(bytes, b => GUILD_CODE_CHARS[b % GUILD_CODE_CHARS.length]).join(''); };
+const randomCode = () => randomInviteCode(GUILD_CODE_LENGTH);
 const totalsOf = (g: { week: string } & GuildTotals, week: string): GuildTotals => g.week === week ? { catches: g.catches, clears: g.clears, bosses: g.bosses, abyss: g.abyss, donated: g.donated } : emptyTotals();
 const claimsOf = (m: GuildMemberRow, week: string) => m.week === week && m.claimed ? m.claimed.split(',').filter(Boolean) : [];
 /** 채팅 채널 판정용 소속 캐시(인스턴스 메모리, 5분). 탈퇴·추방은 즉시 지웁니다. */

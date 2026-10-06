@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { kstIso } from '@/game/data/door-info';
 
 type AdminSp = { have: number; research: { name: string; sp: number; claimed: boolean }[]; spentSkills: { name: string; sp: number }[]; limitBreaks: { name: string; sp: number }[]; logs: string[] };
 type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
@@ -43,7 +44,7 @@ function Bars({ title, rows, total }: { title: string; rows: { label: string; co
 const MULTS = [['exp', '경험치'], ['gold', '골드'], ['drop', '장비 드롭'], ['mastery', '숙련'], ['mimic', '까미 출현'], ['nuri', '누리 출현']] as const;
 /** datetime-local(한국 시간으로 입력) → ISO. */
 const kstToIso = (v: string) => v ? `${v}:00+09:00` : '';
-const isoToKst = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 16);
+const isoToKst = (iso: string) => kstIso(Date.parse(iso)).slice(0, 16);
 /** 진행 중 · 시작 전 · 종료됨(목록을 불러온 시각 기준). */
 const phase = (e: EventRow, at: number) => e.live ? ' · 진행 중' : Date.parse(e.from) > at ? ' · 시작 전' : ' · 종료됨';
 const when = (e: EventRow) => `${isoToKst(e.from).replace('T', ' ')} ~ ${isoToKst(e.until).replace('T', ' ')} (한국 시간)`;
@@ -304,7 +305,7 @@ export default function AdminPage() {
                 </form>
             </div>
             {news && <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>최근 소식 {news.length}줄</h2>{!news.length && <p style={{ color: '#9bb3b0', fontSize: 13, margin: 0 }}>없습니다.</p>}
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 4, fontSize: 13 }}>{[...news].reverse().map(r => <li key={r.id} style={{ color: r.hacker ? '#ff9a9a' : undefined }}><span style={{ color: '#9bb3b0' }}>{new Date(r.at + 9 * 3600_000).toISOString().slice(5, 16).replace('T', ' ')} · {r.name}</span> {r.text}</li>)}</ul></div>}
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 4, fontSize: 13 }}>{[...news].reverse().map(r => <li key={r.id} style={{ color: r.hacker ? '#ff9a9a' : undefined }}><span style={{ color: '#9bb3b0' }}>{kstIso(r.at).slice(5, 16).replace('T', ' ')} · {r.name}</span> {r.text}</li>)}</ul></div>}
         </section>}
         {tab === 'closures' && closures && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
             <div className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 13 }}><b>해커 방송</b> · {broadcast ? <>[해커 {broadcast.by}] {broadcast.text} <small style={{ color: '#9bb3b0' }}>· {new Date(broadcast.until).toLocaleTimeString()}까지</small></> : <span style={{ color: '#9bb3b0' }}>없음</span>}</span>{broadcast && <button className="secondary" disabled={busy} onClick={removeBroadcast}>방송 지우기</button>}</div>

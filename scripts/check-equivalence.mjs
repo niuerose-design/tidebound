@@ -101,11 +101,11 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
     samples[2].job = JOBS.find(j => j.tier === 2)?.id || samples[2].job;
     const display = [];
     for (const sk of SKILLS) {
-        display.push(desc.skillEffectLines(sk), desc.skillGrowthStages(sk), prog.skillRankDeltas(sk, 2, 1), prog.skillMasteryHint(sk, 1), prog.skillRankHint(sk, 1, 0), prog.skillPracticeTargets(sk), mastery.masteryConditionText(sk));
+        display.push(desc.skillEffectLines(sk), desc.skillGrowthStages(sk), prog.skillRankDeltas(sk, 2, 1), prog.skillRankHint(sk, 1, 0), mastery.masteryConditionText(sk));
         for (const lv of [0, 1, 2, 3]) display.push(prog.effectiveSkill(sk, lv + 1, lv, 0), prog.effectiveSkill(sk, lv + 1, lv, 3e7));
     }
     for (const s of samples) {
-        display.push(statsM.stats(s), statsM.dropRate(s), statsM.goldMultiplier(s), statsM.expMultiplier(s), statsM.dungeonGoldMultiplier(s), statsM.snapshot(s), statsM.power(statsM.stats(s)), statsM.mastery(s));
+        display.push(statsM.stats(s), statsM.dropRate(s), statsM.goldMultiplier(s), statsM.expMultiplier(s), statsM.dungeonGoldMultiplier(s), statsM.snapshot(s), statsM.power(statsM.stats(s)));
         display.push(prog.apCapacity(s), prog.apUsed(s), meta.rebirthReward(s, 2), meta.rebirthLevel(s), commerceM.gambleCost(s), commerceM.imprintGambleCost(s), commerceM.pityLeft(s));
         for (const j of JOBS) display.push(prog.jobRequirements(s, j), prog.canChangeJob(s, j.id));
         for (const x of SHOP) display.push(commerceM.shopPreview(s, x.id));

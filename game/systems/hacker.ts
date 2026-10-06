@@ -108,15 +108,14 @@ function hash(text: string, seed = 0) {
     h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
     return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 }
-function nodeRng(run: Pick<HackerInfil, 'seed' | 'depth'>) {
-    let x = hash(`${puzzleKey}:${run.seed}:${run.depth}`) % 4294967296;
+/** mulberry32: 키에서 만든 시드로 늘 같은 흐름을 냅니다. */
+function mulberry(seed: number) {
+    let x = seed;
     return () => { x = (x + 0x6D2B79F5) >>> 0; let t = x; t = Math.imul(t ^ t >>> 15, 1 | t); t ^= t + Math.imul(t ^ t >>> 7, 61 | t); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 }
+const nodeRng = (run: Pick<HackerInfil, 'seed' | 'depth'>) => mulberry(hash(`${puzzleKey}:${run.seed}:${run.depth}`) % 4294967296);
 /** v3.26 키로만 만들 수 있는 보조 난수(salt마다 다른 흐름). 노드 종류(k)와 새 퍼즐 문제(p)에 씁니다. 자물쇠·포트 정답은 예전 흐름 그대로. */
-function saltRng(seed: number, depth: number, salt: string) {
-    let x = hash(`${puzzleKey}:${seed}:${depth}:${salt}`) % 4294967296;
-    return () => { x = (x + 0x6D2B79F5) >>> 0; let t = x; t = Math.imul(t ^ t >>> 15, 1 | t); t ^= t + Math.imul(t ^ t >>> 7, 61 | t); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-}
+const saltRng = (seed: number, depth: number, salt: string) => mulberry(hash(`${puzzleKey}:${seed}:${depth}:${salt}`) % 4294967296);
 const pick = (r: () => number, lo: number, hi: number) => lo + Math.floor(r() * (hi - lo + 1));
 /** v3.26 암호 해독 단어(영문 대문자). */
 const CIPHER_WORDS = ['ROOT', 'ADMIN', 'SHELL', 'PROXY', 'TOKEN', 'CACHE', 'LOGIN', 'KERNEL', 'ROUTER', 'SOCKET', 'PACKET', 'BINARY', 'CIPHER', 'ACCESS', 'SERVER', 'CLIENT', 'SCRIPT', 'BUFFER', 'MATRIX', 'FIREWALL', 'BACKDOOR', 'EXPLOIT'];

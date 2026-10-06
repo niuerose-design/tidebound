@@ -13,6 +13,7 @@ import { ApiError } from './store';
 import { refreshAltarEvents } from './events-config';
 import { allow } from './throttle';
 import { weekKey } from '../data/goals';
+import { kstIso } from '../data/door-info';
 import { addLog } from '../systems/state';
 import { snapshot } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot } from '../systems/duel';
@@ -223,7 +224,7 @@ export async function commitOffering(account: string, id: string, name: string, 
             if (!r) break;
             opened++; until = r.until; level = r.level;
         }
-        if (opened) { await refreshAltarEvents(now); await announce(`${name}의 공물로 ${josa(b.name, '이가')} ${!wasLive ? `열렸습니다${level > 1 ? `(${level}단계)` : ''}` : level > before ? `${level}단계가 되었습니다` : (level > BLESSING_HIGH_FROM ? `${level}단계가 ${Math.round(blessingLevelMs(b.hours, level) / 60_000)}분 다시 유지됩니다` : `${level}단계로 ${opened}시간 연장되었습니다`)}! ${blessingDesc(b, level)} · ${new Date(until + 9 * 3600_000).toISOString().slice(11, 16)}까지`, now); }
+        if (opened) { await refreshAltarEvents(now); await announce(`${name}의 공물로 ${josa(b.name, '이가')} ${!wasLive ? `열렸습니다${level > 1 ? `(${level}단계)` : ''}` : level > before ? `${level}단계가 되었습니다` : (level > BLESSING_HIGH_FROM ? `${level}단계가 ${Math.round(blessingLevelMs(b.hours, level) / 60_000)}분 다시 유지됩니다` : `${level}단계로 ${opened}시간 연장되었습니다`)}! ${blessingDesc(b, level)} · ${kstIso(until).slice(11, 16)}까지`, now); }
     }
     invalidateAltar();
     await shared(now, true); // 신 소환 게이지가 찼으면 여기서 깨어납니다.
@@ -301,11 +302,9 @@ export async function syncAltarStatus(s: State, now: number, id = '') {
             blessings: BLESSINGS.filter(b => liveLevel(sh.gauges[b.id], now) > 0).map(b => { const level = liveLevel(sh.gauges[b.id], now); return { id: b.id, name: `${b.name} ${level}단계`, desc: blessingDesc(b, level), until: liveUntil(sh.gauges[b.id], now), level }; }),
             god: god && godAlive(a, now) ? { gen: a.gen, name: god.name, until: a.god_until } : null,
             raids: RAIDS.filter(r => raidAlive(sh.raids[r.id], now)).map(r => { const x = sh.raids[r.id]; return { id: r.id, gen: x.gen, name: r.name, until: x.until, pct: x.hp_max ? Math.max(0, Math.min(1, x.hp / x.hp_max)) : 0 }; }),
-            raid: null,
             throne: a.throne_name,
             gauges: GAUGE_IDS.map(g => { const level = liveLevel(sh.gauges[g], now); return { id: g, name: gaugeName(g), pct: Math.min(100, Math.floor((sh.gauges[g]?.points || 0) / gaugeCost(g, level, level > 0) * 100)) }; }),
         };
-        status.raid = status.raids?.[0] ? { gen: status.raids[0].gen, name: status.raids[0].name, until: status.raids[0].until, pct: status.raids[0].pct } : null;
         s.altarStatus = status;
         if (id) for (const r of Object.values(sh.raids)) await claimRaidReward(s, r, id);
     }
