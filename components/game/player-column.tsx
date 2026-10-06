@@ -1,23 +1,17 @@
 'use client';
-import { tutorialActive } from './growth-goals';
-import { displayTitle, unlockedTitles, titleById } from '@/game/data/titles';
+import { displayTitle } from '@/game/data/titles';
 import { rankOf, rankIndex, rankState } from '@/game/data/rank';
 import { RankInsignia } from './rank-insignia';
-import { TutorialCard } from './guidance-panels';
-import { tutorialEarly } from '@/game/systems/guidance';
-import { BookOpen, ChevronRight, Flag, Heart, Shield, ShoppingBag, Swords, Target, Trophy, Users, Zap, Leaf, Flame } from 'lucide-react';
-import { goalSummary } from '@/game/systems/progress';
+import { ChevronRight, Heart, Shield, Swords, Target, Users, Zap, Leaf } from 'lucide-react';
 import { Meter, SlotIcon, format } from './shared';
 import { OnyxArt } from './onyx-art';
 import { xpNeeded, SLOTS, RARITIES } from '@/game/data/balance';
 import { jobById } from '@/game/data/classes';
 import { stats, power } from '@/game/systems/stats';
-import type { State, Action } from '@/game/types';
+import type { State } from '@/game/types';
 import { xpWall } from '@/game/systems/meta';
-export function Player({ s, busy, send, setView }: {
+export function Player({ s, setView }: {
     s: State;
-    busy: boolean;
-    send: (a: Action) => void;
     setView: (v: string) => void;
 }) {
     const a = stats(s);
@@ -33,8 +27,6 @@ export function Player({ s, busy, send, setView }: {
     </div>
     <div className="combatant-name character-name"><h3>{s.badge === 'rank' ? <small className="rebirth-title rank-badge" title={`계급 ${rankOf(s).name}`}><RankInsignia index={rankIndex(rankState(s).exp)} size={16}/>{rankOf(s).name}</small> : displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</h3></div>
     <p className="job-label">{jobById(s.job)?.name} · 환생 {s.rebirths}회</p>
-    {(() => { const owned = unlockedTitles(s); if (!owned.length) return null; const value = s.title === null ? 'none' : s.title === undefined ? 'auto' : titleById(s.title) ? s.title : 'auto'; return <label className="title-label"><span>칭호</span><select value={value} disabled={busy} onChange={e => send({ type: 'title', id: e.target.value })}><option value="auto">자동 · 최근 획득</option><option value="none">표시 안 함</option>{owned.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>; })()}
-    <label className="title-label rank-label"><span>계급장</span><span className="rank-pick"><RankInsignia index={rankIndex(rankState(s).exp)} size={16}/>{rankOf(s).name}</span><select value={s.badge === 'rank' ? 'rank' : 'title'} disabled={busy} onChange={e => send({ type: 'badge', id: e.target.value })}><option value="title">칭호 표시</option><option value="rank">계급장 표시</option></select></label>
     <p className="guild-label"><Users size={14}/>{s.guildMember?.name ? `길드 · ${s.guildMember.name}` : '무소속'}</p>
     <div className="combat-power">
     <span>전투력</span>
@@ -95,14 +87,6 @@ export function Player({ s, busy, send, setView }: {
             </span>
             </button>;
         })}</div>
-    <div className="section-title shortcut-title">
-    <h2><Zap size={15}/> 빠른 이동</h2>
     </div>
-    <div className="battle-stage-list battle-shortcut-list">
-        {(s.daily || s.weekly) && <button type="button" className="battle-stage-button" onClick={() => setView('voyage')}><span className="battle-stage-index"><Flag size={13}/></span><span><strong>목표 · 업적</strong><small>오늘 {goalSummary(s.daily).done}/{goalSummary(s.daily).total} · 주간 {goalSummary(s.weekly).done}/{goalSummary(s.weekly).total}</small></span><ChevronRight size={13}/></button>}
-        {([['altar', '제단 · 축복', Flame], ['skills', '스킬 편성', Zap], ['inventory', '장비 보관함', ShoppingBag], ['book', '도감 연구', BookOpen], ['ranking', '랭킹 · 결투', Trophy]] as const).map(([id, name, Icon]) => <button type="button" key={id} className="battle-stage-button" onClick={() => setView(id)}><span className="battle-stage-index"><Icon size={13}/></span><span><strong>{name}</strong></span><ChevronRight size={13}/></button>)}
-    </div>
-    </div>
-    {tutorialActive(s) && !tutorialEarly(s) && <TutorialCard s={s} send={send} busy={busy} setView={setView}/>}
     </aside>;
 }

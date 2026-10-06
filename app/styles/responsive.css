@@ -55,10 +55,6 @@
     font-size:24px
   }
 
-  .status-pill {
-    font-size:10px
-  }
-
   .battle-skill-row {
     gap:7px
   }
@@ -178,8 +174,6 @@
     gap:16px
   }
 
-
-
   .book-grid>.book-card:last-child {
     grid-column:auto
   }
@@ -237,10 +231,6 @@
   .page-heading p {
     font-size:13px;
     line-height:1.9
-  }
-
-  .page-heading>.status-pill {
-    margin-top:5px
   }
 
   .page-heading .eyebrow {
@@ -302,12 +292,6 @@
   .scene-link {
     font-size:10px
   }
-
-
-
-
-
-
 
   .ocean-art {
     object-position:61% center
@@ -569,10 +553,6 @@
     margin-top:2px
   }
 
-  .status-pill {
-    display:none
-  }
-
   .game-tabs {
     gap:10px!important
   }
@@ -606,10 +586,9 @@
      가로 넘침은 스크롤 컨테이너를 만들지 않는 clip으로 막고 당겨서 새로고침 방지는 html에만 둡니다. */
   html { overscroll-behavior-y:none }
   body { overflow-x:clip }
-  .chat-list, .battle-feed-list, .log-list, .job-sheet, .battle-stage-list, .battle-dungeon-list { -webkit-overflow-scrolling:touch }
+  .chat-list,.log-list,.job-sheet,.battle-stage-list,.battle-dungeon-list{ -webkit-overflow-scrolling:touch }
   .mobile-tab-bar { z-index:60 }
   .battle-console .opponent-card.enemy-opponent { min-height:150px }
-  .battle-console .log-panel:not(.folded) .log-list { min-height:198px }
   .skill-view-toolbar { gap:10px }
   .skill-view-toolbar [data-slot=tabs] { width:100%; min-width:0 }
   .skill-view-toolbar [data-slot=tabs-list] { display:flex; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; width:100%; height:auto; padding-bottom:2px }

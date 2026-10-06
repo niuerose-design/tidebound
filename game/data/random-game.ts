@@ -17,7 +17,7 @@ export const RANDOM_GAME = {
 };
 export const randomGameTier = (wave: number) => RANDOM_GAME.tierBase + RANDOM_GAME.tierPerWave * (wave + 1);
 export const randomGameBoss = (wave: number) => (wave + 1) % RANDOM_GAME.bossEvery === 0;
-/** 웨이브 w(1부터)를 깨서 쌓이는 판돈(배율 적용 전). */
-export const waveStake = (w: number) => ({ essence: RANDOM_GAME.essencePerWave * w, pearls: 0 });
-/** 웨이브 1~n을 모두 깼을 때의 판돈 합계(배율 적용 전). */
-export const stakeUpTo = (n: number) => { let essence = 0, pearls = 0; for (let w = 1; w <= n; w++) { const x = waveStake(w); essence += x.essence; pearls += x.pearls; } return { essence, pearls }; };
+/** 웨이브 w(1부터)를 깨서 쌓이는 판돈 정수(배율 적용 전). */
+export const waveStake = (w: number) => RANDOM_GAME.essencePerWave * w;
+/** 웨이브 1~n을 모두 깼을 때의 판돈 정수 합계(배율 적용 전). */
+export const stakeUpTo = (n: number) => RANDOM_GAME.essencePerWave * n * (n + 1) / 2;

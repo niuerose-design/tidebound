@@ -1,7 +1,7 @@
 import type { Skill, State } from '../types';
 import { SKILLS } from '../data/skills';
 import { stats } from './stats';
-import { lineage, apCapacity, canUse, effectiveSkill, skillMastery, skillMasteryRewards, skillVeiled, refinePractice } from './progression';
+import { lineage, apCapacity, canUse, effectiveSkill, skillMastery, skillVeiled, refinePractice } from './progression';
 
 /**
  * 추천 편성: 현재 직업 전용 → 선행 계보 → 공용 → 계승한 다른 직업 순으로, 액티브는 발동률 × 위력, 패시브는 양수 수치 합이 큰 순서대로 AP 안에서 채웁니다. 패시브 몫(총 AP의 약 40%)을 먼저 채웁니다.
@@ -19,14 +19,13 @@ export function recommendLoadout(s: State) {
     // v27.62 AP 사용량·한도는 스킬별 값의 합이라(apUsed·apCapacity), 후보마다 validLoadout으로 처음부터 다시 세지 않고 누적합으로 판정합니다.
     // pool은 모두 사용 가능하고 중복이 없어 validLoadout(s, [...out, id])와 같은 결과입니다.
     const costs = new Map(pool.map(sk => [sk.id, effectiveSkill(sk, s.learned?.[sk.id] || 1, skillMastery(s, sk.id)).cost!]));
-    const rewards = new Map(pool.map(sk => [sk.id, skillMasteryRewards(sk, s.learned?.[sk.id] || 1, skillMastery(s, sk.id)).ap]));
-    const cost = (sk: Skill) => costs.get(sk.id)!, reward = (sk: Skill) => rewards.get(sk.id)!;
-    const capBase = apCapacity(s, []);
-    let used = 0, bonus = 0;
-    const fits = (sk: Skill) => used + cost(sk) <= capBase + bonus + reward(sk);
-    const take = (sk: Skill) => { used += cost(sk); bonus += reward(sk); out.push(sk.id); };
+    const cost = (sk: Skill) => costs.get(sk.id)!;
+    const cap = apCapacity(s);
+    let used = 0;
+    const fits = (sk: Skill) => used + cost(sk) <= cap;
+    const take = (sk: Skill) => { used += cost(sk); out.push(sk.id); };
     // v25.14 패시브 몫을 먼저 확보합니다(총 AP의 약 40%). 액티브만 가득 차던 추천을 막고, 남는 AP는 종류를 가리지 않고 채웁니다.
-    const cap = apCapacity(s), passiveBudget = Math.max(2, Math.round(cap * .4));
+    const passiveBudget = Math.max(2, Math.round(cap * .4));
     for (const sk of pool.filter(x => x.type === 'passive')) if (used + cost(sk) <= passiveBudget && fits(sk)) take(sk);
     for (const sk of pool.filter(x => x.type === 'active')) if (fits(sk)) take(sk);
     for (const sk of pool) if (!out.includes(sk.id) && fits(sk)) take(sk);

@@ -2,7 +2,7 @@
 import { ConfirmButton } from './confirm-button';
 import { ChevronDown, RefreshCw, Target } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
-import { attributes, apCapacity, apUsed } from '@/game/systems/progression';
+import { attributes, apCapacity, apUsed, apSources } from '@/game/systems/progression';
 import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
 import { masteryMultipliers } from '@/game/systems/mastery';
 import { RANK_PERKS, rankOf, rankPerkLevel, rankPerkValue } from '@/game/data/rank';
@@ -85,8 +85,9 @@ export function Character({ s, send, busy }: PanelProps) {
     </span>
     {(() => { const c = variantChances(s), total = VARIANTS.reduce((a, v) => a + c[v.id], 0), golden = a.goldenFind || 0; return <span title={`사냥터에서 몬스터를 ${VARIANT_BOOK_MIN}회 이상 처치한 뒤부터 출현마다 변종을 판정합니다. ${VARIANTS.map(v => `${v.mark} ${v.name} ${percent(c[v.id], 1)}`).join(' · ')}. 황금 개체는 처치 순간 따로 판정(${percent(golden, 1)}). 버섯숲 연못 테마 +10%, 섀도어 계보 패시브가 변종 조우 확률을 올립니다(현재 +${percent(a.variantFind || 0, 0)}).`}>변종 조우 확률 (처치당)<strong>{percent(total, 1)}{golden ? ` · 황금 ${percent(golden, 1)}` : ''}</strong></span>; })()}
     <span title="상세 능력치의 ‘경험치 획득 보너스’에서 계산식을 봅니다.">경험치 획득 배율<strong>×{expMultiplier(s).toFixed(2)}</strong></span>
-    <span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong>
-    </span>
+    <details className="ap-breakdown"><summary><span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong></span></summary>
+    <dl>{apSources(s).filter(x => x.value).map(x => <div key={x.id}><dt>{x.label}</dt><dd className={x.value < 0 ? 'negative' : ''}>{x.value > 0 ? '+' : ''}{x.value}</dd></div>)}</dl>
+    </details>
     <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}만큼 회복합니다. 기본 ${percent(BALANCE.healAfterKill)}이 사냥터 난이도가 오를수록 줄어듭니다(난이도 10에서 절반, 최저 ${percent(BALANCE.healAfterKillMin)}), 연구 ‘회복의 기억’ 1단계마다 +1%p. 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 고정입니다.`}>처치 후 회복 (처치당)<strong>{percent(victoryHealRate(s))} · {victoryHeal(s).toLocaleString()} HP</strong>
     </span>
     </div>

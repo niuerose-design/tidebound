@@ -78,10 +78,9 @@ export function jobRevealed(s: State, j: Job) {
 }
 
 /** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 미발견 실루엣은 이름을 드러내지 않도록 목록에서 뺍니다. */
-export type Finder = 'ready' | 'mastered' | 'near' | 'goal' | 'doors';
+export type Finder = 'ready' | 'mastered' | 'near' | 'doors';
 export function finderJobs(s: State, kind: Finder, openDoorJobs: string[]) {
     const visible = JOBS.filter(j => jobRevealed(s, j));
-    if (kind === 'goal') return s.growthGoal?.kind === 'job' ? visible.filter(j => j.id === s.growthGoal!.id) : [];
     if (kind === 'doors') return JOBS.filter(j => openDoorJobs.includes(j.id));
     // 숙달: 직업 숙련이 숙달 목표에 닿아 조건 없이 언제든 돌아갈 수 있는 직업(현재 직업 포함).
     if (kind === 'mastered') return JOBS.filter(j => jobMastered(s, j));

@@ -1,12 +1,10 @@
 /** 게임 진입점: 행동 처리(act)와 턴 진행을 묶습니다. 세부 규칙은 state·turn·encounter·dungeon-run·actions/에 있습니다. */
 import type { State, Action } from '../types';
 import { commerce } from './commerce';
-import { guildAction } from './guild';
 import { clampVitals } from './stats';
 import { grantJobSkills } from './progression';
 import { syncGoals, syncAchievements } from './progress';
 import { syncVoyage } from './guidance';
-import { syncGoal } from './goals';
 import { addLog } from './state';
 import { syncStatRate } from './turn';
 import type { ActionHandlers } from './actions/types';
@@ -29,7 +27,6 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
     syncGoals(s, now);
     dispatch(s, a, now, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
-    syncGoal(s, text => addLog(s, text, 'reward'));
     syncAchievements(s, text => addLog(s, text, 'reward'));
 }
 function dispatch(s: State, a: Action, now: number, rng: () => number) {
@@ -39,12 +36,6 @@ function dispatch(s: State, a: Action, now: number, rng: () => number) {
     if (message !== null) {
         clampVitals(s);
         addLog(s, message);
-        return;
-    }
-    const guildMessage = guildAction(s, a);
-    if (guildMessage !== null) {
-        clampVitals(s);
-        addLog(s, guildMessage, 'reward');
         return;
     }
     const handler = Object.hasOwn(HANDLERS, a.type) ? HANDLERS[a.type] : undefined;

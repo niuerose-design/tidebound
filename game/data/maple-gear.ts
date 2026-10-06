@@ -7,7 +7,7 @@ import type { Item } from '../types';
 
 /** 등급별 세트 이름(장비 도감·무기 이름 앞머리). */
 export const GEAR_SETS = ['초보자', '메이플', '자쿰', '파프니르', '앱솔랩스', '아케인셰이드', '제네시스'] as const;
-export const WEAPON_NAMES: Record<'physical' | 'magic' | 'balanced', readonly string[]> = {
+const WEAPON_NAMES: Record<'physical' | 'magic' | 'balanced', readonly string[]> = {
     physical: ['목검', '메이플 소드', '자쿰의 소드', '파프니르 소드', '앱솔랩스 세이버', '아케인셰이드 세이버', '제네시스 세이버'],
     magic: ['나무 스태프', '메이플 스태프', '자쿰의 스태프', '파프니르 스태프', '앱솔랩스 스태프', '아케인셰이드 스태프', '제네시스 스태프'],
     balanced: ['수련용 샤이닝 로드', '메이플 샤이닝 로드', '자쿰의 샤이닝 로드', '파프니르 샤이닝 로드', '앱솔랩스 샤이닝 로드', '아케인셰이드 샤이닝 로드', '제네시스 샤이닝 로드'],

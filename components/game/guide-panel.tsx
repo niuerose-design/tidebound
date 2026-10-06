@@ -131,7 +131,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Sparkles size={19}/>} title="습득 · 계승 · 강화"
                     effect="전직하면 그 직업의 기술을 Lv.0으로 얻습니다. 장착한 채 처치해 첫 숙련을 채우면 다른 직업에서도 씁니다. 3차 이상 스킬은 숙련 단계가 높습니다(3차 ×3 · 4차 ×10 · 5차 ×25)."
                     condition="해금한 기술에 한해 계승·강화에 각각 1 SP."
-                    limit="SP는 도감 최종 연구, 던전 첫 정복 연구, 무릉도장 이정표에서만 얻습니다."/>
+                    limit="SP는 도감 최종 연구, 업적(던전 첫 정복 포함), 무릉도장 이정표에서 얻습니다."/>
                 <Rule icon={<Target size={19}/>} title="숙련 · 연마"
                     effect="처치할 때마다 현재 직업과 장착한 스킬의 숙련이 기본 1 오릅니다(사냥터·던전 난이도와 무관). 난이도 5 이상에서 나오는 숙련의 까미가 큰 숙련을 줍니다. 기본 숙련을 마치면 연마 30단계가 이어져 단계마다 직접 피해·양수 패시브 +0.8%."
                     condition={`조건부 숙련 스킬은 지정한 적을 이겼을 때만 더 줍니다. 처치 1회당 최대 ${PROGRESSION.maxMasteryPerVictory}.`}
@@ -160,7 +160,7 @@ export function Guide({ s }: { s?: State }) {
                     condition={`규모는 도감 처치 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100, ${SWARM_UNLOCK[500].toLocaleString()}회에 시프의 ‘무리 감지’(Lv.30)를 장착하면 ×500.`}
                     limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 처치 전에 쓰러지면 보상이 없습니다."/>
                 <Rule icon={<Swords size={19}/>} title="던전 · 무릉도장"
-                    effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 세계석, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1, 30·60·90층에 장착 AP 1.`}
+                    effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 세계석, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1.`}
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                     limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 사냥터로 돌아옵니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
@@ -201,7 +201,7 @@ export function Guide({ s }: { s?: State }) {
                     limit={`횟수 보상은 20회까지 회당 세계석 1·경험치 +25%, 이후 완만해집니다. 필요 경험치는 환생 20회까지 회당 크게, 그 뒤로도 꾸준히 오르고, 환생 50회와 100회에 벽이 있습니다(그 회차부터 필요 경험치 ×${XP_SCALING.rebirthWalls.map(([, x]) => x).join(' · ×')}). 환생 AP 최대 ${ECONOMY.rebirthAPCap}, 사냥터 난이도 최대 ${ECONOMY.tideCap}. 칭호는 업적(환생 횟수·도전·무릉도장)을 달성하면 얻고, 능력치 화면의 ‘칭호’에서 장착하거나 숨깁니다.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="승천"
                     effect={`환생 ${ASCENSION.requirements[0]}회부터 원할 때 승천할 수 있고, 승천할 때마다 필요한 환생 횟수가 ${ASCENSION.requirements.join(' → ')}로 오릅니다. 승천하면 환생·장비·연구가 처음으로 돌아가고, 직업·스킬 숙련과 업적·계급장·칭호·기록은 남습니다. 승천 1회마다 숙련 획득 +${ASCENSION.masteryPer * 100}%(${ASCENSION.masteryCap}회까지, 숙련의 까미 당첨분 포함) · 서약 보상 ×${1 + ASCENSION.vowPer}씩(${ASCENSION.vowCap}회까지).`}
-                    condition={`승천 직후: 업적 보상 세계석·SP를 다시 받고(영구 효과는 그대로), 편의 연구(지겨운 환생·가방·긴 휴식·청산·자동 분해기·자동 판매기·자동 강화·불굴의 의지)와 서약·랜덤게임 1단계가 열립니다. 환생 ${ASCENSION.earlyExpUntil}회 전까지 경험치 ×${ASCENSION.earlyExp}(새싹의 축복 대신), 까미·누리는 사냥터 난이도 0부터 나옵니다. 행운의 편지 6~10단계를 살 수 있습니다.`}
+                    condition={`승천 직후: 업적 보상 세계석·SP를 다시 받고(영구 효과는 그대로), 편의 연구(지겨운 환생·가방·긴 휴식·청산·자동 정리·자동 강화·불굴의 의지)와 서약·랜덤게임 1단계가 열립니다. 환생 ${ASCENSION.earlyExpUntil}회 전까지 경험치 ×${ASCENSION.earlyExp}(새싹의 축복 대신), 까미·누리는 사냥터 난이도 0부터 나옵니다. 행운의 편지 6~10단계를 살 수 있습니다.`}
                     limit={`지워지는 것: 골드·세계석·연구·SP·정수, 스킬 연마 단계와 한계 돌파, SP로 올린 스킬 단계, 모든 장비(유물·칠흑 포함), 도감, 무릉도장 기록(최고층은 승천 기록에 남음), 계정 금고(다른 분신 몫 포함), 서약. 결투·이번 주 무릉도장 기록판에서 바로 빠집니다. 환생은 ${ASCENSION.rebirthCap}회까지이고 ${ASCENSION.researchLockAt}회부터는 세계석 연구를 살 수 없습니다.`}/>
                 <Rule icon={<Target size={19}/>} title="계급장"
                     effect={`처치한 마릿수로만 오르는 별도 계급(이등병 → 중장, ${RANKS.length}단계). 환생·분신과 무관하게 유지되고 무리는 마릿수만큼 셉니다. 진급마다 진급 포인트(병 1 · 부사관 2 · 장교 3 · 장성 4, 합계 ${RANK_TOTAL_POINTS})를 받아 특전을 삽니다. 특전은 단계당 1P이고 단계마다 효과가 같은 폭으로 늘어납니다: ${RANK_PERKS.map(p => `${p.name} — 단계당 ${p.id === 'tally' ? '처치 1마리를 계급 경험치 +1마리로 더 셈' : p.id === 'drill' ? '처치 숙련 기본 +1(직업·장착 스킬, 배율과 무관한 고정값)' : p.id === 'medal' ? '사냥터 처치마다 SP 드롭 +0.1%' : '사냥터 처치마다 세계석 드롭 +0.1%'}, 최대 ${p.max}단계(${p.desc(p.max)})`).join(' · ')}.`}
@@ -212,8 +212,8 @@ export function Guide({ s }: { s?: State }) {
                     condition="단계가 오를수록 비용이 커집니다. 일부 연구는 정해진 환생 횟수 뒤에 열립니다."
                     limit={`탭별 재분배는 언제나 무료이며 쓴 세계석의 ${RESEARCH_RESET.refund * 100}%를 돌려받습니다. 자동 사냥·던전 중에는 할 수 없습니다.`}/>
                 <Rule icon={<BookOpen size={19}/>} title="몬스터 도감"
-                    effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 처치. 4·5·6단계에 SP. 6단계는 그 몬스터를 난이도 ${BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다. 2단계부터 그 몬스터를 상대로 주는 피해가 오르고 받는 공격 피해가 줄어드는 생태 연구가 붙습니다(6단계 누적 +50% / -25%). 지역의 모든 몬스터가 연구 4·5·6단계면 지역 연구 1·2·3단계로 지역 효과가 쌓입니다. 지역마다 자주 나오는 변종이 다르고, 지역 끝의 무리 서식지에서는 몬스터가 전부 ×100·×500 무리로 나옵니다.`}
-                    condition={`${PROGRESSION.fishComplete}회 처치하면 완성이고 적 정보가 열립니다. 지역의 모든 종을 완성하면 AP +1과 지역 테마 보너스.`}
+                    effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 처치. 4·5·6단계에 SP. 6단계는 그 몬스터를 난이도 ${BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다. 2단계부터 그 몬스터를 상대로 주는 피해가 오르고 받는 공격 피해가 줄어드는 생태 연구가 붙습니다(6단계 누적 +50% / -25%). 지역의 모든 몬스터가 연구 1·2·3단계면 지역 연구 1·2·3단계입니다. 1단계에 지역 첫 보너스(예전 장소 테마)가 붙고, 단계마다 지역 효과가 쌓입니다. 지역마다 자주 나오는 변종이 다르고, 지역 끝의 무리 서식지에서는 몬스터가 전부 ×100·×500 무리로 나옵니다.`}
+                    condition={`${PROGRESSION.fishComplete}회 처치하면 완성이고 적 정보가 열립니다. 사냥터(장소)의 모든 종을 완성하면 업적 ‘지역 연구 N곳 완성’에서 장착 AP +1.`}
                     limit={`보상은 도감에서 직접 받고 각 단계는 한 번만 줍니다. 합계는 도감 ‘연구 보너스’ 탭에서 봅니다. 칠흑의 보스(v3.12): 무리 서식지 출현마다 ${Math.round(ONYX.chance * 1000) / 10}%로 지역 보스가 나오고(${ONYX.turns}턴 안에 못 잡으면 떠남), 처치하면 ${Math.round(ONYX.drop * 1000) / 10}%(${ONYX.dropPity}번째 연속 미획득은 확정)로 환생해도 남는 칠흑 장신구를 받습니다. 도감 ‘칠흑의 보스’에서 세트 보너스를 봅니다.`}/>
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비"
                     effect={`감정은 희귀 이상을 보장하고, 확정 구매는 표시된 등급 그대로입니다. 강화는 스타포스(v3.0): 전설 이상 ${STARFORCE.max}성 · 영웅 이하 ${STARFORCE.maxLow}성까지, 1~${STARFORCE.gainHighFrom}성 +${STARFORCE.gainLow * 100}%/성 · 그 위 +${STARFORCE.gainHigh * 100}%/성. 성마다 성공률이 정해져 있고(${STARFORCE.gainHighFrom}성부터 30%), ${STARFORCE.dropFrom}성부터 실패 시 1성 하락(${STARFORCE.safeStars.join('·')}성 유지), 15성부터 파괴 확률(일반 장비는 소멸, 유물은 ${STARFORCE.relicResetStar}성으로). 하락 2번 연속이면 찬스 타임(100%), 수동 강화의 스타캐치(별이 가운데 올 때 누르기)는 성공률 +10%p, 15·16성은 파괴 방지(비용 ×2)를 고를 수 있습니다. 비용은 12성까지 전과 같고 13성부터 성마다 ×${STARFORCE.growth}.`}

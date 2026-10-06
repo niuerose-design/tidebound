@@ -3,7 +3,6 @@ import { syncGoals, syncAchievements } from './progress';
 import { activeEvent, offlineEvent } from '../data/events';
 import { recordOpenDoors, openDoorsSnapshot } from '../data/doors';
 import { syncVoyage } from './guidance';
-import { syncGoal } from './goals';
 import { stats } from './stats';
 import type { State } from '../types';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
@@ -31,7 +30,6 @@ export function tick(s: State, rng = Math.random) {
     tickTurn(s, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
     syncAchievements(s, text => addLog(s, text, 'reward'));
-    syncGoal(s, text => addLog(s, text, 'reward'));
 }
 /** 레벨당 능력치 포인트가 오른 뒤(4 → 5), 이전 세이브에 지난 레벨만큼 차액을 한 번 지급합니다. */
 export function syncStatRate(s: State) {
