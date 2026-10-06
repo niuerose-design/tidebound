@@ -1,7 +1,7 @@
 // 새 세이브 관리형 플레이(물리/마법 × 시드 3)로 첫 환생까지의 성장 속도와 액티브 스킬 규칙을 확인합니다. 사용: node scripts/check-balance.mjs
 import assert from 'node:assert/strict';
 import { loadGame } from './lib/game-modules.mjs';
-import { random,   manage, chooseStage } from './lib/sim.mjs';
+import { random, manage, chooseStage } from './lib/sim.mjs';
 const {load:moduleAt}=loadGame();
 const {newState,tick}=await moduleAt('systems/engine');
 const {stats}=await moduleAt('systems/stats');
@@ -9,11 +9,14 @@ const {effectiveSkill,maxSkillLevel}=await moduleAt('systems/progression');
 const {SKILLS}=await moduleAt('data/skills');
 const {ACTIVE_SKILL_BALANCE}=await moduleAt('data/skill-balance');
 const {strike}=await moduleAt('systems/combat');
+const {SECRET_SKILLS}=await moduleAt('secret/skills');
+// v3.47 비밀 직업 스킬은 완성된 수치를 secret/skills.ts에 두므로 밸런스 표에 줄이 없어도 됩니다(규칙 검사는 똑같이 받음).
+const secret=new Set(SECRET_SKILLS.map(x=>x.id));
 for(const sk of SKILLS.filter(x=>x.type==='active')){
- assert(ACTIVE_SKILL_BALANCE[sk.id],`Missing balance row: ${sk.id}`);
+ assert(ACTIVE_SKILL_BALANCE[sk.id]||secret.has(sk.id),`Missing balance row: ${sk.id}`);
  for(let level=0;level<=maxSkillLevel(sk);level++){
   const value=effectiveSkill(sk,level+1);
-  // 상태이상 전용 기술은 발동률을 낮게 둡니다(check-progression-pace.mjs와 같은 규칙).
+  // 상태이상 전용 기술은 피해 없는 행동이 턴을 덜 잡아먹도록 발동률을 낮게 둡니다(최대 숙련 35% 이하).
   if(sk.statusOnly){assert(value.chance<=.35,sk.id);if(sk.damageType==='magic')assert(value.manaCost>0,sk.id);}
   else if(sk.damageType==='magic'||sk.damageType==='split'){assert(value.manaCost>0,sk.id);assert(value.chance>=.45,sk.id);}
   else if(sk.scaling==='swap'||sk.scaling==='attr'){/* 힘법사·외길(v26): 공격력 대신 반대 능력치·배분 능력치 기준. 마나 없는 물리형이어도 발동률 규칙 예외 */}

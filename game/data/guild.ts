@@ -23,6 +23,10 @@ export function makeGuildGoals(memberCount: number): GuildGoal[] {
     ];
 }
 export const guildGoalProgress = (g: GuildGoal, t: GuildTotals) => Math.min(g.target, t[g.id]);
-/** 가입 코드: 헷갈리는 글자(0·O·1·I)를 뺀 6자. */
-export const GUILD_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-export const normalizeGuildCode = (code: string) => code.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+/** 길드 가입 코드·조직 초대 코드 글자: 헷갈리는 0·O·1·I를 뺍니다. */
+const INVITE_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+export const randomInviteCode = (length: number) => Array.from(crypto.getRandomValues(new Uint8Array(length)), b => INVITE_CODE_CHARS[b % INVITE_CODE_CHARS.length]).join('');
+export const normalizeInviteCode = (code: string, length: number) => code.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, length);
+/** 길드 가입 코드는 6자. */
+export const GUILD_CODE_LENGTH = 6;
+export const normalizeGuildCode = (code: string) => normalizeInviteCode(code, GUILD_CODE_LENGTH);

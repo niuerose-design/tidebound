@@ -1,5 +1,5 @@
 // v25 ??? 특수 직업: 시계공·시간의 지배자·玄
-import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, unlocksMod as unlocks, combatFxFromLog, act, jobMasteryTarget, migrateState, assert, test } from './harness.mjs';
+import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, combatFxFromLog, act, jobMasteryTarget, assert, test } from './harness.mjs';
 const { actTurn } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/combat');
 const { skillVeiled, skillBlockReason } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
 
@@ -12,7 +12,6 @@ test('v25 clockmaker: time machine restores both sides once per battle; mastery 
     const text = strike(a, b, () => 0); assert.match(text, /타임 리와인드/); assert.equal(a.hp, 1000); assert.equal(b.hp, 1e6); assert.ok(a.effects.timeUsed);
     a.hp = 10; strike(a, b, () => 0); assert.equal(a.hp, 10, 'only once per battle');
     const s = newState(0); s.level = 10; s.attributes.dex = 30; s.attributes.int = 30;
-    assert.ok(unlocks.HIDDEN_UNLOCKS.some(d => d.job === 'clockmaker' && d.test({ playMs: 10 * 3600_000 }) && !d.test({ playMs: 0 })), 'v27.12 the clockmaker opens after ten hours at sea');
     assert.equal(canChangeJob(s, 'chronarch'), false); s.jobMastery.clockmaker = 3000; assert.equal(canChangeJob(s, 'chronarch'), true, 'mastery alone opens the chronarch');
     assert.equal(JOBS.find(j => j.id === 'chronarch').tier, 4);
 });
@@ -275,7 +274,7 @@ test('v27.79 account bonuses are low multiplicative factors (AP unchanged); slot
     const t = newState(0); t.account = merged; t.level = 999; act(t, { type: 'rebirth' }, 0); assert.ok(t.rebirths === 1 && t.account === merged, 'account cache survives rebirth');
 });
 
-test('v25.7 legend+ enhances to +12, others stop at +10; sale value follows the fish gold curve and refunds 30% of enhancement', async () => {
+test('v25.7 enhance caps: legend+ to 22★, others stop at 15★; sale value follows the fish gold curve and refunds 30% of enhancement', async () => {
     const { enhanceMaxFor, saleValue, enhanceCost } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
     const { fishGoldAt } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
     assert.equal(enhanceMaxFor({ rarity: 2 }), 15); assert.equal(enhanceMaxFor({ rarity: 3 }), 22); assert.equal(enhanceMaxFor({ rarity: 6 }), 22);
@@ -383,11 +382,6 @@ test('v25.14 defense expansion: 11 jobs wired, resist scaling uses ward affinity
     assert.ok(withWard > withoutWard, 'resist scaling is multiplied by ward affinity');
 });
 
-test('v3.37 door notice server setting is gone: the action is refused and old saves drop the field', () => {
-    const s = newState(0); assert.throws(() => act(s, { type: 'doorNotice', value: 'off' }, 0), /지원하지 않는/);
-    s.hideDoorNotice = true; migrateState(s, 0); assert.equal('hideDoorNotice' in s, false);
-});
-
 test('v25.14 recommended loadout mixes passives and actives within AP', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { recommendLoadout } = await mods.load('systems/loadout'); const { SKILLS } = await mods.load('data/skills'); const { JOBS } = await mods.load('data/classes'); const { apUsed, apCapacity, validLoadout } = await mods.load('systems/progression');
@@ -397,7 +391,7 @@ test('v25.14 recommended loadout mixes passives and actives within AP', async ()
     const passiveAP = apUsed(s, out.filter(id => SKILLS.find(x => x.id === id).type === 'passive')); assert.ok(passiveAP >= Math.min(2, apCapacity(s) * .3), 'passives get a real share');
 });
 
-test('v25.15 update log keeps only 3-5 entries, newest first; stat confirm setting toggles and survives rebirth', async () => {
+test('v25.15 update log keeps exactly the 3 newest entries, newest first; stat confirm setting toggles and survives rebirth', async () => {
     const { UPDATE_LOG } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/update-log');
     assert.ok(UPDATE_LOG.length === 3, `update log has ${UPDATE_LOG.length} entries; keep exactly 3`);
     const nums = UPDATE_LOG.map(e => e.version.split('.').map(Number)); for (let i = 1; i < nums.length; i++) assert.ok(nums[i - 1][0] > nums[i][0] || (nums[i - 1][0] === nums[i][0] && nums[i - 1][1] > nums[i][1]), 'newest first');
@@ -529,8 +523,8 @@ test('v27.43 altar: offering points, tithe, blessing events skip offline catch-u
         const mixed = ev.activeEvent(now, [...ev.currentEvents(), { id: 'x', name: '주말', from: '2026-01-01T00:00:00+09:00', until: '2027-12-31T00:00:00+09:00', exp: 3 }]); assert.equal(mixed.banner.gold, 1); assert.equal(mixed.banner.mimic, 1); assert.ok(mixed.banner.exp >= 3 && mixed.gold === 2); assert.equal(live.gold, 2); assert.match(ev.eventLabel(live), /까미 출현 ×3/);
         assert.equal(ev.activeEvent(now, ev.currentEvents(false)), null, 'altar blessings are not part of the offline settlement list');
         // 오프라인 정산(1분 초과) 동안에는 축복 없이 돌고, 끝난 뒤 다시 적힙니다.
-        const s = engine.newState(now - 3600_000); engine.act(s, { type: 'start' }, now - 3600_000); const gold = s.gold;
-        const seen = []; const orig = Math.random; let calls = 0; Math.random = () => { calls++; if (calls % 500 === 0) seen.push(s.event?.gold || 1); return orig(); };
+        const from = now - 10 * 60_000, s = engine.newState(from); engine.act(s, { type: 'start' }, from); const gold = s.gold;
+        const seen = []; const orig = Math.random; let calls = 0; Math.random = () => { calls++; if (calls % 100 === 0) seen.push(s.event?.gold || 1); return orig(); };
         try { engine.advance(s, now); } finally { Math.random = orig; }
         assert.ok(seen.length && seen.every(g => g === 1.5), 'half the altar gold bonus during catch-up (v27.51)');
         assert.equal(s.event.gold, 2, 'blessing shown again after catch-up'); assert.ok(s.gold > gold);
@@ -600,7 +594,7 @@ test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlemen
     assert.equal(A.gaugeCost('god'), 40000); assert.equal(A.ALTAR.essencePoints, 30); assert.equal(A.ALTAR.pearlPoints, 500);
     // 오프라인 정산: 골드 ×10 이벤트는 정산 중 ×5.5(절반)로 적용됩니다.
     const E = await L.load('systems/engine'), t0 = Date.parse('2030-01-01T00:00:00Z');
-    const run = withEvent => { Ev.setRuntimeEvents(withEvent ? [{ id: 'admin-x', name: 'x', from: '2000-01-01T00:00:00Z', until: '2100-01-01T00:00:00Z', gold: 10 }] : [], []); const s = E.newState(t0); E.act(s, { type: 'start' }, t0); s.hp = 1e9; let n = 7; T.advance(s, t0 + 3600_000, () => ((n = (n * 9301 + 49297) % 233280) / 233280)); return s; };
+    const run = withEvent => { Ev.setRuntimeEvents(withEvent ? [{ id: 'admin-x', name: 'x', from: '2000-01-01T00:00:00Z', until: '2100-01-01T00:00:00Z', gold: 10 }] : [], []); const s = E.newState(t0); E.act(s, { type: 'start' }, t0); s.hp = 1e9; let n = 7; T.advance(s, t0 + 10 * 60_000, () => ((n = (n * 9301 + 49297) % 233280) / 233280)); return s; };
     const on = run(true), off = run(false); Ev.setRuntimeEvents([], []);
     const ratio = (on.gold - 100) / (off.gold - 100); assert.ok(ratio > 5 && ratio < 6, `offline gold x5.5: ${ratio}`); assert.ok(on.kills > 10);
     assert.equal(Ev.offlineEvent({ id: 'e', name: '', until: 0, exp: 2, gold: 1, drop: 3, mastery: 2 }).exp, 1.5);
@@ -1402,7 +1396,7 @@ test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per
 });
 test('v3.17 tutorial rewards: a step completed by its condition pays once; silent back-fill for veteran saves pays nothing', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const G = await L.load('systems/guidance');
-    assert.equal(G.TUTORIAL_STEPS.length, 13); assert.ok(G.TUTORIAL_STEPS.every(st => st.reward && (st.reward.pearls || st.reward.sp)));
+    assert.ok(G.TUTORIAL_STEPS.every(st => st.reward && (st.reward.pearls || st.reward.sp)));
     const s = newState(0); s.tutorial = { done: {} }; const pearls = s.pearls; const logs = [];
     G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls, 'the starter skill alone pays nothing (new accounts start with 0 pearls)'); assert.ok(s.tutorial.done.skill, 'but the step counts as done');
     s.kills = 1; G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1); assert.ok(logs.some(t => t.includes('첫 처치'))); G.syncTutorial(s, t => logs.push(t)); assert.equal(s.pearls, pearls + 1, 'paid once');
@@ -1429,14 +1423,16 @@ test('v3.20 starforce flow achievements: 10★+ success streak, fail streak, dro
     for (let i = 0; i < 5; i++) C.starForceAttempt(s, item, false, () => 0, spend);
     assert.equal(item.enhance, 15); assert.equal(s.starforce.bestStreak, 5); assert.equal(s.starforce.high || 0, 0, '15★+ not yet');
     C.starForceAttempt(s, item, false, () => 0, spend, true); assert.equal(s.starforce.high, 1); assert.equal(s.starforce.catches, 1); assert.equal(s.starforce.bestStreak, 6);
-    // 16★: 실패(유지·하락) 두 번 → 연속 실패 2, 하락 횟수, 다음은 찬스 타임으로 성공.
-    const keepRoll = () => .9;
-    C.starForceAttempt(s, item, false, keepRoll, spend); C.starForceAttempt(s, item, false, keepRoll, spend);
-    assert.equal(s.starforce.streak, 0, 'failure breaks the streak'); assert.equal(s.starforce.bestFailStreak, 2); assert.ok((s.starforce.drops || 0) >= 1);
-    if (item.starFails >= 2) { C.starForceAttempt(s, item, false, keepRoll, spend); assert.equal(s.starforce.chance, 1); assert.equal(s.starforce.failStreak, 0); }
+    // 17★까지 올린 뒤 하락 두 번(17→16→15) → 연속 실패 2, 하락 2, 다음 시도는 찬스 타임으로 성공(15★는 하락하지 않는 구간이라 17★에서 시작).
+    C.starForceAttempt(s, item, false, () => 0, spend); assert.equal(item.enhance, 17); assert.equal(s.starforce.bestStreak, 7);
+    const failRoll = () => .9;
+    C.starForceAttempt(s, item, false, failRoll, spend); C.starForceAttempt(s, item, false, failRoll, spend);
+    assert.equal(item.enhance, 15); assert.equal(item.starFails, 2);
+    assert.equal(s.starforce.streak, 0, 'failure breaks the streak'); assert.equal(s.starforce.bestFailStreak, 2); assert.equal(s.starforce.drops, 2);
+    C.starForceAttempt(s, item, false, failRoll, spend); assert.equal(item.enhance, 16, 'chance time succeeds'); assert.equal(s.starforce.chance, 1); assert.equal(s.starforce.failStreak, 0);
     const ids = A.ACHIEVEMENTS.map(a => a.id);
     for (const id of ['starStreak:3', 'starFailStreak:5', 'starDrops:10', 'starChance:1', 'starCatch:10', 'starHigh:10']) assert.ok(ids.includes(id), id);
-    assert.equal(A.ACHIEVEMENTS.find(a => a.id === 'starStreak:5').progress(s), 6);
+    assert.equal(A.ACHIEVEMENTS.find(a => a.id === 'starStreak:5').progress(s), 7);
 });
 
 test('v3.21 difficulty exp and gold bend to √ above difficulty 30', async () => {

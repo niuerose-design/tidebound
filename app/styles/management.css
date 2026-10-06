@@ -8,8 +8,7 @@
 .port-resource-bar strong small { font-size:13px; color:#a7b9b1; font-weight:400; }
 .port-tabs.game-tabs { margin-bottom:22px; }
 .port-gamble-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
-.port-purchase-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
-.port-gamble-grid>* , .port-purchase-grid>* { min-width:0; }
+.port-gamble-grid>* { min-width:0; }
 .appraisal-odds { display:flex; align-items:center; flex-wrap:wrap; gap:12px 22px; padding:0 2px 18px; font-size:13px; }
 .appraisal-odds>span { color:var(--muted); }
 .appraisal-odds b { font-weight:500; }
@@ -69,7 +68,6 @@
 .vow-badge.vow-breath { border-color:#d38e8088; color:#eab0a4; }
 .vow-badge.vow-rough { border-color:#7fc4a888; color:#a8e0c8; }
 @media(max-width:900px){ .vow-grid { grid-template-columns:1fr; } }
-.fish-golden { margin-left:6px; padding:1px 7px; border-radius:99px; font-size:11px; color:#2a1d05; background:linear-gradient(90deg,#f3d27a,#e6b54a); font-weight:700; }
 .setting-toggle { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 0; border-top:1px solid #9ab4b522; margin-top:12px; }
 .setting-toggle p { font-size:12px; color:#a5bfb1; margin:4px 0 0; line-height:1.6; }
 .setting-toggle button { flex-shrink:0; min-width:64px; }
@@ -161,7 +159,7 @@
     .port-resource-bar>div:last-child { grid-column:1/-1; }
     .legacy-resource-bar>div:last-child { grid-column:auto; }
     .port-resource-bar>div>svg { width:18px; }
-    .port-purchase-grid,.research-grid,.rebirth-records { grid-template-columns:1fr; }
+    .research-grid,.rebirth-records { grid-template-columns:1fr; }
     .port-tabs.game-tabs { width:100%; display:flex; padding:0; height:auto; }
     .port-tabs [data-slot=tabs-trigger] { flex:1; padding:12px 7px; font-size:13px; }
     .rebirth-ready { grid-template-columns:1fr; padding:22px; gap:20px; }

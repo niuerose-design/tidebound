@@ -17,7 +17,6 @@ import { canChangeJob, jobMastered, jobMasteryTarget } from './progression';
 import { recommendLoadout } from './loadout';
 import { addLog } from './state';
 import { runResearchPlan } from './research-plan';
-export { AUTO_REBIRTH_LEVELS, RESEARCH_PLAN_MAX, runResearchPlan, type ResearchPlanItem } from './research-plan';
 
 /** 자동 환생이 지금 일어날 조건: 승천 1회 · 켜 둠 · 던전 밖 · 환생 상한 전 · 목표 레벨 도달. */
 export function autoRebirthDue(s: State) {

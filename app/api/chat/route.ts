@@ -3,6 +3,7 @@ import { guildIdOf } from '@/game/server/guild';
 import type { State } from '@/game/types';
 import { displayTitle } from '@/game/data/titles';
 import { rankOf } from '@/game/data/rank';
+import { CHAT_MAX_CHARS, CHAT_COOLDOWN_MS } from '@/game/data/chat';
 export const dynamic = 'force-dynamic';
 
 /** v25.4 전체 채팅. 열려 있는 동안만 몇 초마다 새 줄을 묻고(after 커서), 한 줄은 120자, 계정마다 2.5초에 한 줄입니다. */
@@ -16,7 +17,7 @@ async function resolveChannel(account: string, channel: string) {
     if (!guildId) throw new ApiError('길드에 가입하면 길드 채팅을 쓸 수 있습니다.', 403);
     return `guild:${guildId}`;
 }
-export const CHAT_MAX_CHARS = 120, CHAT_COOLDOWN_MS = 2500, CHAT_PAGE = 60;
+const CHAT_PAGE = 60;
 
 export async function GET(req: Request) { try {
     const { account, id } = await session(req), url = new URL(req.url);

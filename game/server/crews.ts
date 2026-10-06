@@ -12,11 +12,12 @@ import { ApiError } from './store';
 import { dayKey, weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { gainHacker, hackerState, isHacker } from '../systems/hacker';
-import { CREW, CREW_CODE_CHARS, CREW_SIDES, cleanCrewName, crewGrade, crewGradeProgress, crewSide, normalizeCrewCode, opGoal, opSteps, sideAllows, crewModule, moduleSlots, upkeepOf, crewScore, type CrewData, type CrewSide, type CrewWeek } from '../data/crew';
+import { CREW, CREW_SIDES, cleanCrewName, crewGrade, crewGradeProgress, crewSide, normalizeCrewCode, opGoal, opSteps, sideAllows, crewModule, moduleSlots, upkeepOf, crewScore, type CrewData, type CrewSide, type CrewWeek } from '../data/crew';
+import { randomInviteCode } from '../data/guild';
 
 const CACHE_MS = 30_000, ATTEMPTS = 3;
 const cache = new Map<string, { at: number; row: CrewRow | null }>();
-const randomCode = () => Array.from(crypto.getRandomValues(new Uint8Array(CREW.codeLength)), b => CREW_CODE_CHARS[b % CREW_CODE_CHARS.length]).join('');
+const randomCode = () => randomInviteCode(CREW.codeLength);
 const parse = (row: CrewRow | null): CrewData | null => { try { return row ? JSON.parse(row.data) as CrewData : null; } catch { return null; } };
 
 /** 30초 캐시로 조직 행을 읽습니다(동기화용). 화면·행동은 fresh로 읽습니다. */

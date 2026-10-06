@@ -4,13 +4,13 @@ import { Crown, Flame, Skull, Sparkles, Trophy, Coins, Gem, Droplets, EyeOff, Sw
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
-import { Heading, Meter, format } from './shared';
+import { Heading, Meter, format, formatRemaining } from './shared';
 import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
 type Props = PanelProps & { info: AltarInfo | null; error: string; load: () => Promise<void>; act: (body: Record<string, unknown>) => Promise<boolean>; result: AltarResult | null; clearResult: () => void };
-const left = (ms: number) => { const m = Math.max(0, Math.ceil(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`; };
+const remaining = (ms: number) => formatRemaining(ms, 0);
 const stamp = () => Date.now();
 const num = (v: string) => Math.max(0, Math.floor(Number(v.replace(/[^0-9]/g, '')) || 0));
 const QUICK = [10, 25, 50, 100];
@@ -78,7 +78,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 {info.gauges.filter(g => (gaugeTab === 'summon') === SUMMON_GAUGE_IDS.includes(g.id)).map(g => {
                     const open = g.until > now, summon = SUMMON_GAUGE_IDS.includes(g.id);
                     return <button key={g.id} type="button" className={`altar-gauge ${gauge === g.id ? 'selected' : ''} ${summon ? 'god' : ''}`} onClick={() => pickGauge(g.id)} aria-pressed={gauge === g.id}>
-                        <div className="altar-gauge-head"><strong>{g.id === 'god' ? <Skull size={14}/> : isRaidGauge(g.id) ? <Swords size={14}/> : <Sparkles size={14}/>} {g.name}{open && g.level ? ` · ${g.level}단계` : ''}</strong>{open ? <em className="altar-open">진행 중 · {g.desc} · {left(g.until - now)} 남음</em> : <small>{g.desc}</small>}</div>
+                        <div className="altar-gauge-head"><strong>{g.id === 'god' ? <Skull size={14}/> : isRaidGauge(g.id) ? <Swords size={14}/> : <Sparkles size={14}/>} {g.name}{open && g.level ? ` · ${g.level}단계` : ''}</strong>{open ? <em className="altar-open">진행 중 · {g.desc} · {remaining(g.until - now)} 남음</em> : <small>{g.desc}</small>}</div>
                         <Meter value={Math.min(g.points, g.cost)} max={g.cost} color={g.id === 'god' ? 'gold' : 'teal'}/>
                         <small className="micro">{format(g.points)} / {format(g.cost)}{g.points >= g.cost && g.id === 'god' ? ' · 신이 떠나면 바로 깨어납니다' : g.id !== 'god' ? ` · ${g.next}` : ''}</small>
                     </button>;
@@ -115,9 +115,9 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
             <section className="panel altar-god">
                 <div className="section-title"><h2><Skull size={16}/> 신</h2>{god && <span className="micro">{god.gen}번째 신</span>}</div>
                 {god?.alive ? <>
-                    <div className="altar-god-card"><strong>{god.name}</strong><span>Lv.{god.level} · 최대 체력 {format(god.hp)} · 공격 {format(god.attack)} · 전투력 {format(god.power)}</span><small>떠나기까지 {left(god.until - now)} · 내 전투력 {format(myPower)}</small></div>
+                    <div className="altar-god-card"><strong>{god.name}</strong><span>Lv.{god.level} · 최대 체력 {format(god.hp)} · 공격 {format(god.attack)} · 전투력 {format(god.power)}</span><small>떠나기까지 {remaining(god.until - now)} · 내 전투력 {format(myPower)}</small></div>
                     {god.mine ? <p className="footnote">지금 깨어난 신은 당신을 본뜬 모습입니다. 다른 모험가가 쓰러뜨리면 자리를 빼앗깁니다.</p>
-                        : <button className="primary" disabled={busy || wait > 0} onClick={() => void act({ action: 'challenge' })}>{wait > 0 ? `${left(wait)} 뒤 다시 도전` : '신에게 도전'}</button>}
+                        : <button className="primary" disabled={busy || wait > 0} onClick={() => void act({ action: 'challenge' })}>{wait > 0 ? `${remaining(wait)} 뒤 다시 도전` : '신에게 도전'}</button>}
                     <p className="footnote">가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉습니다. 도전은 {ALTAR.challengeCooldownMs / 60000}분에 한 번, 무릉도장처럼 끝까지(최대 {ALTAR.godMaxTurns}턴) 겨룹니다.</p>
                 </> : <p className="footnote">{god ? '신이 잠들어 있습니다.' : '아직 깨어난 신이 없습니다.'} 신 소환 게이지({format(ALTAR.godCost)})가 차면 신이 깨어납니다. 처음 깨어나는 신은 {ALTAR.firstGod.name}(무릉도장 {ALTAR.firstGod.depth}층 보스급), 그 뒤로는 신의 자리 주인을 본뜬 신이 깨어납니다.</p>}
                 {result && result.dealt === undefined && <div className={`altar-result ${result.winner === 'player' ? 'win' : 'lose'}`}>
@@ -132,8 +132,8 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 {raid ? <>
                     <div className="altar-god-card"><strong>{raid.name}</strong><span>Lv.{raid.level} · 공격 {format(raid.attack)} · 방어 {format(raid.defense)} · 전투력 {format(raid.power)}</span>
                         <Meter value={raid.hp} max={raid.hpMax} label={`공유 체력 ${format(raid.hp)} / ${format(raid.hpMax)}`} color={raid.alive ? 'enemy' : 'gold'}/>
-                        <small>{raid.alive ? `떠나기까지 ${left(raid.until - now)} · 모든 모험가의 피해가 함께 쌓입니다` : `격파! 마지막 일격 ${raid.slayer || '—'} · 참여한 모험가는 다음 동기화 때 보상을 받습니다`}</small></div>
-                    {raid.alive && <button className="primary" disabled={busy || raidWait > 0} onClick={() => void act({ action: 'raid', id: raid.id })}>{raidWait > 0 ? `${left(raidWait)} 뒤 다시 도전` : '월드보스에게 도전'}</button>}
+                        <small>{raid.alive ? `떠나기까지 ${remaining(raid.until - now)} · 모든 모험가의 피해가 함께 쌓입니다` : `격파! 마지막 일격 ${raid.slayer || '—'} · 참여한 모험가는 다음 동기화 때 보상을 받습니다`}</small></div>
+                    {raid.alive && <button className="primary" disabled={busy || raidWait > 0} onClick={() => void act({ action: 'raid', id: raid.id })}>{raidWait > 0 ? `${remaining(raidWait)} 뒤 다시 도전` : '월드보스에게 도전'}</button>}
                     <p className="footnote">도전은 {RAID.cooldownMs / 60000}분에 한 번, 한 번에 최대 {RAID.maxTurns}턴. 깎은 체력은 그대로 남아 다음 모험가가 이어서 때립니다. 격파 보상 · {format(raid.reward.gold)} G · 세계석 +{raid.reward.pearls}{raid.reward.sp ? ` · SP +${raid.reward.sp}` : ''} (한 번이라도 때린 모험가 전원) · 마지막 일격 세계석 +{raid.slayerBonus.pearls}{raid.slayerBonus.sp ? ` · SP +${raid.slayerBonus.sp}` : ''} 추가 · 서버 전체 축복.</p>
                     {result && result.dealt !== undefined && <div className={`altar-result ${result.slain ? 'win' : 'lose'}`}>
                         <strong>{result.slain ? result.slayer ? '격파 · 마지막 일격!' : '격파 · 함께 쓰러뜨렸습니다' : `피해 ${format(result.dealt)} · 남은 체력 ${format(result.remaining || 0)}`}</strong>
@@ -149,7 +149,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
             <section className="panel altar-throne">
                 <div className="section-title"><h2><Crown size={16}/> 신의 자리</h2></div>
                 {throne ? <>
-                    <div className="altar-god-card"><strong>{throne.name}{throne.mine ? ' (나)' : ''}{!throne.mine && !god?.alive && <button className="secondary small altar-impeach" disabled={busy || wait > 0} title={`신이 된 ${throne.name}(최대 체력 ${format(throne.hp)} · 전투력 ${format(throne.power)})과 겨뤄 이기면 자리에서 내려옵니다. 자리는 비고, 다시 앉으려면 신을 소환해 쓰러뜨려야 합니다.`} onClick={() => void act({ action: 'impeach' })}>{wait > 0 ? `탄핵 · ${left(wait)} 뒤` : '탄핵'}</button>}</strong><small>{new Date(throne.since).toLocaleString('ko-KR')}부터 · 임기 {left(throne.since + ALTAR.throneTermMs - now)} 남음(지나면 자리와 몫이 비고 다음 신은 {ALTAR.firstGod.name})</small></div>
+                    <div className="altar-god-card"><strong>{throne.name}{throne.mine ? ' (나)' : ''}{!throne.mine && !god?.alive && <button className="secondary small altar-impeach" disabled={busy || wait > 0} title={`신이 된 ${throne.name}(최대 체력 ${format(throne.hp)} · 전투력 ${format(throne.power)})과 겨뤄 이기면 자리에서 내려옵니다. 자리는 비고, 다시 앉으려면 신을 소환해 쓰러뜨려야 합니다.`} onClick={() => void act({ action: 'impeach' })}>{wait > 0 ? `탄핵 · ${remaining(wait)} 뒤` : '탄핵'}</button>}</strong><small>{new Date(throne.since).toLocaleString('ko-KR')}부터 · 임기 {remaining(throne.since + ALTAR.throneTermMs - now)} 남음(지나면 자리와 몫이 비고 다음 신은 {ALTAR.firstGod.name})</small></div>
                     {throne.mine && throne.tithe && <>
                         <p className="altar-tithe">쌓인 몫 · {format(throne.tithe.gold)} G · 세계석 {format(throne.tithe.pearls)} · 정수 {format(throne.tithe.essence)}</p>
                         <button className="primary" disabled={busy || !(throne.tithe.gold || throne.tithe.pearls || throne.tithe.essence)} onClick={() => void act({ action: 'harvest' })}>몫 거두기</button>

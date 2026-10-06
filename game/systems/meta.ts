@@ -20,7 +20,7 @@ export const tailwindExp = (s: Pick<State, 'permanent'>) => (TAILWIND_EXP * 10 +
 /** v3.23 순풍은 조건 없이 환생 뒤 목표 레벨까지 켜지고, 다른 경험치 보너스와 더합니다(전에는 요구 레벨+5 안에 환생해야 다음 생에 켜지고 따로 곱했음). */
 export const tailwindActive = (s: Pick<State, 'rebirths' | 'level'>) => (s.rebirths || 0) > 0 && s.level < rebirthLevel(s);
 /** v3.23 목표 레벨 너머 벽(OVER_TARGET). v3.24 역풍 견디기(옛 바람목 넓히기) 연구 삭제로 배율은 고정입니다. */
-export const xpWall = (s: Pick<State, 'rebirths' | 'permanent'>): XpTargetWall => ({ target: rebirthLevel(s), growth: OVER_TARGET.growth });
+export const xpWall = (s: Pick<State, 'rebirths'>): XpTargetWall => ({ target: rebirthLevel(s), growth: OVER_TARGET.growth });
 export const rebirthReward = (s: State, bonus = 0) => Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) + Math.max(0, Math.floor(bonus));
 /** 환생 세계석의 구성. 합계는 rebirthReward와 같습니다. */
 export const rebirthRewardParts = (s: State, bonus = 0) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))), bonus: Math.max(0, Math.floor(bonus)) });
@@ -42,7 +42,6 @@ export const dungeonLevelAt = (d: { id: string; level: number }, tier: number, p
  */
 export const TIER_REWARD = { linearUntil: 30, perTier: .5, lateScale: 1.5 };
 export const tierReward = (tier: number) => { const t = Math.max(0, tier), r = TIER_REWARD; return t <= r.linearUntil ? 1 + t * r.perTier : 1 + r.linearUntil * r.perTier + r.lateScale * Math.sqrt(t - r.linearUntil); };
-/** v27.77 경험치의 난이도 배율. 골드(tierReward, 1 + 0.5t)와 분리해 1 + 0.1√t로 눌렀습니다: 난이도 17 ×1.41, 100 ×2. 전에는 난이도 100에서 ×51이라 19마리면 환생이었습니다. */
 /**
  * v3.21 경험치 난이도 배율: 난이도 30까지는 v3.11 그대로(체력 배율과 같은 꼴, 원킬하면 성장이 폭증하는 구간), 그 위로는 √로 꺾습니다(10.5 + 1.5√(t−30)).
  * 난이도 55 ×23.6 → ×18, 100 ×63 → ×23, 200 ×223 → ×30. 한 방에 잡는 한 난이도 상한(= 환생 횟수)을 따라 마리당 경험치가 끝없이 커지던 것을 막습니다.

@@ -55,6 +55,8 @@ export function Empty({ title, description }: {
     </div>;
 }
 export const format = (n: number) => n.toLocaleString('ko-KR');
+/** 남은 시간(분 올림): '3시간 5분' · '42분'. 끝나 가도 min분 아래로는 내려가지 않습니다. */
+export const formatRemaining = (ms: number, min = 1) => { const m = Math.max(min, Math.ceil(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`; };
 /** 큰 수는 짧게(1.2만, 3.4억) 표시합니다. 정확한 값은 Num의 title(마우스 올리기·길게 누르기)로 확인합니다. */
 export function short(n: number) {
     const a = Math.abs(n), f = (v: number) => (Math.floor(v * 10) / 10).toLocaleString('ko-KR');

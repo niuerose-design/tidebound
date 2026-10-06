@@ -155,11 +155,8 @@ export function josa(word: string, pair: '이가' | '을를' | '은는' | '과�
 export type AltarStatus = {
     blessings: { id: BlessingId; name: string; desc: string; until: number; level: number }[];
     god: { gen: number; name: string; until: number } | null;
-    /** v27.91 살아 있는 월드보스(체력 비율 0~1). */
-    /** v3.22 살아 있는 월드보스들(알림용). */
+    /** v3.22 살아 있는 월드보스들(알림용, 체력 비율 pct 0~1). 이 값이 없는 옛 요약은 다음 동기화 때 서버가 새로 적습니다. */
     raids?: { id: string; gen: number; name: string; until: number; pct: number }[];
-    /** 예전 세이브 호환: 첫 번째 살아 있는 보스. */
-    raid: { gen: number; name: string; until: number; pct: number } | null;
     throne: string;
     gauges: { id: AltarGaugeId; name: string; pct: number }[];
 };

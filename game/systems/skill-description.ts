@@ -1,6 +1,6 @@
 import type { Skill, Stats } from '../types';
 import { STATUS_TUNING, SKILL_FORMULA, diceMultiplier, diceRange } from '../data/balance';
-import { STAT_LABELS, byStatOrder, statDeltaDisplay, PROGRESSION } from '../data/progression';
+import { STAT_LABELS, byStatOrder, statDeltaDisplay, PROGRESSION, ATTRIBUTE_NAMES } from '../data/progression';
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
 import { jobById } from '../data/classes';
@@ -77,7 +77,7 @@ export function skillBrief(sk: Skill): string {
 export function skillEffectLines(sk: Skill, level = 0): string[] {
     const out: string[] = [];
     if (sk.type === 'active') {
-        const base = sk.scaling === 'attr' && sk.scalingAttribute ? [`${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)}(배분 능력치, 공격력 미사용)`] : [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.scaling === 'dual' ? '(물리 공격 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해로 바꿈)' : '마법 공격(물리 피해로 바꿈)') : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
+        const base = sk.scaling === 'attr' && sk.scalingAttribute ? [`${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)}(배분 능력치, 공격력 미사용)`] : [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.scaling === 'dual' ? '(물리 공격 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해로 바꿈)' : '마법 공격(물리 피해로 바꿈)') : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
         if (sk.scaling === 'defense') base.push(`물리 방어 × ${number(sk.scalingRatio ?? 1)} × 방어 친화도`);
         if (sk.scaling === 'resist') base.push(`마법 방어 × ${number(sk.scalingRatio ?? 1)} × 결계 친화도`);
         if (sk.scaling === 'hp') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hpScaling)}`);
@@ -95,7 +95,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.scaling === 'mastered') out.push(`숙달한 직업 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'luck') out.push(`물리 공격 × (치명 피해 배율 − 1) × ${number(sk.scalingRatio ?? 1)} 추가(행운 비례)`);
         if (sk.scaling === 'gold') out.push(`피해 × (1 + log10(보유 골드 + 1) × ${number(sk.scalingRatio ?? 0)}) · 골드 자릿수가 늘 때마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
-        if (sk.dice) { const d = sk.dice; out.push(`${({ str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' } as Record<string, string>)[d.attribute]} ${d.per}마다 주사위를 1개 더 굴립니다(최대 ${d.max}개). 가장 높은 눈이 피해 배율이 됩니다: ${[1, 2, 3, 4, 5, 6].map(f => `${'⚀⚁⚂⚃⚄⚅'[f - 1]}×${diceMultiplier(d, f).toFixed(2)}`).join(' ')}`); out.push(`손가락 자르기를 장착하면 양 끝이 좁아집니다(3단계: ×${diceRange(d, 3).low.toFixed(2)}~×${diceRange(d, 3).high.toFixed(2)}).`); }
+        if (sk.dice) { const d = sk.dice; out.push(`${ATTRIBUTE_NAMES[d.attribute]} ${d.per}마다 주사위를 1개 더 굴립니다(최대 ${d.max}개). 가장 높은 눈이 피해 배율이 됩니다: ${[1, 2, 3, 4, 5, 6].map(f => `${'⚀⚁⚂⚃⚄⚅'[f - 1]}×${diceMultiplier(d, f).toFixed(2)}`).join(' ')}`); out.push(`손가락 자르기를 장착하면 양 끝이 좁아집니다(3단계: ×${diceRange(d, 3).low.toFixed(2)}~×${diceRange(d, 3).high.toFixed(2)}).`); }
         if (sk.gamble) out.push(`쓸 때마다 ${[sk.gamble.min !== sk.gamble.max ? `피해 ×${number(sk.gamble.min)}~${number(sk.gamble.max)}(평균 ×${number((sk.gamble.min + sk.gamble.max) / 2)})` : '', sk.gamble.accuracy ? `이 기술 명중 ±${skillPercent(sk.gamble.accuracy)}p` : ''].filter(Boolean).join(' · ')} 무작위`);
         if (sk.allIn) out.push(`현재 체력의 ${skillPercent(sk.allIn.hpRatio)}(1은 남김)와 남은 마나 전부를 걸고 (건 체력 × ${number(sk.allIn.hpScale)} + 건 마나 × ${number(sk.allIn.manaScale)})를 피해식에 더합니다 · 빗나가도 소모`);
         if (sk.goldSpend) out.push(`보유 골드의 ${skillPercent(sk.goldSpend.ratio)}(한 번에 최대 ${sk.goldSpend.cap.toLocaleString()})를 실제로 쓰고, 쓴 골드 × ${number(sk.goldSpend.scale)}를 피해식에 더합니다`);

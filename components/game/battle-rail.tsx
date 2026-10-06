@@ -6,7 +6,7 @@ import { ChatPanel, NewsFeed } from './chat-panel';
 import { JournalLine, LOG_TABS, withTurnDividers } from './combat-log';
 import { ChevronDown, ChevronRight, Compass, Flame, Lock, Map, Megaphone, MessageCircle, Sparkles, Swords } from 'lucide-react';
 import { serverNow } from './jobs/job-status';
-import { Meter } from './shared';
+import { Meter, formatRemaining } from './shared';
 import { STAGES, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { DUNGEON_MODES } from '@/game/data/balance';
 import type { State, Action } from '@/game/types';
@@ -86,16 +86,15 @@ const PlaceSelector = memo(function PlaceSelector({ s, busy, send, setView }: Pl
     </>;
 });
 
-const left = (ms: number) => { const m = Math.max(1, Math.ceil(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`; };
 /** v27.47 오른쪽 선택판 제단 탭(v3.50 복구): 동기화 때 받은 제단 요약(State.altarStatus). 누르면 제단 화면으로 갑니다. 살아 있는 월드보스도 보입니다. */
 function AltarRail({ s, setView }: { s: State; setView: (v: string) => void }) {
     const a = s.altarStatus;
     if (!a) return <div className="battle-dungeon-list battle-altar-list"><p className="battle-feed-empty">제단 소식을 불러오는 중입니다. 위의 ‘열기’로 제단 화면을 바로 열 수 있습니다.</p></div>;
     const now = serverNow(s), open = () => setView('altar');
     return <div className="battle-dungeon-list battle-altar-list">
-        {a.blessings.map(b => <button type="button" key={b.id} className="battle-dungeon-button selected" onClick={open}><span><strong>{b.name} 진행 중</strong><small>{b.desc} · {left(b.until - now)} 남음</small></span><Flame size={13}/></button>)}
-        {a.god && <button type="button" className="battle-dungeon-button selected" onClick={open}><span><strong>{a.god.name} 깨어남</strong><small>쓰러뜨리면 신의 자리 · {left(a.god.until - now)} 뒤 떠남</small></span><Swords size={13}/></button>}
-        {(a.raids ?? (a.raid ? [{ id: 'raid', ...a.raid }] : [])).map(r => <button type="button" key={r.id} className="battle-dungeon-button selected battle-altar-gauge" onClick={open}><span><strong>{r.name} 출현</strong><small>남은 체력 {Math.round(r.pct * 100)}% · {left(r.until - now)} 뒤 떠남</small><Meter value={Math.round(r.pct * 100)} max={100}/></span></button>)}
+        {a.blessings.map(b => <button type="button" key={b.id} className="battle-dungeon-button selected" onClick={open}><span><strong>{b.name} 진행 중</strong><small>{b.desc} · {formatRemaining(b.until - now)} 남음</small></span><Flame size={13}/></button>)}
+        {a.god && <button type="button" className="battle-dungeon-button selected" onClick={open}><span><strong>{a.god.name} 깨어남</strong><small>쓰러뜨리면 신의 자리 · {formatRemaining(a.god.until - now)} 뒤 떠남</small></span><Swords size={13}/></button>}
+        {(a.raids ?? []).map(r => <button type="button" key={r.id} className="battle-dungeon-button selected battle-altar-gauge" onClick={open}><span><strong>{r.name} 출현</strong><small>남은 체력 {Math.round(r.pct * 100)}% · {formatRemaining(r.until - now)} 뒤 떠남</small><Meter value={Math.round(r.pct * 100)} max={100}/></span></button>)}
         {a.gauges.map(g => <button type="button" key={g.id} className="battle-dungeon-button battle-altar-gauge" onClick={open}><span><strong>{g.name}</strong><small>게이지 {g.pct}%</small><Meter value={g.pct} max={100}/></span></button>)}
         <p className="battle-altar-throne">신의 자리 · {a.throne || '비어 있음'}</p>
     </div>;
