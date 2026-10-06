@@ -701,7 +701,7 @@ test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% o
         const s = make(); s.rebirths = 3; s.exp = 0; Enc.spawn(s, () => pm + N.nuriChance(10) / 2); s.enemy.hp = 0;
         const base = Math.floor(s.enemy.exp * (await L.load('systems/stats')).expMultiplier(s));
         Enc.reward(s, () => roll);
-        assert.equal(s.exp, base + Math.floor(B.xpNeeded(80, 3) * pct), `tier ${pct}`);
+        assert.equal(s.exp, base + Math.floor(B.xpNeeded(80, 3, (await L.load('systems/meta')).xpWall(s)) * pct), `tier ${pct}`);
         assert.equal(s.book[N.EXP_NURI.id], 1); assert.ok(s.logs.some(l => l.text.includes('경험의 누리')));
     }
 });
@@ -1345,7 +1345,7 @@ test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/m
     store.feed(mk(R.RATE_WINDOW_MS + 30_000 + R.GAP_RESET_MS + 50_001, 0, [], 2)); assert.equal(store.get().elapsedMs, 0, 'rebirth restarts');
 });
 
-test('v3.23 recent kill: mastery on the kill line (mimic jackpot included), nuri exp folded in, no double count on EXP lines', async () => {
+test('v3.29 recent kill: mastery on the kill line (mimic jackpot included), nuri exp folded in, no double count on EXP lines', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const R = await L.load('systems/live-rates');
     assert.equal(R.gainsOf({ id: 1, type: 'reward', text: '잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +500 EXP' }, '나').exp, 500, 'not counted twice');

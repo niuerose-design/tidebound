@@ -238,6 +238,16 @@ export const closuresSnapshot = (): Closures | null => CLOSED_DUNGEONS.size || C
 /** 화면용: 동기화 때 받은 State.closed 기준. */
 export const closedIn = (s: { closed?: Closures | null }, kind: keyof Closures, id: string) => !!s.closed?.[kind]?.includes(id);
 export const CLOSED_NOTE = '점검 중 · 입장 불가';
+/**
+ * v3.25 해킹 III 서버 다운: 새 입장만 막습니다(이미 들어간 모험가는 계속). 서버가 해킹 설정(hacks)을 읽어 setHackDown으로 채웁니다.
+ * 화이트 해커가 패치한 곳(patched)은 다운이 걸려 있어도 열려 있습니다.
+ */
+let HACK_DOWN: { kind: 'stage' | 'dungeon'; id: string; until: number; by: string }[] = [];
+let HACK_PATCHED: Record<string, number> = {};
+export function setHackDown(list: typeof HACK_DOWN, patched: Record<string, number> = {}) { HACK_DOWN = list; HACK_PATCHED = patched; }
+export const placeKey = (kind: 'stage' | 'dungeon', id: string) => `${kind}:${id}`;
+/** 지금 해킹으로 막힌 곳이면 그 기록, 아니면 undefined. */
+export const hackDownOf = (kind: 'stage' | 'dungeon', id: string, now: number) => (HACK_PATCHED[placeKey(kind, id)] || 0) > now ? undefined : HACK_DOWN.find(d => d.kind === kind && d.id === id && d.until > now);
 export const DUNGEONS = [
     /** v27.86 랜덤게임: 웨이브마다 무작위 몬스터(fish는 자리표시). 일반 던전 목록·업적·목표에서는 random으로 빠집니다. */
     { id: 'randomGame', name: '랜덤게임', level: 1, rebirth: 5, fish: ['minnow'], bossFish: undefined as string | undefined, boss: '랜덤게임', gold: 0, pearls: 0, description: '해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브를 깰수록 판돈이 쌓이고, 쓰러지면 모두 잃습니다.', random: true },

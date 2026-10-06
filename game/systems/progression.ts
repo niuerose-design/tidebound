@@ -11,7 +11,7 @@ import { SKILLS, skillById } from '../data/skills';
 import { PLACES, FISH } from '../data/world';
 import { doorFor, DOORS } from '../data/doors';
 import { researchRank } from '../data/economy';
-import { HACKER_ID } from '../data/hacker';
+import { HACKER_ID, isHackerJob } from '../data/hacker';
 export function initialProgress(level = 1) { return { attributes: emptyAttributes(), statPoints: PROGRESSION.startingStats + (level - 1) * PROGRESSION.statPerLevel, sp: PROGRESSION.startingSP, peakLevel: level, learned: { hook: 1 } as Record<string, number>, skillSpent: {} as Record<string, number>, skillInheritances: {} as Record<string, boolean>, skillPractice: {} as Record<string, number>, jobMastery: {} as Record<string, number>, unlockedJobs: ['fisher'], bookClaims: {} as Record<string, number>, itemBook: {} as Record<string, boolean>, target: null as string | null, presets: {} as State['presets'], mana: 40, effects: {}, playerStun: 0 }; }
 export function attributes(s: State) {
     const out = emptyAttributes();
@@ -111,7 +111,8 @@ export function jobFactor(job: Job, key: JobStatKey) {
     return job[key] + (flat && ref ? flat / (ref * jobTierScale(job)) : 0);
 }
 export function inherited(s: State, id: string) { const sk = skillById(id); return !!sk && (!!s.skillInheritances?.[id] || !!s.legacyInherited?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
-function classAccess(s: State, sk: Skill) { return (!sk.song || songAccess(s)) && (!sk.job || s.job === sk.job || inherited(s, sk.id)); }
+/** v3.25 해커 스킬(신원 조작)은 해커 계열(화이트 해커 포함)이면 씁니다. */
+function classAccess(s: State, sk: Skill) { return (!sk.song || songAccess(s)) && (!sk.job || s.job === sk.job || sk.job === HACKER_ID && isHackerJob(s.job) || inherited(s, sk.id)); }
 /** v24.2 노래 패시브는 음유시인 계보(엔젤릭버스터 (1차)의 후속 직업)만 장착합니다. */
 function songAccess(s: Pick<State, 'job'>) { return lineage(s.job).includes('bard'); }
 export function skillUnlockReady(s: State, sk: Skill) { return (!sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery) && (!sk.unlockAfter || skillMastery(s, sk.unlockAfter.skill) >= sk.unlockAfter.level); }
@@ -288,8 +289,8 @@ export function overRestraint(s: State, ids: string[]) {
     const active = ids.filter(id => skillById(id)?.type === 'active').length;
     return active > cap || ids.length - active > cap;
 }
-/** v3.18 해커는 해커 전용 스킬(애드가드)만 장착합니다. */
-const hackerLoadoutOk = (s: State, ids: string[]) => s.job !== HACKER_ID || ids.every(id => skillById(id)?.job === HACKER_ID);
+/** v3.18 해커는 해커 계열 스킬(신원 조작·방화벽)만 장착합니다. */
+const hackerLoadoutOk = (s: State, ids: string[]) => !isHackerJob(s.job) || ids.every(id => isHackerJob(skillById(id)?.job || ''));
 export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && hackerLoadoutOk(s, ids) && !overRestraint(s, ids) && apUsed(s, ids) <= apCapacity(s, ids); }
 export function trimLoadout(s: State) {
     s.skills = [...new Set(s.skills)].filter(id => canUse(s, id));

@@ -96,11 +96,11 @@ test('Research v2: online ticks and one offline settlement give the same result 
 });
 
 // 세계석 연구 3단계: 특별 연구 5개
-import { reward, expMultiplier, metaMod, mimicChanceOf } from './harness.mjs';
+import { reward, expMultiplier, metaMod, mimicChanceOf, migrateState, randomGameRunsLeft } from './harness.mjs';
 const counting = (value = .99) => { const f = () => { f.calls++; return typeof value === 'function' ? value(f.calls) : value; }; f.calls = 0; return f; };
 
 test('Research v3: four special entries match the plan table and sit in the utility special group', () => {
-    const table = { tailwindSail: [5, 8, 5, 2, 90], tailwindWindow: [5, 6, 4, 2, 70], sortingNet: [2, 10, 10, 2, 30], messageBottle: [5, 6, 4, 3, 70] };
+    const table = { tailwindSail: [5, 8, 5, 2, 90], sortingNet: [2, 10, 10, 2, 30], autoVend: [2, 10, 10, 2, 30], messageBottle: [5, 6, 4, 3, 70] };
     for (const [id, [max, base, step, rebirth, total]] of Object.entries(table)) {
         const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.tab, r.group], [max, base, step, rebirth, 'utility', 'special'], id);
         assert.equal(economy.researchSpent(id, max), total, id);
@@ -108,20 +108,19 @@ test('Research v3: four special entries match the plan table and sit in the util
     }
 });
 
-test('Research v3: tailwind sail and window scale the tailwind bonus, its condition and the rebirth log', () => {
-    const s = newState(0); assert.equal(metaMod.tailwindExp(s), .5); assert.equal(metaMod.tailwindWindow(s), 5);
-    s.permanent.tailwindSail = 3; s.permanent.tailwindWindow = 2; close(metaMod.tailwindExp(s), .8); assert.equal(metaMod.tailwindWindow(s), 7);
-    s.rebirths = 6; s.level = 67; assert.equal(metaMod.nextLifeBonus(s), 'tailwind'); s.level = 68; assert.equal(metaMod.nextLifeBonus(s), null);
-    s.level = 67; act(s, { type: 'rebirth' }, 0); assert.equal(s.lifeBonus, 'tailwind'); assert.ok(s.logs.some(l => l.text.includes('경험치 +80%')));
-    close(expMultiplier(s) / expMultiplier({ ...s, lifeBonus: null }), 1.8);
+test('Research v3.23: tailwind sail raises the additive bonus, the over-target wall stays at ×1.6', () => {
+    const s = newState(0); assert.equal(metaMod.tailwindExp(s), .5); close(metaMod.xpWall(s).growth, 1.6);
+    s.permanent.tailwindSail = 3; close(metaMod.tailwindExp(s), .8);
+    s.rebirths = 6; s.level = 67; act(s, { type: 'rebirth' }, 0); assert.ok(s.logs.some(l => l.text.includes('경험치 +80%')));
+    const e = stats(s).expBonus; close(expMultiplier(s) / expMultiplier({ ...s, level: metaMod.rebirthLevel(s) }), (1 + e + .8) / (1 + e));
 });
 
-test('Research v3: sorting net sells only known, low-rarity drops while the setting is on', () => {
+test('Research v3: sorting net dismantles only known, low-rarity drops into essence while the setting is on', () => {
     const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /자동 분해기/);
     s.permanent.sortingNet = 1; act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoSell, true);
     // v27.53 드롭은 희귀 이상만: 1단계는 희귀, 2단계는 영웅 이하를 팝니다.
     drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'unregistered kind is kept');
-    s.itemBook['rod:1'] = true; const gold = s.gold; drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'rank 1 sells rare'); assert.ok(s.gold > gold);
+    s.itemBook['rod:1'] = true; const gold = s.gold, essence = s.essence || 0; drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'rank 1 dismantles rare'); assert.equal(s.gold, gold, 'no gold'); assert.equal((s.essence || 0) - essence, 2, 'rare → essence 2');
     const hero = () => { const v = [.6, 0]; let i = 0; return () => v[i++] ?? 0; }; // 등급 굴림 .6 → 영웅, 부위 굴림 0 → 낚싯대
     s.itemBook['rod:2'] = true; drop(s, 5, hero(), true); assert.equal(s.inventory.at(-1).rarity, 2); assert.equal(s.inventory.length, 2, 'rank 1 keeps hero');
     s.permanent.sortingNet = 2; drop(s, 5, hero(), true); assert.equal(s.inventory.length, 2, 'rank 2 sells hero');
@@ -185,6 +184,9 @@ test('v27.86 random game: research-gated entries per life, random monsters by wa
     const e1 = s.essence; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 0, gold: 0, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
     tick(s, () => .5); assert.equal(s.dungeon, null); assert.equal(s.essence, e1, 'stake lost on a fall');
     assert.throws(() => act(s, { type: 'dungeon', id: 'randomGame' }, 0), /횟수/, 'rank 2 = two entries per life');
+    // v3.24 하루(한국 시간)가 지나면 다시 채워집니다.
+    const DAY = 86_400_000; assert.equal(randomGameRunsLeft(s, 0), 0); assert.equal(randomGameRunsLeft(s, DAY), 2);
+    act(s, { type: 'dungeon', id: 'randomGame' }, DAY); assert.equal(s.randomGameRuns, 1); act(s, { type: 'leaveDungeon' }, DAY);
     // 나가기 = 받고 나가기.
     const t = newState(0); t.rebirths = 6; t.level = 60; t.permanent.vowAnchor = 1; act(t, { type: 'dungeon', id: 'randomGame' }, 0); t.recovery = 0;
     for (let w = 0; w < 10; w++) { spawn(t, () => .5); t.enemy.hp = 0; reward(t, () => .5); }
@@ -253,4 +255,19 @@ test('v27.88 every vow is a next-life reservation: reserving rough/restraint/bre
     assert.equal(s.vows, undefined); assert.equal(apCapacity(s), ap); assert.equal(goldMultiplier(s), gold);
     act(s, { type: 'nextVow', id: 'restraint', value: '0' }, 0); assert.equal(s.vows, undefined);
     act(s, { type: 'rebirth' }, 0); assert.deepEqual(s.vows, { rough: 3, breath: true });
+});
+
+test('v3.24 auto vend sells known low-rarity drops for gold; it and the auto dismantler are never on together', () => {
+    const s = newState(0); assert.throws(() => act(s, { type: 'autoVend', value: 'on' }, 0), /자동 판매기/);
+    s.permanent.autoVend = 1; s.permanent.sortingNet = 1; s.itemBook['rod:1'] = true;
+    act(s, { type: 'autoSell', value: 'on' }, 0); act(s, { type: 'autoVend', value: 'on' }, 0); assert.equal(s.autoVend, true); assert.equal(s.autoSell, false, 'vend turns the dismantler off');
+    const gold = s.gold, essence = s.essence || 0; drop(s, 5, () => 0); assert.equal(s.inventory.length, 0); assert.ok(s.gold > gold, 'sold for gold'); assert.equal(s.essence || 0, essence);
+    act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoVend, false, 'dismantler turns vend off');
+    s.level = 30; act(s, { type: 'rebirth' }, 0); act(s, { type: 'autoVend', value: 'on' }, 0); s.level = 35; act(s, { type: 'rebirth' }, 0); assert.equal(s.autoVend, true, 'kept across rebirth');
+});
+
+test('v3.24 removed research tailwindWindow refunds every pearl once', () => {
+    const s = newState(0); s.permanent.tailwindWindow = 3; const p = s.pearls;
+    migrateState(s); assert.equal(s.pearls - p, 6 + 10 + 14); assert.equal(s.permanent.tailwindWindow, undefined);
+    migrateState(s); assert.equal(s.pearls - p, 30, 'only once');
 });

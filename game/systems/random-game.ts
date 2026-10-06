@@ -5,13 +5,16 @@ import { FISH, PLACES, tideLiftFish } from '../data/world';
 import { scaledEnemyStats, foeSkills } from '../data/encounters';
 import { researchRank } from '../data/economy';
 import { encounterTier } from './meta';
+import { dayKey } from '../data/goals';
 import { addLog, endRun } from './state';
 
-/** 랜덤게임 연구 단계(0이면 잠김). 생마다 이 횟수만큼 입장합니다. */
+/** 랜덤게임 연구 단계(0이면 잠김). 생마다(v3.24 그리고 하루마다, 한국 시간 자정) 이 횟수만큼 입장합니다. */
 export const randomGameRank = (s: Pick<State, 'permanent'>) => researchRank(s, RANDOM_GAME.research);
 /** 판돈 배율: ×1 → ×1.5 → ×2. */
 export const randomGamePayout = (s: Pick<State, 'permanent'>) => 1 + .5 * Math.max(0, randomGameRank(s) - 1);
-export const randomGameRunsLeft = (s: Pick<State, 'permanent' | 'randomGameRuns'>) => Math.max(0, randomGameRank(s) - (s.randomGameRuns || 0));
+/** v3.24 오늘(한국 시간) 이번 생에 쓴 입장 횟수. 날이 바뀌었으면 0입니다. now를 빼면 저장된 값 그대로. */
+export const randomGameUsed = (s: Pick<State, 'randomGameRuns' | 'randomGameDay'>, now?: number) => now !== undefined && s.randomGameDay !== dayKey(now) ? 0 : (s.randomGameRuns || 0);
+export const randomGameRunsLeft = (s: Pick<State, 'permanent' | 'randomGameRuns' | 'randomGameDay'>, now?: number) => Math.max(0, randomGameRank(s) - randomGameUsed(s, now));
 export const inRandomGame = (s: Pick<State, 'dungeon'>) => s.dungeon?.id === RANDOM_GAME.id;
 /** 받을 판돈(배율 적용, 내림). */
 export const stakePayout = (s: Pick<State, 'permanent' | 'dungeon'>) => { const st = s.dungeon?.stake || { essence: 0, pearls: 0 }, m = randomGamePayout(s); return { essence: Math.floor(st.essence * m), pearls: Math.floor(st.pearls * m) }; };

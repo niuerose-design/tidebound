@@ -10,8 +10,8 @@ import type { RankingRow } from './db';
 import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
 import { refreshEvents } from './events-config';
-import { ensurePuzzleKey } from './hacks';
-import { privacyOf, isHacker } from '../systems/hacker';
+import { ensurePuzzleKey, readHacks, syncHackerBoard } from './hacks';
+import { isHacker } from '../systems/hacker';
 import { accountFromRequest, AuthError, readSlot } from './auth';
 import { FISH } from '../data/world';
 import { JOBS } from '../data/classes';
@@ -67,8 +67,9 @@ export function checkOrigin(req: Request) {
 export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
     const database = db(), now = Date.now();
     await refreshEvents(now);
-    // v3.18 침투 작전 정답 키(인스턴스마다 한 번).
+    // v3.18 침투 작전 정답 키(인스턴스마다 한 번). v3.25 해킹 효과(이벤트 변조·서버 다운)도 30초 캐시로 반영합니다.
     await ensurePuzzleKey(now);
+    await readHacks(now);
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = await database.getPlayer(id);
         // v25.10 처음 보는 모험가일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
@@ -79,6 +80,8 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
         advance(s, now);
         act(s, action, now);
         const result = extra ? await extra(s) : null;
+        // v3.25 해커 순위(월): 기록이 바뀌었을 때만 한 번 씁니다.
+        await syncHackerBoard(id, s, now);
         if (await database.updatePlayer(id, JSON.stringify(s), now, row.revision))
             return { state: s, result };
     }
@@ -90,15 +93,8 @@ export const duelRowId = (seasonKey: string, id: string) => `duel:${seasonKey}:$
 export async function register(id: string) {
     const now = Date.now(), key = duelSeasonKey(now);
     const { state } = await mutate(id, { type: 'sync' }, s => syncDuelSeason(id, s, now));
-    // v3.18 해커는 결투 정보를 새로 등록하지 않습니다. 이전 직업으로 등록해 둔 기록은 그대로 두고, 애드가드 숨김 정보만 갱신합니다.
-    if (isHacker(state)) {
-        const row = await db().getRanking(duelRowId(key, id), monthSeason(key));
-        if (!row) throw new ApiError('해커는 결투 정보를 등록할 수 없습니다. 다른 직업으로 등록해 두면 그 기록이 남습니다.');
-        const { privacy: _old, ...rest } = JSON.parse(row.snapshot) as Snapshot; void _old;
-        const privacy = privacyOf(state);
-        await db().upsertRanking({ ...row, snapshot: JSON.stringify({ ...rest, ...(privacy ? { privacy } : {}) }) });
-        return state;
-    }
+    // v3.18 해커는 결투 정보를 새로 등록하지 않습니다(이전 직업으로 등록해 둔 기록은 그대로). v3.26 숨김 정보는 해커의 신원 조작이 서버 설정에 둡니다.
+    if (isHacker(state)) throw new ApiError('해커는 결투 정보를 등록할 수 없습니다. 다른 직업으로 등록해 두면 그 기록이 남습니다.');
     const snap = { ...snapshot(state), season: monthSeason(key), seasonRank: state.duelSeason?.lastKey === previousMonthKey(key) ? state.duelSeason?.lastRank : undefined };
     await db().upsertRanking({ id: duelRowId(key, id), snapshot: JSON.stringify(snap), rating: snap.rating, power: snap.power, updated_at: now });
     return state;
@@ -142,7 +138,7 @@ export async function syncAbyssBoard(id: string, s: State, now: number) {
     if (!week) return;
     const database = db(), current = weekKey(now);
     if (week.dirty && week.key === current) {
-        await database.upsertRanking({ id: abyssRowId(id), snapshot: JSON.stringify({ season: weekSeason(current), board: 'abyss', account: id, name: s.name, depth: week.best, job: s.job, rebirths: s.rebirths, ...(privacyOf(s) ? { privacy: privacyOf(s) } : {}) }), rating: week.best, power: week.best, updated_at: now });
+        await database.upsertRanking({ id: abyssRowId(id), snapshot: JSON.stringify({ season: weekSeason(current), board: 'abyss', account: id, name: s.name, depth: week.best, job: s.job, rebirths: s.rebirths }), rating: week.best, power: week.best, updated_at: now });
         delete week.dirty;
     }
     const previous = weekKey(now - 7 * 86400000);

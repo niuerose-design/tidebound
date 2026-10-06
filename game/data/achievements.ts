@@ -109,7 +109,9 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('gold', '도전', n => `보유 골드 ${n.toLocaleString()}`, n => `골드를 ${n.toLocaleString()} 이상 모읍니다.`, [1e6, 1e8, 1e10], s => s.gold || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, sp: 1 }][i]),
     ...series('enhance', '도전', n => `강화 +${n}`, n => `장착한 장비 하나를 +${n} 이상 강화합니다.`, [5, 10, 12], bestEnhance, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('god', '도전', n => `신 처치 ${n}회`, n => `제단에서 깨어난 신을 ${n}번 쓰러뜨립니다.`, [1, 10], s => s.altar?.wins || 0, i => [{ pearls: 10, sp: 1 }, { pearls: 30, ap: 1 }][i]),
-    { id: 'deep:100', group: '환생', title: '깊은 모험', desc: 'Lv.100에 도달한 채 환생합니다.', reward: { pearls: 10, bonus: { hp: .03, defense: .02, resist: .02 } }, progress: s => s.lifeBonus === 'deep' ? 1 : 0, target: 1 },
+    { id: 'deep:100', group: '환생', title: '깊은 모험', desc: 'Lv.100에 도달합니다.', reward: { pearls: 10, bonus: { hp: .03, defense: .02, resist: .02 } }, progress: s => Math.max(s.level, s.peakLevel || 0) >= 100 ? 1 : 0, target: 1 },
+    /** v3.28 해킹 X 루트 권한을 한 번 쓰면 칭호 root(보상은 칭호뿐: 해커는 다른 재화를 얻지 않음). */
+    { id: 'hacker:root', group: '도전', title: 'root', desc: '해킹 X 루트 권한을 실행합니다.', reward: {}, progress: s => (s.hacker?.roots || 0) > 0 ? 1 : 0, target: 1 },
     { id: 'warden:all', group: '숙련', title: '모든 세계의 수호자', desc: '방어 계열 직업 3개를 숙달합니다.', reward: { pearls: 6, bonus: { defense: .04, resist: .04 } }, progress: s => JOBS.filter(j => j.tree === 'defense' && jobMastered(s, j)).length, target: 3 },
 ];
 for (const a of ACHIEVEMENTS) if (a.reward.ap) ACHIEVEMENT_AP[a.id] = a.reward.ap;

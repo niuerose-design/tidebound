@@ -5,10 +5,11 @@ import { Activity, ChevronDown, Coins, Fish, Sparkles, Swords, Zap } from 'lucid
 import type { State } from '@/game/types';
 import type { RecentKill } from '@/game/systems/live-rates';
 import { projectLevel, msToCap, LEVEL_CAP } from '@/game/systems/live-rates';
-import { xpNeeded } from '@/game/data/balance';
-const xpNeededSafe = (level: number, rebirths: number) => level >= LEVEL_CAP ? 1 : xpNeeded(level, rebirths);
+import { xpNeeded , type XpTargetWall } from '@/game/data/balance';
+const xpNeededSafe = (level: number, rebirths: number, wall?: XpTargetWall) => level >= LEVEL_CAP ? 1 : xpNeeded(level, rebirths, wall);
 import { short, format } from './shared';
 import { recentKill, RATE_WINDOW_MS, useLiveRates } from './live-rates';
+import { xpWall } from '@/game/systems/meta';
 const FOLD_KEY = 'tidebound.liveRates';
 type Recent = RecentKill | null;
 /** 마지막 처치 획득량. 로그가 밀려나도 남고, 화면을 오가도 유지됩니다(앱 전체 하나). */
@@ -21,13 +22,13 @@ export function LiveRatesCard({ s, compact = false }: { s: State; compact?: bool
     const [open, setOpen] = useState(true);
     useEffect(() => { if (!compact) return; const t = setTimeout(() => { try { if (localStorage.getItem(FOLD_KEY) === 'folded') setOpen(false); } catch { /* 저장소 없음 */ } }, 0); return () => clearTimeout(t); }, [compact]);
     const toggle = () => setOpen(v => { try { localStorage.setItem(FOLD_KEY, v ? 'folded' : 'open'); } catch { /* 저장소 없음 */ } return !v; });
-    // 최근 처치 한 줄: 같은 턴의 처치·누리·숙련 줄을 한 처치로 묶은 값(v3.23). 로그가 밀려나도 마지막 값은 남겨 둡니다.
+    // 최근 처치 한 줄: 같은 턴의 처치·누리·숙련 줄을 한 처치로 묶은 값(v3.29). 로그가 밀려나도 마지막 값은 남겨 둡니다.
     const latest = recentKill(s.logs, s.name);
     const recent = useSyncExternalStore(recentStore.subscribe, recentStore.get, recentStore.get);
     useEffect(() => { if (latest && (!recent || latest.id !== recent.id)) recentStore.set(latest); }, [latest, recent]);
     // 경험치는 '지금 레벨 필요량의 %' 대신 시간당 몇 레벨, 최대 레벨까지 얼마나 걸리는지로 보여 줍니다(환생 직후 %가 수천이 되던 문제).
-    const after1h = projectLevel(s.level, s.exp, s.rebirths, r.perHour.exp), capMs = msToCap(s.level, s.exp, s.rebirths, r.perHour.exp), atCap = s.level >= LEVEL_CAP;
-    const levelGain = after1h.level + after1h.progress - (s.level + s.exp / xpNeededSafe(s.level, s.rebirths));
+    const after1h = projectLevel(s.level, s.exp, s.rebirths, r.perHour.exp, xpWall(s)), capMs = msToCap(s.level, s.exp, s.rebirths, r.perHour.exp, xpWall(s)), atCap = s.level >= LEVEL_CAP;
+    const levelGain = after1h.level + after1h.progress - (s.level + s.exp / xpNeededSafe(s.level, s.rebirths, xpWall(s)));
     const window = Math.min(r.elapsedMs, RATE_WINDOW_MS);
     const status = !r.ready ? `측정 중 ${clock(r.elapsedMs)} · 30초 뒤부터 표시` : `지난 ${clock(window)} 실측${s.running || s.dungeon ? '' : ' · 사냥 멈춤'}`;
     const tiles: { Icon: typeof Zap; label: string; value: string; sub?: string; tone: string }[] = [
@@ -46,7 +47,7 @@ export function LiveRatesCard({ s, compact = false }: { s: State; compact?: bool
         {open && <>
             <div className="live-body"><div className="live-tiles">{tiles.map(t => <div key={t.label} className={`live-tile tone-${t.tone}`}><t.Icon size={15}/><span>{t.label}</span><strong>{r.ready ? t.value : '—'}</strong>{t.sub && <small>{r.ready ? t.sub : ' '}</small>}</div>)}</div>
             <table className="live-forecast"><colgroup><col className="head"/><col/><col className="lv"/><col/><col/><col/></colgroup><thead><tr><th>예상</th><th>경험치</th><th>레벨</th><th>골드</th><th>처치</th><th>숙련</th></tr></thead>
-                <tbody>{HORIZONS.map(([label, h]) => { const p = projectLevel(s.level, s.exp, s.rebirths, r.perHour.exp * h); return <tr key={label}><th>{label}</th><td title={r.ready ? format(Math.round(r.perHour.exp * h)) : ''}>{r.ready ? short(r.perHour.exp * h) : '—'}</td><td><em>{r.ready ? (p.capped ? `Lv.${LEVEL_CAP} ✓` : `Lv.${p.level}`) : '—'}</em></td><td title={r.ready ? format(Math.round(r.perHour.gold * h)) : ''}>{r.ready ? short(r.perHour.gold * h) : '—'}</td><td>{r.ready ? short(r.perHour.kills * h) : '—'}</td><td>{r.ready ? short(r.perHour.mastery * h) : '—'}</td></tr>; })}</tbody></table></div>
+                <tbody>{HORIZONS.map(([label, h]) => { const p = projectLevel(s.level, s.exp, s.rebirths, r.perHour.exp * h, xpWall(s)); return <tr key={label}><th>{label}</th><td title={r.ready ? format(Math.round(r.perHour.exp * h)) : ''}>{r.ready ? short(r.perHour.exp * h) : '—'}</td><td><em>{r.ready ? (p.capped ? `Lv.${LEVEL_CAP} ✓` : `Lv.${p.level}`) : '—'}</em></td><td title={r.ready ? format(Math.round(r.perHour.gold * h)) : ''}>{r.ready ? short(r.perHour.gold * h) : '—'}</td><td>{r.ready ? short(r.perHour.kills * h) : '—'}</td><td>{r.ready ? short(r.perHour.mastery * h) : '—'}</td></tr>; })}</tbody></table></div>
             {!compact && <p className="footnote"><Sparkles size={12}/> 브라우저가 이미 받는 전투 기록으로 계산하므로 서버에 부담이 없습니다. 5분 창의 실측 평균이며, 탭을 숨기거나 부재중 정산이 들어오면 창을 새로 시작합니다. 레벨 예상은 지금 속도가 이어진다고 보고 셉니다(몬스터·난이도를 바꾸면 달라짐). 숙련은 직업 단련치 합의 증가분입니다.</p>}
         </>}
     </section>;

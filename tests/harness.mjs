@@ -27,6 +27,7 @@ export const {diceMultiplier,diceRange}=await load('game/data/balance.js');
 export const {variantChances}=await load('game/data/variants.js');
 export const {combatFxFromLog,combatFxBatch}=await load('game/systems/combat-feedback.js');
 export const {migrateState}=await load('game/systems/migrations.js');
+export const {randomGameRunsLeft}=await load('game/systems/random-game.js');
 export const {passiveGrowthBonus,jobMastered,apCapacity,apUsed,canUse,canChangeJob,effectiveSkill,skillRankDeltas,skillMasteryLevel,masteryMilestonesFor,jobRequirements,validLoadout,skillLevel,maxSkillLevel,inherited,trimLoadout,jobMasteryTarget,jobCombatMultiplier,limitBreakNext,skillMastery}=await load('game/systems/progression.js');
 export const {goalProgress,goalSuggestions}=await load('game/systems/goals.js');
 export const {skillGrowthStages,skillExtraNotes}=await load('game/systems/skill-description.js');
@@ -63,4 +64,8 @@ export const jobUi=await load('ui/job-status.js');
 let seed=44;
 export const rng=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
 export const results={passed:0};
-export const test=(name,fn)=>{fn();results.passed++;console.log('PASS',name)};
+// v3.27 비동기 테스트(파일 DB 등)는 차례로 돌립니다. 동시에 돌면 서로의 TIDEBOUND_DEV_DB 파일을 지워 결과가 흔들렸습니다. 동기 테스트는 그대로 즉시 실행.
+let chain=Promise.resolve();
+export const test=(name,fn)=>{if(fn.constructor.name==='AsyncFunction'){chain=chain.then(async()=>{await fn();results.passed++;console.log('PASS',name)});return;}fn();results.passed++;console.log('PASS',name)};
+/** run.mjs가 끝에 기다립니다: 줄 세운 비동기 테스트가 모두 끝날 때까지. */
+export const settled=()=>chain;

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send } from 'lucide-react';
 
-export type ChatLine = { id: number; name: string; text: string; at: number; self: boolean };
+export type ChatLine = { id: number; name: string; text: string; at: number; self: boolean; /** v3.26 시스템 알림 종류(hacker = 해커 전직, 빨간 줄). */ kind?: 'hacker' };
 /** 열려 있는 동안만 이 간격으로 새 줄을 묻습니다. 닫히거나 탭이 숨으면 멈춥니다. */
 const POLL_MS = 8000, KEEP = 120, MAX_CHARS = 120;
 
@@ -75,7 +75,7 @@ function ChatFeed({ open, playerName, active }: { open: boolean; playerName: str
     const submit = async () => { const text = draft.trim(); if (!text) return; if (await send(text)) { setDraft(''); stick.current = true; } };
     return <div className="chat-feed">
         <div className="chat-list" ref={listRef} onScroll={onScroll} role="log" aria-label={active === 'guild' ? '길드 채팅' : '전체 채팅'} aria-live="polite">
-            {lines.length ? lines.map(l => <p key={l.id} className={`chat-line ${l.self ? 'self' : ''}`}><span className="chat-head"><b className="chat-name" title={l.self ? `${playerName} (나)` : l.name}>{l.name}</b><span className="chat-time">{hhmm(l.at)}</span></span><span className="chat-text">{l.text}</span></p>)
+            {lines.length ? lines.map(l => <p key={l.id} className={`chat-line ${l.self ? 'self' : ''} ${l.kind === 'hacker' ? 'hacker-alert' : ''}`}><span className="chat-head"><b className="chat-name" title={l.self ? `${playerName} (나)` : l.name}>{l.name}</b><span className="chat-time">{hhmm(l.at)}</span></span><span className="chat-text">{l.text}</span></p>)
                 : <p className="chat-empty"><MessageCircle size={14}/> 아직 메시지가 없습니다. 첫 인사를 남겨 보세요.</p>}
         </div>
         {error && <p className="chat-error" role="alert">{error}</p>}

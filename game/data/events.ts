@@ -34,7 +34,20 @@ export function setAltarEvents(list: ServerEvent[]) { altar = list; }
  * 지금 적용 대상인 이벤트 목록: 코드 이벤트(끈 것 제외) + 운영 페이지 이벤트 + 제단 축복.
  * 제단 축복은 1시간 남짓이라 오프라인 정산(최대 수십 시간)에는 넣지 않습니다(withAltar = false).
  */
-export const currentEvents = (withAltar = true) => [...SERVER_EVENTS.filter(e => !runtime.disabled.includes(e.id)), ...runtime.extra, ...(withAltar ? altar : [])];
+/** v3.25 해킹 II 이벤트 변조: 이벤트 id → 남은 시간(분)·배율(%p) 조정. 서버가 해킹 설정(hacks)을 읽어 채웁니다. 제단 축복은 변조할 수 없습니다. */
+let tamper: Record<string, { minutes: number; rate: number }> = {};
+export function setEventTamper(t: Record<string, { minutes: number; rate: number }>) { tamper = t; }
+const tweak = (m: number | undefined, rate: number) => m === undefined || m === 1 ? m : Math.max(1, Math.round((m + rate) * 100) / 100);
+/** 변조를 적용한 이벤트. 배율은 정해진 배율(경험치·골드·드롭·숙련)에만 더하고 ×1.0 아래로는 내리지 않습니다. */
+export function tamperedEvent(e: ServerEvent): ServerEvent {
+    const t = tamper[e.id];
+    if (!t) return e;
+    return { ...e, until: new Date(Date.parse(e.until) + t.minutes * 60_000).toISOString(), exp: tweak(e.exp, t.rate), gold: tweak(e.gold, t.rate), drop: tweak(e.drop, t.rate), mastery: tweak(e.mastery, t.rate) };
+}
+/** v3.28 해킹 IX DDoS로 열린 이벤트(id는 hack-로 시작). 서버가 해킹 설정(hacks)을 읽어 채웁니다. 변조 대상이 아닙니다. */
+let hacked: ServerEvent[] = [];
+export function setHackEvents(list: ServerEvent[]) { hacked = list; }
+export const currentEvents = (withAltar = true) => [...SERVER_EVENTS.filter(e => !runtime.disabled.includes(e.id)), ...runtime.extra].map(tamperedEvent).concat(hacked, withAltar ? altar : []);
 export function activeEvent(now: number, events: ServerEvent[] = currentEvents()): ActiveEvent | null {
     const live = events.filter(e => Date.parse(e.from) <= now && now <= Date.parse(e.until));
     if (!live.length) return null;

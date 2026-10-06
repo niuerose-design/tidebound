@@ -113,40 +113,29 @@
 .auto-run-status dl > div { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
 .auto-run-status dt { color: var(--muted); font-size: 12px; }
 .auto-run-status dd { margin: 0; color: #d4e0d6; line-height: 1.5; }
-.auto-run-state { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
-.auto-run-state.on { color: #b6e0cc; background: #13302a; }
-.auto-run-state.off { color: #e3c28d; background: #2c2618; }
+.auto-run-state { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: #0f2227; white-space: nowrap; }
+.auto-run-state i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.auto-run-state.on { color: #a4e9ba; border-color: #3f6b5e; }
+.auto-run-state.on i { box-shadow: 0 0 0 0 #a4e9ba88; animation: auto-run-pulse 1.8s ease-out infinite; }
+.auto-run-state.off { color: #e3c28d; border-color: #6b6236; }
+@keyframes auto-run-pulse { 0% { box-shadow: 0 0 0 0 #a4e9ba88; } 70%, 100% { box-shadow: 0 0 0 6px #a4e9ba00; } }
+@media (prefers-reduced-motion: reduce) { .auto-run-state.on i { animation: none; } }
 .auto-run-status { margin-bottom: 18px; }
-.auto-run-card { padding: 20px 22px; }
-/* v3.23 던전 화면 자동 진행 카드: 랜덤게임 카드와 같은 짜임(머리 · 칩 · 아이콘 목록 · 오른쪽 게이지). */
+.auto-run-status:not(.compact) { padding: 20px 22px; }
 .auto-run-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-.auto-run-head h2 { margin: 2px 0 0; font-size: 20px; }
-.auto-run-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.auto-run-chips .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; background: #0f2227; color: #a9c5bd; font-size: 12px; white-space: nowrap; }
-.auto-run-chips .chip i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.auto-run-chips .chip.on { color: #a4e9ba; border-color: #3f6b5e; } .auto-run-chips .chip.on i { animation: auto-run-pulse 1.6s ease-in-out infinite; }
-.auto-run-chips .chip.off { color: #e3c28d; border-color: #6b5a36; }
-.auto-run-chips .chip.gold { color: var(--gold); border-color: #6b6236; }
-@keyframes auto-run-pulse { 50% { opacity: .35; } }
-.auto-run-body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
-.auto-run-rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.auto-run-rules li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.6; color: #d4e0d6; }
-.auto-run-rules li svg { flex: none; margin-top: 4px; color: #9bc8b5; }
-.auto-run-rules li span { display: grid; min-width: 0; }
-.auto-run-rules li small { font-size: 11px; color: #7f9c98; line-height: 1.4; }
-.auto-run-meter { display: grid; align-content: center; gap: 8px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: #0f2227; }
-.auto-run-card.on .auto-run-meter { border-color: #3f6b5e; background: linear-gradient(160deg, #13302a, #0f2227 70%); }
-.auto-run-meter-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8ea7a4; }
-.auto-run-meter-value { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-.auto-run-meter-value b { font-size: 28px; line-height: 1; color: #f1f6f3; font-variant-numeric: tabular-nums; }
-.auto-run-meter-value small { font-size: 12px; color: #9bb3b0; }
-.auto-run-bar { height: 6px; border-radius: 999px; background: #1a2d33; overflow: hidden; }
-.auto-run-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7fd0c0, #d5b36c); transition: width .4s ease; }
-.auto-run-bar.idle i { width: 100%; opacity: .25; background: #2d474a; }
-.auto-run-card.on .auto-run-bar.idle i { width: 30%; opacity: 1; background: linear-gradient(90deg, transparent, #7fd0c0, transparent); animation: auto-run-sweep 1.8s linear infinite; }
-@keyframes auto-run-sweep { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
-@media (max-width: 767px) { .auto-run-card { padding: 16px; } .auto-run-body { grid-template-columns: 1fr; gap: 14px; } }
-@media (prefers-reduced-motion: reduce) { .auto-run-chips .chip.on i, .auto-run-card.on .auto-run-bar.idle i { animation: none; } }
+.auto-run-head h2 { display: flex; align-items: center; gap: 8px; margin: 2px 0 0; font-size: 20px; }
+.auto-run-head h2 svg { color: #9bc8b5; }
+.auto-run-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.auto-run-tile { display: grid; align-content: start; gap: 6px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: #0f2227; min-width: 0; }
+.auto-run-label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #7f9c98; }
+.auto-run-label svg { flex: none; color: #9bc8b5; }
+.auto-run-tile p { margin: 0; font-size: 13px; line-height: 1.55; color: #dbe9e3; word-break: keep-all; overflow-wrap: anywhere; }
+.auto-run-tile.goal { border-color: #3f6b5e; background: #12292a; }
+.auto-run-tile.goal p { font-weight: 600; color: #fff; }
+.auto-run-tile.warn p { color: #e3c28d; } .auto-run-tile.warn .auto-run-label svg { color: #e3c28d; }
+.auto-run-tile.muted p { color: #a9bdb8; }
+@media (max-width: 1100px) { .auto-run-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .auto-run-status:not(.compact) { padding: 16px; } .auto-run-grid { grid-template-columns: 1fr; } }
 /* 튜토리얼·모험 기록 */
 .tutorial-card { padding: 14px 18px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
 .tutorial-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
@@ -477,6 +466,18 @@ details.mastery-stack-note > span { display: block; margin-top: 8px; }
 .hack-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .hack-card{display:grid;gap:8px;align-content:start;padding:12px;border:1px solid #9ab4b522;border-radius:6px}.hack-card small{color:#9bb3b0;font-size:12px;line-height:1.5}
 .event-banner.hack-banner{border-color:#7fe08c66;color:#bff5c6;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+/* v3.28 루트 권한 연출 */
+.event-banner.root-banner{border-color:#ff6b6b88;color:#ffd0d0;background:linear-gradient(90deg,rgba(255,80,80,.16),rgba(255,80,80,.03))}.event-banner.root-banner b{letter-spacing:.12em}
+.infil-prompt{margin:0;font-size:18px;letter-spacing:.06em}.infil-prompt code{color:#8fe3c4}
+/* v3.28 최단 경로 격자 */
+.infil-prompt small{display:block;font-size:12px;letter-spacing:0;color:var(--muted)}.infil-grid{margin:6px 0 0;font-family:ui-monospace,monospace;color:#8fe3c4;line-height:1.5;letter-spacing:.4em}
+.mask-list{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:12px}.mask-list li{display:flex;gap:8px;align-items:center}.mask-list span{color:#9bb3b0}
+.hack-form input.spoof-hours{flex:0 0 64px}
+.hack-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.hack-form select{flex:1 1 140px;min-width:0}
+/* v3.25 프로그램 */
+.program-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.program-card{display:grid;gap:6px;align-content:start;padding:12px;border:1px solid #9ab4b522;border-radius:6px}.program-card small{color:#9bb3b0;font-size:12px;line-height:1.5}
+.program-card.on{border-color:#6fd3b066;background:#6fd3b00d}
 @media(max-width:640px){.hacker-status{grid-template-columns:repeat(2,minmax(0,1fr))}.hack-list{grid-template-columns:1fr}}
 
 /* v3.19 설정: 자동 사냥 화면 알림 켜기/끄기 칩 */

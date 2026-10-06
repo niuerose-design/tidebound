@@ -6,7 +6,7 @@ import { stats } from '@/game/systems/stats';
 import { buildCombatReplay, type ReplayFrame } from '@/game/systems/combat-feedback';
 import { logKey, mergeLogs, type LogDelta } from '@/game/systems/log-delta';
 export type Ranking = Snapshot & {
-    /** v3.18 애드가드로 가린 항목(name · job · level · gear · skills · title · guild). */
+    /** v3.18 가린 항목(v3.26 신원 조작)(name · job · level · gear · skills · title · guild). */
     masked?: string[];
     id: string;
     self: boolean;

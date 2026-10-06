@@ -227,7 +227,15 @@ export const XP_SCALING = { base: 4, perRebirth: 1, lateFrom: 20, latePerRebirth
 export const xpRebirthWall = (rebirths = 0) => XP_SCALING.rebirthWalls.reduce((m, [from, x]) => rebirths >= from ? x : m, 1);
 export const xpRebirthFactor = (rebirths = 0) => (XP_SCALING.base + XP_SCALING.perRebirth * Math.min(XP_SCALING.lateFrom, rebirths) + XP_SCALING.latePerRebirth * Math.max(0, rebirths - XP_SCALING.lateFrom)) * xpRebirthWall(rebirths);
 export const xpWallFactor = (level: number) => level >= XP_SCALING.wallLevel ? Math.pow(XP_SCALING.wallGrowth, level - XP_SCALING.wallLevel + 1) : 1;
-export const xpNeeded = (level: number, rebirths = 0) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1) * xpRebirthFactor(rebirths) * xpWallFactor(level));
+/**
+ * v3.23 환생 목표 레벨 너머의 벽: 목표 레벨에서 다음 레벨로 갈 때부터 필요 경험치에 레벨마다 ×growth(기본 1.6)를 복리로 곱합니다.
+ * 목표 50이면 50→51 ×1.6, 54→55 ×10.5, 59→60 ×110. 순풍(목표까지 경험치 +)으로 빠르게 복구하고, 목표를 넘기면 숨이 막히게.
+ * 목표 레벨은 환생 46회부터 Lv.100(최대)이라 그 뒤로는 이 벽이 걸리지 않습니다(환생 50·100회 벽이 맡음).
+ */
+export const OVER_TARGET = { growth: 1.6 };
+export type XpTargetWall = { target: number; growth: number };
+export const overTargetFactor = (level: number, wall?: XpTargetWall) => wall && level >= wall.target ? Math.pow(wall.growth, level - wall.target + 1) : 1;
+export const xpNeeded = (level: number, rebirths = 0, wall?: XpTargetWall) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1) * xpRebirthFactor(rebirths) * xpWallFactor(level) * overTargetFactor(level, wall));
 // v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.
 export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }, { name: '신화', color: '#f08a6c', factor: 3.9 }, { name: '고대', color: '#5fd0b5', factor: 4.5 }, { name: '태초', color: '#ff6fb5', factor: 5.2 }];
 export const SLOTS = { rod: '무기', coat: '방어구', charm: '장신구', cape: '망토' };

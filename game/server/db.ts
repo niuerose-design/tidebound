@@ -7,6 +7,7 @@ export type PlayerRow = { state: string; revision: number };
 export type RankingRow = { id: string; snapshot: string; rating: number; power: number; updated_at: number };
 export type AccountRow = { id: string; username: string; pass_hash: string; salt: string; created_at: number };
 /** v25.4 채팅 한 줄. 채널마다 최근 CHAT_KEEP개만 남깁니다. */
+export type CrewRow = { id: string; code: string; data: string; revision: number };
 export type ChatRow = { id: number; channel: string; account_id: string; name: string; text: string; created_at: number };
 const CHAT_KEEP = 300;
 /** v25.11 공유 길드. 주간 합산(week가 현재 주와 다르면 0으로 보고 다시 셉니다). */
@@ -44,6 +45,14 @@ export interface Storage {
     listAccounts(): Promise<{ id: string; username: string }[]>;
     /** v27.26 운영 도구용: 모든 세이브(압축 해제된 상태 문자열). */
     listPlayers(): Promise<{ id: string; state: string; revision: number; updated_at: number }[]>;
+    /** v3.28 해커 조직: 행 읽기·코드로 찾기·전체 목록(순위)·revision 비교 저장(새 조직은 revision −1). */
+    getCrew(id: string): Promise<CrewRow | null>;
+    getCrewByCode(code: string): Promise<CrewRow | null>;
+    listCrews(): Promise<CrewRow[]>;
+    putCrew(id: string, code: string, data: string, revision: number, now: number): Promise<boolean>;
+    deleteCrew(id: string): Promise<void>;
+    /** v3.25 패킷 스니핑: since 이후 저장된(활동한) 모험가 수(나 제외). */
+    countActivePlayers(since: number, except: string): Promise<number>;
     /** v27.27 운영 설정(서버 이벤트 등) 키-값. */
     getSetting(key: string): Promise<string | null>;
     setSetting(key: string, value: string, now: number): Promise<void>;
@@ -121,6 +130,8 @@ export interface Storage {
     summonAltarRaid(raidId: string, hpMax: number, until: number, now: number, respawnMs: number): Promise<number>;
     /** 그 보스의 gen 세대가 살아 있을 때만 피해를 빼고 남은 체력을 돌려줍니다(0 이하는 0). 아니면 null. */
     hitAltarRaid(raidId: string, gen: number, dealt: number): Promise<number | null>;
+    /** v3.28 해킹 VII 세이브 스캠: 살아 있는 gen 세대 보스의 체력에 delta를 더합니다(1 ~ 최대 체력, 쓰러뜨리지 않음). 바꾼 뒤 체력, 아니면 null. */
+    shiftAltarRaid(raidId: string, gen: number, delta: number): Promise<number | null>;
     /** 체력이 0이 된 gen 세대 보스를 격파 처리하고 마지막 일격 모험가 id를 적습니다. 먼저 온 한 명만 true. */
     slayAltarRaid(raidId: string, gen: number, id: string, name: string, now: number): Promise<boolean>;
     /** 떠나는 시각이 지난 그 보스를 보냅니다(gone). 바꿨으면 true. */
@@ -180,6 +191,8 @@ const SCHEMA = [
     // v3.22 보스별 월드보스. 예전 한 마리 칸(altar.raid_*)에 있던 보스는 처음 한 번 옮깁니다(이미 있으면 그대로).
     "CREATE TABLE IF NOT EXISTS altar_raids (id TEXT PRIMARY KEY, gen INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL DEFAULT 'none', hp BIGINT NOT NULL DEFAULT 0, hp_max BIGINT NOT NULL DEFAULT 0, until BIGINT NOT NULL DEFAULT 0, slayer TEXT NOT NULL DEFAULT '', slain_at BIGINT NOT NULL DEFAULT 0)",
     "INSERT INTO altar_raids (id,gen,state,hp,hp_max,until,slayer,slain_at) SELECT raid_id, raid_gen, raid_state, raid_hp, raid_hp_max, raid_until, raid_slayer, raid_slain_at FROM altar WHERE id='main' AND raid_id<>'' AND raid_gen>0 AND raid_state IN ('alive','slain') ON CONFLICT (id) DO NOTHING",
+    // v3.28 해커 조직: 조직 하나를 JSON 한 칸에 두고 revision으로 동시 수정을 막습니다(조직원 10명 이하라 한 행으로 충분).
+    'CREATE TABLE IF NOT EXISTS crews (id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE, data TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0, updated_at BIGINT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS wallets (account_id TEXT PRIMARY KEY, pearls INTEGER NOT NULL DEFAULT 0, essence INTEGER NOT NULL DEFAULT 0, week TEXT NOT NULL DEFAULT \'\', pearl_out INTEGER NOT NULL DEFAULT 0)',
 ];
 const slotRowId = (accountId: string, slot: number) => `${accountId}#${slot}`;
@@ -215,6 +228,15 @@ function neonStorage(url: string): Storage {
         async createAccount(a) { const r = await q('INSERT INTO accounts (id,username,pass_hash,salt,created_at) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (username) DO NOTHING', [a.id, a.username, a.pass_hash, a.salt, a.created_at]); return r.rowCount === 1; },
         async getAccountByName(username) { const { rows } = await q<AccountRow>('SELECT id,username,pass_hash,salt,created_at FROM accounts WHERE username=$1', [username]); return rows[0] ? num(rows[0]) as AccountRow : null; },
         async listAccounts() { const { rows } = await q<{ id: string; username: string }>('SELECT id, username FROM accounts'); return rows; },
+        async getCrew(id) { const { rows } = await q<CrewRow>('SELECT id,code,data,revision FROM crews WHERE id=$1', [id]); return rows[0] ? { ...rows[0], revision: Number(rows[0].revision) } : null; },
+        async getCrewByCode(code) { const { rows } = await q<CrewRow>('SELECT id,code,data,revision FROM crews WHERE code=$1', [code]); return rows[0] ? { ...rows[0], revision: Number(rows[0].revision) } : null; },
+        async listCrews() { const { rows } = await q<CrewRow>('SELECT id,code,data,revision FROM crews ORDER BY updated_at DESC LIMIT 500'); return rows.map(r => ({ ...r, revision: Number(r.revision) })); },
+        async putCrew(id, code, data, revision, now) {
+            if (revision < 0) { try { const r = await q('INSERT INTO crews (id,code,data,revision,updated_at) VALUES ($1,$2,$3,0,$4) ON CONFLICT DO NOTHING', [id, code, data, now]); return r.rowCount === 1; } catch { return false; } }
+            const r = await q('UPDATE crews SET data=$1, revision=revision+1, updated_at=$2 WHERE id=$3 AND revision=$4', [data, now, id, revision]); return r.rowCount === 1;
+        },
+        async deleteCrew(id) { await q('DELETE FROM crews WHERE id=$1', [id]); },
+        async countActivePlayers(since, except) { const { rows } = await q<{ n: string }>('SELECT COUNT(*) AS n FROM players WHERE updated_at>=$1 AND id<>$2', [since, except]); return Number(rows[0]?.n || 0); },
         async listPlayers() { const { rows } = await q<{ id: string; state: string; revision: number; updated_at: number }>('SELECT id, state, revision, updated_at FROM players'); return rows.map(r => ({ id: r.id, state: unpackState(r.state), revision: Number(r.revision), updated_at: Number(r.updated_at) })); },
         async getSetting(key) { const { rows } = await q<{ value: string }>('SELECT value FROM settings WHERE key=$1', [key]); return rows[0]?.value ?? null; },
         async setSetting(key, value, now) { await q('INSERT INTO settings (key,value,updated_at) VALUES ($1,$2,$3) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at', [key, value, now]); },
@@ -286,6 +308,7 @@ function neonStorage(url: string): Storage {
             return Number(rows[0]?.gen || 0);
         },
         async hitAltarRaid(raidId, gen, dealt) { const { rows } = await q<{ hp: string }>("UPDATE altar_raids SET hp=GREATEST(0, hp-$3) WHERE id=$1 AND gen=$2 AND state='alive' AND hp>0 RETURNING hp", [raidId, gen, Math.max(0, Math.floor(dealt))]); return rows[0] ? Number(rows[0].hp) : null; },
+        async shiftAltarRaid(raidId, gen, delta) { const { rows } = await q<{ hp: string }>("UPDATE altar_raids SET hp=LEAST(hp_max, GREATEST(1, hp+$3)) WHERE id=$1 AND gen=$2 AND state='alive' AND hp>0 RETURNING hp", [raidId, gen, Math.trunc(delta)]); return rows[0] ? Number(rows[0].hp) : null; },
         async slayAltarRaid(raidId, gen, id, name, now) { void name; const r = await q("UPDATE altar_raids SET state='slain', slayer=$3, slain_at=$4 WHERE id=$1 AND gen=$2 AND state='alive' AND hp<=0", [raidId, gen, id, now]); return r.rowCount === 1; },
         async expireAltarRaid(raidId, now) { const r = await q("UPDATE altar_raids SET state='gone' WHERE id=$1 AND state='alive' AND until<$2", [raidId, now]); return r.rowCount === 1; },
         async bumpRaidHit(gen, playerId, name, dealt, now) { await q('INSERT INTO altar_raid_hits (id,gen,player_id,name,dealt,hits,updated_at) VALUES ($1,$2,$3,$4,$5,1,$6) ON CONFLICT (id) DO UPDATE SET dealt=altar_raid_hits.dealt+EXCLUDED.dealt, hits=altar_raid_hits.hits+1, name=EXCLUDED.name, updated_at=EXCLUDED.updated_at', [`${gen}:${playerId}`, gen, playerId, name, Math.max(0, Math.floor(dealt)), now]); },
@@ -335,7 +358,7 @@ function fileRaids(db: FileDb) {
     if (a && a.raid_id && a.raid_gen > 0 && (a.raid_state === 'alive' || a.raid_state === 'slain') && !raids[a.raid_id]) raids[a.raid_id] = { id: a.raid_id, gen: a.raid_gen, state: a.raid_state, hp: a.raid_hp, hp_max: a.raid_hp_max, until: a.raid_until, slayer: a.raid_slayer, slain_at: a.raid_slain_at };
     return raids;
 }
-type FileDb = { altarRaids?: Record<string, AltarRaidRow>; settings?: Record<string, { value: string; updated_at: number }>; players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; wallets?: Record<string, WalletRow>; altar?: AltarRow; altarGauges?: Record<string, AltarGaugeRow>; altarOffers?: Record<string, AltarOfferRow>; altarRaidHits?: Record<string, AltarRaidHitRow>; chat?: ChatRow[]; chatSeq?: number };
+type FileDb = { crews?: Record<string, CrewRow & { updated_at: number }>; altarRaids?: Record<string, AltarRaidRow>; settings?: Record<string, { value: string; updated_at: number }>; players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; wallets?: Record<string, WalletRow>; altar?: AltarRow; altarGauges?: Record<string, AltarGaugeRow>; altarOffers?: Record<string, AltarOfferRow>; altarRaidHits?: Record<string, AltarRaidHitRow>; chat?: ChatRow[]; chatSeq?: number };
 function fileStorage(): Storage {
     const path = process.env.TIDEBOUND_DEV_DB || '.data/dev-db.json';
     let chain: Promise<unknown> = Promise.resolve();
@@ -361,6 +384,17 @@ function fileStorage(): Storage {
         createAccount: a => tx(db => { if (Object.values(db.accounts).some(x => x.username === a.username)) return false; db.accounts[a.id] = a; return true; }),
         getAccountByName: username => tx(db => Object.values(db.accounts).find(x => x.username === username) || null),
         listAccounts: () => tx(db => Object.values(db.accounts).map(a => ({ id: a.id, username: a.username }))),
+        getCrew: id => tx(db => db.crews?.[id] ? { ...db.crews[id] } : null),
+        getCrewByCode: code => tx(db => Object.values(db.crews || {}).find(c => c.code === code) || null),
+        listCrews: () => tx(db => Object.values(db.crews || {})),
+        putCrew: (id, code, data, revision, now) => tx(db => {
+            const crews = db.crews ??= {}, cur = crews[id];
+            if (revision < 0) { if (cur || Object.values(crews).some(c => c.code === code)) return false; crews[id] = { id, code, data, revision: 0, updated_at: now }; return true; }
+            if (!cur || cur.revision !== revision) return false;
+            crews[id] = { ...cur, data, revision: revision + 1, updated_at: now }; return true;
+        }),
+        deleteCrew: id => tx(db => { delete db.crews?.[id]; }),
+        countActivePlayers: (since, except) => tx(db => Object.entries(db.players).filter(([id, p]) => id !== except && p.updated_at >= since).length),
         listPlayers: () => tx(db => Object.entries(db.players).map(([id, p]) => ({ id, state: unpackState(p.state), revision: p.revision, updated_at: p.updated_at }))),
         getSetting: key => tx(db => db.settings?.[key]?.value ?? null),
         setSetting: (key, value, now) => tx(db => { (db.settings ??= {})[key] = { value, updated_at: now }; }),
@@ -419,6 +453,7 @@ function fileStorage(): Storage {
         listAltarRaids: () => tx(db => Object.values(fileRaids(db)).map(r => ({ ...r }))),
         summonAltarRaid: (raidId, hpMax, until, now, respawnMs) => tx(db => { const raids = fileRaids(db), r = raids[raidId]; if (r && ((r.state === 'alive' && r.until >= now) || (r.state === 'slain' && r.slain_at > now - respawnMs))) return 0; const a = db.altar = { ...ALTAR_EMPTY, ...db.altar }; a.raid_gen += 1; raids[raidId] = { id: raidId, gen: a.raid_gen, state: 'alive', hp: hpMax, hp_max: hpMax, until, slayer: '', slain_at: 0 }; return a.raid_gen; }),
         hitAltarRaid: (raidId, gen, dealt) => tx(db => { const r = fileRaids(db)[raidId]; if (!r || r.gen !== gen || r.state !== 'alive' || r.hp <= 0) return null; r.hp = Math.max(0, r.hp - Math.max(0, Math.floor(dealt))); return r.hp; }),
+        shiftAltarRaid: (raidId, gen, delta) => tx(db => { const r = fileRaids(db)[raidId]; if (!r || r.gen !== gen || r.state !== 'alive' || r.hp <= 0) return null; r.hp = Math.min(r.hp_max, Math.max(1, r.hp + Math.trunc(delta))); return r.hp; }),
         slayAltarRaid: (raidId, gen, id, name, now) => tx(db => { void name; const r = fileRaids(db)[raidId]; if (!r || r.gen !== gen || r.state !== 'alive' || r.hp > 0) return false; Object.assign(r, { state: 'slain', slayer: id, slain_at: now }); return true; }),
         expireAltarRaid: (raidId, now) => tx(db => { const r = fileRaids(db)[raidId]; if (!r || r.state !== 'alive' || r.until >= now) return false; r.state = 'gone'; return true; }),
         bumpRaidHit: (gen, playerId, name, dealt, now) => tx(db => { const key = `${gen}:${playerId}`, old = (db.altarRaidHits ??= {})[key]; db.altarRaidHits[key] = { id: key, gen, player_id: playerId, name, dealt: (old?.dealt || 0) + Math.max(0, Math.floor(dealt)), hits: (old?.hits || 0) + 1, updated_at: now }; }),

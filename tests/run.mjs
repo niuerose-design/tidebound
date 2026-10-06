@@ -1,5 +1,5 @@
 // 게임플레이 테스트 실행: node tests/run.mjs. 파일 순서가 공유 난수 순서를 정하므로 바꾸지 마세요.
-import { results } from './harness.mjs';
+import { results, settled } from './harness.mjs';
 await import('./basics.test.mjs');
 await import('./features.test.mjs');
 await import('./systems.test.mjs');
@@ -15,4 +15,5 @@ await import('./chain.test.mjs');
 await import('./support.test.mjs');
 await import('./v25.test.mjs');
 await import('./hacker.test.mjs');
+await settled();
 console.log(`${results.passed} gameplay tests passed.`);

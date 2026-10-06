@@ -21,6 +21,16 @@ function refundGoldenResearch(s: State) {
     s.pearls = (s.pearls || 0) + spent;
     delete (s.permanent as Record<string, number | undefined>).goldenFish;
 }
+/** v3.24 세계석 연구 ‘역풍 견디기’(옛 바람목 넓히기, base 6·step 4) 삭제: 투자한 세계석을 전액 돌려줍니다. */
+export function refundTailwindWindow(s: State) {
+    const perm = s.permanent as Record<string, number | undefined> | undefined, rank = perm?.tailwindWindow || 0;
+    if (!perm || !('tailwindWindow' in perm)) return 0;
+    delete perm.tailwindWindow;
+    let spent = 0;
+    for (let i = 0; i < rank; i++) spent += 6 + 4 * i;
+    if (spent > 0) { s.pearls = (s.pearls || 0) + spent; addLog(s, `세계석 연구 ‘역풍 견디기’가 없어져 투자한 세계석 ${spent}개를 돌려받았습니다.`, 'system'); }
+    return spent;
+}
 /** v27.19 환생 유물이 세계석 구매에서 환생 횟수 제공으로 바뀌었습니다. 이미 가진 유물(= 세계석으로 산 유물)의 세계석을 한 번 돌려줍니다. */
 export function refundRelicPurchases(s: State) {
     if (s.relicRefunded) return 0;
@@ -76,7 +86,7 @@ export function rescaleRanks(s: State) {
     return true;
 }
 export function migrateState(s: State, now = s.lastTick || 0): State {
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

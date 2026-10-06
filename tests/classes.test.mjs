@@ -3,11 +3,11 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 260); assert.equal(new Set(JOBS.map(j => j.id)).size, 260);
+    assert.equal(JOBS.length, 262); assert.equal(new Set(JOBS.map(j => j.id)).size, 262);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 41, magic: 42, defense: 41, status: 29, hybrid: 33, support: 41, mystery: 33 });
+    assert.deepEqual(count, { physical: 41, magic: 42, defense: 41, status: 29, hybrid: 33, support: 41, mystery: 35 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
@@ -39,7 +39,8 @@ test('Job counts stay close: trees within 1.5× of each other (??? 14 or more), 
     const sizes = JOB_TREES.filter(t => t.id !== 'mystery').map(t => JOBS.filter(j => j.tree === t.id).length);
     assert.ok(Math.max(...sizes) <= Math.min(...sizes) * 1.5, sizes.join(','));
     assert.ok(JOBS.filter(j => j.tree === 'mystery').length >= 14);
-    for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent') && l.id !== 'fisher')) {
+    // v3.25 해커 계보는 단계적으로 늘리는 중이라(해커 → 화이트 해커, 3단계에 블랙 해커) 직업 수 검사에서 뺍니다.
+    for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent') && l.id !== 'fisher' && l.id !== 'hacker')) {
         const jobs = JOBS.filter(j => lineageOf(j) === l.id);
         // v25.26 외길 계보는 의도적으로 1~3차 세 직업입니다.
         if (jobs.every(j => j.role?.startsWith('외길'))) { assert.ok(jobs.length === 3 || jobs.length === 4, l.id); assert.ok([3, 5].includes(Math.max(...jobs.map(j => j.tier))), `${l.id} ends at tier 3 or 5`); continue; }

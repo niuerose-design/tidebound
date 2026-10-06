@@ -44,8 +44,12 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                 <button className="primary" disabled={busy || !s || name.trim().length < 2} onClick={() => { send({ type: 'rename', value: name }); onOpenChange(false); }}>변경</button>
             </div>
             {s && researchRank(s, 'sortingNet') > 0 && <div className="setting-toggle">
-                <div><strong>자동 분해기 자동 판매</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 팝니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
+                <div><strong>자동 분해기</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 정수로 분해합니다. 자동 판매기를 켜면 꺼집니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
                 <button className={s.autoSell ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoSell} onClick={() => send({ type: 'autoSell', value: s.autoSell ? 'off' : 'on' })}>{s.autoSell ? '켜짐' : '꺼짐'}</button>
+            </div>}
+            {s && researchRank(s, 'autoVend') > 0 && <div className="setting-toggle">
+                <div><strong>자동 판매기</strong><p>{researchRank(s, 'autoVend') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 골드로 팝니다. 자동 분해기를 켜면 꺼집니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
+                <button className={s.autoVend ? 'primary' : 'secondary'} disabled={busy} aria-pressed={!!s.autoVend} onClick={() => send({ type: 'autoVend', value: s.autoVend ? 'off' : 'on' })}>{s.autoVend ? '켜짐' : '꺼짐'}</button>
             </div>}
             <SkillFxToggle/>
             <NoticeToggles/>

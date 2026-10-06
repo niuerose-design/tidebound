@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
+import { xpNeeded, bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -52,20 +52,17 @@ test('Abyss pearls scale with depth and milestone SP is granted once and survive
  assert.deepEqual(ABYSS_SP_MILESTONES,[10,25,50,100]);
 });
 
-test('Rebirth timing: deep voyage pearls and mastery, tailwind experience',()=>{
+test('v3.23 Rebirth: tailwind adds +50% to the exp bonus until the target, then the over-target wall compounds',()=>{
  const meta=metaMod;
- const s=newState(0);s.rebirths=6;assert.equal(meta.rebirthLevel(s),60);
- for(const [lv,extra] of [[60,0],[70,2],[80,10],[90,22],[100,40]]){s.level=lv;assert.equal(meta.deepVoyagePearls(s),extra);}
- s.level=65;assert.equal(meta.nextLifeBonus(s),'tailwind');s.level=66;assert.equal(meta.nextLifeBonus(s),null);s.level=100;assert.equal(meta.nextLifeBonus(s),'deep');
+ const s=newState(0);s.rebirths=6;s.level=100;assert.equal(meta.rebirthLevel(s),60);
  act(s,{type:'sync'},0);const pearls=s.pearls,expected=meta.rebirthReward(s,stats(s).rebirthBonus||0);act(s,{type:'rebirth'},0);
- assert.equal(s.pearls-pearls,expected);assert.equal(s.lifeBonus,'deep');
- assert.equal(victoryMastery(s,{id:'minnow',boss:false}).amount,2);
- const f=newState(0);f.rebirths=6;f.level=60;act(f,{type:'rebirth'},0);assert.equal(f.lifeBonus,'tailwind');
- const plain=newState(0);plain.rebirths=7;plain.level=f.level;
- assert.ok(Math.abs(expMultiplier(f)/expMultiplier({...f,lifeBonus:null})-1.5)<1e-9);
- f.level=meta.rebirthLevel(f);assert.equal(expMultiplier(f),expMultiplier({...f,lifeBonus:null}),'tailwind ends at the rebirth level');
- assert.equal(victoryMastery(f,{id:'minnow',boss:false}).amount,1);
- const m=newState(0);m.rebirths=6;m.level=80;act(m,{type:'rebirth'},0);assert.equal(m.lifeBonus,null);
+ assert.equal(s.pearls-pearls,expected,'no deep voyage pearls');assert.equal(victoryMastery(s,{id:'minnow',boss:false}).amount,1,'no deep voyage mastery');
+ const f=newState(0);f.rebirths=7;f.level=10;assert.ok(meta.tailwindActive(f));assert.ok(!meta.tailwindActive({...f,rebirths:0}),'no tailwind before the first rebirth');
+ const e=stats(f).expBonus,off={...f,level:meta.rebirthLevel(f)};assert.ok(!meta.tailwindActive(off),'tailwind ends at the rebirth level');
+ assert.ok(Math.abs(expMultiplier(f)/expMultiplier(off)-(1+e+.5)/(1+e))<1e-9,'additive with the exp bonus');
+ const w=meta.xpWall(f);assert.deepEqual(w,{target:meta.rebirthLevel(f),growth:1.6});
+ assert.equal(xpNeeded(w.target-1,f.rebirths,w),xpNeeded(w.target-1,f.rebirths),'below the target: unchanged');
+ for(const [lv,x] of [[w.target,1.6],[w.target+1,1.6**2],[w.target+4,1.6**5]])assert.ok(Math.abs(xpNeeded(lv,f.rebirths,w)/xpNeeded(lv,f.rebirths)-x)/x<1e-3,`Lv.${lv}`);
 });
 
 test('Dungeon repeat runs until its stop condition, then resumes idle fishing',()=>{
@@ -120,7 +117,7 @@ test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; 
 });
 
 test('Rebirth reward breakdown always sums to the pearls actually granted',()=>{
- for(const [lv,rb,bonus] of [[30,0,0],[45,3,2],[60,6,0],[100,6,1],[100,25,3],[70,400,5]]){const s=newState(0);s.level=lv;s.rebirths=rb;const p=metaMod.rebirthRewardParts(s,bonus);assert.equal(p.level+p.count+p.bonus+p.deep,metaMod.rebirthReward(s,bonus));}
+ for(const [lv,rb,bonus] of [[30,0,0],[45,3,2],[60,6,0],[100,6,1],[100,25,3],[70,400,5]]){const s=newState(0);s.level=lv;s.rebirths=rb;const p=metaMod.rebirthRewardParts(s,bonus);assert.equal(p.level+p.count+p.bonus,metaMod.rebirthReward(s,bonus));}
 });
 
 test('Follow-up hits: each hit counted once, total equals HP lost, stops when the target dies, works for player and enemy',()=>{

@@ -10,7 +10,7 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
 test('222 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,260);assert.equal(SKILLS.length,510);assert.equal(JOB_TREES.length,7);
+ assert.equal(JOBS.length,262);/* v3.25 화이트 해커 · v3.28 블랙 해커 */assert.equal(SKILLS.length,512);assert.equal(JOB_TREES.length,7);
  for(const job of JOBS)assert.ok(JOB_TREES.some(t=>t.id===job.tree),job.id);
  for(const job of JOBS.filter(j=>(j.tier===1||j.tier===2)&&!j.fullKit)){
   const owned=SKILLS.filter(sk=>sk.job===job.id&&!sk.song);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
@@ -75,7 +75,7 @@ test('PvP snapshots use the same purchased or mastered active levels',()=>{
 });
 
 test('Experience bonus is additive, visible and included only for usable equipped skills',()=>{
- const s=newState(0);s.level=25;s.job='voyageScribe';s.rebirths=2;s.permanent.exp=3;s.learned.voyageReview=1;s.skills=['voyageReview'];
+ const s=newState(0);s.level=40;/* v3.23 환생 목표 레벨(40)에 닿아 순풍 없음 */s.job='voyageScribe';s.rebirths=2;s.permanent.exp=3;s.learned.voyageReview=1;s.skills=['voyageReview'];
  assert.ok(Math.abs(stats(s).expBonus-1.21)<1e-9);/* v27.89 새싹 ×2.6 제외 */assert.ok(Math.abs(expMultiplier(s)/2.6-2.21)<1e-9);
  s.skills=[];assert.ok(Math.abs(expMultiplier(s)/2.6-2.13)<1e-9);
  s.job='fisher';s.skills=['voyageReview'];assert.ok(Math.abs(expMultiplier(s)/2.6-2.1)<1e-9);

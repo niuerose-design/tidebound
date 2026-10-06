@@ -13,7 +13,7 @@ import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
 import { bookRevealed } from '@/game/systems/book';
 import { BOOK_REVEAL } from '@/game/data/book-traits';
 import { statDisplay } from '@/game/data/progression';
-import { Heading, Meter, format } from './shared';
+import { Heading, Meter, format, useNow } from './shared';
 import { useSkillFx } from './skill-fx-setting';
 import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, useCombatFx } from './combat-fx';
 import { StatusBadges } from './combat-status';
@@ -95,15 +95,15 @@ export function Dungeons({ s, send, busy }: PanelProps) {
 
 /** v27.86 랜덤게임 입장 카드. v27.91 두 칸 구성: 왼쪽 규칙 세 줄, 오른쪽 목표 웨이브 칩(받는 판돈 표시)과 시작 버튼. 판돈 표는 목표까지 모두 깼을 때 받는 양(연구 배율 포함). */
 function RandomGameCard({ s, send, busy }: PanelProps) {
-    const [target, setTarget] = useState<number>(10);
-    const rank = randomGameRank(s), left = randomGameRunsLeft(s), m = randomGamePayout(s);
+    const [target, setTarget] = useState<number>(10), now = useNow(60_000);
+    const rank = randomGameRank(s), left = randomGameRunsLeft(s, now), m = randomGamePayout(s);
     if (s.rebirths < 5 && !rank) return null;
     const total = (n: number) => { const t = stakeUpTo(n); return { essence: Math.floor(t.essence * m), pearls: Math.floor(t.pearls * m) }; };
     const payout = (n: number) => { const t = total(n); return `정수 ${t.essence}${t.pearls ? ` · 세계석 ${t.pearls}` : ''}`; };
     return <section className={`panel random-game ${rank ? '' : 'locked'}`}>
         <div className="random-game-head">
             <div><span className="eyebrow">RANDOM GAME · 던전</span><h2>랜덤게임</h2></div>
-            <div className="random-game-chips">{rank ? <><span className={left ? 'chip on' : 'chip'}>남은 입장 {left} / {rank}</span><span className="chip gold">판돈 ×{m}</span></> : <span className="chip">세계석 연구 ‘랜덤게임’에서 해금 · 환생 5회</span>}</div>
+            <div className="random-game-chips">{rank ? <><span className={left ? 'chip on' : 'chip'} title="하루(한국 시간 자정)가 지나거나 환생하면 다시 채워집니다">오늘 남은 입장 {left} / {rank}</span><span className="chip gold">판돈 ×{m}</span></> : <span className="chip">세계석 연구 ‘랜덤게임’에서 해금 · 환생 5회</span>}</div>
         </div>
         <div className="random-game-body">
             <ul className="random-game-rules">
@@ -116,7 +116,7 @@ function RandomGameCard({ s, send, busy }: PanelProps) {
                 <div className="random-game-targets" role="radiogroup" aria-label="목표 웨이브">{RANDOM_GAME.targets.map(n => <button key={n} type="button" role="radio" aria-checked={target === n} className={`random-game-target ${target === n ? 'on' : ''}`} disabled={busy} onClick={() => setTarget(n)}><b>{n ? `${n}` : '∞'}</b><small>{n ? `정수 ${total(n).essence}` : '목표 없음'}</small></button>)}</div>
                 <div className="random-game-go">
                     <span>{target ? `${target}웨이브까지 모두 깨면 ${payout(target)}` : '받고 나가기를 누르거나 쓰러질 때까지 계속합니다.'}</span>
-                    <button className="gold-button" disabled={busy || !left || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: RANDOM_GAME.id, value: `until:${target}` })}>{left ? '랜덤게임 시작' : '이번 생 입장 횟수를 모두 썼습니다'}</button>
+                    <button className="gold-button" disabled={busy || !left || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: RANDOM_GAME.id, value: `until:${target}` })}>{left ? '랜덤게임 시작' : '오늘 입장 횟수를 모두 썼습니다 · 내일 또는 환생 뒤 다시'}</button>
                 </div>
             </div>}
         </div>
