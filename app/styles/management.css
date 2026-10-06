@@ -346,3 +346,63 @@
 .ascension-panel .rebirth-three { margin: 0; padding: 0 18px 18px; }
 .ascension-panel .ascension-log { padding: 0 28px 18px; margin: 0; }
 @media (max-width: 767px) { .ascension-panel .ascension-ready { padding: 18px 16px 6px; } .ascension-panel .rebirth-three { padding: 0 12px 12px; } .ascension-panel .ascension-log { padding: 0 16px 14px; } }
+
+/* v3.40 숙련 진행판 */
+.mastery-summary { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; padding:18px 20px; margin-bottom:14px; }
+.mastery-summary small { font-size:12px; color:#9db5ab; }
+.mastery-summary strong { display:block; font-size:24px; color:var(--gold); margin:4px 0 6px; }
+.mastery-summary strong span { font-size:13px; color:#8faead; margin-left:3px; }
+.mastery-summary p { margin:0; font-size:12px; color:#8faead; line-height:1.5; }
+.mastery-letters { padding:14px 18px; margin-bottom:14px; }
+.mastery-letters h2 { display:flex; align-items:center; gap:6px; font-size:14px; margin:0 0 8px; }
+.mastery-letters ul { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:4px 16px; }
+.mastery-letters li { display:flex; justify-content:space-between; font-size:12px; color:#b4ccc6; }
+.mastery-letters b { color:#a4e9ba; font-weight:600; }
+.mastery-filter { display:flex; gap:6px; margin:0 0 12px; }
+.mastery-tree { padding:0; margin-bottom:10px; overflow:hidden; }
+.mastery-tree > summary { display:flex; align-items:center; gap:10px; padding:14px 18px; cursor:pointer; list-style:none; }
+.mastery-tree > summary::-webkit-details-marker { display:none; }
+.mastery-tree > summary h2 { font-size:15px; margin:0; }
+.mastery-tree > summary small { font-size:12px; color:#9db5ab; white-space:nowrap; }
+.mastery-tree > summary .meter { flex:1; min-width:60px; }
+.mastery-tree-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.mastery-chevron { color:#7f9c98; transition:transform .2s; flex-shrink:0; }
+.mastery-tree[open] .mastery-chevron { transform:rotate(180deg); }
+.mastery-rows { list-style:none; margin:0; padding:0 18px 12px; display:grid; gap:6px; }
+.mastery-row { display:grid; grid-template-columns:minmax(0, 220px) 1fr; gap:14px; align-items:center; padding:7px 10px; border:1px solid var(--border); border-radius:7px; background:#0f2227; }
+.mastery-row.state-current { border-color:#6fb7a0aa; }
+.mastery-row.state-done { border-color:#d5b36c55; }
+.mastery-row.state-locked { opacity:.6; }
+.mastery-name { display:flex; flex-direction:column; align-items:flex-start; gap:2px; background:none; border:0; padding:0; color:inherit; cursor:pointer; text-align:left; min-width:0; }
+.mastery-name b { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+.mastery-name small { font-size:11px; color:#8faead; }
+.mastery-row.state-done .mastery-name small { color:#e8d39a; }
+.mastery-meter small, .mastery-none { font-size:11px; color:#8faead; }
+.mastery-empty { padding:0 18px 14px; font-size:13px; color:#8faead; margin:0; }
+@media (min-width:1100px) { .mastery-rows { grid-template-columns:repeat(2, minmax(0, 1fr)); } .mastery-row { grid-template-columns:minmax(0, 170px) 1fr; } }
+@media (max-width:767px) {
+    .mastery-summary { grid-template-columns:1fr 1fr; padding:14px; }
+    .mastery-row { grid-template-columns:1fr; gap:6px; }
+    .mastery-tree > summary { padding:12px 14px; flex-wrap:wrap; }
+    .mastery-rows { padding:0 12px 12px; }
+}
+
+/* v3.40 승천 편의: 자동 환생 · 연구 구매 예약 */
+.automation-panel { padding:18px 20px; margin-bottom:14px; }
+.automation-panel.locked { opacity:.7; }
+.automation-panel .section-title { gap:10px; }
+.automation-panel .section-title h2 { display:flex; align-items:center; gap:6px; margin-right:auto; }
+.automation-panel .section-title span { font-size:12px; color:#9db5ab; }
+.automation-panel > p { font-size:13px; color:#a5bcb0; line-height:1.6; margin:6px 0 10px; }
+.automation-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.automation-row label { display:flex; align-items:center; gap:8px; font-size:13px; color:#b4ccc6; }
+.automation-row select { min-width:0; max-width:100%; }
+.research-plan-list { list-style:decimal inside; margin:0 0 10px; padding:0; display:grid; gap:5px; }
+.research-plan-list li { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:#0f2227; font-size:13px; }
+.research-plan-list li::marker { color:#7f9c98; }
+.research-plan-list li > span:first-child { display:inline-flex; gap:8px; align-items:baseline; flex:1; min-width:0; }
+.research-plan-list li small { color:#8faead; font-size:12px; }
+.research-plan-list li.done b { color:#a4e9ba; }
+.research-plan-actions { display:inline-flex; gap:4px; flex-shrink:0; }
+.research-plan-empty { font-size:13px; color:#8faead; margin:0 0 10px; }
+.automation-note { font-size:12px; color:#8faead; margin:8px 0 0; }

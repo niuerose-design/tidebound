@@ -1,4 +1,5 @@
 'use client';
+import { AutoRebirthPanel, AutoFollowPanel, RotationPanel, ResearchPlanPanel, showAutomation } from './automation-panels';
 import { ConfirmButton } from './confirm-button';
 import { useState } from 'react';
 import { Sparkles, RefreshCw, Info, ChevronDown } from 'lucide-react';
@@ -138,6 +139,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         {tab === 'prepare' && <>
             <AscensionPanel s={s} send={send} busy={busy}/>
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
+            {showAutomation(s) && <><AutoRebirthPanel s={s} send={send} busy={busy}/><AutoFollowPanel s={s} send={send} busy={busy}/><RotationPanel s={s} send={send} busy={busy}/></>}
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.rebirths >= ASCENSION.rebirthCap ? `환생은 ${ASCENSION.rebirthCap}회까지입니다. 위의 승천으로 다시 오를 수 있습니다` : s.level >= required ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
                     {s.rebirths > 0 && <p className="footnote">이번 생 효과: {tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산)` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</p>}</div>
@@ -163,6 +165,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         </>}
         {tab === 'research' && <><p className="tab-intro">세계석 연구는 환생 후에도 유지됩니다(승천하면 초기화되고 편의 연구는 자동으로 열림). 환생 200회부터는 구매가 잠깁니다. 카드에는 1단계당 증가량과 현재 → 다음 단계 효과를 표시합니다.</p>
             <Tabs value={researchTab} onValueChange={v => setResearchTab(v as ResearchTab)}><TabsList className="game-tabs research-tabs">{RESEARCH_TABS.map(t => <TabsTrigger key={t.id} value={t.id}>{t.name}</TabsTrigger>)}</TabsList></Tabs>
+            {showAutomation(s) && <ResearchPlanPanel s={s} send={send} busy={busy}/>}
             <ResearchTabView tab={researchTab} s={s} send={send} busy={busy}/></>}
         {tab === 'relics' && <><p className="tab-intro">환생을 가로질러 자라는 장비입니다. 위력은 환생마다 +{RELIC_GROWTH.perRebirth * 100}%(지금 ×{(1 + s.rebirths * RELIC_GROWTH.perRebirth).toFixed(2)}), 별과 이식한 옵션(최대 {RELIC_GROWTH.imprintSlots}줄)은 환생해도 남고, 강화 파괴 대신 12성으로 돌아갑니다. 옵션 이식은 장비 보관함에서 같은 부위 장비를 소비해 합니다. 세계석 없이 환생 횟수를 채우면 받을 수 있고, 종류당 하나만 보유할 수 있습니다.</p><div className="port-gamble-grid">{RELICS.map(r => {
             const owned = ownsRelic(s, r.id);

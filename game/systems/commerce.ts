@@ -19,8 +19,33 @@ export const plainCost = (s: State) => Math.max(30, Math.floor(shopCost(s) * .2)
 export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, fishPrice(s, SHOP_FISH.gamble)));
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: gearName(o.slot, 1, o.style), slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
+/** v3.40 세계석 연구를 지금 살 수 없는 이유(세계석 부족 제외). 살 수 있으면 null. 연구 구매와 연구 구매 예약이 같은 판정을 씁니다. */
+export function researchBlock(s: State, id: string) {
+    const r = RESEARCH.find(x => x.id === id), rank = s.permanent[id] || 0;
+    if (!r || rank >= r.max)
+        return '연구 한도를 확인하세요.';
+    if (rank >= researchMaxFor(s, r))
+        return `${r.name} ${(r.ascendAbove || 0) + 1}단계부터는 승천한 뒤에 살 수 있습니다.`;
+    if (!researchUnlocked(s.rebirths, r))
+        return `환생 ${r.rebirth}회 이후에 열리는 연구입니다.`;
+    // v3.31 환생 200회부터는 세계석 연구를 더 살 수 없습니다(승천하면 연구가 초기화되며 다시 열림).
+    if (s.rebirths >= ASCENSION.researchLockAt)
+        return `환생 ${ASCENSION.researchLockAt}회부터는 세계석 연구를 살 수 없습니다. 승천하면 다시 살 수 있습니다.`;
+    return null;
+}
+/** 세계석 연구 한 단계를 삽니다. 못 사면 이유를 던집니다. */
+export function buyResearch(s: State, id: string) {
+    const block = researchBlock(s, id);
+    if (block) throw Error(block);
+    const r = RESEARCH.find(x => x.id === id)!, rank = s.permanent[id] || 0, cost = researchCost(id, rank);
+    if (s.pearls < cost)
+        throw Error('세계석이 부족합니다.');
+    s.pearls -= cost;
+    s.permanent[id] = rank + 1;
+    return `${r.name} 연구 ${rank + 1}단계 · -${cost} 세계석`;
+}
 /** 탭에 쓴 세계석과 재분배 반환액. 첫 1회는 전액, 이후 90%(내림). */
-export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' | 'researchGranted'>, tab: string) {
+export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' | 'researchGranted' | 'researchLegacy'>, tab: string) {
     const ranks: Record<string, number> = {};
     let spent = 0;
     for (const r of RESEARCH) {
@@ -28,7 +53,9 @@ export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' 
         if (r.tab !== tab || !rank) continue;
         ranks[r.id] = rank;
         // v27.31 무료로 받은 앞 단계는 반환하지 않습니다.
-        spent += researchSpent(r.id, rank) - researchSpent(r.id, Math.min(rank, s.researchGranted?.[r.id] || 0));
+        // v3.42 가격 인상 전에 산 단계(researchLegacy)는 전 가격으로 돌려줍니다.
+        const legacy = s.researchLegacy?.[r.id] || 0;
+        spent += researchSpent(r.id, rank, legacy) - researchSpent(r.id, Math.min(rank, s.researchGranted?.[r.id] || 0), legacy);
     }
     const rate = s.researchResetUsed ? RESEARCH_RESET.refund : RESEARCH_RESET.firstRefund;
     return { spent, refund: Math.floor(spent * rate), ranks, first: !s.researchResetUsed };
@@ -229,24 +256,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         s.essence = (s.essence || 0) + gained;
         return `${items.length === 1 ? items[0].name : `${items.length}개`} 분해 · 정수 +${gained}`;
     }
-    if (a.type === 'permanent') {
-        const r = RESEARCH.find(x => x.id === id), rank = s.permanent[id] || 0;
-        if (!r || rank >= r.max)
-            throw Error('연구 한도를 확인하세요.');
-        if (rank >= researchMaxFor(s, r))
-            throw Error(`${r.name} ${(r.ascendAbove || 0) + 1}단계부터는 승천한 뒤에 살 수 있습니다.`);
-        if (!researchUnlocked(s.rebirths, r))
-            throw Error(`환생 ${r.rebirth}회 이후에 열리는 연구입니다.`);
-        // v3.31 환생 200회부터는 세계석 연구를 더 살 수 없습니다(승천하면 연구가 초기화되며 다시 열림).
-        if (s.rebirths >= ASCENSION.researchLockAt)
-            throw Error(`환생 ${ASCENSION.researchLockAt}회부터는 세계석 연구를 살 수 없습니다. 승천하면 다시 살 수 있습니다.`);
-        const cost = researchCost(id, rank);
-        if (s.pearls < cost)
-            throw Error('세계석이 부족합니다.');
-        s.pearls -= cost;
-        s.permanent[id] = rank + 1;
-        return `${r.name} 연구 ${rank + 1}단계 · -${cost} 세계석`;
-    }
+    if (a.type === 'permanent')
+        return buyResearch(s, id);
     if (a.type === 'resetResearch') {
         const tab = RESEARCH_TABS.find(x => x.id === id);
         if (!tab)
@@ -265,6 +276,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         for (const k of Object.keys(ranks)) {
             const kept = Math.min(ranks[k], s.researchGranted?.[k] || 0);
             if (kept) s.permanent[k] = kept; else delete s.permanent[k];
+            if (s.researchLegacy) delete s.researchLegacy[k];
         }
         s.researchResetUsed = true;
         s.pearls += refund;

@@ -36,6 +36,12 @@ export const ASCENSION_RESEARCH: Record<string, number> = {
     habit: 3, inventory: 8, offline: 12, salvage: 5, sortingNet: 2, autoStar: 1, revive: 5,
     vowAnchor: 1, vowBreath: 1, vowRough: 1, vowRestraint: 1,
 };
+/**
+ * v3.40 승천 편의(14.3): 이 승천 횟수부터 열립니다. 전투력과 무관한 반복 조작 덜기입니다.
+ * 승천 1회: 자동 환생 · 연구 구매 예약. 승천 2회: 사냥터·난이도 자동 따라가기 · 숙련 순회 전직.
+ */
+export const ASCENSION_PERKS = { autoRebirth: 1, researchPlan: 1, autoFollow: 2, rotation: 2 } as const;
+export const ascensionPerk = (s: AscensionState, perk: keyof typeof ASCENSION_PERKS) => ascensionOf(s) >= ASCENSION_PERKS[perk];
 /** 승천 기록을 세이브에 남기는 수. */
 export const ASCENSION_LOG_KEEP = 20;
 /** 모든 승천을 합친 누적 환생 횟수. 분신 슬롯 해금은 이 값으로 판정해 승천 뒤에도 잠기지 않습니다. */

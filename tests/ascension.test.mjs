@@ -1,11 +1,11 @@
 // v3.31 승천 · 환생 200회 상한 · 까미 확률 상한 · 행운의 편지 10단계(docs/balance-rebirth.md 8·9·11·13·14절).
 // 공유 난수를 쓰지 않습니다(직접 만든 난수만). run.mjs 맨 끝에 둡니다.
-import { newState, act, expMultiplier, assert, test } from './harness.mjs';
+import { newState, act, advance, rebirthLevel, expMultiplier, assert, test } from './harness.mjs';
 const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
 const Asc = await L.load('data/ascension'), Mi = await L.load('data/mimic'), Lc = await L.load('systems/actions/lifecycle');
 const P = await L.load('systems/progression'), LT = await L.load('data/long-term'), V = await L.load('systems/vows'), Sp = await L.load('data/sprout');
 const E = await L.load('systems/encounter'), Ac = await L.load('data/account'), Ec = await L.load('data/economy'), RG = await L.load('systems/random-game');
-const W = await L.load('data/world');
+const W = await L.load('data/world'), AmMod = await L.load('systems/automation');
 const { skillById } = await L.load('data/skills');
 const SKILL = id => skillById(id);
 
@@ -96,7 +96,7 @@ test('v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.5, jackpot
     assert.equal(tiers[2].chance, .075); assert.ok(Math.abs(tiers.reduce((a, t) => a + t.chance, 0) - 1) < 1e-12);
     const r = newState(0); r.ascension = 1; r.permanent.messageBottle = 10; r.level = 20; r.kills = 500; r.stage = 'brook'; r.unlockedJobs = ['fisher', 'wanderer']; r.jobMastery = {};
     E.spawn(r, () => 0); r.enemy.hp = 0; E.reward(r, () => 0);
-    assert.equal(r.jobMastery.wanderer, Math.floor(1000 * 2 * .01), 'recipient gets 1% of the multiplied jackpot');
+    assert.equal(r.jobMastery.wanderer, Math.floor(1000 * 2 * .01), 'recipient gets 1% of the multiplied jackpot'); assert.deepEqual(r.letterLog?.[0] && [r.letterLog[0].job, r.letterLog[0].gift], ['wanderer', 20], 'v3.40 recipient record for the mastery board');
 });
 
 test('v3.31 slot unlocks use lifetime rebirths so an ascension never closes a slot', () => {
@@ -106,4 +106,110 @@ test('v3.31 slot unlocks use lifetime rebirths so an ascension never closes a sl
     assert.ok(Ac.slotUnlocked(merged, 3), 'slot 3 stays open'); assert.ok(Ac.slotUnlocked(merged, 2));
     assert.equal(Ac.accountExpGold(merged), 1, 'account exp/gold bonus refills from current rebirths');
     assert.equal(Asc.lifetimeRebirths({ rebirths: 20, ascensionLog: [{ rebirths: 100 }] }), 120);
+});
+
+test('v3.40 auto rebirth (ascension 1): locked before, fires at the target level outside dungeons, keeps hunting, settings survive', () => {
+    const s = newState(0); s.rebirths = 3; assert.throws(() => act(s, { type: 'autoRebirth', id: 'on', value: '0' }, 0), /승천 1회/);
+    s.ascension = 1; act(s, { type: 'autoRebirth', id: 'on', value: '60' }, 0); assert.deepEqual(s.autoRebirth, { on: true, level: 60 });
+    assert.throws(() => act(s, { type: 'autoRebirth', id: 'on', value: '55' }, 0), /목표 레벨/);
+    s.running = true; s.level = 59; s.hp = 1e9;
+    const Am = AmMod; s.level = 59; assert.equal(Am.autoRebirthDue(s), false, 'below the chosen level');
+    s.level = 60; s.dungeon = { id: 'grotto', wave: 0 }; assert.equal(Am.autoRebirthDue(s), false, 'not inside a dungeon'); s.dungeon = null;
+    Am.runAutomation(s, () => .5); assert.equal(s.rebirths, 4); assert.equal(s.running, true, 'keeps hunting'); assert.ok(s.logs.some(l => l.text.startsWith('자동 환생 · Lv.60')));
+    assert.deepEqual(s.autoRebirth, { on: true, level: 60 }, 'kept across rebirth');
+    s.rebirths = 200; s.level = 100; assert.equal(Am.autoRebirthDue(s), false, 'rebirth cap');
+});
+
+test('v3.40 research plan (ascension 1): buys in order up to targets, waits when short of pearls, skips locked ones, survives ascension', () => {
+    const s = newState(0); s.rebirths = 1; s.pearls = 0;
+    assert.throws(() => act(s, { type: 'researchPlan', id: 'add', value: 'attack:3' }, 0), /승천 1회/);
+    s.ascension = 1;
+    act(s, { type: 'researchPlan', id: 'add', value: 'crit:2' }, 0); // 환생 2회부터 → 지금은 건너뜀
+    act(s, { type: 'researchPlan', id: 'add', value: 'attack:3' }, 0); act(s, { type: 'researchPlan', id: 'add', value: 'hp:2' }, 0);
+    assert.throws(() => act(s, { type: 'researchPlan', id: 'add', value: 'attack:999' }, 0), /목표 단계/);
+    act(s, { type: 'researchPlan', id: 'add', value: 'attack:2' }, 0); assert.deepEqual(s.researchPlan.items.map(x => `${x.id}:${x.to}`), ['crit:2', 'attack:2', 'hp:2'], 'same research updates its target');
+    const cost = (id, from, to) => { let n = 0; for (let i = from; i < to; i++) n += Ec.researchCost(id, i); return n; };
+    s.pearls = cost('attack', 0, 2) + Ec.researchCost('hp', 0); act(s, { type: 'researchPlan', id: 'on' }, 0);
+    assert.equal(s.permanent.attack, 2); assert.equal(s.permanent.hp || 0, 1); assert.equal(s.permanent.crit || 0, 0, 'locked research is skipped'); assert.equal(s.pearls, 0);
+    s.pearls = Ec.researchCost('hp', 1) - 1; AmMod.runResearchPlan(s); assert.equal(s.permanent.hp, 1, 'waits for pearls');
+    s.pearls += 1; AmMod.runResearchPlan(s); assert.equal(s.permanent.hp, 2);
+    act(s, { type: 'researchPlan', id: 'up', value: '2' }, 0); assert.deepEqual(s.researchPlan.items.map(x => x.id), ['crit', 'hp', 'attack']);
+    act(s, { type: 'researchPlan', id: 'remove', value: '0' }, 0); assert.deepEqual(s.researchPlan.items.map(x => x.id), ['hp', 'attack']);
+    s.rebirths = Asc.ASCENSION.requirements[1]; Lc.ascend(s, 0); assert.deepEqual(s.researchPlan, { on: true, items: [{ id: 'hp', to: 2 }, { id: 'attack', to: 2 }] }, 'plan survives ascension');
+});
+
+test('v3.40 auto rebirth also fires during offline catch-up and keeps the offline summary', () => {
+    const s = newState(0); s.ascension = 1; s.rebirths = 3; act(s, { type: 'autoRebirth', id: 'on', value: '0' }, 0);
+    s.level = rebirthLevel(s); s.running = true; s.lastTick = 0;
+    let seed = 7; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    advance(s, 10 * 60_000, rng);
+    assert.equal(s.rebirths, 4); assert.equal(s.running, true); assert.ok(s.lastOffline && s.lastOffline.gold >= 0, 'offline summary kept and never negative');
+});
+
+test('v3.41 auto follow (ascension 2): highest stage that fits the level, tide by rule, only between fights', () => {
+    const s = newState(0); s.ascension = 1; s.rebirths = 25; s.level = 40;
+    assert.throws(() => act(s, { type: 'autoFollow', id: 'on', value: 'top:max' }, 0), /승천 2회/);
+    s.ascension = 2; act(s, { type: 'autoFollow', id: 'on', value: 'top:mimic' }, 0);
+    assert.throws(() => act(s, { type: 'autoFollow', id: 'on', value: 'nope:max' }, 0), /규칙/);
+    const want = [...W.PLACES].reverse().find(st => st.level <= 40 && s.rebirths >= st.rebirth);
+    s.enemy = { id: 'x' }; assert.equal(AmMod.runAutoFollow(s), false, 'waits while fighting'); s.enemy = null;
+    assert.equal(AmMod.runAutoFollow(s), true); assert.equal(s.stage, want.id); assert.equal(s.tide, Math.min(20, Mi.MIMIC.tierCap));
+    assert.equal(AmMod.runAutoFollow(s), false, 'nothing to change');
+    act(s, { type: 'autoFollow', id: 'on', value: 'habitat:max' }, 0); AmMod.runAutoFollow(s); assert.ok(W.STAGES.find(x => x.id === s.stage).habitat); assert.equal(s.tide, 25);
+});
+
+test('v3.41 job rotation (ascension 2 fixed at vocation 1; more choices later): switches to the next unmastered job and equips a loadout', () => {
+    const s = newState(0); s.ascension = 1; s.level = 60; s.rebirths = 10; Object.assign(s.attributes, { str: 60, dex: 60, int: 60, vit: 60, wis: 60, luk: 60 });
+    assert.deepEqual(AmMod.rotationChoices(s), []); assert.throws(() => act(s, { type: 'rotation', id: 'on', value: '1' }, 0), /승천 2회/);
+    s.ascension = 2; assert.deepEqual(AmMod.rotationChoices(s), [1]); assert.throws(() => act(s, { type: 'rotation', id: 'on', value: 'mastered' }, 0), /전직 시점/);
+    s.ascension = 3; assert.deepEqual(AmMod.rotationChoices(s), ['mastered', 1, 2, 3]); s.ascension = 5; assert.equal(AmMod.rotationChoices(s).length, 8);
+    s.ascension = 2; act(s, { type: 'rotation', id: 'on', value: '1' }, 0);
+    const target = P.jobMasteryTarget(s.job); s.jobMastery[s.job] = target; s.running = true;
+    assert.equal(AmMod.runRotation(s, () => .5), false, 'mastered but vocation 1 not reached');
+    s.jobMastery[s.job] = target + LT.VOCATION_OFFSETS[0]; const from = s.job;
+    assert.equal(AmMod.runRotation(s, () => .5), true); assert.notEqual(s.job, from); assert.equal(s.running, true, 'keeps hunting');
+    assert.ok(s.skills.length > 0, 'loadout equipped'); assert.ok(s.logs.some(l => l.text.startsWith('숙련 순회 전직')));
+    s.rebirths = Asc.ASCENSION.requirements[2]; Lc.ascend(s, 0); assert.deepEqual(s.rotation, { on: true, at: 1 }, 'rotation survives ascension');
+});
+
+// v3.42 무리 드롭 √N 판정 · ×500 무리 보상 · 세계석 연구 21번째 단계부터 ×1.06 복리
+const Mig = await L.load('systems/migrations'), Co = await L.load('systems/commerce');
+const swarmKill = size => {
+    const s = newState(0); s.level = 30; s.stage = 'brook'; s.tide = 0; s.permanent.inventory = 8; s.inventory = [];
+    E.spawn(s, () => .99); s.enemy.swarm = size; s.enemy.variant = 'swarm'; s.enemy.hp = 0;
+    const exp = s.exp, gold = s.gold, essence = s.essence || 0;
+    E.reward(s, () => 0);
+    return { items: s.inventory.length, exp: s.exp - exp, gold: s.gold - gold, essence: (s.essence || 0) - essence, logs: s.logs.map(l => l.text) };
+};
+test('v3.42 swarm drops roll √N times (×500 doubled) and the skipped rolls pay essence', () => {
+    assert.deepEqual([1, 5, 100, 500].map(W.swarmDropRolls), [1, 2, 10, 22]);
+    const five = swarmKill(5), hundred = swarmKill(100), big = swarmKill(500);
+    assert.equal(five.items, 2); assert.equal(hundred.items, 10); assert.equal(big.items, 44, '22 rolls × 2 for ×500');
+    assert.ok(hundred.essence >= 1 && big.essence >= 1, 'skipped rolls become essence');
+    assert.ok(big.logs.some(t => t.includes('무리 전리품 · 정수')));
+});
+test('v3.42 ×500 swarms pay exp · gold ×1.5 on top of the head count', () => {
+    const hundred = swarmKill(100), big = swarmKill(500);
+    assert.ok(Math.abs(big.exp / hundred.exp - 7.5) < .05, `exp ratio ${big.exp / hundred.exp}`);
+    // 난수 0이면 황금 개체(한 마리 골드 10배)도 뜨므로 그 몫(+9마리분)은 빼고 비교합니다.
+    const golden = hundred.logs.some(t => t.includes('황금 개체 골드 10배')), perFish = hundred.gold / (100 + (golden ? 9 : 0));
+    assert.equal(big.gold, Math.floor(perFish * 500 * 1.5) + (golden ? perFish * 9 : 0), 'gold ×500 × 1.5');
+    assert.ok(big.logs.some(t => t.includes('큰 무리 보상 ×1.5')));
+    assert.equal(W.swarmRewardMultiplier(100), 1); assert.equal(W.swarmRewardMultiplier(500), 1.5);
+});
+test('v3.42 research ranks from the 21st cost ×1.06 compounding; ranks bought before refund at the old price', () => {
+    for (let k = 0; k < 20; k++) assert.equal(Ec.researchCost('attack', k), Ec.researchLegacyCost('attack', k));
+    assert.equal(Ec.researchCost('attack', 20), Math.round(Ec.researchLegacyCost('attack', 20) * 1.06));
+    assert.equal(Ec.researchCost('attack', 40), Math.round(Ec.researchLegacyCost('attack', 40) * 1.06 ** 21));
+    assert.equal(Ec.researchSpent('attack', 40), 5813); assert.equal(Ec.researchSpent('attack', 40, 40), 2780, 'old total');
+    const s = newState(0); s.rebirths = 50; s.permanent = { attack: 40, hp: 12 }; delete s.researchLegacy;
+    Mig.stampResearchLegacy(s); assert.deepEqual(s.researchLegacy, { attack: 40 }, 'only ranks past 20 need the old price');
+    Mig.stampResearchLegacy(s); assert.deepEqual(s.researchLegacy, { attack: 40 }, 'once');
+    s.pearls = 1e6; act(s, { type: 'permanent', id: 'attack' }, 0); assert.equal(s.permanent.attack, 41);
+    const tab = Ec.RESEARCH.find(r => r.id === 'attack').tab, legacyHp = Ec.researchSpent('hp', 12);
+    const { spent } = Co.researchRefund(s, tab);
+    assert.equal(spent, Ec.researchSpent('attack', 40, 40) + Ec.researchCost('attack', 40) + legacyHp, 'old price up to the stamp, new price after');
+    const pearls = s.pearls; act(s, { type: 'resetResearch', id: tab }, 0);
+    assert.equal(s.pearls - pearls, spent, 'first reset refunds everything paid'); assert.equal(s.researchLegacy.attack, undefined, 'stamp cleared by the reset');
+    assert.deepEqual(newState(0).researchLegacy, {}, 'new saves pay the new price');
 });
