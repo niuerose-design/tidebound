@@ -30,7 +30,10 @@ const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.index
 const SEEDS = Number(arg('--seeds', 20)), TIER = Number(arg('--tier', 30)), RARITY = Number(arg('--rarity', 6)), STAR = Number(arg('--star', 22));
 // 환생 100 무렵의 흔한 연구(전투 탭 약 75%, 물리·마법 같은 단계라 직업 사이 공정). 숫자를 바꾸면 절대값만 달라지고 비율은 거의 그대로입니다.
 const RESEARCH = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 15, critDamage: 20, penetration: 10, evasion: 15, lifesteal: 15, manaRegen: 8, recovery: 8, ap: 12 };
-const LEVEL = 100, REBIRTHS = 100, MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg('--dungeon-tier', TIER * 2)), SWARM500_TIER = Number(arg('--swarm500-tier', 0));
+const LEVEL = 100, REBIRTHS = 100, MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg('--dungeon-tier', TIER * 2)), SWARM500_TIER = Number(arg('--swarm500-tier', 0)), PEN = arg('--pen') === undefined ? null : Number(arg('--pen'));
+// --swarm500-atk: ×500 무리 공격 배율 실험(n = 지금 490배 · 숫자 = 고정 배율 · sqrt = √N · thin = 남은 마리 비례 · thin-sqrt = √(남은 마리)). --only 키: 그 상황만 잽니다.
+const SWARM_ATK = arg('--swarm500-atk', 'n'), ONLY = arg('--only');
+// --pen: 관통을 이 값으로 맞춘 몸(장비 관통 옵션을 챙긴 경우 · 전체 상한 0.6)으로 잽니다.
 const FOES = ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul'], BOSS = 'arTrueErda', RAID_ID = 'horntail';
 
 function attributesFor(j) {
@@ -83,17 +86,33 @@ function run(s, st, make) {
     return { win: w / k, turns: t / k, hpLeft: h / k, score: w / k / (t / k) };
 }
 // 무리: 턴 상한을 넉넉히(3,000) 두고, 지면 깎은 몫만큼만 셉니다(점수 = 깎은 체력 비율 / 쓴 턴, 이기면 1 / 처치 턴).
+function swarmAttack(size, left) {
+    if (size < 500 || SWARM_ATK === 'n') return swarmAttackMultiplier(size);
+    const n = swarmHpMultiplier(size), alive = Math.max(1, n * left);
+    return SWARM_ATK === 'sqrt' ? Math.sqrt(n) : SWARM_ATK === 'thin' ? alive : SWARM_ATK === 'thin-sqrt' ? Math.sqrt(alive) : Number(SWARM_ATK);
+}
 function runSwarm(s, st, size, tier = TIER) {
     let w = 0, t = 0, cut = 0, k = 0;
-    for (let seed = 1; seed <= SEEDS; seed++) { const a = player(st, s), f = foe(FOES[0], { swarm: size, tier }), max = f.hp, r = fight(a, f, random(seed * 131 + size), SWARM_TURNS); const done = 1 - Math.max(0, f.hp) / max; w += r.won ? 1 : 0; t += r.turns; cut += done; k++; }
+    for (let seed = 1; seed <= SEEDS; seed++) {
+        const a = player(st, s), f = foe(FOES[0], { tier }), one = { ...f.stats }, max = Math.round(one.hp * swarmHpMultiplier(size)), rng = random(seed * 131 + size);
+        Object.assign(f, { swarm: size, hp: max }); f.stats = { ...one, hp: max };
+        let n = 0;
+        while (a.hp > 0 && f.hp > 0 && n < SWARM_TURNS) {
+            n++; const m = swarmAttack(size, f.hp / max); f.stats.attack = Math.round(one.attack * m); f.stats.magic = Math.round((one.magic ?? one.attack) * m);
+            const first = fighterSpeed(a) >= fighterSpeed(f) ? a : f, second = first === a ? f : a; strike(first, second, rng); if (first.hp > 0 && second.hp > 0) strike(second, first, rng);
+        }
+        const won = a.hp > 0 && f.hp <= 0; w += won ? 1 : 0; t += n; cut += 1 - Math.max(0, f.hp) / max; k++;
+    }
     return { win: w / k, turns: t / k, cut: cut / k, score: cut / k / Math.max(1, w / k === 1 ? t / k : SWARM_TURNS) };
 }
 function measure(j) {
-    const s = body(j), st = stats(s), out = {};
-    out.hunt = run(s, st, () => FOES.map(id => foe(id)));
-    out.swarm100 = runSwarm(s, st, 100);
-    out.swarm500 = runSwarm(s, st, 500, SWARM500_TIER);
-    out.boss = run(s, st, () => [foe(BOSS, { boss: true })]);
+    const s = body(j), st = PEN === null ? stats(s) : { ...stats(s), penetration: Math.max(stats(s).penetration, PEN) }, out = {};
+    const want = k => !ONLY || ONLY === k, zero = { win: 0, turns: 0, hpLeft: 0, cut: 0, cleared: 0, dealt: 0, died: 0, score: 0 };
+    out.hunt = want('hunt') ? run(s, st, () => FOES.map(id => foe(id))) : zero;
+    out.swarm100 = want('swarm100') ? runSwarm(s, st, 100) : zero;
+    out.swarm500 = want('swarm500') ? runSwarm(s, st, 500, SWARM500_TIER) : zero;
+    out.boss = want('boss') ? run(s, st, () => [foe(BOSS, { boss: true })]) : zero;
+    if (ONLY && ONLY !== 'dungeon' && ONLY !== 'raid') { out.dungeon = zero; out.raid = zero; return { id: j.id, name: j.name, lineage: lineageOf(j), sub: subRoleOf(j, lineageOf(j)), out }; }
     // 던전: 난이도 DUNGEON_TIER에서 쉬지 않고 5연전(마지막은 보스), 체력·마나 이어짐. 점수 = 넘긴 판 비율 / 쓴 턴.
     let cleared = 0, hpEnd = 0, turns = 0;
     for (let seed = 1; seed <= SEEDS; seed++) {
@@ -103,7 +122,7 @@ function measure(j) {
     }
     out.dungeon = { cleared: cleared / SEEDS, hpLeft: hpEnd / SEEDS, turns: turns / SEEDS, score: cleared / SEEDS / Math.max(1, turns / SEEDS) };
     const raid = raidById(RAID_ID); let dealt = 0, died = 0;
-    for (let seed = 1; seed <= SEEDS; seed++) { const r = pvpDuel(snapshot(s), raidBossSnapshot(raid), true, random(seed), RAID.maxTurns); dealt += raid.stats.hp - Math.max(0, r.opponentHp); died += r.playerHp <= 0 ? 1 : 0; }
+    for (let seed = 1; seed <= SEEDS; seed++) { const snap = snapshot(s); if (PEN !== null) snap.stats = st; const r = pvpDuel(snap, raidBossSnapshot(raid), true, random(seed), RAID.maxTurns); dealt += raid.stats.hp - Math.max(0, r.opponentHp); died += r.playerHp <= 0 ? 1 : 0; }
     out.raid = { dealt: dealt / SEEDS, died: died / SEEDS, score: dealt / SEEDS };
     const sub = subRoleOf(j, lineageOf(j));
     return { id: j.id, name: j.name, lineage: lineageOf(j), sub, out };
@@ -113,7 +132,7 @@ const rows = JOBS.filter(j => j.tier === 5 && !j.retired).map(measure);
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 for (const k of KEYS) { const m = median(rows.map(r => r.out[k].score)) || 1; for (const r of rows) r[k] = r.out[k].score / m; }
 const f2 = n => n.toFixed(2), pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : `${Math.round(n / 1e4)}만`;
-console.log(`5차 직업 비교 (Lv.${LEVEL} · 환생 ${REBIRTHS} · 전투 연구 약 75% · ${RARITIES[RARITY].name} ${STAR}성 4부위 · 사냥터 난이도 ${TIER} · 던전 난이도 ${DUNGEON_TIER} · ×500 무리 난이도 ${SWARM500_TIER} · 시드 ${SEEDS}, 5차 중앙값 = 1.00)`);
+console.log(`5차 직업 비교 (Lv.${LEVEL} · 환생 ${REBIRTHS} · 전투 연구 약 75% · ${RARITIES[RARITY].name} ${STAR}성 4부위 · 사냥터 난이도 ${TIER} · 던전 난이도 ${DUNGEON_TIER} · ×500 무리 난이도 ${SWARM500_TIER} ${PEN === null ? '' : ` · 관통 ${PEN}`} · 시드 ${SEEDS}, 5차 중앙값 = 1.00)`);
 console.log('직업'.padEnd(16, '　') + '역할　　　 사냥터(턴·승) 무리100(턴·승) 무리500(턴·승) 던전(판·체력) 보스(턴·승) 월드보스(피해)');
 for (const r of [...rows].sort((a, b) => a.sub.localeCompare(b.sub) || b.hunt - a.hunt)) {
     const o = r.out;
