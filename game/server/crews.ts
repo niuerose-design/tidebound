@@ -31,7 +31,7 @@ async function readCrew(id: string, now: number, fresh = false) {
 
 /**
  * 정리 규칙(쓸 때마다): 해커 계열이 아닌 채로 30일 지난 조직원은 내보내고,
- * 조직장이 없거나 14일 동안 활동이 없으면 금고 기여가 가장 많은 다른 조직원에게 넘깁니다.
+ * 조직장이 없거나 14일 동안 활동이 없으면 기여가 가장 많은 다른 조직원에게 넘깁니다.
  */
 export function tidyCrew(c: CrewData, now: number) {
     for (const [id, m] of Object.entries(c.members)) if (m.offSince !== undefined && now - m.offSince >= CREW.leaveDays * 86400_000) delete c.members[id];
@@ -155,7 +155,7 @@ export async function leaderAct(me: string, s: State, kind: 'kick' | 'delegate' 
     return st => { if (c) setCache(st, cached.id, c, me, now); addLog(st, label, 'system'); };
 }
 
-/** 금고에 비트를 넣습니다(되돌릴 수 없음). 하루 상한 = 권한 등급 × 50. 금고 비트 1 = 조직 경험치 1. */
+/** 비트 기여: 조직 자금에 비트를 더합니다(되돌릴 수 없음). 하루 상한 = 권한 등급 × 50. 기여 비트 1 = 조직 경험치 1. */
 export async function depositCrew(me: string, s: State, rawAmount: unknown, now: number): Promise<CrewApply> {
     const cached = requireCrew(s), h = hackerState(s), amount = Math.floor(Number(rawAmount)), day = dayKey(now);
     requireHackerLine(s);
@@ -169,6 +169,6 @@ export async function depositCrew(me: string, s: State, rawAmount: unknown, now:
     return st => {
         const hk = hackerState(st), u = hk.crewDeposit?.day === day ? hk.crewDeposit.n : 0;
         hk.bits -= amount; hk.crewDeposit = { day, n: u + amount }; setCache(st, cached.id, c!, me, now);
-        addLog(st, `조직 금고에 비트 ${amount} · 조직 경험치 +${amount}${grade > before ? ` · 조직 등급 ${grade} 달성` : ''}`, 'reward');
+        addLog(st, `조직에 비트 ${amount} 기여 · 조직 경험치 +${amount}${grade > before ? ` · 조직 등급 ${grade} 달성` : ''}`, 'reward');
     };
 }

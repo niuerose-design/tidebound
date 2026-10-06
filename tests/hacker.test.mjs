@@ -262,7 +262,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         act(bk, { type: 'hackRun', id: 'broadcast', value: '들켰다' }, now, () => .01); await Hk.applyPendingHack(bk, 'acct_bk', now);
         assert.ok((await database.listChat('global', 0, 300)).some(c => c.account_id === 'system-hacker' && c.text.includes('블랙 해커 그림자가 방송 탈취 중 추적당했습니다')), 'busted notice names the black hacker');
         assert.notEqual((await Hk.readHacks(now)).broadcast?.text, '들켰다', 'failed hack has no effect');
-        // v3.29 해커 조직(4-a): 창설·가입(초대 코드)·성향 제한·정원·금고·위임·강퇴·코드 재발급·탈퇴, 소속 캐시 동기화.
+        // v3.29 해커 조직(4-a): 창설·가입(초대 코드)·성향 제한·정원·비트 기여·위임·강퇴·코드 재발급·탈퇴, 소속 캐시 동기화.
         const Cr = await load('game/server/crews.js'), CD = await load('game/data/crew.js');
         const boss = veteran(1); boss.name = '조직장';
         await assert.rejects(Cr.createCrew('m_boss', boss, 'x', 'gray', now), /2~12/);
@@ -276,7 +276,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         for (let i = 0; i < 4; i++) { const m = veteran(1); m.name = `조직원${i}`; (await Cr.joinCrew(`m_${i}`, m, row0.code.toLowerCase(), now))(m); members.push(m); }
         await assert.rejects(Cr.joinCrew('m_full', veteran(1), row0.code, now), /정원\(5명\)/);
         assert.equal(members[0].hacker.crew.id, crewId); assert.equal(members[0].hacker.crew.leader, false);
-        // 금고: 하루 상한 = 권한 등급 × 50, 넣은 만큼 조직 경험치.
+        // 비트 기여: 하루 상한 = 권한 등급 × 50, 기여한 만큼 조직 자금·조직 경험치.
         const dep = members[0]; dep.hacker.grade = 10;
         await assert.rejects(Cr.depositCrew('m_0', dep, 501, now), /500까지/);
         (await Cr.depositCrew('m_0', dep, 500, now))(dep); assert.equal(dep.hacker.crewDeposit.n, 500); assert.equal(dep.hacker.bits, 10000 - 500);
@@ -290,7 +290,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         (await Cr.leaderAct('m_boss', boss, 'kick', 'm_1', now))(boss);
         members[1].hacker.crew.syncedAt = 0; await Cr.syncCrew('m_1', members[1], now + 31_000); assert.equal(members[1].hacker.crew, undefined, 'kicked member drops the cache on sync');
         (await Cr.leaderAct('m_boss', boss, 'delegate', 'm_0', now))(boss); assert.equal(boss.hacker.crew.leader, false);
-        // 정리: 조직장이 14일 활동이 없으면 금고 기여가 가장 많은 조직원에게, 해커 계열이 아닌 채로 30일이면 자동 탈퇴.
+        // 정리: 조직장이 14일 활동이 없으면 기여가 가장 많은 조직원에게, 해커 계열이 아닌 채로 30일이면 자동 탈퇴.
         const tidy = { leader: 'a', members: { a: { seen: 0, deposited: 0, joined: 0 }, b: { seen: 0, deposited: 5, joined: 1 }, c: { seen: 0, deposited: 9, joined: 2, offSince: 0 } } };
         Cr.tidyCrew(tidy, 30 * 86400_000); assert.deepEqual(Object.keys(tidy.members), ['a', 'b']); assert.equal(tidy.leader, 'b');
         // 동기화: 해커 계열을 떠나면 offSince가 적히고, 마지막 조직원이 나가면 조직이 사라집니다.

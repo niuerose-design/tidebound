@@ -1,6 +1,6 @@
 /**
  * v3.29 해커 조직(docs/concept.md 9.10). 해커 계열끼리 꾸리는 조직입니다. 서버의 crews 테이블에 조직 하나가 JSON 한 행으로 삽니다.
- * 이번 단계(4-a): 창설·가입(초대 코드)·탈퇴·위임·강퇴·코드 재발급, 비트 공동 금고와 조직 등급. 합동 작전·모듈·순위는 다음 단계.
+ * 이번 단계(4-a): 창설·가입(초대 코드)·탈퇴·위임·강퇴·코드 재발급, 비트 기여(조직 자금)와 조직 등급. 합동 작전·모듈·순위는 다음 단계.
  * 아래는 서버와 화면이 함께 쓰는 순수 규칙입니다.
  */
 import { HACKER_ID, WHITE_HACKER_ID, BLACK_HACKER_ID } from './hacker';
@@ -11,12 +11,12 @@ export const CREW = {
     nameMin: 2, nameMax: 12, codeLength: 6,
     /** 정원: 5명 + 조직 등급 2마다 1명, 최대 10명(crews 한 행에 담는 상한). */
     capacity: (grade: number) => Math.min(10, 5 + Math.floor(grade / 2)),
-    /** 조직 등급 g → g+1에 필요한 조직 경험치(금고 비트 1 = 1). 최대 20. */
+    /** 조직 등급 g → g+1에 필요한 조직 경험치(기여 비트 1 = 1). 최대 20. */
     gradeNeed: (grade: number) => Math.round(2000 * grade ** 1.3),
     maxGrade: 20,
-    /** 하루에 금고에 넣을 수 있는 비트 = 권한 등급 × 50. */
+    /** 하루에 기여할 수 있는 비트 = 권한 등급 × 50. */
     depositPerDay: (hackerGrade: number) => Math.max(1, hackerGrade) * 50,
-    /** 조직장이 이만큼 활동(조직에 쓰기)이 없으면 금고 기여가 가장 많은 조직원에게 자동 위임. */
+    /** 조직장이 이만큼 활동(조직에 쓰기)이 없으면 기여가 가장 많은 조직원에게 자동 위임. */
     leaderIdleDays: 14,
     /** 해커 계열이 아닌 채로 이만큼 지나면 자동 탈퇴. */
     leaveDays: 30,
