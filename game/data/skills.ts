@@ -3,6 +3,7 @@ import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
 import { SKILL_FORMULA } from './balance';
 import { JOBS, type Job } from './classes';
+import { subRoleOf } from './roles';
 import { PROGRESSION } from './progression';
 import { EXPANSION_SKILLS } from './expansion';
 import { LINEAGE_SKILLS } from './expansion-lineages';
@@ -267,14 +268,58 @@ registerSkills(STAT_TRAINING_SKILLS);
  * 능력치 수련(목표를 따로 정함) · 해커(처치 숙련 없음) · 스킬이 없는 직업은 그대로입니다. 5차 전직 조건(부모 숙달)도 새 목표를 따릅니다.
  * 비밀 직업은 서버가 등록한 뒤(secret/register.ts) 같은 함수로 맞춥니다.
  */
+/**
+ * v3.77 스킬 숙련 기준(docs/concept.md 11.9): 차수별 기본 곡선 하나가 원칙이고, 장기 성장형(진행도 비례 피해 · AP 감소)은 ×1.4.
+ * 개별 조정은 기본 곡선 마지막 단계의 ±50% 안에서만 두고, 벗어나면 기본 곡선(단계 수가 다르면 같은 모양 비율)으로 되돌립니다.
+ * 따로 정한 체계는 예외: 수련 패시브(3차 곡선) · 능력치 수련 · 玄의 天 · 해커 스킬. 예전 첫 단계는 LEGACY_FIRST_MILESTONE에 남겨 계승을 보존합니다.
+ */
+export const SKILL_TIER_CURVE: Record<number, number[]> = { 0: [120, 600, 2400, 8000], 1: [250, 1200, 4500, 14000], 2: [600, 3000, 12000, 36000], 3: [4500, 22500, 84000, 225000], 4: [25000, 120000, 400000, 1000000], 5: [100000, 450000, 1500000, 3750000] };
+export const SKILL_CURVE_BAND = .5;
+/**
+ * v3.77 제약형 스킬: 최대 숙련에서 AP가 0 이하가 되는 스킬(노래 제외)과 제약 직업(유리 대포 · 玄)의 스킬.
+ * 숙련 요구치를 천만 단위로 둡니다: AP를 돌려주는(음수) 스킬 5,000만 · 그 밖 1,000만(같은 모양 비율). 직업 숙달 목표 계산에서는 뺍니다.
+ */
+export const CONSTRAINT_MASTERY = { free: 10_000_000, refund: 50_000_000 };
+const CONSTRAINT_JOBS = new Set(['glassHarpooner', 'glyphMonk']);
+/** 최대 숙련(한계돌파 전)에서의 AP. progression.effectiveSkill과 같은 식입니다(순환 참조를 피해 여기서 계산). */
+export function costAtMastery(sk: Skill) {
+    const max = (sk.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones).length;
+    return sk.levelEffects?.[max]?.cost ?? Math.max(1, (sk.cost ?? 2) - Math.floor(max * (sk.rankEffects?.apReduction ?? 0))) - (sk.type === 'passive' ? SKILL_FORMULA.masteredPassiveAP : 0);
+}
+export const isConstraintSkill = (sk: Skill) => !sk.song && (costAtMastery(sk) <= 0 || !!sk.job && CONSTRAINT_JOBS.has(sk.job));
+/** 예외: 수련 · 능력치 수련 · 해커 스킬 · 역할 경계 직업(제로 · 아이돌 연습생)의 스킬(제약형은 따로 천만 단위). */
+const SKILL_CURVE_EXEMPT = (sk: Skill) => !!sk.job && (/^training/.test(sk.job) || /Training[123]$|[hH]acker$/.test(sk.job) || ['border', 'borderBuffer'].includes(subRoleOf(JOBS.find(j => j.id === sk.job) ?? { id: sk.job }, '')));
+export const LEGACY_FIRST_MILESTONE: Record<string, number> = {};
+const round2 = (n: number) => { const p = 10 ** Math.max(0, Math.floor(Math.log10(n)) - 1); return Math.round(n / p) * p; };
+export function normalizeSkillMastery(list: Skill[]) {
+    for (const sk of list) {
+        const job = JOBS.find(j => j.id === sk.job);
+        if (!job || job.tier < 1 || SKILL_CURVE_EXEMPT(sk) || !sk.masteryMilestones?.length) continue;
+        const curve = SKILL_TIER_CURVE[Math.min(5, job.tier)], longTerm = !!sk.scaling || !!sk.rankEffects?.apReduction;
+        const ms = sk.masteryMilestones, ratio = ms.at(-1)! / curve.at(-1)!;
+        if (isConstraintSkill(sk)) {
+            const last = costAtMastery(sk) < 0 ? CONSTRAINT_MASTERY.refund : CONSTRAINT_MASTERY.free;
+            if (ms.at(-1) !== last) { LEGACY_FIRST_MILESTONE[sk.id] = ms[0]; sk.masteryMilestones = ms.map(n => round2(n * last / ms.at(-1)!)); }
+            continue;
+        }
+        if (ratio >= 1 - SKILL_CURVE_BAND && ratio <= 1 + SKILL_CURVE_BAND) continue;
+        const want = curve.at(-1)! * (longTerm ? 1.4 : 1);
+        LEGACY_FIRST_MILESTONE[sk.id] = ms[0];
+        sk.masteryMilestones = ms.length === curve.length ? curve.map(n => Math.round(n * (longTerm ? 1.4 : 1))) : ms.map(n => round2(n * want / ms.at(-1)!));
+    }
+}
+normalizeSkillMastery(SKILLS);
 export const MASTERY_ALIGN = { ratio: .4, keep: /^(str|dex|int|vit|wis|luk)Training[123]$|[hH]acker$/ };
 export const LEGACY_MASTERY_TARGET: Record<string, number> = {};
 const roundTarget = (n: number) => n >= 10_000 ? Math.round(n / 1000) * 1000 : Math.round(n / 100) * 100;
 export function alignJobMastery(jobs: Job[]) {
     for (const job of jobs) {
         if (job.tier < 1 || MASTERY_ALIGN.keep.test(job.id) || job.id in LEGACY_MASTERY_TARGET) continue;
-        const lasts = SKILLS.filter(sk => sk.job === job.id && !sk.song).map(sk => (sk.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones).at(-1)!);
-        if (!lasts.length) continue;
+        const own = SKILLS.filter(sk => sk.job === job.id && !sk.song);
+        if (!own.length) continue;
+        // v3.77 제약형 스킬(천만 단위)은 빼고 셉니다. 제약형뿐인 직업은 차수 기본 곡선을 씁니다.
+        const usual = own.filter(sk => !isConstraintSkill(sk));
+        const lasts = usual.length ? usual.map(sk => (sk.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones).at(-1)!) : [SKILL_TIER_CURVE[Math.min(5, job.tier)].at(-1)!];
         LEGACY_MASTERY_TARGET[job.id] = job.masteryTarget!;
         job.masteryTarget = roundTarget(Math.max(...lasts) * MASTERY_ALIGN.ratio);
     }

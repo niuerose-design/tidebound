@@ -86,3 +86,23 @@ test('v3.77 job mastery targets follow skill milestones (40% of the last); jobs 
     assert.deepEqual(s.masteryKept, ['whaler']); assert.equal(P.jobMastered(s, whaler), true); assert.equal(P.masteredJobCount(s), 1);
     const n = newState(0); n.jobMastery.whaler = old; migrateState(n); assert.equal(P.jobMastered(n, whaler), false, 'new saves use the new target');
 });
+
+test('v3.77 skill mastery standard: one curve per tier (×1.4 long-term), custom ones within ±50%, constraint skills in tens of millions; old inheritance kept when the first stage went up', async () => {
+    const Sk = await load('game/data/skills.js'), R = await load('game/data/roles.js');
+    const bad = [];
+    for (const sk of SKILLS) {
+        const j = job(sk.job); if (!j || j.tier < 1 || j.retired) continue;
+        const exempt = /^training|Training[123]$|[hH]acker$/.test(j.id) || ['border', 'borderBuffer'].includes(R.subRoleOf(j, lineageOf(j)));
+        if (exempt) continue;
+        // 제약형(최대 숙련에서 AP 0 이하 · 제약 직업): 마지막 단계가 천만 단위(AP 반환 5,000만 · 그 밖 1,000만).
+        if (Sk.isConstraintSkill(sk)) { const want = Sk.costAtMastery(sk) < 0 ? 5e7 : 1e7; if (P.masteryMilestonesFor(sk).at(-1) !== want) bad.push(`${sk.id} constraint`); continue; }
+        const r = P.masteryMilestonesFor(sk).at(-1) / Sk.SKILL_TIER_CURVE[Math.min(5, j.tier)].at(-1);
+        if (r < .5 || r > 1.5) bad.push(`${sk.id} ×${r.toFixed(2)}`);
+    }
+    assert.deepEqual(bad, []);
+    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'emptyPalm')), [600, 3000, 12000, 36000], 'moved 2nd-tier hidden jobs use the 2nd-tier curve');
+    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e6, 1e7, 5e7], 'bone legacy (AP −3) needs tens of millions');
+    assert.equal(P.jobMasteryTarget(job('undead')), 5600, 'constraint skills do not slow the job mastery');
+    const s = newState(0); delete s.masteryAligned; s.skillPractice.emptyPalm = 300; s.skillPractice.riseAgain = 100;
+    migrateState(s); assert.ok(s.legacyInherited?.emptyPalm && !s.legacyInherited?.riseAgain, 'kept only above the old first stage');
+});

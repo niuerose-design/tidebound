@@ -9,7 +9,7 @@ import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { SAVE_VERSION } from '../data/balance';
 import { newState } from './engine';
-import { SKILLS, skillMasteryScale, LEGACY_MASTERY_TARGET } from '../data/skills';
+import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
 import { RANKS, RANK_LEGACY_NEED, rankIndex, rankState } from '../data/rank';
 import { OLD_GEAR_NAMES, RENAMED_GEAR, RENAMED_AFFIX, gearName } from '../data/maple-gear';
 /**
@@ -194,6 +194,13 @@ export function keepMasteredJobs(s: State) {
     s.masteryAligned = true;
     const kept = Object.entries(s.jobMastery || {}).filter(([id, n]) => LEGACY_MASTERY_TARGET[id] !== undefined && n >= LEGACY_MASTERY_TARGET[id] && n < (jobById(id)?.masteryTarget ?? Infinity)).map(([id]) => id);
     if (kept.length) { s.masteryKept = [...new Set([...(s.masteryKept || []), ...kept])]; addLog(s, `직업 숙달 목표가 올랐습니다. 이미 숙달한 직업 ${kept.length}개는 숙달로 남습니다.`, 'system'); }
+    // v3.77 스킬 숙련 기준 정리로 첫 단계가 오른 스킬: 예전 기준으로 이미 계승 자격이 있었으면 계승을 유지합니다.
+    let skills = 0;
+    for (const [id, old] of Object.entries(LEGACY_FIRST_MILESTONE)) {
+        const now = skillById(id)?.masteryMilestones?.[0] ?? 0, practice = s.skillPractice?.[id] || 0;
+        if (practice >= old && practice < now) { (s.legacyInherited ??= {})[id] = true; skills++; }
+    }
+    if (skills) addLog(s, `스킬 숙련 기준이 바뀌어, 이미 계승한 스킬 ${skills}개는 계승을 그대로 유지합니다.`, 'system');
     return kept.length;
 }
 /**

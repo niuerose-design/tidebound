@@ -33,16 +33,17 @@ test('SP inheritance is separate, costs one, and refund preserves natural inheri
  act(s,{type:'inheritSkill',id:'pierce'},0);s.skillPractice.pierce=masteryMilestonesFor(SKILLS.find(sk=>sk.id==='pierce'))[0];act(s,{type:'resetSkills'},0);
  assert.equal(s.sp,5);assert.equal(canUse(s,'pierce'),true);
 });
-test('Bone growth boundaries flip penalties and AP exactly at 2500/25000/125000 wins',()=>{
- const bone=SKILLS.find(sk=>sk.id==='boneLegacy');assert.deepEqual(masteryMilestonesFor(bone),[2500,25000,125000]);
- for(const [wins,lv,cost] of [[0,0,6],[2499,0,6],[2500,1,6],[24999,1,6],[25000,2,2],[124999,2,2],[125000,3,-3]]){
+// v3.77 제약형(AP를 돌려주는 스킬)은 천만 단위: 100만 · 1,000만 · 5,000만.
+test('Bone growth boundaries flip penalties and AP exactly at 1M/10M/50M wins',()=>{
+ const bone=SKILLS.find(sk=>sk.id==='boneLegacy');assert.deepEqual(masteryMilestonesFor(bone),[1e6,1e7,5e7]);
+ for(const [wins,lv,cost] of [[0,0,6],[999999,0,6],[1e6,1,6],[1e7-1,1,6],[1e7,2,2],[5e7-1,2,2],[5e7,3,-3]]){
   const natural=skillMasteryLevel(wins,bone.masteryMilestones);assert.equal(natural,lv);
   const fx=effectiveSkill(bone,1,natural);assert.equal(fx.cost,cost);if(lv<2)assert.ok(fx.bonus.hp<0&&fx.bonus.defense<0);else assert.ok(fx.bonus.hp>0&&fx.bonus.defense>0);
  }
  assert.deepEqual(effectiveSkill(bone,4,0),effectiveSkill(bone,1,3));assert.equal(maxSkillLevel(bone),3);
 });
 test('Negative AP works independent of priority and cannot be removed to overflow AP',()=>{
- const s=newState(0);s.level=30;s.learned={hook:1,pierce:1,focus:1,boneLegacy:1};s.skillInheritances={pierce:true,focus:true};s.skillPractice.boneLegacy=125000;
+ const s=newState(0);s.level=30;s.learned={hook:1,pierce:1,focus:1,boneLegacy:1};s.skillInheritances={pierce:true,focus:true};s.skillPractice.boneLegacy=5e7;
  s.skills=['hook','pierce','focus','boneLegacy'];assert.equal(apUsed(s),5);assert.equal(validLoadout(s,s.skills),true);
  trimLoadout(s);assert.equal(s.skills.length,4);assert.throws(()=>act(s,{type:'skill',id:'boneLegacy'},0));assert.equal(s.skills.length,4);
  act(s,{type:'skill',id:'pierce'},0);act(s,{type:'skill',id:'boneLegacy'},0);assert.ok(apUsed(s)<=apCapacity(s));
@@ -104,9 +105,9 @@ test('A bonus victory advances job and equipped skills once but codex by only on
  tick(s,()=>.5);assert.equal(s.book.grottoWarden,1);
 });
 test('A mastery level earned by this victory does not retroactively multiply its reward',()=>{
- const s=newState(0);s.level=25;s.job='bossNaturalist';s.learned.titanFieldNotes=1;s.skillPractice.titanFieldNotes=999;s.skills=['titanFieldNotes'];s.running=true;s.hp=stats(s).hp;
+ const s=newState(0);s.level=25;s.job='bossNaturalist';s.learned.titanFieldNotes=1;const first=masteryMilestonesFor(SKILLS.find(sk=>sk.id==='titanFieldNotes'))[0];s.skillPractice.titanFieldNotes=first-1;s.skills=['titanFieldNotes'];s.running=true;s.hp=stats(s).hp;
  s.enemy={id:'grottoWarden',name:'test boss',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};
- tick(s,()=>.5);assert.equal(s.skillPractice.titanFieldNotes,1002);assert.equal(s.jobMastery.bossNaturalist,3);assert.equal(victoryMastery(s,{id:'grottoWarden',boss:true}).amount,4);
+ tick(s,()=>.5);assert.equal(s.skillPractice.titanFieldNotes,first+2);assert.equal(s.jobMastery.bossNaturalist,3);assert.equal(victoryMastery(s,{id:'grottoWarden',boss:true}).amount,4);
 });
 test('Boss techniques unlock at native job mastery and SP cannot skip first acquisition',()=>{
  const s=newState(0);s.level=40;s.job='echoTamer';s.jobMastery.echoTamer=5999;s.sp=20;s.skills=['hook'];
@@ -127,7 +128,7 @@ test('Bone mastery relieves only the current job\'s negative multipliers',()=>{
  const jobHpFactor=st=>{const trace={};stats(st,trace);return (trace.hp||[]).filter(t=>t.source==='job'&&t.factor!==undefined).reduce((x,t)=>x*t.factor,1);};
  const s=newState(0);s.level=40;s.job='skeleton';s.learned.boneLegacy=1;s.skills=['boneLegacy'];
  const hp=JOBS.find(j=>j.id==='skeleton').hp;assert.ok(hp<1);
- for(const [wins,relief] of [[0,0],[2500,.15],[25000,.5],[125000,1]]){s.skillPractice.boneLegacy=wins;assert.ok(Math.abs(jobHpFactor(s)-(1-(1-hp)*(1-relief)))<1e-9,String(wins));}
+ for(const [wins,relief] of [[0,0],[1e6,.15],[1e7,.5],[5e7,1]]){s.skillPractice.boneLegacy=wins;assert.ok(Math.abs(jobHpFactor(s)-(1-(1-hp)*(1-relief)))<1e-9,String(wins));}
  // 장착하지 않으면 숙련만으로는 회복하지 않습니다.
  s.skills=[];assert.ok(Math.abs(jobHpFactor(s)-hp)<1e-9);
 });
@@ -140,9 +141,10 @@ test('v24 per-rebirth passives grow with rebirths up to the cap', () => {
  assert.ok(r10 > r0 && r30 > r10); assert.equal(r60, r30, 'rebirths beyond the cap add nothing');
 });
 
-test('v24 late-bloomer passives start expensive and pay off at 10k/100k/500k mastery (v27.95 5th-tier x25)', () => {
+test('v24 late-bloomer passives start expensive and pay off at three stages (v3.77 scaled to the 5th-tier curve)', () => {
  const sk = SKILLS.find(x => x.id === 'abyssalPatience');
- assert.deepEqual(masteryMilestonesFor(sk), [10000, 100000, 500000].map(n => n * 25));
+ // v3.77 스킬 숙련 기준: 5차 기본 곡선 마지막(375만)에 맞춰 같은 모양(1 : 10 : 50)으로 줄였습니다(옛 1,250만).
+ assert.deepEqual(masteryMilestonesFor(sk), [75000, 750000, 3800000]);
  const costs = [0, 1, 2, 3].map(lv => effectiveSkill(sk, 1, lv).cost), atk = [0, 1, 2, 3].map(lv => effectiveSkill(sk, 1, lv).bonus.attack);
  assert.deepEqual(costs, [8, 7, 5, 2]);
  for (let i = 1; i < 4; i++) assert.ok(atk[i] > atk[i - 1] * 1.8, `level ${i} pays off`);
@@ -168,13 +170,16 @@ test('v24 loadout priority moves only among skills of the same type', () => {
 });
 
 const H95 = await import('./harness.mjs');
+const SK95 = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('game/data/skills.js');
 test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-2 stay, old inheritance is kept', () => {
  const { JOBS: J, PROGRESSION: P, jobMasteryTarget: target, masteryMilestonesFor: ms, inherited: inh, migrateState: migrate, newState: fresh, act: doAct } = H95;
  assert.deepEqual(P.jobMasteryTierScale, [1, 1, 1, 3, 15, 50]); assert.deepEqual(P.skillMasteryTierScale, [1, 1, 1, 3, 10, 25]);
  // v3.77 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계(최대) × 40%(능력치 수련·해커는 따로).
- const own = id => SKILLS.filter(x => x.job === id && !x.song).map(x => ms(x).at(-1));
+ // v3.77 제약형 스킬(천만 단위)은 빼고, 제약형뿐인 직업은 차수 기본 곡선으로 셉니다.
+ const own = id => SKILLS.filter(x => x.job === id && !x.song), usual = id => own(id).filter(x => !SK95.isConstraintSkill(x)).map(x => ms(x).at(-1));
  for (const j of J.filter(j => j.tier >= 1 && !j.retired && own(j.id).length && !/Training[123]$|[hH]acker$/.test(j.id))) {
-  const want = Math.max(...own(j.id)) * .4, got = target(j); assert.ok(Math.abs(got - want) <= (want >= 10000 ? 500 : 50), `${j.id} ${got} vs ${want}`);
+  const lasts = usual(j.id).length ? usual(j.id) : [SK95.SKILL_TIER_CURVE[Math.min(5, j.tier)].at(-1)];
+  const want = Math.max(...lasts) * .4, got = target(j); assert.ok(Math.abs(got - want) <= (want >= 10000 ? 500 : 50), `${j.id} ${got} vs ${want}`);
  }
  for (const j of J.filter(j => j.tier === 5)) if (j.parent) assert.ok(j.mastery >= target(j.parent), `${j.id} needs the parent mastered`);
  const t5 = SKILLS.find(x => J.find(j => j.id === x.job)?.tier === 5 && ms(x).length === 4);
