@@ -24,3 +24,25 @@ test('v3.61 roles: lineage assignments follow the plan (§11.6-1), with job-leve
     for (const [id, want] of [['coralSaint', 'healer'], ['reefBrawler', 'drain'], ['clockworkAngler', 'physical'], ['allRounder', 'physical'], ['codexReader', 'utility'], ['poorMonk', 'reflect'], ['fallenAngler', 'drain'], ['clockmaker', 'border']])
         if (JOBS.some(j => j.id === id)) assert.equal(sub(id), want, id);
 });
+
+test('v3.75 role-unique effects stay with their role (docs/concept.md 11.3): swarm/thorns tanks, DoT boosts status dealers, gold/exp/drop buffers, heal actives healers, dealers own at most one control active', async () => {
+    const { JOBS, lineageOf } = await load('data/classes'), { SKILLS } = await load('data/skills'), { subRoleOf, roleOf } = await load('data/roles');
+    // 의도한 예외: 아이돌 연습생(힐러도 버퍼라 경험치 강점) · 제로(역할 경계 직업) · 수련 직업(계승 재료).
+    const ALLOW = new Set(['harmonics', 'rewind']);
+    const CAT = [
+        { keys: ['swarmFind', 'thorns'], ok: (sub, role) => role === 'tank' },
+        { keys: ['dotBonus', 'bleedBonus', 'poisonBonus', 'burnBonus', 'dotTurnsBonus', 'poisonStackBonus'], ok: sub => sub === 'status' },
+        { keys: ['goldBonus', 'expBonus', 'dropBonus', 'variantFind', 'goldenFind', 'rebirthBonus', 'dungeonGoldBonus'], ok: sub => sub === 'utility' },
+    ];
+    const bad = [];
+    for (const j of JOBS.filter(j => !j.retired && j.subRole !== 'training' && j.id !== 'fisher')) {
+        const sub = subRoleOf(j, lineageOf(j)), role = roleOf(sub), own = SKILLS.filter(sk => sk.job === j.id && !ALLOW.has(sk.id));
+        for (const sk of own) {
+            const b = { ...(sk.bonus || {}), ...(sk.levelEffects?.at(-1)?.bonus || {}) };
+            for (const c of CAT) if (c.keys.some(k => (b[k] || 0) > 0) && !c.ok(sub, role)) bad.push(`${j.id}/${sk.id}`);
+            if (sk.type === 'active' && sk.effect === 'heal' && sub !== 'healer') bad.push(`${j.id}/${sk.id} heal`);
+        }
+        if (role === 'dealer' && own.filter(sk => sk.type === 'active' && ['stun', 'slow', 'silence'].includes(sk.effect)).length > 1) bad.push(`${j.id} control×2+`);
+    }
+    assert.deepEqual(bad, []);
+});
