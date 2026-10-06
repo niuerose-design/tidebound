@@ -8,7 +8,7 @@ const { load } = loadGame();
 const { newState } = await load('systems/engine'), { stats, power, dropRate } = await load('systems/stats');
 const { RARITIES } = await load('data/balance'), Ec = await load('data/economy'), { ONYX } = await load('data/onyx');
 const { starMultiplier } = await load('data/starforce'), { rarityShareFrom } = await load('systems/encounter'), { gearName } = await load('data/maple-gear');
-const { rollAffixes } = await load('data/gear'), C = await load('systems/commerce');
+const { rollAffixes, refineOption } = await load('data/gear'), C = await load('systems/commerce');
 
 const KILLS_PER_HOUR = 1730, SAMPLES = 240, SLOTS = ['rod', 'coat', 'charm', 'cape'];
 const fmt = v => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
@@ -17,7 +17,9 @@ console.log(`등급 배율 ${RARITIES.map(r => `${r.name}×${r.factor}`).join(' 
 // 1. 장비 몫: Lv.100 · 환생 200 · 치명타 약 100%(행운 300, 키운 캐릭터 기준) 캐릭터에 같은 종류 Lv.100 장비 4부위를 끼운 전투력(v3.66 실제 전투식) ÷ 장비 없음. kind가 있으면 계승 장비(유물·원시 고대·계승 태초) 위력 공식.
 const body = () => { const s = newState(0); s.level = 100; s.rebirths = 200; s.statPoints = 0; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 300 }; Object.assign(s.permanent, { attack: 200, hp: 200, guard: 100, magicGuard: 100 }); s.equipment = { rod: null, coat: null, charm: null, cape: null }; return s; };
 const naked = power(stats(body())), rng = random(3);
-const piece = (slot, rarity, star, kind, rb) => { const pw = kind ? Ec.heirPower(kind, rb, 100) : Math.round(102 * RARITIES[rarity].factor), style = slot === 'rod' ? 'physical' : 'balanced'; return { id: slot + rarity, slot, style, rarity, power: pw, level: 100, enhance: star, name: gearName(slot, rarity, style), affixes: rollAffixes(rarity, pw, undefined, rng, [], slot, 100) }; };
+// 원시 고대 · 계승 태초는 계승할 때 옵션이 최고 굴림으로 고정되므로 그대로 잽니다(유물은 이식 옵션이라 굴린 그대로).
+const heirMax = (kind, affixes, pw, rarity) => kind === 'ancient' || kind === 'primal' ? affixes.map(x => refineOption(x, pw, rarity, () => 1, 100)) : affixes;
+const piece = (slot, rarity, star, kind, rb) => { const pw = kind ? Ec.heirPower(kind, rb, 100) : Math.round(102 * RARITIES[rarity].factor), style = slot === 'rod' ? 'physical' : 'balanced'; return { id: slot + rarity, slot, style, rarity, power: pw, level: 100, enhance: star, name: gearName(slot, rarity, style), affixes: heirMax(kind, rollAffixes(rarity, pw, undefined, rng, [], slot, 100), pw, rarity) }; };
 const share = (rarity, star, kind, rb = 200) => { let sum = 0; for (let k = 0; k < SAMPLES; k++) { const s = body(); for (const slot of SLOTS) s.equipment[slot] = piece(slot, rarity, star, kind, rb); sum += power(stats(s)) / naked; } return sum / SAMPLES; };
 const tier = {};
 for (const star of [0, 22]) {
@@ -25,7 +27,7 @@ for (const star of [0, 22]) {
     for (let r = 1; r < RARITIES.length; r++) { tier[`${r}:${star}`] = share(r, star); row.push(`${RARITIES[r].name} ×${tier[`${r}:${star}`].toFixed(2)}`); }
     console.log(`장비 몫(장비 없음 대비, ${star}성 4부위): ${row.join(' · ')}`);
 }
-// 2. 계승 장비(22성 4부위)와 칠흑. 유물은 전설 등급 옵션, 원시 고대·계승 태초는 각 등급 옵션으로 어림합니다(실제로는 이식·최고 굴림이라 조금 더 높음).
+// 2. 계승 장비(22성 4부위)와 칠흑. 유물은 전설 등급 옵션(굴린 그대로), 원시 고대·계승 태초는 각 등급 옵션의 최고 굴림입니다.
 const heir = {};
 for (const [kind, rarity, name] of [['relic', 3, '유물'], ['ancient', 5, '원시 고대'], ['primal', 6, '계승 태초']]) {
     heir[kind] = [0, 100, 200].map(rb => share(rarity, 22, kind, rb));
@@ -43,12 +45,12 @@ for (const rb of [0, 100, 200]) { const s = newState(0); s.level = 100; s.rebirt
 console.log('칠흑 장신구: 기대 약 18일 · 최장 약 31일(data/onyx.ts 머리 주석, 서식지 방치 기준)');
 
 // 사다리(docs/gear-endgame.md 7절, v3.66 전투력 기준): 0성·22성 모두 전설 < 신화 < 고대 < 태초, 유물(환생 200)은 신화와 고대 사이,
-// 원시 고대(환생 200)는 신화의 1.4~1.8배, 계승 태초(환생 200)는 신화의 1.9~2.5배(v3.71 고대 이상 전용 옵션으로 상위 격차가 조금 커짐). 계승 장비는 환생할수록 강해집니다.
+// 원시 고대(환생 200)는 신화의 1.55~1.9배, 계승 태초(환생 200)는 신화의 2.25~2.75배(계승 옵션 최고 굴림으로 잼, v3.77 기준 ×1.73 · ×2.50). 계승 장비는 환생할수록 강해집니다.
 const t22 = r => tier[`${r}:22`], myth = t22(4);
 for (const star of [0, 22]) { const t = r => tier[`${r}:${star}`]; assert.ok(t(3) < t(4) && t(4) < t(5) && t(5) < t(6), `${star}성 등급 순서: ${[3, 4, 5, 6].map(t).map(x => x.toFixed(2))}`); }
 assert.ok(heir.relic[2] > myth && heir.relic[2] < t22(5), `유물(환생 200) ×${heir.relic[2].toFixed(2)}이 신화(×${myth.toFixed(2)})·고대(×${t22(5).toFixed(2)}) 사이 밖`);
-assert.ok(heir.ancient[2] / myth >= 1.4 && heir.ancient[2] / myth <= 1.8, `원시 고대(환생 200) 신화의 ${(heir.ancient[2] / myth).toFixed(2)}배`);
-assert.ok(heir.primal[2] / myth >= 1.9 && heir.primal[2] / myth <= 2.5, `계승 태초(환생 200) 신화의 ${(heir.primal[2] / myth).toFixed(2)}배`);
+assert.ok(heir.ancient[2] / myth >= 1.55 && heir.ancient[2] / myth <= 1.9, `원시 고대(환생 200) 신화의 ${(heir.ancient[2] / myth).toFixed(2)}배`);
+assert.ok(heir.primal[2] / myth >= 2.25 && heir.primal[2] / myth <= 2.75, `계승 태초(환생 200) 신화의 ${(heir.primal[2] / myth).toFixed(2)}배`);
 for (const k of ['relic', 'ancient', 'primal']) assert.ok(heir[k][0] < heir[k][1] && heir[k][1] < heir[k][2], `${k} 환생 성장`);
 console.log(`신화 대비(환생 200): 유물 ×${(heir.relic[2] / myth).toFixed(2)} · 원시 고대 ×${(heir.ancient[2] / myth).toFixed(2)} · 계승 태초 ×${(heir.primal[2] / myth).toFixed(2)}`);
 // v3.67 난이도·던전(나이트메어 200 · 무릉 깊은 층)에서도 태초는 칠흑 범위: 태초 등급의 난이도 가중은 ODDS.drop.primalTierCap에서 멈춥니다.
