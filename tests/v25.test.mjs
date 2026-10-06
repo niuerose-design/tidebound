@@ -1085,6 +1085,11 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
         Alt.invalidateAltar();
         const info = await Alt.altarInfo('p1', a, now + 5); const ib = info.raids.find(x => x.id === 'balrog');
         assert.ok(ib && ib.slain && ib.participants === 2 && ib.board[0].dealt >= ib.board[1].dealt && ib.slayer === '둘째'); assert.ok(info.raids.some(x => x.id === 'zakum' && x.alive));
+        // v3.84 순위의 최근 도전 기록: 요약(출처별 피해 합 = 그 도전의 피해 이상, 넘친 피해 포함)과 전투 기록을 다른 모험가도 봅니다.
+        const p1Row = ib.board.find(x => x.name === '첫째'); assert.ok(p1Row.last && p1Row.last.dealt === r1.dealt && p1Row.last.turns > 0 && p1Row.last.sources.length > 0, 'board carries the latest challenge summary');
+        assert.ok(p1Row.last.sources.reduce((n, x) => n + x.value, 0) >= r1.dealt, 'sources add up to the damage');
+        const logView = await Alt.raidLog('balrog', p1Row.rank, now + 5); assert.equal(logView.name, '첫째'); assert.ok(logView.logs.length > 0 && logView.logs.length <= A.RAID.logLines, 'logs are readable by anyone');
+        await assert.rejects(Alt.raidLog('balrog', 99, now + 5), /순위/);
         const zakumGauge = info.gauges.find(g => g.id === 'zakum'), balrogGauge = info.gauges.find(g => g.id === 'balrog');
         assert.ok(/대기/.test(balrogGauge.next) && !/대기/.test(zakumGauge.next), 'respawn wait only on the slain boss');
         const gold = a.gold, pearls = a.pearls; Alt.invalidateAltar(); await Alt.syncAltarStatus(a, now + 10, 'p1');
@@ -1444,7 +1449,7 @@ test('v3.21 difficulty exp and gold bend to √ above difficulty 30', async () =
     assert.ok(M.tierExp(200) < 31 && M.tierReward(200) < 36, 'no runaway with the difficulty cap');
 });
 
-test('v3.84 altar: a blessing re-opens by itself when the gauge already holds the next cost (no extra offering needed)', async () => {
+test('v3.85 altar: a blessing re-opens by itself when the gauge already holds the next cost (no extra offering needed)', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), A = await L.load('data/altar');
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const file = path.join(os.tmpdir(), `tb-bless-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;

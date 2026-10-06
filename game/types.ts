@@ -432,6 +432,8 @@ export type State = {
     masteryKept?: string[];
     /** v3.80 위 숙달 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     masteryAligned?: boolean;
+    /** v3.84 관통 장비 옵션 ×2를 지금 가진 장비에 이미 적용한 세이브(새 세이브는 처음부터 true). */
+    penetrationBoosted?: boolean;
     /** v3.19 계급장 필요 처치 재조정(강등 시 특전 되돌리기)을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     rankRescaled?: boolean;
     jobMastery: Record<string, number>;

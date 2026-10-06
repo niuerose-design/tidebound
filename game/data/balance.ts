@@ -60,6 +60,20 @@ export function bossLevelScale(level: number) {
     return { hp: 2.1 + (MONSTER_TUNING.bossMultiplier - 2.1) * growth, attack: 1.2 + .25 * growth, magic: 1.08 + .17 * growth };
 }
 /** v27.30 던전 적 압박: 같은 레벨 사냥터보다 단단하게(체력 1.3~1.62배, 공격 1.12~1.32배, 방어 1.08~1.24배). */
+/**
+ * v3.84 방어 관통 개편(docs/concept.md 11.9): 출처끼리 곱연산(남은 방어의 x%를 무시)으로 합치고 60% 상한을 없앴습니다. 스킬 보너스까지 합친 상한은 85%(cap):
+ * 100%면 방어가 0이 되어 아무리 단단한 보스도 그대로 뚫리므로, 방어 15,000도 2.2%만 들어가게 남깁니다. 능력치 관통만으로는 풀세팅 약 75%라 성장 구간에서는 막히지 않습니다.
+ * 곱연산이라 1에 닿지 않아 출처를 더할 때마다 피해가 거의 일정하게 늘어납니다. 장비는 부위마다 한 출처입니다. 스킬 관통 보너스는 그 위에 더합니다(예전과 같음).
+ * 피해식(공격 대비 B안)을 바꾸더라도 관통은 '방어 × (1 − 관통)'으로 그대로 쓸 수 있습니다.
+ */
+export const PENETRATION = { cap: .85, researchPerRank: .03, gearScale: 2 } as const;
+/** 관통 두 값을 곱연산으로 합칩니다(음수는 그대로 빼서 손해 옵션도 반영). */
+export const stackPenetration = (a: number, b: number) => b >= 0 ? 1 - (1 - a) * (1 - Math.min(1, b)) : a + b;
+/**
+ * v3.84 보스 피해(bossDamage, 보스 · 사냥감에게 주는 직접 피해): 출처(장비 부위 · 칠흑 세트 · 칠흑 규칙)끼리 곱연산.
+ * 하나하나는 작지만 모을수록 보스전에서 크게 붙습니다. 지속 피해(출혈 · 중독 · 화상)에는 붙지 않습니다(틱은 보정 전 위력 기준).
+ */
+export const stackBossDamage = (a: number, b: number) => b >= 0 ? (1 + a) * (1 + b) - 1 : a + b;
 export function dungeonPressure(wave: number) {
     const index = Math.max(0, Math.min(4, wave));
     return { hp: 1.3 + index * .08, attack: 1.12 + index * .05, defense: 1.08 + index * .04 };

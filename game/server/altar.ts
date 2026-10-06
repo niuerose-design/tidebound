@@ -16,8 +16,9 @@ import { weekKey } from '../data/goals';
 import { kstIso } from '../data/time';
 import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
-import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot } from '../systems/duel';
-import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
+import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot, raidBreakdown } from '../systems/duel';
+import { jobById } from '../data/classes';
+import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, type RaidHitSummary, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
 
 type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[]; allTime: AltarTotalRow[]; raids: Record<string, AltarRaidRow> };
 /** 진행 중인 축복의 단계(끝났으면 0). */
@@ -80,14 +81,14 @@ async function shared(now: number, force = false): Promise<Shared> {
     // v27.91 떠날 시각이 지난 월드보스는 보내고, 소환 게이지가 찼으면 새로 부릅니다.
     for (const r of raidRows) if (r.state === 'alive' && r.until < now && await database.expireAltarRaid(r.id, now)) { await announce(`월드보스 ${josa(raidById(r.id)?.name || r.id, '이가')} 떠났습니다.`, now); return shared(now, true); }
     if (await trySummonRaid(raids, map, now)) return shared(now, true);
-    // v3.84 축복이 끝났거나 단계가 내려와도 이미 쌓인 기여도가 비용 이상이면 바로 다음 단계로 엽니다(바치기를 기다리지 않음).
+    // v3.85 축복이 끝났거나 단계가 내려와도 이미 쌓인 기여도가 비용 이상이면 바로 다음 단계로 엽니다(바치기를 기다리지 않음).
     for (const b of BLESSINGS) { const live = liveLevel(map[b.id], now); if ((map[b.id]?.points || 0) >= gaugeCost(b.id, live, live > 0) && await levelBlessing(b, now, '쌓여 있던 공물로')) return shared(now, true); }
     return cache = { at: now, week, altar, gauges: map, board, allTime, raids };
 }
 export const invalidateAltar = () => { cache = null; };
 /**
  * v3.25 해킹 V 백도어: 게이지를 조금 채웁니다(기여 순위·합계에는 넣지 않음). 신·월드보스 게이지가 차면 바로 깨어나고,
- * v3.84 축복 게이지도 비용만큼 찼으면 바로 단계가 오릅니다.
+ * v3.85 축복 게이지도 비용만큼 찼으면 바로 단계가 오릅니다.
  */
 export async function backdoorGauge(gauge: AltarGaugeId, points: number, now: number) {
     await db().addAltarGauge(gauge, points);
@@ -129,6 +130,20 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
         raids: (await Promise.all(RAIDS.map(r => raidInfo(sh.raids[r.id], id, now)))).filter((x): x is AltarRaidInfo => !!x),
     };
 }
+const parseSummary = (text: string): RaidHitSummary | null => { try { const v = JSON.parse(text) as RaidHitSummary; return v && typeof v.dealt === 'number' ? v : null; } catch { return null; } };
+/** v3.84 피해 순위 rank위 모험가의 가장 최근 도전 기록(요약 + 전투 기록). 지금 떠 있거나 방금 격파된 그 보스의 세대만 봅니다. */
+export async function raidLog(raidId: string, rank: number, now: number) {
+    const r = (await shared(now)).raids[raidId], raid = raidById(raidId);
+    if (!r || !raid || r.gen <= 0) throw new ApiError('그 월드보스 기록이 없습니다.');
+    const n = Math.floor(rank);
+    if (!(n >= 1 && n <= RAID.boardSize)) throw new ApiError('순위를 확인하세요.');
+    const database = db(), hit = (await database.listRaidHits(r.gen, RAID.boardSize))[n - 1];
+    if (!hit) throw new ApiError('그 순위의 기록이 없습니다.');
+    const row = await database.getRaidLog(r.gen, hit.player_id);
+    let logs: string[] = [];
+    try { logs = row ? JSON.parse(row.logs) as string[] : []; } catch { logs = []; }
+    return { raid: raid.name, rank: n, name: hit.name, dealt: hit.dealt, hits: hit.hits, last: row ? parseSummary(row.summary) : null, logs: Array.isArray(logs) ? logs.slice(-RAID.logLines).map(String) : [] };
+}
 /** v27.91 월드보스 카드 정보: 공유 체력·남은 시간·참여자 수·피해 순위·내 기록. 보스가 없거나 떠났으면 null, 격파된 보스는 다음 보스가 올 때까지 결과로 남습니다. */
 async function raidInfo(r: AltarRaidRow | undefined, id: string, now: number): Promise<AltarRaidInfo | null> {
     const raid = r && raidById(r.id);
@@ -136,12 +151,14 @@ async function raidInfo(r: AltarRaidRow | undefined, id: string, now: number): P
     const database = db(), alive = raidAlive(r, now), slain = r.state === 'slain';
     if (!alive && !slain) return null;
     const [hits, participants, mine, slayerHit] = await Promise.all([database.listRaidHits(r.gen, RAID.boardSize), database.countRaidHits(r.gen), database.getRaidHit(r.gen, id), r.slayer ? database.getRaidHit(r.gen, r.slayer) : null]);
+    // v3.84 순위에 있는 모험가의 가장 최근 도전 요약(전투 기록 본문은 raidLog로 따로).
+    const summaries = new Map((await database.listRaidSummaries(r.gen, hits.map(h => h.player_id))).map(x => [x.player_id, parseSummary(x.summary)]));
     const rank = mine ? await database.countRaidAbove(r.gen, mine.dealt) + 1 : 0;
     const snap = raidBossSnapshot(raid);
     return {
         id: raid.id, gen: r.gen, name: raid.name, level: raid.level, alive, slain, hp: Math.max(0, r.hp), hpMax: r.hp_max || raid.stats.hp, attack: raid.stats.attack, defense: raid.stats.defense, power: snap.power, until: r.until,
         participants, slayer: slayerHit?.name || '',
-        board: hits.map((h, i) => ({ rank: i + 1, name: h.name, dealt: h.dealt, hits: h.hits, self: h.player_id === id })), me: { dealt: mine?.dealt || 0, hits: mine?.hits || 0, rank },
+        board: hits.map((h, i) => ({ rank: i + 1, name: h.name, dealt: h.dealt, hits: h.hits, self: h.player_id === id, ...(summaries.get(h.player_id) ? { last: summaries.get(h.player_id)! } : {}) })), me: { dealt: mine?.dealt || 0, hits: mine?.hits || 0, rank },
         reward: raid.reward, slayerBonus: raid.slayer,
     };
 }
@@ -163,6 +180,9 @@ export function makeRaid(id: string, raidId: string) {
             const database = db(), remaining = await database.hitAltarRaid(raidId, r.gen, dealt);
             if (remaining === null) throw new ApiError('월드보스가 방금 떠났거나 쓰러졌습니다.');
             await database.bumpRaidHit(r.gen, id, s.name, dealt, now);
+            // v3.84 가장 최근 도전 기록(피해 순위에서 다른 모험가도 봄): 출처별 피해 요약 + 전투 기록 끝 RAID.logLines줄.
+            const summary: RaidHitSummary = { at: now, dealt, turns: result.turns, died: result.playerHp <= 0, job: jobById(s.job)?.name || s.job, power: me.power, sources: raidBreakdown(result, me.name) };
+            await database.putRaidLog(r.gen, id, JSON.stringify(summary), JSON.stringify(result.logs.slice(-RAID.logLines)), now);
             const slain = remaining <= 0; let slayer = false;
             if (slain) {
                 slayer = await database.slayAltarRaid(raidId, r.gen, id, s.name, now);
@@ -207,7 +227,7 @@ export function applyOffering(s: State, o: Offering, points: number, gauge: Alta
 }
 /**
  * 축복 게이지가 한 칸 찰 때마다: 닫혀 있으면 1단계로 열고, 진행 중이면 단계 +1. 올렸으면 소식을 냅니다.
- * v3.84 바치기 뒤뿐 아니라 공용 정보를 읽을 때도 부릅니다. 축복이 끝나거나(0단계) 상위 단계가 3단계로 내려와 비용이 바뀌었을 때
+ * v3.85 바치기 뒤뿐 아니라 공용 정보를 읽을 때도 부릅니다. 축복이 끝나거나(0단계) 상위 단계가 3단계로 내려와 비용이 바뀌었을 때
  * 이미 쌓인 기여도가 충분하면 누가 1이라도 더 바치지 않아도 바로 열립니다. 조건부 UPDATE라 여러 인스턴스가 동시에 불러도 한 번만 오릅니다.
  */
 async function levelBlessing(b: typeof BLESSINGS[number], now: number, by: string) {
