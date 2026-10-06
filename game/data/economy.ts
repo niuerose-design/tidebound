@@ -17,8 +17,10 @@ export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];
  * v3.58 10^(환생 / 60)은 환생 200에서 ×2,150으로 골드 수입(환생 30 → 200에 약 12배)을 크게 앞질러 후반 감정이 사실상 막혔습니다.
  * v3.68 예전 배율과 직선 1 + 환생 × perRebirth 중 낮은 쪽: 환생 100까지는 예전 그대로(어느 구간도 비싸지지 않음), 그 위로는 직선(환생 200 ×91).
  * 감정 태초 기대 비용이 환생 100 이상에서도 그 구간 시간당 골드의 약 5일분(사냥 태초와 비슷)으로 남습니다.
+ * v3.80 예전 배율의 scale 60 → 30: 환생 30~100 구간이 수입보다 싸서(환생 60 태초 기대가 수입 약 1일분) 뽑기 태초로 계승 태초를 빨리 만들 수 있었습니다.
+ * 이제 약 환생 38부터 직선(환생 30 ×10 · 60 ×28 · 100 ×46 · 200 ×91)이라 환생 60~200에서 태초 기대가 수입의 약 5일분입니다. 환생 100 이상은 그대로입니다.
  */
-export const APPRAISAL_REBIRTH = { scale: 60, perRebirth: .45 };
+export const APPRAISAL_REBIRTH = { scale: 30, perRebirth: .45 };
 export const appraisalRebirthFactor = (rebirths: number) => { const r = Math.max(0, rebirths); return Math.min(Math.pow(10, r / APPRAISAL_REBIRTH.scale), 1 + r * APPRAISAL_REBIRTH.perRebirth); };
 /** v3.58 각인 감정: 고른 옵션 하나가 반드시 붙습니다. 골드는 감정 × goldMultiplier, 정수 essence가 더 듭니다. */
 export const IMPRINT_APPRAISAL = { goldMultiplier: 5, essence: 50 };
