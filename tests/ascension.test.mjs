@@ -1,6 +1,6 @@
 // v3.31 승천 · 환생 200회 상한 · 까미 확률 상한 · 행운의 편지 10단계(docs/balance-rebirth.md 8·9·11·13·14절).
 // 공유 난수를 쓰지 않습니다(직접 만든 난수만). run.mjs 맨 끝에 둡니다.
-import { newState, act, advance, rebirthLevel, expMultiplier, assert, test } from './harness.mjs';
+import { newState, act, advance, rebirthLevel, expMultiplier, JOBS, assert, test } from './harness.mjs';
 const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
 const Asc = await L.load('data/ascension'), Mi = await L.load('data/mimic'), Lc = await L.load('systems/actions/lifecycle');
 const P = await L.load('systems/progression'), LT = await L.load('data/long-term'), V = await L.load('systems/vows'), Sp = await L.load('data/sprout');
@@ -60,8 +60,21 @@ test('v3.31 refinement and limit-break progress restart from the ascension base;
     const s = { skillPractice: { hook: last + 40_000 }, refineBase: { hook: last + 40_000 } };
     assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 0, 'refinement back to 0');
     assert.equal(P.refinePractice({ skillPractice: { hook: last + 40_000 } }, 'hook'), last + 40_000, 'no base → unchanged');
-    s.skillPractice.hook += 5_000; assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 1, 'first step after 5k more');
+    // v3.71 극한돌파(옛 연마): 한계돌파 마지막 숙련(마지막 단계 × 8) 위로 5,000부터.
+    s.skillPractice.hook += last * 7 + 4_999; assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 0, 'not before the last limit-break practice + 5k');
+    s.skillPractice.hook += 1; assert.equal(LT.thresholdRank(P.refinePractice(s, 'hook'), targets), 1, 'first step after 5k more');
     assert.equal(P.skillMasteryLevel(s.skillPractice.hook, P.masteryMilestonesFor(sk)), P.masteryMilestonesFor(sk).length, 'growth level kept');
+});
+
+test('v3.71 extreme break (old refinement) counts only after all three limit breaks; requirement labels use thousands separators', () => {
+    const sk = skillById('hook'), max = P.maxSkillLevel(sk), targets = P.skillRefinementTargets(sk), far = targets.at(-1);
+    const plain = P.effectiveSkill(sk, 1, max, 0).multiplier;
+    assert.equal(P.effectiveSkill(sk, 1, max, far).multiplier, plain, 'no limit break: no extreme break bonus');
+    assert.equal(P.effectiveSkill(sk, 1, max + 2, far).multiplier, P.effectiveSkill(sk, 1, max + 2, 0).multiplier, 'two limit breaks: still none');
+    const lb3 = P.effectiveSkill(sk, 1, max + 3, 0).multiplier;
+    assert.ok(Math.abs(P.effectiveSkill(sk, 1, max + 3, far).multiplier / lb3 - (1 + targets.length * LT.REFINEMENT_STEP_BONUS)) < 1e-9, 'all three: +0.8% per step');
+    const j = JOBS.find(x => x.id === 'strTraining1'), s = newState(0);
+    assert.ok(P.jobRequirements(s, j).some(r => r.label.endsWith('숙련 1,000,000')), 'parent mastery shown as 1,000,000');
 });
 
 test('v3.31 ascended effects: no sprout, ×2 early exp, vow and random-game bonus ×1.2 per ascension, mastery ×(1+n)', () => {
