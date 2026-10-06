@@ -22,7 +22,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
     const base = gradeTotal(h.grade), need = gradeNeed(h.grade), into = Math.max(0, h.exp - base);
     const [convert, setConvert] = useState<{ id: 'sp' | 'pearls'; n: string }>({ id: 'pearls', n: '10' });
     const [guess, setGuess] = useState(''), [message, setMessage] = useState(''), [target, setTarget] = useState('');
-    const infil = h.infil, next = HACKER.tiers[h.tier], n = h.tier;
+    const infil = h.infil, next = HACKER.tiers[h.tier], n = h.tier, leaks = h.leaks || [];
     const run = (id: string, value?: string) => send({ type: 'hackRun', id, ...(value !== undefined ? { value } : {}) }, '/api/hack');
     const events = s.hackFeed?.events || [], feedDown = s.hackFeed?.down || [];
     const [tamper, setTamper] = useState({ id: '', time: '+', rate: '+' }), [place, setPlace] = useState(PLACES[0].value), [gauge, setGauge] = useState(GAUGES[0].id), [restore, setRestore] = useState('');
@@ -169,6 +169,13 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
             {!!feedDown.length && <p className="footnote">지금 다운된 곳: {feedDown.map(d => `${placeLabel(d.kind, d.id)}(${d.by}, ${Math.ceil((d.until - now) / 60000)}분${d.patched ? ' · 패치됨' : ''})`).join(' · ')}</p>}
         </section>
 
+        {/* v3.56 정보 해킹: 서버가 데이터에서 만든 비밀 조각 하나(드롭·확률 · 출현 가중치 · 히든 직업 조건). 퍼뜨리기는 방송 탈취·채팅으로. */}
+        {n >= 1 && <section className="panel hacker-section hacker-leaks">
+            <div className="section-title"><h2>정보 해킹</h2><span>알아낸 정보 {leaks.length}개 · 최근 {HACKER.leak.keep}개까지 보관</span></div>
+            <p className="footnote">서버 깊은 곳에서 아직 모르는 비밀 하나를 빼냅니다: 장비 드롭·등급·까미·누리·칠흑·변종·감정 확률, 희귀 몬스터 출현 가중치, 히든 직업의 전직 조건이나 문 조건. 퍼뜨릴지는 해커가 정합니다(방송 탈취·채팅). 비트 {cost(HACKER.leak.bits)} · 오늘 {used.leak || 0}/{cap2(HACKER.leak.perDay(n))}</p>
+            <button className="primary" disabled={busy || !isHacker || busted || (used.leak || 0) >= cap2(HACKER.leak.perDay(n)) || h.bits < cost(HACKER.leak.bits)} onClick={() => run('leak')}>정보 해킹</button>
+            {leaks.length > 0 && <ul className="hack-leaks">{leaks.map(l => <li key={l.id}><span>{l.text}</span><button type="button" className="text-button" title="복사해서 채팅에 붙여 넣을 수 있습니다" onClick={() => { try { void navigator.clipboard?.writeText(l.text); } catch { /* 복사 불가 */ } }}>복사</button></li>)}</ul>}
+        </section>}
         <section className="panel hacker-section">
             <div className="section-title"><h2>프로그램</h2><span>메모리 {memoryUsed(loadout)} / {mem} · 권한 등급 5마다 +1</span></div>
             <p className="footnote">비트로 한 번 설치하면 영구입니다. 메모리 한도 안에서 장착한 프로그램만 해커 계열일 때 작동합니다.</p>

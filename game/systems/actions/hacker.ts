@@ -8,6 +8,7 @@ import { BLESSINGS, RAIDS } from '../../data/altar';
 import { crewNote, entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn, isBlackHacker, crewOn } from '../hacker';
 import { dayKey, weekKey } from '../../data/goals';
 import { addLog } from '../state';
+import { leakPool } from '../../secret/leaks';
 
 const needHacker = (s: Parameters<ActionHandlers[string]>[0]) => { if (!isHacker(s)) throw Error('해커 직업일 때만 할 수 있습니다.'); };
 export const BROADCAST_PATTERN = /^[^\n\r<>]{1,40}$/;
@@ -296,6 +297,19 @@ export const hackerActions: ActionHandlers = {
             daily('restore', HACKER.white.restore.perDay(n), '해킹 되돌리기'); pay(HACKER.white.restore.bits);
             h.pending = { kind: 'restore', value, minutes: 0 };
             gainHacker(s, 0, HACKER.white.restore.exp); bumpSeason(s, now, { restores: 1 });
+            return;
+        }
+        if (id === 'leak') {
+            // v3.56 정보 해킹: 아직 모르는 비밀 조각 하나. 화이트 해커도 씁니다(공격 해킹이 아님).
+            need(HACK_TIER.leak);
+            const pool = leakPool(s, new Set((h.leaks || []).map(l => l.id)));
+            if (!pool.length) throw Error('더 알아낼 정보가 없습니다.');
+            daily('leak', HACKER.leak.perDay(n), '정보 해킹'); pay(HACKER.leak.bits);
+            if (busted()) return;
+            const pick = pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
+            h.leaks = [{ ...pick, at: now }, ...(h.leaks || [])].slice(0, HACKER.leak.keep);
+            gainHacker(s, 0, HACKER.leak.exp); bumpSeason(s, now, { hacks: 1 });
+            addLog(s, `정보 해킹 · ${pick.text}`, 'reward');
             return;
         }
         if (id === 'patch') {
