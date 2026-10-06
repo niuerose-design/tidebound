@@ -300,7 +300,7 @@ export const hackerActions: ActionHandlers = {
             return;
         }
         if (id === 'leak') {
-            // v3.56 정보 해킹: 아직 모르는 비밀 조각 하나. 화이트 해커도 씁니다(공격 해킹이 아님).
+            // v3.57 정보 해킹: 아직 모르는 비밀 조각 하나. 화이트 해커도 씁니다(공격 해킹이 아님).
             need(HACK_TIER.leak);
             const pool = leakPool(s, new Set((h.leaks || []).map(l => l.id)));
             if (!pool.length) throw Error('더 알아낼 정보가 없습니다.');

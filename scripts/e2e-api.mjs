@@ -28,7 +28,7 @@ assert.equal(data.state.version, 8); assert.equal(data.state.name, '테스터까
 assert.equal(data.catalog?.secret, false, 'v3.43 catalog rides with the game response (secrecy off by default)'); assert.ok(data.catalog.doors?.discovery?.length, 'v3.44 door states come from the server');
 assert.equal(data.catalog.skills?.length, 67, 'v3.47 secret-job skills come through the catalog (all of them while secrecy is off)');
 assert.ok(data.catalog.odds?.drop?.chance > 0, 'v3.52 drop odds come through the catalog while secrecy is off');
-assert.ok(Object.keys(data.catalog.stageAvg || {}).length > 10, 'v3.54 per-stage reward averages ride with the catalog');
+assert.ok(Object.keys(data.catalog.stageAvg || {}).length > 10, 'v3.55 per-stage reward averages ride with the catalog');
 ({ data } = await call('/api/game', { type: 'start' }, { expect: 200 }));
 assert.equal(data.state.running, true);
 await call('/api/game', { type: 'upgrade', id: 'attack' }, { expect: 400 });

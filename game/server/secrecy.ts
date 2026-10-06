@@ -17,7 +17,7 @@ import { stageRewardAvgTable } from '../data/world';
 
 const KEY = 'secrecy', TTL = 30_000;
 const ODDS_KEY = createHash('sha1').update(JSON.stringify(SERVER_ODDS)).digest('base64url');
-/** v3.54 사냥터별 평균 보상 배율 표: 바뀌지 않으므로 처음 한 번 만들고, 키에는 지문만 더합니다. */
+/** v3.55 사냥터별 평균 보상 배율 표: 바뀌지 않으므로 처음 한 번 만들고, 키에는 지문만 더합니다. */
 let stageAvg: { table: ReturnType<typeof stageRewardAvgTable>; key: string } | undefined;
 const stageAvgOnce = () => stageAvg ??= (t => ({ table: t, key: createHash('sha1').update(JSON.stringify(t)).digest('base64url') }))(stageRewardAvgTable());
 let cached: { at: number; on: boolean } | null = null;

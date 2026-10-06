@@ -574,10 +574,10 @@ test('v27.48 burn: stacks to 3, ticks like poison, adds half of bleed vulnerabil
     for (let i = 0; i < 5; i++) { const a = mk(['fireball']); strike(a, b, () => 0); }
     assert.equal(b.effects.burn.stacks, STATUS_TUNING.burnMaxStacks, 'caps at 3 stacks');
     assert.equal(b.effects.burn.turns, STATUS_TUNING.burnTurns);
-    const fang = mk(['toxicFang']), c = mk([]); strike(fang, c, () => 0); assert.equal(c.effects.burn.stacks, 1); assert.equal(c.effects.poison, undefined);
+    const fang = mk(['toxicFang']), c = mk([]); strike(fang, c, () => 0); assert.equal(c.effects.burn.stacks, STATUS_TUNING.burnFirstStacks, 'v3.54 first burn starts at 2 stacks'); assert.equal(c.effects.poison, undefined);
     // 틱: 화상 중인 쪽이 행동하면 (중첩당 + 체력 비례) × 중첩만큼 깎입니다.
     const before = b.hp, burn = { ...b.effects.burn }; strike(b, mk([]), () => .99);
-    assert.ok(before - b.hp >= (burn.perStack + burn.hpTick) * burn.stacks, 'burn ticks on action');
+    assert.ok(before - b.hp >= (burn.perStack + Math.floor(before * burn.hpRatio)) * burn.stacks, 'burn ticks on action (v3.54 current HP)');
     // 받는 직접 피해: 화상 +6%, 출혈 +12%, 둘 다면 합산.
     const hit = (effects) => { const t = mk([]); t.effects = effects; strike(mk([]), t, () => .5); return 1e6 - t.hp; };
     const plain = hit({}), burned = hit({ burn: { perStack: 0, stacks: 1, turns: 9, hpTick: 0 } });

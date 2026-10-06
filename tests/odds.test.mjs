@@ -36,7 +36,7 @@ test('v3.52 odds: the catalog carries the odds only while secrecy is off', async
     } finally { if (before === undefined) delete process.env.TIDEBOUND_SECRECY; else process.env.TIDEBOUND_SECRECY = before; }
 });
 
-test('v3.54 spawn weights: server-only, and the per-stage average table reproduces the server reward norm for the screen', async () => {
+test('v3.55 spawn weights: server-only, and the per-stage average table reproduces the server reward norm for the screen', async () => {
     const W = await load('data/world'), { SERVER_ODDS } = await load('secret/odds');
     assert.equal(W.FISH.find(f => f.id === 'abyssManta').spawnWeight, SERVER_ODDS.spawn.abyssManta);
     assert.equal(W.FISH.find(f => f.id === 'masteryMimic').spawnWeight, 0);
@@ -49,7 +49,7 @@ test('v3.54 spawn weights: server-only, and the per-stage average table reproduc
     assert.ok(!/spawnWeight: \.\d/.test(src), 'no weight literals left in world.ts');
 });
 
-test('v3.56 info hacking: leaks are built from the data, skip known ones and entered jobs, and every discovery door has an exact condition', async () => {
+test('v3.57 info hacking: leaks are built from the data, skip known ones and entered jobs, and every discovery door has an exact condition', async () => {
     const { leakPool, DOOR_CONDITIONS } = await load('secret/leaks'), { DISCOVERY_DOORS } = await load('data/doors'), { newState: fresh } = await load('systems/state');
     assert.deepEqual(Object.keys(DOOR_CONDITIONS).sort(), DISCOVERY_DOORS.map(d => d.job).sort());
     const s = fresh(0), all = leakPool(s, new Set());
@@ -59,7 +59,7 @@ test('v3.56 info hacking: leaks are built from the data, skip known ones and ent
     s.unlockedJobs.push('undead'); assert.ok(!leakPool(s, new Set()).some(l => l.id === 'job:undead'), 'jobs already entered are skipped');
 });
 
-test('v3.56 info hacking: hackRun leak charges bits, counts per day, stores the fragment and refuses when nothing is left', async () => {
+test('v3.57 info hacking: hackRun leak charges bits, counts per day, stores the fragment and refuses when nothing is left', async () => {
     const { newState: fresh } = await load('systems/state'), { act } = await import('./harness.mjs'), D = await load('data/hacker'), { leakPool } = await load('secret/leaks');
     const s = fresh(0); s.level = 40; s.rebirths = 5; s.sp = 10; s.pearls = 500; act(s, { type: 'job', id: 'hacker' }, 0);
     s.hacker.tier = 1; s.hacker.bits = 1000;

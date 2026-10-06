@@ -1,5 +1,5 @@
 /**
- * v3.56 정보 비공개 6단계(docs/concept.md 10.3-6): 해커 ‘정보 해킹’이 알아내는 비밀 조각(서버 전용).
+ * v3.57 정보 비공개 6단계(docs/concept.md 10.3-6): 해커 ‘정보 해킹’이 알아내는 비밀 조각(서버 전용).
  * 조각은 데이터에서 자동으로 만듭니다: 드롭·확률 수치(odds.ts) · 몬스터 출현 가중치 · 히든 직업의 전직 조건 · 발견의 문 조건.
  * 퍼뜨리기는 기존 기능(방송 탈취·채팅)으로 합니다. 해커가 이미 아는 조각과 이미 들어가 본 직업은 빼고 고릅니다.
  */
@@ -18,7 +18,7 @@ import { REBIRTH_DOOR_JOBS } from '../data/doors';
 
 export type Leak = { id: string; text: string };
 const pct = (x: number) => `${Math.round(x * 100_000) / 1000}%`;
-/** 발견의 문의 정확한 조건(문 힌트는 v3.55에 분위기 문장으로 바꿨고, 정확한 조건은 여기서만). doors.ts의 test와 같은 내용입니다. */
+/** 발견의 문의 정확한 조건(문 힌트는 v3.56에 분위기 문장으로 바꿨고, 정확한 조건은 여기서만). doors.ts의 test와 같은 내용입니다. */
 export const DOOR_CONDITIONS: Record<string, string> = {
     undead: '10번 쓰러지기', clockmaker: '사냥터에서 10시간 보내기', headwindSailor: '다섯 번째 사냥터까지 가 보기', sunriseAngler: '몬스터 15종 만나기',
     barehandFisher: '무기 없이 Lv.15 넘기기', noonDiver: '던전 5번 끝까지 클리어', mistSwordsman: '결투 3번 이기기', nightHeron: '몬스터 500마리 처치',

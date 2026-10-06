@@ -164,12 +164,12 @@ export function tideLiftLevel(level: number, tier: number, playerLevel: number) 
  * 반환값은 rewardMultiplier에 곱할 값(올라간 정도만큼 점점 적용).
  */
 export function stageRewardNorm(stageFish: readonly string[], tier: number) {
-    // v3.54 출현 가중치를 모르는 화면(비공개 켬)은 서버가 카탈로그로 보낸 사냥터별 평균 표를 씁니다.
+    // v3.55 출현 가중치를 모르는 화면(비공개 켬)은 서버가 카탈로그로 보낸 사냥터별 평균 표를 씁니다.
     const stage = oddsKnown() ? undefined : STAGES.find(st => st.fish === stageFish), table = stage && STAGE_REWARD_AVG[stage.id];
     const avg = table ? stageAvgAt(table, tier) : stageRewardAvg(stageFish, tier);
     return 1 / Math.pow(Math.max(1, avg), Math.min(1, tier / TIDE_LIFT_TIERS));
 }
-/** v3.54 구간 표에서 난이도 tier의 평균(그 난이도 이하의 마지막 구간). */
+/** v3.55 구간 표에서 난이도 tier의 평균(그 난이도 이하의 마지막 구간). */
 export const stageAvgAt = (table: [number, number][], tier: number) => [...table].reverse().find(([from]) => from <= tier)?.[1] ?? 1;
 /** 사냥터 평균 보상 배율(출현 가중, 그 난이도에서 나오는 몬스터). 서버는 진짜 가중치로 계산합니다. */
 function stageRewardAvg(stageFish: readonly string[], tier: number) {
@@ -177,7 +177,7 @@ function stageRewardAvg(stageFish: readonly string[], tier: number) {
     const weight = rows.reduce((a, f) => a + (f.spawnWeight ?? 1), 0);
     return weight ? rows.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / weight : 1;
 }
-/** v3.54 서버: 카탈로그에 실을 사냥터별 [이 난이도부터, 평균 보상 배율] 구간 표. 몬스터의 minTier마다 평균이 바뀝니다. */
+/** v3.55 서버: 카탈로그에 실을 사냥터별 [이 난이도부터, 평균 보상 배율] 구간 표. 몬스터의 minTier마다 평균이 바뀝니다. */
 export function stageRewardAvgTable(): StageRewardAvg {
     return Object.fromEntries(STAGES.map(st => {
         const from = [...new Set([0, ...st.fish.map(id => FISH.find(f => f.id === id)?.minTier || 0)])].sort((a, b) => a - b);
@@ -236,7 +236,7 @@ const specialFish: Array<{
     { id: 'starfallSeraph', name: '파풀라투스', level: 62, lore: '루디브리엄 시계탑의 시간을 멈춘 차원의 침략자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
 ];
 for (const f of specialFish)
-    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: fishExpAt(f.level), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, /** v3.54 출현 가중치는 서버 전용(ODDS.spawn). */ get spawnWeight() { return ODDS.spawn[f.id]; }, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
+    FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: fishExpAt(f.level), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, /** v3.55 출현 가중치는 서버 전용(ODDS.spawn). */ get spawnWeight() { return ODDS.spawn[f.id]; }, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
 // v27.41 메이플 몬스터 이름: maple-monsters.ts 한곳에서 이름·설명을 덮어씁니다(id·능력치는 그대로).
 for (const f of FISH) { const m = MAPLE_MONSTERS[f.id]; if (m) { f.name = m.name; f.lore = m.lore; } }
 /**

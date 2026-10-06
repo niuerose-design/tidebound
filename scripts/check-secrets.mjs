@@ -38,7 +38,7 @@ const canaries = {
         num(SERVER_ODDS.drop.rarity), num(SERVER_ODDS.appraisal), `rarity:1,chance:${n(SERVER_ODDS.appraisal[0])}`,
         `rarityPerTier:${n(SERVER_ODDS.drop.tideRarityPerTier)}`, `essenceChancePerTier:${n(SERVER_ODDS.drop.essenceChancePerTier)}`,
         ...Object.entries(SERVER_ODDS.variant.region).map(([region, row]) => `"${region}":{${Object.entries(row).map(([k, v]) => `${k}:${n(v)}`).join(',')}}`),
-        // v3.54 몬스터 출현 가중치(옛 world.ts 모양 spawnWeight:.18).
+        // v3.55 몬스터 출현 가중치(옛 world.ts 모양 spawnWeight:.18).
         ...Object.values(SERVER_ODDS.spawn).filter(v => v > 0).map(v => `spawnWeight:${n(v)}`),
     ],
 };
