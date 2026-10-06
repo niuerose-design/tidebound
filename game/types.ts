@@ -495,6 +495,8 @@ export type State = {
     goldEarned?: number;
     /** v3.58 감정 기록: 총 횟수, 등급별 횟수(0~6), 천장 카운트(그 등급 이상이 마지막으로 나온 뒤 감정 수). 환생해도 남고 승천하면 초기화. */
     appraisal?: { count: number; byRarity: number[]; pity: { myth: number; ancient: number; primal: number } };
+    /** v3.59 사냥·던전 드롭에서 태초 없이 떨어진 장비 수(PRIMAL_DROP_PITY에 닿으면 다음 드롭은 태초). 환생 유지 · 승천 초기화. */
+    primalDropPity?: number;
     /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
     plainCodex?: boolean;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */

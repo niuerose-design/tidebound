@@ -311,3 +311,11 @@ test('v3.58 imprint appraisal always carries the chosen option and costs 2× gol
     const u = newState(0); u.level = 50; u.gold = Co.gambleCost(u) * 3; u.permanent.inventory = 8; u.inventory = [];
     act(u, { type: 'autoGamble', id: 'rod', value: `6|${u.gold}` }, 0, () => 0); assert.equal(u.appraisal.count, 3, 'stops at the gold limit'); assert.equal(u.inventory.length, 0);
 });
+test('v3.59 primal drops: weight cut to ~0.054% of drops and a pity at PRIMAL_DROP_PITY drops, kept through rebirth', async () => {
+    const Enc = await L.load('systems/encounter'), Ec = await L.load('data/economy');
+    assert.ok(Math.abs(Enc.rarityShareFrom(0, 6) - .00054) < 5e-5);
+    const s = newState(0); s.level = 50; s.permanent.inventory = 8; s.inventory = []; s.primalDropPity = Ec.PRIMAL_DROP_PITY - 2;
+    Enc.drop(s, 50, () => 0, true); assert.equal(s.inventory.at(-1).rarity, 1); assert.equal(s.primalDropPity, Ec.PRIMAL_DROP_PITY - 1);
+    Enc.drop(s, 50, () => 0, true); assert.equal(s.inventory.at(-1).rarity, 6, 'pity drop is primal'); assert.equal(s.primalDropPity, 0);
+    const r = newState(0); r.level = 60; r.primalDropPity = 123; act(r, { type: 'rebirth' }, 0); assert.equal(r.primalDropPity, 123);
+});
