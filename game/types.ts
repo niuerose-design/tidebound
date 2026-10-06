@@ -626,6 +626,10 @@ export type HackerState = {
     roots?: number;
     /** v3.28 블랙 해커가 해킹에 실패해 추적당한 동안(이 시각까지 해킹 불가). */
     bustedUntil?: number;
+    /** v3.29 해커 조직 소속 캐시(동기화 때 10분마다 서버의 crews 행과 맞춤). */
+    crew?: { id: string; name: string; side: string; grade: number; leader: boolean; syncedAt: number };
+    /** v3.29 오늘 조직 금고에 넣은 비트(하루 상한). */
+    crewDeposit?: { day: string; n: number };
     /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
     season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };
