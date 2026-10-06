@@ -97,7 +97,7 @@ const A = { type: 'active' as const };
 const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
 const dual = { damageType: 'split' as const, scaling: 'dual' as const };
-const M4 = [2500, 12000, 40000, 100000], M5 = [4000, 18000, 60000, 150000];
+const M4 = [2500, 12000, 40000, 100000];
 
 /** level은 직업 레벨로 다시 맞춰지고, 액티브의 desc는 밸런스 표를 적용할 때 실제 수치로 다시 씁니다. */
 export const LINEAGE_SKILLS: Skill[] = [
@@ -195,19 +195,6 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'huntersPatience', name: '사냥꾼의 인내', desc: '물리 공격과 명중이 오릅니다.', level: 25, job: 'beastTracker', cost: 2, bonus: { attack: 14, accuracy: .04 } },
     { ...A, ...magic, id: 'sirenChorus', name: '세이렌 합창', desc: '', level: 25, job: 'tidalSinger', chance: .55, cooldown: 3, multiplier: 1.35, cost: 3, manaCost: 12, effect: 'heal' },
     { ...P, id: 'harmonics', name: '화음', desc: '경험치 획득과 마나 회복이 오릅니다.', level: 25, job: 'tidalSinger', cost: 2, bonus: { expBonus: .04, manaRegen: 1 } },
-    // ???
-    { ...A, ...physical, id: 'soulTyranny', name: '영혼 폭정', desc: '', level: 55, job: 'lichKing', chance: .26, cooldown: 4, multiplier: 2.5, cost: 5, effect: 'drain', drainRatio: .2, masteryMilestones: M4 },
-    { ...P, id: 'undyingThrone', name: '죽지 않는 왕좌', desc: '최대 체력과 치명타가 오릅니다.', level: 55, job: 'lichKing', cost: 3, bonus: { hp: 320, crit: .08, attack: 30 }, masteryMilestones: M4 },
-    { ...A, ...magic, id: 'nullStep', name: '허공 걸음', desc: '', level: 40, job: 'voidDrifter', chance: .55, cooldown: 4, multiplier: 2, cost: 4, manaCost: 20, scaling: 'mana', scalingRatio: .3 },
-    { ...P, id: 'phaseCloak', name: '위상 망토', desc: '회피와 최대 마나가 오릅니다.', level: 40, job: 'voidDrifter', cost: 3, bonus: { evasion: .06, mana: 30 } },
-    { ...A, ...magic, id: 'abyssDecree', name: '심연의 칙령', desc: '', level: 55, job: 'voidSovereign', chance: .55, cooldown: 4, multiplier: 2.7, cost: 5, manaCost: 30, scaling: 'mana', scalingRatio: .35, masteryMilestones: M4 },
-    { ...P, id: 'silentAbyss', name: '침묵하는 심연', desc: '최대 마나와 마법 공격이 오릅니다.', level: 55, job: 'voidSovereign', cost: 3, bonus: { mana: 60, magic: 36 }, masteryMilestones: M4 },
-    { ...A, ...physical, id: 'maulingTide', name: '난타의 조수', desc: '', level: 55, job: 'deepHorror', chance: .24, cooldown: 4, multiplier: 1.3, cost: 5, extraAttacks: 2, extraAttackMultiplier: .6, masteryMilestones: M4 },
-    { ...P, id: 'abyssHide', name: '괴수 가죽', desc: '최대 체력과 물리 방어가 오릅니다.', level: 55, job: 'deepHorror', cost: 3, bonus: { hp: 220, defense: 20 }, masteryMilestones: M4 },
-    { ...A, ...physical, id: 'devour', name: '포식', desc: '', level: 55, job: 'tideDevourer', chance: .26, cooldown: 4, multiplier: 2.4, cost: 5, effect: 'drain', drainRatio: .25, masteryMilestones: M4 },
-    { ...P, id: 'gorgedMaw', name: '가득 찬 아가리', desc: '최대 체력과 흡혈이 오릅니다.', level: 55, job: 'tideDevourer', cost: 3, bonus: { hp: 260, lifesteal: .03 }, masteryMilestones: M4 },
-    { ...A, ...physical, id: 'worldTentacle', name: '세계의 촉수', desc: '', level: 70, job: 'leviathanAvatar', chance: .24, cooldown: 4, multiplier: 1.5, cost: 6, extraAttacks: 3, extraAttackMultiplier: .65, masteryMilestones: M5 },
-    { ...P, id: 'primordialBlood', name: '태고의 피', desc: '물리 공격과 최대 체력이 오릅니다.', level: 70, job: 'leviathanAvatar', cost: 3, bonus: { attack: 40, hp: 300 }, masteryMilestones: M5 },
 ];
 
 /** 액티브 밸런스 표 행: 선언한 발동률·배율·재사용 대기·마나를 그대로 사용합니다. */

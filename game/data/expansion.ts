@@ -200,7 +200,6 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'nimbleStep', name: '가벼운 발', desc: '회피와 속도가 오르고, 연속 행동마다 40% 확률로 가장 긴 재사용 대기를 초기화합니다.', level: 10, job: 'acrobat', cost: 2, bonus: { evasion: .06, speed: 8 }, cooldownReset: { on: 'chain', chance: .4, pick: 'longest' } },
     // 기존 직업 보강 (은월 (3차) 물리 경로)
     { ...P, id: 'galvanicScales', name: '전류 비늘', desc: '물리 공격과 속도가 오릅니다.', level: 25, job: 'stormEel', cost: 2, bonus: { attack: 16, speed: 8 } },
-    { ...P, id: 'abyssalGrip', name: '촉수 악력', desc: '물리 공격과 방어 관통이 오릅니다.', level: 40, job: 'krakenkin', cost: 3, bonus: { attack: 28, penetration: .04 } },
 ];
 
 /** 액티브 밸런스 표 행: 선언한 발동률·배율·재사용 대기·마나를 그대로 사용합니다. */

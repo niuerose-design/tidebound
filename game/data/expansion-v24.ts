@@ -181,10 +181,6 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'queenOfCurses', name: '저주의 왕관', desc: '마법 공격과 지속 피해가 크게 오릅니다.', level: 70, job: 'curseQueen', cost: 3, bonus: { magic: 110, dotBonus: .2 }, masteryMilestones: M5 },
     { ...A, ...dual, id: 'dragonGodSpear', name: '좀비 루팡신의 창', desc: '', level: 70, job: 'seaDragonGod', chance: .5, cooldown: 5, multiplier: 4.5, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
     { ...P, id: 'dragonGodScale', name: '좀비 루팡신의 비늘', desc: '두 공격과 체력이 크게 오릅니다.', level: 70, job: 'seaDragonGod', cost: 3, bonus: { attack: 55, magic: 55, hp: 300 }, masteryMilestones: M5 },
-    { ...A, ...physical, id: 'soulReap', name: '영혼 수확 일격', desc: '', level: 70, job: 'deathEmperor', chance: .27, cooldown: 4, multiplier: 3.5, cost: 6, effect: 'drain', drainRatio: .2, masteryMilestones: M5 },
-    { ...P, id: 'undeathThrone', name: '불멸의 옥좌', desc: '치명타·흡혈·물리 공격이 오릅니다.', level: 70, job: 'deathEmperor', cost: 3, bonus: { crit: .08, lifesteal: .04, attack: 70 }, masteryMilestones: M5 },
-    { ...A, ...magic, id: 'voidCollapse', name: '공허 붕괴', desc: '', level: 70, job: 'voidIncarnate', chance: .55, cooldown: 5, multiplier: 3.9, cost: 6, manaCost: 40, scaling: 'mana', scalingRatio: .3, masteryMilestones: M5 },
-    { ...P, id: 'endlessVoid', name: '끝없는 공허', desc: '최대 마나와 마법 공격이 크게 오릅니다.', level: 70, job: 'voidIncarnate', cost: 3, bonus: { mana: 150, magic: 100 }, masteryMilestones: M5 },
 ];
 
 /** 액티브 밸런스 표 행: 선언한 발동률·배율·재사용 대기·마나를 그대로 사용합니다. */

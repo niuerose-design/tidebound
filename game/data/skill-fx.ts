@@ -21,17 +21,14 @@ export const SKILL_FX: Record<string, SkillFx> = {
     // 조류: 물결
     tsunamiRush: 'wave', tidalCollapse: 'wave', voidTorrent: 'wave',
     // 마력탄: 마법 기본 갈래
-    pureBolt: 'arcane', manaBolt: 'arcane', encyclopediaBolt: 'arcane', borrowedForm: 'arcane',
+    pureBolt: 'arcane', manaBolt: 'arcane',
     // 부식·모사·맨손
-    saltCatalyst: 'venom', borrowedTentacles: 'bite', bareGrab: 'quake',
+    saltCatalyst: 'venom', borrowedTentacles: 'bite',
     // 제로 (1차)·제로 (4차): 시간 갈래
-    windUp: 'time', slackHand: 'time', timeMachine: 'time', precede: 'time', frozenTime: 'time', rewind: 'time',
     // 매지션(불,독)·부식 연성: 독 갈래
     toxicFang: 'fire', venomDart: 'venom', doomMark: 'venom', miasma: 'venom', rotBloom: 'venom', rottenBait: 'venom', corrosiveBloom: 'venom', transmute: 'venom', grandTransmutation: 'venom',
     // 팬텀 (1차): 먹물 갈래
     inkTrick: 'ink', smokeVeil: 'ink',
     // 망인 계보: 뼈 갈래
-    graveHook: 'bone', marrowGuard: 'bone', soulReap: 'bone', soulTyranny: 'bone', harvestEcho: 'bone',
     // 여명·천 번의 삶: 빛
-    dawnFlare: 'star', thousandLives: 'star',
 };

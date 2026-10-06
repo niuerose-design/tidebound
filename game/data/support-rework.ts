@@ -24,8 +24,6 @@ const magic = { damageType: 'magic' as const };
 /** 액티브 최종 수치(ACTIVE_SKILL_BALANCE에 합쳐짐). 새 액티브도 여기에 두어 설명이 자동으로 만들어집니다. */
 export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     // v25.4 떠돌이 계보: 복합 피해 규칙(발동 45% 이상)에 맞춘 숙달 비례 일격.
-    borrowedForm: { chance: .45, cooldown: 4, multiplier: 1.2, manaCost: 8 },
-    thousandLives: { chance: .45, cooldown: 5, multiplier: 1.6, statusTurns: 3, manaCost: 12 },
     // ── 팬텀 (1차): 주사위 ──
     inkTrick: { gamble: { min: 1, max: 1, accuracy: .25 } },
     smokeVeil: { gamble: { min: 1, max: 1, accuracy: .2 } },
@@ -58,16 +56,6 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     weakpointThesis: { preyBonus: .3 },
     weakpointCut: { preyBonus: .4 },
     titanFell: { preyBonus: .5 },
-    // ── ??? 문 직업 ──
-    headwindTack: { chance: .28, cooldown: 3, multiplier: 1.2 },
-    dawnFlare: { chance: .55, cooldown: 3, multiplier: 1.6, manaCost: 3 },
-    bareGrab: { chance: .28, cooldown: 3, multiplier: 1.5 },
-    sunDive: { chance: .26, cooldown: 4, multiplier: 1.1, scalingRatio: .04 },
-    mistSlash: { chance: .28, cooldown: 3, multiplier: 1.3, accuracyBonus: .08 },
-    heronStill: { chance: .3, cooldown: 3, multiplier: 1 },
-    emptyPalm: { chance: .28, cooldown: 3, multiplier: 1.35, drainRatio: .15 },
-    encyclopediaBolt: { chance: .55, cooldown: 3, multiplier: 1.45, manaCost: 3, scaling: 'codex', scalingRatio: .008 },
-    riseAgain: { chance: .28, cooldown: 4, multiplier: 1.3, drainRatio: .25 },
 };
 
 /** 패시브 덮어쓰기. bonus는 통째로 바뀝니다(골드·드롭을 빼거나 옮기기 위해). */
@@ -122,39 +110,7 @@ export const SUPPORT_SKILLS: Skill[] = [
     { ...P, id: 'heroicVerse', name: '영웅의 시', desc: '여섯 능력치와 치명·회피가 오르는 노래.', level: 40, job: 'legendBard', song: true, bonus: { hp: 140, attack: 18, magic: 18, defense: 6, resist: 6, crit: .02, evasion: .01 } },
     { ...P, id: 'oceanOde', name: '바다의 송가', desc: '여섯 능력치와 속도가 크게 오르는 노래.', level: 55, job: 'balladKing', song: true, bonus: { hp: 320, attack: 45, magic: 45, defense: 14, resist: 14, speed: 3 }, masteryMilestones: [2500, 12000, 40000, 100000] },
     { ...P, id: 'sirenAria', name: '세이렌의 아리아', desc: '여섯 능력치와 치명·회피가 크게 오르는 노래.', level: 70, job: 'siren', song: true, bonus: { hp: 520, attack: 75, magic: 75, defense: 22, resist: 22, crit: .03, evasion: .02 }, masteryMilestones: [4000, 18000, 60000, 150000] },
-    // ??? 시간의 문
-    { ...A, ...physical, id: 'headwindTack', name: '역풍 태킹', desc: '', level: 10, job: 'headwindSailor', cost: 2, effect: 'haste' },
-    { ...P, id: 'galeLegs', name: '돌풍 걸음', desc: '속도와 회피가 오릅니다.', level: 10, job: 'headwindSailor', cost: 2, bonus: { speed: 4, evasion: .02 } },
-    { ...A, ...magic, id: 'dawnFlare', name: '여명 섬광', desc: '', level: 10, job: 'sunriseAngler', cost: 2 },
-    { ...P, id: 'morningCalm', name: '아침 고요', desc: '마나 회복과 최대 마나가 오릅니다.', level: 10, job: 'sunriseAngler', cost: 2, bonus: { manaRegen: 1, mana: 12 } },
-    { ...A, ...physical, id: 'bareGrab', name: '맨손 낚아채기', desc: '', level: 10, job: 'barehandFisher', cost: 3 },
-    { ...P, id: 'ironGrip', name: '쇠 손아귀', desc: '물리 공격과 치명타가 오릅니다.', level: 10, job: 'barehandFisher', cost: 2, bonus: { attack: 4, crit: .02 } },
-    { ...A, ...physical, id: 'sunDive', name: '한낮 잠수', desc: '', level: 10, job: 'noonDiver', cost: 3, scaling: 'hp' },
-    { ...P, id: 'brineLungs', name: '짠물 폐', desc: '최대 체력과 물리 방어가 오릅니다.', level: 10, job: 'noonDiver', cost: 2, bonus: { hp: 40, defense: 2 } },
-    { ...A, ...physical, id: 'mistSlash', name: '안개 베기', desc: '', level: 10, job: 'mistSwordsman', cost: 2 },
-    { ...P, id: 'fogVeil', name: '안개 장막', desc: '회피와 치명타가 오릅니다.', level: 10, job: 'mistSwordsman', cost: 2, bonus: { evasion: .04, crit: .02 } },
-    { ...A, ...physical, id: 'heronStill', name: '왜가리의 정적', desc: '', level: 10, job: 'nightHeron', cost: 2, effect: 'slow' },
-    { ...P, id: 'nightEyes', name: '밤눈', desc: '명중과 치명타가 오릅니다.', level: 10, job: 'nightHeron', cost: 2, bonus: { accuracy: .04, crit: .02 } },
-    // ??? 발견의 문
-    { ...A, ...physical, id: 'emptyPalm', name: '빈손 장타', desc: '', level: 10, job: 'poorMonk', cost: 2, effect: 'drain' },
-    { ...P, id: 'vowOfPoverty', name: '청빈 서약', desc: '골드 획득이 줄어드는 대신 체력과 두 방어가 오릅니다.', level: 10, job: 'poorMonk', cost: 2, bonus: { hp: 30, defense: 2, resist: 2, goldBonus: -.1 } },
-    { ...A, ...magic, id: 'encyclopediaBolt', name: '백과 낭독', desc: '', level: 10, job: 'codexReader', cost: 2 },
-    { ...P, id: 'marginNotes', name: '여백 메모', desc: '최대 마나가 오르고, 도감 기록마다 마법 공격과 마법 방어가 오릅니다.', level: 10, job: 'codexReader', cost: 2, bonus: { mana: 8 }, perCount: [{ source: 'codex', per: 5, bonus: { magic: 1, resist: 1 }, cap: 11 }] },
-    { ...A, ...physical, id: 'riseAgain', name: '다시 일어서기', desc: '', level: 10, job: 'fallenAngler', cost: 3, effect: 'drain' },
-    { ...P, id: 'scarTissue', name: '아문 상처', desc: '최대 체력과 흡혈이 오릅니다.', level: 10, job: 'fallenAngler', cost: 2, bonus: { hp: 50, lifesteal: .02 } },
 ];
-
-/** 상태이상 전용(피해 없음)으로 바꿀 새 기술. */
-export const SUPPORT_STATUS_ONLY = ['heronStill'];
-/** 떠돌이 모험가의 패시브: 숙달한 직업 수마다 자랍니다. 숙련 목표와 상한을 크게 잡아 장기 리턴으로 둡니다. */
-SUPPORT_SKILLS.push(
-    { ...P, id: 'thousandHands', name: '천 개의 손놀림', desc: '숙달한 직업 1개마다 두 공격 +3·최대 체력 +12·두 방어 +1(최대 60회).', level: 10, job: 'journeyman', cost: 3, perCount: [{ source: 'mastered', per: 1, bonus: { attack: 3, magic: 3, hp: 12, defense: 1, resist: 1 }, cap: 60 }], masteryMilestones: [800, 4000, 16000, 50000] },
-    { ...A, id: 'borrowedForm', name: '배운 대로', desc: '', level: 25, job: 'polymath', cost: 4, damageType: 'split', scaling: 'mastered', scalingRatio: .03, manaCost: 8, masteryMilestones: [1500, 7000, 25000, 80000] },
-    { ...P, id: 'hundredKnacks', name: '백 가지 요령', desc: '숙달한 직업 1개마다 두 공격 +5·최대 체력 +20·두 방어 +1.5(최대 60회).', level: 25, job: 'polymath', cost: 3, perCount: [{ source: 'mastered', per: 1, bonus: { attack: 5, magic: 5, hp: 20, defense: 1.5, resist: 1.5 }, cap: 60 }], masteryMilestones: [1500, 7000, 25000, 80000] },
-    { ...A, id: 'thousandLives', name: '천 번의 삶', desc: '', level: 40, job: 'hundredLives', cost: 5, damageType: 'split', scaling: 'mastered', scalingRatio: .04, effect: 'weaken', manaCost: 12, masteryMilestones: [2500, 12000, 40000, 100000] },
-    { ...P, id: 'everyLife', name: '모든 생의 기억', desc: '최대 체력 +100. 숙달한 직업 1개마다 치명타·명중 +0.4%p·속도 +0.5·최대 체력 +15(최대 60회).', level: 40, job: 'hundredLives', cost: 3, bonus: { hp: 100 }, perCount: [{ source: 'mastered', per: 1, bonus: { crit: .004, accuracy: .004, speed: .5, hp: 15 }, cap: 60 }], masteryMilestones: [2500, 12000, 40000, 100000] },
-    { ...P, id: 'wayfarerKnack', name: '떠돌이의 요령', desc: '숙달한 직업 2개마다 치명타·명중 +1%p·속도 +1(최대 30회).', level: 10, job: 'journeyman', cost: 2, perCount: [{ source: 'mastered', per: 2, bonus: { crit: .01, accuracy: .01, speed: 1 }, cap: 30 }], masteryMilestones: [800, 4000, 16000, 50000] },
-);
 
 /** 직업 소개 갱신. */
 export const SUPPORT_JOB_DESC: Record<string, string> = {
