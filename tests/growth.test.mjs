@@ -171,10 +171,12 @@ const H95 = await import('./harness.mjs');
 test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-2 stay, old inheritance is kept', () => {
  const { JOBS: J, PROGRESSION: P, jobMasteryTarget: target, masteryMilestonesFor: ms, inherited: inh, migrateState: migrate, newState: fresh, act: doAct } = H95;
  assert.deepEqual(P.jobMasteryTierScale, [1, 1, 1, 3, 15, 50]); assert.deepEqual(P.skillMasteryTierScale, [1, 1, 1, 3, 10, 25]);
- assert.equal(target('harpoon'), 180, 'tier 1 unchanged'); assert.equal(target('whaler'), 1200, 'tier 2 unchanged'); assert.equal(target('krakenSlayer'), 27000, 'tier 3 x3');
- // v3.70 능력치 수련(subRole training)은 따로 정한 큰 숙련 목표를 씁니다.
- for (const j of J.filter(j => j.tier === 4 && j.subRole !== 'training')) assert.ok([300000, 450000].includes(target(j)), j.id);
- for (const j of J.filter(j => j.tier === 5)) { assert.equal(target(j), 1500000, j.id); if (j.parent) assert.ok(j.mastery >= target(j.parent), `${j.id} needs the parent mastered`); }
+ // v3.76 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계(최대) × 40%(능력치 수련·해커는 따로).
+ const own = id => SKILLS.filter(x => x.job === id && !x.song).map(x => ms(x).at(-1));
+ for (const j of J.filter(j => j.tier >= 1 && !j.retired && own(j.id).length && !/Training[123]$|[hH]acker$/.test(j.id))) {
+  const want = Math.max(...own(j.id)) * .4, got = target(j); assert.ok(Math.abs(got - want) <= (want >= 10000 ? 500 : 50), `${j.id} ${got} vs ${want}`);
+ }
+ for (const j of J.filter(j => j.tier === 5)) if (j.parent) assert.ok(j.mastery >= target(j.parent), `${j.id} needs the parent mastered`);
  const t5 = SKILLS.find(x => J.find(j => j.id === x.job)?.tier === 5 && ms(x).length === 4);
  assert.deepEqual(ms(t5), [4000, 18000, 60000, 150000].map(n => n * 25));
  // 옛 기준(4,000)은 넘겼지만 새 기준(100,000)에 못 미친 스킬은 계승을 유지하고, 그보다 낮은 스킬은 새 기준을 따릅니다.

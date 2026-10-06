@@ -257,7 +257,8 @@ export function skillRankHint(sk: Skill, rank: number, mastery = 0, practice = 0
     return rows.length ? rows.map(x => `${x.label} ${x.from} → ${x.to}`).join(' · ') : '최대 강화 레벨입니다.';
 }
 /** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·숨은 조건 없이 언제든 다시 전직할 수 있습니다. */
-export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
+/** v3.76 숙달 목표를 올리기 전 기준으로 이미 숙달한 직업(masteryKept)은 계속 숙달입니다. */
+export const jobMastered = (s: Pick<State, 'jobMastery'> & Partial<Pick<State, 'masteryKept'>>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j) || !!s.masteryKept?.includes(j.id);
 /** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. v3.69 옛 수련(retired)은 세지 않습니다(숙달할 직업 21개 감소, 기존 세이브도 같은 기준). */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && !j.retired && jobMastered(s, j); }).length;
 /** 전직 조건 목록. v27.13 문 판정은 플레이 기록만 보므로 시각 인자가 없습니다. */

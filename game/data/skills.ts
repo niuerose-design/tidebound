@@ -2,7 +2,7 @@ import { tuneActiveSkills } from './skill-balance';
 import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
 import { SKILL_FORMULA } from './balance';
-import { JOBS } from './classes';
+import { JOBS, type Job } from './classes';
 import { PROGRESSION } from './progression';
 import { EXPANSION_SKILLS } from './expansion';
 import { LINEAGE_SKILLS } from './expansion-lineages';
@@ -261,3 +261,26 @@ for (const sk of SKILLS) {
 }
 // v3.70 능력치 수련 패시브(data/stat-training.ts).
 registerSkills(STAT_TRAINING_SKILLS);
+/**
+ * v3.76 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계 중 가장 큰 값 × 40%(MASTERY_ALIGN.ratio). 스킬 숙련 기준과 같이 오르도록 맞춥니다.
+ * 예전 목표는 LEGACY_MASTERY_TARGET에 남겨, 그 기준으로 이미 숙달한 직업은 숙달로 둡니다(migrations.keepMasteredJobs).
+ * 능력치 수련(목표를 따로 정함) · 해커(처치 숙련 없음) · 스킬이 없는 직업은 그대로입니다. 5차 전직 조건(부모 숙달)도 새 목표를 따릅니다.
+ * 비밀 직업은 서버가 등록한 뒤(secret/register.ts) 같은 함수로 맞춥니다.
+ */
+export const MASTERY_ALIGN = { ratio: .4, keep: /^(str|dex|int|vit|wis|luk)Training[123]$|[hH]acker$/ };
+export const LEGACY_MASTERY_TARGET: Record<string, number> = {};
+const roundTarget = (n: number) => n >= 10_000 ? Math.round(n / 1000) * 1000 : Math.round(n / 100) * 100;
+export function alignJobMastery(jobs: Job[]) {
+    for (const job of jobs) {
+        if (job.tier < 1 || MASTERY_ALIGN.keep.test(job.id) || job.id in LEGACY_MASTERY_TARGET) continue;
+        const lasts = SKILLS.filter(sk => sk.job === job.id && !sk.song).map(sk => (sk.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones).at(-1)!);
+        if (!lasts.length) continue;
+        LEGACY_MASTERY_TARGET[job.id] = job.masteryTarget!;
+        job.masteryTarget = roundTarget(Math.max(...lasts) * MASTERY_ALIGN.ratio);
+    }
+    for (const job of jobs) {
+        const parent = job.tier >= 5 && job.parent ? JOBS.find(j => j.id === job.parent) : undefined;
+        if (parent && LEGACY_MASTERY_TARGET[parent.id] !== undefined && job.mastery === LEGACY_MASTERY_TARGET[parent.id]) job.mastery = parent.masteryTarget!;
+    }
+}
+alignJobMastery(JOBS);
