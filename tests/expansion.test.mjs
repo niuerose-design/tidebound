@@ -122,14 +122,16 @@ test('v22 gear (v27.53 base 0.25%, rare or better): scarce drops, dismantle into
 });
 test('v27.94 essence sinks: rerolling the same item costs +10% each time without a cap, refine rerolls only the value',()=>{
  const s=newState(0);s.gold=1e12;s.essence=1e6;
- s.inventory=[{id:'x',slot:'rod',style:'physical',rarity:4,power:300,level:40,name:'x',affixes:gear.rollAffixes(4,300,undefined,rng)}];
+ // 전용 고정 난수: 공유 난수 순서에 따라 재련할 수 있는 옵션이 없는 장비가 드물게 나오던 것을 막습니다.
+ const local=(seed=>()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296))(9427);
+ s.inventory=[{id:'x',slot:'rod',style:'physical',rarity:4,power:300,level:40,name:'x',affixes:gear.rollAffixes(4,300,undefined,local)}];
  const item=()=>s.inventory[0],base=gear.rerollEssence(4);
  for(let n=0;n<30;n++){const e=s.essence,g=s.gold;act(s,{type:'reforge',id:'x',value:'0'},0);assert.equal(e-s.essence,Math.ceil(base*(10+n)/10),'essence step '+n);assert.ok(s.gold<g);}
  assert.equal(item().rerolls,30);assert.equal(Math.ceil(base*4),Math.ceil(gear.rerollScaled(base,30)),'no cap: 30 rerolls = x4');
  // 실패한 재설정(정수 부족)은 횟수를 올리지 않습니다.
  s.essence=0;assert.throws(()=>act(s,{type:'reforge',id:'x',value:'0'},0),/정수/);assert.equal(item().rerolls,30);
  // 수치 재련: 종류는 그대로, 수치만 바뀌고, 비용은 재설정 기본 비용의 절반이며 오르지 않습니다.
- s.essence=1000;const ids=item().affixes.map(a=>a.id),idx=item().affixes.findIndex(a=>!a.rule);
+ s.essence=1000;const ids=item().affixes.map(a=>a.id),idx=item().affixes.findIndex(a=>!a.rule);assert.ok(idx>=0,'재련할 수 있는 옵션이 있어야 합니다');
  const spent=[];for(const r of [.0,.999,.5]){const e=s.essence;act(s,{type:'refine',id:'x',value:String(idx)},0,()=>r);spent.push(e-s.essence);}
  assert.deepEqual(spent,[gear.refineEssence(4),gear.refineEssence(4),gear.refineEssence(4)]);assert.equal(gear.refineEssence(4),Math.ceil(base/2));
  assert.deepEqual(item().affixes.map(a=>a.id),ids,'refine keeps every option kind');assert.equal(item().rerolls,30,'refine does not raise the reroll cost');

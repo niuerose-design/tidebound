@@ -156,7 +156,8 @@ export const SKILL_FORMULA = {
     // 대기 초기화 패시브(처치·치명타·연속 행동)는 각성기 대기를 0으로 만들지 않고 reset턴만 줄입니다.
     // 각성기로 상대를 쓰러뜨리면 대기를 kill턴으로 줄입니다.
     // perTurn: 한 턴에 나가는 각성기 수(나중에 승천 연구로 늘릴 자리, 전투원별 awakenPerTurn이 있으면 그 값).
-    awaken: { tier: 5, cooldown: 10, start: 10, boost: 1, reset: 5, kill: 5, perTurn: 1 },
+    // exceptJobs: 각성기로 바꾸지 않는 직업(옛 규칙 · 수치 그대로). 팬텀(luckDeity)은 짧은 전투에서 크게 약해져 되돌려 둡니다(운영 결정, 추후 따로 조정).
+    awaken: { tier: 5, cooldown: 10, start: 10, boost: 1, reset: 5, kill: 5, perTurn: 1, exceptJobs: ['luckDeity'] as string[] },
     // v3.84 추가 판정: 액티브가 발동한 행동에서 남은 액티브로 한 번 더 판정해 줄어든 위력으로 함께 씁니다. 단계마다 장착 AP · 위력(세계석 연구 ‘연계의 기억’으로 해금).
     extraRoll: { ap: [12], power: [.6] },
     // v25.4 패시브는 최대 성장(마지막 숙련 단계)에 닿으면 장착 AP가 이만큼 줄어듭니다(0 아래로는 안 내려감). 노래와 단계별 AP가 정해진 대기만성형은 제외.

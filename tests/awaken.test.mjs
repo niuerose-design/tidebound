@@ -12,8 +12,10 @@ const turn = (a, b, rng, chained = false) => { const ev = []; strike(a, b, rng, 
 
 test('v3.84 every tier-5+ active is an awakening skill with a 10-turn cooldown that starts full', () => {
     const tier = id => JOBS.find(j => j.id === id)?.tier ?? 0;
-    const awakened = SKILLS.filter(sk => sk.type === 'active' && tier(sk.job) >= SKILL_FORMULA.awaken.tier);
-    assert.ok(awakened.length >= 34, `${awakened.length}`);
+    const awakened = SKILLS.filter(sk => sk.type === 'active' && tier(sk.job) >= SKILL_FORMULA.awaken.tier && !SKILL_FORMULA.awaken.exceptJobs.includes(sk.job));
+    assert.ok(awakened.length >= 33, `${awakened.length}`);
+    // 운영 결정: 팬텀(5차) 액티브는 옛 규칙 그대로(조커 · 파이널 컷).
+    for (const id of ['jackpotStrike', 'allOrNothing']) { const sk = SKILLS.find(x => x.id === id); assert.equal(sk.awaken, undefined, id); assert.ok(sk.cooldown < 10, id); }
     for (const sk of awakened) { assert.equal(sk.awaken.start, 10, sk.id); assert.equal(sk.cooldown, 10, sk.id); assert.equal(!!sk.awaken.statusScale, !!sk.effect && sk.effect !== 'heal' && sk.effect !== 'drain', sk.id); }
     // 덜 자주 걸리는 만큼 상태이상 지속(패시브 보너스 포함)이 늘어납니다.
     const a = { name: 'A', stats: { ...base, dotTurnsBonus: 2 }, hp: 1e9, mana: 1000, skills: ['trenchPierce'], cooldowns: { trenchPierce: 0 }, stun: 0, effects: {}, ranks: { trenchPierce: 1 }, mastery: {}, practice: {} }, ev = [];
@@ -52,13 +54,13 @@ test('v3.84 chain actions are not turns; guaranteed extra turns are', () => {
 });
 
 test('v3.84 only one awakening fires per turn; it can join any active in the same turn', () => {
-    const a = fighter(['flashCut', 'jackpotStrike', 'allOrNothing']), b = dummy();
-    a.cooldowns.jackpotStrike = 0; a.cooldowns.allOrNothing = 0;
+    const a = fighter(['flashCut', 'braveSlash', 'trenchPierce']), b = dummy();
+    a.cooldowns.braveSlash = 0; a.cooldowns.trenchPierce = 0;
     const ev = []; strike(a, b, () => 0, ev);
     assert.equal(ev[0].skillId, 'flashCut', 'the normal roll ignores awakening skills');
-    assert.deepEqual(ev.filter(e => e.awaken).map(e => e.skillId), ['jackpotStrike']);
-    assert.equal(a.cooldowns.allOrNothing, 0, 'the other one waits for the next turn');
-    assert.deepEqual(turn(a, b, () => 0), ['allOrNothing']);
+    assert.deepEqual(ev.filter(e => e.awaken).map(e => e.skillId), ['braveSlash']);
+    assert.equal(a.cooldowns.trenchPierce, 0, 'the other one waits for the next turn');
+    assert.deepEqual(turn(a, b, () => 0), ['trenchPierce']);
 });
 
 test('v3.84 stunned or silenced turns still count down but do not cast', () => {

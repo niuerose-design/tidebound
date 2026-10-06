@@ -136,7 +136,7 @@ export function awakenExpectedRolls(c: number) {
 const awakenDesc = (desc: string) => desc.startsWith('[각성]') ? desc : `[각성] ${desc}`;
 /** v3.84 각성기로 바꿉니다: 대기는 턴 단위(SKILL_FORMULA.awaken), 배율은 옛 행동 단위 기대 기여를 넘도록 키웁니다(숙련 완료 발동률 기준). */
 export function awakenSkill(sk: Skill) {
-    if (sk.awaken || sk.type !== 'active') return;
+    if (sk.awaken || sk.type !== 'active' || SKILL_FORMULA.awaken.exceptJobs.includes(sk.job || '')) return;
     const A = SKILL_FORMULA.awaken, steps = sk.masteryMilestones?.length || PROGRESSION.skillMasteryMilestones.length;
     const c = Math.min(.95, sk.chance + steps * (sk.rankEffects?.chanceIncrease ?? 0));
     const before = sk.cooldown + 1 / c, after = A.cooldown + awakenExpectedRolls(c), old = sk.multiplier;
