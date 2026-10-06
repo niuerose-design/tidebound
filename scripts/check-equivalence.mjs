@@ -17,7 +17,6 @@ const migrations = await load('game/systems/migrations.js');
 const feedback = await load('game/systems/combat-feedback.js');
 const status = await load('game/systems/combat-status.js');
 const mastery = await load('game/systems/mastery.js');
-const guild = await load('game/systems/guild.js');
 const { SKILLS } = await load('game/data/skills.js');
 const { JOBS } = await load('game/data/classes.js');
 const { STAGES, DUNGEONS, FISH, setClosures } = await load('game/data/world.js');
@@ -50,8 +49,6 @@ function pickAction(s, r) {
         () => ({ type: 'buy', id: pick(SHOP).id }), () => ({ type: 'gamble', id: pick(GAMBLE_CATEGORIES).id }), () => ({ type: 'enhance', id: pick(inv) }),
         () => ({ type: 'reforge', id: pick(inv) }), () => ({ type: 'lockItem', id: pick(inv) }), () => ({ type: 'sellRarity', id: String(Math.floor(r() * 4)) }),
         () => ({ type: 'permanent', id: pick(RESEARCH).id }), () => ({ type: 'buyRelic', id: pick(RELICS).id }),
-        () => ({ type: 'guildJoin', value: '검증길드' }), () => ({ type: 'guildDonate', id: pick(['gold', 'pearl']), value: '1000' }), 
-        () => ({ type: 'guildClaim', id: String(Math.floor(r() * 3)) }), () => ({ type: 'guildRaid' }),
     ];
     return pick(options)();
 }
@@ -90,13 +87,6 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
     for (let life = 0; life < 4; life++) { now += 8 * 3600_000; engine.advance(s, now, game); try { engine.act(s, { type: 'rebirth' }, now, game); } catch (e) { trace.push(String(e.message)); } engine.act(s, { type: 'start' }, now, game); trace.push(hash(s)); }
     result.dungeonRebirth = { rngCalls: game.calls, trace: hash(trace), state: hash(s), rebirths: s.rebirths, pearls: s.pearls, abyssBest: s.abyssBest };
 }
-// 3-1. 길드
-{
-    const s = engine.newState(0), game = seeded(12); s.gold = 1e7; s.pearls = 500; s.level = 50; const trace = []; let now = 0;
-    const acts = [{ type: 'guildJoin', value: '검증길드' }, ...Array.from({ length: 30 }, (_, i) => [{ type: 'guildDonate', id: i % 2 ? 'pearl' : 'gold', value: String(1000 * (i + 1)) }, { type: 'guildClaim', id: String(i % 3) }, { type: 'guildRaid' }, { type: 'guildRename', value: `길드${i}` }]).flat()];
-    for (const a of acts) { let err = null; try { engine.act(s, a, now, game); } catch (e) { err = String(e.message); } now += 3600_000; engine.advance(s, now, game); trace.push(hash([err, s.guild, s.gold, s.pearls])); }
-    result.guild = { trace: hash(trace), rngCalls: game.calls };
-}
 // 4. 결투
 {
     const game = seeded(31), a = engine.newState(0), b = engine.newState(0); a.level = 40; b.level = 45; b.job = JOBS[5].id;
@@ -117,7 +107,7 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
     }
     for (const s of samples) {
         display.push(statsM.stats(s), statsM.dropRate(s), statsM.goldMultiplier(s), statsM.expMultiplier(s), statsM.dungeonGoldMultiplier(s), statsM.snapshot(s), statsM.power(statsM.stats(s)), statsM.mastery(s));
-        display.push(prog.apCapacity(s), prog.apUsed(s), meta.rebirthReward(s, 2), meta.rebirthLevel(s), commerceM.shopCost(s), commerceM.gambleCost(s), guild.guildLevelProgress(s));
+        display.push(prog.apCapacity(s), prog.apUsed(s), meta.rebirthReward(s, 2), meta.rebirthLevel(s), commerceM.shopCost(s), commerceM.gambleCost(s));
         for (const j of JOBS) display.push(prog.jobRequirements(s, j), prog.canChangeJob(s, j.id));
         for (const x of SHOP) display.push(commerceM.shopPreview(s, x.id));
         for (const f of FISH) display.push(prog.bookReward(s, f.id));
