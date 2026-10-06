@@ -15,7 +15,7 @@ const charmCrit = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CHARM_
  * v27.36 등급별 고정 수치 감쇠(기본 수치와 고정 수치 옵션에 곱함). 고대·태초 장비가 최종 능력치의 대부분을 차지하던 것을 줄입니다. 저장된 위력은 그대로라 기존 장비에도 바로 적용됩니다.
  * v3.66 전투력(실제 전투식)에서 0성·22성 모두 전설 < 신화 < 고대 < 태초가 되도록 고대 .58 → .62, 태초 .52 → .56으로 올렸습니다(내린 등급 없음). v3.72 신화 .68 → .72(옵션 풀이 바뀐 뒤 전설과 겹쳐서). 큰 격차는 계승 장비(heir)에 둡니다.
  */
-export const GEAR_RARITY_SCALE = [1, 1, 1, .85, .72, .62, .56];
+export const GEAR_RARITY_SCALE = [1, 1, 1, .85, .74, .62, .56];
 const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
 export function itemStats(item: Item): Partial<Stats> {
     const damp = GEAR_RARITY_SCALE[item.rarity] ?? 1;
@@ -40,7 +40,8 @@ export function itemStats(item: Item): Partial<Stats> {
         // v3.5 상태이상 저항만 별 보정(별당 +3%)을 받고 장비 합계 50%에서 막힙니다.
         const value = affix.stat === 'statusResist' ? Math.min(GEAR_CAPS.statusResist!, affix.value * (1 + (item.enhance || 0) * STATUS_RESIST_STAR)) : scaled(affix.stat, affix.value);
         result[affix.stat] = (result[affix.stat] || 0) + value;
-        if (affix.stat2 && affix.value2) result[affix.stat2] = (result[affix.stat2] || 0) + affix.value2;
+        // v3.73 이중 옵션(위력 · 수호)의 둘째 고정 수치도 등급 감쇠를 받습니다. 양날 옵션의 손해(음수)는 그대로입니다.
+        if (affix.stat2 && affix.value2) result[affix.stat2] = (result[affix.stat2] || 0) + scaled(affix.stat2, affix.value2);
     }
     return result;
 }

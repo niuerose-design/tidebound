@@ -22,15 +22,15 @@ export function attributes(s: State) {
     return out;
 }
 export function masteryMilestonesFor(sk?: Skill) { return sk?.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones; }
-/** v3.73 극한돌파 목표 숙련: 모든 액티브 스킬이 같은 1억(EXTREME_BREAK_PRACTICE). 패시브는 극한돌파가 없습니다(null). */
+/** v3.74 극한돌파 목표 숙련: 모든 액티브 스킬이 같은 1억(EXTREME_BREAK_PRACTICE). 패시브는 극한돌파가 없습니다(null). */
 export function extremeBreakTarget(sk: Skill) { return sk.type === 'active' ? EXTREME_BREAK_PRACTICE : null; }
-/** v3.73 극한돌파 달성: 액티브 스킬이 한계돌파 3단계(연구 적용분)를 마치고 숙련 1억을 넘었는지. 지금은 효과가 없습니다(운영자 문의). */
+/** v3.74 극한돌파 달성: 액티브 스킬이 한계돌파 3단계(연구 적용분)를 마치고 숙련 1억을 넘었는지. 지금은 효과가 없습니다(운영자 문의). */
 export function extremeBroken(s: State, id: string) {
     const sk = skillById(id), target = sk && extremeBreakTarget(sk);
     return !!target && limitBreakOf(s, id) >= PROGRESSION.limitBreak.max && refinePractice(s, id) >= target;
 }
 /**
- * v3.31 극한돌파(v3.73, 옛 연마)·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
+ * v3.31 극한돌파(v3.74, 옛 연마)·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
  * 성장 레벨(숙련 1~4단계)은 원래 숙련 그대로라 바뀌지 않습니다. 기준점이 없으면 원래 숙련과 같습니다.
  */
 export function refinePractice(s: Pick<State, 'skillPractice' | 'refineBase'>, id: string) {
@@ -197,7 +197,7 @@ export function passiveGrowthBonus(s: State, sk: Skill, counts: Record<string, n
     if (sk.perRebirth && rebirths > 0) for (const [key, n] of Object.entries(sk.perRebirth)) out[key] = (out[key] || 0) + (n as number) * rebirths * scale;
     return out;
 }
-/** 스킬의 실제 효과. practice(refinePractice)는 v3.73부터 효과에 쓰지 않습니다(옛 연마 삭제). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
+/** 스킬의 실제 효과. practice(refinePractice)는 v3.74부터 효과에 쓰지 않습니다(옛 연마 삭제). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
     // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.
@@ -216,7 +216,7 @@ export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): 
         bonus,
         penaltyRelief: override?.penaltyRelief ?? sk.penaltyRelief,
     };
-    // v3.73 옛 연마 보너스는 없앴습니다(극한돌파는 아직 효과 없음). practice 인자는 호출부 호환을 위해 남깁니다.
+    // v3.74 옛 연마 보너스는 없앴습니다(극한돌파는 아직 효과 없음). practice 인자는 호출부 호환을 위해 남깁니다.
     void practice;
     return result;
 }

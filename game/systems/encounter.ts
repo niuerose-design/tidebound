@@ -277,7 +277,7 @@ export function reward(s: State, rng: () => number) {
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {
         if (canUse(s, id)) {
-            // v3.73 극한돌파: 달성한 순간 한 번 알립니다(효과는 아직 없음, 운영자 문의).
+            // v3.74 극한돌파: 달성한 순간 한 번 알립니다(효과는 아직 없음, 운영자 문의).
             const before = extremeBroken(s, id);
             s.skillPractice[id] = (s.skillPractice[id] || 0) + practiceTotal;
             if (!before && extremeBroken(s, id)) addLog(s, `${skillById(id)!.name} 극한돌파 달성! 운영자에게 문의해 주세요.`, 'reward');
