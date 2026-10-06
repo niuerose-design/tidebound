@@ -3,11 +3,11 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 262); assert.equal(new Set(JOBS.map(j => j.id)).size, 262);
+    assert.equal(JOBS.length, 256); assert.equal(new Set(JOBS.map(j => j.id)).size, 256);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 41, magic: 42, defense: 41, status: 29, hybrid: 33, support: 41, mystery: 35 });
+    assert.deepEqual(count, { physical: 41, magic: 43, defense: 41, status: 29, hybrid: 34, support: 42, mystery: 26 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
@@ -35,7 +35,7 @@ test('Lineages: every job belongs to exactly one lineage inside its own tree; in
     assert.deepEqual(jobTags(JOBS.find(j => j.id === 'corsair')), ['회피', '출혈']);
 });
 
-test('Job counts stay close: trees within 1.5× of each other (??? 14 or more), named lineages 5–10 and all reach tier 5', () => {
+test('Job counts stay close: trees within 1.5× of each other (??? 14 or more), named lineages 4–10 (매지션 11) and all reach tier 5', () => {
     const sizes = JOB_TREES.filter(t => t.id !== 'mystery').map(t => JOBS.filter(j => j.tree === t.id).length);
     assert.ok(Math.max(...sizes) <= Math.min(...sizes) * 1.5, sizes.join(','));
     assert.ok(JOBS.filter(j => j.tree === 'mystery').length >= 14);
@@ -44,7 +44,8 @@ test('Job counts stay close: trees within 1.5× of each other (??? 14 or more), 
         const jobs = JOBS.filter(j => lineageOf(j) === l.id);
         // v25.26 외길 계보는 의도적으로 1~3차 세 직업입니다.
         if (jobs.every(j => j.role?.startsWith('외길'))) { assert.ok(jobs.length === 3 || jobs.length === 4, l.id); assert.ok([3, 5].includes(Math.max(...jobs.map(j => j.tier))), `${l.id} ends at tier 3 or 5`); continue; }
-        assert.ok(jobs.length >= 4 && jobs.length <= 10, `${l.id} ${jobs.length}`);
+        // v3.64 매지션 계보(tide)는 요정 대사제가 힐러 가지로 들어와 11개입니다.
+        assert.ok(jobs.length >= 4 && jobs.length <= (l.id === 'tide' ? 11 : 10), `${l.id} ${jobs.length}`);
         assert.equal(Math.max(...jobs.map(j => j.tier)), 5, `${l.id} reaches tier 5`);
     }
 });
@@ -75,9 +76,9 @@ test('v3.47 secret skills: server-only table registered by the engine, missing f
     const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Sk = await load('data/skills'), { SECRET_SKILLS } = await load('secret/skills'), { SECRET_JOBS } = await load('secret/jobs');
     const secretJobs = new Set(SECRET_JOBS.map(j => j.id));
-    assert.equal(SECRET_SKILLS.length, 67); assert.ok(SECRET_SKILLS.every(sk => secretJobs.has(sk.job)), 'every secret skill belongs to a secret job');
+    assert.equal(SECRET_SKILLS.length, 55); assert.ok(SECRET_SKILLS.every(sk => secretJobs.has(sk.job)), 'every secret skill belongs to a secret job');
     assert.ok(SECRET_SKILLS.every(sk => Sk.skillById(sk.id) === sk), 'the engine registered the finished objects');
-    assert.equal(Sk.SKILLS.filter(sk => secretJobs.has(sk.job)).length, 67, 'full table on the server');
+    assert.equal(Sk.SKILLS.filter(sk => secretJobs.has(sk.job)).length, 55, 'full table on the server');
     // 공개 표(game/data)에는 정의가 없습니다. 보스도 쓰는 tentacleBarrage만 예외.
     const fs = await import('node:fs'), src = fs.readdirSync('game/data').filter(f => f.endsWith('.ts')).map(f => fs.readFileSync(`game/data/${f}`, 'utf8')).join('\n');
     assert.deepEqual(SECRET_SKILLS.filter(sk => src.includes(`id: '${sk.id}'`)).map(sk => sk.id), ['tentacleBarrage']);
