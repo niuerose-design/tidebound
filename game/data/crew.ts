@@ -22,6 +22,13 @@ export const CREW = {
     leaveDays: 30,
     /** 소속 캐시를 다시 읽는 간격(동기화), 조직원의 마지막 활동을 다시 적는 간격. */
     refreshMs: 10 * 60_000, seenMs: 86400_000,
+    /**
+     * v3.32 합동 작전(주간, 한국 시간 월요일 0시 기준): 조직원이 각자 침투 작전에서 뚫은 노드 수를 합산합니다.
+     * 목표 = 30 × 그 주 시작 때 조직원 수 × (1 + 0.5 × (조직 등급 − 1) / 19). 주 중에 가입하면 늘어난 인원 기준으로 올리고, 탈퇴로는 내리지 않습니다.
+     * 목표의 50 · 100 · 150%마다 단계 보상.
+     * 단계 보상은 그 주에 1노드 이상 뚫은 조직원 각자가 받고(다음 동기화 때), 조직 자금에도 쌓입니다.
+     */
+    op: { perMember: 30, steps: [.5, 1, 1.5], reward: (step: number) => ({ bits: 50 * step, exp: 120 * step, fund: 100 * step }) },
 } as const;
 
 /** 성향: 창설 때 정하고 바꿀 수 없습니다. 회색은 해커 계열 누구나, 화이트·블랙은 해커와 그 2차만. */
@@ -36,7 +43,11 @@ export const sideAllows = (side: string, job: string) => !!crewSide(side)?.jobs.
 
 /** crews.data에 담기는 조직 한 개. members는 모험가 id → 조직원 정보. */
 export type CrewMember = { name: string; joined: number; seen: number; deposited: number; /** 해커 계열이 아니게 된 시각(돌아오면 지움). */ offSince?: number };
-export type CrewData = { name: string; side: CrewSide; leader: string; created: number; vault: number; exp: number; members: Record<string, CrewMember> };
+/** v3.32 합동 작전 한 주: 목표, 합계, 도달한 단계, 조직원별 기여. */
+export type CrewWeek = { key: string; goal: number; nodes: number; hacks: number; steps: number; by: Record<string, { nodes: number; hacks: number }> };
+export type CrewData = { name: string; side: CrewSide; leader: string; created: number; vault: number; exp: number; members: Record<string, CrewMember>;
+    /** v3.32 이번 주와 지난주 합동 작전(지난주는 보상을 아직 못 받은 조직원용). */
+    week?: CrewWeek; prev?: CrewWeek };
 
 /** 조직 경험치로 등급을 계산합니다(1부터). */
 export function crewGrade(exp: number) {
@@ -56,3 +67,8 @@ export const CREW_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const normalizeCrewCode = (code: string) => code.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CREW.codeLength);
 /** 조직 이름: 제어 문자·꺾쇠·대괄호 제외, 공백 정리. */
 export const cleanCrewName = (name: unknown) => String(name ?? '').replace(/[\u0000-\u001f\u007f<>[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, CREW.nameMax);
+
+/** v3.32 합동 작전 주간 목표(노드 합계). */
+export const opGoal = (members: number, grade: number) => Math.round(CREW.op.perMember * Math.max(1, members) * (1 + .5 * (Math.min(CREW.maxGrade, Math.max(1, grade)) - 1) / (CREW.maxGrade - 1)));
+/** v3.32 합계로 도달한 단계 수(0~3). */
+export const opSteps = (nodes: number, goal: number) => CREW.op.steps.filter(r => nodes >= Math.ceil(goal * r)).length;

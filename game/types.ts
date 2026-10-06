@@ -637,6 +637,10 @@ export type HackerState = {
     crew?: { id: string; name: string; side: string; grade: number; leader: boolean; syncedAt: number };
     /** v3.29 오늘 조직에 기여한 비트(하루 상한). */
     crewDeposit?: { day: string; n: number };
+    /** v3.32 아직 조직에 올리지 않은 합동 작전 기여(침투 노드·해킹). 침투 작전이 끝난 뒤 한 번에 올립니다. */
+    crewPending?: { nodes: number; hacks: number };
+    /** v3.32 받은 합동 작전 단계 보상(조직 id:주 → 단계 수, 최근 2주만). */
+    crewClaimed?: Record<string, number>;
     /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
     season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };

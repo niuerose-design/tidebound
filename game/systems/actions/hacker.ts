@@ -5,7 +5,7 @@ import { canUse } from '../progression';
 import { JOBS } from '../../data/classes';
 import { STAGES, DUNGEONS } from '../../data/world';
 import { BLESSINGS, RAIDS } from '../../data/altar';
-import { entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn, isBlackHacker } from '../hacker';
+import { crewNote, entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn, isBlackHacker } from '../hacker';
 import { dayKey, weekKey } from '../../data/goals';
 import { addLog } from '../state';
 
@@ -70,6 +70,7 @@ export const hackerActions: ActionHandlers = {
             const r = HACKER.infil.reward(run.depth + 1);
             run.bank.bits += r.bits; run.bank.exp += r.exp; run.depth++;
             h.bestDepth = Math.max(h.bestDepth || 0, run.depth);
+            crewNote(s, { nodes: 1 });
             run.node = makeNode(run.seed, run.depth, nodeExtra(s));
             bumpSeason(s, now, { depth: run.depth });
             addLog(s, `노드 ${run.depth} 돌파 · 쌓인 보상 비트 ${run.bank.bits} · 권한 ${run.bank.exp}`, 'reward');
