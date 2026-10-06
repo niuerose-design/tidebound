@@ -107,6 +107,9 @@ export const dungeonOverlevel = (playerLevel: number, dungeonLevel: number) => {
 };
 // 스킬 공식의 기본값. 전투 계산(combat.ts)과 스킬 설명(skill-description.ts)이 같은 값을 씁니다.
 export const SKILL_FORMULA = {
+    /** v3.88 행운 비례 보정(팬텀 계열): 치명 피해 재적용을 없앤 대신 위력의 치명 피해 비례분(scalingRatio)에 곱합니다.
+     * 성장 구간(장비 없음) 2~5차는 거의 그대로, 엔드(치명 피해 ×4 이상)의 제곱 폭증만 깎이도록 맞춘 값(check-roles · check-tier5). */
+    luckScalingScale: 2.8,
     // v26.6 주사위: 손가락 자르기 1단계마다 최저 배율은 로그 폭의 diceTrimLow, 최고 배율은 diceTrimHigh만큼 안쪽으로. 최대 diceTrimCap단계.
     diceTrimLow: .25, diceTrimHigh: .05, diceTrimCap: 3,
     healThreshold: .8, woundedThreshold: .7, healRatio: .22,

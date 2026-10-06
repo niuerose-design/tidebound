@@ -66,7 +66,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     useEffect(() => { const timer = window.setInterval(() => setTip(v => v + 1), 14000); return () => window.clearInterval(timer); }, []);
     const st = STAGES.find(x => x.id === s.stage)!, d = DUNGEONS.find(x => x.id === s.dungeon?.id);
     const enemy = s.enemy;
-    // v3.88 능력치는 동기화 상태(base)로 한 번만 계산합니다. 재생 프레임은 체력·마나·적·상태이상·기록만 바꾸고 능력치에는 영향이 없습니다.
+    // v3.90 능력치는 동기화 상태(base)로 한 번만 계산합니다. 재생 프레임은 체력·마나·적·상태이상·기록만 바꾸고 능력치에는 영향이 없습니다.
     const playerStats = useMemo(() => stats(base), [base]);
     const enemyStats = enemy ? normalizeStats(enemy.combatStats || { hp: enemy.maxHp, attack: enemy.attack, defense: enemy.defense, crit: 0 }) : null;
     const activeIds = s.skills.filter(id => skillById(id)?.type === 'active');

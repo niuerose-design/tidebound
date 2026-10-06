@@ -54,7 +54,7 @@ function useChat(open: boolean, channel: ChatChannel = 'global') {
 
 const hhmm = (at: number) => new Date(at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-/** v3.88 전투 화면 재생 프레임마다 다시 그리지 않도록 memo(속성이 바뀔 때만). */
+/** v3.90 전투 화면 재생 프레임마다 다시 그리지 않도록 memo(속성이 바뀔 때만). */
 export const ChatPanel = memo(function ChatPanel({ open, playerName, guildName }: { open: boolean; playerName: string; guildName?: string }) {
     const [channel, setChannel] = useState<ChatChannel>('global');
     const active: ChatChannel = channel === 'guild' && !guildName ? 'global' : channel;
