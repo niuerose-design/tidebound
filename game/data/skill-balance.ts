@@ -8,7 +8,7 @@ import { INVERSION_BALANCE } from './expansion-inversion';
 import { MONOSTAT_BALANCE } from './expansion-monostat';
 import { SUPPORT_BALANCE } from './support-rework';
 import { V25_BALANCE, V25_STATUS_ONLY } from './expansion-v25';
-import { ATTRIBUTE_NAMES } from './progression';
+import { ATTRIBUTE_NAMES, PROGRESSION } from './progression';
 
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
 export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
@@ -127,6 +127,26 @@ function progressDesc(sk: Skill) {
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
 const MAGIC_MANA_COST_SCALE = 4;
 
+/** v3.86 실패할 때마다 기본 발동률을 더하는 판정(c → 2c → 3c …, 최대 100%)의 기대 판정 수. */
+export function awakenExpectedRolls(c: number) {
+    let rolls = 0, miss = 1;
+    for (let k = 1; miss > 1e-9; k++) { rolls += miss; miss *= 1 - Math.min(1, k * Math.max(.01, c)); }
+    return rolls;
+}
+const awakenDesc = (desc: string) => desc.startsWith('[각성]') ? desc : `[각성] ${desc}`;
+/** v3.86 각성기로 바꿉니다: 대기는 턴 단위(SKILL_FORMULA.awaken), 배율은 옛 행동 단위 기대 기여를 넘도록 키웁니다(숙련 완료 발동률 기준). */
+export function awakenSkill(sk: Skill) {
+    if (sk.awaken || sk.type !== 'active') return;
+    const A = SKILL_FORMULA.awaken, steps = sk.masteryMilestones?.length || PROGRESSION.skillMasteryMilestones.length;
+    const c = Math.min(.95, sk.chance + steps * (sk.rankEffects?.chanceIncrease ?? 0));
+    const before = sk.cooldown + 1 / c, after = A.cooldown + awakenExpectedRolls(c), old = sk.multiplier;
+    sk.multiplier = Math.round(sk.multiplier * after / before * A.boost * 10) / 10;
+    sk.desc = awakenDesc((sk.desc || '').replace(`× ${old} 피해`, `× ${sk.multiplier} 피해`));
+    sk.cooldown = A.cooldown;
+    // 덜 자주 걸리는 만큼 거는 상태이상의 지속(패시브 보너스 포함)도 같은 비율로 늘려 유지율을 맞춥니다(예: 출혈 3+2턴 → 9턴).
+    sk.awaken = { start: A.start, ...(sk.effect && STATUS_DEFAULT_TURNS[sk.effect] !== undefined ? { statusScale: Math.round(after / before * 100) / 100 } : {}) };
+}
+
 export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number = () => 0) {
     for (const sk of skills) {
         const tuning = ACTIVE_SKILL_BALANCE[sk.id];
@@ -141,6 +161,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         sk.rankEffects = { ...sk.rankEffects, multiplierScale: sk.id === 'hook' ? .03 : .05,
             chanceIncrease: sk.id === 'hook' || sk.statusOnly ? .01 : magic ? .025 : .02,
             manaReduction: magic ? 1 : 0, cooldownReduction: 0 };
+        if (tierOf(sk) >= SKILL_FORMULA.awaken.tier) awakenSkill(sk);
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
         const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}` : sk.scaling === 'harmony' ? '올라운드 밸런스 원시 피해' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해)' : '마법 공격(물리 피해)') : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
@@ -168,4 +189,6 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
     }
+    // v3.86 각성기 설명 앞에 [각성]을 붙입니다(위에서 설명을 다시 썼으므로).
+    for (const sk of skills) if (sk.awaken) sk.desc = awakenDesc(sk.desc || '');
 }

@@ -33,7 +33,8 @@ test('v21 poison, burns and execute conditions are data-driven',()=>{
  assert.equal(b.hp,1e6-(b.effects.poison.perStack+Math.floor(1e6*SKILL_FORMULA.poisonHpRatio))*2,'v3.54 독침은 상태이상 전용: 직접 피해 없이 첫 틱만 바로');assert.equal(b.effects.poison.turns,dart.statusTurns??STATUS_TUNING.poisonTurns,'duration unchanged');
  b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.burn.stacks,STATUS_TUNING.burnFirstStacks);assert.equal(b.effects.dot,undefined);assert.ok(b.hp<1e6);// 플레임 디스차지는 피해와 화상을 함께
  b=mk([]);strike(mk(['rotBloom']),b,()=>0);assert.equal(b.effects.poison.stacks,2);assert.ok(b.hp<1e6);// 4차는 피해와 상태이상을 함께
- const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[];strike(mk(['braveSlash']),t,()=>0,ev);return ev[0].hits[0].value;};
+ // v3.86 용사의 일격은 각성기: 대기가 끝나 있으면(0) 기본 행동 뒤에 턴 판정으로 함께 나갑니다.
+ const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[],a=mk(['braveSlash']);a.cooldowns.braveSlash=0;strike(a,t,()=>0,ev);return ev.find(e=>e.skillId==='braveSlash').hits[0].value;};
  const sk=SKILLS.find(x=>x.id==='braveSlash');assert.equal(brave(3e5),Math.round(Math.round(100*sk.multiplier)*(1+sk.conditionalDamageBonus)));assert.equal(brave(1e6),Math.round(100*sk.multiplier));
 });
 test('v21 job chains: five-step flagships per archetype and a physical kraken route',()=>{
@@ -61,7 +62,7 @@ test('v21.1 magic jobs replace basic attacks with a weaker arcane strike from ti
 
 test('v21.2 tier 5 (v3.80) signature skills work fully in their own lineage and at 70% when inherited elsewhere',()=>{
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
- const hit=(job,id='braveSlash')=>{const b={name:'B',stats:{...base},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};strike({name:'A',job,stats:{...base},hp:1e6,mana:100,skills:[id],cooldowns:{},stun:0,effects:{},ranks:{[id]:1},mastery:{},practice:{}},b,()=>0);return 1e6-b.hp;};
+ const hit=(job,id='braveSlash')=>{const b={name:'B',stats:{...base},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};const ev=[];strike({name:'A',job,stats:{...base},hp:1e6,mana:100,skills:[id],cooldowns:{[id]:0},stun:0,effects:{},ranks:{[id]:1},mastery:{},practice:{}},b,()=>0,ev);return ev.find(e=>e.skillId===id).total;};
  const own=hit('hero'),outside=hit('apostle');assert.ok(Math.abs(outside/own-SKILL_FORMULA.signatureScale)<.02);assert.equal(hit('knight'),hit('knight'));
  assert.equal(hit(undefined),own,'enemies and legacy fighters are unaffected');assert.equal(hit('apostle','flashCut'),hit('hero','flashCut'),'tier 3 skills combine freely');
  const s=newState(0);s.level=100;s.rebirths=2;s.skillInheritances.heroSoul=true;s.learned.heroSoul=1;s.skills=['heroSoul'];
@@ -121,14 +122,16 @@ test('v22 gear (v27.53 base 0.25%, rare or better): scarce drops, dismantle into
 });
 test('v27.94 essence sinks: rerolling the same item costs +10% each time without a cap, refine rerolls only the value',()=>{
  const s=newState(0);s.gold=1e12;s.essence=1e6;
- s.inventory=[{id:'x',slot:'rod',style:'physical',rarity:4,power:300,level:40,name:'x',affixes:gear.rollAffixes(4,300,undefined,rng)}];
+ // 전용 고정 난수: 공유 난수 순서에 따라 재련할 수 있는 옵션이 없는 장비가 드물게 나오던 것을 막습니다.
+ const local=(seed=>()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296))(9427);
+ s.inventory=[{id:'x',slot:'rod',style:'physical',rarity:4,power:300,level:40,name:'x',affixes:gear.rollAffixes(4,300,undefined,local)}];
  const item=()=>s.inventory[0],base=gear.rerollEssence(4);
  for(let n=0;n<30;n++){const e=s.essence,g=s.gold;act(s,{type:'reforge',id:'x',value:'0'},0);assert.equal(e-s.essence,Math.ceil(base*(10+n)/10),'essence step '+n);assert.ok(s.gold<g);}
  assert.equal(item().rerolls,30);assert.equal(Math.ceil(base*4),Math.ceil(gear.rerollScaled(base,30)),'no cap: 30 rerolls = x4');
  // 실패한 재설정(정수 부족)은 횟수를 올리지 않습니다.
  s.essence=0;assert.throws(()=>act(s,{type:'reforge',id:'x',value:'0'},0),/정수/);assert.equal(item().rerolls,30);
  // 수치 재련: 종류는 그대로, 수치만 바뀌고, 비용은 재설정 기본 비용의 절반이며 오르지 않습니다.
- s.essence=1000;const ids=item().affixes.map(a=>a.id),idx=item().affixes.findIndex(a=>!a.rule);
+ s.essence=1000;const ids=item().affixes.map(a=>a.id),idx=item().affixes.findIndex(a=>!a.rule);assert.ok(idx>=0,'재련할 수 있는 옵션이 있어야 합니다');
  const spent=[];for(const r of [.0,.999,.5]){const e=s.essence;act(s,{type:'refine',id:'x',value:String(idx)},0,()=>r);spent.push(e-s.essence);}
  assert.deepEqual(spent,[gear.refineEssence(4),gear.refineEssence(4),gear.refineEssence(4)]);assert.equal(gear.refineEssence(4),Math.ceil(base/2));
  assert.deepEqual(item().affixes.map(a=>a.id),ids,'refine keeps every option kind');assert.equal(item().rerolls,30,'refine does not raise the reroll cost');

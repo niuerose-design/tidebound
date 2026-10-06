@@ -77,7 +77,12 @@ export const ACHIEVEMENT_AP: Record<string, number> = {};
 export function skillMasteryLevel(practice: number, milestones = PROGRESSION.skillMasteryMilestones) { return milestones.filter(m => practice >= m).length; }
 export function skillMastery(s: State, id: string) { const sk = skillById(id); return skillMasteryLevel(s.skillPractice?.[id] || 0, masteryMilestonesFor(sk)) + limitBreakOf(s, id); }
 export function skillMasteryRanks(s: State) { const out: Record<string, number> = {}; for (const [id, practice] of Object.entries(s.skillPractice || {})) out[id] = skillMasteryLevel(practice, masteryMilestonesFor(skillById(id))) + limitBreakOf(s, id); return out; }
-export function apUsed(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
+/** v3.86 효과가 나는 추가 판정 단계: 켠 단계 · 연구 ‘연계의 기억’ 단계 · 규칙 최대 단계 중 가장 낮은 값. */
+export function extraRollLevel(s: Pick<State, 'extraRolls' | 'permanent'>) { return Math.max(0, Math.min(s.extraRolls || 0, researchRank(s, 'extraRoll'), SKILL_FORMULA.extraRoll.ap.length)); }
+/** v3.86 추가 판정이 쓰는 장착 AP(단계별 합). */
+export function extraRollAP(s: Pick<State, 'extraRolls' | 'permanent'>, level = extraRollLevel(s)) { return SKILL_FORMULA.extraRoll.ap.slice(0, level).reduce((a, n) => a + n, 0); }
+/** 장착 AP 사용량: 스킬 AP 합 + v3.86 추가 판정 AP. */
+export function apUsed(s: State, ids = s.skills) { return extraRollAP(s) + ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
 export function lineage(job: string): string[] { const j = jobById(job); return j ? [j.id, ...(j.parent ? lineage(j.parent) : [])] : []; }
 /** 전용 기술 효율: signatureTier(v3.80 5차) 이상 직업의 기술을 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1. */
 export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
@@ -307,6 +312,8 @@ const hackerLoadoutOk = (s: State, ids: string[]) => !isHackerJob(s.job) || ids.
 export function validLoadout(s: State, ids: string[]) { return ids.length === new Set(ids).size && ids.every(id => canUse(s, id)) && hackerLoadoutOk(s, ids) && !overRestraint(s, ids) && apUsed(s, ids) <= apCapacity(s); }
 export function trimLoadout(s: State) {
     s.skills = [...new Set(s.skills)].filter(id => canUse(s, id));
+    // v3.86 AP가 모자라면 스킬보다 추가 판정을 먼저 끕니다.
+    while (extraRollLevel(s) > 0 && !validLoadout(s, s.skills)) s.extraRolls = extraRollLevel(s) - 1;
     // v27.86 절제: 액티브·패시브를 앞에서부터 상한 개수만 남깁니다.
     const cap = restraintSlots(s);
     if (cap !== null) { let a = 0, p = 0; s.skills = s.skills.filter(id => skillById(id)?.type === 'active' ? ++a <= cap : ++p <= cap); }
