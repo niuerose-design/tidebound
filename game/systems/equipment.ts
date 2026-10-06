@@ -68,7 +68,7 @@ export const saleValue = (item: Item) => {
 const smith = (cost: number, s?: Pick<State, 'permanent'>) => s ? Math.floor(cost * smithDiscount(s)) : cost;
 // v27.30 강화·옵션 재설정 비용은 Lv.40 위 장비부터 몬스터 골드 곡선(priceScale)만큼 커집니다.
 /** 강화 1회 비용. 12성까지 전 공식, 13성부터 12성 비용 × growth^(성−12)(v27.93 스타포스). */
-/** v3.80 영구 장비(유물 · 계승 · 칠흑) 강화 비용 배율: 1 + 환생 × permanentPerRebirth. 일반 장비는 1. */
+/** v3.81 영구 장비(유물 · 계승 · 칠흑) 강화 비용 배율: 1 + 환생 × permanentPerRebirth. 일반 장비는 1. */
 export const permanentStarScale = (item: Pick<Item, 'relic' | 'onyx' | 'heir'>, s?: Partial<Pick<State, 'rebirths'>>) => keepsAcrossLives(item) ? 1 + Math.max(0, s?.rebirths || 0) * STARFORCE.permanentPerRebirth : 1;
 export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'> & Partial<Pick<State, 'rebirths'>>) => { const n = item.enhance || 0, base = Math.min(n, STARFORCE.growthFrom); return smith(Math.floor((120 + item.power * 12) * (1 + base) ** 1.6 * priceScale(item.level || 1) * Math.pow(STARFORCE.growth, Math.max(0, n - STARFORCE.growthFrom)) * permanentStarScale(item, s)), s); };
 /** v3.3 유물 옵션 이식 비용: 소비하는 장비의 옵션 재설정 골드 × RELIC_GROWTH.imprintCost. */

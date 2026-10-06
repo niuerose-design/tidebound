@@ -124,7 +124,7 @@ test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint 
     for (const [id, last] of [['titanFieldNotes', 0], ['pearlLedger', 0], ['chronicleStudy', -1], ['serpentFolklore', 0], ['abyssObservation', -1]]) { const m = maxSkillLevel(sk(id)); assert.equal(sk(id).levelEffects.length, m + 1, id); assert.equal(effectiveSkill(sk(id), 1, m).cost, last, id); assert.ok(effectiveSkill(sk(id), 1, 0).cost >= 3, `${id} starts expensive`); }
     assert.equal(effectiveSkill(sk('pearlLedger'), 1, 4).bonus.rebirthBonus, 2);
     // 떠돌이 계보: 숙달 직업 수 관문과 숙달 비례 피해.
-    const s = newState(0); s.level = 40; s.attributes = { str: 30, int: 30, vit: 30, dex: 0, wis: 0, luk: 0 }; s.jobMastery.journeyman = 4000; s.unlockedJobs.push('journeyman');
+    const s = newState(0); s.level = 40; s.attributes = { str: 30, int: 30, vit: 30, dex: 0, wis: 0, luk: 0 }; s.jobMastery.journeyman = jobMasteryTarget(JOBS.find(x => x.id === 'journeyman')); s.unlockedJobs.push('journeyman');
     for (const id of ['harpoon', 'tide', 'warden', 'whaler', 'corsair', 'tempest']) s.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
     assert.equal(canChangeJob(s, 'polymath'), false, '6 mastered + journeyman = 7 < 8');
     s.jobMastery.oracle = jobMasteryTarget(JOBS.find(x => x.id === 'oracle')); assert.equal(canChangeJob(s, 'polymath'), true);

@@ -59,7 +59,7 @@ test('v21.1 magic jobs replace basic attacks with a weaker arcane strike from ti
  assert.ok(SKILL_FORMULA.arcaneStrikeChance.slice(1).every((c,i,a)=>c>=.7&&(i===0||c>=a[i-1])));
 });
 
-test('v21.2 tier 4+ signature skills work fully in their own lineage and at 70% when inherited elsewhere',()=>{
+test('v21.2 tier 5 (v3.80) signature skills work fully in their own lineage and at 70% when inherited elsewhere',()=>{
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const hit=(job,id='braveSlash')=>{const b={name:'B',stats:{...base},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};strike({name:'A',job,stats:{...base},hp:1e6,mana:100,skills:[id],cooldowns:{},stun:0,effects:{},ranks:{[id]:1},mastery:{},practice:{}},b,()=>0);return 1e6-b.hp;};
  const own=hit('hero'),outside=hit('apostle');assert.ok(Math.abs(outside/own-SKILL_FORMULA.signatureScale)<.02);assert.equal(hit('knight'),hit('knight'));
@@ -67,6 +67,8 @@ test('v21.2 tier 4+ signature skills work fully in their own lineage and at 70% 
  const s=newState(0);s.level=100;s.rebirths=2;s.skillInheritances.heroSoul=true;s.learned.heroSoul=1;s.skills=['heroSoul'];
  const withHero=stats({...s,job:'hero'}).critDamage-stats({...s,job:'hero',skills:[]}).critDamage,withApostle=stats({...s,job:'apostle'}).critDamage-stats({...s,job:'apostle',skills:[]}).critDamage;
  assert.ok(Math.abs(withApostle/withHero-SKILL_FORMULA.signatureScale)<1e-9);
+ // v3.80 시작 차수 5: 4차 기술은 계보 밖에서도 온전히 씁니다.
+ assert.equal(SKILL_FORMULA.signatureTier,5);const t4=SKILLS.find(sk=>sk.type==='active'&&JOBS.find(j=>j.id===sk.job)?.tier===4&&!sk.song);const owner=t4.job,other=JOBS.find(j=>j.tier===4&&j.id!==owner&&!j.retired&&!j.hidden).id;assert.equal(hit(other,t4.id),hit(owner,t4.id),'tier 4 skills combine freely');
 });
 
 test('v27.17 poison is its own stacking status; bleed does not stack but makes the target take more damage',()=>{
