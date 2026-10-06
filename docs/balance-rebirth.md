@@ -276,7 +276,7 @@ Lv.100, 같은 직업 계보(모두 숙달), 전설 장비 4부위, 연구는 �
 | **유지(진행이 아닌 것)** | 이름, 분신 슬롯 목록과 해금, 길드 소속, 제단·주간·일일 기여, 결투 시즌, 설정(공개 범위, 자동 판매, 프리셋, 스킬 고정·숨김, 알림) | `name`, `guild`, `guildMember`, `guildStats`, `altar`, `daily`, `weekly`, `duelSeason`, `privacy`, `autoSell`, `salvageMode`, `presets`, `skillPins`, `skillHidden`, `hideDoorNotice`, `skipStatConfirm` |
 | 초기화: 무릉도장 | 최고층, 층 이정표(첫 도달 보상), 주간 기록. 승천 기록에 이번 승천 최고층을 남긴 뒤 0 | `abyssBest`, `abyssMilestones`, `abyssWeek` |
 | 초기화: 계정 보너스 | 승천한 캐릭터의 계정 보너스 계산. 슬롯 목록과 해금은 유지 | `account` (보너스 계산부만) |
-| 초기화: 환생 | 환생 횟수, 생 보너스(순풍·깊은 모험), 서약 | `rebirths` → 0, `lifeBonus`, `vows`, `nextVows` |
+| 초기화: 환생 | 환생 횟수, 서약 | `rebirths` → 0, `vows`, `nextVows` |
 | 초기화: 골드·세계석 | 골드(새 캐릭터와 같은 100 G), 세계석, 세계석 연구, 연구 초기화 사용 기록 | `gold`, `pearls`, `permanent`, `researchResetUsed`, `researchGranted` |
 | 초기화: SP·정수 | SP, 스킬 SP 투자, 정수, **최고 레벨(레벨 SP 판정용)** | `sp`, `skillSpent`, `essence`, `peakLevel` |
 | 유지: 해커 | 해킹 단계, 권한 등급, 비트, 애드가드 | `hacker` |
