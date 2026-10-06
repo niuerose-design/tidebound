@@ -4,6 +4,16 @@ import { BALANCE } from './balance';
 /** 가격·확률·영구 성장 수치의 단일 설정. 모두 게임 내 재화 전용. */
 export const ECONOMY = { /** v27.93 강화 상한·성당 배율은 data/starforce.ts(STARFORCE)로 옮김. 판매 때 돌려받는 강화 비용 비율. */ saleEnhanceRefund: .3, shopBase: 180, shopPerLevel: 35, gambleBase: 300, gamblePerLevel: 45, rebirthAPCap: 12, rebirthLevelStep: 5, /** v27.55 Lv.60(환생 6회) 뒤로는 환생마다 +1, 최대 Lv.80. */ rebirthLevelCap: 100, rebirthLevelLateFrom: 60, rebirthLevelLateStep: 1, rebirthExp: .25, tideCap: 200 };
 // v22: 감정은 희귀 이상. 드물게 신화·고대·태초가 나옵니다(등급 수 = 옵션 수).
+/** v3.55 감정 천장: 이 등급 이상이 마지막으로 나온 뒤 이 횟수째 감정은 그 등급 이상이 확정입니다(신화 150 · 고대 1,000 · 태초 3,000). 환생해도 남고 승천하면 초기화. */
+export const APPRAISAL_PITY = [{ rarity: 4, key: 'myth', count: 150 }, { rarity: 5, key: 'ancient', count: 1000 }, { rarity: 6, key: 'primal', count: 3000 }] as const;
+export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];
+/** v3.55 감정 가격의 환생 배율: 10^(환생 / 60). 환생 50 ×6.8 · 100 ×46 · 200 ×2,154. 현재 환생 횟수 기준이라 승천하면 다시 낮아집니다. */
+export const APPRAISAL_REBIRTH_SCALE = 60;
+export const appraisalRebirthFactor = (rebirths: number) => Math.pow(10, Math.max(0, rebirths) / APPRAISAL_REBIRTH_SCALE);
+/** v3.55 각인 감정: 고른 옵션 하나가 반드시 붙습니다. 골드는 감정 × goldMultiplier, 정수 essence가 더 듭니다. */
+export const IMPRINT_APPRAISAL = { goldMultiplier: 2, essence: 10 };
+/** v3.55 자동 감정 한 번에 최대 시도 수(렉 방지). */
+export const AUTO_APPRAISAL_MAX = 1000;
 /** 감정 등급(희귀 ~ 태초). v3.52 확률은 서버 전용(game/secret/odds.ts, ODDS.appraisal). */
 export const APPRAISAL: readonly { rarity: number; readonly chance: number }[] = [1, 2, 3, 4, 5, 6].map((rarity, i) => ({ rarity, get chance() { return ODDS.appraisal[i]; } }));
 export type ResearchTab = 'combat' | 'utility' | 'gold';

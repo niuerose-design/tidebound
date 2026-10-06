@@ -117,6 +117,8 @@ export type StatusEffects = {
     lastStand?: number;
 };
 export type Item = {
+    /** v3.55 각인 감정으로 고른 옵션 id(표시용). */
+    imprinted?: string;
     /** v27.27 상점에서 산 장비의 구매가(골드). 판매가는 이 값의 절반을 넘지 않습니다. */
     paid?: number;
     /** 강화 단계(v27.93부터 스타포스 성 수). */
@@ -491,6 +493,10 @@ export type State = {
     goldLog?: { h: number; g: number }[];
     /** v3.55 기록을 시작한 뒤 사냥으로 번 골드 합계. */
     goldEarned?: number;
+    /** v3.55 감정 기록: 총 횟수, 등급별 횟수(0~6), 천장 카운트(그 등급 이상이 마지막으로 나온 뒤 감정 수). 환생해도 남고 승천하면 초기화. */
+    appraisal?: { count: number; byRarity: number[]; pity: { myth: number; ancient: number; primal: number } };
+    /** v3.55 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
+    plainCodex?: boolean;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
     /** 자동 정리 · 분해 방식(설정). v3.23부터 정수로 분해. */

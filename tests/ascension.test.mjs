@@ -280,3 +280,34 @@ test('v3.55 gold income is logged per play hour (24 buckets) and survives rebirt
     assert.ok((t.goldEarned || 0) >= t.gold - g0 && t.goldLog?.length >= 1, 'hunting ticks record income');
     t.level = 60; t.goldLog = [{ h: 0, g: 9 }]; act(t, { type: 'rebirth' }, 700_000); assert.deepEqual(t.goldLog, [{ h: 0, g: 9 }], 'kept through rebirth');
 });
+test('v3.55 appraisal: price × 10^(rebirths/60), pity at 150/1000/3000 kept through rebirth and reset by ascension', async () => {
+    const Co = await L.load('systems/commerce'), Ec = await L.load('data/economy');
+    const s = newState(0); s.level = 100; const base = Co.gambleCost(s);
+    s.rebirths = 60; assert.equal(Co.gambleCost(s), Math.floor(base * 10)); s.rebirths = 0;
+    s.gold = 1e12; s.permanent.inventory = 8; s.inventory = [];
+    s.appraisal = { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 148, ancient: 0, primal: 0 } };
+    act(s, { type: 'gamble', id: 'coat', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 1, 'below pity: rolls as usual');
+    act(s, { type: 'gamble', id: 'coat', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 4, '150th appraisal is myth or better');
+    assert.equal(s.appraisal.pity.myth, 0); assert.equal(s.appraisal.pity.ancient, 2); assert.equal(s.appraisal.count, 2);
+    s.appraisal.pity.primal = 2999; act(s, { type: 'gamble', id: 'charm', value: '1' }, 0, () => 0); assert.equal(s.inventory.at(-1).rarity, 6, 'primal pity');
+    assert.deepEqual(s.appraisal.pity, { myth: 0, ancient: 0, primal: 0 });
+    assert.deepEqual(Co.pityLeft(s).map(p => p.left), Ec.APPRAISAL_PITY.map(p => p.count));
+    const r = newState(0); r.level = 60; r.appraisal = { count: 7, byRarity: [0, 7, 0, 0, 0, 0, 0], pity: { myth: 7, ancient: 7, primal: 7 } }; act(r, { type: 'rebirth' }, 0); assert.equal(r.appraisal.count, 7, 'kept through rebirth');
+});
+test('v3.55 imprint appraisal always carries the chosen option and costs 2× gold + essence; auto appraisal stops at the target', async () => {
+    const Co = await L.load('systems/commerce'), Ec = await L.load('data/economy');
+    const s = newState(0); s.level = 50; s.gold = 1e9; s.essence = 15; s.permanent.inventory = 8; s.inventory = [];
+    const cost = Co.imprintGambleCost(s); assert.equal(cost.gold, Co.gambleCost(s) * 2); assert.equal(cost.essence, Ec.IMPRINT_APPRAISAL.essence);
+    let x = 1; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647);
+    act(s, { type: 'imprintGamble', id: 'charm', value: 'brutal|1' }, 0, rng);
+    const it = s.inventory.at(-1); assert.ok(it.affixes.some(a => a.id === 'brutal'), 'chosen option'); assert.equal(it.imprinted, 'brutal'); assert.equal(s.essence, 5);
+    assert.throws(() => act(s, { type: 'imprintGamble', id: 'charm', value: 'brutal|1' }, 0, rng), /정수/);
+    assert.throws(() => act(s, { type: 'imprintGamble', id: 'charm', value: 'nope|1' }, 0, rng), /옵션/);
+    assert.ok(!Co.imprintChoices('charm').some(a => a.kind === 'rule'), 'no rule options to imprint');
+    const t = newState(0); t.level = 50; t.gold = 1e12; t.essence = 0; t.permanent.inventory = 8; t.inventory = []; t.itemBook = {};
+    const bag = t.inventory.length; act(t, { type: 'autoGamble', id: 'rod', value: `4|${1e12}` }, 0, rng);
+    assert.equal(t.inventory.length, bag + 1, 'only the target piece enters the bag'); assert.ok(t.inventory.at(-1).rarity >= 4);
+    assert.ok(t.appraisal.count <= Ec.AUTO_APPRAISAL_MAX && t.appraisal.count >= 1); assert.ok(Object.keys(t.itemBook).length >= 1, 'missing kinds registered');
+    const u = newState(0); u.level = 50; u.gold = Co.gambleCost(u) * 3; u.permanent.inventory = 8; u.inventory = [];
+    act(u, { type: 'autoGamble', id: 'rod', value: `6|${u.gold}` }, 0, () => 0); assert.equal(u.appraisal.count, 3, 'stops at the gold limit'); assert.equal(u.inventory.length, 0);
+});

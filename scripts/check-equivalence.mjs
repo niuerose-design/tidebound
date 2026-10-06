@@ -45,7 +45,7 @@ function pickAction(s, r) {
         () => ({ type: 'loadPreset', id: String(Math.floor(r() * 3)) }), () => ({ type: 'equip', id: pick(inv) }), () => ({ type: 'unequip', id: pick(['rod', 'coat', 'charm']) }),
         () => ({ type: 'sell', id: pick(inv) }), () => ({ type: 'rebirth' }),
         () => ({ type: 'offlineDismiss' }),
-        () => ({ type: 'buy', id: pick(SHOP).id }), () => ({ type: 'gamble', id: pick(GAMBLE_CATEGORIES).id }), () => ({ type: 'enhance', id: pick(inv) }),
+        () => ({ type: 'gamble', id: pick(GAMBLE_CATEGORIES).id }), () => ({ type: 'imprintGamble', id: pick(GAMBLE_CATEGORIES).id, value: 'might|1' }), () => ({ type: 'autoGamble', id: pick(GAMBLE_CATEGORIES).id, value: `4|${Math.floor(r() * 1e6)}` }), () => ({ type: 'enhance', id: pick(inv) }),
         () => ({ type: 'reforge', id: pick(inv) }), () => ({ type: 'lockItem', id: pick(inv) }), () => ({ type: 'sellRarity', id: String(Math.floor(r() * 4)) }),
         () => ({ type: 'permanent', id: pick(RESEARCH).id }), () => ({ type: 'buyRelic', id: pick(RELICS).id }),
     ];
@@ -106,7 +106,7 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
     }
     for (const s of samples) {
         display.push(statsM.stats(s), statsM.dropRate(s), statsM.goldMultiplier(s), statsM.expMultiplier(s), statsM.dungeonGoldMultiplier(s), statsM.snapshot(s), statsM.power(statsM.stats(s)), statsM.mastery(s));
-        display.push(prog.apCapacity(s), prog.apUsed(s), meta.rebirthReward(s, 2), meta.rebirthLevel(s), commerceM.shopCost(s), commerceM.gambleCost(s));
+        display.push(prog.apCapacity(s), prog.apUsed(s), meta.rebirthReward(s, 2), meta.rebirthLevel(s), commerceM.gambleCost(s), commerceM.imprintGambleCost(s), commerceM.pityLeft(s));
         for (const j of JOBS) display.push(prog.jobRequirements(s, j), prog.canChangeJob(s, j.id));
         for (const x of SHOP) display.push(commerceM.shopPreview(s, x.id));
         for (const f of FISH) display.push(prog.bookReward(s, f.id));

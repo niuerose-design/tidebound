@@ -476,7 +476,7 @@ test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is
     const W = await L.load('data/world'), B = await L.load('data/balance'), M = await L.load('systems/meta'), C = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), E = await L.load('data/encounters');
     for (const lv of [1, 10, 25, 40]) assert.equal(W.fishGoldAt(lv), Math.round(7 * Math.pow(1.12, lv - 1)), `Lv.${lv} unchanged`);
     assert.ok(W.fishGoldAt(60) < Math.round(7 * Math.pow(1.12, 59)) / 2, 'late fish gold at least halved');
-    const s = newState(0); s.level = 30; assert.ok(C.gambleCost(s) >= W.fishGoldAt(30) * 60 && C.shopCost(s) >= W.fishGoldAt(30) * 30, 'shop prices follow fish gold');
+    const s = newState(0); s.level = 30; assert.ok(C.gambleCost(s) >= W.fishGoldAt(30) * 60, 'appraisal price follows fish gold');
     const item = level => ({ id: 'x', slot: 'rod', rarity: 3, level, power: 100, enhance: 0 });
     assert.equal(Eq.enhanceCost(item(40)), Eq.enhanceCost(item(20)), 'no price scaling up to Lv.40');
     assert.ok(Eq.enhanceCost(item(60)) > Eq.enhanceCost(item(40)) * 3, 'Lv.60 gear costs more to enhance');
@@ -630,7 +630,7 @@ test('v27.51 every final combat stat equals the sum of its shown breakdown rows'
 test('v27.53 drops: 0.25% base, bonus 0.01 = +10%, rare or better, tide drop level capped at player level + 10', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const S = await L.load('systems/stats'), Enc = await L.load('systems/encounter'), E = await L.load('systems/engine'), P = await L.load('data/progression');
-    const s = E.newState(0); s.attributes.luk = 0; const base = S.dropRate(s); assert.ok(base >= .0025 && base < .0028, `base ${base} (기본 행운 포함)`);
+    const s = E.newState(0); s.attributes.luk = 0; s.itemBook = {}; const base = S.dropRate(s); assert.ok(base >= .0025 && base < .0028, `base ${base} (기본 행운 포함, v3.55 일반 도감 4칸 제외)`);
     s.permanent.drop = 10; assert.ok(Math.abs(S.dropRate(s) - base - .0025) < 1e-9, 'research 10 ranks = +100% of the 0.25% base');
     assert.equal(P.statDisplay('dropBonus', .05), '+50%');
     assert.equal(Enc.dropLevel({ level: 30 }, 25, 10), 40, 'capped at player + 10'); assert.equal(Enc.dropLevel({ level: 30 }, 50, 10), 50, 'never below the source level'); assert.equal(Enc.dropLevel({ level: 30 }, 25, 1), 30);

@@ -2,21 +2,42 @@ import { gearName } from '../data/maple-gear';
 import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { ASCENSION } from '../data/ascension';
-import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, ECONOMY, researchRank, APPRAISAL, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap } from '../data/economy';
-import { apCapacity, apUsed } from './progression';
+import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap } from '../data/economy';
+import { apCapacity, apUsed, itemKey } from './progression';
 import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
-import { rollAffixes, refineOption } from '../data/gear';
+import { rollAffixes, refineOption, rollOption, affixDef, AFFIX_POOL } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
-/** v27.30 확정 구매·감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 배수' 중 큰 값. 감정은 매번 희귀 이상이라 드롭(처치당 0.1%)보다 훨씬 유리했습니다. */
-const SHOP_FISH = { buy: 30, gamble: 60 };
+/** v27.30 감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.55 확정 구매를 없애고 환생 배율(10^(환생/60))을 곱합니다. */
+const GAMBLE_FISH = 60;
 /** v3.7 자동 강화 한 번에 돌리는 최대 시도 수(렉 방지). */
 const AUTO_STAR_MAX_TRIES = 2000;
 const fishPrice = (s: State, n: number) => fishGoldAt(Math.min(PRICE_LEVEL_CAP, s.level)) * n;
-export const shopCost = (s: State) => Math.floor(Math.max(ECONOMY.shopBase + s.level * ECONOMY.shopPerLevel, fishPrice(s, SHOP_FISH.buy)));
-/** v27.20 일반 등급(흰색) 장비 확정 구매: 도감용. 드롭 확률이 낮고 던전·보스 드롭은 희귀 이상이라 흰색을 따로 팝니다. */
-export const plainCost = (s: State) => Math.max(30, Math.floor(shopCost(s) * .2));
-export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, fishPrice(s, SHOP_FISH.gamble)));
+export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, fishPrice(s, GAMBLE_FISH)) * appraisalRebirthFactor(s.rebirths || 0));
+/** v3.55 각인 감정 비용(한 번): 골드 = 감정 × 2, 정수 10. */
+export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
+/** v3.55 각인으로 고를 수 있는 옵션: 그 부위에 붙을 수 있는 일반 옵션(규칙 옵션·출신 전용 옵션 제외). */
+export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.onlyOrigin && (!a.onlySlot || a.onlySlot === slot));
+const gambleCategory = (id: string) => GAMBLE_CATEGORIES.find(x => x.id === id) as { slot: string; offers: readonly string[] } | undefined ?? (SHOP.some(x => x.id === id) ? { slot: SHOP.find(x => x.id === id)!.slot, offers: [id] } : undefined);
+const appraisalState = (s: State) => (s.appraisal ??= { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 0, ancient: 0, primal: 0 } });
+/** v3.55 다음 감정에서 천장이 터지는 등급(없으면 0). */
+export const pityRarity = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.reduce((r, p) => (s.appraisal?.pity[p.key] || 0) + 1 >= p.count ? Math.max(r, p.rarity) : r, 0);
+/** v3.55 천장까지 남은 감정 수(이번 감정 포함). */
+export const pityLeft = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.map(p => ({ ...p, left: Math.max(1, p.count - (s.appraisal?.pity[p.key] || 0)) }));
+/** v3.55 감정 한 번: 확률표로 등급을 뽑고 천장을 적용한 뒤 장비를 만듭니다. 골드·정수는 부르는 쪽이 냅니다. */
+function appraiseOnce(s: State, offers: readonly string[], rng: () => number, cost: number, imprint?: string): Item {
+    const offerId = offers[offers.length > 1 ? Math.min(offers.length - 1, Math.floor(rng() * offers.length)) : 0], offer = SHOP.find(x => x.id === offerId)!;
+    const roll = rng();
+    let threshold = 0;
+    const rolled = APPRAISAL.find(r => { threshold = Math.round((threshold + r.chance) * 1e6) / 1e6; return roll < threshold; })?.rarity ?? APPRAISAL[APPRAISAL.length - 1].rarity;
+    const rarity = Math.max(rolled, pityRarity(s)), rec = appraisalState(s);
+    rec.count++; rec.byRarity[rarity] = (rec.byRarity[rarity] || 0) + 1;
+    for (const p of APPRAISAL_PITY) rec.pity[p.key] = rarity >= p.rarity ? 0 : rec.pity[p.key] + 1;
+    const power = Math.round((s.level + 2) * RARITIES[rarity].factor), base: Item = { ...shopPreview(s, offer.id), id: `shop-${++s.shopSerial}` };
+    delete base.affix;
+    const fixed = imprint ? [rollOption(affixDef(imprint)!, power, rarity, rng, s.level)] : [];
+    return { ...base, name: gearName(offer.slot, rarity, base.style), rarity, power, affixes: rollAffixes(rarity, power, undefined, rng, fixed, offer.slot, s.level), paid: cost, ...(imprint ? { imprinted: imprint } : {}) };
+}
 export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: gearName(o.slot, 1, o.style), slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
 /** v3.40 세계석 연구를 지금 살 수 없는 이유(세계석 부족 제외). 살 수 있으면 null. 연구 구매와 연구 구매 예약이 같은 판정을 씁니다. */
@@ -111,54 +132,57 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     const room = () => { if (s.inventory.length >= inventoryCap(s))
         throw Error('가방을 비운 뒤 구매하세요.'); };
     const nextId = () => `shop-${++s.shopSerial}`;
-    if (a.type === 'buy' || a.type === 'gamble') {
-        const gamble = a.type === 'gamble';
-        // 감정은 부위(rod·coat·charm)로 고르지만, 상품 id를 직접 넘겨도 그 상품 하나로 감정합니다(기존 호출 호환).
-        const category = gamble ? GAMBLE_CATEGORIES.find(x => x.id === id) ?? (SHOP.some(x => x.id === id) ? { offers: [id] } : undefined) : undefined;
-        if (gamble ? !category : !SHOP.some(x => x.id === id))
-            throw Error('상품을 확인하세요.');
-        // v27.13 감정은 1·5·10개 단위. 골드와 가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다(1개일 때의 난수 순서는 그대로).
-        const plain = !gamble && a.value === 'plain';
-        const count = gamble ? Number(a.value || 1) : 1;
-        if (!GAMBLE_COUNTS.includes(count))
-            throw Error('감정 개수는 1·5·10개 중 하나입니다.');
-        const cost = gamble ? gambleCost(s) : plain ? plainCost(s) : shopCost(s), total = cost * count;
-        if (s.inventory.length + count > inventoryCap(s))
-            throw Error(count > 1 ? `가방에 ${count}칸이 필요합니다. 장비를 정리하세요.` : '가방을 비운 뒤 구매하세요.');
-        if (s.gold < total)
-            throw Error('골드가 부족합니다.');
+    // v3.55 확정 구매는 없앴습니다. 감정(1·5·10개)과 각인 감정은 부위를 고르고, 골드·정수·가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다.
+    if (a.type === 'gamble' || a.type === 'imprintGamble') {
+        // 부위(rod·coat·charm·cape) 대신 상품 id(physical·magic …)를 넘기면 그 상품 하나로 감정합니다(기존 호출 호환).
+        const category = gambleCategory(id);
+        if (!category) throw Error('감정할 부위를 확인하세요.');
+        const [affix, n] = a.type === 'imprintGamble' ? (a.value || '').split('|') : [undefined, a.value];
+        if (affix !== undefined && !imprintChoices(category.slot).some(x => x.id === affix)) throw Error('각인할 옵션을 고르세요.');
+        const count = Number(n || 1);
+        if (!GAMBLE_COUNTS.includes(count)) throw Error('감정 개수는 1·5·10개 중 하나입니다.');
+        const each = affix ? imprintGambleCost(s) : { gold: gambleCost(s), essence: 0 };
+        if (s.inventory.length + count > inventoryCap(s)) throw Error(count > 1 ? `가방에 ${count}칸이 필요합니다. 장비를 정리하세요.` : '가방을 비운 뒤 감정하세요.');
+        if (s.gold < each.gold * count) throw Error('골드가 부족합니다.');
+        if ((s.essence || 0) < each.essence * count) throw Error(`정수가 부족합니다(필요 ${each.essence * count}).`);
         const results: Item[] = [];
         for (let i = 0; i < count; i++) {
-            const offerId = category ? category.offers[category.offers.length > 1 ? Math.min(category.offers.length - 1, Math.floor(rng() * category.offers.length)) : 0] : id;
-            const offer = SHOP.find(x => x.id === offerId)!;
-            spend(cost);
-            const roll = gamble ? rng() : 0;
-            let threshold = 0;
-            const rarity = gamble ? (APPRAISAL.find(r => { threshold = Math.round((threshold + r.chance) * 1000) / 1000; return roll < threshold; })?.rarity ?? APPRAISAL[APPRAISAL.length - 1].rarity) : 1;
-            let item: Item = { ...shopPreview(s, offer.id), id: nextId() };
-            if (plain) {
-                const base: Item = { ...item };
-                delete base.affix;
-                item = { ...base, name: gearName(offer.slot, 0, base.style), rarity: 0, power: Math.round((s.level + 2) * RARITIES[0].factor) };
-            }
-            if (gamble) {
-                const power = Math.round((s.level + 2) * RARITIES[rarity].factor);
-                const base: Item = { ...item };
-                delete base.affix;
-                item = { ...base, name: gearName(offer.slot, rarity, base.style), rarity, power, affixes: rollAffixes(rarity, power, undefined, rng, [], offer.slot, s.level) };
-            }
-            item.paid = cost;
-            s.inventory.push(item);
-            results.push(item);
+            spend(each.gold); s.essence = (s.essence || 0) - each.essence;
+            const item = appraiseOnce(s, category.offers, rng, each.gold, affix);
+            s.inventory.push(item); results.push(item);
         }
-        if (count === 1) {
-            const item = results[0];
-            return `${gamble ? '감정' : '구매'} · ${item.name}${gamble ? ` · 옵션 ${item.rarity}개` : ''} · -${cost} G`;
-        }
-        // 묶음 결과: 등급별 개수(높은 등급부터)와 가장 좋은 장비 이름.
-        const tally = [...APPRAISAL].map(r => r.rarity).sort((x, y) => y - x).map(r => [r, results.filter(i => i.rarity === r).length] as const).filter(([, n]) => n);
+        const word = affix ? `각인 감정(${affixDef(affix)!.name})` : '감정';
+        if (count === 1) return `${word} · ${results[0].name} · 옵션 ${results[0].rarity}개 · -${each.gold} G${each.essence ? ` · 정수 -${each.essence}` : ''}`;
+        const tally = [...APPRAISAL].map(r => r.rarity).sort((x, y) => y - x).map(r => [r, results.filter(i => i.rarity === r).length] as const).filter(([, k]) => k);
         const best = results.reduce((b, i) => (i.rarity || 0) > (b.rarity || 0) ? i : b, results[0]);
-        return `감정 ${count}개 · ${tally.map(([r, n]) => `${RARITIES[r].name} ${n}`).join(' · ')} · 최고 ${best.name} · -${total} G`;
+        return `${word} ${count}개 · ${tally.map(([r, k]) => `${RARITIES[r].name} ${k}`).join(' · ')} · 최고 ${best.name} · -${each.gold * count} G${each.essence ? ` · 정수 -${each.essence * count}` : ''}`;
+    }
+    // v3.55 자동 감정: value = '목표 등급|골드 한도|각인 옵션(선택)'. 목표 등급 이상이 나오면 가방에 넣고 멈춥니다.
+    // 목표 미만은 물건 도감에 없는 종류면 도감에 등록하고, 나머지는 분해해 정수로 받습니다. 최대 AUTO_APPRAISAL_MAX번.
+    if (a.type === 'autoGamble') {
+        const category = gambleCategory(id);
+        if (!category) throw Error('감정할 부위를 확인하세요.');
+        const [targetText, limitText, affixText] = (a.value || '').split('|'), target = Number(targetText), limit = Number(limitText), affix = affixText || undefined;
+        if (!APPRAISAL.some(r => r.rarity === target)) throw Error('목표 등급을 고르세요.');
+        if (!(limit > 0) || !Number.isFinite(limit)) throw Error('골드 한도를 정하세요.');
+        if (affix && !imprintChoices(category.slot).some(x => x.id === affix)) throw Error('각인할 옵션을 고르세요.');
+        if (s.inventory.length >= inventoryCap(s)) throw Error('가방에 한 칸이 필요합니다. 장비를 정리하세요.');
+        const each = affix ? imprintGambleCost(s) : { gold: gambleCost(s), essence: 0 };
+        if (s.gold < each.gold || each.gold > limit) throw Error('골드가 부족합니다.');
+        if ((s.essence || 0) < each.essence) throw Error(`정수가 부족합니다(필요 ${each.essence}).`);
+        let tries = 0, spent = 0, essence = 0, registered = 0, hit: Item | undefined;
+        const tally = [0, 0, 0, 0, 0, 0, 0];
+        while (tries < AUTO_APPRAISAL_MAX && s.gold >= each.gold && spent + each.gold <= limit && (s.essence || 0) >= each.essence) {
+            spend(each.gold); spent += each.gold; s.essence = (s.essence || 0) - each.essence; tries++;
+            const item = appraiseOnce(s, category.offers, rng, each.gold, affix);
+            tally[item.rarity]++;
+            if (item.rarity >= target) { s.inventory.push(item); hit = item; break; }
+            const key = itemKey(item.slot, item.rarity);
+            if (!s.itemBook?.[key]) { (s.itemBook ??= {})[key] = true; registered++; continue; }
+            const gain = dismantleEssence(item); s.essence = (s.essence || 0) + gain; essence += gain;
+        }
+        const parts = tally.map((k, r) => [r, k] as const).filter(([, k]) => k).reverse().map(([r, k]) => `${RARITIES[r].name} ${k}`).join(' · ');
+        return `자동 감정 ${tries}회 · ${parts} · -${spent.toLocaleString()} G${each.essence ? ` · 정수 -${(each.essence * tries).toLocaleString()}` : ''}${essence ? ` · 분해 정수 +${essence}` : ''}${registered ? ` · 도감 등록 ${registered}` : ''} · ${hit ? `목표 달성: ${hit.name}` : tries >= AUTO_APPRAISAL_MAX ? `최대 ${AUTO_APPRAISAL_MAX}회까지 돌렸습니다` : '골드·정수 한도에 닿아 멈췄습니다'}`;
     }
     if (a.type === 'lockItem') {
         const item = s.inventory.find(x => x.id === id);

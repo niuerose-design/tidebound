@@ -406,3 +406,11 @@
 .research-plan-actions { display:inline-flex; gap:4px; flex-shrink:0; }
 .research-plan-empty { font-size:13px; color:#8faead; margin:0 0 10px; }
 .automation-note { font-size:12px; color:#8faead; margin:8px 0 0; }
+/* v3.55 감정 천장 · 각인 감정 · 자동 감정 */
+.appraisal-pity { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:0 2px 14px; font-size:13px; }
+.appraisal-pity .muted, .imprint-card .muted { color:var(--muted); font-size:12px; }
+.imprint-card { padding:22px; gap:14px; }
+.imprint-row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+.imprint-row label { display:grid; gap:4px; font-size:12px; color:var(--muted); min-width:160px; }
+.imprint-row label.check { display:flex; align-items:center; gap:6px; }
+.imprint-row select, .imprint-row input:not([type=checkbox]) { min-height:34px; }
