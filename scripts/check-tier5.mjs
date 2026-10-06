@@ -29,12 +29,15 @@ const { raidById, RAID } = await load('data/altar');
 const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const SEEDS = Number(arg('--seeds', 20)), TIER = Number(arg('--tier', 30)), RARITY = Number(arg('--rarity', 6)), STAR = Number(arg('--star', 22));
 // 환생 100 무렵의 흔한 연구(전투 탭 약 75%, 물리·마법 같은 단계라 직업 사이 공정). 숫자를 바꾸면 절대값만 달라지고 비율은 거의 그대로입니다.
-const RESEARCH = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 15, critDamage: 20, penetration: 10, evasion: 15, lifesteal: 15, manaRegen: 8, recovery: 8, ap: 12 };
-const LEVEL = 100, REBIRTHS = 100, MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg('--dungeon-tier', TIER * 2)), SWARM500_TIER = Number(arg('--swarm500-tier', 0)), PEN = arg('--pen') === undefined ? null : Number(arg('--pen'));
+const RESEARCH_FULL = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 15, critDamage: 20, penetration: 10, evasion: 15, lifesteal: 15, manaRegen: 8, recovery: 8, ap: 12 };
+// v3.81 --level · --rebirths · --research(연구 비율, 1 = 위 표) · --job-tier · --raid로 다른 몸(예: 환생 0 · 50)과 월드보스를 잽니다.
+const LEVEL = Number(arg('--level', 100)), REBIRTHS = Number(arg('--rebirths', 100)), JOB_TIER = Number(arg('--job-tier', 5)), RESEARCH_SCALE = Number(arg('--research', 1));
+const RESEARCH = Object.fromEntries(Object.entries(RESEARCH_FULL).map(([k, v]) => [k, Math.round(v * RESEARCH_SCALE)]));
+const MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg('--dungeon-tier', TIER * 2)), SWARM500_TIER = Number(arg('--swarm500-tier', 0)), PEN = arg('--pen') === undefined ? null : Number(arg('--pen'));
 // --swarm500-atk: ×500 무리 공격 배율 실험(n = 지금 490배 · 숫자 = 고정 배율 · sqrt = √N · thin = 남은 마리 비례 · thin-sqrt = √(남은 마리)). --only 키: 그 상황만 잽니다.
 const SWARM_ATK = arg('--swarm500-atk', 'n'), ONLY = arg('--only');
 // --pen: 관통을 이 값으로 맞춘 몸(장비 관통 옵션을 챙긴 경우 · 전체 상한 0.6)으로 잽니다.
-const FOES = ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul'], BOSS = 'arTrueErda', RAID_ID = 'horntail';
+const FOES = ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul'], BOSS = 'arTrueErda', RAID_ID = arg('--raid', 'horntail'), RAID_DEF = arg('--raid-def') === undefined ? null : Number(arg('--raid-def'));
 
 function attributesFor(j) {
     const own = SKILLS.filter(sk => sk.job === j.id && sk.type === 'active');
@@ -115,20 +118,20 @@ function measure(j) {
     if (ONLY && ONLY !== 'dungeon' && ONLY !== 'raid') { out.dungeon = zero; out.raid = zero; return { id: j.id, name: j.name, lineage: lineageOf(j), sub: subRoleOf(j, lineageOf(j)), out }; }
     // 던전: 난이도 DUNGEON_TIER에서 쉬지 않고 5연전(마지막은 보스), 체력·마나 이어짐. 점수 = 넘긴 판 비율 / 쓴 턴.
     let cleared = 0, hpEnd = 0, turns = 0;
-    for (let seed = 1; seed <= SEEDS; seed++) {
+    for (let seed = 1; seed <= (ONLY === 'raid' ? 0 : SEEDS); seed++) {
         const rng = random(seed); let hp = st.hp, mana = st.mana, ok = true, w = 0;
         for (; w < WAVES && ok; w++) { const last = w === WAVES - 1, a = player(st, s, hp, mana), r = fight(a, foe(last ? BOSS : FOES[w % FOES.length], { wave: w, boss: last, tier: DUNGEON_TIER }), rng); ok = r.won; hp = a.hp; mana = a.mana; turns += r.turns; }
         cleared += (ok ? w : w - 1) / WAVES; hpEnd += ok ? Math.max(0, hp) / st.hp : 0;
     }
     out.dungeon = { cleared: cleared / SEEDS, hpLeft: hpEnd / SEEDS, turns: turns / SEEDS, score: cleared / SEEDS / Math.max(1, turns / SEEDS) };
-    const raid = raidById(RAID_ID); let dealt = 0, died = 0;
-    for (let seed = 1; seed <= SEEDS; seed++) { const snap = snapshot(s); if (PEN !== null) snap.stats = st; const r = pvpDuel(snap, raidBossSnapshot(raid), true, random(seed), RAID.maxTurns); dealt += raid.stats.hp - Math.max(0, r.opponentHp); died += r.playerHp <= 0 ? 1 : 0; }
-    out.raid = { dealt: dealt / SEEDS, died: died / SEEDS, score: dealt / SEEDS };
+    const raid = RAID_DEF === null ? raidById(RAID_ID) : { ...raidById(RAID_ID), stats: { ...raidById(RAID_ID).stats, defense: RAID_DEF, resist: RAID_DEF } }; let dealt = 0, died = 0, lasted = 0;
+    for (let seed = 1; seed <= SEEDS; seed++) { const snap = snapshot(s); if (PEN !== null) snap.stats = st; const r = pvpDuel(snap, raidBossSnapshot(raid), true, random(seed), RAID.maxTurns); dealt += raid.stats.hp - Math.max(0, r.opponentHp); died += r.playerHp <= 0 ? 1 : 0; lasted += r.turns; }
+    out.raid = { dealt: dealt / SEEDS, died: died / SEEDS, turns: lasted / SEEDS, score: dealt / SEEDS };
     const sub = subRoleOf(j, lineageOf(j));
     return { id: j.id, name: j.name, lineage: lineageOf(j), sub, out };
 }
 const KEYS = ['hunt', 'swarm100', 'swarm500', 'dungeon', 'boss', 'raid'];
-const rows = JOBS.filter(j => j.tier === 5 && !j.retired).map(measure);
+const rows = JOBS.filter(j => j.tier === JOB_TIER && !j.retired && (j.level || 0) <= LEVEL && (j.rebirth || 0) <= REBIRTHS).map(measure);
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 for (const k of KEYS) { const m = median(rows.map(r => r.out[k].score)) || 1; for (const r of rows) r[k] = r.out[k].score / m; }
 const f2 = n => n.toFixed(2), pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : `${Math.round(n / 1e4)}만`;
