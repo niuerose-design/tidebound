@@ -140,7 +140,12 @@ function measure(j) {
 }
 const KEYS = ['hunt', 'swarm100', 'swarm500', 'dungeon', 'boss', 'raid'];
 if (process.argv.includes('--body')) { for (const j of JOBS.filter(j => j.tier === JOB_TIER && !j.retired).slice(0, 34)) { const st = stats(body(j)); console.log(j.name, 'atk', Math.round(st.attack), 'mag', Math.round(st.magic), 'def', Math.round(st.defense), 'res', Math.round(st.resist), 'hp', Math.round(st.hp), 'pen', st.penetration.toFixed(2)); } process.exit(0); }
-const rows = JOBS.filter(j => j.tier === JOB_TIER && !j.retired && (j.level || 0) <= LEVEL && (j.rebirth || 0) <= REBIRTHS).map(measure);
+// v3.85 --jobs id,id: 그 직업만 잽니다(배율 조정용). --scale '{"jobId":1.5}': 그 직업 고유 액티브 배율을 실험으로 곱합니다(게임 데이터는 그대로).
+const ONLY_JOBS = arg('--jobs') ? new Set(arg('--jobs').split(',')) : null;
+if (arg('--scale')) for (const [id, f] of Object.entries(JSON.parse(arg('--scale')))) for (const sk of SKILLS) if (sk.job === id && sk.type === 'active' && sk.multiplier) sk.multiplier *= f;
+// v3.85 --jscale '{"jobId":1.3}': 그 직업의 공격 · 마법 계수를 실험으로 곱합니다.
+if (arg('--jscale')) for (const [id, f] of Object.entries(JSON.parse(arg('--jscale')))) { const j = JOBS.find(x => x.id === id); if (j) { j.attack *= f; j.magic *= f; } }
+const rows = JOBS.filter(j => j.tier === JOB_TIER && !j.retired && (j.level || 0) <= LEVEL && (j.rebirth || 0) <= REBIRTHS && (!ONLY_JOBS || ONLY_JOBS.has(j.id))).map(measure);
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 for (const k of KEYS) { const m = median(rows.map(r => r.out[k].score)) || 1; for (const r of rows) r[k] = r.out[k].score / m; }
 const f2 = n => n.toFixed(2), pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : `${Math.round(n / 1e4)}만`;
