@@ -303,7 +303,7 @@ test('v3.24 removed research tailwindWindow refunds every pearl once', () => {
     migrateState(s); assert.equal(s.pearls - p, 30, 'only once');
 });
 
-test('v3.89 max mana: base grows with level, research ‘샘의 기억’ ×(1 + 8%/rank), account · rebirth multipliers, coat/cape mana, ~0.2 of max HP', () => {
+test('v3.90 max mana: base grows with level, research ‘샘의 기억’ ×(1 + 8%/rank), account · rebirth multipliers, coat/cape mana, ~0.2 of max HP', () => {
     const s = newState(0);
     const lv1 = stats(s).mana; s.level = 11; assert.equal(stats(s).mana - lv1, 30, '+3 per level');
     const r = research('mana'); assert.deepEqual([r.max, r.base, r.step, r.rebirth || 0, r.tab, r.group], [200, 2, 2, 0, 'combat', 'attack']);

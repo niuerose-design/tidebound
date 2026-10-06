@@ -177,7 +177,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));
     const memory = rebirthMemory(s.rebirths) * (1 + dedication * .04);
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(key, [['rebirth', memory]]);
-    // v3.89 최대 마나도 체력처럼 연구(‘샘의 기억’) · 계정 · 환생 배율을 받습니다(전에는 배율이 없어 후반에 체력의 1%도 안 됐음).
+    // v3.90 최대 마나도 체력처럼 연구(‘샘의 기억’) · 계정 · 환생 배율을 받습니다(전에는 배율이 없어 후반에 체력의 1%도 안 됐음).
     mul('mana', [['research', 1 + researchRank(s, 'mana') * MANA_RESEARCH_PER], ['account', account], ['rebirth', memory]]);
     for (const t of themes)
         for (const [key, n] of Object.entries(t.scale || {}))
@@ -205,7 +205,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     limit('evasion', evasionRating(evasionRaw(dexEvasion, a.evasion - dexEvasion)));
     limit('penetration', Math.min(PENETRATION.cap, a.penetration));
     limit('statusResist', Math.min(.5, a.statusResist || 0));
-    // v3.12 창세의 힘·칠흑 세트: 체력·양 공격·양 방어 배율. v3.89 최대 마나도.
+    // v3.12 창세의 힘·칠흑 세트: 체력·양 공격·양 방어 배율. v3.90 최대 마나도.
     if (a.allStats) for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist'] as const) mul(k, [['equipment', 1 + a.allStats]]);
     // v3.73 피의 계약 흡혈은 전체 상한(30%)도 받지 않습니다(한 번 회복량 상한 lifestealHpCap은 그대로).
     { const pact = (free.lifesteal || 0) * roughGear(s); limit('lifesteal', Math.min(.3, a.lifesteal - pact) + pact); }

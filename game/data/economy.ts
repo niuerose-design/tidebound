@@ -46,7 +46,7 @@ export type ResearchDef = {
 };
 export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '전투' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
 export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본', special: '특별', vow: '서약' };
-/** v3.89 연구 ‘샘의 기억’ 단계당 최대 마나 배율(깊은 숨결의 최대 체력과 같은 +8%). */
+/** v3.90 연구 ‘샘의 기억’ 단계당 최대 마나 배율(깊은 숨결의 최대 체력과 같은 +8%). */
 export const MANA_RESEARCH_PER = .08;
 export const RESEARCH: ResearchDef[] = [
     // The first purchase is reachable after a normal first rebirth, but later
