@@ -90,14 +90,15 @@ function ChatFeed({ open, playerName, active }: { open: boolean; playerName: str
 /**
  * v3.39 소식: 서버가 올리는 시스템 줄(모험가 소식 · 제단 · 해킹 공지)만 보는 읽기 전용 목록. 채팅과 같은 방식으로 열려 있을 때만 받습니다.
  */
+/** v3.47 소식 줄 색: 보낸 곳(제단·운영·해커)과 소식 종류(칠흑·승천·5차 전직·무릉도장·22성·진급)마다 다르게 칠합니다. */
+const NEWS_TONES: [RegExp, string][] = [[/칠흑/, 'onyx'], [/승천/, 'ascend'], [/5차/, 'tier5'], [/무릉도장/, 'abyss'], [/22성/, 'star'], [/진급/, 'rank']];
+const newsTone = (l: { name: string; text: string; kind?: string }) => l.kind === 'hacker' ? 'hacker-alert' : l.name === '제단' ? 'news-altar' : l.name === '운영' ? 'news-admin' : `news-${NEWS_TONES.find(([re]) => re.test(l.text))?.[1] || 'plain'}`;
 export function NewsFeed({ open }: { open: boolean }) {
     const { lines, error } = useChat(open, 'news');
-    const listRef = useRef<HTMLDivElement>(null), stick = useRef(true);
-    useEffect(() => { const el = listRef.current; if (el && stick.current) el.scrollTop = el.scrollHeight; }, [lines]);
-    const onScroll = () => { const el = listRef.current; if (el) stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24; };
+    // v3.47 전투·획득 탭처럼 새 소식이 맨 위에 옵니다(채팅만 아래에서 위로 쌓임).
     return <div className="chat-feed news-feed">
-        <div className="chat-list" ref={listRef} onScroll={onScroll} role="log" aria-label="소식" aria-live="polite">
-            {lines.length ? lines.map(l => <p key={l.id} className={`chat-line news-line ${l.kind === 'hacker' ? 'hacker-alert' : ''}`}><span className="chat-head"><b className="chat-name">{l.name}</b><span className="chat-time">{hhmm(l.at)}</span></span><span className="chat-text">{l.text}</span></p>)
+        <div className="chat-list" role="log" aria-label="소식" aria-live="polite">
+            {lines.length ? [...lines].reverse().map(l => <p key={l.id} className={`chat-line news-line ${newsTone(l)}`}><span className="chat-head"><b className="chat-name">{l.name}</b><span className="chat-time">{hhmm(l.at)}</span></span><span className="chat-text">{l.text}</span></p>)
                 : <p className="chat-empty"><Megaphone size={14}/> 아직 소식이 없습니다. 칠흑 장신구 · 승천 · 5차 전직 · 무릉도장 · 22성 · 장성 진급 · 제단 소식이 여기에 올라옵니다.</p>}
         </div>
         {error && <p className="chat-error" role="alert">{error}</p>}

@@ -6,10 +6,13 @@ import { BALANCE, SAVE_VERSION } from '../data/balance';
 import { type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { initialProgress, grantJobSkills } from './progression';
+import { LOG_KEEP, logGroup } from './log-delta';
 export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'system' | 'skill' = 'system', event?: CombatEvent) {
     s.logs.push({ id: ++s.logId, text, type, turn: s.turn, ...(event ? { event } : {}) });
-    if (s.logs.length > 70)
-        s.logs.shift();
+    // v3.47 묶음(전투·시스템 / 획득·스킬)마다 따로 상한을 둡니다. 넘친 묶음의 가장 오래된 줄 하나를 뺍니다.
+    const group = logGroup(type);
+    if (s.logs.reduce((n, l) => n + (logGroup(l.type) === group ? 1 : 0), 0) > LOG_KEEP[group])
+        s.logs.splice(s.logs.findIndex(l => logGroup(l.type) === group), 1);
 }
 export function newState(now: number): State {
     const state: State = {

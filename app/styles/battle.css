@@ -928,3 +928,16 @@
 .chat-line.news-line .chat-name{color:#e7be71}
 .chat-line.news-line .chat-text{color:#d6dfd7}
 @media(max-width:767px){.battle-utility-rail>.battle-feed .rail-log{flex:none;height:300px;min-height:0}}
+.battle-utility-rail>.battle-feed .news-feed .chat-list>:first-child{margin-top:0}
+/* v3.47 소식 줄 색: 종류마다 이름·본문·왼쪽 띠 색을 다르게 */
+.chat-line.news-line{padding-left:8px;border-left:2px solid #3a5658}
+.chat-line.news-line.news-onyx{border-left-color:#f08a6c}.chat-line.news-line.news-onyx .chat-text{color:#f4b39f}
+.chat-line.news-line.news-ascend{border-left-color:#5fd0b5}.chat-line.news-line.news-ascend .chat-text{color:#9ce8d4}
+.chat-line.news-line.news-tier5{border-left-color:#bf96ef}.chat-line.news-line.news-tier5 .chat-text{color:#d8c0f5}
+.chat-line.news-line.news-abyss{border-left-color:#68b6ee}.chat-line.news-line.news-abyss .chat-text{color:#a9d5f5}
+.chat-line.news-line.news-star{border-left-color:#e7be71}.chat-line.news-line.news-star .chat-text{color:#f0d79c}
+.chat-line.news-line.news-rank{border-left-color:#d1b783}.chat-line.news-line.news-rank .chat-text{color:#e3cfa3}
+.chat-line.news-line.news-altar{border-left-color:#ff6fb5}.chat-line.news-line.news-altar .chat-name{color:#ff9fcd}.chat-line.news-line.news-altar .chat-text{color:#f6c4dc}
+.chat-line.news-line.news-admin{border-left-color:#93bda9}.chat-line.news-line.news-admin .chat-name{color:#93bda9}.chat-line.news-line.news-admin .chat-text{color:#c6e2d4}
+.chat-line.news-line.news-plain .chat-text{color:#c2d3cd}
+.chat-line.news-line.hacker-alert{border-left-color:#ff6b6b}.chat-line.news-line.hacker-alert .chat-name,.chat-line.news-line.hacker-alert .chat-text{color:#ff6b6b}
