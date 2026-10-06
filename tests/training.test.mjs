@@ -154,3 +154,8 @@ test('v3.88 luck-scaling skills (Phantom line) put crit damage into power once: 
     assert.equal(hit(['fateRoll'], 1), hit(['fateRoll'], 0), 'Ultimate Drive: same damage with or without a crit');
     assert.ok(hit([], 1) > hit([], 0) * 2.5, 'a normal attack still multiplies crit damage');
 });
+
+test('v3.89 Joker: luck ratio 0.3 (Final Cut keeps 0.8)', () => {
+    assert.equal(SKILLS.find(sk => sk.id === 'jackpotStrike').scalingRatio, .3);
+    assert.equal(SKILLS.find(sk => sk.id === 'allOrNothing').scalingRatio, .8);
+});
