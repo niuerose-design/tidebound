@@ -237,9 +237,9 @@ export type AdminStats = {
      * v27.54 밸런스 점검 지표.
      * godDepth: 첫 신과 같은 무릉도장 층, reached: 그 층 이상을 깬 모험가 수(모험가·몬스터 전투력은 잣대가 달라 비교하지 않습니다).
      * god: 신 도전 합계(시도·승리·도전한 모험가·가장 많이 깎은 체력 비율). offline: 최근 부재중 정산 중 상한(6시간 + 긴 휴식)에 닿은 수.
-     * abyss: 무릉도장 최고 층 분포. burn: 화상 기술을 장착한 모험가 수.
+     * abyss: 무릉도장 최고 층 분포.
      */
-    balance: { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: { label: string; count: number }[]; burn: number };
+    balance: { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: { label: string; count: number }[] };
     /**
      * v27.63 환생 통계(세이브의 최근 환생 기록 20개 기준). recent: 24시간·7일 안에 일어난 환생 수.
      * 시간: 생 시작부터 환생까지 실제 시간(real)·사냥 시간(play)의 평균·중앙값(업데이트 전에 시작한 ‘일부’ 기록은 뺌).
@@ -275,7 +275,6 @@ function balanceStats(list: State[]): AdminStats['balance'] {
         god: { tries, wins, players: list.filter(s => s.altar?.tries).length, best: Math.max(0, ...list.map(s => s.altar?.best || 0)) },
         offline: { settled: settled.length, capped: capped.length },
         abyss: bucketize(list.map(s => s.abyssBest || 0), [0, 1, 10, 25, 50, 75, 100], '층'),
-        burn: list.filter(s => (s.skills || []).some(id => skillById(id)?.effect === 'burn')).length,
     };
 }
 const median = (xs: number[]) => { if (!xs.length) return 0; const a = [...xs].sort((x, y) => x - y), m = a.length >> 1; return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2); };
