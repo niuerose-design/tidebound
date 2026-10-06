@@ -72,12 +72,13 @@ test('v25.3 passive-only and independent jobs fight at tier strength', () => {
     // 방어형 독립 직업은 물리 평타를 쓰도록 물리 보정이 마법보다 낮지 않습니다.
     for (const id of ['lifeTender', 'driftwoodHermit', 'chronicleNavigator', 'netWeaver']) { const j = JOBS.find(x => x.id === id); assert.ok(j.attack >= j.magic, id); assert.equal(j.penalties?.attack, undefined, id); }
     const bonus = id => SKILLS.find(x => x.id === id).bonus;
-    assert.equal(bonus('axeArm').attack, 30); assert.equal(bonus('bookwise').magic, 30); assert.ok(bonus('bookwise').arcaneRatioBonus > 0);
-    assert.equal(bonus('innerBreath').hpRegen, 2); assert.equal(bonus('vital').hpRegen, 2); assert.ok(bonus('flow').arcaneRatioBonus > 0);
+    // v3.67 수련 패시브는 ×1.5(3차 수준).
+    assert.equal(bonus('axeArm').attack, 45); assert.equal(bonus('bookwise').magic, 45); assert.ok(bonus('bookwise').arcaneRatioBonus > 0);
+    assert.equal(bonus('innerBreath').hpRegen, 3); assert.equal(bonus('vital').hpRegen, 3); assert.ok(bonus('flow').arcaneRatioBonus > 0);
     assert.ok(bonus('echoReview').magic >= 24 && bonus('chronicleStudy').attack >= 16 && bonus('serpentFolklore').magic >= 24 && bonus('abyssObservation').attack >= 36);
     // 턴당 체력 회복 패시브가 실제 능력치에 더해집니다.
     const s = newState(0); s.level = 15; s.job = 'trainingDefense'; s.learned.innerBreath = 1; s.skills = ['innerBreath'];
-    assert.equal(stats(s).hpRegen, stats({ ...s, skills: [] }).hpRegen + 2);
+    assert.equal(stats(s).hpRegen, stats({ ...s, skills: [] }).hpRegen + 3);
 });
 
 test('v25.3 combat feedback marks heaven for the scene effect and build view pairs the two regens', async () => {
@@ -106,7 +107,7 @@ test('v25.3 passive-route returns: the archivist passive scales with rebirths an
     for (const id of ['harpoon', 'tide', 'warden']) j.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
     assert.equal(masteredJobCount(j), 3); assert.equal(canChangeJob(j, 'journeyman'), true);
     act(j, { type: 'job', id: 'journeyman' }, 0); j.skills = ['thousandHands', 'wayfarerKnack'];
-    const three = stats(j); j.jobMastery.scholar = jobMasteryTarget(JOBS.find(x => x.id === 'scholar')); j.jobMastery.woodcutter = jobMasteryTarget(JOBS.find(x => x.id === 'woodcutter'));
+    const three = stats(j); j.jobMastery.whaler = jobMasteryTarget(JOBS.find(x => x.id === 'whaler')); j.jobMastery.corsair = jobMasteryTarget(JOBS.find(x => x.id === 'corsair'));
     const five = stats(j); assert.equal(five.attack - three.attack, 6); assert.equal(five.hp - three.hp, 24); assert.ok(five.speed - three.speed === 1);
     // setSkills: 끌어서 바꾼 순서와 추천 편성을 한 번에 적용. 사용 불가·AP 초과는 거부.
     const k = newState(0); k.level = 10; k.job = 'harpoon'; k.unlockedJobs.push('harpoon'); for (const sk of SKILLS) k.learned[sk.id] = 1;
@@ -124,9 +125,9 @@ test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint 
     assert.equal(effectiveSkill(sk('pearlLedger'), 1, 4).bonus.rebirthBonus, 2);
     // 떠돌이 계보: 숙달 직업 수 관문과 숙달 비례 피해.
     const s = newState(0); s.level = 40; s.attributes = { str: 30, int: 30, vit: 30, dex: 0, wis: 0, luk: 0 }; s.jobMastery.journeyman = 4000; s.unlockedJobs.push('journeyman');
-    for (const id of ['harpoon', 'tide', 'warden', 'scholar', 'woodcutter', 'noviceMonk']) s.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
+    for (const id of ['harpoon', 'tide', 'warden', 'whaler', 'corsair', 'tempest']) s.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
     assert.equal(canChangeJob(s, 'polymath'), false, '6 mastered + journeyman = 7 < 8');
-    s.jobMastery.gladiator = jobMasteryTarget(JOBS.find(x => x.id === 'gladiator')); assert.equal(canChangeJob(s, 'polymath'), true);
+    s.jobMastery.oracle = jobMasteryTarget(JOBS.find(x => x.id === 'oracle')); assert.equal(canChangeJob(s, 'polymath'), true);
     act(s, { type: 'job', id: 'polymath' }, 0); assert.equal(s.job, 'polymath');
     const dmg = mastered => { const a = { name: 'A', job: 'polymath', stats: { ...base, masteredPower: mastered }, hp: 1000, mana: 200, skills: ['borrowedForm'], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} }, t = target(); strike(a, t, () => 0); return 1e6 - t.hp; };
     assert.ok(dmg(20) > dmg(0) * 1.5 && dmg(20) < dmg(0) * 1.7, `mastered scaling +3% each (${dmg(0)} → ${dmg(20)})`);
