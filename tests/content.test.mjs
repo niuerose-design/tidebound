@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { xpNeeded, bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,shopCost,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
+import { xpNeeded, bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
 const inventoryCapOf=s=>economy.inventoryCap(s);
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -14,7 +14,7 @@ test('Category appraisal rolls rod style and rarity separately, charging once',(
   const s=newState(0);s.gold=10000;const rolls=[styleRoll,.95,.2];act(s,{type:'gamble',id:'rod'},0,()=>rolls.shift()??0);
   assert.equal(s.inventory.length,1);assert.equal(s.inventory[0].slot,'rod');assert.equal(s.inventory[0].style,style);assert.equal(s.inventory[0].rarity,3);assert.equal(s.gold,10000-gambleCost(s));
  }
- for(const slot of ['coat','charm']){const s=newState(0);s.gold=10000;act(s,{type:'gamble',id:slot},0,()=>.55);assert.equal(s.inventory[0].slot,slot);assert.equal(s.inventory[0].rarity,2);}
+ for(const slot of ['coat','charm']){const s=newState(0);s.gold=10000;act(s,{type:'gamble',id:slot},0,()=>.6);assert.equal(s.inventory[0].slot,slot);assert.equal(s.inventory[0].rarity,2);}
  const s=newState(0);s.gold=10000;const before=JSON.stringify(s);assert.throws(()=>act(s,{type:'gamble',id:'unknown'},0));assert.equal(JSON.stringify(s),before);
 });
 test('Job mastery strengthens only the currently selected job and never its penalties',()=>{
@@ -253,10 +253,9 @@ test('v27.19 relics come from rebirth count, and pearls spent before the change 
  const u=newState(0);assert.equal(migrations.refundRelicPurchases(u),0);assert.equal(u.relicRefunded,true);
 });
 
-test('v27.20 plain (white) gear can be bought for the item book',()=>{
- const s=newState(0);s.level=20;s.gold=10000;const before=s.gold;act(s,{type:'buy',id:'charm',value:'plain'},0);
- const it=s.inventory[0];assert.equal(it.rarity,0);assert.equal(it.slot,'charm');assert.equal(it.affix,undefined);assert.equal(it.power,22);assert.equal(before-s.gold,Math.max(30,Math.floor(shopCost(s)*.2)));
- act(s,{type:'registerItem',id:it.id},0);assert.equal(s.itemBook['charm:0'],true);
+test('v3.58 plain (white) codex entries start registered now that the plain purchase is gone',()=>{
+ const s=newState(0);for(const slot of ['rod','coat','charm','cape'])assert.equal(s.itemBook[`${slot}:0`],true);
+ assert.throws(()=>act(s,{type:'buy',id:'charm',value:'plain'},0));
 });
 
 test('v27.74 catch mastery ignores stage tide and dungeon mode (the tide mastery multiplier is gone)',()=>{

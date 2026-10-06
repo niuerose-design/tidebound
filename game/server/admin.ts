@@ -22,6 +22,7 @@ import { SERVER_EVENTS, activeEvent, eventLabel, type ServerEvent } from '../dat
 import { readEventConfig, writeEventConfig, readClosures, writeClosures, readOpenDoors, writeOpenDoors } from './events-config';
 import { DISCOVERY_DOORS, DOORS, DOOR_JOBS, REBIRTH_DOOR_JOBS } from '../data/doors';
 import { invalidateAltar } from './altar';
+import { incomeRate } from '../systems/income';
 
 const digest = (v: string) => createHash('sha256').update(v).digest();
 /** 운영자 키 확인. 실패는 IP당 10분에 10번까지만 받습니다. */
@@ -343,4 +344,30 @@ export async function resetAltar(kind: string) {
     if (kind === 'offers') await db().resetAltarGauges(); else await db().resetAltarGod();
     invalidateAltar();
     return adminStats();
+}
+
+/** v3.58 사냥 골드 수입 통계: 플레이 시간 기준 시간당 골드(최근 다 채운 3시간 평균). query가 있으면 그 모험가들의 시간별 기록도 줍니다. */
+export type IncomeRow = { id: string; name: string; username: string; rebirths: number; ascension: number; level: number; place: string; tide: number; perHour: number; hours: number; estimated: boolean; gold: number; earned: number; running: boolean; updatedAt: number };
+export async function adminIncome(query = '', now = Date.now()) {
+    const database = db(), accounts = new Map((await database.listAccounts()).map(a => [a.id, a.username]));
+    const rows: IncomeRow[] = [], q = query.trim().toLowerCase(), picked: (IncomeRow & { log: { ago: number; gold: number }[] })[] = [];
+    for (const row of await database.listPlayers()) {
+        let s: State; try { s = JSON.parse(row.state); } catch { continue; }
+        if (!s || typeof s.level !== 'number') continue;
+        const username = accounts.get(row.id.split('#')[0]) || '', rate = incomeRate(s);
+        const place = s.dungeon ? DUNGEONS.find(d => d.id === s.dungeon!.id)?.name || s.dungeon.id : STAGES.find(x => x.id === s.stage)?.name || s.stage;
+        const r: IncomeRow = { id: row.id, name: s.name, username, rebirths: s.rebirths || 0, ascension: s.ascension || 0, level: s.level, place, tide: s.tide || 0, perHour: rate.perHour, hours: rate.hours, estimated: rate.estimated, gold: Math.floor(s.gold || 0), earned: Math.floor(s.goldEarned || 0), running: !!s.running, updatedAt: row.updated_at };
+        rows.push(r);
+        if (q && (username.toLowerCase() === q || (typeof s.name === 'string' && s.name.toLowerCase().includes(q)))) {
+            const cur = Math.floor((s.playMs || 0) / 3600_000);
+            picked.push({ ...r, log: (s.goldLog || []).map(b => ({ ago: cur - b.h, gold: b.g })).reverse() });
+        }
+    }
+    const measured = rows.filter(r => r.perHour > 0), recent = measured.filter(r => now - r.updatedAt <= 86400_000);
+    const byRebirth = [[0, 9], [10, 49], [50, 99], [100, 149], [150, 200]].map(([lo, hi]) => { const g = recent.filter(r => r.rebirths >= lo && r.rebirths <= hi); return { label: `환생 ${lo}~${hi}`, count: g.length, median: median(g.map(r => r.perHour)), max: Math.max(0, ...g.map(r => r.perHour)) }; });
+    return {
+        at: now, measured: measured.length, recent: recent.length, median: median(recent.map(r => r.perHour)), byRebirth,
+        top: [...recent].sort((a, b) => b.perHour - a.perHour).slice(0, 30),
+        picked: picked.sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 10),
+    };
 }

@@ -21,6 +21,7 @@ import { bookEcology } from './book';
 import { breathReset } from './actions/lifecycle';
 import { isHacker, hackerTick } from './hacker';
 import { runAutomation } from './automation';
+import { recordIncome } from './income';
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
@@ -28,7 +29,10 @@ export function tick(s: State, rng = Math.random) {
     if (isHacker(s)) { hackerTick(s); return; }
     syncStatRate(s);
     syncGoals(s, s.lastTick);
+    // v3.58 사냥 골드 수입 기록(운영 페이지 통계): 턴 처리로 늘어난 골드만 셉니다.
+    const goldBefore = s.gold;
     tickTurn(s, rng);
+    recordIncome(s, s.gold - goldBefore);
     syncVoyage(s, text => addLog(s, text, 'reward'));
     syncAchievements(s, text => addLog(s, text, 'reward'));
     // v3.40 승천 편의: 연구 구매 예약 · 자동 환생.

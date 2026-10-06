@@ -12,7 +12,12 @@ type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
 /** v27.73 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
 type DoorRow = { id: string; name: string; door: string; hint: string; open: boolean };
 type DoorList = { doors: DoorRow[] };
-type Tab = 'life' | 'events' | 'closures' | 'doors' | 'stats' | 'news';
+type Tab = 'life' | 'events' | 'closures' | 'doors' | 'stats' | 'news' | 'income';
+/** v3.58 사냥 골드 수입 통계(server/admin.ts adminIncome). */
+type IncomeRow = { id: string; name: string; username: string; rebirths: number; ascension: number; level: number; place: string; tide: number; perHour: number; hours: number; estimated: boolean; gold: number; earned: number; running: boolean; updatedAt: number };
+type IncomeData = { at: number; measured: number; recent: number; median: number; byRebirth: { label: string; count: number; median: number; max: number }[]; top: IncomeRow[]; picked: (IncomeRow & { log: { ago: number; gold: number }[] })[] };
+/** 큰 골드: 1.2조 · 3.4억 · 5.6만. */
+const big = (v: number) => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(2)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
 type NewsRow = { id: number; name: string; text: string; at: number; hacker: boolean };
 /** 운영 페이지 소식 테스트 종류(server/news.ts NEWS_SAMPLES와 같은 순서). */
 const NEWS_KINDS: [string, string][] = [['onyx', '칠흑 장신구'], ['ascend', '승천'], ['tier5', '5차 전직'], ['abyss', '무릉도장 50층'], ['star22', '22성 강화'], ['general', '장성 진급'], ['hacker', '해커 전직(빨간 줄)'], ['god', '제단 · 신 깨어남'], ['raid', '제단 · 월드보스 출현']];
@@ -72,6 +77,7 @@ export default function AdminPage() {
     const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [doors, setDoors] = useState<DoorList | null>(null), [stats, setStats] = useState<Stats | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' });
     const [spOpen, setSpOpen] = useState<string | null>(null);
+    const [income, setIncome] = useState<IncomeData | null>(null), [incomeQuery, setIncomeQuery] = useState('');
     const [news, setNews] = useState<NewsRow[] | null>(null), [newsName, setNewsName] = useState('테스트 모험가'), [newsText, setNewsText] = useState(''), [newsTag, setNewsTag] = useState(true);
     const [edit, setEdit] = useState<{ player: AdminPlayer; gold: string; pearls: string } | null>(null);
     const [preview, setPreview] = useState<{ id: string; data: Preview } | null>(null), [done, setDone] = useState(''), [error, setError] = useState(''), [busy, setBusy] = useState(false);
@@ -147,6 +153,7 @@ export default function AdminPage() {
         if (d) { setClosures(d); setDone(`${row.name}을(를) ${row.closed ? '열었습니다' : '닫았습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
     };
     /** v27.73 문 개방: 연 동안 모든 모험가에게 그 ??? 직업의 문이 열립니다. 닫으면 다시 조건대로(그 사이 전직한 모험가는 그대로). */
+    const loadIncome = async (query = incomeQuery) => { const d = await call({ action: 'income', query }); if (d) setIncome(d); };
     const loadNews = async () => { const d = await call({ action: 'news' }); if (d) setNews(d.rows); };
     const postNews = async (kind: string) => { const d = await call({ action: 'newsTest', kind, name: newsName, text: newsText, tag: newsTag }); if (d) { setNews(d.rows); setDone('소식 탭에 올렸습니다. 게임 화면의 기록판 → 소식에서 확인하세요.'); if (kind === 'custom') setNewsText(''); } };
     const loadDoors = async () => { const d = await call({ action: 'doors' }); if (d) setDoors(d); };
@@ -155,14 +162,14 @@ export default function AdminPage() {
         const d = await call({ action: 'setDoor', id: row.id, open: !row.open });
         if (d) { setDoors(d); setDone(`${row.name}의 문을 ${row.open ? '닫았습니다. 다시 조건대로 열립니다' : '열었습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
     };
-    const tabButton = (id: Tab, label: string) => <button type="button" className={tab === id ? 'primary' : 'secondary'} onClick={() => { setTab(id); setError(''); setDone(''); if (id === 'events' && key) loadEvents(); if (id === 'closures' && key) loadClosures(); if (id === 'doors' && key) loadDoors(); if (id === 'stats' && key) loadStats(); if (id === 'news' && key) loadNews(); }}>{label}</button>;
+    const tabButton = (id: Tab, label: string) => <button type="button" className={tab === id ? 'primary' : 'secondary'} onClick={() => { setTab(id); setError(''); setDone(''); if (id === 'events' && key) loadEvents(); if (id === 'closures' && key) loadClosures(); if (id === 'doors' && key) loadDoors(); if (id === 'stats' && key) loadStats(); if (id === 'news' && key) loadNews(); if (id === 'income' && key) void loadIncome(); }}>{label}</button>;
     const closureList = (kind: keyof ClosureList, title: string) => closures && <div><h2 style={{ fontSize: 16 }}>{title}</h2><ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 6 }}>{closures[kind].map(r => <li key={r.id} className="panel" style={{ padding: 10, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
         <span style={{ fontSize: 13 }}><b>{r.name}</b> · {r.closed ? <b style={{ color: '#ff9a9a' }}>입장 막힘</b> : <span style={{ color: '#9ce8b4' }}>열림</span>}{r.locked ? <small style={{ color: '#9bb3b0' }}> · 첫 사냥터라 닫을 수 없음</small> : null}</span>
         {!r.locked && <button className={r.closed ? 'primary' : 'secondary'} disabled={busy} onClick={() => toggleClosed(kind, r)}>{r.closed ? '다시 열기' : '입장 막기'}</button>}</li>)}</ul></div>;
     return <main className="admin-tool" style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px', color: '#e6f1ee' }}>
         <h1 style={{ fontSize: 24, marginBottom: 8 }}>운영 도구</h1>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>{tabButton('life', '모험가 관리')}{tabButton('events', '서버 이벤트')}{tabButton('closures', '입장 관리')}{tabButton('doors', '문 개방')}{tabButton('stats', '통계')}{tabButton('news', '소식 테스트')}</div>
-        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·세계석을 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·세계석·연구·유물·도감·스킬 성장은 그대로입니다.' : tab === 'events' ? '기간 동안 모든 모험가의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다. 배율 없이 이름만 적으면 공지(서버 메시지)로 배너에 뜹니다. 코드에 든 이벤트는 없고, 모든 서버 메시지는 이 페이지에서만 만듭니다.' : tab === 'doors' ? '??? 직업의 문을 조건과 상관없이 모든 모험가에게 엽니다(테스트용). 연 동안만 열리고, 닫으면 다시 각자의 조건대로 돌아갑니다. 그 사이 전직한 모험가는 그 직업을 그대로 가집니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.' : tab === 'news' ? '기록판 ‘소식’ 탭에 뜨는 줄을 종류별로 올려 봅니다. 실제 소식과 같은 문장·발신자(소식·제단·빨간 해커 줄)로 모든 모험가에게 보이니, 기본으로 [테스트] 표시를 붙입니다. 직접 입력은 운영 공지 한 줄로 씁니다.' : tab === 'stats' ? '모든 세이브를 읽어 집계합니다. 활동은 마지막 저장 시각 기준이라, 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다. 운영자가 불러올 때만 계산해 게임에는 부하가 없습니다.' : '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나오고(사냥터는 더 앞의 열린 곳으로), 반복 도전도 멈춥니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.'}</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>{tabButton('life', '모험가 관리')}{tabButton('events', '서버 이벤트')}{tabButton('closures', '입장 관리')}{tabButton('doors', '문 개방')}{tabButton('stats', '통계')}{tabButton('news', '소식 테스트')}{tabButton('income', '골드 수입')}</div>
+        <p style={{ color: '#9bb3b0', fontSize: 14, marginTop: 0 }}>{tab === 'life' ? '이름이나 아이디로 찾아 골드·세계석을 조정하거나 이번 생을 초기화합니다. 이번 생 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전을 처음 상태로 되돌립니다. 환생 횟수·세계석·연구·유물·도감·스킬 성장은 그대로입니다.' : tab === 'events' ? '기간 동안 모든 모험가의 경험치·골드·장비 드롭·숙련에 배율을 겁니다. 겹치면 배율은 곱해집니다. 배율 없이 이름만 적으면 공지(서버 메시지)로 배너에 뜹니다. 코드에 든 이벤트는 없고, 모든 서버 메시지는 이 페이지에서만 만듭니다.' : tab === 'doors' ? '??? 직업의 문을 조건과 상관없이 모든 모험가에게 엽니다(테스트용). 연 동안만 열리고, 닫으면 다시 각자의 조건대로 돌아갑니다. 그 사이 전직한 모험가는 그 직업을 그대로 가집니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.' : tab === 'income' ? '사냥(턴 처리)으로 번 골드를 플레이 시간 1시간 단위로 기록합니다. 시간당 골드는 다 채운 최근 3시간 평균이고, 아직 1시간을 못 채웠으면 지금까지로 추정(≈)합니다. 판매·환불 골드는 넣지 않습니다. v3.58부터 쌓이므로 그 전 기록은 없습니다.' : tab === 'news' ? '기록판 ‘소식’ 탭에 뜨는 줄을 종류별로 올려 봅니다. 실제 소식과 같은 문장·발신자(소식·제단·빨간 해커 줄)로 모든 모험가에게 보이니, 기본으로 [테스트] 표시를 붙입니다. 직접 입력은 운영 공지 한 줄로 씁니다.' : tab === 'stats' ? '모든 세이브를 읽어 집계합니다. 활동은 마지막 저장 시각 기준이라, 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다. 운영자가 불러올 때만 계산해 게임에는 부하가 없습니다.' : '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나오고(사냥터는 더 앞의 열린 곳으로), 반복 도전도 멈춥니다. 게임 업데이트 없이 바로 적용되며 서버마다 최대 30초 걸립니다.'}</p>
         <section className="panel" style={{ padding: 16, display: 'grid', gap: 10 }}>
             <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>운영자 키<input type="password" value={key} onChange={e => setKey(e.target.value)} autoComplete="off" placeholder="Vercel 환경 변수 TIDEBOUND_ADMIN_KEY 값" style={field}/></label>
             {tab === 'life' && <form onSubmit={e => { e.preventDefault(); search(); }} style={{ display: 'flex', gap: 8 }}>
@@ -174,6 +181,10 @@ export default function AdminPage() {
             {tab === 'closures' && <button className="secondary" disabled={busy || !key} onClick={loadClosures}>목록 불러오기</button>}
             {tab === 'doors' && <button className="secondary" disabled={busy || !key} onClick={loadDoors}>목록 불러오기</button>}
             {tab === 'news' && <button className="secondary" disabled={busy || !key} onClick={loadNews}>최근 소식 불러오기</button>}
+            {tab === 'income' && <form onSubmit={e => { e.preventDefault(); void loadIncome(); }} style={{ display: 'flex', gap: 8 }}>
+                <input value={incomeQuery} onChange={e => setIncomeQuery(e.target.value)} placeholder="특정 모험가만 보기: 이름(일부) 또는 로그인 아이디 (비우면 전체)" style={{ ...field, flex: 1 }}/>
+                <button className="primary" disabled={busy || !key}>{income ? '새로고침' : '불러오기'}</button>
+            </form>}
         </section>
         {error && <p role="alert" style={{ color: '#ff9a9a' }}>{error}</p>}
         {done && <p role="status" style={{ color: '#9ce8b4' }}>{done}</p>}
@@ -262,6 +273,23 @@ export default function AdminPage() {
                 <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>환생·레벨 상위 10</h2>
                     <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, display: 'grid', gap: 3 }}>{stats.top.map((p, i) => <li key={i}>{p.name} · 환생 {p.rebirths}회 · Lv.{p.level}{p.abyss ? ` · 무릉도장 ${p.abyss}층` : ''}</li>)}</ol></div>
             </div>
+        </section>}
+        {tab === 'income' && income && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))', gap: 10 }}>
+                <Tile label="기록 있는 모험가" value={n(income.measured)} note={`최근 24시간 안에 저장 ${n(income.recent)}명`}/>
+                <Tile label="시간당 골드 중앙값" value={big(income.median)} note="최근 24시간 안에 저장한 모험가 기준"/>
+                {income.byRebirth.map(b => <Tile key={b.label} label={b.label} value={b.count ? big(b.median) : '-'} note={`${n(b.count)}명 · 최고 ${big(b.max)}`}/>)}
+            </div>
+            {income.picked.map(p => <div key={p.id} className="panel" style={{ padding: 14, display: 'grid', gap: 8 }}>
+                <h2 style={{ fontSize: 15, margin: 0 }}>{p.name} <span style={{ color: '#9bb3b0', fontSize: 12 }}>({p.username || '?'} · 환생 {p.rebirths}{p.ascension ? ` · 승천 ${p.ascension}` : ''} · Lv.{p.level} · {p.place} 난이도 {p.tide}{p.running ? '' : ' · 멈춤'})</span></h2>
+                <p style={{ margin: 0, fontSize: 13 }}>시간당 <b>{p.estimated ? '≈ ' : ''}{big(p.perHour)}</b> · 보유 {big(p.gold)} · 기록 뒤 합계 {big(p.earned)}</p>
+                {!p.log.length ? <p style={{ color: '#9bb3b0', fontSize: 13, margin: 0 }}>아직 기록이 없습니다.</p> : (() => { const top = Math.max(1, ...p.log.map(x => x.gold)); return <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 3, fontSize: 12 }}>{p.log.map(x => <li key={x.ago} style={{ display: 'grid', gridTemplateColumns: '92px 1fr 80px', gap: 8, alignItems: 'center' }}><span style={{ color: '#9bb3b0' }}>{x.ago ? `${x.ago}시간 전(플레이)` : '지금 시간'}</span><span style={{ height: 8, borderRadius: 4, background: '#2d474a' }}><span style={{ display: 'block', height: 8, borderRadius: 4, width: `${Math.max(2, x.gold / top * 100)}%`, background: '#e7be71' }}/></span><b style={{ textAlign: 'right' }}>{big(x.gold)}</b></li>)}</ul>; })()}
+            </div>)}
+            {incomeQuery.trim() && !income.picked.length && <p style={{ color: '#9bb3b0', fontSize: 13 }}>‘{incomeQuery}’에 맞는 모험가가 없습니다.</p>}
+            <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>시간당 골드 상위 30 (최근 24시간 저장)</h2>
+                <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}><thead><tr style={{ color: '#9bb3b0', textAlign: 'left' }}><th>#</th><th>모험가</th><th>환생</th><th>Lv</th><th>장소 · 난이도</th><th style={{ textAlign: 'right' }}>시간당</th><th style={{ textAlign: 'right' }}>보유</th></tr></thead>
+                <tbody>{income.top.map((r, i) => <tr key={r.id} style={{ borderTop: '1px solid #263f42', cursor: 'pointer' }} onClick={() => { setIncomeQuery(r.name); void loadIncome(r.name); }} title="눌러서 시간별 기록 보기"><td>{i + 1}</td><td>{r.name} <span style={{ color: '#9bb3b0' }}>{r.username}</span></td><td>{r.rebirths}{r.ascension ? `·승${r.ascension}` : ''}</td><td>{r.level}</td><td>{r.place} · {r.tide}</td><td style={{ textAlign: 'right' }}>{r.estimated ? '≈ ' : ''}{big(r.perHour)}</td><td style={{ textAlign: 'right' }}>{big(r.gold)}</td></tr>)}</tbody></table></div>
+                {!income.top.length && <p style={{ color: '#9bb3b0', fontSize: 13, margin: 0 }}>아직 기록이 없습니다. 업데이트 뒤 사냥한 시간만큼 쌓입니다.</p>}</div>
         </section>}
         {tab === 'news' && <section style={{ marginTop: 16, display: 'grid', gap: 12 }}>
             <div className="panel" style={{ padding: 14, display: 'grid', gap: 10 }}>

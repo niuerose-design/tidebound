@@ -1,5 +1,5 @@
 // 세계석 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
-import { newState, act, advance, rawAdvance, stats, economy, victoryHealRate, drop, researchMastery, shopCost, gambleCost, enhanceCost, reforgeCost, rebirthReward, MIMIC_DATA, NURI_DATA, assert, test } from './harness.mjs';
+import { newState, act, advance, rawAdvance, stats, economy, victoryHealRate, drop, researchMastery, gambleCost, enhanceCost, reforgeCost, rebirthReward, MIMIC_DATA, NURI_DATA, assert, test } from './harness.mjs';
 
 const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'enhance'];
 const research = id => economy.RESEARCH.find(r => r.id === id);
@@ -38,9 +38,8 @@ test('Research v2: recovery and smith discounts use the state-aware functions', 
     const s = newState(0); s.rebirths = 5; s.permanent.recovery = 5;
     close(victoryHealRate({ ...s, dungeon: null }), .25); close(victoryHealRate({ ...s, dungeon: { id: 'grotto', wave: 0 } }), .13);
     close(victoryHealRate({ ...newState(0), rebirths: 5, dungeon: null }), .2); close(victoryHealRate({ ...newState(0), dungeon: null }), .25, 'sprout +5%p');
-    s.level = 10; const full = shopCost(s), fullGamble = gambleCost(s);
-    s.permanent.shop = 10; assert.equal(shopCost(s), full, 'v3.38 상점 단골 삭제'); assert.equal(gambleCost(s), fullGamble);
-    s.gold = 1e6; const before = s.gold; act(s, { type: 'buy', id: 'coat' }, 0); assert.equal(before - s.gold, shopCost(s));
+    s.level = 10; const fullGamble = gambleCost(s);
+    s.permanent.shop = 10; assert.equal(gambleCost(s), fullGamble, 'v3.38 상점 단골 삭제'); s.gold = 1e6;
     const item = { id: 'forge', slot: 'coat', rarity: 1, power: 10, level: 10, name: 'forge', affix: { stat: 'hp', name: '생명', value: 15 } };
     s.inventory.push(item); s.permanent.enhance = 15;
     assert.equal(enhanceCost(item), 240); assert.equal(enhanceCost(item, s), 168); assert.equal(reforgeCost(item, s), Math.floor(reforgeCost(item) * .7));
