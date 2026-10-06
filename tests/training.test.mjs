@@ -54,3 +54,21 @@ test('v3.69 mastered job count: retired independents no longer count, for old sa
     const s = newState(0); s.jobMastery.woodcutter = 1e9; s.jobMastery.harpoon = 1e9;
     assert.equal(P.masteredJobCount(s), 1);
 });
+
+test('v3.70 stat training I-III: opened by 1M training mastery, each step needs the previous one mastered, passives raise base attributes and can be inherited', () => {
+    const s = newState(0); s.level = 30;
+    for (const [stat, parent] of [['str', 'trainingPhysical'], ['int', 'trainingMagic'], ['vit', 'trainingDefense'], ['luk', 'trainingStatus'], ['wis', 'trainingHybrid'], ['dex', 'trainingSupport']]) {
+        const [i1, i2, i3] = [1, 2, 3].map(n => job(`${stat}Training${n}`));
+        assert.ok(i1.parent === parent && i2.parent === i1.id && i3.parent === i2.id, stat);
+        assert.deepEqual([i1.mastery, i1.masteryTarget, i2.mastery, i2.masteryTarget, i3.mastery, i3.masteryTarget], [1e6, 1e7, 1e7, 1e8, 1e8, 1e9], stat);
+        assert.ok([i1, i2, i3].every(j => j.subRole === 'training' && j.rewardScale === .35 && lineageOf(j) === lineageOf(job(parent))), stat);
+    }
+    assert.equal(canChangeJob(s, 'strTraining1'), false); s.jobMastery.trainingPhysical = 999_999; assert.equal(canChangeJob(s, 'strTraining1'), false);
+    s.jobMastery.trainingPhysical = 1_000_000; assert.equal(canChangeJob(s, 'strTraining1'), true); assert.equal(canChangeJob(s, 'strTraining2'), false);
+    // 패시브: 기본 능력치(근력) 자체가 오릅니다. 다른 직업이 계승(첫 숙련 단계 1,000만)하면 그 직업에서도 오릅니다.
+    const h = newState(0); h.level = 30; h.job = 'harpoon'; h.learned.strDrill1 = 1; h.skills = ['strDrill1'];
+    const before = stats({ ...h, skills: [] }).attack;
+    assert.equal(stats(h).attack, before, 'not inherited yet: no effect');
+    h.skillPractice.strDrill1 = 10_000_000; const S1 = S.trainedAttributes(h).str, base = S.trainedAttributes({ ...h, skills: [] }).str;
+    assert.equal(S1 - base, 25, '+20 × (1 + 25% for the first mastery stage)'); assert.ok(stats(h).attack > before);
+});
