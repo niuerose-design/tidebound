@@ -11,7 +11,9 @@ const { newState } = await load('systems/engine');
 const { stats } = await load('systems/stats');
 const { strike, fighterSpeed } = await load('systems/combat');
 const { SKILLS } = await load('data/skills');
-const { JOBS } = await load('data/classes');
+const { JOBS, lineageOf } = await load('data/classes');
+/** v3.61 외길 계보 → 몰아 주는 능력치. */
+const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
 const { FISH } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
 const { canUse, validLoadout, skillMasteryRanks, lineage, jobMasteryTarget, jobFactor, masteryMilestonesFor } = await load('systems/progression');
@@ -34,7 +36,9 @@ function attributesFor(j, level) {
     // scaling 'swap'은 피해 유형과 반대 공격력을 쓰므로 주 능력치도 반대로 봅니다.
     const ownMagic = own.filter(sk => (sk.damageType === 'magic') !== (sk.scaling === 'swap')).length, ownPhysical = own.length - ownMagic;
     const total = 4 + (level - 1) * 4, magic = ownMagic !== ownPhysical ? ownMagic > ownPhysical : jobFactor(j, 'magic') > jobFactor(j, 'attack') || (jobFactor(j, 'magic') === jobFactor(j, 'attack') && SKILLS.some(sk => sk.job === j.id && sk.damageType === 'magic'));
-    const w = magic ? { int: 45, wis: 20, vit: 25, dex: 10 } : { str: 45, dex: 20, vit: 25, wis: 10 };
+    // v3.61 외길 계보는 그 능력치 하나에 모두 배분합니다(같은 배분으로 재면 외길이 크게 약하게 나옴).
+    const single = ONE_STAT[lineageOf(j)];
+    const w = single ? { [single]: 100 } : magic ? { int: 45, wis: 20, vit: 25, dex: 10 } : { str: 45, dex: 20, vit: 25, wis: 10 };
     const out = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; let used = 0;
     for (const [k, p] of Object.entries(w)) { out[k] = Math.floor(total * p / 100); used += out[k]; }
     out.vit += total - used;

@@ -51,6 +51,8 @@ export type Job = {
     fullKit?: boolean;
     /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않고, v3.54부터 넘친 회복량 × overhealDamage를 적에게 피해로 줍니다. */
     healer?: boolean;
+    /** v3.61 세부 역할(data/roles.ts). 비밀 직업은 데이터에 직접, 공개 직업은 계보 기본값·직업별 표로 정합니다. */
+    subRole?: import('./roles').SubRoleId;
     hidden?: boolean;
     rebirth?: number;
     /** 계보 id. 없으면 루트 조상 id, 상위·하위가 없는 1차 직업은 `${tree}-independent`(lineageOf). */
