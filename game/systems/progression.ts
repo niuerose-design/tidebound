@@ -79,7 +79,7 @@ export function skillMastery(s: State, id: string) { const sk = skillById(id); r
 export function skillMasteryRanks(s: State) { const out: Record<string, number> = {}; for (const [id, practice] of Object.entries(s.skillPractice || {})) out[id] = skillMasteryLevel(practice, masteryMilestonesFor(skillById(id))) + limitBreakOf(s, id); return out; }
 export function apUsed(s: State, ids = s.skills) { return ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
 export function lineage(job: string): string[] { const j = jobById(job); return j ? [j.id, ...(j.parent ? lineage(j.parent) : [])] : []; }
-/** 전용 기술 효율: signatureTier(v3.78 5차) 이상 직업의 기술을 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1. */
+/** 전용 기술 효율: signatureTier(v3.79 5차) 이상 직업의 기술을 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1. */
 export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (!sk.job || !userJob) return 1;
     const owner = jobById(sk.job);
@@ -257,7 +257,7 @@ export function skillRankHint(sk: Skill, rank: number, mastery = 0, practice = 0
     return rows.length ? rows.map(x => `${x.label} ${x.from} → ${x.to}`).join(' · ') : '최대 강화 레벨입니다.';
 }
 /** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·숨은 조건 없이 언제든 다시 전직할 수 있습니다. */
-/** v3.78 숙달 목표를 올리기 전 기준으로 이미 숙달한 직업(masteryKept)은 계속 숙달입니다. */
+/** v3.79 숙달 목표를 올리기 전 기준으로 이미 숙달한 직업(masteryKept)은 계속 숙달입니다. */
 export const jobMastered = (s: Pick<State, 'jobMastery'> & Partial<Pick<State, 'masteryKept'>>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j) || !!s.masteryKept?.includes(j.id);
 /** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. v3.69 옛 수련(retired)은 세지 않습니다(숙달할 직업 21개 감소, 기존 세이브도 같은 기준). */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && !j.retired && jobMastered(s, j); }).length;

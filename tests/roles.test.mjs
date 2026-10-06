@@ -25,9 +25,9 @@ test('v3.61 roles: lineage assignments follow the plan (§11.6-1), with job-leve
         if (JOBS.some(j => j.id === id)) assert.equal(sub(id), want, id);
 });
 
-test('v3.78 role-unique effects stay with their role (docs/concept.md 11.3): swarm/thorns tanks, DoT boosts status dealers, gold/exp/drop buffers, heal actives healers, dealers own at most one control active', async () => {
+test('v3.79 role-unique effects stay with their role (docs/concept.md 11.3): swarm/thorns tanks, DoT boosts status dealers, gold/exp/drop buffers, heal actives healers, dealers own at most one control active', async () => {
     const { JOBS, lineageOf } = await load('data/classes'), { SKILLS } = await load('data/skills'), { subRoleOf, roleOf } = await load('data/roles');
-    // 역할 경계 직업(제로 · v3.78 아이돌 연습생)과 수련 직업(계승 재료)은 점검에서 뺍니다.
+    // 역할 경계 직업(제로 · v3.79 아이돌 연습생)과 수련 직업(계승 재료)은 점검에서 뺍니다.
     const CAT = [
         { keys: ['swarmFind', 'thorns'], ok: (sub, role) => role === 'tank' },
         { keys: ['dotBonus', 'bleedBonus', 'poisonBonus', 'burnBonus', 'dotTurnsBonus', 'poisonStackBonus'], ok: sub => sub === 'status' },

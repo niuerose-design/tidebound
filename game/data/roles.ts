@@ -18,7 +18,7 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     utility: { role: 'buffer', name: '유틸리티' },
     /** 일부러 역할 경계에 선 히든 직업(제로). */
     border: { role: 'border', name: '경계: 딜러 · 제어 탱커' },
-    /** v3.78 일부러 힐러와 유틸리티 경계에 선 직업(아이돌 연습생: 회복 + 경험치). */
+    /** v3.79 일부러 힐러와 유틸리티 경계에 선 직업(아이돌 연습생: 회복 + 경험치). */
     borderBuffer: { role: 'border', name: '경계: 힐러 · 유틸리티' },
     /** 독립 수련(계승 재료). */
     training: { role: 'none', name: '수련' },

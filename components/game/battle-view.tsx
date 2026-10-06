@@ -13,7 +13,7 @@ import { useReplayView, type FrameStore } from './use-game';
 import { LiveRatesCard } from './live-rates-card';
 import { EXP_NURI } from '@/game/data/exp-nuri';
 import { rebirthLevel, encounterTier } from '@/game/systems/meta';
-import { BookOpen, Check, ChevronRight, ScrollText, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Leaf } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, ScrollText, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Leaf, Gem } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heading, Meter, SkillIcon, format, Num } from './shared';
@@ -96,7 +96,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     <div className="battle-console">
     <MobileFisherStrip s={s} setView={setView}/>
     {tutorialActive(s) && <div className="battle-top-tutorial"><TutorialCard s={s} send={send} busy={busy} setView={setView}/></div>}
-    <div className="session-metrics"><div><Fish/><span>누적 처치<strong><Num n={s.kills}/> <small>마리</small></strong></span></div><div><BookOpen/><span>발견한 몬스터<strong>{Object.keys(s.book).length} <small>/ {FISH.length}종</small></strong></span></div><div className="session-currency gold"><Coins/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div><div className="session-currency pearl" title={`세계석은 환생(Lv.${rebirthLevel(s)}부터) 후 ‘환생 · 분신 → 세계석 연구’에서 영구 능력치·편의 연구를 사는 데 씁니다. 환생할 때 레벨·환생 횟수에 따라 받고, 별빛 변종·도감·업적 보상으로도 모입니다. 환생해도 사라지지 않습니다.`}><Sparkles/><span>보유 세계석 <small className="metric-hint">?</small><strong><Num n={s.pearls}/> <small>개</small></strong></span></div></div>
+    <div className="session-metrics"><div><Fish/><span>누적 처치<strong><Num n={s.kills}/> <small>마리</small></strong></span></div><div><BookOpen/><span>발견한 몬스터<strong>{Object.keys(s.book).length} <small>/ {FISH.length}종</small></strong></span></div><div className="session-currency gold"><Coins/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div><div className="session-currency pearl" title={`세계석은 환생(Lv.${rebirthLevel(s)}부터) 후 ‘환생 · 분신 → 세계석 연구’에서 영구 능력치·편의 연구를 사는 데 씁니다. 환생할 때 레벨·환생 횟수에 따라 받고, 별빛 변종·도감·업적 보상으로도 모입니다. 환생해도 사라지지 않습니다.`}><Sparkles/><span>보유 세계석 <small className="metric-hint">?</small><strong><Num n={s.pearls}/> <small>개</small></strong></span></div><div className="session-currency essence" title="정수는 장비 분해 · 무리 전리품 · 높은 사냥터 난이도 등에서 모입니다. 옵션 재설정 · 재련, 저격 뽑기, 원시 각성에 씁니다. 환생해도 사라지지 않습니다."><Gem/><span>보유 정수 <small className="metric-hint">?</small><strong><Num n={s.essence || 0}/> <small>개</small></strong></span></div></div>
     {show('liveRates') && <LiveRatesCard s={s} compact/>}
     <TideSelector s={base} send={send} busy={busy}/>
     <div className="battle-target-strip"><span><Target size={15}/> 집중 사냥</span><Tabs value={s.target || 'all'} onValueChange={id => send({ type: 'target', id })}><TabsList><TabsTrigger value="all" disabled={busy || !!s.dungeon}>무작위</TabsTrigger>{st.fish.map(id => { const f = FISH.find(x => x.id === id), need = f?.minTier || 0, locked = need > encounterTier(s); return <TabsTrigger value={id} key={id} disabled={busy || !!s.dungeon || locked} title={locked ? `사냥터 난이도 ${need}부터 나타나는 몬스터입니다. 지금 난이도 ${encounterTier(s)}.` : undefined}>{f?.name}{locked ? ` · 난이도 ${need}+` : ''}</TabsTrigger>; })}</TabsList></Tabs></div>
