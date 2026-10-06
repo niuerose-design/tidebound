@@ -220,17 +220,6 @@
 .route-card.selected { border-color:#5b9be6; box-shadow:0 0 0 1px #5b9be6; background:#15232f; }
 .job-status.mastered { color:#e8d39a; border-color:#8a7440; }
 .job-status.near { color:#e7c98c; border-color:#6d5f3f; }
-.door-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.door-card { display:flex; flex-direction:column; align-items:flex-start; gap:5px; text-align:left; padding:14px; }
-.door-card .door-icon { color:#9a9ab8; }
-.door-card.open .door-icon { color:#d7c6f2; }
-.door-card.open { border-color:#6c5f8f; background:linear-gradient(140deg,#231f36,#141e25); }
-.door-card.selected { box-shadow:0 0 0 1px #d5b36c; }
-.door-card strong { font-size:14px; }
-.door-card .door-job { font-size:13px; color:#e3dcf4; }
-.door-card.closed .door-job { color:#8b98a3; }
-.door-card small { font-size:11px; color:#8fa2a6; line-height:1.6; }
-.door-card:disabled { cursor:default; opacity:1; }
 .job-detail-slot { position:sticky; top:16px; min-width:0; }
 .job-sheet-backdrop, .job-sheet-close { display:none; }
 .job-sheet { position:relative; display:flex; flex-direction:column; padding:18px 18px 0!important; gap:8px!important; }
@@ -263,10 +252,9 @@
 .job-tag-chips { display:flex; flex-wrap:wrap; gap:4px; }
 .job-tag-chip { flex:0 0 auto; white-space:nowrap; padding:4px 8px; border:1px solid transparent; border-radius:99px; background:#132226; color:#8fa89f; font-size:11px; }
 .job-tag-chip.active { border-color:#7fb8a4; color:#dff2ea; background:#1a2e31; }
-.job-tree-dot { width:7px; height:7px; border-radius:50%; background:#d7c6f2; box-shadow:0 0 6px #b69be8; }
 .job-list-clear { align-self:flex-start; font-size:12px; }
 .route-steps.job-list { gap:8px; }
-.route-note.secret, .door-card .door-hint { color:#b9a9d8; font-style:italic; }
+.route-note.secret { color:#b9a9d8; font-style:italic; }
 .job-silhouette .job-detail-title h2 { color:#8b98a3; letter-spacing:4px; }
 .job-silhouette { padding-bottom:18px!important; }
 .job-compare { margin-top:18px; padding:18px; }
@@ -287,10 +275,6 @@
 .job-compare-req li.met { color:#b6e0cc; }
 .job-compare-req li.missing { color:#e7b2a6; }
 .job-sheet-footer { flex-wrap:wrap; }
-.door-notice { display:flex; align-items:stretch; margin-top:8px; border:1px solid #5c4f80; background:#1f1b30; border-radius:5px; font-size:12px; }
-.door-notice-open { display:flex; align-items:center; gap:8px; flex:1; min-width:0; padding:7px 12px; color:#e3dcf4; text-align:left; }
-.door-notice-open span { color:#bfb4d8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.door-notice-dismiss { padding:0 10px; color:#a99fc4; }
 @media (max-width:1180px) {
     .job-columns { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
     .job-columns>.job-detail-slot { grid-column:1/-1; position:static; }
@@ -300,7 +284,6 @@
     .job-tree-chips { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin:0 -18px; padding:0 18px; }
     .job-tree-chips::-webkit-scrollbar { display:none; }
     .job-tree-chip { flex:0 0 auto; padding:8px 13px; font-size:13px; }
-    .door-row { grid-template-columns:1fr; }
     .job-tag-chips { flex:1 1 100%; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
     .job-search-box { flex:1 1 100%; }
     .job-columns>.job-detail-slot { display:contents; }
@@ -317,17 +300,6 @@
 .gamble-count-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; width:100%; }
 .gamble-count-row button { width:100%; padding:9px 6px; font-size:12px; white-space:nowrap; }
 
-/* v27.12 발견의 문 목록: 윤회의 문 카드 옆에 조건 13개를 한 줄씩. */
-.door-card.discovery-list { cursor:default; grid-column:1 / -1; }
-.door-card.discovery-list strong small { font-weight:500; color:#9bb3b0; margin-left:6px; }
-.discovery-doors { list-style:none; margin:4px 0 0; padding:0; display:grid; gap:4px; width:100%; }
-.discovery-doors button { width:100%; display:grid; grid-template-columns:minmax(88px,auto) 1fr auto; gap:8px; align-items:center; text-align:left; padding:6px 8px; border:1px solid #2b3b40; border-radius:7px; background:#111c21; color:#c7d6d2; font-size:12px; }
-.discovery-doors li.open button { border-color:#6c5f8f; background:#1a1b2c; color:#e6e0f5; }
-.discovery-doors button.selected { box-shadow:0 0 0 1px #d5b36c; }
-.discovery-doors button:disabled { cursor:default; opacity:.75; }
-.discovery-doors b { font-weight:600; } .discovery-doors i { font-style:normal; color:#9bb3b0; } .discovery-doors em { font-style:normal; font-size:11px; color:#8ea39f; white-space:nowrap; }
-.discovery-doors li.open em { color:#d7c6f2; }
-@media (max-width:767px) { .door-row { grid-template-columns:1fr; } .discovery-doors button { grid-template-columns:1fr auto; } .discovery-doors i { grid-column:1 / -1; } }
 /* v27.40 스킬 아이콘: 원작 도트 아이콘이 흐려지지 않게 */
 .skill-art { image-rendering: pixelated; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0; }
 /* v27.44 제단 알림(문 알림과 같은 모양, 주황빛) */

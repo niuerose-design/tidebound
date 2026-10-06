@@ -1,7 +1,7 @@
 /** 직업 화면 공용 계산. 게임 판정(progression)을 그대로 쓰고, 화면용 상태 이름만 붙입니다. */
 import type { State } from '@/game/types';
 import { JOBS, JOB_TREES, lineageOf, jobTags, type Job, jobById } from '@/game/data/classes';
-import { doorFor } from '@/game/data/door-info';
+import { unlockFor } from '@/game/data/unlock-info';
 import { catalogRevealed } from '@/game/data/catalog';
 import { jobRequirements, jobMastered, jobCombatMultiplier, jobFlatBonus } from '@/game/systems/progression';
 import { percent } from '@/game/data/progression';
@@ -61,8 +61,8 @@ export function jobBonusText(j: Job, key: JobBonusKey, mastered = false) {
     return parts.join(' · ') || '—';
 }
 
-/** 실루엣 대상: 히든 직업과 ??? 문 직업(문 목록은 서버 카탈로그). */
-export const secretJob = (j: Job) => !!j.hidden || !!doorFor({}, j.id);
+/** 실루엣 대상: 히든 직업과 숨은 조건이 있는 직업(목록은 서버 카탈로그). */
+export const secretJob = (j: Job) => !!j.hidden || unlockFor({}, j.id) !== null;
 /**
  * 실루엣 공개. v3.44 판정(관문 조건)은 비밀이라 서버가 하고(game/systems/reveal.ts), 화면은 카탈로그의 공개 목록만 봅니다.
  * 들어간 적 있는 직업은 카탈로그를 받기 전에도 드러난 것으로 봅니다.
@@ -72,10 +72,9 @@ export function jobRevealed(s: State, j: Job) {
 }
 
 /** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 미발견 실루엣은 이름을 드러내지 않도록 목록에서 뺍니다. */
-export type Finder = 'ready' | 'mastered' | 'near' | 'doors';
-export function finderJobs(s: State, kind: Finder, openDoorJobs: string[]) {
+export type Finder = 'ready' | 'mastered' | 'near';
+export function finderJobs(s: State, kind: Finder) {
     const visible = JOBS.filter(j => jobRevealed(s, j));
-    if (kind === 'doors') return JOBS.filter(j => openDoorJobs.includes(j.id));
     // 숙달: 직업 숙련이 숙달 목표에 닿아 조건 없이 언제든 돌아갈 수 있는 직업(현재 직업 포함).
     if (kind === 'mastered') return JOBS.filter(j => jobMastered(s, j));
     return visible.filter(j => { const st = jobStatus(s, j).status; return kind === 'ready' ? st === 'ready' || st === 'mastered' : st === 'near'; });

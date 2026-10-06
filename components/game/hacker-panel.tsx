@@ -172,7 +172,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
         {/* v3.57 정보 해킹: 서버가 데이터에서 만든 비밀 조각 하나(드롭·확률 · 출현 가중치 · 히든 직업 조건). 퍼뜨리기는 방송 탈취·채팅으로. */}
         {n >= 1 && <section className="panel hacker-section hacker-leaks">
             <div className="section-title"><h2>정보 해킹</h2><span>알아낸 정보 {leaks.length}개 · 최근 {HACKER.leak.keep}개까지 보관</span></div>
-            <p className="footnote">서버 깊은 곳에서 아직 모르는 비밀 하나를 빼냅니다: 장비 드롭·등급·까미·누리·칠흑·변종·감정 확률, 희귀 몬스터 출현 가중치, 히든 직업의 전직 조건이나 문 조건. 퍼뜨릴지는 해커가 정합니다(방송 탈취·채팅). 비트 {cost(HACKER.leak.bits)} · 오늘 {used.leak || 0}/{cap2(HACKER.leak.perDay(n))}</p>
+            <p className="footnote">서버 깊은 곳에서 아직 모르는 비밀 하나를 빼냅니다: 장비 드롭·등급·까미·누리·칠흑·변종·감정 확률, 희귀 몬스터 출현 가중치, 히든 직업의 전직 조건이나 숨은 조건. 퍼뜨릴지는 해커가 정합니다(방송 탈취·채팅). 비트 {cost(HACKER.leak.bits)} · 오늘 {used.leak || 0}/{cap2(HACKER.leak.perDay(n))}</p>
             <button className="primary" disabled={busy || !isHacker || busted || (used.leak || 0) >= cap2(HACKER.leak.perDay(n)) || h.bits < cost(HACKER.leak.bits)} onClick={() => run('leak')}>정보 해킹</button>
             {leaks.length > 0 && <ul className="hack-leaks">{leaks.map(l => <li key={l.id}><span>{l.text}</span><button type="button" className="text-button" title="복사해서 채팅에 붙여 넣을 수 있습니다" onClick={() => { try { void navigator.clipboard?.writeText(l.text); } catch { /* 복사 불가 */ } }}>복사</button></li>)}</ul>}
         </section>}

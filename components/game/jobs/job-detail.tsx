@@ -29,7 +29,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
         <div className="job-detail-title"><h2>???</h2></div>
         <p className="job-detail-sub">{tierName(j)} · {treeName(j.tree)}</p>
         <p className="job-cross">{j.hint || '아직 드러나지 않은 직업입니다.'}</p>
-        <p className="footnote">이 직업의 문이 열리면 바로, 문이 없으면 관문 조건(환생 횟수·선행 직업 숙련)을 모두 채우면 이름과 조건이 드러납니다. 한 번 전직하거나 숙달하면 계속 보입니다.</p>
+        <p className="footnote">숨은 조건(플레이 기록)을 만족하거나 관문 조건(환생 횟수·선행 직업 숙련)을 모두 채우면 이름과 조건이 드러납니다. 한 번 전직하거나 숙달하면 계속 보입니다.</p>
     </article>;
     const st = jobStatus(s, j), current = st.status === 'current', ready = canEnter(st);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;
@@ -55,7 +55,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
                 </section>
             </>}
             {tab === 'requirements' && <section className="job-detail-section">
-                {st.status === 'mastered' && <p className="job-cross positive">숙달한 직업이라 레벨·능력치·숙련·문 조건 없이 전직할 수 있습니다.</p>}
+                {st.status === 'mastered' && <p className="job-cross positive">숙달한 직업이라 레벨·능력치·숙련·숨은 조건 없이 전직할 수 있습니다.</p>}
                 {current && <p className="footnote">지금 이 직업입니다.</p>}
                 <ul className="job-req-list">{st.req.map(r => <li key={r.label} className={r.met ? 'met' : 'missing'}>
                     <span>{r.met ? <Check size={13}/> : <Lock size={13}/>} {r.label}</span>

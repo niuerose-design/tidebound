@@ -1,6 +1,6 @@
 /**
  * v3.57 정보 비공개 6단계(docs/concept.md 10.3-6): 해커 ‘정보 해킹’이 알아내는 비밀 조각(서버 전용).
- * 조각은 데이터에서 자동으로 만듭니다: 드롭·확률 수치(odds.ts) · 몬스터 출현 가중치 · 히든 직업의 전직 조건 · 발견의 문 조건.
+ * 조각은 데이터에서 자동으로 만듭니다: 드롭·확률 수치(odds.ts) · 몬스터 출현 가중치 · 히든 직업의 전직 조건 · 숨은 조건(v3.62, 옛 발견의 문).
  * 퍼뜨리기는 기존 기능(방송 탈취·채팅)으로 합니다. 해커가 이미 아는 조각과 이미 들어가 본 직업은 빼고 고릅니다.
  */
 // 서버 전용 표식: 화면(클라이언트) 번들이 이 파일을 가져가면 빌드가 실패합니다(docs/concept.md 10.2-1).
@@ -14,16 +14,15 @@ import { FISH, HABITAT } from '../data/world';
 import { APPRAISAL } from '../data/economy';
 import { jobById } from '../data/classes';
 import { jobRequirements } from '../systems/progression';
-import { REBIRTH_DOOR_JOBS } from '../data/doors';
 
 export type Leak = { id: string; text: string };
 const pct = (x: number) => `${Math.round(x * 100_000) / 1000}%`;
-/** 발견의 문의 정확한 조건(문 힌트는 v3.56에 분위기 문장으로 바꿨고, 정확한 조건은 여기서만). doors.ts의 test와 같은 내용입니다. */
-export const DOOR_CONDITIONS: Record<string, string> = {
+/** 숨은 조건의 정확한 문장(정확한 조건은 여기서만). secret/unlocks.ts의 test와 같은 내용입니다. */
+export const UNLOCK_CONDITIONS: Record<string, string> = {
     undead: '10번 쓰러지기', clockmaker: '사냥터에서 10시간 보내기', headwindSailor: '다섯 번째 사냥터까지 가 보기', sunriseAngler: '몬스터 15종 만나기',
     barehandFisher: '무기 없이 Lv.15 넘기기', noonDiver: '던전 5번 끝까지 클리어', mistSwordsman: '결투 3번 이기기', nightHeron: '몬스터 500마리 처치',
     krakenkin: '보스 10마리 처치', poorMonk: 'Lv.15 이상인데 골드 100 미만', codexReader: '도감 기록(몬스터 종 + 물건) 30개 이상', fallenAngler: '30번 쓰러지기', journeyman: '직업 3개 끝까지 숙달',
-    // 표에 없는 발견의 문 직업이 생기면 tests/odds.test.mjs가 알려 줍니다.
+    // 표에 없는 숨은 조건 직업이 생기면 tests/odds.test.mjs가 알려 줍니다.
 };
 
 /** 드롭·확률 조각(고정). */
@@ -49,12 +48,11 @@ function oddsLeaks(): Leak[] {
         ...Object.entries(o.spawn).filter(([, w]) => w > 0).map(([id, w]) => ({ id: `spawn:${id}`, text: `희귀 몬스터 ${fish(id)}의 출현 가중치는 ×${w}(보통 몬스터 ×1)입니다.` })),
     ];
 }
-/** 히든 직업 조각: 문 조건 또는 전직 조건. 이미 들어가 본 직업은 뺍니다. */
+/** 히든 직업 조각: 숨은 조건 또는 전직 조건. 이미 들어가 본 직업은 뺍니다. */
 function jobLeaks(s: State): Leak[] {
     return SECRET_JOBS.filter(raw => !s.unlockedJobs.includes(raw.id)).map(raw => {
         const j = jobById(raw.id) || raw;
-        if (DOOR_CONDITIONS[j.id]) return { id: `job:${j.id}`, text: `${j.name}: 발견의 문 조건은 ‘${DOOR_CONDITIONS[j.id]}’입니다.` };
-        if (REBIRTH_DOOR_JOBS.includes(j.id)) return { id: `job:${j.id}`, text: `${j.name}: 환생할 때 윤회의 문이 이 직업을 고르면 열립니다.` };
+        if (UNLOCK_CONDITIONS[j.id]) return { id: `job:${j.id}`, text: `${j.name}: 숨은 조건은 ‘${UNLOCK_CONDITIONS[j.id]}’입니다.` };
         const need = jobRequirements(s, j).map(r => r.label).join(' · ');
         return { id: `job:${j.id}`, text: `${j.name}: ${j.parent ? `${jobById(j.parent)?.name ?? j.parent}에서 전직, ` : ''}조건은 ${need}입니다.` };
     });

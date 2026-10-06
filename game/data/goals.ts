@@ -1,6 +1,6 @@
 import type { State } from '../types';
 import { FISH, PLACES as STAGES, DUNGEONS, PLAIN_DUNGEONS } from './world';
-import { kst } from './door-info';
+import { kst } from './time';
 
 /**
  * v25.6 일일·주간 모험 목표. 한국 시간 자정·월요일에 바뀌며, 날짜를 씨앗으로 정해지므로 서버·클라이언트가 같은 목표를 봅니다.

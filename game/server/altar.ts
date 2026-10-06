@@ -13,7 +13,7 @@ import { ApiError } from './store';
 import { refreshAltarEvents } from './events-config';
 import { allow } from './throttle';
 import { weekKey } from '../data/goals';
-import { kstIso } from '../data/door-info';
+import { kstIso } from '../data/time';
 import { addLog } from '../systems/state';
 import { snapshot } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot } from '../systems/duel';

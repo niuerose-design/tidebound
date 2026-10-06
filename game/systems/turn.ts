@@ -1,7 +1,7 @@
 /** 턴 진행(온라인 tick·오프라인 advance). */
 import { syncGoals, syncAchievements } from './progress';
 import { activeEvent, offlineEvent } from '../data/events';
-import { recordOpenDoors, openDoorsSnapshot } from '../data/doors';
+import { recordUnlocks } from '../secret/unlocks';
 import { syncVoyage } from './guidance';
 import { stats } from './stats';
 import type { State } from '../types';
@@ -156,8 +156,6 @@ export function advance(s: State, now: number, rng = Math.random) {
     s.event = elapsed > 60000 ? offlineEvent(live) : live;
     // v27.31 닫힌 사냥터·던전 목록도 같이 적어 화면이 잠금 표시를 합니다.
     const closed = closuresSnapshot(); if (closed) s.closed = closed; else delete s.closed;
-    // v27.73 운영 페이지에서 연 문도 적어 둡니다(이 정산의 전직 판정과 화면이 봅니다).
-    const openDoors = openDoorsSnapshot(); if (openDoors) s.openDoors = openDoors; else delete s.openDoors;
     // 정산 상한은 정산을 시작할 때의 긴 휴식 단계로 정합니다(정산 중 연구가 바뀌지 않음).
     const cap = offlineCapSeconds(s);
     // v3.17 긴 부재중 정산은 요청 하나에서 다 돌리지 않고 CATCH_UP_CHUNK턴씩 나눕니다(6~30시간 = 1만~5만 턴을 한 요청에서 돌리면 수십 초가 걸려
@@ -177,7 +175,7 @@ export function advance(s: State, now: number, rng = Math.random) {
     if (offline) s.event = live;
     if (truncated) { s.catchUpLeft = budget - count; s.lastTick = s.lastTick + count * BALANCE.turnMs; }
     else { delete s.catchUpLeft; s.lastTick = elapsed > cap * 1000 || continuing ? now : now - (elapsed % BALANCE.turnMs); }
-    recordOpenDoors(s);
+    recordUnlocks(s);
     if (offline && s.kills > before.kills) {
         const prev = continuing && s.lastOffline ? s.lastOffline : null;
         s.lastOffline = { seconds: prev ? prev.seconds : Math.min(cap, Math.floor(elapsed / 1000)), kills: (prev?.kills || 0) + s.kills - before.kills, gold: (prev?.gold || 0) + Math.max(0, s.gold - before.gold), exp: (prev?.exp || 0) + Math.max(0, s.exp - before.exp) };
