@@ -11,10 +11,10 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
 });
 // 직업·스킬 개수와 계열 소속은 classes.test에서 봅니다(콘텐츠를 추가할 때마다 깨지던 개수 단언은 지웠습니다).
 test('Tier 1 and 2 jobs own one or two skills; every skill has a real job and rising milestones',()=>{
- for(const job of JOBS.filter(j=>(j.tier===1||j.tier===2)&&!j.fullKit)){
+ for(const job of JOBS.filter(j=>(j.tier===1||j.tier===2)&&!j.fullKit&&!j.retired)){
   const owned=SKILLS.filter(sk=>sk.job===job.id&&!sk.song);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
  }
- assert.equal(SKILLS.find(sk=>sk.id==='hushCurrent').job,'stillwaterBinder');
+ assert.equal(SKILLS.find(sk=>sk.id==='hushCurrent').job,'trainingMagic');
  for(const sk of SKILLS){
   assert.ok(!sk.job||JOBS.some(j=>j.id===sk.job),sk.id);const ms=masteryMilestonesFor(sk);
   assert.ok(ms.every((n,i)=>Number.isInteger(n)&&n>0&&(i===0||n>ms[i-1])),sk.id);
@@ -172,7 +172,8 @@ test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-
  const { JOBS: J, PROGRESSION: P, jobMasteryTarget: target, masteryMilestonesFor: ms, inherited: inh, migrateState: migrate, newState: fresh, act: doAct } = H95;
  assert.deepEqual(P.jobMasteryTierScale, [1, 1, 1, 3, 15, 50]); assert.deepEqual(P.skillMasteryTierScale, [1, 1, 1, 3, 10, 25]);
  assert.equal(target('harpoon'), 180, 'tier 1 unchanged'); assert.equal(target('whaler'), 1200, 'tier 2 unchanged'); assert.equal(target('krakenSlayer'), 27000, 'tier 3 x3');
- for (const j of J.filter(j => j.tier === 4)) assert.ok([300000, 450000].includes(target(j)), j.id);
+ // v3.70 능력치 수련(subRole training)은 따로 정한 큰 숙련 목표를 씁니다.
+ for (const j of J.filter(j => j.tier === 4 && j.subRole !== 'training')) assert.ok([300000, 450000].includes(target(j)), j.id);
  for (const j of J.filter(j => j.tier === 5)) { assert.equal(target(j), 1500000, j.id); if (j.parent) assert.ok(j.mastery >= target(j.parent), `${j.id} needs the parent mastered`); }
  const t5 = SKILLS.find(x => J.find(j => j.id === x.job)?.tier === 5 && ms(x).length === 4);
  assert.deepEqual(ms(t5), [4000, 18000, 60000, 150000].map(n => n * 25));

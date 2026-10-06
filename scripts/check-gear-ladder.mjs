@@ -43,7 +43,7 @@ for (const rb of [0, 100, 200]) { const s = newState(0); s.level = 100; s.rebirt
 console.log('칠흑 장신구: 기대 약 18일 · 최장 약 31일(data/onyx.ts 머리 주석, 서식지 방치 기준)');
 
 // 사다리(docs/gear-endgame.md 7절, v3.66 전투력 기준): 0성·22성 모두 전설 < 신화 < 고대 < 태초, 유물(환생 200)은 신화와 고대 사이,
-// 원시 고대(환생 200)는 신화의 1.4~1.8배, 계승 태초(환생 200)는 신화의 1.9~2.5배(v3.69 고대 이상 전용 옵션으로 상위 격차가 조금 커짐). 계승 장비는 환생할수록 강해집니다.
+// 원시 고대(환생 200)는 신화의 1.4~1.8배, 계승 태초(환생 200)는 신화의 1.9~2.5배(v3.71 고대 이상 전용 옵션으로 상위 격차가 조금 커짐). 계승 장비는 환생할수록 강해집니다.
 const t22 = r => tier[`${r}:22`], myth = t22(4);
 for (const star of [0, 22]) { const t = r => tier[`${r}:${star}`]; assert.ok(t(3) < t(4) && t(4) < t(5) && t(5) < t(6), `${star}성 등급 순서: ${[3, 4, 5, 6].map(t).map(x => x.toFixed(2))}`); }
 assert.ok(heir.relic[2] > myth && heir.relic[2] < t22(5), `유물(환생 200) ×${heir.relic[2].toFixed(2)}이 신화(×${myth.toFixed(2)})·고대(×${t22(5).toFixed(2)}) 사이 밖`);

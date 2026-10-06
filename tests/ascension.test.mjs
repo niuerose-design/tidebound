@@ -367,7 +367,7 @@ test('v3.66 relics owned before the update keep the higher of the old and new po
     s.rebirths = 200; Lc.ascend(s, 0); assert.equal(s.relicRule, true); assert.ok(!s.inventory.some(x => x.relic));
 });
 
-test('v3.69 options: quality 1 + 0.2 × rarity, ancient+ only options (not on lower grades, not imprintable), two-edged options scaled both ways', async () => {
+test('v3.71 options: quality 1 + 0.2 × rarity, ancient+ only options (not on lower grades, not imprintable), two-edged options scaled both ways', async () => {
     const G = await L.load('data/gear'), Co = await L.load('systems/commerce');
     assert.equal(G.rarityQuality(6), 2.2); assert.equal(G.rarityQuality(4), 1.8);
     const ancientOnly = G.AFFIX_POOL.filter(a => a.minRarity === 5).map(a => a.id).sort();
@@ -382,7 +382,7 @@ test('v3.69 options: quality 1 + 0.2 × rarity, ancient+ only options (not on lo
     const berserk = G.affixDef('berserk'); assert.equal(berserk.base, 1.35); assert.equal(berserk.base2, -.675);
     assert.equal(G.GEAR_CAPS.lifesteal, .1);
 });
-test('v3.70 draws: accuracy+evasion merged into sense (both rolled), precise/drift/runic retired but still readable, auto draw spends everything with limit "max"', async () => {
+test('v3.72 draws: accuracy+evasion merged into sense (both rolled), precise/drift/runic retired but still readable, auto draw spends everything with limit "max"', async () => {
     const G = await L.load('data/gear'), Co = await L.load('systems/commerce'), Eq = await L.load('systems/equipment');
     const sense = G.affixDef('sense'), lo = G.rollOption(sense, 100, 6, () => 0, 100), hi = G.rollOption(sense, 100, 6, () => 1, 100);
     assert.equal(sense.stat, 'accuracy'); assert.equal(sense.stat2, 'evasion'); assert.ok(hi.value2 > lo.value2 && lo.value2 > 0, 'evasion part is rolled too');

@@ -232,7 +232,7 @@ function RaidSelect({ raids, value, onChange, scummed }: { raids: { id: string; 
 }
 const DDOS_LABEL: Record<string, string> = { exp: '경험치', gold: '골드', drop: '장비 드롭' };
 /** v3.28 미끼 직업 후보: 숨은 직업 제외. */
-const DECOY_JOBS = JOBS.filter(j => !j.hidden);
+const DECOY_JOBS = JOBS.filter(j => !j.hidden && !j.retired);
 /** v3.26 침투 작전 노드 이름과 입력 안내. */
 /** v3.28 최단 경로 · 패스워드 재조합 추가. */
 const NODE_LABEL: Record<string, (size: number) => string> = { lock: n => `방화벽 · 숫자 ${n}자리`, port: n => `포트 스캔 · 1~${format(n)}`, seq: () => '수열 · 다음 수는?', bin: () => '진법 변환 · 10진수로', cipher: n => `암호 해독 · ${n}글자`, path: () => '최단 경로 · 지나는 칸 합의 최솟값', anagram: n => `패스워드 재조합 · ${n}글자` };

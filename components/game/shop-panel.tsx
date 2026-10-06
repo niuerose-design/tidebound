@@ -31,12 +31,12 @@ export function Shop({ s, send, busy }: PanelProps) {
     const [slot, setSlot] = useState<string>('rod'), [affix, setAffix] = useState(''), [target, setTarget] = useState(4);
     const choices = imprintChoices(GAMBLE_CATEGORIES.find(c => c.id === slot)!.slot), pick = choices.some(c => c.id === affix) ? affix : choices[0]?.id || '';
     const [autoImprint, setAutoImprint] = useState(false);
-    // v3.70 자동 뽑기는 골드 한도 없이 가진 골드 · 정수를 모두 씁니다(한 번에 최대 AUTO_APPRAISAL_MAX회).
+    // v3.72 자동 뽑기는 골드 한도 없이 가진 골드 · 정수를 모두 씁니다(한 번에 최대 AUTO_APPRAISAL_MAX회).
     const autoEach = autoImprint ? imprint : { gold: gamble, essence: 0 };
     const autoMax = Math.min(AUTO_APPRAISAL_MAX, Math.floor(s.gold / Math.max(1, autoEach.gold)), autoEach.essence ? Math.floor((s.essence || 0) / autoEach.essence) : Infinity);
     const slotSelect = <label>부위<select value={slot} onChange={e => setSlot(e.target.value)}>{GAMBLE_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>;
     const icons = (only?: string) => <div className="gamble-icon-row">{GAMBLE_CATEGORIES.filter(o => !only || o.id === only).map(o => <span className="gamble-icon" key={o.id} title={o.name}><SlotIcon slot={o.slot} size={30}/></span>)}</div>;
-    // v3.70 세 뽑기 탭은 같은 틀(머리 · 설명 · 선택 줄 · 비용 줄 · 버튼 줄)이라 탭을 바꿔도 화면이 흔들리지 않습니다.
+    // v3.72 세 뽑기 탭은 같은 틀(머리 · 설명 · 선택 줄 · 비용 줄 · 버튼 줄)이라 탭을 바꿔도 화면이 흔들리지 않습니다.
     const draw = tab === 'gamble' ? {
         label: '랜덤 뽑기', eyebrow: '모든 부위', head: icons(),
         desc: '무기 · 방어구 · 장신구 · 망토 중 하나가 같은 확률로 나옵니다(무기는 물리·마법 중 하나). 등급 수만큼 옵션이 붙고, 영웅 이상은 규칙 옵션이 붙을 수 있습니다.',

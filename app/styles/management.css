@@ -389,7 +389,7 @@
 .admin-tool .admin-fold-body { padding:0 14px 14px }
 .admin-tool .admin-help > summary { font-size:13px; color:#9bb3b0; width:max-content }
 .admin-tool .admin-help p { margin:6px 0 0; font-size:13px; color:#9bb3b0; line-height:1.6 }
-/* v3.70 상점: 세 뽑기 탭이 같은 틀 · 같은 높이라 탭을 바꿔도 흔들리지 않습니다. */
+/* v3.72 상점: 세 뽑기 탭이 같은 틀 · 같은 높이라 탭을 바꿔도 흔들리지 않습니다. */
 .shop-body { min-height:620px; }
 .draw-card { display:grid; gap:14px; padding:26px; }
 .draw-head { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }

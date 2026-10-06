@@ -17,7 +17,7 @@ export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase +
 /** v3.58 각인 감정 비용(한 번): 골드 = 감정 × 2, 정수 10. */
 export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
 /** v3.58 각인으로 고를 수 있는 옵션: 그 부위에 붙을 수 있는 일반 옵션(규칙 옵션·출신 전용 옵션 제외). */
-/** 각인 감정으로 고를 수 있는 옵션: 일반 옵션(규칙 · 전용 출처 · v3.69 고대 이상 전용 제외), 부위 제한 맞는 것. */
+/** 각인 감정으로 고를 수 있는 옵션: 일반 옵션(규칙 · 전용 출처 · v3.71 고대 이상 전용 제외), 부위 제한 맞는 것. */
 export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.onlyOrigin && !a.minRarity && !a.retired && (!a.onlySlot || a.onlySlot === slot));
 const appraisalState = (s: State) => (s.appraisal ??= { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 0, ancient: 0, primal: 0 } });
 /** v3.58 다음 감정에서 천장이 터지는 등급(없으면 0). */
@@ -166,7 +166,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     if (a.type === 'autoGamble') {
         const category = slotCategory(id);
         if (!category) throw Error('감정할 부위를 고르세요.');
-        // v3.70 자동 뽑기는 골드 한도 없이 가진 골드 · 정수를 모두 쓸 수 있습니다(한도 'max' 또는 생략). 숫자 한도도 그대로 받습니다.
+        // v3.72 자동 뽑기는 골드 한도 없이 가진 골드 · 정수를 모두 쓸 수 있습니다(한도 'max' 또는 생략). 숫자 한도도 그대로 받습니다.
         const [targetText, limitText, affixText] = (a.value || '').split('|'), target = Number(targetText), limit = !limitText || limitText === 'max' ? Infinity : Number(limitText), affix = affixText || undefined;
         if (!APPRAISAL.some(r => r.rarity === target)) throw Error('목표 등급을 고르세요.');
         if (!(limit > 0)) throw Error('골드 한도를 정하세요.');

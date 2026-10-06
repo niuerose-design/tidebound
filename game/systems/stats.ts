@@ -13,6 +13,7 @@ import { roughReward, roughGear, roughHeal, restraintExp, vowBadges } from './vo
 import { sproutExp, sproutCount } from '../data/sprout';
 import { ascensionEarlyExp } from '../data/ascension';
 import { skillById } from '../data/skills';
+import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
@@ -36,8 +37,19 @@ export type StatTrace = Partial<Record<keyof CombatStats, { source: StatSource; 
  * 최종 전투 능력치. trace를 넘기면 각 단계의 증감을 원인별로 기록합니다.
  * 기록 여부와 관계없이 계산 순서와 결과는 같습니다(덧셈·곱셈 순서 유지).
  */
+/** v3.70 기본 능력치 + 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). 전직 조건은 배분 능력치만 봅니다. */
+export function trainedAttributes(s: State) {
+    const v = attributes(s);
+    for (const id of s.skills || []) {
+        const sk = skillById(id);
+        if (!sk?.attrBonus || !canUse(s, id)) continue;
+        const scale = 1 + STAT_TRAINING_GROWTH * Math.min(4, skillMastery(s, id));
+        for (const [k, n] of Object.entries(sk.attrBonus)) v[k as keyof typeof v] += Math.round((n || 0) * scale);
+    }
+    return v;
+}
 export function stats(s: State, trace?: StatTrace): CombatStats {
-    const j = jobById(s.job) || JOBS[0], v = attributes(s), themes = regionThemes(s);
+    const j = jobById(s.job) || JOBS[0], v = trainedAttributes(s), themes = regionThemes(s);
     const rec = (k: keyof CombatStats, source: StatSource, delta: number, factor?: number) => {
         if (trace && delta) (trace[k] ||= []).push(factor === undefined ? { source, delta } : { source, delta, factor });
     };
@@ -235,9 +247,11 @@ export function clampVitals(s: State) {
 export const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 // v27.79 계정(분신) 보너스는 곱연산 배율입니다(accountExpGold ≤ ×1.3).
-export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
+/** v3.69 수련 직업으로 사냥할 때의 처치 보상 배율(data/training.ts). */
+const jobReward = (s: State) => jobById(s.job)?.rewardScale ?? 1;
+export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * jobReward(s) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
 // v3.23 순풍은 다른 경험치 보너스와 더합니다(전에는 따로 곱해 폭증).
-export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
+export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 던전 정복 골드. 전투 보상과 던전 화면 표시가 같은 식을 씁니다. */
 export const dungeonClearGold = (s: State, baseGold: number, tier: number) => Math.floor(baseGold * tierReward(tier) * goldMultiplier(s) * dungeonGoldMultiplier(s));
