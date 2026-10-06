@@ -24,7 +24,7 @@ function BattleLogLineView({ log, index, playerName }: { log: Log; index?: boole
     // 내 행동과 적 행동을 왼쪽 띠 색으로 구분합니다(이름을 모르면 구분하지 않음).
     const side = playerName ? ev.actor === playerName ? ' actor-player' : ' actor-enemy' : '';
     const Icon = ev.damageType === 'magic' ? Sparkles : ev.damageType === 'split' ? Wind : Swords;
-    // v3.84 각성기 줄 · 추가 판정 줄 표식.
+    // v3.86 각성기 줄 · 추가 판정 줄 표식.
     const chain = <>{ev.chain ? <em className="status chain">연속 {ev.chain}</em> : null}{ev.awaken ? <em className="status awaken">각성</em> : null}{ev.followUp ? <em className="status chain">추가 판정 {Math.round(ev.followUp.power * 100)}%</em> : null}</>;
     if (ev.stunned || ev.defeated) return <p className={`battle-line log-status${side}`}>{id}{chain}<b>{ev.actor}</b>{ev.dot && <em className="dmg-dot">{ev.dot.name} {ev.dot.value}</em>}{ev.stunned ? '기절로 행동 불가' : '쓰러짐'}</p>;
     const missed = ev.hits.length > 0 && ev.hits.every(h => h.miss);

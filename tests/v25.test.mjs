@@ -1085,6 +1085,11 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
         Alt.invalidateAltar();
         const info = await Alt.altarInfo('p1', a, now + 5); const ib = info.raids.find(x => x.id === 'balrog');
         assert.ok(ib && ib.slain && ib.participants === 2 && ib.board[0].dealt >= ib.board[1].dealt && ib.slayer === '둘째'); assert.ok(info.raids.some(x => x.id === 'zakum' && x.alive));
+        // v3.84 순위의 최근 도전 기록: 요약(출처별 피해 합 = 그 도전의 피해 이상, 넘친 피해 포함)과 전투 기록을 다른 모험가도 봅니다.
+        const p1Row = ib.board.find(x => x.name === '첫째'); assert.ok(p1Row.last && p1Row.last.dealt === r1.dealt && p1Row.last.turns > 0 && p1Row.last.sources.length > 0, 'board carries the latest challenge summary');
+        assert.ok(p1Row.last.sources.reduce((n, x) => n + x.value, 0) >= r1.dealt, 'sources add up to the damage');
+        const logView = await Alt.raidLog('balrog', p1Row.rank, now + 5); assert.equal(logView.name, '첫째'); assert.ok(logView.logs.length > 0 && logView.logs.length <= A.RAID.logLines, 'logs are readable by anyone');
+        await assert.rejects(Alt.raidLog('balrog', 99, now + 5), /순위/);
         const zakumGauge = info.gauges.find(g => g.id === 'zakum'), balrogGauge = info.gauges.find(g => g.id === 'balrog');
         assert.ok(/대기/.test(balrogGauge.next) && !/대기/.test(zakumGauge.next), 'respawn wait only on the slain boss');
         const gold = a.gold, pearls = a.pearls; Alt.invalidateAltar(); await Alt.syncAltarStatus(a, now + 10, 'p1');
@@ -1442,4 +1447,29 @@ test('v3.21 difficulty exp and gold bend to √ above difficulty 30', async () =
     for (const t of [0, 10, 20, 30]) { assert.ok(Math.abs(M.tierExp(t) - (1 + .3 * t + .005 * Math.max(0, t - 20) ** 2)) < 1e-9, `exp ${t} unchanged`); assert.equal(M.tierReward(t), 1 + .5 * t, `gold ${t} unchanged`); }
     assert.ok(Math.abs(M.tierExp(55) - (10.5 + 1.5 * 5)) < 1e-9); assert.ok(Math.abs(M.tierReward(55) - (16 + 1.5 * 5)) < 1e-9);
     assert.ok(M.tierExp(200) < 31 && M.tierReward(200) < 36, 'no runaway with the difficulty cap');
+});
+
+test('v3.85 altar: a blessing re-opens by itself when the gauge already holds the next cost (no extra offering needed)', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), A = await L.load('data/altar');
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-bless-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const Alt = await L.load('server/altar'), DB = await L.load('server/db');
+    try {
+        const database = DB.db(), now = Date.now(), gauge = async id => (await database.listAltarGauges()).find(g => g.id === id);
+        // 3단계가 끝나 닫혔는데 1단계 비용보다 많이 쌓여 있음 → 정보를 읽으면 바로 열립니다(남는 기여도는 그대로 둠).
+        const base = A.gaugeCost('gold', 0, false);
+        await database.setAltarBlessing('gold', 3, now - 1000, 0); await database.addAltarGauge('gold', base + 5);
+        Alt.invalidateAltar(); const info = await Alt.altarInfo('p1', null, now);
+        let g = await gauge('gold'); assert.equal(A.effectiveBlessingLevel(g, now), 1); assert.equal(g.points, 5); assert.equal(info.gauges.find(x => x.id === 'gold').level, 1);
+        // 4단계 유지 시간이 지나 3단계로 내려왔고 4단계 비용이 쌓여 있음 → 다시 4단계.
+        const high = A.gaugeCost('exp', 3, true);
+        await database.setAltarBlessing('exp', 4, now + 3600_000, now - 1000); await database.addAltarGauge('exp', high);
+        Alt.invalidateAltar(); await Alt.altarInfo('p1', null, now);
+        g = await gauge('exp'); assert.equal(A.effectiveBlessingLevel(g, now), 4); assert.equal(g.points, 0);
+        // 모자라면 그대로(닫힌 채로 기다림).
+        await database.setAltarBlessing('mimic', 0, 0, 0); await database.addAltarGauge('mimic', A.gaugeCost('mimic', 0, false) - 1);
+        Alt.invalidateAltar(); await Alt.altarInfo('p1', null, now);
+        assert.equal(A.effectiveBlessingLevel(await gauge('mimic'), now), 0);
+        const news = await database.listChat('news', 0, 20); assert.ok(news.some(m => m.text.includes('쌓여 있던 공물로')), 'news says it opened from the stored offerings');
+    } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });

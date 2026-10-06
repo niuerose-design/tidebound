@@ -33,7 +33,7 @@ test('v21 poison, burns and execute conditions are data-driven',()=>{
  assert.equal(b.hp,1e6-(b.effects.poison.perStack+Math.floor(1e6*SKILL_FORMULA.poisonHpRatio))*2,'v3.54 독침은 상태이상 전용: 직접 피해 없이 첫 틱만 바로');assert.equal(b.effects.poison.turns,dart.statusTurns??STATUS_TUNING.poisonTurns,'duration unchanged');
  b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.burn.stacks,STATUS_TUNING.burnFirstStacks);assert.equal(b.effects.dot,undefined);assert.ok(b.hp<1e6);// 플레임 디스차지는 피해와 화상을 함께
  b=mk([]);strike(mk(['rotBloom']),b,()=>0);assert.equal(b.effects.poison.stacks,2);assert.ok(b.hp<1e6);// 4차는 피해와 상태이상을 함께
- // v3.84 용사의 일격은 각성기: 대기가 끝나 있으면(0) 기본 행동 뒤에 턴 판정으로 함께 나갑니다.
+ // v3.86 용사의 일격은 각성기: 대기가 끝나 있으면(0) 기본 행동 뒤에 턴 판정으로 함께 나갑니다.
  const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[],a=mk(['braveSlash']);a.cooldowns.braveSlash=0;strike(a,t,()=>0,ev);return ev.find(e=>e.skillId==='braveSlash').hits[0].value;};
  const sk=SKILLS.find(x=>x.id==='braveSlash');assert.equal(brave(3e5),Math.round(Math.round(100*sk.multiplier)*(1+sk.conditionalDamageBonus)));assert.equal(brave(1e6),Math.round(100*sk.multiplier));
 });

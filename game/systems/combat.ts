@@ -1,7 +1,7 @@
 import { SKILLS, skillById } from '../data/skills';
 import { ENEMY_SKILLS } from '../data/encounters';
 import { jobById } from '../data/classes';
-import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier } from '../data/balance';
+import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier, PENETRATION } from '../data/balance';
 import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute, Skill } from '../types';
 const ATTR_KEY: Record<Attribute, 'attrStr' | 'attrDex' | 'attrInt' | 'attrVit' | 'attrWis' | 'attrLuk'> = { str: 'attrStr', dex: 'attrDex', int: 'attrInt', vit: 'attrVit', wis: 'attrWis', luk: 'attrLuk' };
 export type { CombatEvent, CombatHit } from '../types';
@@ -14,12 +14,12 @@ export type Fighter = {
     stats: Stats;
     hp: number;
     skills: string[];
-    /** 재사용 대기(행동 단위). v3.84 각성기는 턴 단위로 같은 칸에 두고, '~id' 칸에 실패한 판정 수를 셉니다. */
+    /** 재사용 대기(행동 단위). v3.86 각성기는 턴 단위로 같은 칸에 두고, '~id' 칸에 실패한 판정 수를 셉니다. */
     cooldowns: Record<string, number>;
     stun: number;
-    /** v3.84 추가 판정 단계(액티브가 발동한 행동에서 아래 액티브로 더 굴리는 횟수). 플레이어만. */
+    /** v3.86 추가 판정 단계(액티브가 발동한 행동에서 아래 액티브로 더 굴리는 횟수). 플레이어만. */
     extraRolls?: number;
-    /** v3.84 한 턴에 나갈 수 있는 각성기 수(없으면 SKILL_FORMULA.awaken.perTurn). 승천 연구로 늘릴 자리입니다. */
+    /** v3.86 한 턴에 나갈 수 있는 각성기 수(없으면 SKILL_FORMULA.awaken.perTurn). 승천 연구로 늘릴 자리입니다. */
     awakenPerTurn?: number;
     mana?: number;
     ranks?: Record<string, number>;
@@ -158,9 +158,9 @@ export function actTurn(a: Fighter, b: Fighter, rng: () => number, onAction: (te
             const t = act(a, b, rng, more, false, chain > 1, { id, index: i + 1, count: ev.multicast.count });
             onAction(`${t} · 동시 시전 ${i + 2}/${ev.multicast.count}`, more[0]);
         }
-        // v3.84 추가 판정 · 각성기(턴의 첫 행동만, 연속 행동은 턴을 세지 않음).
+        // v3.86 추가 판정 · 각성기(턴의 첫 행동만, 연속 행동은 턴을 세지 않음).
         afterAction(a, b, rng, ev, chain === 1, onAction);
-        // v25 확정 추가 행동(선행·찰): 연속 행동 횟수와 별개로 한 번 더 행동합니다. 추가 행동에서 다시 생기지는 않습니다. v3.84 각성기에는 한 턴으로 셉니다.
+        // v25 확정 추가 행동(선행·찰): 연속 행동 횟수와 별개로 한 번 더 행동합니다. 추가 행동에서 다시 생기지는 않습니다. v3.86 각성기에는 한 턴으로 셉니다.
         if (ev?.extraTurn && a.hp > 0 && b.hp > 0) {
             const extra: CombatEvent[] = [];
             const t2 = act(a, b, rng, extra, true);
@@ -194,7 +194,22 @@ function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, s
     notes.push(`無 · 체력 1로 버팀 (${f.effects.lastStand}/${charges})${heal > 0 ? ` · 체력 ${heal} 회복` : ''}`);
     return true;
 }
-/** v3.84 각성기의 실패한 판정 수를 적는 재사용 대기 칸: '~' + 기술 id. */
+/**
+ * v3.84 방어 피해식 비교(docs/concept.md 11.9 5단계). 기본은 지금 식(legacy)이고, 측정 스크립트만 바꿔 씁니다.
+ * - legacy: 피해 × 100 / (100 + 방어 × 2)
+ * - ratio(B안, 공격 대비): 피해 × 공격 / (공격 + c × 방어). 공격 = 때리는 쪽의 물리 또는 마법 공격.
+ * - constant(C안, 기준값 키우기): 피해 × k / (k + 방어 × 2)
+ */
+export type DefenseModel = { kind: 'legacy' } | { kind: 'ratio'; c: number } | { kind: 'constant'; k: number };
+let defenseModel: DefenseModel = { kind: 'legacy' };
+export function setDefenseModel(model: DefenseModel) { defenseModel = model; }
+export function mitigate(raw: number, defense: number, attackStat: number) {
+    const m = defenseModel;
+    if (m.kind === 'ratio') { const a = Math.max(1, attackStat); return raw * a / (a + m.c * defense); }
+    if (m.kind === 'constant') return raw * m.k / (m.k + defense * 2);
+    return raw * 100 / (100 + defense * 2);
+}
+/** v3.86 각성기의 실패한 판정 수를 적는 재사용 대기 칸: '~' + 기술 id. */
 const AWAKEN_PITY = '~';
 const isAwaken = (id: string) => id.startsWith(AWAKEN_PITY) || !!skillById(id)?.awaken;
 /** 기술의 실제 효과(숙련·계보 밖 효율 반영). */
@@ -239,12 +254,12 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
     }
     return undefined;
 }
-/** v3.84 행동 뒤에 붙는 줄: 추가 판정(액티브가 발동한 행동)과, 턴을 세는 행동(턴의 첫 행동·확정 추가 행동)이면 각성기. */
+/** v3.86 행동 뒤에 붙는 줄: 추가 판정(액티브가 발동한 행동)과, 턴을 세는 행동(턴의 첫 행동·확정 추가 행동)이면 각성기. */
 function afterAction(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | undefined, turn: boolean, onAction: (text: string, event: CombatEvent) => void) {
     followUps(a, b, rng, first, onAction);
     if (turn) awaken(a, b, rng, first, onAction);
 }
-/** v3.84 추가 판정: 액티브가 발동한 행동에서 그 아래 액티브로 단계 수만큼 더 굴려, 성공하면 줄어든 위력으로 바로 씁니다. 동시 시전 묶음과는 겹치지 않습니다. */
+/** v3.86 추가 판정: 액티브가 발동한 행동에서 그 아래 액티브로 단계 수만큼 더 굴려, 성공하면 줄어든 위력으로 바로 씁니다. 동시 시전 묶음과는 겹치지 않습니다. */
 function followUps(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | undefined, onAction: (text: string, event: CombatEvent) => void) {
     const R = SKILL_FORMULA.extraRoll, rolls = Math.min(R.power.length, a.extraRolls || 0);
     if (!rolls || !first?.skillId || first.multicast || a.hp <= 0 || b.hp <= 0) return;
@@ -261,7 +276,7 @@ function followUps(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent
     }
 }
 /**
- * v3.84 각성기: 턴마다 대기를 1 줄이고, 대기가 끝난 각성기를 편성 순서대로 굴려 한 턴에 perTurn개(기본 1)까지 씁니다.
+ * v3.86 각성기: 턴마다 대기를 1 줄이고, 대기가 끝난 각성기를 편성 순서대로 굴려 한 턴에 perTurn개(기본 1)까지 씁니다.
  * 처음(대기 칸이 비어 있으면)은 awaken.start 턴을 기다립니다. 실패하면 다음 판정 확률에 기본 발동률을 더하고(최대 100%), 쓰면 초기화합니다.
  * 기절·침묵인 턴과 마나가 모자란 턴은 굴리지 않습니다(대기는 줄어듦).
  */
@@ -289,7 +304,7 @@ function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | 
 }
 /**
  * Shared PvE/PvP action. Recovery, status, conditional proc, MP, accuracy, defense and crit.
- * v3.84 한 행동에 이어 추가 판정과 각성기(턴의 첫 행동·확정 추가 행동이면)까지 처리합니다. 이어진 줄의 결과는 events에 차례로 쌓입니다.
+ * v3.86 한 행동에 이어 추가 판정과 각성기(턴의 첫 행동·확정 추가 행동이면)까지 처리합니다. 이어진 줄의 결과는 events에 차례로 쌓입니다.
  * 연속 행동(chained)은 턴을 세지 않습니다. 점검 도구는 이 함수를 한 턴으로 씁니다.
  */
 export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false, forced?: ForcedCast) {
@@ -299,7 +314,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     return text;
 }
 /** v25.5 동시 시전 묶음의 2번째 이후 줄: 행동 시작 효과(회복·지속 피해·대기 감소·기절)를 건너뛰고 정해진 기술을 바로 씁니다.
- * v3.84 kind: 'awaken'(각성기) · 'followUp'(추가 판정, power = 위력 배율)도 같은 방식으로 씁니다. */
+ * v3.86 kind: 'awaken'(각성기) · 'followUp'(추가 판정, power = 위력 배율)도 같은 방식으로 씁니다. */
 export type ForcedCast = { id: string; index: number; count: number; kind?: 'awaken' | 'followUp'; power?: number };
 function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false, forced?: ForcedCast) {
     const sa = normalizeStats(a.stats), sb = normalizeStats(b.stats);
@@ -487,12 +502,13 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hybridHpScaling) + sa.mana * ((chosen.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2);
     if (chosen?.id === 'crush')
         base += sa.defense * SKILL_FORMULA.crushDefense / (chosen.multiplier || 1);
-    const pierce = 1 - Math.min(.85, sa.penetration + (chosen?.penetrationBonus || 0));
+    // v3.84 능력치 관통(출처끼리 곱연산)에 스킬 관통 보너스는 예전처럼 더합니다(곱하면 관통이 낮은 캐릭터의 스킬 보너스가 줄어듦). 합계 상한 85%(PENETRATION.cap).
+    const pierce = 1 - Math.min(PENETRATION.cap, sa.penetration + (chosen?.penetrationBonus || 0));
     const defense = (magical ? sb.resist : sb.defense) * pierce;
     // 복합(split) 피해: 한 번의 명중·치명 판정 뒤 물리·마법 절반씩 각각의 방어를 적용합니다.
     const mitigated = (raw: number) => split
-        ? Math.round(raw * SKILL_FORMULA.splitPhysical * 100 / (100 + sb.defense * pierce * 2)) + Math.round(raw * (1 - SKILL_FORMULA.splitPhysical) * 100 / (100 + sb.resist * pierce * 2))
-        : Math.round(raw * 100 / (100 + defense * 2));
+        ? Math.round(mitigate(raw * SKILL_FORMULA.splitPhysical, sb.defense * pierce, sa.attack)) + Math.round(mitigate(raw * (1 - SKILL_FORMULA.splitPhysical), sb.resist * pierce, sa.magic))
+        : Math.round(mitigate(raw, defense, magical ? sa.magic : sa.attack));
     const linked = chosen?.damageBonusCondition === 'bleeding' ? !!(b.effects.dot || b.effects.poison || b.effects.burn) : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
     const preyHit = !!(chosen?.preyBonus && b.prey);
     if (preyHit) notes.push('사냥감');
@@ -518,7 +534,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const crowd = a.swarm && a.swarm > 1 ? Math.min(SKILL_FORMULA.swarmThornsCap, 1 + Math.log2(a.swarm)) : 1;
         // v27.2 마법 공격을 맞으면 마법 방어로 반격합니다(결계 계보가 마법 무리를 갈 수 있도록). 공격자도 같은 종류의 방어로 막습니다.
         const guard = magical ? sb.resist : sb.defense, foeGuard = magical ? sa.resist : sa.defense;
-        const reflected = Math.min(a.hp, Math.max(1, Math.round(guard * sb.thorns * crowd * 100 / (100 + foeGuard * 2 * (1 - SKILL_FORMULA.thornsPierce)))));
+        const reflected = Math.min(a.hp, Math.max(1, Math.round(mitigate(guard * sb.thorns * crowd, foeGuard * (1 - SKILL_FORMULA.thornsPierce), guard))));
         a.hp = Math.max(0, a.hp - reflected);
         endure(a, sa, notes, ev, true);
         ev.reflected = reflected;
@@ -538,7 +554,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (resisted) { notes.push(`${RESIST_LABELS[harmful!]} 저항`); ev.resisted = harmful; }
     const effect = resisted ? undefined : chosen?.effect;
     const onset: { name: string; value: number }[] = [];
-    // v3.84 각성기가 거는 상태이상은 지속(패시브 보너스 포함)에 awaken.statusScale을 곱합니다.
+    // v3.86 각성기가 거는 상태이상은 지속(패시브 보너스 포함)에 awaken.statusScale을 곱합니다.
     const lasting = (turns: number) => forced?.kind === 'awaken' && chosen?.awaken?.statusScale ? Math.round(turns * chosen.awaken.statusScale) : turns;
     if (landed && chosen && effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
     else if (landed && chosen && effect === 'stun') {
@@ -704,7 +720,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
             const waiting = a.skills.filter(x => (a.cooldowns[x] || 0) > 0 && skillById(x)?.type === 'active');
             if (!waiting.length) continue;
             const picked = rule.pick === 'all' ? waiting : rule.pick === 'first' ? [waiting[0]] : [waiting.reduce((best, x) => a.cooldowns[x] > a.cooldowns[best] ? x : best, waiting[0])];
-            // v3.84 각성기는 턴 단위 대기를 awaken.reset턴만 줄입니다(0이 되면 다음 턴에 판정).
+            // v3.86 각성기는 턴 단위 대기를 awaken.reset턴만 줄입니다(0이 되면 다음 턴에 판정).
             for (const x of picked) a.cooldowns[x] = skillById(x)?.awaken ? Math.max(0, a.cooldowns[x] - SKILL_FORMULA.awaken.reset) : 0;
             ev.cooldownReset = [...(ev.cooldownReset || []), ...picked.map(x => skillById(x)?.name || x)];
             notes.push(`대기 초기화 · ${picked.map(x => skillById(x)?.name || x).join('·')} (${skillById(id)?.name})`);

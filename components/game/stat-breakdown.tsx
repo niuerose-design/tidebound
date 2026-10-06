@@ -14,7 +14,8 @@ const STAT_NOTES: Partial<Record<keyof CombatStats, string>> = {
     accuracy: '실제 적중률 = 내 명중 − 상대 회피 + 속도 보정(최대 ±6%p), 1~99.5% 범위.',
     crit: `치명타 확률 상한 ${SKILL_FORMULA.critCap * 100}%. 넘는 몫 100%p마다 극 치명타 확률 +${SKILL_FORMULA.superCritPerHundred * 100}%.`,
     superCrit: `치명타가 뜬 뒤 이 확률로 극 치명타가 됩니다. 극 치명타는 치명 피해에 ×${SKILL_FORMULA.superCritBonus}를 더 곱합니다. 치명타 확률이 ${SKILL_FORMULA.critCap * 100}%를 넘은 몫 100%p마다 +${SKILL_FORMULA.superCritPerHundred * 100}%입니다.`,
-    penetration: '방어 관통 상한 60%. 스킬의 관통 보너스를 더해도 85%까지입니다.',
+    bossDamage: '보스 · 사냥감(월드보스 포함)에게 주는 직접 피해. 장비 부위 · 칠흑 세트 · 칠흑 옵션마다 곱연산이라 모을수록 크게 붙습니다. 지속 피해(출혈 · 중독 · 화상)에는 붙지 않습니다.',
+    penetration: '방어 관통은 출처끼리 곱연산(남은 방어의 x%를 무시)이라 1에 닿지 않습니다. 장비는 부위마다 따로 곱하고, 스킬의 관통 보너스는 그 위에 더합니다(합계 최대 85%).',
     lifesteal: `흡혈 상한 30%. 한 번의 행동으로 최대 체력 × 흡혈률 × ${SKILL_FORMULA.lifestealHpCap * 100}%까지만 회복합니다.`,
 };
 

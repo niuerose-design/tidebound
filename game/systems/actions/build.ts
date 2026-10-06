@@ -105,7 +105,7 @@ export const buildActions: ActionHandlers = {
         }
         clampVitals(s);
     },
-    /** v3.84 추가 판정 단계 정하기(value = 0~연구 단계). 단계마다 장착 AP를 씁니다. */
+    /** v3.86 추가 판정 단계 정하기(value = 0~연구 단계). 단계마다 장착 AP를 씁니다. */
     extraRoll(s, { a }) {
         const level = Number(a.value);
         if (!Number.isInteger(level) || level < 0 || level > SKILL_FORMULA.extraRoll.ap.length)

@@ -41,7 +41,7 @@ export const TRAINING: Snapshot[] = [
 ];
 /** maxTurns: 결투는 80턴, v27.43 제단의 신은 무릉도장처럼 길게(ALTAR.godMaxTurns). */
 export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rng = Math.random, maxTurns: number = BALANCE.duelMaxTurns): DuelResult {
-    const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), ...(s.job === 'boss' ? { foe: true } : {}), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, skills: s.skills, cooldowns: {}, extraRolls: s.extraRolls, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, practice: s.skillPractice, effects: {} });
+    const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), /* v3.84 월드보스는 보스라 보스 피해(bossDamage)를 받습니다. */ ...(s.job === 'boss' ? { foe: true, prey: true } : {}), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, skills: s.skills, cooldowns: {}, extraRolls: s.extraRolls, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, practice: s.skillPractice, effects: {} });
     const a = fighter(player), b = fighter(opponent);
     const logs: string[] = [], rounds: DuelResult['rounds'] = [];
     let turns = 0;
@@ -95,4 +95,18 @@ export function rankedDuelBlock(s: Pick<State, 'duelDay' | 'lastDuel'>, now: num
 export function recordRankedDuel(s: State, now: number, opponentId: string) {
     const day = duelDayOf(s, now);
     s.duelDay = { key: day.key, count: day.count + 1, opponents: { ...day.opponents, [opponentId]: (day.opponents[opponentId] || 0) + 1 } };
+}
+
+/**
+ * v3.84 월드보스 도전 결과를 피해 출처별로 묶습니다(기술별 직접 피해 · 지속 피해 · 반격 · 넘친 회복 피해). 많은 순으로 maxRows줄, 나머지는 '기타'.
+ * 보스가 받은 피해만 셉니다: 내 행동의 직접 피해 · 지속 피해 첫 틱 · 넘친 회복 피해, 보스 행동 때의 지속 피해 틱 · 내 반격.
+ */
+export function raidBreakdown(result: Pick<DuelResult, 'rounds'>, playerName: string, maxRows = 8) {
+    const sum = new Map<string, number>(), put = (label: string, n: number | undefined) => { if (n && n > 0) sum.set(label, (sum.get(label) || 0) + n); };
+    for (const { event: e } of result.rounds || []) {
+        if (e.actor === playerName) { put(e.skillName || '기본 공격', e.total); put('넘친 회복 피해', e.holy); if (e.onset) put('지속 피해 (출혈 · 중독 · 화상)', e.onset.value); }
+        else { if (e.dot) put('지속 피해 (출혈 · 중독 · 화상)', e.dot.value); put('반격', e.reflected); }
+    }
+    const rows = [...sum].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+    return rows.length > maxRows ? [...rows.slice(0, maxRows - 1), { label: '기타', value: rows.slice(maxRows - 1).reduce((n, r) => n + r.value, 0) }] : rows;
 }

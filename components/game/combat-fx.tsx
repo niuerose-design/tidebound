@@ -94,7 +94,7 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     jackpotStrike: { kind: 'jackpot', title: '조커', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },
     frozenTime: { kind: 'time', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
 };
-/** v3.84 전용 연출이 없는 각성기의 기본 장면(스킬 이름을 제목으로). */
+/** v3.86 전용 연출이 없는 각성기의 기본 장면(스킬 이름을 제목으로). */
 const AWAKEN_FX = { kind: 'light', glyphs: ['✦', '·', '✧', '·', '✦', '·', '✧', '·'] };
 const ultimateOf = (id?: string) => id ? ULTIMATES[id] ?? (skillById(id)?.awaken ? AWAKEN_FX : undefined) : undefined;
 /**

@@ -20,7 +20,7 @@ export function recommendLoadout(s: State) {
     // pool은 모두 사용 가능하고 중복이 없어 validLoadout(s, [...out, id])와 같은 결과입니다.
     const costs = new Map(pool.map(sk => [sk.id, effectiveSkill(sk, s.learned?.[sk.id] || 1, skillMastery(s, sk.id)).cost!]));
     const cost = (sk: Skill) => costs.get(sk.id)!;
-    // v3.84 추가 판정이 쓰는 AP는 빼고 채웁니다.
+    // v3.86 추가 판정이 쓰는 AP는 빼고 채웁니다.
     const cap = apCapacity(s) - extraRollAP(s);
     let used = 0;
     const fits = (sk: Skill) => used + cost(sk) <= cap;

@@ -127,14 +127,14 @@ function progressDesc(sk: Skill) {
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
 const MAGIC_MANA_COST_SCALE = 4;
 
-/** v3.84 실패할 때마다 기본 발동률을 더하는 판정(c → 2c → 3c …, 최대 100%)의 기대 판정 수. */
+/** v3.86 실패할 때마다 기본 발동률을 더하는 판정(c → 2c → 3c …, 최대 100%)의 기대 판정 수. */
 export function awakenExpectedRolls(c: number) {
     let rolls = 0, miss = 1;
     for (let k = 1; miss > 1e-9; k++) { rolls += miss; miss *= 1 - Math.min(1, k * Math.max(.01, c)); }
     return rolls;
 }
 const awakenDesc = (desc: string) => desc.startsWith('[각성]') ? desc : `[각성] ${desc}`;
-/** v3.84 각성기로 바꿉니다: 대기는 턴 단위(SKILL_FORMULA.awaken), 배율은 옛 행동 단위 기대 기여를 넘도록 키웁니다(숙련 완료 발동률 기준). */
+/** v3.86 각성기로 바꿉니다: 대기는 턴 단위(SKILL_FORMULA.awaken), 배율은 옛 행동 단위 기대 기여를 넘도록 키웁니다(숙련 완료 발동률 기준). */
 export function awakenSkill(sk: Skill) {
     if (sk.awaken || sk.type !== 'active') return;
     const A = SKILL_FORMULA.awaken, steps = sk.masteryMilestones?.length || PROGRESSION.skillMasteryMilestones.length;
@@ -189,6 +189,6 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
     }
-    // v3.84 각성기 설명 앞에 [각성]을 붙입니다(위에서 설명을 다시 썼으므로).
+    // v3.86 각성기 설명 앞에 [각성]을 붙입니다(위에서 설명을 다시 썼으므로).
     for (const sk of skills) if (sk.awaken) sk.desc = awakenDesc(sk.desc || '');
 }

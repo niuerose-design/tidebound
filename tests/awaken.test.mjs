@@ -1,4 +1,4 @@
-// v3.84 전투 개편(docs/combat-rework.md): 각성기(5차 이상 액티브의 턴 단위 판정)와 추가 판정. 전용 난수만 씁니다.
+// v3.86 전투 개편(docs/combat-rework.md): 각성기(5차 이상 액티브의 턴 단위 판정)와 추가 판정. 전용 난수만 씁니다.
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 import { newState, act, strike, SKILLS, JOBS, SKILL_FORMULA, STATUS_TUNING, assert, test } from './harness.mjs';
 const { actTurn } = await loadGame().load('game/systems/combat.js');
@@ -10,7 +10,7 @@ const dummy = () => ({ name: 'B', stats: { ...base }, hp: 1e9, skills: [], coold
 /** 한 턴(strike)을 치르고 이번 턴에 나간 각성기 id를 돌려줍니다. */
 const turn = (a, b, rng, chained = false) => { const ev = []; strike(a, b, rng, ev, false, chained); return ev.filter(e => e.awaken).map(e => e.skillId); };
 
-test('v3.84 every tier-5+ active is an awakening skill with a 10-turn cooldown that starts full', () => {
+test('v3.86 every tier-5+ active is an awakening skill with a 10-turn cooldown that starts full', () => {
     const tier = id => JOBS.find(j => j.id === id)?.tier ?? 0;
     const awakened = SKILLS.filter(sk => sk.type === 'active' && tier(sk.job) >= SKILL_FORMULA.awaken.tier);
     assert.ok(awakened.length >= 34, `${awakened.length}`);
@@ -25,13 +25,13 @@ test('v3.84 every tier-5+ active is an awakening skill with a 10-turn cooldown t
     assert.ok(SKILLS.filter(sk => sk.awaken).every(sk => tier(sk.job) >= 5), 'only tier 5+ skills awaken');
 });
 
-test('v3.84 awakening rolls once per turn, waits 10 turns at the start and after each cast', () => {
+test('v3.86 awakening rolls once per turn, waits 10 turns at the start and after each cast', () => {
     const a = fighter(['braveSlash']), b = dummy(), fired = [];
     for (let t = 1; t <= 30; t++) if (turn(a, b, () => 0).length) fired.push(t);
     assert.deepEqual(fired, [11, 22], 'never right at the start, then every 11th turn with a sure roll');
 });
 
-test('v3.84 a failed awakening roll adds the base chance to the next roll (27% → 54% → 81% → 100%)', () => {
+test('v3.86 a failed awakening roll adds the base chance to the next roll (27% → 54% → 81% → 100%)', () => {
     const a = fighter(['braveSlash']), b = dummy(), fired = [];
     a.cooldowns.braveSlash = 0;
     for (let t = 1; t <= 4; t++) { if (turn(a, b, () => .99).length) fired.push(t); if (t < 4) assert.equal(a.cooldowns['~braveSlash'], t); }
@@ -40,7 +40,7 @@ test('v3.84 a failed awakening roll adds the base chance to the next roll (27% �
     assert.equal(a.cooldowns.braveSlash, 10);
 });
 
-test('v3.84 chain actions are not turns; guaranteed extra turns are', () => {
+test('v3.86 chain actions are not turns; guaranteed extra turns are', () => {
     const a = fighter(['braveSlash']), b = dummy();
     for (let i = 0; i < 5; i++) turn(a, b, () => 0, true);
     assert.equal(a.cooldowns.braveSlash, undefined, 'chained actions do not touch the awakening');
@@ -53,7 +53,7 @@ test('v3.84 chain actions are not turns; guaranteed extra turns are', () => {
     assert.equal(z.cooldowns.braveSlash, 8);
 });
 
-test('v3.84 only one awakening fires per turn; it can join any active in the same turn', () => {
+test('v3.86 only one awakening fires per turn; it can join any active in the same turn', () => {
     const a = fighter(['flashCut', 'braveSlash', 'trenchPierce']), b = dummy();
     a.cooldowns.braveSlash = 0; a.cooldowns.trenchPierce = 0;
     const ev = []; strike(a, b, () => 0, ev);
@@ -63,14 +63,14 @@ test('v3.84 only one awakening fires per turn; it can join any active in the sam
     assert.deepEqual(turn(a, b, () => 0), ['trenchPierce']);
 });
 
-test('v3.84 stunned or silenced turns still count down but do not cast', () => {
+test('v3.86 stunned or silenced turns still count down but do not cast', () => {
     const a = fighter(['braveSlash']), b = dummy();
     a.cooldowns.braveSlash = 0; a.stun = 1;
     assert.deepEqual(turn(a, b, () => 0), []);
     assert.deepEqual(turn(a, b, () => 0), ['braveSlash']);
 });
 
-test('v3.84 extra roll: after an active fires, roll the actives below it once more at 60% power', () => {
+test('v3.86 extra roll: after an active fires, roll the actives below it once more at 60% power', () => {
     const dealt = (skills, rolls) => { const a = fighter(skills, { extraRolls: rolls }), ev = []; strike(a, dummy(), () => 0, ev); return ev; };
     const solo = dealt(['pierce'], 0)[0].total;
     const ev = dealt(['flashCut', 'pierce'], 1);
@@ -84,7 +84,7 @@ test('v3.84 extra roll: after an active fires, roll the actives below it once mo
     assert.equal(log.filter(e => e.followUp).length, 0);
 });
 
-test('v3.84 extra roll costs 12 AP, needs the world-stone research and is dropped before skills when AP runs short', () => {
+test('v3.86 extra roll costs 12 AP, needs the world-stone research and is dropped before skills when AP runs short', () => {
     const s = newState(0); s.rebirths = 30; s.permanent.ap = 12;
     assert.throws(() => act(s, { type: 'extraRoll', value: '1' }, 0), /연계의 기억/);
     s.permanent.extraRoll = 1;

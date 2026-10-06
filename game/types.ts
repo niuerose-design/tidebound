@@ -226,7 +226,7 @@ export type Skill = {
     cooldownReset?: { on: 'crit' | 'kill' | 'chain'; chance: number; pick: 'longest' | 'first' | 'all' };
     /** v25.5 동시 시전 가능. 같은 표시가 있는 액티브끼리 한 행동에 함께 나갑니다. */
     multicast?: boolean;
-    /** v3.84 각성기(5차 이상 액티브): 턴마다 따로 판정하고 대기는 턴 단위. start는 대기를 비운 뒤(전투·던전 시작, 쓰러짐, 편성 변경) 처음 대기 턴입니다. */
+    /** v3.86 각성기(5차 이상 액티브): 턴마다 따로 판정하고 대기는 턴 단위. start는 대기를 비운 뒤(전투·던전 시작, 쓰러짐, 편성 변경) 처음 대기 턴입니다. */
     awaken?: { start: number; /** 거는 상태이상 지속 배율(패시브 보너스 포함, 반올림). */ statusScale?: number };
     /** v25 일곱 글자: 쓰면 이번 전투의 인(印)을 하나 새깁니다. */
     seal?: boolean;
@@ -331,9 +331,9 @@ export type CombatEvent = {
     cooldownReset?: string[];
     /** v25.5 동시 시전: 이 줄이 묶음의 몇 번째(0부터)이고 몇 개가 함께 나갔는지. 첫 줄은 이어서 나갈 기술 id를 들고 있습니다. */
     multicast?: { index: number; count: number; ids?: string[] };
-    /** v3.84 각성기 발동 줄. */
+    /** v3.86 각성기 발동 줄. */
     awaken?: boolean;
-    /** v3.84 추가 판정으로 함께 나간 줄(몇 번째 추가 판정인지, 1부터)과 위력 배율. */
+    /** v3.86 추가 판정으로 함께 나간 줄(몇 번째 추가 판정인지, 1부터)과 위력 배율. */
     followUp?: { index: number; power: number };
     /** v25: 타임 리와인드로 모두 회복. */
     restored?: boolean;
@@ -438,6 +438,8 @@ export type State = {
     masteryKept?: string[];
     /** v3.80 위 숙달 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     masteryAligned?: boolean;
+    /** v3.84 관통 장비 옵션 ×2를 지금 가진 장비에 이미 적용한 세이브(새 세이브는 처음부터 true). */
+    penetrationBoosted?: boolean;
     /** v3.19 계급장 필요 처치 재조정(강등 시 특전 되돌리기)을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     rankRescaled?: boolean;
     jobMastery: Record<string, number>;
@@ -496,7 +498,7 @@ export type State = {
     recovery: number;
     lastTick: number;
     skills: string[];
-    /** v3.84 추가 판정 단계(편성에서 켬, 단계마다 장착 AP). 세계석 연구 ‘연계의 기억’ 단계까지만 효과가 납니다. */
+    /** v3.86 추가 판정 단계(편성에서 켬, 단계마다 장착 AP). 세계석 연구 ‘연계의 기억’ 단계까지만 효과가 납니다. */
     extraRolls?: number;
     cooldowns: Record<string, number>;
     book: Record<string, number>;
@@ -711,7 +713,7 @@ export type Snapshot = {
     rebirths: number;
     stats: Stats;
     skills: string[];
-    /** v3.84 추가 판정 단계(결투·제단·월드보스에도 그대로). */
+    /** v3.86 추가 판정 단계(결투·제단·월드보스에도 그대로). */
     extraRolls?: number;
     power: number;
     rating: number;

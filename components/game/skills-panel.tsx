@@ -207,7 +207,7 @@ export function Skills({ s, send, busy }: PanelProps) {
                 {!ids.length && <p className="loadout-empty">{type === 'active' ? '액티브가 없으면 기본 공격만 합니다.' : '장착한 패시브가 없습니다.'}</p>}
             </div>;
         })}</div>{(() => {
-            // v3.84 추가 판정: 연구로 해금하고 장착 AP를 내고 켭니다.
+            // v3.86 추가 판정: 연구로 해금하고 장착 AP를 내고 켭니다.
             const unlocked = researchRank(s, 'extraRoll'), level = extraRollLevel(s), need = SKILL_FORMULA.extraRoll.ap[0], power = Math.round(SKILL_FORMULA.extraRoll.power[0] * 100), short = need - (cap - used);
             const gate = RESEARCH.find(r => r.id === 'extraRoll');
             return <div className={`loadout-extra ${level ? 'on' : ''}`}><div><strong>추가 판정 {level ? `${level}단계 · 켜짐` : unlocked ? '· 꺼짐' : '· 잠김'}</strong><small>{unlocked ? `액티브가 발동한 행동에서 편성 순서상 그 아래 액티브로 한 번 더 판정합니다. 성공하면 ${power}% 위력으로 함께 씁니다. 장착 AP ${need}.` : `세계석 연구 ‘${gate?.name}’에서 해금합니다${gate?.rebirth ? `(환생 ${gate.rebirth}회부터)` : ''}. 켜면 장착 AP ${need}를 씁니다.`}</small></div>{unlocked > 0 && <button className={level ? 'secondary small' : 'primary small'} disabled={busy || (!level && short > 0)} onClick={() => send({ type: 'extraRoll', value: String(level ? 0 : 1) })}>{level ? '끄기' : short > 0 ? `AP ${short} 부족` : `켜기 · AP ${need}`}</button>}</div>;
