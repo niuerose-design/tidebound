@@ -38,6 +38,10 @@ const MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg(
 const SWARM_ATK = arg('--swarm500-atk', 'n'), ONLY = arg('--only');
 // v3.84 --extra N: 추가 판정 단계(기본 0).
 const EXTRA = Number(arg('--extra', 0));
+// v3.84 --job id: 그 직업만 잽니다(비율 표는 의미 없음, --json으로 절대값 비교).
+const ONE_JOB = arg('--job');
+// v3.84 --hunt-rounds N: 사냥을 시드마다 몬스터 4마리 × N번(기본 10) 이어서 잽니다. 몇 마리만 재면 빨리 잡는 직업은 시작 대기에 결과가 좌우됩니다.
+const HUNT_ROUNDS = Number(arg('--hunt-rounds', 10));
 // --pen: 관통을 이 값으로 맞춘 몸(장비 관통 옵션을 챙긴 경우 · 전체 상한 0.6)으로 잽니다.
 const FOES = ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul'], BOSS = 'arTrueErda', RAID_ID = arg('--raid', 'horntail'), RAID_DEF = arg('--raid-def') === undefined ? null : Number(arg('--raid-def'));
 
@@ -118,11 +122,12 @@ function measure(j) {
     const want = k => !ONLY || ONLY === k, zero = { win: 0, turns: 0, hpLeft: 0, cut: 0, cleared: 0, dealt: 0, died: 0, score: 0 };
     // v3.84 사냥은 몇 시간씩 이어지므로 각성기 대기가 이미 돌고 있는 상태(0~10턴)에서 시작합니다(보스와 같음).
     const warm = (cd, seed) => { let i = 0; for (const id of s.skills) if (SKILLS.find(x => x.id === id)?.awaken) cd[id] = (seed * 7 + i++ * 3) % 11; };
-    out.hunt = want('hunt') ? run(s, st, () => FOES.map(id => foe(id)), warm) : zero;
+    out.hunt = want('hunt') ? run(s, st, () => Array.from({ length: HUNT_ROUNDS }, () => FOES.map(id => foe(id))).flat(), warm) : zero;
     out.swarm100 = want('swarm100') ? runSwarm(s, st, 100) : zero;
     out.swarm500 = want('swarm500') ? runSwarm(s, st, 500, SWARM500_TIER) : zero;
-    // v3.84 보스도 사냥 도중에 만나므로 같은 방식으로 시작합니다.
-    out.boss = want('boss') ? run(s, st, () => [foe(BOSS, { boss: true })], warm) : zero;
+    // 보스: 사냥터 몬스터를 12마리 잡은 뒤(대기 · 각성기 상태가 사냥 그대로 이어짐) 만난다고 봅니다.
+    const hunted = (cd, seed) => { const rng = random(seed * 53 + 7); for (let i = 0; i < 12; i++) fight(player(st, s, st.hp, st.mana, cd), foe(FOES[i % FOES.length]), rng); };
+    out.boss = want('boss') ? run(s, st, () => [foe(BOSS, { boss: true })], hunted) : zero;
     if (ONLY && ONLY !== 'dungeon' && ONLY !== 'raid') { out.dungeon = zero; out.raid = zero; return { id: j.id, name: j.name, lineage: lineageOf(j), sub: subRoleOf(j, lineageOf(j)), out }; }
     // 던전: 난이도 DUNGEON_TIER에서 쉬지 않고 5연전(마지막은 보스), 체력·마나 이어짐. 점수 = 넘긴 판 비율 / 쓴 턴.
     let cleared = 0, hpEnd = 0, turns = 0;
@@ -139,7 +144,7 @@ function measure(j) {
     return { id: j.id, name: j.name, lineage: lineageOf(j), sub, out };
 }
 const KEYS = ['hunt', 'swarm100', 'swarm500', 'dungeon', 'boss', 'raid'];
-const rows = JOBS.filter(j => j.tier === JOB_TIER && !j.retired && (j.level || 0) <= LEVEL && (j.rebirth || 0) <= REBIRTHS).map(measure);
+const rows = JOBS.filter(j => (!ONE_JOB || j.id === ONE_JOB) && j.tier === JOB_TIER && !j.retired && (j.level || 0) <= LEVEL && (j.rebirth || 0) <= REBIRTHS).map(measure);
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 for (const k of KEYS) { const m = median(rows.map(r => r.out[k].score)) || 1; for (const r of rows) r[k] = r.out[k].score / m; }
 const f2 = n => n.toFixed(2), pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : `${Math.round(n / 1e4)}만`;
