@@ -33,7 +33,7 @@ test('SP inheritance is separate, costs one, and refund preserves natural inheri
  act(s,{type:'inheritSkill',id:'pierce'},0);s.skillPractice.pierce=masteryMilestonesFor(SKILLS.find(sk=>sk.id==='pierce'))[0];act(s,{type:'resetSkills'},0);
  assert.equal(s.sp,5);assert.equal(canUse(s,'pierce'),true);
 });
-// v3.79 본 레거시는 제약형 개별 예외: 10만 · 100만 · 500만(제약형 기본 5,000만에서 0 하나씩 뗌).
+// v3.80 본 레거시는 제약형 개별 예외: 10만 · 100만 · 500만(제약형 기본 5,000만에서 0 하나씩 뗌).
 test('Bone growth boundaries flip penalties and AP exactly at 1M/10M/50M wins',()=>{
  const bone=SKILLS.find(sk=>sk.id==='boneLegacy');assert.deepEqual(masteryMilestonesFor(bone),[1e5,1e6,5e6]);
  for(const [wins,lv,cost] of [[0,0,6],[99999,0,6],[1e5,1,6],[1e6-1,1,6],[1e6,2,2],[5e6-1,2,2],[5e6,3,-3]]){
@@ -141,9 +141,9 @@ test('v24 per-rebirth passives grow with rebirths up to the cap', () => {
  assert.ok(r10 > r0 && r30 > r10); assert.equal(r60, r30, 'rebirths beyond the cap add nothing');
 });
 
-test('v24 late-bloomer passives start expensive and pay off at three stages (v3.79 scaled to the 5th-tier curve)', () => {
+test('v24 late-bloomer passives start expensive and pay off at three stages (v3.80 scaled to the 5th-tier curve)', () => {
  const sk = SKILLS.find(x => x.id === 'abyssalPatience');
- // v3.79 스킬 숙련 기준: 5차 기본 곡선 마지막(375만)에 맞춰 같은 모양(1 : 10 : 50)으로 줄였습니다(옛 1,250만).
+ // v3.80 스킬 숙련 기준: 5차 기본 곡선 마지막(375만)에 맞춰 같은 모양(1 : 10 : 50)으로 줄였습니다(옛 1,250만).
  assert.deepEqual(masteryMilestonesFor(sk), [75000, 750000, 3800000]);
  const costs = [0, 1, 2, 3].map(lv => effectiveSkill(sk, 1, lv).cost), atk = [0, 1, 2, 3].map(lv => effectiveSkill(sk, 1, lv).bonus.attack);
  assert.deepEqual(costs, [8, 7, 5, 2]);
@@ -174,8 +174,8 @@ const SK95 = await (await import('../scripts/lib/game-modules.mjs')).loadGame().
 test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-2 stay, old inheritance is kept', () => {
  const { JOBS: J, PROGRESSION: P, jobMasteryTarget: target, masteryMilestonesFor: ms, inherited: inh, migrateState: migrate, newState: fresh, act: doAct } = H95;
  assert.deepEqual(P.jobMasteryTierScale, [1, 1, 1, 3, 15, 50]); assert.deepEqual(P.skillMasteryTierScale, [1, 1, 1, 3, 10, 25]);
- // v3.79 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계(최대) × 40%(능력치 수련·해커는 따로).
- // v3.79 제약형 스킬(천만 단위)은 빼고, 제약형뿐인 직업은 차수 기본 곡선으로 셉니다.
+ // v3.80 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계(최대) × 40%(능력치 수련·해커는 따로).
+ // v3.80 제약형 스킬(천만 단위)은 빼고, 제약형뿐인 직업은 차수 기본 곡선으로 셉니다.
  const own = id => SKILLS.filter(x => x.job === id && !x.song), usual = id => own(id).filter(x => !SK95.isConstraintSkill(x)).map(x => ms(x).at(-1));
  for (const j of J.filter(j => j.tier >= 1 && !j.retired && own(j.id).length && !/Training[123]$|[hH]acker$/.test(j.id))) {
   const lasts = usual(j.id).length ? usual(j.id) : [SK95.SKILL_TIER_CURVE[Math.min(5, j.tier)].at(-1)];

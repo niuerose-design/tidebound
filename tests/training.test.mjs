@@ -9,7 +9,7 @@ test('v3.69 training: six training jobs absorb the 27 old independents; every ol
     const ids = Object.keys(T.TRAINING_GROUPS);
     assert.equal(ids.length, 6); assert.equal(T.RETIRED_TRAINING.length, 27); assert.equal(new Set(T.RETIRED_TRAINING).size, 27);
     for (const id of ids) { const j = job(id); assert.ok(j && j.tier === 1 && lineageOf(j) === `${j.tree}-independent` && j.subRole === 'training' && !j.retired, id); }
-    // v3.79 숙달 목표 = 패시브 마지막 숙련 단계(225,000) × 40%.
+    // v3.80 숙달 목표 = 패시브 마지막 숙련 단계(225,000) × 40%.
     for (const id of ids) assert.equal(P.jobMasteryTarget(job(id)), 90_000, id);
     for (const old of T.RETIRED_TRAINING) { assert.ok(job(old).retired, old); assert.equal(SKILLS.filter(sk => sk.job === old).length, 0, `${old} owns nothing now`); }
     // 지도 제작자는 둘로: 교란 → 마법 수련, 측량(드롭) → 보조 수련. 척후병의 출혈·중독 → 상태이상 수련.
@@ -76,7 +76,7 @@ test('v3.70 stat training I-III: opened by 1M training mastery, each step needs 
     assert.deepEqual([1, 2, 3].map(n => SKILLS.find(sk => sk.id === `strDrill${n}`).cost), [4, 6, 8], 'high AP cost'); assert.ok(stats(h).attack > before);
 });
 
-test('v3.79 job mastery targets follow skill milestones (40% of the last); jobs mastered under the old target stay mastered', async () => {
+test('v3.80 job mastery targets follow skill milestones (40% of the last); jobs mastered under the old target stay mastered', async () => {
     const Sk = await load('game/data/skills.js');
     const whaler = job('whaler'), old = Sk.LEGACY_MASTERY_TARGET.whaler;
     assert.ok(old < P.jobMasteryTarget(whaler), 'target went up');
@@ -87,7 +87,7 @@ test('v3.79 job mastery targets follow skill milestones (40% of the last); jobs 
     const n = newState(0); n.jobMastery.whaler = old; migrateState(n); assert.equal(P.jobMastered(n, whaler), false, 'new saves use the new target');
 });
 
-test('v3.79 skill mastery standard: one curve per tier (×1.4 long-term), custom ones within ±50%, constraint skills in tens of millions; old inheritance kept when the first stage went up', async () => {
+test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom ones within ±50%, constraint skills in tens of millions; old inheritance kept when the first stage went up', async () => {
     const Sk = await load('game/data/skills.js'), R = await load('game/data/roles.js');
     const bad = [];
     for (const sk of SKILLS) {
@@ -101,7 +101,7 @@ test('v3.79 skill mastery standard: one curve per tier (×1.4 long-term), custom
     }
     assert.deepEqual(bad, []);
     assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'emptyPalm')), [600, 3000, 12000, 36000], 'moved 2nd-tier hidden jobs use the 2nd-tier curve');
-    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e5, 1e6, 5e6], 'bone legacy (AP −3): v3.79 exception, one zero off');
+    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e5, 1e6, 5e6], 'bone legacy (AP −3): v3.80 exception, one zero off');
     assert.equal(P.jobMasteryTarget(job('undead')), 5600, 'constraint skills do not slow the job mastery');
     const s = newState(0); delete s.masteryAligned; s.skillPractice.emptyPalm = 300; s.skillPractice.riseAgain = 100;
     migrateState(s); assert.ok(s.legacyInherited?.emptyPalm && !s.legacyInherited?.riseAgain, 'kept only above the old first stage');

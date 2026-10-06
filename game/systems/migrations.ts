@@ -188,13 +188,13 @@ export function keepTrainingInheritance(s: State) {
     if (kept) addLog(s, `수련 패시브의 숙련 요구치가 올라, 이미 계승한 수련 패시브 ${kept}개는 계승을 그대로 유지합니다.`, 'system');
     return kept;
 }
-/** v3.79 직업 숙달 목표 상향(data/skills.ts alignJobMastery): 예전 목표로 이미 숙달한 직업은 숙달로 남깁니다. 한 번만 처리합니다. */
+/** v3.80 직업 숙달 목표 상향(data/skills.ts alignJobMastery): 예전 목표로 이미 숙달한 직업은 숙달로 남깁니다. 한 번만 처리합니다. */
 export function keepMasteredJobs(s: State) {
     if (s.masteryAligned) return 0;
     s.masteryAligned = true;
     const kept = Object.entries(s.jobMastery || {}).filter(([id, n]) => LEGACY_MASTERY_TARGET[id] !== undefined && n >= LEGACY_MASTERY_TARGET[id] && n < (jobById(id)?.masteryTarget ?? Infinity)).map(([id]) => id);
     if (kept.length) { s.masteryKept = [...new Set([...(s.masteryKept || []), ...kept])]; addLog(s, `직업 숙달 목표가 올랐습니다. 이미 숙달한 직업 ${kept.length}개는 숙달로 남습니다.`, 'system'); }
-    // v3.79 스킬 숙련 기준 정리로 첫 단계가 오른 스킬: 예전 기준으로 이미 계승 자격이 있었으면 계승을 유지합니다.
+    // v3.80 스킬 숙련 기준 정리로 첫 단계가 오른 스킬: 예전 기준으로 이미 계승 자격이 있었으면 계승을 유지합니다.
     let skills = 0;
     for (const [id, old] of Object.entries(LEGACY_FIRST_MILESTONE)) {
         const now = skillById(id)?.masteryMilestones?.[0] ?? 0, practice = s.skillPractice?.[id] || 0;

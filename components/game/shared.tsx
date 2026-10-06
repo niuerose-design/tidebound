@@ -1,7 +1,7 @@
 'use client';
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond, Feather } from 'lucide-react';
+import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond, Feather, ChevronDown } from 'lucide-react';
 import type { State } from '@/game/types';
 import { inventoryCap } from '@/game/data/economy';
 import { skillArtSrc } from '@/game/data/art';
@@ -79,3 +79,19 @@ export function WalletBar({ s, label, extra }: { s: State; label: string; extra?
         {extra}
     </section>;
 }
+
+/**
+ * v3.79 접었다 펴는 구역(제목 줄을 누르면 접힘). 접은 상태는 이 기기에 기억합니다(localStorage, 못 쓰면 기본값).
+ * 처음 그릴 때는 기본값으로 그리고, 화면에 붙은 뒤 저장된 값을 읽어 서버 렌더와 어긋나지 않게 합니다.
+ */
+export function Fold({ id, title, note, defaultOpen = true, className = '', children }: { id: string; title: ReactNode; note?: ReactNode; defaultOpen?: boolean; className?: string; children: ReactNode }) {
+    const key = `fold:${id}`;
+    const [open, setOpen] = useState(defaultOpen);
+    useEffect(() => { const t = setTimeout(() => { try { const v = localStorage.getItem(key); if (v === '1' || v === '0') setOpen(v === '1'); } catch { /* 저장소 없음 */ } }, 0); return () => clearTimeout(t); }, [key]);
+    const toggle = (next: boolean) => { if (next === open) return; setOpen(next); try { localStorage.setItem(key, next ? '1' : '0'); } catch { /* 저장소 없음 */ } };
+    return <details className={`fold ${className}`} open={open} onToggle={e => toggle(e.currentTarget.open)}>
+        <summary className="fold-summary"><span className="section-title"><h2>{title}</h2>{note !== undefined && <span>{note}</span>}</span><ChevronDown size={18} className="fold-chevron" aria-hidden/></summary>
+        {children}
+    </details>;
+}
+
