@@ -474,8 +474,15 @@
 .battle-utility-rail>.battle-feed .chat-list>:first-child{margin-top:auto}
 /* v26.7 선택 패널은 열 높이에 맞춰 늘리지 않고 목록만큼만 차지합니다. */
 .battle-utility-rail>.battle-selector-panel{flex:none;display:flex;flex-direction:column;min-height:0}
-.battle-utility-rail>.battle-selector-panel #place-panel{display:flex;flex-direction:column;min-height:0}
-.battle-utility-rail>.battle-selector-panel .battle-stage-list,.battle-utility-rail>.battle-selector-panel .battle-dungeon-list{min-height:0;max-height:330px}
+/* v3.50 사냥터·던전·제단 탭을 바꿔도 판 높이가 변하지 않도록 목록 칸 높이를 고정합니다(짧은 목록은 아래가 빔). */
+.battle-utility-rail>.battle-selector-panel #place-panel{display:flex;flex-direction:column;min-height:0;height:330px}
+.battle-utility-rail>.battle-selector-panel .battle-stage-list,.battle-utility-rail>.battle-selector-panel .battle-dungeon-list{min-height:0;max-height:none;flex:1}
+/* v3.50 제단 탭(v3.37에 뺐다가 복구). */
+.battle-altar-list .battle-dungeon-button>span{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+.battle-altar-list .battle-dungeon-button>span .meter{width:100%}
+.battle-altar-gauge .meter{margin-top:5px}
+.battle-tab-dot{width:6px;height:6px;border-radius:50%;background:#e7be71;display:inline-block;margin-left:2px}
+.battle-altar-throne{margin:6px 2px 0;color:#7f9c98;font-size:12px}
 /* 왼쪽 캐릭터 열을 촘촘하게: 전체 높이를 줄입니다. */
 .battle-character-column .player-panel>.section-title{margin-bottom:12px}
 .battle-character-column .player-avatar{width:58px;height:58px;margin-bottom:9px;box-shadow:0 0 0 5px #85774726}
