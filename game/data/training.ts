@@ -20,6 +20,8 @@ const RAW: TrainingJob[] = [
 /** 수련 직업 보정(초안). */
 export const TRAINING_PENALTY = { attack: .35, magic: .35, hp: .4, reward: .35 };
 /** 수련 패시브: 효과 배율(3차 패시브 수준)과 숙련 단계(3차 직업 스킬과 같음). oldFirst는 예전 계승 기준(옛 세이브 보존용). */
+/** v3.76 수련 직업 숙달 목표(3차 직업 기본값과 같음). */
+export const TRAINING_MASTERY_TARGET = 36_000;
 export const TRAINING_PASSIVE = { scale: 1.5, milestones: [4500, 22500, 84000, 225000], oldFirst: 250 };
 /** 수치가 적힌 옛 설명은 수치 없이 바꿉니다(수치는 효과 칩에 나옵니다). */
 export const TRAINING_DESC: Record<string, string> = {
@@ -37,6 +39,8 @@ const UNSCALED = new Set(['swarmFind']);
 export const scaleTrainingBonus = (bonus: Record<string, number>) => Object.fromEntries(Object.entries(bonus).map(([k, v]) => [k, UNSCALED.has(k) ? v : Number.isInteger(v) ? Math.round(v * TRAINING_PASSIVE.scale) : Math.round(v * TRAINING_PASSIVE.scale * 1000) / 1000]));
 export const TRAINING_JOBS = RAW.map(j => ({
     ...j, attack: TRAINING_PENALTY.attack, magic: TRAINING_PENALTY.magic, hp: TRAINING_PENALTY.hp, defense: 1, resist: 1, crit: 0,
+    // v3.76 숙달 목표도 패시브 숙련 단계처럼 3차 직업 수준(36,000)으로 맞춥니다.
+    masteryTarget: TRAINING_MASTERY_TARGET, masteryBoost: .3,
     tier: 1, level: 10, mastery: 0, role: '수련·계승 재료', lineage: `${j.tree}-independent`, branchless: true, fullKit: true, subRole: 'training' as const, rewardScale: TRAINING_PENALTY.reward,
 }));
 /** 새 수련 직업 → 합쳐지는 옛 수련 직업(11.8-1). 지도 제작자는 둘로 나뉩니다(교란 → 마법, 측량 → 보조). */

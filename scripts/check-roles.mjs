@@ -87,7 +87,8 @@ function measure(j) {
     const sub = subRoleOf(j, lineageOf(j));
     return { id: j.id, name: j.name, tier: j.tier, lineage: lineageOf(j), sub, role: roleOf(sub), out };
 }
-const rows = JOBS.map(measure);
+// v3.76 옛 독립 수련(retired)은 전직할 수 없어 재지 않습니다.
+const rows = JOBS.filter(j => !j.retired).map(measure);
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length ? v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2 : 0; };
 // 같은 차수 중앙값(전 직업) 대비 비율.
 for (const tier of Object.keys(TIERS).map(Number)) {

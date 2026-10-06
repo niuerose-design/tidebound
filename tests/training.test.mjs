@@ -9,6 +9,8 @@ test('v3.69 training: six training jobs absorb the 27 old independents; every ol
     const ids = Object.keys(T.TRAINING_GROUPS);
     assert.equal(ids.length, 6); assert.equal(T.RETIRED_TRAINING.length, 27); assert.equal(new Set(T.RETIRED_TRAINING).size, 27);
     for (const id of ids) { const j = job(id); assert.ok(j && j.tier === 1 && lineageOf(j) === `${j.tree}-independent` && j.subRole === 'training' && !j.retired, id); }
+    // v3.76 숙달 목표도 3차 수준(패시브 숙련 단계와 맞춤).
+    for (const id of ids) assert.equal(P.jobMasteryTarget(job(id)), T.TRAINING_MASTERY_TARGET, id);
     for (const old of T.RETIRED_TRAINING) { assert.ok(job(old).retired, old); assert.equal(SKILLS.filter(sk => sk.job === old).length, 0, `${old} owns nothing now`); }
     // 지도 제작자는 둘로: 교란 → 마법 수련, 측량(드롭) → 보조 수련. 척후병의 출혈·중독 → 상태이상 수련.
     const owner = id => SKILLS.find(sk => sk.id === id).job;
