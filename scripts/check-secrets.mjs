@@ -13,12 +13,12 @@ const bundle = fs.readdirSync(root, { recursive: true }).filter(f => String(f).e
 const { load } = loadGame();
 // v3.44 비밀 직업은 서버 전용 표(game/secret)에 있으므로 엔진을 불러 서버와 같은 전체 표로 셉니다.
 await load('systems/engine');
-const { JOBS } = await load('data/classes'), { SKILLS } = await load('data/skills'), { doorFor } = await load('data/doors');
+const { JOBS } = await load('data/classes'), { SKILLS } = await load('data/skills'), { unlockMet } = await load('secret/unlocks');
 const { SERVER_ODDS } = await load('secret/odds');
 // 압축기 숫자 모양: 0.5 → .5, 0.0014 → .0014(지수 표기로 바꾸는 값은 못 찾음 → 하한).
 const n = x => String(x).replace(/^0\./, '.'), num = arr => arr.map(n).join(',');
-// 비밀 직업: 히든 직업과 문으로 열리는 직업. 이름·설명은 드러나기 전까지 비밀입니다(힌트는 공개, 10.2-4).
-const secretJobs = JOBS.filter(j => j.hidden || doorFor({}, j.id)), secretIds = new Set(secretJobs.map(j => j.id));
+// 비밀 직업: 히든 직업과 숨은 조건이 있는 직업. 이름·설명은 드러나기 전까지 비밀입니다(힌트는 공개, 10.2-4).
+const secretJobs = JOBS.filter(j => j.hidden || unlockMet({}, j.id) !== null), secretIds = new Set(secretJobs.map(j => j.id));
 const text = (s) => typeof s === 'string' && s.length >= 12 ? s : '';
 // 스킬 설명과 일부 직업 이름(예: ‘아델 (2차)’)은 실행 중에 조합되어 글자 그대로는 번들에 없습니다. 이름 검사는 하한값입니다(설명 검사가 더 정확).
 const named = (name) => `name:${JSON.stringify(name)}`;
@@ -30,8 +30,8 @@ const canaries = {
     // v3.47 이름이 실행 중에 덮어써져(메이플 이름) name:"…" 모양이 아니어도 잡도록 따옴표 이름 그대로 찾습니다.
     // 보스도 쓰는 tentacleBarrage와 해킹 이름과 같은 adGuard(‘신원 조작’)는 공개 글이라 뺍니다.
     '히든 직업 스킬 이름(따옴표)': SKILLS.filter(sk => sk.job && secretIds.has(sk.job) && !['tentacleBarrage', 'adGuard'].includes(sk.id)).map(sk => JSON.stringify(sk.name)),
-    // v3.44 발견의 문 조건(압축된 모양). doors.ts가 서버 전용이 되면 0이어야 합니다.
-    '발견의 문 조건': ['deaths||0)>=10', 'deaths||0)>=30', 'wins||0)>=3', 'kills||0)>=500', 'gold||0)<100', 'bestStage||0)>=4'],
+    // v3.44 숨은 조건(옛 발견의 문, 압축된 모양). secret/unlocks.ts는 서버 전용이라 0이어야 합니다.
+    '숨은 조건': ['deaths||0)>=10', 'deaths||0)>=30', 'wins||0)>=3', 'kills||0)>=500', 'gold||0)<100', 'bestStage||0)>=4'],
     // v3.52 드롭·확률 수치(서버 전용 game/secret/odds.ts). 압축기가 쓰는 모양(0.5 → .5, 쉼표 뒤 공백 없음)으로 표와 키:값을 찾습니다(하한).
     // 키 이름(dropChanceCap 등)은 공개 표의 getter로 남아 있어도 값이 없으므로 셈하지 않습니다.
     '드롭·확률 수치(하한)': [

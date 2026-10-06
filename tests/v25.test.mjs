@@ -1,5 +1,5 @@
 // v25 ??? 특수 직업: 시계공·시간의 지배자·玄
-import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, doorsMod as doors, combatFxFromLog, act, jobMasteryTarget, migrateState, assert, test } from './harness.mjs';
+import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, unlocksMod as unlocks, combatFxFromLog, act, jobMasteryTarget, migrateState, assert, test } from './harness.mjs';
 const { actTurn } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/combat');
 const { skillVeiled, skillBlockReason } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
 
@@ -12,7 +12,7 @@ test('v25 clockmaker: time machine restores both sides once per battle; mastery 
     const text = strike(a, b, () => 0); assert.match(text, /타임 리와인드/); assert.equal(a.hp, 1000); assert.equal(b.hp, 1e6); assert.ok(a.effects.timeUsed);
     a.hp = 10; strike(a, b, () => 0); assert.equal(a.hp, 10, 'only once per battle');
     const s = newState(0); s.level = 10; s.attributes.dex = 30; s.attributes.int = 30;
-    assert.ok(doors.DISCOVERY_DOORS.some(d => d.job === 'clockmaker' && d.test({ playMs: 10 * 3600_000 }) && !d.test({ playMs: 0 })), 'v27.12 the clockmaker opens after ten hours at sea');
+    assert.ok(unlocks.HIDDEN_UNLOCKS.some(d => d.job === 'clockmaker' && d.test({ playMs: 10 * 3600_000 }) && !d.test({ playMs: 0 })), 'v27.12 the clockmaker opens after ten hours at sea');
     assert.equal(canChangeJob(s, 'chronarch'), false); s.jobMastery.clockmaker = 3000; assert.equal(canChangeJob(s, 'chronarch'), true, 'mastery alone opens the chronarch');
     assert.equal(JOBS.find(j => j.id === 'chronarch').tier, 4);
 });

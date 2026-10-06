@@ -1,6 +1,12 @@
 import type { State } from '../types';
 import { FISH, PLACES as STAGES, DUNGEONS, PLAIN_DUNGEONS } from './world';
-import { kst } from './door-info';
+
+const KST = 9 * 3600_000;
+/** 한국 시간 기준 시(0~23)와 날짜 키(YYYY-MM-DD). v3.62 문(door-info)이 없어지며 여기로 옮겼습니다. */
+export function kst(now: number) {
+    const d = new Date(now + KST);
+    return { hour: d.getUTCHours(), minute: d.getUTCMinutes(), date: d.toISOString().slice(0, 10), dayStart: Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - KST };
+}
 
 /**
  * v25.6 일일·주간 모험 목표. 한국 시간 자정·월요일에 바뀌며, 날짜를 씨앗으로 정해지므로 서버·클라이언트가 같은 목표를 봅니다.

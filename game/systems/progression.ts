@@ -8,7 +8,7 @@ import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { Job, JobStatKey, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { PLACES, FISH } from '../data/world';
-import { doorFor, DOORS } from '../data/door-info';
+import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
 import { researchRank } from '../data/economy';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
@@ -262,9 +262,9 @@ export function skillMasteryHint(sk: Skill, level: number, rank = 1) {
         return '최대 강화 완료 · 실전 숙련과 전직 조건은 계속 기록됩니다.';
     return `${milestones[current].toLocaleString()} 또는 1 SP → Lv.${current + 1} · ${skillRankHint(sk, rank, level)}`;
 }
-/** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·문 조건 없이 언제든 다시 전직할 수 있습니다. */
+/** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·숨은 조건 없이 언제든 다시 전직할 수 있습니다. */
 export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
-/** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 발견의 문이 셉니다. */
+/** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && jobMastered(s, j); }).length;
 /** 전직 조건 목록. v27.13 문 판정은 플레이 기록만 보므로 시각 인자가 없습니다. */
 export function jobRequirements(s: State, j: Job) {
@@ -292,9 +292,9 @@ export function jobRequirements(s: State, j: Job) {
             const skill = skillById(skillId), milestones = masteryMilestonesFor(skill), target = milestones[Math.max(0, mastery - 1)] || milestones[milestones.length - 1];
             list.push({ label: `${skill?.name || skillId} 숙련 ${mastery}단계 (${target})`, met: skillMastery(s, skillId) >= mastery, value: skillMastery(s, skillId), target: mastery });
         }
-        // ??? 계보의 첫 직업은 해당 문이 열려 있어야 합니다(한 번 들어간 직업은 제외).
-        const door = doorFor(s, j.id);
-        if (door) list.push({ label: `${DOORS.find(d => d.id === door.door)!.name} 열림`, met: door.open });
+        // v3.62 숨은 전직: 플레이 기록 조건(서버 전용 secret/unlocks.ts)을 만족해야 합니다(한 번 들어간 직업은 제외).
+        const unlock = unlockFor(s, j.id);
+        if (unlock !== null) list.push({ label: UNLOCK_LABEL, met: unlock });
     }
     return list;
 }

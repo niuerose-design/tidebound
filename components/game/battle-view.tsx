@@ -2,7 +2,6 @@
 import { displayTitle } from '@/game/data/titles';
 import { TutorialCard } from './guidance-panels';
 import { tutorialActive } from '@/game/systems/guidance';
-import { DoorNotice } from './jobs/mystery-doors';
 import { AltarNotice } from './altar-notice';
 import { useEffect, useRef, useState } from 'react';
 import { tipAt } from '@/game/data/tips';
@@ -78,7 +77,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     const recoveryText = s.recovery > 0 ? d ? `출정 준비 · ${recoverySeconds}초 남음` : `회복 대기 · ${recoverySeconds}초 남음` : null;
     return <>
     <Heading eyebrow="THE ENDLESS ADVENTURE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(s.name); }} s={s} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>
-    {/* v27.88 알림은 한 묶음: 부재중 정산이 있으면 맨 앞, 그다음 이벤트 → 문 → 제단 → 안내 팁. 모바일에서는 첫 줄만 보이고 나머지는 펼칩니다. */}
+    {/* v27.88 알림은 한 묶음: 부재중 정산이 있으면 맨 앞, 그다음 이벤트 → 제단 → 안내 팁. 모바일에서는 첫 줄만 보이고 나머지는 펼칩니다. */}
     <NoticeStack>
     {s.lastOffline && show('offline') && <div className="voyage-brief has-offline"><Leaf size={16}/><span>부재중 사냥 정산 · {Math.floor(s.lastOffline.seconds / 60)}분 동안 {s.lastOffline.kills}마리 처치 · +{format(s.lastOffline.gold)} G</span><button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button></div>}
     {banner && show('event') && <div className="event-banner" role="status"><Sparkles size={15}/><b>이벤트</b><span>{eventLabel(banner)}</span></div>}
@@ -87,7 +86,6 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     {s.hackFeed?.broadcast && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>[해커 {s.hackFeed.broadcast.by}]</b><span>{s.hackFeed.broadcast.text}</span></div>}
     {s.hackFeed?.root && show('hacker') && <div className="event-banner hack-banner root-banner" role="status"><Sparkles size={15}/><b>ROOT ACCESS</b><span>[해커 {s.hackFeed.root.by}]이(가) 서버의 루트 권한을 얻었습니다.</span></div>}
     {/* v3.19 새싹의 축복 알림은 뺐습니다(효과는 그대로, 능력치 화면 경험치 내역에 표시). */}
-    {show('door') && <DoorNotice s={s} setView={setView}/>}
     {show('altar') && <AltarNotice s={s} setView={setView}/>}
     {!s.lastOffline && show('tip') && <div className="voyage-brief"><Leaf size={16}/><span>{tipAt(tip)}</span></div>}
     </NoticeStack>

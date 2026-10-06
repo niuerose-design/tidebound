@@ -49,9 +49,9 @@ test('v3.55 spawn weights: server-only, and the per-stage average table reproduc
     assert.ok(!/spawnWeight: \.\d/.test(src), 'no weight literals left in world.ts');
 });
 
-test('v3.57 info hacking: leaks are built from the data, skip known ones and entered jobs, and every discovery door has an exact condition', async () => {
-    const { leakPool, DOOR_CONDITIONS } = await load('secret/leaks'), { DISCOVERY_DOORS } = await load('data/doors'), { newState: fresh } = await load('systems/state');
-    assert.deepEqual(Object.keys(DOOR_CONDITIONS).sort(), DISCOVERY_DOORS.map(d => d.job).sort());
+test('v3.57 info hacking: leaks are built from the data, skip known ones and entered jobs, and every hidden unlock has an exact condition', async () => {
+    const { leakPool, UNLOCK_CONDITIONS } = await load('secret/leaks'), { UNLOCK_JOBS } = await load('secret/unlocks'), { newState: fresh } = await load('systems/state');
+    assert.deepEqual(Object.keys(UNLOCK_CONDITIONS).sort(), [...UNLOCK_JOBS].sort());
     const s = fresh(0), all = leakPool(s, new Set());
     assert.ok(all.some(l => l.id === 'drop:base' && l.text.includes('0.25%')) && all.some(l => l.id === 'job:undead' && l.text.includes('10번 쓰러지기')) && all.some(l => l.id === 'spawn:abyssManta'));
     assert.equal(new Set(all.map(l => l.id)).size, all.length, 'leak ids are unique');

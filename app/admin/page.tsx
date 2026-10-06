@@ -10,9 +10,7 @@ type EventList = { code: EventRow[]; extra: EventRow[]; banner: string; at: numb
 type ClosureRow = { id: string; name: string; closed: boolean; locked: boolean };
 type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
 /** v27.73 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
-type DoorRow = { id: string; name: string; door: string; hint: string; open: boolean };
-type DoorList = { doors: DoorRow[] };
-type Tab = 'life' | 'events' | 'closures' | 'doors' | 'stats' | 'news' | 'income';
+type Tab = 'life' | 'events' | 'closures' | 'stats' | 'news' | 'income';
 /** v3.58 사냥 골드 수입 통계(server/admin.ts adminIncome). */
 type IncomeRow = { id: string; name: string; username: string; rebirths: number; ascension: number; level: number; place: string; tide: number; perHour: number; hours: number; estimated: boolean; gold: number; earned: number; running: boolean; updatedAt: number };
 type IncomeData = { at: number; measured: number; recent: number; median: number; byRebirth: { label: string; count: number; median: number; max: number }[]; top: IncomeRow[]; picked: (IncomeRow & { log: { ago: number; gold: number }[] })[] };
@@ -40,7 +38,6 @@ const HELP: Record<Tab, string> = {
     life: '이름이나 아이디로 찾아 골드·세계석을 조정하거나 이번 생을 초기화합니다. 초기화는 레벨·골드·일반 장비·직업·능력치·진행 중 던전만 되돌리고, 환생 횟수·세계석·연구·유물·도감·스킬 성장은 그대로 둡니다.',
     events: '기간 동안 모든 모험가에게 배율을 겁니다(겹치면 곱함). 배율을 모두 1로 두면 이름만 배너 공지로 뜹니다.',
     closures: '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나옵니다(사냥터는 더 앞의 열린 곳으로). 서버마다 최대 30초 걸립니다.',
-    doors: '??? 직업의 문을 조건과 상관없이 모두에게 엽니다(테스트용). 닫으면 다시 조건대로 돌아가고, 그 사이 전직한 모험가는 그대로입니다. 서버마다 최대 30초 걸립니다.',
     stats: '모든 세이브를 읽어 집계합니다(불러올 때만 계산). 활동은 마지막 저장 시각 기준입니다.',
     news: '기록판 ‘소식’ 탭에 실제와 같은 줄을 올려 봅니다. 모두에게 보이므로 기본으로 [테스트]를 붙입니다.',
     income: '사냥으로 번 골드를 플레이 1시간 단위로 기록합니다. 시간당 골드는 최근 3시간 평균이고, 1시간을 못 채웠으면 추정(≈)합니다. 판매·환불은 빠집니다.',
@@ -91,7 +88,7 @@ export default function AdminPage() {
     /** v3.43 정보 비공개 스위치(docs/concept.md 10장). env가 있으면 환경 변수가 우선합니다. */
     const [secrecy, setSecrecyState] = useState<{ on: boolean; env: string | null } | null>(null);
     const [hackFx, setHackFx] = useState<{ tamper: number; down: number; patched: number; ddos?: number } | null>(null);
-    const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [doors, setDoors] = useState<DoorList | null>(null), [stats, setStats] = useState<Stats | null>(null);
+    const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [stats, setStats] = useState<Stats | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' });
     const [spOpen, setSpOpen] = useState<string | null>(null);
     const [income, setIncome] = useState<IncomeData | null>(null), [incomeQuery, setIncomeQuery] = useState('');
@@ -171,15 +168,8 @@ export default function AdminPage() {
     const loadIncome = async (query = incomeQuery) => { const d = await call({ action: 'income', query }); if (d) setIncome(d); };
     const loadNews = async () => { const d = await call({ action: 'news' }); if (d) setNews(d.rows); };
     const postNews = async (kind: string) => { const d = await call({ action: 'newsTest', kind, name: newsName, text: newsText, tag: newsTag }); if (d) { setNews(d.rows); setDone('소식 탭에 올렸습니다. 게임 화면의 기록판 → 소식에서 확인하세요.'); if (kind === 'custom') setNewsText(''); } };
-    /** v27.73 문 개방: 연 동안 모든 모험가에게 그 ??? 직업의 문이 열립니다. 닫으면 다시 조건대로(그 사이 전직한 모험가는 그대로). */
-    const loadDoors = async () => { const d = await call({ action: 'doors' }); if (d) setDoors(d); };
-    const toggleDoor = async (row: DoorRow) => {
-        if (!row.open && !confirm(`${row.door} · ${row.name}의 문을 모든 모험가에게 열까요?\n연 동안은 조건과 상관없이 전직할 수 있고, 다시 닫으면 조건대로 돌아갑니다(그 사이 전직한 모험가는 그대로).`)) return;
-        const d = await call({ action: 'setDoor', id: row.id, open: !row.open });
-        if (d) { setDoors(d); setDone(`${row.name}의 문을 ${row.open ? '닫았습니다. 다시 조건대로 열립니다' : '열었습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
-    };
-    const TABS: [Tab, string][] = [['life', '모험가 관리'], ['events', '서버 이벤트'], ['closures', '입장 관리'], ['doors', '문 개방'], ['stats', '통계'], ['income', '골드 수입'], ['news', '소식 테스트']];
-    const openTab = (id: Tab) => { setTab(id); setError(''); setDone(''); if (!key) return; if (id === 'events') loadEvents(); if (id === 'closures') loadClosures(); if (id === 'doors') loadDoors(); if (id === 'stats') loadStats(); if (id === 'news') loadNews(); if (id === 'income') void loadIncome(); };
+    const TABS: [Tab, string][] = [['life', '모험가 관리'], ['events', '서버 이벤트'], ['closures', '입장 관리'], ['stats', '통계'], ['income', '골드 수입'], ['news', '소식 테스트']];
+    const openTab = (id: Tab) => { setTab(id); setError(''); setDone(''); if (!key) return; if (id === 'events') loadEvents(); if (id === 'closures') loadClosures(); if (id === 'stats') loadStats(); if (id === 'news') loadNews(); if (id === 'income') void loadIncome(); };
     const closureList = (kind: keyof ClosureList, title: string, open: boolean) => closures && <Fold title={title} open={open} note={`${closures[kind].length}곳 · 막힘 ${closures[kind].filter(r => r.closed).length}`}>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>{closures[kind].map(r => <li key={r.id} style={rowItem}>
             <span style={{ fontSize: 13 }}><b>{r.name}</b> · {r.closed ? <b style={{ color: '#ff9a9a' }}>입장 막힘</b> : <span style={{ color: '#9ce8b4' }}>열림</span>}{r.locked ? <small style={muted}> · 첫 사냥터(닫을 수 없음)</small> : null}</span>
@@ -201,7 +191,6 @@ export default function AdminPage() {
             {tab === 'events' && reload(events ? '새로고침' : '이벤트 불러오기', loadEvents)}
             {tab === 'stats' && reload(stats ? '새로고침' : '통계 불러오기', loadStats)}
             {tab === 'closures' && reload(closures ? '새로고침' : '목록 불러오기', loadClosures)}
-            {tab === 'doors' && reload(doors ? '새로고침' : '목록 불러오기', loadDoors)}
             {tab === 'news' && reload(news ? '새로고침' : '최근 소식 불러오기', loadNews)}
             {tab === 'income' && <form onSubmit={e => { e.preventDefault(); void loadIncome(); }} style={{ display: 'flex', gap: 8, flex: 1 }}>
                 <input value={incomeQuery} onChange={e => setIncomeQuery(e.target.value)} placeholder="모험가 이름·아이디 (비우면 전체)" style={{ ...field, flex: 1 }}/>
@@ -350,12 +339,6 @@ export default function AdminPage() {
             </Fold>
             {closureList('dungeons', '던전', true)}{closureList('stages', '사냥터', false)}
         </>}
-
-        {tab === 'doors' && doors && <Fold title="??? 직업의 문" note={`운영자가 연 문: ${doors.doors.filter(d => d.open).map(d => d.name).join(', ') || '없음'}`}>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>{doors.doors.map(r => <li key={r.id} style={rowItem}>
-                <span style={{ fontSize: 13 }}><b>{r.name}</b> · {r.door} · {r.open ? <b style={{ color: '#9ce8b4' }}>모두에게 열림</b> : <span style={muted}>조건대로</span>}<br/><small style={muted}>{r.hint}</small></span>
-                <button className={r.open ? 'secondary' : 'primary'} disabled={busy} onClick={() => toggleDoor(r)}>{r.open ? '닫기' : '열기'}</button></li>)}</ul>
-        </Fold>}
 
         {tab === 'life' && players && <Fold title="검색 결과" note={`${players.length}명${players.length === 30 ? ' (최대 30명)' : ''}`}>
             {!players.length && <p style={{ ...muted, margin: 0 }}>찾은 모험가가 없습니다.</p>}

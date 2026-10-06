@@ -16,7 +16,6 @@ import type { State, Vows, RebirthRecord, AscensionRecord } from '../../types';
 export const REBIRTH_LOG_KEEP = 20;
 import type { ActionHandlers } from './types';
 import { addLog, newState } from '../state';
-import { drawRebirthDoor } from '../../data/door-info';
 import { jobById, JOB_TREES } from '../../data/classes';
 import { jobMastered, canChangeJob, canUse, grantJobSkills, trimLoadout } from '../progression';
 import { STAGES } from '../../data/world';
@@ -49,7 +48,7 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
 }
 
 /** 환생: 요구 레벨을 넘긴 생을 마치고 다음 생을 시작합니다. v3.40 자동 환생(systems/automation)도 이 함수를 씁니다. */
-export function rebirthNow(s: State, now: number, rng: () => number) {
+export function rebirthNow(s: State, now: number) {
     // v3.31 환생 상한: 200회부터는 환생할 수 없고 승천만 할 수 있습니다.
     if (s.rebirths >= ASCENSION.rebirthCap)
         throw Error(`환생은 ${ASCENSION.rebirthCap}회까지입니다. 승천할 수 있습니다.`);
@@ -77,13 +76,10 @@ export function rebirthNow(s: State, now: number, rng: () => number) {
     else delete s.vows;
     // v27.86 절제: 새 생의 편성을 AP·장착 개수 상한에 맞춥니다.
     if (s.vows?.restraint) trimLoadout(s);
-    // 윤회의 문: 이번 생에 열릴 ??? 직업을 게임 난수로 추첨해 저장합니다(후보가 없으면 난수를 쓰지 않음).
-    const door = drawRebirthDoor(s, rng);
-    if (door) s.rebirthDoor = door; else delete s.rebirthDoor;
+    // v3.62 윤회의 문 추첨은 없앴습니다(docs/concept.md 11.7). 옛 세이브의 값은 migrations가 지웁니다.
     addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${breath ? ` · 하드코어 +${breath}` : ''}`);
     addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 필요 경험치가 레벨마다 크게 늘어납니다`, 'reward');
     if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => (LEVELED_VOWS as readonly string[]).includes(id) ? `${VOW_NAMES[id]} ${s.vows![id]}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
-    if (s.rebirthDoor) addLog(s, `윤회의 문 · 이번 생에는 ${jobById(s.rebirthDoor)?.name}의 문이 열렸습니다.`, 'system');
     if (habit >= 1 && prevJob && prevMastered && prevJob.id !== s.job && canChangeJob(s, prevJob.id)) {
         s.job = prevJob.id; if (!s.unlockedJobs.includes(prevJob.id)) s.unlockedJobs.push(prevJob.id); grantJobSkills(s);
         addLog(s, `지겨운 환생 · 숙달한 ${prevJob.name}(으)로 자동 전직`, 'system');
@@ -191,7 +187,7 @@ export function ascend(s: State, now: number) {
 export const lifecycleActions: ActionHandlers = {
     /** v3.31 승천. */
     ascend(s, { now }) { ascend(s, now); },
-    rebirth(s, { now, rng }) { rebirthNow(s, now, rng); },
+    rebirth(s, { now }) { rebirthNow(s, now); },
     /** v3.40 자동 환생(승천 1회): id 'on' · 'off', value = 목표 레벨(AUTO_REBIRTH_LEVELS, 0이면 요구 레벨). */
     autoRebirth(s, { id, a }) {
         if (!ascensionPerk(s, 'autoRebirth')) throw Error(`자동 환생은 승천 ${ASCENSION_PERKS.autoRebirth}회부터 쓸 수 있습니다.`);
@@ -283,6 +279,6 @@ export const lifecycleActions: ActionHandlers = {
         const name = s.name;
         Object.assign(s, newState(now), { name });
         // newState에 없는 선택 필드도 함께 지웁니다(계정당 첫 재분배 사용 여부는 유지).
-        for (const key of ['vows', 'nextVows', 'goldenBook', 'variantBook', 'tideBest', 'bookTier', 'randomGameStats', 'masteryCarry', 'autoSell', 'autoVend', 'autoSellGrades', 'autoVendGrades', 'rebirthDoor'] as const) delete s[key];
+        for (const key of ['vows', 'nextVows', 'goldenBook', 'variantBook', 'tideBest', 'bookTier', 'randomGameStats', 'masteryCarry', 'autoSell', 'autoVend', 'autoSellGrades', 'autoVendGrades'] as const) delete s[key];
     },
 };

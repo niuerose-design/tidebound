@@ -98,7 +98,7 @@ export function runAutomation(s: State, rng: () => number) {
     if (!autoRebirthDue(s)) return;
     // 부재중 정산 중에도 일어나므로, 정산 요약(lastOffline)은 새 생으로 넘어가도 남깁니다.
     const level = s.level, offline = s.lastOffline;
-    rebirthNow(s, s.lastTick, rng);
+    rebirthNow(s, s.lastTick);
     s.running = true;
     if (offline) s.lastOffline = offline;
     addLog(s, `자동 환생 · Lv.${level}에서 ${s.rebirths}번째 환생`, 'system');
