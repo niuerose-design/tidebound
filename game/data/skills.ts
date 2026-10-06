@@ -13,7 +13,7 @@ import { MONOSTAT_SKILLS } from './expansion-monostat';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
 import { SPECIAL_SKILLS } from './specials';
-import { trainingSkillOwner } from './training';
+import { trainingSkillOwner, scaleTrainingBonus, TRAINING_PASSIVE, TRAINING_DESC } from './training';
 export const SKILLS: Skill[] = [
     { id: 'hook', name: '강철 챔질', desc: '공격력 180% 피해.', type: 'active', level: 1, chance: .35, cooldown: 2, multiplier: 1.8 },
     { id: 'breath', name: '고요한 호흡', desc: '공격하지 않고 최대 체력 18%를 회복합니다.', type: 'active', level: 6, chance: .3, cooldown: 5, multiplier: 0, effect: 'heal', healOnly: true },
@@ -248,4 +248,13 @@ export function skillMasteryScale(sk: Pick<Skill, 'job'>) {
 // v3.65 공개 특수 직업의 스킬(data/specials.ts, 완성된 모양).
 registerSkills(SPECIAL_SKILLS);
 // v3.67 옛 독립 수련의 스킬은 id 그대로 새 수련 직업이 가집니다(data/training.ts).
-for (const sk of SKILLS) { const owner = trainingSkillOwner(sk.id, sk.job); if (owner) sk.job = owner; }
+for (const sk of SKILLS) {
+    const owner = trainingSkillOwner(sk.id, sk.job);
+    if (!owner) continue;
+    sk.job = owner;
+    // v3.67 수련 패시브: 1레벨부터 3차 패시브 수준, 숙련 요구치도 3차 수준(data/training.ts TRAINING_PASSIVE).
+    if (sk.type !== 'passive') continue;
+    if (sk.bonus) sk.bonus = scaleTrainingBonus(sk.bonus as Record<string, number>);
+    sk.masteryMilestones = [...TRAINING_PASSIVE.milestones];
+    sk.desc = TRAINING_DESC[sk.id] ?? sk.desc;
+}

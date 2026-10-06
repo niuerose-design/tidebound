@@ -1,4 +1,4 @@
-import { trainingFor } from '../data/training';
+import { trainingFor, TRAINING_PASSIVE } from '../data/training';
 import type { State } from '../types';
 import { addLog } from './state';
 import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
@@ -173,8 +173,23 @@ export function retireHiddenJobs(s: State) {
     for (const p of Object.values(s.presets || {})) p.skills = drop(p.skills)!;
 }
 /**
+ * v3.67 수련 패시브 숙련 요구치 상향(data/training.ts TRAINING_PASSIVE): 예전 기준(첫 단계 250)으로 이미 계승 자격이 있던 수련 패시브는 계승을 유지합니다. 한 번만 처리합니다.
+ */
+export function keepTrainingInheritance(s: State) {
+    if (s.trainingRescaled) return 0;
+    s.trainingRescaled = true;
+    let kept = 0;
+    for (const sk of SKILLS) {
+        if (sk.type !== 'passive' || !sk.job?.startsWith('training')) continue;
+        const practice = s.skillPractice?.[sk.id] || 0;
+        if (practice >= TRAINING_PASSIVE.oldFirst && practice < TRAINING_PASSIVE.milestones[0]) { (s.legacyInherited ??= {})[sk.id] = true; kept++; }
+    }
+    if (kept) addLog(s, `수련 패시브의 숙련 요구치가 올라, 이미 계승한 수련 패시브 ${kept}개는 계승을 그대로 유지합니다.`, 'system');
+    return kept;
+}
+/**
  * v3.67 독립 수련 통합(data/training.ts): 지금 옛 수련 직업이면 새 수련 직업으로 옮깁니다(스킬은 id 그대로 새 직업 것이라 편성·습득은 그대로).
- * 옛 직업의 숙련·숙달 기록은 지우지 않습니다(숙달 수에 셈). 여러 번 불러도 같습니다.
+ * 옛 직업의 숙련 기록은 지우지 않습니다(숙달 수에는 세지 않음). 여러 번 불러도 같습니다.
  */
 export function moveToTraining(s: State) {
     const next = trainingFor(s.job);
@@ -202,7 +217,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); keepTrainingInheritance(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
