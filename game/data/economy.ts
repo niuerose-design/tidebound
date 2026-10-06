@@ -4,6 +4,11 @@ import { BALANCE } from './balance';
 /** 가격·확률·영구 성장 수치의 단일 설정. 모두 게임 내 재화 전용. */
 export const ECONOMY = { /** v27.93 강화 상한·성당 배율은 data/starforce.ts(STARFORCE)로 옮김. 판매 때 돌려받는 강화 비용 비율. */ saleEnhanceRefund: .3, shopBase: 180, shopPerLevel: 35, gambleBase: 300, gamblePerLevel: 45, rebirthAPCap: 12, rebirthLevelStep: 5, /** v27.55 Lv.60(환생 6회) 뒤로는 환생마다 +1, 최대 Lv.80. */ rebirthLevelCap: 100, rebirthLevelLateFrom: 60, rebirthLevelLateStep: 1, rebirthExp: .25, tideCap: 200 };
 // v22: 감정은 희귀 이상. 드물게 신화·고대·태초가 나옵니다(등급 수 = 옵션 수).
+/**
+ * v3.59 사냥·던전 드롭 태초 천장: 태초 없이 이만큼 장비가 떨어지면 다음 드롭은 태초(무작위 부위)입니다. 환생해도 남고 승천하면 초기화.
+ * 기준 캐릭터(처치당 드롭 약 1%, 시간당 1,730처치)로 약 7.7일 = 부위당 약 31일(칠흑 장신구 최장과 같음).
+ */
+export const PRIMAL_DROP_PITY = 3200;
 /** v3.58 감정 천장: 이 등급 이상이 마지막으로 나온 뒤 이 횟수째 감정은 그 등급 이상이 확정입니다(신화 150 · 고대 1,000 · 태초 3,000). 환생해도 남고 승천하면 초기화. */
 export const APPRAISAL_PITY = [{ rarity: 4, key: 'myth', count: 150 }, { rarity: 5, key: 'ancient', count: 1000 }, { rarity: 6, key: 'primal', count: 3000 }] as const;
 export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];

@@ -6,7 +6,7 @@ import { jobMasteryTarget, skillRefinementTargets, refinePractice } from './prog
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
-import { inventoryCap, researchRank, autoGrades } from '../data/economy';
+import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
 import { MIMIC, LETTER, letterRank, rollMimicMastery, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
@@ -80,7 +80,9 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         return;
     // v27.53 일반 처치 드롭도 희귀 이상만(일반 등급은 상점 기본 장비로).
     // v27.76 사냥터·던전 난이도가 높을수록 상위 등급 가중치가 조금 오릅니다(보수적).
-    const rarity = rollRarity(rng, 1, encounterTier(s));
+    // v3.59 태초 드롭 천장: 태초 없이 PRIMAL_DROP_PITY개째 드롭은 태초.
+    const pity = (s.primalDropPity || 0) + 1, rarity = pity >= PRIMAL_DROP_PITY ? RARITIES.length - 1 : rollRarity(rng, 1, encounterTier(s));
+    s.primalDropPity = rarity >= RARITIES.length - 1 ? 0 : pity;
     const origin = s.dungeon?.id || s.stage;
     const slot = (['rod', 'coat', 'charm', 'cape'] as const)[Math.floor(rng() * 4)];
     const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: '', power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
