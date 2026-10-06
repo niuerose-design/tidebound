@@ -459,7 +459,7 @@ test('v3.75 rare primal/onyx options (drill/valor fixed +1, apex super crit, dis
     for (const id of ['ornate', 'pinch']) assert.ok(!Co.imprintChoices('rod').some(a => a.id === id));
 });
 test('v3.77 onyx accessories carry max-rolled options (power still grows only by paid level-ups) and fall back to 12★ instead of breaking', async () => {
-    const M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment'), Ec = await L.load('data/economy'), C = await L.load('systems/commerce'), SF = await L.load('data/starforce'), O = await L.load('data/onyx'), G = await L.load('data/gear');
+    const M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment'), C = await L.load('systems/commerce'), SF = await L.load('data/starforce'), O = await L.load('data/onyx'), G = await L.load('data/gear');
     const s = newState(0); s.rebirths = 150; s.level = 100;
     const it = O.onyxAccessory(O.ONYX_BOSSES[0], 'ox', 100); it.affixes = G.rollAffixes(6, it.power, it.origin, () => .3, it.affixes, 'charm', 100); const before = it.power;
     s.inventory = [it]; M.migrateState(s, 0);
