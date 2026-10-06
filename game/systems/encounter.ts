@@ -255,6 +255,8 @@ export function reward(s: State, rng: () => number) {
             const to = pool[Math.floor(rng() * pool.length)], gift = Math.max(1, Math.floor(mimicBonus * ascensionMastery(s) * LETTER.recipientShare));
             s.jobMastery[to] = (s.jobMastery[to] || 0) + gift;
             addLog(s, `편지 수신인 · ${jobById(to)!.name} 숙련 +${gift.toLocaleString()}`, 'skill');
+            // v3.40 숙련 진행판의 편지 수신인 기록(최근 10건, 승천해도 남음).
+            s.letterLog = [{ job: to, gift, turn: s.turn }, ...(s.letterLog || [])].slice(0, 10);
         }
     }
     const jobTargets = vocationTargets(jobMasteryTarget(jobById(s.job)!));

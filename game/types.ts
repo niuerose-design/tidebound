@@ -443,6 +443,8 @@ export type State = {
     placeApMoved?: boolean;
     /** v3.39 소식 비교용 지난 표시(systems/news.ts). */
     newsMark?: import('./systems/news').NewsMark;
+    /** v3.40 편지 수신인 기록(최근 10건). */
+    letterLog?: { job: string; gift: number; turn: number }[];
     /** v3.12 칠흑 보스: 서식지별로 보스를 못 본 출현 횟수(천장)와 보스별 처치 수. 환생해도 남습니다. */
     onyxSeen?: Record<string, number>;
     onyxBook?: Record<string, number>;
