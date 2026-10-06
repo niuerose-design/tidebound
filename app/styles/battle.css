@@ -919,7 +919,7 @@
 @keyframes sceneKkamiKillCoin{0%{opacity:0;transform:translateY(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-110px) translateX(calc((var(--i) - 3.5) * 14px)) scale(1.2) rotate(300deg)}}
 @keyframes sceneKkamiKillTitle{0%{opacity:0;scale:.6}15%,78%{opacity:1;scale:1}100%{opacity:0;scale:1.1}}
 @media(prefers-reduced-motion:reduce){.scene-fx-kkami-ring{display:none}}
-/* v3.38 기록판(전투 · 획득 · 소식 · 채팅): 오른쪽 열의 남는 높이를 채웁니다. 모바일은 장면 아래에서 높이를 제한합니다. */
+/* v3.39 기록판(전투 · 획득 · 소식 · 채팅): 오른쪽 열의 남는 높이를 채웁니다. 모바일은 장면 아래에서 높이를 제한합니다. */
 .feed-tabs{margin-right:auto;flex:1;min-width:0}
 .battle-place-tabs.feed-tabs button{flex:1 1 0;justify-content:center;gap:4px;padding:6px 6px;font-size:12px;white-space:nowrap}
 .battle-utility-rail>.battle-feed .rail-log{flex:1 1 0;height:auto;min-height:260px}

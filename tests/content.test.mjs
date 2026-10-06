@@ -136,7 +136,7 @@ test('Follow-up hits: each hit counted once, total equals HP lost, stops when th
  const crit=[];strike(mk(['arcane'],{crit:1}),{...mk([]),name:'B',hp:1e6},()=>0,crit);assert.equal(crit[0].hits[0].critical,true);assert.equal(crit[0].damageType,'magic');
 });
 
-test('v27.81 codex: research stages grant no flat trait stats (ecology only); v3.37 place themes moved into region research tier 1; 50 catches reveal info',()=>{
+test('v27.81 codex: research stages grant no flat trait stats (ecology only); v3.38 place themes moved into region research tier 1; 50 catches reveal info',()=>{
  const bookDelta=(s,k)=>{const t={};stats(s,t);return (t[k]||[]).filter(x=>x.source==='book'&&x.factor===undefined).reduce((a,x)=>a+x.delta,0);};
  const s=newState(0);s.book.minnow=10000;s.book.eel=10000;s.book.grottoWarden=10000;
  for(const k of ['attack','magic','accuracy','resist','hp','defense'])assert.equal(bookDelta(s,k),0,`no ${k} from traits`);

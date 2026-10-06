@@ -23,7 +23,7 @@ export async function POST(req: Request) { try {
             crewFlush?.(s); });
         // v3.26 해커 계열 전직 알림(익명, 채팅에 빨간 줄).
         if (announce) await announceHacker(announce, Date.now());
-        // v3.38 모험가 소식(칠흑·승천·5차 전직·무릉도장·22성·장성 진급). 저장이 끝난 뒤 한 번만 올립니다.
+        // v3.39 모험가 소식(칠흑·승천·5차 전직·무릉도장·22성·장성 진급). 저장이 끝난 뒤 한 번만 올립니다.
         if (news.length) await postPlayerNews(id, out.state, news, Date.now());
         // v27.62 동기화는 클라이언트가 가진 마지막 로그 뒤의 로그만 보냅니다(log-delta.ts).
         const trimmed = a.type === 'sync' ? trimLogs(out.state.logs, (a as { logKey?: unknown }).logKey) : null;

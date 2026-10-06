@@ -8,7 +8,7 @@ const researchFactor = (s, k) => { const t = {}; stats(s, t); return (t[k] || []
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
 const seeded = seed => { let x = seed >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296); };
 
-test('Research v2: 11 new entries (v3.37 shop removed) match the plan table and are refused before unlock and at the cap', () => {
+test('Research v2: 11 new entries (v3.38 shop removed) match the plan table and are refused before unlock and at the cap', () => {
     const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 4, 3, 5, 1020], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], inventory: [8, 3, 3, 2, 108], offline: [12, 3, 2, 2, 168], mastery: [10, 3, 3, 5, 165], enhance: [15, 3, 2, 5, 255] };
     for (const id of NEW) {
         const r = research(id), [max, base, step, rebirth, total] = table[id];
@@ -39,7 +39,7 @@ test('Research v2: recovery and smith discounts use the state-aware functions', 
     close(victoryHealRate({ ...s, dungeon: null }), .25); close(victoryHealRate({ ...s, dungeon: { id: 'grotto', wave: 0 } }), .13);
     close(victoryHealRate({ ...newState(0), rebirths: 5, dungeon: null }), .2); close(victoryHealRate({ ...newState(0), dungeon: null }), .25, 'sprout +5%p');
     s.level = 10; const full = shopCost(s), fullGamble = gambleCost(s);
-    s.permanent.shop = 10; assert.equal(shopCost(s), full, 'v3.37 상점 단골 삭제'); assert.equal(gambleCost(s), fullGamble);
+    s.permanent.shop = 10; assert.equal(shopCost(s), full, 'v3.38 상점 단골 삭제'); assert.equal(gambleCost(s), fullGamble);
     s.gold = 1e6; const before = s.gold; act(s, { type: 'buy', id: 'coat' }, 0); assert.equal(before - s.gold, shopCost(s));
     const item = { id: 'forge', slot: 'coat', rarity: 1, power: 10, level: 10, name: 'forge', affix: { stat: 'hp', name: '생명', value: 15 } };
     s.inventory.push(item); s.permanent.enhance = 15;
@@ -255,7 +255,7 @@ test('v27.88 every vow is a next-life reservation: reserving rough/restraint/bre
     act(s, { type: 'rebirth' }, 0); assert.deepEqual(s.vows, { rough: 3, breath: true });
 });
 
-test('v3.37 auto sort: one research, sell or dismantle mode (never both), kept across rebirth', () => {
+test('v3.38 auto sort: one research, sell or dismantle mode (never both), kept across rebirth', () => {
     const s = newState(0); assert.throws(() => act(s, { type: 'autoSort', value: 'sell' }, 0), /자동 정리/);
     s.permanent.sortingNet = 1; s.itemBook['rod:1'] = true;
     act(s, { type: 'autoSort', value: 'dismantle' }, 0); act(s, { type: 'autoSort', value: 'sell' }, 0); assert.equal(s.autoVend, true); assert.equal(s.autoSell, false, 'sell turns dismantle off');
@@ -265,7 +265,7 @@ test('v3.37 auto sort: one research, sell or dismantle mode (never both), kept a
     act(s, { type: 'autoSort', value: 'sell' }, 0); s.level = 30; act(s, { type: 'rebirth' }, 0); assert.equal(s.autoVend, true, 'kept across rebirth');
 });
 
-test('v3.37 research cleanup refunds paid ranks once: dungeon vault, shop regular, and the vend half of auto sort', () => {
+test('v3.38 research cleanup refunds paid ranks once: dungeon vault, shop regular, and the vend half of auto sort', () => {
     const s = newState(0); s.version = 8; s.pearls = 0;
     s.permanent.dungeon = 3; s.permanent.shop = 2; s.permanent.sortingNet = 2; s.permanent.autoVend = 1; s.autoVend = true;
     migrateState(s, 0);

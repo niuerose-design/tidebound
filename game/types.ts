@@ -439,9 +439,9 @@ export type State = {
     deaths: number;
     /** v3.8 자동 강화 연구 비용 인하(100 → 10) 차액 환급을 처리한 세이브. */
     autoStarRefunded?: boolean;
-    /** v3.37 장소 완성 AP를 업적(지역 연구 N곳 완성)으로 옮겼는지. */
+    /** v3.38 장소 완성 AP를 업적(지역 연구 N곳 완성)으로 옮겼는지. */
     placeApMoved?: boolean;
-    /** v3.38 소식 비교용 지난 표시(systems/news.ts). */
+    /** v3.39 소식 비교용 지난 표시(systems/news.ts). */
     newsMark?: import('./systems/news').NewsMark;
     /** v3.12 칠흑 보스: 서식지별로 보스를 못 본 출현 횟수(천장)와 보스별 처치 수. 환생해도 남습니다. */
     onyxSeen?: Record<string, number>;

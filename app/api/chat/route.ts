@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /** v25.4 전체 채팅. 열려 있는 동안만 몇 초마다 새 줄을 묻고(after 커서), 한 줄은 120자, 계정마다 2.5초에 한 줄입니다. */
 const CHANNELS = new Set(['global', 'guild', 'news']);
-/** v3.38 소식 채널은 읽기만 합니다(서버가 시스템 줄로 올림). */
+/** v3.39 소식 채널은 읽기만 합니다(서버가 시스템 줄로 올림). */
 const READ_ONLY = new Set(['news']);
 /** 'guild'는 소속 길드 채널(guild:<id>)로 바꿉니다. 무소속이면 403. */
 async function resolveChannel(account: string, channel: string) {

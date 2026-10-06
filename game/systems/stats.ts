@@ -98,7 +98,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         // v27.86 힘의 길: 장비 능력치 ×(1 − 30·50·70%).
         add(key as keyof CombatStats, 'equipment', Math.min(n!, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity) * roughGear(s));
     // v3.12 칠흑 세트(보유 수 기준, 영구).
-    // v3.37 칠흑 세트는 장비 출처로 표시합니다(전에는 ‘도감’으로 잘못 묶였음).
+    // v3.38 칠흑 세트는 장비 출처로 표시합니다(전에는 ‘도감’으로 잘못 묶였음).
     { const b = onyxSetBonus(ownedOnyx(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); if (b.allStats) add('allStats', 'equipment', b.allStats); }
     const passiveJobs = new Set<string>();
     let relief = 0;

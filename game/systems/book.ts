@@ -26,7 +26,7 @@ export function nextEcology(s: Pick<State, 'book' | 'bookTier'>, id: string) {
 export const regionResearchStage = (s: Pick<State, 'book' | 'bookTier'>, region: string) =>
     Math.max(0, Math.min(REGION_RESEARCH_MAX, Math.min(...regionFish(region).map(id => bookStage(s, id))) - REGION_RESEARCH_FROM + 1));
 type Theme = { label: string; add?: StatBonus; scale?: Partial<Record<'hp' | 'attack' | 'magic' | 'defense' | 'resist', number>>; rareSpawn?: number };
-/** 지역 연구 효과(add는 더하고 scale은 곱하는 배율). v3.37 1단계부터 첫 보너스(옛 장소 테마)가 한 번 붙습니다. */
+/** 지역 연구 효과(add는 더하고 scale은 곱하는 배율). v3.38 1단계부터 첫 보너스(옛 장소 테마)가 한 번 붙습니다. */
 export function regionThemes(s: Pick<State, 'book' | 'bookTier'>): Theme[] {
     return REGIONS.flatMap(region => {
         const n = regionResearchStage(s, region), r = REGION_RESEARCH[region];

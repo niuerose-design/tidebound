@@ -54,7 +54,7 @@ export function limitBreakNext(s: State, id: string) {
 /** SP and mastery unlock the SAME stages. Neither locks out the other. v27.6 숙련(한계돌파 포함)이 최대를 넘으면 그만큼 더 올라갑니다. */
 export function skillLevel(sk: Skill, rank = 1, mastery = 0) { const max = maxSkillLevel(sk); return Math.min(max + Math.min(PROGRESSION.limitBreak.max, Math.max(0, mastery - max)), Math.max(0, rank - 1, mastery)); }
 /** 장착 AP 한도. v27.86 절제 서약은 −2·−4·−6(최소 1). */
-/** v3.37 장착 AP 내역(능력치 화면 표시와 apCapacity가 같은 목록을 씁니다). 무릉도장 30·60·90층 AP는 없앴습니다. */
+/** v3.38 장착 AP 내역(능력치 화면 표시와 apCapacity가 같은 목록을 씁니다). 무릉도장 30·60·90층 AP는 없앴습니다. */
 export function apSources(s: State): { id: string; label: string; value: number }[] {
     return [
         { id: 'base', label: '기본', value: PROGRESSION.baseAP },

@@ -24,7 +24,7 @@ export const abyssPearls = (depth: number) => (1 + Math.floor(depth / 10)) * (de
 export const ABYSS_SP_MILESTONES = [10, 25, 50, 100];
 export const nextAbyssMilestone = (best: number) => ABYSS_SP_MILESTONES.find(n => n > best);
 
-/** v25.8 무릉도장 10층마다 첫 돌파 보너스 세계석(층 수만큼). v3.37 장착 AP 이정표는 없앴습니다. */
+/** v25.8 무릉도장 10층마다 첫 돌파 보너스 세계석(층 수만큼). v3.38 장착 AP 이정표는 없앴습니다. */
 export const abyssFloorBonus = (depth: number) => depth % 10 === 0 ? depth : 0;
 /** v25.8 윤회 칭호: 환생 횟수로 얻는 영구 칭호. 랭킹·채팅·전투 화면에 이름과 함께 표시됩니다. */
 export const REBIRTH_TITLES: { rebirths: number; title: string }[] = [

@@ -89,7 +89,7 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
-    // 자동 정리(v3.37 옛 자동 분해기·자동 판매기): 1단계는 희귀, 2단계는 영웅 이하를 바로 분해(정수, autoSell) 또는 판매(골드, autoVend). 유물·장비 도감에 없는 종류는 남깁니다.
+    // 자동 정리(v3.38 옛 자동 분해기·자동 판매기): 1단계는 희귀, 2단계는 영웅 이하를 바로 분해(정수, autoSell) 또는 판매(골드, autoVend). 유물·장비 도감에 없는 종류는 남깁니다.
     const net = researchRank(s, 'sortingNet');
     if (net && s.autoSell && !item.relic && item.rarity <= net && s.itemBook?.[itemKey(slot, rarity)]) {
         const essence = dismantleEssence(item);
@@ -346,7 +346,7 @@ export function reward(s: State, rng: () => number) {
                 s.pearls += pearls;
                 addLog(s, `무릉도장 ${depth}층 정복 · 세계석 +${pearls}`, 'reward');
                 s.abyssMilestones ??= [];
-                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 세계석). v3.37 30·60·90층 장착 AP 이정표는 없앴습니다.
+                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 세계석). v3.38 30·60·90층 장착 AP 이정표는 없앴습니다.
                 if (deeper && abyssFloorBonus(depth)) { s.pearls += abyssFloorBonus(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 · 보너스 세계석 +${abyssFloorBonus(depth)}`, 'reward'); }
                 if (ABYSS_SP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) {
                     s.abyssMilestones.push(depth);

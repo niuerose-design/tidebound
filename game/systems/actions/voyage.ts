@@ -98,7 +98,7 @@ export const voyageActions: ActionHandlers = {
     offlineDismiss(s) {
         s.lastOffline = null;
     },
-    /** v3.37 자동 정리: off · dismantle(정수, autoSell) · sell(골드, autoVend). 둘은 동시에 켜지지 않습니다. */
+    /** v3.38 자동 정리: off · dismantle(정수, autoSell) · sell(골드, autoVend). 둘은 동시에 켜지지 않습니다. */
     autoSort(s, { a }) {
         if (!researchRank(s, 'sortingNet'))
             throw Error('자동 정리 연구가 필요합니다.');

@@ -11,18 +11,18 @@ import { RANKS, RANK_CUMULATIVE, RANK_TOTAL_POINTS, rankState, rankPointsSpent }
 
 /**
  * v25.6 업적: 조건을 처음 만족하면 한 번만 해금되고 보상을 바로 받습니다. 환생 후에도 유지됩니다.
- * 보상 종류: 세계석(pearls), SP(sp), 영구 장착 AP(ap). v3.37 업적마다 붙던 능력치 배율은 ‘업적 보너스’ 하나로 합쳤습니다(받은 업적 수 × ACHIEVEMENT_BONUS_PER).
+ * 보상 종류: 세계석(pearls), SP(sp), 영구 장착 AP(ap). v3.38 업적마다 붙던 능력치 배율은 ‘업적 보너스’ 하나로 합쳤습니다(받은 업적 수 × ACHIEVEMENT_BONUS_PER).
  * v27.58 무릉도장 묶음을 던전 묶음으로 넓혔습니다(던전 정복·보스 업적이 옮겨 옴, id는 그대로라 세이브와 호환).
  * 조건 판정은 저장 상태만 보며 난수를 쓰지 않습니다. 기존 세이브는 이미 달성한 업적을 조용히 채우되 보상은 지급합니다.
  */
 export type AchievementReward = { pearls?: number; sp?: number; ap?: number };
 export type AchievementBonusKey = 'attack' | 'magic' | 'hp' | 'defense' | 'resist';
 /**
- * v3.37 업적 보너스: 받은 업적 1개마다 더하는 능력치 배율. 예전 업적 38개에 흩어져 있던 배율(최대 공격·마법 +41%, 체력 +49%, 방어·저항 +21%)을
+ * v3.38 업적 보너스: 받은 업적 1개마다 더하는 능력치 배율. 예전 업적 38개에 흩어져 있던 배율(최대 공격·마법 +41%, 체력 +49%, 방어·저항 +21%)을
  * 모든 업적에 고르게 나눴습니다(전부 받으면 예전 최대와 비슷).
  */
 export const ACHIEVEMENT_BONUS_PER: Record<AchievementBonusKey, number> = { attack: .0022, magic: .0022, hp: .0026, defense: .0011, resist: .0011 };
-export type Achievement = { /** v3.37 명예 업적: 업적 보너스(능력치) 집계에서 빠지고 칭호를 줍니다. 새로 늘리는 업적은 명예 업적으로 둡니다. */ honor?: boolean; id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '계급' | '도전' | '강화'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
+export type Achievement = { /** v3.38 명예 업적: 업적 보너스(능력치) 집계에서 빠지고 칭호를 줍니다. 새로 늘리는 업적은 명예 업적으로 둡니다. */ honor?: boolean; id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '계급' | '도전' | '강화'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
 
 const kills = (s: State) => s.kills || 0;
 /** 도감 업적 대상. v27.58 경험의 누리는 빼서 '도감 전체' 업적 id(codex:종 수)가 바뀌지 않게 합니다. */
@@ -55,7 +55,7 @@ const tiers = (s: State) => Math.max(0, ...(s.unlockedJobs || []).map(id => JOBS
 const series = (prefix: string, group: Achievement['group'], title: (n: number) => string, desc: (n: number) => string, steps: number[], progress: (s: State) => number, reward: (i: number) => AchievementReward): Achievement[] =>
     steps.map((n, i) => ({ id: `${prefix}:${n}`, group, title: title(n), desc: desc(n), reward: reward(i), progress, target: n }));
 
-/** v3.37 던전 첫 정복 SP(옛 boss-research.ts). 업적 id는 firstClear:던전 id. */
+/** v3.38 던전 첫 정복 SP(옛 boss-research.ts). 업적 id는 firstClear:던전 id. */
 export const FIRST_CLEAR_SP: Record<string, number> = { grotto: 1, kelpCatacomb: 1, cemetery: 1, caldera: 1, temple: 2, starSanctum: 2, ventCathedral: 3, abyss: 2 };
 const PLAIN_FIRST_CLEAR = Object.entries(FIRST_CLEAR_SP);
 const DUNGEON_NAME = (id: string) => ALL_DUNGEONS.find(d => d.id === id)?.name || id;
@@ -108,7 +108,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     // v27.58 업적 확장: 묶음마다 새 기록을 늘리고, 마지막 단계에 SP +1을 붙였습니다.
     ...series('level', '모험', n => `Lv.${n}`, n => `최고 레벨 ${n}에 도달합니다(환생 전 기록 포함).`, [30, 50, 70, 85, 100], s => s.peakLevel || s.level, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 12, ap: 1 }, { pearls: 25, sp: 1 }][i]),
     ...series('items', '모험', n => `물건도감 ${n}종`, n => `물건도감에 장비 ${n}종(부위 × 등급)을 등록합니다.`, [8, 16, 28], s => Object.keys(s.itemBook || {}).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
-    // v3.37 장소 완성 장착 AP(곳마다 +1)를 이 업적으로 옮겼습니다. 1·4·14곳은 원래 업적, 나머지 단계는 명예 업적(칭호, 업적 보너스 집계 제외).
+    // v3.38 장소 완성 장착 AP(곳마다 +1)를 이 업적으로 옮겼습니다. 1·4·14곳은 원래 업적, 나머지 단계는 명예 업적(칭호, 업적 보너스 집계 제외).
     ...series('regions', '모험', n => `지역 연구 ${n}곳 완성`, n => `사냥터 ${n}곳의 모든 몬스터 도감을 완성합니다.`, STAGES.map((_, i) => i + 1), s => completedRegions(s).length, i => i === 0 ? { pearls: 2, ap: 1 } : i === 3 ? { pearls: 6, ap: 1 } : i === STAGES.length - 1 ? { pearls: 12, sp: 1, ap: 1 } : { ap: 1 }).map(a => [1, 4, STAGES.length].includes(a.target) ? a : { ...a, honor: true }),
     ...series('golden', '사냥', n => `황금 개체 ${n}마리`, n => `황금 개체를 ${n}마리 처치합니다.`, [1, 10, 100], goldens, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('variants', '사냥', n => `변종 ${n.toLocaleString()}마리`, n => `거대·심연·별빛·무리 변종을 ${n.toLocaleString()}번 처치합니다.`, [10, 100, 1000], variants, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
@@ -116,7 +116,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('nuri', '사냥', n => `경험의 누리 ${n}마리`, n => `경험의 누리를 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[EXP_NURI.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('jobs', '숙련', n => `직업 ${n}개 해금`, n => `직업 ${n}개를 해금합니다.`, [10, 30, 80], s => (s.unlockedJobs || []).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('learned', '숙련', n => `스킬 ${n}개 습득`, n => `SP로 스킬 ${n}개를 배웁니다.`, [10, 30, 80], s => Object.values(s.learned || {}).filter(n => n > 0).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
-    // v3.37 던전 첫 정복 SP(옛 ‘보스 연구’, 던전 화면의 따로 받기 버튼)를 업적으로 옮겼습니다.
+    // v3.38 던전 첫 정복 SP(옛 ‘보스 연구’, 던전 화면의 따로 받기 버튼)를 업적으로 옮겼습니다.
     ...PLAIN_FIRST_CLEAR.map(([id, sp]) => ({ id: `firstClear:${id}`, group: '던전' as const, title: `${DUNGEON_NAME(id)} 첫 정복`, desc: `${DUNGEON_NAME(id)}을(를) 처음 정복합니다.`, reward: { sp }, progress: (s: State) => (s.clears?.[id] || 0) > 0 ? 1 : 0, target: 1 })),
     ...series('dungeonsTen', '던전', n => `던전 ${n}곳 10회 정복`, n => `서로 다른 던전 ${n}곳을 각각 10번 이상 정복합니다.`, [3, DUNGEONS.length], dungeonsAt(10), i => [{ pearls: 5 }, { pearls: 12, sp: 1 }][i]),
     ...series('dungeonsHundred', '던전', n => `던전 ${n}곳 100회 정복`, n => `서로 다른 던전 ${n}곳을 각각 100번 이상 정복합니다.`, [1, DUNGEONS.length], dungeonsAt(100), i => [{ pearls: 5 }, { pearls: 20, ap: 1, sp: 1 }][i]),

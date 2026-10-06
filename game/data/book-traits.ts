@@ -22,7 +22,7 @@ export const REGION_RESEARCH_FROM = 1;
 export const REGION_RESEARCH_MAX = 3;
 type RegionBonus = { label: string; add?: StatBonus; scale?: Partial<Record<'hp' | 'attack' | 'magic' | 'defense' | 'resist', number>>; rareSpawn?: number };
 /**
- * v3.37 장소 테마(사냥터별 완성 보너스)를 지역 연구로 합쳤습니다. first는 지역 연구 1단계(= 지역 몬스터 전부 처치 50회)에 한 번 붙는 첫 보너스로,
+ * v3.38 장소 테마(사냥터별 완성 보너스)를 지역 연구로 합쳤습니다. first는 지역 연구 1단계(= 지역 몬스터 전부 처치 50회)에 한 번 붙는 첫 보너스로,
  * 예전 그 지역 장소 테마들의 합입니다. 나머지(label·add·scale)는 전처럼 단계마다 쌓입니다. 장소 완성 장착 AP +1은 그대로입니다.
  */
 export const REGION_RESEARCH: Record<string, RegionBonus & { first: RegionBonus }> = {

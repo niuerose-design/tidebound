@@ -88,7 +88,7 @@ function ChatFeed({ open, playerName, active }: { open: boolean; playerName: str
 }
 
 /**
- * v3.38 소식: 서버가 올리는 시스템 줄(모험가 소식 · 제단 · 해킹 공지)만 보는 읽기 전용 목록. 채팅과 같은 방식으로 열려 있을 때만 받습니다.
+ * v3.39 소식: 서버가 올리는 시스템 줄(모험가 소식 · 제단 · 해킹 공지)만 보는 읽기 전용 목록. 채팅과 같은 방식으로 열려 있을 때만 받습니다.
  */
 export function NewsFeed({ open }: { open: boolean }) {
     const { lines, error } = useChat(open, 'news');

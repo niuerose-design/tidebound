@@ -9,7 +9,7 @@ test('Codex: crossing several thresholds claims all pending ranks once; claim-al
 });
 test('Stat trace: per-source deltas sum to the final value and do not change the result',()=>{
  const s=newState(0);s.level=60;s.rebirths=4;s.attributes.str=40;s.attributes.vit=30;s.attributes.luk=20;s.permanent.hp=5;s.permanent.attack=7;s.permanent.guard=3;s.permanent.gold=2;s.book.minnow=600;
- // v3.37 도감 기여는 지역 연구 1단계 첫 보너스(커닝시티: 체력·공격·방어 +2%)로 확인합니다(지역 몬스터 전부 처치 50회).
+ // v3.38 도감 기여는 지역 연구 1단계 첫 보너스(커닝시티: 체력·공격·방어 +2%)로 확인합니다(지역 몬스터 전부 처치 50회).
  for(const id of ['starKoi','prismRay','voidGuppy','abyssManta','novaManta','ventCrab','glassSquid','sulfurEel','blindShark','cinderAngler','ventLeviathan'])s.book[id]=50;
  s.equipment.rod={id:'t',slot:'rod',rarity:2,power:30,level:20,name:'t',enhance:3};
  const plain=stats(s),trace={},traced=stats(s,trace);assert.deepEqual(traced,plain);
@@ -30,17 +30,17 @@ test('Recovery v27.8: 20% after a win minus 1%p per sea tier (min 5%), 8% in dun
  s.dungeon={id:'grotto',wave:0};assert.equal(victoryHeal(s),Math.floor(max*.08));
  const src=encounterSource.slice(encounterSource.indexOf('function reward('));const end=src.indexOf('\nexport function ');assert.equal(((end<0?src:src.slice(0,end)).match(/victoryHeal\(/g)||[]).length,1);
 });
-test('v3.37 growth goal is gone: the action is refused and old saves drop the field and the legacy guild record',()=>{
+test('v3.38 growth goal is gone: the action is refused and old saves drop the field and the legacy guild record',()=>{
  const s=newState(0);assert.throws(()=>act(s,{type:'growthGoal',id:'whaler',value:'job'},0),/지원하지 않는/);
  s.growthGoal={kind:'job',id:'whaler'};s.guild={name:'',level:3};migrateState(s,0);assert.equal('growthGoal' in s,false);assert.equal('guild' in s,false);
 });
-test('v3.37 AP sources: the breakdown sums to the cap and abyss floors no longer give AP',async()=>{
+test('v3.38 AP sources: the breakdown sums to the cap and abyss floors no longer give AP',async()=>{
  const P=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
  const s=newState(0);s.rebirths=5;s.permanent.ap=3;s.abyssMilestones=[30,60,90];const src=P.apSources(s);
  assert.equal(src.reduce((a,x)=>a+x.value,0),P.apCapacity(s));assert.equal(src.find(x=>x.id==='rebirth').value,5);assert.equal(src.some(x=>/무릉/.test(x.label)),false);
  const t=newState(0);t.abyssMilestones=[30,60,90];assert.equal(P.apCapacity(t),P.apCapacity(newState(0)),'abyss milestones add nothing');
 });
-test('v3.37 place AP moves to region achievements once: old saves keep their AP; honor steps give titles and skip the achievement bonus',async()=>{
+test('v3.38 place AP moves to region achievements once: old saves keep their AP; honor steps give titles and skip the achievement bonus',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),A=await L.load('data/achievements'),T=await L.load('data/titles'),W=await L.load('data/world');
  const o=newState(0);o.version=8;delete o.placeApMoved;for(const st of W.PLACES.slice(0,5))for(const id of st.fish)o.book[id]=50;
  migrateState(o,0);assert.equal(o.placeApMoved,true);for(const n of [1,2,3,4,5])assert.equal(o.achievementClaims[`regions:${n}`],true);
@@ -51,7 +51,7 @@ test('v3.37 place AP moves to region achievements once: old saves keep their AP;
  assert.ok(T.TITLES.some(t=>t.achievement==='regions:13'));
  const v=newState(0);v.version=8;delete v.placeApMoved;v.rebirths=5;v.achievements={'rebirths:5':50};for(const st of W.PLACES.slice(0,3))for(const id of st.fish)v.book[id]=50;migrateState(v,0);assert.equal(T.displayTitle({...v,title:undefined}),T.displayTitle({achievements:{'rebirths:5':50},rebirths:5,title:undefined}),'auto title is not replaced by the backfilled honor titles');
 });
-test('v3.38 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22-star/general rank make one line each, once a day per kind',async()=>{
+test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22-star/general rank make one line each, once a day per kind',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),R=await L.load('data/rank'),C=await L.load('data/classes'),O=await L.load('data/onyx');
  const s=newState(0);assert.deepEqual(N.collectNews(s,0),[]);assert.ok(s.newsMark);assert.deepEqual(N.collectNews(s,0),[],'nothing new');
  const boss=O.ONYX_BOSSES[0];s.inventory.push({id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.accessory.name,onyx:boss.id});
@@ -62,7 +62,7 @@ test('v3.38 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22
  s.abyssBest=150;assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');s.abyssBest=200;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again');
  s.abyssBest=0;assert.deepEqual(N.collectNews(s,86_400_000*5),[],'a lower best (after ascension) never announces');
 });
-test('v3.37 first-clear SP is an achievement; old boss-research claims move over as claimed (no double SP)',()=>{
+test('v3.38 first-clear SP is an achievement; old boss-research claims move over as claimed (no double SP)',()=>{
  const s=newState(0);s.clears.grotto=1;act(s,{type:'sync'},0);assert.ok(s.achievements['firstClear:grotto']!==undefined);const sp=s.sp;act(s,{type:'claimAchievement',id:'firstClear:grotto'},0);assert.equal(s.sp,sp+1);
  assert.throws(()=>act(s,{type:'bossResearch',id:'grotto'},0),/지원하지 않는/);
  const o=newState(0);o.clears.temple=1;o.bossResearchClaims={temple:true};migrateState(o,0);assert.equal(o.achievementClaims['firstClear:temple'],true);assert.equal('bossResearchClaims' in o,false);
@@ -73,9 +73,9 @@ test('Stat points: 5 per level, old saves get the difference once, max button sp
  act(old,{type:'attribute',id:'vit',value:'max'},0);assert.equal(old.statPoints,0);assert.equal(old.attributes.vit,30);assert.throws(()=>act(old,{type:'attribute',id:'vit',value:'max'},0));assert.throws(()=>act(old,{type:'attribute',id:'vit',value:'7'},0));
 });
 
-test('v27.72 tutorial: 13 steps (v3.37), completed steps are recorded and never regress, veterans are backfilled silently', async () => {
+test('v27.72 tutorial: 13 steps (v3.38), completed steps are recorded and never regress, veterans are backfilled silently', async () => {
     const { TUTORIAL_STEPS, tutorialProgress, tutorialStepDone, nextTutorialStep, syncTutorial } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/guidance');
-    // v3.37 환생 전 12단계 + 사냥터 난이도(중후반 8단계는 안내 팁으로).
+    // v3.38 환생 전 12단계 + 사냥터 난이도(중후반 8단계는 안내 팁으로).
     assert.equal(TUTORIAL_STEPS.length, 13); assert.deepEqual(TUTORIAL_STEPS.map(x => x.id), ['catch', 'attribute', 'skill', 'stage', 'dungeon', 'job', 'enhance', 'book', 'achievement', 'altar', 'research', 'rebirth', 'tide']);
     const s = newState(0); s.tutorial = { done: {} }; assert.equal(tutorialProgress(s), 1, 'starter skill counts as equipped'); assert.deepEqual(s.tutorial, { done: {} });
     s.clears = { grotto: 1 }; assert.ok(tutorialStepDone(s, TUTORIAL_STEPS.find(x => x.id === 'dungeon')));

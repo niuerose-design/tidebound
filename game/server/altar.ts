@@ -92,7 +92,7 @@ export async function backdoorGauge(gauge: AltarGaugeId, points: number, now: nu
     await shared(now, true);
 }
 
-/** 제단 소식을 남깁니다(실패해도 본 처리는 그대로). v3.38 전체 채팅 대신 소식 채널. */
+/** 제단 소식을 남깁니다(실패해도 본 처리는 그대로). v3.39 전체 채팅 대신 소식 채널. */
 async function announce(text: string, now: number) {
     try { await db().postChat({ channel: 'news', account_id: 'system', name: '제단', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
 }
