@@ -116,7 +116,7 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
     if (roll < p + d) {
         sf.destroy++;
         item.starFails = 0;
-        if (item.relic || item.heir) { item.enhance = STARFORCE.relicResetStar; return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! ${item.relic ? '유물' : '계승 장비'}라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G` }; }
+        if (item.relic || item.heir || item.onyx) { item.enhance = STARFORCE.relicResetStar; return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! ${item.relic ? '유물' : item.onyx ? '칠흑 장신구' : '계승 장비'}라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G` }; }
         s.inventory = s.inventory.filter(x => x.id !== item.id);
         for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
         return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 장비가 파괴되었습니다 · -${cost} G` };
@@ -348,7 +348,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             if (s.gold - cost < floor) { stop = count.tries ? '골드 한도 도달' : '골드 부족'; break; }
             const r = starForceAttempt(s, item, safeguard, rng, spend);
             count.tries++; count.gold += r.cost; count[r.outcome]++;
-            if (r.outcome === 'destroy') { stop = item.relic || item.heir ? `파괴 · ${item.relic ? '유물' : '계승 장비'} ${STARFORCE.relicResetStar}성 회귀` : '파괴'; break; }
+            if (r.outcome === 'destroy') { stop = item.relic || item.heir || item.onyx ? `파괴 · ${item.relic ? '유물' : item.onyx ? '칠흑 장신구' : '계승 장비'} ${STARFORCE.relicResetStar}성 회귀` : '파괴'; break; }
         }
         if (!stop) stop = `시도 ${AUTO_STAR_MAX_TRIES}회 한도`;
         if (!count.tries) throw Error(stop === '골드 부족' ? '골드가 부족합니다.' : stop);

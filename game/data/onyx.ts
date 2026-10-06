@@ -10,6 +10,7 @@ import { ODDS } from './odds';
  * 처치하면 drop 확률로 그 보스의 칠흑 장신구 1개를 받습니다(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석 duplicatePearls). 장신구는 환생해도 남습니다.
  * 엔드 콘텐츠 기준: 서식지 방치 시 출현 약 180회/시간 → 보스 약 13회/일(난이도 0). drop .003 · 천장 400이면 장신구 1개에 기대 약 18일, 최장 약 31일(난이도 50에서는 절반). 7종 완성은 반년 남짓.
  * 보스마다 고유 성향·기술이 있습니다(data/encounters PROFILES onyx*).
+ * v3.77 장신구 위력은 계승 태초와 같은 환생 성장(systems/equipment heirKind → primal), 무작위 옵션은 얻을 때 최고 굴림(tuneOnyx), 강화 파괴 시 12성으로 돌아갑니다.
  */
 // v3.52 출현·드롭 확률과 천장은 서버 전용(game/secret/odds.ts). 체력·공격·머무는 턴·옵션 수는 공개.
 export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, hp: 100, attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5, power: 5.2, affixes: 5 };

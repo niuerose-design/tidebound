@@ -6,7 +6,7 @@ import { jobMasteryTarget, extremeBroken } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
-import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY } from '../data/economy';
+import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY, heirPower } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
 import { MIMIC, LETTER, letterRank, rollMimicMastery, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
@@ -25,7 +25,7 @@ import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
-import { dismantleEssence, saleValue, keepsAcrossLives, equippedAffixTotal } from './equipment';
+import { dismantleEssence, saleValue, keepsAcrossLives, equippedAffixTotal, tuneOnyx } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
 import { recordGoal, recordAbyssDepth } from './progress';
@@ -324,7 +324,10 @@ export function reward(s: State, rng: () => number) {
         else {
             s.onyxMiss[e.onyx] = 0;
             const stageLevel = STAGES.find(x => x.id === s.stage)?.level || fishLevelOf(e.id), item = onyxAccessory(bossDef, `onyx-${e.onyx}-${s.turn}`, stageLevel);
+            // v3.77 칠흑 장신구는 계승 태초와 같은 위력(환생 성장)이고 무작위 옵션은 최고 굴림입니다.
+            item.power = heirPower('primal', s.rebirths || 0, stageLevel);
             item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', stageLevel);
+            tuneOnyx(item);
             s.inventory.push(item); s.itemBook ??= {}; s.itemBook[onyxCodexKey(e.onyx)] = true;
             addLog(s, `✦ ${bossDef.name} 격파 · 칠흑 장신구 ‘${item.name}’ 획득! 환생해도 남습니다 (보유 ${ownedOnyx(s).size}/7종) · 물건 도감 자동 등록`, 'reward');
         }

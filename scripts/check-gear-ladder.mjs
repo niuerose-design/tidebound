@@ -6,13 +6,13 @@ import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine'), { stats, power, dropRate } = await load('systems/stats');
-const { RARITIES } = await load('data/balance'), Ec = await load('data/economy'), { ONYX, ONYX_BOSSES, onyxAccessory } = await load('data/onyx');
+const { RARITIES } = await load('data/balance'), Ec = await load('data/economy');
 const { starMultiplier } = await load('data/starforce'), { rarityShareFrom } = await load('systems/encounter'), { gearName } = await load('data/maple-gear');
 const { rollAffixes } = await load('data/gear'), C = await load('systems/commerce');
 
 const KILLS_PER_HOUR = 1730, SAMPLES = 240, SLOTS = ['rod', 'coat', 'charm', 'cape'];
 const fmt = v => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
-console.log(`등급 배율 ${RARITIES.map(r => `${r.name}×${r.factor}`).join(' ')} · 칠흑 ×${ONYX.power} · 22성 ×${starMultiplier(22).toFixed(2)}`);
+console.log(`등급 배율 ${RARITIES.map(r => `${r.name}×${r.factor}`).join(' ')} · 22성 ×${starMultiplier(22).toFixed(2)}`);
 
 // 1. 장비 몫: Lv.100 · 환생 200 · 치명타 약 100%(행운 300, 키운 캐릭터 기준) 캐릭터에 같은 종류 Lv.100 장비 4부위를 끼운 전투력(v3.66 실제 전투식) ÷ 장비 없음. kind가 있으면 계승 장비(유물·원시 고대·계승 태초) 위력 공식.
 const body = () => { const s = newState(0); s.level = 100; s.rebirths = 200; s.statPoints = 0; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 300 }; Object.assign(s.permanent, { attack: 200, hp: 200, guard: 100, magicGuard: 100 }); s.equipment = { rod: null, coat: null, charm: null, cape: null }; return s; };
@@ -31,7 +31,7 @@ for (const [kind, rarity, name] of [['relic', 3, '유물'], ['ancient', 5, '원�
     heir[kind] = [0, 100, 200].map(rb => share(rarity, 22, kind, rb));
     console.log(`${name} 장비 몫(22성 4부위) 환생 0/100/200: ${heir[kind].map(x => `×${x.toFixed(2)}`).join(' / ')} · Lv.100 위력 ${[0, 100, 200].map(rb => Ec.heirPower(kind, rb, 100)).join('/')}`);
 }
-console.log(`칠흑 장신구 위력 ${onyxAccessory(ONYX_BOSSES[0], 'x', 100).power} · 원시 각성 정수 환생 0/100/200: ${[0, 100, 200].map(rb => Ec.awakenEssence(rb).toLocaleString()).join(' / ')} · 태초 계승 게이지 ${Ec.PRIMAL_INHERIT.gauge}`);
+console.log(`칠흑 장신구 위력(v3.77 계승 태초와 같은 성장) 환생 0/100/200: ${[0, 100, 200].map(rb => Ec.heirPower('primal', rb, 100)).join('/')} · 원시 각성 정수 환생 0/100/200: ${[0, 100, 200].map(rb => Ec.awakenEssence(rb).toLocaleString()).join(' / ')} · 태초 계승 게이지 ${Ec.PRIMAL_INHERIT.gauge}`);
 
 // 3. 획득: 사냥 드롭(기준 캐릭터) · 감정 · 칠흑.
 const book = Object.fromEntries(SLOTS.flatMap(s => [0, 1, 2, 3, 4, 5, 6].map(r => [`${s}:${r}`, true])));

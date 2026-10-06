@@ -458,3 +458,15 @@ test('v3.75 rare primal/onyx options (drill/valor fixed +1, apex super crit, dis
     const pinch = G.rollOption(G.affixDef('pinch'), 500, 6, () => .9, 100); assert.equal(Eq.itemStats({ id: 'c', slot: 'charm', rarity: 6, power: 10, level: 10, affixes: [pinch] }).hp, 1, 'pinch is a flat +1 hp');
     for (const id of ['ornate', 'pinch']) assert.ok(!Co.imprintChoices('rod').some(a => a.id === id));
 });
+test('v3.77 onyx accessories grow like inherited primal gear, carry max-rolled options and fall back to 12★ instead of breaking', async () => {
+    const M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment'), Ec = await L.load('data/economy'), C = await L.load('systems/commerce'), SF = await L.load('data/starforce'), O = await L.load('data/onyx'), G = await L.load('data/gear');
+    const s = newState(0); s.rebirths = 150; s.level = 100;
+    const it = O.onyxAccessory(O.ONYX_BOSSES[0], 'ox', 100); it.affixes = G.rollAffixes(6, it.power, it.origin, () => .3, it.affixes, 'charm', 100); const before = it.power;
+    s.inventory = [it]; M.migrateState(s, 0);
+    assert.equal(Eq.heirKind(it), 'primal'); assert.equal(it.power, Ec.heirPower('primal', 150, 100)); assert.ok(it.power > before, 'grows with rebirths');
+    assert.equal(it.onyxTuned, true); assert.ok(it.affixes[0].rule && it.affixes[0].value === O.ONYX_BOSSES[0].accessory.affix.value, 'unique rule kept');
+    for (const x of it.affixes.filter(a => !a.rule)) { const q = G.affixQuality(x, it.power, it.rarity, 100); assert.ok(q === null || q > .99, `${x.id} max roll ${q}`); }
+    const tuned = JSON.stringify(it.affixes); M.migrateState(s, 0); assert.equal(JSON.stringify(it.affixes), tuned, 'tuned once');
+    it.enhance = 21; const r = C.starForceAttempt(s, it, false, () => SF.starSuccess(21) + 1e-9, () => {});
+    assert.equal(r.outcome, 'destroy'); assert.ok(s.inventory.includes(it), 'not lost'); assert.equal(it.enhance, SF.STARFORCE.relicResetStar);
+});
