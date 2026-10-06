@@ -6,7 +6,7 @@
 import type { Job } from './classes';
 
 export type RoleId = 'dealer' | 'tank' | 'buffer' | 'border' | 'none';
-export type SubRoleId = 'physical' | 'magic' | 'status' | 'reflect' | 'control' | 'drain' | 'healer' | 'utility' | 'border' | 'training' | 'none';
+export type SubRoleId = 'physical' | 'magic' | 'status' | 'reflect' | 'control' | 'drain' | 'healer' | 'utility' | 'border' | 'borderBuffer' | 'training' | 'none';
 export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     physical: { role: 'dealer', name: '물리 딜러' },
     magic: { role: 'dealer', name: '마법 딜러' },
@@ -18,6 +18,8 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     utility: { role: 'buffer', name: '유틸리티' },
     /** 일부러 역할 경계에 선 히든 직업(제로). */
     border: { role: 'border', name: '경계: 딜러 · 제어 탱커' },
+    /** v3.76 일부러 힐러와 유틸리티 경계에 선 직업(아이돌 연습생: 회복 + 경험치). */
+    borderBuffer: { role: 'border', name: '경계: 힐러 · 유틸리티' },
     /** 독립 수련(계승 재료). */
     training: { role: 'none', name: '수련' },
     none: { role: 'none', name: '역할 없음' },
@@ -41,7 +43,7 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
 };
 /** 계보 기본값과 다른 직업(갈림길·곁가지). */
 export const ROLE_BY_JOB: Record<string, SubRoleId> = {
-    oracle: 'healer', lunarOracle: 'healer', coralSaint: 'healer', tideMender: 'healer', coralBuilder: 'healer', tidalSinger: 'healer',
+    oracle: 'healer', lunarOracle: 'healer', coralSaint: 'healer', tideMender: 'healer', coralBuilder: 'healer', tidalSinger: 'borderBuffer',
     reefBrawler: 'drain', inkMime: 'utility', crystalCaster: 'magic', deckGunner: 'physical', clockworkAngler: 'physical', allRounder: 'physical',
     glyphMonk: 'physical',
 };
