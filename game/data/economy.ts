@@ -161,7 +161,7 @@ export const RELIC_GROWTH = { imprintSlots: 3, imprintCost: 5, starBase: 12 };
  * docs/gear-endgame.md 7절: Lv.100 · 22성 4부위 전투력(v3.66 실제 전투식)이 환생 200에서 유물 ≈ 신화 × 1.05(신화와 고대 사이),
  * 원시 고대 ≈ 신화 × 1.5, 계승 태초 ≈ 신화 × 2가 되도록 scripts/check-gear-ladder.mjs로 맞춘 값입니다. 환생 0에서는 유물이 신화의 약 0.75배, 계승 장비는 일반 고대·태초와 비슷합니다.
  */
-export const HEIR_GROWTH = { toRebirth: 200, relic: { from: 2.57, to: 3.65 }, ancient: { from: 4.5, to: 5.92 }, primal: { from: 5.18, to: 7.73 } } as const;
+export const HEIR_GROWTH = { toRebirth: 200, relic: { from: 2.57, to: 3.75 }, ancient: { from: 4.5, to: 5.92 }, primal: { from: 5.18, to: 7.73 } } as const;
 /**
  * v3.66 예전 유물 위력(기본 × (1 + 환생 × 4%) × (1 + (레벨 − 1) × 1%)). 이 업데이트 전에 이미 가진 유물(relicLegacy)은 다음 승천까지
  * 예전 공식과 새 공식 중 높은 쪽을 씁니다(유저가 가진 유물이 갑자기 약해지지 않게). 승천 뒤 다시 받는 유물은 새 공식만 씁니다.

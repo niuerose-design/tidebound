@@ -26,6 +26,8 @@ export type AffixDef = {
     retired?: boolean;
     /** v3.72 stat2도 굴림 · 등급 품질을 받는 이중 옵션(양날 옵션의 손해 쪽은 고정이라 false). */
     rollBoth?: boolean;
+    /** v3.73 뽑힐 가중치(기본 1). 치명 피해처럼 강한 옵션은 덜 나옵니다. 저격 뽑기로 고르면 그대로 붙습니다. */
+    weight?: number;
     /** v25.8 이 출처(던전 id)에서 떨어진 장비에만 붙는 옵션. */
     onlyOrigin?: string;
     /** v3.5 이 부위에만 붙는 옵션. */
@@ -55,7 +57,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'current', name: '순환', stat: 'manaRegen', kind: 'flat', base: .012, description: '턴당 마나 회복이 오릅니다.' },
     { id: 'precise', name: '정밀', stat: 'accuracy', kind: 'percent', base: .03, retired: true, description: '명중이 오릅니다. (v3.72 감각으로 통합, 새로 붙지 않음)' },
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
-    { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, description: '치명 피해가 오릅니다.' },
+    { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, weight: .4, description: '치명 피해가 오릅니다.' },
     { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', base: .025, description: '방어 관통이 오릅니다.' },
     { id: 'leech', name: '흡혈', stat: 'lifesteal', kind: 'percent', base: .015, description: '준 피해의 일부를 회복합니다 (장비 흡혈 합계 최대 10%p).' },
     { id: 'drift', name: '회피', stat: 'evasion', kind: 'percent', base: .02, retired: true, description: '회피가 오릅니다. (v3.72 감각으로 통합, 새로 붙지 않음)' },
@@ -76,7 +78,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .075, stat2: 'accuracy', base2: -.09, description: '치명타가 크게 오르지만 명중이 줄어듭니다.' },
     { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -2.25, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 10%p).' },
     // v3.71 고대 이상 전용 옵션(minRarity 5): 고대 · 태초에서만 굴려지는 강한 옵션. 각인 감정으로는 고를 수 없습니다(낮은 등급이 나올 수 있어서).
-    { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, description: '고대 이상. 치명 피해가 크게 오릅니다.' },
+    { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, weight: .4, description: '고대 이상. 치명 피해가 크게 오릅니다.' },
     { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, description: '고대 이상. 체력 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },
     { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, description: '고대 이상. 보스 · 사냥감에게 주는 피해가 오릅니다.' },
     { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, description: '고대 이상. 연속 행동 확률이 오릅니다(속도와 무관).' },
@@ -154,7 +156,7 @@ const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(M
 
 function pickAffix(pool: AffixDef[], origin: string | undefined, rng: () => number) {
     const theme = new Set(ORIGIN_THEMES[origin || '']?.affixes || []);
-    const weights = pool.map(a => theme.has(a.id) ? THEME_WEIGHT : 1);
+    const weights = pool.map(a => (theme.has(a.id) ? THEME_WEIGHT : 1) * (a.weight ?? 1));
     let roll = rng() * weights.reduce((sum, w) => sum + w, 0);
     for (let i = 0; i < pool.length; i++) { roll -= weights[i]; if (roll <= 0) return pool[i]; }
     return pool[pool.length - 1];
