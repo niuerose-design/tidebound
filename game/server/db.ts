@@ -206,6 +206,9 @@ const SCHEMA = [
     'CREATE TABLE IF NOT EXISTS crews (id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE, data TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0, updated_at BIGINT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS wallets (account_id TEXT PRIMARY KEY, pearls INTEGER NOT NULL DEFAULT 0, essence INTEGER NOT NULL DEFAULT 0, week TEXT NOT NULL DEFAULT \'\', pearl_out INTEGER NOT NULL DEFAULT 0)',
 ];
+/** v3.88 SCHEMA 지문(FNV-1a): 문장이 하나라도 바뀌면 달라집니다. settings의 SCHEMA_SETTING 칸에 둡니다. */
+const SCHEMA_SETTING = 'schemaSignature';
+export const SCHEMA_SIGNATURE = (() => { let h = 0x811c9dc5; for (const ch of SCHEMA.join('\n')) { h ^= ch.codePointAt(0)!; h = Math.imul(h, 0x01000193) >>> 0; } return `${SCHEMA.length}:${h.toString(16)}`; })();
 const slotRowId = (accountId: string, slot: number) => `${accountId}#${slot}`;
 function neonStorage(url: string): Storage {
     // Neon 서버리스 드라이버와 같은 규칙: 호스트의 첫 레이블을 api.로 바꾼 주소의 /sql 에 쿼리를 보냅니다.
@@ -217,8 +220,15 @@ function neonStorage(url: string): Storage {
         return { rows: data.rows || [], rowCount: data.rowCount ?? 0 };
     };
     let ready: Promise<void> | null = null;
+    // v3.88 서버가 새로 뜰 때마다 SCHEMA 문장(약 40개)을 하나씩 보내던 것을, DB에 남긴 지문이 같으면 한 번의 조회로 건너뜁니다.
+    // 문장 목록이 바뀐 배포에서만 전부 돌리고 지문을 새로 씁니다(문장은 모두 IF NOT EXISTS라 다시 돌려도 안전).
+    const ensureSchema = async () => {
+        try { const { rows } = await query<{ value: string }>('SELECT value FROM settings WHERE key=$1', [SCHEMA_SETTING]); if (rows[0]?.value === SCHEMA_SIGNATURE) return; } catch { /* settings가 아직 없음 → 아래에서 만듦 */ }
+        for (const s of SCHEMA) await query(s);
+        await query('INSERT INTO settings (key,value,updated_at) VALUES ($1,$2,$3) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at', [SCHEMA_SETTING, SCHEMA_SIGNATURE, Date.now()]);
+    };
     const q = async <T>(sql: string, params: unknown[] = []) => {
-        ready ??= (async () => { for (const s of SCHEMA) await query(s); })().catch(e => { ready = null; throw e; });
+        ready ??= ensureSchema().catch(e => { ready = null; throw e; });
         await ready;
         return query<T>(sql, params);
     };
