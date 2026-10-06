@@ -178,3 +178,29 @@
 - 읽기: 조직 행은 인스턴스마다 30초 캐시. 동기화는 조직 id가 있을 때만 캐시를 읽어 조직 모듈 효과를 세이브에 요약해 적는다(hackFeed와 같은 방식). 순위는 listCrews(최대 500)를 5분 캐시.
 - 주간 정산은 따로 돌리지 않는다. 그 주 첫 쓰기 때 지난 주 기록을 마감하고, 보상은 조직원이 다음 동기화 때 받아 간다(월드보스 보상 정산과 같은 방식).
 
+
+## 10. 정보 비공개 (정식 오픈 준비, 설계)
+> 히든 직업 조건, 드롭 테이블, 각종 확률, 스킬 전체 계보를 비공개로 돌린다. 모험가는 스스로 알아낸 것만 보고, 해커는 그것을 파고드는 직업이 된다(9장 권장 방향).
+
+### 10.1 지금 새는 경로 (v3.35 조사)
+- 서버가 State 전체를 그대로 보낸다. 화면 코드가 `systems/encounter` · `progression` · `stats` · `meta` · `actions/lifecycle`을 가져다 쓰고, 이 모듈들이 직업·문·스킬·드롭·확률 표를 모두 끌고 와서 브라우저 번들에 실린다. 화면에서 ???로 가려도 번들을 열면 다 보인다.
+- 히든 직업과 조건: `data/classes.ts` JOBS(hidden · rebirth · requires · mastery · requiresJobMastery · requiresMastered · hint), 확장 표(expansion-lineages · v24 · v25 · support-rework · defense · hacker · maple-flavor), `data/doors.ts` DISCOVERY_DOORS(조건이 담긴 test 함수), `systems/progression.ts` jobRequirements. 화면: classes-panel, jobs/*(job-status가 화면에서 공개 여부를 판정), hacker-panel, guide-panel.
+- 스킬 전체 계보: `data/skills.ts`와 확장 스킬 표. 화면 skills-panel의 ‘전체 계보’ 탭과 검색은 모든 직업의 모든 스킬을 보여 준다.
+- 드롭·확률: `data/balance.ts`(dropChance · dropChanceCap · tideLoot · RARITIES), `data/gear.ts`(DROP_RARITY · ORIGIN_AFFIXES), `systems/encounter.ts`(rarityWeights · rarityShareFrom · tideEssence · rollRarity · drop), `systems/stats.ts` dropRate, onyx · mimic · exp-nuri · variants · world(HABITAT · spawnWeight) · economy(APPRAISAL) · encounters(적 스킬 확률) · starforce. 화면: character-panel(드롭 확률 공식 · 변종 확률), tide-selector(전설 이상 비율 · 정수 확률), collection-panel(까미·누리·칠흑 확률), stages-panel, shop-panel(감정 확률), guide-panel(공식).
+- 글: 도움말 공식, tips, 직업·스킬 설명 속 조건·수치, 문 힌트 중 조건을 그대로 적은 것, 업데이트 내역.
+
+### 10.2 원칙
+1. 비밀 표는 서버 전용 모듈(`game/secret/*`, `server-only`)로 옮긴다. 화면 코드가 가져가면 빌드가 실패한다.
+2. 화면은 서버가 모험가마다 만들어 주는 **카탈로그**(알아낸 직업·스킬·문, 보여 줄 수치)만 쓴다. 세이브(State)와 함께 오거나 정보 API로 온다(제단·길드·조직 정보와 같은 방식).
+3. 공개 판정(어떤 직업이 드러났는지, 문 조건을 만족했는지)은 서버가 한다. 지금 화면의 jobRevealed · doorFor.test는 서버로 옮긴다.
+4. 힌트는 공개한다(분위기를 주는 문장). 정확한 조건과 수치는 비공개다. 힌트 중 조건을 그대로 적은 것은 고쳐 쓴다.
+5. 비공개 스위치: 서버 설정 하나로 오픈 베타 동안은 전체 카탈로그를 보내고(지금과 같은 화면), 정식 오픈 때 끈다. 코드는 미리 바꿔 두고 공개 여부만 운영에서 정한다.
+6. 검사: 빌드한 화면 번들에서 비밀 표식(히든 직업 힌트 문장, 드롭 상수 이름 등)을 찾는 테스트를 두어 다시 새면 CI가 실패한다.
+
+### 10.3 단계
+1. 검사 장치와 비공개 스위치: 번들 검사 스크립트(처음에는 경고만), 서버 설정 secrecy, 카탈로그 전달 통로.
+2. 히든 직업·문: 직업 표를 공개 부분과 비밀 부분으로 나누고, 전직 화면·계보·문은 카탈로그로 그린다. 전직 조건 문구는 서버가 만들어 보낸다.
+3. 스킬: 전체 계보 탭과 검색은 알아낸 직업의 스킬만. 스킬 표도 같은 방식으로 나눈다.
+4. 드롭·확률: 확률 표시를 화면에서 걷어내고(또는 정성 표현으로), 드롭 계산을 서버 전용으로 옮긴다. 화면에서 쓰던 계산(내 드롭 확률 등)은 서버가 필요한 값만 보낸다.
+5. 글 정리: 도움말·팁·설명·문 힌트.
+6. 해커 정보 해킹: 서버가 해커에게 비밀 조각(이 사냥터의 전설 드롭률, 이 직업의 전직 조건 하나 등)을 데이터에서 자동으로 만들어 준다. 퍼뜨리기(방송·채팅)는 기존 기능으로.
