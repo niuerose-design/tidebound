@@ -8,7 +8,7 @@ import type { State, Snapshot, Stats, CombatStats } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
-import { RESEARCH, researchRank } from '../data/economy';
+import { RESEARCH, researchRank, MANA_RESEARCH_PER } from '../data/economy';
 import { roughReward, roughGear, roughHeal, restraintExp, vowBadges } from './vows';
 import { sproutExp, sproutCount } from '../data/sprout';
 import { ascensionEarlyExp } from '../data/ascension';
@@ -27,7 +27,7 @@ export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', '
 export type StatSource = typeof STAT_SOURCES[number];
 const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '세계석 연구', book: '도감', achievement: '업적', account: '계정 보너스', equipment: '장비', limit: '상한·정수 처리' };
 /** 세계석 연구가 올리는 능력치 → 연구 id. 물리·마법 공격과 방어는 각각 다른 연구입니다. */
-const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', rebirthBonus: 'pearl', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
+const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', mana: 'mana', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', rebirthBonus: 'pearl', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
 /** 능력치 분해의 원인 이름. 세계석 연구는 해당 연구 이름까지 붙입니다(예: 세계석 연구 · 마력의 기억). */
 export function statSourceLabel(k: keyof CombatStats, source: StatSource) {
     const name = source === 'research' ? RESEARCH.find(r => r.id === RESEARCH_BY_STAT[k])?.name : undefined;
@@ -84,7 +84,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     set('accuracy', 'base', .92); add('accuracy', 'attributes', v.dex * E.dex.accuracy);
     const dexEvasion = v.dex * E.dex.evasion; set('evasion', 'attributes', dexEvasion);
     set('speed', 'base', 10); add('speed', 'attributes', v.dex * E.dex.speed);
-    set('mana', 'base', 30); add('mana', 'attributes', v.wis * E.wis.mana); add('mana', 'attributes', v.int * E.int.mana);
+    set('mana', 'base', BALANCE.baseMana + (s.level - 1) * BALANCE.manaPerLevel); add('mana', 'attributes', v.wis * E.wis.mana); add('mana', 'attributes', v.int * E.int.mana);
     set('manaRegen', 'base', 2); add('manaRegen', 'attributes', v.wis * E.wis.manaRegen);
     add('hpRegen', 'attributes', v.vit * E.vit.hpRegen);
     set('harmony', 'attributes', harmonyPower(s));
@@ -177,6 +177,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));
     const memory = rebirthMemory(s.rebirths) * (1 + dedication * .04);
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(key, [['rebirth', memory]]);
+    // v3.90 최대 마나도 체력처럼 연구(‘샘의 기억’) · 계정 · 환생 배율을 받습니다(전에는 배율이 없어 후반에 체력의 1%도 안 됐음).
+    mul('mana', [['research', 1 + researchRank(s, 'mana') * MANA_RESEARCH_PER], ['account', account], ['rebirth', memory]]);
     for (const t of themes)
         for (const [key, n] of Object.entries(t.scale || {}))
             mul(key as keyof CombatStats, [['book', n]]);
@@ -203,8 +205,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     limit('evasion', evasionRating(evasionRaw(dexEvasion, a.evasion - dexEvasion)));
     limit('penetration', Math.min(PENETRATION.cap, a.penetration));
     limit('statusResist', Math.min(.5, a.statusResist || 0));
-    // v3.12 창세의 힘·칠흑 세트: 체력·양 공격·양 방어 배율.
-    if (a.allStats) for (const k of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(k, [['equipment', 1 + a.allStats]]);
+    // v3.12 창세의 힘·칠흑 세트: 체력·양 공격·양 방어 배율. v3.90 최대 마나도.
+    if (a.allStats) for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist'] as const) mul(k, [['equipment', 1 + a.allStats]]);
     // v3.73 피의 계약 흡혈은 전체 상한(30%)도 받지 않습니다(한 번 회복량 상한 lifestealHpCap은 그대로).
     { const pact = (free.lifesteal || 0) * roughGear(s); limit('lifesteal', Math.min(.3, a.lifesteal - pact) + pact); }
     // v27.86 힘의 길 회복 봉쇄: 흡혈·턴당 체력 회복 ×(1 − 50·75·100%). 처치 후 회복은 victoryHealRate에서 줄입니다.

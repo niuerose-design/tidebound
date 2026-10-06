@@ -16,7 +16,7 @@ export const ACCOUNT_RULES = {
     rebirthStep: .01, rebirthCap: 30,
     /** 숙달한 직업(합집합) 5개마다 장착 AP +1(최대 +6). 그대로. */
     masteredPer: 5, masteredCap: 6,
-    /** 계정 최고 무릉도장 층 10층마다 두 공격·최대 체력 ×(1 + 0.5%)(최대 ×1.05). */
+    /** 계정 최고 무릉도장 층 10층마다 두 공격·최대 체력·최대 마나 ×(1 + 0.5%)(최대 ×1.05). */
     abyssPer: 10, abyssStep: .005, abyssCap: 10,
     /** 도감 발견 몬스터(합집합) 5종마다 직업·스킬 숙련 획득 ×(1 + 1%)(최대 ×1.07). */
     speciesPer: 5, speciesStep: .01, speciesCap: 7,
@@ -52,7 +52,7 @@ const accountRebirthRank = (s: AccountState) => Math.min(R.rebirthCap, s.account
 export const accountExpGold = (s: AccountState) => 1 + accountRebirthRank(s) * R.rebirthStep;
 export const accountAP = (s: AccountState) => Math.min(R.masteredCap, Math.floor((s.account?.mastered || 0) / R.masteredPer));
 const accountAbyssRank = (s: AccountState) => Math.min(R.abyssCap, Math.floor((s.account?.abyssBest || 0) / R.abyssPer));
-/** 두 공격·최대 체력 배율(1.02 = ×1.02). */
+/** 두 공격·최대 체력·최대 마나 배율(1.02 = ×1.02). */
 export const accountPower = (s: AccountState) => 1 + accountAbyssRank(s) * R.abyssStep;
 const accountSpeciesRank = (s: AccountState) => Math.min(R.speciesCap, Math.floor((s.account?.species || 0) / R.speciesPer));
 /** 숙련 획득 배율(1.03 = ×1.03). 연구 ‘숙련의 기억’과 곱합니다. */
@@ -68,7 +68,7 @@ export function accountBonusRows(s: AccountState) {
     return [
         { name: '계정 환생 합계', value: `${rebirths}회`, effect: `경험치·골드 +${pct(accountExpGold(s) - 1)}`, next: rebirths >= R.rebirthCap ? '최대' : `1회마다 +${pct(R.rebirthStep)} · 최대 ${R.rebirthCap}회` },
         { name: '숙달한 직업(합집합)', value: `${mastered}개`, effect: `장착 AP +${accountAP(s)}`, next: `${R.masteredPer}개마다 +1 · ${next(mastered, R.masteredPer, R.masteredCap)}` },
-        { name: '계정 최고 무릉도장 층', value: `${abyss}층`, effect: `두 공격·최대 체력 +${pct(accountPower(s) - 1, 1)}`, next: `${R.abyssPer}층마다 +${pct(R.abyssStep, 1)} · ${next(abyss, R.abyssPer, R.abyssCap)}` },
+        { name: '계정 최고 무릉도장 층', value: `${abyss}층`, effect: `두 공격·최대 체력·최대 마나 +${pct(accountPower(s) - 1, 1)}`, next: `${R.abyssPer}층마다 +${pct(R.abyssStep, 1)} · ${next(abyss, R.abyssPer, R.abyssCap)}` },
         { name: '발견한 어종(합집합)', value: `${species}종`, effect: `직업·스킬 숙련 획득 +${pct(accountMastery(s) - 1)}`, next: `${R.speciesPer}종마다 +${pct(R.speciesStep)} · ${next(species, R.speciesPer, R.speciesCap)}` },
         { name: '보스 포획 합계', value: `${boss}마리`, effect: `치명타 확률 +${pct(accountCrit(s) - 1)}`, next: `${R.bossPer}마리마다 +${pct(R.bossStep)} · ${next(boss, R.bossPer, R.bossCap)}` },
     ];
