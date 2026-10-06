@@ -76,7 +76,7 @@ test('v25.3 passive-only and independent jobs fight at tier strength', () => {
     assert.equal(bonus('innerBreath').hpRegen, 2); assert.equal(bonus('vital').hpRegen, 2); assert.ok(bonus('flow').arcaneRatioBonus > 0);
     assert.ok(bonus('echoReview').magic >= 24 && bonus('chronicleStudy').attack >= 16 && bonus('serpentFolklore').magic >= 24 && bonus('abyssObservation').attack >= 36);
     // 턴당 체력 회복 패시브가 실제 능력치에 더해집니다.
-    const s = newState(0); s.level = 15; s.job = 'noviceMonk'; s.learned.innerBreath = 1; s.skills = ['innerBreath'];
+    const s = newState(0); s.level = 15; s.job = 'trainingDefense'; s.learned.innerBreath = 1; s.skills = ['innerBreath'];
     assert.equal(stats(s).hpRegen, stats({ ...s, skills: [] }).hpRegen + 2);
 });
 

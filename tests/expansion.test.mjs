@@ -45,7 +45,7 @@ test('v21 job chains: five-step flagships per archetype and a physical kraken ro
  const bite=SKILLS.find(x=>x.id==='electricBite');assert.equal(bite.damageType,'physical');assert.equal(bite.manaCost,0);
  assert.equal(JOBS.find(j=>j.id==='stormEel').parent,'tidalBrawler');assert.deepEqual(JOBS.find(j=>j.id==='stormEel').requiresSkillMastery,{wakeFist:2});
  for(const id of ['stormEel','krakenkin'])assert.ok(SKILLS.filter(sk=>sk.job===id&&sk.type==='active').every(sk=>sk.damageType!=='magic'),id);
- for(const job of JOBS.filter(j=>j.branchless&&j.role.startsWith('능력치'))){const owned=SKILLS.filter(sk=>sk.job===job.id);assert.equal(owned.length,1,job.id);assert.equal(owned[0].type,'passive');}
+ for(const job of JOBS.filter(j=>j.branchless&&!j.retired&&j.role.startsWith('능력치'))){const owned=SKILLS.filter(sk=>sk.job===job.id);assert.equal(owned.length,1,job.id);assert.equal(owned[0].type,'passive');}
 });
 
 test('v21.1 magic jobs replace basic attacks with a weaker arcane strike from tier 1',()=>{

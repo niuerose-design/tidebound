@@ -11,10 +11,10 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
 });
 // 직업·스킬 개수와 계열 소속은 classes.test에서 봅니다(콘텐츠를 추가할 때마다 깨지던 개수 단언은 지웠습니다).
 test('Tier 1 and 2 jobs own one or two skills; every skill has a real job and rising milestones',()=>{
- for(const job of JOBS.filter(j=>(j.tier===1||j.tier===2)&&!j.fullKit)){
+ for(const job of JOBS.filter(j=>(j.tier===1||j.tier===2)&&!j.fullKit&&!j.retired)){
   const owned=SKILLS.filter(sk=>sk.job===job.id&&!sk.song);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
  }
- assert.equal(SKILLS.find(sk=>sk.id==='hushCurrent').job,'stillwaterBinder');
+ assert.equal(SKILLS.find(sk=>sk.id==='hushCurrent').job,'trainingMagic');
  for(const sk of SKILLS){
   assert.ok(!sk.job||JOBS.some(j=>j.id===sk.job),sk.id);const ms=masteryMilestonesFor(sk);
   assert.ok(ms.every((n,i)=>Number.isInteger(n)&&n>0&&(i===0||n>ms[i-1])),sk.id);
