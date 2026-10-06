@@ -142,6 +142,8 @@ export type Item = {
     relicLegacy?: boolean;
     /** v3.12 칠흑 장신구(보스 id). 종당 1개, 환생해도 남고 판매·분해·이식 재료 불가. */
     onyx?: string;
+    /** v3.77 칠흑 장신구 무작위 옵션을 최고 굴림으로 맞췄는지(한 번만). */
+    onyxTuned?: boolean;
     /** v21 이전 장비와 유물의 단일 옵션. */
     affix?: {
         stat: keyof Stats;
@@ -426,9 +428,9 @@ export type State = {
     masteryRescaled?: boolean;
     /** v3.69 수련 패시브 숙련 요구치 상향의 계승 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     trainingRescaled?: boolean;
-    /** v3.77 직업 숙달 목표를 올리기 전 기준으로 이미 숙달한 직업(계속 숙달로 봄). */
+    /** v3.78 직업 숙달 목표를 올리기 전 기준으로 이미 숙달한 직업(계속 숙달로 봄). */
     masteryKept?: string[];
-    /** v3.77 위 숙달 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
+    /** v3.78 위 숙달 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     masteryAligned?: boolean;
     /** v3.19 계급장 필요 처치 재조정(강등 시 특전 되돌리기)을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     rankRescaled?: boolean;

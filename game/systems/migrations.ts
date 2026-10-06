@@ -4,7 +4,7 @@ import type { State } from '../types';
 import { addLog } from './state';
 import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
 import { RELICS, RESEARCH_GROWTH } from '../data/economy';
-import { syncRelicPower } from './equipment';
+import { syncRelicPower, tuneOnyx } from './equipment';
 import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { SAVE_VERSION } from '../data/balance';
@@ -188,13 +188,13 @@ export function keepTrainingInheritance(s: State) {
     if (kept) addLog(s, `수련 패시브의 숙련 요구치가 올라, 이미 계승한 수련 패시브 ${kept}개는 계승을 그대로 유지합니다.`, 'system');
     return kept;
 }
-/** v3.77 직업 숙달 목표 상향(data/skills.ts alignJobMastery): 예전 목표로 이미 숙달한 직업은 숙달로 남깁니다. 한 번만 처리합니다. */
+/** v3.78 직업 숙달 목표 상향(data/skills.ts alignJobMastery): 예전 목표로 이미 숙달한 직업은 숙달로 남깁니다. 한 번만 처리합니다. */
 export function keepMasteredJobs(s: State) {
     if (s.masteryAligned) return 0;
     s.masteryAligned = true;
     const kept = Object.entries(s.jobMastery || {}).filter(([id, n]) => LEGACY_MASTERY_TARGET[id] !== undefined && n >= LEGACY_MASTERY_TARGET[id] && n < (jobById(id)?.masteryTarget ?? Infinity)).map(([id]) => id);
     if (kept.length) { s.masteryKept = [...new Set([...(s.masteryKept || []), ...kept])]; addLog(s, `직업 숙달 목표가 올랐습니다. 이미 숙달한 직업 ${kept.length}개는 숙달로 남습니다.`, 'system'); }
-    // v3.77 스킬 숙련 기준 정리로 첫 단계가 오른 스킬: 예전 기준으로 이미 계승 자격이 있었으면 계승을 유지합니다.
+    // v3.78 스킬 숙련 기준 정리로 첫 단계가 오른 스킬: 예전 기준으로 이미 계승 자격이 있었으면 계승을 유지합니다.
     let skills = 0;
     for (const [id, old] of Object.entries(LEGACY_FIRST_MILESTONE)) {
         const now = skillById(id)?.masteryMilestones?.[0] ?? 0, practice = s.skillPractice?.[id] || 0;
@@ -233,7 +233,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

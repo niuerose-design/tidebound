@@ -263,20 +263,20 @@ for (const sk of SKILLS) {
 // v3.70 능력치 수련 패시브(data/stat-training.ts).
 registerSkills(STAT_TRAINING_SKILLS);
 /**
- * v3.77 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계 중 가장 큰 값 × 40%(MASTERY_ALIGN.ratio). 스킬 숙련 기준과 같이 오르도록 맞춥니다.
+ * v3.78 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계 중 가장 큰 값 × 40%(MASTERY_ALIGN.ratio). 스킬 숙련 기준과 같이 오르도록 맞춥니다.
  * 예전 목표는 LEGACY_MASTERY_TARGET에 남겨, 그 기준으로 이미 숙달한 직업은 숙달로 둡니다(migrations.keepMasteredJobs).
  * 능력치 수련(목표를 따로 정함) · 해커(처치 숙련 없음) · 스킬이 없는 직업은 그대로입니다. 5차 전직 조건(부모 숙달)도 새 목표를 따릅니다.
  * 비밀 직업은 서버가 등록한 뒤(secret/register.ts) 같은 함수로 맞춥니다.
  */
 /**
- * v3.77 스킬 숙련 기준(docs/concept.md 11.9): 차수별 기본 곡선 하나가 원칙이고, 장기 성장형(진행도 비례 피해 · AP 감소)은 ×1.4.
+ * v3.78 스킬 숙련 기준(docs/concept.md 11.9): 차수별 기본 곡선 하나가 원칙이고, 장기 성장형(진행도 비례 피해 · AP 감소)은 ×1.4.
  * 개별 조정은 기본 곡선 마지막 단계의 ±50% 안에서만 두고, 벗어나면 기본 곡선(단계 수가 다르면 같은 모양 비율)으로 되돌립니다.
  * 따로 정한 체계는 예외: 수련 패시브(3차 곡선) · 능력치 수련 · 玄의 天 · 해커 스킬. 예전 첫 단계는 LEGACY_FIRST_MILESTONE에 남겨 계승을 보존합니다.
  */
 export const SKILL_TIER_CURVE: Record<number, number[]> = { 0: [120, 600, 2400, 8000], 1: [250, 1200, 4500, 14000], 2: [600, 3000, 12000, 36000], 3: [4500, 22500, 84000, 225000], 4: [25000, 120000, 400000, 1000000], 5: [100000, 450000, 1500000, 3750000] };
 export const SKILL_CURVE_BAND = .5;
 /**
- * v3.77 제약형 스킬: 최대 숙련에서 AP가 0 이하가 되는 스킬(노래 제외)과 제약 직업(유리 대포 · 玄)의 스킬.
+ * v3.78 제약형 스킬: 최대 숙련에서 AP가 0 이하가 되는 스킬(노래 제외)과 제약 직업(유리 대포 · 玄)의 스킬.
  * 숙련 요구치를 천만 단위로 둡니다: AP를 돌려주는(음수) 스킬 5,000만 · 그 밖 1,000만(같은 모양 비율). 직업 숙달 목표 계산에서는 뺍니다.
  */
 export const CONSTRAINT_MASTERY = { free: 10_000_000, refund: 50_000_000 };
@@ -317,7 +317,7 @@ export function alignJobMastery(jobs: Job[]) {
         if (job.tier < 1 || MASTERY_ALIGN.keep.test(job.id) || job.id in LEGACY_MASTERY_TARGET) continue;
         const own = SKILLS.filter(sk => sk.job === job.id && !sk.song);
         if (!own.length) continue;
-        // v3.77 제약형 스킬(천만 단위)은 빼고 셉니다. 제약형뿐인 직업은 차수 기본 곡선을 씁니다.
+        // v3.78 제약형 스킬(천만 단위)은 빼고 셉니다. 제약형뿐인 직업은 차수 기본 곡선을 씁니다.
         const usual = own.filter(sk => !isConstraintSkill(sk));
         const lasts = usual.length ? usual.map(sk => (sk.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones).at(-1)!) : [SKILL_TIER_CURVE[Math.min(5, job.tier)].at(-1)!];
         LEGACY_MASTERY_TARGET[job.id] = job.masteryTarget!;
