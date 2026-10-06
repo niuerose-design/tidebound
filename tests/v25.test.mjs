@@ -928,8 +928,8 @@ test('v27.75 hits record the computed damage: text and FX show it, value/HP bar/
 test('v27.76 tide loot: rarity weights drift up conservatively with tier, essence drops on stages from tier 5', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Enc = await L.load('systems/encounter'), B = await L.load('data/balance');
-    const near = (a, b, eps = 1e-3) => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${b}`);
-    near(Enc.rarityShareFrom(0, 6), .00054, 5e-5); near(Enc.rarityShareFrom(100, 6), .00093, 1e-4); near(Enc.rarityShareFrom(100, 3), .292, 5e-3);
+    const near = (a, b, eps = 1e-3, why = '') => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${b} ${why}`);
+    near(Enc.rarityShareFrom(0, 6), .00054, 5e-5); near(Enc.rarityShareFrom(100, 6), .00072, 1e-4, 'v3.67 primal lift capped at primalTierCap'); near(Enc.rarityShareFrom(100, 3), .292, 5e-3);
     assert.deepEqual(Enc.rarityWeights(0, 1).slice(0, 2), [0, .25]); assert.equal(Enc.rollRarity(() => .99999, 1, 200), 6); assert.equal(Enc.rollRarity(() => 0, 1, 200), 1);
     assert.deepEqual(Enc.tideEssence(4), { chance: 0, amount: 0 }); assert.deepEqual(Enc.tideEssence(10), { chance: .03, amount: 2 }); assert.deepEqual(Enc.tideEssence(30), { chance: .09, amount: 4 });
     const make = (tide, dungeon) => { const s = newState(0); s.rebirths = 40; s.tide = tide; s.running = true; s.stage = 'brook'; if (dungeon) s.dungeon = { id: 'grotto', wave: 0 }; s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0 }; return s; };
