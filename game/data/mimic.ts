@@ -33,7 +33,7 @@ export const MIMIC = {
 export const LETTER = { offlineRank: 6, offlineScale: .5, jackpotRank: 8, /** v3.52 값은 서버 전용(odds). */ get jackpotChance() { return ODDS.mimic.letterJackpot; }, recipientRank: 10, recipientShare: .01 } as const;
 type LetterState = { permanent?: Record<string, number> };
 export const letterRank = (s?: LetterState) => s?.permanent?.messageBottle || 0;
-/** 까미 로또 표. 행운의 편지 8단계부터 ‘대’ 5% → 7.5%(늘어난 몫은 ‘소’에서 뺌). */
+/** 까미 로또 표. 행운의 편지 8단계부터 ‘대’ 당첨 확률이 오릅니다(늘어난 몫은 ‘소’에서 뺌). */
 export const mimicTiers = (s?: LetterState) => {
     if (letterRank(s) < LETTER.jackpotRank) return MIMIC.tiers;
     const extra = LETTER.jackpotChance - MIMIC.tiers[2].chance;

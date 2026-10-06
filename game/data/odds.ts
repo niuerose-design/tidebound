@@ -36,6 +36,8 @@ let known = false;
 export function setOdds(o: Odds) { Object.assign(ODDS, JSON.parse(JSON.stringify(o)) as Odds); known = true; }
 /** 진짜 값을 받았는지(화면: 비공개가 켜져 있으면 false). */
 export const oddsKnown = () => known;
+/** v3.55 설명 글용: 값을 알면 퍼센트, 모르면 대신 쓸 말. */
+export const oddsPercent = (x: number, unknown: string) => known ? `${Math.round(x * 1000) / 10}%` : unknown;
 
 /**
  * v3.54 사냥터 평균 보상 배율(출현 가중 평균, world.ts stageRewardNorm). 출현 가중치는 비밀이지만 도감 ‘적 정보’가 실제 전투와 같은 값을 보여야 하므로,
