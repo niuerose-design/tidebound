@@ -7,10 +7,8 @@ import { SLOTS, RARITIES } from '@/game/data/balance';
 import { gambleCost, imprintGambleCost, imprintChoices, pityLeft, GAMBLE_COUNTS, APPRAISAL_ALL } from '@/game/systems/commerce';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 import type { PanelProps } from './panel-props';
-import { starLabel } from '@/game/data/starforce';
 import { catalogNow } from '@/game/data/catalog';
-import { BonusList } from './inventory-panel';
-import { EquipmentForge } from './inventory-panel';
+import { ForgeBench, ForgeHead } from './inventory-panel';
 import type { State } from '@/game/types';
 
 /** v3.58 뽑기(감정) 천장 현황: 신화·고대·태초 이상까지 남은 감정 수와 지금까지 감정 기록. */
@@ -31,6 +29,7 @@ export function Shop({ s, send, busy }: PanelProps) {
     const [slot, setSlot] = useState<string>('rod'), [affix, setAffix] = useState(''), [target, setTarget] = useState(4);
     const choices = imprintChoices(GAMBLE_CATEGORIES.find(c => c.id === slot)!.slot), pick = choices.some(c => c.id === affix) ? affix : choices[0]?.id || '';
     const [autoImprint, setAutoImprint] = useState(false);
+    const [forgeSlot, setForgeSlot] = useState<string>('rod'), forgeItem = s.equipment[forgeSlot as keyof typeof s.equipment];
     // v3.72 자동 뽑기는 골드 한도 없이 가진 골드 · 정수를 모두 씁니다(한 번에 최대 AUTO_APPRAISAL_MAX회).
     const autoEach = autoImprint ? imprint : { gold: gamble, essence: 0 };
     const autoMax = Math.min(AUTO_APPRAISAL_MAX, Math.floor(s.gold / Math.max(1, autoEach.gold)), autoEach.essence ? Math.floor((s.essence || 0) / autoEach.essence) : Infinity);
@@ -74,11 +73,12 @@ export function Shop({ s, send, busy }: PanelProps) {
             </article>
         </section>}
         {tab === 'forge' && <section aria-label="장비 강화">
-            <div className="section-title"><h2>착용 장비 강화</h2><span>보관 중인 장비는 장비 보관함에서 강화</span></div>
-            <div className="port-gamble-grid">{Object.entries(SLOTS).map(([slotId, name]) => {
-                const item = s.equipment[slotId as keyof typeof s.equipment];
-                return <article className="panel market-card forge-card" key={slotId}><SlotIcon slot={slotId}/><small>{name}</small>{item ? <><h2>{item.name} <span className="gold-text">{starLabel(item.enhance || 0)}</span></h2><BonusList item={item}/><EquipmentForge s={s} send={send} busy={busy} item={item}/></> : <><h2>착용 장비 없음</h2><p>장비 보관함에서 {name}을 장착하세요.</p></>}</article>;
-            })}</div>
+            {/* v3.76 부위 고르기 + 작업대 하나: 카드 네 장을 늘어놓던 때와 달리 높이가 들쭉날쭉하지 않고 옵션 재설정까지 한 곳에서 합니다. */}
+            <div className="forge-picker" aria-label="강화할 부위">{(Object.keys(SLOTS) as (keyof typeof SLOTS)[]).map(id => { const it = s.equipment[id as keyof typeof s.equipment]; return <button type="button" key={id} aria-pressed={forgeSlot === id} className={`forge-pick${forgeSlot === id ? ' on' : ''}`} style={{ '--rarity': it ? RARITIES[it.rarity].color : '#5a6f71' } as React.CSSProperties} onClick={() => setForgeSlot(id)}>
+                <SlotIcon slot={id} size={18}/><span><small>{SLOTS[id]}</small><b>{it ? it.name : '비어 있음'}</b></span>{it && <em className="gold-text">★{it.enhance || 0}</em>}</button>; })}</div>
+            {forgeItem ? <article className="panel forge-panel" style={{ '--rarity': RARITIES[forgeItem.rarity].color } as React.CSSProperties}><ForgeHead item={forgeItem}/><ForgeBench s={s} send={send} busy={busy} item={forgeItem}/></article>
+                : <div className="notice">착용한 {SLOTS[forgeSlot as keyof typeof SLOTS]}이 없습니다. 장비 보관함에서 장착하면 여기서 강화할 수 있습니다.</div>}
+            <p className="footnote">보관 중인 장비는 장비 보관함에서 줄을 펼쳐 강화합니다.</p>
         </section>}
         </div>
         {full && <div className="notice">가방이 가득 찼습니다. 장비를 정리하면 다시 뽑을 수 있습니다.</div>}
