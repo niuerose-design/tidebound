@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import { Copy, Check, Crown, Users, Terminal } from 'lucide-react';
 import { Heading, Meter, format } from './shared';
 import { ConfirmButton } from './confirm-button';
-import { CREW } from '@/game/data/crew';
+import { CREW, CREW_MODULES } from '@/game/data/crew';
 import { isHackerJob } from '@/game/data/hacker';
 import type { CrewInfo } from './use-game';
 
 type Props = PanelProps & { info: CrewInfo | null; error: string; load: () => Promise<void>; act: (body: Record<string, unknown>) => Promise<boolean> };
 /**
  * v3.29 해커 조직 화면(4-a): 창설(성향 선택)·초대 코드 가입, 조직원·기여·조직 등급, 조직장 관리(코드 재발급·위임·내보내기).
- * v3.32 합동 작전(주간): 조직원이 뚫은 침투 노드 합계, 단계 목표, 조직원별 기여. 조직 모듈·조직 순위는 다음 단계에서 붙습니다.
+ * v3.32 합동 작전(주간): 조직원이 뚫은 침투 노드 합계, 단계 목표, 조직원별 기여. v3.33 조직 모듈(조직장이 켜고 끔). 조직 순위는 다음 단계에서 붙습니다.
  */
 export function Crew({ s, busy, info, error, load, act }: Props) {
     const [name, setName] = useState(''), [side, setSide] = useState('gray'), [code, setCode] = useState(''), [amount, setAmount] = useState('50'), [copied, setCopied] = useState(false);
@@ -48,9 +48,18 @@ export function Crew({ s, busy, info, error, load, act }: Props) {
             <p className="footnote">조직원이 각자 침투 작전에서 뚫은 노드(이탈·추적 모두)가 합산됩니다. 내 기여 {format(c.op.mine)}노드{c.op.pending ? ` · 아직 올리지 않은 ${c.op.pending}노드는 침투 작전이 끝나면 올라갑니다` : ''}. 단계 보상은 그 주에 1노드 이상 뚫은 조직원이 다음 동기화 때 받고, 지난주 보상도 한 주 동안 받을 수 있습니다. 주 중에 조직원이 들어오면 목표가 그만큼 늘어납니다.</p>
         </section>
         <section className="panel hacker-section">
+            <div className="section-title"><h2>조직 모듈</h2><span>슬롯 {c.modules.length} / {c.slots}(조직 등급만큼) · 다음 주 유지비 {format(c.upkeep)} · 조직 자금 {format(c.vault)}</span></div>
+            <p className="footnote">조직장이 켜고 끕니다. 켤 때 그 주 유지비를 내고, 월요일 0시마다 조직 자금에서 다시 냅니다. 조직 자금이 모자라면 뒤에 켠 모듈부터 꺼지고, 끈 모듈의 유지비는 돌려받지 않습니다. 효과는 해커 계열 조직원에게만 적용됩니다.</p>
+            <div className="program-list">{CREW_MODULES.filter(m => !m.side || m.side === c.side).map(m => { const on = c.modules.includes(m.id); return <div key={m.id} className={`program-card ${on ? 'on' : ''}`}>
+                <b>{m.name}{m.side ? ` · ${c.sideName} 전용` : ''}</b><small>{m.desc} · 주간 유지비 {m.upkeep}</small>
+                {c.leader ? <button className={on ? 'primary' : 'secondary'} aria-pressed={on} disabled={busy || (!on && (c.modules.length >= c.slots || c.vault < m.upkeep))} onClick={() => act({ action: 'module', target: m.id })}>{on ? '가동 중 · 끄기' : '켜기'}</button>
+                    : <small>{on ? '가동 중' : '꺼짐'}</small>}
+            </div>; })}</div>
+        </section>
+        <section className="panel hacker-section">
             <div className="section-title"><h2>조직 등급 · 기여</h2><span>오늘 더 기여할 수 있는 비트 {format(c.depositLeft)}</span></div>
             {c.need ? <Meter value={Math.min(c.need, c.into)} max={c.need} label={`조직 등급 ${c.grade + 1}까지`}/> : <p className="footnote">최고 조직 등급입니다.</p>}
-            <p className="footnote">기여한 비트는 되돌릴 수 없고, 1비트 = 조직 경험치 1입니다. 하루에 권한 등급 × 50까지 기여할 수 있습니다. 기여한 비트는 조직 자금으로 모여 다음 단계의 조직 모듈 유지비로 쓰입니다.</p>
+            <p className="footnote">기여한 비트는 되돌릴 수 없고, 1비트 = 조직 경험치 1입니다. 하루에 권한 등급 × 50까지 기여할 수 있습니다. 기여한 비트는 조직 자금으로 모여 조직 모듈 유지비로 쓰입니다.</p>
             <div className="hack-form"><input value={amount} onChange={e => setAmount(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" aria-label="기여할 비트"/>
                 <button className="primary" disabled={busy || !hacker || n < 1 || n > c.depositLeft || bits < n} onClick={() => act({ action: 'deposit', amount: n })}>기여하기</button></div>
         </section>

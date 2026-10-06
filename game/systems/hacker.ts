@@ -21,7 +21,10 @@ export const hackCost = (s: Pick<State, 'job'>, bits: number) => isBlackHacker(s
 export const hackCap = (s: Pick<State, 'job'>, cap: number) => isBlackHacker(s) ? cap * HACKER.black.cap : cap;
 /** v3.25 장착한 프로그램인지(해커 계열일 때만 켜짐). */
 export const programOn = (s: Pick<State, 'job' | 'hacker'>, id: ProgramId) => isHacker(s) && !!s.hacker?.loadout?.includes(id);
-export const memoryCap = (s: Pick<State, 'hacker'>) => HACKER.memory(s.hacker?.grade || 1);
+/** v3.33 켠 조직 모듈이 이 모험가에게 작동하는지(해커 계열일 때만). */
+export const crewOn = (s: Pick<State, 'job' | 'hacker'>, id: string) => isHacker(s) && !!s.hacker?.crew?.modules?.includes(id);
+/** v3.33 조직 모듈 공유 메모리: +1. */
+export const memoryCap = (s: Pick<State, 'hacker' | 'job'>) => HACKER.memory(s.hacker?.grade || 1) + (crewOn(s, 'sharedMemory') ? 1 : 0);
 export const memoryUsed = (ids: string[]) => ids.reduce((n, id) => n + (programById(id)?.memory || 0), 0);
 /** v3.25 해커 순위(월) 기록을 올립니다. 저장 전에 /api 쪽이 dirty를 보고 순위표에 씁니다. */
 export function bumpSeason(s: State, now: number, d: { depth?: number; hacks?: number; restores?: number }) {
@@ -79,13 +82,15 @@ export const gradeTotal = (grade: number) => { let n = 0; for (let g = 1; g < gr
 export function hackerTick(s: State) {
     // v3.25 크립토 마이너: 비트 +30%. v3.27 다른 해커의 과부하 동안은 비트 절반. v3.28 봇넷 동안 비트·권한 ×2.
     const overloaded = (s.hackFeed?.overloadUntil || 0) > (s.lastTick || 0), botnet = botnetOn(s, s.lastTick || 0) ? HACKER.botnet.rate : 1;
-    gainHacker(s, HACKER.brute.bits * (programOn(s, 'cryptoMiner') ? 1.3 : 1) * (overloaded ? HACKER.overload.rate : 1) * botnet, HACKER.brute.exp * botnet, true);
+    // v3.33 조직 모듈 분산 처리: 비트 +10%.
+    gainHacker(s, HACKER.brute.bits * (programOn(s, 'cryptoMiner') ? 1.3 : 1) * (crewOn(s, 'distributed') ? 1.1 : 1) * (overloaded ? HACKER.overload.rate : 1) * botnet, HACKER.brute.exp * botnet, true);
 }
 /** v3.28 해킹 VIII 봇넷이 돌고 있는지. */
 export const botnetOn = (s: Pick<State, 'hacker'>, now: number) => (s.hacker?.botnet?.until || 0) > now;
 /** v3.27 오늘 침투 작전 입장 한도: 기본 − 다른 해커의 역추적(최소 1). v3.28 봇넷을 건 날은 +2. */
-export function entriesCap(s: Pick<State, 'hackFeed' | 'hacker'>, now: number) {
-    const t = s.hackFeed?.traced, cut = t && t.day === dayKey(now) ? t.n : 0, bonus = s.hacker?.botnet?.day === dayKey(now) ? HACKER.botnet.entries : 0;
+export function entriesCap(s: Pick<State, 'hackFeed' | 'hacker' | 'job'>, now: number) {
+    // v3.33 조직 모듈 우회 경로: 하루 입장 +1.
+    const t = s.hackFeed?.traced, cut = t && t.day === dayKey(now) ? t.n : 0, bonus = (s.hacker?.botnet?.day === dayKey(now) ? HACKER.botnet.entries : 0) + (crewOn(s, 'detour') ? 1 : 0);
     return Math.max(1, HACKER.infil.entriesPerDay - cut) + bonus;
 }
 /** v3.25 추적당했을 때 회수하는 비율(백신 회피 75%). */

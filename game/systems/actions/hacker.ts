@@ -5,7 +5,7 @@ import { canUse } from '../progression';
 import { JOBS } from '../../data/classes';
 import { STAGES, DUNGEONS } from '../../data/world';
 import { BLESSINGS, RAIDS } from '../../data/altar';
-import { crewNote, entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn, isBlackHacker } from '../hacker';
+import { crewNote, entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn, isBlackHacker, crewOn } from '../hacker';
 import { dayKey, weekKey } from '../../data/goals';
 import { addLog } from '../state';
 
@@ -118,10 +118,12 @@ export const hackerActions: ActionHandlers = {
         const offense = () => { if (white) throw Error('화이트 해커는 공격 해킹을 쓰지 않습니다. 해커로 전직하면 쓸 수 있습니다.'); };
         /** v3.28 블랙 해커의 실패: 비트·횟수는 쓰이고 효과는 없습니다. 추적되어 이름이 공지되고(서버) 6시간 동안 해킹할 수 없습니다. */
         const busted = () => {
-            if (!black || rng() >= HACKER.black.fail(n)) return false;
+            // v3.33 조직 모듈 세탁: 실패 확률 −3%p(최소 5%), 공지에 이름 대신 조직 이름.
+            const launder = crewOn(s, 'launder');
+            if (!black || rng() >= Math.max(.05, HACKER.black.fail(n) - (launder ? .03 : 0))) return false;
             const label = HACK_NAMES[id || ''] || '해킹', hours = s.skills.includes(WIPE_TRACE_ID) && canUse(s, WIPE_TRACE_ID) ? HACKER.black.wipedHours : HACKER.black.traceHours;
             h.bustedUntil = now + hours * 3600_000;
-            h.pending = { kind: 'busted', value: label, minutes: hours * 60 };
+            h.pending = { kind: 'busted', value: launder && h.crew ? `${label}|${h.crew.name}` : label, minutes: hours * 60 };
             addLog(s, `${label} 실패 · 추적당했습니다! ${hours}시간 동안 해킹할 수 없고, 전체 채팅에 이름이 공지됩니다.`, 'system');
             return true;
         };
@@ -300,7 +302,8 @@ export const hackerActions: ActionHandlers = {
             if (!white) throw Error('패치는 화이트 해커만 할 수 있습니다.');
             const place = parsePlace(value);
             daily('patch', HACKER.white.patch.perDay(), '패치'); pay(HACKER.white.patch.bits);
-            h.pending = { kind: 'patch', value: place, minutes: HACKER.white.patch.minutes };
+            // v3.33 조직 모듈 합동 패치: +30분.
+            h.pending = { kind: 'patch', value: place, minutes: HACKER.white.patch.minutes + (crewOn(s, 'jointPatch') ? 30 : 0) };
             gainHacker(s, 0, HACKER.white.patch.exp);
             return;
         }

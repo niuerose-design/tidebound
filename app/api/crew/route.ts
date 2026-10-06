@@ -13,7 +13,7 @@ export async function GET(req: Request) { try {
 catch (e) {
     return failure(e);
 } }
-/** { action: 'create' name side | 'join' code | 'leave' | 'kick' target | 'delegate' target | 'code' | 'deposit' amount }. 조직 행 쓰기는 한 번만, 세이브 변화는 저장과 함께. */
+/** { action: 'create' name side | 'join' code | 'leave' | 'kick' target | 'delegate' target | 'code' | 'module' target | 'deposit' amount }. 조직 행 쓰기는 한 번만, 세이브 변화는 저장과 함께. */
 export async function POST(req: Request) { try {
     checkOrigin(req);
     const { id } = await session(req), body = await readJson(req), action = String(body.action || '');
@@ -26,7 +26,7 @@ export async function POST(req: Request) { try {
             if (action === 'create') apply = await createCrew(id, s, body.name, body.side, now);
             else if (action === 'join') apply = await joinCrew(id, s, body.code, now);
             else if (action === 'leave') apply = await leaveCrew(id, s, now);
-            else if (action === 'kick' || action === 'delegate' || action === 'code') apply = await leaderAct(id, s, action, body.target, now);
+            else if (action === 'kick' || action === 'delegate' || action === 'code' || action === 'module') apply = await leaderAct(id, s, action, body.target, now);
             else if (action === 'deposit') apply = await depositCrew(id, s, body.amount, now);
             else throw new ApiError('올바르지 않은 요청입니다.');
         }

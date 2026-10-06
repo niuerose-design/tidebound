@@ -161,7 +161,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
                 </div>
                 <div className="hack-card">
                     <b>패치 · 화이트</b>
-                    <small>사냥터·던전 하나를 {HACKER.white.patch.minutes}분 동안 서버 다운에서 지킵니다(이미 걸린 다운도 그동안 풀림). 하루 1회 · 비트 {HACKER.white.patch.bits}</small>
+                    <small>사냥터·던전 하나를 {HACKER.white.patch.minutes + (s.hacker?.crew?.modules?.includes('jointPatch') ? 30 : 0)}분 동안 서버 다운에서 지킵니다(이미 걸린 다운도 그동안 풀림). 하루 1회 · 비트 {HACKER.white.patch.bits}</small>
                     <div className="hack-form"><PlaceSelect value={place} onChange={setPlace}/><button className="primary" disabled={busy || (used.patch || 0) >= HACKER.white.patch.perDay() || h.bits < HACKER.white.patch.bits} onClick={() => run('patch', place)}>패치</button></div>
                 </div>
                 </>}

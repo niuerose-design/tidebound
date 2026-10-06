@@ -46,6 +46,8 @@ export type CrewMember = { name: string; joined: number; seen: number; deposited
 /** v3.32 합동 작전 한 주: 목표, 합계, 도달한 단계, 조직원별 기여. */
 export type CrewWeek = { key: string; goal: number; nodes: number; hacks: number; steps: number; by: Record<string, { nodes: number; hacks: number }> };
 export type CrewData = { name: string; side: CrewSide; leader: string; created: number; vault: number; exp: number; members: Record<string, CrewMember>;
+    /** v3.33 켠 조직 모듈(조직 등급만큼). 유지비는 주마다 조직 자금에서 나가고, 켤 때 그 주 유지비를 냅니다. */
+    modules?: CrewModuleId[];
     /** v3.32 이번 주와 지난주 합동 작전(지난주는 보상을 아직 못 받은 조직원용). */
     week?: CrewWeek; prev?: CrewWeek };
 
@@ -72,3 +74,21 @@ export const cleanCrewName = (name: unknown) => String(name ?? '').replace(/[\u0
 export const opGoal = (members: number, grade: number) => Math.round(CREW.op.perMember * Math.max(1, members) * (1 + .5 * (Math.min(CREW.maxGrade, Math.max(1, grade)) - 1) / (CREW.maxGrade - 1)));
 /** v3.32 합계로 도달한 단계 수(0~3). */
 export const opSteps = (nodes: number, goal: number) => CREW.op.steps.filter(r => nodes >= Math.ceil(goal * r)).length;
+
+/**
+ * v3.33 조직 모듈: 조직장이 조직 등급만큼 슬롯 안에서 켭니다. 켤 때 그 주 유지비를, 주가 바뀔 때마다 다시 유지비를 조직 자금에서 냅니다.
+ * 조직 자금이 모자라면 뒤에 켠 모듈부터 꺼집니다. 효과는 해커 계열 조직원에게만 적용됩니다.
+ */
+export type CrewModuleId = 'distributed' | 'sharedMemory' | 'proxyChain' | 'jointPatch' | 'launder' | 'detour';
+export const CREW_MODULES: { id: CrewModuleId; name: string; desc: string; upkeep: number; side?: CrewSide }[] = [
+    { id: 'distributed', name: '분산 처리', desc: '조직원 브루트포스 비트 +10%', upkeep: 150 },
+    { id: 'sharedMemory', name: '공유 메모리', desc: '조직원 프로그램 메모리 +1', upkeep: 200 },
+    { id: 'proxyChain', name: '프록시 체인', desc: '조직원끼리 크래킹·역추적·과부하 불가, 다른 해커가 조직원에게 건 역추적·과부하를 조직 전체에서 하루 1회 막음', upkeep: 250 },
+    { id: 'jointPatch', name: '합동 패치', desc: '화이트 해커 조직원의 패치 지속 +30분', upkeep: 150, side: 'white' },
+    { id: 'launder', name: '세탁', desc: '블랙 해커 조직원의 실패 확률 −3%p(최소 5%), 추적 공지에 이름 대신 조직 이름', upkeep: 200, side: 'black' },
+    { id: 'detour', name: '우회 경로', desc: '조직원 침투 작전 하루 입장 +1', upkeep: 200, side: 'gray' },
+];
+export const crewModule = (id: string) => CREW_MODULES.find(m => m.id === id);
+/** 모듈 슬롯 = 조직 등급. */
+export const moduleSlots = (grade: number) => Math.max(1, grade);
+export const upkeepOf = (ids: string[]) => ids.reduce((n, id) => n + (crewModule(id)?.upkeep || 0), 0);

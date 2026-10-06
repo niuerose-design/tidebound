@@ -38,6 +38,8 @@ export type Hacks = {
     root?: { by: string; byId: string; until: number };
     /** v3.28 해킹 VII 세이브 스캠: 월드보스 세대 → 건 시각(보스 한 마리당 서버 전체 1회). */
     scummed: Record<string, number>;
+    /** v3.33 조직 모듈 프록시 체인: 조직 id → 외부 역추적·과부하를 막은 날(조직 전체 하루 1회). */
+    crewShield: Record<string, string>;
 };
 /** v3.27 신원 조작이 지금 걸려 있는지(until 0 = 무기한). */
 const maskLive = (m: { until: number } | undefined, now: number) => !!m && (!m.until || m.until > now);
@@ -49,9 +51,9 @@ function parse(raw: string | null): Hacks {
     try {
         const v = raw ? JSON.parse(raw) : null;
         return { broadcast: v?.broadcast && typeof v.broadcast.text === 'string' ? v.broadcast : undefined, cracked: obj<number>(v?.cracked), tamper: obj<Tamper>(v?.tamper), down: Array.isArray(v?.down) ? v.down.filter((d: Down) => d && typeof d.id === 'string') : [], patched: obj<number>(v?.patched), shielded: obj<string>(v?.shielded), masked: obj<Hacks['masked'][string]>(v?.masked), rival: obj<Hacks['rival'][string]>(v?.rival),
-            ddos: v?.ddos && (HACKER.ddos.kinds as readonly string[]).includes(v.ddos.kind) ? v.ddos : undefined, root: v?.root && typeof v.root.until === 'number' ? v.root : undefined, scummed: obj<number>(v?.scummed) };
+            ddos: v?.ddos && (HACKER.ddos.kinds as readonly string[]).includes(v.ddos.kind) ? v.ddos : undefined, root: v?.root && typeof v.root.until === 'number' ? v.root : undefined, scummed: obj<number>(v?.scummed), crewShield: obj<string>(v?.crewShield) };
     }
-    catch { return { cracked: {}, tamper: {}, down: [], patched: {}, shielded: {}, masked: {}, rival: {}, scummed: {} }; }
+    catch { return { cracked: {}, tamper: {}, down: [], patched: {}, shielded: {}, masked: {}, rival: {}, scummed: {}, crewShield: {} }; }
 }
 /** 게임 계산에 넣습니다(이벤트 변조 · 서버 다운 · 패치 · v3.28 DDoS 이벤트). */
 function applyRuntime(h: Hacks) {
@@ -76,6 +78,7 @@ async function writeHacks(h: Hacks, now: number) {
     for (const [id, r] of Object.entries(h.rival)) if (r.day !== today && !((r.overloadUntil || 0) > now)) delete h.rival[id];
     for (const [id, t] of Object.entries(h.tamper)) if (!(now - t.at < TAMPER_KEEP)) delete h.tamper[id];
     for (const [id, day] of Object.entries(h.shielded)) if (day !== today) delete h.shielded[id];
+    for (const [id, day] of Object.entries(h.crewShield)) if (day !== today) delete h.crewShield[id];
     for (const [gen, at] of Object.entries(h.scummed)) if (!(now - at < SCUM_KEEP)) delete h.scummed[gen];
     if (h.ddos && !(h.ddos.until > now)) delete h.ddos;
     if (h.root && !(h.root.until > now)) delete h.root;
@@ -144,6 +147,7 @@ export async function applyPendingHack(s: State, id: string, now: number) {
         if (!target || target === id) throw Error('크래킹할 대상을 확인하세요.');
         // v3.25 화이트 해커 패시브 방화벽은 하루 한 번 크래킹을 막아 냅니다(비트·횟수는 그대로 씀).
         const row = await database.getPlayer(target), victim = row ? JSON.parse(row.state) as State : null;
+        sameCrew(s, victim);
         if (victim?.skills?.includes(FIREWALL_ID) && h.shielded[target] !== dayKey(now)) {
             h.shielded[target] = dayKey(now);
             addLog(s, '크래킹이 화이트 해커의 방화벽에 막혔습니다. 오늘은 방어막이 사라졌으니 다시 시도할 수 있습니다.', 'system');
@@ -169,8 +173,14 @@ export async function applyPendingHack(s: State, id: string, now: number) {
         if (!target || target === id) throw Error('다른 해커를 고르세요.');
         const row = await database.getPlayer(target), victim = row ? JSON.parse(row.state) as State : null;
         if (!victim?.hacker) throw Error('해커 기록이 있는 모험가만 견제할 수 있습니다.');
-        const today = dayKey(now), r = h.rival[target] ??= {};
-        if (victim.skills?.includes(FIREWALL_ID) && h.shielded[target] !== today) {
+        const today = dayKey(now), r = h.rival[target] ??= {}, vc = victim.hacker.crew;
+        sameCrew(s, victim);
+        if (vc?.modules?.includes('proxyChain') && h.crewShield[vc.id] !== today) {
+            // v3.33 프록시 체인: 대상 조직 전체에서 하루 한 번 외부 견제를 막습니다(비트·횟수는 그대로 씀).
+            h.crewShield[vc.id] = today;
+            addLog(s, `${pending.kind === 'trace' ? '역추적' : '과부하'}이(가) 대상 조직의 프록시 체인에 막혔습니다.`, 'system');
+        }
+        else if (victim.skills?.includes(FIREWALL_ID) && h.shielded[target] !== today) {
             h.shielded[target] = today;
             addLog(s, `${pending.kind === 'trace' ? '역추적' : '과부하'}이(가) 화이트 해커의 방화벽에 막혔습니다.`, 'system');
         }
@@ -252,7 +262,9 @@ export async function applyPendingHack(s: State, id: string, now: number) {
     }
     else if (pending.kind === 'busted') {
         // v3.28 블랙 해커 실패: 루트킷이 있어도 진짜 이름을 공지합니다.
-        await hackNotice(`🚨 블랙 해커 ${josa(s.name, '이가')} ${pending.value} 중 추적당했습니다. ${pending.minutes / 60}시간 동안 해킹할 수 없습니다.`, now);
+        // v3.33 조직 모듈 세탁이면 이름 대신 조직 이름(값 = 해킹 이름|조직 이름).
+        const [label, crew] = pending.value.split('|'), who = crew ? `[${crew}] 소속 블랙 해커` : `블랙 해커 ${s.name}`;
+        await hackNotice(`🚨 ${josa(who, '이가')} ${label} 중 추적당했습니다. ${pending.minutes / 60}시간 동안 해킹할 수 없습니다.`, now);
         write = false;
     }
     else if (pending.kind === 'root') {
@@ -309,6 +321,11 @@ export async function applyPendingHack(s: State, id: string, now: number) {
     delete hk.pending;
 }
 
+/** v3.33 조직 모듈 프록시 체인: 같은 조직원끼리는 크래킹·역추적·과부하를 걸 수 없습니다. */
+function sameCrew(s: State, victim: State | null) {
+    const mine = s.hacker?.crew;
+    if (mine?.modules?.includes('proxyChain') && victim?.hacker?.crew?.id === mine.id) throw Error('같은 조직원은 노릴 수 없습니다(프록시 체인).');
+}
 /** v3.28 해킹 공지(세이브 스캠 · DDoS · 루트 권한)를 전체 채팅에 빨간 줄로 남깁니다(실패해도 해킹은 그대로). */
 async function hackNotice(text: string, now: number) {
     try { await db().postChat({ channel: 'global', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 채팅은 부가 기능 */ }
