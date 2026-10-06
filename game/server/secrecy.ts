@@ -12,8 +12,10 @@ import { revealedSecretJobs } from '../systems/reveal';
 import { jobById, lineageOf, type Job, type Lineage } from '../data/classes';
 import { SECRET_JOBS, SECRET_LINEAGES } from '../secret/jobs';
 import { SECRET_SKILLS } from '../secret/skills';
+import { SERVER_ODDS } from '../secret/odds';
 
 const KEY = 'secrecy', TTL = 30_000;
+const ODDS_KEY = createHash('sha1').update(JSON.stringify(SERVER_ODDS)).digest('base64url');
 let cached: { at: number; on: boolean } | null = null;
 export async function secrecyOn(now: number) {
     const env = process.env.TIDEBOUND_SECRECY;
@@ -45,6 +47,7 @@ export async function buildCatalog(s: State, now: number, known?: unknown): Prom
     const mine = (id: string) => s.skills.includes(id) || (s.learned?.[id] || 0) > 0;
     const skills = SECRET_SKILLS.filter(sk => !secret || (sk.job && shown.has(sk.job)) || mine(sk.id));
     const body: Catalog = { secret, doors: doorView(s), revealed, jobs, lineages, skills };
-    const key = createHash('sha1').update(JSON.stringify(body)).digest('base64url').slice(0, 16);
-    return key === known ? null : { ...body, key };
+    // v3.52 드롭·확률 수치는 비공개가 꺼져 있을 때만 싣습니다. 바뀌지 않는 값이라 키에는 미리 만든 지문만 더합니다(동기화마다 다시 해시하지 않음).
+    const key = createHash('sha1').update(JSON.stringify(body)).update(secret ? '' : ODDS_KEY).digest('base64url').slice(0, 16);
+    return key === known ? null : { ...body, ...(secret ? {} : { odds: SERVER_ODDS }), key };
 }

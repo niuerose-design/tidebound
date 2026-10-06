@@ -1,9 +1,10 @@
 /** 가장 자주 수정할 밸런스. UI/저장 코드와 독립적입니다. */
+import { ODDS } from './odds';
 /** 세이브 형식 버전. 바뀌면 migrations.ts가 이전 세이브를 변환하고, 랭킹은 같은 버전의 스냅샷만 보여줍니다. */
 export const SAVE_VERSION = 8;
 export const BALANCE = {
     turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13, baseDefense: 3,
-    hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08, /** v27.45 황금 개체 기본 확률(처치마다). 시프 계열 패시브가 그 위에 더합니다. */ goldenBase: .002,
+    hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08, /** v27.45 황금 개체 기본 확률(처치마다). v3.52 값은 서버 전용(odds). */ get goldenBase() { return ODDS.drop.goldenBase; },
     // Stage hopping used to make the first rebirth arrive in under an hour.
     // See scripts/check-progression-pace.mjs for gearless routing samples;
     // completion times vary substantially with the chosen job and loadout.
@@ -11,21 +12,14 @@ export const BALANCE = {
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
     activeSlots: 4, passiveSlots: 3, inventoryCap: 60,
-    // v27.53 처치당 기본 0.25%(전에는 0.1%). v27.73 상한 1.5% → 3%: 행운 500이나 행운 300 + 물건도감 완성만으로 상한에 닿아 보물의 감각 연구가 0 효과가 되던 것을 풀었습니다. 일반 처치 드롭은 희귀 이상만 나옵니다.
-    // 행운·물건도감·연구·드롭 보너스는 이 확률에 곱해지는 상대 증가: 드롭 보너스 0.01 = 드롭 확률 +10%(dropBonusScale 0.1).
-    // 전에는 0.01이 +5.9%인데 설명은 '+1%p'로 적혀 있어 실제 효과가 설명의 수십분의 일이었습니다.
-    dropChance: 0.0025, dropBonusScale: 0.1, dropChanceCap: 0.03,
+    // v3.52 기본 확률·상한은 서버 전용(game/secret/odds.ts). dropBonusScale(보너스 → 상대 증가 환산)은 화면 표시에 써서 공개.
+    get dropChance() { return ODDS.drop.chance; }, dropBonusScale: 0.1, get dropChanceCap() { return ODDS.drop.cap; },
     /** v27.53 해역 난이도·무릉도장 층으로 올라가는 드롭 장비 레벨 상한: 캐릭터 레벨 + dropLevelOver(그 지역 몬스터보다 낮아지지는 않음). */
     dropLevelOver: 10,
-    /**
-     * v27.76 사냥터 난이도의 장비 보상(숙련 배율 대신).
-     * rarityPerTier: 희귀 이상 드롭의 등급 가중치를 (1 + rarityPerTier × 난이도)^(등급−1)로 밉니다. 보수적으로 잡아 난이도 100에서 태초 0.6% → 1.0%, 전설 이상 24% → 30%.
-     * essence*: 난이도 essenceMinTier 이상 사냥터에서 처치마다 정수 드롭(확률 essenceChancePerTier × 난이도, 양 1 + ⌊난이도 ÷ essenceEveryTiers⌋). 던전은 제외.
-     */
-    tideLoot: { rarityPerTier: .0014, essenceMinTier: 5, essenceChancePerTier: .003, essenceEveryTiers: 10 },
-    // 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상).
-    /** v27.30 반복 정복 확정 장비 확률 5% → 1%(레벨 초과 감소 적용). 드롭률을 낮게 둔 의미가 없어지던 문제. */
-    dungeonRepeatDrop: 0.01,
+    /** v27.76 사냥터 난이도의 장비 보상: 등급 가중·정수 확률·양은 서버 전용(odds). 정수는 난이도 essenceMinTier부터(공개). */
+    tideLoot: { get rarityPerTier() { return ODDS.drop.tideRarityPerTier; }, essenceMinTier: 5, get essenceChancePerTier() { return ODDS.drop.essenceChancePerTier; }, get essenceEveryTiers() { return ODDS.drop.essenceEveryTiers; } },
+    /** 던전 반복 정복 시 희귀 이상 확정 장비 확률(첫 정복·심연 5층마다는 항상). v3.52 값은 서버 전용(odds). */
+    get dungeonRepeatDrop() { return ODDS.drop.dungeonRepeat; },
     // 처치 후 회복률(근거: scripts/check-recovery.mjs). v27.8 기본 20%, v27.78 난이도가 오를수록 1/(1+t/10)로 계속 줄고 healAfterKillMin 아래로는 내려가지 않습니다.
     healAfterKill: 0.2, /** v27.78 난이도 t에서 처치 후 회복 = 기본 ÷ (1 + t ÷ healAfterKillTideScale), 최저 healAfterKillMin. 10에서 10%, 30에서 5%, 90부터 2%. */ healAfterKillTideScale: 10, healAfterKillMin: .02, /** v3.17 쓰러진 뒤 회복 대기(턴): 3 → 25(50초). 환생 10회 미만은 SPROUT.recoveryTurns(3). */ recoveryTurns: 25,
     // Fish codex SP is deliberately paced for long-term mastery rather than early burst spending.

@@ -1,3 +1,4 @@
+import { ODDS } from './odds';
 import { MAPLE_MONSTERS } from './maple-monsters';
 /** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
 /** 사냥터 정의. habitat는 v27.80 무리 서식지(지역마다 하나)입니다. */
@@ -25,7 +26,8 @@ const BASE_STAGES: StageDef[] = [
  * 처치 한 번에 마리 수만큼 보상·도감이 쌓이는 고위험 고보상 사냥터입니다(v3.42 드롭은 √N번 판정, swarmDropRolls). 까미·누리는 나오지 않습니다.
  * 입장: 지역 사냥터의 최고 레벨 · (지역 사냥터 최고 환생 조건 + 2, 최소 2회).
  */
-export const HABITAT = { sizes: [100, 500] as const, bigChance: .25, rebirthOver: 2, minRebirth: 2 };
+// v3.52 ×500 확률(bigChance)은 서버 전용(game/secret/odds.ts).
+export const HABITAT = { sizes: [100, 500] as const, get bigChance() { return ODDS.variant.habitatBig; }, rebirthOver: 2, minRebirth: 2 };
 const HABITAT_META: Record<string, { id: string; subtitle: string; description: string; tone: string }> = {
     '리스항구': { id: 'lithSwarm', subtitle: 'LITH HARBOR · SWARM NEST', description: '항구 뒤편 갯바위. 첫 바다의 몬스터들이 떼로 몰려와 한 덩어리로 덤빈다.', tone: '#5fa8a0' },
     '헤네시스': { id: 'henesysSwarm', subtitle: 'HENESYS · SWARM MEADOW', description: '돼지와 버섯이 끝없이 몰려드는 들판. 한 번 휩쓸면 도감이 백 장씩 넘어간다.', tone: '#c98a6a' },

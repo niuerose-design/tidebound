@@ -1,5 +1,6 @@
 /** 적 등장·드롭·승리 보상. */
-import { DROP_RARITY, rollAffixes } from '../data/gear';
+import { rollAffixes } from '../data/gear';
+import { ODDS } from '../data/odds';
 import { vocationTargets, thresholdRank, refinementBonusLabel, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, skillRefinementTargets, refinePractice } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
@@ -59,9 +60,9 @@ export function releaseLegacySeal(s: State) {
 /** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘회복의 기억’은 1단계마다 +1%p. */
 /** 처치 후 회복 비율. v27.86 힘의 길 회복 봉쇄 ×(1 − 50·75·100%). */
 export const victoryHealRate = (s: State) => ((s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill / (1 + encounterTier(s) / BALANCE.healAfterKillTideScale))) + researchRank(s, 'recovery') * .01 + sproutHeal(s)) * roughHeal(s);
-/** 드롭 등급: DROP_RARITY 분포에서 minRarity 이상만 다시 정규화해 뽑습니다. */
+/** 드롭 등급: 등급 분포(ODDS.drop.rarity, 서버 전용)에서 minRarity 이상만 다시 정규화해 뽑습니다. */
 /** v27.76 난이도별 등급 가중치(일반 제외 표시용·판정용 공통). */
-export const rarityWeights = (tier: number, minRarity = 0) => DROP_RARITY.map((w, i) => i >= minRarity ? w * Math.pow(1 + BALANCE.tideLoot.rarityPerTier * Math.max(0, tier), Math.max(0, i - 1)) : 0);
+export const rarityWeights = (tier: number, minRarity = 0) => ODDS.drop.rarity.map((w, i) => i >= minRarity ? w * Math.pow(1 + BALANCE.tideLoot.rarityPerTier * Math.max(0, tier), Math.max(0, i - 1)) : 0);
 /** 등급 i 이상이 나올 비율(0~1). 난이도 선택기 표시용. */
 export const rarityShareFrom = (tier: number, from: number, minRarity = 1) => { const w = rarityWeights(tier, minRarity), total = w.reduce((a, b) => a + b, 0); return total ? w.slice(from).reduce((a, b) => a + b, 0) / total : 0; };
 /** v27.76 사냥터 난이도의 정수 드롭(사냥터만). 난이도가 낮으면 확률 0이라 난수를 쓰지 않습니다. */

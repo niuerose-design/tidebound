@@ -123,7 +123,7 @@ export const ORIGIN_THEMES: Record<string, { name: string; affixes: string[] }> 
 const THEME_WEIGHT = 4;
 
 /** 드롭 등급 확률(드롭이 일어났을 때). 합 1. */
-export const DROP_RARITY = [.5, .25, .13, .07, .035, .012, .003];
+/** v3.52 장비 등급 분포는 서버 전용(game/secret/odds.ts, ODDS.drop.rarity). */
 /** 등급별 옵션 수치 배율: 높은 등급일수록 한 옵션도 강합니다. */
 export const rarityQuality = (rarity: number) => 1 + rarity * .1;
 /** 분해 시 얻는 정수와 옵션 재설정에 드는 정수. */

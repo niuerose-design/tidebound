@@ -1,9 +1,11 @@
+import { ODDS } from './odds';
 import type { Item, State } from '../types';
 import { BALANCE } from './balance';
 /** 가격·확률·영구 성장 수치의 단일 설정. 모두 게임 내 재화 전용. */
 export const ECONOMY = { /** v27.93 강화 상한·성당 배율은 data/starforce.ts(STARFORCE)로 옮김. 판매 때 돌려받는 강화 비용 비율. */ saleEnhanceRefund: .3, shopBase: 180, shopPerLevel: 35, gambleBase: 300, gamblePerLevel: 45, rebirthAPCap: 12, rebirthLevelStep: 5, /** v27.55 Lv.60(환생 6회) 뒤로는 환생마다 +1, 최대 Lv.80. */ rebirthLevelCap: 100, rebirthLevelLateFrom: 60, rebirthLevelLateStep: 1, rebirthExp: .25, tideCap: 200 };
 // v22: 감정은 희귀 이상. 드물게 신화·고대·태초가 나옵니다(등급 수 = 옵션 수).
-export const APPRAISAL = [{ rarity: 1, chance: .55 }, { rarity: 2, chance: .33 }, { rarity: 3, chance: .09 }, { rarity: 4, chance: .025 }, { rarity: 5, chance: .004 }, { rarity: 6, chance: .001 }];
+/** 감정 등급(희귀 ~ 태초). v3.52 확률은 서버 전용(game/secret/odds.ts, ODDS.appraisal). */
+export const APPRAISAL: readonly { rarity: number; readonly chance: number }[] = [1, 2, 3, 4, 5, 6].map((rarity, i) => ({ rarity, get chance() { return ODDS.appraisal[i]; } }));
 export type ResearchTab = 'combat' | 'utility' | 'gold';
 export type ResearchGroup = 'attack' | 'defense' | 'basic' | 'special' | 'vow';
 export type ResearchDef = {
