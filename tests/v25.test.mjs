@@ -1018,7 +1018,7 @@ test('v27.79 rank: kills-only progression with perks (tally, drill, medal, suppl
     act(s, { type: 'rankPerk', id: 'reset' }, 0); assert.equal(R.rankPointsFree(s), 1); assert.deepEqual(s.rank.perks, {});
     s.rank.exp = R.RANK_CUMULATIVE[16]; assert.equal(R.rankOf(s).name, '중장'); assert.equal(R.rankPointsEarned(s), 41);
     s.rank.perks = { tally: 2, drill: 3, medal: 5 }; assert.equal(R.rankPointsSpent(s), 2 + 3 + 5); assert.equal(M.victoryMastery(s, { id: 'minnow', boss: false }).base, 4, 'drill 3 → base mastery 4');
-    s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, swarm: 10 }; const e0 = s.rank.exp, sp0 = s.sp; Enc.reward(s, () => 0); assert.equal(s.rank.exp, e0 + 30, 'swarm 10 × (1 + tally 2)'); assert.equal(s.sp, sp0 + 1, 'medal hit');
+    s.enemy = { id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, swarm: 100, born: s.turn - 9 }; const e0 = s.rank.exp, sp0 = s.sp; Enc.reward(s, () => 0); assert.equal(s.rank.exp, e0 + 39, 'v3.46 ×100 swarm fought 10 turns: 10 × 1.32 × (1 + tally 2) = 39.6'); assert.ok(Math.abs(s.rank.frac - .6) < 1e-9, 'fraction carried'); assert.equal(s.sp, sp0 + 1, 'medal hit');
     const r = newState(0); r.level = 60; r.rank = { exp: 12345, perks: { supply: 1 } }; act(r, { type: 'rebirth' }, 0); assert.deepEqual(r.rank, { exp: 12345, perks: { supply: 1 } }, 'rank survives rebirth');
 });
 
