@@ -89,9 +89,11 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <TabsTrigger value="training">훈련 상대</TabsTrigger>
     {s.rebirths >= 3 && <TabsTrigger value="abyss" onClick={() => { if (!abyss) loadAbyss(); }}>무릉도장 · 주간</TabsTrigger>}
     {(s.hacker || s.rebirths >= 3) && <TabsTrigger value="hacker">해커 · 월간</TabsTrigger>}
+    {(s.hacker || s.rebirths >= 3) && <TabsTrigger value="crew">조직 · 주간</TabsTrigger>}
     </TabsList>
     <TabsContent value="abyss"><AbyssBoard s={s} abyss={abyss} reload={loadAbyss}/></TabsContent>
     <TabsContent value="hacker"><HackerBoard s={s} send={send} busy={busy}/></TabsContent>
+    <TabsContent value="crew"><CrewBoard s={s}/></TabsContent>
     <TabsContent value="ranking">
     {(() => { const picks = recommendOpponents(rows, s.rating); return picks.length ? <div className="panel ranking-panel recommend-panel">
         <div className="section-title"><h2>추천 상대</h2><span>내 점수 ±{RECOMMEND_RANGE} 안에서 가까운 순</span></div>
@@ -205,7 +207,7 @@ function AbyssBoard({ s, abyss, reload }: { s: State; abyss: { week: string; row
     </section>;
 }
 
-type HackerRow = { rank: number; id: string; name: string; job: string; depth: number; hacks: number; restores: number; grade: number; score: number; self: boolean; masked?: string[] };
+type HackerRow = { rank: number; id: string; name: string; job: string; depth: number; hacks: number; restores: number; grade: number; score: number; self: boolean; masked?: string[]; /** v3.34 조직 이름(이름을 가리면 함께 가림) */ crew?: string };
 /** v3.25 해커 순위(월): 침투 작전 최고 깊이 ×10 + 해킹 실행 ×5 + 화이트 해커 복구 ×5. 탭을 열 때 한 번 불러옵니다. */
 function HackerBoard({ s, send, busy }: { s: State; send: PanelProps['send']; busy: boolean }) {
     const [board, setBoard] = useState<{ month: string; rows: HackerRow[] } | null>(null), [error, setError] = useState('');
@@ -225,6 +227,26 @@ function HackerBoard({ s, send, busy }: { s: State; send: PanelProps['send']; bu
         {mine && <p className="abyss-mine">내 이번 달 기록 <b>깊이 {mine.depth} · 해킹 {mine.hacks} · 복구 {mine.restores}</b></p>}
         {error ? <p className="footnote negative">{error}</p> : !board ? <p className="footnote">불러오는 중…</p> : !board.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 달에 침투 작전·해킹을 한 해커가 없습니다."/> :
         <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>해커</TableHead><TableHead>점수</TableHead><TableHead>깊이</TableHead><TableHead>해킹</TableHead><TableHead>복구</TableHead>{rival && <TableHead>견제</TableHead>}</TableRow></TableHeader>
-        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}{r.job === 'whiteHacker' && !r.masked?.includes('job') ? <small> · 화이트</small> : r.job === 'blackHacker' && !r.masked?.includes('job') ? <small> · 블랙</small> : null}</TableCell><TableCell><b>{format(r.score)}</b></TableCell><TableCell>{r.depth}</TableCell><TableCell>{r.hacks}</TableCell><TableCell>{r.restores}</TableCell>{rival && <TableCell className="ranking-actions">{!r.self && <><button className="secondary small" disabled={busy || (used.trace || 0) >= hackCap(s, 1) || bits < hackCost(s, HACKER.trace.bits)} title={`이 해커의 오늘 침투 작전 입장 −1(하루 ${hackCap(s, 1)}회, 비트 ${hackCost(s, HACKER.trace.bits)})`} onClick={() => send({ type: 'hackRun', id: 'trace', value: r.id }, '/api/hack')}>역추적</button><button className="secondary small" disabled={busy || (used.overload || 0) >= hackCap(s, 1) || bits < hackCost(s, HACKER.overload.bits)} title={`이 해커의 브루트포스 비트를 ${HACKER.overload.minutes / 60}시간 동안 절반으로(하루 ${hackCap(s, 1)}회, 비트 ${hackCost(s, HACKER.overload.bits)})`} onClick={() => send({ type: 'hackRun', id: 'overload', value: r.id }, '/api/hack')}>과부하</button></>}</TableCell>}</TableRow>)}</TableBody></Table>}
+        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.crew ? <small> [{r.crew}]</small> : null}{r.self ? ' (나)' : ''}{r.job === 'whiteHacker' && !r.masked?.includes('job') ? <small> · 화이트</small> : r.job === 'blackHacker' && !r.masked?.includes('job') ? <small> · 블랙</small> : null}</TableCell><TableCell><b>{format(r.score)}</b></TableCell><TableCell>{r.depth}</TableCell><TableCell>{r.hacks}</TableCell><TableCell>{r.restores}</TableCell>{rival && <TableCell className="ranking-actions">{!r.self && <><button className="secondary small" disabled={busy || (used.trace || 0) >= hackCap(s, 1) || bits < hackCost(s, HACKER.trace.bits)} title={`이 해커의 오늘 침투 작전 입장 −1(하루 ${hackCap(s, 1)}회, 비트 ${hackCost(s, HACKER.trace.bits)})`} onClick={() => send({ type: 'hackRun', id: 'trace', value: r.id }, '/api/hack')}>역추적</button><button className="secondary small" disabled={busy || (used.overload || 0) >= hackCap(s, 1) || bits < hackCost(s, HACKER.overload.bits)} title={`이 해커의 브루트포스 비트를 ${HACKER.overload.minutes / 60}시간 동안 절반으로(하루 ${hackCap(s, 1)}회, 비트 ${hackCost(s, HACKER.overload.bits)})`} onClick={() => send({ type: 'hackRun', id: 'overload', value: r.id }, '/api/hack')}>과부하</button></>}</TableCell>}</TableRow>)}</TableBody></Table>}
+    </section>;
+}
+
+type CrewRow = { rank: number; id: string; name: string; side: string; members: number; grade: number; nodes: number; hacks: number; score: number };
+const SIDE_NAME: Record<string, string> = { gray: '회색', white: '화이트', black: '블랙' };
+/** v3.34 해커 조직 순위(주간): 합동 작전 노드 합 ×10 + 조직원 해킹 수 ×2. 탭을 열 때 한 번 불러옵니다(서버 5분 캐시). */
+function CrewBoard({ s }: { s: State }) {
+    const [board, setBoard] = useState<{ week: string; rows: CrewRow[] } | null>(null), [error, setError] = useState('');
+    const [nonce, setNonce] = useState(0), load = () => setNonce(n => n + 1), mine = s.hacker?.crew?.id;
+    useEffect(() => {
+        let alive = true;
+        fetch('/api/ranking?board=crew', { cache: 'no-store' }).then(async r => { const d = await r.json(); if (!r.ok) throw Error(d.error || '불러오지 못했습니다.'); if (alive) { setBoard(d); setError(''); } }).catch(e => { if (alive) setError(e instanceof Error ? e.message : '불러오지 못했습니다.'); });
+        return () => { alive = false; };
+    }, [nonce]);
+    return <section className="panel ranking-panel abyss-board">
+        <div className="section-title"><h2><ArrowUpRight size={17}/> 이번 주 해커 조직 순위{board ? ` · ${board.week}` : ''}</h2><button className="text-button" onClick={load}><RefreshCw size={13}/> 새로고침</button></div>
+        <p className="footnote">점수 = 합동 작전에서 뚫은 노드 합 ×10 + 조직원 해킹 실행 ×2. 한국 시간 월요일 0시에 새로 셉니다. 순위는 5분마다 갱신됩니다.</p>
+        {error ? <p className="footnote negative">{error}</p> : !board ? <p className="footnote">불러오는 중…</p> : !board.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 주 합동 작전 기록이 있는 조직이 없습니다."/> :
+        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>조직</TableHead><TableHead>점수</TableHead><TableHead>노드</TableHead><TableHead>해킹</TableHead><TableHead>인원 · 등급</TableHead></TableRow></TableHeader>
+        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.id === mine ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}<small> · {SIDE_NAME[r.side] || r.side}</small>{r.id === mine ? ' (내 조직)' : ''}</TableCell><TableCell><b>{format(r.score)}</b></TableCell><TableCell>{format(r.nodes)}</TableCell><TableCell>{format(r.hacks)}</TableCell><TableCell>{r.members}명 · {r.grade}</TableCell></TableRow>)}</TableBody></Table>}
     </section>;
 }

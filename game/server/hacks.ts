@@ -135,8 +135,8 @@ export async function applyPendingHack(s: State, id: string, now: number) {
     const pending = s.hacker?.pending;
     if (!pending) return;
     const database = db(), h = parse(await database.getSetting(KEY)), hk = s.hacker!;
-    // v3.25 루트킷: 서명·공지에 이름 대신 ???.
-    const by = programOn(s, 'rootkit') ? '???' : s.name, n = pending.n || hk.tier;
+    // v3.25 루트킷: 서명·공지에 이름 대신 ???. v3.34 조직원이면 이름 뒤에 [조직 이름](루트킷이면 태그도 숨김).
+    const by = programOn(s, 'rootkit') ? '???' : hk.crew ? `${s.name} [${hk.crew.name}]` : s.name, n = pending.n || hk.tier;
     let write = true;
     if (pending.kind === 'broadcast') {
         if (h.broadcast && h.broadcast.until > now && h.broadcast.byId !== id) throw Error(`다른 해커(${h.broadcast.by})의 방송이 ${Math.ceil((h.broadcast.until - now) / 60000)}분 남았습니다.`);
@@ -355,11 +355,12 @@ export async function syncHackerBoard(id: string, s: State, now: number) {
     if (!x?.dirty) return;
     delete x.dirty;
     const score = seasonScore(x);
-    await db().upsertRanking({ id: `hacker:${id}`, snapshot: JSON.stringify({ season: hackerSeason(x.key), board: 'hacker', account: id, name: s.name, job: s.job, depth: x.depth, hacks: x.hacks, restores: x.restores, grade: s.hacker?.grade || 1 }), rating: score, power: x.depth, updated_at: now });
+    // v3.34 조직 이름도 싣습니다(신원 조작으로 이름을 가리면 함께 가림).
+    await db().upsertRanking({ id: `hacker:${id}`, snapshot: JSON.stringify({ season: hackerSeason(x.key), board: 'hacker', account: id, name: s.name, job: s.job, depth: x.depth, hacks: x.hacks, restores: x.restores, grade: s.hacker?.grade || 1, ...(s.hacker?.crew ? { crew: s.hacker.crew.name } : {}) }), rating: score, power: x.depth, updated_at: now });
 }
 export async function listHackerBoard(key: string) {
     const rows = await db().listRankings(hackerSeason(key), 50);
-    return rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as { account: string; name: string; job: string; depth: number; hacks: number; restores: number; grade: number; privacy?: { show: string[] } }; return { rank: i + 1, id: snap.account, name: snap.name, job: snap.job, depth: snap.depth, hacks: snap.hacks, restores: snap.restores, grade: snap.grade, score: r.rating, ...(snap.privacy ? { privacy: snap.privacy } : {}) }; });
+    return rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as { account: string; name: string; job: string; depth: number; hacks: number; restores: number; grade: number; crew?: string; privacy?: { show: string[] } }; return { rank: i + 1, id: snap.account, name: snap.name, job: snap.job, depth: snap.depth, hacks: snap.hacks, restores: snap.restores, grade: snap.grade, score: r.rating, ...(snap.crew ? { crew: snap.crew } : {}), ...(snap.privacy ? { privacy: snap.privacy } : {}) }; });
 }
 
 /**
@@ -372,7 +373,9 @@ export function maskSnapshot<T extends Partial<Snapshot> & { name?: string }>(sn
     if (!privacy || (hacks.cracked[playerId] || 0) > now) return snap;
     // 값은 지우고(브라우저에서도 못 보게) 0·빈 값으로 채운 뒤, 화면은 masked 목록을 보고 ???로 그립니다.
     // v3.28 미끼 정보가 있는 항목은 ??? 대신 가짜 값을 싣고 masked 목록에서도 뺍니다(진짜 정보처럼 보임).
+    // v3.34 이름을 가리면(미끼 이름 포함) 조직 이름도 함께 지웁니다.
     const show = new Set(privacy.show || []), decoy = m.decoy || {}, out: Record<string, unknown> = { ...snap, name: decoy.name || '???' };
+    if ('crew' in out) delete out.crew;
     const masked = [...(decoy.name ? [] : ['name']), ...PRIVACY_KEYS.filter(f => !show.has(f) && !(f === 'job' && decoy.job) && !(f === 'level' && decoy.level))];
     if (masked.length) out.masked = masked;
     if (!show.has('job')) out.job = decoy.job || '';

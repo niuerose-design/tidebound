@@ -12,7 +12,7 @@ import { ApiError } from './store';
 import { dayKey, weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { gainHacker, hackerState, isHacker } from '../systems/hacker';
-import { CREW, CREW_CODE_CHARS, CREW_SIDES, cleanCrewName, crewGrade, crewGradeProgress, crewSide, normalizeCrewCode, opGoal, opSteps, sideAllows, crewModule, moduleSlots, upkeepOf, type CrewData, type CrewSide, type CrewWeek } from '../data/crew';
+import { CREW, CREW_CODE_CHARS, CREW_SIDES, cleanCrewName, crewGrade, crewGradeProgress, crewSide, normalizeCrewCode, opGoal, opSteps, sideAllows, crewModule, moduleSlots, upkeepOf, crewScore, type CrewData, type CrewSide, type CrewWeek } from '../data/crew';
 
 const CACHE_MS = 30_000, ATTEMPTS = 3;
 const cache = new Map<string, { at: number; row: CrewRow | null }>();
@@ -158,6 +158,21 @@ export async function flushCrew(me: string, s: State, now: number): Promise<Crew
         if (reached) addLog(st, `합동 작전 ${reached}단계 달성 · 조직 자금 +${CREW.op.reward(reached).fund}`, 'reward');
         claimOp(st, cached.id, c, me);
     };
+}
+
+/**
+ * v3.34 조직 순위(주간): 이번 주 합동 작전 기록이 있는 조직을 점수(노드 × 10 + 해킹 × 2)로 줄 세웁니다.
+ * listCrews(최대 500행)를 인스턴스마다 5분 캐시로 읽습니다. 내 조직 표시는 화면이 소속 캐시로 합니다(추가 질의 없음).
+ */
+const BOARD_MS = 5 * 60_000, BOARD_SIZE = 30;
+let board: { at: number; week: string; rows: { rank: number; id: string; name: string; side: CrewSide; members: number; grade: number; nodes: number; hacks: number; score: number }[] } | null = null;
+export async function crewBoard(now: number) {
+    const week = weekKey(now);
+    if (board && board.week === week && now - board.at < BOARD_MS) return board;
+    const rows = (await db().listCrews()).map(r => ({ id: r.id, c: parse(r) })).filter((x): x is { id: string; c: CrewData } => !!x.c && x.c.week?.key === week && crewScore(x.c.week) > 0)
+        .map(({ id, c }) => ({ id, name: c.name, side: c.side, members: Object.keys(c.members).length, grade: crewGrade(c.exp), nodes: c.week!.nodes, hacks: c.week!.hacks, score: crewScore(c.week) }))
+        .sort((a, b) => b.score - a.score || b.nodes - a.nodes).slice(0, BOARD_SIZE).map((r, i) => ({ rank: i + 1, ...r }));
+    return board = { at: now, week, rows };
 }
 
 /** 아래 행동은 /api/crew가 mutate 안에서 부릅니다. DB 쓰기를 한 번 한 뒤, 세이브에 적용할 변화(apply)를 돌려줍니다(저장 충돌로 다시 돌면 apply만 다시). */

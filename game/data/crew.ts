@@ -70,6 +70,8 @@ export const normalizeCrewCode = (code: string) => code.toUpperCase().replace(/[
 /** 조직 이름: 제어 문자·꺾쇠·대괄호 제외, 공백 정리. */
 export const cleanCrewName = (name: unknown) => String(name ?? '').replace(/[\u0000-\u001f\u007f<>[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, CREW.nameMax);
 
+/** v3.34 조직 순위(주간) 점수: 합동 작전 노드 합 × 10 + 조직원 해킹 수 × 2. */
+export const crewScore = (w: { nodes: number; hacks: number } | undefined) => w ? w.nodes * 10 + w.hacks * 2 : 0;
 /** v3.32 합동 작전 주간 목표(노드 합계). */
 export const opGoal = (members: number, grade: number) => Math.round(CREW.op.perMember * Math.max(1, members) * (1 + .5 * (Math.min(CREW.maxGrade, Math.max(1, grade)) - 1) / (CREW.maxGrade - 1)));
 /** v3.32 합계로 도달한 단계 수(0~3). */
