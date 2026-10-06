@@ -3,11 +3,13 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 256); assert.equal(new Set(JOBS.map(j => j.id)).size, 256);
+    assert.equal(JOBS.length, 262); assert.equal(new Set(JOBS.map(j => j.id)).size, 262);
+    // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
+    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 235);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 45, magic: 43, defense: 41, status: 29, hybrid: 35, support: 42, mystery: 21 });
+    assert.deepEqual(count, { physical: 46, magic: 44, defense: 42, status: 30, hybrid: 36, support: 43, mystery: 21 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
@@ -23,7 +25,7 @@ test('Job trees: the old other jobs land where the plan puts them', () => {
 
 test('Lineages: every job belongs to exactly one lineage inside its own tree; independents are parentless, childless tier 1', () => {
     assert.equal(new Set(LINEAGES.map(l => l.id)).size, LINEAGES.length);
-    for (const t of JOB_TREES) assert.ok(LINEAGES.some(l => l.id === `${t.id}-independent` && l.tree === t.id && l.name === '독립 수련'), t.id);
+    for (const t of JOB_TREES) assert.ok(LINEAGES.some(l => l.id === `${t.id}-independent` && l.tree === t.id && l.name === '수련'), t.id);
     for (const j of JOBS) {
         const matches = LINEAGES.filter(l => l.id === lineageOf(j));
         assert.equal(matches.length, 1, `${j.id} → ${lineageOf(j)}`);

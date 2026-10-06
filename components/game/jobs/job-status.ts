@@ -68,6 +68,8 @@ export const secretJob = (j: Job) => !!j.hidden || unlockFor({}, j.id) !== null;
  * 들어간 적 있는 직업은 카탈로그를 받기 전에도 드러난 것으로 봅니다.
  */
 export function jobRevealed(s: State, j: Job) {
+    // v3.69 옛 수련(retired)은 화면에 보이지 않습니다.
+    if (j.retired) return false;
     return !secretJob(j) || s.unlockedJobs.includes(j.id) || catalogRevealed(j.id);
 }
 /** v3.63 히든 직업은 드러나기 전에는 어디에도 보이지 않습니다(실루엣 없음). 화면에 보이는 직업과 계보별로 보이는 직업. */
