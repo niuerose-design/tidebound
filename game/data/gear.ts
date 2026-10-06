@@ -45,7 +45,7 @@ export type AffixDef = {
     levelPower?: number;
     description: string;
 };
-export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean };
+export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean; /** v3.82 유물에 이식한 줄의 원래 장비 등급(감쇠를 맞춘 표시). */ srcRarity?: number };
 /** 장비 옵션 합계 상한. v3.71 흡혈 6%p → 10%p(흡혈 옵션 상향과 함께). */
 export const GEAR_CAPS: Partial<Record<GearStat, number>> = { lifesteal: .1, statusResist: .5 };
 
@@ -85,11 +85,11 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '처치·던전 골드가 늘어납니다.' },
     { id: 'seeker', name: '탐색', stat: 'dropBonus', kind: 'percent', base: .01, description: '장비 드롭 확률이 늘어납니다(상대 증가).' },
     // 양날 옵션: 큰 이득 + 손해. v3.71 이득과 손해를 함께 ×1.5(맞는 빌드엔 확실한 이득, 안 맞으면 확실한 손해).
-    { id: 'berserk', name: '광전사', stat: 'attack', kind: 'flat', base: 1.35, stat2: 'defense', base2: -.675, description: '물리 공격이 크게 오르지만 물리 방어가 줄어듭니다.' },
-    { id: 'glassCannon', name: '유리 대포', stat: 'magic', kind: 'flat', base: 1.35, stat2: 'hp', base2: -3.3, description: '마법 공격이 크게 오르지만 최대 체력이 줄어듭니다.' },
-    { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: 1.35, stat2: 'speed', base2: -6, description: '물리 방어가 크게 오르지만 느려집니다.' },
-    { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .075, stat2: 'accuracy', base2: -.09, description: '치명타가 크게 오르지만 명중이 줄어듭니다.' },
-    { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -2.25, uncapped: true, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 10%p).' },
+    { id: 'berserk', name: '광전사', stat: 'attack', kind: 'flat', base: 1.35, stat2: 'defense', base2: -.675, description: '물리 공격이 크게 오르지만 물리 방어가 줄어듭니다. 물리 직업용(마법 직업에는 공격 이득이 거의 없음). 방어 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
+    { id: 'glassCannon', name: '유리 대포', stat: 'magic', kind: 'flat', base: 1.35, stat2: 'hp', base2: -3.3, description: '마법 공격이 크게 오르지만 최대 체력이 줄어듭니다. 마법 직업용(물리 직업에는 공격 이득이 거의 없음). 체력 손해는 장비 위력에 비례하고 굴림 없이 고정이며, 연구 · 직업의 체력 배율이 곱해져 실제 최대 체력은 표시보다 크게 줄어듭니다.' },
+    { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: 1.35, stat2: 'speed', base2: -6, description: '물리 방어가 크게 오르지만 느려집니다. 속도 손해는 고정 폭입니다.' },
+    { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .075, stat2: 'accuracy', base2: -.09, description: '치명타가 크게 오르지만 명중이 줄어듭니다. 치명타 100%를 아직 못 채운 캐릭터에게 이득이고, 명중 손해는 고정 폭입니다.' },
+    { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -2.25, uncapped: true, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다. 이 흡혈은 장비 · 전체 흡혈 상한을 받지 않습니다. 체력 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
     // v3.71 고대 이상 전용 옵션(minRarity 5): 고대 · 태초에서만 굴려지는 강한 옵션. 각인 감정으로는 고를 수 없습니다(낮은 등급이 나올 수 있어서).
     { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, weight: .4, description: '고대 이상. 치명 피해가 크게 오릅니다.' },
     { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, description: '고대 이상. 체력 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },

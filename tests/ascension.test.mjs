@@ -482,3 +482,29 @@ test('v3.81 permanent gear (relic / heir / onyx) star force costs × (1 + 0.21 �
     assert.equal(Eq.enhanceCost({ ...base, heir: 'primal' }, { ...s, rebirths: 0 }), plain, 'no extra cost at 0 rebirths');
     assert.equal(Ec.appraisalRebirthFactor(60), 1 + 60 * .45); assert.ok(Ec.appraisalRebirthFactor(30) < 1 + 30 * .45); assert.equal(Ec.appraisalRebirthFactor(200), 1 + 200 * .45);
 });
+test('v3.82 relic imprint keeps the source item\'s effective flat bonus (source damp ÷ relic damp); old imprints are corrected once, never raised', async () => {
+    const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations');
+    const s = newState(0); s.level = 100; s.gold = 1e12;
+    const relic = { id: 'r', name: 'r', slot: 'rod', style: 'balanced', rarity: 3, level: 100, power: 300, relic: 'memoryRod', locked: true, affixes: [] };
+    const glass = G.rollOption(G.affixDef('glassCannon'), 530, 6, () => .5, 100);
+    const source = { id: 'p', name: 'p', slot: 'rod', style: 'magic', rarity: 6, level: 100, power: 530, affixes: [glass] };
+    s.inventory = [relic, source];
+    act(s, { type: 'imprintRelic', id: 'r', value: 'p:0:0' }, 0);
+    const line = relic.affixes[0];
+    assert.equal(line.srcRarity, 6); assert.equal(line.value2, glass.value2, 'hp penalty unchanged');
+    const onSource = Eq.itemStats({ ...source, power: 1 }).magic, onRelic = Eq.itemStats({ ...relic, power: 1 }).magic;
+    assert.ok(Math.abs(onRelic - onSource) <= 1, `same effective magic ${onRelic} vs ${onSource}`);
+    // 예전 줄(srcRarity 없음): 태초급 수치는 줄고, 낮은 수치는 그대로.
+    const old = { ...relic, id: 'r2', relic: 'soulCoat', affixes: [{ ...glass }, { id: 'might', name: '맹공', stat: 'attack', value: 20 }] };
+    const t = newState(0); t.inventory = [old]; M.migrateState(t, 0);
+    assert.ok(old.affixes[0].value < glass.value, 'primal-sized line shrinks'); assert.equal(old.affixes[1].value, 20, 'small line is not raised');
+    const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'only once');
+});
+test('v3.82 removing an imprinted relic line is free and empties that slot', () => {
+    const s = newState(0); s.gold = 0;
+    const relic = { id: 'r', name: 'r', slot: 'rod', style: 'balanced', rarity: 3, level: 1, power: 10, relic: 'memoryRod', locked: true, affixes: [{ id: 'might', name: '맹공', stat: 'attack', value: 5, srcRarity: 3 }, { id: 'glassCannon', name: '유리 대포', stat: 'magic', value: 9, stat2: 'hp', value2: -20, srcRarity: 3 }] };
+    s.inventory = [relic];
+    act(s, { type: 'removeImprint', id: 'r', value: '0' }, 0);
+    assert.deepEqual(relic.affixes.map(x => x.id), ['glassCannon']); assert.equal(s.gold, 0);
+    assert.throws(() => act(s, { type: 'removeImprint', id: 'r', value: '5' }, 0), /지울/);
+});

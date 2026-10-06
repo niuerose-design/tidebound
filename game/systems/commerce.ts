@@ -4,7 +4,7 @@ import { RARITIES } from '../data/balance';
 import { ASCENSION } from '../data/ascension';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap } from '../data/economy';
 import { apCapacity, apUsed, itemKey } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, keepsAcrossLives, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, keepsAcrossLives, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
@@ -395,10 +395,22 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const cost = imprintCost(source, s);
         spend(cost);
         const before = lines[slot];
-        lines[slot] = { ...affix };
+        lines[slot] = imprintAffix(affix, source.rarity, relic.rarity);
         relic.affixes = lines.filter(Boolean);
         s.inventory = s.inventory.filter(x => x.id !== source.id);
         return `${relic.name} 옵션 이식 · ${affix.name}${before ? ` (${before.name} 대체)` : ''} · ${source.name} 소비 · -${cost} G`;
+    }
+    if (a.type === 'removeImprint') {
+        // v3.82 이식 옵션 지우기: value = 칸 번호(0~2). 무료이고 되돌릴 수 없습니다(그 칸은 비고, 다시 이식할 수 있음).
+        const relic = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        if (!relic?.relic)
+            throw Error('유물을 찾을 수 없습니다.');
+        const index = Number(a.value);
+        const line = Number.isInteger(index) ? relic.affixes?.[index] : undefined;
+        if (!line)
+            throw Error('지울 이식 옵션을 고르세요.');
+        relic.affixes = relic.affixes!.filter((_, i) => i !== index);
+        return `${relic.name} 이식 옵션 제거 · ${line.name}`;
     }
     if (a.type === 'awaken' || a.type === 'inheritPrimal') {
         // v3.66 계승: 원시 각성(고대, 정수) · 태초 계승(태초, 분해 게이지). 옵션 수치는 최고 굴림으로 고정되고, 환생해도 남으며 위력이 환생마다 오릅니다.
