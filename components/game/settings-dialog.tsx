@@ -5,7 +5,8 @@ import { useStarSetting, setStarSetting } from './star-catch-setting';
 import { Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import type { State, Action } from '@/game/types';
-import { researchRank, salvageRate } from '@/game/data/economy';
+import { researchRank, salvageRate, autoGrades, autoMaxGrade, AUTO_RESEARCH, type AutoDevice } from '@/game/data/economy';
+import { RARITIES } from '@/game/data/balance';
 import { SWARM_CAPS, swarmCapOf } from '@/game/data/variants';
 import { useState } from 'react';
 import { SLOT_COUNT, accountSlot, slotUnlocked, slotUnlockText } from '@/game/data/account';
@@ -43,10 +44,8 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                 <input id="player-name" className="name-input" value={name} maxLength={16} onChange={e => setName(e.target.value)}/>
                 <button className="primary" disabled={busy || !s || name.trim().length < 2} onClick={() => { send({ type: 'rename', value: name }); onOpenChange(false); }}>변경</button>
             </div>
-            {s && researchRank(s, 'sortingNet') > 0 && <div className="setting-toggle">
-                <div><strong>자동 정리</strong><p>{researchRank(s, 'sortingNet') >= 2 ? '영웅 이하' : '희귀'} 등급 드롭을 바로 분해(정수)하거나 판매(골드)합니다. 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.</p></div>
-                <div className="setting-choice" role="radiogroup" aria-label="자동 정리 방식">{([['off', '끔'], ['dismantle', '분해'], ['sell', '판매']] as const).map(([id, label]) => { const on = id === 'dismantle' ? !!s.autoSell : id === 'sell' ? !s.autoSell && !!s.autoVend : !s.autoSell && !s.autoVend; return <button key={id} type="button" role="radio" aria-checked={on} className={on ? 'primary' : 'secondary'} disabled={busy} onClick={() => send({ type: 'autoSort', value: id })}>{label}</button>; })}</div>
-            </div>}
+            {s && researchRank(s, 'sortingNet') > 0 && <AutoDeviceRow s={s} busy={busy} send={send} device="salvage" title="자동 분해기" verb="정수로 분해" on={!!s.autoSell} action="autoSell"/>}
+            {s && researchRank(s, 'sortingNet') > 0 && <AutoDeviceRow s={s} busy={busy} send={send} device="vend" title="자동 판매기" verb="골드로 판매" on={!!s.autoVend} action="autoVend"/>}
             <SkillFxToggle/>
             <NoticeToggles/>
             <StarToggle id="catch" title="스타캐치 미니게임" desc="수동 강화 때 좌우로 오가는 별을 가운데에서 잡으면 성공률 +10%p. 끄면 바로 강화합니다(자동 강화에는 없음)."/>
@@ -101,5 +100,19 @@ function SkillFxToggle() {
     return <div className="setting-toggle">
         <div><strong>스킬 이펙트</strong><p>전투 화면의 스킬 연출·피해 숫자·체력 막대 반짝임입니다. 끄면 휴대폰이 덜 버벅이고 배터리를 아낍니다. HP와 전투 기록은 그대로 보입니다. 이 기기에만 저장되며, 처음에는 모바일은 꺼짐·데스크톱은 켜짐입니다.</p></div>
         <button className={on ? 'primary' : 'secondary'} aria-pressed={on} onClick={() => setSkillFx(!on)}>{on ? '켜짐' : '꺼짐'}</button>
+    </div>;
+}
+
+/**
+ * v3.35 자동 분해기·자동 판매기: 켜고 끄기 + 처리할 등급 여러 개 고르기(1단계 희귀~전설, 2단계 고대까지).
+ * 한 등급은 한 장치에만(다른 장치에서 고른 등급은 표시). 태초·칠흑·잠금·유물·도감에 없는 종류는 처리하지 않습니다.
+ */
+function AutoDeviceRow({ s, busy, send, device, title, verb, on, action }: { s: State; busy: boolean; send: (a: Action) => void; device: AutoDevice; title: string; verb: string; on: boolean; action: 'autoSell' | 'autoVend' }) {
+    const max = autoMaxGrade(researchRank(s, AUTO_RESEARCH[device])), mine = autoGrades(s, device), other = autoGrades(s, device === 'salvage' ? 'vend' : 'salvage');
+    return <div className="setting-toggle auto-device">
+        <div><strong>{title}</strong><p>고른 등급의 드롭을 바로 {verb}합니다. 자동 {device === 'salvage' ? '판매기' : '분해기'}와 함께 켤 수 있고, 한 등급은 한쪽에만 고를 수 있습니다(같은 등급이면 분해가 먼저). 태초·칠흑·잠금 장비·유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.{max < 5 ? ` 연구 2단계에서 ${RARITIES[4].name}·${RARITIES[5].name}도 고를 수 있습니다.` : ''}</p>
+            <div className="skill-chip-group" role="group" aria-label={`${title} 등급`}>{RARITIES.slice(1, 6).map((r, i) => { const g = i + 1, picked = mine.includes(g); return <button type="button" key={g} className={`skill-chip ${picked ? 'active' : ''}`} aria-pressed={picked} disabled={busy || g > max} title={g > max ? '연구 2단계 필요' : other.includes(g) ? `자동 ${device === 'salvage' ? '판매기' : '분해기'}에서 고른 등급(누르면 이쪽으로 옮김)` : undefined} onClick={() => send({ type: 'autoGrade', id: device, value: String(g) })} style={{ color: r.color }}>{r.name}{other.includes(g) && !picked ? ' ·' : ''}</button>; })}</div>
+        </div>
+        <button className={on ? 'primary' : 'secondary'} disabled={busy} aria-pressed={on} onClick={() => send({ type: action, value: on ? 'off' : 'on' })}>{on ? '켜짐' : '꺼짐'}</button>
     </div>;
 }

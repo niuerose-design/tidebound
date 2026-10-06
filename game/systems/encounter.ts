@@ -5,7 +5,7 @@ import { jobMasteryTarget, skillRefinementTargets, refinePractice } from './prog
 import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
-import { inventoryCap, researchRank } from '../data/economy';
+import { inventoryCap, researchRank, autoGrades } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
 import { MIMIC, LETTER, letterRank, rollMimicMastery, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
@@ -89,15 +89,17 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     if (slot === 'rod')
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
-    // 자동 정리(v3.38 옛 자동 분해기·자동 판매기): 1단계는 희귀, 2단계는 영웅 이하를 바로 분해(정수, autoSell) 또는 판매(골드, autoVend). 유물·장비 도감에 없는 종류는 남깁니다.
-    const net = researchRank(s, 'sortingNet');
-    if (net && s.autoSell && !item.relic && item.rarity <= net && s.itemBook?.[itemKey(slot, rarity)]) {
+    // 자동 분해기: v3.23 골드 대신 정수. 유물·장비 도감에 없는 종류는 남깁니다.
+    // v3.35 설정에서 고른 등급(여러 개)만 처리합니다. 칠흑·잠금 장비는 어떤 경우에도 처리하지 않습니다.
+    const keep = item.relic || item.locked || item.onyx || !s.itemBook?.[itemKey(slot, rarity)];
+    if (!keep && s.autoSell && autoGrades(s, 'salvage').includes(item.rarity)) {
         const essence = dismantleEssence(item);
         s.essence = (s.essence || 0) + essence;
         addLog(s, `자동 정리: ${item.name} 분해 · 정수 +${essence}`, 'reward');
         return;
     }
-    if (net && s.autoVend && !s.autoSell && !item.relic && item.rarity <= net && s.itemBook?.[itemKey(slot, rarity)]) {
+    // v3.24 자동 판매기: 같은 조건의 드롭을 골드로 팝니다. v3.35 자동 분해기와 함께 켤 수 있고, 같은 등급이면 위에서 분해가 먼저입니다.
+    if (!keep && s.autoVend && autoGrades(s, 'vend').includes(item.rarity)) {
         const gold = saleValue(item);
         s.gold += gold;
         addLog(s, `자동 정리: ${item.name} 판매 +${gold} G`, 'reward');

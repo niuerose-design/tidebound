@@ -116,15 +116,15 @@ test('Research v3.23: tailwind sail raises the additive bonus, the over-target w
 });
 
 test('Research v3: sorting net dismantles only known, low-rarity drops into essence while the setting is on', () => {
-    const s = newState(0); assert.throws(() => act(s, { type: 'autoSort', value: 'dismantle' }, 0), /자동 정리/);
-    s.permanent.sortingNet = 1; act(s, { type: 'autoSort', value: 'dismantle' }, 0); assert.equal(s.autoSell, true);
+    const s = newState(0); assert.throws(() => act(s, { type: 'autoSell', value: 'on' }, 0), /자동 정리/);
+    s.permanent.sortingNet = 1; act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoSell, true);
     // v27.53 드롭은 희귀 이상만: 1단계는 희귀, 2단계는 영웅 이하를 팝니다.
     drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'unregistered kind is kept');
     s.itemBook['rod:1'] = true; const gold = s.gold, essence = s.essence || 0; drop(s, 5, () => 0); assert.equal(s.inventory.length, 1, 'rank 1 dismantles rare'); assert.equal(s.gold, gold, 'no gold'); assert.equal((s.essence || 0) - essence, 2, 'rare → essence 2');
     const hero = () => { const v = [.6, 0]; let i = 0; return () => v[i++] ?? 0; }; // 등급 굴림 .6 → 영웅, 부위 굴림 0 → 낚싯대
     s.itemBook['rod:2'] = true; drop(s, 5, hero(), true); assert.equal(s.inventory.at(-1).rarity, 2); assert.equal(s.inventory.length, 2, 'rank 1 keeps hero');
     s.permanent.sortingNet = 2; drop(s, 5, hero(), true); assert.equal(s.inventory.length, 2, 'rank 2 sells hero');
-    act(s, { type: 'autoSort', value: 'off' }, 0); drop(s, 5, () => 0); assert.equal(s.inventory.length, 3, 'off keeps everything');
+    act(s, { type: 'autoSell', value: 'off' }, 0); drop(s, 5, () => 0); assert.equal(s.inventory.length, 3, 'off keeps everything');
 });
 
 test('v25.23 golden fish: multiplies one catch by ten and is recorded; v27.44 everyone rolls a 0.2% base, thief passives add to it', () => {
@@ -255,14 +255,33 @@ test('v27.88 every vow is a next-life reservation: reserving rough/restraint/bre
     act(s, { type: 'rebirth' }, 0); assert.deepEqual(s.vows, { rough: 3, breath: true });
 });
 
-test('v3.38 auto sort: one research, sell or dismantle mode (never both), kept across rebirth', () => {
-    const s = newState(0); assert.throws(() => act(s, { type: 'autoSort', value: 'sell' }, 0), /자동 정리/);
+test('v3.24 auto vend sells known low-rarity drops for gold; v3.38 one research (자동 정리) opens both; v3.35 it can run together with the auto dismantler (dismantler wins on the same grade)', () => {
+    const s = newState(0); assert.throws(() => act(s, { type: 'autoVend', value: 'on' }, 0), /자동 정리/);
     s.permanent.sortingNet = 1; s.itemBook['rod:1'] = true;
-    act(s, { type: 'autoSort', value: 'dismantle' }, 0); act(s, { type: 'autoSort', value: 'sell' }, 0); assert.equal(s.autoVend, true); assert.equal(s.autoSell, false, 'sell turns dismantle off');
+    act(s, { type: 'autoVend', value: 'on' }, 0); assert.equal(s.autoVend, true);
     const gold = s.gold, essence = s.essence || 0; drop(s, 5, () => 0); assert.equal(s.inventory.length, 0); assert.ok(s.gold > gold, 'sold for gold'); assert.equal(s.essence || 0, essence);
-    act(s, { type: 'autoSort', value: 'dismantle' }, 0); assert.equal(s.autoVend, false, 'dismantle turns sell off');
-    assert.throws(() => act(s, { type: 'autoSort', value: 'maybe' }, 0), /방식/);
-    act(s, { type: 'autoSort', value: 'sell' }, 0); s.level = 30; act(s, { type: 'rebirth' }, 0); assert.equal(s.autoVend, true, 'kept across rebirth');
+    act(s, { type: 'autoSell', value: 'on' }, 0); assert.equal(s.autoVend, true, 'both can be on');
+    const e0 = s.essence || 0, g0 = s.gold; drop(s, 5, () => 0); assert.ok((s.essence || 0) > e0 && s.gold === g0, 'same default grade: dismantler first');
+    s.level = 30; act(s, { type: 'rebirth' }, 0); s.level = 35; act(s, { type: 'rebirth' }, 0); assert.equal(s.autoVend, true, 'kept across rebirth');
+});
+
+test('v3.35 auto devices pick several grades: rank 1 up to legendary, rank 2 up to ancient, one device per grade, primordial/onyx/locked never processed', () => {
+    const rarityRng = r => { for (let v = 0; v < 1; v += .0005) { const t = newState(0); drop(t, 5, (() => { const q = [v, 0]; let i = 0; return () => q[i++] ?? 0; })(), true); if (t.inventory[0]?.rarity === r) return () => { const q = [v, 0]; let i = 0; return () => q[i++] ?? 0; }; } throw Error(`no roll for ${r}`); };
+    const s = newState(0); s.level = 200; s.permanent.sortingNet = 1;
+    for (let r = 1; r <= 5; r++) s.itemBook[`rod:${r}`] = true;
+    assert.throws(() => act(s, { type: 'autoGrade', id: 'salvage', value: '4' }, 0), /전설까지/);
+    assert.throws(() => act(s, { type: 'autoGrade', id: 'nope', value: '1' }, 0), /고르세요/);
+    act(s, { type: 'autoGrade', id: 'salvage', value: '2' }, 0); act(s, { type: 'autoGrade', id: 'salvage', value: '3' }, 0);
+    assert.deepEqual(s.autoSellGrades, [1, 2, 3]); act(s, { type: 'autoGrade', id: 'vend', value: '1' }, 0);
+    assert.deepEqual([s.autoVendGrades, s.autoSellGrades], [[1], [2, 3]], 'one device per grade');
+    act(s, { type: 'autoSell', value: 'on' }, 0); act(s, { type: 'autoVend', value: 'on' }, 0);
+    const legend = rarityRng(3), e0 = s.essence || 0; drop(s, 5, legend(), true); assert.equal(s.inventory.length, 0, 'legendary dismantled'); assert.ok((s.essence || 0) > e0);
+    const g0 = s.gold; drop(s, 5, rarityRng(1)(), true); assert.ok(s.gold > g0, 'rare sold');
+    s.permanent.sortingNet = 2; act(s, { type: 'autoGrade', id: 'salvage', value: '5' }, 0); assert.deepEqual(s.autoSellGrades, [2, 3, 5]);
+    act(s, { type: 'autoGrade', id: 'salvage', value: '3' }, 0); drop(s, 5, legend(), true); assert.equal(s.inventory.at(-1).rarity, 3, 'unpicked grade is kept');
+    assert.throws(() => act(s, { type: 'autoGrade', id: 'salvage', value: '6' }, 0), /고를 수 없는/, 'primordial (onyx) cannot be picked');
+    // 칠흑·잠금 장비는 등급과 상관없이 남깁니다(칠흑은 원래 드롭 경로가 아니지만 한 번 더 막음).
+    s.permanent.sortingNet = 0; assert.deepEqual(economy.autoGrades(s, 'salvage'), [], 'no research, no grades');
 });
 
 test('v3.38 research cleanup refunds paid ranks once: dungeon vault, shop regular, and the vend half of auto sort', () => {

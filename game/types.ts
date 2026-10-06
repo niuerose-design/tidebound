@@ -470,8 +470,11 @@ export type State = {
     masteryCarry?: number;
     /** 자동 정리 · 분해 방식(설정). v3.23부터 정수로 분해. */
     autoSell?: boolean;
-    /** 자동 정리 · 판매 방식(설정). autoSell과 동시에 켜지지 않습니다. */
+    /** v3.24 자동 판매기 켜짐 여부(설정). v3.35부터 자동 분해기와 함께 켤 수 있습니다(같은 등급이면 분해 우선). */
     autoVend?: boolean;
+    /** v3.35 자동 분해기·자동 판매기가 처리할 등급(1 희귀 ~ 5 고대). 없으면 연구 단계 기본값(1단계 희귀, 2단계 영웅 이하). 한 등급은 한 장치에만. */
+    autoSellGrades?: number[];
+    autoVendGrades?: number[];
     /** v25.14 전투 화면 ‘문이 열렸습니다’ 알림 끄기(설정). */
     /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */
     skipStatConfirm?: boolean;

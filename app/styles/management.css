@@ -73,8 +73,6 @@
 .setting-toggle { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 0; border-top:1px solid #9ab4b522; margin-top:12px; }
 .setting-toggle p { font-size:12px; color:#a5bfb1; margin:4px 0 0; line-height:1.6; }
 .setting-toggle button { flex-shrink:0; min-width:64px; }
-.setting-choice { display:flex; gap:6px; flex-shrink:0; }
-.setting-choice button { min-width:52px; }
 .swarm-cap-setting { flex-direction:column; align-items:stretch; }
 .swarm-cap-buttons { display:flex; flex-wrap:wrap; gap:6px; }
 .swarm-cap-buttons button { flex:1 1 0; min-width:72px; }
