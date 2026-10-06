@@ -1,5 +1,5 @@
 import type { Item, Stats, State } from '../types';
-import { ECONOMY, AFFIXES, RELICS, RELIC_GROWTH, GEAR_LEVEL_UP, relicPower, smithDiscount } from '../data/economy';
+import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, heirPower, smithDiscount, type HeirKind } from '../data/economy';
 import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence, GEAR_CAPS, STATUS_RESIST_STAR, rescaleAffix } from '../data/gear';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
@@ -11,8 +11,11 @@ const CHARM_CRIT = [.03, .05, .07, .10, .12, .14, .16], CHARM_CRIT_ENHANCE = .05
 const CAPE_EVASION = [.04, .06, .08, .11, .13, .15, .17], CAPE_EVASION_ENHANCE = .03;
 export const capeEvasion = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CAPE_EVASION[item.rarity] ?? CAPE_EVASION[0]) * (1 + (item.enhance || 0) * CAPE_EVASION_ENHANCE) * 10000) / 10000;
 const charmCrit = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CHARM_CRIT[item.rarity] ?? CHARM_CRIT[0]) * (1 + (item.enhance || 0) * CHARM_CRIT_ENHANCE) * 10000) / 10000;
-/** v27.36 등급별 고정 수치 감쇠(기본 수치와 고정 수치 옵션에 곱함). 고대·태초 장비가 최종 능력치의 대부분을 차지하던 것을 줄입니다. 저장된 위력은 그대로라 기존 장비에도 바로 적용됩니다. */
-export const GEAR_RARITY_SCALE = [1, 1, 1, .85, .68, .58, .52];
+/**
+ * v27.36 등급별 고정 수치 감쇠(기본 수치와 고정 수치 옵션에 곱함). 고대·태초 장비가 최종 능력치의 대부분을 차지하던 것을 줄입니다. 저장된 위력은 그대로라 기존 장비에도 바로 적용됩니다.
+ * v3.62 22성 4부위 장비 몫이 전설 ×2.8 < 신화 ×2.86 < 고대 ×2.95 < 태초 ×3.0으로 오르도록 전설·신화를 낮췄습니다(전에는 전설 3.07 > 신화 2.99). 큰 격차는 계승 장비(heir)에 둡니다.
+ */
+export const GEAR_RARITY_SCALE = [1, 1, 1, .75, .638, .58, .5];
 const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
 export function itemStats(item: Item): Partial<Stats> {
     const damp = GEAR_RARITY_SCALE[item.rarity] ?? 1;
@@ -66,33 +69,50 @@ const smith = (cost: number, s?: Pick<State, 'permanent'>) => s ? Math.floor(cos
 export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'>) => { const n = item.enhance || 0, base = Math.min(n, STARFORCE.growthFrom); return smith(Math.floor((120 + item.power * 12) * (1 + base) ** 1.6 * priceScale(item.level || 1) * Math.pow(STARFORCE.growth, Math.max(0, n - STARFORCE.growthFrom))), s); };
 /** v3.3 유물 옵션 이식 비용: 소비하는 장비의 옵션 재설정 골드 × RELIC_GROWTH.imprintCost. */
 export const imprintCost = (source: Item, s?: Pick<State, 'permanent'>) => reforgeCost(source, s) * RELIC_GROWTH.imprintCost;
-/** v3.3 유물 위력을 환생 횟수에 맞춥니다(기본 × (1 + 환생 × 4%)). 불러오기·환생·수령 때 불러 저장된 위력을 고칩니다. */
+/** v3.62 환생해도 남는 장비: 유물 · 칠흑 장신구 · 계승 장비(원시 고대 · 계승 태초). 판매·분해·도감 등록·청산 대상이 아닙니다. */
+export const keepsAcrossLives = (item: Pick<Item, 'relic' | 'onyx' | 'heir'>) => !!(item.relic || item.onyx || item.heir);
+/** v3.62 계승 위력 종류: 유물은 relic, 계승 장비는 heir 값. 일반 장비는 null. */
+export const heirKind = (item: Pick<Item, 'relic' | 'heir'>): HeirKind | null => item.relic ? 'relic' : item.heir || null;
+/** v3.3 유물 · v3.62 계승 장비 위력을 환생 횟수와 레벨에 맞춥니다(heirPower). 불러오기·환생·수령·계승 때 불러 저장된 위력을 고칩니다. 계승 장비의 고정 수치 옵션은 위력 비율만큼 함께 바뀝니다(유물 이식 옵션은 그대로). */
 export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebirths'>) {
     for (const item of [...s.inventory, ...Object.values(s.equipment)]) {
-        const base = item?.relic && RELICS.find(r => r.id === item.relic);
-        if (item && base) item.power = relicPower(base.power, s.rebirths || 0, item.level || 1);
+        const kind = item && heirKind(item);
+        if (!item || !kind) continue;
+        const next = heirPower(kind, s.rebirths || 0, item.level || 1), before = item.power;
+        if (next === before) continue;
+        item.power = next;
+        if (item.heir && item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1));
     }
 }
 /** v3.5 레벨 올리기 목표 레벨: 지금 레벨 + step, 내 레벨까지. 더 올릴 수 없으면 null. */
 /** v3.13 +step이 내 레벨을 넘으면 내 레벨까지만 올립니다(전에는 Lv.91 장비가 최대 레벨 100에서 Lv.101을 요구해 영원히 막혔음). */
 export const levelUpTarget = (item: Pick<Item, 'level'>, s: Pick<State, 'level'>) => { const cur = item.level || 1, next = Math.min(cur + GEAR_LEVEL_UP.step, s.level); return next > cur ? next : null; };
 export const levelUpCost = (item: Item, s: Pick<State, 'permanent' | 'level'>) => { const next = levelUpTarget(item, s) ?? (item.level || 1) + GEAR_LEVEL_UP.step; return smith(Math.floor((250 + item.power * 25) * priceScale(next) * GEAR_LEVEL_UP.costMultiplier), s); };
-/** 레벨 올리기 적용: 위력·고정 수치 옵션은 (새 레벨 + 2) ÷ (옛 레벨 + 2)배, 유물 위력은 relicPower로 다시 계산, 별·하락 횟수는 0. */
+/** 레벨 올리기 적용: 위력·고정 수치 옵션은 (새 레벨 + 2) ÷ (옛 레벨 + 2)배, 유물·계승 장비 위력은 heirPower로 다시 계산, 별·하락 횟수는 0. */
 export function applyLevelUp(item: Item, next: number, s: Pick<State, 'rebirths'>) {
     const old = item.level || 1, ratio = (next + 2) / (old + 2);
     item.level = next;
-    const base = item.relic && RELICS.find(r => r.id === item.relic);
-    item.power = base ? relicPower(base.power, s.rebirths || 0, next) : Math.max(2, Math.round(item.power * ratio));
+    const kind = heirKind(item);
+    item.power = kind ? heirPower(kind, s.rebirths || 0, next) : Math.max(2, Math.round(item.power * ratio));
     if (item.affixes) item.affixes = item.affixes.map(x => rescaleAffix(x, ratio, old, next));
     item.enhance = 0; item.starFails = 0;
 }
 export const reforgeCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((250 + item.power * 25) * priceScale(item.level || 1)), s);
 /** 분해로 얻는 정수와 옵션 하나 재설정에 드는 정수. */
 export const dismantleEssence = (item: Item) => ESSENCE_BY_RARITY[item.rarity] ?? 1;
+/** v3.62 태초 계승 게이지에 쌓이는 분해: 태초 등급(칠흑 장신구 제외)이면 1. */
+export const primalGaugeOf = (item: Pick<Item, 'rarity' | 'onyx'>) => item.rarity >= 6 && !item.onyx ? 1 : 0;
+/** 분해 정산: 정수(× rate)와 태초 계승 게이지를 더하고 얻은 양을 돌려줍니다. 장비를 목록에서 빼는 것은 부르는 쪽이 합니다. */
+export function dismantleInto(s: Pick<State, 'essence' | 'primalGauge'>, items: Item[], rate = 1) {
+    const essence = Math.floor(items.reduce((sum, i) => sum + dismantleEssence(i), 0) * rate), gauge = items.reduce((n, i) => n + primalGaugeOf(i), 0);
+    s.essence = (s.essence || 0) + essence;
+    if (gauge) s.primalGauge = (s.primalGauge || 0) + gauge;
+    return { essence, gauge };
+}
 /** v27.94 재설정 비용은 이 장비를 재설정한 횟수만큼 오릅니다(1회마다 +10%, 상한 없음). */
 export const rerollCost = (item: Item, s?: Pick<State, 'permanent'>) => ({ gold: Math.floor(rerollScaled(reforgeCost(item, s), item.rerolls)), essence: Math.ceil(rerollScaled(rerollEssence(item.rarity), item.rerolls)) });
 /** v27.94 수치 재련 비용: 재설정 기본 비용의 절반, 횟수에 따라 오르지 않습니다. */
 export const refineCost = (item: Item, s?: Pick<State, 'permanent'>) => ({ gold: Math.floor(reforgeCost(item, s) / 2), essence: refineEssence(item.rarity) });
 export const itemDescription = (item: Item) => item.description || (item.slot === 'rod' ? (item.style === 'magic' ? '마법 특화' : item.style === 'physical' ? '물리 특화' : '물리·마법 겸용') + ' 낚싯대.' : item.slot === 'coat' ? '최대 체력·물리 방어·마법 방어를 높이는 방어구.' : item.slot === 'cape' ? '회피와 체력을 조금 높이는 망토. 상태이상 저항 옵션은 망토에만 붙습니다.' : '치명타 확률을 높이는 장신구.');
 export function rollAffix(rarity: number, rng: () => number) { const x = AFFIXES[Math.floor(rng() * AFFIXES.length)]; return { stat: x.stat, name: x.name, value: x.value * Math.max(1, rarity) }; }
-export function bulkItems(s: State, rarity: number) { return s.inventory.filter(i => i.rarity === rarity && !i.locked && !i.relic && !i.onyx); }
+export function bulkItems(s: State, rarity: number) { return s.inventory.filter(i => i.rarity === rarity && !i.locked && !keepsAcrossLives(i)); }

@@ -144,15 +144,27 @@ export const GAMBLE_CATEGORIES = [
 ] as const;
 /** v27.19 환생 유물: 환생 횟수(rebirth)를 채우면 세계석 없이 받습니다. cost는 v27.19 이전 구매자 환불 기준값입니다. */
 export const RELICS = [
-    { id: 'memoryRod', name: '윤회의 샤이닝 로드', slot: 'rod', style: 'balanced', power: 45, cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
-    { id: 'soulCoat', name: '영혼의 갑주', slot: 'coat', style: 'balanced', power: 55, cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 회피', value: .12 } },
-    { id: 'abyssCharm', name: '심연의 눈', slot: 'charm', style: 'balanced', power: 70, cost: 28, rebirth: 3, description: '깊은 심연에 도전하는 모험가의 정밀 유물.', affix: { stat: 'accuracy', name: '심연 통찰', value: .2 } },
-    { id: 'tideCape', name: '조류의 망토', slot: 'cape', style: 'balanced', power: 60, cost: 36, rebirth: 4, description: '조류를 타고 환생을 건너는 유물. 상태이상 저항은 이식으로 새깁니다.', affix: { stat: 'dropBonus', name: '조류의 흐름', value: .1 } },
+    { id: 'memoryRod', name: '윤회의 샤이닝 로드', slot: 'rod', style: 'balanced', cost: 10, rebirth: 1, description: '환생해도 사라지지 않는 물리·마법 겸용 유물.', affix: { stat: 'goldBonus', name: '황금 기억', value: .2 } },
+    { id: 'soulCoat', name: '영혼의 갑주', slot: 'coat', style: 'balanced', cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 회피', value: .12 } },
+    { id: 'abyssCharm', name: '심연의 눈', slot: 'charm', style: 'balanced', cost: 28, rebirth: 3, description: '깊은 심연에 도전하는 모험가의 정밀 유물.', affix: { stat: 'accuracy', name: '심연 통찰', value: .2 } },
+    { id: 'tideCape', name: '조류의 망토', slot: 'cape', style: 'balanced', cost: 36, rebirth: 4, description: '조류를 타고 환생을 건너는 유물. 상태이상 저항은 이식으로 새깁니다.', affix: { stat: 'dropBonus', name: '조류의 흐름', value: .1 } },
 ] as const;
-/** v3.3 성장하는 유물: 위력은 환생마다 +perRebirth(기본 × (1 + 환생 × perRebirth)), 같은 부위 장비를 소비해 옵션을 imprintSlots줄까지 이식(비용 = 그 장비 옵션 재설정 골드 × imprintCost). 성·이식 옵션은 환생해도 남습니다. */
-export const RELIC_GROWTH = { perRebirth: .04, imprintSlots: 3, imprintCost: 5, perLevel: .01, starBase: 12 };
-/** v3.5 유물 위력 = 기본 × (1 + 환생 × 4%) × (1 + (레벨 − 1) × 1%). 레벨은 ‘레벨 올리기’로만 오릅니다(Lv.100 ×2). */
-export const relicPower = (base: number, rebirths: number, level = 1) => Math.round(base * (1 + Math.max(0, rebirths) * RELIC_GROWTH.perRebirth) * (1 + Math.max(0, level - 1) * RELIC_GROWTH.perLevel));
+/** v3.3 성장하는 유물: 같은 부위 장비를 소비해 옵션을 imprintSlots줄까지 이식(비용 = 그 장비 옵션 재설정 골드 × imprintCost). 성은 레벨이 정하는 상한(starBase + 레벨 ÷ 10)까지. */
+export const RELIC_GROWTH = { imprintSlots: 3, imprintCost: 5, starBase: 12 };
+/**
+ * v3.62 계승 장비(유물 · 원시 고대 · 계승 태초) 위력 = (레벨 + 2) × 배율. 배율은 환생 0 → toRebirth에서 from → to로 곧게 오릅니다.
+ * docs/gear-endgame.md 2.3: Lv.100 · 22성 4부위의 장비 몫(장비 없음 대비)이 유물 ×2.45 → ×2.88(신화와 고대 사이),
+ * 원시 고대 ×2.92 → ×3.7, 계승 태초 ×3.0 → ×4.7이 되도록 scripts/check-gear-ladder.mjs로 맞춘 값입니다.
+ */
+export const HEIR_GROWTH = { toRebirth: 200, relic: { from: 2.67, to: 3.46 }, ancient: { from: 4.5, to: 6.33 }, primal: { from: 5.18, to: 9.58 } } as const;
+export type HeirKind = 'relic' | 'ancient' | 'primal';
+export const heirFactor = (kind: HeirKind, rebirths: number) => { const g = HEIR_GROWTH[kind]; return g.from + (g.to - g.from) * Math.min(1, Math.max(0, rebirths) / HEIR_GROWTH.toRebirth); };
+export const heirPower = (kind: HeirKind, rebirths: number, level = 1) => Math.round((Math.max(1, level) + 2) * heirFactor(kind, rebirths));
+/** v3.62 원시 각성(고대 → 원시 고대): 정수 essenceBase × 10^(환생 ÷ rebirthScale). 환생 0 5천 · 100 약 3.4만 · 200 약 23만. 정수를 파밍할 이유입니다. */
+export const AWAKENING = { essenceBase: 5000, rebirthScale: 120 };
+export const awakenEssence = (rebirths: number) => Math.round(AWAKENING.essenceBase * Math.pow(10, Math.max(0, rebirths) / AWAKENING.rebirthScale));
+/** v3.62 태초 계승: 태초 장비를 분해할 때마다 게이지 +1, gauge만큼 차면 태초 하나를 계승합니다(부위당 기대 약 18일 = 칠흑 장신구 하나와 같은 무게). 환생 유지, 승천 초기화. */
+export const PRIMAL_INHERIT = { gauge: 3 };
 /** v3.5 장비 레벨 올리기: 한 번에 step 레벨, 내 레벨까지. 위력(과 고정 수치 옵션)이 레벨 비례로 오르고 별은 0으로 돌아갑니다(저레벨에서 싸게 별을 올려 고레벨로 가져가는 것을 막음). 비용 = (250 + 위력 × 25) × 가격 보정(새 레벨) × costMultiplier. */
 export const GEAR_LEVEL_UP = { step: 10, costMultiplier: 2 };
 /** v25.7 청산 효율(0 = 연구 없음). 1단계 40%, 단계당 +15%, 5단계 100%. */

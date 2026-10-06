@@ -1123,12 +1123,13 @@ test('v27.93 star force: per-star odds, drops from 10 (15/20 safe), destruction 
 test('v27.96 growing relics: power follows rebirths, imprint consumes a same-slot item and survives rebirth, reforge only rerolls the fixed affix', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Eco = await L.load('data/economy'), { syncRelicPower, imprintCost } = await L.load('systems/equipment'), M = await L.load('systems/migrations'), Meta = await L.load('systems/meta');
-    assert.equal(Eco.relicPower(45, 0), 45); assert.equal(Eco.relicPower(45, 25), 90); assert.equal(Eco.relicPower(45, 50), 135);
+    // v3.62 유물 위력 = (레벨 + 2) × 배율(환생 0 ×2.67 → 환생 200 ×3.46, 그 뒤로는 그대로).
+    assert.equal(Eco.heirPower('relic', 0, 1), 8); assert.equal(Eco.heirPower('relic', 200, 100), 353); assert.equal(Eco.heirPower('relic', 300, 100), 353); assert.equal(Eco.heirPower('relic', 100, 100), Math.round(102 * (2.67 + 3.46) / 2));
     const s = newState(0); s.rebirths = 10; s.gold = 1e9;
     act(s, { type: 'buyRelic', id: 'memoryRod' }, 0);
     const relic = s.inventory.find(i => i.relic === 'memoryRod');
-    assert.equal(relic.power, Eco.relicPower(45, 10), 'bought relic starts at the current rebirth power');
-    relic.power = 45; M.migrateState(s, 0); assert.equal(relic.power, 63, 'loading an old save syncs relic power');
+    assert.equal(relic.power, Eco.heirPower('relic', 10, 1), 'bought relic starts at the current rebirth power');
+    relic.power = 45; M.migrateState(s, 0); assert.equal(relic.power, Eco.heirPower('relic', 10, 1), 'loading an old save syncs relic power');
     const src = (id, affixes, extra = {}) => ({ id, name: `원본 ${id}`, slot: 'rod', rarity: 3, power: 100, level: 40, affixes, ...extra });
     s.inventory.push(src('a', [{ id: 'might', name: '맹공', stat: 'attack', value: 30 }, { id: 'swift', name: '신속', stat: 'speed', value: 2 }]));
     s.inventory.push(src('b', [{ id: 'might', name: '맹공', stat: 'attack', value: 50 }], { locked: true }), { ...src('c', [{ id: 'lucky', name: '행운', stat: 'crit', value: .02 }]), slot: 'coat' });
@@ -1151,16 +1152,16 @@ test('v27.96 growing relics: power follows rebirths, imprint consumes a same-slo
     s.equipment.rod = relic; s.inventory = s.inventory.filter(i => i.id !== relic.id); relic.enhance = 14;
     s.level = Meta.rebirthLevel(s); act(s, { type: 'rebirth' }, 0);
     const kept = s.equipment.rod; assert.equal(kept?.relic, 'memoryRod'); assert.equal(kept.enhance, 14); assert.deepEqual(kept.affixes.map(x => x.id), ['swift', 'arcana']);
-    assert.equal(kept.power, Eco.relicPower(45, 11), 'rebirth bumps relic power');
-    syncRelicPower(s); assert.equal(kept.power, Eco.relicPower(45, 11));
+    assert.equal(kept.power, Eco.heirPower('relic', 11, kept.level), 'rebirth re-syncs relic power');
+    syncRelicPower(s); assert.equal(kept.power, Eco.heirPower('relic', 11, kept.level));
 });
 
 test('v27.95 cape slot: evasion/hp base, steadfast affix only on capes with level² scaling and star bonus (cap 50%), monsters\' statuses are resisted', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
-    const { itemStats, capeEvasion } = await L.load('systems/equipment'), G = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear'), { SLOTS } = await L.load('data/balance');
+    const { itemStats, capeEvasion, GEAR_RARITY_SCALE } = await L.load('systems/equipment'), G = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear'), { SLOTS } = await L.load('data/balance');
     assert.deepEqual(Object.keys(SLOTS), ['rod', 'coat', 'charm', 'cape']); assert.equal(gearName('cape', 6), '에테르넬 케이프');
     const cape = { id: 'c', name: 'x', slot: 'cape', rarity: 6, power: 100, level: 100, enhance: 22 };
-    assert.equal(capeEvasion({ rarity: 6, enhance: 22 }), Math.round(.17 * 1.66 * 10000) / 10000); assert.equal(itemStats(cape).hp, Math.round(100 * 3.55 * .52 * 2 * 1000) / 1000 || itemStats(cape).hp);
+    assert.equal(capeEvasion({ rarity: 6, enhance: 22 }), Math.round(.17 * 1.66 * 10000) / 10000); assert.equal(itemStats(cape).hp, 100 * 3.55 * GEAR_RARITY_SCALE[6] * 2);
     assert.ok(itemStats(cape).evasion > .28 && itemStats(cape).evasion < .283); assert.equal(itemStats(cape).speed, undefined, 'capes give no speed');
     const def = G.AFFIX_POOL.find(a => a.id === 'steadfast'); assert.equal(def.onlySlot, 'cape');
     for (let i = 0; i < 40; i++) assert.ok(!G.rollAffixes(6, 100, undefined, () => (i % 7) / 7, [], 'rod', 100).some(a => a.id === 'steadfast'), 'never on weapons');
@@ -1199,7 +1200,7 @@ test('v3.5 gear level-up: +10 up to player level, power/flat affixes scale, star
     assert.equal(enhanceMaxFor(relic), 12, 'Lv.1 relic caps at 12 stars'); relic.enhance = 12; assert.throws(() => act(s, { type: 'enhance', id: relic.id }, 0, () => 0), /최대 강화/);
     const cheap = enhanceCost({ ...relic, enhance: 5 }, s);
     act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 11); assert.equal(relic.enhance, 0); assert.equal(enhanceMaxFor(relic), 13);
-    assert.equal(relic.power, Eco.relicPower(45, 10, 11)); assert.ok(enhanceCost({ ...relic, enhance: 5 }, s) > cheap, 'relic star cost rises with its level');
+    assert.equal(relic.power, Eco.heirPower('relic', 10, 11)); assert.ok(enhanceCost({ ...relic, enhance: 5 }, s) > cheap, 'relic star cost rises with its level');
     for (let i = 0; i < 8; i++) act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 91); assert.equal(enhanceMaxFor(relic), 21);
     // v3.13 Lv.91 → Lv.100(내 레벨까지), 별 상한 22. 전에는 Lv.101을 요구해 영원히 막혔습니다.
     act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 100); assert.equal(enhanceMaxFor(relic), 22); assert.throws(() => act(s, { type: 'levelUp', id: relic.id }, 0), /내 레벨/, 'already at my level');
