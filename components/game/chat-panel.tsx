@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Megaphone, MessageCircle, Send } from 'lucide-react';
 import { CHAT_MAX_CHARS, CHAT_COOLDOWN_MS, CHAT_KEEP } from '@/game/data/chat';
 
@@ -54,7 +54,8 @@ function useChat(open: boolean, channel: ChatChannel = 'global') {
 
 const hhmm = (at: number) => new Date(at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-export function ChatPanel({ open, playerName, guildName }: { open: boolean; playerName: string; guildName?: string }) {
+/** v3.91 전투 화면 재생 프레임마다 다시 그리지 않도록 memo(속성이 바뀔 때만). */
+export const ChatPanel = memo(function ChatPanel({ open, playerName, guildName }: { open: boolean; playerName: string; guildName?: string }) {
     const [channel, setChannel] = useState<ChatChannel>('global');
     const active: ChatChannel = channel === 'guild' && !guildName ? 'global' : channel;
     // 채널이 바뀌면 목록을 새로 마운트해 커서와 줄을 처음부터 받습니다.
@@ -65,7 +66,7 @@ export function ChatPanel({ open, playerName, guildName }: { open: boolean; play
         </div>}
         <ChatFeed key={active} open={open} playerName={playerName} active={active}/>
     </div>;
-}
+});
 function ChatFeed({ open, playerName, active }: { open: boolean; playerName: string; active: ChatChannel }) {
     const { lines, error, sending, send } = useChat(open, active);
     const [draft, setDraft] = useState('');
@@ -94,7 +95,7 @@ function ChatFeed({ open, playerName, active }: { open: boolean; playerName: str
 /** v3.48 소식 줄 색: 보낸 곳(제단·운영·해커)과 소식 종류(칠흑·승천·5차 전직·무릉도장·22성·진급)마다 다르게 칠합니다. */
 const NEWS_TONES: [RegExp, string][] = [[/칠흑/, 'onyx'], [/승천/, 'ascend'], [/5차/, 'tier5'], [/무릉도장/, 'abyss'], [/22성/, 'star'], [/진급/, 'rank']];
 const newsTone = (l: { name: string; text: string; kind?: string }) => l.kind === 'hacker' ? 'hacker-alert' : l.name === '제단' ? 'news-altar' : l.name === '운영' ? 'news-admin' : `news-${NEWS_TONES.find(([re]) => re.test(l.text))?.[1] || 'plain'}`;
-export function NewsFeed({ open }: { open: boolean }) {
+export const NewsFeed = memo(function NewsFeed({ open }: { open: boolean }) {
     const { lines, error } = useChat(open, 'news');
     // v3.48 전투·획득 탭처럼 새 소식이 맨 위에 옵니다(채팅만 아래에서 위로 쌓임).
     return <div className="chat-feed news-feed">
@@ -104,4 +105,4 @@ export function NewsFeed({ open }: { open: boolean }) {
         </div>
         {error && <p className="chat-error" role="alert">{error}</p>}
     </div>;
-}
+});

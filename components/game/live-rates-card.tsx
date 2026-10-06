@@ -1,6 +1,6 @@
 'use client';
 /** v3.13 실시간 효율 카드: 지난 5분 실측(시간당 경험치·골드·처치·숙련, DPS)과 1·6·24시간 예상치. 전투 화면(접을 수 있음)과 통계 화면에 같은 카드를 씁니다. */
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { memo, useEffect, useState, useSyncExternalStore } from 'react';
 import { Activity, ChevronDown, Coins, Fish, Sparkles, Swords, Zap } from 'lucide-react';
 import type { State } from '@/game/types';
 import type { RecentKill } from '@/game/systems/live-rates';
@@ -17,7 +17,8 @@ const recentStore = (() => { let value: Recent = null; const subs = new Set<() =
 const HORIZONS: [label: string, hours: number][] = [['1시간', 1], ['6시간', 6], ['24시간', 24]];
 const clock = (ms: number) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 const span = (ms: number) => { const m = Math.round(ms / 60_000); return m < 60 ? `${m}분` : m < 1440 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${Math.floor(m / 1440)}일 ${Math.floor(m % 1440 / 60)}시간`; };
-export function LiveRatesCard({ s, compact = false }: { s: State; compact?: boolean }) {
+/** v3.91 전투 화면에서는 동기화 상태를 받고 memo로 감싸 재생 프레임마다 다시 그리지 않습니다. */
+export const LiveRatesCard = memo(function LiveRatesCard({ s, compact = false }: { s: State; compact?: boolean }) {
     const r = useLiveRates();
     // v3.50 전투 화면(compact)에서는 기본으로 접어 둡니다. 이 기기에서 펼쳐 둔 적이 있으면 펼친 채로 엽니다. 통계 화면은 늘 펼침.
     const [open, setOpen] = useState(!compact);
@@ -52,4 +53,4 @@ export function LiveRatesCard({ s, compact = false }: { s: State; compact?: bool
             {!compact && <p className="footnote"><Sparkles size={12}/> 브라우저가 이미 받는 전투 기록으로 계산하므로 서버에 부담이 없습니다. 5분 창의 실측 평균이며, 탭을 숨기거나 부재중 정산이 들어오면 창을 새로 시작합니다. 레벨 예상은 지금 속도가 이어진다고 보고 셉니다(몬스터·난이도를 바꾸면 달라짐). 숙련은 직업 단련치 합의 증가분입니다.</p>}
         </>}
     </section>;
-}
+});

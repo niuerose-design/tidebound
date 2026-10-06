@@ -20,7 +20,10 @@ import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot, raidBreakdow
 import { jobById } from '../data/classes';
 import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, type RaidHitSummary, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
 
-type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[]; allTime: AltarTotalRow[]; raids: Record<string, AltarRaidRow> };
+type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[]; allTime: AltarTotalRow[]; raids: Record<string, AltarRaidRow>;
+    /** v3.91 모든 모험가의 누적 기여(내 누적 기여 · 순위를 요청마다 전체 합산하지 않고 이 캐시에서 셉니다). totals는 많은 순. */ totals: Map<string, number>; sortedTotals: number[] };
+/** v3.91 누적 기여를 한 번에 읽을 최대 인원(순위 계산용). */
+const ALL_TOTALS = 100_000;
 /** 진행 중인 축복의 단계(끝났으면 0). */
 const liveLevel = (g: { until: number; level: number; high_until?: number } | undefined, now: number) => effectiveBlessingLevel(g, now);
 /** v3.16 축복이 보이는 종료 시각: 4단계 이상이면 그 단계의 유지 시각(지나면 3단계로 이어짐). */
@@ -69,7 +72,7 @@ async function shared(now: number, force = false): Promise<Shared> {
     const week = weekKey(now);
     if (!force && cache && cache.week === week && now - cache.at < ALTAR.cacheMs) return cache;
     const database = db();
-    const [altar, gauges, board, allTime, raidRows] = await Promise.all([database.getAltar(), database.listAltarGauges(), database.listAltarOffers(week, ALTAR.boardSize), database.listAltarOffersAllTime(ALTAR.boardSize), database.listAltarRaids()]);
+    const [altar, gauges, board, allTime, raidRows] = await Promise.all([database.getAltar(), database.listAltarGauges(), database.listAltarOffers(week, ALTAR.boardSize), database.listAltarOffersAllTime(ALL_TOTALS), database.listAltarRaids()]);
     const raids = Object.fromEntries(raidRows.map(r => [r.id, r]));
     // v27.69 신의 자리 임기(ALTAR.throneTermMs)가 지나면 자리와 몫을 비웁니다. 다음에 깨어나는 신은 다시 처음 신입니다.
     if (altar.throne && now - altar.throne_since >= ALTAR.throneTermMs && await database.expireAltarThrone(now - ALTAR.throneTermMs)) {
@@ -83,7 +86,7 @@ async function shared(now: number, force = false): Promise<Shared> {
     if (await trySummonRaid(raids, map, now)) return shared(now, true);
     // v3.85 축복이 끝났거나 단계가 내려와도 이미 쌓인 기여도가 비용 이상이면 바로 다음 단계로 엽니다(바치기를 기다리지 않음).
     for (const b of BLESSINGS) { const live = liveLevel(map[b.id], now); if ((map[b.id]?.points || 0) >= gaugeCost(b.id, live, live > 0) && await levelBlessing(b, now, '쌓여 있던 공물로')) return shared(now, true); }
-    return cache = { at: now, week, altar, gauges: map, board, allTime, raids };
+    return cache = { at: now, week, altar, gauges: map, board, allTime: allTime.slice(0, ALTAR.boardSize), raids, totals: new Map(allTime.map(r => [r.player_id, r.points])), sortedTotals: allTime.map(r => r.points) };
 }
 export const invalidateAltar = () => { cache = null; };
 /**
@@ -106,10 +109,22 @@ async function announce(text: string, now: number) {
     try { await db().postChat({ channel: 'news', account_id: 'system', name: '제단', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
 }
 
+/** v3.91 많은 순으로 정렬된 누적 기여 목록에서 points보다 큰 사람 수(이진 탐색). */
+const countAbove = (sorted: number[], points: number) => { let lo = 0, hi = sorted.length; while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] > points) lo = m + 1; else hi = m; } return lo; };
+/**
+ * 제단 정보. v3.91 DB 왕복을 줄였습니다: 공용 정보(15초 캐시)와 내 이번 주 기여를 함께 읽고, 이번 주 순위와 월드보스 카드를 함께 읽습니다.
+ * 누적 기여 · 순위는 공용 캐시의 전체 합계에서 셉니다. s가 없으면(조회) me의 세이브 칸은 비워 두고 화면이 자기 세이브를 씁니다.
+ */
 export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now: number): Promise<AltarInfo> {
-    const sh = await shared(now), database = db(), a = sh.altar;
-    const [mine, total] = await Promise.all([database.getAltarOffer(sh.week, id), database.sumAltarOffers(id)]);
-    const rank = mine && mine.points > 0 ? await database.countAltarAbove(sh.week, mine.points) + 1 : 0;
+    const database = db();
+    const [sh, mine] = await Promise.all([shared(now), database.getAltarOffer(weekKey(now), id)]);
+    const a = sh.altar, mineTotal = sh.totals.get(id) || 0, total = { points: mineTotal, above: countAbove(sh.sortedTotals, mineTotal) };
+    // 이번 주 순위: 순위표(상위 boardSize)에 있으면 그 자리, 아니면 한 번 셉니다. 월드보스 카드와 함께 읽습니다.
+    const onBoard = sh.board.findIndex(r => r.player_id === id);
+    const [rank, raidCards] = await Promise.all([
+        !mine || mine.points <= 0 ? 0 : onBoard >= 0 ? onBoard + 1 : database.countAltarAbove(sh.week, mine.points).then(n => n + 1),
+        Promise.all(RAIDS.map(r => raidInfo(sh.raids[r.id], id, now))),
+    ]);
     const stored = parseGod(a), god = stored && divineFirstGod(stored), isThrone = !!a.throne && a.throne === id;
     return {
         week: sh.week,
@@ -127,7 +142,7 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
         allTime: sh.allTime.map((r, i) => ({ rank: i + 1, name: r.anonymous ? '익명의 모험가' : r.name, points: r.points, anonymous: !!r.anonymous, self: r.player_id === id })),
         total: { points: total.points, rank: total.points > 0 ? total.above + 1 : 0 },
         me: { points: mine?.points || 0, rank, anonymous: !!s?.altar?.anonymous, challengeAt: s?.altar?.challengeAt || 0, raidAt: s?.altar?.raidAt || 0, raidAtBy: s?.altar?.raidAtBy || {} },
-        raids: (await Promise.all(RAIDS.map(r => raidInfo(sh.raids[r.id], id, now)))).filter((x): x is AltarRaidInfo => !!x),
+        raids: raidCards.filter((x): x is AltarRaidInfo => !!x),
     };
 }
 const parseSummary = (text: string): RaidHitSummary | null => { try { const v = JSON.parse(text) as RaidHitSummary; return v && typeof v.dealt === 'number' ? v : null; } catch { return null; } };
@@ -152,8 +167,9 @@ async function raidInfo(r: AltarRaidRow | undefined, id: string, now: number): P
     if (!alive && !slain) return null;
     const [hits, participants, mine, slayerHit] = await Promise.all([database.listRaidHits(r.gen, RAID.boardSize), database.countRaidHits(r.gen), database.getRaidHit(r.gen, id), r.slayer ? database.getRaidHit(r.gen, r.slayer) : null]);
     // v3.84 순위에 있는 모험가의 가장 최근 도전 요약(전투 기록 본문은 raidLog로 따로).
-    const summaries = new Map((await database.listRaidSummaries(r.gen, hits.map(h => h.player_id))).map(x => [x.player_id, parseSummary(x.summary)]));
-    const rank = mine ? await database.countRaidAbove(r.gen, mine.dealt) + 1 : 0;
+    // v3.91 요약과 내 순위를 함께 읽습니다.
+    const [summaryRows, rank] = await Promise.all([database.listRaidSummaries(r.gen, hits.map(h => h.player_id)), mine ? database.countRaidAbove(r.gen, mine.dealt).then(n => n + 1) : 0]);
+    const summaries = new Map(summaryRows.map(x => [x.player_id, parseSummary(x.summary)]));
     const snap = raidBossSnapshot(raid);
     return {
         id: raid.id, gen: r.gen, name: raid.name, level: raid.level, alive, slain, hp: Math.max(0, r.hp), hpMax: r.hp_max || raid.stats.hp, attack: raid.stats.attack, defense: raid.stats.defense, power: snap.power, until: r.until,
