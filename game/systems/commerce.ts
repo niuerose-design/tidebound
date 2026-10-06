@@ -400,6 +400,18 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         s.inventory = s.inventory.filter(x => x.id !== source.id);
         return `${relic.name} 옵션 이식 · ${affix.name}${before ? ` (${before.name} 대체)` : ''} · ${source.name} 소비 · -${cost} G`;
     }
+    if (a.type === 'removeImprint') {
+        // v3.82 이식 옵션 지우기: value = 칸 번호(0~2). 무료이고 되돌릴 수 없습니다(그 칸은 비고, 다시 이식할 수 있음).
+        const relic = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        if (!relic?.relic)
+            throw Error('유물을 찾을 수 없습니다.');
+        const index = Number(a.value);
+        const line = Number.isInteger(index) ? relic.affixes?.[index] : undefined;
+        if (!line)
+            throw Error('지울 이식 옵션을 고르세요.');
+        relic.affixes = relic.affixes!.filter((_, i) => i !== index);
+        return `${relic.name} 이식 옵션 제거 · ${line.name}`;
+    }
     if (a.type === 'awaken' || a.type === 'inheritPrimal') {
         // v3.66 계승: 원시 각성(고대, 정수) · 태초 계승(태초, 분해 게이지). 옵션 수치는 최고 굴림으로 고정되고, 환생해도 남으며 위력이 환생마다 오릅니다.
         const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);

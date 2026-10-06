@@ -500,3 +500,11 @@ test('v3.82 relic imprint keeps the source item\'s effective flat bonus (source 
     assert.ok(old.affixes[0].value < glass.value, 'primal-sized line shrinks'); assert.equal(old.affixes[1].value, 20, 'small line is not raised');
     const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'only once');
 });
+test('v3.82 removing an imprinted relic line is free and empties that slot', () => {
+    const s = newState(0); s.gold = 0;
+    const relic = { id: 'r', name: 'r', slot: 'rod', style: 'balanced', rarity: 3, level: 1, power: 10, relic: 'memoryRod', locked: true, affixes: [{ id: 'might', name: '맹공', stat: 'attack', value: 5, srcRarity: 3 }, { id: 'glassCannon', name: '유리 대포', stat: 'magic', value: 9, stat2: 'hp', value2: -20, srcRarity: 3 }] };
+    s.inventory = [relic];
+    act(s, { type: 'removeImprint', id: 'r', value: '0' }, 0);
+    assert.deepEqual(relic.affixes.map(x => x.id), ['glassCannon']); assert.equal(s.gold, 0);
+    assert.throws(() => act(s, { type: 'removeImprint', id: 'r', value: '5' }, 0), /지울/);
+});
