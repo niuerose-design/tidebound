@@ -71,7 +71,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .2, stat2: 'manaRegen', base2: .012, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, weight: .4, description: '치명 피해가 오릅니다.' },
-    { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', /* v3.84 .025 × 1.5 */ base: .0375, description: '방어 관통이 오릅니다.' },
+    { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', /* v3.84 .025 × 2 */ base: .05, description: '방어 관통이 오릅니다.' },
     { id: 'leech', name: '흡혈', stat: 'lifesteal', kind: 'percent', base: .015, description: '준 피해의 일부를 회복합니다 (장비 흡혈 합계 최대 10%p).' },
     { id: 'drift', name: '회피', stat: 'evasion', kind: 'percent', base: .02, retired: true, description: '회피가 오릅니다. (v3.72 감각으로 통합, 새로 붙지 않음)' },
     // v3.72 명중 · 회피 통합 옵션: 두 수치를 함께 굴립니다(예전 정밀 · 회피 한 줄씩과 같은 크기).
@@ -93,7 +93,7 @@ export const AFFIX_POOL: AffixDef[] = [
     // v3.71 고대 이상 전용 옵션(minRarity 5): 고대 · 태초에서만 굴려지는 강한 옵션. 각인 감정으로는 고를 수 없습니다(낮은 등급이 나올 수 있어서).
     { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, weight: .4, description: '고대 이상. 치명 피해가 크게 오릅니다.' },
     { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, description: '고대 이상. 체력 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },
-    { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, description: '고대 이상. 보스 · 사냥감에게 주는 피해가 오릅니다.' },
+    { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, description: '고대 이상. 보스 · 사냥감에게 주는 직접 피해가 오릅니다(다른 보스 피해와 곱연산, 지속 피해에는 붙지 않음).' },
     { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, description: '고대 이상. 연속 행동 확률이 오릅니다(속도와 무관).' },
     { id: 'bounty', name: '풍요', stat: 'expBonus', kind: 'percent', base: .04, stat2: 'goldBonus', base2: .05, rollBoth: true, minRarity: 5, description: '고대 이상. 경험치와 골드 획득이 함께 늘어납니다.' },
     // v3.5 망토 전용 옵션: 몬스터 상태이상 저항. 수치 = 18.8% × (레벨/100)² × 등급 품질 × 굴림, 착용 시 별당 +3%(다른 옵션과 달리 별 보정), 합계 최대 50%(Lv.100 태초 22성 ≈ 50%).
@@ -118,7 +118,7 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 물리 공격이 크게 오릅니다.' },
     { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 마법 공격이 크게 오릅니다.' },
     { id: 'abyssBreath', name: '심연의 숨', stat: 'lifesteal', kind: 'percent', base: .018, onlyOrigin: 'abyss', description: '무릉도장 전용. 흡혈이 오릅니다 (장비 흡혈 합계 최대 10%p).' },
-    { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', /* v3.84 .04 × 1.5 */ base: .06, onlyOrigin: 'abyss', description: '무릉도장 전용. 방어 관통이 크게 오릅니다.' },
+    { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', /* v3.84 .04 × 2 */ base: .08, onlyOrigin: 'abyss', description: '무릉도장 전용. 방어 관통이 크게 오릅니다.' },
     // 규칙 옵션 (영웅 이상, 장비당 1개)
     { id: 'concuss', name: '뇌진탕', stat: 'stunBonus', kind: 'rule', base: 1, minRarity: 3, description: '기절 지속 +1턴 (합계 최대 +1).' },
     { id: 'binding', name: '속박', stat: 'controlBonus', kind: 'rule', base: 1, minRarity: 3, description: '침묵·감속 지속 +1턴 (합계 최대 +1).' },

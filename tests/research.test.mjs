@@ -26,11 +26,11 @@ test('Research v2: 11 new entries (v3.38 shop removed) match the plan table and 
 test('Research v2: stat effects come from the research source and keep the existing caps', () => {
     const s = newState(0);
     Object.assign(s.permanent, { crit: 20, critDamage: 25, penetration: 15, evasion: 20, lifesteal: 20, manaRegen: 10 });
-    close(researchDelta(s, 'crit'), .1); close(researchDelta(s, 'critDamage'), .5); close(researchDelta(s, 'penetration'), .3); // v3.84 단계당 2%
+    close(researchDelta(s, 'crit'), .1); close(researchDelta(s, 'critDamage'), .5); close(researchDelta(s, 'penetration'), .45); // v3.84 단계당 3%
     close(researchDelta(s, 'evasion'), .12); close(researchDelta(s, 'lifesteal'), .1); close(researchFactor(s, 'manaRegen'), 1.5);
     const base = newState(0);
     close(stats(s).crit - stats(base).crit, .1); close(stats(s).lifesteal - stats(base).lifesteal, .1);
-    s.permanent.penetration = 1000; s.permanent.lifesteal = 1000; assert.equal(stats(s).penetration, .9); /* v3.84 안전 상한 0.6 → 0.9 */ assert.equal(stats(s).lifesteal, .3);
+    s.permanent.penetration = 1000; s.permanent.lifesteal = 1000; assert.equal(stats(s).penetration, 1); /* v3.84 상한 0.6 폐지(방어를 100%까지만 무시) */ assert.equal(stats(s).lifesteal, .3);
 });
 
 test('Research v2: recovery and smith discounts use the state-aware functions', () => {

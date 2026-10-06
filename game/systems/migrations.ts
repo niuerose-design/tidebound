@@ -276,7 +276,7 @@ export function startLifeClock(s: State, now: number) {
     s.lifeStart = { at: now, playMs: s.playMs || 0, partial: true };
 }
 
-/** v3.84 관통 장비 옵션 ×1.5(PENETRATION.gearScale): 새로 굴리는 옵션은 기본값이 이미 1.5배라, 지금 가진 장비(가방 · 착용 · 유물 이식 줄)의 관통 줄만 한 번 맞춥니다. */
+/** v3.84 관통 장비 옵션 ×2(PENETRATION.gearScale): 새로 굴리는 옵션은 기본값이 이미 2배라, 지금 가진 장비(가방 · 착용 · 유물 이식 줄)의 관통 줄만 한 번 맞춥니다. */
 export function boostPenetrationAffixes(s: State) {
     if (s.penetrationBoosted) return 0;
     let n = 0;

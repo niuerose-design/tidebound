@@ -118,15 +118,29 @@ test('v3.83 utility gain ×1.5: gold/exp/drop bonuses of utility job skills only
     Sk.scaleUtilityGain(SKILLS); assert.equal(bonus('tradeEmpire').goldBonus, .3, 'calling again does not scale twice');
 });
 
-test('v3.84 penetration: sources stack multiplicatively (no 0.6 wall), research 2% per rank, owned gear lines ×1.5 once', async () => {
+test('v3.84 penetration: sources stack multiplicatively (no cap), research 3% per rank, owned gear lines ×2 once; boss damage stacks multiplicatively', async () => {
     const B = await load('game/data/balance.js');
     assert.ok(Math.abs(B.stackPenetration(.3, .2) - .44) < 1e-9, '1 − 0.7 × 0.8');
     assert.ok(Math.abs(B.stackPenetration(.5, -.1) - .4) < 1e-9, 'penalties still subtract');
     const s = newState(0); s.permanent.penetration = 15;
-    assert.ok(Math.abs(stats(s).penetration - .3) < 1e-9, 'research 15 ranks = 30%');
+    assert.ok(Math.abs(stats(s).penetration - .45) < 1e-9, 'research 15 ranks = 45%');
+    assert.ok(Math.abs(B.stackBossDamage(.05, .05) - .1025) < 1e-9, 'boss damage: 1.05 × 1.05 − 1');
     const old = newState(0); delete old.penetrationBoosted;
     old.inventory.push({ id: 'p1', slot: 'rod', style: 'physical', rarity: 6, power: 530, level: 100, enhance: 0, name: 't', affixes: [{ id: 'piercing', name: '관통', stat: 'penetration', value: .05 }, { id: 'might', name: '힘', stat: 'attack', value: 10 }] });
     migrateState(old);
-    assert.equal(old.inventory[0].affixes[0].value, .075); assert.equal(old.inventory[0].affixes[1].value, 10, 'other lines untouched');
-    migrateState(old); assert.equal(old.inventory[0].affixes[0].value, .075, 'only once');
+    assert.equal(old.inventory[0].affixes[0].value, .1); assert.equal(old.inventory[0].affixes[1].value, 10, 'other lines untouched');
+    migrateState(old); assert.equal(old.inventory[0].affixes[0].value, .1, 'only once');
+});
+
+test('v3.84 boss damage: direct hits on bosses only (world bosses included), never damage-over-time ticks', async () => {
+    const { strike } = await load('game/systems/combat.js'), { duel, raidBossSnapshot } = await load('game/systems/duel.js'), { raidById } = await load('game/data/altar.js');
+    const base = { hp: 1e7, attack: 1000, magic: 1000, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 100, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const mk = (skills, extra = {}, more = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: 1e7, mana: 100, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {}, ...more });
+    const hit = (bd, prey) => { const b = mk([], {}, prey ? { prey: true } : {}); strike(mk([], { bossDamage: bd }), b, () => .5); return 1e7 - b.hp; };
+    assert.ok(Math.abs(hit(.5, true) / hit(0, true) - 1.5) < .01, 'boss: ×1.5'); assert.equal(hit(.5, false), hit(0, false), 'normal foe: unchanged');
+    const dot = bd => { const b = mk([], {}, { prey: true }); strike(mk(['venomDart'], { bossDamage: bd }), b, () => 0); return b.effects.poison.perStack; };
+    assert.equal(dot(.5), dot(0), 'poison tick ignores boss damage');
+    const raid = raidById('zakum'), me = { name: 'me', level: 100, job: 'fisher', rebirths: 0, stats: { ...base, attack: 5000 }, skills: [], power: 1, rating: 1000 };
+    const dealt = bd => { const r = duel({ ...me, stats: { ...me.stats, bossDamage: bd } }, raidBossSnapshot(raid), true, () => .5, 5); return raid.stats.hp - r.opponentHp; };
+    assert.ok(dealt(.5) > dealt(0) * 1.4, 'world boss counts as a boss');
 });
