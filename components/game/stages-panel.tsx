@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { RegionProgress, RegionResearchLine } from './book-research';
 import { regionSignature } from '@/game/data/variants';
+import { catalogNow } from '@/game/data/catalog';
 import { levelGateOk } from '@/game/systems/meta';
 import { ArrowUpRight, ChevronDown, Lock, MapPin } from 'lucide-react';
 import { STAGES, REGIONS, HABITAT, closedIn, CLOSED_NOTE } from '@/game/data/world';
@@ -12,7 +13,8 @@ import type { PanelProps } from './panel-props';
 import { TideSelector } from './tide-selector';
 export function Stages({ s, send, busy }: PanelProps) {
     // 사냥터와 던전은 동시에 돌지 않습니다. 던전 탐험 중에는 현재 사냥터 표시를 지우고 이동을 막습니다(전투 레일과 같은 규칙).
-    const inDungeon = !!s.dungeon;
+    // v3.49 정보 비공개가 켜져 있으면 무리 규모 비율·까미 출현 배율을 숨깁니다.
+    const inDungeon = !!s.dungeon, secret = catalogNow().secret;
     // v27.80 지역별 접기·펴기: 처음에는 지금 사냥터가 있는 지역만 펼칩니다. 고른 상태는 이 브라우저에만 기억합니다.
     const [openRegions, setOpenRegions] = useState<Record<string, boolean>>(() => { try { return JSON.parse(localStorage.getItem('tidebound:stage-regions') || '{}'); } catch { return {}; } });
     const toggle = (region: string, open: boolean) => setOpenRegions(prev => { const next = { ...prev, [region]: open }; try { localStorage.setItem('tidebound:stage-regions', JSON.stringify(next)); } catch { /* 저장소를 못 쓰면 이번 화면에서만 기억 */ } return next; });
@@ -38,7 +40,7 @@ export function Stages({ s, send, busy }: PanelProps) {
                 <p>{st.description}</p>
                 <div className="stage-footer">
                 <span>Lv. {st.level}+{st.rebirth ? ` · 환생 ${st.rebirth}회` : ''}</span>
-                <span>{st.habitat ? `${st.fish.length}종 · 무리 ×${HABITAT.sizes[0]} ${Math.round((1 - HABITAT.bigChance) * 100)}% · ×${HABITAT.sizes[1]} ${Math.round(HABITAT.bigChance * 100)}% 확정 · 까미·누리 없음${onyxBossFor(st.region) ? ` · 칠흑 보스 ${onyxBossFor(st.region)!.name}` : ''}` : `${st.fish.length}종 서식 · 까미 ×${mimicStageMultiplier(i).toFixed(2)}`}</span>
+                <span>{st.habitat ? `${st.fish.length}종 · ${secret ? `무리 ×${HABITAT.sizes[0]}·×${HABITAT.sizes[1]}` : `무리 ×${HABITAT.sizes[0]} ${Math.round((1 - HABITAT.bigChance) * 100)}% · ×${HABITAT.sizes[1]} ${Math.round(HABITAT.bigChance * 100)}%`} 확정 · 까미·누리 없음${onyxBossFor(st.region) ? ` · 칠흑 보스 ${onyxBossFor(st.region)!.name}` : ''}` : `${st.fish.length}종 서식${secret ? '' : ` · 까미 ×${mimicStageMultiplier(i).toFixed(2)}`}`}</span>
                 </div>
                 {st.habitat ? <span className="region-research">고위험 고보상 · 처치 한 번에 마리 수만큼 보상·도감 · ×500은 보상 1.5배</span> : <RegionProgress s={s} id={st.id}/>}
                 </button>;

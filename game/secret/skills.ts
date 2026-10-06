@@ -6,6 +6,8 @@
  * 완성된 값을 여기에 두어 서버에서 덮어씁니다(화면은 그 직업이 드러나면 카탈로그로 받음).
  * 편집은 이 파일에서 합니다. 예전에 skills.ts 후처리를 거친 결과를 v3.47에 그대로 옮겼습니다.
  */
+// v3.49 서버 전용 표식: 화면(클라이언트) 번들이 이 파일을 가져가면 빌드가 실패합니다(docs/concept.md 10.2-1).
+import 'server-only';
 import type { Skill } from '../types';
 
 export const SECRET_SKILLS: Skill[] = [

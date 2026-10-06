@@ -8,6 +8,7 @@ import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
 import { ECONOMY, RESEARCH_RESET, RELIC_GROWTH, offlineCapSeconds, inventoryCap } from '@/game/data/economy';
 import { STARFORCE } from '@/game/data/starforce';
 import { victoryHealRate } from '@/game/systems/encounter';
+import { catalogNow } from '@/game/data/catalog';
 import type { State } from '@/game/types';
 import { SWARM_UNLOCK, DEPTH_SCALE } from '@/game/data/world';
 import { ONYX } from '@/game/data/onyx';
@@ -48,7 +49,8 @@ const STATUS_GROUPS = [
 ] as const;
 
 export function Guide({ s }: { s?: State }) {
-    const swarm = VARIANTS.find(v => v.id === 'swarm')!;
+    // v3.49 정보 비공개(10.2-7)가 켜져 있으면 드롭·등급·정수·변종·칠흑 확률과 공식을 뺍니다. 전투 수치는 그대로.
+    const swarm = VARIANTS.find(v => v.id === 'swarm')!, secret = catalogNow().secret;
     return <>
         <Heading eyebrow="ADVENTURER'S MANUAL" title="모험 도움말" description="주제는 모두 접혀 있습니다. 제목을 누르면 펼치고 다시 누르면 접습니다."/>
         <Topic icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분. 직업·장비·스킬이 더해집니다.">
@@ -152,11 +154,11 @@ export function Guide({ s }: { s?: State }) {
         <Topic icon={<Fish size={19}/>} title="사냥 · 던전 · 생존" note="변종, 던전 반복, 회복과 방치 진행.">
             <div className="help-columns">
                 <Rule icon={<Fish size={19}/>} title="변종"
-                    effect={<>같은 몬스터인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b> {percent(v.chance, 1)} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 처치 순간 따로 판정, 그 한 마리 골드 10배. 섀도어 계보 패시브(메소 마스터리·메소 가드·섀도우 파트너·메소 익스플로전 강화)가 확률을 올립니다.</>}
+                    effect={<>같은 몬스터인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b>{secret ? '' : ` ${percent(v.chance, 1)}`} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 처치 순간 따로 판정, 그 한 마리 골드 10배. 섀도어 계보 패시브(메소 마스터리·메소 가드·섀도우 파트너·메소 익스플로전 강화)가 확률을 올립니다.</>}
                     condition={`사냥터에서 그 몬스터를 ${VARIANT_BOOK_MIN}회 이상 처치한 뒤부터 출현마다 판정합니다. 버섯숲 연못 테마 +10%. 섀도어 계보 패시브가 확률을 올립니다(픽파킷 +20% · 무리 감지 +50% · 메소 익스플로전 강화 +100% 등).`}
-                    limit="던전과 보스에는 변종이 없습니다. 지금 확률은 능력치 화면 아래 ‘변종 조우 확률’에서 봅니다."/>
+                    limit={secret ? '던전과 보스에는 변종이 없습니다. 확률은 공개하지 않습니다.' : '던전과 보스에는 변종이 없습니다. 지금 확률은 능력치 화면 아래 ‘변종 조우 확률’에서 봅니다.'}/>
                 <Rule icon={<Fish size={19}/>} title="무리 변종"
-                    effect={`처치당 ${percent(swarm.chance, 1)}. 무리 전체를 체력 ×N인 한 개체로 상대하고, 처치하면 경험치·골드·도감을 마리 수만큼 받습니다(×500은 경험치·골드 1.5배). 숙련과 계급 경험치는 싸운 턴 수 × 규모별 값(숙련 ×5 2 · ×100 10 · ×500 20, 마리 수가 상한)입니다. 장비 드롭은 √N번만 판정하고(×500은 2배) 남는 몫은 정수로 받습니다.`}
+                    effect={`${secret ? '' : `처치당 ${percent(swarm.chance, 1)}. `}무리 전체를 체력 ×N인 한 개체로 상대하고, 처치하면 경험치·골드·도감을 마리 수만큼 받습니다(×500은 경험치·골드 1.5배). 숙련과 계급 경험치는 싸운 턴 수 × 규모별 값(숙련 ×5 2 · ×100 10 · ×500 20, 마리 수가 상한)입니다. 장비 드롭은 √N번만 판정하고(×500은 2배) 남는 몫은 정수로 받습니다.`}
                     condition={`규모는 도감 처치 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100, ${SWARM_UNLOCK[500].toLocaleString()}회에 시프의 ‘무리 감지’(Lv.30)를 장착하면 ×500.`}
                     limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 처치 전에 쓰러지면 보상이 없습니다."/>
                 <Rule icon={<Swords size={19}/>} title="던전 · 무릉도장"
@@ -184,9 +186,9 @@ export function Guide({ s }: { s?: State }) {
                     condition={`도전은 ${RAID.cooldownMs / 60_000}분에 한 번, 한 번에 최대 ${RAID.maxTurns}턴. 격파하면 한 번이라도 때린 모험가 전원이 골드·세계석(·SP)을 다음 동기화 때 받고, 마지막 일격은 보너스를 더 받으며, 서버 전체에 축복이 열립니다. 피해 순위는 제단의 월드보스 카드에서 봅니다.`}
                     limit="한 번에 한 마리만 나타납니다. 시간 안에 못 잡으면 떠나고 게이지는 다시 채워야 합니다. 신 소환과는 별개입니다."/>
                 <Rule icon={<Gauge size={19}/>} title="사냥터 난이도 · 던전 난이도"
-                    effect={`사냥터 난이도는 환생 횟수만큼(최대 ${ECONOMY.tideCap}) 올릴 수 있습니다. 몬스터 체력·공격이 오르는 대신 골드·경험치 배율과 장비 레벨이 오르고, 드롭 장비의 상위 등급 비율이 조금씩 오르며(난이도 100에서 태초 0.6% → 1%), 난이도 ${BALANCE.tideLoot.essenceMinTier}부터 처치마다 정수가 떨어집니다(확률 난이도 × ${BALANCE.tideLoot.essenceChancePerTier * 100}%, 양 1 + 난이도 ÷ ${BALANCE.tideLoot.essenceEveryTiers}). 난이도 ${MIMIC.minTier}부터 저레벨 사냥터의 몬스터도 내 레벨 근처까지 올라와 어느 사냥터든 보상이 비슷해집니다.`}
+                    effect={`사냥터 난이도는 환생 횟수만큼(최대 ${ECONOMY.tideCap}) 올릴 수 있습니다. 몬스터 체력·공격이 오르는 대신 골드·경험치 배율과 장비 레벨이 오르고, 드롭 장비의 상위 등급 비율이 조금씩 오르며${secret ? '' : '(난이도 100에서 태초 0.6% → 1%)'}, 난이도 ${BALANCE.tideLoot.essenceMinTier}부터 처치마다 정수가 떨어집니다${secret ? '' : `(확률 난이도 × ${BALANCE.tideLoot.essenceChancePerTier * 100}%, 양 1 + 난이도 ÷ ${BALANCE.tideLoot.essenceEveryTiers})`}. 난이도 ${MIMIC.minTier}부터 저레벨 사냥터의 몬스터도 내 레벨 근처까지 올라와 어느 사냥터든 보상이 비슷해집니다.`}
                     condition={`일반 던전은 입장할 때 ${DUNGEON_MODES.map(m => m.name).join(' · ')} 중 하나를 고릅니다. 헬은 사냥터 난이도 ${DUNGEON_MODES[1].tier}급, 나이트메어는 ${DUNGEON_MODES[2].tier}급이고 몬스터 레벨도 내 레벨까지 올라옵니다. 깊이 계수(v3.9): 사냥터·지역 던전은 입장 레벨 순서마다 체력·공격·골드·경험치 +${DEPTH_SCALE * 100}%라 뒤로 갈수록 조금 더 어렵고 조금 더 줍니다(무릉도장·랜덤게임·까미·누리 제외).`}
-                    limit={`수식(난이도 t): 몬스터 체력 ×(1 + 0.35t + 0.006×(t−20)²) · 공격 ×(1 + 0.18t + 0.002×(t−20)²) · 몬스터 레벨은 난이도 5에서 내 레벨(사냥터 최고 레벨 + 6까지)까지 상승 · 골드 ×(1 + 0.5t, 난이도 30부터 16 + 1.5√(t−30)) · 경험치 ×(1 + 0.3t + 0.005×(t−20)², 난이도 30부터 10.5 + 1.5√(t−30)) · 처치 후 회복 ${percent(BALANCE.healAfterKill)} ÷ (1 + t ÷ ${BALANCE.healAfterKillTideScale}) · 드롭 장비 레벨 +5t(내 레벨 + ${BALANCE.dropLevelOver}까지) · 상위 등급 가중 (1 + ${BALANCE.tideLoot.rarityPerTier}t)^(등급−1) · 정수 확률 ${BALANCE.tideLoot.essenceChancePerTier * 100}% × t, 양 1 + t ÷ ${BALANCE.tideLoot.essenceEveryTiers}(난이도 ${BALANCE.tideLoot.essenceMinTier}부터). 무릉도장은 층 수가 난이도이고, 사냥터 난이도는 던전에 영향을 주지 않습니다.`}/>
+                    limit={`수식(난이도 t): 몬스터 체력 ×(1 + 0.35t + 0.006×(t−20)²) · 공격 ×(1 + 0.18t + 0.002×(t−20)²) · 몬스터 레벨은 난이도 5에서 내 레벨(사냥터 최고 레벨 + 6까지)까지 상승 · 골드 ×(1 + 0.5t, 난이도 30부터 16 + 1.5√(t−30)) · 경험치 ×(1 + 0.3t + 0.005×(t−20)², 난이도 30부터 10.5 + 1.5√(t−30)) · 처치 후 회복 ${percent(BALANCE.healAfterKill)} ÷ (1 + t ÷ ${BALANCE.healAfterKillTideScale}) · 드롭 장비 레벨 +5t(내 레벨 + ${BALANCE.dropLevelOver}까지)${secret ? '' : ` · 상위 등급 가중 (1 + ${BALANCE.tideLoot.rarityPerTier}t)^(등급−1) · 정수 확률 ${BALANCE.tideLoot.essenceChancePerTier * 100}% × t, 양 1 + t ÷ ${BALANCE.tideLoot.essenceEveryTiers}(난이도 ${BALANCE.tideLoot.essenceMinTier}부터)`}. 무릉도장은 층 수가 난이도이고, 사냥터 난이도는 던전에 영향을 주지 않습니다.`}/>
                 <Rule icon={<Fish size={19}/>} title="숙련의 까미 · 경험의 누리"
                     effect={`까미: 사냥터 난이도 ${MIMIC.minTier} 이상 · Lv.${MIMIC.minLevel} 이상 · 누적 ${MIMIC.minKills}마리부터 드물게 나오고(확률은 난이도와 뒤쪽 사냥터일수록 오르다가 난이도 ${MIMIC.tierCap} · 리프레 용의 둥지에서 최대), 잡으면 현재 직업 숙련을 한 번에 줍니다(${MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()}`).join(' · ')}). 누리: 난이도 ${EXP_NURI.minTier} 이상 · Lv.${EXP_NURI.minLevel}~99 · 누적 ${EXP_NURI.minKills.toLocaleString()}마리부터 나오고, 잡으면 지금 레벨 필요 경험치의 ${EXP_NURI.tiers.map(t => `${t.pct * 100}%`).join('·')}를 한 번에 줍니다.`}
                     condition="둘 다 체력이 많고 거의 아프지 않습니다. 제단의 까미·누리 축복과 운영 이벤트가 출현 확률을 곱해 올립니다."
@@ -214,7 +216,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<BookOpen size={19}/>} title="몬스터 도감"
                     effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 처치. 4·5·6단계에 SP. 6단계는 그 몬스터를 난이도 ${BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다. 2단계부터 그 몬스터를 상대로 주는 피해가 오르고 받는 공격 피해가 줄어드는 생태 연구가 붙습니다(6단계 누적 +50% / -25%). 지역의 모든 몬스터가 연구 1·2·3단계면 지역 연구 1·2·3단계입니다. 1단계에 지역 첫 보너스(예전 장소 테마)가 붙고, 단계마다 지역 효과가 쌓입니다. 지역마다 자주 나오는 변종이 다르고, 지역 끝의 무리 서식지에서는 몬스터가 전부 ×100·×500 무리로 나옵니다.`}
                     condition={`${PROGRESSION.fishComplete}회 처치하면 완성이고 적 정보가 열립니다. 사냥터(장소)의 모든 종을 완성하면 업적 ‘지역 연구 N곳 완성’에서 장착 AP +1.`}
-                    limit={`보상은 도감에서 직접 받고 각 단계는 한 번만 줍니다. 합계는 도감 ‘연구 보너스’ 탭에서 봅니다. 칠흑의 보스(v3.12): 무리 서식지 출현마다 ${Math.round(ONYX.chance * 1000) / 10}%로 지역 보스가 나오고(${ONYX.turns}턴 안에 못 잡으면 떠남), 처치하면 ${Math.round(ONYX.drop * 1000) / 10}%(${ONYX.dropPity}번째 연속 미획득은 확정)로 환생해도 남는 칠흑 장신구를 받습니다. 도감 ‘칠흑의 보스’에서 세트 보너스를 봅니다.`}/>
+                    limit={`보상은 도감에서 직접 받고 각 단계는 한 번만 줍니다. 합계는 도감 ‘연구 보너스’ 탭에서 봅니다. 칠흑의 보스(v3.12): 무리 서식지 출현마다 ${secret ? '드물게' : `${Math.round(ONYX.chance * 1000) / 10}%로`} 지역 보스가 나오고(${ONYX.turns}턴 안에 못 잡으면 떠남), 처치하면 ${secret ? '낮은 확률(오래 못 얻으면 확정)' : `${Math.round(ONYX.drop * 1000) / 10}%(${ONYX.dropPity}번째 연속 미획득은 확정)`}로 환생해도 남는 칠흑 장신구를 받습니다. 도감 ‘칠흑의 보스’에서 세트 보너스를 봅니다.`}/>
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비"
                     effect={`감정은 희귀 이상을 보장하고, 확정 구매는 표시된 등급 그대로입니다. 강화는 스타포스(v3.0): 전설 이상 ${STARFORCE.max}성 · 영웅 이하 ${STARFORCE.maxLow}성까지, 1~${STARFORCE.gainHighFrom}성 +${STARFORCE.gainLow * 100}%/성 · 그 위 +${STARFORCE.gainHigh * 100}%/성. 성마다 성공률이 정해져 있고(${STARFORCE.gainHighFrom}성부터 30%), ${STARFORCE.dropFrom}성부터 실패 시 1성 하락(${STARFORCE.safeStars.join('·')}성 유지), 15성부터 파괴 확률(일반 장비는 소멸, 유물은 ${STARFORCE.relicResetStar}성으로). 하락 2번 연속이면 찬스 타임(100%), 수동 강화의 스타캐치(별이 가운데 올 때 누르기)는 성공률 +10%p, 15·16성은 파괴 방지(비용 ×2)를 고를 수 있습니다. 비용은 12성까지 전과 같고 13성부터 성마다 ×${STARFORCE.growth}.`}
                     condition="판매가는 등급·레벨에 비례하고 강화 비용의 30%를 돌려받습니다. 분해는 골드 대신 정수를 줍니다. 정수는 옵션 재설정(옵션 종류를 바꿈, 같은 장비에서 할 때마다 비용 +10%·상한 없음)과 수치 재련(종류는 그대로 수치만 다시 굴림, 재설정 기본 비용의 절반·오르지 않음)에 씁니다."

@@ -9,6 +9,8 @@
  *   화면의 문 상태는 서버가 카탈로그로 보냅니다. 불러올 때 setDoorSource로 door-info의 창구를 이 파일의 판정으로 채웁니다.
  *   비밀 직업을 서버에서 나중에 등록하므로 직업 표로 거르지 않습니다(목록의 id는 모두 있는 직업).
  */
+// v3.49 서버 전용 표식: 화면(클라이언트) 번들이 이 파일을 가져가면 빌드가 실패합니다(docs/concept.md 10.2-1).
+import 'server-only';
 import type { State } from '../types';
 import { FISH } from './world';
 import { masteredJobCount } from '../systems/progression';

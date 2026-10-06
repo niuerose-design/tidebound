@@ -58,13 +58,16 @@ function LockedInfo({ n }: { n: number }) {
 }
 import { Heading, Meter, SlotIcon } from './shared';
 import type { PanelProps } from './panel-props';
+import { catalogNow } from '@/game/data/catalog';
 export function Collection({ s, send, busy }: PanelProps) {
-    const player = stats(s), bookComplete = PROGRESSION.fishComplete;
+    // v3.49 정보 비공개(10.2-7): 켜져 있으면 장비 드롭·까미·누리·칠흑 확률을 숨깁니다.
+    const player = stats(s), bookComplete = PROGRESSION.fishComplete, secret = catalogNow().secret;
     const complete = FISH.filter(f => (s.book[f.id] || 0) >= bookComplete).length, regions = completedRegions(s), pendingBooks = pendingBookCount(s);
     // v26.8 물건도감: 표시 확률은 전체 장비 드롭 확률(행운·연구·이벤트 포함) 기준. 한 종류 더 등록했을 때의 증가분을 %p로 보여 줍니다.
     const registeredCount = Object.keys(s.itemBook).length, currentDrop = dropRate(s);
     /** v3.15 물건 도감 등급별 보기: 전체 · 등급 · 칠흑. */
     const [itemFilter, setItemFilter] = useState<'all' | 'onyx' | number>('all');
+    const perEntryBonus = Math.round(PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 1000) / 10;
     const perEntryDrop = Math.max(0, dropRate({ ...s, itemBook: { ...s.itemBook, ['preview:next']: true } }) - currentDrop);
     const bulkCandidates = Object.keys(SLOTS).flatMap(slot => RARITIES.map((_, i) => s.itemBook[itemKey(slot, i)] ? null : s.inventory.filter(x => x.slot === slot && x.rarity === i && !x.locked && !x.relic).sort((a, b) => a.power - b.power || (a.enhance || 0) - (b.enhance || 0))[0] || null)).filter((x): x is NonNullable<typeof x> => !!x);
 
@@ -83,13 +86,13 @@ export function Collection({ s, send, busy }: PanelProps) {
             <div className="book-icon"><FishArt id={MIMIC.id} size={56}/><span>{n ? `${n}회 처치` : '미발견'}</span></div>
             <h3>{n ? '숙련의 까미' : '???'} <small className="fish-rarity legendary">특별</small></h3>
             <p>{n ? FISH.find(f => f.id === MIMIC.id)!.lore : `사냥터 난이도 ${MIMIC.minTier} 이상에서 아주 드물게 나타난다고 합니다.`}</p>
-            <div className="fish-trait"><strong>숙련 로또</strong><span>잡으면 현재 직업과 장착 스킬의 숙련이 한꺼번에 오릅니다: {MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()} (${Math.round(t.chance * 100)}%)`).join(' · ')}.</span><span>출현마다 ({(MIMIC.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(MIMIC.chancePerTier * 100).toFixed(2)}%p, 난이도 {MIMIC.tierCap}까지) × 사냥터 배율(첫 사냥터 ×1, 한 곳 뒤로 갈 때마다 +{MIMIC.stageStep}, {STAGES[MIMIC_STAGE_CAP_INDEX].name}까지) · 지금 사냥터(행운의 편지 포함) {(s.tide || 0) >= MIMIC.minTier ? `${(mimicChance(s.tide || 0, Math.max(0, STAGES.findIndex(x => x.id === s.stage))) * luck * 100).toFixed(2)}%` : '등장 안 함'} · 사냥터 난이도 {MIMIC.minTier} 이상 · Lv.{MIMIC.minLevel}·누적 처치 {MIMIC.minKills}마리부터 · 던전 제외 · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{MIMIC.hp}, 공격 ×{MIMIC.attack}).</span></div>
+            <div className="fish-trait"><strong>숙련 로또</strong><span>잡으면 현재 직업과 장착 스킬의 숙련이 한꺼번에 오릅니다: {MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()}${secret ? '' : ` (${Math.round(t.chance * 100)}%)`}`).join(' · ')}.</span><span>{secret ? '출현 확률은 공개하지 않습니다(난이도가 높고 뒤쪽 사냥터일수록 자주 나타납니다)' : <>출현마다 ({(MIMIC.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(MIMIC.chancePerTier * 100).toFixed(2)}%p, 난이도 {MIMIC.tierCap}까지) × 사냥터 배율(첫 사냥터 ×1, 한 곳 뒤로 갈 때마다 +{MIMIC.stageStep}, {STAGES[MIMIC_STAGE_CAP_INDEX].name}까지) · 지금 사냥터(행운의 편지 포함) {(s.tide || 0) >= MIMIC.minTier ? `${(mimicChance(s.tide || 0, Math.max(0, STAGES.findIndex(x => x.id === s.stage))) * luck * 100).toFixed(2)}%` : '등장 안 함'}</>} · 사냥터 난이도 {MIMIC.minTier} 이상 · Lv.{MIMIC.minLevel}·누적 처치 {MIMIC.minKills}마리부터 · 던전 제외 · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{MIMIC.hp}, 공격 ×{MIMIC.attack}).</span></div>
         </article>
         <article className={`panel book-card ${!m ? 'undiscovered' : ''}`}>
             <div className="book-icon"><FishArt id={EXP_NURI.id} size={56}/><span>{m ? `${m}회 처치` : '미발견'}</span></div>
             <h3>{m ? '경험의 누리' : '???'} <small className="fish-rarity legendary">특별</small></h3>
             <p>{m ? FISH.find(f => f.id === EXP_NURI.id)!.lore : `사냥터 난이도 ${EXP_NURI.minTier} 이상, Lv.${EXP_NURI.minLevel}이 넘은 모험가 앞에 아주 드물게 나타난다고 합니다.`}</p>
-            <div className="fish-trait"><strong>경험치 로또</strong><span>잡으면 지금 레벨에 필요한 경험치의 일부를 한 번에 얻습니다(경험치 배율·서약과 무관): {EXP_NURI.tiers.map(t => `${t.label} ${Math.round(t.pct * 100)}% (${Math.round(t.chance * 100)}%)`).join(' · ')}.</span><span>출현마다 {(EXP_NURI.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(EXP_NURI.chancePerTier * 100).toFixed(2)}%p · 지금(행운의 편지 포함) {(s.tide || 0) >= EXP_NURI.minTier ? `${(nuriChance(s.tide || 0) * luck * 100).toFixed(2)}%` : '등장 안 함'} · 사냥터 난이도 {EXP_NURI.minTier} 이상 · Lv.{EXP_NURI.minLevel}~99·누적 처치 {EXP_NURI.minKills.toLocaleString()}마리부터 · 던전 제외 · 오프라인 정산 중 ×{EXP_NURI.offlineScale} · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{EXP_NURI.hp}, 공격 ×{EXP_NURI.attack}).</span></div>
+            <div className="fish-trait"><strong>경험치 로또</strong><span>잡으면 지금 레벨에 필요한 경험치의 일부를 한 번에 얻습니다(경험치 배율·서약과 무관): {EXP_NURI.tiers.map(t => `${t.label} ${Math.round(t.pct * 100)}%${secret ? '' : ` (${Math.round(t.chance * 100)}%)`}`).join(' · ')}.</span><span>{secret ? '출현 확률은 공개하지 않습니다(난이도가 높을수록 자주 나타납니다)' : <>출현마다 {(EXP_NURI.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(EXP_NURI.chancePerTier * 100).toFixed(2)}%p · 지금(행운의 편지 포함) {(s.tide || 0) >= EXP_NURI.minTier ? `${(nuriChance(s.tide || 0) * luck * 100).toFixed(2)}%` : '등장 안 함'}</>} · 사냥터 난이도 {EXP_NURI.minTier} 이상 · Lv.{EXP_NURI.minLevel}~99·누적 처치 {EXP_NURI.minKills.toLocaleString()}마리부터 · 던전 제외 · 오프라인 정산 중 ×{EXP_NURI.offlineScale} · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{EXP_NURI.hp}, 공격 ×{EXP_NURI.attack}).</span></div>
         </article></div>
     </details>; })()}{REGIONS.map(region => { const ids = regionFish(region), sig = regionSignature(region), here = STAGES.some(x => x.region === region && x.id === s.stage);
     /* v27.80 도감: 지역 → 장소 2단. 지역 제목에 완성 종 수·지역 연구 단계·대표 변종. */
@@ -138,7 +141,8 @@ export function Collection({ s, send, busy }: PanelProps) {
         })}</div>
         </details><details className="book-section book-region boss-book-section onyx-book-section">
         <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>칠흑의 보스</h2><span>{ONYX_BOSSES.filter(b => ownedOnyx(s).has(b.id)).length} / {ONYX_BOSSES.length} 장신구 보유</span></summary>
-        <p className="footnote">무리 서식지에서만 출현마다 {Math.round(ONYX.chance * 1000) / 10}%(난이도 50마다 +100%, {ONYX.pity.toLocaleString()}회 못 보면 확정)로 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 {Math.round(ONYX.drop * 1000) / 10}%로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 무작위 {ONYX.affixes}줄)를 받고({ONYX.dropPity}번째 연속 미획득 격파는 확정), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>
+        {secret ? <p className="footnote">무리 서식지에서 드물게 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 낮은 확률로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 무작위 {ONYX.affixes}줄)를 받고(오래 못 얻으면 반드시 받음), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>
+        : <p className="footnote">무리 서식지에서만 출현마다 {Math.round(ONYX.chance * 1000) / 10}%(난이도 50마다 +100%, {ONYX.pity.toLocaleString()}회 못 보면 확정)로 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 {Math.round(ONYX.drop * 1000) / 10}%로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 무작위 {ONYX.affixes}줄)를 받고({ONYX.dropPity}번째 연속 미획득 격파는 확정), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>}
         <ul className="bonus-rows">{ONYX_SET.map(b => <li key={b.count} className={ownedOnyx(s).size >= b.count ? 'done' : ''}><b>{b.count}종 보유</b> · <span>{b.label}</span>{ownedOnyx(s).size >= b.count ? ' ✓' : ''}</li>)}</ul>
         <div className="book-grid">{ONYX_BOSSES.map(b => { const f = FISH.find(x => x.id === b.id)!, n = s.onyxBook?.[b.id] || 0, got = ownedOnyx(s).has(b.id), def = affixDef(b.accessory.affix.id);
             return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={b.id}>
@@ -152,8 +156,8 @@ export function Collection({ s, send, busy }: PanelProps) {
     <div className="notice">
     <BookOpen size={22}/>
     <div>
-    <strong>등록한 종류 {registeredCount} / {Object.keys(SLOTS).length * RARITIES.length} · 장비 드롭 확률 {percent(currentDrop, 3)}</strong>
-    <p>도감 보너스 +{Math.round(registeredCount * PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}% 포함, 행운·연구·이벤트를 모두 더한 실제 값입니다. 한 종류 더 등록하면 약 +{percent(perEntryDrop, 4)}p. 가방의 장비 한 개를 영구 등록하며 해당 장비는 소모됩니다. 같은 슬롯·등급은 한 번만 등록합니다.</p>
+    <strong>등록한 종류 {registeredCount} / {Object.keys(SLOTS).length * RARITIES.length}{secret ? '' : ` · 장비 드롭 확률 ${percent(currentDrop, 3)}`}</strong>
+    {secret ? <p>도감 보너스: 장비 드롭 보너스 +{Math.round(registeredCount * PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}%. 한 종류 더 등록할 때마다 +{perEntryBonus}%. 가방의 장비 한 개를 영구 등록하며 해당 장비는 소모됩니다. 같은 슬롯·등급은 한 번만 등록합니다.</p> : <p>도감 보너스 +{Math.round(registeredCount * PROGRESSION.itemDropBonus / BALANCE.dropBonusScale * 100)}% 포함, 행운·연구·이벤트를 모두 더한 실제 값입니다. 한 종류 더 등록하면 약 +{percent(perEntryDrop, 4)}p. 가방의 장비 한 개를 영구 등록하며 해당 장비는 소모됩니다. 같은 슬롯·등급은 한 번만 등록합니다.</p>}
     </div>
     <AlertDialog>
     <AlertDialogTrigger asChild><button className="secondary" disabled={busy || !bulkCandidates.length}>{bulkCandidates.length ? `일괄 등록 (${bulkCandidates.length}종)` : '일괄 등록할 장비 없음'}</button></AlertDialogTrigger>
@@ -188,7 +192,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             <SlotIcon slot={slot} size={32}/>
             </div>
             <h3>{EQUIPMENT_NAMES[slot as keyof typeof EQUIPMENT_NAMES][i]}</h3>
-            <p>{label} · 장비 드롭 확률 +{percent(perEntryDrop, 4)}p</p>
+            <p>{label} · {secret ? `장비 드롭 보너스 +${perEntryBonus}%` : `장비 드롭 확률 +${percent(perEntryDrop, 4)}p`}</p>
             <AlertDialog>
             <AlertDialogTrigger asChild>
             <button className="secondary" disabled={busy || !!registered || !candidate}>{registered ? '영구 보너스 적용 중' : candidate ? '장비 1개 등록' : '가방에 해당 장비 없음'}</button>
@@ -210,7 +214,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             <div className="item-top"><span>{top.name} · 칠흑</span><small>{registered ? '등록 완료' : '미획득'}</small></div>
             <div className="item-icon"><OnyxArt id={b.id} size={36}/></div>
             <h3>{b.accessory.name}</h3>
-            <p>{b.name} 격파 보상 · 장비 드롭 확률 +{percent(perEntryDrop, 4)}p</p>
+            <p>{b.name} 격파 보상 · {secret ? `장비 드롭 보너스 +${perEntryBonus}%` : `장비 드롭 확률 +${percent(perEntryDrop, 4)}p`}</p>
             <button className="secondary" disabled>{registered ? '영구 보너스 적용 중' : '얻으면 자동 등록(소모 없음)'}</button>
             </article>; })}</div>
     </details>
