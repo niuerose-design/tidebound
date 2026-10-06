@@ -7,7 +7,9 @@ import type { Attribute } from '../../types';
 import { jobById } from '../../data/classes';
 import { skillById } from '../../data/skills';
 import { emptyAttributes } from '../../data/progression';
-import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, overRestraint, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery, limitBreakNext } from '../progression';
+import { SKILL_FORMULA } from '../../data/balance';
+import { researchRank } from '../../data/economy';
+import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, overRestraint, extraRollLevel, skillCost, grantJobSkills, canSpendSkill, canInheritSkill, skillLevel, skillMastery, limitBreakNext } from '../progression';
 import { restraintSlots } from '../vows';
 import type { ActionHandlers } from './types';
 import { addLog, endRun } from '../state';
@@ -102,6 +104,19 @@ export const buildActions: ActionHandlers = {
             s.skills.push(id);
         }
         clampVitals(s);
+    },
+    /** v3.84 추가 판정 단계 정하기(value = 0~연구 단계). 단계마다 장착 AP를 씁니다. */
+    extraRoll(s, { a }) {
+        const level = Number(a.value);
+        if (!Number.isInteger(level) || level < 0 || level > SKILL_FORMULA.extraRoll.ap.length)
+            throw Error('알 수 없는 단계입니다.');
+        if (level > researchRank(s, 'extraRoll'))
+            throw Error('세계석 연구 ‘연계의 기억’에서 먼저 해금하세요.');
+        const before = s.extraRolls;
+        s.extraRolls = level;
+        if (!validLoadout(s, s.skills)) { s.extraRolls = before; throw Error(`장착 AP가 모자랍니다. 추가 판정에는 AP ${SKILL_FORMULA.extraRoll.ap.slice(0, level).reduce((x, n) => x + n, 0)}가 필요합니다. 스킬 장착을 줄인 뒤 다시 켜세요.`); }
+        if (!level) delete s.extraRolls;
+        addLog(s, level ? `추가 판정 ${extraRollLevel(s)}단계를 켰습니다.` : '추가 판정을 껐습니다.', 'skill');
     },
     learn(s, { id }) {
         if (!canSpendSkill(s, id))

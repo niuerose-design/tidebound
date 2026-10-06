@@ -17,7 +17,7 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, refinePractice, refinePractices } from './progression';
+import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, refinePractice, refinePractices, extraRollLevel } from './progression';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, superCrit: 0, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, bleedBonus: 0, poisonBonus: 0, burnBonus: 0, guardAffinity: 1, wardAffinity: 1, healFocus: 0, arcaneStrike: 0, statusResist: 0, chainBonus: 0, bossDamage: 0, allStats: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, masteryFlat: 0, rankFlat: 0, essenceBonus: 0, ornament: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0, ...a }; }
 /** 능력치 증가 원인. 능력치 화면의 상세보기가 이 순서로 보여줍니다. */
@@ -230,7 +230,7 @@ export function powerParts(v: Stats) {
     return { offense, durability, critFactor, hit, pierce, armor, dodge };
 }
 export function power(v: Stats) { const p = powerParts(v); return Math.round(POWER_SCALE * Math.sqrt(p.offense * p.durability)); }
-export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillPractice: refinePractices(s), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
+export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillPractice: refinePractices(s), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
 /** 마법 직업이면 1(기본 공격이 항상 마력 평타), 아니면 0. */
 export const arcaneStrikeChance = (j: { magic: number; attack: number; tier: number }) => j.magic - j.attack >= .045 ? SKILL_FORMULA.arcaneStrikeChance[Math.min(j.tier, SKILL_FORMULA.arcaneStrikeChance.length - 1)] || 0 : 0;
 /** 직업의 물리 방어 배율로 정하는 방어 친화도(0.2~1). 방어 비례 피해·반격의 효율입니다. */

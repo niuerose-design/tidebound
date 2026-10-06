@@ -129,7 +129,11 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Zap size={19}/>} title="액티브"
                     effect="전투 중 발동 확률에 따라 자동으로 씁니다. 편성 순서대로 판정해 처음 성공한 하나만 사용합니다."
                     condition="마나·재사용 대기·스킬별 조건(체력 비율 등)을 채워야 합니다."
-                    limit={`장착 개수 제한은 없고 총 AP만 제한합니다. 추가타는 최대 ${STATUS_TUNING.maxExtraAttacks}회.`}/>
+                    limit={`장착 개수 제한은 없고 총 AP만 제한합니다. 추가타는 최대 ${STATUS_TUNING.maxExtraAttacks}회. 추가 판정(세계석 연구 ‘연계의 기억’, 장착 AP ${SKILL_FORMULA.extraRoll.ap[0]})을 켜면 액티브가 발동한 행동에서 그 아래 액티브로 한 번 더 판정해 ${Math.round(SKILL_FORMULA.extraRoll.power[0] * 100)}% 위력으로 함께 씁니다.`}/>
+                <Rule icon={<Sparkles size={19}/>} title="각성기 (5차)"
+                    effect="5차 이상 직업의 액티브는 각성기입니다. 행동마다가 아니라 턴마다 따로 판정해 일반 액티브와 같은 턴에 함께 나갑니다. 연속 행동은 턴으로 세지 않고, 확정 추가 행동은 한 턴으로 셉니다."
+                    condition={`대기 ${SKILL_FORMULA.awaken.cooldown}턴. 결투·제단·월드보스 전투, 던전 입장, 쓰러짐, 전직 뒤에는 대기가 꽉 찬 채로 시작합니다(사냥 중에는 다음 몬스터로 이어짐). 판정에 실패할 때마다 다음 판정 확률에 기본 발동률을 더합니다(최대 100%).`}
+                    limit={`한 턴에 각성기는 하나만. 각성기로 쓰러뜨리면 대기가 ${SKILL_FORMULA.awaken.kill}턴만 돌고, 대기 초기화 효과는 ${SKILL_FORMULA.awaken.reset}턴을 줄입니다. 거는 상태이상은 덜 자주 걸리는 만큼 오래 갑니다.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="습득 · 계승 · 강화"
                     effect="전직하면 그 직업의 기술을 Lv.0으로 얻습니다. 장착한 채 처치해 첫 숙련을 채우면 다른 직업에서도 씁니다. 3차 이상 스킬은 숙련 단계가 높습니다(3차 ×3 · 4차 ×10 · 5차 ×25)."
                     condition="해금한 기술에 한해 계승·강화에 각각 1 SP."

@@ -43,7 +43,9 @@ test('v24.2 gamble rolls the multiplier; all-in spends HP and mana; gold toss sp
 });
 
 test('v24.2 prey bonus hits bosses and designated species harder', () => {
-    const plain = hit(fighter('titanFell'), target()), prey = hit(fighter('titanFell'), target({ prey: true }));
+    // v3.84 거신 쓰러뜨리기는 각성기: 대기를 비워 두면 기본 행동 뒤 턴 판정으로 나갑니다. 그 줄의 피해만 견줍니다.
+    const awakened = b => { const a = fighter('titanFell', { fields: { cooldowns: { titanFell: 0 } } }), ev = []; strike(a, b, () => 0, ev); return ev.find(e => e.awaken).total; };
+    const plain = awakened(target()), prey = awakened(target({ prey: true }));
     assert.ok(Math.abs(prey / plain - 1.5) < .02, `${prey}/${plain}`);
 });
 

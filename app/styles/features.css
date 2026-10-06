@@ -449,3 +449,5 @@
 .crew-code{font-size:20px;letter-spacing:.2em;color:#8fe3c4}.crew-members{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}.crew-members li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 10px;border-radius:8px;background:#0e2026}.crew-members li.self{outline:1px solid #8fe3c455}.crew-members b{display:flex;align-items:center;gap:4px}.crew-members small{color:#9bb3b0}.crew-actions{margin-left:auto;display:flex;gap:6px}
 /* v3.32 합동 작전 단계 */
 .crew-steps{list-style:none;margin:8px 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.crew-steps li{display:grid;gap:2px;padding:8px 10px;border-radius:8px;background:#0e2026;border:1px solid #9ab4b522}.crew-steps li.done{border-color:#8fe3c488;color:#bff5c6}.crew-steps small{color:#9bb3b0;font-size:12px}@media(max-width:600px){.crew-steps{grid-template-columns:1fr}}
+/* v3.84 각성기 줄 */
+.battle-line em.status.awaken { color: #1d1608; background: #f3d58a; border-radius: 3px; padding: 0 4px; font-weight: 700; }

@@ -226,6 +226,8 @@ export type Skill = {
     cooldownReset?: { on: 'crit' | 'kill' | 'chain'; chance: number; pick: 'longest' | 'first' | 'all' };
     /** v25.5 동시 시전 가능. 같은 표시가 있는 액티브끼리 한 행동에 함께 나갑니다. */
     multicast?: boolean;
+    /** v3.84 각성기(5차 이상 액티브): 턴마다 따로 판정하고 대기는 턴 단위. start는 대기를 비운 뒤(전투·던전 시작, 쓰러짐, 편성 변경) 처음 대기 턴입니다. */
+    awaken?: { start: number; /** 거는 상태이상 지속 배율(패시브 보너스 포함, 반올림). */ statusScale?: number };
     /** v25 일곱 글자: 쓰면 이번 전투의 인(印)을 하나 새깁니다. */
     seal?: boolean;
     /** v25 魂: 이번 전투에 새긴 인 1개마다 피해 +sealPower. */
@@ -329,6 +331,10 @@ export type CombatEvent = {
     cooldownReset?: string[];
     /** v25.5 동시 시전: 이 줄이 묶음의 몇 번째(0부터)이고 몇 개가 함께 나갔는지. 첫 줄은 이어서 나갈 기술 id를 들고 있습니다. */
     multicast?: { index: number; count: number; ids?: string[] };
+    /** v3.84 각성기 발동 줄. */
+    awaken?: boolean;
+    /** v3.84 추가 판정으로 함께 나간 줄(몇 번째 추가 판정인지, 1부터)과 위력 배율. */
+    followUp?: { index: number; power: number };
     /** v25: 타임 리와인드로 모두 회복. */
     restored?: boolean;
     /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */
@@ -490,6 +496,8 @@ export type State = {
     recovery: number;
     lastTick: number;
     skills: string[];
+    /** v3.84 추가 판정 단계(편성에서 켬, 단계마다 장착 AP). 세계석 연구 ‘연계의 기억’ 단계까지만 효과가 납니다. */
+    extraRolls?: number;
     cooldowns: Record<string, number>;
     book: Record<string, number>;
     inventory: Item[];
@@ -703,6 +711,8 @@ export type Snapshot = {
     rebirths: number;
     stats: Stats;
     skills: string[];
+    /** v3.84 추가 판정 단계(결투·제단·월드보스에도 그대로). */
+    extraRolls?: number;
     power: number;
     rating: number;
     guild?: string;

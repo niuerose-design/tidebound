@@ -33,7 +33,8 @@ test('v21 poison, burns and execute conditions are data-driven',()=>{
  assert.equal(b.hp,1e6-(b.effects.poison.perStack+Math.floor(1e6*SKILL_FORMULA.poisonHpRatio))*2,'v3.54 독침은 상태이상 전용: 직접 피해 없이 첫 틱만 바로');assert.equal(b.effects.poison.turns,dart.statusTurns??STATUS_TUNING.poisonTurns,'duration unchanged');
  b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.burn.stacks,STATUS_TUNING.burnFirstStacks);assert.equal(b.effects.dot,undefined);assert.ok(b.hp<1e6);// 플레임 디스차지는 피해와 화상을 함께
  b=mk([]);strike(mk(['rotBloom']),b,()=>0);assert.equal(b.effects.poison.stacks,2);assert.ok(b.hp<1e6);// 4차는 피해와 상태이상을 함께
- const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[];strike(mk(['braveSlash']),t,()=>0,ev);return ev[0].hits[0].value;};
+ // v3.84 용사의 일격은 각성기: 대기가 끝나 있으면(0) 기본 행동 뒤에 턴 판정으로 함께 나갑니다.
+ const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[],a=mk(['braveSlash']);a.cooldowns.braveSlash=0;strike(a,t,()=>0,ev);return ev.find(e=>e.skillId==='braveSlash').hits[0].value;};
  const sk=SKILLS.find(x=>x.id==='braveSlash');assert.equal(brave(3e5),Math.round(Math.round(100*sk.multiplier)*(1+sk.conditionalDamageBonus)));assert.equal(brave(1e6),Math.round(100*sk.multiplier));
 });
 test('v21 job chains: five-step flagships per archetype and a physical kraken route',()=>{
@@ -61,7 +62,7 @@ test('v21.1 magic jobs replace basic attacks with a weaker arcane strike from ti
 
 test('v21.2 tier 5 (v3.80) signature skills work fully in their own lineage and at 70% when inherited elsewhere',()=>{
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
- const hit=(job,id='braveSlash')=>{const b={name:'B',stats:{...base},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};strike({name:'A',job,stats:{...base},hp:1e6,mana:100,skills:[id],cooldowns:{},stun:0,effects:{},ranks:{[id]:1},mastery:{},practice:{}},b,()=>0);return 1e6-b.hp;};
+ const hit=(job,id='braveSlash')=>{const b={name:'B',stats:{...base},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};const ev=[];strike({name:'A',job,stats:{...base},hp:1e6,mana:100,skills:[id],cooldowns:{[id]:0},stun:0,effects:{},ranks:{[id]:1},mastery:{},practice:{}},b,()=>0,ev);return ev.find(e=>e.skillId===id).total;};
  const own=hit('hero'),outside=hit('apostle');assert.ok(Math.abs(outside/own-SKILL_FORMULA.signatureScale)<.02);assert.equal(hit('knight'),hit('knight'));
  assert.equal(hit(undefined),own,'enemies and legacy fighters are unaffected');assert.equal(hit('apostle','flashCut'),hit('hero','flashCut'),'tier 3 skills combine freely');
  const s=newState(0);s.level=100;s.rebirths=2;s.skillInheritances.heroSoul=true;s.learned.heroSoul=1;s.skills=['heroSoul'];

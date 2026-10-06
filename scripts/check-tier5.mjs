@@ -36,6 +36,8 @@ const RESEARCH = Object.fromEntries(Object.entries(RESEARCH_FULL).map(([k, v]) =
 const MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg('--dungeon-tier', TIER * 2)), SWARM500_TIER = Number(arg('--swarm500-tier', 0)), PEN = arg('--pen') === undefined ? null : Number(arg('--pen'));
 // --swarm500-atk: ×500 무리 공격 배율 실험(n = 지금 490배 · 숫자 = 고정 배율 · sqrt = √N · thin = 남은 마리 비례 · thin-sqrt = √(남은 마리)). --only 키: 그 상황만 잽니다.
 const SWARM_ATK = arg('--swarm500-atk', 'n'), ONLY = arg('--only');
+// v3.84 --extra N: 추가 판정 단계(기본 0).
+const EXTRA = Number(arg('--extra', 0));
 // --pen: 관통을 이 값으로 맞춘 몸(장비 관통 옵션을 챙긴 경우 · 전체 상한 0.6)으로 잽니다.
 const FOES = ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul'], BOSS = 'arTrueErda', RAID_ID = arg('--raid', 'horntail'), RAID_DEF = arg('--raid-def') === undefined ? null : Number(arg('--raid-def'));
 
@@ -68,10 +70,13 @@ function body(j) {
     s.equipment = { ...GEAR[magic ? 'magic' : 'physical'] };
     s.jobMastery = { [j.id]: 0 };
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = masteryMilestonesFor(sk).at(-1); }
+    // v3.84 추가 판정을 켜면 그 AP를 빼고 편성합니다.
+    if (EXTRA) { s.permanent.extraRoll = EXTRA; s.extraRolls = EXTRA; }
     loadout(s, j, magic);
     return s;
 }
-const player = (st, s, hp = st.hp, mana = st.mana) => ({ name: 'player', stats: st, hp, mana, skills: s.skills, cooldowns: {}, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice });
+// v3.84 재사용 대기(각성기 포함)는 게임처럼 사냥 중 다음 몬스터로, 던전은 다음 판으로 이어집니다(cooldowns를 넘겨 공유).
+const player = (st, s, hp = st.hp, mana = st.mana, cooldowns = {}) => ({ name: 'player', stats: st, hp, mana, skills: s.skills, cooldowns, extraRolls: EXTRA, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice });
 function foe(id, { swarm = 1, boss = false, wave, tier = TIER } = {}) {
     const base = scaledEnemyStats(FISH.find(f => f.id === id), { tier, boss, ...(wave !== undefined ? { wave } : {}) });
     const st = swarm > 1 ? { ...base, hp: Math.round(base.hp * swarmHpMultiplier(swarm)), attack: Math.round(base.attack * swarmAttackMultiplier(swarm)), magic: Math.round((base.magic ?? base.attack) * swarmAttackMultiplier(swarm)) } : base;
@@ -83,9 +88,9 @@ function fight(a, b, rng, cap = MAX_TURNS) {
     return { won: a.hp > 0 && b.hp <= 0, turns: n };
 }
 // 처치 효율 = 승률 / 이긴 판 평균 턴(진 판은 턴 상한으로 셈).
-function run(s, st, make) {
+function run(s, st, make, warm) {
     let w = 0, t = 0, h = 0, k = 0;
-    for (let seed = 1; seed <= SEEDS; seed++) for (const f of make()) { const a = player(st, s), r = fight(a, f, random(seed * 97 + k)); w += r.won ? 1 : 0; t += r.won ? r.turns : MAX_TURNS; h += Math.max(0, a.hp) / st.hp; k++; }
+    for (let seed = 1; seed <= SEEDS; seed++) { const cd = {}; warm?.(cd, seed); for (const f of make()) { const a = player(st, s, st.hp, st.mana, cd), r = fight(a, f, random(seed * 97 + k)); w += r.won ? 1 : 0; t += r.won ? r.turns : MAX_TURNS; h += Math.max(0, a.hp) / st.hp; k++; } }
     return { win: w / k, turns: t / k, hpLeft: h / k, score: w / k / (t / k) };
 }
 // 무리: 턴 상한을 넉넉히(3,000) 두고, 지면 깎은 몫만큼만 셉니다(점수 = 깎은 체력 비율 / 쓴 턴, 이기면 1 / 처치 턴).
@@ -111,21 +116,24 @@ function runSwarm(s, st, size, tier = TIER) {
 function measure(j) {
     const s = body(j), st = PEN === null ? stats(s) : { ...stats(s), penetration: Math.max(stats(s).penetration, PEN) }, out = {};
     const want = k => !ONLY || ONLY === k, zero = { win: 0, turns: 0, hpLeft: 0, cut: 0, cleared: 0, dealt: 0, died: 0, score: 0 };
-    out.hunt = want('hunt') ? run(s, st, () => FOES.map(id => foe(id))) : zero;
+    // v3.84 사냥은 몇 시간씩 이어지므로 각성기 대기가 이미 돌고 있는 상태(0~10턴)에서 시작합니다(보스와 같음).
+    const warm = (cd, seed) => { let i = 0; for (const id of s.skills) if (SKILLS.find(x => x.id === id)?.awaken) cd[id] = (seed * 7 + i++ * 3) % 11; };
+    out.hunt = want('hunt') ? run(s, st, () => FOES.map(id => foe(id)), warm) : zero;
     out.swarm100 = want('swarm100') ? runSwarm(s, st, 100) : zero;
     out.swarm500 = want('swarm500') ? runSwarm(s, st, 500, SWARM500_TIER) : zero;
-    out.boss = want('boss') ? run(s, st, () => [foe(BOSS, { boss: true })]) : zero;
+    // v3.84 보스도 사냥 도중에 만나므로 같은 방식으로 시작합니다.
+    out.boss = want('boss') ? run(s, st, () => [foe(BOSS, { boss: true })], warm) : zero;
     if (ONLY && ONLY !== 'dungeon' && ONLY !== 'raid') { out.dungeon = zero; out.raid = zero; return { id: j.id, name: j.name, lineage: lineageOf(j), sub: subRoleOf(j, lineageOf(j)), out }; }
     // 던전: 난이도 DUNGEON_TIER에서 쉬지 않고 5연전(마지막은 보스), 체력·마나 이어짐. 점수 = 넘긴 판 비율 / 쓴 턴.
     let cleared = 0, hpEnd = 0, turns = 0;
     for (let seed = 1; seed <= (ONLY === 'raid' ? 0 : SEEDS); seed++) {
-        const rng = random(seed); let hp = st.hp, mana = st.mana, ok = true, w = 0;
-        for (; w < WAVES && ok; w++) { const last = w === WAVES - 1, a = player(st, s, hp, mana), r = fight(a, foe(last ? BOSS : FOES[w % FOES.length], { wave: w, boss: last, tier: DUNGEON_TIER }), rng); ok = r.won; hp = a.hp; mana = a.mana; turns += r.turns; }
+        const rng = random(seed), cd = {}; let hp = st.hp, mana = st.mana, ok = true, w = 0;
+        for (; w < WAVES && ok; w++) { const last = w === WAVES - 1, a = player(st, s, hp, mana, cd), r = fight(a, foe(last ? BOSS : FOES[w % FOES.length], { wave: w, boss: last, tier: DUNGEON_TIER }), rng); ok = r.won; hp = a.hp; mana = a.mana; turns += r.turns; }
         cleared += (ok ? w : w - 1) / WAVES; hpEnd += ok ? Math.max(0, hp) / st.hp : 0;
     }
     out.dungeon = { cleared: cleared / SEEDS, hpLeft: hpEnd / SEEDS, turns: turns / SEEDS, score: cleared / SEEDS / Math.max(1, turns / SEEDS) };
     const raid = RAID_DEF === null ? raidById(RAID_ID) : { ...raidById(RAID_ID), stats: { ...raidById(RAID_ID).stats, defense: RAID_DEF, resist: RAID_DEF } }; let dealt = 0, died = 0, lasted = 0;
-    for (let seed = 1; seed <= SEEDS; seed++) { const snap = snapshot(s); if (PEN !== null) snap.stats = st; const r = pvpDuel(snap, raidBossSnapshot(raid), true, random(seed), RAID.maxTurns); dealt += raid.stats.hp - Math.max(0, r.opponentHp); died += r.playerHp <= 0 ? 1 : 0; lasted += r.turns; }
+    for (let seed = 1; seed <= SEEDS; seed++) { const snap = snapshot(s); if (PEN !== null) snap.stats = st; if (EXTRA) snap.extraRolls = EXTRA; const r = pvpDuel(snap, raidBossSnapshot(raid), true, random(seed), RAID.maxTurns); dealt += raid.stats.hp - Math.max(0, r.opponentHp); died += r.playerHp <= 0 ? 1 : 0; lasted += r.turns; }
     out.raid = { dealt: dealt / SEEDS, died: died / SEEDS, turns: lasted / SEEDS, score: dealt / SEEDS };
     const sub = subRoleOf(j, lineageOf(j));
     return { id: j.id, name: j.name, lineage: lineageOf(j), sub, out };
