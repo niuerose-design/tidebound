@@ -63,10 +63,10 @@ test('v3.31 extreme-break and limit-break progress restart from the ascension ba
     assert.equal(P.skillMasteryLevel(s.skillPractice.hook, P.masteryMilestonesFor(sk)), P.masteryMilestonesFor(sk).length, 'growth level kept');
 });
 
-test('v3.73 extreme break: after all three limit breaks, the same extra practice for every skill (old refinement total); no effect yet, an honor achievement without reward', () => {
-    const sk = skillById('hook'), last = P.masteryMilestonesFor(sk).at(-1), target = P.extremeBreakTarget(sk);
-    assert.equal(target - last * 8, LT.EXTREME_BREAK_PRACTICE, 'same extra amount for any skill');
-    assert.equal(target - last * 8, P.extremeBreakTarget(skillById('pierce')) - P.masteryMilestonesFor(skillById('pierce')).at(-1) * 8);
+test('v3.73 extreme break: active skills only, after all three limit breaks at 100M practice; no effect yet, an honor achievement without reward', () => {
+    const sk = skillById('hook'), target = P.extremeBreakTarget(sk);
+    assert.equal(target, 100_000_000, '1억 for every active skill'); assert.equal(P.extremeBreakTarget(skillById('pierce')), 100_000_000);
+    assert.equal(P.extremeBreakTarget(skillById('axeArm')), null, 'passives have no extreme break');
     const s = newState(0); s.learned.hook = 1; s.skillPractice.hook = target; s.permanent.limitBreak = 3; s.limitBreaks = { hook: 2 };
     assert.equal(P.extremeBroken(s, 'hook'), false, 'two limit breaks are not enough');
     s.limitBreaks.hook = 3; assert.equal(P.extremeBroken(s, 'hook'), true);

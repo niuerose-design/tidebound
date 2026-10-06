@@ -22,15 +22,12 @@ export function attributes(s: State) {
     return out;
 }
 export function masteryMilestonesFor(sk?: Skill) { return sk?.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones; }
-/** v3.73 극한돌파 목표 숙련: 한계돌파 마지막 단계의 숙련(마지막 숙련 단계 × 한계돌파 마지막 배수) + 옛 연마 30단계만큼(EXTREME_BREAK_PRACTICE). */
-export function extremeBreakTarget(sk: Skill) {
-    const lb = PROGRESSION.limitBreak;
-    return masteryMilestonesFor(sk).at(-1)! * lb.practiceMultiple[lb.max - 1] + EXTREME_BREAK_PRACTICE;
-}
-/** v3.73 극한돌파 달성: 한계돌파 3단계(연구 적용분)를 마치고 목표 숙련을 넘었는지. 지금은 효과가 없습니다(운영자 문의). */
+/** v3.73 극한돌파 목표 숙련: 모든 액티브 스킬이 같은 1억(EXTREME_BREAK_PRACTICE). 패시브는 극한돌파가 없습니다(null). */
+export function extremeBreakTarget(sk: Skill) { return sk.type === 'active' ? EXTREME_BREAK_PRACTICE : null; }
+/** v3.73 극한돌파 달성: 액티브 스킬이 한계돌파 3단계(연구 적용분)를 마치고 숙련 1억을 넘었는지. 지금은 효과가 없습니다(운영자 문의). */
 export function extremeBroken(s: State, id: string) {
-    const sk = skillById(id);
-    return !!sk && limitBreakOf(s, id) >= PROGRESSION.limitBreak.max && refinePractice(s, id) >= extremeBreakTarget(sk);
+    const sk = skillById(id), target = sk && extremeBreakTarget(sk);
+    return !!target && limitBreakOf(s, id) >= PROGRESSION.limitBreak.max && refinePractice(s, id) >= target;
 }
 /**
  * v3.31 극한돌파(v3.73, 옛 연마)·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.

@@ -3,10 +3,10 @@
 // 어느 숙련 수치에서도 이전 6단계보다 누적 보너스가 낮아지지 않습니다.
 export const REFINEMENT_OFFSETS = [5000, 11000, 20000, 30000, 44000, 61000, 83000, 111000, 148000, 194000, 254000, 330000, 427000, 553000, 713000, 918000, 1181000, 1519000, 1950000, 2504000, 3212000, 4120000, 5283000, 6773000, 8682000, 11127000, 14260000, 18273000, 23414000, 30000000];
 /**
- * v3.73 극한돌파: 한계돌파 3단계를 마친 스킬에 옛 연마 1~30단계만큼의 숙련(마지막 오프셋)을 더 쌓으면 달성합니다. 어떤 스킬이든 같은 양입니다.
+ * v3.73 극한돌파: 한계돌파 3단계를 마친 액티브 스킬의 숙련이 1억에 닿으면 달성합니다(어떤 스킬이든 같은 값).
  * 한 가지 스킬만 파는 모험가를 위한 보상으로 설계 중이라 지금은 효과가 없고, 달성하면 운영자에게 문의합니다(업적은 보상 없음).
  */
-export const EXTREME_BREAK_PRACTICE = REFINEMENT_OFFSETS.at(-1)!;
+export const EXTREME_BREAK_PRACTICE = 100_000_000;
 export const VOCATION_OFFSETS = [5000, 25000, 100000, 400000, 1500000, 5000000, 15000000];
 export const vocationTargets = (base: number) => VOCATION_OFFSETS.map(n => base + n);
 export const thresholdRank = (practice: number, targets: number[]) => targets.filter(n => practice >= n).length;
