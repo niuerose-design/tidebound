@@ -60,7 +60,7 @@ test('v3.70 stat training I-III: opened by 1M training mastery, each step needs 
     for (const [stat, parent] of [['str', 'trainingPhysical'], ['int', 'trainingMagic'], ['vit', 'trainingDefense'], ['luk', 'trainingStatus'], ['wis', 'trainingHybrid'], ['dex', 'trainingSupport']]) {
         const [i1, i2, i3] = [1, 2, 3].map(n => job(`${stat}Training${n}`));
         assert.ok(i1.parent === parent && i2.parent === i1.id && i3.parent === i2.id, stat);
-        assert.deepEqual([i1.mastery, i1.masteryTarget, i2.mastery, i2.masteryTarget, i3.mastery, i3.masteryTarget], [1e6, 1e7, 1e7, 1e8, 1e8, 1e9], stat);
+        assert.deepEqual([i1.mastery, i1.masteryTarget, i2.mastery, i2.masteryTarget, i3.mastery, i3.masteryTarget], [1e6, 1e7, 1e7, 2.5e7, 2.5e7, 5e7], stat);
         assert.ok([i1, i2, i3].every(j => j.subRole === 'training' && j.rewardScale === .35 && lineageOf(j) === lineageOf(job(parent))), stat);
     }
     assert.equal(canChangeJob(s, 'strTraining1'), false); s.jobMastery.trainingPhysical = 999_999; assert.equal(canChangeJob(s, 'strTraining1'), false);
@@ -70,5 +70,6 @@ test('v3.70 stat training I-III: opened by 1M training mastery, each step needs 
     const before = stats({ ...h, skills: [] }).attack;
     assert.equal(stats(h).attack, before, 'not inherited yet: no effect');
     h.skillPractice.strDrill1 = 10_000_000; const S1 = S.trainedAttributes(h).str, base = S.trainedAttributes({ ...h, skills: [] }).str;
-    assert.equal(S1 - base, 25, '+20 × (1 + 25% for the first mastery stage)'); assert.ok(stats(h).attack > before);
+    assert.equal(S1 - base, 25, '+20 × (1 + 25% for the first mastery stage)');
+    assert.deepEqual([1, 2, 3].map(n => SKILLS.find(sk => sk.id === `strDrill${n}`).cost), [4, 6, 8], 'high AP cost'); assert.ok(stats(h).attack > before);
 });
