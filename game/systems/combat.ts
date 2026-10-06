@@ -101,6 +101,10 @@ function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number
     effects[key] = Math.max(effects[key] || 0, turns);
 }
 const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합' } as const;
+/** v3.51 무리에게 거는 지속 피해의 최대 체력 비례분: 한 마리 체력 × √N(= 무리 전체 체력 ÷ √N). 한 마리면 1. */
+/** v3.51 이 전투에서 처음 거는 지속 피해면 true를 돌려주고 표시합니다(첫 틱 즉시 적용은 전투당 한 번). */
+const opens = (b: Fighter, key: 'bleed' | 'poison' | 'burn') => { const fx = (b.effects ??= {}); if (fx.opened?.[key]) return false; (fx.opened ??= {})[key] = true; return true; };
+export const swarmDotShare = (swarm?: number) => swarm && swarm > 1 ? 1 / Math.sqrt(swarm) : 1;
 /** v27.75 화면에 보여 주는 타격 수치: 계산된 피해(raw). 남은 체력에 막힌 실제 감소량(value)은 규칙에만 씁니다. */
 export const shownHit = (h: Pick<CombatHit, 'value' | 'raw'>) => h.raw ?? h.value;
 /** 타격 기록: 실제 감소량과 다를 때만 계산 피해(raw)를 함께 적습니다. */
@@ -301,7 +305,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (forced) ev.multicast = { index: forced.index, count: forced.count };
     // 마력 평타: 마법 직업은 기본 공격 대신 마법 공격 × 계수의 마법 피해를 줍니다(v25.22부터 확률 없이 항상).
     const arcane = !chosen && sa.arcaneStrike > 0;
-    let healed = 0;
+    let healed = 0, overheal = 0;
     // 체력이 충분한데 쓴 회복 기술: 회복 직업이 아니면 이번 공격 피해가 줄어듭니다.
     const idleHeal = chosen?.effect === 'heal' && a.hp >= sa.hp * SKILL_FORMULA.healThreshold && !sa.healFocus;
     if (chosen) {
@@ -315,8 +319,11 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
             notes.push(`상태이상 면역 ${chosen.wardTurns}턴`);
         }
         if (chosen.effect === 'heal') {
-            healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio) * (1 + sa.healBonus)));
+            const intended = Math.floor(sa.hp * (chosen.healRatio ?? SKILL_FORMULA.healRatio) * (1 + sa.healBonus));
+            healed = Math.min(sa.hp - a.hp, intended);
             a.hp += healed;
+            // v3.51 힐러(회복 직업)는 넘친 회복량을 적에게 피해로 돌려줍니다(아래에서 overhealDamage 배율로 적용).
+            if (sa.healFocus) overheal = intended - healed;
         }
         // v25 타임 리와인드: 둘 다 처음 상태로. 전투당 1회.
         if (chosen.restoreAll) {
@@ -441,6 +448,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     const resisted = !!(landed && harmful && a.foe && sb.statusResist > 0 && !isImmune(b, harmful as ImmuneStatus) && rng() < sb.statusResist);
     if (resisted) { notes.push(`${RESIST_LABELS[harmful!]} 저항`); ev.resisted = harmful; }
     const effect = resisted ? undefined : chosen?.effect;
+    const onset: { name: string; value: number }[] = [];
     if (landed && chosen && effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
     else if (landed && chosen && effect === 'stun') {
         const turns = (chosen.statusTurns ?? 1) + sa.stunBonus;
@@ -452,10 +460,13 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     else if (landed && chosen && effect === 'bleed') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus;
         const name = chosen.dotName || '출혈';
-        // v27.3 틱 피해 = 위력 비례 + 대상 최대 체력 × dotMaxHpRatio(무리는 한 마리 기준). 방어·반격을 모두 무시하므로 탱커의 카운터입니다.
-        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0) + (sa.bleedBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)) + Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.bleedHpRatio));
+        // v27.3 틱 피해 = 위력 비례 + 대상 최대 체력 × dotMaxHpRatio(v3.51 무리는 한 마리 × √N). 방어·반격을 모두 무시하므로 탱커의 카운터입니다.
+        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0) + (sa.bleedBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)) + Math.floor(sb.hp * swarmDotShare(b.swarm) * SKILL_FORMULA.bleedHpRatio));
         // v27.17 출혈은 중첩되지 않습니다. 다시 걸면 더 강한 피해와 더 긴 지속으로 갱신합니다.
         const current = b.effects.dot;
+        // v3.51 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(지속은 그대로, 전투당 한 번). 원킬·짧은 전투에서도 지속 피해가 몫을 합니다.
+        // (지속을 1턴 줄이면 다시 걸기 전에 끝나 면역이 생겨 긴 전투 피해가 줄었고, 매번 주면 출혈만 긴 전투에서 크게 늘었습니다.)
+        if (opens(b, 'bleed')) onset.push({ name, value: tick });
         b.effects.dot = { damage: Math.max(tick, current?.damage || 0), turns: Math.max(turns, current?.turns || 0), name };
         notes.push(`${name} ${turns}턴`);
         ev.statuses.push({ id: 'bleed', turns });
@@ -465,9 +476,11 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     else if (landed && chosen && effect === 'poison') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.poisonTurns) + sa.dotTurnsBonus;
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0) + (sa.poisonBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
-        const hpTick = Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.poisonHpRatio);
+        const hpTick = Math.floor(sb.hp * swarmDotShare(b.swarm) * SKILL_FORMULA.poisonHpRatio);
         const current = b.effects.poison;
-        const stacks = Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, (current?.stacks || 0) + 1);
+        // v3.51 처음 걸면 poisonFirstStacks중첩으로 시작합니다. 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
+        const first = opens(b, 'poison'), stacks = Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, current ? current.stacks + 1 : first ? STATUS_TUNING.poisonFirstStacks : 1);
+        if (first) onset.push({ name: '중독', value: (perStack + hpTick) * stacks });
         b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpTick: Math.max(hpTick, current?.hpTick || 0) };
         notes.push(`중독 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'poison', turns });
@@ -477,12 +490,25 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     else if (landed && chosen && effect === 'burn') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus;
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
-        const hpTick = Math.floor(sb.hp / (b.swarm || 1) * SKILL_FORMULA.burnHpRatio);
+        const hpTick = Math.floor(sb.hp * swarmDotShare(b.swarm) * SKILL_FORMULA.burnHpRatio);
         const current = b.effects.burn;
-        const stacks = Math.min(STATUS_TUNING.burnMaxStacks, (current?.stacks || 0) + 1);
+        // v3.51 전투에서 처음 걸면 burnFirstStacks중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
+        const first = opens(b, 'burn'), stacks = Math.min(STATUS_TUNING.burnMaxStacks, current ? current.stacks + 1 : first ? STATUS_TUNING.burnFirstStacks : 1);
+        if (first) onset.push({ name: '화상', value: (perStack + hpTick) * stacks });
         b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpTick: Math.max(hpTick, current?.hpTick || 0) };
         notes.push(`화상 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'burn', turns });
+    }
+    // v3.51 새로 건 지속 피해의 첫 틱과 힐러의 넘친 회복 피해를 바로 줍니다(방어 무시). 쓰러지면 無 판정을 거칩니다.
+    if (onset.length && b.hp > 0) {
+        const value = Math.min(b.hp, onset.reduce((n, x) => n + x.value, 0));
+        b.hp -= value; ev.onset = { name: onset.map(x => x.name).join('·'), value };
+        notes.push(`${ev.onset.name} 즉시 ${value}`);
+        if (b.hp <= 0) stood = endure(b, sb, notes, ev) || stood;
+    }
+    if (overheal > 0 && b.hp > 0) {
+        const value = Math.min(b.hp, Math.floor(overheal * SKILL_FORMULA.overhealDamage));
+        if (value > 0) { b.hp -= value; ev.holy = value; notes.push(`넘친 회복 → 피해 ${value}`); if (b.hp <= 0) stood = endure(b, sb, notes, ev) || stood; }
     }
     if (landed && chosen && effect === 'weaken' && isImmune(b, 'weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
     else if (landed && chosen && effect === 'weaken') {

@@ -574,7 +574,7 @@ test('v27.48 burn: stacks to 3, ticks like poison, adds half of bleed vulnerabil
     for (let i = 0; i < 5; i++) { const a = mk(['fireball']); strike(a, b, () => 0); }
     assert.equal(b.effects.burn.stacks, STATUS_TUNING.burnMaxStacks, 'caps at 3 stacks');
     assert.equal(b.effects.burn.turns, STATUS_TUNING.burnTurns);
-    const fang = mk(['toxicFang']), c = mk([]); strike(fang, c, () => 0); assert.equal(c.effects.burn.stacks, 1); assert.equal(c.effects.poison, undefined);
+    const fang = mk(['toxicFang']), c = mk([]); strike(fang, c, () => 0); assert.equal(c.effects.burn.stacks, STATUS_TUNING.burnFirstStacks, 'v3.51 first burn starts at 2 stacks'); assert.equal(c.effects.poison, undefined);
     // 틱: 화상 중인 쪽이 행동하면 (중첩당 + 체력 비례) × 중첩만큼 깎입니다.
     const before = b.hp, burn = { ...b.effects.burn }; strike(b, mk([]), () => .99);
     assert.ok(before - b.hp >= (burn.perStack + burn.hpTick) * burn.stacks, 'burn ticks on action');

@@ -34,7 +34,9 @@ function BattleLogLineView({ log, index, playerName }: { log: Log; index?: boole
         {ev.dot && <em className="dmg-dot">{ev.dot.name} {ev.dot.value}</em>}
         {missed ? <em className="miss">빗나감</em> : ev.hits.map((h, i) => <em key={i} className={`${h.miss ? 'miss' : ''} ${h.critical ? 'crit' : ''}`}>{follows ? (i ? `추가타${ev.hits.length > 2 ? ` ${i}` : ''} ` : '본타 ') : ''}{h.miss ? '빗나감' : (h.raw ?? h.value).toLocaleString()}{h.critical ? ' 치명' : ''}</em>)}
         {!missed && ev.hits.length > 0 && <strong>{follows ? `합계 ${ev.total.toLocaleString()}` : ''} {WORD[ev.damageType]} 피해</strong>}
+        {ev.onset && <em className="dmg-dot">{ev.onset.name} 즉시 {ev.onset.value}</em>}
         {ev.healed > 0 && <em className="heal">회복 {ev.healed}</em>}
+        {ev.holy ? <em className="heal">넘친 회복 → 피해 {ev.holy}</em> : null}
         {ev.drained > 0 && <em className="heal">흡혈 {ev.drained}</em>}
         {ev.statuses.map(st => <em key={st.id} className="status">{STATUS_NAMES[st.id] || st.id} {st.turns}턴{st.onSelf ? '(자신)' : ''}</em>)}
         {ev.linked && <em className="status">연계</em>}{ev.cleansed && <em className="heal">정화</em>}{ev.silenced && <em className="status">침묵 중</em>}

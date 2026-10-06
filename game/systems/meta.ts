@@ -71,6 +71,9 @@ export const dungeonExp = (f: { level: number; rewardMultiplier?: number }, dung
 /** 클리어 보너스 골드의 기준값(골드 배율·층 배율 적용 전): 권장 레벨 몬스터 clearGoldFish마리분. */
 export const dungeonClearBase = (d: { level: number }) => fishGoldAt(d.level) * DUNGEON_TUNING.clearGoldFish;
 /** 이 몬스터로 해당 무리 규모를 고를 수 있는지 (도감 처치 수 기준). */
+/**
+ * 난이도 체력 배율. 체력당 경험치(tierExp ÷ tierHealth)는 난이도 0을 1로 두면 10~30에서 0.87~0.89로 거의 평평하고,
+ * v3.21에서 30 위 경험치를 √로 꺾은 뒤로는 50에서 0.72, 100에서 0.31, 200에서 0.11로 떨어집니다(v3.11 주석의 ‘200에서도 84%’는 v3.21 이후 맞지 않음).
+ */
 export const tierHealth = (tier: number) => 1 + tier * .35 + Math.pow(Math.max(0, tier - 20), 2) * .006;
-/** v3.11 경험치 배율은 체력 배율과 같은 꼴(선형 + 20 이후 제곱)로 올려, 체력 1만당 경험치가 난이도 200에서도 난이도 0의 84% 안에 머뭅니다(전에는 1 + 0.1√t라 난이도 30에서 1/8). */
 export const tierAttack = (tier: number) => 1 + tier * .18 + Math.pow(Math.max(0, tier - 20), 2) * .002;

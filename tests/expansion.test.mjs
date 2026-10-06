@@ -1,5 +1,5 @@
 // v21 직업 확장·전투 규칙, v22 장비 옵션·흡혈 상한
-import { JOBS, RARITIES, SKILLS, SKILL_FORMULA, STATUS_TUNING_MAX, act, assert, dropRate, gear, newState, rng, rollRarity, stats, strike, test, tick, visibleStatuses } from './harness.mjs';
+import { JOBS, RARITIES, SKILLS, SKILL_FORMULA, STATUS_TUNING, STATUS_TUNING_MAX, act, assert, dropRate, gear, newState, rng, rollRarity, stats, strike, test, tick, visibleStatuses } from './harness.mjs';
 test('v21 tank counter and defense-scaled damage follow the job defense multiplier',()=>{
  const base={hp:1e6,attack:100,magic:0,defense:100,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const fighter=(extra={},skills=[])=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
@@ -18,10 +18,10 @@ test('v21 tank counter and defense-scaled damage follow the job defense multipli
 });
 test('v21 heal skills fire at full HP; non-healers deal reduced damage when the heal is wasted',()=>{
  const base={hp:1000,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
- const cast=(extra,hp)=>{const a={name:'A',stats:{...base,...extra},hp,mana:100,skills:['moonTide'],cooldowns:{},stun:0,effects:{},ranks:{moonTide:1},mastery:{},practice:{}};const b={name:'B',stats:{...base,hp:1e6},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};const log=strike(a,b,()=>0);return {dmg:1e6-b.hp,log,a};};
+ const cast=(extra,hp)=>{const a={name:'A',stats:{...base,...extra},hp,mana:100,skills:['moonTide'],cooldowns:{},stun:0,effects:{},ranks:{moonTide:1},mastery:{},practice:{}};const b={name:'B',stats:{...base,hp:1e6},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}};const log=strike(a,b,()=>0),holy=Number(/넘친 회복 → 피해 (\d+)/.exec(log)?.[1]||0);return {dmg:1e6-b.hp-holy,holy,log,a};};// v3.51 힐러의 넘친 회복 피해는 따로 셉니다
  const idle=cast({},1000),healer=cast({healFocus:1},1000),hurt=cast({},300);
  assert.match(idle.log,/달빛 치유/);assert.equal(idle.a.cooldowns.moonTide>0,true);
- assert.ok(Math.abs(idle.dmg/healer.dmg-SKILL_FORMULA.idleHealDamage)<.01);assert.equal(hurt.dmg,healer.dmg,'a needed heal keeps full damage');
+ assert.ok(Math.abs(idle.dmg/healer.dmg-SKILL_FORMULA.idleHealDamage)<.01);assert.equal(hurt.dmg,healer.dmg,'a needed heal keeps full damage');assert.ok(healer.holy>0&&idle.holy===0,'v3.51 only healers turn the wasted heal into damage');
  assert.ok(SKILLS.filter(sk=>sk.effect==='heal').every(sk=>!sk.condition));
  assert.equal(stats({...newState(0),job:'lunarOracle'}).healFocus,1);assert.equal(stats(newState(0)).healFocus,0);
 });
@@ -29,10 +29,10 @@ test('v21 poison, burns and execute conditions are data-driven',()=>{
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
  const dart=SKILLS.find(x=>x.id==='venomDart');let b=mk([]);strike(mk(['venomDart'],{dotBonus:.5}),b,()=>0);
- assert.equal(b.effects.poison.stacks,1);assert.equal(b.effects.poison.perStack,Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)*1.5));assert.equal(b.effects.poison.hpTick,Math.floor(1e6*SKILL_FORMULA.poisonHpRatio),'v27.57 poison tick adds 0.3% of target max hp per stack');
- assert.equal(b.hp,1e6);// 독침은 상태이상 전용: 직접 피해 없음
- b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.burn.stacks,1);assert.equal(b.effects.dot,undefined);assert.ok(b.hp<1e6);// 플레임 디스차지는 피해와 화상을 함께
- b=mk([]);strike(mk(['rotBloom']),b,()=>0);assert.equal(b.effects.poison.stacks,1);assert.ok(b.hp<1e6);// 4차는 피해와 상태이상을 함께
+ assert.equal(b.effects.poison.stacks,STATUS_TUNING.poisonFirstStacks,'v3.51 first poison starts at 2 stacks');assert.equal(b.effects.poison.perStack,Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)*1.5));assert.equal(b.effects.poison.hpTick,Math.floor(1e6*SKILL_FORMULA.poisonHpRatio),'v27.57 poison tick adds 0.3% of target max hp per stack');
+ assert.equal(b.hp,1e6-(b.effects.poison.perStack+b.effects.poison.hpTick)*2,'v3.51 독침은 상태이상 전용: 직접 피해 없이 첫 틱만 바로');assert.equal(b.effects.poison.turns,dart.statusTurns??STATUS_TUNING.poisonTurns,'duration unchanged');
+ b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.burn.stacks,STATUS_TUNING.burnFirstStacks);assert.equal(b.effects.dot,undefined);assert.ok(b.hp<1e6);// 플레임 디스차지는 피해와 화상을 함께
+ b=mk([]);strike(mk(['rotBloom']),b,()=>0);assert.equal(b.effects.poison.stacks,2);assert.ok(b.hp<1e6);// 4차는 피해와 상태이상을 함께
  const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[];strike(mk(['braveSlash']),t,()=>0,ev);return ev[0].hits[0].value;};
  const sk=SKILLS.find(x=>x.id==='braveSlash');assert.equal(brave(3e5),Math.round(Math.round(100*sk.multiplier)*(1+sk.conditionalDamageBonus)));assert.equal(brave(1e6),Math.round(100*sk.multiplier));
 });
@@ -73,7 +73,7 @@ test('v27.17 poison is its own stacking status; bleed does not stack but makes t
  const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills)=>({name:'A',stats:{...base},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
  const b=mk([]),dart=SKILLS.find(x=>x.id==='venomDart');assert.equal(dart.effect,'poison');const per=Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)),hpTick=Math.floor(1e6*SKILL_FORMULA.poisonHpRatio);
- for(let i=1;i<=STATUS_TUNING_MAX+2;i++){strike(mk(['venomDart']),b,()=>0);const n=Math.min(i,STATUS_TUNING_MAX);assert.equal(b.effects.poison.stacks,n);assert.equal(b.effects.poison.perStack,per);assert.equal(b.effects.poison.hpTick,hpTick);}
+ for(let i=1;i<=STATUS_TUNING_MAX+2;i++){strike(mk(['venomDart']),b,()=>0);const n=Math.min(i+STATUS_TUNING.poisonFirstStacks-1,STATUS_TUNING_MAX);assert.equal(b.effects.poison.stacks,n);assert.equal(b.effects.poison.perStack,per);assert.equal(b.effects.poison.hpTick,hpTick);}
  assert.match(visibleStatuses(b.effects,0,[],'enemy').find(r=>r.id==='poison').label,/중독 ×5/);
  strike(mk(['cut']),b,()=>0);assert.ok(b.effects.dot&&!b.effects.dot.stacks,'bleed sits beside poison');assert.equal(b.effects.poison.stacks,STATUS_TUNING_MAX,'bleed never touches poison stacks');
  const hp=b.hp,expected=(b.effects.poison.perStack+hpTick)*STATUS_TUNING_MAX+b.effects.dot.damage;strike(b,mk([]),()=>0);assert.equal(hp-b.hp,expected,'bleed and poison ticks both apply on its own action');
