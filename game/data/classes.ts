@@ -49,7 +49,7 @@ export type Job = {
     branchless?: boolean;
     /** v25: 1·2차여도 전용 기술을 3개 이상 가진 특수 직업(제로 (1차)·玄). */
     fullKit?: boolean;
-    /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않고, v3.51부터 넘친 회복량 × overhealDamage를 적에게 피해로 줍니다. */
+    /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않고, v3.54부터 넘친 회복량 × overhealDamage를 적에게 피해로 줍니다. */
     healer?: boolean;
     hidden?: boolean;
     rebirth?: number;
@@ -222,7 +222,7 @@ JOBS.push(...(MONOSTAT_JOBS as Job[]));
 // v3.18 해커 계열과 v3.44부터 모든 히든·??? 문 직업은 서버 전용 game/secret/jobs.ts에 있습니다(docs/concept.md 10장).
 // 서버는 game/secret/register.ts로, 화면은 카탈로그(catalog.ts)로 registerJobs를 거쳐 이 표에 더합니다.
 
-// v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다. v3.51 넘친 회복은 적에게 피해로 돌아갑니다(SKILL_FORMULA.overhealDamage).
+// v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다. v3.54 넘친 회복은 적에게 피해로 돌아갑니다(SKILL_FORMULA.overhealDamage).
 const HEALERS = new Set(['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger', 'tideSaint', 'lifeOcean']);
 
 // 특정 스킬/직업을 마스터해야만 열리는 교차 전직 조건입니다.

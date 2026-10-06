@@ -245,7 +245,7 @@ test('v3.48 logs keep battle 70 and reward 50 lines separately; client merge pru
     const cut = D.trimLogs(s.logs, key); assert.ok(cut);
     assert.deepEqual(D.mergeLogs(old, cut.logs, cut.delta), s.logs, 'merge equals the server list');
 });
-test('v3.51 DoT: first application in a fight ticks at once (once per fight), poison/burn open at 2 stacks, swarm %HP uses one × √N', async () => {
+test('v3.54 DoT: first application in a fight ticks at once (once per fight), poison/burn open at 2 stacks, swarm %HP uses one × √N', async () => {
     const C = await L.load('systems/combat'), B = await L.load('data/balance');
     const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
     const mk = (skills, extra = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: extra.hp || 1e6, mana: 1e6, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
@@ -257,7 +257,7 @@ test('v3.51 DoT: first application in a fight ticks at once (once per fight), po
     assert.ok(Math.abs(swarm.effects.poison.hpRatio - B.SKILL_FORMULA.poisonHpRatio / 10) < 1e-15, 'swarm: ratio × 1/√N of the current swarm HP');
     assert.equal(swarm.effects.poison.stacks, B.STATUS_TUNING.poisonFirstStacks);
 });
-test('v3.51 healers turn overflowing heals into damage on the enemy (healers only)', async () => {
+test('v3.54 healers turn overflowing heals into damage on the enemy (healers only)', async () => {
     const C = await L.load('systems/combat'), B = await L.load('data/balance');
     const base = { hp: 10000, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
     const caster = healFocus => ({ name: 'H', stats: { ...base, healFocus }, hp: 10000, mana: 1e6, skills: ['breath'], cooldowns: {}, stun: 0, effects: {}, ranks: { breath: 1 }, mastery: {}, practice: {} });

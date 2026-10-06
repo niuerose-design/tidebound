@@ -3,14 +3,14 @@
  * 사냥터 몬스터 목록·지역 연구·변종과는 별개(별도 도감)이고, 던전에서는 나오지 않습니다.
  */
 import { STAGES } from './world';
+import { ODDS } from './odds';
 
 export const MIMIC = {
     id: 'masteryMimic',
-    /** 출현마다 까미가 나올 확률(사냥터 난이도 5 이상, Lv.10 이상, 누적 처치 100마리 이상). 사냥터 난이도 1단계마다 chancePerTier만큼 더합니다. */
-    chance: .0015,
-    chancePerTier: .0005,
-    /** 사냥터 순서(0부터)마다 등장 확률 배율 +stageStep. 낮은 사냥터는 빨리 많이 잡고, 높은 사냥터는 한 번의 확률이 높습니다. */
-    stageStep: .25,
+    /** 출현마다 까미가 나올 확률(사냥터 난이도 5 이상, Lv.10 이상, 누적 처치 100마리 이상) · 난이도당 · 사냥터 순서당 배율. v3.52 값은 서버 전용(odds). */
+    get chance() { return ODDS.mimic.chance; },
+    get chancePerTier() { return ODDS.mimic.perTier; },
+    get stageStep() { return ODDS.mimic.stageStep; },
     /** v3.31 까미 확률 상한: 난이도 항은 tierCap에서, 사냥터 항은 stageCap 사냥터(환생 20회에 열리는 리프레 · 용의 둥지)에서 멈춥니다.
      * 환생 20회 단계에서 확률이 최대가 되어, 그 위의 숙련 속도는 환생 횟수가 아니라 승천이 맡습니다(docs/balance-rebirth.md 6.5). */
     tierCap: 20, stageCap: 'dragonNest',
@@ -22,15 +22,15 @@ export const MIMIC = {
     minTier: 5,
     /** 체력·공격 배율: 그 사냥터에서 가장 강한 몬스터 기준. */
     hp: 2.5, attack: .6,
-    /** 숙련 로또: 앞에서부터 확률을 더해 판정합니다. */
+    /** 숙련 로또: 앞에서부터 확률을 더해 판정합니다. v3.52 당첨 확률은 서버 전용(odds). */
     tiers: [
-        { mastery: 1000, chance: .70, label: '소' },
-        { mastery: 10000, chance: .25, label: '중' },
-        { mastery: 100000, chance: .05, label: '대' },
+        { mastery: 1000, get chance() { return ODDS.mimic.tiers[0]; }, label: '소' },
+        { mastery: 10000, get chance() { return ODDS.mimic.tiers[1]; }, label: '중' },
+        { mastery: 100000, get chance() { return ODDS.mimic.tiers[2]; }, label: '대' },
     ],
 } as const;
 /** v3.31 행운의 편지 6~10단계(승천 후) 기능. */
-export const LETTER = { offlineRank: 6, offlineScale: .5, jackpotRank: 8, jackpotChance: .075, recipientRank: 10, recipientShare: .01 } as const;
+export const LETTER = { offlineRank: 6, offlineScale: .5, jackpotRank: 8, /** v3.52 값은 서버 전용(odds). */ get jackpotChance() { return ODDS.mimic.letterJackpot; }, recipientRank: 10, recipientShare: .01 } as const;
 type LetterState = { permanent?: Record<string, number> };
 export const letterRank = (s?: LetterState) => s?.permanent?.messageBottle || 0;
 /** 까미 로또 표. 행운의 편지 8단계부터 ‘대’ 5% → 7.5%(늘어난 몫은 ‘소’에서 뺌). */
