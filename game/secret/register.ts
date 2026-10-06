@@ -9,5 +9,5 @@ import { SECRET_SKILLS } from './skills';
 
 registerLineages(SECRET_LINEAGES);
 registerJobs(SECRET_JOBS, true);
-// v3.46 비밀 직업의 스킬(완성된 모양).
+// v3.47 비밀 직업의 스킬(완성된 모양).
 registerSkills(SECRET_SKILLS);

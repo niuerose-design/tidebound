@@ -43,7 +43,7 @@ async function trySummon(a: AltarRow, godPoints: number, now: number) {
     if (!await database.spendAltarGauge('god', ALTAR.godCost)) return false;
     const god = nextGod(a);
     if (!await database.summonAltarGod(JSON.stringify(god), now + ALTAR.godLifetimeMs, now)) { await database.addAltarGauge('god', ALTAR.godCost); return false; }
-    await announce(`제단에 ${josa(god.name, '이가')} 깨어났습니다! 가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉습니다.`, now);
+    await announce(ALTAR_NEWS.godAwake(god.name), now);
     return true;
 }
 /** v3.22 월드보스는 보스마다 따로: 그 보스가 살아 있지 않고(격파 뒤에는 RAID.respawnMs가 지나야) 그 소환 게이지가 찼으면 나타납니다. 여러 보스가 동시에 있을 수 있습니다. */
@@ -57,7 +57,7 @@ async function trySummonRaid(raids: Record<string, AltarRaidRow>, gauges: Record
         if ((gauges[raid.id]?.points || 0) < raid.cost) continue;
         if (!await database.spendAltarGauge(raid.id, raid.cost)) continue;
         if (!await database.summonAltarRaid(raid.id, raid.stats.hp, now + raid.lifetimeHours * 3600_000, now, RAID.respawnMs)) { await database.addAltarGauge(raid.id, raid.cost); continue; }
-        await announce(`월드보스 ${josa(raid.name, '이가')} 나타났습니다! 모든 모험가의 피해가 하나의 체력에 쌓입니다. ${raid.lifetimeHours}시간 안에 함께 쓰러뜨리세요.`, now);
+        await announce(ALTAR_NEWS.raidAppear(raid.name, raid.lifetimeHours), now);
         return true;
     }
     return false;
@@ -92,6 +92,11 @@ export async function backdoorGauge(gauge: AltarGaugeId, points: number, now: nu
     await shared(now, true);
 }
 
+/** 제단 소식 문장(운영 페이지의 소식 테스트도 씁니다). */
+export const ALTAR_NEWS = {
+    godAwake: (name: string) => `제단에 ${josa(name, '이가')} 깨어났습니다! 가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉습니다.`,
+    raidAppear: (name: string, hours: number) => `월드보스 ${josa(name, '이가')} 나타났습니다! 모든 모험가의 피해가 하나의 체력에 쌓입니다. ${hours}시간 안에 함께 쓰러뜨리세요.`,
+};
 /** 제단 소식을 남깁니다(실패해도 본 처리는 그대로). v3.39 전체 채팅 대신 소식 채널. */
 async function announce(text: string, now: number) {
     try { await db().postChat({ channel: 'news', account_id: 'system', name: '제단', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }

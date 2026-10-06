@@ -227,7 +227,7 @@ export function skillById(id: string | undefined) {
 }
 
 /**
- * v3.46 정보 비공개(docs/concept.md 10장): 비밀 직업의 스킬을 나중에 더합니다. 서버는 game/secret/register.ts, 화면은 카탈로그(catalog.ts).
+ * v3.47 정보 비공개(docs/concept.md 10장): 비밀 직업의 스킬을 나중에 더합니다. 서버는 game/secret/register.ts, 화면은 카탈로그(catalog.ts).
  * 이미 완성된 모양(위 후처리를 거친 값)이라 그대로 넣고, 같은 id가 있으면 바꿉니다. id 찾기 캐시는 비웁니다.
  */
 export function registerSkills(list: Skill[]) {

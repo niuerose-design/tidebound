@@ -71,7 +71,7 @@ test('v3.44 registerJobs: adds a batch once with the same finishing steps (hint,
     C.JOBS.splice(C.JOBS.indexOf(got), 1); assert.equal(C.JOBS.length, before);
 });
 
-test('v3.46 secret skills: server-only table registered by the engine, missing from the public table, registerSkills upserts by id', async () => {
+test('v3.47 secret skills: server-only table registered by the engine, missing from the public table, registerSkills upserts by id', async () => {
     const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Sk = await load('data/skills'), { SECRET_SKILLS } = await load('secret/skills'), { SECRET_JOBS } = await load('secret/jobs');
     const secretJobs = new Set(SECRET_JOBS.map(j => j.id));

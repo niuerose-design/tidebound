@@ -3,7 +3,7 @@ import type React from 'react';
 import { Compass, Sparkles, Swords, Wind } from 'lucide-react';
 import type { Log } from '@/game/types';
 import { STATUS_NAMES } from '@/game/systems/combat-feedback';
-// v3.46 비밀 직업 스킬 이름은 카탈로그로 받은 스킬 표에서 읽습니다(번들에 이름을 두지 않음).
+// v3.47 비밀 직업 스킬 이름은 카탈로그로 받은 스킬 표에서 읽습니다(번들에 이름을 두지 않음).
 import { skillById } from '@/game/data/skills';
 
 /** 기록판 탭별 로그 종류. */

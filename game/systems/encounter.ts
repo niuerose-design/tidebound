@@ -11,7 +11,7 @@ import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize,
 import { MIMIC, LETTER, letterRank, rollMimicMastery, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
 import { ascended, ascensionMastery } from '../data/ascension';
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
-import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue } from '../data/rank';
+import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue, swarmRankKills } from '../data/rank';
 import { roughHeal } from './vows';
 import { sproutHeal } from '../data/sprout';
 import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
@@ -210,7 +210,7 @@ export function spawn(s: State, rng: () => number) {
         foe.magic = Math.round((foe.magic || 0) * vdef.attack);
         if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm } : {}), ...(variant ? { variant } : {}) };
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
 }
 const fishLevelOf = (id: string) => FISH.find(f => f.id === id)?.level || 1;
 export function reward(s: State, rng: () => number) {
@@ -243,7 +243,10 @@ export function reward(s: State, rng: () => number) {
     // v27.79 계급장: 처치 수(무리는 마릿수)만큼 계급 경험치. ‘전과 기록’ 특전이 마리당 더 셉니다. 기록이 없던 세이브는 지금까지의 처치 수에서 시작합니다. 진급하면 알립니다.
     const rk = rankState(s), rankBefore = rankIndex(rk.exp);
     s.kills += size;
-    rk.exp += size * (1 + rankPerkLevel(s, 'tally')); s.rank = rk;
+    // v3.46 무리는 마리 수 대신 싸운 턴 × 규모별 턴당 값(swarmRankKills, 마리 수 상한). 소수점은 이월합니다.
+    if (size > 1) { const raw = swarmRankKills(size, s.turn - (e.born ?? s.turn) + 1) * (1 + rankPerkLevel(s, 'tally')) + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
+    else rk.exp += 1 + rankPerkLevel(s, 'tally');
+    s.rank = rk;
     if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 빌드 화면의 계급에서 사용)`, 'reward'); }
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.30 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
     let mimicBonus = 0;

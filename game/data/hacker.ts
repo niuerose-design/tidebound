@@ -122,4 +122,4 @@ export const PRIVACY_LABELS: Record<PrivacyField, string> = { job: '직업', lev
 
 /** v3.44 해커 계열 직업(해커·화이트 해커·블랙 해커)은 비밀 직업이라 game/secret/jobs.ts로 옮겼습니다(서버 전용). */
 
-/** v3.46 해커 계열 스킬(신원 조작·방화벽·흔적 지우기)도 비밀 직업의 스킬이라 game/secret/skills.ts로 옮겼습니다(서버 전용). id는 위 상수로 씁니다. */
+/** v3.47 해커 계열 스킬(신원 조작·방화벽·흔적 지우기)도 비밀 직업의 스킬이라 game/secret/skills.ts로 옮겼습니다(서버 전용). id는 위 상수로 씁니다. */

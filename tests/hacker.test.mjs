@@ -374,7 +374,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.ok(veiledCat.lineages.every(l => l.name === '???'), 'unrevealed secret lineages are veiled'); assert.notEqual(veiledCat.key, openCat.key);
         const opened = newState(0); opened.rebirthDoor = 'voidcaller'; const voidCat = await Sc.buildCatalog(opened, now + 6);
         assert.ok(voidCat.revealed.includes('voidcaller') && !voidCat.jobs.find(j => j.id === 'voidcaller').veiled, 'an open door reveals the job in full');
-        // v3.46 비밀 직업의 스킬: 꺼져 있으면 67개 전부, 켜면 드러난 직업 것과 내가 배운·장착한 것만(실루엣 직업의 스킬은 없음).
+        // v3.47 비밀 직업의 스킬: 꺼져 있으면 67개 전부, 켜면 드러난 직업 것과 내가 배운·장착한 것만(실루엣 직업의 스킬은 없음).
         assert.equal(openCat.skills.length, 67); assert.ok(veiledCat.skills.every(sk => veiledCat.revealed.includes(sk.job)) && !veiledCat.skills.some(sk => sk.job === 'lichKing'), 'only skills of revealed jobs');
         assert.ok(voidCat.skills.some(sk => sk.id === 'voidLance') && voidCat.skills.length > veiledCat.skills.length, 'opening the door sends the job skills');
         const holder = newState(0); holder.skills.push('graveHook'); const holderCat = await Sc.buildCatalog(holder, now + 7);

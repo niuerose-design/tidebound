@@ -23,7 +23,7 @@ const canaries = {
     '히든 직업 이름(하한)': secretJobs.map(j => named(j.name)),
     '히든 직업 설명': secretJobs.map(j => text(j.desc)).filter(Boolean),
     '히든 직업 스킬 이름(하한)': SKILLS.filter(sk => sk.job && secretIds.has(sk.job)).map(sk => named(sk.name)),
-    // v3.46 이름이 실행 중에 덮어써져(메이플 이름) name:"…" 모양이 아니어도 잡도록 따옴표 이름 그대로 찾습니다.
+    // v3.47 이름이 실행 중에 덮어써져(메이플 이름) name:"…" 모양이 아니어도 잡도록 따옴표 이름 그대로 찾습니다.
     // 보스도 쓰는 tentacleBarrage와 해킹 이름과 같은 adGuard(‘신원 조작’)는 공개 글이라 뺍니다.
     '히든 직업 스킬 이름(따옴표)': SKILLS.filter(sk => sk.job && secretIds.has(sk.job) && !['tentacleBarrage', 'adGuard'].includes(sk.id)).map(sk => JSON.stringify(sk.name)),
     // v3.44 발견의 문 조건(압축된 모양). doors.ts가 서버 전용이 되면 0이어야 합니다.

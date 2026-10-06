@@ -16,7 +16,7 @@ export function fxVariantOf(id: string | undefined, magical: boolean, effect?: s
     if (!id) return magical ? 'arcane' : 'impact';
     // v27.14 스킬별 지정이 있으면 그것을 먼저 씁니다.
     if (SKILL_FX[id]) return SKILL_FX[id];
-    // v3.46 서버 전용 비밀 스킬은 표 대신 스킬에 fx를 적어 둡니다(화면은 카탈로그로 받음).
+    // v3.47 서버 전용 비밀 스킬은 표 대신 스킬에 fx를 적어 둡니다(화면은 카탈로그로 받음).
     const own = skillById(id)?.fx;
     if (own) return own as CombatFxVariant;
     if (effect === 'poison') return 'venom';

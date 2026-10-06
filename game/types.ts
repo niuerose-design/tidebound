@@ -144,7 +144,7 @@ export type Item = {
     level: number;
 };
 export type Skill = {
-    /** v3.46 연출 갈래(skill-fx.ts SKILL_FX와 같은 값). 서버 전용 비밀 스킬은 공개 표 대신 여기에 둡니다. */
+    /** v3.47 연출 갈래(skill-fx.ts SKILL_FX와 같은 값). 서버 전용 비밀 스킬은 공개 표 대신 여기에 둡니다. */
     fx?: string;
     /** A rare native technique requires this much mastery in its owning job. */
     unlockJobMastery?: number;
@@ -263,6 +263,8 @@ export type Enemy = {
     leavesAt?: number;
     /** 무리 규모(N). 무리 전체가 체력 ×N인 한 개체입니다. 없으면 한 마리. */
     swarm?: number;
+    /** v3.46 이 몬스터가 나온 턴(s.turn). 무리 계급 경험치를 싸운 턴 수로 셉니다. */
+    born?: number;
     /** v25.19 변종 종류(무리·거대·심연 변이·별빛). 없으면 보통 개체. */
     variant?: 'giant' | 'abyssal' | 'starlit' | 'swarm';
     combatStats?: Stats;

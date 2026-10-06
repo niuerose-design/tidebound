@@ -81,7 +81,7 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
 }
 
 const SEAL_GLYPHS = ['無', '虛', '斬', '血', '縛', '刹', '魂'];
-/** v27.24 5차 궁극기 전용 장면 연출. kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. v3.46 title이 없으면 스킬 이름(비밀 직업 스킬은 카탈로그로 받은 이름). */
+/** v27.24 5차 궁극기 전용 장면 연출. kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. v3.47 title이 없으면 스킬 이름(비밀 직업 스킬은 카탈로그로 받은 이름). */
 const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[] }> = {
     braveSlash: { kind: 'slash', title: '소드 오브 버닝 소울', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
     oceanWrath: { kind: 'wave', title: '썬더 브레이크', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
