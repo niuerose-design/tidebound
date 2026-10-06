@@ -225,3 +225,23 @@ test('v3.46 swarm rank exp = fought turns × per-size rate, capped at the head c
     assert.equal(s.rank.exp, 3, '3 one-turn ×100 swarms = 3.96 → 3'); assert.ok(Math.abs(s.rank.frac - .96) < 1e-9);
     assert.equal(s.kills, 300, 'kill count (achievements) still counts heads');
 });
+test('v3.48 swarm mastery = fought turns × per-size rate (×5 2 · ×100 10 · ×500 20), capped at the head count', () => {
+    assert.equal(Rk.swarmMasteryKills(100, 1), 10); assert.equal(Rk.swarmMasteryKills(500, 1), 20); assert.equal(Rk.swarmMasteryKills(5, 4), 5, 'head count cap');
+    const one = size => { const s = newState(0); s.level = 30; s.stage = 'brook'; s.tide = 0; E.spawn(s, () => .99); if (size > 1) { s.enemy.swarm = size; s.enemy.variant = 'swarm'; s.enemy.born = s.turn; } s.enemy.hp = 0; const m = s.jobMastery[s.job] || 0; E.reward(s, () => .99); return (s.jobMastery[s.job] || 0) - m; };
+    const single = one(1);
+    assert.equal(one(100), single * 10); assert.equal(one(500), single * 20, 'no ×1.5 big-swarm bonus on mastery');
+});
+test('v3.48 logs keep battle 70 and reward 50 lines separately; client merge prunes the same way', async () => {
+    const D = await L.load('systems/log-delta'), St = await L.load('systems/state');
+    const s = newState(0); s.logs = []; s.logId = 0;
+    for (let i = 0; i < 300; i++) St.addLog(s, `b${i}`, i % 7 ? 'battle' : 'reward');
+    const count = g => s.logs.filter(l => D.logGroup(l.type) === g).length;
+    assert.equal(count('battle'), 70); assert.equal(count('reward'), 43, 'all 43 reward lines kept (below 50)');
+    for (let i = 0; i < 100; i++) St.addLog(s, `r${i}`, 'skill');
+    assert.equal(count('reward'), 50); assert.equal(count('battle'), 70);
+    assert.deepEqual(D.pruneLogs(s.logs), s.logs, 'idempotent');
+    const old = s.logs.slice(), key = D.logKey(old.at(-1));
+    for (let i = 0; i < 30; i++) St.addLog(s, `n${i}`, i % 2 ? 'battle' : 'reward');
+    const cut = D.trimLogs(s.logs, key); assert.ok(cut);
+    assert.deepEqual(D.mergeLogs(old, cut.logs, cut.delta), s.logs, 'merge equals the server list');
+});

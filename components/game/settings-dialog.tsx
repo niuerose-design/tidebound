@@ -55,7 +55,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                 <button className={s.skipStatConfirm ? 'secondary' : 'primary'} disabled={busy} aria-pressed={!s.skipStatConfirm} onClick={() => send({ type: 'statConfirm', value: s.skipStatConfirm ? 'on' : 'off' })}>{s.skipStatConfirm ? '꺼짐' : '켜짐'}</button>
             </div>}
             {s && <div className="setting-toggle swarm-cap-setting">
-                <div><strong>무리 최대 규모</strong><p>이보다 큰 무리가 뽑히면 이 규모로 나옵니다. 큰 무리는 보상도 마리 수만큼이라 효율은 비슷하고 한 번의 전투만 길어집니다. ×500은 공격도 490배인 대신 경험치·골드·숙련 1.5배, 드롭 판정 2배입니다. ‘끔’이면 무리 대신 일반 개체가 나오고, 다른 변종(거대·심연·별빛)은 그대로 나옵니다.</p></div>
+                <div><strong>무리 최대 규모</strong><p>이보다 큰 무리가 뽑히면 이 규모로 나옵니다. 큰 무리는 보상도 마리 수만큼이라 효율은 비슷하고 한 번의 전투만 길어집니다. ×500은 공격도 490배인 대신 경험치·골드 1.5배, 드롭 판정 2배입니다. ‘끔’이면 무리 대신 일반 개체가 나오고, 다른 변종(거대·심연·별빛)은 그대로 나옵니다.</p></div>
                 <div className="swarm-cap-buttons" role="group" aria-label="무리 최대 규모">{SWARM_CAPS.map(cap => <button key={cap} className={swarmCapOf(s) === cap ? 'primary' : 'secondary'} disabled={busy} aria-pressed={swarmCapOf(s) === cap} onClick={() => send({ type: 'swarmCap', value: String(cap) })}>{cap === 0 ? '끔' : cap >= 500 ? '제한 없음' : `×${cap}까지`}</button>)}</div>
             </div>}
             {s && salvageRate(s) > 0 && <div className="setting-toggle">
