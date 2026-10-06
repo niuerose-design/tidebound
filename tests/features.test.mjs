@@ -40,6 +40,28 @@ test('v3.37 AP sources: the breakdown sums to the cap and abyss floors no longer
  assert.equal(src.reduce((a,x)=>a+x.value,0),P.apCapacity(s));assert.equal(src.find(x=>x.id==='rebirth').value,5);assert.equal(src.some(x=>/무릉/.test(x.label)),false);
  const t=newState(0);t.abyssMilestones=[30,60,90];assert.equal(P.apCapacity(t),P.apCapacity(newState(0)),'abyss milestones add nothing');
 });
+test('v3.37 place AP moves to region achievements once: old saves keep their AP; honor steps give titles and skip the achievement bonus',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),A=await L.load('data/achievements'),T=await L.load('data/titles'),W=await L.load('data/world');
+ const o=newState(0);o.version=8;delete o.placeApMoved;for(const st of W.PLACES.slice(0,5))for(const id of st.fish)o.book[id]=50;
+ migrateState(o,0);assert.equal(o.placeApMoved,true);for(const n of [1,2,3,4,5])assert.equal(o.achievementClaims[`regions:${n}`],true);
+ assert.equal(P.apSources(o).find(x=>x.id==='achievement').value>=5,true);assert.equal(P.apSources(o).some(x=>x.id==='places'),false);
+ const before=JSON.stringify(o.achievementClaims);migrateState(o,0);assert.equal(JSON.stringify(o.achievementClaims),before,'once');
+ assert.equal(A.achievementById('regions:2').honor,true);assert.equal(A.achievementById('regions:4').honor,undefined);
+ assert.equal(A.achievementTotals({achievementClaims:{'regions:2':true,'regions:3':true}}).count,0,'honor steps do not raise the bonus');
+ assert.ok(T.TITLES.some(t=>t.achievement==='regions:13'));
+ const v=newState(0);v.version=8;delete v.placeApMoved;v.rebirths=5;v.achievements={'rebirths:5':50};for(const st of W.PLACES.slice(0,3))for(const id of st.fish)v.book[id]=50;migrateState(v,0);assert.equal(T.displayTitle({...v,title:undefined}),T.displayTitle({achievements:{'rebirths:5':50},rebirths:5,title:undefined}),'auto title is not replaced by the backfilled honor titles');
+});
+test('v3.38 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22-star/general rank make one line each, once a day per kind',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),R=await L.load('data/rank'),C=await L.load('data/classes'),O=await L.load('data/onyx');
+ const s=newState(0);assert.deepEqual(N.collectNews(s,0),[]);assert.ok(s.newsMark);assert.deepEqual(N.collectNews(s,0),[],'nothing new');
+ const boss=O.ONYX_BOSSES[0];s.inventory.push({id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.accessory.name,onyx:boss.id});
+ s.ascension=1;s.unlockedJobs.push(C.JOBS.find(j=>j.tier===5).id);s.abyssBest=104;s.inventory.push({id:'x',slot:'rod',rarity:1,power:1,level:1,name:'x',enhance:22});
+ const g=R.RANKS.findIndex(r=>r.group==='장성');s.rank={exp:R.RANK_CUMULATIVE[g],perks:{}};
+ const ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind).sort(),['abyss','ascend','general','onyx','star22','tier5']);
+ assert.ok(ev.find(e=>e.kind==='abyss').text('철수').includes('무릉도장 100층'));assert.ok(ev.find(e=>e.kind==='onyx').text('영희').startsWith('영희가 칠흑 장신구'));
+ s.abyssBest=150;assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');s.abyssBest=200;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again');
+ s.abyssBest=0;assert.deepEqual(N.collectNews(s,86_400_000*5),[],'a lower best (after ascension) never announces');
+});
 test('v3.37 first-clear SP is an achievement; old boss-research claims move over as claimed (no double SP)',()=>{
  const s=newState(0);s.clears.grotto=1;act(s,{type:'sync'},0);assert.ok(s.achievements['firstClear:grotto']!==undefined);const sp=s.sp;act(s,{type:'claimAchievement',id:'firstClear:grotto'},0);assert.equal(s.sp,sp+1);
  assert.throws(()=>act(s,{type:'bossResearch',id:'grotto'},0),/지원하지 않는/);

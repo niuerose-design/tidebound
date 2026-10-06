@@ -1,8 +1,8 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MessageCircle, Send } from 'lucide-react';
+import { Megaphone, MessageCircle, Send } from 'lucide-react';
 
-export type ChatLine = { id: number; name: string; text: string; at: number; self: boolean; /** v3.26 시스템 알림 종류(hacker = 해커 전직, 빨간 줄). */ kind?: 'hacker' };
+export type ChatLine = { id: number; name: string; text: string; at: number; self: boolean; /** v3.26 시스템 알림 종류(hacker = 해킹 공지 빨간 줄, system = 제단·모험가 소식). */ kind?: 'hacker' | 'system' };
 /** 열려 있는 동안만 이 간격으로 새 줄을 묻습니다. 닫히거나 탭이 숨으면 멈춥니다. */
 const POLL_MS = 8000, KEEP = 120, MAX_CHARS = 120;
 
@@ -10,7 +10,7 @@ const POLL_MS = 8000, KEEP = 120, MAX_CHARS = 120;
  * 전체 채팅. 서버 부하를 줄이려고 (1) 열려 있을 때만 폴링, (2) after 커서로 새 줄만 받기, (3) 보낸 직후 한 번 더 받기만 합니다.
  * 메시지는 서버가 채널당 최근 300줄만 보관합니다.
  */
-export type ChatChannel = 'global' | 'guild';
+export type ChatChannel = 'global' | 'guild' | 'news';
 function useChat(open: boolean, channel: ChatChannel = 'global') {
     const [lines, setLines] = useState<ChatLine[]>([]), [error, setError] = useState(''), [sending, setSending] = useState(false);
     const last = useRef(0), inflight = useRef(false);
@@ -84,5 +84,22 @@ function ChatFeed({ open, playerName, active }: { open: boolean; playerName: str
             <button type="submit" className="primary small" disabled={sending || !draft.trim()} aria-label="보내기"><Send size={14}/></button>
         </form>
         <small className="chat-note">{draft.length} / {MAX_CHARS} · 2.5초에 한 줄 · 최근 300줄만 보관</small>
+    </div>;
+}
+
+/**
+ * v3.38 소식: 서버가 올리는 시스템 줄(모험가 소식 · 제단 · 해킹 공지)만 보는 읽기 전용 목록. 채팅과 같은 방식으로 열려 있을 때만 받습니다.
+ */
+export function NewsFeed({ open }: { open: boolean }) {
+    const { lines, error } = useChat(open, 'news');
+    const listRef = useRef<HTMLDivElement>(null), stick = useRef(true);
+    useEffect(() => { const el = listRef.current; if (el && stick.current) el.scrollTop = el.scrollHeight; }, [lines]);
+    const onScroll = () => { const el = listRef.current; if (el) stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24; };
+    return <div className="chat-feed news-feed">
+        <div className="chat-list" ref={listRef} onScroll={onScroll} role="log" aria-label="소식" aria-live="polite">
+            {lines.length ? lines.map(l => <p key={l.id} className={`chat-line news-line ${l.kind === 'hacker' ? 'hacker-alert' : ''}`}><span className="chat-head"><b className="chat-name">{l.name}</b><span className="chat-time">{hhmm(l.at)}</span></span><span className="chat-text">{l.text}</span></p>)
+                : <p className="chat-empty"><Megaphone size={14}/> 아직 소식이 없습니다. 칠흑 장신구 · 승천 · 5차 전직 · 무릉도장 · 22성 · 장성 진급 · 제단 소식이 여기에 올라옵니다.</p>}
+        </div>
+        {error && <p className="chat-error" role="alert">{error}</p>}
     </div>;
 }

@@ -1,12 +1,20 @@
 'use client';
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useIsMobile } from './use-mobile';
 import { levelGateOk } from '@/game/systems/meta';
-import { ChatPanel } from './chat-panel';
-import { ChevronDown, ChevronRight, Compass, Lock, Map, MessageCircle, Swords } from 'lucide-react';
+import { ChatPanel, NewsFeed } from './chat-panel';
+import { JournalLine, LOG_TABS, withTurnDividers } from './combat-log';
+import { ChevronDown, ChevronRight, Compass, Lock, Map, Megaphone, MessageCircle, Sparkles, Swords } from 'lucide-react';
 import { STAGES, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { DUNGEON_MODES } from '@/game/data/balance';
 import type { State, Action } from '@/game/types';
+const FEED_KEY = 'tidebound.railFeed';
+type FeedTab = 'battle' | 'reward' | 'news' | 'chat';
+const FEED_TABS: { id: FeedTab; label: string; Icon: typeof Swords }[] = [{ id: 'battle', label: '전투', Icon: Swords }, { id: 'reward', label: '획득', Icon: Sparkles }, { id: 'news', label: '소식', Icon: Megaphone }, { id: 'chat', label: '채팅', Icon: MessageCircle }];
+/**
+ * v3.38 기록판: 가운데 ‘모험 일지’를 없애고 오른쪽 한 곳에 전투 · 획득 · 소식 · 채팅을 탭으로 모았습니다.
+ * 고른 탭은 이 기기에 남깁니다. 소식·채팅은 그 탭을 볼 때만 서버에 묻습니다.
+ */
 export function BattleRail({ s, base, busy, send, setView }: {
     s: State;
     /** v27.62 재생 프레임이 아닌 동기화 상태. 사냥터·던전 선택판은 이것만 보고 프레임마다 다시 그리지 않습니다. */
@@ -15,13 +23,22 @@ export function BattleRail({ s, base, busy, send, setView }: {
     send: (a: Action) => void;
     setView: (v: string) => void;
 }) {
-    // v3.36 전투 기록은 가운데 ‘모험 일지’ 한 곳에만 둡니다. 오른쪽 위 패널은 채팅 전용입니다.
-    // v27.88 모바일: 장면 바로 아래에 접힌 채로 두고 화살표로 펼칩니다(채팅은 펼쳤을 때만 불러옴). 데스크톱은 늘 펼침.
-    const mobile = useIsMobile(), [opened, setOpened] = useState(false), feedOpen = !mobile || opened;
+    const [tab, setTab] = useState<FeedTab>('battle');
+    useEffect(() => { const timer = window.setTimeout(() => { try { const v = localStorage.getItem(FEED_KEY); if (FEED_TABS.some(t => t.id === v)) setTab(v as FeedTab); } catch { /* 저장소 없음 */ } }, 0); return () => window.clearTimeout(timer); }, []);
+    const pick = (v: FeedTab) => { setTab(v); setOpened(true); try { localStorage.setItem(FEED_KEY, v); } catch { /* 저장소 없음 */ } };
+    // v3.38 모바일도 기록판을 펼친 채로 시작합니다(가운데 일지가 없어짐). 화살표로 접을 수 있습니다.
+    const mobile = useIsMobile(), [opened, setOpened] = useState(true), feedOpen = !mobile || opened;
+    const lines = tab === 'battle' || tab === 'reward' ? s.logs.filter(l => LOG_TABS[tab].includes(l.type)).slice(-40).reverse() : [];
+    const latestReward = tab === 'battle' ? s.logs.findLast(l => l.type === 'reward' || l.type === 'skill') : undefined;
     return <aside className="battle-utility-rail" aria-label="전투 보조 패널">
-    <section className={`panel battle-rail-panel battle-feed feed-chat ${feedOpen ? '' : 'folded'}`}>
-    <div className="section-title"><h2><MessageCircle size={14}/>채팅</h2><span className="micro">CHAT</span><button type="button" className="feed-fold" aria-expanded={feedOpen} aria-label={feedOpen ? '채팅 접기' : '채팅 펼치기'} onClick={() => setOpened(v => !v)}><ChevronDown size={15}/></button></div>
-    {feedOpen && <ChatPanel open playerName={s.name} guildName={s.guildMember?.name}/>}
+    <section className={`panel battle-rail-panel battle-feed ${tab === 'chat' ? 'feed-chat' : ''} ${feedOpen ? '' : 'folded'}`}>
+    <div className="section-title"><div className="battle-place-tabs feed-tabs" role="tablist" aria-label="기록판">
+        {FEED_TABS.map(({ id, label, Icon }) => <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'active' : ''} onClick={() => pick(id)}><Icon size={14}/>{label}</button>)}
+    </div><button type="button" className="feed-fold" aria-expanded={feedOpen} aria-label={feedOpen ? '기록판 접기' : '기록판 펼치기'} onClick={() => setOpened(v => !v)}><ChevronDown size={15}/></button></div>
+    {!feedOpen ? null : tab === 'chat' ? <ChatPanel open playerName={s.name} guildName={s.guildMember?.name}/> : tab === 'news' ? <NewsFeed open/> : <>
+        {latestReward && <button type="button" className="log-reward-ticker" onClick={() => pick('reward')} title="획득 기록 보기"><Sparkles size={13}/><span>{latestReward.text}</span></button>}
+        <div className="log-list rail-log" role="log" aria-label={tab === 'battle' ? '최근 전투 기록' : '최근 획득 기록'}>{lines.length ? withTurnDividers(lines, log => <JournalLine key={log.id} log={log} playerName={s.name}/>) : <p className="battle-feed-empty">{tab === 'battle' ? '자동 사냥을 시작하면 전투 기록이 표시됩니다.' : '처치 보상과 획득 기록이 여기에 쌓입니다.'}</p>}</div>
+    </>}
     </section>
     <PlaceSelector s={base} busy={busy} send={send} setView={setView}/>
     </aside>;

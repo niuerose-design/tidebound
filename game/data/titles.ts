@@ -6,7 +6,7 @@
 import type { State } from '../types';
 import { REBIRTH_TITLES } from './long-term';
 
-export type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '사냥' | '강화'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
+export type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
 export const TITLES: TitleDef[] = [
     { id: 'novice', name: '🌱 초심자', desc: '모험을 시작한 모든 모험가', group: '시작' },
@@ -24,6 +24,8 @@ export const TITLES: TitleDef[] = [
     { id: 'abyss:25', name: '무릉 수련자', desc: '무릉도장 25층', group: '무릉도장', achievement: 'abyss:25' },
     { id: 'abyss:100', name: '무릉의 주인', desc: '무릉도장 100층', group: '무릉도장', achievement: 'abyss:100' },
     { id: 'hacker:root', name: 'root', desc: '해킹 X 루트 권한', group: '도전', achievement: 'hacker:root' },
+    // v3.37 명예 업적(지역 연구 N곳 완성) 칭호.
+    ...([[2, '첫 지도를 넘긴 자'], [3, '세 번째 발자국'], [5, '다섯 지역의 탐구자'], [6, '여섯 번째 지도'], [7, '일곱 갈래 길의 기록자'], [8, '여덟 지역의 박물학자'], [9, '아홉 번째 도감'], [10, '열 곳의 증인'], [11, '빅토리아 너머로'], [12, '세계를 걷는 자'], [13, '마지막 한 곳 앞에서']] as const).map(([n, name]) => ({ id: `regions:${n}`, name: `📖 ${name}`, desc: `사냥터 ${n}곳 도감 완성`, group: '모험' as const, achievement: `regions:${n}` })),
 ];
 export const titleById = (id?: string | null) => id ? TITLES.find(t => t.id === id) : undefined;
 /** 달성한 업적 기준으로 얻은 칭호. 환생 칭호는 업적 기록이 없어도 환생 횟수로 인정합니다. */

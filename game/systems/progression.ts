@@ -60,7 +60,6 @@ export function apSources(s: State): { id: string; label: string; value: number 
         { id: 'base', label: '기본', value: PROGRESSION.baseAP },
         { id: 'rebirth', label: '환생 횟수', value: rebirthAP(s) },
         { id: 'research', label: '세계석 연구 ‘영혼의 그릇’', value: s.permanent.ap || 0 },
-        { id: 'places', label: '장소 완성(도감)', value: completedRegions(s).length },
         { id: 'achievement', label: '업적', value: achievementAP(s) },
         { id: 'account', label: '계정(분신 숙달 직업)', value: accountAP(s) },
         { id: 'restraint', label: '절제 서약', value: -restraintAP(s) },

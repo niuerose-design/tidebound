@@ -320,7 +320,6 @@
 .battle-console>.battle-scene{order:1}
 .battle-console>.battle-opponent-strip{order:2}
 .battle-console>.battle-skills{order:4}
-.battle-console>.log-panel{order:5}
 .battle-console>.session-metrics{order:6;margin-top:12px}
 .battle-console>.battle-target-strip{order:7}
 .battle-console>.tide-selector{order:8}
@@ -465,11 +464,6 @@
 .battle-character-column{display:flex;flex-direction:column}
 .battle-character-column .player-column{display:flex;flex-direction:column;flex:1}
 .battle-character-column .player-panel{flex:1}
-.battle-console>.log-panel{flex:1;display:flex;flex-direction:column;min-height:0;margin-bottom:0}
-/* v3.36 전투 기록은 모험 일지 한 곳에만 있어 데스크톱에서 최소 높이를 넉넉히 둡니다. */
-.battle-console>.log-panel:not(.folded) .log-list{flex:1 1 0;height:auto;min-height:120px}
-@media(min-width:768px){.battle-console>.log-panel:not(.folded) .log-list{min-height:360px}}
-.battle-feed.feed-chat>.section-title h2{margin-right:auto}
 /* v25.19 전투 기록·채팅은 내용만큼만(최대 9줄 정도), 남는 높이는 낚시터·던전 목록이 채워 빈 공간이 없게 합니다. */
 /* v26.7 전투 기록·채팅 패널이 남는 세로 공간을 채워 오른쪽 열 하단이 가운데 열과 맞습니다. */
 .battle-utility-rail>.battle-feed{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
@@ -851,7 +845,6 @@
   .battle-console>.battle-opponent-strip{order:2}
   .battle-utility-rail>.battle-feed{order:3;width:100%;margin-bottom:12px}
   .battle-console>.battle-skills{order:4}
-  .battle-console>.log-panel{order:5}
   .battle-console>.session-metrics{order:6}
   .battle-console>.battle-target-strip{order:7}
   .battle-console>.tide-selector{order:8}
@@ -866,7 +859,6 @@
   .battle-feed:not(.folded) .section-title{margin-bottom:10px}
   .feed-fold{display:inline-flex}
 
-  .battle-console>.log-panel:not(.folded) .log-list{flex:none;height:220px;min-height:0}
   .mobile-tab-bar{backface-visibility:hidden}
 }
 @media(max-width:767px){
@@ -927,3 +919,12 @@
 @keyframes sceneKkamiKillCoin{0%{opacity:0;transform:translateY(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-110px) translateX(calc((var(--i) - 3.5) * 14px)) scale(1.2) rotate(300deg)}}
 @keyframes sceneKkamiKillTitle{0%{opacity:0;scale:.6}15%,78%{opacity:1;scale:1}100%{opacity:0;scale:1.1}}
 @media(prefers-reduced-motion:reduce){.scene-fx-kkami-ring{display:none}}
+/* v3.38 기록판(전투 · 획득 · 소식 · 채팅): 오른쪽 열의 남는 높이를 채웁니다. 모바일은 장면 아래에서 높이를 제한합니다. */
+.feed-tabs{margin-right:auto;flex:1;min-width:0}
+.battle-place-tabs.feed-tabs button{flex:1 1 0;justify-content:center;gap:4px;padding:6px 6px;font-size:12px;white-space:nowrap}
+.battle-utility-rail>.battle-feed .rail-log{flex:1 1 0;height:auto;min-height:260px}
+.battle-utility-rail>.battle-feed .log-reward-ticker{margin-bottom:8px}
+.battle-feed-empty{color:#718c90;font-size:12px;margin:8px 0}
+.chat-line.news-line .chat-name{color:#e7be71}
+.chat-line.news-line .chat-text{color:#d6dfd7}
+@media(max-width:767px){.battle-utility-rail>.battle-feed .rail-log{flex:none;height:300px;min-height:0}}

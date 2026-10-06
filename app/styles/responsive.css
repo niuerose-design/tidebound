@@ -589,7 +589,6 @@
   .chat-list,.log-list,.job-sheet,.battle-stage-list,.battle-dungeon-list{ -webkit-overflow-scrolling:touch }
   .mobile-tab-bar { z-index:60 }
   .battle-console .opponent-card.enemy-opponent { min-height:150px }
-  .battle-console .log-panel:not(.folded) .log-list { min-height:198px }
   .skill-view-toolbar { gap:10px }
   .skill-view-toolbar [data-slot=tabs] { width:100%; min-width:0 }
   .skill-view-toolbar [data-slot=tabs-list] { display:flex; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; width:100%; height:auto; padding-bottom:2px }

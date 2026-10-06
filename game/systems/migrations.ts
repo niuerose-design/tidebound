@@ -1,5 +1,6 @@
 import type { State } from '../types';
 import { addLog } from './state';
+import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
 import { RELICS } from '../data/economy';
 import { syncRelicPower } from './equipment';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
@@ -49,6 +50,18 @@ export function mergeResearch337(s: State) {
     if (s.researchGranted) s.researchGranted = granted;
     if (refund) { s.pearls = (s.pearls || 0) + refund; addLog(s, `연구 정리(던전의 금고·상점 단골 삭제, 자동 분해기·판매기 → 자동 정리): 세계석 ${refund}개를 돌려받았습니다.`, 'system'); }
     return refund;
+}
+/** v3.37 장소 완성 장착 AP를 업적 ‘지역 연구 N곳 완성’으로 옮깁니다. 이미 완성한 곳의 업적은 바로 받은 것으로 처리해 AP가 줄지 않습니다(한 번만). */
+export function movePlaceAp(s: State) {
+    if (s.placeApMoved) return 0;
+    s.placeApMoved = true;
+    const had = new Set(Object.keys(s.achievements || {}));
+    syncAchievements(s, () => {});
+    // 이번에 새로 채운 지역 업적은 가장 오래된 기록(0)으로 둡니다. 자동 칭호가 새 명예 칭호로 바뀌지 않게 합니다.
+    for (const id of Object.keys(s.achievements || {})) if (!had.has(id) && id.startsWith('regions:')) s.achievements![id] = 0;
+    const ids = unclaimedAchievements(s).filter(id => id.startsWith('regions:'));
+    for (const id of ids) claimAchievements(s, id);
+    return ids.length;
 }
 /** v3.24 세계석 연구 ‘역풍 견디기’(옛 바람목 넓히기, base 6·step 4) 삭제: 투자한 세계석을 전액 돌려줍니다. */
 export function refundTailwindWindow(s: State) {
@@ -129,7 +142,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

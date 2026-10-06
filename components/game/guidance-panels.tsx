@@ -81,7 +81,7 @@ function AchievementBonus({ s }: { s: State }) {
                 <div><dt>장착 AP</dt><dd>+{totals.ap}<small> / {max.ap}</small></dd></div>
                 {BONUS_KEYS.map(k => <div key={k}><dt>{BONUS_LABEL[k]}</dt><dd>+{pct(totals.bonus[k])}<small> / {pct(max.bonus[k])}</small></dd></div>)}
             </dl>
-            <p className="footnote">업적 보너스는 받은 업적 1개마다 {BONUS_KEYS.map(k => `${BONUS_LABEL[k]} +${(ACHIEVEMENT_BONUS_PER[k] * 100).toFixed(2)}%`).join(' · ')}씩 쌓이고, 최종 능력치에 한 번 곱합니다. 받은 업적 {claimedList.length} / {ACHIEVEMENTS.length}개 · 세계석 {pearls.toLocaleString()} · SP {sp} 수령.</p>
+            <p className="footnote">업적 보너스는 받은 업적 1개마다 {BONUS_KEYS.map(k => `${BONUS_LABEL[k]} +${(ACHIEVEMENT_BONUS_PER[k] * 100).toFixed(2)}%`).join(' · ')}씩 쌓이고, 최종 능력치에 한 번 곱합니다. 받은 업적 {claimedList.length} / {ACHIEVEMENTS.length}개(명예 업적 {claimedList.filter(x => x.honor).length}개는 업적 보너스에서 제외) · 세계석 {pearls.toLocaleString()} · SP {sp} 수령.</p>
         </section>
         <details className="achievement-group bonus-feats" open>
             <summary><h3>장착 AP가 붙은 업적</h3><span>{permanent.filter(a => claimed[a.id]).length} / {permanent.length} 수령</span><ChevronDown size={15} className="achievement-chevron"/></summary>

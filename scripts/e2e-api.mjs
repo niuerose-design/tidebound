@@ -46,6 +46,9 @@ await call('/api/chat', { text: '' }, { expect: 400 });
 ({ data } = await call('/api/chat', { text: '  안녕하세요   e2e  ' }, { expect: 200 }));
 assert.equal(data.row.text, '안녕하세요 e2e'); assert.equal(data.row.self, true); const chatId = data.row.id;
 await call('/api/chat', { text: '너무 빨리' }, { expect: 429 });
+// v3.38 소식 채널: 읽기만 됩니다.
+({ data } = await call('/api/chat?channel=news', undefined, { expect: 200 })); assert.ok(Array.isArray(data.rows), 'news rows');
+await call('/api/chat', { channel: 'news', text: '소식 쓰기' }, { expect: 403 });
 await call('/api/chat', { text: 'x'.repeat(121) }, { expect: 400 });
 ({ data } = await call('/api/chat', undefined, { expect: 200 }));
 assert.ok(data.rows.some(r => r.id === chatId && r.self), 'own chat line listed');

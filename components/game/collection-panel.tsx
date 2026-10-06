@@ -251,9 +251,9 @@ export function Collection({ s, send, busy }: PanelProps) {
     </div>
     </details>
     <details className="bonus-block">
-    <summary><div><h2>장소 연구</h2><p>사냥터(장소)의 모든 종을 완성(처치 50회)하면 장착 AP +1을 받습니다. 예전 장소 테마 보너스는 지역 연구 1단계 첫 보너스로 옮겼습니다.</p></div><span className="bonus-count">{regions.length}<small> / {PLACES.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <summary><div><h2>장소 연구</h2><p>사냥터(장소)의 모든 종을 완성(처치 50회)하면 업적 ‘지역 연구 N곳 완성’에서 장착 AP +1을 받습니다. 예전 장소 테마 보너스는 지역 연구 1단계 첫 보너스로 옮겼습니다.</p></div><span className="bonus-count">{regions.length}<small> / {PLACES.length}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
-    <ul className="bonus-grid wide">{PLACES.map(st => { const done = regions.some(r => r.id === st.id); return <li key={st.id} className={done ? 'done' : ''}><span>{st.name}</span><strong>장착 AP +1{done ? <em> · 적용 중</em> : null}</strong></li>; })}</ul>
+    <ul className="bonus-grid wide">{PLACES.map(st => { const done = regions.some(r => r.id === st.id); return <li key={st.id} className={done ? 'done' : ''}><span>{st.name}</span><strong>{done ? '완성 · 업적에서 장착 AP +1' : '미완성'}</strong></li>; })}</ul>
     </div>
     </details>
     </div>; })()}

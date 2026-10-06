@@ -51,7 +51,7 @@ function regionResearch(s: State, stageId: string) {
     const st = STAGES.find(x => x.id === stageId)!;
     const done = st.fish.filter(id => (s.book[id] || 0) >= PROGRESSION.fishComplete).length;
     const pending = st.fish.reduce((a, id) => a + bookPending(s, id).ranks.length, 0);
-    return { done, total: st.fish.length, complete: done === st.fish.length, pending, reward: '장착 AP +1' };
+    return { done, total: st.fish.length, complete: done === st.fish.length, pending, reward: '업적 장착 AP +1' };
 }
 
 export function pendingBookCount(s: State) { return FISH.reduce((a, f) => a + bookPending(s, f.id).ranks.length, 0); }

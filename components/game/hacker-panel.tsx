@@ -130,7 +130,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
                 </div>}
                 {n >= 7 && <div className="hack-card">
                     <b>세이브 스캠 · VII</b>
-                    <small>떠 있는 월드보스의 체력을 되감거나(깎인 체력의 {Math.round(HACKER.savescum.rewind(n) * 100)}% 회복) 빨리감습니다(남은 체력의 {Math.round(HACKER.savescum.forward(n) * 100)}% 감소, 쓰러뜨리지는 못함). 보스 한 마리당 서버 전체 1회 · 전체 채팅 공지 · 하루 {cap2(HACKER.savescum.perDay())}회 · 비트 {cost(HACKER.savescum.bits)}</small>
+                    <small>떠 있는 월드보스의 체력을 되감거나(깎인 체력의 {Math.round(HACKER.savescum.rewind(n) * 100)}% 회복) 빨리감습니다(남은 체력의 {Math.round(HACKER.savescum.forward(n) * 100)}% 감소, 쓰러뜨리지는 못함). 보스 한 마리당 서버 전체 1회 · 소식 공지 · 하루 {cap2(HACKER.savescum.perDay())}회 · 비트 {cost(HACKER.savescum.bits)}</small>
                     {raids.length ? <div className="hack-form"><RaidSelect raids={raids} value={raid?.id || ''} onChange={setRaidPick} scummed={scummed}/>
                         <select value={scumMode} onChange={e => setScumMode(e.target.value)} aria-label="세이브 스캠 방향"><option value="forward">빨리감기</option><option value="rewind">되감기</option></select>
                         <button className="primary" disabled={busy || busted || !raid || scummed.has(raid.gen) || (used.savescum || 0) >= cap2(HACKER.savescum.perDay()) || h.bits < cost(HACKER.savescum.bits)} onClick={() => raid && run('savescum', `${raid.id}|${scumMode}`)}>세이브 스캠</button></div> : <small>지금 떠 있는 월드보스가 없습니다.</small>}

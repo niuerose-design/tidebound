@@ -5,6 +5,8 @@ import { syncHackFeed } from '@/game/server/hacks';
 import { syncCrew, flushCrew, type CrewApply } from '@/game/server/crews';
 import { trimLogs } from '@/game/systems/log-delta';
 import { announceHacker } from '@/game/server/hacks';
+import { postPlayerNews } from '@/game/server/news';
+import { collectNews, type NewsEvent } from '@/game/systems/news';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) { try {
     checkOrigin(req);
@@ -14,12 +16,15 @@ export async function POST(req: Request) { try {
     try {
         let announce = '';
         let crewFlush: CrewApply | null | undefined;
-        const out = await mutate(id, a, async s => { const now = Date.now(); announce = s.jobAnnounce || ''; delete s.jobAnnounce; if (a.type === 'ascend') await afterAscend(account, id, now); await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncHackFeed(s, id, now); await syncCrew(id, s, now);
+        let news: NewsEvent[] = [];
+        const out = await mutate(id, a, async s => { const now = Date.now(); announce = s.jobAnnounce || ''; delete s.jobAnnounce; news = collectNews(s, now); if (a.type === 'ascend') await afterAscend(account, id, now); await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncHackFeed(s, id, now); await syncCrew(id, s, now);
             // v3.32 합동 작전 기여는 침투 작전이 끝난 뒤 한 번만 올리고, 저장 충돌로 다시 돌면 세이브 변화만 다시 적용합니다.
             if (crewFlush === undefined) crewFlush = await flushCrew(id, s, now);
             crewFlush?.(s); });
         // v3.26 해커 계열 전직 알림(익명, 채팅에 빨간 줄).
         if (announce) await announceHacker(announce, Date.now());
+        // v3.38 모험가 소식(칠흑·승천·5차 전직·무릉도장·22성·장성 진급). 저장이 끝난 뒤 한 번만 올립니다.
+        if (news.length) await postPlayerNews(id, out.state, news, Date.now());
         // v27.62 동기화는 클라이언트가 가진 마지막 로그 뒤의 로그만 보냅니다(log-delta.ts).
         const trimmed = a.type === 'sync' ? trimLogs(out.state.logs, (a as { logKey?: unknown }).logKey) : null;
         return Response.json(trimmed ? { ...out, state: { ...out.state, logs: trimmed.logs }, logDelta: trimmed.delta } : out, { headers: { 'Cache-Control': 'no-store' } });

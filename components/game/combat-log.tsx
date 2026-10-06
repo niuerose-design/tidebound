@@ -1,8 +1,11 @@
 import { memo } from 'react';
 import type React from 'react';
-import { Sparkles, Swords, Wind } from 'lucide-react';
+import { Compass, Sparkles, Swords, Wind } from 'lucide-react';
 import type { Log } from '@/game/types';
 import { STATUS_NAMES } from '@/game/systems/combat-feedback';
+
+/** 기록판 탭별 로그 종류. */
+export const LOG_TABS: Record<'battle' | 'reward', Log['type'][]> = { battle: ['battle', 'system'], reward: ['reward', 'skill'] };
 
 const WORD = { physical: '물리', magic: '마법', split: '복합' } as const;
 
@@ -51,3 +54,8 @@ export function withTurnDividers<T extends { turn?: number }>(logs: T[], render:
     });
     return out;
 }
+
+/** v27.62 모험 일지 한 줄. 같은 id의 로그는 내용이 바뀌지 않아 전투 재생 프레임마다 다시 그리지 않습니다. */
+export const JournalLine = memo(function JournalLine({ log, playerName }: { log: Log; playerName: string }) {
+    return <div className={`log-line ${log.type}`}><span className="log-number">{String(log.id).padStart(3, '0')}</span>{log.event ? <BattleLogLine log={log} playerName={playerName}/> : <><span>{log.type === 'reward' ? <Sparkles size={13}/> : log.type === 'system' ? <Compass size={13}/> : <Swords size={13}/>}</span><p>{log.text}</p></>}</div>;
+}, (a, b) => a.log.id === b.log.id && a.log.text === b.log.text && a.playerName === b.playerName);

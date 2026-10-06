@@ -326,14 +326,16 @@ function sameCrew(s: State, victim: State | null) {
     const mine = s.hacker?.crew;
     if (mine?.modules?.includes('proxyChain') && victim?.hacker?.crew?.id === mine.id) throw Error('같은 조직원은 노릴 수 없습니다(프록시 체인).');
 }
-/** v3.28 해킹 공지(세이브 스캠 · DDoS · 루트 권한)를 전체 채팅에 빨간 줄로 남깁니다(실패해도 해킹은 그대로). */
+/** v3.28 해킹 공지(세이브 스캠 · DDoS · 루트 권한)를 빨간 줄로 남깁니다(v3.38 소식 채널, 실패해도 해킹은 그대로). */
 async function hackNotice(text: string, now: number) {
-    try { await db().postChat({ channel: 'global', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 채팅은 부가 기능 */ }
+    // v3.38 전체 채팅 대신 소식 채널에 올립니다.
+    try { await db().postChat({ channel: 'news', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
 }
 /** v3.26 해커 계열 전직을 전체 채팅에 알립니다(이름은 밝히지 않음). 채팅 화면은 account_id 'system-hacker'를 빨간 줄로 그립니다. */
 export async function announceHacker(job: string, now: number) {
     const text = `누군가가 ${job === 'whiteHacker' ? '화이트 해커' : job === 'blackHacker' ? '블랙 해커' : '해커'}로 전직했습니다.`;
-    try { await db().postChat({ channel: 'global', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 채팅은 부가 기능 */ }
+    // v3.38 전체 채팅 대신 소식 채널에 올립니다.
+    try { await db().postChat({ channel: 'news', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
 }
 /** 운영 페이지: 진행 중인 방송 탈취를 지웁니다. */
 export async function clearBroadcast(now: number) {
@@ -388,3 +390,9 @@ export function maskSnapshot<T extends Partial<Snapshot> & { name?: string }>(sn
     return out as T & { masked?: string[] };
 }
 const PRIVACY_KEYS = ['job', 'level', 'gear', 'skills', 'title', 'guild'];
+/** v3.38 소식에 쓸 이름: 신원 조작으로 이름을 가린 동안(크래킹당하지 않았으면)은 미끼 이름 또는 ‘누군가’. */
+export function newsName(playerId: string, name: string, hacks: Hacks, now: number) {
+    const m = hacks.masked[playerId];
+    if (!maskLive(m, now) || (hacks.cracked[playerId] || 0) > now) return name;
+    return m.decoy?.name || '누군가';
+}

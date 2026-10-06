@@ -6,7 +6,9 @@ import { rankOf } from '@/game/data/rank';
 export const dynamic = 'force-dynamic';
 
 /** v25.4 전체 채팅. 열려 있는 동안만 몇 초마다 새 줄을 묻고(after 커서), 한 줄은 120자, 계정마다 2.5초에 한 줄입니다. */
-const CHANNELS = new Set(['global', 'guild']);
+const CHANNELS = new Set(['global', 'guild', 'news']);
+/** v3.38 소식 채널은 읽기만 합니다(서버가 시스템 줄로 올림). */
+const READ_ONLY = new Set(['news']);
 /** 'guild'는 소속 길드 채널(guild:<id>)로 바꿉니다. 무소속이면 403. */
 async function resolveChannel(account: string, channel: string) {
     if (channel !== 'guild') return channel;
@@ -21,7 +23,7 @@ export async function GET(req: Request) { try {
     const requested = url.searchParams.get('channel') || 'global', after = Math.max(0, Math.floor(Number(url.searchParams.get('after')) || 0));
     if (!CHANNELS.has(requested)) throw new ApiError('없는 채널입니다.');
     const rows = await db().listChat(await resolveChannel(account, requested), after, CHAT_PAGE);
-    return Response.json({ rows: rows.map(r => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, self: r.account_id === id, ...(r.account_id === 'system-hacker' ? { kind: 'hacker' } : {}) })), now: Date.now() }, { headers: { 'Cache-Control': 'no-store' } });
+    return Response.json({ rows: rows.map(r => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, self: r.account_id === id, ...(r.account_id === 'system-hacker' ? { kind: 'hacker' } : r.account_id.startsWith('system') ? { kind: 'system' } : {}) })), now: Date.now() }, { headers: { 'Cache-Control': 'no-store' } });
 }
 catch (e) {
     return failure(e);
@@ -32,6 +34,7 @@ export async function POST(req: Request) { try {
     const { account, id } = await session(req), body = await readJson(req, 2048);
     const requested = typeof body.channel === 'string' ? body.channel : 'global';
     if (!CHANNELS.has(requested)) throw new ApiError('없는 채널입니다.');
+    if (READ_ONLY.has(requested)) throw new ApiError('소식 채널에는 글을 쓸 수 없습니다.', 403);
     const channel = await resolveChannel(account, requested);
     // 제어 문자를 빼고 공백을 하나로 접은 뒤 길이를 봅니다.
     const text = String(body.text ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();

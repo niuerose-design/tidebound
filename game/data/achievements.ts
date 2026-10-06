@@ -22,7 +22,7 @@ export type AchievementBonusKey = 'attack' | 'magic' | 'hp' | 'defense' | 'resis
  * 모든 업적에 고르게 나눴습니다(전부 받으면 예전 최대와 비슷).
  */
 export const ACHIEVEMENT_BONUS_PER: Record<AchievementBonusKey, number> = { attack: .0022, magic: .0022, hp: .0026, defense: .0011, resist: .0011 };
-export type Achievement = { id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '계급' | '도전' | '강화'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
+export type Achievement = { /** v3.37 명예 업적: 업적 보너스(능력치) 집계에서 빠지고 칭호를 줍니다. 새로 늘리는 업적은 명예 업적으로 둡니다. */ honor?: boolean; id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '계급' | '도전' | '강화'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
 
 const kills = (s: State) => s.kills || 0;
 /** 도감 업적 대상. v27.58 경험의 누리는 빼서 '도감 전체' 업적 id(codex:종 수)가 바뀌지 않게 합니다. */
@@ -108,7 +108,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     // v27.58 업적 확장: 묶음마다 새 기록을 늘리고, 마지막 단계에 SP +1을 붙였습니다.
     ...series('level', '모험', n => `Lv.${n}`, n => `최고 레벨 ${n}에 도달합니다(환생 전 기록 포함).`, [30, 50, 70, 85, 100], s => s.peakLevel || s.level, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 12, ap: 1 }, { pearls: 25, sp: 1 }][i]),
     ...series('items', '모험', n => `물건도감 ${n}종`, n => `물건도감에 장비 ${n}종(부위 × 등급)을 등록합니다.`, [8, 16, 28], s => Object.keys(s.itemBook || {}).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
-    ...series('regions', '모험', n => `지역 연구 ${n}곳 완성`, n => `사냥터 ${n}곳의 모든 몬스터 도감을 완성합니다.`, [1, 4, STAGES.length], s => completedRegions(s).length, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 12, sp: 1 }][i]),
+    // v3.37 장소 완성 장착 AP(곳마다 +1)를 이 업적으로 옮겼습니다. 1·4·14곳은 원래 업적, 나머지 단계는 명예 업적(칭호, 업적 보너스 집계 제외).
+    ...series('regions', '모험', n => `지역 연구 ${n}곳 완성`, n => `사냥터 ${n}곳의 모든 몬스터 도감을 완성합니다.`, STAGES.map((_, i) => i + 1), s => completedRegions(s).length, i => i === 0 ? { pearls: 2, ap: 1 } : i === 3 ? { pearls: 6, ap: 1 } : i === STAGES.length - 1 ? { pearls: 12, sp: 1, ap: 1 } : { ap: 1 }).map(a => [1, 4, STAGES.length].includes(a.target) ? a : { ...a, honor: true }),
     ...series('golden', '사냥', n => `황금 개체 ${n}마리`, n => `황금 개체를 ${n}마리 처치합니다.`, [1, 10, 100], goldens, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('variants', '사냥', n => `변종 ${n.toLocaleString()}마리`, n => `거대·심연·별빛·무리 변종을 ${n.toLocaleString()}번 처치합니다.`, [10, 100, 1000], variants, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('mimic', '사냥', n => `숙련의 까미 ${n}마리`, n => `숙련의 까미를 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[MIMIC.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
@@ -135,12 +136,12 @@ export const ACHIEVEMENT_GROUPS = ['모험', '사냥', '숙련', '던전', '환�
 /** v27.81 받을 수 있는 모든 업적의 영구 보상 합계(업적 보너스 탭의 ‘최대’). */
 export const achievementMaxTotals = () => achievementTotals({ achievementClaims: Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, true])) });
 
-/** 받은 업적의 영구 보상 합계: 장착 AP와 업적 보너스(받은 업적 수 × ACHIEVEMENT_BONUS_PER). 능력치 배율은 최종 능력치에 한 번 곱합니다(stats가 씀). */
+/** 받은 업적의 영구 보상 합계: 장착 AP와 업적 보너스(받은 업적 수 × ACHIEVEMENT_BONUS_PER, 명예 업적 제외). 능력치 배율은 최종 능력치에 한 번 곱합니다(stats가 씀). */
 export function achievementTotals(s: Pick<State, 'achievementClaims'>) {
     let ap = 0, count = 0;
     for (const id of Object.keys(s.achievementClaims || {})) {
         const a = achievementById(id); if (!a) continue;
-        ap += a.reward.ap || 0; count++;
+        ap += a.reward.ap || 0; if (!a.honor) count++;
     }
     const bonus = Object.fromEntries(Object.entries(ACHIEVEMENT_BONUS_PER).map(([k, n]) => [k, n * count])) as Record<AchievementBonusKey, number>;
     return { ap, count, bonus };

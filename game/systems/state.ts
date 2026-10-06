@@ -15,7 +15,7 @@ export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
         version: SAVE_VERSION,
-        relicRefunded: true, autoStarRefunded: true,
+        relicRefunded: true, autoStarRefunded: true, placeApMoved: true,
         masteryRescaled: true,
         rankRescaled: true,
         // v27.31 새 세이브는 무료로 받을 한계의 문 단계가 없습니다(옛 세이브만 migrations에서 한 번 받음).
