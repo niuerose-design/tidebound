@@ -120,7 +120,7 @@ export function restartLife(s: State, now: number) {
     addLog(s, '운영 조치로 이번 생을 처음부터 다시 시작합니다. 환생 횟수·세계석·연구·유물·도감은 그대로입니다.', 'system');
 }
 
-/** v25.7 청산: 다음 생에 남지 않는 보관함·착용 장비 전부를 연구 효율만큼 판매하거나 분해합니다. 연구가 없으면 count 0. v3.64 칠흑·계승 장비도 빼고(전에는 칠흑을 남기면서 값도 셌음), 분해하면 태초가 계승 게이지를 채웁니다. */
+/** v25.7 청산: 다음 생에 남지 않는 보관함·착용 장비 전부를 연구 효율만큼 판매하거나 분해합니다. 연구가 없으면 count 0. v3.66 칠흑·계승 장비도 빼고(전에는 칠흑을 남기면서 값도 셌음), 분해하면 태초가 계승 게이지를 채웁니다. */
 export function salvagePreview(s: State) {
     const rate = salvageRate(s), mode = s.salvageMode || 'sell';
     const items = rate ? [...s.inventory, ...Object.values(s.equipment)].filter((i): i is NonNullable<typeof i> => !!i && !keepsAcrossLives(i)) : [];

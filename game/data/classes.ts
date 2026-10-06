@@ -10,6 +10,7 @@ import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
 import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
 import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
 import { MAPLE_JOB_FLAVOR, MAPLE_LINEAGE_SUMMARY } from './maple-flavor';
+import { SPECIAL_JOBS, RESTRAINT_LINEAGE } from './specials';
 export type Job = {
     id: string;
     name: string;
@@ -152,7 +153,7 @@ JOBS.push(
     { id: 'lunarOracle', name: '월광 예언자', title: '달의 조수로 미래를 고친다', desc: '높은 회복력과 저항을 얻지만 물리 공격에 약한 유지형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 55, hp: 175, resist: 16 }, tier: 3, level: 40, parent: 'oracle', requires: { wis: 50, vit: 35 }, mastery: 150, role: '회복·저항', tree: 'magic' },
     { id: 'reefMedic', name: '암초 의무관', title: '상처를 산호로 꿰맨다', desc: '작은 회복을 자주 발동해 자동 전투의 안정성을 높이는 보조 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 2, hp: 65, defense: 4, resist: 3 }, tier: 2, level: 25, parent: 'seagrassKeeper', requires: { vit: 28, wis: 22 }, mastery: 75, role: '회복·흡혈', tree: 'defense' },
     { id: 'bellTurtle', name: '종거북 수호자', title: '울림으로 적의 박자를 끊는다', desc: '속도를 포기하고 방어와 기절을 챙기는 느린 제어형입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { hp: 100, defense: 6, resist: 1 }, tier: 2, level: 25, parent: 'warden', requires: { vit: 34, luk: 20 }, mastery: 75, role: '기절·방어', tree: 'defense', penalties: { speed: -6 }, lineage: 'bellTurtle' },
-    { id: 'coralSaint', name: '산호 성인', title: '스스로 빛나는 방벽', desc: '액티브 없이 두 패시브만으로 파티 없는 자동 전투를 버티는 순수 보조형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 84, hp: 260, defense: 12, resist: 16 }, tier: 3, level: 40, parent: 'oracle', requires: { vit: 50, wis: 38 }, mastery: 150, role: '패시브·유지', tree: 'defense', lineage: 'warden' },
+    { id: 'coralSaint', name: '산호 성인', title: '스스로 빛나는 방벽', desc: '액티브 없이 두 패시브만으로 파티 없는 자동 전투를 버티는 순수 보조형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 84, hp: 260, defense: 12, resist: 16 }, tier: 3, level: 40, parent: 'oracle', requires: { vit: 50, wis: 38 }, mastery: 150, role: '패시브·유지', tree: 'magic' },
     { id: 'brineThorn', name: '염수 가시성채', title: '다가오는 자를 꿰뚫는다', desc: '높은 생명력과 방어를 얻는 대신 명중을 포기하는 반격형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 9, hp: 215, defense: 26, resist: 6 }, tier: 3, level: 40, parent: 'bulwark', requires: { vit: 52, str: 38 }, mastery: 150, role: '반격·성채', tree: 'defense', penalties: { accuracy: -.04 } },
     { id: 'clockworkAngler', name: '태엽 낚시꾼', title: '한 턴을 미리 감는다', desc: '속도·명중·HP·MP 비례를 섞어 어느 편성에도 들어가는 복합 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 7, magic: 7, hp: 10 }, tier: 2, level: 25, parent: 'wanderer', requires: { dex: 28, int: 22 }, mastery: 75, role: '속도·복합', tree: 'hybrid' },
     { id: 'gambler', name: '바다 도박사', title: '확률을 이기는 대신 대가를 건다', desc: '치명 피해와 골드가 오르지만 명중이 흔들리는 고위험 직업입니다.', attack: 1, magic: 1, hp: .92, defense: 1, resist: 1, crit: .1, bonus: { attack: 2, magic: 2 }, tier: 2, level: 25, parent: 'squidJester', requires: { luk: 36, dex: 28 }, mastery: 75, role: '치명·경제', tree: 'support', penalties: { accuracy: -.04 } },
@@ -165,7 +166,7 @@ JOBS.push(
     { id: 'salvageMerchant', name: '인양 상인', title: '전리품을 항해 자금으로 바꾼다', desc: '전투력 대신 처치·던전 골드를 극대화하는 독립 1차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 10, requires: { luk: 14, dex: 10 }, mastery: 0, role: '독립·골드', tree: 'support', branchless: true },
     { id: 'pearlBroker', name: '진주 중개인', title: '윤회의 값을 협상한다', desc: '몬스터 속삭임을 숙달한 뒤 환생 보상을 늘리는 경제형 2차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 25, parent: 'fishWhisperer', requires: { int: 25, luk: 25 }, mastery: 75, role: '환생·경제', tree: 'magic' },
     { id: 'rareTracker', name: '변종 추적자', title: '한 번뿐인 흔적을 놓치지 않는다', desc: '픽파킷을 완성한 2차 파밍 직업입니다. 메소 마스터리로 장비 드롭과 골드 보상을 늘립니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, tier: 2, level: 25, parent: 'relicScavenger', requires: { dex: 28, luk: 28 }, mastery: 75, role: '변종·황금 개체', tree: 'support' },
-    { id: 'stormEel', name: '폭풍 곰치 혈족', title: '몬스터의 전류를 배운 자', desc: '여우령의 귀참으로 물어뜯는 물리 기술을 계승하는 몬스터 계열 2차 직업입니다. 감속과 속도 패시브로 선공을 잡습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .04, bonus: { attack: 24, hp: 20, resist: 1 }, tier: 2, level: 25, parent: 'tidalBrawler', requires: { str: 28, dex: 22 }, mastery: 75, role: '몬스터·물리 감속', tree: 'physical' },
+    { id: 'stormEel', lineage: 'krakenkin', name: '폭풍 곰치 혈족', title: '몬스터의 전류를 배운 자', desc: '여우령의 귀참으로 물어뜯는 물리 기술을 계승하는 몬스터 계열 2차 직업입니다. 감속과 속도 패시브로 선공을 잡습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .04, bonus: { attack: 24, hp: 20, resist: 1 }, tier: 2, level: 25, parent: 'tidalBrawler', requires: { str: 28, dex: 22 }, mastery: 75, role: '몬스터·물리 감속', tree: 'physical' },
     { id: 'abyssArchivist', name: '진주 기록관', title: '다음 생의 장부를 보관한다', desc: '마법 잔해를 끝까지 숙련해 환생과 던전 경제를 함께 키우는 후반 비전투 직업입니다. 직업 자체는 약하지만, 드래곤 링크는 환생을 거듭할수록 어느 직업에서든 힘이 되는 패시브입니다.', attack: .9, magic: .95, hp: .98, defense: .95, resist: 1, crit: 0, bonus: { resist: 1 }, tier: 3, level: 40, parent: 'pearlBroker', requires: { int: 45, wis: 35, luk: 30 }, mastery: 150, role: '환생·기록', tree: 'magic', penalties: { attack: -8, magic: -6, accuracy: -.04 }, rebirth: 1 },
 );
 
@@ -334,6 +335,8 @@ const independent = (tree: JobTreeId): Lineage => ({ id: `${tree}-independent`, 
 export const LINEAGES: Lineage[] = [
     { id: 'harpoon', name: '작살 사냥꾼 계보', tree: 'physical', summary: '관통·치명·출혈로 갈라지는 물리 폭발 계보입니다.' },
     { id: 'tidalBrawler', name: '조수 투사 계보', tree: 'physical', summary: '근접 연타와 추가타, 관통·감속을 연구하는 계보입니다.' },
+    /** v3.65 은월 계보 하나로: 스트라이커 1차 → 은월 2차(공개) → 3차 이후 숨은 단계(game/secret). */
+    { id: 'krakenkin', name: '은월 계보', tree: 'physical', summary: '몬스터의 피를 이은 추가타 직업입니다. 3차부터는 숨은 단계입니다.' },
     { id: 'ronin', name: '낭인 계보', tree: 'physical', summary: '검술의 연타·관통·돌격을 거쳐 5차 용사에 이르는 계보입니다.' },
     { id: 'martialArtist', name: '무투가 계보', tree: 'physical', summary: '다단 연타와 기절·감속 제어를 잇는 격투 계보입니다.' },
     independent('physical'),
@@ -368,6 +371,7 @@ export const LINEAGES: Lineage[] = [
     { id: 'bard', name: '방랑 음유시인 계보', tree: 'support', summary: '가속·경험치·보상으로 성장을 보조하는 계보입니다.' },
     independent('support'),
     /** v3.25 해커 계열: 해커 → 화이트 해커. 싸우지 않고 서버를 건드리는 계보입니다. v3.28 블랙 해커. */
+    RESTRAINT_LINEAGE,
     independent('mystery'),
     ...MONOSTAT_LINEAGES,
 ];
@@ -405,3 +409,5 @@ export function jobById(id: string | undefined) {
     if (!jobByIdMap) { jobByIdMap = new Map(); for (const x of JOBS) if (!jobByIdMap.has(x.id)) jobByIdMap.set(x.id, x); }
     return id === undefined ? undefined : jobByIdMap.get(id);
 }
+// v3.65 공개 특수 직업(유리 대포 · 윤회의 나그네, data/specials.ts).
+registerJobs(SPECIAL_JOBS, true);

@@ -41,9 +41,9 @@ test('Job UI: quick finder and search never leak silhouette names', () => {
 
 test('Job UI: a hidden condition reveals its job while it holds and keeps it once recorded', () => {
     const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
-    assert.equal(ui.jobRevealed(s, job('nightHeron')), false, 'condition unmet → silhouette');
-    s.kills = 500; assert.equal(ui.jobRevealed(s, job('nightHeron')), true, 'condition met → name shown');
-    s.kills = 0; assert.equal(ui.jobRevealed(s, job('nightHeron')), false); s.doorsOpened = ['nightHeron']; assert.equal(ui.jobRevealed(s, job('nightHeron')), true, 'recorded condition stays met');
+    assert.equal(ui.jobRevealed(s, job('fallenAngler')), false, 'condition unmet → hidden');
+    s.deaths = 30; assert.equal(ui.jobRevealed(s, job('fallenAngler')), true, 'condition met → name shown');
+    s.deaths = 0; assert.equal(ui.jobRevealed(s, job('fallenAngler')), false); s.doorsOpened = ['fallenAngler']; assert.equal(ui.jobRevealed(s, job('fallenAngler')), true, 'recorded condition stays met');
 });
 
 test('v25 hidden jobs without gates are shown; the chronarch appears once the clockmaker is mastered', () => {

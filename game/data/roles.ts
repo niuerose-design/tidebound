@@ -26,7 +26,7 @@ export const ROLE_NAMES: Record<RoleId, string> = { dealer: '딜러', tank: '탱
 
 /** 계보 기본 역할(11.6-1). 독립 수련은 training. */
 export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
-    harpoon: 'physical', tidalBrawler: 'physical', ronin: 'physical', brawnFisher: 'physical', nimbleAngler: 'physical', luckyAngler: 'physical',
+    harpoon: 'physical', tidalBrawler: 'physical', krakenkin: 'physical', ronin: 'physical', brawnFisher: 'physical', nimbleAngler: 'physical', luckyAngler: 'physical',
     squidJester: 'physical', spellbladeNovice: 'physical', brawnMage: 'physical', nerveNeedler: 'physical', tideLancer: 'physical',
     tide: 'magic', chantNovice: 'magic', apprentice: 'magic', manaDevotee: 'magic',
     poisoner: 'status', shaman: 'status', bloodAngler: 'status', currentScholar: 'status',

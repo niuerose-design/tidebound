@@ -361,12 +361,12 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         for (const [mid, m] of [['b_a', ba], ['b_b', bb]]) (await Cr.leaveCrew(mid, m, now))(m);
         // v3.43 정보 비공개 스위치: 서버 설정(30초 캐시)으로 켜고 끄고, 환경 변수 TIDEBOUND_SECRECY가 있으면 그것이 우선. 카탈로그에 실립니다.
         const Sc = await load('game/server/secrecy.js');
-        assert.equal(await Sc.secrecyOn(now), false, 'off by default (open beta)'); const cat0 = await Sc.buildCatalog(newState(0), now); assert.equal(cat0.secret, false); assert.ok(Object.keys(cat0.unlocks).length >= 10 && Object.values(cat0.unlocks).every(v => v === false), 'v3.62 hidden unlocks judged on the server (met or not, no conditions)'); assert.ok(Array.isArray(cat0.revealed));
+        assert.equal(await Sc.secrecyOn(now), false, 'off by default (open beta)'); const cat0 = await Sc.buildCatalog(newState(0), now); assert.equal(cat0.secret, false); assert.ok(Object.keys(cat0.unlocks).length >= 5 && Object.values(cat0.unlocks).every(v => v === false), 'v3.62 hidden unlocks judged on the server (met or not, no conditions)'); assert.ok(Array.isArray(cat0.revealed));
         await Sc.setSecrecy(true, now); assert.equal(await Sc.secrecyOn(now + 1), true); assert.equal(await database.getSetting('secrecy'), 'on');
         process.env.TIDEBOUND_SECRECY = 'off'; assert.equal(await Sc.secrecyOn(now + 2), false, 'env wins'); delete process.env.TIDEBOUND_SECRECY;
         await Sc.setSecrecy(false, now); assert.equal((await Sc.buildCatalog(newState(0), now + 3)).secret, false);
         // v3.44 비밀 직업: 비공개가 꺼져 있으면 전체, 켜면 드러난 것만 전체·나머지는 실루엣(이름·설명·조건·능력치 없음). 같은 키면 다시 보내지 않음.
-        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 35); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
+        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 27); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
         assert.equal(await Sc.buildCatalog(newState(0), now + 4, openCat.key), null, 'same key: nothing to send');
         process.env.TIDEBOUND_SECRECY = 'on';
         const veiledCat = await Sc.buildCatalog(newState(0), now + 5), lich = veiledCat.jobs.find(j => j.id === 'lichKing');
@@ -375,7 +375,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         const opened = newState(0); opened.doorsOpened = ['voidcaller']; const voidCat = await Sc.buildCatalog(opened, now + 6);
         assert.ok(voidCat.revealed.includes('voidcaller') && !voidCat.jobs.find(j => j.id === 'voidcaller').veiled, 'a recorded reveal (old rebirth door) shows the job in full');
         // v3.47 비밀 직업의 스킬: 꺼져 있으면 67개 전부, 켜면 드러난 직업 것과 내가 배운·장착한 것만(실루엣 직업의 스킬은 없음).
-        assert.equal(openCat.skills.length, 67); assert.ok(veiledCat.skills.every(sk => veiledCat.revealed.includes(sk.job)) && !veiledCat.skills.some(sk => sk.job === 'lichKing'), 'only skills of revealed jobs');
+        assert.equal(openCat.skills.length, 52); assert.ok(veiledCat.skills.every(sk => veiledCat.revealed.includes(sk.job)) && !veiledCat.skills.some(sk => sk.job === 'lichKing'), 'only skills of revealed jobs');
         assert.ok(voidCat.skills.some(sk => sk.id === 'voidLance') && voidCat.skills.length > veiledCat.skills.length, 'revealing the job sends its skills');
         const holder = newState(0); holder.skills.push('graveHook'); const holderCat = await Sc.buildCatalog(holder, now + 7);
         assert.ok(holderCat.skills.some(sk => sk.id === 'graveHook') && holderCat.jobs.find(j => j.id === 'undead').veiled, 'an equipped secret skill is sent even if its job is still veiled');

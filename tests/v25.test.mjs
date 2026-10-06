@@ -1123,7 +1123,7 @@ test('v27.93 star force: per-star odds, drops from 10 (15/20 safe), destruction 
 test('v27.96 growing relics: power follows rebirths, imprint consumes a same-slot item and survives rebirth, reforge only rerolls the fixed affix', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Eco = await L.load('data/economy'), { syncRelicPower, imprintCost } = await L.load('systems/equipment'), M = await L.load('systems/migrations'), Meta = await L.load('systems/meta');
-    // v3.64 유물 위력 = (레벨 + 2) × 배율(환생 0 → 200에서 HEIR_GROWTH.relic from → to, 그 뒤로는 그대로).
+    // v3.66 유물 위력 = (레벨 + 2) × 배율(환생 0 → 200에서 HEIR_GROWTH.relic from → to, 그 뒤로는 그대로).
     const R = Eco.HEIR_GROWTH.relic; assert.equal(Eco.heirPower('relic', 0, 1), Math.round(3 * R.from)); assert.equal(Eco.heirPower('relic', 200, 100), Math.round(102 * R.to)); assert.equal(Eco.heirPower('relic', 300, 100), Math.round(102 * R.to)); assert.equal(Eco.heirPower('relic', 100, 100), Math.round(102 * (R.from + R.to) / 2));
     const s = newState(0); s.rebirths = 10; s.gold = 1e9;
     act(s, { type: 'buyRelic', id: 'memoryRod' }, 0);

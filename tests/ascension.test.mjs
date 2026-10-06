@@ -318,7 +318,7 @@ test('v3.59 primal drops: weight cut to ~0.054% of drops and a pity at PRIMAL_DR
     Enc.drop(s, 50, () => 0, true); assert.equal(s.inventory.at(-1).rarity, 6, 'pity drop is primal'); assert.equal(s.primalDropPity, 0);
     const r = newState(0); r.level = 60; r.primalDropPity = 123; act(r, { type: 'rebirth' }, 0); assert.equal(r.primalDropPity, 123);
 });
-test('v3.64 heir gear: relic power follows (level + 2) × rebirth factor; awakened ancients and inherited primals survive rebirth, grow, cap one per slot', async () => {
+test('v3.66 heir gear: relic power follows (level + 2) × rebirth factor; awakened ancients and inherited primals survive rebirth, grow, cap one per slot', async () => {
     const Eq = await L.load('systems/equipment'), { rollAffixes, affixQuality } = await L.load('data/gear');
     const gear = (id, rarity, slot = 'rod', level = 100) => { const power = Math.round((level + 2) * [1, 1.5, 2.2, 3.3, 3.9, 4.5, 5.2][rarity]); return { id, name: id, slot, style: 'physical', rarity, power, level, enhance: 0, affixes: rollAffixes(rarity, power, undefined, () => .3, [], slot, level) }; };
     // 위력 배율은 환생 200까지 곧게 오르고, 종류마다 유물 < 원시 고대 < 계승 태초입니다.
@@ -352,7 +352,7 @@ test('v3.64 heir gear: relic power follows (level + 2) × rebirth factor; awaken
     const C = await L.load('systems/commerce'), SF = await L.load('data/starforce');
     p.enhance = 21; const r = C.starForceAttempt(s, p, false, () => SF.starSuccess(21) + 1e-9, () => {}); assert.equal(r.outcome, 'destroy'); assert.ok(s.inventory.includes(p)); assert.equal(p.enhance, SF.STARFORCE.relicResetStar);
 });
-test('v3.64 relics owned before the update keep the higher of the old and new power formulas until ascension', async () => {
+test('v3.66 relics owned before the update keep the higher of the old and new power formulas until ascension', async () => {
     const M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment');
     const s = newState(0); s.rebirths = 150; s.level = 100; delete s.relicRule;
     const relic = { id: 'r', name: 'r', slot: 'rod', style: 'balanced', rarity: 3, level: 100, power: 1, relic: 'memoryRod', locked: true };

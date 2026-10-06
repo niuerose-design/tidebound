@@ -152,13 +152,13 @@ export const RELICS = [
 /** v3.3 성장하는 유물: 같은 부위 장비를 소비해 옵션을 imprintSlots줄까지 이식(비용 = 그 장비 옵션 재설정 골드 × imprintCost). 성은 레벨이 정하는 상한(starBase + 레벨 ÷ 10)까지. */
 export const RELIC_GROWTH = { imprintSlots: 3, imprintCost: 5, starBase: 12 };
 /**
- * v3.64 계승 장비(유물 · 원시 고대 · 계승 태초) 위력 = (레벨 + 2) × 배율. 배율은 환생 0 → toRebirth에서 from → to로 곧게 오릅니다.
- * docs/gear-endgame.md 7절: Lv.100 · 22성 4부위 전투력(v3.64 실제 전투식)이 환생 200에서 유물 ≈ 신화 × 1.05(신화와 고대 사이),
+ * v3.66 계승 장비(유물 · 원시 고대 · 계승 태초) 위력 = (레벨 + 2) × 배율. 배율은 환생 0 → toRebirth에서 from → to로 곧게 오릅니다.
+ * docs/gear-endgame.md 7절: Lv.100 · 22성 4부위 전투력(v3.66 실제 전투식)이 환생 200에서 유물 ≈ 신화 × 1.05(신화와 고대 사이),
  * 원시 고대 ≈ 신화 × 1.5, 계승 태초 ≈ 신화 × 2가 되도록 scripts/check-gear-ladder.mjs로 맞춘 값입니다. 환생 0에서는 유물이 신화의 약 0.75배, 계승 장비는 일반 고대·태초와 비슷합니다.
  */
 export const HEIR_GROWTH = { toRebirth: 200, relic: { from: 2.57, to: 3.5 }, ancient: { from: 4.5, to: 5.92 }, primal: { from: 5.18, to: 7.73 } } as const;
 /**
- * v3.64 예전 유물 위력(기본 × (1 + 환생 × 4%) × (1 + (레벨 − 1) × 1%)). 이 업데이트 전에 이미 가진 유물(relicLegacy)은 다음 승천까지
+ * v3.66 예전 유물 위력(기본 × (1 + 환생 × 4%) × (1 + (레벨 − 1) × 1%)). 이 업데이트 전에 이미 가진 유물(relicLegacy)은 다음 승천까지
  * 예전 공식과 새 공식 중 높은 쪽을 씁니다(유저가 가진 유물이 갑자기 약해지지 않게). 승천 뒤 다시 받는 유물은 새 공식만 씁니다.
  */
 export const RELIC_LEGACY = { base: { memoryRod: 45, soulCoat: 55, abyssCharm: 70, tideCape: 60 } as Record<string, number>, perRebirth: .04, perLevel: .01 };
@@ -166,10 +166,10 @@ export const legacyRelicPower = (id: string, rebirths: number, level = 1) => Mat
 export type HeirKind = 'relic' | 'ancient' | 'primal';
 export const heirFactor = (kind: HeirKind, rebirths: number) => { const g = HEIR_GROWTH[kind]; return g.from + (g.to - g.from) * Math.min(1, Math.max(0, rebirths) / HEIR_GROWTH.toRebirth); };
 export const heirPower = (kind: HeirKind, rebirths: number, level = 1) => Math.round((Math.max(1, level) + 2) * heirFactor(kind, rebirths));
-/** v3.64 원시 각성(고대 → 원시 고대): 정수 essenceBase × 10^(환생 ÷ rebirthScale). 환생 0 5천 · 100 약 3.4만 · 200 약 23만. 정수를 파밍할 이유입니다. */
+/** v3.66 원시 각성(고대 → 원시 고대): 정수 essenceBase × 10^(환생 ÷ rebirthScale). 환생 0 5천 · 100 약 3.4만 · 200 약 23만. 정수를 파밍할 이유입니다. */
 export const AWAKENING = { essenceBase: 5000, rebirthScale: 120 };
 export const awakenEssence = (rebirths: number) => Math.round(AWAKENING.essenceBase * Math.pow(10, Math.max(0, rebirths) / AWAKENING.rebirthScale));
-/** v3.64 태초 계승: 태초 장비를 분해할 때마다 게이지 +1, gauge만큼 차면 태초 하나를 계승합니다(부위당 기대 약 18일 = 칠흑 장신구 하나와 같은 무게). 환생 유지, 승천 초기화. */
+/** v3.66 태초 계승: 태초 장비를 분해할 때마다 게이지 +1, gauge만큼 차면 태초 하나를 계승합니다(부위당 기대 약 18일 = 칠흑 장신구 하나와 같은 무게). 환생 유지, 승천 초기화. */
 export const PRIMAL_INHERIT = { gauge: 3 };
 /** v3.5 장비 레벨 올리기: 한 번에 step 레벨, 내 레벨까지. 위력(과 고정 수치 옵션)이 레벨 비례로 오르고 별은 0으로 돌아갑니다(저레벨에서 싸게 별을 올려 고레벨로 가져가는 것을 막음). 비용 = (250 + 위력 × 25) × 가격 보정(새 레벨) × costMultiplier. */
 export const GEAR_LEVEL_UP = { step: 10, costMultiplier: 2 };

@@ -14,7 +14,7 @@ export const skillPercent = (n: number) => `${number(n * 100)}%`;
 export function skillBonusText(key: string, value: number) {
     return `${STAT_LABELS[key as keyof Stats] || key} ${statDeltaDisplay(key, value)}`;
 }
-const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '던전 클리어·보스 처치', species: '지정 몬스터 처치', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업', variant: '변종·황금 처치', str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
+const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '던전 클리어·보스 처치', species: '지정 몬스터 처치', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업', variant: '변종·황금 처치', deaths: '쓰러진 횟수', str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
 const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록' };
 const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' };
 /** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */
