@@ -118,7 +118,7 @@ test('v3.83 utility gain ×1.5: gold/exp/drop bonuses of utility job skills only
     Sk.scaleUtilityGain(SKILLS); assert.equal(bonus('tradeEmpire').goldBonus, .3, 'calling again does not scale twice');
 });
 
-test('v3.84 penetration: sources stack multiplicatively (no cap), research 3% per rank, owned gear lines ×2 once; boss damage stacks multiplicatively', async () => {
+test('v3.84 penetration: sources stack multiplicatively (no 0.6 wall, 0.85 total cap), research 3% per rank, owned gear lines ×2 once; boss damage stacks multiplicatively', async () => {
     const B = await load('game/data/balance.js');
     assert.ok(Math.abs(B.stackPenetration(.3, .2) - .44) < 1e-9, '1 − 0.7 × 0.8');
     assert.ok(Math.abs(B.stackPenetration(.5, -.1) - .4) < 1e-9, 'penalties still subtract');

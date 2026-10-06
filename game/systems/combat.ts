@@ -416,7 +416,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hybridHpScaling) + sa.mana * ((chosen.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2);
     if (chosen?.id === 'crush')
         base += sa.defense * SKILL_FORMULA.crushDefense / (chosen.multiplier || 1);
-    // v3.84 능력치 관통(출처끼리 곱연산)에 스킬 관통 보너스는 예전처럼 더합니다(곱하면 관통이 낮은 캐릭터의 스킬 보너스가 줄어듦). 방어를 100%까지만 무시(PENETRATION.cap).
+    // v3.84 능력치 관통(출처끼리 곱연산)에 스킬 관통 보너스는 예전처럼 더합니다(곱하면 관통이 낮은 캐릭터의 스킬 보너스가 줄어듦). 합계 상한 85%(PENETRATION.cap).
     const pierce = 1 - Math.min(PENETRATION.cap, sa.penetration + (chosen?.penetrationBonus || 0));
     const defense = (magical ? sb.resist : sb.defense) * pierce;
     // 복합(split) 피해: 한 번의 명중·치명 판정 뒤 물리·마법 절반씩 각각의 방어를 적용합니다.

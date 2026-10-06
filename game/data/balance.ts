@@ -61,11 +61,12 @@ export function bossLevelScale(level: number) {
 }
 /** v27.30 던전 적 압박: 같은 레벨 사냥터보다 단단하게(체력 1.3~1.62배, 공격 1.12~1.32배, 방어 1.08~1.24배). */
 /**
- * v3.84 방어 관통 개편(docs/concept.md 11.9): 출처끼리 곱연산(남은 방어의 x%를 무시)으로 합치고 상한을 없앴습니다(방어를 100%까지만 무시).
+ * v3.84 방어 관통 개편(docs/concept.md 11.9): 출처끼리 곱연산(남은 방어의 x%를 무시)으로 합치고 60% 상한을 없앴습니다. 스킬 보너스까지 합친 상한은 85%(cap):
+ * 100%면 방어가 0이 되어 아무리 단단한 보스도 그대로 뚫리므로, 방어 15,000도 2.2%만 들어가게 남깁니다. 능력치 관통만으로는 풀세팅 약 75%라 성장 구간에서는 막히지 않습니다.
  * 곱연산이라 1에 닿지 않아 출처를 더할 때마다 피해가 거의 일정하게 늘어납니다. 장비는 부위마다 한 출처입니다. 스킬 관통 보너스는 그 위에 더합니다(예전과 같음).
  * 피해식(공격 대비 B안)을 바꾸더라도 관통은 '방어 × (1 − 관통)'으로 그대로 쓸 수 있습니다.
  */
-export const PENETRATION = { cap: 1, researchPerRank: .03, gearScale: 2 } as const;
+export const PENETRATION = { cap: .85, researchPerRank: .03, gearScale: 2 } as const;
 /** 관통 두 값을 곱연산으로 합칩니다(음수는 그대로 빼서 손해 옵션도 반영). */
 export const stackPenetration = (a: number, b: number) => b >= 0 ? 1 - (1 - a) * (1 - Math.min(1, b)) : a + b;
 /**
