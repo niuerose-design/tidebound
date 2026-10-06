@@ -332,8 +332,9 @@ async function hackNotice(text: string, now: number) {
     try { await db().postChat({ channel: 'news', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
 }
 /** v3.26 해커 계열 전직을 전체 채팅에 알립니다(이름은 밝히지 않음). 채팅 화면은 account_id 'system-hacker'를 빨간 줄로 그립니다. */
+export const hackerJobNews = (job: string) => `누군가가 ${job === 'whiteHacker' ? '화이트 해커' : job === 'blackHacker' ? '블랙 해커' : '해커'}로 전직했습니다.`;
 export async function announceHacker(job: string, now: number) {
-    const text = `누군가가 ${job === 'whiteHacker' ? '화이트 해커' : job === 'blackHacker' ? '블랙 해커' : '해커'}로 전직했습니다.`;
+    const text = hackerJobNews(job);
     // v3.39 전체 채팅 대신 소식 채널에 올립니다.
     try { await db().postChat({ channel: 'news', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
 }
