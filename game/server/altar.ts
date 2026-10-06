@@ -28,7 +28,6 @@ const ALL_TOTALS = 100_000;
 const liveLevel = (g: { until: number; level: number; high_until?: number } | undefined, now: number) => effectiveBlessingLevel(g, now);
 /** v3.16 축복이 보이는 종료 시각: 4단계 이상이면 그 단계의 유지 시각(지나면 3단계로 이어짐). */
 const liveUntil = (g: { until: number; level: number; high_until?: number } | undefined, now: number) => !g ? 0 : liveLevel(g, now) > BLESSING_HIGH_FROM ? Math.min(g.until, g.high_until || 0) : g.until;
-let cache: Shared | null = null;
 export const godAlive = (a: AltarRow, now: number) => a.god_state === 'alive' && a.god_until >= now;
 const parseGod = (a: AltarRow): Snapshot | null => { try { return a.god ? JSON.parse(a.god) as Snapshot : null; } catch { return null; } };
 
@@ -67,28 +66,46 @@ async function trySummonRaid(raids: Record<string, AltarRaidRow>, gauges: Record
     }
     return false;
 }
-/** 공용 정보(15초 캐시). 읽는 김에 밀려 있던 신 소환도 처리합니다. */
-async function shared(now: number, force = false): Promise<Shared> {
-    const week = weekKey(now);
-    if (!force && cache && cache.week === week && now - cache.at < ALTAR.cacheMs) return cache;
+type Core = Pick<Shared, 'at' | 'altar' | 'gauges' | 'raids'>;
+type Boards = Pick<Shared, 'at' | 'week' | 'board' | 'allTime' | 'totals' | 'sortedTotals'>;
+let coreCache: Core | null = null, boardsCache: Boards | null = null;
+/**
+ * 제단 · 게이지 · 월드보스(15초 캐시). 읽는 김에 밀려 있던 신 소환 · 월드보스 교대 · 축복 단계도 처리합니다.
+ * v3.92 게임 동기화(syncAltarStatus)는 이것만 읽습니다(순위표 · 전체 누적 합산은 제단 화면을 열 때만).
+ */
+async function core(now: number, force = false): Promise<Core> {
+    if (!force && coreCache && now - coreCache.at < ALTAR.cacheMs) return coreCache;
     const database = db();
-    const [altar, gauges, board, allTime, raidRows] = await Promise.all([database.getAltar(), database.listAltarGauges(), database.listAltarOffers(week, ALTAR.boardSize), database.listAltarOffersAllTime(ALL_TOTALS), database.listAltarRaids()]);
+    const [altar, gauges, raidRows] = await Promise.all([database.getAltar(), database.listAltarGauges(), database.listAltarRaids()]);
     const raids = Object.fromEntries(raidRows.map(r => [r.id, r]));
     // v27.69 신의 자리 임기(ALTAR.throneTermMs)가 지나면 자리와 몫을 비웁니다. 다음에 깨어나는 신은 다시 처음 신입니다.
     if (altar.throne && now - altar.throne_since >= ALTAR.throneTermMs && await database.expireAltarThrone(now - ALTAR.throneTermMs)) {
         await announce(`${josa(altar.throne_name, '이가')} 신의 자리에서 내려왔습니다. 다음에 깨어나는 신은 ${ALTAR.firstGod.name}입니다.`, now);
-        return shared(now, true);
+        return core(now, true);
     }
     const map = Object.fromEntries(gauges.map(g => [g.id, { points: g.points, until: g.until, level: g.level || 0, high_until: g.high_until || 0 }]));
-    if (await trySummon(altar, map.god?.points || 0, now)) return shared(now, true);
+    if (await trySummon(altar, map.god?.points || 0, now)) return core(now, true);
     // v27.91 떠날 시각이 지난 월드보스는 보내고, 소환 게이지가 찼으면 새로 부릅니다.
-    for (const r of raidRows) if (r.state === 'alive' && r.until < now && await database.expireAltarRaid(r.id, now)) { await announce(`월드보스 ${josa(raidById(r.id)?.name || r.id, '이가')} 떠났습니다.`, now); return shared(now, true); }
-    if (await trySummonRaid(raids, map, now)) return shared(now, true);
+    for (const r of raidRows) if (r.state === 'alive' && r.until < now && await database.expireAltarRaid(r.id, now)) { await announce(`월드보스 ${josa(raidById(r.id)?.name || r.id, '이가')} 떠났습니다.`, now); return core(now, true); }
+    if (await trySummonRaid(raids, map, now)) return core(now, true);
     // v3.85 축복이 끝났거나 단계가 내려와도 이미 쌓인 기여도가 비용 이상이면 바로 다음 단계로 엽니다(바치기를 기다리지 않음).
-    for (const b of BLESSINGS) { const live = liveLevel(map[b.id], now); if ((map[b.id]?.points || 0) >= gaugeCost(b.id, live, live > 0) && await levelBlessing(b, now, '쌓여 있던 공물로')) return shared(now, true); }
-    return cache = { at: now, week, altar, gauges: map, board, allTime: allTime.slice(0, ALTAR.boardSize), raids, totals: new Map(allTime.map(r => [r.player_id, r.points])), sortedTotals: allTime.map(r => r.points) };
+    for (const b of BLESSINGS) { const live = liveLevel(map[b.id], now); if ((map[b.id]?.points || 0) >= gaugeCost(b.id, live, live > 0) && await levelBlessing(b, now, '쌓여 있던 공물로')) return core(now, true); }
+    return coreCache = { at: now, altar, gauges: map, raids };
 }
-export const invalidateAltar = () => { cache = null; };
+/** v3.92 이번 주 순위표와 모든 모험가의 누적 기여(15초 캐시). 제단 화면에서만 읽습니다. */
+async function boards(now: number, force = false): Promise<Boards> {
+    const week = weekKey(now);
+    if (!force && boardsCache && boardsCache.week === week && now - boardsCache.at < ALTAR.cacheMs) return boardsCache;
+    const database = db();
+    const [board, allTime] = await Promise.all([database.listAltarOffers(week, ALTAR.boardSize), database.listAltarOffersAllTime(ALL_TOTALS)]);
+    return boardsCache = { at: now, week, board, allTime: allTime.slice(0, ALTAR.boardSize), totals: new Map(allTime.map(r => [r.player_id, r.points])), sortedTotals: allTime.map(r => r.points) };
+}
+/** 공용 정보 전체(제단 화면): 핵심과 순위를 함께 읽습니다. */
+async function shared(now: number, force = false): Promise<Shared> {
+    const [c, b] = await Promise.all([core(now, force), boards(now, force)]);
+    return { ...c, ...b };
+}
+export const invalidateAltar = () => { coreCache = null; boardsCache = null; };
 /**
  * v3.25 해킹 V 백도어: 게이지를 조금 채웁니다(기여 순위·합계에는 넣지 않음). 신·월드보스 게이지가 차면 바로 깨어나고,
  * v3.85 축복 게이지도 비용만큼 찼으면 바로 단계가 오릅니다.
@@ -96,7 +113,7 @@ export const invalidateAltar = () => { cache = null; };
 export async function backdoorGauge(gauge: AltarGaugeId, points: number, now: number) {
     await db().addAltarGauge(gauge, points);
     invalidateAltar();
-    await shared(now, true);
+    await core(now, true);
 }
 
 /** 제단 소식 문장(운영 페이지의 소식 테스트도 씁니다). */
@@ -148,7 +165,7 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
 const parseSummary = (text: string): RaidHitSummary | null => { try { const v = JSON.parse(text) as RaidHitSummary; return v && typeof v.dealt === 'number' ? v : null; } catch { return null; } };
 /** v3.84 피해 순위 rank위 모험가의 가장 최근 도전 기록(요약 + 전투 기록). 지금 떠 있거나 방금 격파된 그 보스의 세대만 봅니다. */
 export async function raidLog(raidId: string, rank: number, now: number) {
-    const r = (await shared(now)).raids[raidId], raid = raidById(raidId);
+    const r = (await core(now)).raids[raidId], raid = raidById(raidId);
     if (!r || !raid || r.gen <= 0) throw new ApiError('그 월드보스 기록이 없습니다.');
     const n = Math.floor(rank);
     if (!(n >= 1 && n <= RAID.boardSize)) throw new ApiError('순위를 확인하세요.');
@@ -188,7 +205,7 @@ export function makeRaid(id: string, raidId: string) {
         // v3.22 도전 간격은 보스마다 따로입니다(예전 세이브의 raidAt은 그때 떠 있던 보스에만 걸림).
         const last = s.altar?.raidAtBy?.[raidId] ?? 0;
         if (!outcome) {
-            const r = (await shared(now, true)).raids[raidId], raid = raidById(raidId);
+            const r = (await core(now, true)).raids[raidId], raid = raidById(raidId);
             if (!r || !raid || !raidAlive(r, now)) throw new ApiError('그 월드보스는 지금 나타나 있지 않습니다.');
             if (now - last < RAID.cooldownMs) throw new ApiError(`월드보스에게는 ${Math.ceil((RAID.cooldownMs - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
             const me = snapshot(s), boss = raidBossSnapshot(raid, r.hp), result = duel(me, boss, true, Math.random, RAID.maxTurns);
@@ -272,7 +289,7 @@ export async function commitOffering(account: string, id: string, name: string, 
     const b = BLESSINGS.find(x => x.id === gauge);
     if (b) await levelBlessing(b, now, `${name}의 공물로`);
     invalidateAltar();
-    await shared(now, true); // 신 소환 게이지가 찼으면 여기서 깨어납니다.
+    await core(now, true); // 신 소환 게이지가 찼으면 여기서 깨어납니다(순위는 제단 정보를 읽을 때 새로).
 }
 
 /** 신에게 도전. 결과는 한 번만 계산해 저장 충돌로 다시 돌아도 같은 결과를 적습니다. */
@@ -281,7 +298,7 @@ export function makeChallenge(id: string) {
     return async (s: State, now: number) => {
         const last = s.altar?.challengeAt || 0;
         if (!outcome) {
-            const a = (await shared(now, true)).altar, stored = parseGod(a), god = stored && divineFirstGod(stored);
+            const a = (await core(now, true)).altar, stored = parseGod(a), god = stored && divineFirstGod(stored);
             if (!god || !godAlive(a, now)) throw new ApiError('지금 깨어 있는 신이 없습니다.');
             if (a.throne === id) throw new ApiError('신의 자리에 앉아 있는 동안에는 도전할 수 없습니다.');
             if (now - last < ALTAR.challengeCooldownMs) throw new ApiError(`신에게는 ${Math.ceil((ALTAR.challengeCooldownMs - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
@@ -307,7 +324,7 @@ export function makeImpeach(id: string) {
     return async (s: State, now: number) => {
         const last = s.altar?.challengeAt || 0;
         if (!outcome) {
-            const a = (await shared(now, true)).altar;
+            const a = (await core(now, true)).altar;
             if (!a.throne) throw new ApiError('신의 자리가 비어 있습니다.');
             if (a.throne === id) throw new ApiError('자신을 탄핵할 수는 없습니다.');
             if (godAlive(a, now)) throw new ApiError('깨어 있는 신이 있습니다. 신에게 도전하세요.');
@@ -342,7 +359,7 @@ export function makeHarvest(id: string) {
 /** 동기화 때 한 번: 제단 진행 요약을 세이브에 적습니다. 공용 캐시를 쓰므로 15초에 한 번만 DB를 읽고, 실패해도 동기화는 그대로 진행합니다. */
 export async function syncAltarStatus(s: State, now: number, id = '') {
     try {
-        const sh = await shared(now), a = sh.altar, god = parseGod(a);
+        const sh = await core(now), a = sh.altar, god = parseGod(a);
         const status: AltarStatus = {
             blessings: BLESSINGS.filter(b => liveLevel(sh.gauges[b.id], now) > 0).map(b => { const level = liveLevel(sh.gauges[b.id], now); return { id: b.id, name: `${b.name} ${level}단계`, desc: blessingDesc(b, level), until: liveUntil(sh.gauges[b.id], now), level }; }),
             god: god && godAlive(a, now) ? { gen: a.gen, name: god.name, until: a.god_until } : null,
