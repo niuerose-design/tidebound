@@ -7,6 +7,7 @@ import { PROGRESSION } from '../data/progression';
 import { researchRank } from '../data/economy';
 import { canUse, masteryGainBonus, skillLevel, skillMastery } from './progression';
 import { jobById } from '../data/classes';
+import { equippedAffixTotal } from './equipment';
 
 export function masteryConditionText(sk: Skill) {
     const rule = sk.masteryGain;
@@ -44,7 +45,8 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
         if (extra > bonus) { bonus = extra; source = sk.name; }
     }
     // 기본 숙련 1 + 계급 특전 숙련 훈련. 보너스 한도는 그만큼 함께 올라갑니다. (v3.23 깊은 모험 +1은 삭제)
-    const base = 1 + rankPerkLevel(s, 'drill');
+    // v3.74 수련 옵션: 기본 숙련 +1(고정)씩.
+    const base = 1 + rankPerkLevel(s, 'drill') + Math.floor(equippedAffixTotal(s, 'masteryFlat'));
     const amount = masteryPerVictory(bonus, base);
     return { amount, base, bonus: amount - base, source };
 }
@@ -57,6 +59,7 @@ export function masteryMultipliers(s: State) {
     const focus = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     const event = s.event?.mastery || 1;
     const research = 1 + masteryResearchHundredths(s) / 100;
-    const base = 1 + rankPerkLevel(s, 'drill');
+    // v3.74 수련 옵션: 기본 숙련 +1(고정)씩.
+    const base = 1 + rankPerkLevel(s, 'drill') + Math.floor(equippedAffixTotal(s, 'masteryFlat'));
     return { base, focus, event, research, total: focus * event * research };
 }

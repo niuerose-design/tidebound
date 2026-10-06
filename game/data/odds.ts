@@ -20,6 +20,8 @@ export type Odds = {
     appraisal: number[];
     /** v3.55 몬스터 출현 가중치(희귀 몬스터 id → 가중치, 없으면 1). */
     spawn: Record<string, number>;
+    /** v3.74 장비 옵션: 태초 · 칠흑 전용 희귀 옵션의 뽑힐 가중치(일반 옵션 1) · 꽝 옵션이 한 줄에 끼어들 확률. */
+    affix: { rare: number; junk: number };
 };
 const empty = (): Odds => ({
     drop: { chance: 0, cap: 0, dungeonRepeat: 0, goldenBase: 0, rarity: [0, 0, 0, 0, 0, 0, 0], tideRarityPerTier: 0, primalTierCap: 1, essenceChancePerTier: 0, essenceEveryTiers: 1 },
@@ -29,6 +31,7 @@ const empty = (): Odds => ({
     variant: { chance: {}, region: {}, swarmWeights: [0, 0, 0], habitatBig: 0 },
     appraisal: [0, 0, 0, 0, 0, 0],
     spawn: {},
+    affix: { rare: 0, junk: 0 },
 });
 /** 지금 쓰는 값. 서버는 늘 진짜 값, 화면은 카탈로그로 받았을 때만. */
 export const ODDS: Odds = empty();

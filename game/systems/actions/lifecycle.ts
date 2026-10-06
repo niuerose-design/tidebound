@@ -124,7 +124,7 @@ export function restartLife(s: State, now: number) {
 export function salvagePreview(s: State) {
     const rate = salvageRate(s), mode = s.salvageMode || 'sell';
     const items = rate ? [...s.inventory, ...Object.values(s.equipment)].filter((i): i is NonNullable<typeof i> => !!i && !keepsAcrossLives(i)) : [];
-    return { mode, rate, items, count: items.length, gold: Math.floor(items.reduce((sum, i) => sum + saleValue(i), 0) * rate), essence: Math.floor(items.reduce((sum, i) => sum + dismantleEssence(i), 0) * rate) };
+    return { mode, rate, items, count: items.length, gold: Math.floor(items.reduce((sum, i) => sum + saleValue(i), 0) * rate), essence: Math.floor(items.reduce((sum, i) => sum + dismantleEssence(i, s), 0) * rate) };
 }
 /** v3.31 승천 직후 다시 받는 업적 재화: 받은 업적의 세계석·SP 합계. 영구 효과(능력치·AP)는 업적 기록에서 그대로 나옵니다. */
 export function achievementRefund(s: Pick<State, 'achievementClaims'>) {

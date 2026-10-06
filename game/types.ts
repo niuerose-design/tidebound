@@ -60,6 +60,11 @@ export type Stats = {
     followUpBonus?: number;
     healBonus?: number;
     executeBonus?: number;
+    /** v3.74 장비 희귀 옵션: 처치당 스킬 숙련 +N(수련) · 계급 처치 수 +N(전공) · 분해 정수 비율(정수). 장식(꽝)은 효과 없는 표시용. */
+    masteryFlat?: number;
+    rankFlat?: number;
+    essenceBonus?: number;
+    ornament?: number;
     /** v24.2 진행도 비례 피해의 기준값(능력치 계산이 채움). 도감 종 수 · log10(누적 처치) · √(던전 클리어+보스 처치) · log10(보유 골드). */
     codexPower?: number;
     catchPower?: number;

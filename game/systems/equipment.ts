@@ -1,6 +1,6 @@
 import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, heirPower, legacyRelicPower, smithDiscount, type HeirKind } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence, GEAR_CAPS, STATUS_RESIST_STAR, rescaleAffix } from '../data/gear';
+import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence, GEAR_CAPS, STATUS_RESIST_STAR, rescaleAffix, affixDef } from '../data/gear';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
@@ -38,7 +38,8 @@ export function itemStats(item: Item): Partial<Stats> {
         result[item.affix.stat] = (result[item.affix.stat] || 0) + scaled(item.affix.stat, item.affix.value);
     for (const affix of item.affixes || []) {
         // v3.5 상태이상 저항만 별 보정(별당 +3%)을 받고 장비 합계 50%에서 막힙니다.
-        const value = affix.stat === 'statusResist' ? Math.min(GEAR_CAPS.statusResist!, affix.value * (1 + (item.enhance || 0) * STATUS_RESIST_STAR)) : scaled(affix.stat, affix.value);
+        // v3.74 고정 옵션(한 줌)은 등급 감쇠 없이 그대로입니다.
+        const value = affixDef(affix.id)?.fixed ? affix.value : affix.stat === 'statusResist' ? Math.min(GEAR_CAPS.statusResist!, affix.value * (1 + (item.enhance || 0) * STATUS_RESIST_STAR)) : scaled(affix.stat, affix.value);
         result[affix.stat] = (result[affix.stat] || 0) + value;
         // v3.73 이중 옵션(위력 · 수호)의 둘째 고정 수치도 등급 감쇠를 받습니다. 양날 옵션의 손해(음수)는 그대로입니다.
         if (affix.stat2 && affix.value2) result[affix.stat2] = (result[affix.stat2] || 0) + scaled(affix.stat2, affix.value2);
@@ -102,12 +103,15 @@ export function applyLevelUp(item: Item, next: number, s: Pick<State, 'rebirths'
 }
 export const reforgeCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((250 + item.power * 25) * priceScale(item.level || 1)), s);
 /** 분해로 얻는 정수와 옵션 하나 재설정에 드는 정수. */
-export const dismantleEssence = (item: Item) => ESSENCE_BY_RARITY[item.rarity] ?? 1;
+/** v3.74 착용 장비 옵션 합계(희귀 옵션 수련 · 전공 · 정수처럼 능력치 계산 밖에서 쓰는 값). */
+export const equippedAffixTotal = (s: Pick<State, 'equipment'> | undefined, stat: string) => Object.values(s?.equipment || {}).reduce((sum, item) => sum + (item?.affixes || []).reduce((n, a) => n + (a.stat === stat ? a.value : 0), 0), 0);
+/** 분해 정수. v3.74 착용 장비의 정수 옵션만큼 늘어납니다(장비마다 반올림). */
+export const dismantleEssence = (item: Item, s?: Pick<State, 'equipment'>) => Math.round((ESSENCE_BY_RARITY[item.rarity] ?? 1) * (1 + equippedAffixTotal(s, 'essenceBonus')));
 /** v3.66 태초 계승 게이지에 쌓이는 분해: 태초 등급(칠흑 장신구 제외)이면 1. */
 export const primalGaugeOf = (item: Pick<Item, 'rarity' | 'onyx'>) => item.rarity >= 6 && !item.onyx ? 1 : 0;
 /** 분해 정산: 정수(× rate)와 태초 계승 게이지를 더하고 얻은 양을 돌려줍니다. 장비를 목록에서 빼는 것은 부르는 쪽이 합니다. */
-export function dismantleInto(s: Pick<State, 'essence' | 'primalGauge'>, items: Item[], rate = 1) {
-    const essence = Math.floor(items.reduce((sum, i) => sum + dismantleEssence(i), 0) * rate), gauge = items.reduce((n, i) => n + primalGaugeOf(i), 0);
+export function dismantleInto(s: Pick<State, 'essence' | 'primalGauge'> & Partial<Pick<State, 'equipment'>>, items: Item[], rate = 1) {
+    const essence = Math.floor(items.reduce((sum, i) => sum + dismantleEssence(i, s as Pick<State, 'equipment'>), 0) * rate), gauge = items.reduce((n, i) => n + primalGaugeOf(i), 0);
     s.essence = (s.essence || 0) + essence;
     if (gauge) s.primalGauge = (s.primalGauge || 0) + gauge;
     return { essence, gauge };
