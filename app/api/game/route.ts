@@ -1,4 +1,4 @@
-import { session, checkOrigin, mutate, failure, actionBody, ApiError, syncAbyssBoard, syncAccount, syncDuelSeason } from '@/game/server/store';
+import { session, checkOrigin, mutate, failure, actionBody, ApiError, syncAbyssBoard, syncAccount, syncDuelSeason, afterAscend } from '@/game/server/store';
 import { syncGuild } from '@/game/server/guild';
 import { syncAltarStatus } from '@/game/server/altar';
 import { syncHackFeed } from '@/game/server/hacks';
@@ -14,8 +14,8 @@ export async function POST(req: Request) { try {
     try {
         let announce = '';
         let crewFlush: CrewApply | null | undefined;
-        const out = await mutate(id, a, async s => { const now = Date.now(); announce = s.jobAnnounce || ''; delete s.jobAnnounce; await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncHackFeed(s, id, now); await syncCrew(id, s, now);
-            // v3.30 합동 작전 기여는 침투 작전이 끝난 뒤 한 번만 올리고, 저장 충돌로 다시 돌면 세이브 변화만 다시 적용합니다.
+        const out = await mutate(id, a, async s => { const now = Date.now(); announce = s.jobAnnounce || ''; delete s.jobAnnounce; if (a.type === 'ascend') await afterAscend(account, id, now); await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncHackFeed(s, id, now); await syncCrew(id, s, now);
+            // v3.32 합동 작전 기여는 침투 작전이 끝난 뒤 한 번만 올리고, 저장 충돌로 다시 돌면 세이브 변화만 다시 적용합니다.
             if (crewFlush === undefined) crewFlush = await flushCrew(id, s, now);
             crewFlush?.(s); });
         // v3.26 해커 계열 전직 알림(익명, 채팅에 빨간 줄).

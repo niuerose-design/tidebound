@@ -42,7 +42,7 @@ export function tidyCrew(c: CrewData, now: number) {
     }
 }
 
-/** v3.30 합동 작전 주 넘기기: 이번 주가 아니면 지난주로 옮기고, 그 주 시작 때 조직원 수·등급으로 목표를 정합니다. */
+/** v3.32 합동 작전 주 넘기기: 이번 주가 아니면 지난주로 옮기고, 그 주 시작 때 조직원 수·등급으로 목표를 정합니다. */
 export function rollWeek(c: CrewData, now: number) {
     const key = weekKey(now);
     if (c.week?.key === key) return c.week;
@@ -65,7 +65,7 @@ async function updateCrew(crewId: string, now: number, change: (c: CrewData, row
 }
 
 /**
- * v3.30 합동 작전 단계 보상 수령(쓰기 없음): 이번 주·지난주에 1노드 이상 뚫었으면, 그 주에 도달한 단계 중 아직 받지 않은 만큼 받습니다.
+ * v3.32 합동 작전 단계 보상 수령(쓰기 없음): 이번 주·지난주에 1노드 이상 뚫었으면, 그 주에 도달한 단계 중 아직 받지 않은 만큼 받습니다.
  * 받은 기록은 세이브(crewClaimed, 조직 id:주)에 두어 같은 단계를 두 번 받지 않습니다.
  */
 export function claimOp(s: State, crewId: string, c: CrewData, me: string) {
@@ -88,7 +88,7 @@ const requireHackerLine = (s: State) => { if (!isHacker(s)) throw new ApiError('
 export type CrewInfo = {
     crew: null | { id: string; name: string; side: CrewSide; sideName: string; code: string; leader: boolean; vault: number; exp: number; grade: number; into: number; need: number; capacity: number;
         members: { id: string; name: string; leader: boolean; self: boolean; joined: number; deposited: number; idleDays: number; off: boolean; nodes: number }[]; depositLeft: number;
-        /** v3.30 이번 주 합동 작전: 목표·합계·도달 단계·단계별 목표, 내가 올린 노드와 아직 올리지 않은 노드. */
+        /** v3.32 이번 주 합동 작전: 목표·합계·도달 단계·단계별 목표, 내가 올린 노드와 아직 올리지 않은 노드. */
         op: { key: string; goal: number; nodes: number; hacks: number; steps: number; targets: number[]; mine: number; pending: number } };
     sides: { id: CrewSide; name: string; allowed: boolean }[];
 };
@@ -126,7 +126,7 @@ export async function syncCrew(me: string, s: State, now: number) {
 }
 
 /**
- * v3.30 합동 작전 기여 올리기: 세이브에 쌓인 침투 노드·해킹 수를 침투 작전이 끝난 뒤(진행 중이 아닐 때) 한 번에 조직 행에 더합니다.
+ * v3.32 합동 작전 기여 올리기: 세이브에 쌓인 침투 노드·해킹 수를 침투 작전이 끝난 뒤(진행 중이 아닐 때) 한 번에 조직 행에 더합니다.
  * 올릴 것이 없으면 질의 0. 실패하면(동시 수정) 세이브에 그대로 두고 다음 동기화 때 다시 올립니다. 돌려준 apply는 저장 충돌로 다시 돌 때도 씁니다.
  */
 export async function flushCrew(me: string, s: State, now: number): Promise<CrewApply | null> {
@@ -186,7 +186,7 @@ export async function joinCrew(me: string, s: State, rawCode: unknown, now: numb
         const cap = CREW.capacity(crewGrade(x.exp));
         if (Object.keys(x.members).length >= cap) throw new ApiError(`조직 정원(${cap}명)이 찼습니다.`);
         x.members[me] = { name: s.name, joined: now, seen: now, deposited: 0 };
-        // v3.30 가입하면 이번 주 합동 작전 목표를 늘어난 인원 기준으로 올립니다(탈퇴로는 내려가지 않음).
+        // v3.32 가입하면 이번 주 합동 작전 목표를 늘어난 인원 기준으로 올립니다(탈퇴로는 내려가지 않음).
         x.week!.goal = Math.max(x.week!.goal, opGoal(Object.keys(x.members).length, crewGrade(x.exp)));
     });
     return st => { setCache(st, row.id, c!, me, now); addLog(st, `해커 조직 ‘${c!.name}’ 가입`, 'reward'); };

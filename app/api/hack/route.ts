@@ -10,7 +10,7 @@ export async function POST(req: Request) { try {
     if (a.type !== 'hackRun') throw new ApiError('지원하지 않는 해킹입니다.');
     if (!allow(`hack:${id}`, 1, 3000)) throw new ApiError('잠시 후 다시 시도하세요.', 429);
     try {
-        // v3.30 해킹 수는 합동 작전 기여로 올립니다(침투 작전 중이면 끝난 뒤에).
+        // v3.32 해킹 수는 합동 작전 기여로 올립니다(침투 작전 중이면 끝난 뒤에).
         let crewFlush: CrewApply | null | undefined;
         const out = await mutate(id, a, async s => { const now = Date.now(); await applyPendingHack(s, id, now); await syncHackFeed(s, id, now); if (crewFlush === undefined) crewFlush = await flushCrew(id, s, now); crewFlush?.(s); });
         return Response.json(out, { headers: { 'Cache-Control': 'no-store' } });

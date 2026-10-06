@@ -298,7 +298,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.ok(JSON.parse((await database.getCrew(crewId)).data).members.m_2.offSince > 0);
         for (const [mid, m] of [['m_boss', boss], ['m_0', dep], ['m_2', leaver], ['m_3', members[3]]]) (await Cr.leaveCrew(mid, m, now))(m);
         assert.equal(await database.getCrew(crewId), null, 'empty crew is deleted'); assert.equal(boss.hacker.crew, undefined);
-        // v3.30 합동 작전: 침투 노드·해킹 수를 세이브에 쌓았다가 침투가 끝난 뒤 한 번에 올리고, 단계마다 조직 자금과 (1노드 이상 뚫은) 조직원 보상.
+        // v3.32 합동 작전: 침투 노드·해킹 수를 세이브에 쌓았다가 침투가 끝난 뒤 한 번에 올리고, 단계마다 조직 자금과 (1노드 이상 뚫은) 조직원 보상.
         const lead = veteran(1); lead.name = '작전장'; (await Cr.createCrew('o_lead', lead, '작전조', 'gray', now))(lead);
         const opId = lead.hacker.crew.id, opCode = (await database.getCrew(opId)).code, runner = veteran(1); runner.name = '러너';
         (await Cr.joinCrew('o_run', runner, opCode, now))(runner);

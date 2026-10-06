@@ -11,7 +11,7 @@ import type { CrewInfo } from './use-game';
 type Props = PanelProps & { info: CrewInfo | null; error: string; load: () => Promise<void>; act: (body: Record<string, unknown>) => Promise<boolean> };
 /**
  * v3.29 해커 조직 화면(4-a): 창설(성향 선택)·초대 코드 가입, 조직원·기여·조직 등급, 조직장 관리(코드 재발급·위임·내보내기).
- * v3.30 합동 작전(주간): 조직원이 뚫은 침투 노드 합계, 단계 목표, 조직원별 기여. 조직 모듈·조직 순위는 다음 단계에서 붙습니다.
+ * v3.32 합동 작전(주간): 조직원이 뚫은 침투 노드 합계, 단계 목표, 조직원별 기여. 조직 모듈·조직 순위는 다음 단계에서 붙습니다.
  */
 export function Crew({ s, busy, info, error, load, act }: Props) {
     const [name, setName] = useState(''), [side, setSide] = useState('gray'), [code, setCode] = useState(''), [amount, setAmount] = useState('50'), [copied, setCopied] = useState(false);

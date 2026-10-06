@@ -1,4 +1,4 @@
-// 스크린샷용 중반 진행 세이브를 만들어 로컬 D1에 넣을 SQL을 출력합니다.
+// 스크린샷용 중반 진행 세이브를 만들어 로컬 파일 DB(JSON)에 씁니다. 사용: node seed-state.mjs <db.json 경로>
 import { loadGame } from '../lib/game-modules.mjs';
 const { load } = loadGame();
 const { newState, act, advance } = await load('game/systems/engine.js');

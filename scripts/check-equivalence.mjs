@@ -113,7 +113,7 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
     const display = [];
     for (const sk of SKILLS) {
         display.push(desc.skillEffectLines(sk), desc.skillGrowthStages(sk), prog.skillRankDeltas(sk, 2, 1), prog.skillMasteryHint(sk, 1), prog.skillRankHint(sk, 1, 0), prog.skillPracticeTargets(sk), mastery.masteryConditionText(sk));
-        for (const lv of [0, 1, 2, 3]) display.push(prog.effectiveSkill(sk, lv + 1, lv, undefined, 0), prog.effectiveSkill(sk, lv + 1, lv, undefined, 3e7));
+        for (const lv of [0, 1, 2, 3]) display.push(prog.effectiveSkill(sk, lv + 1, lv, 0), prog.effectiveSkill(sk, lv + 1, lv, 3e7));
     }
     for (const s of samples) {
         display.push(statsM.stats(s), statsM.dropRate(s), statsM.goldMultiplier(s), statsM.expMultiplier(s), statsM.dungeonGoldMultiplier(s), statsM.snapshot(s), statsM.power(statsM.stats(s)), statsM.mastery(s));

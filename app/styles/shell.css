@@ -337,38 +337,6 @@
   line-height:1.8
 }
 
-.enemy-status {
-  position:absolute;
-  bottom:98px;
-  left:27px;
-  right:27px;
-  background:#10262bb8;
-  border:1px solid #6e94934a;
-  padding:12px 15px;
-  border-radius:6px;
-  backdrop-filter:blur(8px)
-}
-
-.enemy-title {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:9px;
-  font-size:13px;
-  color:#d8e4df
-}
-
-.enemy-title>span {
-  display:flex;
-  align-items:center;
-  gap:7px
-}
-
-.enemy-title small {
-  font-size:11px;
-  color:#a5bbb9
-}
-
 .primary,.secondary,.gold-button,.pause-button {
   display:inline-flex;
   align-items:center;

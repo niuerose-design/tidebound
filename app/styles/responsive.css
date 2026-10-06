@@ -178,9 +178,7 @@
     gap:16px
   }
 
-  .arena-stats .small-type {
-    font-size:14px
-  }
+
 
   .book-grid>.book-card:last-child {
     grid-column:auto
@@ -305,20 +303,11 @@
     font-size:10px
   }
 
-  .enemy-status {
-    left:17px;
-    right:17px;
-    padding:11px;
-    bottom:98px
-  }
 
-  .enemy-title {
-    font-size:12px
-  }
 
-  .enemy-title small {
-    font-size:10px
-  }
+
+
+
 
   .ocean-art {
     object-position:61% center

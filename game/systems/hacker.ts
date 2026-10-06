@@ -31,7 +31,7 @@ export function bumpSeason(s: State, now: number, d: { depth?: number; hacks?: n
     x.depth = Math.max(x.depth, d.depth || 0); x.hacks += d.hacks || 0; x.restores += d.restores || 0; x.dirty = true;
     if (d.hacks) crewNote(s, { hacks: d.hacks });
 }
-/** v3.30 합동 작전 기여를 세이브에 쌓아 둡니다(조직 소속 해커 계열만). 서버가 침투 작전이 끝난 뒤 한 번에 조직에 올립니다. */
+/** v3.32 합동 작전 기여를 세이브에 쌓아 둡니다(조직 소속 해커 계열만). 서버가 침투 작전이 끝난 뒤 한 번에 조직에 올립니다. */
 export function crewNote(s: State, d: { nodes?: number; hacks?: number }) {
     const h = s.hacker;
     if (!h?.crew || !isHacker(s)) return;
