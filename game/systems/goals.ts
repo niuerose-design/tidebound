@@ -2,8 +2,8 @@ import type { State } from '../types';
 import { JOBS, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { DUNGEONS } from '../data/world';
-import { BOSS_RESEARCH } from '../data/specializations';
-import { skillPracticeTargets, canUse, jobRequirements, masteryMilestonesFor } from './progression';
+import { BOSS_RESEARCH } from '../data/boss-research';
+import { skillPracticeTargets, canUse, jobRequirements, masteryMilestonesFor, refinePractice } from './progression';
 
 export type GoalProgress = { title: string; detail: string; value: number; max: number; done: boolean; view: string; steps?: { label: string; done: boolean }[] };
 
@@ -15,7 +15,7 @@ export function goalProgress(s: State): GoalProgress | null {
         const skill = skillById(goal.id);
         if (!skill) return null;
         const stage = goal.target || 1, base = masteryMilestonesFor(skill), all = skillPracticeTargets(skill), max = all[stage - 1] || all.at(-1)!;
-        const value = s.skillPractice[skill.id] || 0, refine = stage > base.length;
+        const value = stage > base.length ? refinePractice(s, skill.id) : s.skillPractice[skill.id] || 0, refine = stage > base.length;
         const hint = !s.learned[skill.id] ? ' · 먼저 전용 직업에서 해금하세요.' : !canUse(s, skill.id) ? ' · 현재 사용 조건을 확인하세요.' : !s.skills.includes(skill.id) ? ' · 숙련하려면 장착하세요.' : '';
         return { title: `${skill.name} · ${refine ? '장기 연마' : '실전 숙련'} ${refine ? stage - base.length : stage}단계`, value, max, done: value >= max, view: 'skills',
             detail: `${Math.min(value, max).toLocaleString()} / ${max.toLocaleString()} · ${stage === 1 ? '무료 계승' : refine ? '직접 피해·양수 패시브 +4%' : '스킬 성장·상위 전직 준비'}${hint}` };
@@ -42,7 +42,7 @@ export function goalProgress(s: State): GoalProgress | null {
 /** 지금 도전할 수 있는 것 위주의 추천. */
 export function goalSuggestions(s: State) {
     const open = (x: { level: number; rebirth?: number }) => s.level >= x.level && s.rebirths >= (x.rebirth || 0);
-    const unfinished = (id: string) => { const sk = skillById(id)!; return (s.skillPractice[id] || 0) < skillPracticeTargets(sk).at(-1)!; };
+    const unfinished = (id: string) => { const sk = skillById(id)!; return refinePractice(s, id) < skillPracticeTargets(sk).at(-1)!; };
     const skill = [...s.skills.filter(id => canUse(s, id)), ...SKILLS.filter(x => x.job === s.job && canUse(s, x.id)).map(x => x.id), ...SKILLS.filter(x => canUse(s, x.id)).map(x => x.id)].find(unfinished);
     const job = JOBS.find(x => x.parent === s.job && !s.unlockedJobs.includes(x.id) && open(x)) || JOBS.find(x => x.tier === 1 && !s.unlockedJobs.includes(x.id) && open(x));
     const dungeon = [...DUNGEONS].sort((a, b) => a.level - b.level).find(x => BOSS_RESEARCH[x.id] && !s.bossResearchClaims?.[x.id] && open(x));

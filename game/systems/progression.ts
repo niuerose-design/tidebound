@@ -25,6 +25,17 @@ export function skillRefinementTargets(sk: Skill) {
     return sk.type === 'active' || positive ? refinementTargets(masteryMilestonesFor(sk).at(-1)!) : [];
 }
 export const skillPracticeTargets = (sk: Skill) => [...masteryMilestonesFor(sk), ...skillRefinementTargets(sk)];
+/**
+ * v3.31 연마·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
+ * 성장 레벨(숙련 1~4단계)은 원래 숙련 그대로라 바뀌지 않습니다. 기준점이 없으면 원래 숙련과 같습니다.
+ */
+export function refinePractice(s: Pick<State, 'skillPractice' | 'refineBase'>, id: string) {
+    const practice = s.skillPractice?.[id] || 0, base = s.refineBase?.[id];
+    if (!base) return practice;
+    const last = masteryMilestonesFor(skillById(id)).at(-1)!;
+    return Math.max(Math.min(practice, last), practice - Math.max(0, base - last));
+}
+export const refinePractices = (s: Pick<State, 'skillPractice' | 'refineBase'>) => Object.fromEntries(Object.keys(s.skillPractice || {}).map(id => [id, refinePractice(s, id)]));
 export function maxSkillLevel(sk: Skill) { return masteryMilestonesFor(sk).length; }
 /** 실제로 한 한계돌파 단계(연구 상한 적용 전). 다음 단계 계산에 씁니다. */
 export function limitBreakOwned(s: Pick<State, 'limitBreaks'>, id: string) { return Math.min(PROGRESSION.limitBreak.max, s.limitBreaks?.[id] || 0); }
@@ -37,7 +48,7 @@ export function limitBreakOf(s: Pick<State, 'limitBreaks' | 'permanent'>, id: st
 export function limitBreakNext(s: State, id: string) {
     const sk = skillById(id), stage = limitBreakOwned(s, id) + 1, lb = PROGRESSION.limitBreak;
     if (!sk || stage > lb.max) return { stage, sp: 0, practice: 0, ok: false, reason: stage > lb.max ? '한계돌파 최대 단계입니다.' : '스킬을 찾을 수 없습니다.' };
-    const last = masteryMilestonesFor(sk).at(-1)!, practice = last * lb.practiceMultiple[stage - 1], sp = lb.sp[stage - 1], have = s.skillPractice?.[id] || 0;
+    const last = masteryMilestonesFor(sk).at(-1)!, practice = last * lb.practiceMultiple[stage - 1], sp = lb.sp[stage - 1], have = refinePractice(s, id);
     const reason = !(s.learned?.[id] > 0) ? '먼저 습득해야 합니다.' : skillMasteryLevel(have, masteryMilestonesFor(sk)) < maxSkillLevel(sk) ? '실전 숙련을 끝까지 채워야 합니다.' : researchRank(s, 'limitBreak') < stage ? `세계석 연구 ‘한계의 문’ ${stage}단계 필요 (지금 ${researchRank(s, 'limitBreak')}단계)` : have < practice ? `실전 숙련 ${practice.toLocaleString()} 필요 (지금 ${have.toLocaleString()})` : s.sp < sp ? `SP ${sp} 필요` : '';
     return { stage, sp, practice, ok: !reason, reason };
 }
@@ -177,8 +188,8 @@ export function passiveGrowthBonus(s: State, sk: Skill, counts: Record<string, n
     if (sk.perRebirth && rebirths > 0) for (const [key, n] of Object.entries(sk.perRebirth)) out[key] = (out[key] || 0) + (n as number) * rebirths * scale;
     return out;
 }
-/** 스킬의 실제 효과. _specialization은 호출 호환용으로만 남긴 자리입니다(특화는 효과 수치를 바꾸지 않음 · check-combat-depth가 검사). */
-export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, _specialization?: string, practice = 0): Skill {
+/** 스킬의 실제 효과. practice는 연마 단계에 쓰는 숙련(refinePractice). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
+export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
     // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.
     const broken = Math.max(0, steps - maxSkillLevel(sk)), lb = PROGRESSION.limitBreak;
@@ -226,16 +237,16 @@ export function masteryGainBonus(sk: Skill, level: number) {
     const stages = sk.masteryGain?.bonusByLevel;
     return stages?.[Math.min(level, stages.length - 1)] ?? 0;
 }
-export function skillRankDeltas(sk: Skill, rank: number, mastery = 0, specialization?: string, practice = 0): SkillRankDelta[] {
+export function skillRankDeltas(sk: Skill, rank: number, mastery = 0, practice = 0): SkillRankDelta[] {
     const level = skillLevel(sk, rank, mastery);
     if (level >= maxSkillLevel(sk))
         return [];
-    const deltas = skillDeltas(effectiveSkill(sk, level + 1, mastery, specialization, practice), effectiveSkill(sk, level + 2, mastery, specialization, practice));
+    const deltas = skillDeltas(effectiveSkill(sk, level + 1, mastery, practice), effectiveSkill(sk, level + 2, mastery, practice));
     if (sk.masteryGain) deltas.push({ label: '조건 충족 시 추가 숙련', from: `+${masteryGainBonus(sk, level)}`, to: `+${masteryGainBonus(sk, level + 1)}` });
     return deltas;
 }
-export function skillRankHint(sk: Skill, rank: number, mastery = 0, specialization?: string, practice = 0) {
-    const rows = skillRankDeltas(sk, Math.max(1, rank), mastery, specialization, practice);
+export function skillRankHint(sk: Skill, rank: number, mastery = 0, practice = 0) {
+    const rows = skillRankDeltas(sk, Math.max(1, rank), mastery, practice);
     return rows.length ? rows.map(x => `${x.label} ${x.from} → ${x.to}`).join(' · ') : '최대 강화 레벨입니다.';
 }
 export function skillMasteryHint(sk: Skill, level: number, rank = 1) {

@@ -245,12 +245,6 @@
   color:#8fa7a9
 }
 
-.arena-stats .small-type {
-  font-size:17px;
-  color:#b0c8c3;
-  margin-top:15px
-}
-
 .ranking-panel {
   padding:24px
 }
@@ -407,16 +401,6 @@
   font-size:15px
 }
 
-.help-copy h3 {
-  margin-top:15px
-}
-
-.help-copy p {
-  font-size:13px;
-  line-height:1.9;
-  margin-top:11px
-}
-
 [data-slot=dialog-content],[data-slot=alert-dialog-content] {
   background:#172a30;
   border-color:#425e61;
@@ -464,7 +448,7 @@
 .ranking-sort .text-button { margin-left:6px }
 .duel-hit-summary { display:grid; gap:5px; padding:10px 13px; margin-top:8px; background:#13262c; border-radius:6px; font-size:12px; color:#a9c6bf }
 .duel-hit-summary b { color:#e6ecdf }
-.door-countdown { display:block; color:#e8d39a; font-weight:600 }
+
 @media (max-width:767px) {
   .ranking-panel table, .ranking-panel tbody, .ranking-panel tr, .ranking-panel td { display:block; width:100% }
   .ranking-panel thead { display:none }

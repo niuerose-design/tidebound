@@ -1,7 +1,6 @@
 /** 몬스터 도감 보상 계산. 모든 값은 s.book(처치 수)에서 파생되어 세이브 변환이 필요 없습니다. */
 import type { CombatStats, State } from '../types';
 import { REGIONS, regionFish } from '../data/world';
-import { STAT_LABELS, PERCENT_STATS } from '../data/progression';
 import { BOOK_ECOLOGY, BOOK_REVEAL, REGION_THEMES, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '../data/book-traits';
 import { completedRegions, bookRankMet } from './progression';
 
@@ -38,11 +37,3 @@ function regionResearchThemes(s: State) {
 export const regionThemes = (s: State) => [...completedRegions(s).map(st => REGION_THEMES[st.id]).filter(Boolean), ...regionResearchThemes(s)];
 export const rareSpawnBonus = (s: State) => regionThemes(s).reduce((a, t) => a + (t.rareSpawn || 0), 0);
 
-/** "물리 공격 +2 · 명중 +0.3%p"처럼 능력치 보너스를 읽기 쉬운 문장으로 씁니다. */
-export function bonusLabel(bonus: StatBonus, times = 1) {
-    return Object.entries(bonus).map(([k, v]) => {
-        const n = (v as number) * times;
-        const text = PERCENT_STATS.has(k) ? `${Number((n * 100).toFixed(2))}%${k === 'expBonus' || k === 'goldBonus' ? '' : 'p'}` : `${Number(n.toFixed(2))}`;
-        return `${STAT_LABELS[k as keyof CombatStats]} +${text}`;
-    }).join(' · ');
-}

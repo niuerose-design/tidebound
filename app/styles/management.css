@@ -57,8 +57,7 @@
 .vow-panel { padding:20px 22px; margin:18px 0; }
 .vow-current { display:flex; flex-direction:column; gap:8px; padding:12px 14px; border:1px solid #d6b87955; border-radius:8px; margin:10px 0 14px; background:#2a2a1f44; }
 .vow-current>span { font-size:13px; color:#e2c98f; }
-.vow-seal { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-.vow-seal>*:first-child { flex:1; min-width:220px; }
+
 .vow-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 .vow-card { border:1px solid #9ab4b533; border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:8px; }
 .vow-card h3 { font-size:16px; margin:0; }
@@ -195,13 +194,9 @@
 .growth-goals p { margin: 8px 0; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .growth-goals small { display: block; margin-top: 10px; color: var(--muted-foreground); font-size: 13px; }
 .growth-goals summary, .skill-specialization summary { cursor: pointer; padding: 10px 0; font-size: 14px; }
-.growth-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.growth-suggestions button { white-space: normal; text-align: left; }
+
 .skill-specialization { margin: 12px 0; border-top: 1px solid var(--border); }
-.skill-specialization p, .specialization-option p { font-size: 14px; line-height: 1.6; }
-.specialization-option { padding: 12px 0; border-bottom: 1px solid var(--border); }
-.specialization-option strong, .specialization-option small { display: block; margin-bottom: 6px; }
-@media (max-width: 640px) { .growth-suggestions { flex-direction: column; } }
+.skill-specialization p{ font-size: 14px; line-height: 1.6; }
 
 /* 직업 계보도: 계열 칩 → 계보 카드 → 항로도 → 상세 패널(모바일은 아래에서 올라오는 창). */
 /* 세 칸: ① 계보 카드 · ② 항로도 · ③ 직업 상세 */
@@ -359,3 +354,11 @@
 .altar-notice-open { display:flex; align-items:center; gap:8px; flex:1; min-width:0; padding:7px 12px; color:#f3dcb8; text-align:left; }
 .altar-notice-open span { color:#d9c3a3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .altar-notice-dismiss { padding:0 10px; color:#c4a989; }
+/* v3.31 승천 카드: 환생 준비 탭 맨 위. 환생 카드와 같은 짜임에 금빛 테두리. */
+.ascension-panel { margin-bottom: 18px; padding: 0; border-color: #6b6236; background: linear-gradient(160deg, #1c1a12, #101a1d 60%); }
+.ascension-panel .ascension-ready { padding: 24px 28px 8px; }
+.ascension-panel .ascension-ready .eyebrow { color: #e3c28d; }
+.ascension-panel .rebirth-reward strong svg { color: #e3c28d; }
+.ascension-panel .rebirth-three { margin: 0; padding: 0 18px 18px; }
+.ascension-panel .ascension-log { padding: 0 28px 18px; margin: 0; }
+@media (max-width: 767px) { .ascension-panel .ascension-ready { padding: 18px 16px 6px; } .ascension-panel .rebirth-three { padding: 0 12px 12px; } .ascension-panel .ascension-log { padding: 0 16px 14px; } }

@@ -320,6 +320,8 @@ export type CombatEvent = {
 export type LifeStart = { at: number; playMs: number; partial?: boolean };
 /** 환생 한 번의 기록. realMs: 생 시작부터 환생까지 실제 시간, playMs: 그동안 사냥이 진행된 시간(부재중 정산 포함). */
 export type RebirthRecord = { n: number; at: number; realMs: number; playMs: number; level: number; pearls: number; partial?: boolean };
+/** v3.31 승천 기록: 몇 번째 승천인지, 그때의 환생 횟수·무릉도장 최고층·걸린 시간. */
+export type AscensionRecord = { n: number; at: number; rebirths: number; abyssBest: number; realMs: number; kills: number };
 export type Log = {
     id: number;
     text: string;
@@ -358,7 +360,6 @@ export type State = {
     closed?: import('./data/world').Closures | null;
     /** v27.73 운영 페이지에서 연 문의 ??? 직업 id(서버가 동기화 때 적음). 없으면 null. 열려 있는 동안만 문이 열리고 doorsOpened에는 남지 않습니다. */
     openDoors?: string[] | null;
-    skillSpecializations?: Record<string, string>;
     bossResearchClaims?: Record<string, boolean>;
     growthGoal?: { kind: 'skill' | 'job' | 'dungeon'; id: string; target?: number; notified?: boolean } | null;
     /** 마지막으로 자동 진행(사냥·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
@@ -414,6 +415,12 @@ export type State = {
     /** Paid inheritance is independent of growth and never fabricates mastery wins. */
     skillInheritances: Record<string, boolean>;
     skillPractice: Record<string, number>;
+    /** v3.31 승천할 때의 스킬 숙련. 연마 단계·한계 돌파 조건은 이 값 위로 쌓인 숙련만 셉니다(refinePractice). */
+    refineBase?: Record<string, number>;
+    /** v3.31 승천 횟수와 기록, 이번 승천의 시작 시각. */
+    ascension?: number;
+    ascensionLog?: AscensionRecord[];
+    ascensionStart?: number;
     /** v27.6 한계돌파 단계(기술 id → 0~limitBreak.max). 환생해도 유지됩니다. */
     limitBreaks?: Record<string, number>;
     /** v27.19 환생 유물이 세계석 구매에서 환생 횟수 제공으로 바뀌며, 이미 산 유물의 세계석을 돌려준 뒤 true. */
@@ -650,7 +657,6 @@ export type Snapshot = {
     /** 세이브 버전. 랭킹·결투는 현재 버전의 스냅샷만 사용합니다. */
     season?: number;
     skillPractice?: Record<string, number>;
-    skillSpecializations?: Record<string, string>;
     skillRanks?: Record<string, number>;
     skillMastery?: Record<string, number>;
     name: string;

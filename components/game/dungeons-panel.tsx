@@ -1,6 +1,6 @@
 'use client';
 import { AutoRunStatus } from './auto-run';
-import { BOSS_RESEARCH } from '@/game/data/specializations';
+import { BOSS_RESEARCH } from '@/game/data/boss-research';
 import { dungeonClearGold, stats } from '@/game/systems/stats';
 import { dungeonTier, dungeonClearBase, dungeonRewardTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack, tierReward, tierExp } from '@/game/systems/meta';
 import { useState } from 'react';

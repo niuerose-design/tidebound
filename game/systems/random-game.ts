@@ -1,4 +1,5 @@
 /** v27.86 랜덤게임 진행: 무작위 몬스터 생성, 웨이브 판돈, 받고 나가기, 쓰러짐. */
+import { ascensionVow } from '../data/ascension';
 import type { State } from '../types';
 import { RANDOM_GAME, randomGameBoss, waveStake } from '../data/random-game';
 import { FISH, PLACES, tideLiftFish } from '../data/world';
@@ -11,7 +12,8 @@ import { addLog, endRun } from './state';
 /** 랜덤게임 연구 단계(0이면 잠김). 생마다(v3.24 그리고 하루마다, 한국 시간 자정) 이 횟수만큼 입장합니다. */
 export const randomGameRank = (s: Pick<State, 'permanent'>) => researchRank(s, RANDOM_GAME.research);
 /** 판돈 배율: ×1 → ×1.5 → ×2. */
-export const randomGamePayout = (s: Pick<State, 'permanent'>) => 1 + .5 * Math.max(0, randomGameRank(s) - 1);
+/** 판돈 배율: 연구 1단계 ×1, 2단계 ×1.5, 3단계 ×2. v3.31 보너스 부분(1을 넘는 몫)에 승천 배율을 곱합니다(승천 5회 3단계 ×3). */
+export const randomGamePayout = (s: Pick<State, 'permanent'> & Partial<Pick<State, 'ascension'>>) => 1 + .5 * Math.max(0, randomGameRank(s) - 1) * ascensionVow(s);
 /** v3.24 오늘(한국 시간) 이번 생에 쓴 입장 횟수. 날이 바뀌었으면 0입니다. now를 빼면 저장된 값 그대로. */
 export const randomGameUsed = (s: Pick<State, 'randomGameRuns' | 'randomGameDay'>, now?: number) => now !== undefined && s.randomGameDay !== dayKey(now) ? 0 : (s.randomGameRuns || 0);
 export const randomGameRunsLeft = (s: Pick<State, 'permanent' | 'randomGameRuns' | 'randomGameDay'>, now?: number) => Math.max(0, randomGameRank(s) - randomGameUsed(s, now));
