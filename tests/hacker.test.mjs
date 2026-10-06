@@ -361,7 +361,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         for (const [mid, m] of [['b_a', ba], ['b_b', bb]]) (await Cr.leaveCrew(mid, m, now))(m);
         // v3.40 정보 비공개 스위치: 서버 설정(30초 캐시)으로 켜고 끄고, 환경 변수 TIDEBOUND_SECRECY가 있으면 그것이 우선. 카탈로그에 실립니다.
         const Sc = await load('game/server/secrecy.js');
-        assert.equal(await Sc.secrecyOn(now), false, 'off by default (open beta)'); assert.deepEqual(await Sc.buildCatalog(newState(0), now), { secret: false });
+        assert.equal(await Sc.secrecyOn(now), false, 'off by default (open beta)'); const cat0 = await Sc.buildCatalog(newState(0), now); assert.equal(cat0.secret, false); assert.ok(cat0.doors.discovery.length >= 10 && cat0.doors.discovery.every(d => !d.open), 'v3.41 doors judged on the server'); assert.ok(!('test' in cat0.doors.discovery[0]), 'no door conditions in the catalog'); assert.ok(Array.isArray(cat0.revealed));
         await Sc.setSecrecy(true, now); assert.equal(await Sc.secrecyOn(now + 1), true); assert.equal(await database.getSetting('secrecy'), 'on');
         process.env.TIDEBOUND_SECRECY = 'off'; assert.equal(await Sc.secrecyOn(now + 2), false, 'env wins'); delete process.env.TIDEBOUND_SECRECY;
         await Sc.setSecrecy(false, now); assert.equal((await Sc.buildCatalog(newState(0), now + 3)).secret, false);

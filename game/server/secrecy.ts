@@ -6,6 +6,8 @@
 import { db } from './db';
 import type { State } from '../types';
 import type { Catalog } from '../data/catalog';
+import { doorView } from '../data/doors';
+import { revealedSecretJobs } from '../systems/reveal';
 
 const KEY = 'secrecy', TTL = 30_000;
 let cached: { at: number; on: boolean } | null = null;
@@ -22,8 +24,7 @@ export async function setSecrecy(on: boolean, now: number) {
     cached = { at: now, on };
     return { on, env: process.env.TIDEBOUND_SECRECY || null };
 }
-/** 모험가마다 화면에 보낼 카탈로그. 단계마다 내용이 늘어납니다(지금은 스위치 상태만). */
+/** 모험가마다 화면에 보낼 카탈로그. v3.41 문 상태와 드러난 비밀 직업(조건 판정은 서버에서만). */
 export async function buildCatalog(s: State, now: number): Promise<Catalog> {
-    void s;
-    return { secret: await secrecyOn(now) };
+    return { secret: await secrecyOn(now), doors: doorView(s), revealed: revealedSecretJobs(s) };
 }

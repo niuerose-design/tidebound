@@ -21,6 +21,8 @@ const canaries = {
     '히든 직업 이름(하한)': secretJobs.map(j => named(j.name)),
     '히든 직업 설명': secretJobs.map(j => text(j.desc)).filter(Boolean),
     '히든 직업 스킬 이름(하한)': SKILLS.filter(sk => sk.job && secretIds.has(sk.job)).map(sk => named(sk.name)),
+    // v3.41 발견의 문 조건(압축된 모양). doors.ts가 서버 전용이 되면 0이어야 합니다.
+    '발견의 문 조건': ['deaths||0)>=10', 'deaths||0)>=30', 'wins||0)>=3', 'kills||0)>=500', 'gold||0)<100', 'bestStage||0)>=4'],
     // 드롭·확률 표의 키 이름. 압축기가 상수를 값으로 바꿔 넣으면(예: Math.min(.03,.0025*…)) 키가 사라져 못 찾으므로 하한값입니다.
     // 드롭 계산이 화면 번들에 없는지는 4단계에서 모듈 검사(화면이 game/secret을 가져가면 빌드 실패)로 확인합니다.
     '드롭·확률 키(하한)': ['dropChanceCap', 'dropBonusScale', 'tideLoot', 'dungeonRepeatDrop', 'dropPity', 'chancePerTier', 'bigChance', 'spawnWeight', 'goldenBase'],

@@ -25,7 +25,7 @@ assert.ok(cookie.startsWith('tb_session='), 'session cookie set');
 assert.equal((await call('/api/auth')).data.loggedIn, true);
 let { data } = await call('/api/game', { type: 'sync' }, { expect: 200 });
 assert.equal(data.state.version, 8); assert.equal(data.state.name, '테스터까미', 'v26.8 signup name applied to the first fisher');
-assert.deepEqual(data.catalog, { secret: false }, 'v3.40 catalog rides with the game response (secrecy off by default)');
+assert.equal(data.catalog?.secret, false, 'v3.40 catalog rides with the game response (secrecy off by default)'); assert.ok(data.catalog.doors?.discovery?.length, 'v3.41 door states come from the server');
 ({ data } = await call('/api/game', { type: 'start' }, { expect: 200 }));
 assert.equal(data.state.running, true);
 await call('/api/game', { type: 'upgrade', id: 'attack' }, { expect: 400 });

@@ -8,7 +8,7 @@ import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { Job, JobStatKey, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { PLACES, FISH } from '../data/world';
-import { doorFor, DOORS } from '../data/doors';
+import { doorFor, DOORS } from '../data/door-info';
 import { researchRank } from '../data/economy';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 export function initialProgress(level = 1) { return { attributes: emptyAttributes(), statPoints: PROGRESSION.startingStats + (level - 1) * PROGRESSION.statPerLevel, sp: PROGRESSION.startingSP, peakLevel: level, learned: { hook: 1 } as Record<string, number>, skillSpent: {} as Record<string, number>, skillInheritances: {} as Record<string, boolean>, skillPractice: {} as Record<string, number>, jobMastery: {} as Record<string, number>, unlockedJobs: ['fisher'], bookClaims: {} as Record<string, number>, itemBook: {} as Record<string, boolean>, target: null as string | null, presets: {} as State['presets'], mana: 40, effects: {}, playerStun: 0 }; }

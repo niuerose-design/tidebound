@@ -1,7 +1,8 @@
 /** 직업 화면 공용 계산. 게임 판정(progression)을 그대로 쓰고, 화면용 상태 이름만 붙입니다. */
 import type { State } from '@/game/types';
 import { JOBS, JOB_TREES, lineageOf, jobTags, type Job, jobById } from '@/game/data/classes';
-import { doorFor } from '@/game/data/doors';
+import { doorFor } from '@/game/data/door-info';
+import { catalogRevealed } from '@/game/data/catalog';
 import { jobRequirements, jobMastered, jobCombatMultiplier, jobFlatBonus } from '@/game/systems/progression';
 import { percent } from '@/game/data/progression';
 
@@ -60,21 +61,14 @@ export function jobBonusText(j: Job, key: JobBonusKey, mastered = false) {
     return parts.join(' · ') || '—';
 }
 
-/** 실루엣 대상: 히든 직업과 ??? 문 직업. */
+/** 실루엣 대상: 히든 직업과 ??? 문 직업(문 목록은 서버 카탈로그). */
 export const secretJob = (j: Job) => !!j.hidden || !!doorFor({}, j.id);
 /**
- * 실루엣 공개: 들어간 적 있거나 숙달했거나, 그 직업의 문이 지금 열려 있거나, 관문 조건(환생 횟수·선행 직업 숙련·문 열림)을 모두 채우면 이름을 공개합니다.
- * 레벨과 능력치는 보지 않습니다.
+ * 실루엣 공개. v3.41 판정(관문 조건)은 비밀이라 서버가 하고(game/systems/reveal.ts), 화면은 카탈로그의 공개 목록만 봅니다.
+ * 들어간 적 있는 직업은 카탈로그를 받기 전에도 드러난 것으로 봅니다.
  */
 export function jobRevealed(s: State, j: Job) {
-    if (!secretJob(j) || s.unlockedJobs.includes(j.id) || jobMastered(s, j)) return true;
-    // 문이 열려 있으면 다른 관문과 상관없이 정체(이름·조건)를 드러냅니다. 전직은 여전히 모든 조건이 필요합니다.
-    if (doorFor(s, j.id)?.open) return true;
-    // 관문: 환생 횟수 · 문 · 선행 직업 숙련(상위 직업 또는 requiresJobMastery로 지정한 직업, 예: 시계공 → 시간의 지배자).
-    const keys = [j.parent, ...Object.keys(j.requiresJobMastery || {})].map(id => jobById(id)?.name).filter(Boolean) as string[];
-    const gates = jobRequirements(s, j).filter(r => r.label.startsWith('환생 ') || r.label.endsWith('문 열림') || keys.some(name => r.label.startsWith(`${name} 숙련`)));
-    // 관문이 하나도 없는 히든 직업(예: 玄)은 처음부터 드러납니다.
-    return gates.every(r => r.met);
+    return !secretJob(j) || s.unlockedJobs.includes(j.id) || catalogRevealed(j.id);
 }
 
 /** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 미발견 실루엣은 이름을 드러내지 않도록 목록에서 뺍니다. */
