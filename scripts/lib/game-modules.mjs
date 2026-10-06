@@ -15,7 +15,9 @@ export function loadGame() {
         const js = ts.transpileModule(fs.readFileSync(path.join('game', file), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText
             .replace(/from (['"])(\.\.?\/[^'"]+)\1/g, (_, q, p) => `from ${q}${p}.js${q}`)
             // v3.44 부수 효과만 있는 import('../secret/register')도 .js를 붙입니다.
-            .replace(/^import (['"])(\.\.?\/[^'"]+)\1/gm, (_, q, p) => `import ${q}${p}.js${q}`);
+            .replace(/^import (['"])(\.\.?\/[^'"]+)\1/gm, (_, q, p) => `import ${q}${p}.js${q}`)
+            // v3.49 Next 빌드 전용 표식 import 'server-only'는 Node 스크립트·테스트에서 지웁니다(패키지 없이 Next가 처리).
+            .replace(/^import 'server-only';\n/m, '');
         const out = path.join(dir, file.replace(/\.ts$/, '.js'));
         fs.mkdirSync(path.dirname(out), { recursive: true });
         fs.writeFileSync(out, js);

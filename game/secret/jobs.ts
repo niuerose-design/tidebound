@@ -5,6 +5,8 @@
  * 화면 코드(components/·app/의 클라이언트)가 이 폴더를 가져가면 안 됩니다(scripts/check-secrets.mjs가 번들을 검사).
  * 편집은 이 파일에서 합니다. 예전에 classes.ts 후처리(이름·칭호·숙련 목표 등)를 거친 결과를 v3.44에 그대로 옮겼습니다.
  */
+// v3.49 서버 전용 표식: 화면(클라이언트) 번들이 이 파일을 가져가면 빌드가 실패합니다(docs/concept.md 10.2-1).
+import 'server-only';
 import type { Job, Lineage } from '../data/classes';
 
 export const SECRET_JOBS: Job[] = [
