@@ -1,5 +1,7 @@
 /** 게임 진입점: 행동 처리(act)와 턴 진행을 묶습니다. 세부 규칙은 state·turn·encounter·dungeon-run·actions/에 있습니다. */
 import type { State, Action } from '../types';
+// v3.41 비밀 직업·계보(서버 전용)를 먼저 직업 표에 더합니다.
+import '../secret/register';
 import { commerce } from './commerce';
 import { clampVitals } from './stats';
 import { grantJobSkills } from './progression';

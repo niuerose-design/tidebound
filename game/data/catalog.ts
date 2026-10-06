@@ -4,6 +4,7 @@
  * v3.41 2단계: 문 상태(조건은 서버가 판정)와 드러난 비밀 직업 목록. applyCatalog가 화면 쪽 문 창구(door-info)를 채웁니다.
  */
 import { setDoorSource, type DoorId } from './door-info';
+import { upsertJobs, registerLineages, type Job, type Lineage } from './classes';
 
 export type CatalogDoors = {
     states: Record<string, { door: DoorId; open: boolean }>;
@@ -18,6 +19,11 @@ export type Catalog = {
     doors?: CatalogDoors;
     /** v3.41 이 모험가에게 드러난 비밀 직업 id(실루엣을 벗은 직업). */
     revealed?: string[];
+    /** v3.41 비밀 직업: 드러났거나 비공개가 꺼져 있으면 전체, 아니면 실루엣(veiled). 화면 직업 표에 넣습니다. */
+    jobs?: Job[];
+    lineages?: Lineage[];
+    /** 내용 키. 화면이 가진 키와 같으면 서버는 카탈로그를 다시 보내지 않습니다. */
+    key?: string;
 };
 export const OPEN_CATALOG: Catalog = { secret: false };
 
@@ -25,6 +31,8 @@ let current: Catalog = OPEN_CATALOG, revealed = new Set<string>();
 /** 화면: 서버가 보낸 카탈로그를 적용합니다(문 창구 채우기 · 공개 목록). */
 export function applyCatalog(c: Catalog) {
     current = c; revealed = new Set(c.revealed || []);
+    if (c.lineages?.length) registerLineages(c.lineages);
+    if (c.jobs?.length) upsertJobs(c.jobs);
     const states = c.doors?.states || {};
     // 브라우저에서만 문 창구를 카탈로그로 바꿉니다(서버·테스트는 doors.ts의 실제 판정을 그대로 씀).
     if (typeof window !== 'undefined') setDoorSource({ doorFor: (_s, jobId) => states[jobId] ?? null });

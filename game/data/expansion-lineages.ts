@@ -16,7 +16,6 @@ const T1 = { tier: 1, level: 10, mastery: 0 };
 const T2 = { tier: 2, level: 25, mastery: 75 };
 const T3 = { tier: 3, level: 40, mastery: 150 };
 const T4 = { tier: 4, level: 55, rebirth: 1, mastery: 300, masteryTarget: 20000, masteryBoost: .32 };
-const T5 = { tier: 5, level: 70, rebirth: 2, mastery: 600, masteryTarget: 30000, masteryBoost: .35 };
 /** 상위 전직 없이 능력치 패시브 하나를 익히는 독립 1차 직업. */
 const STAT_T1 = { ...neutral, ...T1, branchless: true, masteryTarget: 500, masteryBoost: .08 };
 
@@ -79,12 +78,6 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'tidalSinger', name: '해조 가수', title: '파도가 따라 부른다', desc: '노래 계보의 2차 직업입니다. 합창으로 체력을 회복하고, 패시브로 경험치와 마나 회복을 올립니다.', ...neutral, bonus: { magic: 36, hp: 15, resist: 2 }, ...T2, parent: 'bard', requires: { wis: 30, int: 22 }, requiresSkillMastery: { tempoSong: 2 }, role: '회복·노래', tree: 'support' },
 
     // ── ???: 문 직업의 후속 차수만 ──────────────────────────────
-    { id: 'lichKing', name: '사령왕', title: '죽음의 왕좌에 앉은 모험가', desc: '망인 계보의 환생 후 4차 히든 직업입니다. 쉐도우 스피어로 때린 만큼 흡혈하고, 패시브로 체력과 치명타를 올립니다.', ...neutral, attack: 1.39, magic: 1.07, hp: 1.04, defense: 1.14, crit: .2, ...T4, parent: 'soulHarvester', requires: { str: 54, luk: 42 }, requiresSkillMastery: { harvestEcho: 3 }, role: '치명·영혼 군주', tree: 'mystery', hidden: true },
-    { id: 'voidDrifter', name: '허공 방랑자', title: '어디에도 닿지 않는 걸음', desc: '마나 비례 주문과 회피·마나 패시브로 싸우는 공허 계열 3차 히든 직업입니다.', ...neutral, bonus: { magic: 83, resist: 6 }, crit: .12, ...T3, rebirth: 1, parent: 'voidcaller', requires: { int: 46, luk: 40 }, requiresSkillMastery: { voidLance: 3 }, role: 'MP·회피', tree: 'mystery', lineage: 'voidcaller', hidden: true },
-    { id: 'voidSovereign', name: '공허의 군주', title: '비어 있음으로 채운다', desc: '공허 계보의 4차 히든 직업입니다. 칙령은 최대 마나를 쏟아부어 때리고, 패시브로 마나와 마법 공격을 올립니다.', ...neutral, defense: 1.12, magic: 1.52, hp: 1.18, resist: 1.21, crit: .12, ...T4, rebirth: 2, parent: 'manaLeviathan', requires: { int: 60, wis: 45 }, requiresSkillMastery: { leviathanEquation: 3 }, role: 'MP·최상위', tree: 'mystery', lineage: 'voidcaller', hidden: true },
-    { id: 'deepHorror', name: '검은물 괴수', title: '촉수가 파도를 삼킨다', desc: '몬스터 계보의 4차 히든 직업입니다. 난타로 여러 번 후려치고, 패시브로 체력과 방어를 받칩니다.', ...neutral, attack: 1.42, hp: 1.18, defense: 1.04, crit: .1, ...T4, parent: 'krakenkin', requires: { str: 52, dex: 38 }, requiresSkillMastery: { tentacleBarrage: 3 }, role: '몬스터·추가타', tree: 'mystery', lineage: 'krakenkin', penalties: { accuracy: -.04 }, hidden: true },
-    { id: 'tideDevourer', name: '조수 포식자', title: '모든 것을 삼키는 입', desc: '몬스터 계보의 4차 히든 직업입니다. 포식은 삼킨 만큼 회복하고, 패시브로 체력과 흡혈을 올립니다.', ...neutral, attack: 1.36, hp: 1.21, crit: .08, ...T4, parent: 'krakenkin', requires: { str: 50, vit: 40 }, requiresSkillMastery: { tentacleBarrage: 3 }, role: '몬스터·흡혈', tree: 'mystery', lineage: 'krakenkin', hidden: true },
-    { id: 'leviathanAvatar', name: '대해수의 화신', title: '바다가 몸을 얻었다', desc: '세계를 휘감는 촉수 난타로 몬스터 계열의 정점에 선 5차 히든 직업입니다.', ...neutral, attack: 1.56, hp: 1.25, defense: 1.08, resist: 1.06, crit: .12, ...T5, parent: 'deepHorror', requires: { str: 66, dex: 44, vit: 40 }, requiresSkillMastery: { maulingTide: 3 }, role: '몬스터 최상위', tree: 'mystery', lineage: 'krakenkin', penalties: { accuracy: -.04 }, hidden: true },
 ];
 
 /** 새 계보. 계열 안의 위치는 classes.ts의 LINEAGES 순서를 따릅니다. */
@@ -97,12 +90,6 @@ export const NEW_LINEAGES = {
 
 /** 새 히든 직업의 실루엣 힌트. */
 export const LINEAGE_HINTS: Record<string, string> = {
-    lichKing: '영혼을 충분히 거둔 수확자가 두 번째 삶에서 왕좌를 봅니다.',
-    voidDrifter: '샤드를 깊이 익힌 기록자가 걸음을 옮길 때.',
-    voidSovereign: '디바이드를 마치고 두 번의 윤회를 건넌 자에게.',
-    deepHorror: '크라켄의 촉수가 더 많은 파도를 원할 때.',
-    tideDevourer: '크라켄의 굶주림이 끝나지 않을 때.',
-    leviathanAvatar: '괴수의 난타가 바다 전체에 닿을 때.',
 };
 
 const P = { type: 'passive' as const, chance: 0, cooldown: 0, multiplier: 0, rankEffects: { bonusScale: .3 } };

@@ -11,6 +11,8 @@ if (!fs.existsSync(root)) { console.error('먼저 pnpm build를 하세요(.next/
 const bundle = fs.readdirSync(root, { recursive: true }).filter(f => String(f).endsWith('.js')).map(f => fs.readFileSync(path.join(root, String(f)), 'utf8')).join('\n');
 
 const { load } = loadGame();
+// v3.41 비밀 직업은 서버 전용 표(game/secret)에 있으므로 엔진을 불러 서버와 같은 전체 표로 셉니다.
+await load('systems/engine');
 const { JOBS } = await load('data/classes'), { SKILLS } = await load('data/skills'), { doorFor } = await load('data/doors');
 // 비밀 직업: 히든 직업과 문으로 열리는 직업. 이름·설명은 드러나기 전까지 비밀입니다(힌트는 공개, 10.2-4).
 const secretJobs = JOBS.filter(j => j.hidden || doorFor({}, j.id)), secretIds = new Set(secretJobs.map(j => j.id));

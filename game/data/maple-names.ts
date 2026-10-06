@@ -21,17 +21,14 @@ const BY_TIER: { cls: string; ids: string[] }[] = [
     { cls: '패스파인더', ids: ['voyageScribe', 'chronicleNavigator', 'starCartographer', 'starNavigator', 'routeDeity'] },
     { cls: '와일드헌터', ids: ['bossNaturalist', 'speciesChronicler', 'titanScholar', 'titanAnatomist', 'beastKing'] },
     { cls: '팬텀', ids: ['squidJester', 'gambler', 'highRoller', 'fateGambler', 'luckDeity'] },
-    { cls: '나이트워커', ids: ['undead', 'skeleton', 'soulHarvester', 'lichKing', 'deathEmperor'] },
     { cls: '스트라이커', ids: ['tidalBrawler', 'twinAngler', 'surgeFighter', 'tsunamiBrawler', 'oceanFist'] },
-    { cls: '은월', ids: ['stormEel', 'krakenkin', 'deepHorror', 'leviathanAvatar'] },
+    { cls: '은월', ids: ['stormEel'] },
     { cls: '제논', ids: ['wanderer', 'chimera', 'bloodTide', 'abyssHybrid', 'aberrantKing'] },
     { cls: '메카닉', ids: ['runesmith', 'arcArtificer', 'resonanceEngineer', 'resonanceMaster', 'runeCreator'] },
     { cls: '아크', ids: ['brawnMage', 'inverseMage', 'paradoxCaster', 'paradoxSage', 'skyInverter'] },
-    { cls: '아델', ids: ['voidcaller', 'manaLeviathan', 'voidSovereign', 'voidIncarnate'] },
     { cls: '엔젤릭버스터', ids: ['bard', 'minstrel', 'legendBard', 'balladKing', 'siren'] },
     { cls: '칼리', ids: ['shaman', 'hexer', 'warlock', 'calamityShrine', 'curseQueen'] },
     { cls: '카데나', ids: ['nerveNeedler', 'nerveSeverer', 'silenceWarden', 'stillLord', 'silenceDeity'] },
-    { cls: '제로', ids: ['clockmaker', 'chronarch'] },
     // v27.39 2-2단계: 외길 계보
     { cls: '아란', ids: ['brawnFisher', 'mightyStrongman', 'colossus'] },
     { cls: '블래스터', ids: ['bulkyFisher', 'hulkingBrute', 'mountainBody'] },
@@ -72,19 +69,17 @@ const NAMED: Record<string, string> = {
     // 갈래가 시작되는 1차: 원작 1차 이름(갈래)
     ronin: '검사(히어로)', poisoner: '매지션(불,독)', seagrassKeeper: '매지션(비숍)', relicScavenger: '로그(섀도어)', salvageMerchant: '해적(캡틴)',
     // 곁가지: 그 직업의 세계관으로
-    oracle: '요정 사제', lunarOracle: '달빛 사제', coralSaint: '요정 대사제', runeSwell: '룬 위자드', tideMender: '마나 조율사', eternalNavigator: '시공의 위자드',
+    oracle: '요정 사제', lunarOracle: '달빛 사제', coralSaint: '요정 대사제', runeSwell: '룬 위자드', tideMender: '마나 조율사',
     echoTamer: '미르 조련사', abyssMimic: '오닉스 드래곤 라이더', crystalCaster: '크리스탈 연성사',
     lineBreaker: '썬더 브레이커', grappler: '브롤러', stormHunter: '크로스보우맨', reefBrawler: '근접 아처',
     clockworkAngler: '태엽 기계공', allRounder: '올라운더', deckGunner: '캐논슈터',
     inkMime: '트릭스터', wreckDiver: '보물 사냥꾼', harborBroker: '무역상', logbookRunner: '길 안내인', beastTracker: '재규어 추적자', tidalSinger: '아이돌 연습생',
-    shoreApothecary: '견습 사제', deepCaretaker: '치유사', coralBuilder: '성벽 기사', tideDevourer: '구미호',
+    shoreApothecary: '견습 사제', deepCaretaker: '치유사', coralBuilder: '성벽 기사',
     // 독립 1차: 바다·낚시 단어만 교체
     netWeaver: '그물 사냥꾼', oathAngler: '맹세의 전사', barbSkirmisher: '척후병', wakeRunner: '질주자', sapper: '엔지니어', tideSurveyor: '지도 제작자',
     bubbleMage: '버블 매지션', stillwaterBinder: '봉인술사', driftwoodHermit: '숲의 은둔자', scaleKnight: '견습 기사', lifeTender: '생명지기',
     ambiAngler: '양손 무기 수련생', inkThrower: '표창 투척수',
-    // ??? 히든: 분위기는 두고 바다 단어만
-    glassHarpooner: '유리 대포', rebirthFisher: '윤회의 나그네', headwindSailor: '역풍의 모험가', sunriseAngler: '해돋이 모험가', barehandFisher: '맨손 격투가',
-    noonDiver: '한낮의 수련생', codexReader: '몬스터 도감 독자', journeyman: '떠돌이 모험가', polymath: '만능 모험가', fallenAngler: '칠전팔기 모험가',
+    // ??? 히든 직업 이름은 v3.41부터 game/secret/jobs.ts(서버 전용)에 있습니다.
 };
 /** 직업 id → 메이플 이름. 차수(tier)가 있어야 ‘(N차)’를 붙일 수 있어 직업 목록을 받아 만듭니다. */
 export function mapleJobNames(jobs: { id: string; tier: number }[]): Record<string, string> {
@@ -104,7 +99,6 @@ export const MAPLE_LINEAGE_NAMES: Record<string, string> = {
     poisoner: '아크메이지(불,독) 계보', shaman: '칼리 계보', bloodAngler: '데몬어벤져 계보', nerveNeedler: '카데나 계보',
     fisher: '초보자', wanderer: '제논 계보', spellbladeNovice: '데몬슬레이어 계보', tideLancer: '다크나이트 계보', runesmith: '메카닉 계보',
     squidJester: '팬텀 계보', relicScavenger: '섀도어 계보', salvageMerchant: '캡틴 계보', voyageScribe: '패스파인더 계보', bossNaturalist: '와일드헌터 계보', bard: '엔젤릭버스터 계보',
-    undead: '나이트워커 계보', voidcaller: '아델 계보', krakenkin: '은월 계보',
     paladin: '루미너스 계보', bellTurtle: '카이저 계보', saltWarden: '호영 계보', brawnMage: '아크 계보', luckyAngler: '나이트로드 · 행운 외길', nimbleAngler: '듀얼블레이드 · 기민 외길',
     brawnFisher: '아란 · 근력 외길', bulkyFisher: '블래스터 · 체질 외길', manaDevotee: '배틀메이지 · 지능 외길', stillAngler: '라라 · 정신 외길',
 };

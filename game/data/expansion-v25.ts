@@ -25,14 +25,10 @@ const physical = { damageType: 'physical' as const, manaCost: 0 };
 const GLYPH = { level: 10, job: 'glyphMonk', veiled: true, masteryMilestones: [120, 1500, 6000, 20000] };
 const GLYPH_A = { ...A, ...physical, ...GLYPH, cost: 2, seal: true, rankEffects: { apReduction: .5 } };
 
-/** 제로 (1차) 숙달 목표 = 제로 (4차) 전직 조건. */
-const CLOCKMAKER_MASTERY = 3000;
 /** 타임 리와인드를 쓸 때마다 더하는 직업 숙련. */
 export const TIME_MACHINE_MASTERY = 25;
 
 export const V25_JOBS: NewJob[] = [
-    { id: 'clockmaker', name: '시계공', title: '고장 난 시간을 고친다', desc: '자신을 가속하고 상대를 감속하는 시간 직업. 가끔 타임 리와인드가 작동해 나와 상대가 모두 처음 상태로 돌아갑니다. 끝까지 숙달하면 제로 (4차)가 열립니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, tier: 1, level: 10, mastery: 0, requires: { dex: 12, int: 10 }, role: '시간·속도', tree: 'mystery', branchless: true, hidden: true, fullKit: true, masteryTarget: CLOCKMAKER_MASTERY, masteryBoost: .2 },
-    { id: 'chronarch', name: '시간의 지배자', title: '멈춘 시간 속을 홀로 걷는다', desc: '제로 (1차)를 숙달한 자에게만 열리는 4차급 독립 직업. 확정 기절과 확정 추가 행동으로 전투의 시간을 지배합니다.', ...neutral, attack: 1.3, magic: 1.3, hp: 1.12, defense: 1.08, resist: 1.08, crit: .08, tier: 4, level: 10, mastery: 0, requires: {}, requiresJobMastery: { clockmaker: CLOCKMAKER_MASTERY }, role: '시간·제어', tree: 'mystery', lineage: 'mystery-independent', hidden: true, fullKit: true, masteryTarget: 30000, masteryBoost: .35 },
     { id: 'glyphMonk', name: '玄', title: '일곱 글자를 몸에 새긴다', desc: '혼자 쓰면 손해뿐인 일곱 글자를 서로 맞물려 쓰는 조합 직업. 글자 하나를 익히면 다음 글자가 열리고, 일곱 글자가 모두 맞물리면 天이 깨어납니다.', ...neutral, bonus: { attack: 2, magic: 2 }, tier: 1, level: 10, mastery: 0, requires: { wis: 12, luk: 10 }, role: '조합·각성', tree: 'mystery', branchless: true, fullKit: true, masteryTarget: 5000, masteryBoost: .2 },
 ];
 
@@ -85,7 +81,5 @@ export const V25_BALANCE: Record<string, Partial<Skill>> = {
 export const V25_STATUS_ONLY = ['slackHand', 'glyphBind'];
 
 export const V25_HINTS: Record<string, string> = {
-    clockmaker: '사냥터에서 열 시간을 보낸 뒤, 시계 소리가 들립니다.',
-    chronarch: '제로 (1차)의 모든 톱니를 맞춘 자에게.',
     glyphMonk: '일곱 글자를 품은 수행자. 누구에게나 열려 있습니다.',
 };

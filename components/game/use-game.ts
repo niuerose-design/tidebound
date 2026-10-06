@@ -5,7 +5,7 @@ import { BALANCE } from '@/game/data/balance';
 import { stats } from '@/game/systems/stats';
 import { buildCombatReplay, type ReplayFrame } from '@/game/systems/combat-feedback';
 import { logKey, mergeLogs, type LogDelta } from '@/game/systems/log-delta';
-import { OPEN_CATALOG, applyCatalog, type Catalog } from '@/game/data/catalog';
+import { OPEN_CATALOG, applyCatalog, catalogNow, type Catalog } from '@/game/data/catalog';
 export type Ranking = Snapshot & {
     /** v3.18 가린 항목(v3.26 신원 조작)(name · job · level · gear · skills · title · guild). */
     masked?: string[];
@@ -107,8 +107,9 @@ export function useGame() {
         return; const previous = queue.current; let release!: () => void; queue.current = new Promise<void>(resolve => { release = resolve; }); await previous; lock.current = true; if (a.type !== 'sync')
         setBusy(true); try {
         // v27.62 동기화에는 가진 마지막 로그의 키를 붙여, 서버가 그 뒤 로그만 보내게 합니다(응답의 약 절반이 로그).
-        const known = a.type === 'sync' ? stateRef.current?.logs.at(-1) : undefined;
-        const data = await request(path, known ? { ...a, logKey: logKey(known) } : a);
+        const known = a.type === 'sync' ? stateRef.current?.logs.at(-1) : undefined, catalogKey = catalogNow().key;
+        // v3.41 가진 카탈로그 키를 붙이면, 서버는 바뀌었을 때만 카탈로그를 보냅니다.
+        const data = await request(path, { ...a, ...(known ? { logKey: logKey(known) } : {}), ...(catalogKey && path === '/api/game' ? { catalogKey } : {}) });
         // v3.41 카탈로그(문 상태·드러난 비밀 직업)를 상태보다 먼저 적용해, 이번 응답으로 그리는 화면이 같은 기준을 봅니다.
         if (data.catalog) { applyCatalog(data.catalog); setCatalog(data.catalog); }
         if (data.state) {
