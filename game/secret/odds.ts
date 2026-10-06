@@ -26,6 +26,11 @@ export const SERVER_ODDS: Odds = {
          * 정수: 난이도 essenceMinTier(공개) 이상 사냥터에서 처치마다 확률 essenceChancePerTier × 난이도, 양 1 + ⌊난이도 ÷ essenceEveryTiers⌋. 던전은 제외.
          */
         tideRarityPerTier: .0014, essenceChancePerTier: .003, essenceEveryTiers: 10,
+        /**
+         * v3.67 태초 등급의 난이도 가중 상한. (1 + .0014t)^5가 난이도 200에서 ×3.4라 태초가 부위당 7일(칠흑의 2.5배 빠름)이던 것을
+         * ×1.5에서 멈춥니다(난이도 약 60부터): 어느 난이도·던전(나이트메어·무릉 깊은 층)이든 태초 부위당 기대 약 14~18일(난이도 0보다 느리지 않음, 난이도 50~100이 가장 빠름). 고대 이하는 그대로.
+         */
+        primalTierCap: 1.5,
     },
     mimic: {
         /** 출현마다 까미가 나올 확률. 사냥터 난이도 1단계마다 perTier만큼 더합니다(난이도 MIMIC.tierCap까지). */

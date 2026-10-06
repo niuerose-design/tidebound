@@ -247,12 +247,12 @@ export function skillMasteryScale(sk: Pick<Skill, 'job'>) {
 }
 // v3.65 공개 특수 직업의 스킬(data/specials.ts, 완성된 모양).
 registerSkills(SPECIAL_SKILLS);
-// v3.67 옛 독립 수련의 스킬은 id 그대로 새 수련 직업이 가집니다(data/training.ts).
+// v3.68 옛 독립 수련의 스킬은 id 그대로 새 수련 직업이 가집니다(data/training.ts).
 for (const sk of SKILLS) {
     const owner = trainingSkillOwner(sk.id, sk.job);
     if (!owner) continue;
     sk.job = owner;
-    // v3.67 수련 패시브: 1레벨부터 3차 패시브 수준, 숙련 요구치도 3차 수준(data/training.ts TRAINING_PASSIVE).
+    // v3.68 수련 패시브: 1레벨부터 3차 패시브 수준, 숙련 요구치도 3차 수준(data/training.ts TRAINING_PASSIVE).
     if (sk.type !== 'passive') continue;
     if (sk.bonus) sk.bonus = scaleTrainingBonus(sk.bonus as Record<string, number>);
     sk.masteryMilestones = [...TRAINING_PASSIVE.milestones];

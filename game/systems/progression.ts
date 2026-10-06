@@ -257,7 +257,7 @@ export function skillRankHint(sk: Skill, rank: number, mastery = 0, practice = 0
 }
 /** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·숨은 조건 없이 언제든 다시 전직할 수 있습니다. */
 export const jobMastered = (s: Pick<State, 'jobMastery'>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j);
-/** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. v3.67 옛 수련(retired)은 세지 않습니다(숙달할 직업 21개 감소, 기존 세이브도 같은 기준). */
+/** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. v3.68 옛 수련(retired)은 세지 않습니다(숙달할 직업 21개 감소, 기존 세이브도 같은 기준). */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && !j.retired && jobMastered(s, j); }).length;
 /** 전직 조건 목록. v27.13 문 판정은 플레이 기록만 보므로 시각 인자가 없습니다. */
 export function jobRequirements(s: State, j: Job) {
@@ -291,7 +291,7 @@ export function jobRequirements(s: State, j: Job) {
     }
     return list;
 }
-/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. v3.67 옛 수련(retired)은 전직할 수 없습니다. now는 서버 요청 시각입니다. */
+/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. v3.68 옛 수련(retired)은 전직할 수 없습니다. now는 서버 요청 시각입니다. */
 export function canChangeJob(s: State, id: string) { const j = jobById(id); return !!j && !j.retired && (jobMastered(s, j) || jobRequirements(s, j).every(x => x.met)); }
 /** v27.86 절제: 액티브·패시브를 각각 몇 개까지 장착할 수 있는지 넘었는지. */
 export function overRestraint(s: State, ids: string[]) {

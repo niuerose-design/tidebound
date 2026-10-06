@@ -235,7 +235,7 @@ export function clampVitals(s: State) {
 export const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 // v27.79 계정(분신) 보너스는 곱연산 배율입니다(accountExpGold ≤ ×1.3).
-/** v3.67 수련 직업으로 사냥할 때의 처치 보상 배율(data/training.ts). */
+/** v3.68 수련 직업으로 사냥할 때의 처치 보상 배율(data/training.ts). */
 const jobReward = (s: State) => jobById(s.job)?.rewardScale ?? 1;
 export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * jobReward(s) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
 // v3.23 순풍은 다른 경험치 보너스와 더합니다(전에는 따로 곱해 폭증).

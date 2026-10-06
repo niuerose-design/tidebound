@@ -173,7 +173,7 @@ export function retireHiddenJobs(s: State) {
     for (const p of Object.values(s.presets || {})) p.skills = drop(p.skills)!;
 }
 /**
- * v3.67 수련 패시브 숙련 요구치 상향(data/training.ts TRAINING_PASSIVE): 예전 기준(첫 단계 250)으로 이미 계승 자격이 있던 수련 패시브는 계승을 유지합니다. 한 번만 처리합니다.
+ * v3.68 수련 패시브 숙련 요구치 상향(data/training.ts TRAINING_PASSIVE): 예전 기준(첫 단계 250)으로 이미 계승 자격이 있던 수련 패시브는 계승을 유지합니다. 한 번만 처리합니다.
  */
 export function keepTrainingInheritance(s: State) {
     if (s.trainingRescaled) return 0;
@@ -188,7 +188,7 @@ export function keepTrainingInheritance(s: State) {
     return kept;
 }
 /**
- * v3.67 독립 수련 통합(data/training.ts): 지금 옛 수련 직업이면 새 수련 직업으로 옮깁니다(스킬은 id 그대로 새 직업 것이라 편성·습득은 그대로).
+ * v3.68 독립 수련 통합(data/training.ts): 지금 옛 수련 직업이면 새 수련 직업으로 옮깁니다(스킬은 id 그대로 새 직업 것이라 편성·습득은 그대로).
  * 옛 직업의 숙련 기록은 지우지 않습니다(숙달 수에는 세지 않음). 여러 번 불러도 같습니다.
  */
 export function moveToTraining(s: State) {

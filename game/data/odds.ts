@@ -6,8 +6,8 @@
  * 확률 칸을 모듈을 불러올 때 계산해 두면(최상위 상수) 서버가 채우기 전 값(0)이 굳으므로, 늘 쓸 때 읽습니다.
  */
 export type Odds = {
-    /** 장비 드롭: 처치당 기본 확률 · 상한 · 던전 반복 정복 확정 장비 · 황금 개체 기본 · 등급 분포(일반~태초) · 사냥터 난이도 등급 가중 · 정수 확률·양. */
-    drop: { chance: number; cap: number; dungeonRepeat: number; goldenBase: number; rarity: number[]; tideRarityPerTier: number; essenceChancePerTier: number; essenceEveryTiers: number };
+    /** 장비 드롭: 처치당 기본 확률 · 상한 · 던전 반복 정복 확정 장비 · 황금 개체 기본 · 등급 분포(일반~태초) · 사냥터 난이도 등급 가중(태초는 상한까지) · 정수 확률·양. */
+    drop: { chance: number; cap: number; dungeonRepeat: number; goldenBase: number; rarity: number[]; tideRarityPerTier: number; primalTierCap: number; essenceChancePerTier: number; essenceEveryTiers: number };
     /** 숙련의 까미: 기본 · 난이도당 · 사냥터 순서당 배율 · 당첨 등급(소·중·대) · 행운의 편지 ‘대’ 당첨. */
     mimic: { chance: number; perTier: number; stageStep: number; tiers: number[]; letterJackpot: number };
     /** 경험의 누리: 기본 · 난이도당 · 당첨 등급(소·중·대). */
@@ -22,7 +22,7 @@ export type Odds = {
     spawn: Record<string, number>;
 };
 const empty = (): Odds => ({
-    drop: { chance: 0, cap: 0, dungeonRepeat: 0, goldenBase: 0, rarity: [0, 0, 0, 0, 0, 0, 0], tideRarityPerTier: 0, essenceChancePerTier: 0, essenceEveryTiers: 1 },
+    drop: { chance: 0, cap: 0, dungeonRepeat: 0, goldenBase: 0, rarity: [0, 0, 0, 0, 0, 0, 0], tideRarityPerTier: 0, primalTierCap: 1, essenceChancePerTier: 0, essenceEveryTiers: 1 },
     mimic: { chance: 0, perTier: 0, stageStep: 0, tiers: [0, 0, 0], letterJackpot: 0 },
     nuri: { chance: 0, perTier: 0, tiers: [0, 0, 0] },
     onyx: { chance: 0, perTier: 0, pity: Infinity, drop: 0, dropPity: Infinity },
