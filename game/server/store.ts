@@ -69,12 +69,11 @@ export function checkOrigin(req: Request) {
 }
 export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
     const database = db(), now = Date.now();
-    await refreshEvents(now);
     // v3.18 침투 작전 정답 키(인스턴스마다 한 번). v3.25 해킹 효과(이벤트 변조·서버 다운)도 30초 캐시로 반영합니다.
-    await ensurePuzzleKey(now);
-    await readHacks(now);
+    // v3.92 이벤트 · 정답 키 · 해킹 설정과 첫 세이브 읽기는 서로 기다릴 필요가 없어 함께 읽습니다(DB 왕복 최대 4번 → 1번).
+    const [, , , first] = await Promise.all([refreshEvents(now), ensurePuzzleKey(now), readHacks(now), database.getPlayer(id)]);
     for (let attempt = 0; attempt < 3; attempt++) {
-        let row = await database.getPlayer(id);
+        let row = attempt === 0 ? first : await database.getPlayer(id);
         // v25.10 처음 보는 모험가일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
         if (!row) { await database.createPlayerIfMissing(id, JSON.stringify(newState(now)), now); row = await database.getPlayer(id); }
         if (!row)
