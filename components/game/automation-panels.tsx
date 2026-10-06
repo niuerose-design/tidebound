@@ -1,11 +1,15 @@
 'use client';
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, ListOrdered, RefreshCw, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Compass, ListOrdered, RefreshCw, Repeat, X } from 'lucide-react';
 import type { Action, State } from '@/game/types';
 import { RESEARCH, RESEARCH_TABS } from '@/game/data/economy';
 import { ASCENSION, ASCENSION_PERKS, ascended, ascensionPerk } from '@/game/data/ascension';
 import { AUTO_REBIRTH_LEVELS, RESEARCH_PLAN_MAX } from '@/game/systems/research-plan';
 import { rebirthLevel } from '@/game/systems/meta';
+import { FOLLOW_STAGE, FOLLOW_TIDE, followTarget, nextRotationJob, rotationChoices, type FollowRule } from '@/game/systems/automation';
+import { STAGES } from '@/game/data/world';
+import { MIMIC } from '@/game/data/mimic';
+import { jobById } from '@/game/data/classes';
 
 type Props = { s: State; send: (a: Action) => void; busy: boolean };
 /** 승천 편의 패널을 보여 줄지: 승천했거나 승천 패널이 보이는 환생 50회부터(잠긴 채 미리 보기). */
@@ -45,5 +49,38 @@ export function ResearchPlanPanel({ s, send, busy }: Props) {
                 {plan.items.length > 0 && <button type="button" className="text-button" disabled={busy} onClick={() => send({ type: 'researchPlan', id: 'clear' })}>비우기</button>}
             </div>
         </>}
+    </section>;
+}
+
+const STAGE_RULE: Record<FollowRule['stage'], string> = { top: '레벨에 맞는 가장 높은 사냥터', habitat: '레벨에 맞는 가장 높은 무리 서식지', keep: '사냥터는 그대로' };
+const TIDE_RULE: Record<FollowRule['tide'], string> = { max: '고를 수 있는 최대 난이도', mimic: `까미 상한 난이도(${MIMIC.tierCap})까지`, keep: '난이도는 그대로' };
+/** v3.41 사냥터·난이도 자동 따라가기(승천 2회): 레벨·환생이 오르면 규칙대로 사냥터와 난이도를 옮깁니다(전투 사이에만). */
+export function AutoFollowPanel({ s, send, busy }: Props) {
+    const open = ascensionPerk(s, 'autoFollow'), rule: FollowRule = s.autoFollow || { on: false, stage: 'top', tide: 'max' };
+    const set = (patch: Partial<FollowRule>) => { const next = { ...rule, ...patch }; send({ type: 'autoFollow', id: next.on ? 'on' : 'off', value: `${next.stage}:${next.tide}` }); };
+    const target = open ? followTarget(s, rule) : null;
+    return <section className={`panel automation-panel ${open ? '' : 'locked'}`}>
+        <div className="section-title"><h2><Compass size={16}/> 사냥터 · 난이도 자동 따라가기</h2><span>{open ? (rule.on ? '켜짐' : '꺼짐') : `승천 ${ASCENSION_PERKS.autoFollow}회부터`}</span></div>
+        <p>레벨과 환생 횟수가 오르면 규칙대로 사냥터와 난이도를 옮깁니다. 전투 사이(던전 밖, 회복 대기가 아닐 때)에만 바꿉니다.</p>
+        {open && <><div className="automation-row">
+            <select value={rule.stage} disabled={busy} aria-label="사냥터 규칙" onChange={e => set({ stage: e.target.value as FollowRule['stage'] })}>{FOLLOW_STAGE.map(id => <option key={id} value={id}>{STAGE_RULE[id]}</option>)}</select>
+            <select value={rule.tide} disabled={busy} aria-label="난이도 규칙" onChange={e => set({ tide: e.target.value as FollowRule['tide'] })}>{FOLLOW_TIDE.map(id => <option key={id} value={id}>{TIDE_RULE[id]}</option>)}</select>
+            <button type="button" className={rule.on ? 'primary' : 'secondary'} disabled={busy} aria-pressed={rule.on} onClick={() => set({ on: !rule.on })}>{rule.on ? '켜짐' : '꺼짐'}</button>
+        </div>{target && <p className="automation-note">지금 규칙이면: {STAGES.find(x => x.id === target.stage)?.name} · 난이도 {target.tide}</p>}</>}
+    </section>;
+}
+
+/** v3.41 숙련 순회 전직(승천 2회): 지금 직업이 정한 시점에 닿으면 숙달하지 않은 다음 직업으로 바꾸고 추천 편성을 장착합니다. */
+export function RotationPanel({ s, send, busy }: Props) {
+    const choices = rotationChoices(s), open = choices.length > 0, rule = s.rotation || { on: false, at: choices[0] ?? 1 };
+    const at = choices.includes(rule.at) ? rule.at : choices[0], label = (x: 'mastered' | number) => x === 'mastered' ? '숙달 즉시' : `단련 ${x}단계`;
+    const next = open ? nextRotationJob(s) : null;
+    return <section className={`panel automation-panel ${open ? '' : 'locked'}`}>
+        <div className="section-title"><h2><Repeat size={16}/> 숙련 순회 전직</h2><span>{open ? (rule.on ? '켜짐' : '꺼짐') : `승천 ${ASCENSION_PERKS.rotation}회부터`}</span></div>
+        <p>지금 직업이 정한 시점에 닿으면, 바꿀 수 있는 숙달 전 직업 중 낮은 차수부터 자동으로 전직하고 추천 편성을 장착합니다. 전직 시점은 승천 2회에 단련 1단계 고정, 3회부터 숙달 즉시·단련 1~3단계, 4회 1~5단계, 5회 1~7단계까지 고를 수 있습니다.</p>
+        {open && <><div className="automation-row">
+            <label>전직 시점<select value={String(at)} disabled={busy || choices.length < 2} onChange={e => send({ type: 'rotation', id: rule.on ? 'on' : 'off', value: e.target.value })}>{choices.map(x => <option key={String(x)} value={String(x)}>{label(x)}</option>)}</select></label>
+            <button type="button" className={rule.on ? 'primary' : 'secondary'} disabled={busy} aria-pressed={rule.on} onClick={() => send({ type: 'rotation', id: rule.on ? 'off' : 'on', value: String(at) })}>{rule.on ? '켜짐' : '꺼짐'}</button>
+        </div><p className="automation-note">{next ? `다음 직업: ${next.name}` : '지금 바꿀 수 있는 숙달 전 직업이 없습니다.'} · 지금 직업 {jobById(s.job)?.name}</p></>}
     </section>;
 }

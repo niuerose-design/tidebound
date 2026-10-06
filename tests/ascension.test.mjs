@@ -145,3 +145,29 @@ test('v3.40 auto rebirth also fires during offline catch-up and keeps the offlin
     advance(s, 10 * 60_000, rng);
     assert.equal(s.rebirths, 4); assert.equal(s.running, true); assert.ok(s.lastOffline && s.lastOffline.gold >= 0, 'offline summary kept and never negative');
 });
+
+test('v3.41 auto follow (ascension 2): highest stage that fits the level, tide by rule, only between fights', () => {
+    const s = newState(0); s.ascension = 1; s.rebirths = 25; s.level = 40;
+    assert.throws(() => act(s, { type: 'autoFollow', id: 'on', value: 'top:max' }, 0), /승천 2회/);
+    s.ascension = 2; act(s, { type: 'autoFollow', id: 'on', value: 'top:mimic' }, 0);
+    assert.throws(() => act(s, { type: 'autoFollow', id: 'on', value: 'nope:max' }, 0), /규칙/);
+    const want = [...W.PLACES].reverse().find(st => st.level <= 40 && s.rebirths >= st.rebirth);
+    s.enemy = { id: 'x' }; assert.equal(AmMod.runAutoFollow(s), false, 'waits while fighting'); s.enemy = null;
+    assert.equal(AmMod.runAutoFollow(s), true); assert.equal(s.stage, want.id); assert.equal(s.tide, Math.min(20, Mi.MIMIC.tierCap));
+    assert.equal(AmMod.runAutoFollow(s), false, 'nothing to change');
+    act(s, { type: 'autoFollow', id: 'on', value: 'habitat:max' }, 0); AmMod.runAutoFollow(s); assert.ok(W.STAGES.find(x => x.id === s.stage).habitat); assert.equal(s.tide, 25);
+});
+
+test('v3.41 job rotation (ascension 2 fixed at vocation 1; more choices later): switches to the next unmastered job and equips a loadout', () => {
+    const s = newState(0); s.ascension = 1; s.level = 60; s.rebirths = 10; Object.assign(s.attributes, { str: 60, dex: 60, int: 60, vit: 60, wis: 60, luk: 60 });
+    assert.deepEqual(AmMod.rotationChoices(s), []); assert.throws(() => act(s, { type: 'rotation', id: 'on', value: '1' }, 0), /승천 2회/);
+    s.ascension = 2; assert.deepEqual(AmMod.rotationChoices(s), [1]); assert.throws(() => act(s, { type: 'rotation', id: 'on', value: 'mastered' }, 0), /전직 시점/);
+    s.ascension = 3; assert.deepEqual(AmMod.rotationChoices(s), ['mastered', 1, 2, 3]); s.ascension = 5; assert.equal(AmMod.rotationChoices(s).length, 8);
+    s.ascension = 2; act(s, { type: 'rotation', id: 'on', value: '1' }, 0);
+    const target = P.jobMasteryTarget(s.job); s.jobMastery[s.job] = target; s.running = true;
+    assert.equal(AmMod.runRotation(s, () => .5), false, 'mastered but vocation 1 not reached');
+    s.jobMastery[s.job] = target + LT.VOCATION_OFFSETS[0]; const from = s.job;
+    assert.equal(AmMod.runRotation(s, () => .5), true); assert.notEqual(s.job, from); assert.equal(s.running, true, 'keeps hunting');
+    assert.ok(s.skills.length > 0, 'loadout equipped'); assert.ok(s.logs.some(l => l.text.startsWith('숙련 순회 전직')));
+    s.rebirths = Asc.ASCENSION.requirements[2]; Lc.ascend(s, 0); assert.deepEqual(s.rotation, { on: true, at: 1 }, 'rotation survives ascension');
+});

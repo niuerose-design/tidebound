@@ -1,5 +1,5 @@
 'use client';
-import { AutoRebirthPanel, ResearchPlanPanel, showAutomation } from './automation-panels';
+import { AutoRebirthPanel, AutoFollowPanel, RotationPanel, ResearchPlanPanel, showAutomation } from './automation-panels';
 import { ConfirmButton } from './confirm-button';
 import { useState } from 'react';
 import { Sparkles, RefreshCw, Info, ChevronDown } from 'lucide-react';
@@ -139,7 +139,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
         {tab === 'prepare' && <>
             <AscensionPanel s={s} send={send} busy={busy}/>
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
-            {showAutomation(s) && <AutoRebirthPanel s={s} send={send} busy={busy}/>}
+            {showAutomation(s) && <><AutoRebirthPanel s={s} send={send} busy={busy}/><AutoFollowPanel s={s} send={send} busy={busy}/><RotationPanel s={s} send={send} busy={busy}/></>}
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.rebirths >= ASCENSION.rebirthCap ? `환생은 ${ASCENSION.rebirthCap}회까지입니다. 위의 승천으로 다시 오를 수 있습니다` : s.level >= required ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
                     {s.rebirths > 0 && <p className="footnote">이번 생 효과: {tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산)` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</p>}</div>

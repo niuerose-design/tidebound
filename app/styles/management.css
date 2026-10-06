@@ -405,3 +405,4 @@
 .research-plan-list li.done b { color:#a4e9ba; }
 .research-plan-actions { display:inline-flex; gap:4px; flex-shrink:0; }
 .research-plan-empty { font-size:13px; color:#8faead; margin:0 0 10px; }
+.automation-note { font-size:12px; color:#8faead; margin:8px 0 0; }

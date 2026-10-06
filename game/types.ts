@@ -449,6 +449,10 @@ export type State = {
     autoRebirth?: { on: boolean; level: number };
     /** v3.40 연구 구매 예약(승천 1회): 순서대로 목표 단계까지 자동 구매. */
     researchPlan?: { on: boolean; items: { id: string; to: number }[] };
+    /** v3.41 사냥터·난이도 자동 따라가기(승천 2회). */
+    autoFollow?: { on: boolean; stage: 'top' | 'habitat' | 'keep'; tide: 'max' | 'mimic' | 'keep' };
+    /** v3.41 숙련 순회 전직(승천 2회): 전직 시점('mastered' 또는 단련 단계). idle은 바꿀 직업이 없다고 한 번 알린 표시. */
+    rotation?: { on: boolean; at: 'mastered' | number; idle?: boolean };
     /** v3.12 칠흑 보스: 서식지별로 보스를 못 본 출현 횟수(천장)와 보스별 처치 수. 환생해도 남습니다. */
     onyxSeen?: Record<string, number>;
     onyxBook?: Record<string, number>;

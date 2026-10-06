@@ -2,6 +2,7 @@
 import { tailwindExp, rebirthLevel, rebirthReward } from '../meta';
 import { ASCENSION, ASCENSION_RESEARCH, ASCENSION_LOG_KEEP, ASCENSION_PERKS, ascensionOf, ascensionPerk, ascensionRequirement } from '../../data/ascension';
 import { AUTO_REBIRTH_LEVELS, RESEARCH_PLAN_MAX, runResearchPlan } from '../research-plan';
+import { FOLLOW_STAGE, FOLLOW_TIDE, rotationChoices, type FollowRule } from '../automation';
 import { achievementById } from '../../data/achievements';
 import { masteryMilestonesFor } from '../progression';
 import { skillById } from '../../data/skills';
@@ -161,7 +162,7 @@ export function ascend(s: State, now: number) {
         guildMember: s.guildMember, guildStats: s.guildStats, altar: s.altar, daily: s.daily, weekly: s.weekly, duelSeason: s.duelSeason,
         privacy: s.privacy, autoSell: s.autoSell, autoVend: s.autoVend, autoSellGrades: s.autoSellGrades, autoVendGrades: s.autoVendGrades, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, skipStatConfirm: s.skipStatConfirm, swarmCap: s.swarmCap,
         account: s.account, hacker: s.hacker, hackFeed: s.hackFeed, doorsOpened: s.doorsOpened, shopSerial: s.shopSerial, logId: s.logId,
-        newsMark: s.newsMark, letterLog: s.letterLog, autoRebirth: s.autoRebirth, researchPlan: s.researchPlan, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled,
+        newsMark: s.newsMark, letterLog: s.letterLog, autoRebirth: s.autoRebirth, researchPlan: s.researchPlan, autoFollow: s.autoFollow, rotation: s.rotation, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled,
         jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, skillPractice: s.skillPractice, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited,
         learned: Object.fromEntries(Object.keys(s.learned || {}).map(id => [id, 1])),
         // 튜토리얼은 건너뜁니다: 모든 단계를 완료로 적어 안내도, 단계 보상도 다시 나오지 않게 합니다.
@@ -220,6 +221,21 @@ export const lifecycleActions: ActionHandlers = {
         else throw Error('연구 구매 예약 설정을 확인하세요.');
         s.researchPlan = { on: plan.on, items };
         if (s.researchPlan.on) { const n = runResearchPlan(s); if (!n && id === 'on') addLog(s, '연구 구매 예약을 켰습니다. 세계석이 모이면 순서대로 삽니다.', 'system'); }
+    },
+    /** v3.41 사냥터·난이도 자동 따라가기(승천 2회): id 'on' · 'off', value '사냥터 규칙:난이도 규칙'(top|habitat|keep : max|mimic|keep). */
+    autoFollow(s, { id, a }) {
+        if (!ascensionPerk(s, 'autoFollow')) throw Error(`자동 따라가기는 승천 ${ASCENSION_PERKS.autoFollow}회부터 쓸 수 있습니다.`);
+        const [stage, tide] = String(a.value || `${s.autoFollow?.stage || 'top'}:${s.autoFollow?.tide || 'max'}`).split(':');
+        if (!(FOLLOW_STAGE as readonly string[]).includes(stage) || !(FOLLOW_TIDE as readonly string[]).includes(tide) || (id !== 'on' && id !== 'off')) throw Error('자동 따라가기 규칙을 확인하세요.');
+        s.autoFollow = { on: id === 'on', stage: stage as FollowRule['stage'], tide: tide as FollowRule['tide'] };
+    },
+    /** v3.41 숙련 순회 전직(승천 2회): id 'on' · 'off', value 전직 시점('mastered' 또는 단련 단계 숫자, 승천 횟수에 따라 고를 수 있는 범위). */
+    rotation(s, { id, a }) {
+        const choices = rotationChoices(s);
+        if (!choices.length) throw Error(`숙련 순회 전직은 승천 ${ASCENSION_PERKS.rotation}회부터 쓸 수 있습니다.`);
+        const raw = a.value ?? String(s.rotation?.at ?? choices[0]), at = raw === 'mastered' ? 'mastered' : Number(raw);
+        if (!choices.includes(at) || (id !== 'on' && id !== 'off')) throw Error('지금 승천 횟수로 고를 수 있는 전직 시점이 아닙니다.');
+        s.rotation = { on: id === 'on', at };
     },
     /** v25.6 업적 보상 받기: id 또는 'all'. */
     claimAchievement(s, { id }) {
