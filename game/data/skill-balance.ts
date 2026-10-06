@@ -6,7 +6,7 @@ import { V24_BALANCE } from './expansion-v24';
 import { DEFENSE_BALANCE } from './expansion-defense';
 import { INVERSION_BALANCE } from './expansion-inversion';
 import { MONOSTAT_BALANCE } from './expansion-monostat';
-import { SUPPORT_BALANCE, SUPPORT_STATUS_ONLY } from './support-rework';
+import { SUPPORT_BALANCE } from './support-rework';
 import { V25_BALANCE, V25_STATUS_ONLY } from './expansion-v25';
 
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
@@ -30,15 +30,9 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     pearlPrayer: { chance: .6, multiplier: 1.7, manaCost: 16, damageType: 'magic', healRatio: .18 },
     crush: { chance: .22, multiplier: 1.5 },
     oath: { chance: .24, multiplier: 2.1, drainRatio: .15 },
-    soulHook: { chance: .24, multiplier: 1.9, drainRatio: .15 },
-    eternalWave: { chance: .6, multiplier: 2.6, manaCost: 24, cooldownReset: { on: 'kill', chance: 1, pick: 'all' } },
     vitalSurge: { chance: .23, multiplier: 1.65, scalingRatio: .05, drainRatio: .15 },
-    voidLance: { chance: .55, multiplier: 2, scalingRatio: .3, manaCost: 20 },
     // v27.5 망인 계보 계승 가치: 다크 엘리멘트 AP 4→2·대기 3, 쉐도우 배트 발동 34%·×1.9·AP 3. 같은 차수 기술 중 꼴찌였습니다.
-    graveHook: { chance: .5, multiplier: 1.7, manaCost: 13 },
     // v27.4 유리 대포(제약 직업): 240%·빈사 +50%.
-    glassLance: { chance: .3, multiplier: 2.4 },
-    marrowGuard: { chance: .3, multiplier: 2 },
     wakeFist: { chance: .26, multiplier: 1.45 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
     greenTide: { chance: .55, multiplier: 1.3, manaCost: 11, healRatio: .16 },
@@ -58,8 +52,6 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     windupCast: { chance: .25, multiplier: 1.5, scalingRatio: .03 },
     loadedHook: { chance: .3, multiplier: 1.05, cooldown: 2, drainRatio: .1 },
     redWake: { chance: .24, multiplier: 1.65, scalingRatio: .07, drainRatio: .18 },
-    leviathanEquation: { chance: .55, multiplier: 2.6, scalingRatio: .45, manaCost: 28 },
-    harvestEcho: { chance: .26, multiplier: 2.2, drainRatio: .18 },
     // 올라운더: check-all-rounder.mjs 검증값
     harmonicWeight: { chance: .5, multiplier: 2.2, cooldown: 3, manaCost: 16 },
     twinHook: { chance: .24, multiplier: 1.15, extraAttackMultiplier: .5 },
@@ -88,7 +80,7 @@ for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE }
  */
 const STATUS_ONLY_SKILLS = ['anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'numbNeedle', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
     'bellCrash', 'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
-    'quakeStep', 'sealHex', 'frostMist', 'driftwoodShove', 'currentJam', 'netThrow', 'oathShout', 'rottenBait', ...SUPPORT_STATUS_ONLY, ...V25_STATUS_ONLY];
+    'quakeStep', 'sealHex', 'frostMist', 'driftwoodShove', 'currentJam', 'netThrow', 'oathShout', 'rottenBait', ...V25_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, poison: 4, burn: 3, weaken: 3, silence: 2, slow: 3 };
 /** 상태이상 전용 전환과 초반 배율 제한. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. tier는 기술 주인 직업의 차수(공용 0). */

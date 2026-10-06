@@ -54,7 +54,7 @@ export type RankState = { /** 계급 경험치(세어진 처치 수) */ exp: num
  */
 export const SWARM_RANK_PER_TURN: Record<number, number> = { 5: 1.1, 100: 1.32, 500: 1.98 };
 /**
- * v3.47 무리 처치 숙련: 계급과 같은 구조(싸운 턴 × 규모별 턴당 값, 마리 수 상한)로 숙련 배수를 셉니다.
+ * v3.48 무리 처치 숙련: 계급과 같은 구조(싸운 턴 × 규모별 턴당 값, 마리 수 상한)로 숙련 배수를 셉니다.
  * 한 마리 처치는 턴당 약 1이므로 서식지 숙련은 처치 숙련의 약 10~20배(×100 · ×500), 까미 상한 지역의 1/10 정도입니다.
  */
 export const SWARM_MASTERY_PER_TURN: Record<number, number> = { 5: 2, 100: 10, 500: 20 };

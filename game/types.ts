@@ -144,6 +144,8 @@ export type Item = {
     level: number;
 };
 export type Skill = {
+    /** v3.47 연출 갈래(skill-fx.ts SKILL_FX와 같은 값). 서버 전용 비밀 스킬은 공개 표 대신 여기에 둡니다. */
+    fx?: string;
     /** A rare native technique requires this much mastery in its owning job. */
     unlockJobMastery?: number;
     sourceEnemySkill?: string;

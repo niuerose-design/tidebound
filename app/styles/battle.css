@@ -929,7 +929,7 @@
 .chat-line.news-line .chat-text{color:#d6dfd7}
 @media(max-width:767px){.battle-utility-rail>.battle-feed .rail-log{flex:none;height:300px;min-height:0}}
 .battle-utility-rail>.battle-feed .news-feed .chat-list>:first-child{margin-top:0}
-/* v3.47 소식 줄 색: 종류마다 이름·본문·왼쪽 띠 색을 다르게 */
+/* v3.48 소식 줄 색: 종류마다 이름·본문·왼쪽 띠 색을 다르게 */
 .chat-line.news-line{padding-left:8px;border-left:2px solid #3a5658}
 .chat-line.news-line.news-onyx{border-left-color:#f08a6c}.chat-line.news-line.news-onyx .chat-text{color:#f4b39f}
 .chat-line.news-line.news-ascend{border-left-color:#5fd0b5}.chat-line.news-line.news-ascend .chat-text{color:#9ce8d4}

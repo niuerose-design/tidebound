@@ -2,9 +2,12 @@
  * v3.43 정보 비공개(docs/concept.md 10장): 서버가 모험가마다 만들어 화면에 보내는 카탈로그.
  * 화면은 비밀 표(히든 직업 조건·드롭 테이블·확률·스킬 전체 계보)를 직접 읽지 않고 이 카탈로그만 쓰도록 단계마다 옮겨 갑니다.
  * v3.44 2단계: 문 상태(조건은 서버가 판정)와 드러난 비밀 직업 목록. applyCatalog가 화면 쪽 문 창구(door-info)를 채웁니다.
+ * v3.47 3단계: 비밀 직업의 스킬. 드러난 직업(비공개가 꺼져 있으면 전부)의 스킬만 받아 스킬 표에 넣습니다.
  */
 import { setDoorSource, type DoorId } from './door-info';
 import { upsertJobs, registerLineages, type Job, type Lineage } from './classes';
+import { registerSkills } from './skills';
+import type { Skill } from '../types';
 
 export type CatalogDoors = {
     states: Record<string, { door: DoorId; open: boolean }>;
@@ -22,6 +25,8 @@ export type Catalog = {
     /** v3.44 비밀 직업: 드러났거나 비공개가 꺼져 있으면 전체, 아니면 실루엣(veiled). 화면 직업 표에 넣습니다. */
     jobs?: Job[];
     lineages?: Lineage[];
+    /** v3.47 비밀 직업의 스킬(완성된 모양): 드러난 직업 것과 내가 배운·장착한 것. 비공개가 꺼져 있으면 전부. */
+    skills?: Skill[];
     /** 내용 키. 화면이 가진 키와 같으면 서버는 카탈로그를 다시 보내지 않습니다. */
     key?: string;
 };
@@ -33,6 +38,7 @@ export function applyCatalog(c: Catalog) {
     current = c; revealed = new Set(c.revealed || []);
     if (c.lineages?.length) registerLineages(c.lineages);
     if (c.jobs?.length) upsertJobs(c.jobs);
+    if (c.skills?.length) registerSkills(c.skills);
     const states = c.doors?.states || {};
     // 브라우저에서만 문 창구를 카탈로그로 바꿉니다(서버·테스트는 doors.ts의 실제 판정을 그대로 씀).
     if (typeof window !== 'undefined') setDoorSource({ doorFor: (_s, jobId) => states[jobId] ?? null });

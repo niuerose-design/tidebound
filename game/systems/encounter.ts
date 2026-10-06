@@ -232,7 +232,7 @@ export function reward(s: State, rng: () => number) {
     const { focus: focusMastery, event: eventMastery } = masteryMultipliers(s);
     // v3.42 ×500 도전 무리는 경험치·골드 ×1.5(swarmRewardMultiplier).
     const big = swarmRewardMultiplier(size);
-    // v3.47 무리 숙련은 마리 수 대신 싸운 턴 × 규모별 값(swarmMasteryKills, 마리 수 상한). 서식지가 숙련을 까미보다 몇 배 더 주던 문제.
+    // v3.48 무리 숙련은 마리 수 대신 싸운 턴 × 규모별 값(swarmMasteryKills, 마리 수 상한). 서식지가 숙련을 까미보다 몇 배 더 주던 문제.
     const swarmTurns = s.turn - (e.born ?? s.turn) + 1, masteryHeads = size > 1 ? swarmMasteryKills(size, swarmTurns) : 1;
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * masteryHeads * focusMastery * eventMastery)), practice = researched.total;
     // v3.12 칠흑 세트 4종: 무리 서식지 골드·경험치 +15%.

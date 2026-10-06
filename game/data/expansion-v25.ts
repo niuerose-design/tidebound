@@ -33,16 +33,6 @@ export const V25_JOBS: NewJob[] = [
 ];
 
 export const V25_SKILLS: Skill[] = [
-    // ── 제로 (1차) ──
-    { ...A, ...physical, id: 'windUp', name: '태엽 감기', desc: '', level: 10, job: 'clockmaker', cost: 2, effect: 'haste' },
-    { ...A, ...physical, id: 'slackHand', name: '늘어진 초침', desc: '', level: 10, job: 'clockmaker', cost: 2, effect: 'slow' },
-    { ...P, id: 'timeLag', name: '시차', desc: '속도와 회피가 오릅니다. 속도 차이가 클수록 연속 행동이 잦아집니다.', level: 10, job: 'clockmaker', cost: 2, bonus: { speed: 6, evasion: .02 } },
-    { ...A, ...physical, id: 'timeMachine', name: '타임머신', desc: '', level: 10, job: 'clockmaker', cost: 2, restoreAll: true, statusOnly: true },
-    // ── 제로 (4차) ──
-    { ...A, id: 'frozenTime', name: '정지된 시간', desc: '', level: 10, job: 'chronarch', cost: 5, damageType: 'split', scaling: 'dual', effect: 'stun', masteryMilestones: [2500, 12000, 40000, 100000] },
-    { ...A, id: 'precede', name: '선행', desc: '', level: 10, job: 'chronarch', cost: 5, damageType: 'split', scaling: 'dual', extraTurn: true, masteryMilestones: [2500, 12000, 40000, 100000] },
-    { ...A, id: 'rewind', name: '역행', desc: '', level: 10, job: 'chronarch', cost: 4, damageType: 'split', scaling: 'dual', effect: 'heal', masteryMilestones: [2500, 12000, 40000, 100000] },
-    { ...P, id: 'chronoSovereign', name: '시간의 주권', desc: '속도·회피·치명타·명중이 크게 오르고, 연속 행동마다 편성 첫 번째 대기 중인 기술을 초기화합니다.', level: 10, job: 'chronarch', cost: 3, bonus: { speed: 18, evasion: .05, crit: .05, accuracy: .05, attack: 40, magic: 40 }, cooldownReset: { on: 'chain', chance: 1, pick: 'first' }, masteryMilestones: [2500, 12000, 40000, 100000] },
     // ── 玄: 無 → 虛 → 斬 → 血 → 縛 → 刹 → 魂 → 天 ──
     { ...P, ...GLYPH, id: 'glyphNothing', name: '無', desc: '체력이 1 아래로 내려가지 않습니다. 쓰러질 피해를 받으면 체력 1로 버티고 최대 체력의 25%를 되찾습니다(전투당 6번, 숙련 1단계마다 +2번). 함께 새긴 글자 수에 비례해 횟수·회복이 줄어, 無만 새기면 전투당 1번·회복 없음입니다.', cost: 1, lastStand: { charges: 6, chargesPerLevel: 2, heal: .25 } },
     { ...GLYPH_A, id: 'glyphVoid', name: '虛', desc: '', unlockAfter: { skill: 'glyphNothing', level: 1 } },
@@ -56,13 +46,6 @@ export const V25_SKILLS: Skill[] = [
 
 /** 액티브 최종 수치(ACTIVE_SKILL_BALANCE에 합쳐짐). */
 export const V25_BALANCE: Record<string, Partial<Skill>> = {
-    windUp: { chance: .28, cooldown: 4, multiplier: .9 },
-    slackHand: { chance: .3, cooldown: 3, multiplier: 1 },
-    timeMachine: { chance: .12, cooldown: 1, multiplier: 1 },
-    frozenTime: { chance: 1, cooldown: 6, multiplier: 1.6, statusTurns: 2, manaCost: 8, sureHit: true },
-    // v25.2: 복합 피해 기술 규칙(발동 45% 이상)에 맞추고 제로 (4차)를 4차 중앙값으로 끌어올립니다.
-    precede: { chance: .45, cooldown: 5, multiplier: 1.9, manaCost: 8 },
-    rewind: { chance: .45, cooldown: 6, multiplier: 1.3, healRatio: .35, manaCost: 8 },
     // 虛: 체력을 1까지 걸고 건 체력에 비례한 피해. 無 없이 쓰면 다음 공격에 쓰러집니다.
     glyphVoid: { chance: .26, cooldown: 4, multiplier: 1.2, accuracyBonus: .15, allIn: { hpRatio: 1, hpScale: 1, manaScale: 0 } },
     // 斬: 큰 피해, 준 피해의 절반을 자신도 받음(체력 1 아래로는 안 내려감).
@@ -78,7 +61,7 @@ export const V25_BALANCE: Record<string, Partial<Skill>> = {
 };
 
 /** 피해 없이 상태이상만 거는 기술. */
-export const V25_STATUS_ONLY = ['slackHand', 'glyphBind'];
+export const V25_STATUS_ONLY = ['glyphBind'];
 
 export const V25_HINTS: Record<string, string> = {
     glyphMonk: '일곱 글자를 품은 수행자. 누구에게나 열려 있습니다.',

@@ -724,7 +724,7 @@ test('v27.62 sync log delta: server sends only logs after the client key, client
     const firstBefore = s.logs[0].id;
     E.advance(s, 130_000, rng); // 서버에서 로그가 몇 줄 더 쌓이고 앞쪽은 70줄 상한으로 빠짐
     const battleLines = s.logs.filter(l => D.logGroup(l.type) === 'battle').length, rewardLines = s.logs.length - battleLines;
-    assert.ok(battleLines === D.LOG_KEEP.battle && rewardLines <= D.LOG_KEEP.reward && s.logs.length < s.logId - firstBefore + 1, 'v3.47 front logs dropped per group (battle 70 · reward 50)');
+    assert.ok(battleLines === D.LOG_KEEP.battle && rewardLines <= D.LOG_KEEP.reward && s.logs.length < s.logId - firstBefore + 1, 'v3.48 front logs dropped per group (battle 70 · reward 50)');
     const cut = D.trimLogs(s.logs, D.logKey(client.at(-1)));
     assert.ok(cut && cut.logs.length < s.logs.length && cut.logs.every(l => l.id > cut.delta.after), 'only newer logs are sent');
     assert.deepEqual(D.mergeLogs(client, json(cut.logs), cut.delta), json(s.logs), 'merge equals the server list');
