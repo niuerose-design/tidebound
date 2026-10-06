@@ -7,10 +7,10 @@ import { ArrowUpRight, ChevronDown, Gem, Lock, Search, Sparkles, Swords } from '
 import { OnyxArt } from './onyx-art';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Item, Stats } from '@/game/types';
-import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, researchRank } from '@/game/data/economy';
+import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, HEIR_GROWTH, AWAKENING, PRIMAL_INHERIT, heirFactor, awakenEssence, researchRank } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '@/game/data/progression';
-import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, rerollCost, refineCost, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
+import { itemStats, itemDescription, enhanceCost, bulkItems, saleValue, dismantleEssence, primalGaugeOf, keepsAcrossLives, heirKind, rerollCost, refineCost, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
 import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT } from '@/game/data/gear';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
 import { stats, power } from '@/game/systems/stats';
@@ -92,8 +92,8 @@ export function Inventory({ s, send, busy }: PanelProps) {
             <div className="button-row">
                 {!equipped && <>
                     <button className="secondary small" disabled={busy} onClick={() => send({ type: 'lockItem', id: item.id })}>{item.locked ? '보호 해제' : '보호'}</button>
-                    <ConfirmButton label={`${format(saleValue(item))} G 판매`} title={`${item.name}을(를) 판매할까요?`} description={`${format(saleValue(item))} G를 받고 장비가 사라집니다.`} disabled={busy || !!item.locked || !!item.relic} onConfirm={() => send({ type: 'sell', id: item.id })}/>
-                    <ConfirmButton label={`분해 · 정수 +${dismantleEssence(item)}`} title={`${item.name}을(를) 분해할까요?`} description={`정수 ${dismantleEssence(item)}를 얻고 장비가 사라집니다.`} disabled={busy || !!item.locked || !!item.relic} onConfirm={() => send({ type: 'dismantle', id: item.id })}/>
+                    <ConfirmButton label={`${format(saleValue(item))} G 판매`} title={`${item.name}을(를) 판매할까요?`} description={`${format(saleValue(item))} G를 받고 장비가 사라집니다.`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'sell', id: item.id })}/>
+                    <ConfirmButton label={`분해 · 정수 +${dismantleEssence(item)}${primalGaugeOf(item) ? ' · 계승 게이지 +1' : ''}`} title={`${item.name}을(를) 분해할까요?`} description={`정수 ${dismantleEssence(item)}를 얻고 장비가 사라집니다.${primalGaugeOf(item) ? ` 태초 계승 게이지가 1 찹니다(${(s.primalGauge || 0) + 1}/${PRIMAL_INHERIT.gauge}).` : ''}`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'dismantle', id: item.id })}/>
                 </>}
             </div>
             <details className="forge-details"><summary>{item.relic ? '강화 · 옵션 이식' : '강화 · 옵션 재설정'}</summary><EquipmentForge s={s} send={send} busy={busy} item={item}/></details>
@@ -104,7 +104,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
         return <article key={item.id} className={`panel gear-row ${expanded ? 'expanded' : ''} ${equipped ? 'equipped' : ''}`} style={{ '--rarity': RARITIES[item.rarity].color } as React.CSSProperties}>
             <button type="button" className="gear-row-main" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : item.id)}>
                 <span className={`gear-row-icon${item.onyx ? ' onyx-icon' : ''}`}>{item.onyx ? <OnyxArt id={item.onyx} size={30}/> : <SlotIcon slot={item.slot} size={20}/>}</span>
-                <span className="gear-row-name"><strong>{item.name} <span className="gold-text">{starLabel(item.enhance || 0)}</span>{item.locked && <Lock size={12} aria-label="보호"/>}{item.relic && <Sparkles size={12} aria-label="환생 보존 유물"/>}{item.onyx && <Gem size={12} aria-label="칠흑 장신구"/>}</strong><small>{RARITIES[item.rarity].name} · {SLOTS[item.slot]} · 위력 {item.power} · {item.relic ? '유물' : `Lv.${item.level}`}{item.affixes?.length ? ` · 옵션 ${item.affixes.length}` : ''}</small></span>
+                <span className="gear-row-name"><strong>{item.name} <span className="gold-text">{starLabel(item.enhance || 0)}</span>{item.locked && <Lock size={12} aria-label="보호"/>}{item.relic && <Sparkles size={12} aria-label="환생 보존 유물"/>}{item.heir && <Sparkles size={12} aria-label={HEIR_LABEL[item.heir]}/>}{item.onyx && <Gem size={12} aria-label="칠흑 장신구"/>}</strong><small>{RARITIES[item.rarity].name} · {SLOTS[item.slot]} · 위력 {item.power} · {item.relic ? '유물' : item.heir ? `${HEIR_LABEL[item.heir]} · Lv.${item.level}` : `Lv.${item.level}`}{item.affixes?.length ? ` · 옵션 ${item.affixes.length}` : ''}</small></span>
                 <span className="gear-row-stats">{topStats(item)}</span>
                 <span className="gear-row-gain">{equipped ? <span className="gear-gain neutral">착용 중</span> : gainBadge(gain)}</span>
                 <ChevronDown size={16} className="gear-row-chevron"/>
@@ -160,7 +160,7 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     const blocked = !picked ? '' : lines.some((x, i) => i !== slot && x.id === picked.affix.id) ? '이미 같은 옵션이 새겨져 있습니다.' : picked.affix.rule && lines.some((x, i) => i !== slot && x.rule) ? '규칙 옵션은 유물당 하나만 새길 수 있습니다.' : s.gold < cost ? '골드가 부족합니다.' : '';
     const label = (a: NonNullable<Item['affixes']>[number]) => `${a.name} · ${STAT_LABELS[a.stat]} ${statDeltaDisplay(a.stat, a.value)}`;
     return <div className="relic-imprint">
-        <b>옵션 이식 · 환생 {s.rebirths}회 위력 ×{(1 + s.rebirths * RELIC_GROWTH.perRebirth).toFixed(2)}</b>
+        <b>옵션 이식 · 환생 {s.rebirths}회 위력 배율 ×{heirFactor('relic', s.rebirths).toFixed(2)}{item.relicLegacy ? ' · 다음 승천까지 예전 공식과 새 공식 중 높은 쪽' : ''}</b>
         <div className="relic-imprint-slots">{Array.from({ length: RELIC_GROWTH.imprintSlots }, (_, i) => <label key={i} className={`altar-anon${slot === i ? ' on' : ''}`}><input type="radio" name={`imprint-${item.id}`} checked={slot === i} onChange={() => setSlot(i)}/> {i + 1}번 칸 · {lines[i] ? label(lines[i]) : '비어 있음'}</label>)}</div>
         {choices.length ? <>
             <label className="gear-select">소비할 장비·옵션<select value={key} onChange={e => setChoice(e.target.value)}>{choices.map(c => <option key={c.key} value={c.key}>{c.item.name}{starLabel(c.item.enhance || 0) ? ` ${starLabel(c.item.enhance || 0)}` : ''} › {label(c.affix)}</option>)}</select></label>
@@ -171,13 +171,41 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     </div>;
 }
 
+/** v3.66 계승: 고대는 정수로 원시 각성, 태초는 분해 게이지로 계승. 계승하면 환생해도 남고 위력이 환생마다 오르며 옵션이 최고 수치로 고정됩니다. 부위마다 종류별 1개. */
+const HEIR_LABEL = { ancient: '원시 고대', primal: '계승 태초' } as const;
+function HeirPanel({ s, send, busy, item }: PanelProps & { item: Item }) {
+    const kind = item.rarity === 5 ? 'ancient' : 'primal', g = HEIR_GROWTH[kind], label = HEIR_LABEL[kind];
+    const factor = (rb: number) => heirFactor(kind, rb).toFixed(2);
+    if (item.heir) return <div className="relic-imprint">
+        <b>{label} · 환생해도 남습니다</b>
+        <p className="footnote">위력 = (레벨 + 2) × 배율 ×{factor(s.rebirths)} (환생 {HEIR_GROWTH.toRebirth}회 ×{g.to}). 강화가 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다. 승천하면 사라집니다.</p>
+    </div>;
+    const old = [...s.inventory, ...Object.values(s.equipment)].find(x => x && x.id !== item.id && x.heir === kind && x.slot === item.slot);
+    const replace = old ? ` 이 부위의 ${label} ‘${old.name}’은(는) 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐).` : '';
+    const what = `환생해도 남고, 위력이 (레벨 + 2) × ${factor(s.rebirths)}(환생 ${HEIR_GROWTH.toRebirth}회 ×${g.to})로 바뀌며 옵션 수치가 최고로 고정됩니다. 판매·분해할 수 없게 됩니다.`;
+    if (kind === 'ancient') {
+        const cost = awakenEssence(s.rebirths), have = s.essence || 0;
+        return <div className="relic-imprint">
+            <b>원시 각성 · 정수 {format(cost)} (보유 {format(have)})</b>
+            <ConfirmButton label={`원시 각성 · 정수 ${format(cost)}`} title={`${item.name}을(를) 원시 각성할까요?`} description={`정수 ${format(cost)}를 씁니다. ${what}${replace}`} disabled={busy || have < cost} onConfirm={() => send({ type: 'awaken', id: item.id })}/>
+            <p className="footnote">각성 비용은 환생이 많을수록 늘어납니다(정수 {format(AWAKENING.essenceBase)} × 10^(환생 ÷ {AWAKENING.rebirthScale})). 부위마다 원시 고대 하나만 둘 수 있습니다.</p>
+        </div>;
+    }
+    const gauge = s.primalGauge || 0;
+    return <div className="relic-imprint">
+        <b>태초 계승 · 게이지 {gauge}/{PRIMAL_INHERIT.gauge}</b>
+        <ConfirmButton label={`태초 계승 · 게이지 ${PRIMAL_INHERIT.gauge}`} title={`${item.name}을(를) 계승할까요?`} description={`계승 게이지 ${PRIMAL_INHERIT.gauge}를 씁니다. ${what}${replace}`} disabled={busy || gauge < PRIMAL_INHERIT.gauge} onConfirm={() => send({ type: 'inheritPrimal', id: item.id })}/>
+        <p className="footnote">태초 장비를 분해할 때마다 게이지가 1 찹니다(환생해도 남고 승천하면 초기화). 부위마다 계승 태초 하나만 둘 수 있습니다.</p>
+    </div>;
+}
+
 /** v3.5 레벨 올리기: +10씩 내 레벨까지(v3.13 마지막 단은 내 레벨까지만). 위력·고정 수치 옵션이 레벨 비례로 오르고 별은 0으로 돌아갑니다. 유물은 레벨이 별 상한(12 + 레벨 ÷ 10)을 정합니다. */
 function GearLevelUp({ s, send, busy, item }: PanelProps & { item: Item }) {
     const next = levelUpTarget(item, s), cost = levelUpCost(item, s), star = item.enhance || 0;
     return <div className="relic-imprint">
         <b>레벨 올리기 · Lv.{item.level || 1}{next ? ` → Lv.${next}` : ''}{item.relic ? ` · 별 상한 ${enhanceMaxFor(item)}성` : ''}</b>
         {next ? <ConfirmButton label={`Lv.${next}로 올리기 · ${format(cost)} G`} title={`${item.name}을(를) Lv.${next}로 올릴까요?`} description={`위력과 고정 수치 옵션이 레벨에 맞춰 오릅니다.${star ? ` 지금 ★${star}은 0으로 돌아갑니다(강화 비용은 돌려받지 않음).` : ''}${item.relic ? ` 유물 별 상한이 ${RELIC_GROWTH.starBase + Math.floor(next / 10)}성이 됩니다.` : ''} 골드 ${format(cost)} G를 사용합니다.`} disabled={busy || s.gold < cost} onConfirm={() => send({ type: 'levelUp', id: item.id })}/> : <p className="footnote">내 레벨(Lv.{s.level})까지 올릴 수 있습니다.</p>}
-        <p className="footnote">한 번에 +{GEAR_LEVEL_UP.step}. 올리면 별이 0으로 돌아가니 별은 레벨을 다 올린 뒤에 쌓으세요.{item.relic ? ' 유물 위력은 환생 횟수와 레벨을 함께 따릅니다(Lv.100 ×2).' : ''}</p>
+        <p className="footnote">한 번에 +{GEAR_LEVEL_UP.step}. 올리면 별이 0으로 돌아가니 별은 레벨을 다 올린 뒤에 쌓으세요.{heirKind(item) ? ' 유물·계승 장비 위력은 (레벨 + 2) × 환생 배율입니다.' : ''}</p>
     </div>;
 }
 
@@ -228,6 +256,7 @@ export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Ite
         {star < max && researchRank(s, 'autoStar') > 0 && <AutoStar s={s} send={send} busy={busy} item={item} safeguard={guard}/>}
         <GearLevelUp s={s} send={send} busy={busy} item={item}/>
         {item.relic && <RelicImprint s={s} send={send} busy={busy} item={item}/>}
+        {(item.rarity === 5 || item.rarity === 6) && !item.relic && !item.onyx && <HeirPanel s={s} send={send} busy={busy} item={item}/>}
         {item.affixes?.length && !item.relic ? <p className="footnote">옵션은 위 옵션 목록에서 하나씩 재설정합니다.</p> : <ConfirmButton label={`옵션 재설정 · ${format(rerollCost(item, s).gold)} G + 정수 ${rerollCost(item, s).essence}`} title="추가 옵션을 무작위로 바꿀까요?" description={`이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다. 골드 ${format(rerollCost(item, s).gold)} G와 정수 ${rerollCost(item, s).essence}(보유 ${s.essence || 0})를 사용합니다.`} disabled={busy || item.rarity === 0 || s.gold < rerollCost(item, s).gold || (s.essence || 0) < rerollCost(item, s).essence} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}
     </div>;
 }

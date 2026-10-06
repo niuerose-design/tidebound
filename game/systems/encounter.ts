@@ -25,7 +25,7 @@ import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
-import { dismantleEssence, saleValue } from './equipment';
+import { dismantleEssence, saleValue, keepsAcrossLives } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
 import { recordGoal, recordAbyssDepth } from './progress';
@@ -94,7 +94,7 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     item.name = gearName(slot, rarity, item.style);
     // 자동 분해기: v3.23 골드 대신 정수. 유물·장비 도감에 없는 종류는 남깁니다.
     // v3.35 설정에서 고른 등급(여러 개)만 처리합니다. 칠흑·잠금 장비는 어떤 경우에도 처리하지 않습니다.
-    const keep = item.relic || item.locked || item.onyx || !s.itemBook?.[itemKey(slot, rarity)];
+    const keep = item.locked || keepsAcrossLives(item) || !s.itemBook?.[itemKey(slot, rarity)];
     if (!keep && s.autoSell && autoGrades(s, 'salvage').includes(item.rarity)) {
         const essence = dismantleEssence(item);
         s.essence = (s.essence || 0) + essence;

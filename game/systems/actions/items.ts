@@ -1,5 +1,5 @@
 /** 장비 장착·해제·판매 */
-import { saleValue } from '../equipment';
+import { saleValue, keepsAcrossLives } from '../equipment';
 import { stats } from '../stats';
 import { inventoryCap } from '../../data/economy';
 import type { ActionHandlers } from './types';
@@ -28,8 +28,8 @@ export const itemActions: ActionHandlers = {
         const item = s.inventory.find(x => x.id === id);
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
-        if (item.locked || item.relic || item.onyx)
-            throw Error('보호 장비와 유물·칠흑 장신구는 판매할 수 없습니다.');
+        if (item.locked || keepsAcrossLives(item))
+            throw Error('보호 장비와 유물·칠흑·계승 장비는 판매할 수 없습니다.');
         s.gold += saleValue(item);
         s.inventory = s.inventory.filter(x => x.id !== id);
     },
