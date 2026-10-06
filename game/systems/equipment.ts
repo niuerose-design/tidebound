@@ -28,7 +28,7 @@ export function itemStats(item: Item): Partial<Stats> {
     }
     if (item.slot === 'coat') {
         result.hp = p * 6;
-        // v3.87 체력을 주는 부위(방어구 · 망토)는 최대 마나도 줍니다(방어구 위력 ×1 · 망토 ×0.3, 최대 마나가 체력의 약 0.2배가 되게).
+        // v3.89 체력을 주는 부위(방어구 · 망토)는 최대 마나도 줍니다(방어구 위력 ×1 · 망토 ×0.3, 최대 마나가 체력의 약 0.2배가 되게).
         result.mana = p;
         result.defense = p;
         result.resist = p * .5;

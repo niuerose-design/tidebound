@@ -259,7 +259,7 @@ function afterAction(a: Fighter, b: Fighter, rng: () => number, first: CombatEve
     followUps(a, b, rng, first, onAction);
     if (turn) awaken(a, b, rng, first, onAction);
 }
-/** v3.86 추가 판정: 액티브가 발동한 행동에서 그 아래 액티브로 단계 수만큼 더 굴려, 성공하면 줄어든 위력으로 바로 씁니다. 동시 시전 묶음과는 겹치지 않습니다. */
+/** v3.86 추가 판정: 액티브가 발동한 행동에서 그 아래 액티브로 단계 수만큼 더 굴려, 성공하면 줄어든 위력으로 바로 씁니다. 동시 시전 묶음으로 나간 행동에는 굴리지 않고, 대신 v3.87부터 묶음 최대 개수가 단계만큼 늘어납니다. */
 function followUps(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | undefined, onAction: (text: string, event: CombatEvent) => void) {
     const R = SKILL_FORMULA.extraRoll, rolls = Math.min(R.power.length, a.extraRolls || 0);
     if (!rolls || !first?.skillId || first.multicast || a.hp <= 0 || b.hp <= 0) return;
@@ -393,9 +393,11 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const MC = SKILL_FORMULA.multicast;
     let castCount = forced?.count || 1;
     if (chosen?.multicast && !forced) {
+        // v3.87 추가 판정 단계만큼 묶음 최대 개수가 늘어납니다(동시 시전으로 나간 행동에는 추가 판정을 따로 굴리지 않음).
+        const maxCast = MC.max + Math.min(SKILL_FORMULA.extraRoll.power.length, a.extraRolls || 0);
         const extras: { id: string; mana: number }[] = [];
         for (const id of a.skills) {
-            if (id === chosen.id || extras.length + 1 >= MC.max || blocked.has(id)) continue;
+            if (id === chosen.id || extras.length + 1 >= maxCast || blocked.has(id)) continue;
             const c = skillOf(a, id);
             if (!c || c.type !== 'active' || !c.multicast || c.awaken || c.statusOnly && c.effect && ENEMY_STATUS[c.effect] && isImmune(b, ENEMY_STATUS[c.effect])) continue;
             if (rng() < c.chance) extras.push({ id, mana: c.manaCost || 0 });
@@ -489,7 +491,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (chosen?.scaling === 'attr' && chosen.scalingAttribute)
         base += (sa[ATTR_KEY[chosen.scalingAttribute]] || 0) * (chosen.scalingRatio ?? 1);
     if (chosen?.scaling === 'luck')
-        base += sa.attack * Math.max(0, (sa.critDamage || 1) - 1) * (chosen.scalingRatio ?? 1);
+        base += sa.attack * Math.max(0, (sa.critDamage || 1) - 1) * (chosen.scalingRatio ?? 1) * SKILL_FORMULA.luckScalingScale;
     if (chosen?.scaling === 'hp')
         base += sa.hp / (a.swarm || 1) * (chosen.scalingRatio ?? SKILL_FORMULA.hpScaling);
     if (chosen?.scaling === 'mana')
@@ -523,7 +525,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v27.18 극 치명타: 같은 난수로 판정합니다(치명타 확률 상한을 넘은 몫 = superCrit). 치명 피해에 superCritBonus를 더 곱합니다.
     const critRoll = landed && !statusOnly ? rng() : 1;
     const crit = critRoll < sa.crit, superCrit = crit && critRoll < (sa.superCrit || 0);
-    const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
+    // v3.88 행운 비례(scaling 'luck', 팬텀 계열)는 위력에 이미 치명 피해를 넣으므로, 치명타가 터져도 치명 피해를 다시 곱하지 않습니다(제곱 방지).
+    const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - actual);
     // v25 無: 쓰러질 피해를 받은 쪽이 無를 장착했으면 체력 1로 버티고, 이 행동의 남은 추가타는 멈춥니다.

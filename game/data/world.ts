@@ -67,7 +67,9 @@ export const isHabitat = (id: string) => !!STAGES.find(st => st.id === id)?.habi
  */
 export const SWARM_SIZES = [1, 5, 100, 500] as const;
 /** 무리 규모별 해금에 필요한 해당 몬스터 도감 처치 수. */
-export const SWARM_UNLOCK: Record<number, number> = { 1: 0, 5: 10, 100: 500, 500: 5000 };
+export const SWARM_UNLOCK: Record<number, number> = { 1: 0, 5: 10, 100: 500 };
+/** v3.87 일반 사냥터 무리의 최대 규모. ×500 도전 무리는 무리 서식지에서만 나옵니다. */
+export const FIELD_SWARM_MAX = 100;
 /** 무리 체력 배율: N배, ×100 이상은 98%(×100 = 98배, ×500 = 490배). */
 export const swarmHpMultiplier = (size: number) => size >= 100 ? size * .98 : Math.max(1, size);
 /** 무리 공격 배율: ×500 도전 무리만 체력과 같은 배율(490배), 그 아래 규모는 한 마리와 같습니다. 방어·속도는 늘 한 마리와 같습니다. */
