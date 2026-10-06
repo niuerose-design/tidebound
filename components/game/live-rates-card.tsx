@@ -19,8 +19,9 @@ const clock = (ms: number) => { const s = Math.floor(ms / 1000); return `${Math.
 const span = (ms: number) => { const m = Math.round(ms / 60_000); return m < 60 ? `${m}분` : m < 1440 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${Math.floor(m / 1440)}일 ${Math.floor(m % 1440 / 60)}시간`; };
 export function LiveRatesCard({ s, compact = false }: { s: State; compact?: boolean }) {
     const r = useLiveRates();
-    const [open, setOpen] = useState(true);
-    useEffect(() => { if (!compact) return; const t = setTimeout(() => { try { if (localStorage.getItem(FOLD_KEY) === 'folded') setOpen(false); } catch { /* 저장소 없음 */ } }, 0); return () => clearTimeout(t); }, [compact]);
+    // v3.50 전투 화면(compact)에서는 기본으로 접어 둡니다. 이 기기에서 펼쳐 둔 적이 있으면 펼친 채로 엽니다. 통계 화면은 늘 펼침.
+    const [open, setOpen] = useState(!compact);
+    useEffect(() => { if (!compact) return; const t = setTimeout(() => { try { if (localStorage.getItem(FOLD_KEY) === 'open') setOpen(true); } catch { /* 저장소 없음 */ } }, 0); return () => clearTimeout(t); }, [compact]);
     const toggle = () => setOpen(v => { try { localStorage.setItem(FOLD_KEY, v ? 'folded' : 'open'); } catch { /* 저장소 없음 */ } return !v; });
     // 최근 처치 한 줄: 같은 턴의 처치·누리·숙련 줄을 한 처치로 묶은 값(v3.30). 로그가 밀려나도 마지막 값은 남겨 둡니다.
     const latest = recentKill(s.logs, s.name);
