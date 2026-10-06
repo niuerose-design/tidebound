@@ -1,11 +1,11 @@
-// v3.68 독립 수련 통합(docs/concept.md 11.8): 옛 독립 수련 27개 → 계열별 수련 직업 6개.
+// v3.69 독립 수련 통합(docs/concept.md 11.8): 옛 독립 수련 27개 → 계열별 수련 직업 6개.
 import { newState, act, canChangeJob, migrateState, stats, JOBS, SKILLS, assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 
 const { load } = loadGame(), T = await load('game/data/training.js'), P = await load('game/systems/progression.js'), S = await load('game/systems/stats.js'), { lineageOf } = await load('game/data/classes.js');
 const job = id => JOBS.find(j => j.id === id);
 
-test('v3.68 training: six training jobs absorb the 27 old independents; every old skill keeps its id under a new owner', () => {
+test('v3.69 training: six training jobs absorb the 27 old independents; every old skill keeps its id under a new owner', () => {
     const ids = Object.keys(T.TRAINING_GROUPS);
     assert.equal(ids.length, 6); assert.equal(T.RETIRED_TRAINING.length, 27); assert.equal(new Set(T.RETIRED_TRAINING).size, 27);
     for (const id of ids) { const j = job(id); assert.ok(j && j.tier === 1 && lineageOf(j) === `${j.tree}-independent` && j.subRole === 'training' && !j.retired, id); }
@@ -18,7 +18,7 @@ test('v3.68 training: six training jobs absorb the 27 old independents; every ol
     assert.ok(T.RETIRED_TRAINING.every(id => JOBS.some(j => j.id === id)), 'kept in the table for old records');
 });
 
-test('v3.68 training: retired jobs refuse the job change even when mastered; training jobs hunt weak and earn about a third', () => {
+test('v3.69 training: retired jobs refuse the job change even when mastered; training jobs hunt weak and earn about a third', () => {
     const s = newState(0); s.level = 20; Object.assign(s.attributes, { str: 20, dex: 20, int: 20, vit: 20, wis: 20, luk: 20 });
     assert.equal(canChangeJob(s, 'woodcutter'), false); s.jobMastery.woodcutter = 1e9; assert.equal(canChangeJob(s, 'woodcutter'), false, 'retired even when mastered');
     assert.equal(canChangeJob(s, 'trainingPhysical'), true);
@@ -29,7 +29,7 @@ test('v3.68 training: retired jobs refuse the job change even when mastered; tra
     assert.ok(stats(train).attack < stats(base).attack, 'weaker than the beginner');
 });
 
-test('v3.68 training: a save sitting in an old independent job moves to its training job and keeps its skills and records', () => {
+test('v3.69 training: a save sitting in an old independent job moves to its training job and keeps its skills and records', () => {
     const s = newState(0); s.level = 20; s.job = 'noviceMonk'; s.unlockedJobs.push('noviceMonk'); s.jobMastery.noviceMonk = 400; s.learned.innerBreath = 2; s.skills = ['hook', 'innerBreath'];
     migrateState(s); migrateState(s);
     assert.equal(s.job, 'trainingDefense'); assert.ok(s.unlockedJobs.includes('trainingDefense') && s.unlockedJobs.includes('noviceMonk'));
@@ -38,7 +38,7 @@ test('v3.68 training: a save sitting in an old independent job moves to its trai
     act(s, { type: 'job', id: 'fisher' }, 0); assert.throws(() => act(s, { type: 'job', id: 'noviceMonk' }, 0));
 });
 
-test('v3.68 training passives: tier-3 strength from level 1, tier-3 mastery milestones, old inheritance kept once', () => {
+test('v3.69 training passives: tier-3 strength from level 1, tier-3 mastery milestones, old inheritance kept once', () => {
     const passives = SKILLS.filter(sk => sk.job?.startsWith('training') && sk.type === 'passive');
     assert.ok(passives.length >= 20);
     for (const sk of passives) { assert.deepEqual(P.masteryMilestonesFor(sk), [4500, 22500, 84000, 225000], sk.id); if (T.TRAINING_DESC[sk.id]) assert.ok(sk.desc === T.TRAINING_DESC[sk.id] && !/\d/.test(sk.desc), `${sk.id} desc has no stale numbers`); }
@@ -50,7 +50,7 @@ test('v3.68 training passives: tier-3 strength from level 1, tier-3 mastery mile
     const fresh = newState(0); fresh.skillPractice.axeArm = 300; migrateState(fresh); assert.ok(!fresh.legacyInherited?.axeArm, 'new saves use the new bar');
 });
 
-test('v3.68 mastered job count: retired independents no longer count, for old saves too', () => {
+test('v3.69 mastered job count: retired independents no longer count, for old saves too', () => {
     const s = newState(0); s.jobMastery.woodcutter = 1e9; s.jobMastery.harpoon = 1e9;
     assert.equal(P.masteredJobCount(s), 1);
 });

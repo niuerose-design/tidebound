@@ -4,7 +4,7 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
     assert.equal(JOBS.length, 262); assert.equal(new Set(JOBS.map(j => j.id)).size, 262);
-    // v3.68 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
+    // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
     assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 235);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);

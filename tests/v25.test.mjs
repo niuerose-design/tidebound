@@ -72,7 +72,7 @@ test('v25.3 passive-only and independent jobs fight at tier strength', () => {
     // 방어형 독립 직업은 물리 평타를 쓰도록 물리 보정이 마법보다 낮지 않습니다.
     for (const id of ['lifeTender', 'driftwoodHermit', 'chronicleNavigator', 'netWeaver']) { const j = JOBS.find(x => x.id === id); assert.ok(j.attack >= j.magic, id); assert.equal(j.penalties?.attack, undefined, id); }
     const bonus = id => SKILLS.find(x => x.id === id).bonus;
-    // v3.68 수련 패시브는 ×1.5(3차 수준).
+    // v3.69 수련 패시브는 ×1.5(3차 수준).
     assert.equal(bonus('axeArm').attack, 45); assert.equal(bonus('bookwise').magic, 45); assert.ok(bonus('bookwise').arcaneRatioBonus > 0);
     assert.equal(bonus('innerBreath').hpRegen, 3); assert.equal(bonus('vital').hpRegen, 3); assert.ok(bonus('flow').arcaneRatioBonus > 0);
     assert.ok(bonus('echoReview').magic >= 24 && bonus('chronicleStudy').attack >= 16 && bonus('serpentFolklore').magic >= 24 && bonus('abyssObservation').attack >= 36);
