@@ -5,18 +5,18 @@
  * v27.73 운영 페이지에서 문을 직접 열 수 있습니다(settings.doors). 서버가 setOpenDoors로 채우고 동기화 때 State.openDoors에 적어 화면도 봅니다.
  *   운영자가 연 문은 열려 있는 동안만 열리고(doorsOpened에 기록하지 않음) 닫으면 다시 조건을 봅니다. 그 사이 들어간 직업은 unlockedJobs라 그대로 남습니다.
  * 새 ??? 직업은 support-rework.ts에 만들고 이 목록에 추가합니다.
+ * v3.44 서버 전용(docs/concept.md 10장): 문 조건이 비밀이라 화면은 이 파일을 가져가지 않습니다. 이름·한국 시간·상태 창구는 door-info.ts,
+ *   화면의 문 상태는 서버가 카탈로그로 보냅니다. 불러올 때 setDoorSource로 door-info의 창구를 이 파일의 판정으로 채웁니다.
+ *   비밀 직업을 서버에서 나중에 등록하므로 직업 표로 거르지 않습니다(목록의 id는 모두 있는 직업).
  */
 import type { State } from '../types';
-import { JOBS } from './classes';
 import { FISH } from './world';
 import { masteredJobCount } from '../systems/progression';
-
-export type DoorId = 'rebirth' | 'discovery';
-
-const known = (ids: string[]) => ids.filter(id => JOBS.some(j => j.id === id));
+import { DOORS, kst, setDoorSource, type DoorId } from './door-info';
+export { DOORS, kst, type DoorId };
 
 /** 윤회의 문: 환생할 때 한 직업을 골라 다음 생 동안 엽니다. */
-export const REBIRTH_DOOR_JOBS = known(['rebirthFisher', 'voidcaller']);
+export const REBIRTH_DOOR_JOBS = ['rebirthFisher', 'voidcaller'];
 const codexCount = (s: State) => FISH.filter(f => (s.book?.[f.id] || 0) > 0).length + Object.keys(s.itemBook || {}).length;
 const speciesCount = (s: State) => FISH.filter(f => (s.book?.[f.id] || 0) > 0).length;
 const bossCatches = (s: State) => FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
@@ -41,19 +41,7 @@ export const DISCOVERY_DOORS: DiscoveryDoor[] = ([
     { job: 'codexReader', hint: '도감에 기록이 서른 개 넘게 쌓였을 때.', test: s => codexCount(s) >= 30 },
     { job: 'fallenAngler', hint: '서른 번쯤 쓰러져 본 모험가에게.', test: s => (s.deaths || 0) >= 30 },
     { job: 'journeyman', hint: '직업 셋을 끝까지 숙달한 모험가에게.', test: s => masteredJobCount(s) >= 3 },
-] as DiscoveryDoor[]).filter(d => JOBS.some(j => j.id === d.job));
-
-export const DOORS: { id: DoorId; name: string; summary: string }[] = [
-    { id: 'rebirth', name: '윤회의 문', summary: '환생할 때마다 하나의 직업이 이번 생 동안 문을 엽니다.' },
-    { id: 'discovery', name: '발견의 문', summary: '숨은 조건을 처음 만족하면 열리고, 그 뒤로 계속 열려 있습니다.' },
-];
-
-const KST = 9 * 3600_000;
-/** 한국 시간 기준 시(0~23)와 날짜 키(YYYY-MM-DD). */
-export function kst(now: number) {
-    const d = new Date(now + KST);
-    return { hour: d.getUTCHours(), minute: d.getUTCMinutes(), date: d.toISOString().slice(0, 10), dayStart: Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - KST };
-}
+] as DiscoveryDoor[]);
 
 /** 문이 열리는 모든 ??? 직업. */
 export const DOOR_JOBS = [...REBIRTH_DOOR_JOBS, ...DISCOVERY_DOORS.map(d => d.job)];
@@ -102,3 +90,30 @@ export function drawRebirthDoor(s: Pick<State, 'rebirthDoor' | 'unlockedJobs'>, 
     if (fresh.length) pool = fresh;
     return pool.length === 1 ? pool[0] : pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
 }
+/** v3.44 화면에 보낼 문 정보(카탈로그). 예전에는 화면(mystery-doors)이 직접 계산했습니다. */
+export type DoorView = {
+    /** 문이 있는 직업 → 지금 상태(화면의 doorFor 창구). */
+    states: Record<string, { door: DoorId; open: boolean }>;
+    rebirth: { job?: string; note: string };
+    discovery: { job: string; hint: string; open: boolean; entered: boolean; forced: boolean }[];
+    /** 열려 있고 아직 들어가지 않은 문(??? 탭 점·전투 화면 알림·빠른 찾기). */
+    unentered: { door: DoorId; job: string }[];
+};
+const KEPT_NOTE = '한 번 열린 문 · 계속 열려 있습니다.', FORCED_NOTE = '운영 이벤트로 지금 열려 있습니다.';
+export function doorView(s: State): DoorView {
+    const states: DoorView['states'] = {};
+    for (const job of DOOR_JOBS) { const d = doorFor(s, job); if (d) states[job] = d; }
+    // 윤회의 문: 이번 생에 열린 직업(없으면 기록된 직업, 없으면 운영자가 연 직업).
+    const kept = REBIRTH_DOOR_JOBS.find(j => s.doorsOpened?.includes(j) && !s.unlockedJobs.includes(j)) ?? REBIRTH_DOOR_JOBS.find(j => s.doorsOpened?.includes(j));
+    const forced = REBIRTH_DOOR_JOBS.find(j => doorForcedOpen(s, j) && !s.unlockedJobs.includes(j)) ?? REBIRTH_DOOR_JOBS.find(j => doorForcedOpen(s, j));
+    const current = s.rebirthDoor && REBIRTH_DOOR_JOBS.includes(s.rebirthDoor) ? s.rebirthDoor : undefined, rjob = current ?? kept ?? forced;
+    const rebirth = { ...(rjob ? { job: rjob } : {}), note: current ? '이번 생 동안 열려 있습니다.' : kept ? KEPT_NOTE : rjob ? FORCED_NOTE : '환생하면 한 직업의 문이 열립니다.' };
+    const discovery = DISCOVERY_DOORS.map(d => ({ job: d.job, hint: d.hint, open: s.unlockedJobs.includes(d.job) || !!doorFor(s, d.job)?.open, entered: s.unlockedJobs.includes(d.job), forced: !s.doorsOpened?.includes(d.job) && !d.test(s) && doorForcedOpen(s, d.job) }));
+    const unentered: DoorView['unentered'] = [];
+    for (const job of REBIRTH_DOOR_JOBS) if ((job === rjob || doorForcedOpen(s, job)) && !s.unlockedJobs.includes(job)) unentered.push({ door: 'rebirth', job });
+    for (const d of discovery) if (d.open && !d.entered) unentered.push({ door: 'discovery', job: d.job });
+    return { states, rebirth, discovery, unentered };
+}
+
+// v3.44 진행·환생 계산이 door-info의 창구로 이 판정을 씁니다(서버).
+setDoorSource({ doorFor, drawRebirthDoor });

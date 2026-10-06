@@ -1,6 +1,7 @@
 import { checkOrigin, failure, readJson } from '@/game/server/store';
 import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats, resetAltar, setAltarBlessingLevel, listDoors, setDoorOpen } from '@/game/server/admin';
 import { readHacks, clearBroadcast, clearHackEffects } from '@/game/server/hacks';
+import { secrecyOn, setSecrecy } from '@/game/server/secrecy';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
 /** v27.26 운영자 도구. 헤더 x-admin-key 필요. POST { action: 'search', query } | 'preview' | 'apply' | v27.27 'events' | 'saveEvent' { event } | 'deleteEvent' { id } | 'toggleEvent' { id, disabled } | 'adjust' { id, gold?, pearls? } | v27.31 'closures' | 'setClosed' { kind: 'stages'|'dungeons', id, closed } | v27.32 'stats' | v27.73 'doors' | 'setDoor' { id, open }. */
@@ -21,6 +22,8 @@ export async function POST(req: Request) { try {
     if (body.action === 'hacks') { const now = Date.now(), h = await readHacks(0); return Response.json({ broadcast: h.broadcast || null, effects: { tamper: Object.keys(h.tamper).length, down: h.down.filter(d => d.until > now).length, patched: Object.values(h.patched).filter(u => u > now).length, ddos: h.ddos && h.ddos.until > now ? 1 : 0 } }, { headers }); }
     // v3.25 해킹 II~III 효과(이벤트 변조·서버 다운)와 패치를 모두 지웁니다.
     if (body.action === 'clearHackEffects') { await clearHackEffects(Date.now()); return Response.json({ ok: true }, { headers }); }
+    // v3.43 정보 비공개 스위치(docs/concept.md 10장): 보기 { action: 'secrecy' }, 바꾸기 { action: 'secrecy', on }.
+    if (body.action === 'secrecy') return Response.json(body.on === undefined ? { on: await secrecyOn(Date.now()), env: process.env.TIDEBOUND_SECRECY || null } : await setSecrecy(!!body.on, Date.now()), { headers });
     if (body.action === 'clearBroadcast') { await clearBroadcast(Date.now()); return Response.json({ ok: true }, { headers }); }
     if (body.action === 'setBlessing') return Response.json(await setAltarBlessingLevel(String(body.id ?? ''), Number(body.level), body.minutes === undefined ? undefined : Number(body.minutes)), { headers });
     if (body.action === 'closures') return Response.json(await listClosures(), { headers });
