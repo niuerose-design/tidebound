@@ -104,6 +104,8 @@ const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합' } as 
 /** v3.51 무리에게 거는 지속 피해의 최대 체력 비례분: 한 마리 체력 × √N(= 무리 전체 체력 ÷ √N). 한 마리면 1. */
 /** v3.51 이 전투에서 처음 거는 지속 피해면 true를 돌려주고 표시합니다(첫 틱 즉시 적용은 전투당 한 번). */
 const opens = (b: Fighter, key: 'bleed' | 'poison' | 'burn') => { const fx = (b.effects ??= {}); if (fx.opened?.[key]) return false; (fx.opened ??= {})[key] = true; return true; };
+/** v3.51 지속 피해의 체력 비례분: 틱 때 현재 체력 × hpRatio. hpRatio가 없는 옛 효과는 저장된 고정값(legacy)을 씁니다. */
+const hpPart = (current: number, hpRatio: number | undefined, legacy: number | undefined) => hpRatio === undefined ? (legacy || 0) : Math.floor(Math.max(0, current) * hpRatio);
 export const swarmDotShare = (swarm?: number) => swarm && swarm > 1 ? 1 / Math.sqrt(swarm) : 1;
 /** v27.75 화면에 보여 주는 타격 수치: 계산된 피해(raw). 남은 체력에 막힌 실제 감소량(value)은 규칙에만 씁니다. */
 export const shownHit = (h: Pick<CombatHit, 'value' | 'raw'>) => h.raw ?? h.value;
@@ -200,7 +202,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     if (!forced) tickImmunity(a.effects);
     if (!forced && a.effects.dot) {
         const dot = a.effects.dot;
-        const dotHit = dot.damage;
+        // v3.51 체력 비례분은 틱 때 현재 체력 기준입니다(전에는 걸 때 최대 체력 기준).
+        const dotHit = dot.damage + hpPart(a.hp, dot.hpRatio, 0);
         a.hp = Math.max(0, a.hp - dotHit);
         notes.push(`${dot.name} ${dotHit}`);
         ev.dot = { name: dot.name, value: dotHit };
@@ -217,7 +220,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // v27.19 중독 틱: 중첩 × (중첩당 피해 + 최대 체력 비례). 출혈과 별개로 함께 들어갑니다.
     if (!forced && a.effects.poison && a.hp > 0) {
         const poison = a.effects.poison;
-        const hit = (poison.perStack + poison.hpTick) * poison.stacks;
+        const hit = (poison.perStack + hpPart(a.hp, poison.hpRatio, poison.hpTick)) * poison.stacks;
         a.hp = Math.max(0, a.hp - hit);
         notes.push(`중독 ×${poison.stacks} ${hit}`);
         ev.dot = ev.dot ? { name: `${ev.dot.name}·중독`, value: ev.dot.value + hit } : { name: `중독 ×${poison.stacks}`, value: hit };
@@ -228,7 +231,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     // v27.48 화상 틱: 중독과 같은 방식(중첩 × (중첩당 피해 + 최대 체력 비례)). 출혈·중독과 함께 들어갑니다.
     if (!forced && a.effects.burn && a.hp > 0) {
         const burn = a.effects.burn;
-        const hit = (burn.perStack + burn.hpTick) * burn.stacks;
+        const hit = (burn.perStack + hpPart(a.hp, burn.hpRatio, burn.hpTick)) * burn.stacks;
         a.hp = Math.max(0, a.hp - hit);
         notes.push(`화상 ×${burn.stacks} ${hit}`);
         ev.dot = ev.dot ? { name: `${ev.dot.name}·화상`, value: ev.dot.value + hit } : { name: `화상 ×${burn.stacks}`, value: hit };
@@ -460,14 +463,15 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     else if (landed && chosen && effect === 'bleed') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus;
         const name = chosen.dotName || '출혈';
-        // v27.3 틱 피해 = 위력 비례 + 대상 최대 체력 × dotMaxHpRatio(v3.51 무리는 한 마리 × √N). 방어·반격을 모두 무시하므로 탱커의 카운터입니다.
-        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0) + (sa.bleedBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)) + Math.floor(sb.hp * swarmDotShare(b.swarm) * SKILL_FORMULA.bleedHpRatio));
+        // v27.3 틱 피해 = 위력 비례 + 대상 체력 비례(v3.51 틱 때 현재 체력 × bleedHpRatio, 무리는 × swarmDotShare). 방어·반격을 모두 무시하므로 탱커의 카운터입니다.
+        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0) + (sa.bleedBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
+        const hpRatio = SKILL_FORMULA.bleedHpRatio * swarmDotShare(b.swarm);
         // v27.17 출혈은 중첩되지 않습니다. 다시 걸면 더 강한 피해와 더 긴 지속으로 갱신합니다.
         const current = b.effects.dot;
         // v3.51 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(지속은 그대로, 전투당 한 번). 원킬·짧은 전투에서도 지속 피해가 몫을 합니다.
         // (지속을 1턴 줄이면 다시 걸기 전에 끝나 면역이 생겨 긴 전투 피해가 줄었고, 매번 주면 출혈만 긴 전투에서 크게 늘었습니다.)
-        if (opens(b, 'bleed')) onset.push({ name, value: tick });
-        b.effects.dot = { damage: Math.max(tick, current?.damage || 0), turns: Math.max(turns, current?.turns || 0), name };
+        if (opens(b, 'bleed')) onset.push({ name, value: tick + hpPart(b.hp, hpRatio, 0) });
+        b.effects.dot = { damage: Math.max(tick, current?.hpRatio === undefined ? 0 : current.damage), hpRatio: Math.max(hpRatio, current?.hpRatio || 0), turns: Math.max(turns, current?.turns || 0), name };
         notes.push(`${name} ${turns}턴`);
         ev.statuses.push({ id: 'bleed', turns });
     }
@@ -476,12 +480,12 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     else if (landed && chosen && effect === 'poison') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.poisonTurns) + sa.dotTurnsBonus;
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0) + (sa.poisonBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
-        const hpTick = Math.floor(sb.hp * swarmDotShare(b.swarm) * SKILL_FORMULA.poisonHpRatio);
+        const hpRatio = SKILL_FORMULA.poisonHpRatio * swarmDotShare(b.swarm);
         const current = b.effects.poison;
         // v3.51 처음 걸면 poisonFirstStacks중첩으로 시작합니다. 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'poison'), stacks = Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, current ? current.stacks + 1 : first ? STATUS_TUNING.poisonFirstStacks : 1);
-        if (first) onset.push({ name: '중독', value: (perStack + hpTick) * stacks });
-        b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpTick: Math.max(hpTick, current?.hpTick || 0) };
+        if (first) onset.push({ name: '중독', value: (perStack + hpPart(b.hp, hpRatio, 0)) * stacks });
+        b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`중독 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'poison', turns });
     }
@@ -490,12 +494,12 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
     else if (landed && chosen && effect === 'burn') {
         const turns = (chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus;
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
-        const hpTick = Math.floor(sb.hp * swarmDotShare(b.swarm) * SKILL_FORMULA.burnHpRatio);
+        const hpRatio = SKILL_FORMULA.burnHpRatio * swarmDotShare(b.swarm);
         const current = b.effects.burn;
         // v3.51 전투에서 처음 걸면 burnFirstStacks중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'burn'), stacks = Math.min(STATUS_TUNING.burnMaxStacks, current ? current.stacks + 1 : first ? STATUS_TUNING.burnFirstStacks : 1);
-        if (first) onset.push({ name: '화상', value: (perStack + hpTick) * stacks });
-        b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpTick: Math.max(hpTick, current?.hpTick || 0) };
+        if (first) onset.push({ name: '화상', value: (perStack + hpPart(b.hp, hpRatio, 0)) * stacks });
+        b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`화상 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'burn', turns });
     }

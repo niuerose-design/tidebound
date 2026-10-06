@@ -142,7 +142,8 @@ export const SKILL_FORMULA = {
     thornsPierce: .5, swarmThornsCap: 10,
     // v27.3 지속 피해는 틱마다 대상 최대 체력 비례 피해를 더합니다(무리는 한 마리 기준). v27.57부터 종류별 비율(bleedHpRatio·poisonHpRatio·burnHpRatio). 이 값은 옛 기준(설명용).
     dotMaxHpRatio: .01,
-    // v3.51 무리에게 거는 지속 피해의 최대 체력 비례분: 한 마리 체력 × √N(swarmDotShare). 무리에서 % 부분이 사실상 사라지던 것을 보정합니다.
+    // v3.51 지속 피해의 체력 비례분은 틱 때 대상의 현재 체력 기준입니다(전에는 최대 체력). 보스·월드보스처럼 체력이 큰 상대에게 비례분이 끝없이 커지던 것을 막고, 체력이 깎일수록 줄어듭니다.
+    // 무리에게는 한 마리 체력 × √N(swarmDotShare)으로 셉니다.
     // v3.51 힐러(healFocus) 회복 기술의 넘친 회복량 × overhealDamage를 적에게 방어 무시 피해로 줍니다(회복이 처치 속도에 기여하도록).
     overhealDamage: .6,
     // v21.1 마력 평타: 마법 직업(마법 배율이 물리보다 0.05 이상 높음, 고정 보정의 반올림을 감안해 0.045로 판정)은 기본 공격 대신
@@ -207,9 +208,9 @@ export const STATUS_GUIDE = [
     { id: 'stun', name: '기절', kind: '행동 차단', description: '다음 행동을 건너뜁니다.', detail: '기절 중에도 출혈 같은 지속 피해는 먼저 처리됩니다.' },
     { id: 'silence', name: '침묵', kind: '스킬 차단', description: '지속 중 액티브 스킬을 사용할 수 없습니다.', detail: '기본 공격은 계속하며, 쿨다운·마나를 낭비하지 않습니다.' },
     { id: 'weaken', name: '약화', kind: '피해 감소', description: `주는 직접 피해가 ${Math.round((1 - SKILL_FORMULA.weakenedDamage) * 100)}% 감소합니다.`, detail: '물리·마법 등 다음 공격의 피해 계산에 적용됩니다.' },
-    { id: 'bleed', name: '출혈', kind: '지속 피해', description: `행동할 때마다 고정 피해를 받고, 출혈 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.bleedVulnerability * 100)}% 커집니다. 중첩되지 않습니다.`, detail: `명중한 공격의 위력 + 대상 최대 체력의 ${Math.round(SKILL_FORMULA.bleedHpRatio * 100)}%가 틱 피해가 되고 최대 ${STATUS_TUNING.bleedTurns}턴 지속됩니다. 체력이 큰 탱커일수록 아픕니다. 전투에서 처음 걸면 첫 틱을 바로 한 번 더 줍니다. 무리에게는 최대 체력분을 한 마리 × √N으로 셉니다.` },
-    { id: 'poison', name: '중독', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받습니다. 걸릴 때마다 한 중첩씩 쌓여 틱 피해가 커집니다(최대 ${STATUS_TUNING.poisonMaxStacks}중첩, 포화 옵션으로 상한 증가).`, detail: `중첩당 (명중한 공격의 위력 × ${SKILL_FORMULA.poisonRatio}) + 대상 최대 체력의 ${Math.round(SKILL_FORMULA.poisonHpRatio * 100)}%가 틱 피해이고, 최대 체력분도 중첩 수만큼 곱합니다. 다시 걸면 지속 ${STATUS_TUNING.poisonTurns}턴이 갱신됩니다. 출혈과 함께 걸릴 수 있습니다. 전투에서 처음 걸면 ${STATUS_TUNING.poisonFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 최대 체력분을 한 마리 × √N으로 셉니다.` },
-    { id: 'burn', name: '화상', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받고, 화상 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.burnVulnerability * 100)}% 커집니다. 걸릴 때마다 한 중첩씩 쌓입니다(최대 ${STATUS_TUNING.burnMaxStacks}중첩).`, detail: `중독과 출혈의 중간입니다. 중첩당 틱 = 위력 × ${SKILL_FORMULA.burnRatio} + 대상 최대 체력 × ${SKILL_FORMULA.burnHpRatio}, ${STATUS_TUNING.burnTurns}턴. 출혈·중독과 함께 걸립니다. 전투에서 처음 걸면 ${STATUS_TUNING.burnFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 최대 체력분을 한 마리 × √N으로 셉니다.` },
+    { id: 'bleed', name: '출혈', kind: '지속 피해', description: `행동할 때마다 고정 피해를 받고, 출혈 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.bleedVulnerability * 100)}% 커집니다. 중첩되지 않습니다.`, detail: `명중한 공격의 위력 + 대상 현재 체력의 ${(SKILL_FORMULA.bleedHpRatio * 100).toFixed(1)}%가 틱 피해가 되고 최대 ${STATUS_TUNING.bleedTurns}턴 지속됩니다. 체력이 큰 탱커일수록 아픕니다. 전투에서 처음 걸면 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
+    { id: 'poison', name: '중독', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받습니다. 걸릴 때마다 한 중첩씩 쌓여 틱 피해가 커집니다(최대 ${STATUS_TUNING.poisonMaxStacks}중첩, 포화 옵션으로 상한 증가).`, detail: `중첩당 (명중한 공격의 위력 × ${SKILL_FORMULA.poisonRatio}) + 대상 현재 체력의 ${(SKILL_FORMULA.poisonHpRatio * 100).toFixed(1)}%가 틱 피해이고, 체력분도 중첩 수만큼 곱합니다. 다시 걸면 지속 ${STATUS_TUNING.poisonTurns}턴이 갱신됩니다. 출혈과 함께 걸릴 수 있습니다. 전투에서 처음 걸면 ${STATUS_TUNING.poisonFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
+    { id: 'burn', name: '화상', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받고, 화상 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.burnVulnerability * 100)}% 커집니다. 걸릴 때마다 한 중첩씩 쌓입니다(최대 ${STATUS_TUNING.burnMaxStacks}중첩).`, detail: `중독과 출혈의 중간입니다. 중첩당 틱 = 위력 × ${SKILL_FORMULA.burnRatio} + 대상 현재 체력 × ${SKILL_FORMULA.burnHpRatio}, ${STATUS_TUNING.burnTurns}턴. 출혈·중독과 함께 걸립니다. 전투에서 처음 걸면 ${STATUS_TUNING.burnFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
     { id: 'slow', name: '감속', kind: '속도 감소', description: `속도가 ${Math.round(STATUS_TUNING.slowMultiplier * 100)}% 낮아져 선공·명중 보정·연속 행동에 불리해집니다.`, detail: '선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
     { id: 'haste', name: '가속', kind: '속도 증가', description: `속도가 ${Math.round(STATUS_TUNING.hasteMultiplier * 100)}% 높아져 선공·명중 보정·연속 행동에 유리해집니다.`, detail: '상대보다 빨라지면 연속 행동 확률이 올라갑니다. 선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
 ] as const;

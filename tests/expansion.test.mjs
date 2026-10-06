@@ -29,8 +29,8 @@ test('v21 poison, burns and execute conditions are data-driven',()=>{
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
  const dart=SKILLS.find(x=>x.id==='venomDart');let b=mk([]);strike(mk(['venomDart'],{dotBonus:.5}),b,()=>0);
- assert.equal(b.effects.poison.stacks,STATUS_TUNING.poisonFirstStacks,'v3.51 first poison starts at 2 stacks');assert.equal(b.effects.poison.perStack,Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)*1.5));assert.equal(b.effects.poison.hpTick,Math.floor(1e6*SKILL_FORMULA.poisonHpRatio),'v27.57 poison tick adds 0.3% of target max hp per stack');
- assert.equal(b.hp,1e6-(b.effects.poison.perStack+b.effects.poison.hpTick)*2,'v3.51 독침은 상태이상 전용: 직접 피해 없이 첫 틱만 바로');assert.equal(b.effects.poison.turns,dart.statusTurns??STATUS_TUNING.poisonTurns,'duration unchanged');
+ assert.equal(b.effects.poison.stacks,STATUS_TUNING.poisonFirstStacks,'v3.51 first poison starts at 2 stacks');assert.equal(b.effects.poison.perStack,Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)*1.5));assert.equal(b.effects.poison.hpRatio,SKILL_FORMULA.poisonHpRatio,'v3.51 poison tick adds 0.3% of target current hp per stack');
+ assert.equal(b.hp,1e6-(b.effects.poison.perStack+Math.floor(1e6*SKILL_FORMULA.poisonHpRatio))*2,'v3.51 독침은 상태이상 전용: 직접 피해 없이 첫 틱만 바로');assert.equal(b.effects.poison.turns,dart.statusTurns??STATUS_TUNING.poisonTurns,'duration unchanged');
  b=mk([]);strike(mk(['fireball']),b,()=>0);assert.equal(b.effects.burn.stacks,STATUS_TUNING.burnFirstStacks);assert.equal(b.effects.dot,undefined);assert.ok(b.hp<1e6);// 플레임 디스차지는 피해와 화상을 함께
  b=mk([]);strike(mk(['rotBloom']),b,()=>0);assert.equal(b.effects.poison.stacks,2);assert.ok(b.hp<1e6);// 4차는 피해와 상태이상을 함께
  const brave=(hp)=>{const t=mk([]);t.hp=hp;const ev=[];strike(mk(['braveSlash']),t,()=>0,ev);return ev[0].hits[0].value;};
@@ -72,11 +72,11 @@ test('v21.2 tier 4+ signature skills work fully in their own lineage and at 70% 
 test('v27.17 poison is its own stacking status; bleed does not stack but makes the target take more damage',()=>{
  const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills)=>({name:'A',stats:{...base},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
- const b=mk([]),dart=SKILLS.find(x=>x.id==='venomDart');assert.equal(dart.effect,'poison');const per=Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)),hpTick=Math.floor(1e6*SKILL_FORMULA.poisonHpRatio);
- for(let i=1;i<=STATUS_TUNING_MAX+2;i++){strike(mk(['venomDart']),b,()=>0);const n=Math.min(i+STATUS_TUNING.poisonFirstStacks-1,STATUS_TUNING_MAX);assert.equal(b.effects.poison.stacks,n);assert.equal(b.effects.poison.perStack,per);assert.equal(b.effects.poison.hpTick,hpTick);}
+ const b=mk([]),dart=SKILLS.find(x=>x.id==='venomDart');assert.equal(dart.effect,'poison');const per=Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)),hpRatio=SKILL_FORMULA.poisonHpRatio;
+ for(let i=1;i<=STATUS_TUNING_MAX+2;i++){strike(mk(['venomDart']),b,()=>0);const n=Math.min(i+STATUS_TUNING.poisonFirstStacks-1,STATUS_TUNING_MAX);assert.equal(b.effects.poison.stacks,n);assert.equal(b.effects.poison.perStack,per);assert.equal(b.effects.poison.hpRatio,hpRatio);}
  assert.match(visibleStatuses(b.effects,0,[],'enemy').find(r=>r.id==='poison').label,/중독 ×5/);
  strike(mk(['cut']),b,()=>0);assert.ok(b.effects.dot&&!b.effects.dot.stacks,'bleed sits beside poison');assert.equal(b.effects.poison.stacks,STATUS_TUNING_MAX,'bleed never touches poison stacks');
- const hp=b.hp,expected=(b.effects.poison.perStack+hpTick)*STATUS_TUNING_MAX+b.effects.dot.damage;strike(b,mk([]),()=>0);assert.equal(hp-b.hp,expected,'bleed and poison ticks both apply on its own action');
+ const hp=b.hp,bleedHit=b.effects.dot.damage+Math.floor(hp*b.effects.dot.hpRatio),expected=bleedHit+(b.effects.poison.perStack+Math.floor((hp-bleedHit)*hpRatio))*STATUS_TUNING_MAX;/* v3.51 출혈 틱 뒤 남은 현재 체력으로 중독 틱 */strike(b,mk([]),()=>0);assert.equal(hp-b.hp,expected,'bleed and poison ticks both apply on its own action');
  const c=mk([]);strike(mk(['cut']),c,()=>0);const d1=c.effects.dot.damage;strike(mk(['cut']),c,()=>0);assert.equal(c.effects.dot.damage,d1);assert.equal(c.effects.dot.stacks,undefined,'bleed does not stack');
  const plain=mk([]),bleeding=mk([]);bleeding.effects.dot={damage:1,turns:3,name:'출혈'};strike(mk([]),plain,()=>.99);strike(mk([]),bleeding,()=>.99);
  assert.equal(1e6-bleeding.hp,Math.round((1e6-plain.hp)*(1+SKILL_FORMULA.bleedVulnerability)),'bleeding targets take extra direct damage');
