@@ -19,6 +19,8 @@ export type Fighter = {
     stun: number;
     /** v3.84 추가 판정 단계(액티브가 발동한 행동에서 아래 액티브로 더 굴리는 횟수). 플레이어만. */
     extraRolls?: number;
+    /** v3.84 한 턴에 나갈 수 있는 각성기 수(없으면 SKILL_FORMULA.awaken.perTurn). 승천 연구로 늘릴 자리입니다. */
+    awakenPerTurn?: number;
     mana?: number;
     ranks?: Record<string, number>;
     mastery?: Record<string, number>;
@@ -259,24 +261,25 @@ function followUps(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent
     }
 }
 /**
- * v3.84 각성기: 턴마다 대기를 1 줄이고, 대기가 끝난 각성기를 편성 순서대로 굴려 한 턴에 하나만 씁니다.
+ * v3.84 각성기: 턴마다 대기를 1 줄이고, 대기가 끝난 각성기를 편성 순서대로 굴려 한 턴에 perTurn개(기본 1)까지 씁니다.
  * 처음(대기 칸이 비어 있으면)은 awaken.start 턴을 기다립니다. 실패하면 다음 판정 확률에 기본 발동률을 더하고(최대 100%), 쓰면 초기화합니다.
  * 기절·침묵인 턴과 마나가 모자란 턴은 굴리지 않습니다(대기는 줄어듦).
  */
 function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | undefined, onAction: (text: string, event: CombatEvent) => void) {
-    let fired = false;
+    let fired = 0;
+    const limit = a.awakenPerTurn ?? SKILL_FORMULA.awaken.perTurn;
     for (const id of a.skills) {
         const base = skillById(id);
         if (!base?.awaken) continue;
         if (a.cooldowns[id] === undefined) a.cooldowns[id] = base.awaken.start;
         if (a.cooldowns[id] > 0) { a.cooldowns[id]--; continue; }
-        if (fired || a.hp <= 0 || b.hp <= 0 || first?.stunned || first?.silenced) continue;
+        if (fired >= limit || a.hp <= 0 || b.hp <= 0 || first?.stunned || first?.silenced) continue;
         const sk = skillOf(a, id)!;
         if ((a.mana ?? 0) < (sk.manaCost || 0)) continue;
         const key = AWAKEN_PITY + id, misses = a.cooldowns[key] || 0;
         if (rng() >= Math.min(1, sk.chance * (1 + misses))) { a.cooldowns[key] = misses + 1; continue; }
         delete a.cooldowns[key];
-        fired = true;
+        fired++;
         const more: CombatEvent[] = [];
         const text = act(a, b, rng, more, false, false, { id, index: 0, count: 1, kind: 'awaken' });
         // 각성기로 쓰러뜨리면 대기를 kill턴만 둡니다(짧은 사냥에서 남는 피해로 버려지는 몫을 돌려줌).
