@@ -256,6 +256,8 @@ export type Skill = {
     statusOnly?: boolean;
     /** 장착하면 현재 직업의 마이너스 배율 보정을 이 비율만큼 되돌립니다(0~1). 여러 개면 가장 큰 값 하나만 적용합니다. */
     penaltyRelief?: number;
+    /** v3.70 능력치 수련 패시브: 기본 능력치(배분 능력치와 같은 자리)에 더합니다. 숙련 단계마다 +25%(data/stat-training.ts). */
+    attrBonus?: Partial<Record<Attribute, number>>;
     bonus?: Partial<Stats>;
     rankEffects?: {
         apReduction?: number;

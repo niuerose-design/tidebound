@@ -1,4 +1,4 @@
-import type { Skill, Stats } from '../types';
+import type { Attribute, Skill, Stats } from '../types';
 import { STATUS_TUNING, SKILL_FORMULA, diceMultiplier, diceRange } from '../data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay, PROGRESSION, ATTRIBUTE_NAMES } from '../data/progression';
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel } from './progression';
@@ -51,6 +51,8 @@ export function skillExtraNotes(sk: Skill): string[] {
 export function skillBrief(sk: Skill): string {
     if (sk.type !== 'active') {
         const parts = byStatOrder(Object.entries(sk.levelEffects?.[0]?.bonus ?? sk.bonus ?? {})).map(([key, n]) => skillBonusText(key, n as number));
+        // v3.70 능력치 수련 패시브: 기본 능력치 자체가 오릅니다.
+        for (const [key, n] of Object.entries(sk.attrBonus || {})) parts.push(`${ATTRIBUTE_NAMES[key as Attribute]} +${n}`);
         if (sk.perRebirth) parts.push(`환생마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')}`);
         if (sk.levelEffects?.length) parts.push(`숙련할수록 강해짐(AP ${sk.levelEffects[0].cost} → ${sk.levelEffects.at(-1)!.cost})`);
         if (sk.masteryGain) parts.push('조건부 숙련 증가');

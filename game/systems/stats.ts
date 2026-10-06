@@ -13,6 +13,7 @@ import { roughReward, roughGear, roughHeal, restraintExp, vowBadges } from './vo
 import { sproutExp, sproutCount } from '../data/sprout';
 import { ascensionEarlyExp } from '../data/ascension';
 import { skillById } from '../data/skills';
+import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
@@ -36,8 +37,19 @@ export type StatTrace = Partial<Record<keyof CombatStats, { source: StatSource; 
  * 최종 전투 능력치. trace를 넘기면 각 단계의 증감을 원인별로 기록합니다.
  * 기록 여부와 관계없이 계산 순서와 결과는 같습니다(덧셈·곱셈 순서 유지).
  */
+/** v3.70 기본 능력치 + 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). 전직 조건은 배분 능력치만 봅니다. */
+export function trainedAttributes(s: State) {
+    const v = attributes(s);
+    for (const id of s.skills || []) {
+        const sk = skillById(id);
+        if (!sk?.attrBonus || !canUse(s, id)) continue;
+        const scale = 1 + STAT_TRAINING_GROWTH * Math.min(4, skillMastery(s, id));
+        for (const [k, n] of Object.entries(sk.attrBonus)) v[k as keyof typeof v] += Math.round((n || 0) * scale);
+    }
+    return v;
+}
 export function stats(s: State, trace?: StatTrace): CombatStats {
-    const j = jobById(s.job) || JOBS[0], v = attributes(s), themes = regionThemes(s);
+    const j = jobById(s.job) || JOBS[0], v = trainedAttributes(s), themes = regionThemes(s);
     const rec = (k: keyof CombatStats, source: StatSource, delta: number, factor?: number) => {
         if (trace && delta) (trace[k] ||= []).push(factor === undefined ? { source, delta } : { source, delta, factor });
     };
