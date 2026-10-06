@@ -51,6 +51,10 @@ assert.ok(heir.ancient[2] / myth >= 1.35 && heir.ancient[2] / myth <= 1.65, `원
 assert.ok(heir.primal[2] / myth >= 1.8 && heir.primal[2] / myth <= 2.2, `계승 태초(환생 200) 신화의 ${(heir.primal[2] / myth).toFixed(2)}배`);
 for (const k of ['relic', 'ancient', 'primal']) assert.ok(heir[k][0] < heir[k][1] && heir[k][1] < heir[k][2], `${k} 환생 성장`);
 console.log(`신화 대비(환생 200): 유물 ×${(heir.relic[2] / myth).toFixed(2)} · 원시 고대 ×${(heir.ancient[2] / myth).toFixed(2)} · 계승 태초 ×${(heir.primal[2] / myth).toFixed(2)}`);
+// v3.67 난이도·던전(나이트메어 200 · 무릉 깊은 층)에서도 태초는 칠흑 범위: 태초 등급의 난이도 가중은 ODDS.drop.primalTierCap에서 멈춥니다.
+const byTier = [0, 50, 100, 200, 300].map(t => [t, 4 / (perHour * rarityShareFrom(t, 6)) / 24]);
+console.log(`난이도별 태초 부위당 기대: ${byTier.map(([t, d]) => `${t} ${d.toFixed(0)}일`).join(' · ')}`);
+for (const [t, d] of byTier) assert.ok(d >= 13 && d <= 24 && d <= byTier[0][1] + .5, `난이도 ${t} 태초 부위당 ${d.toFixed(1)}일이 13~24일 밖이거나 난이도 0보다 느림`);
 // 태초 드롭은 칠흑과 같은 범위: 부위당 기대 14~24일, 천장 25~40일.
 assert.ok(expectDays * 4 >= 14 && expectDays * 4 <= 24, `태초 드롭 부위당 기대 ${(expectDays * 4).toFixed(1)}일이 14~24일 밖`);
 assert.ok(pityDays * 4 >= 25 && pityDays * 4 <= 40, `태초 드롭 부위당 천장 ${(pityDays * 4).toFixed(1)}일이 25~40일 밖`);
