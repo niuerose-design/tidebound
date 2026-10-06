@@ -28,6 +28,8 @@ export type AffixDef = {
     rollBoth?: boolean;
     /** v3.73 뽑힐 가중치(기본 1). 치명 피해처럼 강한 옵션은 덜 나옵니다. 저격 뽑기로 고르면 그대로 붙습니다. */
     weight?: number;
+    /** v3.73 장비 합계 상한(GEAR_CAPS)을 받지 않는 옵션(피의 계약의 흡혈). 전체 능력치 상한은 그대로입니다. */
+    uncapped?: boolean;
     /** v25.8 이 출처(던전 id)에서 떨어진 장비에만 붙는 옵션. */
     onlyOrigin?: string;
     /** v3.5 이 부위에만 붙는 옵션. */
@@ -53,9 +55,13 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'vigor', name: '생명', stat: 'hp', kind: 'flat', base: 1.5, description: '최대 체력이 오릅니다.' },
     { id: 'plating', name: '철갑', stat: 'defense', kind: 'flat', base: .3, description: '물리 방어가 오릅니다.' },
     { id: 'ward', name: '정신', stat: 'resist', kind: 'flat', base: .3, description: '마법 방어가 오릅니다.' },
-    { id: 'wellspring', name: '샘물', stat: 'mana', kind: 'flat', base: .2, description: '최대 마나가 오릅니다.' },
-    { id: 'current', name: '순환', stat: 'manaRegen', kind: 'flat', base: .012, description: '턴당 마나 회복이 오릅니다.' },
+    { id: 'wellspring', name: '샘물', stat: 'mana', kind: 'flat', base: .2, retired: true, description: '최대 마나가 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
+    { id: 'current', name: '순환', stat: 'manaRegen', kind: 'flat', base: .012, retired: true, description: '턴당 마나 회복이 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
     { id: 'precise', name: '정밀', stat: 'accuracy', kind: 'percent', base: .03, retired: true, description: '명중이 오릅니다. (v3.72 감각으로 통합, 새로 붙지 않음)' },
+    // v3.73 이중 옵션: 위력(물공+마공) · 수호(물방+마방)는 한쪽 옵션보다 각 수치가 낮은 대신 두 쪽을 함께 올립니다. 마력은 샘물+순환 통합.
+    { id: 'force', name: '위력', stat: 'attack', kind: 'flat', base: .2, stat2: 'magic', base2: .2, rollBoth: true, description: '물리 공격과 마법 공격이 함께 오릅니다.' },
+    { id: 'guardian', name: '수호', stat: 'defense', kind: 'flat', base: .2, stat2: 'resist', base2: .2, rollBoth: true, description: '물리 방어와 마법 방어가 함께 오릅니다.' },
+    { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .2, stat2: 'manaRegen', base2: .012, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, weight: .4, description: '치명 피해가 오릅니다.' },
     { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', base: .025, description: '방어 관통이 오릅니다.' },
@@ -76,12 +82,13 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'glassCannon', name: '유리 대포', stat: 'magic', kind: 'flat', base: 1.35, stat2: 'hp', base2: -3.3, description: '마법 공격이 크게 오르지만 최대 체력이 줄어듭니다.' },
     { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: 1.35, stat2: 'speed', base2: -6, description: '물리 방어가 크게 오르지만 느려집니다.' },
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .075, stat2: 'accuracy', base2: -.09, description: '치명타가 크게 오르지만 명중이 줄어듭니다.' },
-    { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -2.25, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 10%p).' },
+    { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -2.25, uncapped: true, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다 (장비 흡혈 합계 최대 10%p).' },
     // v3.71 고대 이상 전용 옵션(minRarity 5): 고대 · 태초에서만 굴려지는 강한 옵션. 각인 감정으로는 고를 수 없습니다(낮은 등급이 나올 수 있어서).
     { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, weight: .4, description: '고대 이상. 치명 피해가 크게 오릅니다.' },
     { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, description: '고대 이상. 체력 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },
     { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, description: '고대 이상. 보스 · 사냥감에게 주는 피해가 오릅니다.' },
     { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, description: '고대 이상. 연속 행동 확률이 오릅니다(속도와 무관).' },
+    { id: 'bounty', name: '풍요', stat: 'expBonus', kind: 'percent', base: .04, stat2: 'goldBonus', base2: .05, rollBoth: true, minRarity: 5, description: '고대 이상. 경험치와 골드 획득이 함께 늘어납니다.' },
     // v3.5 망토 전용 옵션: 몬스터 상태이상 저항. 수치 = 18.8% × (레벨/100)² × 등급 품질 × 굴림, 착용 시 별당 +3%(다른 옵션과 달리 별 보정), 합계 최대 50%(Lv.100 태초 22성 ≈ 50%).
     { id: 'steadfast', name: '불굴', stat: 'statusResist', kind: 'percent', base: STATUS_RESIST_BASE, onlySlot: 'cape', levelPower: 2, description: '망토 전용. 몬스터가 거는 기절·침묵·출혈·중독·화상·약화·감속을 이 확률로 무효화합니다. 별마다 +3%, 최대 50%.' },
     // v3.12 칠흑 장신구 고유 옵션(규칙). onlyOrigin 'onyx'라 어디서도 굴리지 않고 onyxAccessory가 직접 붙입니다.
@@ -111,24 +118,24 @@ export const AFFIX_POOL: AffixDef[] = [
 /** 사냥터·던전별로 잘 나오는 옵션(가중치 ×4). 명시되지 않은 곳은 균등합니다. 이름은 STAGES·DUNGEONS에서 가져옵니다. */
 const ORIGIN_AFFIXES: Record<string, string[]> = {
     brook: ['vigor', 'plating', 'sense'],
-    bay: ['ward', 'wellspring', 'scholar'],
+    bay: ['ward', 'flow', 'scholar'],
     reef: ['lucky', 'brutal', 'gambit'],
     kelp: ['sense', 'swift', 'venom'],
     wreck: ['piercing', 'brutal', 'might', 'berserk'],
     volcanic: ['venom', 'arcana', 'spiked', 'lingering'],
     trench: ['leech', 'vigor', 'spiked', 'bloodPact'],
-    moon: ['arcana', 'current', 'glassCannon', 'runeCore'],
+    moon: ['arcana', 'flow', 'glassCannon', 'runeCore'],
     starfall: ['scholar', 'seeker', 'lucky', 'echoing'],
     grotto: ['swift', 'concuss', 'binding'],
     kelpCatacomb: ['venom', 'saturate', 'mending'],
     cemetery: ['plating', 'spiked', 'bulwark'],
     caldera: ['venom', 'lingering', 'saturate'],
-    temple: ['arcana', 'wellspring', 'runeCore', 'mending'],
+    temple: ['arcana', 'flow', 'runeCore', 'mending'],
     starSanctum: ['echoing', 'reaper', 'concuss'],
     duskVents: ['might', 'arcana', 'piercing', 'berserk', 'reaper'],
     coralForest: ['sense', 'leech', 'swift'],
     dragonNest: ['might', 'plating', 'berserk', 'spiked'],
-    memoryLane: ['scholar', 'current', 'arcana'],
+    memoryLane: ['scholar', 'flow', 'arcana'],
     vanishingJourney: ['piercing', 'brutal', 'reaper', 'echoing'],
     ventCathedral: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'],
     abyss: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'],

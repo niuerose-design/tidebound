@@ -21,7 +21,7 @@ export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];
 export const APPRAISAL_REBIRTH = { scale: 60, perRebirth: .45 };
 export const appraisalRebirthFactor = (rebirths: number) => { const r = Math.max(0, rebirths); return Math.min(Math.pow(10, r / APPRAISAL_REBIRTH.scale), 1 + r * APPRAISAL_REBIRTH.perRebirth); };
 /** v3.58 각인 감정: 고른 옵션 하나가 반드시 붙습니다. 골드는 감정 × goldMultiplier, 정수 essence가 더 듭니다. */
-export const IMPRINT_APPRAISAL = { goldMultiplier: 2, essence: 10 };
+export const IMPRINT_APPRAISAL = { goldMultiplier: 5, essence: 50 };
 /** v3.58 자동 감정 한 번에 최대 시도 수(렉 방지). */
 export const AUTO_APPRAISAL_MAX = 1000;
 /** 감정 등급(희귀 ~ 태초). v3.52 확률은 서버 전용(game/secret/odds.ts, ODDS.appraisal). */

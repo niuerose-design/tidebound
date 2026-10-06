@@ -40,7 +40,8 @@ export function itemStats(item: Item): Partial<Stats> {
         // v3.5 상태이상 저항만 별 보정(별당 +3%)을 받고 장비 합계 50%에서 막힙니다.
         const value = affix.stat === 'statusResist' ? Math.min(GEAR_CAPS.statusResist!, affix.value * (1 + (item.enhance || 0) * STATUS_RESIST_STAR)) : scaled(affix.stat, affix.value);
         result[affix.stat] = (result[affix.stat] || 0) + value;
-        if (affix.stat2 && affix.value2) result[affix.stat2] = (result[affix.stat2] || 0) + affix.value2;
+        // v3.73 이중 옵션(위력 · 수호)의 둘째 고정 수치도 등급 감쇠를 받습니다. 양날 옵션의 손해(음수)는 그대로입니다.
+        if (affix.stat2 && affix.value2) result[affix.stat2] = (result[affix.stat2] || 0) + scaled(affix.stat2, affix.value2);
     }
     return result;
 }

@@ -2,7 +2,7 @@ import { tailwindActive, tailwindExp, tierReward, encounterTier } from './meta';
 import { displayTitle } from '../data/titles';
 import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTargets, thresholdRank } from '../data/long-term';
 import { itemStats } from './equipment';
-import { GEAR_CAPS, RULE_CAPS } from '../data/gear';
+import { GEAR_CAPS, RULE_CAPS, affixDef } from '../data/gear';
 import { ownedOnyx, onyxSetBonus } from '../data/onyx';
 import type { State, Snapshot, Stats, CombatStats } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA } from '../data/balance';
@@ -104,9 +104,14 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
             for (const [key, n] of Object.entries(itemStats(item)))
                 gear[key as keyof CombatStats] = (gear[key as keyof CombatStats] || 0) + n;
     }
-    for (const [key, n] of Object.entries(gear))
+    // v3.73 장비 합계 상한을 받지 않는 옵션(피의 계약의 흡혈)은 상한 계산에서 빼고 따로 더합니다.
+    const free: Partial<Record<keyof CombatStats, number>> = {};
+    for (const item of Object.values(s.equipment)) for (const affix of item?.affixes || []) if (affixDef(affix.id)?.uncapped) free[affix.stat as keyof CombatStats] = (free[affix.stat as keyof CombatStats] || 0) + affix.value;
+    for (const [key, n] of Object.entries(gear)) {
+        const own = free[key as keyof CombatStats] || 0;
         // v27.86 힘의 길: 장비 능력치 ×(1 − 30·50·70%).
-        add(key as keyof CombatStats, 'equipment', Math.min(n!, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity) * roughGear(s));
+        add(key as keyof CombatStats, 'equipment', (Math.min(n! - own, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity) + own) * roughGear(s));
+    }
     // v3.12 칠흑 세트(보유 수 기준, 영구).
     // v3.38 칠흑 세트는 장비 출처로 표시합니다(전에는 ‘도감’으로 잘못 묶였음).
     { const b = onyxSetBonus(ownedOnyx(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); if (b.allStats) add('allStats', 'equipment', b.allStats); }
@@ -188,7 +193,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     limit('statusResist', Math.min(.5, a.statusResist || 0));
     // v3.12 창세의 힘·칠흑 세트: 체력·양 공격·양 방어 배율.
     if (a.allStats) for (const k of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(k, [['equipment', 1 + a.allStats]]);
-    limit('lifesteal', Math.min(.3, a.lifesteal));
+    // v3.73 피의 계약 흡혈은 전체 상한(30%)도 받지 않습니다(한 번 회복량 상한 lifestealHpCap은 그대로).
+    { const pact = (free.lifesteal || 0) * roughGear(s); limit('lifesteal', Math.min(.3, a.lifesteal - pact) + pact); }
     // v27.86 힘의 길 회복 봉쇄: 흡혈·턴당 체력 회복 ×(1 − 50·75·100%). 처치 후 회복은 victoryHealRate에서 줄입니다.
     if (roughHeal(s) < 1) { limit('lifesteal', a.lifesteal * roughHeal(s)); limit('hpRegen', Math.floor(a.hpRegen * roughHeal(s))); }
     return a;
