@@ -1,5 +1,5 @@
 /**
- * v3.40 정보 비공개 스위치(docs/concept.md 10.2-5). 오픈 베타 동안은 꺼 두고, 정식 오픈 때 운영 페이지에서 켭니다.
+ * v3.43 정보 비공개 스위치(docs/concept.md 10.2-5). 오픈 베타 동안은 꺼 두고, 정식 오픈 때 운영 페이지에서 켭니다.
  * 환경 변수 TIDEBOUND_SECRECY(on · off)가 있으면 그것을 따르고, 없으면 서버 설정 secrecy를 인스턴스마다 30초 캐시로 읽습니다.
  * 쓰기는 운영 페이지에서 바꿀 때만 합니다.
  */
@@ -27,12 +27,12 @@ export async function setSecrecy(on: boolean, now: number) {
     cached = { at: now, on };
     return { on, env: process.env.TIDEBOUND_SECRECY || null };
 }
-/** v3.41 실루엣: 계보 안 자리(차수·상위·계보)와 힌트만 남기고 이름·설명·조건·능력치는 뺍니다. */
+/** v3.44 실루엣: 계보 안 자리(차수·상위·계보)와 힌트만 남기고 이름·설명·조건·능력치는 뺍니다. */
 export const veil = (j: Job): Job => ({ id: j.id, name: '???', title: '', desc: '', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: j.tier, level: 1, mastery: 0, requires: {}, role: '', tree: j.tree,
     ...(j.parent ? { parent: j.parent } : {}), ...(j.lineage ? { lineage: j.lineage } : {}), hidden: true, ...(j.hint ? { hint: j.hint } : {}), masteryTarget: 1, masteryBoost: 0, veiled: true });
 const veilLineage = (l: Lineage): Lineage => ({ id: l.id, name: '???', tree: l.tree, summary: '아직 드러나지 않은 계보입니다.' });
 /**
- * 모험가마다 화면에 보낼 카탈로그. v3.41 문 상태 · 드러난 비밀 직업 · 비밀 직업(드러난 것만 전체, 나머지 실루엣)·계보.
+ * 모험가마다 화면에 보낼 카탈로그. v3.44 문 상태 · 드러난 비밀 직업 · 비밀 직업(드러난 것만 전체, 나머지 실루엣)·계보.
  * 비공개가 꺼져 있으면(오픈 베타) 비밀 직업도 모두 전체로 보내 지금 화면과 같습니다. 조건 판정은 서버에서만 합니다.
  * known이 지금 내용 키와 같으면 null(다시 보내지 않음).
  */

@@ -2,7 +2,7 @@
 import { newState, jobMasteryTarget, jobUi, JOBS, assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 
-// v3.41 공개 판정은 서버(game/systems/reveal.ts)가 하고 화면은 카탈로그를 봅니다. 화면 함수를 부르기 전에 그 상태로 만든 카탈로그를 적용합니다.
+// v3.44 공개 판정은 서버(game/systems/reveal.ts)가 하고 화면은 카탈로그를 봅니다. 화면 함수를 부르기 전에 그 상태로 만든 카탈로그를 적용합니다.
 const { load } = loadGame(), reveal = await load('game/systems/reveal.js'), catalog = await load('game/data/catalog.js'), doors = await load('game/data/doors.js');
 const ui = new Proxy(jobUi, { get: (m, k) => typeof m[k] !== 'function' ? m[k] : (...args) => { const s = args[0]; if (s && Array.isArray(s.unlockedJobs)) catalog.applyCatalog({ secret: false, revealed: reveal.revealedSecretJobs(s), doors: doors.doorView(s) }); return m[k](...args); } });
 

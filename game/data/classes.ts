@@ -59,7 +59,7 @@ export type Job = {
     tags?: string[];
     /** 미발견 히든·문 직업의 실루엣 카드에 보이는 한 줄 힌트. */
     hint?: string;
-    /** v3.41 카탈로그 실루엣: 이름·조건·능력치를 뺀 비밀 직업(화면 전용, 서버 표에는 없음). */
+    /** v3.44 카탈로그 실루엣: 이름·조건·능력치를 뺀 비밀 직업(화면 전용, 서버 표에는 없음). */
     veiled?: boolean;
     /**
      * v27.4 제약 직업 틀. 체력 ×0.01처럼 큰 마이너스 배율을 가진 직업이 "어떻게 살아남는지"를 데이터로 선언합니다.
@@ -219,7 +219,7 @@ JOBS.push(...(DEFENSE_JOBS as Job[]));
 JOBS.push(...(INVERSION_JOBS as Job[]));
 // v25.26 외길 계보: 능력치 하나만으로 전직하는 1~3차. 자세한 설계는 expansion-monostat.ts.
 JOBS.push(...(MONOSTAT_JOBS as Job[]));
-// v3.18 해커 계열과 v3.41부터 모든 히든·??? 문 직업은 서버 전용 game/secret/jobs.ts에 있습니다(docs/concept.md 10장).
+// v3.18 해커 계열과 v3.44부터 모든 히든·??? 문 직업은 서버 전용 game/secret/jobs.ts에 있습니다(docs/concept.md 10장).
 // 서버는 game/secret/register.ts로, 화면은 카탈로그(catalog.ts)로 registerJobs를 거쳐 이 표에 더합니다.
 
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다.
@@ -275,7 +275,7 @@ const JOB_HINTS: Record<string, string> = {
 };
 
 /**
- * v3.41 직업 표 후처리를 한곳에 모았습니다(docs/concept.md 10장). 불러올 때 기본 직업 표에 한 번,
+ * v3.44 직업 표 후처리를 한곳에 모았습니다(docs/concept.md 10장). 불러올 때 기본 직업 표에 한 번,
  * 그 뒤 서버 전용 비밀 직업이나 화면이 받은 카탈로그 직업을 registerJobs로 더할 때 그 묶음에만 다시 적용합니다.
  * 순서가 결과를 정하므로 바꾸지 마세요: 설명 → 회복 → 교차 조건 → 숙련 목표 → 차수 배율 → 5차 선행 숙련 → 힌트 → 메이플 이름 → 칭호·설명.
  */
@@ -303,7 +303,7 @@ function finishJobs(list: Job[]) {
 }
 finishJobs(JOBS);
 /**
- * v3.41 직업 더하기: 서버는 비밀 직업 표를, 화면은 서버가 보낸 카탈로그 직업을 여기로 넣습니다.
+ * v3.44 직업 더하기: 서버는 비밀 직업 표를, 화면은 서버가 보낸 카탈로그 직업을 여기로 넣습니다.
  * 이미 있는 id는 건너뜁니다(같은 묶음을 두 번 받아도 안전). 더한 직업 수를 돌려줍니다.
  */
 export function registerJobs(list: Job[], finished = false) {
@@ -314,7 +314,7 @@ export function registerJobs(list: Job[], finished = false) {
     jobByIdMap = undefined; lineageCache = new WeakMap();
     return fresh.length;
 }
-/** v3.41 화면: 카탈로그 직업(완성된 모양)을 넣거나 실루엣을 드러난 직업으로 바꿉니다. 바뀐 수를 돌려줍니다. */
+/** v3.44 화면: 카탈로그 직업(완성된 모양)을 넣거나 실루엣을 드러난 직업으로 바꿉니다. 바뀐 수를 돌려줍니다. */
 export function upsertJobs(list: Job[]) {
     let changed = 0;
     for (const j of list) {
@@ -372,7 +372,7 @@ export const LINEAGES: Lineage[] = [
 for (const lineage of LINEAGES) lineage.name = MAPLE_LINEAGE_NAMES[lineage.id] ?? lineage.name;
 for (const lineage of LINEAGES) lineage.summary = MAPLE_LINEAGE_SUMMARY[lineage.id] ?? lineage.summary;
 /**
- * v3.41 계보 더하기·바꾸기(비밀 계보: 서버는 전체, 화면은 카탈로그의 것). 같은 id는 내용을 바꿉니다.
+ * v3.44 계보 더하기·바꾸기(비밀 계보: 서버는 전체, 화면은 카탈로그의 것). 같은 id는 내용을 바꿉니다.
  */
 export function registerLineages(list: Lineage[]) {
     for (const l of list) { const i = LINEAGES.findIndex(x => x.id === l.id); if (i >= 0) LINEAGES[i] = l; else LINEAGES.splice(LINEAGES.findIndex(x => x.id === 'mystery-independent'), 0, l); }

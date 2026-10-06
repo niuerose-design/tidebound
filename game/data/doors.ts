@@ -5,7 +5,7 @@
  * v27.73 운영 페이지에서 문을 직접 열 수 있습니다(settings.doors). 서버가 setOpenDoors로 채우고 동기화 때 State.openDoors에 적어 화면도 봅니다.
  *   운영자가 연 문은 열려 있는 동안만 열리고(doorsOpened에 기록하지 않음) 닫으면 다시 조건을 봅니다. 그 사이 들어간 직업은 unlockedJobs라 그대로 남습니다.
  * 새 ??? 직업은 support-rework.ts에 만들고 이 목록에 추가합니다.
- * v3.41 서버 전용(docs/concept.md 10장): 문 조건이 비밀이라 화면은 이 파일을 가져가지 않습니다. 이름·한국 시간·상태 창구는 door-info.ts,
+ * v3.44 서버 전용(docs/concept.md 10장): 문 조건이 비밀이라 화면은 이 파일을 가져가지 않습니다. 이름·한국 시간·상태 창구는 door-info.ts,
  *   화면의 문 상태는 서버가 카탈로그로 보냅니다. 불러올 때 setDoorSource로 door-info의 창구를 이 파일의 판정으로 채웁니다.
  *   비밀 직업을 서버에서 나중에 등록하므로 직업 표로 거르지 않습니다(목록의 id는 모두 있는 직업).
  */
@@ -90,7 +90,7 @@ export function drawRebirthDoor(s: Pick<State, 'rebirthDoor' | 'unlockedJobs'>, 
     if (fresh.length) pool = fresh;
     return pool.length === 1 ? pool[0] : pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
 }
-/** v3.41 화면에 보낼 문 정보(카탈로그). 예전에는 화면(mystery-doors)이 직접 계산했습니다. */
+/** v3.44 화면에 보낼 문 정보(카탈로그). 예전에는 화면(mystery-doors)이 직접 계산했습니다. */
 export type DoorView = {
     /** 문이 있는 직업 → 지금 상태(화면의 doorFor 창구). */
     states: Record<string, { door: DoorId; open: boolean }>;
@@ -115,5 +115,5 @@ export function doorView(s: State): DoorView {
     return { states, rebirth, discovery, unentered };
 }
 
-// v3.41 진행·환생 계산이 door-info의 창구로 이 판정을 씁니다(서버).
+// v3.44 진행·환생 계산이 door-info의 창구로 이 판정을 씁니다(서버).
 setDoorSource({ doorFor, drawRebirthDoor });

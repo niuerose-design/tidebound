@@ -79,7 +79,7 @@ const NAMED: Record<string, string> = {
     netWeaver: '그물 사냥꾼', oathAngler: '맹세의 전사', barbSkirmisher: '척후병', wakeRunner: '질주자', sapper: '엔지니어', tideSurveyor: '지도 제작자',
     bubbleMage: '버블 매지션', stillwaterBinder: '봉인술사', driftwoodHermit: '숲의 은둔자', scaleKnight: '견습 기사', lifeTender: '생명지기',
     ambiAngler: '양손 무기 수련생', inkThrower: '표창 투척수',
-    // ??? 히든 직업 이름은 v3.41부터 game/secret/jobs.ts(서버 전용)에 있습니다.
+    // ??? 히든 직업 이름은 v3.44부터 game/secret/jobs.ts(서버 전용)에 있습니다.
 };
 /** 직업 id → 메이플 이름. 차수(tier)가 있어야 ‘(N차)’를 붙일 수 있어 직업 목록을 받아 만듭니다. */
 export function mapleJobNames(jobs: { id: string; tier: number }[]): Record<string, string> {

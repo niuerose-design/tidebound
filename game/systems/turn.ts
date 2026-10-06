@@ -20,6 +20,7 @@ import { profile } from '../data/encounters';
 import { bookEcology } from './book';
 import { breathReset } from './actions/lifecycle';
 import { isHacker, hackerTick } from './hacker';
+import { runAutomation } from './automation';
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
@@ -30,6 +31,8 @@ export function tick(s: State, rng = Math.random) {
     tickTurn(s, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
     syncAchievements(s, text => addLog(s, text, 'reward'));
+    // v3.40 승천 편의: 연구 구매 예약 · 자동 환생.
+    runAutomation(s, rng);
 }
 /** 레벨당 능력치 포인트가 오른 뒤(4 → 5), 이전 세이브에 지난 레벨만큼 차액을 한 번 지급합니다. */
 export function syncStatRate(s: State) {
@@ -173,6 +176,6 @@ export function advance(s: State, now: number, rng = Math.random) {
     recordOpenDoors(s);
     if (offline && s.kills > before.kills) {
         const prev = continuing && s.lastOffline ? s.lastOffline : null;
-        s.lastOffline = { seconds: prev ? prev.seconds : Math.min(cap, Math.floor(elapsed / 1000)), kills: (prev?.kills || 0) + s.kills - before.kills, gold: (prev?.gold || 0) + s.gold - before.gold, exp: (prev?.exp || 0) + Math.max(0, s.exp - before.exp) };
+        s.lastOffline = { seconds: prev ? prev.seconds : Math.min(cap, Math.floor(elapsed / 1000)), kills: (prev?.kills || 0) + s.kills - before.kills, gold: (prev?.gold || 0) + Math.max(0, s.gold - before.gold), exp: (prev?.exp || 0) + Math.max(0, s.exp - before.exp) };
     }
 }

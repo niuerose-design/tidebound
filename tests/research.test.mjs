@@ -9,7 +9,7 @@ const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
 const seeded = seed => { let x = seed >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296); };
 
 test('Research v2: 11 new entries (v3.38 shop removed) match the plan table and are refused before unlock and at the cap', () => {
-    const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 4, 3, 5, 1020], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], inventory: [8, 3, 3, 2, 108], offline: [12, 3, 2, 2, 168], mastery: [10, 3, 3, 5, 165], enhance: [15, 3, 2, 5, 255] };
+    const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 4, 3, 5, 1096], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], inventory: [8, 3, 3, 2, 108], offline: [12, 3, 2, 2, 168], mastery: [10, 3, 3, 5, 165], enhance: [15, 3, 2, 5, 255] }; // v3.42 치명 피해 21~25단계는 ×1.06 복리(전 가격 1,020)
     for (const id of NEW) {
         const r = research(id), [max, base, step, rebirth, total] = table[id];
         assert.deepEqual([r.max, r.base, r.step, r.rebirth], [max, base, step, rebirth], id);

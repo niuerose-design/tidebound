@@ -1,7 +1,7 @@
 /**
- * v3.40 정보 비공개(docs/concept.md 10장): 서버가 모험가마다 만들어 화면에 보내는 카탈로그.
+ * v3.43 정보 비공개(docs/concept.md 10장): 서버가 모험가마다 만들어 화면에 보내는 카탈로그.
  * 화면은 비밀 표(히든 직업 조건·드롭 테이블·확률·스킬 전체 계보)를 직접 읽지 않고 이 카탈로그만 쓰도록 단계마다 옮겨 갑니다.
- * v3.41 2단계: 문 상태(조건은 서버가 판정)와 드러난 비밀 직업 목록. applyCatalog가 화면 쪽 문 창구(door-info)를 채웁니다.
+ * v3.44 2단계: 문 상태(조건은 서버가 판정)와 드러난 비밀 직업 목록. applyCatalog가 화면 쪽 문 창구(door-info)를 채웁니다.
  */
 import { setDoorSource, type DoorId } from './door-info';
 import { upsertJobs, registerLineages, type Job, type Lineage } from './classes';
@@ -15,11 +15,11 @@ export type CatalogDoors = {
 export type Catalog = {
     /** 비공개 스위치. false(오픈 베타)면 화면은 지금처럼 전체 정보를 보여 줍니다. */
     secret: boolean;
-    /** v3.41 문 상태(서버 판정). */
+    /** v3.44 문 상태(서버 판정). */
     doors?: CatalogDoors;
-    /** v3.41 이 모험가에게 드러난 비밀 직업 id(실루엣을 벗은 직업). */
+    /** v3.44 이 모험가에게 드러난 비밀 직업 id(실루엣을 벗은 직업). */
     revealed?: string[];
-    /** v3.41 비밀 직업: 드러났거나 비공개가 꺼져 있으면 전체, 아니면 실루엣(veiled). 화면 직업 표에 넣습니다. */
+    /** v3.44 비밀 직업: 드러났거나 비공개가 꺼져 있으면 전체, 아니면 실루엣(veiled). 화면 직업 표에 넣습니다. */
     jobs?: Job[];
     lineages?: Lineage[];
     /** 내용 키. 화면이 가진 키와 같으면 서버는 카탈로그를 다시 보내지 않습니다. */

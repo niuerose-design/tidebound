@@ -121,7 +121,7 @@ export const PRIVACY_FIELDS = ['job', 'level', 'gear', 'skills', 'title', 'guild
 export type PrivacyField = typeof PRIVACY_FIELDS[number];
 export const PRIVACY_LABELS: Record<PrivacyField, string> = { job: '직업', level: '레벨', gear: '장비', skills: '장착 스킬', title: '칭호', guild: '길드' };
 
-/** v3.41 해커 계열 직업(해커·화이트 해커·블랙 해커)은 비밀 직업이라 game/secret/jobs.ts로 옮겼습니다(서버 전용). */
+/** v3.44 해커 계열 직업(해커·화이트 해커·블랙 해커)은 비밀 직업이라 game/secret/jobs.ts로 옮겼습니다(서버 전용). */
 
 /** 해커 계열 스킬: 신원 조작(id adGuard, 옛 애드가드)과 화이트 해커 방화벽. 숙련은 해커 활동(침투·브루트포스·해킹)으로 오릅니다. */
 export const HACKER_SKILLS: Skill[] = [

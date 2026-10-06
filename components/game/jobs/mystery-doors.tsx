@@ -9,7 +9,7 @@ import { serverNow, jobRevealed } from './job-status';
 
 const jobOf = (id?: string) => jobById(id);
 const doorName = (id: string) => DOORS.find(d => d.id === id)!;
-/** v3.41 문 정보는 서버가 판정해 카탈로그로 보냅니다(발견의 문 조건은 비밀). 받기 전에는 빈 값. */
+/** v3.44 문 정보는 서버가 판정해 카탈로그로 보냅니다(발견의 문 조건은 비밀). 받기 전에는 빈 값. */
 const doorsOf = () => catalogNow().doors ?? { states: {}, rebirth: { note: '환생하면 한 직업의 문이 열립니다.' }, discovery: [], unentered: [] };
 
 /** ??? 탭 윗줄: 윤회의 문 카드 하나와 발견의 문 목록. 열린 문의 직업을 누르면 상세를 엽니다. */
@@ -37,7 +37,7 @@ export function DoorRow({ s, selectedId, onSelect }: { s: State; selectedId?: st
     </div>;
 }
 
-/** 지금 열려 있고 아직 들어가지 않은 문의 직업들(??? 탭 점·전투 화면 알림·빠른 찾기). 운영자가 연 윤회의 문 직업도 모두 넣습니다. v3.41 서버가 판정. */
+/** 지금 열려 있고 아직 들어가지 않은 문의 직업들(??? 탭 점·전투 화면 알림·빠른 찾기). 운영자가 연 윤회의 문 직업도 모두 넣습니다. v3.44 서버가 판정. */
 export function openUnenteredDoors(s: State) {
     void s;
     return doorsOf().unentered.map(d => ({ door: doorName(d.door), job: d.job }));

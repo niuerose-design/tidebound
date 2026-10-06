@@ -443,6 +443,16 @@ export type State = {
     placeApMoved?: boolean;
     /** v3.39 소식 비교용 지난 표시(systems/news.ts). */
     newsMark?: import('./systems/news').NewsMark;
+    /** v3.40 편지 수신인 기록(최근 10건). */
+    letterLog?: { job: string; gift: number; turn: number }[];
+    /** v3.40 자동 환생(승천 1회): 켜짐과 목표 레벨(0 = 요구 레벨). */
+    autoRebirth?: { on: boolean; level: number };
+    /** v3.40 연구 구매 예약(승천 1회): 순서대로 목표 단계까지 자동 구매. */
+    researchPlan?: { on: boolean; items: { id: string; to: number }[] };
+    /** v3.41 사냥터·난이도 자동 따라가기(승천 2회). */
+    autoFollow?: { on: boolean; stage: 'top' | 'habitat' | 'keep'; tide: 'max' | 'mimic' | 'keep' };
+    /** v3.41 숙련 순회 전직(승천 2회): 전직 시점('mastered' 또는 단련 단계). idle은 바꿀 직업이 없다고 한 번 알린 표시. */
+    rotation?: { on: boolean; at: 'mastered' | number; idle?: boolean };
     /** v3.12 칠흑 보스: 서식지별로 보스를 못 본 출현 횟수(천장)와 보스별 처치 수. 환생해도 남습니다. */
     onyxSeen?: Record<string, number>;
     onyxBook?: Record<string, number>;
@@ -466,6 +476,8 @@ export type State = {
     researchResetUsed?: boolean;
     /** v27.31 무료로 받은 세계석 연구 단계(재분배 때 반환하지 않음). limitBreak: 이미 한 한계돌파만큼 ‘한계의 문’을 무료로 받음. */
     researchGranted?: Record<string, number>;
+    /** v3.42 가격 인상(RESEARCH_GROWTH) 전에 이미 산 연구 단계. 재분배 때 이 단계까지는 전 가격으로 돌려줍니다. 승천·재분배하면 비웁니다. */
+    researchLegacy?: Record<string, number>;
     /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
     /** 자동 정리 · 분해 방식(설정). v3.23부터 정수로 분해. */

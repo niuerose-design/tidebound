@@ -64,7 +64,7 @@ export function jobBonusText(j: Job, key: JobBonusKey, mastered = false) {
 /** 실루엣 대상: 히든 직업과 ??? 문 직업(문 목록은 서버 카탈로그). */
 export const secretJob = (j: Job) => !!j.hidden || !!doorFor({}, j.id);
 /**
- * 실루엣 공개. v3.41 판정(관문 조건)은 비밀이라 서버가 하고(game/systems/reveal.ts), 화면은 카탈로그의 공개 목록만 봅니다.
+ * 실루엣 공개. v3.44 판정(관문 조건)은 비밀이라 서버가 하고(game/systems/reveal.ts), 화면은 카탈로그의 공개 목록만 봅니다.
  * 들어간 적 있는 직업은 카탈로그를 받기 전에도 드러난 것으로 봅니다.
  */
 export function jobRevealed(s: State, j: Job) {

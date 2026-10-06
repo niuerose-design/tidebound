@@ -1,7 +1,7 @@
 import type { State } from '../types';
 import { addLog } from './state';
 import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
-import { RELICS } from '../data/economy';
+import { RELICS, RESEARCH_GROWTH } from '../data/economy';
 import { syncRelicPower } from './equipment';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { SAVE_VERSION } from '../data/balance';
@@ -127,6 +127,12 @@ export function rescaleRanks(s: State) {
     addLog(s, `계급장 진급 기준이 크게 늘어 ${RANKS[oldIndex].name} → ${RANKS[now].name}(으)로 조정되었습니다.${spent ? ' 찍어 둔 특전을 모두 되돌렸으니 진급 포인트를 다시 배분하세요.' : ''}`, 'system');
     return true;
 }
+/** v3.42 연구 가격 인상(21번째 단계부터 ×1.06 복리) 전에 산 단계를 한 번 기록합니다. 재분배 때 이 단계까지는 전 가격으로 돌려줍니다. */
+export function stampResearchLegacy(s: State) {
+    if (s.researchLegacy) return 0;
+    s.researchLegacy = Object.fromEntries(Object.entries(s.permanent || {}).filter(([, rank]) => rank > RESEARCH_GROWTH.from));
+    return Object.keys(s.researchLegacy).length;
+}
 export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
@@ -142,7 +148,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

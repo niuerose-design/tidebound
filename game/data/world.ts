@@ -22,7 +22,7 @@ const BASE_STAGES: StageDef[] = [
 ];
 /**
  * v27.80 무리 서식지: 지역마다 하나. 그 지역 몬스터가 전부 무리로만 나옵니다(×100 75% · ×500 25%, 도감·패시브 조건 없음).
- * 처치 한 번에 마리 수만큼 보상·도감·드롭 판정이 쌓이는 고위험 고보상 사냥터입니다. 까미·누리는 나오지 않습니다.
+ * 처치 한 번에 마리 수만큼 보상·도감이 쌓이는 고위험 고보상 사냥터입니다(v3.42 드롭은 √N번 판정, swarmDropRolls). 까미·누리는 나오지 않습니다.
  * 입장: 지역 사냥터의 최고 레벨 · (지역 사냥터 최고 환생 조건 + 2, 최소 2회).
  */
 export const HABITAT = { sizes: [100, 500] as const, bigChance: .25, rebirthOver: 2, minRebirth: 2 };
@@ -70,6 +70,13 @@ export const SWARM_UNLOCK: Record<number, number> = { 1: 0, 5: 10, 100: 500, 500
 export const swarmHpMultiplier = (size: number) => size >= 100 ? size * .98 : Math.max(1, size);
 /** 무리 공격 배율: ×500 도전 무리만 체력과 같은 배율(490배), 그 아래 규모는 한 마리와 같습니다. 방어·속도는 늘 한 마리와 같습니다. */
 export const swarmAttackMultiplier = (size: number) => size >= 500 ? swarmHpMultiplier(size) : 1;
+/** v3.42 무리 장비 드롭 판정 횟수: 마리 수 N 대신 √N(반올림). ×5 2번 · ×100 10번 · ×500 22번. 서식지에서 장비가 폭증하던 것을 막습니다. */
+export const swarmDropRolls = (size: number) => size > 1 ? Math.round(Math.sqrt(size)) : 1;
+/** v3.42 덜 굴린 드롭 판정은 기대 장비 수 × 이 값만큼 정수로 바꿉니다(희귀·영웅 분해 정수의 중간값). */
+export const SWARM_ESSENCE_PER_ITEM = 3;
+/** v3.42 ×500 도전 무리(공격도 490배)의 추가 보상: 경험치·골드·숙련 ×1.5, 드롭 판정 ×2(44번). */
+export const SWARM_BIG = { size: 500, reward: 1.5, drops: 2 } as const;
+export const swarmRewardMultiplier = (size: number) => size >= SWARM_BIG.size ? SWARM_BIG.reward : 1;
 export type FishDef = {
     id: string;
     name: string;

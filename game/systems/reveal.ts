@@ -1,5 +1,5 @@
 /**
- * v3.41 비밀 직업 공개 판정(docs/concept.md 10장). 서버가 카탈로그를 만들 때 씁니다.
+ * v3.44 비밀 직업 공개 판정(docs/concept.md 10장). 서버가 카탈로그를 만들 때 씁니다.
  * 화면은 이 판정을 직접 하지 않고 카탈로그의 revealed 목록을 봅니다(조건이 비밀이므로).
  */
 import type { State } from '../types';

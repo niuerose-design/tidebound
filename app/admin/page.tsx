@@ -63,7 +63,7 @@ const lifeLine = (p: AdminPlayer) => [p.lastRebirthAt ? `마지막 환생 ${new 
 export default function AdminPage() {
     const [key, setKey] = useState(''), [query, setQuery] = useState(''), [players, setPlayers] = useState<AdminPlayer[] | null>(null);
     const [broadcast, setBroadcast] = useState<{ text: string; by: string; until: number } | null>(null);
-    /** v3.40 정보 비공개 스위치(docs/concept.md 10장). env가 있으면 환경 변수가 우선합니다. */
+    /** v3.43 정보 비공개 스위치(docs/concept.md 10장). env가 있으면 환경 변수가 우선합니다. */
     const [secrecy, setSecrecyState] = useState<{ on: boolean; env: string | null } | null>(null);
     const [hackFx, setHackFx] = useState<{ tamper: number; down: number; patched: number; ddos?: number } | null>(null);
     const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [doors, setDoors] = useState<DoorList | null>(null), [stats, setStats] = useState<Stats | null>(null);

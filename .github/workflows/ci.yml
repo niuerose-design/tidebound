@@ -44,7 +44,7 @@ jobs:
       - name: Build
         run: pnpm build 2>&1 | tee /tmp/build.log; exit ${PIPESTATUS[0]}
         shell: bash
-      # v3.40 정보 비공개 검사(docs/concept.md 10장): 화면 번들에 남은 비밀 개수를 보여 줍니다. 다 옮기기 전까지는 경고만(--strict 없이).
+      # v3.43 정보 비공개 검사(docs/concept.md 10장): 화면 번들에 남은 비밀 개수를 보여 줍니다. 다 옮기기 전까지는 경고만(--strict 없이).
       - name: Secret leak report
         run: node scripts/check-secrets.mjs 2>&1 | tee /tmp/secrets.log; exit ${PIPESTATUS[0]}
         shell: bash
