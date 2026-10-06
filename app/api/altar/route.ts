@@ -7,7 +7,7 @@ const headers = { 'Cache-Control': 'no-store' };
 export async function GET(req: Request) { try {
     const url = new URL(req.url), raidId = url.searchParams.get('raidLog');
     if (raidId) { await session(req); return Response.json(await raidLog(raidId, Number(url.searchParams.get('rank')), Date.now()), { headers }); }
-    // v3.90 조회는 세이브를 읽지 않습니다(화면은 기여도 · 순위만 쓰고, 도전 시각 · 익명 여부는 자기 세이브에서 읽음).
+    // v3.91 조회는 세이브를 읽지 않습니다(화면은 기여도 · 순위만 쓰고, 도전 시각 · 익명 여부는 자기 세이브에서 읽음).
     const { id } = await session(req);
     return Response.json(await altarInfo(id, null, Date.now()), { headers });
 }

@@ -4,6 +4,8 @@ import { ODDS } from './odds';
 export const SAVE_VERSION = 8;
 export const BALANCE = {
     turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13, baseDefense: 3,
+    /** v3.90 최대 마나 기본값 · 레벨당(전에는 30 고정). 체력(110 · 레벨당 14)의 약 0.2배를 목표로 합니다. */
+    baseMana: 30, manaPerLevel: 3,
     hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08, /** v27.45 황금 개체 기본 확률(처치마다). v3.52 값은 서버 전용(odds). */ get goldenBase() { return ODDS.drop.goldenBase; },
     // Stage hopping used to make the first rebirth arrive in under an hour.
     // See scripts/check-progression-pace.mjs for gearless routing samples;

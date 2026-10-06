@@ -17,7 +17,7 @@ const recentStore = (() => { let value: Recent = null; const subs = new Set<() =
 const HORIZONS: [label: string, hours: number][] = [['1시간', 1], ['6시간', 6], ['24시간', 24]];
 const clock = (ms: number) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 const span = (ms: number) => { const m = Math.round(ms / 60_000); return m < 60 ? `${m}분` : m < 1440 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${Math.floor(m / 1440)}일 ${Math.floor(m % 1440 / 60)}시간`; };
-/** v3.90 전투 화면에서는 동기화 상태를 받고 memo로 감싸 재생 프레임마다 다시 그리지 않습니다. */
+/** v3.91 전투 화면에서는 동기화 상태를 받고 memo로 감싸 재생 프레임마다 다시 그리지 않습니다. */
 export const LiveRatesCard = memo(function LiveRatesCard({ s, compact = false }: { s: State; compact?: boolean }) {
     const r = useLiveRates();
     // v3.50 전투 화면(compact)에서는 기본으로 접어 둡니다. 이 기기에서 펼쳐 둔 적이 있으면 펼친 채로 엽니다. 통계 화면은 늘 펼침.

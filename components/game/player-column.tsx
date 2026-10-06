@@ -12,7 +12,7 @@ import type { CombatStats, State } from '@/game/types';
 import { xpWall } from '@/game/systems/meta';
 export function Player({ s, a = stats(s), setView }: {
     s: State;
-    /** v3.90 미리 계산한 능력치(전투 화면은 재생 프레임마다 다시 계산하지 않도록 넘김). */
+    /** v3.91 미리 계산한 능력치(전투 화면은 재생 프레임마다 다시 계산하지 않도록 넘김). */
     a?: CombatStats;
     setView: (v: string) => void;
 }) {
