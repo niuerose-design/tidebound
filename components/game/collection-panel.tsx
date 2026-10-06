@@ -1,4 +1,5 @@
 'use client';
+import { STARFORCE } from '@/game/data/starforce';
 import { useState } from 'react';
 import { BookOpen, ChevronDown, Swords } from 'lucide-react';
 import { FishArt } from './art';
@@ -142,8 +143,8 @@ export function Collection({ s, send, busy }: PanelProps) {
         })}</div>
         </details><details className="book-section book-region boss-book-section onyx-book-section">
         <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>칠흑의 보스</h2><span>{ONYX_BOSSES.filter(b => ownedOnyx(s).has(b.id)).length} / {ONYX_BOSSES.length} 장신구 보유</span></summary>
-        {secret ? <p className="footnote">무리 서식지에서 드물게 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 낮은 확률로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 무작위 {ONYX.affixes}줄)를 받고(오래 못 얻으면 반드시 받음), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>
-        : <p className="footnote">무리 서식지에서만 출현마다 {Math.round(ONYX.chance * 1000) / 10}%(난이도 50마다 +100%, {ONYX.pity.toLocaleString()}회 못 보면 확정)로 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 {Math.round(ONYX.drop * 1000) / 10}%로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 무작위 {ONYX.affixes}줄)를 받고({ONYX.dropPity}번째 연속 미획득 격파는 확정), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>}
+        {secret ? <p className="footnote">무리 서식지에서 드물게 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 낮은 확률로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 최고 굴림 무작위 {ONYX.affixes}줄 · 위력은 골드로 레벨을 올려 키움 · 강화 파괴 시 {STARFORCE.relicResetStar}성으로)를 받고(오래 못 얻으면 반드시 받음), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>
+        : <p className="footnote">무리 서식지에서만 출현마다 {Math.round(ONYX.chance * 1000) / 10}%(난이도 50마다 +100%, {ONYX.pity.toLocaleString()}회 못 보면 확정)로 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 {Math.round(ONYX.drop * 1000) / 10}%로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 최고 굴림 무작위 {ONYX.affixes}줄 · 위력은 골드로 레벨을 올려 키움 · 강화 파괴 시 {STARFORCE.relicResetStar}성으로)를 받고({ONYX.dropPity}번째 연속 미획득 격파는 확정), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>}
         <ul className="bonus-rows">{ONYX_SET.map(b => <li key={b.count} className={ownedOnyx(s).size >= b.count ? 'done' : ''}><b>{b.count}종 보유</b> · <span>{b.label}</span>{ownedOnyx(s).size >= b.count ? ' ✓' : ''}</li>)}</ul>
         <div className="book-grid">{ONYX_BOSSES.map(b => { const f = FISH.find(x => x.id === b.id)!, n = s.onyxBook?.[b.id] || 0, got = ownedOnyx(s).has(b.id), def = affixDef(b.accessory.affix.id);
             return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={b.id}>

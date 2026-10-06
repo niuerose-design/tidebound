@@ -142,6 +142,8 @@ export type Item = {
     relicLegacy?: boolean;
     /** v3.12 칠흑 장신구(보스 id). 종당 1개, 환생해도 남고 판매·분해·이식 재료 불가. */
     onyx?: string;
+    /** v3.77 칠흑 장신구 무작위 옵션을 최고 굴림으로 맞췄는지(한 번만). */
+    onyxTuned?: boolean;
     /** v21 이전 장비와 유물의 단일 옵션. */
     affix?: {
         stat: keyof Stats;
