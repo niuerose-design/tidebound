@@ -10,7 +10,7 @@ import type { Skill } from '../types';
  * - 패스파인더 (1차): 경험치는 그대로, 누적 처치(scaling 'catch')과 환생 횟수(perCount rebirth)에 비례합니다.
  * - 와일드헌터 (1차): 던전 클리어 + 보스 처치(scaling 'hunt', perCount hunt)과 지정 몬스터 처치(perCount species), 사냥감 추가 피해(preyBonus).
  * - 엔젤릭버스터 (1차): 직업마다 AP 0 노래 패시브(song). 음유시인 계보만 장착합니다.
- * - ??? 계열: 시간의 문(아침·낮·밤)과 발견의 문에 독립 1차 직업을 더합니다(doors.ts).
+ * - ??? 계열: 숨은 조건(secret/unlocks.ts, v3.62 옛 문)으로 드러나는 독립 1차 직업을 더합니다.
  *
  * 액티브 수치(SUPPORT_BALANCE)는 skill-balance.ts의 ACTIVE_SKILL_BALANCE에 합쳐져 상태이상 규칙·마나 배율·설명을 함께 거칩니다.
  * 패시브 수치(SUPPORT_PASSIVES)는 skills.ts에서 기술 목록을 다 모은 뒤 덮어씁니다.
@@ -152,7 +152,7 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
     siren: '엔젤릭버스터 계보의 5차 직업입니다. 그랜드 피날레로 상대를 침묵시키고, 패시브로 경험치·드롭·마법 공격을 올려 노래의 정점에 섭니다.',
 };
 
-/** ??? 문 직업. 모두 상위·하위가 없는 독립 1차이며 문(doors.ts)이 열릴 때만 전직할 수 있습니다. */
+/** ??? 숨은 조건 직업. 모두 상위·하위가 없는 독립 1차이며 숨은 조건(secret/unlocks.ts)을 만족해야 전직할 수 있습니다. */
 export const SUPPORT_JOBS: NewJob[] = [
 ];
 

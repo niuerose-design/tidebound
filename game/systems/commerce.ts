@@ -396,7 +396,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         return `${relic.name} 옵션 이식 · ${affix.name}${before ? ` (${before.name} 대체)` : ''} · ${source.name} 소비 · -${cost} G`;
     }
     if (a.type === 'awaken' || a.type === 'inheritPrimal') {
-        // v3.62 계승: 원시 각성(고대, 정수) · 태초 계승(태초, 분해 게이지). 옵션 수치는 최고 굴림으로 고정되고, 환생해도 남으며 위력이 환생마다 오릅니다.
+        // v3.64 계승: 원시 각성(고대, 정수) · 태초 계승(태초, 분해 게이지). 옵션 수치는 최고 굴림으로 고정되고, 환생해도 남으며 위력이 환생마다 오릅니다.
         const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
         const kind = a.type === 'awaken' ? 'ancient' : 'primal', rarity = kind === 'ancient' ? 5 : 6;
         if (!item)

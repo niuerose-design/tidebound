@@ -8,7 +8,7 @@ await import('./content.test.mjs');
 await import('./expansion.test.mjs');
 await import('./research.test.mjs');
 await import('./classes.test.mjs');
-await import('./doors.test.mjs');
+await import('./unlocks.test.mjs');
 await import('./jobs-ui.test.mjs');
 await import('./playback.test.mjs');
 await import('./chain.test.mjs');

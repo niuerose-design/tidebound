@@ -7,7 +7,7 @@ import { db } from './db';
 import type { State } from '../types';
 import type { Catalog } from '../data/catalog';
 import { createHash } from 'node:crypto';
-import { doorView } from '../data/doors';
+import { unlockStates } from '../secret/unlocks';
 import { revealedSecretJobs } from '../systems/reveal';
 import { jobById, lineageOf, type Job, type Lineage } from '../data/classes';
 import { SECRET_JOBS, SECRET_LINEAGES } from '../secret/jobs';
@@ -39,7 +39,7 @@ export const veil = (j: Job): Job => ({ id: j.id, name: '???', title: '', desc: 
     ...(j.parent ? { parent: j.parent } : {}), ...(j.lineage ? { lineage: j.lineage } : {}), hidden: true, ...(j.hint ? { hint: j.hint } : {}), masteryTarget: 1, masteryBoost: 0, veiled: true });
 const veilLineage = (l: Lineage): Lineage => ({ id: l.id, name: '???', tree: l.tree, summary: '아직 드러나지 않은 계보입니다.' });
 /**
- * 모험가마다 화면에 보낼 카탈로그. v3.44 문 상태 · 드러난 비밀 직업 · 비밀 직업(드러난 것만 전체, 나머지 실루엣)·계보.
+ * 모험가마다 화면에 보낼 카탈로그. v3.62 숨은 조건 만족 여부(옛 문 상태) · 드러난 비밀 직업 · 비밀 직업(드러난 것만 전체, 나머지 실루엣)·계보.
  * v3.47 비밀 직업의 스킬: 드러난 직업 것과 내가 배운·장착한 것(실루엣 직업의 스킬은 보내지 않음).
  * 비공개가 꺼져 있으면(오픈 베타) 비밀 직업도 모두 전체로 보내 지금 화면과 같습니다. 조건 판정은 서버에서만 합니다.
  * known이 지금 내용 키와 같으면 null(다시 보내지 않음).
@@ -50,7 +50,7 @@ export async function buildCatalog(s: State, now: number, known?: unknown): Prom
     const lineages = SECRET_LINEAGES.map(l => !secret || SECRET_JOBS.some(j => shown.has(j.id) && lineageOf(jobById(j.id) || j) === l.id) ? l : veilLineage(l));
     const mine = (id: string) => s.skills.includes(id) || (s.learned?.[id] || 0) > 0;
     const skills = SECRET_SKILLS.filter(sk => !secret || (sk.job && shown.has(sk.job)) || mine(sk.id));
-    const body: Catalog = { secret, doors: doorView(s), revealed, jobs, lineages, skills };
+    const body: Catalog = { secret, unlocks: unlockStates(s), revealed, jobs, lineages, skills };
     // v3.52 드롭·확률 수치는 비공개가 꺼져 있을 때만 싣습니다. 바뀌지 않는 값이라 키에는 미리 만든 지문만 더합니다(동기화마다 다시 해시하지 않음).
     const avg = stageAvgOnce();
     const key = createHash('sha1').update(JSON.stringify(body)).update(secret ? '' : ODDS_KEY).update(avg.key).digest('base64url').slice(0, 16);

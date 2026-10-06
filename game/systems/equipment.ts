@@ -13,7 +13,7 @@ export const capeEvasion = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.roun
 const charmCrit = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CHARM_CRIT[item.rarity] ?? CHARM_CRIT[0]) * (1 + (item.enhance || 0) * CHARM_CRIT_ENHANCE) * 10000) / 10000;
 /**
  * v27.36 등급별 고정 수치 감쇠(기본 수치와 고정 수치 옵션에 곱함). 고대·태초 장비가 최종 능력치의 대부분을 차지하던 것을 줄입니다. 저장된 위력은 그대로라 기존 장비에도 바로 적용됩니다.
- * v3.62 22성 4부위 장비 몫이 전설 ×2.8 < 신화 ×2.86 < 고대 ×2.95 < 태초 ×3.0으로 오르도록 전설·신화를 낮췄습니다(전에는 전설 3.07 > 신화 2.99). 큰 격차는 계승 장비(heir)에 둡니다.
+ * v3.64 22성 4부위 장비 몫이 전설 ×2.8 < 신화 ×2.86 < 고대 ×2.95 < 태초 ×3.0으로 오르도록 전설·신화를 낮췄습니다(전에는 전설 3.07 > 신화 2.99). 큰 격차는 계승 장비(heir)에 둡니다.
  */
 export const GEAR_RARITY_SCALE = [1, 1, 1, .75, .638, .58, .5];
 const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
@@ -69,11 +69,11 @@ const smith = (cost: number, s?: Pick<State, 'permanent'>) => s ? Math.floor(cos
 export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'>) => { const n = item.enhance || 0, base = Math.min(n, STARFORCE.growthFrom); return smith(Math.floor((120 + item.power * 12) * (1 + base) ** 1.6 * priceScale(item.level || 1) * Math.pow(STARFORCE.growth, Math.max(0, n - STARFORCE.growthFrom))), s); };
 /** v3.3 유물 옵션 이식 비용: 소비하는 장비의 옵션 재설정 골드 × RELIC_GROWTH.imprintCost. */
 export const imprintCost = (source: Item, s?: Pick<State, 'permanent'>) => reforgeCost(source, s) * RELIC_GROWTH.imprintCost;
-/** v3.62 환생해도 남는 장비: 유물 · 칠흑 장신구 · 계승 장비(원시 고대 · 계승 태초). 판매·분해·도감 등록·청산 대상이 아닙니다. */
+/** v3.64 환생해도 남는 장비: 유물 · 칠흑 장신구 · 계승 장비(원시 고대 · 계승 태초). 판매·분해·도감 등록·청산 대상이 아닙니다. */
 export const keepsAcrossLives = (item: Pick<Item, 'relic' | 'onyx' | 'heir'>) => !!(item.relic || item.onyx || item.heir);
-/** v3.62 계승 위력 종류: 유물은 relic, 계승 장비는 heir 값. 일반 장비는 null. */
+/** v3.64 계승 위력 종류: 유물은 relic, 계승 장비는 heir 값. 일반 장비는 null. */
 export const heirKind = (item: Pick<Item, 'relic' | 'heir'>): HeirKind | null => item.relic ? 'relic' : item.heir || null;
-/** v3.3 유물 · v3.62 계승 장비 위력을 환생 횟수와 레벨에 맞춥니다(heirPower). 불러오기·환생·수령·계승 때 불러 저장된 위력을 고칩니다. 계승 장비의 고정 수치 옵션은 위력 비율만큼 함께 바뀝니다(유물 이식 옵션은 그대로). */
+/** v3.3 유물 · v3.64 계승 장비 위력을 환생 횟수와 레벨에 맞춥니다(heirPower). 불러오기·환생·수령·계승 때 불러 저장된 위력을 고칩니다. 계승 장비의 고정 수치 옵션은 위력 비율만큼 함께 바뀝니다(유물 이식 옵션은 그대로). */
 export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebirths'>) {
     for (const item of [...s.inventory, ...Object.values(s.equipment)]) {
         const kind = item && heirKind(item);
@@ -100,7 +100,7 @@ export function applyLevelUp(item: Item, next: number, s: Pick<State, 'rebirths'
 export const reforgeCost = (item: Item, s?: Pick<State, 'permanent'>) => smith(Math.floor((250 + item.power * 25) * priceScale(item.level || 1)), s);
 /** 분해로 얻는 정수와 옵션 하나 재설정에 드는 정수. */
 export const dismantleEssence = (item: Item) => ESSENCE_BY_RARITY[item.rarity] ?? 1;
-/** v3.62 태초 계승 게이지에 쌓이는 분해: 태초 등급(칠흑 장신구 제외)이면 1. */
+/** v3.64 태초 계승 게이지에 쌓이는 분해: 태초 등급(칠흑 장신구 제외)이면 1. */
 export const primalGaugeOf = (item: Pick<Item, 'rarity' | 'onyx'>) => item.rarity >= 6 && !item.onyx ? 1 : 0;
 /** 분해 정산: 정수(× rate)와 태초 계승 게이지를 더하고 얻은 양을 돌려줍니다. 장비를 목록에서 빼는 것은 부르는 쪽이 합니다. */
 export function dismantleInto(s: Pick<State, 'essence' | 'primalGauge'>, items: Item[], rate = 1) {

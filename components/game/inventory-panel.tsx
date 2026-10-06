@@ -171,7 +171,7 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     </div>;
 }
 
-/** v3.62 계승: 고대는 정수로 원시 각성, 태초는 분해 게이지로 계승. 계승하면 환생해도 남고 위력이 환생마다 오르며 옵션이 최고 수치로 고정됩니다. 부위마다 종류별 1개. */
+/** v3.64 계승: 고대는 정수로 원시 각성, 태초는 분해 게이지로 계승. 계승하면 환생해도 남고 위력이 환생마다 오르며 옵션이 최고 수치로 고정됩니다. 부위마다 종류별 1개. */
 const HEIR_LABEL = { ancient: '원시 고대', primal: '계승 태초' } as const;
 function HeirPanel({ s, send, busy, item }: PanelProps & { item: Item }) {
     const kind = item.rarity === 5 ? 'ancient' : 'primal', g = HEIR_GROWTH[kind], label = HEIR_LABEL[kind];

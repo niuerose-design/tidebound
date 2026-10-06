@@ -10,6 +10,8 @@ import { SECRET_JOBS, SECRET_LINEAGES } from './jobs';
 import { SECRET_SKILLS } from './skills';
 import { setOdds } from '../data/odds';
 import { SERVER_ODDS } from './odds';
+// v3.62 숨은 전직 조건(조건 창구 unlock-info를 채움).
+import './unlocks';
 
 registerLineages(SECRET_LINEAGES);
 registerJobs(SECRET_JOBS, true);

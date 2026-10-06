@@ -318,7 +318,7 @@ test('v3.59 primal drops: weight cut to ~0.054% of drops and a pity at PRIMAL_DR
     Enc.drop(s, 50, () => 0, true); assert.equal(s.inventory.at(-1).rarity, 6, 'pity drop is primal'); assert.equal(s.primalDropPity, 0);
     const r = newState(0); r.level = 60; r.primalDropPity = 123; act(r, { type: 'rebirth' }, 0); assert.equal(r.primalDropPity, 123);
 });
-test('v3.62 heir gear: relic power follows (level + 2) × rebirth factor; awakened ancients and inherited primals survive rebirth, grow, cap one per slot', async () => {
+test('v3.64 heir gear: relic power follows (level + 2) × rebirth factor; awakened ancients and inherited primals survive rebirth, grow, cap one per slot', async () => {
     const Eq = await L.load('systems/equipment'), { rollAffixes, affixQuality } = await L.load('data/gear');
     const gear = (id, rarity, slot = 'rod', level = 100) => { const power = Math.round((level + 2) * [1, 1.5, 2.2, 3.3, 3.9, 4.5, 5.2][rarity]); return { id, name: id, slot, style: 'physical', rarity, power, level, enhance: 0, affixes: rollAffixes(rarity, power, undefined, () => .3, [], slot, level) }; };
     // 위력 배율은 환생 200까지 곧게 오르고, 종류마다 유물 < 원시 고대 < 계승 태초입니다.

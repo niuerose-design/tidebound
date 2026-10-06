@@ -1,4 +1,4 @@
-import { KST } from './door-info';
+import { KST } from './time';
 /**
  * v26.1 서버 이벤트: 기간 동안 모든 모험가의 경험치·골드·드롭 배율을 올립니다.
  * v27.73부터 목록은 운영 페이지에서만 관리합니다(코드 목록은 비움). 서버가 동기화·정산 때 activeEvent(now)를 State.event에 적어 둡니다.

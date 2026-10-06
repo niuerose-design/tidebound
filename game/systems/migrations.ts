@@ -142,6 +142,15 @@ export function registerPlainCodex(s: State) {
     for (const k of add) book[k] = true;
     return add.length;
 }
+/**
+ * v3.62 문 폐지(docs/concept.md 11.7): 이번 생 윤회의 문으로 열려 있던 직업은 드러난 것으로 남기고(doorsOpened) 추첨 값을 지웁니다.
+ * 운영자가 연 문(openDoors)도 더는 쓰지 않습니다. 여러 번 불러도 같습니다.
+ */
+export function retireDoors(s: State) {
+    const legacy = s as State & { rebirthDoor?: string; openDoors?: unknown };
+    if (legacy.rebirthDoor) { if (!s.doorsOpened?.includes(legacy.rebirthDoor)) (s.doorsOpened ??= []).push(legacy.rebirthDoor); delete legacy.rebirthDoor; }
+    if ('openDoors' in legacy) delete legacy.openDoors;
+}
 export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
@@ -159,7 +168,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); retireDoors(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

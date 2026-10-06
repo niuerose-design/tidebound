@@ -131,7 +131,7 @@ export type Item = {
     /** v27.94 이 장비의 옵션 재설정 횟수. 많을수록 다음 재설정 비용이 오릅니다. */
     rerolls?: number;
     relic?: string;
-    /** v3.62 계승 장비: 원시 각성한 고대(ancient) · 게이지로 계승한 태초(primal). 환생해도 남고 판매·분해·등록 불가, 위력은 환생마다 오릅니다(data/economy HEIR_GROWTH). 부위마다 종류별 1개. */
+    /** v3.64 계승 장비: 원시 각성한 고대(ancient) · 게이지로 계승한 태초(primal). 환생해도 남고 판매·분해·등록 불가, 위력은 환생마다 오릅니다(data/economy HEIR_GROWTH). 부위마다 종류별 1개. */
     heir?: 'ancient' | 'primal';
     /** v3.12 칠흑 장신구(보스 id). 종당 1개, 환생해도 남고 판매·분해·이식 재료 불가. */
     onyx?: string;
@@ -350,8 +350,6 @@ export type State = {
     event?: import('./data/events').ActiveEvent | null;
     /** v27.31 운영 페이지에서 닫은 사냥터·던전(서버가 동기화 때 적음). 없으면 null. */
     closed?: import('./data/world').Closures | null;
-    /** v27.73 운영 페이지에서 연 문의 ??? 직업 id(서버가 동기화 때 적음). 없으면 null. 열려 있는 동안만 문이 열리고 doorsOpened에는 남지 않습니다. */
-    openDoors?: string[] | null;
     /** 마지막으로 자동 진행(사냥·던전·반복)이 끝나거나 바뀐 사유. 표시 전용이며 게임 규칙에 쓰지 않습니다. */
     runEnd?: { reason: string; turn: number } | null;
     /** 모험 안내. 없으면(기존 세이브) 표시하지 않습니다. hidden: 접기, skipped: 건너뛰기. done은 한 번 만족한 단계의 기록(턴)으로, 조건이 깨져도 되돌아가지 않습니다(v27.72). */
@@ -494,7 +492,7 @@ export type State = {
     appraisal?: { count: number; byRarity: number[]; pity: { myth: number; ancient: number; primal: number } };
     /** v3.59 사냥·던전 드롭에서 태초 없이 떨어진 장비 수(PRIMAL_DROP_PITY에 닿으면 다음 드롭은 태초). 환생 유지 · 승천 초기화. */
     primalDropPity?: number;
-    /** v3.62 태초 계승 게이지: 태초 장비를 분해할 때마다 +1(PRIMAL_INHERIT.gauge만큼 모이면 태초 하나를 계승). 환생 유지, 승천 초기화. */
+    /** v3.64 태초 계승 게이지: 태초 장비를 분해할 때마다 +1(PRIMAL_INHERIT.gauge만큼 모이면 태초 하나를 계승). 환생 유지, 승천 초기화. */
     primalGauge?: number;
     /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
     plainCodex?: boolean;
@@ -533,9 +531,10 @@ export type State = {
     skillPins?: string[];
     /** v27.73 스킬 화면에서 숨긴 스킬(스킬 id). 장착 중·검색 결과·‘숨김’ 탭에는 그대로 보입니다. 환생·SP 환급·이번 생 초기화에도 유지. */
     skillHidden?: string[];
-    /** 윤회의 문: 이번 생에 문이 열린 ??? 직업(환생 때 추첨). */
-    rebirthDoor?: string;
-    /** v25.23 한 번이라도 열린 것을 본 문의 직업. 이후로는 시간·방문·조건과 상관없이 계속 열려 있습니다. */
+    /**
+     * v3.62 숨은 조건을 한 번이라도 만족한(드러난) 히든 직업. 이후로는 조건과 상관없이 계속 만족입니다(secret/unlocks.ts).
+     * 이름은 옛 문 시스템(v25.23 한 번 열린 문)의 것을 세이브 호환으로 그대로 씁니다. 옛 윤회의 문 직업도 들어 있을 수 있습니다(드러남만).
+     */
     doorsOpened?: string[];
     dungeon: null | {
         id: string;
