@@ -1,7 +1,7 @@
 'use client';
 /** v27.88 통계: 세이브에 쌓인 기록을 한 화면에 모아 보여 줍니다(계산만, 상태는 바꾸지 않음). */
 import type { State } from '@/game/types';
-import { Heading, format } from './shared';
+import { Heading, Fold, format } from './shared';
 import { RebirthHistory, formatDuration } from './rebirth-history';
 import { FISH, PLACES, PLAIN_DUNGEONS } from '@/game/data/world';
 import { PROGRESSION } from '@/game/data/progression';
@@ -10,10 +10,9 @@ import { LiveRatesCard } from './live-rates-card';
 
 type Row = [label: string, value: string];
 function Block({ title, rows, note }: { title: string; rows: Row[]; note?: string }) {
-    return <section className="panel stats-block">
-        <div className="section-title"><h2>{title}</h2>{note && <span>{note}</span>}</div>
+    return <Fold id={`stats:${title}`} title={title} note={note} className="panel stats-block">
         <ul className="bonus-grid">{rows.map(([label, value]) => <li key={label}><span>{label}</span><strong>{value}</strong></li>)}</ul>
-    </section>;
+    </Fold>;
 }
 const sum = (o?: Record<string, number>) => Object.values(o || {}).reduce((a, n) => a + (n || 0), 0);
 
@@ -26,7 +25,7 @@ export function Stats({ s }: { s: State }) {
     const duels = s.wins + s.losses;
     return <>
         <Heading eyebrow="STATISTICS" title="통계" description="지금까지 쌓은 모험의 기록입니다."/>
-        <LiveRatesCard s={s}/>
+        <Fold id="stats:live" title="실시간 효율" className="stats-fold-plain"><LiveRatesCard s={s}/></Fold>
         <Block title="모험" rows={[
             ['사냥 시간(부재중 정산 포함)', formatDuration(s.playMs || 0)],
             ['누적 처치', `${format(s.kills)}마리`],
@@ -60,6 +59,6 @@ export function Stats({ s }: { s: State }) {
             ['레이팅', format(s.rating)],
             ['전적', duels ? `${format(s.wins)}승 ${format(s.losses)}패 (승률 ${Math.round(s.wins / duels * 100)}%)` : '기록 없음'],
         ]}/>
-        <RebirthHistory s={s}/>
+        <Fold id="stats:rebirths" title="환생 기록" className="stats-fold-plain"><RebirthHistory s={s}/></Fold>
     </>;
 }

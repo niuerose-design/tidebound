@@ -344,7 +344,7 @@
 }
 
 /* v27.13 장비 감정 1·5·10개 버튼 */
-.gamble-count-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; width:100%; }
+.gamble-count-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; width:100%; }
 .gamble-count-row button { width:100%; padding:9px 6px; font-size:12px; white-space:nowrap; }
 
 /* v27.40 스킬 아이콘: 원작 도트 아이콘이 흐려지지 않게 */
@@ -427,7 +427,9 @@
 .appraisal-pity { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:0 2px 14px; font-size:13px; }
 .appraisal-pity .muted { color:var(--muted); font-size:12px; }
 .imprint-row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
-.imprint-row label { display:grid; gap:4px; font-size:12px; color:var(--muted); min-width:160px; }
+.imprint-row label { display:grid; gap:4px; font-size:12px; color:var(--muted); min-width:160px; max-width:100%; }
+.imprint-row select { max-width:100%; min-width:0; }
+.draw-pick-desc { flex-basis:100%; font-size:12px; color:#9fb5b2; line-height:1.5; }
 .imprint-row label.check { display:flex; align-items:center; gap:6px; }
 .imprint-row select, .imprint-row input:not([type=checkbox]) { min-height:34px; }
 /* v3.60 장비 감정 하나(모든 부위) */
@@ -447,12 +449,29 @@
 .admin-tool .admin-help p { margin:6px 0 0; font-size:13px; color:#9bb3b0; line-height:1.6 }
 /* v3.72 상점: 세 뽑기 탭이 같은 틀 · 같은 높이라 탭을 바꿔도 흔들리지 않습니다. */
 .shop-body { min-height:620px; }
-.draw-card { display:grid; gap:14px; padding:26px; }
+.draw-card { display:grid; grid-template-columns:minmax(0,1fr); gap:14px; padding:26px; }
 .draw-head { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
 .draw-head h2 { margin:4px 0 0; font-size:24px; }
 .draw-desc { margin:0; min-height:3.6em; line-height:1.8; }
 .draw-controls { min-height:64px; align-items:end; }
 .draw-cost { margin:0; min-height:1.6em; }
 .draw-actions { min-height:44px; }
-@media(max-width:767px){ .shop-body { min-height:0; } .draw-desc { min-height:7.2em; } .draw-card { padding:20px; min-height:560px; align-content:start; } }
+@media(max-width:767px){ .gamble-count-row { grid-template-columns:minmax(0,1fr); } .shop-body { min-height:0; } .draw-desc { min-height:7.2em; } .draw-card { padding:20px; min-height:560px; align-content:start; } }
+/* v3.79 접었다 펴는 구역(Fold): 제목 줄 전체가 누름 단추, 오른쪽 화살표가 접히면 돌아갑니다. */
+.fold>summary { display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none; }
+.fold>summary::-webkit-details-marker { display:none; }
+.fold>summary .section-title { flex:1; min-width:0; margin:0; }
+.fold-chevron { flex:none; color:#8fa6a4; transition:transform .15s ease; }
+.fold:not([open])>summary .fold-chevron { transform:rotate(-90deg); }
+.fold[open]>summary { margin-bottom:12px; }
+.stats-fold-plain { margin-bottom:16px; }
+.loadout-actions { display:flex; justify-content:flex-end; margin:-4px 0 8px; }
+.loadout-actions>button { font-size:13px; }
+/* v3.79 제단 모바일: 탭이 화면 밖으로 나가지 않게 줄바꿈, 게이지 제목과 효과는 위아래로. */
+@media (max-width:600px) {
+    .altar-tabs { display:grid !important; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); width:100% !important; height:auto !important; }
+    .altar-tabs>* { min-width:0; height:auto !important; padding:6px 4px !important; white-space:normal !important; font-size:12px; line-height:1.3; }
+    .altar-tabs svg { display:none; }
+    .altar-gauge-head { flex-direction:column; align-items:flex-start; gap:2px; }
+}
 

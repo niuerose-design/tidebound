@@ -370,7 +370,7 @@
 .random-game-stake { margin: 6px 0 12px; font-size: 13px; color: var(--gold); }
 
 /* v27.88 통계 · 서약 예약 표시 */
-.stats-block { margin-bottom: 16px; }
+.stats-block { margin-bottom: 16px; padding: 14px 16px; }
 .vow-next-label { display: block; margin: 8px 0 4px; color: var(--muted); }
 /* v27.86 무리 서식지 카드의 긴 요약은 한 줄에 못 들어가므로 줄을 나눕니다(전에는 두 줄이 겹쳐 보였음). */
 .stage-card.habitat .stage-footer { flex-wrap:wrap; }

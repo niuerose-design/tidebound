@@ -45,7 +45,7 @@ export function Shop({ s, send, busy }: PanelProps) {
     } : tab === 'imprint' ? {
         label: '저격 뽑기', eyebrow: '부위 · 옵션 지정', head: icons(slot),
         desc: `부위와 옵션 하나를 고르면 그 옵션이 반드시 붙은 장비가 나옵니다. 나머지 옵션과 등급은 랜덤 뽑기와 같고 천장도 함께 쌓입니다. 고대 이상 전용 옵션은 고를 수 없습니다.`,
-        controls: <>{slotSelect}<label>새길 옵션<select value={pick} onChange={e => setAffix(e.target.value)}>{choices.map(c => <option key={c.id} value={c.id}>{c.name} · {c.description}</option>)}</select></label></>,
+        controls: <>{slotSelect}<label>새길 옵션<select value={pick} onChange={e => setAffix(e.target.value)}>{choices.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label><small className="draw-pick-desc">{choices.find(c => c.id === pick)?.description}</small></>,
         cost: `한 번 ${format(imprint.gold)} G(랜덤 뽑기의 ${IMPRINT_APPRAISAL.goldMultiplier}배) · 정수 ${imprint.essence}`,
         actions: GAMBLE_COUNTS.map(n => { const gold = imprint.gold * n, ess = imprint.essence * n, noRoom = s.inventory.length + n > cap; return <ConfirmButton key={n} label={`${n}개 · ${format(gold)} G · 정수 ${ess}`} title={`저격 뽑기 ${n}개를 할까요?`} description={`골드 ${format(gold)} G와 정수 ${ess}개를 사용합니다. ${odds}고른 옵션이 반드시 붙습니다.${n > 1 ? ` 가방 ${n}칸이 필요합니다.` : ''}`} disabled={busy || !pick || s.gold < gold || (s.essence || 0) < ess || noRoom} onConfirm={() => send({ type: 'imprintGamble', id: slot, value: `${pick}|${n}` })}/>; }),
     } : tab === 'auto' ? {
