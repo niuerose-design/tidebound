@@ -151,6 +151,26 @@ export function retireDoors(s: State) {
     if (legacy.rebirthDoor) { if (!s.doorsOpened?.includes(legacy.rebirthDoor)) (s.doorsOpened ??= []).push(legacy.rebirthDoor); delete legacy.rebirthDoor; }
     if ('openDoors' in legacy) delete legacy.openDoors;
 }
+/** v3.64 삭제한 히든 직업 6개와 그 스킬(docs/concept.md 11.7-2). */
+export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor', 'sunriseAngler', 'noonDiver', 'nightHeron'];
+export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes'];
+/**
+ * v3.64 히든 직업 재배치: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).
+ * 지금 그 직업이면 초보자로 돌아갑니다. 여러 번 불러도 같습니다.
+ */
+export function retireHiddenJobs(s: State) {
+    const jobs = new Set(RETIRED_JOBS), skills = new Set(RETIRED_SKILLS), drop = (ids?: string[]) => ids?.filter(id => !skills.has(id));
+    if (jobs.has(s.job)) s.job = 'fisher';
+    s.unlockedJobs = s.unlockedJobs.filter(id => !jobs.has(id));
+    if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => !jobs.has(id));
+    for (const id of jobs) delete s.jobMastery[id];
+    if (s.letterLog) s.letterLog = s.letterLog.filter(l => !jobs.has(l.job));
+    for (const id of skills) for (const rec of [s.learned, s.skillSpent, s.skillPractice, s.skillInheritances, s.refineBase, s.limitBreaks, s.legacyInherited, s.cooldowns]) if (rec) delete (rec as Record<string, unknown>)[id];
+    s.skills = drop(s.skills)!;
+    if (s.skillPins) s.skillPins = drop(s.skillPins);
+    if (s.skillHidden) s.skillHidden = drop(s.skillHidden);
+    for (const p of Object.values(s.presets || {})) p.skills = drop(p.skills)!;
+}
 export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
@@ -168,7 +188,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); retireDoors(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
