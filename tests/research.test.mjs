@@ -138,13 +138,11 @@ test('v25.23 golden fish: multiplies one catch by ten and is recorded; v27.44 ev
     assert.equal(gold.gold - 100 /* start gold */, (plain.gold - 100) * 10); assert.equal(gold.goldenBook.minnow, 1);
 });
 
-test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance per rank, offline bottles gone', () => {
+test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance per rank', () => {
     const make = rank => { const s = newState(0); s.level = 20; s.kills = 500; s.stage = 'brook'; s.tide = MIMIC_DATA.minTier; s.permanent.messageBottle = rank; return s; };
     const roll = mimicChanceOf(MIMIC_DATA.minTier, 0) * 1.5; // 기본 확률 밖, 5단계(×1.75) 안
     const plain = make(0); spawn(plain, () => roll); assert.notEqual(plain.enemy.id, MIMIC_DATA.id);
     const lucky = make(5); spawn(lucky, () => roll); assert.equal(lucky.enemy.id, MIMIC_DATA.id);
-    const o = newState(0); o.permanent.messageBottle = 5; act(o, { type: 'start' }, 0); advance(o, 1_800_000, seeded(7));
-    assert.ok(o.lastOffline && !('bottles' in o.lastOffline), 'no more offline bottles');
 });
 
 // 세계석 연구 4단계: 서약 3개

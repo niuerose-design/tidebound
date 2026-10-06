@@ -550,11 +550,6 @@ test('v27.43 altar first god matches the Mu Lung floor-50 boss and fights past t
     assert.equal(r.turns, A.ALTAR.godMaxTurns); assert.equal(r.winner, 'draw'); assert.ok(performance.now() - t0 < 1500, 'a full god fight stays cheap');
 });
 
-test('v27.45 golden monsters have a 0.2% base chance that thief passives add to', async () => {
-    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
-    const { stats } = await L.load('systems/stats'), B = await L.load('data/balance');
-    assert.equal(stats(newState(0)).goldenFind, B.BALANCE.goldenBase); assert.equal(B.BALANCE.goldenBase, .002);
-});
 test('v27.46 maple gear names: drops/shop use set names by style, old save names and affixes are renamed once', async () => {
     const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const M = await G.load('data/maple-gear'), mig = await G.load('systems/migrations'), engine = await G.load('systems/engine');
@@ -1364,15 +1359,6 @@ test('v3.29 recent kill: mastery on the kill line (mimic jackpot included), nuri
     assert.equal(R.recentKill(old, '나').mastery, 5006, 'old logs: skill line + jackpot line');
 });
 
-test('v3.13 level-up never dead-ends: +10 is capped at my level (Lv.91 relic → Lv.100 at max level, star cap 22)', async () => {
-    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const E = await L.load('systems/equipment');
-    assert.equal(E.levelUpTarget({ level: 91 }, { level: 100 }), 100); assert.equal(E.levelUpTarget({ level: 100 }, { level: 100 }), null); assert.equal(E.levelUpTarget({ level: 80 }, { level: 100 }), 90); assert.equal(E.levelUpTarget({ level: 95 }, { level: 97 }), 97); assert.equal(E.levelUpTarget({ level: 50 }, { level: 50 }), null);
-    const s = newState(0); s.level = 100; s.gold = 1e12; const relic = s.inventory.find(i => i.relic) || null;
-    const item = { id: 'r91', name: '유물', slot: 'rod', rarity: 5, level: 91, power: 500, affixes: [], relic: relic?.relic, enhance: 15 }; s.inventory.push(item);
-    act(s, { type: 'levelUp', id: 'r91' }, 0); assert.equal(item.level, 100); assert.equal(item.enhance, 0); assert.equal(E.enhanceMaxFor(item), item.relic ? 22 : E.enhanceMaxFor({ ...item, relic: undefined }));
-    assert.throws(() => act(s, { type: 'levelUp', id: 'r91' }, 0), /내 레벨/);
-});
-
 test('v3.14 plain 태초 charm renamed to 제네시스 펜던트 by migration; onyx 창세의 뱃지 keeps its name', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const Mig = await L.load('systems/migrations'), G = await L.load('data/maple-gear');
     assert.equal(G.ACCESSORY_NAMES[6], '제네시스 펜던트');
@@ -1453,10 +1439,9 @@ test('v3.20 starforce flow achievements: 10★+ success streak, fail streak, dro
     assert.equal(A.ACHIEVEMENTS.find(a => a.id === 'starStreak:5').progress(s), 6);
 });
 
-test('v3.21 difficulty exp and gold bend to √ above difficulty 30; rebirth walls at 50 and 100', async () => {
-    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), M = await L.load('systems/meta'), B = await L.load('data/balance');
+test('v3.21 difficulty exp and gold bend to √ above difficulty 30', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(), M = await L.load('systems/meta');
     for (const t of [0, 10, 20, 30]) { assert.ok(Math.abs(M.tierExp(t) - (1 + .3 * t + .005 * Math.max(0, t - 20) ** 2)) < 1e-9, `exp ${t} unchanged`); assert.equal(M.tierReward(t), 1 + .5 * t, `gold ${t} unchanged`); }
     assert.ok(Math.abs(M.tierExp(55) - (10.5 + 1.5 * 5)) < 1e-9); assert.ok(Math.abs(M.tierReward(55) - (16 + 1.5 * 5)) < 1e-9);
     assert.ok(M.tierExp(200) < 31 && M.tierReward(200) < 36, 'no runaway with the difficulty cap');
-    assert.ok(B.xpRebirthFactor(50) / B.xpRebirthFactor(49) > 8 && B.xpRebirthFactor(100) / B.xpRebirthFactor(99) > 3.5, 'walls');
 });

@@ -1,9 +1,16 @@
 name: CI
 
+# main 푸시와 PR에서만 돕니다(전에는 모든 브랜치 푸시 + PR이라 PR 브랜치는 같은 커밋을 두 번 돌렸음).
+# 같은 브랜치·PR에 새 커밋이 오면 앞선 실행은 취소합니다.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -21,6 +28,13 @@ jobs:
           cache: pnpm
       - name: Install
         run: pnpm install --frozen-lockfile
+      - name: Next build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/**', 'components/**', 'game/**', 'lib/**', 'hooks/**') }}
+          restore-keys: |
+            next-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Lint (warnings are errors)
         run: pnpm lint 2>&1 | tee /tmp/lint.log; exit ${PIPESTATUS[0]}
         shell: bash

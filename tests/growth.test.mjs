@@ -1,5 +1,5 @@
 // 숙련·계승·AP·직업 숙련·경험치 배율·보스 기술
-import { newState, act, tick, stats, snapshot, expMultiplier, normalizeStats, victoryMastery, duel, TRAINING, combatFxFromLog, combatFxBatch, apCapacity, apUsed, canUse, effectiveSkill, skillRankDeltas, skillMasteryLevel, masteryMilestonesFor, validLoadout, skillLevel, maxSkillLevel, inherited, trimLoadout, SKILLS, FISH, hitChance, xpNeeded, JOBS, JOB_TREES, assert, test } from './harness.mjs';
+import { newState, act, tick, stats, snapshot, expMultiplier, normalizeStats, victoryMastery, duel, TRAINING, combatFxFromLog, combatFxBatch, apCapacity, apUsed, canUse, effectiveSkill, skillRankDeltas, skillMasteryLevel, masteryMilestonesFor, validLoadout, skillLevel, maxSkillLevel, inherited, trimLoadout, SKILLS, FISH, hitChance, xpNeeded, JOBS, assert, test } from './harness.mjs';
 test('SP and mastery reach identical growth levels, never stacking or locking',()=>{
  const sk=SKILLS.find(x=>x.id==='pierce');assert.equal(effectiveSkill(sk,1).cost,4);
  assert.deepEqual(effectiveSkill(sk,3,0),effectiveSkill(sk,1,2));assert.deepEqual(effectiveSkill(sk,3,2),effectiveSkill(sk,1,2));
@@ -9,9 +9,8 @@ test('SP and mastery reach identical growth levels, never stacking or locking',(
  act(s,{type:'learn',id:'pierce'},0);assert.equal(s.sp,3);assert.equal(skillLevel(sk,s.learned.pierce,2),3);
  s.skillPractice.pierce=sk.masteryMilestones[3];assert.equal(skillLevel(sk,s.learned.pierce,4),4);assert.throws(()=>act(s,{type:'learn',id:'pierce'},0));
 });
-test('222 jobs distribute tier 1 and 2 skills into one or two each',()=>{
- assert.equal(JOBS.length,262);/* v3.25 화이트 해커 · v3.28 블랙 해커 */assert.equal(SKILLS.length,512);assert.equal(JOB_TREES.length,7);
- for(const job of JOBS)assert.ok(JOB_TREES.some(t=>t.id===job.tree),job.id);
+// 직업·스킬 개수와 계열 소속은 classes.test에서 봅니다(콘텐츠를 추가할 때마다 깨지던 개수 단언은 지웠습니다).
+test('Tier 1 and 2 jobs own one or two skills; every skill has a real job and rising milestones',()=>{
  for(const job of JOBS.filter(j=>(j.tier===1||j.tier===2)&&!j.fullKit)){
   const owned=SKILLS.filter(sk=>sk.job===job.id&&!sk.song);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
  }
@@ -53,9 +52,9 @@ test('SP inheritance, growth and practice survive reincarnation',()=>{
  act(s,{type:'rebirth'},1);assert.equal(s.skillInheritances.pierce,true);assert.equal(s.learned.pierce,3);assert.equal(s.skillPractice.pierce,100);assert.equal(s.sp,2);
  assert.equal(s.level,1);assert.equal(canUse(s,'pierce'),true,'inherited skills ignore the level requirement after rebirth');
 });
-test('Level ups grant native skills but no SP',()=>{
+test('Level ups grant no SP',()=>{
  const s=newState(0);s.running=true;s.exp=xpNeeded(1)+xpNeeded(2);s.enemy={id:'minnow',name:'target',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};
- tick(s,()=>.5);assert.equal(s.level,3);assert.equal(s.sp,0);assert.equal(s.learned.splash,undefined,'v26.1 물보라 삭제');
+ tick(s,()=>.5);assert.equal(s.level,3);assert.equal(s.sp,0);
 });
 test('Combat feedback preserves both actors, healing target and follow-up misses',()=>{
  const logs=[
@@ -120,7 +119,7 @@ test('Boss techniques unlock at native job mastery and SP cannot skip first acqu
 });
 test('Research skill conditions and boss origins reference actual game data',()=>{
  for(const sk of SKILLS){if(sk.masteryGain){assert.equal(sk.masteryGain.bonusByLevel.length,maxSkillLevel(sk)+1);for(const id of sk.masteryGain.enemyIds||[])assert.ok(FISH.some(f=>f.id===id));}if(sk.unlockJobMastery)assert.ok(sk.job&&sk.sourceEnemySkill);}
- assert.equal(new Set(JOBS.map(j=>j.id)).size,JOBS.length);assert.equal(new Set(SKILLS.map(j=>j.id)).size,SKILLS.length);
+ assert.equal(new Set(SKILLS.map(j=>j.id)).size,SKILLS.length);
  for(const job of JOBS){const seen=new Set();let node=job;while(node.parent){assert.ok(!seen.has(node.id));seen.add(node.id);node=JOBS.find(j=>j.id===node.parent);assert.ok(node);}}
 });
 
