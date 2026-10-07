@@ -23,7 +23,7 @@ export type AbyssRow = { rank: number; id: string; name: string; depth: number; 
 /** 동기화 주기(ms). */
 const SYNC_MS = 3000;
 /** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다. */
-const IDLE_SYNC_SKIP = 10;
+const IDLE_SYNC_SKIP = 20;
 /** v27.62 전투를 보지 않는 화면(스킬·상점 등)에서는 자동 사냥 중에도 SYNC_MS × 이 값마다(9초). 전투 재생이 필요 없어 데이터·서버 부하를 줄입니다. */
 const BACKGROUND_SYNC_SKIP = 3;
 /** 턴이 서버에서 계산된 뒤 다음 동기화로 도착할 때까지의 여유. 이만큼 늦게 재생해야 턴 간격이 고르게 유지됩니다. */
@@ -203,7 +203,7 @@ export function useGame() {
         setBusy(false);
     } }, [request, loadRanking, replay]);
     useEffect(() => { const first = setTimeout(() => send({ type: 'sync' }), 0); let ticks = 0; const timer = setInterval(() => { const s = stateRef.current; ticks++;
-        // v25.21 자동 사냥이 꺼져 있고 던전도 아니면 10번에 한 번(30초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
+        // v25.21 자동 사냥이 꺼져 있고 던전도 아니면 20번에 한 번(60초)만 동기화합니다(서버 CPU 절약을 위해 30초 → 60초). 행동은 즉시 보내므로 체감 지연은 없습니다.
         // v27.62 진행 중이어도 전투를 보지 않는 화면이면 3번에 한 번(9초)만 동기화합니다.
         const active = !!s && (s.running || !!s.dungeon);
         if (document.visibilityState === 'visible' && (!s || (active && (live.current || ticks % BACKGROUND_SYNC_SKIP === 0)) || ticks % IDLE_SYNC_SKIP === 0))
