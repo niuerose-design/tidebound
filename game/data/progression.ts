@@ -26,7 +26,7 @@ export const ATTRIBUTE_EFFECTS = {
     // v25.2: 기민의 속도를 줄이고 근력·지능의 공격을 올렸습니다(기민 +20이 근력 +20보다 처치 효율이 2.5배 높던 편중 완화).
     str: { attack: 2.3, defense: .25 },
     dex: { accuracy: .0025, evasion: .0015, speed: .15 },
-    // v3.128 지능 · 체질이 마법 방어도 조금 올립니다(근력 · 체질이 물리 방어를 올리는 것과 대칭).
+    // v3.129 지능 · 체질이 마법 방어도 조금 올립니다(근력 · 체질이 물리 방어를 올리는 것과 대칭).
     int: { magic: 2.8, mana: 1, resist: .25 },
     vit: { hp: 9, defense: .6, resist: .4, hpRegen: .3 },
     wis: { resist: 1.2, mana: 3, manaRegen: .25 },

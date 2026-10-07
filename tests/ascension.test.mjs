@@ -418,7 +418,7 @@ test('v3.73 options: crit damage drawn at 0.4 weight, force/guardian roll both d
     const general = Co.imprintChoices('rod').length; assert.ok(brutal / 4000 < 1.6 / general, `brutal rate ${brutal / 4000} vs uniform ${1 / general}`);
     for (const id of ['force', 'guardian']) {
         const def = G.affixDef(id), a = G.rollOption(def, 100, 4, () => .5, 100); assert.ok(a.value > 0 && a.value2 === a.value, `${id} rolls both`);
-        // v3.128 장신구도 체력 · 방어를 주므로 옵션 없는 같은 장비의 기본 수치를 뺀 뒤 비교합니다.
+        // v3.129 장신구도 체력 · 방어를 주므로 옵션 없는 같은 장비의 기본 수치를 뺀 뒤 비교합니다.
         const item = { id: 'x', slot: 'charm', rarity: 4, power: 100, level: 100 }, st = Eq.itemStats({ ...item, affixes: [a] }), bare = Eq.itemStats({ ...item, affixes: [] });
         assert.ok(Math.abs(st[def.stat2] - (bare[def.stat2] || 0) - a.value2 * Eq.GEAR_RARITY_SCALE[4]) < 1e-9, `${id} second stat damped`);
     }
@@ -653,7 +653,7 @@ test('v3.122 onyx accessory level: the higher of its habitat level and my level 
     const low = newState(0); low.level = 40; G.grantOnyx(low, 'onyxBlackMage', 100, () => .5, 'test'); assert.equal(low.inventory.find(i => i.onyx).level, 100, 'habitat level when higher');
     const m = newState(0); m.level = 120; m.rebirths = 50; G.grantOnyxMilestones(m, () => 0); assert.equal(m.inventory.find(i => i.onyx).level, 120, 'milestone onyx at my level');
 });
-test('v3.128 slot redistribution: coat / cape / charm share hp and both defenses, totals unchanged, weapon untouched', async () => {
+test('v3.129 slot redistribution: coat / cape / charm share hp and both defenses, totals unchanged, weapon untouched', async () => {
     const Eq = await L.load('systems/equipment');
     const sum = k => ['rod', 'coat', 'cape', 'charm'].reduce((n, sl) => n + (Eq.SLOT_GEAR[sl][k] || 0), 0);
     assert.equal(sum('hp'), 8); assert.equal(Math.round(sum('mana') * 10) / 10, 1.8, 'mana 1.3 → 1.8 spread over weapon · coat · charm · cape'); assert.equal(sum('defense'), 1); assert.equal(sum('resist'), .5);
@@ -664,7 +664,7 @@ test('v3.128 slot redistribution: coat / cape / charm share hp and both defenses
     assert.equal(cape.hp, 250); assert.equal(cape.mana, 30); assert.equal(cape.defense, undefined); assert.ok(cape.evasion > 0);
     assert.equal(charm.hp, 200); assert.equal(charm.defense, 40); assert.equal(charm.resist, 20); assert.equal(charm.mana, 50); assert.ok(charm.crit > 0);
     assert.equal(rod.attack, 140); assert.equal(rod.mana, 50, 'weapon gives mana'); assert.equal(rod.hp, undefined, 'weapon gives no hp');
-    // v3.128 기본 방어 · 마방: 레벨당 방어 1.5 · 마방 1.2, 체질 → 마방 .4 · 지능 → 마방 .25.
+    // v3.129 기본 방어 · 마방: 레벨당 방어 1.5 · 마방 1.2, 체질 → 마방 .4 · 지능 → 마방 .25.
     const { stats } = await L.load('systems/stats'), { BALANCE } = await L.load('data/balance'), { ATTRIBUTE_EFFECTS } = await L.load('data/progression');
     assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [5, 1.5, 5, 1.2]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, .4); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .25);
     const b = newState(0); b.level = 100; b.attributes = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; b.statPoints = 0; const r0 = stats(b).resist; b.attributes.vit = 100; const r1 = stats(b).resist; b.attributes.vit = 0; b.attributes.int = 100; const r2 = stats(b).resist;
