@@ -241,3 +241,8 @@ test('v3.124 Adele: Ruin magic +450 and max mana +1000', async () => {
     const sk = SECRET_SKILLS.find(s => s.id === 'endlessVoid');
     assert.deepEqual([sk.bonus.magic, sk.bonus.mana], [450, 1000]);
 });
+
+test('v3.125 Cadena: Mystic Storm attack +450 (stun extension kept)', () => {
+    const sk = SKILLS.find(s => s.id === 'absoluteStill');
+    assert.deepEqual([sk.bonus.attack, sk.bonus.stunBonus], [450, 1]);
+});
