@@ -42,6 +42,6 @@ export function grantOnyxMilestones(s: State, rng: () => number = Math.random) {
         const boss = ONYX_BOSSES[Math.min(ONYX_BOSSES.length - 1, Math.floor(rng() * ONYX_BOSSES.length))];
         const level = STAGES.find(st => st.region === boss.region && st.habitat)?.level || 1;
         got.add(m); s.onyxMilestones = [...got].sort((a, b) => a - b);
-        grantOnyx(s, boss.id, level, rng, `환생 ${m}회 달성 보상`);
+        if (grantOnyx(s, boss.id, level, rng, `환생 ${m}회 달성 보상`) === 'new') (s.onyxGift ??= {})[boss.id] = m;
     }
 }

@@ -28,7 +28,8 @@ function markOf(s: State, day: NewsMark['day'] = {}): NewsMark {
 const particle = (word: string, pair: '이가' | '을를') => josa(word, pair).slice(word.length);
 /** 소식 문장. collectNews와 운영 페이지의 소식 테스트(server/news.ts)가 같이 씁니다. */
 export const NEWS_TEXT = {
-    onyx: (n: string, item: string) => `${josa(n, '이가')} 칠흑 장신구 ‘${item}’${particle(item, '을를')} 얻었습니다.`,
+    // v3.115 환생 이정표로 받은 칠흑은 ‘환생 N회 달성 보상으로 … 받았습니다’.
+    onyx: (n: string, item: string, milestone?: number) => milestone ? `${josa(n, '이가')} 환생 ${milestone}회 달성 보상으로 칠흑 장신구 ‘${item}’${particle(item, '을를')} 받았습니다.` : `${josa(n, '이가')} 칠흑 장신구 ‘${item}’${particle(item, '을를')} 얻었습니다.`,
     ascend: (n: string, count: number) => `${josa(n, '이가')} ${count}번째 승천을 했습니다.`,
     tier5: (n: string, job: string) => `${josa(n, '이가')} 5차 직업 ‘${job}’(으)로 전직했습니다.`,
     abyss: (n: string, floor: number) => `${josa(n, '이가')} 무릉도장 ${floor}층을 돌파했습니다.`,
@@ -37,11 +38,11 @@ export const NEWS_TEXT = {
 } satisfies Record<NewsKind, (n: string, ...a: never[]) => string>;
 /** 지난 표시 뒤로 새로 생긴 소식을 찾고 표시를 지금 상태로 옮깁니다. */
 export function collectNews(s: State, now: number): NewsEvent[] {
-    const prev = s.newsMark, next = markOf(s, { ...(prev?.day || {}) });
-    s.newsMark = next;
+    const prev = s.newsMark, next = markOf(s, { ...(prev?.day || {}) }), gift = s.onyxGift || {};
+    s.newsMark = next; delete s.onyxGift;
     if (!prev) return [];
     const found: NewsEvent[] = [];
-    for (const id of next.onyx.filter(x => !prev.onyx.includes(x))) { const name = onyxById(id)?.accessory.name || id; found.push({ kind: 'onyx', text: n => NEWS_TEXT.onyx(n, name) }); }
+    for (const id of next.onyx.filter(x => !prev.onyx.includes(x))) { const name = onyxById(id)?.accessory.name || id; found.push({ kind: 'onyx', text: n => NEWS_TEXT.onyx(n, name, gift[id]) }); }
     if (next.ascension > prev.ascension) found.push({ kind: 'ascend', text: n => NEWS_TEXT.ascend(n, next.ascension) });
     for (const id of next.tier5.filter(x => !prev.tier5.includes(x))) { const job = JOBS.find(j => j.id === id)!; found.push({ kind: 'tier5', text: n => NEWS_TEXT.tier5(n, job.name) }); }
     if (next.abyss > prev.abyss) found.push({ kind: 'abyss', text: n => NEWS_TEXT.abyss(n, next.abyss * NEWS_ABYSS_STEP) });
