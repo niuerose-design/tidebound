@@ -16,7 +16,7 @@ import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue, swarmRankKil
 import { roughHeal } from './vows';
 import { sproutHeal } from '../data/sprout';
 import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
-import type { State, Item, Stats } from '../types';
+import type { State, Item, Stats, Enemy } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth } from '../data/world';
 import { jobById } from '../data/classes';
@@ -217,6 +217,15 @@ export function spawn(s: State, rng: () => number) {
     }
     s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
 }
+/**
+ * v3.97 전투 · 처치 로그에 쓰는 적 이름. 무리는 ‘스포아 ×100’, 변종은 ‘◆ 거대 개체 스포아’,
+ * 던전 · 필드 보스는 ‘[보스] …’, 칠흑 보스는 ‘[칠흑] …’. 전투 화면 카드는 배지로 따로 보여 줍니다.
+ */
+export function enemyLabel(e: Pick<Enemy, 'id' | 'name' | 'swarm' | 'variant' | 'boss' | 'onyx'>) {
+    const v = e.variant && e.variant !== 'swarm' ? variantById(e.variant) : undefined;
+    const tag = e.onyx ? '[칠흑] ' : e.boss || FISH.find(f => f.id === e.id)?.boss ? '[보스] ' : '';
+    return `${tag}${v ? `${v.mark} ${v.name} ` : ''}${e.name}${(e.swarm || 1) > 1 ? ` ×${e.swarm}` : ''}`;
+}
 const fishLevelOf = (id: string) => FISH.find(f => f.id === id)?.level || 1;
 export function reward(s: State, rng: () => number) {
     const e = s.enemy!;
@@ -313,7 +322,7 @@ export function reward(s: State, rng: () => number) {
         s.exp += bonus;
         addLog(s, `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} (Lv.${s.level} 필요량의 ${Math.round(t.pct * 100)}%)`, 'reward');
     }
-    addLog(s, `${golden ? '✦ 황금 ' : ''}${vdef && e.variant !== 'swarm' ? `${vdef.mark} ${vdef.name} ` : ''}${e.name}${size > 1 ? ` 무리 ×${size}` : ''} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
+    addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
     // v3.12 칠흑 보스 처치: drop 확률로 그 보스의 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
     if (e.onyx) {

@@ -136,7 +136,7 @@ export function combatFxSkipped(logs: Log[], afterId: number, playerName: string
 // 서버 계산을 흉내 내지 않고 로그의 실제 피해·회복 값만 되짚으므로, 배치의 마지막 프레임은 항상 next와 같습니다.
 const RECOVERED = '숨을 고르고 다시 무기를 들었습니다.';
 const LOST = '몬스터를 놓쳤습니다. 잠시 회복합니다.';
-const CAUGHT = /^(.+?)(?: 무리 ×\d+)? 처치 · \+\d/;
+const CAUGHT = /^(.+?) 처치 · \+\d/;
 
 export type ReplayFrame = {
     /** 턴 시작 뒤 이 프레임을 보여 줄 시각(ms). */

@@ -13,7 +13,7 @@ import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
 import { canUse, skillMasteryRanks, refinePractices, extraRollLevel } from './progression';
 import { addLog, endRun } from './state';
-import { spawn, reward, releaseLegacySeal, gainLevels } from './encounter';
+import { spawn, reward, releaseLegacySeal, gainLevels, enemyLabel } from './encounter';
 import { inRandomGame, loseRandomGame } from './random-game';
 import { deathRecoveryTurns, deathExpLoss } from '../data/sprout';
 import { profile } from '../data/encounters';
@@ -93,7 +93,7 @@ function tickTurn(s: State, rng: () => number) {
     const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
     const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), practice: refinePractices(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
-    const enemy: Fighter = { foe: true, name: e.name, stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
+    const enemy: Fighter = { foe: true, name: enemyLabel(e), stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
     // v25 타임 리와인드: 쓸 때마다 현재 직업 숙련이 오릅니다.
@@ -114,9 +114,9 @@ function tickTurn(s: State, rng: () => number) {
     // v27.16 교착 안전장치: 양쪽 체력이 그대로인 턴이 이어지면 몬스터가 달아난 것으로 보고 새 몬스터를 맞이합니다.
     if (e.hp > 0 && s.hp > 0) {
         // v3.12 칠흑 보스는 정해진 턴이 지나면 떠납니다(도망 보상 없음).
-        if (e.onyx && e.leavesAt !== undefined && s.turn >= e.leavesAt && e.hp > 0) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${e.name}이(가) 어둠 속으로 사라졌습니다. 다음에 다시 만나세요.`); return; }
+        if (e.onyx && e.leavesAt !== undefined && s.turn >= e.leavesAt && e.hp > 0) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${enemyLabel(e)}이(가) 어둠 속으로 사라졌습니다. 다음에 다시 만나세요.`); return; }
         e.stale = e.hp === enemyHpBefore && s.hp === playerHpBefore ? (e.stale || 0) + 1 : 0;
-        if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${e.name}이(가) 줄을 끊고 달아났습니다. 다음 몬스터를 기다립니다.`); return; }
+        if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${enemyLabel(e)}이(가) 줄을 끊고 달아났습니다. 다음 몬스터를 기다립니다.`); return; }
     }
     if (e.hp <= 0 && s.hp > 0)
         reward(s, rng);
