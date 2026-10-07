@@ -624,6 +624,15 @@ test('v3.120 primal gauge fills on every exit path, rare foes are never golden, 
     const { stats } = await L.load('systems/stats'); assert.ok(stats(r).goldenFind > 0);
     E.spawn(r, () => .5); r.enemy.hp = 0; E.reward(r, () => 0); assert.ok(Object.keys(r.goldenBook || {}).length === 1, 'a normal foe can be golden');
     for (const kind of ['mimic', 'nuri']) { r.enemy = null; E.spawn(r, () => .5, kind); const id = r.enemy.id; r.enemy.hp = 0; E.reward(r, () => 0); assert.ok(!r.goldenBook?.[id], `${kind} is never golden`); }
+    // 칠흑 위력 계수 6.37: Lv.100 650. 옛 530 장신구는 불러올 때 위력과 고정 수치 옵션이 함께 맞춰지고, 레벨 올리기도 같은 식을 씁니다.
+    const O = await L.load('data/onyx'), M = await L.load('systems/migrations');
+    assert.equal(O.onyxPower(100), 650); assert.equal(O.onyxAccessory(O.ONYX_BOSSES[0], 'ox', 100).power, 650);
+    const old = O.onyxAccessory(O.ONYX_BOSSES[6], 'old', 100); old.power = 530; old.affixes = G.rollAffixes(6, 530, old.origin, () => .3, old.affixes, 'charm', 100).map(x => x.rule ? x : G.refineOption(x, 530, 6, () => 1, 100)); old.onyxTuned = true;
+    const flatOld = old.affixes.find(x => !x.rule && G.affixDef(x.id)?.kind === 'flat'), flatBefore = flatOld?.value;
+    const o = newState(0); o.level = 100; o.inventory = [old]; M.migrateState(o, 0);
+    assert.equal(old.power, 650, 'old accessories are raised on load'); if (flatOld) assert.equal(old.affixes.find(x => x.id === flatOld.id).value, Math.round(flatBefore * 650 / 530), 'flat options follow the power');
+    M.migrateState(o, 0); assert.equal(old.power, 650, 'stable on the next load');
+    Eq.applyLevelUp(old, 110, o); assert.equal(old.power, O.onyxPower(110), 'level up uses the onyx formula');
     // 계승 · 칠흑의 재련 상한 150%: 보통 장비는 1(100%)에서 멈춥니다.
     const h = gear('h1', 6); h.heir = 'primal'; h.locked = true; const n = gear('n1', 6);
     const idx = h.affixes.findIndex(x => G.affixQuality(x, h.power, 6, 100) !== null); assert.ok(idx >= 0);

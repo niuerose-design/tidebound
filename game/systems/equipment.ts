@@ -4,7 +4,7 @@ import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAP
 import { RARITIES } from '../data/balance';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
-import { onyxAwaken, onyxScaledStat, isOnyxUnique } from '../data/onyx';
+import { onyxAwaken, onyxScaledStat, isOnyxUnique, onyxPower } from '../data/onyx';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
 /** 장신구: 위력 1당 치명타 +0.2%p. */
 /** v27.36 장신구 치명타: 레벨·위력과 무관한 등급 고정값 × (1 + 강화 × CHARM_CRIT_ENHANCE). 예전 위력 × 0.2%는 Lv.60 전설 +10 하나로 100%를 넘었습니다. */
@@ -96,9 +96,15 @@ export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebir
         if (item.heir && item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1));
     }
 }
-/** v3.77 칠흑 장신구의 무작위 옵션을 최고 굴림으로 맞춥니다(고유 규칙 옵션은 그대로). 얻을 때 한 번, 이전 장신구는 불러올 때 한 번(onyxTuned). */
+/**
+ * v3.77 칠흑 장신구의 무작위 옵션을 최고 굴림으로 맞춥니다(고유 규칙 옵션은 그대로). 얻을 때 한 번, 이전 장신구는 불러올 때 한 번(onyxTuned).
+ * v3.120 위력도 (레벨 + 2) × ONYX.power에 맞춥니다(계수가 5.2 → 6.37로 올라 이미 가진 장신구 보정). 고정 수치 옵션은 위력 비율만큼 함께 바뀝니다.
+ */
 export function tuneOnyx(item: Item) {
-    if (!item.onyx || item.onyxTuned) return;
+    if (!item.onyx) return;
+    const next = onyxPower(item.level || 1), before = item.power;
+    if (next !== before) { item.power = next; if (item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1)); }
+    if (item.onyxTuned) return;
     item.affixes = (item.affixes || []).map(x => x.rule ? x : refineOption(x, item.power, item.rarity, () => 1, item.level || 1));
     item.onyxTuned = true;
 }
@@ -131,12 +137,12 @@ export function fixRelicImprints(s: Pick<State, 'inventory' | 'equipment'>) {
 /** v3.13 +step이 내 레벨을 넘으면 내 레벨까지만 올립니다(전에는 Lv.91 장비가 최대 레벨 100에서 Lv.101을 요구해 영원히 막혔음). */
 export const levelUpTarget = (item: Pick<Item, 'level'>, s: Pick<State, 'level'>) => { const cur = item.level || 1, next = Math.min(cur + GEAR_LEVEL_UP.step, s.level); return next > cur ? next : null; };
 export const levelUpCost = (item: Item, s: Pick<State, 'permanent' | 'level'>) => { const next = levelUpTarget(item, s) ?? (item.level || 1) + GEAR_LEVEL_UP.step; return smith(Math.floor((250 + item.power * 25) * priceScale(next) * GEAR_LEVEL_UP.costMultiplier), s); };
-/** 레벨 올리기 적용: 위력·고정 수치 옵션은 (새 레벨 + 2) ÷ (옛 레벨 + 2)배, 유물·계승 장비 위력은 heirPower로 다시 계산, 별·하락 횟수는 0. */
+/** 레벨 올리기 적용: 위력·고정 수치 옵션은 (새 레벨 + 2) ÷ (옛 레벨 + 2)배, 유물·계승 장비 위력은 heirPower로, 칠흑은 onyxPower로 다시 계산, 별·하락 횟수는 0. */
 export function applyLevelUp(item: Item, next: number, s: Pick<State, 'rebirths'>) {
     const old = item.level || 1, ratio = (next + 2) / (old + 2);
     item.level = next;
     const kind = heirKind(item);
-    item.power = kind ? heirItemPower(item, kind, s.rebirths || 0, next) : Math.max(2, Math.round(item.power * ratio));
+    item.power = kind ? heirItemPower(item, kind, s.rebirths || 0, next) : item.onyx ? onyxPower(next) : Math.max(2, Math.round(item.power * ratio));
     if (item.affixes) item.affixes = item.affixes.map(x => rescaleAffix(x, ratio, old, next));
     item.enhance = 0; item.starFails = 0;
 }

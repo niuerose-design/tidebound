@@ -22,7 +22,7 @@ export function grantOnyx(s: State, bossId: string, level: number, rng: () => nu
         return 'awaken' as const;
     }
     const item = onyxAccessory(boss, `onyx-${bossId}-${s.turn}`, level);
-    // v3.77 칠흑 장신구의 무작위 옵션은 최고 굴림입니다. 위력은 그대로 (레벨 + 2) × 5.2이고 골드로 레벨을 올려 키웁니다.
+    // v3.77 칠흑 장신구의 무작위 옵션은 최고 굴림입니다. 위력은 (레벨 + 2) × ONYX.power(v3.120 6.37, Lv.100 650)이고 골드로 레벨을 올려 키웁니다.
     item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', level);
     tuneOnyx(item);
     s.inventory.push(item); s.itemBook ??= {}; s.itemBook[onyxCodexKey(bossId)] = true;
@@ -45,6 +45,8 @@ export function receiveOnyx(s: State, item: Item) {
     }
     const taken = new Set([...s.inventory, ...Object.values(s.equipment)].map(x => x?.id));
     const got = { ...item, id: taken.has(item.id) ? `onyx-${item.onyx}-${s.turn}-v` : item.id };
+    // v3.120 금고에 들어가 있던 장신구도 지금 위력 계수에 맞춥니다.
+    tuneOnyx(got);
     s.inventory.push(got); s.itemBook ??= {}; s.itemBook[onyxCodexKey(item.onyx!)] = true; (s.onyxGift ??= {})[item.onyx!] = 0;
     addLog(s, `✦ 계정 금고에서 칠흑 장신구 ‘${got.name}’을(를) 꺼냈습니다 (보유 ${ownedOnyx(s).size}/${ONYX_BOSSES.length}종)`, 'reward');
     return 'new' as const;
