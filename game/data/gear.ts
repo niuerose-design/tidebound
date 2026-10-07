@@ -179,14 +179,34 @@ export const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity)
  * - 재설정: 정수 없이 골드만. 기본 비용 × REROLL_GOLD × 감정 가격의 환생 배율(시간당 골드를 따라감), 재설정할수록 +10%(그대로).
  * - 원시 고대 · 계승 태초 · 칠흑: 세계석 GEAR_RESET_PEARLS로 재련 · 재설정 횟수를 0으로(비용 초기화). 대신 별 0 · 추가 옵션 새로 굴림(최고 수치).
  */
-export const REFINE_GROWTH = 1.08, REROLL_GOLD = 20, GEAR_RESET_PEARLS = 999;
-export const refineEssenceAt = (rarity: number, refines = 0) => Math.ceil(refineEssence(rarity) * Math.pow(REFINE_GROWTH, Math.max(0, Math.floor(refines))));
+/**
+ * v3.130 재련 비용 곡선: 성장 1.08 → 1.1, 그리고 systems/equipment refineCost가 환생 배율 10^(환생 ÷ 120)(원시 각성과 같은 식, 난이도 정수 수입을 따라감)을 곱합니다.
+ * 환생 100 태초(처음 48): 40회째 약 2천(난이도 100 정수 수입 20분) · 50회째 5천(1시간) · 60회째 1.4만(2.4시간) · 80회째 9만(16시간) · 100회째 62만(109시간).
+ * 60~80회쯤부터 세계석 999 비용 초기화가 눈에 들어오도록 둔 값입니다(전에는 50회 누적 4천 정수라 초기화할 이유가 없었음).
+ */
+export const REFINE_GROWTH = 1.1, REROLL_GOLD = 20, GEAR_RESET_PEARLS = 999;
+export const refineEssenceAt = (rarity: number, refines = 0, rebirthFactor = 1) => Math.ceil(refineEssence(rarity) * rebirthFactor * Math.pow(REFINE_GROWTH, Math.max(0, Math.floor(refines))));
 const ROLL_MIN = .6, ROLL_SPAN = .8;
 /**
  * v3.125 원시 고대 · 계승 태초 · 칠흑의 재련 상한: 보통 장비의 최고 굴림(수치 100%)을 1로 두고 그 1.5배 폭까지 굴립니다(수치 150%).
  * 계승 · 칠흑은 옵션이 최고 수치로 고정돼 재련할 이유가 없었습니다. 계승 · 비용 초기화는 그대로 100%에 놓고, 재련으로만 그 위를 노립니다.
  */
 export const HEIR_ROLL_TOP = 1.5;
+/**
+ * v3.130 100%를 넘는 굴림은 균등이 아닙니다. 한 번 굴릴 때 HEIR_ROLL_TAIL(15%)만 100% 위로 가고, 그 안에서도 위로 갈수록 급히 드물어집니다
+ * (100% 위 x만큼을 넘을 확률 = TAIL × (1 − x ÷ 50%)^TAIL_POWER): 110% 위 6.1% · 120% 위 1.9% · 130% 위 0.38% · 140% 위 0.024%. 기대 횟수 110% 16회 · 120% 52회 · 130% 260회.
+ * 0~100%는 전처럼 균등(85%). 난수는 한 번만 씁니다. heirRollQuality가 난수 → 수치(0~1.5)를 바꿉니다.
+ */
+export const HEIR_ROLL_TAIL = .15, HEIR_ROLL_TAIL_POWER = 4;
+export function heirRollQuality(u: number, top = HEIR_ROLL_TOP) {
+    if (top <= 1) return u;
+    const body = 1 - HEIR_ROLL_TAIL;
+    if (u < body) return u / body;
+    const v = Math.min(1, (u - body) / HEIR_ROLL_TAIL);
+    return 1 + (top - 1) * (1 - Math.pow(1 - v, 1 / HEIR_ROLL_TAIL_POWER));
+}
+/** 100% 위 q(1~top)를 넘을 확률(화면 안내용). */
+export const heirRollChanceAbove = (q: number, top = HEIR_ROLL_TOP) => q <= 1 ? 1 : q >= top ? 0 : HEIR_ROLL_TAIL * Math.pow(1 - (q - 1) / (top - 1), HEIR_ROLL_TAIL_POWER);
 /** v3.5 레벨 비례 옵션(불굴): (장비 레벨 ÷ 100)^levelPower, Lv.100 이상은 1. */
 const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
 
@@ -201,8 +221,8 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
     if (def.kind === 'rule') return { id: def.id, name: def.name, stat: def.stat, value: def.base, rule: true };
     if (def.fixed) return { id: def.id, name: def.name, stat: def.stat, value: def.base };
     // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
-    // v3.125 top은 굴림 폭 배율(보통 1, 계승 · 칠흑 재련은 HEIR_ROLL_TOP): 최고가 0.6 + 0.8 × top배까지 늘어납니다.
-    const roll = (ROLL_MIN + rng() * ROLL_SPAN * top) * rarityQuality(rarity) * levelScale(def, level);
+    // v3.125 top은 굴림 폭 배율(보통 1, 계승 · 칠흑 재련은 HEIR_ROLL_TOP): 최고가 0.6 + 0.8 × top배까지 늘어납니다. v3.130 100% 위는 heirRollQuality의 꼬리 분포.
+    const roll = (ROLL_MIN + heirRollQuality(rng(), top) * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
     const round = (n: number) => def.kind === 'flat' ? Math.round(n) : Math.round(n * 10000) / 10000;
     const out: ItemAffix = { id: def.id, name: def.name, stat: def.stat, value: round(def.base * scale * roll) };

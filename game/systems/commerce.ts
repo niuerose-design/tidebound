@@ -226,7 +226,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (item.rarity < 1)
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');
         if (a.type === 'refine') {
-            // v27.94 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. v3.118 정수만 들고, 이 장비를 재련할수록 ×1.08씩 오릅니다.
+            // v27.94 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. v3.118 정수만 들고, 이 장비를 재련할수록 ×REFINE_GROWTH씩 오릅니다(v3.130 1.1 · 환생 배율).
             const index = Number(a.value || '0');
             const x = item.affixes?.[index];
             if (item.relic)
@@ -237,7 +237,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error('규칙 옵션(◆)은 수치가 고정이라 재련할 수 없습니다.');
             if (affixDef(x.id)?.fixed)
                 throw Error(`${x.name} 옵션은 수치가 고정이라 재련해도 바뀌지 않습니다.`);
-            const cost = refineCost(item);
+            const cost = refineCost(item, s);
             if ((s.essence || 0) < cost.essence)
                 throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence.toLocaleString()}).`);
             s.essence = (s.essence || 0) - cost.essence;

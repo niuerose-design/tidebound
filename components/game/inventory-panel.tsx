@@ -11,7 +11,7 @@ import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, HEIR_GROWTH, AWAKENING, 
 import { SLOTS, RARITIES } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay, HIDDEN_STATS } from '@/game/data/progression';
 import { itemStats, itemDescription, enhanceCost, permanentStarScale, imprintAffix, bulkItems, saleValue, dismantleEssence, primalGaugeOf, keepsAcrossLives, heirKind, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
-import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT, REFINE_GROWTH, GEAR_RESET_PEARLS } from '@/game/data/gear';
+import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT, REFINE_GROWTH, GEAR_RESET_PEARLS, HEIR_ROLL_TAIL, heirRollChanceAbove } from '@/game/data/gear';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
 import { stats, power } from '@/game/systems/stats';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
@@ -39,7 +39,7 @@ export function BonusList({ item }: {
 function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
     const cost = rerollCost(item, s), canPay = s.gold >= cost.gold;
     // v27.94 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다. v3.118 정수만, 이 장비를 재련할수록 ×1.08.
-    const refine = refineCost(item), canRefine = (s.essence || 0) >= refine.essence;
+    const refine = refineCost(item, s), canRefine = (s.essence || 0) >= refine.essence;
     // v3.125 원시 고대 · 계승 태초 · 칠흑은 재련 상한이 150%라 수치 표시도 그 위까지 보입니다(refineTopOf).
     const top = refineTopOf(item), quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity, item.level, top); return q === null ? null : Math.round(q * 100); };
     return <div className="affix-explanation">
@@ -48,7 +48,7 @@ function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
             <span>{x.rule ? '◆ ' : ''}<b>{x.name}</b>{!HIDDEN_STATS.has(x.stat) && <> · {STAT_LABELS[x.stat]} {statDeltaDisplay(x.stat, x.value)}</>}{x.stat2 && x.value2 ? ` · ${STAT_LABELS[x.stat2]} ${statDeltaDisplay(x.stat2, x.value2)}` : ''}{quality(x) !== null && <em className="affix-quality"> · 수치 {quality(x)}%</em>}</span>
             <small>{affixDef(x.id)?.description}</small>
             {!item.relic && !(item.onyx && x.rule) && <span className="gear-option-actions"><ConfirmButton label="재설정" title={`${x.name} 옵션을 다시 굴릴까요?`} description={`이 옵션 하나만 바뀌고 나머지 옵션은 그대로입니다. 골드 ${format(cost.gold)} G를 사용합니다(정수 없음). 같은 옵션은 중복되지 않고, 규칙 옵션(◆)은 장비당 1개까지입니다.`} disabled={busy || !canPay} onConfirm={() => send({ type: 'reforge', id: item.id, value: String(i) })}/>
-                {!x.rule && !affixDef(x.id)?.fixed && <ConfirmButton label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다${top > 1 ? `(이 장비는 보통 최고의 ${top}배, 수치 ${Math.round(top * 100)}%까지)` : ''}. 지금보다 낮아질 수도 있습니다. 정수 ${format(refine.essence)}를 사용합니다(골드 없음). 이 장비를 재련할 때마다 다음 정수가 ×${REFINE_GROWTH}로 오릅니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
+                {!x.rule && !affixDef(x.id)?.fixed && <ConfirmButton label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다${top > 1 ? `. 이 장비는 수치 ${Math.round(top * 100)}%까지 가능하지만 100% 위는 ${Math.round(HEIR_ROLL_TAIL * 100)}%만 나오고 위로 갈수록 급히 드뭅니다(110% 위 ${(heirRollChanceAbove(1.1) * 100).toFixed(1)}% · 120% 위 ${(heirRollChanceAbove(1.2) * 100).toFixed(1)}% · 130% 위 ${(heirRollChanceAbove(1.3) * 100).toFixed(2)}%)` : ''}. 지금보다 낮아질 수도 있습니다. 정수 ${format(refine.essence)}를 사용합니다(골드 없음). 이 장비를 재련할 때마다 다음 정수가 ×${REFINE_GROWTH}로 오릅니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
             </span>}
         </div>)}
         <p className="footnote">{item.relic ? '이식 옵션은 환생해도 남고, 같은 칸에 다시 이식하면 덮어씁니다. 위 수치는 장비 기여 수치에 포함됩니다.' : <>옵션 재설정 · {format(cost.gold)} G{item.rerolls ? ` (이 장비 ${item.rerolls}회 재설정 · 1회마다 +${REROLL_STEP_PCT}%)` : ` (재설정할 때마다 +${REROLL_STEP_PCT}%)`} · 수치 재련 · 정수 {format(refine.essence)}{item.refines ? ` (이 장비 ${item.refines}회 재련 · 1회마다 ×${REFINE_GROWTH})` : ` (재련할 때마다 ×${REFINE_GROWTH})`} · 보유 정수 {format(s.essence || 0)}</>}</p>
