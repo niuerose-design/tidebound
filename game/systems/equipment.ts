@@ -1,10 +1,10 @@
 import type { Item, Stats, State } from '../types';
-import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, heirPower, legacyRelicPower, smithDiscount, appraisalRebirthFactor, type HeirKind } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, rescaleAffix, affixDef, refineOption, rarityQuality, type ItemAffix } from '../data/gear';
+import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, PRIMAL_INHERIT, heirPower, legacyRelicPower, smithDiscount, appraisalRebirthFactor, type HeirKind } from '../data/economy';
+import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, refineOption, rarityQuality, type ItemAffix } from '../data/gear';
 import { RARITIES } from '../data/balance';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
-import { onyxAwaken, onyxScaledStat, isOnyxUnique } from '../data/onyx';
+import { onyxAwaken, onyxScaledStat, isOnyxUnique, onyxPower } from '../data/onyx';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
 /** 장신구: 위력 1당 치명타 +0.2%p. */
 /** v27.36 장신구 치명타: 레벨·위력과 무관한 등급 고정값 × (1 + 강화 × CHARM_CRIT_ENHANCE). 예전 위력 × 0.2%는 Lv.60 전설 +10 하나로 100%를 넘었습니다. */
@@ -96,9 +96,15 @@ export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebir
         if (item.heir && item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1));
     }
 }
-/** v3.77 칠흑 장신구의 무작위 옵션을 최고 굴림으로 맞춥니다(고유 규칙 옵션은 그대로). 얻을 때 한 번, 이전 장신구는 불러올 때 한 번(onyxTuned). */
+/**
+ * v3.77 칠흑 장신구의 무작위 옵션을 최고 굴림으로 맞춥니다(고유 규칙 옵션은 그대로). 얻을 때 한 번, 이전 장신구는 불러올 때 한 번(onyxTuned).
+ * v3.125 위력도 (레벨 + 2) × ONYX.power에 맞춥니다(계수가 5.2 → 6.37로 올라 이미 가진 장신구 보정). 고정 수치 옵션은 위력 비율만큼 함께 바뀝니다.
+ */
 export function tuneOnyx(item: Item) {
-    if (!item.onyx || item.onyxTuned) return;
+    if (!item.onyx) return;
+    const next = onyxPower(item.level || 1), before = item.power;
+    if (next !== before) { item.power = next; if (item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1)); }
+    if (item.onyxTuned) return;
     item.affixes = (item.affixes || []).map(x => x.rule ? x : refineOption(x, item.power, item.rarity, () => 1, item.level || 1));
     item.onyxTuned = true;
 }
@@ -131,12 +137,12 @@ export function fixRelicImprints(s: Pick<State, 'inventory' | 'equipment'>) {
 /** v3.13 +step이 내 레벨을 넘으면 내 레벨까지만 올립니다(전에는 Lv.91 장비가 최대 레벨 100에서 Lv.101을 요구해 영원히 막혔음). */
 export const levelUpTarget = (item: Pick<Item, 'level'>, s: Pick<State, 'level'>) => { const cur = item.level || 1, next = Math.min(cur + GEAR_LEVEL_UP.step, s.level); return next > cur ? next : null; };
 export const levelUpCost = (item: Item, s: Pick<State, 'permanent' | 'level'>) => { const next = levelUpTarget(item, s) ?? (item.level || 1) + GEAR_LEVEL_UP.step; return smith(Math.floor((250 + item.power * 25) * priceScale(next) * GEAR_LEVEL_UP.costMultiplier), s); };
-/** 레벨 올리기 적용: 위력·고정 수치 옵션은 (새 레벨 + 2) ÷ (옛 레벨 + 2)배, 유물·계승 장비 위력은 heirPower로 다시 계산, 별·하락 횟수는 0. */
+/** 레벨 올리기 적용: 위력·고정 수치 옵션은 (새 레벨 + 2) ÷ (옛 레벨 + 2)배, 유물·계승 장비 위력은 heirPower로, 칠흑은 onyxPower로 다시 계산, 별·하락 횟수는 0. */
 export function applyLevelUp(item: Item, next: number, s: Pick<State, 'rebirths'>) {
     const old = item.level || 1, ratio = (next + 2) / (old + 2);
     item.level = next;
     const kind = heirKind(item);
-    item.power = kind ? heirItemPower(item, kind, s.rebirths || 0, next) : Math.max(2, Math.round(item.power * ratio));
+    item.power = kind ? heirItemPower(item, kind, s.rebirths || 0, next) : item.onyx ? onyxPower(next) : Math.max(2, Math.round(item.power * ratio));
     if (item.affixes) item.affixes = item.affixes.map(x => rescaleAffix(x, ratio, old, next));
     item.enhance = 0; item.starFails = 0;
 }
@@ -148,11 +154,21 @@ export const equippedAffixTotal = (s: Pick<State, 'equipment'> | undefined, stat
 export const dismantleEssence = (item: Item, s?: Pick<State, 'equipment'>) => Math.round((ESSENCE_BY_RARITY[item.rarity] ?? 1) * (1 + equippedAffixTotal(s, 'essenceBonus')));
 /** v3.66 태초 계승 게이지에 쌓이는 분해: 태초 등급(칠흑 장신구 제외)이면 1. */
 export const primalGaugeOf = (item: Pick<Item, 'rarity' | 'onyx'>) => item.rarity >= 6 && !item.onyx ? 1 : 0;
+/**
+ * v3.125 태초가 손을 떠나는 모든 길에서 계승 게이지가 찹니다: 분해뿐 아니라 강화 파괴 · 판매(단일 · 일괄 · 자동 · 청산) · 물건도감 등록 · 유물 이식 소비.
+ * 전에는 분해만 세어 파괴되거나 팔린 태초는 중간다리 노릇을 못 했습니다. 얻은 양을 돌려주고, 장비를 목록에서 빼는 것은 부르는 쪽이 합니다.
+ */
+export function primalGaugeGain(s: Pick<State, 'primalGauge'>, items: Pick<Item, 'rarity' | 'onyx'>[]) {
+    const gauge = items.reduce((n, i) => n + primalGaugeOf(i), 0);
+    if (gauge) s.primalGauge = (s.primalGauge || 0) + gauge;
+    return gauge;
+}
+/** 게이지가 찼을 때 기록 줄에 붙이는 꼬리(없으면 빈 문자열). */
+export const primalGaugeNote = (s: Pick<State, 'primalGauge'>, gauge: number) => gauge ? ` · 태초 계승 게이지 +${gauge} (${s.primalGauge || 0}/${PRIMAL_INHERIT.gauge})` : '';
 /** 분해 정산: 정수(× rate)와 태초 계승 게이지를 더하고 얻은 양을 돌려줍니다. 장비를 목록에서 빼는 것은 부르는 쪽이 합니다. */
 export function dismantleInto(s: Pick<State, 'essence' | 'primalGauge'> & Partial<Pick<State, 'equipment'>>, items: Item[], rate = 1) {
-    const essence = Math.floor(items.reduce((sum, i) => sum + dismantleEssence(i, s as Pick<State, 'equipment'>), 0) * rate), gauge = items.reduce((n, i) => n + primalGaugeOf(i), 0);
+    const essence = Math.floor(items.reduce((sum, i) => sum + dismantleEssence(i, s as Pick<State, 'equipment'>), 0) * rate), gauge = primalGaugeGain(s, items);
     s.essence = (s.essence || 0) + essence;
-    if (gauge) s.primalGauge = (s.primalGauge || 0) + gauge;
     return { essence, gauge };
 }
 /** v27.94 재설정 비용은 이 장비를 재설정한 횟수만큼 오릅니다(1회마다 +10%, 상한 없음). v3.118 골드만(기본 × REROLL_GOLD × 감정 환생 배율), 정수 없음. */
@@ -161,6 +177,8 @@ export const rerollCost = (item: Item, s?: Pick<State, 'permanent'> & Partial<Pi
 export const refineCost = (item: Item) => ({ gold: 0, essence: refineEssenceAt(item.rarity, item.refines) });
 /** v3.118 비용 초기화(원시 고대 · 계승 태초 · 칠흑): 세계석으로 재련 · 재설정 횟수를 0으로, 대신 별과 추가 옵션이 초기화됩니다. */
 export const canResetGear = (item: Pick<Item, 'heir' | 'onyx'>) => !!(item.heir || item.onyx);
+/** v3.125 재련 굴림 폭 배율: 원시 고대 · 계승 태초 · 칠흑은 HEIR_ROLL_TOP(수치 150%까지), 그 밖은 1(100%). 화면의 ‘수치 N%’도 같은 값을 씁니다. */
+export const refineTopOf = (item: Pick<Item, 'heir' | 'onyx'>) => canResetGear(item) ? HEIR_ROLL_TOP : 1;
 export const itemDescription = (item: Item) => item.description || (item.slot === 'rod' ? (item.style === 'magic' ? '마법 특화' : item.style === 'physical' ? '물리 특화' : '물리·마법 겸용') + ' 낚싯대.' : item.slot === 'coat' ? '최대 체력·최대 마나·물리 방어·마법 방어를 높이는 방어구.' : item.slot === 'cape' ? '회피와 체력·마나를 조금 높이는 망토. 상태이상 저항 옵션은 망토에만 붙습니다.' : '치명타 확률을 높이는 장신구.');
 export function rollAffix(rarity: number, rng: () => number) { const x = AFFIXES[Math.floor(rng() * AFFIXES.length)]; return { stat: x.stat, name: x.name, value: x.value * Math.max(1, rarity) }; }
 export function bulkItems(s: State, rarity: number) { return s.inventory.filter(i => i.rarity === rarity && !i.locked && !keepsAcrossLives(i)); }

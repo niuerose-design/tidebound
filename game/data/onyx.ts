@@ -10,10 +10,13 @@ import { ODDS } from './odds';
  * 처치하면 drop 확률로 그 보스의 칠흑 장신구 1개를 받습니다(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석 duplicatePearls). 장신구는 환생해도 남습니다.
  * 엔드 콘텐츠 기준: 서식지 방치 시 출현 약 180회/시간 → 보스 약 13회/일(난이도 0). drop .003 · 천장 400이면 장신구 1개에 기대 약 18일, 최장 약 31일(난이도 50에서는 절반). 7종 완성은 반년 남짓.
  * 보스마다 고유 성향·기술이 있습니다(data/encounters PROFILES onyx*).
- * v3.77 무작위 옵션은 얻을 때 최고 굴림(systems/equipment tuneOnyx), 강화 파괴 시 12성으로 돌아갑니다. 위력은 (레벨 + 2) × power이고 골드로 레벨을 올려 키웁니다(환생으로 저절로 오르지 않음).
+ * v3.77 무작위 옵션은 얻을 때 최고 굴림(systems/equipment tuneOnyx), 강화 파괴 시 12성으로 돌아갑니다. 위력은 (레벨 + 2) × power(onyxPower)이고 골드로 레벨을 올려 키웁니다(환생으로 저절로 오르지 않음).
+ * v3.125 power 5.2 → 6.37(Lv.100 530 → 650). 이미 가진 장신구는 불러올 때 위력과 고정 수치 옵션을 함께 맞춥니다(tuneOnyx).
  */
 // v3.52 출현·드롭 확률과 천장은 서버 전용(game/secret/odds.ts). 체력·공격·머무는 턴·옵션 수는 공개.
-export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, hp: 100, attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5, power: 5.2, affixes: 5,
+export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, hp: 100, attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5,
+    /** v3.125 위력 계수: Lv.100에서 650(환생 60 계승 태초 606과 환생 200 계승 태초 788 사이). 전에는 일반 태초와 같은 5.2(530)라 파밍 동기가 약했습니다. 각성 · 7종 세트까지 모으면 환생 200 계승 태초 장신구를 넘도록 둔 값입니다. */
+    power: 6.37, affixes: 5,
     /** v3.113 각성: 이미 가진 칠흑을 다시 얻으면(같은 드롭 확률 · 천장) 고유 옵션 +awakenStep씩, 최대 awakenMax단계. 세계석은 그대로 받습니다. */
     awakenMax: 5, awakenStep: .1,
     /** v3.113 공명: 착용하지 않은 칠흑 장신구의 고유 옵션을 이 비율만큼 받습니다(각성 포함, 강화 · 별 보정 없음). */
@@ -63,8 +66,10 @@ export const ONYX_SET: { count: number; label: string; bossDamage?: number; habi
 export const onyxSetBonus = (owned: number) => ONYX_SET.filter(b => owned >= b.count).reduce((a, b) => ({ bossDamage: a.bossDamage + (b.bossDamage || 0), habitatReward: a.habitatReward + (b.habitatReward || 0), statusResist: a.statusResist + (b.statusResist || 0), allStats: a.allStats + (b.allStats || 0) }), { bossDamage: 0, habitatReward: 0, statusResist: 0, allStats: 0 });
 /** 서식지 출현마다 칠흑 보스가 나올 확률. 못 본 횟수가 pity에 닿으면 확정. */
 export const onyxChance = (tier: number, seen: number) => seen >= ONYX.pity ? 1 : ONYX.chance * (1 + tier * ONYX.chancePerTier);
+/** 칠흑 장신구의 위력: (레벨 + 2) × ONYX.power. 획득 · 레벨 올리기 · 불러오기(tuneOnyx)가 같은 식을 씁니다. */
+export const onyxPower = (level: number) => Math.max(2, Math.round((Math.max(1, level) + 2) * ONYX.power));
 /** 칠흑 장신구를 만듭니다(태초 고정, 레벨은 부르는 쪽이 정함(v3.122 서식지 레벨과 내 레벨 중 높은 쪽), 고유 규칙 옵션 + 무작위 옵션은 호출자가 채움). */
 export function onyxAccessory(boss: OnyxBoss, id: string, level: number): Item {
     const stage = STAGES.find(st => st.region === boss.region && st.habitat);
-    return { id, name: boss.accessory.name, slot: 'charm', rarity: RARITIES.length - 1, level, power: Math.max(2, Math.round((level + 2) * ONYX.power)), locked: true, onyx: boss.id, origin: stage?.id, description: boss.accessory.desc, affixes: [{ ...boss.accessory.affix }] };
+    return { id, name: boss.accessory.name, slot: 'charm', rarity: RARITIES.length - 1, level, power: onyxPower(level), locked: true, onyx: boss.id, origin: stage?.id, description: boss.accessory.desc, affixes: [{ ...boss.accessory.affix }] };
 }

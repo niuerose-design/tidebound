@@ -10,7 +10,7 @@ import type { CombatStats, Item, State, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, HEIR_GROWTH, AWAKENING, PRIMAL_INHERIT, heirFactor, awakenEssence, researchRank } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay, HIDDEN_STATS } from '@/game/data/progression';
-import { itemStats, itemDescription, enhanceCost, permanentStarScale, imprintAffix, bulkItems, saleValue, dismantleEssence, primalGaugeOf, keepsAcrossLives, heirKind, rerollCost, refineCost, canResetGear, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
+import { itemStats, itemDescription, enhanceCost, permanentStarScale, imprintAffix, bulkItems, saleValue, dismantleEssence, primalGaugeOf, keepsAcrossLives, heirKind, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
 import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT, REFINE_GROWTH, GEAR_RESET_PEARLS } from '@/game/data/gear';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
 import { stats, power } from '@/game/systems/stats';
@@ -40,14 +40,15 @@ function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
     const cost = rerollCost(item, s), canPay = s.gold >= cost.gold;
     // v27.94 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다. v3.118 정수만, 이 장비를 재련할수록 ×1.08.
     const refine = refineCost(item), canRefine = (s.essence || 0) >= refine.essence;
-    const quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity, item.level); return q === null ? null : Math.round(q * 100); };
+    // v3.125 원시 고대 · 계승 태초 · 칠흑은 재련 상한이 150%라 수치 표시도 그 위까지 보입니다(refineTopOf).
+    const top = refineTopOf(item), quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity, item.level, top); return q === null ? null : Math.round(q * 100); };
     return <div className="affix-explanation">
         <b>{item.relic ? `이식 옵션 ${item.affixes!.length}/${RELIC_GROWTH.imprintSlots}줄` : `추가 옵션 ${item.affixes!.length}개`}{item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</b>
         {item.affixes!.map((x, i) => <div key={x.id + i} className="gear-option-row">
             <span>{x.rule ? '◆ ' : ''}<b>{x.name}</b>{!HIDDEN_STATS.has(x.stat) && <> · {STAT_LABELS[x.stat]} {statDeltaDisplay(x.stat, x.value)}</>}{x.stat2 && x.value2 ? ` · ${STAT_LABELS[x.stat2]} ${statDeltaDisplay(x.stat2, x.value2)}` : ''}{quality(x) !== null && <em className="affix-quality"> · 수치 {quality(x)}%</em>}</span>
             <small>{affixDef(x.id)?.description}</small>
             {!item.relic && !(item.onyx && x.rule) && <span className="gear-option-actions"><ConfirmButton label="재설정" title={`${x.name} 옵션을 다시 굴릴까요?`} description={`이 옵션 하나만 바뀌고 나머지 옵션은 그대로입니다. 골드 ${format(cost.gold)} G를 사용합니다(정수 없음). 같은 옵션은 중복되지 않고, 규칙 옵션(◆)은 장비당 1개까지입니다.`} disabled={busy || !canPay} onConfirm={() => send({ type: 'reforge', id: item.id, value: String(i) })}/>
-                {!x.rule && !affixDef(x.id)?.fixed && <ConfirmButton label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다. 지금보다 낮아질 수도 있습니다. 정수 ${format(refine.essence)}를 사용합니다(골드 없음). 이 장비를 재련할 때마다 다음 정수가 ×${REFINE_GROWTH}로 오릅니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
+                {!x.rule && !affixDef(x.id)?.fixed && <ConfirmButton label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다${top > 1 ? `(이 장비는 보통 최고의 ${top}배, 수치 ${Math.round(top * 100)}%까지)` : ''}. 지금보다 낮아질 수도 있습니다. 정수 ${format(refine.essence)}를 사용합니다(골드 없음). 이 장비를 재련할 때마다 다음 정수가 ×${REFINE_GROWTH}로 오릅니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
             </span>}
         </div>)}
         <p className="footnote">{item.relic ? '이식 옵션은 환생해도 남고, 같은 칸에 다시 이식하면 덮어씁니다. 위 수치는 장비 기여 수치에 포함됩니다.' : <>옵션 재설정 · {format(cost.gold)} G{item.rerolls ? ` (이 장비 ${item.rerolls}회 재설정 · 1회마다 +${REROLL_STEP_PCT}%)` : ` (재설정할 때마다 +${REROLL_STEP_PCT}%)`} · 수치 재련 · 정수 {format(refine.essence)}{item.refines ? ` (이 장비 ${item.refines}회 재련 · 1회마다 ×${REFINE_GROWTH})` : ` (재련할 때마다 ×${REFINE_GROWTH})`} · 보유 정수 {format(s.essence || 0)}</>}</p>
@@ -88,7 +89,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
                 <small>교체 후 최종 능력치 변화</small>{delta.length ? delta.map(([k, n]) => { const d = n - current[k as keyof Stats]; return <span key={k} className={d > 0 ? 'positive' : 'negative'}>{STAT_LABELS[k as keyof Stats]} {statDeltaDisplay(k, d)}</span>; }) : <span>변화 없음</span>}</div>
             <div className="button-row">
                 <button className="secondary small" disabled={busy} onClick={() => send({ type: 'lockItem', id: item.id })}>{item.locked ? '보호 해제' : '보호'}</button>
-                <ConfirmButton label={`${format(saleValue(item))} G 판매`} title={`${item.name}을(를) 판매할까요?`} description={`${format(saleValue(item))} G를 받고 장비가 사라집니다.`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'sell', id: item.id })}/>
+                <ConfirmButton label={`${format(saleValue(item))} G 판매${primalGaugeOf(item) ? ' · 계승 게이지 +1' : ''}`} title={`${item.name}을(를) 판매할까요?`} description={`${format(saleValue(item))} G를 받고 장비가 사라집니다.${primalGaugeOf(item) ? ` 태초 계승 게이지가 1 찹니다(${(s.primalGauge || 0) + 1}/${PRIMAL_INHERIT.gauge}).` : ''}`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'sell', id: item.id })}/>
                 <ConfirmButton label={`분해 · 정수 +${dismantleEssence(item, s)}${primalGaugeOf(item) ? ' · 계승 게이지 +1' : ''}`} title={`${item.name}을(를) 분해할까요?`} description={`정수 ${dismantleEssence(item, s)}를 얻고 장비가 사라집니다.${primalGaugeOf(item) ? ` 태초 계승 게이지가 1 찹니다(${(s.primalGauge || 0) + 1}/${PRIMAL_INHERIT.gauge}).` : ''}`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'dismantle', id: item.id })}/>
             </div>
         </>}/></div>;
@@ -138,7 +139,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     {!s.inventory.length ? <div className="notice">가방이 비어 있습니다. 사냥 또는 상점에서 장비를 획득하세요.</div> : !shown.length && <div className="notice">조건에 맞는 장비가 없습니다.</div>}
     <details className="panel bulk-sale gear-bulk">
     <summary><h2>등급별 일괄판매 · 분해</h2><span>보호 장비·유물·착용 장비는 제외 · 분해 정수 등급별 {ESSENCE_BY_RARITY.join('·')}</span></summary>
-    <p>가방 전체에서 선택한 등급만 판매하거나 분해합니다. 분해하면 옵션 재설정에 쓰는 정수를 얻습니다.</p>
+    <p>가방 전체에서 선택한 등급만 판매하거나 분해합니다. 분해하면 수치 재련에 쓰는 정수를 얻습니다. 태초는 팔아도 분해해도 계승 게이지가 1씩 찹니다.</p>
     <div className="button-row">{RARITIES.map((r, i) => { const items = bulkItems(s, i), gold = items.reduce((sum, item) => sum + saleValue(item), 0); return <ConfirmButton key={r.name} label={`${r.name} ${items.length}개`} title={`${r.name} 장비 ${items.length}개를 판매할까요?`} description={`보호하지 않은 일반 장비만 판매하여 ${format(gold)} G를 받습니다. 장착 장비와 환생 유물은 제외됩니다.`} disabled={busy || !items.length} onConfirm={() => send({ type: 'sellRarity', id: String(i) })}/>; })}</div>
     <div className="button-row">{RARITIES.map((r, i) => { const items = bulkItems(s, i); return <ConfirmButton key={'d' + r.name} label={`${r.name} 분해 ${items.length}`} title={`${r.name} 장비 ${items.length}개를 분해할까요?`} description={`보호하지 않은 장비만 분해해 정수 ${items.length * (ESSENCE_BY_RARITY[i] || 1)}를 얻습니다. 장착 장비와 환생 유물은 제외됩니다.`} disabled={busy || !items.length} onConfirm={() => send({ type: 'dismantleRarity', id: String(i) })}/>; })}</div>
     </details></>;
@@ -204,7 +205,7 @@ function HeirPanel({ s, send, busy, item }: PanelProps & { item: Item }) {
     return <div className="relic-imprint">
         <b>태초 계승 · 게이지 {gauge}/{PRIMAL_INHERIT.gauge}</b>
         <ConfirmButton label={`태초 계승 · 게이지 ${PRIMAL_INHERIT.gauge}`} title={`${item.name}을(를) 계승할까요?`} description={`계승 게이지 ${PRIMAL_INHERIT.gauge}를 씁니다. ${what}${replace}`} disabled={busy || gauge < PRIMAL_INHERIT.gauge} onConfirm={() => send({ type: 'inheritPrimal', id: item.id })}/>
-        <p className="footnote">태초 장비를 분해할 때마다 게이지가 1 찹니다(환생해도 남고 승천하면 초기화). 부위마다 계승 태초 하나만 둘 수 있습니다.</p>
+        <p className="footnote">태초 장비가 손을 떠날 때마다(분해 · 판매 · 강화 파괴 · 도감 등록 · 이식 소비) 게이지가 1 찹니다(환생해도 남고 승천하면 초기화). 부위마다 계승 태초 하나만 둘 수 있습니다.</p>
     </div>;
 }
 

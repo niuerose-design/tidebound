@@ -599,6 +599,51 @@ test('v3.119 display bugs: 마력 option mana regen scales with power (and old t
     const t = newState(0); t.equipment.coat = { id: 'c', slot: 'coat', rarity: 5, power: 333, level: 80, name: 'c', affixes: [{ id: 'transcend', name: '초월', stat: 'allStats', value: .0173 }] };
     const a = St.stats(t); for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist']) assert.ok(Number.isInteger(a[k]), `${k} ${a[k]}`);
 });
+test('v3.125 primal gauge fills on every exit path, rare foes are never golden, heir refine ceiling is 150%', async () => {
+    const G = await L.load('data/gear'), Eq = await L.load('systems/equipment');
+    const gear = (id, rarity, slot = 'rod', level = 100) => { const power = Math.round((level + 2) * [1, 1.5, 2.2, 3.3, 3.9, 4.5, 5.2][rarity]); return { id, name: id, slot, style: 'physical', rarity, power, level, enhance: 0, affixes: G.rollAffixes(rarity, power, undefined, () => .3, [], slot, level) }; };
+    const s = newState(0); s.level = 100; s.permanent.inventory = 8; s.gold = 1e12; s.itemBook ??= {};
+    s.inventory = [gear('p1', 6), gear('p2', 6), gear('p3', 6), gear('p4', 6, 'coat'), gear('p5', 6), gear('a1', 5)];
+    // 단일 판매 · 등급별 일괄 판매.
+    act(s, { type: 'sell', id: 'p1' }, 0); assert.equal(s.primalGauge, 1, 'sell fills the gauge');
+    for (const id of ['p3', 'p4', 'p5']) s.inventory.find(x => x.id === id).locked = true;
+    act(s, { type: 'sellRarity', id: '6' }, 0); assert.equal(s.primalGauge, 2, 'bulk sell fills the gauge'); assert.ok(!s.inventory.some(x => x.id === 'p2'));
+    for (const id of ['p3', 'p4', 'p5']) s.inventory.find(x => x.id === id).locked = false;
+    // 강화 파괴: 15성 성공률 .3 · 파괴 .021이라 굴림 .31은 파괴입니다.
+    const p3 = s.inventory.find(x => x.id === 'p3'); p3.enhance = 15; p3.starFails = 0;
+    act(s, { type: 'enhance', id: 'p3', value: '' }, 0, () => .31); assert.ok(!s.inventory.some(x => x.id === 'p3'), 'destroyed'); assert.equal(s.primalGauge, 3, 'destroy fills the gauge');
+    // 물건도감 등록 소모.
+    act(s, { type: 'registerItem', id: 'p4' }, 0); assert.equal(s.primalGauge, 4, 'codex registration fills the gauge');
+    // 고대는 세지 않습니다.
+    act(s, { type: 'sell', id: 'a1' }, 0); assert.equal(s.primalGauge, 4, 'ancients do not count');
+    // 가방 가득 자동 판매로 사라진 태초도 셉니다.
+    s.permanent.inventory = 0; while (s.inventory.length < Ec.inventoryCap(s)) s.inventory.push(gear(`f${s.inventory.length}`, 0));
+    const before = s.primalGauge; s.primalDropPity = Ec.PRIMAL_DROP_PITY - 1; E.drop(s, 100, () => .5, true); assert.equal(s.primalGauge, before + 1, 'bag-full auto sale of a primal fills the gauge');
+    // 희귀 몬스터는 황금 개체가 되지 않습니다(보통 몬스터는 같은 난수로 황금).
+    const r = newState(0); r.level = 100; r.kills = 10000; r.running = true;
+    const { stats } = await L.load('systems/stats'); assert.ok(stats(r).goldenFind > 0);
+    E.spawn(r, () => .5); r.enemy.hp = 0; E.reward(r, () => 0); assert.ok(Object.keys(r.goldenBook || {}).length === 1, 'a normal foe can be golden');
+    for (const kind of ['mimic', 'nuri']) { r.enemy = null; E.spawn(r, () => .5, kind); const id = r.enemy.id; r.enemy.hp = 0; E.reward(r, () => 0); assert.ok(!r.goldenBook?.[id], `${kind} is never golden`); }
+    // 칠흑 위력 계수 6.37: Lv.100 650. 옛 530 장신구는 불러올 때 위력과 고정 수치 옵션이 함께 맞춰지고, 레벨 올리기도 같은 식을 씁니다.
+    const O = await L.load('data/onyx'), M = await L.load('systems/migrations');
+    assert.equal(O.onyxPower(100), 650); assert.equal(O.onyxAccessory(O.ONYX_BOSSES[0], 'ox', 100).power, 650);
+    const old = O.onyxAccessory(O.ONYX_BOSSES[6], 'old', 100); old.power = 530; old.affixes = G.rollAffixes(6, 530, old.origin, () => .3, old.affixes, 'charm', 100).map(x => x.rule ? x : G.refineOption(x, 530, 6, () => 1, 100)); old.onyxTuned = true;
+    const flatOld = old.affixes.find(x => !x.rule && G.affixDef(x.id)?.kind === 'flat'), flatBefore = flatOld?.value;
+    const o = newState(0); o.level = 100; o.inventory = [old]; M.migrateState(o, 0);
+    assert.equal(old.power, 650, 'old accessories are raised on load'); if (flatOld) assert.equal(old.affixes.find(x => x.id === flatOld.id).value, Math.round(flatBefore * 650 / 530), 'flat options follow the power');
+    M.migrateState(o, 0); assert.equal(old.power, 650, 'stable on the next load');
+    Eq.applyLevelUp(old, 110, o); assert.equal(old.power, O.onyxPower(110), 'level up uses the onyx formula');
+    // 계승 · 칠흑의 재련 상한 150%: 보통 장비는 1(100%)에서 멈춥니다.
+    const h = gear('h1', 6); h.heir = 'primal'; h.locked = true; const n = gear('n1', 6);
+    const idx = h.affixes.findIndex(x => G.affixQuality(x, h.power, 6, 100) !== null); assert.ok(idx >= 0);
+    assert.equal(Eq.refineTopOf(h), G.HEIR_ROLL_TOP); assert.equal(Eq.refineTopOf(n), 1); assert.equal(Eq.refineTopOf({ onyx: 'x' }), G.HEIR_ROLL_TOP);
+    const top = G.refineOption(h.affixes[idx], h.power, 6, () => 1, 100, G.HEIR_ROLL_TOP), plain = G.refineOption(n.affixes[idx], n.power, 6, () => 1, 100);
+    assert.ok(G.affixQuality(top, h.power, 6, 100, G.HEIR_ROLL_TOP) > 1.45, 'heir refine reaches 150%'); assert.ok(top.value > plain.value, 'above the normal ceiling');
+    assert.ok(Math.abs(G.affixQuality(plain, n.power, 6, 100) - 1) < 1e-6, 'normal gear stays at 100%');
+    const t = newState(0); t.level = 100; t.permanent.inventory = 8; t.essence = 1e9; t.inventory = [h, n];
+    act(t, { type: 'refine', id: 'h1', value: String(idx) }, 0, () => 1); assert.ok(G.affixQuality(t.inventory[0].affixes[idx], h.power, 6, 100, G.HEIR_ROLL_TOP) > 1.45, 'refine action uses the heir ceiling');
+    act(t, { type: 'refine', id: 'n1', value: String(idx) }, 0, () => 1); assert.ok(Math.abs(G.affixQuality(t.inventory[1].affixes[idx], n.power, 6, 100, G.HEIR_ROLL_TOP) - 1) < 1e-6, 'normal refine stays at the normal ceiling');
+});
 
 test('v3.122 onyx accessory level: the higher of its habitat level and my level (boss drop and milestone grant)', async () => {
     const G = await L.load('systems/onyx-grant'), O = await L.load('data/onyx');

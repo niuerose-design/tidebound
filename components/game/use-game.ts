@@ -21,7 +21,7 @@ export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: numbe
 export type VaultInfo = import('@/game/data/account').VaultInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean; masked?: string[] };
 /**
- * 동기화 주기(ms). v3.124 3초 → 5초(docs/performance.md 6단계): 요청 하나의 고정 비용(세이브 풀기 · 저장 · 압축 · 응답, 약 4~5ms)이
+ * 동기화 주기(ms). v3.127 3초 → 5초(docs/performance.md 6단계): 요청 하나의 고정 비용(세이브 풀기 · 저장 · 압축 · 응답, 약 4~5ms)이
  * 턴 계산(2초당 한 턴, 턴당 3~5ms)과 맞먹어, 전투 화면에서도 요청 수를 40% 줄입니다. 턴 재생은 REPLAY_LAG_MS만큼 늦게 보일 뿐 결과는 같습니다.
  */
 const SYNC_MS = 5000;
