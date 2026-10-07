@@ -279,3 +279,9 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     assert.deepEqual(finish({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(2) }), [3, 1]);
     assert.deepEqual(finish({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(STATUS_TUNING.burnMaxStacks) }), [punisher.dotFinisher.maxHits, 2]);
 });
+
+test('v3.133 Night Walker: Dominion attack +300 (crit and lifesteal kept)', async () => {
+    const { SECRET_SKILLS } = await load('game/secret/skills.js');
+    const sk = SECRET_SKILLS.find(s => s.id === 'undeathThrone');
+    assert.deepEqual([sk.bonus.attack, sk.bonus.crit, sk.bonus.lifesteal], [300, .08, .04]);
+});
