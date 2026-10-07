@@ -583,8 +583,10 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         ev.statuses.push({ id: 'bleed', turns });
     }
     // v27.17 중독: 출혈과 별개의 중첩형 지속 피해. 걸릴 때마다 한 중첩, 지속 갱신, 중첩당 피해는 더 강한 쪽.
-    if (landed && chosen && effect === 'poison' && isImmune(b, 'poison')) { notes.push('중독 면역'); ev.immune = 'poison'; }
-    else if (landed && chosen && effect === 'poison') {
+    // v3.129 alsoEffect: 같은 공격으로 두 번째 중첩형 지속 피해(중독·화상)를 함께 겁니다.
+    const also = resisted ? undefined : chosen?.alsoEffect;
+    if (landed && chosen && (effect === 'poison' || also === 'poison') && isImmune(b, 'poison')) { notes.push('중독 면역'); ev.immune = 'poison'; }
+    else if (landed && chosen && (effect === 'poison' || also === 'poison')) {
         const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.poisonTurns) + sa.dotTurnsBonus);
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0) + (sa.poisonBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
         const hpRatio = SKILL_FORMULA.poisonHpRatio * swarmDotShare(b.swarm);
@@ -597,8 +599,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         ev.statuses.push({ id: 'poison', turns });
     }
     // v27.48 화상: 걸릴 때마다 한 중첩(최대 burnMaxStacks), 지속 갱신, 중첩당 피해는 더 강한 쪽.
-    if (landed && chosen && effect === 'burn' && isImmune(b, 'burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
-    else if (landed && chosen && effect === 'burn') {
+    if (landed && chosen && (effect === 'burn' || also === 'burn') && isImmune(b, 'burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
+    else if (landed && chosen && (effect === 'burn' || also === 'burn')) {
         const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus);
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
         const hpRatio = SKILL_FORMULA.burnHpRatio * swarmDotShare(b.swarm);
@@ -660,14 +662,20 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     }
     // Follow-up hits are part of the same action. They use the same hit chance,
     // cannot recursively trigger another follow-up, and are capped in balance.ts.
-    const followUps = statusOnly ? 0 : Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
+    // v3.129 도트 퍼니셔: 적의 중독·화상 중첩(각 최대 대비 비율의 평균 fill)에 따라 추가타. 둘 다 최대면 maxHits회,
+    // 하나라도 걸려 있으면 maxHits × (1 + fill) / 2회(절반부터, 최대보다 1회 적게), 없으면 0회. 최대 추가타 상한(maxExtraAttacks)을 따로 씁니다.
+    const finisher = landed && !statusOnly ? chosen?.dotFinisher : undefined;
+    const poisonFill = Math.min(1, (b.effects.poison?.stacks || 0) / (STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus)), burnFill = Math.min(1, (b.effects.burn?.stacks || 0) / STATUS_TUNING.burnMaxStacks), fill = (poisonFill + burnFill) / 2;
+    const fullFinish = !!finisher && poisonFill >= 1 && burnFill >= 1, finisherHits = !finisher || fill <= 0 ? 0 : fullFinish ? finisher.maxHits : Math.min(finisher.maxHits - 1, Math.max(1, Math.round(finisher.maxHits * (1 + fill) / 2)));
+    if (finisher) notes.push(finisherHits ? `퍼니시 ${finisherHits}회` : '퍼니시 없음');
+    const followUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
     for (let i = 0; i < followUps && b.hp > 0 && a.hp > 0 && !stood; i++) {
         if (rng() >= hit) {
             ev.hits.push({ kind: 'follow', value: 0, critical: false, miss: true });
             continue;
         }
         const followRoll = rng(), followCrit = followRoll < sa.crit, followSuper = followCrit && followRoll < (sa.superCrit || 0);
-        const followMultiplier = (chosen?.multiplier || 1) * ((chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier) + sa.followUpBonus);
+        const followMultiplier = (chosen?.multiplier || 1) * ((finisher?.hitMultiplier ?? chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier) + sa.followUpBonus);
         const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage * (followSuper ? SKILL_FORMULA.superCritBonus : 1) : 1)));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
@@ -679,6 +687,16 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
             const recovery = Math.min(sa.hp - a.hp, followDrain);
             a.hp += recovery;
             ev.drained += recovery;
+        }
+    }
+    // v3.129 도트 퍼니셔 기절: 중독·화상이 모두 최대 중첩이면 fullStun턴, 하나라도 걸려 있으면 partStun턴(+기절 보너스).
+    if (finisher && finisherHits && b.hp > 0 && !stood) {
+        if (isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
+        else {
+            const turns = (fullFinish ? finisher.fullStun : finisher.partStun) + sa.stunBonus;
+            b.stun = Math.max(b.stun, turns);
+            notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
+            ev.statuses.push({ id: 'stun', turns });
         }
     }
     // v25 반동: 준 피해에 비례해 자신도 받습니다. 반동으로는 쓰러지지 않습니다.
