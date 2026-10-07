@@ -27,6 +27,15 @@ for (const star of [0, 22]) {
     for (let r = 1; r < RARITIES.length; r++) { tier[`${r}:${star}`] = share(r, star); row.push(`${RARITIES[r].name} ×${tier[`${r}:${star}`].toFixed(2)}`); }
     console.log(`장비 몫(장비 없음 대비, ${star}성 4부위): ${row.join(' · ')}`);
 }
+// 1-1. v3.126 부위 몫: 태초 22성 4부위에서 한 부위를 빼면 전투력이 얼마나 줄어드는지. 방어구가 혼자 77%를 차지하던 것을 체력 · 방어 분배로 35~48%대에 맞췄습니다(systems/equipment SLOT_GEAR).
+const slotDrop = {};
+for (let k = 0; k < SAMPLES; k++) {
+    const s = body(), items = Object.fromEntries(SLOTS.map(sl => [sl, piece(sl, 6, 22)]));
+    for (const sl of SLOTS) s.equipment[sl] = items[sl];
+    const full = power(stats(s));
+    for (const sl of SLOTS) { s.equipment[sl] = null; slotDrop[sl] = (slotDrop[sl] || 0) + (1 - power(stats(s)) / full) / SAMPLES; s.equipment[sl] = items[sl]; }
+}
+console.log(`부위 몫(태초 22성 4부위에서 한 부위를 빼면 전투력 감소): ${SLOTS.map(sl => `${sl} ${(slotDrop[sl] * 100).toFixed(0)}%`).join(' · ')}`);
 // 2. 계승 장비(22성 4부위)와 칠흑. 유물은 전설 등급 옵션(굴린 그대로), 원시 고대·계승 태초는 각 등급 옵션의 최고 굴림입니다.
 const heir = {};
 for (const [kind, rarity, name] of [['relic', 3, '유물'], ['ancient', 5, '원시 고대'], ['primal', 6, '계승 태초']]) {
@@ -52,6 +61,7 @@ assert.ok(heir.relic[2] > myth && heir.relic[2] < t22(5), `유물(환생 200) ×
 assert.ok(heir.ancient[2] / myth >= 1.55 && heir.ancient[2] / myth <= 1.9, `원시 고대(환생 200) 신화의 ${(heir.ancient[2] / myth).toFixed(2)}배`);
 assert.ok(heir.primal[2] / myth >= 2.25 && heir.primal[2] / myth <= 2.75, `계승 태초(환생 200) 신화의 ${(heir.primal[2] / myth).toFixed(2)}배`);
 for (const k of ['relic', 'ancient', 'primal']) assert.ok(heir[k][0] < heir[k][1] && heir[k][1] < heir[k][2], `${k} 환생 성장`);
+for (const sl of SLOTS) assert.ok(slotDrop[sl] >= .2 && slotDrop[sl] <= .6, `부위 ${sl}을 빼면 전투력 ${(slotDrop[sl] * 100).toFixed(0)}% 감소: 20~60% 밖(한 부위 쏠림)`);
 console.log(`신화 대비(환생 200): 유물 ×${(heir.relic[2] / myth).toFixed(2)} · 원시 고대 ×${(heir.ancient[2] / myth).toFixed(2)} · 계승 태초 ×${(heir.primal[2] / myth).toFixed(2)}`);
 // v3.67 난이도·던전(나이트메어 200 · 무릉 깊은 층)에서도 태초는 칠흑 범위: 태초 등급의 난이도 가중은 ODDS.drop.primalTierCap에서 멈춥니다.
 const byTier = [0, 50, 100, 200, 300].map(t => [t, 4 / (perHour * rarityShareFrom(t, 6)) / 24]);

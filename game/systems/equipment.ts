@@ -19,6 +19,17 @@ const charmCrit = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CHARM_
  */
 export const GEAR_RARITY_SCALE = [1, 1, 1, .85, .74, .62, .56];
 const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
+/**
+ * v3.126 부위별 고정 수치 배수(위력 × 별 × 등급 감쇠에 곱함). 합계는 전과 같습니다(체력 8 · 마나 1.3 · 방어 1 · 마방 .5).
+ * 전에는 방어구가 체력 6 · 방어 1 · 마방 .5를 혼자 들어 태초 22성 4부위 전투력의 77%를 차지했습니다(방어구만 끼면 ×5.6, 무기만 ×1.6).
+ * 체력 · 방어 · 마방을 방어구 · 망토 · 장신구에 나눠 부위를 빼면 무기 35 · 방어구 48 · 장신구 32 · 망토 35%가 줄도록 맞췄습니다(docs/gear-endgame.md v3.126, scripts/check-gear-ladder.mjs가 검사).
+ * 마나는 그대로 방어구 1 · 망토 .3(v3.90, 최대 마나가 체력의 약 0.2배). 무기 공격(물리 1.4 · 마법 .4 등)은 아래 그대로입니다.
+ */
+export const SLOT_GEAR: Record<string, Partial<Record<'hp' | 'mana' | 'defense' | 'resist', number>>> = {
+    coat: { hp: 3.5, mana: 1, defense: .6, resist: .3 },
+    cape: { hp: 2.5, mana: .3 },
+    charm: { hp: 2, defense: .4, resist: .2 },
+};
 export function itemStats(item: Item): Partial<Stats> {
     const damp = GEAR_RARITY_SCALE[item.rarity] ?? 1;
     const p = item.power * starMultiplier(item.enhance || 0) * damp;
@@ -27,16 +38,11 @@ export function itemStats(item: Item): Partial<Stats> {
         result.attack = p * (item.style === 'magic' ? .4 : item.style === 'physical' ? 1.4 : 1);
         result.magic = p * (item.style === 'magic' ? 1.4 : item.style === 'physical' ? .4 : .8);
     }
-    if (item.slot === 'coat') {
-        result.hp = p * 6;
-        // v3.90 체력을 주는 부위(방어구 · 망토)는 최대 마나도 줍니다(방어구 위력 ×1 · 망토 ×0.3, 최대 마나가 체력의 약 0.2배가 되게).
-        result.mana = p;
-        result.defense = p;
-        result.resist = p * .5;
-    }
+    // v3.126 체력 · 마나 · 방어 · 마방은 부위 표(SLOT_GEAR)대로. v3.90 체력을 주는 부위(방어구 · 망토)는 최대 마나도 줍니다.
+    for (const [stat, mult] of Object.entries(SLOT_GEAR[item.slot] || {})) if (mult) result[stat as 'hp' | 'mana' | 'defense' | 'resist'] = p * mult;
     // v27.18 장신구 치명타에 더는 15% 상한이 없습니다. 전체 치명타가 60%를 넘으면 그 몫은 극 치명타 확률이 됩니다.
     if (item.slot === 'charm') result.crit = charmCrit(item);
-    if (item.slot === 'cape') { result.evasion = capeEvasion(item); result.hp = p * 2; result.mana = p * .3; }
+    if (item.slot === 'cape') result.evasion = capeEvasion(item);
     const scaled = (stat: string, n: number) => FLAT_GEAR_STATS.has(stat) && n > 0 ? n * damp : n;
     if (item.affix)
         result[item.affix.stat] = (result[item.affix.stat] || 0) + scaled(item.affix.stat, item.affix.value);
@@ -179,6 +185,6 @@ export const refineCost = (item: Item) => ({ gold: 0, essence: refineEssenceAt(i
 export const canResetGear = (item: Pick<Item, 'heir' | 'onyx'>) => !!(item.heir || item.onyx);
 /** v3.125 재련 굴림 폭 배율: 원시 고대 · 계승 태초 · 칠흑은 HEIR_ROLL_TOP(수치 150%까지), 그 밖은 1(100%). 화면의 ‘수치 N%’도 같은 값을 씁니다. */
 export const refineTopOf = (item: Pick<Item, 'heir' | 'onyx'>) => canResetGear(item) ? HEIR_ROLL_TOP : 1;
-export const itemDescription = (item: Item) => item.description || (item.slot === 'rod' ? (item.style === 'magic' ? '마법 특화' : item.style === 'physical' ? '물리 특화' : '물리·마법 겸용') + ' 낚싯대.' : item.slot === 'coat' ? '최대 체력·최대 마나·물리 방어·마법 방어를 높이는 방어구.' : item.slot === 'cape' ? '회피와 체력·마나를 조금 높이는 망토. 상태이상 저항 옵션은 망토에만 붙습니다.' : '치명타 확률을 높이는 장신구.');
+export const itemDescription = (item: Item) => item.description || (item.slot === 'rod' ? (item.style === 'magic' ? '마법 특화' : item.style === 'physical' ? '물리 특화' : '물리·마법 겸용') + ' 낚싯대.' : item.slot === 'coat' ? '최대 체력·최대 마나·물리 방어·마법 방어를 높이는 방어구.' : item.slot === 'cape' ? '회피와 체력·마나를 높이는 망토. 상태이상 저항 옵션은 망토에만 붙습니다.' : '치명타 확률과 체력·물리 방어·마법 방어를 높이는 장신구.');
 export function rollAffix(rarity: number, rng: () => number) { const x = AFFIXES[Math.floor(rng() * AFFIXES.length)]; return { stat: x.stat, name: x.name, value: x.value * Math.max(1, rarity) }; }
 export function bulkItems(s: State, rarity: number) { return s.inventory.filter(i => i.rarity === rarity && !i.locked && !keepsAcrossLives(i)); }
