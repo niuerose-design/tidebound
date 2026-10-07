@@ -671,3 +671,22 @@ test('v3.129 slot redistribution: coat / cape / charm share hp and both defenses
     assert.ok(r1 > r0 && r2 > r0, 'vit and int raise resist'); assert.ok(Math.abs((r1 - r0) / (r2 - r0) - .4 / .25) < .05, 'in the .4 : .25 ratio');
     assert.equal(coat.hp + cape.hp + charm.hp, 800, 'four-slot hp total is unchanged (6 + 2 before)');
 });
+test('v3.131 heir refine above 100% is a thin tail (15%, steeper upward) and refine essence grows ×1.1 with a rebirth factor', async () => {
+    const G = await L.load('data/gear'), Eq = await L.load('systems/equipment');
+    // 0~100%는 균등(85%), 100% 위는 15%만, 위로 갈수록 급히 드뭅니다.
+    assert.equal(G.heirRollQuality(.5, 1), .5, 'normal gear: identity'); assert.ok(Math.abs(G.heirRollQuality(.85 * .5) - .5) < 1e-9, 'body maps 0..85% → 0..100%'); assert.equal(G.heirRollQuality(.85), 1); assert.ok(Math.abs(G.heirRollQuality(1) - 1.5) < 1e-9);
+    let x = 7; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647); const N = 40000; const q = Array.from({ length: N }, () => G.heirRollQuality(rng()));
+    const above = t => q.filter(v => v > t).length / N;
+    assert.ok(Math.abs(above(1) - .15) < .01, `above 100%: ${above(1)}`); assert.ok(Math.abs(above(1.1) - G.heirRollChanceAbove(1.1)) < .006, `above 110%: ${above(1.1)} vs ${G.heirRollChanceAbove(1.1)}`);
+    assert.ok(above(1.2) < .03 && above(1.2) > .01, `above 120%: ${above(1.2)}`); assert.ok(above(1.3) < .008, `above 130%: ${above(1.3)}`); assert.ok(above(1.4) < .001, `above 140%: ${above(1.4)}`);
+    assert.ok(Math.abs(G.heirRollChanceAbove(1.1) - .15 * .8 ** 4) < 1e-9); assert.equal(G.heirRollChanceAbove(1.5), 0); assert.equal(G.heirRollChanceAbove(1), 1);
+    // rollOption은 같은 분포를 씁니다: 계승 상한으로 난수 .85 → 정확히 100%, .99 → 100% 위.
+    const def = G.affixDef('might') || G.AFFIX_POOL.find(a => a.kind === 'flat' && !a.rule && !a.fixed);
+    const at = u => G.affixQuality(G.rollOption(def, 500, 6, () => u, 100, G.HEIR_ROLL_TOP), 500, 6, 100, G.HEIR_ROLL_TOP);
+    assert.ok(Math.abs(at(.85) - 1) < .01 && at(.99) > 1 && at(.99) < 1.3 && at(.3) < .4, `${at(.85)} ${at(.99)} ${at(.3)}`);
+    // 재련 비용: ×1.1 복리, 환생 배율 10^(환생 ÷ 120).
+    assert.equal(G.REFINE_GROWTH, 1.1); assert.equal(Eq.refineRebirthFactor(0), 1); assert.ok(Math.abs(Eq.refineRebirthFactor(120) - 10) < 1e-9);
+    const it = { id: 'p', slot: 'rod', rarity: 6, power: 500, level: 100, refines: 0 };
+    assert.equal(Eq.refineCost(it).essence, 7); assert.equal(Eq.refineCost(it, { rebirths: 120 }).essence, 70); assert.equal(Eq.refineCost({ ...it, refines: 10 }).essence, Math.ceil(7 * 1.1 ** 10));
+    assert.ok(Eq.refineCost({ ...it, refines: 50 }, { rebirths: 100 }).essence > 4000 && Eq.refineCost({ ...it, refines: 50 }, { rebirths: 100 }).essence < 7000, '50th refine at R100 ≈ one hour of tier-100 essence');
+});
