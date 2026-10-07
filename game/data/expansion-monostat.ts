@@ -6,7 +6,7 @@
 import type { Job } from './classes';
 import type { Skill, Attribute } from '../types';
 /** 외길 액티브: 배분 능력치 × 비율을 기준값에 더합니다. 근력·지능은 공격력이 이미 비례하므로 비율이 낮고, 기민·체질·정신·행운은 그 능력치만으로 사냥이 되도록 높습니다. */
-const attr = (a: Attribute, ratio: number) => ({ scaling: 'attr' as const, scalingAttribute: a, scalingRatio: ratio });
+const attr = (a: Attribute, ratio: number, attack?: number) => ({ scaling: 'attr' as const, scalingAttribute: a, scalingRatio: ratio, ...(attack ? { scalingAttack: attack } : {}) });
 
 type NewJob = Omit<Job, 'masteryTarget' | 'masteryBoost'> & Partial<Pick<Job, 'masteryTarget' | 'masteryBoost'>>;
 const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0 };
@@ -41,7 +41,7 @@ export const MONOSTAT_JOBS: NewJob[] = [
     // ── 행운 외길 (보조) ──
     { id: 'luckyAngler', fullKit: true, name: '요행 낚시꾼', title: '운도 실력이다', desc: '행운 하나로 전직하는 외길 1차 직업입니다. 주사위를 굴리는 럭키 세븐과 치명타 패시브로 운만 키웁니다.', ...neutral, bonus: { attack: 2, magic: 2 }, crit: .03, ...T1, requires: { luk: R1 }, role: '외길·행운', tree: 'support' },
     { id: 'fortunate', fullKit: true, name: '행운아', title: '언제나 한 끗 차이로 이긴다', desc: '행운 비례 어벤져와 치명타·치명 피해 패시브를 가진 행운 외길 2차 직업입니다. 주사위가 늘어납니다.', ...neutral, bonus: { attack: 16, magic: 10 }, crit: .08, ...T2, parent: 'luckyAngler', requires: { luk: R2 }, requiresSkillMastery: { luckyBreak: 2 }, role: '외길·행운·치명', tree: 'support' },
-    { id: 'fortuneChild', name: '운명의 총아', title: '운명이 편을 든다', desc: '행운 외길의 3차 직업입니다. 트리플 스로우는 행운에 비례해 때리고, 행운이 많을수록 주사위를 더 굴립니다. 패시브는 행운이 오를수록 치명타와 치명 피해를 더합니다.', ...neutral, bonus: { attack: 40, magic: 20 }, crit: .12, ...T3, parent: 'fortunate', requires: { luk: R3 }, requiresSkillMastery: { heavenlyStrike: 3 }, role: '외길·행운·치명', tree: 'support' },
+    { id: 'fortuneChild', name: '운명의 총아', title: '운명이 편을 든다', desc: '행운 외길의 3차 직업입니다. 트리플 스로우는 행운과 물리 공격에 비례해 때리고, 행운이 많을수록 주사위를 더 굴립니다. 패시브는 행운이 오를수록 치명타와 치명 피해를 더합니다.', ...neutral, bonus: { attack: 40, magic: 20 }, crit: .12, ...T3, parent: 'fortunate', requires: { luk: R3 }, requiresSkillMastery: { heavenlyStrike: 3 }, role: '외길·행운·치명', tree: 'support' },
     { id: 'fortuneAvatar', name: '천운의 화신', title: '주사위가 세계를 정한다', desc: '행운 외길의 끝, 환생 후 5차 직업입니다. 3차에서 바로 이어집니다. 쿼드러플 스로우는 행운 25마다 주사위를 하나 더 굴려(최대 10개) 가장 높은 눈으로 때립니다. 패시브는 행운이 오를수록 치명타와 체력을 더합니다.', ...neutral, attack: 1.2, hp: 1.15, crit: .2, ...T5, parent: 'fortuneChild', requires: { luk: R5 }, requiresSkillMastery: { fateReversal: 3 }, role: '외길·행운 최상위', tree: 'support' },
 ];
 
@@ -100,8 +100,8 @@ export const MONOSTAT_SKILLS: Skill[] = [
     { ...P, id: 'luckyStreak', name: '연승 기운', desc: '행운 10마다 치명타가 오릅니다.', level: 10, job: 'luckyAngler', cost: 1, bonus: { crit: .01, hp: 60 }, perCount: [{ source: 'luk', per: 10, bonus: { crit: .004 }, cap: 40 }] },
     { ...A, ...physical, id: 'heavenlyStrike', name: '천운의 일격', desc: '', level: 20, job: 'fortunate', chance: .5, cooldown: 4, multiplier: 1.5, cost: 3, ...attr('luk', 4), dice: { attribute: 'luk', per: 35, max: 5, low: .05, high: 4.5 } },
     { ...P, id: 'blessedHand', name: '축복받은 손', desc: '행운 10마다 치명타와 치명 피해가 오릅니다.', level: 20, job: 'fortunate', cost: 2, bonus: { crit: .01, hp: 120 }, perCount: [{ source: 'luk', per: 10, bonus: { crit: .004, critDamage: .01 }, cap: 40 }] },
-    { ...A, ...physical, id: 'fateReversal', name: '운명 역전', desc: '', level: 40, job: 'fortuneChild', chance: .5, cooldown: 4, multiplier: 2, cost: 4, ...attr('luk', 3), dice: { attribute: 'luk', per: 30, max: 7, low: .02, high: 6 } },
-    { ...A, ...physical, id: 'heavenlyDice', name: '천운의 주사위', desc: '', level: 70, job: 'fortuneAvatar', chance: .5, cooldown: 4, multiplier: 2.6, cost: 6, ...attr('luk', 3), dice: { attribute: 'luk', per: 25, max: 10, low: .01, high: 8 }, masteryMilestones: [4000, 18000, 60000, 150000] },
+    { ...A, ...physical, id: 'fateReversal', name: '운명 역전', desc: '', level: 40, job: 'fortuneChild', chance: .5, cooldown: 4, multiplier: 2, cost: 4, ...attr('luk', 3, .5), dice: { attribute: 'luk', per: 30, max: 7, low: .02, high: 6 } },
+    { ...A, ...physical, id: 'heavenlyDice', name: '천운의 주사위', desc: '', level: 70, job: 'fortuneAvatar', chance: .5, cooldown: 4, multiplier: 2.6, cost: 6, ...attr('luk', 3, .5), dice: { attribute: 'luk', per: 25, max: 10, low: .01, high: 8 }, masteryMilestones: [4000, 18000, 60000, 150000] },
     { ...P, id: 'avatarsLuck', name: '천운', desc: '행운 10마다 치명타·치명 피해·최대 체력이 오릅니다.', level: 70, job: 'fortuneAvatar', cost: 3, bonus: { crit: .03, hp: 200 }, perCount: [{ source: 'luk', per: 10, bonus: { crit: .006, critDamage: .02, hp: 10 }, cap: 40 }], masteryMilestones: [4000, 18000, 60000, 150000] },
     // v26.6 손가락 자르기: 주사위의 최저 배율을 올리고 최고 배율을 낮추는 선택형 패시브. 장착한 단계를 합산(최대 3단계)합니다.
     { ...P, id: 'fingerCutI', name: '손가락 자르기 I', desc: '주사위의 최저 배율을 올리고 최고 배율을 낮춥니다(1단계). 다른 단계와 합산, 최대 3단계.', level: 10, job: 'luckyAngler', cost: 1, bonus: { diceTrim: 1 } },

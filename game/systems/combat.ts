@@ -488,8 +488,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         base += sa.resist * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1);
     // v25.22 행운 비례 피해(도박 기술): 물리 공격 × (치명 피해 배율 − 1) × 비율. 행운을 몰아주면 치명 피해 배율이 커져 주사위 기술이 세집니다.
     // v26.4 능력치 비례 피해(외길 계보): 기준값 = 배분 능력치 × 비율(공격력은 쓰지 않음). 그 능력치만 올려도 사냥이 됩니다.
+    // v3.97 scalingAttack: 행운 외길 3·5차 주사위 기술은 물리 공격 × 비율을 더합니다(장비 · 연구가 쌓여도 기술 피해가 따라 커짐).
     if (chosen?.scaling === 'attr' && chosen.scalingAttribute)
-        base += (sa[ATTR_KEY[chosen.scalingAttribute]] || 0) * (chosen.scalingRatio ?? 1);
+        base += (sa[ATTR_KEY[chosen.scalingAttribute]] || 0) * (chosen.scalingRatio ?? 1) + sa.attack * (chosen.scalingAttack ?? 0);
     if (chosen?.scaling === 'luck')
         base += sa.attack * Math.max(0, (sa.critDamage || 1) - 1) * (chosen.scalingRatio ?? 1) * SKILL_FORMULA.luckScalingScale;
     if (chosen?.scaling === 'hp')
