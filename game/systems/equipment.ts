@@ -20,9 +20,9 @@ const charmCrit = (item: Pick<Item, 'rarity' | 'enhance'>) => Math.round((CHARM_
 export const GEAR_RARITY_SCALE = [1, 1, 1, .85, .74, .62, .56];
 const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
 /**
- * v3.126 부위별 고정 수치 배수(위력 × 별 × 등급 감쇠에 곱함). 합계는 전과 같습니다(체력 8 · 마나 1.3 · 방어 1 · 마방 .5).
+ * v3.128 부위별 고정 수치 배수(위력 × 별 × 등급 감쇠에 곱함). 합계는 전과 같습니다(체력 8 · 마나 1.3 · 방어 1 · 마방 .5).
  * 전에는 방어구가 체력 6 · 방어 1 · 마방 .5를 혼자 들어 태초 22성 4부위 전투력의 77%를 차지했습니다(방어구만 끼면 ×5.6, 무기만 ×1.6).
- * 체력 · 방어 · 마방을 방어구 · 망토 · 장신구에 나눠 부위를 빼면 무기 35 · 방어구 48 · 장신구 32 · 망토 35%가 줄도록 맞췄습니다(docs/gear-endgame.md v3.126, scripts/check-gear-ladder.mjs가 검사).
+ * 체력 · 방어 · 마방을 방어구 · 망토 · 장신구에 나눠 부위를 빼면 무기 35 · 방어구 48 · 장신구 32 · 망토 35%가 줄도록 맞췄습니다(docs/gear-endgame.md v3.128, scripts/check-gear-ladder.mjs가 검사).
  * 마나는 그대로 방어구 1 · 망토 .3(v3.90, 최대 마나가 체력의 약 0.2배). 무기 공격(물리 1.4 · 마법 .4 등)은 아래 그대로입니다.
  */
 export const SLOT_GEAR: Record<string, Partial<Record<'hp' | 'mana' | 'defense' | 'resist', number>>> = {
@@ -38,7 +38,7 @@ export function itemStats(item: Item): Partial<Stats> {
         result.attack = p * (item.style === 'magic' ? .4 : item.style === 'physical' ? 1.4 : 1);
         result.magic = p * (item.style === 'magic' ? 1.4 : item.style === 'physical' ? .4 : .8);
     }
-    // v3.126 체력 · 마나 · 방어 · 마방은 부위 표(SLOT_GEAR)대로. v3.90 체력을 주는 부위(방어구 · 망토)는 최대 마나도 줍니다.
+    // v3.128 체력 · 마나 · 방어 · 마방은 부위 표(SLOT_GEAR)대로. v3.90 체력을 주는 부위(방어구 · 망토)는 최대 마나도 줍니다.
     for (const [stat, mult] of Object.entries(SLOT_GEAR[item.slot] || {})) if (mult) result[stat as 'hp' | 'mana' | 'defense' | 'resist'] = p * mult;
     // v27.18 장신구 치명타에 더는 15% 상한이 없습니다. 전체 치명타가 60%를 넘으면 그 몫은 극 치명타 확률이 됩니다.
     if (item.slot === 'charm') result.crit = charmCrit(item);

@@ -27,7 +27,7 @@ for (const star of [0, 22]) {
     for (let r = 1; r < RARITIES.length; r++) { tier[`${r}:${star}`] = share(r, star); row.push(`${RARITIES[r].name} ×${tier[`${r}:${star}`].toFixed(2)}`); }
     console.log(`장비 몫(장비 없음 대비, ${star}성 4부위): ${row.join(' · ')}`);
 }
-// 1-1. v3.126 부위 몫: 태초 22성 4부위에서 한 부위를 빼면 전투력이 얼마나 줄어드는지. 방어구가 혼자 77%를 차지하던 것을 체력 · 방어 분배로 35~48%대에 맞췄습니다(systems/equipment SLOT_GEAR).
+// 1-1. v3.128 부위 몫: 태초 22성 4부위에서 한 부위를 빼면 전투력이 얼마나 줄어드는지. 방어구가 혼자 77%를 차지하던 것을 체력 · 방어 분배로 35~48%대에 맞췄습니다(systems/equipment SLOT_GEAR).
 const slotDrop = {};
 for (let k = 0; k < SAMPLES; k++) {
     const s = body(), items = Object.fromEntries(SLOTS.map(sl => [sl, piece(sl, 6, 22)]));

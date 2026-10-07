@@ -62,7 +62,7 @@ export default function GameShell() {
     // v27.11 분신 탭은 계정 기준으로 엽니다. 새 슬롯(환생 0회)으로 바꾼 뒤에도 원래 캐릭터로 돌아갈 수 있어야 합니다.
     const slotsOpen = !!s && (!!s.rebirths || slotUnlocked(s.account, 2));
     useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [view]);
-    // v27.62 전투를 보여 주는 화면(사냥·던전 탐험)만 3초 동기화, 나머지는 9초.
+    // v27.62 전투를 보여 주는 화면(사냥·던전 탐험)만 SYNC_MS(5초) 동기화, 나머지는 15초(use-game.ts).
     const { setLive } = game;
     useEffect(() => { setLive(view === 'battle' || view === 'dungeons'); }, [view, setLive]);
     useEffect(() => {

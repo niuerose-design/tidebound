@@ -31,14 +31,14 @@ pnpm dev               # http://localhost:5173
 
 - `pnpm lint`: 린트(경고도 실패로 처리)
 - `pnpm test`: 게임 규칙 테스트 (`tests/*.test.mjs`, 순서는 `tests/run.mjs`)
+- `pnpm checks` (`-- --fast`로 긴 시뮬레이션 제외, 이름 일부로 골라 실행 가능): `scripts/check-*.mjs` 밸런스 · 성장 · 직업 점검을 한꺼번에
 - `node scripts/check-equivalence.mjs`: 같은 상태·난수의 결과 지문 (리팩터링 전후 비교)
-- `node scripts/check-balance.mjs`, `check-progression-pace.mjs`, `check-active-routing.mjs`, `check-combat-depth.mjs`: 밸런스 점검
-- `node scripts/check-all-rounder.mjs`, `check-expedition.mjs`, `check-recovery.mjs`: 팔방 항해사 · 던전 도달 · 회복률 검증
+- `node scripts/audit-rewards.mjs [분]`: 사냥터 · 던전별 시간당 보상 표(판단용, 통과/실패 없음)
 - 운영 도구 웹 페이지 `/admin`: Vercel 환경 변수 `TIDEBOUND_ADMIN_KEY`(12자 이상)를 넣으면 켜집니다. 모험가 이름·아이디로 찾아 이번 생 초기화를 미리 보기 → 적용. 같은 기능을 Actions 탭 '이번 생 초기화' 워크플로로도 실행할 수 있습니다(시크릿 `DATABASE_URL` 필요).
 - `DATABASE_URL=... node scripts/reset-life.mjs <아이디> [--slot 2] [--yes]` 또는 `... reset-life.mjs --name <모험가 이름> [--yes]`: 특정 유저의 이번 생만 처음 상태로(환생 횟수·세계석·연구·유물·도감 유지, `--yes` 없이는 미리 보기)
 - `DATABASE_URL=... node scripts/reset-data.mjs chat`: 채팅만 초기화. `... reset-data.mjs all --yes`: 계정 포함 전부 초기화(되돌릴 수 없음, `--yes` 없이는 미리 보기)
 - `node scripts/e2e-api.mjs <주소>`: 가입·로그인·게임·랭킹 API 흐름
-- GitHub Actions: 푸시마다 린트·테스트·빌드·타입 검사·API 흐름을 실행합니다. `screens-request` 브랜치에 푸시하면 화면 스크린샷을 `screenshots` 브랜치에 저장합니다.
+- GitHub Actions: `main` 푸시와 PR마다 린트·테스트·빌드(타입 검사 포함)·비밀 유출 검사·API 흐름을 실행합니다. `screens-request` 브랜치에 푸시하면 화면 스크린샷을 `screenshots` 브랜치에 저장합니다.
 
 ## 주요 폴더
 
@@ -52,6 +52,6 @@ pnpm dev               # http://localhost:5173
 | `game/systems/actions/` | 행동 처리기: 항해(voyage) · 빌드(build) · 도감(collection) · 장비(items) · 환생(lifecycle) |
 | `game/server/` | 사용자 식별, 서버 저장, 동시 요청 처리 |
 | `public/` | 배경 이미지와 아이콘 |
-| `tests/`, `scripts/` | 테스트, 점검·내보내기 도구. 공용 로더는 `scripts/lib/game-modules.mjs`, 시뮬레이션 도우미는 `scripts/lib/sim.mjs` |
+| `tests/`, `scripts/` | 테스트, 점검 · 운영 도구. 공용 로더는 `scripts/lib/game-modules.mjs`, 시뮬레이션 도우미는 `scripts/lib/sim.mjs`, 기준 몸은 `scripts/lib/reference-body.mjs` |
 
 몬스터·사냥터는 `game/data/world.ts`, 직업은 `game/data/classes.ts`, 스킬은 `game/data/skills.ts`, 기본 밸런스는 `game/data/balance.ts`에서 수정합니다. 패치 기록은 `game/data/update-log.ts`에 최근 큰 패치만 남깁니다.
