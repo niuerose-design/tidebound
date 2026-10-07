@@ -229,7 +229,9 @@ test('v3.121 Eunwol: Ghost Gate attack +500, Fist Barrage ×1.5, Shattering Fist
     assert.ok(sk('worldTentacle').multiplier > 2, 'awakening boost on top of base ×2');
 });
 
-test('v3.123 Kali: Queen of Hexes magic +400 (damage-over-time bonus kept)', () => {
-    const sk = SKILLS.find(s => s.id === 'queenOfCurses');
-    assert.deepEqual([sk.bonus.magic, sk.bonus.dotBonus], [400, .2]);
+test('v3.123 Kali: Chakram Split curses (bleed-type damage over time, Illium\'s ratio), Queen of Hexes magic +250', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.deepEqual([sk('calamityRite').effect, sk('calamityRite').dotName, sk('calamityRite').damageBonusCondition], ['bleed', '저주', 'controlled']);
+    assert.equal(sk('calamityRite').dotRatio, sk('transmute').dotRatio);
+    assert.deepEqual([sk('queenOfCurses').bonus.magic, sk('queenOfCurses').bonus.dotBonus], [250, .2]);
 });
