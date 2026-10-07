@@ -280,7 +280,7 @@ export const SKILL_CURVE_BAND = .5;
  * 숙련 요구치를 천만 단위로 둡니다: AP를 돌려주는(음수) 스킬 5,000만 · 그 밖 1,000만(같은 모양 비율). 직업 숙달 목표 계산에서는 뺍니다.
  */
 export const CONSTRAINT_MASTERY = { free: 10_000_000, refund: 50_000_000 };
-/** v3.80 개별 예외: 본 레거시(끝나지 않는 골격)는 v3.137부터 마지막 단계 1,000만(100만 · 400만 · 1,000만, 망인 숙달 목표와 같음). */
+/** v3.80 개별 예외: 본 레거시(죽지않은 영혼)는 v3.137부터 마지막 단계 1,000만(100만 · 400만 · 1,000만, 망인 숙달 목표와 같음). */
 export const CONSTRAINT_MASTERY_BY_SKILL: Record<string, number> = { boneLegacy: 10_000_000 };
 const CONSTRAINT_JOBS = new Set(['glassHarpooner', 'glyphMonk']);
 /** 최대 숙련(한계돌파 전)에서의 AP. progression.effectiveSkill과 같은 식입니다(순환 참조를 피해 여기서 계산). */

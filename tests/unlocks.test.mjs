@@ -83,7 +83,7 @@ test('v3.135 Night Walker lineage retired: only 망인 (undead) remains in the �
     for (const id of ['skeleton', 'bonecaster', 'soulHarvester', 'lichKing', 'deathEmperor']) assert.equal(job(id), undefined, id);
     for (const id of ['marrowGuard', 'ossuaryRite', 'harvestEcho', 'soulTax', 'soulTyranny', 'undyingThrone', 'soulReap', 'undeathThrone']) assert.equal(SKILLS.find(x => x.id === id), undefined, id);
     assert.equal(job('undead').name, '망인'); assert.equal(lineageOf(job('undead')), 'restraint');
-    assert.deepEqual(SKILLS.filter(x => x.job === 'undead').map(x => x.name), ['무덤의 챔질', '끝나지 않는 골격']);
+    assert.deepEqual(SKILLS.filter(x => x.job === 'undead').map(x => x.name), ['무덤파기', '죽지않은 영혼']);
     const s = newState(0); s.job = 'deathEmperor'; s.unlockedJobs.push('undead', 'skeleton', 'lichKing', 'deathEmperor'); s.jobMastery.lichKing = 900; s.jobMastery.undead = 300;
     s.learned.soulReap = 2; s.skillPractice.soulReap = 5000; s.skillInheritances.undeathThrone = true; s.learned.graveHook = 1; s.skills.push('soulReap', 'graveHook'); s.presets = { a: { name: 'a', skills: ['soulTyranny', 'hookShot'] } };
     migrateState(s); migrateState(s);
@@ -93,13 +93,24 @@ test('v3.135 Night Walker lineage retired: only 망인 (undead) remains in the �
     assert.ok(!s.skills.includes('soulReap')); assert.deepEqual(s.presets.a.skills, ['hookShot']);
 });
 
-test('v3.137 망인: job mastery ten million; 끝나지 않는 골격 AP 6 → 4 → 2 → −3 at 1M · 4M · 10M practice with no flat minus; only strong job penalties remain', async () => {
+test('v3.137 망인: job mastery ten million; 죽지않은 영혼 AP 6 → 4 → 2 → −3 at 1M · 4M · 10M practice with no flat minus; only strong job penalties remain', async () => {
     const { apUsed, effectiveSkill } = await loadGame().load('game/systems/progression.js');
     const j = job('undead'); assert.equal(j.masteryTarget, 1e7); assert.deepEqual(j.penalties, { accuracy: -0.08 }); assert.ok(['hp', 'attack', 'magic', 'defense', 'resist'].every(k => j[k] <= .8), 'every multiplier penalty is strong');
     const sk = SKILLS.find(x => x.id === 'boneLegacy'); assert.ok(!Object.values(sk.bonus || {}).some(n => n < 0) && sk.levelEffects.every(l => !Object.values(l.bonus || {}).some(n => n < 0)), 'no flat minus on the passive');
     const ap = n => { const s = newState(0); s.level = 40; s.job = 'undead'; s.learned.boneLegacy = 1; s.skills = ['boneLegacy']; s.skillPractice.boneLegacy = n; return apUsed(s); };
     assert.deepEqual([0, 999_999, 1e6, 4e6, 9_999_999, 1e7].map(ap), [6, 6, 4, 2, 2, -3]);
     assert.equal(effectiveSkill(sk, 1, 3).penaltyRelief, 1, 'the last stage relieves every penalty');
+});
+
+test('v3.138 망인 skills: 무덤파기 only weakens for 5 turns; 죽지않은 영혼 shows only 쓸모없음 but keeps its real effect', async () => {
+    const { strike } = await import('./harness.mjs'), D = await loadGame().load('game/systems/skill-description.js');
+    const grave = SKILLS.find(x => x.id === 'graveHook'); assert.equal(grave.name, '무덤파기'); assert.ok(grave.statusOnly && grave.effect === 'weaken' && grave.statusTurns === 5);
+    const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const a = { name: 'A', stats: { ...base }, hp: 1e6, mana: 1000, skills: ['graveHook'], cooldowns: {}, stun: 0, effects: {}, ranks: { graveHook: 1 }, mastery: {}, practice: {} }, b = { name: 'B', stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} };
+    strike(a, b, () => 0); assert.equal(b.hp, 1e6, 'no damage'); assert.equal(b.effects.weaken, 5);
+    const soul = SKILLS.find(x => x.id === 'boneLegacy'); assert.equal(soul.name, '죽지않은 영혼');
+    assert.deepEqual(D.skillEffectLines(soul, 3), ['쓸모없음']); assert.equal(D.skillBrief(soul), '쓸모없음'); assert.ok(D.skillGrowthStages(soul).every(r => r.effects.join() === '쓸모없음'));
+    assert.equal(soul.levelEffects.at(-1).penaltyRelief, 1, 'the real effect is unchanged');
 });
 
 test('v3.64 the fallen angler grows with deaths', () => {

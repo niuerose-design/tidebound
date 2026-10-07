@@ -713,8 +713,8 @@
 | ⬜ | `glyphHeaven` | 天 | 玄 | 패시브 |
 | ⬜ | `glassLance` | 유리 창 | 유리 대포 | 액티브 |
 | ⬜ | `glassHeart` | 유리 심장 | 유리 대포 | 패시브 |
-| ⬜ | `graveHook` | 무덤의 챔질 | 망인 | 액티브 |
-| ⬜ | `boneLegacy` | 끝나지 않는 골격 | 망인 | 패시브 |
+| ⬜ | `graveHook` | 무덤파기 | 망인 | 액티브 |
+| ⬜ | `boneLegacy` | 죽지않은 영혼 | 망인 | 패시브 |
 
 ## 아델 계보
 
