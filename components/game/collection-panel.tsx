@@ -21,7 +21,7 @@ import { ONYX, ONYX_BOSSES, ONYX_SET, ownedOnyx, onyxCodexKey } from '@/game/dat
 import { OnyxArt } from './onyx-art';
 import { affixDef } from '@/game/data/gear';
 import { abyssReference, stageField } from '@/game/systems/encounter';
-import { bookEcology, nextEcology, bookRevealed, regionResearchStage, bookStage } from '@/game/systems/book';
+import { bookEcology, bookRevealed, regionResearchStage, bookStage } from '@/game/systems/book';
 import { BOOK_ECOLOGY, BOOK_REVEAL, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
 import { VARIANTS, regionSignature } from '@/game/data/variants';
 import type { State, Stats } from '@/game/types';
@@ -38,13 +38,16 @@ function EnemySkillList({ ids, enemy }: { ids: string[]; enemy: Stats }) {
         return <li key={id}><strong>{sk.name}</strong><span>{enemySkillBrief(sk)}</span><small>발동 {percent(sk.chance)} · 재사용 {sk.cooldown}턴</small></li>;
     })}</ul></div>;
 }
-/** v27.81 생태 연구: 이 몬스터 상대 주는 피해·받는 공격 피해. 최대 +50% / -25%. */
+/**
+ * v27.81 연구 효과(예전 이름 '생태 연구'): 이 몬스터 상대 주는 피해·받는 공격 피해. 최대 +50% / -25%.
+ * v3.95 '생태 연구 4/5'와 '연구 6/6단계 진행'이 따로 보여 다른 것처럼 읽혔습니다 → 단계는 연구 단계 하나로만 세고, 여기서는 지금 받는 효과만 보입니다.
+ */
 function EcologyLine({ s, id }: { s: State; id: string }) {
-    const eco = bookEcology(s, id), next = nextEcology(s, id), pct = (n: number) => Number((n * 100).toFixed(1));
+    const eco = bookEcology(s, id), pct = (n: number) => Number((n * 100).toFixed(1));
     const max = { dealt: BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0), taken: BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0) };
     return <div className="fish-trait book-trait-line">
-        <strong>생태 연구 {eco.stages} / {BOOK_ECOLOGY.dealt.length}</strong>
-        <span>{eco.stages ? <b className="positive">이 몬스터 상대 주는 피해 +{pct(eco.dealt)}% · 받는 공격 피해 -{pct(eco.taken)}%</b> : `연구 ${BOOK_ECOLOGY.fromStage}단계(${BALANCE.bookMilestones[BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회)부터 적용`}{next ? ` · 다음 단계 +${pct(next.dealt)}% / -${pct(next.taken)}%` : ''} · 최대 +{pct(max.dealt)}% / -{pct(max.taken)}%</span>
+        <strong>연구 효과</strong>
+        <span>{eco.stages ? <b className="positive">이 몬스터 상대 주는 피해 +{pct(eco.dealt)}% · 받는 공격 피해 -{pct(eco.taken)}%</b> : `연구 ${BOOK_ECOLOGY.fromStage}단계(${BALANCE.bookMilestones[BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회 처치)부터 이 몬스터 상대 주는 피해가 오르고 받는 공격 피해가 줄어듭니다`} · 6단계까지 최대 +{pct(max.dealt)}% / -{pct(max.taken)}%</span>
     </div>;
 }
 /** v25.21 몬스터 이름 옆 변종 아이콘 줄. 잡은 변종은 색이 켜지고 횟수가 붙으며, 아직 못 만난 변종은 흐리게 자리만 보여 줍니다. */
@@ -222,16 +225,16 @@ export function Collection({ s, send, busy }: PanelProps) {
     </details>
     </TabsContent>
     <TabsContent value="bonus">
-    {(() => { const eco = FISH.map(f => bookEcology(s, f.id).stages), maxStage = FISH.length * BOOK_ECOLOGY.dealt.length, pct = (n: number) => Number((n * 100).toFixed(1)); return <div className="bonus-stack">
+    {(() => { const last = BALANCE.bookMilestones.length, stages = FISH.map(f => bookStage(s, f.id)), maxStage = FISH.length * last, pct = (n: number) => Number((n * 100).toFixed(1)); return <div className="bonus-stack">
     <details className="bonus-block" open>
-    <summary><div><h2>생태 연구</h2><p>몬스터를 {BALANCE.bookMilestones.slice(BOOK_ECOLOGY.fromStage - 1).map(m => m.toLocaleString()).join(' · ')}회 처치할 때마다(6단계는 난이도 {BALANCE.bookTierReq[5]} 이상 처치 필요) 그 몬스터를 상대로 주는 피해가 오르고 받는 공격 피해가 줄어듭니다. 단계마다 {BOOK_ECOLOGY.dealt.map(pct).join('·')}% / {BOOK_ECOLOGY.taken.map(pct).join('·')}%, 최대 +{pct(BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0))}% / -{pct(BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0))}%.</p></div><span className="bonus-count">{eco.reduce((a, n) => a + n, 0)}<small> / {maxStage}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <summary><div><h2>몬스터 연구 효과</h2><p>몬스터 연구 {BOOK_ECOLOGY.fromStage}~{last}단계(처치 {BALANCE.bookMilestones.slice(BOOK_ECOLOGY.fromStage - 1).map(m => m.toLocaleString()).join(' · ')}회)에 오를 때마다(6단계는 난이도 {BALANCE.bookTierReq[5]} 이상 처치 필요) 그 몬스터를 상대로 주는 피해가 오르고 받는 공격 피해가 줄어듭니다. 단계마다 {BOOK_ECOLOGY.dealt.map(pct).join('·')}% / {BOOK_ECOLOGY.taken.map(pct).join('·')}%, 최대 +{pct(BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0))}% / -{pct(BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0))}%.</p></div><span className="bonus-count">{stages.reduce((a, n) => a + n, 0)}<small> / {maxStage}단계</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
-    <ul className="bonus-grid">{BOOK_ECOLOGY.dealt.map((_, i) => { const n = eco.filter(x => x > i).length; return <li key={i} className={n ? 'active' : ''}><span>생태 {i + 1}단계 · 누적 +{pct(BOOK_ECOLOGY.dealt.slice(0, i + 1).reduce((a, x) => a + x, 0))}% / -{pct(BOOK_ECOLOGY.taken.slice(0, i + 1).reduce((a, x) => a + x, 0))}%</span><strong>{n} / {FISH.length}종</strong></li>; })}</ul>
-    <h3>몬스터별 진행 <small>장소별 · 칩의 숫자는 그 몬스터의 생태 단계({BOOK_ECOLOGY.dealt.length}단계가 최대)</small></h3>
-    <ul className="bonus-rows">{PLACES.map(st => { const ids = [...new Set(st.fish)], max = ids.length * BOOK_ECOLOGY.dealt.length, sum = ids.reduce((a, id) => a + bookEcology(s, id).stages, 0); return <li key={st.id} className={sum >= max ? 'done' : sum ? 'active' : ''}>
+    <ul className="bonus-grid">{BOOK_ECOLOGY.dealt.map((_, i) => { const n = stages.filter(x => x >= i + BOOK_ECOLOGY.fromStage).length; return <li key={i} className={n ? 'active' : ''}><span>연구 {i + BOOK_ECOLOGY.fromStage}단계 · 누적 +{pct(BOOK_ECOLOGY.dealt.slice(0, i + 1).reduce((a, x) => a + x, 0))}% / -{pct(BOOK_ECOLOGY.taken.slice(0, i + 1).reduce((a, x) => a + x, 0))}%</span><strong>{n} / {FISH.length}종</strong></li>; })}</ul>
+    <h3>몬스터별 진행 <small>장소별 · 칩의 숫자는 그 몬스터의 연구 단계(최대 {last}단계)</small></h3>
+    <ul className="bonus-rows">{PLACES.map(st => { const ids = [...new Set(st.fish)], max = ids.length * last, sum = ids.reduce((a, id) => a + bookStage(s, id), 0); return <li key={st.id} className={sum >= max ? 'done' : sum ? 'active' : ''}>
         <div className="bonus-row-head"><strong>{st.name}</strong><small>{st.rebirth ? `환생 ${st.rebirth} · ` : ''}Lv.{st.level}</small><span className="bonus-count small">{sum}<small> / {max}</small></span></div>
         <Meter value={sum} max={max}/>
-        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = fishOf(id)!, n = s.book[id] || 0, e = bookEcology(s, id); return <span key={id} className={`bonus-chip ${e.stages >= BOOK_ECOLOGY.dealt.length ? 'done' : e.stages ? 'seen' : ''}`} title={n ? `${f.name} · 처치 ${n.toLocaleString()}회 · 주는 피해 +${pct(e.dealt)}% · 받는 공격 피해 -${pct(e.taken)}%` : '미발견'}>{n ? f.name : '???'}{n ? ` ${e.stages}/${BOOK_ECOLOGY.dealt.length}` : ''}</span>; })}</dd></dl>
+        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = fishOf(id)!, n = s.book[id] || 0, e = bookEcology(s, id); return <span key={id} className={`bonus-chip ${bookStage(s, id) >= last ? 'done' : e.stages ? 'seen' : ''}`} title={n ? `${f.name} · 처치 ${n.toLocaleString()}회 · 주는 피해 +${pct(e.dealt)}% · 받는 공격 피해 -${pct(e.taken)}%` : '미발견'}>{n ? f.name : '???'}{n ? ` ${bookStage(s, id)}/${last}` : ''}</span>; })}</dd></dl>
     </li>; })}</ul>
     </div>
     </details>
