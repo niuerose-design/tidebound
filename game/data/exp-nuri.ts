@@ -7,7 +7,7 @@
 import { ODDS } from './odds';
 export const EXP_NURI = {
     id: 'expNuri',
-    /** 출현마다 누리가 나올 확률(사냥터 난이도 10 이상, Lv.50 이상, 누적 처치 1,000마리 이상, Lv.100 미만) · 난이도당. v3.52 값은 서버 전용(odds). 사냥터 난이도 1단계마다 chancePerTier만큼 더합니다. */
+    /** 출현마다 누리가 나올 확률(사냥터 난이도 10 이상, Lv.50 이상, 누적 처치 1,000마리 이상. v3.112 Lv.100 미만 조건 삭제) · 난이도당. v3.52 값은 서버 전용(odds). 사냥터 난이도 1단계마다 chancePerTier만큼 더합니다. */
     get chance() { return ODDS.nuri.chance; },
     get chancePerTier() { return ODDS.nuri.perTier; },
     /** 오프라인 정산 중 등장 확률 배율(까미와 같음). */
@@ -18,6 +18,8 @@ export const EXP_NURI = {
     minTier: 10,
     /** 체력·공격 배율: 그 사냥터에서 가장 강한 몬스터 기준. 오래 버티지만 거의 아프지 않습니다. */
     hp: 3, attack: .4,
+    /** v3.112 사냥터 출현 몫: 레벨 % 대신 ‘지금 사냥터 평균 출현 경험치 × pct × 이 값’이 더 크면 그쪽(1%당 10회분, 소 · 중 · 대 = 10 · 20 · 30회분). Lv.100부터는 이 몫만. */
+    encountersPerPct: 1000,
     /** 경험치 로또: 현재 레벨 필요 경험치의 pct. 앞에서부터 확률을 더해 판정합니다(당첨 확률은 서버 전용). */
     tiers: [
         { pct: .01, get chance() { return ODDS.nuri.tiers[0]; }, label: '소' },
@@ -34,4 +36,5 @@ export function rollNuriTier(rng: () => number) {
 /** 등장 확률 = 기본 + 사냥터 난이도 × 단계당. */
 export const nuriChance = (tier: number) => EXP_NURI.chance + tier * EXP_NURI.chancePerTier;
 /** 누리가 나올 수 있는지(사냥터 난이도·레벨·누적 처치). */
-export const nuriEligible = (s: { level: number; kills: number }, tier: number) => tier >= EXP_NURI.minTier && s.level >= EXP_NURI.minLevel && s.level < 100 && s.kills >= EXP_NURI.minKills;
+/** v3.112 Lv.100 이상도 나옵니다(보상은 사냥터 출현 몫). */
+export const nuriEligible = (s: { level: number; kills: number }, tier: number) => tier >= EXP_NURI.minTier && s.level >= EXP_NURI.minLevel && s.kills >= EXP_NURI.minKills;
