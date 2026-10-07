@@ -9,8 +9,8 @@ test('v21 tank counter and defense-scaled damage follow the job defense multipli
  assert.equal(1e6-attacker.hp,50);assert.equal(ev[0].reflected,50);assert.match(ev[0]&&strike(fighter({defense:0}),fighter({thorns:.5}),()=>0),/반격 50/);
  const noThorns=fighter({defense:0});strike(noThorns,fighter(),()=>0);assert.equal(noThorns.hp,1e6);
  // 방어 비례 기술은 방어 친화도만큼만 더해집니다.
- const hit=(affinity)=>{const b=fighter({defense:0});strike(fighter({guardAffinity:affinity},['ironRetort']),b,()=>0);return 1e6-b.hp;};
- assert.ok(hit(1)>hit(.2));const sk=SKILLS.find(x=>x.id==='ironRetort');assert.equal(hit(1),Math.round((100+100*sk.scalingRatio)*sk.multiplier));
+ const hit=(affinity)=>{const b=fighter({defense:0});strike(fighter({guardAffinity:affinity},['citadelCrash']),b,()=>0);return 1e6-b.hp;};
+ assert.ok(hit(1)>hit(.2));const sk=SKILLS.find(x=>x.id==='citadelCrash');assert.equal(hit(1),Math.round((100+100*sk.scalingRatio)*sk.multiplier));
  // 직업 방어 배율 → 방어 친화도 → 최종 반격 수치
  const s=newState(0);s.level=40;s.skillInheritances.reefFortress=true;s.learned.reefFortress=1;s.skills=['reefFortress'];
  s.job='brineThorn';const tankThorns=stats(s).thorns;s.job='krakenSlayer';const dealerThorns=stats(s).thorns;
@@ -39,7 +39,7 @@ test('v21 poison, burns and execute conditions are data-driven',()=>{
  const sk=SKILLS.find(x=>x.id==='braveSlash');assert.equal(brave(3e5),Math.round(Math.round(100*sk.multiplier)*(1+sk.conditionalDamageBonus)));assert.equal(brave(1e6),Math.round(100*sk.multiplier));
 });
 test('v21 job chains: five-step flagships per archetype and a physical kraken route',()=>{
- for(const top of ['hero','grandMagus','celestialBlade','guardianDeity','apostle']){
+ for(const top of ['hero','grandMagus','celestialBlade','abyssBastion','apostle']){
   let j=JOBS.find(x=>x.id===top);assert.equal(j.tier,5);assert.ok(j.rebirth>=2);
   while(j.parent){const p=JOBS.find(x=>x.id===j.parent);assert.equal(p.tier,j.tier-1,j.id);assert.ok(p.level<j.level);assert.ok(Object.keys(j.requiresSkillMastery||{}).every(id=>SKILLS.find(sk=>sk.id===id).job===p.id),j.id);j=p;}
   assert.equal(j.tier,1);

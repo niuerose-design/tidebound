@@ -50,12 +50,6 @@ export const EXPANSION_JOBS: NewJob[] = [
     { id: 'swordSaint', name: '마검성', title: '두 개의 달을 벤다', desc: '추가타가 붙는 쌍월로 복합 피해를 두 번 넣는 환생 후 4차 직업입니다.', ...neutral, attack: 1.36, magic: 1.36, hp: 1.14, defense: 1.04, resist: 1.04, crit: .06, tier: 4, ...T4, parent: 'runeKnight', requires: { str: 48, int: 48 }, requiresSkillMastery: { runeBurst: 3 }, role: '복합·연타', tree: 'hybrid' },
     { id: 'celestialBlade', name: '천검', title: '하늘과 땅을 가르는 검', desc: '기절을 거는 데몬 베인으로 물리·마법 복합 계열의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.67, magic: 1.67, hp: 1.29, defense: 1.08, resist: 1.08, crit: .08, tier: 5, ...T5, parent: 'swordSaint', requires: { str: 58, int: 58, dex: 25 }, requiresSkillMastery: { twinMoon: 3 }, role: '복합 최상위', tree: 'hybrid' },
 
-    // ── 방패의 길 (탱커 최상위: 미하일 (5차)) ─────────────────────────
-    { id: 'shieldbearer', name: '방패병', title: '가장 앞에 서는 자', desc: '물리 방어를 실어 치는 소울 블레이드와 방어 패시브를 익히는 탱커 입문 직업입니다.', ...neutral, bonus: { hp: 15, defense: 2 }, tier: 1, level: 10, requires: { vit: 12, str: 10 }, mastery: 0, role: '탱커 입문', tree: 'defense', masteryTarget: 400, masteryBoost: .08 },
-    { id: 'gatekeeper', name: '수문장', title: '문은 열리지 않는다', desc: '맞을 때마다 방어 비례 반격을 돌려주는 실드 오브 라이트를 얻는 탱커 2차 직업입니다.', ...neutral, bonus: { attack: 5, hp: 165, defense: 17, resist: 5 }, tier: 2, level: 25, parent: 'shieldbearer', requires: { vit: 32, str: 22 }, mastery: 75, requiresSkillMastery: { shieldBash: 2 }, role: '탱커·반격', tree: 'defense', masteryTarget: 3000, masteryBoost: .18 },
-    { id: 'fortressLord', name: '철옹성', title: '성벽이 곧 무기', desc: '약화를 거는 소울 어썰트와 반격·체력 패시브로 오래 버티며 되갚는 탱커 3차 직업입니다.', ...neutral, bonus: { attack: 24, hp: 300, defense: 36, resist: 12 }, tier: 3, level: 40, parent: 'gatekeeper', requires: { vit: 48, str: 32 }, mastery: 150, requiresSkillMastery: { ironRetort: 3 }, role: '탱커·약화', tree: 'defense', penalties: { speed: -4 }, masteryTarget: 11000, masteryBoost: .3 },
-    { id: 'unyielding', name: '불굴의 수호자', title: '쓰러지지 않는 마지막 방패', desc: '환생 후 4차 탱커입니다. 샤이닝 크로스는 때린 만큼 흡혈하고, 패시브로 체력을 크게 올립니다.', ...neutral, attack: 1.07, hp: 1.49, defense: 1.6, resist: 1.32, tier: 4, ...T4, parent: 'fortressLord', requires: { vit: 58, str: 35, wis: 20 }, requiresSkillMastery: { bulwarkSlam: 3 }, role: '탱커·흡혈', tree: 'defense', penalties: { speed: -5 } },
-    { id: 'guardianDeity', name: '수호신', title: '바다를 지키는 신', desc: '방어로 심판하는 기술과 가장 강한 반격으로 탱커 계열의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.11, hp: 1.49, defense: 1.7, resist: 1.42, tier: 5, ...T5, parent: 'unyielding', requires: { vit: 70, str: 40, wis: 25 }, requiresSkillMastery: { lastStand: 3 }, role: '탱커 최상위·반격', tree: 'defense', penalties: { speed: -6 } },
 
     // ── 역병의 길 (상태이상 최상위: 아크메이지(불,독) (5차)) ────────────────
     { id: 'poisoner', name: '독술사', title: '한 방울이면 충분하다', desc: '마법으로 방어를 무시하는 중독을 걸고 지속 피해 패시브를 익히는 상태이상 입문 직업입니다.', ...neutral, bonus: { magic: 4 }, crit: .02, tier: 1, level: 10, requires: { dex: 12, luk: 8 }, mastery: 0, role: '중독 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
@@ -151,18 +145,6 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...A, ...dual, id: 'heavenSplit', name: '천지개벽', desc: '', level: 70, job: 'celestialBlade', chance: .5, cooldown: 5, multiplier: 4.8, cost: 6, manaCost: 20, effect: 'stun', statusTurns: 3, masteryMilestones: M5 },
     // v3.128 데몬슬레이어 상향: 데몬 어웨이크닝 물리 · 마법 공격 +55 → +350(숙련 보정 뒤 엔드 물리 약 +17% · 마법 약 +52%, 복합 피해라 둘 다 같은 값).
     { ...P, id: 'celestialAura', name: '천검의 기운', desc: '물리·마법 공격과 치명타가 크게 오릅니다.', level: 70, job: 'celestialBlade', cost: 3, bonus: { attack: 350, magic: 350, crit: .05 }, masteryMilestones: M5 },
-    // 방패의 길
-    { ...A, ...physical, id: 'shieldBash', name: '방패 치기', desc: '', level: 10, job: 'shieldbearer', chance: .24, cooldown: 4, multiplier: 1.1, cost: 2, effect: 'stun', scaling: 'defense', scalingRatio: .6 },
-    { ...P, id: 'shieldWall', name: '방패벽', desc: '물리 방어와 체력이 오릅니다.', level: 10, job: 'shieldbearer', cost: 2, bonus: { defense: 20, hp: 40 , swarmFind: 0.3, resist: 8 } },
-    { ...A, ...physical, id: 'ironRetort', name: '철벽 반격', desc: '', level: 25, job: 'gatekeeper', chance: .26, cooldown: 3, multiplier: 1.2, cost: 3, scaling: 'defense', scalingRatio: 1 },
-    { ...P, id: 'spikedShield', name: '가시 방패', desc: '맞을 때마다 물리 방어에 비례한 반격 피해를 돌려줍니다.', level: 25, job: 'gatekeeper', cost: 3, bonus: { thorns: .25, defense: 25 , swarmFind: 0.5, resist: 12 } },
-    { ...A, ...physical, id: 'bulwarkSlam', name: '성벽 강타', desc: '', level: 40, job: 'fortressLord', chance: .25, cooldown: 4, multiplier: 1.5, cost: 4, effect: 'weaken', scaling: 'defense', scalingRatio: 1.8 },
-    { ...P, id: 'stoneSkin', name: '바위 피부', desc: '반격·체력·마법 방어가 오릅니다.', level: 40, job: 'fortressLord', cost: 3, bonus: { thorns: .35, hp: 180, resist: 35 , swarmFind: 0.8, defense: 20 } },
-    // v3.102 미하일 상향: 샤이닝 크로스 방어 비례 1.6 → 2.4, 라이트 오브 커리지 치명타 +8%p · 치명 피해 +0.4(직업 치명 0이라 치명 69% · ×2.07에 머물렀음).
-    { ...A, ...physical, id: 'lastStand', name: '최후의 저항', desc: '', level: 55, job: 'unyielding', chance: .26, cooldown: 4, multiplier: 1.7, cost: 5, effect: 'drain', drainRatio: .08, scaling: 'defense', scalingRatio: 2.4, masteryMilestones: M4 },
-    { ...P, id: 'undying', name: '불굴', desc: '체력·물리 방어·흡혈이 오릅니다.', level: 55, job: 'unyielding', cost: 3, bonus: { hp: 250, defense: 75, lifesteal: .02 , swarmFind: 1, resist: 30 }, masteryMilestones: M4 },
-    { ...A, ...physical, id: 'aegisJudgment', name: '신성한 심판', desc: '', level: 70, job: 'guardianDeity', chance: .26, cooldown: 5, multiplier: 2.1, cost: 6, effect: 'stun', scaling: 'defense', scalingRatio: 3.4, masteryMilestones: M5 },
-    { ...P, id: 'divineAegis', name: '신의 방패', desc: '가장 강한 반격과 두 방어, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'guardianDeity', cost: 3, bonus: { thorns: .4, defense: 120, resist: 90, swarmFind: 1.2, crit: .08, critDamage: .4 }, masteryMilestones: M5 },
     // 역병의 길
     // v3.132 아크메이지(불,독) 리메이크: 계보 전체를 마법 피해로 바꿉니다(직업 배율도 마법 쪽으로).
     { ...A, ...magic, id: 'venomDart', name: '독침', desc: '', level: 10, job: 'poisoner', chance: .3, cooldown: 3, multiplier: 1, cost: 2, manaCost: 4, effect: 'poison', dotRatio: .12 },

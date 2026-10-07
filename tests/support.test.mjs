@@ -176,9 +176,9 @@ test('v27.2 thorns scale with swarm size, ignore half of attacker defense, and t
     const t2 = tank(), f2 = foe(100); strike(f2, t2, () => .5); const crowd = 1e6 - f2.hp;
     assert.ok(single >= 1, 'thorns fired'); assert.ok(Math.abs(crowd / single - (1 + Math.log2(100))) < .15, `×100 swarm reflects (1+log2 100)≈7.6x: ${crowd}/${single}`);
     assert.equal(single, Math.round(100 * .4 * 100 / (100 + 100 * 2 * (1 - SKILL_FORMULA.thornsPierce))), 'attacker defense counted at thornsPierce');
-    const s = newState(0); s.level = 30; s.unlockedJobs.push('gatekeeper'); s.job = 'gatekeeper'; s.learned.spikedShield = 1;
-    const before = variantChances(s).swarm; s.skills = ['spikedShield']; assert.ok(canUse(s, 'spikedShield')); const after = variantChances(s).swarm;
-    assert.ok(Math.abs(after / before - 1.5) < 1e-6, `실드 오브 라이트 +50% 무리 조우: ${before} → ${after}`);
+    const s = newState(0); s.level = 30; s.unlockedJobs.push('bulwark'); s.job = 'bulwark'; s.learned.ironWill = 1;
+    const before = variantChances(s).swarm; s.skills = ['ironWill']; assert.ok(canUse(s, 'ironWill')); const after = variantChances(s).swarm;
+    assert.ok(Math.abs(after / before - 1.5) < 1e-6, `파워 가드 +50% 무리 조우: ${before} → ${after}`);
 });
 
 test('v27.6 limit break: needs full mastery, practice multiples and SP; pushes growth past max, adds chance, stage 3 cuts AP; survives rebirth copy', async () => {

@@ -8,7 +8,6 @@
  */
 /** 원작에 차수별 이름이 없는 직업: ids는 그 계보의 직업 id. 이름은 ‘직업 (N차)’(N = 직업 차수). */
 const BY_TIER: { cls: string; ids: string[] }[] = [
-    { cls: '미하일', ids: ['shieldbearer', 'gatekeeper', 'fortressLord', 'unyielding', 'guardianDeity'] },
     { cls: '루미너스', ids: ['paladin', 'holyKnight', 'holyCommander', 'lightOcean'] },
     { cls: '카이저', ids: ['bellTurtle', 'bellWarden', 'eonTurtle', 'worldTurtle'] },
     { cls: '데몬슬레이어', ids: ['spellbladeNovice', 'spellblade', 'runeKnight', 'swordSaint', 'celestialBlade'] },
@@ -74,7 +73,7 @@ const NAMED: Record<string, string> = {
     lineBreaker: '썬더 브레이커', grappler: '브롤러', stormHunter: '크로스보우맨', reefBrawler: '근접 아처',
     clockworkAngler: '태엽 기계공', allRounder: '올라운더', deckGunner: '캐논슈터',
     inkMime: '트릭스터', wreckDiver: '보물 사냥꾼', harborBroker: '무역상', logbookRunner: '길 안내인', beastTracker: '재규어 추적자', tidalSinger: '아이돌 연습생',
-    shoreApothecary: '견습 사제', deepCaretaker: '치유사', coralBuilder: '성벽 기사',
+    shoreApothecary: '견습 사제', deepCaretaker: '치유사',
     // 독립 1차: 바다·낚시 단어만 교체
     netWeaver: '그물 사냥꾼', oathAngler: '맹세의 전사', barbSkirmisher: '척후병', wakeRunner: '질주자', sapper: '엔지니어', tideSurveyor: '지도 제작자',
     bubbleMage: '버블 매지션', stillwaterBinder: '봉인술사', driftwoodHermit: '숲의 은둔자', scaleKnight: '견습 기사', lifeTender: '생명지기',
@@ -95,7 +94,7 @@ export function mapleJobNames(jobs: { id: string; tier: number }[]): Record<stri
 export const MAPLE_LINEAGE_NAMES: Record<string, string> = {
     harpoon: '아처 계보', tidalBrawler: '스트라이커 계보', ronin: '히어로 계보', martialArtist: '바이퍼 계보',
     tide: '매지션 계보', currentScholar: '일리움 계보', fishWhisperer: '에반 계보', chantNovice: '키네시스 계보', apprentice: '플레임위자드 계보',
-    warden: '검사 계보', seagrassKeeper: '비숍 계보', shieldbearer: '미하일 계보',
+    warden: '검사 계보', seagrassKeeper: '비숍 계보',
     poisoner: '아크메이지(불,독) 계보', shaman: '칼리 계보', bloodAngler: '데몬어벤져 계보', nerveNeedler: '카데나 계보',
     fisher: '초보자', wanderer: '제논 계보', spellbladeNovice: '데몬슬레이어 계보', tideLancer: '다크나이트 계보', runesmith: '메카닉 계보',
     squidJester: '팬텀 계보', relicScavenger: '섀도어 계보', salvageMerchant: '캡틴 계보', voyageScribe: '패스파인더 계보', bossNaturalist: '와일드헌터 계보', bard: '엔젤릭버스터 계보',

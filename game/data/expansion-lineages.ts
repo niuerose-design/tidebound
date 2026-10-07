@@ -104,7 +104,6 @@ export const LINEAGE_SKILLS: Skill[] = [
     // 물리
     { ...A, ...physical, id: 'jointLock', name: '관절 꺾기', desc: '', level: 25, job: 'grappler', chance: .26, cooldown: 3, multiplier: 1.5, cost: 3, effect: 'slow', statusTurns: 2, damageBonusCondition: 'controlled', conditionalDamageBonus: .3 },
     { ...P, id: 'lifeCurrentFlow', name: '생명의 흐름', desc: '턴마다 체력이 회복되고 회복량이 오릅니다.', level: 25, job: 'tideMender', cost: 2, bonus: { hpRegen: 3, healBonus: .1 } },
-    { ...P, id: 'coralPatience', name: '산호의 인내', desc: '턴마다 체력이 회복되고 물리 방어가 오릅니다.', level: 25, job: 'coralBuilder', cost: 2, bonus: { hpRegen: 2, defense: 12 } },
     { ...P, id: 'grappleStance', name: '붙잡는 자세', desc: '최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'grappler', cost: 2, bonus: { hp: 90, defense: 15, resist: 5 } },
     // 마법
     { ...A, ...magic, id: 'crystalShard', name: '결정 파편', desc: '', level: 25, job: 'crystalCaster', chance: .52, cooldown: 3, multiplier: 1.3, cost: 3, manaCost: 12, scaling: 'mana', scalingRatio: .2 },

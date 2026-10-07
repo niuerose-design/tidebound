@@ -184,7 +184,6 @@ JOBS.push(
     { id: 'tideMender', name: '생명의 조율사', title: '밀려오는 회복의 때', desc: '마나 리커버리와 턴마다 차오르는 마나 순환을 가진 회복형 주문사. 요정 사제가 흡혈이라면 이쪽은 지속 회복입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 6, hp: 25, resist: 2 }, tier: 2, level: 25, parent: 'tide', requires: { int: 24, wis: 28 }, mastery: 400, requiresSkillMastery: { wave: 1 }, role: '회복·주문', tree: 'magic', masteryTarget: 4000, masteryBoost: .18 },
     { id: 'scaleKnight', name: '비늘 견습기사', title: '가장 작은 방벽', desc: '기사의 갑옷 하나로 물리 방어를 익힙니다. 화려한 공격 대신 방어 패시브의 계승을 준비합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { defense: 1 }, tier: 1, level: 10, requires: { vit: 12, str: 10 }, mastery: 0, role: '독립·물리 방어', tree: 'defense', branchless: true, masteryTarget: 800, masteryBoost: .08 },
     { id: 'lifeTender', name: '해양 생명지기', title: '작은 생명을 품는다', desc: '생명의 기운 하나를 익히는 독립 직업. 체력 비례 공격과 조합할 기반을 만듭니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { hp: 40 }, tier: 1, level: 10, requires: { vit: 14, wis: 10 }, mastery: 0, role: '독립·최대 체력', tree: 'defense', branchless: true, masteryTarget: 1400, masteryBoost: .12 },
-    { id: 'coralBuilder', name: '산호 축성가', title: '파도 앞에 성을 세운다', desc: '리커버리와 턴마다 회복되는 아이언 바디를 가진 재생형 방어 직업. 반격(철벽)·기절(종거북)과 다른 세 번째 길입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { hp: 40, defense: 3, resist: 1 }, tier: 2, level: 25, parent: 'warden', requires: { vit: 28, wis: 22 }, mastery: 450, requiresSkillMastery: { anchor: 1 }, role: '회복·장기전', tree: 'defense', masteryTarget: 4500, masteryBoost: .2 },
     { id: 'barbSkirmisher', name: '미늘 척후병', title: '상처를 남기고 물러난다', desc: '갈고리 상처로 출혈을, 썩은 덫으로 길게 중독을 남기는 독립 직업. 확률형 공격과 지속 피해를 엮습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { attack: 1 }, tier: 1, level: 10, requires: { str: 10, dex: 12 }, mastery: 0, role: '독립·출혈', tree: 'physical', branchless: true, masteryTarget: 1200, masteryBoost: .1 },
     { id: 'wakeRunner', name: '물결 달림꾼', title: '파도보다 한 걸음 먼저', desc: '질주로 가속을 얻습니다. 낮은 위력 대신 다음 라운드의 선공을 준비합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, tier: 1, level: 10, requires: { dex: 14 }, mastery: 0, role: '독립·가속', tree: 'physical', branchless: true, masteryTarget: 1500, masteryBoost: .1 },
     { id: 'bubbleMage', name: '포말 마도사', title: '한 방울의 마법', desc: '버블 볼트 하나를 연마하는 기초 마법 직업. 낮은 비용의 주문을 다른 직업에 넘깁니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 2 }, tier: 1, level: 10, requires: { int: 12, wis: 10 }, mastery: 0, role: '독립·기초 주문', tree: 'magic', branchless: true, masteryTarget: 1000, masteryBoost: .08 },
@@ -235,7 +234,7 @@ for (const job of JOBS) if (RETIRED_TRAINING.includes(job.id)) job.retired = tru
 // 서버는 game/secret/register.ts로, 화면은 카탈로그(catalog.ts)로 registerJobs를 거쳐 이 표에 더합니다.
 
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다. v3.54 넘친 회복은 적에게 피해로 돌아갑니다(SKILL_FORMULA.overhealDamage).
-const HEALERS = new Set(['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'coralBuilder', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger', 'tideSaint', 'lifeOcean']);
+const HEALERS = new Set(['oracle', 'lunarOracle', 'coralSaint', 'seagrassKeeper', 'reefMedic', 'tideMender', 'lifeTender', 'tideHealer', 'shoreApothecary', 'deepCaretaker', 'tidalSinger', 'tideSaint', 'lifeOcean']);
 
 // 특정 스킬/직업을 마스터해야만 열리는 교차 전직 조건입니다.
 // 값은 스킬 숙련 단계(1~4) 또는 직업 숙련 승수로 작성합니다.
@@ -358,7 +357,6 @@ export const LINEAGES: Lineage[] = [
     independent('magic'),
     { id: 'warden', name: '산호 수호자 계보', tree: 'defense', summary: '방어·기절·회복·반격과 복합 흡혈로 갈라지는 수호 계보입니다.' },
     { id: 'seagrassKeeper', name: '해초 돌봄꾼 계보', tree: 'defense', summary: '회복과 흡혈로 편성을 지탱하는 보조 방어 계보입니다.' },
-    { id: 'shieldbearer', name: '방패병 계보', tree: 'defense', summary: '반격·약화 탱커를 거쳐 5차 미하일에 이르는 계보입니다.' },
     ...DEFENSE_LINEAGES,
     independent('defense'),
     { id: 'poisoner', name: '독술사 계보', tree: 'status', summary: '중독·역병을 쌓아 5차 아크메이지(불,독) (5차)에 이르는 계보입니다.' },

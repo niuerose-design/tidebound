@@ -19,7 +19,6 @@
 | `magic-independent` | 독립 수련 (마법) | 마법 | self-taught sea mage with a patched robe and a single lantern orb |
 | `warden` | 산호 수호자 계보 | 방어 | coral warden with a shield grown from living coral and a heavy anchor mace |
 | `seagrassKeeper` | 해초 돌봄꾼 계보 | 방어 | seagrass keeper tending glowing kelp, woven-grass armor, calm healer posture |
-| `shieldbearer` | 방패병 계보 | 방어 | shieldbearer braced behind a tower shield of riveted hull plating, waves breaking on it |
 | `bellTurtle` | 종거북 계보 | 방어 | slow heavy guardian carrying a bronze bell shell on the back, turtle motifs |
 | `paladin` | 성해 기사 계보 | 방어 | holy-sea knight in pearl-white armor, blade glowing with both tide and light |
 | `saltWarden` | 소금 파수꾼 계보 | 방어 | salt warden with crystallized salt armor and a ward-sigil staff, silence in the air |
