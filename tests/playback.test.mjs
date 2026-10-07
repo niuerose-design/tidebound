@@ -95,12 +95,14 @@ test('v3.101 battle records: client-side per-mob fights from synced logs (win/lo
     assert.ok(all.some(r => r.result === 'win' && r.dealt > 0 && r.lines.at(-1).text.includes('처치')), 'win closes on the kill line');
     for (const [name, list] of Object.entries(store.byMob)) if (!R.isSpecialMob(name)) assert.ok(list.filter(r => r.result !== 'lose').length <= 1, `plain mob keeps one: ${name}`);
     assert.ok(all.some(r => r.before), 'a later win carries the previous win summary');
-    // 합성 로그: 무리 ×100 6번 승리 → 5개, 패배 · 달아남, 건너뛴 id는 일부.
+    // 합성 로그: 무리 ×100 6번 승리 → BATTLE_RECORD.special개(v3.119 3개), 패배 · 달아남, 건너뛴 id는 일부.
     const me = '나', ev = (actor, total, crit = false) => ({ actor, skillName: '기본 공격', damageType: 'physical', hits: [{ kind: 'main', value: total, critical: crit, miss: false }], total, healed: 0, drained: 0, statuses: [] });
     const t = R.emptyBattleRecords(); let id = 0;
     const line = (type, text, event, turn) => ({ id: ++id, type, text, turn, ...(event ? { event } : {}) });
     for (let n = 0; n < 6; n++) R.ingestBattleLogs(t, [line('battle', '', ev(me, 50 + n, n === 5), 1), line('battle', '', ev('스포아 ×100', 7), 1), line('battle', '', ev(me, 60), 2), line('reward', '스포아 ×100 처치 · +1 G · +1 EXP')], me);
-    assert.equal(t.byMob['스포아 ×100'].length, 5); const top = t.byMob['스포아 ×100'][0];
+    assert.equal(t.byMob['스포아 ×100'].length, R.BATTLE_RECORD.special);
+    { const big = { lastId: 0, order: Array.from({ length: 25 }, (_, i) => `[보스] ${i}`), byMob: {} }; for (const n of big.order) big.byMob[n] = Array.from({ length: 6 }, (_, k) => ({ id: k, result: k % 2 ? 'lose' : 'win' })); R.trimBattleRecords(big);
+      assert.equal(big.order.length, R.BATTLE_RECORD.mobs); assert.equal(Object.keys(big.byMob).length, R.BATTLE_RECORD.mobs); assert.equal(big.byMob[big.order[0]].length, R.BATTLE_RECORD.special + R.BATTLE_RECORD.defeats, 'v3.119 old saves trimmed to the new caps'); } const top = t.byMob['스포아 ×100'][0];
     assert.deepEqual([top.result, top.turns, top.dealt, top.taken, top.maxHit, top.crits], ['win', 2, 115, 7, 60, 1]);
     assert.deepEqual(R.compareWithPrevious(top), { turns: 0, maxHit: 1 });
     R.ingestBattleLogs(t, [line('battle', '', ev('[보스] 자쿰', 999), 3), line('system', '몬스터를 놓쳤습니다. 50초 동안 회복합니다.')], me);

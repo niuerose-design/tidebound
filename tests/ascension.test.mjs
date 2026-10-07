@@ -572,3 +572,30 @@ test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, w
         info = await V.vaultInfo(acc, now); assert.deepEqual(info.onyx.map(x => x.item.onyx), ['onyxHilla']); assert.equal(info.pearls, 0);
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
+
+test('v3.118 gear cost reset: heir / onyx only, 999 pearls, rerolls · refines → 0, stars → 0, extra options rerolled at max value, onyx unique kept', async () => {
+    const G = await L.load('data/gear'), O = await L.load('data/onyx');
+    const local = (seed => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296))(77);
+    const s = newState(0); s.pearls = 5000;
+    const heir = { id: 'h', slot: 'rod', style: 'physical', rarity: 6, power: 500, level: 100, name: 'h', heir: 'primal', enhance: 18, rerolls: 12, refines: 30, affixes: G.rollAffixes(6, 500, undefined, local, [], 'rod', 100) };
+    const plain = { id: 'p', slot: 'coat', rarity: 6, power: 500, level: 100, name: 'p', rerolls: 3, affixes: G.rollAffixes(6, 500, undefined, local, [], 'coat', 100) };
+    s.inventory.push(heir, plain);
+    assert.throws(() => act(s, { type: 'gearReset', id: 'p' }, 0), /원시 고대/);
+    act(s, { type: 'gearReset', id: 'h' }, 0, local);
+    assert.equal(s.pearls, 5000 - G.GEAR_RESET_PEARLS); assert.equal(heir.enhance, 0); assert.equal(heir.rerolls, 0); assert.equal(heir.refines, 0); assert.equal(heir.affixes.length, 6);
+    for (const x of heir.affixes) { const q = G.affixQuality(x, heir.power, heir.rarity, heir.level); assert.ok(q === null || q > .99, `${x.id} max roll ${q}`); }
+    assert.throws(() => act(s, { type: 'gearReset', id: 'h' }, 0), /초기화할 비용이 없/);
+    const onyx = O.onyxAccessory(O.ONYX_BOSSES[0], 'o', 100); onyx.affixes = G.rollAffixes(6, onyx.power, onyx.origin, local, onyx.affixes, 'charm', 100); onyx.rerolls = 2; onyx.enhance = 10; s.inventory.push(onyx);
+    const unique = onyx.affixes[0]; s.pearls = 10; assert.throws(() => act(s, { type: 'gearReset', id: 'o' }, 0), /세계석/); s.pearls = 2000;
+    act(s, { type: 'gearReset', id: 'o' }, 0, local); assert.deepEqual(onyx.affixes[0], unique, 'unique kept'); assert.equal(onyx.affixes.length, 6); assert.equal(onyx.enhance, 0);
+});
+
+test('v3.119 display bugs: 마력 option mana regen scales with power (and old tiny values are fixed on load), 초월 keeps hp/attack integers', async () => {
+    const G = await L.load('data/gear'), Mig = await L.load('systems/migrations'), St = await L.load('systems/stats');
+    const flow = G.rollOption(G.affixDef('flow'), 300, 4, () => .5, 80);
+    assert.ok(flow.value2 >= 1 && Number.isInteger(flow.value2), `mana regen scales with power: ${flow.value2}`);
+    const s = newState(0); s.inventory.push({ id: 'f', slot: 'coat', rarity: 4, power: 300, level: 80, name: 'f', affixes: [{ ...flow, value2: .0108 }] });
+    Mig.fixFlowRegen(s); const fixed = s.inventory[0].affixes[0].value2; assert.equal(fixed, Math.round(flow.value * .012 / .225)); Mig.fixFlowRegen(s); assert.equal(s.inventory[0].affixes[0].value2, fixed, 'idempotent');
+    const t = newState(0); t.equipment.coat = { id: 'c', slot: 'coat', rarity: 5, power: 333, level: 80, name: 'c', affixes: [{ id: 'transcend', name: '초월', stat: 'allStats', value: .0173 }] };
+    const a = St.stats(t); for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist']) assert.ok(Number.isInteger(a[k]), `${k} ${a[k]}`);
+});
