@@ -902,9 +902,7 @@
 @media(prefers-reduced-motion:reduce){.scene-fx-kkami-ring{display:none}}
 /* v3.39 기록판(전투 · 획득 · 소식 · 채팅): 오른쪽 열의 남는 높이를 채웁니다. 모바일은 장면 아래에서 높이를 제한합니다. */
 .feed-tabs{margin-right:auto;flex:1;min-width:0}
-.battle-place-tabs.feed-tabs button{flex:1 1 0;min-width:0;justify-content:center;gap:3px;padding:6px 2px;font-size:12px;white-space:nowrap}
-/* v3.101 탭이 5개(기록 추가)라 아이콘을 조금 줄입니다. */
-.battle-place-tabs.feed-tabs button svg{width:12px;height:12px;flex:none}
+.battle-place-tabs.feed-tabs button{flex:1 1 0;justify-content:center;gap:4px;padding:6px 6px;font-size:12px;white-space:nowrap}
 .battle-utility-rail>.battle-feed .rail-log{flex:1 1 0;height:auto;min-height:260px}
 .battle-utility-rail>.battle-feed .log-reward-ticker{margin-bottom:8px}
 .battle-feed-empty{color:#718c90;font-size:12px;margin:8px 0}
@@ -924,8 +922,9 @@
 .chat-line.news-line.news-admin{border-left-color:#93bda9}.chat-line.news-line.news-admin .chat-name{color:#93bda9}.chat-line.news-line.news-admin .chat-text{color:#c6e2d4}
 .chat-line.news-line.news-plain .chat-text{color:#c2d3cd}
 .chat-line.news-line.hacker-alert{border-left-color:#ff6b6b}.chat-line.news-line.hacker-alert .chat-name,.chat-line.news-line.hacker-alert .chat-text{color:#ff6b6b}
-/* v3.101 기록판 ‘기록’ 탭: 몹별 최근 전투 */
-.battle-records{display:flex;flex-direction:column;gap:10px}
+/* v3.101 통계 · 기록 › 전투 기록: 몹별 최근 전투 */
+.battle-records{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:12px;align-items:start}
+.battle-record-group{padding:12px}
 .battle-record-group h3{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 0 4px;color:#cfe0d6;font-size:13px}
 .battle-record-group h3 small{color:#718c90;font-size:11px;font-weight:500}
 .battle-record{border:1px solid #263f42;border-radius:6px;background:#0b1a1f;margin-bottom:4px}
@@ -942,5 +941,4 @@
 .battle-record-stats{color:#8ea6a2;font-size:11px}
 .battle-record-diff{color:#d7c48a;font-size:11px}
 .battle-record-toggle{display:inline-flex;align-items:center;gap:2px;color:#7f9c98;font-size:11px}
-.battle-record-log{padding:4px 8px 8px;border-top:1px solid #1d3134}
-.battle-records-note{color:#5f7a7d;font-size:11px;margin:4px 0 0}
+.battle-record-log{padding:4px 8px 8px;border-top:1px solid #1d3134;max-height:420px;overflow-y:auto}
