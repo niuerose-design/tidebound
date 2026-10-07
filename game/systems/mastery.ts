@@ -46,9 +46,10 @@ export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
     }
     // 기본 숙련 1 + 계급 특전 숙련 훈련. 보너스 한도는 그만큼 함께 올라갑니다. (v3.23 깊은 모험 +1은 삭제)
     // v3.75 수련 옵션: 기본 숙련 +1(고정)씩.
-    const base = 1 + rankPerkLevel(s, 'drill') + Math.floor(equippedAffixTotal(s, 'masteryFlat'));
+    // v3.107 계급 특전 숙련 훈련(drill)은 배율과 무관한 고정값: amount에는 들어가지만(보너스 한도 계산), 배율(계열 집중 · 이벤트 · 숙련의 기억 · 승천)은 amount − drill에만 곱합니다.
+    const drill = rankPerkLevel(s, 'drill'), base = 1 + drill + Math.floor(equippedAffixTotal(s, 'masteryFlat'));
     const amount = masteryPerVictory(bonus, base);
-    return { amount, base, bonus: amount - base, source };
+    return { amount, base, bonus: amount - base, source, drill };
 }
 /**
  * 처치 숙련 배율(조건부 스킬 보너스 제외). 전투 보상과 능력치 화면이 같은 식을 씁니다.
@@ -59,7 +60,8 @@ export function masteryMultipliers(s: State) {
     const focus = s.vows?.focus?.kind === 'tree' && jobById(s.job)?.tree === s.vows.focus.id ? 2 : 1;
     const event = s.event?.mastery || 1;
     const research = 1 + masteryResearchHundredths(s) / 100;
-    // v3.75 수련 옵션: 기본 숙련 +1(고정)씩.
-    const base = 1 + rankPerkLevel(s, 'drill') + Math.floor(equippedAffixTotal(s, 'masteryFlat'));
-    return { base, focus, event, research, total: focus * event * research };
+    // v3.75 수련 옵션: 기본 숙련 +1(고정)씩. v3.107 계급 특전 숙련 훈련(drill)은 배율 뒤에 더합니다(scaled = base − drill에만 배율).
+    const drill = rankPerkLevel(s, 'drill'), base = 1 + drill + Math.floor(equippedAffixTotal(s, 'masteryFlat'));
+    const total = focus * event * research;
+    return { base, drill, focus, event, research, total, perKill: (base - drill) * total + drill };
 }
