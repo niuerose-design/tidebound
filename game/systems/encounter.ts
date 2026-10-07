@@ -151,6 +151,18 @@ export function stageField(s: Pick<State, 'level'>, stageId: string, fishId: str
     applyDepth(foe, base, stageDepth(st.id));
     return { field, foe, level: field.level, exp: Math.max(1, Math.round(base.exp * expLevelScale(field.level, s.level))), gold: base.gold, skills: foeSkills(f.id, field.level, !!f.boss) };
 }
+/**
+ * v3.112 경험의 누리 보상 기준: 지금 사냥터 한 번 출현의 평균 경험치(몬스터 평균 · 경험치 배율 · 무리 서식지는 평균 규모와 ×500 보상 · 칠흑 세트).
+ * 변종 · 황금 개체 · 이벤트성 희귀 몬스터는 넣지 않습니다.
+ */
+export function stageEncounterExp(s: State, won = stats(s)) {
+    const st = STAGES.find(x => x.id === s.stage);
+    if (!st?.fish.length) return 0;
+    const tier = encounterTier(s), each = st.fish.reduce((sum, id) => sum + stageField(s, st.id, id, tier).exp, 0) / st.fish.length;
+    const heads = st.habitat ? (1 - HABITAT.bigChance) * HABITAT.sizes[0] * swarmRewardMultiplier(HABITAT.sizes[0]) + HABITAT.bigChance * HABITAT.sizes[1] * swarmRewardMultiplier(HABITAT.sizes[1]) : 1;
+    const onyxSet = st.habitat ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
+    return each * expMultiplier(s, won) * onyxSet * heads;
+}
 /** v3.9 깊이 계수를 몬스터 체력·공격·마법과 보상 골드·경험치에 곱합니다(제자리 수정). */
 function applyDepth(foe: Stats, base: { exp: number; gold: number }, k: number) {
     if (k === 1) return;
@@ -339,10 +351,12 @@ export function reward(s: State, rng: () => number) {
     if (size > 1) recordGoal(s, 'swarm', undefined, 1, text => addLog(s, text, 'reward'));
     s.exp += exp;
     // v27.58 경험의 누리: 지금 레벨 필요 경험치의 1~3%. 배율과 무관하게 바로 더합니다.
-    if (e.id === EXP_NURI.id && s.level < 100) {
-        const t = rollNuriTier(rng), bonus = Math.max(1, Math.floor(xpNeeded(s.level, s.rebirths, xpWall(s)) * t.pct));
+    // v3.112 이 사냥터 평균 출현 경험치 ×(1% 당 10회분)과 비교해 큰 쪽을 줍니다(고수는 레벨 %가 너무 작아 무리 한 번보다 못했음). Lv.100부터는 출현 몫만.
+    if (e.id === EXP_NURI.id) {
+        const t = rollNuriTier(rng), byLevel = s.level < 100 ? Math.floor(xpNeeded(s.level, s.rebirths, xpWall(s)) * t.pct) : 0;
+        const times = Math.round(t.pct * EXP_NURI.encountersPerPct), byField = Math.floor(stageEncounterExp(s, won) * times), bonus = Math.max(1, byLevel, byField);
         s.exp += bonus;
-        addLog(s, `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} (Lv.${s.level} 필요량의 ${Math.round(t.pct * 100)}%)`, 'reward');
+        addLog(s, `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} (${byField > byLevel ? `이 사냥터 출현 ${times}회분` : `Lv.${s.level} 필요량의 ${Math.round(t.pct * 100)}%`})`, 'reward');
     }
     addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');

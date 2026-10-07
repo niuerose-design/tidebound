@@ -673,7 +673,7 @@ test('v27.55 rebirth level keeps rising after Lv.60 (+1 per rebirth, cap 80); le
     const gated = W.STAGES.find(st => st.rebirth > 5); if (gated) assert.throws(() => E.act(s5, { type: 'stage', id: gated.id }, 0), 'rebirth gates stay');
 });
 
-test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% of the current level requirement', async () => {
+test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% of the current level requirement (v3.112 or 10~30 stage encounters, whichever is larger)', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri'), B = await L.load('data/balance');
     const make = (level = 80) => { const s = newState(0); s.level = level; s.kills = 5000; s.stage = 'brook'; s.tide = 10; s.running = true; return s; };
@@ -683,14 +683,16 @@ test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% o
     assert.equal(b.enemy.name, '경험의 누리'); assert.ok(!b.enemy.variant && !b.enemy.swarm, 'no variants');
     const c = make(); Enc.spawn(c, () => pm + N.nuriChance(10) * 1.5); assert.ok(![Mi.MIMIC.id, N.EXP_NURI.id].includes(c.enemy.id), 'past both bands');
     const off = make(); off.catchingUp = true; Enc.spawn(off, () => pm * Mi.MIMIC.offlineScale + N.nuriChance(10) * .5); assert.notEqual(off.enemy.id, N.EXP_NURI.id, 'quarter rate offline');
-    for (const lv of [N.EXP_NURI.minLevel - 1, 100]) { const s = make(lv); Enc.spawn(s, () => pm + N.nuriChance(10) / 2); assert.notEqual(s.enemy.id, N.EXP_NURI.id, `not at Lv.${lv}`); }
+    { const s = make(N.EXP_NURI.minLevel - 1); Enc.spawn(s, () => pm + N.nuriChance(10) / 2); assert.notEqual(s.enemy.id, N.EXP_NURI.id, 'not below the min level'); }
+    { const s = make(100); Enc.spawn(s, () => pm + N.nuriChance(10) / 2); assert.equal(s.enemy.id, N.EXP_NURI.id, 'v3.112 Lv.100+ too'); }
     const flat = make(); flat.tide = 9; Enc.spawn(flat, () => Mi.mimicChance(9, 0) + N.nuriChance(9) / 2); assert.notEqual(flat.enemy.id, N.EXP_NURI.id, 'v27.59 needs stage difficulty 10');
     const few = make(); few.kills = N.EXP_NURI.minKills - 1; Enc.spawn(few, () => pm + N.nuriChance(10) / 2); assert.notEqual(few.enemy.id, N.EXP_NURI.id, 'needs kills');
     for (const [roll, pct] of [[0, .01], [.8, .02], [.99, .03]]) {
         const s = make(); s.rebirths = 3; s.exp = 0; Enc.spawn(s, () => pm + N.nuriChance(10) / 2); s.enemy.hp = 0;
         const base = Math.floor(s.enemy.exp * (await L.load('systems/stats')).expMultiplier(s));
+        const field = Math.floor(Enc.stageEncounterExp(s) * Math.round(pct * N.EXP_NURI.encountersPerPct));
         Enc.reward(s, () => roll);
-        assert.equal(s.exp, base + Math.floor(B.xpNeeded(80, 3, (await L.load('systems/meta')).xpWall(s)) * pct), `tier ${pct}`);
+        assert.equal(s.exp, base + Math.max(Math.floor(B.xpNeeded(80, 3, (await L.load('systems/meta')).xpWall(s)) * pct), field), `tier ${pct}: larger of level % and stage encounters`);
         assert.equal(s.book[N.EXP_NURI.id], 1); assert.ok(s.logs.some(l => l.text.includes('경험의 누리')));
     }
 });
@@ -1562,4 +1564,17 @@ test('v3.107 rank perk drill is a flat add outside every mastery multiplier (foc
     assert.equal(s.jobMastery[s.job] - before, 1 * 2 + 3, 'event ×2 applies to base 1 only; drill +3 stays flat (was (1 + 3) × 2)');
     const mid = s.jobMastery[s.job]; s.enemy = foe({ swarm: 100, born: s.turn - 9 }); Enc.reward(s, () => .99);
     assert.equal(s.jobMastery[s.job] - mid, 100 * 2 + 100 * 3, '×100 swarm over 10 turns: 100 heads × (1 × 2) + 100 heads × 3');
+});
+
+test('v3.112 exp nuri for strong hunters: pays 10/20/30 average encounters of the current stage when that beats the level %, and appears from Lv.100 on', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri');
+    const s = newState(0); s.level = 120; s.rebirths = 60; s.kills = 5000; s.stage = 'brook'; s.tide = 30; s.running = true;
+    const pm = Mi.mimicChance(30, 0); Enc.spawn(s, () => pm + N.nuriChance(30) / 2); assert.equal(s.enemy.id, N.EXP_NURI.id);
+    s.enemy.hp = 0; const per = Enc.stageEncounterExp(s), e0 = s.exp, base = Math.floor(s.enemy.exp * (await L.load('systems/stats')).expMultiplier(s));
+    assert.ok(per > 0); Enc.reward(s, () => .99);
+    assert.equal(s.exp - e0, base + Math.floor(per * 30), 'Lv.100+: big win = 30 encounters of this stage');
+    assert.ok(s.logs.some(l => l.text.includes('이 사냥터 출현 30회분')));
+    const at = stage => { const x = newState(0); x.level = 120; x.rebirths = 60; x.stage = stage; x.tide = 30; return Enc.stageEncounterExp(x); };
+    assert.ok(at('lithSwarm') > 50 * at('brook'), 'habitat encounters count the whole swarm (×100 / ×500)');
 });
