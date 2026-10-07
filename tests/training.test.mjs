@@ -186,16 +186,12 @@ test('v3.100 Luminous: Light Reflection ×2.8, Apocalypse ×3 with one extra hit
     assert.equal(sk('lightHarpoon').extraAttacks, 1);
 });
 
-test('v3.102 Michael: Shining Cross defense ratio 2.4, Light of Courage adds crit 8%p and crit damage 0.4', () => {
-    const sk = id => SKILLS.find(s => s.id === id);
-    assert.equal(sk('lastStand').scalingRatio, 2.4);
-    assert.deepEqual([sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage], [.08, .4]);
-});
-
-test('v3.107 Paladin: Sanctuary defense ratio 2.4, Elemental Force adds crit 8%p and crit damage 0.4 (same as Michael)', () => {
+test('v3.107 Paladin: Sanctuary defense ratio 2.4, Elemental Force adds crit 8%p and crit damage 0.4 (v3.135: Michael lineage retired)', () => {
     const sk = id => SKILLS.find(s => s.id === id);
     assert.equal(sk('citadelCrash').scalingRatio, 2.4);
-    assert.deepEqual([sk('eternalReef').bonus.crit, sk('eternalReef').bonus.critDamage], [sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage]);
+    assert.deepEqual([sk('eternalReef').bonus.crit, sk('eternalReef').bonus.critDamage], [.08, .4]);
+    for (const id of ['shieldBash', 'lastStand', 'divineAegis', 'fortress', 'coralPatience']) assert.equal(sk(id), undefined, `${id} removed`);
+    for (const id of ['shieldbearer', 'guardianDeity', 'coralBuilder']) assert.equal(JOBS.find(j => j.id === id), undefined, `${id} removed`);
 });
 
 test('v3.108 Wild Hunter: Wild Vulcan ×2.4, Sonic Boom ×2.8', () => {
@@ -206,7 +202,7 @@ test('v3.108 Wild Hunter: Wild Vulcan ×2.4, Sonic Boom ×2.8', () => {
 
 test('v3.109 Kaiser: Nova Temperance adds crit 8%p and crit damage 0.4 (same as Michael and Paladin)', () => {
     const sk = id => SKILLS.find(s => s.id === id);
-    assert.deepEqual([sk('earthShell').bonus.crit, sk('earthShell').bonus.critDamage], [sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage]);
+    assert.deepEqual([sk('earthShell').bonus.crit, sk('earthShell').bonus.critDamage], [sk('eternalReef').bonus.crit, sk('eternalReef').bonus.critDamage]);
 });
 
 test('v3.110 Mechanic: Magnetic Field ×2.8, Robot Launcher RM7 ×3.2 with one extra hit', () => {
@@ -278,4 +274,14 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     assert.deepEqual(finish({ poison: dot(2) }), [2, 1]);
     assert.deepEqual(finish({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(2) }), [3, 1]);
     assert.deepEqual(finish({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(STATUS_TUNING.burnMaxStacks) }), [punisher.dotFinisher.maxHits, 2]);
+});
+
+test('v3.135 retiring the Michael lineage: a saved character on a removed job falls back to fisher and its skill records are dropped', () => {
+    const s = newState(0); s.job = 'guardianDeity'; s.unlockedJobs.push('shieldbearer', 'guardianDeity'); s.jobMastery.guardianDeity = 5000; s.jobMastery.shieldbearer = 100;
+    s.learned.divineAegis = 1; s.learned.aegisJudgment = 1; s.skills = ['divineAegis', 'aegisJudgment', 'breath']; s.skillInheritances.spikedShield = true; s.skillPractice = { divineAegis: 10, breath: 3 };
+    migrateState(s, 0);
+    assert.equal(s.job, 'fisher'); assert.ok(!s.unlockedJobs.includes('guardianDeity') && !s.unlockedJobs.includes('shieldbearer'));
+    assert.equal(s.jobMastery.guardianDeity, undefined); assert.equal(s.jobMastery.shieldbearer, undefined);
+    assert.deepEqual(s.skills, ['breath']); assert.equal(s.learned.divineAegis, undefined); assert.equal(s.skillInheritances.spikedShield, undefined); assert.deepEqual(s.skillPractice, { breath: 3 });
+    assert.ok(!JOBS.some(j => ['shieldbearer', 'gatekeeper', 'fortressLord', 'unyielding', 'guardianDeity', 'coralBuilder'].includes(j.id)), 'jobs removed from data');
 });

@@ -37,7 +37,7 @@ export function SkillIcon({ id, size = 24 }: {
     const [broken, setBroken] = useState(false);
     // eslint-disable-next-line @next/next/no-img-element -- 선택적 정적 파일(목록에 있는 것만 요청)
     if (SKILL_ART.has(id) && !broken) return <img className="skill-art" src={skillArtSrc(id)} alt="" width={size} height={size} loading="lazy" decoding="async" onError={() => setBroken(true)}/>;
-    const Icon = id === 'breath' || id === 'spring' || id === 'vital' ? Heart : id === 'scales' || id === 'fortress' ? Shield : id === 'wave' ? Waves : id === 'focus' ? Target : id === 'anchor' ? Anchor : id === 'hook' || id === 'pierce' ? Swords : Zap;
+    const Icon = id === 'breath' || id === 'spring' || id === 'vital' ? Heart : id === 'scales' ? Shield : id === 'wave' ? Waves : id === 'focus' ? Target : id === 'anchor' ? Anchor : id === 'hook' || id === 'pierce' ? Swords : Zap;
     return <Icon size={size}/>;
 }
 export function SlotIcon({ slot, size = 24 }: {

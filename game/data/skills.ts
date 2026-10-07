@@ -24,7 +24,6 @@ export const SKILLS: Skill[] = [
     { id: 'wave', name: '해일', desc: '공격력 240% 피해, 적을 1턴 기절.', type: 'active', level: 10, job: 'tide', chance: .3, cooldown: 4, multiplier: 2.4, effect: 'stun' },
     { id: 'spring', name: '생명의 조류', desc: '최대 체력 22% 회복, 공격력 250% 피해.', type: 'active', level: 20, job: 'tide', chance: .4, cooldown: 4, multiplier: 2.5, effect: 'heal' },
     { id: 'anchor', name: '심해의 닻', desc: '공격력 210% 피해, 적을 1턴 기절.', type: 'active', level: 10, job: 'warden', chance: .4, cooldown: 3, multiplier: 2.1, effect: 'stun' },
-    { id: 'fortress', name: '산호의 의지', desc: '최대 체력 22% 회복, 공격력 200% 피해.', type: 'active', level: 20, job: 'warden', chance: .4, cooldown: 4, multiplier: 2, effect: 'heal' },
     { id: 'focus', name: '낚시꾼의 집중', desc: '치명타 확률 +7%. 팬텀 계열의 불안정한 고점을 보완합니다.', type: 'passive', level: 2, job: 'squidJester', chance: 0, cooldown: 0, multiplier: 0, bonus: { crit: .07 } },
     { id: 'scales', name: '비늘 갑옷', desc: '물리 방어 +6, 치명 피해 +15%p. 비늘 가시로 받아치는 반격형 방벽입니다.', type: 'passive', level: 5, job: 'warden', chance: 0, cooldown: 0, multiplier: 0, bonus: { defense: 6, critDamage: .15 } },
     { id: 'vital', name: '바다의 생명력', desc: '최대 체력 +170, 턴당 체력 회복 +2, 쓰러진 뒤 회복 대기 -5턴. 방어형 직업의 긴 전투를 돕습니다.', type: 'passive', level: 12, job: 'warden', chance: 0, cooldown: 0, multiplier: 0, revive: 5, bonus: { hp: 170, hpRegen: 2 } },
@@ -106,7 +105,7 @@ SKILLS.push(
 const skillJobAssignments: Record<string, string> = {
     breath: 'fisher', arcane: 'bubbleMage', cut: 'barbSkirmisher',
     focus: 'squidJester', scales: 'scaleKnight', vital: 'lifeTender', resolve: 'oathAngler',
-    hunt: 'stormHunter', spring: 'tideMender', fortress: 'coralBuilder',
+    hunt: 'stormHunter', spring: 'tideMender',
     hushCurrent: 'stillwaterBinder', undertow: 'stillwaterBinder', rushCurrent: 'wakeRunner',
     insight: 'manaScribe', flow: 'manaScribe', precision: 'wanderer',
     goldMemory: 'memoryMerchant', soulShell: 'coralSaint', twinHook: 'twinAngler',
