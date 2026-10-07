@@ -589,3 +589,13 @@ test('v3.118 gear cost reset: heir / onyx only, 999 pearls, rerolls · refines �
     const unique = onyx.affixes[0]; s.pearls = 10; assert.throws(() => act(s, { type: 'gearReset', id: 'o' }, 0), /세계석/); s.pearls = 2000;
     act(s, { type: 'gearReset', id: 'o' }, 0, local); assert.deepEqual(onyx.affixes[0], unique, 'unique kept'); assert.equal(onyx.affixes.length, 6); assert.equal(onyx.enhance, 0);
 });
+
+test('v3.119 display bugs: 마력 option mana regen scales with power (and old tiny values are fixed on load), 초월 keeps hp/attack integers', async () => {
+    const G = await L.load('data/gear'), Mig = await L.load('systems/migrations'), St = await L.load('systems/stats');
+    const flow = G.rollOption(G.affixDef('flow'), 300, 4, () => .5, 80);
+    assert.ok(flow.value2 >= 1 && Number.isInteger(flow.value2), `mana regen scales with power: ${flow.value2}`);
+    const s = newState(0); s.inventory.push({ id: 'f', slot: 'coat', rarity: 4, power: 300, level: 80, name: 'f', affixes: [{ ...flow, value2: .0108 }] });
+    Mig.fixFlowRegen(s); const fixed = s.inventory[0].affixes[0].value2; assert.equal(fixed, Math.round(flow.value * .012 / .225)); Mig.fixFlowRegen(s); assert.equal(s.inventory[0].affixes[0].value2, fixed, 'idempotent');
+    const t = newState(0); t.equipment.coat = { id: 'c', slot: 'coat', rarity: 5, power: 333, level: 80, name: 'c', affixes: [{ id: 'transcend', name: '초월', stat: 'allStats', value: .0173 }] };
+    const a = St.stats(t); for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist']) assert.ok(Number.isInteger(a[k]), `${k} ${a[k]}`);
+});

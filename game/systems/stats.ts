@@ -208,7 +208,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     limit('penetration', Math.min(PENETRATION.cap, a.penetration));
     limit('statusResist', Math.min(.5, a.statusResist || 0));
     // v3.12 창세의 힘·칠흑 세트: 체력·양 공격·양 방어 배율. v3.90 최대 마나도.
-    if (a.allStats) for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist'] as const) mul(k, [['equipment', 1 + a.allStats]]);
+    // v3.119 배율 뒤에도 정수로(초월 · 창세가 붙으면 최대 체력 3460.1499… 처럼 소수가 화면에 나오던 문제).
+    if (a.allStats) for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist'] as const) { mul(k, [['equipment', 1 + a.allStats]]); limit(k, Math.max(k === 'hp' ? 1 : 0, Math.floor(a[k]))); }
     // v3.73 피의 계약 흡혈은 전체 상한(30%)도 받지 않습니다(한 번 회복량 상한 lifestealHpCap은 그대로).
     { const pact = (free.lifesteal || 0) * roughGear(s); limit('lifesteal', Math.min(.3, a.lifesteal - pact) + pact); }
     // v27.86 힘의 길 회복 봉쇄: 흡혈·턴당 체력 회복 ×(1 − 50·75·100%). 처치 후 회복은 victoryHealRate에서 줄입니다.

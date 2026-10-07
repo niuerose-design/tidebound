@@ -40,10 +40,11 @@ export type BattleRecordStore = {
     /** 최근에 싸운 몹 순서(새것 먼저). */
     order: string[];
 };
-export const BATTLE_RECORD = { special: 5, normal: 1, defeats: 5, mobs: 20, lines: 24 } as const;
+/** v3.119 너무 길어지지 않게: 몹 20 → 10종, 무리 · 변종 · 보스 승리와 패배 5 → 3회. */
+export const BATTLE_RECORD = { special: 3, normal: 1, defeats: 3, mobs: 10, lines: 24 } as const;
 
 export const emptyBattleRecords = (): BattleRecordStore => ({ lastId: 0, byMob: {}, order: [] });
-/** 무리(×N) · 변종(표식) · 보스 태그가 붙은 이름이면 5회, 아니면 1회. */
+/** 무리(×N) · 변종(표식) · 보스 태그가 붙은 이름이면 special회, 아니면 1회. */
 export const isSpecialMob = (label: string) => /^\[|^[◆◈✧]|×\d+$/.test(label);
 
 const KILL = /^(✦ 황금 )?(.+?) 처치 · \+/;
@@ -109,4 +110,15 @@ export function compareWithPrevious(record: BattleRecord) {
     const prev = record.result === 'win' ? record.before : undefined;
     if (!prev) return undefined;
     return { turns: record.turns - prev.turns, maxHit: prev.maxHit ? record.maxHit / prev.maxHit : undefined };
+}
+
+/** v3.119 저장해 둔 기록을 지금 상한에 맞춥니다(예전 상한으로 쌓인 기기 기록이 남지 않게). */
+export function trimBattleRecords(store: BattleRecordStore): BattleRecordStore {
+    for (const old of store.order.splice(BATTLE_RECORD.mobs)) delete store.byMob[old];
+    for (const name of store.order) {
+        const keep = isSpecialMob(name) ? BATTLE_RECORD.special : BATTLE_RECORD.normal;
+        let others = 0, losses = 0;
+        store.byMob[name] = (store.byMob[name] || []).filter(r => r.result === 'lose' ? ++losses <= BATTLE_RECORD.defeats : ++others <= keep);
+    }
+    return store;
 }

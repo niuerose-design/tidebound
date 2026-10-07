@@ -5,7 +5,7 @@
  */
 import { useEffect, useSyncExternalStore } from 'react';
 import type { State } from '@/game/types';
-import { emptyBattleRecords, ingestBattleLogs, type BattleRecordStore } from '@/game/systems/battle-records';
+import { emptyBattleRecords, ingestBattleLogs, trimBattleRecords, type BattleRecordStore } from '@/game/systems/battle-records';
 
 const KEY = 'tidebound.battleRecords:', SAVE_MS = 5000;
 let owner = '', store: BattleRecordStore = emptyBattleRecords(), snapshot: BattleRecordStore = store, timer: ReturnType<typeof setTimeout> | undefined;
@@ -16,7 +16,7 @@ const save = () => { timer = undefined; if (!owner) return; try { localStorage.s
 const load = (name: string) => {
     if (timer) { clearTimeout(timer); save(); }
     owner = name; store = emptyBattleRecords();
-    try { const raw = localStorage.getItem(KEY + name), parsed = raw ? JSON.parse(raw) as BattleRecordStore : null; if (parsed?.byMob && Array.isArray(parsed.order)) store = { ...parsed, current: undefined }; } catch { /* 깨진 값: 새로 시작 */ }
+    try { const raw = localStorage.getItem(KEY + name), parsed = raw ? JSON.parse(raw) as BattleRecordStore : null; if (parsed?.byMob && Array.isArray(parsed.order)) store = trimBattleRecords({ ...parsed, current: undefined }); } catch { /* 깨진 값: 새로 시작 */ }
 };
 function feed(s: State) {
     const loaded = s.name !== owner;

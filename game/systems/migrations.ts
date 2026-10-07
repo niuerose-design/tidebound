@@ -8,6 +8,7 @@ import { syncRelicPower, tuneOnyx, fixRelicImprints } from './equipment';
 import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
+import { affixDef } from '../data/gear';
 import { SAVE_VERSION, PENETRATION } from '../data/balance';
 import { newState } from './engine';
 import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
@@ -234,6 +235,8 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         for (const [id, got] of Object.entries(bossClaims)) if (got) { s.achievements[`firstClear:${id}`] ??= s.turn || 0; s.achievementClaims[`firstClear:${id}`] = true; }
         delete (s as Record<string, unknown>).bossResearchClaims;
     }
+    // v3.119 마력 옵션의 턴당 마나 회복이 위력 비례가 아니라 0.01 남짓으로 붙어 있던 장비를 바로잡습니다(최대 마나와 같은 굴림으로).
+    if (s.version === SAVE_VERSION) fixFlowRegen(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
     if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
@@ -290,4 +293,13 @@ export function boostPenetrationAffixes(s: State) {
     }
     s.penetrationBoosted = true;
     return n;
+}
+
+/** v3.119 마력(flow) 옵션: 둘째 수치(턴당 마나 회복)를 최대 마나와 같은 굴림의 위력 비례 값으로 다시 맞춥니다. 1 미만으로 붙은 줄만 고치므로 여러 번 불러도 같습니다. */
+export function fixFlowRegen(s: State) {
+    const def = affixDef('flow');
+    if (!def?.base || !def.base2) return;
+    for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})])
+        for (const x of item?.affixes || [])
+            if (x.id === 'flow' && x.stat2 === 'manaRegen' && (x.value2 || 0) < 1 && x.value >= 1) x.value2 = Math.max(1, Math.round(x.value * def.base2 / def.base));
 }

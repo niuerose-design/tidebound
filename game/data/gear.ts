@@ -202,7 +202,8 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
     const out: ItemAffix = { id: def.id, name: def.name, stat: def.stat, value: round(def.base * scale * roll) };
     if (def.stat2 && def.base2) {
         // 체력·공격·방어 같은 고정 수치 손해는 위력 비례, 속도·명중 같은 손해는 고정 폭입니다.
-        const flatStat = ['hp', 'attack', 'magic', 'defense', 'resist', 'mana'].includes(def.stat2);
+        // v3.119 턴당 마나 회복(마력의 둘째 수치)도 위력 비례입니다(빠져 있어 0.01 남짓 · ‘+0’으로 붙던 버그).
+        const flatStat = ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'manaRegen'].includes(def.stat2);
         out.stat2 = def.stat2;
         out.value2 = def.rollBoth ? (flatStat ? Math.round(def.base2 * Math.max(1, power) * roll) : Math.round(def.base2 * roll * 10000) / 10000) : flatStat ? Math.round(def.base2 * Math.max(1, power)) : Math.round(def.base2 * 10000) / 10000;
     }
