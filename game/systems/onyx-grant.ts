@@ -7,7 +7,7 @@ import { addLog } from './state';
 
 /**
  * v3.114 칠흑 장신구 하나를 줍니다(보스 드롭 · 환생 이정표 공용). 이미 가진 종이면 각성 +1(최대 awakenMax), 각성까지 다 찼으면 세계석 duplicatePearls.
- * level은 장신구 레벨(보스 드롭은 그 서식지 레벨). 무작위 옵션은 최고 굴림(tuneOnyx)입니다.
+ * level은 서식지 레벨이고, 실제 장신구 레벨은 그것과 내 레벨 중 높은 쪽입니다(v3.122). 무작위 옵션은 최고 굴림(tuneOnyx)입니다.
  */
 export function grantOnyx(s: State, bossId: string, level: number, rng: () => number, source: string) {
     const boss = onyxById(bossId)!;
@@ -21,9 +21,10 @@ export function grantOnyx(s: State, bossId: string, level: number, rng: () => nu
         else { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ ${source} · ${boss.accessory.name}은(는) 각성까지 마쳐 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
         return 'awaken' as const;
     }
-    const item = onyxAccessory(boss, `onyx-${bossId}-${s.turn}`, level);
+    // v3.122 장신구 레벨은 서식지 레벨과 내 레벨 중 높은 쪽(전에는 서식지 레벨이라 리스항구 칠흑은 Lv.5로 나와 바로 끼기 어려웠음).
+    const lv = Math.max(level, s.level || 1), item = onyxAccessory(boss, `onyx-${bossId}-${s.turn}`, lv);
     // v3.77 칠흑 장신구의 무작위 옵션은 최고 굴림입니다. 위력은 그대로 (레벨 + 2) × 5.2이고 골드로 레벨을 올려 키웁니다.
-    item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', level);
+    item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', lv);
     tuneOnyx(item);
     s.inventory.push(item); s.itemBook ??= {}; s.itemBook[onyxCodexKey(bossId)] = true;
     addLog(s, `✦ ${source} · 칠흑 장신구 ‘${item.name}’ 획득! 환생해도 남습니다 (보유 ${ownedOnyx(s).size}/${ONYX_BOSSES.length}종) · 물건 도감 자동 등록`, 'reward');

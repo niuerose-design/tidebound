@@ -63,7 +63,7 @@ export const ONYX_SET: { count: number; label: string; bossDamage?: number; habi
 export const onyxSetBonus = (owned: number) => ONYX_SET.filter(b => owned >= b.count).reduce((a, b) => ({ bossDamage: a.bossDamage + (b.bossDamage || 0), habitatReward: a.habitatReward + (b.habitatReward || 0), statusResist: a.statusResist + (b.statusResist || 0), allStats: a.allStats + (b.allStats || 0) }), { bossDamage: 0, habitatReward: 0, statusResist: 0, allStats: 0 });
 /** 서식지 출현마다 칠흑 보스가 나올 확률. 못 본 횟수가 pity에 닿으면 확정. */
 export const onyxChance = (tier: number, seen: number) => seen >= ONYX.pity ? 1 : ONYX.chance * (1 + tier * ONYX.chancePerTier);
-/** 칠흑 장신구를 만듭니다(태초 고정, 서식지 레벨, 고유 규칙 옵션 + 무작위 옵션은 호출자가 채움). */
+/** 칠흑 장신구를 만듭니다(태초 고정, 레벨은 부르는 쪽이 정함(v3.122 서식지 레벨과 내 레벨 중 높은 쪽), 고유 규칙 옵션 + 무작위 옵션은 호출자가 채움). */
 export function onyxAccessory(boss: OnyxBoss, id: string, level: number): Item {
     const stage = STAGES.find(st => st.region === boss.region && st.habitat);
     return { id, name: boss.accessory.name, slot: 'charm', rarity: RARITIES.length - 1, level, power: Math.max(2, Math.round((level + 2) * ONYX.power)), locked: true, onyx: boss.id, origin: stage?.id, description: boss.accessory.desc, affixes: [{ ...boss.accessory.affix }] };

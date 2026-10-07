@@ -182,7 +182,7 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'sirenVoice', name: '세이렌의 목소리', desc: '경험치·장비 드롭·마법 공격이 오릅니다.', level: 70, job: 'siren', cost: 3, bonus: { expBonus: .18, dropBonus: .04, magic: 110 }, masteryMilestones: M5 },
     // 4차에서 끝나던 계보의 5차
     { ...A, ...magic, id: 'doomCurse', name: '파멸의 저주', desc: '', level: 70, job: 'curseQueen', chance: .5, cooldown: 4, multiplier: 3.9, cost: 6, manaCost: 36, effect: 'silence', damageBonusCondition: 'controlled', conditionalDamageBonus: .6, masteryMilestones: M5 },
-    // v3.122 칼리 상향: 헥스의 여왕 마법 공격 +110 → +400(숙련 보정 뒤 엔드 마법 약 +20%, 썬콜 · 은월과 같은 방식).
+    // v3.123 칼리 상향: 헥스의 여왕 마법 공격 +110 → +400(숙련 보정 뒤 엔드 마법 약 +20%, 썬콜 · 은월과 같은 방식).
     { ...P, id: 'queenOfCurses', name: '저주의 왕관', desc: '마법 공격과 지속 피해가 크게 오릅니다.', level: 70, job: 'curseQueen', cost: 3, bonus: { magic: 400, dotBonus: .2 }, masteryMilestones: M5 },
     { ...A, ...dual, id: 'dragonGodSpear', name: '좀비 루팡신의 창', desc: '', level: 70, job: 'seaDragonGod', chance: .5, cooldown: 5, multiplier: 4.5, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
     // v3.98 다크니스 오라: 치명타 +8%p · 치명 피해 +0.45(팬텀 5차 패시브와 같은 값, 다크나이트 치명 75% · ×2.07로 물리 딜러 최하위였음).
