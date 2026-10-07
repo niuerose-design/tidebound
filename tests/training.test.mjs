@@ -203,3 +203,8 @@ test('v3.108 Wild Hunter: Wild Vulcan ×2.4, Sonic Boom ×2.8', () => {
     assert.equal(sk('weakpointThesis').multiplier, 2.4);
     assert.equal(sk('weakpointCut').multiplier, 2.8);
 });
+
+test('v3.109 Kaiser: Nova Temperance adds crit 8%p and crit damage 0.4 (same as Michael and Paladin)', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.deepEqual([sk('earthShell').bonus.crit, sk('earthShell').bonus.critDamage], [sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage]);
+});

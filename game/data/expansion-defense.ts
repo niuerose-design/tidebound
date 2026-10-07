@@ -48,7 +48,8 @@ export const DEFENSE_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'tidalToll', name: '해일 종타', desc: '', level: 55, job: 'eonTurtle', chance: .26, cooldown: 4, multiplier: 2.7, cost: 5, effect: 'stun', scaling: 'hp', scalingRatio: .045, masteryMilestones: M4 },
     { ...P, id: 'eonShell', name: '만년 등껍질', desc: '체력과 두 방어가 크게 오릅니다.', level: 55, job: 'eonTurtle', cost: 3, bonus: { hp: 300, defense: 60, resist: 30 , swarmFind: 1}, masteryMilestones: M4 },
     { ...A, ...physical, id: 'worldBearerSlam', name: '세계를 받친 등', desc: '', level: 70, job: 'worldTurtle', chance: .26, cooldown: 5, multiplier: 4, cost: 6, effect: 'stun', scaling: 'hp', scalingRatio: .06, masteryMilestones: M5 },
-    { ...P, id: 'earthShell', name: '대지의 등껍질', desc: '체력·물리 방어·반격이 크게 오릅니다.', level: 70, job: 'worldTurtle', cost: 3, bonus: { hp: 450, defense: 90, thorns: .4 , swarmFind: 1.2}, masteryMilestones: M5 },
+    // v3.109 카이저 상향(미하일 · 팔라딘과 같은 처방): 노바 템퍼런스 치명타 +8%p · 치명 피해 +0.4(계보 직업 치명 0.01).
+    { ...P, id: 'earthShell', name: '대지의 등껍질', desc: '체력·물리 방어·반격이 크게 오르고, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'worldTurtle', cost: 3, bonus: { hp: 450, defense: 90, thorns: .4, swarmFind: 1.2, crit: .08, critDamage: .4 }, masteryMilestones: M5 },
     { ...P, ...lateBloomer, id: 'eonSlumber', name: '만년의 잠', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 체력·두 방어가 크게 오릅니다.', level: 70, job: 'worldTurtle', cost: 8, bonus: { hp: 200, defense: 15, resist: 15 },
         levelEffects: [{ cost: 8, bonus: { hp: 200, defense: 15, resist: 15 } }, { cost: 7, bonus: { hp: 700, defense: 60, resist: 40 } }, { cost: 5, bonus: { hp: 1600, defense: 140, resist: 100 } }, { cost: 2, bonus: { hp: 3200, defense: 260, resist: 180, thorns: .2 } }] },
     // 루미너스 (2차) 갈래
