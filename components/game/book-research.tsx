@@ -15,7 +15,7 @@ function stepEffect(_id: string, rank: number) {
     const i = rank + 1 - BOOK_ECOLOGY.fromStage, pct = (n: number) => Number((n * 100).toFixed(1));
     if (i < 0) return '적 정보 공개';
     const dealt = BOOK_ECOLOGY.dealt.slice(0, i + 1).reduce((a, n) => a + n, 0), taken = BOOK_ECOLOGY.taken.slice(0, i + 1).reduce((a, n) => a + n, 0);
-    return `연구 효과 +${pct(BOOK_ECOLOGY.dealt[i])}% / -${pct(BOOK_ECOLOGY.taken[i])}% → 합계 주는 피해 +${pct(dealt)}% · 받는 공격 피해 -${pct(taken)}%`;
+    return `연구 효과 +${pct(dealt)}% / -${pct(taken)}%`;
 }
 /** 이 연구 단계 구간(이전 목표 초과 ~ 이번 목표 이하)에서 열리는 무리 사냥 규모. 목표와 해금 수가 다르면 해금 수를 같이 적습니다. */
 const swarmAt = (rank: number, n: number) => SWARM_SIZES.filter(size => size > 1 && SWARM_UNLOCK[size] > (MILESTONES[rank - 1] || 0) && SWARM_UNLOCK[size] <= MILESTONES[rank])
@@ -34,7 +34,7 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
         <dl className="book-research-rows">
             <div><dt>처치 수</dt><dd>{n.toLocaleString()}회</dd></div>
             <div><dt>다음 연구 목표</dt><dd>{next < 0 ? '모든 단계 달성' : `${MILESTONES[next].toLocaleString()}회${n < MILESTONES[next] ? ` (남은 ${(MILESTONES[next] - n).toLocaleString()}회)` : ' ✓'}${tierText(next)}`}</dd></div>
-            {next >= 0 && <div><dt>달성하면</dt><dd>{stepReward(next, n, swarm) || '능력치만'}</dd><small>바로 적용: {stepEffect(id, next)}</small></div>}
+            {next >= 0 && <div><dt>달성하면</dt><dd>{stepReward(next, n, swarm) || '능력치만'}</dd><small>{stepEffect(id, next)}</small></div>}
             {pending.ranks.length > 0 && <div><dt>수령 여부</dt><dd><b className="positive">미수령 SP +{pending.sp}</b></dd></div>}
         </dl>
         {/* v3.95 막대는 처치 수 그대로(전에는 이전 목표부터의 구간이라 '남은 N회'와 숫자가 어긋나 보였음). */}
