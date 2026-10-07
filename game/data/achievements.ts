@@ -131,11 +131,21 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'warden:all', group: '숙련', title: '모든 세계의 수호자', desc: '방어 계열 직업 3개를 숙달합니다.', reward: { pearls: 6 }, progress: s => JOBS.filter(j => j.tree === 'defense' && jobMastered(s, j)).length, target: 3 },
 ];
 for (const a of ACHIEVEMENTS) if (a.reward.ap) ACHIEVEMENT_AP[a.id] = a.reward.ap;
-export const achievementById = (id: string) => ACHIEVEMENTS.find(a => a.id === id);
+/** v3.93 id로 찾기(Map, 처음 부를 때 한 번 만듦). 업적 합계 계산이 받은 업적 수 × 전체 업적 수로 돌던 것을 줄입니다. */
+let achievementMap: Map<string, typeof ACHIEVEMENTS[number]> | undefined;
+export const achievementById = (id: string) => (achievementMap ??= new Map(ACHIEVEMENTS.map(a => [a.id, a]))).get(id);
 /** 업적 묶음. ‘도전’은 플레이 시간·전투 턴·능력치 돌파 같은 누적 기록입니다. */
 export const CHALLENGE_GROUP = '도전' as const;
 export const ACHIEVEMENT_GROUPS = ['모험', '사냥', '숙련', '던전', '환생', '계급', '강화', CHALLENGE_GROUP] as const;
 /** v27.81 받을 수 있는 모든 업적의 영구 보상 합계(업적 보너스 탭의 ‘최대’). */
+/**
+ * v3.93 진행도 읽기: 한 묶음(series)의 단계들은 같은 진행도 함수를 쓰므로, 한 번 훑는 동안 함수마다 한 번만 계산합니다(예: 최대 체력 업적 3단계에 능력치 계산 1번).
+ * 상태가 바뀌면 새로 만들어 쓰세요(진행도 함수는 업적 달성 기록을 읽지 않으므로 해금 표시만 하는 동안은 같은 값입니다).
+ */
+export function progressReader(s: State) {
+    const cache = new Map<Achievement['progress'], number>();
+    return (a: Pick<Achievement, 'progress'>) => { let v = cache.get(a.progress); if (v === undefined) cache.set(a.progress, v = a.progress(s)); return v; };
+}
 export const achievementMaxTotals = () => achievementTotals({ achievementClaims: Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, true])) });
 
 /** 받은 업적의 영구 보상 합계: 장착 AP와 업적 보너스(받은 업적 수 × ACHIEVEMENT_BONUS_PER, 명예 업적 제외). 능력치 배율은 최종 능력치에 한 번 곱합니다(stats가 씀). */

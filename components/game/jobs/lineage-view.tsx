@@ -4,15 +4,15 @@ import { JobArt } from '../art';
 import { ArrowDown, Compass } from 'lucide-react';
 import type { State } from '@/game/types';
 import { JOBS, type Job, type Lineage } from '@/game/data/classes';
-import { jobStatus, crossParent, lineageSummary, tierLabel, jobRevealed, treeName } from './job-status';
+import { statusReader, crossParent, lineageSummary, tierLabel, jobRevealed, treeName } from './job-status';
 
 const tierRange = (tiers: number[]) => { const lo = Math.max(1, tiers[0]), hi = tiers.at(-1)!; return hi <= 0 ? '시작' : lo === hi ? `${hi}차` : `${lo}~${hi}차`; };
 
 /** ① 계보 카드(세로 목록). 계보명 · 차수 점(해금한 차수 채움) · 상태 한 줄. */
 export function LineageCard({ s, lineage, accent, selected, onOpen }: { s: State; lineage: Lineage; accent: string; selected: boolean; onOpen: () => void }) {
-    const sum = lineageSummary(s, lineage.id);
+    const sum = lineageSummary(s, lineage.id, statusReader(s));
     const independent = lineage.id.endsWith('-independent');
-    const near = sum.jobs.filter(j => jobStatus(s, j).status === 'near').length;
+    const near = sum.jobs.filter(j => statusReader(s)(j).status === 'near').length;
     const status = sum.current ? '현재 직업이 있는 계보' : sum.ready ? `전직 가능 ${sum.ready}` : near ? `거의 다 됨 ${near}` : `전직해 본 ${sum.unlocked} / ${sum.total}`;
     return <button type="button" className={`lineage-item ${selected ? 'selected' : ''} ${sum.current ? 'has-current' : ''}`} style={{ '--tree-color': accent } as React.CSSProperties} aria-pressed={selected} onClick={onOpen}>
         <strong>{sum.jobs[0] && <JobArt job={sum.jobs[0]} size={30}/>}{lineage.name}</strong>
@@ -24,7 +24,7 @@ export function LineageCard({ s, lineage, accent, selected, onOpen }: { s: State
 /** 항로도 카드 한 줄 설명: 현재 · 숙달 · 해금함 · 전직 가능 · 조건 부족(첫 부족 조건). 미발견 실루엣은 힌트만 보여줍니다. */
 function routeNote(s: State, j: Job) {
     if (!jobRevealed(s, j)) return { text: j.hint || '아직 드러나지 않은 직업입니다.', cls: 'secret' };
-    const st = jobStatus(s, j);
+    const st = statusReader(s)(j);
     if (st.status === 'current') return { text: '현재 직업', cls: 'current' };
     if (st.status === 'mastered') return { text: '숙달 · 조건 없이 전직', cls: 'mastered' };
     if (st.status === 'ready') return { text: s.unlockedJobs.includes(j.id) ? '전직한 적 있음 · 전직 가능' : '전직 가능', cls: 'ready' };

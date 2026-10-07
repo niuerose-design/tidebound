@@ -147,7 +147,14 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.type === 'passive' && !sk.song && !sk.levelEffects && SKILL_FORMULA.masteredPassiveAP) out.push(level >= maxSkillLevel(sk) ? `최대 성장을 마쳐 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어 있습니다.` : `최대 성장(Lv.${maxSkillLevel(sk)})에 닿으면 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어듭니다.`);
     return out;
 }
+/** v3.93 스킬마다 한 번만 계산합니다(세이브와 무관한 표). */
+const growthCache = new WeakMap<Skill, ReturnType<typeof buildGrowthStages>>();
 export function skillGrowthStages(sk: Skill) {
+    let rows = growthCache.get(sk);
+    if (!rows) growthCache.set(sk, rows = buildGrowthStages(sk));
+    return rows;
+}
+function buildGrowthStages(sk: Skill) {
     const milestones = masteryMilestonesFor(sk), max = maxSkillLevel(sk), lb = PROGRESSION.limitBreak;
     // v27.6 한계돌파 단계(최대 성장 다음 1~max)는 숙련 채널로만 도달하므로 mastery 인자로 흉내 냅니다.
     return Array.from({ length: max + 1 + lb.max }, (_, level) => {

@@ -73,6 +73,16 @@ export type CombatFx = {
 export const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', slow: '감속', haste: '가속' };
 const variantOf = (id: string | undefined, magical: boolean, effect?: string): CombatFxVariant => fxVariantOf(id, magical, effect);
 /** 구조화된 전투 결과(log.event)를 우선 사용하고, 이전 세이브의 문자열 로그만 텍스트로 해석합니다. */
+
+/** v3.93 기록의 스킬 이름 → 스킬. 같은 이름이면 행동한 쪽(몬스터면 몬스터 스킬) 목록에서 먼저 나온 것을 씁니다. 기록 줄마다 두 목록을 합쳐 훑지 않도록 처음 한 번 만듭니다. */
+const nameMaps: Partial<Record<'enemy' | 'player', Map<string, (typeof SKILLS)[number] | (typeof ENEMY_SKILLS)[number]>>> = {};
+const skillByName = (enemy: boolean) => {
+    const key = enemy ? 'enemy' : 'player';
+    let map = nameMaps[key];
+    if (!map) { map = nameMaps[key] = new Map(); for (const sk of enemy ? [...ENEMY_SKILLS, ...SKILLS] : [...SKILLS, ...ENEMY_SKILLS]) if (!map.has(sk.name)) map.set(sk.name, sk); }
+    const found = map;
+    return (name: string) => found.get(name);
+};
 export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
     if (log.type !== 'battle') return null;
     const ev = log.event;
@@ -92,8 +102,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
     if (arrow < 0) return null;
     const header = text.slice(0, arrow), detail = text.slice(arrow + 3).trim();
     const label = header.slice(header.indexOf(' · ') + 3).replace(/ \[(극 )?치명타\]$/, '');
-    const pool = actor === 'enemy' ? [...ENEMY_SKILLS, ...SKILLS] : [...SKILLS, ...ENEMY_SKILLS];
-    const skill = pool.find(sk => sk.name === label);
+    const skill = skillByName(actor === 'enemy')(label);
     if (!skill && label !== '기본 공격') return null;
     const missed = detail.startsWith('빗나감'), magical = detail.includes('마법 피해');
     const total = Number(detail.match(/^(\d+) (?:마법|물리) 피해/)?.[1] || 0);

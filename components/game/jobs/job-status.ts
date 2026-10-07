@@ -16,6 +16,18 @@ export function jobStatus(s: State, j: Job) {
     const status: JobStatus = j.id === s.job ? 'current' : jobMastered(s, j) ? 'mastered' : !missing.length ? 'ready' : missing.length <= 2 ? 'near' : 'locked';
     return { status, req, missing };
 }
+export type StatusReader = (j: Job) => ReturnType<typeof jobStatus>;
+const readers = new WeakMap<State, StatusReader>();
+/** v3.93 화면용 직업 상태: 같은 상태 객체(동기화마다 새로 옴)에서는 직업마다 한 번만 계산합니다. 상태를 고쳐 쓰는 곳(서버 · 시험)은 jobStatus를 쓰세요. */
+export function statusReader(s: State): StatusReader {
+    let read = readers.get(s);
+    if (!read) {
+        const cache = new Map<string, ReturnType<typeof jobStatus>>();
+        read = j => { let v = cache.get(j.id); if (!v) cache.set(j.id, v = jobStatus(s, j)); return v; };
+        readers.set(s, read);
+    }
+    return read;
+}
 export const STATUS_LABEL = (st: ReturnType<typeof jobStatus>) => st.status === 'current' ? '현재' : st.status === 'mastered' ? '숙달' : st.status === 'ready' ? '전직 가능' : st.status === 'near' ? '거의 다 됨' : `조건 부족 ${st.missing.length}`;
 export const canEnter = (st: ReturnType<typeof jobStatus>) => st.status === 'mastered' || st.status === 'ready';
 
@@ -33,10 +45,10 @@ export function crossParent(j: Job) {
     return parent && lineageOf(parent) !== lineageOf(j) ? `↩ ${parent.name}(${treeName(parent.tree)})` : '';
 }
 /** 계보 요약: 해금 n / m · 전직 가능 k, 차수 점. */
-export function lineageSummary(s: State, lineageId: string) {
+export function lineageSummary(s: State, lineageId: string, status: StatusReader = j => jobStatus(s, j)) {
     const jobs = shownLineageJobs(s, lineageId);
     const unlocked = jobs.filter(j => s.unlockedJobs.includes(j.id)).length;
-    const ready = jobs.filter(j => { const st = jobStatus(s, j).status; return st === 'ready' || st === 'mastered'; }).length;
+    const ready = jobs.filter(j => { const st = status(j).status; return st === 'ready' || st === 'mastered'; }).length;
     const tiers = [...new Set(jobs.map(j => j.tier))].sort((a, b) => a - b).map(tier => ({ tier, reached: jobs.some(j => j.tier === tier && s.unlockedJobs.includes(j.id)) }));
     return { jobs, unlocked, total: jobs.length, ready, tiers, current: jobs.some(j => j.id === s.job) };
 }
@@ -83,11 +95,11 @@ export const inMysteryTab = (s: State, l: { id: string; tree: string }) => {
 
 /** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 드러나지 않은 히든 직업은 뺍니다. */
 export type Finder = 'ready' | 'mastered' | 'near';
-export function finderJobs(s: State, kind: Finder) {
+export function finderJobs(s: State, kind: Finder, status: StatusReader = j => jobStatus(s, j)) {
     const visible = shownJobs(s);
     // 숙달: 직업 숙련이 숙달 목표에 닿아 조건 없이 언제든 돌아갈 수 있는 직업(현재 직업 포함).
     if (kind === 'mastered') return JOBS.filter(j => jobMastered(s, j));
-    return visible.filter(j => { const st = jobStatus(s, j).status; return kind === 'ready' ? st === 'ready' || st === 'mastered' : st === 'near'; });
+    return visible.filter(j => { const st = status(j).status; return kind === 'ready' ? st === 'ready' || st === 'mastered' : st === 'near'; });
 }
 /** 이름 검색과 태그 필터(드러나지 않은 히든 직업은 제외). */
 export function searchJobs(s: State, query: string, tag: string) {

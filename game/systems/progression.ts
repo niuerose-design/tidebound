@@ -190,9 +190,11 @@ export const brokenStages = (sk: Skill, rank = 1, mastery = 0) => Math.max(0, sk
  * v3.5 누적·환생 비례 패시브(perCount · perRebirth)의 지금 수치. 능력치 계산(stats.ts)과 같은 식(시그니처 · 한계돌파 배율 포함)으로,
  * 스킬 카드 간단히 보기에 고정 효과와 합쳐 보여 줍니다.
  */
-export function passiveGrowthBonus(s: State, sk: Skill, counts: Record<string, number> = progressCounts(s)) {
+export function passiveGrowthBonus(s: State, sk: Skill, given?: Record<string, number>) {
     const out: Record<string, number> = {};
     if (!sk.perCount && !sk.perRebirth) return out;
+    // v3.93 진행도 집계는 누적 비례 패시브일 때만(스킬 카드마다 돌던 것을 줄임).
+    const counts = given ?? progressCounts(s);
     const scale = signatureScale(sk, s.job) * limitBreakScale(brokenStages(sk, s.learned?.[sk.id] || 1, skillMastery(s, sk.id)));
     for (const pc of sk.perCount || []) {
         const times = Math.min(pc.cap, Math.floor((counts[pc.source] || 0) / pc.per));

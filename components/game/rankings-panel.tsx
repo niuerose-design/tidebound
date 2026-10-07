@@ -1,7 +1,7 @@
 'use client';
 import { rebirthTitle } from '@/game/data/long-term';
 import { duelTier, recommendOpponents, duelSeasonPearls, RECOMMEND_RANGE, duelAllowance } from '@/game/systems/duel';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, RefreshCw, Swords, Fish, Users } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -52,10 +52,11 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     result: DuelResult | null;
     setResult: (v: DuelResult | null) => void;
 }) {
-    const now = useNow();
+    // v3.93 시계: 결투 대기(60초) 중일 때만 1초마다, 아니면 10초마다 갱신합니다(순위표 100줄을 매초 다시 그리지 않음).
+    const slow = useNow(10_000), cooling = slow - s.lastDuel < BALANCE.duelCooldownMs + 10_000, fast = useNow(cooling ? 1000 : 60_000), now = Math.max(slow, fast);
     const [detail, setDetail] = useState<Ranking | null>(null);
     const [sort, setSort] = useState<'rating' | 'power' | 'level' | 'rebirths'>('rating');
-    const sorted = [...rows].sort((a, b) => (b[sort] - a[sort]) || (b.rating - a.rating) || (b.power - a.power));
+    const sorted = useMemo(() => [...rows].sort((a, b) => (b[sort] - a[sort]) || (b.rating - a.rating) || (b.power - a.power)), [rows, sort]);
     // 등록한 지 오래된 내 방어용 정보는 화면을 열 때 한 번 자동으로 다시 등록합니다(10분 이상 지났을 때).
     const refreshed = useRef(false);
     const me = rows.find(r => r.self);
