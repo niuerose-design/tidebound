@@ -39,7 +39,7 @@ export const collectionActions: ActionHandlers = {
             throw Error('이미 등록한 종류입니다.');
         s.itemBook[key] = true;
         s.inventory = s.inventory.filter(x => x.id !== id);
-        // v3.120 등록으로 소모된 태초도 계승 게이지를 채웁니다.
+        // v3.124 등록으로 소모된 태초도 계승 게이지를 채웁니다.
         const gauge = primalGaugeGain(s, [item]);
         addLog(s, `${item.name} 물건도감 등록 · 장비 1개 소모${primalGaugeNote(s, gauge)}`, 'reward');
     },

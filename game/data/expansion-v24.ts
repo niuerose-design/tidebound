@@ -110,8 +110,9 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'currentDominion', name: '해류 지배', desc: '마법 공격과 마나 회복이 오릅니다.', level: 55, job: 'currentLord', cost: 3, bonus: { magic: 60, manaRegen: 5 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'oceanWrath', name: '대해의 분노', desc: '', level: 70, job: 'oceanWill', chance: .55, cooldown: 5, multiplier: 4.3, cost: 6, manaCost: 38, effect: 'stun', masteryMilestones: M5 },
     { ...P, id: 'willOfSea', name: '바다의 뜻', desc: '마법 공격과 마법 방어가 크게 오릅니다.', level: 70, job: 'oceanWill', cost: 3, bonus: { magic: 100, resist: 50 }, masteryMilestones: M5 },
+    // v3.120 아크메이지(썬,콜) 상향: 익스트림 매직(대기만성) 마법 공격 단계 100 · 240 · 440 → 200 · 700 · 2000(마법 +440은 엔드 마법의 1%도 안 돼 체감이 없었음).
     { ...P, id: 'tideOfAges', name: '세월의 조류', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 마법 공격·마나가 크게 오릅니다.', level: 70, job: 'oceanWill', cost: 8, bonus: { magic: 25 }, masteryMilestones: LATE,
-        levelEffects: [{ cost: 8, bonus: { magic: 25 } }, { cost: 7, bonus: { magic: 100, mana: 40 } }, { cost: 5, bonus: { magic: 240, mana: 100, manaRegen: 3 } }, { cost: 2, bonus: { magic: 440, mana: 180, manaRegen: 6, penetration: .08 } }] },
+        levelEffects: [{ cost: 8, bonus: { magic: 25 } }, { cost: 7, bonus: { magic: 200, mana: 40 } }, { cost: 5, bonus: { magic: 700, mana: 100, manaRegen: 3 } }, { cost: 2, bonus: { magic: 2000, mana: 180, manaRegen: 6, penetration: .08 } }] },
     { ...A, ...magic, id: 'transmute', name: '소금 연성', desc: '', level: 55, job: 'abyssTransmuter', chance: .52, cooldown: 4, multiplier: 2.4, cost: 5, manaCost: 26, effect: 'bleed', dotName: '부식', dotRatio: .2, damageBonusCondition: 'bleeding', conditionalDamageBonus: .4, masteryMilestones: M4 },
     { ...P, id: 'philosopherBrine', name: '현자의 염수', desc: '마법 공격과 지속 피해가 오릅니다.', level: 55, job: 'abyssTransmuter', cost: 3, bonus: { magic: 45, dotBonus: .15 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'grandTransmutation', name: '대연성', desc: '', level: 70, job: 'grandAlchemist', chance: .52, cooldown: 5, multiplier: 3.6, cost: 6, manaCost: 36, effect: 'bleed', dotName: '부식', dotRatio: .24, statusTurns: 5, masteryMilestones: M5 },
@@ -181,7 +182,8 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'sirenVoice', name: '세이렌의 목소리', desc: '경험치·장비 드롭·마법 공격이 오릅니다.', level: 70, job: 'siren', cost: 3, bonus: { expBonus: .18, dropBonus: .04, magic: 110 }, masteryMilestones: M5 },
     // 4차에서 끝나던 계보의 5차
     { ...A, ...magic, id: 'doomCurse', name: '파멸의 저주', desc: '', level: 70, job: 'curseQueen', chance: .5, cooldown: 4, multiplier: 3.9, cost: 6, manaCost: 36, effect: 'silence', damageBonusCondition: 'controlled', conditionalDamageBonus: .6, masteryMilestones: M5 },
-    { ...P, id: 'queenOfCurses', name: '저주의 왕관', desc: '마법 공격과 지속 피해가 크게 오릅니다.', level: 70, job: 'curseQueen', cost: 3, bonus: { magic: 110, dotBonus: .2 }, masteryMilestones: M5 },
+    // v3.123 칼리 상향: 헥스의 여왕 마법 공격 +110 → +250(숙련 보정 뒤 엔드 마법 약 +10%). 주력 상향은 4차 저주(지속 피해).
+    { ...P, id: 'queenOfCurses', name: '저주의 왕관', desc: '마법 공격과 지속 피해가 크게 오릅니다.', level: 70, job: 'curseQueen', cost: 3, bonus: { magic: 250, dotBonus: .2 }, masteryMilestones: M5 },
     { ...A, ...dual, id: 'dragonGodSpear', name: '좀비 루팡신의 창', desc: '', level: 70, job: 'seaDragonGod', chance: .5, cooldown: 5, multiplier: 4.5, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
     // v3.98 다크니스 오라: 치명타 +8%p · 치명 피해 +0.45(팬텀 5차 패시브와 같은 값, 다크나이트 치명 75% · ×2.07로 물리 딜러 최하위였음).
     { ...P, id: 'dragonGodScale', name: '좀비 루팡신의 비늘', desc: '두 공격과 체력이 크게 오르고, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'seaDragonGod', cost: 3, bonus: { attack: 55, magic: 55, hp: 300, crit: .08, critDamage: .45 }, masteryMilestones: M5 },

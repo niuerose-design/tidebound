@@ -215,3 +215,23 @@ test('v3.110 Mechanic: Magnetic Field ×2.8, Robot Launcher RM7 ×3.2 with one e
     assert.equal(sk('resonanceBurst').multiplier, 3.2);
     assert.equal(sk('resonanceBurst').extraAttacks, 1);
 });
+
+test('v3.120 Arch Mage (Thunder, Cold): Extreme Magic magic steps 25 · 200 · 700 · 2000', () => {
+    assert.deepEqual(SKILLS.find(s => s.id === 'tideOfAges').levelEffects.map(l => l.bonus.magic), [25, 200, 700, 2000]);
+});
+
+test('v3.121 Eunwol: Ghost Gate attack +500, Fist Barrage ×1.5, Shattering Fists base ×2 (extra hits unchanged)', async () => {
+    const { SECRET_SKILLS } = await load('game/secret/skills.js');
+    const sk = id => SECRET_SKILLS.find(s => s.id === id);
+    assert.equal(sk('primordialBlood').bonus.attack, 500);
+    assert.deepEqual([sk('maulingTide').multiplier, sk('maulingTide').extraAttacks], [1.5, 2]);
+    assert.equal(sk('worldTentacle').extraAttacks, 3);
+    assert.ok(sk('worldTentacle').multiplier > 2, 'awakening boost on top of base ×2');
+});
+
+test('v3.123 Kali: Chakram Split curses (bleed-type damage over time, Illium\'s ratio), Queen of Hexes magic +250', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.deepEqual([sk('calamityRite').effect, sk('calamityRite').dotName, sk('calamityRite').damageBonusCondition], ['bleed', '저주', 'controlled']);
+    assert.equal(sk('calamityRite').dotRatio, sk('transmute').dotRatio);
+    assert.deepEqual([sk('queenOfCurses').bonus.magic, sk('queenOfCurses').bonus.dotBonus], [250, .2]);
+});

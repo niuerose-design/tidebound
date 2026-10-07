@@ -33,7 +33,7 @@ export const itemActions: ActionHandlers = {
             throw Error('보호 장비와 유물·칠흑·계승 장비는 판매할 수 없습니다.');
         s.gold += saleValue(item);
         s.inventory = s.inventory.filter(x => x.id !== id);
-        // v3.120 팔린 태초도 계승 게이지를 채웁니다(분해와 같음).
+        // v3.124 팔린 태초도 계승 게이지를 채웁니다(분해와 같음).
         const gauge = primalGaugeGain(s, [item]);
         if (gauge) addLog(s, `${item.name} 판매${primalGaugeNote(s, gauge)}`, 'reward');
     },

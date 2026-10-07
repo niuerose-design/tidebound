@@ -599,7 +599,7 @@ test('v3.119 display bugs: 마력 option mana regen scales with power (and old t
     const t = newState(0); t.equipment.coat = { id: 'c', slot: 'coat', rarity: 5, power: 333, level: 80, name: 'c', affixes: [{ id: 'transcend', name: '초월', stat: 'allStats', value: .0173 }] };
     const a = St.stats(t); for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist']) assert.ok(Number.isInteger(a[k]), `${k} ${a[k]}`);
 });
-test('v3.120 primal gauge fills on every exit path, rare foes are never golden, heir refine ceiling is 150%', async () => {
+test('v3.124 primal gauge fills on every exit path, rare foes are never golden, heir refine ceiling is 150%', async () => {
     const G = await L.load('data/gear'), Eq = await L.load('systems/equipment');
     const gear = (id, rarity, slot = 'rod', level = 100) => { const power = Math.round((level + 2) * [1, 1.5, 2.2, 3.3, 3.9, 4.5, 5.2][rarity]); return { id, name: id, slot, style: 'physical', rarity, power, level, enhance: 0, affixes: G.rollAffixes(rarity, power, undefined, () => .3, [], slot, level) }; };
     const s = newState(0); s.level = 100; s.permanent.inventory = 8; s.gold = 1e12; s.itemBook ??= {};
@@ -643,4 +643,12 @@ test('v3.120 primal gauge fills on every exit path, rare foes are never golden, 
     const t = newState(0); t.level = 100; t.permanent.inventory = 8; t.essence = 1e9; t.inventory = [h, n];
     act(t, { type: 'refine', id: 'h1', value: String(idx) }, 0, () => 1); assert.ok(G.affixQuality(t.inventory[0].affixes[idx], h.power, 6, 100, G.HEIR_ROLL_TOP) > 1.45, 'refine action uses the heir ceiling');
     act(t, { type: 'refine', id: 'n1', value: String(idx) }, 0, () => 1); assert.ok(Math.abs(G.affixQuality(t.inventory[1].affixes[idx], n.power, 6, 100, G.HEIR_ROLL_TOP) - 1) < 1e-6, 'normal refine stays at the normal ceiling');
+});
+
+test('v3.122 onyx accessory level: the higher of its habitat level and my level (boss drop and milestone grant)', async () => {
+    const G = await L.load('systems/onyx-grant'), O = await L.load('data/onyx');
+    const s = newState(0); s.level = 87; G.grantOnyx(s, O.ONYX_BOSSES[0].id, 5, () => .5, 'test');
+    const dusk = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.equal(dusk.level, 87); assert.equal(dusk.power, Math.round((87 + 2) * O.ONYX.power));
+    const low = newState(0); low.level = 40; G.grantOnyx(low, 'onyxBlackMage', 100, () => .5, 'test'); assert.equal(low.inventory.find(i => i.onyx).level, 100, 'habitat level when higher');
+    const m = newState(0); m.level = 120; m.rebirths = 50; G.grantOnyxMilestones(m, () => 0); assert.equal(m.inventory.find(i => i.onyx).level, 120, 'milestone onyx at my level');
 });
