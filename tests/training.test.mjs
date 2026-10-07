@@ -170,3 +170,11 @@ test('v3.97 Night Lord dice skills (3rd · 5th tier) add physical attack × 0.5 
     assert.ok(hit(['fateReversal'], 40000) > hit(['fateReversal'], 1000) * 5, 'Triple Throw grows with attack');
     assert.equal(hit(['heavenlyStrike'], 40000), hit(['heavenlyStrike'], 1000), 'Avenger stays luck-only');
 });
+
+test('v3.98 Dark Knight: Dragon Fury ×2.8, Beholder Impact ×2.8 with one extra hit, Darkness Aura crit like Phantom\'s 5th passive', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(sk('thunderLance').multiplier, 2.8);
+    assert.equal(sk('leviathanCharge').multiplier, 2.8);
+    assert.equal(sk('leviathanCharge').extraAttacks, 1);
+    assert.deepEqual([sk('dragonGodScale').bonus.crit, sk('dragonGodScale').bonus.critDamage], [sk('divineLuck').bonus.crit, sk('divineLuck').bonus.critDamage]);
+});

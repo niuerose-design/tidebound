@@ -155,9 +155,10 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'lancerPoise', name: '창기병의 균형', desc: '최대 체력과 최대 마나가 오릅니다.', level: 10, job: 'tideLancer', cost: 2, bonus: { hp: 60, mana: 10 } },
     { ...A, ...dual, id: 'dragonDive', name: '좀비 루팡 급강하', desc: '', level: 25, job: 'seaDragoon', chance: .5, cooldown: 3, multiplier: 1.7, cost: 3, manaCost: 13, effect: 'weaken' },
     { ...P, id: 'wyrmScale', name: '용린', desc: '최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'seaDragoon', cost: 2, bonus: { hp: 120, defense: 10 } },
-    { ...A, ...dual, id: 'thunderLance', name: '뇌창', desc: '', level: 40, job: 'stormDragoon', chance: .5, cooldown: 4, multiplier: 2.1, cost: 4, manaCost: 20, penetrationBonus: .15 },
+    // v3.98 다크나이트 상향: 드래곤 퓨리 배율 2.1 → 2.8, 비홀더 임팩트 배율 2.5 → 2.8 · 추가 공격 1회(비홀더가 함께 때림).
+    { ...A, ...dual, id: 'thunderLance', name: '뇌창', desc: '', level: 40, job: 'stormDragoon', chance: .5, cooldown: 4, multiplier: 2.8, cost: 4, manaCost: 20, penetrationBonus: .15 },
     { ...P, id: 'stormRider', name: '폭풍 기수', desc: '물리·마법 공격과 속도가 오릅니다.', level: 40, job: 'stormDragoon', cost: 3, bonus: { attack: 18, magic: 18, speed: 6 } },
-    { ...A, ...dual, id: 'leviathanCharge', name: '용왕 대돌격', desc: '', level: 55, job: 'abyssDragonLord', chance: .5, cooldown: 4, multiplier: 2.5, cost: 5, manaCost: 26, effect: 'stun', masteryMilestones: M4 },
+    { ...A, ...dual, id: 'leviathanCharge', name: '용왕 대돌격', desc: '', level: 55, job: 'abyssDragonLord', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 26, effect: 'stun', extraAttacks: 1, masteryMilestones: M4 },
     { ...P, id: 'dragonKingAura', name: '용왕의 위엄', desc: '최대 체력과 물리·마법 공격이 오릅니다.', level: 55, job: 'abyssDragonLord', cost: 3, bonus: { hp: 260, attack: 24, magic: 24 }, masteryMilestones: M4 },
     // 복합: 메카닉 (1차)
     { ...A, ...dual, id: 'runeHammer', name: '룬 망치', desc: '', level: 10, job: 'runesmith', chance: .48, cooldown: 3, multiplier: 1.15, cost: 2, manaCost: 8, effect: 'weaken' },
