@@ -427,6 +427,8 @@ export type State = {
     /** v3.31 승천 횟수와 기록, 이번 승천의 시작 시각. */
     ascension?: number;
     ascensionLog?: AscensionRecord[];
+    /** v3.114 환생 50 · 100회 확정 칠흑을 받은 이정표(캐릭터 평생 한 번, 환생 · 승천 유지). */
+    onyxMilestones?: number[];
     ascensionStart?: number;
     /** v27.6 한계돌파 단계(기술 id → 0~limitBreak.max). 환생해도 유지됩니다. */
     limitBreaks?: Record<string, number>;
