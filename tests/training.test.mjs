@@ -185,3 +185,9 @@ test('v3.100 Luminous: Light Reflection ×2.8, Apocalypse ×3 with one extra hit
     assert.equal(sk('lightHarpoon').multiplier, 3);
     assert.equal(sk('lightHarpoon').extraAttacks, 1);
 });
+
+test('v3.102 Michael: Shining Cross defense ratio 2.4, Light of Courage adds crit 8%p and crit damage 0.4', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(sk('lastStand').scalingRatio, 2.4);
+    assert.deepEqual([sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage], [.08, .4]);
+});
