@@ -530,3 +530,14 @@ test('v3.114 rebirth 50 · 100 onyx milestones: random accessory once per charac
     // 승천 기록만 있는 캐릭터(지금 생은 10회)도 소급: 지난 승천에서 100회에 닿았음.
     const b = newState(0); b.rebirths = 10; b.ascensionLog = [{ n: 1, at: 0, rebirths: 100, abyssBest: 0, realMs: 0, kills: 0 }]; G.grantOnyxMilestones(b, () => .3); assert.deepEqual(b.onyxMilestones, [50, 100]);
 });
+
+test('v3.115 news: a milestone onyx reads ‘환생 N회 달성 보상으로 … 받았습니다’, a hunted one keeps the old line; the gift note is cleared', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const N = await L.load('systems/news'), G = await L.load('systems/onyx-grant'), O = await L.load('data/onyx');
+    const s = newState(0); N.collectNews(s, 0); s.rebirths = 50; G.grantOnyxMilestones(s, () => 0);
+    const ev = N.collectNews(s, 0), line = ev.find(e => e.kind === 'onyx').text('영희');
+    assert.ok(line.startsWith(`영희가 환생 50회 달성 보상으로 칠흑 장신구 ‘${O.ONYX_BOSSES[0].accessory.name}’`) && line.endsWith('받았습니다.'), line);
+    assert.equal(s.onyxGift, undefined, 'gift note cleared');
+    s.inventory.push(O.onyxAccessory(O.ONYX_BOSSES[1], 'hunt', 60));
+    assert.ok(N.collectNews(s, 86_400_000).find(e => e.kind === 'onyx').text('영희').endsWith('얻었습니다.'), 'hunted onyx keeps the old line');
+});
