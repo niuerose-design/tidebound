@@ -196,8 +196,6 @@ export type Skill = {
     wardTurns?: number;
     /** v3.17 장착 패시브: 쓰러진 뒤 회복 대기를 이만큼(턴) 줄입니다(환생 10회 이상). */
     revive?: number;
-    /** v3.97 사냥터에서 다음 몬스터를 찾는 시간 단축(ms). */
-    searchCut?: number;
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. swap: 피해 유형과 반대 공격력을 기준값으로(물리 계수 마법 피해 등). */
     scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr';
     /** v26.2 scaling 'attr'가 비례하는 능력치. 기준값 += 능력치 × scalingRatio. */
@@ -498,9 +496,6 @@ export type State = {
         streak?: number; bestStreak?: number; failStreak?: number; bestFailStreak?: number; drops?: number; chance?: number; catches?: number; high?: number;
     };
     recovery: number;
-    /** v3.97 사냥터 탐색: 다음 몬스터가 나오기까지 남은 턴(전투 처리 없음)과, 턴(2초)으로 나누고 남은 시간(ms, 다음 탐색으로 넘김). */
-    searching?: number;
-    searchCarry?: number;
     lastTick: number;
     skills: string[];
     /** v3.86 추가 판정 단계(편성에서 켬, 단계마다 장착 AP). 세계석 연구 ‘연계의 기억’ 단계까지만 효과가 납니다. */

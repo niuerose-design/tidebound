@@ -22,7 +22,6 @@ import { breathReset } from './actions/lifecycle';
 import { isHacker, hackerTick } from './hacker';
 import { runAutomation } from './automation';
 import { recordIncome } from './income';
-import { startSearch, searchTurn, clearSearch } from './search';
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
@@ -88,9 +87,6 @@ function tickTurn(s: State, rng: () => number) {
         }
         return;
     }
-    // v3.97 사냥터 탐색: 전투 없이 턴만 지나가고(쿨타임 · 버프 · 상태이상은 그대로) 초마다 턴당 회복만큼 회복합니다.
-    if (s.dungeon) { if (s.searching) clearSearch(s); }
-    else if (!s.enemy && s.searching) { searchTurn(s, a); return; }
     if (!s.enemy)
         spawn(s, rng);
     const e = s.enemy!;
@@ -118,14 +114,12 @@ function tickTurn(s: State, rng: () => number) {
     // v27.16 교착 안전장치: 양쪽 체력이 그대로인 턴이 이어지면 몬스터가 달아난 것으로 보고 새 몬스터를 맞이합니다.
     if (e.hp > 0 && s.hp > 0) {
         // v3.12 칠흑 보스는 정해진 턴이 지나면 떠납니다(도망 보상 없음).
-        if (e.onyx && e.leavesAt !== undefined && s.turn >= e.leavesAt && e.hp > 0) { s.enemy = null; s.effects = {}; s.playerStun = 0; startSearch(s); addLog(s, `${e.name}이(가) 어둠 속으로 사라졌습니다. 다음에 다시 만나세요.`); return; }
+        if (e.onyx && e.leavesAt !== undefined && s.turn >= e.leavesAt && e.hp > 0) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${e.name}이(가) 어둠 속으로 사라졌습니다. 다음에 다시 만나세요.`); return; }
         e.stale = e.hp === enemyHpBefore && s.hp === playerHpBefore ? (e.stale || 0) + 1 : 0;
-        if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; startSearch(s); addLog(s, `${e.name}이(가) 줄을 끊고 달아났습니다. 다음 몬스터를 기다립니다.`); return; }
+        if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${e.name}이(가) 줄을 끊고 달아났습니다. 다음 몬스터를 기다립니다.`); return; }
     }
-    if (e.hp <= 0 && s.hp > 0) {
+    if (e.hp <= 0 && s.hp > 0)
         reward(s, rng);
-        if (!s.enemy) startSearch(s);
-    }
     else if (s.hp <= 0) {
         s.deaths++;
         // 하드코어: 쓰러지면 즉시 이번 생을 처음부터 다시 시작합니다(오프라인 정산 중에도 같은 규칙).

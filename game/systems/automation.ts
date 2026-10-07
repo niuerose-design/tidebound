@@ -47,7 +47,7 @@ export function runAutoFollow(s: State) {
     if (!rule?.on || !ascensionPerk(s, 'autoFollow') || s.dungeon || s.enemy || s.recovery > 0) return false;
     const next = followTarget(s, rule), moved = next.stage !== s.stage, tide = next.tide !== (s.tide || 0);
     if (!moved && !tide) return false;
-    if (moved) { const st = STAGES.find(x => x.id === next.stage)!; delete s.searching; s.stage = st.id; s.target = null; s.effects = {}; s.playerStun = 0; s.bestStage = Math.max(s.bestStage || 0, STAGES.indexOf(st)); }
+    if (moved) { const st = STAGES.find(x => x.id === next.stage)!; s.stage = st.id; s.target = null; s.effects = {}; s.playerStun = 0; s.bestStage = Math.max(s.bestStage || 0, STAGES.indexOf(st)); }
     s.tide = next.tide;
     addLog(s, `자동 따라가기 · ${moved ? `${STAGES.find(x => x.id === s.stage)!.name}` : '사냥터 그대로'} · 난이도 ${s.tide}`, 'system');
     return true;

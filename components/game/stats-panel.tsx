@@ -6,7 +6,6 @@ import { RebirthHistory, formatDuration } from './rebirth-history';
 import { FISH, PLACES, PLAIN_DUNGEONS } from '@/game/data/world';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookStage } from '@/game/systems/book';
-import { searchTime, SEARCH } from '@/game/systems/search';
 import { BALANCE } from '@/game/data/balance';
 import { LiveRatesCard } from './live-rates-card';
 
@@ -33,8 +32,6 @@ export function Stats({ s }: { s: State }) {
             ['사냥 시간(부재중 정산 포함)', formatDuration(s.playMs || 0)],
             ['누적 처치', `${format(s.kills)}마리`],
             ['쓰러짐', `${format(s.deaths)}회`],
-            // v3.97 지금 사냥터에서 다음 몬스터를 찾는 시간(던전은 없음).
-            ['다음 몬스터 탐색', (() => { const t = searchTime(s); return `${t.ms / 1000}초${t.ms < SEARCH.baseMs ? ` (기본 ${SEARCH.baseMs / 1000}초)` : ''}`; })()],
             ['환생', `${format(s.rebirths)}회`],
             ['최고 레벨', `Lv.${Math.max(s.peakLevel || 0, s.level)}`],
             ['지금 레벨', `Lv.${s.level}`],

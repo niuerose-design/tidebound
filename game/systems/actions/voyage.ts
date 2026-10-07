@@ -42,8 +42,6 @@ export const voyageActions: ActionHandlers = {
             throw Error(`${st.name}은(는) 점검 중이라 입장할 수 없습니다.`);
         // v3.25 해킹 III 서버 다운: 새로 들어오는 것만 막습니다(지금 있는 사냥터는 계속).
         { const down = s.stage === st.id ? undefined : hackDownOf('stage', st.id, now); if (down) throw Error(`${st.name}은(는) ${down.by}의 해킹으로 서버가 다운되어 ${Math.ceil((down.until - now) / 60000)}분 동안 입장할 수 없습니다.`); }
-        // v3.97 다른 사냥터로 옮기면 탐색 없이 바로 만납니다(같은 사냥터를 다시 고르면 탐색은 그대로).
-        if (s.stage !== id) delete s.searching;
         s.stage = id;
         s.target = null;
         s.effects = {};

@@ -23,8 +23,8 @@ export async function referenceBodies({ load }) {
     const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
     /** 세계석 연구 비율(최대 대비): 초보 0→15%, 중수 30→60%, 고수 75→100%. 치명 · 관통 · AP는 중수부터 최대(먼저 찍는 연구). */
     const researchFrac = r => r < 10 ? lerp(0, .15, r / 10) : r < 50 ? lerp(.3, .6, (r - 10) / 40) : lerp(.75, 1, (r - 50) / 50);
-    const RESEARCH_MAX = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 20, critDamage: 20, penetration: 15, evasion: 15, lifesteal: 15, manaRegen: 10, recovery: 10, ap: 12, tracking: 1 };
-    const PRIORITY = new Set(['crit', 'penetration', 'ap', 'tracking']);
+    const RESEARCH_MAX = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 20, critDamage: 20, penetration: 15, evasion: 15, lifesteal: 15, manaRegen: 10, recovery: 10, ap: 12 };
+    const PRIORITY = new Set(['crit', 'penetration', 'ap']);
     /** 장비 [등급, 별]: 초보 희귀~영웅 10~15성, 중수 영웅 17성 → 신화 22성, 고수 고대 → 태초 22성. */
     const gearOf = r => r < 5 ? [1, 10] : r < 10 ? [2, 12] : r < 15 ? [2, 15] : r < 20 ? [3, 17] : r < 30 ? [3, 20] : r < 40 ? [4, 20] : r < 50 ? [4, 22] : r < 70 ? [5, 22] : [6, 22];
     /** 옵션 줄(앞에서부터 등급 수만큼): 주 공격 · 관통 · 치명 피해 · 치명 · 체력 · 모든 능력치 · 보스 피해. 중수부터 관통 · 치명을 앞으로. */

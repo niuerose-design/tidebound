@@ -1,5 +1,5 @@
 // 사냥터 개편(docs/hunting-ground-plan.md 4절): 기준 몸(scripts/lib/reference-body.mjs)으로 환생 시점마다 모든 사냥터 · 무리 서식지를
-// 실제 턴 처리(tick, v3.97 탐색 포함)로 사냥시켜 시간당 사망 · 평균 처치 턴 · 시간당 경험치를 재고, 사냥터마다 '적정 환생'을 셉니다.
+// 실제 턴 처리(tick)로 사냥시켜 시간당 사망 · 평균 처치 턴 · 시간당 경험치를 재고, 사냥터마다 '적정 환생'을 셉니다.
 //   일반 사냥터: 난이도 0에서 사망 0 · 평균 처치 3턴 이하 · 시간당 경험치가 바로 앞 사냥터 이상인 가장 낮은 환생.
 //   무리 서식지: 난이도 0에서 시간당 사망 5회 이하 · 시간당 경험치가 그 환생의 최상위 일반 사냥터 이상인 가장 낮은 환생.
 // 시험하는 사냥터 몬스터의 도감 기록은 지웁니다(처음 가는 사냥터로 봄).
@@ -30,7 +30,7 @@ function hunt(r, jobId, stage, tide, seed) {
     const L = s.level, SP = s.statPoints;
     let exp = 0, kills = 0, deaths = 0, fight = 0, fights = 0;
     for (let i = 0; i < TICKS; i++) {
-        const E = s.exp, K = s.kills, D = s.deaths, quiet = (s.searching || 0) > 0 || s.recovery > 0;
+        const E = s.exp, K = s.kills, D = s.deaths, quiet = s.recovery > 0;
         tick(s, rng);
         if (!quiet) fight++;
         exp += expBetween(s, L, E); kills += s.kills - K; deaths += s.deaths - D; if (s.kills > K) fights++;

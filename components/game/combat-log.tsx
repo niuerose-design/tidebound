@@ -49,19 +49,11 @@ function BattleLogLineView({ log, index, playerName }: { log: Log; index?: boole
 const LogTurnDivider = memo(function LogTurnDivider({ turn }: { turn: number }) {
     return <div className="log-turn-divider" role="separator" aria-label={`${turn}턴`}><span>{turn.toLocaleString()}턴</span></div>;
 });
-/** v3.97 턴이 건너뛴 자리(사냥터 탐색 · 회복 대기): 앞뒤가 다른 몬스터와의 전투라는 표시. */
-const LogEncounterDivider = memo(function LogEncounterDivider() {
-    return <div className="log-encounter-divider" role="separator" aria-label="다음 몬스터"><span>다음 몬스터</span></div>;
-});
-/**
- * 턴 번호가 바뀌는 줄 앞에 구분선을 끼워 렌더합니다(최신순 목록 기준: 각 턴 묶음의 위에 선). 턴 정보가 없는 오래된 로그는 그대로.
- * v3.97 턴이 2 이상 건너뛰면(탐색 · 회복 대기) 그 사이에 '다음 몬스터' 구분선을 더 넣습니다.
- */
+/** 턴 번호가 바뀌는 줄 앞에 구분선을 끼워 렌더합니다(최신순 목록 기준: 각 턴 묶음의 위에 선). 턴 정보가 없는 오래된 로그는 그대로. */
 export function withTurnDividers<T extends { turn?: number }>(logs: T[], render: (log: T) => React.ReactNode) {
     const out: React.ReactNode[] = [];
     logs.forEach((log, i) => {
         const prev = logs[i - 1];
-        if (log.turn !== undefined && prev?.turn !== undefined && prev.turn - log.turn > 1) out.push(<LogEncounterDivider key={`gap-${log.turn}-${i}`}/>);
         if (log.turn !== undefined && (i === 0 || prev?.turn !== log.turn)) out.push(<LogTurnDivider key={`turn-${log.turn}-${i}`} turn={log.turn}/>);
         out.push(render(log));
     });
