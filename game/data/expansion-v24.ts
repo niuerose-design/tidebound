@@ -143,7 +143,7 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'stillVerdict', name: '정적의 판결', desc: '', level: 55, job: 'stillLord', chance: .26, cooldown: 4, multiplier: 2.4, cost: 5, effect: 'stun', damageBonusCondition: 'controlled', conditionalDamageBonus: .5, masteryMilestones: M4 },
     { ...P, id: 'stillAura', name: '정적의 기운', desc: '침묵·감속 지속과 물리 공격이 오릅니다.', level: 55, job: 'stillLord', cost: 3, bonus: { controlBonus: 1, attack: 30 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'worldStill', name: '세계의 정적', desc: '', level: 70, job: 'silenceDeity', chance: .26, cooldown: 4, multiplier: 3.3, cost: 6, effect: 'silence', statusTurns: 3, damageBonusCondition: 'controlled', conditionalDamageBonus: .6, masteryMilestones: M5 },
-    // v3.125 카데나 상향: 미스틱 스톰 물리 공격 +60 → +450(숙련 보정 뒤 엔드 물리 약 +22%, 은월 귀문진과 같은 방식), 치명타 +10%p.
+    // v3.126 카데나 상향: 미스틱 스톰 물리 공격 +60 → +450(숙련 보정 뒤 엔드 물리 약 +22%, 은월 귀문진과 같은 방식), 치명타 +10%p.
     { ...P, id: 'absoluteStill', name: '절대 정적', desc: '기절이 1턴 더 이어지고 물리 공격과 치명타가 크게 오릅니다.', level: 70, job: 'silenceDeity', cost: 3, bonus: { stunBonus: 1, attack: 450, crit: .1 }, masteryMilestones: M5 },
     // 복합
     { ...A, ...physical, id: 'lifeTorrent', name: '생명 급류', desc: '', level: 55, job: 'abyssHybrid', chance: .25, cooldown: 4, multiplier: 1.8, cost: 5, scaling: 'hp', scalingRatio: .09, effect: 'drain', drainRatio: .2, masteryMilestones: M4 },

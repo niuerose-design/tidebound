@@ -10,7 +10,7 @@ import { TUTORIAL_STEPS } from '../guidance';
 import { stats } from '../stats';
 import { salvageRate, startingLevel, researchRank, RESEARCH } from '../../data/economy';
 import { PROGRESSION } from '../../data/progression';
-import { saleValue, dismantleEssence, dismantleInto, keepsAcrossLives, syncRelicPower } from '../equipment';
+import { saleValue, dismantleEssence, dismantleInto, primalGaugeGain, keepsAcrossLives, syncRelicPower } from '../equipment';
 import { grantOnyxMilestones } from '../onyx-grant';
 import type { State, Vows, RebirthRecord, AscensionRecord } from '../../types';
 /** v27.63 세이브에 남기는 최근 환생 기록 수. */
@@ -73,7 +73,7 @@ export function rebirthNow(s: State, now: number) {
     s.lifeStart = { at: now, playMs: s.playMs || 0 };
     if (salvage.count) {
         if (salvage.mode === 'dismantle') { const got = dismantleInto(s, salvage.items, salvage.rate); addLog(s, `청산 · 장비 ${salvage.count}개 분해 · 정수 +${got.essence}${got.gauge ? ` · 태초 계승 게이지 +${got.gauge}` : ''}`, 'reward'); }
-        else { s.gold += salvage.gold; addLog(s, `청산 · 장비 ${salvage.count}개 판매 · 다음 생 시작 골드 +${salvage.gold} G`, 'reward'); }
+        else { s.gold += salvage.gold; const gauge = primalGaugeGain(s, salvage.items); addLog(s, `청산 · 장비 ${salvage.count}개 판매 · 다음 생 시작 골드 +${salvage.gold} G${gauge ? ` · 태초 계승 게이지 +${gauge}` : ''}`, 'reward'); }
     }
     if (hasVows(vows)) s.vows = vows;
     else delete s.vows;
