@@ -24,7 +24,6 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     training: { role: 'none', name: '수련' },
     none: { role: 'none', name: '역할 없음' },
 };
-export const ROLE_NAMES: Record<RoleId, string> = { dealer: '딜러', tank: '탱커', buffer: '버퍼', border: '경계', none: '역할 없음' };
 
 /** 계보 기본 역할(11.6-1). 독립 수련은 training. */
 export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {

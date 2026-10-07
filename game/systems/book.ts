@@ -16,12 +16,6 @@ export function bookEcology(s: Pick<State, 'book' | 'bookTier'>, id: string) {
     const stages = Math.max(0, bookStage(s, id) - BOOK_ECOLOGY.fromStage + 1), sum = (a: number[]) => a.slice(0, stages).reduce((x, n) => x + n, 0);
     return { stages, dealt: sum(BOOK_ECOLOGY.dealt), taken: sum(BOOK_ECOLOGY.taken) };
 }
-/** v27.81 생태 연구 다음 단계에서 더해지는 값(없으면 null). */
-export function nextEcology(s: Pick<State, 'book' | 'bookTier'>, id: string) {
-    const i = Math.max(0, bookStage(s, id) - BOOK_ECOLOGY.fromStage + 1);
-    return i < BOOK_ECOLOGY.dealt.length ? { dealt: BOOK_ECOLOGY.dealt[i], taken: BOOK_ECOLOGY.taken[i] } : null;
-}
-
 /** v27.80 지역 연구 단계(0~3): 지역 몬스터 전부가 연구 REGION_RESEARCH_FROM부터 세 단계(v27.92부터 1·2·3단계) 이상. */
 /** v3.104 능력치 계산이 턴마다 지역 수만큼 부르므로, 결과에 필요한 단계까지만 세고 한 몬스터라도 REGION_RESEARCH_FROM 미만이면 바로 0을 돌려줍니다(값은 전과 같음). */
 export function regionResearchStage(s: Pick<State, 'book' | 'bookTier'>, region: string) {

@@ -20,11 +20,14 @@ export type AltarInfo = import('@/game/data/altar').AltarInfo;
 export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: number; logs: string[]; claimed: boolean; /** v27.70 탄핵 성공 */ impeached?: boolean; /** v27.91 월드보스: 준 피해·남은 공유 체력·격파 여부·내가 마지막 일격인지 */ dealt?: number; remaining?: number; slain?: boolean; slayer?: boolean };
 export type VaultInfo = import('@/game/data/account').VaultInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean; masked?: string[] };
-/** 동기화 주기(ms). */
-const SYNC_MS = 3000;
-/** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다. */
-const IDLE_SYNC_SKIP = 20;
-/** v27.62 전투를 보지 않는 화면(스킬·상점 등)에서는 자동 사냥 중에도 SYNC_MS × 이 값마다(9초). 전투 재생이 필요 없어 데이터·서버 부하를 줄입니다. */
+/**
+ * 동기화 주기(ms). v3.127 3초 → 5초(docs/performance.md 6단계): 요청 하나의 고정 비용(세이브 풀기 · 저장 · 압축 · 응답, 약 4~5ms)이
+ * 턴 계산(2초당 한 턴, 턴당 3~5ms)과 맞먹어, 전투 화면에서도 요청 수를 40% 줄입니다. 턴 재생은 REPLAY_LAG_MS만큼 늦게 보일 뿐 결과는 같습니다.
+ */
+const SYNC_MS = 5000;
+/** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다(60초). */
+const IDLE_SYNC_SKIP = 12;
+/** v27.62 전투를 보지 않는 화면(스킬·상점 등)에서는 자동 사냥 중에도 SYNC_MS × 이 값마다(15초). 전투 재생이 필요 없어 데이터·서버 부하를 줄입니다. */
 const BACKGROUND_SYNC_SKIP = 3;
 /** 턴이 서버에서 계산된 뒤 다음 동기화로 도착할 때까지의 여유. 이만큼 늦게 재생해야 턴 간격이 고르게 유지됩니다. */
 const REPLAY_LAG_MS = SYNC_MS + 500;
@@ -203,8 +206,8 @@ export function useGame() {
         setBusy(false);
     } }, [request, loadRanking, replay]);
     useEffect(() => { const first = setTimeout(() => send({ type: 'sync' }), 0); let ticks = 0; const timer = setInterval(() => { const s = stateRef.current; ticks++;
-        // v25.21 자동 사냥이 꺼져 있고 던전도 아니면 20번에 한 번(60초)만 동기화합니다(서버 CPU 절약을 위해 30초 → 60초). 행동은 즉시 보내므로 체감 지연은 없습니다.
-        // v27.62 진행 중이어도 전투를 보지 않는 화면이면 3번에 한 번(9초)만 동기화합니다.
+        // v25.21 자동 사냥이 꺼져 있고 던전도 아니면 IDLE_SYNC_SKIP번에 한 번(60초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
+        // v27.62 진행 중이어도 전투를 보지 않는 화면이면 BACKGROUND_SYNC_SKIP번에 한 번(15초)만 동기화합니다.
         const active = !!s && (s.running || !!s.dungeon);
         if (document.visibilityState === 'visible' && (!s || (active && (live.current || ticks % BACKGROUND_SYNC_SKIP === 0)) || ticks % IDLE_SYNC_SKIP === 0))
         send({ type: 'sync' }); }, SYNC_MS); const visible = () => { if (document.visibilityState === 'visible')
