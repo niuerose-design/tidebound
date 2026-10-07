@@ -44,34 +44,34 @@ const lateBloomer = { masteryMilestones: LATE, rankEffects: { bonusScale: 1.6, a
 export const DEFENSE_SKILLS: Skill[] = [
     // 종거북 갈래
     { ...A, ...physical, id: 'greatBellToll', name: '대종 울림', desc: '', level: 40, job: 'bellWarden', chance: .26, cooldown: 4, multiplier: 1.9, cost: 4, effect: 'stun', scaling: 'hp', scalingRatio: .03, masteryMilestones: M3 },
-    { ...P, id: 'ancientShell', name: '천년 껍질', desc: '두 방어와 반격이 오릅니다.', level: 40, job: 'bellWarden', cost: 3, bonus: { defense: 40, resist: 20, thorns: .2 , swarmFind: 0.8}, masteryMilestones: M3 },
+    { ...P, id: 'ancientShell', name: '천년 껍질', desc: '두 방어와 반격이 오릅니다.', level: 40, job: 'bellWarden', cost: 3, bonus: { defense: 60, resist: 30, thorns: .2 , swarmFind: 0.8}, masteryMilestones: M3 },
     { ...A, ...physical, id: 'tidalToll', name: '해일 종타', desc: '', level: 55, job: 'eonTurtle', chance: .26, cooldown: 4, multiplier: 2.7, cost: 5, effect: 'stun', scaling: 'hp', scalingRatio: .045, masteryMilestones: M4 },
-    { ...P, id: 'eonShell', name: '만년 등껍질', desc: '체력과 두 방어가 크게 오릅니다.', level: 55, job: 'eonTurtle', cost: 3, bonus: { hp: 300, defense: 60, resist: 30 , swarmFind: 1}, masteryMilestones: M4 },
+    { ...P, id: 'eonShell', name: '만년 등껍질', desc: '체력과 두 방어가 크게 오릅니다.', level: 55, job: 'eonTurtle', cost: 3, bonus: { hp: 300, defense: 90, resist: 45 , swarmFind: 1}, masteryMilestones: M4 },
     { ...A, ...physical, id: 'worldBearerSlam', name: '세계를 받친 등', desc: '', level: 70, job: 'worldTurtle', chance: .26, cooldown: 5, multiplier: 4, cost: 6, effect: 'stun', scaling: 'hp', scalingRatio: .06, masteryMilestones: M5 },
     // v3.109 카이저 상향(미하일 · 팔라딘과 같은 처방): 노바 템퍼런스 치명타 +8%p · 치명 피해 +0.4(계보 직업 치명 0.01).
-    { ...P, id: 'earthShell', name: '대지의 등껍질', desc: '체력·물리 방어·반격이 크게 오르고, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'worldTurtle', cost: 3, bonus: { hp: 450, defense: 90, thorns: .4, swarmFind: 1.2, crit: .08, critDamage: .4 }, masteryMilestones: M5 },
-    { ...P, ...lateBloomer, id: 'eonSlumber', name: '만년의 잠', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 체력·두 방어가 크게 오릅니다.', level: 70, job: 'worldTurtle', cost: 8, bonus: { hp: 200, defense: 15, resist: 15 },
+    { ...P, id: 'earthShell', name: '대지의 등껍질', desc: '체력·물리 방어·반격이 크게 오르고, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'worldTurtle', cost: 3, bonus: { hp: 450, defense: 130, thorns: .4, swarmFind: 1.2, crit: .08, critDamage: .4, resist: 40 }, masteryMilestones: M5 },
+    { ...P, ...lateBloomer, id: 'eonSlumber', name: '만년의 잠', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 체력·두 방어가 크게 오릅니다.', level: 70, job: 'worldTurtle', cost: 8, bonus: { hp: 200, defense: 25, resist: 25 },
         levelEffects: [{ cost: 8, bonus: { hp: 200, defense: 15, resist: 15 } }, { cost: 7, bonus: { hp: 700, defense: 60, resist: 40 } }, { cost: 5, bonus: { hp: 1600, defense: 140, resist: 100 } }, { cost: 2, bonus: { hp: 3200, defense: 260, resist: 180, thorns: .2 } }] },
     // 루미너스 (2차) 갈래
     // v3.100 루미너스 상향: 라이트 리플렉션 배율 2.25 → 2.8, 아포칼립스 배율 2.4 → 3 · 추가 공격 1회(복합 피해라 기술 한 번이 공격력의 1.5배에 그쳤음).
     { ...A, ...dual, id: 'vowStrike', name: '서약의 일격', desc: '', level: 40, job: 'holyKnight', chance: .5, cooldown: 4, multiplier: 2.8, cost: 4, manaCost: 14, effect: 'drain', drainRatio: .12, masteryMilestones: M3 },
     { ...P, id: 'twoSeasOath', name: '두 바다의 맹세', desc: '두 공격·체력·흡혈이 오릅니다.', level: 40, job: 'holyKnight', cost: 3, bonus: { attack: 26, magic: 26, hp: 120, lifesteal: .02 }, masteryMilestones: M3 },
     { ...A, ...dual, id: 'lightHarpoon', name: '빛의 작살', desc: '', level: 55, job: 'holyCommander', chance: .5, cooldown: 4, multiplier: 3, cost: 5, manaCost: 20, effect: 'drain', drainRatio: .1, extraAttacks: 1, masteryMilestones: M4 },
-    { ...P, id: 'sanctifiedSea', name: '성해의 축성', desc: '두 공격·체력·두 방어가 고르게 오릅니다.', level: 55, job: 'holyCommander', cost: 3, bonus: { attack: 45, magic: 45, hp: 220, defense: 30, resist: 30 }, masteryMilestones: M4 },
+    { ...P, id: 'sanctifiedSea', name: '성해의 축성', desc: '두 공격·체력·두 방어가 고르게 오릅니다.', level: 55, job: 'holyCommander', cost: 3, bonus: { attack: 45, magic: 45, hp: 220, defense: 45, resist: 45 }, masteryMilestones: M4 },
     { ...A, ...dual, id: 'seaOfLightDescent', name: '성해 강림', desc: '', level: 70, job: 'lightOcean', chance: .5, cooldown: 5, multiplier: 4.1, cost: 6, manaCost: 28, effect: 'stun', masteryMilestones: M5 },
     { ...P, id: 'oceanOfLight', name: '빛의 대양', desc: '두 공격·체력·흡혈·회복량이 오릅니다.', level: 70, job: 'lightOcean', cost: 3, bonus: { attack: 95, magic: 95, hp: 350, lifesteal: .03, healBonus: .2 }, masteryMilestones: M5 },
     // 호영 계보
     { ...A, ...magic, id: 'saltWard', name: '소금 결계', desc: '', level: 10, job: 'saltWarden', chance: .5, cooldown: 4, multiplier: 1.5, cost: 2, manaCost: 7, scaling: 'resist', scalingRatio: 2 },
-    { ...P, id: 'brinedSkin', name: '염장 피부', desc: '마법 방어와 체력이 오릅니다.', level: 10, job: 'saltWarden', cost: 2, bonus: { resist: 20, hp: 50 , swarmFind: 0.3, thorns: 0.15} },
+    { ...P, id: 'brinedSkin', name: '염장 피부', desc: '마법 방어와 체력이 오릅니다.', level: 10, job: 'saltWarden', cost: 2, bonus: { resist: 30, hp: 50 , swarmFind: 0.3, thorns: 0.15, defense: 8 } },
     { ...A, ...magic, id: 'stillRipple', name: '정적 파문', desc: '', level: 25, job: 'stillWarden', chance: .5, cooldown: 4, multiplier: 1.6, cost: 3, manaCost: 11, scaling: 'resist', scalingRatio: 2.2, effect: 'silence' },
-    { ...P, id: 'stillArmor', name: '정적의 갑옷', desc: '마법 방어·물리 방어·턴당 마나 회복이 오릅니다.', level: 25, job: 'stillWarden', cost: 2, bonus: { resist: 30, defense: 10, manaRegen: 1 , swarmFind: 0.5, thorns: 0.2} },
+    { ...P, id: 'stillArmor', name: '정적의 갑옷', desc: '마법 방어·물리 방어·턴당 마나 회복이 오릅니다.', level: 25, job: 'stillWarden', cost: 2, bonus: { resist: 45, defense: 18, manaRegen: 1 , swarmFind: 0.5, thorns: 0.2} },
     { ...A, ...magic, id: 'wardBurst', name: '결계 파쇄', desc: '', level: 40, job: 'wardKeeper', chance: .5, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 16, scaling: 'resist', scalingRatio: 2.6, effect: 'weaken', masteryMilestones: M3 },
-    { ...P, id: 'layeredWard', name: '겹결계', desc: '마법 방어·체력·물리 방어가 오릅니다.', level: 40, job: 'wardKeeper', cost: 3, bonus: { resist: 50, hp: 200, defense: 20 , swarmFind: 0.8, thorns: 0.3}, masteryMilestones: M3 },
+    { ...P, id: 'layeredWard', name: '겹결계', desc: '마법 방어·체력·물리 방어가 오릅니다.', level: 40, job: 'wardKeeper', cost: 3, bonus: { resist: 75, hp: 200, defense: 30 , swarmFind: 0.8, thorns: 0.3}, masteryMilestones: M3 },
     { ...A, ...magic, id: 'abyssWardArray', name: '열수 결계진', desc: '', level: 55, job: 'abyssWarder', chance: .5, cooldown: 4, multiplier: 2.2, cost: 5, manaCost: 22, scaling: 'resist', scalingRatio: 3.4, effect: 'stun', masteryMilestones: M4 },
-    { ...P, id: 'deepWard', name: '열수 결계', desc: '마법 방어·체력·물리 방어·반격이 오릅니다.', level: 55, job: 'abyssWarder', cost: 3, bonus: { resist: 70, hp: 280, defense: 35, thorns: .3 , swarmFind: 0.6}, masteryMilestones: M4 },
+    { ...P, id: 'deepWard', name: '열수 결계', desc: '마법 방어·체력·물리 방어·반격이 오릅니다.', level: 55, job: 'abyssWarder', cost: 3, bonus: { resist: 100, hp: 280, defense: 50, thorns: .3 , swarmFind: 0.6}, masteryMilestones: M4 },
     { ...A, ...magic, id: 'divineWard', name: '신의 결계', desc: '', level: 70, job: 'wardDeity', chance: .5, cooldown: 5, multiplier: 2.8, cost: 6, manaCost: 30, scaling: 'resist', scalingRatio: 4.2, effect: 'silence', masteryMilestones: M5 },
-    { ...P, id: 'wardOfGods', name: '신들의 결계', desc: '마법 방어·체력·물리 방어·흡혈이 크게 오릅니다.', level: 70, job: 'wardDeity', cost: 3, bonus: { resist: 110, hp: 420, defense: 50, lifesteal: .02 , thorns: .35, swarmFind: 1.2}, masteryMilestones: M5 },
-    { ...P, ...lateBloomer, id: 'millenniumWard', name: '천년 결계', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 마법 방어·체력이 크게 오릅니다.', level: 70, job: 'wardDeity', cost: 8, bonus: { resist: 20, hp: 150 },
+    { ...P, id: 'wardOfGods', name: '신들의 결계', desc: '마법 방어·체력·물리 방어·흡혈이 크게 오릅니다.', level: 70, job: 'wardDeity', cost: 3, bonus: { resist: 150, hp: 420, defense: 70, lifesteal: .02 , thorns: .35, swarmFind: 1.2}, masteryMilestones: M5 },
+    { ...P, ...lateBloomer, id: 'millenniumWard', name: '천년 결계', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 마법 방어·체력이 크게 오릅니다.', level: 70, job: 'wardDeity', cost: 8, bonus: { resist: 30, hp: 150, defense: 10 },
         levelEffects: [{ cost: 8, bonus: { resist: 20, hp: 150 } }, { cost: 7, bonus: { resist: 80, hp: 500 } }, { cost: 5, bonus: { resist: 200, hp: 1300, defense: 50 } }, { cost: 2, bonus: { resist: 380, hp: 2600, defense: 110, lifesteal: .02 } }] },
 ];
 export const DEFENSE_BALANCE: Record<string, Partial<Skill>> = Object.fromEntries(

@@ -1174,7 +1174,7 @@ test('v27.95 cape slot: evasion/hp base, steadfast affix only on capes with leve
     const { itemStats, capeEvasion, GEAR_RARITY_SCALE } = await L.load('systems/equipment'), G = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear'), { SLOTS } = await L.load('data/balance');
     assert.deepEqual(Object.keys(SLOTS), ['rod', 'coat', 'charm', 'cape']); assert.equal(gearName('cape', 6), '에테르넬 케이프');
     const cape = { id: 'c', name: 'x', slot: 'cape', rarity: 6, power: 100, level: 100, enhance: 22 };
-    assert.equal(capeEvasion({ rarity: 6, enhance: 22 }), Math.round(.17 * 1.66 * 10000) / 10000); assert.equal(itemStats(cape).hp, 100 * 3.55 * GEAR_RARITY_SCALE[6] * 2);
+    assert.equal(capeEvasion({ rarity: 6, enhance: 22 }), Math.round(.17 * 1.66 * 10000) / 10000); assert.equal(itemStats(cape).hp, 100 * 3.55 * GEAR_RARITY_SCALE[6] * 2.5, "v3.129 cape hp ×2.5");
     assert.ok(itemStats(cape).evasion > .28 && itemStats(cape).evasion < .283); assert.equal(itemStats(cape).speed, undefined, 'capes give no speed');
     const def = G.AFFIX_POOL.find(a => a.id === 'steadfast'); assert.equal(def.onlySlot, 'cape');
     for (let i = 0; i < 40; i++) assert.ok(!G.rollAffixes(6, 100, undefined, () => (i % 7) / 7, [], 'rod', 100).some(a => a.id === 'steadfast'), 'never on weapons');
