@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
+import { researchBudgetTools } from './lib/research-budget.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine'), { stats, power, POWER_WEIGHT } = await load('systems/stats'), { strike } = await load('systems/combat');
 const N = 6000;
@@ -20,7 +21,7 @@ function simulated(st) {
     return Math.pow(offense, POWER_WEIGHT.offense) * Math.pow(durability, POWER_WEIGHT.durability);
 }
 const s = newState(0); s.level = 100; s.rebirths = 100; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 0 };
-Object.assign(s.permanent, { attack: 100, hp: 100, guard: 60, magicGuard: 60 });
+Object.assign(s.permanent, (await researchBudgetTools({ load })).researchByBudget(100, 'attack'));
 const base = { ...stats(s), chainBonus: 0, bossDamage: 0 };
 const variants = {
     '치명타 피해 +1.0': { critDamage: base.critDamage + 1 },

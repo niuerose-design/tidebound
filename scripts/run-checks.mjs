@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 /** 수 분씩 걸리는 장시간 시뮬레이션. --fast에서 뺍니다. */
-const SLOW = new Set(['check-active-routing.mjs', 'check-recovery.mjs', 'check-balance.mjs', 'check-progression-pace.mjs', 'check-roles.mjs']);
+const SLOW = new Set(['check-active-routing.mjs', 'check-recovery.mjs', 'check-balance.mjs', 'check-progression-pace.mjs', 'check-roles.mjs', 'check-research.mjs']);
 const args = process.argv.slice(2), fast = args.includes('--fast'), picks = args.filter(a => !a.startsWith('--'));
 const all = readdirSync(dir).filter(f => /^check-.*\.mjs$/.test(f)).sort();
 const files = all.filter(f => (!fast || !SLOW.has(f)) && (!picks.length || picks.some(p => f.includes(p))));

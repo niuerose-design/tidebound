@@ -34,6 +34,7 @@ pnpm dev               # http://localhost:5173
 - `pnpm checks` (`-- --fast`로 긴 시뮬레이션 제외, 이름 일부로 골라 실행 가능): `scripts/check-*.mjs` 밸런스 · 성장 · 직업 점검을 한꺼번에
 - `node scripts/check-equivalence.mjs`: 같은 상태·난수의 결과 지문 (리팩터링 전후 비교). `check-turn-hash.mjs`: 기준 몸 90가지 × 400턴 세이브 해시 · 턴 시간(엔진 · 능력치 계산 리팩터링 전후 비교)
 - `node scripts/audit-rewards.mjs [분]`: 사냥터 · 던전별 시간당 보상 표(판단용, 통과/실패 없음)
+- `node scripts/check-research.mjs`: 세계석 연구 효과(연구 0 ↔ 산 단계 ↔ +5단계의 사냥 · 보스 비교, `docs/research-review.md`). 10~20분
 - 운영 도구 웹 페이지 `/admin`: Vercel 환경 변수 `TIDEBOUND_ADMIN_KEY`(12자 이상)를 넣으면 켜집니다. 모험가 이름·아이디로 찾아 이번 생 초기화를 미리 보기 → 적용. 같은 기능을 Actions 탭 '이번 생 초기화' 워크플로로도 실행할 수 있습니다(시크릿 `DATABASE_URL` 필요).
 - `DATABASE_URL=... node scripts/reset-life.mjs <아이디> [--slot 2] [--yes]` 또는 `... reset-life.mjs --name <모험가 이름> [--yes]`: 특정 유저의 이번 생만 처음 상태로(환생 횟수·세계석·연구·유물·도감 유지, `--yes` 없이는 미리 보기)
 - `DATABASE_URL=... node scripts/reset-data.mjs chat`: 채팅만 초기화. `... reset-data.mjs all --yes`: 계정 포함 전부 초기화(되돌릴 수 없음, `--yes` 없이는 미리 보기)
@@ -52,6 +53,6 @@ pnpm dev               # http://localhost:5173
 | `game/systems/actions/` | 행동 처리기: 항해(voyage) · 빌드(build) · 도감(collection) · 장비(items) · 환생(lifecycle) |
 | `game/server/` | 사용자 식별, 서버 저장, 동시 요청 처리 |
 | `public/` | 배경 이미지와 아이콘 |
-| `tests/`, `scripts/` | 테스트, 점검 · 운영 도구. 공용 로더는 `scripts/lib/game-modules.mjs`, 시뮬레이션 도우미는 `scripts/lib/sim.mjs`, 기준 몸은 `scripts/lib/reference-body.mjs` |
+| `tests/`, `scripts/` | 테스트, 점검 · 운영 도구. 공용 로더는 `scripts/lib/game-modules.mjs`, 시뮬레이션 도우미는 `scripts/lib/sim.mjs`, 기준 몸은 `scripts/lib/reference-body.mjs`, 점검용 몸의 세계석 연구 단계는 `scripts/lib/research-budget.mjs`(그 환생까지 벌 수 있는 세계석으로 산 단계) |
 
 몬스터·사냥터는 `game/data/world.ts`, 직업은 `game/data/classes.ts`, 스킬은 `game/data/skills.ts`, 기본 밸런스는 `game/data/balance.ts`에서 수정합니다. 패치 기록은 `game/data/update-log.ts`에 최근 큰 패치만 남깁니다.

@@ -3,6 +3,7 @@
 // 결과는 표로 출력합니다(점검 스크립트가 아니라 판단용 자료라 통과/실패가 없습니다).
 import { loadGame } from './lib/game-modules.mjs';
 import { random, manage } from './lib/sim.mjs';
+import { researchBudgetTools } from './lib/research-budget.mjs';
 const { load } = loadGame();
 const { newState, tick, act } = await load('systems/engine');
 const { drop } = await load('systems/encounter');
@@ -14,13 +15,14 @@ const { xpNeeded, DUNGEON_MODES } = await load('data/balance');
 const { levelGateOk, tideLimit } = await load('systems/meta');
 const MINUTES = Number(process.argv[2] || 30), PICK = process.argv[3] || '';
 
-/** 대표 모험가: 레벨·환생·연구를 정하고, 그 레벨 장비를 몇 번 주워 좋은 것을 끼웁니다. */
+/** 대표 모험가: 레벨·환생을 정하고, 전투 연구는 그 환생까지의 세계석 예산으로 산 단계(scripts/lib/research-budget.mjs), 유틸 연구는 아래 값, 그 레벨 장비를 몇 번 주워 좋은 것을 끼웁니다. */
+const { researchByBudget } = await researchBudgetTools({ load });
 const PROFILES = [
-    { name: '환생 0 · Lv.30', rebirths: 0, level: 30, research: { attack: 5, hp: 5, guard: 3 } },
-    { name: '환생 10 · Lv.64', rebirths: 10, level: 64, research: { attack: 60, magicAttack: 20, hp: 60, guard: 30, magicGuard: 20, crit: 10, critDamage: 10, penetration: 8, exp: 6, gold: 8, drop: 5, mastery: 5 } },
-    { name: '환생 40 · Lv.80', rebirths: 40, level: 80, research: { attack: 200, magicAttack: 80, hp: 200, guard: 100, magicGuard: 80, crit: 20, critDamage: 25, penetration: 15, lifesteal: 20, recovery: 10, evasion: 20, exp: 10, gold: 20, drop: 10, mastery: 10 } },
-    { name: '환생 60 · Lv.100', rebirths: 60, level: 100, research: { attack: 260, magicAttack: 100, hp: 260, guard: 130, magicGuard: 100, crit: 25, critDamage: 30, penetration: 18, lifesteal: 25, exp: 10, gold: 12, drop: 8 } },
-];
+    { name: '환생 0 · Lv.30', rebirths: 0, level: 30, utility: {} },
+    { name: '환생 10 · Lv.64', rebirths: 10, level: 64, utility: { exp: 6, gold: 8, drop: 5, mastery: 5 } },
+    { name: '환생 40 · Lv.80', rebirths: 40, level: 80, utility: { exp: 10, gold: 20, drop: 10, mastery: 10 } },
+    { name: '환생 60 · Lv.100', rebirths: 60, level: 100, utility: { exp: 10, gold: 20, drop: 10, mastery: 10 } },
+].map(p => ({ ...p, research: { ...researchByBudget(p.rebirths, 'attack'), ...p.utility } }));
 function build(p) {
     const rng = random(7), s = newState(0);
     s.rebirths = p.rebirths; s.level = p.level; s.peakLevel = p.level; s.statPoints = (p.level - 1) * 5; s.tutorial = { hidden: true, skipped: true };

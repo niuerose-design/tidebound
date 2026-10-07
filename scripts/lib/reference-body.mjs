@@ -2,6 +2,7 @@
 //   초보(환생 0~10) · 중수(10~50, 치명 100% · 관통 50→70%) · 고수(50~100, 치명 100% · 관통 75→85%).
 // 사용: const { referenceBody, bodyReport } = await referenceBodies(loadGame()); const s = referenceBody(30, 'hero');
 import { random } from './sim.mjs';
+import { researchBudgetTools } from './research-budget.mjs';
 
 export async function referenceBodies({ load }) {
     const { newState } = await load('systems/engine');
@@ -21,10 +22,12 @@ export async function referenceBodies({ load }) {
 
     const tierOf = r => r < 10 ? 'novice' : r < 50 ? 'mid' : 'expert';
     const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
-    /** 세계석 연구 비율(최대 대비): 초보 0→15%, 중수 30→60%, 고수 75→100%. 치명 · 관통 · AP는 중수부터 최대(먼저 찍는 연구). */
-    const researchFrac = r => r < 10 ? lerp(0, .15, r / 10) : r < 50 ? lerp(.3, .6, (r - 10) / 40) : lerp(.75, 1, (r - 50) / 50);
-    const RESEARCH_MAX = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 20, critDamage: 20, penetration: 15, evasion: 15, lifesteal: 15, manaRegen: 10, recovery: 10, ap: 12 };
-    const PRIORITY = new Set(['crit', 'penetration', 'ap']);
+    /**
+     * 세계석 연구는 '최대의 몇 %'가 아니라 그 환생까지 벌 수 있는 세계석 예산으로 삽니다(scripts/lib/research-budget.mjs, docs/research-review.md 2절).
+     * 전에는 환생 12 · 30 · 60 · 90에 공격 47 · 68 · 120 · 143단계를 줬는데, 그 비용은 6만 · 70만 · 7천만 · 4억 5천만 개로
+     * 실제 누적 수입(약 130 · 600 · 1,700 · 2,700개)과 2~5자릿수 차이라 기준 몸이 실제 유저보다 공격 ×1.5~2.5 강했습니다.
+     */
+    const { researchBudget, researchByBudget } = await researchBudgetTools({ load });
     /** 장비 [등급, 별]: 초보 희귀~영웅 10~15성, 중수 영웅 17성 → 신화 22성, 고수 고대 → 태초 22성. */
     const gearOf = r => r < 5 ? [1, 10] : r < 10 ? [2, 12] : r < 15 ? [2, 15] : r < 20 ? [3, 17] : r < 30 ? [3, 20] : r < 40 ? [4, 20] : r < 50 ? [4, 22] : r < 70 ? [5, 22] : [6, 22];
     /** 옵션 줄(앞에서부터 등급 수만큼): 주 공격 · 관통 · 치명 피해 · 치명 · 체력 · 모든 능력치 · 보스 피해. 중수부터 관통 · 치명을 앞으로. */
@@ -88,8 +91,9 @@ export async function referenceBodies({ load }) {
         const attrs = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; let used = 0;
         for (const [k, p] of Object.entries(w)) { attrs[k] = Math.floor(total * p / 100); used += attrs[k]; }
         attrs[main] += total - used;
-        const frac = researchFrac(r), permanent = Object.fromEntries(Object.entries(RESEARCH_MAX).map(([k, v]) => [k, tier !== 'novice' && PRIORITY.has(k) ? v : Math.round(v * frac)]));
-        const x = extras(r), ach = ACHIEVEMENTS.filter(a => !a.honor);
+        const both = own.some(sk => sk.damageType === 'magic') && own.some(sk => sk.damageType !== 'magic');
+        const x = extras(r), permanent = researchByBudget(r, both ? 'both' : magic ? 'magicAttack' : 'attack', x.ach);
+        const ach = ACHIEVEMENTS.filter(a => !a.honor);
         const claims = Object.fromEntries(ach.slice(0, Math.round(ach.length * x.ach)).map(a => [a.id, true]));
         const book = {};
         if (x.region) for (const region of REGIONS) for (const id of regionFish(region)) book[id] = BALANCE.bookMilestones[x.region - 1];
@@ -106,5 +110,5 @@ export async function referenceBodies({ load }) {
         return s;
     }
     const bodyReport = s => { const st = stats(s); return { level: s.level, job: s.job, crit: +st.crit.toFixed(3), penetration: +st.penetration.toFixed(3), luk: s.attributes.luk, power: power(st), ap: `${apUsed(s)}/${apCapacity(s)}`, passives: s.skills.filter(id => SKILLS.find(k => k.id === id)?.type === 'passive').length }; };
-    return { referenceBody, bodyReport, tierOf, random };
+    return { referenceBody, bodyReport, tierOf, random, researchBudget, researchByBudget };
 }
