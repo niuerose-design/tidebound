@@ -265,15 +265,19 @@ export function applyOffering(s: State, o: Offering, points: number, gauge: Alta
  */
 async function levelBlessing(b: typeof BLESSINGS[number], now: number, by: string) {
     const database = db();
-    let opened = 0, until = 0, level = 0, wasLive = false, before = 0;
+    let opened = 0, until = 0, level = 0, wasLive = false, before = 0, reread = false;
+    // v3.94 게이지는 처음 한 번만 읽고, 올린 뒤에는 UPDATE가 돌려준 행으로 다음 단계를 셉니다. 공물이 모자라면 쿼리 없이 멈춥니다
+    // (전에는 단계마다 게이지 전체 읽기 + UPDATE, 마지막 실패까지 최악 24번). 다른 인스턴스와 겹쳐 UPDATE가 빗나가면 한 번만 다시 읽습니다.
+    let g = (await database.listAltarGauges()).find(x => x.id === b.id);
     for (let i = 0; i < 12; i++) {
-        const g = (await database.listAltarGauges()).find(x => x.id === b.id), live = effectiveBlessingLevel(g, now);
+        const live = effectiveBlessingLevel(g, now), cost = gaugeCost(b.id, live, live > 0);
         if (i === 0) { wasLive = live > 0; before = live; }
+        if (!g || g.points < cost) break;
         // v3.16 다음 단계가 4 이상이면 전체 시간은 늘지 않고 그 단계의 짧은 유지 시간만 새로 셉니다.
         const target = Math.min(live + 1, BLESSING_MAX_LEVEL), high = target > BLESSING_HIGH_FROM;
-        const r = await database.levelAltarBlessing(b.id, gaugeCost(b.id, live, live > 0), live, now, high ? 0 : b.hours * 3600_000, ALTAR.blessingCapMs, BLESSING_MAX_LEVEL, high ? blessingLevelMs(b.hours, target) : 0, BLESSING_HIGH_FROM);
-        if (!r) break;
-        opened++; until = r.until; level = r.level;
+        const r = await database.levelAltarBlessing(b.id, cost, live, now, high ? 0 : b.hours * 3600_000, ALTAR.blessingCapMs, BLESSING_MAX_LEVEL, high ? blessingLevelMs(b.hours, target) : 0, BLESSING_HIGH_FROM);
+        if (!r) { if (reread) break; reread = true; g = (await database.listAltarGauges()).find(x => x.id === b.id); continue; }
+        opened++; until = r.until; level = r.level; g = { ...g, ...r };
     }
     if (opened) { await refreshAltarEvents(now); await announce(`${by} ${josa(b.name, '이가')} ${!wasLive ? `열렸습니다${level > 1 ? `(${level}단계)` : ''}` : level > before ? `${level}단계가 되었습니다` : (level > BLESSING_HIGH_FROM ? `${level}단계가 ${Math.round(blessingLevelMs(b.hours, level) / 60_000)}분 다시 유지됩니다` : `${level}단계로 ${opened}시간 연장되었습니다`)}! ${blessingDesc(b, level)} · ${kstIso(until).slice(11, 16)}까지`, now); }
     return opened > 0;
