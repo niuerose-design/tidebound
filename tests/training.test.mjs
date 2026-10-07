@@ -101,8 +101,8 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
     }
     assert.deepEqual(bad, []);
     assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'emptyPalm')), [600, 3000, 12000, 36000], 'moved 2nd-tier hidden jobs use the 2nd-tier curve');
-    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e5, 1e6, 5e6], 'bone legacy (AP −3): v3.80 exception, one zero off');
-    assert.equal(P.jobMasteryTarget(job('undead')), 5600, 'constraint skills do not slow the job mastery');
+    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e6, 4e6, 1e7], 'v3.137 bone legacy (AP 6 → 4 → 2 → −3) in millions, ending at ten million');
+    assert.equal(P.jobMasteryTarget(job('undead')), 1e7, 'v3.137 망인 job mastery is ten million');
     const s = newState(0); delete s.masteryAligned; s.skillPractice.emptyPalm = 300; s.skillPractice.riseAgain = 100;
     migrateState(s); assert.ok(s.legacyInherited?.emptyPalm && !s.legacyInherited?.riseAgain, 'kept only above the old first stage');
 });

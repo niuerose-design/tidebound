@@ -147,6 +147,8 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.unlockAfter) out.push(`해금: ${skillById(sk.unlockAfter.skill)?.name || sk.unlockAfter.skill} 숙련 Lv.${sk.unlockAfter.level}`);
     if (sk.perRebirth) out.push(`환생 1회마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);
     if (sk.penaltyRelief) out.push(`현재 직업의 마이너스 보정(체력·공격·방어 배율) ${skillPercent(sk.penaltyRelief)} 회복 · 여러 개면 가장 큰 값만`);
+    // v3.137 페널티 회복형 성장 스킬의 첫 단계(회복 0 · 보너스 없음)도 무엇을 하는지 적습니다.
+    else if (sk.levelEffects?.some(l => l.penaltyRelief)) out.push('아직 직업 마이너스 보정을 되찾지 못함 · 숙련하면 단계별로 회복');
     if ((jobById(sk.job)?.tier || 0) >= SKILL_FORMULA.signatureTier) out.push(`전용 기술입니다. 계보 밖 직업이 계승하면 ${sk.type === 'active' ? '피해 배율' : '능력치'}이 ×${number(SKILL_FORMULA.signatureScale)}로 줄어듭니다.`);
     if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 처치 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
     if (sk.type === 'passive' && !sk.song && !sk.levelEffects && SKILL_FORMULA.masteredPassiveAP) out.push(level >= maxSkillLevel(sk) ? `최대 성장을 마쳐 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어 있습니다.` : `최대 성장(Lv.${maxSkillLevel(sk)})에 닿으면 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어듭니다.`);

@@ -25,7 +25,7 @@ test('Job mastery strengthens only the currently selected job and never its pena
 });
 test('Growth descriptions expose real bone penalties, negative AP and farming stages',()=>{
  const bone=skillGrowthStages(SKILLS.find(sk=>sk.id==='boneLegacy')).filter(r=>!r.broken);// v27.6 한계돌파 행 제외
- assert.deepEqual(bone.map(r=>[r.practice,r.effective.cost,r.effective.bonus.hp,r.effective.bonus.defense]),[[0,6,-60,-8],[1e5,6,-40,-5],[1e6,2,100,12],[5e6,-3,450,45]]);
+ assert.deepEqual(bone.map(r=>[r.practice,r.effective.cost,r.effective.bonus?.hp||0,r.effective.bonus?.defense||0]),[[0,6,0,0],[1e6,4,0,0],[4e6,2,100,12],[1e7,-3,450,45]]);// v3.137 백만 단위 · 작은 마이너스 제거
  assert.deepEqual(bone.map(r=>r.effective.penaltyRelief||0),[0,.15,.5,1]);
  const loot=skillGrowthStages(SKILLS.find(sk=>sk.id==='salvageContract'));assert.ok(loot[0].effects.includes('장비 드롭 보너스 +45%'),loot[0].effects.join('|'));const codex=skillGrowthStages(SKILLS.find(sk=>sk.id==='rareSense'));assert.match(codex[0].effects.join(' '),/변종·황금 처치 5마다 .*최대 20회/);
  const study=skillGrowthStages(SKILLS.find(sk=>sk.id==='titanFieldNotes'));assert.match(study[0].effects.join(' '),/모든 보스 처치 시 숙련 ×3/);assert.match(study.at(-1).effects.join(' '),/숙련 ×8/);
@@ -275,7 +275,7 @@ test('v27.22 mastery mimic: rare stage-only spawn with the strongest local body,
 });
 
 test('v27.24 ultimate finale skills exist, belong to 5th-tier jobs, and the fx parser carries the skill id',()=>{
- const ids=['braveSlash','oceanWrath','genesis','doomMark','aegisJudgment','redApocalypse','worldTentacle','soulReap','jackpotStrike','frozenTime'];
+ const ids=['braveSlash','oceanWrath','genesis','doomMark','aegisJudgment','redApocalypse','worldTentacle','jackpotStrike','frozenTime'];
  for(const id of ids){const sk=SKILLS.find(x=>x.id===id);assert.ok(sk,id);const job=JOBS.find(j=>j.id===sk.job);assert.ok(job&&(job.tier===5||job.id==='chronarch'),id+' job tier');}
  const fx=combatFxFromLog({id:9,type:'battle',text:'나 · 소드 오브 버닝 소울 → 100 물리 피해'},'나');assert.equal(fx.skillId,'braveSlash');
 });

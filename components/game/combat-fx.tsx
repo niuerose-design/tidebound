@@ -91,7 +91,6 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     aegisJudgment: { kind: 'judgment', title: '소드 오브 라이트', glyphs: ['⬡', '✦', '⬡', '✦', '⬡', '✦', '⬡', '✦'] },
     redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
     worldTentacle: { kind: 'tentacle', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
-    soulReap: { kind: 'soul', glyphs: ['☠', '◌', '☠', '◌', '☠', '◌', '☠', '◌'] },
     jackpotStrike: { kind: 'jackpot', title: '조커', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },
     frozenTime: { kind: 'time', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
 };

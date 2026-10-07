@@ -761,12 +761,6 @@
 .ult-tentacle .ult-a{rotate:35deg}.ult-tentacle .ult-b{rotate:-35deg;animation-delay:calc(var(--fx-delay) + .15s)}
 @keyframes ultTentacle{0%{opacity:0;scale:1.6 .2}30%{opacity:1;scale:1 1}60%{scale:.5 1.3}100%{opacity:0;scale:.2 1.6}}
 /* 영혼 수확 일격: 뼈 교차와 떠오르는 영혼 */
-.ult-soul{--fx:#ece6d2}.ult-soul .scene-fx-dark{background:#07080c}
-.ult-soul .ult-a,.ult-soul .ult-b{left:62%;top:48%;width:260px;height:6px;margin:-3px 0 0 -130px;border-radius:3px;background:linear-gradient(90deg,transparent,#ece6d2,transparent);box-shadow:0 0 18px #ece6d2;animation:ultBone 2.4s ease-out var(--fx-delay) both}
-.ult-soul .ult-a{rotate:35deg}.ult-soul .ult-b{rotate:-35deg}
-.ult-soul .ult-frag{animation-name:ultSoulRise;font-size:26px;color:#dfe9ff;text-shadow:0 0 14px #9fc8ff}
-@keyframes ultBone{0%,20%{opacity:0;scale:0 1}32%{opacity:1;scale:1 1}80%{opacity:1}100%{opacity:0}}
-@keyframes ultSoulRise{0%{opacity:0;transform:translate(calc((var(--i) - 3.5) * 24px),30px) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(calc((var(--i) - 3.5) * 30px),-110px) scale(1.1)}}
 /* 대박 일격: 슬롯 세 칸과 동전 폭포 */
 .ult-jackpot{--fx:#ffd76a}.ult-jackpot .scene-fx-dark{background:#120c02}
 .ult-jackpot .ult-a{left:62%;top:40%;width:210px;height:64px;margin:-32px 0 0 -105px;border:3px solid #ffd76a;border-radius:10px;background:#1a1206;box-shadow:0 0 24px #ffd76a;animation:ultSlot 2.4s ease-out var(--fx-delay) both}
