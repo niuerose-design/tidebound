@@ -183,7 +183,7 @@ export const REFINE_GROWTH = 1.08, REROLL_GOLD = 20, GEAR_RESET_PEARLS = 999;
 export const refineEssenceAt = (rarity: number, refines = 0) => Math.ceil(refineEssence(rarity) * Math.pow(REFINE_GROWTH, Math.max(0, Math.floor(refines))));
 const ROLL_MIN = .6, ROLL_SPAN = .8;
 /**
- * v3.124 원시 고대 · 계승 태초 · 칠흑의 재련 상한: 보통 장비의 최고 굴림(수치 100%)을 1로 두고 그 1.5배 폭까지 굴립니다(수치 150%).
+ * v3.125 원시 고대 · 계승 태초 · 칠흑의 재련 상한: 보통 장비의 최고 굴림(수치 100%)을 1로 두고 그 1.5배 폭까지 굴립니다(수치 150%).
  * 계승 · 칠흑은 옵션이 최고 수치로 고정돼 재련할 이유가 없었습니다. 계승 · 비용 초기화는 그대로 100%에 놓고, 재련으로만 그 위를 노립니다.
  */
 export const HEIR_ROLL_TOP = 1.5;
@@ -201,7 +201,7 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
     if (def.kind === 'rule') return { id: def.id, name: def.name, stat: def.stat, value: def.base, rule: true };
     if (def.fixed) return { id: def.id, name: def.name, stat: def.stat, value: def.base };
     // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
-    // v3.124 top은 굴림 폭 배율(보통 1, 계승 · 칠흑 재련은 HEIR_ROLL_TOP): 최고가 0.6 + 0.8 × top배까지 늘어납니다.
+    // v3.125 top은 굴림 폭 배율(보통 1, 계승 · 칠흑 재련은 HEIR_ROLL_TOP): 최고가 0.6 + 0.8 × top배까지 늘어납니다.
     const roll = (ROLL_MIN + rng() * ROLL_SPAN * top) * rarityQuality(rarity) * levelScale(def, level);
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
     const round = (n: number) => def.kind === 'flat' ? Math.round(n) : Math.round(n * 10000) / 10000;
@@ -223,7 +223,7 @@ export function refineOption(x: ItemAffix, power: number, rarity: number, rng: (
     // v3.72 이중 옵션(rollBoth, 예: 감각)은 두 수치를 같은 굴림으로 함께 바꿉니다.
     return def.rollBoth ? { ...x, value: next.value, value2: next.value2 } : { ...x, value: next.value };
 }
-/** v27.94 옵션 수치가 굴림 범위에서 어디쯤인지(0 = 최저, 1 = 보통 최고). 규칙 옵션·알 수 없는 옵션은 null. v3.124 top(계승 · 칠흑 1.5)까지 1을 넘을 수 있습니다. */
+/** v27.94 옵션 수치가 굴림 범위에서 어디쯤인지(0 = 최저, 1 = 보통 최고). 규칙 옵션·알 수 없는 옵션은 null. v3.125 top(계승 · 칠흑 1.5)까지 1을 넘을 수 있습니다. */
 export function affixQuality(x: ItemAffix, power: number, rarity: number, level = 1, top = 1): number | null {
     const def = affixDef(x.id);
     if (!def || x.rule || def.kind === 'rule' || def.fixed || !def.base) return null;

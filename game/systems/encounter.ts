@@ -101,7 +101,7 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     // v3.35 설정에서 고른 등급(여러 개)만 처리합니다. 칠흑·잠금 장비는 어떤 경우에도 처리하지 않습니다.
     const keep = item.locked || keepsAcrossLives(item) || !s.itemBook?.[itemKey(slot, rarity)];
     if (!keep && s.autoSell && autoGrades(s, 'salvage').includes(item.rarity)) {
-        // v3.124 자동 분해도 태초 계승 게이지를 채웁니다(전에는 정수만 주고 게이지를 빠뜨림).
+        // v3.125 자동 분해도 태초 계승 게이지를 채웁니다(전에는 정수만 주고 게이지를 빠뜨림).
         const got = dismantleInto(s, [item]);
         addLog(s, `자동 정리: ${item.name} 분해 · 정수 +${got.essence}${primalGaugeNote(s, got.gauge)}`, 'reward');
         return;
@@ -288,7 +288,7 @@ export function reward(s: State, rng: () => number) {
     const won = stats(s);
     const perFish = Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
-    // v3.124 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
+    // v3.125 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
     const rareFoe = e.id === MIMIC.id || e.id === EXP_NURI.id || !!e.onyx;
     const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && !rareFoe && rng() < goldenChance;
     const gold = Math.floor(perFish * size * big) + (golden ? perFish * 9 : 0);

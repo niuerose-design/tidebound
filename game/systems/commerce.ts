@@ -119,7 +119,7 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
         if (item.relic || item.heir || item.onyx) { item.enhance = STARFORCE.relicResetStar; return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! ${item.relic ? '유물' : item.onyx ? '칠흑 장신구' : '계승 장비'}라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G` }; }
         s.inventory = s.inventory.filter(x => x.id !== item.id);
         for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
-        // v3.124 파괴된 태초도 계승 게이지를 채웁니다(분해와 같음).
+        // v3.125 파괴된 태초도 계승 게이지를 채웁니다(분해와 같음).
         const gauge = primalGaugeGain(s, [item]);
         return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 장비가 파괴되었습니다 · -${cost} G${primalGaugeNote(s, gauge)}` };
     }
@@ -242,7 +242,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence.toLocaleString()}).`);
             s.essence = (s.essence || 0) - cost.essence;
             item.refines = (item.refines || 0) + 1;
-            // v3.124 원시 고대 · 계승 태초 · 칠흑은 보통 최고의 1.5배 폭(수치 150%)까지 굴립니다(refineTopOf).
+            // v3.125 원시 고대 · 계승 태초 · 칠흑은 보통 최고의 1.5배 폭(수치 150%)까지 굴립니다(refineTopOf).
             const next = refineOption(x, item.power, item.rarity, rng, item.level, refineTopOf(item));
             item.affixes = item.affixes!.map((o, i) => i === index ? next : o);
             return `${item.name} ${x.name} 수치 재련 · ${x.value} → ${next.value} · 정수 -${cost.essence.toLocaleString()}`;

@@ -11,11 +11,11 @@ import { ODDS } from './odds';
  * 엔드 콘텐츠 기준: 서식지 방치 시 출현 약 180회/시간 → 보스 약 13회/일(난이도 0). drop .003 · 천장 400이면 장신구 1개에 기대 약 18일, 최장 약 31일(난이도 50에서는 절반). 7종 완성은 반년 남짓.
  * 보스마다 고유 성향·기술이 있습니다(data/encounters PROFILES onyx*).
  * v3.77 무작위 옵션은 얻을 때 최고 굴림(systems/equipment tuneOnyx), 강화 파괴 시 12성으로 돌아갑니다. 위력은 (레벨 + 2) × power(onyxPower)이고 골드로 레벨을 올려 키웁니다(환생으로 저절로 오르지 않음).
- * v3.124 power 5.2 → 6.37(Lv.100 530 → 650). 이미 가진 장신구는 불러올 때 위력과 고정 수치 옵션을 함께 맞춥니다(tuneOnyx).
+ * v3.125 power 5.2 → 6.37(Lv.100 530 → 650). 이미 가진 장신구는 불러올 때 위력과 고정 수치 옵션을 함께 맞춥니다(tuneOnyx).
  */
 // v3.52 출현·드롭 확률과 천장은 서버 전용(game/secret/odds.ts). 체력·공격·머무는 턴·옵션 수는 공개.
 export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, hp: 100, attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5,
-    /** v3.124 위력 계수: Lv.100에서 650(환생 60 계승 태초 606과 환생 200 계승 태초 788 사이). 전에는 일반 태초와 같은 5.2(530)라 파밍 동기가 약했습니다. 각성 · 7종 세트까지 모으면 환생 200 계승 태초 장신구를 넘도록 둔 값입니다. */
+    /** v3.125 위력 계수: Lv.100에서 650(환생 60 계승 태초 606과 환생 200 계승 태초 788 사이). 전에는 일반 태초와 같은 5.2(530)라 파밍 동기가 약했습니다. 각성 · 7종 세트까지 모으면 환생 200 계승 태초 장신구를 넘도록 둔 값입니다. */
     power: 6.37, affixes: 5,
     /** v3.113 각성: 이미 가진 칠흑을 다시 얻으면(같은 드롭 확률 · 천장) 고유 옵션 +awakenStep씩, 최대 awakenMax단계. 세계석은 그대로 받습니다. */
     awakenMax: 5, awakenStep: .1,

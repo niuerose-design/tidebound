@@ -33,7 +33,7 @@ for (const [kind, rarity, name] of [['relic', 3, '유물'], ['ancient', 5, '원�
     heir[kind] = [0, 100, 200].map(rb => share(rarity, 22, kind, rb));
     console.log(`${name} 장비 몫(22성 4부위) 환생 0/100/200: ${heir[kind].map(x => `×${x.toFixed(2)}`).join(' / ')} · Lv.100 위력 ${[0, 100, 200].map(rb => Ec.heirPower(kind, rb, 100)).join('/')}`);
 }
-console.log(`칠흑 장신구 위력 Lv.100 ${Math.round(102 * ONYX.power)}(환생 성장 없음 · v3.124 계수 6.37, 옵션 최고 굴림) · 원시 각성 정수 환생 0/100/200: ${[0, 100, 200].map(rb => Ec.awakenEssence(rb).toLocaleString()).join(' / ')} · 태초 계승 게이지 ${Ec.PRIMAL_INHERIT.gauge}`);
+console.log(`칠흑 장신구 위력 Lv.100 ${Math.round(102 * ONYX.power)}(환생 성장 없음 · v3.125 계수 6.37, 옵션 최고 굴림) · 원시 각성 정수 환생 0/100/200: ${[0, 100, 200].map(rb => Ec.awakenEssence(rb).toLocaleString()).join(' / ')} · 태초 계승 게이지 ${Ec.PRIMAL_INHERIT.gauge}`);
 
 // 3. 획득: 사냥 드롭(기준 캐릭터) · 감정 · 칠흑.
 const book = Object.fromEntries(SLOTS.flatMap(s => [0, 1, 2, 3, 4, 5, 6].map(r => [`${s}:${r}`, true])));
