@@ -1317,9 +1317,9 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     // 세트 보너스·스탯·환생 유지·보호.
     const before = stats(s).attack; s.inventory.push({ ...acc, id: 'x2', onyx: 'onyxDunkel' }); assert.ok(Math.abs(stats(s).bossDamage - .05) < 1e-9, '2 pieces: boss damage +5%');
     for (const id of ['onyxWill', 'onyxLucid', 'onyxHilla', 'onyxSeren', 'onyxBlackMage']) s.inventory.push({ ...acc, id: 'x-' + id, onyx: id, affixes: [] });
-    assert.ok(Math.abs(stats(s).allStats - .03) < 1e-9 && stats(s).attack > before, '7 pieces: all stats +3%');
+    assert.ok(Math.abs(stats(s).allStats - (.03 + .05 * O.ONYX.resonance)) < 1e-9 && stats(s).attack > before, '7 pieces: all stats +3% (v3.113 plus the unworn Black Mage badge resonance)');
     assert.throws(() => act(s, { type: 'sell', id: acc.id }, 0), /칠흑/); assert.throws(() => act(s, { type: 'reforge', id: acc.id, value: '0' }, 0), /고유 옵션/);
-    s.level = Meta.rebirthLevel(s); act(s, { type: 'rebirth' }, 0); assert.equal(s.inventory.filter(i => i.onyx).length, 7, 'accessories survive rebirth'); assert.equal(s.onyxBook.onyxDusk, 6); assert.deepEqual(s.onyxMiss, { onyxDusk: 0 }, 'miss counter kept');
+    s.level = Meta.rebirthLevel(s); act(s, { type: 'rebirth' }, 0); assert.equal(s.inventory.filter(i => i.onyx).length, 7, 'accessories survive rebirth'); assert.equal(s.onyxBook.onyxDusk, 6); assert.deepEqual(s.onyxMiss, { onyxDusk: 1 }, 'miss counter kept (v3.113 a missed awakening roll counts too)');
 });
 
 test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/mastery/dps per hour), min time, gap and rebirth restart', async () => {
@@ -1577,4 +1577,26 @@ test('v3.112 exp nuri for strong hunters: pays 10/20/30 average encounters of th
     assert.ok(s.logs.some(l => l.text.includes('이 사냥터 출현 30회분')));
     const at = stage => { const x = newState(0); x.level = 120; x.rebirths = 60; x.stage = stage; x.tide = 30; return Enc.stageEncounterExp(x); };
     assert.ok(at('lithSwarm') > 50 * at('brook'), 'habitat encounters count the whole swarm (×100 / ×500)');
+});
+
+test('v3.113 onyx awakening and resonance: a repeat drop raises the owned accessory (max 5, unique option +10% each), unworn accessories lend 10% of their unique option', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Enc = await L.load('systems/encounter'), O = await L.load('data/onyx'), Eq = await L.load('systems/equipment');
+    const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 0;
+    const acc = O.onyxAccessory(O.ONYX_BOSSES[0], 'dusk', 60); s.inventory.push(acc);
+    const thorns = () => Eq.itemStats(acc).thorns;
+    const base = thorns(); assert.ok(Math.abs(base - .1) < 1e-9, 'unique thorns .1');
+    // 공명: 착용하지 않은 더스크 → 가시 .1 × 10%.
+    const r0 = stats(s).thorns || 0; s.equipment.charm = acc; s.inventory = s.inventory.filter(i => i !== acc); const worn = stats(s).thorns || 0;
+    s.equipment.charm = null; s.inventory.push(acc); assert.ok(r0 > 0 && Math.abs(r0 - worn * O.ONYX.resonance) < 1e-9, `resonance ${r0} = worn ${worn} × 10% (after job affinity)`);
+    // 각성: 다시 얻으면(드롭 굴림 .001) +1, 세계석도 받음. 실패하면 미획득만 셈.
+    const p0 = s.pearls; Enc.spawn(s, () => 0); assert.equal(s.enemy.onyx, 'onyxDusk'); s.enemy.hp = 0; Enc.reward(s, () => .001);
+    assert.equal(acc.onyxRank, 1); assert.equal(s.pearls, p0 + O.ONYX.duplicatePearls); assert.ok(s.logs.some(l => l.text.includes('각성 1/5')));
+    assert.ok(Math.abs(thorns() - .11) < 1e-9, 'unique option ×1.1'); assert.ok(Math.abs((stats(s).thorns || 0) - r0 * 1.1) < 1e-9, 'resonance follows awakening');
+    Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); assert.equal(acc.onyxRank, 1); assert.equal(s.onyxMiss.onyxDusk, 1);
+    s.onyxMiss.onyxDusk = O.ONYX.dropPity - 1; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); assert.equal(acc.onyxRank, 2, 'pity applies to awakening');
+    acc.onyxRank = O.ONYX.awakenMax; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .001); assert.equal(acc.onyxRank, O.ONYX.awakenMax, 'capped'); assert.ok(s.logs.some(l => l.text.includes('각성 완료')));
+    // 제어 연장(턴)은 각성 · 공명을 받지 않습니다.
+    const will = O.onyxAccessory(O.ONYX_BOSSES.find(b => b.id === 'onyxWill'), 'will', 60); will.onyxRank = 5;
+    assert.equal(Eq.itemStats(will).controlBonus, 1); assert.equal(O.onyxResonance({ inventory: [will], equipment: {} }).controlBonus, undefined);
 });

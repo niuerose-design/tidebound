@@ -13,7 +13,11 @@ import { ODDS } from './odds';
  * v3.77 무작위 옵션은 얻을 때 최고 굴림(systems/equipment tuneOnyx), 강화 파괴 시 12성으로 돌아갑니다. 위력은 (레벨 + 2) × power이고 골드로 레벨을 올려 키웁니다(환생으로 저절로 오르지 않음).
  */
 // v3.52 출현·드롭 확률과 천장은 서버 전용(game/secret/odds.ts). 체력·공격·머무는 턴·옵션 수는 공개.
-export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, hp: 100, attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5, power: 5.2, affixes: 5 };
+export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, hp: 100, attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5, power: 5.2, affixes: 5,
+    /** v3.113 각성: 이미 가진 칠흑을 다시 얻으면(같은 드롭 확률 · 천장) 고유 옵션 +awakenStep씩, 최대 awakenMax단계. 세계석은 그대로 받습니다. */
+    awakenMax: 5, awakenStep: .1,
+    /** v3.113 공명: 착용하지 않은 칠흑 장신구의 고유 옵션을 이 비율만큼 받습니다(각성 포함, 강화 · 별 보정 없음). */
+    resonance: .1 };
 export type OnyxBoss = { id: string; name: string; region: string; accessory: { name: string; desc: string; affix: ItemAffix } };
 export const ONYX_BOSSES: OnyxBoss[] = [
     { id: 'onyxDusk', name: '더스크', region: '리스항구', accessory: { name: '거대한 공포', desc: '더스크를 쓰러뜨린 증표. 가시 반격이 크게 오릅니다.', affix: { id: 'onyxThorns', name: '공포의 가시', stat: 'thorns', value: .1, rule: true } } },
@@ -25,6 +29,25 @@ export const ONYX_BOSSES: OnyxBoss[] = [
     { id: 'onyxBlackMage', name: '검은 마법사', region: '아케인 리버', accessory: { name: '창세의 뱃지', desc: '검은 마법사의 뱃지. 체력·마나·공격·방어가 모두 오릅니다.', affix: { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', value: .05, rule: true } } },
 ];
 export const onyxBossFor = (region: string) => ONYX_BOSSES.find(b => b.region === region);
+/** v3.113 각성 배율: 1 + 단계 × awakenStep. */
+export const onyxAwaken = (item: Pick<Item, 'onyxRank'>) => 1 + Math.min(ONYX.awakenMax, Math.max(0, item.onyxRank || 0)) * ONYX.awakenStep;
+/** v3.113 칠흑 고유 옵션의 각성 적용 값. 제어 연장(controlBonus, 턴)은 정수라 각성 · 공명을 받지 않습니다. */
+export const onyxScaledStat = (stat: string, value: number, mult: number) => stat === 'controlBonus' ? value : value * mult;
+/** v3.113 이 칠흑 장신구의 고유 옵션(보스별 1줄)인지. */
+export const isOnyxUnique = (item: Pick<Item, 'onyx'>, affixId: string) => !!item.onyx && ONYX_BOSSES.some(b => b.id === item.onyx && b.accessory.affix.id === affixId);
+/** v3.113 공명: 착용하지 않은 칠흑 장신구마다 고유 옵션(각성 포함) × resonance. 제어 연장은 빠집니다. */
+export function onyxResonance(s: Pick<State, 'inventory' | 'equipment'>) {
+    const worn = new Set(Object.values(s.equipment).map(i => i?.id).filter(Boolean)), out: Record<string, number> = {};
+    for (const item of s.inventory) {
+        if (!item.onyx || worn.has(item.id)) continue;
+        const a = ONYX_BOSSES.find(b => b.id === item.onyx)?.accessory.affix;
+        if (!a) continue;
+        const m = onyxAwaken(item) * ONYX.resonance;
+        out[a.stat] = (out[a.stat] || 0) + a.value * m;
+        if (a.stat2 && a.value2 && a.stat2 !== 'controlBonus') out[a.stat2] = (out[a.stat2] || 0) + a.value2 * m;
+    }
+    return out;
+}
 export const onyxById = (id: string) => ONYX_BOSSES.find(b => b.id === id);
 /** v3.14 물건 도감 키: 칠흑 장신구는 얻는 순간 자동 등록(장비 소모 없음, 환생 유지). */
 export const onyxCodexKey = (bossId: string) => `onyx:${bossId}`;

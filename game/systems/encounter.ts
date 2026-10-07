@@ -364,7 +364,19 @@ export function reward(s: State, rng: () => number) {
     if (e.onyx) {
         const bossDef = onyxById(e.onyx)!; s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1; s.onyxMiss ??= {};
         const miss = s.onyxMiss[e.onyx] || 0, dropRoll = rng();
-        if (ownedOnyx(s).has(e.onyx)) { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
+        if (ownedOnyx(s).has(e.onyx)) {
+            // v3.113 각성: 이미 가진 칠흑도 같은 드롭 확률 · 천장으로 다시 얻으면 각성 단계 +1(최대 5, 고유 옵션 +10%씩). 세계석은 전처럼 받습니다.
+            s.pearls += ONYX.duplicatePearls;
+            const own = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.onyx === e.onyx)!, rank = own.onyxRank || 0;
+            if (rank < ONYX.awakenMax && (dropRoll < ONYX.drop || miss + 1 >= ONYX.dropPity)) {
+                s.onyxMiss[e.onyx] = 0; own.onyxRank = rank + 1;
+                addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name} 각성 ${own.onyxRank}/${ONYX.awakenMax}! 고유 옵션 +${Math.round(own.onyxRank * ONYX.awakenStep * 100)}% · 세계석 +${ONYX.duplicatePearls}`, 'reward');
+            }
+            else {
+                if (rank < ONYX.awakenMax) s.onyxMiss[e.onyx] = miss + 1;
+                addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}${rank < ONYX.awakenMax ? ` (각성 ${rank}/${ONYX.awakenMax} · 연속 미획득 ${miss + 1}/${ONYX.dropPity})` : ' (각성 완료)'}`, 'reward');
+            }
+        }
         else if (dropRoll >= ONYX.drop && miss + 1 < ONYX.dropPity) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · 장신구를 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
         else {
             s.onyxMiss[e.onyx] = 0;
