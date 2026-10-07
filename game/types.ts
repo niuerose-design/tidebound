@@ -200,6 +200,8 @@ export type Skill = {
     scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr';
     /** v26.2 scaling 'attr'가 비례하는 능력치. 기준값 += 능력치 × scalingRatio. */
     scalingAttribute?: Attribute;
+    /** v3.97 scaling 'attr'에 물리 공격 × 이 비율을 더합니다(행운 외길 상위 차수: 장비 · 연구가 쌓여도 기술이 따라 커지도록). */
+    scalingAttack?: number;
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */

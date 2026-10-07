@@ -218,7 +218,7 @@ export function spawn(s: State, rng: () => number) {
     s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
 }
 /**
- * v3.97 전투 · 처치 로그에 쓰는 적 이름. 무리는 ‘스포아 ×100’, 변종은 ‘◆ 거대 개체 스포아’,
+ * v3.98 전투 · 처치 로그에 쓰는 적 이름. 무리는 ‘스포아 ×100’, 변종은 ‘◆ 거대 개체 스포아’,
  * 던전 · 필드 보스는 ‘[보스] …’, 칠흑 보스는 ‘[칠흑] …’. 전투 화면 카드는 배지로 따로 보여 줍니다.
  */
 export function enemyLabel(e: Pick<Enemy, 'id' | 'name' | 'swarm' | 'variant' | 'boss' | 'onyx'>) {

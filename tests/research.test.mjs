@@ -316,7 +316,7 @@ test('v3.90 max mana: base grows with level, research ‘샘의 기억’ ×(1 +
     const st = stats(b), ratio = st.mana / st.hp; assert.ok(ratio > .15 && ratio < .35, `mana/hp ${ratio.toFixed(3)}`);
 });
 
-test('v3.97 enemy label in combat logs: swarm ×N, variant mark + name, [보스] / [칠흑] tags; battle lines and kill line use it', async () => {
+test('v3.98 enemy label in combat logs: swarm ×N, variant mark + name, [보스] / [칠흑] tags; battle lines and kill line use it', async () => {
     const { enemyLabel, tick: tk } = await import('./harness.mjs');
     const base = { id: 'minnow', name: '스포아' };
     assert.equal(enemyLabel(base), '스포아');
