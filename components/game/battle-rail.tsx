@@ -69,7 +69,7 @@ const PlaceSelector = memo(function PlaceSelector({ s, busy, send, setView }: Pl
     {tab === 'stage' ? <div className="battle-stage-list">{STAGES.map((stage, index) => {
         const closed = closedIn(s, 'stages', stage.id), locked = closed || !levelGateOk(s, stage.level) || s.rebirths < stage.rebirth;
         return <button type="button" key={stage.id} className={`battle-stage-button ${s.stage === stage.id && !s.dungeon ? 'selected' : ''} ${locked ? 'locked' : ''}`} disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'stage', id: stage.id })}>
-        <span className="battle-stage-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{stage.place}</strong><small>{closed ? CLOSED_NOTE : `${stage.region} · Lv. ${stage.level}${stage.rebirth ? ` · 환생 ${stage.rebirth}` : ''}`}</small></span>{locked ? <Lock size={13}/> : s.stage === stage.id && !s.dungeon ? <span className="battle-selected-dot"/> : null}
+        <span className="battle-stage-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{stage.place}</strong><small>{closed ? CLOSED_NOTE : `${stage.region} · Lv. ${stage.level}${stage.rebirth ? ` · 환생 ${stage.rebirth}` : ''}${(stage.fit ?? 0) > stage.rebirth ? ` · 적정 ${stage.fit}` : ''}`}</small></span>{locked ? <Lock size={13}/> : s.stage === stage.id && !s.dungeon ? <span className="battle-selected-dot"/> : null}
         </button>;
     })}</div>
     : tab === 'altar' ? <AltarRail s={s} setView={setView}/>

@@ -25,7 +25,7 @@ export function autoRebirthDue(s: State) {
     return s.level >= Math.max(rebirthLevel(s), a.level || 0);
 }
 
-/** v3.41 자동 따라가기 규칙. 사냥터: top = 레벨이 맞는 가장 높은 일반 사냥터, habitat = 레벨이 맞는 가장 높은 무리 서식지(없으면 top), keep = 그대로.
+/** v3.41 자동 따라가기 규칙. 사냥터: top = 레벨이 맞는 가장 높은 일반 사냥터, habitat = 레벨이 맞는 가장 높은 무리 서식지(없으면 top), keep = 그대로. v3.97 적정 환생에 닿은 곳을 먼저.
  * 난이도: max = 고를 수 있는 최대, mimic = 까미 확률이 최대가 되는 난이도(MIMIC.tierCap)까지, keep = 그대로. */
 export const FOLLOW_STAGE = ['top', 'habitat', 'keep'] as const;
 export const FOLLOW_TIDE = ['max', 'mimic', 'keep'] as const;
@@ -33,7 +33,10 @@ export type FollowRule = { on: boolean; stage: typeof FOLLOW_STAGE[number]; tide
 const enterable = (s: State, st: typeof STAGES[number]) => st.level <= s.level && s.rebirths >= st.rebirth && !stageClosed(st.id) && (st.id === s.stage || !hackDownOf('stage', st.id, s.lastTick));
 /** 규칙이 고르는 사냥터·난이도(바꿀 것이 없으면 지금 값). */
 export function followTarget(s: State, rule: FollowRule) {
-    const top = [...PLACES].reverse().find(st => enterable(s, st)), habitat = [...STAGES].filter(st => st.habitat).reverse().find(st => enterable(s, st));
+    // v3.97 입장 조건을 내리면서, 적정 환생(fit)에 닿은 곳 중 가장 높은 곳을 고릅니다(없으면 입장 가능한 가장 높은 곳).
+    const fits = (st: typeof STAGES[number]) => (st.fit ?? 0) <= s.rebirths;
+    const pick = (list: typeof STAGES) => [...list].reverse().find(st => enterable(s, st) && fits(st)) || [...list].reverse().find(st => enterable(s, st));
+    const top = pick(PLACES), habitat = pick(STAGES.filter(st => st.habitat));
     const stage = rule.stage === 'keep' ? s.stage : (rule.stage === 'habitat' ? habitat || top : top)?.id || s.stage;
     const limit = tideLimit(s), tide = rule.tide === 'keep' ? s.tide || 0 : rule.tide === 'mimic' ? Math.min(limit, MIMIC.tierCap) : limit;
     return { stage, tide };
