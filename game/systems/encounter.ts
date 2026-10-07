@@ -32,8 +32,8 @@ import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
 /** 처치 1회당 회복량. 무리 규모와 관계없이 처치마다 한 번 적용합니다(응급처치 포함). */
-export function victoryHeal(s: State) {
-    return Math.floor(stats(s).hp * victoryHealRate(s));
+export function victoryHeal(s: State, a = stats(s)) {
+    return Math.floor(a.hp * victoryHealRate(s));
 }
 /** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
 export function gainLevels(s: State) {
@@ -76,8 +76,9 @@ export function rollRarity(rng: () => number, minRarity = 0, tier = 0) {
 }
 /** v27.53 드롭 장비 레벨: 기준 레벨 + 해역 난이도(층) × 5, 단 캐릭터 레벨 + dropLevelOver까지(기준 레벨보다 낮아지지는 않음). */
 export const dropLevel = (s: Pick<State, 'level'>, base: number, tier: number) => Math.max(base, Math.min(base + tier * 5, s.level + BALANCE.dropLevelOver));
-export function drop(s: State, level: number, rng: () => number, guaranteed = false) {
-    if (!guaranteed && rng() > dropRate(s))
+/** v3.104 rate: 미리 계산한 드롭 확률(무리 드롭 판정 반복용, 없으면 지금 계산). */
+export function drop(s: State, level: number, rng: () => number, guaranteed = false, rate?: number) {
+    if (!guaranteed && rng() > (rate ?? dropRate(s)))
         return;
     // v27.53 일반 처치 드롭도 희귀 이상만(일반 등급은 상점 기본 장비로).
     // v27.76 사냥터·던전 난이도가 높을수록 상위 등급 가중치가 조금 오릅니다(보수적).
@@ -119,6 +120,8 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         addLog(s, `${RARITIES[rarity].name} 장비 발견 · ${item.name}${rarity ? ` · 옵션 ${rarity}개` : ''}`, 'reward');
     }
 }
+/** v3.104 drop()이 바꾸는 값 가운데 능력치(드롭 보너스)에 닿을 수 있는 것: 골드 자릿수(기록 비례 패시브) · 물건 도감 수 · 가방 · 정수. */
+const dropRateKey = (s: State) => `${Math.floor(Math.log10(1 + Math.max(0, s.gold || 0)))}|${Object.keys(s.itemBook || {}).length}|${s.inventory.length}|${s.essence || 0}`;
 /** rareBonus: 희귀 이상 몬스터의 출현 가중치 증가율(0.1 = +10%). */
 export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, tier = 0) {
     const choices = (ids.map(id => FISH.find(f => f.id === id)).filter(Boolean) as typeof FISH).filter(f => (f.minTier || 0) <= tier);
@@ -251,9 +254,11 @@ export function reward(s: State, rng: () => number) {
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * masteryHeads * focusMastery * eventMastery)), practice = researched.total;
     // v3.12 칠흑 세트 4종: 무리 서식지 골드·경험치 +15%.
     const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
-    const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s) * expMult * onyxSet) * size * big);
+    // v3.104 골드 · 경험치 배율과 황금 개체 확률은 같은 상태의 능력치 한 번으로 계산합니다(사이에 상태가 바뀌지 않음).
+    const won = stats(s);
+    const perFish = Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
-    const goldenChance = stats(s).goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
+    const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
     const gold = Math.floor(perFish * size * big) + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     // v27.79 계급장: 처치 수(무리는 마릿수)만큼 계급 경험치. ‘전과 기록’ 특전이 마리당 더 셉니다. 기록이 없던 세이브는 지금까지의 처치 수에서 시작합니다. 진급하면 알립니다.
@@ -343,8 +348,13 @@ export function reward(s: State, rng: () => number) {
     const fish = FISH.find(f => f.id === e.id)!;
     // v3.42 무리는 마리 수 N 대신 √N번만 드롭을 판정하고(×500은 2배), 덜 굴린 판정은 기대 장비 수만큼 정수로 바꿉니다.
     const rolls = swarmDropRolls(size) * (size >= SWARM_BIG.size ? SWARM_BIG.drops : 1);
-    for (let i = 0; i < rolls * (vdef?.drops || 1); i++)
-        drop(s, dropLevel(s, fish.level, encounterTier(s)), rng);
+    // v3.104 드롭 확률은 판정마다 능력치를 다시 계산하던 것을, 드롭이 바꿀 수 있는 값(골드 자릿수 · 물건 도감 · 가방 · 정수)이 그대로면 재사용합니다.
+    let rateKey = '', rate = 0;
+    for (let i = 0; i < rolls * (vdef?.drops || 1); i++) {
+        const key = dropRateKey(s);
+        if (key !== rateKey) { rateKey = key; rate = dropRate(s); }
+        drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, false, rate);
+    }
     if (size > rolls) {
         const owed = (size - rolls) * dropRate(s) * SWARM_ESSENCE_PER_ITEM, essence = Math.floor(owed) + (rng() < owed % 1 ? 1 : 0);
         if (essence > 0) { s.essence = (s.essence || 0) + essence; addLog(s, `무리 전리품 · 정수 +${essence}`, 'reward'); }
@@ -357,7 +367,7 @@ export function reward(s: State, rng: () => number) {
         const sk = skillById(id)!;
         if (sk.unlockJobMastery) addLog(s, `직업 숙련으로 ${sk.name} 해금 · 기본 Lv.0부터 장착 가능`, 'skill');
     }
-    s.hp = Math.min(stats(s).hp, s.hp + victoryHeal(s));
+    { const a = stats(s); s.hp = Math.min(a.hp, s.hp + victoryHeal(s, a)); }
     s.enemy = null;
     s.effects = {};
     s.playerStun = 0;

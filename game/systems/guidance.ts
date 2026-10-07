@@ -1,5 +1,6 @@
 import type { State } from '../types';
 import { PLACES } from '../data/world';
+import { noteOneTimeReward } from './one-time-rewards';
 
 export type TutorialStep = { id: string; title: string; hint: string; view: string; done: (s: State) => boolean; /** v3.17 보상 조건(없으면 done). 환생으로 자동 완료되는 단계는 실제로 해냈을 때만 보상합니다. */ earned?: (s: State) => boolean; /** v3.17 완료 보상(완료되는 순간 자동 지급, 한 번). */ reward?: { pearls?: number; sp?: number } };
 /**
@@ -46,6 +47,7 @@ export function syncTutorial(s: State, log?: (text: string) => void) {
         if (met && step.reward && !auto && (step.earned ? step.earned(s) : true)) {
             if (step.reward.pearls) s.pearls += step.reward.pearls;
             if (step.reward.sp) s.sp += step.reward.sp;
+            noteOneTimeReward(step.reward);
             log?.(`✦ 모험 안내 ‘${step.title}’ 완료 · ${[step.reward.pearls ? `세계석 +${step.reward.pearls}` : '', step.reward.sp ? `SP +${step.reward.sp}` : ''].filter(Boolean).join(' · ')}`);
         }
     }

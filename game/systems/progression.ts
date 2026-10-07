@@ -40,6 +40,16 @@ export function refinePractice(s: Pick<State, 'skillPractice' | 'refineBase'>, i
     return Math.max(Math.min(practice, last), practice - Math.max(0, base - last));
 }
 export const refinePractices = (s: Pick<State, 'skillPractice' | 'refineBase'>) => Object.fromEntries(Object.keys(s.skillPractice || {}).map(id => [id, refinePractice(s, id)]));
+/**
+ * v3.104 skillMasteryRanks · refinePractices와 같은 값을, 조회한 스킬만 그때 계산하는 표(숙련 기록이 있는 스킬만 값이 있고 나머지는 undefined).
+ * 턴마다 숙련을 쌓은 모든 스킬(수백 개)을 계산하던 것을 전투가 실제로 보는 몇 개로 줄입니다. 표를 쓰는 동안 숙련 기록이 바뀌지 않을 때만 쓰세요.
+ */
+function lazySkillTable(s: Pick<State, 'skillPractice'>, value: (id: string) => number): Record<string, number> {
+    const practice = s.skillPractice || {}, cache: Record<string, number | undefined> = {};
+    return new Proxy(cache, { get: (_, id) => { if (typeof id !== 'string' || !Object.prototype.hasOwnProperty.call(practice, id)) return undefined; return cache[id] ??= value(id); } }) as Record<string, number>;
+}
+export const lazySkillMasteryRanks = (s: State) => lazySkillTable(s, id => skillMasteryLevel(s.skillPractice[id], masteryMilestonesFor(skillById(id))) + limitBreakOf(s, id));
+export const lazyRefinePractices = (s: State) => lazySkillTable(s, id => refinePractice(s, id));
 export function maxSkillLevel(sk: Skill) { return masteryMilestonesFor(sk).length; }
 /** 실제로 한 한계돌파 단계(연구 상한 적용 전). 다음 단계 계산에 씁니다. */
 export function limitBreakOwned(s: Pick<State, 'limitBreaks'>, id: string) { return Math.min(PROGRESSION.limitBreak.max, s.limitBreaks?.[id] || 0); }
@@ -205,7 +215,22 @@ export function passiveGrowthBonus(s: State, sk: Skill, given?: Record<string, n
     return out;
 }
 /** 스킬의 실제 효과. practice(refinePractice)는 v3.74부터 효과에 쓰지 않습니다(옛 연마 삭제). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
+/**
+ * v3.104 같은 스킬 · 레벨 · 숙련 단계면 결과가 같으므로 스킬 객체마다 캐시합니다(능력치 계산이 턴마다 장착 스킬 수만큼 부름).
+ * 돌려받은 스킬 객체는 고치지 마세요. 고쳐 쓸 때는 복사본({ ...sk })을 만드세요.
+ */
+const effectiveCache = new WeakMap<Skill, Map<string, Skill>>();
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): Skill {
+    // v3.74 옛 연마 보너스는 없앴습니다(극한돌파는 아직 효과 없음). practice 인자는 호출부 호환을 위해 남깁니다.
+    void practice;
+    let byLevel = effectiveCache.get(sk);
+    if (!byLevel) effectiveCache.set(sk, byLevel = new Map());
+    const key = `${rank}:${mastery}`;
+    let out = byLevel.get(key);
+    if (!out) { byLevel.set(key, out = computeEffectiveSkill(sk, rank, mastery)); Object.freeze(out); if (out.bonus) Object.freeze(out.bonus); }
+    return out;
+}
+function computeEffectiveSkill(sk: Skill, rank: number, mastery: number): Skill {
     const steps = skillLevel(sk, rank, mastery), fx = sk.rankEffects || {}, override = sk.levelEffects?.[Math.min(steps, maxSkillLevel(sk))];
     // v27.6 한계돌파 단계(최대 성장을 넘은 만큼): 발동 추가, 마지막 단계 AP -1.
     const broken = Math.max(0, steps - maxSkillLevel(sk)), lb = PROGRESSION.limitBreak;
@@ -223,8 +248,6 @@ export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): 
         bonus,
         penaltyRelief: override?.penaltyRelief ?? sk.penaltyRelief,
     };
-    // v3.74 옛 연마 보너스는 없앴습니다(극한돌파는 아직 효과 없음). practice 인자는 호출부 호환을 위해 남깁니다.
-    void practice;
     return result;
 }
 export type SkillRankDelta = { label: string; from: string; to: string; };

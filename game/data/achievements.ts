@@ -60,6 +60,10 @@ export const FIRST_CLEAR_SP: Record<string, number> = { grotto: 1, kelpCatacomb:
 const PLAIN_FIRST_CLEAR = Object.entries(FIRST_CLEAR_SP);
 const DUNGEON_NAME = (id: string) => ALL_DUNGEONS.find(d => d.id === id)?.name || id;
 
+/** v3.104 진행도 읽기(progressReader) 한 번 동안은 상태가 그대로이므로, 능력치를 쓰는 업적(최대 체력 · 최대 마나)이 능력치를 한 번만 계산합니다. */
+type StatsRead = { s: State; a?: ReturnType<typeof stats> };
+let reading: StatsRead | null = null;
+const readStats = (s: State) => reading?.s === s ? (reading.a ??= stats(s)) : stats(s);
 export const ACHIEVEMENTS: Achievement[] = [
     ...series('kills', '사냥', n => `처치 ${n.toLocaleString()}마리`, n => `누적 ${n.toLocaleString()}마리를 처치합니다.`, [100, 1000, 5000, 20000, 100000, 500000], kills, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 4 }, { pearls: 8 }, { pearls: 15, ap: 1 }, { pearls: 30, sp: 1 }][i]),
     ...series('codex', '모험', n => `도감 ${n}종`, n => `서로 다른 몬스터 ${n}종을 발견합니다.`, [10, 20, 30, 47, CODEX_FISH.length], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 15, sp: 1 }][i]),
@@ -85,8 +89,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('playtime', '도전', n => `모험 ${n.toLocaleString()}시간`, n => `자동 사냥·던전으로 누적 ${n.toLocaleString()}시간을 보냅니다(부재중 정산 포함).`, [1, 10, 50, 100, 500, 1000], playHours, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6 }, { pearls: 10, ap: 1 }, { pearls: 20 }, { pearls: 40, sp: 1, ap: 1 }][i]),
     ...series('turns', '도전', n => `${n.toLocaleString()}턴`, n => `전투 턴을 누적 ${n.toLocaleString()}번 진행합니다.`, [10000, 100000, 1000000], s => s.turn || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, ap: 1 }][i]),
     ...series('attr', '도전', n => `능력치 ${n} 돌파`, n => `기본 능력치 하나를 ${n} 이상으로 올립니다(직접 투자 + 성장).`, [100, 300, 500], s => Math.max(0, ...Object.values(attributes(s))), i => [{ pearls: 3 }, { pearls: 8, ap: 1 }, { pearls: 20, sp: 1, ap: 1 }][i]),
-    ...series('hpmax', '도전', n => `최대 체력 ${n.toLocaleString()}`, n => `최종 최대 체력이 ${n.toLocaleString()}을 넘습니다.`, [10000, 50000, 200000], s => stats(s).hp, i => [{ pearls: 3 }, { pearls: 10 }, { pearls: 25, ap: 1 }][i]),
-    ...series('manamax', '도전', n => `최대 마나 ${n.toLocaleString()}`, n => `최종 최대 마나가 ${n.toLocaleString()}을 넘습니다.`, [5000, 50000], s => stats(s).mana, i => [{ pearls: 3 }, { pearls: 12, ap: 1 }][i]),
+    ...series('hpmax', '도전', n => `최대 체력 ${n.toLocaleString()}`, n => `최종 최대 체력이 ${n.toLocaleString()}을 넘습니다.`, [10000, 50000, 200000], s => readStats(s).hp, i => [{ pearls: 3 }, { pearls: 10 }, { pearls: 25, ap: 1 }][i]),
+    ...series('manamax', '도전', n => `최대 마나 ${n.toLocaleString()}`, n => `최종 최대 마나가 ${n.toLocaleString()}을 넘습니다.`, [5000, 50000], s => readStats(s).mana, i => [{ pearls: 3 }, { pearls: 12, ap: 1 }][i]),
     // v3.6 스타포스 업적: 시도·성공·실패·파괴·쓴 골드·최고 별. 기록은 환생해도 남습니다.
     ...series('starTries', '강화', n => `스타포스 ${n.toLocaleString()}회 시도`, n => `스타포스 강화를 누적 ${n.toLocaleString()}번 시도합니다.`, [100, 1000, 10000], s => sf(s).tries, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, sp: 1 }][i]),
     ...series('starSuccess', '강화', n => `강화 성공 ${n.toLocaleString()}회`, n => `스타포스 강화에 누적 ${n.toLocaleString()}번 성공합니다.`, [50, 500, 5000], s => sf(s).success, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
@@ -143,8 +147,12 @@ export const ACHIEVEMENT_GROUPS = ['모험', '사냥', '숙련', '던전', '환�
  * 상태가 바뀌면 새로 만들어 쓰세요(진행도 함수는 업적 달성 기록을 읽지 않으므로 해금 표시만 하는 동안은 같은 값입니다).
  */
 export function progressReader(s: State) {
-    const cache = new Map<Achievement['progress'], number>();
-    return (a: Pick<Achievement, 'progress'>) => { let v = cache.get(a.progress); if (v === undefined) cache.set(a.progress, v = a.progress(s)); return v; };
+    const cache = new Map<Achievement['progress'], number>(), ctx: StatsRead = { s };
+    return (a: Pick<Achievement, 'progress'>) => {
+        let v = cache.get(a.progress);
+        if (v === undefined) { const prev = reading; reading = ctx; try { v = a.progress(s); } finally { reading = prev; } cache.set(a.progress, v); }
+        return v;
+    };
 }
 export const achievementMaxTotals = () => achievementTotals({ achievementClaims: Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, true])) });
 

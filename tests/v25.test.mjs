@@ -1391,7 +1391,10 @@ test('v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-pie
 });
 
 test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per request and continues next sync (same total, summary accumulates)', async () => {
-    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), B = await L.load('data/balance');
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), B = await L.load('data/balance'), O = await L.load('systems/offline-sample');
+    // v3.104 사냥터 정산은 표본 + 환산이라, 분할 정산(던전 · 해커 · 표본 뒤 조건이 바뀐 경우)은 환산을 끄고 확인합니다.
+    const sampleTurns = O.OFFLINE_SAMPLE.turns; O.OFFLINE_SAMPLE.turns = Infinity;
+    try {
     const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 100; s.stage = 'brook'; s.running = true; s.lastTick = 0; s.hp = 1e9;
     const hours = 1, now = hours * 3600_000, total = now / B.BALANCE.turnMs;
     T.advance(s, now, () => .5);
@@ -1400,6 +1403,27 @@ test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per
     while (s.catchUpLeft) { T.advance(s, now, () => .5); rounds++; }
     assert.equal(rounds, Math.ceil(total / T.CATCH_UP_CHUNK)); assert.equal(s.lastTick, now, 'caught up to now'); assert.ok(s.lastOffline.kills > firstKills, 'summary accumulates across chunks'); assert.equal(s.lastOffline.seconds, hours * 3600);
     T.advance(s, now + 2000, () => .5); assert.equal(s.catchUpLeft, undefined); assert.equal(s.turn > 0, true);
+    } finally { O.OFFLINE_SAMPLE.turns = sampleTurns; }
+});
+test('v3.104 offline sampling: a long absence runs OFFLINE_SAMPLE.turns real turns and adds the rest in proportion, in one request; one-time goal rewards are not multiplied; dungeons are not sampled', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), O = await L.load('systems/offline-sample'), R = await L.load('systems/one-time-rewards');
+    const seeded = seed => { let x = seed >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296); };
+    const make = () => { const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 100; s.stage = 'brook'; s.running = true; s.lastTick = 0; s.hp = 1e9; return s; };
+    const N = O.OFFLINE_SAMPLE.turns, hours = 3, total = hours * 3600 / 2, k = (total - N) / N;
+    // 표본만: 같은 상태 · 같은 난수로 N턴(1분 넘는 부재라 같은 오프라인 정산 규칙).
+    const ref = make(); T.advance(ref, N * 2000, seeded(41)); const once = { ...R.oneTimeRewards };
+    const s = make(); T.advance(s, hours * 3600_000, seeded(41));
+    assert.equal(s.catchUpLeft, undefined, 'settled in one request'); assert.equal(s.turn, N, 'only the sample ran turn by turn'); assert.equal(s.lastTick, hours * 3600_000);
+    assert.equal(s.playMs, total * 2000, 'play time counts the whole absence');
+    const grow = d => Math.round(Math.max(0, d) * k);
+    assert.equal(s.kills, ref.kills + grow(ref.kills - 100), 'kills: sample + sample × k');
+    assert.equal(s.jobMastery[s.job], ref.jobMastery[s.job] + grow(ref.jobMastery[s.job] - (newState(0).jobMastery[s.job] || 0)), 'job mastery in proportion');
+    assert.ok(s.kills > ref.kills * 5, 'about six times the sample');
+    assert.ok(once.pearls > 0, 'the sample completed a goal (one-time reward)');
+    assert.equal(s.pearls - make().pearls, (ref.pearls - make().pearls) + grow(ref.pearls - make().pearls - once.pearls), 'one-time rewards are not multiplied');
+    assert.ok(s.lastOffline && s.lastOffline.kills === s.kills - 100 && s.lastOffline.seconds === hours * 3600, 'summary covers the whole absence');
+    // 던전은 환산하지 않습니다(분할 정산).
+    assert.equal(O.canSampleOffline({ ...make(), dungeon: { id: 'x', wave: 0 } }), false); assert.equal(O.canSampleOffline(make()), true);
 });
 test('v3.17 tutorial rewards: a step completed by its condition pays once; silent back-fill for veteran saves pays nothing', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const G = await L.load('systems/guidance');
