@@ -690,3 +690,24 @@ test('v3.131 heir refine above 100% is a thin tail (15%, steeper upward) and ref
     assert.equal(Eq.refineCost(it).essence, 7); assert.equal(Eq.refineCost(it, { rebirths: 120 }).essence, 70); assert.equal(Eq.refineCost({ ...it, refines: 10 }).essence, Math.ceil(7 * 1.1 ** 10));
     assert.ok(Eq.refineCost({ ...it, refines: 50 }, { rebirths: 100 }).essence > 4000 && Eq.refineCost({ ...it, refines: 50 }, { rebirths: 100 }).essence < 7000, '50th refine at R100 ≈ one hour of tier-100 essence');
 });
+test('v3.133 rule options (◆) draw at weight .25: about 36% of primal items carry one (was 80%), rare (★) unchanged', async () => {
+    const G = await L.load('data/gear');
+    assert.equal(G.RULE_WEIGHT, .25);
+    let x = 11; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647); const N = 6000; let rule6 = 0, rule3 = 0, rare6 = 0;
+    for (let i = 0; i < N; i++) { const a = G.rollAffixes(6, 500, undefined, rng, [], 'rod', 100); if (a.some(o => o.rule)) rule6++; if (a.some(o => G.affixDef(o.id)?.rare)) rare6++; const b = G.rollAffixes(3, 500, undefined, rng, [], 'rod', 100); if (b.some(o => o.rule)) rule3++; }
+    assert.ok(rule6 / N > .30 && rule6 / N < .43, `primal with a rule option ${rule6 / N}`); assert.ok(rule3 / N > .16 && rule3 / N < .29, `legendary with a rule option ${rule3 / N}`); assert.ok(rare6 / N < .01, `rare ${rare6 / N}`);
+    assert.ok(G.rollAffixes(6, 500, undefined, () => 0, [], 'rod', 100).filter(o => o.rule).length <= 1, 'still at most one rule line');
+});
+test('v3.134 combat power weights offense .65 · durability .35, Lv.1 stays ≈453, and the weapon outranks the coat on primal 22★', async () => {
+    const { stats, power, powerParts, POWER_WEIGHT } = await L.load('systems/stats'), { RARITIES } = await L.load('data/balance'), { rollAffixes } = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear');
+    assert.deepEqual(POWER_WEIGHT, { offense: .65, durability: .35 });
+    const fresh = stats(newState(0)), p = powerParts(fresh); assert.ok(Math.abs(power(fresh) - 453) <= 5, `Lv.1 power ${power(fresh)}`);
+    assert.ok(Math.abs(power(fresh) - Math.round(8 * p.offense ** .65 * p.durability ** .35)) <= 1);
+    const body = () => { const s = newState(0); s.level = 100; s.rebirths = 200; s.statPoints = 0; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 300 }; Object.assign(s.permanent, { attack: 200, hp: 200, guard: 100, magicGuard: 100 }); s.equipment = { rod: null, coat: null, charm: null, cape: null }; return s; };
+    let x = 3; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647); const drop = { rod: 0, coat: 0, charm: 0, cape: 0 }, N = 12;
+    for (let k = 0; k < N; k++) {
+        const s = body(); for (const slot of Object.keys(drop)) { const pw = Math.round(102 * RARITIES[6].factor), style = slot === 'rod' ? 'physical' : 'balanced'; s.equipment[slot] = { id: slot, slot, style, rarity: 6, power: pw, level: 100, enhance: 22, name: gearName(slot, 6, style), affixes: rollAffixes(6, pw, undefined, rng, [], slot, 100) }; }
+        const full = power(stats(s)); for (const slot of Object.keys(drop)) { const it = s.equipment[slot]; s.equipment[slot] = null; drop[slot] += (1 - power(stats(s)) / full) / N; s.equipment[slot] = it; }
+    }
+    assert.ok(drop.rod > drop.coat, `weapon ${drop.rod} should outrank coat ${drop.coat}`); assert.ok(drop.rod > drop.charm && drop.rod > drop.cape);
+});
