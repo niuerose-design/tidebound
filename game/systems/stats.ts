@@ -41,7 +41,7 @@ export type StatTrace = Partial<Record<keyof CombatStats, { source: StatSource; 
  */
 type UsableSkill = { id: string; sk: Skill; mastery: number };
 /**
- * v3.129 장착 스킬 가운데 쓸 수 있는 것과 그 숙련 단계. 능력치 계산 한 번에 canUse · skillMastery를 스킬마다 한 번만 부릅니다
+ * v3.130 장착 스킬 가운데 쓸 수 있는 것과 그 숙련 단계. 능력치 계산 한 번에 canUse · skillMastery를 스킬마다 한 번만 부릅니다
  * (전에는 수련 패시브 · 보너스 · 한계돌파에서 같은 값을 세 번씩 다시 셌음). 순서는 s.skills 그대로라 더하는 순서도 같습니다.
  */
 function usableSkills(s: State): UsableSkill[] {
@@ -96,7 +96,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'attributes', v.str * E.str.attack);
     set('magic', 'base', 10 + (s.level - 1) * 3); add('magic', 'attributes', v.int * E.int.magic);
     set('defense', 'base', BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel); add('defense', 'attributes', v.vit * E.vit.defense); add('defense', 'attributes', v.str * E.str.defense);
-    set('resist', 'base', 3 + (s.level - 1) * .7); add('resist', 'attributes', v.wis * E.wis.resist);
+    // v3.129 마방도 체질 · 지능에서 조금 받습니다(방어가 체질 · 근력에서 받는 것과 대칭). 정신 없는 물리 빌드의 마방이 0에 가깝던 것.
+    set('resist', 'base', BALANCE.baseResist + (s.level - 1) * BALANCE.resistPerLevel); add('resist', 'attributes', v.wis * E.wis.resist); add('resist', 'attributes', v.vit * E.vit.resist); add('resist', 'attributes', v.int * E.int.resist);
     set('crit', 'base', BALANCE.baseCrit); add('crit', 'job', j.crit); add('crit', 'attributes', v.luk * E.luk.crit);
     set('critDamage', 'base', BALANCE.critMultiplier); add('critDamage', 'attributes', v.luk * E.luk.critDamage);
     set('goldenFind', 'base', BALANCE.goldenBase);
@@ -155,7 +156,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const counts = progressCounts(s);
     set('codexPower', 'book', counts.codex); set('catchPower', 'book', Math.log10(1 + counts.catch)); set('huntPower', 'book', Math.sqrt(counts.hunt)); set('goldPower', 'book', Math.log10(1 + Math.max(0, s.gold || 0))); set('masteredPower', 'book', counts.mastered); set('variantPower', 'book', Math.sqrt(counts.variant));
     set('attrStr', 'attributes', v.str); set('attrDex', 'attributes', v.dex); set('attrInt', 'attributes', v.int); set('attrVit', 'attributes', v.vit); set('attrWis', 'attributes', v.wis); set('attrLuk', 'attributes', v.luk);
-    // v3.129 스킬마다 숙련 단계 · 시그니처 배율 · 한계돌파 배율을 한 번만 계산하고, Object.entries 대신 키 순회로 할당을 없앴습니다(더하는 순서 · 식은 그대로).
+    // v3.130 스킬마다 숙련 단계 · 시그니처 배율 · 한계돌파 배율을 한 번만 계산하고, Object.entries 대신 키 순회로 할당을 없앴습니다(더하는 순서 · 식은 그대로).
     for (const { id, sk, mastery } of usable) {
         const rank = s.learned[id] || 1;
         if (sk.penaltyRelief !== undefined || sk.levelEffects) relief = Math.max(relief, effectiveSkill(sk, rank, mastery).penaltyRelief || 0);

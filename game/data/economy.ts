@@ -144,15 +144,15 @@ export const SHOP = [
     { id: 'physical', name: '소드', slot: 'rod', style: 'physical', description: '물리 공격에 집중한 무기.' },
     { id: 'magic', name: '스태프', slot: 'rod', style: 'magic', description: '마법 스킬을 위한 무기.' },
     { id: 'coat', name: '모험가의 갑옷', slot: 'coat', style: 'balanced', description: '체력 · 마나와 두 방어를 보강합니다.' },
-    { id: 'charm', name: '정밀한 귀고리', slot: 'charm', style: 'balanced', description: '치명타를 높이고 정밀 옵션으로 명중을 보강합니다.' },
-    { id: 'cape', name: '여행자의 망토', slot: 'cape', style: 'balanced', description: '회피와 체력 · 마나를 조금 보강합니다.' },
+    { id: 'charm', name: '정밀한 귀고리', slot: 'charm', style: 'balanced', description: '치명타와 체력 · 두 방어를 높이고 정밀 옵션으로 명중을 보강합니다.' },
+    { id: 'cape', name: '여행자의 망토', slot: 'cape', style: 'balanced', description: '회피와 체력 · 마나를 보강합니다.' },
 ] as const;
 /** 감정은 부위를 먼저 고릅니다. 무기의 공격 계열은 같은 확률입니다. */
 export const GAMBLE_CATEGORIES = [
     { id: 'rod', name: '무기', slot: 'rod', offers: ['physical', 'magic'], description: '물리형·마법형 중 하나를 같은 확률로 획득합니다.' },
     { id: 'coat', name: '방어구', slot: 'coat', offers: ['coat'], description: '최대 체력 · 최대 마나와 물리·마법 방어를 보강합니다.' },
-    { id: 'charm', name: '장신구', slot: 'charm', offers: ['charm'], description: '등급에 따라 정해진 치명타 확률(전설 10%, 태초 16%, 강화할수록 조금씩 상승)과 무작위 추가 옵션을 얻습니다. 치명타 100%를 넘으면 극 치명타 확률이 생깁니다.' },
-    { id: 'cape', name: '망토', slot: 'cape', offers: ['cape'], description: '등급에 따라 정해진 회피(전설 11%, 태초 17%, 강화할수록 상승)와 체력 · 마나 소량. 망토에만 상태이상 저항 옵션이 붙습니다.' },
+    { id: 'charm', name: '장신구', slot: 'charm', offers: ['charm'], description: '등급에 따라 정해진 치명타 확률(전설 10%, 태초 16%, 강화할수록 조금씩 상승)과 체력 · 물리 · 마법 방어, 무작위 추가 옵션을 얻습니다. 치명타 100%를 넘으면 극 치명타 확률이 생깁니다.' },
+    { id: 'cape', name: '망토', slot: 'cape', offers: ['cape'], description: '등급에 따라 정해진 회피(전설 11%, 태초 17%, 강화할수록 상승)와 체력 · 마나. 망토에만 상태이상 저항 옵션이 붙습니다.' },
 ] as const;
 /** v27.19 환생 유물: 환생 횟수(rebirth)를 채우면 세계석 없이 받습니다. cost는 v27.19 이전 구매자 환불 기준값입니다. */
 export const RELICS = [

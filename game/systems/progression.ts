@@ -93,7 +93,7 @@ export function extraRollLevel(s: Pick<State, 'extraRolls' | 'permanent'>) { ret
 export function extraRollAP(s: Pick<State, 'extraRolls' | 'permanent'>, level = extraRollLevel(s)) { return SKILL_FORMULA.extraRoll.ap.slice(0, level).reduce((a, n) => a + n, 0); }
 /** 장착 AP 사용량: 스킬 AP 합 + v3.86 추가 판정 AP. */
 export function apUsed(s: State, ids = s.skills) { return extraRollAP(s) + ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
-/** v3.129 직업 객체별로 한 번만 만듭니다(능력치 계산이 장착 스킬마다 시그니처 · 노래 판정에 부르므로). 돌려준 배열은 읽기만 하세요. 비밀 직업 등록은 새 객체를 넣으므로 캐시가 어긋나지 않습니다. */
+/** v3.130 직업 객체별로 한 번만 만듭니다(능력치 계산이 장착 스킬마다 시그니처 · 노래 판정에 부르므로). 돌려준 배열은 읽기만 하세요. 비밀 직업 등록은 새 객체를 넣으므로 캐시가 어긋나지 않습니다. */
 const lineageCache = new WeakMap<Job, string[]>();
 export function lineage(job: string): string[] {
     const j = jobById(job);
