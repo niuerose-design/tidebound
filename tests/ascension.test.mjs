@@ -664,11 +664,11 @@ test('v3.129 slot redistribution: coat / cape / charm share hp and both defenses
     assert.equal(cape.hp, 250); assert.equal(cape.mana, 30); assert.equal(cape.defense, undefined); assert.ok(cape.evasion > 0);
     assert.equal(charm.hp, 200); assert.equal(charm.defense, 40); assert.equal(charm.resist, 20); assert.equal(charm.mana, 50); assert.ok(charm.crit > 0);
     assert.equal(rod.attack, 140); assert.equal(rod.mana, 50, 'weapon gives mana'); assert.equal(rod.hp, undefined, 'weapon gives no hp');
-    // v3.129 기본 방어 · 마방 레벨당 값은 그대로(3 + 1 · 3 + .7), 체질 → 마방 .4 · 지능 → 마방 .25만 추가. 방어 · 마방은 탱커 계보 패시브로 채우는 것이 의도.
+    // v3.129 기본 방어 · 마방 레벨당 값은 그대로(3 + 1 · 3 + .7), 지능 → 마방 .25만 추가(v3.136 체질 → 마방 .4는 제거). 방어 · 마방은 탱커 계보 패시브로 채우는 것이 의도.
     const { stats } = await L.load('systems/stats'), { BALANCE } = await L.load('data/balance'), { ATTRIBUTE_EFFECTS } = await L.load('data/progression');
-    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [3, 1, 3, .7]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, .4); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .25);
+    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [3, 1, 3, .7]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, undefined); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .25);
     const b = newState(0); b.level = 100; b.attributes = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; b.statPoints = 0; const r0 = stats(b).resist; b.attributes.vit = 100; const r1 = stats(b).resist; b.attributes.vit = 0; b.attributes.int = 100; const r2 = stats(b).resist;
-    assert.ok(r1 > r0 && r2 > r0, 'vit and int raise resist'); assert.ok(Math.abs((r1 - r0) / (r2 - r0) - .4 / .25) < .05, 'in the .4 : .25 ratio');
+    assert.ok(r1 === r0 && r2 > r0, 'v3.136 only int raises resist; vit no longer does');
     assert.equal(coat.hp + cape.hp + charm.hp, 800, 'four-slot hp total is unchanged (6 + 2 before)');
 });
 test('v3.131 heir refine above 100% is a thin tail (15%, steeper upward) and refine essence grows ×1.1 with a rebirth factor', async () => {
