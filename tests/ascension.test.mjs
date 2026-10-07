@@ -655,14 +655,19 @@ test('v3.122 onyx accessory level: the higher of its habitat level and my level 
 });
 test('v3.128 slot redistribution: coat / cape / charm share hp and both defenses, totals unchanged, weapon untouched', async () => {
     const Eq = await L.load('systems/equipment');
-    const sum = k => ['coat', 'cape', 'charm'].reduce((n, sl) => n + (Eq.SLOT_GEAR[sl][k] || 0), 0);
-    assert.equal(sum('hp'), 8); assert.equal(Math.round(sum('mana') * 10) / 10, 1.3); assert.equal(sum('defense'), 1); assert.equal(sum('resist'), .5);
-    assert.deepEqual(Eq.SLOT_GEAR.coat, { hp: 3.5, mana: 1, defense: .6, resist: .3 }); assert.deepEqual(Eq.SLOT_GEAR.cape, { hp: 2.5, mana: .3 }); assert.deepEqual(Eq.SLOT_GEAR.charm, { hp: 2, defense: .4, resist: .2 });
+    const sum = k => ['rod', 'coat', 'cape', 'charm'].reduce((n, sl) => n + (Eq.SLOT_GEAR[sl][k] || 0), 0);
+    assert.equal(sum('hp'), 8); assert.equal(Math.round(sum('mana') * 10) / 10, 1.8, 'mana 1.3 → 1.8 spread over weapon · coat · charm · cape'); assert.equal(sum('defense'), 1); assert.equal(sum('resist'), .5);
+    assert.deepEqual(Eq.SLOT_GEAR.rod, { mana: .5 }); assert.deepEqual(Eq.SLOT_GEAR.coat, { hp: 3.5, mana: .5, defense: .6, resist: .3 }); assert.deepEqual(Eq.SLOT_GEAR.cape, { hp: 2.5, mana: .3 }); assert.deepEqual(Eq.SLOT_GEAR.charm, { hp: 2, mana: .5, defense: .4, resist: .2 });
     const base = (slot) => ({ id: slot, slot, style: 'balanced', rarity: 0, power: 100, level: 100, enhance: 0, name: slot, affixes: [] });
     const coat = Eq.itemStats(base('coat')), cape = Eq.itemStats(base('cape')), charm = Eq.itemStats(base('charm')), rod = Eq.itemStats({ ...base('rod'), style: 'physical' });
-    assert.equal(coat.hp, 350); assert.equal(coat.defense, 60); assert.equal(coat.resist, 30); assert.equal(coat.mana, 100);
+    assert.equal(coat.hp, 350); assert.equal(coat.defense, 60); assert.equal(coat.resist, 30); assert.equal(coat.mana, 50);
     assert.equal(cape.hp, 250); assert.equal(cape.mana, 30); assert.equal(cape.defense, undefined); assert.ok(cape.evasion > 0);
-    assert.equal(charm.hp, 200); assert.equal(charm.defense, 40); assert.equal(charm.resist, 20); assert.equal(charm.mana, undefined); assert.ok(charm.crit > 0);
-    assert.equal(rod.attack, 140); assert.equal(rod.hp, undefined, 'weapon gives no hp');
+    assert.equal(charm.hp, 200); assert.equal(charm.defense, 40); assert.equal(charm.resist, 20); assert.equal(charm.mana, 50); assert.ok(charm.crit > 0);
+    assert.equal(rod.attack, 140); assert.equal(rod.mana, 50, 'weapon gives mana'); assert.equal(rod.hp, undefined, 'weapon gives no hp');
+    // v3.128 기본 방어 · 마방: 레벨당 방어 1.5 · 마방 1.2, 체질 → 마방 .4 · 지능 → 마방 .25.
+    const { stats } = await L.load('systems/stats'), { BALANCE } = await L.load('data/balance'), { ATTRIBUTE_EFFECTS } = await L.load('data/progression');
+    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [5, 1.5, 5, 1.2]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, .4); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .25);
+    const b = newState(0); b.level = 100; b.attributes = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; b.statPoints = 0; const r0 = stats(b).resist; b.attributes.vit = 100; const r1 = stats(b).resist; b.attributes.vit = 0; b.attributes.int = 100; const r2 = stats(b).resist;
+    assert.ok(r1 > r0 && r2 > r0, 'vit and int raise resist'); assert.ok(Math.abs((r1 - r0) / (r2 - r0) - .4 / .25) < .05, 'in the .4 : .25 ratio');
     assert.equal(coat.hp + cape.hp + charm.hp, 800, 'four-slot hp total is unchanged (6 + 2 before)');
 });

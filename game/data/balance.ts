@@ -3,10 +3,12 @@ import { ODDS } from './odds';
 /** 세이브 형식 버전. 바뀌면 migrations.ts가 이전 세이브를 변환하고, 랭킹은 같은 버전의 스냅샷만 보여줍니다. */
 export const SAVE_VERSION = 8;
 export const BALANCE = {
-    turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13, baseDefense: 3,
+    turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13,
+    /** v3.128 기본 방어 · 마방을 올려 장비가 방어의 전부가 되지 않게(docs/gear-endgame.md v3.128). 방어 3 + 레벨당 1 → 5 + 1.5, 마방 3 + .7 → 5 + 1.2. */
+    baseDefense: 5, baseResist: 5, resistPerLevel: 1.2,
     /** v3.90 최대 마나 기본값 · 레벨당(전에는 30 고정). 체력(110 · 레벨당 14)의 약 0.2배를 목표로 합니다. */
     baseMana: 30, manaPerLevel: 3,
-    hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08, /** v27.45 황금 개체 기본 확률(처치마다). v3.52 값은 서버 전용(odds). */ get goldenBase() { return ODDS.drop.goldenBase; },
+    hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1.5, baseCrit: 0.08, /** v27.45 황금 개체 기본 확률(처치마다). v3.52 값은 서버 전용(odds). */ get goldenBase() { return ODDS.drop.goldenBase; },
     // Stage hopping used to make the first rebirth arrive in under an hour.
     // See scripts/check-progression-pace.mjs for gearless routing samples;
     // completion times vary substantially with the chosen job and loadout.

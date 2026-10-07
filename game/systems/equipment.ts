@@ -23,12 +23,13 @@ const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', '
  * v3.128 부위별 고정 수치 배수(위력 × 별 × 등급 감쇠에 곱함). 합계는 전과 같습니다(체력 8 · 마나 1.3 · 방어 1 · 마방 .5).
  * 전에는 방어구가 체력 6 · 방어 1 · 마방 .5를 혼자 들어 태초 22성 4부위 전투력의 77%를 차지했습니다(방어구만 끼면 ×5.6, 무기만 ×1.6).
  * 체력 · 방어 · 마방을 방어구 · 망토 · 장신구에 나눠 부위를 빼면 무기 35 · 방어구 48 · 장신구 32 · 망토 35%가 줄도록 맞췄습니다(docs/gear-endgame.md v3.128, scripts/check-gear-ladder.mjs가 검사).
- * 마나는 그대로 방어구 1 · 망토 .3(v3.90, 최대 마나가 체력의 약 0.2배). 무기 공격(물리 1.4 · 마법 .4 등)은 아래 그대로입니다.
+ * 마나는 방어구 1 · 망토 .3(v3.90)에서 무기 .5 · 방어구 .5 · 장신구 .5 · 망토 .3(합 1.8)으로 나눴습니다: 마나 비례 기술(천둥 성가 · 결정 파편 · 창세의 빛)과 마법 직업에 무기 · 장신구도 보탬이 되게. 무기 공격(물리 1.4 · 마법 .4 등)은 아래 그대로입니다.
  */
 export const SLOT_GEAR: Record<string, Partial<Record<'hp' | 'mana' | 'defense' | 'resist', number>>> = {
-    coat: { hp: 3.5, mana: 1, defense: .6, resist: .3 },
+    rod: { mana: .5 },
+    coat: { hp: 3.5, mana: .5, defense: .6, resist: .3 },
     cape: { hp: 2.5, mana: .3 },
-    charm: { hp: 2, defense: .4, resist: .2 },
+    charm: { hp: 2, mana: .5, defense: .4, resist: .2 },
 };
 export function itemStats(item: Item): Partial<Stats> {
     const damp = GEAR_RARITY_SCALE[item.rarity] ?? 1;
