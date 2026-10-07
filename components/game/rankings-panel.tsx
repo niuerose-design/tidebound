@@ -1,6 +1,6 @@
 'use client';
 import { rebirthTitle } from '@/game/data/long-term';
-import { duelTier, recommendOpponents, duelSeasonPearls, RECOMMEND_RANGE, duelAllowance } from '@/game/systems/duel';
+import { duelTier, recommendOpponents, RECOMMEND_RANGE, duelAllowance } from '@/game/systems/duel';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, RefreshCw, Swords, Fish, Users } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -67,7 +67,7 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     <button className="primary" disabled={busy || isHackerJob(s.job)} onClick={register} title={isHackerJob(s.job) ? '해커는 결투 정보를 등록하지 않습니다. 다른 직업으로 등록해 둔 기록은 그대로 남습니다.' : undefined}>
     <ArrowUpRight size={17}/>{isHackerJob(s.job) ? '해커는 등록 불가' : '내 전투 정보 등록'}</button>
     </Heading>
-    <p className="arena-season" title={`지난 시즌 순위 보상: 1위 ${duelSeasonPearls(1)} · 2위 ${duelSeasonPearls(2)} · 3위 ${duelSeasonPearls(3)} · 10위 안 ${duelSeasonPearls(10)} · 50위 안 ${duelSeasonPearls(50)} · 참가 ${duelSeasonPearls(99)}세계석. 첫 행동 때 받습니다.`}>결투 시즌 <b>{season || '—'}</b> · 매달 1일 0시(한국 시간) 점수 1000으로 초기화 · 순위 보상은 다음 시즌 첫 행동 때 지급</p>
+    <p className="arena-season">결투 시즌 <b>{season || '—'}</b> · 매달 1일 0시(한국 시간) 점수 1000으로 초기화 · 시즌 순위 보상은 없습니다(점수 · 순위 기록만)</p>
     <div className="arena-stats">
     <div className="panel">
     <small>내 결투 점수</small>

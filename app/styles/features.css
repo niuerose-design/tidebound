@@ -240,6 +240,7 @@
 .goal-board { padding:0; margin-top:0; }
 .goal-board[open] > summary { margin-bottom:4px; }
 .goal-board .goal-list { padding:0 12px 6px; }
+.goal-reset { display:flex; align-items:center; gap:4px; margin:2px 12px 4px; font-size:12px; color:#9dadaf; }
 .goal-side { display:flex; align-items:center; gap:6px; white-space:nowrap; }
 .goal-reroll { width:24px; height:24px; padding:0; color:#9bc8b5; } .goal-reroll:disabled { opacity:.35; cursor:default; }
 .goal-optional { font-size:11px; color:#8ea7a4; font-weight:normal; margin-left:4px; }

@@ -162,12 +162,13 @@ export type ForcedRare = 'onyx' | 'mimic' | 'nuri' | 'starlit';
 /** v3.104 까미 · 누리 등장 확률(출현 한 번에 난수 하나를 [까미 | 누리] 구간으로 나눠 씀). spawn과 부재중 정산 환산이 같은 식을 씁니다. */
 export function specialChances(s: State) {
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id), st = STAGES.find(x => x.id === s.stage)!, tier = encounterTier(s);
-    // v27.80 무리 서식지에는 까미·누리가 나오지 않습니다(무리만 확정).
+    // v3.106 무리 서식지에도 까미·누리가 나옵니다(전에는 무리만 확정). 까미의 사냥터 배율은 그 지역의 마지막 일반 사냥터 자리를 씁니다.
     // v3.31 승천한 모험가에게는 까미·누리가 난이도 0부터 나옵니다(난이도 조건만 없앰, 레벨·처치 수 조건은 그대로).
-    const asc = ascended(s), mimicOk = !dungeon && !st.habitat && (asc || tier >= MIMIC.minTier) && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && !st.habitat && nuriEligible(s, asc ? Math.max(tier, EXP_NURI.minTier) : tier);
+    const asc = ascended(s), mimicOk = !dungeon && (asc || tier >= MIMIC.minTier) && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && nuriEligible(s, asc ? Math.max(tier, EXP_NURI.minTier) : tier);
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
-    const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
+    const place = st.habitat ? Math.max(...STAGES.filter(x => !x.habitat && x.region === st.region).map(x => STAGES.indexOf(x))) : STAGES.indexOf(st);
+    const mimicP = mimicOk ? mimicChance(tier, place) * (s.catchingUp ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
     const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
     return { rolls: mimicOk || nuriOk, mimicP, nuriP };
 }

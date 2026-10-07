@@ -1,13 +1,13 @@
 'use client';
 import type { PanelProps } from './panel-props';
-import { Check, ChevronDown, ChevronRight, ChevronUp, Compass, HelpCircle, RefreshCw, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, ChevronUp, Clock, Compass, HelpCircle, RefreshCw, X } from 'lucide-react';
 import { PLACES, DUNGEONS } from '@/game/data/world';
 import { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, CHALLENGE_GROUP, achievementTotals, achievementMaxTotals, rewardText, ACHIEVEMENT_BONUS_PER, progressReader } from '@/game/data/achievements';
-import { goalText, dayKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, type GoalBoard } from '@/game/data/goals';
+import { goalText, dayKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, nextDailyReset, nextWeeklyReset, type GoalBoard } from '@/game/data/goals';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { unclaimedAchievements } from '@/game/systems/progress';
 import { TUTORIAL_STEPS, tutorialProgress, tutorialStepDone, nextTutorialStep } from '@/game/systems/guidance';
-import { Heading, Meter } from './shared';
+import { Heading, Meter, useNow } from './shared';
 import { useState } from 'react';
 import { useIsMobile } from './use-mobile';
 import type { State } from '@/game/types';
@@ -47,10 +47,15 @@ const BONUS_LABEL: Record<typeof BONUS_KEYS[number], string> = { attack: '물리
 
 /** 일일·주간 목표판. 제목을 눌러 접고 펼치며, 목표마다 하루 1회 다시 뽑기(↻)를 할 수 있습니다. */
 function GoalBoardView({ title, which, board, bonus, today, send, busy }: { title: string; which: 'daily' | 'weekly'; board?: GoalBoard; bonus: number; today: string } & Pick<PanelProps, 'send' | 'busy'>) {
+    // v3.106 정확한 초기화 시각(한국 시간)과 남은 시간. 1분마다 갱신합니다.
+    const now = useNow(60_000);
     if (!board) return null;
-    const done = board.goals.filter(g => g.claimed).length;
+    const done = board.goals.filter(g => g.claimed).length, at = which === 'daily' ? nextDailyReset(now) : nextWeeklyReset(now), left = at - now, day = new Date(at + 9 * 3600_000);
+    const d = Math.floor(left / 86400_000), h = Math.floor(left % 86400_000 / 3600_000), m = Math.max(1, Math.ceil(left % 3600_000 / 60_000));
+    const leftText = `${d ? `${d}일 ` : ''}${d || h ? `${h}시간 ` : ''}${m === 60 ? '59' : m}분 남음`, resetText = which === 'daily' ? '매일 0시' : '매주 월요일 0시', nextText = which === 'weekly' ? ` · 다음 ${day.getUTCMonth() + 1}월 ${day.getUTCDate()}일(월)` : '';
     return <details className="achievement-group goal-board" open>
         <summary><h3>{title}</h3><span>{done} / {board.goals.length} · 모두 달성 시 세계석 +{bonus}{board.bonus ? ' (받음)' : ''}</span><ChevronDown size={15} className="achievement-chevron"/></summary>
+        <p className="goal-reset"><Clock size={12}/> 초기화 {resetText}(한국 시간){nextText} · {leftText}</p>
         <ul className="goal-list">{board.goals.map(g => { const used = g.rerolled === today; return <li key={g.id} className={g.claimed ? 'done' : ''}>
             <div><strong>{goalText(g)}{g.optional ? <small className="goal-optional"> 선택</small> : null}</strong><span className="goal-side"><small>세계석 +{g.pearls}{g.essence ? ` · 정수 +${g.essence}` : ''}</small>
                 {!g.claimed && <button className="icon-button goal-reroll" disabled={busy || used} aria-label="목표 다시 뽑기" title={used ? '오늘은 이미 다시 뽑았습니다. 목표마다 하루 1회.' : '다시 뽑기 (목표마다 하루 1회, 진행은 0부터)'} onClick={() => send({ type: 'rerollGoal', id: `${which}:${g.id}` })}><RefreshCw size={13}/></button>}</span></div>
