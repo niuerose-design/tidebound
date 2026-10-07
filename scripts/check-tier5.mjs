@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
+import { researchBudgetTools } from './lib/research-budget.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
 const { stats, snapshot } = await load('systems/stats');
@@ -29,11 +30,12 @@ const { raidById, RAID } = await load('data/altar');
 
 const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const SEEDS = Number(arg('--seeds', 20)), TIER = Number(arg('--tier', 30)), RARITY = Number(arg('--rarity', 6)), STAR = Number(arg('--star', 22));
-// 환생 100 무렵의 흔한 연구(전투 탭 약 75%, 물리·마법 같은 단계라 직업 사이 공정). 숫자를 바꾸면 절대값만 달라지고 비율은 거의 그대로입니다.
-const RESEARCH_FULL = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 15, critDamage: 20, penetration: 10, evasion: 15, lifesteal: 15, manaRegen: 8, recovery: 8, ap: 12 };
-// v3.83 --level · --rebirths · --research(연구 비율, 1 = 위 표) · --job-tier · --raid로 다른 몸(예: 환생 0 · 50)과 월드보스를 잽니다.
+// 연구: 그 환생까지의 세계석 예산으로 산 단계(scripts/lib/research-budget.mjs, 직업의 주 공격 종류만 다르고 단계는 같아 직업 사이 공정).
+// 전에는 공격 150 · 체력 150 … 고정표였는데 그 비용(약 1억 개)은 벌 수 없는 양이라 실제 몸보다 공격 ×3 강했습니다(docs/research-review.md).
+// v3.83 --level · --rebirths · --research(예산 배율, 1 = 기준 · 0 = 연구 없음) · --job-tier · --raid로 다른 몸(예: 환생 0 · 50)과 월드보스를 잽니다.
 const LEVEL = Number(arg('--level', 100)), REBIRTHS = Number(arg('--rebirths', 100)), JOB_TIER = Number(arg('--job-tier', 5)), RESEARCH_SCALE = Number(arg('--research', 1));
-const RESEARCH = Object.fromEntries(Object.entries(RESEARCH_FULL).map(([k, v]) => [k, Math.round(v * RESEARCH_SCALE)]));
+const { researchByBudget } = await researchBudgetTools({ load });
+const RESEARCH_BY_MAIN = Object.fromEntries(['attack', 'magicAttack', 'both'].map(m => [m, researchByBudget(REBIRTHS, m, undefined, RESEARCH_SCALE)]));
 // v3.108 --book N: 기록 비례 직업(와일드헌터 사냥 기록 · 섀도어 도감 · 패스파인더 누적 처치 · 캡틴 골드)을 위해 몬스터마다 N마리 처치 · 던전 클리어 N회 · 골드 10^9를 채운 몸으로 잽니다(기본 0 = 기록 없음).
 const BOOK = Number(arg('--book', 0));
 // v3.111 변종 기록(섀도어)도 처치 수의 약 7%(변종 처치 확률 합)만큼 채웁니다.
@@ -65,7 +67,7 @@ function attributesFor(j) {
     const out = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; let used = 0;
     for (const [k, p] of Object.entries(w)) { out[k] = Math.floor(total * p / 100); used += out[k]; }
     out.vit += total - used;
-    return { attrs: out, magic };
+    return { attrs: out, magic, main: ownMagic > 0 && ownPhysical > 0 ? 'both' : magic ? 'magicAttack' : 'attack' };
 }
 // 같은 장비: 부위마다 같은 등급·별·옵션(고정 시드). 무기 계열만 물리/마법을 직업에 맞춥니다.
 const GEAR = {};
@@ -81,8 +83,8 @@ function loadout(s, j, magic) {
     for (const sk of pool) if (validLoadout(s, [...s.skills, sk.id])) s.skills.push(sk.id);
 }
 function body(j) {
-    const s = newState(0), { attrs, magic } = attributesFor(j);
-    Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH }, book: BOOK ? Object.fromEntries(FISH.map(f => [f.id, BOOK])) : {}, ...(BOOK ? { clears: { record: BOOK }, gold: 1e9, variantBook: Object.fromEntries(FISH.map(f => [f.id, { giant: Math.round(BOOK * VARIANT_SHARE) }])) } : {}), unlockedJobs: JOBS.map(x => x.id) });
+    const s = newState(0), { attrs, magic, main } = attributesFor(j);
+    Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH_BY_MAIN[main] }, book: BOOK ? Object.fromEntries(FISH.map(f => [f.id, BOOK])) : {}, ...(BOOK ? { clears: { record: BOOK }, gold: 1e9, variantBook: Object.fromEntries(FISH.map(f => [f.id, { giant: Math.round(BOOK * VARIANT_SHARE) }])) } : {}), unlockedJobs: JOBS.map(x => x.id) });
     s.equipment = { ...GEAR[magic ? 'magic' : 'physical'] };
     s.jobMastery = { [j.id]: 0 };
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = masteryMilestonesFor(sk).at(-1); }
@@ -166,7 +168,7 @@ const rows = JOBS.filter(j => (!ONE_JOB || j.id === ONE_JOB) && (!ONLY_JOBS || O
 const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 for (const k of KEYS) { const m = median(rows.map(r => r.out[k].score)) || 1; for (const r of rows) r[k] = r.out[k].score / m; }
 const f2 = n => n.toFixed(2), pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : `${Math.round(n / 1e4)}만`;
-console.log(`5차 직업 비교 [피해식 ${MODEL}${MDEF !== 1 ? ` · 몬스터 방어 ×${MDEF}` : ''}${MDEF_TIER ? ' · 난이도 비례' : ''}] (Lv.${LEVEL} · 환생 ${REBIRTHS} · 전투 연구 약 ${Math.round(75 * RESEARCH_SCALE)}% · ${RARITIES[RARITY].name} ${STAR}성 4부위 · 사냥터 난이도 ${TIER} · 던전 난이도 ${DUNGEON_TIER} · ×500 무리 난이도 ${SWARM500_TIER} ${PEN === null ? '' : ` · 관통 ${PEN}`} · 시드 ${SEEDS}, 5차 중앙값 = 1.00)`);
+console.log(`5차 직업 비교 [피해식 ${MODEL}${MDEF !== 1 ? ` · 몬스터 방어 ×${MDEF}` : ''}${MDEF_TIER ? ' · 난이도 비례' : ''}] (Lv.${LEVEL} · 환생 ${REBIRTHS} · 연구 = 환생 ${REBIRTHS} 세계석 예산${RESEARCH_SCALE !== 1 ? ` ×${RESEARCH_SCALE}` : ''}(공격 ${RESEARCH_BY_MAIN.attack.attack || 0} · 체력 ${RESEARCH_BY_MAIN.attack.hp || 0} · 관통 ${RESEARCH_BY_MAIN.attack.penetration || 0}) · ${RARITIES[RARITY].name} ${STAR}성 4부위 · 사냥터 난이도 ${TIER} · 던전 난이도 ${DUNGEON_TIER} · ×500 무리 난이도 ${SWARM500_TIER} ${PEN === null ? '' : ` · 관통 ${PEN}`} · 시드 ${SEEDS}, 5차 중앙값 = 1.00)`);
 console.log('직업'.padEnd(16, '　') + '역할　　　 사냥터(턴·승) 무리100(턴·승) 무리500(턴·승) 던전(판·체력) 보스(턴·승) 월드보스(피해)');
 for (const r of [...rows].sort((a, b) => a.sub.localeCompare(b.sub) || b.hunt - a.hunt)) {
     const o = r.out;

@@ -5,6 +5,7 @@
 // 사용: node scripts/check-habitat.mjs [--rebirths 10,20,30,40,50,60] [--jobs hero,grandMagus,...] [--hours 1] [--seeds 2]
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
+import { researchBudgetTools } from './lib/research-budget.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
 const { tick } = await load('systems/turn');
@@ -24,7 +25,8 @@ const REBIRTHS = arg('--rebirths', '10,20,30,40,50,60').split(',').map(Number);
 // 역할별 대표 5차: 물리 딜러 · 마법 딜러 · 탱커 · 출혈 · 회복. R<20은 각 5차의 4차 부모로 잽니다.
 const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion,crimsonAvatar,lifeOcean').split(',');
 const HOURS = Number(arg('--hours', 1)), SEEDS = Number(arg('--seeds', 2)), TICKS = Math.round(HOURS * 1800);
-const RESEARCH_FULL = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 15, critDamage: 20, penetration: 10, evasion: 15, lifesteal: 15, manaRegen: 8, recovery: 8, ap: 12 };
+// 연구는 그 환생까지의 세계석 예산으로 산 단계(scripts/lib/research-budget.mjs). 전에는 환생 100에 공격 150단계 같은 벌 수 없는 표를 썼습니다(docs/research-review.md).
+const { researchByBudget } = await researchBudgetTools({ load });
 const GEAR_BY_REBIRTH = r => r < 20 ? [2, 15] : r < 30 ? [3, 17] : r < 40 ? [3, 20] : r < 50 ? [4, 20] : [5, 22];
 
 function body(r, jobId) {
@@ -36,7 +38,7 @@ function body(r, jobId) {
     const attrs = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; let used = 0;
     for (const [k, p] of Object.entries(w)) { attrs[k] = Math.floor(total * p / 100); used += attrs[k]; }
     attrs.vit += total - used;
-    const scale = Math.min(1, r / 100), research = Object.fromEntries(Object.entries(RESEARCH_FULL).map(([k, v]) => [k, Math.round(v * scale)]));
+    const research = researchByBudget(r, magic ? 'magicAttack' : 'attack');
     const [rarity, star] = GEAR_BY_REBIRTH(r);
     const equipment = Object.fromEntries(['rod', 'coat', 'charm', 'cape'].map(slot => {
         const st = slot === 'rod' ? (magic ? 'magic' : 'physical') : 'balanced', pw = Math.round(102 * RARITIES[rarity].factor);

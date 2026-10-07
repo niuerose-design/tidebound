@@ -4,18 +4,20 @@
 import assert from 'node:assert/strict';
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
+import { researchBudgetTools } from './lib/research-budget.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine'), { stats, power, dropRate } = await load('systems/stats');
 const { RARITIES } = await load('data/balance'), Ec = await load('data/economy'), { ONYX } = await load('data/onyx');
 const { starMultiplier } = await load('data/starforce'), { rarityShareFrom } = await load('systems/encounter'), { gearName } = await load('data/maple-gear');
 const { rollAffixes, refineOption } = await load('data/gear'), C = await load('systems/commerce');
+const { researchByBudget } = await researchBudgetTools({ load });
 
 const KILLS_PER_HOUR = 1730, SAMPLES = 240, SLOTS = ['rod', 'coat', 'charm', 'cape'];
 const fmt = v => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
 console.log(`등급 배율 ${RARITIES.map(r => `${r.name}×${r.factor}`).join(' ')} · 22성 ×${starMultiplier(22).toFixed(2)}`);
 
 // 1. 장비 몫: Lv.100 · 환생 200 · 치명타 약 100%(행운 300, 키운 캐릭터 기준) 캐릭터에 같은 종류 Lv.100 장비 4부위를 끼운 전투력(v3.66 실제 전투식, v3.134 공격 .65 · 버티는 힘 .35 가중) ÷ 장비 없음. kind가 있으면 계승 장비(유물·원시 고대·계승 태초) 위력 공식.
-const body = () => { const s = newState(0); s.level = 100; s.rebirths = 200; s.statPoints = 0; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 300 }; Object.assign(s.permanent, { attack: 200, hp: 200, guard: 100, magicGuard: 100 }); s.equipment = { rod: null, coat: null, charm: null, cape: null }; return s; };
+const body = () => { const s = newState(0); s.level = 100; s.rebirths = 200; s.statPoints = 0; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 300 }; Object.assign(s.permanent, researchByBudget(200, 'attack')); s.equipment = { rod: null, coat: null, charm: null, cape: null }; return s; };
 const naked = power(stats(body())), rng = random(3);
 // 원시 고대 · 계승 태초는 계승할 때 옵션이 최고 굴림으로 고정되므로 그대로 잽니다(유물은 이식 옵션이라 굴린 그대로).
 const heirMax = (kind, affixes, pw, rarity) => kind === 'ancient' || kind === 'primal' ? affixes.map(x => refineOption(x, pw, rarity, () => 1, 100)) : affixes;
