@@ -1,5 +1,5 @@
 import type { Item, Stats, State } from '../types';
-import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, PRIMAL_INHERIT, heirPower, legacyRelicPower, smithDiscount, appraisalRebirthFactor, type HeirKind } from '../data/economy';
+import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, PRIMAL_INHERIT, AWAKENING, heirPower, legacyRelicPower, smithDiscount, appraisalRebirthFactor, type HeirKind } from '../data/economy';
 import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, refineOption, rarityQuality, type ItemAffix } from '../data/gear';
 import { RARITIES } from '../data/balance';
 import { fishGoldAt, priceScale } from '../data/world';
@@ -181,7 +181,9 @@ export function dismantleInto(s: Pick<State, 'essence' | 'primalGauge'> & Partia
 /** v27.94 재설정 비용은 이 장비를 재설정한 횟수만큼 오릅니다(1회마다 +10%, 상한 없음). v3.118 골드만(기본 × REROLL_GOLD × 감정 환생 배율), 정수 없음. */
 export const rerollCost = (item: Item, s?: Pick<State, 'permanent'> & Partial<Pick<State, 'rebirths'>>) => ({ gold: Math.floor(rerollScaled(reforgeCost(item, s) * REROLL_GOLD * appraisalRebirthFactor(s?.rebirths || 0), item.rerolls)), essence: 0 });
 /** v27.94 수치 재련 비용. v3.118 골드 없이 정수만, 이 장비를 재련할수록 ×1.08씩(refineEssenceAt). */
-export const refineCost = (item: Item) => ({ gold: 0, essence: refineEssenceAt(item.rarity, item.refines) });
+/** v3.131 재련 환생 배율: 원시 각성과 같은 10^(환생 ÷ AWAKENING.rebirthScale). 난이도(≈ 환생) 사냥의 정수 수입이 비슷한 기울기로 오르기 때문입니다. */
+export const refineRebirthFactor = (rebirths = 0) => Math.pow(10, Math.max(0, rebirths) / AWAKENING.rebirthScale);
+export const refineCost = (item: Item, s?: Partial<Pick<State, 'rebirths'>>) => ({ gold: 0, essence: refineEssenceAt(item.rarity, item.refines, refineRebirthFactor(s?.rebirths || 0)) });
 /** v3.118 비용 초기화(원시 고대 · 계승 태초 · 칠흑): 세계석으로 재련 · 재설정 횟수를 0으로, 대신 별과 추가 옵션이 초기화됩니다. */
 export const canResetGear = (item: Pick<Item, 'heir' | 'onyx'>) => !!(item.heir || item.onyx);
 /** v3.125 재련 굴림 폭 배율: 원시 고대 · 계승 태초 · 칠흑은 HEIR_ROLL_TOP(수치 150%까지), 그 밖은 1(100%). 화면의 ‘수치 N%’도 같은 값을 씁니다. */

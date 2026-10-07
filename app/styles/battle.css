@@ -723,7 +723,7 @@
 .ult-nova .ult-frag:nth-of-type(even){color:#ffae5a;text-shadow:0 0 12px #ff6a1a}
 .battle-scene:has(.ult-nova) .ocean-art{animation:ultNovaTint 2.4s ease-out both}
 @keyframes ultNovaTint{0%,10%{filter:none}25%,60%{filter:sepia(.5) hue-rotate(40deg) saturate(1.4)}100%{filter:none}}
-/* v3.130 도트 퍼니셔: 추가타 수에 따라 pun-none(구체 한 발) · pun-part(표식이 차례로 꽂힘) · pun-full(어둠 · 동시 수렴 · 십자 폭발 · 기절 별) */
+/* v3.132 도트 퍼니셔: 추가타 수에 따라 pun-none(구체 한 발) · pun-part(표식이 차례로 꽂힘) · pun-full(어둠 · 동시 수렴 · 십자 폭발 · 기절 별) */
 .scene-fx-punisher{--fx:#b7f06a;position:absolute;inset:0}
 .scene-fx-punisher .scene-fx-dark{inset:0;background:#08100a;animation:sceneDark 1.8s ease-in-out var(--fx-delay) both}
 .pun-part .scene-fx-dark{animation-duration:1.2s;background:rgba(8,16,10,.6)}

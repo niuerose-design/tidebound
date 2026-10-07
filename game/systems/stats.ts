@@ -4,7 +4,7 @@ import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTa
 import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS, affixDef } from '../data/gear';
 import { ownedOnyx, onyxSetBonus, onyxResonance } from '../data/onyx';
-import type { State, Snapshot, Stats, CombatStats } from '../types';
+import type { State, Snapshot, Stats, CombatStats, Skill } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
@@ -17,7 +17,7 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, refinePractice, refinePractices, extraRollLevel } from './progression';
+import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, refinePractices, extraRollLevel } from './progression';
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
@@ -39,19 +39,38 @@ export type StatTrace = Partial<Record<keyof CombatStats, { source: StatSource; 
  * 최종 전투 능력치. trace를 넘기면 각 단계의 증감을 원인별로 기록합니다.
  * 기록 여부와 관계없이 계산 순서와 결과는 같습니다(덧셈·곱셈 순서 유지).
  */
-/** v3.70 기본 능력치 + 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). 전직 조건은 배분 능력치만 봅니다. */
-export function trainedAttributes(s: State) {
-    const v = attributes(s);
+type UsableSkill = { id: string; sk: Skill; mastery: number };
+/**
+ * v3.130 장착 스킬 가운데 쓸 수 있는 것과 그 숙련 단계. 능력치 계산 한 번에 canUse · skillMastery를 스킬마다 한 번만 부릅니다
+ * (전에는 수련 패시브 · 보너스 · 한계돌파에서 같은 값을 세 번씩 다시 셌음). 순서는 s.skills 그대로라 더하는 순서도 같습니다.
+ */
+function usableSkills(s: State): UsableSkill[] {
+    const out: UsableSkill[] = [];
     for (const id of s.skills || []) {
+        if (!canUse(s, id)) continue;
         const sk = skillById(id);
-        if (!sk?.attrBonus || !canUse(s, id)) continue;
-        const scale = 1 + STAT_TRAINING_GROWTH * Math.min(4, skillMastery(s, id));
-        for (const [k, n] of Object.entries(sk.attrBonus)) v[k as keyof typeof v] += Math.round((n || 0) * scale);
+        if (sk) out.push({ id, sk, mastery: skillMastery(s, id) });
+    }
+    return out;
+}
+/** 정적 스킬 자료에 양수 보너스가 하나라도 있는지(올라운드 밸런스의 ‘빌린 직업’ 판정). */
+function hasPositiveBonus(sk: Skill) {
+    const bonus = sk.bonus || {};
+    for (const k in bonus) if ((bonus[k as keyof typeof bonus] as number) > 0) return true;
+    return false;
+}
+/** v3.70 기본 능력치 + 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). 전직 조건은 배분 능력치만 봅니다. */
+export function trainedAttributes(s: State, usable = usableSkills(s)) {
+    const v = attributes(s);
+    for (const { sk, mastery } of usable) {
+        if (!sk.attrBonus) continue;
+        const scale = 1 + STAT_TRAINING_GROWTH * Math.min(4, mastery);
+        for (const k in sk.attrBonus) v[k as keyof typeof v] += Math.round((sk.attrBonus[k as keyof typeof sk.attrBonus] || 0) * scale);
     }
     return v;
 }
 export function stats(s: State, trace?: StatTrace): CombatStats {
-    const j = jobById(s.job) || JOBS[0], v = trainedAttributes(s), themes = regionThemes(s);
+    const j = jobById(s.job) || JOBS[0], usable = usableSkills(s), v = trainedAttributes(s, usable), themes = regionThemes(s);
     const rec = (k: keyof CombatStats, source: StatSource, delta: number, factor?: number) => {
         if (trace && delta) (trace[k] ||= []).push(factor === undefined ? { source, delta } : { source, delta, factor });
     };
@@ -102,67 +121,66 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     add('penetration', 'research', researchRank(s, 'penetration') * PENETRATION.researchPerRank); add('evasion', 'research', researchRank(s, 'evasion') * .006);
     add('lifesteal', 'research', researchRank(s, 'lifesteal') * .005);
     // 도감: 완성 장소의 테마 보너스와 지역 연구(고정값). 배율은 아래에서 따로 적용합니다. v27.81 성향 연구 능력치는 없앴습니다.
-    for (const bonus of themes.map(t => t.add || {}))
-        for (const [key, n] of Object.entries(bonus))
-            add(key as keyof CombatStats, 'book', n as number);
+    for (const t of themes)
+        if (t.add) for (const key in t.add) add(key as keyof CombatStats, 'book', t.add[key as keyof typeof t.add] as number);
     const gear: Partial<Record<keyof CombatStats, number>> = {};
     const perItem: [keyof CombatStats, number][] = [];
     for (const item of Object.values(s.equipment)) {
-        if (item)
-            for (const [key, n] of Object.entries(itemStats(item))) {
+        if (item) {
+            const st = itemStats(item);
+            for (const key in st) {
+                const n = st[key as keyof Stats]!;
                 // v3.84 관통 · 보스 피해는 부위마다 한 출처로 곱연산합니다(아래 add).
                 if (PER_ITEM_STATS.has(key)) { perItem.push([key as keyof CombatStats, n]); continue; }
                 gear[key as keyof CombatStats] = (gear[key as keyof CombatStats] || 0) + n;
             }
+        }
     }
     // v3.73 장비 합계 상한을 받지 않는 옵션(피의 계약의 흡혈)은 상한 계산에서 빼고 따로 더합니다.
     const free: Partial<Record<keyof CombatStats, number>> = {};
     for (const item of Object.values(s.equipment)) for (const affix of item?.affixes || []) if (affixDef(affix.id)?.uncapped) free[affix.stat as keyof CombatStats] = (free[affix.stat as keyof CombatStats] || 0) + affix.value;
     for (const [key, n] of perItem) add(key, 'equipment', n * roughGear(s));
-    for (const [key, n] of Object.entries(gear)) {
-        const own = free[key as keyof CombatStats] || 0;
+    for (const key in gear) {
+        const n = gear[key as keyof CombatStats]!, own = free[key as keyof CombatStats] || 0;
         // v27.86 힘의 길: 장비 능력치 ×(1 − 30·50·70%).
-        add(key as keyof CombatStats, 'equipment', (Math.min(n! - own, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity) + own) * roughGear(s));
+        add(key as keyof CombatStats, 'equipment', (Math.min(n - own, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity) + own) * roughGear(s));
     }
     // v3.12 칠흑 세트(보유 수 기준, 영구).
     // v3.38 칠흑 세트는 장비 출처로 표시합니다(전에는 ‘도감’으로 잘못 묶였음).
     { const b = onyxSetBonus(ownedOnyx(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); if (b.allStats) add('allStats', 'equipment', b.allStats); }
     // v3.113 칠흑 공명: 착용하지 않은 칠흑 장신구의 고유 옵션 × 10%(각성 포함).
-    for (const [key, n] of Object.entries(onyxResonance(s))) add(key as keyof CombatStats, 'equipment', n);
+    { const res = onyxResonance(s); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
     const passiveJobs = new Set<string>();
     let relief = 0;
     // v24.2 진행도 기록: 진행도 비례 피해의 기준값과 perCount 패시브가 씁니다.
     const counts = progressCounts(s);
     set('codexPower', 'book', counts.codex); set('catchPower', 'book', Math.log10(1 + counts.catch)); set('huntPower', 'book', Math.sqrt(counts.hunt)); set('goldPower', 'book', Math.log10(1 + Math.max(0, s.gold || 0))); set('masteredPower', 'book', counts.mastered); set('variantPower', 'book', Math.sqrt(counts.variant));
     set('attrStr', 'attributes', v.str); set('attrDex', 'attributes', v.dex); set('attrInt', 'attributes', v.int); set('attrVit', 'attributes', v.vit); set('attrWis', 'attributes', v.wis); set('attrLuk', 'attributes', v.luk);
-    for (const id of s.skills) {
-        if (!canUse(s, id))
-            continue;
-        const sk = skillById(id);
-        if (sk?.penaltyRelief !== undefined || sk?.levelEffects) relief = Math.max(relief, effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id)).penaltyRelief || 0);
-        if (sk?.type === 'passive' && sk.job && Object.values(sk.bonus || {}).some(n => n > 0)) passiveJobs.add(sk.job);
-        if (sk?.bonus) {
-            const bonus = effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id), refinePractice(s, id)).bonus!;
-            const scale = signatureScale(sk, s.job);
-            for (const [key, n] of Object.entries(bonus))
-                add(key as keyof CombatStats, 'skills', n > 0 ? n * scale : n);
+    // v3.130 스킬마다 숙련 단계 · 시그니처 배율 · 한계돌파 배율을 한 번만 계산하고, Object.entries 대신 키 순회로 할당을 없앴습니다(더하는 순서 · 식은 그대로).
+    for (const { id, sk, mastery } of usable) {
+        const rank = s.learned[id] || 1;
+        if (sk.penaltyRelief !== undefined || sk.levelEffects) relief = Math.max(relief, effectiveSkill(sk, rank, mastery).penaltyRelief || 0);
+        if (sk.type === 'passive' && sk.job && hasPositiveBonus(sk)) passiveJobs.add(sk.job);
+        let signature: number | undefined;
+        if (sk.bonus) {
+            const bonus = effectiveSkill(sk, rank, mastery).bonus!, scale = signature ??= signatureScale(sk, s.job);
+            for (const key in bonus) { const n = bonus[key as keyof typeof bonus] as number; add(key as keyof CombatStats, 'skills', n > 0 ? n * scale : n); }
         }
         // v27.28 횟수 비례 패시브도 한계돌파 단계마다 +10%.
-        const lbScale = sk ? limitBreakScale(brokenStages(sk, s.learned[id] || 1, skillMastery(s, id))) : 1;
-        if (sk?.perCount) {
-            const scale = signatureScale(sk, s.job) * lbScale;
-            for (const pc of sk.perCount) {
-                const times = Math.min(pc.cap, Math.floor(counts[pc.source] / pc.per));
-                if (times > 0) for (const [key, n] of Object.entries(pc.bonus)) add(key as keyof CombatStats, 'skills', n * times * scale);
+        if (sk.perCount || sk.perRebirth) {
+            const lbScale = limitBreakScale(brokenStages(sk, rank, mastery)), scale = (signature ??= signatureScale(sk, s.job)) * lbScale;
+            if (sk.perCount)
+                for (const pc of sk.perCount) {
+                    const times = Math.min(pc.cap, Math.floor(counts[pc.source] / pc.per));
+                    if (times > 0) for (const key in pc.bonus) add(key as keyof CombatStats, 'skills', (pc.bonus[key as keyof typeof pc.bonus] as number) * times * scale);
+                }
+            if (sk.perRebirth) {
+                const times = Math.min(s.rebirths || 0, SKILL_FORMULA.perRebirthCap);
+                for (const key in sk.perRebirth) add(key as keyof CombatStats, 'skills', (sk.perRebirth[key as keyof typeof sk.perRebirth] as number) * times * scale);
             }
         }
-        if (sk?.perRebirth) {
-            const times = Math.min(s.rebirths || 0, SKILL_FORMULA.perRebirthCap), scale = signatureScale(sk, s.job) * lbScale;
-            for (const [key, n] of Object.entries(sk.perRebirth)) add(key as keyof CombatStats, 'skills', n * times * scale);
-        }
     }
-    for (const [key, n] of Object.entries(j.penalties || {}))
-        add(key as keyof CombatStats, 'job', n);
+    if (j.penalties) for (const key in j.penalties) add(key as keyof CombatStats, 'job', j.penalties[key as keyof typeof j.penalties] as number);
     const mastered = (s.jobMastery?.[s.job] || 0) >= jobMasteryTarget(j);
     // 페널티 회복(쉐도우 서번트 등): 1보다 낮은 직업 배율을 relief만큼 1 쪽으로 되돌립니다.
     const mult = (n: number) => jobCombatMultiplier(j, n < 1 ? 1 - (1 - n) * (1 - Math.min(1, relief)) : n, mastered);
@@ -183,8 +201,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v3.90 최대 마나도 체력처럼 연구(‘샘의 기억’) · 계정 · 환생 배율을 받습니다(전에는 배율이 없어 후반에 체력의 1%도 안 됐음).
     mul('mana', [['research', 1 + researchRank(s, 'mana') * MANA_RESEARCH_PER], ['account', account], ['rebirth', memory]]);
     for (const t of themes)
-        for (const [key, n] of Object.entries(t.scale || {}))
-            mul(key as keyof CombatStats, [['book', n]]);
+        if (t.scale) for (const key in t.scale) mul(key as keyof CombatStats, [['book', t.scale[key as keyof typeof t.scale] as number]]);
     // 올라운드 밸런스: 공격력과 같은 연구·환생·직업 배율을 받고, 서로 다른 직업의 능력치 패시브를 빌려 올수록 강해집니다.
     mul('harmony', [['job', mult((j.attack + j.magic) / 2) * SKILL_FORMULA.harmonyScale], ['research', 1 + (s.permanent.attack || 0) * .05], ['rebirth', memory],
         ['skills', 1 + Math.min(SKILL_FORMULA.harmonyJobCap, passiveJobs.size) * SKILL_FORMULA.harmonyPerJob]]);

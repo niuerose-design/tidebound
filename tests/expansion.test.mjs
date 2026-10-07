@@ -134,7 +134,7 @@ test('v27.94 essence sinks: rerolling the same item costs +10% each time without
  // 수치 재련: 종류는 그대로, 수치만 바뀌고, 비용은 재설정 기본 비용의 절반이며 오르지 않습니다.
  s.essence=1000;const ids=item().affixes.map(a=>a.id),idx=item().affixes.findIndex(a=>!a.rule);assert.ok(idx>=0,'재련할 수 있는 옵션이 있어야 합니다');
  const spent=[],g1=s.gold;for(const r of [.0,.999,.5]){const e=s.essence;act(s,{type:'refine',id:'x',value:String(idx)},0,()=>r);spent.push(e-s.essence);}
- assert.deepEqual(spent,[0,1,2].map(n=>gear.refineEssenceAt(4,n)),'refine essence grows ×1.08 per refine');assert.equal(s.gold,g1,'refine spends no gold');assert.equal(item().refines,3);
+ assert.deepEqual(spent,[0,1,2].map(n=>gear.refineEssenceAt(4,n)),'refine essence grows ×REFINE_GROWTH per refine');assert.equal(s.gold,g1,'refine spends no gold');assert.equal(item().refines,3);
  assert.deepEqual(item().affixes.map(a=>a.id),ids,'refine keeps every option kind');assert.equal(item().rerolls,30,'refine does not raise the reroll cost');
  const def=gear.affixDef(ids[idx]),lo=gear.refineOption({...item().affixes[idx]},300,4,()=>0),hi=gear.refineOption({...item().affixes[idx]},300,4,()=>.999999);
  assert.ok(hi.value>lo.value,def.id);assert.ok(gear.affixQuality(lo,300,4)<.02);assert.ok(gear.affixQuality(hi,300,4)>.98);

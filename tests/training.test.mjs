@@ -253,7 +253,7 @@ test('v3.128 Demon Slayer: Demon Awakening attack and magic +350 each (crit kept
     assert.deepEqual([sk.bonus.attack, sk.bonus.magic, sk.bonus.crit], [350, 350, .05]);
 });
 
-test('v3.130 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons and burns 7 turns (half chance outside the lineage), Dot Punisher finishes by stacks with no cooldown', async () => {
+test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons and burns 7 turns (half chance outside the lineage), Dot Punisher finishes by stacks with no cooldown', async () => {
     const { strike, STATUS_TUNING } = await import('./harness.mjs');
     for (const id of ['venomDart', 'toxicFang', 'miasma', 'rotBloom', 'doomMark', 'endOfAll']) assert.equal(SKILLS.find(s => s.id === id).damageType, 'magic', id);
     const apostle = JOBS.find(j => j.id === 'apostle');

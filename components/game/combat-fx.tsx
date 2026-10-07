@@ -86,7 +86,7 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     braveSlash: { kind: 'slash', title: '소드 오브 버닝 소울', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
     oceanWrath: { kind: 'wave', title: '썬더 브레이크', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
     genesis: { kind: 'light', title: '인피니티 플레임 서클', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
-    // v3.130 중독 + 화상을 함께 거는 포이즌 노바: 독 고리와 불 고리가 겹쳐 터집니다.
+    // v3.132 중독 + 화상을 함께 거는 포이즌 노바: 독 고리와 불 고리가 겹쳐 터집니다.
     doomMark: { kind: 'nova', title: '포이즌 노바', glyphs: ['●', '✹', '◌', '▴', '●', '✹', '◌', '▴'] },
     aegisJudgment: { kind: 'judgment', title: '소드 오브 라이트', glyphs: ['⬡', '✦', '⬡', '✦', '⬡', '✦', '⬡', '✦'] },
     redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
@@ -99,7 +99,7 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
 const AWAKEN_FX = { kind: 'light', glyphs: ['✦', '·', '✧', '·', '✦', '·', '✧', '·'] };
 const ultimateOf = (id?: string) => id ? ULTIMATES[id] ?? (skillById(id)?.awaken ? AWAKEN_FX : undefined) : undefined;
 /**
- * v3.130 도트 퍼니셔 전용 장면. 추가타 수로 모션이 달라집니다: 0회는 독·불 구체 한 발(어둠 없음),
+ * v3.132 도트 퍼니셔 전용 장면. 추가타 수로 모션이 달라집니다: 0회는 독·불 구체 한 발(어둠 없음),
  * 일부(2~3회)는 표식이 하나씩 날아와 박히고, 최대(4회)는 어둠 속에서 네 표식이 동시에 모여 십자로 터지며 기절 별이 돕니다.
  * 표식은 HP 바 숫자(타격마다 160ms)와 같은 박자로 꽂힙니다.
  */
