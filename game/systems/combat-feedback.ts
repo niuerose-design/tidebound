@@ -160,16 +160,25 @@ export function groupReplayTurns(logs: Log[]): Log[][] {
         const leads = cur ? cur.filter(l => l.type === 'battle' && (l.event?.chain ?? 1) === 1) : [];
         const follows = !!cur && cur.at(-1)!.type === 'battle' && ((log.event?.chain ?? 1) > 1 || (log.event?.multicast?.index || 0) > 0)
             || leads.length === 1 && cur!.at(-1)!.type === 'battle' && (!log.event || !leads[0].event || log.event.actor !== leads[0].event.actor);
-        const starts = !cur || (log.type === 'battle' ? !follows : log.text === RECOVERED);
+        // v3.103 서버 턴이 바뀌면 새 묶음(탐색 턴처럼 로그 없는 턴을 사이에 두고 이어지는 기록이 한 묶음으로 붙지 않게).
+        const starts = !cur || cur.at(-1)!.turn !== log.turn || (log.type === 'battle' ? !follows : log.text === RECOVERED);
         if (starts) turns.push([log]);
         else cur!.push(log);
     }
     return turns;
 }
 
-/** 각 로그 묶음이 몇 번째 턴에 일어났는지. 회복 대기 턴은 로그가 없으므로 회복 카운트로 자리를 잡고, 어긋나면 마지막 턴들에 붙입니다. */
-function placeTurns(groups: Log[][], count: number, recovery: number, recoveryTurns = BALANCE.recoveryTurns): number[] | null {
+/**
+ * 각 로그 묶음이 몇 번째 턴에 일어났는지.
+ * v3.103 로그에 적힌 서버 턴 번호로 바로 자리를 잡습니다(회복 대기 · 탐색 턴처럼 로그 없는 턴도 정확히 건너뜀).
+ * 턴 번호가 맞지 않으면(옛 기록 · 턴 수 불일치) 예전처럼 회복 카운트로 자리를 잡고, 어긋나면 마지막 턴들에 붙입니다.
+ */
+function placeTurns(groups: Log[][], count: number, recovery: number, recoveryTurns = BALANCE.recoveryTurns, turns?: { from: number; to: number }): number[] | null {
     if (groups.length > count) return null;
+    if (turns && turns.to - turns.from === count) {
+        const at = groups.map(g => Math.min(count, Math.max(1, (g[0].turn ?? NaN) - turns.from)));
+        if (at.every((k, i) => Number.isFinite(k) && (i === 0 || k >= at[i - 1]))) return at;
+    }
     const at: number[] = [];
     let r = recovery, g = 0;
     for (let k = 1; k <= count && g < groups.length; k++) {
@@ -196,7 +205,7 @@ export function buildCombatReplay(prev: State, next: State, maxHp: number, maxMa
     const fresh = next.logs.filter(l => l.id > prevLast);
     if (count < 0 || next.logId < prev.logId || next.logId - prevLast !== fresh.length) return null;
     if (count === 0) return fresh.length ? null : [];
-    const groups = groupReplayTurns(fresh), at = placeTurns(groups, count, prev.recovery, deathRecoveryTurns(prev));
+    const groups = groupReplayTurns(fresh), at = placeTurns(groups, count, prev.recovery, deathRecoveryTurns(prev), { from: prev.turn, to: next.turn });
     if (!at) return null;
     // 타격 하나가 한 박자. 보상·패배·회복 줄은 그 턴의 마지막 박자에 함께 드러냅니다.
     const beats: Beat[] = [];

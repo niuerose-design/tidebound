@@ -2,7 +2,7 @@ import { ODDS, oddsKnown, STAGE_REWARD_AVG, type StageRewardAvg } from './odds';
 import { MAPLE_MONSTERS } from './maple-monsters';
 /** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
 /** 사냥터 정의. habitat는 v27.80 무리 서식지(지역마다 하나)입니다. */
-export type StageDef = { id: string; region: string; place: string; name: string; subtitle: string; level: number; rebirth: number; description: string; fish: string[]; tone: string; habitat?: boolean };
+export type StageDef = { id: string; region: string; place: string; name: string; subtitle: string; level: number; rebirth: number; description: string; fish: string[]; tone: string; habitat?: boolean; /** v3.103 적정 환생(측정, docs/hunting-ground-plan.md 9절). 입장 조건(rebirth)보다 클 때만 따로 보입니다. */ fit?: number };
 const BASE_STAGES: StageDef[] = [
     { id: 'brook', region: '리스항구', place: '선착장', name: '리스항구 · 선착장', subtitle: 'LITH HARBOR · PIER', level: 1, rebirth: 0, description: '빅토리아 아일랜드의 관문. 선착장 끝에서 첫 몬스터가 찾아온다.', fish: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
     { id: 'bay', region: '리스항구', place: '조개 해안', name: '리스항구 · 조개 해안', subtitle: 'LITH HARBOR · SHELL COAST', level: 5, rebirth: 0, description: '항구 뒤 조개껍데기가 깔린 해안. 버섯과 슬라임이 파도 소리에 맞춰 통통 튄다.', fish: ['mackerel', 'ray', 'puffer'], tone: '#68b6ce' },
@@ -16,15 +16,15 @@ const BASE_STAGES: StageDef[] = [
     // v25.8 환생 5회부터. Lv.60 생이 반복되는 환생 중반의 새 땅.
     { id: 'duskVents', region: '커닝시티', place: '지하 배수로', name: '커닝시티 · 지하 배수로', subtitle: 'KERNING CITY · UNDERGROUND DRAIN', level: 55, rebirth: 5, description: '도시 아래 끓어오르는 배수로. 다섯 번의 생을 건넌 모험가만 이 열기를 견딘다.', fish: ['ventCrab', 'glassSquid', 'sulfurEel', 'blindShark', 'cinderAngler', 'ventLeviathan'], tone: '#d88a5a' },
     // v3.10 고레벨 사냥터 4곳(Lv.70·80·90·100). 환생 요구 레벨 곡선(12회 66 · 20회 74 · 35회 89 · 50회 100)에 맞춰 엽니다.
-    { id: 'coralForest', region: '아쿠아로드', place: '산호 숲', name: '아쿠아로드 · 산호 숲', subtitle: 'AQUA ROAD · CORAL FOREST', level: 70, rebirth: 12, description: '빛이 산호 사이로 부서지는 바다 밑 숲. 씨코와 상어가 물결을 가르고, 수호병이 깊은 곳을 지킨다.', fish: ['aqSeaco', 'aqShark', 'aqSquid', 'aqFlower', 'aqGuard'], tone: '#4fa3c7' },
-    { id: 'dragonNest', region: '리프레', place: '용의 둥지', name: '리프레 · 용의 둥지', subtitle: 'LEAFRE · DRAGON NEST', level: 80, rebirth: 20, description: '용의 숲 깊은 곳의 둥지. 드래곤 터틀이 바위처럼 엎드려 있고 와이번이 절벽을 돈다.', fish: ['lfBlueTurtle', 'lfRedTurtle', 'lfWyvern', 'lfSkelegon', 'lfManticore'], tone: '#7fb069' },
-    { id: 'memoryLane', region: '시간의 신전', place: '기억의 길', name: '시간의 신전 · 기억의 길', subtitle: 'TEMPLE OF TIME · MEMORY LANE', level: 90, rebirth: 35, description: '시간이 멈춘 신전의 회랑. 기억의 수호병과 키메라가 지나온 생을 묻는다.', fish: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo', 'ttLyka'], tone: '#c9a85c' },
-    { id: 'vanishingJourney', region: '아케인 리버', place: '소멸의 여로', name: '아케인 리버 · 소멸의 여로', subtitle: 'ARCANE RIVER · VANISHING JOURNEY', level: 100, rebirth: 50, description: '세계의 끝에서 흐르는 강. 에르다가 영혼이 되어 떠돌고, 쉰 번의 생을 건넌 모험가만 이 강을 거슬러 오른다.', fish: ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul', 'arTrueErda'], tone: '#8b7fd6' },
+    { id: 'coralForest', region: '아쿠아로드', place: '산호 숲', name: '아쿠아로드 · 산호 숲', subtitle: 'AQUA ROAD · CORAL FOREST', level: 70, rebirth: 10, description: '빛이 산호 사이로 부서지는 바다 밑 숲. 씨코와 상어가 물결을 가르고, 수호병이 깊은 곳을 지킨다.', fish: ['aqSeaco', 'aqShark', 'aqSquid', 'aqFlower', 'aqGuard'], tone: '#4fa3c7' },
+    { id: 'dragonNest', region: '리프레', place: '용의 둥지', name: '리프레 · 용의 둥지', subtitle: 'LEAFRE · DRAGON NEST', level: 80, rebirth: 15, description: '용의 숲 깊은 곳의 둥지. 드래곤 터틀이 바위처럼 엎드려 있고 와이번이 절벽을 돈다.', fish: ['lfBlueTurtle', 'lfRedTurtle', 'lfWyvern', 'lfSkelegon', 'lfManticore'], tone: '#7fb069' },
+    { id: 'memoryLane', region: '시간의 신전', place: '기억의 길', name: '시간의 신전 · 기억의 길', subtitle: 'TEMPLE OF TIME · MEMORY LANE', level: 90, rebirth: 15, description: '시간이 멈춘 신전의 회랑. 기억의 수호병과 키메라가 지나온 생을 묻는다.', fish: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo', 'ttLyka'], tone: '#c9a85c' },
+    { id: 'vanishingJourney', region: '아케인 리버', place: '소멸의 여로', name: '아케인 리버 · 소멸의 여로', subtitle: 'ARCANE RIVER · VANISHING JOURNEY', level: 100, rebirth: 20, description: '세계의 끝에서 흐르는 강. 에르다가 영혼이 되어 떠돌고, 쉰 번의 생을 건넌 모험가만 이 강을 거슬러 오른다.', fish: ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul', 'arTrueErda'], tone: '#8b7fd6' },
 ];
 /**
  * v27.80 무리 서식지: 지역마다 하나. 그 지역 몬스터가 전부 무리로만 나옵니다(×100 75% · ×500 25%, 도감·패시브 조건 없음).
  * 처치 한 번에 마리 수만큼 보상·도감이 쌓이는 고위험 고보상 사냥터입니다(v3.42 드롭은 √N번 판정, swarmDropRolls). 까미·누리는 나오지 않습니다.
- * 입장: 지역 사냥터의 최고 레벨 · (지역 사냥터 최고 환생 조건 + 2, 최소 2회).
+ * 입장: 지역 사냥터의 최고 레벨 · 환생은 HABITAT_REBIRTH 표(v3.103, 그 전에는 지역 사냥터 최고 환생 조건 + 2, 최소 2회).
  */
 // v3.52 ×500 확률(bigChance)은 서버 전용(game/secret/odds.ts).
 export const HABITAT = { sizes: [100, 500] as const, get bigChance() { return ODDS.variant.habitatBig; }, rebirthOver: 2, minRebirth: 2 };
@@ -45,9 +45,21 @@ export const REGIONS = [...new Set(BASE_STAGES.map(st => st.region))];
 export const regionPlaces = (region: string) => BASE_STAGES.filter(st => st.region === region);
 /** 지역에 사는 몬스터(중복 없이, 사냥터 순서). */
 export const regionFish = (region: string) => [...new Set(regionPlaces(region).flatMap(st => st.fish))];
+/**
+ * v3.103 사냥터 개편(docs/hunting-ground-plan.md 9절, 기준 몸 '자기 계열 패시브' 측정).
+ * 적정 환생: 난이도 0에서 사망 0 · 평균 처치 3턴 이하(서식지는 시간당 사망 5회 이하 · 경험치가 일반 사냥터 이상)가 되는 환생.
+ * 서식지 입장 환생은 지역 최고 환생 + 2로 정하던 것을 표로 고정합니다(늦은 지역 사냥터 입장을 내리면서 따로 정함).
+ */
+export const STAGE_FIT: Record<string, number> = {
+    brook: 0, bay: 0, reef: 0, kelp: 0, wreck: 2, volcanic: 5, trench: 5, moon: 5, starfall: 10, duskVents: 10,
+    coralForest: 10, dragonNest: 15, memoryLane: 15, vanishingJourney: 20,
+    lithSwarm: 10, henesysSwarm: 10, perionSwarm: 10, elliniaSwarm: 20, kerningSwarm: 20, aquaSwarm: 15, leafreSwarm: 15, templeSwarm: 15, arcaneSwarm: 20,
+};
+const HABITAT_REBIRTH: Record<string, number> = { lithSwarm: 2, henesysSwarm: 2, perionSwarm: 2, elliniaSwarm: 3, kerningSwarm: 7, aquaSwarm: 14, leafreSwarm: 15, templeSwarm: 15, arcaneSwarm: 20 };
+for (const st of BASE_STAGES) st.fit = STAGE_FIT[st.id];
 const HABITATS: StageDef[] = REGIONS.map(region => {
     const places = regionPlaces(region), meta = HABITAT_META[region];
-    return { id: meta.id, region, place: '무리 서식지', name: `${region} · 무리 서식지`, subtitle: meta.subtitle, level: Math.max(...places.map(st => st.level)), rebirth: Math.max(HABITAT.minRebirth, Math.max(...places.map(st => st.rebirth)) + HABITAT.rebirthOver), description: meta.description, fish: regionFish(region), tone: meta.tone, habitat: true };
+    return { id: meta.id, region, place: '무리 서식지', name: `${region} · 무리 서식지`, subtitle: meta.subtitle, level: Math.max(...places.map(st => st.level)), rebirth: HABITAT_REBIRTH[meta.id] ?? Math.max(HABITAT.minRebirth, Math.max(...places.map(st => st.rebirth)) + HABITAT.rebirthOver), description: meta.description, fish: regionFish(region), tone: meta.tone, habitat: true, fit: STAGE_FIT[meta.id] };
 });
 export const STAGES: StageDef[] = [...BASE_STAGES, ...HABITATS];
 /** 일반 사냥터(무리 서식지 제외). 사냥터 수·도감·업적처럼 장소를 세는 곳에서 씁니다. */
