@@ -690,3 +690,11 @@ test('v3.131 heir refine above 100% is a thin tail (15%, steeper upward) and ref
     assert.equal(Eq.refineCost(it).essence, 7); assert.equal(Eq.refineCost(it, { rebirths: 120 }).essence, 70); assert.equal(Eq.refineCost({ ...it, refines: 10 }).essence, Math.ceil(7 * 1.1 ** 10));
     assert.ok(Eq.refineCost({ ...it, refines: 50 }, { rebirths: 100 }).essence > 4000 && Eq.refineCost({ ...it, refines: 50 }, { rebirths: 100 }).essence < 7000, '50th refine at R100 ≈ one hour of tier-100 essence');
 });
+test('v3.132 rule options (◆) draw at weight .25: about 36% of primal items carry one (was 80%), rare (★) unchanged', async () => {
+    const G = await L.load('data/gear');
+    assert.equal(G.RULE_WEIGHT, .25);
+    let x = 11; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647); const N = 6000; let rule6 = 0, rule3 = 0, rare6 = 0;
+    for (let i = 0; i < N; i++) { const a = G.rollAffixes(6, 500, undefined, rng, [], 'rod', 100); if (a.some(o => o.rule)) rule6++; if (a.some(o => G.affixDef(o.id)?.rare)) rare6++; const b = G.rollAffixes(3, 500, undefined, rng, [], 'rod', 100); if (b.some(o => o.rule)) rule3++; }
+    assert.ok(rule6 / N > .30 && rule6 / N < .43, `primal with a rule option ${rule6 / N}`); assert.ok(rule3 / N > .16 && rule3 / N < .29, `legendary with a rule option ${rule3 / N}`); assert.ok(rare6 / N < .01, `rare ${rare6 / N}`);
+    assert.ok(G.rollAffixes(6, 500, undefined, () => 0, [], 'rod', 100).filter(o => o.rule).length <= 1, 'still at most one rule line');
+});
