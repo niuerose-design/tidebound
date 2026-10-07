@@ -192,7 +192,7 @@ test('v3.102 Michael: Shining Cross defense ratio 2.4, Light of Courage adds cri
     assert.deepEqual([sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage], [.08, .4]);
 });
 
-test('v3.105 Paladin: Sanctuary defense ratio 2.4, Elemental Force adds crit 8%p and crit damage 0.4 (same as Michael)', () => {
+test('v3.107 Paladin: Sanctuary defense ratio 2.4, Elemental Force adds crit 8%p and crit damage 0.4 (same as Michael)', () => {
     const sk = id => SKILLS.find(s => s.id === id);
     assert.equal(sk('citadelCrash').scalingRatio, 2.4);
     assert.deepEqual([sk('eternalReef').bonus.crit, sk('eternalReef').bonus.critDamage], [sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage]);

@@ -22,6 +22,9 @@ export function weekKey(now: number) {
     const week = 1 + Math.round(((d.getTime() - first.getTime()) / 86400000 - 3 + ((first.getUTCDay() + 6) % 7)) / 7);
     return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }
+/** v3.106 다음 초기화 시각(밀리초): 일일은 다음 한국 시간 자정, 주간은 다음 월요일 0시(한국 시간). */
+export const nextDailyReset = (now: number) => kst(now).dayStart + 86400_000;
+export const nextWeeklyReset = (now: number) => { const start = kst(now).dayStart, weekday = (new Date(start + 9 * 3600_000).getUTCDay() + 6) % 7; return start + (7 - weekday) * 86400_000; };
 /** 주 키를 랭킹 시즌 정수로(예: 2026-W40 → 202640). */
 export const weekSeason = (key: string) => Number(key.replace('-W', ''));
 

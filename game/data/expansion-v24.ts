@@ -123,7 +123,7 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'aeonsInsight', name: '영겁의 통찰', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 두 공격과 경험치 획득이 크게 오릅니다.', level: 70, job: 'aeonChronicler', cost: 8, bonus: { attack: 15, magic: 15, expBonus: .05 }, masteryMilestones: LATE,
         levelEffects: [{ cost: 8, bonus: { attack: 15, magic: 15, expBonus: .05 } }, { cost: 7, bonus: { attack: 60, magic: 60, expBonus: .1 } }, { cost: 5, bonus: { attack: 150, magic: 150, expBonus: .2 } }, { cost: 2, bonus: { attack: 280, magic: 280, expBonus: .3 } }] },
     // 방어
-    // v3.105 팔라딘 상향(미하일 v3.102와 같은 처방): 생츄어리 방어 비례 1.8 → 2.4, 엘리멘탈 포스 치명타 +8%p · 치명 피해 +0.4(직업 치명 0).
+    // v3.107 팔라딘 상향(미하일 v3.102와 같은 처방): 생츄어리 방어 비례 1.8 → 2.4, 엘리멘탈 포스 치명타 +8%p · 치명 피해 +0.4(직업 치명 0).
     { ...A, ...physical, id: 'citadelCrash', name: '요새 붕괴', desc: '', level: 55, job: 'coralCitadel', chance: .26, cooldown: 4, multiplier: 1.8, cost: 5, effect: 'stun', scaling: 'defense', scalingRatio: 2.4, masteryMilestones: M4 },
     { ...P, id: 'livingReef', name: '살아 있는 산호', desc: '반격·물리 방어·체력이 오릅니다.', level: 55, job: 'coralCitadel', cost: 3, bonus: { thorns: .4, defense: 50, hp: 200 , swarmFind: 1}, masteryMilestones: M4 },
     { ...A, ...physical, id: 'bastionQuake', name: '성벽 진동', desc: '', level: 70, job: 'abyssBastion', chance: .26, cooldown: 5, multiplier: 2.2, cost: 6, effect: 'weaken', scaling: 'defense', scalingRatio: 3, masteryMilestones: M5 },
