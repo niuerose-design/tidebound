@@ -32,6 +32,7 @@ import { ViewTabs } from './view-tabs';
 import { Crew } from './crew-panel';
 import { BattleView } from './battle-view';
 import { useFeedLiveRates } from './live-rates';
+import { useFeedBattleRecords } from './battle-records';
 import { MobileTabBar } from './mobile-tab-bar';
 import { slotUnlocked } from '@/game/data/account';
 import { isHackerJob } from '@/game/data/hacker';
@@ -52,6 +53,8 @@ export default function GameShell() {
     const { state: s, error, busy, saved, send, loadRanking } = game;
     // v3.13 실시간 효율: 동기화로 받은 원본 상태만 흘려 넣습니다(브라우저 계산, 서버 요청 없음).
     useFeedLiveRates(s);
+    // v3.101 최근 전투 기록(몹별): 받은 로그를 이 브라우저에만 모읍니다(서버 요청 없음).
+    useFeedBattleRecords(s);
     const [picked, setView] = useState('battle'), [name, setName] = useState(''), [settings, setSettings] = useState(false);
     // v3.25 지금 직업에서 숨긴 화면이면 자동 사냥 화면으로.
     const view = navHidden(s, picked) ? 'battle' : picked;

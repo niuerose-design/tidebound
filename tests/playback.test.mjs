@@ -82,3 +82,33 @@ test('battle replay: unreplayable batches fall back to an immediate update', () 
     const a = stats(s);
     assert.equal(buildCombatReplay(prev, s, a.hp, a.mana), null, 'more than the 70-line log window');
 });
+
+test('v3.101 battle records: client-side per-mob fights from synced logs (win/lose/flee, ×N swarm 5 kept, plain mob 1 + previous summary, gaps marked partial)', async () => {
+    const R = await loadGame().load('game/systems/battle-records.js');
+    let x = 7; const rng = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296);
+    // 실제 사냥 로그를 동기화마다 받는 것처럼 나눠 넣습니다.
+    const s = newState(0); s.running = true; const store = R.emptyBattleRecords();
+    for (let k = 0; k < 120; k++) { tick(s, rng); s.lastTick += BALANCE.turnMs; if (k % 3 === 2) R.ingestBattleLogs(store, s.logs, s.name, k); }
+    R.ingestBattleLogs(store, s.logs, s.name, 999);
+    const all = Object.values(store.byMob).flat();
+    assert.ok(all.length > 0 && all.every(r => r.label && r.turns >= 1 && r.lines.length <= R.BATTLE_RECORD.lines), 'fights recorded');
+    assert.ok(all.some(r => r.result === 'win' && r.dealt > 0 && r.lines.at(-1).text.includes('처치')), 'win closes on the kill line');
+    for (const [name, list] of Object.entries(store.byMob)) if (!R.isSpecialMob(name)) assert.ok(list.filter(r => r.result !== 'lose').length <= 1, `plain mob keeps one: ${name}`);
+    assert.ok(all.some(r => r.before), 'a later win carries the previous win summary');
+    // 합성 로그: 무리 ×100 6번 승리 → 5개, 패배 · 달아남, 건너뛴 id는 일부.
+    const me = '나', ev = (actor, total, crit = false) => ({ actor, skillName: '기본 공격', damageType: 'physical', hits: [{ kind: 'main', value: total, critical: crit, miss: false }], total, healed: 0, drained: 0, statuses: [] });
+    const t = R.emptyBattleRecords(); let id = 0;
+    const line = (type, text, event, turn) => ({ id: ++id, type, text, turn, ...(event ? { event } : {}) });
+    for (let n = 0; n < 6; n++) R.ingestBattleLogs(t, [line('battle', '', ev(me, 50 + n, n === 5), 1), line('battle', '', ev('스포아 ×100', 7), 1), line('battle', '', ev(me, 60), 2), line('reward', '스포아 ×100 처치 · +1 G · +1 EXP')], me);
+    assert.equal(t.byMob['스포아 ×100'].length, 5); const top = t.byMob['스포아 ×100'][0];
+    assert.deepEqual([top.result, top.turns, top.dealt, top.taken, top.maxHit, top.crits], ['win', 2, 115, 7, 60, 1]);
+    assert.deepEqual(R.compareWithPrevious(top), { turns: 0, maxHit: 1 });
+    R.ingestBattleLogs(t, [line('battle', '', ev('[보스] 자쿰', 999), 3), line('system', '몬스터를 놓쳤습니다. 50초 동안 회복합니다.')], me);
+    assert.equal(t.byMob['[보스] 자쿰'][0].result, 'lose');
+    id += 5; // 서버가 잘라 보낸 줄
+    R.ingestBattleLogs(t, [line('battle', '', ev('◆ 거대 개체 스포아', 3), 4), line('system', '◆ 거대 개체 스포아이(가) 줄을 끊고 달아났습니다. 다음 몬스터를 기다립니다.')], me);
+    const giant = t.byMob['◆ 거대 개체 스포아'][0]; assert.equal(giant.result, 'flee'); assert.equal(t.order[0], '◆ 거대 개체 스포아');
+    R.ingestBattleLogs(t, [line('battle', '', ev(me, 1), 5)], me); id += 3;
+    R.ingestBattleLogs(t, [line('battle', '', ev('스포아', 1), 5), line('reward', '✦ 황금 스포아 처치 · +10 G')], me);
+    assert.ok(t.byMob['스포아'][0].partial && t.byMob['스포아'][0].golden, 'gap → partial, golden flag');
+});
