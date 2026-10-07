@@ -10,12 +10,12 @@ import { BOOK_ECOLOGY, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MA
 import { Meter } from './shared';
 
 const MILESTONES = BALANCE.bookMilestones;
-/** 연구 단계를 달성하면 바로 적용되는 전투 보상. v27.81 성향 능력치는 없애고, 2단계부터 생태 연구(이 몬스터 상대 보정)만 오릅니다. */
+/** 연구 단계를 달성하면 바로 적용되는 전투 보상. v27.81 성향 능력치는 없애고, 2단계부터 연구 효과(예전 이름 생태 연구, 이 몬스터 상대 보정)만 오릅니다. */
 function stepEffect(_id: string, rank: number) {
     const i = rank + 1 - BOOK_ECOLOGY.fromStage, pct = (n: number) => Number((n * 100).toFixed(1));
     if (i < 0) return '적 정보 공개';
     const dealt = BOOK_ECOLOGY.dealt.slice(0, i + 1).reduce((a, n) => a + n, 0), taken = BOOK_ECOLOGY.taken.slice(0, i + 1).reduce((a, n) => a + n, 0);
-    return `생태 연구: 이 몬스터 상대 주는 피해 +${pct(BOOK_ECOLOGY.dealt[i])}% · 받는 공격 피해 -${pct(BOOK_ECOLOGY.taken[i])}% (누적 +${pct(dealt)}% / -${pct(taken)}%)`;
+    return `연구 효과 +${pct(BOOK_ECOLOGY.dealt[i])}% / -${pct(BOOK_ECOLOGY.taken[i])}% → 합계 주는 피해 +${pct(dealt)}% · 받는 공격 피해 -${pct(taken)}%`;
 }
 /** 이 연구 단계 구간(이전 목표 초과 ~ 이번 목표 이하)에서 열리는 무리 사냥 규모. 목표와 해금 수가 다르면 해금 수를 같이 적습니다. */
 const swarmAt = (rank: number, n: number) => SWARM_SIZES.filter(size => size > 1 && SWARM_UNLOCK[size] > (MILESTONES[rank - 1] || 0) && SWARM_UNLOCK[size] <= MILESTONES[rank])
@@ -30,14 +30,15 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
     /** v27.80 5단계부터 난이도 조건: 처치 수를 채워도 그 난이도 이상에서 잡은 적이 없으면 멈춥니다. */
     const tierText = (r: number) => bookTierReq(r) ? ` + 난이도 ${bookTierReq(r)} 이상 처치${best >= bookTierReq(r) ? ' ✓' : ` (최고 ${best})`}` : '';
     return <section className="book-block book-research">
-        <h4>연구 진행 <small>플레이어 보상</small></h4>
+        <h4>연구 진행 <small>{reached} / {MILESTONES.length}단계 달성</small></h4>
         <dl className="book-research-rows">
             <div><dt>처치 수</dt><dd>{n.toLocaleString()}회</dd></div>
             <div><dt>다음 연구 목표</dt><dd>{next < 0 ? '모든 단계 달성' : `${MILESTONES[next].toLocaleString()}회${n < MILESTONES[next] ? ` (남은 ${(MILESTONES[next] - n).toLocaleString()}회)` : ' ✓'}${tierText(next)}`}</dd></div>
             {next >= 0 && <div><dt>달성하면</dt><dd>{stepReward(next, n, swarm) || '능력치만'}</dd><small>바로 적용: {stepEffect(id, next)}</small></div>}
             {pending.ranks.length > 0 && <div><dt>수령 여부</dt><dd><b className="positive">미수령 SP +{pending.sp}</b></dd></div>}
         </dl>
-        {next >= 0 && <Meter value={Math.min(n, MILESTONES[next]) - (MILESTONES[next - 1] || 0)} max={MILESTONES[next] - (MILESTONES[next - 1] || 0)} label={`${next + 1} / ${MILESTONES.length}단계 진행`}/>}
+        {/* v3.95 막대는 처치 수 그대로(전에는 이전 목표부터의 구간이라 '남은 N회'와 숫자가 어긋나 보였음). */}
+        {next >= 0 && <Meter value={Math.min(n, MILESTONES[next])} max={MILESTONES[next]} label={`${next + 1}단계까지`}/>}
         {pending.ranks.length > 0 && <button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimBook', id })}>연구 보상 받기 · SP +{pending.sp}</button>}
         {reached > 0 && <details className="book-done">
             <summary><ChevronDown size={13}/>달성한 연구 {reached}단계</summary>
