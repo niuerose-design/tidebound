@@ -154,8 +154,9 @@
 .derived-summary .ap-breakdown{margin:6px 0}
 .derived-summary .ap-breakdown>summary{list-style:none;cursor:pointer}
 .derived-summary .ap-breakdown>summary::-webkit-details-marker{display:none}
-.derived-summary .ap-breakdown>summary>span{display:flex;justify-content:space-between;font-size:14px}
-.derived-summary .ap-breakdown>summary>span::after{content:'▾';margin-left:6px;color:#7f9c98;font-size:11px}
+/* v3.117 ▾가 세 번째 칸이 되어 숫자가 가운데로 가던 것: ▾는 이름 바로 뒤, 숫자는 다른 줄처럼 오른쪽 끝. */
+.derived-summary .ap-breakdown>summary>span{display:flex;align-items:center;gap:6px;font-size:14px}.derived-summary .ap-breakdown>summary>span>strong{margin-left:auto;order:2}
+.derived-summary .ap-breakdown>summary>span::after{content:'▾';order:1;color:#7f9c98;font-size:11px}
 .derived-summary .ap-breakdown dl{margin:6px 0 0;padding:8px 10px;border:1px solid var(--border);border-radius:6px;display:grid;gap:4px}
 .derived-summary .ap-breakdown dl>div{display:flex;justify-content:space-between;font-size:12px;color:#96b0b3}
 .derived-summary .ap-breakdown dd{margin:0;color:#d6dfd7}
