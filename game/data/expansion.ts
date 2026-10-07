@@ -164,7 +164,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'aegisJudgment', name: '신성한 심판', desc: '', level: 70, job: 'guardianDeity', chance: .26, cooldown: 5, multiplier: 2.1, cost: 6, effect: 'stun', scaling: 'defense', scalingRatio: 3.4, masteryMilestones: M5 },
     { ...P, id: 'divineAegis', name: '신의 방패', desc: '가장 강한 반격과 두 방어, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'guardianDeity', cost: 3, bonus: { thorns: .4, defense: 120, resist: 90, swarmFind: 1.2, crit: .08, critDamage: .4 }, masteryMilestones: M5 },
     // 역병의 길
-    // v3.129 아크메이지(불,독) 리메이크: 계보 전체를 마법 피해로 바꿉니다(직업 배율도 마법 쪽으로).
+    // v3.130 아크메이지(불,독) 리메이크: 계보 전체를 마법 피해로 바꿉니다(직업 배율도 마법 쪽으로).
     { ...A, ...magic, id: 'venomDart', name: '독침', desc: '', level: 10, job: 'poisoner', chance: .3, cooldown: 3, multiplier: 1, cost: 2, manaCost: 4, effect: 'poison', dotRatio: .12 },
     { ...P, id: 'toxinLore', name: '독물학', desc: '지속 피해가 늘어납니다.', level: 10, job: 'poisoner', cost: 2, bonus: { dotBonus: .1 } },
     { ...A, ...magic, id: 'toxicFang', name: '맹독 송곳니', desc: '', level: 25, job: 'venomAssassin', chance: .3, cooldown: 3, multiplier: 1.25, cost: 3, manaCost: 5, effect: 'burn' },
@@ -173,9 +173,9 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'plagueVessel', name: '역병의 그릇', desc: '지속 피해와 방어 관통이 오릅니다.', level: 40, job: 'plagueDoctor', cost: 3, bonus: { dotBonus: .2, penetration: .04 } },
     { ...A, ...magic, id: 'rotBloom', name: '부패의 꽃', desc: '', level: 55, job: 'plagueLord', chance: .5, cooldown: 4, multiplier: 1.8, cost: 5, manaCost: 16, effect: 'poison', dotRatio: .16, statusTurns: 4, damageBonusCondition: 'bleeding', conditionalDamageBonus: .5, masteryMilestones: M4 },
     { ...P, id: 'pestilence', name: '만연', desc: '지속 피해와 체력이 오릅니다.', level: 55, job: 'plagueLord', cost: 3, bonus: { dotBonus: .15, hp: 250 }, masteryMilestones: M4 },
-    // v3.129 포이즌 노바(각성기): 중독과 화상을 함께 7턴(+지속 턴 옵션) 겁니다. 각성 지속 배율 없이 적힌 턴 그대로.
+    // v3.130 포이즌 노바(각성기): 중독과 화상을 함께 7턴(+지속 턴 옵션) 겁니다. 각성 지속 배율 없이 적힌 턴 그대로.
     { ...A, ...magic, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 4, multiplier: 2.3, cost: 6, manaCost: 22, effect: 'poison', alsoEffect: 'burn', dotRatio: .2, statusTurns: 7, damageBonusCondition: 'bleeding', conditionalDamageBonus: .6, masteryMilestones: M5 },
-    // v3.129 도트 퍼니셔: 패시브 → 일반 액티브(대기 4). 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
+    // v3.130 도트 퍼니셔: 패시브 → 일반 액티브(대기 4). 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
     { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 4, multiplier: 2.4, cost: 4, manaCost: 20, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1 }, damageBonusCondition: 'bleeding', conditionalDamageBonus: .5, bonus: { dotBonus: .2, crit: .05, magic: 250 }, masteryMilestones: M5 },
     // 저주의 길
     { ...A, ...magic, id: 'curseBolt', name: '저주탄', desc: '', level: 10, job: 'shaman', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 9, effect: 'weaken' },

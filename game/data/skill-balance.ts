@@ -144,7 +144,7 @@ export function awakenSkill(sk: Skill) {
     sk.desc = awakenDesc((sk.desc || '').replace(`× ${old} 피해`, `× ${sk.multiplier} 피해`));
     sk.cooldown = A.cooldown;
     // 덜 자주 걸리는 만큼 거는 상태이상의 지속(패시브 보너스 포함)도 같은 비율로 늘려 유지율을 맞춥니다(예: 출혈 3+2턴 → 9턴).
-    // v3.129 alsoEffect(포이즌 노바)는 적힌 지속(7턴 + 패시브)을 그대로 씁니다.
+    // v3.130 alsoEffect(포이즌 노바)는 적힌 지속(7턴 + 패시브)을 그대로 씁니다.
     sk.awaken = { start: A.start, ...(sk.effect && STATUS_DEFAULT_TURNS[sk.effect] !== undefined && !sk.alsoEffect ? { statusScale: Math.round(after / before * 100) / 100 } : {}) };
 }
 
@@ -162,7 +162,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         sk.rankEffects = { ...sk.rankEffects, multiplierScale: sk.id === 'hook' ? .03 : .05,
             chanceIncrease: sk.id === 'hook' || sk.statusOnly ? .01 : magic ? .025 : .02,
             manaReduction: magic ? 1 : 0, cooldownReduction: 0 };
-        // v3.129 도트 퍼니셔는 5차지만 일반 액티브(대기 4)로 남습니다.
+        // v3.130 도트 퍼니셔는 5차지만 일반 액티브(대기 4)로 남습니다.
         if (tierOf(sk) >= SKILL_FORMULA.awaken.tier && !sk.dotFinisher) awakenSkill(sk);
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
@@ -184,7 +184,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.effect === 'heal') sk.desc += ` 최대 체력 ${Math.round((sk.healRatio ?? .22) * 100)}% 회복.`;
         if (sk.effect === 'drain') sk.desc += ` 실제 피해의 ${Math.round((sk.drainRatio ?? .25) * 100)}% 회복.`;
         if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += sk.alsoEffect ? ` 중독·화상(중첩) ${sk.statusTurns}턴.` : ` ${statusName} 효과.`;
-        // v3.129 장착 효과가 있는 액티브(도트 퍼니셔)는 무엇이 오르는지 적습니다.
+        // v3.130 장착 효과가 있는 액티브(도트 퍼니셔)는 무엇이 오르는지 적습니다.
         if (sk.bonus) sk.desc += ` 장착하면 ${Object.keys(sk.bonus).map(k => STAT_LABELS[k as keyof typeof STAT_LABELS]).join('·')}이 오릅니다.`;
         if (sk.dotFinisher) sk.desc += ` 적의 중독·화상 중첩에 비례해 ${Math.round(sk.dotFinisher.hitMultiplier * 100)}% 위력 추가타 최대 ${sk.dotFinisher.maxHits}회. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴, 일부면 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴.`;
         if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;

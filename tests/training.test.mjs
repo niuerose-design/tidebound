@@ -253,7 +253,7 @@ test('v3.128 Demon Slayer: Demon Awakening attack and magic +350 each (crit kept
     assert.deepEqual([sk.bonus.attack, sk.bonus.magic, sk.bonus.crit], [350, 350, .05]);
 });
 
-test('v3.129 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons and burns 7 turns, Dot Punisher finishes by stacks', async () => {
+test('v3.130 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons and burns 7 turns, Dot Punisher finishes by stacks', async () => {
     const { strike, STATUS_TUNING } = await import('./harness.mjs');
     for (const id of ['venomDart', 'toxicFang', 'miasma', 'rotBloom', 'doomMark', 'endOfAll']) assert.equal(SKILLS.find(s => s.id === id).damageType, 'magic', id);
     const apostle = JOBS.find(j => j.id === 'apostle');
@@ -262,6 +262,7 @@ test('v3.129 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     assert.ok(nova.awaken && !nova.awaken.statusScale, 'nova is the awakened skill with its written duration');
     assert.deepEqual([nova.effect, nova.alsoEffect, nova.statusTurns], ['poison', 'burn', 7]);
     assert.equal(punisher.type, 'active'); assert.equal(punisher.awaken, undefined); assert.equal(punisher.cooldown, 4);
+    assert.deepEqual([punisher.bonus.magic, punisher.bonus.dotBonus, punisher.bonus.crit], [250, .2, .05], 'equip bonus keeps the old passive and adds magic');
     const base = { hp: 1e9, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
     const mk = (skills, extra = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: 1e9, mana: 1000, skills, cooldowns: Object.fromEntries(skills.map(id => [id, 0])), stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
     // 포이즌 노바: 중독·화상을 함께, 지속 7턴 + 지속 턴 옵션.
