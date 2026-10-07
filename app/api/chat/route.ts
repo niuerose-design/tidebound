@@ -36,14 +36,13 @@ export async function POST(req: Request) { try {
     const requested = typeof body.channel === 'string' ? body.channel : 'global';
     if (!CHANNELS.has(requested)) throw new ApiError('없는 채널입니다.');
     if (READ_ONLY.has(requested)) throw new ApiError('소식 채널에는 글을 쓸 수 없습니다.', 403);
-    const channel = await resolveChannel(account, requested);
     // 제어 문자를 빼고 공백을 하나로 접은 뒤 길이를 봅니다.
     const text = String(body.text ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!text) throw new ApiError('보낼 내용이 없습니다.');
     if (text.length > CHAT_MAX_CHARS) throw new ApiError(`한 줄은 ${CHAT_MAX_CHARS}자까지입니다.`);
-    const now = Date.now(), database = db();
-    if (now - await database.lastChatAt(id) < CHAT_COOLDOWN_MS) throw new ApiError('조금 천천히 보내 주세요.', 429);
-    const player = await database.getPlayer(id);
+    // v3.94 채널 판정 · 마지막으로 보낸 시각 · 이름(세이브)을 함께 읽습니다(DB 차례 대기 3번 → 1번).
+    const now = Date.now(), database = db(), [channel, last, player] = await Promise.all([resolveChannel(account, requested), database.lastChatAt(id), database.getPlayer(id)]);
+    if (now - last < CHAT_COOLDOWN_MS) throw new ApiError('조금 천천히 보내 주세요.', 429);
     if (!player) throw new ApiError('먼저 게임을 시작하세요.');
     const state = JSON.parse(player.state) as State, title = state.badge === 'rank' ? rankOf(state).name : displayTitle(state);
     const name = `${title ? `[${title}] ` : ''}${String(state.name || '모험가').slice(0, 20)}`;

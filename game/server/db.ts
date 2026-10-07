@@ -103,7 +103,7 @@ export interface Storage {
     /** v27.48 축복 한 칸: 게이지에서 cost를 빼고, 진행 중이면 단계 +1(최대 max)·아니면 1단계로 열고, 시간을 ms만큼 늘립니다(지금부터 cap까지).
      *  expectLevel(진행 중이 아니면 0)이 그대로일 때만 적용해 비용 계산과 동시 바치기가 어긋나지 않게 합니다. 실패하면 null. */
     /** v3.16 highMs > 0이면 상위 단계: high_until = now + highMs, 전체 until은 now + highMs + cap 이상 보장(상위 단계가 끝나면 3단계가 cap 동안 이어짐, ms는 0으로). highFrom 이하가 '기본 단계'. */
-    levelAltarBlessing(id: string, cost: number, expectLevel: number, now: number, ms: number, cap: number, max: number, highMs?: number, highFrom?: number): Promise<{ level: number; until: number } | null>;
+    levelAltarBlessing(id: string, cost: number, expectLevel: number, now: number, ms: number, cap: number, max: number, highMs?: number, highFrom?: number): Promise<{ level: number; until: number; points: number; high_until: number } | null>;
     /** 살아 있는 신이 없을 때만 새 신을 깨웁니다(세대 +1). */
     summonAltarGod(god: string, until: number, now: number): Promise<boolean>;
     /** gen 세대의 신이 아직 살아 있으면 쓰러뜨린 모험가를 자리에 앉히고 몫을 비웁니다. 먼저 온 한 명만 true. */
@@ -206,9 +206,16 @@ const SCHEMA = [
     'CREATE TABLE IF NOT EXISTS crews (id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE, data TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0, updated_at BIGINT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS wallets (account_id TEXT PRIMARY KEY, pearls INTEGER NOT NULL DEFAULT 0, essence INTEGER NOT NULL DEFAULT 0, week TEXT NOT NULL DEFAULT \'\', pearl_out INTEGER NOT NULL DEFAULT 0)',
 ];
+/**
+ * v3.94 성능용 문장: 실패해도(예: 옛 행의 season이 숫자가 아님) 서버를 멈추지 않고 경고만 남깁니다.
+ * 랭킹 목록은 모든 시즌 · 게시판 행의 스냅샷 JSON을 풀어 season을 비교했습니다 → 같은 식에 인덱스를 걸어 그 시즌 행만 읽습니다.
+ */
+const OPTIONAL_SCHEMA = [
+    "CREATE INDEX IF NOT EXISTS rankings_season_idx ON rankings (((snapshot::jsonb->>'season')::int), rating DESC, power DESC)",
+];
 /** v3.91 SCHEMA 지문(FNV-1a): 문장이 하나라도 바뀌면 달라집니다. settings의 SCHEMA_SETTING 칸에 둡니다. */
 const SCHEMA_SETTING = 'schemaSignature';
-export const SCHEMA_SIGNATURE = (() => { let h = 0x811c9dc5; for (const ch of SCHEMA.join('\n')) { h ^= ch.codePointAt(0)!; h = Math.imul(h, 0x01000193) >>> 0; } return `${SCHEMA.length}:${h.toString(16)}`; })();
+export const SCHEMA_SIGNATURE = (() => { let h = 0x811c9dc5; for (const ch of [...SCHEMA, ...OPTIONAL_SCHEMA].join('\n')) { h ^= ch.codePointAt(0)!; h = Math.imul(h, 0x01000193) >>> 0; } return `${SCHEMA.length + OPTIONAL_SCHEMA.length}:${h.toString(16)}`; })();
 const slotRowId = (accountId: string, slot: number) => `${accountId}#${slot}`;
 function neonStorage(url: string): Storage {
     // Neon 서버리스 드라이버와 같은 규칙: 호스트의 첫 레이블을 api.로 바꾼 주소의 /sql 에 쿼리를 보냅니다.
@@ -225,6 +232,7 @@ function neonStorage(url: string): Storage {
     const ensureSchema = async () => {
         try { const { rows } = await query<{ value: string }>('SELECT value FROM settings WHERE key=$1', [SCHEMA_SETTING]); if (rows[0]?.value === SCHEMA_SIGNATURE) return; } catch { /* settings가 아직 없음 → 아래에서 만듦 */ }
         for (const s of SCHEMA) await query(s);
+        for (const s of OPTIONAL_SCHEMA) await query(s).catch(e => console.warn('optional schema statement failed', s.slice(0, 80), e instanceof Error ? e.message : e));
         await query('INSERT INTO settings (key,value,updated_at) VALUES ($1,$2,$3) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=EXCLUDED.updated_at', [SCHEMA_SETTING, SCHEMA_SIGNATURE, Date.now()]);
     };
     const q = async <T>(sql: string, params: unknown[] = []) => {
@@ -313,8 +321,8 @@ function neonStorage(url: string): Storage {
         async levelAltarBlessing(id, cost, expectLevel, now, ms, cap, max, highMs = 0, highFrom = 3) {
             // 살아 있는 단계(eff): 닫혔으면 0, 상위 단계 시간이 지났으면 highFrom으로 내려 봅니다.
             const eff = 'CASE WHEN until>$4 THEN (CASE WHEN high_until>$4 THEN level ELSE LEAST(level,$9) END) ELSE 0 END';
-            const { rows } = await q<{ level: string; until: string }>(`UPDATE altar_gauges SET points=points-$2, level=LEAST(${eff}+1,$7), high_until=CASE WHEN $8>0 THEN $4+$8 ELSE high_until END, until=GREATEST(LEAST(GREATEST(until,$4)+$5,$4+$6), CASE WHEN $8>0 THEN $4+$8+$6 ELSE 0 END) WHERE id=$1 AND points>=$2 AND ${eff}=$3 RETURNING level, until`, [id, cost, expectLevel, now, ms, cap, max, highMs, highFrom]);
-            return rows[0] ? { level: Number(rows[0].level), until: Number(rows[0].until) } : null;
+            const { rows } = await q<{ level: string; until: string; points: string; high_until: string }>(`UPDATE altar_gauges SET points=points-$2, level=LEAST(${eff}+1,$7), high_until=CASE WHEN $8>0 THEN $4+$8 ELSE high_until END, until=GREATEST(LEAST(GREATEST(until,$4)+$5,$4+$6), CASE WHEN $8>0 THEN $4+$8+$6 ELSE 0 END) WHERE id=$1 AND points>=$2 AND ${eff}=$3 RETURNING level, until, points, high_until`, [id, cost, expectLevel, now, ms, cap, max, highMs, highFrom]);
+            return rows[0] ? { level: Number(rows[0].level), until: Number(rows[0].until), points: Number(rows[0].points), high_until: Number(rows[0].high_until || 0) } : null;
         },
         async addAltarGauge(id, points) { await q('INSERT INTO altar_gauges (id,points,until) VALUES ($1,$2,0) ON CONFLICT (id) DO UPDATE SET points=altar_gauges.points+EXCLUDED.points', [id, points]); },
         async spendAltarGauge(id, cost) { const r = await q('UPDATE altar_gauges SET points=points-$2 WHERE id=$1 AND points>=$2', [id, cost]); return r.rowCount === 1; },
@@ -465,7 +473,7 @@ function fileStorage(): Storage {
             if (highMs > 0) g.high_until = now + highMs;
             // 상위 단계: 그 단계 시간 뒤 3단계가 cap(12시간) 동안 이어지도록 전체 시간을 보장합니다.
             g.until = Math.max(Math.min(Math.max(g.until, now) + ms, now + cap), highMs > 0 ? now + highMs + cap : 0);
-            return { level: g.level, until: g.until };
+            return { level: g.level, until: g.until, points: g.points, high_until: g.high_until || 0 };
         }),
         summonAltarGod: (god, until, now) => tx(db => { const r = db.altar = { ...ALTAR_EMPTY, ...db.altar }; if (r.god_state === 'alive' && r.god_until >= now) return false; Object.assign(r, { gen: r.gen + 1, god_state: 'alive', god, god_until: until }); return true; }),
         claimAltarThrone: (gen, id, name, snapshot, now) => tx(db => {
