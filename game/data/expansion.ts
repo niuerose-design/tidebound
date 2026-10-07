@@ -111,7 +111,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'heroSoul', name: '용사의 혼', desc: '물리 공격·치명타·치명 피해가 크게 오릅니다.', level: 70, job: 'hero', cost: 3, bonus: { attack: 70, crit: .05, critDamage: .2 }, masteryMilestones: M5 },
     // 주먹의 길
     { ...A, ...physical, id: 'palmStrike', name: '장타', desc: '', level: 10, job: 'martialArtist', chance: .24, cooldown: 4, multiplier: 1.2, cost: 2, effect: 'stun' },
-    { ...P, id: 'ironBody', name: '단련된 몸', desc: '체력과 물리 방어가 오릅니다.', level: 10, job: 'martialArtist', cost: 2, bonus: { hp: 70, defense: 8 } },
+    { ...P, id: 'ironBody', name: '단련된 몸', desc: '체력과 물리 방어가 오릅니다.', level: 10, job: 'martialArtist', cost: 2, bonus: { hp: 70, defense: 15, resist: 5 } },
     { ...A, ...physical, id: 'comboFist', name: '연환권', desc: '', level: 25, job: 'fistMaster', chance: .28, cooldown: 3, multiplier: .95, cost: 3, extraAttacks: 2, extraAttackMultiplier: .45 },
     { ...P, id: 'qiFlow', name: '기의 흐름', desc: '속도와 물리 공격이 오릅니다.', level: 25, job: 'fistMaster', cost: 2, bonus: { speed: 10, attack: 14 } },
     { ...A, ...physical, id: 'skyBreaker', name: '파천권', desc: '', level: 40, job: 'fistKing', chance: .26, cooldown: 4, multiplier: 2.2, cost: 4, effect: 'slow', damageBonusCondition: 'controlled', conditionalDamageBonus: .4 },
@@ -153,16 +153,16 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'celestialAura', name: '천검의 기운', desc: '물리·마법 공격과 치명타가 크게 오릅니다.', level: 70, job: 'celestialBlade', cost: 3, bonus: { attack: 350, magic: 350, crit: .05 }, masteryMilestones: M5 },
     // 방패의 길
     { ...A, ...physical, id: 'shieldBash', name: '방패 치기', desc: '', level: 10, job: 'shieldbearer', chance: .24, cooldown: 4, multiplier: 1.1, cost: 2, effect: 'stun', scaling: 'defense', scalingRatio: .6 },
-    { ...P, id: 'shieldWall', name: '방패벽', desc: '물리 방어와 체력이 오릅니다.', level: 10, job: 'shieldbearer', cost: 2, bonus: { defense: 14, hp: 40 , swarmFind: 0.3} },
+    { ...P, id: 'shieldWall', name: '방패벽', desc: '물리 방어와 체력이 오릅니다.', level: 10, job: 'shieldbearer', cost: 2, bonus: { defense: 20, hp: 40 , swarmFind: 0.3, resist: 8 } },
     { ...A, ...physical, id: 'ironRetort', name: '철벽 반격', desc: '', level: 25, job: 'gatekeeper', chance: .26, cooldown: 3, multiplier: 1.2, cost: 3, scaling: 'defense', scalingRatio: 1 },
-    { ...P, id: 'spikedShield', name: '가시 방패', desc: '맞을 때마다 물리 방어에 비례한 반격 피해를 돌려줍니다.', level: 25, job: 'gatekeeper', cost: 3, bonus: { thorns: .25, defense: 15 , swarmFind: 0.5} },
+    { ...P, id: 'spikedShield', name: '가시 방패', desc: '맞을 때마다 물리 방어에 비례한 반격 피해를 돌려줍니다.', level: 25, job: 'gatekeeper', cost: 3, bonus: { thorns: .25, defense: 25 , swarmFind: 0.5, resist: 12 } },
     { ...A, ...physical, id: 'bulwarkSlam', name: '성벽 강타', desc: '', level: 40, job: 'fortressLord', chance: .25, cooldown: 4, multiplier: 1.5, cost: 4, effect: 'weaken', scaling: 'defense', scalingRatio: 1.8 },
-    { ...P, id: 'stoneSkin', name: '바위 피부', desc: '반격·체력·마법 방어가 오릅니다.', level: 40, job: 'fortressLord', cost: 3, bonus: { thorns: .35, hp: 180, resist: 20 , swarmFind: 0.8} },
+    { ...P, id: 'stoneSkin', name: '바위 피부', desc: '반격·체력·마법 방어가 오릅니다.', level: 40, job: 'fortressLord', cost: 3, bonus: { thorns: .35, hp: 180, resist: 35 , swarmFind: 0.8, defense: 20 } },
     // v3.102 미하일 상향: 샤이닝 크로스 방어 비례 1.6 → 2.4, 라이트 오브 커리지 치명타 +8%p · 치명 피해 +0.4(직업 치명 0이라 치명 69% · ×2.07에 머물렀음).
     { ...A, ...physical, id: 'lastStand', name: '최후의 저항', desc: '', level: 55, job: 'unyielding', chance: .26, cooldown: 4, multiplier: 1.7, cost: 5, effect: 'drain', drainRatio: .08, scaling: 'defense', scalingRatio: 2.4, masteryMilestones: M4 },
-    { ...P, id: 'undying', name: '불굴', desc: '체력·물리 방어·흡혈이 오릅니다.', level: 55, job: 'unyielding', cost: 3, bonus: { hp: 250, defense: 50, lifesteal: .02 , swarmFind: 1}, masteryMilestones: M4 },
+    { ...P, id: 'undying', name: '불굴', desc: '체력·물리 방어·흡혈이 오릅니다.', level: 55, job: 'unyielding', cost: 3, bonus: { hp: 250, defense: 75, lifesteal: .02 , swarmFind: 1, resist: 30 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'aegisJudgment', name: '신성한 심판', desc: '', level: 70, job: 'guardianDeity', chance: .26, cooldown: 5, multiplier: 2.1, cost: 6, effect: 'stun', scaling: 'defense', scalingRatio: 3.4, masteryMilestones: M5 },
-    { ...P, id: 'divineAegis', name: '신의 방패', desc: '가장 강한 반격과 두 방어, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'guardianDeity', cost: 3, bonus: { thorns: .4, defense: 80, resist: 60, swarmFind: 1.2, crit: .08, critDamage: .4 }, masteryMilestones: M5 },
+    { ...P, id: 'divineAegis', name: '신의 방패', desc: '가장 강한 반격과 두 방어, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'guardianDeity', cost: 3, bonus: { thorns: .4, defense: 120, resist: 90, swarmFind: 1.2, crit: .08, critDamage: .4 }, masteryMilestones: M5 },
     // 역병의 길
     // v3.129 아크메이지(불,독) 리메이크: 계보 전체를 마법 피해로 바꿉니다(직업 배율도 마법 쪽으로).
     { ...A, ...magic, id: 'venomDart', name: '독침', desc: '', level: 10, job: 'poisoner', chance: .3, cooldown: 3, multiplier: 1, cost: 2, manaCost: 4, effect: 'poison', dotRatio: .12 },

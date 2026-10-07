@@ -3,7 +3,9 @@ import { ODDS } from './odds';
 /** 세이브 형식 버전. 바뀌면 migrations.ts가 이전 세이브를 변환하고, 랭킹은 같은 버전의 스냅샷만 보여줍니다. */
 export const SAVE_VERSION = 8;
 export const BALANCE = {
-    turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13, baseDefense: 3,
+    turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13,
+    /** v3.129 기본 마방도 상수로 둡니다(전에는 stats.ts에 3 + 레벨당 .7로 박혀 있었음). 레벨당 값은 올리지 않습니다: 방어 · 마방은 탱커 계보 패시브를 배워 채우는 것이 의도(docs/gear-endgame.md v3.129). */
+    baseDefense: 3, baseResist: 3, resistPerLevel: .7,
     /** v3.90 최대 마나 기본값 · 레벨당(전에는 30 고정). 체력(110 · 레벨당 14)의 약 0.2배를 목표로 합니다. */
     baseMana: 30, manaPerLevel: 3,
     hpPerLevel: 14, attackPerLevel: 3, defensePerLevel: 1, baseCrit: 0.08, /** v27.45 황금 개체 기본 확률(처치마다). v3.52 값은 서버 전용(odds). */ get goldenBase() { return ODDS.drop.goldenBase; },

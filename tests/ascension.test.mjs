@@ -418,8 +418,9 @@ test('v3.73 options: crit damage drawn at 0.4 weight, force/guardian roll both d
     const general = Co.imprintChoices('rod').length; assert.ok(brutal / 4000 < 1.6 / general, `brutal rate ${brutal / 4000} vs uniform ${1 / general}`);
     for (const id of ['force', 'guardian']) {
         const def = G.affixDef(id), a = G.rollOption(def, 100, 4, () => .5, 100); assert.ok(a.value > 0 && a.value2 === a.value, `${id} rolls both`);
-        const st = Eq.itemStats({ id: 'x', slot: 'charm', rarity: 4, power: 100, level: 100, affixes: [a] });
-        assert.ok(Math.abs(st[def.stat2] - a.value2 * Eq.GEAR_RARITY_SCALE[4]) < 1e-9, `${id} second stat damped`);
+        // v3.129 장신구도 체력 · 방어를 주므로 옵션 없는 같은 장비의 기본 수치를 뺀 뒤 비교합니다.
+        const item = { id: 'x', slot: 'charm', rarity: 4, power: 100, level: 100 }, st = Eq.itemStats({ ...item, affixes: [a] }), bare = Eq.itemStats({ ...item, affixes: [] });
+        assert.ok(Math.abs(st[def.stat2] - (bare[def.stat2] || 0) - a.value2 * Eq.GEAR_RARITY_SCALE[4]) < 1e-9, `${id} second stat damped`);
     }
     for (const id of ['might', 'arcana', 'plating', 'ward']) assert.ok(!G.affixDef(id).retired, `${id} kept`);
     for (const id of ['wellspring', 'current']) { assert.equal(G.affixDef(id).retired, true); assert.ok(!Co.imprintChoices('rod').some(a => a.id === id)); }
@@ -456,7 +457,7 @@ test('v3.75 rare primal/onyx options (drill/valor fixed +1, apex super crit, dis
     assert.ok(!G.rollAffixes(6, 500, 'onyx', () => 0, [], 'charm', 100).some(a => G.affixDef(a.id).junk), 'no junk on onyx');
     const named = G.syncOrnateName({ name: '창', affixes: [{ id: 'ornate', name: '장식', stat: 'ornament', value: 1 }] }); assert.equal(named.name, '반짝이는 창');
     named.affixes = []; assert.equal(G.syncOrnateName(named).name, '창');
-    const pinch = G.rollOption(G.affixDef('pinch'), 500, 6, () => .9, 100); assert.equal(Eq.itemStats({ id: 'c', slot: 'charm', rarity: 6, power: 10, level: 10, affixes: [pinch] }).hp, 1, 'pinch is a flat +1 hp');
+    const pinch = G.rollOption(G.affixDef('pinch'), 500, 6, () => .9, 100); assert.equal(Eq.itemStats({ id: 'c', slot: 'rod', rarity: 6, power: 10, level: 10, affixes: [pinch] }).hp, 1, 'pinch is a flat +1 hp');
     for (const id of ['ornate', 'pinch']) assert.ok(!Co.imprintChoices('rod').some(a => a.id === id));
 });
 test('v3.77 onyx accessories carry max-rolled options (power still grows only by paid level-ups) and fall back to 12★ instead of breaking', async () => {
@@ -651,4 +652,22 @@ test('v3.122 onyx accessory level: the higher of its habitat level and my level 
     const dusk = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.equal(dusk.level, 87); assert.equal(dusk.power, Math.round((87 + 2) * O.ONYX.power));
     const low = newState(0); low.level = 40; G.grantOnyx(low, 'onyxBlackMage', 100, () => .5, 'test'); assert.equal(low.inventory.find(i => i.onyx).level, 100, 'habitat level when higher');
     const m = newState(0); m.level = 120; m.rebirths = 50; G.grantOnyxMilestones(m, () => 0); assert.equal(m.inventory.find(i => i.onyx).level, 120, 'milestone onyx at my level');
+});
+test('v3.129 slot redistribution: coat / cape / charm share hp and both defenses, totals unchanged, weapon untouched', async () => {
+    const Eq = await L.load('systems/equipment');
+    const sum = k => ['rod', 'coat', 'cape', 'charm'].reduce((n, sl) => n + (Eq.SLOT_GEAR[sl][k] || 0), 0);
+    assert.equal(sum('hp'), 8); assert.equal(Math.round(sum('mana') * 10) / 10, 1.8, 'mana 1.3 → 1.8 spread over weapon · coat · charm · cape'); assert.equal(sum('defense'), 1); assert.equal(sum('resist'), .5);
+    assert.deepEqual(Eq.SLOT_GEAR.rod, { mana: .5 }); assert.deepEqual(Eq.SLOT_GEAR.coat, { hp: 3.5, mana: .5, defense: .6, resist: .3 }); assert.deepEqual(Eq.SLOT_GEAR.cape, { hp: 2.5, mana: .3 }); assert.deepEqual(Eq.SLOT_GEAR.charm, { hp: 2, mana: .5, defense: .4, resist: .2 });
+    const base = (slot) => ({ id: slot, slot, style: 'balanced', rarity: 0, power: 100, level: 100, enhance: 0, name: slot, affixes: [] });
+    const coat = Eq.itemStats(base('coat')), cape = Eq.itemStats(base('cape')), charm = Eq.itemStats(base('charm')), rod = Eq.itemStats({ ...base('rod'), style: 'physical' });
+    assert.equal(coat.hp, 350); assert.equal(coat.defense, 60); assert.equal(coat.resist, 30); assert.equal(coat.mana, 50);
+    assert.equal(cape.hp, 250); assert.equal(cape.mana, 30); assert.equal(cape.defense, undefined); assert.ok(cape.evasion > 0);
+    assert.equal(charm.hp, 200); assert.equal(charm.defense, 40); assert.equal(charm.resist, 20); assert.equal(charm.mana, 50); assert.ok(charm.crit > 0);
+    assert.equal(rod.attack, 140); assert.equal(rod.mana, 50, 'weapon gives mana'); assert.equal(rod.hp, undefined, 'weapon gives no hp');
+    // v3.129 기본 방어 · 마방 레벨당 값은 그대로(3 + 1 · 3 + .7), 체질 → 마방 .4 · 지능 → 마방 .25만 추가. 방어 · 마방은 탱커 계보 패시브로 채우는 것이 의도.
+    const { stats } = await L.load('systems/stats'), { BALANCE } = await L.load('data/balance'), { ATTRIBUTE_EFFECTS } = await L.load('data/progression');
+    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [3, 1, 3, .7]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, .4); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .25);
+    const b = newState(0); b.level = 100; b.attributes = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; b.statPoints = 0; const r0 = stats(b).resist; b.attributes.vit = 100; const r1 = stats(b).resist; b.attributes.vit = 0; b.attributes.int = 100; const r2 = stats(b).resist;
+    assert.ok(r1 > r0 && r2 > r0, 'vit and int raise resist'); assert.ok(Math.abs((r1 - r0) / (r2 - r0) - .4 / .25) < .05, 'in the .4 : .25 ratio');
+    assert.equal(coat.hp + cape.hp + charm.hp, 800, 'four-slot hp total is unchanged (6 + 2 before)');
 });
