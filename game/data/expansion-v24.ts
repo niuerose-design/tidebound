@@ -169,7 +169,8 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'starChart', name: '별의 해도', desc: '경험치 획득과 마법 공격이 오릅니다.', level: 55, job: 'starNavigator', cost: 3, bonus: { expBonus: .15, magic: 60 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'galaxyFall', name: '은하 낙하', desc: '', level: 70, job: 'routeDeity', chance: .5, cooldown: 4, multiplier: 4.2, cost: 6, manaCost: 32, masteryMilestones: M5 },
     { ...P, id: 'cosmicChart', name: '우주의 해도', desc: '경험치 획득과 마법 공격이 오릅니다.', level: 70, job: 'routeDeity', cost: 3, bonus: { expBonus: .25, magic: 110 }, masteryMilestones: M5 },
-    { ...A, ...dual, id: 'weakpointCut', name: '약점 절개', desc: '', level: 55, job: 'titanAnatomist', chance: .5, cooldown: 4, multiplier: 2.3, cost: 5, manaCost: 18, damageBonusCondition: 'lowHp', conditionalDamageBonus: .5, masteryMilestones: M4 },
+    // v3.108 와일드헌터 상향: 소닉 붐 배율 2.3 → 2.8.
+    { ...A, ...dual, id: 'weakpointCut', name: '약점 절개', desc: '', level: 55, job: 'titanAnatomist', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 18, damageBonusCondition: 'lowHp', conditionalDamageBonus: .5, masteryMilestones: M4 },
     { ...P, id: 'titanLore', name: '거수학', desc: '치명 피해와 빈사 기준이 오릅니다.', level: 55, job: 'titanAnatomist', cost: 3, bonus: { critDamage: .2, executeBonus: .05 }, masteryMilestones: M4 },
     { ...A, ...dual, id: 'titanFell', name: '거수 쓰러뜨리기', desc: '', level: 70, job: 'beastKing', chance: .5, cooldown: 4, multiplier: 3.3, cost: 6, manaCost: 24, damageBonusCondition: 'lowHp', conditionalDamageBonus: .6, masteryMilestones: M5 },
     { ...P, id: 'apexLore', name: '정점의 사냥법', desc: '빈사 기준과 두 공격이 오릅니다.', level: 70, job: 'beastKing', cost: 3, bonus: { executeBonus: .08, attack: 50, magic: 50 }, masteryMilestones: M5 },

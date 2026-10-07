@@ -190,7 +190,8 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'starLog', name: '별의 항해일지', desc: '경험치 획득과 마법 공격이 오릅니다.', level: 40, job: 'starCartographer', cost: 3, bonus: { expBonus: .06, magic: 16 } },
     { ...A, ...physical, id: 'dispatchDash', name: '전령 질주', desc: '', level: 25, job: 'logbookRunner', chance: .28, cooldown: 3, multiplier: 1.35, cost: 3, effect: 'haste' },
     { ...P, id: 'swiftQuill', name: '빠른 펜', desc: '속도와 경험치 획득이 오릅니다.', level: 25, job: 'logbookRunner', cost: 2, bonus: { speed: 6, expBonus: .03 } },
-    { ...A, ...dual, id: 'weakpointThesis', name: '약점 논증', desc: '', level: 40, job: 'titanScholar', chance: .5, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 18, penetrationBonus: .1 },
+    // v3.108 와일드헌터 상향: 와일드 발칸 배율 1.9 → 2.4(중간 몸에서 복합 피해가 낮은 관통에 크게 깎임).
+    { ...A, ...dual, id: 'weakpointThesis', name: '약점 논증', desc: '', level: 40, job: 'titanScholar', chance: .5, cooldown: 4, multiplier: 2.4, cost: 4, manaCost: 18, penetrationBonus: .1 },
     { ...P, id: 'titanAnatomy', name: '거수 해부학', desc: '치명 피해와 방어 관통이 오릅니다.', level: 40, job: 'titanScholar', cost: 3, bonus: { critDamage: .12, penetration: .04 } },
     { ...A, ...physical, id: 'trackersSpear', name: '추적자의 창', desc: '', level: 25, job: 'beastTracker', chance: .26, cooldown: 3, multiplier: 1.5, cost: 3, penetrationBonus: .1 },
     { ...P, id: 'huntersPatience', name: '사냥꾼의 인내', desc: '물리 공격과 명중이 오릅니다.', level: 25, job: 'beastTracker', cost: 2, bonus: { attack: 14, accuracy: .04 } },

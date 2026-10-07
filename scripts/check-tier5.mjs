@@ -34,6 +34,8 @@ const RESEARCH_FULL = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magic
 // v3.83 --level · --rebirths · --research(연구 비율, 1 = 위 표) · --job-tier · --raid로 다른 몸(예: 환생 0 · 50)과 월드보스를 잽니다.
 const LEVEL = Number(arg('--level', 100)), REBIRTHS = Number(arg('--rebirths', 100)), JOB_TIER = Number(arg('--job-tier', 5)), RESEARCH_SCALE = Number(arg('--research', 1));
 const RESEARCH = Object.fromEntries(Object.entries(RESEARCH_FULL).map(([k, v]) => [k, Math.round(v * RESEARCH_SCALE)]));
+// v3.108 --book N: 기록 비례 직업(와일드헌터 사냥 기록 · 섀도어 도감 · 패스파인더 누적 처치 · 캡틴 골드)을 위해 몬스터마다 N마리 처치 · 던전 클리어 N회 · 골드 10^9를 채운 몸으로 잽니다(기본 0 = 기록 없음).
+const BOOK = Number(arg('--book', 0));
 const MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg('--dungeon-tier', TIER * 2)), SWARM500_TIER = Number(arg('--swarm500-tier', 0)), PEN = arg('--pen') === undefined ? null : Number(arg('--pen'));
 // --swarm500-atk: ×500 무리 공격 배율 실험(n = 지금 490배 · 숫자 = 고정 배율 · sqrt = √N · thin = 남은 마리 비례 · thin-sqrt = √(남은 마리)). --only 키: 그 상황만 잽니다.
 const SWARM_ATK = arg('--swarm500-atk', 'n'), ONLY = arg('--only');
@@ -78,7 +80,7 @@ function loadout(s, j, magic) {
 }
 function body(j) {
     const s = newState(0), { attrs, magic } = attributesFor(j);
-    Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH }, book: {}, unlockedJobs: JOBS.map(x => x.id) });
+    Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH }, book: BOOK ? Object.fromEntries(FISH.map(f => [f.id, BOOK])) : {}, ...(BOOK ? { clears: { record: BOOK }, gold: 1e9 } : {}), unlockedJobs: JOBS.map(x => x.id) });
     s.equipment = { ...GEAR[magic ? 'magic' : 'physical'] };
     s.jobMastery = { [j.id]: 0 };
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = masteryMilestonesFor(sk).at(-1); }
