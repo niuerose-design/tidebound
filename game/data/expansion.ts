@@ -173,10 +173,10 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'plagueVessel', name: '역병의 그릇', desc: '지속 피해와 방어 관통이 오릅니다.', level: 40, job: 'plagueDoctor', cost: 3, bonus: { dotBonus: .2, penetration: .04 } },
     { ...A, ...magic, id: 'rotBloom', name: '부패의 꽃', desc: '', level: 55, job: 'plagueLord', chance: .5, cooldown: 4, multiplier: 1.8, cost: 5, manaCost: 16, effect: 'poison', dotRatio: .16, statusTurns: 4, damageBonusCondition: 'bleeding', conditionalDamageBonus: .5, masteryMilestones: M4 },
     { ...P, id: 'pestilence', name: '만연', desc: '지속 피해와 체력이 오릅니다.', level: 55, job: 'plagueLord', cost: 3, bonus: { dotBonus: .15, hp: 250 }, masteryMilestones: M4 },
-    // v3.130 포이즌 노바(각성기): 중독과 화상을 함께 7턴(+지속 턴 옵션) 겁니다. 각성 지속 배율 없이 적힌 턴 그대로.
-    { ...A, ...magic, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 4, multiplier: 2.3, cost: 6, manaCost: 22, effect: 'poison', alsoEffect: 'burn', dotRatio: .2, statusTurns: 7, damageBonusCondition: 'bleeding', conditionalDamageBonus: .6, masteryMilestones: M5 },
-    // v3.130 도트 퍼니셔: 패시브 → 일반 액티브(대기 4). 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
-    { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 4, multiplier: 2.4, cost: 4, manaCost: 20, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1 }, damageBonusCondition: 'bleeding', conditionalDamageBonus: .5, bonus: { dotBonus: .2, crit: .05, magic: 250 }, masteryMilestones: M5 },
+    // v3.130 포이즌 노바(각성기): 중독과 화상을 함께 7턴(+지속 턴 옵션) 겁니다. 계보 밖에서 계승하면 발동률 절반(outsiderChance). 각성 지속 배율 없이 적힌 턴 그대로.
+    { ...A, ...magic, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 4, multiplier: 2.3, cost: 6, manaCost: 22, effect: 'poison', alsoEffect: 'burn', dotRatio: .2, statusTurns: 7, outsiderChance: .5, damageBonusCondition: 'bleeding', conditionalDamageBonus: .6, masteryMilestones: M5 },
+    // v3.130 도트 퍼니셔: 패시브 → 일반 액티브(대기 0 · 비용 6, AP 부담이 대가). 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
+    { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 0, multiplier: 2.4, cost: 6, manaCost: 20, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1 }, damageBonusCondition: 'bleeding', conditionalDamageBonus: .5, masteryMilestones: M5 },
     // 저주의 길
     { ...A, ...magic, id: 'curseBolt', name: '저주탄', desc: '', level: 10, job: 'shaman', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 9, effect: 'weaken' },
     { ...P, id: 'spiritWard', name: '정령의 가호', desc: '마법 방어·최대 마나와 마력 평타 계수가 오릅니다.', level: 10, job: 'shaman', cost: 2, bonus: { resist: 14, mana: 15, arcaneRatioBonus: .5 } },
