@@ -148,7 +148,8 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...A, ...dual, id: 'twinMoon', name: '쌍월', desc: '', level: 55, job: 'swordSaint', chance: .5, cooldown: 4, multiplier: 2.5, cost: 5, manaCost: 16, extraAttacks: 1, extraAttackMultiplier: .7, masteryMilestones: M4 },
     { ...P, id: 'saintEdge', name: '검성의 날', desc: '물리·마법 공격과 방어 관통이 오릅니다.', level: 55, job: 'swordSaint', cost: 3, bonus: { attack: 30, magic: 30, penetration: .05, manaRegen: 3 }, masteryMilestones: M4 },
     { ...A, ...dual, id: 'heavenSplit', name: '천지개벽', desc: '', level: 70, job: 'celestialBlade', chance: .5, cooldown: 5, multiplier: 4.8, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
-    { ...P, id: 'celestialAura', name: '천검의 기운', desc: '물리·마법 공격과 치명타가 크게 오릅니다.', level: 70, job: 'celestialBlade', cost: 3, bonus: { attack: 55, magic: 55, crit: .05 }, masteryMilestones: M5 },
+    // v3.127 데몬슬레이어 상향: 데몬 어웨이크닝 물리 · 마법 공격 +55 → +350(숙련 보정 뒤 엔드 물리 약 +17% · 마법 약 +52%, 복합 피해라 둘 다 같은 값).
+    { ...P, id: 'celestialAura', name: '천검의 기운', desc: '물리·마법 공격과 치명타가 크게 오릅니다.', level: 70, job: 'celestialBlade', cost: 3, bonus: { attack: 350, magic: 350, crit: .05 }, masteryMilestones: M5 },
     // 방패의 길
     { ...A, ...physical, id: 'shieldBash', name: '방패 치기', desc: '', level: 10, job: 'shieldbearer', chance: .24, cooldown: 4, multiplier: 1.1, cost: 2, effect: 'stun', scaling: 'defense', scalingRatio: .6 },
     { ...P, id: 'shieldWall', name: '방패벽', desc: '물리 방어와 체력이 오릅니다.', level: 10, job: 'shieldbearer', cost: 2, bonus: { defense: 14, hp: 40 , swarmFind: 0.3} },
