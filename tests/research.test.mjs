@@ -315,3 +315,19 @@ test('v3.90 max mana: base grows with level, research ‘샘의 기억’ ×(1 +
     const b = newState(0); b.level = 100; b.rebirths = 100; Object.assign(b.attributes, { int: 120, wis: 60, vit: 60, str: 30, dex: 30 }); Object.assign(b.permanent, { hp: 100, mana: 100 });
     const st = stats(b), ratio = st.mana / st.hp; assert.ok(ratio > .15 && ratio < .35, `mana/hp ${ratio.toFixed(3)}`);
 });
+
+test('v3.99 enemy label in combat logs: swarm ×N, variant mark + name, [보스] / [칠흑] tags; battle lines and kill line use it', async () => {
+    const { enemyLabel, tick: tk } = await import('./harness.mjs');
+    const base = { id: 'minnow', name: '스포아' };
+    assert.equal(enemyLabel(base), '스포아');
+    assert.equal(enemyLabel({ ...base, swarm: 100, variant: 'swarm' }), '스포아 ×100');
+    assert.equal(enemyLabel({ ...base, swarm: 500, variant: 'swarm' }), '스포아 ×500');
+    assert.equal(enemyLabel({ ...base, variant: 'giant' }), '◆ 거대 개체 스포아');
+    assert.equal(enemyLabel({ ...base, name: '자쿰', boss: true }), '[보스] 자쿰');
+    assert.equal(enemyLabel({ ...base, name: '검은 마법사', boss: true, onyx: 'onyxBlackMage' }), '[칠흑] 검은 마법사');
+    const s = newState(0); s.running = true;
+    s.enemy = { id: 'minnow', name: '스포아', hp: 5, maxHp: 5, attack: 1, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, swarm: 100, variant: 'swarm', born: 0 };
+    for (let i = 0; i < 5 && s.enemy?.swarm; i++) tk(s, () => .5);
+    const lines = s.logs.map(l => l.text);
+    assert.ok(lines.some(t => t.includes('스포아 ×100')), `labelled: ${lines.slice(-6).join(' / ')}`);
+});
