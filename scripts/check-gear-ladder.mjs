@@ -14,7 +14,7 @@ const KILLS_PER_HOUR = 1730, SAMPLES = 240, SLOTS = ['rod', 'coat', 'charm', 'ca
 const fmt = v => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(1)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
 console.log(`등급 배율 ${RARITIES.map(r => `${r.name}×${r.factor}`).join(' ')} · 22성 ×${starMultiplier(22).toFixed(2)}`);
 
-// 1. 장비 몫: Lv.100 · 환생 200 · 치명타 약 100%(행운 300, 키운 캐릭터 기준) 캐릭터에 같은 종류 Lv.100 장비 4부위를 끼운 전투력(v3.66 실제 전투식) ÷ 장비 없음. kind가 있으면 계승 장비(유물·원시 고대·계승 태초) 위력 공식.
+// 1. 장비 몫: Lv.100 · 환생 200 · 치명타 약 100%(행운 300, 키운 캐릭터 기준) 캐릭터에 같은 종류 Lv.100 장비 4부위를 끼운 전투력(v3.66 실제 전투식, v3.133 공격 .65 · 버티는 힘 .35 가중) ÷ 장비 없음. kind가 있으면 계승 장비(유물·원시 고대·계승 태초) 위력 공식.
 const body = () => { const s = newState(0); s.level = 100; s.rebirths = 200; s.statPoints = 0; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 300 }; Object.assign(s.permanent, { attack: 200, hp: 200, guard: 100, magicGuard: 100 }); s.equipment = { rod: null, coat: null, charm: null, cape: null }; return s; };
 const naked = power(stats(body())), rng = random(3);
 // 원시 고대 · 계승 태초는 계승할 때 옵션이 최고 굴림으로 고정되므로 그대로 잽니다(유물은 이식 옵션이라 굴린 그대로).
@@ -57,7 +57,8 @@ console.log('칠흑 장신구: 기대 약 18일 · 최장 약 31일(data/onyx.ts
 // 원시 고대(환생 200)는 신화의 1.55~1.9배, 계승 태초(환생 200)는 신화의 2.25~2.75배(계승 옵션 최고 굴림으로 잼, v3.77 기준 ×1.73 · ×2.50). 계승 장비는 환생할수록 강해집니다.
 const t22 = r => tier[`${r}:22`], myth = t22(4);
 for (const star of [0, 22]) { const t = r => tier[`${r}:${star}`]; assert.ok(t(3) < t(4) && t(4) < t(5) && t(5) < t(6), `${star}성 등급 순서: ${[3, 4, 5, 6].map(t).map(x => x.toFixed(2))}`); }
-assert.ok(heir.relic[2] > myth && heir.relic[2] < t22(5), `유물(환생 200) ×${heir.relic[2].toFixed(2)}이 신화(×${myth.toFixed(2)})·고대(×${t22(5).toFixed(2)}) 사이 밖`);
+// v3.133 전투력 가중(공격 .65 · 버티는 힘 .35)으로 바꾼 뒤 유물(환생 200)은 신화의 0.996배(×7.42 vs ×7.45). 장비는 그대로이고 잣대만 바뀐 것이라 아래쪽을 신화의 0.95배로 둡니다.
+assert.ok(heir.relic[2] >= myth * .95 && heir.relic[2] < t22(5), `유물(환생 200) ×${heir.relic[2].toFixed(2)}이 신화(×${myth.toFixed(2)}) 0.95배·고대(×${t22(5).toFixed(2)}) 사이 밖`);
 assert.ok(heir.ancient[2] / myth >= 1.55 && heir.ancient[2] / myth <= 1.9, `원시 고대(환생 200) 신화의 ${(heir.ancient[2] / myth).toFixed(2)}배`);
 assert.ok(heir.primal[2] / myth >= 2.25 && heir.primal[2] / myth <= 2.75, `계승 태초(환생 200) 신화의 ${(heir.primal[2] / myth).toFixed(2)}배`);
 for (const k of ['relic', 'ancient', 'primal']) assert.ok(heir[k][0] < heir[k][1] && heir[k][1] < heir[k][2], `${k} 환생 성장`);

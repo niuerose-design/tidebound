@@ -1,12 +1,12 @@
 // 전투력 점검(v3.66): stats.power의 공식이 실제 전투 판정(strike)과 같은 방향·크기로 움직이는지 봅니다.
 // 기준 캐릭터에서 능력치 하나씩(치명타 피해·치명타·관통·공격·체력·방어·회피) 또는 장비 세트를 바꿔, 기준 몬스터를 때린 평균 피해(공격)와
-// 기준 몬스터에게 맞은 평균 피해로 나눈 체력(버티는 힘)을 실제로 굴려 √(공격 × 버티는 힘) 비율을 구하고, 전투력 비율과 비교합니다.
+// 기준 몬스터에게 맞은 평균 피해로 나눈 체력(버티는 힘)을 실제로 굴려 공격^.65 × 버티는 힘^.35(v3.133 전투력과 같은 가중) 비율을 구하고, 전투력 비율과 비교합니다.
 // 사용: node scripts/check-power.mjs
 import assert from 'node:assert/strict';
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
 const { load } = loadGame();
-const { newState } = await load('systems/engine'), { stats, power } = await load('systems/stats'), { strike } = await load('systems/combat');
+const { newState } = await load('systems/engine'), { stats, power, POWER_WEIGHT } = await load('systems/stats'), { strike } = await load('systems/combat');
 const N = 6000;
 const fighter = (st, name) => ({ name, stats: { ...st }, hp: 1e15, mana: 1e9, skills: [], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} });
 // 기준 몬스터: Lv.100 일반 몬스터 근처(방어 163, 회피 0.1, 명중 1.1), 공격은 피해 비율만 보므로 아무 값.
@@ -16,7 +16,8 @@ function simulated(st) {
     for (let i = 0; i < N; i++) { const me = fighter({ ...st, speed: 10 }, 'me'), mob = fighter(MOB, 'mob'); strike(me, mob, rng); dealt += 1e15 - mob.hp; }
     for (let i = 0; i < N; i++) { const me = fighter({ ...st, speed: 10, thorns: 0 }, 'me'), mob = fighter(MOB, 'mob'); strike(mob, me, rng); taken += 1e15 - me.hp; }
     const offense = dealt / N, durability = st.hp / Math.max(1e-9, taken / N) * (1 + (st.lifesteal || 0));
-    return Math.sqrt(offense * durability);
+    // v3.133 전투력과 같은 가중(공격 .65 · 버티는 힘 .35)으로 묶습니다.
+    return Math.pow(offense, POWER_WEIGHT.offense) * Math.pow(durability, POWER_WEIGHT.durability);
 }
 const s = newState(0); s.level = 100; s.rebirths = 100; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 0 };
 Object.assign(s.permanent, { attack: 100, hp: 100, guard: 60, magicGuard: 60 });
