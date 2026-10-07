@@ -86,7 +86,8 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     braveSlash: { kind: 'slash', title: '소드 오브 버닝 소울', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
     oceanWrath: { kind: 'wave', title: '썬더 브레이크', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
     genesis: { kind: 'light', title: '인피니티 플레임 서클', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
-    doomMark: { kind: 'venom', title: '포이즌 노바', glyphs: ['●', '◌', '●', '◌', '●', '◌', '●', '◌'] },
+    // v3.132 중독 + 화상을 함께 거는 포이즌 노바: 독 고리와 불 고리가 겹쳐 터집니다.
+    doomMark: { kind: 'nova', title: '포이즌 노바', glyphs: ['●', '✹', '◌', '▴', '●', '✹', '◌', '▴'] },
     aegisJudgment: { kind: 'judgment', title: '소드 오브 라이트', glyphs: ['⬡', '✦', '⬡', '✦', '⬡', '✦', '⬡', '✦'] },
     redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
     worldTentacle: { kind: 'tentacle', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
@@ -98,12 +99,26 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
 const AWAKEN_FX = { kind: 'light', glyphs: ['✦', '·', '✧', '·', '✦', '·', '✧', '·'] };
 const ultimateOf = (id?: string) => id ? ULTIMATES[id] ?? (skillById(id)?.awaken ? AWAKEN_FX : undefined) : undefined;
 /**
+ * v3.132 도트 퍼니셔 전용 장면. 추가타 수로 모션이 달라집니다: 0회는 독·불 구체 한 발(어둠 없음),
+ * 일부(2~3회)는 표식이 하나씩 날아와 박히고, 최대(4회)는 어둠 속에서 네 표식이 동시에 모여 십자로 터지며 기절 별이 돕니다.
+ * 표식은 HP 바 숫자(타격마다 160ms)와 같은 박자로 꽂힙니다.
+ */
+function PunisherFx({ fx }: { fx: CombatFx }) {
+    const follows = Math.max(0, fx.hits.length - 1), stage = follows === 0 ? 'none' : follows >= (skillById('endOfAll')?.dotFinisher?.maxHits ?? 4) ? 'full' : 'part';
+    return <div className={`scene-fx scene-fx-punisher pun-${stage}`} style={fxStyle(fx.delay, { '--hits': follows })}>
+        {stage !== 'none' && <i className="scene-fx-dark"/>}<i className="scene-fx-flash"/><i className="pun-core"/>
+        {Array.from({ length: follows }, (_, i) => <b key={i} className={`pun-mark ${i % 2 ? 'burn' : 'poison'}`} style={fxStyle(fx.delay + 160 * (i + 1), { '--i': i, '--ang': `${i * 360 / Math.max(1, follows) - 90}deg` })}>{i % 2 ? '✹' : '●'}</b>)}
+        {stage === 'full' && <><i className="pun-cross"/><i className="pun-cross late"/>{['★', '✶', '★'].map((g, i) => <b key={g + i} className="pun-star" style={fxStyle(fx.delay + 800, { '--i': i })}>{g}</b>)}</>}
+        <strong className="pun-title">{stage === 'full' ? '도트 퍼니셔 · 퍼니시' : stage === 'part' ? `도트 퍼니셔 ×${follows + 1}` : '도트 퍼니셔'}</strong>
+    </div>;
+}
+/**
  * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
  * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)으로 충분하므로 배경에는 띄우지 않습니다.
  */
 export function SceneFx({ effect }: { effect: CombatFx[] }) {
     const cues = effect.filter(fx => fx.actor === 'player' && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId); return ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId); return fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
         <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>

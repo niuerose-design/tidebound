@@ -252,6 +252,12 @@ export type Skill = {
     preyBonus?: number;
     scalingRatio?: number;
     statusTurns?: number;
+    /** v3.132 함께 거는 두 번째 중첩형 지속 피해(포이즌 노바: 중독 + 화상). 지속은 statusTurns, 틱 비율은 dotRatio를 같이 씁니다. 각성 지속 배율을 받지 않습니다. */
+    alsoEffect?: 'poison' | 'burn';
+    /** v3.132 계보 밖 직업이 계승해 쓰면 발동률에 곱하는 값(5차 전용 기술, signatureScale과 함께). */
+    outsiderChance?: number;
+    /** v3.132 도트 퍼니셔: 적의 중독·화상 중첩에 비례한 추가타(최대 maxHits회, 위력 hitMultiplier). 둘 다 최대 중첩이면 기절 fullStun턴, 일부면 partStun턴, 없으면 추가타·기절 없음. */
+    dotFinisher?: { maxHits: number; hitMultiplier: number; fullStun: number; partStun: number };
     /** 이 기술이 거는 지속 피해 비율(기본 SKILL_FORMULA.bleedRatio)과 이름(기본 출혈). */
     dotRatio?: number;
     dotName?: string;

@@ -717,6 +717,34 @@
 @keyframes ultSigil{0%{opacity:0;rotate:0deg;scale:.3}20%{opacity:1;scale:1}100%{opacity:0;rotate:200deg;scale:1.4}}
 @keyframes ultFog{0%{opacity:0;translate:0 60%}40%,70%{opacity:1;translate:0 0}100%{opacity:0;translate:0 -30%}}
 /* 신성한 심판: 닫히는 육각 결계 위로 내리꽂히는 빛 */
+.ult-nova{--fx:#c8f06a}.ult-nova .scene-fx-dark{background:#0d1004}
+.ult-nova .ult-a{left:62%;top:78%;width:260px;height:90px;margin:-45px 0 0 -130px;border:3px dashed #9af06a;border-radius:50%;box-shadow:0 0 24px #9af06a,inset 0 0 24px rgba(154,240,106,.5);animation:ultSigil 2.4s ease-out var(--fx-delay) both}
+.ult-nova .ult-b{left:62%;top:78%;width:200px;height:70px;margin:-35px 0 0 -100px;border:3px dotted #ff9a4a;border-radius:50%;box-shadow:0 0 24px #ff7a2a,inset 0 0 20px rgba(255,122,42,.5);animation:ultSigil 2.4s ease-out calc(var(--fx-delay) + .2s) reverse both}
+.ult-nova .ult-frag:nth-of-type(even){color:#ffae5a;text-shadow:0 0 12px #ff6a1a}
+.battle-scene:has(.ult-nova) .ocean-art{animation:ultNovaTint 2.4s ease-out both}
+@keyframes ultNovaTint{0%,10%{filter:none}25%,60%{filter:sepia(.5) hue-rotate(40deg) saturate(1.4)}100%{filter:none}}
+/* v3.132 도트 퍼니셔: 추가타 수에 따라 pun-none(구체 한 발) · pun-part(표식이 차례로 꽂힘) · pun-full(어둠 · 동시 수렴 · 십자 폭발 · 기절 별) */
+.scene-fx-punisher{--fx:#b7f06a;position:absolute;inset:0}
+.scene-fx-punisher .scene-fx-dark{inset:0;background:#08100a;animation:sceneDark 1.8s ease-in-out var(--fx-delay) both}
+.pun-part .scene-fx-dark{animation-duration:1.2s;background:rgba(8,16,10,.6)}
+.scene-fx-punisher .scene-fx-flash{inset:0;background:radial-gradient(ellipse at 62% 48%,color-mix(in srgb,var(--fx) 45%,transparent),transparent 58%);animation:sceneFlash .9s ease-out var(--fx-delay) both;mix-blend-mode:screen}
+.pun-core{position:absolute;left:62%;top:48%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:radial-gradient(circle,#fff 0,#d6ff9a 25%,#7ad04a 55%,#ff8a3a 80%,transparent 82%);box-shadow:0 0 26px #9af06a,0 0 40px #ff7a2a;animation:punCore .8s cubic-bezier(.3,.9,.3,1) var(--fx-delay) both}
+.pun-mark{position:absolute;left:62%;top:48%;font:800 30px/1 monospace;color:#9af06a;text-shadow:0 0 14px #5ad02a;translate:-50% -50%;animation:punMark .7s cubic-bezier(.6,0,.2,1) var(--fx-delay) both}
+.pun-mark.burn{color:#ffae5a;text-shadow:0 0 14px #ff6a1a}
+.pun-full .pun-mark{animation-delay:calc(var(--fx-delay) + .1s - var(--i) * .16s + .45s);animation-duration:.55s;font-size:36px}
+.pun-cross{position:absolute;left:62%;top:48%;width:340px;height:8px;margin:-4px 0 0 -170px;border-radius:4px;background:linear-gradient(90deg,transparent,#d6ff9a,#fff,#ffae5a,transparent);box-shadow:0 0 30px #b7f06a;rotate:45deg;animation:punCross 1.4s ease-out calc(var(--fx-delay) + .95s) both}
+.pun-cross.late{rotate:-45deg;animation-delay:calc(var(--fx-delay) + 1.02s)}
+.pun-star{position:absolute;left:62%;top:calc(48% - 70px);font:800 22px/1 monospace;color:#fff3a8;text-shadow:0 0 10px #ffd76a;animation:punStar 1.2s linear var(--fx-delay) both;--r:calc(var(--i) * 120deg)}
+.pun-title{position:absolute;left:50%;top:calc(50% + 70px);translate:-50% 0;font-size:16px;font-weight:800;letter-spacing:4px;color:#eaffc8;text-shadow:0 0 12px #5ad02a,0 2px 6px #000;white-space:nowrap;animation:sceneTitleQuick 1.6s ease-out var(--fx-delay) both}
+.pun-full .pun-title{font-size:21px;color:#fff2c4;text-shadow:0 0 16px #ff8a3a,0 0 10px #9af06a,0 2px 6px #000}
+.pun-none .pun-title{font-size:14px;opacity:.85}
+.battle-scene:has(.pun-full) .ocean-art{animation:punShake .5s steps(2) 1s both}
+@keyframes punCore{0%{opacity:0;scale:.2}35%{opacity:1;scale:1.3}100%{opacity:0;scale:.6}}
+@keyframes punMark{0%{opacity:0;transform:rotate(var(--ang)) translateX(170px) rotate(calc(-1 * var(--ang))) scale(1.4)}30%{opacity:1}85%{opacity:1;transform:rotate(var(--ang)) translateX(0) rotate(calc(-1 * var(--ang))) scale(.9)}100%{opacity:0;transform:scale(1.8)}}
+@keyframes punCross{0%{opacity:0;scale:0 1}20%{opacity:1;scale:1 1}70%{opacity:1}100%{opacity:0;scale:1.2 2}}
+@keyframes punStar{0%{opacity:0;transform:rotate(var(--r)) translateX(26px) rotate(calc(-1 * var(--r)))}15%,80%{opacity:1}100%{opacity:0;transform:rotate(calc(var(--r) + 540deg)) translateX(26px) rotate(calc(-1 * var(--r) - 540deg))}}
+@keyframes punShake{0%{translate:-4px 0}50%{translate:4px 2px}100%{translate:0 0}}
+@media(prefers-reduced-motion:reduce){.pun-mark,.pun-cross,.pun-star{display:none}.battle-scene:has(.pun-full) .ocean-art{animation:none}}
 .ult-judgment{--fx:#ffd76a}
 .ult-judgment .ult-a{left:62%;top:48%;width:220px;height:220px;margin:-110px 0 0 -110px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:color-mix(in srgb,#ffd76a 35%,transparent);box-shadow:0 0 40px #ffd76a;animation:ultHex 2.4s ease-out var(--fx-delay) both}
 .ult-judgment .ult-b{left:62%;top:-20%;width:60px;height:80%;translate:-50% 0;background:linear-gradient(180deg,#fff,#ffd76a,transparent);filter:blur(1px);animation:ultDrop 2.4s cubic-bezier(.6,0,.2,1) calc(var(--fx-delay) + .5s) both}

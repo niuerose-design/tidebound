@@ -74,7 +74,7 @@ test('v21.2 tier 5 (v3.80) signature skills work fully in their own lineage and 
 });
 
 test('v27.17 poison is its own stacking status; bleed does not stack but makes the target take more damage',()=>{
- const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
+ const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills)=>({name:'A',stats:{...base},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
  const b=mk([]),dart=SKILLS.find(x=>x.id==='venomDart');assert.equal(dart.effect,'poison');const per=Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)),hpRatio=SKILL_FORMULA.poisonHpRatio;
  for(let i=1;i<=STATUS_TUNING_MAX+2;i++){strike(mk(['venomDart']),b,()=>0);const n=Math.min(i+STATUS_TUNING.poisonFirstStacks-1,STATUS_TUNING_MAX);assert.equal(b.effects.poison.stacks,n);assert.equal(b.effects.poison.perStack,per);assert.equal(b.effects.poison.hpRatio,hpRatio);}
