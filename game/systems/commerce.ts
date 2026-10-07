@@ -4,7 +4,7 @@ import { RARITIES } from '../data/balance';
 import { ASCENSION } from '../data/ascension';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap } from '../data/economy';
 import { apCapacity, apUsed, itemKey } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, keepsAcrossLives, rerollCost, refineCost, canResetGear, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
@@ -119,7 +119,9 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
         if (item.relic || item.heir || item.onyx) { item.enhance = STARFORCE.relicResetStar; return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! ${item.relic ? '유물' : item.onyx ? '칠흑 장신구' : '계승 장비'}라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G` }; }
         s.inventory = s.inventory.filter(x => x.id !== item.id);
         for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
-        return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 장비가 파괴되었습니다 · -${cost} G` };
+        // v3.120 파괴된 태초도 계승 게이지를 채웁니다(분해와 같음).
+        const gauge = primalGaugeGain(s, [item]);
+        return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 장비가 파괴되었습니다 · -${cost} G${primalGaugeNote(s, gauge)}` };
     }
     sf.fail++;
     if (starDrops(star)) {
@@ -206,7 +208,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const ids = new Set(items.map(x => x.id)), gold = items.reduce((sum, i) => sum + saleValue(i), 0);
         s.inventory = s.inventory.filter(i => !ids.has(i.id));
         s.gold += gold;
-        return `${RARITIES[rarity].name} ${items.length}개 일괄판매 · +${gold} G`;
+        const gauge = primalGaugeGain(s, items);
+        return `${RARITIES[rarity].name} ${items.length}개 일괄판매 · +${gold} G${primalGaugeNote(s, gauge)}`;
     }
     if (a.type === 'enhance' || a.type === 'reforge' || a.type === 'refine') {
         const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
@@ -239,7 +242,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence.toLocaleString()}).`);
             s.essence = (s.essence || 0) - cost.essence;
             item.refines = (item.refines || 0) + 1;
-            const next = refineOption(x, item.power, item.rarity, rng, item.level);
+            // v3.120 원시 고대 · 계승 태초 · 칠흑은 보통 최고의 1.5배 폭(수치 150%)까지 굴립니다(refineTopOf).
+            const next = refineOption(x, item.power, item.rarity, rng, item.level, refineTopOf(item));
             item.affixes = item.affixes!.map((o, i) => i === index ? next : o);
             return `${item.name} ${x.name} 수치 재련 · ${x.value} → ${next.value} · 정수 -${cost.essence.toLocaleString()}`;
         }
@@ -393,7 +397,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         lines[slot] = imprintAffix(affix, source.rarity, relic.rarity);
         relic.affixes = lines.filter(Boolean);
         s.inventory = s.inventory.filter(x => x.id !== source.id);
-        return `${relic.name} 옵션 이식 · ${affix.name}${before ? ` (${before.name} 대체)` : ''} · ${source.name} 소비 · -${cost} G`;
+        const gauge = primalGaugeGain(s, [source]);
+        return `${relic.name} 옵션 이식 · ${affix.name}${before ? ` (${before.name} 대체)` : ''} · ${source.name} 소비 · -${cost} G${primalGaugeNote(s, gauge)}`;
     }
     if (a.type === 'removeImprint') {
         // v3.82 이식 옵션 지우기: value = 칸 번호(0~2). 무료이고 되돌릴 수 없습니다(그 칸은 비고, 다시 이식할 수 있음).
@@ -444,7 +449,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         }
         else {
             if ((s.primalGauge || 0) < PRIMAL_INHERIT.gauge)
-                throw Error(`태초 계승 게이지가 부족합니다(${s.primalGauge || 0}/${PRIMAL_INHERIT.gauge}). 태초 장비를 분해하면 찹니다.`);
+                throw Error(`태초 계승 게이지가 부족합니다(${s.primalGauge || 0}/${PRIMAL_INHERIT.gauge}). 태초 장비를 분해 · 판매하거나 강화 중 파괴되면 찹니다.`);
             s.primalGauge = (s.primalGauge || 0) - PRIMAL_INHERIT.gauge;
         }
         // 부위마다 종류별 1개: 같은 부위의 예전 계승 장비는 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐).
