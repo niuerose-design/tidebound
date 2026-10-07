@@ -599,3 +599,11 @@ test('v3.119 display bugs: 마력 option mana regen scales with power (and old t
     const t = newState(0); t.equipment.coat = { id: 'c', slot: 'coat', rarity: 5, power: 333, level: 80, name: 'c', affixes: [{ id: 'transcend', name: '초월', stat: 'allStats', value: .0173 }] };
     const a = St.stats(t); for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist']) assert.ok(Number.isInteger(a[k]), `${k} ${a[k]}`);
 });
+
+test('v3.122 onyx accessory level: the higher of its habitat level and my level (boss drop and milestone grant)', async () => {
+    const G = await L.load('systems/onyx-grant'), O = await L.load('data/onyx');
+    const s = newState(0); s.level = 87; G.grantOnyx(s, O.ONYX_BOSSES[0].id, 5, () => .5, 'test');
+    const dusk = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.equal(dusk.level, 87); assert.equal(dusk.power, Math.round((87 + 2) * O.ONYX.power));
+    const low = newState(0); low.level = 40; G.grantOnyx(low, 'onyxBlackMage', 100, () => .5, 'test'); assert.equal(low.inventory.find(i => i.onyx).level, 100, 'habitat level when higher');
+    const m = newState(0); m.level = 120; m.rebirths = 50; G.grantOnyxMilestones(m, () => 0); assert.equal(m.inventory.find(i => i.onyx).level, 120, 'milestone onyx at my level');
+});
