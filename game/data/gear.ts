@@ -211,7 +211,7 @@ export const heirRollChanceAbove = (q: number, top = HEIR_ROLL_TOP) => q <= 1 ? 
 const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
 
 /**
- * v3.132 규칙 옵션(◆ 기절 · 지속 등 8종, 장비당 1줄)의 등장 가중치. 일반 옵션(30종)과 같은 1이던 때는 전설 60% · 신화 70% · 태초 80%의 장비에 규칙 옵션이 붙어
+ * v3.133 규칙 옵션(◆ 기절 · 지속 등 8종, 장비당 1줄)의 등장 가중치. 일반 옵션(30종)과 같은 1이던 때는 전설 60% · 신화 70% · 태초 80%의 장비에 규칙 옵션이 붙어
  * ‘희귀한 옵션’이라는 인상과 어긋났습니다. .25면 전설 약 22% · 신화 29% · 고대 31% · 태초 36%. 희귀(★) 옵션은 따로 ODDS.affix.rare, 테마 옵션은 THEME_WEIGHT를 곱합니다.
  */
 export const RULE_WEIGHT = .25;

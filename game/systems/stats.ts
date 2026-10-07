@@ -250,10 +250,10 @@ export function dropRate(s: State, a = stats(s)) {
  */
 export const POWER_REF = { accuracy: 1.1, evasion: .1, penetrationWeight: .6 } as const;
 /**
- * v3.133 전투력 = POWER_SCALE × 공격^offense × 버티는 힘^durability. 전에는 √(공격 × 버티는 힘)(둘을 같은 무게)이었습니다.
+ * v3.134 전투력 = POWER_SCALE × 공격^offense × 버티는 힘^durability. 전에는 √(공격 × 버티는 힘)(둘을 같은 무게)이었습니다.
  * 장비 4부위가 공격은 ×4, 버티는 힘은 ×39를 올리는데(공격은 능력치 · 연구 기본값이 커서, 방어 · 마방은 기본값이 작아서) 같은 무게로 곱하면 방어 부위가
  * 전투력을 지배하고(v3.129 전 방어구 하나가 77%), 환생이 쌓이면 버티는 힘은 포화(장비 없이도 마지막 서식지에서 죽기까지 수천 대)라 진행 속도는 공격만 정합니다.
- * 공격 .65 · 버티는 힘 .35로 두면 태초 22성 4부위에서 부위를 빼면 무기 42 · 방어구 39 · 장신구 26 · 망토 29%로 무기가 1등이 됩니다(docs/gear-endgame.md v3.133).
+ * 공격 .65 · 버티는 힘 .35로 두면 태초 22성 4부위에서 부위를 빼면 무기 42 · 방어구 39 · 장신구 26 · 망토 29%로 무기가 1등이 됩니다(docs/gear-endgame.md v3.134).
  * POWER_SCALE 8은 Lv.1 새 캐릭터의 전투력(약 453)이 전과 같게 맞춘 값입니다. 전투력은 표시 · 장비 미리보기 · 결투 상대 · 제단 신 위력에 쓰이고 전투 판정에는 쓰지 않습니다.
  */
 export const POWER_WEIGHT = { offense: .65, durability: .35 } as const;
