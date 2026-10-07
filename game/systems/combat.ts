@@ -472,7 +472,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const spent = Math.min(chosen.goldSpend.cap, Math.floor(a.gold! * chosen.goldSpend.ratio));
         if (spent > 0) { a.gold! -= spent; allInBonus += spent * chosen.goldSpend.scale; notes.push(`골드 ${spent.toLocaleString()} 투척`); }
     }
-    // v3.140 성해의 일격(oath)의 '높은 쪽 공격' 특례는 지웠습니다. 루미너스 액티브는 모두 damageType physical · scaling swap(마법 계수 → 물리 피해)으로 선언합니다.
+    // v3.140 성해의 빛살(oath)의 '높은 쪽 공격' 특례는 지웠습니다. 루미너스 액티브는 모두 damageType physical · scaling swap(마법 계수 → 물리 피해)으로 선언합니다.
     const magical = arcane || chosen?.damageType === 'magic' || !chosen && !!a.magicBasic;
     // v26.7 마법 공격은 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다(물리 빌드와의 차별점).
     const hit = chosen?.sureHit || a.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed }, magical);

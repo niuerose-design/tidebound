@@ -20,8 +20,8 @@ export const DEFENSE_JOBS: NewJob[] = [
     { id: 'eonTurtle', lineage: 'bellTurtle', name: '만년 거북', title: '만 년을 버틴 등껍질', desc: '인퍼널 브레스로 기절시키고 드래곤 스케일로 버티는 종거북 갈래 환생 후 4차 직업입니다.', ...neutral, attack: 1.03, hp: 1.5, defense: 1.55, resist: 1.35, crit: .01, ...T4, parent: 'bellWarden', requires: { vit: 62, luk: 36 }, requiresSkillMastery: { greatBellToll: 3 }, role: '탱커·기절', tree: 'defense', penalties: { speed: -9 } },
     { id: 'worldTurtle', lineage: 'bellTurtle', name: '세계 거북', title: '등 위에 바다가 얹혀 있다', desc: '파이널 피규레이션으로 짓누르고 노바 템퍼런스와 대기만성 패시브 드래곤 블레이즈를 가진 종거북 갈래 5차 직업입니다. 처음에는 느리고 4차와 비슷한 힘으로 시작하는 대기만성 직업입니다.', ...neutral, attack: 1.02, hp: 1.38, defense: 1.5, resist: 1.25, crit: .01, ...T5, parent: 'eonTurtle', requires: { vit: 76, luk: 44 }, requiresSkillMastery: { tidalToll: 3 }, role: '탱커 최상위·대기만성', tree: 'defense', penalties: { speed: -14 } },
     // ── 루미너스 (2차) 갈래 (v3.140 매지션 계보 · 마법 계수 → 물리 피해 역전 딜러) ──
-    { id: 'holyKnight', lineage: 'paladin', name: '성해 성기사', title: '서약은 두 바다에 닿는다', desc: '마법 공격 계수로 물리 피해를 주고 흡수하는 라이트 리플렉션과 이퀄리브리엄을 가진 루미너스 (2차) 갈래 3차 직업입니다.', ...neutral, crit: .04, bonus: { magic: 60, hp: 160, resist: 14 }, tier: 3, level: 40, parent: 'paladin', requires: { int: 36, wis: 30 }, mastery: 150, requiresSkillMastery: { oath: 2 }, role: '역전 딜러·흡수', tree: 'hybrid', masteryTarget: 9500, masteryBoost: .3 },
-    { id: 'holyCommander', lineage: 'paladin', name: '성해 대성기사', title: '마력이 작살이 된다', desc: '아포칼립스로 흡수하고 다크 크레센도로 마법 공격 · 체력 · 물리 방어 관통을 올리는 환생 후 4차 직업입니다.', ...neutral, attack: 1, magic: 1.4, hp: 1.2, defense: 1.08, resist: 1.2, crit: .04, ...T4, parent: 'holyKnight', requires: { int: 48, wis: 40 }, requiresSkillMastery: { vowStrike: 3 }, role: '역전 딜러·흡수', tree: 'hybrid' },
+    { id: 'holyKnight', lineage: 'paladin', name: '성해 마도사', title: '서약은 두 바다에 닿는다', desc: '마법 공격 계수로 물리 피해를 주고 흡수하는 라이트 리플렉션과 이퀄리브리엄을 가진 루미너스 (2차) 갈래 3차 직업입니다.', ...neutral, crit: .04, bonus: { magic: 60, hp: 160, resist: 14 }, tier: 3, level: 40, parent: 'paladin', requires: { int: 36, wis: 30 }, mastery: 150, requiresSkillMastery: { oath: 2 }, role: '역전 딜러·흡수', tree: 'hybrid', masteryTarget: 9500, masteryBoost: .3 },
+    { id: 'holyCommander', lineage: 'paladin', name: '성해 대마도사', title: '마력이 작살이 된다', desc: '아포칼립스로 흡수하고 다크 크레센도로 마법 공격 · 체력 · 물리 방어 관통을 올리는 환생 후 4차 직업입니다.', ...neutral, attack: 1, magic: 1.4, hp: 1.2, defense: 1.08, resist: 1.2, crit: .04, ...T4, parent: 'holyKnight', requires: { int: 48, wis: 40 }, requiresSkillMastery: { vowStrike: 3 }, role: '역전 딜러·흡수', tree: 'hybrid' },
     { id: 'lightOcean', lineage: 'paladin', name: '빛의 바다', title: '바다 전체가 빛으로 서약한다', desc: '기절시키며 흡수하는 진리의 문과 리버레이션 오브 패시브를 가진 루미너스 (2차) 갈래 5차 직업입니다. 마법 공격 계수로 물리 피해를 줍니다.', ...neutral, attack: 1, magic: 1.7, hp: 1.25, defense: 1.1, resist: 1.25, crit: .05, ...T5, parent: 'holyCommander', requires: { int: 60, wis: 50 }, requiresSkillMastery: { lightHarpoon: 3 }, role: '역전 딜러 최상위·흡수', tree: 'hybrid' },
     // ── 호영 계보 (마법 방어) ──
     { id: 'saltWarden', name: '소금 파수꾼', title: '소금은 저주를 막는다', desc: '마법 방어를 실어 치는 귀화부와 선기: 천지인 환영을 익히는 마법 방어 입문 직업입니다.', ...neutral, bonus: { magic: 8, hp: 30, resist: 6 }, tier: 1, level: 10, requires: { wis: 12, vit: 10 }, mastery: 0, role: '마법 방어 입문', tree: 'defense', masteryTarget: 400, masteryBoost: .08 },
@@ -56,7 +56,7 @@ export const DEFENSE_SKILLS: Skill[] = [
     // 루미너스 (2차) 갈래
     // v3.100 루미너스 상향: 라이트 리플렉션 배율 2.25 → 2.8, 아포칼립스 배율 2.4 → 3 · 추가 공격 1회(복합 피해라 기술 한 번이 공격력의 1.5배에 그쳤음).
     // v3.140 재개편: 모두 마법 계수 → 물리 피해(arcaneBlow). 패시브는 마법 공격 고정값 + 물리 방어 관통(지능만 올려도 물리 방어 약한 적을 뚫는 그림).
-    { ...A, ...arcaneBlow, id: 'vowStrike', name: '서약의 일격', desc: '', level: 40, job: 'holyKnight', chance: .5, cooldown: 4, multiplier: 2.8, cost: 4, manaCost: 14, effect: 'drain', drainRatio: .12, masteryMilestones: M3 },
+    { ...A, ...arcaneBlow, id: 'vowStrike', name: '서약의 빛살', desc: '', level: 40, job: 'holyKnight', chance: .5, cooldown: 4, multiplier: 2.8, cost: 4, manaCost: 14, effect: 'drain', drainRatio: .12, masteryMilestones: M3 },
     { ...P, id: 'twoSeasOath', name: '두 바다의 맹세', desc: '마법 공격·체력·흡혈이 오릅니다.', level: 40, job: 'holyKnight', cost: 3, bonus: { magic: 52, hp: 120, lifesteal: .02 }, masteryMilestones: M3 },
     { ...A, ...arcaneBlow, id: 'lightHarpoon', name: '빛의 작살', desc: '', level: 55, job: 'holyCommander', chance: .5, cooldown: 4, multiplier: 3, cost: 5, manaCost: 20, effect: 'drain', drainRatio: .1, extraAttacks: 1, masteryMilestones: M4 },
     { ...P, id: 'sanctifiedSea', name: '성해의 축성', desc: '마법 공격·체력·물리 방어 관통이 오릅니다.', level: 55, job: 'holyCommander', cost: 3, bonus: { magic: 90, hp: 220, penetration: .06, resist: 30 }, masteryMilestones: M4 },
@@ -87,6 +87,6 @@ export const DEFENSE_HINTS: Record<string, string> = {
 /** 검사(1차)에서 갈라지는 두 갈래는 직업 수가 많아져 계보를 따로 묶습니다(1차는 검사 공통). */
 export const DEFENSE_LINEAGES = [
     { id: 'bellTurtle', name: '종거북 계보', tree: 'defense' as const, summary: '검사에서 갈라져 속도를 버리고 체력 비례 기절과 두꺼운 껍질로 버티는 느린 제어 탱커 계보입니다.' },
-    { id: 'paladin', name: '성해 기사 계보', tree: 'hybrid' as const, summary: '조류 술사에서 갈라져 마법 공격 계수로 물리 피해를 주는 역전 딜러 계보입니다. 피해의 일부를 흡수해 버팁니다.' },
+    { id: 'paladin', name: '성해 술사 계보', tree: 'hybrid' as const, summary: '마법사 갈래에서 나와 빛의 마력을 작살에 실어 물리 피해를 주는 역전 딜러 계보입니다. 피해의 일부를 흡수해 버팁니다.' },
     { id: 'saltWarden', name: '소금 파수꾼 계보', tree: 'defense' as const, summary: '마법 방어를 피해로 바꾸고 침묵·약화·기절으로 주문을 막는 결계 계보입니다.' },
 ];

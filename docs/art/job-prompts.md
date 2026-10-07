@@ -20,7 +20,7 @@
 | `warden` | 산호 수호자 계보 | 방어 | coral warden with a shield grown from living coral and a heavy anchor mace |
 | `seagrassKeeper` | 해초 돌봄꾼 계보 | 방어 | seagrass keeper tending glowing kelp, woven-grass armor, calm healer posture |
 | `bellTurtle` | 종거북 계보 | 방어 | slow heavy guardian carrying a bronze bell shell on the back, turtle motifs |
-| `paladin` | 성해 기사 계보 | 방어 | holy-sea knight in pearl-white armor, blade glowing with both tide and light |
+| `paladin` | 성해 술사 계보 | 복합 | holy-sea sorcerer in pearl-white robes, a harpoon of condensed light floating at their side |
 | `saltWarden` | 소금 파수꾼 계보 | 방어 | salt warden with crystallized salt armor and a ward-sigil staff, silence in the air |
 | `defense-independent` | 독립 수련 (방어) | 방어 | stout fisher in a thick oilskin coat with a buckler made from a ship wheel |
 | `poisoner` | 독술사 계보 | 상태이상 | poisoner with a belt of venom vials and a dripping needle-blade, sickly green glow |
