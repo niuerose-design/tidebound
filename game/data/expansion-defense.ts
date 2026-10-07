@@ -52,9 +52,10 @@ export const DEFENSE_SKILLS: Skill[] = [
     { ...P, ...lateBloomer, id: 'eonSlumber', name: '만년의 잠', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 체력·두 방어가 크게 오릅니다.', level: 70, job: 'worldTurtle', cost: 8, bonus: { hp: 200, defense: 15, resist: 15 },
         levelEffects: [{ cost: 8, bonus: { hp: 200, defense: 15, resist: 15 } }, { cost: 7, bonus: { hp: 700, defense: 60, resist: 40 } }, { cost: 5, bonus: { hp: 1600, defense: 140, resist: 100 } }, { cost: 2, bonus: { hp: 3200, defense: 260, resist: 180, thorns: .2 } }] },
     // 루미너스 (2차) 갈래
-    { ...A, ...dual, id: 'vowStrike', name: '서약의 일격', desc: '', level: 40, job: 'holyKnight', chance: .5, cooldown: 4, multiplier: 2.25, cost: 4, manaCost: 14, effect: 'drain', drainRatio: .12, masteryMilestones: M3 },
+    // v3.100 루미너스 상향: 라이트 리플렉션 배율 2.25 → 2.8, 아포칼립스 배율 2.4 → 3 · 추가 공격 1회(복합 피해라 기술 한 번이 공격력의 1.5배에 그쳤음).
+    { ...A, ...dual, id: 'vowStrike', name: '서약의 일격', desc: '', level: 40, job: 'holyKnight', chance: .5, cooldown: 4, multiplier: 2.8, cost: 4, manaCost: 14, effect: 'drain', drainRatio: .12, masteryMilestones: M3 },
     { ...P, id: 'twoSeasOath', name: '두 바다의 맹세', desc: '두 공격·체력·흡혈이 오릅니다.', level: 40, job: 'holyKnight', cost: 3, bonus: { attack: 26, magic: 26, hp: 120, lifesteal: .02 }, masteryMilestones: M3 },
-    { ...A, ...dual, id: 'lightHarpoon', name: '빛의 작살', desc: '', level: 55, job: 'holyCommander', chance: .5, cooldown: 4, multiplier: 2.4, cost: 5, manaCost: 20, effect: 'drain', drainRatio: .1, masteryMilestones: M4 },
+    { ...A, ...dual, id: 'lightHarpoon', name: '빛의 작살', desc: '', level: 55, job: 'holyCommander', chance: .5, cooldown: 4, multiplier: 3, cost: 5, manaCost: 20, effect: 'drain', drainRatio: .1, extraAttacks: 1, masteryMilestones: M4 },
     { ...P, id: 'sanctifiedSea', name: '성해의 축성', desc: '두 공격·체력·두 방어가 고르게 오릅니다.', level: 55, job: 'holyCommander', cost: 3, bonus: { attack: 45, magic: 45, hp: 220, defense: 30, resist: 30 }, masteryMilestones: M4 },
     { ...A, ...dual, id: 'seaOfLightDescent', name: '성해 강림', desc: '', level: 70, job: 'lightOcean', chance: .5, cooldown: 5, multiplier: 4.1, cost: 6, manaCost: 28, effect: 'stun', masteryMilestones: M5 },
     { ...P, id: 'oceanOfLight', name: '빛의 대양', desc: '두 공격·체력·흡혈·회복량이 오릅니다.', level: 70, job: 'lightOcean', cost: 3, bonus: { attack: 95, magic: 95, hp: 350, lifesteal: .03, healBonus: .2 }, masteryMilestones: M5 },
