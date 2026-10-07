@@ -156,10 +156,11 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'spikedShield', name: '가시 방패', desc: '맞을 때마다 물리 방어에 비례한 반격 피해를 돌려줍니다.', level: 25, job: 'gatekeeper', cost: 3, bonus: { thorns: .25, defense: 15 , swarmFind: 0.5} },
     { ...A, ...physical, id: 'bulwarkSlam', name: '성벽 강타', desc: '', level: 40, job: 'fortressLord', chance: .25, cooldown: 4, multiplier: 1.5, cost: 4, effect: 'weaken', scaling: 'defense', scalingRatio: 1.8 },
     { ...P, id: 'stoneSkin', name: '바위 피부', desc: '반격·체력·마법 방어가 오릅니다.', level: 40, job: 'fortressLord', cost: 3, bonus: { thorns: .35, hp: 180, resist: 20 , swarmFind: 0.8} },
-    { ...A, ...physical, id: 'lastStand', name: '최후의 저항', desc: '', level: 55, job: 'unyielding', chance: .26, cooldown: 4, multiplier: 1.7, cost: 5, effect: 'drain', drainRatio: .08, scaling: 'defense', scalingRatio: 1.6, masteryMilestones: M4 },
+    // v3.101 미하일 상향: 샤이닝 크로스 방어 비례 1.6 → 2.4, 라이트 오브 커리지 치명타 +8%p · 치명 피해 +0.4(직업 치명 0이라 치명 69% · ×2.07에 머물렀음).
+    { ...A, ...physical, id: 'lastStand', name: '최후의 저항', desc: '', level: 55, job: 'unyielding', chance: .26, cooldown: 4, multiplier: 1.7, cost: 5, effect: 'drain', drainRatio: .08, scaling: 'defense', scalingRatio: 2.4, masteryMilestones: M4 },
     { ...P, id: 'undying', name: '불굴', desc: '체력·물리 방어·흡혈이 오릅니다.', level: 55, job: 'unyielding', cost: 3, bonus: { hp: 250, defense: 50, lifesteal: .02 , swarmFind: 1}, masteryMilestones: M4 },
     { ...A, ...physical, id: 'aegisJudgment', name: '신성한 심판', desc: '', level: 70, job: 'guardianDeity', chance: .26, cooldown: 5, multiplier: 2.1, cost: 6, effect: 'stun', scaling: 'defense', scalingRatio: 3.4, masteryMilestones: M5 },
-    { ...P, id: 'divineAegis', name: '신의 방패', desc: '가장 강한 반격과 두 방어가 오릅니다.', level: 70, job: 'guardianDeity', cost: 3, bonus: { thorns: .4, defense: 80, resist: 60 , swarmFind: 1.2}, masteryMilestones: M5 },
+    { ...P, id: 'divineAegis', name: '신의 방패', desc: '가장 강한 반격과 두 방어, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'guardianDeity', cost: 3, bonus: { thorns: .4, defense: 80, resist: 60, swarmFind: 1.2, crit: .08, critDamage: .4 }, masteryMilestones: M5 },
     // 역병의 길
     { ...A, ...physical, id: 'venomDart', name: '독침', desc: '', level: 10, job: 'poisoner', chance: .28, cooldown: 3, multiplier: 1, cost: 2, effect: 'poison', dotRatio: .12 },
     { ...P, id: 'toxinLore', name: '독물학', desc: '지속 피해가 늘어납니다.', level: 10, job: 'poisoner', cost: 2, bonus: { dotBonus: .1 } },
