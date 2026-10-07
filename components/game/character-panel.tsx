@@ -22,12 +22,12 @@ import { catalogNow } from '@/game/data/catalog';
 /** 상세 능력치의 숙련도 획득 보너스. 펼치면 배율별 기여와 처치당 기대 숙련을 보여줍니다. */
 function MasteryBreakdown({ s }: { s: State }) {
     const m = masteryMultipliers(s), x = (n: number) => `×${n.toFixed(2)}`, drill = rankPerkLevel(s, 'drill');
-    /** v27.85 기본 획득을 구성 요소(기본 1 · 계급 특전 숙련 훈련 +N)로 나눠 보여 줍니다. 고정값이라 배율보다 먼저 더합니다. */
-    const rows: [string, string][] = [['기본 획득', '+1'], ...(drill ? [[`계급 특전 · 숙련 훈련 ${drill}단계`, `+${drill}`] as [string, string]] : []), ['고정 획득 합계', `+${m.base}`], ['숙련의 기억 · 계정 몬스터', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as [string, string]] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as [string, string]] : [])];
+    /** v27.85 기본 획득을 구성 요소로 나눠 보여 줍니다. v3.107 계급 특전 숙련 훈련은 배율 밖의 고정값이라 배율을 곱한 뒤에 더합니다. */
+    const rows: [string, string][] = [['기본 획득', `+${m.base - drill}`], ['숙련의 기억 · 계정 몬스터', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as [string, string]] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as [string, string]] : []), ...(drill ? [[`계급 특전 · 숙련 훈련 ${drill}단계 (배율 밖)`, `+${drill}`] as [string, string]] : [])];
     return <details className="stat-breakdown">
-        <summary><span>숙련도 획득<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>처치당 ≈ {(m.base * m.total).toFixed(1)}</strong></summary>
+        <summary><span>숙련도 획득<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>처치당 ≈ {m.perKill.toFixed(1)}</strong></summary>
         <ul>{rows.map(([label, value]) => <li key={label}><span>{label}</span><b>{value}</b></li>)}
-            <li className="stat-breakdown-total"><span>계산식</span><b>{m.base} × {m.total.toFixed(2)} ≈ {(m.base * m.total).toFixed(1)}</b></li></ul>
+            <li className="stat-breakdown-total"><span>계산식</span><b>{m.base - drill} × {m.total.toFixed(2)}{drill ? ` + ${drill}` : ''} ≈ {m.perKill.toFixed(1)}</b></li></ul>
         <p className="stat-note">처치할 때마다 현재 직업과 장착 스킬의 숙련이 오릅니다. 조건부 숙련 스킬 보너스(지정 적 처치 시)와 무리 마릿수는 따로 더해집니다.</p>
     </details>;
 }
@@ -38,7 +38,7 @@ function RankPerkBreakdown({ s }: { s: State }) {
     return <details className="stat-breakdown">
         <summary><span>계급 특전 · {rankOf(s).name}<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>{active.length ? `${active.reduce((a, x) => a + x.level, 0)}P 적용` : '없음'}</strong></summary>
         <ul>{active.map(({ p, level }) => <li key={p.id}><span>{p.name} {level}단계</span><b>{value(p.id, level)}</b></li>)}</ul>
-        <p className="stat-note">{active.length ? '숙련 훈련은 위 숙련도 획득의 고정 획득에 더해져 있습니다. 전공 훈장·보급품은 던전에서는 발동하지 않습니다.' : '치장 → 계급에서 진급 포인트로 특전을 켜면 여기에 적용값이 보입니다.'}</p>
+        <p className="stat-note">{active.length ? '숙련 훈련은 위 숙련도 획득에 배율과 따로 더해집니다(계열 집중 · 이벤트 · 연구 · 승천 배율을 받지 않음). 전공 훈장·보급품은 던전에서는 발동하지 않습니다.' : '치장 → 계급에서 진급 포인트로 특전을 켜면 여기에 적용값이 보입니다.'}</p>
     </details>;
 }
 export function Character({ s, send, busy }: PanelProps) {

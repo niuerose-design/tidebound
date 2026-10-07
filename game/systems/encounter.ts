@@ -266,7 +266,9 @@ export function reward(s: State, rng: () => number) {
     const big = swarmRewardMultiplier(size);
     // v3.48 무리 숙련은 마리 수 대신 싸운 턴 × 규모별 값(swarmMasteryKills, 마리 수 상한). 서식지가 숙련을 까미보다 몇 배 더 주던 문제.
     const swarmTurns = s.turn - (e.born ?? s.turn) + 1, masteryHeads = size > 1 ? swarmMasteryKills(size, swarmTurns) : 1;
-    const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * masteryHeads * focusMastery * eventMastery)), practice = researched.total;
+    // v3.107 계급 특전 숙련 훈련은 배율 밖의 고정값(무리는 마리분만큼): 배율은 나머지에만 곱하고, 승천 배율 뒤에 더합니다.
+    const masteryReward = victoryMastery(s, e), drillMastery = masteryReward.drill * masteryHeads;
+    const researched = researchMastery(s, Math.floor((masteryReward.amount - masteryReward.drill) * masteryHeads * focusMastery * eventMastery)), practice = researched.total + drillMastery;
     // v3.12 칠흑 세트 4종: 무리 서식지 골드·경험치 +15%.
     const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
     // v3.104 골드 · 경험치 배율과 황금 개체 확률은 같은 상태의 능력치 한 번으로 계산합니다(사이에 상태가 바뀌지 않음).
@@ -289,8 +291,8 @@ export function reward(s: State, rng: () => number) {
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.30 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
     let mimicBonus = 0;
     if (e.id === MIMIC.id) { const t = rollMimicMastery(rng, s); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
-    // v3.31 승천 숙련 배율(1회당 +100%, 5회 ×6)은 까미 당첨분까지 합친 이번 처치 숙련 전체에 곱합니다. 다른 배율은 까미에 걸지 않습니다.
-    const practiceTotal = Math.floor((practice + mimicBonus) * ascensionMastery(s));
+    // v3.31 승천 숙련 배율(1회당 +100%, 5회 ×6)은 까미 당첨분까지 합친 이번 처치 숙련에 곱합니다(v3.107 계급 특전 숙련 훈련은 빼고 뒤에 더함). 다른 배율은 까미에 걸지 않습니다.
+    const practiceTotal = Math.floor((researched.total + mimicBonus) * ascensionMastery(s)) + drillMastery;
     // v3.31 행운의 편지 10단계 · 편지 수신인: 까미 당첨 숙련(승천 배율 적용 뒤)의 1%를 해금했지만 숙달하지 않은 다른 직업 하나에 덤으로 줍니다.
     if (mimicBonus && letterRank(s) >= LETTER.recipientRank) {
         const pool = s.unlockedJobs.filter(id => id !== s.job && id !== HACKER_ID && jobById(id) && !jobMastered(s, jobById(id)!));

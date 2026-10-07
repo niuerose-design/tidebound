@@ -1551,3 +1551,15 @@ test('v3.106 goal reset times: daily at the next KST midnight, weekly at the nex
     assert.equal(G.nextWeeklyReset(kst(2026, 10, 12)), kst(2026, 10, 19)); // 월요일 0시 정각 → 다음 주
     assert.equal(G.weekKey(kst(2026, 10, 11, 23, 59)) !== G.weekKey(G.nextWeeklyReset(kst(2026, 10, 11, 23, 59))), true);
 });
+
+test('v3.107 rank perk drill is a flat add outside every mastery multiplier (focus · event · research · ascension), per swarm head', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Enc = await L.load('systems/encounter'), M = await L.load('systems/mastery');
+    const s = newState(0); s.running = true; s.stage = 'brook'; s.skills = []; s.rank = { exp: 0, perks: { drill: 3 } }; s.event = { mastery: 2 };
+    const foe = extra => ({ id: 'minnow', name: 't', hp: 1, maxHp: 1, attack: 0, defense: 0, exp: 1, gold: 1, boss: false, stun: 0, ...extra });
+    const m = M.masteryMultipliers(s); assert.equal(m.perKill, 1 * 2 + 3, 'breakdown: (base − drill) × multipliers + drill');
+    const before = s.jobMastery[s.job] || 0; s.enemy = foe(); Enc.reward(s, () => .99);
+    assert.equal(s.jobMastery[s.job] - before, 1 * 2 + 3, 'event ×2 applies to base 1 only; drill +3 stays flat (was (1 + 3) × 2)');
+    const mid = s.jobMastery[s.job]; s.enemy = foe({ swarm: 100, born: s.turn - 9 }); Enc.reward(s, () => .99);
+    assert.equal(s.jobMastery[s.job] - mid, 100 * 2 + 100 * 3, '×100 swarm over 10 turns: 100 heads × (1 × 2) + 100 heads × 3');
+});
