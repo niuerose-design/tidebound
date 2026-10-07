@@ -247,7 +247,7 @@ test('v3.126 Cadena: Mystic Storm attack +450 and crit +10%p (stun extension kep
     assert.deepEqual([sk.bonus.attack, sk.bonus.crit, sk.bonus.stunBonus], [450, .1, 1]);
 });
 
-test('v3.127 Demon Slayer: Demon Awakening attack and magic +350 each (crit kept), Demon Bane stuns 3 turns', () => {
+test('v3.128 Demon Slayer: Demon Awakening attack and magic +350 each (crit kept), Demon Bane stuns 3 turns', () => {
     assert.equal(SKILLS.find(s => s.id === 'heavenSplit').statusTurns, 3);
     const sk = SKILLS.find(s => s.id === 'celestialAura');
     assert.deepEqual([sk.bonus.attack, sk.bonus.magic, sk.bonus.crit], [350, 350, .05]);
