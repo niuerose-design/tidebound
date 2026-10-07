@@ -197,3 +197,9 @@ test('v3.107 Paladin: Sanctuary defense ratio 2.4, Elemental Force adds crit 8%p
     assert.equal(sk('citadelCrash').scalingRatio, 2.4);
     assert.deepEqual([sk('eternalReef').bonus.crit, sk('eternalReef').bonus.critDamage], [sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage]);
 });
+
+test('v3.108 Wild Hunter: Wild Vulcan ×2.4, Sonic Boom ×2.8', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(sk('weakpointThesis').multiplier, 2.4);
+    assert.equal(sk('weakpointCut').multiplier, 2.8);
+});
