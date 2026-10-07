@@ -28,7 +28,9 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
     const n = s.book[id] || 0, claimed = s.bookClaims?.[id] || 0, pending = bookPending(s, id);
     const reached = bookStage(s, id), next = reached < MILESTONES.length ? reached : -1, best = s.bookTier?.[id] || 0;
     /** v27.80 5단계부터 난이도 조건: 처치 수를 채워도 그 난이도 이상에서 잡은 적이 없으면 멈춥니다. */
-    const tierText = (r: number) => bookTierReq(r) ? ` + 난이도 ${bookTierReq(r)} 이상 처치${best >= bookTierReq(r) ? ' ✓' : ` (최고 ${best})`}` : '';
+    const tierText = (r: number) => !bookTierReq(r) ? '' : best >= bookTierReq(r) ? ` + 난이도 ${bookTierReq(r)} 이상 처치 ✓` : ` + 난이도 ${bookTierReq(r)} 이상에서 1회 처치 필요 (현재 최고 난이도 ${best})`;
+    /** 처치 수는 채웠는데 난이도 조건이 남았으면 막대가 꽉 차도 단계가 안 오르니 라벨에 적습니다. */
+    const tierLeft = next >= 0 && n >= MILESTONES[next] && best < bookTierReq(next);
     return <section className="book-block book-research">
         <h4>연구 진행 <small>{reached} / {MILESTONES.length}단계 달성</small></h4>
         <dl className="book-research-rows">
@@ -38,7 +40,7 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
             {pending.ranks.length > 0 && <div><dt>수령 여부</dt><dd><b className="positive">미수령 SP +{pending.sp}</b></dd></div>}
         </dl>
         {/* v3.95 막대는 처치 수 그대로(전에는 이전 목표부터의 구간이라 '남은 N회'와 숫자가 어긋나 보였음). */}
-        {next >= 0 && <Meter value={Math.min(n, MILESTONES[next])} max={MILESTONES[next]} label={`${next + 1}단계까지`}/>}
+        {next >= 0 && <Meter value={Math.min(n, MILESTONES[next])} max={MILESTONES[next]} label={`${next + 1}단계까지${tierLeft ? ' · 난이도 조건 남음' : ''}`}/>}
         {pending.ranks.length > 0 && <button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimBook', id })}>연구 보상 받기 · SP +{pending.sp}</button>}
         {reached > 0 && <details className="book-done">
             <summary><ChevronDown size={13}/>달성한 연구 {reached}단계</summary>
