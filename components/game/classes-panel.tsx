@@ -8,7 +8,7 @@ import { Heading, format } from './shared';
 import { LineageCard, RouteMap, JobList } from './jobs/lineage-view';
 import { JobCompare } from './jobs/job-compare';
 import { JobDetail } from './jobs/job-detail';
-import { finderJobs, searchJobs, secretJob, shownJobs, shownLineageJobs, inMysteryTab, TOP_TAGS, type Finder } from './jobs/job-status';
+import { statusReader, finderJobs, searchJobs, secretJob, shownJobs, shownLineageJobs, inMysteryTab, TOP_TAGS, type Finder } from './jobs/job-status';
 
 const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', mastered: '숙달', near: '거의 다 됨' };
 
@@ -31,9 +31,9 @@ export function Classes({ s, send, busy }: PanelProps) {
     const [compareIds, setCompareIds] = useState<string[]>([]);
     const toggleCompare = (id: string) => setCompareIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : ids.length >= 3 ? ids : [...ids, id]);
     // v27.62 빠른 찾기 개수는 상태가 바뀔 때만 다시 셉니다(직업 259개 × 조건 판정이라 검색 입력마다 세면 무거움).
-    const finderCounts = useMemo(() => Object.fromEntries((Object.keys(FINDER_LABEL) as Finder[]).map(kind => [kind, finderJobs(s, kind).length])) as Record<Finder, number>, [s]);
+    const finderCounts = useMemo(() => Object.fromEntries((Object.keys(FINDER_LABEL) as Finder[]).map(kind => [kind, finderJobs(s, kind, statusReader(s)).length])) as Record<Finder, number>, [s]);
     const searching = !!query.trim() || !!tag;
-    const found = finder ? finderJobs(s, finder) : searching ? searchJobs(s, query, tag) : null;
+    const found = useMemo(() => finder ? finderJobs(s, finder, statusReader(s)) : searching ? searchJobs(s, query, tag) : null, [s, finder, searching, query, tag]);
     const foundTitle = finder ? `빠른 찾기 · ${FINDER_LABEL[finder]}` : `검색${query.trim() ? ` '${query.trim()}'` : ''}${tag ? ` #${tag}` : ''}`;
     const clearFound = () => { setFinder(null); setQuery(''); setTag(''); };
     // 전직하면 화면을 새 직업의 계보로 맞춥니다(렌더 중 이전 값과 비교).

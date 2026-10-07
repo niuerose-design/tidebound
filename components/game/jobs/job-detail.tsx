@@ -15,7 +15,7 @@ import { vocationTargets, thresholdRank } from '@/game/data/long-term';
 import { jobMasteryTarget, jobMasteryBoost, skillVeiled } from '@/game/systems/progression';
 import { Meter, SkillIcon, format } from '../shared';
 import type { PanelProps } from '../panel-props';
-import { jobStatus, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS, hasJobBonus, growsWithMastery, jobBonusText } from './job-status';
+import { statusReader, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS, hasJobBonus, growsWithMastery, jobBonusText } from './job-status';
 
 type Tab = 'overview' | 'requirements' | 'skills' | 'mastery';
 
@@ -31,7 +31,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
         <p className="job-cross">{j.hint || '아직 드러나지 않은 직업입니다.'}</p>
         <p className="footnote">숨은 조건(플레이 기록)을 만족하거나 관문 조건(환생 횟수·선행 직업 숙련)을 모두 채우면 이름과 조건이 드러납니다. 한 번 전직하거나 숙달하면 계속 보입니다.</p>
     </article>;
-    const st = jobStatus(s, j), current = st.status === 'current', ready = canEnter(st);
+    const st = statusReader(s)(j), current = st.status === 'current', ready = canEnter(st);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;
     const dedicationTargets = vocationTargets(target), dedication = thresholdRank(xp, dedicationTargets);
     const bonuses = JOB_BONUS_KEYS.filter(key => hasJobBonus(j, key)), grows = bonuses.some(key => growsWithMastery(j, key)) && jobMasteryBoost(j) > 0;

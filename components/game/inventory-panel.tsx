@@ -1,12 +1,12 @@
 'use client';
 import { ConfirmButton } from './confirm-button';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StarCatch } from './star-catch';
 import { useStarSetting, starSound } from './star-catch-setting';
 import { ArrowUpRight, ChevronDown, Gem, Lock, Search, Sparkles, Swords } from 'lucide-react';
 import { OnyxArt } from './onyx-art';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Item, Stats } from '@/game/types';
+import type { CombatStats, Item, State, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, HEIR_GROWTH, AWAKENING, PRIMAL_INHERIT, heirFactor, awakenEssence, researchRank } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay, HIDDEN_STATS } from '@/game/data/progression';
@@ -17,6 +17,17 @@ import { stats, power } from '@/game/systems/stats';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 const PAGE = 12;
 import type { PanelProps } from './panel-props';
+/** v3.93 교체 미리보기 캐시: 장비 · 가방 · 성장(레벨 · 직업 · 스킬 · 능력치 · 연구)이 같으면 지난 계산을 씁니다. 화면 하나만 쓰므로 한 칸이면 충분합니다. */
+let previewCache: { key: string; value: { current: CombatStats; currentPower: number; preview: Map<string, { after: Stats; gain: number }> } } | null = null;
+function gearPreview(s: State) {
+    const gear = (i: Item | null | undefined) => i ? `${i.id}:${i.enhance || 0}:${i.affixes?.length || 0}` : '-';
+    const key = [s.name, s.level, s.job, s.rebirths, s.skills.join(','), JSON.stringify(s.learned), JSON.stringify(s.attributes), JSON.stringify(s.permanent), SLOT_IDS.map(id => gear(s.equipment[id])).join(','), s.inventory.map(gear).join(',')].join('|');
+    if (previewCache?.key === key) return previewCache.value;
+    const current = stats(s), currentPower = power(current), preview = new Map<string, { after: Stats; gain: number }>();
+    for (const item of s.inventory) { const after = stats({ ...s, equipment: { ...s.equipment, [item.slot]: item } }); preview.set(item.id, { after, gain: power(after) - currentPower }); }
+    previewCache = { key, value: { current, currentPower, preview } };
+    return previewCache.value;
+}
 export function BonusList({ item }: {
     item: Item;
 }) {
@@ -58,14 +69,8 @@ export function Inventory({ s, send, busy }: PanelProps) {
     // v25.19 보관함은 PAGE(12)개씩 보여 주고 ‘더 보기’로 늘립니다. 아래 일괄 판매·분해까지 길게 내리지 않아도 됩니다.
     const [limit, setLimit] = useState(PAGE);
     const [open, setOpen] = useState<string | null>(null);
-    const current = useMemo(() => stats(s), [s]);
-    const currentPower = power(current);
-    // 장비마다 교체 후 최종 능력치와 전투력 변화를 한 번만 계산합니다.
-    const preview = useMemo(() => {
-        const out = new Map<string, { after: Stats; gain: number }>();
-        for (const item of s.inventory) { const after = stats({ ...s, equipment: { ...s.equipment, [item.slot]: item } }); out.set(item.id, { after, gain: power(after) - currentPower }); }
-        return out;
-    }, [s, currentPower]);
+    // 장비마다 교체 후 최종 능력치와 전투력 변화를 한 번만 계산합니다. v3.93 장비 · 성장 상태가 바뀔 때만 다시(사냥 중 동기화마다 가방 전체를 다시 계산하지 않음).
+    const { current, currentPower, preview } = gearPreview(s);
     const best = (id: Item['slot']) => s.inventory.filter(i => i.slot === id && (preview.get(i.id)?.gain || 0) > 0).sort((a, b) => preview.get(b.id)!.gain - preview.get(a.id)!.gain)[0];
     const upgrades = SLOT_IDS.map(best).filter((i): i is Item => !!i);
     const q = query.trim().toLowerCase();
