@@ -90,7 +90,6 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     doomMark: { kind: 'nova', title: '포이즌 노바', glyphs: ['●', '✹', '◌', '▴', '●', '✹', '◌', '▴'] },
     redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
     worldTentacle: { kind: 'tentacle', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
-    soulReap: { kind: 'soul', glyphs: ['☠', '◌', '☠', '◌', '☠', '◌', '☠', '◌'] },
     jackpotStrike: { kind: 'jackpot', title: '조커', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },
     frozenTime: { kind: 'time', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
 };

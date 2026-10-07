@@ -3,22 +3,23 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 274); assert.equal(new Set(JOBS.map(j => j.id)).size, 274);
+    assert.equal(JOBS.length, 269); assert.equal(new Set(JOBS.map(j => j.id)).size, 269);
+    // v3.135 나이트워커 2~5차 · 골령술사(5개)를 지우고 1차 망인만 남겼습니다. v3.138 미하일 계보 5개 · 성벽 기사를 지웠습니다.
     // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
-    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 247);
+    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 242);
     // v3.70 능력치 수련 I~III 18개(계열마다 3개, 수련 계보).
     assert.equal(JOBS.filter(j => /^(str|dex|int|vit|wis|luk)Training[123]$/.test(j.id)).length, 18);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 49, magic: 47, defense: 39, status: 33, hybrid: 39, support: 46, mystery: 21 });
+    assert.deepEqual(count, { physical: 49, magic: 47, defense: 39, status: 33, hybrid: 39, support: 46, mystery: 16 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
     const tree = id => JOBS.find(j => j.id === id).tree;
     for (const id of ['fisher', 'wanderer', 'chimera', 'clockworkAngler', 'allRounder', 'bloodTide', 'spellbladeNovice', 'spellblade', 'runeKnight', 'swordSaint', 'celestialBlade']) assert.equal(tree(id), 'hybrid', id);
     for (const id of ['squidJester', 'gambler', 'relicScavenger', 'salvageMerchant', 'rareTracker', 'memoryMerchant', 'voyageScribe', 'chronicleNavigator', 'bossNaturalist', 'speciesChronicler']) assert.equal(tree(id), 'support', id);
-    for (const id of ['undead', 'skeleton', 'bonecaster', 'soulHarvester', 'voidcaller', 'manaLeviathan', 'glyphMonk', 'glassHarpooner', 'clockmaker']) assert.equal(tree(id), 'mystery', id);
+    for (const id of ['undead', 'voidcaller', 'manaLeviathan', 'glyphMonk', 'glassHarpooner', 'clockmaker']) assert.equal(tree(id), 'mystery', id);
     // v3.65 은월은 공개 물리 계보로(3차부터 숨은 단계), 윤회의 나그네는 초보자 계보의 환생 가지로.
     for (const id of ['stormEel', 'krakenkin', 'leviathanAvatar']) assert.equal(tree(id), 'physical', id);
     assert.equal(tree('rebirthFisher'), 'hybrid');
@@ -86,9 +87,9 @@ test('v3.47 secret skills: server-only table registered by the engine, missing f
     const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Sk = await load('data/skills'), { SECRET_SKILLS } = await load('secret/skills'), { SECRET_JOBS } = await load('secret/jobs');
     const secretJobs = new Set(SECRET_JOBS.map(j => j.id));
-    assert.equal(SECRET_SKILLS.length, 52); assert.ok(SECRET_SKILLS.every(sk => secretJobs.has(sk.job)), 'every secret skill belongs to a secret job');
+    assert.equal(SECRET_SKILLS.length, 44); assert.ok(SECRET_SKILLS.every(sk => secretJobs.has(sk.job)), 'every secret skill belongs to a secret job');
     assert.ok(SECRET_SKILLS.every(sk => Sk.skillById(sk.id) === sk), 'the engine registered the finished objects');
-    assert.equal(Sk.SKILLS.filter(sk => secretJobs.has(sk.job)).length, 52, 'full table on the server');
+    assert.equal(Sk.SKILLS.filter(sk => secretJobs.has(sk.job)).length, 44, 'full table on the server');
     // 공개 표(game/data)에는 정의가 없습니다. 보스도 쓰는 tentacleBarrage만 예외.
     const fs = await import('node:fs'), src = fs.readdirSync('game/data').filter(f => f.endsWith('.ts')).map(f => fs.readFileSync(`game/data/${f}`, 'utf8')).join('\n');
     assert.deepEqual(SECRET_SKILLS.filter(sk => src.includes(`id: '${sk.id}'`)).map(sk => sk.id), ['tentacleBarrage']);

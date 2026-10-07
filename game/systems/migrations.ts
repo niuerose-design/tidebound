@@ -157,13 +157,13 @@ export function retireDoors(s: State) {
 }
 /** v3.64 삭제한 히든 직업 6개와 그 스킬(docs/concept.md 11.7-2). */
 export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor', 'sunriseAngler', 'noonDiver', 'nightHeron',
-    /** v3.135 5차 통폐합 1: 미하일 계보(팔라딘과 같은 반사 탱커)와 숨은 2차 성벽 기사(산호 축성가). */
+    /** v3.138 5차 통폐합 1: 미하일 계보(팔라딘과 같은 반사 탱커)와 숨은 2차 성벽 기사(산호 축성가). */
     'shieldbearer', 'gatekeeper', 'fortressLord', 'unyielding', 'guardianDeity', 'coralBuilder'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
-    /** v3.135 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */
+    /** v3.138 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */
     'shieldBash', 'shieldWall', 'ironRetort', 'spikedShield', 'bulwarkSlam', 'stoneSkin', 'lastStand', 'undying', 'aegisJudgment', 'divineAegis', 'fortress', 'coralPatience'];
 /**
- * v3.64 히든 직업 재배치 · v3.135 5차 통폐합: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).
+ * v3.64 히든 직업 재배치 · v3.138 5차 통폐합: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).
  * 지금 그 직업이면 초보자로 돌아갑니다. 여러 번 불러도 같습니다.
  */
 export function retireHiddenJobs(s: State) {
@@ -172,6 +172,26 @@ export function retireHiddenJobs(s: State) {
     s.unlockedJobs = s.unlockedJobs.filter(id => !jobs.has(id));
     if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => !jobs.has(id));
     for (const id of jobs) delete s.jobMastery[id];
+    if (s.letterLog) s.letterLog = s.letterLog.filter(l => !jobs.has(l.job));
+    for (const id of skills) for (const rec of [s.learned, s.skillSpent, s.skillPractice, s.skillInheritances, s.refineBase, s.limitBreaks, s.legacyInherited, s.cooldowns]) if (rec) delete (rec as Record<string, unknown>)[id];
+    s.skills = drop(s.skills)!;
+    if (s.skillPins) s.skillPins = drop(s.skillPins);
+    if (s.skillHidden) s.skillHidden = drop(s.skillHidden);
+    for (const p of Object.values(s.presets || {})) p.skills = drop(p.skills)!;
+}
+/** v3.135 나이트워커 2~5차 · 골령술사와 그 스킬을 지우고 1차 망인(undead)만 남깁니다. */
+export const NIGHT_WALKER_JOBS = ['skeleton', 'bonecaster', 'soulHarvester', 'lichKing', 'deathEmperor'];
+export const NIGHT_WALKER_SKILLS = ['marrowGuard', 'ossuaryRite', 'harvestEcho', 'soulTax', 'soulTyranny', 'undyingThrone', 'soulReap', 'undeathThrone'];
+/**
+ * v3.135 지운 직업에 있으면 망인으로 옮기고, 지운 직업 · 스킬의 기록(숙련 · 숙달 · 습득 · 계승 · SP · 한계돌파 · 편성)을 지웁니다. 여러 번 불러도 같습니다.
+ */
+export function retireNightWalker(s: State) {
+    const jobs = new Set(NIGHT_WALKER_JOBS), skills = new Set(NIGHT_WALKER_SKILLS), drop = (ids?: string[]) => ids?.filter(id => !skills.has(id));
+    if (jobs.has(s.job)) { s.job = 'undead'; addLog(s, '나이트워커 2~5차가 사라져 망인으로 돌아왔습니다.', 'system'); }
+    s.unlockedJobs = s.unlockedJobs.filter(id => !jobs.has(id));
+    if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => !jobs.has(id));
+    for (const id of jobs) delete s.jobMastery[id];
+    if (s.masteryKept) s.masteryKept = s.masteryKept.filter(id => !jobs.has(id));
     if (s.letterLog) s.letterLog = s.letterLog.filter(l => !jobs.has(l.job));
     for (const id of skills) for (const rec of [s.learned, s.skillSpent, s.skillPractice, s.skillInheritances, s.refineBase, s.limitBreaks, s.legacyInherited, s.cooldowns]) if (rec) delete (rec as Record<string, unknown>)[id];
     s.skills = drop(s.skills)!;
@@ -243,7 +263,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

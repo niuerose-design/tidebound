@@ -101,8 +101,8 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
     }
     assert.deepEqual(bad, []);
     assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'emptyPalm')), [600, 3000, 12000, 36000], 'moved 2nd-tier hidden jobs use the 2nd-tier curve');
-    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e5, 1e6, 5e6], 'bone legacy (AP −3): v3.80 exception, one zero off');
-    assert.equal(P.jobMasteryTarget(job('undead')), 5600, 'constraint skills do not slow the job mastery');
+    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e6, 4e6, 1e7], 'v3.137 bone legacy (AP 6 → 4 → 2 → −3) in millions, ending at ten million');
+    assert.equal(P.jobMasteryTarget(job('undead')), 1e7, 'v3.137 망인 job mastery is ten million');
     const s = newState(0); delete s.masteryAligned; s.skillPractice.emptyPalm = 300; s.skillPractice.riseAgain = 100;
     migrateState(s); assert.ok(s.legacyInherited?.emptyPalm && !s.legacyInherited?.riseAgain, 'kept only above the old first stage');
 });
@@ -186,7 +186,7 @@ test('v3.100 Luminous: Light Reflection ×2.8, Apocalypse ×3 with one extra hit
     assert.equal(sk('lightHarpoon').extraAttacks, 1);
 });
 
-test('v3.107 Paladin: Sanctuary defense ratio 2.4, Elemental Force adds crit 8%p and crit damage 0.4 (v3.135: Michael lineage retired)', () => {
+test('v3.107 Paladin: Sanctuary defense ratio 2.4, Elemental Force adds crit 8%p and crit damage 0.4 (v3.138: Michael lineage retired)', () => {
     const sk = id => SKILLS.find(s => s.id === id);
     assert.equal(sk('citadelCrash').scalingRatio, 2.4);
     assert.deepEqual([sk('eternalReef').bonus.crit, sk('eternalReef').bonus.critDamage], [.08, .4]);
@@ -276,7 +276,7 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     assert.deepEqual(finish({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(STATUS_TUNING.burnMaxStacks) }), [punisher.dotFinisher.maxHits, 2]);
 });
 
-test('v3.135 retiring the Michael lineage: a saved character on a removed job falls back to fisher and its skill records are dropped', () => {
+test('v3.138 retiring the Michael lineage: a saved character on a removed job falls back to fisher and its skill records are dropped', () => {
     const s = newState(0); s.job = 'guardianDeity'; s.unlockedJobs.push('shieldbearer', 'guardianDeity'); s.jobMastery.guardianDeity = 5000; s.jobMastery.shieldbearer = 100;
     s.learned.divineAegis = 1; s.learned.aegisJudgment = 1; s.skills = ['divineAegis', 'aegisJudgment', 'breath']; s.skillInheritances.spikedShield = true; s.skillPractice = { divineAegis: 10, breath: 3 };
     migrateState(s, 0);

@@ -24,7 +24,6 @@ const builds=[
  ['krakenSlayer',{str:85,dex:35,vit:30,wis:10},['breath','krakenBore','pierce','deepWeakpoint','barb']],
  ['stormScribe',{int:85,wis:40,vit:25,dex:10},['spring','thunderPsalm','maelstrom','arcane','overcast']],
  ['coralSaint',{vit:70,wis:55,int:25,dex:10},['reefPulse','anchor','saintTide','sanctuaryShell','soulTide']],
- ['bonecaster',{int:75,wis:40,vit:35,dex:10},['breath','graveHook','arcane','boneLegacy','ossuaryRite']],
 ];
 const summary=[];
 for(const [job,attributes,skills] of builds){
