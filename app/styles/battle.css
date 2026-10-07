@@ -925,6 +925,8 @@
 /* v3.101 통계 · 기록 › 전투 기록: 몹별 최근 전투 */
 .battle-records{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:12px;align-items:start}
 .battle-record-group{padding:12px}
+/* v3.119 몹별 접기 */
+.battle-record-mob{display:flex;align-items:center;gap:6px;width:100%;padding:2px 0;background:none;border:0;color:#cfe0d6;font:inherit;font-size:13px;text-align:left;cursor:pointer}.battle-record-mob small{margin-left:auto;color:#718c90;font-size:11px;font-weight:500}.battle-record-mob[aria-expanded=true]{margin-bottom:6px}
 .battle-record-group h3{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 0 4px;color:#cfe0d6;font-size:13px}
 .battle-record-group h3 small{color:#718c90;font-size:11px;font-weight:500}
 .battle-record{border:1px solid #263f42;border-radius:6px;background:#0b1a1f;margin-bottom:4px}

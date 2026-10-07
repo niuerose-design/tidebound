@@ -216,6 +216,6 @@ test('v3.110 Mechanic: Magnetic Field ×2.8, Robot Launcher RM7 ×3.2 with one e
     assert.equal(sk('resonanceBurst').extraAttacks, 1);
 });
 
-test('v3.118 Arch Mage (Thunder, Cold): Extreme Magic magic steps 25 · 200 · 700 · 2000', () => {
+test('v3.120 Arch Mage (Thunder, Cold): Extreme Magic magic steps 25 · 200 · 700 · 2000', () => {
     assert.deepEqual(SKILLS.find(s => s.id === 'tideOfAges').levelEffects.map(l => l.bonus.magic), [25, 200, 700, 2000]);
 });

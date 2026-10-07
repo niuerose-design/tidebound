@@ -135,6 +135,8 @@ export type Item = {
     locked?: boolean;
     /** v27.94 이 장비의 옵션 재설정 횟수. 많을수록 다음 재설정 비용이 오릅니다. */
     rerolls?: number;
+    /** v3.118 이 장비의 수치 재련 횟수. 많을수록 다음 재련 정수가 오릅니다(×1.08씩). */
+    refines?: number;
     relic?: string;
     /** v3.66 계승 장비: 원시 각성한 고대(ancient) · 게이지로 계승한 태초(primal). 환생해도 남고 판매·분해·등록 불가, 위력은 환생마다 오릅니다(data/economy HEIR_GROWTH). 부위마다 종류별 1개. */
     heir?: 'ancient' | 'primal';

@@ -454,3 +454,6 @@
 .crew-steps{list-style:none;margin:8px 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.crew-steps li{display:grid;gap:2px;padding:8px 10px;border-radius:8px;background:#0e2026;border:1px solid #9ab4b522}.crew-steps li.done{border-color:#8fe3c488;color:#bff5c6}.crew-steps small{color:#9bb3b0;font-size:12px}@media(max-width:600px){.crew-steps{grid-template-columns:1fr}}
 /* v3.86 각성기 줄 */
 .battle-line em.status.awaken { color: #1d1608; background: #f3d58a; border-radius: 3px; padding: 0 4px; font-weight: 700; }
+
+/* v3.118 비용 초기화 */
+.forge-reset { display:grid; gap:6px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; } .forge-reset small { color:#8ea7a4; font-size:12px; }

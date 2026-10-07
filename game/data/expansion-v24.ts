@@ -110,7 +110,7 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'currentDominion', name: '해류 지배', desc: '마법 공격과 마나 회복이 오릅니다.', level: 55, job: 'currentLord', cost: 3, bonus: { magic: 60, manaRegen: 5 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'oceanWrath', name: '대해의 분노', desc: '', level: 70, job: 'oceanWill', chance: .55, cooldown: 5, multiplier: 4.3, cost: 6, manaCost: 38, effect: 'stun', masteryMilestones: M5 },
     { ...P, id: 'willOfSea', name: '바다의 뜻', desc: '마법 공격과 마법 방어가 크게 오릅니다.', level: 70, job: 'oceanWill', cost: 3, bonus: { magic: 100, resist: 50 }, masteryMilestones: M5 },
-    // v3.118 아크메이지(썬,콜) 상향: 익스트림 매직(대기만성) 마법 공격 단계 100 · 240 · 440 → 200 · 700 · 2000(마법 +440은 엔드 마법의 1%도 안 돼 체감이 없었음).
+    // v3.120 아크메이지(썬,콜) 상향: 익스트림 매직(대기만성) 마법 공격 단계 100 · 240 · 440 → 200 · 700 · 2000(마법 +440은 엔드 마법의 1%도 안 돼 체감이 없었음).
     { ...P, id: 'tideOfAges', name: '세월의 조류', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 마법 공격·마나가 크게 오릅니다.', level: 70, job: 'oceanWill', cost: 8, bonus: { magic: 25 }, masteryMilestones: LATE,
         levelEffects: [{ cost: 8, bonus: { magic: 25 } }, { cost: 7, bonus: { magic: 200, mana: 40 } }, { cost: 5, bonus: { magic: 700, mana: 100, manaRegen: 3 } }, { cost: 2, bonus: { magic: 2000, mana: 180, manaRegen: 6, penetration: .08 } }] },
     { ...A, ...magic, id: 'transmute', name: '소금 연성', desc: '', level: 55, job: 'abyssTransmuter', chance: .52, cooldown: 4, multiplier: 2.4, cost: 5, manaCost: 26, effect: 'bleed', dotName: '부식', dotRatio: .2, damageBonusCondition: 'bleeding', conditionalDamageBonus: .4, masteryMilestones: M4 },

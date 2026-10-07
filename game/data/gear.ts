@@ -173,6 +173,14 @@ export const REROLL_STEP_PCT = 10;
 export const rerollScaled = (base: number, rerolls = 0) => base * (100 + REROLL_STEP_PCT * Math.max(0, Math.floor(rerolls))) / 100;
 /** v27.94 수치 재련: 옵션 종류는 그대로 두고 수치(0.6~1.4배 굴림)만 다시 굴립니다. 비용은 재설정 기본 비용의 절반(올림)이고 오르지 않습니다. */
 export const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity) / 2);
+/**
+ * v3.118 장비 비용 개편.
+ * - 재련: 골드 없이 정수만. 이 장비를 재련할 때마다 정수가 ×REFINE_GROWTH(복리)로 오릅니다(Item.refines).
+ * - 재설정: 정수 없이 골드만. 기본 비용 × REROLL_GOLD × 감정 가격의 환생 배율(시간당 골드를 따라감), 재설정할수록 +10%(그대로).
+ * - 원시 고대 · 계승 태초 · 칠흑: 세계석 GEAR_RESET_PEARLS로 재련 · 재설정 횟수를 0으로(비용 초기화). 대신 별 0 · 추가 옵션 새로 굴림(최고 수치).
+ */
+export const REFINE_GROWTH = 1.08, REROLL_GOLD = 20, GEAR_RESET_PEARLS = 999;
+export const refineEssenceAt = (rarity: number, refines = 0) => Math.ceil(refineEssence(rarity) * Math.pow(REFINE_GROWTH, Math.max(0, Math.floor(refines))));
 const ROLL_MIN = .6, ROLL_SPAN = .8;
 /** v3.5 레벨 비례 옵션(불굴): (장비 레벨 ÷ 100)^levelPower, Lv.100 이상은 1. */
 const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
@@ -194,7 +202,8 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
     const out: ItemAffix = { id: def.id, name: def.name, stat: def.stat, value: round(def.base * scale * roll) };
     if (def.stat2 && def.base2) {
         // 체력·공격·방어 같은 고정 수치 손해는 위력 비례, 속도·명중 같은 손해는 고정 폭입니다.
-        const flatStat = ['hp', 'attack', 'magic', 'defense', 'resist', 'mana'].includes(def.stat2);
+        // v3.119 턴당 마나 회복(마력의 둘째 수치)도 위력 비례입니다(빠져 있어 0.01 남짓 · ‘+0’으로 붙던 버그).
+        const flatStat = ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'manaRegen'].includes(def.stat2);
         out.stat2 = def.stat2;
         out.value2 = def.rollBoth ? (flatStat ? Math.round(def.base2 * Math.max(1, power) * roll) : Math.round(def.base2 * roll * 10000) / 10000) : flatStat ? Math.round(def.base2 * Math.max(1, power)) : Math.round(def.base2 * 10000) / 10000;
     }

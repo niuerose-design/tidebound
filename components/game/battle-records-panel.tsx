@@ -15,7 +15,7 @@ const ago = (ms: number) => { const m = Math.floor(ms / 60000); return m < 1 ? '
  */
 export function BattleRecordsPanel({ playerName }: { playerName: string }) {
     const records = useBattleRecords();
-    const [open, setOpen] = useState<number | null>(null), now = useNow(30000);
+    const [open, setOpen] = useState<number | null>(null), [mobs, setMobs] = useState<Set<string>>(() => new Set()), now = useNow(30000);
     const rule = `일반 몹은 최근 승리 ${BATTLE_RECORD.normal}회, 무리 · 변종 · 보스는 ${BATTLE_RECORD.special}회, 패배는 ${BATTLE_RECORD.defeats}회까지 남습니다. 이 기기(브라우저)에만 저장됩니다.`;
     return <>
         <Heading eyebrow="BATTLE RECORDS" title="전투 기록" description={`몹별 최근 전투와 지난 승리 대비 변화입니다. ${rule}`}>
@@ -23,10 +23,14 @@ export function BattleRecordsPanel({ playerName }: { playerName: string }) {
         </Heading>
         {!records.order.length ? <section className="panel"><p className="battle-feed-empty">자동 사냥을 하면 몹별 최근 전투가 여기에 모입니다.</p></section>
         : <div className="battle-records" aria-label="몹별 최근 전투 기록">
-            {records.order.map(name => <section key={name} className="panel battle-record-group">
-                <h3>{name}<small>최근 {records.byMob[name]?.length || 0}회</small></h3>
-                {(records.byMob[name] || []).map(r => <RecordRow key={r.id} r={r} now={now} playerName={playerName} open={open === r.id} toggle={() => setOpen(v => v === r.id ? null : r.id)}/>)}
-            </section>)}
+            {/* v3.119 몹마다 접어 둡니다(기본 접힘). 제목 줄에 가장 최근 결과만 보이고, 펼치면 전투 목록이 나옵니다. */}
+            {records.order.map(name => { const list = records.byMob[name] || [], last = list[0], shown = mobs.has(name); return <section key={name} className="panel battle-record-group">
+                <button type="button" className="battle-record-mob" aria-expanded={shown} onClick={() => setMobs(m => { const n = new Set(m); if (n.has(name)) n.delete(name); else n.add(name); return n; })}>
+                    {shown ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}<b>{name}</b>
+                    <small>{last ? `${RESULT[last.result]} · ${last.turns}턴 · ${ago(now - last.at)} · ` : ''}최근 {list.length}회</small>
+                </button>
+                {shown && list.map(r => <RecordRow key={r.id} r={r} now={now} playerName={playerName} open={open === r.id} toggle={() => setOpen(v => v === r.id ? null : r.id)}/>)}
+            </section>; })}
         </div>}
     </>;
 }
