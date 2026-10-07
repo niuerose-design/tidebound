@@ -159,3 +159,14 @@ test('v3.89 Joker: luck ratio 0.3 (Final Cut keeps 0.8)', () => {
     assert.equal(SKILLS.find(sk => sk.id === 'jackpotStrike').scalingRatio, .3);
     assert.equal(SKILLS.find(sk => sk.id === 'allOrNothing').scalingRatio, .8);
 });
+
+test('v3.97 Night Lord dice skills (3rd · 5th tier) add physical attack × 0.6 to the luck base; 1st · 2nd tier stay luck-only', async () => {
+    const { strike } = await load('game/systems/combat.js');
+    assert.equal(SKILLS.find(sk => sk.id === 'fateReversal').scalingAttack, .6);
+    assert.equal(SKILLS.find(sk => sk.id === 'heavenlyDice').scalingAttack, .6);
+    assert.equal(SKILLS.find(sk => sk.id === 'heavenlyStrike').scalingAttack, undefined);
+    const mk = (skills, attack) => ({ name: 'A', stats: { hp: 1e9, attack, magic: 0, defense: 0, resist: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, crit: 0, critDamage: 2, attrLuk: 500 }, hp: 1e9, mana: 1e6, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
+    const hit = (skills, attack) => { const b = mk([], 0); strike(mk(skills, attack), b, () => 0); return 1e9 - b.hp; };
+    assert.ok(hit(['fateReversal'], 40000) > hit(['fateReversal'], 1000) * 5, 'Triple Throw grows with attack');
+    assert.equal(hit(['heavenlyStrike'], 40000), hit(['heavenlyStrike'], 1000), 'Avenger stays luck-only');
+});

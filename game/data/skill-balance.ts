@@ -164,7 +164,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (tierOf(sk) >= SKILL_FORMULA.awaken.tier) awakenSkill(sk);
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
-        const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}` : sk.scaling === 'harmony' ? '올라운드 밸런스 원시 피해' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해)' : '마법 공격(물리 피해)') : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
+        const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}${sk.scalingAttack ? ` + 물리 공격 × ${sk.scalingAttack}` : ''}` : sk.scaling === 'harmony' ? '올라운드 밸런스 원시 피해' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해)' : '마법 공격(물리 피해)') : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
         const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'resist' ? ` + 마법 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 결계 친화도` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : '';
         const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName : { stun: '기절', bleed: '출혈', poison: '중독(중첩)', burn: '화상(중첩)', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun'];
         if (sk.restoreAll) { sk.desc = '피해 없이 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회.'; continue; }
@@ -177,7 +177,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         }
         if (sk.healOnly) { sk.desc = `공격하지 않고 최대 체력 ${Math.round((sk.healRatio ?? .22) * 100)}%를 회복합니다.${progressDesc(sk)}`; continue; }
         // v26.4 외길 기술의 한 줄 설명은 능력치 비례만 말합니다(수치는 상세 보기).
-        if (sk.scaling === 'attr' && sk.scalingAttribute) { const an = ATTRIBUTE_NAMES[sk.scalingAttribute]; sk.desc = `${an} 비례 피해.${sk.dice ? ` 주사위 ×${sk.dice.low}~×${sk.dice.high}, ${an}이 많을수록 주사위를 많이 굴립니다.` : ''}${sk.effect && !['heal', 'drain'].includes(sk.effect) ? ` ${statusName} 효과.` : ''}${sk.extraAttacks ? ` 추가 공격 ${sk.extraAttacks}회.` : ''}`; continue; }
+        if (sk.scaling === 'attr' && sk.scalingAttribute) { const an = ATTRIBUTE_NAMES[sk.scalingAttribute]; sk.desc = `${an}${sk.scalingAttack ? '·물리 공격' : ''} 비례 피해.${sk.dice ? ` 주사위 ×${sk.dice.low}~×${sk.dice.high}, ${an}이 많을수록 주사위를 많이 굴립니다.` : ''}${sk.effect && !['heal', 'drain'].includes(sk.effect) ? ` ${statusName} 효과.` : ''}${sk.extraAttacks ? ` 추가 공격 ${sk.extraAttacks}회.` : ''}`; continue; }
         sk.desc = `(${source}${scaling}) × ${sk.multiplier} 피해.${sk.id === 'crush' ? ' 물리 방어 150% 추가 피해.' : ''}`;
         if (sk.effect === 'heal') sk.desc += ` 최대 체력 ${Math.round((sk.healRatio ?? .22) * 100)}% 회복.`;
         if (sk.effect === 'drain') sk.desc += ` 실제 피해의 ${Math.round((sk.drainRatio ?? .25) * 100)}% 회복.`;
