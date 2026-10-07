@@ -4,6 +4,7 @@ import { ESSENCE_BY_RARITY, rerollEssence, rerollScaled, refineEssence, GEAR_CAP
 import { RARITIES } from '../data/balance';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
+import { onyxAwaken, onyxScaledStat, isOnyxUnique } from '../data/onyx';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
 /** 장신구: 위력 1당 치명타 +0.2%p. */
 /** v27.36 장신구 치명타: 레벨·위력과 무관한 등급 고정값 × (1 + 강화 × CHARM_CRIT_ENHANCE). 예전 위력 × 0.2%는 Lv.60 전설 +10 하나로 100%를 넘었습니다. */
@@ -42,10 +43,12 @@ export function itemStats(item: Item): Partial<Stats> {
     for (const affix of item.affixes || []) {
         // v3.5 상태이상 저항만 별 보정(별당 +3%)을 받고 장비 합계 50%에서 막힙니다.
         // v3.75 고정 옵션(한 줌)은 등급 감쇠 없이 그대로입니다.
-        const value = affixDef(affix.id)?.fixed ? affix.value : affix.stat === 'statusResist' ? Math.min(GEAR_CAPS.statusResist!, affix.value * (1 + (item.enhance || 0) * STATUS_RESIST_STAR)) : scaled(affix.stat, affix.value);
+        // v3.113 칠흑 고유 옵션은 각성 단계만큼 커집니다(onyxAwaken, 제어 연장 턴 제외).
+        const awaken = isOnyxUnique(item, affix.id) ? onyxAwaken(item) : 1;
+        const value = affixDef(affix.id)?.fixed ? affix.value : affix.stat === 'statusResist' ? Math.min(GEAR_CAPS.statusResist!, affix.value * awaken * (1 + (item.enhance || 0) * STATUS_RESIST_STAR)) : scaled(affix.stat, onyxScaledStat(affix.stat, affix.value, awaken));
         result[affix.stat] = (result[affix.stat] || 0) + value;
         // v3.73 이중 옵션(위력 · 수호)의 둘째 고정 수치도 등급 감쇠를 받습니다. 양날 옵션의 손해(음수)는 그대로입니다.
-        if (affix.stat2 && affix.value2) result[affix.stat2] = (result[affix.stat2] || 0) + scaled(affix.stat2, affix.value2);
+        if (affix.stat2 && affix.value2) result[affix.stat2] = (result[affix.stat2] || 0) + scaled(affix.stat2, onyxScaledStat(affix.stat2, affix.value2, awaken));
     }
     return result;
 }
