@@ -2,7 +2,7 @@
 import type { State } from '../types';
 import { ACHIEVEMENTS, achievementById, progressReader } from '../data/achievements';
 import { makeGoals, rerollGoal, dayKey, weekKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, goalText, type GoalBoard, type GoalKind } from '../data/goals';
-import { noteOneTimeReward } from './one-time-rewards';
+import { noteOneTimeReward } from './offline-tally';
 
 /** 새로 달성한 업적을 해금합니다. 보상은 기록 화면에서 받습니다(claimAchievement). 기록이 없던 세이브는 이미 달성한 업적을 조용히 채웁니다. */
 export function syncAchievements(s: State, log: (text: string) => void) {

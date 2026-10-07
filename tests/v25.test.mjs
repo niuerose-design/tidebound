@@ -1406,22 +1406,25 @@ test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per
     } finally { O.OFFLINE_SAMPLE.turns = sampleTurns; }
 });
 test('v3.104 offline sampling: a long absence runs OFFLINE_SAMPLE.turns real turns and adds the rest in proportion, in one request; one-time goal rewards are not multiplied; dungeons are not sampled', async () => {
-    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), O = await L.load('systems/offline-sample'), R = await L.load('systems/one-time-rewards');
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), O = await L.load('systems/offline-sample'), R = await L.load('systems/offline-tally');
     const seeded = seed => { let x = seed >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296); };
     const make = () => { const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 100; s.stage = 'brook'; s.running = true; s.lastTick = 0; s.hp = 1e9; return s; };
-    const N = O.OFFLINE_SAMPLE.turns, hours = 3, total = hours * 3600 / 2, k = (total - N) / N;
-    // 표본만: 같은 상태 · 같은 난수로 N턴(1분 넘는 부재라 같은 오프라인 정산 규칙).
-    const ref = make(); T.advance(ref, N * 2000, seeded(41)); const once = { ...R.oneTimeRewards };
+    const W = O.OFFLINE_SAMPLE.warmup, N = O.OFFLINE_SAMPLE.turns, hours = 3, total = hours * 3600 / 2, k = (total - W - N) / N;
+    // 표본만: 같은 상태 · 같은 난수로 워밍업 W턴, 이어서 측정 N턴(둘 다 1분 넘는 부재라 같은 오프라인 정산 규칙).
+    const ref = make(), rng = seeded(41); T.advance(ref, W * 2000, rng); const at = structuredClone(ref); R.resetOfflineTally(); T.advance(ref, (W + N) * 2000, rng); const once = { ...R.oneTimeRewards };
     const s = make(); T.advance(s, hours * 3600_000, seeded(41));
-    assert.equal(s.catchUpLeft, undefined, 'settled in one request'); assert.equal(s.turn, N, 'only the sample ran turn by turn'); assert.equal(s.lastTick, hours * 3600_000);
+    assert.equal(s.catchUpLeft, undefined, 'settled in one request'); assert.equal(s.turn, W + N, 'only warm-up + sample ran turn by turn (no onyx in a normal hunting ground)'); assert.equal(s.lastTick, hours * 3600_000);
     assert.equal(s.playMs, total * 2000, 'play time counts the whole absence');
     const grow = d => Math.round(Math.max(0, d) * k);
-    assert.equal(s.kills, ref.kills + grow(ref.kills - 100), 'kills: sample + sample × k');
-    assert.equal(s.jobMastery[s.job], ref.jobMastery[s.job] + grow(ref.jobMastery[s.job] - (newState(0).jobMastery[s.job] || 0)), 'job mastery in proportion');
-    assert.ok(s.kills > ref.kills * 5, 'about six times the sample');
-    assert.ok(once.pearls > 0, 'the sample completed a goal (one-time reward)');
-    assert.equal(s.pearls - make().pearls, (ref.pearls - make().pearls) + grow(ref.pearls - make().pearls - once.pearls), 'one-time rewards are not multiplied');
+    assert.equal(s.kills, ref.kills + grow(ref.kills - at.kills), 'kills: run so far + measured sample × k (warm-up not measured)');
+    assert.equal(s.jobMastery[s.job], ref.jobMastery[s.job] + grow(ref.jobMastery[s.job] - (at.jobMastery[s.job] || 0)), 'job mastery in proportion');
+    assert.ok(s.kills > ref.kills * 3, 'several times the sample');
+    assert.ok(once.pearls > 0 || ref.pearls === at.pearls, 'one-time tally read');
+    assert.equal(s.pearls - ref.pearls, grow(ref.pearls - at.pearls - once.pearls), 'one-time rewards are not multiplied');
     assert.ok(s.lastOffline && s.lastOffline.kills === s.kills - 100 && s.lastOffline.seconds === hours * 3600, 'summary covers the whole absence');
+    // 측정 구간에 레벨이 2 이상 오르는 빠른 성장(막 시작한 캐릭터)은 환산하지 않고 전처럼 분할 정산합니다.
+    const fresh = newState(0); act(fresh, { type: 'start' }, 0); T.advance(fresh, hours * 3600_000, seeded(5));
+    assert.ok(fresh.catchUpLeft > 0 && fresh.turn === W + N && fresh.turn + fresh.catchUpLeft === total, 'fast-growing character falls back to turn-by-turn catch-up');
     // 던전은 환산하지 않습니다(분할 정산).
     assert.equal(O.canSampleOffline({ ...make(), dungeon: { id: 'x', wave: 0 } }), false); assert.equal(O.canSampleOffline(make()), true);
 });

@@ -166,16 +166,20 @@ export function advance(s: State, now: number, rng = Math.random) {
     // 1분 넘게 밀린 정산은 오프라인 정산으로 봅니다(저장하지 않는 임시 표시).
     const offline = elapsed > 60000 || continuing;
     // v3.104 긴 부재중 정산은 앞의 OFFLINE_SAMPLE.turns턴만 돌리고 남은 턴은 비례해 더합니다(systems/offline-sample.ts).
-    const sampling = offline && !continuing && budget > OFFLINE_SAMPLE.turns && canSampleOffline(s);
-    const count = sampling ? OFFLINE_SAMPLE.turns : Math.min(budget, CATCH_UP_CHUNK);
+    const sampling = offline && !continuing && budget > OFFLINE_SAMPLE.warmup + OFFLINE_SAMPLE.turns && canSampleOffline(s);
+    const warmup = sampling ? OFFLINE_SAMPLE.warmup : 0, count = sampling ? warmup + OFFLINE_SAMPLE.turns : Math.min(budget, CATCH_UP_CHUNK);
     let truncated = count < budget;
-    const before = { kills: s.kills, gold: s.gold, exp: s.exp }, mark = sampling ? markOffline(s) : null;
+    const before = { kills: s.kills, gold: s.gold, exp: s.exp };
+    let mark: ReturnType<typeof markOffline> | null = null;
     if (offline) s.catchingUp = true;
     try {
-        for (let i = 0; i < count; i++)
+        for (let i = 0; i < count; i++) {
+            // 워밍업이 끝난 때부터 비율을 잽니다.
+            if (sampling && i === warmup) mark = markOffline(s);
             tick(s, rng);
+        }
         // 표본 뒤에도 같은 사냥 중이면 남은 턴을 환산하고, 아니면 전처럼 남은 턴을 이어 돌립니다(catchUpLeft).
-        if (mark && sampleStable(s, mark)) { extrapolateOffline(s, mark, count, budget - count); truncated = false; }
+        if (mark && sampleStable(s, mark)) { extrapolateOffline(s, mark, count - warmup, budget - count, rng, () => tick(s, rng)); truncated = false; }
     }
     finally { delete s.catchingUp; }
     if (offline) s.event = live;

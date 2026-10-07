@@ -63,8 +63,7 @@ test('Research v2: long anchor line extends the offline cap by two hours per ran
     const base = run(0), long = run(3);
     // v27.43 기본 6시간 + 2시간/단계.
     assert.equal(economy.offlineCapSeconds(base), 6 * 3600); assert.equal(economy.offlineCapSeconds(long), 12 * 3600);
-    // v3.104 사냥터 정산은 표본 + 환산이라 정산한 시간은 플레이 시간(playMs)으로 봅니다.
-    assert.equal(base.playMs / 2000, 6 * 3600 / 2); assert.equal(long.playMs / 2000, 12 * 3600 / 2);
+    assert.equal(base.turn + base.catchUpLeft, 6 * 3600 / 2); assert.equal(long.turn + long.catchUpLeft, 12 * 3600 / 2);
 });
 
 test('Research v2/v27.73: mastery memory adds +3% per rank with an integer carry (1/100) and no random calls', async () => {

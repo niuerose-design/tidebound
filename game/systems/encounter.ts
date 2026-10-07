@@ -28,6 +28,7 @@ import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
 import { dismantleEssence, saleValue, keepsAcrossLives, equippedAffixTotal, tuneOnyx } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
+import { offlineTally, noteOneTimeReward } from './offline-tally';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -156,7 +157,8 @@ function applyDepth(foe: Stats, base: { exp: number; gold: number }, k: number) 
     foe.hp = Math.round(foe.hp * k); foe.attack = Math.round(foe.attack * k); foe.magic = Math.round((foe.magic || 0) * k);
     base.exp = Math.round(base.exp * k); base.gold = Math.round(base.gold * k);
 }
-export function spawn(s: State, rng: () => number) {
+/** v3.104 forceOnyx: 칠흑 보스를 판정 없이 바로 세웁니다(부재중 정산 표본 환산이 남은 시간의 칠흑 판정을 따로 굴린 뒤 씀, 무리 서식지에서만). */
+export function spawn(s: State, rng: () => number, forceOnyx = false) {
     // v27.86 랜덤게임: 해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다.
     if (inRandomGame(s)) return spawnRandomGame(s, rng);
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
@@ -178,7 +180,8 @@ export function spawn(s: State, rng: () => number) {
     // v3.12 칠흑의 보스: 무리 서식지 출현마다 아주 드물게(천장 있음). 집중 사냥 대상이 아니며 그 서식지 최강 몬스터의 몸집(×100 무리급 체력, 공격 ×3)을 빌립니다.
     const onyxDef = !dungeon && st.habitat ? onyxBossFor(st.region) : undefined;
     let onyx = false;
-    if (onyxDef) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; }
+    if (onyxDef && forceOnyx) { s.onyxSeen ??= {}; onyx = true; s.onyxSeen[st.region] = 0; }
+    else if (onyxDef) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; offlineTally.onyxRolls++; }
     const rare = mimic || nuri || onyx, rareId = onyx ? onyxDef!.id : mimic ? MIMIC.id : EXP_NURI.id, rareDef = onyx ? { hp: ONYX.hp, attack: ONYX.attack } : mimic ? MIMIC : EXP_NURI;
     const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
     // v27.64 사냥터 몬스터는 난이도만큼 레벨이 올라갑니다(내 레벨까지, tideLiftFish). 까미·누리는 올라간 가장 강한 몬스터의 몸집을 빌립니다.
@@ -333,7 +336,7 @@ export function reward(s: State, rng: () => number) {
     if (e.onyx) {
         const bossDef = onyxById(e.onyx)!; s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1; s.onyxMiss ??= {};
         const miss = s.onyxMiss[e.onyx] || 0, dropRoll = rng();
-        if (ownedOnyx(s).has(e.onyx)) { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
+        if (ownedOnyx(s).has(e.onyx)) { s.pearls += ONYX.duplicatePearls; noteOneTimeReward({ pearls: ONYX.duplicatePearls }); addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
         else if (dropRoll >= ONYX.drop && miss + 1 < ONYX.dropPity) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · 장신구를 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
         else {
             s.onyxMiss[e.onyx] = 0;
