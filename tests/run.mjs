@@ -20,5 +20,6 @@ await import('./odds.test.mjs');
 await import('./roles.test.mjs');
 await import('./training.test.mjs');
 await import('./awaken.test.mjs');
+await import('./search.test.mjs');
 await settled();
 console.log(`${results.passed} gameplay tests passed.`);

@@ -1,6 +1,8 @@
 'use client';
 import { SPROUT, sproutExp } from '@/game/data/sprout';
 import { BOOK_ECOLOGY } from '@/game/data/book-traits';
+import { SEARCH, searchTime } from '@/game/systems/search';
+import { SKILLS } from '@/game/data/skills';
 import { ASCENSION } from '@/game/data/ascension';
 import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Flame, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap , Droplets } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -174,8 +176,13 @@ export function Guide({ s }: { s?: State }) {
                     limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 사냥터로 돌아옵니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
                     effect={`처치 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 사냥터 난이도가 오를수록 줄어듭니다: 기본 ÷ (1 + 난이도 ÷ ${BALANCE.healAfterKillTideScale}) — 난이도 10에서 10%, 30에서 5%, 최저 ${percent(BALANCE.healAfterKillMin)}. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}
-                    condition={`패배하면 잃는 것 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다. 자리를 비운 시간도 서버가 턴으로 계산합니다.`}
+                    condition={`패배하면 잃는 것 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다. 자리를 비운 시간도 서버가 턴으로 계산합니다. 사냥터에서는 몬스터를 잡은 뒤 다음 몬스터를 찾는 시간이 있습니다(아래 ‘다음 몬스터 탐색’).`}
                     limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}, 가방은 기본 ${BALANCE.inventoryCap}칸${s ? `(지금 ${inventoryCap(s)}칸)` : ''}. 둘 다 세계석 연구로 늘어납니다.`}/>
+                {/* v3.97 사냥터 탐색 */}
+                <Rule icon={<Target size={19}/>} title="다음 몬스터 탐색"
+                    effect={`사냥터 · 무리 서식지에서 몬스터를 잡거나 놓치면 다음 몬스터를 찾는 동안 전투 없이 기다립니다. 기본 ${SEARCH.baseMs / 1000}초, 최저 ${SEARCH.minMs / 1000}초${s ? `(지금 ${searchTime({ ...s, dungeon: null } as typeof s).ms / 1000}초)` : ''}. 그동안 쿨타임 · 각성기 대기 · 버프 · 상태이상은 흐르지 않고, 1초마다 턴당 체력 · 마나 회복만큼 회복합니다.`}
+                    condition={`줄이는 법: 세계석 연구 ‘추적술’ 단계마다 -${SEARCH.researchMs / 1000}초, 탐색 패시브(${SKILLS.filter(sk => sk.searchCut).map(sk => sk.name).join(' · ')}) 각 -0.3초, 익숙한 사냥터(그 사냥터 몬스터를 모두 도감 완성) -${SEARCH.familiarMs / 1000}초.`}
+                    limit="던전 · 무릉도장 · 랜덤게임은 탐색 없이 연속으로 싸웁니다. 사냥터에 처음 들어갈 때와 쓰러진 뒤 회복이 끝났을 때도 바로 만납니다. 서버 턴이 2초라 남는 시간은 다음 탐색으로 넘깁니다(3초면 2초 · 4초가 번갈아)."/>
             </div>
         </Topic>
         <Topic icon={<Flame size={19}/>} title="제단 · 난이도 · 특수 몬스터" note="모두가 함께 채우는 제단, 사냥터·던전 난이도, 까미와 누리.">

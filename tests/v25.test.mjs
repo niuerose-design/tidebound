@@ -729,7 +729,7 @@ test('v27.62 sync log delta: server sends only logs after the client key, client
     const gone = D.trimLogs(s.logs, D.logKey(s.logs.at(-1))); assert.deepEqual(gone.logs, [], 'nothing new');
     assert.deepEqual(D.mergeLogs(s.logs, gone.logs, gone.delta), s.logs);
     assert.deepEqual(D.mergeLogs([], cut.logs, cut.delta), cut.logs, 'missing base → just the new logs');
-    E.advance(s, 600_000, rng); assert.equal(D.trimLogs(s.logs, D.logKey(client.at(-1))), null, 'client fell behind the 70-log window → full list');
+    E.advance(s, 1_800_000, rng); assert.equal(D.trimLogs(s.logs, D.logKey(client.at(-1))), null, 'client fell behind the 70-log window → full list');
 });
 
 test('v27.63 rebirth history: each rebirth records real/play time, level and pearls; old saves start a partial clock', async () => {

@@ -152,6 +152,9 @@ SKILLS.push(...SUPPORT_SKILLS);
 // v25 ??? 특수 직업 기술.
 SKILLS.push(...V25_SKILLS);
 for (const sk of SKILLS) if (SUPPORT_PASSIVES[sk.id]) Object.assign(sk, SUPPORT_PASSIVES[sk.id]);
+// v3.97 탐색 패시브: 사냥터에서 다음 몬스터를 찾는 시간을 줄입니다(ms, systems/search.ts). 이름이 추적 · 길 찾기에 어울리는 패시브에 붙였습니다.
+export const SEARCH_PASSIVES: Record<string, number> = { swiftQuill: 300, huntersPatience: 300, pressureSuit: 300 };
+for (const sk of SKILLS) if (SEARCH_PASSIVES[sk.id]) sk.searchCut = SEARCH_PASSIVES[sk.id];
 // v21 회복 기술은 체력 조건 없이 시도합니다. 회복이 필요 없을 때의 피해 감소는 combat.ts에서 처리합니다.
 for (const sk of SKILLS) if (sk.effect === 'heal') delete sk.condition;
 
@@ -355,3 +358,5 @@ export function alignJobMastery(jobs: Job[]) {
     }
 }
 alignJobMastery(JOBS);
+// v3.97 탐색 패시브 설명(이름 · 설명 덮어쓰기가 모두 끝난 뒤 붙입니다).
+for (const sk of SKILLS) if (sk.searchCut && !sk.desc.includes('찾는 시간')) sk.desc = `${sk.desc} 사냥터에서 다음 몬스터를 찾는 시간 -${sk.searchCut / 1000}초.`;
