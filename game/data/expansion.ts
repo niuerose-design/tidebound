@@ -173,7 +173,8 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'rotBloom', name: '부패의 꽃', desc: '', level: 55, job: 'plagueLord', chance: .27, cooldown: 4, multiplier: 1.8, cost: 5, effect: 'poison', dotRatio: .16, statusTurns: 4, damageBonusCondition: 'bleeding', conditionalDamageBonus: .5, masteryMilestones: M4 },
     { ...P, id: 'pestilence', name: '만연', desc: '지속 피해와 체력이 오릅니다.', level: 55, job: 'plagueLord', cost: 3, bonus: { dotBonus: .15, hp: 250 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: .27, cooldown: 4, multiplier: 2.3, cost: 6, effect: 'poison', dotRatio: .2, statusTurns: 4, damageBonusCondition: 'bleeding', conditionalDamageBonus: .6, masteryMilestones: M5 },
-    { ...P, id: 'endOfAll', name: '만물의 끝', desc: '지속 피해와 치명타가 크게 오릅니다.', level: 70, job: 'apostle', cost: 3, bonus: { dotBonus: .2, crit: .05 }, masteryMilestones: M5 },
+    // v3.129 아크메이지(불,독) 상향: 도트 퍼니셔에 물리 공격 +450(숙련 보정 뒤 엔드 물리 약 +25%, 은월 · 카데나와 같은 방식).
+    { ...P, id: 'endOfAll', name: '만물의 끝', desc: '지속 피해와 치명타, 물리 공격이 크게 오릅니다.', level: 70, job: 'apostle', cost: 3, bonus: { dotBonus: .2, crit: .05, attack: 450 }, masteryMilestones: M5 },
     // 저주의 길
     { ...A, ...magic, id: 'curseBolt', name: '저주탄', desc: '', level: 10, job: 'shaman', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 9, effect: 'weaken' },
     { ...P, id: 'spiritWard', name: '정령의 가호', desc: '마법 방어·최대 마나와 마력 평타 계수가 오릅니다.', level: 10, job: 'shaman', cost: 2, bonus: { resist: 14, mana: 15, arcaneRatioBonus: .5 } },

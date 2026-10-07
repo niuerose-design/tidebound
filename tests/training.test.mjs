@@ -252,3 +252,8 @@ test('v3.128 Demon Slayer: Demon Awakening attack and magic +350 each (crit kept
     const sk = SKILLS.find(s => s.id === 'celestialAura');
     assert.deepEqual([sk.bonus.attack, sk.bonus.magic, sk.bonus.crit], [350, 350, .05]);
 });
+
+test('v3.129 Arch Mage (Fire, Poison): Dot Punisher adds attack +450 (damage-over-time bonus and crit kept)', () => {
+    const sk = SKILLS.find(s => s.id === 'endOfAll');
+    assert.deepEqual([sk.bonus.attack, sk.bonus.dotBonus, sk.bonus.crit], [450, .2, .05]);
+});
