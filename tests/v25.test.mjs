@@ -354,10 +354,10 @@ test('v25.11 guild goals scale with members, points formula, weekly stats accumu
 
 test('v25.12 duel season keys, tiers, season pearls, optional duel goals excluded from the all-bonus, duel achievements', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
-    const { monthKey, monthSeason, previousMonthKey, weekSeason, makeGoals } = await mods.load('data/goals'); const { duelTier, duelSeasonPearls, recommendOpponents } = await mods.load('systems/duel');
+    const { monthKey, monthSeason, previousMonthKey, weekSeason, makeGoals } = await mods.load('data/goals'); const { duelTier, recommendOpponents } = await mods.load('systems/duel');
     const { recordGoal, syncGoals } = await mods.load('systems/progress'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
     assert.equal(monthKey(Date.UTC(2026, 9, 31, 15, 30)), '2026-11', 'KST month'); assert.equal(previousMonthKey('2026-01'), '2025-12'); assert.ok(monthSeason('2026-10') !== weekSeason('2026-W10') && monthSeason('2026-10') > 10_000_000);
-    assert.deepEqual([999, 1000, 1200, 1399, 1600, 2500].map(r => duelTier(r).id), ['shell', 'coral', 'pearl', 'pearl', 'abyss', 'abyss']); assert.deepEqual([1, 2, 3, 10, 50, 51].map(duelSeasonPearls), [60, 40, 30, 15, 6, 2]);
+    assert.deepEqual([999, 1000, 1200, 1399, 1600, 2500].map(r => duelTier(r).id), ['shell', 'coral', 'pearl', 'pearl', 'abyss', 'abyss']);
     const picks = recommendOpponents([{ id: 'a', rating: 1100 }, { id: 'me', rating: 1000, self: true }, { id: 'b', rating: 1300 }, { id: 'c', rating: 960 }], 1000); assert.deepEqual(picks.map(p => p.id), ['c', 'a'], 'within ±150, closest first, never self');
     const daily = makeGoals({ rebirths: 0, level: 1, peakLevel: 1 }, '2026-10-02', false); const duelGoal = daily.find(g => g.kind === 'duel'); assert.ok(duelGoal && duelGoal.optional && duelGoal.target === 1);
     const s = newState(Date.UTC(2026, 9, 1, 3)); syncGoals(s, Date.UTC(2026, 9, 1, 3)); const pearls = s.pearls;
@@ -981,7 +981,7 @@ test('v27.80 regional book: research 5·6 need 250k/500k kills (stage 6 also dif
     assert.deepEqual([rb.variantBook, rb.goldenBook, rb.tideBest, rb.bookTier], [{ minnow: { giant: 2 } }, { minnow: 1 }, { brook: 5 }, { minnow: 9 }]);
 });
 
-test('v27.80 regional variants and swarm habitats: signature variant ×2.5, habitats spawn only ×100/×500 swarms without mimic or milestone pearls', async () => {
+test('v27.80 regional variants and swarm habitats: signature variant ×2.5, habitats spawn ×100/×500 swarms (v3.106 plus mimic · nuri) without milestone pearls', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), V = await L.load('data/variants'), E = await L.load('systems/encounter');
     const at = stage => { const s = newState(0); s.level = 60; s.rebirths = 10; s.stage = stage; return V.variantChances(s); };
@@ -992,8 +992,13 @@ test('v27.80 regional variants and swarm habitats: signature variant ×2.5, habi
     const hab = W.STAGES.find(st => st.id === 'lithSwarm');
     assert.deepEqual(hab.fish, W.regionFish('리스항구')); assert.ok(hab.rebirth >= W.HABITAT.minRebirth);
     const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 20; s.running = true;
-    const sizes = new Set(); for (const roll of [.01, .1, .3, .9]) { E.spawn(s, () => roll); assert.equal(s.enemy.variant, 'swarm'); sizes.add(s.enemy.swarm); assert.ok(!['masteryMimic', 'expNuri'].includes(s.enemy.id), 'no mimic or nuri in habitats'); }
+    const sizes = new Set(); for (const roll of [.1, .3, .9]) { E.spawn(s, () => roll); assert.equal(s.enemy.variant, 'swarm'); sizes.add(s.enemy.swarm); }
     assert.deepEqual([...sizes].sort((a, b) => a - b), [100, 500]);
+    // v3.106 무리 서식지에도 까미·누리가 나옵니다(그 지역 마지막 일반 사냥터와 같은 까미 확률).
+    const sp = E.specialChances(s), last = W.STAGES.filter(st => !st.habitat && st.region === hab.region).at(-1);
+    assert.ok(sp.rolls && sp.mimicP > 0, 'mimic can appear in habitats');
+    assert.equal(sp.mimicP, E.specialChances({ ...s, stage: last.id }).mimicP);
+    { const seq = [0, .99]; E.spawn(s, () => seq.shift() ?? .99); } assert.ok(['masteryMimic', 'expNuri'].includes(s.enemy.id) && s.enemy.variant !== 'swarm', 'a rare roll in a habitat is a single mimic or nuri');
     const logs = s.logs.length; s.enemy.hp = 0; E.reward(s, () => .5); assert.ok(!s.logs.slice(logs).some(l => l.text.includes('이정표')), 'no tide milestone pearls in habitats'); assert.ok(!s.tideBest?.lithSwarm);
 });
 
@@ -1534,4 +1539,15 @@ test('v3.105 altar: after an offering the cached all-time totals are patched (sa
         assert.deepEqual(patched.board.map(r => [r.name, r.points]), fresh.board.map(r => [r.name, r.points]), 'weekly board');
         assert.deepEqual(patched.total, { points: 550, rank: 1 });
     } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});
+
+test('v3.106 goal reset times: daily at the next KST midnight, weekly at the next KST Monday 0:00', async () => {
+    const G = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/goals');
+    const kst = (y, mo, d, h = 0, mi = 0) => Date.UTC(y, mo - 1, d, h - 9, mi);
+    assert.equal(G.nextDailyReset(kst(2026, 10, 7, 23, 59)), kst(2026, 10, 8));
+    assert.equal(G.nextDailyReset(kst(2026, 10, 8)), kst(2026, 10, 9));
+    assert.equal(G.nextWeeklyReset(kst(2026, 10, 7, 12)), kst(2026, 10, 12)); // 수요일 → 다음 월요일
+    assert.equal(G.nextWeeklyReset(kst(2026, 10, 11, 23, 59)), kst(2026, 10, 12)); // 일요일 밤
+    assert.equal(G.nextWeeklyReset(kst(2026, 10, 12)), kst(2026, 10, 19)); // 월요일 0시 정각 → 다음 주
+    assert.equal(G.weekKey(kst(2026, 10, 11, 23, 59)) !== G.weekKey(G.nextWeeklyReset(kst(2026, 10, 11, 23, 59))), true);
 });

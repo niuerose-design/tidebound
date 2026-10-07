@@ -392,7 +392,7 @@ export type State = {
     abyssWeek?: { key: string; best: number; dirty?: boolean; settled?: string };
     /** v25.8 사냥터별 처치한 최고 사냥터 난이도(차수). 이정표 세계석과 업적에 씁니다. */
     tideBest?: Record<string, number>;
-    /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위 보상을 한 번 정산합니다. */
+    /** v25.12 결투 시즌(한국 시간 월). 월이 바뀌면 점수를 1000으로 되돌리고 지난 시즌 순위를 기록합니다(v3.106 순위 보상 없음). */
     duelSeason?: { key: string; lastKey?: string; lastRank?: number };
     /** v27.43 제단: 마지막 신 도전 시각, 익명 기여 설정. 서버만 씁니다. */
     altar?: { challengeAt?: number; anonymous?: boolean; /** v27.54 신 도전 횟수·승리·가장 많이 깎은 신 체력 비율(0~1). 운영 통계용. */ tries?: number; wins?: number; best?: number; /** v27.72 공물을 바친 횟수(안내 단계 판정). */ offers?: number; /** v27.91 월드보스: 마지막 도전 시각, 보상을 정산한 세대, 누적 참여·피해(통계). */ raidAt?: number; raidClaimed?: number; raidHits?: number; raidDealt?: number; /** v3.22 보스별 마지막 도전 시각과 보상을 정산한 세대. */ raidAtBy?: Record<string, number>; raidClaimedBy?: Record<string, number> };

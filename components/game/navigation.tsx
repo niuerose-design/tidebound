@@ -21,9 +21,10 @@ export function Navigation({ view, setView, s, onLogout }: {
     </div>
     </div>
     </SidebarHeader>
-    <SidebarContent>{NAV.map(group => <SidebarGroup key={group.label}>
+    {/* v3.106 기록을 불러오기 전(로딩 · 로그인 화면)에는 메뉴를 숨깁니다. 눌러도 열 화면이 없습니다. */}
+    <SidebarContent>{!s ? <p className="sidebar-wait">모험가의 기록을 불러오면 메뉴가 열립니다.</p> : NAV.map(group => <SidebarGroup key={group.label}>
         <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-        <SidebarMenu>{group.items.filter(item => !(s && item.hidden?.(s))).map(({ id, name, Icon, unlock, views }) => { const lock = s && unlock ? unlock(s) : null, active = views ? views.includes(view) : view === id; return <SidebarMenuItem key={id}>
+        <SidebarMenu>{group.items.filter(item => !item.hidden?.(s)).map(({ id, name, Icon, unlock, views }) => { const lock = unlock ? unlock(s) : null, active = views ? views.includes(view) : view === id; return <SidebarMenuItem key={id}>
             <SidebarMenuButton isActive={active} className={lock ? 'nav-locked' : ''} title={lock ? `${lock}부터 쓸 수 있는 화면입니다. 미리 볼 수는 있습니다.` : undefined} onClick={() => { setView(id); setOpenMobile(false); }}>
             <Icon />
             <span>{name}</span>{lock ? <small className="nav-lock"><Lock size={11}/>{lock}</small> : active && <ChevronRight className="nav-arrow"/>}</SidebarMenuButton>
