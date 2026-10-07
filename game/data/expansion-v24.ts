@@ -148,7 +148,8 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'hybridCore', name: '섞인 심장', desc: '체력과 두 공격이 오릅니다.', level: 55, job: 'abyssHybrid', cost: 3, bonus: { hp: 300, attack: 30, magic: 30 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'aberrantSurge', name: '이형 쇄도', desc: '', level: 70, job: 'aberrantKing', chance: .25, cooldown: 4, multiplier: 2.4, cost: 6, scaling: 'hybrid', scalingRatio: .05, effect: 'drain', drainRatio: .2, masteryMilestones: M5 },
     { ...P, id: 'aberrantBody', name: '이형의 몸', desc: '체력·최대 마나·흡혈이 오릅니다.', level: 70, job: 'aberrantKing', cost: 3, bonus: { hp: 500, mana: 80, lifesteal: .03 }, masteryMilestones: M5 },
-    { ...A, ...dual, id: 'resonanceBurst', name: '공명 폭발', desc: '', level: 55, job: 'resonanceMaster', chance: .5, cooldown: 4, multiplier: 2.6, cost: 5, manaCost: 16, effect: 'weaken', masteryMilestones: M4 },
+    // v3.110 메카닉 상향: 로봇 런처: RM7 배율 2.6 → 3.2 · 추가 공격 1회.
+    { ...A, ...dual, id: 'resonanceBurst', name: '공명 폭발', desc: '', level: 55, job: 'resonanceMaster', chance: .5, cooldown: 4, multiplier: 3.2, cost: 5, manaCost: 16, effect: 'weaken', extraAttacks: 1, masteryMilestones: M4 },
     { ...P, id: 'harmonicPlate', name: '공명 갑판', desc: '두 공격과 두 방어가 오릅니다.', level: 55, job: 'resonanceMaster', cost: 3, bonus: { attack: 25, magic: 25, defense: 30, resist: 30 }, masteryMilestones: M4 },
     { ...A, ...dual, id: 'genesisRune', name: '창세 룬', desc: '', level: 70, job: 'runeCreator', chance: .5, cooldown: 5, multiplier: 4.2, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
     { ...P, id: 'creatorRune', name: '창조주의 문장', desc: '두 공격과 방어 관통이 오릅니다.', level: 70, job: 'runeCreator', cost: 3, bonus: { attack: 55, magic: 55, penetration: .05 }, masteryMilestones: M5 },

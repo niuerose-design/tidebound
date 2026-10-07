@@ -165,7 +165,8 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'forgeRune', name: '대장간 룬', desc: '물리·마법 방어가 오릅니다.', level: 10, job: 'runesmith', cost: 2, bonus: { defense: 8, resist: 8 } },
     { ...A, ...physical, id: 'plateSurge', name: '갑주 충격', desc: '', level: 25, job: 'arcArtificer', chance: .26, cooldown: 3, multiplier: 1.4, cost: 3, scaling: 'defense', scalingRatio: .6 },
     { ...P, id: 'arcaneArmor', name: '마력 갑주', desc: '물리·마법 방어가 오릅니다.', level: 25, job: 'arcArtificer', cost: 2, bonus: { defense: 16, resist: 16 } },
-    { ...A, ...dual, id: 'resonantCannon', name: '공명포', desc: '', level: 40, job: 'resonanceEngineer', chance: .5, cooldown: 4, multiplier: 2, cost: 4, manaCost: 20, penetrationBonus: .1 },
+    // v3.110 메카닉 상향: 마그네틱 필드 배율 2 → 2.8(복합 피해라 기술 한 번이 공격력의 1.5배에 그쳤음).
+    { ...A, ...dual, id: 'resonantCannon', name: '공명포', desc: '', level: 40, job: 'resonanceEngineer', chance: .5, cooldown: 4, multiplier: 2.8, cost: 4, manaCost: 20, penetrationBonus: .1 },
     { ...P, id: 'tunedFrame', name: '조율된 골격', desc: '최대 체력과 물리 방어가 오릅니다.', level: 40, job: 'resonanceEngineer', cost: 3, bonus: { hp: 180, defense: 18 } },
     { ...A, ...dual, id: 'broadside', name: '현측 포격', desc: '', level: 25, job: 'deckGunner', chance: .5, cooldown: 3, multiplier: .95, cost: 3, manaCost: 12, extraAttacks: 1, extraAttackMultiplier: .6 },
     { ...P, id: 'powderKeg', name: '화약통', desc: '물리·마법 공격이 오릅니다.', level: 25, job: 'deckGunner', cost: 2, bonus: { attack: 12, magic: 12 } },

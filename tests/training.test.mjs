@@ -208,3 +208,10 @@ test('v3.109 Kaiser: Nova Temperance adds crit 8%p and crit damage 0.4 (same as 
     const sk = id => SKILLS.find(s => s.id === id);
     assert.deepEqual([sk('earthShell').bonus.crit, sk('earthShell').bonus.critDamage], [sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage]);
 });
+
+test('v3.110 Mechanic: Magnetic Field ×2.8, Robot Launcher RM7 ×3.2 with one extra hit', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(sk('resonantCannon').multiplier, 2.8);
+    assert.equal(sk('resonanceBurst').multiplier, 3.2);
+    assert.equal(sk('resonanceBurst').extraAttacks, 1);
+});
