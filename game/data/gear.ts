@@ -173,6 +173,14 @@ export const REROLL_STEP_PCT = 10;
 export const rerollScaled = (base: number, rerolls = 0) => base * (100 + REROLL_STEP_PCT * Math.max(0, Math.floor(rerolls))) / 100;
 /** v27.94 수치 재련: 옵션 종류는 그대로 두고 수치(0.6~1.4배 굴림)만 다시 굴립니다. 비용은 재설정 기본 비용의 절반(올림)이고 오르지 않습니다. */
 export const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity) / 2);
+/**
+ * v3.118 장비 비용 개편.
+ * - 재련: 골드 없이 정수만. 이 장비를 재련할 때마다 정수가 ×REFINE_GROWTH(복리)로 오릅니다(Item.refines).
+ * - 재설정: 정수 없이 골드만. 기본 비용 × REROLL_GOLD × 감정 가격의 환생 배율(시간당 골드를 따라감), 재설정할수록 +10%(그대로).
+ * - 원시 고대 · 계승 태초 · 칠흑: 세계석 GEAR_RESET_PEARLS로 재련 · 재설정 횟수를 0으로(비용 초기화). 대신 별 0 · 추가 옵션 새로 굴림(최고 수치).
+ */
+export const REFINE_GROWTH = 1.08, REROLL_GOLD = 20, GEAR_RESET_PEARLS = 999;
+export const refineEssenceAt = (rarity: number, refines = 0) => Math.ceil(refineEssence(rarity) * Math.pow(REFINE_GROWTH, Math.max(0, Math.floor(refines))));
 const ROLL_MIN = .6, ROLL_SPAN = .8;
 /** v3.5 레벨 비례 옵션(불굴): (장비 레벨 ÷ 100)^levelPower, Lv.100 이상은 1. */
 const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;

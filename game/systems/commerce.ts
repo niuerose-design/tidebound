@@ -4,9 +4,9 @@ import { RARITIES } from '../data/balance';
 import { ASCENSION } from '../data/ascension';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap } from '../data/economy';
 import { apCapacity, apUsed, itemKey } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, keepsAcrossLives, rerollCost, refineCost, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, keepsAcrossLives, rerollCost, refineCost, canResetGear, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
-import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName } from '../data/gear';
+import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** v27.30 감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 확정 구매를 없애고 환생 배율(v3.68 10^(환생/60)과 1 + 환생 × 0.45 중 낮은 쪽)을 곱합니다. */
 const GAMBLE_FISH = 60;
@@ -223,7 +223,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (item.rarity < 1)
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');
         if (a.type === 'refine') {
-            // v27.94 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. 비용은 재설정의 절반이고 오르지 않습니다.
+            // v27.94 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. v3.118 정수만 들고, 이 장비를 재련할수록 ×1.08씩 오릅니다.
             const index = Number(a.value || '0');
             const x = item.affixes?.[index];
             if (item.relic)
@@ -234,26 +234,23 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error('규칙 옵션(◆)은 수치가 고정이라 재련할 수 없습니다.');
             if (affixDef(x.id)?.fixed)
                 throw Error(`${x.name} 옵션은 수치가 고정이라 재련해도 바뀌지 않습니다.`);
-            const cost = refineCost(item, s);
+            const cost = refineCost(item);
             if ((s.essence || 0) < cost.essence)
-                throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
-            spend(cost.gold);
+                throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence.toLocaleString()}).`);
             s.essence = (s.essence || 0) - cost.essence;
+            item.refines = (item.refines || 0) + 1;
             const next = refineOption(x, item.power, item.rarity, rng, item.level);
             item.affixes = item.affixes!.map((o, i) => i === index ? next : o);
-            return `${item.name} ${x.name} 수치 재련 · ${x.value} → ${next.value} · -${cost.gold} G · 정수 -${cost.essence}`;
+            return `${item.name} ${x.name} 수치 재련 · ${x.value} → ${next.value} · 정수 -${cost.essence.toLocaleString()}`;
         }
         // v3.3 유물은 이식 옵션(affixes)이 있어도 재설정은 고유 옵션(affix) 한 줄만 굴립니다. 이식 옵션은 다시 이식해 덮어씁니다.
         if (!item.affixes?.length || item.relic) {
             // v21 이전 장비·상점 장비·유물의 단일 옵션. v27.74 이 경로도 다중 옵션과 같이 골드 + 정수를 받습니다(전에는 골드만).
             const cost = rerollCost(item, s);
-            if ((s.essence || 0) < cost.essence)
-                throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
             spend(cost.gold);
-            s.essence = (s.essence || 0) - cost.essence;
             item.rerolls = (item.rerolls || 0) + 1;
             item.affix = rollAffix(item.rarity, rng);
-            return `${item.name} 옵션 재설정 · ${item.affix.name} · -${cost.gold} G · 정수 -${cost.essence}`;
+            return `${item.name} 옵션 재설정 · ${item.affix.name} · -${cost.gold.toLocaleString()} G`;
         }
         // v22: 고른 옵션 하나만 다시 굴립니다. 나머지 옵션은 그대로이며 골드와 정수가 듭니다.
         const index = Number(a.value || '0');
@@ -261,18 +258,16 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error('재설정할 옵션을 고르세요.');
         if (item.onyx && item.affixes[index].rule)
             throw Error('칠흑 장신구의 고유 옵션은 바꿀 수 없습니다.');
+        // v3.118 재설정은 골드만(정수 없음).
         const cost = rerollCost(item, s);
-        if ((s.essence || 0) < cost.essence)
-            throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence}).`);
         spend(cost.gold);
-        s.essence = (s.essence || 0) - cost.essence;
         item.rerolls = (item.rerolls || 0) + 1;
         const others = item.affixes.filter((_, i) => i !== index);
         const next = rollAffixes(others.length + 1, item.power, item.origin, rng, others, item.slot, item.level).at(-1)!;
         const before = item.affixes[index].name;
         item.affixes = item.affixes.map((x, i) => i === index ? next : x);
         syncOrnateName(item);
-        return `${item.name} 옵션 재설정 · ${before} → ${next.name} · -${cost.gold} G · 정수 -${cost.essence}`;
+        return `${item.name} 옵션 재설정 · ${before} → ${next.name} · -${cost.gold.toLocaleString()} G`;
     }
     if (a.type === 'dismantle' || a.type === 'dismantleRarity') {
         // 분해: 가방의 장비를 정수로 바꿉니다. 보호·유물·장착 장비는 제외합니다.
@@ -411,6 +406,25 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error('지울 이식 옵션을 고르세요.');
         relic.affixes = relic.affixes!.filter((_, i) => i !== index);
         return `${relic.name} 이식 옵션 제거 · ${line.name}`;
+    }
+    if (a.type === 'gearReset') {
+        // v3.118 비용 초기화: 원시 고대 · 계승 태초 · 칠흑만. 세계석으로 재련 · 재설정 횟수를 0으로 되돌리고, 별은 0, 추가 옵션은 새로 굴려 최고 수치로(칠흑 고유 옵션은 그대로).
+        const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        if (!item)
+            throw Error('장비를 찾을 수 없습니다.');
+        if (!canResetGear(item))
+            throw Error('비용 초기화는 원시 고대 · 계승 태초 · 칠흑 장비만 할 수 있습니다.');
+        if (!item.rerolls && !item.refines)
+            throw Error('재련 · 재설정한 적이 없어 초기화할 비용이 없습니다.');
+        if (s.pearls < GEAR_RESET_PEARLS)
+            throw Error(`세계석이 부족합니다(필요 ${GEAR_RESET_PEARLS}).`);
+        s.pearls -= GEAR_RESET_PEARLS;
+        const fixed = (item.affixes || []).filter(x => item.onyx && x.rule), count = (item.affixes || []).length - fixed.length;
+        if (item.affixes?.length) item.affixes = rollAffixes(fixed.length + count, item.power, item.origin, rng, fixed, item.slot, item.level).map(x => fixed.includes(x) ? x : refineOption(x, item.power, item.rarity, () => 1, item.level));
+        else if (item.affix) item.affix = rollAffix(item.rarity, rng);
+        item.enhance = 0; item.starFails = 0; item.rerolls = 0; item.refines = 0;
+        syncOrnateName(item); syncRelicPower(s);
+        return `${item.name} 비용 초기화 · 세계석 -${GEAR_RESET_PEARLS} · 재련 · 재설정 비용이 처음으로 · 별 0 · 추가 옵션 새로 굴림(최고 수치)`;
     }
     if (a.type === 'awaken' || a.type === 'inheritPrimal') {
         // v3.66 계승: 원시 각성(고대, 정수) · 태초 계승(태초, 분해 게이지). 옵션 수치는 최고 굴림으로 고정되고, 환생해도 남으며 위력이 환생마다 오릅니다.

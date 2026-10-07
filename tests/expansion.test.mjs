@@ -1,5 +1,6 @@
 // v21 직업 확장·전투 규칙, v22 장비 옵션·흡혈 상한
 import { JOBS, RARITIES, SKILLS, SKILL_FORMULA, STATUS_TUNING, STATUS_TUNING_MAX, act, assert, dropRate, gear, newState, rng, rollRarity, stats, strike, test, tick, visibleStatuses } from './harness.mjs';
+const EQ=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('game/systems/equipment.js');
 test('v21 tank counter and defense-scaled damage follow the job defense multiplier',()=>{
  const base={hp:1e6,attack:100,magic:0,defense:100,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const fighter=(extra={},skills=[])=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
@@ -110,30 +111,30 @@ test('v22 gear (v27.53 base 0.25%, rare or better): scarce drops, dismantle into
  const s=newState(0);s.itemBook={};/* v3.58 ‘일반’ 4칸 미리 등록분(도감 드롭 보너스) 없이 기본 확률 */assert.ok(dropRate(s)<=.003,'drop rate '+dropRate(s));s.running=true;act(s,{type:'stage',id:'brook'},0);s.running=true;for(let i=0;i<1800;i++)tick(s,rng);assert.ok(s.inventory.length<=12&&s.inventory.every(i=>i.rarity>=1),'a few items an hour with variants: '+s.inventory.map(i=>i.rarity).join(','));
  s.inventory=[{id:'x',slot:'rod',style:'physical',rarity:4,power:300,level:40,name:'x',origin:'wreck',affixes:gear.rollAffixes(4,300,'wreck',rng)},{id:'y',slot:'coat',rarity:2,power:50,level:10,name:'y',affixes:gear.rollAffixes(2,50,undefined,rng)},{id:'z',slot:'coat',rarity:2,power:50,level:10,name:'z',locked:true}];
  s.essence=0;act(s,{type:'dismantle',id:'y'},0);assert.equal(s.essence,gear.ESSENCE_BY_RARITY[2]);assert.throws(()=>act(s,{type:'dismantle',id:'z'},0));
- s.gold=1e9;assert.throws(()=>act(s,{type:'reforge',id:'x',value:'1'},0),/정수/);s.essence=100;
+ s.gold=0;assert.throws(()=>act(s,{type:'reforge',id:'x',value:'1'},0),/골드/);s.gold=1e12;s.essence=100;/* v3.118 재설정은 골드만 */
  const before=s.inventory[0].affixes.map(a=>a.id);act(s,{type:'reforge',id:'x',value:'1'},0,()=>.37);const after=s.inventory[0].affixes;
- assert.equal(after.length,4);assert.deepEqual([after[0].id,after[2].id,after[3].id],[before[0],before[2],before[3]]);assert.equal(new Set(after.map(a=>a.id)).size,4);assert.equal(s.essence,100-gear.rerollEssence(4));
+ assert.equal(after.length,4);assert.deepEqual([after[0].id,after[2].id,after[3].id],[before[0],before[2],before[3]]);assert.equal(new Set(after.map(a=>a.id)).size,4);assert.equal(s.essence,100,'v3.118 reroll spends no essence');
  assert.throws(()=>act(s,{type:'reforge',id:'x',value:'9'},0));
- // v27.74 단일 옵션(유물·상점·옛 장비) 재설정도 정수를 받습니다.
+ // v27.74 단일 옵션(유물·상점·옛 장비) 재설정. v3.118 골드만.
  s.inventory.push({id:'relic1',slot:'coat',rarity:3,power:10,level:1,name:'유물',affix:{stat:'evasion',name:'영혼 회피',value:.12}});s.essence=0;
- assert.throws(()=>act(s,{type:'reforge',id:'relic1'},0),/정수/);s.essence=20;const g0=s.gold;act(s,{type:'reforge',id:'relic1'},0,()=>.2);
- assert.equal(s.essence,20-gear.rerollEssence(3),'single-affix reroll spends essence');assert.ok(s.gold<g0);assert.ok(s.inventory.find(i=>i.id==='relic1').affix);
+ const g0=s.gold;act(s,{type:'reforge',id:'relic1'},0,()=>.2);
+ assert.equal(s.essence,0,'single-affix reroll spends no essence');assert.ok(s.gold<g0);assert.ok(s.inventory.find(i=>i.id==='relic1').affix);
  const reb=newState(0);reb.level=30;reb.essence=7;act(reb,{type:'rebirth'},0);assert.equal(reb.essence,7,'essence survives rebirth');
 });
-test('v27.94 essence sinks: rerolling the same item costs +10% each time without a cap, refine rerolls only the value',()=>{
+test('v27.94 essence sinks: rerolling the same item costs +10% each time without a cap, refine rerolls only the value (v3.118 reroll gold only, refine essence only ×1.08 each)',()=>{
  const s=newState(0);s.gold=1e12;s.essence=1e6;
  // 전용 고정 난수(처음 장비 · 재설정 모두): 공유 난수 순서나 Math.random에 따라 재련할 수 있는 옵션이 없는 장비가 드물게 나오던 것을 막습니다.
  const local=(seed=>()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296))(9427);
  s.inventory=[{id:'x',slot:'rod',style:'physical',rarity:4,power:300,level:40,name:'x',affixes:gear.rollAffixes(4,300,undefined,local)}];
- const item=()=>s.inventory[0],base=gear.rerollEssence(4);
- for(let n=0;n<30;n++){const e=s.essence,g=s.gold;act(s,{type:'reforge',id:'x',value:'0'},0,local);assert.equal(e-s.essence,Math.ceil(base*(10+n)/10),'essence step '+n);assert.ok(s.gold<g);}
- assert.equal(item().rerolls,30);assert.equal(Math.ceil(base*4),Math.ceil(gear.rerollScaled(base,30)),'no cap: 30 rerolls = x4');
- // 실패한 재설정(정수 부족)은 횟수를 올리지 않습니다.
- s.essence=0;assert.throws(()=>act(s,{type:'reforge',id:'x',value:'0'},0),/정수/);assert.equal(item().rerolls,30);
+ const item=()=>s.inventory[0],first=EQ.rerollCost(item(),s).gold;
+ for(let n=0;n<30;n++){const e=s.essence,g=s.gold;act(s,{type:'reforge',id:'x',value:'0'},0,local);assert.equal(e,s.essence,'no essence');assert.equal(g-s.gold,Math.floor(gear.rerollScaled(first,n)),'gold step '+n);}
+ assert.equal(item().rerolls,30);assert.equal(Math.floor(gear.rerollScaled(first,30)),Math.floor(first*4),'no cap: 30 rerolls = x4');
+ // 실패한 재설정(골드 부족)은 횟수를 올리지 않습니다.
+ s.gold=0;assert.throws(()=>act(s,{type:'reforge',id:'x',value:'0'},0),/골드/);assert.equal(item().rerolls,30);s.gold=1e12;
  // 수치 재련: 종류는 그대로, 수치만 바뀌고, 비용은 재설정 기본 비용의 절반이며 오르지 않습니다.
  s.essence=1000;const ids=item().affixes.map(a=>a.id),idx=item().affixes.findIndex(a=>!a.rule);assert.ok(idx>=0,'재련할 수 있는 옵션이 있어야 합니다');
- const spent=[];for(const r of [.0,.999,.5]){const e=s.essence;act(s,{type:'refine',id:'x',value:String(idx)},0,()=>r);spent.push(e-s.essence);}
- assert.deepEqual(spent,[gear.refineEssence(4),gear.refineEssence(4),gear.refineEssence(4)]);assert.equal(gear.refineEssence(4),Math.ceil(base/2));
+ const spent=[],g1=s.gold;for(const r of [.0,.999,.5]){const e=s.essence;act(s,{type:'refine',id:'x',value:String(idx)},0,()=>r);spent.push(e-s.essence);}
+ assert.deepEqual(spent,[0,1,2].map(n=>gear.refineEssenceAt(4,n)),'refine essence grows ×1.08 per refine');assert.equal(s.gold,g1,'refine spends no gold');assert.equal(item().refines,3);
  assert.deepEqual(item().affixes.map(a=>a.id),ids,'refine keeps every option kind');assert.equal(item().rerolls,30,'refine does not raise the reroll cost');
  const def=gear.affixDef(ids[idx]),lo=gear.refineOption({...item().affixes[idx]},300,4,()=>0),hi=gear.refineOption({...item().affixes[idx]},300,4,()=>.999999);
  assert.ok(hi.value>lo.value,def.id);assert.ok(gear.affixQuality(lo,300,4)<.02);assert.ok(gear.affixQuality(hi,300,4)>.98);
