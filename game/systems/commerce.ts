@@ -226,7 +226,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (item.rarity < 1)
             throw Error('희귀 이상 장비만 재설정할 수 있습니다.');
         if (a.type === 'refine') {
-            // v27.94 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. v3.118 정수만 들고, 이 장비를 재련할수록 ×REFINE_GROWTH씩 오릅니다(v3.130 1.1 · 환생 배율).
+            // v27.94 수치 재련: 고른 옵션의 종류는 그대로, 수치만 다시 굴립니다. v3.118 정수만 들고, 이 장비를 재련할수록 ×REFINE_GROWTH씩 오릅니다(v3.131 1.1 · 환생 배율).
             const index = Number(a.value || '0');
             const x = item.affixes?.[index];
             if (item.relic)

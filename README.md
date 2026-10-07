@@ -32,7 +32,7 @@ pnpm dev               # http://localhost:5173
 - `pnpm lint`: 린트(경고도 실패로 처리)
 - `pnpm test`: 게임 규칙 테스트 (`tests/*.test.mjs`, 순서는 `tests/run.mjs`)
 - `pnpm checks` (`-- --fast`로 긴 시뮬레이션 제외, 이름 일부로 골라 실행 가능): `scripts/check-*.mjs` 밸런스 · 성장 · 직업 점검을 한꺼번에
-- `node scripts/check-equivalence.mjs`: 같은 상태·난수의 결과 지문 (리팩터링 전후 비교)
+- `node scripts/check-equivalence.mjs`: 같은 상태·난수의 결과 지문 (리팩터링 전후 비교). `check-turn-hash.mjs`: 기준 몸 90가지 × 400턴 세이브 해시 · 턴 시간(엔진 · 능력치 계산 리팩터링 전후 비교)
 - `node scripts/audit-rewards.mjs [분]`: 사냥터 · 던전별 시간당 보상 표(판단용, 통과/실패 없음)
 - 운영 도구 웹 페이지 `/admin`: Vercel 환경 변수 `TIDEBOUND_ADMIN_KEY`(12자 이상)를 넣으면 켜집니다. 모험가 이름·아이디로 찾아 이번 생 초기화를 미리 보기 → 적용. 같은 기능을 Actions 탭 '이번 생 초기화' 워크플로로도 실행할 수 있습니다(시크릿 `DATABASE_URL` 필요).
 - `DATABASE_URL=... node scripts/reset-life.mjs <아이디> [--slot 2] [--yes]` 또는 `... reset-life.mjs --name <모험가 이름> [--yes]`: 특정 유저의 이번 생만 처음 상태로(환생 횟수·세계석·연구·유물·도감 유지, `--yes` 없이는 미리 보기)

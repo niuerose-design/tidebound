@@ -181,7 +181,7 @@ export function dismantleInto(s: Pick<State, 'essence' | 'primalGauge'> & Partia
 /** v27.94 재설정 비용은 이 장비를 재설정한 횟수만큼 오릅니다(1회마다 +10%, 상한 없음). v3.118 골드만(기본 × REROLL_GOLD × 감정 환생 배율), 정수 없음. */
 export const rerollCost = (item: Item, s?: Pick<State, 'permanent'> & Partial<Pick<State, 'rebirths'>>) => ({ gold: Math.floor(rerollScaled(reforgeCost(item, s) * REROLL_GOLD * appraisalRebirthFactor(s?.rebirths || 0), item.rerolls)), essence: 0 });
 /** v27.94 수치 재련 비용. v3.118 골드 없이 정수만, 이 장비를 재련할수록 ×1.08씩(refineEssenceAt). */
-/** v3.130 재련 환생 배율: 원시 각성과 같은 10^(환생 ÷ AWAKENING.rebirthScale). 난이도(≈ 환생) 사냥의 정수 수입이 비슷한 기울기로 오르기 때문입니다. */
+/** v3.131 재련 환생 배율: 원시 각성과 같은 10^(환생 ÷ AWAKENING.rebirthScale). 난이도(≈ 환생) 사냥의 정수 수입이 비슷한 기울기로 오르기 때문입니다. */
 export const refineRebirthFactor = (rebirths = 0) => Math.pow(10, Math.max(0, rebirths) / AWAKENING.rebirthScale);
 export const refineCost = (item: Item, s?: Partial<Pick<State, 'rebirths'>>) => ({ gold: 0, essence: refineEssenceAt(item.rarity, item.refines, refineRebirthFactor(s?.rebirths || 0)) });
 /** v3.118 비용 초기화(원시 고대 · 계승 태초 · 칠흑): 세계석으로 재련 · 재설정 횟수를 0으로, 대신 별과 추가 옵션이 초기화됩니다. */

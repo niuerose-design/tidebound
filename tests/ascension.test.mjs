@@ -671,7 +671,7 @@ test('v3.129 slot redistribution: coat / cape / charm share hp and both defenses
     assert.ok(r1 > r0 && r2 > r0, 'vit and int raise resist'); assert.ok(Math.abs((r1 - r0) / (r2 - r0) - .4 / .25) < .05, 'in the .4 : .25 ratio');
     assert.equal(coat.hp + cape.hp + charm.hp, 800, 'four-slot hp total is unchanged (6 + 2 before)');
 });
-test('v3.130 heir refine above 100% is a thin tail (15%, steeper upward) and refine essence grows ×1.1 with a rebirth factor', async () => {
+test('v3.131 heir refine above 100% is a thin tail (15%, steeper upward) and refine essence grows ×1.1 with a rebirth factor', async () => {
     const G = await L.load('data/gear'), Eq = await L.load('systems/equipment');
     // 0~100%는 균등(85%), 100% 위는 15%만, 위로 갈수록 급히 드뭅니다.
     assert.equal(G.heirRollQuality(.5, 1), .5, 'normal gear: identity'); assert.ok(Math.abs(G.heirRollQuality(.85 * .5) - .5) < 1e-9, 'body maps 0..85% → 0..100%'); assert.equal(G.heirRollQuality(.85), 1); assert.ok(Math.abs(G.heirRollQuality(1) - 1.5) < 1e-9);
