@@ -1512,3 +1512,26 @@ test('v3.85 altar: a blessing re-opens by itself when the gauge already holds th
         const news = await database.listChat('news', 0, 20); assert.ok(news.some(m => m.text.includes('쌓여 있던 공물로')), 'news says it opened from the stored offerings');
     } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
+
+test('v3.105 altar: after an offering the cached all-time totals are patched (same answer as a fresh read, no full re-read)', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-offer-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const Alt = await L.load('server/altar'), DB = await L.load('server/db');
+    try {
+        const database = DB.db(), now = Date.now(), o = { gold: 0, pearls: 10, essence: 0 };
+        for (const [id, pts] of [['a', 500], ['b', 300], ['c', 100]]) await Alt.commitOffering(id, id, id, o, pts, 'gold', false, now);
+        Alt.invalidateAltar(); await Alt.altarInfo('c', null, now); // 캐시를 채움
+        let fullReads = 0; const orig = database.listAltarOffersAllTime; database.listAltarOffersAllTime = (...x) => { fullReads++; return orig(...x); };
+        await Alt.commitOffering('c', 'c', 'c', o, 450, 'gold', false, now + 1);
+        const patched = await Alt.altarInfo('c', null, now + 2);
+        assert.equal(fullReads, 0, 'an offering does not re-read every total');
+        Alt.invalidateAltar(); const fresh = await Alt.altarInfo('c', null, now + 3);
+        assert.equal(fullReads, 1, 'the counter does see a fresh read');
+        database.listAltarOffersAllTime = orig;
+        assert.deepEqual(patched.total, fresh.total, `my total and rank (${JSON.stringify(patched.total)})`);
+        assert.deepEqual(patched.allTime.map(r => [r.name, r.points]), fresh.allTime.map(r => [r.name, r.points]), 'all-time board');
+        assert.deepEqual(patched.board.map(r => [r.name, r.points]), fresh.board.map(r => [r.name, r.points]), 'weekly board');
+        assert.deepEqual(patched.total, { points: 550, rank: 1 });
+    } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});

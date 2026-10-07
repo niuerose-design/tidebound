@@ -68,12 +68,12 @@ async function trySummonRaid(raids: Record<string, AltarRaidRow>, gauges: Record
 }
 type Core = Pick<Shared, 'at' | 'altar' | 'gauges' | 'raids'>;
 type Boards = Pick<Shared, 'at' | 'week' | 'board' | 'allTime' | 'totals' | 'sortedTotals'>;
-let coreCache: Core | null = null, boardsCache: Boards | null = null;
+let coreCache: Core | null = null, boardsCache: Boards | null = null, boardStale = false;
 /**
  * 제단 · 게이지 · 월드보스(15초 캐시). 읽는 김에 밀려 있던 신 소환 · 월드보스 교대 · 축복 단계도 처리합니다.
  * v3.92 게임 동기화(syncAltarStatus)는 이것만 읽습니다(순위표 · 전체 누적 합산은 제단 화면을 열 때만).
  */
-async function core(now: number, force = false): Promise<Core> {
+async function core(now: number, force = false, by = '쌓여 있던 공물로'): Promise<Core> {
     if (!force && coreCache && now - coreCache.at < ALTAR.cacheMs) return coreCache;
     const database = db();
     const [altar, gauges, raidRows] = await Promise.all([database.getAltar(), database.listAltarGauges(), database.listAltarRaids()]);
@@ -89,13 +89,18 @@ async function core(now: number, force = false): Promise<Core> {
     for (const r of raidRows) if (r.state === 'alive' && r.until < now && await database.expireAltarRaid(r.id, now)) { await announce(`월드보스 ${josa(raidById(r.id)?.name || r.id, '이가')} 떠났습니다.`, now); return core(now, true); }
     if (await trySummonRaid(raids, map, now)) return core(now, true);
     // v3.85 축복이 끝났거나 단계가 내려와도 이미 쌓인 기여도가 비용 이상이면 바로 다음 단계로 엽니다(바치기를 기다리지 않음).
-    for (const b of BLESSINGS) { const live = liveLevel(map[b.id], now); if ((map[b.id]?.points || 0) >= gaugeCost(b.id, live, live > 0) && await levelBlessing(b, now, '쌓여 있던 공물로')) return core(now, true); }
+    for (const b of BLESSINGS) { const live = liveLevel(map[b.id], now); if ((map[b.id]?.points || 0) >= gaugeCost(b.id, live, live > 0) && await levelBlessing(b, now, by)) return core(now, true); }
     return coreCache = { at: now, altar, gauges: map, raids };
 }
 /** v3.92 이번 주 순위표와 모든 모험가의 누적 기여(15초 캐시). 제단 화면에서만 읽습니다. */
 async function boards(now: number, force = false): Promise<Boards> {
     const week = weekKey(now);
-    if (!force && boardsCache && boardsCache.week === week && now - boardsCache.at < ALTAR.cacheMs) return boardsCache;
+    if (!force && boardsCache && boardsCache.week === week && now - boardsCache.at < ALTAR.cacheMs) {
+        // v3.105 바친 뒤에는 이번 주 순위표(상위 몇 줄)만 다시 읽습니다. 전체 누적은 바친 만큼 캐시를 고쳐 둡니다(patchTotals).
+        if (boardStale) { boardStale = false; boardsCache = { ...boardsCache, board: await db().listAltarOffers(week, ALTAR.boardSize) }; }
+        return boardsCache;
+    }
+    boardStale = false;
     const database = db();
     const [board, allTime] = await Promise.all([database.listAltarOffers(week, ALTAR.boardSize), database.listAltarOffersAllTime(ALL_TOTALS)]);
     return boardsCache = { at: now, week, board, allTime: allTime.slice(0, ALTAR.boardSize), totals: new Map(allTime.map(r => [r.player_id, r.points])), sortedTotals: allTime.map(r => r.points) };
@@ -106,6 +111,23 @@ async function shared(now: number, force = false): Promise<Shared> {
     return { ...c, ...b };
 }
 export const invalidateAltar = () => { coreCache = null; boardsCache = null; };
+/**
+ * v3.105 바치기 뒤: 전체 누적 기여 캐시를 바친 만큼 고칩니다. v3.91부터 순위를 이 캐시(모든 모험가의 합계)에서 셌는데,
+ * 바칠 때마다 캐시를 지워 전체 합계를 처음부터 다시 읽느라 바치기가 느려졌습니다. 다른 인스턴스는 15초 캐시가 지나면 새로 읽습니다.
+ */
+function patchTotals(id: string, name: string, anonymous: boolean, points: number) {
+    const b = boardsCache;
+    if (!b) return;
+    const before = b.totals.get(id) || 0, after = before + points, sorted = [...b.sortedTotals];
+    if (before > 0) { const i = sorted.indexOf(before); if (i >= 0) sorted.splice(i, 1); }
+    sorted.splice(countAbove(sorted, after), 0, after);
+    const totals = new Map(b.totals).set(id, after);
+    const rest = b.allTime.filter(r => r.player_id !== id), last = b.allTime.at(-1);
+    const allTime = before > 0 && b.allTime.some(r => r.player_id === id) || !last || after > last.points || b.allTime.length < ALTAR.boardSize
+        ? [...rest, { player_id: id, name, anonymous: anonymous ? 1 : 0, points: after }].sort((x, y) => y.points - x.points).slice(0, ALTAR.boardSize) : b.allTime;
+    boardsCache = { ...b, totals, sortedTotals: sorted, allTime };
+    boardStale = true;
+}
 /**
  * v3.25 해킹 V 백도어: 게이지를 조금 채웁니다(기여 순위·합계에는 넣지 않음). 신·월드보스 게이지가 차면 바로 깨어나고,
  * v3.85 축복 게이지도 비용만큼 찼으면 바로 단계가 오릅니다.
@@ -290,10 +312,9 @@ export async function commitOffering(account: string, id: string, name: string, 
         database.addAltar(id, { ...o, points }, tithe(o)),
         database.addAltarGauge(gauge, points),
     ]);
-    const b = BLESSINGS.find(x => x.id === gauge);
-    if (b) await levelBlessing(b, now, `${name}의 공물로`);
-    invalidateAltar();
-    await core(now, true); // 신 소환 게이지가 찼으면 여기서 깨어납니다(순위는 제단 정보를 읽을 때 새로).
+    // v3.105 축복 단계 · 신 소환은 공용 정보를 새로 읽으며 한 번에 처리합니다(전에는 축복 게이지를 따로 한 번 더 읽음).
+    patchTotals(id, name, anonymous, points);
+    await core(now, true, `${name}의 공물로`);
 }
 
 /** 신에게 도전. 결과는 한 번만 계산해 저장 충돌로 다시 돌아도 같은 결과를 적습니다. */
