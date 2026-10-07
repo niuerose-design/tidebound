@@ -105,7 +105,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'jointLock', name: '관절 꺾기', desc: '', level: 25, job: 'grappler', chance: .26, cooldown: 3, multiplier: 1.5, cost: 3, effect: 'slow', statusTurns: 2, damageBonusCondition: 'controlled', conditionalDamageBonus: .3 },
     { ...P, id: 'lifeCurrentFlow', name: '생명의 흐름', desc: '턴마다 체력이 회복되고 회복량이 오릅니다.', level: 25, job: 'tideMender', cost: 2, bonus: { hpRegen: 3, healBonus: .1 } },
     { ...P, id: 'coralPatience', name: '산호의 인내', desc: '턴마다 체력이 회복되고 물리 방어가 오릅니다.', level: 25, job: 'coralBuilder', cost: 2, bonus: { hpRegen: 2, defense: 12 } },
-    { ...P, id: 'grappleStance', name: '붙잡는 자세', desc: '최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'grappler', cost: 2, bonus: { hp: 90, defense: 8 } },
+    { ...P, id: 'grappleStance', name: '붙잡는 자세', desc: '최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'grappler', cost: 2, bonus: { hp: 90, defense: 15, resist: 5 } },
     // 마법
     { ...A, ...magic, id: 'crystalShard', name: '결정 파편', desc: '', level: 25, job: 'crystalCaster', chance: .52, cooldown: 3, multiplier: 1.3, cost: 3, manaCost: 12, scaling: 'mana', scalingRatio: .2 },
     { ...P, id: 'latticeMind', name: '바둑판 사고', desc: '최대 마나와 마법 공격이 오릅니다.', level: 25, job: 'crystalCaster', cost: 2, bonus: { mana: 30, magic: 10 } },
@@ -163,12 +163,12 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'dragonKingAura', name: '용왕의 위엄', desc: '최대 체력과 물리·마법 공격이 오릅니다.', level: 55, job: 'abyssDragonLord', cost: 3, bonus: { hp: 260, attack: 24, magic: 24 }, masteryMilestones: M4 },
     // 복합: 메카닉 (1차)
     { ...A, ...dual, id: 'runeHammer', name: '룬 망치', desc: '', level: 10, job: 'runesmith', chance: .48, cooldown: 3, multiplier: 1.15, cost: 2, manaCost: 8, effect: 'weaken' },
-    { ...P, id: 'forgeRune', name: '대장간 룬', desc: '물리·마법 방어가 오릅니다.', level: 10, job: 'runesmith', cost: 2, bonus: { defense: 8, resist: 8 } },
+    { ...P, id: 'forgeRune', name: '대장간 룬', desc: '물리·마법 방어가 오릅니다.', level: 10, job: 'runesmith', cost: 2, bonus: { defense: 12, resist: 12 } },
     { ...A, ...physical, id: 'plateSurge', name: '갑주 충격', desc: '', level: 25, job: 'arcArtificer', chance: .26, cooldown: 3, multiplier: 1.4, cost: 3, scaling: 'defense', scalingRatio: .6 },
-    { ...P, id: 'arcaneArmor', name: '마력 갑주', desc: '물리·마법 방어가 오릅니다.', level: 25, job: 'arcArtificer', cost: 2, bonus: { defense: 16, resist: 16 } },
+    { ...P, id: 'arcaneArmor', name: '마력 갑주', desc: '물리·마법 방어가 오릅니다.', level: 25, job: 'arcArtificer', cost: 2, bonus: { defense: 25, resist: 25 } },
     // v3.110 메카닉 상향: 마그네틱 필드 배율 2 → 2.8(복합 피해라 기술 한 번이 공격력의 1.5배에 그쳤음).
     { ...A, ...dual, id: 'resonantCannon', name: '공명포', desc: '', level: 40, job: 'resonanceEngineer', chance: .5, cooldown: 4, multiplier: 2.8, cost: 4, manaCost: 20, penetrationBonus: .1 },
-    { ...P, id: 'tunedFrame', name: '조율된 골격', desc: '최대 체력과 물리 방어가 오릅니다.', level: 40, job: 'resonanceEngineer', cost: 3, bonus: { hp: 180, defense: 18 } },
+    { ...P, id: 'tunedFrame', name: '조율된 골격', desc: '최대 체력과 물리 방어가 오릅니다.', level: 40, job: 'resonanceEngineer', cost: 3, bonus: { hp: 180, defense: 30, resist: 12 } },
     { ...A, ...dual, id: 'broadside', name: '현측 포격', desc: '', level: 25, job: 'deckGunner', chance: .5, cooldown: 3, multiplier: .95, cost: 3, manaCost: 12, extraAttacks: 1, extraAttackMultiplier: .6 },
     { ...P, id: 'powderKeg', name: '화약통', desc: '물리·마법 공격이 오릅니다.', level: 25, job: 'deckGunner', cost: 2, bonus: { attack: 12, magic: 12 } },
     // 복합: 독립
