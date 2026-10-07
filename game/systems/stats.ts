@@ -214,8 +214,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     return a;
 }
 /** 처치당 장비 드롭 확률. 기본 확률에 드롭 보너스(행운·물건도감·연구·스킬·장비, stats에서 합산)를 상대 증가로 곱합니다. */
-export function dropRate(s: State) {
-    const bonus = stats(s).dropBonus || 0;
+/** v3.104 a: 같은 상태로 이미 계산한 능력치(있으면 다시 계산하지 않음). */
+export function dropRate(s: State, a = stats(s)) {
+    const bonus = a.dropBonus || 0;
     // v27.86 힘의 길 보상은 드롭 상한 뒤에 곱합니다(난이도 하한 미만이면 ×1).
     return Math.min(BALANCE.dropChanceCap, BALANCE.dropChance * (1 + bonus / BALANCE.dropBonusScale) * (s.event?.drop || 1)) * roughReward(s, encounterTier(s));
 }
@@ -269,9 +270,9 @@ export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows
 // v27.79 계정(분신) 보너스는 곱연산 배율입니다(accountExpGold ≤ ×1.3).
 /** v3.69 수련 직업으로 사냥할 때의 처치 보상 배율(data/training.ts). */
 const jobReward = (s: State) => jobById(s.job)?.rewardScale ?? 1;
-export const goldMultiplier = (s: State) => (1 + stats(s).goldBonus) * jobReward(s) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
+export const goldMultiplier = (s: State, a = stats(s)) => (1 + a.goldBonus) * jobReward(s) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
 // v3.23 순풍은 다른 경험치 보너스와 더합니다(전에는 따로 곱해 폭증).
-export const expMultiplier = (s: State) => Math.max(0, 1 + stats(s).expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
+export const expMultiplier = (s: State, a = stats(s)) => Math.max(0, 1 + a.expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 던전 정복 골드. 전투 보상과 던전 화면 표시가 같은 식을 씁니다. */
 export const dungeonClearGold = (s: State, baseGold: number, tier: number) => Math.floor(baseGold * tierReward(tier) * goldMultiplier(s) * dungeonGoldMultiplier(s));

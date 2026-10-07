@@ -11,13 +11,14 @@ import { DUNGEONS, FISH, STAGES, dungeonClosed, stageClosed, closuresSnapshot } 
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
-import { canUse, skillMasteryRanks, refinePractices, extraRollLevel } from './progression';
+import { canUse, lazySkillMasteryRanks, lazyRefinePractices, extraRollLevel } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, reward, releaseLegacySeal, gainLevels, enemyLabel } from './encounter';
 import { inRandomGame, loseRandomGame } from './random-game';
 import { deathRecoveryTurns, deathExpLoss } from '../data/sprout';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
+import { OFFLINE_SAMPLE, canSampleOffline, markOffline, sampleStable, extrapolateOffline, markOfflineRare, noteOfflineRare } from './offline-sample';
 import { breathReset } from './actions/lifecycle';
 import { isHacker, hackerTick } from './hacker';
 import { runAutomation } from './automation';
@@ -92,7 +93,7 @@ function tickTurn(s: State, rng: () => number) {
     const e = s.enemy!;
     const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
-    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: skillMasteryRanks(s), practice: refinePractices(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
+    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), practice: lazyRefinePractices(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
     const enemy: Fighter = { foe: true, name: enemyLabel(e), stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
@@ -118,8 +119,12 @@ function tickTurn(s: State, rng: () => number) {
         e.stale = e.hp === enemyHpBefore && s.hp === playerHpBefore ? (e.stale || 0) + 1 : 0;
         if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${enemyLabel(e)}이(가) 줄을 끊고 달아났습니다. 다음 몬스터를 기다립니다.`); return; }
     }
-    if (e.hp <= 0 && s.hp > 0)
+    if (e.hp <= 0 && s.hp > 0) {
+        // v3.104 부재중 정산 중 희귀 몬스터 처치는 표본 환산의 비례에서 뺍니다(남은 시간에는 따로 실제로 굴림).
+        const rare = markOfflineRare(s);
         reward(s, rng);
+        noteOfflineRare(s, rare);
+    }
     else if (s.hp <= 0) {
         s.deaths++;
         // 하드코어: 쓰러지면 즉시 이번 생을 처음부터 다시 시작합니다(오프라인 정산 중에도 같은 규칙).
@@ -162,14 +167,23 @@ export function advance(s: State, now: number, rng = Math.random) {
     // 클라이언트 20초 제한에 걸리고 서버가 멈춘 것처럼 보였음). 남은 턴은 catchUpLeft에 적어 다음 동기화가 이어 돌립니다. 총 턴 수는 전과 같습니다.
     const continuing = (s.catchUpLeft || 0) > 0;
     const budget = continuing ? Math.min(s.catchUpLeft!, Math.floor(elapsed / BALANCE.turnMs)) : Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
-    const count = Math.min(budget, CATCH_UP_CHUNK), truncated = count < budget;
-    const before = { kills: s.kills, gold: s.gold, exp: s.exp };
     // 1분 넘게 밀린 정산은 오프라인 정산으로 봅니다(저장하지 않는 임시 표시).
     const offline = elapsed > 60000 || continuing;
+    // v3.104 긴 부재중 정산은 앞의 OFFLINE_SAMPLE.turns턴만 돌리고 남은 턴은 비례해 더합니다(systems/offline-sample.ts).
+    const sampling = offline && !continuing && budget > OFFLINE_SAMPLE.warmup + OFFLINE_SAMPLE.turns && canSampleOffline(s);
+    const warmup = sampling ? OFFLINE_SAMPLE.warmup : 0, count = sampling ? warmup + OFFLINE_SAMPLE.turns : Math.min(budget, CATCH_UP_CHUNK);
+    let truncated = count < budget;
+    const before = { kills: s.kills, gold: s.gold, exp: s.exp };
+    let mark: ReturnType<typeof markOffline> | null = null;
     if (offline) s.catchingUp = true;
     try {
-        for (let i = 0; i < count; i++)
+        for (let i = 0; i < count; i++) {
+            // 워밍업이 끝난 때부터 비율을 잽니다.
+            if (sampling && i === warmup) mark = markOffline(s);
             tick(s, rng);
+        }
+        // 표본 뒤에도 같은 사냥 중이면 남은 턴을 환산하고, 아니면 전처럼 남은 턴을 이어 돌립니다(catchUpLeft).
+        if (mark && sampleStable(s, mark)) { extrapolateOffline(s, mark, count - warmup, budget - count, rng, () => tick(s, rng)); truncated = false; }
     }
     finally { delete s.catchingUp; }
     if (offline) s.event = live;

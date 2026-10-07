@@ -28,12 +28,13 @@ import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
 import { dismantleEssence, saleValue, keepsAcrossLives, equippedAffixTotal, tuneOnyx } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
+import { offlineTally } from './offline-tally';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
 /** 처치 1회당 회복량. 무리 규모와 관계없이 처치마다 한 번 적용합니다(응급처치 포함). */
-export function victoryHeal(s: State) {
-    return Math.floor(stats(s).hp * victoryHealRate(s));
+export function victoryHeal(s: State, a = stats(s)) {
+    return Math.floor(a.hp * victoryHealRate(s));
 }
 /** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
 export function gainLevels(s: State) {
@@ -76,8 +77,9 @@ export function rollRarity(rng: () => number, minRarity = 0, tier = 0) {
 }
 /** v27.53 드롭 장비 레벨: 기준 레벨 + 해역 난이도(층) × 5, 단 캐릭터 레벨 + dropLevelOver까지(기준 레벨보다 낮아지지는 않음). */
 export const dropLevel = (s: Pick<State, 'level'>, base: number, tier: number) => Math.max(base, Math.min(base + tier * 5, s.level + BALANCE.dropLevelOver));
-export function drop(s: State, level: number, rng: () => number, guaranteed = false) {
-    if (!guaranteed && rng() > dropRate(s))
+/** v3.104 rate: 미리 계산한 드롭 확률(무리 드롭 판정 반복용, 없으면 지금 계산). */
+export function drop(s: State, level: number, rng: () => number, guaranteed = false, rate?: number) {
+    if (!guaranteed && rng() > (rate ?? dropRate(s)))
         return;
     // v27.53 일반 처치 드롭도 희귀 이상만(일반 등급은 상점 기본 장비로).
     // v27.76 사냥터·던전 난이도가 높을수록 상위 등급 가중치가 조금 오릅니다(보수적).
@@ -119,6 +121,8 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         addLog(s, `${RARITIES[rarity].name} 장비 발견 · ${item.name}${rarity ? ` · 옵션 ${rarity}개` : ''}`, 'reward');
     }
 }
+/** v3.104 drop()이 바꾸는 값 가운데 능력치(드롭 보너스)에 닿을 수 있는 것: 골드 자릿수(기록 비례 패시브) · 물건 도감 수 · 가방 · 정수. */
+const dropRateKey = (s: State) => `${Math.floor(Math.log10(1 + Math.max(0, s.gold || 0)))}|${Object.keys(s.itemBook || {}).length}|${s.inventory.length}|${s.essence || 0}`;
 /** rareBonus: 희귀 이상 몬스터의 출현 가중치 증가율(0.1 = +10%). */
 export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, tier = 0) {
     const choices = (ids.map(id => FISH.find(f => f.id === id)).filter(Boolean) as typeof FISH).filter(f => (f.minTier || 0) <= tier);
@@ -153,7 +157,21 @@ function applyDepth(foe: Stats, base: { exp: number; gold: number }, k: number) 
     foe.hp = Math.round(foe.hp * k); foe.attack = Math.round(foe.attack * k); foe.magic = Math.round((foe.magic || 0) * k);
     base.exp = Math.round(base.exp * k); base.gold = Math.round(base.gold * k);
 }
-export function spawn(s: State, rng: () => number) {
+/** v3.104 부재중 정산 표본 환산(offline-sample.ts)이 남은 시간의 희귀 출현 판정을 따로 굴린 뒤, 나온 희귀 몬스터를 판정 없이 바로 세울 때 씁니다. */
+export type ForcedRare = 'onyx' | 'mimic' | 'nuri' | 'starlit';
+/** v3.104 까미 · 누리 등장 확률(출현 한 번에 난수 하나를 [까미 | 누리] 구간으로 나눠 씀). spawn과 부재중 정산 환산이 같은 식을 씁니다. */
+export function specialChances(s: State) {
+    const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id), st = STAGES.find(x => x.id === s.stage)!, tier = encounterTier(s);
+    // v27.80 무리 서식지에는 까미·누리가 나오지 않습니다(무리만 확정).
+    // v3.31 승천한 모험가에게는 까미·누리가 난이도 0부터 나옵니다(난이도 조건만 없앰, 레벨·처치 수 조건은 그대로).
+    const asc = ascended(s), mimicOk = !dungeon && !st.habitat && (asc || tier >= MIMIC.minTier) && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && !st.habitat && nuriEligible(s, asc ? Math.max(tier, EXP_NURI.minTier) : tier);
+    // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
+    const luck = specialLuck(s);
+    const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
+    const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
+    return { rolls: mimicOk || nuriOk, mimicP, nuriP };
+}
+export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     // v27.86 랜덤게임: 해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다.
     if (inRandomGame(s)) return spawnRandomGame(s, rng);
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id);
@@ -163,19 +181,16 @@ export function spawn(s: State, rng: () => number) {
     const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
     // v27.58 경험의 누리: 까미와 같은 난수 하나를 [까미 구간 | 누리 구간]으로 나눠 씁니다(난수 사용 횟수는 그대로).
-    // v27.80 무리 서식지에는 까미·누리가 나오지 않습니다(무리만 확정).
-    // v3.31 승천한 모험가에게는 까미·누리가 난이도 0부터 나옵니다(난이도 조건만 없앰, 레벨·처치 수 조건은 그대로).
-    const asc = ascended(s), mimicOk = !dungeon && !st.habitat && (asc || tier >= MIMIC.minTier) && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && !st.habitat && nuriEligible(s, asc ? Math.max(tier, EXP_NURI.minTier) : tier);
-    // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
-    const luck = specialLuck(s);
-    const mimicP = mimicOk ? mimicChance(tier, STAGES.indexOf(st)) * (s.catchingUp ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
-    const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
-    const special = mimicOk || nuriOk ? rng() : 1;
-    const mimic = special < mimicP, nuri = !mimic && special < mimicP + nuriP;
+    const chances = specialChances(s), { mimicP, nuriP } = chances;
+    // v3.104 force가 있으면 판정 없이 그 희귀 몬스터를 세웁니다(난수를 쓰지 않음). 판정한 횟수는 부재중 정산 환산이 셉니다(offlineTally).
+    const special = !force && chances.rolls ? rng() : 1;
+    if (!force && chances.rolls) offlineTally.specialRolls++;
+    const mimic = force === 'mimic' || special < mimicP, nuri = force === 'nuri' || (!mimic && special < mimicP + nuriP);
     // v3.12 칠흑의 보스: 무리 서식지 출현마다 아주 드물게(천장 있음). 집중 사냥 대상이 아니며 그 서식지 최강 몬스터의 몸집(×100 무리급 체력, 공격 ×3)을 빌립니다.
     const onyxDef = !dungeon && st.habitat ? onyxBossFor(st.region) : undefined;
     let onyx = false;
-    if (onyxDef) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; }
+    if (onyxDef && force === 'onyx') { s.onyxSeen ??= {}; onyx = true; s.onyxSeen[st.region] = 0; }
+    else if (onyxDef && !force) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; offlineTally.onyxRolls++; }
     const rare = mimic || nuri || onyx, rareId = onyx ? onyxDef!.id : mimic ? MIMIC.id : EXP_NURI.id, rareDef = onyx ? { hp: ONYX.hp, attack: ONYX.attack } : mimic ? MIMIC : EXP_NURI;
     const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
     // v27.64 사냥터 몬스터는 난이도만큼 레벨이 올라갑니다(내 레벨까지, tideLiftFish). 까미·누리는 올라간 가장 강한 몬스터의 몸집을 빌립니다.
@@ -196,8 +211,10 @@ export function spawn(s: State, rng: () => number) {
     const exp = Math.max(1, Math.round(base.exp * expLevelScale(rewardLevel, s.level)));
     // v25.19 변종: 몬스터를 10회 이상 처치한 사냥터 출현마다 한 번 판정합니다. 무리는 체력 ×N(×100 이상은 98%)인 한 개체이고 공격은 ×500에서만 체력과 같은 배율, 방어는 한 마리와 같습니다.
     let swarm = 1, variant: typeof VARIANTS[number]['id'] | undefined;
-    if (!dungeon && !rare && st.habitat) { variant = 'swarm'; swarm = rollHabitatSwarm(rng, HABITAT.bigChance, HABITAT.sizes); }
+    if (force === 'starlit') variant = 'starlit';
+    else if (!dungeon && !rare && st.habitat) { variant = 'swarm'; swarm = rollHabitatSwarm(rng, HABITAT.bigChance, HABITAT.sizes); }
     else if (!dungeon && !rare && (s.book[f.id] || 0) >= VARIANT_BOOK_MIN) {
+        offlineTally.variantRolls++;
         const chances = variantChances(s);
         let roll = rng();
         for (const v of VARIANTS) { roll -= chances[v.id]; if (roll < 0) { variant = v.id; break; } }
@@ -251,9 +268,11 @@ export function reward(s: State, rng: () => number) {
     const masteryReward = victoryMastery(s, e), researched = researchMastery(s, Math.floor(masteryReward.amount * masteryHeads * focusMastery * eventMastery)), practice = researched.total;
     // v3.12 칠흑 세트 4종: 무리 서식지 골드·경험치 +15%.
     const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
-    const perFish = Math.floor(e.gold * goldMultiplier(s) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s) * expMult * onyxSet) * size * big);
+    // v3.104 골드 · 경험치 배율과 황금 개체 확률은 같은 상태의 능력치 한 번으로 계산합니다(사이에 상태가 바뀌지 않음).
+    const won = stats(s);
+    const perFish = Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
-    const goldenChance = stats(s).goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
+    const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
     const gold = Math.floor(perFish * size * big) + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     // v27.79 계급장: 처치 수(무리는 마릿수)만큼 계급 경험치. ‘전과 기록’ 특전이 마리당 더 셉니다. 기록이 없던 세이브는 지금까지의 처치 수에서 시작합니다. 진급하면 알립니다.
@@ -343,8 +362,13 @@ export function reward(s: State, rng: () => number) {
     const fish = FISH.find(f => f.id === e.id)!;
     // v3.42 무리는 마리 수 N 대신 √N번만 드롭을 판정하고(×500은 2배), 덜 굴린 판정은 기대 장비 수만큼 정수로 바꿉니다.
     const rolls = swarmDropRolls(size) * (size >= SWARM_BIG.size ? SWARM_BIG.drops : 1);
-    for (let i = 0; i < rolls * (vdef?.drops || 1); i++)
-        drop(s, dropLevel(s, fish.level, encounterTier(s)), rng);
+    // v3.104 드롭 확률은 판정마다 능력치를 다시 계산하던 것을, 드롭이 바꿀 수 있는 값(골드 자릿수 · 물건 도감 · 가방 · 정수)이 그대로면 재사용합니다.
+    let rateKey = '', rate = 0;
+    for (let i = 0; i < rolls * (vdef?.drops || 1); i++) {
+        const key = dropRateKey(s);
+        if (key !== rateKey) { rateKey = key; rate = dropRate(s); }
+        drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, false, rate);
+    }
     if (size > rolls) {
         const owed = (size - rolls) * dropRate(s) * SWARM_ESSENCE_PER_ITEM, essence = Math.floor(owed) + (rng() < owed % 1 ? 1 : 0);
         if (essence > 0) { s.essence = (s.essence || 0) + essence; addLog(s, `무리 전리품 · 정수 +${essence}`, 'reward'); }
@@ -357,7 +381,7 @@ export function reward(s: State, rng: () => number) {
         const sk = skillById(id)!;
         if (sk.unlockJobMastery) addLog(s, `직업 숙련으로 ${sk.name} 해금 · 기본 Lv.0부터 장착 가능`, 'skill');
     }
-    s.hp = Math.min(stats(s).hp, s.hp + victoryHeal(s));
+    { const a = stats(s); s.hp = Math.min(a.hp, s.hp + victoryHeal(s, a)); }
     s.enemy = null;
     s.effects = {};
     s.playerStun = 0;

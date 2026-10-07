@@ -2,6 +2,7 @@
 import type { State } from '../types';
 import { ACHIEVEMENTS, achievementById, progressReader } from '../data/achievements';
 import { makeGoals, rerollGoal, dayKey, weekKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, goalText, type GoalBoard, type GoalKind } from '../data/goals';
+import { noteOneTimeReward } from './offline-tally';
 
 /** 새로 달성한 업적을 해금합니다. 보상은 기록 화면에서 받습니다(claimAchievement). 기록이 없던 세이브는 이미 달성한 업적을 조용히 채웁니다. */
 export function syncAchievements(s: State, log: (text: string) => void) {
@@ -48,10 +49,11 @@ function advanceBoard(s: State, b: GoalBoard, weekly: boolean, kind: GoalKind, s
         if (g.progress < g.target) continue;
         g.claimed = true;
         s.pearls += g.pearls; if (g.essence) s.essence = (s.essence || 0) + g.essence;
+        noteOneTimeReward({ pearls: g.pearls, essence: g.essence });
         log(`${weekly ? '주간' : '오늘의'} 목표 달성 · ${goalText(g)} · 세계석 +${g.pearls}${g.essence ? ` · 정수 +${g.essence}` : ''}`);
     }
     if (!b.bonus && b.goals.every(g => g.claimed || g.optional)) {
-        b.bonus = true; const bonus = weekly ? WEEKLY_ALL_BONUS : DAILY_ALL_BONUS; s.pearls += bonus;
+        b.bonus = true; const bonus = weekly ? WEEKLY_ALL_BONUS : DAILY_ALL_BONUS; s.pearls += bonus; noteOneTimeReward({ pearls: bonus });
         log(`${weekly ? '주간' : '오늘의'} 목표 모두 달성 · 보너스 세계석 +${bonus}`);
     }
 }

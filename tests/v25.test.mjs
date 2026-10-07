@@ -1391,7 +1391,10 @@ test('v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-pie
 });
 
 test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per request and continues next sync (same total, summary accumulates)', async () => {
-    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), B = await L.load('data/balance');
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), B = await L.load('data/balance'), O = await L.load('systems/offline-sample');
+    // v3.104 사냥터 정산은 표본 + 환산이라, 분할 정산(던전 · 해커 · 표본 뒤 조건이 바뀐 경우)은 환산을 끄고 확인합니다.
+    const sampleTurns = O.OFFLINE_SAMPLE.turns; O.OFFLINE_SAMPLE.turns = Infinity;
+    try {
     const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 100; s.stage = 'brook'; s.running = true; s.lastTick = 0; s.hp = 1e9;
     const hours = 1, now = hours * 3600_000, total = now / B.BALANCE.turnMs;
     T.advance(s, now, () => .5);
@@ -1400,6 +1403,42 @@ test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per
     while (s.catchUpLeft) { T.advance(s, now, () => .5); rounds++; }
     assert.equal(rounds, Math.ceil(total / T.CATCH_UP_CHUNK)); assert.equal(s.lastTick, now, 'caught up to now'); assert.ok(s.lastOffline.kills > firstKills, 'summary accumulates across chunks'); assert.equal(s.lastOffline.seconds, hours * 3600);
     T.advance(s, now + 2000, () => .5); assert.equal(s.catchUpLeft, undefined); assert.equal(s.turn > 0, true);
+    } finally { O.OFFLINE_SAMPLE.turns = sampleTurns; }
+});
+test('v3.104 offline sampling: a long absence runs warm-up + sample turn by turn and adds the rest in proportion, in one request; fast-growing characters and dungeons fall back to chunked catch-up', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), O = await L.load('systems/offline-sample');
+    const seeded = seed => { let x = seed >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296); };
+    const make = () => { const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 100; s.stage = 'brook'; s.running = true; s.lastTick = 0; s.hp = 1e9; return s; };
+    const W = O.OFFLINE_SAMPLE.warmup, N = O.OFFLINE_SAMPLE.turns, hours = 3, total = hours * 3600 / 2;
+    // 표본만: 같은 상태 · 같은 난수로 워밍업 W턴, 이어서 측정 N턴.
+    const ref = make(), rng = seeded(41); T.advance(ref, W * 2000, rng); const at = structuredClone(ref); T.advance(ref, (W + N) * 2000, rng);
+    const s = make(); T.advance(s, hours * 3600_000, seeded(41));
+    assert.equal(s.catchUpLeft, undefined, 'settled in one request'); assert.equal(s.lastTick, hours * 3600_000);
+    assert.ok(s.turn >= W + N && s.turn < W + N + 600, 'warm-up + sample (+ any rare fights) ran turn by turn');
+    assert.equal(s.playMs, total * 2000, 'play time counts the whole absence exactly');
+    const rate = (ref.kills - at.kills) / N, expected = ref.kills + rate * (total - W - N);
+    assert.ok(Math.abs(s.kills - expected) / expected < .2, `kills follow the measured rate (${s.kills} vs ~${Math.round(expected)})`);
+    assert.ok(s.lastOffline && s.lastOffline.kills === s.kills - 100 && s.lastOffline.seconds === hours * 3600, 'summary covers the whole absence');
+    // 측정 구간에 레벨이 2 이상 오르는 빠른 성장(막 시작한 캐릭터)은 환산하지 않고 전처럼 분할 정산합니다.
+    const fresh = newState(0); act(fresh, { type: 'start' }, 0); T.advance(fresh, hours * 3600_000, seeded(5));
+    assert.ok(fresh.catchUpLeft > 0 && fresh.turn === W + N && fresh.turn + fresh.catchUpLeft === total, 'fast-growing character falls back to turn-by-turn catch-up');
+    // 던전은 환산하지 않습니다(분할 정산).
+    assert.equal(O.canSampleOffline({ ...make(), dungeon: { id: 'x', wave: 0 } }), false); assert.equal(O.canSampleOffline(make()), true);
+});
+test('v3.104 offline extrapolation math: gains grow by remaining/turns; one-time rewards and rare kills (까미 · 누리 · 별빛 · 칠흑) are left out of the proportion', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const O = await L.load('systems/offline-sample'), R = await L.load('systems/offline-tally'), { MIMIC } = await L.load('data/mimic');
+    const s = newState(0); s.level = 30; s.rebirths = 12; s.stage = 'brook'; s.running = true;
+    const m = O.markOffline(s), job = s.job, mastery = s.jobMastery[job] || 0;
+    // 측정 구간: 일반 처치 50마리 · 숙련 300 · 세계석 10(그중 목표 보상 4).
+    s.kills += 50; s.jobMastery[job] = mastery + 300; s.pearls += 10; R.noteOneTimeReward({ pearls: 4 });
+    // 까미 처치: 숙련 +10,000 · 처치 1 · 세계석 +3 → 비례에서 빠짐.
+    s.catchingUp = true; s.enemy = { id: MIMIC.id, name: '까미', hp: 0, maxHp: 1, attack: 1, defense: 0, exp: 1, gold: 1 };
+    const before = O.markOfflineRare(s); assert.ok(before, 'rare enemy marked while catching up');
+    s.kills += 1; s.jobMastery[job] += 10_000; s.pearls += 3; s.enemy = null; O.noteOfflineRare(s, before); delete s.catchingUp;
+    const kills = s.kills, pearls = s.pearls, rngCalls = { n: 0 };
+    O.extrapolateOffline(s, m, 900, 1800, () => { rngCalls.n++; return .99; }, () => { throw Error('no rare fights expected'); });
+    assert.equal(s.kills, kills + 100, 'normal kills ×2'); assert.equal(s.jobMastery[job], mastery + 300 + 10_000 + 600, 'rare mastery not multiplied');
+    assert.equal(s.pearls, pearls + 12, '(10 − 4 one-time) × 2, rare pearls not multiplied'); assert.equal(rngCalls.n, 0, 'no rare rolls tallied → no rolls');
 });
 test('v3.17 tutorial rewards: a step completed by its condition pays once; silent back-fill for veteran saves pays nothing', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const G = await L.load('systems/guidance');

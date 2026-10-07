@@ -216,9 +216,9 @@ const isAwaken = (id: string) => id.startsWith(AWAKEN_PITY) || !!skillById(id)?.
 function skillOf(a: Fighter, id: string) {
     const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
     if (!base) return undefined;
-    const c = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0);
-    c.multiplier *= signatureScale(base, a.job);
-    return c;
+    // v3.104 effectiveSkill은 캐시된 객체를 돌려주므로 복사본에 배율을 곱합니다.
+    const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0);
+    return { ...e, multiplier: e.multiplier * signatureScale(base, a.job) };
 }
 /**
  * 편성 순서대로 액티브 발동 판정을 굴려 처음 성공한 기술을 고릅니다. from부터 봅니다(추가 판정은 앞서 고른 기술 아래부터).
@@ -229,8 +229,7 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
         const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
         if (!base || base.type !== 'active' || base.awaken || blocked.has(id))
             continue;
-        const candidate = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0);
-        candidate.multiplier *= signatureScale(base, a.job);
+        const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0), candidate = { ...e, multiplier: e.multiplier * signatureScale(base, a.job) };
         // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
         if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)
             continue;

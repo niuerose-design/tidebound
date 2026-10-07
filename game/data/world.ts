@@ -44,7 +44,9 @@ export const REGIONS = [...new Set(BASE_STAGES.map(st => st.region))];
 /** 지역의 일반 사냥터(무리 서식지 제외). */
 export const regionPlaces = (region: string) => BASE_STAGES.filter(st => st.region === region);
 /** 지역에 사는 몬스터(중복 없이, 사냥터 순서). */
-export const regionFish = (region: string) => [...new Set(regionPlaces(region).flatMap(st => st.fish))];
+const regionFishCache = new Map<string, string[]>();
+/** v3.104 사냥터 표는 바뀌지 않으므로 지역마다 한 번만 만듭니다(능력치 계산이 턴마다 부름). 돌려받은 배열은 고치지 마세요. */
+export const regionFish = (region: string) => { let ids = regionFishCache.get(region); if (!ids) regionFishCache.set(region, ids = Object.freeze([...new Set(regionPlaces(region).flatMap(st => st.fish))]) as string[]); return ids; };
 /**
  * v3.103 사냥터 개편(docs/hunting-ground-plan.md 9절, 기준 몸 '자기 계열 패시브' 측정).
  * 적정 환생: 난이도 0에서 사망 0 · 평균 처치 3턴 이하(서식지는 시간당 사망 5회 이하 · 경험치가 일반 사냥터 이상)가 되는 환생.
