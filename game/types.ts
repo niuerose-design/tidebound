@@ -254,7 +254,7 @@ export type Skill = {
     statusTurns?: number;
     /** v3.132 함께 거는 두 번째 중첩형 지속 피해(포이즌 노바: 중독 + 화상). 지속은 statusTurns, 틱 비율은 dotRatio를 같이 씁니다. 각성 지속 배율을 받지 않습니다. */
     alsoEffect?: 'poison' | 'burn';
-    /** v3.138 화면에 효과 대신 이 글만 보입니다(실제 효과는 그대로, 망인 죽지않은 영혼). */
+    /** v3.139 화면에 효과 대신 이 글만 보입니다(실제 효과는 그대로, 망인 죽지않은 영혼). */
     disguise?: string;
     /** v3.132 계보 밖 직업이 계승해 쓰면 발동률에 곱하는 값(5차 전용 기술, signatureScale과 함께). */
     outsiderChance?: number;

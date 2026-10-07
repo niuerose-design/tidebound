@@ -13,7 +13,7 @@ const { JOBS } = await game.load('data/classes');
 const { referenceBody, random } = await referenceBodies(game);
 const hash = v => createHash('sha256').update(JSON.stringify(v)).digest('hex').slice(0, 16);
 // 5차 직업 중 계보가 다른 것들을 고르게: 물리 · 마법 · 상태이상 · 보조 · 제약 등
-const picks = ['hero', 'thousandChants', 'grandMagus', 'celestialBlade', 'guardianDeity', 'apostle', 'oceanFist', 'grandAlchemist', 'aeonChronicler', 'lifeOcean', 'crimsonAvatar', 'luckDeity', 'seaTreasury', 'routeDeity', 'beastKing', 'siren', 'skyInverter', 'fortuneAvatar'].filter(id => JOBS.some(j => j.id === id));
+const picks = ['hero', 'thousandChants', 'grandMagus', 'celestialBlade', 'abyssBastion', 'apostle', 'oceanFist', 'grandAlchemist', 'aeonChronicler', 'lifeOcean', 'crimsonAvatar', 'luckDeity', 'seaTreasury', 'routeDeity', 'beastKing', 'siren', 'skyInverter', 'fortuneAvatar'].filter(id => JOBS.some(j => j.id === id));
 const out = {}; let totalTurns = 0, totalMs = 0;
 for (const r of [3, 12, 30, 60, 90]) for (const job of picks) {
     let s; try { s = referenceBody(r, job); } catch { continue; }

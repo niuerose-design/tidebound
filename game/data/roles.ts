@@ -31,7 +31,7 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
     squidJester: 'physical', spellbladeNovice: 'physical', brawnMage: 'physical', nerveNeedler: 'physical', tideLancer: 'physical',
     tide: 'magic', chantNovice: 'magic', apprentice: 'magic', manaDevotee: 'magic',
     poisoner: 'status', shaman: 'status', bloodAngler: 'status', currentScholar: 'status',
-    warden: 'reflect', shieldbearer: 'reflect', saltWarden: 'reflect', bulkyFisher: 'reflect',
+    warden: 'reflect', saltWarden: 'reflect', bulkyFisher: 'reflect',
     martialArtist: 'control', bellTurtle: 'control', stillAngler: 'control', runesmith: 'control',
     wanderer: 'drain', paladin: 'drain',
     seagrassKeeper: 'healer',
@@ -42,7 +42,7 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
 };
 /** 계보 기본값과 다른 직업(갈림길·곁가지). */
 export const ROLE_BY_JOB: Record<string, SubRoleId> = {
-    oracle: 'healer', lunarOracle: 'healer', coralSaint: 'healer', tideMender: 'healer', coralBuilder: 'healer', tidalSinger: 'borderBuffer',
+    oracle: 'healer', lunarOracle: 'healer', coralSaint: 'healer', tideMender: 'healer', tidalSinger: 'borderBuffer',
     reefBrawler: 'drain', inkMime: 'utility', crystalCaster: 'magic', deckGunner: 'physical', clockworkAngler: 'physical', allRounder: 'physical',
     glyphMonk: 'physical',
 };

@@ -80,7 +80,7 @@ export function skillBrief(sk: Skill): string {
 }
 /** Describes the effective values used by combat, including HP/MP scaling and follow-ups. */
 export function skillEffectLines(sk: Skill, level = 0): string[] {
-    // v3.138 위장 설명: 효과 줄 대신 적힌 글만 보여 줍니다.
+    // v3.139 위장 설명: 효과 줄 대신 적힌 글만 보여 줍니다.
     if (sk.disguise) return [sk.disguise];
     const out: string[] = [];
     if (sk.type === 'active') {

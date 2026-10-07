@@ -88,7 +88,6 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     genesis: { kind: 'light', title: '인피니티 플레임 서클', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
     // v3.132 중독 + 화상을 함께 거는 포이즌 노바: 독 고리와 불 고리가 겹쳐 터집니다.
     doomMark: { kind: 'nova', title: '포이즌 노바', glyphs: ['●', '✹', '◌', '▴', '●', '✹', '◌', '▴'] },
-    aegisJudgment: { kind: 'judgment', title: '소드 오브 라이트', glyphs: ['⬡', '✦', '⬡', '✦', '⬡', '✦', '⬡', '✦'] },
     redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
     worldTentacle: { kind: 'tentacle', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
     jackpotStrike: { kind: 'jackpot', title: '조커', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },

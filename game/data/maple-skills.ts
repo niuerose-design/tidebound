@@ -25,7 +25,7 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
 
     // ── 검사 계보: 팔라딘 · 성벽 기사 · 요정 대사제 ──
     anchor: '파워 스트라이크', fortress: '리커버리', crush: '차지 블로우', ironWill: '파워 가드',
-    coralPatience: '아이언 바디', soulShell: '요정의 축복', sanctuaryShell: '엘븐 블레싱', saintTide: '성스러운 가호',
+    soulShell: '요정의 축복', sanctuaryShell: '엘븐 블레싱', saintTide: '성스러운 가호',
     thornCounter: '블래스트', reefFortress: '실드 마스터리', citadelCrash: '생츄어리', livingReef: '블레싱 아머',
     bastionQuake: '마이티 묠니르', eternalReef: '엘리멘탈 포스', reefOfEons: '어드밴스드 차지',
 
@@ -129,10 +129,6 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     heavenSplit: '데몬 베인', celestialAura: '데몬 어웨이크닝',
 
     // ── 미하일 계보 ──
-    shieldBash: '소울 블레이드', shieldWall: '로얄 가드', ironRetort: '소울 드라이버', spikedShield: '실드 오브 라이트',
-    bulwarkSlam: '소울 어썰트', stoneSkin: '소울 링크', lastStand: '샤이닝 크로스', undying: '소울 마제스티',
-    aegisJudgment: '소드 오브 라이트', divineAegis: '라이트 오브 커리지',
-
     // ── 아크메이지(불,독) 계보 ──
     venomDart: '포이즌 브레스', toxinLore: '매직 마스터리', toxicFang: '파이어 애로우', lethalDose: '스펠 마스터리(불,독)',
     miasma: '포이즌 미스트', plagueVessel: '이그나이트', rotBloom: '미스트 이럽션', pestilence: '익스트림 매직(불,독)',

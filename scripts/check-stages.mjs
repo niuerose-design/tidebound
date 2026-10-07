@@ -4,7 +4,7 @@
 //   무리 서식지: 난이도 0에서 시간당 사망 5회 이하 · 시간당 경험치가 그 환생의 최상위 일반 사냥터 이상인 가장 낮은 환생.
 // 시험하는 사냥터 몬스터의 도감 기록은 지웁니다(처음 가는 사냥터로 봄).
 // --own: 다른 직업 패시브를 빌리지 않은 몸(자기 계열 패시브만)으로 잽니다.
-// 사용: node scripts/check-stages.mjs [--own] [--rebirths 0,2,5,...] [--jobs hero,grandMagus,guardianDeity] [--hours .5] [--seeds 1] [--json out.json]
+// 사용: node scripts/check-stages.mjs [--own] [--rebirths 0,2,5,...] [--jobs hero,grandMagus,abyssBastion] [--hours .5] [--seeds 1] [--json out.json]
 import { loadGame } from './lib/game-modules.mjs';
 import { referenceBodies } from './lib/reference-body.mjs';
 import { random } from './lib/sim.mjs';
@@ -17,7 +17,7 @@ const { referenceBody } = await referenceBodies(game);
 
 const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const REBIRTHS = arg('--rebirths', '0,2,5,8,10,15,20,25,30,35,40,50,60,80,100').split(',').map(Number);
-const JOB_IDS = arg('--jobs', 'hero,grandMagus,guardianDeity').split(',');
+const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion').split(',');
 const HOURS = Number(arg('--hours', .5)), SEEDS = Number(arg('--seeds', 1)), TICKS = Math.round(HOURS * 1800);
 const ONLY = arg('--stages', '') ? arg('--stages', '').split(',') : null;
 

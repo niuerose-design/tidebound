@@ -22,7 +22,7 @@ const { rebirthLevel, xpWall, tideLimit } = await load('systems/meta');
 const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const REBIRTHS = arg('--rebirths', '10,20,30,40,50,60').split(',').map(Number);
 // 역할별 대표 5차: 물리 딜러 · 마법 딜러 · 탱커 · 출혈 · 회복. R<20은 각 5차의 4차 부모로 잽니다.
-const JOB_IDS = arg('--jobs', 'hero,grandMagus,guardianDeity,crimsonAvatar,lifeOcean').split(',');
+const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion,crimsonAvatar,lifeOcean').split(',');
 const HOURS = Number(arg('--hours', 1)), SEEDS = Number(arg('--seeds', 2)), TICKS = Math.round(HOURS * 1800);
 const RESEARCH_FULL = { attack: 150, magicAttack: 150, hp: 150, guard: 75, magicGuard: 75, crit: 15, critDamage: 20, penetration: 10, evasion: 15, lifesteal: 15, manaRegen: 8, recovery: 8, ap: 12 };
 const GEAR_BY_REBIRTH = r => r < 20 ? [2, 15] : r < 30 ? [3, 17] : r < 40 ? [3, 20] : r < 50 ? [4, 20] : [5, 22];
