@@ -372,7 +372,7 @@ test('v25.14 defense expansion: 11 jobs wired, resist scaling uses ward affinity
     const { JOBS, LINEAGES } = await mods.load('data/classes'); const { SKILLS } = await mods.load('data/skills'); const { ACTIVE_SKILL_BALANCE } = await mods.load('data/skill-balance');
     const ids = ['bellWarden', 'eonTurtle', 'worldTurtle', 'saltWarden', 'stillWarden', 'wardKeeper', 'abyssWarder', 'wardDeity'];
     for (const id of ids) { const j = JOBS.find(x => x.id === id); assert.ok(j && j.tree === 'defense', id); assert.ok(SKILLS.filter(sk => sk.job === id).length >= 2, id); }
-    // v3.139 루미너스는 복합(역전 딜러) 계열로 옮겼습니다.
+    // v3.140 루미너스는 복합(역전 딜러) 계열로 옮겼습니다.
     for (const id of ['holyKnight', 'holyCommander', 'lightOcean']) { const j = JOBS.find(x => x.id === id); assert.ok(j && j.tree === 'hybrid', id); assert.ok(SKILLS.filter(sk => sk.job === id).length >= 2, id); }
     ids.push('holyKnight', 'holyCommander', 'lightOcean');
     for (const sk of SKILLS.filter(sk => ids.includes(sk.job) && sk.type === 'active')) assert.ok(ACTIVE_SKILL_BALANCE[sk.id], sk.id);

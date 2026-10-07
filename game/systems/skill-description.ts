@@ -39,7 +39,7 @@ function statusLabel(sk: Skill) {
  * 비어 있으면 기타 칸을 그리지 않습니다.
  */
 export function skillExtraNotes(sk: Skill): string[] {
-    if (sk.type === 'active') return [];
+    if (sk.type === 'active' || sk.disguise) return [];
     const notes: string[] = [];
     if (sk.perRebirth) notes.push(`환생마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);
     for (const pc of sk.perCount || []) notes.push(`${COUNT_WORD[pc.source]}${pc.per === 1 ? '' : ` ${pc.per.toLocaleString()}`}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
@@ -49,6 +49,7 @@ export function skillExtraNotes(sk: Skill): string[] {
     return notes;
 }
 export function skillBrief(sk: Skill): string {
+    if (sk.disguise) return sk.disguise;
     if (sk.type !== 'active') {
         const parts = byStatOrder(Object.entries(sk.levelEffects?.[0]?.bonus ?? sk.bonus ?? {})).map(([key, n]) => skillBonusText(key, n as number));
         // v3.70 능력치 수련 패시브: 기본 능력치 자체가 오릅니다.
@@ -79,6 +80,8 @@ export function skillBrief(sk: Skill): string {
 }
 /** Describes the effective values used by combat, including HP/MP scaling and follow-ups. */
 export function skillEffectLines(sk: Skill, level = 0): string[] {
+    // v3.139 위장 설명: 효과 줄 대신 적힌 글만 보여 줍니다.
+    if (sk.disguise) return [sk.disguise];
     const out: string[] = [];
     if (sk.type === 'active') {
         const base = sk.scaling === 'attr' && sk.scalingAttribute ? [sk.scalingAttack ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)} + 물리 공격 × ${number(sk.scalingAttack)}` : `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)}(배분 능력치, 공격력 미사용)`] : [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.scaling === 'dual' ? '(물리 공격 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해로 바꿈)' : '마법 공격(물리 피해로 바꿈)') : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];

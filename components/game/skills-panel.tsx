@@ -49,8 +49,8 @@ const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned 
     const effects = skillEffectLines(effective, level);
     // v3.5 간단히 보기: 고정 효과 + 누적·환생 비례 수치(지금 기준)를 칩으로 합치고, 칩으로 못 담는 조건은 ‘기타’ 칸에 모읍니다.
     const growthNow = sk.type === 'passive' ? passiveGrowthBonus(s, sk) : {}, growing = new Set(Object.keys(growthNow));
-    const passiveChips: Record<string, number> = { ...(effective.bonus || {}) as Record<string, number> };
-    for (const [key, n] of Object.entries(growthNow)) passiveChips[key] = (passiveChips[key] || 0) + n;
+    const passiveChips: Record<string, number> = sk.disguise ? {} : { ...(effective.bonus || {}) as Record<string, number> };
+    if (!sk.disguise) for (const [key, n] of Object.entries(growthNow)) passiveChips[key] = (passiveChips[key] || 0) + n;
     const extraNotes = [...skillExtraNotes(sk), ...(sk.type === 'passive' && !Object.keys(passiveChips).length && sk.desc && !skillExtraNotes(sk).length ? [sk.desc] : [])];
     const growth = detailed ? skillGrowthStages(sk) : [];
     const extremeTarget = extremeBreakTarget(sk), refinePracticeNow = refinePractice(s, sk.id), extreme = extremeBroken(s, sk.id);
@@ -72,7 +72,7 @@ const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned 
         {!detailed && <span className={`skill-status-badge ${equipped && usable ? 'on' : !acquired || !usable ? 'off' : ''}`}>{equipped ? (usable ? '장착 중' : '장착 · 사용 불가') : !acquired ? '미습득' : !usable ? '계승 필요' : '사용 가능'}</span>}
         {detailed && <div className="skill-state-row" aria-label="스킬 상태"><span className={acquired ? 'on' : 'off'}><small>습득</small>{acquired ? '습득' : '미습득'}</span><span className={!sk.job || isInherited ? 'on' : 'off'}><small>다른 직업</small>{!sk.job ? '공용 · 모든 직업' : isInherited ? '계승 완료 · 사용 가능' : '계승 필요'}</span><span className={equipped ? (usable ? 'on' : 'warn') : 'off'}><small>장착</small>{equipped ? (usable ? '장착 중' : '장착 · 지금은 사용 불가') : '미장착'}</span></div>}
         {detailed && <div className="skill-level-line"><strong>{acquired ? `성장 Lv.${level}` : '미해금'} <small>/ 최대 {max}{lb > 0 ? ` · 한계돌파 ${lb}단계` : ''}{acquired ? ` · SP Lv.${Math.min(max, Math.max(0, rank - 1))} · 숙련 Lv.${Math.min(max, mastery - lb)} 중 높은 값` : ''}</small></strong>{!acquired && <span>{inheritanceText}</span>}<TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" className="info-trigger" aria-label={`${sk.name} 현재 효과와 다음 강화`}><Info size={16}/></button></TooltipTrigger><TooltipContent className="game-tooltip"><strong>성장 Lv.{level} / {max}</strong><p>{effects.join(' · ')}</p><p>다음 강화: {hint}</p></TooltipContent></Tooltip></TooltipProvider></div>}
-        {!detailed && <><p className="skill-current-description">{sk.id === 'boneLegacy' ? '처음에는 생존력이 낮아지지만, 성장하면 체력·방어와 장착 AP 여유를 얻습니다.' : sk.desc || skillBrief(sk)}</p></>}{sk.id === 'rareSense' && <p className="skill-specific-note">몬스터 출현률과 장비 등급 확률은 바뀌지 않습니다.</p>}
+        {!detailed && <><p className="skill-current-description">{sk.disguise || sk.desc || skillBrief(sk)}</p></>}{sk.id === 'rareSense' && <p className="skill-specific-note">몬스터 출현률과 장비 등급 확률은 바뀌지 않습니다.</p>}
         {sk.unlockJobMastery && (detailed || !acquired) && <div className="skill-unlock-note">최초 해금: {jobById(sk.job)?.name} 숙련도 <b>{(s.jobMastery[sk.job!] || 0).toLocaleString()} / {sk.unlockJobMastery.toLocaleString()}</b><small>해금 전에는 SP로 구매·계승할 수 없습니다.</small></div>}
         {detailed && (sk.sourceEnemySkill && <div className="skill-origin">몬스터 원형: {ENEMY_SKILLS.find(x => x.id === sk.sourceEnemySkill)?.name}</div>)}
         {detailed && sk.masteryGain && <div className="skill-unlock-note"><b>대상 처치 시 숙련 ×{1 + masteryGainBonus(sk, level)}</b><span>{masteryConditionText(sk)}</span><small>현재 직업·장착 스킬에 적용 · 가장 높은 보너스 하나만 · 최대 ×10</small></div>}

@@ -58,7 +58,7 @@ test('v24.2 songs cost 0 AP and only bard-lineage jobs may equip them', () => {
     assert.ok(JOBS.find(j => j.id === 'siren'));
 });
 
-test('v25.24 swap scaling: brawnWave deals magic damage from physical attack; v3.139 Luminous oath deals physical damage from magic attack', () => {
+test('v25.24 swap scaling: brawnWave deals magic damage from physical attack; v3.140 Luminous oath deals physical damage from magic attack', () => {
     const brawn = SKILLS.find(x => x.id === 'brawnWave'), fist = SKILLS.find(x => x.id === 'oath');
     assert.equal(brawn.damageType, 'magic'); assert.equal(brawn.scaling, 'swap'); assert.equal(fist.damageType, 'physical'); assert.equal(fist.scaling, 'swap');
     const strong = hit(fighter('brawnWave', { stats: { attack: 300, magic: 0 } }), target()), weak = hit(fighter('brawnWave', { stats: { attack: 0, magic: 300 } }), target());
