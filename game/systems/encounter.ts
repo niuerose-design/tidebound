@@ -25,7 +25,7 @@ import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
-import { dismantleEssence, saleValue, keepsAcrossLives, equippedAffixTotal } from './equipment';
+import { dismantleInto, primalGaugeGain, primalGaugeNote, saleValue, keepsAcrossLives, equippedAffixTotal } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, ownedOnyx, onyxSetBonus } from '../data/onyx';
 import { offlineTally } from './offline-tally';
@@ -101,21 +101,21 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     // v3.35 설정에서 고른 등급(여러 개)만 처리합니다. 칠흑·잠금 장비는 어떤 경우에도 처리하지 않습니다.
     const keep = item.locked || keepsAcrossLives(item) || !s.itemBook?.[itemKey(slot, rarity)];
     if (!keep && s.autoSell && autoGrades(s, 'salvage').includes(item.rarity)) {
-        const essence = dismantleEssence(item, s);
-        s.essence = (s.essence || 0) + essence;
-        addLog(s, `자동 정리: ${item.name} 분해 · 정수 +${essence}`, 'reward');
+        // v3.125 자동 분해도 태초 계승 게이지를 채웁니다(전에는 정수만 주고 게이지를 빠뜨림).
+        const got = dismantleInto(s, [item]);
+        addLog(s, `자동 정리: ${item.name} 분해 · 정수 +${got.essence}${primalGaugeNote(s, got.gauge)}`, 'reward');
         return;
     }
     // v3.24 자동 판매기: 같은 조건의 드롭을 골드로 팝니다. v3.35 자동 분해기와 함께 켤 수 있고, 같은 등급이면 위에서 분해가 먼저입니다.
     if (!keep && s.autoVend && autoGrades(s, 'vend').includes(item.rarity)) {
         const gold = saleValue(item);
         s.gold += gold;
-        addLog(s, `자동 정리: ${item.name} 판매 +${gold} G`, 'reward');
+        addLog(s, `자동 정리: ${item.name} 판매 +${gold} G${primalGaugeNote(s, primalGaugeGain(s, [item]))}`, 'reward');
         return;
     }
     if (s.inventory.length >= inventoryCap(s)) {
         s.gold += item.power * 3;
-        addLog(s, `가방 가득 참: ${item.name} 자동 판매 +${item.power * 3} G`, 'reward');
+        addLog(s, `가방 가득 참: ${item.name} 자동 판매 +${item.power * 3} G${primalGaugeNote(s, primalGaugeGain(s, [item]))}`, 'reward');
     }
     else {
         s.inventory.push(item);
@@ -288,7 +288,9 @@ export function reward(s: State, rng: () => number) {
     const won = stats(s);
     const perFish = Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
-    const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && rng() < goldenChance;
+    // v3.125 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
+    const rareFoe = e.id === MIMIC.id || e.id === EXP_NURI.id || !!e.onyx;
+    const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && !rareFoe && rng() < goldenChance;
     const gold = Math.floor(perFish * size * big) + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     // v27.79 계급장: 처치 수(무리는 마릿수)만큼 계급 경험치. ‘전과 기록’ 특전이 마리당 더 셉니다. 기록이 없던 세이브는 지금까지의 처치 수에서 시작합니다. 진급하면 알립니다.

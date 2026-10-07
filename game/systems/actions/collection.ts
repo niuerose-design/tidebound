@@ -1,11 +1,11 @@
 /** 도감·연구 보상 */
-import type { State } from '../../types';
+import type { State, Item } from '../../types';
 import { FISH } from '../../data/world';
 import { SLOTS, RARITIES } from '../../data/balance';
 import { bookPending, itemKey } from '../progression';
 import type { ActionHandlers } from './types';
 import { addLog } from '../state';
-import { keepsAcrossLives } from '../equipment';
+import { keepsAcrossLives, primalGaugeGain, primalGaugeNote } from '../equipment';
 /** 한 몬스터의 미수령 연구 보상을 모두 지급합니다. 각 단계는 bookClaims로 한 번만 지급됩니다. */
 function claimBookRewards(s: State, id: string) {
     const pending = bookPending(s, id);
@@ -39,11 +39,13 @@ export const collectionActions: ActionHandlers = {
             throw Error('이미 등록한 종류입니다.');
         s.itemBook[key] = true;
         s.inventory = s.inventory.filter(x => x.id !== id);
-        addLog(s, `${item.name} 물건도감 등록 · 장비 1개 소모`, 'reward');
+        // v3.125 등록으로 소모된 태초도 계승 게이지를 채웁니다.
+        const gauge = primalGaugeGain(s, [item]);
+        addLog(s, `${item.name} 물건도감 등록 · 장비 1개 소모${primalGaugeNote(s, gauge)}`, 'reward');
     },
     /** v26.8 일괄 등록: 미등록 슬롯·등급마다 가방에서 가장 약한(위력 낮은) 장비 1개를 골라 한 번에 등록합니다. 보호·유물은 제외. */
     registerItemAll(s) {
-        const picked: string[] = [];
+        const picked: string[] = [], consumed: Item[] = [];
         for (const slot of Object.keys(SLOTS)) for (let rarity = 0; rarity < RARITIES.length; rarity++) {
             const key = itemKey(slot, rarity);
             if (s.itemBook[key]) continue;
@@ -51,9 +53,10 @@ export const collectionActions: ActionHandlers = {
             if (!candidate) continue;
             s.itemBook[key] = true;
             s.inventory = s.inventory.filter(x => x.id !== candidate.id);
-            picked.push(candidate.name);
+            picked.push(candidate.name); consumed.push(candidate);
         }
         if (!picked.length) throw Error('등록할 수 있는 미등록 장비가 가방에 없습니다.');
-        addLog(s, `물건도감 일괄 등록 ${picked.length}종 · ${picked.join(', ')} 소모`, 'reward');
+        const gauge = primalGaugeGain(s, consumed);
+        addLog(s, `물건도감 일괄 등록 ${picked.length}종 · ${picked.join(', ')} 소모${primalGaugeNote(s, gauge)}`, 'reward');
     },
 };
