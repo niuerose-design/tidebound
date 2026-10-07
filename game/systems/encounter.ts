@@ -25,10 +25,11 @@ import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
-import { dismantleEssence, saleValue, keepsAcrossLives, equippedAffixTotal, tuneOnyx } from './equipment';
+import { dismantleEssence, saleValue, keepsAcrossLives, equippedAffixTotal } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
-import { ONYX, onyxBossFor, onyxById, onyxChance, onyxAccessory, ownedOnyx, onyxSetBonus, onyxCodexKey } from '../data/onyx';
+import { ONYX, onyxBossFor, onyxById, onyxChance, ownedOnyx, onyxSetBonus } from '../data/onyx';
 import { offlineTally } from './offline-tally';
+import { grantOnyx } from './onyx-grant';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -380,12 +381,7 @@ export function reward(s: State, rng: () => number) {
         else if (dropRoll >= ONYX.drop && miss + 1 < ONYX.dropPity) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · 장신구를 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
         else {
             s.onyxMiss[e.onyx] = 0;
-            const stageLevel = STAGES.find(x => x.id === s.stage)?.level || fishLevelOf(e.id), item = onyxAccessory(bossDef, `onyx-${e.onyx}-${s.turn}`, stageLevel);
-            // v3.77 칠흑 장신구의 무작위 옵션은 최고 굴림입니다. 위력은 그대로 (레벨 + 2) × 5.2이고 골드로 레벨을 올려 키웁니다.
-            item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', stageLevel);
-            tuneOnyx(item);
-            s.inventory.push(item); s.itemBook ??= {}; s.itemBook[onyxCodexKey(e.onyx)] = true;
-            addLog(s, `✦ ${bossDef.name} 격파 · 칠흑 장신구 ‘${item.name}’ 획득! 환생해도 남습니다 (보유 ${ownedOnyx(s).size}/7종) · 물건 도감 자동 등록`, 'reward');
+            grantOnyx(s, e.onyx, STAGES.find(x => x.id === s.stage)?.level || fishLevelOf(e.id), rng, `${bossDef.name} 격파`);
         }
     }
     const fish = FISH.find(f => f.id === e.id)!;

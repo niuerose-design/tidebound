@@ -508,3 +508,25 @@ test('v3.82 removing an imprinted relic line is free and empties that slot', () 
     assert.deepEqual(relic.affixes.map(x => x.id), ['glassCannon']); assert.equal(s.gold, 0);
     assert.throws(() => act(s, { type: 'removeImprint', id: 'r', value: '5' }, 0), /지울/);
 });
+
+test('v3.114 rebirth 50 · 100 onyx milestones: random accessory once per character (retroactive on load, not again after ascension), repeat kinds awaken; ascension log keeps earlier records', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const G = await L.load('systems/onyx-grant'), Mig = await L.load('systems/migrations'), O = await L.load('data/onyx');
+    const onyx = s => [...s.inventory, ...Object.values(s.equipment)].filter(i => i?.onyx);
+    // 환생해서 50회에 닿으면 1개.
+    const s = newState(0); s.rebirths = 49; s.level = 100; act(s, { type: 'rebirth' }, 1000);
+    assert.equal(s.rebirths, 50); assert.deepEqual(s.onyxMilestones, [50]); assert.equal(onyx(s).length, 1); assert.ok(s.logs.some(l => l.text.includes('환생 50회 달성 보상')));
+    s.level = 100; act(s, { type: 'rebirth' }, 2000); assert.equal(onyx(s).length, 1, 'no repeat at 51');
+    // 소급: 이미 120회인 세이브를 불러오면 50 · 100 두 개(같은 종이면 각성).
+    const old = newState(0); old.rebirths = 120; old.version = (await L.load('data/balance')).SAVE_VERSION; Mig.migrateState(old, 0);
+    assert.deepEqual(old.onyxMilestones, [50, 100]); const got = onyx(old); assert.ok(got.length === 2 || got.length === 1 && got[0].onyxRank === 1, JSON.stringify(got.map(i => [i.onyx, i.onyxRank])));
+    Mig.migrateState(old, 0); assert.equal(onyx(old).length, got.length, 'idempotent');
+    // 같은 종 두 번: 각성.
+    const same = newState(0); same.rebirths = 100; G.grantOnyxMilestones(same, () => 0); assert.equal(onyx(same).length, 1); assert.equal(onyx(same)[0].onyx, O.ONYX_BOSSES[0].id); assert.equal(onyx(same)[0].onyxRank, 1);
+    // 승천: 칠흑은 사라지고(유물 · 칠흑과 같음) 이정표는 남아 다시 50회에 닿아도 주지 않음. 승천 기록은 이어 붙음.
+    const a = newState(0); a.rebirths = 100; G.grantOnyxMilestones(a, () => .5); act(a, { type: 'ascend' }, 5000);
+    assert.deepEqual(a.onyxMilestones, [50, 100]); a.rebirths = 49; a.level = 100; act(a, { type: 'rebirth' }, 6000); assert.equal(a.logs.filter(l => l.text.includes('달성 보상')).length, 0, 'not again after ascension');
+    a.rebirths = 125; act(a, { type: 'ascend' }, 9000); assert.deepEqual(a.ascensionLog.map(x => [x.n, x.rebirths]), [[1, 100], [2, 125]], 'v3.114 earlier ascension records survive');
+    // 승천 기록만 있는 캐릭터(지금 생은 10회)도 소급: 지난 승천에서 100회에 닿았음.
+    const b = newState(0); b.rebirths = 10; b.ascensionLog = [{ n: 1, at: 0, rebirths: 100, abyssBest: 0, realMs: 0, kills: 0 }]; G.grantOnyxMilestones(b, () => .3); assert.deepEqual(b.onyxMilestones, [50, 100]);
+});
