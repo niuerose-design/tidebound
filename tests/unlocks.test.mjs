@@ -1,5 +1,5 @@
 // 직업 개편 2단계: ??? 계열의 숨은 조건과 숙달 규칙. v3.62 문(윤회의 문·발견의 문·운영 문 열기)을 없애고 숨은 조건만 남겼습니다(docs/concept.md 11.7).
-import { newState, act, advance, canChangeJob, jobRequirements, jobMastered, jobMasteryTarget, migrateState, unlocksMod as unlocks, JOBS, SKILLS, passiveGrowthBonus, assert, test } from './harness.mjs';
+import { newState, act, advance, canChangeJob, jobRequirements, jobMastered, jobMasteryTarget, migrateState, unlocksMod as unlocks, JOBS, SKILLS, lineageOf, passiveGrowthBonus, assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 const { progressCounts } = await loadGame().load('game/systems/progression.js');
 
@@ -15,7 +15,7 @@ test('v3.62 hidden unlocks: record conditions (v3.64 seven); an unmet one shows 
     s.deaths = 10; act(s, { type: 'job', id: 'undead' }, 0); assert.equal(s.job, 'undead');
     act(s, { type: 'job', id: 'fisher' }, 0); s.deaths = 0;
     assert.equal(canChangeJob(s, 'undead'), true, 'a job once entered ignores its hidden condition');
-    assert.equal(unlocks.unlockMet({}, 'skeleton'), null, 'later jobs in a ??? lineage have no hidden condition');
+    assert.equal(unlocks.unlockMet({}, 'manaLeviathan'), null, 'later jobs in a ??? lineage have no hidden condition');
 });
 
 test('v3.62 hidden unlocks count play records', () => {
@@ -77,6 +77,20 @@ test('v3.64 retired hidden jobs: the six jobs and their skills are gone, and old
     assert.equal(s.jobMastery.nightHeron, undefined); assert.deepEqual(s.doorsOpened, ['undead']);
     for (const rec of [s.learned, s.skillPractice, s.skillSpent, s.skillInheritances]) assert.ok(!('heronStill' in rec) && !('nightEyes' in rec));
     assert.ok(!s.skills.includes('heronStill') && !s.skills.includes('nightEyes')); assert.deepEqual(s.presets.a.skills, ['hookShot']);
+});
+
+test('v3.135 Night Walker lineage retired: only 망인 (undead) remains in the 제약 lineage; old saves move to 망인 and lose the deleted jobs\' and skills\' records', () => {
+    for (const id of ['skeleton', 'bonecaster', 'soulHarvester', 'lichKing', 'deathEmperor']) assert.equal(job(id), undefined, id);
+    for (const id of ['marrowGuard', 'ossuaryRite', 'harvestEcho', 'soulTax', 'soulTyranny', 'undyingThrone', 'soulReap', 'undeathThrone']) assert.equal(SKILLS.find(x => x.id === id), undefined, id);
+    assert.equal(job('undead').name, '망인'); assert.equal(lineageOf(job('undead')), 'restraint');
+    assert.deepEqual(SKILLS.filter(x => x.job === 'undead').map(x => x.name), ['무덤의 챔질', '끝나지 않는 골격']);
+    const s = newState(0); s.job = 'deathEmperor'; s.unlockedJobs.push('undead', 'skeleton', 'lichKing', 'deathEmperor'); s.jobMastery.lichKing = 900; s.jobMastery.undead = 300;
+    s.learned.soulReap = 2; s.skillPractice.soulReap = 5000; s.skillInheritances.undeathThrone = true; s.learned.graveHook = 1; s.skills.push('soulReap', 'graveHook'); s.presets = { a: { name: 'a', skills: ['soulTyranny', 'hookShot'] } };
+    migrateState(s); migrateState(s);
+    assert.equal(s.job, 'undead'); assert.ok(s.unlockedJobs.includes('undead') && !s.unlockedJobs.some(id => ['skeleton', 'lichKing', 'deathEmperor'].includes(id)));
+    assert.equal(s.jobMastery.lichKing, undefined); assert.equal(s.jobMastery.undead, 300, 'the 망인 record stays');
+    assert.ok(!('soulReap' in s.learned) && !('soulReap' in s.skillPractice) && !('undeathThrone' in s.skillInheritances)); assert.equal(s.learned.graveHook, 1);
+    assert.ok(!s.skills.includes('soulReap')); assert.deepEqual(s.presets.a.skills, ['hookShot']);
 });
 
 test('v3.64 the fallen angler grows with deaths', () => {

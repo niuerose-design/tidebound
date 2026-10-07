@@ -126,8 +126,8 @@ test('Research skill conditions and boss origins reference actual game data',()=
 
 test('Bone mastery relieves only the current job\'s negative multipliers',()=>{
  const jobHpFactor=st=>{const trace={};stats(st,trace);return (trace.hp||[]).filter(t=>t.source==='job'&&t.factor!==undefined).reduce((x,t)=>x*t.factor,1);};
- const s=newState(0);s.level=40;s.job='skeleton';s.learned.boneLegacy=1;s.skills=['boneLegacy'];
- const hp=JOBS.find(j=>j.id==='skeleton').hp;assert.ok(hp<1);
+ const s=newState(0);s.level=40;s.job='undead';s.learned.boneLegacy=1;s.skills=['boneLegacy'];
+ const hp=JOBS.find(j=>j.id==='undead').hp;assert.ok(hp<1);
  for(const [wins,relief] of [[0,0],[1e5,.15],[1e6,.5],[5e6,1]]){s.skillPractice.boneLegacy=wins;assert.ok(Math.abs(jobHpFactor(s)-(1-(1-hp)*(1-relief)))<1e-9,String(wins));}
  // 장착하지 않으면 숙련만으로는 회복하지 않습니다.
  s.skills=[];assert.ok(Math.abs(jobHpFactor(s)-hp)<1e-9);

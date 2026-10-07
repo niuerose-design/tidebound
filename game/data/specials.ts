@@ -16,5 +16,5 @@ export const SPECIAL_SKILLS: Skill[] = [
     {id: 'glassLance', name: '유리 창', desc: '(물리 공격) × 2.4 피해. 빈사 상태의 적에게 피해 +50%.', type: 'active', level: 10, job: 'glassHarpooner', chance: 0.3, cooldown: 4, multiplier: 2.4, cost: 3, damageBonusCondition: 'lowHp', conditionalDamageBonus: 0.5, rankEffects: {multiplierScale: 0.05, chanceIncrease: 0.02, manaReduction: 0, cooldownReduction: 0}, masteryMilestones: [250, 1200, 4500, 14000], manaCost: 0},
     {id: 'glassHeart', name: '유리 심장', desc: '치명타 +10%p, 치명 피해 +30%p. 계승하면 어느 직업이든 한 방이 매워집니다.', type: 'passive', level: 10, job: 'glassHarpooner', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: {crit: 0.1, critDamage: 0.3}, rankEffects: undefined, masteryMilestones: [250, 1200, 4500, 14000]},
 ];
-/** 제약 계보(공개). 玄(glyphMonk)도 이 계보입니다. */
+/** 제약 계보(공개). 玄(glyphMonk)도 이 계보입니다. v3.135 히든 망인(undead, game/secret)도 이 계보로 돌아왔습니다. */
 export const RESTRAINT_LINEAGE: Lineage = { id: 'restraint', name: '제약 계보', tree: 'mystery', summary: '일부러 큰 제약을 걸고 그 대가로 강해지는 특수 직업입니다.' };
