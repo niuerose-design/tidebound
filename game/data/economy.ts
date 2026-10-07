@@ -91,8 +91,8 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'autoStar', name: '자동 강화', desc: '장비 보관함의 강화 칸에서 목표 별과 골드 한도를 정하면 스타포스를 한 번에 자동으로 시도합니다(확률·비용은 수동과 같고 파괴되면 멈춤)', max: 1, base: 10, step: 0, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '자동 강화', levels: ['없음', '해금'] },
     /** v3.17 불굴의 의지: 쓰러진 뒤 회복 대기 -3턴/단계(기본 25턴, 최저 10턴). 환생 10회부터. */
     { id: 'revive', name: '불굴의 의지', desc: '쓰러진 뒤 회복 대기 -3턴(6초) (기본 25턴 = 50초, 최저 10턴)', max: 5, base: 4, step: 3, tab: 'utility', group: 'basic', rebirth: 10, per: 3, unit: 'flat', label: '회복 대기 단축', suffix: '턴' },
-    /** v3.97 추적술: 사냥터에서 다음 몬스터를 찾는 시간 -0.1초/단계(기본 3초, 최저 2초, systems/search.ts). */
-    { id: 'tracking', name: '추적술', desc: '사냥터에서 다음 몬스터를 찾는 시간 -0.1초 (기본 3초, 최저 2초)', max: 5, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 2, per: .1, unit: 'flat', label: '탐색 시간 단축', suffix: '초' },
+    /** v3.97 추적술: 사냥터에서 다음 몬스터를 찾는 시간 -1초(기본 4초, 최저 2초, systems/search.ts). */
+    { id: 'tracking', name: '추적술', desc: '사냥터에서 다음 몬스터를 찾는 시간 -1초 (기본 4초, 최저 2초)', max: 1, base: 6, step: 0, tab: 'utility', group: 'basic', rebirth: 2, per: 1, unit: 'flat', label: '탐색 시간 단축', suffix: '초' },
     { id: 'mastery', name: '숙련의 기억', desc: '스킬·직업 숙련 획득 +3%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .03, unit: 'percent', label: '숙련 획득' },
     { id: 'gold', name: '황금 비', desc: '처치·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '처치·던전 골드' },
     { id: 'drop', name: '보물의 감각', desc: '장비 드롭 확률 +10%', max: 10, base: 3, step: 3, tab: 'gold', per: .1, unit: 'percent', label: '장비 드롭 확률' },

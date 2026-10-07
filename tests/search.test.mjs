@@ -9,15 +9,13 @@ const { STAGES } = await load('game/data/world.js');
 const hunter = () => { const s = newState(0); s.running = true; s.attributes.str = 400; s.statPoints = 0; s.hp = stats(s).hp; return s; };
 const battleTurns = s => new Set(s.logs.filter(l => l.type === 'battle').map(l => l.turn));
 
-test('v3.97 search: after a kill the next turns have no combat; 3s alternates 1 and 2 turns, then a monster appears', () => {
-    const s = hunter(), rng = () => .5;
-    const gaps = [];
-    for (let kills = 0, last = 0; kills < 5;) {
-        const before = s.kills; tick(s, rng);
-        if (s.kills > before) { if (last) gaps.push(s.turn - last - 1); last = s.turn; kills++; }
-    }
-    assert.deepEqual(gaps, [1, 2, 1, 2], 'search turns between one-turn kills (carry 1s)');
+test('v3.97 search: 4s base = two quiet turns after each kill; 3s alternates 1 and 2; then a monster appears', () => {
+    const gapsOf = s => { const rng = () => .5, gaps = []; for (let kills = 0, last = 0; kills < 5;) { const before = s.kills; tick(s, rng); if (s.kills > before) { if (last) gaps.push(s.turn - last - 1); last = s.turn; kills++; } } return gaps; };
+    const s = hunter();
     assert.equal(S.searchTime(s).ms, S.SEARCH.baseMs);
+    assert.deepEqual(gapsOf(s), [2, 2, 2, 2], 'search turns between one-turn kills');
+    const r = hunter(); r.permanent.tracking = 1;
+    assert.deepEqual(gapsOf(r), [1, 2, 1, 2], '3s: carry 1s');
 });
 
 test('v3.97 search: frozen combat (no cooldown/awakening/effect change) and per-second regen from turn regen', () => {
@@ -33,17 +31,14 @@ test('v3.97 search: frozen combat (no cooldown/awakening/effect change) and per-
     assert.ok(!battleTurns(s).has(s.turn), 'no battle log on a search turn');
 });
 
-test('v3.97 search: research, passives and a familiar stage cut it down to the 2s floor (one turn every time)', () => {
+test('v3.97 search: research -1s and one search passive -1s (passives do not stack) reach the 2s floor', () => {
     const s = hunter();
-    s.permanent.tracking = 5;
-    assert.equal(S.searchTime(s).ms, 2500);
-    const passive = SKILLS.find(sk => sk.searchCut);
-    assert.ok(passive && passive.desc.includes('찾는 시간'), 'search passive described');
-    s.skills = [passive.id]; assert.equal(S.searchTime(s).ms, 2200);
-    for (const id of STAGES.find(x => x.id === s.stage).fish) s.book[id] = 50;
-    assert.ok(S.familiarStage(s)); assert.equal(S.searchTime(s).ms, 2000);
-    s.skills = SKILLS.filter(sk => sk.searchCut).map(sk => sk.id); assert.equal(S.searchTime(s).ms, S.SEARCH.minMs, 'never below 2s');
-    s.searchCarry = 0; for (let i = 0; i < 4; i++) { S.startSearch(s); assert.equal(s.searching, 1); assert.equal(s.searchCarry, 0); }
+    s.permanent.tracking = 1; assert.equal(S.searchTime(s).ms, 3000);
+    const passives = SKILLS.filter(sk => sk.searchCut);
+    assert.equal(passives.length, 3); assert.ok(passives.every(sk => sk.desc.includes('찾는 시간')), 'search passives described');
+    s.skills = [passives[0].id]; assert.equal(S.searchTime(s).ms, S.SEARCH.minMs);
+    s.permanent.tracking = 0; s.skills = passives.map(sk => sk.id); assert.equal(S.searchTime(s).ms, 3000, 'search passives do not stack');
+    s.permanent.tracking = 1; s.searchCarry = 0; for (let i = 0; i < 4; i++) { S.startSearch(s); assert.equal(s.searching, 1); assert.equal(s.searchCarry, 0); }
 });
 
 test('v3.97 search: none in dungeons, none after a defeat, and switching hunting grounds skips it', () => {
