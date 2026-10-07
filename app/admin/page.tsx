@@ -111,14 +111,14 @@ export default function AdminPage() {
     const apply = async () => {
         if (!preview || !confirm(`${preview.data.before.name}(${preview.data.before.username || '아이디 없음'} · ${preview.data.before.slot}번 슬롯)의 이번 생을 처음 상태로 되돌릴까요?`)) return;
         const d = await call({ action: 'apply', id: preview.id, revision: preview.data.before.revision });
-        if (d) { setDone(`적용했습니다: ${line(d.after)} · 유저 화면은 다음 동기화(최대 30초) 때 바뀝니다.`); setPreview(null); setPlayers(null); }
+        if (d) { setDone(`적용했습니다: ${line(d.after)} · 유저 화면은 다음 동기화(사냥 중 5초 · 대기 중 최대 60초) 때 바뀝니다.`); setPreview(null); setPlayers(null); }
     };
     const adjust = async () => {
         if (!edit) return;
         const gold = edit.gold.replace(/[,\s]/g, ''), pearls = edit.pearls.replace(/[,\s]/g, '');
         if (!confirm(`${edit.player.name}(${edit.player.username || '아이디 없음'} · ${edit.player.slot}번 슬롯)\n골드 ${edit.player.gold.toLocaleString()} → ${gold === '' ? '그대로' : Number(gold).toLocaleString()}\n세계석 ${edit.player.pearls.toLocaleString()} → ${pearls === '' ? '그대로' : Number(pearls).toLocaleString()}\n이대로 바꿀까요?`)) return;
         const d = await call({ action: 'adjust', id: edit.player.id, gold: gold === '' ? undefined : Number(gold), pearls: pearls === '' ? undefined : Number(pearls) });
-        if (d) { setDone(`조정했습니다: ${line(d.after)} · 유저 화면은 다음 동기화(최대 30초) 때 바뀝니다.`); setEdit(null); setPlayers(ps => ps && ps.map(p => p.id === d.after.id ? d.after : p)); }
+        if (d) { setDone(`조정했습니다: ${line(d.after)} · 유저 화면은 다음 동기화(사냥 중 5초 · 대기 중 최대 60초) 때 바뀝니다.`); setEdit(null); setPlayers(ps => ps && ps.map(p => p.id === d.after.id ? d.after : p)); }
     };
     const loadEvents = async () => { const d = await call({ action: 'events' }); if (d) setEvents(d); };
     const saveEvent = async () => {
