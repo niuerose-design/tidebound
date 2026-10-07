@@ -1,4 +1,4 @@
-import type { State } from '../types';
+import type { Item, State } from '../types';
 import { rollAffixes } from '../data/gear';
 import { STAGES } from '../data/world';
 import { ONYX, ONYX_BOSSES, onyxAccessory, onyxById, onyxCodexKey, ownedOnyx } from '../data/onyx';
@@ -27,6 +27,26 @@ export function grantOnyx(s: State, bossId: string, level: number, rng: () => nu
     tuneOnyx(item);
     s.inventory.push(item); s.itemBook ??= {}; s.itemBook[onyxCodexKey(bossId)] = true;
     addLog(s, `✦ ${source} · 칠흑 장신구 ‘${item.name}’ 획득! 환생해도 남습니다 (보유 ${ownedOnyx(s).size}/${ONYX_BOSSES.length}종) · 물건 도감 자동 등록`, 'reward');
+    return 'new' as const;
+}
+
+/**
+ * v3.116 금고에서 꺼낸 칠흑 장신구를 받습니다. 별 · 각성 단계는 그대로이고, 이미 같은 종을 가졌으면 그 장신구가 각성 +1(다 찼으면 세계석)입니다.
+ * 소식은 띄우지 않습니다(onyxGift 0).
+ */
+export function receiveOnyx(s: State, item: Item) {
+    const boss = onyxById(item.onyx!)!;
+    const own = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.onyx === item.onyx);
+    if (own) {
+        const rank = own.onyxRank || 0;
+        if (rank < ONYX.awakenMax) { own.onyxRank = rank + 1; addLog(s, `✦ 금고의 ${boss.accessory.name} · 이미 가진 칠흑이라 각성 ${own.onyxRank}/${ONYX.awakenMax}! 고유 옵션 +${Math.round(own.onyxRank * ONYX.awakenStep * 100)}%`, 'reward'); }
+        else { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ 금고의 ${boss.accessory.name} · 각성까지 마쳐 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
+        return 'awaken' as const;
+    }
+    const taken = new Set([...s.inventory, ...Object.values(s.equipment)].map(x => x?.id));
+    const got = { ...item, id: taken.has(item.id) ? `onyx-${item.onyx}-${s.turn}-v` : item.id };
+    s.inventory.push(got); s.itemBook ??= {}; s.itemBook[onyxCodexKey(item.onyx!)] = true; (s.onyxGift ??= {})[item.onyx!] = 0;
+    addLog(s, `✦ 계정 금고에서 칠흑 장신구 ‘${got.name}’을(를) 꺼냈습니다 (보유 ${ownedOnyx(s).size}/${ONYX_BOSSES.length}종)`, 'reward');
     return 'new' as const;
 }
 

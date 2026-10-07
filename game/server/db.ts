@@ -14,7 +14,8 @@ export type ChatRow = { id: number; channel: string; account_id: string; name: s
 export type GuildRow = { id: string; name: string; code: string; leader: string; treasury: number; created_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; points: number };
 export type GuildMemberRow = { account_id: string; guild_id: string; name: string; joined_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; claimed: string };
 /** v25.13 계정 공유 금고. pearl_out은 이번 주(week) 세계석 인출 합계(주당 상한용). */
-export type WalletRow = { account_id: string; pearls: number; essence: number; week: string; pearl_out: number };
+/** v3.116 items: 금고에 넣은 칠흑 장신구 목록(JSON, VaultOnyx[]). */
+export type WalletRow = { account_id: string; pearls: number; essence: number; week: string; pearl_out: number; items?: string };
 /** v27.43 제단(서버에 한 줄). god_state: none(깨어난 적 없음)·alive·slain·gone(시간이 지나 떠남은 god_until로 판단). */
 export type AltarRow = { /** v27.91 월드보스: 세대·종류·상태(none/alive/slain/gone)·남은/최대 공유 체력·떠나는 시각·마지막 일격·격파 시각 */ raid_gen: number; raid_id: string; raid_state: string; raid_hp: number; raid_hp_max: number; raid_until: number; raid_slayer: string; raid_slain_at: number; gen: number; god_state: string; god: string; god_until: number; throne: string; throne_name: string; throne_since: number; throne_snapshot: string; tithe_gold: number; tithe_pearls: number; tithe_essence: number; total_gold: number; total_pearls: number; total_essence: number; total_points: number };
 /** 제단 게이지(축복·신 소환). until은 축복이 열려 있는 시각(신 소환은 쓰지 않음). */
@@ -205,6 +206,8 @@ const SCHEMA = [
     // v3.28 해커 조직: 조직 하나를 JSON 한 칸에 두고 revision으로 동시 수정을 막습니다(조직원 10명 이하라 한 행으로 충분).
     'CREATE TABLE IF NOT EXISTS crews (id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE, data TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0, updated_at BIGINT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS wallets (account_id TEXT PRIMARY KEY, pearls INTEGER NOT NULL DEFAULT 0, essence INTEGER NOT NULL DEFAULT 0, week TEXT NOT NULL DEFAULT \'\', pearl_out INTEGER NOT NULL DEFAULT 0)',
+    // v3.116 금고 칠흑 칸.
+    "ALTER TABLE wallets ADD COLUMN IF NOT EXISTS items TEXT NOT NULL DEFAULT '[]'",
 ];
 /**
  * v3.94 성능용 문장: 실패해도(예: 옛 행의 season이 숫자가 아님) 서버를 멈추지 않고 경고만 남깁니다.
@@ -309,7 +312,7 @@ function neonStorage(url: string): Storage {
             await q('UPDATE guild_members SET week=$2, catches=$3, clears=$4, bosses=$5, abyss=$6, donated=$7, claimed=$8 WHERE account_id=$1', [accountId, week, n.catches, n.clears, n.bosses, n.abyss, n.donated, claims]);
         },
         async renameGuildMember(accountId, name) { await q('UPDATE guild_members SET name=$1 WHERE account_id=$2', [name, accountId]); },
-        async getWallet(accountId) { const { rows } = await q<WalletRow>('SELECT account_id,pearls,essence,week,pearl_out FROM wallets WHERE account_id=$1', [accountId]); return rows[0] ? { ...rows[0], pearls: Number(rows[0].pearls), essence: Number(rows[0].essence), pearl_out: Number(rows[0].pearl_out) } : null; },
+        async getWallet(accountId) { const { rows } = await q<WalletRow>('SELECT account_id,pearls,essence,week,pearl_out,items FROM wallets WHERE account_id=$1', [accountId]); return rows[0] ? { ...rows[0], pearls: Number(rows[0].pearls), essence: Number(rows[0].essence), pearl_out: Number(rows[0].pearl_out) } : null; },
         async getAltar() {
             const { rows } = await q<AltarRow>("SELECT * FROM altar WHERE id='main'");
             return rows[0] ? numAltar(rows[0]) : { ...ALTAR_EMPTY };
@@ -369,7 +372,7 @@ function neonStorage(url: string): Storage {
             return { points: Number(rows[0]?.points || 0), above: Number(rows[0]?.above || 0) };
         },
         async countAltarAbove(week, points) { const { rows } = await q<{ n: string }>('SELECT COUNT(*) AS n FROM altar_offers WHERE week=$1 AND points>$2', [week, points]); return Number(rows[0]?.n || 0); },
-        async setWallet(w) { await q('INSERT INTO wallets (account_id,pearls,essence,week,pearl_out) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (account_id) DO UPDATE SET pearls=EXCLUDED.pearls, essence=EXCLUDED.essence, week=EXCLUDED.week, pearl_out=EXCLUDED.pearl_out', [w.account_id, w.pearls, w.essence, w.week, w.pearl_out]); },
+        async setWallet(w) { await q('INSERT INTO wallets (account_id,pearls,essence,week,pearl_out,items) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (account_id) DO UPDATE SET pearls=EXCLUDED.pearls, essence=EXCLUDED.essence, week=EXCLUDED.week, pearl_out=EXCLUDED.pearl_out, items=EXCLUDED.items', [w.account_id, w.pearls, w.essence, w.week, w.pearl_out, w.items || '[]']); },
     };
 }
 
