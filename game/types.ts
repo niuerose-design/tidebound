@@ -429,7 +429,7 @@ export type State = {
     ascensionLog?: AscensionRecord[];
     /** v3.114 환생 50 · 100회 확정 칠흑을 받은 이정표(캐릭터 평생 한 번, 환생 · 승천 유지). */
     onyxMilestones?: number[];
-    /** v3.115 이번에 환생 이정표로 새로 받은 칠흑(보스 id → 이정표). 소식 문구에만 쓰고 collectNews가 지웁니다. */
+    /** v3.115 이번에 환생 이정표로 새로 받은 칠흑(보스 id → 이정표). 소식 문구에만 쓰고 collectNews가 지웁니다. v3.116 0이면 금고에서 꺼낸 것이라 소식을 띄우지 않습니다. */
     onyxGift?: Record<string, number>;
     ascensionStart?: number;
     /** v27.6 한계돌파 단계(기술 id → 0~limitBreak.max). 환생해도 유지됩니다. */

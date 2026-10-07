@@ -65,6 +65,10 @@ assert.ok(data.pearls === 0 && data.essence === 0 && data.pearlOutLeft === 30, '
 await call('/api/vault', { action: 'deposit', kind: 'pearls', amount: 1 }, { expect: 400 });
 await call('/api/vault', { action: 'withdraw', kind: 'essence', amount: 1 }, { expect: 400 });
 await call('/api/vault', { action: 'deposit', kind: 'gold', amount: 1 }, { expect: 400 });
+// v3.116 금고 칠흑 칸: 빈 목록, 없는 칠흑 넣기 · 없는 칸 꺼내기 거부.
+assert.ok(Array.isArray(data.onyx) && data.onyx.length === 0, 'empty onyx vault');
+({ data } = await call('/api/vault', { action: 'deposit', kind: 'onyx', id: 'nope' }, { expect: 400 })); assert.match(data.error, /칠흑/);
+({ data } = await call('/api/vault', { action: 'withdraw', kind: 'onyx', id: 'nope' }, { expect: 400 })); assert.match(data.error, /칠흑/);
 // v25.11 공유 길드: 무소속 상태의 정보·제한. 창설·가입은 골드와 두 계정이 필요해 별도 스크립트로 확인합니다.
 // v27.43 제단: 정보, 잘못된 요청, 재화 부족, 신 없음, 자리 주인 아님.
 ({ data } = await call('/api/altar', undefined, { expect: 200 }));

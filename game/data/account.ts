@@ -1,4 +1,4 @@
-import type { State } from '../types';
+import type { Item, State } from '../types';
 
 /**
  * v25.6 캐릭터 슬롯과 계정 보너스.
@@ -78,4 +78,8 @@ export function accountBonusRows(s: AccountState) {
  * 세계석 인출은 주당 상한(알트 슬롯의 목표 세계석을 본체로 몰아넣는 걸 막음). 입금은 제한 없음.
  */
 export const VAULT_PEARL_OUT_WEEKLY = 30;
-export type VaultInfo = { pearls: number; essence: number; week: string; pearlOut: number; pearlOutLeft: number };
+/** v3.116 금고의 칠흑 장신구 한 칸: 넣은 분신(slot)과 그때의 승천 횟수. 그 분신이 승천하면 사라집니다. */
+export type VaultOnyx = { id: string; item: Item; slot: number; ascension: number; at: number };
+/** v3.116 금고 칠흑 칸 수 상한. */
+export const VAULT_ONYX_CAP = 21;
+export type VaultInfo = { pearls: number; essence: number; week: string; pearlOut: number; pearlOutLeft: number; onyx: VaultOnyx[] };

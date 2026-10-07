@@ -42,7 +42,7 @@ export function collectNews(s: State, now: number): NewsEvent[] {
     s.newsMark = next; delete s.onyxGift;
     if (!prev) return [];
     const found: NewsEvent[] = [];
-    for (const id of next.onyx.filter(x => !prev.onyx.includes(x))) { const name = onyxById(id)?.accessory.name || id; found.push({ kind: 'onyx', text: n => NEWS_TEXT.onyx(n, name, gift[id]) }); }
+    for (const id of next.onyx.filter(x => !prev.onyx.includes(x) && gift[x] !== 0)) { const name = onyxById(id)?.accessory.name || id; found.push({ kind: 'onyx', text: n => NEWS_TEXT.onyx(n, name, gift[id]) }); }
     if (next.ascension > prev.ascension) found.push({ kind: 'ascend', text: n => NEWS_TEXT.ascend(n, next.ascension) });
     for (const id of next.tier5.filter(x => !prev.tier5.includes(x))) { const job = JOBS.find(j => j.id === id)!; found.push({ kind: 'tier5', text: n => NEWS_TEXT.tier5(n, job.name) }); }
     if (next.abyss > prev.abyss) found.push({ kind: 'abyss', text: n => NEWS_TEXT.abyss(n, next.abyss * NEWS_ABYSS_STEP) });

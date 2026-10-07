@@ -129,8 +129,8 @@ export async function syncDuelSeason(id: string, s: State, now: number) {
  * 금고는 계정 공용이라 다른 분신이 넣어 둔 몫도 함께 사라집니다(의도).
  */
 export async function afterAscend(account: string, id: string, now: number) {
+    // v3.116 금고 비우기는 vaultAfterAscend(칠흑은 그 분신 몫만)로 옮겼습니다.
     const database = db();
-    await database.setWallet({ account_id: account, pearls: 0, essence: 0, week: weekKey(now), pearl_out: 0 });
     await database.deleteRanking(duelRowId(duelSeasonKey(now), id));
     await database.deleteRanking(abyssRowId(id));
 }

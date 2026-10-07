@@ -541,3 +541,34 @@ test('v3.115 news: a milestone onyx reads ‘환생 N회 달성 보상으로 …
     s.inventory.push(O.onyxAccessory(O.ONYX_BOSSES[1], 'hunt', 60));
     assert.ok(N.collectNews(s, 86_400_000).find(e => e.kind === 'onyx').text('영희').endsWith('얻었습니다.'), 'hunted onyx keeps the old line');
 });
+
+test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, withdraw into another slot, repeat kind awakens, ascension removes only that slot\'s deposits', async () => {
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-vault-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const V = await L.load('server/vault'), O = await L.load('data/onyx');
+    try {
+        const now = Date.now(), acc = 'acct_v';
+        const a = newState(0), b = newState(0);
+        const dusk = O.onyxAccessory(O.ONYX_BOSSES[0], 'dusk-a', 60); dusk.enhance = 17; dusk.onyxRank = 2; a.inventory.push(dusk);
+        const will = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxWill'), 'will-a', 60); a.equipment.charm = will;
+        await assert.rejects(V.vaultMove(acc, a, 'deposit', 'onyx', 'will-a', now, 1), /착용 중/);
+        const before = structuredClone(a), first = await V.vaultMove(acc, a, 'deposit', 'onyx', 'dusk-a', now, 1); let info = first.info;
+        first.apply(before); assert.ok(!before.inventory.some(i => i.id === 'dusk-a'), 'a save-conflict retry replays the bag change on the fresh save (no duplicate)');
+        assert.equal(info.onyx.length, 1); assert.ok(!a.inventory.some(i => i.id === 'dusk-a'), 'left the bag');
+        // 다른 분신이 꺼냄: 별 · 각성 그대로.
+        info = (await V.vaultMove(acc, b, 'withdraw', 'onyx', info.onyx[0].id, now, 2)).info;
+        const got = b.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(got && got.enhance === 17 && got.onyxRank === 2); assert.equal(info.onyx.length, 0);
+        assert.equal(b.onyxGift?.onyxDusk, 0, 'no news for a vault withdrawal');
+        // 같은 종을 가진 분신이 꺼내면 그 칠흑이 각성 +1.
+        const dusk2 = O.onyxAccessory(O.ONYX_BOSSES[0], 'dusk-c', 60); a.inventory.push(dusk2);
+        info = (await V.vaultMove(acc, a, 'deposit', 'onyx', 'dusk-c', now, 1)).info;
+        await V.vaultMove(acc, b, 'withdraw', 'onyx', info.onyx[0].id, now, 2);
+        assert.equal(b.inventory.filter(i => i.onyx === 'onyxDusk').length, 1); assert.equal(got.onyxRank, 3, 'awaken +1');
+        // 승천: 그 분신이 넣은 칠흑만 사라지고 다른 분신 몫은 남음(세계석 · 정수는 전처럼 비움).
+        const lucid = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxLucid'), 'l', 60), hilla = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxHilla'), 'h', 60);
+        a.inventory.push(lucid); b.inventory.push(hilla); a.pearls = 50;
+        await V.vaultMove(acc, a, 'deposit', 'onyx', 'l', now, 1); await V.vaultMove(acc, b, 'deposit', 'onyx', 'h', now, 2); await V.vaultMove(acc, a, 'deposit', 'pearls', 10, now, 1);
+        assert.equal(await V.vaultAfterAscend(acc, 1, now), 1);
+        info = await V.vaultInfo(acc, now); assert.deepEqual(info.onyx.map(x => x.item.onyx), ['onyxHilla']); assert.equal(info.pearls, 0);
+    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});

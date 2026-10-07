@@ -21,7 +21,8 @@ import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
 import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, ROUGH, RESTRAINT } from '@/game/systems/vows';
 import { BonusList } from './inventory-panel';
-import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, type VaultInfo } from '@/game/data/account';
+import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, VAULT_ONYX_CAP, type VaultInfo } from '@/game/data/account';
+import { ownedOnyx } from '@/game/data/onyx';
 import { useEffect, useState as useLocalState } from 'react';
 import { salvagePreview } from '@/game/systems/actions/lifecycle';
 import { AscensionPanel } from './ascension-panel';
@@ -97,6 +98,15 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
         <div className="section-title"><h2>계정 금고</h2><span>어느 슬롯에서든 넣고 꺼냄 · 세계석 인출 주당 {VAULT_PEARL_OUT_WEEKLY}개 · 골드 불가</span></div>
         {error && <p className="login-error" role="alert">{error}</p>}
         <ul className="account-rows vault-rows">{row('pearls', '세계석', s.pearls, vault ? `이번 주 인출 가능 ${vault.pearlOutLeft}개` : undefined)}{row('essence', '정수', s.essence || 0)}</ul>
+        {/* v3.116 칠흑 장신구: 별 · 각성 그대로 옮김. 받는 분신이 같은 종을 가졌으면 각성 +1. 넣은 분신이 승천하면 사라짐. */}
+        <h3 className="vault-onyx-title">칠흑 장신구 <small>금고 {vault?.onyx.length ?? '…'}/{VAULT_ONYX_CAP} · 별 · 각성 그대로 · 같은 종을 가진 분신이 꺼내면 각성 +1 · 넣은 분신이 승천하면 금고에서도 사라짐</small></h3>
+        <ul className="account-rows vault-rows">
+            {s.inventory.filter(i => i.onyx).map(i => <li key={i.id}><div><strong>{i.name}{i.onyxRank ? ` +${i.onyxRank}` : ''}</strong><small>가방 · {starLabel(i.enhance || 0, true)} · Lv.{i.level}</small></div>
+                <div className="vault-row"><button className="secondary small" disabled={busy || !vault || vault.onyx.length >= VAULT_ONYX_CAP} onClick={() => act({ action: 'deposit', kind: 'onyx', id: i.id })}>넣기</button></div></li>)}
+            {vault?.onyx.map(v => <li key={v.id}><div><strong>{v.item.name}{v.item.onyxRank ? ` +${v.item.onyxRank}` : ''}</strong><small>금고 · {v.slot}번 분신이 넣음 · {starLabel(v.item.enhance || 0, true)} · Lv.{v.item.level}{ownedOnyx(s).has(v.item.onyx!) ? ' · 꺼내면 내 칠흑 각성 +1' : ''}</small></div>
+                <div className="vault-row"><button className="primary small" disabled={busy} onClick={() => act({ action: 'withdraw', kind: 'onyx', id: v.id })}>꺼내기</button></div></li>)}
+            {!s.inventory.some(i => i.onyx) && !vault?.onyx.length && <li><small>가방에 넣을 칠흑이 없습니다(착용 중인 칠흑은 벗어야 넣을 수 있음).</small></li>}
+        </ul>
     </section>;
 }
 /** 환생 화면의 서약: 이번 생 서약, 다음 생 서약 예약. */

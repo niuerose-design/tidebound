@@ -290,6 +290,8 @@
 .recommend-row > div { display:grid; gap:2px; } .recommend-row small { font-size:12px; color:#9bb3b0; }
 .vault-rows { grid-template-columns:1fr 1fr; } .vault-row { display:flex; gap:6px; align-items:center; } .vault-row input { width:110px; min-width:0; background:#101c20; border:1px solid var(--border); border-radius:6px; color:#e8efe9; padding:6px 8px; font:inherit; font-size:13px; }
 @media (max-width: 767px) { .vault-rows { grid-template-columns:1fr; } }
+/* v3.116 금고 칠흑 칸 */
+.vault-onyx-title { margin:14px 0 6px; font-size:14px; } .vault-onyx-title small { display:block; font-weight:normal; font-size:12px; color:#8ea7a4; margin-top:2px; }
 .achievement-visited { font-size:11px; color:#9bc8b5; }
 .slots-screen { padding:20px 22px; margin-bottom:18px; } .slots-screen .section-title h3 { display:flex; align-items:center; gap:6px; font-size:16px; margin:0; } .slots-screen .slot-list li button { display:inline-flex; align-items:center; gap:4px; }
 .text-button.inline { display:inline; padding:0 2px; font-size:inherit; color:#e8d39a; text-decoration:underline; }
