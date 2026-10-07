@@ -277,7 +277,7 @@ export function reward(s: State, rng: () => number) {
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
     s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practiceTotal;
     const newJobRank = thresholdRank(s.jobMastery[s.job], jobTargets);
-    if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·양 공격·양 방어 +4%`, 'skill');
+    if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·마나·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {
         if (canUse(s, id)) {
             // v3.74 극한돌파: 달성한 순간 한 번 알립니다(효과는 아직 없음, 운영자 문의).

@@ -11,9 +11,9 @@ async function wallet(account: string, now: number) {
     const week = weekKey(now), w = (await db().getWallet(account)) || fresh(account, week);
     return w.week === week ? w : { ...w, week, pearl_out: 0 };
 }
+const infoOf = (w: WalletRow): VaultInfo => ({ pearls: w.pearls, essence: w.essence, week: w.week, pearlOut: w.pearl_out, pearlOutLeft: Math.max(0, VAULT_PEARL_OUT_WEEKLY - w.pearl_out) });
 export async function vaultInfo(account: string, now: number): Promise<VaultInfo> {
-    const w = await wallet(account, now);
-    return { pearls: w.pearls, essence: w.essence, week: w.week, pearlOut: w.pearl_out, pearlOutLeft: Math.max(0, VAULT_PEARL_OUT_WEEKLY - w.pearl_out) };
+    return infoOf(await wallet(account, now));
 }
 /** 입금·인출. mutate의 extra 안에서 한 번만 호출됩니다. */
 export async function vaultMove(account: string, s: State, action: unknown, kind: unknown, rawAmount: unknown, now: number) {
@@ -37,5 +37,6 @@ export async function vaultMove(account: string, s: State, action: unknown, kind
     }
     else throw new ApiError('올바르지 않은 요청입니다.');
     await db().setWallet(w);
-    return vaultInfo(account, now);
+    // v3.94 방금 쓴 지갑으로 답합니다(다시 읽지 않음).
+    return infoOf(w);
 }

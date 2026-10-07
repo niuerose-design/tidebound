@@ -15,7 +15,7 @@ import { vocationTargets, thresholdRank } from '@/game/data/long-term';
 import { jobMasteryTarget, jobMasteryBoost, skillVeiled } from '@/game/systems/progression';
 import { Meter, SkillIcon, format } from '../shared';
 import type { PanelProps } from '../panel-props';
-import { jobStatus, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS, hasJobBonus, growsWithMastery, jobBonusText } from './job-status';
+import { statusReader, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS, hasJobBonus, growsWithMastery, jobBonusText } from './job-status';
 
 type Tab = 'overview' | 'requirements' | 'skills' | 'mastery';
 
@@ -31,7 +31,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
         <p className="job-cross">{j.hint || '아직 드러나지 않은 직업입니다.'}</p>
         <p className="footnote">숨은 조건(플레이 기록)을 만족하거나 관문 조건(환생 횟수·선행 직업 숙련)을 모두 채우면 이름과 조건이 드러납니다. 한 번 전직하거나 숙달하면 계속 보입니다.</p>
     </article>;
-    const st = jobStatus(s, j), current = st.status === 'current', ready = canEnter(st);
+    const st = statusReader(s)(j), current = st.status === 'current', ready = canEnter(st);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;
     const dedicationTargets = vocationTargets(target), dedication = thresholdRank(xp, dedicationTargets);
     const bonuses = JOB_BONUS_KEYS.filter(key => hasJobBonus(j, key)), grows = bonuses.some(key => growsWithMastery(j, key)) && jobMasteryBoost(j) > 0;
@@ -71,7 +71,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
                     {bonuses.length > 0 ? <table className="job-bonus-table"><thead><tr><th>능력치</th><th>숙달 전</th><th>숙달 후</th></tr></thead><tbody>{bonuses.map(key => <tr key={key}><th>{STAT_LABELS[key]}</th><td className={growsWithMastery(j, key) ? '' : 'negative'}>{jobBonusText(j, key)}</td><td className={growsWithMastery(j, key) ? 'positive' : 'negative'}>{jobBonusText(j, key, true)}</td></tr>)}</tbody></table> : <p className="footnote">숙달로 강화되는 능력치가 없습니다.</p>}
                     {!grows && bonuses.length > 0 && <p className="footnote">숙달 보너스 배율이 없습니다.</p>}
                 </section>
-                <section className="job-detail-section"><h3>직업 단련 · {dedication} / {dedicationTargets.length}</h3><p className="footnote">숙달 이후에도 이 직업의 체력·양 공격·양 방어가 단계마다 4%씩 추가됩니다.</p><Meter value={Math.min(xp, dedicationTargets[dedication] || dedicationTargets.at(-1)!)} max={dedicationTargets[dedication] || dedicationTargets.at(-1)!} label="누적 직업 숙련"/></section>
+                <section className="job-detail-section"><h3>직업 단련 · {dedication} / {dedicationTargets.length}</h3><p className="footnote">숙달 이후에도 이 직업의 체력·마나·양 공격·양 방어가 단계마다 4%씩 추가됩니다.</p><Meter value={Math.min(xp, dedicationTargets[dedication] || dedicationTargets.at(-1)!)} max={dedicationTargets[dedication] || dedicationTargets.at(-1)!} label="누적 직업 숙련"/></section>
             </>}
         </div>
         <div className="job-sheet-footer">

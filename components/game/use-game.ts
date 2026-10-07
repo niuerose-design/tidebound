@@ -123,8 +123,8 @@ export function useGame() {
     const action = useCallback(async (a: Action, path = '/api/game') => { if (lock.current && a.type === 'sync')
         return; const previous = queue.current; let release!: () => void; queue.current = new Promise<void>(resolve => { release = resolve; }); await previous; lock.current = true; if (a.type !== 'sync')
         setBusy(true); try {
-        // v27.62 동기화에는 가진 마지막 로그의 키를 붙여, 서버가 그 뒤 로그만 보내게 합니다(응답의 약 절반이 로그).
-        const known = a.type === 'sync' ? stateRef.current?.logs.at(-1) : undefined, catalogKey = catalogNow().key;
+        // v27.62 동기화에는 가진 마지막 로그의 키를 붙여, 서버가 그 뒤 로그만 보내게 합니다(응답의 약 절반이 로그). v3.92 게임 행동(/api/game)에도 붙입니다.
+        const known = path === '/api/game' ? stateRef.current?.logs.at(-1) : undefined, catalogKey = catalogNow().key;
         // v3.44 가진 카탈로그 키를 붙이면, 서버는 바뀌었을 때만 카탈로그를 보냅니다.
         const data = await request(path, { ...a, ...(known ? { logKey: logKey(known) } : {}), ...(catalogKey && path === '/api/game' ? { catalogKey } : {}) });
         // v3.44 카탈로그(문 상태·드러난 비밀 직업)를 상태보다 먼저 적용해, 이번 응답으로 그리는 화면이 같은 기준을 봅니다.

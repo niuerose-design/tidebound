@@ -91,6 +91,8 @@
 .gear-detail{grid-column:1/-1;padding:4px 16px 16px 58px;border-top:1px solid #9ab4b51a}
 .gear-detail>p{font-size:13px;color:#b8cbc5;margin:10px 0 0}.gear-detail .equipment-numbers{margin:12px 0}.gear-detail .button-row{flex-wrap:wrap}.gear-detail .button-row>*{flex:0 1 auto}
 .gear-bulk{margin:18px 0 0}.gear-bulk summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;list-style:none}.gear-bulk summary::-webkit-details-marker{display:none}.gear-bulk summary span{font-size:13px;color:#9dadaf}.gear-bulk[open] summary{margin-bottom:8px}.gear-bulk .button-row{flex-wrap:wrap;margin-top:8px}
+/* v3.94 등급별 일괄판매 · 분해: 공용 .button-row(버튼 flex:1 · min-width:0)는 줄을 바꾸지 않고 버튼을 줄여 모바일에서 글자가 버튼 밖으로 튀어나왔습니다. 칸 격자로 줄을 나눕니다. */
+.gear-bulk .button-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}.gear-bulk .button-row>*{min-width:0;white-space:nowrap;padding-left:6px;padding-right:6px}
 @media(max-width:900px){.gear-slots{grid-template-columns:1fr}.gear-row-main{grid-template-columns:34px minmax(0,1fr) auto 18px}.gear-row-stats{display:none}.gear-detail{padding-left:16px}}
 @media(max-width:600px){.gear-row{grid-template-columns:1fr}.gear-row-actions{padding:0 12px 10px 58px}.gear-count{margin-left:0;width:100%}.gear-slot-upgrade{flex-direction:column;align-items:flex-start}}
 /* v25.3 스킬 찾기: 검색 + 종류·효과 칩 + 정렬. 검색 중에는 범위 탭을 무시하고 모든 기술에서 찾습니다. */

@@ -21,13 +21,16 @@ import { ONYX, ONYX_BOSSES, ONYX_SET, ownedOnyx, onyxCodexKey } from '@/game/dat
 import { OnyxArt } from './onyx-art';
 import { affixDef } from '@/game/data/gear';
 import { abyssReference, stageField } from '@/game/systems/encounter';
-import { bookEcology, nextEcology, bookRevealed, regionResearchStage, bookStage } from '@/game/systems/book';
+import { bookEcology, bookRevealed, regionResearchStage, bookStage } from '@/game/systems/book';
 import { BOOK_ECOLOGY, BOOK_REVEAL, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
 import { VARIANTS, regionSignature } from '@/game/data/variants';
 import type { State, Stats } from '@/game/types';
 import { enemySkillBrief } from '@/game/systems/skill-description';
 
-const skillOf = (id: string) => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id);
+let skillMap: Map<string, (typeof SKILLS)[number] | (typeof ENEMY_SKILLS)[number]> | undefined;
+const skillOf = (id: string) => (skillMap ??= new Map([...SKILLS, ...ENEMY_SKILLS].map(sk => [sk.id, sk]))).get(id);
+let fishMap: Map<string, (typeof FISH)[number]> | undefined;
+const fishOf = (id: string) => (fishMap ??= new Map(FISH.map(f => [f.id, f]))).get(id);
 /** 몬스터 스킬 상세: 발동률·재사용 대기와 실제 효과(피해식·상태이상·추가타). */
 function EnemySkillList({ ids, enemy }: { ids: string[]; enemy: Stats }) {
     return <div className="enemy-skill-list"><h5>사용 스킬 <small>치명 {percent(enemy.crit || 0)} · 치명 피해 ×{BALANCE.critMultiplier}</small></h5><ul>{ids.map(id => {
@@ -35,13 +38,17 @@ function EnemySkillList({ ids, enemy }: { ids: string[]; enemy: Stats }) {
         return <li key={id}><strong>{sk.name}</strong><span>{enemySkillBrief(sk)}</span><small>발동 {percent(sk.chance)} · 재사용 {sk.cooldown}턴</small></li>;
     })}</ul></div>;
 }
-/** v27.81 생태 연구: 이 몬스터 상대 주는 피해·받는 공격 피해. 최대 +50% / -25%. */
+/**
+ * v27.81 연구 효과(예전 이름 '생태 연구'): 이 몬스터 상대 주는 피해·받는 공격 피해. 최대 +50% / -25%.
+ * v3.95 '생태 연구 4/5'와 '연구 6/6단계 진행'이 따로 보여 다른 것처럼 읽혔습니다 → 단계는 연구 단계 하나로만 세고, 여기서는 지금 받는 효과만 보입니다.
+ */
 function EcologyLine({ s, id }: { s: State; id: string }) {
-    const eco = bookEcology(s, id), next = nextEcology(s, id), pct = (n: number) => Number((n * 100).toFixed(1));
+    const eco = bookEcology(s, id), pct = (n: number) => Number((n * 100).toFixed(1));
     const max = { dealt: BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0), taken: BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0) };
     return <div className="fish-trait book-trait-line">
-        <strong>생태 연구 {eco.stages} / {BOOK_ECOLOGY.dealt.length}</strong>
-        <span>{eco.stages ? <b className="positive">이 몬스터 상대 주는 피해 +{pct(eco.dealt)}% · 받는 공격 피해 -{pct(eco.taken)}%</b> : `연구 ${BOOK_ECOLOGY.fromStage}단계(${BALANCE.bookMilestones[BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회)부터 적용`}{next ? ` · 다음 단계 +${pct(next.dealt)}% / -${pct(next.taken)}%` : ''} · 최대 +{pct(max.dealt)}% / -{pct(max.taken)}%</span>
+        <strong>연구 효과</strong>
+        {/* v3.96 한 줄 요약만(단계별 수치는 도움말 ‘몬스터 연구 효과’). */}
+        <span>{eco.stages ? <><b className="positive">이 몬스터 상대 주는 피해 +{pct(eco.dealt)}% · 받는 피해 -{pct(eco.taken)}%</b> (최대 +{pct(max.dealt)}% / -{pct(max.taken)}%)</> : `연구 ${BOOK_ECOLOGY.fromStage}단계(${BALANCE.bookMilestones[BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회)부터 이 몬스터 상대로 강해집니다.`}</span>
     </div>;
 }
 /** v25.21 몬스터 이름 옆 변종 아이콘 줄. 잡은 변종은 색이 켜지고 횟수가 붙으며, 아직 못 만난 변종은 흐리게 자리만 보여 줍니다. */
@@ -58,7 +65,7 @@ function EnemyStrike({ enemy }: { enemy: Partial<Stats> }) {
 function LockedInfo({ n }: { n: number }) {
     return <div className="fish-trait book-locked"><strong>미확인 개체</strong><span>{BOOK_REVEAL}회 처치하면 성향·스킬·능력치 정보가 공개됩니다 ({Math.min(n, BOOK_REVEAL)} / {BOOK_REVEAL}).</span></div>;
 }
-import { Heading, Meter, SlotIcon } from './shared';
+import { Heading, LazyDetails, Meter, SlotIcon } from './shared';
 import type { PanelProps } from './panel-props';
 import { catalogNow } from '@/game/data/catalog';
 export function Collection({ s, send, busy }: PanelProps) {
@@ -87,13 +94,13 @@ export function Collection({ s, send, busy }: PanelProps) {
         <div className="book-grid"><article className={`panel book-card ${!n ? 'undiscovered' : ''}`}>
             <div className="book-icon"><FishArt id={MIMIC.id} size={56}/><span>{n ? `${n}회 처치` : '미발견'}</span></div>
             <h3>{n ? '숙련의 까미' : '???'} <small className="fish-rarity legendary">특별</small></h3>
-            <p>{n ? FISH.find(f => f.id === MIMIC.id)!.lore : `사냥터 난이도 ${MIMIC.minTier} 이상에서 아주 드물게 나타난다고 합니다.`}</p>
+            <p>{n ? fishOf(MIMIC.id)!.lore : `사냥터 난이도 ${MIMIC.minTier} 이상에서 아주 드물게 나타난다고 합니다.`}</p>
             <div className="fish-trait"><strong>숙련 로또</strong><span>잡으면 현재 직업과 장착 스킬의 숙련이 한꺼번에 오릅니다: {MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()}${secret ? '' : ` (${Math.round(t.chance * 100)}%)`}`).join(' · ')}.</span><span>{secret ? '출현 확률은 공개하지 않습니다(난이도가 높고 뒤쪽 사냥터일수록 자주 나타납니다)' : <>출현마다 ({(MIMIC.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(MIMIC.chancePerTier * 100).toFixed(2)}%p, 난이도 {MIMIC.tierCap}까지) × 사냥터 배율(첫 사냥터 ×1, 한 곳 뒤로 갈 때마다 +{MIMIC.stageStep}, {STAGES[MIMIC_STAGE_CAP_INDEX].name}까지) · 지금 사냥터(행운의 편지 포함) {(s.tide || 0) >= MIMIC.minTier ? `${(mimicChance(s.tide || 0, Math.max(0, STAGES.findIndex(x => x.id === s.stage))) * luck * 100).toFixed(2)}%` : '등장 안 함'}</>} · 사냥터 난이도 {MIMIC.minTier} 이상 · Lv.{MIMIC.minLevel}·누적 처치 {MIMIC.minKills}마리부터 · 던전 제외 · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{MIMIC.hp}, 공격 ×{MIMIC.attack}).</span></div>
         </article>
         <article className={`panel book-card ${!m ? 'undiscovered' : ''}`}>
             <div className="book-icon"><FishArt id={EXP_NURI.id} size={56}/><span>{m ? `${m}회 처치` : '미발견'}</span></div>
             <h3>{m ? '경험의 누리' : '???'} <small className="fish-rarity legendary">특별</small></h3>
-            <p>{m ? FISH.find(f => f.id === EXP_NURI.id)!.lore : `사냥터 난이도 ${EXP_NURI.minTier} 이상, Lv.${EXP_NURI.minLevel}이 넘은 모험가 앞에 아주 드물게 나타난다고 합니다.`}</p>
+            <p>{m ? fishOf(EXP_NURI.id)!.lore : `사냥터 난이도 ${EXP_NURI.minTier} 이상, Lv.${EXP_NURI.minLevel}이 넘은 모험가 앞에 아주 드물게 나타난다고 합니다.`}</p>
             <div className="fish-trait"><strong>경험치 로또</strong><span>잡으면 지금 레벨에 필요한 경험치의 일부를 한 번에 얻습니다(경험치 배율·서약과 무관): {EXP_NURI.tiers.map(t => `${t.label} ${Math.round(t.pct * 100)}%${secret ? '' : ` (${Math.round(t.chance * 100)}%)`}`).join(' · ')}.</span><span>{secret ? '출현 확률은 공개하지 않습니다(난이도가 높을수록 자주 나타납니다)' : <>출현마다 {(EXP_NURI.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(EXP_NURI.chancePerTier * 100).toFixed(2)}%p · 지금(행운의 편지 포함) {(s.tide || 0) >= EXP_NURI.minTier ? `${(nuriChance(s.tide || 0) * luck * 100).toFixed(2)}%` : '등장 안 함'}</>} · 사냥터 난이도 {EXP_NURI.minTier} 이상 · Lv.{EXP_NURI.minLevel}~99·누적 처치 {EXP_NURI.minKills.toLocaleString()}마리부터 · 던전 제외 · 오프라인 정산 중 ×{EXP_NURI.offlineScale} · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{EXP_NURI.hp}, 공격 ×{EXP_NURI.attack}).</span></div>
         </article></div>
     </details>; })()}{REGIONS.map(region => { const ids = regionFish(region), sig = regionSignature(region), here = STAGES.some(x => x.region === region && x.id === s.stage);
@@ -101,13 +108,11 @@ export function Collection({ s, send, busy }: PanelProps) {
     return <details className="book-section book-region book-area" key={region} open={here}>
         <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>{region} <small>{ids.filter(id => (s.book[id] || 0) >= bookComplete).length} / {ids.length}종 완성 · 지역 연구 {regionResearchStage(s, region)} / {REGION_RESEARCH_MAX}단계{sig.length ? ` · 대표 변종 ${sig.map(v => `${v.mark} ${v.name}`).join('·')}` : ''}</small></h2></summary>
         <RegionResearchLine s={s} region={region}/>
-        {PLACES.filter(st => st.region === region).map(st => <details className="book-section book-region" key={st.id} open={st.id === s.stage}>
-        <summary className="section-title">
+        {PLACES.filter(st => st.region === region).map(st => <LazyDetails className="book-section book-region" key={st.id} defaultOpen={st.id === s.stage} summary={<summary className="section-title">
         <h2><ChevronDown size={18} className="book-region-chevron"/>{st.place} <small>{st.fish.filter(id => (s.book[id] || 0) >= bookComplete).length} / {st.fish.length}종 완성</small></h2>
         <RegionProgress s={s} id={st.id}/>
-        </summary>
-        <div className="book-grid">{st.fish.map(id => {
-                const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, tide = s.dungeon ? 0 : (s.tide || 0), live = stageField(s, st.id, id, tide), enemy = live.foe, p = profile(id);
+        </summary>}>{() => <div className="book-grid">{st.fish.map(id => {
+                const f = fishOf(id)!, n = s.book[id] || 0, tide = s.dungeon ? 0 : (s.tide || 0), live = stageField(s, st.id, id, tide), enemy = live.foe, p = profile(id);
                 return <article className={`panel book-card ${!n ? 'undiscovered' : ''}`} key={id}>
                 <div className="book-icon">
                 <FishArt id={id} size={56}/>
@@ -125,8 +130,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><span>명중 수치 {statDisplay('accuracy', enemy.accuracy || 0)}</span><span>회피 수치 {statDisplay('evasion', enemy.evasion || 0)}</span><EnemyStrike enemy={enemy}/></div>
                 <div className="book-stats book-matchup"><span className="positive">실제 적중률 · 물리 {percent(hitChance(player, enemy))} · 마법 {percent(hitChance(player, enemy, true))}</span><span>적 공격 {percent(hitChance(enemy, player))}</span><span>처치 골드 {Math.floor(live.gold * goldMultiplier(s))} G <small>(기본 {f.gold} · 난이도·골드 보너스 적용)</small></span><span>처치 경험치 {Math.floor(live.exp * expMultiplier(s)).toLocaleString()} <small>(기본 {f.exp} · 난이도·경험치 배율 적용)</small></span></div>{f.level >= 5 && p.skills.length > 0 ? <EnemySkillList ids={p.skills} enemy={enemy}/> : <p className="footnote">스킬 없이 기본 공격만 합니다 · 치명 {percent(enemy.crit || 0)}</p>}</details>}
                 {s.stage === st.id && !s.dungeon && <button className="text-button" disabled={busy} onClick={() => send({ type: 'target', id })}>{s.target === id ? '집중 사냥 대상' : '이 몬스터 집중 사냥'}</button>}</article>;
-            })}</div>
-        </details>)}
+            })}</div>}</LazyDetails>)}
     </details>; })}<details className="book-section book-region boss-book-section">
         <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>던전 보스 도감</h2><span>{FISH.filter(f => f.boss && (s.book[f.id] || 0) >= bookComplete).length} / {FISH.filter(f => f.boss).length}종 완성</span></summary>
         <div className="book-grid">{FISH.filter(f => f.boss).map(f => {
@@ -146,7 +150,7 @@ export function Collection({ s, send, busy }: PanelProps) {
         {secret ? <p className="footnote">무리 서식지에서 드물게 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 낮은 확률로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 최고 굴림 무작위 {ONYX.affixes}줄 · 위력은 골드로 레벨을 올려 키움 · 강화 파괴 시 {STARFORCE.relicResetStar}성으로)를 받고(오래 못 얻으면 반드시 받음), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>
         : <p className="footnote">무리 서식지에서만 출현마다 {Math.round(ONYX.chance * 1000) / 10}%(난이도 50마다 +100%, {ONYX.pity.toLocaleString()}회 못 보면 확정)로 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 {Math.round(ONYX.drop * 1000) / 10}%로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 최고 굴림 무작위 {ONYX.affixes}줄 · 위력은 골드로 레벨을 올려 키움 · 강화 파괴 시 {STARFORCE.relicResetStar}성으로)를 받고({ONYX.dropPity}번째 연속 미획득 격파는 확정), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>}
         <ul className="bonus-rows">{ONYX_SET.map(b => <li key={b.count} className={ownedOnyx(s).size >= b.count ? 'done' : ''}><b>{b.count}종 보유</b> · <span>{b.label}</span>{ownedOnyx(s).size >= b.count ? ' ✓' : ''}</li>)}</ul>
-        <div className="book-grid">{ONYX_BOSSES.map(b => { const f = FISH.find(x => x.id === b.id)!, n = s.onyxBook?.[b.id] || 0, got = ownedOnyx(s).has(b.id), def = affixDef(b.accessory.affix.id);
+        <div className="book-grid">{ONYX_BOSSES.map(b => { const f = fishOf(b.id)!, n = s.onyxBook?.[b.id] || 0, got = ownedOnyx(s).has(b.id), def = affixDef(b.accessory.affix.id);
             return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={b.id}>
                 <div className="book-icon onyx-book-icon"><FishArt id={b.id} size={48} boss/><OnyxArt id={b.id} size={44} className={got ? 'owned' : ''}/><span>{n ? `${n}회 격파` : '미발견'}</span></div>
                 <h3>{b.name} <small className="fish-rarity legendary">{b.region} 서식지</small></h3>
@@ -222,16 +226,16 @@ export function Collection({ s, send, busy }: PanelProps) {
     </details>
     </TabsContent>
     <TabsContent value="bonus">
-    {(() => { const eco = FISH.map(f => bookEcology(s, f.id).stages), maxStage = FISH.length * BOOK_ECOLOGY.dealt.length, pct = (n: number) => Number((n * 100).toFixed(1)); return <div className="bonus-stack">
+    {(() => { const last = BALANCE.bookMilestones.length, stages = FISH.map(f => bookStage(s, f.id)), maxStage = FISH.length * last, pct = (n: number) => Number((n * 100).toFixed(1)); return <div className="bonus-stack">
     <details className="bonus-block" open>
-    <summary><div><h2>생태 연구</h2><p>몬스터를 {BALANCE.bookMilestones.slice(BOOK_ECOLOGY.fromStage - 1).map(m => m.toLocaleString()).join(' · ')}회 처치할 때마다(6단계는 난이도 {BALANCE.bookTierReq[5]} 이상 처치 필요) 그 몬스터를 상대로 주는 피해가 오르고 받는 공격 피해가 줄어듭니다. 단계마다 {BOOK_ECOLOGY.dealt.map(pct).join('·')}% / {BOOK_ECOLOGY.taken.map(pct).join('·')}%, 최대 +{pct(BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0))}% / -{pct(BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0))}%.</p></div><span className="bonus-count">{eco.reduce((a, n) => a + n, 0)}<small> / {maxStage}</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
+    <summary><div><h2>몬스터 연구 효과</h2><p>많이 잡은 몬스터일수록 그 몬스터 상대로 강해집니다(연구 {BOOK_ECOLOGY.fromStage}단계부터, 6단계 최대 +{pct(BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0))}% / -{pct(BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0))}%). 단계별 수치는 도움말 ‘몬스터 연구 효과’.</p></div><span className="bonus-count">{stages.reduce((a, n) => a + n, 0)}<small> / {maxStage}단계</small></span><ChevronDown size={18} className="bonus-chevron"/></summary>
     <div className="bonus-body">
-    <ul className="bonus-grid">{BOOK_ECOLOGY.dealt.map((_, i) => { const n = eco.filter(x => x > i).length; return <li key={i} className={n ? 'active' : ''}><span>생태 {i + 1}단계 · 누적 +{pct(BOOK_ECOLOGY.dealt.slice(0, i + 1).reduce((a, x) => a + x, 0))}% / -{pct(BOOK_ECOLOGY.taken.slice(0, i + 1).reduce((a, x) => a + x, 0))}%</span><strong>{n} / {FISH.length}종</strong></li>; })}</ul>
-    <h3>몬스터별 진행 <small>장소별 · 칩의 숫자는 그 몬스터의 생태 단계({BOOK_ECOLOGY.dealt.length}단계가 최대)</small></h3>
-    <ul className="bonus-rows">{PLACES.map(st => { const ids = [...new Set(st.fish)], max = ids.length * BOOK_ECOLOGY.dealt.length, sum = ids.reduce((a, id) => a + bookEcology(s, id).stages, 0); return <li key={st.id} className={sum >= max ? 'done' : sum ? 'active' : ''}>
+    <ul className="bonus-grid">{BOOK_ECOLOGY.dealt.map((_, i) => { const n = stages.filter(x => x >= i + BOOK_ECOLOGY.fromStage).length; return <li key={i} className={n ? 'active' : ''}><span>연구 {i + BOOK_ECOLOGY.fromStage}단계 · 누적 +{pct(BOOK_ECOLOGY.dealt.slice(0, i + 1).reduce((a, x) => a + x, 0))}% / -{pct(BOOK_ECOLOGY.taken.slice(0, i + 1).reduce((a, x) => a + x, 0))}%</span><strong>{n} / {FISH.length}종</strong></li>; })}</ul>
+    <h3>몬스터별 진행 <small>장소별 · 칩의 숫자는 그 몬스터의 연구 단계(최대 {last}단계)</small></h3>
+    <ul className="bonus-rows">{PLACES.map(st => { const ids = [...new Set(st.fish)], max = ids.length * last, sum = ids.reduce((a, id) => a + bookStage(s, id), 0); return <li key={st.id} className={sum >= max ? 'done' : sum ? 'active' : ''}>
         <div className="bonus-row-head"><strong>{st.name}</strong><small>{st.rebirth ? `환생 ${st.rebirth} · ` : ''}Lv.{st.level}</small><span className="bonus-count small">{sum}<small> / {max}</small></span></div>
         <Meter value={sum} max={max}/>
-        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0, e = bookEcology(s, id); return <span key={id} className={`bonus-chip ${e.stages >= BOOK_ECOLOGY.dealt.length ? 'done' : e.stages ? 'seen' : ''}`} title={n ? `${f.name} · 처치 ${n.toLocaleString()}회 · 주는 피해 +${pct(e.dealt)}% · 받는 공격 피해 -${pct(e.taken)}%` : '미발견'}>{n ? f.name : '???'}{n ? ` ${e.stages}/${BOOK_ECOLOGY.dealt.length}` : ''}</span>; })}</dd></dl>
+        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = fishOf(id)!, n = s.book[id] || 0, e = bookEcology(s, id); return <span key={id} className={`bonus-chip ${bookStage(s, id) >= last ? 'done' : e.stages ? 'seen' : ''}`} title={n ? `${f.name} · 처치 ${n.toLocaleString()}회 · +${pct(e.dealt)}% / -${pct(e.taken)}%` : '미발견'}>{n ? f.name : '???'}{n ? ` ${bookStage(s, id)}/${last}` : ''}</span>; })}</dd></dl>
     </li>; })}</ul>
     </div>
     </details>
@@ -241,7 +245,7 @@ export function Collection({ s, send, busy }: PanelProps) {
     <ul className="bonus-rows">{PLACES.map(st => { const ids = [...new Set(st.fish)], done = ids.filter(id => (s.book[id] || 0) >= bookComplete).length; return <li key={st.id} className={done === ids.length ? 'done' : done ? 'active' : ''}>
         <div className="bonus-row-head"><strong>{st.name}</strong><small>{st.rebirth ? `환생 ${st.rebirth} · ` : ''}Lv.{st.level}</small><span className="bonus-count small">{done}<small> / {ids.length}</small></span></div>
         <Meter value={done} max={ids.length}/>
-        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = FISH.find(x => x.id === id)!, n = s.book[id] || 0; return <span key={id} className={`bonus-chip ${n >= bookComplete ? 'done' : n ? 'seen' : ''}`}>{n ? f.name : '???'}{n && n < bookComplete ? ` ${n}` : ''}</span>; })}</dd></dl>
+        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = fishOf(id)!, n = s.book[id] || 0; return <span key={id} className={`bonus-chip ${n >= bookComplete ? 'done' : n ? 'seen' : ''}`}>{n ? f.name : '???'}{n && n < bookComplete ? ` ${n}` : ''}</span>; })}</dd></dl>
     </li>; })}</ul>
     </div>
     </details>
@@ -251,7 +255,7 @@ export function Collection({ s, send, busy }: PanelProps) {
     <ul className="bonus-rows">{REGIONS.map(region => { const n = regionResearchStage(s, region), r = REGION_RESEARCH[region], ids = regionFish(region), need = REGION_RESEARCH_FROM + n; return <li key={region} className={n >= REGION_RESEARCH_MAX ? 'done' : n ? 'active' : ''}>
         <div className="bonus-row-head"><strong>{region}</strong><small>1단계 첫 보너스 {r?.first.label} · 단계마다 {r?.label}{n ? ` · ×${n} 적용 중` : ''}</small><span className="bonus-count small">{n}<small> / {REGION_RESEARCH_MAX}단계</small></span></div>
         <Meter value={n} max={REGION_RESEARCH_MAX}/>
-        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = FISH.find(x => x.id === id)!, k = s.book[id] || 0, stage = bookStage(s, id); return <span key={id} className={`bonus-chip ${stage >= REGION_RESEARCH_FROM + REGION_RESEARCH_MAX - 1 ? 'done' : stage >= need ? 'seen' : ''}`} title={k ? `${f.name} · 연구 ${stage}단계${n < REGION_RESEARCH_MAX ? ` · 다음 지역 연구에 ${need}단계 필요` : ''}` : '미발견'}>{k ? f.name : '???'}{k ? ` ${stage}단계` : ''}</span>; })}</dd></dl>
+        <dl><dt>몬스터</dt><dd>{ids.map(id => { const f = fishOf(id)!, k = s.book[id] || 0, stage = bookStage(s, id); return <span key={id} className={`bonus-chip ${stage >= REGION_RESEARCH_FROM + REGION_RESEARCH_MAX - 1 ? 'done' : stage >= need ? 'seen' : ''}`} title={k ? `${f.name} · 연구 ${stage}단계${n < REGION_RESEARCH_MAX ? ` · 다음 지역 연구에 ${need}단계 필요` : ''}` : '미발견'}>{k ? f.name : '???'}{k ? ` ${stage}단계` : ''}</span>; })}</dd></dl>
         {n < REGION_RESEARCH_MAX && <p className="bonus-empty">다음 단계: 지역의 모든 몬스터가 연구 {need}단계 이상.</p>}
     </li>; })}</ul>
     </div>

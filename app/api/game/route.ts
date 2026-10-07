@@ -26,8 +26,8 @@ export async function POST(req: Request) { try {
         if (announce) await announceHacker(announce, Date.now());
         // v3.39 모험가 소식(칠흑·승천·5차 전직·무릉도장·22성·장성 진급). 저장이 끝난 뒤 한 번만 올립니다.
         if (news.length) await postPlayerNews(id, out.state, news, Date.now());
-        // v27.62 동기화는 클라이언트가 가진 마지막 로그 뒤의 로그만 보냅니다(log-delta.ts).
-        const trimmed = a.type === 'sync' ? trimLogs(out.state.logs, (a as { logKey?: unknown }).logKey) : null;
+        // v27.62 동기화는 클라이언트가 가진 마지막 로그 뒤의 로그만 보냅니다(log-delta.ts). v3.92 다른 행동도 같게(키가 없거나 못 찾으면 전체).
+        const trimmed = trimLogs(out.state.logs, (a as { logKey?: unknown }).logKey);
         // v3.43 정보 비공개 카탈로그(docs/concept.md 10장). 화면은 단계마다 비밀 표 대신 이것을 읽게 됩니다.
         // v3.44 화면이 가진 카탈로그 키(catalogKey)와 같으면 다시 보내지 않습니다(비밀 직업 표가 커서).
         const catalog = await buildCatalog(out.state, Date.now(), (a as { catalogKey?: unknown }).catalogKey);

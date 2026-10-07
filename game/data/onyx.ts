@@ -22,7 +22,7 @@ export const ONYX_BOSSES: OnyxBoss[] = [
     { id: 'onyxLucid', name: '루시드', region: '엘리니아', accessory: { name: '몽환의 벨트', desc: '루시드의 벨트. 마력 평타 확률과 마력 평타 배율이 오릅니다.', affix: { id: 'onyxArcane', name: '몽환의 마력', stat: 'arcaneStrike', value: .1, stat2: 'arcaneRatioBonus', value2: .1, rule: true } } },
     { id: 'onyxHilla', name: '진 힐라', region: '커닝시티', accessory: { name: '마력이 깃든 안대', desc: '진 힐라의 안대. 상태이상 저항이 크게 오르고 턴마다 체력을 회복합니다.', affix: { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', value: .2, stat2: 'hpRegen', value2: 15, rule: true } } },
     { id: 'onyxSeren', name: '세렌', region: '시간의 신전', accessory: { name: '미트라의 분노', desc: '세렌의 증표. 보스·사냥감에게 주는 피해가 오릅니다.', affix: { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', value: .15, rule: true } } },
-    { id: 'onyxBlackMage', name: '검은 마법사', region: '아케인 리버', accessory: { name: '창세의 뱃지', desc: '검은 마법사의 뱃지. 체력·공격·방어가 모두 오릅니다.', affix: { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', value: .05, rule: true } } },
+    { id: 'onyxBlackMage', name: '검은 마법사', region: '아케인 리버', accessory: { name: '창세의 뱃지', desc: '검은 마법사의 뱃지. 체력·마나·공격·방어가 모두 오릅니다.', affix: { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', value: .05, rule: true } } },
 ];
 export const onyxBossFor = (region: string) => ONYX_BOSSES.find(b => b.region === region);
 export const onyxById = (id: string) => ONYX_BOSSES.find(b => b.id === id);
@@ -35,7 +35,7 @@ export const ONYX_SET: { count: number; label: string; bossDamage?: number; habi
     { count: 2, label: '보스·사냥감 피해 +5%', bossDamage: .05 },
     { count: 4, label: '무리 서식지 골드·경험치 +15%', habitatReward: .15 },
     { count: 6, label: '상태이상 저항 +10%p', statusResist: .1 },
-    { count: 7, label: '체력·공격·방어 +3%', allStats: .03 },
+    { count: 7, label: '체력·마나·공격·방어 +3%', allStats: .03 },
 ];
 export const onyxSetBonus = (owned: number) => ONYX_SET.filter(b => owned >= b.count).reduce((a, b) => ({ bossDamage: a.bossDamage + (b.bossDamage || 0), habitatReward: a.habitatReward + (b.habitatReward || 0), statusResist: a.statusResist + (b.statusResist || 0), allStats: a.allStats + (b.allStats || 0) }), { bossDamage: 0, habitatReward: 0, statusResist: 0, allStats: 0 });
 /** 서식지 출현마다 칠흑 보스가 나올 확률. 못 본 횟수가 pity에 닿으면 확정. */

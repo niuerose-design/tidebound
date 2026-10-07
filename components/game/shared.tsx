@@ -54,12 +54,14 @@ export function Empty({ title, description }: {
     <p>{description}</p>
     </div>;
 }
-export const format = (n: number) => n.toLocaleString('ko-KR');
+/** v3.93 숫자 표시: 매번 새 포매터를 만드는 toLocaleString 대신 하나를 함께 씁니다(결과는 같음). */
+const KO_NUMBER = new Intl.NumberFormat('ko-KR');
+export const format = (n: number) => KO_NUMBER.format(n);
 /** 남은 시간(분 올림): '3시간 5분' · '42분'. 끝나 가도 min분 아래로는 내려가지 않습니다. */
 export const formatRemaining = (ms: number, min = 1) => { const m = Math.max(min, Math.ceil(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`; };
 /** 큰 수는 짧게(1.2만, 3.4억) 표시합니다. 정확한 값은 Num의 title(마우스 올리기·길게 누르기)로 확인합니다. */
 export function short(n: number) {
-    const a = Math.abs(n), f = (v: number) => (Math.floor(v * 10) / 10).toLocaleString('ko-KR');
+    const a = Math.abs(n), f = (v: number) => KO_NUMBER.format(Math.floor(v * 10) / 10);
     return a >= 1e8 ? `${f(n / 1e8)}억` : a >= 1e4 ? `${f(n / 1e4)}만` : format(Math.floor(n));
 }
 export function Num({ n }: { n: number }) { return <span className="num-short" title={format(n)}>{short(n)}</span>; }
@@ -95,3 +97,12 @@ export function Fold({ id, title, note, defaultOpen = true, className = '', chil
     </details>;
 }
 
+
+/**
+ * v3.93 처음 펼칠 때 내용을 그리는 접기 칸. 닫힌 칸의 내용(도감 카드 등)은 그리지 않아 화면 전체 다시 그리기가 가벼워집니다.
+ * 한 번 펼친 뒤에는 접어도 내용을 유지합니다(다시 펼칠 때 바로 보이도록). children은 함수로 넘겨 닫혀 있는 동안 계산하지 않습니다.
+ */
+export function LazyDetails({ className, defaultOpen = false, summary, children }: { className?: string; defaultOpen?: boolean; summary: ReactNode; children: () => ReactNode }) {
+    const [opened, setOpened] = useState(defaultOpen);
+    return <details className={className} open={defaultOpen} onToggle={e => { if (e.currentTarget.open) setOpened(true); }}>{summary}{opened || defaultOpen ? children() : null}</details>;
+}

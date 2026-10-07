@@ -1,5 +1,6 @@
 'use client';
 import { SPROUT, sproutExp } from '@/game/data/sprout';
+import { BOOK_ECOLOGY } from '@/game/data/book-traits';
 import { ASCENSION } from '@/game/data/ascension';
 import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Flame, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap , Droplets } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -22,6 +23,8 @@ import { TAILWIND_EXP, tailwindExp, xpWall, LEVEL_GATE_FREE_REBIRTHS } from '@/g
 import { OVER_TARGET } from '@/game/data/balance';
 import { Heading } from './shared';
 import { JOB_TREES, LINEAGES } from '@/game/data/classes';
+/** 0.125 → 12.5 */
+const pctOf = (n: number) => Number((n * 100).toFixed(1));
 
 /** 도움말 카드: 효과 → 조건 → 제한. 각 항목은 두세 문장으로 짧게 적습니다. */
 function Rule({ icon, title, effect, condition, limit }: { icon: ReactNode; title: string; effect: ReactNode; condition?: ReactNode; limit?: ReactNode }) {
@@ -92,7 +95,7 @@ export function Guide({ s }: { s?: State }) {
                         limit={`방어 관통은 출처끼리 곱연산으로 합칩니다(스킬 보너스까지 합계 최대 85%). 관통만큼 상대 방어를 무시합니다.`}/>
                     <Rule icon={<Droplets size={19}/>} title="지속 피해 (고정 피해)"
                         effect="출혈·중독·화상·부식은 물리도 마법도 아닌 고정 피해입니다. 걸릴 때 시전자의 공격력으로 틱 피해가 정해지고, 그 뒤로는 걸린 쪽이 행동할 때마다 그 값이 체력에서 그대로 빠집니다."
-                        condition="물리·마법 방어, 방어 관통, 회피, 반격, 생태 연구 보정, 흡혈이 모두 적용되지 않습니다. 기절 중에도 들어갑니다."
+                        condition="물리·마법 방어, 방어 관통, 회피, 반격, 몬스터 연구 효과, 흡혈이 모두 적용되지 않습니다. 기절 중에도 들어갑니다."
                         limit="면역(풀린 뒤 1턴), 정화 기술, 無처럼 쓰러지지 않는 장치로만 막을 수 있습니다. 중독은 중첩마다, 출혈은 한 번만 최대 체력 1%분을 더합니다."/>
                     <Rule icon={<Sparkles size={19}/>} title="마법 피해"
                         effect="마법 공격 × 스킬 배율. 상대의 마법 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 마법 방어 × 2). 마나를 씁니다."
@@ -218,9 +221,14 @@ export function Guide({ s }: { s?: State }) {
                     condition="단계가 오를수록 비용이 커집니다. 일부 연구는 정해진 환생 횟수 뒤에 열립니다."
                     limit={`탭별 재분배는 언제나 무료이며 쓴 세계석의 ${RESEARCH_RESET.refund * 100}%를 돌려받습니다. 자동 사냥·던전 중에는 할 수 없습니다.`}/>
                 <Rule icon={<BookOpen size={19}/>} title="몬스터 도감"
-                    effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 처치. 4·5·6단계에 SP. 6단계는 그 몬스터를 난이도 ${BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다. 2단계부터 그 몬스터를 상대로 주는 피해가 오르고 받는 공격 피해가 줄어드는 생태 연구가 붙습니다(6단계 누적 +50% / -25%). 지역의 모든 몬스터가 연구 1·2·3단계면 지역 연구 1·2·3단계입니다. 1단계에 지역 첫 보너스(예전 장소 테마)가 붙고, 단계마다 지역 효과가 쌓입니다. 지역마다 자주 나오는 변종이 다르고, 지역 끝의 무리 서식지에서는 몬스터가 전부 ×100·×500 무리로 나옵니다.`}
+                    effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 처치. 4·5·6단계에 SP. 6단계는 그 몬스터를 난이도 ${BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다. 2단계부터 연구 효과가 붙습니다(아래 ‘몬스터 연구 효과’). 지역의 모든 몬스터가 연구 1·2·3단계면 지역 연구 1·2·3단계입니다. 1단계에 지역 첫 보너스(예전 장소 테마)가 붙고, 단계마다 지역 효과가 쌓입니다. 지역마다 자주 나오는 변종이 다르고, 지역 끝의 무리 서식지에서는 몬스터가 전부 ×100·×500 무리로 나옵니다.`}
                     condition={`${PROGRESSION.fishComplete}회 처치하면 완성이고 적 정보가 열립니다. 사냥터(장소)의 모든 종을 완성하면 업적 ‘지역 연구 N곳 완성’에서 장착 AP +1.`}
                     limit={`보상은 도감에서 직접 받고 각 단계는 한 번만 줍니다. 합계는 도감 ‘연구 보너스’ 탭에서 봅니다. 칠흑의 보스(v3.12): 무리 서식지 출현마다 ${secret ? '드물게' : `${Math.round(ONYX.chance * 1000) / 10}%로`} 지역 보스가 나오고(${ONYX.turns}턴 안에 못 잡으면 떠남), 처치하면 ${secret ? '낮은 확률(오래 못 얻으면 확정)' : `${Math.round(ONYX.drop * 1000) / 10}%(${ONYX.dropPity}번째 연속 미획득은 확정)`}로 환생해도 남는 칠흑 장신구를 받습니다. 도감 ‘칠흑의 보스’에서 세트 보너스를 봅니다.`}/>
+                {/* v3.96 도감 카드 · 보너스 탭은 한 줄 요약만 보이고, 단계별 수치는 여기서 봅니다. */}
+                <Rule icon={<BookOpen size={19}/>} title="몬스터 연구 효과"
+                    effect={`그 몬스터를 많이 잡을수록 그 몬스터 상대로 강해집니다. 연구 ${BOOK_ECOLOGY.fromStage}~${BALANCE.bookMilestones.length}단계에 오를 때마다 주는 피해가 오르고 받는 공격 피해가 줄어듭니다.`}
+                    condition={BOOK_ECOLOGY.dealt.map((d, i) => `연구 ${i + BOOK_ECOLOGY.fromStage}단계(${BALANCE.bookMilestones[i + BOOK_ECOLOGY.fromStage - 1].toLocaleString()}회) +${pctOf(d)}% / -${pctOf(BOOK_ECOLOGY.taken[i])}%`).join(' · ')}
+                    limit={`6단계 누적 주는 피해 +${pctOf(BOOK_ECOLOGY.dealt.reduce((a, n) => a + n, 0))}% · 받는 공격 피해 -${pctOf(BOOK_ECOLOGY.taken.reduce((a, n) => a + n, 0))}%. 그 몬스터를 상대할 때만 적용되고, 받는 피해 감소는 지속 피해에는 들지 않습니다. 6단계는 난이도 ${BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다.`}/>
                 <Rule icon={<Coins size={19}/>} title="상점 · 장비"
                     effect={`뽑기는 희귀 이상을 보장하고, 신화·고대·태초는 천장(${APPRAISAL_PITY.map(p => `${p.count}회`).join('·')})이 있습니다. 가격은 레벨과 환생 횟수를 따릅니다(환생 100까지 10^(환생/60)배, 그 위로는 완만하게). 랜덤 뽑기는 모든 부위가 나오고, 저격 뽑기는 부위와 옵션 하나를 골라 반드시 붙이며, 자동 뽑기는 가진 골드·정수로 목표 등급까지 반복합니다. 강화는 스타포스(v3.0): 전설 이상 ${STARFORCE.max}성 · 영웅 이하 ${STARFORCE.maxLow}성까지, 1~${STARFORCE.gainHighFrom}성 +${STARFORCE.gainLow * 100}%/성 · 그 위 +${STARFORCE.gainHigh * 100}%/성. 성마다 성공률이 정해져 있고(${STARFORCE.gainHighFrom}성부터 30%), ${STARFORCE.dropFrom}성부터 실패 시 1성 하락(${STARFORCE.safeStars.join('·')}성 유지), 15성부터 파괴 확률(일반 장비는 소멸, 유물은 ${STARFORCE.relicResetStar}성으로). 하락 2번 연속이면 찬스 타임(100%), 수동 강화의 스타캐치(별이 가운데 올 때 누르기)는 성공률 +10%p, 15·16성은 파괴 방지(비용 ×2)를 고를 수 있습니다. 비용은 12성까지 전과 같고 13성부터 성마다 ×${STARFORCE.growth}.`}
                     condition="판매가는 등급·레벨에 비례하고 강화 비용의 30%를 돌려받습니다. 분해는 골드 대신 정수를 줍니다. 정수는 옵션 재설정(옵션 종류를 바꿈, 같은 장비에서 할 때마다 비용 +10%·상한 없음)과 수치 재련(종류는 그대로 수치만 다시 굴림, 재설정 기본 비용의 절반·오르지 않음)에 씁니다."

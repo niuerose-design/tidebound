@@ -3,7 +3,7 @@
 import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { PROGRESSION } from '@/game/data/progression';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Eye, EyeOff, GripVertical, Info, Pin, Search } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
@@ -33,7 +33,8 @@ function MarkButtons({ pinned, hidden, onPin, onHide, name, disabled }: { pinned
     </span>;
 }
 
-function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false }: PanelProps & { sk: Skill; detailed: boolean; pinned?: boolean; hidden?: boolean }) {
+/** v3.93 memo: 검색 입력 · 필터 조작으로 목록이 다시 그려져도 같은 상태의 카드는 다시 계산하지 않습니다. */
+const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false }: PanelProps & { sk: Skill; detailed: boolean; pinned?: boolean; hidden?: boolean }) {
     const marks = <MarkButtons pinned={pinned} hidden={hidden} disabled={busy} name={sk.name} onPin={() => send({ type: 'pinSkill', id: sk.id })} onHide={() => send({ type: 'hideSkill', id: sk.id })}/>;
     const rank = s.learned[sk.id] || 0, acquired = rank > 0;
     const practice = s.skillPractice[sk.id] || 0, mastery = skillMastery(s, sk.id);
@@ -51,7 +52,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false
     const passiveChips: Record<string, number> = { ...(effective.bonus || {}) as Record<string, number> };
     for (const [key, n] of Object.entries(growthNow)) passiveChips[key] = (passiveChips[key] || 0) + n;
     const extraNotes = [...skillExtraNotes(sk), ...(sk.type === 'passive' && !Object.keys(passiveChips).length && sk.desc && !skillExtraNotes(sk).length ? [sk.desc] : [])];
-    const growth = skillGrowthStages(sk);
+    const growth = detailed ? skillGrowthStages(sk) : [];
     const extremeTarget = extremeBreakTarget(sk), refinePracticeNow = refinePractice(s, sk.id), extreme = extremeBroken(s, sk.id);
     const lb = limitBreakOf(s, sk.id), lbOwned = limitBreakOwned(s, sk.id), lbNext = limitBreakNext(s, sk.id);
     const equipAllowed = validLoadout(s, equipped ? s.skills.filter(id => id !== sk.id) : [...s.skills, sk.id]);
@@ -96,7 +97,7 @@ function SkillCard({ sk, s, send, busy, detailed, pinned = false, hidden = false
         {acquired && mastery - lb >= max && lbNext.stage <= PROGRESSION.limitBreak.max && !lbNext.ok && <p className="footnote limit-break-reason" role="note">한계돌파 {lbNext.stage}단계 조건: {lbNext.reason}. 장착 여부와 관계없이, 조건을 채우면 버튼이 켜집니다.</p>}
         {paidInheritance && mastery > 0 && detailed && <small className="footnote">실전 숙련으로 무료 계승도 완료했습니다. SP 투자 환급 시 숙련 계승은 유지됩니다.</small>}
     </article>;
-}
+});
 
 type SkillKind = 'all' | 'active' | 'passive';
 type SkillDamage = 'all' | 'physical' | 'magic' | 'status' | 'heal';
@@ -152,7 +153,9 @@ export function Skills({ s, send, busy }: PanelProps) {
     };
     /** 계보별 묶기: 현재 직업 → 선행 직업(가까운 순) → 공용 → 다른 직업(계승). */
     const groupOf = (sk: Skill) => !sk.job ? { key: 'common', order: line.length + 1, name: '공용' } : sk.job === s.job ? { key: sk.job, order: 0, name: `${currentJob.name} · 현재 직업` } : line.includes(sk.job) ? { key: sk.job, order: line.indexOf(sk.job), name: `${jobById(sk.job)?.name} · 선행 직업` } : { key: sk.job, order: line.length + 2, name: `${jobById(sk.job)?.name} · 계승` };
-    const q = query.trim().toLowerCase();
+    // v3.93 검색은 입력을 늦춰 반영하고(useDeferredValue), 검색 대상 문구(이름 · 설명 · 직업 · 효과)는 검색 중일 때 상태가 바뀔 때만 한 번 만듭니다.
+    const q = useDeferredValue(query).trim().toLowerCase(), searching = q.length > 0;
+    const corpus = useMemo(() => searching ? new Map(SKILLS.map(sk => [sk.id, [sk.name, sk.desc, jobById(sk.job)?.name || '공용', skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id)), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ')].join('\n').toLowerCase()])) : null, [s, searching]);
     /**
      * v3.45 정보 비공개(docs/concept.md 10장): 비공개가 켜져 있으면 만나 본 직업의 스킬만 목록·검색에 나옵니다.
      * 공용 스킬, 현재 직업과 그 계보, 들어가 본 직업(숙달 포함), 이미 배웠거나 장착한 스킬. 오픈 베타(꺼짐)에는 지금처럼 전부.
@@ -174,22 +177,17 @@ export function Skills({ s, send, busy }: PanelProps) {
             // v27.73 숨긴 스킬은 장착 중이 아니면 목록에서 빼고, 검색·‘숨김’ 탭에서만 보여 줍니다.
             if (hidden.includes(sk.id) && !s.skills.includes(sk.id)) return false;
         } else {
-            const job = jobById(sk.job)?.name || '공용';
-            const effects = skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id)), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ');
-            if (![sk.name, sk.desc, job, effects].some(x => x.toLowerCase().includes(q))) return false;
+            if (!corpus?.get(sk.id)?.includes(q)) return false;
         }
         if (kind !== 'all' && sk.type !== kind) return false;
         if (damage !== 'all' && !skillDamageKind(sk).includes(damage)) return false;
         return filter === 'unlearned' ? !acquired : filter === 'usable' ? canUse(s, sk.id) : true;
-    }).sort((a, b) => {
-        if (sort === 'default') return 0;
-        const fx = (sk: Skill) => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id));
-        if (sort === 'ap') return (fx(a).cost ?? 2) - (fx(b).cost ?? 2);
-        if (sort === 'chance') return (fx(b).chance || 0) - (fx(a).chance || 0);
-        if (sort === 'level') return skillLevel(b, s.learned[b.id] || 1, skillMastery(s, b.id)) - skillLevel(a, s.learned[a.id] || 1, skillMastery(s, a.id));
-        if (sort === 'mastery') return (s.skillPractice[b.id] || 0) - (s.skillPractice[a.id] || 0);
-        return a.name.localeCompare(b.name, 'ko');
     });
+    // v3.93 정렬 키는 스킬마다 한 번만 계산합니다(비교할 때마다 효과를 다시 계산하지 않음). 큰 값이 앞인 정렬은 키를 음수로.
+    const keyOf = (sk: Skill) => { const fx = () => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id));
+        return sort === 'ap' ? fx().cost ?? 2 : sort === 'chance' ? -(fx().chance || 0) : sort === 'level' ? -skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id)) : -(s.skillPractice[sk.id] || 0); };
+    if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    else if (sort !== 'default') { const keys = new Map(list.map(sk => [sk.id, keyOf(sk)])); list.sort((a, b) => keys.get(a.id)! - keys.get(b.id)!); }
     const filtersOn = !!q || kind !== 'all' || damage !== 'all' || sort !== 'default' || filter !== 'all';
     return <>
         <Heading eyebrow="SKILL LABORATORY" title="직업을 거쳐, 나만의 편성으로" description="전직 스킬은 무료로 사용합니다. 장착 후 처치로 계승·강화하거나, 얻어 둔 스킬에 1 SP를 투자하세요.">

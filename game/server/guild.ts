@@ -34,13 +34,13 @@ export type GuildInfo = {
     board: { rank: number; id: string; name: string; points: number; self: boolean }[];
 };
 export async function guildInfo(account: string, now: number): Promise<GuildInfo> {
-    const database = db(), week = weekKey(now), member = await database.getGuildMember(account);
-    const rows = await database.listGuildBoard(week, BOARD_SIZE);
+    // v3.94 내 소속과 주간 순위표, 길드와 길드원을 함께 읽습니다(DB 차례 대기 4번 → 2번).
+    const database = db(), week = weekKey(now), [member, rows] = await Promise.all([database.getGuildMember(account), database.listGuildBoard(week, BOARD_SIZE)]);
     const board = rows.map((g, i) => ({ rank: i + 1, id: g.id, name: g.name, points: g.points, self: g.id === member?.guild_id }));
     if (!member) return { week, guild: null, board };
-    const g = await database.getGuild(member.guild_id);
+    const [g, members] = await Promise.all([database.getGuild(member.guild_id), database.listGuildMembers(member.guild_id)]);
     if (!g) { await database.removeGuildMember(account); forget(account); return { week, guild: null, board }; }
-    const members = await database.listGuildMembers(g.id), totals = totalsOf(g, week), claimed = claimsOf(member, week);
+    const totals = totalsOf(g, week), claimed = claimsOf(member, week);
     return { week, board, guild: { id: g.id, name: g.name, code: g.leader === account ? g.code : undefined, leader: g.leader === account, treasury: g.treasury, totals, points: guildPoints(totals),
         goals: makeGuildGoals(members.length).map(goal => ({ ...goal, progress: guildGoalProgress(goal, totals), claimed: claimed.includes(goal.id) })),
         members: members.map(m => { const t = totalsOf(m, week); return { account: m.account_id, name: m.name, leader: m.account_id === g.leader, self: m.account_id === account, joinedAt: m.joined_at, totals: t, points: guildPoints(t) }; }) } };
@@ -62,7 +62,7 @@ export async function syncGuild(account: string, s: State, now: number) {
 async function uploadStats(account: string, s: State, now: number) {
     const st = guildStatsFor(s, now), week = st.key, database = db();
     const delta = { catches: st.catches - st.sentCatches, clears: st.clears - st.sentClears, bosses: st.bosses - st.sentBosses, abyss: st.abyss };
-    if (s.guildMember) { await database.bumpGuild(s.guildMember.id, week, delta); await database.bumpGuildMember(account, week, delta); }
+    if (s.guildMember) await Promise.all([database.bumpGuild(s.guildMember.id, week, delta), database.bumpGuildMember(account, week, delta)]);
     st.sentCatches = st.catches; st.sentClears = st.clears; st.sentBosses = st.bosses; st.sentAbyss = st.abyss; st.sentAt = now;
 }
 const requireMember = async (account: string) => { const m = await db().getGuildMember(account); if (!m) throw new ApiError('길드에 가입되어 있지 않습니다.'); const g = await db().getGuild(m.guild_id); if (!g) throw new ApiError('길드를 찾을 수 없습니다.'); return { m, g }; };
@@ -137,17 +137,18 @@ export async function donate(account: string, s: State, rawAmount: unknown, now:
     if (!GUILD_DONATIONS.includes(amount)) throw new ApiError('기부 금액을 확인하세요.');
     if (s.gold < amount) throw new ApiError('골드가 부족합니다.');
     const week = weekKey(now);
-    await db().bumpGuild(g.id, week, { donated: amount }); await db().bumpGuildMember(account, week, { donated: amount });
+    await Promise.all([db().bumpGuild(g.id, week, { donated: amount }), db().bumpGuildMember(account, week, { donated: amount })]);
     s.gold -= amount;
     addLog(s, `길드 금고 기부 · -${amount.toLocaleString()} G · 이번 주 길드 점수 +${Math.floor(amount / 1000)}`, 'reward');
 }
 export async function claimGoal(account: string, s: State, goalId: unknown, now: number) {
     const { m, g } = await requireMember(account);
     await uploadStats(account, s, now); // 내 기록을 먼저 반영한 뒤 판정합니다.
-    const week = weekKey(now), fresh = (await db().getGuild(g.id)) || g, members = await db().listGuildMembers(g.id);
+    // v3.94 갱신된 길드 · 길드원 수 · 내 수령 기록을 함께 읽습니다.
+    const week = weekKey(now), [freshRow, members, mine] = await Promise.all([db().getGuild(g.id), db().listGuildMembers(g.id), db().getGuildMember(account)]), fresh = freshRow || g;
     const goal = makeGuildGoals(members.length).find(x => x.id === goalId);
     if (!goal) throw new ApiError('없는 목표입니다.');
-    const totals = totalsOf(fresh, week), claimed = claimsOf((await db().getGuildMember(account)) || m, week);
+    const totals = totalsOf(fresh, week), claimed = claimsOf(mine || m, week);
     if (guildGoalProgress(goal, totals) < goal.target) throw new ApiError('아직 목표에 닿지 않았습니다.');
     if (claimed.includes(goal.id)) throw new ApiError('이번 주에 이미 받았습니다.');
     await db().bumpGuildMember(account, week, {}, [...claimed, goal.id].join(','));

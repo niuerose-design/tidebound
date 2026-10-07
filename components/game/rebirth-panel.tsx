@@ -152,7 +152,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             <div className="rebirth-records rebirth-three">
                 <article className="panel ledger-gain"><h2>받는 보상</h2><ul>
                     <li><b>세계석 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{breathExtra ? ` · 서약 +${breathExtra}` : ''}</small></li>
-                    <li><b>환생 영구 보너스: 체력·물리/마법 공격·물리/마법 방어</b><small>현재 +{memoryNow}% → 환생 후 +{memoryNext}%</small></li>
+                    <li><b>환생 영구 보너스: 체력·마나·물리/마법 공격·물리/마법 방어</b><small>현재 +{memoryNow}% → 환생 후 +{memoryNext}%</small></li>
                     <li><b>영구 경험치 획득</b><small>현재 ×{permanentExp.toFixed(2)} → 환생 후 ×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</small></li>
                     <li><b>장착 AP {apGain ? '+1' : '+0'}</b><small>{apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`}</small></li>
                     <li><b>다음 생 효과</b><small>{lifeText}</small></li>
