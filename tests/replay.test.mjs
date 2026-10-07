@@ -1,9 +1,9 @@
-// v3.97 전투 재생: 로그 묶음을 기록의 서버 턴 번호로 배치합니다(쓰러진 뒤 회복 대기처럼 로그 없는 턴을 정확히 건너뜀).
+// v3.103 전투 재생: 로그 묶음을 기록의 서버 턴 번호로 배치합니다(쓰러진 뒤 회복 대기처럼 로그 없는 턴을 정확히 건너뜀).
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 import { newState, tick, stats, assert, test } from './harness.mjs';
 const { buildCombatReplay } = await loadGame().load('game/systems/combat-feedback.js');
 
-test('v3.97 replay: every log shows up on its own server turn, including across a defeat and recovery', () => {
+test('v3.103 replay: every log shows up on its own server turn, including across a defeat and recovery', () => {
     const s = newState(0), rng = () => .5;
     s.running = true; s.rebirths = 12; s.stage = 'starfall'; s.hp = stats(s).hp; // 약한 몸으로 강한 사냥터 → 쓰러지고 회복 대기
     const prev = JSON.parse(JSON.stringify(s)), count = 40;

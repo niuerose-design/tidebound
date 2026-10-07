@@ -159,3 +159,35 @@ test('v3.89 Joker: luck ratio 0.3 (Final Cut keeps 0.8)', () => {
     assert.equal(SKILLS.find(sk => sk.id === 'jackpotStrike').scalingRatio, .3);
     assert.equal(SKILLS.find(sk => sk.id === 'allOrNothing').scalingRatio, .8);
 });
+
+test('v3.97 Night Lord dice skills (3rd · 5th tier) add physical attack × 0.5 to the luck base; 1st · 2nd tier stay luck-only', async () => {
+    const { strike } = await load('game/systems/combat.js');
+    assert.equal(SKILLS.find(sk => sk.id === 'fateReversal').scalingAttack, .5);
+    assert.equal(SKILLS.find(sk => sk.id === 'heavenlyDice').scalingAttack, .5);
+    assert.equal(SKILLS.find(sk => sk.id === 'heavenlyStrike').scalingAttack, undefined);
+    const mk = (skills, attack) => ({ name: 'A', stats: { hp: 1e9, attack, magic: 0, defense: 0, resist: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, crit: 0, critDamage: 2, attrLuk: 500 }, hp: 1e9, mana: 1e6, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
+    const hit = (skills, attack) => { const b = mk([], 0); strike(mk(skills, attack), b, () => 0); return 1e9 - b.hp; };
+    assert.ok(hit(['fateReversal'], 40000) > hit(['fateReversal'], 1000) * 5, 'Triple Throw grows with attack');
+    assert.equal(hit(['heavenlyStrike'], 40000), hit(['heavenlyStrike'], 1000), 'Avenger stays luck-only');
+});
+
+test('v3.98 Dark Knight: Dragon Fury ×2.8, Beholder Impact ×2.8 with one extra hit, Darkness Aura crit like Phantom\'s 5th passive', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(sk('thunderLance').multiplier, 2.8);
+    assert.equal(sk('leviathanCharge').multiplier, 2.8);
+    assert.equal(sk('leviathanCharge').extraAttacks, 1);
+    assert.deepEqual([sk('dragonGodScale').bonus.crit, sk('dragonGodScale').bonus.critDamage], [sk('divineLuck').bonus.crit, sk('divineLuck').bonus.critDamage]);
+});
+
+test('v3.100 Luminous: Light Reflection ×2.8, Apocalypse ×3 with one extra hit', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(sk('vowStrike').multiplier, 2.8);
+    assert.equal(sk('lightHarpoon').multiplier, 3);
+    assert.equal(sk('lightHarpoon').extraAttacks, 1);
+});
+
+test('v3.102 Michael: Shining Cross defense ratio 2.4, Light of Courage adds crit 8%p and crit damage 0.4', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(sk('lastStand').scalingRatio, 2.4);
+    assert.deepEqual([sk('divineAegis').bonus.crit, sk('divineAegis').bonus.critDamage], [.08, .4]);
+});

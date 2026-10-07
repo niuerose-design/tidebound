@@ -136,7 +136,7 @@ export function combatFxSkipped(logs: Log[], afterId: number, playerName: string
 // 서버 계산을 흉내 내지 않고 로그의 실제 피해·회복 값만 되짚으므로, 배치의 마지막 프레임은 항상 next와 같습니다.
 const RECOVERED = '숨을 고르고 다시 무기를 들었습니다.';
 const LOST = '몬스터를 놓쳤습니다. 잠시 회복합니다.';
-const CAUGHT = /^(.+?)(?: 무리 ×\d+)? 처치 · \+\d/;
+const CAUGHT = /^(.+?) 처치 · \+\d/;
 
 export type ReplayFrame = {
     /** 턴 시작 뒤 이 프레임을 보여 줄 시각(ms). */
@@ -160,7 +160,7 @@ export function groupReplayTurns(logs: Log[]): Log[][] {
         const leads = cur ? cur.filter(l => l.type === 'battle' && (l.event?.chain ?? 1) === 1) : [];
         const follows = !!cur && cur.at(-1)!.type === 'battle' && ((log.event?.chain ?? 1) > 1 || (log.event?.multicast?.index || 0) > 0)
             || leads.length === 1 && cur!.at(-1)!.type === 'battle' && (!log.event || !leads[0].event || log.event.actor !== leads[0].event.actor);
-        // v3.97 서버 턴이 바뀌면 새 묶음(탐색 턴처럼 로그 없는 턴을 사이에 두고 이어지는 기록이 한 묶음으로 붙지 않게).
+        // v3.103 서버 턴이 바뀌면 새 묶음(탐색 턴처럼 로그 없는 턴을 사이에 두고 이어지는 기록이 한 묶음으로 붙지 않게).
         const starts = !cur || cur.at(-1)!.turn !== log.turn || (log.type === 'battle' ? !follows : log.text === RECOVERED);
         if (starts) turns.push([log]);
         else cur!.push(log);
@@ -170,7 +170,7 @@ export function groupReplayTurns(logs: Log[]): Log[][] {
 
 /**
  * 각 로그 묶음이 몇 번째 턴에 일어났는지.
- * v3.97 로그에 적힌 서버 턴 번호로 바로 자리를 잡습니다(회복 대기 · 탐색 턴처럼 로그 없는 턴도 정확히 건너뜀).
+ * v3.103 로그에 적힌 서버 턴 번호로 바로 자리를 잡습니다(회복 대기 · 탐색 턴처럼 로그 없는 턴도 정확히 건너뜀).
  * 턴 번호가 맞지 않으면(옛 기록 · 턴 수 불일치) 예전처럼 회복 카운트로 자리를 잡고, 어긋나면 마지막 턴들에 붙입니다.
  */
 function placeTurns(groups: Log[][], count: number, recovery: number, recoveryTurns = BALANCE.recoveryTurns, turns?: { from: number; to: number }): number[] | null {
