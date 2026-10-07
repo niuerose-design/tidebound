@@ -180,7 +180,8 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'doomCurse', name: '파멸의 저주', desc: '', level: 70, job: 'curseQueen', chance: .5, cooldown: 4, multiplier: 3.9, cost: 6, manaCost: 36, effect: 'silence', damageBonusCondition: 'controlled', conditionalDamageBonus: .6, masteryMilestones: M5 },
     { ...P, id: 'queenOfCurses', name: '저주의 왕관', desc: '마법 공격과 지속 피해가 크게 오릅니다.', level: 70, job: 'curseQueen', cost: 3, bonus: { magic: 110, dotBonus: .2 }, masteryMilestones: M5 },
     { ...A, ...dual, id: 'dragonGodSpear', name: '좀비 루팡신의 창', desc: '', level: 70, job: 'seaDragonGod', chance: .5, cooldown: 5, multiplier: 4.5, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
-    { ...P, id: 'dragonGodScale', name: '좀비 루팡신의 비늘', desc: '두 공격과 체력이 크게 오릅니다.', level: 70, job: 'seaDragonGod', cost: 3, bonus: { attack: 55, magic: 55, hp: 300 }, masteryMilestones: M5 },
+    // v3.98 다크니스 오라: 치명타 +8%p · 치명 피해 +0.45(팬텀 5차 패시브와 같은 값, 다크나이트 치명 75% · ×2.07로 물리 딜러 최하위였음).
+    { ...P, id: 'dragonGodScale', name: '좀비 루팡신의 비늘', desc: '두 공격과 체력이 크게 오르고, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'seaDragonGod', cost: 3, bonus: { attack: 55, magic: 55, hp: 300, crit: .08, critDamage: .45 }, masteryMilestones: M5 },
 ];
 
 /** 액티브 밸런스 표 행: 선언한 발동률·배율·재사용 대기·마나를 그대로 사용합니다. */
