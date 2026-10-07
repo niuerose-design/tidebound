@@ -243,6 +243,9 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
             continue;
         if ((a.mana ?? 0) < (candidate.manaCost || 0))
             continue;
+        // v3.141 전탄발사: 충전 중첩이 모자라면 굴리지 않습니다.
+        if (candidate.chargeNeed && (a.effects?.charge || 0) < candidate.chargeNeed)
+            continue;
         // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
         if (alreadyAfflicted(b, candidate))
             continue;
@@ -294,6 +297,8 @@ function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | 
         if (fired >= limit || a.hp <= 0 || b.hp <= 0 || first?.stunned || first?.silenced) continue;
         const sk = skillOf(a, id)!;
         if ((a.mana ?? 0) < (sk.manaCost || 0)) continue;
+        // v3.141 전탄발사: 충전 중첩이 chargeNeed에 닿을 때까지 기다립니다(대기 0에서 멈춰 있고, 실패로 세지 않음).
+        if (sk.chargeNeed && (a.effects?.charge || 0) < sk.chargeNeed) continue;
         const key = AWAKEN_PITY + id, misses = a.cooldowns[key] || 0;
         if (rng() >= Math.min(1, sk.chance * (1 + misses))) { a.cooldowns[key] = misses + 1; continue; }
         delete a.cooldowns[key];
@@ -487,6 +492,14 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
         base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
+    // v3.141 전탄발사: 쌓인 충전 중첩을 모두 소모해 중첩당 chargeBonus만큼 피해를 키웁니다(추가타 · 지속 피해 기준값에도 적용).
+    const targetWeakened = (b.effects.weaken || 0) > 0;
+    if (chosen?.chargeNeed && landed) {
+        const spent = Math.min(SKILL_FORMULA.charge.max, a.effects.charge || 0);
+        a.effects.charge = 0;
+        base *= 1 + spent * (chosen.chargeBonus || 0);
+        notes.push(`충전 ${spent}중첩 방출`);
+    }
     // v25.14 마법 방어 비례 피해: 결계 계열(마법 방어 배율이 높은 직업)에서 온전히, 다른 직업이 계승하면 일부만.
     if (chosen?.scaling === 'resist')
         base += sa.resist * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1);
@@ -536,6 +549,12 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     b.hp = Math.max(0, b.hp - actual);
     // v25 無: 쓰러질 피해를 받은 쪽이 無를 장착했으면 체력 1로 버티고, 이 행동의 남은 추가타는 멈춥니다.
     let stood = endure(b, sb, notes, ev);
+    // v3.141 충전: 충전 기술이 명중하면 중첩이 쌓입니다(약화된 적이면 weakenedExtra 더).
+    if (landed && chosen?.charge) {
+        const before = Math.min(SKILL_FORMULA.charge.max, a.effects.charge || 0);
+        a.effects.charge = Math.min(SKILL_FORMULA.charge.max, before + chosen.charge + (targetWeakened ? SKILL_FORMULA.charge.weakenedExtra : 0));
+        if (a.effects.charge > before) notes.push(`충전 ${a.effects.charge}`);
+    }
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
     if (landed && !statusOnly && sb.thorns > 0) {
         // v27.2 공격자 방어를 절반만 적용하고, 무리 규모에 따라 (1 + log2 N)배(최대 10배). 탱커가 무리 사냥에서 빛나는 장치입니다.

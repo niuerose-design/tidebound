@@ -67,6 +67,8 @@ export function skillBrief(sk: Skill): string {
     if (sk.alsoEffect) parts.push(`${STATUS_WORD[sk.alsoEffect]} ${sk.statusTurns}턴`);
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
     if (sk.dotFinisher) parts.push(`중독·화상 중첩 비례 추가타 최대 ${sk.dotFinisher.maxHits}회 · 기절 ${sk.dotFinisher.partStun}~${sk.dotFinisher.fullStun}턴`);
+    if (sk.charge) parts.push(`명중 시 충전 +${sk.charge}(약화 적 +${SKILL_FORMULA.charge.weakenedExtra})`);
+    if (sk.chargeNeed) parts.push(`충전 ${sk.chargeNeed}중첩부터 · 중첩당 피해 +${skillPercent(sk.chargeBonus || 0)}`);
     if (sk.effect === 'heal') parts.push(`체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복`);
     if (sk.effect === 'drain') parts.push(`피해의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 흡혈`);
     if (sk.damageBonusCondition) parts.push(`${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 적 +${skillPercent(sk.conditionalDamageBonus || 0)}`);

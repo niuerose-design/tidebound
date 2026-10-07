@@ -93,6 +93,7 @@ function applyStatusRules(sk: Skill, tier: number) {
         sk.chance = Math.min(sk.chance, STATUS_ONLY_MAX_CHANCE);
         sk.cooldown = Math.max(sk.cooldown, sk.statusTurns);
         delete sk.damageBonusCondition; delete sk.conditionalDamageBonus; delete sk.extraAttacks; delete sk.penetrationBonus;
+        if (sk.charge) sk.desc += ` 명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}).`;
         return;
     }
     // 1~3차 연계 공격기(제어·출혈·약화 중인 적 추가 피해)는 상태이상 없이 피해만 줍니다. 상태는 같은 계보의 보조기가 겁니다.
@@ -191,6 +192,8 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
         if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
+        if (sk.charge) sk.desc += ` 명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}).`;
+        if (sk.chargeNeed) sk.desc += ` 충전 ${sk.chargeNeed}중첩 이상에서만 나가고, 중첩을 모두 소모해 중첩당 피해 +${Math.round((sk.chargeBonus || 0) * 100)}%.`;
         sk.desc += progressDesc(sk);
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';

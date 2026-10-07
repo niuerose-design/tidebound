@@ -158,12 +158,14 @@ export function retireDoors(s: State) {
 /** v3.64 삭제한 히든 직업 6개와 그 스킬(docs/concept.md 11.7-2). */
 export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor', 'sunriseAngler', 'noonDiver', 'nightHeron',
     /** v3.138 5차 통폐합 1: 미하일 계보(팔라딘과 같은 반사 탱커)와 숨은 2차 성벽 기사(산호 축성가). */
-    'shieldbearer', 'gatekeeper', 'fortressLord', 'unyielding', 'guardianDeity', 'coralBuilder', 'fistMagus'];
+    'shieldbearer', 'gatekeeper', 'fortressLord', 'unyielding', 'guardianDeity', 'coralBuilder', 'fistMagus', 'deckGunner'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.138 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */
     'shieldBash', 'shieldWall', 'ironRetort', 'spikedShield', 'bulwarkSlam', 'stoneSkin', 'lastStand', 'undying', 'aegisJudgment', 'divineAegis', 'fortress', 'coralPatience',
     /** v3.140 숨은 2차 주먹 마도사(마법 계수 → 물리 피해)는 루미너스 계보가 그 자리를 맡아 지웠습니다. */
-    'arcaneFist', 'manaMuscle'];
+    'arcaneFist', 'manaMuscle',
+    /** v3.141 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
+    'broadside', 'powderKeg'];
 /**
  * v3.64 히든 직업 재배치 · v3.138 5차 통폐합: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).
  * 지금 그 직업이면 초보자로 돌아갑니다. 여러 번 불러도 같습니다.

@@ -50,8 +50,8 @@ export const V24_JOBS: NewJob[] = [
     // ── 복합 ──────────────────────────────────────────────
     { id: 'abyssHybrid', name: '피조류 혼합체', title: '피와 마나가 한 몸에서 끓는다', desc: '제논 계보의 환생 후 4차 직업입니다. 메가 스매셔는 최대 체력에 비례해 때리고 흡혈합니다. 패시브로 체력과 물리·마법 공격을 올립니다.', ...neutral, attack: 1.35, magic: 1.2, hp: 1.35, defense: 1.08, ...T4, parent: 'bloodTide', requires: { str: 52, vit: 46 }, requiresSkillMastery: { redWake: 3 }, role: 'HP·흡혈', tree: 'hybrid' },
     { id: 'aberrantKing', name: '이형의 왕', title: '어느 바다에도 속하지 않는 왕', desc: '제논 계보의 5차 직업입니다. 홀로그램 그래피티는 체력과 마나를 함께 실어 때립니다. 패시브로 체력·마나·흡혈을 올립니다.', ...neutral, attack: 1.42, magic: 1.3, hp: 1.45, defense: 1.1, resist: 1.08, ...T5, parent: 'abyssHybrid', requires: { str: 64, vit: 56, int: 40 }, requiresSkillMastery: { lifeTorrent: 3 }, role: 'HP·MP 최상위', tree: 'hybrid' },
-    { id: 'resonanceMaster', name: '공명 장인', title: '쇠와 룬이 함께 운다', desc: '메카닉 계보의 환생 후 4차 직업입니다. 로봇 런처: RM7으로 상대를 약화시키고, 패시브로 두 공격과 두 방어를 함께 올립니다.', ...neutral, attack: 1.38, magic: 1.38, hp: 1.18, defense: 1.12, resist: 1.12, ...T4, parent: 'resonanceEngineer', requires: { int: 50, vit: 44, str: 34 }, requiresSkillMastery: { resonantCannon: 3 }, role: '복합·약화', tree: 'hybrid' },
-    { id: 'runeCreator', name: '룬의 창조주', title: '새 문자를 바다에 새긴다', desc: '기절을 거는 메탈아머 전탄발사와 두 공격·관통 패시브로 메카닉 계보의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.5, magic: 1.5, hp: 1.22, defense: 1.12, resist: 1.12, crit: .05, ...T5, parent: 'resonanceMaster', requires: { int: 62, vit: 52, str: 42 }, requiresSkillMastery: { resonanceBurst: 3 }, role: '복합 최상위', tree: 'hybrid' },
+    { id: 'resonanceMaster', name: '공명 장인', title: '쇠와 룬이 함께 운다', desc: '메카닉 계보의 환생 후 4차 직업입니다. 로봇 런처: RM7으로 상대를 약화시키며 충전을 쌓고, 패시브로 마법 공격 · 두 방어 · 반격을 올립니다.', ...neutral, attack: 1, magic: 1.3, hp: 1.25, defense: 1.35, resist: 1.15, ...T4, parent: 'resonanceEngineer', requires: { int: 50, vit: 44 }, requiresSkillMastery: { resonantCannon: 3 }, role: '경계·약화 충전', tree: 'hybrid' },
+    { id: 'runeCreator', name: '룬의 창조주', title: '새 문자를 바다에 새긴다', desc: '충전 5중첩부터 나가 중첩을 모두 쏟아내는 메탈아머 전탄발사와 마법 공격 · 방어 · 관통 · 반격 패시브로 메카닉 계보의 정점에 선 5차 직업입니다.', ...neutral, attack: 1, magic: 1.35, hp: 1.3, defense: 1.45, resist: 1.2, crit: .05, ...T5, parent: 'resonanceMaster', requires: { int: 62, vit: 52 }, requiresSkillMastery: { resonanceBurst: 3 }, role: '경계 최상위·전탄발사', tree: 'hybrid' },
 
     // ── 보조 ──────────────────────────────────────────────
     { id: 'fateGambler', name: '운명 도박사', title: '판돈은 언제나 전부', desc: '팬텀 계보의 환생 후 4차 직업입니다. 얼티밋 드라이브는 치명타로 판을 뒤집습니다. 패시브로 치명 피해와 골드를 올립니다.', ...neutral, attack: 1.3, magic: 1.2, hp: 1.05, crit: .15, ...T4, parent: 'highRoller', requires: { luk: 58, dex: 42 }, requiresSkillMastery: { allIn: 3 }, role: '치명·경제', tree: 'support', penalties: { accuracy: -.04 } },
@@ -83,6 +83,8 @@ const A = { type: 'active' as const };
 const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
 const dual = { damageType: 'split' as const, scaling: 'dual' as const };
+/** v3.141 메카닉: 마법 피해 + 물리 방어 비례(방어 친화도 적용). */
+const forgeBlast = { damageType: 'magic' as const, scaling: 'defense' as const };
 const M4 = [2500, 12000, 40000, 100000], M5 = [4000, 18000, 60000, 150000];
 /** 대기만성: 숙련 10,000 / 100,000 / 500,000(v27.95부터 5차 ×25 = 25만 / 250만 / 1,250만). 단계마다 AP가 줄고 보상이 크게 오릅니다. */
 const LATE = [10000, 100000, 500000];
@@ -151,10 +153,11 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'aberrantSurge', name: '이형 쇄도', desc: '', level: 70, job: 'aberrantKing', chance: .25, cooldown: 4, multiplier: 2.4, cost: 6, scaling: 'hybrid', scalingRatio: .05, effect: 'drain', drainRatio: .2, masteryMilestones: M5 },
     { ...P, id: 'aberrantBody', name: '이형의 몸', desc: '체력·최대 마나·흡혈이 오릅니다.', level: 70, job: 'aberrantKing', cost: 3, bonus: { hp: 500, mana: 80, lifesteal: .03 }, masteryMilestones: M5 },
     // v3.110 메카닉 상향: 로봇 런처: RM7 배율 2.6 → 3.2 · 추가 공격 1회.
-    { ...A, ...dual, id: 'resonanceBurst', name: '공명 폭발', desc: '', level: 55, job: 'resonanceMaster', chance: .5, cooldown: 4, multiplier: 3.2, cost: 5, manaCost: 16, effect: 'weaken', extraAttacks: 1, masteryMilestones: M4 },
-    { ...P, id: 'harmonicPlate', name: '공명 갑판', desc: '두 공격과 두 방어가 오릅니다.', level: 55, job: 'resonanceMaster', cost: 3, bonus: { attack: 25, magic: 25, defense: 50, resist: 50 }, masteryMilestones: M4 },
-    { ...A, ...dual, id: 'genesisRune', name: '창세 룬', desc: '', level: 70, job: 'runeCreator', chance: .5, cooldown: 5, multiplier: 4.2, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
-    { ...P, id: 'creatorRune', name: '창조주의 문장', desc: '두 공격과 방어 관통이 오릅니다.', level: 70, job: 'runeCreator', cost: 3, bonus: { attack: 55, magic: 55, penetration: .05 }, masteryMilestones: M5 },
+    // v3.141 메카닉 재개편: 방어 비례 마법 피해로 충전, 창세 룬(전탄발사)은 충전 5중첩부터 나가 중첩당 +12%.
+    { ...A, ...forgeBlast, id: 'resonanceBurst', name: '공명 폭발', desc: '', level: 55, job: 'resonanceMaster', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 16, scalingRatio: .8, effect: 'weaken', charge: 1, masteryMilestones: M4 },
+    { ...P, id: 'harmonicPlate', name: '공명 갑판', desc: '마법 공격 · 두 방어 · 반격이 오릅니다.', level: 55, job: 'resonanceMaster', cost: 3, bonus: { magic: 50, defense: 50, resist: 50, thorns: .25 }, masteryMilestones: M4 },
+    { ...A, ...forgeBlast, id: 'genesisRune', name: '창세 룬', desc: '', level: 70, job: 'runeCreator', chance: .5, cooldown: 5, multiplier: 4.2, cost: 6, manaCost: 20, scalingRatio: .8, effect: 'stun', chargeNeed: 5, chargeBonus: .12, masteryMilestones: M5 },
+    { ...P, id: 'creatorRune', name: '창조주의 문장', desc: '마법 공격 · 물리 방어 · 방어 관통 · 반격이 오릅니다.', level: 70, job: 'runeCreator', cost: 3, bonus: { magic: 110, defense: 60, penetration: .05, thorns: .3 }, masteryMilestones: M5 },
     // 보조
     { ...A, ...physical, id: 'fateRoll', name: '운명의 주사위', desc: '', level: 55, job: 'fateGambler', chance: .27, cooldown: 4, multiplier: 2.5, cost: 5, accuracyBonus: .06, masteryMilestones: M4 },
     { ...P, id: 'fortuneFavor', name: '행운의 총애', desc: '치명 피해와 골드 획득이 오릅니다.', level: 55, job: 'fateGambler', cost: 3, bonus: { critDamage: .3, goldBonus: .15 }, masteryMilestones: M4 },

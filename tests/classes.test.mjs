@@ -3,16 +3,16 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 268); assert.equal(new Set(JOBS.map(j => j.id)).size, 268);
+    assert.equal(JOBS.length, 267); assert.equal(new Set(JOBS.map(j => j.id)).size, 267);
     // v3.135 나이트워커 2~5차 · 골령술사(5개)를 지우고 1차 망인만 남겼습니다. v3.138 미하일 계보 5개 · 성벽 기사를 지웠습니다.
     // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
-    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 241);
+    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 240);
     // v3.70 능력치 수련 I~III 18개(계열마다 3개, 수련 계보).
     assert.equal(JOBS.filter(j => /^(str|dex|int|vit|wis|luk)Training[123]$/.test(j.id)).length, 18);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 49, magic: 47, defense: 35, status: 33, hybrid: 42, support: 46, mystery: 16 });
+    assert.deepEqual(count, { physical: 49, magic: 47, defense: 35, status: 33, hybrid: 41, support: 46, mystery: 16 });
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
