@@ -600,7 +600,7 @@ test('v3.119 display bugs: 마력 option mana regen scales with power (and old t
     const a = St.stats(t); for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist']) assert.ok(Number.isInteger(a[k]), `${k} ${a[k]}`);
 });
 
-test('v3.121 onyx accessory level: the higher of its habitat level and my level (boss drop and milestone grant)', async () => {
+test('v3.122 onyx accessory level: the higher of its habitat level and my level (boss drop and milestone grant)', async () => {
     const G = await L.load('systems/onyx-grant'), O = await L.load('data/onyx');
     const s = newState(0); s.level = 87; G.grantOnyx(s, O.ONYX_BOSSES[0].id, 5, () => .5, 'test');
     const dusk = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.equal(dusk.level, 87); assert.equal(dusk.power, Math.round((87 + 2) * O.ONYX.power));
