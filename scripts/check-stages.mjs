@@ -3,7 +3,8 @@
 //   일반 사냥터: 난이도 0에서 사망 0 · 평균 처치 3턴 이하 · 시간당 경험치가 바로 앞 사냥터 이상인 가장 낮은 환생.
 //   무리 서식지: 난이도 0에서 시간당 사망 5회 이하 · 시간당 경험치가 그 환생의 최상위 일반 사냥터 이상인 가장 낮은 환생.
 // 시험하는 사냥터 몬스터의 도감 기록은 지웁니다(처음 가는 사냥터로 봄).
-// 사용: node scripts/check-stages.mjs [--rebirths 0,2,5,...] [--jobs hero,grandMagus,guardianDeity] [--hours .5] [--seeds 1] [--json out.json]
+// --own: 다른 직업 패시브를 빌리지 않은 몸(자기 계열 패시브만)으로 잽니다.
+// 사용: node scripts/check-stages.mjs [--own] [--rebirths 0,2,5,...] [--jobs hero,grandMagus,guardianDeity] [--hours .5] [--seeds 1] [--json out.json]
 import { loadGame } from './lib/game-modules.mjs';
 import { referenceBodies } from './lib/reference-body.mjs';
 import { random } from './lib/sim.mjs';
@@ -22,7 +23,7 @@ const ONLY = arg('--stages', '') ? arg('--stages', '').split(',') : null;
 
 const expBetween = (s, L, E) => { let n = s.exp - E; for (let l = L; l < s.level; l++) n += xpNeeded(l, s.rebirths, xpWall(s)); return n; };
 const bodies = new Map();
-const bodyFor = (r, jobId, stage) => { const k = `${r}:${jobId}`; if (!bodies.has(k)) bodies.set(k, referenceBody(r, jobId)); const s = structuredClone(bodies.get(k)); for (const id of stage.fish) delete s.book[id]; return s; };
+const bodyFor = (r, jobId, stage) => { const k = `${r}:${jobId}`; if (!bodies.has(k)) bodies.set(k, referenceBody(r, jobId, { borrow: !process.argv.includes('--own') })); const s = structuredClone(bodies.get(k)); for (const id of stage.fish) delete s.book[id]; return s; };
 function hunt(r, jobId, stage, tide, seed) {
     const s = bodyFor(r, jobId, stage), rng = random(seed * 7919 + r * 31 + tide);
     Object.assign(s, { stage: stage.id, tide, running: true, enemy: null, recovery: 0, target: null });
