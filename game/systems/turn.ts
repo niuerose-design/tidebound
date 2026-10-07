@@ -18,7 +18,7 @@ import { inRandomGame, loseRandomGame } from './random-game';
 import { deathRecoveryTurns, deathExpLoss } from '../data/sprout';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
-import { OFFLINE_SAMPLE, canSampleOffline, markOffline, sampleStable, extrapolateOffline } from './offline-sample';
+import { OFFLINE_SAMPLE, canSampleOffline, markOffline, sampleStable, extrapolateOffline, markOfflineRare, noteOfflineRare } from './offline-sample';
 import { breathReset } from './actions/lifecycle';
 import { isHacker, hackerTick } from './hacker';
 import { runAutomation } from './automation';
@@ -119,8 +119,12 @@ function tickTurn(s: State, rng: () => number) {
         e.stale = e.hp === enemyHpBefore && s.hp === playerHpBefore ? (e.stale || 0) + 1 : 0;
         if (e.stale >= STALEMATE_TURNS) { s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${enemyLabel(e)}이(가) 줄을 끊고 달아났습니다. 다음 몬스터를 기다립니다.`); return; }
     }
-    if (e.hp <= 0 && s.hp > 0)
+    if (e.hp <= 0 && s.hp > 0) {
+        // v3.104 부재중 정산 중 희귀 몬스터 처치는 표본 환산의 비례에서 뺍니다(남은 시간에는 따로 실제로 굴림).
+        const rare = markOfflineRare(s);
         reward(s, rng);
+        noteOfflineRare(s, rare);
+    }
     else if (s.hp <= 0) {
         s.deaths++;
         // 하드코어: 쓰러지면 즉시 이번 생을 처음부터 다시 시작합니다(오프라인 정산 중에도 같은 규칙).
