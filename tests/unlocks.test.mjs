@@ -93,6 +93,15 @@ test('v3.135 Night Walker lineage retired: only 망인 (undead) remains in the �
     assert.ok(!s.skills.includes('soulReap')); assert.deepEqual(s.presets.a.skills, ['hookShot']);
 });
 
+test('v3.137 망인: job mastery ten million; 끝나지 않는 골격 AP 6 → 4 → 2 → −3 at 1M · 4M · 10M practice with no flat minus; only strong job penalties remain', async () => {
+    const { apUsed, effectiveSkill } = await loadGame().load('game/systems/progression.js');
+    const j = job('undead'); assert.equal(j.masteryTarget, 1e7); assert.deepEqual(j.penalties, { accuracy: -0.08 }); assert.ok(['hp', 'attack', 'magic', 'defense', 'resist'].every(k => j[k] <= .8), 'every multiplier penalty is strong');
+    const sk = SKILLS.find(x => x.id === 'boneLegacy'); assert.ok(!Object.values(sk.bonus || {}).some(n => n < 0) && sk.levelEffects.every(l => !Object.values(l.bonus || {}).some(n => n < 0)), 'no flat minus on the passive');
+    const ap = n => { const s = newState(0); s.level = 40; s.job = 'undead'; s.learned.boneLegacy = 1; s.skills = ['boneLegacy']; s.skillPractice.boneLegacy = n; return apUsed(s); };
+    assert.deepEqual([0, 999_999, 1e6, 4e6, 9_999_999, 1e7].map(ap), [6, 6, 4, 2, 2, -3]);
+    assert.equal(effectiveSkill(sk, 1, 3).penaltyRelief, 1, 'the last stage relieves every penalty');
+});
+
 test('v3.64 the fallen angler grows with deaths', () => {
     const sk = SKILLS.find(x => x.id === 'scarTissue');
     const s = newState(0); s.deaths = 0; const none = passiveGrowthBonus(s, sk, progressCounts(s)).hp || 0;

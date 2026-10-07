@@ -33,17 +33,17 @@ test('SP inheritance is separate, costs one, and refund preserves natural inheri
  act(s,{type:'inheritSkill',id:'pierce'},0);s.skillPractice.pierce=masteryMilestonesFor(SKILLS.find(sk=>sk.id==='pierce'))[0];act(s,{type:'resetSkills'},0);
  assert.equal(s.sp,5);assert.equal(canUse(s,'pierce'),true);
 });
-// v3.80 본 레거시는 제약형 개별 예외: 10만 · 100만 · 500만(제약형 기본 5,000만에서 0 하나씩 뗌).
-test('Bone growth boundaries flip penalties and AP exactly at 1M/10M/50M wins',()=>{
- const bone=SKILLS.find(sk=>sk.id==='boneLegacy');assert.deepEqual(masteryMilestonesFor(bone),[1e5,1e6,5e6]);
- for(const [wins,lv,cost] of [[0,0,6],[99999,0,6],[1e5,1,6],[1e6-1,1,6],[1e6,2,2],[5e6-1,2,2],[5e6,3,-3]]){
+// v3.137 본 레거시(끝나지 않는 골격)는 제약형 개별 예외: 100만 · 400만 · 1,000만(망인 숙달 목표와 같음).
+test('Bone growth boundaries flip AP exactly at 1M/4M/10M wins',()=>{
+ const bone=SKILLS.find(sk=>sk.id==='boneLegacy');assert.deepEqual(masteryMilestonesFor(bone),[1e6,4e6,1e7]);
+ for(const [wins,lv,cost] of [[0,0,6],[999999,0,6],[1e6,1,4],[4e6-1,1,4],[4e6,2,2],[1e7-1,2,2],[1e7,3,-3]]){
   const natural=skillMasteryLevel(wins,bone.masteryMilestones);assert.equal(natural,lv);
-  const fx=effectiveSkill(bone,1,natural);assert.equal(fx.cost,cost);if(lv<2)assert.ok(fx.bonus.hp<0&&fx.bonus.defense<0);else assert.ok(fx.bonus.hp>0&&fx.bonus.defense>0);
+  const fx=effectiveSkill(bone,1,natural);assert.equal(fx.cost,cost);if(lv<2)assert.ok(!((fx.bonus?.hp||0)<0)&&!((fx.bonus?.defense||0)<0));else assert.ok(fx.bonus.hp>0&&fx.bonus.defense>0);
  }
  assert.deepEqual(effectiveSkill(bone,4,0),effectiveSkill(bone,1,3));assert.equal(maxSkillLevel(bone),3);
 });
 test('Negative AP works independent of priority and cannot be removed to overflow AP',()=>{
- const s=newState(0);s.level=30;s.learned={hook:1,pierce:1,focus:1,boneLegacy:1};s.skillInheritances={pierce:true,focus:true};s.skillPractice.boneLegacy=5e6;
+ const s=newState(0);s.level=30;s.learned={hook:1,pierce:1,focus:1,boneLegacy:1};s.skillInheritances={pierce:true,focus:true};s.skillPractice.boneLegacy=1e7;
  s.skills=['hook','pierce','focus','boneLegacy'];assert.equal(apUsed(s),5);assert.equal(validLoadout(s,s.skills),true);
  trimLoadout(s);assert.equal(s.skills.length,4);assert.throws(()=>act(s,{type:'skill',id:'boneLegacy'},0));assert.equal(s.skills.length,4);
  act(s,{type:'skill',id:'pierce'},0);act(s,{type:'skill',id:'boneLegacy'},0);assert.ok(apUsed(s)<=apCapacity(s));
@@ -128,7 +128,7 @@ test('Bone mastery relieves only the current job\'s negative multipliers',()=>{
  const jobHpFactor=st=>{const trace={};stats(st,trace);return (trace.hp||[]).filter(t=>t.source==='job'&&t.factor!==undefined).reduce((x,t)=>x*t.factor,1);};
  const s=newState(0);s.level=40;s.job='undead';s.learned.boneLegacy=1;s.skills=['boneLegacy'];
  const hp=JOBS.find(j=>j.id==='undead').hp;assert.ok(hp<1);
- for(const [wins,relief] of [[0,0],[1e5,.15],[1e6,.5],[5e6,1]]){s.skillPractice.boneLegacy=wins;assert.ok(Math.abs(jobHpFactor(s)-(1-(1-hp)*(1-relief)))<1e-9,String(wins));}
+ for(const [wins,relief] of [[0,0],[1e6,.15],[4e6,.5],[1e7,1]]){s.skillPractice.boneLegacy=wins;assert.ok(Math.abs(jobHpFactor(s)-(1-(1-hp)*(1-relief)))<1e-9,String(wins));}
  // 장착하지 않으면 숙련만으로는 회복하지 않습니다.
  s.skills=[];assert.ok(Math.abs(jobHpFactor(s)-hp)<1e-9);
 });
@@ -177,7 +177,8 @@ test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-
  // v3.80 직업 숙달 목표 = 그 직업 스킬의 마지막 숙련 단계(최대) × 40%(능력치 수련·해커는 따로).
  // v3.80 제약형 스킬(천만 단위)은 빼고, 제약형뿐인 직업은 차수 기본 곡선으로 셉니다.
  const own = id => SKILLS.filter(x => x.job === id && !x.song), usual = id => own(id).filter(x => !SK95.isConstraintSkill(x)).map(x => ms(x).at(-1));
- for (const j of J.filter(j => j.tier >= 1 && !j.retired && own(j.id).length && !/Training[123]$|[hH]acker$/.test(j.id))) {
+ // v3.137 망인(undead)은 숙달 목표를 데이터 그대로(1,000만) 씁니다(MASTERY_ALIGN.keep).
+ for (const j of J.filter(j => j.tier >= 1 && !j.retired && own(j.id).length && !/Training[123]$|[hH]acker$|^undead$/.test(j.id))) {
   const lasts = usual(j.id).length ? usual(j.id) : [SK95.SKILL_TIER_CURVE[Math.min(5, j.tier)].at(-1)];
   const want = Math.max(...lasts) * .4, got = target(j); assert.ok(Math.abs(got - want) <= (want >= 10000 ? 500 : 50), `${j.id} ${got} vs ${want}`);
  }
