@@ -28,7 +28,7 @@ export type StatSource = typeof STAT_SOURCES[number];
 const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '세계석 연구', book: '도감', achievement: '업적', account: '계정 보너스', equipment: '장비', limit: '상한·정수 처리' };
 /** 세계석 연구가 올리는 능력치 → 연구 id. 물리·마법 공격과 방어는 각각 다른 연구입니다. */
 const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', mana: 'mana', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', rebirthBonus: 'pearl', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
-/** 능력치 분해의 원인 이름. 세계석 연구는 해당 연구 이름까지 붙입니다(예: 세계석 연구 · 마력의 기억). */
+/** 능력치 분해의 원인 이름. 세계석 연구는 해당 연구 이름까지 붙입니다(예: 세계석 연구 · 마법력 강화 I). */
 export function statSourceLabel(k: keyof CombatStats, source: StatSource) {
     const name = source === 'research' ? RESEARCH.find(r => r.id === RESEARCH_BY_STAT[k])?.name : undefined;
     return name ? `${STAT_SOURCE_LABELS.research} · ${name}` : STAT_SOURCE_LABELS[source];
@@ -198,7 +198,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));
     const memory = rebirthMemory(s.rebirths) * (1 + dedication * .04);
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(key, [['rebirth', memory]]);
-    // v3.90 최대 마나도 체력처럼 연구(‘샘의 기억’) · 계정 · 환생 배율을 받습니다(전에는 배율이 없어 후반에 체력의 1%도 안 됐음).
+    // v3.90 최대 마나도 체력처럼 연구(‘마나 강화 I’) · 계정 · 환생 배율을 받습니다(전에는 배율이 없어 후반에 체력의 1%도 안 됐음).
     mul('mana', [['research', 1 + researchRank(s, 'mana') * MANA_RESEARCH_PER], ['account', account], ['rebirth', memory]]);
     for (const t of themes)
         if (t.scale) for (const key in t.scale) mul(key as keyof CombatStats, [['book', t.scale[key as keyof typeof t.scale] as number]]);
@@ -229,7 +229,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v3.119 배율 뒤에도 정수로(초월 · 창세가 붙으면 최대 체력 3460.1499… 처럼 소수가 화면에 나오던 문제).
     if (a.allStats) for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist'] as const) { mul(k, [['equipment', 1 + a.allStats]]); limit(k, Math.max(k === 'hp' ? 1 : 0, Math.floor(a[k]))); }
     // v3.73 피의 계약 흡혈은 전체 상한(30%)도 받지 않습니다(한 번 회복량 상한 lifestealHpCap은 그대로).
-    { const pact = (free.lifesteal || 0) * roughGear(s); limit('lifesteal', Math.min(.3, a.lifesteal - pact) + pact); }
+    // v3.150 흡혈 강화(연구) 분도 상한 밖에 더합니다(최대 20단계 +10%p). 장비만으로 30%가 차서 연구 효과가 0이던 문제.
+    { const over = (free.lifesteal || 0) * roughGear(s) + researchRank(s, 'lifesteal') * .005; limit('lifesteal', Math.min(.3, a.lifesteal - over) + over); }
     // v27.86 힘의 길 회복 봉쇄: 흡혈·턴당 체력 회복 ×(1 − 50·75·100%). 처치 후 회복은 victoryHealRate에서 줄입니다.
     if (roughHeal(s) < 1) { limit('lifesteal', a.lifesteal * roughHeal(s)); limit('hpRegen', Math.floor(a.hpRegen * roughHeal(s))); }
     return a;

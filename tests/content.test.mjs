@@ -177,10 +177,10 @@ test('Pearl research reset: per-tab refund, always free (v27.29), refusal condit
  s.running=true;assert.throws(()=>act(s,{type:'resetResearch',id:'combat'},0),/자동 사냥/);s.running=false;
  s.dungeon={id:'grotto',wave:0};assert.throws(()=>act(s,{type:'resetResearch',id:'combat'},0));s.dungeon=null;
  assert.throws(()=>act(s,{type:'resetResearch',id:'utility'},0),/돌려받을/);
- assert.deepEqual(researchRefund(s,'combat').refund,(2+4+6)+2+(2+4));
- act(s,{type:'resetResearch',id:'combat'},0);assert.equal(s.pearls,20);assert.equal(s.researchResetUsed,true);
+ assert.deepEqual(researchRefund(s,'combat').refund,(2+4+6)+2+(1+2)); // v3.150 체력 강화 기본 1 · 증가 1
+ act(s,{type:'resetResearch',id:'combat'},0);assert.equal(s.pearls,17);assert.equal(s.researchResetUsed,true);
  assert.equal(s.permanent.attack||0,0);assert.equal(s.permanent.magicAttack||0,0);assert.equal(s.permanent.hp||0,0);assert.equal(s.permanent.gold,2);
- act(s,{type:'resetResearch',id:'gold'},0);assert.equal(s.pearls,20+(3+5));assert.equal(s.permanent.gold||0,0);
+ act(s,{type:'resetResearch',id:'gold'},0);assert.equal(s.pearls,17+(3+5));assert.equal(s.permanent.gold||0,0);
  s.level=40;act(s,{type:'rebirth'},0);assert.equal(s.researchResetUsed,true);
  const a=newState(0);a.permanent.ap=4;const cap=apCapacity(a);const pool=['hook',...SKILLS.filter(x=>x.cost).map(x=>x.id).filter(id=>id!=='hook')];a.skills=[];
  for(const id of pool){if(apUsed({...a,skills:[...a.skills,id]})>cap)continue;a.skills.push(id);if(apUsed(a)>cap-4)break;}
