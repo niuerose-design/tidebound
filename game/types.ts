@@ -545,7 +545,7 @@ export type State = {
     letterLog?: { job: string; gift: number; turn: number }[];
     /** v3.40 자동 환생(승천 1회): 켜짐과 목표 레벨(0 = 요구 레벨). */
     /** v3.160 호루라기: 다음 사냥터 출현을 이 희귀 몬스터로(출현 때 지움). */
-    whistle?: 'mimic' | 'nuri';
+    whistle?: 'mimic' | 'nuri' | 'slime';
     /** v3.160 오늘(한국 시간) 분 호루라기 수. */
     whistleDay?: { key: string; used: number };
     autoRebirth?: { on: boolean; level: number };

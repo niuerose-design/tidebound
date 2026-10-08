@@ -363,6 +363,11 @@ test('v3.160 whistle: SP 5 forces the next hunting-ground spawn to be the mimic 
     s.sp = 4; assert.throws(() => act(s, { type: 'whistle', id: 'mimic' }, 86_400_000 * 2 + 1), /SP가 부족/, 'a new day resets the count but SP 5 is still needed');
     s.sp = 5; act(s, { type: 'whistle', id: 'mimic' }, 86_400_000 * 2 + 1); assert.equal(s.whistleDay.used, 1, 'new day count'); assert.equal(s.sp, 0);
     const t = newState(0); t.level = 5; t.sp = 10; assert.throws(() => act(t, { type: 'whistle', id: 'mimic' }, 0), /Lv\.10/);
+    // v3.162 정수의 슬라임도 부를 수 있습니다(Lv.30 · 처치 500). 다음 출현이 슬라임이고 난이도 조건은 보지 않습니다.
+    const u = newState(0); u.level = 60; u.kills = 2000; u.sp = 5; u.stage = 'brook'; u.tide = 0;
+    act(u, { type: 'whistle', id: 'slime' }, 0); assert.equal(u.whistle, 'slime'); assert.equal(u.sp, 0);
+    act(u, { type: 'start' }, 0); rawAdvance(u, 2000, seeded(2)); assert.equal(u.enemy?.id, 'essenceSlime', 'next spawn is the essence slime at difficulty 0'); assert.equal(u.whistle, undefined);
+    const v = newState(0); v.level = 29; v.kills = 2000; v.sp = 5; assert.throws(() => act(v, { type: 'whistle', id: 'slime' }, 0), /Lv\.30/);
 });
 
 test('v3.160 reenlist: only at the top rank, resets rank exp and perks, adds a permanent promotion point per reenlistment and shows a star', async () => {
@@ -422,6 +427,6 @@ test('v3.161 kings: after 30 small ones a share of that special becomes the king
         assert.ok(!t.enemy || t.enemy.id !== K.KING.slime.id, 'gone'); assert.equal(t.essence, 0); assert.equal(t.book.kingSlime || 0, 0, 'no reward for an escape'); assert.ok(t.logs.some(l => l.text.includes('대왕 정수 슬라임이(가) 힘이 다 빠지기 전에 달아났습니다'))); }
     // 던전에서는 안 나오고, 호루라기는 대왕을 부를 수 없습니다.
     { const d = make(); d.dungeon = { id: 'grotto', wave: 0 }; assert.equal(Enc.specialChances(d).rolls, false); }
-    { const w = make(); w.sp = 10; assert.throws(() => act(w, { type: 'whistle', id: 'kingMimic' }, 0), /숙련의 까미 또는 경험의 누리/); }
+    { const w = make(); w.sp = 10; assert.throws(() => act(w, { type: 'whistle', id: 'kingMimic' }, 0), /정수의 슬라임 중에서/); }
     assert.deepEqual(K.SPECIAL_IDS, ['masteryMimic', 'expNuri', 'essenceSlime', 'kingMimic', 'kingNuri', 'kingSlime']);
 });
