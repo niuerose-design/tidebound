@@ -122,9 +122,9 @@ export const JOB_TREES: JobTree[] = [
     { id: 'magic', name: '마법', subtitle: '지능 · 정신 · 마법', description: '마나와 주문 확률을 이용해 큰 마법 피해·회복·약화를 만드는 계열입니다.', accent: '#75b8d6' },
     { id: 'defense', name: '방어', subtitle: '체질 · 방어 · 회복', description: '체력과 방어를 바탕으로 회복·기절·반격·흡혈을 조합하는 계열입니다.', accent: '#8fc49b' },
     { id: 'status', name: '상태이상', subtitle: '출혈 · 중독 · 저주 · 제어', description: '방어를 무시하는 지속 피해와 기절·침묵·약화로 적을 무너뜨리는 계열입니다. 걸어 둔 상태이상에 연계할수록 강해집니다.', accent: '#b6c86a' },
-    { id: 'hybrid', name: '복합', subtitle: '물리 + 마법 · HP · MP', description: '물리와 마법, 체력과 마나를 함께 쓰는 복합 계열입니다. 모든 모험의 출발점인 초보자도 여기에 속합니다.', accent: '#c0a1dc' },
+    { id: 'hybrid', name: '복합', subtitle: '물리 + 마법 · HP · MP', description: '물리와 마법, 체력과 마나를 함께 쓰는 복합 계열입니다.', accent: '#c0a1dc' },
     { id: 'support', name: '보조', subtitle: '경험치 · 보상 · 속도 · 파밍', description: '직접 화력보다 성장 속도·보상·파밍·가속으로 편성을 보조하는 계열입니다.', accent: '#e0b36a' },
-    { id: 'mystery', name: '???', subtitle: '히든 · 페널티 · 몬스터', description: '조건을 만족해야 드러나는 숨은 직업, 페널티를 숙련으로 극복하는 직업, 몬스터 혈족의 모음입니다.', accent: '#9a9ab8' },
+    { id: 'mystery', name: '???', subtitle: '초보자 · 히든 · 페널티 · 몬스터', description: '모든 모험의 출발점인 초보자와, 조건을 만족해야 드러나는 숨은 직업, 페널티를 숙련으로 극복하는 직업, 몬스터 혈족의 모음입니다.', accent: '#9a9ab8' },
 ];
 export const JOBS: Job[] = [
     { id: 'fisher', name: '무직', title: '가능성이 시작되는 곳', desc: '공용 기술을 익히며 자신만의 항해를 준비합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 0, level: 1, requires: {}, mastery: 0, role: '균형', tree: 'hybrid' },
@@ -363,7 +363,8 @@ export const LINEAGES: Lineage[] = [
     NEW_LINEAGES.bloodAngler,
     NEW_LINEAGES.nerveNeedler,
     independent('status'),
-    { id: 'fisher', name: '무직', tree: 'hybrid', summary: '모든 모험의 출발점입니다. 공용 기술로 첫 전직을 준비합니다.' },
+    /** v3.168 초보자 계보는 ??? 탭에 둡니다(직업의 tree는 복합 그대로: 숙련 진행판 · 계열 집중은 그대로). */
+    { id: 'fisher', name: '무직', tree: 'mystery', summary: '모든 모험의 출발점입니다. 공용 기술로 첫 전직을 준비합니다.' },
     { id: 'wanderer', name: '이형 항해자 계보', tree: 'hybrid', summary: '여섯 능력치를 고르게 키울수록 세지고, 명중 · 회피로 버티다 회피를 무시하는 고정 피해 레이저(메가 스매셔)를 쏘는 경계 계보입니다.' },
     { id: 'spellbladeNovice', name: '마검 수련생 계보', tree: 'hybrid', summary: '마나 대신 현재 체력의 일부를 바쳐 베는 피의 딜러 계보입니다. 피가 줄수록 피해가 커지고(피의 분노), 흡혈로 바친 피를 되찾습니다.' },
     NEW_LINEAGES.tideLancer,

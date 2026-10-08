@@ -1,6 +1,6 @@
 /** 직업 화면 공용 계산. 게임 판정(progression)을 그대로 쓰고, 화면용 상태 이름만 붙입니다. */
 import type { State } from '@/game/types';
-import { JOBS, JOB_TREES, lineageOf, jobTags, type Job, type JobTreeId, jobById } from '@/game/data/classes';
+import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, type Job, type JobTreeId, jobById } from '@/game/data/classes';
 import { unlockFor } from '@/game/data/unlock-info';
 import { catalogRevealed } from '@/game/data/catalog';
 import { jobRequirements, jobMastered, jobCombatMultiplier, jobFlatBonus } from '@/game/systems/progression';
@@ -104,6 +104,8 @@ export const MONOSTAT_TAB = { id: 'monostat' as const, name: '외길', subtitle:
 export const JOB_TABS: { id: JobTabId; name: string; subtitle: string; description: string; accent: string }[] = [...JOB_TREES, MONOSTAT_TAB];
 const monostatIds = new Set(MONOSTAT_LINEAGES.map(l => l.id));
 export const monostatLineage = (lineageId: string) => monostatIds.has(lineageId);
+/** v3.168 직업이 든 계보의 계열. 계보가 직업과 다른 탭에 있을 수 있습니다(초보자 계보는 ??? 탭, 직업 tree는 복합). */
+export const lineageTreeOf = (j: Job) => LINEAGES.find(l => l.id === lineageOf(j))?.tree ?? j.tree;
 /** 계보가 이 탭에 들어가는지: ??? 탭은 드러난 히든 직업 기준, 외길 탭은 외길 계보, 나머지는 자기 계열(외길 제외)에서 보이는 직업이 있을 때. */
 export function lineageInTab(s: State, tab: JobTabId, l: { id: string; tree: string }) {
     if (tab === 'mystery') return inMysteryTab(s, l);
@@ -113,12 +115,12 @@ export function lineageInTab(s: State, tab: JobTabId, l: { id: string; tree: str
 /** 탭 칩의 직업 수(보이는 직업만). ??? 탭은 다른 계열에 붙은 드러난 히든 직업도 셉니다. */
 export function tabJobCount(s: State, tab: JobTabId) {
     const shown = shownJobs(s);
-    if (tab === 'mystery') return shown.filter(j => j.tree === 'mystery' || secretJob(j)).length;
+    if (tab === 'mystery') return shown.filter(j => lineageTreeOf(j) === 'mystery' || secretJob(j)).length;
     if (tab === 'monostat') return shown.filter(j => monostatLineage(lineageOf(j))).length;
-    return shown.filter(j => j.tree === tab && !monostatLineage(lineageOf(j))).length;
+    return shown.filter(j => lineageTreeOf(j) === tab && !monostatLineage(lineageOf(j))).length;
 }
 /** 직업이 전직 화면에서 들어가는 탭. 외길 계보면 ‘외길’, 그 밖에는 자기 계열. */
-export const tabOf = (j: Job): JobTabId => monostatLineage(lineageOf(j)) ? 'monostat' : j.tree;
+export const tabOf = (j: Job): JobTabId => monostatLineage(lineageOf(j)) ? 'monostat' : lineageTreeOf(j);
 
 /**
  * v3.166 직업 수 셈을 한곳에: 전직 화면 머리와 숙련 진행판이 같은 기준으로 셉니다.

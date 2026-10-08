@@ -32,7 +32,8 @@ test('Lineages: every job belongs to exactly one lineage inside its own tree; in
     for (const j of JOBS) {
         const matches = LINEAGES.filter(l => l.id === lineageOf(j));
         assert.equal(matches.length, 1, `${j.id} → ${lineageOf(j)}`);
-        assert.equal(matches[0].tree, j.tree, `${j.id} lineage tree`);
+        // v3.168 초보자 계보만 ??? 탭에 둡니다(직업 tree는 복합).
+        assert.equal(matches[0].tree, lineageOf(j) === 'fisher' ? 'mystery' : j.tree, `${j.id} lineage tree`);
         // v3.70 수련 계보 안의 능력치 수련 I~III은 수련 직업에서 이어집니다(부모도 같은 수련 계보).
         if (lineageOf(j).endsWith('-independent')) assert.ok(j.parent ? lineageOf(JOBS.find(p => p.id === j.parent)) === lineageOf(j) : (j.tier === 1 || j.fullKit) && (j.subRole === 'training' || !JOBS.some(c => c.parent === j.id)), j.id);
     }
