@@ -9,6 +9,8 @@ import { SKILLS } from '@/game/data/skills';
 import { FISH, STAGES, PLACES, REGIONS, regionFish } from '@/game/data/world';
 import { MIMIC, MIMIC_STAGE_CAP_INDEX, mimicChance, specialLuck } from '@/game/data/mimic';
 import { EXP_NURI, nuriChance } from '@/game/data/exp-nuri';
+import { ESSENCE_SLIME, slimeChance, slimeBundle } from '@/game/data/essence-slime';
+import { KING, KING_KINDS } from '@/game/data/king';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
 import { keepsAcrossLives } from '@/game/systems/equipment';
@@ -89,8 +91,11 @@ export function Collection({ s, send, busy }: PanelProps) {
     <TabsTrigger value="items">물건도감</TabsTrigger>
     <TabsTrigger value="bonus">연구 보너스</TabsTrigger>
     </TabsList>
-    <TabsContent value="fish">{(() => { const n = s.book[MIMIC.id] || 0, m = s.book[EXP_NURI.id] || 0, luck = specialLuck(s); return <details className="book-section book-region book-special" open={n + m > 0}>
-        <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>특별 도감 <small>{n + m ? [n ? `숙련의 까미 ${n}회` : '', m ? `경험의 누리 ${m}회` : ''].filter(Boolean).join(' · ') + ' 처치' : '아직 만나지 못함'}</small></h2></summary>
+    <TabsContent value="fish">{(() => { const n = s.book[MIMIC.id] || 0, m = s.book[EXP_NURI.id] || 0, sl = s.book[ESSENCE_SLIME.id] || 0, kings = KING_KINDS.map(k => s.book[KING[k].id] || 0), luck = specialLuck(s), tier = s.tide || 0, bundle = slimeBundle(tier);
+    /* v3.161 특별 도감: 까미 · 누리 · 정수의 슬라임과 대왕 3종. 대왕은 작은 녀석을 KING.minBookKills마리 잡은 뒤에만 섞입니다. */
+    const seen = [n ? `숙련의 까미 ${n}회` : '', m ? `경험의 누리 ${m}회` : '', sl ? `정수의 슬라임 ${sl}회` : '', ...KING_KINDS.map((k, i) => kings[i] ? `${KING[k].name} ${kings[i]}회` : '')].filter(Boolean);
+    return <details className="book-section book-region book-special" open={seen.length > 0}>
+        <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>특별 도감 <small>{seen.length ? seen.join(' · ') + ' 처치' : '아직 만나지 못함'}</small></h2></summary>
         <div className="book-grid"><article className={`panel book-card ${!n ? 'undiscovered' : ''}`}>
             <div className="book-icon"><FishArt id={MIMIC.id} size={56}/><span>{n ? `${n}회 처치` : '미발견'}</span></div>
             <h3>{n ? '숙련의 까미' : '???'} <small className="fish-rarity legendary">특별</small></h3>
@@ -102,7 +107,22 @@ export function Collection({ s, send, busy }: PanelProps) {
             <h3>{m ? '경험의 누리' : '???'} <small className="fish-rarity legendary">특별</small></h3>
             <p>{m ? fishOf(EXP_NURI.id)!.lore : `사냥터 난이도 ${EXP_NURI.minTier} 이상, Lv.${EXP_NURI.minLevel}이 넘은 모험가 앞에 아주 드물게 나타난다고 합니다.`}</p>
             <div className="fish-trait"><strong>경험치 로또</strong><span>잡으면 지금 레벨에 필요한 경험치의 일부를 한 번에 얻습니다(경험치 배율·서약과 무관): {EXP_NURI.tiers.map(t => `${t.label} ${Math.round(t.pct * 100)}%${secret ? '' : ` (${Math.round(t.chance * 100)}%)`}`).join(' · ')}.</span><span>{secret ? '출현 확률은 공개하지 않습니다(난이도가 높을수록 자주 나타납니다)' : <>출현마다 {(EXP_NURI.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(EXP_NURI.chancePerTier * 100).toFixed(2)}%p · 지금(행운의 편지 포함) {(s.tide || 0) >= EXP_NURI.minTier ? `${(nuriChance(s.tide || 0) * luck * 100).toFixed(2)}%` : '등장 안 함'}</>} · 사냥터 난이도 {EXP_NURI.minTier} 이상 · Lv.{EXP_NURI.minLevel}~99·누적 처치 {EXP_NURI.minKills.toLocaleString()}마리부터 · 던전 제외 · 오프라인 정산 중 ×{EXP_NURI.offlineScale} · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{EXP_NURI.hp}, 공격 ×{EXP_NURI.attack}).</span></div>
-        </article></div>
+        </article>
+        <article className={`panel book-card ${!sl ? 'undiscovered' : ''}`}>
+            <div className="book-icon"><FishArt id={ESSENCE_SLIME.id} size={56}/><span>{sl ? `${sl}회 처치` : '미발견'}</span></div>
+            <h3>{sl ? '정수의 슬라임' : '???'} <small className="fish-rarity legendary">특별</small></h3>
+            <p>{sl ? fishOf(ESSENCE_SLIME.id)!.lore : `사냥터 난이도 ${ESSENCE_SLIME.minTier} 이상, Lv.${ESSENCE_SLIME.minLevel}이 넘은 모험가 앞에 아주 드물게 나타난다고 합니다.`}</p>
+            <div className="fish-trait"><strong>정수 로또</strong><span>잡으면 이 사냥터 난이도의 정수 묶음(1 + ⌊난이도 ÷ {ESSENCE_SLIME.bundleTiers}⌋, 지금 {bundle})에 배수를 곱해 정수를 얻습니다: {ESSENCE_SLIME.tiers.map(t => `${t.label} ×${t.mul}${secret ? '' : ` (${Math.round(t.chance * 100)}%)`}`).join(' · ')}.</span><span>{secret ? '출현 확률은 공개하지 않습니다(난이도가 높을수록 자주 나타납니다)' : <>출현마다 {(ESSENCE_SLIME.chance * 100).toFixed(2)}% + 사냥터 난이도 1단계당 {(ESSENCE_SLIME.chancePerTier * 100).toFixed(2)}%p · 지금(행운의 편지 포함) {tier >= ESSENCE_SLIME.minTier ? `${(slimeChance(tier) * luck * 100).toFixed(2)}%` : '등장 안 함'}</>} · 사냥터 난이도 {ESSENCE_SLIME.minTier} 이상 · Lv.{ESSENCE_SLIME.minLevel}·누적 처치 {ESSENCE_SLIME.minKills.toLocaleString()}마리부터 · 던전 제외 · 오프라인 정산 중 ×{ESSENCE_SLIME.offlineScale} · 그 사냥터에서 가장 강한 몬스터의 몸집(체력 ×{ESSENCE_SLIME.hp}, 공격 ×{ESSENCE_SLIME.attack}).</span></div>
+        </article>
+        {KING_KINDS.map((k, i) => { const def = KING[k], got = kings[i], base = fishOf(def.base)!, baseKills = s.book[def.base] || 0, ready = baseKills >= KING.minBookKills;
+            const reward = k === 'mimic' ? `직업·장착 스킬 숙련 +${(MIMIC.tiers[2].mastery * KING.rewardMul).toLocaleString()}` : k === 'nuri' ? `경험치 Lv 필요량의 ${Math.round(EXP_NURI.tiers[2].pct * KING.rewardMul * 100)}% 또는 이 사냥터 출현 ${Math.round(EXP_NURI.tiers[2].pct * KING.rewardMul * EXP_NURI.encountersPerPct)}회분 중 큰 쪽` : `정수 묶음 ×${ESSENCE_SLIME.tiers[2].mul * KING.rewardMul}(지금 ${(bundle * ESSENCE_SLIME.tiers[2].mul * KING.rewardMul).toLocaleString()})`;
+            const bodyHp = (k === 'mimic' ? MIMIC.hp : k === 'nuri' ? EXP_NURI.hp : ESSENCE_SLIME.hp) * KING.hp;
+            return <article className={`panel book-card ${!got ? 'undiscovered' : ''}`} key={def.id}>
+            <div className="book-icon"><FishArt id={def.id} size={56} boss/><span>{got ? `${got}회 처치` : '미발견'}</span></div>
+            <h3>{got ? def.name : '???'} <small className="fish-rarity legendary">대왕</small></h3>
+            <p>{got ? fishOf(def.id)!.lore : `${base.name}을(를) ${KING.minBookKills}마리 잡은 사냥꾼 앞에, ${base.name}이(가) 나올 자리에 아주 드물게 대신 나타난다고 합니다.${ready ? '' : ` (지금 ${baseKills} / ${KING.minBookKills})`}`}</p>
+            <div className="fish-trait"><strong>확정 대박 · 도망</strong><span>잡으면 {base.name} ‘대’ 당첨의 ×{KING.rewardMul}이 확정: {reward}.</span><span>{secret ? `${base.name} 출현 중 일부가 대왕으로 바뀝니다(비율은 공개하지 않음)` : `${base.name} 출현 ${Math.round(1 / KING.share)}번 중 1번이 대왕으로 바뀝니다`} · {base.name} {KING.minBookKills}마리 처치 뒤부터 · 호루라기로는 부를 수 없음 · 체력은 {base.name}의 ×{KING.hp}(그 사냥터 최강 몬스터의 ×{bodyHp}), 공격은 최강 몬스터의 ×{KING.attack} · {KING.turns}턴({Math.round(KING.turns * 2 / 60)}분) 안에 못 잡으면 달아납니다(보상 없음).</span></div>
+            </article>; })}</div>
     </details>; })()}{REGIONS.map(region => { const ids = regionFish(region), sig = regionSignature(region), here = STAGES.some(x => x.region === region && x.id === s.stage);
     /* v27.80 도감: 지역 → 장소 2단. 지역 제목에 완성 종 수·지역 연구 단계·대표 변종. */
     return <details className="book-section book-region book-area" key={region} open={here}>

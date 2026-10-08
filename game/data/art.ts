@@ -34,7 +34,7 @@ export const FISH_SHAPES: Record<string, FishShape> = {
     aqSeaco: 'pig', aqShark: 'croc', aqSquid: 'octopus', aqFlower: 'mushroom', aqGuard: 'fighter', lfBlueTurtle: 'golem', lfRedTurtle: 'golem', lfWyvern: 'drake', lfSkelegon: 'skeleton', lfManticore: 'boar',
     ttMonitor: 'eye', ttGuardian: 'statue', ttChimera: 'demon', ttDodo: 'bat', ttLyka: 'croc', arErdaSpirit: 'ghost', arMemoryGuard: 'statue', arMysticErda: 'bubble', arVanishSoul: 'ghost', arTrueErda: 'bubble',
     // 까미 · 보스
-    masteryMimic: 'chest', expNuri: 'ghost',
+    masteryMimic: 'chest', expNuri: 'ghost', essenceSlime: 'slime', kingMimic: 'chest', kingNuri: 'ghost', kingSlime: 'slime',
     onyxDusk: 'ghost', onyxDunkel: 'fighter', onyxWill: 'mage', onyxLucid: 'mage', onyxHilla: 'mage', onyxSeren: 'fighter', onyxBlackMage: 'mage',
     grottoWarden: 'mushroom', kelpHydra: 'slime', anchorWraith: 'mushroom', magmaKraken: 'demon', templeOracle: 'mage', abyssSovereign: 'fighter', ventColossus: 'statue', starfallSeraph: 'clock',
 };

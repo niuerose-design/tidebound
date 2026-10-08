@@ -12,6 +12,10 @@ export type Odds = {
     mimic: { chance: number; perTier: number; stageStep: number; tiers: number[]; letterJackpot: number };
     /** 경험의 누리: 기본 · 난이도당 · 당첨 등급(소·중·대). */
     nuri: { chance: number; perTier: number; tiers: number[] };
+    /** v3.161 정수의 슬라임: 기본 · 난이도당 · 당첨 등급(소·중·대). */
+    slime: { chance: number; perTier: number; tiers: number[] };
+    /** v3.161 대왕 시리즈: 그 특별 몬스터 출현 중 대왕으로 바뀌는 몫. */
+    king: { share: number };
     /** 칠흑의 보스: 출현 기본 · 난이도당 배율 · 출현 천장 · 장신구 드롭 · 드롭 천장. */
     onyx: { chance: number; perTier: number; pity: number; drop: number; dropPity: number };
     /** 변종: 종류별 처치당 기본 확률 · 지역 배율 · 무리 규모(×5·×100·×500) 가중치 · 무리 서식지 ×500 확률. */
@@ -27,6 +31,8 @@ const empty = (): Odds => ({
     drop: { chance: 0, cap: 0, dungeonRepeat: 0, goldenBase: 0, rarity: [0, 0, 0, 0, 0, 0, 0], tideRarityPerTier: 0, primalTierCap: 1, essenceChancePerTier: 0, essenceEveryTiers: 1 },
     mimic: { chance: 0, perTier: 0, stageStep: 0, tiers: [0, 0, 0], letterJackpot: 0 },
     nuri: { chance: 0, perTier: 0, tiers: [0, 0, 0] },
+    slime: { chance: 0, perTier: 0, tiers: [0, 0, 0] },
+    king: { share: 0 },
     onyx: { chance: 0, perTier: 0, pity: Infinity, drop: 0, dropPity: Infinity },
     variant: { chance: {}, region: {}, swarmWeights: [0, 0, 0], habitatBig: 0 },
     appraisal: [0, 0, 0, 0, 0, 0],

@@ -19,13 +19,12 @@ import { encounterTier, xpWall } from './meta';
 import { isHacker } from './hacker';
 import { dismantleEssence, keepsAcrossLives } from './equipment';
 import { rankState } from '../data/rank';
-import { gainLevels, spawn, specialChances, type ForcedRare } from './encounter';
+import { gainLevels, spawn, specialChances, pickSpecial, type ForcedRare } from './encounter';
 import { recordIncome } from './income';
 import { oneTimeRewards, offlineTally, resetOfflineTally } from './offline-tally';
 import { ONYX, onyxBossFor, onyxChance } from '../data/onyx';
 import { STAGES } from '../data/world';
-import { MIMIC } from '../data/mimic';
-import { EXP_NURI } from '../data/exp-nuri';
+import { KING, isSpecialId } from '../data/king';
 import { variantChances } from '../data/variants';
 
 /**
@@ -78,7 +77,7 @@ function addGains(into: Gains, g: Gains, sign = 1) {
 /** 측정 구간의 희귀 처치로 얻은 양(비례에서 뺌). markOffline이 비웁니다. */
 let rareGains: Gains = emptyGains();
 /** 비례에서 빼고 남은 시간에 따로 굴리는 희귀 몬스터. */
-export const isOfflineRare = (e: Pick<Enemy, 'id' | 'onyx' | 'variant'>) => !!e.onyx || e.id === MIMIC.id || e.id === EXP_NURI.id || e.variant === 'starlit';
+export const isOfflineRare = (e: Pick<Enemy, 'id' | 'onyx' | 'variant'>) => !!e.onyx || isSpecialId(e.id) || e.variant === 'starlit';
 /** 부재중 정산 중 희귀 몬스터 처치 직전에 부릅니다(turn.ts). 돌려받은 값을 처치 뒤 noteOfflineRare에 넘깁니다. */
 export const markOfflineRare = (s: State) => (s.catchingUp && s.enemy && isOfflineRare(s.enemy) ? counters(s) : null);
 export function noteOfflineRare(s: State, before: Counters | null) { if (before) addGains(rareGains, gainsSince(s, before)); }
@@ -149,8 +148,8 @@ function rareFights(s: State, rolls: { onyx: number; special: number; variant: n
         }
     }
     if (rolls.special > 0) {
-        const { mimicP, nuriP } = specialChances(s);
-        for (let i = 0; i < rolls.special; i++) { const r = rng(); if (r < mimicP) found.push('mimic'); else if (r < mimicP + nuriP) found.push('nuri'); }
+        const chances = specialChances(s);
+        for (let i = 0; i < rolls.special; i++) { const kind = pickSpecial(rng(), chances); if (kind) found.push(kind); }
     }
     if (rolls.variant > 0) {
         const p = variantChances(s).starlit || 0;
@@ -167,8 +166,8 @@ function rareFights(s: State, rolls: { onyx: number; special: number; variant: n
         // 칠흑의 출현 천장은 위에서 이미 정리했으므로, 강제 등장이 onyxSeen을 0으로 두는 것과 같습니다.
         spawn(s, rng, kind);
         const foe = s.enemy;
-        // 칠흑 보스는 ONYX.turns턴 뒤 떠나고, 다른 희귀 몬스터도 교착 안전장치로 끝납니다(여유를 둔 상한).
-        for (let t = 0; t < ONYX.turns + 120 && s.enemy === foe && s.running; t++) { step(); turns++; }
+        // 칠흑 보스는 ONYX.turns턴, 대왕은 KING.turns턴 뒤 떠나고, 다른 희귀 몬스터도 교착 안전장치로 끝납니다(여유를 둔 상한).
+        for (let t = 0; t < Math.max(ONYX.turns, KING.turns) + 120 && s.enemy === foe && s.running; t++) { step(); turns++; }
         if (s.enemy === foe) s.enemy = null;
     }
     // 싸우던 몬스터로 돌아갑니다. 무리는 싸운 턴 수로 숙련 · 계급을 세므로, 희귀 전투로 흐른 턴만큼 등장 턴을 미룹니다.
