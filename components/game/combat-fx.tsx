@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { FishArt } from './art';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
 import type { Log } from '@/game/types';
@@ -192,6 +193,26 @@ export function SceneFx({ effect }: { effect: CombatFx[] }) {
         {(fx.tier || 0) >= 4 && <i className="scene-fx-dark"/>}<i className="scene-fx-flash"/>{(fx.tier || 0) >= 5 && <><i className="scene-fx-slash"/><span className="scene-fx-title">{fx.title}</span></>}
         {glyphs[fx.variant].slice(0, 4).map((g, i) => <b key={i} className="scene-fx-spark" style={fxStyle(fx.delay + i * 40, { '--fx-x': `${Math.cos(i * Math.PI / 2 + .6) * 180}px`, '--fx-y': `${Math.sin(i * Math.PI / 2 + .6) * 90}px` })}>{g}</b>)}
     </div>; })}</div>;
+}
+
+/** v3.178 처형 연출: 빈사(체력 35% 이하) 적에게 추가 피해가 붙은 검 계열 처형기. 배경 몬스터가 반으로 갈라지고 HP 바가 베입니다. */
+const EXECUTE_CLEAVE = new Set(['braveSlash']);
+const cleaveFx = (effect: CombatFx[]) => effect.find(fx => fx.execute && fx.actor === 'player' && !!fx.skillId && EXECUTE_CLEAVE.has(fx.skillId) && fx.hits.some(h => !h.miss));
+/** 사냥터 장면 위: 몬스터 그림의 위 · 아래 반쪽이 베인 선을 따라 벌어집니다(원본 몬스터는 CSS가 숨김). */
+export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: string; boss?: boolean } | null }) {
+    const fx = cleaveFx(effect);
+    if (!fx || !enemy) return null;
+    return <div key={fx.id} className="scene-foe-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
+        <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${enemy.boss ? 'boss' : ''}`}/>
+        <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half lower ${enemy.boss ? 'boss' : ''}`}/>
+        <i className="scene-foe-cut"/>
+    </div>;
+}
+/** 상대 카드 HP 바 위: 검이 지나가고 바의 아래 조각이 떨어져 나갑니다. */
+export function BarCleave({ effect }: { effect: CombatFx[] }) {
+    const fx = cleaveFx(effect);
+    if (!fx) return null;
+    return <span key={fx.id} className="bar-cleave" aria-hidden="true" style={fxStyle(fx.delay)}><i className="bar-cleave-shard"/><i className="bar-cleave-blade"/></span>;
 }
 
 const DAMAGE_ICON = { physical: '⚔', magic: '✦', split: '⚔✦', fixed: '⚡' } as const;
