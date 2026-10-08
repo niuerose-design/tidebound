@@ -14,7 +14,7 @@ test('Tier 1 and 2 jobs own one or two skills; every skill has a real job and ri
  for(const job of JOBS.filter(j=>(j.tier===1||j.tier===2)&&!j.fullKit&&!j.retired)){
   const owned=SKILLS.filter(sk=>sk.job===job.id&&!sk.song);assert.ok(owned.length>=1&&owned.length<=2,job.id+': '+owned.length);
  }
- assert.equal(SKILLS.find(sk=>sk.id==='hushCurrent').job,'trainingMagic');
+ assert.equal(SKILLS.find(sk=>sk.id==='insight').job,'trainingMagic');
  for(const sk of SKILLS){
   assert.ok(!sk.job||JOBS.some(j=>j.id===sk.job),sk.id);const ms=masteryMilestonesFor(sk);
   assert.ok(ms.every((n,i)=>Number.isInteger(n)&&n>0&&(i===0||n>ms[i-1])),sk.id);

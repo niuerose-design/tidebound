@@ -79,9 +79,9 @@ test('v27.17 poison is its own stacking status; bleed does not stack but makes t
  const b=mk([]),dart=SKILLS.find(x=>x.id==='venomDart');assert.equal(dart.effect,'poison');const per=Math.floor(100*(dart.dotRatio??SKILL_FORMULA.poisonRatio)),hpRatio=SKILL_FORMULA.poisonHpRatio;
  for(let i=1;i<=STATUS_TUNING_MAX+2;i++){strike(mk(['venomDart']),b,()=>0);const n=Math.min(i+STATUS_TUNING.poisonFirstStacks-1,STATUS_TUNING_MAX);assert.equal(b.effects.poison.stacks,n);assert.equal(b.effects.poison.perStack,per);assert.equal(b.effects.poison.hpRatio,hpRatio);}
  assert.match(visibleStatuses(b.effects,0,[],'enemy').find(r=>r.id==='poison').label,/중독 ×5/);
- strike(mk(['cut']),b,()=>0);assert.ok(b.effects.dot&&!b.effects.dot.stacks,'bleed sits beside poison');assert.equal(b.effects.poison.stacks,STATUS_TUNING_MAX,'bleed never touches poison stacks');
+ strike(mk(['razor']),b,()=>0);assert.ok(b.effects.dot&&!b.effects.dot.stacks,'bleed sits beside poison');assert.equal(b.effects.poison.stacks,STATUS_TUNING_MAX,'bleed never touches poison stacks');
  const hp=b.hp,bleedHit=b.effects.dot.damage+Math.floor(hp*b.effects.dot.hpRatio),expected=bleedHit+(b.effects.poison.perStack+Math.floor((hp-bleedHit)*hpRatio))*STATUS_TUNING_MAX;/* v3.54 출혈 틱 뒤 남은 현재 체력으로 중독 틱 */strike(b,mk([]),()=>0);assert.equal(hp-b.hp,expected,'bleed and poison ticks both apply on its own action');
- const c=mk([]);strike(mk(['cut']),c,()=>0);const d1=c.effects.dot.damage;strike(mk(['cut']),c,()=>0);assert.equal(c.effects.dot.damage,d1);assert.equal(c.effects.dot.stacks,undefined,'bleed does not stack');
+ const c=mk([]);strike(mk(['razor']),c,()=>0);const d1=c.effects.dot.damage;strike(mk(['razor']),c,()=>0);assert.equal(c.effects.dot.damage,d1);assert.equal(c.effects.dot.stacks,undefined,'bleed does not stack');
  const plain=mk([]),bleeding=mk([]);bleeding.effects.dot={damage:1,turns:3,name:'출혈'};strike(mk([]),plain,()=>.99);strike(mk([]),bleeding,()=>.99);
  assert.equal(1e6-bleeding.hp,Math.round((1e6-plain.hp)*(1+SKILL_FORMULA.bleedVulnerability)),'bleeding targets take extra direct damage');
 });
@@ -102,7 +102,7 @@ test('v22 gear: rule options change existing rules within caps and apply from eq
  const base={hp:1e6,attack:100,magic:100,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const mk=(skills,extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
  let b=mk([]);strike(mk(['anchor'],{stunBonus:1}),b,()=>0);assert.equal(b.stun,3);
- b=mk([]);strike(mk(['cut'],{dotTurnsBonus:2}),b,()=>0);assert.equal(b.effects.dot.turns,7);
+ b=mk([]);strike(mk(['razor'],{dotTurnsBonus:2}),b,()=>0);assert.equal(b.effects.dot.turns,7);
  b=mk([]);for(let i=0;i<9;i++)strike(mk(['venomDart'],{poisonStackBonus:3}),b,()=>0);assert.equal(b.effects.poison.stacks,STATUS_TUNING_MAX+3);
  {const a=mk([],{attack:1e7,lifesteal:.1});a.hp=1;strike(a,mk([]),()=>0);assert.equal(a.hp-1,Math.floor(1e6*.1*SKILL_FORMULA.lifestealHpCap),'lifesteal heal per action is capped by max HP');}
  const arc=(extra)=>{const t=mk([]);strike(mk([],{arcaneStrike:1,...extra}),t,()=>0);return 1e6-t.hp;};assert.equal(arc({arcaneRatioBonus:.2}),Math.round(100*(SKILL_FORMULA.arcaneStrikeRatio+.2)));

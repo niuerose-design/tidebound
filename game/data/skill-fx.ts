@@ -13,7 +13,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
     // 루미너스 (2차): 빛
     oath: 'star', vowStrike: 'star',
     // 독립 물리·복합
-    netThrow: 'wave', oathShout: 'song', runeBurst: 'arcane',
+    runeBurst: 'arcane',
     // 아처: 관통·베기
     abyssHarpoon: 'pierce', krakenBore: 'pierce', needleStep: 'slash',
     // 경제
@@ -26,7 +26,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
     saltCatalyst: 'venom', borrowedTentacles: 'bite',
     // 제로 (1차)·제로 (4차): 시간 갈래
     // 매지션(불,독)·부식 연성: 독 갈래
-    toxicFang: 'fire', venomDart: 'venom', doomMark: 'venom', miasma: 'venom', rotBloom: 'venom', rottenBait: 'venom', corrosiveBloom: 'venom', transmute: 'venom', grandTransmutation: 'venom',
+    toxicFang: 'fire', venomDart: 'venom', doomMark: 'venom', miasma: 'venom', rotBloom: 'venom', corrosiveBloom: 'venom', transmute: 'venom', grandTransmutation: 'venom',
     // 팬텀 (1차): 먹물 갈래
     inkTrick: 'ink', 
     // 망인 계보: 뼈 갈래

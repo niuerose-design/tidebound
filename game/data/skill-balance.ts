@@ -20,11 +20,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     spring: { chance: .55, multiplier: 1.8, manaCost: 14, healRatio: .16 },
     anchor: { chance: .22, multiplier: 1.55, cooldown: 4 },
     fortress: { chance: .2, multiplier: 1.35, healRatio: .12, cooldown: 5 },
-    arcane: { chance: .6, multiplier: 1.55, manaCost: 10, cooldown: 2 },
     cut: { chance: .24, multiplier: 1.15 },
-    hushCurrent: { chance: .5, multiplier: 1.1, manaCost: 11 },
-    undertow: { chance: .55, multiplier: 1.7, manaCost: 10 },
-    rushCurrent: { chance: .28, multiplier: 1.05, cooldown: 4 },
     whaleStrike: { chance: .24, multiplier: 3.2 },
     razor: { chance: .28, multiplier: 1.6 },
     maelstrom: { chance: .55, multiplier: 2.4, manaCost: 20, damageType: 'magic' },
@@ -77,9 +73,9 @@ for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE }
  *   ③ 1~2차(공용 포함)의 피해+기절·침묵 기술은 피해 배율이 제한됩니다(STATUS_TUNING.earlyStatusMultiplierCap).
  * - 1~3차 연계 공격기는 상태이상 없이 피해만 줍니다(같은 계보의 보조기로 상태를 겁니다).
  */
-const STATUS_ONLY_SKILLS = ['anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
+const STATUS_ONLY_SKILLS = ['anchor', 'curseBolt', 'gashHook', 'inkTrick', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
     'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
-    'quakeStep', 'sealHex', 'driftwoodShove', 'currentJam', 'netThrow', 'oathShout', 'rottenBait', ...V25_STATUS_ONLY];
+    'quakeStep', 'sealHex', ...V25_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, poison: 4, burn: 3, weaken: 3, silence: 2, slow: 3, corrode: STATUS_TUNING.corrodeTurns };
 /** 상태이상 전용 전환과 초반 배율 제한. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. tier는 기술 주인 직업의 차수(공용 0). */

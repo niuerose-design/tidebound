@@ -33,7 +33,7 @@ test('Growth descriptions expose real bone penalties, negative AP and farming st
 test('Active descriptions show maximum-resource scaling, statuses and additional hits',()=>{
  const voidLance=skillGrowthStages(SKILLS.find(sk=>sk.id==='voidLance'));assert.match(voidLance[0].effects.join(' '),/태운 마나/);
  const oath=skillGrowthStages(SKILLS.find(sk=>sk.id==='oath'));assert.match(oath[0].effects[0],/마법 공격\(물리 피해로 바꿈\)/);
- const hush=skillGrowthStages(SKILLS.find(sk=>sk.id==='hushCurrent'));assert.match(hush[0].effects.join(' '),/침묵 4턴/);assert.match(hush[0].effects[0],/직접 피해 없음/);
+ const hush=skillGrowthStages(SKILLS.find(sk=>sk.id==='sealHex'));assert.match(hush[0].effects.join(' '),/침묵 4턴/);assert.match(hush[0].effects[0],/직접 피해 없음/);
  const twin=skillGrowthStages(SKILLS.find(sk=>sk.id==='twinHook'));assert.match(twin[0].effects.join(' '),/추가 공격/);
  for(const sk of SKILLS){const rows=skillGrowthStages(sk);assert.equal(rows.length,maxSkillLevel(sk)+1+3,'v27.6 limit break rows');assert.equal(rows.filter(r=>!r.broken).length,maxSkillLevel(sk)+1);assert.ok(rows.every(r=>r.effects.length&&Number.isFinite(r.effective.cost)));}
 });
@@ -122,7 +122,7 @@ test('Follow-up hits: each hit counted once, total equals HP lost, stops when th
  const a=mk(['twinHook']),weak={...mk([]),name:'B',hp:5};const ev=[];strike(a,weak,()=>0,ev);assert.equal(ev[0].hits.length,1,'no follow-up after the target dies');assert.equal(ev[0].hits[0].value,5,'value = HP actually removed');assert.equal(ev[0].total,ev[0].hits[0].raw,'v27.75 the displayed total is the computed damage');assert.ok(ev[0].hits[0].raw>5);
  const rolls=[0,0];let r=0;const b2={...mk([]),name:'B',hp:1e6};const ev2=[];strike(mk(['twinHook']),b2,()=>rolls[r++]??.9999,ev2);
  assert.ok(ev2[0].hits.some(h=>h.kind==='follow'&&h.miss),'a follow-up can miss independently');
- const crit=[];strike(mk(['arcane'],{crit:1}),{...mk([]),name:'B',hp:1e6},()=>0,crit);assert.equal(crit[0].hits[0].critical,true);assert.equal(crit[0].damageType,'magic');
+ const crit=[];strike(mk(['wave'],{crit:1}),{...mk([]),name:'B',hp:1e6},()=>0,crit);assert.equal(crit[0].hits[0].critical,true);assert.equal(crit[0].damageType,'magic');
 });
 
 test('v27.81 codex: research stages grant no flat trait stats (ecology only); v3.38 place themes moved into region research tier 1; 50 catches reveal info',()=>{
