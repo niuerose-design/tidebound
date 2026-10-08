@@ -689,7 +689,7 @@ test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% o
     const b = make(); Enc.spawn(b, () => pm + N.nuriChance(10) / 2); assert.equal(b.enemy.id, N.EXP_NURI.id, 'right after the mimic band');
     assert.equal(b.enemy.name, '경험의 누리'); assert.ok(!b.enemy.variant && !b.enemy.swarm, 'no variants');
     const c = make(); Enc.spawn(c, () => pm + N.nuriChance(10) * 1.5); assert.ok(![Mi.MIMIC.id, N.EXP_NURI.id].includes(c.enemy.id), 'past both bands');
-    const off = make(); off.catchingUp = true; Enc.spawn(off, () => pm * Mi.MIMIC.offlineScale + N.nuriChance(10) * .5); assert.notEqual(off.enemy.id, N.EXP_NURI.id, 'quarter rate offline');
+    const off = make(); off.catchingUp = true; Enc.spawn(off, () => pm * Mi.MIMIC.offlineScale + N.nuriChance(10) * .5); assert.notEqual(off.enemy.id, N.EXP_NURI.id, 'v3.188 half rate offline');
     { const s = make(N.EXP_NURI.minLevel - 1); Enc.spawn(s, () => pm + N.nuriChance(10) / 2); assert.notEqual(s.enemy.id, N.EXP_NURI.id, 'not below the min level'); }
     { const s = make(100); Enc.spawn(s, () => pm + N.nuriChance(10) / 2); assert.equal(s.enemy.id, N.EXP_NURI.id, 'v3.112 Lv.100+ too'); }
     const flat = make(); flat.tide = 9; Enc.spawn(flat, () => Mi.mimicChance(9, 0) + N.nuriChance(9) / 2); assert.notEqual(flat.enemy.id, N.EXP_NURI.id, 'v27.59 needs stage difficulty 10');

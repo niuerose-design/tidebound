@@ -396,7 +396,7 @@ test('v3.161 essence slime: shares the special roll right after the nuri band, p
     assert.equal(s.essence, Sl.slimeBundle(10) * Sl.ESSENCE_SLIME.tiers[2].mul, 'jackpot: bundle 2 × 40'); assert.equal(s.book.essenceSlime, 1); assert.ok(s.logs.some(l => l.text.includes('정수의 슬라임 · 대당첨')));
     { const t = make(Sl.ESSENCE_SLIME.minLevel - 1); assert.equal(Enc.specialChances(t).slimeP, 0, 'not below Lv.30'); }
     { const t = make(); t.tide = Sl.ESSENCE_SLIME.minTier - 1; assert.equal(Enc.specialChances(t).slimeP, 0, 'not below difficulty 10'); }
-    { const t = make(); t.catchingUp = true; assert.ok(Math.abs(Enc.specialChances(t).slimeP - c.slimeP * Sl.ESSENCE_SLIME.offlineScale) < 1e-12, 'quarter rate offline'); }
+    { const t = make(); t.catchingUp = true; assert.ok(Math.abs(Enc.specialChances(t).slimeP - c.slimeP * Sl.ESSENCE_SLIME.offlineScale) < 1e-12, 'v3.188 half rate offline'); }
     assert.equal(Sl.slimeBundle(100), 11); assert.equal(Sl.slimeBundle(0), 1);
 });
 
