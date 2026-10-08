@@ -486,3 +486,10 @@
     .altar-gauge-head { flex-direction:column; align-items:flex-start; gap:2px; }
 }
 
+
+/* v3.182 직업 상세 역할 표시: 제목 아래 역할 태그, 개요의 강점 · 약점 · 잘하는 곳 */
+.job-role-tag { padding:1px 8px; border-radius:999px; background:#17303a; color:#aecbc0; font-size:12px; }
+.job-role-tag.role-dealer { color:#e0a86b; } .job-role-tag.role-tank { color:#8fc1e3; } .job-role-tag.role-buffer { color:#a8d58d; } .job-role-tag.role-border { color:#d4b6e8; }
+.job-role h3 small { font-size:11px; color:#8faaa8; margin-left:6px; }
+.job-role-guide { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; margin:0 0 10px; font-size:13px; }
+.job-role-guide dt { color:#aecbc0; white-space:nowrap; } .job-role-guide dd { margin:0; color:#c6d1c9; line-height:1.6; }

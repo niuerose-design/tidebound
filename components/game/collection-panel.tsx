@@ -18,7 +18,8 @@ import { PROGRESSION, statDisplay, percent } from '@/game/data/progression';
 import { completedRegions, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } from './book-research';
 import { stats, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
-import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
+import { ENEMY_SKILLS, profile, profileId, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
+import { FoeRoles } from './foe-roles';
 import { ONYX, ONYX_BOSSES, ONYX_SET, ownedOnyx, onyxCodexKey } from '@/game/data/onyx';
 import { OnyxArt } from './onyx-art';
 import { affixDef } from '@/game/data/gear';
@@ -143,6 +144,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 {bookRevealed(s, id) ? <div className="fish-trait">
                 <strong>{p.name}</strong>
                 <span>{p.hint}</span>
+                <FoeRoles s={s} profileId={profileId(id)} tip/>
                 </div> : <LockedInfo n={n}/>}
                 <EcologyLine s={s} id={id}/>
                 <BookResearch s={s} id={id} send={send} busy={busy} swarm/>
@@ -159,7 +161,7 @@ export function Collection({ s, send, busy }: PanelProps) {
                 <div className="book-icon"><Swords size={34}/><span>{n >= bookComplete ? '완성' : `${n} / ${bookComplete} 처치`}</span></div>
                 <h3>{f.name} <small className="fish-rarity legendary">전설 보스</small><GoldenMark s={s} id={f.id}/></h3>
                 <p>{f.lore}</p>
-                {bookRevealed(s, f.id) ? <div className="fish-trait"><strong>{p.name}</strong><span>{p.hint}</span></div> : <LockedInfo n={n}/>}
+                {bookRevealed(s, f.id) ? <div className="fish-trait"><strong>{p.name}</strong><span>{p.hint}</span><FoeRoles s={s} profileId={profileId(f.id)} tip/></div> : <LockedInfo n={n}/>}
                 <EcologyLine s={s} id={f.id}/>
                 <BookResearch s={s} id={f.id} send={send} busy={busy}/>
                 {bookRevealed(s, f.id) && <details className="book-block book-enemy"><summary><h4><ChevronDown size={14} className="book-enemy-chevron"/>적 정보 <small>{f.id === 'abyssSovereign' ? '무릉도장 1층 최종 웨이브 기준' : '던전 최종 웨이브 기준'}</small></h4></summary><div className="book-stats"><span>HP {enemy.hp}</span><span>물공 {enemy.attack}</span><span>마공 {enemy.magic || 0}</span><span>물방 {enemy.defense}</span><span>마방 {enemy.resist}</span><span>속도 {enemy.speed}</span><EnemyStrike enemy={enemy}/></div><EnemySkillList ids={p.skills} enemy={enemy}/></details>}
