@@ -21,7 +21,6 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { skillGrowthStages, skillEffectLines, skillBonusText, skillPercent, skillBrief, skillExtraNotes } from '@/game/systems/skill-description';
 
 import { ENEMY_SKILLS } from '@/game/data/encounters';
-import { catalogNow } from '@/game/data/catalog';
 
 
 
@@ -157,15 +156,11 @@ export function Skills({ s, send, busy }: PanelProps) {
     const q = useDeferredValue(query).trim().toLowerCase(), searching = q.length > 0;
     const corpus = useMemo(() => searching ? new Map(SKILLS.map(sk => [sk.id, [sk.name, sk.desc, jobById(sk.job)?.name || '공용', skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id)), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ')].join('\n').toLowerCase()])) : null, [s, searching]);
     /**
-     * v3.45 정보 비공개(docs/concept.md 10장): 비공개가 켜져 있으면 만나 본 직업의 스킬만 목록·검색에 나옵니다.
-     * 공용 스킬, 현재 직업과 그 계보, 들어가 본 직업(숙달 포함), 이미 배웠거나 장착한 스킬. 오픈 베타(꺼짐)에는 지금처럼 전부.
+     * v3.45 정보 비공개(docs/concept.md 10장)의 ‘만나 본 직업의 스킬만’ 가림은 v3.167에 뺐습니다(운영은 비공개를 끄고 있고, 수련 스킬 같은
+     * 공개 직업의 패시브가 검색에서 통째로 빠지는 문제). 비밀 직업의 스킬은 서버가 카탈로그에 싣지 않으므로(server/secrecy.ts) 여기서 가릴 것이 없습니다.
      */
-    const secret = catalogNow().secret;
-    const known = (sk: Skill) => !secret || !sk.job || sk.job === s.job || line.includes(sk.job) || s.unlockedJobs.includes(sk.job) || (s.learned[sk.id] || 0) > 0 || s.skills.includes(sk.id);
-    const unknownCount = secret ? SKILLS.filter(sk => !known(sk)).length : 0;
     // 검색어가 있으면 범위(현재 직업·해금 등)를 무시하고 모든 기술에서 찾습니다. 이름·설명·직업 이름·효과 설명을 대상으로 합니다.
     const list = SKILLS.filter(sk => {
-        if (!known(sk)) return false;
         const acquired = (s.learned[sk.id] || 0) > 0;
         if (!q) {
             if (scope === 'current' && sk.job !== s.job && !(s.job === 'fisher' && !sk.job)) return false;
@@ -217,7 +212,7 @@ export function Skills({ s, send, busy }: PanelProps) {
                 <div className="skill-chip-group" role="group" aria-label="효과">{(Object.keys(DAMAGE_LABEL) as SkillDamage[]).map(k => <button type="button" key={k} className={`skill-chip ${damage === k ? 'active' : ''}`} aria-pressed={damage === k} onClick={() => setDamage(k)}>{DAMAGE_LABEL[k]}</button>)}</div>
                 <label className="gear-select">정렬<select value={sort} onChange={e => setSort(e.target.value as SkillSort)} aria-label="스킬 정렬">{(Object.keys(SORT_LABEL) as SkillSort[]).map(k => <option key={k} value={k}>{SORT_LABEL[k]}</option>)}</select></label>
                 {filtersOn && <button type="button" className="text-button" onClick={() => { setQuery(''); setKind('all'); setDamage('all'); setSort('default'); setFilter('all'); }}>필터 초기화</button>}
-                <span className="gear-count">{list.length}종 표시{q ? ` · 검색 중에는 ${secret ? '만나 본 ' : '모든 '}직업의 기술을 봅니다` : ''}{unknownCount ? ` · 아직 들어가 보지 않은 직업의 스킬 ${unknownCount}개는 그 직업에 들어가면 보입니다` : ''}</span>
+                <span className="gear-count">{list.length}종 표시{q ? ' · 검색 중에는 모든 직업의 기술을 봅니다' : ''}</span>
             </div>
         </section>
         <div className="skill-view-toolbar"><Tabs value={scope} onValueChange={setScope}><TabsList className="game-tabs"><TabsTrigger value="current">{currentJob.name} 전용</TabsTrigger><TabsTrigger value="equipped">장착 중 {s.skills.length}</TabsTrigger><TabsTrigger value="pinned">즐겨찾기 {pins.length}</TabsTrigger><TabsTrigger value="owned">해금한 스킬</TabsTrigger><TabsTrigger value="common">공용</TabsTrigger><TabsTrigger value="all">전체 계보</TabsTrigger><TabsTrigger value="hidden">숨김 {hidden.length}</TabsTrigger></TabsList></Tabs><div className="skill-view-toggle" role="group" aria-label="스킬 보기 방식"><button className={view === 'simple' ? 'active' : ''} aria-pressed={view === 'simple'} onClick={() => setView('simple')}>간단히 보기</button><button className={view === 'detail' ? 'active' : ''} aria-pressed={view === 'detail'} onClick={() => setView('detail')}>자세히 보기</button><button className={grouped ? 'active' : ''} aria-pressed={grouped} onClick={() => setGrouped(v => !v)}>계보별 묶기</button></div></div>
