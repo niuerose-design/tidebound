@@ -27,7 +27,7 @@
 - **스킬 화면**: 성장표(`skillGrowthStages`)를 스킬 객체로 캐시(WeakMap). 검색은 `useDeferredValue` + 검색 중일 때만 만드는 검색 문구 Map, 정렬 키는 스킬마다 한 번. `SkillCard`는 `memo`, 성장표는 자세히 볼 때만. 누적 비례 패시브만 진행도 집계(`passiveGrowthBonus`에 집계를 넘길 수 있음).
 - **장비 보관함**: 교체 미리보기(장비마다 `stats()`)를 모듈 캐시 한 칸에 두고, 장비 · 가방 · 레벨 · 직업 · 스킬 · 능력치 · 연구 지문이 같으면 다시 쓰지 않음.
 - **업적 · 목표**: `progressReader(s)`로 같은 진행도 함수는 상태마다 한 번(`syncAchievements`도 사용). `achievementById`는 Map.
-- **도감**: 지역 묶음을 `LazyDetails`로(펼칠 때만 그림). `FISH.find` · `[...ENEMY_SKILLS, ...SKILLS].find` → Map.
+- **도감**: 지역 묶음을 `LazyDetails`로(펼칠 때만 그림). `MONSTERS.find` · `[...ENEMY_SKILLS, ...SKILLS].find` → Map.
 - **랭킹**: 시계를 결투 대기 중 1초 · 평소 10초로, 정렬은 `useMemo([rows, sort])`.
 - **직업 화면**: `statusReader(s)`(상태 객체별 WeakMap)로 직업마다 조건 판정 한 번. 빠른 찾기 · 계보 요약 · 상세 · 비교가 함께 씀. 검색 결과 메모. 서버 · 시험처럼 상태를 고쳐 쓰는 곳은 그대로 `jobStatus`.
 - **잔손질**: `format()` · `short()`는 공용 `Intl.NumberFormat`, 전투 기록 해석(`combatFxFromLog`)의 스킬 이름 찾기는 Map.
@@ -64,7 +64,7 @@
 ### 바꾼 것(전투 결과는 같음)
 같은 난수로 기준 몸 14가지 · 825턴을 돌린 최종 세이브 해시가 전후 모두 같은지 확인했습니다(63초 → 24초, 약 −61%).
 - `effectiveSkill`: 스킬 객체 · 레벨 · 숙련 단계별 캐시(WeakMap). 캐시한 객체는 동결(freeze)합니다. 고쳐 쓰던 `combat.ts`의 두 곳(`skillOf` · `pickActive`)은 복사본에 배율을 곱합니다.
-- `regionThemes`: 지역 · 단계별 효과 객체를 한 번만 만듦. `regionFish`: 지역별 배열 캐시. `regionResearchStage`: 할당 없이, 결과가 정해지면 바로 끝냄.
+- `regionThemes`: 지역 · 단계별 효과 객체를 한 번만 만듦. `regionMonsters`: 지역별 배열 캐시. `regionResearchStage`: 할당 없이, 결과가 정해지면 바로 끝냄.
 - 같은 상태의 `stats()` 재사용: 처치 보상의 골드 · 경험치 배율과 황금 개체 확률, 처치 후 회복, 변종 확률(`variantChances`), 업적 진행도 읽기(`progressReader` 한 번 동안 최대 체력 · 마나 업적).
 - 무리 드롭 판정: 판정마다 `dropRate`(= `stats()`)를 다시 계산하던 것을, 드롭이 바꿀 수 있는 값(골드 자릿수 · 물건 도감 수 · 가방 · 정수)이 그대로면 재사용.
 - 전투용 캐릭터의 숙련 단계 · 연마 숙련 표: 턴마다 숙련 기록이 있는 모든 스킬(수백 개)을 계산하던 것을, 전투가 조회한 스킬만 계산(`lazySkillMasteryRanks` · `lazyRefinePractices`).

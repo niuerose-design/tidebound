@@ -14,7 +14,7 @@ const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf } = await load('data/classes');
 /** v3.61 외길 계보 → 몰아 주는 능력치. */
 const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
-const { FISH } = await load('data/world');
+const { MONSTERS } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
 const { canUse, validLoadout, skillMasteryRanks, lineage, jobMasteryTarget, jobFactor, masteryMilestonesFor } = await load('systems/progression');
 
@@ -53,7 +53,7 @@ function loadout(s, j, magic) {
     for (const sk of pool) if (validLoadout(s, [...s.skills, sk.id])) s.skills.push(sk.id);
 }
 function fight(st, s, foeId, tier) {
-    const fish = FISH.find(f => f.id === foeId), foe = scaledEnemyStats(fish, { tier });
+    const monster = MONSTERS.find(f => f.id === foeId), foe = scaledEnemyStats(monster, { tier });
     let wins = 0, turns = 0, hpLeft = 0;
     for (let seed = 1; seed <= SEEDS; seed++) {
         const a = { name: 'player', stats: st, hp: st.hp, mana: st.mana, skills: s.skills, cooldowns: {}, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice };

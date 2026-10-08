@@ -5,9 +5,9 @@ import { dungeonClearGold, stats } from '@/game/systems/stats';
 import { dungeonTier, dungeonClearBase, dungeonRewardTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack, tierReward, tierExp } from '@/game/systems/meta';
 import { useState } from 'react';
 import { Lock, Swords, Gem, Skull } from 'lucide-react';
-import { FishArt } from './art';
+import { MonsterArt } from './art';
 import { BALANCE, MONSTER_TUNING, dungeonOverlevel, DUNGEON_MODES, type DungeonMode } from '@/game/data/balance';
-import { FISH, DUNGEONS, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
+import { MONSTERS, DUNGEONS, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
 import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
 import { bookRevealed } from '@/game/systems/book';
@@ -25,9 +25,9 @@ import { randomGameRank, randomGamePayout, randomGameRunsLeft, stakePayout } fro
 export function Dungeons({ s, send, busy }: PanelProps) {
     const activeDungeon = s.dungeon ? DUNGEONS.find(d => d.id === s.dungeon?.id) : undefined;
     const playerStats = stats(s);
-    const enemyFish = s.enemy ? FISH.find(f => f.id === s.enemy?.id) : undefined;
-    const revealed = !!enemyFish && bookRevealed(s, enemyFish.id);
-    const enemyProfile = enemyFish && revealed ? profile(enemyFish.id) : undefined;
+    const enemyMonster = s.enemy ? MONSTERS.find(f => f.id === s.enemy?.id) : undefined;
+    const revealed = !!enemyMonster && bookRevealed(s, enemyMonster.id);
+    const enemyProfile = enemyMonster && revealed ? profile(enemyMonster.id) : undefined;
     const activeWave = s.dungeon?.wave ?? 0;
     const randomRun = activeDungeon?.id === RANDOM_GAME.id;
     const skillFx = useSkillFx(), { effects: combatFx, combo: fxCombo } = useCombatFx(s.logs, s.name, skillFx);
@@ -46,17 +46,17 @@ export function Dungeons({ s, send, busy }: PanelProps) {
         <div><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}{activeDungeon.id === 'abyss' && <b className="abyss-floor"> {s.dungeon!.depth || s.abyssBest + 1}층</b>}{randomRun && <b className="abyss-floor"> {activeWave + 1}웨이브</b>}</h2><p>{activeDungeon.description}{activeDungeon.id === 'abyss' ? ` · 최고 기록 ${s.abyssBest}층` : ''}</p></div>
         {randomRun ? <button className="gold-button" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>받고 나가기 · 정수 {stakePayout(s)}</button> : <button className="secondary" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</button>}
         </div>
-        {randomRun ? <p className="random-game-stake">판돈 · 정수 {stakePayout(s)} (×{randomGamePayout(s)}) · 다음 웨이브 돌파 시 정수 +{Math.floor(waveStake(activeWave + 1) * randomGamePayout(s))} · 난이도 {randomGameTier(activeWave)}{s.dungeon?.until ? ` · 목표 ${s.dungeon.until}웨이브에서 자동으로 받고 나감` : ' · 목표 없음'} · 쓰러지면 판돈 소멸</p> : <div className="dungeon-wave-track">{activeDungeon.fish.map((id, index) => {
+        {randomRun ? <p className="random-game-stake">판돈 · 정수 {stakePayout(s)} (×{randomGamePayout(s)}) · 다음 웨이브 돌파 시 정수 +{Math.floor(waveStake(activeWave + 1) * randomGamePayout(s))} · 난이도 {randomGameTier(activeWave)}{s.dungeon?.until ? ` · 목표 ${s.dungeon.until}웨이브에서 자동으로 받고 나감` : ' · 목표 없음'} · 쓰러지면 판돈 소멸</p> : <div className="dungeon-wave-track">{activeDungeon.monsters.map((id, index) => {
             const isDone = s.dungeon!.wave > index;
             const isCurrent = s.dungeon!.wave === index;
-            const isBoss = index === activeDungeon.fish.length - 1;
-            const fish = isBoss && activeDungeon.bossFish ? FISH.find(f => f.id === activeDungeon.bossFish) : FISH.find(f => f.id === id);
-            return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><FishArt id={fish?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{fish?.name || id}</strong></div>;
+            const isBoss = index === activeDungeon.monsters.length - 1;
+            const monster = isBoss && activeDungeon.bossMonster ? MONSTERS.find(f => f.id === activeDungeon.bossMonster) : MONSTERS.find(f => f.id === id);
+            return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><MonsterArt id={monster?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{monster?.name || id}</strong></div>;
         })}</div>}
         <div className="dungeon-combat-grid dungeon-combat-fx-host">
         <CombatFxOverlay effect={combatFx} combo={fxCombo}/>
         <div className="dungeon-combatant player-combatant"><span className="eyebrow">내 모험가</span><div className="combatant-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label="HP" color="teal"/><PlayerHitEffect effect={combatFx}/></div><Meter value={s.mana} max={playerStats.mana} label="MP" color="blue"/><small>속도 {playerStats.speed} · 명중 수치 {statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', playerStats.evasion || 0)}</small></div>
-        <div className="dungeon-vs">VS<span>{randomRun ? `${activeWave + 1}웨이브` : `${activeWave + 1}/${activeDungeon.fish.length}`}</span></div>
+        <div className="dungeon-vs">VS<span>{randomRun ? `${activeWave + 1}웨이브` : `${activeWave + 1}/${activeDungeon.monsters.length}`}</span></div>
         <div className="dungeon-combatant enemy-combatant"><span className="eyebrow">{s.enemy?.boss ? 'BOSS ENCOUNTER' : 'CURRENT TARGET'}</span><div className="combatant-name"><h3>{s.enemy?.name || (s.recovery > 0 ? `출정 준비 · ${Math.ceil(s.recovery * BALANCE.turnMs / 1000)}초 남음` : '다음 몬스터를 기다리는 중')}</h3>{s.enemy && <StatusBadges effects={s.enemy.effects} stun={s.enemy.stun} recent={combatFx} target="enemy"/>}</div>{s.enemy ? <><div className="player-hp-anchor"><Meter value={s.enemy.hp} max={s.enemy.maxHp} label="HP" color="rose"/><CombatBarEffect effect={combatFx} target="enemy"/></div><small>{enemyProfile?.name || '미확인 개체'} · 속도 {s.enemy.combatStats?.speed || '-'}{revealed ? ` · 공격 스킬 ${s.enemy.skills?.map(id => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id)?.name || id).join(', ') || '기본 공격'}` : ` · 도감 ${BOOK_REVEAL}회 처치 시 성향·스킬 공개`}</small>{enemyProfile?.hint && <p className="dungeon-hint">{enemyProfile.hint}</p>}</> : <p className="dungeon-hint">{s.recovery > 0 ? '준비가 끝나면 체력·마나가 모두 회복되고 탐험이 시작됩니다.' : '자동 사냥이 다음 웨이브를 준비하고 있습니다.'}</p>}</div>
         </div>
         <div className="dungeon-combat-log"><div className="section-title"><h3>최근 전투 로그</h3><span>자동 갱신</span></div>{s.logs.filter(log => log.type === 'battle').slice(-6).reverse().map(log => <BattleLogLine key={log.id} log={log} playerName={s.name}/>)}</div>
@@ -69,7 +69,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             return <article className={`stage-card dungeon-stage-card ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} key={d.id}>
             <div className="stage-top"><span className="stage-num">{String(i + 1).padStart(2, '0')}</span>{locked ? <Lock size={20}/> : active ? <span className="badge">탐험 중</span> : d.id === 'abyss' ? <span className="badge">최고 {s.abyssBest}층</span> : s.clears[d.id] ? <span className="badge">{s.clears[d.id]}회 정복</span> : <span className="badge muted">미탐험</span>}</div>
             <Swords className="stage-wave" size={40}/>
-            <div className="eyebrow">{closed ? CLOSED_NOTE : d.id === 'abyss' ? `다음 도전 ${s.abyssBest + 1}층` : `${d.fish.length}웨이브 · 보스 ${d.boss?.split('·').pop()?.trim() || ''}`}</div>
+            <div className="eyebrow">{closed ? CLOSED_NOTE : d.id === 'abyss' ? `다음 도전 ${s.abyssBest + 1}층` : `${d.monsters.length}웨이브 · 보스 ${d.boss?.split('·').pop()?.trim() || ''}`}</div>
             <h2>{d.name}</h2>
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">

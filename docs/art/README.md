@@ -25,7 +25,7 @@
 | 직업 상세 | — | 제목 왼쪽 44px |
 | 계보 목록 | — | 이름 앞 30px |
 
-구현: `components/game/art.tsx`의 `FishArt`·`JobArt`, 스킬은 `components/game/shared.tsx`의 `SkillIcon`. 그림이 로드되기 전과 실패 시에는 실루엣이 보이고, 로드되면 0.3초에 걸쳐 그림으로 바뀝니다. 미발견 몬스터(도감 `???`)는 그림이 있어도 실루엣만 보입니다.
+구현: `components/game/art.tsx`의 `MonsterArt`·`JobArt`, 스킬은 `components/game/shared.tsx`의 `SkillIcon`. 그림이 로드되기 전과 실패 시에는 실루엣이 보이고, 로드되면 0.3초에 걸쳐 그림으로 바뀝니다. 미발견 몬스터(도감 `???`)는 그림이 있어도 실루엣만 보입니다.
 
 ## 공통 스타일 (모든 프롬프트 앞에 붙임)
 
@@ -48,4 +48,4 @@ weathered sea gear, calm expression, plain dark background, no text, no watermar
 
 ## 실루엣(폴백) 규칙
 
-어종마다 `game/data/art.ts`의 `FISH_SHAPES`에 모양 하나를 적어 둡니다(물고기·비단잉어·가오리·곰치·오징어·게·해파리·상어·복어·해마·아귀·망령·거수). 새 어종을 추가하면 이 표에도 넣어야 하며, 테스트가 빠진 어종을 잡습니다.
+어종마다 `game/data/art.ts`의 `MONSTER_SHAPES`에 모양 하나를 적어 둡니다(물고기·비단잉어·가오리·곰치·오징어·게·해파리·상어·복어·해마·아귀·망령·거수). 새 어종을 추가하면 이 표에도 넣어야 하며, 테스트가 빠진 어종을 잡습니다.

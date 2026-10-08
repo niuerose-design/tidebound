@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Meter } from './shared';
-import { FishArt } from './art';
+import { MonsterArt } from './art';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
 import type { Log } from '@/game/types';
@@ -239,10 +239,10 @@ export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: 
     const { fx, phase } = held, boss = enemy.boss ? 'boss' : '';
     return <div key={fx.id} className="scene-foe-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
         {phase === 'cut' ? <>
-            <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${boss}`}/>
-            <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half lower ${boss}`}/>
+            <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${boss}`}/>
+            <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half lower ${boss}`}/>
             <i className="scene-foe-cut"/>
-        </> : <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-restore ${boss}`}/>}
+        </> : <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-restore ${boss}`}/>}
     </div>;
 }
 /** 상대 카드 HP 바: 검이 지나간 자리에서 HP 바 UI(라벨 · 숫자 · 막대)가 비스듬히 두 조각으로 잘려, 아래 조각이 튕겨 날아갑니다(원본 바는 CSS가 숨김). */

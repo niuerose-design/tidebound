@@ -90,7 +90,7 @@ export const blessingCost = (b: Blessing, level: number, active: boolean) => {
  * 셋은 입문(0환생도 기여 가능) · 중급 · 상급 순으로 체력이 크게 뜁니다. 공격·방어는 완만하고 체력은 공유를 감안해 큽니다(수치는 밸런스용이라 화면에는 기준을 적지 않음).
  */
 export type RaidDef = {
-    id: RaidId; name: string; /** 전투 기술·외형을 빌리는 몬스터 id */ fish: string; level: number; cost: number; /** 머무는 시간 */ lifetimeHours: number;
+    id: RaidId; name: string; /** 전투 기술·외형을 빌리는 몬스터 id */ monster: string; level: number; cost: number; /** 머무는 시간 */ lifetimeHours: number;
     stats: { hp: number; attack: number; magic: number; defense: number; resist: number; speed: number; crit: number; accuracy: number; penetration: number; evasion: number };
     /** 참여자 보상(격파 뒤 다음 동기화 때) · 마지막 일격 보너스 · 축복 시간. */
     reward: { gold: number; pearls: number; sp: number }; slayer: { pearls: number; sp: number }; blessings: BlessingId[]; blessingHours: number;
@@ -125,11 +125,11 @@ export type RaidHitSummary = { at: number; dealt: number; turns: number; died: b
  * 혼테일은 환생 100 몸이 8~17번이라 아직 그만한 모험가가 없어 그대로. 기준 몸 실측은 scripts/check-bosses.mjs --only raid [--raid-stage k].
  */
 export const RAIDS: RaidDef[] = [
-    { id: 'balrog', name: '발록', fish: 'magmaKraken', level: 30, cost: 2_000, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
+    { id: 'balrog', name: '발록', monster: 'magmaKraken', level: 30, cost: 2_000, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
         reward: { gold: 30_000, pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 }, blessings: ['gold', 'exp'], blessingHours: 1 },
-    { id: 'zakum', name: '자쿰', fish: 'ventColossus', level: 70, cost: 5_000, lifetimeHours: 12, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
+    { id: 'zakum', name: '자쿰', monster: 'ventColossus', level: 70, cost: 5_000, lifetimeHours: 12, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
         reward: { gold: 500_000, pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 }, blessings: ['gold', 'exp'], blessingHours: 2 },
-    { id: 'horntail', name: '혼테일', fish: 'abyssSovereign', level: 120, cost: 12_000, lifetimeHours: 24, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
+    { id: 'horntail', name: '혼테일', monster: 'abyssSovereign', level: 120, cost: 12_000, lifetimeHours: 24, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
         reward: { gold: 5_000_000, pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 }, blessings: ['gold', 'exp', 'mimic', 'nuri'], blessingHours: 3 },
 ];
 export const raidById = (id: string) => RAIDS.find(r => r.id === id);

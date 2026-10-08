@@ -9,10 +9,10 @@ const {load:moduleAt}=loadGame();
 const {newState,tick,act}=await moduleAt('systems/engine');
 const {stats}=await moduleAt('systems/stats');
 const {grantJobSkills,canUse,validLoadout,attributes}=await moduleAt('systems/progression');
-const {FISH}=await moduleAt('data/world');
+const {MONSTERS}=await moduleAt('data/world');
 const {scaledEnemyStats}=await moduleAt('data/encounters');
 const {MONSTER_TUNING}=await moduleAt('data/balance');
-const {dungeonCatchReward}=await moduleAt('systems/meta');
+const {dungeonKillReward}=await moduleAt('systems/meta');
 const {DUNGEONS}=await moduleAt('data/world');
 function fixture(level,magic,progressed=false){
  const s=newState(0);s.level=level;s.equipment={};s.inventory=[];s.statPoints=level*4;s.rebirths=progressed?30:level>=40?1:0; if(progressed)s.permanent={attack:10,hp:10,guard:10};
@@ -36,8 +36,8 @@ console.log(JSON.stringify({baseline,expeditions:rows}));
 if(!baseline){
  const s=fixture(30,false);s.hp=1;s.mana=0;act(s,{type:'dungeon',id:'grotto'},0);assert.equal(s.hp,1);assert.equal(s.mana,0);assert.equal(s.recovery,3);
  tick(s,()=>.5);assert.equal(s.hp,1);tick(s,()=>.5);assert.equal(s.hp,1);tick(s,()=>.5);assert.equal(s.hp,stats(s).hp);assert.equal(s.enemy,null);
- tick(s,()=>.9999);const f=FISH.find(f=>f.id==='ray'),expected=scaledEnemyStats(f,{wave:0});assert.equal(s.enemy.maxHp,expected.hp);assert.equal(s.enemy.attack,expected.attack);
- const boss=FISH.find(f=>f.id==='grottoWarden');s.dungeon.wave=4;s.enemy=null;tick(s,()=>.9999);const expectedBoss=scaledEnemyStats(boss,{boss:true,wave:4});assert.equal(s.enemy.maxHp,expectedBoss.hp);assert.equal(s.enemy.exp,dungeonCatchReward(boss,DUNGEONS.find(d=>d.id==='grotto').level,0,true).exp,'v27.35 던전 보스 경험치는 던전 레벨 기준으로 정규화');
+ tick(s,()=>.9999);const f=MONSTERS.find(f=>f.id==='ray'),expected=scaledEnemyStats(f,{wave:0});assert.equal(s.enemy.maxHp,expected.hp);assert.equal(s.enemy.attack,expected.attack);
+ const boss=MONSTERS.find(f=>f.id==='grottoWarden');s.dungeon.wave=4;s.enemy=null;tick(s,()=>.9999);const expectedBoss=scaledEnemyStats(boss,{boss:true,wave:4});assert.equal(s.enemy.maxHp,expectedBoss.hp);assert.equal(s.enemy.exp,dungeonKillReward(boss,DUNGEONS.find(d=>d.id==='grotto').level,0,true).exp,'v27.35 던전 보스 경험치는 던전 레벨 기준으로 정규화');
  const trained=s.skills[0],oldPractice=s.skillPractice[trained];s.enemy.hp=1;s.hp=stats(s).hp;tick(s,()=>0);assert.equal(s.skillPractice[trained],oldPractice+1);
  const health=scaledEnemyStats(f,{wave:3}).hp;assert(health>scaledEnemyStats(f,{wave:0}).hp);assert.equal(MONSTER_TUNING.bossRewardMultiplier,1.9);assert.equal(MONSTER_TUNING.dungeonHealAfterKill,.08);
  console.log(JSON.stringify({checks:'passed',coverage:['real preparation turns','preview/spawn agreement','boss reward unchanged','victory mastery 1','increasing wave pressure']}));

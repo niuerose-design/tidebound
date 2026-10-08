@@ -23,7 +23,7 @@ const ONLY = arg('--stages', '') ? arg('--stages', '').split(',') : null;
 
 const expBetween = (s, L, E) => { let n = s.exp - E; for (let l = L; l < s.level; l++) n += xpNeeded(l, s.rebirths, xpWall(s)); return n; };
 const bodies = new Map();
-const bodyFor = (r, jobId, stage) => { const k = `${r}:${jobId}`; if (!bodies.has(k)) bodies.set(k, referenceBody(r, jobId, { borrow: !process.argv.includes('--own') })); const s = structuredClone(bodies.get(k)); for (const id of stage.fish) delete s.book[id]; return s; };
+const bodyFor = (r, jobId, stage) => { const k = `${r}:${jobId}`; if (!bodies.has(k)) bodies.set(k, referenceBody(r, jobId, { borrow: !process.argv.includes('--own') })); const s = structuredClone(bodies.get(k)); for (const id of stage.monsters) delete s.book[id]; return s; };
 function hunt(r, jobId, stage, tide, seed) {
     const s = bodyFor(r, jobId, stage), rng = random(seed * 7919 + r * 31 + tide);
     Object.assign(s, { stage: stage.id, tide, running: true, enemy: null, recovery: 0, target: null });
@@ -41,7 +41,7 @@ function hunt(r, jobId, stage, tide, seed) {
 const avg = xs => ({ exp: xs.reduce((a, x) => a + x.exp, 0) / xs.length, kills: xs.reduce((a, x) => a + x.kills, 0) / xs.length, deaths: xs.reduce((a, x) => a + x.deaths, 0) / xs.length, turns: xs.reduce((a, x) => a + x.turns, 0) / xs.length });
 const fmt = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : n >= 1e4 ? `${Math.round(n / 1e4)}만` : `${Math.round(n)}`;
 
-const stages = STAGES.filter(st => !ONLY || ONLY.includes(st.id)).filter(st => st.fish?.length);
+const stages = STAGES.filter(st => !ONLY || ONLY.includes(st.id)).filter(st => st.monsters?.length);
 const normal = stages.filter(st => !st.habitat);
 const table = {};
 for (const r of REBIRTHS) {

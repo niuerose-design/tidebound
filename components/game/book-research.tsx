@@ -1,7 +1,7 @@
 'use client';
 import { CheckCircle2, ChevronDown } from 'lucide-react';
 import type { State, Action } from '@/game/types';
-import { FISH, STAGES, SWARM_SIZES, SWARM_UNLOCK } from '@/game/data/world';
+import { MONSTERS, STAGES, SWARM_SIZES, SWARM_UNLOCK } from '@/game/data/world';
 import { BALANCE } from '@/game/data/balance';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookPending, bookTierReq } from '@/game/systems/progression';
@@ -50,12 +50,12 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
 /** 한 장소(사냥터)의 연구 진행도와 장소 완성 보상. 사냥터 카드와 도감 장소 제목에서 같이 씁니다. */
 function regionResearch(s: State, stageId: string) {
     const st = STAGES.find(x => x.id === stageId)!;
-    const done = st.fish.filter(id => (s.book[id] || 0) >= PROGRESSION.fishComplete).length;
-    const pending = st.fish.reduce((a, id) => a + bookPending(s, id).ranks.length, 0);
-    return { done, total: st.fish.length, complete: done === st.fish.length, pending, reward: '업적 장착 AP +1' };
+    const done = st.monsters.filter(id => (s.book[id] || 0) >= PROGRESSION.monsterComplete).length;
+    const pending = st.monsters.reduce((a, id) => a + bookPending(s, id).ranks.length, 0);
+    return { done, total: st.monsters.length, complete: done === st.monsters.length, pending, reward: '업적 장착 AP +1' };
 }
 
-export function pendingBookCount(s: State) { return FISH.reduce((a, f) => a + bookPending(s, f.id).ranks.length, 0); }
+export function pendingBookCount(s: State) { return MONSTERS.reduce((a, f) => a + bookPending(s, f.id).ranks.length, 0); }
 
 export function RegionProgress({ s, id }: { s: State; id: string }) {
     const r = regionResearch(s, id);

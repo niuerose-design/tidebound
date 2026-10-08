@@ -88,14 +88,14 @@ export function dungeonPressure(wave: number) {
 }
 /**
  * v27.30 던전 보상 기준.
- * - v27.35 보상은 '권장 레벨 몬스터 몇 마리분'으로 정합니다. 보스 경험치 = 몬스터 bossExpFish마리분, 보스 골드 = bossGoldFish마리분,
- *   클리어 골드 = clearGoldFish마리분. 일반 웨이브는 몬스터 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
+ * - v27.35 보상은 '권장 레벨 몬스터 몇 마리분'으로 정합니다. 보스 경험치 = 몬스터 bossExpMonsters마리분, 보스 골드 = bossGoldMonsters마리분,
+ *   클리어 골드 = clearGoldMonsters마리분. 일반 웨이브는 몬스터 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
  *   한 번 클리어(전투 5번)가 같은 레벨 사냥 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
  * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(세계석은 층 공식 그대로).
  * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
  * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
  */
-export const DUNGEON_TUNING = { bossExpFish: 6, bossGoldFish: 4, clearGoldFish: 6, expLevelOver: 2, rewardTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
+export const DUNGEON_TUNING = { bossExpMonsters: 6, bossGoldMonsters: 4, clearGoldMonsters: 6, expLevelOver: 2, rewardTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
 /**
  * v27.35 무릉도장 적: 층마다 가파르게 강해지는 별도 공식(보상은 rewardTierCap에서 멈춤).
  * 1층 일반 몬스터 체력 hp(10만)에서 층마다 ×hpGrowth, 공격은 기준 몬스터의 attack배에서 층마다 ×attackGrowth, 방어는 defense배에서 ×defenseGrowth.

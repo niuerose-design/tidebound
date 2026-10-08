@@ -3,7 +3,7 @@
 import type { State } from '@/game/types';
 import { Heading, Fold, format } from './shared';
 import { RebirthHistory, formatDuration } from './rebirth-history';
-import { FISH, PLACES, PLAIN_DUNGEONS } from '@/game/data/world';
+import { MONSTERS, PLACES, PLAIN_DUNGEONS } from '@/game/data/world';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookStage } from '@/game/systems/book';
 import { BALANCE } from '@/game/data/balance';
@@ -18,9 +18,9 @@ function Block({ title, rows, note }: { title: string; rows: Row[]; note?: strin
 const sum = (o?: Record<string, number>) => Object.values(o || {}).reduce((a, n) => a + (n || 0), 0);
 
 export function Stats({ s }: { s: State }) {
-    const discovered = FISH.filter(f => (s.book[f.id] || 0) > 0).length, complete = FISH.filter(f => (s.book[f.id] || 0) >= PROGRESSION.fishComplete).length;
+    const discovered = MONSTERS.filter(f => (s.book[f.id] || 0) > 0).length, complete = MONSTERS.filter(f => (s.book[f.id] || 0) >= PROGRESSION.monsterComplete).length;
     // v3.95 도감과 같은 기준(연구 단계, 몬스터마다 최대 6)으로 셉니다.
-    const research = FISH.reduce((a, f) => a + bookStage(s, f.id), 0);
+    const research = MONSTERS.reduce((a, f) => a + bookStage(s, f.id), 0);
     const variants = Object.values(s.variantBook || {}).reduce((a, row) => a + sum(row as Record<string, number>), 0);
     const clears = PLAIN_DUNGEONS.map(d => [d.name, s.clears?.[d.id] || 0] as const);
     const rg = s.randomGameStats;
@@ -50,9 +50,9 @@ export function Stats({ s }: { s: State }) {
             ...clears.map(([name, n]) => [name, `${format(n)}회`] as Row),
         ]}/>
         <Block title="도감 · 변종" rows={[
-            ['발견한 몬스터', `${discovered} / ${FISH.length}종`],
-            ['완성한 몬스터', `${complete} / ${FISH.length}종`],
-            ['몬스터 연구 단계 합계', `${format(research)} / ${format(FISH.length * BALANCE.bookMilestones.length)}`],
+            ['발견한 몬스터', `${discovered} / ${MONSTERS.length}종`],
+            ['완성한 몬스터', `${complete} / ${MONSTERS.length}종`],
+            ['몬스터 연구 단계 합계', `${format(research)} / ${format(MONSTERS.length * BALANCE.bookMilestones.length)}`],
             ['변종 처치', `${format(variants)}마리`],
             ['황금 개체 처치', `${format(sum(s.goldenBook))}마리`],
         ]}/>
