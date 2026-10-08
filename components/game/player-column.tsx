@@ -1,6 +1,6 @@
 'use client';
 import { displayTitle } from '@/game/data/titles';
-import { rankOf, rankIndex, rankState } from '@/game/data/rank';
+import { rankTitle, rankIndex, rankState } from '@/game/data/rank';
 import { RankInsignia } from './rank-insignia';
 import { ChevronRight, Heart, Shield, Swords, Target, Users, Zap, Leaf } from 'lucide-react';
 import { Meter, SlotIcon, format } from './shared';
@@ -26,7 +26,7 @@ export function Player({ s, a = stats(s), setView }: {
     <Leaf size={36}/>
     <span>{s.level}</span>
     </div>
-    <div className="combatant-name character-name"><h3>{s.badge === 'rank' ? <small className="rebirth-title rank-badge" title={`계급 ${rankOf(s).name}`}><RankInsignia index={rankIndex(rankState(s).exp)} size={16}/>{rankOf(s).name}</small> : displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</h3></div>
+    <div className="combatant-name character-name"><h3>{s.badge === 'rank' ? <small className="rebirth-title rank-badge" title={`계급 ${rankTitle(s)}`}><RankInsignia index={rankIndex(rankState(s).exp)} size={16}/>{rankTitle(s)}</small> : displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</h3></div>
     <p className="job-label">{jobById(s.job)?.name} · 환생 {s.rebirths}회</p>
     <p className="guild-label"><Users size={14}/>{s.guildMember?.name ? `길드 · ${s.guildMember.name}` : '무소속'}</p>
     <div className="combat-power">

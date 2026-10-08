@@ -12,7 +12,8 @@ function Mugunghwa({ cx, cy, r }: { cx: number; cy: number; r: number }) {
     return <g>{Array.from({ length: 5 }, (_, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; return <ellipse key={i} cx={(cx + r * .55 * Math.cos(a)).toFixed(1)} cy={(cy + r * .55 * Math.sin(a)).toFixed(1)} rx={r * .5} ry={r * .34} transform={`rotate(${(a * 180 / Math.PI).toFixed(0)} ${(cx + r * .55 * Math.cos(a)).toFixed(1)} ${(cy + r * .55 * Math.sin(a)).toFixed(1)})`} fill={GOLD} stroke={GOLD_DARK} strokeWidth=".7"/>; })}<circle cx={cx} cy={cy} r={r * .28} fill={GOLD_DARK}/></g>;
 }
 /** index: RANKS 배열 번호(0 이등병 ~ 16 중장). size: 픽셀. */
-export function RankInsignia({ index, size = 28, title }: { index: number; size?: number; title?: string }) {
+/** v3.160 ring: 재입대 횟수. 1 이상이면 금테를 두릅니다. */
+export function RankInsignia({ index, size = 28, title, ring = 0 }: { index: number; size?: number; title?: string; ring?: number }) {
     const W = 48, H = 48, els: React.ReactNode[] = [];
     if (index <= 3) { // 병: 작대기 1~4
         const n = index + 1, gap = 9, top = 24 - (n - 1) * gap / 2;
@@ -31,5 +32,5 @@ export function RankInsignia({ index, size = 28, title }: { index: number; size?
         const n = index - 13, gap = 14, cx0 = 24 - (n - 1) * gap / 2;
         for (let i = 0; i < n; i++) els.push(<Star key={i} cx={cx0 + i * gap} cy={24} r={7}/>);
     }
-    return <svg className="rank-insignia" width={size} height={size} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title}>{title && <title>{title}</title>}<rect x="1" y="1" width={W - 2} height={H - 2} rx="6" fill={BG} stroke="#3b4d42" strokeWidth="1.5"/>{els}</svg>;
+    return <svg className="rank-insignia" width={size} height={size} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title}>{title && <title>{title}</title>}<rect x="1" y="1" width={W - 2} height={H - 2} rx="6" fill={BG} stroke="#3b4d42" strokeWidth="1.5"/>{ring > 0 && <rect x="3" y="3" width={W - 6} height={H - 6} rx="5" fill="none" stroke={GOLD} strokeWidth="2"/>}{els}</svg>;
 }

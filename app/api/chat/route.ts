@@ -2,7 +2,7 @@ import { session, checkOrigin, db, failure, readJson, ApiError } from '@/game/se
 import { guildIdOf } from '@/game/server/guild';
 import type { State } from '@/game/types';
 import { displayTitle } from '@/game/data/titles';
-import { rankOf } from '@/game/data/rank';
+import { rankTitle } from '@/game/data/rank';
 import { CHAT_MAX_CHARS, CHAT_COOLDOWN_MS } from '@/game/data/chat';
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +44,7 @@ export async function POST(req: Request) { try {
     const now = Date.now(), database = db(), [channel, last, player] = await Promise.all([resolveChannel(account, requested), database.lastChatAt(id), database.getPlayer(id)]);
     if (now - last < CHAT_COOLDOWN_MS) throw new ApiError('조금 천천히 보내 주세요.', 429);
     if (!player) throw new ApiError('먼저 게임을 시작하세요.');
-    const state = JSON.parse(player.state) as State, title = state.badge === 'rank' ? rankOf(state).name : displayTitle(state);
+    const state = JSON.parse(player.state) as State, title = state.badge === 'rank' ? rankTitle(state) : displayTitle(state);
     const name = `${title ? `[${title}] ` : ''}${String(state.name || '모험가').slice(0, 20)}`;
     const row = await database.postChat({ channel, account_id: id, name, text, created_at: now });
     return Response.json({ row: { id: row.id, name: row.name, text: row.text, at: row.created_at, self: true }, now }, { headers: { 'Cache-Control': 'no-store' } });
