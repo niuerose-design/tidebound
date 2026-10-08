@@ -141,7 +141,7 @@ export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, 
 }
 /** 무릉도장 1층 기준 능력치(첫 몬스터). 한 번만 계산합니다. */
 /**
- * v3.187 칠흑의 보스 능력치: 몸(서식지 최강 × hpMul · 공격 ×3, 레벨은 난이도만큼 올라간 뒤)에 난이도 배율을 √로 완만하게 얹습니다(체력 √tierHealth · 공격 √tierAttack).
+ * v3.188 칠흑의 보스 능력치: 몸(서식지 최강 × hpMul · 공격 ×3, 레벨은 난이도만큼 올라간 뒤)에 난이도 배율을 √로 완만하게 얹습니다(체력 √tierHealth · 공격 √tierAttack).
  * 사냥터 몬스터는 난이도 5에서 체력 2.75배가 되지만 칠흑은 1.66배: 체력이 이미 수백 배라 난이도까지 그대로 곱하면 적정 몸으로는 아무도 못 잡았습니다(docs/boss-plan.md §8.1).
  */
 export function onyxEnemyStats(f: Parameters<typeof scaledEnemyStats>[0], tier: number) {
@@ -240,7 +240,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     const specialKind = isSpecialKind(force) ? force : !force && chances.rolls ? pickSpecial(rng(), chances) : undefined;
     if (!force && chances.rolls) offlineTally.specialRolls++;
     const special = specialKind ? specialDef(specialKind) : undefined, king = !!special?.king;
-    // v3.12 칠흑의 보스: 무리 서식지 출현마다 아주 드물게(천장 있음). 집중 사냥 대상이 아니며 그 서식지 최강 몬스터의 몸집(v3.187 체력 × 보스별 hpMul, 공격 ×3)을 빌립니다.
+    // v3.12 칠흑의 보스: 무리 서식지 출현마다 아주 드물게(천장 있음). 집중 사냥 대상이 아니며 그 서식지 최강 몬스터의 몸집(v3.188 체력 × 보스별 hpMul, 공격 ×3)을 빌립니다.
     const onyxDef = !dungeon && st.habitat ? onyxBossFor(st.region) : undefined;
     let onyx = false;
     if (onyxDef && force === 'onyx') { s.onyxSeen ??= {}; onyx = true; s.onyxSeen[st.region] = 0; }

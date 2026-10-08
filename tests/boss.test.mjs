@@ -18,7 +18,7 @@ test('v3.186 boss pass 1: dungeon entry rebirths 2 · 2 · 6, hell 70 · nightma
     assert.ok(Du.abyssBossSnapshot(ALTAR.firstGod.depth).stats.hp > 9e8, 'the first god keeps its 9.3억 body');
 });
 
-test('v3.187 boss pass 2: onyx hp multiplier per boss with √ difficulty scaling, Mu Lung floor 1 at 3만 · ×2, the first god keeps its body at floor 59', async () => {
+test('v3.188 boss pass 2: onyx hp multiplier per boss with √ difficulty scaling, Mu Lung floor 1 at 3만 · ×2, the first god keeps its body at floor 59', async () => {
     const { ONYX, ONYX_BOSSES, onyxBossFor } = await load('data/onyx'), { ABYSS_TUNING } = await load('data/balance'), { ALTAR } = await load('data/altar');
     const Enc = await load('systems/encounter'), E = await load('data/encounters'), M = await load('systems/meta'), { FISH } = await load('data/world'), Du = await load('systems/duel');
     assert.deepEqual(ONYX_BOSSES.map(b => b.hpMul), [5000, 1600, 750, 800, 400, 70, 80]); assert.equal(ONYX.hp, undefined); assert.equal(ONYX.attack, 3);
