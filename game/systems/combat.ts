@@ -105,7 +105,7 @@ const RESIST_LABELS: Record<string, string> = { stun: '기절', bleed: '출혈',
 function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number) {
     effects[key] = Math.max(effects[key] || 0, turns);
 }
-const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합' } as const;
+const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합', fixed: '고정' } as const;
 /** v3.54 무리에게 거는 지속 피해의 최대 체력 비례분: 한 마리 체력 × √N(= 무리 전체 체력 ÷ √N). 한 마리면 1. */
 /** v3.54 이 전투에서 처음 거는 지속 피해면 true를 돌려주고 표시합니다(첫 틱 즉시 적용은 전투당 한 번). */
 const opens = (b: Fighter, key: 'bleed' | 'poison' | 'burn') => { const fx = (b.effects ??= {}); if (fx.opened?.[key]) return false; (fx.opened ??= {})[key] = true; return true; };
@@ -479,8 +479,10 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     }
     // v3.140 성해의 빛살(oath)의 '높은 쪽 공격' 특례는 지웠습니다. 루미너스 액티브는 모두 damageType physical · scaling swap(마법 계수 → 물리 피해)으로 선언합니다.
     const magical = arcane || chosen?.damageType === 'magic' || !chosen && !!a.magicBasic;
+    // v3.141 고정 피해: 방어를 전혀 받지 않습니다(메카닉 전탄발사). 명중은 마법처럼(회피 절반 · 속도 페널티 없음), 치명은 그대로 판정합니다.
+    const fixed = chosen?.damageType === 'fixed';
     // v26.7 마법 공격은 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다(물리 빌드와의 차별점).
-    const hit = chosen?.sureHit || a.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed }, magical);
+    const hit = chosen?.sureHit || a.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed }, magical || fixed);
     const splitBasic = !chosen && !!a.splitBasic;
     const label = chosen?.name || (arcane ? '마력 평타' : splitBasic ? '복합 평타' : '기본 공격');
     // v26.3 순수 회복 기술: 명중 판정 없이 회복만 하고 끝납니다.
@@ -488,7 +490,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const landed = healOnly ? true : rng() < hit;
     const split = chosen?.damageType === 'split' || splitBasic;
     // 올라운드 밸런스는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
-    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'attr' ? 0 : splitBasic ? (sa.attack + sa.magic) / 2 : magical ? sa.magic : sa.attack;
+    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'attr' ? 0 : splitBasic ? (sa.attack + sa.magic) / 2 : magical || chosen?.baseStat === 'magic' ? sa.magic : sa.attack;
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
         base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
@@ -526,7 +528,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const pierce = 1 - Math.min(PENETRATION.cap, sa.penetration + (chosen?.penetrationBonus || 0));
     const defense = (magical ? sb.resist : sb.defense) * pierce;
     // 복합(split) 피해: 한 번의 명중·치명 판정 뒤 물리·마법 절반씩 각각의 방어를 적용합니다.
-    const mitigated = (raw: number) => split
+    const mitigated = (raw: number) => fixed ? Math.round(raw) : split
         ? Math.round(mitigate(raw * SKILL_FORMULA.splitPhysical, sb.defense * pierce, sa.attack)) + Math.round(mitigate(raw * (1 - SKILL_FORMULA.splitPhysical), sb.resist * pierce, sa.magic))
         : Math.round(mitigate(raw, defense, magical ? sa.magic : sa.attack));
     const linked = chosen?.damageBonusCondition === 'bleeding' ? !!(b.effects.dot || b.effects.poison || b.effects.burn) : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
@@ -773,7 +775,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     }
     ev.skillId = chosen?.id;
     ev.skillName = label;
-    ev.damageType = split ? 'split' : magical ? 'magic' : 'physical';
+    ev.damageType = fixed ? 'fixed' : split ? 'split' : magical ? 'magic' : 'physical';
     ev.healed = healed;
     // v27.75 합계도 계산된 피해 기준(표시용). 실제 감소량 합이 필요하면 hits의 value를 더합니다.
     ev.total = ev.hits.reduce((n, h) => n + shownHit(h), 0);

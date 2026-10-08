@@ -156,7 +156,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         Object.assign(sk, tuning);
         applyStatusRules(sk, tierOf(sk));
         // 복합(split) 피해도 마나를 쓰는 주문으로 취급합니다.
-        const magic = sk.damageType === 'magic' || sk.damageType === 'split';
+        const magic = sk.damageType === 'magic' || sk.damageType === 'split' || sk.damageType === 'fixed' && sk.baseStat === 'magic';
         // 물리 기술은 마나를 쓰지 않고, 마법·복합 기술은 정신(마나 회복)에 투자해야 꾸준히 쓸 수 있도록 비용을 높입니다.
         sk.manaCost = magic ? Math.round((sk.manaCost || 0) * MAGIC_MANA_COST_SCALE) : 0;
         // At maximum mastery physical procs stay <= 38%; spells remain paid.
@@ -167,7 +167,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (tierOf(sk) >= SKILL_FORMULA.awaken.tier && !sk.dotFinisher) awakenSkill(sk);
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
-        const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}${sk.scalingAttack ? ` + 물리 공격 × ${sk.scalingAttack}` : ''}` : sk.scaling === 'harmony' ? '올라운드 밸런스 원시 피해' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해)' : '마법 공격(물리 피해)') : sk.id === 'oath' ? '물리·마법 공격 중 높은 값' : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
+        const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}${sk.scalingAttack ? ` + 물리 공격 × ${sk.scalingAttack}` : ''}` : sk.scaling === 'harmony' ? '올라운드 밸런스 원시 피해' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해)' : '마법 공격(물리 피해)') : sk.damageType === 'fixed' ? `${sk.baseStat === 'magic' ? '마법' : '물리'} 공격(고정 피해 · 방어 무시)` : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
         const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'resist' ? ` + 마법 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 결계 친화도` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : '';
         const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName : { stun: '기절', bleed: '출혈', poison: '중독(중첩)', burn: '화상(중첩)', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' }[sk.effect as 'stun'];
         if (sk.restoreAll) { sk.desc = '피해 없이 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회.'; continue; }

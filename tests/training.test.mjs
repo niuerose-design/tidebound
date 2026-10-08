@@ -209,9 +209,10 @@ test('v3.141 Mechanic: every active is defense-scaled magic damage that charges;
     const sk = id => SKILLS.find(s => s.id === id);
     assert.equal(sk('resonantCannon').multiplier, 2.4); assert.equal(sk('resonantCannon').damageBonusCondition, 'weakened');
     assert.equal(sk('resonanceBurst').multiplier, 2.8); assert.equal(sk('resonanceBurst').effect, 'weaken');
-    for (const id of ['plateSurge', 'resonantCannon', 'resonanceBurst', 'genesisRune']) { assert.equal(sk(id).damageType, 'magic', id); assert.equal(sk(id).scaling, 'defense', id); }
+    for (const id of ['plateSurge', 'resonantCannon', 'resonanceBurst']) { assert.equal(sk(id).damageType, 'magic', id); assert.equal(sk(id).scaling, 'defense', id); }
+    assert.equal(sk('genesisRune').damageType, 'fixed'); assert.equal(sk('genesisRune').baseStat, 'magic'); assert.equal(sk('genesisRune').scaling, 'defense');
     for (const id of ['runeHammer', 'plateSurge', 'resonantCannon', 'resonanceBurst']) assert.equal(sk(id).charge, 1, id);
-    assert.equal(sk('genesisRune').chargeNeed, 5); assert.equal(sk('genesisRune').chargeBonus, .12);
+    assert.equal(sk('genesisRune').chargeNeed, 5); assert.equal(sk('genesisRune').chargeBonus, .1);
     assert.equal(sk('broadside'), undefined, 'cannon shooter removed');
     const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5, guardAffinity: 1 };
     const fighter = (id, effects = {}, cooldowns = {}) => ({ name: 'A', stats: { ...base, magic: 300, defense: 200 }, hp: 1000, mana: 200, skills: [id], cooldowns, stun: 0, effects, ranks: { [id]: 1 }, mastery: {}, practice: {} });
@@ -219,12 +220,16 @@ test('v3.141 Mechanic: every active is defense-scaled magic damage that charges;
     // 충전 기술이 명중하면 +1, 약화된 적이면 +2.
     const a1 = fighter('plateSurge'); strike(a1, target(), () => 0); assert.equal(a1.effects.charge, 1);
     const a2 = fighter('plateSurge'); strike(a2, target({ weaken: 2 }), () => 0); assert.equal(a2.effects.charge, 2);
-    // 전탄발사(각성, 대기 0)는 중첩이 모자라면 기다리고(기본 공격만), 5중첩이면 나가서 모두 소모해 중첩당 +12%.
+    // 전탄발사(각성, 대기 0)는 중첩이 모자라면 기다리고(기본 공격만), 5중첩이면 나가서 모두 소모해 중첩당 +10%.
     const g0 = fighter('genesisRune', { charge: 4 }, { genesisRune: 0 }); const e0 = []; strike(g0, target(), () => 0, e0); assert.equal(e0.length, 1); assert.equal(e0[0].skillName, '기본 공격'); assert.equal(g0.effects.charge, 4); assert.equal(g0.cooldowns.genesisRune, 0);
     const g5 = fighter('genesisRune', { charge: 5 }, { genesisRune: 0 }); const e5 = []; strike(g5, target(), () => 0, e5);
     const g8 = fighter('genesisRune', { charge: 8 }, { genesisRune: 0 }); const e8 = []; strike(g8, target(), () => 0, e8);
     assert.equal(e5.length, 2); assert.ok(e5[1].awaken); assert.equal(g5.effects.charge, 0); assert.equal(g8.effects.charge, 0);
-    const d5 = e5[1].total, d8 = e8[1].total; assert.ok(Math.abs(d8 / d5 - 1.96 / 1.6) < .03, `charge bonus ${d5} → ${d8}`);
+    const d5 = e5[1].total, d8 = e8[1].total; assert.ok(Math.abs(d8 / d5 - 1.8 / 1.5) < .03, `charge bonus ${d5} → ${d8}`);
+    // 고정 피해: 적의 방어 · 마법 방어가 아무리 높아도 같은 피해, 로그 피해 유형은 fixed.
+    const armored = target(); armored.stats = { ...base, defense: 5000, resist: 5000 }; const ga = fighter('genesisRune', { charge: 5 }, { genesisRune: 0 }); const ea = []; strike(ga, armored, () => 0, ea);
+    assert.equal(ea[1].damageType, 'fixed'); assert.equal(ea[1].total, d5, `fixed damage ignores defense: ${ea[1].total} vs ${d5}`);
+    const magicOnly = fighter('genesisRune', { charge: 5 }, { genesisRune: 0 }); magicOnly.stats = { ...base, magic: 300, defense: 200, attack: 0, guardAffinity: 1 }; const em = []; strike(magicOnly, target(), () => 0, em); assert.equal(em[1].total, d5, 'base uses magic, not attack');
 });
 
 test('v3.120 Arch Mage (Thunder, Cold): Extreme Magic magic steps 25 · 200 · 700 · 2000', () => {

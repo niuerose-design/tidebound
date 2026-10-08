@@ -187,7 +187,10 @@ export type Skill = {
     multiplier: number;
     effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste';
     /** split: 원시 피해를 물리·마법 절반씩 나누어 각각 방어를 적용하는 한 번의 공격. */
-    damageType?: 'physical' | 'magic' | 'split';
+    /** fixed(v3.141): 고정 피해. 방어 · 마법 방어를 전혀 받지 않습니다(메카닉 전탄발사). 기준 공격력은 baseStat(기본 물리 공격). */
+    damageType?: 'physical' | 'magic' | 'split' | 'fixed';
+    /** v3.141 고정 피해의 기준 공격력. */
+    baseStat?: 'attack' | 'magic';
     cost?: number;
     manaCost?: number;
     accuracyBonus?: number;
@@ -333,7 +336,7 @@ export type Enemy = {
  */
 export type CombatHit = { kind: 'main' | 'follow'; value: number; raw?: number; critical: boolean; miss: boolean; /** v27.18 극 치명타 */ superCritical?: boolean };
 export type CombatEvent = {
-    actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split';
+    actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split' | 'fixed';
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
     /** 면역으로 막힌 상태이상(있을 때만). */

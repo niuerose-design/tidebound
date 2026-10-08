@@ -59,7 +59,7 @@ const FOES = ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul'], 
 const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
 function attributesFor(j) {
     const own = SKILLS.filter(sk => sk.job === j.id && sk.type === 'active');
-    const ownMagic = own.filter(sk => (sk.damageType === 'magic') !== (sk.scaling === 'swap')).length, ownPhysical = own.length - ownMagic;
+    const ownMagic = own.filter(sk => (sk.damageType === 'magic' || sk.damageType === 'fixed' && sk.baseStat === 'magic') !== (sk.scaling === 'swap')).length, ownPhysical = own.length - ownMagic;
     const magic = ownMagic !== ownPhysical ? ownMagic > ownPhysical : jobFactor(j, 'magic') > jobFactor(j, 'attack');
     // v3.84 외길 계열(근력 · 기민 · 지능 · 정신 · 체질 · 행운)은 check-roles처럼 그 능력치에 몰아 배분합니다(행운 비례 나이트로드 등).
     const single = ONE_STAT[lineageOf(j)];

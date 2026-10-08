@@ -6,7 +6,7 @@ import { deathRecoveryTurns } from '../data/sprout';
 import { jobById } from '../data/classes';
 import type { Enemy, Log, State, StatusEffects } from '../types';
 
-export type CombatFxKind = 'physical' | 'magic' | 'split' | 'stun' | 'bleed' | 'poison' | 'burn' | 'silence' | 'slow' | 'haste' | 'heal' | 'weaken' | 'miss';
+export type CombatFxKind = 'physical' | 'magic' | 'split' | 'fixed' | 'stun' | 'bleed' | 'poison' | 'burn' | 'silence' | 'slow' | 'haste' | 'heal' | 'weaken' | 'miss';
 /** v25.20 스킬별 연출 갈래. 궤적 모양·파편 글자·색이 갈래마다 다릅니다. */
 export type CombatFxVariant = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph' | 'venom' | 'ink' | 'bone' | 'time';
 /** 스킬 id·효과로 연출 갈래를 고릅니다. 앞 규칙이 우선이고, 아무것도 맞지 않으면 마법은 arcane, 물리는 impact. */
@@ -51,7 +51,7 @@ export type CombatFx = {
     id: number; actor: 'player' | 'enemy'; target: 'player' | 'enemy';
     title: string; kind: CombatFxKind; variant: CombatFxVariant;
     basic: boolean; critical: boolean; healing: number; drained: number; status: string;
-    damageType: 'physical' | 'magic' | 'split'; dot?: { name: string; value: number };
+    damageType: 'physical' | 'magic' | 'split' | 'fixed'; dot?: { name: string; value: number };
     /** v25 無로 버틴 쪽(self면 행동한 쪽 자신). */
     endured?: { heal: number; self?: boolean };
     hits: { value: number; critical: boolean; miss: boolean; superCritical?: boolean }[];

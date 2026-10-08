@@ -153,10 +153,11 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'aberrantSurge', name: '이형 쇄도', desc: '', level: 70, job: 'aberrantKing', chance: .25, cooldown: 4, multiplier: 2.4, cost: 6, scaling: 'hybrid', scalingRatio: .05, effect: 'drain', drainRatio: .2, masteryMilestones: M5 },
     { ...P, id: 'aberrantBody', name: '이형의 몸', desc: '체력·최대 마나·흡혈이 오릅니다.', level: 70, job: 'aberrantKing', cost: 3, bonus: { hp: 500, mana: 80, lifesteal: .03 }, masteryMilestones: M5 },
     // v3.110 메카닉 상향: 로봇 런처: RM7 배율 2.6 → 3.2 · 추가 공격 1회.
-    // v3.141 메카닉 재개편: 방어 비례 마법 피해로 충전, 창세 룬(전탄발사)은 충전 5중첩부터 나가 중첩당 +12%.
+    // v3.141 메카닉 재개편: 방어 비례 마법 피해로 충전, 창세 룬(전탄발사)은 충전 5중첩부터 나가 중첩당 +10%, 고정 피해(방어를 전혀 받지 않아 배율은 2로 낮게).
     { ...A, ...forgeBlast, id: 'resonanceBurst', name: '공명 폭발', desc: '', level: 55, job: 'resonanceMaster', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 16, scalingRatio: .8, effect: 'weaken', charge: 1, masteryMilestones: M4 },
     { ...P, id: 'harmonicPlate', name: '공명 갑판', desc: '마법 공격 · 두 방어 · 반격이 오릅니다.', level: 55, job: 'resonanceMaster', cost: 3, bonus: { magic: 50, defense: 50, resist: 50, thorns: .25 }, masteryMilestones: M4 },
-    { ...A, ...forgeBlast, id: 'genesisRune', name: '창세 룬', desc: '', level: 70, job: 'runeCreator', chance: .5, cooldown: 5, multiplier: 4.2, cost: 6, manaCost: 20, scalingRatio: .8, effect: 'stun', chargeNeed: 5, chargeBonus: .12, masteryMilestones: M5 },
+    // 전탄발사는 고정 피해(방어 · 마법 방어 무시), 기준값은 마법 공격 + 물리 방어 비례.
+    { ...A, ...forgeBlast, damageType: 'fixed', baseStat: 'magic', id: 'genesisRune', name: '창세 룬', desc: '', level: 70, job: 'runeCreator', chance: .5, cooldown: 5, multiplier: 2, cost: 6, manaCost: 20, scalingRatio: .8, effect: 'stun', chargeNeed: 5, chargeBonus: .1, masteryMilestones: M5 },
     { ...P, id: 'creatorRune', name: '창조주의 문장', desc: '마법 공격 · 물리 방어 · 방어 관통 · 반격이 오릅니다.', level: 70, job: 'runeCreator', cost: 3, bonus: { magic: 110, defense: 60, penetration: .05, thorns: .3 }, masteryMilestones: M5 },
     // 보조
     { ...A, ...physical, id: 'fateRoll', name: '운명의 주사위', desc: '', level: 55, job: 'fateGambler', chance: .27, cooldown: 4, multiplier: 2.5, cost: 5, accuracyBonus: .06, masteryMilestones: M4 },
