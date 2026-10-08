@@ -69,7 +69,7 @@ export const V24_JOBS: NewJob[] = [
 
     // ── 4차에서 끝나던 계보의 5차 ─────────────────────────
     { id: 'curseQueen', name: '저주의 여왕', title: '모든 저주가 무릎 꿇는다', desc: '침묵을 걸며 제어된 적을 무너뜨리는 보이드 버스트와 마법 공격·지속 피해 패시브로 칼리 계보의 정점에 선 5차 직업입니다.', ...neutral, defense: 1.08, magic: 1.7, hp: 1.2, resist: 1.3, crit: .08, ...T5, parent: 'calamityShrine', requires: { int: 70, wis: 54 }, requiresSkillMastery: { calamityRite: 3 }, role: '저주 최상위', tree: 'status' },
-    { id: 'seaDragonGod', name: '좀비 루팡신', title: '바다를 감고 하늘에 오른다', desc: '기절을 거는 다크나이트 (5차)의 창과 두 공격·체력 패시브로 다크나이트 계보의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.5, magic: 1.5, hp: 1.25, defense: 1.08, resist: 1.08, crit: .06, ...T5, parent: 'abyssDragonLord', requires: { str: 64, wis: 62 }, requiresSkillMastery: { leviathanCharge: 3 }, role: '복합 최상위·좀비 루팡', tree: 'hybrid' },
+    { id: 'seaDragonGod', name: '좀비 루팡신', title: '바다를 감고 하늘에 오른다', desc: '기절을 거는 궁그닐 디센트와, 쓰러질 피해를 한 번 버텨 내는 리인카네이션(다크니스 오라) 패시브로 다크나이트 계보의 정점에 선 5차 직업입니다. 쓰러진 횟수 · 보낸 턴에 비례해 공격과 체력이 오릅니다.', ...neutral, attack: 1.35, magic: 1, hp: 1.4, defense: 1.25, resist: 1.15, crit: .06, ...T5, parent: 'abyssDragonLord', requires: { str: 64, vit: 56 }, requiresSkillMastery: { leviathanCharge: 3 }, role: '경계 최상위·리인카네이션', tree: 'hybrid' },
 ];
 
 /** 히든 직업 실루엣 카드의 힌트. */
@@ -83,6 +83,8 @@ const A = { type: 'active' as const };
 const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
 const dual = { damageType: 'split' as const, scaling: 'dual' as const };
+/** v3.144 다크나이트: 물리 피해(마나는 그대로 씀). */
+const spear = { damageType: 'physical' as const };
 /** v3.143 메카닉: 마법 피해 + 물리 방어 비례(방어 친화도 적용). */
 const forgeBlast = { damageType: 'magic' as const, scaling: 'defense' as const };
 const M4 = [2500, 12000, 40000, 100000], M5 = [4000, 18000, 60000, 150000];
@@ -189,9 +191,10 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'doomCurse', name: '파멸의 저주', desc: '', level: 70, job: 'curseQueen', chance: .5, cooldown: 4, multiplier: 3.9, cost: 6, manaCost: 36, effect: 'silence', damageBonusCondition: 'controlled', conditionalDamageBonus: .6, masteryMilestones: M5 },
     // v3.123 칼리 상향: 헥스의 여왕 마법 공격 +110 → +250(숙련 보정 뒤 엔드 마법 약 +10%). 주력 상향은 4차 저주(지속 피해).
     { ...P, id: 'queenOfCurses', name: '저주의 왕관', desc: '마법 공격과 지속 피해가 크게 오릅니다.', level: 70, job: 'curseQueen', cost: 3, bonus: { magic: 250, dotBonus: .2 }, masteryMilestones: M5 },
-    { ...A, ...dual, id: 'dragonGodSpear', name: '좀비 루팡신의 창', desc: '', level: 70, job: 'seaDragonGod', chance: .5, cooldown: 5, multiplier: 4.5, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
+    // v3.144 다크나이트 재개편: 물리 창술. 비늘(다크니스 오라)은 리인카네이션(lastStand 1회 · 25% 회복) + 쓰러진 횟수 · 보낸 턴 비례 성장.
+    { ...A, ...spear, id: 'dragonGodSpear', name: '좀비 루팡신의 창', desc: '', level: 70, job: 'seaDragonGod', chance: .5, cooldown: 5, multiplier: 3.4, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
     // v3.98 다크니스 오라: 치명타 +8%p · 치명 피해 +0.45(팬텀 5차 패시브와 같은 값, 다크나이트 치명 75% · ×2.07로 물리 딜러 최하위였음).
-    { ...P, id: 'dragonGodScale', name: '좀비 루팡신의 비늘', desc: '두 공격과 체력이 크게 오르고, 치명타와 치명 피해가 오릅니다.', level: 70, job: 'seaDragonGod', cost: 3, bonus: { attack: 55, magic: 55, hp: 300, crit: .08, critDamage: .45 }, masteryMilestones: M5 },
+    { ...P, id: 'dragonGodScale', name: '좀비 루팡신의 비늘', desc: '물리 공격과 체력이 크게 오르고 치명타 · 치명 피해가 오릅니다. 쓰러질 피해를 받으면 전투당 한 번 체력 1로 버티고 최대 체력의 25%를 되찾습니다. 쓰러진 횟수마다 물리 공격, 보낸 턴 1,000마다 최대 체력이 오릅니다.', level: 70, job: 'seaDragonGod', cost: 3, bonus: { attack: 70, hp: 300, crit: .08, critDamage: .45 }, lastStand: { charges: 1, heal: .25 }, perCount: [{ source: 'deaths', per: 1, bonus: { attack: 2 }, cap: 100 }, { source: 'turns', per: 1000, bonus: { hp: 6 }, cap: 100 }], masteryMilestones: M5 },
 ];
 
 /** 액티브 밸런스 표 행: 선언한 발동률·배율·재사용 대기·마나를 그대로 사용합니다. */

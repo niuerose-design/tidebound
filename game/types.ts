@@ -89,7 +89,7 @@ export type Stats = {
 };
 export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
-export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
+export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
     /** v3.54 이번 전투에서 첫 틱을 이미 바로 준 지속 피해(전투당 한 번). */
     opened?: Partial<Record<'bleed' | 'poison' | 'burn', true>>;

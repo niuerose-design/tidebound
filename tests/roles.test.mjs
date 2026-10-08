@@ -21,7 +21,7 @@ test('v3.61 roles: lineage assignments follow the plan (§11.6-1), with job-leve
     for (const [lineage, want] of [['harpoon', 'physical'], ['tide', 'magic'], ['poisoner', 'status'], ['warden', 'reflect'], ['martialArtist', 'control'], ['wanderer', 'drain'], ['seagrassKeeper', 'healer'], ['fishWhisperer', 'utility']])
         for (const j of JOBS.filter(x => lineageOf(x) === lineage && !x.subRole)) if (!['oracle', 'lunarOracle', 'coralSaint', 'tideMender', 'tidalSinger', 'reefBrawler', 'inkMime', 'crystalCaster', 'clockworkAngler', 'allRounder', 'glyphMonk'].includes(j.id)) assert.equal(sub(j.id), want, `${lineage}/${j.id}`);
     // 곁가지 예외(§11.6-1)와 히든(§11.7-2)
-    for (const [id, want] of [['tidalSinger', 'borderBuffer'], ['coralSaint', 'healer'], ['reefBrawler', 'drain'], ['clockworkAngler', 'physical'], ['allRounder', 'physical'], ['codexReader', 'utility'], ['poorMonk', 'reflect'], ['fallenAngler', 'drain'], ['clockmaker', 'border'], ['runeCreator', 'borderReflect']])
+    for (const [id, want] of [['tidalSinger', 'borderBuffer'], ['coralSaint', 'healer'], ['reefBrawler', 'drain'], ['clockworkAngler', 'physical'], ['allRounder', 'physical'], ['codexReader', 'utility'], ['poorMonk', 'reflect'], ['fallenAngler', 'drain'], ['clockmaker', 'border'], ['runeCreator', 'borderReflect'], ['seaDragonGod', 'borderStand']])
         if (JOBS.some(j => j.id === id)) assert.equal(sub(id), want, id);
 });
 
