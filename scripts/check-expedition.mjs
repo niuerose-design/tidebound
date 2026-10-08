@@ -14,8 +14,9 @@ const {scaledEnemyStats}=await moduleAt('data/encounters');
 const {MONSTER_TUNING}=await moduleAt('data/balance');
 const {dungeonKillReward}=await moduleAt('systems/meta');
 const {DUNGEONS}=await moduleAt('data/world');
-function fixture(level,magic,progressed=false){
- const s=newState(0);s.level=level;s.equipment={};s.inventory=[];s.statPoints=level*4;s.rebirths=progressed?30:level>=40?1:0; if(progressed)s.permanent={attack:10,hp:10,guard:10};
+// minRebirth: v3.186부터 던전마다 입장 환생 조건이 있어(불의 제단 2 · 잊힌 마법 사원 2 · 시계탑 6) 그만큼은 채워 줍니다.
+function fixture(level,magic,progressed=false,minRebirth=0){
+ const s=newState(0);s.level=level;s.equipment={};s.inventory=[];s.statPoints=level*4;s.rebirths=Math.max(minRebirth,progressed?30:level>=40?1:0); if(progressed)s.permanent={attack:10,hp:10,guard:10};
  while(s.statPoints){const v=attributes(s);act(s,{type:'attribute',id:magic?(v.int<35?'int':v.wis<20?'wis':s.statPoints%4===0?'vit':'int'):(v.str<35?'str':v.dex<20?'dex':s.statPoints%4===0?'vit':'str')},0);}
  for(const job of level>=25?(magic?['tide','tempest']:['harpoon','whaler']):level>=10?[magic?'tide':'harpoon']:['fisher']){s.job=job;grantJobSkills(s);s.jobMastery[job]=progressed?30000:2000;}
  for(const id of Object.keys(s.learned))s.skillPractice[id]=progressed?30000:1000;
@@ -26,7 +27,7 @@ const rows=[];
 for(const [id,levels,progressed=false] of [['grotto',[8,14,20,30]],['kelpCatacomb',[14,22,30]],['cemetery',[18,25,30]],['caldera',[26,30,40]],['caldera',[40],true],['temple',[40],true]])for(const level of levels)for(const magic of [false,true]){
  let clears=0,total=0,bossReached=0;
  for(let seed=1;seed<=24;seed++){
-  const s=fixture(level,magic,progressed),rng=random(seed);act(s,{type:'dungeon',id},0,rng);let n=0,reached=false;
+  const s=fixture(level,magic,progressed,DUNGEONS.find(d=>d.id===id).rebirth),rng=random(seed);act(s,{type:'dungeon',id},0,rng);let n=0,reached=false;
   while(s.dungeon&&n<2400){tick(s,rng);n++;if(s.dungeon?.wave===4)reached=true;}
   clears+=s.clears[id]?1:0;total+=n;bossReached+=reached?1:0;
  }
