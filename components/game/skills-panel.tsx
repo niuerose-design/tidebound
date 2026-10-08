@@ -109,7 +109,7 @@ const STATUS_EFFECTS = new Set(['stun', 'bleed', 'silence', 'slow', 'weaken', 'p
 /** 검색·칩 필터에 쓰는 기술의 효과 분류. 액티브는 피해 유형, 상태이상·회복은 효과로 나눕니다. */
 function skillDamageKind(sk: Skill): SkillDamage[] {
     const out: SkillDamage[] = [];
-    if (sk.type === 'active') out.push(sk.damageType === 'magic' ? 'magic' : sk.damageType === 'split' ? 'physical' : 'physical');
+    if (sk.type === 'active') out.push(sk.damageType === 'magic' || sk.damageType === 'fixed' && sk.baseStat === 'magic' ? 'magic' : 'physical');
     if (sk.damageType === 'split') out.push('magic');
     if (sk.effect && STATUS_EFFECTS.has(sk.effect) || sk.statusOnly) out.push('status');
     if (sk.effect === 'heal' || sk.effect === 'drain' || sk.bonus?.lifesteal || sk.bonus?.hpRegen) out.push('heal');

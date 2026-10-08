@@ -119,6 +119,8 @@ export const SKILL_FORMULA = {
     healThreshold: .8, woundedThreshold: .7, healRatio: .22,
     hpScaling: .08, manaScaling: .45, hybridHpScaling: .05, hybridManaScaling: .25,
     crushDefense: 1.5, weakenedDamage: .75,
+    /** v3.143 충전(메카닉): 최대 중첩과, 약화된 적을 충전 기술로 때릴 때 더 쌓이는 중첩. */
+    charge: { max: 8, weakenedExtra: 1 },
     /**
      * v27.57 지속 피해 셋의 '가득 찬 상태' 이론 증가량을 맞춥니다(턴당, 위력 P 기준):
      *   출혈 0.26P + 받는 피해 +12% ≈ 0.38P · 화상 3중첩 × 0.11P + 받는 피해 +6% ≈ 0.39P · 중독 5중첩 × 0.075P = 0.375P
@@ -230,6 +232,7 @@ export const STATUS_TUNING = {
     earlyStatusMultiplierCap: { stun: 1.2, silence: 1.5 } as Partial<Record<string, number>>,
 } as const;
 export const STATUS_GUIDE = [
+    { id: 'charge', name: '충전', kind: '중첩(자신)', description: '충전 기술이 명중할 때마다 쌓입니다(약화된 적이면 1 더). 전탄발사는 일정 중첩 이상에서만 나가고, 쓰면 중첩을 모두 소모해 중첩당 피해가 커집니다.', detail: '최대 8중첩. 전투가 끝나면 사라집니다.' },
     { id: 'stun', name: '기절', kind: '행동 차단', description: '다음 행동을 건너뜁니다.', detail: '기절 중에도 출혈 같은 지속 피해는 먼저 처리됩니다.' },
     { id: 'silence', name: '침묵', kind: '스킬 차단', description: '지속 중 액티브 스킬을 사용할 수 없습니다.', detail: '기본 공격은 계속하며, 쿨다운·마나를 낭비하지 않습니다.' },
     { id: 'weaken', name: '약화', kind: '피해 감소', description: `주는 직접 피해가 ${Math.round((1 - SKILL_FORMULA.weakenedDamage) * 100)}% 감소합니다.`, detail: '물리·마법 등 다음 공격의 피해 계산에 적용됩니다.' },

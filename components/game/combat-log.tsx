@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import type React from 'react';
-import { Compass, Sparkles, Swords, Wind } from 'lucide-react';
+import { Compass, Sparkles, Swords, Wind, Zap } from 'lucide-react';
 import type { Log } from '@/game/types';
 import { STATUS_NAMES } from '@/game/systems/combat-feedback';
 // v3.47 비밀 직업 스킬 이름은 카탈로그로 받은 스킬 표에서 읽습니다(번들에 이름을 두지 않음).
@@ -9,7 +9,7 @@ import { skillById } from '@/game/data/skills';
 /** 기록판 탭별 로그 종류. */
 export const LOG_TABS: Record<'battle' | 'reward', Log['type'][]> = { battle: ['battle', 'system'], reward: ['reward', 'skill'] };
 
-const WORD = { physical: '물리', magic: '마법', split: '복합' } as const;
+const WORD = { physical: '물리', magic: '마법', split: '복합', fixed: '고정' } as const;
 
 /** 전투 로그 한 줄. 구조화된 결과가 있으면 피해 종류별 색·아이콘과 본타/추가타/합계를 나눠 보여줍니다. */
 /**
@@ -23,7 +23,7 @@ function BattleLogLineView({ log, index, playerName }: { log: Log; index?: boole
     if (!ev) return <p className="battle-line">{id}{log.text}</p>;
     // 내 행동과 적 행동을 왼쪽 띠 색으로 구분합니다(이름을 모르면 구분하지 않음).
     const side = playerName ? ev.actor === playerName ? ' actor-player' : ' actor-enemy' : '';
-    const Icon = ev.damageType === 'magic' ? Sparkles : ev.damageType === 'split' ? Wind : Swords;
+    const Icon = ev.damageType === 'magic' ? Sparkles : ev.damageType === 'split' ? Wind : ev.damageType === 'fixed' ? Zap : Swords;
     // v3.86 각성기 줄 · 추가 판정 줄 표식.
     const chain = <>{ev.chain ? <em className="status chain">연속 {ev.chain}</em> : null}{ev.awaken ? <em className="status awaken">각성</em> : null}{ev.followUp ? <em className="status chain">추가 판정 {Math.round(ev.followUp.power * 100)}%</em> : null}</>;
     if (ev.stunned || ev.defeated) return <p className={`battle-line log-status${side}`}>{id}{chain}<b>{ev.actor}</b>{ev.dot && <em className="dmg-dot">{ev.dot.name} {ev.dot.value}</em>}{ev.stunned ? '기절로 행동 불가' : '쓰러짐'}</p>;

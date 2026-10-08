@@ -55,10 +55,10 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'stormDragoon', name: '폭풍 용기사', title: '번개를 두른 창', desc: '방어를 꿰뚫는 뇌창과 속도 패시브로 싸우는 복합 3차 직업입니다.', ...neutral, bonus: { attack: 67, magic: 74, hp: 90, defense: 3, resist: 2 }, crit: .04, ...T3, parent: 'seaDragoon', requires: { str: 40, wis: 40, vit: 25 }, requiresSkillMastery: { dragonDive: 3 }, role: '복합·관통', tree: 'hybrid' },
     { id: 'abyssDragonLord', name: '해구 용왕', title: '파도의 왕좌', desc: '복합 계보의 환생 후 4차 직업입니다. 대돌격으로 상대를 기절시키고, 패시브로 체력과 물리·마법 공격을 함께 올립니다.', ...neutral, attack: 1.39, magic: 1.39, hp: 1.18, defense: 1.06, resist: 1.06, crit: .06, ...T4, parent: 'stormDragoon', requires: { str: 50, wis: 50 }, requiresSkillMastery: { thunderLance: 3 }, role: '복합·최상위 돌진', tree: 'hybrid' },
     // ── 복합: 메카닉 계보 ──────────────────────────────────
-    { id: 'runesmith', name: '룬 대장장이', title: '쇠에 문장을 새긴다', desc: '약화를 거는 플레임 런처와 두 방어 패시브를 익히는 복합 입문 직업입니다.', ...neutral, bonus: { attack: 1, magic: 1, defense: 1 }, ...T1, requires: { str: 10, int: 12 }, role: '복합 입문·룬', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
-    { id: 'arcArtificer', name: '마갑 장인', title: '갑옷이 곧 무기', desc: '물리 방어에 비례하는 호밍 미사일과 두 방어 패시브로 버티며 싸우는 2차 직업입니다.', ...neutral, bonus: { attack: 22, magic: 24, hp: 50, defense: 4, resist: 3 }, ...T2, parent: 'runesmith', requires: { int: 26, vit: 24 }, requiresSkillMastery: { runeHammer: 2 }, role: '복합·방어 비례', tree: 'hybrid' },
-    { id: 'resonanceEngineer', name: '공명 기공사', title: '공명하는 포신', desc: '복합 계보의 3차 직업입니다. 마그네틱 필드는 방어를 꿰뚫고, 패시브로 체력과 방어를 받칩니다.', ...neutral, bonus: { attack: 59, magic: 65, hp: 115, defense: 7, resist: 5 }, crit: .03, ...T3, parent: 'arcArtificer', requires: { int: 40, vit: 36, str: 25 }, requiresSkillMastery: { plateSurge: 3 }, role: '복합·방어 연계', tree: 'hybrid' },
-    { id: 'deckGunner', name: '선상 포격수', title: '두 번 쏘는 현측포', desc: '복합 계보의 2차 직업입니다. 캐논 버스터에 추가타가 따라붙고, 패시브로 물리·마법 공격을 함께 올립니다.', ...neutral, bonus: { attack: 33, magic: 22 }, crit: .06, ...T2, parent: 'runesmith', requires: { str: 28, int: 22 }, requiresSkillMastery: { runeHammer: 2 }, role: '복합·연타', tree: 'hybrid' },
+    // v3.143 메카닉 재개편: 경계(반사 탱커 · 마법 딜러). 약화를 걸고 방어 비례 마법 피해로 때리며 충전, 충전이 쌓이면 전탄발사.
+    { id: 'runesmith', name: '룬 대장장이', title: '쇠에 문장을 새긴다', desc: '약화를 걸며 충전을 쌓는 플레임 런처와 두 방어 · 반격 패시브를 익히는 경계 입문 직업입니다.', ...neutral, bonus: { magic: 2, defense: 2 }, ...T1, requires: { int: 12, vit: 10 }, role: '경계 입문·충전', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
+    { id: 'arcArtificer', name: '마갑 장인', title: '갑옷이 곧 무기', desc: '물리 방어에 비례한 마법 피해로 충전을 쌓는 호밍 미사일과 두 방어 · 반격 패시브로 버티며 싸우는 2차 직업입니다.', ...neutral, bonus: { magic: 30, hp: 60, defense: 8, resist: 4 }, ...T2, parent: 'runesmith', requires: { int: 26, vit: 24 }, requiresSkillMastery: { runeHammer: 2 }, role: '경계·방어 비례 충전', tree: 'hybrid' },
+    { id: 'resonanceEngineer', name: '공명 기공사', title: '공명하는 포신', desc: '메카닉 계보의 3차 직업입니다. 마그네틱 필드는 약화된 적을 더 세게 때리며 충전을 쌓고, 패시브로 체력 · 방어 · 반격을 받칩니다.', ...neutral, bonus: { magic: 80, hp: 130, defense: 14, resist: 7 }, crit: .03, ...T3, parent: 'arcArtificer', requires: { int: 40, vit: 36 }, requiresSkillMastery: { plateSurge: 3 }, role: '경계·약화 연계', tree: 'hybrid' },
     // ── 복합: 독립 수련 ─────────────────────────────────────────
     { id: 'sellsword', name: '떠돌이 용병', title: '값만 맞으면 무엇이든', desc: '물리·마법 공격 패시브 하나를 익히는 독립 1차 직업입니다.', ...STAT_T1, requires: { str: 10, int: 10 }, role: '능력치·양 공격', tree: 'hybrid' },
     { id: 'tinkerApprentice', name: '견습 수선공', title: '고치며 배운다', desc: '최대 체력·마나 패시브 하나를 익히는 독립 1차 직업입니다.', ...STAT_T1, requires: { int: 10, vit: 10 }, role: '능력치·체력·마나', tree: 'hybrid' },
@@ -85,7 +85,7 @@ export const NEW_LINEAGES = {
     bloodAngler: { id: 'bloodAngler', name: '피낚시꾼 계보', tree: 'status' as const, summary: '출혈을 쌓고 출혈 중인 적을 처형하는 계보입니다.' },
     nerveNeedler: { id: 'nerveNeedler', name: '마비 침술사 계보', tree: 'status' as const, summary: '기절·감속으로 적을 멈추고 제어된 적을 끝내는 계보입니다.' },
     tideLancer: { id: 'tideLancer', name: '조류 창기병 계보', tree: 'hybrid' as const, summary: '물리·마법을 함께 실은 창술로 4차 다크나이트에 이르는 계보입니다.' },
-    runesmith: { id: 'runesmith', name: '룬 대장장이 계보', tree: 'hybrid' as const, summary: '방어를 무기로 바꾸는 룬 공학과 캐논 버스터로 갈라지는 계보입니다.' },
+    runesmith: { id: 'runesmith', name: '룬 대장장이 계보', tree: 'hybrid' as const, summary: '반사 탱커와 마법 딜러의 경계에 선 계보입니다. 약화를 걸고 물리 방어에 비례한 마법 피해로 때리며 충전을 쌓고, 충전이 차면 전탄발사로 쏟아냅니다.' },
 };
 
 /** 새 히든 직업의 실루엣 힌트. */
@@ -97,6 +97,8 @@ const A = { type: 'active' as const };
 const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
 const dual = { damageType: 'split' as const, scaling: 'dual' as const };
+/** v3.143 메카닉: 마법 피해 + 물리 방어 비례(방어 친화도 적용). */
+const forgeBlast = { damageType: 'magic' as const, scaling: 'defense' as const };
 const M4 = [2500, 12000, 40000, 100000];
 
 /** level은 직업 레벨로 다시 맞춰지고, 액티브의 desc는 밸런스 표를 적용할 때 실제 수치로 다시 씁니다. */
@@ -161,15 +163,14 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...dual, id: 'leviathanCharge', name: '용왕 대돌격', desc: '', level: 55, job: 'abyssDragonLord', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 26, effect: 'stun', extraAttacks: 1, masteryMilestones: M4 },
     { ...P, id: 'dragonKingAura', name: '용왕의 위엄', desc: '최대 체력과 물리·마법 공격이 오릅니다.', level: 55, job: 'abyssDragonLord', cost: 3, bonus: { hp: 260, attack: 24, magic: 24 }, masteryMilestones: M4 },
     // 복합: 메카닉 (1차)
-    { ...A, ...dual, id: 'runeHammer', name: '룬 망치', desc: '', level: 10, job: 'runesmith', chance: .48, cooldown: 3, multiplier: 1.15, cost: 2, manaCost: 8, effect: 'weaken' },
-    { ...P, id: 'forgeRune', name: '대장간 룬', desc: '물리·마법 방어가 오릅니다.', level: 10, job: 'runesmith', cost: 2, bonus: { defense: 12, resist: 12 } },
-    { ...A, ...physical, id: 'plateSurge', name: '갑주 충격', desc: '', level: 25, job: 'arcArtificer', chance: .26, cooldown: 3, multiplier: 1.4, cost: 3, scaling: 'defense', scalingRatio: .6 },
-    { ...P, id: 'arcaneArmor', name: '마력 갑주', desc: '물리·마법 방어가 오릅니다.', level: 25, job: 'arcArtificer', cost: 2, bonus: { defense: 25, resist: 25 } },
+    // v3.143 메카닉 재개편: 약화(룬 망치) → 방어 비례 마법 피해(forgeBlast)로 충전 → 전탄발사(창세 룬). 패시브는 두 방어 + 반격.
+    { ...A, ...dual, id: 'runeHammer', name: '룬 망치', desc: '', level: 10, job: 'runesmith', chance: .48, cooldown: 3, multiplier: 1.15, cost: 2, manaCost: 8, effect: 'weaken', charge: 1 },
+    { ...P, id: 'forgeRune', name: '대장간 룬', desc: '물리·마법 방어와 반격이 오릅니다.', level: 10, job: 'runesmith', cost: 2, bonus: { defense: 12, resist: 12, thorns: .1 } },
+    { ...A, ...forgeBlast, id: 'plateSurge', name: '갑주 충격', desc: '', level: 25, job: 'arcArtificer', chance: .4, cooldown: 3, multiplier: 1.4, cost: 3, manaCost: 8, scalingRatio: .6, charge: 1 },
+    { ...P, id: 'arcaneArmor', name: '마력 갑주', desc: '물리·마법 방어와 반격이 오릅니다.', level: 25, job: 'arcArtificer', cost: 2, bonus: { defense: 25, resist: 25, thorns: .15 } },
     // v3.110 메카닉 상향: 마그네틱 필드 배율 2 → 2.8(복합 피해라 기술 한 번이 공격력의 1.5배에 그쳤음).
-    { ...A, ...dual, id: 'resonantCannon', name: '공명포', desc: '', level: 40, job: 'resonanceEngineer', chance: .5, cooldown: 4, multiplier: 2.8, cost: 4, manaCost: 20, penetrationBonus: .1 },
-    { ...P, id: 'tunedFrame', name: '조율된 골격', desc: '최대 체력과 물리 방어가 오릅니다.', level: 40, job: 'resonanceEngineer', cost: 3, bonus: { hp: 180, defense: 30, resist: 12 } },
-    { ...A, ...dual, id: 'broadside', name: '현측 포격', desc: '', level: 25, job: 'deckGunner', chance: .5, cooldown: 3, multiplier: .95, cost: 3, manaCost: 12, extraAttacks: 1, extraAttackMultiplier: .6 },
-    { ...P, id: 'powderKeg', name: '화약통', desc: '물리·마법 공격이 오릅니다.', level: 25, job: 'deckGunner', cost: 2, bonus: { attack: 12, magic: 12 } },
+    { ...A, ...forgeBlast, id: 'resonantCannon', name: '공명포', desc: '', level: 40, job: 'resonanceEngineer', chance: .5, cooldown: 4, multiplier: 2.4, cost: 4, manaCost: 20, scalingRatio: .7, penetrationBonus: .1, charge: 1, damageBonusCondition: 'weakened', conditionalDamageBonus: .3 },
+    { ...P, id: 'tunedFrame', name: '조율된 골격', desc: '최대 체력 · 물리 방어 · 반격이 오릅니다.', level: 40, job: 'resonanceEngineer', cost: 3, bonus: { hp: 180, defense: 30, resist: 12, thorns: .2 } },
     // 복합: 독립
     { ...P, id: 'mercenaryCraft', name: '용병의 요령', desc: '물리·마법 공격이 오릅니다.', level: 10, job: 'sellsword', cost: 2, bonus: { attack: 9, magic: 9 } },
     { ...P, id: 'patchwork', name: '덧댄 솜씨', desc: '최대 체력과 최대 마나가 오릅니다.', level: 10, job: 'tinkerApprentice', cost: 2, bonus: { hp: 60, mana: 20 } },

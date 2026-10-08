@@ -61,12 +61,14 @@ export function skillBrief(sk: Skill): string {
         if (sk.song) parts.unshift('노래 · AP 0');
         return parts.join(' · ') || '장착 효과';
     }
-    const parts = [sk.statusOnly ? '피해 없음' : `${sk.damageType === 'magic' ? '마법' : sk.damageType === 'split' ? '복합' : '물리'} 피해 ×${number(sk.multiplier || 1)}`];
+    const parts = [sk.statusOnly ? '피해 없음' : `${sk.damageType === 'magic' ? '마법' : sk.damageType === 'split' ? '복합' : sk.damageType === 'fixed' ? '고정(방어 무시)' : '물리'} 피해 ×${number(sk.multiplier || 1)}`];
     if (sk.effect && STATUS_WORD[sk.effect] && sk.effect !== 'haste') parts.push(`${statusLabel(sk)} ${sk.statusTurns ?? ({ stun: 1, bleed: STATUS_TUNING.bleedTurns, poison: STATUS_TUNING.poisonTurns, burn: STATUS_TUNING.burnTurns, weaken: STATUS_TUNING.weakenTurns, silence: STATUS_TUNING.silenceTurns, slow: STATUS_TUNING.slowTurns } as Record<string, number>)[sk.effect]}턴`);
     if (sk.effect === 'haste') parts.push(`자신 가속 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
     if (sk.alsoEffect) parts.push(`${STATUS_WORD[sk.alsoEffect]} ${sk.statusTurns}턴`);
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
     if (sk.dotFinisher) parts.push(`중독·화상 중첩 비례 추가타 최대 ${sk.dotFinisher.maxHits}회 · 기절 ${sk.dotFinisher.partStun}~${sk.dotFinisher.fullStun}턴`);
+    if (sk.charge) parts.push(`명중 시 충전 +${sk.charge}(약화 적 +${SKILL_FORMULA.charge.weakenedExtra})`);
+    if (sk.chargeNeed) parts.push(`충전 ${sk.chargeNeed}중첩부터 · 중첩당 피해 +${skillPercent(sk.chargeBonus || 0)}`);
     if (sk.effect === 'heal') parts.push(`체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복`);
     if (sk.effect === 'drain') parts.push(`피해의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 흡혈`);
     if (sk.damageBonusCondition) parts.push(`${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 적 +${skillPercent(sk.conditionalDamageBonus || 0)}`);
@@ -84,7 +86,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.disguise) return [sk.disguise];
     const out: string[] = [];
     if (sk.type === 'active') {
-        const base = sk.scaling === 'attr' && sk.scalingAttribute ? [sk.scalingAttack ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)} + 물리 공격 × ${number(sk.scalingAttack)}` : `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)}(배분 능력치, 공격력 미사용)`] : [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.scaling === 'dual' ? '(물리 공격 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해로 바꿈)' : '마법 공격(물리 피해로 바꿈)') : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
+        const base = sk.scaling === 'attr' && sk.scalingAttribute ? [sk.scalingAttack ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)} + 물리 공격 × ${number(sk.scalingAttack)}` : `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)}(배분 능력치, 공격력 미사용)`] : [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.scaling === 'dual' ? '(물리 공격 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해로 바꿈)' : '마법 공격(물리 피해로 바꿈)') : sk.damageType === 'fixed' ? `${sk.baseStat === 'magic' ? '마법' : '물리'} 공격(고정 피해 · 방어 무시)` : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
         if (sk.scaling === 'defense') base.push(`물리 방어 × ${number(sk.scalingRatio ?? 1)} × 방어 친화도`);
         if (sk.scaling === 'resist') base.push(`마법 방어 × ${number(sk.scalingRatio ?? 1)} × 결계 친화도`);
         if (sk.scaling === 'hp') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hpScaling)}`);

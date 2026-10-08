@@ -136,7 +136,7 @@ export function SceneFx({ effect }: { effect: CombatFx[] }) {
     </div>; })}</div>;
 }
 
-const DAMAGE_ICON = { physical: '⚔', magic: '✦', split: '⚔✦' } as const;
+const DAMAGE_ICON = { physical: '⚔', magic: '✦', split: '⚔✦', fixed: '⚡' } as const;
 /** HP 바 위 숫자: 실제로 깎인 값만 한 번씩. 물리·마법·복합은 색과 아이콘, 치명·빗나감·흡혈·지속 피해는 실제 결과로 표시합니다. */
 export function CombatBarEffect({ effect, target }: { effect: CombatFx[]; target: 'player' | 'enemy' }) {
     return <span className="bar-fx-layer" aria-hidden="true">{effect.flatMap(fx => {

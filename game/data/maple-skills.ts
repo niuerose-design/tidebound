@@ -162,7 +162,7 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
 
     // ── 메카닉 계보 · 캐논슈터 ──
     runeHammer: '플레임 런처', forgeRune: '메탈아머: 휴먼', plateSurge: '호밍 미사일', arcaneArmor: '메카닉 마스터리',
-    broadside: '캐논 버스터', powderKeg: '캐논 부스터', resonantCannon: '마그네틱 필드', tunedFrame: '로봇 마스터리',
+    resonantCannon: '마그네틱 필드', tunedFrame: '로봇 마스터리',
     resonanceBurst: '로봇 런처: RM7', harmonicPlate: '메탈아머 익스트림', genesisRune: '메탈아머 전탄발사', creatorRune: '멀티플 옵션',
 
     // ── 호영 계보 ──
