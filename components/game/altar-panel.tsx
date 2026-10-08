@@ -156,8 +156,8 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 </div>}
             </section>
             <section className="panel altar-raid">
-                <div className="section-title"><h2><Swords size={16}/> 월드보스</h2>{raid && <span className="micro">{raid.gen}번째 · 참여 {raid.participants}명</span>}</div>
-                <Tabs value={raidTab} onValueChange={setRaidTab}><TabsList className="game-tabs altar-tabs">{RAIDS.map(r => { const x = info.raids.find(y => y.id === r.id); return <TabsTrigger key={r.id} value={r.id}>{r.name}{x?.alive ? ' · 출현' : x?.slain ? ' · 격파' : ''}</TabsTrigger>; })}</TabsList></Tabs>
+                <div className="section-title"><h2><Swords size={16}/> 월드보스</h2>{raid && <span className="micro">오늘 {raid.stage}단계 · 참여 {raid.participants}명</span>}</div>
+                <Tabs value={raidTab} onValueChange={setRaidTab}><TabsList className="game-tabs altar-tabs">{RAIDS.map(r => { const x = info.raids.find(y => y.id === r.id); return <TabsTrigger key={r.id} value={r.id}>{r.name}{x?.alive ? ` · ${x.stage > 1 ? `${x.stage}단계 ` : ''}출현` : x?.slain ? ' · 격파' : ''}</TabsTrigger>; })}</TabsList></Tabs>
                 {raid ? <>
                     <div className="altar-god-card"><strong>{raid.name}{raid.stage > 1 ? ` · ${raid.stage}단계` : ''}</strong><span>Lv.{raid.level} · 공격 {format(raid.attack)} · 방어 {format(raid.defense)} · 전투력 {format(raid.power)}</span>
                         <Meter value={raid.hp} max={raid.hpMax} label={`공유 체력 ${format(raid.hp)} / ${format(raid.hpMax)}`} color={raid.alive ? 'enemy' : 'gold'}/>
