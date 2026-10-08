@@ -103,6 +103,9 @@ export type RaidHitSummary = { at: number; dealt: number; turns: number; died: b
  * v3.83 방어 재조정: 체력은 그대로 두고, 목표 몸의 중앙 직업이 한 번 도전(80턴)에 깎는 양으로 필요한 도전 횟수를 맞춥니다
  * (scripts/check-tier5.mjs --only raid): 발록 환생 0급 약 10번 · 자쿰 환생 50급 약 100번 · 혼테일 환생 100급 약 1,500번(방어 1,000, 운영 결정).
  * 예전 혼테일 방어 15,000은 엔드 몬스터(100~150)의 100배라 직접 피해가 거의 들어가지 않았습니다. 지속 피해(체력 비례)는 그대로입니다.
+ * (2026-10-08 결정, docs/boss-plan.md §8.3) 체력은 그대로 두고 목표를 기준 몸(scripts/lib/reference-body.mjs) 실측으로 다시 적음: 발록 R0 10번 · 자쿰 R50 2번 · 혼테일 R100 12번
+ * (빌림 / 자기 계열 1.0 / 3.8번 · 8.5 / 17번의 중간값, scripts/check-bosses.mjs --only raid). 체력은 지렛대가 아닙니다(지속 피해 체력 비례분이 체력에 함께 커짐).
+ * 월드보스는 여러 모험가가 한 몸을 함께 깎는 공유 콘텐츠라 개인 몸 기준(빌림)을 그대로 쓰지 않는 특수 기준입니다.
  */
 export const RAIDS: RaidDef[] = [
     { id: 'balrog', name: '발록', fish: 'magmaKraken', level: 30, cost: 2_000, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },

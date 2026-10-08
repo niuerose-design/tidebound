@@ -120,7 +120,9 @@ function measureOnyx() {
 }
 
 // ── 월드보스 ───────────────────────────────────────────────────────────────────────────────────
-const RAID_TARGET = { balrog: { rebirth: 0, kills: 10 }, zakum: { rebirth: 50, kills: 100 }, horntail: { rebirth: 100, kills: 550 } };
+// 월드보스 목표(docs/boss-plan.md §8.3, 2026-10-08 결정): 체력은 그대로 두고 목표를 실측 중간값(빌림 / 자기 계열 사이)으로 적음.
+// 월드보스는 여러 모험가가 한 몸을 함께 깎는 공유 콘텐츠라 개인 몸 기준(빌림)을 그대로 쓰지 않는 특수 기준입니다. 처치까지 횟수는 '한 몸이 혼자 다 깎을 때'의 셈.
+const RAID_TARGET = { balrog: { rebirth: 0, kills: 10 }, zakum: { rebirth: 50, kills: 2 }, horntail: { rebirth: 100, kills: 12 } };
 function measureRaids() {
     const rows = [];
     for (const raid0 of RAIDS) {
