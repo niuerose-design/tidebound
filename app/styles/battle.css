@@ -1253,7 +1253,7 @@
 .whistle-options button{flex:1 1 0;white-space:nowrap;padding:7px 10px;text-align:center}
 @media(max-width:767px){.scene-whistle{right:10px;bottom:10px;font-size:10px;padding:4px 8px}}
 
-/* ── v3.182 보스 몬스터 스킬 배경 연출(.scene-fx-foe · game/data/foe-fx.ts) ──
+/* ── v3.183 보스 몬스터 스킬 배경 연출(.scene-fx-foe · game/data/foe-fx.ts) ──
    기준점 --ox/--oy는 몬스터 그림 바로 왼쪽, 목표점 --tx는 거기서 320px 왼쪽(플레이어 방향). 내 스킬(62% · 48% 중심)과 반대 방향으로 흐릅니다. */
 .scene-fx-foe{--fx:#ff8b8b;--ox:calc(100% - 150px);--oy:48%;--tx:calc(100% - 470px);position:absolute;inset:0;color:var(--fx)}
 .scene-fx-foe .scene-fx-dark{inset:0;background:#0a0608;--dark:.5;animation:sceneDarkSoft 1.7s ease-in-out var(--fx-delay) both}

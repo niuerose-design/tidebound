@@ -172,7 +172,7 @@ function PunisherFx({ fx }: { fx: CombatFx }) {
     </div>;
 }
 /**
- * v3.182 보스 몬스터 스킬의 배경 연출. 몬스터 자리(오른쪽)에서 왼쪽으로 향하게 그려 내 스킬과 방향이 구분됩니다.
+ * v3.183 보스 몬스터 스킬의 배경 연출. 몬스터 자리(오른쪽)에서 왼쪽으로 향하게 그려 내 스킬과 방향이 구분됩니다.
  * 카드 쪽은 손대지 않습니다(‘몬스터 스킬’ 알림 · HP 바 숫자 그대로). 추가타가 있는 기술은 타격 수만큼 .foe-hit를 HP 바 숫자와 같은 박자(160ms)로 반복합니다.
  */
 function FoeFx({ fx }: { fx: CombatFx }) {
@@ -186,7 +186,7 @@ function FoeFx({ fx }: { fx: CombatFx }) {
 }
 /**
  * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
- * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)이 기본이고, v3.182 보스(boss)의 스킬만 전용 배경 연출(FOE_FX)을 함께 띄웁니다.
+ * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)이 기본이고, v3.183 보스(boss)의 스킬만 전용 배경 연출(FOE_FX)을 함께 띄웁니다.
  */
 export function SceneFx({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
     const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');

@@ -2,7 +2,7 @@
 /**
  * v3.173 연출 실험실(개발 전용): 사냥터를 돌리지 않고 가상의 몹 카드 위에 스킬 연출을 바로 띄웁니다.
  * 주소: /fx-lab?skill=<스킬 id>&every=<밀리초>&glow=on|off&tier=5&foe=<몬스터 id>&execute=1(처형 연계 타격으로)
- * v3.182 보스 스킬: /fx-lab?skill=<몬스터 스킬 id>&actor=foe (보스 몬스터가 쓰는 것으로 띄움 · 추가타는 extraAttacks만큼)
+ * v3.183 보스 스킬: /fx-lab?skill=<몬스터 스킬 id>&actor=foe (보스 몬스터가 쓰는 것으로 띄움 · 추가타는 extraAttacks만큼)
  * 운영 빌드(production)에서는 404입니다. 연출 제작 · 녹화용이라 게임 규칙 · 저장과는 무관합니다.
  */
 import { Suspense, useEffect, useMemo, useState } from 'react';

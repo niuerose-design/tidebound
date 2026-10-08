@@ -73,6 +73,10 @@ const profileIds: Record<string, string> = {
     ventColossus: 'boss', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'blaze', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
 };
 export const profileId = (id: string) => profileIds[id] || 'armored';
+/** v3.182 성향 id 목록(역할 전략 안내 · 테스트용). */
+export const PROFILE_KINDS = Object.keys(PROFILES);
+/** v3.182 성향 id로 성향을 찾습니다(profile()은 몬스터 id를 받음). */
+export const profileByKind = (kind: string) => PROFILES[kind];
 export function profile(id: string) { return PROFILES[profileId(id)]; }
 /** 몬스터가 쓰는 기술: Lv.5부터 성향 기술, v27.69 보스와 Lv.wardLevel 이상은 각성(foeWard)을 더합니다. */
 export function foeSkills(id: string, level: number, boss = false): string[] {

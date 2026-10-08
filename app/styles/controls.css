@@ -167,3 +167,21 @@
 
 /* v3.103 사냥터 카드의 적정 환생: 아직 못 닿았으면 주황, 닿았으면 초록 */
 .stage-fit{font-style:normal;color:#e0a46a}.stage-fit.met{color:#8fd0a8}
+
+/* v3.182 역할과 상성: 몬스터 유형별 유리한 역할 한 줄(도감 · 전투 · 던전), 도움말 역할 카드 · 상성표 */
+.foe-roles{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-style:normal;font-size:12px;color:#829fa5}
+.foe-roles span{padding:1px 7px;border-radius:999px;background:#17303a;color:#aecbc0}
+.foe-roles span.mine{background:#2b4a2e;color:#d7efc9;box-shadow:inset 0 0 0 1px #5f9a62}
+.foe-roles b{font-size:11px;color:#9ad48c}
+.foe-roles.fits{color:#9fbf98}
+.foe-roles small{flex-basis:100%;font-size:12px;color:#7f9aa0;line-height:1.6}
+.fish-trait .foe-roles{margin-top:3px}
+.enemy-hint .foe-roles,.dungeon-hint .foe-roles{margin-left:4px;vertical-align:middle}
+.help-role-grid{margin-bottom:16px}
+.help-role-card p{font-size:12px;line-height:1.7;margin:6px 0 0}
+.help-role-card p b,.help-role-card small b{color:#aecbc0;margin-right:4px}
+.help-role-card small{display:block;margin-top:8px;font-size:12px;color:#98b1b1}
+.help-role-card strong small{font-size:11px;color:#8faaa8;margin-left:6px}
+.help-role-card.role-dealer strong{color:#e0a86b}.help-role-card.role-tank strong{color:#8fc1e3}.help-role-card.role-buffer strong{color:#a8d58d}
+.help-matchup-title{font-size:14px;margin:18px 0 10px;color:#cbd8c4}
+.help-matchup .help-status-top span{color:#aecbc0}

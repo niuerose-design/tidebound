@@ -35,7 +35,7 @@ const REPLAY_LAG_MS = SYNC_MS + 500;
 const MAX_BEHIND_TURNS = 2;
 /** v3.178 화면 순서화: 내 각성기(또는 도트 퍼니셔)가 나간 턴 뒤의 턴들은 이만큼 늦게 재생해, 2.4초짜리 전용 연출이 끝난 뒤 다음 타격이 보이게 합니다. 서버 진행과는 무관(화면만). */
 const ULT_HOLD_MS = 1200;
-/** v3.182 각성기 전용 연출의 길이. 같은 턴 안에서 각성기 뒤에 이어지는 타격(연속 행동 · 상대의 반격)은 이 시간이 지난 뒤에 보입니다. */
+/** v3.183 각성기 전용 연출의 길이. 같은 턴 안에서 각성기 뒤에 이어지는 타격(연속 행동 · 상대의 반격)은 이 시간이 지난 뒤에 보입니다. */
 const ULT_FX_MS = 2400;
 /** 이 로그가 내 각성기(또는 도트 퍼니셔) 타격인지. */
 const isUltLog = (l: State['logs'][number], name: string) => l.type === 'battle' && l.event?.actor === name && !!(l.event.awaken || l.event.skillId === 'endOfAll');
@@ -86,7 +86,7 @@ function createReplay(render: (frame: ReplayFrame | null) => void) {
         let hold = 0, lastId = prev.logs.at(-1)?.id ?? 0;
         for (const t of turns) {
             const turnAt = base + t.turn * BALANCE.turnMs + hold;
-            // v3.182 같은 턴 안에서 각성기 타격 뒤의 박자(연속 행동 · 상대의 반격)는 전용 연출이 끝난 뒤(ULT_FX_MS)로 밉니다.
+            // v3.183 같은 턴 안에서 각성기 타격 뒤의 박자(연속 행동 · 상대의 반격)는 전용 연출이 끝난 뒤(ULT_FX_MS)로 밉니다.
             let shift = 0, ult = false, fromId = lastId;
             t.frames.forEach((frame, i) => {
                 queue.push({ turnAt, at: turnAt + frame.offset + shift, frame });

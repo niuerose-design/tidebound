@@ -1,4 +1,4 @@
-// v3.182 보스 몬스터 스킬 배경 연출: 보스 성향이 쓰는 모든 몬스터 스킬에 연출 표가 있어야 합니다.
+// v3.183 보스 몬스터 스킬 배경 연출: 보스 성향이 쓰는 모든 몬스터 스킬에 연출 표가 있어야 합니다.
 import { assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 
