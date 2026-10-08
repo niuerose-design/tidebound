@@ -222,6 +222,8 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.170 수련 액티브 10개 · 패시브 4개(맹세의 결의 · 관중의 환호 · 기사의 갑옷 · 생명의 기운): 계보마다 패시브 4개로 맞추며 삭제. */
     'arcane', 'cut', 'hushCurrent', 'undertow', 'rushCurrent', 'netThrow', 'oathShout', 'currentJam', 'driftwoodShove', 'rottenBait', 'resolve', 'showmanship', 'scales', 'vital',
+    /** v3.174 나이트로드 손가락 자르기 I · III: 세 단계를 II 하나로 접으며 삭제. */
+    'fingerCutI', 'fingerCutIII',
     /** v3.138 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */
     'shieldBash', 'shieldWall', 'ironRetort', 'spikedShield', 'bulwarkSlam', 'stoneSkin', 'lastStand', 'undying', 'aegisJudgment', 'divineAegis', 'fortress', 'coralPatience',
     /** v3.140 숨은 2차 주먹 마도사(마법 계수 → 물리 피해)는 루미너스 계보가 그 자리를 맡아 지웠습니다. */

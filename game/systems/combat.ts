@@ -554,6 +554,13 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
     // v3.143 전탄발사: 쌓인 충전 중첩을 모두 소모해 중첩당 chargeBonus만큼 피해를 키웁니다(추가타 · 지속 피해 기준값에도 적용).
     const targetWeakened = (b.effects.weaken || 0) > 0;
+    // v3.174 콤보 피해(아란): 지금 중첩 × comboBonus. 중첩을 소모하는 기술은 아래에서 대신 chargeBonus를 씁니다.
+    const comboBonus = Math.max(0, ...a.skills.map(id => skillById(id)?.comboBonus || 0)), comboStacks = comboBonus && !chosen?.chargeNeed ? Math.min(SKILL_FORMULA.charge.max, a.effects.charge || 0) : 0;
+    const comboBoost = 1 + comboStacks * comboBonus;
+    if (comboStacks) notes.push(`콤보 ${comboStacks}`);
+    // v3.174 회피 반격 소모(듀얼블레이드): 명중하면 충전을 모두 소모해 중첩당 추가타를 더합니다.
+    const chargeHitSpent = chosen?.chargeHits && landed ? Math.min(SKILL_FORMULA.charge.max, a.effects.charge || 0) : 0;
+    if (chargeHitSpent) { a.effects.charge = 0; notes.push(`반격 ${chargeHitSpent}중첩 방출`); }
     if (chosen?.chargeNeed && landed) {
         const spent = Math.min(SKILL_FORMULA.charge.max, a.effects.charge || 0);
         a.effects.charge = 0;
@@ -617,7 +624,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (chosen?.balanceBonus) notes.push(`조화 ${Math.round(balanceRatio * 100)}%`);
     // v3.158 자기 버프의 피해 배율(접신): 살아 있는 버프의 damageMultiplier를 곱합니다.
     const buffDamage = buffsOf(a.effects).reduce((m, [, bf]) => m * (bf.damageMultiplier || 1), 1);
-    const linkMultiplier = balanceBoost * buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
+    const linkMultiplier = comboBoost * balanceBoost * buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push(chosen?.damageBonusCondition === 'statuses' ? `헥스 ${statusCount}` : '연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly || healOnly;
@@ -625,7 +632,16 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const critRoll = landed && !statusOnly ? rng() : 1;
     const crit = critRoll < sa.crit, superCrit = crit && critRoll < (sa.superCrit || 0);
     // v3.88 행운 비례(scaling 'luck', 팬텀 계열)는 위력에 이미 치명 피해를 넣으므로, 치명타가 터져도 치명 피해를 다시 곱하지 않습니다(제곱 방지).
-    const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
+    let damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
+    // v3.174 마나 방패(배틀메이지): 받는 피해의 ratio만큼을 마나로 먼저 받습니다(마나 1이 피해 rate를 막음).
+    let shielded = 0;
+    if (damage > 0) {
+        const shield = b.skills.map(id => skillById(id)?.manaShield).filter((x): x is NonNullable<Skill['manaShield']> => !!x).sort((x, y) => y.ratio - x.ratio)[0];
+        if (shield && (b.mana ?? 0) > 0) {
+            shielded = Math.min(Math.floor(damage * shield.ratio), Math.floor((b.mana ?? 0) * shield.rate));
+            if (shielded > 0) { b.mana = (b.mana ?? 0) - Math.ceil(shielded / shield.rate); damage -= shielded; notes.push(`${b.name} 마나 방패 ${shielded}`); ev.shielded = (ev.shielded || 0) + shielded; }
+        }
+    }
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - actual);
     // v3.163 피격 충전(카이저): 피해를 입는 공격을 맞으면 맞은 쪽의 충전이 쌓이고(치명타 +1), 가득 차면 변신합니다.
@@ -669,6 +685,16 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     }
     // 표시는 실제로 깎인 체력 기준: 본타·추가타를 각각 한 번씩만 세고 합계는 그 합입니다.
     if (!statusOnly || !landed) ev.hits.push(landed ? hitRecord('main', actual, damage, crit, superCrit) : { kind: 'main', value: 0, critical: false, miss: true });
+    // v3.174 회피 반격(듀얼블레이드): 내게 온 공격이 빗나가면 충전이 쌓입니다.
+    if (!landed && !healOnly) {
+        const evade = Math.max(0, ...b.skills.map(id => skillById(id)?.evadeCharge || 0));
+        if (evade) { b.effects.charge = Math.min(SKILL_FORMULA.charge.max, (b.effects.charge || 0) + evade); notes.push(`${b.name} 반격 준비 ${b.effects.charge}`); }
+    }
+    // v3.174 콤보(아란): 피해를 주는 공격이 명중하면 내 충전이 쌓입니다(중첩을 방출한 기술도 1부터 다시).
+    if (landed && !statusOnly && !healOnly) {
+        const combo = Math.max(0, ...a.skills.map(id => skillById(id)?.hitCharge || 0));
+        if (combo) { a.effects.charge = Math.min(SKILL_FORMULA.charge.max, (a.effects.charge || 0) + combo); notes.push(`콤보 ${a.effects.charge}`); }
+    }
     if (healOnly) notes.push(`회복 ${healed}`);
     // v3.5 상태이상 저항: 몬스터가 거는 해로운 상태이상을 대상의 statusResist 확률로 무효화합니다(저항이 0이면 난수를 쓰지 않음).
     // v3.151 기본 공격 상태이상: 기술이 없을 때(기본 공격 · 마력 평타) 장착한 패시브의 basicEffect를 그 공격의 효과로 씁니다.
@@ -800,7 +826,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (finisher) notes.push(finisherHits ? `퍼니시 ${finisherHits}회` : '퍼니시 없음');
     // v3.164 전류(스트라이커): 살아 있는 전류 버프가 있으면 패시브만큼 추가타가 늘어납니다(상한 뒤에 더함).
     const currentExtra = statusOnly || finisher || !(chosen?.extraAttacks) ? 0 : Math.max(0, ...a.skills.map(id => { const x = skillById(id)?.followUpExtra; return x && (a.effects?.buffs?.[x.buff]?.turns || 0) > 0 ? x.hits : 0; }));
-    const skillFollowUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(chosen?.awaken ? STATUS_TUNING.maxExtraAttacksAwaken : STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0)) + currentExtra;
+    const skillFollowUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(chosen?.awaken ? STATUS_TUNING.maxExtraAttacksAwaken : STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0)) + currentExtra + chargeHitSpent * (chosen?.chargeHits || 0);
     // v3.146 정령(은월): 장착한 패시브의 정령이 모든 공격 행동(기본 공격 포함, 피해 없는 기술 · 순수 회복 · 도트 퍼니셔 제외)에 추가타를 붙입니다.
     const spirits = a.skills.map(id => skillById(id)?.companion).filter((c): c is { hits: number; power: number } => !!c);
     const spirit = spirits.length && !statusOnly && !healOnly && !finisher ? { hits: Math.max(...spirits.map(c => c.hits)), power: Math.max(...spirits.map(c => c.power)) } : null;

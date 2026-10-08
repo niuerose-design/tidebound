@@ -189,6 +189,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
         if (sk.charge) sk.desc += ` 명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}).`;
         if (sk.chargeNeed) sk.desc += ` 충전 ${sk.chargeNeed}중첩 이상에서만 나가고, 중첩을 모두 소모해 중첩당 피해 +${Math.round((sk.chargeBonus || 0) * 100)}%.`;
+        if (sk.chargeHits) sk.desc += ` 명중하면 충전(회피 반격)을 모두 소모해 중첩당 추가타 +${sk.chargeHits}.`;
         if (sk.hpCost) sk.desc += ` 마나 대신 현재 체력의 ${Math.round(sk.hpCost * 100)}%를 바칩니다(체력 1은 남음).`;
         if (sk.manaBurn) sk.desc += ` 고정 마나 소모 없이 현재 마나의 ${Math.round(sk.manaBurn * 100)}%를 태워 그만큼 피해에 더합니다.`;
         if (sk.burnConsume) sk.desc += ` 명중한 적의 화상 중첩을 모두 터뜨려 중첩당 피해 +${Math.round(sk.burnConsume * 100)}%(화상은 사라짐).`;
