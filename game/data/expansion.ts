@@ -130,7 +130,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'spellFocus', name: '주문 집중', desc: '마법 공격과 최대 마나가 오릅니다.', level: 25, job: 'mage', cost: 2, bonus: { magic: 22, mana: 20 } },
     { ...A, ...magic, id: 'meteor', name: '메테오', desc: '', level: 40, job: 'archmage', chance: .5, cooldown: 5, multiplier: 2.9, cost: 5, manaCost: 26, effect: 'stun' },
     { ...P, id: 'arcanePierce', name: '마력 관통', desc: '방어 관통과 마법 공격이 오릅니다.', level: 40, job: 'archmage', cost: 3, bonus: { penetration: .06, magic: 30 } },
-    // v3.147 플레임위자드 재개편: 화상을 쌓아(플레임 디스차지) 인피니티 플레임 서클로 터뜨립니다(화상 폭발, 중첩당 +35%). 5차의 최대 마나 비례는 아델 계보 장치라 뺐습니다.
+    // v3.148 플레임위자드 재개편: 화상을 쌓아(플레임 디스차지) 인피니티 플레임 서클로 터뜨립니다(화상 폭발, 중첩당 +35%). 5차의 최대 마나 비례는 아델 계보 장치라 뺐습니다.
     { ...A, ...magic, id: 'starfall', name: '별의 비', desc: '', level: 55, job: 'sage', chance: .55, cooldown: 4, multiplier: 2.5, cost: 5, manaCost: 30, extraAttacks: 1, extraAttackMultiplier: .6, masteryMilestones: M4 },
     { ...P, id: 'sageWisdom', name: '현자의 지혜', desc: '마나 회복·마법 공격·마법 방어가 오릅니다.', level: 55, job: 'sage', cost: 3, bonus: { manaRegen: 4, magic: 45, resist: 30 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'genesis', name: '창세의 빛', desc: '', level: 70, job: 'grandMagus', chance: .55, cooldown: 5, multiplier: 3.4, cost: 6, manaCost: 40, burnConsume: .35, masteryMilestones: M5 },

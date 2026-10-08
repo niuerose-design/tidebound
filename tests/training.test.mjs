@@ -353,7 +353,7 @@ test('v3.146 Eunwol: companion passives add spirit follow-up hits to every actio
     const e0 = []; strike(fighter([]), target(), () => 0, e0); assert.equal(e0[0].hits.length, 1);
 });
 
-test('v3.147 Adele burns current mana into damage; Flame Wizard Genesis detonates burn stacks', async () => {
+test('v3.148 Adele burns current mana into damage; Flame Wizard Genesis detonates burn stacks', async () => {
     const { SECRET_SKILLS } = await load('game/secret/skills.js'); const { SKILL_FORMULA } = await load('game/data/balance.js');
     const sec = id => SECRET_SKILLS.find(s => s.id === id), pub = id => SKILLS.find(s => s.id === id);
     for (const id of ['voidLance', 'leviathanEquation', 'abyssDecree', 'voidCollapse']) { assert.equal(sec(id).manaCost, 0, id); assert.ok(sec(id).manaBurn > 0, id); assert.equal(sec(id).scaling, undefined, id); }

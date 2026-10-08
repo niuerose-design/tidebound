@@ -428,7 +428,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));
         // v3.145 체력 소모: 현재 체력 × hpCost를 바칩니다(1은 남김). 피의 분노가 그만큼 더 세게 반응합니다.
         if (chosen.hpCost) { const pay = Math.min(Math.max(0, a.hp - 1), Math.floor(a.hp * chosen.hpCost)); if (pay > 0) { a.hp -= pay; ev.hpSpent = pay; notes.push(`체력 ${pay.toLocaleString()} 소모`); } }
-        // v3.147 마나 연소: 현재 마나 × manaBurn을 태웁니다. 태운 만큼 아래에서 피해 기준값에 더합니다.
+        // v3.148 마나 연소: 현재 마나 × manaBurn을 태웁니다. 태운 만큼 아래에서 피해 기준값에 더합니다.
         if (chosen.manaBurn) { burned = Math.floor((a.mana ?? 0) * chosen.manaBurn); if (burned > 0) { a.mana = (a.mana ?? 0) - burned; ev.manaBurned = burned; notes.push(`마나 ${burned.toLocaleString()} 연소`); } }
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.poison; delete a.effects.burn; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
         if (chosen.wardTurns) {
@@ -510,9 +510,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v3.145 피의 분노(데몬슬레이어 패시브): 잃은 체력 비율 × bloodRage 합만큼 기준값이 커집니다(체력 소모 뒤 기준).
     const rage = a.skills.reduce((n, id) => n + (skillById(id)?.bloodRage || 0), 0);
     if (rage > 0 && sa.hp > 0) { const missing = Math.min(1, Math.max(0, 1 - a.hp / sa.hp)); if (missing > 0) { base *= 1 + rage * missing; notes.push(`피의 분노 +${Math.round(rage * missing * 100)}%`); } }
-    // v3.147 마나 연소(아델): 태운 마나 × burnScale을 기준값에 더합니다.
+    // v3.148 마나 연소(아델): 태운 마나 × burnScale을 기준값에 더합니다.
     if (burned > 0) base += burned * (chosen?.burnScale ?? SKILL_FORMULA.manaBurnScale);
-    // v3.147 화상 폭발(플레임위자드): 명중한 적의 화상 중첩을 모두 터뜨려 중첩당 burnConsume만큼 키웁니다. 중첩은 피해를 준 뒤 사라집니다.
+    // v3.148 화상 폭발(플레임위자드): 명중한 적의 화상 중첩을 모두 터뜨려 중첩당 burnConsume만큼 키웁니다. 중첩은 피해를 준 뒤 사라집니다.
     const consumedBurn = chosen?.burnConsume && landed && b.effects.burn ? b.effects.burn.stacks : 0;
     if (consumedBurn > 0) { base *= 1 + consumedBurn * chosen!.burnConsume!; notes.push(`화상 ${consumedBurn}중첩 폭발`); }
     // v25.14 마법 방어 비례 피해: 결계 계열(마법 방어 배율이 높은 직업)에서 온전히, 다른 직업이 계승하면 일부만.

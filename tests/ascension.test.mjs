@@ -216,6 +216,12 @@ test('v3.42 research ranks from the 21st cost ×1.06 compounding; ranks bought b
     assert.equal(Ec.researchCost('attack', 20), Math.round(Ec.researchLegacyCost('attack', 20) * 1.06));
     assert.equal(Ec.researchCost('attack', 40), Math.round(Ec.researchLegacyCost('attack', 40) * 1.06 ** 21));
     assert.equal(Ec.researchSpent('attack', 40), 5813); assert.equal(Ec.researchSpent('attack', 40, 40), 2780, 'old total');
+    // v3.147 45단계부터는 44단계 가격 × 1.03ⁿ(제곱 항 · ×1.06 복리 없음). 44단계까지는 그대로.
+    const c44 = Ec.researchCost('attack', 44);
+    assert.equal(c44, Math.round(Ec.researchLegacyCost('attack', 44) * 1.06 ** 25));
+    assert.equal(Ec.researchCost('attack', 45), Math.round(c44 * 1.03));
+    assert.equal(Ec.researchCost('attack', 60), Math.round(c44 * 1.03 ** 16));
+    assert.equal(Ec.researchSpent('attack', 50), 19547); assert.equal(Ec.researchSpent('attack', 80), 102429); assert.equal(Ec.researchSpent('guard', 100), 245407);
     const s = newState(0); s.rebirths = 50; s.permanent = { attack: 40, hp: 12 }; delete s.researchLegacy;
     Mig.stampResearchLegacy(s); assert.deepEqual(s.researchLegacy, { attack: 40 }, 'only ranks past 20 need the old price');
     Mig.stampResearchLegacy(s); assert.deepEqual(s.researchLegacy, { attack: 40 }, 'once');
