@@ -370,8 +370,11 @@ test('v25.12 duel season keys, tiers, season pearls, optional duel goals exclude
 test('v25.14 defense expansion: 11 jobs wired, resist scaling uses ward affinity, salt warden lineage listed', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { JOBS, LINEAGES } = await mods.load('data/classes'); const { SKILLS } = await mods.load('data/skills'); const { ACTIVE_SKILL_BALANCE } = await mods.load('data/skill-balance');
-    const ids = ['bellWarden', 'eonTurtle', 'worldTurtle', 'holyKnight', 'holyCommander', 'lightOcean', 'saltWarden', 'stillWarden', 'wardKeeper', 'abyssWarder', 'wardDeity'];
+    const ids = ['bellWarden', 'eonTurtle', 'worldTurtle', 'saltWarden', 'stillWarden', 'wardKeeper', 'abyssWarder', 'wardDeity'];
     for (const id of ids) { const j = JOBS.find(x => x.id === id); assert.ok(j && j.tree === 'defense', id); assert.ok(SKILLS.filter(sk => sk.job === id).length >= 2, id); }
+    // v3.140 루미너스는 복합(역전 딜러) 계열로 옮겼습니다.
+    for (const id of ['holyKnight', 'holyCommander', 'lightOcean']) { const j = JOBS.find(x => x.id === id); assert.ok(j && j.tree === 'hybrid', id); assert.ok(SKILLS.filter(sk => sk.job === id).length >= 2, id); }
+    ids.push('holyKnight', 'holyCommander', 'lightOcean');
     for (const sk of SKILLS.filter(sk => ids.includes(sk.job) && sk.type === 'active')) assert.ok(ACTIVE_SKILL_BALANCE[sk.id], sk.id);
     assert.ok(LINEAGES.some(l => l.id === 'saltWarden' && l.tree === 'defense'));
     const s = newState(0); s.level = 40; s.job = 'wardKeeper'; s.learned.wardBurst = 1; s.skills = ['wardBurst']; const a = stats(s); assert.ok(a.wardAffinity > .5, 'ward lineage has high ward affinity'); assert.ok(a.resist > 60, 'Lv.40 ward keeper resist');

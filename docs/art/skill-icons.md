@@ -602,8 +602,6 @@
 | ⬜ | `muscleMana` | 컨택트 커스 | 아크 (1차) | 패시브 |
 | ⬜ | `refluxBurst` | 플레인 차지드라이브 | 아크 (2차) | 액티브 |
 | ⬜ | `invertedCircuit` | 스칼렛 차지드라이브 | 아크 (2차) | 패시브 |
-| ⬜ | `arcaneFist` | 마력 주먹 | 주먹 마도사 | 액티브 |
-| ⬜ | `manaMuscle` | 마력 근육 | 주먹 마도사 | 패시브 |
 | ⬜ | `paradoxRupture` | 거스트 차지드라이브 | 아크 (3차) | 액티브 |
 | ⬜ | `paradoxHeart` | 어비스 차지드라이브 | 아크 (3차) | 패시브 |
 | ⬜ | `heavenEarthInversion` | 그립 오브 애거니 | 아크 (4차) | 액티브 |

@@ -172,7 +172,7 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
 
     // ── 아크 계보 · 주먹 마도사 ──
     brawnWave: '스펠 불릿', muscleMana: '컨택트 커스', refluxBurst: '플레인 차지드라이브', invertedCircuit: '스칼렛 차지드라이브',
-    arcaneFist: '마력 주먹', manaMuscle: '마력 근육', paradoxRupture: '거스트 차지드라이브', paradoxHeart: '어비스 차지드라이브',
+    paradoxRupture: '거스트 차지드라이브', paradoxHeart: '어비스 차지드라이브',
     heavenEarthInversion: '그립 오브 애거니', reverseTide: '끝없는 악몽', worldInversion: '인피니티 스펠', skyInverterAura: '데빌 오브 스칼렛',
 
     // ── 외길 계보: 아란 · 듀얼블레이드 · 배틀메이지 · 블래스터 · 라라 · 나이트로드 ──

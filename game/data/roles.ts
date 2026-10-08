@@ -33,7 +33,9 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
     poisoner: 'status', shaman: 'status', bloodAngler: 'status', currentScholar: 'status',
     warden: 'reflect', saltWarden: 'reflect', bulkyFisher: 'reflect',
     martialArtist: 'control', bellTurtle: 'control', stillAngler: 'control', runesmith: 'control',
-    wanderer: 'drain', paladin: 'drain',
+    wanderer: 'drain',
+    /** v3.140 루미너스: 마법 공격 계수로 물리 피해를 주는 역전 딜러(지능 기반이라 마법 딜러로 셈). */
+    paladin: 'magic',
     seagrassKeeper: 'healer',
     fishWhisperer: 'utility', salvageMerchant: 'utility', voyageScribe: 'utility', relicScavenger: 'utility', bard: 'utility', bossNaturalist: 'utility',
     fisher: 'none',
