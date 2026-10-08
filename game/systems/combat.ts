@@ -133,9 +133,9 @@ function buffsOf(effects: StatusEffects | undefined) {
     return Object.entries(effects.buffs || {}).filter(([, b]) => b.turns > 0);
 }
 /** 같은 id의 버프가 있으면 더 긴 쪽으로 갱신합니다(효과는 새 값). */
-export function grantBuff(effects: StatusEffects, buff: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number }) {
+export function grantBuff(effects: StatusEffects, buff: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number; damageMultiplier?: number }) {
     const buffs = (effects.buffs ??= {}), cur = buffs[buff.id];
-    buffs[buff.id] = { turns: Math.max(buff.turns, cur?.turns || 0), ...(buff.name ? { name: buff.name } : {}), ...(buff.stats ? { stats: buff.stats } : {}), ...(buff.speedMultiplier ? { speedMultiplier: buff.speedMultiplier } : {}) };
+    buffs[buff.id] = { turns: Math.max(buff.turns, cur?.turns || 0), ...(buff.name ? { name: buff.name } : {}), ...(buff.stats ? { stats: buff.stats } : {}), ...(buff.speedMultiplier ? { speedMultiplier: buff.speedMultiplier } : {}), ...(buff.damageMultiplier ? { damageMultiplier: buff.damageMultiplier } : {}) };
 }
 /** 자기 행동마다 버프 턴을 하나씩 줄이고 끝난 버프를 지웁니다. */
 function tickBuffs(effects: StatusEffects) {
@@ -269,6 +269,9 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
         // v3.143 전탄발사: 충전 중첩이 모자라면 굴리지 않습니다.
         if (candidate.chargeNeed && (a.effects?.charge || 0) < candidate.chargeNeed)
             continue;
+        // v3.158 접신 중에만 나가는 기술(아크 인피니티 스펠).
+        if (candidate.requiresBuff && !((a.effects?.buffs?.[candidate.requiresBuff]?.turns || 0) > 0))
+            continue;
         // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
         if (alreadyAfflicted(b, candidate))
             continue;
@@ -322,6 +325,7 @@ function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | 
         if ((a.mana ?? 0) < (sk.manaCost || 0)) continue;
         // v3.143 전탄발사: 충전 중첩이 chargeNeed에 닿을 때까지 기다립니다(대기 0에서 멈춰 있고, 실패로 세지 않음).
         if (sk.chargeNeed && (a.effects?.charge || 0) < sk.chargeNeed) continue;
+        if (sk.requiresBuff && !((a.effects?.buffs?.[sk.requiresBuff]?.turns || 0) > 0)) continue;
         const key = AWAKEN_PITY + id, misses = a.cooldowns[key] || 0;
         if (rng() >= Math.min(1, sk.chance * (1 + misses))) { a.cooldowns[key] = misses + 1; continue; }
         delete a.cooldowns[key];
@@ -587,7 +591,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v3.155 웨폰 버라이어티(카데나): 살아 있는 자기 버프 1개마다 피해 +varietyBonus.
     const varietyCount = sa.varietyBonus ? buffsOf(a.effects).length : 0, varietyBoost = 1 + varietyCount * (sa.varietyBonus || 0);
     if (varietyCount) notes.push(`버라이어티 ${varietyCount}`);
-    const linkMultiplier = varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
+    // v3.158 자기 버프의 피해 배율(접신): 살아 있는 버프의 damageMultiplier를 곱합니다.
+    const buffDamage = buffsOf(a.effects).reduce((m, [, bf]) => m * (bf.damageMultiplier || 1), 1);
+    const linkMultiplier = buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push('연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly || healOnly;
@@ -606,6 +612,12 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const before = Math.min(SKILL_FORMULA.charge.max, a.effects.charge || 0);
         a.effects.charge = Math.min(SKILL_FORMULA.charge.max, before + chosen.charge + (targetWeakened ? SKILL_FORMULA.charge.weakenedExtra : 0));
         if (a.effects.charge > before) notes.push(`충전 ${a.effects.charge}`);
+        // v3.158 접신(아크): 장착한 패시브 중 가장 센 접신의 need에 충전이 닿으면 충전을 비우고 자기 버프에 들어갑니다.
+        const spectre = a.skills.map(id => skillById(id)?.spectre).filter((x): x is NonNullable<Skill['spectre']> => !!x).sort((x, y) => y.damageMultiplier - x.damageMultiplier)[0];
+        if (spectre && a.effects.charge >= spectre.need) {
+            grantBuff(a.effects, { id: 'spectre', name: '접신', turns: spectre.turns, damageMultiplier: spectre.damageMultiplier, speedMultiplier: spectre.speedMultiplier });
+            a.effects.charge = 0; notes.push(`접신 ${spectre.turns}턴`); ev.statuses.push({ id: 'spectre', turns: spectre.turns, onSelf: true });
+        }
     }
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
     if (landed && !statusOnly && sb.thorns > 0) {

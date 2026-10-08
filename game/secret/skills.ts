@@ -11,7 +11,6 @@ import 'server-only';
 import type { Skill } from '../types';
 
 export const SECRET_SKILLS: Skill[] = [
-    {id: 'eternalWave', name: '시공의 파동', desc: '(마법 공격) × 2.6 피해. 약화 효과.', type: 'active', level: 40, rebirth: 3, chance: 0.6, cooldown: 4, multiplier: 2.6, effect: 'weaken', damageType: 'magic', cost: 6, manaCost: 96, job: 'eternalNavigator', rankEffects: {manaReduction: 1, multiplierScale: 0.05, chanceIncrease: 0.025, cooldownReduction: 0}, masteryMilestones: [4500, 22500, 84000, 225000], cooldownReset: {on: 'kill', chance: 1, pick: 'all'}},
     {id: 'voidLance', name: '샤드', desc: '(마법 공격 + 태운 마나 × 6) × 2 피해. 현재 마나의 12%를 태웁니다.', type: 'active', level: 25, rebirth: 1, job: 'voidcaller', chance: 0.55, cooldown: 4, multiplier: 2, damageType: 'magic', cost: 5, manaCost: 0, manaBurn: 0.12, rankEffects: {chanceIncrease: 0.025, manaReduction: 1, multiplierScale: 0.05, cooldownReduction: 0}, masteryMilestones: [1000, 6000, 22000, 60000]},
     {id: 'echoMemory', name: '에테르', desc: '마나 +60, 턴당 마나 회복 +6, 발동 확률 +4%p, 회피 +5%p.', type: 'passive', level: 25, rebirth: 1, job: 'voidcaller', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: {mana: 60, manaRegen: 6, accuracy: 0.04, evasion: 0.05}, rankEffects: {bonusScale: 0.3}, masteryMilestones: [600, 3000, 12000, 36000]},
     // v3.139 무덤파기: 피해 없이 약화 5턴만 겁니다(상태이상 전용 규칙: 발동 30% 이하 · 대기 ≥ 지속).

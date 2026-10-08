@@ -120,7 +120,7 @@ export type StatusEffects = {
     /** v3.151 부식: 남은 턴. 걸린 동안 물리 · 마법 방어와 속도가 STATUS_TUNING.corrode* 만큼 떨어지는 최상급 디버프. */
     corrode?: number;
     /** v3.151 자기 버프(id마다 하나): 남은 턴 동안 stats를 더하고 speedMultiplier를 속도에 곱합니다. 가속도 이 틀로 돕니다. */
-    buffs?: Record<string, { turns: number; name?: string; stats?: Partial<Stats>; speedMultiplier?: number }>;
+    buffs?: Record<string, { turns: number; name?: string; stats?: Partial<Stats>; speedMultiplier?: number; /** v3.158 내 직접 피해 배율(접신). */ damageMultiplier?: number }>;
     /** 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 남은 턴(자기 행동마다 1씩 줄어듭니다). */
     immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'silence' | 'slow' | 'corrode', number>>;
     /** v25 일곱 글자: 이번 전투에 새긴 인. */
@@ -196,7 +196,11 @@ export type Skill = {
     multiplier: number;
     effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste' | 'corrode';
     /** v3.151 자기 버프: 이 기술을 쓰면 시전자가 turns 동안 stats(고정값)와 speedMultiplier를 얻습니다(같은 id면 더 긴 쪽으로 갱신). */
-    selfBuff?: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number };
+    selfBuff?: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number; damageMultiplier?: number };
+    /** v3.158 접신(아크 패시브): 충전이 need에 닿으면 충전을 비우고 자기 버프 ‘접신’(피해 × damageMultiplier · 속도 × speedMultiplier, turns턴)에 들어갑니다. 장착한 것 중 가장 센 하나만. */
+    spectre?: { need: number; turns: number; damageMultiplier: number; speedMultiplier?: number };
+    /** v3.158 이 자기 버프가 걸려 있을 때만 나가는 액티브(아크 인피니티 스펠: 'spectre'). */
+    requiresBuff?: string;
     /** v3.155 쓰면 시전자의 살아 있는 자기 버프를 모두 N턴 연장합니다(카데나 체인아츠: 메일스트롬). */
     extendBuffs?: number;
     /** v3.151 기본 공격 상태이상(패시브): 장착하면 기본 공격(마력 평타 포함)이 명중할 때 이 상태이상을 겁니다(statusTurns 적용). 일리움 부식. */

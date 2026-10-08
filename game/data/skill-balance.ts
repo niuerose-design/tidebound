@@ -199,6 +199,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.burnConsume) sk.desc += ` 명중한 적의 화상 중첩을 모두 터뜨려 중첩당 피해 +${Math.round(sk.burnConsume * 100)}%(화상은 사라짐).`;
         if (sk.selfBuff) sk.desc += ` 쓰면 자기 버프 ${sk.selfBuff.name ?? sk.selfBuff.id} ${sk.selfBuff.turns}턴.`;
         if (sk.extendBuffs) sk.desc += ` 살아 있는 자기 버프를 모두 ${sk.extendBuffs}턴 연장.`;
+        if (sk.requiresBuff) sk.desc += ` ${sk.requiresBuff === 'spectre' ? '접신' : sk.requiresBuff} 중에만 나갑니다.`;
         sk.desc += progressDesc(sk);
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
