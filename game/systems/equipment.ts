@@ -5,6 +5,9 @@ import { RARITIES } from '../data/balance';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
 import { onyxAwaken, onyxScaledStat, isOnyxUnique, onyxPower } from '../data/onyx';
+
+/** 가방과 장착 칸의 장비를 한 목록으로(장착 칸의 빈자리는 null). */
+export const ownedItems = (s: Pick<State, 'inventory' | 'equipment'>): (Item | null)[] => [...s.inventory, ...Object.values(s.equipment)];
 /** v27.36 장신구 치명타: 레벨·위력과 무관한 등급 고정값 × (1 + 강화 × CHARM_CRIT_ENHANCE). */
 const CHARM_CRIT = [.03, .05, .07, .10, .12, .14, .16], CHARM_CRIT_ENHANCE = .05;
 /** v3.5 망토 회피: 등급 고정값 × (1 + 별 × CAPE_EVASION_ENHANCE). 기민 외 회피 60%p 상한과 50% 이후 점감이 그대로 적용됩니다(태초 22성 ≈ +28%p). 속도는 주지 않습니다. */
@@ -91,7 +94,7 @@ export const heirKind = (item: Pick<Item, 'relic' | 'heir'>): HeirKind | null =>
 export const heirItemPower = (item: Pick<Item, 'relic' | 'heir' | 'relicLegacy'>, kind: HeirKind, rebirths: number, level: number) => Math.max(heirPower(kind, rebirths, level), item.relic && item.relicLegacy ? legacyRelicPower(item.relic, rebirths, level) : 0);
 /** v3.3 유물 · v3.66 계승 장비 위력을 환생 횟수와 레벨에 맞춥니다(heirPower). 불러오기·환생·수령·계승 때 불러 저장된 위력을 고칩니다. 계승 장비의 고정 수치 옵션은 위력 비율만큼 함께 바뀝니다(유물 이식 옵션은 그대로). */
 export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebirths'>) {
-    for (const item of [...s.inventory, ...Object.values(s.equipment)]) {
+    for (const item of ownedItems(s)) {
         const kind = item && heirKind(item);
         if (!item || !kind) continue;
         const next = heirItemPower(item, kind, s.rebirths || 0, item.level || 1), before = item.power;
@@ -146,7 +149,7 @@ export function guessImprintRarity(affix: ItemAffix, relicRarity: number) {
 }
 /** v3.82 예전 유물 이식 줄을 한 번 맞춥니다(srcRarity가 없는 줄만). 전설보다 높은 등급에서 온 것이 확실한 줄만 줄어듭니다. */
 export function fixRelicImprints(s: Pick<State, 'inventory' | 'equipment'>) {
-    for (const item of [...s.inventory, ...Object.values(s.equipment)]) {
+    for (const item of ownedItems(s)) {
         if (!item?.relic || !item.affixes?.length) continue;
         // 짐작이 유물 등급보다 낮으면 올리지 않습니다(예전 줄은 깎기만, 잘못 짐작해 키우지 않음).
         item.affixes = item.affixes.map(x => x.srcRarity === undefined ? imprintAffix(x, Math.max(item.rarity, guessImprintRarity(x, item.rarity)), item.rarity) : x);

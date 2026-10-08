@@ -162,7 +162,6 @@ export const SKILL_FORMULA = {
     // v27.2 탱커 개편: 반격은 공격자 방어를 thornsPierce만큼 무시하고, 무리(×N)를 상대할 때 (1 + log2 N)배(최대 swarmThornsCap)로 커집니다. 여러 마리가 한꺼번에 가시에 부딪히는 셈.
     thornsPierce: .5, swarmThornsCap: 10,
     // v27.3 지속 피해는 틱마다 대상 최대 체력 비례 피해를 더합니다(무리는 한 마리 기준). v27.57부터 종류별 비율(bleedHpRatio·poisonHpRatio·burnHpRatio). 이 값은 옛 기준(설명용).
-    dotMaxHpRatio: .01,
     // v3.54 지속 피해의 체력 비례분은 틱 때 대상의 현재 체력 기준입니다. 보스·월드보스처럼 체력이 큰 상대에게 비례분이 끝없이 커지던 것을 막고, 체력이 깎일수록 줄어듭니다.
     // 무리에게는 한 마리 체력 × √N(swarmDotShare)으로 셉니다.
     // v3.54 힐러(healFocus) 회복 기술의 넘친 회복량 × overhealDamage를 적에게 방어 무시 피해로 줍니다(회복이 처치 속도에 기여하도록).

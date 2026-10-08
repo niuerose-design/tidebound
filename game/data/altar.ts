@@ -110,8 +110,9 @@ export const RAIDS: RaidDef[] = [
     { id: 'horntail', name: '혼테일', fish: 'abyssSovereign', level: 120, cost: 12_000, lifetimeHours: 24, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
         reward: { gold: 5_000_000, pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 }, blessings: ['gold', 'exp', 'mimic', 'nuri'], blessingHours: 3 },
 ];
-export const raidById = (id: string) => RAIDS.find(r => r.id === id);
-export const isRaidGauge = (id: string): id is RaidId => RAIDS.some(r => r.id === id);
+let raidIndex: Map<string, (typeof RAIDS)[number]> | undefined;
+export const raidById = (id: string | undefined) => id === undefined ? undefined : (raidIndex ??= new Map(RAIDS.map(r => [r.id, r]))).get(id);
+export const isRaidGauge = (id: string): id is RaidId => !!raidById(id);
 /** 소환 게이지(신 + 월드보스 셋)와 축복 게이지. 화면의 축복/소환 탭이 이 둘로 나뉩니다. */
 export const SUMMON_GAUGE_IDS: AltarGaugeId[] = ['god', ...RAIDS.map(r => r.id)];
 export const GAUGE_IDS: AltarGaugeId[] = [...BLESSINGS.map(b => b.id), ...SUMMON_GAUGE_IDS];

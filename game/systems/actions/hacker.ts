@@ -2,13 +2,13 @@
 import type { ActionHandlers } from './types';
 import { HACKER, PRIVACY_FIELDS, HACK_TIER, HACK_NAMES, WIPE_TRACE_ID, programById, type PrivacyField } from '../../data/hacker';
 import { canUse } from '../progression';
-import { JOBS } from '../../data/classes';
-import { STAGES, DUNGEONS } from '../../data/world';
-import { BLESSINGS, RAIDS } from '../../data/altar';
+import { jobById } from '../../data/classes';
+import { STAGES, stageById, dungeonById } from '../../data/world';
+import { BLESSINGS, RAIDS, raidById } from '../../data/altar';
 import { crewNote, entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn, isBlackHacker, crewOn } from '../hacker';
-import { dayKey, weekKey } from '../../data/goals';
 import { addLog } from '../state';
 import { leakPool } from '../../secret/leaks';
+import { dayKey, weekKey } from '../../data/time';
 
 const needHacker = (s: Parameters<ActionHandlers[string]>[0]) => { if (!isHacker(s)) throw Error('해커 직업일 때만 할 수 있습니다.'); };
 export const BROADCAST_PATTERN = /^[^\n\r<>]{1,40}$/;
@@ -16,8 +16,8 @@ const ROMAN = 'I II III IV V VI VII VIII IX X'.split(' ');
 /** stage:<id> · dungeon:<id>. 첫 사냥터는 다운·패치 대상이 아닙니다. */
 function parsePlace(value: string) {
     const [kind, ...rest] = value.split(':'), id = rest.join(':');
-    if (kind === 'stage' && STAGES.some(st => st.id === id) && id !== STAGES[0].id) return `stage:${id}`;
-    if (kind === 'dungeon' && DUNGEONS.some(d => d.id === id)) return `dungeon:${id}`;
+    if (kind === 'stage' && !!stageById(id) && id !== STAGES[0].id) return `stage:${id}`;
+    if (kind === 'dungeon' && !!dungeonById(id)) return `dungeon:${id}`;
     throw Error('사냥터나 던전을 고르세요(첫 사냥터 제외).');
 }
 
@@ -28,7 +28,8 @@ function parseDecoy(level: number, show: PrivacyField[], name: string, job: stri
     if (!name && !job && !lv) return '';
     if (level < HACKER.spoof.decoyLevel) throw Error(`미끼 정보는 신원 조작 숙련 ${HACKER.spoof.decoyLevel}단계부터 쓸 수 있습니다.`);
     if (name && (!DECOY_NAME.test(name) || name.includes('???'))) throw Error('미끼 이름은 1~12자(줄바꿈·꺾쇠·|·쉼표 제외)로 쓰세요.');
-    if (job && !JOBS.some(j => j.id === job && !j.hidden)) throw Error('미끼 직업을 다시 고르세요(숨은 직업 제외).');
+    const decoyJob = job ? jobById(job) : undefined;
+    if (job && (!decoyJob || decoyJob.hidden)) throw Error('미끼 직업을 다시 고르세요(숨은 직업 제외).');
     const n = lv ? Number(lv) : 0;
     if (lv && (!Number.isInteger(n) || n < 1 || n > HACKER.spoof.decoyMaxLevel)) throw Error(`미끼 레벨은 1~${HACKER.spoof.decoyMaxLevel}로 쓰세요.`);
     const out = [name, show.includes('job') ? '' : job, show.includes('level') || !n ? '' : String(n)];
@@ -99,7 +100,7 @@ export const hackerActions: ActionHandlers = {
         if (h.grade < next.grade) throw Error(`권한 등급 ${next.grade}이 필요합니다.`);
         if (h.bits < next.bits) throw Error(`비트 ${next.bits}가 필요합니다.`);
         h.bits -= next.bits; h.tier++;
-        addLog(s, `해킹 ${'I II III IV V VI VII VIII IX X'.split(' ')[h.tier - 1]} 해금 · 비트 -${next.bits}`, 'reward');
+        addLog(s, `해킹 ${ROMAN[h.tier - 1]} 해금 · 비트 -${next.bits}`, 'reward');
     },
     /**
      * 해킹 실행: 조건·비용을 확인하고 h.pending에 적습니다. 서버 공유 설정에 쓰는 일은 /api/hack이 저장 직전에 하고 pending을 지웁니다.
@@ -189,7 +190,7 @@ export const hackerActions: ActionHandlers = {
         if (id === 'intercept') {
             // v3.28 해킹 VI 패킷 가로채기: 값 = 월드보스 id. 떠 있는지와 세대는 서버가 확인해 h.intercept에 적습니다.
             need(HACK_TIER.intercept);
-            if (!RAIDS.some(r => r.id === value)) throw Error('가로챌 월드보스를 고르세요.');
+            if (!raidById(value)) throw Error('가로챌 월드보스를 고르세요.');
             if (h.intercept) throw Error('걸어 둔 패킷 가로채기를 먼저 정산하세요.');
             daily('intercept', HACKER.intercept.perDay(), '패킷 가로채기'); pay(HACKER.intercept.bits);
             if (busted()) return;
@@ -206,7 +207,7 @@ export const hackerActions: ActionHandlers = {
             // v3.28 해킹 VII 세이브 스캠: 값 = 월드보스 id|rewind(되감기) 또는 forward(빨리감기).
             need(HACK_TIER.savescum);
             const [raid, mode] = value.split('|');
-            if (!RAIDS.some(r => r.id === raid) || !['rewind', 'forward'].includes(mode)) throw Error('월드보스와 되감기·빨리감기를 고르세요.');
+            if (!raidById(raid) || !['rewind', 'forward'].includes(mode)) throw Error('월드보스와 되감기·빨리감기를 고르세요.');
             daily('savescum', HACKER.savescum.perDay(), '세이브 스캠'); pay(HACKER.savescum.bits);
             if (busted()) return;
             h.pending = { kind: 'savescum', value: `${raid}|${mode}`, minutes: 0, n };

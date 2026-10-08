@@ -1,6 +1,5 @@
 import type { State } from '../types';
-import { FISH, PLACES as STAGES, DUNGEONS, PLAIN_DUNGEONS } from './world';
-import { kst } from './time';
+import { BASE_STAGES, DUNGEONS, PLAIN_DUNGEONS, fishById, dungeonById } from './world';
 
 /**
  * v25.6 일일·주간 모험 목표. 한국 시간 자정·월요일에 바뀌며, 날짜를 씨앗으로 정해지므로 서버·클라이언트가 같은 목표를 봅니다.
@@ -13,26 +12,12 @@ export const DAILY_ALL_BONUS = 3, WEEKLY_ALL_BONUS = 10;
 
 const hash = (text: string) => { let h = 2166136261; for (const ch of text) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return h; };
 const pick = <T>(list: T[], seed: number) => list[seed % list.length];
-/** 한국 시간 기준 날짜 키(YYYY-MM-DD)와 ISO 주 키(YYYY-Www). */
-export const dayKey = (now: number) => kst(now).date;
-export function weekKey(now: number) {
-    const d = new Date(kst(now).date + 'T00:00:00Z');
-    const day = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - day + 3);
-    const first = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
-    const week = 1 + Math.round(((d.getTime() - first.getTime()) / 86400000 - 3 + ((first.getUTCDay() + 6) % 7)) / 7);
-    return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
-}
-/** v3.106 다음 초기화 시각(밀리초): 일일은 다음 한국 시간 자정, 주간은 다음 월요일 0시(한국 시간). */
-export const nextDailyReset = (now: number) => kst(now).dayStart + 86400_000;
-export const nextWeeklyReset = (now: number) => { const start = kst(now).dayStart, weekday = (new Date(start + 9 * 3600_000).getUTCDay() + 6) % 7; return start + (7 - weekday) * 86400_000; };
-/** 주 키를 랭킹 시즌 정수로(예: 2026-W40 → 202640). */
-export const weekSeason = (key: string) => Number(key.replace('-W', ''));
 
 /** 지금 플레이어가 갈 수 있는 사냥터·던전 안에서 목표를 뽑습니다(환생·레벨 조건). */
 export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, key: string, weekly: boolean): Goal[] {
     const level = Math.max(s.level, s.peakLevel || 0, 10), seed = hash(key + (weekly ? ':w' : ':d'));
-    const stages = STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = PLAIN_DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
-    const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => FISH.some(f => f.id === id && !f.minTier));
+    const stages = BASE_STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = PLAIN_DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
+    const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => { const f = fishById(id); return !!f && !f.minTier; });
     const scale = weekly ? 6 : 1;
     const goals: Goal[] = [
         { id: 'catch', kind: 'catch', target: 60 * scale, pearls: weekly ? 4 : 1, progress: 0 },
@@ -47,8 +32,8 @@ export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, ke
 /** v27.81 다시 뽑기 후보. 지금 갈 수 있는 사냥터·던전 기준이며 진행은 0부터입니다(결투는 후보에서 뺍니다). */
 export function goalCandidates(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, weekly: boolean): Omit<Goal, 'id' | 'progress'>[] {
     const level = Math.max(s.level, s.peakLevel || 0, 10), scale = weekly ? 6 : 1;
-    const stages = STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
-    const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => FISH.some(f => f.id === id && !f.minTier));
+    const stages = BASE_STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
+    const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => { const f = fishById(id); return !!f && !f.minTier; });
     return [
         { kind: 'catch', target: 60 * scale, pearls: weekly ? 4 : 1 },
         ...fishPool.map(id => ({ kind: 'species' as const, subject: id, target: 25 * scale, pearls: weekly ? 5 : 2 })),
@@ -76,10 +61,7 @@ export function rerollGoal(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, b
     return fresh;
 }
 export function goalText(g: Goal) {
-    const name = g.kind === 'species' ? FISH.find(f => f.id === g.subject)?.name || '지정 몬스터' : g.kind === 'dungeon' ? DUNGEONS.find(d => d.id === g.subject)?.name || '던전' : '';
+    const name = g.kind === 'species' ? fishById(g.subject)?.name || '지정 몬스터' : g.kind === 'dungeon' ? dungeonById(g.subject)?.name || '던전' : '';
     return g.kind === 'duel' ? `랭크 결투 ${g.target}승` : g.kind === 'catch' ? `아무 몬스터 ${g.target}마리 처치` : g.kind === 'species' ? `${name} ${g.target}마리 처치` : g.kind === 'dungeon' ? `${name} ${g.target}회 정복` : g.kind === 'boss' ? `보스 ${g.target}마리 처치` : `무리 변종 ${g.target}회 처치`;
 }
 /** v25.12 결투 시즌 키(한국 시간 월, 예: 2026-10)와 랭킹 시즌 정수. 주 시즌(2026xx)·세이브 버전과 겹치지 않도록 1천만을 더합니다. */
-export const monthKey = (now: number) => kst(now).date.slice(0, 7);
-export const monthSeason = (key: string) => 10_000_000 + Number(key.replace('-', ''));
-export const previousMonthKey = (key: string) => { const [y, m] = key.split('-').map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`; };

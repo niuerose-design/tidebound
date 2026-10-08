@@ -10,7 +10,7 @@ export type CombatFxKind = 'physical' | 'magic' | 'split' | 'fixed' | 'stun' | '
 /** v25.20 스킬별 연출 갈래. 궤적 모양·파편 글자·색이 갈래마다 다릅니다. */
 export type CombatFxVariant = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph' | 'venom' | 'ink' | 'bone' | 'time';
 /** 스킬 직업의 차수. 공용·몬스터 기술은 0. */
-function fxTierOf(id: string | undefined) { const sk = id ? SKILLS.find(x => x.id === id) : undefined; return sk?.job ? jobById(sk.job)?.tier || 0 : 0; }
+function fxTierOf(id: string | undefined) { const sk = id ? skillById(id) : undefined; return sk?.job ? jobById(sk.job)?.tier || 0 : 0; }
 /** 스킬 id·효과로 연출 갈래를 고릅니다. 앞 규칙이 우선이고, 아무것도 맞지 않으면 마법은 arcane, 물리는 impact. */
 export function fxVariantOf(id: string | undefined, magical: boolean, effect?: string): CombatFxVariant {
     if (!id) return magical ? 'arcane' : 'impact';

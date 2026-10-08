@@ -3,7 +3,8 @@ import { MAPLE_MONSTERS } from './maple-monsters';
 /** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
 /** 사냥터 정의. habitat는 v27.80 무리 서식지(지역마다 하나)입니다. */
 export type StageDef = { id: string; region: string; place: string; name: string; subtitle: string; level: number; rebirth: number; description: string; fish: string[]; tone: string; habitat?: boolean; /** v3.103 적정 환생(측정, docs/hunting-ground-plan.md 9절). 입장 조건(rebirth)보다 클 때만 따로 보입니다. */ fit?: number };
-const BASE_STAGES: StageDef[] = [
+/** 일반 사냥터(무리 서식지 제외). 사냥터 수·도감·업적처럼 장소를 세는 곳에서 씁니다. */
+export const BASE_STAGES: StageDef[] = [
     { id: 'brook', region: '리스항구', place: '선착장', name: '리스항구 · 선착장', subtitle: 'LITH HARBOR · PIER', level: 1, rebirth: 0, description: '빅토리아 아일랜드의 관문. 선착장 끝에서 첫 몬스터가 찾아온다.', fish: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
     { id: 'bay', region: '리스항구', place: '조개 해안', name: '리스항구 · 조개 해안', subtitle: 'LITH HARBOR · SHELL COAST', level: 5, rebirth: 0, description: '항구 뒤 조개껍데기가 깔린 해안. 버섯과 슬라임이 파도 소리에 맞춰 통통 튄다.', fish: ['mackerel', 'ray', 'puffer'], tone: '#68b6ce' },
     { id: 'reef', region: '헤네시스', place: '돼지의 해변', name: '헤네시스 · 돼지의 해변', subtitle: 'HENESYS · PIG BEACH', level: 10, rebirth: 0, description: '헤네시스 남쪽 해변. 돼지 떼가 모래밭을 뛰놀고, 버섯이 그늘에서 덮칠 틈을 노린다.', fish: ['lionfish', 'eel', 'barracuda', 'stormBarracuda'], tone: '#d49081' },
@@ -64,14 +65,15 @@ const HABITATS: StageDef[] = REGIONS.map(region => {
     return { id: meta.id, region, place: '무리 서식지', name: `${region} · 무리 서식지`, subtitle: meta.subtitle, level: Math.max(...places.map(st => st.level)), rebirth: HABITAT_REBIRTH[meta.id] ?? Math.max(HABITAT.minRebirth, Math.max(...places.map(st => st.rebirth)) + HABITAT.rebirthOver), description: meta.description, fish: regionFish(region), tone: meta.tone, habitat: true, fit: STAGE_FIT[meta.id] };
 });
 export const STAGES: StageDef[] = [...BASE_STAGES, ...HABITATS];
-/** 일반 사냥터(무리 서식지 제외). 사냥터 수·도감·업적처럼 장소를 세는 곳에서 씁니다. */
-export const PLACES = BASE_STAGES;
+let stageIndex: Map<string, StageDef> | undefined;
+/** 사냥터 id로 찾기(무리 서식지 포함). */
+export const stageById = (id: string | undefined) => id === undefined ? undefined : (stageIndex ??= new Map(STAGES.map(st => [st.id, st]))).get(id);
 /**
  * v3.9 깊이 계수: 난이도 레벨 보정으로 사냥터가 평준화된 뒤에도 뒤 사냥터가 조금 더 어렵고 조금 더 주도록, 입장 레벨 순서(0부터)마다 +DEPTH_SCALE을 체력·공격·골드·경험치에 곱합니다.
  * 서식지는 자기 레벨 자리, 일반 던전은 지역 던전 순서 기준. 무릉도장·랜덤게임·까미·누리는 1.
  */
 export const DEPTH_SCALE = .04;
-const placeLevels = () => [...new Set(PLACES.map(st => st.level))].sort((a, b) => a - b);
+const placeLevels = () => [...new Set(BASE_STAGES.map(st => st.level))].sort((a, b) => a - b);
 export const stageDepth = (stageId: string) => { const st = STAGES.find(x => x.id === stageId); return st ? 1 + DEPTH_SCALE * placeLevels().filter(l => l < st.level).length : 1; };
 export const isHabitat = (id: string) => !!STAGES.find(st => st.id === id)?.habitat;
 /**
@@ -259,6 +261,9 @@ for (const f of specialFish)
     FISH.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: fishExpAt(f.level), gold: fishGoldAt(f.level), lore: f.lore, rarity: f.rarity, /** v3.55 출현 가중치는 서버 전용(ODDS.spawn). */ get spawnWeight() { return ODDS.spawn[f.id]; }, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
 // v27.41 메이플 몬스터 이름: maple-monsters.ts 한곳에서 이름·설명을 덮어씁니다(id·능력치는 그대로).
 for (const f of FISH) { const m = MAPLE_MONSTERS[f.id]; if (m) { f.name = m.name; f.lore = m.lore; } }
+let fishIndex: Map<string, FishDef> | undefined;
+/** 몬스터 id로 찾기. */
+export const fishById = (id: string | undefined) => id === undefined ? undefined : (fishIndex ??= new Map(FISH.map(f => [f.id, f]))).get(id);
 /**
  * v27.31 운영 페이지에서 닫은 사냥터·던전(입장 불가). 서버가 DB 설정(settings.closures)을 읽어 setClosures로 채웁니다.
  * 설정을 한 번도 저장하지 않았으면 DEFAULT_CLOSURES(무릉도장 닫힘)를 씁니다. 테스트는 harness에서 비웁니다.
@@ -306,6 +311,9 @@ export const DUNGEONS = [
 ];
 /** v27.86 랜덤게임을 뺀 일반 던전(목록·업적·목표·점검용). */
 export const PLAIN_DUNGEONS = DUNGEONS.filter(d => !('random' in d && d.random));
+let dungeonIndex: Map<string, (typeof DUNGEONS)[number]> | undefined;
+/** 던전 id로 찾기. */
+export const dungeonById = (id: string | undefined) => id === undefined ? undefined : (dungeonIndex ??= new Map(DUNGEONS.map(d => [d.id, d]))).get(id);
 /** v3.9 지역 던전(까미·누리·무릉도장·랜덤게임 제외)의 입장 레벨 순서 깊이 계수. */
 const REGION_DUNGEONS = () => PLAIN_DUNGEONS.filter(d => d.id !== 'abyss' && d.id !== 'masteryMimic' && d.id !== 'expNuri');
 export const dungeonDepth = (id: string) => { const d = REGION_DUNGEONS().find(x => x.id === id); return d ? 1 + DEPTH_SCALE * [...new Set(REGION_DUNGEONS().map(x => x.level))].filter(l => l < d.level).length : 1; };

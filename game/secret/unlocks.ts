@@ -8,11 +8,11 @@
 import 'server-only';
 import type { State } from '../types';
 import { FISH } from '../data/world';
+import { HOUR } from '../data/time';
 import { masteredJobCount } from '../systems/progression';
 import { setUnlockSource } from '../data/unlock-info';
 
 const bossCatches = (s: State) => FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
-const HOUR = 3600_000;
 
 /** 숨은 조건. 정확한 조건 문장은 해커 정보 해킹 조각(leaks.ts UNLOCK_CONDITIONS)에만 있습니다. */
 export type HiddenUnlock = { job: string; test: (s: State) => boolean };

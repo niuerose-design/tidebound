@@ -40,13 +40,13 @@ export const dungeonLevelAt = (d: { id: string; level: number }, tier: number, p
  * v3.21 골드 난이도 배율: 난이도 30까지는 그대로(1 + 0.5t), 그 위로는 √로 완만하게(16 + 1.5√(t−30)). 환생할수록 난이도 상한이 올라 골드가 끝없이 불어나
  * 스타포스 22성(수백억) 기획이 무너지던 것: 난이도 55 ×28.5 → ×23.5, 100 ×51 → ×28.5, 200 ×101 → ×35.6.
  */
-export const TIER_REWARD = { linearUntil: 30, perTier: .5, lateScale: 1.5 };
+const TIER_REWARD = { linearUntil: 30, perTier: .5, lateScale: 1.5 };
 export const tierReward = (tier: number) => { const t = Math.max(0, tier), r = TIER_REWARD; return t <= r.linearUntil ? 1 + t * r.perTier : 1 + r.linearUntil * r.perTier + r.lateScale * Math.sqrt(t - r.linearUntil); };
 /**
  * v3.21 경험치 난이도 배율: 난이도 30까지는 v3.11 그대로(체력 배율과 같은 꼴, 원킬하면 성장이 폭증하는 구간), 그 위로는 √로 꺾습니다(10.5 + 1.5√(t−30)).
  * 난이도 55 ×23.6 → ×18, 100 ×63 → ×23, 200 ×223 → ×30. 한 방에 잡는 한 난이도 상한(= 환생 횟수)을 따라 마리당 경험치가 끝없이 커지던 것을 막습니다.
  */
-export const TIER_EXP = { linearUntil: 30, lateScale: 1.5 };
+const TIER_EXP = { linearUntil: 30, lateScale: 1.5 };
 const tierExpEarly = (t: number) => 1 + t * .3 + Math.pow(Math.max(0, t - 20), 2) * .005;
 export const tierExp = (tier: number) => { const t = Math.max(0, tier); return t <= TIER_EXP.linearUntil ? tierExpEarly(t) : tierExpEarly(TIER_EXP.linearUntil) + TIER_EXP.lateScale * Math.sqrt(t - TIER_EXP.linearUntil); };
 /** 처치 보상(골드 배율 적용 전). 전투 보상과 도감 화면 표시가 같은 식을 씁니다. */

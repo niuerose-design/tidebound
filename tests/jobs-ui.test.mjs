@@ -10,10 +10,10 @@ const at = (y, mo, d, h) => Date.UTC(y, mo - 1, d, h - 9); // KST 시각 → UTC
 const job = id => JOBS.find(j => j.id === id);
 
 test('Job UI: every hidden or hidden-unlock job has a one-line hint', () => {
-    const secret = JOBS.filter(ui.secretJob);
+    const secret = JOBS.filter(reveal.secretJob);
     assert.ok(secret.length >= 10);
     for (const j of secret) assert.ok(j.hint && !j.hint.includes('\n') && !j.hint.includes(j.name), `${j.id} hint`);
-    assert.ok(JOBS.filter(j => !ui.secretJob(j) && !j.retired).every(j => ui.jobRevealed(newState(0), j)), 'ordinary jobs are always shown');
+    assert.ok(JOBS.filter(j => !reveal.secretJob(j) && !j.retired).every(j => ui.jobRevealed(newState(0), j)), 'ordinary jobs are always shown');
     assert.ok(JOBS.filter(j => j.retired).every(j => !ui.jobRevealed(newState(0), j)), 'v3.69 retired training jobs are never shown');
 });
 
@@ -86,7 +86,7 @@ test('Job UI v3.166: monostat lineages sit in the 외길 tab and leave their ori
         assert.ok(lineage && ui.lineageInTab(s, tab, lineage), `${j.id} lineage ${lineageOf(j)} listed under ${tab}`);
     }
     const tabs = ui.JOB_TABS.filter(t => t.id !== 'mystery').map(t => t.id);
-    assert.equal(tabs.reduce((a, id) => a + ui.tabJobCount(s, id), 0) + ui.tabJobCount(s, 'mystery') - shown.filter(j => ui.secretJob(j) && j.tree !== 'mystery').length, shown.length, 'tab counts cover every shown job once');
+    assert.equal(tabs.reduce((a, id) => a + ui.tabJobCount(s, id), 0) + ui.tabJobCount(s, 'mystery') - shown.filter(j => reveal.secretJob(j) && j.tree !== 'mystery').length, shown.length, 'tab counts cover every shown job once');
     assert.ok(ui.tabJobCount(s, 'monostat') >= MONOSTAT_LINEAGES.length * 3);
 });
 

@@ -1,6 +1,6 @@
 /** v3.40 연구 구매 예약(승천 1회부터, 설계 14.3). 자동 환생과 함께 automation.ts가 턴마다 부릅니다. */
 import type { State } from '../types';
-import { RESEARCH, researchCost } from '../data/economy';
+import { researchCost, researchById } from '../data/economy';
 import { ascensionPerk } from '../data/ascension';
 import { researchBlock, buyResearch } from './commerce';
 import { addLog } from './state';
@@ -21,7 +21,7 @@ export function runResearchPlan(s: State) {
     if (!plan?.on || !plan.items.length || !ascensionPerk(s, 'researchPlan')) return 0;
     let bought = 0;
     for (const item of plan.items) {
-        const r = RESEARCH.find(x => x.id === item.id);
+        const r = researchById(item.id);
         if (!r) continue;
         while ((s.permanent[item.id] || 0) < Math.min(item.to, r.max)) {
             if (researchBlock(s, item.id)) break;

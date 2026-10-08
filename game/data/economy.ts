@@ -100,6 +100,9 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'drop', name: '보물의 냄새', desc: '장비 드롭 확률 +10%', max: 10, base: 3, step: 3, tab: 'gold', per: .1, unit: 'percent', label: '장비 드롭 확률' },
     { id: 'enhance', name: '대장장이 고용', desc: '강화·옵션 재설정 골드 비용 -2%', max: 15, base: 3, step: 2, tab: 'gold', rebirth: 5, per: .02, unit: 'percent', label: '강화·재설정 비용', negative: true },
 ];
+let researchIndex: Map<string, ResearchDef> | undefined;
+/** 연구 id로 찾기. */
+export const researchById = (id: string | undefined) => id === undefined ? undefined : (researchIndex ??= new Map(RESEARCH.map(r => [r.id, r]))).get(id);
 /**
  * v3.42 21번째 단계(rank 20)부터 가격이 단계마다 ×1.06 복리로 오릅니다. 효과는 그대로입니다.
  * v3.147 46번째 단계(rank 45)부터는 제곱 항 · ×1.06 복리 대신 45단계 가격 × 1.03^n(docs/research-review.md 2.1 · 2.2절, A안).
@@ -107,7 +110,7 @@ export const RESEARCH: ResearchDef[] = [
  */
 export const RESEARCH_GROWTH = { from: 20, rate: 1.06, lateFrom: 45, lateRate: 1.03 } as const;
 /** v3.42 전 가격(기본 + 단계 × 증가분 + 20단계 뒤 제곱 항). 그때 산 단계(researchLegacy)를 재분배할 때 이 가격으로 돌려줍니다. */
-export const researchLegacyCost = (id: string, rank: number) => { const r = RESEARCH.find(x => x.id === id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
+export const researchLegacyCost = (id: string, rank: number) => { const r = researchById(id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
 export const researchCost = (id: string, rank: number): number => {
     const g = RESEARCH_GROWTH;
     if (rank >= g.lateFrom) return Math.round(researchCost(id, g.lateFrom - 1) * Math.pow(g.lateRate, rank - g.lateFrom + 1));

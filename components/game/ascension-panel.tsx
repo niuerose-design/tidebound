@@ -5,7 +5,7 @@ import { ConfirmButton } from './confirm-button';
 import { Meter, format } from './shared';
 import type { PanelProps } from './panel-props';
 import { ASCENSION, ASCENSION_RESEARCH, ascensionOf, ascensionRequirement, ascensionMastery, ascensionVow, lifetimeRebirths } from '@/game/data/ascension';
-import { RESEARCH } from '@/game/data/economy';
+import { researchById } from '@/game/data/economy';
 import { ODDS, oddsPercent } from '@/game/data/odds';
 import { achievementRefund } from '@/game/systems/actions/lifecycle';
 
@@ -14,7 +14,7 @@ export function AscensionPanel({ s, send, busy }: PanelProps) {
     const n = ascensionOf(s), need = ascensionRequirement(s), ready = s.rebirths >= need;
     if (!n && s.rebirths < 50) return null;
     const next = { ...s, ascension: n + 1 }, refund = achievementRefund(s);
-    const auto = Object.entries(ASCENSION_RESEARCH).map(([id, rank]) => `${RESEARCH.find(r => r.id === id)?.name || id}${rank > 1 ? ` ${rank}` : ''}`).join(' · ');
+    const auto = Object.entries(ASCENSION_RESEARCH).map(([id, rank]) => `${researchById(id)?.name || id}${rank > 1 ? ` ${rank}` : ''}`).join(' · ');
     const log = (s.ascensionLog || []).slice(-5).reverse();
     return <section className="panel ascension-panel">
         <div className="rebirth-ready ascension-ready">

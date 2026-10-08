@@ -24,7 +24,6 @@ export type Fighter = {
     mana?: number;
     ranks?: Record<string, number>;
     mastery?: Record<string, number>;
-    practice?: Record<string, number>;
     effects?: StatusEffects;
     /** 무리 사냥 개체의 규모. 자기 최대 체력 비례 공격은 한 마리 체력 기준으로 계산합니다. */
     swarm?: number;
@@ -249,7 +248,7 @@ function skillOf(a: Fighter, id: string) {
     const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
     if (!base) return undefined;
     // v3.104 effectiveSkill은 캐시된 객체를 돌려주므로 복사본에 배율을 곱합니다.
-    const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0);
+    const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0);
     return outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) });
 }
 /** v3.132 계보 밖에서 쓰는 5차 기술: outsiderChance가 있으면 발동률을 그만큼 낮춥니다(포이즌 노바). */
@@ -265,7 +264,7 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
         const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
         if (!base || base.type !== 'active' || base.awaken || blocked.has(id))
             continue;
-        const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0), candidate = outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) });
+        const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0), candidate = outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) });
         // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
         if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)
             continue;

@@ -4,10 +4,9 @@
  */
 import type { State, HackerState, HackerInfil } from '../types';
 import { HACKER, WHITE_HACKER_ID, BLACK_HACKER_ID, ADGUARD_ID, gradeNeed, isHackerJob, programById, type ProgramId } from '../data/hacker';
-import { monthKey } from '../data/goals';
-import { dayKey } from '../data/goals';
 import { canUse, skillMastery } from './progression';
 import { addLog } from './state';
+import { monthKey, dayKey } from '../data/time';
 
 /** v3.25 해커 계열(해커·화이트 해커). 같은 제약(전투 불가, 레벨 정지)을 받습니다. */
 export const isHacker = (s: Pick<State, 'job'>) => isHackerJob(s.job);

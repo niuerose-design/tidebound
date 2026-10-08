@@ -1,10 +1,10 @@
 import type { State } from '../types';
 import { db, type WalletRow } from './db';
 import { ApiError } from './store';
-import { weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { VAULT_PEARL_OUT_WEEKLY, VAULT_ONYX_CAP, type VaultInfo, type VaultOnyx } from '../data/account';
 import { receiveOnyx } from '../systems/onyx-grant';
+import { weekKey } from '../data/time';
 
 /** v25.13 계정 공유 금고. 계정당 요청은 세이브 저장과 함께 직렬로 처리되므로 읽고-쓰기로 충분합니다. */
 const fresh = (account: string, week: string): WalletRow => ({ account_id: account, pearls: 0, essence: 0, week, pearl_out: 0, items: '[]' });

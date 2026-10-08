@@ -2,9 +2,9 @@ import { gearName } from '../data/maple-gear';
 import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { ASCENSION } from '../data/ascension';
-import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap } from '../data/economy';
+import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap, researchById } from '../data/economy';
 import { apCapacity, apUsed, itemKey } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix, ownedItems } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
@@ -41,11 +41,11 @@ function appraiseOnce(s: State, rng: () => number, cost: number, imprint?: strin
     const fixed = imprint ? [rollOption(affixDef(imprint)!, power, rarity, rng, s.level)] : [];
     return syncOrnateName({ ...base, name: gearName(offer.slot, rarity, base.style), rarity, power, affixes: rollAffixes(rarity, power, undefined, rng, fixed, offer.slot, s.level), paid: cost, ...(imprint ? { imprinted: imprint } : {}) });
 }
-export function ownsRelic(s: State, id: string) { return [...s.inventory, ...Object.values(s.equipment)].some(x => x?.relic === id); }
+export function ownsRelic(s: State, id: string) { return ownedItems(s).some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: gearName(o.slot, 1, o.style), slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
 /** v3.40 세계석 연구를 지금 살 수 없는 이유(세계석 부족 제외). 살 수 있으면 null. 연구 구매와 연구 구매 예약이 같은 판정을 씁니다. */
 export function researchBlock(s: State, id: string) {
-    const r = RESEARCH.find(x => x.id === id), rank = s.permanent[id] || 0;
+    const r = researchById(id), rank = s.permanent[id] || 0;
     if (!r || rank >= r.max)
         return '연구 한도를 확인하세요.';
     if (rank >= researchMaxFor(s, r))
@@ -61,7 +61,7 @@ export function researchBlock(s: State, id: string) {
 export function buyResearch(s: State, id: string) {
     const block = researchBlock(s, id);
     if (block) throw Error(block);
-    const r = RESEARCH.find(x => x.id === id)!, rank = s.permanent[id] || 0, cost = researchCost(id, rank);
+    const r = researchById(id)!, rank = s.permanent[id] || 0, cost = researchCost(id, rank);
     if (s.pearls < cost)
         throw Error('세계석이 부족합니다.');
     s.pearls -= cost;
@@ -211,7 +211,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         return `${RARITIES[rarity].name} ${items.length}개 일괄판매 · +${gold} G${primalGaugeNote(s, gauge)}`;
     }
     if (a.type === 'enhance' || a.type === 'reforge' || a.type === 'refine') {
-        const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        const item = ownedItems(s).find(x => x?.id === id);
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
         if (a.type === 'enhance') {
@@ -325,7 +325,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         // v3.7 자동 강화(세계석 연구 autoStar): value = '목표 별:골드 한도:safeguard(1/0)'. 목표에 닿거나 한도·골드가 모자라거나 파괴되면 멈추고 한 줄로 요약합니다.
         if (!researchRank(s, 'autoStar'))
             throw Error('세계석 연구 ‘자동 강화’가 필요합니다.');
-        const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        const item = ownedItems(s).find(x => x?.id === id);
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
         const [targetText, capText, guardText] = String(a.value || '').split(':');
@@ -353,7 +353,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     }
     if (a.type === 'levelUp') {
         // v3.5 장비 레벨 올리기(+10, 내 레벨까지). 위력이 오르고 별은 0으로 돌아갑니다.
-        const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        const item = ownedItems(s).find(x => x?.id === id);
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
         const next = levelUpTarget(item, s);
@@ -366,7 +366,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     }
     if (a.type === 'imprintRelic') {
         // v3.3 옵션 이식: value = '소비 장비 id:옵션 번호:이식 칸(0~2)'. 같은 부위의 가방 장비 하나를 소비해 그 옵션 한 줄을 유물에 새깁니다(골드, 덮어쓰기 가능, 환생 유지).
-        const relic = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        const relic = ownedItems(s).find(x => x?.id === id);
         if (!relic?.relic)
             throw Error('유물을 찾을 수 없습니다.');
         const [sourceId, indexText, slotText] = String(a.value || '').split(':');
@@ -399,7 +399,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     }
     if (a.type === 'removeImprint') {
         // v3.82 이식 옵션 지우기: value = 칸 번호(0~2). 무료이고 되돌릴 수 없습니다(그 칸은 비고, 다시 이식할 수 있음).
-        const relic = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        const relic = ownedItems(s).find(x => x?.id === id);
         if (!relic?.relic)
             throw Error('유물을 찾을 수 없습니다.');
         const index = Number(a.value);
@@ -411,7 +411,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     }
     if (a.type === 'gearReset') {
         // v3.118 비용 초기화: 원시 고대 · 계승 태초 · 칠흑만. 세계석으로 재련 · 재설정 횟수를 0으로 되돌리고, 별은 0, 추가 옵션은 새로 굴려 최고 수치로(칠흑 고유 옵션은 그대로).
-        const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        const item = ownedItems(s).find(x => x?.id === id);
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
         if (!canResetGear(item))
@@ -430,7 +430,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     }
     if (a.type === 'awaken' || a.type === 'inheritPrimal') {
         // v3.66 계승: 원시 각성(고대, 정수) · 태초 계승(태초, 분해 게이지). 옵션 수치는 최고 굴림으로 고정되고, 환생해도 남으며 위력이 환생마다 오릅니다.
-        const item = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.id === id);
+        const item = ownedItems(s).find(x => x?.id === id);
         const kind = a.type === 'awaken' ? 'ancient' : 'primal', rarity = kind === 'ancient' ? 5 : 6;
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
@@ -450,7 +450,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             s.primalGauge = (s.primalGauge || 0) - PRIMAL_INHERIT.gauge;
         }
         // 부위마다 종류별 1개: 같은 부위의 예전 계승 장비는 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐).
-        const old = [...s.inventory, ...Object.values(s.equipment)].find(x => x && x !== item && x.heir === kind && x.slot === item.slot);
+        const old = ownedItems(s).find(x => x && x !== item && x.heir === kind && x.slot === item.slot);
         if (old) { delete old.heir; const was = old.power; old.power = Math.round((old.level + 2) * RARITIES[old.rarity].factor); if (old.affixes && was > 0) old.affixes = old.affixes.map(x => rescaleAffix(x, old.power / was, old.level, old.level)); }
         item.heir = kind; item.locked = true;
         if (item.affixes) item.affixes = item.affixes.map(x => refineOption(x, item.power, item.rarity, () => 1, item.level));

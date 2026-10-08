@@ -8,7 +8,7 @@ import type { State, Snapshot, Stats, CombatStats, Skill } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
-import { RESEARCH, researchRank, MANA_RESEARCH_PER } from '../data/economy';
+import { researchRank, MANA_RESEARCH_PER, researchById } from '../data/economy';
 import { roughReward, roughGear, roughHeal, restraintExp, vowBadges } from './vows';
 import { sproutExp, sproutCount } from '../data/sprout';
 import { ascensionEarlyExp } from '../data/ascension';
@@ -17,7 +17,7 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, refinePractices, extraRollLevel } from './progression';
+import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, extraRollLevel } from './progression';
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
@@ -30,7 +30,7 @@ const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)',
 const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', mana: 'mana', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
 /** 능력치 분해의 원인 이름. 세계석 연구는 해당 연구 이름까지 붙입니다(예: 세계석 연구 · 마법력 강화 I). */
 export function statSourceLabel(k: keyof CombatStats, source: StatSource) {
-    const name = source === 'research' ? RESEARCH.find(r => r.id === RESEARCH_BY_STAT[k])?.name : undefined;
+    const name = source === 'research' ? researchById(RESEARCH_BY_STAT[k])?.name : undefined;
     return name ? `${STAT_SOURCE_LABELS.research} · ${name}` : STAT_SOURCE_LABELS[source];
 }
 /** 원인별 증감 기록. factor는 배율로 적용된 경우의 배율입니다. */
@@ -276,7 +276,7 @@ export function powerParts(v: Stats) {
     return { offense, durability, critFactor, hit, pierce, armor, dodge };
 }
 export function power(v: Stats) { const p = powerParts(v); return Math.round(POWER_SCALE * Math.pow(p.offense, POWER_WEIGHT.offense) * Math.pow(p.durability, POWER_WEIGHT.durability)); }
-export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillPractice: refinePractices(s), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
+export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
 /** 마법 직업이면 1(기본 공격이 항상 마력 평타), 아니면 0. */
 export const arcaneStrikeChance = (j: { magic: number; attack: number; tier: number }) => j.magic - j.attack >= .045 ? SKILL_FORMULA.arcaneStrikeChance[Math.min(j.tier, SKILL_FORMULA.arcaneStrikeChance.length - 1)] || 0 : 0;
 /** 직업의 물리 방어 배율로 정하는 방어 친화도(0.2~1). 방어 비례 피해·반격의 효율입니다. */

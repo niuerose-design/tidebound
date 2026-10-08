@@ -7,9 +7,9 @@ import { ConfirmButton } from './confirm-button';
 import { HACKER, PRIVACY_FIELDS, PRIVACY_LABELS, PROGRAMS, gradeNeed, isHackerJob, type PrivacyField } from '@/game/data/hacker';
 import { entriesCap, gradeTotal, adguardLevel, memoryCap, memoryUsed, traceKeep, hackCost, hackCap, botnetOn } from '@/game/systems/hacker';
 import { JOBS } from '@/game/data/classes';
-import { STAGES, DUNGEONS } from '@/game/data/world';
-import { BLESSINGS, RAIDS } from '@/game/data/altar';
-import { dayKey, weekKey } from '@/game/data/goals';
+import { STAGES, DUNGEONS, stageById, dungeonById } from '@/game/data/world';
+import { BLESSINGS, RAIDS, raidById } from '@/game/data/altar';
+import { dayKey, weekKey } from '@/game/data/time';
 
 const ROMAN = 'I II III IV V VI VII VIII IX X'.split(' ');
 
@@ -25,7 +25,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
     const infil = h.infil, next = HACKER.tiers[h.tier], n = h.tier, leaks = h.leaks || [];
     const run = (id: string, value?: string) => send({ type: 'hackRun', id, ...(value !== undefined ? { value } : {}) }, '/api/hack');
     const events = s.hackFeed?.events || [], feedDown = s.hackFeed?.down || [];
-    const [tamper, setTamper] = useState({ id: '', time: '+', rate: '+' }), [place, setPlace] = useState(PLACES[0].value), [gauge, setGauge] = useState(GAUGES[0].id), [restore, setRestore] = useState('');
+    const [tamper, setTamper] = useState({ id: '', time: '+', rate: '+' }), [place, setPlace] = useState(PLACE_OPTIONS[0].value), [gauge, setGauge] = useState(GAUGES[0].id), [restore, setRestore] = useState('');
     const downMinutes = Math.round(HACKER.down.minutes(n) * (h.loadout?.includes('exploitKit') ? 1.2 : 1));
     const targets = [...(s.hackFeed?.broadcast ? [{ value: 'broadcast', label: `방송 탈취 · ${s.hackFeed.broadcast.by}` }] : []), ...(s.hackFeed?.ddos ? [{ value: 'ddos', label: `DDoS · ${s.hackFeed.ddos.by}` }] : []), ...feedDown.map(d => ({ value: `down:${d.kind}:${d.id}`, label: `서버 다운 · ${placeLabel(d.kind, d.id)} · ${d.by}` })), ...events.filter(e => e.tampered).map(e => ({ value: `tamper:${e.id}`, label: `이벤트 변조 · ${e.name}` })), ...(s.hackFeed?.masks || []).filter(m => !m.mine).map(m => ({ value: `mask:${m.target}`, label: `신원 조작 · ${m.target} · ${m.by}` }))];
     const myMasks = (s.hackFeed?.masks || []).filter(m => m.mine);
@@ -125,7 +125,7 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
                 {n >= 6 && <div className="hack-card">
                     <b>패킷 가로채기 · VI</b>
                     <small>떠 있는 월드보스 하나에 걸어 둡니다. 그 보스가 쓰러지면 격파 보상 가치(골드/1,000 + 세계석×40 + SP×400)의 {Math.round(HACKER.intercept.share(n) * 100)}%를 비트로 받고, 쓰러지지 않고 떠나면 아무것도 받지 못합니다. 하루 {cap2(HACKER.intercept.perDay())}회 · 비트 {cost(HACKER.intercept.bits)}</small>
-                    {h.intercept ? <div className="hack-form"><small>걸어 둔 보스: {RAIDS.find(r => r.id === h.intercept!.raid)?.name || h.intercept.raid}{raids.some(r => r.id === h.intercept!.raid && r.gen === h.intercept!.gen) ? ' · 아직 싸우는 중' : ''}</small><button className="primary" disabled={busy} onClick={() => run('interceptClaim')}>정산</button></div>
+                    {h.intercept ? <div className="hack-form"><small>걸어 둔 보스: {raidById(h.intercept!.raid)?.name || h.intercept.raid}{raids.some(r => r.id === h.intercept!.raid && r.gen === h.intercept!.gen) ? ' · 아직 싸우는 중' : ''}</small><button className="primary" disabled={busy} onClick={() => run('interceptClaim')}>정산</button></div>
                         : raids.length ? <div className="hack-form"><RaidSelect raids={raids} value={raid?.id || ''} onChange={setRaidPick}/><button className="primary" disabled={busy || busted || (used.intercept || 0) >= cap2(HACKER.intercept.perDay()) || h.bits < cost(HACKER.intercept.bits)} onClick={() => raid && run('intercept', raid.id)}>가로채기</button></div> : <small>지금 떠 있는 월드보스가 없습니다.</small>}
                 </div>}
                 {n >= 7 && <div className="hack-card">
@@ -217,11 +217,11 @@ export function Hacker({ s, send, busy, setView }: PanelProps) {
     </>;
 }
 
-const placeLabel = (kind: string, id: string) => (kind === 'stage' ? STAGES.find(st => st.id === id)?.name : DUNGEONS.find(d => d.id === id)?.name) || id;
+const placeLabel = (kind: string, id: string) => (kind === 'stage' ? stageById(id)?.name : dungeonById(id)?.name) || id;
 /** v3.25 서버 다운·패치 대상(첫 사냥터 제외). */
-const PLACES = [...STAGES.slice(1).map(st => ({ value: `stage:${st.id}`, label: `사냥터 · ${st.name}` })), ...DUNGEONS.map(d => ({ value: `dungeon:${d.id}`, label: `던전 · ${d.name}` }))];
+const PLACE_OPTIONS = [...STAGES.slice(1).map(st => ({ value: `stage:${st.id}`, label: `사냥터 · ${st.name}` })), ...DUNGEONS.map(d => ({ value: `dungeon:${d.id}`, label: `던전 · ${d.name}` }))];
 function PlaceSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-    return <select value={value} onChange={e => onChange(e.target.value)} aria-label="사냥터·던전">{PLACES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}</select>;
+    return <select value={value} onChange={e => onChange(e.target.value)} aria-label="사냥터·던전">{PLACE_OPTIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}</select>;
 }
 /** v3.25 백도어 대상: 축복 · 신 소환 · 월드보스 게이지. */
 const GAUGES = [...BLESSINGS.map(b => ({ id: b.id as string, name: b.name })), { id: 'god', name: '신 소환' }, ...RAIDS.map(r => ({ id: r.id as string, name: `${r.name} 소환` }))];

@@ -1,7 +1,7 @@
 import type { Enemy, Skill, State } from '../types';
 import { accountMastery } from '../data/account';
 import { rankPerkLevel } from '../data/rank';
-import { FISH } from '../data/world';
+import { fishById } from '../data/world';
 import { skillById } from '../data/skills';
 import { PROGRESSION } from '../data/progression';
 import { researchRank } from '../data/economy';
@@ -12,7 +12,7 @@ import { equippedAffixTotal } from './equipment';
 export function masteryConditionText(sk: Skill) {
     const rule = sk.masteryGain;
     if (!rule) return '';
-    const names = rule.enemyIds?.map(id => FISH.find(f => f.id === id)?.name || id).join(' · ');
+    const names = rule.enemyIds?.map(id => fishById(id)?.name || id).join(' · ');
     return names ? `${names}${rule.bossOnly ? ' (보스)' : ''}` : rule.bossOnly ? '모든 보스' : '모든 적';
 }
 
@@ -34,7 +34,7 @@ export function researchMastery(s: State, practice: number) {
 }
 /** A victory is always one catch. Bonuses change mastery, never codex counts or SP. */
 export function victoryMastery(s: State, enemy: Pick<Enemy, 'id' | 'boss'>) {
-    const boss = enemy.boss || FISH.some(f => f.id === enemy.id && f.boss);
+    const boss = enemy.boss || !!fishById(enemy.id)?.boss;
     let bonus = 0, source = '';
     for (const id of new Set(s.skills)) {
         const sk = skillById(id), rule = sk?.masteryGain;

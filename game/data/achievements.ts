@@ -1,7 +1,7 @@
 import type { State } from '../types';
-import { PLACES as STAGES, PLAIN_DUNGEONS as DUNGEONS, DUNGEONS as ALL_DUNGEONS, FISH } from './world';
-import { JOBS } from './classes';
-import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedRegions, extremeBroken } from '../systems/progression';
+import { BASE_STAGES, PLAIN_DUNGEONS, FISH, dungeonById } from './world';
+import { JOBS, jobById } from './classes';
+import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedStages, extremeBroken } from '../systems/progression';
 import { MIMIC } from './mimic';
 import { EXP_NURI } from './exp-nuri';
 import { ESSENCE_SLIME } from './essence-slime';
@@ -42,17 +42,17 @@ const onyxOwned = (s: State) => ownedOnyx(s).size;
 const sf = (s: State) => s.starforce || { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
 const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
 const variants = (s: State) => Object.values(s.variantBook || {}).reduce((a, row) => a + sum(row as Record<string, number>), 0);
-const dungeonsAt = (n: number) => (s: State) => DUNGEONS.filter(d => (s.clears?.[d.id] || 0) >= n).length;
+const dungeonsAt = (n: number) => (s: State) => PLAIN_DUNGEONS.filter(d => (s.clears?.[d.id] || 0) >= n).length;
 const bestEnhance = (s: State) => Math.max(0, ...Object.values(s.equipment || {}).map(i => i?.enhance || 0));
 /** v27.81 헬·나이트메어 정복 기록(encounter가 modeClears에 쌓음). */
 const modeClears = (mode: DungeonMode) => (s: State) => sum(s.modeClears?.[mode]);
 const modeDungeons = (mode: DungeonMode) => (s: State) => Object.values(s.modeClears?.[mode] || {}).filter(n => (n || 0) > 0).length;
-const MODE_DUNGEONS = DUNGEONS.filter(d => d.id !== 'abyss').length;
+const MODE_DUNGEONS = PLAIN_DUNGEONS.filter(d => d.id !== 'abyss').length;
 const modeName = (mode: DungeonMode) => DUNGEON_MODES.find(m => m.id === mode)!.name;
 /** v27.81 계급 업적: 계급 경험치(세어진 처치 수)가 그 계급의 누적 필요치에 닿으면 달성합니다. */
 const RANK_STEPS = ['pvt1', 'sgt', 'ssg', 'smaj', 'lt2', 'maj', 'bg', 'ltg'] as const;
 const rankAchievements: Achievement[] = RANK_STEPS.map((id, i) => { const index = RANKS.findIndex(r => r.id === id), r = RANKS[index]; return { id: `rank:${id}`, group: '계급' as const, title: `${r.name} 진급`, desc: `계급 ${r.name}에 오릅니다(세어진 처치 ${RANK_CUMULATIVE[index].toLocaleString()}마리).`, reward: [{ pearls: 2 }, { pearls: 4 }, { pearls: 6 }, { pearls: 10, sp: 1 }, { pearls: 12 }, { pearls: 15, ap: 1 }, { pearls: 25, sp: 1 }, { pearls: 40, ap: 1, sp: 1 }][i], progress: s => rankState(s).exp, target: RANK_CUMULATIVE[index] }; });
-const tiers = (s: State) => Math.max(0, ...(s.unlockedJobs || []).map(id => JOBS.find(j => j.id === id)?.tier || 0));
+const tiers = (s: State) => Math.max(0, ...(s.unlockedJobs || []).map(id => jobById(id)?.tier || 0));
 
 const series = (prefix: string, group: Achievement['group'], title: (n: number) => string, desc: (n: number) => string, steps: number[], progress: (s: State) => number, reward: (i: number) => AchievementReward): Achievement[] =>
     steps.map((n, i) => ({ id: `${prefix}:${n}`, group, title: title(n), desc: desc(n), reward: reward(i), progress, target: n }));
@@ -60,7 +60,7 @@ const series = (prefix: string, group: Achievement['group'], title: (n: number) 
 /** v3.38 던전 첫 정복 SP. 업적 id는 firstClear:던전 id. */
 export const FIRST_CLEAR_SP: Record<string, number> = { grotto: 1, kelpCatacomb: 1, cemetery: 1, caldera: 1, temple: 2, starSanctum: 2, ventCathedral: 3, abyss: 2 };
 const PLAIN_FIRST_CLEAR = Object.entries(FIRST_CLEAR_SP);
-const DUNGEON_NAME = (id: string) => ALL_DUNGEONS.find(d => d.id === id)?.name || id;
+const DUNGEON_NAME = (id: string) => dungeonById(id)?.name || id;
 
 /** v3.104 진행도 읽기(progressReader) 한 번 동안은 상태가 그대로이므로, 능력치를 쓰는 업적(최대 체력 · 최대 마나)이 능력치를 한 번만 계산합니다. */
 type StatsRead = { s: State; a?: ReturnType<typeof stats> };
@@ -69,11 +69,11 @@ const readStats = (s: State) => reading?.s === s ? (reading.a ??= stats(s)) : st
 export const ACHIEVEMENTS: Achievement[] = [
     ...series('kills', '사냥', n => `처치 ${n.toLocaleString()}마리`, n => `누적 ${n.toLocaleString()}마리를 처치합니다.`, [100, 1000, 5000, 20000, 100000, 500000], kills, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 4 }, { pearls: 8 }, { pearls: 15, ap: 1 }, { pearls: 30, sp: 1 }][i]),
     ...series('codex', '모험', n => `도감 ${n}종`, n => `서로 다른 몬스터 ${n}종을 발견합니다.`, [10, 20, 30, 47, CODEX_FISH.length], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 15, sp: 1 }][i]),
-    ...series('stages', '모험', n => `사냥터 ${n}곳`, n => `사냥터 ${n}곳에서 사냥합니다.`, [3, 6, 9, STAGES.length], s => STAGES.filter(st => s.voyage?.[`stage:${st.id}`] !== undefined).length, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6 }, { pearls: 10, ap: 1 }][i]),
+    ...series('stages', '모험', n => `사냥터 ${n}곳`, n => `사냥터 ${n}곳에서 사냥합니다.`, [3, 6, 9, BASE_STAGES.length], s => BASE_STAGES.filter(st => s.voyage?.[`stage:${st.id}`] !== undefined).length, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6 }, { pearls: 10, ap: 1 }][i]),
     ...series('clears', '던전', n => `던전 정복 ${n}회`, n => `던전을 ${n}회 정복합니다(무릉도장 포함).`, [1, 10, 50, 200, 1000], clears, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 5 }, { pearls: 8 }, { pearls: 15, ap: 1 }][i]),
     ...series('bosses', '던전', n => `보스 ${n.toLocaleString()}마리`, n => `던전 보스를 ${n.toLocaleString()}마리 처치합니다.`, [10, 100, 500, 2000], bosses, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }, { pearls: 20, sp: 1 }][i]),
     ...series('duels', '사냥', n => `결투 승리 ${n}회`, n => `랭크 결투에서 ${n}번 이깁니다.`, [10, 100, 500], s => s.wins || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, ap: 1 }][i]),
-    ...series('dungeons', '던전', n => `던전 ${n}곳 정복`, n => `서로 다른 던전 ${n}곳을 정복합니다.`, [3, 5, 7, DUNGEONS.length], s => DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).length, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 15, ap: 1 }][i]),
+    ...series('dungeons', '던전', n => `던전 ${n}곳 정복`, n => `서로 다른 던전 ${n}곳을 정복합니다.`, [3, 5, 7, PLAIN_DUNGEONS.length], s => PLAIN_DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).length, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 15, ap: 1 }][i]),
     ...series('mastered', '숙련', n => `직업 숙달 ${n}개`, n => `직업 ${n}개를 끝까지 숙달합니다.`, [1, 3, 8, 15, 30], masteredJobCount, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, ap: 1 }, { pearls: 12 }, { pearls: 20, ap: 1, sp: 1 }][i]),
     ...series('skillsMax', '숙련', n => `스킬 최대 숙련 ${n}개`, n => `스킬 ${n}개의 실전 숙련을 8,000 이상 쌓습니다.`, [1, 5, 15, 40, 80], masteredSkills, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 20 }, { pearls: 30, sp: 1 }][i]),
     ...series('tier', '숙련', n => `${n}차 전직`, n => `${n}차 직업에 처음 전직합니다.`, [2, 3, 4, 5], tiers, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6 }, { pearls: 10, ap: 1 }][i]),
@@ -114,7 +114,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('level', '모험', n => `Lv.${n}`, n => `최고 레벨 ${n}에 도달합니다(환생 전 기록 포함).`, [30, 50, 70, 85, 100], s => s.peakLevel || s.level, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 12, ap: 1 }, { pearls: 25, sp: 1 }][i]),
     ...series('items', '모험', n => `물건도감 ${n}종`, n => `물건도감에 장비 ${n}종(부위 × 등급)을 등록합니다.`, [8, 16, 28], s => Object.keys(s.itemBook || {}).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     // v3.38 장소 완성 장착 AP(곳마다 +1). 1·4·14곳만 보상 업적, 나머지 단계는 명예 업적(칭호, 업적 보너스 집계 제외).
-    ...series('regions', '모험', n => `지역 연구 ${n}곳 완성`, n => `사냥터 ${n}곳의 모든 몬스터 도감을 완성합니다.`, STAGES.map((_, i) => i + 1), s => completedRegions(s).length, i => i === 0 ? { pearls: 2, ap: 1 } : i === 3 ? { pearls: 6, ap: 1 } : i === STAGES.length - 1 ? { pearls: 12, sp: 1, ap: 1 } : { ap: 1 }).map(a => [1, 4, STAGES.length].includes(a.target) ? a : { ...a, honor: true }),
+    ...series('regions', '모험', n => `지역 연구 ${n}곳 완성`, n => `사냥터 ${n}곳의 모든 몬스터 도감을 완성합니다.`, BASE_STAGES.map((_, i) => i + 1), s => completedStages(s).length, i => i === 0 ? { pearls: 2, ap: 1 } : i === 3 ? { pearls: 6, ap: 1 } : i === BASE_STAGES.length - 1 ? { pearls: 12, sp: 1, ap: 1 } : { ap: 1 }).map(a => [1, 4, BASE_STAGES.length].includes(a.target) ? a : { ...a, honor: true }),
     ...series('golden', '사냥', n => `황금 개체 ${n}마리`, n => `황금 개체를 ${n}마리 처치합니다.`, [1, 10, 100], goldens, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('variants', '사냥', n => `변종 ${n.toLocaleString()}마리`, n => `거대·심연·별빛·무리 변종을 ${n.toLocaleString()}번 처치합니다.`, [10, 100, 1000], variants, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('mimic', '사냥', n => `숙련의 까미 ${n}마리`, n => `숙련의 까미를 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[MIMIC.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
@@ -128,8 +128,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'extremeBreak', honor: true, group: '숙련' as const, title: '극한돌파', desc: '액티브 스킬 하나를 극한돌파합니다. 극한돌파시 운영자에게 문의해주세요.', reward: {}, progress: (s: State) => Object.keys(s.skillPractice || {}).some(id => extremeBroken(s, id)) ? 1 : 0, target: 1 },
     // v3.38 던전 첫 정복 SP 업적.
     ...PLAIN_FIRST_CLEAR.map(([id, sp]) => ({ id: `firstClear:${id}`, group: '던전' as const, title: `${DUNGEON_NAME(id)} 첫 정복`, desc: `${DUNGEON_NAME(id)}을(를) 처음 정복합니다.`, reward: { sp }, progress: (s: State) => (s.clears?.[id] || 0) > 0 ? 1 : 0, target: 1 })),
-    ...series('dungeonsTen', '던전', n => `던전 ${n}곳 10회 정복`, n => `서로 다른 던전 ${n}곳을 각각 10번 이상 정복합니다.`, [3, DUNGEONS.length], dungeonsAt(10), i => [{ pearls: 5 }, { pearls: 12, sp: 1 }][i]),
-    ...series('dungeonsHundred', '던전', n => `던전 ${n}곳 100회 정복`, n => `서로 다른 던전 ${n}곳을 각각 100번 이상 정복합니다.`, [1, DUNGEONS.length], dungeonsAt(100), i => [{ pearls: 5 }, { pearls: 20, ap: 1, sp: 1 }][i]),
+    ...series('dungeonsTen', '던전', n => `던전 ${n}곳 10회 정복`, n => `서로 다른 던전 ${n}곳을 각각 10번 이상 정복합니다.`, [3, PLAIN_DUNGEONS.length], dungeonsAt(10), i => [{ pearls: 5 }, { pearls: 12, sp: 1 }][i]),
+    ...series('dungeonsHundred', '던전', n => `던전 ${n}곳 100회 정복`, n => `서로 다른 던전 ${n}곳을 각각 100번 이상 정복합니다.`, [1, PLAIN_DUNGEONS.length], dungeonsAt(100), i => [{ pearls: 5 }, { pearls: 20, ap: 1, sp: 1 }][i]),
     ...series('gold', '도전', n => `보유 골드 ${n.toLocaleString()}`, n => `골드를 ${n.toLocaleString()} 이상 모읍니다.`, [1e6, 1e8, 1e10], s => s.gold || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, sp: 1 }][i]),
     ...series('enhance', '도전', n => `강화 +${n}`, n => `장착한 장비 하나를 +${n} 이상 강화합니다.`, [5, 10, 12], bestEnhance, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('god', '도전', n => `신 처치 ${n}회`, n => `제단에서 깨어난 신을 ${n}번 쓰러뜨립니다.`, [1, 10], s => s.altar?.wins || 0, i => [{ pearls: 10, sp: 1 }, { pearls: 30, ap: 1 }][i]),

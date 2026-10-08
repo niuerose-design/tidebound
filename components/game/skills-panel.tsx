@@ -1,5 +1,4 @@
 'use client';
-
 import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { PROGRESSION } from '@/game/data/progression';
@@ -7,7 +6,7 @@ import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from 're
 import { ArrowDown, ArrowUp, Eye, EyeOff, GripVertical, Info, Pin, Search } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
-import { JOBS, jobById } from '@/game/data/classes';
+import { JOBS, jobById, BASE_JOB } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
 import { lineage, refinePractice, extremeBreakTarget, extremeBroken, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason, skillExclusiveLabel, exclusiveAccess, limitBreakOf, limitBreakOwned, limitBreakNext, passiveGrowthBonus } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon, Fold } from './shared';
@@ -15,12 +14,11 @@ import { hanjaReading } from '@/game/systems/skill-description';
 import { masteryConditionText } from '@/game/systems/mastery';
 import { recommendLoadout } from '@/game/systems/loadout';
 import { extraRollLevel } from '@/game/systems/progression';
-import { researchRank, RESEARCH } from '@/game/data/economy';
+import { researchRank, researchById } from '@/game/data/economy';
 import { SKILL_FORMULA } from '@/game/data/balance';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { skillGrowthStages, skillEffectLines, skillBonusText, skillPercent, skillBrief, skillExtraNotes } from '@/game/systems/skill-description';
-
-import { ENEMY_SKILLS } from '@/game/data/encounters';
+import { enemySkillById } from '@/game/data/encounters';
 
 
 
@@ -39,12 +37,12 @@ const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned 
     const practice = s.skillPractice[sk.id] || 0, mastery = skillMastery(s, sk.id);
     const level = skillLevel(sk, rank || 1, mastery), max = maxSkillLevel(sk), milestones = masteryMilestonesFor(sk);
     const nextMastery = milestones[mastery], nextGrowth = milestones[level];
-    const effective = effectiveSkill(sk, rank || 1, mastery, refinePractice(s, sk.id)), cost = effective.cost ?? 2;
+    const effective = effectiveSkill(sk, rank || 1, mastery), cost = effective.cost ?? 2;
     const equipped = s.skills.includes(sk.id), usable = canUse(s, sk.id), isInherited = inherited(s, sk.id);
     const paidInheritance = !!s.skillInheritances[sk.id];
     const unlockText = sk.unlockAfter && skillMastery(s, sk.unlockAfter.skill) < sk.unlockAfter.level ? `${skillById(sk.unlockAfter.skill)?.name || ''} 숙련 Lv.${sk.unlockAfter.level} 필요` : !skillUnlockReady(s, sk) ? `직업 숙련 ${sk.unlockJobMastery!.toLocaleString()} 필요` : sk.job !== s.job ? '전직 필요' : s.rebirths < (sk.rebirth || 0) ? `환생 ${sk.rebirth}회 필요` : `Lv.${sk.level}에 자동 해금`;
     const inheritanceText = !acquired ? unlockText : !sk.job ? '공용' : isInherited ? (mastery > 0 ? '숙련 계승' : 'SP 계승') : sk.job === s.job ? '현재 직업 전용' : '계승 필요';
-    const hint = skillRankHint(sk, rank || 1, mastery, refinePractice(s, sk.id));
+    const hint = skillRankHint(sk, rank || 1, mastery);
     const effects = skillEffectLines(effective, level);
     // v3.5 간단히 보기: 고정 효과 + 누적·환생 비례 수치(지금 기준)를 칩으로 합치고, 칩으로 못 담는 조건은 ‘기타’ 칸에 모읍니다.
     const growthNow = sk.type === 'passive' ? passiveGrowthBonus(s, sk) : {}, growing = new Set(Object.keys(growthNow));
@@ -73,7 +71,7 @@ const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned 
         {detailed && <div className="skill-level-line"><strong>{acquired ? `성장 Lv.${level}` : '미해금'} <small>/ 최대 {max}{lb > 0 ? ` · 한계돌파 ${lb}단계` : ''}{acquired ? ` · SP Lv.${Math.min(max, Math.max(0, rank - 1))} · 숙련 Lv.${Math.min(max, mastery - lb)} 중 높은 값` : ''}</small></strong>{!acquired && <span>{inheritanceText}</span>}<TooltipProvider><Tooltip><TooltipTrigger asChild><button type="button" className="info-trigger" aria-label={`${sk.name} 현재 효과와 다음 강화`}><Info size={16}/></button></TooltipTrigger><TooltipContent className="game-tooltip"><strong>성장 Lv.{level} / {max}</strong><p>{effects.join(' · ')}</p><p>다음 강화: {hint}</p></TooltipContent></Tooltip></TooltipProvider></div>}
         {!detailed && <><p className="skill-current-description">{sk.disguise || sk.desc || skillBrief(sk)}</p></>}{sk.id === 'rareSense' && <p className="skill-specific-note">몬스터 출현률과 장비 등급 확률은 바뀌지 않습니다.</p>}
         {sk.unlockJobMastery && (detailed || !acquired) && <div className="skill-unlock-note">최초 해금: {jobById(sk.job)?.name} 숙련도 <b>{(s.jobMastery[sk.job!] || 0).toLocaleString()} / {sk.unlockJobMastery.toLocaleString()}</b><small>해금 전에는 SP로 구매·계승할 수 없습니다.</small></div>}
-        {detailed && (sk.sourceEnemySkill && <div className="skill-origin">몬스터 원형: {ENEMY_SKILLS.find(x => x.id === sk.sourceEnemySkill)?.name}</div>)}
+        {detailed && (sk.sourceEnemySkill && <div className="skill-origin">몬스터 원형: {enemySkillById(sk.sourceEnemySkill)?.name}</div>)}
         {detailed && sk.masteryGain && <div className="skill-unlock-note"><b>대상 처치 시 숙련 ×{1 + masteryGainBonus(sk, level)}</b><span>{masteryConditionText(sk)}</span><small>현재 직업·장착 스킬에 적용 · 가장 높은 보너스 하나만 · 최대 ×10</small></div>}
         {detailed && <Meter value={Math.min(practice, nextMastery || milestones[max - 1])} max={nextMastery || milestones[max - 1]} label={level >= max ? '실전 숙련 · 최대 성장 완료' : `실전 숙련 · Lv.${level + 1}까지 ${Math.max(0, nextGrowth - practice).toLocaleString()} 남음 (또는 1 SP)`}/>}
         {!detailed && <div className="skill-brief-stats"><span className={sk.awaken ? 'skill-awaken-chip' : undefined}>{sk.type === 'active' ? (sk.awaken ? '각성 · 턴마다' : '액티브') : '패시브'}</span><span className={cost < 0 ? 'ap-gain' : ''}>장착 AP {cost}{cost < 0 ? ` · 여유 +${-cost}` : ''}</span>{sk.exclusiveLineage && <span className="skill-exclusive-chip" title="이 계보 직업일 때만 장착 · 효과. 계승해도 다른 계보에서는 못 씁니다.">{skillExclusiveLabel(sk)}</span>}{sk.type === 'active' && <><span>발동 {skillPercent(effective.chance)}</span>{sk.hpCost ? <span>체력 {Math.round(sk.hpCost * 100)}%</span> : sk.manaBurn ? <span>마나 {Math.round(sk.manaBurn * 100)}% 연소</span> : <span>마나 {effective.manaCost ?? 0}</span>}</>}{sk.type === 'passive' && Object.entries(passiveChips).map(([key, n]) => <span className={`${n < 0 ? 'negative' : ''} ${growing.has(key) ? 'skill-chip-growing' : ''}`} key={key} title={growing.has(key) ? '누적·환생 비례 수치 포함(지금 기준)' : undefined}>{skillBonusText(key, n)}</span>)}{extraNotes.length > 0 && <span className="skill-chip-extra" title={extraNotes.join('\n')}><b>기타</b>{extraNotes.map(x => <small key={x}>{x}</small>)}</span>}</div>}
@@ -154,7 +152,7 @@ export function Skills({ s, send, busy }: PanelProps) {
     const groupOf = (sk: Skill) => !sk.job ? { key: 'common', order: line.length + 1, name: '공용' } : sk.job === s.job ? { key: sk.job, order: 0, name: `${currentJob.name} · 현재 직업` } : line.includes(sk.job) ? { key: sk.job, order: line.indexOf(sk.job), name: `${jobById(sk.job)?.name} · 선행 직업` } : { key: sk.job, order: line.length + 2, name: `${jobById(sk.job)?.name} · 계승` };
     // v3.93 검색은 입력을 늦춰 반영하고(useDeferredValue), 검색 대상 문구(이름 · 설명 · 직업 · 효과)는 검색 중일 때 상태가 바뀔 때만 한 번 만듭니다.
     const q = useDeferredValue(query).trim().toLowerCase(), searching = q.length > 0;
-    const corpus = useMemo(() => searching ? new Map(SKILLS.map(sk => [sk.id, [sk.name, sk.desc, jobById(sk.job)?.name || '공용', skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id)), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ')].join('\n').toLowerCase()])) : null, [s, searching]);
+    const corpus = useMemo(() => searching ? new Map(SKILLS.map(sk => [sk.id, [sk.name, sk.desc, jobById(sk.job)?.name || '공용', skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id)), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ')].join('\n').toLowerCase()])) : null, [s, searching]);
     /**
      * v3.167 정보 비공개(docs/concept.md 10장)의 ‘만나 본 직업의 스킬만’ 가림은 두지 않습니다(운영은 비공개를 끄고 있고, 수련 스킬 같은
      * 공개 직업의 패시브가 검색에서 통째로 빠짐). 비밀 직업의 스킬은 서버가 카탈로그에 싣지 않으므로(server/secrecy.ts) 여기서 가릴 것이 없습니다.
@@ -163,7 +161,7 @@ export function Skills({ s, send, busy }: PanelProps) {
     const list = SKILLS.filter(sk => {
         const acquired = (s.learned[sk.id] || 0) > 0;
         if (!q) {
-            if (scope === 'current' && sk.job !== s.job && !(s.job === 'fisher' && !sk.job)) return false;
+            if (scope === 'current' && sk.job !== s.job && !(s.job === BASE_JOB && !sk.job)) return false;
             if (scope === 'common' && sk.job) return false;
             if (scope === 'owned' && !acquired) return false;
             if (scope === 'equipped' && !s.skills.includes(sk.id)) return false;
@@ -179,7 +177,7 @@ export function Skills({ s, send, busy }: PanelProps) {
         return filter === 'unlearned' ? !acquired : filter === 'usable' ? canUse(s, sk.id) : true;
     });
     // v3.93 정렬 키는 스킬마다 한 번만 계산합니다. 큰 값이 앞인 정렬은 키를 음수로.
-    const keyOf = (sk: Skill) => { const fx = () => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id));
+    const keyOf = (sk: Skill) => { const fx = () => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id));
         return sort === 'ap' ? fx().cost ?? 2 : sort === 'chance' ? -(fx().chance || 0) : sort === 'level' ? -skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id)) : -(s.skillPractice[sk.id] || 0); };
     if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
     else if (sort !== 'default') { const keys = new Map(list.map(sk => [sk.id, keyOf(sk)])); list.sort((a, b) => keys.get(a.id)! - keys.get(b.id)!); }
@@ -194,7 +192,7 @@ export function Skills({ s, send, busy }: PanelProps) {
             return <div className={`loadout-column loadout-${type}`} key={type}><h3>{type === 'active' ? '액티브' : '패시브'}<small>{type === 'active' ? `위에서부터 먼저 판정 · 처음 성공한 하나만 사용${extraRollLevel(s) ? ' · 추가 판정: 그 아래에서 한 번 더' : ''} · 각성기는 턴마다 따로` : '장착 효과 · 순서 무관'}</small></h3>
                 <ol className="loadout-row">{ids.map((id, i) => {
                     const sk = skillById(id)!;
-                    const rank = s.learned[id] || 1, mastery = skillMastery(s, id), fx = effectiveSkill(sk, rank, mastery, refinePractice(s, id));
+                    const rank = s.learned[id] || 1, mastery = skillMastery(s, id), fx = effectiveSkill(sk, rank, mastery);
                     return <li className={`loadout-skill ${type === 'active' ? 'draggable' : ''} ${dragId === id ? 'dragging' : ''}`} key={id} draggable={type === 'active' && !busy} onDragStart={e => { setDragId(id); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDragId(null)} onDragOver={e => { if (type === 'active' && dragId) e.preventDefault(); }} onDrop={e => { e.preventDefault(); dropOn(id); setDragId(null); }}>{type === 'active' && <span className="loadout-grip" aria-hidden="true" title="끌어서 순서 변경"><GripVertical size={14}/></span>}{type === 'active' && <span className="loadout-order" aria-label={`판정 ${i + 1}순위`}>{i + 1}</span>}<SkillIcon id={id}/><div><strong>{sk.name} · Lv.{skillLevel(sk, rank, mastery)}</strong><small>AP {fx.cost}{type === 'active' ? ` · 발동 ${Math.round((fx.chance || 0) * 100)}%` : ''}{sk.awaken ? ' · 각성(턴마다)' : ''}</small></div>{type === 'active' && i > 0 && <button className="icon-button" aria-label={`${sk.name} 우선순위 올리기`} title="먼저 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id })}><ArrowUp size={16}/></button>}{type === 'active' && i < ids.length - 1 && <button className="icon-button" aria-label={`${sk.name} 우선순위 내리기`} title="나중에 판정" disabled={busy} onClick={() => send({ type: 'skillUp', id: ids[i + 1] })}><ArrowDown size={16}/></button>}<button className="text-button" disabled={busy || !validLoadout(s, s.skills.filter(x => x !== id))} onClick={() => send({ type: 'skill', id })}>해제</button></li>;
                 })}</ol>
                 {!ids.length && <p className="loadout-empty">{type === 'active' ? '액티브가 없으면 기본 공격만 합니다.' : '장착한 패시브가 없습니다.'}</p>}
@@ -202,7 +200,7 @@ export function Skills({ s, send, busy }: PanelProps) {
         })}</div>{(() => {
             // v3.86 추가 판정: 연구로 해금하고 장착 AP를 내고 켭니다.
             const unlocked = researchRank(s, 'extraRoll'), level = extraRollLevel(s), need = SKILL_FORMULA.extraRoll.ap[0], power = Math.round(SKILL_FORMULA.extraRoll.power[0] * 100), short = need - (cap - used);
-            const gate = RESEARCH.find(r => r.id === 'extraRoll');
+            const gate = researchById('extraRoll');
             return <div className={`loadout-extra ${level ? 'on' : ''}`}><div><strong>추가 판정 {level ? `${level}단계 · 켜짐` : unlocked ? '· 꺼짐' : '· 잠김'}</strong><small>{unlocked ? `액티브가 발동한 행동에서 편성 순서상 그 아래 액티브로 한 번 더 판정합니다. 성공하면 ${power}% 위력으로 함께 씁니다. 동시 시전 묶음으로 나간 행동은 묶음 최대 개수가 1 늘어납니다. 장착 AP ${need}.` : `세계석 연구 ‘${gate?.name}’에서 해금합니다${gate?.rebirth ? `(환생 ${gate.rebirth}회부터)` : ''}. 켜면 장착 AP ${need}를 씁니다.`}</small></div>{unlocked > 0 && <button className={level ? 'secondary small' : 'primary small'} disabled={busy || (!level && short > 0)} onClick={() => send({ type: 'extraRoll', value: String(level ? 0 : 1) })}>{level ? '끄기' : short > 0 ? `AP ${short} 부족` : `켜기 · AP ${need}`}</button>}</div>;
         })()}<div className="preset-row">{['1', '2', '3'].map(id => <div key={id}><span>편성 {id}<small>{s.presets[id] ? `${s.presets[id].skills.length}개 스킬` : '저장 없음'}</small></span><button className="text-button" disabled={busy} onClick={() => send({ type: 'savePreset', id })}>저장</button><button className="text-button" disabled={busy || !s.presets[id]} onClick={() => send({ type: 'loadPreset', id })}>불러오기</button></div>)}</div></Fold>
         <section className="skill-finder" aria-label="스킬 찾기">

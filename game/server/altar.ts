@@ -12,8 +12,7 @@ import { db, type AltarRow, type AltarOfferRow, type AltarTotalRow, type AltarRa
 import { ApiError } from './store';
 import { refreshAltarEvents } from './events-config';
 import { allow } from './throttle';
-import { weekKey } from '../data/goals';
-import { kstIso } from '../data/time';
+import { kstIso, weekKey } from '../data/time';
 import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot, raidBreakdown } from '../systems/duel';
@@ -239,7 +238,7 @@ export function makeRaid(id: string, raidId: string) {
             await database.putRaidLog(r.gen, id, JSON.stringify(summary), JSON.stringify(result.logs.slice(-RAID.logLines)), now);
             const slain = remaining <= 0; let slayer = false;
             if (slain) {
-                slayer = await database.slayAltarRaid(raidId, r.gen, id, s.name, now);
+                slayer = await database.slayAltarRaid(raidId, r.gen, id, now);
                 if (slayer) {
                     // 격파 축복: 보스가 정한 축복을 1단계로 blessingHours만큼 엽니다(진행 중이면 시간만 늘어남).
                     for (const b of raid.blessings) { await database.addAltarGauge(b, 0); await database.extendAltarGauge(b, now, raid.blessingHours * 3600_000, ALTAR.blessingCapMs); }

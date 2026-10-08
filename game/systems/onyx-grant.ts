@@ -2,7 +2,7 @@ import type { Item, State } from '../types';
 import { rollAffixes } from '../data/gear';
 import { STAGES } from '../data/world';
 import { ONYX, ONYX_BOSSES, onyxAccessory, onyxById, onyxCodexKey, ownedOnyx } from '../data/onyx';
-import { tuneOnyx } from './equipment';
+import { tuneOnyx, ownedItems } from './equipment';
 import { addLog } from './state';
 
 /**
@@ -11,7 +11,7 @@ import { addLog } from './state';
  */
 export function grantOnyx(s: State, bossId: string, level: number, rng: () => number, source: string) {
     const boss = onyxById(bossId)!;
-    const own = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.onyx === bossId);
+    const own = ownedItems(s).find(x => x?.onyx === bossId);
     if (own) {
         const rank = own.onyxRank || 0;
         if (rank < ONYX.awakenMax) {
@@ -37,14 +37,14 @@ export function grantOnyx(s: State, bossId: string, level: number, rng: () => nu
  */
 export function receiveOnyx(s: State, item: Item) {
     const boss = onyxById(item.onyx!)!;
-    const own = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.onyx === item.onyx);
+    const own = ownedItems(s).find(x => x?.onyx === item.onyx);
     if (own) {
         const rank = own.onyxRank || 0;
         if (rank < ONYX.awakenMax) { own.onyxRank = rank + 1; addLog(s, `✦ 금고의 ${boss.accessory.name} · 이미 가진 칠흑이라 각성 ${own.onyxRank}/${ONYX.awakenMax}! 고유 옵션 +${Math.round(own.onyxRank * ONYX.awakenStep * 100)}%`, 'reward'); }
         else { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ 금고의 ${boss.accessory.name} · 각성까지 마쳐 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
         return 'awaken' as const;
     }
-    const taken = new Set([...s.inventory, ...Object.values(s.equipment)].map(x => x?.id));
+    const taken = new Set(ownedItems(s).map(x => x?.id));
     const got = { ...item, id: taken.has(item.id) ? `onyx-${item.onyx}-${s.turn}-v` : item.id };
     // v3.125 금고에 들어가 있던 장신구도 지금 위력 계수에 맞춥니다.
     tuneOnyx(got);

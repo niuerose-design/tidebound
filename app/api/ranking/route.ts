@@ -1,12 +1,11 @@
 import { identity, checkOrigin, db, register, failure, listAbyssBoard, duelSeasonKey, duelRowId } from '@/game/server/store';
-import { monthSeason } from '@/game/data/goals';
 import { readHacks, maskSnapshot, playerOfRow, listHackerBoard } from '@/game/server/hacks';
-import { monthKey } from '@/game/data/goals';
 import { crewBoard } from '@/game/server/crews';
 import { power } from '@/game/systems/stats';
+import { monthSeason, monthKey } from '@/game/data/time';
 export const dynamic = 'force-dynamic';
 /** 서약 배지: 알려진 배지 문자열만 통과시킵니다(서약 이전 스냅샷은 빈 목록). */
-const VOW_BADGES = new Set(['anchor', 'breath', 'rough1', 'rough2', 'rough3']);
+const VOW_BADGES = new Set(['anchor', 'breath', 'rough1', 'rough2', 'rough3', 'restraint1', 'restraint2', 'restraint3']);
 const vowList = (v: unknown) => Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && VOW_BADGES.has(x)) : [];
 export async function GET(req: Request) { try {
     const id = await identity(req);

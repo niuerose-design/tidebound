@@ -26,6 +26,9 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'onyxSunfire', name: '태양의 불꽃', desc: '마법 공격 140% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.4, damageType: 'magic', effect: 'burn', manaCost: 0 },
     { id: 'onyxGenesis', name: '창세', desc: '복합 피해 170%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 6, multiplier: 1.7, damageType: 'split', manaCost: 0 },
 ];
+let enemySkillIndex: Map<string, Skill> | undefined;
+/** 몬스터 스킬 id로 찾기. */
+export const enemySkillById = (id: string | undefined) => id === undefined ? undefined : (enemySkillIndex ??= new Map(ENEMY_SKILLS.map(sk => [sk.id, sk]))).get(id);
 const PROFILES: Record<string, {
     name: string;
     hint: string;

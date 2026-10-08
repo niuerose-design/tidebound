@@ -8,7 +8,7 @@ import { masteryMilestonesFor } from '../progression';
 import { skillById } from '../../data/skills';
 import { TUTORIAL_STEPS } from '../guidance';
 import { stats } from '../stats';
-import { salvageRate, startingLevel, researchRank, RESEARCH } from '../../data/economy';
+import { salvageRate, startingLevel, researchRank, researchById } from '../../data/economy';
 import { PROGRESSION } from '../../data/progression';
 import { saleValue, dismantleEssence, dismantleInto, primalGaugeGain, keepsAcrossLives, syncRelicPower } from '../equipment';
 import { grantOnyxMilestones } from '../onyx-grant';
@@ -19,12 +19,13 @@ import type { ActionHandlers } from './types';
 import { addLog, newState } from '../state';
 import { jobById, JOB_TREES } from '../../data/classes';
 import { jobMastered, canChangeJob, canUse, grantJobSkills, trimLoadout } from '../progression';
-import { STAGES } from '../../data/world';
+import { stageById } from '../../data/world';
 import { VOW_IDS, VOW_NAMES, LEVELED_VOWS, type VowId, breathBonus, cleanVows, hasVows, vowUnlocked } from '../vows';
 import { claimAchievements, rerollBoardGoal } from '../progress';
-import { goalText, dayKey } from '../../data/goals';
+import { goalText } from '../../data/goals';
 import { WHISTLE, whistleTarget, whistleOk } from '../../data/whistle';
 import { RANKS, isTopRank, reenlistCount, REENLIST_BONUS_POINTS } from '../../data/rank';
+import { dayKey } from '../../data/time';
 
 /**
  * 새 생을 시작합니다. 환생과 소프트 리셋이 같은 초기화 범위를 씁니다(레벨·골드·일반 장비·직업·능력치 배분).
@@ -233,7 +234,7 @@ export const lifecycleActions: ActionHandlers = {
         const plan = s.researchPlan || { on: false, items: [] }, items = [...plan.items], index = Number(a.value);
         if (id === 'on' || id === 'off') plan.on = id === 'on';
         else if (id === 'add') {
-            const [rid, to] = String(a.value || '').split(':'), r = RESEARCH.find(x => x.id === rid), target = Number(to);
+            const [rid, to] = String(a.value || '').split(':'), r = researchById(rid), target = Number(to);
             if (!r || !Number.isInteger(target) || target < 1 || target > r.max) throw Error('예약할 연구와 목표 단계를 확인하세요.');
             const at = items.findIndex(x => x.id === rid);
             if (at >= 0) items[at] = { id: rid, to: target };
@@ -278,7 +279,7 @@ export const lifecycleActions: ActionHandlers = {
             const next: Vows = { ...(s.nextVows || {}) };
             const [kind, target] = String(a.value || 'off').split(':', 2);
             if (kind === 'off') delete next.focus;
-            else if (kind === 'stage' && STAGES.some(st => st.id === target && st.rebirth <= s.rebirths + 1)) next.focus = { kind, id: target };
+            else if (kind === 'stage' && (stageById(target)?.rebirth ?? Infinity) <= s.rebirths + 1) next.focus = { kind, id: target };
             else if (kind === 'tree' && JOB_TREES.some(t => t.id === target)) next.focus = { kind, id: target };
             else if (kind === 'gold') next.focus = { kind };
             else throw Error('조건 카드를 확인하세요.');

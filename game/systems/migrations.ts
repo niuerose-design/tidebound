@@ -1,10 +1,10 @@
 import { trainingFor, TRAINING_PASSIVE } from '../data/training';
-import { jobById } from '../data/classes';
+import { jobById, BASE_JOB } from '../data/classes';
 import type { State } from '../types';
 import { addLog } from './state';
 import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
 import { RELICS, RESEARCH_GROWTH } from '../data/economy';
-import { syncRelicPower, tuneOnyx, fixRelicImprints } from './equipment';
+import { syncRelicPower, tuneOnyx, fixRelicImprints, ownedItems } from './equipment';
 import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
@@ -246,7 +246,7 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
  */
 export function retireHiddenJobs(s: State) {
     const jobs = new Set(RETIRED_JOBS), skills = new Set(RETIRED_SKILLS), drop = (ids?: string[]) => ids?.filter(id => !skills.has(id));
-    if (jobs.has(s.job)) s.job = 'fisher';
+    if (jobs.has(s.job)) s.job = BASE_JOB;
     if (s.jobGoal && jobs.has(s.jobGoal)) delete s.jobGoal;
     s.unlockedJobs = s.unlockedJobs.filter(id => !jobs.has(id));
     if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => !jobs.has(id));
@@ -347,7 +347,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -395,7 +395,7 @@ export function boostPenetrationAffixes(s: State) {
     if (s.penetrationBoosted) return 0;
     let n = 0;
     const scale = (v: number) => Math.round(v * PENETRATION.gearScale * 10000) / 10000;
-    for (const item of [...s.inventory, ...Object.values(s.equipment)]) for (const x of item?.affixes || []) {
+    for (const item of ownedItems(s)) for (const x of item?.affixes || []) {
         if (x.stat === 'penetration' && x.value > 0) { x.value = scale(x.value); n++; }
         if (x.stat2 === 'penetration' && (x.value2 ?? 0) > 0) { x.value2 = scale(x.value2!); n++; }
     }

@@ -276,31 +276,31 @@
 @media(max-width:767px){.battle-fx-host .tide-fx-target-player{left:50%;top:23%}.battle-fx-host .tide-fx-target-enemy{left:50%;top:78%}}
 
 /* 모바일 요약 줄: 레벨·경험치를 스크롤 없이 확인 */
-.mobile-fisher-strip{display:none}
+.mobile-player-strip{display:none}
 @media(max-width:767px){
-.mobile-fisher-strip{display:flex;align-items:center;gap:11px;width:100%;margin:0 0 12px;padding:11px 12px;text-align:left;border:1px solid #3c5f55;border-radius:8px;background:linear-gradient(135deg,#15302f,#10232a);color:#d9e5dc;cursor:pointer}
-.mobile-fisher-strip:focus-visible{outline:2px solid #8fb39a;outline-offset:2px}
-.mobile-fisher-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex:none;width:50px;height:50px;border:1px solid #b99a5c;border-radius:50%;background:#1b2d2a;color:#e0c27d}
-.mobile-fisher-badge b{font:700 11px/1 monospace;color:#f0dcaa}
-.mobile-fisher-main{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
-.mobile-fisher-head{display:flex;align-items:baseline;gap:6px;min-width:0}
-.mobile-fisher-head strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mobile-fisher-head small{flex:1;min-width:0;font-size:11px;color:#8faaa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mobile-fisher-head em{flex:none;font-style:normal;font-size:11px;color:#e0c27d}
+.mobile-player-strip{display:flex;align-items:center;gap:11px;width:100%;margin:0 0 12px;padding:11px 12px;text-align:left;border:1px solid #3c5f55;border-radius:8px;background:linear-gradient(135deg,#15302f,#10232a);color:#d9e5dc;cursor:pointer}
+.mobile-player-strip:focus-visible{outline:2px solid #8fb39a;outline-offset:2px}
+.mobile-player-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex:none;width:50px;height:50px;border:1px solid #b99a5c;border-radius:50%;background:#1b2d2a;color:#e0c27d}
+.mobile-player-badge b{font:700 11px/1 monospace;color:#f0dcaa}
+.mobile-player-main{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.mobile-player-head{display:flex;align-items:baseline;gap:6px;min-width:0}
+.mobile-player-head strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-player-head small{flex:1;min-width:0;font-size:11px;color:#8faaa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-player-head em{flex:none;font-style:normal;font-size:11px;color:#e0c27d}
 /* v27.88 자동 사냥 상태는 머리글 알약 대신 요약 줄 끝의 작은 표식으로(모바일). */
 
-.mobile-fisher-bar{position:relative;display:block;height:16px;border-radius:4px;background:#0a171b;overflow:hidden}
-.mobile-fisher-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
-.mobile-fisher-bar small{position:relative;display:block;padding:0 6px;font:600 10px/16px monospace;color:#eef3ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mobile-fisher-bar.exp i{background:linear-gradient(90deg,#8a6b2f,#d1a752)}
-.mobile-fisher-bar.hp i{background:#3f8b6c}
-.mobile-fisher-bar.mana i{background:#4b6fa0}
-.mobile-fisher-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.mobile-fisher-mini .mobile-fisher-bar{height:13px}
-.mobile-fisher-mini .mobile-fisher-bar small{font-size:9px;line-height:13px}
-.mobile-fisher-chevron{flex:none;color:#7f9c98}
+.mobile-player-bar{position:relative;display:block;height:16px;border-radius:4px;background:#0a171b;overflow:hidden}
+.mobile-player-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.mobile-player-bar small{position:relative;display:block;padding:0 6px;font:600 10px/16px monospace;color:#eef3ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-player-bar.exp i{background:linear-gradient(90deg,#8a6b2f,#d1a752)}
+.mobile-player-bar.hp i{background:#3f8b6c}
+.mobile-player-bar.mana i{background:#4b6fa0}
+.mobile-player-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mobile-player-mini .mobile-player-bar{height:13px}
+.mobile-player-mini .mobile-player-bar small{font-size:9px;line-height:13px}
+.mobile-player-chevron{flex:none;color:#7f9c98}
 /* 모바일 순서: 요약 → 장면(시작·정지) → 대결 → 스킬 → 기록 → 지표·해역·집중 사냥 */
-.battle-console>.mobile-fisher-strip{order:0}
+.battle-console>.mobile-player-strip{order:0}
 .battle-console>.battle-scene{order:1}
 .battle-console>.battle-opponent-strip{order:2}
 .battle-console>.battle-skills{order:4}
@@ -438,8 +438,8 @@
 .chat-channels{display:flex;gap:6px}.chat-channels button{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#101c20;color:#9bb3b0;font-size:12px;cursor:pointer}.chat-channels button.active{border-color:#3d675a;background:#13262c;color:#c5d8d2}
 .chat-feed{display:flex;flex-direction:column;gap:7px}
 /* v25.13 모바일 전투 화면 정리: 캐릭터 열 접기, 안내 카드 중복 제거, 빠른 이동 격자 숨김(탭 바가 대신함) */
-.mobile-fisher-toggle{display:none}
-@media(max-width:900px){.mobile-fisher-toggle{display:flex;order:3;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#101c20;color:#c5d8d2;font-size:13px;cursor:pointer}.mobile-fisher-toggle svg{transition:transform .15s}.mobile-fisher-toggle svg.open{transform:rotate(90deg)}.battle-character-column{display:none;order:4}.battle-character-column.mobile-open{display:block}.battle-character-column .tutorial-card{display:none}}
+.mobile-player-toggle{display:none}
+@media(max-width:900px){.mobile-player-toggle{display:flex;order:3;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#101c20;color:#c5d8d2;font-size:13px;cursor:pointer}.mobile-player-toggle svg{transition:transform .15s}.mobile-player-toggle svg.open{transform:rotate(90deg)}.battle-character-column{display:none;order:4}.battle-character-column.mobile-open{display:block}.battle-character-column .tutorial-card{display:none}}
 /* v25.13 빠른 슬롯 전환 칩 */
 .slot-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;color:#8ea7a4}
 .slot-chip{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#101c20;color:#c5d8d2;cursor:pointer;text-align:left}
@@ -1119,7 +1119,7 @@
   .battle-hud>*{width:100%;min-width:0}
   .battle-console,.battle-utility-rail{display:contents}
   .tutorial-head span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .battle-console>.mobile-fisher-strip{order:0}
+  .battle-console>.mobile-player-strip{order:0}
   .battle-console>.battle-scene{order:1;height:280px}
   .battle-console>.battle-opponent-strip{order:2}
   .battle-utility-rail>.battle-feed{order:3;width:100%;margin-bottom:12px}
@@ -1128,7 +1128,7 @@
   .battle-console>.battle-target-strip{order:7}
   .battle-console>.tide-selector{order:8}
   .battle-utility-rail>.battle-selector-panel{order:9;width:100%;margin-bottom:12px}
-  .battle-hud>.mobile-fisher-toggle{order:10}
+  .battle-hud>.mobile-player-toggle{order:10}
   .battle-hud>.battle-character-column{order:11}
 
   .battle-console .scene-copy{top:62px}

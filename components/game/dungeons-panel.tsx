@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Lock, Swords, Gem, Skull } from 'lucide-react';
 import { FishArt } from './art';
 import { BALANCE, MONSTER_TUNING, dungeonOverlevel, DUNGEON_MODES, type DungeonMode } from '@/game/data/balance';
-import { FISH, DUNGEONS, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
+import { PLAIN_DUNGEONS, closedIn, CLOSED_NOTE, fishById, dungeonById } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
 import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
 import { bookRevealed } from '@/game/systems/book';
@@ -23,9 +23,9 @@ import type { PanelProps } from './panel-props';
 import { RANDOM_GAME, randomGameTier, waveStake, stakeUpTo } from '@/game/data/random-game';
 import { randomGameRank, randomGamePayout, randomGameRunsLeft, stakePayout } from '@/game/systems/random-game';
 export function Dungeons({ s, send, busy }: PanelProps) {
-    const activeDungeon = s.dungeon ? DUNGEONS.find(d => d.id === s.dungeon?.id) : undefined;
+    const activeDungeon = s.dungeon ? dungeonById(s.dungeon?.id) : undefined;
     const playerStats = stats(s);
-    const enemyFish = s.enemy ? FISH.find(f => f.id === s.enemy?.id) : undefined;
+    const enemyFish = s.enemy ? fishById(s.enemy?.id) : undefined;
     const revealed = !!enemyFish && bookRevealed(s, enemyFish.id);
     const enemyProfile = enemyFish && revealed ? profile(enemyFish.id) : undefined;
     const activeWave = s.dungeon?.wave ?? 0;
@@ -50,7 +50,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             const isDone = s.dungeon!.wave > index;
             const isCurrent = s.dungeon!.wave === index;
             const isBoss = index === activeDungeon.fish.length - 1;
-            const fish = isBoss && activeDungeon.bossFish ? FISH.find(f => f.id === activeDungeon.bossFish) : FISH.find(f => f.id === id);
+            const fish = isBoss && activeDungeon.bossFish ? fishById(activeDungeon.bossFish) : fishById(id);
             return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><FishArt id={fish?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{fish?.name || id}</strong></div>;
         })}</div>}
         <div className="dungeon-combat-grid dungeon-combat-fx-host">

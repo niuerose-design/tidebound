@@ -11,10 +11,10 @@ import { setPuzzleKey, gainHacker, isHacker, seasonScore, programOn } from '../s
 import { addLog } from '../systems/state';
 import { HACKER, HACK_BITS, FIREWALL_ID } from '../data/hacker';
 import { currentEvents, setEventTamper, setHackEvents } from '../data/events';
-import { STAGES, DUNGEONS, setHackDown, placeKey } from '../data/world';
+import { setHackDown, placeKey, stageById, dungeonById } from '../data/world';
 import { gaugeCost, raidById, josa, type AltarGaugeId } from '../data/altar';
-import { dayKey } from '../data/goals';
 import { backdoorGauge, raidAlive, invalidateAltar } from './altar';
+import { dayKey } from '../data/time';
 
 type Down = { kind: 'stage' | 'dungeon'; id: string; until: number; by: string; byId: string };
 type Tamper = { minutes: number; rate: number; by: string; byId: string; at: number };
@@ -106,7 +106,7 @@ export async function ensurePuzzleKey(now: number) {
 /** 랭킹 행 id(duel:<시즌>:<모험가>, abyss:<모험가>, hacker:<모험가>)나 모험가 id에서 모험가 id만. */
 export const playerOfRow = (rowId: string) => rowId.startsWith('duel:') ? rowId.split(':').slice(2).join(':') : rowId.startsWith('abyss:') ? rowId.slice(6) : rowId.startsWith('hacker:') ? rowId.slice(7) : rowId;
 
-const placeName = (kind: string, id: string) => (kind === 'stage' ? STAGES.find(st => st.id === id)?.name : DUNGEONS.find(d => d.id === id)?.name) || id;
+const placeName = (kind: string, id: string) => (kind === 'stage' ? stageById(id)?.name : dungeonById(id)?.name) || id;
 /** 이벤트 변조 대상: 운영 이벤트(제단 축복 제외) 중 지금 진행 중인 것. 변조 뒤의 종료 시각으로 봅니다. */
 const liveEvents = (now: number) => currentEvents(false).filter(e => !e.id.startsWith('altar-') && !e.id.startsWith('hack-') && Date.parse(e.from) <= now && now <= Date.parse(e.until));
 
@@ -332,10 +332,7 @@ async function hackNotice(text: string, now: number) {
 }
 /** v3.26 해커 계열 전직을 소식 채널에 알립니다(이름은 밝히지 않음). 채팅 화면은 account_id 'system-hacker'를 빨간 줄로 그립니다. */
 export const hackerJobNews = (job: string) => `누군가가 ${job === 'whiteHacker' ? '화이트 해커' : job === 'blackHacker' ? '블랙 해커' : '해커'}로 전직했습니다.`;
-export async function announceHacker(job: string, now: number) {
-    const text = hackerJobNews(job);
-    try { await db().postChat({ channel: 'news', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
-}
+export const announceHacker = (job: string, now: number) => hackNotice(hackerJobNews(job), now);
 /** 운영 페이지: 진행 중인 방송 탈취를 지웁니다. */
 export async function clearBroadcast(now: number) {
     const h = parse(await db().getSetting(KEY));

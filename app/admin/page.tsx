@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { kstIso } from '@/game/data/time';
+import { format, formatDuration } from '@/components/game/shared';
 
 type AdminSp = { have: number; research: { name: string; sp: number; claimed: boolean }[]; spentSkills: { name: string; sp: number }[]; limitBreaks: { name: string; sp: number }[]; logs: string[] };
 type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rank: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
@@ -25,9 +26,6 @@ type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };
 type Balance = { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: Bucket[] };
 type Stats = { rebirthPace: RebirthPace; balance: Balance; altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number }; at: number; accounts: number; saves: number; active: { hour: number; day: number; week: number }; running: number; inDungeon: number; level: { avg: number; max: number; buckets: Bucket[] }; rebirths: { avg: number; max: number; buckets: Bucket[] }; stages: Count[]; dungeons: Count[]; jobs: Count[]; totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number }; medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number; top: { name: string; level: number; rebirths: number; abyss: number }[]; ranks: { dist: { name: string; count: number }[]; top: string; perks: { name: string; count: number; avg: number; max: number }[]; freePoints: number } };
-const n = (v: number) => v.toLocaleString('ko-KR');
-/** v27.63 걸린 시간: 2일 3시간 · 5시간 12분 · 37분. */
-const dur = (ms: number) => { const m = Math.max(0, Math.floor(ms / 60_000)), h = Math.floor(m / 60), d = Math.floor(h / 24); return d ? `${d}일 ${h % 24}시간` : h ? `${h}시간 ${m % 60}분` : `${m}분`; };
 /** v27.32 통계 카드 한 칸. */
 const Tile = ({ label, value, note }: { label: string; value: string; note?: string }) => <div className="panel" style={{ padding: 12 }}><div style={{ fontSize: 12, color: '#9bb3b0' }}>{label}</div><div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>{note && <div style={{ fontSize: 12, color: '#9bb3b0' }}>{note}</div>}</div>;
 /** 화살표로 접었다 펴는 칸. note는 접혀 있어도 제목 옆에 보입니다. */
@@ -52,7 +50,7 @@ function Bars({ title, rows, total }: { title: string; rows: { label: string; co
         <div style={{ display: 'grid', gap: 5 }}>{rows.map(r => <div key={r.label} style={{ display: 'grid', gridTemplateColumns: 'minmax(90px, 140px) 1fr auto', gap: 8, alignItems: 'center', fontSize: 13 }}>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.label}</span>
             <span style={{ height: 10, borderRadius: 5, background: '#1d3034' }}><span style={{ display: 'block', height: '100%', width: `${r.count / max * 100}%`, borderRadius: 5, background: '#6fb7a0' }}/></span>
-            <span style={{ color: '#c9dbd6', minWidth: 72, textAlign: 'right' }}>{n(r.count)}{total ? <small style={{ color: '#9bb3b0' }}> ({Math.round(r.count / total * 100)}%)</small> : null}</span></div>)}</div></div>;
+            <span style={{ color: '#c9dbd6', minWidth: 72, textAlign: 'right' }}>{format(r.count)}{total ? <small style={{ color: '#9bb3b0' }}> ({Math.round(r.count / total * 100)}%)</small> : null}</span></div>)}</div></div>;
 }
 const MULTS = [['exp', '경험치'], ['gold', '골드'], ['drop', '장비 드롭'], ['mastery', '숙련'], ['mimic', '까미 출현'], ['nuri', '누리 출현']] as const;
 /** datetime-local(한국 시간으로 입력) → ISO. */
@@ -80,7 +78,7 @@ function SpDetail({ sp }: { sp: AdminSp }) {
 const line = (p: AdminPlayer) => `${p.name} · ${brief(p)}`;
 const brief = (p: AdminPlayer) => `Lv.${p.level} ${p.job} · ${p.rank} · 환생 ${p.rebirths}회 · 세계석 ${p.pearls} · SP ${p.sp.have} · 골드 ${p.gold.toLocaleString()}${p.inDungeon ? ' · 던전 진행 중' : ''}`;
 /** v27.63 환생 시간: 이번 생 경과 · 평균 환생 시간. */
-const lifeLine = (p: AdminPlayer) => [p.lifeMs !== null ? `이번 생 ${dur(p.lifeMs)}${p.lifePartial ? '(업데이트 이후)' : ''}` : '', p.paceMs !== null ? `평균 환생 ${dur(p.paceMs)}` : ''].filter(Boolean).join(' · ');
+const lifeLine = (p: AdminPlayer) => [p.lifeMs !== null ? `이번 생 ${formatDuration(p.lifeMs)}${p.lifePartial ? '(업데이트 이후)' : ''}` : '', p.paceMs !== null ? `평균 환생 ${formatDuration(p.paceMs)}` : ''].filter(Boolean).join(' · ');
 
 /** v27.26 운영 도구: 모험가 이름·아이디로 찾아 이번 생을 처음 상태로 되돌립니다(환생 횟수·세계석·연구·유물·도감 유지). */
 export default function AdminPage() {
@@ -226,19 +224,19 @@ export default function AdminPage() {
         {tab === 'stats' && stats && <>
             <Fold title="요약" note={`${new Date(stats.at).toLocaleString('ko-KR')} 기준`}>
                 <div style={grid(150)}>
-                    <Tile label="가입 계정" value={n(stats.accounts)} note={`세이브(분신 포함) ${n(stats.saves)}`}/>
-                    <Tile label="최근 1시간 활동" value={n(stats.active.hour)} note={`24시간 ${n(stats.active.day)} · 7일 ${n(stats.active.week)}`}/>
-                    <Tile label="자동 사냥 켜 둠" value={n(stats.running)} note={`던전 진행 중 ${n(stats.inDungeon)}`}/>
+                    <Tile label="가입 계정" value={format(stats.accounts)} note={`세이브(분신 포함) ${format(stats.saves)}`}/>
+                    <Tile label="최근 1시간 활동" value={format(stats.active.hour)} note={`24시간 ${format(stats.active.day)} · 7일 ${format(stats.active.week)}`}/>
+                    <Tile label="자동 사냥 켜 둠" value={format(stats.running)} note={`던전 진행 중 ${format(stats.inDungeon)}`}/>
                     <Tile label="평균 레벨" value={String(stats.level.avg)} note={`최고 Lv.${stats.level.max}`}/>
                     <Tile label="평균 환생" value={`${stats.rebirths.avg}회`} note={`최고 ${stats.rebirths.max}회 · 무릉도장 ${stats.abyssBest}층`}/>
-                    <Tile label="총 처치" value={big(stats.totals.kills)} note={`누적 플레이 ${n(stats.totals.playHours)}시간`}/>
+                    <Tile label="총 처치" value={big(stats.totals.kills)} note={`누적 플레이 ${format(stats.totals.playHours)}시간`}/>
                     <Tile label="보유 골드 합계" value={big(stats.totals.gold)} note={`중앙값 ${big(stats.medians.gold)}`}/>
-                    <Tile label="보유 세계석 합계" value={n(stats.totals.pearls)} note={`중앙값 ${n(stats.medians.pearls)}`}/>
-                    <Tile label="길드 가입" value={n(stats.inGuild)} note={`한계돌파 ${n(stats.limitBreakers)}명`}/>
-                    <Tile label="최고 계급" value={stats.ranks.top} note={`안 쓴 진급 포인트 ${n(stats.ranks.freePoints)}`}/>
+                    <Tile label="보유 세계석 합계" value={format(stats.totals.pearls)} note={`중앙값 ${format(stats.medians.pearls)}`}/>
+                    <Tile label="길드 가입" value={format(stats.inGuild)} note={`한계돌파 ${format(stats.limitBreakers)}명`}/>
+                    <Tile label="최고 계급" value={stats.ranks.top} note={`안 쓴 진급 포인트 ${format(stats.ranks.freePoints)}`}/>
                 </div>
             </Fold>
-            <Fold title="제단 관리" open={false} note={`${stats.altar.gen}번째 신 ${stats.altar.godAlive ? '깨어 있음' : '잠듦'} · 신의 자리 ${stats.altar.throne || '비어 있음'} · 몫 ${big(stats.altar.titheGold)} G · 기여도 ${n(stats.altar.points)}`}>
+            <Fold title="제단 관리" open={false} note={`${stats.altar.gen}번째 신 ${stats.altar.godAlive ? '깨어 있음' : '잠듦'} · 신의 자리 ${stats.altar.throne || '비어 있음'} · 몫 ${big(stats.altar.titheGold)} G · 기여도 ${format(stats.altar.points)}`}>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button className="secondary" disabled={busy} onClick={() => resetAltar('offers')}>공물 초기화(게이지 0)</button>
                     <button className="secondary" disabled={busy} onClick={() => resetAltar('god')}>신 초기화(신·자리·몫 비우기)</button>
@@ -252,27 +250,27 @@ export default function AdminPage() {
                 </div>
                 <p style={{ ...muted, fontSize: 12, margin: '6px 0 0' }}>기여도는 그대로 두고 단계·시간만 바꿉니다. 기본 시간: 1~3단계 × 1시간, 4·5·6단계는 4·2·1시간 뒤 3단계로 내려와 12시간.</p>
             </Fold>
-            <Fold title="환생 통계" note={`24시간 ${n(stats.rebirthPace.recent.day)}회 · 7일 ${n(stats.rebirthPace.recent.week)}회`}>
+            <Fold title="환생 통계" note={`24시간 ${format(stats.rebirthPace.recent.day)}회 · 7일 ${format(stats.rebirthPace.recent.week)}회`}>
                 <div style={{ display: 'grid', gap: 10 }}>
                     <div style={grid(200)}>
-                        <Tile label="환생까지 실제 시간" value={stats.rebirthPace.measured ? dur(stats.rebirthPace.real.median) : '-'} note={stats.rebirthPace.measured ? `중앙값 · 평균 ${dur(stats.rebirthPace.real.avg)} · ${n(stats.rebirthPace.measured)}건` : '아직 없습니다'}/>
-                        <Tile label="환생까지 사냥 시간" value={stats.rebirthPace.measured ? dur(stats.rebirthPace.play.median) : '-'} note={stats.rebirthPace.measured ? `중앙값 · 평균 ${dur(stats.rebirthPace.play.avg)}` : ''}/>
+                        <Tile label="환생까지 실제 시간" value={stats.rebirthPace.measured ? formatDuration(stats.rebirthPace.real.median) : '-'} note={stats.rebirthPace.measured ? `중앙값 · 평균 ${formatDuration(stats.rebirthPace.real.avg)} · ${format(stats.rebirthPace.measured)}건` : '아직 없습니다'}/>
+                        <Tile label="환생까지 사냥 시간" value={stats.rebirthPace.measured ? formatDuration(stats.rebirthPace.play.median) : '-'} note={stats.rebirthPace.measured ? `중앙값 · 평균 ${formatDuration(stats.rebirthPace.play.avg)}` : ''}/>
                     </div>
                     <div style={grid(320)}>
                         <div className="panel" style={{ padding: 14 }}><h3 style={{ fontSize: 14, margin: '0 0 8px' }}>회차별 평균 시간</h3>
                             {!stats.rebirthPace.byCount.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>없습니다.</p>}
-                            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}><tbody>{stats.rebirthPace.byCount.map(b => <tr key={b.label}><td style={{ padding: '3px 0' }}>{b.label}</td><td style={{ textAlign: 'right' }}>실제 {dur(b.real)}</td><td style={{ textAlign: 'right' }}>사냥 {dur(b.play)}</td><td style={{ textAlign: 'right', ...muted }}>{n(b.count)}건</td></tr>)}</tbody></table></div>
+                            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}><tbody>{stats.rebirthPace.byCount.map(b => <tr key={b.label}><td style={{ padding: '3px 0' }}>{b.label}</td><td style={{ textAlign: 'right' }}>실제 {formatDuration(b.real)}</td><td style={{ textAlign: 'right' }}>사냥 {formatDuration(b.play)}</td><td style={{ textAlign: 'right', ...muted }}>{format(b.count)}건</td></tr>)}</tbody></table></div>
                         <div className="panel" style={{ padding: 14 }}><h3 style={{ fontSize: 14, margin: '0 0 8px' }}>최근 환생 20건</h3>
                             {!stats.rebirthPace.latest.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>없습니다.</p>}
-                            <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12, display: 'grid', gap: 3 }}>{stats.rebirthPace.latest.map((r, i) => <li key={i}>{r.name} · {r.n}번째 · {new Date(r.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · 실제 {dur(r.realMs)}{r.partial ? '(일부)' : ''} · 사냥 {dur(r.playMs)}</li>)}</ol></div>
+                            <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12, display: 'grid', gap: 3 }}>{stats.rebirthPace.latest.map((r, i) => <li key={i}>{r.name} · {r.n}번째 · {new Date(r.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · 실제 {formatDuration(r.realMs)}{r.partial ? '(일부)' : ''} · 사냥 {formatDuration(r.playMs)}</li>)}</ol></div>
                     </div>
                 </div>
             </Fold>
             <Fold title="밸런스 점검" open={false}>
                 <div style={grid(200)}>
-                    <Tile label={`무릉도장 ${stats.balance.godDepth}층 이상`} value={n(stats.balance.reached)} note="첫 신과 같은 난이도를 깬 모험가"/>
-                    <Tile label="신 도전" value={`${n(stats.balance.god.wins)}승 / ${n(stats.balance.god.tries)}회`} note={`도전 ${n(stats.balance.god.players)}명 · 최고 ${Math.round(stats.balance.god.best * 100)}% 깎음`}/>
-                    <Tile label="오프라인 상한 도달" value={`${n(stats.balance.offline.capped)} / ${n(stats.balance.offline.settled)}`} note="최근 부재중 정산이 상한에 닿은 모험가"/>
+                    <Tile label={`무릉도장 ${stats.balance.godDepth}층 이상`} value={format(stats.balance.reached)} note="첫 신과 같은 난이도를 깬 모험가"/>
+                    <Tile label="신 도전" value={`${format(stats.balance.god.wins)}승 / ${format(stats.balance.god.tries)}회`} note={`도전 ${format(stats.balance.god.players)}명 · 최고 ${Math.round(stats.balance.god.best * 100)}% 깎음`}/>
+                    <Tile label="오프라인 상한 도달" value={`${format(stats.balance.offline.capped)} / ${format(stats.balance.offline.settled)}`} note="최근 부재중 정산이 상한에 닿은 모험가"/>
                 </div>
             </Fold>
             <Fold title="분포 · 순위" open={false}>
@@ -285,7 +283,7 @@ export default function AdminPage() {
                     <Bars title="현재 직업 상위 15" rows={stats.jobs.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
                     <Bars title="계급장(계급 순)" rows={stats.ranks.dist.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
                     <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>진급 특전 선택</h2>
-                        <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}><tbody>{stats.ranks.perks.map(p => <tr key={p.name}><td style={{ padding: '3px 0' }}>{p.name}</td><td style={{ textAlign: 'right' }}>{n(p.count)}명{stats.saves ? <small style={muted}> ({Math.round(p.count / stats.saves * 100)}%)</small> : null}</td><td style={{ textAlign: 'right', ...muted }}>평균 {p.avg} / {p.max}단계</td></tr>)}</tbody></table></div>
+                        <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}><tbody>{stats.ranks.perks.map(p => <tr key={p.name}><td style={{ padding: '3px 0' }}>{p.name}</td><td style={{ textAlign: 'right' }}>{format(p.count)}명{stats.saves ? <small style={muted}> ({Math.round(p.count / stats.saves * 100)}%)</small> : null}</td><td style={{ textAlign: 'right', ...muted }}>평균 {p.avg} / {p.max}단계</td></tr>)}</tbody></table></div>
                     <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>환생·레벨 상위 10</h2>
                         <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, display: 'grid', gap: 3 }}>{stats.top.map((p, i) => <li key={i}>{p.name} · 환생 {p.rebirths}회 · Lv.{p.level}{p.abyss ? ` · 무릉도장 ${p.abyss}층` : ''}</li>)}</ol></div>
                 </div>
@@ -293,11 +291,11 @@ export default function AdminPage() {
         </>}
 
         {tab === 'income' && income && <>
-            <Fold title="요약" note={`기록 ${n(income.measured)}명 · 시간당 중앙값 ${big(income.median)}`}>
+            <Fold title="요약" note={`기록 ${format(income.measured)}명 · 시간당 중앙값 ${big(income.median)}`}>
                 <div style={grid(170)}>
-                    <Tile label="기록 있는 모험가" value={n(income.measured)} note={`최근 24시간 저장 ${n(income.recent)}명`}/>
+                    <Tile label="기록 있는 모험가" value={format(income.measured)} note={`최근 24시간 저장 ${format(income.recent)}명`}/>
                     <Tile label="시간당 골드 중앙값" value={big(income.median)} note="최근 24시간 저장 기준"/>
-                    {income.byRebirth.map(b => <Tile key={b.label} label={b.label} value={b.count ? big(b.median) : '-'} note={`${n(b.count)}명 · 최고 ${big(b.max)}`}/>)}
+                    {income.byRebirth.map(b => <Tile key={b.label} label={b.label} value={b.count ? big(b.median) : '-'} note={`${format(b.count)}명 · 최고 ${big(b.max)}`}/>)}
                 </div>
             </Fold>
             {income.picked.map(p => <Fold key={p.id} title={p.name} note={`${p.username || '?'} · 환생 ${p.rebirths}${p.ascension ? ` · 승천 ${p.ascension}` : ''} · Lv.${p.level} · ${p.place} ${p.tide}${p.running ? '' : ' · 멈춤'}`}>

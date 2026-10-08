@@ -1,5 +1,5 @@
 /** 세이브 상태 생성과 로그 기록. */
-import { makeGoals, dayKey, weekKey } from '../data/goals';
+import { makeGoals } from '../data/goals';
 import { stats } from './stats';
 import type { State } from '../types';
 import { BALANCE, SAVE_VERSION } from '../data/balance';
@@ -7,6 +7,8 @@ import { type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { initialProgress, grantJobSkills } from './progression';
 import { LOG_KEEP, logGroup } from './log-delta';
+import { dayKey, weekKey } from '../data/time';
+import { BASE_JOB } from '../data/classes';
 export function addLog(s: State, text: string, type: 'battle' | 'reward' | 'system' | 'skill' = 'system', event?: CombatEvent) {
     s.logs.push({ id: ++s.logId, text, type, turn: s.turn, ...(event ? { event } : {}) });
     // v3.48 묶음(전투·시스템 / 획득·스킬)마다 따로 상한을 둡니다. 넘친 묶음의 가장 오래된 줄 하나를 뺍니다.
@@ -40,7 +42,7 @@ export function newState(now: number): State {
         gold: 100,
         pearls: 0,
         rebirths: 0,
-        job: 'fisher',
+        job: BASE_JOB,
         stage: 'brook',
         running: false,
         hp: BALANCE.baseHp + 12,

@@ -5,7 +5,6 @@ import { snapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
 import { db, ConfigError, type SlotRow } from './db';
 import { ascended, ascensionOf, lifetimeRebirths } from '../data/ascension';
-import { weekKey, weekSeason, monthKey, monthSeason, previousMonthKey } from '../data/goals';
 import type { RankingRow } from './db';
 import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
@@ -17,6 +16,7 @@ import { FISH } from '../data/world';
 import { JOBS } from '../data/classes';
 import { jobMastered } from '../systems/progression';
 import { mergeSlots, slotUnlocked, slotUnlockText, ACCOUNT_RULES, SLOT_COUNT, type SlotSummary } from '../data/account';
+import { weekKey, weekSeason, monthKey, monthSeason, previousMonthKey } from '../data/time';
 export { db };
 export class ApiError extends Error {
     constructor(message: string, public status = 400) { super(message); }

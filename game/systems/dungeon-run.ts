@@ -2,7 +2,7 @@
 import type { State } from '../types';
 import { levelGateOk } from './meta';
 import { BALANCE, MONSTER_TUNING, DUNGEON_MODES, type DungeonMode } from '../data/balance';
-import { DUNGEONS, dungeonClosed } from '../data/world';
+import { dungeonClosed, dungeonById } from '../data/world';
 import { addLog, endRun } from './state';
 /** 반복 설정 문자열: 'once' | 'fail' | 숫자(총 도전 횟수) | 'deeper:N'(무릉도장, 현재 최고 깊이 + N층까지). */
 export function parseRepeat(s: State, id: string, value?: string): { left: number | null; until?: number } | undefined {
@@ -25,7 +25,7 @@ export function parseDungeonValue(s: State, id: string, value?: string): { mode:
     return { mode: id === 'abyss' ? 'normal' : mode, repeat: parseRepeat(s, id, tail) };
 }
 export function enterDungeon(s: State, id: string, repeat?: { left: number | null; until?: number }, mode: DungeonMode = 'normal') {
-    const d = DUNGEONS.find(x => x.id === id)!;
+    const d = dungeonById(id)!;
     s.dungeon = { id, wave: 0, ...(id === 'abyss' ? { depth: s.abyssBest + 1 } : {}), ...(repeat ? { repeat } : {}), ...(mode !== 'normal' && id !== 'abyss' ? { mode } : {}) };
     s.enemy = null;
     // Preparation takes real turns: repeated entry cannot heal instantly.
@@ -42,7 +42,7 @@ function repeatLabel(r?: { left: number | null; until?: number }) {
 }
 /** 반복 도전이 끝나면 사냥터로 돌아가 자동 사냥을 이어갑니다. */
 export function continueRepeat(s: State, id: string, repeat: { left: number | null; until?: number }) {
-    const d = DUNGEONS.find(x => x.id === id)!, mode = s.dungeon?.mode;
+    const d = dungeonById(id)!, mode = s.dungeon?.mode;
     const reached = repeat.until !== undefined && s.abyssBest >= repeat.until;
     const allowed = levelGateOk(s, d.level) && s.rebirths >= d.rebirth && !dungeonClosed(d.id);
     if (!reached && allowed && (repeat.left === null || repeat.left > 0)) {

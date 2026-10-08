@@ -13,6 +13,8 @@ import { MAPLE_JOB_FLAVOR, MAPLE_LINEAGE_SUMMARY } from './maple-flavor';
 import { SPECIAL_JOBS, RESTRAINT_LINEAGE } from './specials';
 import { TRAINING_JOBS, RETIRED_TRAINING } from './training';
 import { STAT_TRAINING_JOBS } from './stat-training';
+/** 전직 전 기본 직업(무직) id. 세이브에 저장되는 값이라 바꾸지 않습니다. */
+export const BASE_JOB = 'fisher';
 export type Job = {
     id: string;
     name: string;
@@ -127,7 +129,7 @@ export const JOB_TREES: JobTree[] = [
     { id: 'mystery', name: '???', subtitle: '초보자 · 히든 · 페널티 · 몬스터', description: '모든 모험의 출발점인 초보자와, 조건을 만족해야 드러나는 숨은 직업, 페널티를 숙련으로 극복하는 직업, 몬스터 혈족의 모음입니다.', accent: '#9a9ab8' },
 ];
 export const JOBS: Job[] = [
-    { id: 'fisher', name: '무직', title: '가능성이 시작되는 곳', desc: '공용 기술을 익히며 자신만의 항해를 준비합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 0, level: 1, requires: {}, mastery: 0, role: '균형', tree: 'hybrid' },
+    { id: BASE_JOB, name: '무직', title: '가능성이 시작되는 곳', desc: '공용 기술을 익히며 자신만의 항해를 준비합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 0, level: 1, requires: {}, mastery: 0, role: '균형', tree: 'hybrid' },
     { id: 'harpoon', name: '작살 사냥꾼', title: '정교한 한 방', desc: '물리 공격과 치명타에 아주 작은 보정만 받는 첫 전직. 이후 관통·폭발 계열로 갈라집니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 4 }, tier: 1, level: 10, requires: { str: 12, dex: 10 }, mastery: 0, role: '물리 입문', tree: 'physical' },
     { id: 'tide', name: '조류 술사', title: '조류를 움직이는 의지', desc: '마법 공격과 저항에 작은 보정만 받는 첫 전직. 주문의 방향은 후속 직업에서 결정됩니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 10, hp: 5, resist: 1 }, tier: 1, level: 10, requires: { int: 12, wis: 10 }, mastery: 0, role: '마법 입문', tree: 'magic' },
     { id: 'warden', name: '산호 수호자', title: '바다의 방패', desc: '체력과 방어에 작은 보정만 받는 첫 전직. 후속 직업에서 회복·제어·반격 중 하나를 고릅니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { hp: 30, defense: 2, resist: 1 }, tier: 1, level: 10, requires: { vit: 12, str: 10 }, mastery: 0, role: '방어 입문', tree: 'defense' },

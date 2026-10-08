@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { PLACES } from '../data/world';
+import { BASE_STAGES } from '../data/world';
 import { noteOneTimeReward } from './offline-tally';
 
 export type TutorialStep = { id: string; title: string; hint: string; view: string; done: (s: State) => boolean; /** v3.17 보상 조건(없으면 done). 환생으로 자동 완료되는 단계는 실제로 해냈을 때만 보상합니다. */ earned?: (s: State) => boolean; /** v3.17 완료 보상(완료되는 순간 자동 지급, 한 번). */ reward?: { pearls?: number; sp?: number } };
@@ -61,5 +61,5 @@ export function syncVoyage(s: State, log?: (text: string) => void) {
     syncTutorial(s, log);
     s.voyage ??= {};
     const key = `stage:${s.stage}`;
-    if (s.running && !s.dungeon && s.voyage[key] === undefined && PLACES.some(st => st.id === s.stage)) s.voyage[key] = s.turn;
+    if (s.running && !s.dungeon && s.voyage[key] === undefined && BASE_STAGES.some(st => st.id === s.stage)) s.voyage[key] = s.turn;
 }

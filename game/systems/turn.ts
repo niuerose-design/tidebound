@@ -7,11 +7,11 @@ import { stats } from './stats';
 import type { State } from '../types';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { TIME_MACHINE_MASTERY } from '../data/expansion-v25';
-import { DUNGEONS, FISH, STAGES, dungeonClosed, stageClosed, closuresSnapshot } from '../data/world';
+import { STAGES, dungeonClosed, stageClosed, closuresSnapshot, fishById, stageById, dungeonById } from '../data/world';
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
-import { canUse, lazySkillMasteryRanks, lazyRefinePractices, extraRollLevel } from './progression';
+import { canUse, lazySkillMasteryRanks, extraRollLevel } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, takeWhistle, reward, releaseLegacySeal, gainLevels, enemyLabel } from './encounter';
 import { inRandomGame, loseRandomGame } from './random-game';
@@ -60,8 +60,8 @@ function repairState(s: State, now?: number) {
     if (s.vows?.seal || s.vows?.anchor) { releaseLegacySeal(s); if (s.vows) { delete s.vows.anchor; delete s.vows.seal; } gainLevels(s); }
     if (now !== undefined && !Number.isFinite(s.lastTick)) { s.lastTick = now; fixed.push('시각'); }
     if (!Number.isFinite(s.recovery) || s.recovery < 0) { s.recovery = 0; fixed.push('회복 대기'); }
-    if (!STAGES.some(x => x.id === s.stage)) { s.stage = STAGES[0].id; s.target = null; fixed.push('사냥터'); }
-    if (s.enemy && (!Number.isFinite(s.enemy.hp) || s.enemy.hp <= 0 || !Number.isFinite(s.enemy.maxHp) || !FISH.some(f => f.id === s.enemy!.id))) { s.enemy = null; fixed.push('몬스터'); }
+    if (!stageById(s.stage)) { s.stage = STAGES[0].id; s.target = null; fixed.push('사냥터'); }
+    if (s.enemy && (!Number.isFinite(s.enemy.hp) || s.enemy.hp <= 0 || !Number.isFinite(s.enemy.maxHp) || !fishById(s.enemy!.id))) { s.enemy = null; fixed.push('몬스터'); }
     if (!Number.isFinite(s.hp) || !Number.isFinite(s.mana)) { const a = stats(s); if (!Number.isFinite(s.hp)) s.hp = a.hp; if (!Number.isFinite(s.mana)) s.mana = a.mana; fixed.push('체력·마나'); }
     if (fixed.length) addLog(s, `전투 상태를 복구했습니다 (${fixed.join('·')}).`, 'system');
     return fixed;
@@ -71,7 +71,7 @@ function tickTurn(s: State, rng: () => number) {
     s.playMs = (s.playMs || 0) + BALANCE.turnMs;
     repairState(s);
     // v27.25·v27.31 운영 페이지에서 닫은 던전·사냥터에 있던 세이브는 보상 없이 나와 열린 사냥터에서 자동 사냥을 잇습니다.
-    if (s.dungeon && dungeonClosed(s.dungeon.id)) { const name = DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'; s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${name}이(가) 점검으로 닫혀 사냥터로 돌아왔습니다. 점검이 끝나면 다시 열립니다.`, 'system'); }
+    if (s.dungeon && dungeonClosed(s.dungeon.id)) { const name = dungeonById(s.dungeon!.id)?.name || '던전'; s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${name}이(가) 점검으로 닫혀 사냥터로 돌아왔습니다. 점검이 끝나면 다시 열립니다.`, 'system'); }
     if (!s.dungeon && stageClosed(s.stage)) {
         const from = STAGES.findIndex(x => x.id === s.stage), name = STAGES[from]?.name || '사냥터';
         const to = [...STAGES.slice(0, Math.max(0, from))].reverse().find(x => !stageClosed(x.id) && s.level >= x.level && s.rebirths >= x.rebirth) || STAGES[0];
@@ -93,7 +93,7 @@ function tickTurn(s: State, rng: () => number) {
     const e = s.enemy!;
     const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
-    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), practice: lazyRefinePractices(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
+    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
     const enemy: Fighter = { foe: true, name: enemyLabel(e), stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
@@ -142,7 +142,7 @@ function tickTurn(s: State, rng: () => number) {
         if (inRandomGame(s)) loseRandomGame(s);
         else if (s.dungeon) {
             const repeating = !!s.dungeon.repeat;
-            endRun(s, `${DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 사냥으로 전환' : ' · 멈춤'}`);
+            endRun(s, `${dungeonById(s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 사냥으로 전환' : ' · 멈춤'}`);
             s.dungeon = null;
             s.running = repeating;
             addLog(s, repeating ? '던전 도전에 실패했습니다. 반복 도전을 멈추고 사냥터에서 자동 사냥을 이어갑니다.' : '던전 도전에 실패했습니다. 손실 없이 다시 도전할 수 있습니다.');

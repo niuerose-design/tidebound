@@ -72,7 +72,6 @@ test('v3.74 extreme break: active skills only, after all three limit breaks at 1
     assert.equal(P.extremeBroken(s, 'hook'), false, 'two limit breaks are not enough');
     s.limitBreaks.hook = 3; assert.equal(P.extremeBroken(s, 'hook'), true);
     s.skillPractice.hook = target - 1; assert.equal(P.extremeBroken(s, 'hook'), false);
-    const max = P.maxSkillLevel(sk); assert.equal(P.effectiveSkill(sk, 1, max + 3, target * 2).multiplier, P.effectiveSkill(sk, 1, max + 3, 0).multiplier, 'no old refinement bonus');
     const { ACHIEVEMENTS } = Ac2, a = ACHIEVEMENTS.find(x => x.id === 'extremeBreak');
     assert.ok(a && a.honor && !Object.keys(a.reward).length && a.desc.includes('운영자에게 문의해주세요')); s.skillPractice.hook = target; assert.equal(a.progress(s), 1);
     const j = JOBS.find(x => x.id === 'strTraining1');
@@ -166,7 +165,7 @@ test('v3.41 auto follow (ascension 2): highest stage that fits the level, tide b
     assert.throws(() => act(s, { type: 'autoFollow', id: 'on', value: 'top:max' }, 0), /승천 2회/);
     s.ascension = 2; act(s, { type: 'autoFollow', id: 'on', value: 'top:mimic' }, 0);
     assert.throws(() => act(s, { type: 'autoFollow', id: 'on', value: 'nope:max' }, 0), /규칙/);
-    const want = [...W.PLACES].reverse().find(st => st.level <= 40 && s.rebirths >= st.rebirth);
+    const want = [...W.BASE_STAGES].reverse().find(st => st.level <= 40 && s.rebirths >= st.rebirth);
     s.enemy = { id: 'x' }; assert.equal(AmMod.runAutoFollow(s), false, 'waits while fighting'); s.enemy = null;
     assert.equal(AmMod.runAutoFollow(s), true); assert.equal(s.stage, want.id); assert.equal(s.tide, Math.min(20, Mi.MIMIC.tierCap));
     assert.equal(AmMod.runAutoFollow(s), false, 'nothing to change');
