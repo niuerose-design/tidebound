@@ -55,6 +55,9 @@ test('v24.2 songs cost 0 AP and only bard-lineage jobs may equip them', () => {
     const s = newState(0); s.level = 70; s.rebirths = 3; s.job = 'legendBard'; s.learned.roadSong = 1; s.skillInheritances = { roadSong: true }; s.learned.heroicVerse = 1;
     assert.ok(canUse(s, 'roadSong') && canUse(s, 'heroicVerse')); assert.equal(apUsed(s, ['roadSong', 'heroicVerse']), 0);
     s.job = 'whaler'; assert.equal(canUse(s, 'roadSong'), false, 'inherited songs still need a bard-lineage job');
+    for (const sk of songs) assert.equal(sk.exclusiveLineage, 'bard', sk.id + ' v3.187 songs are Angelic Buster lineage exclusives');
+    s.job = 'legendBard'; s.skills = ['roadSong']; const sung = stats(s).hp; s.job = 'whaler'; const unsung = stats(s).hp; s.job = 'legendBard'; s.skills = []; assert.ok(sung > stats(s).hp, 'song adds HP in lineage');
+    s.job = 'whaler'; s.skills = []; assert.equal(unsung, stats(s).hp, 'an equipped song gives nothing outside the lineage');
     assert.ok(JOBS.find(j => j.id === 'siren'));
 });
 
