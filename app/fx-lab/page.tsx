@@ -44,7 +44,7 @@ function FxLabInner() {
                 <CombatFxOverlay effect={effect}/>
                 <div className="opponent-card player-opponent"><span className="eyebrow">MY CHARACTER</span><div className="combatant-name"><strong>실험 모험가</strong></div><div className="meter"><i style={{ width: '100%' }}/></div></div>
                 <div style={{ display: 'grid', placeItems: 'center', color: '#8fab9f' }}>VS</div>
-                <div className="opponent-card"><span className="eyebrow">CURRENT TARGET</span><div className="combatant-name"><strong>가상의 몹</strong></div><div className="player-hp-anchor"><Meter value={execute ? 22 : 64} max={100} label="HP"/><BarCleave effect={effect}/></div></div>
+                <div className="opponent-card"><span className="eyebrow">CURRENT TARGET</span><div className="combatant-name"><strong>가상의 몹</strong></div><div className="player-hp-anchor"><Meter value={execute ? 22 : 64} max={100} label="HP"/><BarCleave effect={effect} value={execute ? 22 : 64} max={100} label="HP"/></div></div>
             </div>
             <section className="battle-scene running" style={{ position: 'relative', isolation: 'isolate', height: 270, overflow: 'hidden', borderRadius: 12, border: '1px solid #2c4348' }}>
                 {/* 실제 화면처럼 연출층(z-index -1)이 배경 위 · 몹 아래에 오도록 배경을 -2로 둡니다. */}
