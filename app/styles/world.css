@@ -424,3 +424,11 @@
 .item-filter{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
 .item-filter button{display:inline-flex;align-items:center;gap:6px}
 .item-filter-dot{width:8px;height:8px;border-radius:50%;background:var(--rarity,#9ab4b5);box-shadow:0 0 6px var(--rarity,#9ab4b5)}
+
+/* v3.160 호루라기 카드(사냥터 난이도 아래) · 재입대 표시 */
+.whistle-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.whistle-card h3 { margin: 0 0 4px; }
+.whistle-card h3 small { font-weight: 400; opacity: .75; margin-left: 6px; }
+.whistle-card .footnote { margin: 0; max-width: 56ch; }
+.rank-reenlist { display: block; font-weight: 500; opacity: .85; }
+.rank-reenlist-notice { margin-top: 8px; }

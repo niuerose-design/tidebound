@@ -349,3 +349,30 @@ test('v3.154 bag research retired (cap 100, pearls refunded), long rest rescaled
     assert.ok(u.pearls > 0, 'auto-claim pays the pearls'); assert.ok(u.logs.some(l => l.text.includes('자동 수령 · 업적 보상')));
     assert.ok(Object.keys(u.achievements).every(id => u.achievementClaims[id]), 'nothing left unclaimed');
 });
+
+test('v3.160 whistle: SP 5 forces the next hunting-ground spawn to be the mimic or nuri, three per day, not in dungeons', () => {
+    const s = newState(0); s.level = 60; s.kills = 2000; s.sp = 20; s.stage = 'brook'; s.whistleDay = undefined;
+    act(s, { type: 'whistle', id: 'mimic' }, 0);
+    assert.equal(s.sp, 15); assert.equal(s.whistle, 'mimic'); assert.equal(s.whistleDay.used, 1);
+    assert.throws(() => act(s, { type: 'whistle', id: 'nuri' }, 0), /이미 호루라기/);
+    act(s, { type: 'start' }, 0); rawAdvance(s, 2000, seeded(1));
+    assert.equal(s.enemy?.id, MIMIC_DATA.id, 'next spawn is the mimic'); assert.equal(s.whistle, undefined, 'consumed');
+    act(s, { type: 'pause' }, 0);
+    act(s, { type: 'whistle', id: 'nuri' }, 0); delete s.whistle; act(s, { type: 'whistle', id: 'nuri' }, 0); delete s.whistle;
+    assert.throws(() => act(s, { type: 'whistle', id: 'nuri' }, 0), /하루 3번/);
+    s.sp = 4; assert.throws(() => act(s, { type: 'whistle', id: 'mimic' }, 86_400_000 * 2 + 1), /SP가 부족/, 'a new day resets the count but SP 5 is still needed');
+    s.sp = 5; act(s, { type: 'whistle', id: 'mimic' }, 86_400_000 * 2 + 1); assert.equal(s.whistleDay.used, 1, 'new day count'); assert.equal(s.sp, 0);
+    const t = newState(0); t.level = 5; t.sp = 10; assert.throws(() => act(t, { type: 'whistle', id: 'mimic' }, 0), /Lv\.10/);
+});
+
+test('v3.160 reenlist: only at the top rank, resets rank exp and perks, adds a permanent promotion point per reenlistment and shows a star', async () => {
+    const { RANK_CUMULATIVE, rankPointsEarned, rankTitle, isTopRank } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/rank');
+    const s = newState(0); s.rank = { exp: RANK_CUMULATIVE.at(-1) - 1, perks: { drill: 3 } };
+    assert.throws(() => act(s, { type: 'reenlist' }, 0), /중장에서만/);
+    s.rank.exp = RANK_CUMULATIVE.at(-1); assert.ok(isTopRank(s)); const before = rankPointsEarned(s);
+    s.running = true; assert.throws(() => act(s, { type: 'reenlist' }, 0), /자동 사냥/); s.running = false;
+    act(s, { type: 'reenlist' }, 0);
+    assert.deepEqual(s.rank, { exp: 0, perks: {}, reenlist: 1 }); assert.equal(rankPointsEarned(s), 1, 'private + 1 permanent point'); assert.equal(rankTitle(s), '이등병 ★1');
+    s.rank.exp = RANK_CUMULATIVE.at(-1); assert.equal(rankPointsEarned(s), before + 1); act(s, { type: 'reenlist' }, 0); assert.equal(s.rank.reenlist, 2); assert.equal(rankPointsEarned(s), 2);
+    act(s, { type: 'sync' }, 0); assert.ok('reenlist:1' in s.achievements, 'honor achievement');
+});

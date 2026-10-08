@@ -46,7 +46,7 @@ export const RANK_PERKS: RankPerkDef[] = [
     { id: 'medal', name: '전공 훈장', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 SP +1`, max: 9, cost: 1, per: .001 },
     { id: 'supply', name: '보급품', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 세계석 +1`, max: 10, cost: 1, per: .001 },
 ];
-export type RankState = { /** 계급 경험치(세어진 처치 수) */ exp: number; perks: Partial<Record<RankPerkId, number>>; /** v3.46 무리 계급 경험치의 소수점 이월분(0~1). */ frac?: number };
+export type RankState = { /** 계급 경험치(세어진 처치 수) */ exp: number; perks: Partial<Record<RankPerkId, number>>; /** v3.46 무리 계급 경험치의 소수점 이월분(0~1). */ frac?: number; /** v3.160 재입대 횟수: 중장에서 이등병으로 돌아간 횟수. 횟수만큼 진급 포인트를 영구로 더 받습니다. */ reenlist?: number };
 /**
  * v3.46 무리 계급 경험치: 마리 수 대신 무리와 싸운 턴 수 × 규모별 턴당 값(마리 수 상한). 한 마리는 그대로 1.
  * 처치 상한(2초 턴당 1마리)으로 한 마리만 잡으면 중장까지 약 412일인데, 무리만 잡으면 ×100 약 300일 · ×500 약 200일이 되게 맞췄습니다(전과 기록은 똑같이 곱함).
@@ -71,7 +71,14 @@ export function rankProgress(s: RankSource) {
     const exp = rankState(s).exp, i = rankIndex(exp), next = RANKS[i + 1];
     return { index: i, rank: RANKS[i], next, have: exp - RANK_CUMULATIVE[i], need: next ? next.need : 0, exp };
 }
-export const rankPointsEarned = (s: RankSource) => RANKS.slice(0, rankIndex(rankState(s).exp) + 1).reduce((a, r) => a + r.points, 0);
+/** v3.160 재입대 1회당 영구 진급 포인트. */
+export const REENLIST_BONUS_POINTS = 1;
+export const reenlistCount = (s: RankSource) => rankState(s).reenlist || 0;
+/** 최고 계급(중장)인지. 재입대 조건. */
+export const isTopRank = (s: RankSource) => rankIndex(rankState(s).exp) === RANKS.length - 1;
+export const rankPointsEarned = (s: RankSource) => RANKS.slice(0, rankIndex(rankState(s).exp) + 1).reduce((a, r) => a + r.points, 0) + reenlistCount(s) * REENLIST_BONUS_POINTS;
+/** 이름 옆 · 채팅 · 운영 페이지에 쓰는 계급 표기: 재입대했으면 ★횟수를 붙입니다(예: 상병 ★2). */
+export const rankTitle = (s: RankSource) => `${rankOf(s).name}${reenlistCount(s) ? ` ★${reenlistCount(s)}` : ''}`;
 export const rankPerkLevel = (s: RankSource, id: RankPerkId) => Math.min(RANK_PERKS.find(p => p.id === id)!.max, rankState(s).perks[id] || 0);
 export const rankPointsSpent = (s: RankSource) => RANK_PERKS.reduce((a, p) => a + rankPerkLevel(s, p.id) * p.cost, 0);
 export const rankPointsFree = (s: RankSource) => rankPointsEarned(s) - rankPointsSpent(s);

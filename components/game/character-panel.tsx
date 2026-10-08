@@ -5,7 +5,7 @@ import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, perc
 import { attributes, apCapacity, apUsed, apSources } from '@/game/systems/progression';
 import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
 import { masteryMultipliers } from '@/game/systems/mastery';
-import { RANK_PERKS, rankOf, rankPerkLevel, rankPerkValue } from '@/game/data/rank';
+import { RANK_PERKS, rankTitle, rankPerkLevel, rankPerkValue } from '@/game/data/rank';
 import { VARIANTS, VARIANT_BOOK_MIN, variantChances } from '@/game/data/variants';
 import {MONSTER_TUNING, BALANCE } from '@/game/data/balance';
 import { StatBreakdown } from './stat-breakdown';
@@ -36,7 +36,7 @@ function RankPerkBreakdown({ s }: { s: State }) {
     const active = RANK_PERKS.map(p => ({ p, level: rankPerkLevel(s, p.id) })).filter(x => x.level > 0);
     const value = (id: typeof RANK_PERKS[number]['id'], level: number) => id === 'tally' ? `처치 1마리 = 계급 경험치 ${1 + level}마리` : id === 'drill' ? `처치 숙련 +${level} (고정)` : `${(rankPerkValue(s, id) * 100).toFixed(1)}% (${id === 'medal' ? 'SP' : '세계석'} +1 · 사냥터만)`;
     return <details className="stat-breakdown">
-        <summary><span>계급 특전 · {rankOf(s).name}<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>{active.length ? `${active.reduce((a, x) => a + x.level, 0)}P 적용` : '없음'}</strong></summary>
+        <summary><span>계급 특전 · {rankTitle(s)}<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>{active.length ? `${active.reduce((a, x) => a + x.level, 0)}P 적용` : '없음'}</strong></summary>
         <ul>{active.map(({ p, level }) => <li key={p.id}><span>{p.name} {level}단계</span><b>{value(p.id, level)}</b></li>)}</ul>
         <p className="stat-note">{active.length ? '숙련 훈련은 위 숙련도 획득에 배율과 따로 더해집니다(계열 집중 · 이벤트 · 연구 · 승천 배율을 받지 않음). 전공 훈장·보급품은 던전에서는 발동하지 않습니다.' : '치장 → 계급에서 진급 포인트로 특전을 켜면 여기에 적용값이 보입니다.'}</p>
     </details>;

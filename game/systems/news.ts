@@ -11,8 +11,8 @@ import { isHackerJob } from '../data/hacker';
 import { dayKey } from '../data/goals';
 import { josa } from '../data/altar';
 
-export type NewsKind = 'onyx' | 'ascend' | 'tier5' | 'abyss' | 'star22' | 'general';
-export type NewsMark = { onyx: string[]; ascension: number; tier5: string[]; abyss: number; star: number; rank: number; day: Partial<Record<NewsKind, string>> };
+export type NewsKind = 'onyx' | 'ascend' | 'tier5' | 'abyss' | 'star22' | 'general' | 'reenlist';
+export type NewsMark = { onyx: string[]; ascension: number; tier5: string[]; abyss: number; star: number; rank: number; /** v3.160 재입대 횟수 */ reenlist?: number; day: Partial<Record<NewsKind, string>> };
 export type NewsEvent = { kind: NewsKind; text: (name: string) => string };
 /** 무릉도장은 이 층 단위로 새로 넘을 때 알립니다. */
 export const NEWS_ABYSS_STEP = 50;
@@ -22,7 +22,7 @@ export const NEWS_RANK_GROUP = '장성';
 const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
 const tier5Jobs = (s: State) => (s.unlockedJobs || []).filter(id => !isHackerJob(id) && JOBS.find(j => j.id === id)?.tier === 5);
 function markOf(s: State, day: NewsMark['day'] = {}): NewsMark {
-    return { onyx: [...ownedOnyx(s)], ascension: s.ascension || 0, tier5: tier5Jobs(s), abyss: Math.floor((s.abyssBest || 0) / NEWS_ABYSS_STEP), star: bestStar(s), rank: rankIndex(rankState(s).exp), day };
+    return { onyx: [...ownedOnyx(s)], ascension: s.ascension || 0, tier5: tier5Jobs(s), abyss: Math.floor((s.abyssBest || 0) / NEWS_ABYSS_STEP), star: bestStar(s), rank: rankIndex(rankState(s).exp), reenlist: rankState(s).reenlist || 0, day };
 }
 
 const particle = (word: string, pair: '이가' | '을를') => josa(word, pair).slice(word.length);
@@ -35,6 +35,7 @@ export const NEWS_TEXT = {
     abyss: (n: string, floor: number) => `${josa(n, '이가')} 무릉도장 ${floor}층을 돌파했습니다.`,
     star22: (n: string) => `${josa(n, '이가')} 장비를 22성까지 강화했습니다.`,
     general: (n: string, rank: string) => `${josa(n, '이가')} ${rank}(으)로 진급했습니다.`,
+    reenlist: (n: string, count: number) => `${josa(n, '이가')} ${count}번째 재입대를 했습니다. 중장에서 이등병부터 다시 오릅니다.`,
 } satisfies Record<NewsKind, (n: string, ...a: never[]) => string>;
 /** 지난 표시 뒤로 새로 생긴 소식을 찾고 표시를 지금 상태로 옮깁니다. */
 export function collectNews(s: State, now: number): NewsEvent[] {
@@ -49,6 +50,7 @@ export function collectNews(s: State, now: number): NewsEvent[] {
     if (next.star >= 22 && prev.star < 22) found.push({ kind: 'star22', text: n => NEWS_TEXT.star22(n) });
     const rank = RANKS[next.rank];
     if (next.rank > prev.rank && rank?.group === NEWS_RANK_GROUP) found.push({ kind: 'general', text: n => NEWS_TEXT.general(n, rank.name) });
+    if ((next.reenlist || 0) > (prev.reenlist || 0)) found.push({ kind: 'reenlist', text: n => NEWS_TEXT.reenlist(n, next.reenlist || 0) });
     const today = dayKey(now), out: NewsEvent[] = [];
     for (const e of found) { if (next.day[e.kind] === today) continue; next.day[e.kind] = today; out.push(e); }
     return out;
