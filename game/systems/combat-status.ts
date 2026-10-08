@@ -9,7 +9,7 @@ export function visibleStatuses(effects: StatusEffects = {}, stun = 0, recent: C
     const poisonLabel = effects.poison ? `중독 ×${effects.poison.stacks}` : STATUS_LABELS.poison;
     const burnLabel = effects.burn ? `화상 ×${effects.burn.stacks}` : STATUS_LABELS.burn;
     const rows: { id: string; label: string; turns: number; recent?: boolean; detail?: string }[] = Object.entries(values).filter(([, turns]) => turns > 0).map(([id, turns]) => ({ id, label: id === 'bleed' ? dotLabel : id === 'poison' ? poisonLabel : id === 'burn' ? burnLabel : STATUS_LABELS[id as keyof typeof STATUS_LABELS], turns, recent: false }));
-    // v3.150 자기 버프(가속 제외): 이름과 남은 턴.
+    // v3.151 자기 버프(가속 제외): 이름과 남은 턴.
     for (const [id, b] of Object.entries(effects.buffs || {})) if (id !== 'haste' && b.turns > 0) rows.push({ id, label: b.name ?? id, turns: b.turns });
     // v3.143 충전 중첩(메카닉): 턴이 아니라 중첩 수를 보여 줍니다.
     if (effects.charge) rows.push({ id: 'charge', label: `충전 ×${effects.charge}`, turns: 0, detail: `${effects.charge}중첩 (최대 ${SKILL_FORMULA.charge.max})` });

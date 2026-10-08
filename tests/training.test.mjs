@@ -374,7 +374,7 @@ test('v3.148 Adele burns current mana into damage; Flame Wizard Genesis detonate
     assert.equal(burning.effects.burn, undefined, 'stacks consumed'); assert.ok(Math.abs(d3 / d0 - 2.05 * (1 + SKILL_FORMULA.burnVulnerability)) < .03, `burn detonation ${d0} → ${d3}`);
 });
 
-test('v3.150 Illium: arcane-ratio scaling, basic attacks corrode, corrosion cuts defense/resist/speed, Gravity Core fires five times; self-buff frame carries haste', async () => {
+test('v3.151 Illium: arcane-ratio scaling, basic attacks corrode, corrosion cuts defense/resist/speed, Gravity Core fires five times; self-buff frame carries haste', async () => {
     const { STATUS_TUNING } = await load('game/data/balance.js'); const { fighterSpeed } = await load('game/systems/combat.js');
     const sk = id => SKILLS.find(s => s.id === id);
     assert.equal(sk('crystalShard'), undefined); assert.equal(JOBS.find(j => j.id === 'crystalCaster'), undefined);

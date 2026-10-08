@@ -163,7 +163,7 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
     'tideDevourer',
     /** v3.148 아델 재개편: 곁가지 허공 방랑자(회피 + 마나)는 특색이 약해 지웠습니다. */
     'voidDrifter',
-    /** v3.150 일리움 재개편: 곁가지 크리스탈 연성사(마나 비례)는 아델 장치와 겹쳐 지웠습니다. */
+    /** v3.151 일리움 재개편: 곁가지 크리스탈 연성사(마나 비례)는 아델 장치와 겹쳐 지웠습니다. */
     'crystalCaster'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.138 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */

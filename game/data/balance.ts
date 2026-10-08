@@ -226,11 +226,11 @@ export const STATUS_TUNING = {
     hasteTurns: 3,
     slowMultiplier: .35,
     hasteMultiplier: .35,
-    /** v3.150 부식(최상급 디버프): 지속 턴과, 걸린 동안 깎이는 물리 방어 · 마법 방어 · 속도 비율. */
+    /** v3.151 부식(최상급 디버프): 지속 턴과, 걸린 동안 깎이는 물리 방어 · 마법 방어 · 속도 비율. */
     corrodeTurns: 3, corrodeDefense: .3, corrodeResist: .3, corrodeSpeed: .2,
     /** Extra hits are intentionally capped so one proc cannot create runaway loops. */
     maxExtraAttacks: 2,
-    /** v3.150 각성기의 추가타 상한(일리움 그라비티 코어 5연타, 은월 파쇄 연권). */
+    /** v3.151 각성기의 추가타 상한(일리움 그라비티 코어 5연타, 은월 파쇄 연권). */
     maxExtraAttacksAwaken: 4,
     /** v24.1 면역: 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 턴(자기 행동 기준). */
     immuneTurns: { stun: 2, bleed: 1, poison: 1, burn: 1, weaken: 1, silence: 1, slow: 1, corrode: 1 },

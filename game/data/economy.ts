@@ -44,26 +44,31 @@ export type ResearchDef = {
     /** v3.31 이 단계를 넘는 단계는 승천한 모험가만 살 수 있습니다(행운의 편지 6~10단계). */
     ascendAbove?: number;
 };
-export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '전투' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
+export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '훈련' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
 export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본', special: '특별', vow: '서약' };
 /** v3.90 연구 ‘샘의 기억’ 단계당 최대 마나 배율(깊은 숨결의 최대 체력과 같은 +8%). */
 export const MANA_RESEARCH_PER = .08;
+/**
+ * v3.150 훈련 탭(전 전투 탭)의 능력치 연구 13개는 '○○ 강화 I'로 통일(세계석 연구 테마 · docs/research-review.md 4절 · 권고 6).
+ * 치명 피해 강화 가격 절반(기본 4 · 증가 3 → 2 · 2, 총 1,096 → 722) · 체력 강화 가격 절반(2 · 2 → 1 · 1, 30단계 1,386 → 812) · 흡혈 강화는 연구분을 30% 상한 밖에(권고 4 · 5).
+ * 윤회의 연금술은 골드 탭 → 유틸 탭 기본 묶음.
+ */
 export const RESEARCH: ResearchDef[] = [
     // The first purchase is reachable after a normal first rebirth, but later
     // ranks are deliberately expensive so pearls remain a meaningful choice.
-    { id: 'attack', name: '날카로운 기억', desc: '물리 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '물리 공격' },
-    { id: 'magicAttack', name: '마력의 기억', desc: '마법 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '마법 공격' },
-    { id: 'mana', name: '샘의 기억', desc: '최대 마나 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: MANA_RESEARCH_PER, unit: 'percent', label: '최대 마나' },
-    { id: 'crit', name: '예리한 눈', desc: '치명 확률 +0.5%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .005, unit: 'pp', label: '치명 확률' },
-    { id: 'manaRegen', name: '고요한 호흡', desc: '턴당 마나 회복 +5%', max: 10, base: 3, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .05, unit: 'percent', label: '턴당 마나 회복' },
-    { id: 'critDamage', name: '치명의 일격', desc: '치명 피해 +2%p', max: 25, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 5, per: .02, unit: 'pp', label: '치명 피해' },
-    { id: 'penetration', name: '관통의 기억', desc: '방어 관통 +3% (다른 관통과 곱연산)', max: 15, base: 5, step: 4, tab: 'combat', group: 'attack', rebirth: 5, per: .03, unit: 'pp', label: '방어 관통' },
-    { id: 'hp', name: '깊은 숨결', desc: '최대 체력 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'defense', per: .08, unit: 'percent', label: '최대 체력' },
-    { id: 'guard', name: '불굴의 기억', desc: '물리 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '물리 방어' },
-    { id: 'magicGuard', name: '마나 장막의 기억', desc: '마법 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '마법 방어' },
-    { id: 'recovery', name: '회복의 기억', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
-    { id: 'evasion', name: '바람의 걸음', desc: '회피 +0.6%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .006, unit: 'pp', label: '회피' },
-    { id: 'lifesteal', name: '피의 갈증', desc: '흡혈 +0.5%p (전체 상한 30%)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },
+    { id: 'attack', name: '물리력 강화 I', desc: '물리 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '물리 공격' },
+    { id: 'magicAttack', name: '마법력 강화 I', desc: '마법 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '마법 공격' },
+    { id: 'mana', name: '마나 강화 I', desc: '최대 마나 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: MANA_RESEARCH_PER, unit: 'percent', label: '최대 마나' },
+    { id: 'crit', name: '치명타 강화 I', desc: '치명 확률 +0.5%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .005, unit: 'pp', label: '치명 확률' },
+    { id: 'manaRegen', name: '마나 회복 강화 I', desc: '턴당 마나 회복 +5%', max: 10, base: 3, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .05, unit: 'percent', label: '턴당 마나 회복' },
+    { id: 'critDamage', name: '치명 피해 강화 I', desc: '치명 피해 +2%p', max: 25, base: 2, step: 2, tab: 'combat', group: 'attack', rebirth: 5, per: .02, unit: 'pp', label: '치명 피해' },
+    { id: 'penetration', name: '관통 강화 I', desc: '방어 관통 +3% (다른 관통과 곱연산)', max: 15, base: 5, step: 4, tab: 'combat', group: 'attack', rebirth: 5, per: .03, unit: 'pp', label: '방어 관통' },
+    { id: 'hp', name: '체력 강화 I', desc: '최대 체력 +8%', max: 200, base: 1, step: 1, tab: 'combat', group: 'defense', per: .08, unit: 'percent', label: '최대 체력' },
+    { id: 'guard', name: '물리 방어 강화 I', desc: '물리 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '물리 방어' },
+    { id: 'magicGuard', name: '마법 방어 강화 I', desc: '마법 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '마법 방어' },
+    { id: 'recovery', name: '처치 회복 강화 I', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
+    { id: 'evasion', name: '회피 강화 I', desc: '회피 +0.6%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .006, unit: 'pp', label: '회피' },
+    { id: 'lifesteal', name: '흡혈 강화 I', desc: '흡혈 +0.5%p (연구분은 전체 상한 30% 밖에 더함)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },
     { id: 'ap', name: '영혼의 그릇', desc: '스킬 장착 한도 AP +1', max: 12, base: 4, step: 3, tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
     { id: 'exp', name: '모험의 기억', desc: '처치 경험치 +20%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', per: .2, unit: 'percent', label: '처치 경험치' },
     // v27.60 모험가의 유산: 시작 골드 +500 → 시작 레벨 +2. id는 그대로라 찍어 둔 단계가 이어집니다.
@@ -94,7 +99,7 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'mastery', name: '숙련의 기억', desc: '스킬·직업 숙련 획득 +3%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .03, unit: 'percent', label: '숙련 획득' },
     { id: 'gold', name: '황금 비', desc: '처치·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '처치·던전 골드' },
     { id: 'drop', name: '보물의 감각', desc: '장비 드롭 확률 +10%', max: 10, base: 3, step: 3, tab: 'gold', per: .1, unit: 'percent', label: '장비 드롭 확률' },
-    { id: 'pearl', name: '윤회의 연금술', desc: '환생 세계석 +2', max: 5, base: 6, step: 5, tab: 'gold', per: 2, unit: 'flat', label: '환생 세계석' },
+    { id: 'pearl', name: '윤회의 연금술', desc: '환생 세계석 +2', max: 5, base: 6, step: 5, tab: 'utility', group: 'basic', per: 2, unit: 'flat', label: '환생 세계석' },
     { id: 'enhance', name: '대장장이의 기억', desc: '강화·옵션 재설정 골드 비용 -2%', max: 15, base: 3, step: 2, tab: 'gold', rebirth: 5, per: .02, unit: 'percent', label: '강화·재설정 비용', negative: true },
 ];
 /**

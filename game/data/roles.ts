@@ -35,7 +35,7 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
     squidJester: 'physical', spellbladeNovice: 'physical', brawnMage: 'physical', nerveNeedler: 'physical', tideLancer: 'borderStand',
     tide: 'magic', chantNovice: 'magic', apprentice: 'magic', manaDevotee: 'magic',
     poisoner: 'status', shaman: 'status', bloodAngler: 'status',
-    /** v3.150 일리움: 마력 평타 마법사(부식 디버프를 걸지만 피해의 축은 평타). */
+    /** v3.151 일리움: 마력 평타 마법사(부식 디버프를 걸지만 피해의 축은 평타). */
     currentScholar: 'magic',
     warden: 'reflect', saltWarden: 'reflect', bulkyFisher: 'reflect',
     martialArtist: 'control', bellTurtle: 'control', stillAngler: 'control', runesmith: 'borderReflect',

@@ -9,7 +9,7 @@ const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
 const seeded = seed => { let x = seed >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296); };
 
 test('Research v2: 11 new entries (v3.38 shop removed) match the plan table and are refused before unlock and at the cap', () => {
-    const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 4, 3, 5, 1096], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], inventory: [8, 3, 3, 2, 108], offline: [12, 3, 2, 2, 168], mastery: [10, 3, 3, 5, 165], enhance: [15, 3, 2, 5, 255] }; // v3.42 치명 피해 21~25단계는 ×1.06 복리(전 가격 1,020)
+    const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 2, 2, 5, 722], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], inventory: [8, 3, 3, 2, 108], offline: [12, 3, 2, 2, 168], mastery: [10, 3, 3, 5, 165], enhance: [15, 3, 2, 5, 255] }; // v3.42 치명 피해 21~25단계는 ×1.06 복리(전 가격 1,020)
     for (const id of NEW) {
         const r = research(id), [max, base, step, rebirth, total] = table[id];
         assert.deepEqual([r.max, r.base, r.step, r.rebirth], [max, base, step, rebirth], id);
@@ -30,7 +30,8 @@ test('Research v2: stat effects come from the research source and keep the exist
     close(researchDelta(s, 'evasion'), .12); close(researchDelta(s, 'lifesteal'), .1); close(researchFactor(s, 'manaRegen'), 1.5);
     const base = newState(0);
     close(stats(s).crit - stats(base).crit, .1); close(stats(s).lifesteal - stats(base).lifesteal, .1);
-    s.permanent.penetration = 1000; s.permanent.lifesteal = 1000; assert.equal(stats(s).penetration, .85); /* v3.84 상한 0.6 → 합계 0.85 */ assert.equal(stats(s).lifesteal, .3);
+    s.permanent.penetration = 1000; s.permanent.lifesteal = 1000; assert.equal(stats(s).penetration, .85); /* v3.84 상한 0.6 → 합계 0.85 */
+    { const s0 = structuredClone(s); s0.permanent.lifesteal = 0; close(stats(s).lifesteal, Math.min(.3, stats(s0).lifesteal) + 5); } // v3.150 연구분은 30% 상한 밖
 });
 
 test('Research v2: recovery and smith discounts use the state-aware functions', () => {
@@ -303,7 +304,7 @@ test('v3.24 removed research tailwindWindow refunds every pearl once', () => {
     migrateState(s); assert.equal(s.pearls - p, 30, 'only once');
 });
 
-test('v3.90 max mana: base grows with level, research ‘샘의 기억’ ×(1 + 8%/rank), account · rebirth multipliers, coat/cape mana, ~0.2 of max HP', () => {
+test('v3.90 max mana: base grows with level, research ‘마나 강화 I’ ×(1 + 8%/rank), account · rebirth multipliers, coat/cape mana, ~0.2 of max HP', () => {
     const s = newState(0);
     const lv1 = stats(s).mana; s.level = 11; assert.equal(stats(s).mana - lv1, 30, '+3 per level');
     const r = research('mana'); assert.deepEqual([r.max, r.base, r.step, r.rebirth || 0, r.tab, r.group], [200, 2, 2, 0, 'combat', 'attack']);

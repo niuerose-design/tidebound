@@ -126,7 +126,7 @@ function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageType'>) {
     return [`본타 ${part(ev.hits[0])}`, ...ev.hits.slice(1).map((h, i) => `추가타${ev.hits.length > 2 ? ` ${i + 1}` : ''} ${part(h)}`), `합계 ${ev.total} ${word} 피해`].join(' · ');
 }
 /** 행동 순서·명중 보정·연속 행동 확률에 쓰는 속도. 가속·감속이 반영됩니다. */
-/** v3.150 자기 버프: 옛 세이브의 가속(effects.haste 턴 수)을 buffs.haste로 옮기고, 살아 있는 버프 목록을 돌려줍니다. */
+/** v3.151 자기 버프: 옛 세이브의 가속(effects.haste 턴 수)을 buffs.haste로 옮기고, 살아 있는 버프 목록을 돌려줍니다. */
 function buffsOf(effects: StatusEffects | undefined) {
     if (!effects) return [];
     if (effects.haste) { grantBuff(effects, { id: 'haste', name: '가속', turns: effects.haste, speedMultiplier: 1 + STATUS_TUNING.hasteMultiplier }); delete effects.haste; }
@@ -350,7 +350,7 @@ export type ForcedCast = { id: string; index: number; count: number; kind?: 'awa
 function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false, forced?: ForcedCast) {
     a.effects ??= {};
     b.effects ??= {};
-    // v3.150 자기 버프(가속 포함)의 고정값을 얹은 전투 능력치.
+    // v3.151 자기 버프(가속 포함)의 고정값을 얹은 전투 능력치.
     const sa = withBuffs(normalizeStats(a.stats), a.effects), sb = withBuffs(normalizeStats(b.stats), b.effects);
     if (!forced) a.mana = Math.min(sa.mana, (a.mana ?? sa.mana) + sa.manaRegen);
     const notes: string[] = [];
@@ -454,7 +454,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         if (chosen.hpCost) { const pay = Math.min(Math.max(0, a.hp - 1), Math.floor(a.hp * chosen.hpCost)); if (pay > 0) { a.hp -= pay; ev.hpSpent = pay; notes.push(`체력 ${pay.toLocaleString()} 소모`); } }
         // v3.148 마나 연소: 현재 마나 × manaBurn을 태웁니다. 태운 만큼 아래에서 피해 기준값에 더합니다.
         if (chosen.manaBurn) { burned = Math.floor((a.mana ?? 0) * chosen.manaBurn); if (burned > 0) { a.mana = (a.mana ?? 0) - burned; ev.manaBurned = burned; notes.push(`마나 ${burned.toLocaleString()} 연소`); } }
-        // v3.150 자기 버프: 쓰면 시전자에게 걸립니다(명중과 무관).
+        // v3.151 자기 버프: 쓰면 시전자에게 걸립니다(명중과 무관).
         if (chosen.selfBuff) { grantBuff(a.effects, chosen.selfBuff); notes.push(`${chosen.selfBuff.name ?? chosen.selfBuff.id} ${chosen.selfBuff.turns}턴`); ev.statuses.push({ id: chosen.selfBuff.id, turns: chosen.selfBuff.turns, onSelf: true }); }
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.poison; delete a.effects.burn; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
         if (chosen.wardTurns) {
@@ -565,7 +565,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         base += sa.defense * SKILL_FORMULA.crushDefense / (chosen.multiplier || 1);
     // v3.84 능력치 관통(출처끼리 곱연산)에 스킬 관통 보너스는 예전처럼 더합니다(곱하면 관통이 낮은 캐릭터의 스킬 보너스가 줄어듦). 합계 상한 85%(PENETRATION.cap).
     const pierce = 1 - Math.min(PENETRATION.cap, sa.penetration + (chosen?.penetrationBonus || 0));
-    // v3.150 부식: 걸린 동안 물리 · 마법 방어가 깎입니다.
+    // v3.151 부식: 걸린 동안 물리 · 마법 방어가 깎입니다.
     const corrodeGuard = (b.effects.corrode || 0) > 0 ? { defense: 1 - STATUS_TUNING.corrodeDefense, resist: 1 - STATUS_TUNING.corrodeResist } : { defense: 1, resist: 1 };
     const defense = (magical ? sb.resist * corrodeGuard.resist : sb.defense * corrodeGuard.defense) * pierce;
     // 복합(split) 피해: 한 번의 명중·치명 판정 뒤 물리·마법 절반씩 각각의 방어를 적용합니다.
@@ -620,7 +620,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (!statusOnly || !landed) ev.hits.push(landed ? hitRecord('main', actual, damage, crit, superCrit) : { kind: 'main', value: 0, critical: false, miss: true });
     if (healOnly) notes.push(`회복 ${healed}`);
     // v3.5 상태이상 저항: 몬스터가 거는 해로운 상태이상을 대상의 statusResist 확률로 무효화합니다(저항이 0이면 난수를 쓰지 않음).
-    // v3.150 기본 공격 상태이상: 기술이 없을 때(기본 공격 · 마력 평타) 장착한 패시브의 basicEffect를 그 공격의 효과로 씁니다.
+    // v3.151 기본 공격 상태이상: 기술이 없을 때(기본 공격 · 마력 평타) 장착한 패시브의 basicEffect를 그 공격의 효과로 씁니다.
     const basic = !chosen ? a.skills.map(id => skillById(id)).find(x => x?.basicEffect) : undefined;
     const src: Skill | undefined = chosen ?? (basic ? { ...basic, effect: basic.basicEffect } as Skill : undefined);
     const harmful = src?.effect && RESISTABLE.has(src.effect) ? src.effect : undefined;
@@ -715,7 +715,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         notes.push(`감속 ${turns}턴`);
         ev.statuses.push({ id: 'slow', turns });
     }
-    // v3.150 부식: 물리 · 마법 방어와 속도를 깎는 최상급 디버프(일리움). 기본 공격 상태이상(패시브)으로도 걸립니다.
+    // v3.151 부식: 물리 · 마법 방어와 속도를 깎는 최상급 디버프(일리움). 기본 공격 상태이상(패시브)으로도 걸립니다.
     if (landed && src && effect === 'corrode' && isImmune(b, 'corrode')) { notes.push('부식 면역'); ev.immune = 'corrode'; }
     else if (landed && src && effect === 'corrode') {
         const turns = lasting((src.statusTurns ?? STATUS_TUNING.corrodeTurns) + sa.controlBonus);
