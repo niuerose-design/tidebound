@@ -6,7 +6,7 @@
 import type { Job } from './classes';
 
 export type RoleId = 'dealer' | 'tank' | 'buffer' | 'border' | 'none';
-export type SubRoleId = 'physical' | 'magic' | 'status' | 'reflect' | 'control' | 'drain' | 'healer' | 'utility' | 'border' | 'borderBuffer' | 'borderReflect' | 'borderStand' | 'borderBuff' | 'borderHarmony' | 'borderTempo' | 'morph' | 'training' | 'none';
+export type SubRoleId = 'physical' | 'magic' | 'status' | 'reflect' | 'control' | 'drain' | 'healer' | 'utility' | 'border' | 'borderBuffer' | 'borderReflect' | 'borderStand' | 'borderBuff' | 'borderHarmony' | 'borderTempo' | 'borderRecoil' | 'morph' | 'absorb' | 'training' | 'none';
 export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     physical: { role: 'dealer', name: '물리 딜러' },
     magic: { role: 'dealer', name: '마법 딜러' },
@@ -30,8 +30,12 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     borderHarmony: { role: 'border', name: '경계: 조화 딜러 · 회피 탱커' },
     /** v3.164 추가타 딜러와 가속 지원 경계(스트라이커: 추가타가 명중할 때마다 전류 자기 버프가 길어지고, 전류 중 추가타가 늘어남). */
     borderTempo: { role: 'border', name: '경계: 추가타 딜러 · 가속 지원' },
+    /** v3.172 반동 탱커와 체질 딜러 경계(블래스터: 받은 피해가 반동 게이지(충전)로 쌓이고, 실린더 버스트 · 벙커 버스터가 모두 소모해 터뜨림). */
+    borderRecoil: { role: 'border', name: '경계: 반동 탱커 · 체질 딜러' },
     /** v3.163 변신 탱커(카이저: 맞을 때 충전이 쌓여 파이널 피규레이션으로 변신). */
     morph: { role: 'tank', name: '변신 탱커' },
+    /** v3.172 흡수 탱커(라라: 행동마다 마나를 체력으로 바꿔 버팀). */
+    absorb: { role: 'tank', name: '흡수 탱커' },
     /** 독립 수련(계승 재료). */
     training: { role: 'none', name: '수련' },
     none: { role: 'none', name: '역할 없음' },
@@ -45,8 +49,8 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
     poisoner: 'status', shaman: 'status', bloodAngler: 'status',
     /** v3.151 일리움: 마력 평타 마법사(부식 디버프를 걸지만 피해의 축은 평타). */
     currentScholar: 'magic',
-    warden: 'reflect', saltWarden: 'reflect', bulkyFisher: 'reflect',
-    martialArtist: 'control', bellTurtle: 'morph', stillAngler: 'control', runesmith: 'borderReflect',
+    warden: 'reflect', saltWarden: 'reflect', bulkyFisher: 'borderRecoil',
+    martialArtist: 'control', bellTurtle: 'morph', stillAngler: 'absorb', runesmith: 'borderReflect',
     wanderer: 'borderHarmony',
     /** v3.140 루미너스: 마법 공격 계수로 물리 피해를 주는 역전 딜러(지능 기반이라 마법 딜러로 셈). */
     paladin: 'magic',

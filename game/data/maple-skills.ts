@@ -181,10 +181,11 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     afterimageFlurry: '블레이드 퓨리', shadowPace: '미러 이미징',
     pureBolt: '트리플 블로우', manaFocus: '스태프 마스터리', manaRupture: '다크 체인', arcaneVein: '오라: 블루',
     manaDetonation: '피니싱 블로우', pureCore: '다크 제네시스',
-    bodySlam: '매그넘 펀치', thickBuild: '건틀렛 마스터리', massiveCharge: '더블 팡', wallOfFlesh: '실린더 버스트',
-    landslide: '해머 스매시', mountainHeart: '버닝 브레이커',
+    // v3.172 반동 게이지: 실린더 버스트(3차 액티브) · 벙커 버스터(5차 액티브)가 게이지를 소모합니다.
+    bodySlam: '매그넘 펀치', thickBuild: '건틀렛 마스터리', massiveCharge: '더블 팡', wallOfFlesh: '리볼빙 캐논',
+    landslide: '실린더 버스트', mountainHeart: '버닝 브레이커', bunkerBuster: '벙커 버스터', ironShell: '아머 피어싱',
     mindWave: '정기 뿌리기', calmMind: '자연의 벗', manaTide: '분출', deepMeditation: '용맥 흡수',
-    voidTorrent: '산 꼬마의 놀이', emptyMind: '큰 기지개',
+    voidTorrent: '산 꼬마의 놀이', emptyMind: '큰 기지개', veinBurst: '용맥 폭발', mountainSpirit: '산신령의 축복',
     luckyBreak: '럭키 세븐', luckyStreak: '헤이스트', heavenlyStrike: '어벤져', blessedHand: '크리티컬 스로우',
     fateReversal: '트리플 스로우', fatesFavor: '마크 오브 어쌔신', heavenlyDice: '쿼드러플 스로우', avatarsLuck: '스로잉 엑스퍼트',
 };

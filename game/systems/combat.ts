@@ -371,6 +371,15 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const emit = (text: string) => { events?.push(ev); return text; };
     // 턴당 체력 회복: 마나처럼 행동 시작 때 되찾습니다(연속·추가 행동 포함).
     if (!forced && sa.hpRegen > 0 && a.hp > 0 && a.hp < sa.hp) { ev.regen = Math.min(sa.hp - a.hp, sa.hpRegen); a.hp += ev.regen; }
+    // v3.172 마나 치유(라라): 행동 시작 때 체력이 모자라면 최대 마나 × spend를 써서 최대 체력 × heal을 되찾습니다(마나가 모자라면 안 함, 여러 개면 heal이 큰 것 하나).
+    if (!forced && a.hp > 0 && a.hp < sa.hp) {
+        const mend = a.skills.map(id => skillById(id)?.manaMend).filter((m): m is NonNullable<Skill['manaMend']> => !!m).sort((x, y) => y.heal - x.heal)[0];
+        const cost = mend ? Math.ceil(sa.mana * mend.spend) : 0;
+        if (mend && cost > 0 && (a.mana ?? 0) >= cost) {
+            const healed = Math.min(sa.hp - a.hp, Math.floor(sa.hp * mend.heal));
+            if (healed > 0) { a.mana = (a.mana ?? 0) - cost; a.hp += healed; ev.mend = { mana: cost, value: healed }; notes.push(`마나 치유 ${healed}`); }
+        }
+    }
     if (!forced) tickImmunity(a.effects);
     if (!forced && a.effects.dot) {
         const dot = a.effects.dot;
@@ -564,9 +573,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         base += sa.resist * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1);
     // v25.22 행운 비례 피해(도박 기술): 물리 공격 × (치명 피해 배율 − 1) × 비율. 행운을 몰아주면 치명 피해 배율이 커져 주사위 기술이 세집니다.
     // v26.4 능력치 비례 피해(외길 계보): 기준값 = 배분 능력치 × 비율(공격력은 쓰지 않음). 그 능력치만 올려도 사냥이 됩니다.
-    // v3.97 scalingAttack: 행운 외길 3·5차 주사위 기술은 물리 공격 × 비율을 더합니다(장비 · 연구가 쌓여도 기술 피해가 따라 커짐).
+    // v3.97 scalingAttack: 외길 기술은 공격력 × 비율을 더합니다(장비 · 연구가 쌓여도 기술 피해가 따라 커짐). v3.172 마법 기술이면 마법 공격.
     if (chosen?.scaling === 'attr' && chosen.scalingAttribute)
-        base += (sa[ATTR_KEY[chosen.scalingAttribute]] || 0) * (chosen.scalingRatio ?? 1) + sa.attack * (chosen.scalingAttack ?? 0);
+        base += (sa[ATTR_KEY[chosen.scalingAttribute]] || 0) * (chosen.scalingRatio ?? 1) + (magical ? sa.magic : sa.attack) * (chosen.scalingAttack ?? 0);
     if (chosen?.scaling === 'luck')
         base += sa.attack * Math.max(0, (sa.critDamage || 1) - 1) * (chosen.scalingRatio ?? 1) * SKILL_FORMULA.luckScalingScale;
     if (chosen?.scaling === 'hp')
@@ -623,6 +632,13 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (actual > 0 && b.hp > 0) {
         const onHit = Math.max(0, ...b.skills.map(id => skillById(id)?.chargeOnHit || 0));
         if (onHit) { b.effects.charge = Math.min(SKILL_FORMULA.charge.max, (b.effects.charge || 0) + onHit + (crit ? 1 : 0)); notes.push(`${b.name} 충전 ${b.effects.charge}`); triggerSpectre(b, notes, ev); }
+        // v3.172 반동 게이지(블래스터): 받은 피해가 최대 체력 × recoilGauge에 닿을 때마다 맞은 쪽의 충전 +1(소모형: 실린더 버스트 · 벙커 버스터가 중첩을 모두 씀).
+        const gauge = Math.min(...b.skills.map(id => skillById(id)?.recoilGauge || Infinity));
+        if (gauge < Infinity) {
+            const unit = Math.max(1, sb.hp * gauge), pool = (b.effects.recoilPool || 0) + actual, gained = Math.floor(pool / unit);
+            b.effects.recoilPool = pool - gained * unit;
+            if (gained > 0 && (b.effects.charge || 0) < SKILL_FORMULA.charge.max) { b.effects.charge = Math.min(SKILL_FORMULA.charge.max, (b.effects.charge || 0) + gained); notes.push(`${b.name} 반동 ${b.effects.charge}`); }
+        }
     }
     // v25 無: 쓰러질 피해를 받은 쪽이 無를 장착했으면 체력 1로 버티고, 이 행동의 남은 추가타는 멈춥니다.
     let stood = endure(b, sb, notes, ev);

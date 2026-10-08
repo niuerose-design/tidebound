@@ -5,7 +5,8 @@
  */
 import type { Job } from './classes';
 import type { Skill, Attribute } from '../types';
-/** 외길 액티브: 배분 능력치 × 비율을 기준값에 더합니다. 근력·지능은 공격력이 이미 비례하므로 비율이 낮고, 기민·체질·정신·행운은 그 능력치만으로 사냥이 되도록 높습니다. */
+/** 외길 액티브: 배분 능력치 × 비율을 기준값에 더합니다. 근력·지능은 공격력이 이미 비례하므로 비율이 낮고, 기민·체질·정신·행운은 그 능력치만으로 사냥이 되도록 높습니다.
+ * attack: 공격력(마법 기술이면 마법 공격) × 비율을 더합니다(v3.97 나이트로드 · v3.172 블래스터 · 라라: 엔드 몸은 공격력이 수만이라 능력치 × 비율만으로는 기술이 평타보다 약해집니다). */
 const attr = (a: Attribute, ratio: number, attack?: number) => ({ scaling: 'attr' as const, scalingAttribute: a, scalingRatio: ratio, ...(attack ? { scalingAttack: attack } : {}) });
 
 type NewJob = Omit<Job, 'masteryTarget' | 'masteryBoost'> & Partial<Pick<Job, 'masteryTarget' | 'masteryBoost'>>;
@@ -31,13 +32,17 @@ export const MONOSTAT_JOBS: NewJob[] = [
     { id: 'arcaneSeeker', name: '마력 탐구자', title: '마력의 결을 읽는다', desc: '지능 외길의 2차 직업입니다. 다크 체인은 지능에 비례해 때리고 상대를 약화시킵니다. 패시브는 지능이 오를수록 마법 공격·마나·체력을 더합니다.', ...neutral, bonus: { magic: 30 }, crit: .03, ...T2, parent: 'manaDevotee', requires: { int: R2 }, requiresSkillMastery: { pureBolt: 2 }, role: '외길·지능·약화', tree: 'magic' },
     { id: 'pureMagus', name: '순수 마도사', title: '마력 그 자체', desc: '피니싱 블로우와 마법 공격·관통 패시브로 지능 외길의 끝에 선 3차 직업입니다.', ...neutral, bonus: { magic: 70 }, crit: .05, ...T3, parent: 'arcaneSeeker', requires: { int: R3 }, requiresSkillMastery: { manaRupture: 3 }, role: '외길·지능·관통', tree: 'magic' },
     // ── 체질 외길 (방어) ──
-    { id: 'bulkyFisher', name: '떡대 어부', title: '몸으로 밀어붙인다', desc: '체질 하나로 전직하는 외길 1차 직업입니다. 체력 비례 매그넘 펀치와 체력 패시브로 덩치만 키웁니다.', ...neutral, bonus: { hp: 40 }, ...T1, requires: { vit: R1 }, role: '외길·체질', tree: 'defense' },
-    { id: 'hulkingBrute', name: '거구 장사', title: '벽이 걸어온다', desc: '체질 외길의 2차 직업입니다. 더블 팡은 체질에 비례해 때리고 상대를 기절시킵니다. 패시브는 체질이 오를수록 체력과 물리 방어를 더합니다.', ...neutral, bonus: { hp: 160, defense: 6, attack: 10 }, ...T2, parent: 'bulkyFisher', requires: { vit: R2 }, requiresSkillMastery: { bodySlam: 2 }, role: '외길·체질·기절', tree: 'defense' },
-    { id: 'mountainBody', name: '산 같은 자', title: '산이 움직인다', desc: '체력 비례 해머 스매시와 체력·방어·재생 패시브로 체질 외길의 끝에 선 3차 직업입니다.', ...neutral, bonus: { hp: 360, defense: 14, attack: 20 }, ...T3, parent: 'hulkingBrute', requires: { vit: R3 }, requiresSkillMastery: { massiveCharge: 3 }, role: '외길·체질·재생', tree: 'defense' },
-    // ── 정신 외길 (상태이상: 침묵) ──
-    { id: 'stillAngler', name: '고요한 낚시꾼', title: '마음이 물결을 밀어낸다', desc: '정신 하나로 전직하는 외길 1차 직업입니다. 최대 마나 비례 정기 뿌리기와 마나·마법 방어 패시브를 익힙니다.', ...neutral, bonus: { resist: 4 }, ...T1, requires: { wis: R1 }, role: '외길·정신', tree: 'status' },
-    { id: 'meditantAdept', name: '정수 수행자', title: '고요가 깊어진다', desc: '정신 외길의 2차 직업입니다. 분출은 정신에 비례해 때리고 상대를 침묵시킵니다. 패시브는 정신이 오를수록 마나·마법 방어·체력을 더합니다.', ...neutral, bonus: { magic: 12, resist: 14 }, ...T2, parent: 'stillAngler', requires: { wis: R2 }, requiresSkillMastery: { mindWave: 2 }, role: '외길·정신·침묵', tree: 'status' },
-    { id: 'voidMind', name: '무념자', title: '생각이 멎은 자리에 힘이 남는다', desc: '마나 비례 산 꼬마의 놀이와 마나·마법 방어·마나 회복 패시브로 정신 외길의 끝에 선 3차 직업입니다.', ...neutral, bonus: { magic: 30, resist: 26 }, ...T3, parent: 'meditantAdept', requires: { wis: R3 }, requiresSkillMastery: { manaTide: 3 }, role: '외길·정신·마나', tree: 'status' },
+    // v3.172 체질 외길 → 경계: 반동 탱커 · 체질 딜러(borderRecoil). 받은 피해가 반동 게이지(충전)로 쌓이고(패시브 recoilGauge, 최대 체력의 12 · 10 · 8 · 6%마다 +1), 3차 실린더 버스트 · 5차 벙커 버스터가 중첩을 모두 소모해 중첩당 피해를 키웁니다(카이저 모프는 변신형, 이쪽은 소모형). 3차에서 바로 5차.
+    { id: 'bulkyFisher', name: '떡대 어부', title: '몸으로 밀어붙인다', desc: '체질 하나로 전직하는 외길 1차 직업입니다. 매그넘 펀치는 체질에 비례해 때리고, 건틀렛 마스터리는 받은 피해를 반동 게이지(충전)로 쌓습니다.', ...neutral, bonus: { hp: 40 }, ...T1, requires: { vit: R1 }, role: '외길·체질·반동', tree: 'defense' },
+    { id: 'hulkingBrute', name: '거구 장사', title: '벽이 걸어온다', desc: '체질 외길의 2차 직업입니다. 더블 팡은 체질에 비례해 때리고 상대를 기절시킵니다. 리볼빙 캐논은 반동 게이지를 더 빨리 채우고 체질이 오를수록 체력과 물리 방어를 더합니다.', ...neutral, bonus: { hp: 160, defense: 6, attack: 10 }, ...T2, parent: 'bulkyFisher', requires: { vit: R2 }, requiresSkillMastery: { bodySlam: 2 }, role: '외길·체질·반동·기절', tree: 'defense' },
+    { id: 'mountainBody', name: '산 같은 자', title: '산이 움직인다', desc: '체질 외길의 3차 직업입니다. 실린더 버스트는 반동 게이지 3중첩부터 나가고 중첩을 모두 소모해 중첩당 피해 +20%. 버닝 브레이커는 게이지를 더 빨리 채우고 체력·방어·재생을 더합니다. 5차로 바로 이어집니다.', ...neutral, bonus: { hp: 360, defense: 14, attack: 20 }, ...T3, parent: 'hulkingBrute', requires: { vit: R3 }, requiresSkillMastery: { massiveCharge: 3 }, role: '외길·체질·반동 소모', tree: 'defense' },
+    { id: 'ironBastion', name: '요새 거인', title: '맞은 만큼 되돌려 준다', desc: '체질 외길의 끝, 환생 후 5차 직업입니다. 3차에서 바로 이어집니다. 벙커 버스터는 반동 게이지 5중첩부터 나가고 중첩을 모두 소모해 중첩당 피해 +25%. 아머 피어싱은 최대 체력의 6%를 맞을 때마다 게이지를 채웁니다.', ...neutral, attack: 1.15, hp: 1.2, ...T5, parent: 'mountainBody', requires: { vit: R5 }, requiresSkillMastery: { landslide: 3 }, role: '외길·체질 최상위', tree: 'defense' },
+    // ── 정신 외길 (흡수 탱커) ──
+    // v3.172 정신 외길 → 흡수 탱커(absorb). 패시브 manaMend: 행동마다 최대 마나의 8%를 써서 최대 체력의 3 · 4.5 · 6 · 8%를 되찾습니다(정신이 마나 · 마나 회복을 올리므로 정신이 곧 지속력). 액티브는 정신 비례 마법 피해 + 침묵. 3차에서 바로 5차.
+    { id: 'stillAngler', name: '고요한 낚시꾼', title: '마음이 물결을 밀어낸다', desc: '정신 하나로 전직하는 외길 1차 직업입니다. 정기 뿌리기는 정신에 비례해 때리고, 자연의 벗은 행동마다 마나를 체력으로 바꿉니다.', ...neutral, bonus: { resist: 4 }, ...T1, requires: { wis: R1 }, role: '외길·정신·흡수', tree: 'status' },
+    { id: 'meditantAdept', name: '정수 수행자', title: '고요가 깊어진다', desc: '정신 외길의 2차 직업입니다. 분출은 정신에 비례해 때리고 상대를 침묵시킵니다. 용맥 흡수는 마나를 더 많은 체력으로 바꾸고 정신이 오를수록 마나·마법 방어·체력을 더합니다.', ...neutral, bonus: { magic: 12, resist: 14 }, ...T2, parent: 'stillAngler', requires: { wis: R2 }, requiresSkillMastery: { mindWave: 2 }, role: '외길·정신·흡수·침묵', tree: 'status' },
+    { id: 'voidMind', name: '무념자', title: '생각이 멎은 자리에 힘이 남는다', desc: '정신 외길의 3차 직업입니다. 산 꼬마의 놀이는 정신에 비례해 때리고, 큰 기지개는 행동마다 마나의 8%로 체력 6%를 되찾습니다. 5차로 바로 이어집니다.', ...neutral, bonus: { magic: 30, resist: 26 }, ...T3, parent: 'meditantAdept', requires: { wis: R3 }, requiresSkillMastery: { manaTide: 3 }, role: '외길·정신·흡수', tree: 'status' },
+    { id: 'voidSage', name: '무심의 현자', title: '마음이 비면 바다가 채운다', desc: '정신 외길의 끝, 환생 후 5차 직업입니다. 3차에서 바로 이어집니다. 용맥 폭발은 정신에 비례해 때리고 상대를 침묵시키며, 산신령의 축복은 행동마다 마나의 8%로 체력 8%를 되찾습니다.', ...neutral, magic: 1.15, hp: 1.15, resist: 1.2, ...T5, parent: 'voidMind', requires: { wis: R5 }, requiresSkillMastery: { voidTorrent: 3 }, role: '외길·정신 최상위', tree: 'status' },
     // ── 행운 외길 (보조) ──
     { id: 'luckyAngler', fullKit: true, name: '요행 낚시꾼', title: '운도 실력이다', desc: '행운 하나로 전직하는 외길 1차 직업입니다. 주사위를 굴리는 럭키 세븐과 치명타 패시브로 운만 키웁니다.', ...neutral, bonus: { attack: 2, magic: 2 }, crit: .03, ...T1, requires: { luk: R1 }, role: '외길·행운', tree: 'support' },
     { id: 'fortunate', fullKit: true, name: '행운아', title: '언제나 한 끗 차이로 이긴다', desc: '행운 비례 어벤져와 치명타·치명 피해 패시브를 가진 행운 외길 2차 직업입니다. 주사위가 늘어납니다.', ...neutral, bonus: { attack: 16, magic: 10 }, crit: .08, ...T2, parent: 'luckyAngler', requires: { luk: R2 }, requiresSkillMastery: { luckyBreak: 2 }, role: '외길·행운·치명', tree: 'support' },
@@ -49,8 +54,8 @@ export const MONOSTAT_LINEAGES = [
     { id: 'brawnFisher', name: '근력 외길', tree: 'physical' as const, summary: `근력 ${R1}·${R2}·${R3}만으로 전직하는 세 직업. 힘으로 때리고 힘으로 버팁니다.` },
     { id: 'nimbleAngler', name: '기민 외길', tree: 'physical' as const, summary: `기민 ${R1}·${R2}·${R3}만으로 전직하는 세 직업. 기민 그 자체가 피해가 되고, 여러 번 때립니다.` },
     { id: 'manaDevotee', name: '지능 외길', tree: 'magic' as const, summary: `지능 ${R1}·${R2}·${R3}만으로 전직하는 세 직업. 마법 공격 하나로 밀어붙입니다.` },
-    { id: 'stillAngler', name: '정신 외길', tree: 'status' as const, summary: `정신 ${R1}·${R2}·${R3}만으로 전직하는 세 직업. 정신 그 자체가 피해가 됩니다.` },
-    { id: 'bulkyFisher', name: '체질 외길', tree: 'defense' as const, summary: `체질 ${R1}·${R2}·${R3}만으로 전직하는 세 직업. 체질 그 자체가 피해가 됩니다.` },
+    { id: 'stillAngler', name: '정신 외길', tree: 'status' as const, summary: `정신 ${R1}·${R2}·${R3}·${R5}만으로 전직하는 네 직업(3차에서 바로 5차). 정신 그 자체가 피해가 되고, 행동마다 마나를 체력으로 바꿔 버티는 흡수 탱커입니다.` },
+    { id: 'bulkyFisher', name: '체질 외길', tree: 'defense' as const, summary: `체질 ${R1}·${R2}·${R3}·${R5}만으로 전직하는 네 직업(3차에서 바로 5차). 체질 그 자체가 피해가 되고, 받은 피해가 반동 게이지로 쌓여 실린더 버스트 · 벙커 버스터로 터집니다.` },
     { id: 'luckyAngler', name: '행운 외길', tree: 'support' as const, summary: `행운 ${R1}·${R2}·${R3}·${R5}만으로 전직하는 네 직업(3차에서 바로 5차). 행운이 곧 피해이고, 행운이 많을수록 주사위를 많이 굴려 가장 높은 눈으로 때립니다.` },
 ];
 
@@ -82,19 +87,25 @@ export const MONOSTAT_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'manaDetonation', name: '마력 폭발', desc: '', level: 40, job: 'pureMagus', chance: .5, cooldown: 4, multiplier: 2.6, cost: 4, manaCost: 14, penetrationBonus: .1, ...attr('int', 1.4) },
     { ...P, id: 'pureCore', name: '맑은 심장', desc: '지능 10마다 마법 공격·방어 관통·최대 체력이 오릅니다.', level: 40, job: 'pureMagus', cost: 2, bonus: { magic: 8, hp: 80 }, perCount: [{ source: 'int', per: 10, bonus: { magic: 5, penetration: .002, hp: 12 }, cap: 40 }] },
     // 체질
-    { ...A, ...physical, id: 'bodySlam', name: '몸통 박치기', desc: '', level: 10, job: 'bulkyFisher', chance: .5, cooldown: 3, multiplier: 1.1, cost: 2, ...attr('vit', 2.4) },
-    { ...P, id: 'thickBuild', name: '두꺼운 몸', desc: '체질 10마다 최대 체력이 오릅니다.', level: 10, job: 'bulkyFisher', cost: 1, bonus: { hp: 30 , swarmFind: 0.3, defense: 10 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 15 }, cap: 40 }] },
-    { ...A, ...physical, id: 'massiveCharge', name: '육중한 돌진', desc: '', level: 20, job: 'hulkingBrute', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, effect: 'stun', ...attr('vit', 2.8) },
-    { ...P, id: 'wallOfFlesh', name: '살의 벽', desc: '체질 10마다 최대 체력과 물리 방어가 오릅니다.', level: 20, job: 'hulkingBrute', cost: 2, bonus: { hp: 60, defense: 20 , swarmFind: 0.5, resist: 8 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 25, defense: 1 }, cap: 40 }] },
-    { ...A, ...physical, id: 'landslide', name: '산사태', desc: '', level: 40, job: 'mountainBody', chance: .5, cooldown: 4, multiplier: 1.8, cost: 4, ...attr('vit', 3.2) },
-    { ...P, id: 'mountainHeart', name: '산의 심장', desc: '체질 10마다 최대 체력·물리 방어·턴당 회복이 오릅니다.', level: 40, job: 'mountainBody', cost: 2, bonus: { hp: 100, defense: 35 , swarmFind: 0.8, resist: 15 }, perCount: [{ source: 'vit', per: 10, bonus: { hp: 40, defense: 1.5, hpRegen: .2 }, cap: 40 }] },
+    { ...A, ...physical, id: 'bodySlam', name: '몸통 박치기', desc: '', level: 10, job: 'bulkyFisher', chance: .5, cooldown: 3, multiplier: 1.1, cost: 2, ...attr('vit', 2.4, .5) },
+    // v3.172 반동 게이지: 받은 피해가 최대 체력 × recoilGauge(12 · 10 · 8 · 6%)에 닿을 때마다 충전 +1. 무리 조우 증가는 뺐습니다.
+    { ...P, id: 'thickBuild', name: '두꺼운 몸', desc: '체질 10마다 최대 체력이 오르고, 받은 피해가 최대 체력의 12%에 닿을 때마다 반동 게이지(충전) +1.', level: 10, job: 'bulkyFisher', cost: 1, bonus: { hp: 30, defense: 10 }, recoilGauge: .12, perCount: [{ source: 'vit', per: 10, bonus: { hp: 15 }, cap: 40 }] },
+    { ...A, ...physical, id: 'massiveCharge', name: '육중한 돌진', desc: '', level: 20, job: 'hulkingBrute', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, effect: 'stun', ...attr('vit', 2.8, .5) },
+    { ...P, id: 'wallOfFlesh', name: '살의 벽', desc: '체질 10마다 최대 체력과 물리 방어가 오르고, 받은 피해가 최대 체력의 10%에 닿을 때마다 반동 게이지 +1.', level: 20, job: 'hulkingBrute', cost: 2, bonus: { hp: 60, defense: 20, resist: 8 }, recoilGauge: .1, perCount: [{ source: 'vit', per: 10, bonus: { hp: 25, defense: 1 }, cap: 40 }] },
+    { ...A, ...physical, id: 'landslide', name: '산사태', desc: '', level: 40, job: 'mountainBody', chance: .5, cooldown: 4, multiplier: 1.8, cost: 4, chargeNeed: 3, chargeBonus: .2, ...attr('vit', 3.2, .6) },
+    { ...P, id: 'mountainHeart', name: '산의 심장', desc: '체질 10마다 최대 체력·물리 방어·턴당 회복이 오르고, 받은 피해가 최대 체력의 8%에 닿을 때마다 반동 게이지 +1.', level: 40, job: 'mountainBody', cost: 2, bonus: { hp: 100, defense: 35, resist: 15 }, recoilGauge: .08, perCount: [{ source: 'vit', per: 10, bonus: { hp: 40, defense: 1.5, hpRegen: .2 }, cap: 40 }] },
+    { ...A, ...physical, id: 'bunkerBuster', name: '요새 분쇄', desc: '', level: 70, job: 'ironBastion', chance: .5, cooldown: 4, multiplier: 2.6, cost: 6, chargeNeed: 5, chargeBonus: .25, penetrationBonus: .1, ...attr('vit', 3.6, .7), masteryMilestones: [4000, 18000, 60000, 150000] },
+    { ...P, id: 'ironShell', name: '강철 껍질', desc: '체질 10마다 최대 체력·물리 방어가 크게 오르고, 받은 피해가 최대 체력의 6%에 닿을 때마다 반동 게이지 +1.', level: 70, job: 'ironBastion', cost: 3, bonus: { hp: 200, defense: 40, resist: 20 }, recoilGauge: .06, perCount: [{ source: 'vit', per: 10, bonus: { hp: 50, defense: 2 }, cap: 40 }], masteryMilestones: [4000, 18000, 60000, 150000] },
     // 정신
-    { ...A, ...magic, id: 'mindWave', name: '정신 파동', desc: '', level: 10, job: 'stillAngler', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 6, ...attr('wis', 4.2) },
-    { ...P, id: 'calmMind', name: '고요한 마음', desc: '정신 10마다 최대 마나·마법 방어·최대 체력이 오릅니다.', level: 10, job: 'stillAngler', cost: 1, bonus: { mana: 12, resist: 6, hp: 60, defense: 5 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 5, resist: 1, hp: 8 }, cap: 40 }] },
-    { ...A, ...magic, id: 'manaTide', name: '마나 해일', desc: '', level: 20, job: 'meditantAdept', chance: .5, cooldown: 4, multiplier: 1.4, cost: 3, manaCost: 10, effect: 'silence', ...attr('wis', 5.8) },
-    { ...P, id: 'deepMeditation', name: '깊은 명상', desc: '정신 10마다 최대 마나·마법 방어·마나 회복·최대 체력이 오릅니다.', level: 20, job: 'meditantAdept', cost: 2, bonus: { mana: 16, resist: 12, hp: 100, defense: 8 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 7, resist: 2, manaRegen: .2, hp: 12 }, cap: 40 }] },
-    { ...A, ...magic, id: 'voidTorrent', name: '무념 폭류', desc: '', level: 40, job: 'voidMind', chance: .5, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 14, ...attr('wis', 4.5) },
-    { ...P, id: 'emptyMind', name: '무념', desc: '정신 10마다 최대 마나·마법 방어·마나 회복이 크게 오릅니다.', level: 40, job: 'voidMind', cost: 2, bonus: { mana: 24, resist: 18, hp: 160, defense: 12 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 10, resist: 3, manaRegen: .3 }, cap: 40 }] },
+    { ...A, ...magic, id: 'mindWave', name: '정신 파동', desc: '', level: 10, job: 'stillAngler', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 6, ...attr('wis', 4.2, .6) },
+    // v3.172 마나 치유: 행동마다 최대 마나 8%를 써서 최대 체력 3 · 4.5 · 6 · 8%를 되찾습니다(여러 개면 큰 것 하나).
+    { ...P, id: 'calmMind', name: '고요한 마음', desc: '정신 10마다 최대 마나·마법 방어·최대 체력이 오르고, 행동마다 최대 마나의 8%로 최대 체력의 3%를 되찾습니다.', level: 10, job: 'stillAngler', cost: 1, bonus: { mana: 12, resist: 6, hp: 60, defense: 5 }, manaMend: { spend: .08, heal: .03 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 5, resist: 1, hp: 8 }, cap: 40 }] },
+    { ...A, ...magic, id: 'manaTide', name: '마나 해일', desc: '', level: 20, job: 'meditantAdept', chance: .5, cooldown: 4, multiplier: 1.4, cost: 3, manaCost: 10, effect: 'silence', ...attr('wis', 5.8, .6) },
+    { ...P, id: 'deepMeditation', name: '깊은 명상', desc: '정신 10마다 최대 마나·마법 방어·마나 회복·최대 체력이 오르고, 행동마다 최대 마나의 8%로 최대 체력의 4.5%를 되찾습니다.', level: 20, job: 'meditantAdept', cost: 2, bonus: { mana: 16, resist: 12, hp: 100, defense: 8 }, manaMend: { spend: .08, heal: .045 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 7, resist: 2, manaRegen: .2, hp: 12 }, cap: 40 }] },
+    { ...A, ...magic, id: 'voidTorrent', name: '무념 폭류', desc: '', level: 40, job: 'voidMind', chance: .5, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 14, ...attr('wis', 4.5, .7) },
+    { ...P, id: 'emptyMind', name: '무념', desc: '정신 10마다 최대 마나·마법 방어·마나 회복이 크게 오르고, 행동마다 최대 마나의 8%로 최대 체력의 6%를 되찾습니다.', level: 40, job: 'voidMind', cost: 2, bonus: { mana: 24, resist: 18, hp: 160, defense: 12 }, manaMend: { spend: .08, heal: .06 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 10, resist: 3, manaRegen: .3 }, cap: 40 }] },
+    { ...A, ...magic, id: 'veinBurst', name: '용맥 폭발', desc: '', level: 70, job: 'voidSage', chance: .5, cooldown: 4, multiplier: 2.6, cost: 6, manaCost: 20, effect: 'silence', ...attr('wis', 5, .8), masteryMilestones: [4000, 18000, 60000, 150000] },
+    { ...P, id: 'mountainSpirit', name: '산신령의 숨', desc: '정신 10마다 최대 마나·마법 방어·최대 체력이 크게 오르고, 행동마다 최대 마나의 8%로 최대 체력의 8%를 되찾습니다.', level: 70, job: 'voidSage', cost: 3, bonus: { mana: 40, resist: 30, hp: 200 }, manaMend: { spend: .08, heal: .08 }, perCount: [{ source: 'wis', per: 10, bonus: { mana: 12, resist: 4, hp: 12 }, cap: 40 }], masteryMilestones: [4000, 18000, 60000, 150000] },
     // 행운
     { ...A, ...physical, id: 'luckyBreak', name: '운빨 기도', desc: '', level: 10, job: 'luckyAngler', chance: .5, cooldown: 3, multiplier: 1.1, cost: 2, ...attr('luk', 3.8), dice: { attribute: 'luk', per: 40, max: 3, low: .1, high: 3.33 } },
     { ...P, id: 'luckyStreak', name: '연승 기운', desc: '행운 10마다 치명타가 오릅니다.', level: 10, job: 'luckyAngler', cost: 1, bonus: { crit: .01, hp: 60 }, perCount: [{ source: 'luk', per: 10, bonus: { crit: .004 }, cap: 40 }] },
