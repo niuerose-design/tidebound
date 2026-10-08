@@ -136,7 +136,12 @@ const SHAPES: Record<FishShape, string[]> = {
 };
 
 /** 몬스터 그림. public/art/fish/{id}.png|webp 가 목록(art-manifest)에 있으면 그 그림, 없으면 실루엣. */
-export function FishArt({ id, size = 48, className = '', boss = false }: { id: string; size?: number; className?: string; boss?: boolean }) {
+type FishArtProps = { id: string; size?: number; className?: string; boss?: boolean };
+/** v3.192 id가 바뀌면 불러오기 상태를 새로 시작합니다(key). 호루라기로 부른 몬스터처럼 장면의 몬스터가 내려가지 않고 바로 바뀌면, 앞 몬스터의 상태(ready · missing)가 남아 그림이 사라지거나 실루엣에 머물렀습니다. */
+export function FishArt(props: FishArtProps) {
+    return <FishArtImage key={props.id} {...props}/>;
+}
+function FishArtImage({ id, size = 48, className = '', boss = false }: FishArtProps) {
     const src = fishArtSrc(id);
     const [state, setState] = useState<'pending' | 'ready' | 'missing'>(src ? 'pending' : 'missing');
     const shape = fishShape(id);
