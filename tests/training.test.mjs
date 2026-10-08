@@ -117,7 +117,7 @@ test('v3.172 lara mana mend: at the start of an action mana (8% of max) becomes 
     assert.match(D.skillBrief(sk('calmMind')), /최대 마나 8% → 최대 체력 3% 회복/); assert.ok(D.skillEffectLines(sk('mountainSpirit')).some(l => /마나 치유/.test(l)));
 });
 
-test('v3.174 oneway devices: aran combo stacks on hit and beyonder spends it, dual blade stacks on evade and blade fury turns stacks into follow-ups, battle mage mana shield eats damage first', async () => {
+test('v3.176 oneway devices: aran combo stacks on hit and beyonder spends it, dual blade stacks on evade and blade fury turns stacks into follow-ups, battle mage mana shield eats damage first', async () => {
     const C = await load('game/systems/combat.js'), D = await load('game/systems/skill-description.js');
     const sk = id => SKILLS.find(x => x.id === id);
     for (const [id, parent] of [['titanArm', 'colossus'], ['phantomBlade', 'shadowRunner'], ['archMagus', 'pureMagus']]) { assert.equal(job(id).tier, 5, id); assert.equal(job(id).parent, parent); }
@@ -249,7 +249,7 @@ test('v3.89 Joker: luck ratio 0.3 (Final Cut keeps 0.8)', () => {
     assert.equal(SKILLS.find(sk => sk.id === 'allOrNothing').scalingRatio, .8);
 });
 
-test('v3.97 Night Lord dice skills (3rd · 5th tier) add physical attack × 0.5 to the luck base; v3.174 1st · 2nd tier add × .4 · .45', async () => {
+test('v3.97 Night Lord dice skills (3rd · 5th tier) add physical attack × 0.5 to the luck base; v3.176 1st · 2nd tier add × .4 · .45', async () => {
     const { strike } = await load('game/systems/combat.js');
     assert.equal(SKILLS.find(sk => sk.id === 'fateReversal').scalingAttack, .5);
     assert.equal(SKILLS.find(sk => sk.id === 'heavenlyDice').scalingAttack, .5);
@@ -257,7 +257,7 @@ test('v3.97 Night Lord dice skills (3rd · 5th tier) add physical attack × 0.5 
     const mk = (skills, attack) => ({ name: 'A', stats: { hp: 1e9, attack, magic: 0, defense: 0, resist: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, crit: 0, critDamage: 2, attrLuk: 500 }, hp: 1e9, mana: 1e6, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
     const hit = (skills, attack) => { const b = mk([], 0); strike(mk(skills, attack), b, () => 0); return 1e9 - b.hp; };
     assert.ok(hit(['fateReversal'], 40000) > hit(['fateReversal'], 1000) * 5, 'Triple Throw grows with attack');
-    assert.ok(hit(['heavenlyStrike'], 40000) > hit(['heavenlyStrike'], 1000) * 5, 'v3.174 Avenger grows with attack too');
+    assert.ok(hit(['heavenlyStrike'], 40000) > hit(['heavenlyStrike'], 1000) * 5, 'v3.176 Avenger grows with attack too');
 });
 
 test('v3.98 Dark Knight: Dragon Fury ×2.8, Beholder Impact ×2.8 with one extra hit, Darkness Aura crit like Phantom\'s 5th passive', () => {

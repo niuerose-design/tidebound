@@ -144,7 +144,7 @@ test('v26.6 dice: luck lane rolls more dice with more luck; the highest face map
     for (let i = 1; i < lane.length; i++) { assert.ok(lane[i].low < lane[i - 1].low, 'lower floor'); assert.ok(lane[i].high > lane[i - 1].high, 'higher ceiling'); assert.ok(lane[i].max > lane[i - 1].max, 'more dice'); }
     // 손가락 자르기: 최저는 오르고 최고는 내려감. 3단계는 거의 일정.
     const r1 = diceRange(sk.dice, 1), r3 = diceRange(sk.dice, 3); assert.ok(r1.low > .1 && r1.high < 3.33); assert.ok(r3.low > r1.low && r3.high < r1.high); assert.ok(r3.high / r3.low < 1.6, `${r3.low}~${r3.high}`);
-    // v3.174 세 단계를 하나(2단계)로 접었습니다.
+    // v3.176 세 단계를 하나(2단계)로 접었습니다.
     const cut = SKILLS.find(x => x.id === 'fingerCutII'); assert.equal(cut.bonus.diceTrim, 2); assert.equal(cut.job, 'fortunate'); assert.ok(!SKILLS.some(x => x.id === 'fingerCutI' || x.id === 'fingerCutIII'));
     const seq3 = [0, .99, 0]; const text3 = strike(fighter('luckyBreak', { stats: { attrLuk: 10, diceTrim: 3 } }), target(), () => seq3.length ? seq3.shift() : 0);
     assert.match(text3, new RegExp(`주사위 ⚅ ×${r3.high.toFixed(2)}`), text3);
