@@ -3,8 +3,9 @@ import { rollAffixes, syncOrnateName } from '../data/gear';
 import { ODDS } from '../data/odds';
 import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, extremeBroken } from './progression';
-import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall } from './meta';
-import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
+import { catchReward, encounterTier, dungeonCatchReward, dungeonLevelAt, xpWall } from './meta';
+import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
+import { grantDungeonCoins, clearCoinBase } from './dungeon-coins';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY } from '../data/economy';
 import { rareSpawnBonus } from './book';
@@ -311,16 +312,18 @@ export function reward(s: State, rng: () => number) {
     // v3.48 무리 숙련은 마리 수 대신 싸운 턴 × 규모별 값(swarmMasteryKills, 마리 수 상한). 서식지가 숙련을 까미보다 몇 배 더 주던 문제.
     const swarmTurns = s.turn - (e.born ?? s.turn) + 1, masteryHeads = size > 1 ? swarmMasteryKills(size, swarmTurns) : 1;
     // v3.107 계급 특전 숙련 훈련은 배율 밖의 고정값(무리는 마리분만큼): 배율은 나머지에만 곱하고, 승천 배율 뒤에 더합니다.
-    const masteryReward = victoryMastery(s, e), drillMastery = masteryReward.drill * masteryHeads;
+    // v3.188 던전(무릉도장 포함)은 처치마다 골드 · 경험치 · 숙련 · 장비를 주지 않습니다. 보상은 정복할 때 던전 코인으로 한 번에(data/dungeon-shop).
+    const dungeonRun = !!s.dungeon;
+    const masteryReward = dungeonRun ? { amount: 0, drill: 0, base: 0, bonus: 0, source: '' } : victoryMastery(s, e), drillMastery = masteryReward.drill * masteryHeads;
     const researched = researchMastery(s, Math.floor((masteryReward.amount - masteryReward.drill) * masteryHeads * focusMastery * eventMastery)), practice = researched.total + drillMastery;
     // v3.12 칠흑 세트 4종: 무리 서식지 골드·경험치 +15%.
     const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
     // v3.104 골드 · 경험치 배율과 황금 개체 확률은 같은 상태의 능력치 한 번으로 계산합니다(사이에 상태가 바뀌지 않음).
     const won = stats(s);
-    const perFish = Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
+    const perFish = dungeonRun ? 0 : Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = dungeonRun ? 0 : Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
     // v3.125 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스, v3.161 정수의 슬라임 · 대왕)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
-    const rareFoe = isSpecialId(e.id) || !!e.onyx;
+    const rareFoe = isSpecialId(e.id) || !!e.onyx || dungeonRun;
     const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && !rareFoe && rng() < goldenChance;
     const gold = Math.floor(perFish * size * big) + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
@@ -404,7 +407,8 @@ export function reward(s: State, rng: () => number) {
         s.essence = (s.essence || 0) + got;
         addLog(s, king ? `👑 대왕 정수 슬라임 격파! 정수 +${got.toLocaleString()} (묶음 ${bundle} × ${t.mul} · 대 당첨 ×${KING.rewardMul} 확정)` : `✦ 정수의 슬라임 · ${t.label}당첨! 정수 +${got.toLocaleString()} (묶음 ${bundle} × ${t.mul})`, 'reward');
     }
-    addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
+    if (dungeonRun) addLog(s, `${enemyLabel(e)} 처치`, 'reward');
+    else addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 끝없는 수련 +${researched.extra}` : ''})`, 'skill');
     // v3.12 칠흑 보스 처치: drop 확률로 그 보스의 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
     if (e.onyx) {
@@ -434,7 +438,7 @@ export function reward(s: State, rng: () => number) {
     const rolls = swarmDropRolls(size) * (size >= SWARM_BIG.size ? SWARM_BIG.drops : 1);
     // v3.104 드롭 확률은 판정마다 능력치를 다시 계산하던 것을, 드롭이 바꿀 수 있는 값(골드 자릿수 · 물건 도감 · 가방 · 정수)이 그대로면 재사용합니다.
     let rateKey = '', rate = 0;
-    for (let i = 0; i < rolls * (vdef?.drops || 1); i++) {
+    for (let i = 0; i < (dungeonRun ? 0 : rolls * (vdef?.drops || 1)); i++) {
         const key = dropRateKey(s);
         if (key !== rateKey) { rateKey = key; rate = dropRate(s); }
         drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, false, rate);
@@ -459,12 +463,11 @@ export function reward(s: State, rng: () => number) {
         const d = DUNGEONS.find(x => x.id === s.dungeon!.id)!;
         s.dungeon.wave++;
         if (s.dungeon.wave >= d.fish.length) {
-            // v3.187 권장 레벨 초과 감액은 없앴습니다(클리어 골드·반복 장비 확률 그대로).
+            // v3.188 정복 보상은 던전 코인 한 번(처치 턴과 무관한 고정량, 던전 코인 보너스 적용). 클리어 골드는 없앴습니다.
             const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level);
-            const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * dungeonDepth(d.id));
-            s.gold += bonusGold;
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
+            const coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth));
             recordGoal(s, 'dungeon', d.id, 1, text => addLog(s, text, 'reward'));
             if (d.id === 'abyss') {
                 const deeper = depth > s.abyssBest;
@@ -486,10 +489,10 @@ export function reward(s: State, rng: () => number) {
                 s.pearls += d.pearls;
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             if (s.dungeon.mode && s.dungeon.mode !== 'normal') { s.modeClears ??= {}; const row = (s.modeClears[s.dungeon.mode] ??= {}); row[d.id] = (row[d.id] || 0) + 1; }
-            // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다, 반복 정복은 낮은 확률.
-            if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop)
+            // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다. v3.188 반복 정복 확률 드롭은 없앴습니다(코인샵 장비 상자로).
+            if (first || (d.id === 'abyss' && depth % 5 === 0))
                 drop(s, dropLevel(s, dLevel, tier), rng, true);
-            addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
+            addLog(s, `${d.name} 정복! 던전 코인 +${coins.toLocaleString()} (보유 ${(s.dungeonCoins || 0).toLocaleString()})${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;
             s.dungeon = null;
             s.running = false;

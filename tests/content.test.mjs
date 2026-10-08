@@ -247,9 +247,9 @@ test('v3.58 plain (white) codex entries start registered now that the plain purc
  assert.throws(()=>act(s,{type:'buy',id:'charm',value:'plain'},0));
 });
 
-test('v27.74 catch mastery ignores stage tide and dungeon mode (the tide mastery multiplier is gone)',()=>{
+test('v27.74 catch mastery ignores stage tide (the tide mastery multiplier is gone); v3.188 dungeons give none',()=>{
  const run=(tide,dungeon)=>{const s=newState(0);s.running=true;s.rebirths=10;s.tide=tide;if(dungeon){s.dungeon=dungeon==='abyss'?{id:'abyss',wave:0,depth:1}:{id:'grotto',wave:0,...(dungeon==='hell'?{mode:'hell'}:{})};}s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};let g=0;while(s.enemy&&s.enemy.hp>0&&g++<50)tick(s,()=>.5);return s.jobMastery.fisher||0;};
- const base=run(0,false);assert.ok(base>0);assert.equal(run(10,false),base,'tide 10 gives the same catch mastery');assert.equal(run(10,true),base,'dungeons ignore the stage tide');assert.equal(run(0,'hell'),base,'hell dungeon gives the same catch mastery');assert.equal(run(10,'abyss'),base,'Mu Lung too');
+ const base=run(0,false);assert.ok(base>0);assert.equal(run(10,false),base,'tide 10 gives the same catch mastery');assert.equal(run(10,true),0,'v3.188 dungeons give no catch mastery');assert.equal(run(0,'hell'),0,'hell dungeon neither');assert.equal(run(10,'abyss'),0,'Mu Lung neither');
 });
 
 test('v27.22 mastery mimic: rare stage-only spawn with the strongest local body, pays lottery mastery to job and equipped skills',()=>{
@@ -293,4 +293,21 @@ test('v27.26 restartLife resets this life only: rebirths, pearls, relics, resear
  assert.equal(s.level,1);assert.equal(s.job,'fisher');assert.equal(s.attributes.str,0);assert.equal(s.dungeon,null);assert.equal(s.running,false);
  assert.equal(s.rebirths,4);assert.equal(s.pearls,77);assert.equal(s.permanent.ap,2);assert.equal(s.book.minnow,12);
  assert.deepEqual(s.inventory.map(i=>i.id),['r'],'only relics survive');assert.ok(s.logs.some(l=>l.text.includes('운영 조치')));
+});
+
+test('v3.188 dungeons pay no kill rewards and a fixed dungeon coin per clear; the coin shop sells onyx, gear boxes and the hunter imprint',async()=>{
+ const {restartLife}=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/actions/lifecycle');
+ const clear=(mode,depth)=>{const s=newState(0);s.level=40;s.rebirths=10;s.running=true;const id=depth?'abyss':'grotto';const len=depth?5:5;s.dungeon={id,wave:len-1,...(depth?{depth}:{}),...(mode?{mode}:{})};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:50,gold:50,boss:true,stun:0};const gold=s.gold,exp=s.exp,inv=s.inventory.length;let g=0;while(s.enemy&&g++<50)tick(s,()=>.5);return {s,gold:s.gold-gold,exp:s.exp-exp,inv:s.inventory.length-inv};};
+ const n=clear();assert.equal(n.gold,0,'no kill or clear gold');assert.equal(n.exp,0,'no kill exp');assert.equal(n.inv,0,'no repeat drop');assert.equal(n.s.dungeonCoins,1,'normal clear = 1 coin');assert.equal(n.s.clears.grotto,2);
+ assert.equal(clear('hell').s.dungeonCoins,3);assert.equal(clear('nightmare').s.dungeonCoins,6);assert.equal(clear(undefined,12).s.dungeonCoins,2,'Mu Lung floor 12 = 1 + 1');
+ const s=newState(0);s.level=40;s.dungeonCoins=0;
+ assert.throws(()=>act(s,{type:'dungeonShop',id:'gearBox'},0),/코인이 부족/);
+ s.dungeonCoins=100;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.inventory.at(-1).rarity>=1,true,'rare or better');
+ s.dungeonCoins=20000;assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0),/처치해야/);
+ s.onyxBook={onyxDusk:1};act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,8000);const onyx=s.inventory.find(i=>i.onyx==='onyxDusk');assert.ok(onyx,'crafted');
+ act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,2000);assert.equal(onyx.onyxRank,1,'second purchase awakens');
+ const line=onyx.affixes.findIndex(a=>!a.rule);act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(onyx.affixes[line].id,'hunter');
+ s.dungeonCoins=5000;assert.throws(()=>act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0),/이미 포식자/);
+ const rule=onyx.affixes.findIndex(a=>a.rule);assert.ok(rule>=0);
+ s.dungeonCoins=7;restartLife(s,1000);assert.equal(s.dungeonCoins,7,'coins survive a new life');
 });

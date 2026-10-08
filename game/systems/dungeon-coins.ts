@@ -1,0 +1,36 @@
+/** v3.188 던전 코인 지급과 코인샵 판정(화면 · 행동 공용). 규칙과 가격은 data/dungeon-shop.ts. */
+import type { Item, State } from '../types';
+import { DUNGEON_COINS, DUNGEON_SHOP, HUNTER_AFFIX, abyssCoins } from '../data/dungeon-shop';
+import { dungeonModeTier, type DungeonMode } from '../data/balance';
+import { affixDef } from '../data/gear';
+import { ONYX, onyxById } from '../data/onyx';
+import { dungeonGoldMultiplier } from './stats';
+
+/** 이 정복 한 번의 기본 코인(보너스 전). 무릉도장은 층, 지역 던전은 난이도로 정합니다. */
+export const clearCoinBase = (dungeonId: string, mode: DungeonMode | undefined, depth = 1) => dungeonId === 'abyss' ? abyssCoins(depth) : DUNGEON_COINS[mode && dungeonModeTier(mode) ? mode : 'normal'];
+/** 코인 보너스(던전 코인 보너스 능력치)를 곱해 줍니다. 소수점은 dungeonCoinFrac에 이월합니다. 받은 코인을 돌려줍니다. */
+export function grantDungeonCoins(s: State, base: number) {
+    const raw = base * dungeonGoldMultiplier(s) + (s.dungeonCoinFrac || 0), gain = Math.floor(raw);
+    s.dungeonCoinFrac = raw - gain;
+    s.dungeonCoins = (s.dungeonCoins || 0) + gain;
+    return gain;
+}
+export const allItems = (s: Pick<State, 'inventory' | 'equipment'>) => [...s.inventory, ...Object.values(s.equipment)].filter((x): x is Item => !!x);
+/** 칠흑 장신구 상품: 가진 종이면 각성, 없으면 제작. 못 사는 이유가 있으면 reason. */
+export function onyxOffer(s: State, bossId: string) {
+    const own = allItems(s).find(x => x.onyx === bossId), rank = own?.onyxRank || 0;
+    const kind = own ? 'awaken' as const : 'craft' as const, price = own ? DUNGEON_SHOP.onyxAwaken : DUNGEON_SHOP.onyxCraft;
+    const reason = !onyxById(bossId) ? '없는 칠흑 보스입니다.'
+        : !(s.onyxBook?.[bossId]) ? '그 칠흑 보스를 한 번 이상 처치해야 열립니다.'
+        : own && rank >= ONYX.awakenMax ? '각성을 모두 마쳤습니다.' : undefined;
+    return { kind, price, rank, reason };
+}
+/** 포식자 각인을 받을 수 있는 장비인지. 못 받으면 이유. */
+export function hunterBlock(item: Item) {
+    const min = affixDef(HUNTER_AFFIX)?.minRarity ?? 5;
+    if (item.relic) return '유물에는 각인할 수 없습니다.';
+    if (item.rarity < min) return '고대 이상 장비에만 각인할 수 있습니다.';
+    if (!item.affixes?.length) return '옵션이 없는 장비입니다.';
+    if (item.affixes.some(x => x.id === HUNTER_AFFIX)) return '이미 포식자 옵션이 있습니다.';
+    return undefined;
+}

@@ -498,6 +498,9 @@ export type State = {
     shopSerial: number;
     /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
     essence?: number;
+    /** v3.188 던전 코인: 던전 정복마다 받아 코인샵에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 코인 보너스의 소수점 이월. */
+    dungeonCoins?: number;
+    dungeonCoinFrac?: number;
     attributes: Record<Attribute, number>;
     statPoints: number;
     sp: number;

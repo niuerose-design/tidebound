@@ -1,4 +1,4 @@
-import { tailwindActive, tailwindExp, tierReward, encounterTier } from './meta';
+import { tailwindActive, tailwindExp, encounterTier } from './meta';
 import { displayTitle } from '../data/titles';
 import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTargets, thresholdRank } from '../data/long-term';
 import { itemStats } from './equipment';
@@ -296,7 +296,7 @@ export function clampVitals(s: State) {
     s.hp = Math.min(s.hp, stats(s).hp);
     s.mana = Math.min(s.mana, stats(s).mana);
 }
-/** 골드 배율. 힘의 길 서약은 처치·던전 골드를 함께 올립니다(서약이 없거나 난이도 하한 미만이면 ×1). */
+/** 골드 배율. 힘의 길 서약은 처치 골드를 함께 올립니다(서약이 없거나 난이도 하한 미만이면 ×1). */
 /** v25.6 이번 생의 조건 카드 배율. 사냥터 집중은 그 사냥터에서만, 황금 모험은 생 전체. */
 export const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
@@ -307,8 +307,6 @@ export const goldMultiplier = (s: State, a = stats(s)) => (1 + a.goldBonus) * jo
 // v3.23 순풍은 다른 경험치 보너스와 더합니다(전에는 따로 곱해 폭증).
 export const expMultiplier = (s: State, a = stats(s)) => Math.max(0, 1 + a.expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
-/** 던전 정복 골드. 전투 보상과 던전 화면 표시가 같은 식을 씁니다. */
-export const dungeonClearGold = (s: State, baseGold: number, tier: number) => Math.floor(baseGold * tierReward(tier) * goldMultiplier(s) * dungeonGoldMultiplier(s));
 /** 실제 적중률 = 명중 − 상대 회피 + 속도 보정(±6%p). v26.7 magical이면 회피를 magicEvasionScale만 적용하고 속도 보정은 플러스만 받습니다. */
 export const hitChance = (a: Stats, b: Stats, magical = false) => {
     const accuracy = Math.max(0, a.accuracy ?? 1);

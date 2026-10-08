@@ -18,12 +18,13 @@ import { collectionActions } from './actions/collection';
 import { itemActions } from './actions/items';
 import { lifecycleActions } from './actions/lifecycle';
 import { hackerActions } from './actions/hacker';
+import { dungeonShopActions } from './actions/dungeon-shop';
 
 export { newState } from './state';
 export { tick, advance } from './turn';
 export { victoryHeal, rollRarity } from './encounter';
 
-const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions, ...hackerActions };
+const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions, ...hackerActions, ...dungeonShopActions };
 
 export function act(s: State, a: Action, now: number, rng = Math.random) {
     syncStatRate(s);

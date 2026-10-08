@@ -1,8 +1,11 @@
 'use client';
 import { AutoRunStatus } from './auto-run';
 import { FIRST_CLEAR_SP } from '@/game/data/achievements';
-import { dungeonClearGold, stats } from '@/game/systems/stats';
-import { dungeonTier, dungeonClearBase, dungeonRewardTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack, tierReward, tierExp } from '@/game/systems/meta';
+import { dungeonGoldMultiplier, stats } from '@/game/systems/stats';
+import { dungeonTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack } from '@/game/systems/meta';
+import { clearCoinBase, onyxOffer, hunterBlock, allItems } from '@/game/systems/dungeon-coins';
+import { DUNGEON_SHOP } from '@/game/data/dungeon-shop';
+import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
 import { useState } from 'react';
 import { Lock, Swords, Gem, Skull } from 'lucide-react';
 import { FishArt } from './art';
@@ -34,6 +37,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     const [repeatChoice, setRepeatChoice] = useState<Record<string, string>>({});
     // v27.70 던전 난이도(노말·헬·나이트메어)는 던전마다 고릅니다. 입장 값은 '<난이도>@<반복>'.
     const [modeChoice, setModeChoice] = useState<Record<string, DungeonMode>>({});
+    const coinMult = dungeonGoldMultiplier(s);
     const repeat = s.dungeon?.repeat;
     const repeatStatus = repeat ? (repeat.until ? `반복 중 · ${repeat.until}층까지` : repeat.left === null ? '반복 중 · 실패할 때까지' : repeat.left === 0 ? '반복 중 · 마지막 도전' : `반복 중 · 이후 ${repeat.left}회 더`) : '';
 
@@ -62,6 +66,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
         <div className="dungeon-combat-log"><div className="section-title"><h3>최근 전투 로그</h3><span>자동 갱신</span></div>{s.logs.filter(log => log.type === 'battle').slice(-6).reverse().map(log => <BattleLogLine key={log.id} log={log} playerName={s.name}/>)}</div>
     </section>}
     {!activeDungeon && <RandomGameCard s={s} send={send} busy={busy}/>}
+    <DungeonCoinShop s={s} send={send} busy={busy}/>
     <div className="stage-grid dungeon-grid">{[...PLAIN_DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
             const closed = closedIn(s, 'dungeons', d.id), locked = closed || !levelGateOk(s, d.level) || s.rebirths < d.rebirth;
             const mode = modeChoice[d.id] || 'normal', modeDef = DUNGEON_MODES.find(m => m.id === mode)!, tier = dungeonTier(d.id, s.abyssBest + 1, mode), dLevel = dungeonLevelAt(d, tier, s.level);
@@ -74,7 +79,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">
                 <span><b>최초</b>{d.id === 'abyss' ? `${s.abyssBest + 1}층 세계석 ${abyssPearls(s.abyssBest + 1)} · 10층마다 보너스 세계석(층 수만큼)${nextAbyssMilestone(s.abyssBest) ? ` · ${nextAbyssMilestone(s.abyssBest)}층 SP 1` : ''}` : `세계석 ${d.pearls}${research ? ` · 업적 SP ${research}` : ''}`}{d.id !== 'abyss' && s.clears[d.id] && (!research || claimed) ? ' · 받음' : ''}</span>
-                <span><b>반복</b>{format(Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id))))} G{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)} · 골드 ×${tierReward(tier).toFixed(1)} · 경험치 ×${tierExp(tier).toFixed(2)}` : ''} · 낮은 확률로 희귀 이상 장비{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''}</span>
+                <span><b>정복</b>던전 코인 {format(Math.floor(clearCoinBase(d.id, mode, s.abyssBest + 1) * coinMult))}{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)}` : ''}{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''} · 처치 골드 · 경험치 · 숙련 · 장비 없음</span>
             </div>
             <div className="stage-footer dungeon-actions">
                 <span>Lv. {d.level}+{d.rebirth ? ` · 환생 ${d.rebirth}회` : ''}</span>
@@ -89,6 +94,29 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             </article>;
         })}</div>
     </>;
+}
+
+/** v3.188 던전 코인샵: 정복으로 모은 던전 코인을 칠흑 장신구 제작 · 각성, 장비 상자, 포식자 각인으로 바꿉니다. */
+function DungeonCoinShop({ s, send, busy }: PanelProps) {
+    const coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1;
+    const eligible = allItems(s).filter(x => !hunterBlock(x));
+    const [pick, setPick] = useState(''), [line, setLine] = useState(-1);
+    const item = eligible.find(x => x.id === pick) || eligible[0], lines = (item?.affixes || []).map((x, i) => ({ x, i })).filter(({ x }) => !x.rule);
+    const index = lines.some(l => l.i === line) ? line : lines[0]?.i ?? -1;
+    const buy = (id: string, value?: string) => send({ type: 'dungeonShop', id, ...(value ? { value } : {}) });
+    return <section className="panel dungeon-coin-shop">
+        <div className="section-title"><h3>던전 코인샵</h3><span>보유 {format(coins)} 코인{bonus > 0 ? ` · 코인 보너스 +${Math.round(bonus * 100)}%` : ''}</span></div>
+        <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 코인을 받습니다. 처치 턴과 무관한 고정량이라 보스를 빨리 잡을수록 시간당 코인이 많습니다. 코인은 환생해도 남습니다.</p>
+        <div className="dungeon-reward-lines">
+            {ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id); return <span key={b.id}><b>칠흑</b>{b.name} · {b.accessory.name} {o.kind === 'awaken' ? `각성 ${o.rank}/${ONYX.awakenMax}` : '제작'}{o.reason ? ` · ${o.reason}` : ''} <button className="secondary small" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button></span>; })}
+            <span><b>장비</b>희귀 이상 확정 장비 상자(내 레벨) <button className="secondary small" disabled={busy || coins < DUNGEON_SHOP.gearBox} onClick={() => buy('gearBox')}>구매 · {format(DUNGEON_SHOP.gearBox)}</button></span>
+            <span><b>각인</b>{item ? <>
+                <select aria-label="포식자 각인 장비" value={item.id} disabled={busy} onChange={e => { setPick(e.target.value); setLine(-1); }}>{eligible.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
+                <select aria-label="바꿀 옵션" value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{lines.map(({ x, i }) => <option key={i} value={i}>{i + 1}. {x.name}</option>)}</select>
+                <button className="secondary small" disabled={busy || index < 0 || coins < DUNGEON_SHOP.hunterImprint} onClick={() => buy('hunter', `${item.id}|${index}`)}>포식자 각인 · {format(DUNGEON_SHOP.hunterImprint)}</button>
+            </> : '고대 이상이고 포식자 옵션이 없는 장비가 있어야 합니다.'} <small>고른 옵션 한 줄을 포식자(보스 · 사냥감 피해)로 바꿉니다. 장비당 한 줄.</small></span>
+        </div>
+    </section>;
 }
 
 /** v27.86 랜덤게임 입장 카드. v27.91 두 칸 구성: 왼쪽 규칙 세 줄, 오른쪽 목표 웨이브 칩(받는 판돈 표시)과 시작 버튼. 판돈 표는 목표까지 모두 깼을 때 받는 양(연구 배율 포함). */

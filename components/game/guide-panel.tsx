@@ -1,4 +1,5 @@
 'use client';
+import { DUNGEON_COINS } from '@/game/data/dungeon-shop';
 import { SPROUT, sproutExp } from '@/game/data/sprout';
 import { BOOK_ECOLOGY } from '@/game/data/book-traits';
 import { ASCENSION } from '@/game/data/ascension';
@@ -145,7 +146,7 @@ export function Guide({ s }: { s?: State }) {
                     condition="해금한 기술에 한해 계승·강화에 각각 1 SP."
                     limit="SP는 도감 최종 연구, 업적(던전 첫 정복 포함), 무릉도장 이정표에서 얻습니다."/>
                 <Rule icon={<Target size={19}/>} title="숙련 · 극한돌파"
-                    effect="처치할 때마다 현재 직업과 장착한 스킬의 숙련이 기본 1 오릅니다(사냥터·던전 난이도와 무관). 난이도 5 이상에서 나오는 숙련의 까미가 큰 숙련을 줍니다. 기본 숙련을 마치면 한계돌파(SP · 세계석 연구) 3단계, 그 뒤로 숙련을 더 쌓으면 극한돌파(극한돌파시 운영자에게 문의해주세요)."
+                    effect="사냥터에서 처치할 때마다 현재 직업과 장착한 스킬의 숙련이 기본 1 오릅니다(난이도와 무관, 던전에서는 오르지 않음). 난이도 5 이상에서 나오는 숙련의 까미가 큰 숙련을 줍니다. 기본 숙련을 마치면 한계돌파(SP · 세계석 연구) 3단계, 그 뒤로 숙련을 더 쌓으면 극한돌파(극한돌파시 운영자에게 문의해주세요)."
                     condition={`조건부 숙련 스킬은 지정한 적을 이겼을 때만 더 줍니다. 처치 1회당 최대 ${PROGRESSION.maxMasteryPerVictory}.`}
                     limit="극한돌파는 SP로 건너뛸 수 없습니다. 숙련은 환생과 전직 뒤에도 남습니다."/>
                 <Rule icon={<BookOpen size={19}/>} title="경험치 배율"
@@ -172,7 +173,7 @@ export function Guide({ s }: { s?: State }) {
                     condition={`규모는 도감 처치 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100. ×500 도전 무리는 무리 서식지에서만 나옵니다.`}
                     limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 처치 전에 쓰러지면 보상이 없습니다."/>
                 <Rule icon={<Swords size={19}/>} title="던전 · 무릉도장"
-                    effect={`정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 세계석, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1.`}
+                    effect={`던전에서는 처치마다 골드 · 경험치 · 숙련 · 장비가 나오지 않고, 정복하면 던전 코인을 받습니다(노말 ${DUNGEON_COINS.normal} · 헬 ${DUNGEON_COINS.hell} · 나이트메어 ${DUNGEON_COINS.nightmare}, 무릉도장은 1 + 10층마다 1). 코인은 던전 화면의 코인샵에서 칠흑 장신구 · 장비 상자 · 포식자 각인으로 바꿉니다. 정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 세계석, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1.`}
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                     limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 사냥터로 돌아옵니다.`}/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
