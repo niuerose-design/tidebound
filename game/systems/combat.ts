@@ -243,7 +243,7 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
             continue;
         if ((a.mana ?? 0) < (candidate.manaCost || 0))
             continue;
-        // v3.142 전탄발사: 충전 중첩이 모자라면 굴리지 않습니다.
+        // v3.143 전탄발사: 충전 중첩이 모자라면 굴리지 않습니다.
         if (candidate.chargeNeed && (a.effects?.charge || 0) < candidate.chargeNeed)
             continue;
         // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
@@ -297,7 +297,7 @@ function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | 
         if (fired >= limit || a.hp <= 0 || b.hp <= 0 || first?.stunned || first?.silenced) continue;
         const sk = skillOf(a, id)!;
         if ((a.mana ?? 0) < (sk.manaCost || 0)) continue;
-        // v3.142 전탄발사: 충전 중첩이 chargeNeed에 닿을 때까지 기다립니다(대기 0에서 멈춰 있고, 실패로 세지 않음).
+        // v3.143 전탄발사: 충전 중첩이 chargeNeed에 닿을 때까지 기다립니다(대기 0에서 멈춰 있고, 실패로 세지 않음).
         if (sk.chargeNeed && (a.effects?.charge || 0) < sk.chargeNeed) continue;
         const key = AWAKEN_PITY + id, misses = a.cooldowns[key] || 0;
         if (rng() >= Math.min(1, sk.chance * (1 + misses))) { a.cooldowns[key] = misses + 1; continue; }
@@ -479,7 +479,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     }
     // v3.140 성해의 빛살(oath)의 '높은 쪽 공격' 특례는 지웠습니다. 루미너스 액티브는 모두 damageType physical · scaling swap(마법 계수 → 물리 피해)으로 선언합니다.
     const magical = arcane || chosen?.damageType === 'magic' || !chosen && !!a.magicBasic;
-    // v3.142 고정 피해: 방어를 전혀 받지 않습니다(메카닉 전탄발사). 명중은 마법처럼(회피 절반 · 속도 페널티 없음), 치명은 그대로 판정합니다.
+    // v3.143 고정 피해: 방어를 전혀 받지 않습니다(메카닉 전탄발사). 명중은 마법처럼(회피 절반 · 속도 페널티 없음), 치명은 그대로 판정합니다.
     const fixed = chosen?.damageType === 'fixed';
     // v26.7 마법 공격은 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다(물리 빌드와의 차별점).
     const hit = chosen?.sureHit || a.sureHit ? 1 : hitChance({ ...sa, speed: attackSpeed, accuracy: sa.accuracy + (chosen?.accuracyBonus || 0) + gambleAccuracy }, { ...sb, speed: targetSpeed }, magical || fixed);
@@ -494,7 +494,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
         base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
-    // v3.142 전탄발사: 쌓인 충전 중첩을 모두 소모해 중첩당 chargeBonus만큼 피해를 키웁니다(추가타 · 지속 피해 기준값에도 적용).
+    // v3.143 전탄발사: 쌓인 충전 중첩을 모두 소모해 중첩당 chargeBonus만큼 피해를 키웁니다(추가타 · 지속 피해 기준값에도 적용).
     const targetWeakened = (b.effects.weaken || 0) > 0;
     if (chosen?.chargeNeed && landed) {
         const spent = Math.min(SKILL_FORMULA.charge.max, a.effects.charge || 0);
@@ -551,7 +551,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     b.hp = Math.max(0, b.hp - actual);
     // v25 無: 쓰러질 피해를 받은 쪽이 無를 장착했으면 체력 1로 버티고, 이 행동의 남은 추가타는 멈춥니다.
     let stood = endure(b, sb, notes, ev);
-    // v3.142 충전: 충전 기술이 명중하면 중첩이 쌓입니다(약화된 적이면 weakenedExtra 더).
+    // v3.143 충전: 충전 기술이 명중하면 중첩이 쌓입니다(약화된 적이면 weakenedExtra 더).
     if (landed && chosen?.charge) {
         const before = Math.min(SKILL_FORMULA.charge.max, a.effects.charge || 0);
         a.effects.charge = Math.min(SKILL_FORMULA.charge.max, before + chosen.charge + (targetWeakened ? SKILL_FORMULA.charge.weakenedExtra : 0));

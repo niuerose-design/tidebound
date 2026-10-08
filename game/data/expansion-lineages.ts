@@ -55,7 +55,7 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'stormDragoon', name: '폭풍 용기사', title: '번개를 두른 창', desc: '방어를 꿰뚫는 뇌창과 속도 패시브로 싸우는 복합 3차 직업입니다.', ...neutral, bonus: { attack: 67, magic: 74, hp: 90, defense: 3, resist: 2 }, crit: .04, ...T3, parent: 'seaDragoon', requires: { str: 40, wis: 40, vit: 25 }, requiresSkillMastery: { dragonDive: 3 }, role: '복합·관통', tree: 'hybrid' },
     { id: 'abyssDragonLord', name: '해구 용왕', title: '파도의 왕좌', desc: '복합 계보의 환생 후 4차 직업입니다. 대돌격으로 상대를 기절시키고, 패시브로 체력과 물리·마법 공격을 함께 올립니다.', ...neutral, attack: 1.39, magic: 1.39, hp: 1.18, defense: 1.06, resist: 1.06, crit: .06, ...T4, parent: 'stormDragoon', requires: { str: 50, wis: 50 }, requiresSkillMastery: { thunderLance: 3 }, role: '복합·최상위 돌진', tree: 'hybrid' },
     // ── 복합: 메카닉 계보 ──────────────────────────────────
-    // v3.142 메카닉 재개편: 경계(반사 탱커 · 마법 딜러). 약화를 걸고 방어 비례 마법 피해로 때리며 충전, 충전이 쌓이면 전탄발사.
+    // v3.143 메카닉 재개편: 경계(반사 탱커 · 마법 딜러). 약화를 걸고 방어 비례 마법 피해로 때리며 충전, 충전이 쌓이면 전탄발사.
     { id: 'runesmith', name: '룬 대장장이', title: '쇠에 문장을 새긴다', desc: '약화를 걸며 충전을 쌓는 플레임 런처와 두 방어 · 반격 패시브를 익히는 경계 입문 직업입니다.', ...neutral, bonus: { magic: 2, defense: 2 }, ...T1, requires: { int: 12, vit: 10 }, role: '경계 입문·충전', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
     { id: 'arcArtificer', name: '마갑 장인', title: '갑옷이 곧 무기', desc: '물리 방어에 비례한 마법 피해로 충전을 쌓는 호밍 미사일과 두 방어 · 반격 패시브로 버티며 싸우는 2차 직업입니다.', ...neutral, bonus: { magic: 30, hp: 60, defense: 8, resist: 4 }, ...T2, parent: 'runesmith', requires: { int: 26, vit: 24 }, requiresSkillMastery: { runeHammer: 2 }, role: '경계·방어 비례 충전', tree: 'hybrid' },
     { id: 'resonanceEngineer', name: '공명 기공사', title: '공명하는 포신', desc: '메카닉 계보의 3차 직업입니다. 마그네틱 필드는 약화된 적을 더 세게 때리며 충전을 쌓고, 패시브로 체력 · 방어 · 반격을 받칩니다.', ...neutral, bonus: { magic: 80, hp: 130, defense: 14, resist: 7 }, crit: .03, ...T3, parent: 'arcArtificer', requires: { int: 40, vit: 36 }, requiresSkillMastery: { plateSurge: 3 }, role: '경계·약화 연계', tree: 'hybrid' },
@@ -97,7 +97,7 @@ const A = { type: 'active' as const };
 const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
 const dual = { damageType: 'split' as const, scaling: 'dual' as const };
-/** v3.142 메카닉: 마법 피해 + 물리 방어 비례(방어 친화도 적용). */
+/** v3.143 메카닉: 마법 피해 + 물리 방어 비례(방어 친화도 적용). */
 const forgeBlast = { damageType: 'magic' as const, scaling: 'defense' as const };
 const M4 = [2500, 12000, 40000, 100000];
 
@@ -163,7 +163,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...dual, id: 'leviathanCharge', name: '용왕 대돌격', desc: '', level: 55, job: 'abyssDragonLord', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 26, effect: 'stun', extraAttacks: 1, masteryMilestones: M4 },
     { ...P, id: 'dragonKingAura', name: '용왕의 위엄', desc: '최대 체력과 물리·마법 공격이 오릅니다.', level: 55, job: 'abyssDragonLord', cost: 3, bonus: { hp: 260, attack: 24, magic: 24 }, masteryMilestones: M4 },
     // 복합: 메카닉 (1차)
-    // v3.142 메카닉 재개편: 약화(룬 망치) → 방어 비례 마법 피해(forgeBlast)로 충전 → 전탄발사(창세 룬). 패시브는 두 방어 + 반격.
+    // v3.143 메카닉 재개편: 약화(룬 망치) → 방어 비례 마법 피해(forgeBlast)로 충전 → 전탄발사(창세 룬). 패시브는 두 방어 + 반격.
     { ...A, ...dual, id: 'runeHammer', name: '룬 망치', desc: '', level: 10, job: 'runesmith', chance: .48, cooldown: 3, multiplier: 1.15, cost: 2, manaCost: 8, effect: 'weaken', charge: 1 },
     { ...P, id: 'forgeRune', name: '대장간 룬', desc: '물리·마법 방어와 반격이 오릅니다.', level: 10, job: 'runesmith', cost: 2, bonus: { defense: 12, resist: 12, thorns: .1 } },
     { ...A, ...forgeBlast, id: 'plateSurge', name: '갑주 충격', desc: '', level: 25, job: 'arcArtificer', chance: .4, cooldown: 3, multiplier: 1.4, cost: 3, manaCost: 8, scalingRatio: .6, charge: 1 },

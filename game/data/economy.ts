@@ -51,16 +51,19 @@ export const MANA_RESEARCH_PER = .08;
 export const RESEARCH: ResearchDef[] = [
     // The first purchase is reachable after a normal first rebirth, but later
     // ranks are deliberately expensive so pearls remain a meaningful choice.
-    { id: 'attack', name: '날카로운 기억', desc: '물리 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '물리 공격' },
-    { id: 'magicAttack', name: '마력의 기억', desc: '마법 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '마법 공격' },
-    { id: 'mana', name: '샘의 기억', desc: '최대 마나 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: MANA_RESEARCH_PER, unit: 'percent', label: '최대 마나' },
+    // v3.142 공격 · 마공 · 체력 · 마나 최대 200 → 50, 물리 · 마법 방어 100 → 30(docs/research-review.md 권고 2). 21단계부터 ×1.06 복리라 50단계까지 22,158개,
+    // 100단계는 352만 개, 200단계는 70억 개였는데 한 승천(환생 200회)의 총수입이 1만 개 안팎이라 '연구 N / 670' 같은 분모와 '연구 완료'가 거짓이었습니다.
+    // 가격 곡선과 효과는 그대로이고, 이미 상한을 넘겨 산 단계가 있으면 효과 · 재분배 반환 모두 그대로 인정합니다(화면만 '연구 완료').
+    { id: 'attack', name: '날카로운 기억', desc: '물리 공격 +5%', max: 50, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '물리 공격' },
+    { id: 'magicAttack', name: '마력의 기억', desc: '마법 공격 +5%', max: 50, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '마법 공격' },
+    { id: 'mana', name: '샘의 기억', desc: '최대 마나 +8%', max: 50, base: 2, step: 2, tab: 'combat', group: 'attack', per: MANA_RESEARCH_PER, unit: 'percent', label: '최대 마나' },
     { id: 'crit', name: '예리한 눈', desc: '치명 확률 +0.5%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .005, unit: 'pp', label: '치명 확률' },
     { id: 'manaRegen', name: '고요한 호흡', desc: '턴당 마나 회복 +5%', max: 10, base: 3, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .05, unit: 'percent', label: '턴당 마나 회복' },
     { id: 'critDamage', name: '치명의 일격', desc: '치명 피해 +2%p', max: 25, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 5, per: .02, unit: 'pp', label: '치명 피해' },
     { id: 'penetration', name: '관통의 기억', desc: '방어 관통 +3% (다른 관통과 곱연산)', max: 15, base: 5, step: 4, tab: 'combat', group: 'attack', rebirth: 5, per: .03, unit: 'pp', label: '방어 관통' },
-    { id: 'hp', name: '깊은 숨결', desc: '최대 체력 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'defense', per: .08, unit: 'percent', label: '최대 체력' },
-    { id: 'guard', name: '불굴의 기억', desc: '물리 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '물리 방어' },
-    { id: 'magicGuard', name: '마나 장막의 기억', desc: '마법 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '마법 방어' },
+    { id: 'hp', name: '깊은 숨결', desc: '최대 체력 +8%', max: 50, base: 2, step: 2, tab: 'combat', group: 'defense', per: .08, unit: 'percent', label: '최대 체력' },
+    { id: 'guard', name: '불굴의 기억', desc: '물리 방어 +3%', max: 30, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '물리 방어' },
+    { id: 'magicGuard', name: '마나 장막의 기억', desc: '마법 방어 +3%', max: 30, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '마법 방어' },
     { id: 'recovery', name: '회복의 기억', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
     { id: 'evasion', name: '바람의 걸음', desc: '회피 +0.6%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .006, unit: 'pp', label: '회피' },
     { id: 'lifesteal', name: '피의 갈증', desc: '흡혈 +0.5%p (전체 상한 30%)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },

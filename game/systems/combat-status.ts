@@ -9,7 +9,7 @@ export function visibleStatuses(effects: StatusEffects = {}, stun = 0, recent: C
     const poisonLabel = effects.poison ? `중독 ×${effects.poison.stacks}` : STATUS_LABELS.poison;
     const burnLabel = effects.burn ? `화상 ×${effects.burn.stacks}` : STATUS_LABELS.burn;
     const rows: { id: string; label: string; turns: number; recent?: boolean; detail?: string }[] = Object.entries(values).filter(([, turns]) => turns > 0).map(([id, turns]) => ({ id, label: id === 'bleed' ? dotLabel : id === 'poison' ? poisonLabel : id === 'burn' ? burnLabel : STATUS_LABELS[id as keyof typeof STATUS_LABELS], turns, recent: false }));
-    // v3.142 충전 중첩(메카닉): 턴이 아니라 중첩 수를 보여 줍니다.
+    // v3.143 충전 중첩(메카닉): 턴이 아니라 중첩 수를 보여 줍니다.
     if (effects.charge) rows.push({ id: 'charge', label: `충전 ×${effects.charge}`, turns: 0, detail: `${effects.charge}중첩 (최대 ${SKILL_FORMULA.charge.max})` });
     // A one-action stun may be consumed inside the same server round. Keep its
     // witnessed event beside the name briefly instead of losing the indication.

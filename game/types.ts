@@ -120,7 +120,7 @@ export type StatusEffects = {
     timeUsed?: boolean;
     /** v25 이번 전투에 無로 막은 횟수. */
     lastStand?: number;
-    /** v3.142 충전 중첩(메카닉). 충전 기술이 명중하면 쌓이고 전탄발사가 소모합니다. */
+    /** v3.143 충전 중첩(메카닉). 충전 기술이 명중하면 쌓이고 전탄발사가 소모합니다. */
     charge?: number;
 };
 export type Item = {
@@ -187,9 +187,9 @@ export type Skill = {
     multiplier: number;
     effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste';
     /** split: 원시 피해를 물리·마법 절반씩 나누어 각각 방어를 적용하는 한 번의 공격. */
-    /** fixed(v3.142): 고정 피해. 방어 · 마법 방어를 전혀 받지 않습니다(메카닉 전탄발사). 기준 공격력은 baseStat(기본 물리 공격). */
+    /** fixed(v3.143): 고정 피해. 방어 · 마법 방어를 전혀 받지 않습니다(메카닉 전탄발사). 기준 공격력은 baseStat(기본 물리 공격). */
     damageType?: 'physical' | 'magic' | 'split' | 'fixed';
-    /** v3.142 고정 피해의 기준 공격력. */
+    /** v3.143 고정 피해의 기준 공격력. */
     baseStat?: 'attack' | 'magic';
     cost?: number;
     manaCost?: number;
@@ -265,9 +265,9 @@ export type Skill = {
     outsiderChance?: number;
     /** v3.132 도트 퍼니셔: 적의 중독·화상 중첩에 비례한 추가타(최대 maxHits회, 위력 hitMultiplier). 둘 다 최대 중첩이면 기절 fullStun턴, 일부면 partStun턴, 없으면 추가타·기절 없음. */
     dotFinisher?: { maxHits: number; hitMultiplier: number; fullStun: number; partStun: number };
-    /** v3.142 충전(메카닉): 이 기술이 명중하면 자신의 충전 중첩 +charge(약화된 적이면 +1 더, 최대 SKILL_FORMULA.charge.max). 전투가 끝나면 사라집니다. */
+    /** v3.143 충전(메카닉): 이 기술이 명중하면 자신의 충전 중첩 +charge(약화된 적이면 +1 더, 최대 SKILL_FORMULA.charge.max). 전투가 끝나면 사라집니다. */
     charge?: number;
-    /** v3.142 전탄발사: 충전 중첩이 chargeNeed 이상일 때만 쓰고, 쓰면 중첩을 모두 소모해 중첩당 피해 +chargeBonus. */
+    /** v3.143 전탄발사: 충전 중첩이 chargeNeed 이상일 때만 쓰고, 쓰면 중첩을 모두 소모해 중첩당 피해 +chargeBonus. */
     chargeNeed?: number;
     chargeBonus?: number;
     /** 이 기술이 거는 지속 피해 비율(기본 SKILL_FORMULA.bleedRatio)과 이름(기본 출혈). */
