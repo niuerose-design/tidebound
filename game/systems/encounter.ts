@@ -58,8 +58,8 @@ export function releaseLegacySeal(s: State) {
     addLog(s, `잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +${seal.exp} EXP`, 'reward');
     return seal.exp;
 }
-/** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 회복의 기억 1%p/단계. */
-/** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘회복의 기억’은 1단계마다 +1%p. */
+/** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 처치 회복 강화 I 1%p/단계. */
+/** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘처치 회복 강화 I’은 1단계마다 +1%p. */
 /** 처치 후 회복 비율. v27.86 힘의 길 회복 봉쇄 ×(1 − 50·75·100%). */
 export const victoryHealRate = (s: State) => ((s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill / (1 + encounterTier(s) / BALANCE.healAfterKillTideScale))) + researchRank(s, 'recovery') * .01 + sproutHeal(s)) * roughHeal(s);
 /** 드롭 등급: 등급 분포(ODDS.drop.rarity, 서버 전용)에서 minRarity 이상만 다시 정규화해 뽑습니다. */

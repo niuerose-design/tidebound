@@ -91,7 +91,7 @@ export function Character({ s, send, busy }: PanelProps) {
     <details className="ap-breakdown"><summary><span>스킬 장착 AP<strong>{apUsed(s)} / {apCapacity(s)}</strong></span></summary>
     <dl>{apSources(s).filter(x => x.value).map(x => <div key={x.id}><dt>{x.label}</dt><dd className={x.value < 0 ? 'negative' : ''}>{x.value > 0 ? '+' : ''}{x.value}</dd></div>)}</dl>
     </details>
-    <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}만큼 회복합니다. 기본 ${percent(BALANCE.healAfterKill)}이 사냥터 난이도가 오를수록 줄어듭니다(난이도 10에서 절반, 최저 ${percent(BALANCE.healAfterKillMin)}), 연구 ‘회복의 기억’ 1단계마다 +1%p. 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 고정입니다.`}>처치 후 회복 (처치당)<strong>{percent(victoryHealRate(s))} · {victoryHeal(s).toLocaleString()} HP</strong>
+    <span title={`처치할 때마다 최대 체력의 ${percent(victoryHealRate(s))}만큼 회복합니다. 기본 ${percent(BALANCE.healAfterKill)}이 사냥터 난이도가 오를수록 줄어듭니다(난이도 10에서 절반, 최저 ${percent(BALANCE.healAfterKillMin)}), 연구 ‘처치 회복 강화 I’ 1단계마다 +1%p. 던전에서는 ${percent(MONSTER_TUNING.dungeonHealAfterKill)} 고정입니다.`}>처치 후 회복 (처치당)<strong>{percent(victoryHealRate(s))} · {victoryHeal(s).toLocaleString()} HP</strong>
     </span>
     </div>
     </section>
