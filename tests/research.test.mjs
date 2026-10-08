@@ -376,3 +376,52 @@ test('v3.160 reenlist: only at the top rank, resets rank exp and perks, adds a p
     s.rank.exp = RANK_CUMULATIVE.at(-1); assert.equal(rankPointsEarned(s), before + 1); act(s, { type: 'reenlist' }, 0); assert.equal(s.rank.reenlist, 2); assert.equal(rankPointsEarned(s), 2);
     act(s, { type: 'sync' }, 0); assert.ok('reenlist:1' in s.achievements, 'honor achievement');
 });
+
+test('v3.161 essence slime: shares the special roll right after the nuri band, pays bundle × tier essence, not before Lv.30 / difficulty 10', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Enc = await L.load('systems/encounter'), Sl = await L.load('data/essence-slime');
+    const make = (level = 80) => { const s = newState(0); s.level = level; s.kills = 5000; s.stage = 'brook'; s.tide = 10; s.running = true; s.skills = ['hook']; return s; };
+    const c = Enc.specialChances(make());
+    assert.ok(c.slimeP > 0 && Math.abs(c.slimeP - Sl.slimeChance(10)) < 1e-12, 'slime band = base + 10 × per tier');
+    assert.deepEqual(c.king, { mimic: 0, nuri: 0, slime: 0 }, 'no king before 30 small ones');
+    assert.equal(Enc.pickSpecial(c.mimicP + c.nuriP + c.slimeP / 2, c), 'slime'); assert.equal(Enc.pickSpecial(c.mimicP + c.nuriP + c.slimeP * 1.01, c), undefined);
+    const s = make(); Enc.spawn(s, () => c.mimicP + c.nuriP + c.slimeP / 2);
+    assert.equal(s.enemy.id, Sl.ESSENCE_SLIME.id); assert.equal(s.enemy.name, '정수의 슬라임'); assert.equal(s.enemy.leavesAt, undefined, 'the small slime does not run away');
+    s.enemy.hp = 0; s.essence = 0; Enc.reward(s, () => .99);
+    assert.equal(s.essence, Sl.slimeBundle(10) * Sl.ESSENCE_SLIME.tiers[2].mul, 'jackpot: bundle 2 × 40'); assert.equal(s.book.essenceSlime, 1); assert.ok(s.logs.some(l => l.text.includes('정수의 슬라임 · 대당첨')));
+    { const t = make(Sl.ESSENCE_SLIME.minLevel - 1); assert.equal(Enc.specialChances(t).slimeP, 0, 'not below Lv.30'); }
+    { const t = make(); t.tide = Sl.ESSENCE_SLIME.minTier - 1; assert.equal(Enc.specialChances(t).slimeP, 0, 'not below difficulty 10'); }
+    { const t = make(); t.catchingUp = true; assert.ok(Math.abs(Enc.specialChances(t).slimeP - c.slimeP * Sl.ESSENCE_SLIME.offlineScale) < 1e-12, 'quarter rate offline'); }
+    assert.equal(Sl.slimeBundle(100), 11); assert.equal(Sl.slimeBundle(0), 1);
+});
+
+test('v3.161 kings: after 30 small ones a share of that special becomes the king, with a bigger body, an escape timer and a guaranteed triple jackpot', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const Enc = await L.load('systems/encounter'), K = await L.load('data/king'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri'), Sl = await L.load('data/essence-slime');
+    const make = () => { const s = newState(0); s.level = 80; s.kills = 5000; s.stage = 'brook'; s.tide = 10; s.running = true; s.skills = ['hook']; s.hp = 1e9; s.book = { masteryMimic: K.KING.minBookKills, expNuri: K.KING.minBookKills - 1, essenceSlime: K.KING.minBookKills }; return s; };
+    const c = Enc.specialChances(make());
+    assert.deepEqual(c.king, { mimic: K.KING.share, nuri: 0, slime: K.KING.share }, 'king share only where the small-one count is reached');
+    assert.equal(Enc.pickSpecial(0, c), 'kingMimic'); assert.equal(Enc.pickSpecial(c.mimicP * K.KING.share * 1.01, c), 'mimic', 'past the king sub-band it is the plain mimic');
+    assert.equal(Enc.pickSpecial(c.mimicP, c), 'nuri', 'nuri not ready for kings'); assert.equal(Enc.pickSpecial(c.mimicP + c.nuriP, c), 'kingSlime');
+    // 몸집 · 도망 턴 · 보상(대왕 까미)
+    const small = make(); Enc.spawn(small, () => 1, 'mimic'); const s = make(); Enc.spawn(s, () => 0);
+    assert.equal(s.enemy.id, K.KING.mimic.id); assert.equal(s.enemy.name, '대왕 까미'); assert.ok(s.enemy.boss, 'shown as a boss');
+    assert.ok(Math.abs(s.enemy.maxHp / small.enemy.maxHp - K.KING.hp) < .01, 'hp = small one × 4 (rounding aside): ' + s.enemy.maxHp / small.enemy.maxHp); assert.ok(s.enemy.attack > small.enemy.attack * 2, 'hits harder');
+    assert.equal(s.enemy.leavesAt, s.turn + K.KING.turns, 'leaves after 80 turns');
+    assert.equal(Enc.enemyLabel(s.enemy), '[보스] 대왕 까미');
+    s.enemy.hp = 0; Enc.reward(s, () => .99);
+    assert.ok(s.jobMastery.fisher >= Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul && s.jobMastery.fisher < Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul * 1.01, 'mastery 300,000 guaranteed (+ the kill itself): ' + s.jobMastery.fisher); assert.equal(s.book.kingMimic, 1); assert.ok(s.logs.some(l => l.text.includes('대왕 까미 격파')));
+    // 대왕 누리 · 대왕 정수 슬라임 보상
+    { const t = make(); Enc.spawn(t, () => 1, 'kingNuri'); assert.equal(t.enemy.id, K.KING.nuri.id); const before = t.exp; t.enemy.hp = 0; Enc.reward(t, () => .99);
+        const byField = Math.floor(Enc.stageEncounterExp(t, stats(t)) * Math.round(N.EXP_NURI.tiers[2].pct * K.KING.rewardMul * N.EXP_NURI.encountersPerPct));
+        assert.ok(t.exp - before >= byField && byField > 0, '90 encounters worth of exp or more'); assert.ok(t.logs.some(l => l.text.includes('대왕 누리 격파'))); }
+    { const t = make(); Enc.spawn(t, () => 1, 'kingSlime'); assert.equal(t.enemy.id, K.KING.slime.id); t.essence = 0; t.enemy.hp = 0; Enc.reward(t, () => .99);
+        assert.equal(t.essence, Sl.slimeBundle(10) * Sl.ESSENCE_SLIME.tiers[2].mul * K.KING.rewardMul, 'bundle 2 × 120'); assert.equal(t.book.kingSlime, 1); }
+    // 도망: leavesAt이 지나면 보상 없이 사라집니다.
+    { const t = make(); Enc.spawn(t, () => 1, 'kingSlime'); t.enemy.leavesAt = t.turn; t.essence = 0; rawAdvance(t, 2000, seeded(3));
+        assert.ok(!t.enemy || t.enemy.id !== K.KING.slime.id, 'gone'); assert.equal(t.essence, 0); assert.equal(t.book.kingSlime || 0, 0, 'no reward for an escape'); assert.ok(t.logs.some(l => l.text.includes('대왕 정수 슬라임이(가) 힘이 다 빠지기 전에 달아났습니다'))); }
+    // 던전에서는 안 나오고, 호루라기는 대왕을 부를 수 없습니다.
+    { const d = make(); d.dungeon = { id: 'grotto', wave: 0 }; assert.equal(Enc.specialChances(d).rolls, false); }
+    { const w = make(); w.sp = 10; assert.throws(() => act(w, { type: 'whistle', id: 'kingMimic' }, 0), /숙련의 까미 또는 경험의 누리/); }
+    assert.deepEqual(K.SPECIAL_IDS, ['masteryMimic', 'expNuri', 'essenceSlime', 'kingMimic', 'kingNuri', 'kingSlime']);
+});

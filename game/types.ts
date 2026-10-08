@@ -336,8 +336,9 @@ export type Skill = {
 export type Enemy = {
     /** v27.16 양쪽 체력이 그대로인 턴 수. 오래 이어지면 몬스터가 달아난 것으로 보고 새 몬스터를 맞이합니다. */
     stale?: number;
-    /** v3.12 칠흑 보스 id와 떠나는 턴(s.turn 기준). */
+    /** v3.12 칠흑 보스 id. */
     onyx?: string;
+    /** v3.12 떠나는 턴(s.turn 기준): 칠흑 보스, v3.161 대왕 시리즈. 지나면 도망(보상 없음). */
     leavesAt?: number;
     /** 무리 규모(N). 무리 전체가 체력 ×N인 한 개체입니다. 없으면 한 마리. */
     swarm?: number;
