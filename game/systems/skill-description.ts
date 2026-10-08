@@ -58,6 +58,7 @@ export function skillBrief(sk: Skill): string {
         if (sk.levelEffects?.length) parts.push(`숙련할수록 강해짐(AP ${sk.levelEffects[0].cost} → ${sk.levelEffects.at(-1)!.cost})`);
         if (sk.masteryGain) parts.push('조건부 숙련 증가');
         for (const pc of sk.perCount || []) parts.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')}`);
+        if (sk.bloodRage) parts.push(`잃은 체력 비례 피해 최대 +${skillPercent(sk.bloodRage)}`);
         if (sk.song) parts.unshift('노래 · AP 0');
         return parts.join(' · ') || '장착 효과';
     }
@@ -69,6 +70,7 @@ export function skillBrief(sk: Skill): string {
     if (sk.dotFinisher) parts.push(`중독·화상 중첩 비례 추가타 최대 ${sk.dotFinisher.maxHits}회 · 기절 ${sk.dotFinisher.partStun}~${sk.dotFinisher.fullStun}턴`);
     if (sk.charge) parts.push(`명중 시 충전 +${sk.charge}(약화 적 +${SKILL_FORMULA.charge.weakenedExtra})`);
     if (sk.chargeNeed) parts.push(`충전 ${sk.chargeNeed}중첩부터 · 중첩당 피해 +${skillPercent(sk.chargeBonus || 0)}`);
+    if (sk.hpCost) parts.push(`현재 체력 ${skillPercent(sk.hpCost)} 소모`);
     if (sk.effect === 'heal') parts.push(`체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복`);
     if (sk.effect === 'drain') parts.push(`피해의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 흡혈`);
     if (sk.damageBonusCondition) parts.push(`${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 적 +${skillPercent(sk.conditionalDamageBonus || 0)}`);

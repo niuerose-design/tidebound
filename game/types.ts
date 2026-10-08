@@ -229,6 +229,10 @@ export type Skill = {
     restoreAll?: boolean;
     /** v25 반동: 준 피해 × recoil만큼 자신도 받습니다(반동으로는 체력 1 아래로 내려가지 않음). */
     recoil?: number;
+    /** v3.145 체력 소모(데몬슬레이어): 쓸 때 현재 체력 × hpCost를 냅니다(체력 1 아래로는 내려가지 않음). 마나 대신 쓰는 비용. 피가 줄수록 비용도 줄어 스스로 말라 죽지 않습니다. */
+    hpCost?: number;
+    /** v3.145 피의 분노(패시브): 잃은 체력 비율 × bloodRage만큼 모든 피해가 커집니다(장착한 패시브끼리 더함). */
+    bloodRage?: number;
     /** v25 자기 상태이상: 쓰고 나면 자신이 기절·감속·약화됩니다. waivedBy 기술을 장착하면 생략. */
     selfEffect?: { status: 'stun' | 'slow' | 'weaken'; turns: number; waivedBy?: string };
     /** v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다. */
@@ -339,6 +343,8 @@ export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split' | 'fixed';
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
+    /** v3.145 이 행동에 바친 체력(체력 소모 기술). */
+    hpSpent?: number;
     /** 면역으로 막힌 상태이상(있을 때만). */
     immune?: string;
     /** v3.5 상태이상 저항으로 막힌 상태이상(있을 때만). */

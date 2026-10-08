@@ -425,6 +425,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (chosen) {
         a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
         a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));
+        // v3.145 체력 소모: 현재 체력 × hpCost를 바칩니다(1은 남김). 피의 분노가 그만큼 더 세게 반응합니다.
+        if (chosen.hpCost) { const pay = Math.min(Math.max(0, a.hp - 1), Math.floor(a.hp * chosen.hpCost)); if (pay > 0) { a.hp -= pay; ev.hpSpent = pay; notes.push(`체력 ${pay.toLocaleString()} 소모`); } }
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.poison; delete a.effects.burn; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
         if (chosen.wardTurns) {
             delete a.effects.weaken;
@@ -502,6 +504,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         base *= 1 + spent * (chosen.chargeBonus || 0);
         notes.push(`충전 ${spent}중첩 방출`);
     }
+    // v3.145 피의 분노(데몬슬레이어 패시브): 잃은 체력 비율 × bloodRage 합만큼 기준값이 커집니다(체력 소모 뒤 기준).
+    const rage = a.skills.reduce((n, id) => n + (skillById(id)?.bloodRage || 0), 0);
+    if (rage > 0 && sa.hp > 0) { const missing = Math.min(1, Math.max(0, 1 - a.hp / sa.hp)); if (missing > 0) { base *= 1 + rage * missing; notes.push(`피의 분노 +${Math.round(rage * missing * 100)}%`); } }
     // v25.14 마법 방어 비례 피해: 결계 계열(마법 방어 배율이 높은 직업)에서 온전히, 다른 직업이 계승하면 일부만.
     if (chosen?.scaling === 'resist')
         base += sa.resist * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1);

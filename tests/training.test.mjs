@@ -265,10 +265,23 @@ test('v3.126 Cadena: Mystic Storm attack +450 and crit +10%p (stun extension kep
     assert.deepEqual([sk.bonus.attack, sk.bonus.crit, sk.bonus.stunBonus], [450, .1, 1]);
 });
 
-test('v3.128 Demon Slayer: Demon Awakening attack and magic +350 each (crit kept), Demon Bane stuns 3 turns', () => {
-    assert.equal(SKILLS.find(s => s.id === 'heavenSplit').statusTurns, 3);
-    const sk = SKILLS.find(s => s.id === 'celestialAura');
-    assert.deepEqual([sk.bonus.attack, sk.bonus.magic, sk.bonus.crit], [350, 350, .05]);
+test('v3.145 Demon Slayer: actives cost HP instead of mana (floor 1), Blood Rage scales damage by missing HP, Demon Bane still stuns 3 turns', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(sk('heavenSplit').statusTurns, 3); assert.equal(sk('heavenSplit').hpCost, .15);
+    for (const id of ['runeEdge', 'arcSlash', 'runeBurst', 'twinMoon', 'heavenSplit']) { assert.equal(sk(id).damageType, 'physical', id); assert.equal(sk(id).manaCost, 0, id); assert.ok(sk(id).hpCost > 0, id); }
+    assert.deepEqual([sk('celestialAura').bonus.attack, sk('celestialAura').bonus.crit, sk('celestialAura').bloodRage], [300, .05, .2]);
+    const base = { hp: 1000, attack: 300, magic: 0, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 0, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const fighter = (hp, skills) => ({ name: 'A', stats: { ...base }, hp, mana: 0, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} });
+    const target = () => ({ name: 'B', stats: { ...base, hp: 1e6 }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    // 마나 0이어도 쓰고, 현재 체력의 10%(100)를 바칩니다.
+    const a = fighter(1000, ['runeBurst']); const e = []; strike(a, target(), () => 0, e); assert.equal(e[0].skillName, sk('runeBurst').name); assert.equal(e[0].hpSpent, 100); assert.equal(a.hp, 900);
+    // 현재 체력 비율이라 말라 죽지 않습니다: 체력 10이면 1만 바치고(9 남음), 체력 5면 비용이 0으로 내림.
+    const low = fighter(10, ['runeBurst']); const el = []; strike(low, target(), () => 0, el); assert.equal(low.hp, 9); assert.equal(el[0].hpSpent, 1);
+    const tiny = fighter(5, ['runeBurst']); strike(tiny, target(), () => 0); assert.equal(tiny.hp, 5);
+    // 피의 분노: 잃은 체력 비율 × (0.1 + 0.15 + 0.2). 1000 → 900(바친 뒤)이면 10% × 0.45, 100 → 90이면 91% × 0.45.
+    const t1 = target(); strike(fighter(1000, ['runeBurst', 'runeArmor', 'saintEdge', 'celestialAura']), t1, () => 0); const d1 = 1e6 - t1.hp;
+    const t2 = target(); strike(fighter(100, ['runeBurst', 'runeArmor', 'saintEdge', 'celestialAura']), t2, () => 0); const d2 = 1e6 - t2.hp;
+    assert.ok(Math.abs(d2 / d1 - (1 + .45 * .91) / (1 + .45 * .1)) < .03, `blood rage ${d1} → ${d2}`);
 });
 
 test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons and burns 7 turns (half chance outside the lineage), Dot Punisher finishes by stacks with no cooldown', async () => {
