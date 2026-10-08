@@ -501,7 +501,7 @@ test('v3.82 relic imprint keeps the source item\'s effective flat bonus (source 
     assert.ok(old.affixes[0].value < glass.value, 'primal-sized line shrinks'); assert.equal(old.affixes[1].value, 20, 'small line is not raised');
     const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'only once');
 });
-test('v3.140 relic imprint scales percent lines to relic rarity quality (primal 2.2 → legendary 1.6), never raises, penalties untouched; v3.82~139 lines corrected once on load', async () => {
+test('v3.141 relic imprint scales percent lines to relic rarity quality (primal 2.2 → legendary 1.6), never raises, penalties untouched; v3.82~139 lines corrected once on load', async () => {
     const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations');
     const s = newState(0); s.level = 100; s.gold = 1e12;
     const relic = { id: 'r', name: 'r', slot: 'coat', style: 'balanced', rarity: 3, level: 100, power: 300, relic: 'soulCoat', locked: true, affixes: [] };
@@ -720,7 +720,7 @@ test('v3.133 rule options (◆) draw at weight .25: about 36% of primal items ca
     assert.ok(rule6 / N > .30 && rule6 / N < .43, `primal with a rule option ${rule6 / N}`); assert.ok(rule3 / N > .16 && rule3 / N < .29, `legendary with a rule option ${rule3 / N}`); assert.ok(rare6 / N < .01, `rare ${rare6 / N}`);
     assert.ok(G.rollAffixes(6, 500, undefined, () => 0, [], 'rod', 100).filter(o => o.rule).length <= 1, 'still at most one rule line');
 });
-test('v3.134 combat power weights offense .65 · durability .35, Lv.1 ≈45 (v3.140 display ÷10), and the weapon outranks the coat on primal 22★', async () => {
+test('v3.134 combat power weights offense .65 · durability .35, Lv.1 ≈45 (v3.141 display ÷10), and the weapon outranks the coat on primal 22★', async () => {
     const { stats, power, powerParts, POWER_WEIGHT } = await L.load('systems/stats'), { RARITIES } = await L.load('data/balance'), { rollAffixes } = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear');
     assert.deepEqual(POWER_WEIGHT, { offense: .65, durability: .35 });
     const fresh = stats(newState(0)), p = powerParts(fresh); assert.ok(Math.abs(power(fresh) - 45) <= 1, `Lv.1 power ${power(fresh)}`);

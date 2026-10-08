@@ -45,7 +45,7 @@ export type AffixDef = {
     levelPower?: number;
     description: string;
 };
-export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean; /** v3.82 유물에 이식한 줄의 원래 장비 등급(감쇠를 맞춘 표시). */ srcRarity?: number; /** v3.140 이식한 비율 옵션(초월 · 포식자 · 관통 등)을 유물 등급 품질로 맞춘 줄. 마이그레이션이 한 번만 손대도록 표시. */ pctFixed?: true };
+export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean; /** v3.82 유물에 이식한 줄의 원래 장비 등급(감쇠를 맞춘 표시). */ srcRarity?: number; /** v3.141 이식한 비율 옵션(초월 · 포식자 · 관통 등)을 유물 등급 품질로 맞춘 줄. 마이그레이션이 한 번만 손대도록 표시. */ pctFixed?: true };
 /** 장비 옵션 합계 상한. v3.71 흡혈 6%p → 10%p(흡혈 옵션 상향과 함께). */
 export const GEAR_CAPS: Partial<Record<GearStat, number>> = { lifesteal: .1, statusResist: .5 };
 
