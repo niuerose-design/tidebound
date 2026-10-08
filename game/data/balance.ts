@@ -4,6 +4,8 @@ import { ODDS } from './odds';
 export const SAVE_VERSION = 8;
 export const BALANCE = {
     turnMs: 2000, offlineCapSeconds: 21600, baseHp: 110, baseAttack: 13,
+    /** v3.188 이보다 오래 비운 정산만 부재중 보정(이벤트 · 축복 절반, 까미 · 누리 · 슬라임 확률 offlineScale)을 받습니다. 1분 넘게 밀린 정산은 계산 방식만 부재중 정산(표본 환산 · 분할)입니다. */
+    offlineAwaySeconds: 3600,
     /** v3.129 기본 마방도 상수로 둡니다(전에는 stats.ts에 3 + 레벨당 .7로 박혀 있었음). 레벨당 값은 올리지 않습니다: 방어 · 마방은 탱커 계보 패시브를 배워 채우는 것이 의도(docs/gear-endgame.md v3.129). */
     baseDefense: 3, baseResist: 3, resistPerLevel: .7,
     /** v3.90 최대 마나 기본값 · 레벨당(전에는 30 고정). 체력(110 · 레벨당 14)의 약 0.2배를 목표로 합니다. */
