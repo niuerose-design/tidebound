@@ -70,6 +70,8 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
     // v27.91 게이지는 축복 / 소환(신 + 월드보스 셋) 탭으로 나눠 봅니다. 고른 게이지가 다른 탭에 있으면 탭을 따라갑니다.
     const [gaugeTab, setGaugeTab] = useState<'bless' | 'summon'>('bless');
     const [raidTab, setRaidTab] = useState<string>(RAIDS[0].id);
+    // v3.193 신 · 신의 자리는 한 칸에서 탭으로 봅니다.
+    const [godTab, setGodTab] = useState<'god' | 'throne'>('god');
     // v3.84 피해 순위에서 펼친 모험가의 최근 도전 기록('보스:순위').
     const [openHit, setOpenHit] = useState('');
     // v3.16 슬라이더·비율 버튼 기준: 고른 게이지를 채우는 데 필요한 양 / 내 보유량(수천억 골드를 한 번에 바칠 때).
@@ -143,12 +145,25 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
             </section>
             <section className="panel altar-god">
                 <div className="section-title"><h2><Skull size={16}/> 신</h2>{god && <span className="micro">{god.gen}번째 신</span>}</div>
-                {god?.alive ? <>
-                    <div className="altar-god-card"><strong>{god.name}</strong><span>Lv.{god.level} · 최대 체력 {format(god.hp)} · 공격 {format(god.attack)} · 전투력 {format(god.power)}</span><small>떠나기까지 {remaining(god.until - now)} · 내 전투력 {format(myPower)}</small></div>
-                    {god.mine ? <p className="footnote">지금 깨어난 신은 당신을 본뜬 모습입니다. 다른 모험가가 쓰러뜨리면 자리를 빼앗깁니다.</p>
-                        : <button className="primary" disabled={busy || wait > 0} onClick={() => void act({ action: 'challenge' })}>{wait > 0 ? `${remaining(wait)} 뒤 다시 도전` : '신에게 도전'}</button>}
-                    <p className="footnote">가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉습니다. 도전은 {ALTAR.challengeCooldownMs / 60000}분에 한 번, 무릉도장처럼 끝까지(최대 {ALTAR.godMaxTurns}턴) 겨룹니다.</p>
-                </> : <p className="footnote">{god ? '신이 잠들어 있습니다.' : '아직 깨어난 신이 없습니다.'} 신 소환 게이지({format(ALTAR.godCost)})가 차면 신이 깨어납니다. 처음 깨어나는 신은 {ALTAR.firstGod.name}(무릉도장 {ALTAR.firstGod.depth}층 보스급), 그 뒤로는 신의 자리 주인을 본뜬 신이 깨어납니다.</p>}
+                <Tabs value={godTab} onValueChange={v => setGodTab(v as typeof godTab)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="god"><Skull size={14}/> 신{god?.alive ? ' · 깨어남' : ''}</TabsTrigger><TabsTrigger value="throne"><Crown size={14}/> 신의 자리{throne ? ` · ${throne.name}` : ''}</TabsTrigger></TabsList></Tabs>
+                {godTab === 'god' ? <>
+                    {god?.alive ? <>
+                        <div className="altar-god-card"><strong>{god.name}</strong><span>Lv.{god.level} · 최대 체력 {format(god.hp)} · 공격 {format(god.attack)} · 전투력 {format(god.power)}</span><small>떠나기까지 {remaining(god.until - now)} · 내 전투력 {format(myPower)}</small></div>
+                        {god.mine ? <p className="footnote">지금 깨어난 신은 당신을 본뜬 모습입니다. 다른 모험가가 쓰러뜨리면 자리를 빼앗깁니다.</p>
+                            : <button className="primary" disabled={busy || wait > 0} onClick={() => void act({ action: 'challenge' })}>{wait > 0 ? `${remaining(wait)} 뒤 다시 도전` : '신에게 도전'}</button>}
+                        <p className="footnote">가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉습니다. 도전은 {ALTAR.challengeCooldownMs / 60000}분에 한 번, 무릉도장처럼 끝까지(최대 {ALTAR.godMaxTurns}턴) 겨룹니다.</p>
+                    </> : <p className="footnote">{god ? '신이 잠들어 있습니다.' : '아직 깨어난 신이 없습니다.'} 신 소환 게이지({format(ALTAR.godCost)})가 차면 신이 깨어납니다. 처음 깨어나는 신은 {ALTAR.firstGod.name}(무릉도장 {ALTAR.firstGod.depth}층 보스급), 그 뒤로는 신의 자리 주인을 본뜬 신이 깨어납니다.</p>}
+                </> : <>
+                    {throne ? <>
+                        <div className="altar-god-card"><strong>{throne.name}{throne.mine ? ' (나)' : ''}{!throne.mine && !god?.alive && <button className="secondary small altar-impeach" disabled={busy || wait > 0} title={`신이 된 ${throne.name}(최대 체력 ${format(throne.hp)} · 전투력 ${format(throne.power)})과 겨뤄 이기면 자리에서 내려옵니다. 자리는 비고, 다시 앉으려면 신을 소환해 쓰러뜨려야 합니다.`} onClick={() => void act({ action: 'impeach' })}>{wait > 0 ? `탄핵 · ${remaining(wait)} 뒤` : '탄핵'}</button>}</strong><small>{new Date(throne.since).toLocaleString('ko-KR')}부터 · 임기 {remaining(throne.since + ALTAR.throneTermMs - now)} 남음(지나면 자리와 몫이 비고 다음 신은 {ALTAR.firstGod.name})</small></div>
+                        {throne.mine && throne.tithe && <>
+                            <p className="altar-tithe">쌓인 몫 · {format(throne.tithe.gold)} G · 세계석 {format(throne.tithe.pearls)} · 정수 {format(throne.tithe.essence)}</p>
+                            <button className="primary" disabled={busy || !(throne.tithe.gold || throne.tithe.pearls || throne.tithe.essence)} onClick={() => void act({ action: 'harvest' })}>몫 거두기</button>
+                            <p className="footnote">자리를 빼앗기면 거두지 않은 몫은 사라집니다. 자주 거두세요.</p>
+                        </>}
+                    </> : <p className="footnote">비어 있습니다. 신을 쓰러뜨린 첫 모험가가 앉습니다.</p>}
+                    <p className="footnote">신의 자리 주인은 다른 모험가가 바치는 골드·세계석·정수의 {ALTAR.titheRate * 100}%를 거둡니다.</p>
+                </>}
                 {result && result.dealt === undefined && <div className={`altar-result ${result.winner === 'player' ? 'win' : 'lose'}`}>
                     <strong>{result.winner === 'player' ? result.impeached ? '승리 · 탄핵 성공, 신의 자리가 비었습니다' : result.claimed ? '승리 · 신의 자리에 앉았습니다!' : '승리 · 하지만 한발 늦었습니다' : result.winner === 'draw' ? `${result.turns}턴 안에 쓰러뜨리지 못했습니다` : '패배'}</strong>
                     <details><summary>전투 기록 ({result.turns}턴)</summary><ol>{result.logs.map((l, i) => <li key={i}>{l}</li>)}</ol></details>
@@ -163,7 +178,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                         <Meter value={raid.hp} max={raid.hpMax} label={`공유 체력 ${format(raid.hp)} / ${format(raid.hpMax)}`} color={raid.alive ? 'enemy' : 'gold'}/>
                         <small>{raid.alive ? `떠나기까지 ${remaining(raid.until - now)} · 모든 모험가의 피해가 함께 쌓입니다` : `격파! 마지막 일격 ${raid.slayer || '—'} · 참여한 모험가는 다음 동기화 때 보상을 받습니다`}</small></div>
                     {raid.alive && <button className="primary" disabled={busy || raidWait > 0} onClick={() => void act({ action: 'raid', id: raid.id })}>{raidWait > 0 ? `${remaining(raidWait)} 뒤 다시 도전` : '월드보스에게 도전'}</button>}
-                    <p className="footnote">도전은 {RAID.cooldownMs / 60000}분에 한 번, 한 번에 최대 {RAID.maxTurns}턴. 깎은 체력은 그대로 남아 다음 모험가가 이어서 때립니다. 같은 날 격파된 뒤 다시 나타나면 한 단계 올라(체력 ×{RAID_STAGE.hp} · 공격 ×{RAID_STAGE.attack}, 최대 {RAID_STAGE.max}단계) 점점 잡기 어려워지고, 첫 소환부터 하루가 지나면 1단계로 돌아갑니다. 지속 피해의 체력 비례분은 1단계 체력 기준입니다. 격파 보상 · {format(raid.reward.gold)} G · 세계석 +{raid.reward.pearls}{raid.reward.sp ? ` · SP +${raid.reward.sp}` : ''} (한 번이라도 때린 모험가 전원) · 마지막 일격 세계석 +{raid.slayerBonus.pearls}{raid.slayerBonus.sp ? ` · SP +${raid.slayerBonus.sp}` : ''} 추가.</p>
+                    <p className="footnote">도전은 {RAID.cooldownMs / 60000}분에 한 번, 한 번에 최대 {RAID.maxTurns}턴. 깎은 체력은 그대로 남아 다음 모험가가 이어서 때립니다. 같은 날 격파된 뒤 다시 나타나면 한 단계 올라(체력 ×{RAID_STAGE.hp} · 공격 ×{RAID_STAGE.attack}, 최대 {RAID_STAGE.max}단계) 점점 잡기 어려워지고, 첫 소환부터 하루가 지나면 1단계로 돌아갑니다. 지속 피해의 체력 비례분은 1단계 체력 기준입니다. 격파 보상 · 세계석 +{raid.reward.pearls}{raid.reward.sp ? ` · SP +${raid.reward.sp}` : ''} (한 번이라도 때린 모험가 전원) · 마지막 일격 세계석 +{raid.slayerBonus.pearls}{raid.slayerBonus.sp ? ` · SP +${raid.slayerBonus.sp}` : ''} 추가.</p>
                     {result && result.dealt !== undefined && <div className={`altar-result ${result.slain ? 'win' : 'lose'}`}>
                         <strong>{result.slain ? result.slayer ? '격파 · 마지막 일격!' : '격파 · 함께 쓰러뜨렸습니다' : `피해 ${format(result.dealt)} · 남은 체력 ${format(result.remaining || 0)}`}</strong>
                         <details><summary>전투 기록 ({result.turns}턴)</summary><ol>{result.logs.map((l, i) => <li key={i}>{l}</li>)}</ol></details>
@@ -175,18 +190,6 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                             {openHit === `${raid.id}:${r.rank}` && <TableRow><TableCell colSpan={4}><RaidHitLog key={`${raid.gen}:${r.rank}:${r.last?.at || 0}`} raidId={raid.id} rank={r.rank} last={r.last}/></TableCell></TableRow>}</Fragment>)}</TableBody></Table>
                         : <p className="footnote">아직 아무도 때리지 않았습니다. 첫 피해를 넣어 보세요.</p>}
                 </> : <p className="footnote">{RAIDS.find(r => r.id === raidTab)?.name}은(는) 지금 나타나 있지 않습니다. 소환 게이지 {format(raidGauge?.points || 0)} / {format(raidGauge?.cost || 0)} · {raidGauge?.next || ''}. 보스마다 따로 소환되고(발록 6 · 자쿰 12 · 혼테일 24시간 머묾), 여러 보스가 동시에 나타날 수 있습니다. 모든 모험가의 피해가 하나의 체력에 쌓이고, 격파하면 때린 모험가 전원이 보상을 받습니다.</p>}
-            </section>
-            <section className="panel altar-throne">
-                <div className="section-title"><h2><Crown size={16}/> 신의 자리</h2></div>
-                {throne ? <>
-                    <div className="altar-god-card"><strong>{throne.name}{throne.mine ? ' (나)' : ''}{!throne.mine && !god?.alive && <button className="secondary small altar-impeach" disabled={busy || wait > 0} title={`신이 된 ${throne.name}(최대 체력 ${format(throne.hp)} · 전투력 ${format(throne.power)})과 겨뤄 이기면 자리에서 내려옵니다. 자리는 비고, 다시 앉으려면 신을 소환해 쓰러뜨려야 합니다.`} onClick={() => void act({ action: 'impeach' })}>{wait > 0 ? `탄핵 · ${remaining(wait)} 뒤` : '탄핵'}</button>}</strong><small>{new Date(throne.since).toLocaleString('ko-KR')}부터 · 임기 {remaining(throne.since + ALTAR.throneTermMs - now)} 남음(지나면 자리와 몫이 비고 다음 신은 {ALTAR.firstGod.name})</small></div>
-                    {throne.mine && throne.tithe && <>
-                        <p className="altar-tithe">쌓인 몫 · {format(throne.tithe.gold)} G · 세계석 {format(throne.tithe.pearls)} · 정수 {format(throne.tithe.essence)}</p>
-                        <button className="primary" disabled={busy || !(throne.tithe.gold || throne.tithe.pearls || throne.tithe.essence)} onClick={() => void act({ action: 'harvest' })}>몫 거두기</button>
-                        <p className="footnote">자리를 빼앗기면 거두지 않은 몫은 사라집니다. 자주 거두세요.</p>
-                    </>}
-                </> : <p className="footnote">비어 있습니다. 신을 쓰러뜨린 첫 모험가가 앉습니다.</p>}
-                <p className="footnote">신의 자리 주인은 다른 모험가가 바치는 골드·세계석·정수의 {ALTAR.titheRate * 100}%를 거둡니다.</p>
             </section>
         </div>
     </>;

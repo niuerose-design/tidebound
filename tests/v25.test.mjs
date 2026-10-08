@@ -1111,10 +1111,10 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
         const zakumGauge = info.gauges.find(g => g.id === 'zakum'), balrogGauge = info.gauges.find(g => g.id === 'balrog');
         assert.ok(/대기/.test(balrogGauge.next) && !/대기/.test(zakumGauge.next), 'respawn wait only on the slain boss');
         const gold = a.gold, pearls = a.pearls; Alt.invalidateAltar(); await Alt.syncAltarStatus(a, now + 10, 'p1');
-        assert.equal(a.gold - gold, A.RAIDS[0].reward.gold); assert.equal(a.pearls - pearls, A.RAIDS[0].reward.pearls); assert.equal(a.altar.raidClaimedBy.balrog, row.gen);
+        assert.equal(a.gold, gold, 'v3.193 no gold'); assert.equal(a.pearls - pearls, A.RAIDS[0].reward.pearls); assert.equal(a.altar.raidClaimedBy.balrog, row.gen);
         assert.ok(a.altarStatus.raids.some(x => x.id === 'zakum'));
-        await Alt.syncAltarStatus(a, now + 20, 'p1'); assert.equal(a.gold - gold, A.RAIDS[0].reward.gold, 'paid once');
-        const bg = b.gold, bp = b.pearls; await Alt.syncAltarStatus(b, now + 10, 'p2'); assert.equal(b.pearls - bp, A.RAIDS[0].reward.pearls + A.RAIDS[0].slayer.pearls, 'slayer bonus'); assert.equal(b.gold - bg, A.RAIDS[0].reward.gold);
+        await Alt.syncAltarStatus(a, now + 20, 'p1'); assert.equal(a.pearls - pearls, A.RAIDS[0].reward.pearls, 'paid once');
+        const bg = b.gold, bp = b.pearls; await Alt.syncAltarStatus(b, now + 10, 'p2'); assert.equal(b.pearls - bp, A.RAIDS[0].reward.pearls + A.RAIDS[0].slayer.pearls, 'slayer bonus'); assert.equal(b.gold, bg, 'v3.193 no gold');
         const c = newState(now); const cg = c.gold; await Alt.syncAltarStatus(c, now + 10, 'p3'); assert.equal(c.gold, cg, 'non-participants get nothing'); assert.equal(c.altar.raidClaimedBy.balrog, row.gen);
         const gauges = await database.listAltarGauges(); assert.ok(!gauges.some(g => (g.id === 'gold' || g.id === 'exp') && g.until > now), 'v3.193 a kill opens no blessing');
     } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }

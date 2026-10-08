@@ -410,7 +410,7 @@ async function claimRaidReward(s: State, r: AltarRaidRow, id: string) {
     const hit = await db().getRaidHit(r.gen, id);
     if (!hit || hit.dealt <= 0) return;
     const slayer = r.slayer === id;
-    const gold = raid.reward.gold, pearls = raid.reward.pearls + (slayer ? raid.slayer.pearls : 0), sp = raid.reward.sp + (slayer ? raid.slayer.sp : 0);
-    s.gold += gold; s.pearls += pearls; s.sp += sp;
-    addLog(s, `월드보스 ${raid.name} 격파 보상${slayer ? '(마지막 일격 보너스 포함)' : ''} · ${gold.toLocaleString()} G · 세계석 +${pearls}${sp ? ` · SP +${sp}` : ''} · 내 피해 ${hit.dealt.toLocaleString()}`, 'reward');
+    const pearls = raid.reward.pearls + (slayer ? raid.slayer.pearls : 0), sp = raid.reward.sp + (slayer ? raid.slayer.sp : 0);
+    s.pearls += pearls; s.sp += sp;
+    addLog(s, `월드보스 ${raid.name} 격파 보상${slayer ? '(마지막 일격 보너스 포함)' : ''} · 세계석 +${pearls}${sp ? ` · SP +${sp}` : ''} · 내 피해 ${hit.dealt.toLocaleString()}`, 'reward');
 }

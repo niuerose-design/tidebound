@@ -92,8 +92,8 @@ export const blessingCost = (b: Blessing, level: number, active: boolean) => {
 export type RaidDef = {
     id: RaidId; name: string; /** 전투 기술·외형을 빌리는 몬스터 id */ fish: string; level: number; cost: number; /** 머무는 시간 */ lifetimeHours: number;
     stats: { hp: number; attack: number; magic: number; defense: number; resist: number; speed: number; crit: number; accuracy: number; penetration: number; evasion: number };
-    /** 참여자 보상(격파 뒤 다음 동기화 때) · 마지막 일격 보너스. v3.193 격파 축복은 없앴습니다. */
-    reward: { gold: number; pearls: number; sp: number }; slayer: { pearls: number; sp: number };
+    /** 참여자 보상(격파 뒤 다음 동기화 때) · 마지막 일격 보너스. v3.193 격파 축복 · 골드는 없앴습니다(보상은 추후 검토). */
+    reward: { pearls: number; sp: number }; slayer: { pearls: number; sp: number };
 };
 /** v27.93 머무는 시간은 보스마다(lifetimeHours), 격파 뒤 다음 소환까지 respawnMs 대기. */
 export const RAID = { cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10, respawnMs: 2 * 3600_000, /** v3.84 순위에서 보는 최근 도전 전투 기록 줄 수(끝에서부터). */ logLines: 160 } as const;
@@ -126,11 +126,11 @@ export type RaidHitSummary = { at: number; dealt: number; turns: number; died: b
  */
 export const RAIDS: RaidDef[] = [
     { id: 'balrog', name: '발록', fish: 'magmaKraken', level: 30, cost: 2_000, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
-        reward: { gold: 30_000, pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 } },
+        reward: { pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 } },
     { id: 'zakum', name: '자쿰', fish: 'ventColossus', level: 70, cost: 5_000, lifetimeHours: 12, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
-        reward: { gold: 500_000, pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 } },
+        reward: { pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 } },
     { id: 'horntail', name: '혼테일', fish: 'abyssSovereign', level: 120, cost: 12_000, lifetimeHours: 24, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
-        reward: { gold: 5_000_000, pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 } },
+        reward: { pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 } },
 ];
 export const raidById = (id: string) => RAIDS.find(r => r.id === id);
 export const isRaidGauge = (id: string): id is RaidId => RAIDS.some(r => r.id === id);

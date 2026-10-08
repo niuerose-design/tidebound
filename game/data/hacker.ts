@@ -78,7 +78,7 @@ export const HACKER = {
      * v3.28 해킹 VI 패킷 가로채기: 떠 있는 월드보스 하나에 걸어 두고, 그 보스가 쓰러지면 격파 보상 가치의 10%×(n−5)를 비트로 받습니다.
      * 보상 가치 = 골드/1,000 + 세계석×40 + SP×400(비트 환산). 보스가 쓰러지지 않고 떠나면 아무것도 받지 못합니다. 하루 1회.
      */
-    intercept: { share: (n: number) => .1 * Math.max(1, n - 5), value: (r: { gold: number; pearls: number; sp: number }) => Math.floor(r.gold / 1000 + r.pearls * 40 + r.sp * 400), perDay: () => 1, bits: 50, exp: 80 },
+    intercept: { share: (n: number) => .1 * Math.max(1, n - 5), value: (r: { gold?: number; pearls: number; sp: number }) => Math.floor((r.gold || 0) / 1000 + r.pearls * 40 + r.sp * 400), perDay: () => 1, bits: 50, exp: 80 },
     /** v3.28 해킹 VII 세이브 스캠: 떠 있는 월드보스 체력 되감기(깎인 체력의 5%×(n−6) 회복) 또는 빨리감기(남은 체력의 3%×(n−6) 감소, 쓰러뜨리지는 못함). 하루 1회, 보스 한 마리(세대)당 서버 전체 1회, 소식 공지. */
     savescum: { rewind: (n: number) => .05 * Math.max(1, n - 6), forward: (n: number) => .03 * Math.max(1, n - 6), perDay: () => 1, bits: 60, exp: 100 },
     /** v3.28 해킹 VIII 봇넷: 3시간 동안 브루트포스(비트·권한)와 그동안 시작한 패킷 스니핑 정산 ×2, 오늘 침투 작전 입장 +2. 하루 1회(세이브 안에서만 계산, 서버 쓰기 없음). */
