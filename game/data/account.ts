@@ -55,7 +55,7 @@ const accountAbyssRank = (s: AccountState) => Math.min(R.abyssCap, Math.floor((s
 /** 두 공격·최대 체력·최대 마나 배율(1.02 = ×1.02). */
 export const accountPower = (s: AccountState) => 1 + accountAbyssRank(s) * R.abyssStep;
 const accountSpeciesRank = (s: AccountState) => Math.min(R.speciesCap, Math.floor((s.account?.species || 0) / R.speciesPer));
-/** 숙련 획득 배율(1.03 = ×1.03). 연구 ‘숙련의 기억’과 곱합니다. */
+/** 숙련 획득 배율(1.03 = ×1.03). 연구 ‘끝없는 수련’과 곱합니다. */
 export const accountMastery = (s: AccountState) => 1 + accountSpeciesRank(s) * R.speciesStep;
 const accountBossRank = (s: AccountState) => Math.min(R.bossCap, Math.floor((s.account?.bossKills || 0) / R.bossPer));
 /** 치명타 확률 배율(1.05 = ×1.05). */

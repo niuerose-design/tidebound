@@ -78,6 +78,20 @@ export function refundTailwindWindow(s: State) {
     if (spent > 0) { s.pearls = (s.pearls || 0) + spent; addLog(s, `세계석 연구 ‘역풍 견디기’가 없어져 투자한 세계석 ${spent}개를 돌려받았습니다.`, 'system'); }
     return spent;
 }
+/** v3.152 세계석 연구 ‘윤회의 연금술’(환생 세계석 +2, base 6 · step 5, 최대 5) 삭제 · 개편 대상: 투자한 세계석을 전액 돌려주고 예약 · 기록에서 지웁니다. */
+export function refundPearlResearch(s: State) {
+    const perm = s.permanent as Record<string, number | undefined> | undefined;
+    if (!perm || !('pearl' in perm)) return 0;
+    const rank = perm.pearl || 0;
+    delete perm.pearl;
+    if (s.researchLegacy && 'pearl' in s.researchLegacy) delete (s.researchLegacy as Record<string, number | undefined>).pearl;
+    if (s.researchGranted && 'pearl' in s.researchGranted) delete (s.researchGranted as Record<string, number | undefined>).pearl;
+    if (s.researchPlan?.items.some(x => x.id === 'pearl')) s.researchPlan.items = s.researchPlan.items.filter(x => x.id !== 'pearl');
+    let spent = 0;
+    for (let i = 0; i < rank; i++) spent += 6 + 5 * i;
+    if (spent > 0) { s.pearls = (s.pearls || 0) + spent; addLog(s, `세계석 연구 ‘윤회의 연금술’이 개편 대상이 되어 투자한 세계석 ${spent}개를 돌려받았습니다.`, 'system'); }
+    return spent;
+}
 /** v27.19 환생 유물이 세계석 구매에서 환생 횟수 제공으로 바뀌었습니다. 이미 가진 유물(= 세계석으로 산 유물)의 세계석을 한 번 돌려줍니다. */
 export function refundRelicPurchases(s: State) {
     if (s.relicRefunded) return 0;
@@ -88,7 +102,7 @@ export function refundRelicPurchases(s: State) {
     return refund;
 }
 /**
- * v27.31 한계돌파에 세계석 연구 ‘한계의 문’이 필요해졌습니다. 이미 한 한계돌파(스킬 중 가장 높은 단계)만큼 연구를 무료로 한 번 줍니다.
+ * v27.31 한계돌파에 세계석 연구 ‘리미터 해제’가 필요해졌습니다. 이미 한 한계돌파(스킬 중 가장 높은 단계)만큼 연구를 무료로 한 번 줍니다.
  * 무료 단계는 researchGranted에 적어 재분배 때 세계석으로 돌려주지 않습니다.
  */
 export function grantLimitBreakResearch(s: State) {
@@ -96,7 +110,7 @@ export function grantLimitBreakResearch(s: State) {
     const owned = Math.min(3, Math.max(0, ...Object.values(s.limitBreaks || {})));
     const have = s.permanent?.limitBreak || 0, grant = Math.max(0, owned - have);
     s.researchGranted = { ...s.researchGranted, limitBreak: grant };
-    if (grant > 0) { s.permanent.limitBreak = have + grant; addLog(s, `한계돌파에 세계석 연구 ‘한계의 문’이 필요해져, 이미 한 한계돌파만큼 ${have + grant}단계를 무료로 받았습니다.`, 'system'); }
+    if (grant > 0) { s.permanent.limitBreak = have + grant; addLog(s, `한계돌파에 세계석 연구 ‘리미터 해제’가 필요해져, 이미 한 한계돌파만큼 ${have + grant}단계를 무료로 받았습니다.`, 'system'); }
     return grant;
 }
 /**
@@ -273,7 +287,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

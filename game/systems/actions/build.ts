@@ -111,7 +111,7 @@ export const buildActions: ActionHandlers = {
         if (!Number.isInteger(level) || level < 0 || level > SKILL_FORMULA.extraRoll.ap.length)
             throw Error('알 수 없는 단계입니다.');
         if (level > researchRank(s, 'extraRoll'))
-            throw Error('세계석 연구 ‘연계의 기억’에서 먼저 해금하세요.');
+            throw Error('세계석 연구 ‘시스템 파괴 I’에서 먼저 해금하세요.');
         const before = s.extraRolls;
         s.extraRolls = level;
         if (!validLoadout(s, s.skills)) { s.extraRolls = before; throw Error(`장착 AP가 모자랍니다. 추가 판정에는 AP ${SKILL_FORMULA.extraRoll.ap.slice(0, level).reduce((x, n) => x + n, 0)}가 필요합니다. 스킬 장착을 줄인 뒤 다시 켜세요.`); }
