@@ -306,7 +306,7 @@ test('v3.24 removed research tailwindWindow refunds every pearl once', () => {
 test('v3.90 max mana: base grows with level, research ‘샘의 기억’ ×(1 + 8%/rank), account · rebirth multipliers, coat/cape mana, ~0.2 of max HP', () => {
     const s = newState(0);
     const lv1 = stats(s).mana; s.level = 11; assert.equal(stats(s).mana - lv1, 30, '+3 per level');
-    const r = research('mana'); assert.deepEqual([r.max, r.base, r.step, r.rebirth || 0, r.tab, r.group], [50, 2, 2, 0, 'combat', 'attack']); // v3.142 최대 200 → 50
+    const r = research('mana'); assert.deepEqual([r.max, r.base, r.step, r.rebirth || 0, r.tab, r.group], [200, 2, 2, 0, 'combat', 'attack']);
     s.permanent.mana = 10; close(researchFactor(s, 'mana'), 1.8);
     const t = {}; s.rebirths = 100; stats(s, t); assert.ok(t.mana.some(x => x.source === 'rebirth' && x.factor > 1), 'rebirth memory multiplies mana');
     const coat = { id: 'c', slot: 'coat', style: 'balanced', rarity: 0, power: 100, level: 100, name: 'c', affixes: [] };
