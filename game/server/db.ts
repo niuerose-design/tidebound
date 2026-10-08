@@ -26,7 +26,7 @@ export type AltarOfferRow = { id: string; week: string; player_id: string; accou
 export type AltarAmounts = { gold: number; pearls: number; essence: number };
 /** v27.91 월드보스 피해 기록. id는 세대:모험가. */
 /** v3.22 보스별 월드보스 상태(none/alive/slain/gone). */
-export type AltarRaidRow = { id: string; gen: number; state: string; hp: number; hp_max: number; until: number; slayer: string; slain_at: number };
+export type AltarRaidRow = { id: string; gen: number; state: string; hp: number; hp_max: number; until: number; slayer: string; slain_at: number; /** v3.189 소환 단계와 그날의 첫 소환 시각(RAID_STAGE). */ stage: number; day_start: number };
 export type AltarRaidHitRow = { id: string; gen: number; player_id: string; name: string; dealt: number; hits: number; updated_at: number };
 /** v3.84 모험가별 가장 최근 월드보스 도전 기록(요약 JSON · 전투 기록 JSON). 피해 순위에서 다른 모험가도 봅니다. */
 export type AltarRaidLogRow = { id: string; gen: number; player_id: string; summary: string; logs: string; updated_at: number };
@@ -132,7 +132,8 @@ export interface Storage {
     /** v3.22 월드보스는 보스마다 따로(altar_raids). 세대 번호는 모든 보스가 함께 쓰는 순번(altar.raid_gen)이라 피해 기록(altar_raid_hits)이 섞이지 않습니다. */
     listAltarRaids(): Promise<AltarRaidRow[]>;
     /** 그 보스가 살아 있지 않고 격파 뒤 respawnMs도 지났을 때만 새로 나타납니다. 새 세대 번호, 못 했으면 0. */
-    summonAltarRaid(raidId: string, hpMax: number, until: number, now: number, respawnMs: number): Promise<number>;
+    /** v3.189 stage · dayStart는 소환 단계(data/altar nextRaidStage). 생략하면 1단계 · 지금. */
+    summonAltarRaid(raidId: string, hpMax: number, until: number, now: number, respawnMs: number, stage?: number, dayStart?: number): Promise<number>;
     /** 그 보스의 gen 세대가 살아 있을 때만 피해를 빼고 남은 체력을 돌려줍니다(0 이하는 0). 아니면 null. */
     hitAltarRaid(raidId: string, gen: number, dealt: number): Promise<number | null>;
     /** v3.28 해킹 VII 세이브 스캠: 살아 있는 gen 세대 보스의 체력에 delta를 더합니다(1 ~ 최대 체력, 쓰러뜨리지 않음). 바꾼 뒤 체력, 아니면 null. */
@@ -203,6 +204,9 @@ const SCHEMA = [
     // v3.22 보스별 월드보스. 예전 한 마리 칸(altar.raid_*)에 있던 보스는 처음 한 번 옮깁니다(이미 있으면 그대로).
     "CREATE TABLE IF NOT EXISTS altar_raids (id TEXT PRIMARY KEY, gen INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL DEFAULT 'none', hp BIGINT NOT NULL DEFAULT 0, hp_max BIGINT NOT NULL DEFAULT 0, until BIGINT NOT NULL DEFAULT 0, slayer TEXT NOT NULL DEFAULT '', slain_at BIGINT NOT NULL DEFAULT 0)",
     "INSERT INTO altar_raids (id,gen,state,hp,hp_max,until,slayer,slain_at) SELECT raid_id, raid_gen, raid_state, raid_hp, raid_hp_max, raid_until, raid_slayer, raid_slain_at FROM altar WHERE id='main' AND raid_id<>'' AND raid_gen>0 AND raid_state IN ('alive','slain') ON CONFLICT (id) DO NOTHING",
+    // v3.189 월드보스 소환 단계.
+    'ALTER TABLE altar_raids ADD COLUMN IF NOT EXISTS stage INTEGER NOT NULL DEFAULT 1',
+    'ALTER TABLE altar_raids ADD COLUMN IF NOT EXISTS day_start BIGINT NOT NULL DEFAULT 0',
     // v3.28 해커 조직: 조직 하나를 JSON 한 칸에 두고 revision으로 동시 수정을 막습니다(조직원 10명 이하라 한 행으로 충분).
     'CREATE TABLE IF NOT EXISTS crews (id TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE, data TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0, updated_at BIGINT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS wallets (account_id TEXT PRIMARY KEY, pearls INTEGER NOT NULL DEFAULT 0, essence INTEGER NOT NULL DEFAULT 0, week TEXT NOT NULL DEFAULT \'\', pearl_out INTEGER NOT NULL DEFAULT 0)',
@@ -335,9 +339,9 @@ function neonStorage(url: string): Storage {
         async resetAltarGauges() { await q('UPDATE altar_gauges SET points=0'); },
         async setAltarBlessing(id, level, until, highUntil) { await q('INSERT INTO altar_gauges (id,points,until,level,high_until) VALUES ($1,0,$3,$2,$4) ON CONFLICT (id) DO UPDATE SET level=EXCLUDED.level, until=EXCLUDED.until, high_until=EXCLUDED.high_until', [id, level, until, highUntil]); },
         async resetAltarGod() { await q("UPDATE altar_raids SET state='none', hp=0"); await q("UPDATE altar SET god_state='none', god='', god_until=0, throne='', throne_name='', throne_since=0, throne_snapshot='', tithe_gold=0, tithe_pearls=0, tithe_essence=0, raid_state='none', raid_hp=0 WHERE id='main'"); },
-        async listAltarRaids() { const { rows } = await q<AltarRaidRow>('SELECT * FROM altar_raids'); return rows.map(r => ({ ...r, gen: Number(r.gen), hp: Number(r.hp), hp_max: Number(r.hp_max), until: Number(r.until), slain_at: Number(r.slain_at) })); },
-        async summonAltarRaid(raidId, hpMax, until, now, respawnMs) {
-            const { rows } = await q<{ gen: string }>("WITH g AS (UPDATE altar SET raid_gen=raid_gen+1 WHERE id='main' RETURNING raid_gen) INSERT INTO altar_raids (id,gen,state,hp,hp_max,until,slayer,slain_at) SELECT $1, g.raid_gen, 'alive', $2, $2, $3, '', 0 FROM g ON CONFLICT (id) DO UPDATE SET gen=EXCLUDED.gen, state='alive', hp=EXCLUDED.hp, hp_max=EXCLUDED.hp_max, until=EXCLUDED.until, slayer='', slain_at=0 WHERE NOT (altar_raids.state='alive' AND altar_raids.until>=$4) AND NOT (altar_raids.state='slain' AND altar_raids.slain_at>$4-$5) RETURNING gen", [raidId, hpMax, until, now, respawnMs]);
+        async listAltarRaids() { const { rows } = await q<AltarRaidRow>('SELECT * FROM altar_raids'); return rows.map(r => ({ ...r, gen: Number(r.gen), hp: Number(r.hp), hp_max: Number(r.hp_max), until: Number(r.until), slain_at: Number(r.slain_at), stage: Number(r.stage || 1), day_start: Number(r.day_start || 0) })); },
+        async summonAltarRaid(raidId, hpMax, until, now, respawnMs, stage = 1, dayStart = now) {
+            const { rows } = await q<{ gen: string }>("WITH g AS (UPDATE altar SET raid_gen=raid_gen+1 WHERE id='main' RETURNING raid_gen) INSERT INTO altar_raids (id,gen,state,hp,hp_max,until,slayer,slain_at,stage,day_start) SELECT $1, g.raid_gen, 'alive', $2, $2, $3, '', 0, $6, $7 FROM g ON CONFLICT (id) DO UPDATE SET gen=EXCLUDED.gen, state='alive', hp=EXCLUDED.hp, hp_max=EXCLUDED.hp_max, until=EXCLUDED.until, slayer='', slain_at=0, stage=EXCLUDED.stage, day_start=EXCLUDED.day_start WHERE NOT (altar_raids.state='alive' AND altar_raids.until>=$4) AND NOT (altar_raids.state='slain' AND altar_raids.slain_at>$4-$5) RETURNING gen", [raidId, hpMax, until, now, respawnMs, stage, dayStart]);
             return Number(rows[0]?.gen || 0);
         },
         async hitAltarRaid(raidId, gen, dealt) { const { rows } = await q<{ hp: string }>("UPDATE altar_raids SET hp=GREATEST(0, hp-$3) WHERE id=$1 AND gen=$2 AND state='alive' AND hp>0 RETURNING hp", [raidId, gen, Math.max(0, Math.floor(dealt))]); return rows[0] ? Number(rows[0].hp) : null; },
@@ -391,7 +395,9 @@ function altarTotals(db: FileDb): AltarTotalRow[] {
 /** v3.22 파일 DB 보스별 월드보스. 예전 한 마리 칸(altar.raid_*)의 보스는 처음 한 번 옮깁니다. */
 function fileRaids(db: FileDb) {
     const raids = db.altarRaids ??= {}, a = db.altar;
-    if (a && a.raid_id && a.raid_gen > 0 && (a.raid_state === 'alive' || a.raid_state === 'slain') && !raids[a.raid_id]) raids[a.raid_id] = { id: a.raid_id, gen: a.raid_gen, state: a.raid_state, hp: a.raid_hp, hp_max: a.raid_hp_max, until: a.raid_until, slayer: a.raid_slayer, slain_at: a.raid_slain_at };
+    if (a && a.raid_id && a.raid_gen > 0 && (a.raid_state === 'alive' || a.raid_state === 'slain') && !raids[a.raid_id]) raids[a.raid_id] = { id: a.raid_id, gen: a.raid_gen, state: a.raid_state, hp: a.raid_hp, hp_max: a.raid_hp_max, until: a.raid_until, slayer: a.raid_slayer, slain_at: a.raid_slain_at, stage: 1, day_start: 0 };
+    // v3.189 단계 칸이 없는 옛 기록은 1단계 · 날 기록 없음.
+    for (const r of Object.values(raids)) { r.stage ||= 1; r.day_start ||= 0; }
     return raids;
 }
 type FileDb = { altarRaidLogs?: Record<string, AltarRaidLogRow>; crews?: Record<string, CrewRow & { updated_at: number }>; altarRaids?: Record<string, AltarRaidRow>; settings?: Record<string, { value: string; updated_at: number }>; players: Record<string, PlayerRow & { updated_at: number }>; rankings: Record<string, RankingRow>; accounts: Record<string, AccountRow>; sessions: Record<string, { account_id: string; expires_at: number }>; slots?: Record<string, SlotRow>; guilds?: Record<string, GuildRow>; guildMembers?: Record<string, GuildMemberRow>; wallets?: Record<string, WalletRow>; altar?: AltarRow; altarGauges?: Record<string, AltarGaugeRow>; altarOffers?: Record<string, AltarOfferRow>; altarRaidHits?: Record<string, AltarRaidHitRow>; chat?: ChatRow[]; chatSeq?: number };
@@ -488,7 +494,7 @@ function fileStorage(): Storage {
         setAltarBlessing: (id, level, until, highUntil) => tx(db => { const g = (db.altarGauges ??= {})[id] ??= { id, points: 0, until: 0 }; g.level = level; g.until = until; g.high_until = highUntil; }),
         resetAltarGod: () => tx(db => { for (const r of Object.values(fileRaids(db))) { r.state = 'none'; r.hp = 0; } db.altar = { ...ALTAR_EMPTY, ...db.altar, god_state: 'none', god: '', god_until: 0, throne: '', throne_name: '', throne_since: 0, throne_snapshot: '', tithe_gold: 0, tithe_pearls: 0, tithe_essence: 0, raid_state: 'none', raid_hp: 0 }; }),
         listAltarRaids: () => tx(db => Object.values(fileRaids(db)).map(r => ({ ...r }))),
-        summonAltarRaid: (raidId, hpMax, until, now, respawnMs) => tx(db => { const raids = fileRaids(db), r = raids[raidId]; if (r && ((r.state === 'alive' && r.until >= now) || (r.state === 'slain' && r.slain_at > now - respawnMs))) return 0; const a = db.altar = { ...ALTAR_EMPTY, ...db.altar }; a.raid_gen += 1; raids[raidId] = { id: raidId, gen: a.raid_gen, state: 'alive', hp: hpMax, hp_max: hpMax, until, slayer: '', slain_at: 0 }; return a.raid_gen; }),
+        summonAltarRaid: (raidId, hpMax, until, now, respawnMs, stage = 1, dayStart = now) => tx(db => { const raids = fileRaids(db), r = raids[raidId]; if (r && ((r.state === 'alive' && r.until >= now) || (r.state === 'slain' && r.slain_at > now - respawnMs))) return 0; const a = db.altar = { ...ALTAR_EMPTY, ...db.altar }; a.raid_gen += 1; raids[raidId] = { id: raidId, gen: a.raid_gen, state: 'alive', hp: hpMax, hp_max: hpMax, until, slayer: '', slain_at: 0, stage, day_start: dayStart }; return a.raid_gen; }),
         hitAltarRaid: (raidId, gen, dealt) => tx(db => { const r = fileRaids(db)[raidId]; if (!r || r.gen !== gen || r.state !== 'alive' || r.hp <= 0) return null; r.hp = Math.max(0, r.hp - Math.max(0, Math.floor(dealt))); return r.hp; }),
         shiftAltarRaid: (raidId, gen, delta) => tx(db => { const r = fileRaids(db)[raidId]; if (!r || r.gen !== gen || r.state !== 'alive' || r.hp <= 0) return null; r.hp = Math.min(r.hp_max, Math.max(1, r.hp + Math.trunc(delta))); return r.hp; }),
         slayAltarRaid: (raidId, gen, id, name, now) => tx(db => { void name; const r = fileRaids(db)[raidId]; if (!r || r.gen !== gen || r.state !== 'alive' || r.hp > 0) return false; Object.assign(r, { state: 'slain', slayer: id, slain_at: now }); return true; }),

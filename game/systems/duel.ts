@@ -6,7 +6,7 @@ import { Fighter, fighterSpeed, actTurn, constraintFields } from './combat';
 import { FISH, DUNGEONS } from '../data/world';
 import { abyssReference } from './encounter';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
-import { ALTAR, type RaidDef } from '../data/altar';
+import { ALTAR, raidStageStats, type RaidDef } from '../data/altar';
 /** 훈련 상대로 쓰는 던전 보스. 던전 마지막 웨이브와 같은 능력치·스킬로 섭니다(레벨 보정 0단계). */
 export const BOSS_OPPONENTS = FISH.filter(f => f.boss);
 export function bossSnapshot(id: string): Snapshot | null {
@@ -22,10 +22,13 @@ export function abyssBossSnapshot(depth: number): Snapshot {
     const stats = abyssEnemyStats(f, abyssReference(), depth, { boss: true, wave: d.fish.length - 1, rawBoss: true });
     return { name: d.boss, level: f.level, job: 'boss', rebirths: 0, stats, skills: foeSkills(f.id, f.level, true), power: power(stats), rating: 1000 + f.level * 10 };
 }
-/** v27.91 월드보스 결투 상대. hp는 서버가 들고 있는 남은 공유 체력(없으면 최대 체력)이라, 남은 체력이 적으면 한 번의 도전으로 쓰러집니다. */
-export function raidBossSnapshot(raid: RaidDef, hp = raid.stats.hp): Snapshot {
-    const stats = { ...raid.stats, hp: Math.max(1, Math.floor(hp)), mana: 100, manaRegen: 10 };
-    return { name: raid.name, level: raid.level, job: 'boss', rebirths: 0, stats, skills: foeSkills(raid.fish, raid.level, true), power: power(stats), rating: 1000 + raid.level * 10 };
+/**
+ * v27.91 월드보스 결투 상대. hp는 서버가 들고 있는 남은 공유 체력(없으면 그 단계의 최대 체력)이라, 남은 체력이 적으면 한 번의 도전으로 쓰러집니다.
+ * v3.189 stage는 소환 단계(RAID_STAGE): 능력치는 raidStageStats, 지속 피해의 체력 비례분은 1단계 체력 기준(dotHpCap).
+ */
+export function raidBossSnapshot(raid: RaidDef, hp?: number, stage = 1): Snapshot {
+    const staged = raidStageStats(raid, stage), stats = { ...staged, hp: Math.max(1, Math.floor(hp ?? staged.hp)), mana: 100, manaRegen: 10 };
+    return { name: raid.name, level: raid.level, job: 'boss', rebirths: 0, stats, skills: foeSkills(raid.fish, raid.level, true), power: power(stats), rating: 1000 + raid.level * 10, dotHpCap: raid.stats.hp };
 }
 /** v27.54 검은 마법사 신격 보정(공격·마법 ×5, 방어 관통 50%). 이미 저장된 옛 검은 마법사에도 도전 때 한 번 적용됩니다(관통으로 적용 여부 판별). */
 export function divineFirstGod(god: Snapshot): Snapshot {
@@ -42,7 +45,7 @@ export const TRAINING: Snapshot[] = [
 ];
 /** maxTurns: 결투는 80턴, v27.43 제단의 신은 무릉도장처럼 길게(ALTAR.godMaxTurns). */
 export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rng = Math.random, maxTurns: number = BALANCE.duelMaxTurns): DuelResult {
-    const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), /* v3.84 월드보스는 보스라 보스 피해(bossDamage)를 받습니다. */ ...(s.job === 'boss' ? { foe: true, prey: true } : {}), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, skills: s.skills, cooldowns: {}, extraRolls: s.extraRolls, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, practice: s.skillPractice, effects: {} });
+    const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), /* v3.84 월드보스는 보스라 보스 피해(bossDamage)를 받습니다. */ ...(s.job === 'boss' ? { foe: true, prey: true } : {}), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, ...(s.dotHpCap ? { dotHpCap: s.dotHpCap } : {}), skills: s.skills, cooldowns: {}, extraRolls: s.extraRolls, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, practice: s.skillPractice, effects: {} });
     const a = fighter(player), b = fighter(opponent);
     const logs: string[] = [], rounds: DuelResult['rounds'] = [];
     let turns = 0;
