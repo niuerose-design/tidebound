@@ -12,6 +12,7 @@ import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
 import { researchRank } from '../data/economy';
 import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
+import { MAPLE_LINEAGE_NAMES } from '../data/maple-names';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
 export const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
 export const plainCodexBook = () => Object.fromEntries(PLAIN_CODEX_SLOTS.map(slot => [`${slot}:0`, true]));
@@ -156,9 +157,11 @@ export function jobFactor(job: Job, key: JobStatKey) {
 }
 export function inherited(s: State, id: string) { const sk = skillById(id); return !!sk && (!!s.skillInheritances?.[id] || !!s.legacyInherited?.[id] || (s.skillPractice?.[id] || 0) >= masteryMilestonesFor(sk)[0]); }
 /** v3.25 해커 스킬(신원 조작)은 해커 계열(화이트 해커 포함)이면 씁니다. */
-function classAccess(s: State, sk: Skill) { return (!sk.song || songAccess(s)) && (!sk.job || s.job === sk.job || sk.job === HACKER_ID && isHackerJob(s.job) || inherited(s, sk.id)); }
-/** v24.2 노래 패시브는 음유시인 계보(엔젤릭버스터 (1차)의 후속 직업)만 장착합니다. */
-function songAccess(s: Pick<State, 'job'>) { return lineage(s.job).includes('bard'); }
+function classAccess(s: State, sk: Skill) { return exclusiveAccess(s, sk) && (!sk.job || s.job === sk.job || sk.job === HACKER_ID && isHackerJob(s.job) || inherited(s, sk.id)); }
+/** v3.187 계보 전용 기술(노래 등)은 그 계보 직업만 장착합니다. 계승해도 계보 밖에서는 못 씁니다. */
+export function exclusiveAccess(s: Pick<State, 'job'>, sk: Pick<Skill, 'exclusiveLineage'>) { return !sk.exclusiveLineage || lineage(s.job).includes(sk.exclusiveLineage); }
+/** 계보 전용 칩 · 안내 문구. 전용이 아니면 빈 문자열. 예: '엔젤릭버스터 계보 전용'. */
+export function skillExclusiveLabel(sk: Pick<Skill, 'exclusiveLineage'>) { return sk.exclusiveLineage ? `${MAPLE_LINEAGE_NAMES[sk.exclusiveLineage] ?? `${jobById(sk.exclusiveLineage)?.name ?? sk.exclusiveLineage} 계보`} 전용` : ''; }
 export function skillUnlockReady(s: State, sk: Skill) { return (!sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery) && (!sk.unlockAfter || skillMastery(s, sk.unlockAfter.skill) >= sk.unlockAfter.level); }
 /** v25 숙련 Lv.1 전에는 효과를 감추는 기술인지. */
 export function skillVeiled(s: State, sk: Skill) { return !!sk.veiled && skillMastery(s, sk.id) < 1; }
@@ -168,7 +171,7 @@ function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk 
 export function skillBlockReason(s: State, id: string) {
     const sk = skillById(id);
     if (!sk) return '스킬을 찾을 수 없습니다.';
-    if (sk.song && !songAccess(s)) return '노래는 엔젤릭버스터 계보 직업만 부를 수 있습니다.';
+    if (!exclusiveAccess(s, sk)) return `${skillExclusiveLabel(sk)}입니다. 이 계보 직업으로 전직해야 씁니다.`;
     if (!classAccess(s, sk)) return '전용 직업으로 전직하거나, 숙련 또는 SP 계승을 완료하세요.';
     if (s.rebirths < (sk.rebirth || 0)) return `환생 ${sk.rebirth}회부터 사용할 수 있습니다.`;
     if (sk.unlockAfter && skillMastery(s, sk.unlockAfter.skill) < sk.unlockAfter.level) return `${skillById(sk.unlockAfter.skill)?.name || sk.unlockAfter.skill} 숙련 Lv.${sk.unlockAfter.level}을 달성하면 열립니다.`;
