@@ -1,13 +1,13 @@
 /**
  * v3.39 소식 채널: 전투 화면 기록판의 ‘소식’ 탭. 채팅 저장소의 'news' 채널에 시스템 줄로 남깁니다(읽기 전용, 채널당 최근 300줄).
- * 모험가 소식(칠흑·승천·5차 전직·무릉도장·22성·장성 진급)은 /api/game이, 제단(신·월드보스)·해커 전직 소식은 각 서버 모듈이 올립니다.
+ * 모험가 소식(칠흑·승천·5차 전직·무릉도장·22성·진급)은 /api/game이, 제단(신·월드보스)·해커 전직 소식은 각 서버 모듈이 올립니다.
  */
 import { db } from './db';
 import { readHacks, newsName, hackerJobNews } from './hacks';
 import { ALTAR_NEWS } from './altar';
 import { ApiError } from './store';
 import type { State } from '../types';
-import { NEWS_TEXT, NEWS_ABYSS_STEP, NEWS_RANK_GROUP, type NewsEvent } from '../systems/news';
+import { NEWS_TEXT, NEWS_ABYSS_STEP, NEWS_RANK_FIRST, type NewsEvent } from '../systems/news';
 import { ONYX_BOSSES } from '../data/onyx';
 import { JOBS } from '../data/classes';
 import { isHackerJob } from '../data/hacker';
@@ -30,7 +30,7 @@ export async function postPlayerNews(id: string, s: State, events: NewsEvent[], 
 /** 운영 페이지 소식 테스트: 종류별 예시 줄을 실제 소식과 같은 문장·발신자로 올립니다. */
 export const NEWS_SAMPLES = [
     { id: 'onyx', label: '칠흑 장신구' }, { id: 'ascend', label: '승천' }, { id: 'tier5', label: '5차 전직' }, { id: 'abyss', label: '무릉도장 50층' },
-    { id: 'star22', label: '22성 강화' }, { id: 'general', label: '장성 진급' }, { id: 'hacker', label: '해커 전직(빨간 줄)' },
+    { id: 'star22', label: '22성 강화' }, { id: 'general', label: '진급(하사)' }, { id: 'hacker', label: '해커 전직(빨간 줄)' },
     { id: 'god', label: '제단 · 신 깨어남' }, { id: 'raid', label: '제단 · 월드보스 출현' }, { id: 'custom', label: '직접 입력' },
 ] as const;
 export type NewsSampleId = typeof NEWS_SAMPLES[number]['id'];
@@ -43,7 +43,7 @@ export async function postNewsSample(kind: string, opts: { name?: string; text?:
         tier5: () => ({ text: NEWS_TEXT.tier5(name, job?.name || '5차 직업'), from: 'system-news', label: '소식' }),
         abyss: () => ({ text: NEWS_TEXT.abyss(name, NEWS_ABYSS_STEP), from: 'system-news', label: '소식' }),
         star22: () => ({ text: NEWS_TEXT.star22(name), from: 'system-news', label: '소식' }),
-        general: () => ({ text: NEWS_TEXT.general(name, RANKS.find(r => r.group === NEWS_RANK_GROUP)!.name), from: 'system-news', label: '소식' }),
+        general: () => ({ text: NEWS_TEXT.general(name, RANKS.find(r => r.id === NEWS_RANK_FIRST)!.name), from: 'system-news', label: '소식' }),
         hacker: () => ({ text: hackerJobNews('whiteHacker'), from: 'system-hacker', label: '시스템' }),
         god: () => ({ text: ALTAR_NEWS.godAwake(ALTAR.firstGod.name), from: 'system', label: '제단' }),
         raid: () => ({ text: ALTAR_NEWS.raidAppear(raid.name, raid.lifetimeHours), from: 'system', label: '제단' }),

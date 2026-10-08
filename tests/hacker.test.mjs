@@ -437,7 +437,7 @@ test('v3.28 hacks VI–X in the save: intercept/savescum/ddos leave pending writ
     assert.deepEqual(s.hacker.used, { root: 1 }, 'daily counts reset'); act(s, { type: 'hackRun', id: 'botnet' }, 0);
     assert.throws(() => act(s, { type: 'hackRun', id: 'ddos', value: 'exp' }, 0), /이번 주/, 'weekly DDoS is not reset');
     assert.throws(() => act(s, { type: 'hackRun', id: 'root' }, 0), /횟수/); tick(s, () => .5);
-    assert.ok(s.achievements['hacker:root'] !== undefined, 'root achievement'); assert.ok(TITLES.some(t => t.id === 'hacker:root' && t.name === 'root'));
+    assert.ok(s.achievements['hacker:root'] !== undefined, 'root achievement'); assert.ok(TITLES.some(t => t.id === 'hacker:root' && t.name === '💻 root'));
 });
 
 test('v3.28 black hacker: needs hacker mastery, double caps and costs, failures trace (no effect, 6h lockout, 3h with wipe trace)', () => {
