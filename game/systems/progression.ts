@@ -120,7 +120,7 @@ function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
     for (const k of Object.values(s.goldenBook || {})) n += k || 0;
     return n;
 }
-export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths'>>) {
+export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs'>>) {
     // v26.4 외길 패시브: 배분 능력치(기본 포함)도 기록처럼 셉니다.
     const attr = attributes(s as State);
     const book = s.book || {};
@@ -128,7 +128,7 @@ export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | '
     for (const f of FISH) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
     const clears = Object.values(s.clears || {}).reduce((x, n) => x + (n || 0), 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
-    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s) };
+    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s) };
 }
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;

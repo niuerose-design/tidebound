@@ -191,7 +191,7 @@ function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, s
     const heal = Math.max(0, Math.min(sf.hp - 1, Math.floor(sf.hp * (stand.heal || 0) * weave)));
     f.hp = 1 + heal;
     ev.endured = { heal, ...(self ? { self } : {}) };
-    notes.push(`無 · 체력 1로 버팀 (${f.effects.lastStand}/${charges})${heal > 0 ? ` · 체력 ${heal} 회복` : ''}`);
+    notes.push(`${owner?.name ?? '無'} · 체력 1로 버팀 (${f.effects.lastStand}/${charges})${heal > 0 ? ` · 체력 ${heal} 회복` : ''}`);
     return true;
 }
 /**

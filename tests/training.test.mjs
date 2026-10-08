@@ -92,7 +92,7 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
     const bad = [];
     for (const sk of SKILLS) {
         const j = job(sk.job); if (!j || j.tier < 1 || j.retired) continue;
-        const exempt = /^training|Training[123]$|[hH]acker$/.test(j.id) || ['border', 'borderBuffer', 'borderReflect'].includes(R.subRoleOf(j, lineageOf(j)));
+        const exempt = /^training|Training[123]$|[hH]acker$/.test(j.id) || ['border', 'borderBuffer', 'borderReflect', 'borderStand'].includes(R.subRoleOf(j, lineageOf(j)));
         if (exempt) continue;
         // 제약형(최대 숙련에서 AP 0 이하 · 제약 직업): 마지막 단계가 천만 단위(AP 반환 5,000만 · 그 밖 1,000만).
         if (Sk.isConstraintSkill(sk)) { const want = Sk.CONSTRAINT_MASTERY_BY_SKILL[sk.id] ?? (Sk.costAtMastery(sk) < 0 ? 5e7 : 1e7); if (P.masteryMilestonesFor(sk).at(-1) !== want) bad.push(`${sk.id} constraint`); continue; }
@@ -173,9 +173,11 @@ test('v3.97 Night Lord dice skills (3rd · 5th tier) add physical attack × 0.5 
 
 test('v3.98 Dark Knight: Dragon Fury ×2.8, Beholder Impact ×2.8 with one extra hit, Darkness Aura crit like Phantom\'s 5th passive', () => {
     const sk = id => SKILLS.find(s => s.id === id);
-    assert.equal(sk('thunderLance').multiplier, 2.8);
-    assert.equal(sk('leviathanCharge').multiplier, 2.8);
+    assert.equal(sk('thunderLance').multiplier, 2.1);
+    assert.equal(sk('leviathanCharge').multiplier, 2.1);
     assert.equal(sk('leviathanCharge').extraAttacks, 1);
+    // v3.144 다크나이트: 물리 창술 한 줄.
+    for (const id of ['currentThrust', 'dragonDive', 'thunderLance', 'leviathanCharge', 'dragonGodSpear']) assert.equal(sk(id).damageType, 'physical', id);
     assert.deepEqual([sk('dragonGodScale').bonus.crit, sk('dragonGodScale').bonus.critDamage], [sk('divineLuck').bonus.crit, sk('divineLuck').bonus.critDamage]);
 });
 
@@ -304,4 +306,20 @@ test('v3.138 retiring the Michael lineage: a saved character on a removed job fa
     assert.equal(s.jobMastery.guardianDeity, undefined); assert.equal(s.jobMastery.shieldbearer, undefined);
     assert.deepEqual(s.skills, ['breath']); assert.equal(s.learned.divineAegis, undefined); assert.equal(s.skillInheritances.spikedShield, undefined); assert.deepEqual(s.skillPractice, { breath: 3 });
     assert.ok(!JOBS.some(j => ['shieldbearer', 'gatekeeper', 'fortressLord', 'unyielding', 'guardianDeity', 'coralBuilder'].includes(j.id)), 'jobs removed from data');
+});
+
+test('v3.144 Dark Knight: deaths and turns feed perCount passives; Darkness Aura endures one lethal hit and heals 25%', async () => {
+    const { progressCounts, passiveGrowthBonus } = await loadGame().load('systems/progression');
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(progressCounts({ playMs: 2000 * 12345, deaths: 7, book: {}, attributes: {} }).turns, 12345);
+    const s = newState(0); s.job = 'seaDragonGod'; s.level = 100; s.deaths = 40; s.playMs = 2000 * 25000; s.learned.dragonGodScale = 1;
+    const g = passiveGrowthBonus(s, sk('dragonGodScale'));
+    assert.ok(Math.abs(g.attack - 80) < 1e-9 && Math.abs(g.hp - 150) < 1e-9, `growth ${JSON.stringify(g)}`);
+    s.deaths = 500; s.playMs = 2000 * 1e6; const capped = passiveGrowthBonus(s, sk('dragonGodScale')); assert.ok(Math.abs(capped.attack - 200) < 1e-9 && Math.abs(capped.hp - 600) < 1e-9, 'capped at 100 steps');
+    assert.deepEqual(sk('dragonGodScale').lastStand, { charges: 1, heal: .25 });
+    const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const knight = { name: 'K', stats: { ...base, hp: 1000 }, hp: 50, mana: 200, skills: ['dragonGodScale'], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} };
+    const foe = { name: 'F', stats: { ...base, attack: 100000 }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} };
+    const ev = []; strike(foe, knight, () => 0, ev); assert.equal(knight.hp, 251, 'endured at 1 + 25% of 1000'); assert.ok(ev[0].endured);
+    knight.hp = 50; strike(foe, knight, () => 0, []); assert.equal(knight.hp, 0, 'only once per battle');
 });

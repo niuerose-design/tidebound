@@ -38,6 +38,8 @@ const { researchByBudget } = await researchBudgetTools({ load });
 const RESEARCH_BY_MAIN = Object.fromEntries(['attack', 'magicAttack', 'both'].map(m => [m, researchByBudget(REBIRTHS, m, undefined, RESEARCH_SCALE)]));
 // v3.108 --book N: 기록 비례 직업(와일드헌터 사냥 기록 · 섀도어 도감 · 패스파인더 누적 처치 · 캡틴 골드)을 위해 몬스터마다 N마리 처치 · 던전 클리어 N회 · 골드 10^9를 채운 몸으로 잽니다(기본 0 = 기록 없음).
 const BOOK = Number(arg('--book', 0));
+// v3.144 --deaths N · --turns N: 쓰러진 횟수 · 보낸 턴 비례 패시브(다크나이트)를 위해 기록을 채웁니다(턴은 playMs = N × 턴 길이).
+const DEATHS = Number(arg('--deaths', 0)), TURNS = Number(arg('--turns', 0));
 // v3.111 변종 기록(섀도어)도 처치 수의 약 7%(변종 처치 확률 합)만큼 채웁니다.
 const VARIANT_SHARE = .07;
 const MAX_TURNS = 400, SWARM_TURNS = 3000, WAVES = 5, DUNGEON_TIER = Number(arg('--dungeon-tier', TIER * 2)), SWARM500_TIER = Number(arg('--swarm500-tier', 0)), PEN = arg('--pen') === undefined ? null : Number(arg('--pen'));
@@ -84,7 +86,7 @@ function loadout(s, j, magic) {
 }
 function body(j) {
     const s = newState(0), { attrs, magic, main } = attributesFor(j);
-    Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH_BY_MAIN[main] }, book: BOOK ? Object.fromEntries(FISH.map(f => [f.id, BOOK])) : {}, ...(BOOK ? { clears: { record: BOOK }, gold: 1e9, variantBook: Object.fromEntries(FISH.map(f => [f.id, { giant: Math.round(BOOK * VARIANT_SHARE) }])) } : {}), unlockedJobs: JOBS.map(x => x.id) });
+    Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH_BY_MAIN[main] }, book: BOOK ? Object.fromEntries(FISH.map(f => [f.id, BOOK])) : {}, ...(BOOK ? { clears: { record: BOOK }, gold: 1e9, variantBook: Object.fromEntries(FISH.map(f => [f.id, { giant: Math.round(BOOK * VARIANT_SHARE) }])) } : {}), unlockedJobs: JOBS.map(x => x.id), deaths: DEATHS, playMs: TURNS * 2000 });
     s.equipment = { ...GEAR[magic ? 'magic' : 'physical'] };
     s.jobMastery = { [j.id]: 0 };
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = masteryMilestonesFor(sk).at(-1); }

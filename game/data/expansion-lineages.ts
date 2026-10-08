@@ -50,10 +50,11 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'inkThrower', name: '먹물 투척수', title: '먼저 눈을 가린다', desc: '명중·회피 패시브 하나를 익히는 독립 1차 직업입니다.', ...STAT_T1, requires: { dex: 12, luk: 8 }, role: '능력치·명중', tree: 'status' },
 
     // ── 복합: 다크나이트 계보(좀비 루팡) ────────────────────────────
-    { id: 'tideLancer', name: '조류 창기병', title: '물살을 창끝에 싣는다', desc: '(물리+마법)/2로 찌르는 창술과 체력·마나 패시브를 익히는 복합 입문 직업입니다.', ...neutral, bonus: { attack: 2, magic: 2, hp: 5 }, ...T1, requires: { str: 10, wis: 12 }, role: '복합 입문·창', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
-    { id: 'seaDragoon', name: '좀비 루팡 기수', title: '바다뱀의 등에 오른다', desc: '복합 계보의 2차 직업입니다. 급강하로 상대를 오래 약화시키고, 패시브로 체력과 방어를 받칩니다.', ...neutral, bonus: { attack: 36, magic: 39, hp: 60 }, crit: .03, ...T2, parent: 'tideLancer', requires: { str: 26, wis: 26 }, requiresSkillMastery: { currentThrust: 2 }, role: '복합·돌진', tree: 'hybrid' },
-    { id: 'stormDragoon', name: '폭풍 용기사', title: '번개를 두른 창', desc: '방어를 꿰뚫는 뇌창과 속도 패시브로 싸우는 복합 3차 직업입니다.', ...neutral, bonus: { attack: 67, magic: 74, hp: 90, defense: 3, resist: 2 }, crit: .04, ...T3, parent: 'seaDragoon', requires: { str: 40, wis: 40, vit: 25 }, requiresSkillMastery: { dragonDive: 3 }, role: '복합·관통', tree: 'hybrid' },
-    { id: 'abyssDragonLord', name: '해구 용왕', title: '파도의 왕좌', desc: '복합 계보의 환생 후 4차 직업입니다. 대돌격으로 상대를 기절시키고, 패시브로 체력과 물리·마법 공격을 함께 올립니다.', ...neutral, attack: 1.39, magic: 1.39, hp: 1.18, defense: 1.06, resist: 1.06, crit: .06, ...T4, parent: 'stormDragoon', requires: { str: 50, wis: 50 }, requiresSkillMastery: { thunderLance: 3 }, role: '복합·최상위 돌진', tree: 'hybrid' },
+    // v3.144 다크나이트 재개편: 경계(딜러 · 불굴 탱커). 물리 창술 한 줄, 쓰러진 횟수 · 보낸 턴에 비례해 강해지고 5차 리인카네이션으로 한 번 버팁니다.
+    { id: 'tideLancer', name: '조류 창기병', title: '물살을 창끝에 싣는다', desc: '물리 창술과 체력 · 마나 패시브를 익히는 경계 입문 직업입니다. 이 계보는 쓰러질수록, 오래 싸울수록 강해집니다.', ...neutral, bonus: { attack: 3, hp: 8 }, ...T1, requires: { str: 10, vit: 12 }, role: '경계 입문·창', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
+    { id: 'seaDragoon', name: '좀비 루팡 기수', title: '바다뱀의 등에 오른다', desc: '다크나이트 계보의 2차 직업입니다. 급강하로 상대를 오래 약화시키고, 패시브는 체력 · 방어에 더해 보낸 턴 1,000마다 체력이 오릅니다.', ...neutral, bonus: { attack: 40, hp: 80, defense: 4 }, crit: .03, ...T2, parent: 'tideLancer', requires: { str: 26, vit: 24 }, requiresSkillMastery: { currentThrust: 2 }, role: '경계·약화', tree: 'hybrid' },
+    { id: 'stormDragoon', name: '폭풍 용기사', title: '번개를 두른 창', desc: '방어를 꿰뚫는 뇌창과, 쓰러진 횟수마다 물리 공격이 오르는 패시브로 싸우는 3차 직업입니다.', ...neutral, bonus: { attack: 80, hp: 120, defense: 6, resist: 3 }, crit: .04, ...T3, parent: 'seaDragoon', requires: { str: 40, vit: 36 }, requiresSkillMastery: { dragonDive: 3 }, role: '경계·관통', tree: 'hybrid' },
+    { id: 'abyssDragonLord', name: '해구 용왕', title: '파도의 왕좌', desc: '다크나이트 계보의 환생 후 4차 직업입니다. 대돌격으로 상대를 기절시키고, 패시브는 체력 · 물리 공격에 더해 쓰러진 횟수마다 치명 피해, 보낸 턴 1,000마다 물리 방어가 오릅니다.', ...neutral, attack: 1.25, magic: 1, hp: 1.3, defense: 1.2, resist: 1.1, crit: .06, ...T4, parent: 'stormDragoon', requires: { str: 50, vit: 44 }, requiresSkillMastery: { thunderLance: 3 }, role: '경계·불굴', tree: 'hybrid' },
     // ── 복합: 메카닉 계보 ──────────────────────────────────
     // v3.143 메카닉 재개편: 경계(반사 탱커 · 마법 딜러). 약화를 걸고 방어 비례 마법 피해로 때리며 충전, 충전이 쌓이면 전탄발사.
     { id: 'runesmith', name: '룬 대장장이', title: '쇠에 문장을 새긴다', desc: '약화를 걸며 충전을 쌓는 플레임 런처와 두 방어 · 반격 패시브를 익히는 경계 입문 직업입니다.', ...neutral, bonus: { magic: 2, defense: 2 }, ...T1, requires: { int: 12, vit: 10 }, role: '경계 입문·충전', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
@@ -84,7 +85,7 @@ export const LINEAGE_JOBS: NewJob[] = [
 export const NEW_LINEAGES = {
     bloodAngler: { id: 'bloodAngler', name: '피낚시꾼 계보', tree: 'status' as const, summary: '출혈을 쌓고 출혈 중인 적을 처형하는 계보입니다.' },
     nerveNeedler: { id: 'nerveNeedler', name: '마비 침술사 계보', tree: 'status' as const, summary: '기절·감속으로 적을 멈추고 제어된 적을 끝내는 계보입니다.' },
-    tideLancer: { id: 'tideLancer', name: '조류 창기병 계보', tree: 'hybrid' as const, summary: '물리·마법을 함께 실은 창술로 4차 다크나이트에 이르는 계보입니다.' },
+    tideLancer: { id: 'tideLancer', name: '조류 창기병 계보', tree: 'hybrid' as const, summary: '딜러와 불굴 탱커의 경계에 선 창술 계보입니다. 쓰러진 횟수와 보낸 턴에 비례해 강해지고, 5차에서는 쓰러질 피해를 한 번 버텨 냅니다.' },
     runesmith: { id: 'runesmith', name: '룬 대장장이 계보', tree: 'hybrid' as const, summary: '반사 탱커와 마법 딜러의 경계에 선 계보입니다. 약화를 걸고 물리 방어에 비례한 마법 피해로 때리며 충전을 쌓고, 충전이 차면 전탄발사로 쏟아냅니다.' },
 };
 
@@ -97,6 +98,8 @@ const A = { type: 'active' as const };
 const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
 const dual = { damageType: 'split' as const, scaling: 'dual' as const };
+/** v3.144 다크나이트: 물리 피해(마나는 그대로 씀). */
+const spear = { damageType: 'physical' as const };
 /** v3.143 메카닉: 마법 피해 + 물리 방어 비례(방어 친화도 적용). */
 const forgeBlast = { damageType: 'magic' as const, scaling: 'defense' as const };
 const M4 = [2500, 12000, 40000, 100000];
@@ -153,15 +156,16 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'sporePouch', name: '포자 주머니', desc: '지속 피해와 마법 방어가 오릅니다.', level: 10, job: 'toadstoolForager', cost: 2, bonus: { dotBonus: .08, resist: 6 } },
     { ...P, id: 'inkSplash', name: '먹물 세례', desc: '명중과 회피가 오릅니다.', level: 10, job: 'inkThrower', cost: 2, bonus: { accuracy: .05, evasion: .02 } },
     // 복합: 창기병
-    { ...A, ...dual, id: 'currentThrust', name: '해류 찌르기', desc: '', level: 10, job: 'tideLancer', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 8 },
+    // v3.144 다크나이트 재개편: 액티브는 물리 창술(spear), 패시브는 쓰러진 횟수(deaths) · 보낸 턴(turns) 비례 성장.
+    { ...A, ...spear, id: 'currentThrust', name: '해류 찌르기', desc: '', level: 10, job: 'tideLancer', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 8 },
     { ...P, id: 'lancerPoise', name: '창기병의 균형', desc: '최대 체력과 최대 마나가 오릅니다.', level: 10, job: 'tideLancer', cost: 2, bonus: { hp: 60, mana: 10 } },
-    { ...A, ...dual, id: 'dragonDive', name: '좀비 루팡 급강하', desc: '', level: 25, job: 'seaDragoon', chance: .5, cooldown: 3, multiplier: 1.7, cost: 3, manaCost: 13, effect: 'weaken' },
-    { ...P, id: 'wyrmScale', name: '용린', desc: '최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'seaDragoon', cost: 2, bonus: { hp: 120, defense: 10 } },
+    { ...A, ...spear, id: 'dragonDive', name: '좀비 루팡 급강하', desc: '', level: 25, job: 'seaDragoon', chance: .5, cooldown: 3, multiplier: 1.3, cost: 3, manaCost: 13, effect: 'weaken' },
+    { ...P, id: 'wyrmScale', name: '용린', desc: '최대 체력과 물리 방어가 오르고, 보낸 턴 1,000마다 최대 체력이 오릅니다.', level: 25, job: 'seaDragoon', cost: 2, bonus: { hp: 120, defense: 10 }, perCount: [{ source: 'turns', per: 1000, bonus: { hp: 3 }, cap: 100 }] },
     // v3.98 다크나이트 상향: 드래곤 퓨리 배율 2.1 → 2.8, 비홀더 임팩트 배율 2.5 → 2.8 · 추가 공격 1회(비홀더가 함께 때림).
-    { ...A, ...dual, id: 'thunderLance', name: '뇌창', desc: '', level: 40, job: 'stormDragoon', chance: .5, cooldown: 4, multiplier: 2.8, cost: 4, manaCost: 20, penetrationBonus: .15 },
-    { ...P, id: 'stormRider', name: '폭풍 기수', desc: '물리·마법 공격과 속도가 오릅니다.', level: 40, job: 'stormDragoon', cost: 3, bonus: { attack: 18, magic: 18, speed: 6 } },
-    { ...A, ...dual, id: 'leviathanCharge', name: '용왕 대돌격', desc: '', level: 55, job: 'abyssDragonLord', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 26, effect: 'stun', extraAttacks: 1, masteryMilestones: M4 },
-    { ...P, id: 'dragonKingAura', name: '용왕의 위엄', desc: '최대 체력과 물리·마법 공격이 오릅니다.', level: 55, job: 'abyssDragonLord', cost: 3, bonus: { hp: 260, attack: 24, magic: 24 }, masteryMilestones: M4 },
+    { ...A, ...spear, id: 'thunderLance', name: '뇌창', desc: '', level: 40, job: 'stormDragoon', chance: .5, cooldown: 4, multiplier: 2.1, cost: 4, manaCost: 20, penetrationBonus: .15 },
+    { ...P, id: 'stormRider', name: '폭풍 기수', desc: '물리 공격과 속도가 오르고, 쓰러진 횟수마다 물리 공격이 오릅니다.', level: 40, job: 'stormDragoon', cost: 3, bonus: { attack: 24, speed: 6 }, perCount: [{ source: 'deaths', per: 1, bonus: { attack: 1 }, cap: 100 }] },
+    { ...A, ...spear, id: 'leviathanCharge', name: '용왕 대돌격', desc: '', level: 55, job: 'abyssDragonLord', chance: .5, cooldown: 4, multiplier: 2.1, cost: 5, manaCost: 26, effect: 'stun', extraAttacks: 1, masteryMilestones: M4 },
+    { ...P, id: 'dragonKingAura', name: '용왕의 위엄', desc: '최대 체력과 물리 공격이 오르고, 쓰러진 횟수마다 치명 피해, 보낸 턴 1,000마다 물리 방어가 오릅니다.', level: 55, job: 'abyssDragonLord', cost: 3, bonus: { hp: 260, attack: 30 }, perCount: [{ source: 'deaths', per: 1, bonus: { critDamage: .005 }, cap: 100 }, { source: 'turns', per: 1000, bonus: { defense: 1 }, cap: 100 }], masteryMilestones: M4 },
     // 복합: 메카닉 (1차)
     // v3.143 메카닉 재개편: 약화(룬 망치) → 방어 비례 마법 피해(forgeBlast)로 충전 → 전탄발사(창세 룬). 패시브는 두 방어 + 반격.
     { ...A, ...dual, id: 'runeHammer', name: '룬 망치', desc: '', level: 10, job: 'runesmith', chance: .48, cooldown: 3, multiplier: 1.15, cost: 2, manaCost: 8, effect: 'weaken', charge: 1 },
