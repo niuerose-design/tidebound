@@ -14,15 +14,13 @@ test('v24.2 progress passives count codex, catches, hunts, species, gold and reb
     assert.equal(after.codexPower, 4); assert.ok(Math.abs(after.catchPower - Math.log10(8)) < 1e-9);
     assert.equal(after.attack, before.attack, 'records do not move a rebirth passive'); s.rebirths = 4; assert.ok(stats(s).attack > after.attack && stats(s).magic > after.magic, 'one more rebirth → memoryOfTides step');
     const sk = SKILLS.find(x => x.id === 'chronicleStudy'); assert.ok(!sk.perCount, 'v3.153 패스파인더 passives grow with mastery, not records (렐릭의 힘)'); assert.equal(sk.bonus.expBonus, .18, 'scribe keeps its EXP bonus (v3.83 ×1.5)');
-    for (const id of ['salvageSense', 'rareSense', 'deepSalvage', 'kingsHoard', 'legendHoard']) { const b = SKILLS.find(x => x.id === id).bonus || {}; assert.ok(!b.goldBonus && !b.dropBonus, id + ' moved gold/drop to the merchant line'); assert.ok(b.variantFind > 0, id + ' raises variant odds'); }
+    for (const id of ['salvageSense', 'rareSense', 'deepSalvage', 'kingsHoard', 'legendHoard']) { const b = SKILLS.find(x => x.id === id).bonus || {}; assert.ok(b.goldBonus > 0 && !b.dropBonus, id + ' v3.156 earns the gold meso explosion burns (drop stays on the merchant line)'); assert.ok(!SKILLS.find(x => x.id === id).perCount, id + ' no record growth'); }
     for (const id of ['salvageContract', 'goldMemory', 'portLedger', 'tradeWind', 'tradeEmpire', 'goldenEmpire']) assert.ok(SKILLS.find(x => x.id === id).bonus.dropBonus > 0, id);
 });
 
 test('v24.2 progress scaling multiplies damage by the recorded power', () => {
-    const plain = hit(fighter('spoilsStrike'), target());
-    const rich = hit(fighter('spoilsStrike', { stats: { variantPower: 10 } }), target());
-    const sk = SKILLS.find(x => x.id === 'spoilsStrike'); assert.equal(sk.scaling, 'variant');
-    assert.ok(Math.abs(rich / plain - (1 + 10 * sk.scalingRatio)) < .02, `${rich}/${plain}`);
+    // v3.156 섀도어 액티브는 변종 비례 대신 골드를 태웁니다(아래 골드 투척 검사). 변종 비례 기준값은 능력치 계산에 남아 있습니다.
+    for (const id of ['relicToss', 'spoilsStrike', 'treasureStrike', 'hoardCrush']) { const sk = SKILLS.find(x => x.id === id); assert.ok(sk.goldSpend && !sk.scaling, id + ' burns gold'); }
     const codexPlain = hit(fighter('sigilShock'), target()), codexRich = hit(fighter('sigilShock', { stats: { codexPower: 50 } }), target());
     const sigil = SKILLS.find(x => x.id === 'sigilShock'); assert.equal(sigil.scaling, 'codex');
     assert.ok(Math.abs(codexRich / codexPlain - (1 + 50 * sigil.scalingRatio)) < .02, `${codexRich}/${codexPlain}`);
@@ -37,9 +35,11 @@ test('v24.2 gamble rolls the multiplier; all-in spends HP and mana; gold toss sp
     const last = fighter('allIn', { hp: 1 }); strike(last, target(), () => 0); assert.ok(last.hp >= 1, 'never wagers the last point of HP');
     const calm = hit(fighter('allIn', { hp: 1000, fields: { mana: 0 } }), target());
     assert.ok(big > calm, 'more mana wagered → more damage');
-    const m = fighter('coinBarrage', { fields: { gold: 100000 } }); const paid = hit(m, target());
-    assert.equal(m.gold, 100000 - 200); const free = hit(fighter('coinBarrage', { fields: { gold: 0 } }), target());
+    // v3.156 골드 투척은 섀도어 메소 익스플로전으로 옮겼습니다(캡틴은 보유 골드 비례만).
+    const m = fighter('spoilsStrike', { fields: { gold: 100000 } }); const paid = hit(m, target());
+    assert.equal(m.gold, 100000 - 1000); const free = hit(fighter('spoilsStrike', { fields: { gold: 0 } }), target());
     assert.ok(paid > free);
+    for (const id of ['coinToss', 'coinBarrage', 'goldenTempest', 'goldenStorm']) { const sk = SKILLS.find(x => x.id === id); assert.ok(!sk.goldSpend && sk.scaling === 'gold', id + ' captain keeps only gold-holding scaling'); }
 });
 
 test('v24.2 prey bonus hits bosses and designated species harder', () => {

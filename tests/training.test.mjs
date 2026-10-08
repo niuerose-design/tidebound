@@ -263,7 +263,7 @@ test('v3.124 Adele: Ruin magic +450 and max mana +1000', async () => {
 
 test('v3.155 Cadena: Mystic Storm attack +450 and crit +10%p, variety bonus instead of stun extension; chain arts grant distinct self buffs', () => {
     const sk = id => SKILLS.find(s => s.id === id);
-    assert.deepEqual([sk('absoluteStill').bonus.attack, sk('absoluteStill').bonus.crit, sk('absoluteStill').bonus.varietyBonus, sk('absoluteStill').bonus.stunBonus], [450, .1, .025, undefined]);
+    assert.deepEqual([sk('absoluteStill').bonus.attack, sk('absoluteStill').bonus.crit, sk('absoluteStill').bonus.varietyBonus, sk('absoluteStill').bonus.stunBonus], [450, .1, .035, undefined]);
     assert.deepEqual(['numbNeedle', 'severNerve', 'deadCalm', 'stillVerdict'].map(id => sk(id).selfBuff.id), ['stroke', 'crush', 'scimitar', 'takedown']);
     for (const id of ['numbNeedle', 'severNerve', 'deadCalm', 'stillVerdict', 'worldStill']) assert.ok(!sk(id).effect && !sk(id).damageBonusCondition && !sk(id).statusOnly, id + ' no control, pure chain art');
     assert.equal(sk('worldStill').extendBuffs, 2);

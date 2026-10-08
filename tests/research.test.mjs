@@ -131,11 +131,11 @@ test('v25.23 golden fish: multiplies one catch by ten and is recorded; v27.44 ev
     const fight = rank => { const s = newState(0); if (rank) { s.level = 40; s.job = 'rareTracker'; s.learned.rareSense = 1; s.skills = ['rareSense']; } s.enemy = { id: 'minnow', name: '달팽이', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
     const plain = fight(0), rngPlain = counting(); reward(plain, rngPlain);
     const lucky = fight(1), rngLucky = counting(); reward(lucky, rngLucky);
-    assert.equal(rngLucky.calls, rngPlain.calls, 'both roll once now'); assert.equal(lucky.gold, plain.gold); assert.equal(lucky.goldenBook, undefined);
+    assert.equal(rngLucky.calls, rngPlain.calls, 'both roll once now'); assert.ok(lucky.gold >= plain.gold, 'v3.156 메소 마스터리 gives kill gold, never less'); assert.equal(lucky.goldenBook, undefined);
     assert.ok(stats(lucky).goldenFind > stats(plain).goldenFind && stats(plain).goldenFind === .002, 'passive adds to the base');
     assert.equal(research('goldenFish'), undefined, 'golden research removed');
     const gold = fight(1), rngGold = counting(n => n === 1 ? 0 : .99); reward(gold, rngGold);
-    assert.equal(gold.gold - 100 /* start gold */, (plain.gold - 100) * 10); assert.equal(gold.goldenBook.minnow, 1);
+    assert.equal(gold.gold - 100 /* start gold */, (lucky.gold - 100) * 10 /* v3.156 same body (메소 마스터리 kill gold) × 10 */); assert.equal(gold.goldenBook.minnow, 1);
 });
 
 test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance per rank', () => {

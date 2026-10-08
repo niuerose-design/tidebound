@@ -27,7 +27,7 @@ test('Growth descriptions expose real bone penalties, negative AP and farming st
  const bone=skillGrowthStages(SKILLS.find(sk=>sk.id==='boneLegacy')).filter(r=>!r.broken);// v27.6 한계돌파 행 제외
  assert.deepEqual(bone.map(r=>[r.practice,r.effective.cost,r.effective.bonus?.hp||0,r.effective.bonus?.defense||0]),[[0,6,0,0],[1e6,4,0,0],[4e6,2,100,12],[1e7,-3,450,45]]);// v3.137 백만 단위 · 작은 마이너스 제거
  assert.deepEqual(bone.map(r=>r.effective.penaltyRelief||0),[0,.15,.5,1]);
- const loot=skillGrowthStages(SKILLS.find(sk=>sk.id==='salvageContract'));assert.ok(loot[0].effects.includes('장비 드롭 보너스 +45%'),loot[0].effects.join('|'));const codex=skillGrowthStages(SKILLS.find(sk=>sk.id==='rareSense'));assert.match(codex[0].effects.join(' '),/변종·황금 처치 5마다 .*최대 20회/);
+ const loot=skillGrowthStages(SKILLS.find(sk=>sk.id==='salvageContract'));assert.ok(loot[0].effects.includes('장비 드롭 보너스 +45%'),loot[0].effects.join('|'));const codex=skillGrowthStages(SKILLS.find(sk=>sk.id==='rareSense'));assert.match(codex[0].effects.join(' '),/골드 획득 보너스 \+1\d%/);// v3.156 메소 마스터리: 기록 비례 대신 처치 골드
  const study=skillGrowthStages(SKILLS.find(sk=>sk.id==='titanFieldNotes'));assert.match(study[0].effects.join(' '),/모든 보스 처치 시 숙련 ×3/);assert.match(study.at(-1).effects.join(' '),/숙련 ×8/);
 });
 test('Active descriptions show maximum-resource scaling, statuses and additional hits',()=>{
