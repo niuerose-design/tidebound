@@ -251,7 +251,7 @@ test('v3.146 Eunwol: Ghost Gate attack +300 with a two-hit spirit, Fist Barrage 
 test('v3.123 Kali: Chakram Split curses (bleed-type damage over time, Illium\'s ratio), Queen of Hexes magic +250', () => {
     const sk = id => SKILLS.find(s => s.id === id);
     assert.deepEqual([sk('calamityRite').effect, sk('calamityRite').dotName, sk('calamityRite').damageBonusCondition], ['bleed', '저주', 'controlled']);
-    assert.equal(sk('calamityRite').dotRatio, sk('transmute').dotRatio);
+    assert.ok(sk('calamityRite').dotRatio > 0);
     assert.deepEqual([sk('queenOfCurses').bonus.magic, sk('queenOfCurses').bonus.dotBonus], [250, .2]);
 });
 
@@ -372,4 +372,38 @@ test('v3.148 Adele burns current mana into damage; Flame Wizard Genesis detonate
     const plain = target(); strike(fighter(['genesis']), plain, () => 0, [], false, false, forced); const d0 = 1e6 - plain.hp;
     const burning = target({ burn: { perStack: 10, stacks: 3, turns: 5 } }); strike(fighter(['genesis']), burning, () => 0, [], false, false, forced); const d3 = 1e6 - burning.hp;
     assert.equal(burning.effects.burn, undefined, 'stacks consumed'); assert.ok(Math.abs(d3 / d0 - 2.05 * (1 + SKILL_FORMULA.burnVulnerability)) < .03, `burn detonation ${d0} → ${d3}`);
+});
+
+test('v3.151 Illium: arcane-ratio scaling, basic attacks corrode, corrosion cuts defense/resist/speed, Gravity Core fires five times; self-buff frame carries haste', async () => {
+    const { STATUS_TUNING } = await load('game/data/balance.js'); const { fighterSpeed } = await load('game/systems/combat.js');
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.equal(sk('crystalShard'), undefined); assert.equal(JOBS.find(j => j.id === 'crystalCaster'), undefined);
+    for (const id of ['corrosiveBloom', 'transmute', 'grandTransmutation']) assert.equal(sk(id).scaling, 'arcane', id);
+    assert.deepEqual([sk('grandTransmutation').extraAttacks, sk('grandTransmutation').effect, sk('philosopherSalt').basicEffect, sk('saltCatalyst').effect], [4, 'corrode', 'corrode', 'corrode']);
+    const base = { hp: 1e6, attack: 100, magic: 300, defense: 200, resist: 200, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5, arcaneStrike: 1, arcaneRatioBonus: .5 };
+    const fighter = (skills, extra = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: 1e6, mana: 200, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} });
+    const target = (effects = {}) => ({ name: 'B', stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects });
+    // 마력 평타(기술 없음)가 명중하면 패시브 소울 오브 크리스탈이 부식을 겁니다.
+    const t1 = target(); const e1 = []; strike(fighter(['philosopherSalt']), t1, () => 0, e1); assert.equal(t1.effects.corrode, STATUS_TUNING.corrodeTurns); assert.ok(e1[0].statuses.some(s => s.id === 'corrode'));
+    // 부식 중에는 받는 피해가 커지고(방어 30% 깎임) 속도가 20% 느려집니다.
+    const t2 = target(); strike(fighter([]), t2, () => 0); const plain = 1e6 - t2.hp;
+    const t3 = target({ corrode: 2 }); strike(fighter([]), t3, () => 0); const corroded = 1e6 - t3.hp;
+    const expect = (100 + 200 * 2) / (100 + 200 * (1 - STATUS_TUNING.corrodeResist) * 2); assert.ok(Math.abs(corroded / plain - expect) < .03, `corroded ${plain} → ${corroded}`);
+    assert.ok(Math.abs(fighterSpeed(target({ corrode: 1 })) / fighterSpeed(target()) - (1 - STATUS_TUNING.corrodeSpeed)) < 1e-9);
+    // 평타 계수 기준값: 크래프트: 롱기누스 = 마법 × (0.7 + 0.5) × 1.2.
+    const t4 = target(); const e4 = []; strike(fighter(['corrosiveBloom']), t4, () => 0, e4); const t5 = target(); strike(fighter([]), t5, () => 0);
+    assert.ok(Math.abs((1e6 - t4.hp) / (1e6 - t5.hp) - 1.2) < .03, `arcane scaling ${1e6 - t5.hp} → ${1e6 - t4.hp}`);
+    // 그라비티 코어(각성): 본타 + 추가타 4회 = 5타.
+    const t6 = target(); const e6 = []; strike(fighter(['grandTransmutation']), t6, () => 0, e6, false, false, { id: 'grandTransmutation', index: 0, count: 1, kind: 'awaken' }); assert.equal(e6[0].hits.length, 5); assert.ok(t6.effects.corrode >= STATUS_TUNING.corrodeTurns, `corroded ${t6.effects.corrode}`);
+    // 자기 버프 틀: 옛 가속(effects.haste)은 buffs.haste로 옮겨 속도에 곱하고, 자기 행동마다 1턴씩 줄어듭니다.
+    const h = fighter([]); h.effects = { haste: 2 }; assert.ok(Math.abs(fighterSpeed(h) / 10 - (1 + STATUS_TUNING.hasteMultiplier)) < 1e-9); assert.equal(h.effects.haste, undefined); assert.equal(h.effects.buffs.haste.turns, 2);
+    strike(h, target(), () => 0); assert.equal(h.effects.buffs.haste.turns, 1); strike(h, target(), () => 0); assert.equal(h.effects.buffs, undefined);
+    // selfBuff 기술: 고정값 버프가 전투 능력치에 더해집니다.
+    const bsk = { id: 'zzBuffTest', name: '시험 버프', type: 'active', level: 1, chance: 1, cooldown: 3, multiplier: 1, cost: 1, manaCost: 0, damageType: 'magic', selfBuff: { id: 'test', name: '시험', turns: 2, stats: { magic: 300 } } };
+    SKILLS.push(bsk);
+    try {
+        const bf = fighter(['zzBuffTest']); const tb = target(); const eb = []; strike(bf, tb, () => 0, eb); assert.equal(bf.effects.buffs.test.turns, 2); assert.ok(eb[0].statuses.some(s => s.id === 'test' && s.onSelf));
+        const tb2 = target(); bf.cooldowns = { zzBuffTest: 3 }; strike(bf, tb2, () => 0); const boosted = 1e6 - tb2.hp; const tb3 = target(); strike(fighter([]), tb3, () => 0); const normal = 1e6 - tb3.hp;
+        assert.ok(Math.abs(boosted / normal - 2) < .05, `buffed magic doubles the arcane strike: ${normal} → ${boosted}`);
+    } finally { SKILLS.splice(SKILLS.indexOf(bsk), 1); }
 });

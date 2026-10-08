@@ -50,7 +50,7 @@ export type ItemAffix = { id: string; name: string; stat: GearStat; value: numbe
 export const GEAR_CAPS: Partial<Record<GearStat, number>> = { lifesteal: .1, statusResist: .5 };
 
 export const RULE_CAPS: Partial<Record<GearStat, number>> = {
-    stunBonus: 1, controlBonus: 1, dotTurnsBonus: 2, poisonStackBonus: 3, arcaneRatioBonus: .3, followUpBonus: .3, healBonus: .5, executeBonus: .15,
+    stunBonus: 1, controlBonus: 1, dotTurnsBonus: 2, poisonStackBonus: 3, /** 마력 평타 계수는 장비 몫만 상한(스킬 패시브는 상한 없음, v3.151). */ arcaneRatioBonus: .3, followUpBonus: .3, healBonus: .5, executeBonus: .15,
 };
 
 /** v3.5 불굴(상태이상 저항) 기본값: Lv.100 태초 22성(×1.66) 평균 굴림에서 상한 50%에 닿는 값. v3.71 등급 품질이 1.6 → 2.2가 되어 .188 → .137(같은 지점에서 상한). */

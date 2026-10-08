@@ -111,9 +111,14 @@ export type StatusEffects = {
     weaken?: number;
     silence?: number;
     slow?: number;
+    /** 가속 남은 턴(v3.151부터는 buffs.haste로 옮기며, 옛 세이브의 값은 전투에서 처음 볼 때 옮깁니다). */
     haste?: number;
+    /** v3.151 부식: 남은 턴. 걸린 동안 물리 · 마법 방어와 속도가 STATUS_TUNING.corrode* 만큼 떨어지는 최상급 디버프. */
+    corrode?: number;
+    /** v3.151 자기 버프(id마다 하나): 남은 턴 동안 stats를 더하고 speedMultiplier를 속도에 곱합니다. 가속도 이 틀로 돕니다. */
+    buffs?: Record<string, { turns: number; name?: string; stats?: Partial<Stats>; speedMultiplier?: number }>;
     /** 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 남은 턴(자기 행동마다 1씩 줄어듭니다). */
-    immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'silence' | 'slow', number>>;
+    immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'silence' | 'slow' | 'corrode', number>>;
     /** v25 일곱 글자: 이번 전투에 새긴 인. */
     seals?: string[];
     /** v25 타임 리와인드를 이번 전투에 썼는지. */
@@ -185,7 +190,11 @@ export type Skill = {
     chance: number;
     cooldown: number;
     multiplier: number;
-    effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste';
+    effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste' | 'corrode';
+    /** v3.151 자기 버프: 이 기술을 쓰면 시전자가 turns 동안 stats(고정값)와 speedMultiplier를 얻습니다(같은 id면 더 긴 쪽으로 갱신). */
+    selfBuff?: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number };
+    /** v3.151 기본 공격 상태이상(패시브): 장착하면 기본 공격(마력 평타 포함)이 명중할 때 이 상태이상을 겁니다(statusTurns 적용). 일리움 부식. */
+    basicEffect?: 'corrode' | 'weaken' | 'slow' | 'silence' | 'stun';
     /** split: 원시 피해를 물리·마법 절반씩 나누어 각각 방어를 적용하는 한 번의 공격. */
     /** fixed(v3.143): 고정 피해. 방어 · 마법 방어를 전혀 받지 않습니다(메카닉 전탄발사). 기준 공격력은 baseStat(기본 물리 공격). */
     damageType?: 'physical' | 'magic' | 'split' | 'fixed';
@@ -206,7 +215,7 @@ export type Skill = {
     /** v3.17 장착 패시브: 쓰러진 뒤 회복 대기를 이만큼(턴) 줄입니다(환생 10회 이상). */
     revive?: number;
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. swap: 피해 유형과 반대 공격력을 기준값으로(물리 계수 마법 피해 등). */
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr';
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr' | /** v3.151 마력 평타 계수 기준값: 마법 공격 × (arcaneStrikeRatio + 마력 평타 계수 보너스). 일리움. */ 'arcane';
     /** v26.2 scaling 'attr'가 비례하는 능력치. 기준값 += 능력치 × scalingRatio. */
     scalingAttribute?: Attribute;
     /** v3.97 scaling 'attr'에 물리 공격 × 이 비율을 더합니다(행운 외길 상위 차수: 장비 · 연구가 쌓여도 기술이 따라 커지도록). */

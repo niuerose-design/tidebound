@@ -60,7 +60,7 @@ export function actsFirst(a: Fighter, b: Fighter) {
     if (!!a.firstStrike !== !!b.firstStrike) return !!a.firstStrike;
     return fighterSpeed(a) >= fighterSpeed(b);
 }
-type DurationStatus = 'weaken' | 'silence' | 'slow' | 'haste';
+type DurationStatus = 'weaken' | 'silence' | 'slow' | 'haste' | 'corrode';
 type ImmuneStatus = keyof NonNullable<StatusEffects['immune']>;
 /** 상태이상이 끝나면 같은 상태이상에 잠시 면역이 됩니다(가속은 자기 버프라 제외). */
 function grantImmunity(effects: StatusEffects, key: ImmuneStatus) {
@@ -87,7 +87,7 @@ function tickImmunity(effects: StatusEffects) {
     }
     if (!Object.keys(effects.immune).length) delete effects.immune;
 }
-const ENEMY_STATUS: Record<string, ImmuneStatus> = { stun: 'stun', bleed: 'bleed', poison: 'poison', burn: 'burn', weaken: 'weaken', silence: 'silence', slow: 'slow' };
+const ENEMY_STATUS: Record<string, ImmuneStatus> = { stun: 'stun', bleed: 'bleed', poison: 'poison', burn: 'burn', weaken: 'weaken', silence: 'silence', slow: 'slow', corrode: 'corrode' };
 /** 상대에게 이미 걸려 있는 상태이상(중첩형 중독은 더 쌓을 수 있으므로 제외). */
 function alreadyAfflicted(b: Fighter, sk: { effect?: string }) {
     const key = sk.effect ? ENEMY_STATUS[sk.effect] : undefined;
@@ -100,8 +100,8 @@ function alreadyAfflicted(b: Fighter, sk: { effect?: string }) {
 }
 const isImmune = (b: Fighter, key: ImmuneStatus) => (b.effects?.immune?.[key] || 0) > 0;
 /** v3.5 상태이상 저항이 막는 상태이상과 표시 이름. */
-const RESISTABLE = new Set(['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow']);
-const RESIST_LABELS: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속' };
+const RESISTABLE = new Set(['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode']);
+const RESIST_LABELS: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속', corrode: '부식' };
 function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number) {
     effects[key] = Math.max(effects[key] || 0, turns);
 }
@@ -126,11 +126,34 @@ function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageType'>) {
     return [`본타 ${part(ev.hits[0])}`, ...ev.hits.slice(1).map((h, i) => `추가타${ev.hits.length > 2 ? ` ${i + 1}` : ''} ${part(h)}`), `합계 ${ev.total} ${word} 피해`].join(' · ');
 }
 /** 행동 순서·명중 보정·연속 행동 확률에 쓰는 속도. 가속·감속이 반영됩니다. */
+/** v3.151 자기 버프: 옛 세이브의 가속(effects.haste 턴 수)을 buffs.haste로 옮기고, 살아 있는 버프 목록을 돌려줍니다. */
+function buffsOf(effects: StatusEffects | undefined) {
+    if (!effects) return [];
+    if (effects.haste) { grantBuff(effects, { id: 'haste', name: '가속', turns: effects.haste, speedMultiplier: 1 + STATUS_TUNING.hasteMultiplier }); delete effects.haste; }
+    return Object.entries(effects.buffs || {}).filter(([, b]) => b.turns > 0);
+}
+/** 같은 id의 버프가 있으면 더 긴 쪽으로 갱신합니다(효과는 새 값). */
+export function grantBuff(effects: StatusEffects, buff: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number }) {
+    const buffs = (effects.buffs ??= {}), cur = buffs[buff.id];
+    buffs[buff.id] = { turns: Math.max(buff.turns, cur?.turns || 0), ...(buff.name ? { name: buff.name } : {}), ...(buff.stats ? { stats: buff.stats } : {}), ...(buff.speedMultiplier ? { speedMultiplier: buff.speedMultiplier } : {}) };
+}
+/** 자기 행동마다 버프 턴을 하나씩 줄이고 끝난 버프를 지웁니다. */
+function tickBuffs(effects: StatusEffects) {
+    for (const [id, b] of buffsOf(effects)) { b.turns -= 1; if (b.turns <= 0) delete effects.buffs![id]; }
+    if (effects.buffs && !Object.keys(effects.buffs).length) delete effects.buffs;
+}
+/** 전투 능력치에 살아 있는 버프의 고정값을 더합니다. */
+function withBuffs(stats: CombatStats, effects: StatusEffects | undefined): CombatStats {
+    const live = buffsOf(effects); if (!live.length) return stats;
+    const out = { ...stats } as CombatStats & Record<string, number>;
+    for (const [, b] of live) for (const [k, v] of Object.entries(b.stats || {})) if (typeof v === 'number') out[k] = (out[k] || 0) + v;
+    return out;
+}
 export function fighterSpeed(f: Fighter) {
-    const base = normalizeStats(f.stats).speed;
-    const slowed = (f.effects?.slow || 0) > 0;
-    const hasted = (f.effects?.haste || 0) > 0;
-    const multiplier = (slowed ? 1 - STATUS_TUNING.slowMultiplier : 1) * (hasted ? 1 + STATUS_TUNING.hasteMultiplier : 1);
+    const base = withBuffs(normalizeStats(f.stats), f.effects).speed;
+    const slowed = (f.effects?.slow || 0) > 0, corroded = (f.effects?.corrode || 0) > 0;
+    const buffSpeed = buffsOf(f.effects).reduce((m, [, b]) => m * (b.speedMultiplier || 1), 1);
+    const multiplier = (slowed ? 1 - STATUS_TUNING.slowMultiplier : 1) * (corroded ? 1 - STATUS_TUNING.corrodeSpeed : 1) * buffSpeed;
     return Math.max(1, base * multiplier);
 }
 /** 연속 행동 확률: min(1, max(0, 계수 × log2(내 속도 / 상대 속도))). 같거나 느리면 0. */
@@ -239,7 +262,7 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
             continue;
         if (candidate.condition === 'healthyTarget' && b.hp < sb.hp * .6)
             continue;
-        if (candidate.condition === 'afflicted' && !(a.effects?.dot || a.effects?.poison || a.effects?.burn || a.effects?.slow || a.effects?.weaken))
+        if (candidate.condition === 'afflicted' && !(a.effects?.dot || a.effects?.poison || a.effects?.burn || a.effects?.slow || a.effects?.weaken || a.effects?.corrode))
             continue;
         if ((a.mana ?? 0) < (candidate.manaCost || 0))
             continue;
@@ -325,9 +348,10 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
  * v3.86 kind: 'awaken'(각성기) · 'followUp'(추가 판정, power = 위력 배율)도 같은 방식으로 씁니다. */
 export type ForcedCast = { id: string; index: number; count: number; kind?: 'awaken' | 'followUp'; power?: number };
 function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false, forced?: ForcedCast) {
-    const sa = normalizeStats(a.stats), sb = normalizeStats(b.stats);
     a.effects ??= {};
     b.effects ??= {};
+    // v3.151 자기 버프(가속 포함)의 고정값을 얹은 전투 능력치.
+    const sa = withBuffs(normalizeStats(a.stats), a.effects), sb = withBuffs(normalizeStats(b.stats), b.effects);
     if (!forced) a.mana = Math.min(sa.mana, (a.mana ?? sa.mana) + sa.manaRegen);
     const notes: string[] = [];
     const ev: CombatEvent = { actor: a.name, skillName: '기본 공격', damageType: 'physical', hits: [], total: 0, healed: 0, drained: 0, statuses: [] };
@@ -377,7 +401,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const attackSpeed = fighterSpeed(a), targetSpeed = fighterSpeed(b);
     const weakened = forced ? (a.effects.weaken || 0) > 0 : consumeStatus(a.effects, 'weaken');
     const silenced = forced ? false : consumeStatus(a.effects, 'silence');
-    if (!forced) { consumeStatus(a.effects, 'slow'); consumeStatus(a.effects, 'haste'); }
+    if (!forced) { consumeStatus(a.effects, 'slow'); consumeStatus(a.effects, 'corrode'); tickBuffs(a.effects); }
     if (silenced) {
         notes.push('침묵 중');
         ev.silenced = true;
@@ -430,11 +454,13 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         if (chosen.hpCost) { const pay = Math.min(Math.max(0, a.hp - 1), Math.floor(a.hp * chosen.hpCost)); if (pay > 0) { a.hp -= pay; ev.hpSpent = pay; notes.push(`체력 ${pay.toLocaleString()} 소모`); } }
         // v3.148 마나 연소: 현재 마나 × manaBurn을 태웁니다. 태운 만큼 아래에서 피해 기준값에 더합니다.
         if (chosen.manaBurn) { burned = Math.floor((a.mana ?? 0) * chosen.manaBurn); if (burned > 0) { a.mana = (a.mana ?? 0) - burned; ev.manaBurned = burned; notes.push(`마나 ${burned.toLocaleString()} 연소`); } }
+        // v3.151 자기 버프: 쓰면 시전자에게 걸립니다(명중과 무관).
+        if (chosen.selfBuff) { grantBuff(a.effects, chosen.selfBuff); notes.push(`${chosen.selfBuff.name ?? chosen.selfBuff.id} ${chosen.selfBuff.turns}턴`); ev.statuses.push({ id: chosen.selfBuff.id, turns: chosen.selfBuff.turns, onSelf: true }); }
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.poison; delete a.effects.burn; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
         if (chosen.wardTurns) {
             delete a.effects.weaken;
             const immune = (a.effects.immune ??= {});
-            for (const key of ['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow'] as const) immune[key] = Math.max(immune[key] || 0, chosen.wardTurns);
+            for (const key of ['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode'] as const) immune[key] = Math.max(immune[key] || 0, chosen.wardTurns);
             notes.push(`상태이상 면역 ${chosen.wardTurns}턴`);
         }
         if (chosen.effect === 'heal') {
@@ -495,7 +521,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const landed = healOnly ? true : rng() < hit;
     const split = chosen?.damageType === 'split' || splitBasic;
     // 올라운드 밸런스는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
-    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'attr' ? 0 : splitBasic ? (sa.attack + sa.magic) / 2 : magical || chosen?.baseStat === 'magic' ? sa.magic : sa.attack;
+    let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'arcane' ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'attr' ? 0 : splitBasic ? (sa.attack + sa.magic) / 2 : magical || chosen?.baseStat === 'magic' ? sa.magic : sa.attack;
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
         base += sa.defense * (chosen.scalingRatio ?? 1) * sa.guardAffinity;
@@ -539,10 +565,12 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         base += sa.defense * SKILL_FORMULA.crushDefense / (chosen.multiplier || 1);
     // v3.84 능력치 관통(출처끼리 곱연산)에 스킬 관통 보너스는 예전처럼 더합니다(곱하면 관통이 낮은 캐릭터의 스킬 보너스가 줄어듦). 합계 상한 85%(PENETRATION.cap).
     const pierce = 1 - Math.min(PENETRATION.cap, sa.penetration + (chosen?.penetrationBonus || 0));
-    const defense = (magical ? sb.resist : sb.defense) * pierce;
+    // v3.151 부식: 걸린 동안 물리 · 마법 방어가 깎입니다.
+    const corrodeGuard = (b.effects.corrode || 0) > 0 ? { defense: 1 - STATUS_TUNING.corrodeDefense, resist: 1 - STATUS_TUNING.corrodeResist } : { defense: 1, resist: 1 };
+    const defense = (magical ? sb.resist * corrodeGuard.resist : sb.defense * corrodeGuard.defense) * pierce;
     // 복합(split) 피해: 한 번의 명중·치명 판정 뒤 물리·마법 절반씩 각각의 방어를 적용합니다.
     const mitigated = (raw: number) => fixed ? Math.round(raw) : split
-        ? Math.round(mitigate(raw * SKILL_FORMULA.splitPhysical, sb.defense * pierce, sa.attack)) + Math.round(mitigate(raw * (1 - SKILL_FORMULA.splitPhysical), sb.resist * pierce, sa.magic))
+        ? Math.round(mitigate(raw * SKILL_FORMULA.splitPhysical, sb.defense * corrodeGuard.defense * pierce, sa.attack)) + Math.round(mitigate(raw * (1 - SKILL_FORMULA.splitPhysical), sb.resist * corrodeGuard.resist * pierce, sa.magic))
         : Math.round(mitigate(raw, defense, magical ? sa.magic : sa.attack));
     const linked = chosen?.damageBonusCondition === 'bleeding' ? !!(b.effects.dot || b.effects.poison || b.effects.burn) : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
     const preyHit = !!(chosen?.preyBonus && b.prey);
@@ -592,16 +620,19 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (!statusOnly || !landed) ev.hits.push(landed ? hitRecord('main', actual, damage, crit, superCrit) : { kind: 'main', value: 0, critical: false, miss: true });
     if (healOnly) notes.push(`회복 ${healed}`);
     // v3.5 상태이상 저항: 몬스터가 거는 해로운 상태이상을 대상의 statusResist 확률로 무효화합니다(저항이 0이면 난수를 쓰지 않음).
-    const harmful = chosen?.effect && RESISTABLE.has(chosen.effect) ? chosen.effect : undefined;
+    // v3.151 기본 공격 상태이상: 기술이 없을 때(기본 공격 · 마력 평타) 장착한 패시브의 basicEffect를 그 공격의 효과로 씁니다.
+    const basic = !chosen ? a.skills.map(id => skillById(id)).find(x => x?.basicEffect) : undefined;
+    const src: Skill | undefined = chosen ?? (basic ? { ...basic, effect: basic.basicEffect } as Skill : undefined);
+    const harmful = src?.effect && RESISTABLE.has(src.effect) ? src.effect : undefined;
     const resisted = !!(landed && harmful && a.foe && sb.statusResist > 0 && !isImmune(b, harmful as ImmuneStatus) && rng() < sb.statusResist);
     if (resisted) { notes.push(`${RESIST_LABELS[harmful!]} 저항`); ev.resisted = harmful; }
-    const effect = resisted ? undefined : chosen?.effect;
+    const effect = resisted ? undefined : src?.effect;
     const onset: { name: string; value: number }[] = [];
     // v3.86 각성기가 거는 상태이상은 지속(패시브 보너스 포함)에 awaken.statusScale을 곱합니다.
     const lasting = (turns: number) => forced?.kind === 'awaken' && chosen?.awaken?.statusScale ? Math.round(turns * chosen.awaken.statusScale) : turns;
-    if (landed && chosen && effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
-    else if (landed && chosen && effect === 'stun') {
-        const turns = lasting((chosen.statusTurns ?? 1) + sa.stunBonus);
+    if (landed && src && effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
+    else if (landed && src && effect === 'stun') {
+        const turns = lasting((src!.statusTurns ?? 1) + sa.stunBonus);
         b.stun = Math.max(b.stun, turns);
         notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
         ev.statuses.push({ id: 'stun', turns });
@@ -663,30 +694,38 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const value = Math.min(b.hp, Math.floor(overheal * SKILL_FORMULA.overhealDamage));
         if (value > 0) { b.hp -= value; ev.holy = value; notes.push(`넘친 회복 → 피해 ${value}`); if (b.hp <= 0) stood = endure(b, sb, notes, ev) || stood; }
     }
-    if (landed && chosen && effect === 'weaken' && isImmune(b, 'weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
-    else if (landed && chosen && effect === 'weaken') {
-        const turns = lasting(chosen.statusTurns ?? STATUS_TUNING.weakenTurns);
+    if (landed && src && effect === 'weaken' && isImmune(b, 'weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
+    else if (landed && src && effect === 'weaken') {
+        const turns = lasting(src!.statusTurns ?? STATUS_TUNING.weakenTurns);
         extendStatus(b.effects, 'weaken', turns);
         notes.push(`공격 약화 ${turns}턴`);
         ev.statuses.push({ id: 'weaken', turns });
     }
-    if (landed && chosen && effect === 'silence' && isImmune(b, 'silence')) { notes.push('침묵 면역'); ev.immune = 'silence'; }
-    else if (landed && chosen && effect === 'silence') {
-        const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.silenceTurns) + sa.controlBonus);
+    if (landed && src && effect === 'silence' && isImmune(b, 'silence')) { notes.push('침묵 면역'); ev.immune = 'silence'; }
+    else if (landed && src && effect === 'silence') {
+        const turns = lasting((src!.statusTurns ?? STATUS_TUNING.silenceTurns) + sa.controlBonus);
         extendStatus(b.effects, 'silence', turns);
         notes.push(`침묵 ${turns}턴`);
         ev.statuses.push({ id: 'silence', turns });
     }
-    if (landed && chosen && effect === 'slow' && isImmune(b, 'slow')) { notes.push('감속 면역'); ev.immune = 'slow'; }
-    else if (landed && chosen && effect === 'slow') {
-        const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.slowTurns) + sa.controlBonus);
+    if (landed && src && effect === 'slow' && isImmune(b, 'slow')) { notes.push('감속 면역'); ev.immune = 'slow'; }
+    else if (landed && src && effect === 'slow') {
+        const turns = lasting((src!.statusTurns ?? STATUS_TUNING.slowTurns) + sa.controlBonus);
         extendStatus(b.effects, 'slow', turns);
         notes.push(`감속 ${turns}턴`);
         ev.statuses.push({ id: 'slow', turns });
     }
+    // v3.151 부식: 물리 · 마법 방어와 속도를 깎는 최상급 디버프(일리움). 기본 공격 상태이상(패시브)으로도 걸립니다.
+    if (landed && src && effect === 'corrode' && isImmune(b, 'corrode')) { notes.push('부식 면역'); ev.immune = 'corrode'; }
+    else if (landed && src && effect === 'corrode') {
+        const turns = lasting((src.statusTurns ?? STATUS_TUNING.corrodeTurns) + sa.controlBonus);
+        extendStatus(b.effects, 'corrode', turns);
+        notes.push(`부식 ${turns}턴`);
+        ev.statuses.push({ id: 'corrode', turns });
+    }
     if (landed && chosen?.effect === 'haste') {
         const turns = chosen.statusTurns ?? STATUS_TUNING.hasteTurns;
-        extendStatus(a.effects, 'haste', turns);
+        grantBuff(a.effects, { id: 'haste', name: '가속', turns, speedMultiplier: 1 + STATUS_TUNING.hasteMultiplier });
         notes.push(`가속 ${turns}턴`);
         ev.statuses.push({ id: 'haste', turns, onSelf: true });
     }
@@ -708,7 +747,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const poisonFill = Math.min(1, (b.effects.poison?.stacks || 0) / (STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus)), burnFill = Math.min(1, (b.effects.burn?.stacks || 0) / STATUS_TUNING.burnMaxStacks), fill = (poisonFill + burnFill) / 2;
     const fullFinish = !!finisher && poisonFill >= 1 && burnFill >= 1, finisherHits = !finisher || fill <= 0 ? 0 : fullFinish ? finisher.maxHits : Math.min(finisher.maxHits - 1, Math.max(1, Math.round(finisher.maxHits * (1 + fill) / 2)));
     if (finisher) notes.push(finisherHits ? `퍼니시 ${finisherHits}회` : '퍼니시 없음');
-    const skillFollowUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
+    const skillFollowUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(chosen?.awaken ? STATUS_TUNING.maxExtraAttacksAwaken : STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
     // v3.146 정령(은월): 장착한 패시브의 정령이 모든 공격 행동(기본 공격 포함, 피해 없는 기술 · 순수 회복 · 도트 퍼니셔 제외)에 추가타를 붙입니다.
     const spirits = a.skills.map(id => skillById(id)?.companion).filter((c): c is { hits: number; power: number } => !!c);
     const spirit = spirits.length && !statusOnly && !healOnly && !finisher ? { hits: Math.max(...spirits.map(c => c.hits)), power: Math.max(...spirits.map(c => c.power)) } : null;

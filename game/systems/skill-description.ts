@@ -16,7 +16,7 @@ export function skillBonusText(key: string, value: number) {
 }
 const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '던전 클리어·보스 처치', species: '지정 몬스터 처치', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업', variant: '변종·황금 처치', deaths: '쓰러진 횟수', turns: '보낸 턴', str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
 const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록' };
-const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속' };
+const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속', corrode: '부식' };
 /** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */
 /** v27.15 도감의 적 스킬 한 줄: '물리 150%' · '출혈 5턴' · '물리 110% · 자신 가속 3턴'. 긴 문장은 쓰지 않습니다. */
 export function enemySkillBrief(sk: Skill) {
@@ -60,11 +60,13 @@ export function skillBrief(sk: Skill): string {
         for (const pc of sk.perCount || []) parts.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')}`);
         if (sk.bloodRage) parts.push(`잃은 체력 비례 피해 최대 +${skillPercent(sk.bloodRage)}`);
         if (sk.companion) parts.push(`정령 추가타 ${sk.companion.hits}회 · 위력 ${skillPercent(sk.companion.power)}`);
+        if (sk.basicEffect) parts.push(`기본 공격에 ${STATUS_WORD[sk.basicEffect]} ${sk.statusTurns ?? STATUS_TUNING.corrodeTurns}턴`);
         if (sk.song) parts.unshift('노래 · AP 0');
         return parts.join(' · ') || '장착 효과';
     }
     const parts = [sk.statusOnly ? '피해 없음' : `${sk.damageType === 'magic' ? '마법' : sk.damageType === 'split' ? '복합' : sk.damageType === 'fixed' ? '고정(방어 무시)' : '물리'} 피해 ×${number(sk.multiplier || 1)}`];
-    if (sk.effect && STATUS_WORD[sk.effect] && sk.effect !== 'haste') parts.push(`${statusLabel(sk)} ${sk.statusTurns ?? ({ stun: 1, bleed: STATUS_TUNING.bleedTurns, poison: STATUS_TUNING.poisonTurns, burn: STATUS_TUNING.burnTurns, weaken: STATUS_TUNING.weakenTurns, silence: STATUS_TUNING.silenceTurns, slow: STATUS_TUNING.slowTurns } as Record<string, number>)[sk.effect]}턴`);
+    if (sk.effect && STATUS_WORD[sk.effect] && sk.effect !== 'haste') parts.push(`${statusLabel(sk)} ${sk.statusTurns ?? ({ stun: 1, bleed: STATUS_TUNING.bleedTurns, poison: STATUS_TUNING.poisonTurns, burn: STATUS_TUNING.burnTurns, weaken: STATUS_TUNING.weakenTurns, silence: STATUS_TUNING.silenceTurns, slow: STATUS_TUNING.slowTurns, corrode: STATUS_TUNING.corrodeTurns } as Record<string, number>)[sk.effect]}턴`);
+    if (sk.selfBuff) parts.push(`자기 버프 ${sk.selfBuff.name ?? sk.selfBuff.id} ${sk.selfBuff.turns}턴`);
     if (sk.effect === 'haste') parts.push(`자신 가속 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
     if (sk.alsoEffect) parts.push(`${STATUS_WORD[sk.alsoEffect]} ${sk.statusTurns}턴`);
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
@@ -96,6 +98,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.scaling === 'resist') base.push(`마법 방어 × ${number(sk.scalingRatio ?? 1)} × 결계 친화도`);
         if (sk.scaling === 'hp') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hpScaling)}`);
         if (sk.scaling === 'mana') base.push(`최대 마나 × ${number(sk.scalingRatio ?? SKILL_FORMULA.manaScaling)}`);
+        if (sk.scaling === 'arcane') base.splice(0, base.length, `마력 평타 계수 기준값(마법 공격 × (${number(SKILL_FORMULA.arcaneStrikeRatio)} + 마력 평타 계수 보너스))`);
         if (sk.manaBurn) base.push(`태운 마나(현재 마나의 ${skillPercent(sk.manaBurn)}) × ${number(sk.burnScale ?? SKILL_FORMULA.manaBurnScale)}`);
         if (sk.scaling === 'hybrid') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hybridHpScaling)}`, `최대 마나 × ${number((sk.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2)}`);
         if (sk.healOnly) { out.push(`직접 피해 없음 · 최대 체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복(회복량 보너스 적용)`); return out; }

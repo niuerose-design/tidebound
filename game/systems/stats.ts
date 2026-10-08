@@ -143,7 +143,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const key in gear) {
         const n = gear[key as keyof CombatStats]!, own = free[key as keyof CombatStats] || 0;
         // v27.86 힘의 길: 장비 능력치 ×(1 − 30·50·70%).
-        add(key as keyof CombatStats, 'equipment', (Math.min(n - own, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? Infinity) + own) * roughGear(s));
+        // v3.151 마력 평타 계수(룬 핵 · 몽환의 마력)는 장비 몫만 규칙 상한(.3)까지 셉니다. 전에는 아래 RULE_CAPS 전체 상한이 스킬 몫(라이트 오브 레프 등)까지 깎아 일리움 패시브가 무의미했음.
+        add(key as keyof CombatStats, 'equipment', (Math.min(n - own, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? (key === 'arcaneRatioBonus' ? RULE_CAPS.arcaneRatioBonus! : Infinity)) + own) * roughGear(s));
     }
     // v3.12 칠흑 세트(보유 수 기준, 영구).
     // v3.38 칠흑 세트는 장비 출처로 표시합니다(전에는 ‘도감’으로 잘못 묶였음).
@@ -214,7 +215,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const k of ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'speed', 'harmony', 'hpRegen'] as (keyof CombatStats)[])
         limit(k, Math.max(k === 'hp' || k === 'speed' ? 1 : 0, Math.floor(a[k])));
     // 장비 규칙 옵션은 같은 규칙끼리 상한까지만 합산합니다.
-    for (const [key, cap] of Object.entries(RULE_CAPS)) limit(key as keyof CombatStats, Math.min(cap!, a[key as keyof CombatStats] || 0));
+    for (const [key, cap] of Object.entries(RULE_CAPS)) if (key !== 'arcaneRatioBonus') limit(key as keyof CombatStats, Math.min(cap!, a[key as keyof CombatStats] || 0));
     // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +1%.
     // v3.75 장비 극치명 옵션의 극 치명타 확률은 상한을 넘은 치명타 몫에 더합니다.
     a.superCrit = Math.min(1, (a.superCrit || 0) + Math.max(0, a.crit - SKILL_FORMULA.critCap) * SKILL_FORMULA.superCritPerHundred); rec('superCrit', 'limit', a.superCrit);

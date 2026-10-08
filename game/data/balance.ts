@@ -226,10 +226,14 @@ export const STATUS_TUNING = {
     hasteTurns: 3,
     slowMultiplier: .35,
     hasteMultiplier: .35,
+    /** v3.151 부식(최상급 디버프): 지속 턴과, 걸린 동안 깎이는 물리 방어 · 마법 방어 · 속도 비율. */
+    corrodeTurns: 3, corrodeDefense: .3, corrodeResist: .3, corrodeSpeed: .2,
     /** Extra hits are intentionally capped so one proc cannot create runaway loops. */
     maxExtraAttacks: 2,
+    /** v3.151 각성기의 추가타 상한(일리움 그라비티 코어 5연타, 은월 파쇄 연권). */
+    maxExtraAttacksAwaken: 4,
     /** v24.1 면역: 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 턴(자기 행동 기준). */
-    immuneTurns: { stun: 2, bleed: 1, poison: 1, burn: 1, weaken: 1, silence: 1, slow: 1 },
+    immuneTurns: { stun: 2, bleed: 1, poison: 1, burn: 1, weaken: 1, silence: 1, slow: 1, corrode: 1 },
     /** v24.1 초반 배율 제한: 1~2차(공용 포함)에서 피해와 함께 거는 상태이상별 최대 피해 배율. */
     earlyStatusMultiplierCap: { stun: 1.2, silence: 1.5 } as Partial<Record<string, number>>,
 } as const;
@@ -242,6 +246,7 @@ export const STATUS_GUIDE = [
     { id: 'poison', name: '중독', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받습니다. 걸릴 때마다 한 중첩씩 쌓여 틱 피해가 커집니다(최대 ${STATUS_TUNING.poisonMaxStacks}중첩, 포화 옵션으로 상한 증가).`, detail: `중첩당 (명중한 공격의 위력 × ${SKILL_FORMULA.poisonRatio}) + 대상 현재 체력의 ${(SKILL_FORMULA.poisonHpRatio * 100).toFixed(1)}%가 틱 피해이고, 체력분도 중첩 수만큼 곱합니다. 다시 걸면 지속 ${STATUS_TUNING.poisonTurns}턴이 갱신됩니다. 출혈과 함께 걸릴 수 있습니다. 전투에서 처음 걸면 ${STATUS_TUNING.poisonFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
     { id: 'burn', name: '화상', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받고, 화상 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.burnVulnerability * 100)}% 커집니다. 걸릴 때마다 한 중첩씩 쌓입니다(최대 ${STATUS_TUNING.burnMaxStacks}중첩).`, detail: `중독과 출혈의 중간입니다. 중첩당 틱 = 위력 × ${SKILL_FORMULA.burnRatio} + 대상 현재 체력 × ${SKILL_FORMULA.burnHpRatio}, ${STATUS_TUNING.burnTurns}턴. 출혈·중독과 함께 걸립니다. 전투에서 처음 걸면 ${STATUS_TUNING.burnFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
     { id: 'slow', name: '감속', kind: '속도 감소', description: `속도가 ${Math.round(STATUS_TUNING.slowMultiplier * 100)}% 낮아져 선공·명중 보정·연속 행동에 불리해집니다.`, detail: '선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
+    { id: 'corrode', name: '부식', kind: '방어 · 속도 감소', description: `물리 방어와 마법 방어가 ${Math.round(STATUS_TUNING.corrodeDefense * 100)}%, 속도가 ${Math.round(STATUS_TUNING.corrodeSpeed * 100)}% 떨어집니다.`, detail: '약화(주는 피해 감소) · 감속과 따로 걸립니다. 일리움의 기본 공격과 연성 기술이 겁니다.' },
     { id: 'haste', name: '가속', kind: '속도 증가', description: `속도가 ${Math.round(STATUS_TUNING.hasteMultiplier * 100)}% 높아져 선공·명중 보정·연속 행동에 유리해집니다.`, detail: '상대보다 빨라지면 연속 행동 확률이 올라갑니다. 선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
 ] as const;
 /**
