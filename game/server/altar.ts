@@ -60,7 +60,7 @@ async function trySummonRaid(raids: Record<string, AltarRaidRow>, gauges: Record
         if (raidAlive(r, now) || raidWaiting(r, now)) continue;
         if ((gauges[raid.id]?.points || 0) < raid.cost) continue;
         if (!await database.spendAltarGauge(raid.id, raid.cost)) continue;
-        // v3.189 소환 단계: 같은 날 격파된 뒤의 소환은 한 단계 위(체력 ×RAID_STAGE.hp …), 하루가 지나면 1단계.
+        // v3.191 소환 단계: 같은 날 격파된 뒤의 소환은 한 단계 위(체력 ×RAID_STAGE.hp …), 하루가 지나면 1단계.
         const { stage, dayStart } = nextRaidStage(r, now);
         if (!await database.summonAltarRaid(raid.id, raidStageStats(raid, stage).hp, now + raid.lifetimeHours * 3600_000, now, RAID.respawnMs, stage, dayStart)) { await database.addAltarGauge(raid.id, raid.cost); continue; }
         await announce(ALTAR_NEWS.raidAppear(raid.name, raid.lifetimeHours, stage), now);

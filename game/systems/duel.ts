@@ -24,7 +24,7 @@ export function abyssBossSnapshot(depth: number): Snapshot {
 }
 /**
  * v27.91 월드보스 결투 상대. hp는 서버가 들고 있는 남은 공유 체력(없으면 그 단계의 최대 체력)이라, 남은 체력이 적으면 한 번의 도전으로 쓰러집니다.
- * v3.189 stage는 소환 단계(RAID_STAGE): 능력치는 raidStageStats, 지속 피해의 체력 비례분은 1단계 체력 기준(dotHpCap).
+ * v3.191 stage는 소환 단계(RAID_STAGE): 능력치는 raidStageStats, 지속 피해의 체력 비례분은 1단계 체력 기준(dotHpCap).
  */
 export function raidBossSnapshot(raid: RaidDef, hp?: number, stage = 1): Snapshot {
     const staged = raidStageStats(raid, stage), stats = { ...staged, hp: Math.max(1, Math.floor(hp ?? staged.hp)), mana: 100, manaRegen: 10 };

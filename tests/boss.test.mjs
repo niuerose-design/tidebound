@@ -30,7 +30,7 @@ test('v3.188 boss pass 2: onyx hp multiplier per boss with √ difficulty scalin
     assert.equal(ALTAR.firstGod.depth, 59); const god = Du.abyssBossSnapshot(ALTAR.firstGod.depth).stats; assert.ok(god.hp > 9e8 && god.hp < 1.05e9, `god hp ${god.hp}`);
 });
 
-test('v3.189 world boss summon stages: hp ×2 · attack ×1.15 per stage (max 10), +1 after a kill on the same day, same stage after it leaves, back to 1 after a day; DoT hp-ratio stays on stage-1 hp', async () => {
+test('v3.191 world boss summon stages: hp ×2 · attack ×1.15 per stage (max 10), +1 after a kill on the same day, same stage after it leaves, back to 1 after a day; DoT hp-ratio stays on stage-1 hp', async () => {
     const A = await load('data/altar'), Du = await load('systems/duel'), C = await load('systems/combat');
     assert.deepEqual([A.RAID_STAGE.hp, A.RAID_STAGE.attack, A.RAID_STAGE.defense, A.RAID_STAGE.max, A.RAID_STAGE.dayMs], [2, 1.15, 1, 10, 24 * 3600_000]);
     const z = A.RAIDS.find(r => r.id === 'zakum'), s1 = A.raidStageStats(z, 1), s3 = A.raidStageStats(z, 3), s99 = A.raidStageStats(z, 99);

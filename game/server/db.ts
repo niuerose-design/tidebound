@@ -26,7 +26,7 @@ export type AltarOfferRow = { id: string; week: string; player_id: string; accou
 export type AltarAmounts = { gold: number; pearls: number; essence: number };
 /** v27.91 월드보스 피해 기록. id는 세대:모험가. */
 /** v3.22 보스별 월드보스 상태(none/alive/slain/gone). */
-export type AltarRaidRow = { id: string; gen: number; state: string; hp: number; hp_max: number; until: number; slayer: string; slain_at: number; /** v3.189 소환 단계와 그날의 첫 소환 시각(RAID_STAGE). */ stage: number; day_start: number };
+export type AltarRaidRow = { id: string; gen: number; state: string; hp: number; hp_max: number; until: number; slayer: string; slain_at: number; /** v3.191 소환 단계와 그날의 첫 소환 시각(RAID_STAGE). */ stage: number; day_start: number };
 export type AltarRaidHitRow = { id: string; gen: number; player_id: string; name: string; dealt: number; hits: number; updated_at: number };
 /** v3.84 모험가별 가장 최근 월드보스 도전 기록(요약 JSON · 전투 기록 JSON). 피해 순위에서 다른 모험가도 봅니다. */
 export type AltarRaidLogRow = { id: string; gen: number; player_id: string; summary: string; logs: string; updated_at: number };
@@ -132,7 +132,7 @@ export interface Storage {
     /** v3.22 월드보스는 보스마다 따로(altar_raids). 세대 번호는 모든 보스가 함께 쓰는 순번(altar.raid_gen)이라 피해 기록(altar_raid_hits)이 섞이지 않습니다. */
     listAltarRaids(): Promise<AltarRaidRow[]>;
     /** 그 보스가 살아 있지 않고 격파 뒤 respawnMs도 지났을 때만 새로 나타납니다. 새 세대 번호, 못 했으면 0. */
-    /** v3.189 stage · dayStart는 소환 단계(data/altar nextRaidStage). 생략하면 1단계 · 지금. */
+    /** v3.191 stage · dayStart는 소환 단계(data/altar nextRaidStage). 생략하면 1단계 · 지금. */
     summonAltarRaid(raidId: string, hpMax: number, until: number, now: number, respawnMs: number, stage?: number, dayStart?: number): Promise<number>;
     /** 그 보스의 gen 세대가 살아 있을 때만 피해를 빼고 남은 체력을 돌려줍니다(0 이하는 0). 아니면 null. */
     hitAltarRaid(raidId: string, gen: number, dealt: number): Promise<number | null>;
@@ -204,7 +204,7 @@ const SCHEMA = [
     // v3.22 보스별 월드보스. 예전 한 마리 칸(altar.raid_*)에 있던 보스는 처음 한 번 옮깁니다(이미 있으면 그대로).
     "CREATE TABLE IF NOT EXISTS altar_raids (id TEXT PRIMARY KEY, gen INTEGER NOT NULL DEFAULT 0, state TEXT NOT NULL DEFAULT 'none', hp BIGINT NOT NULL DEFAULT 0, hp_max BIGINT NOT NULL DEFAULT 0, until BIGINT NOT NULL DEFAULT 0, slayer TEXT NOT NULL DEFAULT '', slain_at BIGINT NOT NULL DEFAULT 0)",
     "INSERT INTO altar_raids (id,gen,state,hp,hp_max,until,slayer,slain_at) SELECT raid_id, raid_gen, raid_state, raid_hp, raid_hp_max, raid_until, raid_slayer, raid_slain_at FROM altar WHERE id='main' AND raid_id<>'' AND raid_gen>0 AND raid_state IN ('alive','slain') ON CONFLICT (id) DO NOTHING",
-    // v3.189 월드보스 소환 단계.
+    // v3.191 월드보스 소환 단계.
     'ALTER TABLE altar_raids ADD COLUMN IF NOT EXISTS stage INTEGER NOT NULL DEFAULT 1',
     'ALTER TABLE altar_raids ADD COLUMN IF NOT EXISTS day_start BIGINT NOT NULL DEFAULT 0',
     // v3.28 해커 조직: 조직 하나를 JSON 한 칸에 두고 revision으로 동시 수정을 막습니다(조직원 10명 이하라 한 행으로 충분).
@@ -396,7 +396,7 @@ function altarTotals(db: FileDb): AltarTotalRow[] {
 function fileRaids(db: FileDb) {
     const raids = db.altarRaids ??= {}, a = db.altar;
     if (a && a.raid_id && a.raid_gen > 0 && (a.raid_state === 'alive' || a.raid_state === 'slain') && !raids[a.raid_id]) raids[a.raid_id] = { id: a.raid_id, gen: a.raid_gen, state: a.raid_state, hp: a.raid_hp, hp_max: a.raid_hp_max, until: a.raid_until, slayer: a.raid_slayer, slain_at: a.raid_slain_at, stage: 1, day_start: 0 };
-    // v3.189 단계 칸이 없는 옛 기록은 1단계 · 날 기록 없음.
+    // v3.191 단계 칸이 없는 옛 기록은 1단계 · 날 기록 없음.
     for (const r of Object.values(raids)) { r.stage ||= 1; r.day_start ||= 0; }
     return raids;
 }

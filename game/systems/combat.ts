@@ -13,7 +13,7 @@ export type Fighter = {
     job?: string;
     stats: Stats;
     hp: number;
-    /** v3.189 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계). 없으면 현재 체력. */
+    /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계). 없으면 현재 체력. */
     dotHpCap?: number;
     skills: string[];
     /** 재사용 대기(행동 단위). v3.86 각성기는 턴 단위로 같은 칸에 두고, '~id' 칸에 실패한 판정 수를 셉니다. */
@@ -113,7 +113,7 @@ const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합', fixe
 const opens = (b: Fighter, key: 'bleed' | 'poison' | 'burn') => { const fx = (b.effects ??= {}); if (fx.opened?.[key]) return false; (fx.opened ??= {})[key] = true; return true; };
 /** v3.54 지속 피해의 체력 비례분: 틱 때 현재 체력 × hpRatio. hpRatio가 없는 옛 효과는 저장된 고정값(legacy)을 씁니다. */
 const hpPart = (current: number, hpRatio: number | undefined, legacy: number | undefined) => hpRatio === undefined ? (legacy || 0) : Math.floor(Math.max(0, current) * hpRatio);
-/** v3.189 지속 피해 체력 비례분의 기준 체력: 현재 체력, 상한(dotHpCap)이 있으면 그 아래로. 월드보스 소환 단계가 체력을 올려도 지속 피해는 1단계 체력 기준입니다. */
+/** v3.191 지속 피해 체력 비례분의 기준 체력: 현재 체력, 상한(dotHpCap)이 있으면 그 아래로. 월드보스 소환 단계가 체력을 올려도 지속 피해는 1단계 체력 기준입니다. */
 const dotHp = (f: Pick<Fighter, 'hp' | 'dotHpCap'>) => f.dotHpCap ? Math.min(f.hp, f.dotHpCap) : f.hp;
 export const swarmDotShare = (swarm?: number) => swarm && swarm > 1 ? 1 / Math.sqrt(swarm) : 1;
 /** v27.75 화면에 보여 주는 타격 수치: 계산된 피해(raw). 남은 체력에 막힌 실제 감소량(value)은 규칙에만 씁니다. */

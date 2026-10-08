@@ -98,7 +98,7 @@ export type RaidDef = {
 /** v27.93 머무는 시간은 보스마다(lifetimeHours), 격파 뒤 다음 소환까지 respawnMs 대기. */
 export const RAID = { cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10, respawnMs: 2 * 3600_000, /** v3.84 순위에서 보는 최근 도전 전투 기록 줄 수(끝에서부터). */ logLines: 160 } as const;
 /**
- * v3.189 소환 단계(docs/boss-plan.md §8.3). 센 모험가가 잡는 것은 의도이지만, 같은 날 다시 소환될 때마다 단계가 올라 센 모험가 기준으로도 점점 잡기 힘들어지고,
+ * v3.191 소환 단계(docs/boss-plan.md §8.3). 센 모험가가 잡는 것은 의도이지만, 같은 날 다시 소환될 때마다 단계가 올라 센 모험가 기준으로도 점점 잡기 힘들어지고,
  * 첫 소환부터 dayMs가 지나면 1단계로 돌아갑니다. 단계 k: 체력 ×hp^(k-1) · 공격/마력 ×attack^(k-1) · 방어/저항 ×defense^(k-1), 최대 max단계.
  * 지속 피해의 체력 비례분은 1단계 체력을 기준으로 셉니다(Snapshot.dotHpCap) — 체력만 올리면 체력 비례 지속 피해가 함께 커져 직접 피해 직업만 벌을 받기 때문입니다.
  * 격파된 뒤의 소환만 단계가 오르고, 못 잡고 떠난 뒤의 소환은 같은 단계입니다.
@@ -121,7 +121,7 @@ export type RaidHitSummary = { at: number; dealt: number; turns: number; died: b
  * v3.83 방어 재조정: 체력은 그대로 두고, 목표 몸의 중앙 직업이 한 번 도전(80턴)에 깎는 양으로 필요한 도전 횟수를 맞춥니다
  * (scripts/check-tier5.mjs --only raid): 발록 환생 0급 약 10번 · 자쿰 환생 50급 약 100번 · 혼테일 환생 100급 약 1,500번(방어 1,000, 운영 결정).
  * 예전 혼테일 방어 15,000은 엔드 몬스터(100~150)의 100배라 직접 피해가 거의 들어가지 않았습니다. 지속 피해(체력 비례)는 그대로입니다.
- * (v3.189, docs/boss-plan.md §8.3) 1단계 수치는 그대로입니다. 센 모험가가 잡는 것은 의도(발록 R10 · 자쿰 R50 빌림 몸 1번)이고, 같은 날 다시 소환될 때마다 소환 단계(RAID_STAGE)가 올라 점점 잡기 힘들어집니다.
+ * (v3.191, docs/boss-plan.md §8.3) 1단계 수치는 그대로입니다. 센 모험가가 잡는 것은 의도(발록 R10 · 자쿰 R50 빌림 몸 1번)이고, 같은 날 다시 소환될 때마다 소환 단계(RAID_STAGE)가 올라 점점 잡기 힘들어집니다.
  * 혼테일은 환생 100 몸이 8~17번이라 아직 그만한 모험가가 없어 그대로. 기준 몸 실측은 scripts/check-bosses.mjs --only raid [--raid-stage k].
  */
 export const RAIDS: RaidDef[] = [
@@ -171,7 +171,7 @@ export type AltarRaidInfo = {
     /** 참여자 수와 마지막 일격 */ participants: number; slayer: string;
     /** 피해 순위(상위 RAID.boardSize)와 내 기록 */ board: { rank: number; name: string; dealt: number; hits: number; self: boolean; /** v3.84 가장 최근 도전 요약 */ last?: RaidHitSummary }[]; me: { dealt: number; hits: number; rank: number };
     reward: RaidDef['reward']; slayerBonus: RaidDef['slayer'];
-    /** v3.189 소환 단계(1부터, RAID_STAGE). */ stage: number;
+    /** v3.191 소환 단계(1부터, RAID_STAGE). */ stage: number;
 };
 
 /** 받침에 맞는 조사(이/가, 을/를, 은/는, 과/와). 한글이 아니면 받침 없음으로 봅니다. */
@@ -185,7 +185,7 @@ export type AltarStatus = {
     blessings: { id: BlessingId; name: string; desc: string; until: number; level: number }[];
     god: { gen: number; name: string; until: number } | null;
     /** v3.22 살아 있는 월드보스들(알림용, 체력 비율 pct 0~1). 이 값이 없는 옛 요약은 다음 동기화 때 서버가 새로 적습니다. */
-    raids?: { id: string; gen: number; name: string; until: number; pct: number; /** v3.189 소환 단계(없으면 1). */ stage?: number }[];
+    raids?: { id: string; gen: number; name: string; until: number; pct: number; /** v3.191 소환 단계(없으면 1). */ stage?: number }[];
     throne: string;
     gauges: { id: AltarGaugeId; name: string; pct: number }[];
 };

@@ -120,7 +120,7 @@ function measureOnyx() {
 }
 
 // ── 월드보스 ───────────────────────────────────────────────────────────────────────────────────
-// 월드보스 목표(docs/boss-plan.md §8.3, v3.189): 1단계는 센 모험가가 잡는 것이 의도(발록 R10 · 자쿰 R50 1번). 같은 날 다시 소환되면 단계가 올라(RAID_STAGE) 점점 어려워집니다.
+// 월드보스 목표(docs/boss-plan.md §8.3, v3.191): 1단계는 센 모험가가 잡는 것이 의도(발록 R10 · 자쿰 R50 1번). 같은 날 다시 소환되면 단계가 올라(RAID_STAGE) 점점 어려워집니다.
 // 처치까지 횟수는 '한 몸이 혼자 다 깎을 때'의 셈. --raid-stage 1,3,5 로 단계별 측정(지속 피해는 1단계 체력 기준 dotHpCap 포함).
 const RAID_TARGET = { balrog: { rebirth: 0, kills: 10 }, zakum: { rebirth: 50, kills: 1 }, horntail: { rebirth: 100, kills: 10 } };
 const RAID_STAGES = (arg('--raid-stage') || '1').split(',').map(Number);
