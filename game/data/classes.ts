@@ -60,7 +60,10 @@ export type Job = {
     rewardScale?: number;
     /** v3.61 세부 역할(data/roles.ts). 비밀 직업은 데이터에 직접, 공개 직업은 계보 기본값·직업별 표로 정합니다. */
     subRole?: import('./roles').SubRoleId;
+    /** 히든 직업(직업 상세의 ‘히든’ 표시 · docs/concept.md 11.10). 비밀 표(game/secret)의 직업은 드러나기 전까지 이름 · 설명도 숨깁니다. */
     hidden?: boolean;
+    /** v3.172 공개 히든: 히든으로 분류하지만 공개 표에 있어 처음부터 드러나는 직업(유리 대포 · 玄). 숨김 판정(concealedJob)에서 빠집니다. */
+    open?: boolean;
     rebirth?: number;
     /** 계보 id. 없으면 루트 조상 id, 상위·하위가 없는 1차 직업은 `${tree}-independent`(lineageOf). */
     lineage?: string;
@@ -77,6 +80,8 @@ export type Job = {
      */
     constraint?: JobConstraint;
 };
+/** 드러나기 전까지 숨겨야 하는 히든 직업인지. 공개 히든(open)은 히든 표시만 달고 숨기지 않습니다. */
+export const concealedJob = (j: Pick<Job, 'hidden' | 'open'>) => !!j.hidden && !j.open;
 /** 제약 직업의 생존 장치. 전투 엔진(combat.ts)과 능력치(stats.ts)가 그대로 읽습니다. */
 export type ConstraintDevices = {
     /** 턴 순서에서 항상 먼저 행동합니다(속도 비교 생략). 연속 행동 확률은 속도대로입니다. */

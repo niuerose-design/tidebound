@@ -2,7 +2,7 @@
 import type { ActionHandlers } from './types';
 import { HACKER, PRIVACY_FIELDS, HACK_TIER, HACK_NAMES, WIPE_TRACE_ID, programById, type PrivacyField } from '../../data/hacker';
 import { canUse } from '../progression';
-import { JOBS } from '../../data/classes';
+import { JOBS, concealedJob } from '../../data/classes';
 import { STAGES, DUNGEONS } from '../../data/world';
 import { BLESSINGS, RAIDS } from '../../data/altar';
 import { crewNote, entriesCap, hackerState, rollHackerDay, isHacker, isWhiteHacker, gainHacker, makeNode, nodeExtra, traceKeep, judge, nodeAnswer, adguardLevel, bumpSeason, memoryCap, memoryUsed, botnetOn, isBlackHacker, crewOn } from '../hacker';
@@ -28,7 +28,7 @@ function parseDecoy(level: number, show: PrivacyField[], name: string, job: stri
     if (!name && !job && !lv) return '';
     if (level < HACKER.spoof.decoyLevel) throw Error(`미끼 정보는 신원 조작 숙련 ${HACKER.spoof.decoyLevel}단계부터 쓸 수 있습니다.`);
     if (name && (!DECOY_NAME.test(name) || name.includes('???'))) throw Error('미끼 이름은 1~12자(줄바꿈·꺾쇠·|·쉼표 제외)로 쓰세요.');
-    if (job && !JOBS.some(j => j.id === job && !j.hidden)) throw Error('미끼 직업을 다시 고르세요(숨은 직업 제외).');
+    if (job && !JOBS.some(j => j.id === job && !concealedJob(j))) throw Error('미끼 직업을 다시 고르세요(숨은 직업 제외).');
     const n = lv ? Number(lv) : 0;
     if (lv && (!Number.isInteger(n) || n < 1 || n > HACKER.spoof.decoyMaxLevel)) throw Error(`미끼 레벨은 1~${HACKER.spoof.decoyMaxLevel}로 쓰세요.`);
     const out = [name, show.includes('job') ? '' : job, show.includes('level') || !n ? '' : String(n)];

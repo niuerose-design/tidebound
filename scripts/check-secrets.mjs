@@ -18,7 +18,8 @@ const { SERVER_ODDS } = await load('secret/odds');
 // 압축기 숫자 모양: 0.5 → .5, 0.0014 → .0014(지수 표기로 바꾸는 값은 못 찾음 → 하한).
 const n = x => String(x).replace(/^0\./, '.'), num = arr => arr.map(n).join(',');
 // 비밀 직업: 히든 직업과 숨은 조건이 있는 직업. 이름·설명은 드러나기 전까지 비밀입니다(힌트는 공개, 10.2-4).
-const secretJobs = JOBS.filter(j => j.hidden || unlockMet({}, j.id) !== null), secretIds = new Set(secretJobs.map(j => j.id));
+// v3.172 공개 히든(open: 유리 대포 · 玄)은 공개 표에 있어 처음부터 드러나므로 뺍니다.
+const secretJobs = JOBS.filter(j => (j.hidden && !j.open) || unlockMet({}, j.id) !== null), secretIds = new Set(secretJobs.map(j => j.id));
 const text = (s) => typeof s === 'string' && s.length >= 12 ? s : '';
 // 스킬 설명과 일부 직업 이름(예: ‘아델 (2차)’)은 실행 중에 조합되어 글자 그대로는 번들에 없습니다. 이름 검사는 하한값입니다(설명 검사가 더 정확).
 const named = (name) => `name:${JSON.stringify(name)}`;

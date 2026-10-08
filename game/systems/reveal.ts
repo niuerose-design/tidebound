@@ -3,12 +3,12 @@
  * 화면은 이 판정을 직접 하지 않고 카탈로그의 revealed 목록을 봅니다(조건이 비밀이므로).
  */
 import type { State } from '../types';
-import { JOBS, jobById, type Job } from '../data/classes';
+import { JOBS, jobById, concealedJob, type Job } from '../data/classes';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
 import { jobRequirements, jobMastered } from './progression';
 
 /** 실루엣 대상: 히든 직업과 숨은 조건이 있는 직업. */
-export const secretJob = (j: Job) => !!j.hidden || unlockFor({}, j.id) !== null;
+export const secretJob = (j: Job) => concealedJob(j) || unlockFor({}, j.id) !== null;
 /**
  * 실루엣 공개: 들어간 적 있거나 숙달했거나, 숨은 조건을 만족했거나, 관문 조건(환생 횟수·선행 직업 숙련·숨은 조건)을 모두 채우면 이름을 공개합니다.
  * 레벨과 능력치는 보지 않습니다.
