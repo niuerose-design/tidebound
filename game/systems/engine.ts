@@ -5,7 +5,9 @@ import '../secret/register';
 import { commerce } from './commerce';
 import { clampVitals } from './stats';
 import { grantJobSkills } from './progression';
-import { syncGoals, syncAchievements } from './progress';
+import { syncGoals, syncAchievements, claimAchievements, unclaimedAchievements } from './progress';
+import { claimPendingBooks } from './actions/collection';
+import { researchRank } from '../data/economy';
 import { syncVoyage } from './guidance';
 import { addLog } from './state';
 import { syncStatRate } from './turn';
@@ -29,6 +31,13 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
     dispatch(s, a, now, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
     syncAchievements(s, text => addLog(s, text, 'reward'));
+    autoClaimRewards(s);
+}
+/** v3.154 세계석 연구 ‘자동 수령’: 행동(동기화 포함) 뒤에 받지 않은 업적 보상과 도감 연구 보상을 받습니다. 턴 안이 아니라 행동 뒤라 부재중 정산의 비례 환산에 섞이지 않습니다. */
+export function autoClaimRewards(s: State) {
+    if (!(researchRank(s, 'autoClaim') > 0)) return;
+    if (unclaimedAchievements(s).length) { const got = claimAchievements(s, 'all'); addLog(s, `자동 수령 · 업적 보상 ${got.count}개 · 세계석 +${got.pearls}${got.sp ? ` · SP +${got.sp}` : ''}`, 'reward'); }
+    claimPendingBooks(s);
 }
 function dispatch(s: State, a: Action, now: number, rng: () => number) {
     // 직업 기술이 생기기 전 세이브도 다음 행동에서 보충하고, 새로 레벨 조건을 채운 기술도 지급합니다.

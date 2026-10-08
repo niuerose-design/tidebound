@@ -455,7 +455,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v3.148 마나 연소: 현재 마나 × manaBurn을 태웁니다. 태운 만큼 아래에서 피해 기준값에 더합니다.
         if (chosen.manaBurn) { burned = Math.floor((a.mana ?? 0) * chosen.manaBurn); if (burned > 0) { a.mana = (a.mana ?? 0) - burned; ev.manaBurned = burned; notes.push(`마나 ${burned.toLocaleString()} 연소`); } }
         // v3.151 자기 버프: 쓰면 시전자에게 걸립니다(명중과 무관).
-        // v3.154 자기 버프 연장(카데나 메일스트롬): 살아 있는 버프를 모두 N턴 늘립니다.
+        // v3.155 자기 버프 연장(카데나 메일스트롬): 살아 있는 버프를 모두 N턴 늘립니다.
         if (chosen.extendBuffs) { const live = buffsOf(a.effects); if (live.length) { for (const [, bf] of live) bf.turns += chosen.extendBuffs; notes.push(`자기 버프 ${live.length}개 +${chosen.extendBuffs}턴`); } }
         if (chosen.selfBuff) { grantBuff(a.effects, chosen.selfBuff); notes.push(`${chosen.selfBuff.name ?? chosen.selfBuff.id} ${chosen.selfBuff.turns}턴`); ev.statuses.push({ id: chosen.selfBuff.id, turns: chosen.selfBuff.turns, onSelf: true }); }
         if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.poison; delete a.effects.burn; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
@@ -581,7 +581,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (chosen?.sealPower) notes.push(`인 ${a.effects.seals?.length || 0}개`);
     // v27.17 출혈 중인 대상은 직접 피해를 더 받습니다(출혈은 중첩되지 않는 대신 이 보정). v27.48 화상은 그 절반을 더합니다.
     const bleedBoost = 1 + (b.effects.dot ? SKILL_FORMULA.bleedVulnerability : 0) + (b.effects.burn ? SKILL_FORMULA.burnVulnerability : 0);
-    // v3.154 웨폰 버라이어티(카데나): 살아 있는 자기 버프 1개마다 피해 +varietyBonus.
+    // v3.155 웨폰 버라이어티(카데나): 살아 있는 자기 버프 1개마다 피해 +varietyBonus.
     const varietyCount = sa.varietyBonus ? buffsOf(a.effects).length : 0, varietyBoost = 1 + varietyCount * (sa.varietyBonus || 0);
     if (varietyCount) notes.push(`버라이어티 ${varietyCount}`);
     const linkMultiplier = varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));

@@ -19,7 +19,7 @@ export const itemActions: ActionHandlers = {
     unequip(s, { id }) {
         if (!['rod', 'coat', 'charm', 'cape'].includes(id) || !s.equipment[id])
             throw Error('장착한 장비가 없습니다.');
-        if (s.inventory.length >= inventoryCap(s))
+        if (s.inventory.length >= inventoryCap())
             throw Error('가방이 가득 찼습니다.');
         s.inventory.push(s.equipment[id]!);
         s.equipment[id] = null;

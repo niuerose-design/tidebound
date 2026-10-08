@@ -147,7 +147,7 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'stillVerdict', name: '정적의 판결', desc: '', level: 55, job: 'stillLord', chance: .26, cooldown: 4, multiplier: 1.8, cost: 5, selfBuff: { id: 'takedown', name: '테이크다운', turns: 3, speedMultiplier: 1.15 }, masteryMilestones: M4 },
     { ...P, id: 'stillAura', name: '정적의 기운', desc: '물리 공격이 오르고, 살아 있는 자기 버프 1개마다 피해가 더 오릅니다.', level: 55, job: 'stillLord', cost: 3, bonus: { attack: 30, varietyBonus: .02 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'worldStill', name: '세계의 정적', desc: '', level: 70, job: 'silenceDeity', chance: .26, cooldown: 4, multiplier: 2.7, cost: 6, extendBuffs: 2, masteryMilestones: M5 },
-    // v3.126 미스틱 스톰 물리 공격 +60 → +450(숙련 보정 뒤 엔드 물리 약 +22%), 치명타 +10%p. v3.154 기절 연장 → 웨폰 버라이어티(자기 버프 1개당 피해).
+    // v3.126 미스틱 스톰 물리 공격 +60 → +450(숙련 보정 뒤 엔드 물리 약 +22%), 치명타 +10%p. v3.155 기절 연장 → 웨폰 버라이어티(자기 버프 1개당 피해).
     { ...P, id: 'absoluteStill', name: '절대 정적', desc: '물리 공격과 치명타가 크게 오르고, 살아 있는 자기 버프 1개마다 피해가 더 오릅니다.', level: 70, job: 'silenceDeity', cost: 3, bonus: { attack: 450, crit: .1, varietyBonus: .025 }, masteryMilestones: M5 },
     // 복합
     { ...A, ...physical, id: 'lifeTorrent', name: '생명 급류', desc: '', level: 55, job: 'abyssHybrid', chance: .25, cooldown: 4, multiplier: 1.8, cost: 5, scaling: 'hp', scalingRatio: .09, effect: 'drain', drainRatio: .2, masteryMilestones: M4 },

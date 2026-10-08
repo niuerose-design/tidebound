@@ -4,7 +4,7 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
     assert.equal(JOBS.length, 262); assert.equal(new Set(JOBS.map(j => j.id)).size, 262);
-    // v3.135 나이트워커 2~5차 · 골령술사(5개)를 지우고 1차 망인만 남겼습니다. v3.138 미하일 계보 5개 · 성벽 기사를 지웠습니다. v3.153 몬스터 도감 독자 · v3.154 빙결 결박사를 지웠습니다.
+    // v3.135 나이트워커 2~5차 · 골령술사(5개)를 지우고 1차 망인만 남겼습니다. v3.138 미하일 계보 5개 · 성벽 기사를 지웠습니다. v3.153 몬스터 도감 독자 · v3.155 빙결 결박사를 지웠습니다.
     // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
     assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 235);
     // v3.70 능력치 수련 I~III 18개(계열마다 3개, 수련 계보).

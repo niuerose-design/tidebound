@@ -92,6 +92,32 @@ export function refundPearlResearch(s: State) {
     if (spent > 0) { s.pearls = (s.pearls || 0) + spent; addLog(s, `세계석 연구 ‘윤회의 연금술’이 개편 대상이 되어 투자한 세계석 ${spent}개를 돌려받았습니다.`, 'system'); }
     return spent;
 }
+/**
+ * v3.154 편의 연구 개편: 넓은 가방 삭제(기본 100칸, 투자한 세계석 환급), 긴 휴식 12단계 × 2시간 → 3단계 × 6시간(단계 = ⌈옛 단계 ÷ 3⌉, 상한 시간은 줄지 않음 · 새 가격이 더 비싸 환급은 없음).
+ * 무료 지급분(researchGranted) · 연구 예약도 같이 맞춥니다. offlineRescaled로 한 번만 변환합니다.
+ */
+export function rescaleConvenienceResearch(s: State) {
+    const perm = s.permanent as Record<string, number | undefined> | undefined;
+    if (!perm) return 0;
+    let refund = 0;
+    if ('inventory' in perm) {
+        const rank = perm.inventory || 0;
+        for (let i = 0; i < rank; i++) refund += 3 + 3 * i;
+        delete perm.inventory;
+        if (s.researchGranted && 'inventory' in s.researchGranted) delete (s.researchGranted as Record<string, number | undefined>).inventory;
+        if (s.researchLegacy && 'inventory' in s.researchLegacy) delete (s.researchLegacy as Record<string, number | undefined>).inventory;
+        if (s.researchPlan?.items.some(x => x.id === 'inventory')) s.researchPlan.items = s.researchPlan.items.filter(x => x.id !== 'inventory');
+        if (refund > 0) { s.pearls = (s.pearls || 0) + refund; addLog(s, `세계석 연구 ‘넓은 가방’이 없어지고 가방이 기본 100칸이 되어 투자한 세계석 ${refund}개를 돌려받았습니다.`, 'system'); }
+    }
+    if (!s.offlineRescaled) {
+        s.offlineRescaled = true;
+        const to = (r: number) => Math.min(3, Math.ceil(r / 3));
+        if (perm.offline) perm.offline = to(perm.offline);
+        if (s.researchGranted?.offline) s.researchGranted.offline = to(s.researchGranted.offline);
+        if (s.researchPlan) for (const item of s.researchPlan.items) if (item.id === 'offline') item.to = to(item.to);
+    }
+    return refund;
+}
 /** v27.19 환생 유물이 세계석 구매에서 환생 횟수 제공으로 바뀌었습니다. 이미 가진 유물(= 세계석으로 산 유물)의 세계석을 한 번 돌려줍니다. */
 export function refundRelicPurchases(s: State) {
     if (s.relicRefunded) return 0;
@@ -181,7 +207,7 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
     'crystalCaster',
     /** v3.153 패스파인더 재개편: 숨은 2차 몬스터 도감 독자(도감 비례)는 섀도어 · 기록 비례 직업과 겹쳐 지웠습니다. */
     'codexReader',
-    /** v3.154 카데나 재개편: 곁가지 빙결 결박사(제어 조건 마법 딜)는 바이퍼 장치와 겹쳐 지웠습니다. */
+    /** v3.155 카데나 재개편: 곁가지 빙결 결박사(제어 조건 마법 딜)는 바이퍼 장치와 겹쳐 지웠습니다. */
     'frostBinder'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.138 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */
@@ -190,7 +216,7 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
     'arcaneFist', 'manaMuscle',
     /** v3.153 몬스터 도감 독자의 도감 낭독 · 여백 메모. */
     'encyclopediaBolt', 'marginNotes',
-    /** v3.154 빙결 결박사의 서리 족쇄 · 서리 안개. */
+    /** v3.155 빙결 결박사의 서리 족쇄 · 서리 안개. */
     'rimeShackle', 'frostMist',
     /** v3.143 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
     'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind'];
@@ -295,7 +321,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

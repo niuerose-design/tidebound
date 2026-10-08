@@ -54,6 +54,7 @@ export const MANA_RESEARCH_PER = .08;
  * 윤회의 연금술은 골드 탭 → 유틸 탭 기본 묶음.
  * v3.152 유틸 · 특별 · 골드 탭 이름 정리(영혼 확장 · 노련함 · 전생의 기억 · 끝없는 수련 · 초심자 보너스 · 시스템 파괴 I · 리미터 해제 · 보물의 냄새 · 대장장이 고용).
  * 윤회의 연금술(환생 세계석 +2)은 삭제 · 개편 대상(migrations.ts refundPearlResearch가 투자한 세계석을 돌려줌).
+ * v3.154 넓은 가방 삭제(기본 가방 100칸 · 투자분 환급) · 긴 휴식 12단계 × 2시간 → 3단계 × 6시간(30 · 60 · 90) · 자동 수령(업적 · 도감 보상) 추가. 셋 다 migrations.ts rescaleConvenienceResearch.
  */
 export const RESEARCH: ResearchDef[] = [
     // The first purchase is reachable after a normal first rebirth, but later
@@ -77,8 +78,7 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'starting', name: '전생의 기억', desc: '환생 직후 시작 레벨 +2 (오른 레벨만큼 능력치 포인트도 받음)', max: 10, base: 3, step: 2, tab: 'utility', group: 'basic', per: 2, unit: 'flat', label: '시작 레벨', suffix: '레벨' },
     // v27.80 지겨운 환생: 환생 직후 잡일을 줄입니다. 숙달한 것만 복원하므로 숙련 복사 같은 우회가 없습니다.
     { id: 'habit', name: '지겨운 환생', desc: '1단계: 환생 직전 직업을 숙달했으면 환생 직후 자동 전직. 2단계: 장착 스킬 중 계승·숙달한 것은 그대로 장착. 3단계: 능력치 배분 비율을 유지해 시작 포인트를 자동 배분', max: 3, base: 6, step: 4, tab: 'utility', group: 'basic', rebirth: 2, per: 1, unit: 'flat', label: '환생 편의', suffix: '단계', levels: ['없음', '자동 전직', '자동 전직 · 스킬 편성 유지', '자동 전직 · 스킬 편성 유지 · 능력치 비율 유지'] },
-    { id: 'inventory', name: '넓은 가방', desc: '가방 +5칸', max: 8, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 2, per: 5, unit: 'flat', label: '가방', suffix: '칸' },
-    { id: 'offline', name: '긴 휴식', desc: '오프라인 정산 상한 +2시간', max: 12, base: 3, step: 2, tab: 'utility', group: 'basic', rebirth: 2, per: 2, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
+    { id: 'offline', name: '긴 휴식', desc: '오프라인 정산 상한 +6시간', max: 3, base: 30, step: 30, tab: 'utility', group: 'basic', rebirth: 2, per: 6, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
     { id: 'tailwindSail', name: '초심자 보너스', desc: '순풍 경험치 보너스 +10%p (기본 +50%, 합연산, 환생 뒤 요구 레벨까지)', max: 5, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 2, per: .1, unit: 'pp', label: '순풍 경험치 보너스' },
     { id: 'salvage', name: '청산', desc: '환생할 때 보관함과 착용 중인 일반 장비를 모두 판매(골드는 다음 생 시작 골드에 더함)하거나 분해(정수)합니다. 방식(판매/분해)은 환생 화면의 ‘받는 보상’ 줄이나 설정(톱니바퀴)에서 고르고, 효율은 1단계 40%부터 단계당 +15%', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 1, per: 15, unit: 'percent', label: '청산 효율', levels: ['정리 없음', '효율 40%', '효율 55%', '효율 70%', '효율 85%', '효율 100%'] },
     // v3.38 자동 분해기 + 자동 판매기 연구를 ‘자동 정리’ 하나로 합쳤습니다(id는 sortingNet). 두 장치는 그대로 따로 켜고 등급을 나눠 고릅니다(v3.35).
@@ -96,6 +96,7 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'vowRestraint', name: '절제', desc: '서약 해금(장착 AP -4·-8·-12, 액티브·패시브 각각 3·2·1개까지 대신 경험치 ×1.2·×1.4·×1.6 곱연산). 2·3단계는 보상을 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 경험치 보너스 ×1', '경험치 보너스 ×1.5', '경험치 보너스 ×2'] },
     /** v3.7 자동 강화: 보관함에서 목표 별·골드 한도를 정해 스타포스를 한 번에 자동 시도(확률·비용은 그대로). */
     { id: 'autoStar', name: '자동 강화', desc: '장비 보관함의 강화 칸에서 목표 별과 골드 한도를 정하면 스타포스를 한 번에 자동으로 시도합니다(확률·비용은 수동과 같고 파괴되면 멈춤)', max: 1, base: 10, step: 0, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '자동 강화', levels: ['없음', '해금'] },
+    { id: 'autoClaim', name: '자동 수령', desc: '달성한 업적 보상(세계석 · SP)과 도감 연구 보상(SP)을 동기화 때 자동으로 받습니다', max: 1, base: 30, step: 0, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 수령', levels: ['없음', '해금'] },
     /** v3.17 불굴의 의지: 쓰러진 뒤 회복 대기 -3턴/단계(기본 25턴, 최저 10턴). 환생 10회부터. */
     { id: 'revive', name: '불굴의 의지', desc: '쓰러진 뒤 회복 대기 -3턴(6초) (기본 25턴 = 50초, 최저 10턴)', max: 5, base: 4, step: 3, tab: 'utility', group: 'basic', rebirth: 10, per: 3, unit: 'flat', label: '회복 대기 단축', suffix: '턴' },
     { id: 'mastery', name: '끝없는 수련', desc: '스킬·직업 숙련 획득 +3%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .03, unit: 'percent', label: '숙련 획득' },
@@ -132,9 +133,11 @@ export function researchEffect(r: ResearchDef, rank: number) {
 /** 연구 단계. 없는 연구는 0. */
 export const researchRank = (s: Pick<State, 'permanent'>, id: string) => s.permanent?.[id] || 0;
 /** 가방 칸 수: 60 + 넓은 가방 5칸/단계. */
-export const inventoryCap = (s: Pick<State, 'permanent'>) => BALANCE.inventoryCap + researchRank(s, 'inventory') * 5;
+/** v3.154 넓은 가방 연구 삭제: 가방은 기본 100칸 고정. */
+export const inventoryCap = () => BALANCE.inventoryCap;
 /** 오프라인 정산 상한(초): v27.43 기본 6시간(24 → 6, 인플레·서버 부하 완화) + 긴 휴식 2시간/단계(최대 12단계 = 30시간). */
-export const offlineCapSeconds = (s: Pick<State, 'permanent'>) => BALANCE.offlineCapSeconds + researchRank(s, 'offline') * 7200;
+/** v3.154 긴 휴식 3단계 × 6시간(전에는 12단계 × 2시간). */
+export const offlineCapSeconds = (s: Pick<State, 'permanent'>) => BALANCE.offlineCapSeconds + researchRank(s, 'offline') * 21600;
 /** 대장장이의 기억: 강화·옵션 재설정 골드 비용 배율. */
 export const smithDiscount = (s: Pick<State, 'permanent'>) => 1 - researchRank(s, 'enhance') * .02;
 /** 재분배 반환 비율: 계정당 첫 1회 100%, 이후 90%(내림). */

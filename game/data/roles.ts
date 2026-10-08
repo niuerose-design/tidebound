@@ -24,7 +24,7 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     borderReflect: { role: 'border', name: '경계: 반사 탱커 · 마법 딜러' },
     /** v3.144 딜러와 불굴 탱커 경계(다크나이트: 쓰러진 횟수 · 보낸 턴에 비례해 강해지고, 5차 리인카네이션으로 한 번 버팀). */
     borderStand: { role: 'border', name: '경계: 딜러 · 불굴 탱커' },
-    /** v3.154 자기 버프 지원과 물리 딜러 경계(카데나: 체인아츠마다 서로 다른 자기 버프, 살아 있는 버프 수만큼 피해). */
+    /** v3.155 자기 버프 지원과 물리 딜러 경계(카데나: 체인아츠마다 서로 다른 자기 버프, 살아 있는 버프 수만큼 피해). */
     borderBuff: { role: 'border', name: '경계: 자기 버프 · 물리 딜러' },
     /** 독립 수련(계승 재료). */
     training: { role: 'none', name: '수련' },
