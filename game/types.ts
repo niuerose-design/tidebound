@@ -131,8 +131,6 @@ export type StatusEffects = {
     lastStand?: number;
     /** v3.143 충전 중첩(메카닉). 충전 기술이 명중하면 쌓이고 전탄발사가 소모합니다. */
     charge?: number;
-    /** v3.161 흡혈로 회복한 체력 누적(최대 체력까지). 제논 메가 스매셔가 태웁니다. */
-    siphon?: number;
 };
 export type Item = {
     /** v3.58 각인 감정으로 고른 옵션 id(표시용). */
@@ -205,8 +203,6 @@ export type Skill = {
     chargeOnHit?: number;
     /** v3.161 조화 보너스(제논): 직접 배분한 여섯 능력치의 (가장 낮은 값 ÷ 가장 높은 값) × 이 값만큼 피해가 커집니다. 고르게 투자할수록 세짐. */
     balanceBonus?: number;
-    /** v3.161 흡혈 축적 폭발(제논 메가 스매셔): 이 전투에서 흡혈로 회복한 체력(effects.siphon) × scale을 기준값에 더하고 비웁니다. */
-    siphonBurst?: { scale: number };
     /** v3.158 이 자기 버프가 걸려 있을 때만 나가는 액티브(아크 인피니티 스펠: 'spectre'). */
     requiresBuff?: string;
     /** v3.155 쓰면 시전자의 살아 있는 자기 버프를 모두 N턴 연장합니다(카데나 체인아츠: 메일스트롬). */

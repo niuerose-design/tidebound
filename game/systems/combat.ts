@@ -518,8 +518,6 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         if (chosen.allIn.heal && spentMana > 0) { const h = Math.min(sa.hp - a.hp, Math.floor(spentMana * chosen.allIn.heal)); a.hp += h; healed += h; }
         notes.push(`올인 · 체력 ${spentHp} · 마나 ${Math.floor(spentMana)}`);
     }
-    // v3.161 흡혈 축적 폭발(제논 메가 스매셔): 이 전투에서 흡혈로 회복한 체력을 태워 기준값에 더합니다.
-    if (chosen?.siphonBurst && (a.effects.siphon || 0) > 0) { const burst = Math.floor(a.effects.siphon! * chosen.siphonBurst.scale); allInBonus += burst; notes.push(`흡혈 축적 ${a.effects.siphon!.toLocaleString()} 방출`); a.effects.siphon = 0; }
     // v24.2 골드 투척: 보유 골드 일부를 던져 피해에 더합니다.
     if (chosen?.goldSpend && (a.gold || 0) > 0) {
         // v3.157 상한: 절대값 cap과 기준 공격력 × capAttack 중 작은 쪽. 골드가 아무리 많아도 공격력에 맞는 만큼만 태우고, 새 생의 저레벨에서도 수십 배가 되지 않습니다.
@@ -775,8 +773,6 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const recovery = Math.min(sa.hp - a.hp, drain);
         a.hp += recovery;
         ev.drained += recovery;
-        // v3.161 흡혈 축적(제논): 회복한 만큼 쌓아 두고 메가 스매셔가 태웁니다(최대 체력까지).
-        if (recovery > 0 && a.skills.some(id => skillById(id)?.siphonBurst)) a.effects.siphon = Math.min(Math.round(sa.hp), (a.effects.siphon || 0) + recovery);
     }
     // Follow-up hits are part of the same action. They use the same hit chance,
     // cannot recursively trigger another follow-up, and are capped in balance.ts.

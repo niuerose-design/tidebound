@@ -74,7 +74,6 @@ export function skillBrief(sk: Skill): string {
     if (sk.extendBuffs) parts.push(`살아 있는 자기 버프 모두 +${sk.extendBuffs}턴`);
     if (sk.requiresBuff) parts.push(`${sk.requiresBuff === 'spectre' ? '변신' : sk.requiresBuff} 중에만`);
     if (sk.balanceBonus) parts.push(`조화(최저 ÷ 최고 능력치) × +${skillPercent(sk.balanceBonus)}`);
-    if (sk.siphonBurst) parts.push(`흡혈 축적 × ${number(sk.siphonBurst.scale)} 방출`);
     if (sk.effect === 'haste') parts.push(`자신 가속 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
     if (sk.alsoEffect) parts.push(`${STATUS_WORD[sk.alsoEffect]} ${sk.statusTurns}턴`);
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
@@ -138,7 +137,6 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.extendBuffs) out.push(`쓰면 살아 있는 내 자기 버프를 모두 ${sk.extendBuffs}턴 연장합니다.`);
         if (sk.requiresBuff) out.push(`변신 자기 버프(${sk.requiresBuff === 'spectre' ? '접신 · 파이널 피규레이션' : sk.requiresBuff})가 걸려 있을 때만 나갑니다(없으면 대기만 하고 실패로 세지 않음).`);
         if (sk.balanceBonus) out.push(`조화: 직접 배분한 여섯 능력치의 (가장 낮은 값 ÷ 가장 높은 값) × ${skillPercent(sk.balanceBonus)}만큼 피해가 커집니다. 여섯이 모두 같으면 +${skillPercent(sk.balanceBonus)}, 하나라도 0이면 보너스 없음.`);
-        if (sk.siphonBurst) out.push(`이 전투에서 흡혈로 회복한 체력(최대 체력까지 누적)의 ${number(sk.siphonBurst.scale)}배를 기준값에 더하고 누적을 비웁니다.`);
         if (sk.allIn?.heal) out.push(`건 마나 × ${number(sk.allIn.heal)}만큼 자신 회복`);
         if (sk.recoil) out.push(`준 피해의 ${skillPercent(sk.recoil)}를 자신도 받음 · 반동으로는 체력 1 아래로 내려가지 않음`);
         if (sk.sureHit) out.push('반드시 맞힙니다. 기절 뒤 면역 규칙은 그대로입니다.');
