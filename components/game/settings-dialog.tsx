@@ -1,5 +1,5 @@
 'use client';
-import { useSkillFx, setSkillFx } from './skill-fx-setting';
+import { useSkillFx, setSkillFx, useFxGlow, setFxGlow } from './skill-fx-setting';
 import { useNotices, setNotice, NOTICE_KINDS } from './notice-settings';
 import { useStarSetting, setStarSetting } from './star-catch-setting';
 import { Settings } from 'lucide-react';
@@ -47,6 +47,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
             {s && researchRank(s, 'sortingNet') > 0 && <AutoDeviceRow s={s} busy={busy} send={send} device="salvage" title="자동 분해기" verb="정수로 분해" on={!!s.autoSell} action="autoSell"/>}
             {s && researchRank(s, 'sortingNet') > 0 && <AutoDeviceRow s={s} busy={busy} send={send} device="vend" title="자동 판매기" verb="골드로 판매" on={!!s.autoVend} action="autoVend"/>}
             <SkillFxToggle/>
+            <FxGlowToggle/>
             <NoticeToggles/>
             <StarToggle id="catch" title="스타캐치 미니게임" desc="수동 강화 때 좌우로 오가는 별을 가운데에서 잡으면 성공률 +10%p. 끄면 바로 강화합니다(자동 강화에는 없음)."/>
             <StarToggle id="sound" title="강화 효과음" desc="스타캐치와 강화 성공·하락·파괴 효과음입니다. 이 기기에만 저장됩니다."/>
@@ -100,6 +101,14 @@ function SkillFxToggle() {
     return <div className="setting-toggle">
         <div><strong>스킬 이펙트</strong><p>전투 화면의 스킬 연출·피해 숫자·체력 막대 반짝임입니다. 끄면 휴대폰이 덜 버벅이고 배터리를 아낍니다. HP와 전투 기록은 그대로 보입니다. 이 기기에만 저장되며, 처음에는 모바일은 꺼짐·데스크톱은 켜짐입니다.</p></div>
         <button className={on ? 'primary' : 'secondary'} aria-pressed={on} onClick={() => setSkillFx(!on)}>{on ? '켜짐' : '꺼짐'}</button>
+    </div>;
+}
+/** v3.170 섬광 켜기/끄기(이 기기에만 저장). 어느 기기든 꺼짐이 기본입니다. */
+function FxGlowToggle() {
+    const on = useFxGlow(), fx = useSkillFx();
+    return <div className="setting-toggle">
+        <div><strong>섬광 효과</strong><p>스킬 연출 중 배경과 상대 카드가 원형으로 밝아졌다 퍼지는 섬광입니다. 눈이 부시면 끄세요. 투사체 · 파편 · 고리 · 어두워지는 연출은 그대로입니다.{fx ? '' : ' 스킬 이펙트가 꺼져 있어 지금은 섬광도 나오지 않습니다.'} 이 기기에만 저장되며, 처음에는 꺼짐입니다.</p></div>
+        <button className={on ? 'primary' : 'secondary'} aria-pressed={on} onClick={() => setFxGlow(!on)}>{on ? '켜짐' : '꺼짐'}</button>
     </div>;
 }
 
