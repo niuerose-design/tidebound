@@ -67,11 +67,11 @@ test('v3.189 world boss summon stages: hp ×2 · attack ×1.15 per stage (max 10
         const now2 = now + A.RAID.respawnMs + 60_000; await database.addAltarGauge('horntail', b.cost); Alt.invalidateAltar(); info = await Alt.altarInfo('p1', me, now2);
         row = await raid(); assert.equal(row.state, 'alive'); assert.equal(row.stage, 2, 'second summon of the day'); assert.equal(row.day_start, now, 'the day still starts at the first summon'); assert.equal(row.hp_max, b.stats.hp * 2);
         const ib = info.raids.find(x => x.id === 'horntail'); assert.equal(ib.stage, 2); assert.equal(ib.hpMax, b.stats.hp * 2); assert.equal(ib.attack, Math.round(b.stats.attack * 1.15)); assert.ok(ib.power > 0);
-        assert.ok((await database.listChat?.('news', 0, 20).catch(() => null)) === undefined || true);
         me.altarStatus = undefined; Alt.invalidateAltar(); await Alt.syncAltarStatus(me, now2 + 5, 'p1'); assert.equal(me.altarStatus.raids.find(x => x.id === 'horntail').stage, 2, 'status carries the stage');
-        // 2단계를 못 잡고 떠난 뒤(gone) 같은 날 다시 소환 → 그대로 2단계.
-        const now3 = row.until + 60_000; await database.addAltarGauge('horntail', b.cost); Alt.invalidateAltar(); await Alt.altarInfo('p1', me, now3);
-        row = await raid(); assert.equal(row.state, 'alive'); assert.equal(row.stage, 2, 'left unslain → same stage'); assert.ok(now3 - now < A.RAID_STAGE.dayMs, 'still the same day');
+        // 2단계도 격파 → 같은 날 세 번째 소환은 3단계(체력 ×4). (못 잡고 떠난 뒤 같은 단계로 남는 것은 위 nextRaidStage 단위 검사 — 혼테일은 24시간 머물러 여기서 재현할 수 없음.)
+        assert.equal(await database.hitAltarRaid('horntail', row.gen, row.hp_max), 0); assert.ok(await database.slayAltarRaid('horntail', row.gen, 'p1', '첫째', now2 + 1000));
+        const now3 = now2 + A.RAID.respawnMs + 60_000; await database.addAltarGauge('horntail', b.cost); Alt.invalidateAltar(); await Alt.altarInfo('p1', me, now3);
+        row = await raid(); assert.equal(row.state, 'alive'); assert.equal(row.stage, 3, 'third summon of the day'); assert.equal(row.hp_max, b.stats.hp * 4); assert.ok(now3 - now < A.RAID_STAGE.dayMs, 'still the same day');
         assert.equal(await database.hitAltarRaid('horntail', row.gen, row.hp_max), 0); assert.ok(await database.slayAltarRaid('horntail', row.gen, 'p1', '첫째', now3 + 1000));
         // 하루가 지나면 1단계.
         const now4 = now + A.RAID_STAGE.dayMs + 60_000; await database.addAltarGauge('horntail', b.cost); Alt.invalidateAltar(); await Alt.altarInfo('p1', me, now4);
