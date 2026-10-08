@@ -1,5 +1,5 @@
 import { SKILLS, skillById } from '../data/skills';
-import { ENEMY_SKILLS } from '../data/encounters';
+import { enemySkillById } from '../data/encounters';
 import { jobById } from '../data/classes';
 import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier, PENETRATION } from '../data/balance';
 import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute, Skill } from '../types';
@@ -243,9 +243,11 @@ export function mitigate(raw: number, defense: number, attackStat: number) {
 /** v3.86 각성기의 실패한 판정 수를 적는 재사용 대기 칸: '~' + 기술 id. */
 const AWAKEN_PITY = '~';
 const isAwaken = (id: string) => id.startsWith(AWAKEN_PITY) || !!skillById(id)?.awaken;
+/** 모험가 스킬 또는 몬스터 스킬. */
+const anySkillById = (id: string) => skillById(id) ?? enemySkillById(id);
 /** 기술의 실제 효과(숙련·계보 밖 효율 반영). */
 function skillOf(a: Fighter, id: string) {
-    const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
+    const base = anySkillById(id);
     if (!base) return undefined;
     // v3.104 effectiveSkill은 캐시된 객체를 돌려주므로 복사본에 배율을 곱합니다.
     const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0);
@@ -261,7 +263,7 @@ function outsider(base: Skill, a: Fighter, sk: Skill): Skill {
  */
 function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rng: () => number, blocked: Set<string>, bonusAction: boolean, from = 0) {
     for (const id of a.skills.slice(from)) {
-        const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
+        const base = anySkillById(id);
         if (!base || base.type !== 'active' || base.awaken || blocked.has(id))
             continue;
         const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0), candidate = outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) });

@@ -46,8 +46,9 @@ export function gainLevels(s: State) {
         s.level++;
         s.statPoints += PROGRESSION.statPerLevel;
         if (s.level > s.peakLevel) s.peakLevel = s.level;
-        s.mana = stats(s).mana;
-        s.hp = stats(s).hp;
+        const grown = stats(s);
+        s.mana = grown.mana;
+        s.hp = grown.hp;
         addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
     }
 }

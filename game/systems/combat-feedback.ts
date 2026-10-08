@@ -11,17 +11,8 @@ export type CombatFxKind = 'physical' | 'magic' | 'split' | 'fixed' | 'stun' | '
 export type CombatFxVariant = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph' | 'venom' | 'ink' | 'bone' | 'time';
 /** 스킬 직업의 차수. 공용·몬스터 기술은 0. */
 function fxTierOf(id: string | undefined) { const sk = id ? skillById(id) : undefined; return sk?.job ? jobById(sk.job)?.tier || 0 : 0; }
-/** 스킬 id·효과로 연출 갈래를 고릅니다. 앞 규칙이 우선이고, 아무것도 맞지 않으면 마법은 arcane, 물리는 impact. */
-export function fxVariantOf(id: string | undefined, magical: boolean, effect?: string): CombatFxVariant {
-    if (!id) return magical ? 'arcane' : 'impact';
-    // v27.14 스킬별 지정이 있으면 그것을 먼저 씁니다.
-    if (SKILL_FX[id]) return SKILL_FX[id];
-    // v3.47 서버 전용 비밀 스킬은 표 대신 스킬에 fx를 적어 둡니다(화면은 카탈로그로 받음).
-    const own = skillById(id)?.fx;
-    if (own) return own as CombatFxVariant;
-    if (effect === 'poison') return 'venom';
-    if (effect === 'burn') return 'fire';
-    const rules: [RegExp, CombatFxVariant][] = [
+/** 스킬 id 패턴 → 연출 갈래. 앞 규칙이 우선입니다(모듈에 한 번만 만듦). */
+const VARIANT_RULES: [RegExp, CombatFxVariant][] = [
         [/^glyph|^foeSilence$/, 'glyph'],
         // v27.16 독·먹물·뼈·시간 갈래
         [/^foeVenom$|venom|toxic|miasma|rotten|rotBloom|corros|plague|doomMark/i, 'venom'],
@@ -42,8 +33,18 @@ export function fxVariantOf(id: string | undefined, magical: boolean, effect?: s
         [/slash|cut|draw|iai|edge|razor|verdict|waltz|vein|gash|sever|needle|nerve|mist|whip|cross|flash|twinMoon|split|hook$|^hook/i, 'slash'],
         [/hook|pierce|hunt|lance|bore|spear|harpoon|dart|dive|thrust|charge|whale|trench|track|bolt|ray|shard|toss/i, 'pierce'],
         [/wave|tide|splash|current|maelstrom|undertow|tsunami|torrent|ripple|ocean|sea|rush|dragon|dispatch|headwind|tack|foeSlow|foeHaste/i, 'wave'],
-    ];
-    for (const [re, v] of rules) if (re.test(id)) return v;
+];
+/** 스킬 id·효과로 연출 갈래를 고릅니다. 앞 규칙이 우선이고, 아무것도 맞지 않으면 마법은 arcane, 물리는 impact. */
+export function fxVariantOf(id: string | undefined, magical: boolean, effect?: string): CombatFxVariant {
+    if (!id) return magical ? 'arcane' : 'impact';
+    // v27.14 스킬별 지정이 있으면 그것을 먼저 씁니다.
+    if (SKILL_FX[id]) return SKILL_FX[id];
+    // v3.47 서버 전용 비밀 스킬은 표 대신 스킬에 fx를 적어 둡니다(화면은 카탈로그로 받음).
+    const own = skillById(id)?.fx;
+    if (own) return own as CombatFxVariant;
+    if (effect === 'poison') return 'venom';
+    if (effect === 'burn') return 'fire';
+    for (const [re, v] of VARIANT_RULES) if (re.test(id)) return v;
     if (effect === 'heal') return 'heal';
     return magical ? 'arcane' : 'impact';
 }

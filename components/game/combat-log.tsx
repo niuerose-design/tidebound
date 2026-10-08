@@ -54,7 +54,7 @@ export function withTurnDividers<T extends { turn?: number }>(logs: T[], render:
     const out: React.ReactNode[] = [];
     logs.forEach((log, i) => {
         const prev = logs[i - 1];
-        if (log.turn !== undefined && (i === 0 || prev?.turn !== log.turn)) out.push(<LogTurnDivider key={`turn-${log.turn}-${i}`} turn={log.turn}/>);
+        if (log.turn !== undefined && (i === 0 || prev?.turn !== log.turn)) out.push(<LogTurnDivider key={`turn-${log.turn}`} turn={log.turn}/>);
         out.push(render(log));
     });
     return out;

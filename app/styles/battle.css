@@ -703,6 +703,8 @@
 .ult-slash{--fx:#fff1c8}.ult-slash .scene-fx-dark{background:#000}
 .ult-slash .ult-a{left:-20%;top:50%;width:140%;height:4px;rotate:-18deg;background:linear-gradient(90deg,transparent,#fff,#ffe9a8,#fff,transparent);box-shadow:0 0 28px #fff;animation:ultSlashLine 2.4s cubic-bezier(.2,.9,.2,1) var(--fx-delay) both}
 .ult-slash .ult-b{left:-20%;top:50%;width:140%;height:60px;rotate:-18deg;translate:0 -30px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.18) 50%,transparent);animation:ultSlashGap 2.4s ease-out var(--fx-delay) both}
+/* 궁극기 · 일곱 인 해방이 배경(.ocean-art)의 filter를 애니메이션하는 동안만 합성 레이어로 올려, 매 프레임 배경 전체를 다시 그리지 않습니다. */
+.battle-scene:has(.scene-fx-ult) .ocean-art,.battle-scene:has(.scene-fx-finale) .ocean-art{will-change:filter}
 .battle-scene:has(.ult-slash) .ocean-art{animation:ultMono 2.4s ease-out both}
 @keyframes ultSlashLine{0%,30%{opacity:0;scale:0 1}36%{opacity:1;scale:1 1}70%{opacity:1}100%{opacity:0}}
 @keyframes ultSlashGap{0%,40%{opacity:0;scale:1 0}60%{opacity:1;scale:1 1}100%{opacity:0;scale:1 1.6}}
@@ -753,7 +755,7 @@
 @keyframes punShake{0%{translate:-4px 0}50%{translate:4px 2px}100%{translate:0 0}}
 @media(prefers-reduced-motion:reduce){.pun-mark,.pun-cross,.pun-star{display:none}.battle-scene:has(.pun-full) .ocean-art{animation:none}}
 .ult-judgment{--fx:#ffd76a}
-.ult-judgment .ult-a{left:62%;top:48%;width:220px;height:220px;margin:-110px 0 0 -110px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:color-mix(in srgb,#ffd76a 35%,transparent);box-shadow:0 0 40px #ffd76a;animation:ultHex 2.4s ease-out var(--fx-delay) both}
+.ult-judgment .ult-a{left:62%;top:48%;width:220px;height:220px;margin:-110px 0 0 -110px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:color-mix(in srgb,#ffd76a 35%,transparent);animation:ultHex 2.4s ease-out var(--fx-delay) both}
 .ult-judgment .ult-b{left:62%;top:-20%;width:60px;height:80%;translate:-50% 0;background:linear-gradient(180deg,#fff,#ffd76a,transparent);filter:blur(1px);animation:ultDrop 2.4s cubic-bezier(.6,0,.2,1) calc(var(--fx-delay) + .5s) both}
 @keyframes ultHex{0%{opacity:0;scale:2.4;rotate:40deg}30%{opacity:1;scale:1;rotate:0deg}80%{opacity:1}100%{opacity:0;scale:1.2}}
 @keyframes ultDrop{0%{opacity:0;translate:-50% -100%}30%{opacity:1;translate:-50% 0}70%{opacity:1}100%{opacity:0}}
@@ -789,7 +791,7 @@
 @keyframes ultPsyQuake{0%,10%{filter:none;translate:0 0}20%{translate:-3px 1px;filter:hue-rotate(-40deg) saturate(1.4)}30%{translate:3px -1px}40%{translate:-2px 0}50%{translate:2px 1px;filter:hue-rotate(-40deg) saturate(1.4)}60%{translate:0 0}100%{filter:none;translate:0 0}}
 /* v3.173 데몬 베인(데몬슬레이어): 핏빛 대검이 내리꽂히고 바닥 충격 고리가 번집니다 */
 .ult-demon{--fx:#ff7a9a}.ult-demon .scene-fx-dark{background:#180410}
-.ult-demon .ult-a{left:62%;top:48%;width:34px;height:160px;margin:-160px 0 0 -17px;clip-path:polygon(50% 0,100% 12%,78% 100%,22% 100%,0 12%);background:linear-gradient(180deg,#5a0a24,#ff4d7a 30%,#fff 62%,#ffd0dc);box-shadow:0 0 22px #ff4d7a;rotate:-6deg;transform-origin:50% 100%;animation:ultDemonCleave 2.4s cubic-bezier(.7,0,.3,1) var(--fx-delay) both}
+.ult-demon .ult-a{left:62%;top:48%;width:34px;height:160px;margin:-160px 0 0 -17px;clip-path:polygon(50% 0,100% 12%,78% 100%,22% 100%,0 12%);background:linear-gradient(180deg,#5a0a24,#ff4d7a 30%,#fff 62%,#ffd0dc);rotate:-6deg;transform-origin:50% 100%;animation:ultDemonCleave 2.4s cubic-bezier(.7,0,.3,1) var(--fx-delay) both}
 .ult-demon .ult-b{left:62%;top:52%;width:240px;height:84px;margin:-42px 0 0 -120px;border:3px solid #ff7a9a;border-radius:50%;box-shadow:0 0 18px #ff4d7a,inset 0 0 18px rgba(255,77,122,.5);animation:ultDemonShock 2.4s ease-out var(--fx-delay) both}
 .ult-demon .ult-frag:nth-of-type(even){color:#ff9ab8;text-shadow:0 0 10px #ff4d7a}
 .battle-scene:has(.ult-demon) .ocean-art{animation:punShake .45s steps(2) calc(var(--fx-delay) + .9s) both}
@@ -835,7 +837,7 @@
 @keyframes ultZodiacWheel{0%{opacity:0;transform:rotate(var(--ang)) translateX(96px) rotate(calc(-1 * var(--ang))) scale(.5)}15%,75%{opacity:1;transform:rotate(calc(var(--ang) + 200deg)) translateX(96px) rotate(calc(-1 * var(--ang) - 200deg)) scale(1)}100%{opacity:0;transform:rotate(calc(var(--ang) + 300deg)) translateX(150px) rotate(calc(-1 * var(--ang) - 300deg)) scale(.6)}}
 /* v3.174 마이티 묠니르(팔라딘): 번개 망치가 내리치고 땅이 갈라집니다 */
 .ult-mjolnir{--fx:#ffe38b}.ult-mjolnir .scene-fx-dark{background:#0b0a14}
-.ult-mjolnir .ult-a{left:62%;top:0;width:60px;height:48%;margin-left:-30px;background:#fff;clip-path:polygon(44% 0,62% 0,54% 32%,78% 30%,46% 70%,56% 48%,34% 52%,52% 100%,40% 100%,22% 58%,46% 56%,30% 34%,52% 34%);filter:drop-shadow(0 0 14px #ffe38b) drop-shadow(0 0 28px #ffd040);animation:ultMjolnirBolt 2.4s steps(1) var(--fx-delay) both}
+.ult-mjolnir .ult-a{left:62%;top:0;width:60px;height:48%;margin-left:-30px;background:#fff;clip-path:polygon(44% 0,62% 0,54% 32%,78% 30%,46% 70%,56% 48%,34% 52%,52% 100%,40% 100%,22% 58%,46% 56%,30% 34%,52% 34%);animation:ultMjolnirBolt 2.4s steps(1) var(--fx-delay) both}
 .ult-mjolnir .ult-b{left:62%;top:48%;width:360px;height:6px;margin:-3px 0 0 -180px;background:linear-gradient(90deg,transparent,#ffe38b 25%,#fff 50%,#ffe38b 75%,transparent);box-shadow:0 10px 0 -2px rgba(255,227,139,.5),0 -8px 0 -2px rgba(255,227,139,.5);rotate:-4deg;animation:ultMjolnirCrack 2.4s ease-out calc(var(--fx-delay) + .35s) both}
 .ult-mjolnir .ult-b::before{content:'⚒';position:absolute;left:50%;top:0;translate:-50% -100%;font-size:64px;line-height:1;color:#fff6d8;filter:drop-shadow(0 0 12px #ffe38b);animation:ultMjolnirHammer 2.4s cubic-bezier(.7,0,.3,1) var(--fx-delay) both}
 .battle-scene:has(.ult-mjolnir) .ocean-art{animation:punShake .5s steps(2) calc(var(--fx-delay) + .4s) both}
@@ -877,7 +879,7 @@
 /* v3.177 소닉 블로우(섀도어): 단검이 회전하며 날아들고 초승달 검기가 뒤따라 베어 갑니다 */
 .ult-sonic{--fx:#ffd76a}.ult-sonic .scene-fx-dark{background:#120c02}
 .ult-sonic .ult-a{left:62%;top:48%;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;border:14px solid transparent;border-right-color:#fff2c4;border-top-color:rgba(255,215,106,.9);filter:drop-shadow(0 0 12px #ffd76a);animation:ultSonicAura 2.4s cubic-bezier(.3,.8,.3,1) calc(var(--fx-delay) + .25s) both}
-.ult-sonic .ult-b{left:62%;top:48%;width:110px;height:14px;margin:-7px 0 0 -55px;clip-path:polygon(0 50%,18% 0,100% 30%,100% 70%,18% 100%);background:linear-gradient(90deg,#fff,#ffe9a8 30%,#b89650 60%,#6a4a1a);box-shadow:0 0 14px #ffd76a;animation:ultSonicBlade 2.4s cubic-bezier(.5,0,.3,1) var(--fx-delay) both}
+.ult-sonic .ult-b{left:62%;top:48%;width:110px;height:14px;margin:-7px 0 0 -55px;clip-path:polygon(0 50%,18% 0,100% 30%,100% 70%,18% 100%);background:linear-gradient(90deg,#fff,#ffe9a8 30%,#b89650 60%,#6a4a1a);animation:ultSonicBlade 2.4s cubic-bezier(.5,0,.3,1) var(--fx-delay) both}
 .ult-sonic .ult-frag{font:800 26px/1 monospace;color:#fff2c4;text-shadow:0 0 10px #ffd76a;animation-name:ultSonicSlash;animation-duration:1.1s}
 .battle-scene:has(.ult-sonic) .ocean-art{animation:punShake .45s steps(2) calc(var(--fx-delay) + .9s) both}
 @keyframes ultSonicBlade{0%{opacity:0;translate:-380px 40px;rotate:0deg;scale:.7}12%{opacity:1}38%{opacity:1;translate:0 0;rotate:900deg;scale:1}44%{translate:14px -4px;rotate:960deg}70%{opacity:1;translate:10px 0;rotate:980deg}100%{opacity:0;translate:60px 0;rotate:1080deg}}
@@ -924,7 +926,7 @@
 @keyframes ultVoidSwell{0%{opacity:0;scale:.1}30%{opacity:1;scale:.7}55%{opacity:1;scale:1}62%{opacity:1;scale:.5}70%{opacity:1;scale:2.4}100%{opacity:0;scale:3.2}}
 /* v3.175 궁그닐 디센트(다크나이트): 거대한 창이 내리꽂히고 어둠의 충격이 번집니다 */
 .ult-gungnil{--fx:#ff6a7a}.ult-gungnil .scene-fx-dark{background:#120409}
-.ult-gungnil .ult-a{left:62%;top:48%;width:22px;height:190px;margin:-190px 0 0 -11px;clip-path:polygon(50% 0,100% 18%,70% 18%,70% 100%,30% 100%,30% 18%,0 18%);background:linear-gradient(180deg,#fff,#ff6a7a 25%,#5a0a1e 60%,#2a0410);box-shadow:0 0 22px #ff3a5a;rotate:14deg;transform-origin:50% 100%;animation:ultGungnilFall 2.4s cubic-bezier(.75,0,.25,1) var(--fx-delay) both}
+.ult-gungnil .ult-a{left:62%;top:48%;width:22px;height:190px;margin:-190px 0 0 -11px;clip-path:polygon(50% 0,100% 18%,70% 18%,70% 100%,30% 100%,30% 18%,0 18%);background:linear-gradient(180deg,#fff,#ff6a7a 25%,#5a0a1e 60%,#2a0410);rotate:14deg;transform-origin:50% 100%;animation:ultGungnilFall 2.4s cubic-bezier(.75,0,.25,1) var(--fx-delay) both}
 .ult-gungnil .ult-b{left:62%;top:50%;width:260px;height:90px;margin:-45px 0 0 -130px;border:3px solid #ff6a7a;border-radius:50%;box-shadow:0 0 22px #ff3a5a,inset 0 0 22px rgba(255,58,90,.5);animation:ultDemonShock 2.4s ease-out var(--fx-delay) both}
 .ult-gungnil .ult-frag:nth-of-type(even){color:#ff9ab0;text-shadow:0 0 10px #ff3a5a}
 .battle-scene:has(.ult-gungnil) .ocean-art{animation:punShake .5s steps(2) calc(var(--fx-delay) + .85s) both}
@@ -948,7 +950,7 @@
 @keyframes ultGateLight{0%{opacity:0;scale:.3 1}30%{opacity:1;scale:1 1}70%{opacity:1;scale:1.6 1.1}100%{opacity:0;scale:2.4 1.2}}
 /* v3.175 선기: 분신 둔갑 태을선인(호영): 팔괘 결계가 돌고 부적이 내려옵니다 */
 .ult-sage{--fx:#ffe9a8}.ult-sage .scene-fx-dark{background:#0a0f14}
-.ult-sage .ult-a{left:62%;top:48%;width:230px;height:230px;margin:-115px 0 0 -115px;clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);background:repeating-conic-gradient(from 0deg,rgba(255,233,168,.0) 0 40deg,rgba(255,233,168,.35) 40deg 45deg),radial-gradient(circle,transparent 56%,rgba(120,220,255,.35) 58%,transparent 62%);box-shadow:0 0 20px #7ddcff;animation:ultSageWheel 2.4s linear var(--fx-delay) both}
+.ult-sage .ult-a{left:62%;top:48%;width:230px;height:230px;margin:-115px 0 0 -115px;clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);background:repeating-conic-gradient(from 0deg,rgba(255,233,168,.0) 0 40deg,rgba(255,233,168,.35) 40deg 45deg),radial-gradient(circle,transparent 56%,rgba(120,220,255,.35) 58%,transparent 62%);animation:ultSageWheel 2.4s linear var(--fx-delay) both}
 .ult-sage .ult-b{left:62%;top:48%;width:44px;height:150px;margin:-180px 0 0 -22px;background:linear-gradient(180deg,#ffe9a8,#ffd27a);border:2px solid #b8862a;box-shadow:0 0 16px #ffe9a8;animation:ultSageTalisman 2.4s cubic-bezier(.6,0,.3,1) calc(var(--fx-delay) + .2s) both}
 .ult-sage .ult-b::before{content:'符';position:absolute;inset:0;display:grid;place-items:center;font:800 30px/1 serif;color:#7a1e0a}
 .ult-sage .ult-frag{color:#7ddcff;text-shadow:0 0 10px #2fb6e0;font-size:22px}
@@ -989,7 +991,7 @@
 /* v3.177 매하 디스차지(아란): 얼음 창 마하가 크게 휘둘러지고 얼음 파편이 튑니다 */
 .ult-maha{--fx:#bfe9ff}.ult-maha .scene-fx-dark{background:#061420}
 .ult-maha .ult-a{left:62%;top:48%;width:360px;height:220px;margin:-110px 0 0 -250px;border:9px solid transparent;border-bottom-color:#bfe9ff;border-right-color:#fff;border-radius:50%;filter:drop-shadow(0 0 12px #7dd0ff);animation:ultMahaSweep 2.4s cubic-bezier(.6,0,.2,1) var(--fx-delay) both}
-.ult-maha .ult-b{left:62%;top:48%;width:34px;height:210px;margin:-200px 0 0 -17px;clip-path:polygon(50% 0,100% 10%,78% 24%,70% 100%,30% 100%,22% 24%,0 10%);background:linear-gradient(180deg,#fff,#bfe9ff 25%,#4a9ad0 60%,#1a3a5a);box-shadow:0 0 18px #7dd0ff;transform-origin:50% 100%;animation:ultMahaPole 2.4s cubic-bezier(.6,0,.2,1) var(--fx-delay) both}
+.ult-maha .ult-b{left:62%;top:48%;width:34px;height:210px;margin:-200px 0 0 -17px;clip-path:polygon(50% 0,100% 10%,78% 24%,70% 100%,30% 100%,22% 24%,0 10%);background:linear-gradient(180deg,#fff,#bfe9ff 25%,#4a9ad0 60%,#1a3a5a);transform-origin:50% 100%;animation:ultMahaPole 2.4s cubic-bezier(.6,0,.2,1) var(--fx-delay) both}
 .ult-maha .ult-frag{color:#e8f7ff;text-shadow:0 0 10px #7dd0ff;animation-delay:calc(var(--fx-delay) + .5s + var(--i) * .05s)}
 .battle-scene:has(.ult-maha) .ocean-art{animation:punShake .5s steps(2) calc(var(--fx-delay) + .85s) both}
 @keyframes ultMahaSweep{0%,25%{opacity:0;rotate:-140deg;scale:.6}32%{opacity:1}55%{opacity:1;rotate:40deg;scale:1.1}100%{opacity:0;rotate:80deg;scale:1.3}}
@@ -1004,7 +1006,7 @@
 @keyframes ultKarmaSlashB{0%,28%{opacity:0}30%,48%{opacity:1;rotate:35deg}50%,64%{opacity:0}66%,84%{opacity:1;rotate:5deg}86%,100%{opacity:0}}
 /* v3.178 그림 리퍼(배틀메이지): 낫을 든 검은 사신이 나타나 화면을 반으로 긋고, 두 조각이 벌어집니다 */
 .ult-reaper{--fx:#b48cff}.ult-reaper .scene-fx-dark{background:#07030f}
-.ult-reaper .ult-b{left:36%;top:48%;width:120px;height:230px;margin:-150px 0 0 -60px;clip-path:polygon(50% 0,70% 6%,78% 20%,70% 30%,82% 44%,100% 100%,0 100%,18% 44%,30% 30%,22% 20%,30% 6%);background:linear-gradient(180deg,#050208,#120a24 40%,#06030c);box-shadow:0 0 30px #3a1a6a;filter:drop-shadow(0 0 10px #6a2fd6);animation:ultReaperRise 2.4s cubic-bezier(.4,0,.3,1) var(--fx-delay) both}
+.ult-reaper .ult-b{left:36%;top:48%;width:120px;height:230px;margin:-150px 0 0 -60px;clip-path:polygon(50% 0,70% 6%,78% 20%,70% 30%,82% 44%,100% 100%,0 100%,18% 44%,30% 30%,22% 20%,30% 6%);background:linear-gradient(180deg,#050208,#120a24 40%,#06030c);animation:ultReaperRise 2.4s cubic-bezier(.4,0,.3,1) var(--fx-delay) both}
 .ult-reaper .ult-b::before{content:'';position:absolute;left:38%;top:14%;width:9px;height:9px;border-radius:50%;background:#d8b4ff;box-shadow:24px 0 0 #d8b4ff,0 0 10px #b48cff,24px 0 10px #b48cff;animation:ultReaperEyes 2.4s steps(1) var(--fx-delay) both}
 .ult-reaper .ult-a{left:36%;top:48%;width:170px;height:170px;margin:-215px 0 0 -40px;border-radius:50%;border:14px solid transparent;border-top-color:#f0e8ff;border-right-color:#8a5cf0;filter:drop-shadow(0 0 12px #6a2fd6);transform-origin:10% 110%;animation:ultReaperScythe 2.4s cubic-bezier(.7,0,.2,1) var(--fx-delay) both}
 .ult-reaper .ult-a::before{content:'';position:absolute;left:-120%;top:50%;width:1400px;height:4px;margin-top:-2px;background:linear-gradient(90deg,transparent,#f0e8ff 15%,#fff 50%,#b48cff 85%,transparent);box-shadow:0 0 18px #d8b4ff,0 0 40px #6a2fd6;rotate:-6deg;transform-origin:0 50%;animation:ultReaperCut 2.4s cubic-bezier(.8,0,.2,1) calc(var(--fx-delay) + .95s) both}
@@ -1281,7 +1283,7 @@
 /* 1 마력 방출: 마력 고리 + 왼쪽으로 뻗는 마력 줄기 */
 .foe-shock{--fx:#c08cff}
 .foe-shock .foe-a{left:var(--ox);top:var(--oy);width:170px;height:110px;margin:-55px 0 0 -85px;border:3px solid #e2ccff;border-radius:50%;box-shadow:0 0 18px #c08cff,inset 0 0 18px #c08cff;animation:foeRing 1s ease-out calc(var(--fx-delay) + .1s) both}
-.foe-shock .foe-b{left:calc(var(--ox) - 400px);top:var(--oy);width:400px;height:9px;margin-top:-4px;background:linear-gradient(90deg,transparent,#fff 60%,#c08cff);box-shadow:0 0 14px #c08cff,0 0 30px #8a5cf0;clip-path:polygon(0 50%,12% 0,24% 70%,38% 20%,52% 100%,66% 30%,80% 80%,100% 50%,80% 50%,66% 60%,52% 40%,38% 60%,24% 40%,12% 60%);transform-origin:100% 50%;animation:foeThrust .7s ease-out calc(var(--fx-delay) + .25s) both}
+.foe-shock .foe-b{left:calc(var(--ox) - 400px);top:var(--oy);width:400px;height:9px;margin-top:-4px;background:linear-gradient(90deg,transparent,#fff 60%,#c08cff);clip-path:polygon(0 50%,12% 0,24% 70%,38% 20%,52% 100%,66% 30%,80% 80%,100% 50%,80% 50%,66% 60%,52% 40%,38% 60%,24% 40%,12% 60%);transform-origin:100% 50%;animation:foeThrust .7s ease-out calc(var(--fx-delay) + .25s) both}
 /* 2 불꽃 숨결: 왼쪽으로 뿜는 불길 */
 .foe-burn{--fx:#ff9a4a}.foe-burn .scene-fx-dark{background:#140804}
 .foe-burn .foe-a{left:calc(var(--ox) - 470px);top:calc(var(--oy) - 95px);width:470px;height:190px;clip-path:polygon(100% 42%,100% 58%,6% 100%,0 72%,3% 50%,0 28%,6% 0);background:linear-gradient(270deg,#fff 0,#ffd27a 12%,#ff7a2a 45%,rgba(255,80,20,.45) 80%,transparent);filter:drop-shadow(0 0 16px #ff7a2a);transform-origin:100% 50%;animation:foeBreath 1.3s ease-out calc(var(--fx-delay) + .15s) both}
@@ -1293,7 +1295,7 @@
 .foe-venom .foe-frag{animation-duration:1.7s}
 /* 4 몸통 박치기: 각진 몸통이 돌진해 박히고, 별 모양 충격과 금 간 선이 튑니다 */
 .foe-crush{--fx:#e8d2a8}
-.foe-crush .foe-a{left:var(--ox);top:var(--oy);width:170px;height:96px;margin:-48px 0 0 -85px;clip-path:polygon(0 50%,14% 8%,52% 0,100% 14%,100% 86%,52% 100%,14% 92%);background:linear-gradient(90deg,rgba(255,243,216,.4),#f2dcb0 35%,#b89560 80%,#6b5230);box-shadow:0 0 18px #e8d2a8;animation:foeLunge 1s cubic-bezier(.7,0,.3,1) var(--fx-delay) both}
+.foe-crush .foe-a{left:var(--ox);top:var(--oy);width:170px;height:96px;margin:-48px 0 0 -85px;clip-path:polygon(0 50%,14% 8%,52% 0,100% 14%,100% 86%,52% 100%,14% 92%);background:linear-gradient(90deg,rgba(255,243,216,.4),#f2dcb0 35%,#b89560 80%,#6b5230);animation:foeLunge 1s cubic-bezier(.7,0,.3,1) var(--fx-delay) both}
 .foe-crush .foe-a::before{content:'';position:absolute;left:100%;top:12%;width:160px;height:76%;background:repeating-linear-gradient(180deg,transparent 0 8px,rgba(255,243,216,.7) 8px 11px,transparent 11px 22px);mask-image:linear-gradient(90deg,#000,transparent);-webkit-mask-image:linear-gradient(90deg,#000,transparent)}
 .foe-crush .foe-b{left:var(--tx);top:var(--oy);width:220px;height:220px;margin:-110px 0 0 -110px;clip-path:polygon(50% 0,58% 36%,94% 22%,70% 50%,100% 68%,62% 62%,66% 100%,50% 70%,34% 100%,38% 62%,0 68%,30% 50%,6% 22%,42% 36%);background:radial-gradient(circle,#fff 0,#fff3d8 30%,rgba(232,210,168,.35) 70%,transparent);animation:foeImpact .7s ease-out calc(var(--fx-delay) + .34s) both}
 .foe-crush .foe-b::after{content:'';position:absolute;inset:-30px;background:repeating-conic-gradient(from 10deg,transparent 0 24deg,rgba(255,243,216,.9) 24deg 25.5deg);mask-image:radial-gradient(circle,transparent 30%,#000 32%,transparent 70%);-webkit-mask-image:radial-gradient(circle,transparent 30%,#000 32%,transparent 70%)}
@@ -1322,7 +1324,7 @@
 /* 8 각성: 황금 육각 결계 */
 .foe-ward{--fx:#ffd76a}.foe-ward .scene-fx-dark{background:#120d03}
 .foe-ward .foe-a{left:calc(var(--ox) + 70px);top:var(--oy);width:210px;height:210px;margin:-105px 0 0 -105px;clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);background:linear-gradient(180deg,rgba(255,215,106,.55),rgba(255,215,106,.1) 60%,rgba(255,215,106,.4));box-shadow:inset 0 0 30px #ffd76a;animation:foeGrow 1.6s ease-out var(--fx-delay) both}
-.foe-ward .foe-b{left:calc(var(--ox) + 70px);top:var(--oy);width:250px;height:250px;margin:-125px 0 0 -125px;clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%,50% 4%,11% 27%,11% 73%,50% 96%,89% 73%,89% 27%,50% 4%);background:#fff0b8;filter:drop-shadow(0 0 10px #ffd76a);animation:foeSpin 1.6s ease-out var(--fx-delay) both}
+.foe-ward .foe-b{left:calc(var(--ox) + 70px);top:var(--oy);width:250px;height:250px;margin:-125px 0 0 -125px;clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%,50% 4%,11% 27%,11% 73%,50% 96%,89% 73%,89% 27%,50% 4%);background:#fff0b8;animation:foeSpin 1.6s ease-out var(--fx-delay) both}
 .foe-ward .foe-frag{left:calc(var(--ox) + 70px);--ang:calc(var(--i) * 45deg)}
 /* 9 난타: 타격마다 발톱 자국 */
 .foe-frenzy{--fx:#ff7a7a}
@@ -1348,7 +1350,7 @@
 /* 13 대지 강타: 땅이 울리고 바위들이 솟구칩니다. 바위는 가상 요소라 부모는 clip-path 없는 빈 기준점입니다. */
 .foe-slam{--fx:#d8b06a}.foe-slam .scene-fx-dark{background:#0c0904}
 .foe-slam .foe-a,.foe-slam .foe-b{left:var(--tx);top:calc(var(--oy) + 95px);width:0;height:0;overflow:visible}
-.foe-slam .foe-a::before,.foe-slam .foe-a::after,.foe-slam .foe-b::before,.foe-slam .foe-b::after{content:'';position:absolute;left:calc(var(--dx) - var(--w) / 2);bottom:0;width:var(--w);height:var(--h);background:linear-gradient(160deg,#c9a86a 0,#8a6b3a 35%,#4b3a22 70%,#2d2214);box-shadow:inset 0 0 20px rgba(0,0,0,.6);filter:drop-shadow(0 0 8px rgba(216,176,106,.6));transform-origin:50% 100%;animation:foeRock 1.5s cubic-bezier(.2,.9,.3,1) calc(var(--fx-delay) + var(--d)) both}
+.foe-slam .foe-a::before,.foe-slam .foe-a::after,.foe-slam .foe-b::before,.foe-slam .foe-b::after{content:'';position:absolute;left:calc(var(--dx) - var(--w) / 2);bottom:0;width:var(--w);height:var(--h);background:linear-gradient(160deg,#c9a86a 0,#8a6b3a 35%,#4b3a22 70%,#2d2214);box-shadow:inset 0 0 20px rgba(0,0,0,.6);transform-origin:50% 100%;animation:foeRock 1.5s cubic-bezier(.2,.9,.3,1) calc(var(--fx-delay) + var(--d)) both}
 .foe-slam .foe-a::before{--dx:0px;--w:120px;--h:140px;--d:.3s;clip-path:polygon(50% 0,80% 18%,100% 55%,88% 100%,12% 100%,0 60%,22% 14%)}
 .foe-slam .foe-a::after{--dx:-100px;--w:84px;--h:100px;--d:.42s;clip-path:polygon(40% 0,100% 30%,90% 100%,10% 100%,0 40%)}
 .foe-slam .foe-b::before{--dx:100px;--w:92px;--h:112px;--d:.5s;clip-path:polygon(60% 0,100% 40%,85% 100%,15% 100%,0 55%,20% 10%)}
@@ -1389,7 +1391,7 @@
 .foe-command .foe-hit::before{content:'';position:absolute;left:0;top:4px;width:100%;height:6px;background:linear-gradient(90deg,#fff 0,#ffd8d8 8%,#c9a86a 8%,#8a6b3a 100%);clip-path:polygon(0 50%,7% 0,7% 25%,100% 35%,100% 65%,7% 75%,7% 100%)}
 .foe-command .foe-hit::after{content:'';position:absolute;left:34px;top:-8px;width:38px;height:12px;background:linear-gradient(90deg,#ff6a6a,#8a1020);clip-path:polygon(0 0,100% 0,78% 50%,100% 100%,0 100%)}
 .foe-command .foe-a{left:calc(var(--ox) + 30px);top:calc(var(--oy) - 170px);width:14px;height:150px;background:linear-gradient(180deg,#c9a86a,#6b5230);transform-origin:50% 100%;animation:foeBannerUp 1.6s cubic-bezier(.3,1.3,.5,1) var(--fx-delay) both}
-.foe-command .foe-a::before{content:'';position:absolute;left:-104px;top:4px;width:104px;height:70px;background:linear-gradient(180deg,#ff6a6a,#9a1428 60%,#5a0a16);clip-path:polygon(100% 0,100% 100%,0 100%,16% 50%,0 0);box-shadow:0 0 16px #ff5a5a;transform-origin:100% 0;animation:foeBannerWave 1.6s ease-in-out var(--fx-delay) both}
+.foe-command .foe-a::before{content:'';position:absolute;left:-104px;top:4px;width:104px;height:70px;background:linear-gradient(180deg,#ff6a6a,#9a1428 60%,#5a0a16);clip-path:polygon(100% 0,100% 100%,0 100%,16% 50%,0 0);transform-origin:100% 0;animation:foeBannerWave 1.6s ease-in-out var(--fx-delay) both}
 .foe-command .foe-a::after{content:'⚔';position:absolute;left:-74px;top:18px;font:700 34px/1 sans-serif;color:#ffe9c4;text-shadow:0 0 10px #fff}
 .foe-command .foe-b{left:calc(var(--ox) - 440px);top:calc(var(--oy) + 40px);width:460px;height:70px;background:repeating-linear-gradient(90deg,transparent 0 34px,rgba(201,168,106,.9) 34px 38px,rgba(201,168,106,.2) 38px 44px,transparent 44px 60px);mask-image:linear-gradient(90deg,transparent,#000 30%,#000 80%,transparent),linear-gradient(180deg,#000 40%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 30%,#000 80%,transparent);-webkit-mask-composite:source-in;mask-composite:intersect;animation:foeMarch 1.4s linear calc(var(--fx-delay) + .1s) both}
 .foe-command .foe-frag{left:var(--tx);--ang:calc(var(--i) * 45deg);color:#ffe9c4;animation-delay:calc(var(--fx-delay) + .3s + var(--i) * .05s)}

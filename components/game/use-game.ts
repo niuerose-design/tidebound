@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import type { State, Action, DuelResult, Snapshot } from '@/game/types';
+import type { State, Action, DuelResult, Snapshot, CombatStats } from '@/game/types';
 import { BALANCE } from '@/game/data/balance';
 import { stats } from '@/game/systems/stats';
 import { buildCombatReplay, type ReplayFrame } from '@/game/systems/combat-feedback';
@@ -48,6 +48,9 @@ function createFrameStore(): FrameStore {
     return { get: () => frame, set: next => { if (next === frame) return; frame = next; subs.forEach(fn => fn()); }, subscribe: fn => { subs.add(fn); return () => { subs.delete(fn); }; } };
 }
 const noFrame = () => null;
+const statsCache = new WeakMap<State, CombatStats>();
+/** 같은 상태 객체의 능력치는 한 번만 계산합니다(재생 버퍼와 전투 화면이 함께 씀). */
+export const cachedStats = (s: State) => { let a = statsCache.get(s); if (!a) statsCache.set(s, a = stats(s)); return a; };
 /** 전투 화면에 보이는 상태: 전투 표시값(HP·MP·적·상태이상·회복 대기·로그)만 재생 중인 프레임으로 바꿉니다. */
 export function useReplayView(state: State, frames: FrameStore): State {
     const frame = useSyncExternalStore(frames.subscribe, frames.get, noFrame);
@@ -76,7 +79,7 @@ function createReplay(render: (frame: ReplayFrame | null) => void) {
         const now = Date.now();
         const behind = new Set(queue.filter(q => q.turnAt <= now).map(q => q.turnAt)).size + Math.max(0, Math.min(count, Math.floor((now - base) / BALANCE.turnMs)));
         if (behind > MAX_BEHIND_TURNS) { offset = sample; return reset(); }
-        const a = stats(next), turns = buildCombatReplay(prev, next, a.hp, a.mana);
+        const a = cachedStats(next), turns = buildCombatReplay(prev, next, a.hp, a.mana);
         if (!turns) return reset();
         // 재생 중이 아니었다면 첫 턴이 올 때까지 이전 상태를 붙잡아 둡니다(새 상태가 먼저 보였다가 되감기지 않도록).
         if (!current && turns.length) show({ offset: 0, hp: prev.hp, mana: prev.mana, recovery: prev.recovery, enemy: prev.enemy, effects: prev.effects, playerStun: prev.playerStun, lastLogId: prev.logs.at(-1)?.id ?? 0 });
@@ -156,7 +159,8 @@ export function useGame() {
             setState(data.state);
             // 동기화만 턴 단위로 재생합니다. 직접 한 행동과 오프라인 정산 결과는 지금처럼 바로 보여 줍니다.
             const settled = !!data.state.lastOffline && JSON.stringify(data.state.lastOffline) !== JSON.stringify(prev?.lastOffline);
-            if (a.type === 'sync' && prev && !settled) replay.push(prev, data.state, Date.now());
+            // 전투를 보지 않는 화면은 15초마다 동기화해 어차피 밀린 턴을 건너뛰므로 재생 계산을 하지 않습니다.
+            if (a.type === 'sync' && prev && !settled && live.current) replay.push(prev, data.state, Date.now());
             else replay.reset();
         }
         if (data.result)

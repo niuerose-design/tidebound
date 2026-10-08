@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Compass, Coins, Droplets, Shield, Sparkles, Swords, Wand2, Atom } from 'lucide-react';
 import type { Job } from '@/game/data/classes';
 import { lineageOf } from '@/game/data/classes';
@@ -168,7 +168,7 @@ export function JobArt({ job, size = 48, className = '' }: { job: Job; size?: nu
  * v27.51 전투 장면 배경(바다 그림 대체). 메이플 필드풍 언덕·숲·버섯 집 실루엣을 사냥터 색(--stage-tone)으로 물들입니다.
  * 그림 파일 없이 SVG라 가볍고, 기존 연출(ocean-art 흔들림)을 그대로 받도록 같은 클래스를 씁니다.
  */
-export function SceneBackdrop() {
+export const SceneBackdrop = memo(function SceneBackdrop() {
     return <svg className="ocean-art scene-backdrop" viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
             <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0c1d2b"/><stop offset=".62" stopColor="var(--stage-tone, #5c9dba)" stopOpacity=".55"/><stop offset="1" stopColor="#0b2029"/></linearGradient>
@@ -193,4 +193,4 @@ export function SceneBackdrop() {
         </g>
         <path d="M0 800 C220 760 420 790 640 810 S1100 770 1300 790 L1536 780 V1024 H0Z" fill="#0b2029"/>
     </svg>;
-}
+});

@@ -19,6 +19,9 @@ const KEY = 'secrecy', TTL = 30_000;
 const ODDS_KEY = createHash('sha1').update(JSON.stringify(SERVER_ODDS)).digest('base64url');
 /** v3.55 사냥터별 평균 보상 배율 표: 바뀌지 않으므로 처음 한 번 만들고, 키에는 지문만 더합니다. */
 let stageAvg: { table: ReturnType<typeof stageRewardAvgTable>; key: string } | undefined;
+let secretTables: string | undefined;
+/** 비밀 직업 · 계보 · 스킬 표의 지문(배포마다 한 번). */
+const secretTablesKey = () => secretTables ??= createHash('sha1').update(JSON.stringify([SECRET_JOBS.map(raw => jobById(raw.id) || raw), SECRET_LINEAGES, SECRET_SKILLS])).digest('base64url');
 const stageAvgOnce = () => stageAvg ??= (t => ({ table: t, key: createHash('sha1').update(JSON.stringify(t)).digest('base64url') }))(stageRewardAvgTable());
 let cached: { at: number; on: boolean } | null = null;
 export async function secrecyOn(now: number) {
@@ -51,8 +54,8 @@ export async function buildCatalog(s: State, now: number, known?: unknown): Prom
     const mine = (id: string) => s.skills.includes(id) || (s.learned?.[id] || 0) > 0;
     const skills = SECRET_SKILLS.filter(sk => !secret || (sk.job && shown.has(sk.job)) || mine(sk.id));
     const body: Catalog = { secret, unlocks: unlockStates(s), revealed, jobs, lineages, skills };
-    // v3.52 드롭·확률 수치는 비공개가 꺼져 있을 때만 싣습니다. 바뀌지 않는 값이라 키에는 미리 만든 지문만 더합니다(동기화마다 다시 해시하지 않음).
+    // 키: 본문을 정하는 입력(비공개 여부 · 숨은 조건 · 드러난 직업 · 보낼 스킬 id)과 표 자체의 지문. 표 · 확률 수치는 바뀌지 않으므로 지문은 한 번만 만듭니다(요청마다 30KB 본문을 다시 해시하지 않음).
     const avg = stageAvgOnce();
-    const key = createHash('sha1').update(JSON.stringify(body)).update(secret ? '' : ODDS_KEY).update(avg.key).digest('base64url').slice(0, 16);
+    const key = createHash('sha1').update(JSON.stringify([secret, body.unlocks, revealed, skills.map(sk => sk.id)])).update(secretTablesKey()).update(secret ? '' : ODDS_KEY).update(avg.key).digest('base64url').slice(0, 16);
     return key === known ? null : { ...body, ...(secret ? {} : { odds: SERVER_ODDS }), stageAvg: avg.table, key };
 }

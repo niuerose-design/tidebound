@@ -1,13 +1,13 @@
 'use client';
 /**
  * v3.101 최근 전투 기록: 묶는 계산은 game/systems/battle-records, 여기서는 이 브라우저의 저장(localStorage)과 React 구독만 둡니다.
- * 서버에 보내거나 저장하지 않습니다. 캐릭터 이름마다 따로 남기고, 저장은 몰아서(SAVE_MS) 합니다.
+ * 서버에 보내거나 저장하지 않습니다. 캐릭터 이름마다 따로 남기고, 저장은 몰아서(SAVE_MS · 탭을 숨기거나 떠날 때) 합니다. 저장은 수백 KB 문자열을 동기로 쓰므로 자주 하지 않습니다.
  */
 import { useEffect, useSyncExternalStore } from 'react';
 import type { State } from '@/game/types';
 import { emptyBattleRecords, ingestBattleLogs, trimBattleRecords, type BattleRecordStore } from '@/game/systems/battle-records';
 
-const KEY = 'tidebound.battleRecords:', SAVE_MS = 5000;
+const KEY = 'tidebound.battleRecords:', SAVE_MS = 60_000;
 let owner = '', store: BattleRecordStore = emptyBattleRecords(), snapshot: BattleRecordStore = store, timer: ReturnType<typeof setTimeout> | undefined;
 const subs = new Set<() => void>();
 const EMPTY = emptyBattleRecords();
@@ -31,7 +31,8 @@ function feed(s: State) {
     subs.forEach(fn => fn());
     timer ??= setTimeout(save, SAVE_MS);
 }
-if (typeof window !== 'undefined') window.addEventListener('pagehide', () => { if (timer) { clearTimeout(timer); save(); } });
+const flush = () => { if (timer) { clearTimeout(timer); save(); } };
+if (typeof window !== 'undefined') { window.addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); }); }
 
 const subscribe = (fn: () => void) => { subs.add(fn); return () => { subs.delete(fn); }; };
 export function useBattleRecords() { return useSyncExternalStore(subscribe, () => snapshot, () => EMPTY); }
