@@ -18,7 +18,8 @@ export function bossSnapshot(id: string): Snapshot | null {
 /** v27.43 무릉도장 depth층 보스(마지막 웨이브)와 같은 능력치·기술. 제단의 첫 신이 씁니다. */
 export function abyssBossSnapshot(depth: number): Snapshot {
     const d = DUNGEONS.find(x => x.id === 'abyss')!, f = FISH.find(x => x.id === d.bossFish)!;
-    const stats = abyssEnemyStats(f, abyssReference(), depth, { boss: true, wave: d.fish.length - 1 });
+    // v3.185 신은 던전 보스 체력 배율(bossHpScale)을 받지 않습니다(제단 설계 체력 9.3억 유지).
+    const stats = abyssEnemyStats(f, abyssReference(), depth, { boss: true, wave: d.fish.length - 1, rawBoss: true });
     return { name: d.boss, level: f.level, job: 'boss', rebirths: 0, stats, skills: foeSkills(f.id, f.level, true), power: power(stats), rating: 1000 + f.level * 10 };
 }
 /** v27.91 월드보스 결투 상대. hp는 서버가 들고 있는 남은 공유 체력(없으면 최대 체력)이라, 남은 체력이 적으면 한 번의 도전으로 쓰러집니다. */

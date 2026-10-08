@@ -47,6 +47,8 @@ export const MONSTER_TUNING = {
     wardLevel: 50,
     defenseMultiplier: 1.1,
     bossMultiplier: 2.7,
+    /** v3.185 보스(던전 마지막 판 · 무릉 보스) 체력 추가 배율(docs/boss-plan.md §6): 입장 환생 몸이 보스를 15~30턴에 잡게. 월드보스 · 칠흑 · 대왕은 이 배율을 쓰지 않습니다. */
+    bossHpScale: .8,
     bossRewardMultiplier: 1.9,
     dungeonPreparationTurns: 3,
     dungeonHealAfterKill: .08,
@@ -100,9 +102,9 @@ export const DUNGEON_TUNING = { bossExpFish: 6, bossGoldFish: 4, clearGoldFish: 
 export const ABYSS_TUNING = { hp: 100000, hpGrowth: 1.15, attack: 4, attackGrowth: 1.08, defense: 2, defenseGrowth: 1.05 };
 /**
  * v27.70 던전 난이도(일반 던전): 입장할 때 고르는 세 단계. 사냥터 난이도와 별개입니다. tier는 사냥터 난이도와 같은 배율 공식(체력·공격·보상·숙련·몬스터 레벨 보정)에 넣는 값입니다.
- * 노말 0(지금 난이도) · 헬 50(사냥터 난이도 50급: 체력 ×23.9 · 공격 ×11.8 · 보상 ×26) · 나이트메어 200(난이도 200급: 체력 ×265 · 공격 ×102 · 보상 ×101). 처치 숙련 배율은 없습니다(v27.74). 헬부터 몬스터 레벨이 내 레벨까지 올라갑니다.
+ * 노말 0(지금 난이도) · 헬 70(사냥터 난이도 70급: 체력 ×40.5 · 공격 ×18.6) · 나이트메어 260(난이도 260급: 체력 ×437 · 공격 ×163). v3.185 50 · 200 → 70 · 260(docs/boss-plan.md §6: 헬은 자기 계열 환생 50 몸 30~39턴, 나이트메어는 빌림 환생 100 몸 18~25턴). 처치 숙련 배율은 없습니다(v27.74). 헬부터 몬스터 레벨이 내 레벨까지 올라갑니다.
  */
-export const DUNGEON_MODES = [{ id: 'normal', name: '노말', tier: 0 }, { id: 'hell', name: '헬', tier: 50 }, { id: 'nightmare', name: '나이트메어', tier: 200 }] as const;
+export const DUNGEON_MODES = [{ id: 'normal', name: '노말', tier: 0, note: '' }, { id: 'hell', name: '헬', tier: 70, note: '환생 50 안팎의 몸에 맞춘 난이도입니다.' }, { id: 'nightmare', name: '나이트메어', tier: 260, note: '다른 직업 패시브까지 계승해 채운 몸을 위한 난이도입니다. 자기 계열만으로는 깨기 어렵습니다.' }] as const;
 export type DungeonMode = typeof DUNGEON_MODES[number]['id'];
 export const dungeonModeTier = (mode?: string) => DUNGEON_MODES.find(m => m.id === mode)?.tier ?? 0;
 export const dungeonOverlevel = (playerLevel: number, dungeonLevel: number) => {

@@ -544,7 +544,8 @@ test('v27.43 altar first god matches the Mu Lung floor-50 boss and fights past t
     const god = D.abyssBossSnapshot(A.ALTAR.firstGod.depth);
     const s = engine.newState(0); s.level = 70; s.rebirths = 10; s.dungeon = { id: 'abyss', wave: 4, depth: 50 };
     enc.spawn(s, () => .5);
-    assert.equal(god.stats.hp, s.enemy.maxHp); assert.equal(god.stats.attack, s.enemy.attack); assert.equal(god.stats.defense, s.enemy.defense);
+    const { MONSTER_TUNING } = await G.load('data/balance');
+    assert.ok(Math.abs(god.stats.hp * MONSTER_TUNING.bossHpScale - s.enemy.maxHp) / s.enemy.maxHp < .01, 'v3.185 the god keeps the raw boss body; the dungeon copy carries bossHpScale'); assert.equal(god.stats.attack, s.enemy.attack); assert.equal(god.stats.defense, s.enemy.defense);
     const tank = { ...god, name: '버티는 자', stats: { ...god.stats, attack: 1, magic: 1 }, skills: [] };
     const t0 = performance.now(), r = D.duel(tank, { ...god, stats: { ...god.stats, attack: 1, magic: 1 }, skills: [] }, true, () => .5, A.ALTAR.godMaxTurns);
     assert.equal(r.turns, A.ALTAR.godMaxTurns); assert.equal(r.winner, 'draw'); assert.ok(performance.now() - t0 < 1500, 'a full god fight stays cheap');
@@ -849,7 +850,7 @@ test('v27.73 skill pins and hidden skills live in the save: toggles, mutual excl
 test('v27.70 dungeon modes: normal/hell/nightmare tiers, entry value parsing, repeat keeps the mode, Mu Lung ignores it', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const B = await L.load('data/balance'), M = await L.load('systems/meta'), DR = await L.load('systems/dungeon-run');
-    assert.deepEqual(B.DUNGEON_MODES.map(m => [m.id, m.tier]), [['normal', 0], ['hell', 50], ['nightmare', 200]]);
+    assert.deepEqual(B.DUNGEON_MODES.map(m => [m.id, m.tier]), [['normal', 0], ['hell', 70], ['nightmare', 260]], 'v3.185 hell 70 · nightmare 260');
     const s = newState(0); s.rebirths = 10; s.level = 60; s.tide = 30;
     assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'hell@fail'), { mode: 'hell', repeat: { left: null } });
     assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'fail'), { mode: 'normal', repeat: { left: null } });
@@ -857,7 +858,7 @@ test('v27.70 dungeon modes: normal/hell/nightmare tiers, entry value parsing, re
     assert.equal(DR.parseDungeonValue(s, 'abyss', 'hell@deeper:3').mode, 'normal', 'Mu Lung has no modes');
     assert.throws(() => DR.parseDungeonValue(s, 'caldera', 'ultra@fail'), /난이도/);
     act(s, { type: 'dungeon', id: 'caldera', value: 'nightmare@5' }, 0);
-    assert.equal(s.dungeon.mode, 'nightmare'); assert.equal(M.encounterTier(s), 200, 'mode tier, not the stage tide (30)');
+    assert.equal(s.dungeon.mode, 'nightmare'); assert.equal(M.encounterTier(s), 260, 'mode tier(v3.185 nightmare 260), not the stage tide (30)');
     assert.equal(M.dungeonLevelAt({ id: 'caldera', level: 26 }, M.encounterTier(s), 60), 60, 'nightmare lifts monsters to the player level');
     DR.continueRepeat(s, 'caldera', s.dungeon.repeat); assert.equal(s.dungeon.mode, 'nightmare', 'repeat keeps the mode');
     const n = newState(0); n.rebirths = 10; n.level = 60; act(n, { type: 'dungeon', id: 'caldera', value: 'fail' }, 0);

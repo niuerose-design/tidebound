@@ -37,6 +37,8 @@ const HELL_TIER = Number(arg('--hell-tier', dungeonModeTier('hell'))), NIGHTMARE
 const ENTRY = J('--entry', {}), ONYX_HP = J('--onyx-hp', {}), RAID_HP = J('--raid-hp', {});
 // --onyx-tier-sqrt: 칠흑에만 난이도 배율을 √로 완만하게(체력 √tierHealth · 공격 √tierAttack) 실험.
 const ONYX_TIER_SQRT = process.argv.includes('--onyx-tier-sqrt');
+// --abyss-curve: 무릉도장만 층(1 · 5 · 10 · 20 · 30 · 50) × 몸(R5 · 20 · 50 · 100)으로 오르기 곡선을 잽니다(--abyss 조정과 함께).
+const ABYSS_CURVE = process.argv.includes('--abyss-curve');
 Object.assign(ABYSS_TUNING, J('--abyss', {}));
 
 const bodies = new Map();
@@ -59,13 +61,13 @@ const out = { bodies: {}, dungeon: [], onyx: [], raid: [] };
 
 // ── 던전 ──────────────────────────────────────────────────────────────────────────────────────
 /** 한 몸으로 던전 한 번: 5연전, 체력 · 마나 · 대기 이어짐(check-tier5 규칙). 보스 판은 따로 턴을 셉니다. */
-function dungeonRun(s, st, d, tier, seed) {
+function dungeonRun(s, st, d, tier, seed, depth = 1) {
     const rng = random(seed * 977 + d.id.length), cd = {}; let hp = st.hp, mana = st.mana, ok = true, w = 0, turns = 0, bossTurns = 0, bossHpLeft = 0;
     const level = d.id === 'abyss' ? d.level : d.level;
     for (; w < WAVES && ok; w++) {
         const last = w === WAVES - 1, id = last && d.bossFish ? d.bossFish : d.fish[w], f0 = fishOf(id);
         const f = d.id === 'abyss' ? f0 : tideLiftFish(f0, tier, s.level);
-        const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), 1, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: w });
+        const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), depth, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: w });
         if (last && d.id !== 'abyss' && BOSS_HP !== 1) est.hp = Math.round(est.hp * BOSS_HP);
         const a = player(s, st, hp, mana, cd), b = foeOf({ ...f, level: f.level }, est, { boss: last }), r = fight(a, b, rng);
         ok = r.won; hp = a.hp; mana = a.mana; turns += r.turns;
@@ -144,6 +146,15 @@ function measureRaids() {
 }
 
 const want = k => !ONLY || ONLY === k;
+if (ABYSS_CURVE) {
+    const d = DUNGEONS.find(x => x.id === 'abyss');
+    console.log(`## 무릉도장 층 곡선 (1층 기준 체력 ${ABYSS_TUNING.hp} · 공격 ×${ABYSS_TUNING.attack}, 층마다 ×${ABYSS_TUNING.hpGrowth} · ×${ABYSS_TUNING.attackGrowth})`);
+    for (const r of REBIRTHS || [5, 20, 50, 100]) for (const depth of [1, 5, 10, 20, 30, 50]) {
+        const perJob = JOB_IDS.map(jobId => { const s = bodyFor(r, jobId), st = stats(s); const runs = Array.from({ length: SEEDS }, (_, k) => dungeonRun(s, st, d, 0, k + 1, depth)); return { cleared: avg(runs.map(x => x.cleared)), turns: avg(runs.map(x => x.turns)), hpLeft: avg(runs.map(x => x.hpLeft)) }; });
+        console.log(`R${String(r).padEnd(3)} ${String(depth).padStart(2)}층  클리어 ${pct(avg(perJob.map(x => x.cleared)))} · 턴 ${avg(perJob.map(x => x.turns)).toFixed(0)} · 남은 체력 ${pct(avg(perJob.map(x => x.hpLeft)))} | ${perJob.map((x, i) => `${jobById(JOB_IDS[i]).name.replace(' (5차)', '')} ${pct(x.cleared)}`).join(' · ')}`);
+    }
+    process.exit(0);
+}
 if (process.argv.includes('--body')) for (const r of REBIRTHS || [0, 5, 10, 20, 50, 100]) for (const jobId of JOB_IDS) console.log(r, jobId, JSON.stringify(bodyReport(bodyFor(r, jobId))));
 if (want('dungeon')) { console.log('## 던전 (노말 5연전 · 입장 환생 몸, 헬 R50, 나이트메어 R100)'); measureDungeons(); }
 if (want('onyx')) { console.log('## 칠흑 (서식지 적정 환생 몸 · 80턴)'); measureOnyx(); }

@@ -97,8 +97,10 @@ export function enemyStats(f: { id: string; hp: number; attack: number; defense:
         speed: Math.round((8 + f.level * .25) * p.speed), mana: 100, manaRegen: 10,
     };
 }
-export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: { boss?: boolean; tier?: number; wave?: number } = {}): Stats {
+export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: { boss?: boolean; tier?: number; wave?: number; /** v3.185 던전 보스 체력 배율(bossHpScale)을 건너뜀: 제단의 첫 신처럼 보스 몸을 빌리되 던전이 아닌 것. */ rawBoss?: boolean } = {}): Stats {
     const foe = enemyStats(f, options.boss);
+    // v3.185 던전 보스(마지막 판 · 훈련 상대 · 도감 미리보기 · 무릉 보스) 체력 ×bossHpScale(docs/boss-plan.md §6). 월드보스 · 칠흑 · 대왕은 boss 없이 서므로 해당 없음.
+    if (options.boss && !options.rawBoss) foe.hp = Math.round(foe.hp * MONSTER_TUNING.bossHpScale);
     const pressure = options.wave === undefined ? { hp: 1, attack: 1, defense: 1 } : dungeonPressure(options.wave);
     foe.hp = Math.round(foe.hp * tierHealth(options.tier || 0) * pressure.hp);
     foe.attack = Math.round(foe.attack * tierAttack(options.tier || 0) * pressure.attack);
@@ -113,8 +115,8 @@ export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: {
  * v27.35 무릉도장 적 능력치. 층 배율(tier) 대신 ABYSS_TUNING 공식을 씁니다.
  * ref는 심연 첫 몬스터의 1층 기준 능력치이고, 모든 몬스터에 같은 배수를 곱해 몬스터·보스 사이의 차이를 유지합니다.
  */
-export function abyssEnemyStats(f: Parameters<typeof enemyStats>[0], ref: Stats, depth: number, options: { boss?: boolean; wave?: number } = {}): Stats {
-    const foe = scaledEnemyStats(f, { boss: options.boss, tier: 0, wave: options.wave ?? 0 });
+export function abyssEnemyStats(f: Parameters<typeof enemyStats>[0], ref: Stats, depth: number, options: { boss?: boolean; wave?: number; rawBoss?: boolean } = {}): Stats {
+    const foe = scaledEnemyStats(f, { boss: options.boss, tier: 0, wave: options.wave ?? 0, rawBoss: options.rawBoss });
     const k = Math.max(0, depth - 1), hp = ABYSS_TUNING.hp * Math.pow(ABYSS_TUNING.hpGrowth, k) / Math.max(1, ref.hp);
     const attack = ABYSS_TUNING.attack * Math.pow(ABYSS_TUNING.attackGrowth, k), defense = ABYSS_TUNING.defense * Math.pow(ABYSS_TUNING.defenseGrowth, k);
     foe.hp = Math.round(foe.hp * hp);
