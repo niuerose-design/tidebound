@@ -63,6 +63,7 @@ export function skillBrief(sk: Skill): string {
         if (sk.companion) parts.push(`정령 추가타 ${sk.companion.hits}회 · 위력 ${skillPercent(sk.companion.power)}`);
         if (sk.basicEffect) parts.push(`기본 공격에 ${STATUS_WORD[sk.basicEffect]} ${sk.statusTurns ?? STATUS_TUNING.corrodeTurns}턴`);
         if (sk.lastStand) parts.push(`전투당 ${sk.lastStand.charges}번 체력 1로 버팀${sk.lastStand.heal ? ` · ${skillPercent(sk.lastStand.heal)} 회복` : ''}`);
+        if (sk.spectre) parts.push(`충전 ${sk.spectre.need}에 접신 ${sk.spectre.turns}턴(피해 ×${number(sk.spectre.damageMultiplier)}${sk.spectre.speedMultiplier ? ` · 속도 ×${number(sk.spectre.speedMultiplier)}` : ''})`);
         if (sk.song) parts.unshift('노래 · AP 0');
         return parts.join(' · ') || '장착 효과';
     }
@@ -70,6 +71,7 @@ export function skillBrief(sk: Skill): string {
     if (sk.effect && STATUS_WORD[sk.effect] && sk.effect !== 'haste') parts.push(`${statusLabel(sk)} ${sk.statusTurns ?? ({ stun: 1, bleed: STATUS_TUNING.bleedTurns, poison: STATUS_TUNING.poisonTurns, burn: STATUS_TUNING.burnTurns, weaken: STATUS_TUNING.weakenTurns, silence: STATUS_TUNING.silenceTurns, slow: STATUS_TUNING.slowTurns, corrode: STATUS_TUNING.corrodeTurns } as Record<string, number>)[sk.effect]}턴`);
     if (sk.selfBuff) { const fx = [...Object.entries(sk.selfBuff.stats || {}).map(([k, v]) => skillBonusText(k, v as number)), ...(sk.selfBuff.speedMultiplier ? [`속도 ×${number(sk.selfBuff.speedMultiplier)}`] : [])]; parts.push(`자기 버프 ${sk.selfBuff.name ?? sk.selfBuff.id}${fx.length ? `(${fx.join(' · ')})` : ''} ${sk.selfBuff.turns}턴`); }
     if (sk.extendBuffs) parts.push(`살아 있는 자기 버프 모두 +${sk.extendBuffs}턴`);
+    if (sk.requiresBuff) parts.push(`${sk.requiresBuff === 'spectre' ? '접신' : sk.requiresBuff} 중에만`);
     if (sk.effect === 'haste') parts.push(`자신 가속 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
     if (sk.alsoEffect) parts.push(`${STATUS_WORD[sk.alsoEffect]} ${sk.statusTurns}턴`);
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
@@ -128,8 +130,9 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.hpCost) out.push(`마나 대신 현재 체력의 ${skillPercent(sk.hpCost)}를 바칩니다(체력 1은 남김). 빗나가도 소모.`);
         if (sk.manaBurn) out.push(`고정 마나 소모 없이 현재 마나의 ${skillPercent(sk.manaBurn)}를 태우고, 태운 마나 × ${number(sk.burnScale ?? SKILL_FORMULA.manaBurnScale)}를 위 피해식의 기준값에 더합니다.`);
         if (sk.burnConsume) out.push(`명중한 적의 화상 중첩을 모두 터뜨려 중첩당 피해 +${skillPercent(sk.burnConsume)}. 터뜨린 화상은 사라집니다.`);
-        if (sk.selfBuff) { const b = sk.selfBuff, fx = [...Object.entries(b.stats || {}).map(([k, v]) => skillBonusText(k, v as number)), ...(b.speedMultiplier ? [`속도 ×${number(b.speedMultiplier)}`] : [])]; out.push(`쓰면(명중과 무관) 자기 버프 ‘${b.name ?? b.id}’ ${b.turns}턴: ${fx.join(' · ') || '효과 없음'}. 같은 버프가 있으면 더 긴 쪽으로 갱신. 내 행동마다 1턴씩 줄어듭니다.`); }
+        if (sk.selfBuff) { const b = sk.selfBuff, fx = [...Object.entries(b.stats || {}).map(([k, v]) => skillBonusText(k, v as number)), ...(b.speedMultiplier ? [`속도 ×${number(b.speedMultiplier)}`] : []), ...(b.damageMultiplier ? [`피해 ×${number(b.damageMultiplier)}`] : [])]; out.push(`쓰면(명중과 무관) 자기 버프 ‘${b.name ?? b.id}’ ${b.turns}턴: ${fx.join(' · ') || '효과 없음'}. 같은 버프가 있으면 더 긴 쪽으로 갱신. 내 행동마다 1턴씩 줄어듭니다.`); }
         if (sk.extendBuffs) out.push(`쓰면 살아 있는 내 자기 버프를 모두 ${sk.extendBuffs}턴 연장합니다.`);
+        if (sk.requiresBuff) out.push(`자기 버프 ‘${sk.requiresBuff === 'spectre' ? '접신' : sk.requiresBuff}’이 걸려 있을 때만 나갑니다(없으면 대기만 하고 실패로 세지 않음).`);
         if (sk.allIn?.heal) out.push(`건 마나 × ${number(sk.allIn.heal)}만큼 자신 회복`);
         if (sk.recoil) out.push(`준 피해의 ${skillPercent(sk.recoil)}를 자신도 받음 · 반동으로는 체력 1 아래로 내려가지 않음`);
         if (sk.sureHit) out.push('반드시 맞힙니다. 기절 뒤 면역 규칙은 그대로입니다.');
@@ -168,6 +171,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.song) out.push('노래: AP 0 · 엔젤릭버스터 계보 직업만 장착');
     if (sk.bloodRage) out.push(`피의 분노: 잃은 체력 비율 × ${skillPercent(sk.bloodRage)}만큼 내 직접 피해가 커집니다(체력이 1이면 +${skillPercent(sk.bloodRage)}). 여러 개면 합산.`);
     if (sk.companion) out.push(`정령: 내 모든 공격(기본 공격 · 액티브 · 추가타 뒤)에 위력 ${skillPercent(sk.companion.power)}의 추가타 ${sk.companion.hits}회가 따라옵니다. 상태이상 전용 · 회복 전용 기술에는 붙지 않고, 여러 정령 패시브는 가장 높은 값만.`);
+    if (sk.spectre) out.push(`접신: 충전이 ${sk.spectre.need}에 닿으면 충전을 비우고 ${sk.spectre.turns}턴 동안 내 직접 피해 ×${number(sk.spectre.damageMultiplier)}${sk.spectre.speedMultiplier ? `, 속도 ×${number(sk.spectre.speedMultiplier)}` : ''}. 접신 패시브를 여럿 장착하면 가장 센 하나만. 충전은 차지드라이브가 명중할 때 +1(약화된 적 +2).`);
     if (sk.basicEffect) out.push(`장착하면 기본 공격(마력 평타 포함)이 명중할 때 ${STATUS_WORD[sk.basicEffect]} ${sk.statusTurns ?? (sk.basicEffect === 'corrode' ? STATUS_TUNING.corrodeTurns : 1)}턴을 겁니다(저항 · 면역 규칙은 그대로).`);
     // v3.86 각성기: 턴 단위 판정·대기, 실패 보정, 상태이상 지속 배율.
     if (sk.awaken) out.push(`[각성] 행동마다가 아니라 턴마다(연속 행동 제외, 확정 추가 행동 포함) 따로 판정해 다른 액티브와 같은 턴에 함께 나갑니다. 대기 ${sk.cooldown}턴은 ${sk.awaken.start ? `꽉 찬 채로 시작해(결투·제단·월드보스 전투, 던전 입장, 쓰러짐, 전직) ${sk.awaken.start}턴 뒤부터` : '비어 있어 처음부터'} 판정합니다. 실패할 때마다 다음 판정 확률에 기본 발동률을 더합니다(최대 100%). 한 턴에 각성기는 하나만 나가고, 각성기로 쓰러뜨리면 대기가 ${SKILL_FORMULA.awaken.kill}턴만 돕니다. 대기 초기화 효과는 각성기 대기를 ${SKILL_FORMULA.awaken.reset}턴 줄입니다.${sk.awaken.statusScale ? ` 거는 상태이상 지속 ×${sk.awaken.statusScale}(패시브 보너스 포함).` : ''}`);

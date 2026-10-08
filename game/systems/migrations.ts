@@ -210,7 +210,9 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
     /** v3.155 카데나 재개편: 곁가지 빙결 결박사(제어 조건 마법 딜)는 바이퍼 장치와 겹쳐 지웠습니다. */
     'frostBinder',
     /** v3.156 섀도어 재개편: 곁가지 보물 사냥꾼(닻 휘두르기 · 잠수복)은 특색이 없어 지웠습니다. */
-    'wreckDiver'];
+    'wreckDiver',
+    /** v3.158 숨은 3차 시공의 위자드(썬콜 곁가지, ×N 피해 + 약화 하나)는 장치가 없어 지웠습니다. */
+    'eternalNavigator'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.138 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */
     'shieldBash', 'shieldWall', 'ironRetort', 'spikedShield', 'bulwarkSlam', 'stoneSkin', 'lastStand', 'undying', 'aegisJudgment', 'divineAegis', 'fortress', 'coralPatience',
@@ -222,6 +224,8 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
     'rimeShackle', 'frostMist',
     /** v3.156 보물 사냥꾼의 닻 휘두르기 · 잠수복. */
     'anchorSwing', 'pressureSuit',
+    /** v3.158 시공의 위자드의 시공의 파동. */
+    'eternalWave',
     /** v3.143 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
     'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind'];
 /**

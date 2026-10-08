@@ -113,7 +113,7 @@ test('v25.3 passive-route returns: the archivist passive scales with rebirths an
     const k = newState(0); k.level = 10; k.job = 'harpoon'; k.unlockedJobs.push('harpoon'); for (const sk of SKILLS) k.learned[sk.id] = 1;
     const usable = SKILLS.filter(sk => canUse(k, sk.id) && (sk.cost ?? 2) <= 2).map(sk => sk.id); assert.ok(usable.length >= 2);
     act(k, { type: 'setSkills', value: [usable[1], usable[0]].join(',') }, 0); assert.deepEqual(k.skills, [usable[1], usable[0]]);
-    assert.throws(() => act(k, { type: 'setSkills', value: 'eternalWave' }, 0));
+    assert.throws(() => act(k, { type: 'setSkills', value: 'oceanWrath' }, 0));
 });
 
 test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint passives, journeyman lineage gates', async () => {

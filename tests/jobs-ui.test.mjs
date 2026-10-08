@@ -56,13 +56,13 @@ test('v25 hidden jobs without gates are shown; the chronarch appears once the cl
 
 test('v3.63 hidden jobs stay out of sight until revealed, then show up in the ??? tab (other-tree hidden jobs bring their lineage along)', () => {
     const s = newState(0), shown = () => ui.shownJobs(s).map(j => j.id);
-    assert.ok(!shown().includes('undead') && !shown().includes('eternalNavigator'), 'no silhouettes: unrevealed hidden jobs are not listed');
+    assert.ok(!shown().includes('undead') && !shown().includes('poorMonk'), 'no silhouettes: unrevealed hidden jobs are not listed');
     assert.ok(!ui.shownLineageJobs(s, 'voidcaller').length && !ui.inMysteryTab(s, { id: 'voidcaller', tree: 'mystery' }), 'an unrevealed ??? lineage is not shown');
     assert.ok(!ui.shownLineageJobs(s, 'restraint').some(j => j.id === 'undead'), 'v3.135 the hidden 망인 is left out of the 제약 lineage until revealed');
-    assert.ok(!ui.shownLineageJobs(s, 'tide').some(j => j.id === 'eternalNavigator'), 'the hidden branch is left out of its own lineage too');
+    assert.ok(!ui.shownLineageJobs(s, 'saltWarden').some(j => j.id === 'poorMonk'), 'the hidden branch is left out of its own lineage too');
     s.deaths = 10; assert.ok(ui.inMysteryTab(s, { id: 'restraint', tree: 'mystery' }) && ui.shownLineageJobs(s, 'restraint').map(j => j.id).includes('undead'), 'condition met → appears in the ??? tab');
     s.jobMastery.wanderer = 75; s.rebirths = 1; assert.ok(ui.shownLineageJobs(s, 'voidcaller').map(j => j.id).includes('voidcaller') && !ui.shownLineageJobs(s, 'voidcaller').map(j => j.id).includes('manaLeviathan'), 'later hidden jobs wait for their own gates');
     s.jobMastery.wanderer = 0; s.rebirths = 0;
-    assert.equal(ui.inMysteryTab(s, { id: 'tide', tree: 'magic' }), false, 'a public lineage joins the ??? tab only with a revealed hidden job');
-    const t = newState(0); t.unlockedJobs.push('eternalNavigator'); assert.equal(ui.inMysteryTab(t, { id: 'tide', tree: 'magic' }), true);
+    assert.equal(ui.inMysteryTab(s, { id: 'saltWarden', tree: 'defense' }), false, 'a public lineage joins the ??? tab only with a revealed hidden job');
+    const t = newState(0); t.unlockedJobs.push('poorMonk'); assert.equal(ui.inMysteryTab(t, { id: 'saltWarden', tree: 'defense' }), true);
 });
