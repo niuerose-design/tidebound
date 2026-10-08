@@ -120,22 +120,28 @@ function measureOnyx() {
 }
 
 // ── 월드보스 ───────────────────────────────────────────────────────────────────────────────────
-const RAID_TARGET = { balrog: { rebirth: 0, kills: 10 }, zakum: { rebirth: 50, kills: 100 }, horntail: { rebirth: 100, kills: 550 } };
+// 월드보스 목표(docs/boss-plan.md §8.3, v3.191): 1단계는 센 모험가가 잡는 것이 의도(발록 R10 · 자쿰 R50 1번). 같은 날 다시 소환되면 단계가 올라(RAID_STAGE) 점점 어려워집니다.
+// 처치까지 횟수는 '한 몸이 혼자 다 깎을 때'의 셈. --raid-stage 1,3,5 로 단계별 측정(지속 피해는 1단계 체력 기준 dotHpCap 포함).
+const RAID_TARGET = { balrog: { rebirth: 0, kills: 10 }, zakum: { rebirth: 50, kills: 1 }, horntail: { rebirth: 100, kills: 10 } };
+const RAID_STAGES = (arg('--raid-stage') || '1').split(',').map(Number);
 function measureRaids() {
     const rows = [];
     for (const raid0 of RAIDS) {
         const raid = RAID_HP[raid0.id] ? { ...raid0, stats: { ...raid0.stats, hp: RAID_HP[raid0.id] } } : raid0;
         const t = RAID_TARGET[raid.id], plans = [['목표 몸', t.rebirth], ['한 단계 아래', raid.id === 'balrog' ? 0 : raid.id === 'zakum' ? 20 : 50], ['한 단계 위', raid.id === 'balrog' ? 10 : raid.id === 'zakum' ? 100 : 100]];
+        for (const stage of RAID_STAGES) {
+        const staged = raidBossSnapshot(raid, undefined, stage), hpMax = staged.stats.hp;
         for (const [label, r] of plans) {
             if (REBIRTHS && !REBIRTHS.includes(r)) continue;
             const perJob = JOB_IDS.map(jobId => {
                 const s = bodyFor(r, jobId);
-                const runs = Array.from({ length: SEEDS }, (_, k) => { const rr = duel(snapshot(s), raidBossSnapshot(raid), true, random(k * 53 + r + 1), RAID.maxTurns); return { dealt: raid.stats.hp - Math.max(0, rr.opponentHp), died: rr.playerHp <= 0 ? 1 : 0, turns: rr.turns }; });
+                const runs = Array.from({ length: SEEDS }, (_, k) => { const rr = duel(snapshot(s), raidBossSnapshot(raid, undefined, stage), true, random(k * 53 + r + 1), RAID.maxTurns); return { dealt: hpMax - Math.max(0, rr.opponentHp), died: rr.playerHp <= 0 ? 1 : 0, turns: rr.turns }; });
                 return { jobId, dealt: avg(runs.map(x => x.dealt)), died: avg(runs.map(x => x.died)), turns: avg(runs.map(x => x.turns)) };
             });
-            const dealt = avg(perJob.map(x => x.dealt)), row = { raid: raid.id, name: raid.name, label, rebirth: r, target: t, dealt, kills: raid.stats.hp / Math.max(1, dealt), died: avg(perJob.map(x => x.died)), turns: avg(perJob.map(x => x.turns)), perJob };
+            const dealt = avg(perJob.map(x => x.dealt)), row = { raid: raid.id, name: raid.name, label, rebirth: r, stage, target: t, dealt, kills: hpMax / Math.max(1, dealt), died: avg(perJob.map(x => x.died)), turns: avg(perJob.map(x => x.turns)), perJob };
             rows.push(row);
-            console.log(`${raid.name.padEnd(6, '　')} ${label.padEnd(8, '　')} R${String(r).padEnd(3)} 한 도전 ${big(dealt)} · 처치까지 ${row.kills >= 1e4 ? '1만+' : row.kills.toFixed(row.kills < 10 ? 1 : 0)}번(목표 ${t.kills}, R${t.rebirth}) · 사망 ${pct(row.died)} · ${row.turns.toFixed(0)}턴 | ${perJob.map(x => `${jobById(x.jobId).name.replace(' (5차)', '')} ${big(x.dealt)}`).join(' · ')}`);
+            console.log(`${raid.name.padEnd(6, '　')}${stage > 1 ? ` ${stage}단계` : ''} ${label.padEnd(8, '　')} R${String(r).padEnd(3)} 한 도전 ${big(dealt)} · 처치까지 ${row.kills >= 1e4 ? '1만+' : row.kills.toFixed(row.kills < 10 ? 1 : 0)}번(목표 ${t.kills}, R${t.rebirth}) · 사망 ${pct(row.died)} · ${row.turns.toFixed(0)}턴 | ${perJob.map(x => `${jobById(x.jobId).name.replace(' (5차)', '')} ${(hpMax / Math.max(1, x.dealt)).toFixed(1)}번`).join(' · ')}`);
+        }
         }
     }
     out.raid = rows;

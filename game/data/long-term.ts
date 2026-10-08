@@ -26,6 +26,7 @@ export const nextAbyssMilestone = (best: number) => ABYSS_SP_MILESTONES.find(n =
 export const abyssFloorBonus = (depth: number) => depth % 10 === 0 ? depth : 0;
 /** v25.8 윤회 칭호: 환생 횟수로 얻는 영구 칭호. 랭킹·채팅·전투 화면에 이름과 함께 표시됩니다. */
 export const REBIRTH_TITLES: { rebirths: number; title: string }[] = [
-    { rebirths: 5, title: '되돌아온 모험가' }, { rebirths: 10, title: '윤회의 여행자' }, { rebirths: 20, title: '운명을 거스른 자' }, { rebirths: 30, title: '심연을 건넌 자' }, { rebirths: 50, title: '영원의 모험가' },
+    // v3.190 칭호마다 이름에 어울리는 그림(이모지)을 앞에 둡니다(치장 화면 · 이름 옆 · 순위표 모두 같은 글자).
+    { rebirths: 5, title: '🔁 되돌아온 모험가' }, { rebirths: 10, title: '🌀 윤회의 여행자' }, { rebirths: 20, title: '⚡ 운명을 거스른 자' }, { rebirths: 30, title: '🌊 심연을 건넌 자' }, { rebirths: 50, title: '♾ 영원의 모험가' },
 ];
 export const rebirthTitle = (rebirths: number) => [...REBIRTH_TITLES].reverse().find(x => rebirths >= x.rebirths)?.title || '';

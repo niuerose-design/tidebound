@@ -8,7 +8,7 @@ import { useSyncExternalStore } from 'react';
 export const NOTICE_KINDS = [
     { id: 'offline', label: '부재중 정산', desc: '접속하지 않은 동안의 사냥 결과' },
     { id: 'event', label: '서버 이벤트', desc: '진행 중인 경험치·골드 이벤트' },
-    { id: 'altar', label: '제단 · 월드보스', desc: '축복·신·월드보스 소식' },
+    { id: 'altar', label: '제단 · 월드보스', desc: '축복(4단계 이상)·신·월드보스 소식' },
     { id: 'hacker', label: '해커 방송 · 안내', desc: '해커의 방송 탈취와 해커 직업 안내' },
     { id: 'tip', label: '모험 안내 팁', desc: '사냥·던전 진행 한 줄 안내' },
     { id: 'slots', label: '분신 바로가기', desc: '캐릭터 슬롯 칩' },

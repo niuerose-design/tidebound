@@ -339,7 +339,7 @@ test('v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) 
     assert.ok(ACHIEVEMENTS.some(a => a.id === `stages:${STAGES.filter(st => !st.habitat).length}`) && ACHIEVEMENTS.some(a => a.id === `dungeons:${DUNGEONS.filter(d => !d.random).length}`));
     const s = newState(0); s.level = 60; s.rebirths = 4; assert.throws(() => act(s, { type: 'stage', id: 'duskVents' }, 0)); s.rebirths = 5; act(s, { type: 'stage', id: 'duskVents' }, 0); assert.equal(s.stage, 'duskVents');
     assert.throws(() => act(s, { type: 'dungeon', id: 'ventCathedral' }, 0)); s.rebirths = 8; act(s, { type: 'dungeon', id: 'ventCathedral' }, 0); assert.equal(s.dungeon.id, 'ventCathedral');
-    assert.equal(rebirthTitle(4), ''); assert.equal(rebirthTitle(5), '되돌아온 모험가'); assert.equal(rebirthTitle(49), '심연을 건넌 자'); assert.equal(rebirthTitle(120), '영원의 모험가');
+    assert.equal(rebirthTitle(4), ''); assert.equal(rebirthTitle(5), '🔁 되돌아온 모험가'); assert.equal(rebirthTitle(49), '🌊 심연을 건넌 자'); assert.equal(rebirthTitle(120), '♾ 영원의 모험가');
 });
 
 test('v25.11 guild goals scale with members, points formula, weekly stats accumulate and reset by week', async () => {

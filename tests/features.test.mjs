@@ -65,6 +65,18 @@ test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22
  s.abyssBest=150;assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');s.abyssBest=200;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again');
  s.abyssBest=0;assert.deepEqual(N.collectNews(s,86_400_000*5),[],'a lower best (after ascension) never announces');
 });
+test('v3.190 rank news: 하사 and 소위 and every rank after 소위 announce, other ranks stay quiet, no once-a-day cap, skipped ranks still count',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),R=await L.load('data/rank'),T=await L.load('data/titles');
+ const at=id=>R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id===id)],s=newState(0);N.collectNews(s,0);
+ const promote=(id,t=0)=>{s.rank={exp:at(id),perks:{}};return N.collectNews(s,t).filter(e=>e.kind==='general').map(e=>e.text('철수'));};
+ assert.deepEqual(promote('pvt1'),[],'일병 is quiet');assert.deepEqual(promote('sgt'),[],'병장 is quiet');
+ assert.deepEqual(promote('ssg'),['철수가 하사(으)로 진급했습니다.']);assert.deepEqual(promote('sfc'),[],'중사 is quiet');assert.deepEqual(promote('smaj'),[],'원사 is quiet');
+ assert.deepEqual(promote('lt2'),['철수가 소위(으)로 진급했습니다.']);assert.deepEqual(promote('lt1'),['철수가 중위(으)로 진급했습니다.'],'same day, second promotion still announces');
+ for(const id of ['cpt','maj','ltc','col','bg','mg','ltg'])assert.equal(promote(id).length,1,id+' announces');
+ const j=newState(0);N.collectNews(j,0);j.rank={exp:at('sfc'),perks:{}};assert.deepEqual(N.collectNews(j,0).filter(e=>e.kind==='general').map(e=>e.text('영희')),['영희가 중사(으)로 진급했습니다.'],'jumping past 하사 announces the rank reached');
+ const k=newState(0);N.collectNews(k,0);k.rank={exp:at('cpl'),perks:{}};assert.deepEqual(N.collectNews(k,0).filter(e=>e.kind==='general'),[],'jumping 이등병→상병 stays quiet');
+ for(const t of T.TITLES)assert.ok(!/^[\p{L}\p{N}]/u.test(t.name),'every title starts with a picture: '+t.name);
+});
 test('v3.38 first-clear SP is an achievement; old boss-research claims move over as claimed (no double SP)',()=>{
  const s=newState(0);s.clears.grotto=1;act(s,{type:'sync'},0);assert.ok(s.achievements['firstClear:grotto']!==undefined);const sp=s.sp;act(s,{type:'claimAchievement',id:'firstClear:grotto'},0);assert.equal(s.sp,sp+1);
  assert.throws(()=>act(s,{type:'bossResearch',id:'grotto'},0),/지원하지 않는/);
