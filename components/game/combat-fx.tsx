@@ -92,6 +92,16 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     worldTentacle: { kind: 'tentacle', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
     jackpotStrike: { kind: 'jackpot', title: '조커', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },
     frozenTime: { kind: 'time', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
+    // v3.173 5차 전용 연출 1: 키네시스 싸이킥 토네이도. 보랏빛 염력 소용돌이가 솟고, 파편이 나선으로 끌려 올라갑니다.
+    infiniteChant: { kind: 'psy', glyphs: ['◈', '⌁', '✧', '◇', '◈', '⌁', '✧', '◇'] },
+    // 2: 데몬슬레이어 데몬 베인. 핏빛 대검이 내리꽂히고 바닥 충격 고리와 기절 별 · 핏방울이 튑니다.
+    heavenSplit: { kind: 'demon', glyphs: ['★', '▾', '✶', '▾', '★', '▾', '✶', '▾'] },
+    // 3: 보우마스터 퀴버 풀버스트. 화살 비가 왼쪽에서 쏟아져 꽂히고 출혈 고리가 번집니다.
+    trenchPierce: { kind: 'quiver', glyphs: ['➶', '▾', '➹', '➶', '▾', '➹', '➶', '▾'] },
+    // 4: 스트라이커 교룡연격. 푸른 용의 궤적이 휘감고 충격 고리가 세 번 터집니다(추가타 2회).
+    oceanCombo: { kind: 'dragonfist', glyphs: ['≈', '✦', '≈', '✦', '≈', '✦', '≈', '✦'] },
+    // 5: 바이퍼 하울링 피스트. 거대한 주먹이 날아들고 울부짖음의 동심원이 퍼집니다.
+    limitlessFist: { kind: 'howl', glyphs: ['◠', '◡', '≈', '◠', '◡', '≈', '◠', '◡'] },
 };
 /** v3.86 전용 연출이 없는 각성기의 기본 장면(스킬 이름을 제목으로). */
 const AWAKEN_FX = { kind: 'light', glyphs: ['✦', '·', '✧', '·', '✦', '·', '✧', '·'] };
