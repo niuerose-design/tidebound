@@ -7,7 +7,7 @@ import { stats } from './stats';
 import type { State } from '../types';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { TIME_MACHINE_MASTERY } from '../data/expansion-v25';
-import { STAGES, dungeonClosed, stageClosed, closuresSnapshot, fishById, stageById, dungeonById } from '../data/world';
+import { STAGES, dungeonClosed, stageClosed, closuresSnapshot, monsterById, stageById, dungeonById } from '../data/world';
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
@@ -61,7 +61,7 @@ function repairState(s: State, now?: number) {
     if (now !== undefined && !Number.isFinite(s.lastTick)) { s.lastTick = now; fixed.push('시각'); }
     if (!Number.isFinite(s.recovery) || s.recovery < 0) { s.recovery = 0; fixed.push('회복 대기'); }
     if (!stageById(s.stage)) { s.stage = STAGES[0].id; s.target = null; fixed.push('사냥터'); }
-    if (s.enemy && (!Number.isFinite(s.enemy.hp) || s.enemy.hp <= 0 || !Number.isFinite(s.enemy.maxHp) || !fishById(s.enemy!.id))) { s.enemy = null; fixed.push('몬스터'); }
+    if (s.enemy && (!Number.isFinite(s.enemy.hp) || s.enemy.hp <= 0 || !Number.isFinite(s.enemy.maxHp) || !monsterById(s.enemy!.id))) { s.enemy = null; fixed.push('몬스터'); }
     if (!Number.isFinite(s.hp) || !Number.isFinite(s.mana)) { const a = stats(s); if (!Number.isFinite(s.hp)) s.hp = a.hp; if (!Number.isFinite(s.mana)) s.mana = a.mana; fixed.push('체력·마나'); }
     if (fixed.length) addLog(s, `전투 상태를 복구했습니다 (${fixed.join('·')}).`, 'system');
     return fixed;

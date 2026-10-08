@@ -2,7 +2,7 @@
 import { ascensionVow } from '../data/ascension';
 import type { State } from '../types';
 import { RANDOM_GAME, randomGameBoss, waveStake } from '../data/random-game';
-import { BASE_STAGES, tideLiftFish, fishById } from '../data/world';
+import { BASE_STAGES, tideLiftMonster, monsterById } from '../data/world';
 import { scaledEnemyStats, foeSkills } from '../data/encounters';
 import { researchRank } from '../data/economy';
 import { encounterTier } from './meta';
@@ -24,9 +24,9 @@ export const stakePayout = (s: Pick<State, 'permanent' | 'dungeon'>) => Math.flo
 /** 해금한 일반 사냥터의 몬스터 중 하나를 무작위로 골라 지금 웨이브 난이도로 세웁니다. 처치 경험치·골드는 0입니다. */
 export function spawnRandomGame(s: State, rng: () => number) {
     const tier = encounterTier(s), boss = randomGameBoss(s.dungeon!.wave);
-    const pool = [...new Set(BASE_STAGES.filter(st => st.rebirth <= s.rebirths).flatMap(st => st.fish))].map(id => fishById(id)!).filter(f => f && (f.minTier || 0) <= tier);
+    const pool = [...new Set(BASE_STAGES.filter(st => st.rebirth <= s.rebirths).flatMap(st => st.monsters))].map(id => monsterById(id)!).filter(f => f && (f.minTier || 0) <= tier);
     const f = pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
-    const field = tideLiftFish(f, tier, s.level), foe = scaledEnemyStats(field, { boss, tier });
+    const field = tideLiftMonster(f, tier, s.level), foe = scaledEnemyStats(field, { boss, tier });
     s.enemy = { id: f.id, name: boss ? `${f.name} · 웨이브 보스` : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp: 0, gold: 0, boss, stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss), cooldowns: {}, effects: {}, mana: 100 };
 }
 

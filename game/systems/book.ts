@@ -1,6 +1,6 @@
 /** 몬스터 도감 보상 계산. 모든 값은 s.book(처치 수)에서 파생되어 세이브 변환이 필요 없습니다. */
 import type { CombatStats, State } from '../types';
-import { REGIONS, regionFish } from '../data/world';
+import { REGIONS, regionMonsters } from '../data/world';
 import { BOOK_ECOLOGY, BOOK_REVEAL, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '../data/book-traits';
 import { bookRankMet } from './progression';
 
@@ -20,7 +20,7 @@ export function bookEcology(s: Pick<State, 'book' | 'bookTier'>, id: string) {
 /** v3.104 능력치 계산이 턴마다 지역 수만큼 부르므로, 결과에 필요한 단계까지만 세고 한 몬스터라도 REGION_RESEARCH_FROM 미만이면 바로 0을 돌려줍니다. */
 export function regionResearchStage(s: Pick<State, 'book' | 'bookTier'>, region: string) {
     let min = REGION_RESEARCH_FROM - 1 + REGION_RESEARCH_MAX;
-    for (const id of regionFish(region)) {
+    for (const id of regionMonsters(region)) {
         let n = 0;
         while (n < min && bookRankMet(s, id, n)) n++;
         if (n < min) { min = n; if (min < REGION_RESEARCH_FROM) return 0; }

@@ -13,8 +13,8 @@ import { FOE_FX } from '@/game/data/foe-fx';
 import { jobById } from '@/game/data/classes';
 import { fxVariantOf, type CombatFx, type CombatFxKind } from '@/game/systems/combat-feedback';
 import { CombatFxOverlay, SceneFx, FoeCleave, BarCleave } from '@/components/game/combat-fx';
-import { FishArt } from '@/components/game/art';
-import { FISH } from '@/game/data/world';
+import { MonsterArt } from '@/components/game/art';
+import { MONSTERS } from '@/game/data/world';
 import { Meter } from '@/components/game/shared';
 
 const KIND_BY_EFFECT: Record<string, CombatFxKind> = { stun: 'stun', bleed: 'bleed', poison: 'poison', burn: 'burn', silence: 'silence', slow: 'slow', haste: 'haste', heal: 'heal', weaken: 'weaken', corrode: 'corrode' };
@@ -27,7 +27,7 @@ function FxLabInner() {
     const params = useSearchParams();
     const skillId = params.get('skill') || 'infiniteChant', every = Math.max(800, Number(params.get('every')) || 4000), glow = params.get('glow') !== 'off';
     const asFoe = params.get('actor') === 'foe';
-    const sk = (asFoe ? enemySkillById(skillId) : undefined) ?? skillById(skillId), foeId = params.get('foe') || FISH[0].id, execute = params.get('execute') === '1';
+    const sk = (asFoe ? enemySkillById(skillId) : undefined) ?? skillById(skillId), foeId = params.get('foe') || MONSTERS[0].id, execute = params.get('execute') === '1';
     const [seq, setSeq] = useState(0);
     useEffect(() => { document.documentElement.classList.toggle('fx-no-glow', !glow); return () => document.documentElement.classList.remove('fx-no-glow'); }, [glow]);
     useEffect(() => { const t = setInterval(() => setSeq(n => n + 1), every); return () => clearInterval(t); }, [every]);
@@ -55,7 +55,7 @@ function FxLabInner() {
                 <div className="ocean-art" style={{ position: 'absolute', inset: 0, zIndex: -2, background: 'linear-gradient(180deg,#132a3a 0%,#0d1f2b 55%,#0a1418 100%)' }}/>
                 <div className="scene-shade"/>
                 {/* 실제 화면처럼 몹은 오른쪽 가장자리(.scene-foe: right 28px · z-index 1), 연출 중심(62% · 48%)은 그 왼쪽입니다. */}
-                <FishArt id={foeId} boss={asFoe} size={112} className="scene-foe"/><FoeCleave effect={effect} enemy={{ id: foeId }}/>
+                <MonsterArt id={foeId} boss={asFoe} size={112} className="scene-foe"/><FoeCleave effect={effect} enemy={{ id: foeId }}/>
                 <SceneFx effect={effect} boss={asFoe}/>
             </section>
         </div>

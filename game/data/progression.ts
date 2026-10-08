@@ -5,7 +5,7 @@ const dropPercent = (n: number) => Math.round(n * 1000);
 export const PROGRESSION = {
     statPerLevel: 5, startingStats: 5, baseAttribute: 5,
     startingSP: 0, skillSPCost: 1,
-    baseAP: 6, fishComplete: 50, skillMastery: 120,
+    baseAP: 6, monsterComplete: 50, skillMastery: 120,
     skillMasteryMilestones: [120, 600, 2400, 8000],
     jobMastery: 150, advancedMastery: 75,
     /**

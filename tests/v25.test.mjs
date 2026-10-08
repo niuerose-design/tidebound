@@ -278,15 +278,15 @@ test('v27.79 account bonuses are low multiplicative factors (AP unchanged); slot
     const t = newState(0); t.account = merged; t.level = 999; act(t, { type: 'rebirth' }, 0); assert.ok(t.rebirths === 1 && t.account === merged, 'account cache survives rebirth');
 });
 
-test('v25.7 enhance caps: legend+ to 22★, others stop at 15★; sale value follows the fish gold curve and refunds 30% of enhancement', async () => {
+test('v25.7 enhance caps: legend+ to 22★, others stop at 15★; sale value follows the monster gold curve and refunds 30% of enhancement', async () => {
     const { enhanceMaxFor, saleValue, enhanceCost } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
-    const { fishGoldAt } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
+    const { monsterGoldAt } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
     assert.equal(enhanceMaxFor({ rarity: 2 }), 15); assert.equal(enhanceMaxFor({ rarity: 3 }), 22); assert.equal(enhanceMaxFor({ rarity: 6 }), 22);
     const s = newState(0); s.gold = 1e9; const hero = { id: 'h', name: 'h', slot: 'coat', rarity: 2, power: 60, level: 30, enhance: 15 }, legend = { id: 'l', name: 'l', slot: 'coat', rarity: 3, power: 90, level: 30, enhance: 20 }; s.inventory = [hero, legend];
     const win = () => 0;
     assert.throws(() => act(s, { type: 'enhance', id: 'h' }, 0, win), /최대 강화/); act(s, { type: 'enhance', id: 'l' }, 0, win); act(s, { type: 'enhance', id: 'l' }, 0, win); assert.equal(legend.enhance, 22); assert.throws(() => act(s, { type: 'enhance', id: 'l' }, 0, win), /최대 강화/);
-    assert.equal(saleValue({ rarity: 3, level: 30, power: 90 }), fishGoldAt(30) * 50); assert.equal(saleValue({ rarity: 0, level: 1, power: 2 }), 14);
-    let spent = 0; for (let e = 0; e < legend.enhance; e++) spent += enhanceCost({ ...legend, enhance: e }); assert.equal(saleValue(legend), Math.floor(fishGoldAt(30) * 50 + spent * .3), 'enhancement refund 30%');
+    assert.equal(saleValue({ rarity: 3, level: 30, power: 90 }), monsterGoldAt(30) * 50); assert.equal(saleValue({ rarity: 0, level: 1, power: 2 }), 14);
+    let spent = 0; for (let e = 0; e < legend.enhance; e++) spent += enhanceCost({ ...legend, enhance: e }); assert.equal(saleValue(legend), Math.floor(monsterGoldAt(30) * 50 + spent * .3), 'enhancement refund 30%');
     assert.ok(saleValue({ rarity: 3, level: 60, power: 200 }) > saleValue({ rarity: 3, level: 30, power: 90 }) * 10, 'late-game sale keeps pace with exponential gold');
     assert.equal(saleValue({ rarity: 0, level: 160, power: 10 }), saleValue({ rarity: 0, level: 65, power: 10 }), 'tier-boosted drop levels stop at the Lv.65 sale cap');
 });
@@ -305,15 +305,15 @@ test('v25.7 salvage research sells or dismantles all non-relic gear at rebirth w
     act(u, { type: 'salvageMode', value: 'dismantle' }, 0); act(u, { type: 'rebirth' }, 0); assert.equal(u.essence, 3 + dismantleEssence(gear(4)) + 2, 'dismantled at 100% (+ starter rod and coat, 1 essence each)'); assert.equal(u.gold, 100); assert.equal(u.salvageMode, 'dismantle', 'mode survives rebirth');
 });
 
-test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish need the tier, abyss 10-floor bonus and AP milestones, abyss-only affixes', async () => {
+test('v27.86 tide best is recorded per stage (no milestone pearls), variant monster need the tier, abyss 10-floor bonus and AP milestones, abyss-only affixes', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
-    const { weightedFishId, reward } = await mods.load('systems/encounter'); const { FISH, STAGES } = await mods.load('data/world'); const { rollAffixes, AFFIX_POOL } = await mods.load('data/gear');
+    const { weightedMonsterId, reward } = await mods.load('systems/encounter'); const { MONSTERS, STAGES } = await mods.load('data/world'); const { rollAffixes, AFFIX_POOL } = await mods.load('data/gear');
     const { apCapacity } = await mods.load('systems/progression'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
-    const moon = STAGES.find(st => st.id === 'moon'); assert.ok(STAGES.find(st => st.id === 'reef').fish.includes('stormBarracuda'));
-    const r = () => 0.999; assert.notEqual(weightedFishId(moon.fish, r, 0, 0), 'eclipseMoonfish', 'tier 0 never spawns the variant'); assert.ok(moon.fish.includes('eclipseMoonfish'));
-    const picks = new Set(); let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); for (let i = 0; i < 400; i++) picks.add(weightedFishId(moon.fish, rng, 0, 20)); assert.ok(picks.has('eclipseMoonfish'), 'tier 20 spawns it');
-    assert.equal(FISH.find(f => f.id === 'stormBarracuda').minTier, undefined, 'v26.6 아이언 호그는 난이도 0부터');
-    assert.ok(FISH.find(f => f.id === 'novaManta').minTier === 30 && ACHIEVEMENTS.some(a => a.id === 'tide:50') && ACHIEVEMENTS.some(a => a.id === `codex:${FISH.filter(f => !['expNuri', 'essenceSlime', 'kingMimic', 'kingNuri', 'kingSlime'].includes(f.id)).length}`), 'codex excludes the exp nuri so its id stays');
+    const moon = STAGES.find(st => st.id === 'moon'); assert.ok(STAGES.find(st => st.id === 'reef').monsters.includes('stormBarracuda'));
+    const r = () => 0.999; assert.notEqual(weightedMonsterId(moon.monsters, r, 0, 0), 'eclipseMoonfish', 'tier 0 never spawns the variant'); assert.ok(moon.monsters.includes('eclipseMoonfish'));
+    const picks = new Set(); let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); for (let i = 0; i < 400; i++) picks.add(weightedMonsterId(moon.monsters, rng, 0, 20)); assert.ok(picks.has('eclipseMoonfish'), 'tier 20 spawns it');
+    assert.equal(MONSTERS.find(f => f.id === 'stormBarracuda').minTier, undefined, 'v26.6 아이언 호그는 난이도 0부터');
+    assert.ok(MONSTERS.find(f => f.id === 'novaManta').minTier === 30 && ACHIEVEMENTS.some(a => a.id === 'tide:50') && ACHIEVEMENTS.some(a => a.id === `codex:${MONSTERS.filter(f => !['expNuri', 'essenceSlime', 'kingMimic', 'kingNuri', 'kingSlime'].includes(f.id)).length}`), 'codex excludes the exp nuri so its id stays');
     const foe = (id, boss) => ({ id, name: id, hp: 0, maxHp: 1, attack: 1, defense: 0, exp: 0, gold: 0, boss, stun: 0, combatStats: {}, skills: [], cooldowns: {}, effects: {} });
     const s = newState(0); s.level = 30; s.rebirths = 12; s.stage = 'reef'; s.tide = 12; s.enemy = foe('lionfish', false);
     // v27.86 사냥터 난이도 이정표 세계석은 없앴습니다. 사냥터별 최고 난이도 기록(업적용)만 남습니다.
@@ -329,13 +329,13 @@ test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish
 
 test('v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) are wired into profiles, themes, research and logs; rebirth titles', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
-    const { STAGES, DUNGEONS, FISH } = await mods.load('data/world'); const { profileId } = await mods.load('data/encounters'); const { ORIGIN_THEMES } = await mods.load('data/gear');
+    const { STAGES, DUNGEONS, MONSTERS } = await mods.load('data/world'); const { profileId } = await mods.load('data/encounters'); const { ORIGIN_THEMES } = await mods.load('data/gear');
     const { FIRST_CLEAR_SP } = await mods.load('data/achievements');
     const { rebirthTitle } = await mods.load('data/long-term'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
     const st = STAGES.find(x => x.id === 'duskVents'), d = DUNGEONS.find(x => x.id === 'ventCathedral');
     assert.ok(st && st.rebirth === 5 && st.level === 55 && d && d.rebirth === 8 && d.level === 60);
-    for (const id of [...st.fish, ...d.fish, d.bossFish]) { assert.ok(FISH.some(f => f.id === id), id); assert.notEqual(profileId(id), undefined); }
-    assert.ok(FISH.find(f => f.id === 'ventColossus').boss && ORIGIN_THEMES.duskVents && ORIGIN_THEMES.ventCathedral && FIRST_CLEAR_SP.ventCathedral === 3);
+    for (const id of [...st.monsters, ...d.monsters, d.bossMonster]) { assert.ok(MONSTERS.some(f => f.id === id), id); assert.notEqual(profileId(id), undefined); }
+    assert.ok(MONSTERS.find(f => f.id === 'ventColossus').boss && ORIGIN_THEMES.duskVents && ORIGIN_THEMES.ventCathedral && FIRST_CLEAR_SP.ventCathedral === 3);
     assert.ok(ACHIEVEMENTS.some(a => a.id === `stages:${STAGES.filter(st => !st.habitat).length}`) && ACHIEVEMENTS.some(a => a.id === `dungeons:${DUNGEONS.filter(d => !d.random).length}`));
     const s = newState(0); s.level = 60; s.rebirths = 4; assert.throws(() => act(s, { type: 'stage', id: 'duskVents' }, 0)); s.rebirths = 5; act(s, { type: 'stage', id: 'duskVents' }, 0); assert.equal(s.stage, 'duskVents');
     assert.throws(() => act(s, { type: 'dungeon', id: 'ventCathedral' }, 0)); s.rebirths = 8; act(s, { type: 'dungeon', id: 'ventCathedral' }, 0); assert.equal(s.dungeon.id, 'ventCathedral');
@@ -459,14 +459,14 @@ test('v27.31 limit break needs the pearl research "리미터 해제"; old breaks
     old.pearls = 100; act(old, { type: 'permanent', id: 'limitBreak' }, 0); const paid = 100 - old.pearls; assert.ok(paid > 0);
     old.running = false; act(old, { type: 'resetResearch', id: 'utility' }, 0); assert.equal(old.pearls, 100, 'refunds only the paid rank'); assert.equal(old.permanent.limitBreak, 2, 'free ranks stay');
 });
-test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain fish) and survives rebirth', async () => {
+test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain monster) and survives rebirth', async () => {
     const V = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/variants');
     const s = newState(0); s.book.perch = 10000; s.skills = [];
     const big = () => .999; // 가장 큰 열린 규모(×100, 무리 감지 없음)
     assert.equal(V.rollSwarmSize(s, 'perch', big), 100, 'no cap by default');
     act(s, { type: 'swarmCap', value: '5' }, 0); assert.equal(s.swarmCap, 5); assert.equal(V.rollSwarmSize(s, 'perch', big), 5, 'capped to x5');
     assert.equal(V.rollSwarmSize(s, 'perch', () => 0), 5, 'small rolls stay');
-    act(s, { type: 'swarmCap', value: '0' }, 0); assert.equal(V.rollSwarmSize(s, 'perch', big), 1, 'off → plain fish');
+    act(s, { type: 'swarmCap', value: '0' }, 0); assert.equal(V.rollSwarmSize(s, 'perch', big), 1, 'off → plain monster');
     s.level = 999; act(s, { type: 'rebirth' }, 0); assert.equal(s.swarmCap, 0, 'setting survives rebirth');
     act(s, { type: 'swarmCap', value: '500' }, 0); assert.equal(s.swarmCap, undefined, 'no limit clears the field');
     assert.throws(() => act(s, { type: 'swarmCap', value: '50' }, 0), /무리 최대 규모/);
@@ -475,29 +475,29 @@ test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain fish) and 
 test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, overlevel cuts clear gold, stage enemies capped', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), B = await L.load('data/balance'), M = await L.load('systems/meta'), C = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), E = await L.load('data/encounters');
-    for (const lv of [1, 10, 25, 40]) assert.equal(W.fishGoldAt(lv), Math.round(7 * Math.pow(1.12, lv - 1)), `Lv.${lv} unchanged`);
-    assert.ok(W.fishGoldAt(60) < Math.round(7 * Math.pow(1.12, 59)) / 2, 'late fish gold at least halved');
-    const s = newState(0); s.level = 30; assert.ok(C.gambleCost(s) >= W.fishGoldAt(30) * 60, 'appraisal price follows fish gold');
+    for (const lv of [1, 10, 25, 40]) assert.equal(W.monsterGoldAt(lv), Math.round(7 * Math.pow(1.12, lv - 1)), `Lv.${lv} unchanged`);
+    assert.ok(W.monsterGoldAt(60) < Math.round(7 * Math.pow(1.12, 59)) / 2, 'late monster gold at least halved');
+    const s = newState(0); s.level = 30; assert.ok(C.gambleCost(s) >= W.monsterGoldAt(30) * 60, 'appraisal price follows monster gold');
     const item = level => ({ id: 'x', slot: 'rod', rarity: 3, level, power: 100, enhance: 0 });
     assert.equal(Eq.enhanceCost(item(40)), Eq.enhanceCost(item(20)), 'no price scaling up to Lv.40');
     assert.ok(Eq.enhanceCost(item(60)) > Eq.enhanceCost(item(40)) * 3, 'Lv.60 gear costs more to enhance');
-    const abyss = W.DUNGEONS.find(d => d.id === 'abyss'), boss = W.FISH.find(f => f.id === abyss.bossFish);
-    assert.equal(M.dungeonExp(boss, abyss.level, 0, true), Math.round(W.fishExpAt(abyss.level) * B.DUNGEON_TUNING.bossExpFish));
+    const abyss = W.DUNGEONS.find(d => d.id === 'abyss'), boss = W.MONSTERS.find(f => f.id === abyss.bossMonster);
+    assert.equal(M.dungeonExp(boss, abyss.level, 0, true), Math.round(W.monsterExpAt(abyss.level) * B.DUNGEON_TUNING.bossExpMonsters));
     assert.equal(M.dungeonExp(boss, abyss.level, 80, true), M.dungeonExp(boss, abyss.level, B.DUNGEON_TUNING.rewardTierCap, true), 'abyss depth stops raising exp');
-    assert.ok(M.dungeonExp(boss, abyss.level, 80, true) < M.catchReward(boss, 80, true).exp / 10, 'far below the old uncapped boss exp');
+    assert.ok(M.dungeonExp(boss, abyss.level, 80, true) < M.killReward(boss, 80, true).exp / 10, 'far below the old uncapped boss exp');
     assert.equal(B.dungeonOverlevel(18, 8), 1); assert.equal(B.dungeonOverlevel(30, 8), .7); assert.equal(B.dungeonOverlevel(100, 8), B.DUNGEON_TUNING.overlevelFloor);
-    const reef = W.STAGES.find(st => st.id === 'reef'), storm = W.FISH.find(f => f.id === 'stormBarracuda');
-    assert.equal(W.stageStatFish(storm, reef.level).level, reef.level + W.STAGE_ENEMY_LEVEL_OVER); assert.ok(W.stageStatFish(storm, reef.level).hp < storm.hp);
-    const fish = W.FISH.find(f => f.id === abyss.fish[0]);
+    const reef = W.STAGES.find(st => st.id === 'reef'), storm = W.MONSTERS.find(f => f.id === 'stormBarracuda');
+    assert.equal(W.stageStatMonster(storm, reef.level).level, reef.level + W.STAGE_ENEMY_LEVEL_OVER); assert.ok(W.stageStatMonster(storm, reef.level).hp < storm.hp);
+    const monster = W.MONSTERS.find(f => f.id === abyss.monsters[0]);
     const abyssRef = (await L.load('systems/encounter')).abyssReference();
-    assert.ok(E.abyssEnemyStats(fish, abyssRef, 60, { wave: 0 }).speed > E.abyssEnemyStats(fish, abyssRef, 1, { wave: 0 }).speed * 1.9, 'deep Mu Lung floors are faster');
-    assert.equal(E.scaledEnemyStats(fish, { tier: 50, wave: 0 }).speed, E.scaledEnemyStats(fish, { tier: 0, wave: 0 }).speed, 'v27.68 the tide in normal dungeons does not add speed');
+    assert.ok(E.abyssEnemyStats(monster, abyssRef, 60, { wave: 0 }).speed > E.abyssEnemyStats(monster, abyssRef, 1, { wave: 0 }).speed * 1.9, 'deep Mu Lung floors are faster');
+    assert.equal(E.scaledEnemyStats(monster, { tier: 50, wave: 0 }).speed, E.scaledEnemyStats(monster, { tier: 0, wave: 0 }).speed, 'v27.68 the tide in normal dungeons does not add speed');
     // v27.35 무한 심연: 1층 체력 10만에서 층마다 가파르게, 보상은 상한에서 멈춤. 던전 클리어 골드는 권장 레벨 몬스터 몇 마리분.
     const Enc = await L.load('systems/encounter'), ref = Enc.abyssReference();
-    assert.equal(E.abyssEnemyStats(fish, ref, 1, { wave: 0 }).hp, B.ABYSS_TUNING.hp);
-    assert.ok(E.abyssEnemyStats(fish, ref, 20, { wave: 0 }).hp > B.ABYSS_TUNING.hp * 10 && E.abyssEnemyStats(fish, ref, 20, { wave: 0 }).attack > E.abyssEnemyStats(fish, ref, 1, { wave: 0 }).attack * 4);
-    assert.deepEqual(M.dungeonCatchReward(fish, abyss.level, 100, false), M.dungeonCatchReward(fish, abyss.level, B.DUNGEON_TUNING.rewardTierCap, false), 'abyss rewards stop growing');
-    const temple = W.DUNGEONS.find(d => d.id === 'temple'); assert.equal(M.dungeonClearBase(temple), W.fishGoldAt(temple.level) * B.DUNGEON_TUNING.clearGoldFish);
+    assert.equal(E.abyssEnemyStats(monster, ref, 1, { wave: 0 }).hp, B.ABYSS_TUNING.hp);
+    assert.ok(E.abyssEnemyStats(monster, ref, 20, { wave: 0 }).hp > B.ABYSS_TUNING.hp * 10 && E.abyssEnemyStats(monster, ref, 20, { wave: 0 }).attack > E.abyssEnemyStats(monster, ref, 1, { wave: 0 }).attack * 4);
+    assert.deepEqual(M.dungeonKillReward(monster, abyss.level, 100, false), M.dungeonKillReward(monster, abyss.level, B.DUNGEON_TUNING.rewardTierCap, false), 'abyss rewards stop growing');
+    const temple = W.DUNGEONS.find(d => d.id === 'temple'); assert.equal(M.dungeonClearBase(temple), W.monsterGoldAt(temple.level) * B.DUNGEON_TUNING.clearGoldMonsters);
 });
 
 test('mimic appears at a lower rate (v3.189 half) during an away catch-up', async () => {
@@ -614,14 +614,14 @@ test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlemen
 });
 test('v27.51 every final combat stat equals the sum of its shown breakdown rows', async () => {
     const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
-    const engine = await G.load('systems/engine'), S = await G.load('systems/stats'), { JOBS } = await G.load('data/classes'), { SKILLS } = await G.load('data/skills'), { FISH } = await G.load('data/world');
+    const engine = await G.load('systems/engine'), S = await G.load('systems/stats'), { JOBS } = await G.load('data/classes'), { SKILLS } = await G.load('data/skills'), { MONSTERS } = await G.load('data/world');
     let seed = 11; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 40; i++) {
         const s = engine.newState(0), job = JOBS[Math.floor(r() * JOBS.length)];
         Object.assign(s, { level: 1 + Math.floor(r() * 80), rebirths: Math.floor(r() * 12), job: job.id, unlockedJobs: [job.id] });
         s.skills = SKILLS.filter(k => k.job === job.id || !k.job).map(k => k.id).slice(0, 8);
         for (const k of ['attack', 'hp', 'guard', 'crit', 'evasion', 'magicAttack', 'exp', 'gold', 'drop']) s.permanent[k] = Math.floor(r() * 20);
-        for (const f of FISH) if (r() < .5) s.book[f.id] = Math.floor(r() * 20000);
+        for (const f of MONSTERS) if (r() < .5) s.book[f.id] = Math.floor(r() * 20000);
         s.attributes = { str: Math.floor(r() * 200), dex: Math.floor(r() * 200), int: Math.floor(r() * 200), vit: Math.floor(r() * 200), wis: Math.floor(r() * 200), luk: Math.floor(r() * 200) };
         s.jobMastery[job.id] = Math.floor(r() * 100000);
         const trace = {}, a = S.stats(s, trace);
@@ -777,7 +777,7 @@ test('v27.64 tide lifts low-stage monster levels toward the top stage (capped by
     assert.equal(W.tideLiftLevel(1, 40, 20), 20, 'never past the player level');
     assert.equal(W.tideLiftLevel(50, 40, 20), 50, 'never lowers a monster');
     assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS / 2, 200), Math.round(1 + (cap - 1) / 2), 'halfway at half the lift tier');
-    const f = W.FISH.find(x => x.level <= 3), up = W.tideLiftFish(f, W.TIDE_LIFT_TIERS, 200);
+    const f = W.MONSTERS.find(x => x.level <= 3), up = W.tideLiftMonster(f, W.TIDE_LIFT_TIERS, 200);
     assert.ok(up.level === cap && up.hp > f.hp && up.exp >= f.exp && up.gold >= f.gold, 'stats and rewards follow the lifted level');
     const spawnAt = tide => { const s = newState(0); s.level = 90; s.rebirths = 40; s.kills = 0; s.stage = W.STAGES[0].id; s.tide = tide; Enc.spawn(s, () => .99); return s.enemy; };
     assert.ok(spawnAt(20).maxHp > spawnAt(0).maxHp * 50, 'first stage at high tide is far tougher than before');
@@ -787,7 +787,7 @@ test('v27.66 exp level-gap cap: monsters more than 10 levels above the player gi
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), Enc = await L.load('systems/encounter'), Meta = await L.load('systems/meta');
     assert.equal(W.expLevelScale(20, 10), 1, 'within the gap: full exp');
-    assert.ok(Math.abs(W.expLevelScale(50, 10) - W.fishExpAt(20) / W.fishExpAt(50)) < 1e-12, 'above the gap: scaled to player level + 10');
+    assert.ok(Math.abs(W.expLevelScale(50, 10) - W.monsterExpAt(20) / W.monsterExpAt(50)) < 1e-12, 'above the gap: scaled to player level + 10');
     const top = W.STAGES.at(-1), spawnAt = level => { const s = newState(0); s.rebirths = 10; s.level = level; s.kills = 0; s.stage = top.id; s.target = null; s.tide = 0; Enc.spawn(s, () => .5); return s.enemy; };
     const low = spawnAt(1), high = spawnAt(top.level + 6);
     assert.ok(low.exp < high.exp / 100, `Lv.1 in the top stage gets far less exp (${low.exp} vs ${high.exp})`);
@@ -802,20 +802,20 @@ test('v27.67 lift completes at the mimic tide, and lifted monsters are normalize
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), Mi = await L.load('data/mimic');
     assert.equal(W.TIDE_LIFT_TIERS, Mi.MIMIC.minTier, 'every stage is fully lifted where the mimic starts appearing');
-    const neon = W.STAGES.find(st => st.fish.every(id => (W.FISH.find(f => f.id === id).rewardMultiplier || 1) > 1));
+    const neon = W.STAGES.find(st => st.monsters.every(id => (W.MONSTERS.find(f => f.id === id).rewardMultiplier || 1) > 1));
     assert.ok(neon, 'a rare-only stage exists');
-    assert.equal(W.stageRewardNorm(neon.fish, 0), 1, 'no tide → no normalization');
-    const full = W.stageRewardNorm(neon.fish, W.TIDE_LIFT_TIERS), rows = neon.fish.map(id => W.FISH.find(f => f.id === id)).filter(f => !(f.minTier > W.TIDE_LIFT_TIERS));
+    assert.equal(W.stageRewardNorm(neon.monsters, 0), 1, 'no tide → no normalization');
+    const full = W.stageRewardNorm(neon.monsters, W.TIDE_LIFT_TIERS), rows = neon.monsters.map(id => W.MONSTERS.find(f => f.id === id)).filter(f => !(f.minTier > W.TIDE_LIFT_TIERS));
     const avg = rows.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / rows.reduce((a, f) => a + (f.spawnWeight ?? 1), 0);
     assert.ok(Math.abs(full * avg - 1) < 1e-9, 'stage average becomes ×1 at full lift');
-    const plain = W.STAGES.find(st => st.fish.every(id => (W.FISH.find(f => f.id === id).rewardMultiplier || 1) === 1));
-    assert.equal(W.stageRewardNorm(plain.fish, 30), 1, 'stages of common monsters are untouched');
+    const plain = W.STAGES.find(st => st.monsters.every(id => (W.MONSTERS.find(f => f.id === id).rewardMultiplier || 1) === 1));
+    assert.equal(W.stageRewardNorm(plain.monsters, 30), 1, 'stages of common monsters are untouched');
 });
 
 test('v27.69 monsters get level-based penetration and the ward: bosses/Lv.50+ cleanse and go immune when afflicted', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const E = await L.load('data/encounters'), B = await L.load('data/balance'), C = await L.load('systems/combat'), W = await L.load('data/world');
-    const low = W.FISH.find(f => f.level <= 5), high = W.FISH.find(f => f.level >= 55 && !f.boss), boss = W.FISH.find(f => f.boss);
+    const low = W.MONSTERS.find(f => f.level <= 5), high = W.MONSTERS.find(f => f.level >= 55 && !f.boss), boss = W.MONSTERS.find(f => f.boss);
     assert.ok(E.enemyStats(low).penetration < .03 && E.enemyStats(high).penetration > .15, 'penetration grows with level');
     assert.equal(E.enemyStats(high, true).penetration, Math.min(B.MONSTER_TUNING.penCap, high.level * B.MONSTER_TUNING.penPerLevel) + B.MONSTER_TUNING.penBoss, 'bosses add more');
     assert.ok(E.enemyStats({ ...high, level: 200 }).penetration <= B.MONSTER_TUNING.penCap + B.MONSTER_TUNING.penBoss, 'capped');
@@ -964,7 +964,7 @@ test('v27.78 heal after kill keeps falling with tide; stageField matches spawn; 
     Enc.spawn(s, () => .5); const live = Enc.stageField(s, 'wreck', 'shark', 10);
     assert.equal(s.enemy.id, 'shark'); assert.deepEqual([s.enemy.maxHp, s.enemy.attack, s.enemy.exp, s.enemy.gold], [live.foe.hp, live.foe.attack, live.exp, live.gold], 'codex preview equals the spawned foe');
     assert.ok(live.level > 22 && live.level <= 60, `lifted level ${live.level}`);
-    const star = W.STAGES.find(x => x.id === 'starfall').fish.map(id => W.FISH.find(f => f.id === id));
+    const star = W.STAGES.find(x => x.id === 'starfall').monsters.map(id => W.MONSTERS.find(f => f.id === id));
     const avg = star.reduce((a, f) => a + (f.spawnWeight ?? 1) * (f.rewardMultiplier || 1), 0) / star.reduce((a, f) => a + (f.spawnWeight ?? 1), 0);
     assert.ok(avg < 1.35, `starfall weighted reward multiplier ${avg}`);
 });
@@ -984,8 +984,8 @@ test('v27.80 regional book: research 5·6 need 250k/500k kills (stage 6 also dif
     assert.equal(k.bookTier[killed], 7);
     // 지역 연구(v27.92): 리스항구 몬스터 전부 연구 1단계 → 지역 연구 1단계, 경험치 +2%. 4단계면 최대 3단계.
     const r = newState(0), before = St.stats(r).expBonus;
-    for (const id of W.regionFish('리스항구')) r.book[id] = 50;
-    const r3 = newState(0); for (const id of W.regionFish('리스항구')) r3.book[id] = 10000; assert.equal(Bk.regionResearchStage(r3, '리스항구'), 3);
+    for (const id of W.regionMonsters('리스항구')) r.book[id] = 50;
+    const r3 = newState(0); for (const id of W.regionMonsters('리스항구')) r3.book[id] = 10000; assert.equal(Bk.regionResearchStage(r3, '리스항구'), 3);
     assert.equal(Bk.regionResearchStage(r, '리스항구'), 1); assert.equal(Bk.regionResearchStage(r, '헤네시스'), 0);
     assert.ok(Math.abs(St.stats(r).expBonus - before - .02) < 1e-9 + .03 + 1e-9, 'region research adds exp (place themes may add too)');
     // 환생해도 변종·황금·난이도 이정표·최고 난이도 기록이 남습니다.
@@ -1003,7 +1003,7 @@ test('v27.80 regional variants and swarm habitats: signature variant ×2.5, habi
     assert.ok(hen.giant > lith.giant * 3, 'Henesys favours giants');
     assert.equal(W.REGIONS.length, 9); assert.equal(W.STAGES.filter(st => st.habitat).length, 9); assert.equal(W.BASE_STAGES.length, W.STAGES.length - 9);
     const hab = W.STAGES.find(st => st.id === 'lithSwarm');
-    assert.deepEqual(hab.fish, W.regionFish('리스항구')); assert.ok(hab.rebirth >= W.HABITAT.minRebirth);
+    assert.deepEqual(hab.monsters, W.regionMonsters('리스항구')); assert.ok(hab.rebirth >= W.HABITAT.minRebirth);
     const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 20; s.running = true;
     const sizes = new Set(); for (const roll of [.1, .3, .9]) { E.spawn(s, () => roll); assert.equal(s.enemy.variant, 'swarm'); sizes.add(s.enemy.swarm); }
     assert.deepEqual([...sizes].sort((a, b) => a - b), [100, 500]);
@@ -1287,16 +1287,16 @@ test('v3.9 depth coefficient: later stages/dungeons are +4% per entry-level step
     assert.equal(W.dungeonDepth('abyss'), 1); assert.equal(W.dungeonDepth('randomGame'), 1); assert.equal(W.dungeonDepth('masteryMimic'), 1); assert.equal(W.dungeonDepth('expNuri'), 1); assert.equal(W.dungeonDepth('grotto'), 1);
     assert.ok(Math.abs(W.dungeonDepth('ventCathedral') - 1.24) < 1e-9);
     const first = W.BASE_STAGES[0], last = W.BASE_STAGES[9], s = { level: 200 };
-    const a = E.stageField(s, first.id, first.fish[0], 50), b = E.stageField(s, last.id, last.fish[0], 50);
+    const a = E.stageField(s, first.id, first.monsters[0], 50), b = E.stageField(s, last.id, last.monsters[0], 50);
     assert.equal(a.level, b.level, 'difficulty 50 lifts both to the same level'); assert.ok(Math.abs(b.foe.hp / a.foe.hp - 1.36) < .02, `hp ratio ${b.foe.hp / a.foe.hp}`); assert.ok(b.gold > a.gold * 1.15, 'gold rises with the coefficient (stage reward normalization keeps it below the raw ×1.36)');
 });
 
 test('v3.11 monster exp curve knee: unchanged up to Lv.66, dropped and slower-growing above (so Lv.66→100 idling takes hours, not minutes)', async () => {
     const W = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
     const old = l => Math.round(9 * Math.pow(1.15, l - 1));
-    for (const l of [1, 30, 61, 66]) assert.equal(W.fishExpAt(l), old(l), `Lv.${l} unchanged`);
-    assert.ok(W.fishExpAt(67) < W.fishExpAt(66), 'drop right above the knee'); assert.ok(W.fishExpAt(100) / old(100) < .25 && W.fishExpAt(100) > W.fishExpAt(90) * 2, 'Lv.100 well below the old curve but still rising');
-    const top = W.FISH.find(f => f.id === 'arTrueErda'); assert.equal(top.exp, W.fishExpAt(top.level), 'monster rows use the curve');
+    for (const l of [1, 30, 61, 66]) assert.equal(W.monsterExpAt(l), old(l), `Lv.${l} unchanged`);
+    assert.ok(W.monsterExpAt(67) < W.monsterExpAt(66), 'drop right above the knee'); assert.ok(W.monsterExpAt(100) / old(100) < .25 && W.monsterExpAt(100) > W.monsterExpAt(90) * 2, 'Lv.100 well below the old curve but still rising');
+    const top = W.MONSTERS.find(f => f.id === 'arTrueErda'); assert.equal(top.exp, W.monsterExpAt(top.level), 'monster rows use the curve');
 });
 
 test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0.3% accessory drop with 400-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards', async () => {
@@ -1304,7 +1304,7 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     const O = await L.load('data/onyx'), W = await L.load('data/world'), Enc = await L.load('systems/encounter'), Meta = await L.load('systems/meta'), T = await L.load('systems/turn');
     assert.equal(O.ONYX_BOSSES.length, 7); assert.ok(O.onyxBossFor('리스항구') && !O.onyxBossFor('아쿠아로드'));
     assert.equal(O.onyxChance(0, 0), .003); assert.ok(Math.abs(O.onyxChance(50, 0) - .006) < 1e-9); assert.equal(O.onyxChance(0, O.ONYX.pity), 1, 'pity guarantees');
-    for (const b of O.ONYX_BOSSES) assert.ok(W.FISH.find(f => f.id === b.id)?.boss, `${b.id} is a boss monster`);
+    for (const b of O.ONYX_BOSSES) assert.ok(W.MONSTERS.find(f => f.id === b.id)?.boss, `${b.id} is a boss monster`);
     // 서식지에서만 나옵니다. 첫 난수(까미·누리 없음 → 칠흑 판정)가 0이면 출현.
     const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 0;
     Enc.spawn(s, () => 0); assert.equal(s.enemy.onyx, 'onyxDusk'); assert.ok(s.enemy.boss && s.enemy.swarm === undefined, 'single boss body'); assert.equal(s.enemy.leavesAt, s.turn + O.ONYX.turns); assert.equal(s.onyxSeen['리스항구'], 0);

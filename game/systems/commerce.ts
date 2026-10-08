@@ -7,13 +7,13 @@ import { apCapacity, apUsed, itemKey } from './progression';
 import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix, ownedItems } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
-import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
+import { monsterGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** v27.30 감정 가격: 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 환생 배율(v3.68 10^(환생/60)과 1 + 환생 × 0.45 중 낮은 쪽)을 곱합니다. */
-const GAMBLE_FISH = 60;
+const GAMBLE_MONSTERS = 60;
 /** v3.7 자동 강화 한 번에 돌리는 최대 시도 수(렉 방지). */
 const AUTO_STAR_MAX_TRIES = 2000;
-const fishPrice = (s: State, n: number) => fishGoldAt(Math.min(PRICE_LEVEL_CAP, s.level)) * n;
-export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, fishPrice(s, GAMBLE_FISH)) * appraisalRebirthFactor(s.rebirths || 0));
+const monsterPrice = (s: State, n: number) => monsterGoldAt(Math.min(PRICE_LEVEL_CAP, s.level)) * n;
+export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, monsterPrice(s, GAMBLE_MONSTERS)) * appraisalRebirthFactor(s.rebirths || 0));
 /** v3.58 각인 감정 비용(한 번): 골드 = 감정 × 2, 정수 10. */
 export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
 /** 각인 감정으로 고를 수 있는 옵션: 일반 옵션(규칙 · 전용 출처 · v3.71 고대 이상 전용 제외), 부위 제한 맞는 것. */

@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { BASE_STAGES, DUNGEONS, PLAIN_DUNGEONS, fishById, dungeonById } from './world';
+import { BASE_STAGES, DUNGEONS, PLAIN_DUNGEONS, monsterById, dungeonById } from './world';
 
 /**
  * v25.6 일일·주간 모험 목표. 한국 시간 자정·월요일에 바뀌며, 날짜를 씨앗으로 정해지므로 서버·클라이언트가 같은 목표를 봅니다.
@@ -17,11 +17,11 @@ const pick = <T>(list: T[], seed: number) => list[seed % list.length];
 export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, key: string, weekly: boolean): Goal[] {
     const level = Math.max(s.level, s.peakLevel || 0, 10), seed = hash(key + (weekly ? ':w' : ':d'));
     const stages = BASE_STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = PLAIN_DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
-    const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => { const f = fishById(id); return !!f && !f.minTier; });
+    const monsterPool = [...new Set(stages.flatMap(st => st.monsters))].filter(id => { const f = monsterById(id); return !!f && !f.minTier; });
     const scale = weekly ? 6 : 1;
     const goals: Goal[] = [
         { id: 'catch', kind: 'catch', target: 60 * scale, pearls: weekly ? 4 : 1, progress: 0 },
-        { id: 'species', kind: 'species', subject: pick(fishPool, seed), target: 25 * scale, pearls: weekly ? 5 : 2, progress: 0 },
+        { id: 'species', kind: 'species', subject: pick(monsterPool, seed), target: 25 * scale, pearls: weekly ? 5 : 2, progress: 0 },
         dungeons.length ? { id: 'dungeon', kind: 'dungeon', subject: pick(dungeons, seed >>> 3).id, target: weekly ? 5 : 1, pearls: weekly ? 7 : 2, progress: 0 } : { id: 'boss', kind: 'boss', target: weekly ? 6 : 1, pearls: weekly ? 6 : 1, progress: 0 },
     ];
     if (weekly) goals.push({ id: 'boss', kind: 'boss', target: 12, pearls: 5, progress: 0 });
@@ -33,10 +33,10 @@ export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, ke
 export function goalCandidates(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, weekly: boolean): Omit<Goal, 'id' | 'progress'>[] {
     const level = Math.max(s.level, s.peakLevel || 0, 10), scale = weekly ? 6 : 1;
     const stages = BASE_STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
-    const fishPool = [...new Set(stages.flatMap(st => st.fish))].filter(id => { const f = fishById(id); return !!f && !f.minTier; });
+    const monsterPool = [...new Set(stages.flatMap(st => st.monsters))].filter(id => { const f = monsterById(id); return !!f && !f.minTier; });
     return [
         { kind: 'catch', target: 60 * scale, pearls: weekly ? 4 : 1 },
-        ...fishPool.map(id => ({ kind: 'species' as const, subject: id, target: 25 * scale, pearls: weekly ? 5 : 2 })),
+        ...monsterPool.map(id => ({ kind: 'species' as const, subject: id, target: 25 * scale, pearls: weekly ? 5 : 2 })),
         ...dungeons.map(d => ({ kind: 'dungeon' as const, subject: d.id, target: weekly ? 5 : 1, pearls: weekly ? 7 : 2 })),
         { kind: 'boss', target: weekly ? 6 : 1, pearls: weekly ? 6 : 1 },
         { kind: 'swarm', target: weekly ? 12 : 3, pearls: weekly ? 5 : 2 },
@@ -61,7 +61,7 @@ export function rerollGoal(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, b
     return fresh;
 }
 export function goalText(g: Goal) {
-    const name = g.kind === 'species' ? fishById(g.subject)?.name || '지정 몬스터' : g.kind === 'dungeon' ? dungeonById(g.subject)?.name || '던전' : '';
+    const name = g.kind === 'species' ? monsterById(g.subject)?.name || '지정 몬스터' : g.kind === 'dungeon' ? dungeonById(g.subject)?.name || '던전' : '';
     return g.kind === 'duel' ? `랭크 결투 ${g.target}승` : g.kind === 'catch' ? `아무 몬스터 ${g.target}마리 처치` : g.kind === 'species' ? `${name} ${g.target}마리 처치` : g.kind === 'dungeon' ? `${name} ${g.target}회 정복` : g.kind === 'boss' ? `보스 ${g.target}마리 처치` : `무리 변종 ${g.target}회 처치`;
 }
 /** v25.12 결투 시즌 키(한국 시간 월, 예: 2026-10)와 랭킹 시즌 정수. 주 시즌(2026xx)·세이브 버전과 겹치지 않도록 1천만을 더합니다. */

@@ -1,6 +1,6 @@
 /** 모험 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
 import { tideLimit, encounterTier, levelGateOk } from '../meta';
-import { STAGES, dungeonClosed, stageClosed, hackDownOf, fishById, stageById, dungeonById } from '../../data/world';
+import { STAGES, dungeonClosed, stageClosed, hackDownOf, monsterById, stageById, dungeonById } from '../../data/world';
 import { SWARM_CAPS } from '../../data/variants';
 import { RANDOM_GAME } from '../../data/random-game';
 import { isHackerJob } from '../../data/hacker';
@@ -87,12 +87,12 @@ export const voyageActions: ActionHandlers = {
         if (s.dungeon)
             throw Error('던전에서는 목표를 바꿀 수 없습니다.');
         const stage = stageById(s.stage)!;
-        if (id !== 'all' && !stage.fish.includes(id))
+        if (id !== 'all' && !stage.monsters.includes(id))
             throw Error('현재 사냥터의 몬스터를 선택하세요.');
         // v26.5 사냥터 난이도 조건이 있는 몬스터는 그 난이도부터만 집중 사냥할 수 있습니다(조용히 무작위로 빠지지 않도록 막습니다).
-        const need = id === 'all' ? 0 : fishById(id)?.minTier || 0;
+        const need = id === 'all' ? 0 : monsterById(id)?.minTier || 0;
         if (need > encounterTier(s))
-            throw Error(`${fishById(id)?.name}은(는) 사냥터 난이도 ${need}부터 나타납니다(지금 ${encounterTier(s)}).`);
+            throw Error(`${monsterById(id)?.name}은(는) 사냥터 난이도 ${need}부터 나타납니다(지금 ${encounterTier(s)}).`);
         s.target = id === 'all' ? null : id;
         s.enemy = null;
     },

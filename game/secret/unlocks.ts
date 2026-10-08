@@ -7,12 +7,12 @@
 // 서버 전용 표식: 화면(클라이언트) 번들이 이 파일을 가져가면 빌드가 실패합니다(docs/concept.md 10.2-1).
 import 'server-only';
 import type { State } from '../types';
-import { FISH } from '../data/world';
+import { MONSTERS } from '../data/world';
 import { HOUR } from '../data/time';
 import { masteredJobCount } from '../systems/progression';
 import { setUnlockSource } from '../data/unlock-info';
 
-const bossCatches = (s: State) => FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
+const bossCatches = (s: State) => MONSTERS.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
 
 /** 숨은 조건. 정확한 조건 문장은 해커 정보 해킹 조각(leaks.ts UNLOCK_CONDITIONS)에만 있습니다. */
 export type HiddenUnlock = { job: string; test: (s: State) => boolean };

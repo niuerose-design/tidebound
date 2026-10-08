@@ -1,5 +1,5 @@
 // v24.2 보조 계열 개편: 진행도 비례·도박·올인·골드 투척·사냥감·노래
-import { newState, stats, strike, canUse, effectiveSkill, apUsed, SKILLS, FISH, JOBS, assert, test, diceMultiplier, diceRange } from './harness.mjs';
+import { newState, stats, strike, canUse, effectiveSkill, apUsed, SKILLS, MONSTERS, JOBS, assert, test, diceMultiplier, diceRange } from './harness.mjs';
 
 const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0 };
 const fighter = (id, extra = {}) => ({ name: 'A', stats: { ...base, ...(extra.stats || {}) }, hp: extra.hp ?? 1000, mana: 200, skills: [id], cooldowns: {}, stun: 0, effects: {}, ranks: { [id]: 1 }, mastery: {}, practice: {}, ...extra.fields });
@@ -9,7 +9,7 @@ const hit = (a, b, roll) => { const seq = roll === undefined ? [] : [0, roll, .5
 test('v24.2 progress passives count codex, catches, hunts, species, gold and rebirths', () => {
     const s = newState(0); s.level = 70; s.rebirths = 3; s.job = 'abyssArchivist'; s.learned.memoryOfTides = 1; s.skills = ['memoryOfTides'];
     const before = stats(s);
-    s.book[FISH[0].id] = 5; s.book[FISH[1].id] = 2; s.itemBook = { a: 1, b: 1 };
+    s.book[MONSTERS[0].id] = 5; s.book[MONSTERS[1].id] = 2; s.itemBook = { a: 1, b: 1 };
     const after = stats(s);
     assert.equal(after.codexPower, 4); assert.ok(Math.abs(after.catchPower - Math.log10(8)) < 1e-9);
     assert.equal(after.attack, before.attack, 'records do not move a rebirth passive'); s.rebirths = 4; assert.ok(stats(s).attack > after.attack && stats(s).magic > after.magic, 'one more rebirth → memoryOfTides step');
@@ -154,7 +154,7 @@ test('v26.6 dice: luck lane rolls more dice with more luck; the highest face map
     const s = newState(0); s.level = 20; s.job = 'fortunate'; s.unlockedJobs.push('luckyAngler', 'fortunate'); s.learned.fingerCutII = 1; s.skills = ['fingerCutII']; assert.ok(canUse(s, 'fingerCutII')); assert.equal(stats(s).diceTrim, 2, 'equipped passive feeds diceTrim');
 });
 
-test('v26.5 focus hunting refuses a fish gated behind a higher sea difficulty instead of silently going random', async () => {
+test('v26.5 focus hunting refuses a monster gated behind a higher sea difficulty instead of silently going random', async () => {
     const { act } = await import('./harness.mjs');
     const s = newState(0); s.level = 40; s.rebirths = 1; act(s, { type: 'stage', id: 'moon' }, 0);
     act(s, { type: 'target', id: 'moonfish' }, 0); assert.equal(s.target, 'moonfish');

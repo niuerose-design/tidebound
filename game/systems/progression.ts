@@ -7,7 +7,7 @@ import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES 
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { Job, JobStatKey, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
-import { BASE_STAGES, FISH } from '../data/world';
+import { BASE_STAGES, MONSTERS } from '../data/world';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
 import { researchRank } from '../data/economy';
 import { STAT_TRAINING_GROWTH } from '../data/stat-training';
@@ -125,7 +125,7 @@ export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | '
     const attr = attributes(s as State);
     const book = s.book || {};
     let catches = 0, discovered = 0, bosses = 0;
-    for (const f of FISH) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
+    for (const f of MONSTERS) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
     const clears = Object.values(s.clears || {}).reduce((x, n) => x + (n || 0), 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
     return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s) };
@@ -368,7 +368,7 @@ export function trimLoadout(s: State) {
         s.skills.splice(index < 0 ? s.skills.length - 1 : index, 1);
     }
 }
-export function completedStages(s: State) { return BASE_STAGES.filter(st => st.fish.every(id => (s.book[id] || 0) >= PROGRESSION.fishComplete)); }
+export function completedStages(s: State) { return BASE_STAGES.filter(st => st.monsters.every(id => (s.book[id] || 0) >= PROGRESSION.monsterComplete)); }
 /** v27.80 연구 r단계(0부터)를 넘었는지: 처치 수와, 5단계부터는 그 몬스터를 잡은 최고 난이도 조건. */
 export const bookRankMet = (s: Pick<State, 'book' | 'bookTier'>, id: string, r: number) => r < BALANCE.bookMilestones.length && (s.book[id] || 0) >= BALANCE.bookMilestones[r] && (s.bookTier?.[id] || 0) >= (BALANCE.bookTierReq[r] || 0);
 /** 연구 r단계의 난이도 조건(없으면 0). */

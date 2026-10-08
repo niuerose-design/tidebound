@@ -206,8 +206,8 @@ test('v3.42 ×500 swarms pay exp · gold ×1.5 on top of the head count', () => 
     const hundred = swarmKill(100), big = swarmKill(500);
     assert.ok(Math.abs(big.exp / hundred.exp - 7.5) < .05, `exp ratio ${big.exp / hundred.exp}`);
     // 난수 0이면 황금 개체(한 마리 골드 10배)도 뜨므로 그 몫(+9마리분)은 빼고 비교합니다.
-    const golden = hundred.logs.some(t => t.includes('황금 개체 골드 10배')), perFish = hundred.gold / (100 + (golden ? 9 : 0));
-    assert.equal(big.gold, Math.floor(perFish * 500 * 1.5) + (golden ? perFish * 9 : 0), 'gold ×500 × 1.5');
+    const golden = hundred.logs.some(t => t.includes('황금 개체 골드 10배')), perMonster = hundred.gold / (100 + (golden ? 9 : 0));
+    assert.equal(big.gold, Math.floor(perMonster * 500 * 1.5) + (golden ? perMonster * 9 : 0), 'gold ×500 × 1.5');
     assert.ok(big.logs.some(t => t.includes('큰 무리 보상 ×1.5')));
     assert.equal(W.swarmRewardMultiplier(100), 1); assert.equal(W.swarmRewardMultiplier(500), 1.5);
 });

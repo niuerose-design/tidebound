@@ -1,5 +1,5 @@
 // 숙련·계승·AP·직업 숙련·경험치 배율·보스 기술
-import { newState, act, tick, stats, snapshot, expMultiplier, normalizeStats, victoryMastery, duel, TRAINING, combatFxFromLog, combatFxBatch, apCapacity, apUsed, canUse, effectiveSkill, skillRankDeltas, skillMasteryLevel, masteryMilestonesFor, validLoadout, skillLevel, maxSkillLevel, inherited, trimLoadout, SKILLS, FISH, hitChance, xpNeeded, JOBS, assert, test } from './harness.mjs';
+import { newState, act, tick, stats, snapshot, expMultiplier, normalizeStats, victoryMastery, duel, TRAINING, combatFxFromLog, combatFxBatch, apCapacity, apUsed, canUse, effectiveSkill, skillRankDeltas, skillMasteryLevel, masteryMilestonesFor, validLoadout, skillLevel, maxSkillLevel, inherited, trimLoadout, SKILLS, MONSTERS, hitChance, xpNeeded, JOBS, assert, test } from './harness.mjs';
 test('SP and mastery reach identical growth levels, never stacking or locking',()=>{
  const sk=SKILLS.find(x=>x.id==='pierce');assert.equal(effectiveSkill(sk,1).cost,4);
  assert.deepEqual(effectiveSkill(sk,3,0),effectiveSkill(sk,1,2));assert.deepEqual(effectiveSkill(sk,3,2),effectiveSkill(sk,1,2));
@@ -119,7 +119,7 @@ test('Boss techniques unlock at native job mastery and SP cannot skip first acqu
  s.jobMastery.abyssMimic=20000;act(s,{type:'pause'},0);assert.equal(s.learned.borrowedTentacles,1);
 });
 test('Research skill conditions and boss origins reference actual game data',()=>{
- for(const sk of SKILLS){if(sk.masteryGain){assert.equal(sk.masteryGain.bonusByLevel.length,maxSkillLevel(sk)+1);for(const id of sk.masteryGain.enemyIds||[])assert.ok(FISH.some(f=>f.id===id));}if(sk.unlockJobMastery)assert.ok(sk.job&&sk.sourceEnemySkill);}
+ for(const sk of SKILLS){if(sk.masteryGain){assert.equal(sk.masteryGain.bonusByLevel.length,maxSkillLevel(sk)+1);for(const id of sk.masteryGain.enemyIds||[])assert.ok(MONSTERS.some(f=>f.id===id));}if(sk.unlockJobMastery)assert.ok(sk.job&&sk.sourceEnemySkill);}
  assert.equal(new Set(SKILLS.map(j=>j.id)).size,SKILLS.length);
  for(const job of JOBS){const seen=new Set();let node=job;while(node.parent){assert.ok(!seen.has(node.id));seen.add(node.id);node=JOBS.find(j=>j.id===node.parent);assert.ok(node);}}
 });

@@ -218,7 +218,7 @@
   margin:0
 }
 
-.fish-rarity {
+.monster-rarity {
   display:inline-block;
   margin-left:5px;
   font-size:10px;
@@ -227,11 +227,11 @@
   color:#78b9d9
 }
 
-.fish-rarity.epic {
+.monster-rarity.epic {
   color:#c59aed
 }
 
-.fish-rarity.legendary {
+.monster-rarity.legendary {
   color:#e3bd76
 }
 

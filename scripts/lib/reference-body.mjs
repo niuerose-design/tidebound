@@ -16,7 +16,7 @@ export async function referenceBodies({ load }) {
     const { recommendLoadout } = await load('systems/loadout');
     const { rebirthLevel } = await load('systems/meta');
     const { ACHIEVEMENTS } = await load('data/achievements');
-    const { REGIONS, regionFish } = await load('data/world');
+    const { REGIONS, regionMonsters } = await load('data/world');
     const { BALANCE } = await load('data/balance');
     const { VOCATION_OFFSETS } = await load('data/long-term');
 
@@ -81,7 +81,7 @@ export async function referenceBodies({ load }) {
         s.attributes.luk = lo; s.attributes[main] = total - lo;
     }
 
-    function referenceBody(r, topId, { stageFishCleared = [], borrow = true } = {}) {
+    function referenceBody(r, topId, { stageMonstersCleared = [], borrow = true } = {}) {
         const tier = tierOf(r), level = Math.min(100, rebirthLevel({ rebirths: r })), job = jobFor(level, topId);
         const s = newState(0);
         const own = SKILLS.filter(sk => sk.job === jobById(topId).id && sk.type === 'active');
@@ -96,8 +96,8 @@ export async function referenceBodies({ load }) {
         const ach = ACHIEVEMENTS.filter(a => !a.honor);
         const claims = Object.fromEntries(ach.slice(0, Math.round(ach.length * x.ach)).map(a => [a.id, true]));
         const book = {};
-        if (x.region) for (const region of REGIONS) for (const id of regionFish(region)) book[id] = BALANCE.bookMilestones[x.region - 1];
-        for (const id of stageFishCleared) delete book[id];
+        if (x.region) for (const region of REGIONS) for (const id of regionMonsters(region)) book[id] = BALANCE.bookMilestones[x.region - 1];
+        for (const id of stageMonstersCleared) delete book[id];
         Object.assign(s, { level, rebirths: r, job: job.id, attributes: attrs, statPoints: 0, inventory: [], equipment: equipment(s, level, magic, tier, gearOf(r)), permanent, book, achievementClaims: claims,
             unlockedJobs: JOBS.map(j => j.id), jobMastery: { [job.id]: x.mastered ? jobMasteryTarget(job) + (x.dedication ? VOCATION_OFFSETS[x.dedication - 1] : 0) : 0 },
             account: { slot: 1, rebirths: r, mastered: tier === 'expert' ? 30 : tier === 'mid' ? 10 : 0, species: 0, bossKills: x.boss, abyssBest: x.abyss, slots: [], syncedAt: 0 } });

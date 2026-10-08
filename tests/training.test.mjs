@@ -25,9 +25,9 @@ test('v3.69 training: retired jobs refuse the job change even when mastered; tra
     assert.equal(canChangeJob(s, 'woodcutter'), false); s.jobMastery.woodcutter = 1e9; assert.equal(canChangeJob(s, 'woodcutter'), false, 'retired even when mastered');
     assert.equal(canChangeJob(s, 'trainingPhysical'), true);
     const j = job('trainingPhysical'); assert.ok(j.attack <= .35 && j.magic <= .35 && j.hp <= .4 && j.rewardScale === .35);
-    const base = { ...newState(0), level: 20 }, fisherGold = S.goldMultiplier(base), fisherExp = S.expMultiplier(base);
+    const base = { ...newState(0), level: 20 }, baseGold = S.goldMultiplier(base), baseExp = S.expMultiplier(base);
     const train = { ...base, job: 'trainingPhysical' };
-    assert.ok(Math.abs(S.goldMultiplier(train) - fisherGold * .35) < 1e-9 && Math.abs(S.expMultiplier(train) - fisherExp * .35) < 1e-9);
+    assert.ok(Math.abs(S.goldMultiplier(train) - baseGold * .35) < 1e-9 && Math.abs(S.expMultiplier(train) - baseExp * .35) < 1e-9);
     assert.ok(stats(train).attack < stats(base).attack, 'weaker than the beginner');
 });
 

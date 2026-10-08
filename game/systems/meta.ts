@@ -2,7 +2,7 @@ import type { State } from '../types';
 import { RANDOM_GAME, randomGameTier } from '../data/random-game';
 import { ECONOMY, researchRank } from '../data/economy';
 import { MONSTER_TUNING, DUNGEON_TUNING, dungeonModeTier, OVER_TARGET, type XpTargetWall } from '../data/balance';
-import { fishExpAt, fishGoldAt, tideLiftLevel } from '../data/world';
+import { monsterExpAt, monsterGoldAt, tideLiftLevel } from '../data/world';
 /** 환생 요구 레벨: 30에서 환생마다 +5(Lv.60까지), 그 뒤로는 환생마다 +1(v27.77 최대 Lv.100, 환생 46회에 도달). */
 export const rebirthLevel = (s: Pick<State, 'rebirths'>) => {
     const early = 30 + s.rebirths * ECONOMY.rebirthLevelStep;
@@ -50,7 +50,7 @@ const TIER_EXP = { linearUntil: 30, lateScale: 1.5 };
 const tierExpEarly = (t: number) => 1 + t * .3 + Math.pow(Math.max(0, t - 20), 2) * .005;
 export const tierExp = (tier: number) => { const t = Math.max(0, tier); return t <= TIER_EXP.linearUntil ? tierExpEarly(t) : tierExpEarly(TIER_EXP.linearUntil) + TIER_EXP.lateScale * Math.sqrt(t - TIER_EXP.linearUntil); };
 /** 처치 보상(골드 배율 적용 전). 전투 보상과 도감 화면 표시가 같은 식을 씁니다. */
-export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: number }, tier: number, boss = false) {
+export function killReward(f: { exp: number; gold: number; rewardMultiplier?: number }, tier: number, boss = false) {
     const mult = boss ? MONSTER_TUNING.bossRewardMultiplier : 1;
     const rewardScale = f.rewardMultiplier || 1;
     return { exp: Math.round(f.exp * mult * tierExp(tier) * rewardScale), gold: Math.round(f.gold * mult * tierReward(tier) * rewardScale) };
@@ -58,15 +58,15 @@ export function catchReward(f: { exp: number; gold: number; rewardMultiplier?: n
 /** v27.35 던전 보상에 쓰는 층 배율 단계(무릉도장은 rewardTierCap에서 멈춤). */
 export const dungeonRewardTier = (tier: number, id = 'abyss') => id === 'abyss' ? Math.min(tier, DUNGEON_TUNING.rewardTierCap) : tier;
 /** 던전 처치 보상(배율 적용 전). 보스는 권장 레벨 몬스터 몇 마리분, 일반 웨이브는 몬스터 레벨을 권장 레벨 + 2까지만 셉니다. */
-export function dungeonCatchReward(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean, id = 'abyss') {
+export function dungeonKillReward(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean, id = 'abyss') {
     const rt = dungeonRewardTier(tier, id), t = tierReward(rt), tx = tierExp(rt);
-    if (boss) return { exp: Math.round(fishExpAt(dungeonLevel) * DUNGEON_TUNING.bossExpFish * tx), gold: Math.round(fishGoldAt(dungeonLevel) * DUNGEON_TUNING.bossGoldFish * t) };
+    if (boss) return { exp: Math.round(monsterExpAt(dungeonLevel) * DUNGEON_TUNING.bossExpMonsters * tx), gold: Math.round(monsterGoldAt(dungeonLevel) * DUNGEON_TUNING.bossGoldMonsters * t) };
     const level = Math.min(f.level, dungeonLevel + DUNGEON_TUNING.expLevelOver), scale = f.rewardMultiplier || 1;
-    return { exp: Math.round(fishExpAt(level) * scale * tx), gold: Math.round(fishGoldAt(level) * scale * t) };
+    return { exp: Math.round(monsterExpAt(level) * scale * tx), gold: Math.round(monsterGoldAt(level) * scale * t) };
 }
-export const dungeonExp = (f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) => dungeonCatchReward(f, dungeonLevel, tier, boss).exp;
-/** 클리어 보너스 골드의 기준값(골드 배율·층 배율 적용 전): 권장 레벨 몬스터 clearGoldFish마리분. */
-export const dungeonClearBase = (d: { level: number }) => fishGoldAt(d.level) * DUNGEON_TUNING.clearGoldFish;
+export const dungeonExp = (f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean) => dungeonKillReward(f, dungeonLevel, tier, boss).exp;
+/** 클리어 보너스 골드의 기준값(골드 배율·층 배율 적용 전): 권장 레벨 몬스터 clearGoldMonsters마리분. */
+export const dungeonClearBase = (d: { level: number }) => monsterGoldAt(d.level) * DUNGEON_TUNING.clearGoldMonsters;
 /**
  * 난이도 체력 배율. 체력당 경험치(tierExp ÷ tierHealth)는 난이도 0을 1로 두면 10~30에서 0.87~0.89로 거의 평평하고,
  * v3.21에서 30 위 경험치를 √로 꺾은 뒤로는 50에서 0.72, 100에서 0.31, 200에서 0.11로 떨어집니다.

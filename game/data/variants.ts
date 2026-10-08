@@ -54,8 +54,8 @@ export function variantChances(s: State) {
     return Object.fromEntries(VARIANTS.map(v => [v.id, Math.min(1, v.chance * m * (v.id === 'swarm' ? swarmBoost : 1) * regionVariantScale(s.stage, v.id))])) as Record<VariantId, number>;
 }
 /** 이 몬스터로 등장할 수 있는 무리 규모(도감 처치 수 기준). v3.87 일반 사냥터는 ×100까지(×500은 무리 서식지에서만). */
-function swarmSizesFor(s: State, fishId: string) {
-    const n = s.book[fishId] || 0;
+function swarmSizesFor(s: State, monsterId: string) {
+    const n = s.book[monsterId] || 0;
     return SWARM_SIZES.filter(size => size > 1 && size <= FIELD_SWARM_MAX && n >= SWARM_UNLOCK[size]);
 }
 /** v27.32 설정 ‘무리 최대 규모’에서 고를 수 있는 값. 0은 무리 끔, 100은 제한 없음과 같습니다(v3.87 일반 사냥터 최대 ×100). 서식지에는 적용되지 않습니다. */
@@ -65,8 +65,8 @@ export const swarmCapOf = (s: Pick<State, 'swarmCap'>) => Math.min(FIELD_SWARM_M
  * 무리 규모 추첨: 큰 규모일수록 드뭅니다(가중치는 서버 전용, ODDS.variant.swarmWeights).
  * v27.32 설정 상한을 넘게 뽑히면 상한 규모로 낮춥니다(난수 소비는 같음). 상한 0(끔)이면 1을 돌려 일반 개체가 됩니다.
  */
-export function rollSwarmSize(s: State, fishId: string, rng: () => number) {
-    const sizes = swarmSizesFor(s, fishId);
+export function rollSwarmSize(s: State, monsterId: string, rng: () => number) {
+    const sizes = swarmSizesFor(s, monsterId);
     if (!sizes.length) return 1;
     const [w5, w100, w500] = ODDS.variant.swarmWeights, weight = (n: number) => n >= 500 ? w500 : n >= 100 ? w100 : w5;
     let roll = rng() * sizes.reduce((a, n) => a + weight(n), 0), size: number = sizes[sizes.length - 1];

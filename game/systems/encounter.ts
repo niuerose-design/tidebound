@@ -3,7 +3,7 @@ import { rollAffixes, syncOrnateName } from '../data/gear';
 import { ODDS } from '../data/odds';
 import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
 import { jobMasteryTarget, extremeBroken } from './progression';
-import { catchReward, encounterTier, dungeonCatchReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
+import { killReward, encounterTier, dungeonKillReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
 import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY } from '../data/economy';
@@ -20,7 +20,7 @@ import { sproutHeal } from '../data/sprout';
 import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
 import type { State, Item, Stats, Enemy } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
-import { FISH, STAGES, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth, fishById, stageById, dungeonById } from '../data/world';
+import { MONSTERS, STAGES, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatMonster, tideLiftMonster, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth, monsterById, stageById, dungeonById } from '../data/world';
 import { jobById } from '../data/classes';
 import { HACKER_ID } from '../data/hacker';
 import { skillById } from '../data/skills';
@@ -127,9 +127,9 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
 /** v3.104 drop()이 바꾸는 값 가운데 능력치(드롭 보너스)에 닿을 수 있는 것: 골드 자릿수(기록 비례 패시브) · 물건 도감 수 · 가방 · 정수. */
 const dropRateKey = (s: State) => `${Math.floor(Math.log10(1 + Math.max(0, s.gold || 0)))}|${Object.keys(s.itemBook || {}).length}|${s.inventory.length}|${s.essence || 0}`;
 /** rareBonus: 희귀 이상 몬스터의 출현 가중치 증가율(0.1 = +10%). */
-export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, tier = 0) {
-    const choices = (ids.map(id => fishById(id)).filter(Boolean) as typeof FISH).filter(f => (f.minTier || 0) <= tier);
-    const weight = (f: typeof FISH[number]) => (f.spawnWeight ?? 1) * (f.rarity && f.rarity !== 'common' ? 1 + rareBonus : 1);
+export function weightedMonsterId(ids: string[], rng: () => number, rareBonus = 0, tier = 0) {
+    const choices = (ids.map(id => monsterById(id)).filter(Boolean) as typeof MONSTERS).filter(f => (f.minTier || 0) <= tier);
+    const weight = (f: typeof MONSTERS[number]) => (f.spawnWeight ?? 1) * (f.rarity && f.rarity !== 'common' ? 1 + rareBonus : 1);
     const total = choices.reduce((sum, f) => sum + weight(f), 0);
     let roll = rng() * total;
     for (const f of choices) {
@@ -150,16 +150,16 @@ export function onyxEnemyStats(f: Parameters<typeof scaledEnemyStats>[0], tier: 
 }
 /** 무릉도장 1층 기준 능력치(첫 몬스터). 한 번만 계산합니다. */
 let abyssRef: ReturnType<typeof scaledEnemyStats> | undefined;
-export const abyssReference = () => abyssRef ??= scaledEnemyStats(FISH.find(f => f.id === dungeonById('abyss')!.fish[0])!, { tier: 0, wave: 0 });
+export const abyssReference = () => abyssRef ??= scaledEnemyStats(MONSTERS.find(f => f.id === dungeonById('abyss')!.monsters[0])!, { tier: 0, wave: 0 });
 /**
  * v27.78 일반 사냥터 몬스터의 실전 수치(난이도 적용): 사냥터 레벨 상한 → 난이도 레벨 보정 → 보상 정규화 → 능력치·스킬·경험치·골드.
  * spawn과 도감 ‘적 정보’가 같은 식을 쓰므로 도감 수치가 실제 전투와 일치합니다. 변종·까미·누리·서약은 포함하지 않습니다.
  */
-export function stageField(s: Pick<State, 'level'>, stageId: string, fishId: string, tier: number) {
-    const st = stageById(stageId)!, f = fishById(fishId)!;
-    const capped = stageStatFish(f, st.level), lifted = tideLiftFish(capped, tier, s.level);
-    const field = lifted !== capped ? { ...lifted, rewardMultiplier: (lifted.rewardMultiplier || 1) * stageRewardNorm(st.fish, tier) } : lifted;
-    const foe = scaledEnemyStats(field, { tier }), base = catchReward(field, tier);
+export function stageField(s: Pick<State, 'level'>, stageId: string, monsterId: string, tier: number) {
+    const st = stageById(stageId)!, f = monsterById(monsterId)!;
+    const capped = stageStatMonster(f, st.level), lifted = tideLiftMonster(capped, tier, s.level);
+    const field = lifted !== capped ? { ...lifted, rewardMultiplier: (lifted.rewardMultiplier || 1) * stageRewardNorm(st.monsters, tier) } : lifted;
+    const foe = scaledEnemyStats(field, { tier }), base = killReward(field, tier);
     applyDepth(foe, base, stageDepth(st.id));
     return { field, foe, level: field.level, exp: Math.max(1, Math.round(base.exp * expLevelScale(field.level, s.level))), gold: base.gold, skills: foeSkills(f.id, field.level, !!f.boss) };
 }
@@ -169,8 +169,8 @@ export function stageField(s: Pick<State, 'level'>, stageId: string, fishId: str
  */
 export function stageEncounterExp(s: State, won = stats(s)) {
     const st = stageById(s.stage);
-    if (!st?.fish.length) return 0;
-    const tier = encounterTier(s), each = st.fish.reduce((sum, id) => sum + stageField(s, st.id, id, tier).exp, 0) / st.fish.length;
+    if (!st?.monsters.length) return 0;
+    const tier = encounterTier(s), each = st.monsters.reduce((sum, id) => sum + stageField(s, st.id, id, tier).exp, 0) / st.monsters.length;
     const heads = st.habitat ? (1 - HABITAT.bigChance) * HABITAT.sizes[0] * swarmRewardMultiplier(HABITAT.sizes[0]) + HABITAT.bigChance * HABITAT.sizes[1] * swarmRewardMultiplier(HABITAT.sizes[1]) : 1;
     const onyxSet = st.habitat ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
     return each * expMultiplier(s, won) * onyxSet * heads;
@@ -229,9 +229,9 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     if (inRandomGame(s)) return spawnRandomGame(s, rng);
     const dungeon = dungeonById(s.dungeon?.id);
     const st = stageById(s.stage)!;
-    const finalWave = !!dungeon && s.dungeon!.wave === dungeon.fish.length - 1;
+    const finalWave = !!dungeon && s.dungeon!.wave === dungeon.monsters.length - 1;
     const tier = encounterTier(s);
-    const targetOk = !!s.target && st.fish.includes(s.target) && (fishById(s.target)?.minTier || 0) <= tier;
+    const targetOk = !!s.target && st.monsters.includes(s.target) && (monsterById(s.target)?.minTier || 0) <= tier;
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
     const chances = specialChances(s);
     // v3.104 force가 있으면 판정 없이 그 희귀 몬스터를 세웁니다(난수를 쓰지 않음). 판정한 횟수는 부재중 정산 환산이 셉니다(offlineTally).
@@ -245,18 +245,18 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     if (onyxDef && force === 'onyx') { s.onyxSeen ??= {}; onyx = true; s.onyxSeen[st.region] = 0; }
     else if (onyxDef && !force) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; offlineTally.onyxRolls++; }
     const rare = !!special || onyx, rareId = onyx ? onyxDef!.id : special?.id ?? '', rareDef = onyx ? { hp: onyxDef!.hpMul, attack: ONYX.attack } : special ?? { hp: 1, attack: 1 };
-    const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
-    // v27.64 사냥터 몬스터는 난이도만큼 레벨이 올라갑니다(내 레벨까지, tideLiftFish). 까미·누리는 올라간 가장 강한 몬스터의 몸집을 빌립니다.
-    const top = rare ? tideLiftFish([...st.fish].map(x => fishById(x)!).sort((a, b) => b.level - a.level)[0], tier, s.level) : undefined;
-    const f = rare ? { ...fishById(rareId)!, level: top!.level, hp: Math.round(top!.hp * rareDef.hp), attack: Math.round(top!.attack * rareDef.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : fishById(id)!;
+    const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossMonster ? dungeon.bossMonster : dungeon.monsters[s.dungeon!.wave]) : (targetOk ? s.target! : weightedMonsterId(st.monsters, rng, rareSpawnBonus(s), tier));
+    // v27.64 사냥터 몬스터는 난이도만큼 레벨이 올라갑니다(내 레벨까지, tideLiftMonster). 까미·누리는 올라간 가장 강한 몬스터의 몸집을 빌립니다.
+    const top = rare ? tideLiftMonster([...st.monsters].map(x => monsterById(x)!).sort((a, b) => b.level - a.level)[0], tier, s.level) : undefined;
+    const f = rare ? { ...monsterById(rareId)!, level: top!.level, hp: Math.round(top!.hp * rareDef.hp), attack: Math.round(top!.attack * rareDef.attack), defense: top!.defense, exp: top!.exp, gold: top!.gold } : monsterById(id)!;
     const boss = finalWave;
     const normalDungeon = !!dungeon && dungeon.id !== 'abyss', dLevel = dungeon ? dungeonLevelAt(dungeon, tier, s.level) : 0;
     // v27.67 레벨이 올라간 몬스터는 사냥터 평균 보상 배율로 나눠 사냥터 사이 보상을 맞춥니다(stageRewardNorm). 일반 사냥터는 stageField(도감과 공용).
-    const field = !dungeon && !rare ? stageField(s, st.id, f.id, tier).field : normalDungeon ? tideLiftFish(f, tier, s.level) : f;
+    const field = !dungeon && !rare ? stageField(s, st.id, f.id, tier).field : normalDungeon ? tideLiftMonster(f, tier, s.level) : f;
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
         : onyx ? onyxEnemyStats(f, tier)
         : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
-    const base = dungeon ? dungeonCatchReward(field, dLevel, tier, boss, dungeon.id) : catchReward(field, tier, boss);
+    const base = dungeon ? dungeonKillReward(field, dLevel, tier, boss, dungeon.id) : killReward(field, tier, boss);
     // v3.9 깊이 계수(뒤 사냥터·던전일수록 조금 더 어렵고 더 줌). 무릉도장·랜덤게임·까미·누리는 1.
     applyDepth(foe, base, dungeon ? dungeonDepth(dungeon.id) : stageDepth(st.id));
     const gold = base.gold;
@@ -286,7 +286,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
         foe.magic = Math.round((foe.magic || 0) * vdef.attack);
         if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx || king, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : king ? { leavesAt: s.turn + KING.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!fishById(f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx || king, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : king ? { leavesAt: s.turn + KING.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!monsterById(f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
 }
 /**
  * v3.99 전투 · 처치 로그에 쓰는 적 이름. 무리는 ‘스포아 ×100’, 변종은 ‘◆ 거대 개체 스포아’,
@@ -294,10 +294,10 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
  */
 export function enemyLabel(e: Pick<Enemy, 'id' | 'name' | 'swarm' | 'variant' | 'boss' | 'onyx'>) {
     const v = e.variant && e.variant !== 'swarm' ? variantById(e.variant) : undefined;
-    const tag = e.onyx ? '[칠흑] ' : e.boss || fishById(e.id)?.boss ? '[보스] ' : '';
+    const tag = e.onyx ? '[칠흑] ' : e.boss || monsterById(e.id)?.boss ? '[보스] ' : '';
     return `${tag}${v ? `${v.mark} ${v.name} ` : ''}${e.name}${(e.swarm || 1) > 1 ? ` ×${e.swarm}` : ''}`;
 }
-const fishLevelOf = (id: string) => fishById(id)?.level || 1;
+const monsterLevelOf = (id: string) => monsterById(id)?.level || 1;
 export function reward(s: State, rng: () => number) {
     const e = s.enemy!;
     // v27.86 랜덤게임: 처치 경험치·골드·드롭·숙련 없이 처치 수·도감만 세고, 판돈을 쌓아 다음 웨이브로 갑니다.
@@ -326,12 +326,12 @@ export function reward(s: State, rng: () => number) {
     const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
     // v3.104 골드 · 경험치 배율과 황금 개체 확률은 같은 상태의 능력치 한 번으로 계산합니다(사이에 상태가 바뀌지 않음).
     const won = stats(s);
-    const perFish = Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
+    const perMonster = Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
     // v3.125 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스, v3.161 정수의 슬라임 · 대왕)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
     const rareFoe = isSpecialId(e.id) || !!e.onyx;
     const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && !rareFoe && rng() < goldenChance;
-    const gold = Math.floor(perFish * size * big) + (golden ? perFish * 9 : 0);
+    const gold = Math.floor(perMonster * size * big) + (golden ? perMonster * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     // v27.79 계급장: 처치 수(무리는 마릿수)만큼 계급 경험치. ‘전과 기록’ 특전이 마리당 더 셉니다. 기록이 없던 세이브는 지금까지의 처치 수에서 시작합니다. 진급하면 알립니다.
     const rk = rankState(s), rankBefore = rankIndex(rk.exp);
@@ -435,10 +435,10 @@ export function reward(s: State, rng: () => number) {
         else if (dropRoll >= ONYX.drop && miss + 1 < ONYX.dropPity) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · 장신구를 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
         else {
             s.onyxMiss[e.onyx] = 0;
-            grantOnyx(s, e.onyx, stageById(s.stage)?.level || fishLevelOf(e.id), rng, `${bossDef.name} 격파`);
+            grantOnyx(s, e.onyx, stageById(s.stage)?.level || monsterLevelOf(e.id), rng, `${bossDef.name} 격파`);
         }
     }
-    const fish = fishById(e.id)!;
+    const monster = monsterById(e.id)!;
     // v3.42 무리는 마리 수 N 대신 √N번만 드롭을 판정하고(×500은 2배), 덜 굴린 판정은 기대 장비 수만큼 정수로 바꿉니다.
     const rolls = swarmDropRolls(size) * (size >= SWARM_BIG.size ? SWARM_BIG.drops : 1);
     // v3.104 드롭 확률은 드롭이 바꿀 수 있는 값(골드 자릿수 · 물건 도감 · 가방 · 정수)이 그대로면 재사용합니다.
@@ -446,13 +446,13 @@ export function reward(s: State, rng: () => number) {
     for (let i = 0; i < rolls * (vdef?.drops || 1); i++) {
         const key = dropRateKey(s);
         if (key !== rateKey) { rateKey = key; rate = dropRate(s); }
-        drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, false, rate);
+        drop(s, dropLevel(s, monster.level, encounterTier(s)), rng, false, rate);
     }
     if (size > rolls) {
         const owed = (size - rolls) * dropRate(s) * SWARM_ESSENCE_PER_ITEM, essence = Math.floor(owed) + (rng() < owed % 1 ? 1 : 0);
         if (essence > 0) { s.essence = (s.essence || 0) + essence; addLog(s, `무리 전리품 · 정수 +${essence}`, 'reward'); }
     }
-    if (vdef?.guaranteed) drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, true);
+    if (vdef?.guaranteed) drop(s, dropLevel(s, monster.level, encounterTier(s)), rng, true);
     // v27.86 사냥터별 최고 난이도 기록(업적용).
     if (!s.dungeon && !isHabitat(s.stage)) { const tier = encounterTier(s); if (tier > (s.tideBest?.[s.stage] || 0)) (s.tideBest ??= {})[s.stage] = tier; }
     gainLevels(s);
@@ -467,7 +467,7 @@ export function reward(s: State, rng: () => number) {
     if (s.dungeon) {
         const d = dungeonById(s.dungeon!.id)!;
         s.dungeon.wave++;
-        if (s.dungeon.wave >= d.fish.length) {
+        if (s.dungeon.wave >= d.monsters.length) {
             // v27.30 권장 레벨보다 크게 높으면 클리어 골드와 반복 장비 확률이 줄어듭니다.
             const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level), overlevel = dungeonOverlevel(s.level, dLevel);
             const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel * dungeonDepth(d.id));

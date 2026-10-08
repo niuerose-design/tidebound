@@ -11,7 +11,7 @@ const {combatFxFromLog}=await moduleAt('systems/combat-feedback');
 const {strike,fighterSpeed}=await moduleAt('systems/combat');
 const {SKILLS}=await moduleAt('data/skills');
 const {JOBS}=await moduleAt('data/classes');
-const {FISH}=await moduleAt('data/world');
+const {MONSTERS}=await moduleAt('data/world');
 const {tierHealth,tierAttack}=await moduleAt('systems/meta');
 const {enemyStats,scaledEnemyStats,profile}=await moduleAt('data/encounters');
 const {canUse,validLoadout,skillMasteryRanks,effectiveSkill}=await moduleAt('systems/progression');
@@ -31,7 +31,7 @@ for(const [job,attributes,skills] of builds){
  for(const sk of SKILLS){s.learned[sk.id]=1;s.skillPractice[sk.id]=80000;}s.skills=[];
  for(const id of skills)if(canUse(s,id)&&validLoadout(s,[...s.skills,id]))s.skills.push(id);
  for(const [id,tier] of [['shark',0],['ghost',0],['dragon',10],['dragon',30],['templeOracle',0],['abyssSovereign',3]]){
-  const fish=FISH.find(f=>f.id===id),boss=!!fish.boss;const foe=baseline?enemyStats(fish,boss):scaledEnemyStats(fish,{boss,tier,...(boss?{wave:4}:{})});if(baseline){foe.hp=Math.round(fish.hp*2.5*(boss?1.9:1)*tierHealth(tier));foe.attack*=tierAttack(tier);foe.magic*=tierAttack(tier);}let wins=0,turns=0,remaining=0;
+  const monster=MONSTERS.find(f=>f.id===id),boss=!!monster.boss;const foe=baseline?enemyStats(monster,boss):scaledEnemyStats(monster,{boss,tier,...(boss?{wave:4}:{})});if(baseline){foe.hp=Math.round(monster.hp*2.5*(boss?1.9:1)*tierHealth(tier));foe.attack*=tierAttack(tier);foe.magic*=tierAttack(tier);}let wins=0,turns=0,remaining=0;
   for(let seed=1;seed<=160;seed++){
    const st=stats(s),a={name:'player',stats:st,hp:st.hp,mana:st.mana,skills:s.skills,cooldowns:{},stun:0,effects:{},ranks:s.learned,mastery:skillMasteryRanks(s),practice:s.skillPractice};
    const b={name:'foe',stats:foe,hp:foe.hp,mana:100,skills:profile(id).skills,cooldowns:{},stun:0,effects:{}};const rng=random(seed);let n=0;
