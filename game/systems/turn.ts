@@ -151,7 +151,7 @@ function tickTurn(s: State, rng: () => number) {
 }
 /** v3.17 요청 하나에서 돌리는 부재중 정산 턴 상한(약 1~2초). */
 export const CATCH_UP_CHUNK = 1500;
-/** v3.188 이만큼 비운 정산이 부재중 보정을 받는지(1시간 초과). */
+/** v3.189 이만큼 비운 정산이 부재중 보정을 받는지(1시간 초과). */
 export const awayGap = (elapsedMs: number) => elapsedMs > BALANCE.offlineAwaySeconds * 1000;
 export function advance(s: State, now: number, rng = Math.random) {
     repairState(s, now);
@@ -160,7 +160,7 @@ export function advance(s: State, now: number, rng = Math.random) {
     const elapsed = now - s.lastTick;
     const continuing = (s.catchUpLeft || 0) > 0;
     // v27.51 이벤트·제단 축복 배율: 접속 중에는 그대로, 부재중 정산에는 절반만(offlineEvent). 정산이 끝난 뒤 원래 배율을 다시 적습니다.
-    // v3.188 부재중 보정(이벤트 절반 · 특별 몬스터 offlineScale)은 1분이 아니라 1시간(offlineAwaySeconds) 넘게 비운 정산만 받습니다(탭을 잠깐 내린 것은 접속 중과 같게).
+    // v3.189 부재중 보정(이벤트 절반 · 특별 몬스터 offlineScale)은 1분이 아니라 1시간(offlineAwaySeconds) 넘게 비운 정산만 받습니다(탭을 잠깐 내린 것은 접속 중과 같게).
     // 나눠 돌리는 정산은 처음 정한 보정을 이어 씁니다(catchUpAway). 계산량은 바뀌지 않습니다(표본 환산 · 분할은 아래 offline 기준 그대로).
     const away = continuing ? !!s.catchUpAway : awayGap(elapsed);
     const live = activeEvent(now);

@@ -721,9 +721,9 @@ export type State = {
     bestStage: number;
     /** 오프라인 정산 중에만 true인 임시 표시(저장 전에 지웁니다). */
     catchingUp?: boolean;
-    /** v3.188 부재중 보정(이벤트 절반 · 특별 몬스터 offlineScale)을 받는 정산 중에만 true인 임시 표시. 1시간(BALANCE.offlineAwaySeconds) 넘게 비웠을 때. */
+    /** v3.189 부재중 보정(이벤트 절반 · 특별 몬스터 offlineScale)을 받는 정산 중에만 true인 임시 표시. 1시간(BALANCE.offlineAwaySeconds) 넘게 비웠을 때. */
     away?: boolean;
-    /** v3.188 나눠 돌리는 정산(catchUpLeft)이 부재중 보정을 받는 정산인지. 이어 돌릴 때 같은 보정을 씁니다. */
+    /** v3.189 나눠 돌리는 정산(catchUpLeft)이 부재중 보정을 받는 정산인지. 이어 돌릴 때 같은 보정을 씁니다. */
     catchUpAway?: boolean;
     /** v3.17 부재중 정산을 요청당 CATCH_UP_CHUNK턴씩 나눠 돌릴 때 남은 턴. 0이거나 없으면 밀린 정산이 없습니다. */
     catchUpLeft?: number;

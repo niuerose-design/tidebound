@@ -74,7 +74,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">
                 <span><b>최초</b>{d.id === 'abyss' ? `${s.abyssBest + 1}층 세계석 ${abyssPearls(s.abyssBest + 1)} · 10층마다 보너스 세계석(층 수만큼)${nextAbyssMilestone(s.abyssBest) ? ` · ${nextAbyssMilestone(s.abyssBest)}층 SP 1` : ''}` : `세계석 ${d.pearls}${research ? ` · 업적 SP ${research}` : ''}`}{d.id !== 'abyss' && s.clears[d.id] && (!research || claimed) ? ' · 받음' : ''}</span>
-                <span><b>반복</b>{format(Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel))} G{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)} · 골드 ×${tierReward(tier).toFixed(1)} · 경험치 ×${tierExp(tier).toFixed(2)}` : ''} · 낮은 확률로 희귀 이상 장비{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''}</span>
+                <span><b>반복</b>{format(Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel))} G{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)} · 골드 ×${tierReward(tier).toFixed(1)} · 경험치 ×${tierExp(tier).toFixed(2)}` : ''} · 낮은 확률로 희귀 이상 장비{d.id === 'abyss' ? ' · 5층마다 확정 드롭' : ''}</span>
                 {overlevel < 1 && <span><b>레벨 초과</b>권장 레벨보다 높아 클리어 골드·반복 장비 확률 ×{overlevel.toFixed(1)}</span>}
             </div>
             <div className="stage-footer dungeon-actions">
