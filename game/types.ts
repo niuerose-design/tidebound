@@ -486,6 +486,8 @@ export type State = {
     legacyInherited?: Record<string, true>;
     /** v27.95 숙련 요구치 상향의 계승 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     masteryRescaled?: boolean;
+    /** v3.154 긴 휴식 12단계 × 2시간 → 3단계 × 6시간으로 한 번 변환했는지. */
+    offlineRescaled?: boolean;
     /** v3.69 수련 패시브 숙련 요구치 상향의 계승 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     trainingRescaled?: boolean;
     /** v3.80 직업 숙달 목표를 올리기 전 기준으로 이미 숙달한 직업(계속 숙달로 봄). */

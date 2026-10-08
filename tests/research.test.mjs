@@ -1,15 +1,15 @@
 // 세계석 연구 2단계: 기본 신규 12개(해금·한도·효과), 재분배 가방 검사, 온라인·오프라인 정산 일치
 import { newState, act, advance, rawAdvance, stats, economy, victoryHealRate, drop, researchMastery, gambleCost, enhanceCost, reforgeCost, rebirthReward, MIMIC_DATA, NURI_DATA, assert, test } from './harness.mjs';
 
-const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'inventory', 'offline', 'mastery', 'enhance'];
+const NEW = ['crit', 'manaRegen', 'critDamage', 'penetration', 'recovery', 'evasion', 'lifesteal', 'offline', 'mastery', 'enhance']; // v3.154 inventory(넓은 가방) 삭제
 const research = id => economy.RESEARCH.find(r => r.id === id);
 const researchDelta = (s, k) => { const t = {}; stats(s, t); return (t[k] || []).filter(x => x.source === 'research' && x.factor === undefined).reduce((a, x) => a + x.delta, 0); };
 const researchFactor = (s, k) => { const t = {}; stats(s, t); return (t[k] || []).filter(x => x.source === 'research' && x.factor !== undefined).reduce((a, x) => a * x.factor, 1); };
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
 const seeded = seed => { let x = seed >>> 0; return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296); };
 
-test('Research v2: 11 new entries (v3.38 shop removed) match the plan table and are refused before unlock and at the cap', () => {
-    const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 2, 2, 5, 722], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], inventory: [8, 3, 3, 2, 108], offline: [12, 3, 2, 2, 168], mastery: [10, 3, 3, 5, 165], enhance: [15, 3, 2, 5, 255] }; // v3.42 치명 피해 21~25단계는 ×1.06 복리(전 가격 1,020)
+test('Research v2: 10 new entries (v3.38 shop removed) match the plan table and are refused before unlock and at the cap', () => {
+    const table = { crit: [20, 4, 3, 2, 650], manaRegen: [10, 3, 3, 2, 165], critDamage: [25, 2, 2, 5, 722], penetration: [15, 5, 4, 5, 495], recovery: [10, 3, 3, 2, 165], evasion: [20, 4, 3, 2, 650], lifesteal: [20, 4, 3, 5, 650], offline: [3, 30, 30, 2, 180], mastery: [10, 3, 3, 5, 165], enhance: [15, 3, 2, 5, 255] }; // v3.42 치명 피해 21~25단계는 ×1.06 복리(전 가격 1,020)
     for (const id of NEW) {
         const r = research(id), [max, base, step, rebirth, total] = table[id];
         assert.deepEqual([r.max, r.base, r.step, r.rebirth], [max, base, step, rebirth], id);
@@ -48,23 +48,22 @@ test('Research v2: recovery and smith discounts use the state-aware functions', 
     s.permanent.enhance = 0; assert.equal(enhanceCost(item, s), enhanceCost(item));
 });
 
-test('Research v2: bag size grows with the hold; reset refuses when the bag would overflow', () => {
-    const s = newState(0); s.permanent.inventory = 2; assert.equal(economy.inventoryCap(s), 70);
+test('Research v2 → v3.154: the bag is a flat 100 slots (no research), drops auto-sell at the cap, and a utility reset no longer checks the bag', () => {
+    const s = newState(0); s.permanent.inventory = 2; assert.equal(economy.inventoryCap(), 100, 'legacy rank is ignored');
     const fill = n => Array.from({ length: n }, (_, i) => ({ id: `b${i}`, slot: 'rod', rarity: 0, power: 3, level: 1, name: 'b' }));
-    s.inventory = fill(69); drop(s, 5, () => .5, true); assert.equal(s.inventory.length, 70);
-    const gold = s.gold; drop(s, 5, () => .5, true); assert.equal(s.inventory.length, 70); assert.ok(s.gold > gold, 'full bag auto-sells');
-    const r = newState(0); r.rebirths = 2; r.permanent.inventory = 2; r.inventory = fill(65);
-    assert.throws(() => act(r, { type: 'resetResearch', id: 'utility' }, 0), /장비를 정리하세요/); assert.equal(r.permanent.inventory, 2);
-    r.inventory = fill(60); act(r, { type: 'resetResearch', id: 'utility' }, 0); assert.equal(r.permanent.inventory || 0, 0); assert.equal(economy.inventoryCap(r), 60);
+    s.inventory = fill(99); drop(s, 5, () => .5, true); assert.equal(s.inventory.length, 100);
+    const gold = s.gold; drop(s, 5, () => .5, true); assert.equal(s.inventory.length, 100); assert.ok(s.gold > gold, 'full bag auto-sells');
+    const r = newState(0); r.rebirths = 2; r.permanent.offline = 1; r.inventory = fill(100);
+    act(r, { type: 'resetResearch', id: 'utility' }, 0); assert.equal(r.permanent.offline || 0, 0); assert.equal(r.inventory.length, 100, 'bag untouched by the reset');
 });
 
-test('Research v2: long anchor line extends the offline cap by two hours per rank', () => {
+test('Research v2 → v3.154: long rest extends the offline cap by six hours per rank (3 ranks → 24 hours)', () => {
     // 첫 분할만 돌려 정산할 전체 턴(지금 턴 + 남은 턴)으로 상한을 확인합니다(전에는 6·12시간을 끝까지 돌려 13초).
     const run = rank => { const s = newState(0); s.permanent.offline = rank; act(s, { type: 'start' }, 0); rawAdvance(s, 40 * 3600_000, seeded(3)); return s; };
     const base = run(0), long = run(3);
-    // v27.43 기본 6시간 + 2시간/단계.
-    assert.equal(economy.offlineCapSeconds(base), 6 * 3600); assert.equal(economy.offlineCapSeconds(long), 12 * 3600);
-    assert.equal(base.turn + base.catchUpLeft, 6 * 3600 / 2); assert.equal(long.turn + long.catchUpLeft, 12 * 3600 / 2);
+    // v27.43 기본 6시간 + v3.154 6시간/단계.
+    assert.equal(economy.offlineCapSeconds(base), 6 * 3600); assert.equal(economy.offlineCapSeconds(long), 24 * 3600);
+    assert.equal(base.turn + base.catchUpLeft, 6 * 3600 / 2); assert.equal(long.turn + long.catchUpLeft, 24 * 3600 / 2);
 });
 
 test('Research v2/v27.73: mastery memory adds +3% per rank with an integer carry (1/100) and no random calls', async () => {
@@ -331,4 +330,22 @@ test('v3.99 enemy label in combat logs: swarm ×N, variant mark + name, [보스]
     for (let i = 0; i < 5 && s.enemy?.swarm; i++) tk(s, () => .5);
     const lines = s.logs.map(l => l.text);
     assert.ok(lines.some(t => t.includes('스포아 ×100')), `labelled: ${lines.slice(-6).join(' / ')}`);
+});
+
+test('v3.154 bag research retired (cap 100, pearls refunded), long rest rescaled to 3 x 6h, auto-claim research claims achievements and codex rewards after an action', () => {
+    assert.equal(economy.inventoryCap(), 100); assert.equal(research('inventory'), undefined);
+    assert.deepEqual([research('offline').max, research('offline').base, research('offline').step, research('offline').per], [3, 30, 30, 6]);
+    assert.equal(economy.offlineCapSeconds({ permanent: { offline: 3 } }), 21600 + 3 * 21600);
+    const s = newState(0); s.pearls = 0; s.permanent.inventory = 8; s.permanent.offline = 12; s.researchGranted = { inventory: 8, offline: 12, limitBreak: 0 }; s.researchPlan = { on: false, items: [{ id: 'inventory', to: 8 }, { id: 'offline', to: 12 }] }; delete s.offlineRescaled; // 옛 세이브
+    migrateState(s);
+    assert.equal(s.permanent.inventory, undefined); assert.equal(s.pearls, 108, 'bag pearls refunded'); assert.equal(s.permanent.offline, 3); assert.equal(s.researchGranted.offline, 3); assert.equal(s.researchGranted.inventory, undefined);
+    assert.deepEqual(s.researchPlan.items, [{ id: 'offline', to: 3 }]); assert.equal(s.offlineRescaled, true);
+    migrateState(s); assert.equal(s.pearls, 108, 'idempotent'); assert.equal(s.permanent.offline, 3);
+    const t = newState(0); t.permanent.offline = 5; delete t.offlineRescaled; migrateState(t); assert.equal(t.permanent.offline, 2, 'ceil(5 / 3)');
+    const u = newState(0); u.pearls = 0; u.kills = 1000;
+    act(u, { type: 'sync' }, 0);
+    assert.ok(Object.keys(u.achievements).length > 0 && u.pearls === 0, 'without the research achievements wait for a manual claim');
+    u.permanent.autoClaim = 1; act(u, { type: 'sync' }, 0);
+    assert.ok(u.pearls > 0, 'auto-claim pays the pearls'); assert.ok(u.logs.some(l => l.text.includes('자동 수령 · 업적 보상')));
+    assert.ok(Object.keys(u.achievements).every(id => u.achievementClaims[id]), 'nothing left unclaimed');
 });

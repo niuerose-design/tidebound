@@ -113,7 +113,7 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         addLog(s, `자동 정리: ${item.name} 판매 +${gold} G${primalGaugeNote(s, primalGaugeGain(s, [item]))}`, 'reward');
         return;
     }
-    if (s.inventory.length >= inventoryCap(s)) {
+    if (s.inventory.length >= inventoryCap()) {
         s.gold += item.power * 3;
         addLog(s, `가방 가득 참: ${item.name} 자동 판매 +${item.power * 3} G${primalGaugeNote(s, primalGaugeGain(s, [item]))}`, 'reward');
     }
