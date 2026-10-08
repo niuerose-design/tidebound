@@ -375,7 +375,7 @@ export const LINEAGES: Lineage[] = [
     { id: 'squidJester', name: '오징어 광대 계보', tree: 'support', summary: '확률과 치명으로 보상을 불리는 계보입니다.' },
     { id: 'relicScavenger', name: '난파선 수집가 계보', tree: 'support', summary: '변종과 황금 개체를 더 자주 만나고, 변종 기록이 쌓일수록 강해지는 변종 사냥 계보입니다.' },
     { id: 'salvageMerchant', name: '인양 상인 계보', tree: 'support', summary: '골드와 환생 보상을 굴리는 경제 계보입니다.' },
-    { id: 'voyageScribe', name: '견습 기록사 계보', tree: 'support', summary: '경험치와 장기 성장을 돕는 기록 계보입니다.' },
+    { id: 'voyageScribe', name: '견습 기록사 계보', tree: 'support', summary: '경험치 보너스가 곧 피해가 되는(렐릭의 힘) 경험치 유틸 계보입니다.' },
     { id: 'bossNaturalist', name: '거수 생태학자 계보', tree: 'support', summary: '보스와 지정 몬스터의 숙련을 빠르게 쌓는 계보입니다.' },
     { id: 'bard', name: '방랑 음유시인 계보', tree: 'support', summary: '가속·경험치·보상으로 성장을 보조하는 계보입니다.' },
     independent('support'),

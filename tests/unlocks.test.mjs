@@ -7,7 +7,7 @@ const ready = (level = 30) => { const s = newState(0); s.level = level; s.rebirt
 const job = id => JOBS.find(j => j.id === id);
 
 test('v3.62 hidden unlocks: record conditions (v3.64 seven); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
-    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'krakenkin', 'poorMonk', 'codexReader', 'fallenAngler', 'journeyman']);
+    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'krakenkin', 'poorMonk', 'fallenAngler', 'journeyman']);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead'), false);
     assert.ok(jobRequirements(s, job('undead')).some(r => r.label === '숨은 조건' && !r.met));
@@ -28,9 +28,8 @@ test('v3.62 hidden unlocks count play records', () => {
     s.level = 30; s.attributes.int = 30; s.attributes.wis = 30; s.attributes.vit = 30; s.attributes.str = 30;
     s.gold = 50; closed('poorMonk'); s.jobMastery.saltWarden = 75; s.gold = 5000; closed('poorMonk'); s.gold = 50; open('poorMonk');
     s.jobMastery.wanderer = 75; closed('fallenAngler'); s.deaths = 30; open('fallenAngler');
-    s.jobMastery.voyageScribe = 1200; closed('codexReader'); s.itemBook = Object.fromEntries(Array.from({ length: 30 }, (_, i) => ['item' + i, 1])); open('codexReader');
     for (const id of unlocks.UNLOCK_JOBS) { const j = job(id); assert.ok(j && j.hidden && j.hint && !j.hint.includes(j.name) && !j.hint.includes('문'), id); }
-    for (const [id, parent] of [['codexReader', 'voyageScribe'], ['poorMonk', 'saltWarden'], ['fallenAngler', 'wanderer']]) { const j = job(id); assert.ok(j.tier === 2 && j.parent === parent && j.tree !== 'mystery', id); }
+    for (const [id, parent] of [['poorMonk', 'saltWarden'], ['fallenAngler', 'wanderer']]) { const j = job(id); assert.ok(j.tier === 2 && j.parent === parent && j.tree !== 'mystery', id); }
 });
 
 test('v3.62 the rebirth door is gone: no draw at rebirth, the old door jobs keep only their own conditions', () => {

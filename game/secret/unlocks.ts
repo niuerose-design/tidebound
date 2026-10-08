@@ -13,7 +13,6 @@ import { FISH } from '../data/world';
 import { masteredJobCount } from '../systems/progression';
 import { setUnlockSource } from '../data/unlock-info';
 
-const codexCount = (s: State) => FISH.filter(f => (s.book?.[f.id] || 0) > 0).length + Object.keys(s.itemBook || {}).length;
 const bossCatches = (s: State) => FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
 const HOUR = 3600_000;
 
@@ -24,7 +23,6 @@ export const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
     { job: 'clockmaker', test: s => (s.playMs || 0) >= 10 * HOUR },
     { job: 'krakenkin', test: s => bossCatches(s) >= 10 },
     { job: 'poorMonk', test: s => s.level >= 15 && (s.gold || 0) < 100 },
-    { job: 'codexReader', test: s => codexCount(s) >= 30 },
     { job: 'fallenAngler', test: s => (s.deaths || 0) >= 30 },
     { job: 'journeyman', test: s => masteredJobCount(s) >= 3 },
 ] as HiddenUnlock[]);

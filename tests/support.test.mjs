@@ -7,13 +7,13 @@ const target = (fields = {}) => ({ name: 'B', stats: { ...base }, hp: 1e6, skill
 const hit = (a, b, roll) => { const seq = roll === undefined ? [] : [0, roll, .5]; strike(a, b, () => seq.length ? seq.shift() : 0); return 1e6 - b.hp; };
 
 test('v24.2 progress passives count codex, catches, hunts, species, gold and rebirths', () => {
-    const s = newState(0); s.level = 70; s.rebirths = 3; s.job = 'chronicleNavigator'; s.learned.chronicleStudy = 1; s.skills = ['chronicleStudy'];
+    const s = newState(0); s.level = 70; s.rebirths = 3; s.job = 'abyssArchivist'; s.learned.memoryOfTides = 1; s.skills = ['memoryOfTides'];
     const before = stats(s);
     s.book[FISH[0].id] = 5; s.book[FISH[1].id] = 2; s.itemBook = { a: 1, b: 1 };
     const after = stats(s);
     assert.equal(after.codexPower, 4); assert.ok(Math.abs(after.catchPower - Math.log10(8)) < 1e-9);
-    assert.equal(after.attack, before.attack, 'four codex records → chronicleStudy codex step (per 5) not yet'); s.itemBook = { a: 1, b: 1, c: 1 }; assert.ok(stats(s).attack > after.attack && stats(s).magic > after.magic, 'five codex records → chronicleStudy +1');
-    const sk = SKILLS.find(x => x.id === 'chronicleStudy'); assert.equal(sk.perCount[0].source, 'rebirth'); assert.equal(sk.bonus.expBonus, .18, 'scribe keeps its EXP bonus (v3.83 ×1.5)');
+    assert.equal(after.attack, before.attack, 'records do not move a rebirth passive'); s.rebirths = 4; assert.ok(stats(s).attack > after.attack && stats(s).magic > after.magic, 'one more rebirth → memoryOfTides step');
+    const sk = SKILLS.find(x => x.id === 'chronicleStudy'); assert.ok(!sk.perCount, 'v3.153 패스파인더 passives grow with mastery, not records (렐릭의 힘)'); assert.equal(sk.bonus.expBonus, .18, 'scribe keeps its EXP bonus (v3.83 ×1.5)');
     for (const id of ['salvageSense', 'rareSense', 'deepSalvage', 'kingsHoard', 'legendHoard']) { const b = SKILLS.find(x => x.id === id).bonus || {}; assert.ok(!b.goldBonus && !b.dropBonus, id + ' moved gold/drop to the merchant line'); assert.ok(b.variantFind > 0, id + ' raises variant odds'); }
     for (const id of ['salvageContract', 'goldMemory', 'portLedger', 'tradeWind', 'tradeEmpire', 'goldenEmpire']) assert.ok(SKILLS.find(x => x.id === id).bonus.dropBonus > 0, id);
 });

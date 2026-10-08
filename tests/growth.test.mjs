@@ -196,13 +196,14 @@ test('v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-
 
 test('v3.5 skill simple view: growth passives show their current count/rebirth stats and list the rules under 기타', () => {
  const { passiveGrowthBonus: growth, skillExtraNotes: notes, newState: fresh } = H95;
- const sk = SKILLS.find(x => x.id === 'voyageReview'), s = fresh(0);
- assert.deepEqual(growth(s, sk), {}, 'no kills yet');
- s.book = { [H95.FISH[0].id]: 1e6 }; s.job = sk.job; s.learned[sk.id] = 1;
+ // v3.153 패스파인더 패시브는 기록 비례 성장을 버려(렐릭의 힘) 에반의 윤회의 조류 기록으로 검사합니다.
+ const sk = SKILLS.find(x => x.id === 'memoryOfTides'), s = fresh(0);
+ assert.deepEqual(growth(s, sk), {}, 'no rebirths yet');
+ s.rebirths = 30; s.job = sk.job; s.learned[sk.id] = 1;
  const g = growth(s, sk); assert.ok(g.attack > 0 && g.magic > 0, JSON.stringify(g));
- // 처치 500마다 +1, 최대 10회(능력치 계산 stats.ts와 같은 식).
- assert.deepEqual(g, { attack: 10, magic: 10 });
- assert.equal(notes(sk).length, 1); assert.match(notes(sk)[0], /누적 처치 500마다/);
- assert.match(notes(SKILLS.find(x => x.id === 'chronicleStudy'))[0], /^환생마다/, 'per 1 reads as 마다');
+ // 환생 1마다 +5 · +18 · +1, 최대 12회(능력치 계산 stats.ts와 같은 식).
+ assert.deepEqual(g, { attack: 60, magic: 60, hp: 216, defense: 12, resist: 12 });
+ assert.equal(notes(sk).length, 1); assert.match(notes(sk)[0], /^환생마다/, 'per 1 reads as 마다');
+ assert.deepEqual(notes(SKILLS.find(x => x.id === 'voyageReview')), [], 'v3.153 relic passives list no growth rule');
  assert.deepEqual(notes(SKILLS.find(x => x.type === 'active')), []);
 });
