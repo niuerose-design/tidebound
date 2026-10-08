@@ -32,8 +32,7 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'deepCaretaker', name: '등대 요양사', title: '깊은 곳에서 생명을 돌본다', desc: '입힌 피해를 크게 흡수하고 두 방어를 함께 올리는 흡혈형 3차 직업입니다.', ...neutral, bonus: { magic: 55, hp: 220, defense: 7, resist: 12 }, ...T3, parent: 'shoreApothecary', requires: { vit: 45, wis: 40 }, requiresSkillMastery: { kelpPoultice: 3 }, role: '회복·흡혈', tree: 'defense' },
 
     // ── 상태이상: 칼리 계보 보강 ──────────────────────────────
-    { id: 'voodooCrafter', name: '부두 인형사', title: '실 한 가닥에 저주를 꿴다', desc: '칼리 (1차)의 보이드 러시로 약화시킨 적을 바늘 인형으로 크게 찌르는 저주 2차 직업입니다.', ...neutral, bonus: { magic: 38, resist: 2 }, crit: .04, ...T2, parent: 'shaman', requires: { int: 28, luk: 24 }, requiresSkillMastery: { curseBolt: 2 }, role: '약화·저주 연계', tree: 'status' },
-    { id: 'calamityShrine', name: '재앙의 무녀', title: '불길한 조류를 부른다', desc: '저주(지속 피해)를 새기고 제어된 적을 무너뜨리는 환생 후 4차 저주 직업입니다.', ...neutral, magic: 1.52, hp: 1.2, defense: 1.12, resist: 1.18, crit: .06, ...T4, parent: 'warlock', requires: { int: 56, wis: 42 }, requiresSkillMastery: { soulRend: 3 }, role: '침묵·재앙', tree: 'status' },
+    { id: 'calamityShrine', name: '재앙의 무녀', title: '불길한 조류를 부른다', desc: '저주(지속 피해)를 새기고, 적에게 걸린 상태이상 종류 수만큼 세지는 헥스: 차크람 스플릿(1종마다 +20%)을 쓰는 환생 후 4차 헥스 직업입니다.', ...neutral, magic: 1.52, hp: 1.2, defense: 1.12, resist: 1.18, crit: .06, ...T4, parent: 'warlock', requires: { int: 56, wis: 42 }, requiresSkillMastery: { soulRend: 3 }, role: '침묵·재앙', tree: 'status' },
     // ── 상태이상: 데몬어벤져 계보(출혈) ───────────────────────────
     { id: 'bloodAngler', name: '피낚시꾼', title: '상처에서 흐름을 읽는다', desc: '출혈을 거는 갈고리와 지속 피해 패시브를 익히는 출혈 입문 직업입니다.', ...neutral, bonus: { attack: 1 }, crit: .02, ...T1, requires: { str: 12, dex: 10 }, role: '출혈 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
     { id: 'gashTracker', name: '혈흔 추적자', title: '핏자국은 사라지지 않는다', desc: '데몬어벤져 (1차)의 엑시드 블레이드로 출혈시킨 적을 더 깊이 베는 연계형 2차 직업입니다.', ...neutral, bonus: { attack: 24, hp: 10 }, crit: .08, ...T2, parent: 'bloodAngler', requires: { dex: 30, str: 24 }, requiresSkillMastery: { gashHook: 2 }, role: '출혈·연계', tree: 'status' },
@@ -118,10 +117,8 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'abyssalMend', name: '등대 봉합', desc: '', level: 40, job: 'deepCaretaker', chance: .55, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 18, effect: 'drain', drainRatio: .3 },
     { ...P, id: 'stillWaterVigil', name: '고요한 물의 간병', desc: '물리·마법 방어가 오릅니다.', level: 40, job: 'deepCaretaker', cost: 3, bonus: { defense: 20, resist: 20 } },
     // 상태이상: 칼리 (1차)
-    { ...A, ...magic, id: 'pinDoll', name: '바늘 인형', desc: '', level: 25, job: 'voodooCrafter', chance: .5, cooldown: 3, multiplier: 1.45, cost: 3, manaCost: 13, effect: 'weaken', damageBonusCondition: 'weakened', conditionalDamageBonus: .3 },
-    { ...P, id: 'effigyThread', name: '인형의 실', desc: '마법 공격과 지속 피해가 오릅니다.', level: 25, job: 'voodooCrafter', cost: 2, bonus: { magic: 14, dotBonus: .08 } },
     // v3.123 칼리 지속 피해: 헥스: 차크람 스플릿의 침묵을 저주(출혈, 비율 0.2 · 일리움 4차 크리스탈 스킬: 데우스와 같음)로 바꿉니다. 제어 연계는 아츠: 플러리 · 보이드 버스트의 침묵이 받칩니다.
-    { ...A, ...magic, id: 'calamityRite', name: '재앙의 의식', desc: '', level: 55, job: 'calamityShrine', chance: .5, cooldown: 4, multiplier: 2.9, cost: 5, manaCost: 26, effect: 'bleed', dotName: '저주', dotRatio: .2, damageBonusCondition: 'controlled', conditionalDamageBonus: .55, masteryMilestones: M4 },
+    { ...A, ...magic, id: 'calamityRite', name: '재앙의 의식', desc: '', level: 55, job: 'calamityShrine', chance: .5, cooldown: 4, multiplier: 2.9, cost: 5, manaCost: 26, effect: 'bleed', dotName: '저주', dotRatio: .2, damageBonusCondition: 'statuses', conditionalDamageBonus: .2, masteryMilestones: M4 },
     { ...P, id: 'omenVeil', name: '흉조의 장막', desc: '마법 공격과 마법 방어가 오릅니다.', level: 55, job: 'calamityShrine', cost: 3, bonus: { magic: 40, resist: 25 }, masteryMilestones: M4 },
     // 상태이상: 출혈
     { ...A, ...physical, id: 'gashHook', name: '베는 갈고리', desc: '', level: 10, job: 'bloodAngler', chance: .26, cooldown: 3, multiplier: 1, cost: 2, effect: 'bleed' },

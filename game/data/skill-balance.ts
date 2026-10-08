@@ -189,7 +189,8 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.bonus) sk.desc += ` 장착하면 ${Object.keys(sk.bonus).map(k => STAT_LABELS[k as keyof typeof STAT_LABELS]).join('·')}이 오릅니다.`;
         if (sk.outsiderChance !== undefined) sk.desc += ` 계보 밖에서 계승하면 발동률 ×${sk.outsiderChance}.`;
         if (sk.dotFinisher) sk.desc += ` 적의 중독·화상 중첩에 비례해 ${Math.round(sk.dotFinisher.hitMultiplier * 100)}% 위력 추가타 최대 ${sk.dotFinisher.maxHits}회. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴, 일부면 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴.`;
-        if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
+        if (sk.damageBonusCondition === 'statuses') sk.desc += ` 적에게 걸린 상태이상 1종마다 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
+        else if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
         if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
         if (sk.charge) sk.desc += ` 명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}).`;

@@ -581,7 +581,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const mitigated = (raw: number) => fixed ? Math.round(raw) : split
         ? Math.round(mitigate(raw * SKILL_FORMULA.splitPhysical, sb.defense * corrodeGuard.defense * pierce, sa.attack)) + Math.round(mitigate(raw * (1 - SKILL_FORMULA.splitPhysical), sb.resist * corrodeGuard.resist * pierce, sa.magic))
         : Math.round(mitigate(raw, defense, magical ? sa.magic : sa.attack));
-    const linked = chosen?.damageBonusCondition === 'bleeding' ? !!(b.effects.dot || b.effects.poison || b.effects.burn) : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
+    // v3.159 헥스 수집(칼리): 상대에게 걸린 상태이상 종류 수. 1종마다 conditionalDamageBonus.
+    const statusCount = [b.stun > 0, !!b.effects.silence, !!b.effects.weaken, !!b.effects.slow, !!b.effects.corrode, !!b.effects.dot, !!b.effects.poison, !!b.effects.burn].filter(Boolean).length;
+    const linked = chosen?.damageBonusCondition === 'statuses' ? statusCount > 0 : chosen?.damageBonusCondition === 'bleeding' ? !!(b.effects.dot || b.effects.poison || b.effects.burn) : chosen?.damageBonusCondition === 'weakened' ? !!b.effects.weaken : chosen?.damageBonusCondition === 'controlled' ? !!(b.effects.silence || b.effects.slow || b.stun > 0) : chosen?.damageBonusCondition === 'lowHp' ? b.hp <= sb.hp * (SKILL_FORMULA.lowHpThreshold + sa.executeBonus) : false;
     const preyHit = !!(chosen?.preyBonus && b.prey);
     if (preyHit) notes.push('사냥감');
     const sealBoost = chosen?.sealPower ? 1 + chosen.sealPower * (a.effects.seals?.length || 0) : 1;
@@ -593,8 +595,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (varietyCount) notes.push(`버라이어티 ${varietyCount}`);
     // v3.158 자기 버프의 피해 배율(접신): 살아 있는 버프의 damageMultiplier를 곱합니다.
     const buffDamage = buffsOf(a.effects).reduce((m, [, bf]) => m * (bf.damageMultiplier || 1), 1);
-    const linkMultiplier = buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
-    if (linked) { notes.push('연계'); ev.linked = true; }
+    const linkMultiplier = buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
+    if (linked) { notes.push(chosen?.damageBonusCondition === 'statuses' ? `헥스 ${statusCount}` : '연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly || healOnly;
     // v27.18 극 치명타: 같은 난수로 판정합니다(치명타 확률 상한을 넘은 몫 = superCrit). 치명 피해에 superCritBonus를 더 곱합니다.

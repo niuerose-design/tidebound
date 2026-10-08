@@ -214,7 +214,8 @@ export type Skill = {
     manaCost?: number;
     accuracyBonus?: number;
     penetrationBonus?: number;
-    damageBonusCondition?: 'bleeding' | 'weakened' | 'controlled' | 'lowHp';
+    /** statuses(v3.159 칼리 헥스 수집): 상대에게 걸린 상태이상 종류(기절 · 침묵 · 약화 · 감속 · 부식 · 출혈/저주 · 중독 · 화상) 1개마다 conditionalDamageBonus만큼 피해가 커집니다. */
+    damageBonusCondition?: 'bleeding' | 'weakened' | 'controlled' | 'lowHp' | 'statuses';
     conditionalDamageBonus?: number;
     cleanseSelf?: boolean;
     healRatio?: number;
