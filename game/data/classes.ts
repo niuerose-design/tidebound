@@ -367,7 +367,7 @@ export const LINEAGES: Lineage[] = [
     independent('status'),
     { id: 'fisher', name: '무직', tree: 'hybrid', summary: '모든 모험의 출발점입니다. 공용 기술로 첫 전직을 준비합니다.' },
     { id: 'wanderer', name: '이형 항해자 계보', tree: 'hybrid', summary: '체력·마나·속도·올스탯을 섞어 쓰는 복합 계보입니다.' },
-    { id: 'spellbladeNovice', name: '마검 수련생 계보', tree: 'hybrid', summary: '물리와 마법을 함께 싣는 검술로 5차 천검에 이르는 계보입니다.' },
+    { id: 'spellbladeNovice', name: '마검 수련생 계보', tree: 'hybrid', summary: '마나 대신 현재 체력의 일부를 바쳐 베는 피의 딜러 계보입니다. 피가 줄수록 피해가 커지고(피의 분노), 흡혈로 바친 피를 되찾습니다.' },
     NEW_LINEAGES.tideLancer,
     NEW_LINEAGES.runesmith,
     ...INVERSION_LINEAGES,

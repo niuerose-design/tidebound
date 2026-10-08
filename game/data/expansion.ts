@@ -44,11 +44,12 @@ export const EXPANSION_JOBS: NewJob[] = [
     { id: 'grandMagus', name: '대마도사', title: '세계를 다시 쓰는 주문', desc: '최대 마나를 더한 인피니티 플레임 서클로 마법 계열의 정점에 선 5차 직업입니다.', ...neutral, magic: 1.77, hp: 1.25, defense: 1.07, resist: 1.28, crit: .08, tier: 5, ...T5, parent: 'sage', requires: { int: 72, wis: 55 }, requiresSkillMastery: { starfall: 3 }, role: '마법 최상위', tree: 'magic' },
 
     // ── 마검의 길 (물리·마법 복합 최상위: 천검) ─────────────────
-    { id: 'spellbladeNovice', name: '마검 수련생', title: '검에 마력을 싣는 법', desc: '(물리+마법)/2로 베는 데몬 슬래시와 두 공격을 함께 올리는 패시브를 익힙니다.', ...neutral, bonus: { attack: 2, magic: 2 }, tier: 1, level: 10, requires: { str: 10, int: 10 }, mastery: 0, role: '복합 입문', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
-    { id: 'spellblade', name: '마검사', title: '두 갈래의 칼날', desc: '복합 계보의 2차 직업입니다. 데몬 트레이스는 물리·마법 방어를 절반씩 뚫고 상대를 약화시킵니다.', ...neutral, bonus: { attack: 27, magic: 30, hp: 20 }, crit: .04, tier: 2, level: 25, parent: 'spellbladeNovice', requires: { str: 25, int: 25 }, mastery: 75, requiresSkillMastery: { runeEdge: 2 }, role: '복합·약화', tree: 'hybrid', masteryTarget: 2800, masteryBoost: .18 },
-    { id: 'runeKnight', name: '룬 기사', title: '갑옷에 새긴 문장', desc: '관통하는 데몬 임팩트와 두 방어·체력 패시브로 버티며 싸우는 복합 3차 직업입니다.', ...neutral, bonus: { attack: 63, magic: 70, hp: 90, defense: 5, resist: 4 }, crit: .04, tier: 3, level: 40, parent: 'spellblade', requires: { str: 40, int: 40, vit: 25 }, mastery: 150, requiresSkillMastery: { arcSlash: 3 }, role: '복합·관통', tree: 'hybrid', masteryTarget: 10000, masteryBoost: .3 },
-    { id: 'swordSaint', name: '마검성', title: '두 개의 달을 벤다', desc: '추가타가 붙는 쌍월로 복합 피해를 두 번 넣는 환생 후 4차 직업입니다.', ...neutral, attack: 1.36, magic: 1.36, hp: 1.14, defense: 1.04, resist: 1.04, crit: .06, tier: 4, ...T4, parent: 'runeKnight', requires: { str: 48, int: 48 }, requiresSkillMastery: { runeBurst: 3 }, role: '복합·연타', tree: 'hybrid' },
-    { id: 'celestialBlade', name: '천검', title: '하늘과 땅을 가르는 검', desc: '기절을 거는 데몬 베인으로 물리·마법 복합 계열의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.67, magic: 1.67, hp: 1.29, defense: 1.08, resist: 1.08, crit: .08, tier: 5, ...T5, parent: 'swordSaint', requires: { str: 58, int: 58, dex: 25 }, requiresSkillMastery: { twinMoon: 3 }, role: '복합 최상위', tree: 'hybrid' },
+    // v3.145 데몬슬레이어 재개편: 마나 대신 체력을 바쳐 싸우는 피의 딜러. 액티브는 물리 피해 + 체력 소모, 패시브는 잃은 체력 비례 피해(피의 분노)와 흡혈.
+    { id: 'spellbladeNovice', name: '마검 수련생', title: '피를 검에 싣는 법', desc: '마나 대신 체력을 바쳐 베는 데몬 슬래시를 익히는 입문 직업입니다. 피가 줄수록 세지는 계보의 시작.', ...neutral, bonus: { attack: 3, hp: 10 }, tier: 1, level: 10, requires: { str: 10, vit: 10 }, mastery: 0, role: '피의 딜러 입문', tree: 'hybrid', masteryTarget: 450, masteryBoost: .08 },
+    { id: 'spellblade', name: '마검사', title: '피로 그린 칼날', desc: '데몬슬레이어 계보의 2차 직업입니다. 데몬 트레이스는 체력을 바쳐 상대를 약화시키고, 데빌 크라이로 바친 피의 일부를 되찾습니다.', ...neutral, bonus: { attack: 40, hp: 60 }, crit: .04, tier: 2, level: 25, parent: 'spellbladeNovice', requires: { str: 25, vit: 22 }, mastery: 75, requiresSkillMastery: { runeEdge: 2 }, role: '피의 딜러·약화', tree: 'hybrid', masteryTarget: 2800, masteryBoost: .18 },
+    { id: 'runeKnight', name: '룬 기사', title: '갑옷에 새긴 문장', desc: '관통하는 데몬 임팩트와, 잃은 체력에 비례해 피해가 커지는 메탈 아머를 가진 3차 직업입니다.', ...neutral, bonus: { attack: 90, hp: 130, defense: 6, resist: 4 }, crit: .04, tier: 3, level: 40, parent: 'spellblade', requires: { str: 40, vit: 36 }, mastery: 150, requiresSkillMastery: { arcSlash: 3 }, role: '피의 딜러·관통', tree: 'hybrid', masteryTarget: 10000, masteryBoost: .3 },
+    { id: 'swordSaint', name: '마검성', title: '두 개의 달을 벤다', desc: '추가타가 붙는 서버러스로 두 번 베고, 블루 블러드로 피의 분노와 흡혈을 키우는 환생 후 4차 직업입니다.', ...neutral, attack: 1.45, magic: 1, hp: 1.3, defense: 1.08, resist: 1.08, crit: .06, tier: 4, ...T4, parent: 'runeKnight', requires: { str: 48, vit: 40 }, requiresSkillMastery: { runeBurst: 3 }, role: '피의 딜러·연타', tree: 'hybrid' },
+    { id: 'celestialBlade', name: '천검', title: '피를 다 바쳐 하늘을 가른다', desc: '현재 체력의 15%를 바쳐 기절을 거는 데몬 베인과, 잃은 체력에 비례해 피해가 크게 오르는 데몬 어웨이크닝으로 데몬슬레이어 계보의 정점에 선 5차 직업입니다.', ...neutral, attack: 1.6, magic: 1, hp: 1.45, defense: 1.12, resist: 1.12, crit: .08, tier: 5, ...T5, parent: 'swordSaint', requires: { str: 58, vit: 50 }, requiresSkillMastery: { twinMoon: 3 }, role: '피의 딜러 최상위', tree: 'hybrid' },
 
 
     // ── 역병의 길 (상태이상 최상위: 아크메이지(불,독) (5차)) ────────────────
@@ -87,7 +88,8 @@ const P = { type: 'passive' as const, chance: 0, cooldown: 0, multiplier: 0, ran
 const A = { type: 'active' as const };
 const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
-const dual = { damageType: 'split' as const, scaling: 'dual' as const };
+/** v3.145 데몬슬레이어: 물리 피해, 마나 대신 체력을 바칩니다. */
+const blood = { damageType: 'physical' as const, manaCost: 0 };
 const M4 = [2500, 12000, 40000, 100000], M5 = [4000, 18000, 60000, 150000];
 
 /** level은 직업 레벨로 다시 맞춰지고, 액티브의 desc는 밸런스 표를 적용할 때 실제 수치로 다시 씁니다. */
@@ -133,18 +135,17 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'genesis', name: '창세의 빛', desc: '', level: 70, job: 'grandMagus', chance: .55, cooldown: 5, multiplier: 4.6, cost: 6, manaCost: 40, scaling: 'mana', scalingRatio: .25, masteryMilestones: M5 },
     { ...P, id: 'magusDomain', name: '대마도사의 영역', desc: '마법 공격과 치명 피해가 크게 오릅니다.', level: 70, job: 'grandMagus', cost: 3, bonus: { magic: 120, critDamage: .2, hp: 300 }, masteryMilestones: M5 },
     // 마검의 길
-    { ...A, ...dual, id: 'runeEdge', name: '룬 베기', desc: '', level: 10, job: 'spellbladeNovice', chance: .5, cooldown: 3, multiplier: 1.45, cost: 2, manaCost: 6 },
-    { ...P, id: 'dualTraining', name: '쌍수 수련', desc: '물리·마법 공격이 함께 오릅니다.', level: 10, job: 'spellbladeNovice', cost: 2, bonus: { attack: 8, magic: 8 } },
-    { ...A, ...dual, id: 'arcSlash', name: '마력 참격', desc: '', level: 25, job: 'spellblade', chance: .5, cooldown: 3, multiplier: 1.8, cost: 3, manaCost: 9, effect: 'weaken' },
-    { ...P, id: 'bladeChannel', name: '칼날 공명', desc: '물리·마법 공격과 최대 마나가 오릅니다.', level: 25, job: 'spellblade', cost: 2, bonus: { attack: 14, magic: 14, mana: 15 } },
-    { ...A, ...dual, id: 'runeBurst', name: '룬 폭발', desc: '', level: 40, job: 'runeKnight', chance: .5, cooldown: 4, multiplier: 3, cost: 4, manaCost: 13, penetrationBonus: .1 },
-    { ...P, id: 'runeArmor', name: '룬 갑주', desc: '두 방어와 체력이 오릅니다.', level: 40, job: 'runeKnight', cost: 3, bonus: { defense: 25, resist: 25, hp: 120 } },
-    { ...A, ...dual, id: 'twinMoon', name: '쌍월', desc: '', level: 55, job: 'swordSaint', chance: .5, cooldown: 4, multiplier: 2.5, cost: 5, manaCost: 16, extraAttacks: 1, extraAttackMultiplier: .7, masteryMilestones: M4 },
-    { ...P, id: 'saintEdge', name: '검성의 날', desc: '물리·마법 공격과 방어 관통이 오릅니다.', level: 55, job: 'swordSaint', cost: 3, bonus: { attack: 30, magic: 30, penetration: .05, manaRegen: 3 }, masteryMilestones: M4 },
-    // v3.128 데몬슬레이어: 데몬 베인 기절 1턴 → 3턴.
-    { ...A, ...dual, id: 'heavenSplit', name: '천지개벽', desc: '', level: 70, job: 'celestialBlade', chance: .5, cooldown: 5, multiplier: 4.8, cost: 6, manaCost: 20, effect: 'stun', statusTurns: 3, masteryMilestones: M5 },
-    // v3.128 데몬슬레이어 상향: 데몬 어웨이크닝 물리 · 마법 공격 +55 → +350(숙련 보정 뒤 엔드 물리 약 +17% · 마법 약 +52%, 복합 피해라 둘 다 같은 값).
-    { ...P, id: 'celestialAura', name: '천검의 기운', desc: '물리·마법 공격과 치명타가 크게 오릅니다.', level: 70, job: 'celestialBlade', cost: 3, bonus: { attack: 350, magic: 350, crit: .05 }, masteryMilestones: M5 },
+    // v3.145 데몬슬레이어 재개편: 마나 0, 현재 체력 비율 소모(hpCost) · 물리 피해 · 피의 분노(bloodRage, 잃은 체력 비례) · 흡혈로 되찾기.
+    { ...A, ...blood, id: 'runeEdge', name: '룬 베기', desc: '', level: 10, job: 'spellbladeNovice', chance: .5, cooldown: 3, multiplier: 1.45, cost: 2, hpCost: .06 },
+    { ...P, id: 'dualTraining', name: '쌍수 수련', desc: '물리 공격이 오릅니다.', level: 10, job: 'spellbladeNovice', cost: 2, bonus: { attack: 16 } },
+    { ...A, ...blood, id: 'arcSlash', name: '마력 참격', desc: '', level: 25, job: 'spellblade', chance: .5, cooldown: 3, multiplier: 1.7, cost: 3, hpCost: .08, effect: 'weaken' },
+    { ...P, id: 'bladeChannel', name: '칼날 공명', desc: '물리 공격·최대 체력·흡혈이 오릅니다.', level: 25, job: 'spellblade', cost: 2, bonus: { attack: 28, hp: 60, lifesteal: .04 } },
+    { ...A, ...blood, id: 'runeBurst', name: '룬 폭발', desc: '', level: 40, job: 'runeKnight', chance: .5, cooldown: 4, multiplier: 2.9, cost: 4, hpCost: .1, penetrationBonus: .1 },
+    { ...P, id: 'runeArmor', name: '룬 갑주', desc: '두 방어와 체력이 오르고, 잃은 체력에 비례해 피해가 커집니다.', level: 40, job: 'runeKnight', cost: 3, bonus: { defense: 25, resist: 25, hp: 150 }, bloodRage: .1 },
+    { ...A, ...blood, id: 'twinMoon', name: '쌍월', desc: '', level: 55, job: 'swordSaint', chance: .5, cooldown: 4, multiplier: 2.35, cost: 5, hpCost: .1, extraAttacks: 1, extraAttackMultiplier: .7, masteryMilestones: M4 },
+    { ...P, id: 'saintEdge', name: '검성의 날', desc: '물리 공격·방어 관통·흡혈이 오르고, 잃은 체력에 비례해 피해가 커집니다.', level: 55, job: 'swordSaint', cost: 3, bonus: { attack: 60, penetration: .05, lifesteal: .04 }, bloodRage: .15, masteryMilestones: M4 },
+    { ...A, ...blood, id: 'heavenSplit', name: '천지개벽', desc: '', level: 70, job: 'celestialBlade', chance: .5, cooldown: 5, multiplier: 4.3, cost: 6, hpCost: .15, effect: 'stun', statusTurns: 3, masteryMilestones: M5 },
+    { ...P, id: 'celestialAura', name: '천검의 기운', desc: '물리 공격과 치명타가 크게 오르고, 잃은 체력에 비례해 피해가 크게 커집니다.', level: 70, job: 'celestialBlade', cost: 3, bonus: { attack: 300, crit: .05 }, bloodRage: .2, masteryMilestones: M5 },
     // 역병의 길
     // v3.132 아크메이지(불,독) 리메이크: 계보 전체를 마법 피해로 바꿉니다(직업 배율도 마법 쪽으로).
     { ...A, ...magic, id: 'venomDart', name: '독침', desc: '', level: 10, job: 'poisoner', chance: .3, cooldown: 3, multiplier: 1, cost: 2, manaCost: 4, effect: 'poison', dotRatio: .12 },
