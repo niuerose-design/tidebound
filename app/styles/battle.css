@@ -1020,8 +1020,8 @@
 @keyframes ultReaperQuake{0%,38%{translate:0 0}40%{translate:-5px 2px}42%{translate:5px -2px}46%{translate:0 0}100%{translate:0 0}}
 /* v3.178 처형 연출(히어로 소드 오브 버닝 소울 등): 빈사 적에게 추가 피해가 붙으면 몬스터 그림이 반으로 갈라지고 HP 바가 베입니다 */
 .scene-foe-cleave{position:absolute;inset:0;z-index:2;pointer-events:none}
-/* v3.180 처형 연출 중에는 소드 오브 버닝 소울 전용 장면의 참격 선(화면을 긋는 두 줄)을 띄우지 않습니다 — 베인 자리는 이미 몬스터 · HP 바 조각이 보여 줍니다. 어둠 · 제목 · 파편은 그대로. */
-.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-a,.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-b,.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-frag{display:none}
+/* v3.180 처형 연출 중에는 소드 오브 버닝 소울 전용 장면의 참격 선 두 줄과 참격 파편을 보이지 않게 합니다(display가 아니라 visibility: 다시 보일 때 애니메이션이 처음부터 재생되지 않도록). 어둠 · 제목은 그대로. */
+.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-a,.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-b,.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-frag{visibility:hidden}
 .battle-scene:has(.scene-foe-cleave) .scene-foe:not(.scene-foe-half){opacity:0;animation:none}
 .scene-foe-half{animation:none}
 .scene-foe-half.upper{clip-path:polygon(0 0,100% 0,100% 38%,0 58%);animation:foeCleaveUpper 1.4s cubic-bezier(.5,0,.3,1) calc(var(--fx-delay) + .3s) both}
