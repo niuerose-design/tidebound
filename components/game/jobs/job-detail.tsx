@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Check, Info, Lock, X } from 'lucide-react';
+import { Check, Flag, Info, Lock, X } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
@@ -15,7 +15,7 @@ import { vocationTargets, thresholdRank } from '@/game/data/long-term';
 import { jobMasteryTarget, jobMasteryBoost, skillVeiled } from '@/game/systems/progression';
 import { Meter, SkillIcon, format } from '../shared';
 import type { PanelProps } from '../panel-props';
-import { statusReader, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS, hasJobBonus, growsWithMastery, jobBonusText } from './job-status';
+import { statusReader, STATUS_LABEL, canEnter, crossParent, treeName, tierName, jobRevealed, JOB_BONUS_KEYS, hasJobBonus, growsWithMastery, jobBonusText, jobGoalOf } from './job-status';
 
 type Tab = 'overview' | 'requirements' | 'skills' | 'mastery';
 
@@ -36,10 +36,12 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
     const dedicationTargets = vocationTargets(target), dedication = thresholdRank(xp, dedicationTargets);
     const bonuses = JOB_BONUS_KEYS.filter(key => hasJobBonus(j, key)), grows = bonuses.some(key => growsWithMastery(j, key)) && jobMasteryBoost(j) > 0;
     const skills = SKILLS.filter(sk => sk.job === j.id), from = crossParent(j);
+    // v3.166 목표 직업: 조건과 무관하게 찍어 두면 항로도 · 목록 · 계보 카드에 깃발이 붙고, 전직하면 저절로 내려갑니다.
+    const isGoal = jobGoalOf(s)?.id === j.id;
     return <article className={`panel job-inspector job-sheet ${current ? 'current' : ''}`} aria-label={`${j.name} 상세`}>
         {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}
         <h2 className="job-column-title"><span>③</span> 직업 상세</h2>
-        <div className="job-detail-title"><JobArt job={j} size={44}/><h2 title={hanjaReading(j.name)}>{j.name}</h2><span className={`job-status ${st.status}`}>{STATUS_LABEL(st)}</span></div>
+        <div className="job-detail-title"><JobArt job={j} size={44}/><h2 title={hanjaReading(j.name)}>{j.name}</h2><span className={`job-status ${st.status}`}>{STATUS_LABEL(st)}</span>{isGoal && <span className="job-status goal"><Flag size={12}/> 목표</span>}</div>
         <p className="job-detail-sub">{tierName(j)} · {[treeName(j.tree), ...jobTags(j).filter(t => t !== treeName(j.tree))].join(' · ')}{j.hidden ? ' · 히든' : ''}</p>
         <p className="job-motto">{j.title}</p>
         <Tabs value={tab} onValueChange={v => setTab(v as Tab)}><TabsList className="game-tabs job-detail-tabs">
@@ -78,6 +80,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
             {current ? <button className="secondary" disabled>현재 직업</button> : <AlertDialog><AlertDialogTrigger asChild><button className="primary" disabled={busy || !ready}>{ready ? '이 직업으로 전직' : `전직 조건 부족 ${st.missing.length}`}</button></AlertDialogTrigger>
                 <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{j.name}(으)로 전직할까요?</AlertDialogTitle><AlertDialogDescription>새 직업의 기본 기술은 무료로 해금됩니다. 계승하지 않은 이전 직업의 기술은 해제되지만 해금·성장·숙련 기록은 남습니다. 전투 중이면 현재 적을 보상 없이 정리하고, 던전 중이면 보상 없이 귀환합니다.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>취소</AlertDialogCancel><AlertDialogAction onClick={() => send({ type: 'job', id: j.id })}>전직하기</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
             </AlertDialog>}
+            {!current && <button className={`secondary job-goal-button ${isGoal ? 'active' : ''}`} disabled={busy} aria-pressed={isGoal} onClick={() => send({ type: 'jobGoal', id: isGoal ? '' : j.id })}><Flag size={14}/> {isGoal ? '목표 해제' : '목표로 설정'}</button>}
             {onCompare && <button className="secondary" disabled={!compared && compareFull} onClick={() => onCompare(j.id)}>{compared ? '비교에서 빼기' : compareFull ? '비교 가득 참(3)' : '비교에 추가'}</button>}
         </div>
     </article>;

@@ -1,5 +1,5 @@
 // 직업 개편 3단계: 실루엣 공개 규칙 · 힌트 · 빠른 찾기 · 검색(화면 계산만, 게임 규칙은 그대로)
-import { newState, jobMasteryTarget, jobUi, JOBS, assert, test } from './harness.mjs';
+import { newState, jobMasteryTarget, jobUi, JOBS, assert, test, act, migrations } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 
 // v3.44 공개 판정은 서버(game/systems/reveal.ts)가 하고 화면은 카탈로그를 봅니다. 화면 함수를 부르기 전에 그 상태로 만든 카탈로그를 적용합니다.
@@ -65,4 +65,61 @@ test('v3.63 hidden jobs stay out of sight until revealed, then show up in the ??
     s.jobMastery.wanderer = 0; s.rebirths = 0;
     assert.equal(ui.inMysteryTab(s, { id: 'saltWarden', tree: 'defense' }), false, 'a public lineage joins the ??? tab only with a revealed hidden job');
     const t = newState(0); t.unlockedJobs.push('poorMonk'); assert.equal(ui.inMysteryTab(t, { id: 'saltWarden', tree: 'defense' }), true);
+});
+
+// v3.166 외길 탭 · 직업 수 셈 통일 · 목표 직업
+test('Job UI v3.166: monostat lineages sit in the 외길 tab and leave their original tree tab', async () => {
+    const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
+    const { LINEAGES, lineageOf } = await load('game/data/classes.js'), { MONOSTAT_LINEAGES } = await load('game/data/expansion-monostat.js');
+    assert.equal(ui.JOB_TABS.at(-1).id, 'monostat', 'the 외길 tab comes right after ???');
+    assert.equal(ui.JOB_TABS.at(-2).id, 'mystery');
+    for (const l of MONOSTAT_LINEAGES) {
+        assert.ok(ui.lineageInTab(s, 'monostat', l), `${l.id} in 외길`);
+        assert.ok(!ui.lineageInTab(s, l.tree, l), `${l.id} not in its tree tab`);
+    }
+    for (const l of LINEAGES.filter(l => !ui.monostatLineage(l.id))) assert.ok(!ui.lineageInTab(s, 'monostat', l), `${l.id} stays out of 외길`);
+    // 보이는 직업은 저마다 탭 하나(tabOf)에 들어가고, 그 탭의 계보 목록에 자기 계보가 있습니다.
+    const shown = ui.shownJobs(s);
+    for (const j of shown) {
+        const tab = ui.tabOf(j), lineage = LINEAGES.find(l => l.id === lineageOf(j));
+        assert.ok(ui.monostatLineage(lineageOf(j)) ? tab === 'monostat' : tab === j.tree, j.id);
+        assert.ok(lineage && ui.lineageInTab(s, tab, lineage), `${j.id} lineage ${lineageOf(j)} listed under ${tab}`);
+    }
+    const tabs = ui.JOB_TABS.filter(t => t.id !== 'mystery').map(t => t.id);
+    assert.equal(tabs.reduce((a, id) => a + ui.tabJobCount(s, id), 0) + ui.tabJobCount(s, 'mystery') - shown.filter(j => ui.secretJob(j) && j.tree !== 'mystery').length, shown.length, 'tab counts cover every shown job once');
+    assert.ok(ui.tabJobCount(s, 'monostat') >= MONOSTAT_LINEAGES.length * 3);
+});
+
+test('Job UI v3.166: the classes header and the mastery board count jobs from one tally', () => {
+    const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
+    const t0 = ui.jobTally(s);
+    assert.ok(t0.total > 100 && t0.jobs.every(j => ui.jobRevealed(s, j)), 'only shown jobs');
+    assert.ok(t0.jobs.every(j => !j.retired && !j.id.startsWith('hacker') && j.id !== 'hacker' && j.id !== 'whiteHacker' && j.id !== 'blackHacker'), 'no retired or hacker jobs');
+    assert.equal(t0.unlocked, s.unlockedJobs.filter(id => t0.jobs.some(j => j.id === id)).length);
+    // 통폐합으로 지워진 직업 · 모르는 id · 해커가 기록에 남아도 '전직해 본' 수에 들지 않습니다.
+    s.unlockedJobs.push('clockworkAngler', 'noSuchJob', 'hacker');
+    assert.equal(ui.jobTally(s).unlocked, t0.unlocked, 'stale ids do not count');
+    s.unlockedJobs.push('harpoon');
+    assert.equal(ui.jobTally(s).unlocked, t0.unlocked + 1);
+    s.jobMastery.harpoon = jobMasteryTarget(job('harpoon'));
+    const t1 = ui.jobTally(s);
+    assert.equal(t1.mastered, t0.mastered + 1); assert.equal(t1.total, t0.total, 'the denominator is shared');
+});
+
+test('Job UI v3.166: a job goal is set from the detail sheet, flagged, and dropped on arrival', () => {
+    const s = newState(0); s.level = 30; s.lastTick = at(2026, 10, 1, 12);
+    assert.equal(ui.jobGoalOf(s), undefined);
+    act(s, { type: 'jobGoal', id: 'tide' }, 0);
+    assert.equal(s.jobGoal, 'tide'); assert.equal(ui.jobGoalOf(s).id, 'tide');
+    assert.throws(() => act(s, { type: 'jobGoal', id: 'noSuchJob' }, 0), 'unknown job');
+    assert.throws(() => act(s, { type: 'jobGoal', id: 'fisher' }, 0), 'current job');
+    act(s, { type: 'jobGoal', id: 'tide' }, 0); assert.equal(s.jobGoal, undefined, 'same id toggles off');
+    act(s, { type: 'jobGoal', id: 'tide' }, 0); act(s, { type: 'jobGoal', id: '' }, 0); assert.equal(s.jobGoal, undefined, 'empty id clears');
+    act(s, { type: 'jobGoal', id: 'harpoon' }, 0);
+    s.attributes = { ...s.attributes, str: 20, dex: 20 };
+    act(s, { type: 'job', id: 'harpoon' }, 0);
+    assert.equal(s.job, 'harpoon'); assert.equal(s.jobGoal, undefined, 'reaching the goal clears it');
+    // 지워진 직업을 목표로 둔 세이브는 정리 때 목표가 내려가고, 화면도 없는 것으로 봅니다.
+    s.jobGoal = 'clockworkAngler'; assert.equal(ui.jobGoalOf(s), undefined);
+    migrations.retireHiddenJobs(s); assert.equal(s.jobGoal, undefined);
 });

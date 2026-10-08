@@ -519,6 +519,8 @@ export type State = {
     rankRescaled?: boolean;
     jobMastery: Record<string, number>;
     unlockedJobs: string[];
+    /** v3.166 목표로 찍은 직업(직업 상세의 ‘목표로 설정’). 항로도 · 목록 카드에 깃발을 붙이고, 그 직업으로 전직하면 지워집니다. */
+    jobGoal?: string;
     bookClaims: Record<string, number>;
     itemBook: Record<string, boolean>;
     target: string | null;
