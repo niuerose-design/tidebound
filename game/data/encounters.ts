@@ -42,20 +42,20 @@ const PROFILES: Record<string, {
     speed: number;
 }> = {
     swift: { name: '날쌘 개체', hint: '기민·명중으로 회피에 대응하세요. 가시로 출혈을 겁니다.', skills: ['foeBarbs'], defense: .7, resist: .8, evasion: .14, speed: 1.4 },
-    armored: { name: '단단한 껍질', hint: '마법 공격이나 방어 관통에 약합니다. 물리 공격만 씁니다.', skills: ['foeCrush', 'foeShellRam'], defense: 2.2, resist: .55, evasion: 0, speed: .7 },
+    armored: { name: '단단한 껍질', hint: '마법 공격이나 방어 관통에 약합니다. 물리 돌진과 기절을 씁니다.', skills: ['foeCrush', 'foeShellRam'], defense: 2.2, resist: .55, evasion: 0, speed: .7 },
     arcane: { name: '마력 생물', hint: '마법 방어로 버티고 물리 공격을 활용하세요.', skills: ['foeShock'], magicBasic: true, defense: .6, resist: 2.1, evasion: .03, speed: 1 },
-    venom: { name: '독성 생물', hint: '출혈을 버틸 회복과 체력을 준비하세요.', skills: ['foeVenom', 'foeBarbs'], defense: 1, resist: 1, evasion: .04, speed: 1.1 },
+    venom: { name: '독성 생물', hint: '중독과 출혈을 겁니다. 버틸 회복과 체력을 준비하세요.', skills: ['foeVenom', 'foeBarbs'], defense: 1, resist: 1, evasion: .04, speed: 1.1 },
     silencer: { name: '침묵하는 생물', hint: '기본 공격부터 마법 피해. 액티브를 봉인하는 침묵과 마법 약화에 대비하세요.', skills: ['foeSilence', 'foeInkBurst'], magicBasic: true, power: .9, defense: .9, resist: 1.1, evasion: .06, speed: 1.05 },
     controller: { name: '대지 제어자', hint: '기본 공격부터 복합 피해. 감속·기절로 턴 우선권을 빼앗습니다.', skills: ['foeSlow', 'foeCrush', 'foeTideSlam'], splitBasic: true, defense: 1.2, resist: 1.3, evasion: .02, speed: .85 },
     /** v27.48 불꽃 생물: 화상을 쌓으며 추가타로 몰아칩니다(레드 드레이크 · 주니어 발록). */
     blaze: { name: '불꽃 생물', hint: '화상을 최대 3중첩까지 쌓습니다. 화상 중에는 받는 직접 피해가 커지니 회복과 마법 방어를 챙기세요.', skills: ['foeBurn', 'foeFrenzy'], defense: 1.1, resist: 1, evasion: .06, speed: 1.15 },
-    frenzy: { name: '광폭한 짐승', hint: '한 번의 공격 뒤 추가타가 이어집니다.', skills: ['foeFrenzy', 'foeHaste'], defense: 1.1, resist: .9, evasion: .08, speed: 1.25 },
-    venomBoss: { name: '독성 보스', hint: '출혈과 감속을 번갈아 사용합니다.', skills: ['foeVenom', 'foeSlow'], defense: 1.25, resist: 1.05, evasion: .06, speed: 1.05 },
+    frenzy: { name: '광폭한 짐승', hint: '한 번의 공격 뒤 추가타가 이어지고, 가속으로 더 자주 움직입니다.', skills: ['foeFrenzy', 'foeHaste'], defense: 1.1, resist: .9, evasion: .08, speed: 1.25 },
+    venomBoss: { name: '독성 보스', hint: '중독과 감속을 번갈아 사용합니다.', skills: ['foeVenom', 'foeSlow'], defense: 1.25, resist: 1.05, evasion: .06, speed: 1.05 },
     arcaneBoss: { name: '신탁 보스', hint: '마법 공격과 침묵으로 편성을 흔듭니다.', skills: ['foeShock', 'foeSilence'], magicBasic: true, defense: .95, resist: 1.45, evasion: .05, speed: 1.1 },
     boss: { name: '고대 보스', hint: '침묵·감속·추가타·복합 강타를 모두 사용합니다.', skills: ['foeSilence', 'foeSlow', 'foeFrenzy', 'tentacleBarrage', 'foeTideSlam'], defense: 1.35, resist: 1.35, evasion: .08, speed: 1.05 },
     // v27 혼돈 생물: 기본 공격부터 복합 피해. 물리·마법 방어 중 하나만 높은 빌드에 부담을 줍니다.
-    tidal: { name: '혼돈 생물', hint: '기본 공격이 복합 피해라 물리·마법 방어를 고루 갖춰야 합니다.', skills: ['foeTideSlam', 'foeInkBurst'], splitBasic: true, defense: .9, resist: .9, evasion: .04, speed: 1 },
-    stormEel: { name: '전격 짐승', hint: '기본 공격부터 마법(전격) 피해. 플레이어도 배울 수 있는 감속 전격을 사용합니다.', skills: ['electricBite', 'foeSilence'], magicBasic: true, power: .82, defense: .85, resist: 1.1, evasion: .04, speed: 1.05 },
+    tidal: { name: '혼돈 생물', hint: '기본 공격이 복합 피해라 물리·마법 방어를 고루 갖춰야 합니다. 마법 공격으로 약화도 겁니다.', skills: ['foeTideSlam', 'foeInkBurst'], splitBasic: true, defense: .9, resist: .9, evasion: .04, speed: 1 },
+    stormEel: { name: '전격 짐승', hint: '기본 공격부터 마법(전격) 피해. 플레이어도 배울 수 있는 감속 물리기(귀참)와 침묵을 사용합니다.', skills: ['electricBite', 'foeSilence'], magicBasic: true, power: .82, defense: .85, resist: 1.1, evasion: .04, speed: 1.05 },
     // v3.12 칠흑의 보스 성향: 보스마다 다른 공격 패턴. 모두 보스라 각성(foeWard)이 더해집니다.
     onyxDusk: { name: '거대한 공포', hint: '약화와 출혈을 걸고 기절로 짓누르는 물리 보스. 상태이상 저항과 회복을 챙기세요.', skills: ['onyxDread', 'foeBarbs', 'foeCrush'], defense: 1.5, resist: 1.1, evasion: .05, speed: .95 },
     onyxDunkel: { name: '어둠의 지휘관', hint: '빠르고 추가타가 잦은 물리 보스. 가속까지 걸면 연타가 쏟아지니 방어·회피로 버티세요.', skills: ['onyxCommand', 'foeHaste', 'foeShellRam'], defense: 1.3, resist: 1.2, evasion: .08, speed: 1.3 },
@@ -67,7 +67,7 @@ const PROFILES: Record<string, {
 };
 const profileIds: Record<string, string> = {
     masteryMimic: 'armored', expNuri: 'armored', essenceSlime: 'armored', kingMimic: 'boss', kingNuri: 'boss', kingSlime: 'boss', minnow: 'swift', carp: 'armored', perch: 'tidal', mackerel: 'swift', ray: 'tidal', puffer: 'venom', lionfish: 'venom', eel: 'arcane', barracuda: 'swift', ghost: 'arcane', angler: 'arcane', shark: 'armored', viper: 'venom', squid: 'arcane', leviathan: 'armored', moonfish: 'arcane', dragon: 'swift', ancient: 'armored',
-    seahorse: 'silencer', needlefish: 'swift', tidejelly: 'tidal', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venomBoss', cinderKoi: 'blaze', starKoi: 'arcane', prismRay: 'tidal', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored',
+    seahorse: 'silencer', needlefish: 'swift', tidejelly: 'tidal', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venom', cinderKoi: 'blaze', starKoi: 'arcane', prismRay: 'tidal', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored',
     aqSeaco: 'swift', aqShark: 'frenzy', aqSquid: 'arcane', aqFlower: 'venom', aqGuard: 'armored', lfBlueTurtle: 'armored', lfRedTurtle: 'blaze', lfWyvern: 'swift', lfSkelegon: 'controller', lfManticore: 'venom', ttMonitor: 'silencer', ttGuardian: 'armored', ttChimera: 'tidal', ttDodo: 'swift', ttLyka: 'frenzy', arErdaSpirit: 'arcane', arMemoryGuard: 'controller', arMysticErda: 'stormEel', arVanishSoul: 'silencer', arTrueErda: 'tidal',
     onyxDusk: 'onyxDusk', onyxDunkel: 'onyxDunkel', onyxWill: 'onyxWill', onyxLucid: 'onyxLucid', onyxHilla: 'onyxHilla', onyxSeren: 'onyxSeren', onyxBlackMage: 'onyxBlackMage',
     ventColossus: 'boss', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'blaze', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
