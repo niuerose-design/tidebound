@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Meter } from './shared';
 import { FishArt } from './art';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
@@ -208,11 +209,15 @@ export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: 
         <i className="scene-foe-cut"/>
     </div>;
 }
-/** 상대 카드 HP 바 위: 검이 지나가고 바의 아래 조각이 떨어져 나갑니다. */
-export function BarCleave({ effect }: { effect: CombatFx[] }) {
+/** 상대 카드 HP 바: 검이 지나간 자리에서 HP 바 UI(라벨 · 숫자 · 막대)가 비스듬히 두 조각으로 잘려, 아래 조각이 튕겨 날아갑니다(원본 바는 CSS가 숨김). */
+export function BarCleave({ effect, value, max, label }: { effect: CombatFx[]; value: number; max: number; label?: string }) {
     const fx = cleaveFx(effect);
     if (!fx) return null;
-    return <span key={fx.id} className="bar-cleave" aria-hidden="true" style={fxStyle(fx.delay)}><i className="bar-cleave-shard"/><i className="bar-cleave-blade"/></span>;
+    return <span key={fx.id} className="bar-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
+        <span className="bar-cleave-piece keep"><Meter value={value} max={max} label={label}/></span>
+        <span className="bar-cleave-piece fly"><Meter value={value} max={max} label={label}/></span>
+        <i className="bar-cleave-blade"/>
+    </span>;
 }
 
 const DAMAGE_ICON = { physical: '⚔', magic: '✦', split: '⚔✦', fixed: '⚡' } as const;
