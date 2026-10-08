@@ -270,12 +270,12 @@ test('v3.98 Dark Knight: Dragon Fury ×2.8, Beholder Impact ×2.8 with one extra
     assert.deepEqual([sk('dragonGodScale').bonus.crit, sk('dragonGodScale').bonus.critDamage], [sk('divineLuck').bonus.crit, sk('divineLuck').bonus.critDamage]);
 });
 
-test('v3.178 DoT weight shift: hp ratios halved, power ratios ×1.6, no per-tick cap field', async () => {
+test('v3.181 DoT weight shift: hp ratios halved, power ratios ×1.6, no per-tick cap field', async () => {
     const { load } = loadGame(), { SKILL_FORMULA, STATUS_TUNING } = await load('data/balance'), C = await load('systems/combat');
     assert.deepEqual([SKILL_FORMULA.bleedRatio, SKILL_FORMULA.bleedHpRatio], [.42, .0075]);
     assert.deepEqual([SKILL_FORMULA.poisonRatio, SKILL_FORMULA.poisonHpRatio], [.12, .0015]);
     assert.deepEqual([SKILL_FORMULA.burnRatio, SKILL_FORMULA.burnHpRatio], [.18, .0025]);
-    assert.equal(SKILL_FORMULA.dotHpCap, undefined, 'the v3.178 draft cap was dropped: end bodies stay far under the world boss hp without it');
+    assert.equal(SKILL_FORMULA.dotHpCap, undefined, 'the v3.181 draft cap was dropped: end bodies stay far under the world boss hp without it');
     // 가득 찬 상태 턴당 위력분(v27.57 균형): 출혈 .42 · 중독 5 × .12 = .6 · 화상 3 × .18 = .54 → 받는 피해 보정(+12% · +6%)을 더하면 서로 1.3배 안.
     assert.ok(STATUS_TUNING.poisonMaxStacks * SKILL_FORMULA.poisonRatio / SKILL_FORMULA.bleedRatio < 1.5 && STATUS_TUNING.burnMaxStacks * SKILL_FORMULA.burnRatio / SKILL_FORMULA.bleedRatio < 1.5);
     const base = { hp: 1e6, attack: 1000, magic: 1000, defense: 0, resist: 0, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
@@ -284,7 +284,7 @@ test('v3.178 DoT weight shift: hp ratios halved, power ratios ×1.6, no per-tick
     assert.equal(t.effects.dot.damage, 420, 'power part 1000 × .42'); assert.equal(t.effects.dot.hpRatio, .0075); assert.equal(t.effects.dot.hpCap, undefined, 'no cap stored');
 });
 
-test('v3.100 Luminous: Light Reflection ×2.8 → v3.178 ×3.8, Apocalypse ×3 → ×4 with one extra hit', () => {
+test('v3.100 Luminous: Light Reflection ×2.8 → v3.181 ×3.8, Apocalypse ×3 → ×4 with one extra hit', () => {
     const sk = id => SKILLS.find(s => s.id === id);
     assert.equal(sk('vowStrike').multiplier, 3.8);
     assert.equal(sk('lightHarpoon').multiplier, 4);
