@@ -204,15 +204,15 @@ const CLEAVE_MS = 1900;
 /** v3.180 처형 연출을 효과 목록의 유지 시간(FX_HOLD_MS)과 상관없이 CLEAVE_MS 동안 붙잡아 둡니다. 연출이 다 끝난 뒤에 원본이 복구됩니다. */
 function useCleave(effect: CombatFx[]) {
     const found = cleaveFx(effect);
-    const [held, setHeld] = useState<{ fx: CombatFx; until: number } | null>(null);
-    // 새 처형 타격이 오면 렌더 중에 붙잡아 둡니다(이전 값과 비교하는 파생 상태).
-    if (found && held?.fx.id !== found.id) setHeld({ fx: found, until: Date.now() + found.delay + CLEAVE_MS });
+    const [held, setHeld] = useState<CombatFx | null>(null);
+    // 새 처형 타격이 오면 렌더 중에 붙잡아 둡니다(이전 값과 비교하는 파생 상태). 시각은 effect 안의 타이머가 셉니다.
+    if (found && held?.id !== found.id) setHeld(found);
     useEffect(() => {
         if (!held) return;
-        const timer = window.setTimeout(() => setHeld(cur => cur?.fx.id === held.fx.id ? null : cur), Math.max(0, held.until - Date.now()));
+        const timer = window.setTimeout(() => setHeld(cur => cur?.id === held.id ? null : cur), held.delay + CLEAVE_MS);
         return () => clearTimeout(timer);
     }, [held]);
-    return held?.fx ?? null;
+    return held;
 }
 /** 사냥터 장면 위: 몬스터 그림의 위 · 아래 반쪽이 베인 선을 따라 벌어집니다(원본 몬스터는 CSS가 숨김). */
 export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: string; boss?: boolean } | null }) {
