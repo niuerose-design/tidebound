@@ -11,7 +11,7 @@ export const EXP_NURI = {
     get chance() { return ODDS.nuri.chance; },
     get chancePerTier() { return ODDS.nuri.perTier; },
     /** 오프라인 정산 중 등장 확률 배율(까미와 같음). */
-    offlineScale: .25,
+    offlineScale: .5,
     minLevel: 50,
     minKills: 1000,
     /** v27.59 사냥터 난이도 이 값 이상에서만 등장(확률은 그대로). */

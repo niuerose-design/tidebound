@@ -69,6 +69,8 @@ export interface Storage {
     postChat(row: Omit<ChatRow, 'id'>): Promise<ChatRow>;
     /** 계정의 마지막 메시지 시각(없으면 0). 도배 제한용. */
     lastChatAt(accountId: string): Promise<number>;
+    /** v3.190 운영: 채팅 줄을 지웁니다. channel이 없으면 모든 채널(소식 · 전체 · 길드). 접두사(guild:)로도 고를 수 있습니다. 지운 줄 수를 돌려줍니다. */
+    clearChat(channel?: string, prefix?: string): Promise<number>;
     /** v25.6 캐릭터 슬롯 요약(계정 보너스 계산용). */
     upsertSlot(row: SlotRow): Promise<void>;
     listSlots(accountId: string): Promise<SlotRow[]>;
@@ -292,6 +294,10 @@ function neonStorage(url: string): Storage {
             return { ...row, id };
         },
         async lastChatAt(accountId) { const { rows } = await q<{ created_at: string | number }>('SELECT created_at FROM chat WHERE account_id=$1 ORDER BY id DESC LIMIT 1', [accountId]); return rows[0] ? Number(rows[0].created_at) : 0; },
+        async clearChat(channel, prefix) {
+            const r = channel ? await q('DELETE FROM chat WHERE channel=$1', [channel]) : prefix ? await q('DELETE FROM chat WHERE channel LIKE $1', [prefix.replace(/[%_\\]/g, '\\$&') + '%']) : await q('DELETE FROM chat');
+            return Number(r.rowCount || 0);
+        },
         async upsertSlot(r) { await q('INSERT INTO slots (id,account_id,slot,summary,updated_at) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (id) DO UPDATE SET summary=EXCLUDED.summary, updated_at=EXCLUDED.updated_at', [slotRowId(r.account_id, r.slot), r.account_id, r.slot, r.summary, r.updated_at]); },
         async listSlots(accountId) { const { rows } = await q<SlotRow>('SELECT account_id,slot,summary,updated_at FROM slots WHERE account_id=$1 ORDER BY slot', [accountId]); return rows.map(r => ({ ...r, slot: Number(r.slot), updated_at: Number(r.updated_at) })); },
         async createGuild(g) { const r = await q('INSERT INTO guilds (id,name,code,leader,treasury,created_at,week,catches,clears,bosses,abyss,donated,points) VALUES ($1,$2,$3,$4,$5,$6,$7,0,0,0,0,0,0) ON CONFLICT (name) DO NOTHING', [g.id, g.name, g.code, g.leader, g.treasury, g.created_at, g.week]); return r.rowCount === 1; },
@@ -447,6 +453,7 @@ function fileStorage(): Storage {
         listChat: (channel, afterId, limit) => tx(db => (db.chat || []).filter(r => r.channel === channel && r.id > afterId).slice(-limit)),
         postChat: row => tx(db => { db.chat ??= []; db.chatSeq = (db.chatSeq || 0) + 1; const saved = { ...row, id: db.chatSeq }; db.chat.push(saved); const mine = db.chat.filter(r => r.channel === row.channel); if (mine.length > CHAT_KEEP) { const cut = mine[mine.length - CHAT_KEEP].id; db.chat = db.chat.filter(r => r.channel !== row.channel || r.id >= cut); } return saved; }),
         lastChatAt: accountId => tx(db => { const mine = (db.chat || []).filter(r => r.account_id === accountId); return mine.length ? mine[mine.length - 1].created_at : 0; }),
+        clearChat: (channel, prefix) => tx(db => { const all = db.chat || [], keep = all.filter(r => channel ? r.channel !== channel : prefix ? !r.channel.startsWith(prefix) : false); db.chat = keep; return all.length - keep.length; }),
         upsertSlot: r => tx(db => { (db.slots ??= {})[slotRowId(r.account_id, r.slot)] = r; }),
         listSlots: accountId => tx(db => Object.values(db.slots || {}).filter(r => r.account_id === accountId).sort((a, b) => a.slot - b.slot)),
         createGuild: g => tx(db => { db.guilds ??= {}; if (Object.values(db.guilds).some(x => x.name === g.name)) return false; db.guilds[g.id] = { ...g }; return true; }),

@@ -202,11 +202,11 @@ export function specialChances(s: State) {
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
     const place = st.habitat ? Math.max(...STAGES.filter(x => !x.habitat && x.region === st.region).map(x => STAGES.indexOf(x))) : STAGES.indexOf(st);
-    const mimicP = mimicOk ? mimicChance(tier, place) * (s.catchingUp ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
-    const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
+    const mimicP = mimicOk ? mimicChance(tier, place) * (s.away ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
+    const nuriP = nuriOk ? nuriChance(tier) * (s.away ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
     // v3.161 정수의 슬라임: 누리 구간 바로 뒤. 대왕 몫은 각 구간의 앞쪽 share(작은 녀석을 KING.minBookKills마리 잡은 뒤부터).
     const slimeOk = !dungeon && slimeEligible(s, asc ? Math.max(tier, ESSENCE_SLIME.minTier) : tier);
-    const slimeP = slimeOk ? slimeChance(tier) * (s.catchingUp ? specialOfflineScale(s, ESSENCE_SLIME.offlineScale) : 1) * luck : 0;
+    const slimeP = slimeOk ? slimeChance(tier) * (s.away ? specialOfflineScale(s, ESSENCE_SLIME.offlineScale) : 1) * luck : 0;
     const king = { mimic: kingReady(s, 'mimic') ? KING.share : 0, nuri: kingReady(s, 'nuri') ? KING.share : 0, slime: kingReady(s, 'slime') ? KING.share : 0 };
     return { rolls: mimicOk || nuriOk || slimeOk, mimicP, nuriP, slimeP, king };
 }

@@ -101,7 +101,7 @@ export const NewsFeed = memo(function NewsFeed({ open }: { open: boolean }) {
     return <div className="chat-feed news-feed">
         <div className="chat-list" role="log" aria-label="소식" aria-live="polite">
             {lines.length ? [...lines].reverse().map(l => <p key={l.id} className={`chat-line news-line ${newsTone(l)}`}><span className="chat-head"><b className="chat-name">{l.name}</b><span className="chat-time">{hhmm(l.at)}</span></span><span className="chat-text">{l.text}</span></p>)
-                : <p className="chat-empty"><Megaphone size={14}/> 아직 소식이 없습니다. 칠흑 장신구 · 승천 · 5차 전직 · 무릉도장 · 22성 · 장성 진급 · 제단 소식이 여기에 올라옵니다.</p>}
+                : <p className="chat-empty"><Megaphone size={14}/> 아직 소식이 없습니다. 칠흑 장신구 · 승천 · 5차 전직 · 무릉도장 · 22성 · 진급(하사 · 소위부터) · 4단계 이상 축복 · 제단 소식이 여기에 올라옵니다.</p>}
         </div>
         {error && <p className="chat-error" role="alert">{error}</p>}
     </div>;

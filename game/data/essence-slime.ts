@@ -11,7 +11,7 @@ export const ESSENCE_SLIME = {
     get chance() { return ODDS.slime.chance; },
     get chancePerTier() { return ODDS.slime.perTier; },
     /** 오프라인 정산 중 등장 확률 배율(까미 · 누리와 같음). */
-    offlineScale: .25,
+    offlineScale: .5,
     minLevel: 30,
     minKills: 500,
     /** 사냥터 난이도 이 값 이상에서만 등장(확률은 그대로). 승천하면 난이도 조건이 사라집니다(까미 · 누리와 같음). */
