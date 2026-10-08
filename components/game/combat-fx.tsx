@@ -12,6 +12,9 @@ import { FOE_FX } from '@/game/data/foe-fx';
 
 /** 연출을 띄워 두는 시간(마지막 타격 뒤). */
 const FX_HOLD_MS = 1500;
+/** 장면 연출(각성기 · 일곱 인 해방 · 보스 스킬 · 도트 퍼니셔)은 2.4~2.6초짜리라 그 길이만큼 붙잡아 둡니다. 이보다 짧으면 애니메이션 도중에 DOM이 지워집니다. */
+const SCENE_HOLD_MS = 2700;
+const holdFor = (fx: CombatFx) => fx.finale || fx.skillId === 'endOfAll' || (fx.actor === 'player' && ultimateOf(fx.skillId)) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
 /** ‘×N 연속’ 카운터: 몇 번째 연속인지와 누가 연속으로 행동했는지. */
 export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
 /**
@@ -45,7 +48,7 @@ export function useCombatFx(logs: Log[], playerName: string, enabled = true) {
             timers.current.delete(timer);
             setEffects(prev => prev.filter(fx => !ids.has(fx.id)));
             if (next) setCombo(v => v === next ? null : v);
-        }, batch.at(-1)!.delay + FX_HOLD_MS);
+        }, batch.at(-1)!.delay + Math.max(...batch.map(holdFor)));
         timers.current.add(timer);
     }, [latest, logs, playerName, enabled]);
     useEffect(() => { const pending = timers.current; return () => pending.forEach(clearTimeout); }, []);
