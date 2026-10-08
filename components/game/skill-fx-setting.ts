@@ -27,7 +27,7 @@ export function setSkillFx(on: boolean) {
 }
 
 /**
- * v3.170 섬광 켜기/끄기(이 기기에만 저장). 스킬 연출 가운데 배경 · 카드가 원형으로 밝아졌다 퍼지는 섬광(.scene-fx-flash · .tide-fx-flash)과 4차 이상 카드 위 큰 폭발광(.tide-fx-big)을 끄고, 퍼니셔 구체의 후광을 뺍니다.
+ * v3.171 섬광 켜기/끄기(이 기기에만 저장). 스킬 연출 가운데 배경 · 카드가 원형으로 밝아졌다 퍼지는 섬광(.scene-fx-flash · .tide-fx-flash)과 4차 이상 카드 위 큰 폭발광(.tide-fx-big)을 끄고, 퍼니셔 구체의 후광을 뺍니다.
  * 투사체 · 파편 · 고리 · 어두워지는 연출은 그대로입니다. 저장값이 없으면 어느 기기든 꺼짐이 기본입니다(모바일은 스킬 이펙트 자체가 꺼짐).
  */
 const GLOW_KEY = 'tidebound.skillFxGlow';

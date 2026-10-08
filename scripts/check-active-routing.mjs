@@ -17,7 +17,7 @@ function manage(s,magic,gear,rng){
  if(!s.dungeon)for(const id of magic?['tide','tempest']:['harpoon','whaler'])if(s.job!==id&&!s.unlockedJobs.includes(id)&&canChangeJob(s,id))action({type:'job',id});
  for(const f of FISH){const reward=bookReward(s,f.id);if(reward.ready)action({type:'claimBook',id:f.id});}
  for(const d of DUNGEONS)if(s.achievements?.[`firstClear:${d.id}`]!==undefined&&!s.achievementClaims?.[`firstClear:${d.id}`])action({type:'claimAchievement',id:`firstClear:${d.id}`});
- const order=magic?['maelstrom','wave','arcane','spring','abyssMind','insight','flow','hook','breath']:['whaleStrike','pierce','barb','focus','hook','breath','scales'];
+ const order=magic?['maelstrom','wave','spring','abyssMind','insight','flow','hook','breath']:['whaleStrike','pierce','barb','focus','hook','breath','temperedSkin'];
  s.skills=[];for(const id of order)if(canUse(s,id)&&validLoadout(s,[...s.skills,id]))s.skills.push(id);
  for(const id of order){const sk=SKILLS.find(x=>x.id===id);while(s.sp>0&&s.skills.includes(id)&&skillLevel(sk,s.learned[id],skillMastery(s,id))<maxSkillLevel(sk))action({type:'learn',id});}
  if(gear){

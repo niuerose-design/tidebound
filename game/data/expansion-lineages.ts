@@ -136,13 +136,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'deadCalm', name: '죽은 고요', desc: '', level: 40, job: 'silenceWarden', chance: .26, cooldown: 4, multiplier: 1.8, cost: 5, selfBuff: { id: 'scimitar', name: '시미터', turns: 4, stats: { critDamage: .2 } } },
     { ...P, id: 'numbingAura', name: '마비의 기운', desc: '물리 공격과 방어 관통이 오르고, 살아 있는 자기 버프 1개마다 피해가 오릅니다.', level: 40, job: 'silenceWarden', cost: 3, bonus: { attack: 26, penetration: .04, varietyBonus: .025 } },
     // 상태이상: 독립
-    // v25.25 독립 1차 보조기: 발동률은 낮고(18%) 상태이상은 길게. 계보 밖 연계기(제어·약화·출혈 추가 피해)의 조건을 채우는 용도.
-    { ...A, ...physical, id: 'driftwoodShove', name: '유목 밀치기', desc: '', level: 10, job: 'driftwoodHermit', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'stun', statusTurns: 2 },
-    { ...A, ...physical, id: 'currentJam', name: '해류 교란', desc: '', level: 10, job: 'tideSurveyor', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'weaken', statusTurns: 6 },
-    { ...A, ...physical, id: 'netThrow', name: '그물 던지기', desc: '', level: 10, job: 'netWeaver', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'slow', statusTurns: 6 },
-    { ...A, ...physical, id: 'oathShout', name: '맹세의 함성', desc: '', level: 10, job: 'oathAngler', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'silence', statusTurns: 3 },
-    { ...A, ...physical, id: 'rottenBait', name: '썩은 미끼', desc: '', level: 10, job: 'barbSkirmisher', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'poison', dotRatio: .1, statusTurns: 6 },
-    { ...P, id: 'sporePouch', name: '포자 주머니', desc: '지속 피해와 마법 방어가 오릅니다.', level: 10, job: 'toadstoolForager', cost: 2, bonus: { dotBonus: .08, resist: 6 } },
+    { ...P, id: 'sporePouch', name: '포자 주머니', desc: '지속 피해와 마법 방어가 오릅니다.', level: 10, job: 'toadstoolForager', cost: 2, bonus: { dotBonus: .1, resist: 10 } },
     { ...P, id: 'inkSplash', name: '먹물 세례', desc: '명중과 회피가 오릅니다.', level: 10, job: 'inkThrower', cost: 2, bonus: { accuracy: .05, evasion: .02 } },
     // 복합: 창기병
     // v3.144 다크나이트 재개편: 액티브는 물리 창술(spear), 패시브는 쓰러진 횟수(deaths) · 보낸 턴(turns) 비례 성장.
@@ -165,9 +159,9 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...forgeBlast, id: 'resonantCannon', name: '공명포', desc: '', level: 40, job: 'resonanceEngineer', chance: .5, cooldown: 4, multiplier: 2.4, cost: 4, manaCost: 20, scalingRatio: .7, penetrationBonus: .1, charge: 1, damageBonusCondition: 'weakened', conditionalDamageBonus: .3 },
     { ...P, id: 'tunedFrame', name: '조율된 골격', desc: '최대 체력 · 물리 방어 · 반격이 오릅니다.', level: 40, job: 'resonanceEngineer', cost: 3, bonus: { hp: 180, defense: 30, resist: 12, thorns: .2 } },
     // 복합: 독립
-    { ...P, id: 'mercenaryCraft', name: '용병의 요령', desc: '물리·마법 공격이 오릅니다.', level: 10, job: 'sellsword', cost: 2, bonus: { attack: 9, magic: 9 } },
-    { ...P, id: 'patchwork', name: '덧댄 솜씨', desc: '최대 체력과 최대 마나가 오릅니다.', level: 10, job: 'tinkerApprentice', cost: 2, bonus: { hp: 60, mana: 20 } },
-    { ...P, id: 'twoHanded', name: '양손 챔질', desc: '명중과 속도가 오릅니다.', level: 10, job: 'ambiAngler', cost: 2, bonus: { accuracy: .03, speed: 5 } },
+    { ...P, id: 'mercenaryCraft', name: '용병의 요령', desc: '물리·마법 공격이 오릅니다.', level: 10, job: 'sellsword', cost: 2, bonus: { attack: 16, magic: 16 } },
+    { ...P, id: 'patchwork', name: '덧댄 솜씨', desc: '최대 체력과 최대 마나가 오릅니다.', level: 10, job: 'tinkerApprentice', cost: 2, bonus: { hp: 100, mana: 20 } },
+    { ...P, id: 'twoHanded', name: '양손 챔질', desc: '명중과 속도가 오릅니다.', level: 10, job: 'ambiAngler', cost: 2, bonus: { accuracy: .04, speed: 6 } },
     // 보조
     { ...A, ...physical, id: 'allIn', name: '올인', desc: '', level: 40, job: 'highRoller', chance: .26, cooldown: 4, multiplier: 2, cost: 4, effect: 'drain', drainRatio: .15 },
     { ...P, id: 'jackpot', name: '한탕', desc: '골드 획득과 치명 피해가 오릅니다.', level: 40, job: 'highRoller', cost: 3, bonus: { goldBonus: .12, critDamage: .15 } },

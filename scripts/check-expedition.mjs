@@ -19,7 +19,7 @@ function fixture(level,magic,progressed=false){
  while(s.statPoints){const v=attributes(s);act(s,{type:'attribute',id:magic?(v.int<35?'int':v.wis<20?'wis':s.statPoints%4===0?'vit':'int'):(v.str<35?'str':v.dex<20?'dex':s.statPoints%4===0?'vit':'str')},0);}
  for(const job of level>=25?(magic?['tide','tempest']:['harpoon','whaler']):level>=10?[magic?'tide':'harpoon']:['fisher']){s.job=job;grantJobSkills(s);s.jobMastery[job]=progressed?30000:2000;}
  for(const id of Object.keys(s.learned))s.skillPractice[id]=progressed?30000:1000;
- s.skills=[];for(const id of magic?['spring','wave','arcane','maelstrom','abyssMind','breath','hook']:['breath','pierce','whaleStrike','barb','hook'])if(canUse(s,id)&&validLoadout(s,[...s.skills,id]))s.skills.push(id);
+ s.skills=[];for(const id of magic?['spring','wave','maelstrom','abyssMind','breath','hook']:['breath','pierce','whaleStrike','barb','hook'])if(canUse(s,id)&&validLoadout(s,[...s.skills,id]))s.skills.push(id);
  s.hp=stats(s).hp;s.mana=stats(s).mana;return s;
 }
 const rows=[];

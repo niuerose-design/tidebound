@@ -103,7 +103,7 @@ function SkillFxToggle() {
         <button className={on ? 'primary' : 'secondary'} aria-pressed={on} onClick={() => setSkillFx(!on)}>{on ? '켜짐' : '꺼짐'}</button>
     </div>;
 }
-/** v3.170 섬광 켜기/끄기(이 기기에만 저장). 어느 기기든 꺼짐이 기본입니다. */
+/** v3.171 섬광 켜기/끄기(이 기기에만 저장). 어느 기기든 꺼짐이 기본입니다. */
 function FxGlowToggle() {
     const on = useFxGlow(), fx = useSkillFx();
     return <div className="setting-toggle">

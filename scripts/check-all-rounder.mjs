@@ -25,7 +25,7 @@ const builds=L=>{const total=4+(L-1)*4;return [
  ['allRounder·균등',even(total),['harmonicWeight','breath','focus']],
  ['allRounder·편중',{...{str:15,dex:15,int:15,vit:15,wis:15,luk:15},str:total-75},['harmonicWeight','breath','focus']],
  ['whaler',scale({str:80,dex:30,vit:40,wis:10},total),['breath','pierce','whaleStrike','focus','barb']],
- ['tempest',scale({int:80,wis:40,vit:30,dex:10},total),['spring','wave','maelstrom','arcane','abyssMind']],
+ ['tempest',scale({int:80,wis:40,vit:30,dex:10},total),['spring','wave','maelstrom','abyssMind']],
  ['krakenSlayer',scale({str:85,dex:35,vit:30,wis:10},total),['breath','krakenBore','pierce','deepWeakpoint','barb']],
  ['chimera',scale({str:60,int:50,vit:50},total),['vitalSurge','adaptiveCore','breath']],
 ];};
