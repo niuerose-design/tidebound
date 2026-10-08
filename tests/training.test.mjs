@@ -410,3 +410,17 @@ test('v3.151 Illium: arcane-ratio scaling, basic attacks corrode, corrosion cuts
         assert.ok(Math.abs(boosted / normal - 2) < .05, `buffed magic doubles the arcane strike: ${normal} → ${boosted}`);
     } finally { SKILLS.splice(SKILLS.indexOf(bsk), 1); }
 });
+
+// v3.169 능력치 수련 패시브의 자세히 보기: 효과 줄 · 다음 강화 · 성장표가 숙련 단계 배율(+25%, 최대 ×2)을 보여 줍니다(전투 계산은 그대로).
+test('v3.169 stat training passives: detail view shows the attribute gain per mastery stage, the next-stage hint, and a growing stage table', async () => {
+    const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const P = await load('game/systems/progression.js'), D = await load('game/systems/skill-description.js');
+    const sk = SKILLS.find(x => x.id === 'dexDrill1');
+    assert.deepEqual([0, 1, 2, 4, 6].map(m => P.effectiveSkill(sk, 1, m).attrBonus.dex), [20, 25, 30, 40, 40], 'display value follows the combat formula, capped at ×2');
+    assert.equal(P.effectiveSkill(sk, 3, 0).attrBonus.dex, 20, 'SP ranks do not raise it');
+    assert.ok(D.skillEffectLines(P.effectiveSkill(sk, 1, 1), 1).some(line => line.startsWith('기민 +25')), 'effect line names the attribute');
+    assert.ok(P.skillRankHint(sk, 1, 0).includes('기민') && P.skillRankHint(sk, 1, 0).includes('+20 → +25'), P.skillRankHint(sk, 1, 0));
+    assert.equal(P.skillRankHint(sk, 1, 4), '최대 강화 레벨입니다.');
+    assert.deepEqual(D.skillGrowthStages(sk).slice(0, 5).map(r => r.effective.attrBonus.dex), [20, 25, 30, 35, 40], 'stage table grows by mastery stage');
+    assert.equal(sk.attrBonus.dex, 20, 'the data itself is untouched');
+});
