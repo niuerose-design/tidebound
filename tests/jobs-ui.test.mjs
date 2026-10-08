@@ -82,7 +82,7 @@ test('Job UI v3.166: monostat lineages sit in the 외길 tab and leave their ori
     const shown = ui.shownJobs(s);
     for (const j of shown) {
         const tab = ui.tabOf(j), lineage = LINEAGES.find(l => l.id === lineageOf(j));
-        assert.ok(ui.monostatLineage(lineageOf(j)) ? tab === 'monostat' : tab === j.tree, j.id);
+        assert.ok(ui.monostatLineage(lineageOf(j)) ? tab === 'monostat' : tab === ui.lineageTreeOf(j), j.id);
         assert.ok(lineage && ui.lineageInTab(s, tab, lineage), `${j.id} lineage ${lineageOf(j)} listed under ${tab}`);
     }
     const tabs = ui.JOB_TABS.filter(t => t.id !== 'mystery').map(t => t.id);
@@ -122,4 +122,13 @@ test('Job UI v3.166: a job goal is set from the detail sheet, flagged, and dropp
     // 지워진 직업을 목표로 둔 세이브는 정리 때 목표가 내려가고, 화면도 없는 것으로 봅니다.
     s.jobGoal = 'clockworkAngler'; assert.equal(ui.jobGoalOf(s), undefined);
     migrations.retireHiddenJobs(s); assert.equal(s.jobGoal, undefined);
+});
+
+test('Job UI v3.168: the beginner lineage sits in the ??? tab while the job keeps its hybrid tree', async () => {
+    const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
+    const { LINEAGES } = await load('game/data/classes.js'), fisher = LINEAGES.find(l => l.id === 'fisher');
+    assert.equal(job('fisher').tree, 'hybrid'); assert.equal(fisher.tree, 'mystery');
+    assert.ok(ui.lineageInTab(s, 'mystery', fisher) && !ui.lineageInTab(s, 'hybrid', fisher));
+    assert.equal(ui.tabOf(job('fisher')), 'mystery');
+    assert.ok(ui.tabJobCount(s, 'mystery') >= 1 && !ui.shownJobs(s).some(j => ui.lineageTreeOf(j) === 'hybrid' && j.id === 'fisher'));
 });
