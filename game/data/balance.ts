@@ -99,7 +99,8 @@ export const DUNGEON_TUNING = { bossExpFish: 6, bossGoldFish: 4, clearGoldFish: 
  * 1층 일반 몬스터 체력 hp(10만)에서 층마다 ×hpGrowth, 공격은 기준 몬스터의 attack배에서 층마다 ×attackGrowth, 방어는 defense배에서 ×defenseGrowth.
  * 몬스터·보스 사이의 상대 차이(성향·보스 배율)는 그대로 유지합니다.
  */
-export const ABYSS_TUNING = { hp: 100000, hpGrowth: 1.15, attack: 4, attackGrowth: 1.08, defense: 2, defenseGrowth: 1.05 };
+// v3.188 1층 기준 체력 10만 → 3만 · 공격 ×4 → ×2(docs/boss-plan.md §8.2): 입장 환생 3 초보 몸의 1층 클리어 28% → 76%(환생 5는 96%), 층 성장률은 그대로라 자기 계열의 벽이 10~20층 뒤로(환생 100 자기 계열 50층 44% · 빌림 96%).
+export const ABYSS_TUNING = { hp: 30000, hpGrowth: 1.15, attack: 2, attackGrowth: 1.08, defense: 2, defenseGrowth: 1.05 };
 /**
  * v27.70 던전 난이도(일반 던전): 입장할 때 고르는 세 단계. 사냥터 난이도와 별개입니다. tier는 사냥터 난이도와 같은 배율 공식(체력·공격·보상·숙련·몬스터 레벨 보정)에 넣는 값입니다.
  * 노말 0(지금 난이도) · 헬 70(사냥터 난이도 70급: 체력 ×40.5 · 공격 ×18.6) · 나이트메어 260(난이도 260급: 체력 ×437 · 공격 ×163). v3.186 50 · 200 → 70 · 260(docs/boss-plan.md §6: 헬은 자기 계열 환생 50 몸 30~39턴, 나이트메어는 빌림 환생 100 몸 18~25턴). 처치 숙련 배율은 없습니다(v27.74). 헬부터 몬스터 레벨이 내 레벨까지 올라갑니다.

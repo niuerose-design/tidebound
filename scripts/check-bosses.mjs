@@ -17,11 +17,10 @@ const { jobById } = await load('data/classes');
 const { FISH, STAGES, DUNGEONS, STAGE_FIT, tideLiftFish } = await load('data/world');
 const { scaledEnemyStats, abyssEnemyStats, profile, foeSkills } = await load('data/encounters');
 const { dungeonModeTier, ABYSS_TUNING } = await load('data/balance');
-const { tierHealth, tierAttack } = await load('systems/meta');
 const { ONYX, onyxBossFor } = await load('data/onyx');
 const { RAIDS, RAID } = await load('data/altar');
 const { skillMasteryRanks } = await load('systems/progression');
-const { abyssReference } = await load('systems/encounter');
+const { abyssReference, onyxEnemyStats } = await load('systems/encounter');
 const { duel, raidBossSnapshot } = await load('systems/duel');
 const { referenceBody, bodyReport } = await referenceBodies(game);
 
@@ -31,12 +30,10 @@ const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion,curseQueen,lifeOcean
 const REBIRTHS = arg('--rebirths') ? arg('--rebirths').split(',').map(Number) : null;
 const MAX_TURNS = 400, WAVES = 5;
 // 실험 플래그(게임 데이터는 그대로, 측정에만 적용): --hell-tier N · --nightmare-tier N(던전 난이도), --boss-hp f(일반 던전 보스 체력 배율),
-// --entry '{"caldera":1}'(입장 환생 바꿔 재기), --abyss '{"hp":60000,"attack":3}'(무릉 1층 기준), --onyx-hp '{"onyxDusk":800}'(칠흑 체력 배율), --raid-hp '{"zakum":3e9}'(월드보스 체력).
+// --entry '{"caldera":1}'(입장 환생 바꿔 재기), --abyss '{"hp":60000,"attack":3}'(무릉 1층 기준), --onyx-hp '{"onyxDusk":800}'(칠흑 체력 배율 hpMul), --raid-hp '{"zakum":3e9}'(월드보스 체력).
 const J = (k, d) => arg(k) ? JSON.parse(arg(k)) : d;
 const HELL_TIER = Number(arg('--hell-tier', dungeonModeTier('hell'))), NIGHTMARE_TIER = Number(arg('--nightmare-tier', dungeonModeTier('nightmare'))), BOSS_HP = Number(arg('--boss-hp', 1));
 const ENTRY = J('--entry', {}), ONYX_HP = J('--onyx-hp', {}), RAID_HP = J('--raid-hp', {});
-// --onyx-tier-sqrt: 칠흑에만 난이도 배율을 √로 완만하게(체력 √tierHealth · 공격 √tierAttack) 실험.
-const ONYX_TIER_SQRT = process.argv.includes('--onyx-tier-sqrt');
 // --abyss-curve: 무릉도장만 층(1 · 5 · 10 · 20 · 30 · 50) × 몸(R5 · 20 · 50 · 100)으로 오르기 곡선을 잽니다(--abyss 조정과 함께).
 const ABYSS_CURVE = process.argv.includes('--abyss-curve');
 Object.assign(ABYSS_TUNING, J('--abyss', {}));
@@ -97,11 +94,10 @@ function measureDungeons() {
 
 // ── 칠흑 ──────────────────────────────────────────────────────────────────────────────────────
 function onyxFoe(habitat, tier, playerLevel) {
+    // 게임 규칙 그대로(systems/encounter.ts spawn): 서식지 최강(난이도만큼 레벨 상승) × hpMul · 공격 ×3, 난이도 배율은 √(onyxEnemyStats). --onyx-hp는 hpMul 실험.
     const def = onyxBossFor(habitat.region), top = tideLiftFish([...habitat.fish].map(x => fishOf(x)).sort((a, b) => b.level - a.level)[0], tier, playerLevel);
-    const f = { ...fishOf(def.id), level: top.level, hp: Math.round(top.hp * (ONYX_HP[def.id] ?? ONYX.hp)), attack: Math.round(top.attack * ONYX.attack), defense: top.defense };
-    const st = scaledEnemyStats(f, { boss: false, tier: ONYX_TIER_SQRT ? 0 : tier });
-    if (ONYX_TIER_SQRT && tier > 0) { st.hp = Math.round(st.hp * Math.sqrt(tierHealth(tier))); st.attack = Math.round(st.attack * Math.sqrt(tierAttack(tier))); st.magic = Math.round((st.magic || 0) * Math.sqrt(tierAttack(tier))); }
-    return { def, f, st };
+    const f = { ...fishOf(def.id), level: top.level, hp: Math.round(top.hp * (ONYX_HP[def.id] ?? def.hpMul)), attack: Math.round(top.attack * ONYX.attack), defense: top.defense };
+    return { def, f, st: onyxEnemyStats(f, tier) };
 }
 function measureOnyx() {
     const rows = [];

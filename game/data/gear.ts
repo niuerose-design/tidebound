@@ -115,11 +115,11 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', kind: 'rule', base: .2, stat2: 'hpRegen', base2: 15, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +20%p, 턴당 체력 회복 +15.' },
     { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', kind: 'rule', base: .15, onlyOrigin: 'onyx', description: '칠흑. 보스·사냥감에게 주는 피해 +15%.' },
     { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', kind: 'rule', base: .05, onlyOrigin: 'onyx', description: '칠흑. 체력·마나·물리/마법 공격·물리/마법 방어 +5%.' },
-    // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강합니다.
-    { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 물리 공격이 크게 오릅니다.' },
-    { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', description: '무릉도장 전용. 마법 공격이 크게 오릅니다.' },
-    { id: 'abyssBreath', name: '심연의 숨', stat: 'lifesteal', kind: 'percent', base: .018, onlyOrigin: 'abyss', description: '무릉도장 전용. 흡혈이 오릅니다 (장비 흡혈 합계 최대 10%p).' },
-    { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', /* v3.84 .04 × 2 */ base: .08, onlyOrigin: 'abyss', description: '무릉도장 전용. 방어 관통이 크게 오릅니다.' },
+    // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강했습니다. v3.188 운영 결정으로 퇴역(retired): 새로 붙지 않고, 이미 붙은 줄은 그대로 작동합니다.
+    { id: 'abyssMark', name: '심연의 각인', stat: 'attack', kind: 'flat', base: .55, onlyOrigin: 'abyss', retired: true, description: '무릉도장 전용(v3.188 새로 붙지 않음). 물리 공격이 크게 오릅니다.' },
+    { id: 'abyssEcho', name: '심연의 공명', stat: 'magic', kind: 'flat', base: .55, onlyOrigin: 'abyss', retired: true, description: '무릉도장 전용(v3.188 새로 붙지 않음). 마법 공격이 크게 오릅니다.' },
+    { id: 'abyssBreath', name: '심연의 숨', stat: 'lifesteal', kind: 'percent', base: .018, onlyOrigin: 'abyss', retired: true, description: '무릉도장 전용(v3.188 새로 붙지 않음). 흡혈이 오릅니다 (장비 흡혈 합계 최대 10%p).' },
+    { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', /* v3.84 .04 × 2 */ base: .08, onlyOrigin: 'abyss', retired: true, description: '무릉도장 전용(v3.188 새로 붙지 않음). 방어 관통이 크게 오릅니다.' },
     // 규칙 옵션 (영웅 이상, 장비당 1개)
     { id: 'concuss', name: '뇌진탕', stat: 'stunBonus', kind: 'rule', base: 1, minRarity: 3, description: '기절 지속 +1턴 (합계 최대 +1).' },
     { id: 'binding', name: '속박', stat: 'controlBonus', kind: 'rule', base: 1, minRarity: 3, description: '침묵·감속 지속 +1턴 (합계 최대 +1).' },
@@ -154,7 +154,7 @@ const ORIGIN_AFFIXES: Record<string, string[]> = {
     memoryLane: ['scholar', 'flow', 'arcana'],
     vanishingJourney: ['piercing', 'brutal', 'reaper', 'echoing'],
     ventCathedral: ['vigor', 'bulwark', 'spiked', 'lingering', 'mending'],
-    abyss: ['leech', 'piercing', 'reaper', 'bloodPact', 'abyssMark', 'abyssEcho', 'abyssBreath', 'abyssWeight'],
+    abyss: ['leech', 'piercing', 'reaper', 'bloodPact'],
 };
 export const ORIGIN_THEMES: Record<string, { name: string; affixes: string[] }> = Object.fromEntries(Object.entries(ORIGIN_AFFIXES).map(([id, affixes]) => [id, { name: [...STAGES, ...DUNGEONS].find(x => x.id === id)?.name || id, affixes }]));
 const THEME_WEIGHT = 4;
