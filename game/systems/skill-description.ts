@@ -59,6 +59,7 @@ export function skillBrief(sk: Skill): string {
         if (sk.masteryGain) parts.push('조건부 숙련 증가');
         for (const pc of sk.perCount || []) parts.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')}`);
         if (sk.bloodRage) parts.push(`잃은 체력 비례 피해 최대 +${skillPercent(sk.bloodRage)}`);
+        if (sk.companion) parts.push(`정령 추가타 ${sk.companion.hits}회 · 위력 ${skillPercent(sk.companion.power)}`);
         if (sk.song) parts.unshift('노래 · AP 0');
         return parts.join(' · ') || '장착 효과';
     }

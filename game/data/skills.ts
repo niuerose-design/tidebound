@@ -96,7 +96,7 @@ SKILLS.push(
     { id: 'rareSense', name: '전리품 감지', desc: '장비 드롭 확률 +50%, 처치·던전 골드 +4%. 몬스터 출현률과 장비 등급 확률은 바뀌지 않습니다.', type: 'passive', level: 25, job: 'rareTracker', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { dropBonus: .05, goldBonus: .04 } },
     { id: 'memoryOfTides', name: '윤회의 조류 기록', desc: '환생 시 세계석 +1, 던전 클리어 골드 +10%. 환생할 때마다 두 공격 +5·최대 체력 +18·두 방어 +1(최대 12회). 지난 생의 기록이 다음 생의 힘이 됩니다.', type: 'passive', level: 40, job: 'abyssArchivist', chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { rebirthBonus: 1, dungeonGoldBonus: .1 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 5, magic: 5, hp: 18, defense: 1, resist: 1 }, cap: 12 }] },
     { id: 'electricBite', name: '전기 이빨', desc: '물리 공격 피해, 3턴 감속. 동굴 수호자의 기술을 물어뜯는 기술로 계승합니다.', type: 'active', level: 25, job: 'stormEel', chance: .28, cooldown: 4, multiplier: 1.75, effect: 'slow', damageType: 'physical', statusTurns: 3, cost: 4, manaCost: 9 },
-    { id: 'tentacleBarrage', name: '크라켄의 촉수 난무', desc: '물리 공격 115% 피해 후 최대 2회의 추가타. 보스의 기술을 배웁니다.', type: 'active', level: 40, rebirth: 1, job: 'krakenkin', chance: .26, cooldown: 6, multiplier: 1.15, extraAttacks: 2, extraAttackMultiplier: .5, cost: 6, manaCost: 8 },
+    { id: 'tentacleBarrage', name: '크라켄의 촉수 난무', desc: '물리 공격 150% 피해 후 추가타 1회. 보스의 기술을 배웁니다.', type: 'active', level: 40, rebirth: 1, job: 'krakenkin', chance: .26, cooldown: 6, multiplier: 1.5, extraAttacks: 1, extraAttackMultiplier: .5, cost: 6, manaCost: 8 },
 );
 
 // 공용 스킬은 시작 무기인 hook 하나만 남깁니다. 나머지 기술은

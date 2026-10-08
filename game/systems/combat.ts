@@ -699,14 +699,19 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const poisonFill = Math.min(1, (b.effects.poison?.stacks || 0) / (STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus)), burnFill = Math.min(1, (b.effects.burn?.stacks || 0) / STATUS_TUNING.burnMaxStacks), fill = (poisonFill + burnFill) / 2;
     const fullFinish = !!finisher && poisonFill >= 1 && burnFill >= 1, finisherHits = !finisher || fill <= 0 ? 0 : fullFinish ? finisher.maxHits : Math.min(finisher.maxHits - 1, Math.max(1, Math.round(finisher.maxHits * (1 + fill) / 2)));
     if (finisher) notes.push(finisherHits ? `퍼니시 ${finisherHits}회` : '퍼니시 없음');
-    const followUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
+    const skillFollowUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
+    // v3.146 정령(은월): 장착한 패시브의 정령이 모든 공격 행동(기본 공격 포함, 피해 없는 기술 · 순수 회복 · 도트 퍼니셔 제외)에 추가타를 붙입니다.
+    const spirits = a.skills.map(id => skillById(id)?.companion).filter((c): c is { hits: number; power: number } => !!c);
+    const spirit = spirits.length && !statusOnly && !healOnly && !finisher ? { hits: Math.max(...spirits.map(c => c.hits)), power: Math.max(...spirits.map(c => c.power)) } : null;
+    if (spirit) notes.push(`정령 ${spirit.hits}회`);
+    const followUps = skillFollowUps + (spirit?.hits || 0);
     for (let i = 0; i < followUps && b.hp > 0 && a.hp > 0 && !stood; i++) {
         if (rng() >= hit) {
             ev.hits.push({ kind: 'follow', value: 0, critical: false, miss: true });
             continue;
         }
         const followRoll = rng(), followCrit = followRoll < sa.crit, followSuper = followCrit && followRoll < (sa.superCrit || 0);
-        const followMultiplier = (chosen?.multiplier || 1) * ((finisher?.hitMultiplier ?? chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier) + sa.followUpBonus);
+        const followMultiplier = (chosen?.multiplier || 1) * ((i >= skillFollowUps && spirit ? spirit.power : (finisher?.hitMultiplier ?? chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)) + sa.followUpBonus);
         const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage * (followSuper ? SKILL_FORMULA.superCritBonus : 1) : 1)));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);

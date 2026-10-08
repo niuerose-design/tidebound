@@ -188,7 +188,8 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'bitterBrew', name: '쓴 달임약', desc: '지속 피해와 명중이 오릅니다.', level: 10, job: 'apothecary', cost: 2, bonus: { dotBonus: .2, accuracy: .03 } },
     { ...P, id: 'nimbleStep', name: '가벼운 발', desc: '회피와 속도가 오르고, 연속 행동마다 40% 확률로 가장 긴 재사용 대기를 초기화합니다.', level: 10, job: 'acrobat', cost: 2, bonus: { evasion: .06, speed: 8 }, cooldownReset: { on: 'chain', chance: .4, pick: 'longest' } },
     // 기존 직업 보강 (은월 (3차) 물리 경로)
-    { ...P, id: 'galvanicScales', name: '전류 비늘', desc: '물리 공격과 속도가 오릅니다.', level: 25, job: 'stormEel', cost: 2, bonus: { attack: 16, speed: 8 } },
+    // v3.146 은월 재개편: 패시브가 정령을 불러 모든 공격에 추가타를 붙입니다(2차 1회 25% → 3차 35% → 4차 40% → 5차 2회 35%).
+    { ...P, id: 'galvanicScales', name: '전류 비늘', desc: '물리 공격과 속도가 오르고, 정령이 모든 공격에 추가타 1회(위력 25%)를 붙입니다.', level: 25, job: 'stormEel', cost: 2, bonus: { attack: 16, speed: 8 }, companion: { hits: 1, power: .25 } },
 ];
 
 /** 액티브 밸런스 표 행: 선언한 발동률·배율·재사용 대기·마나를 그대로 사용합니다. */

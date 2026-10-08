@@ -346,7 +346,7 @@ export const LINEAGES: Lineage[] = [
     { id: 'harpoon', name: '작살 사냥꾼 계보', tree: 'physical', summary: '관통·치명·출혈로 갈라지는 물리 폭발 계보입니다.' },
     { id: 'tidalBrawler', name: '조수 투사 계보', tree: 'physical', summary: '근접 연타와 추가타, 관통·감속을 연구하는 계보입니다.' },
     /** v3.65 은월 계보 하나로: 스트라이커 1차 → 은월 2차(공개) → 3차 이후 숨은 단계(game/secret). */
-    { id: 'krakenkin', name: '은월 계보', tree: 'physical', summary: '몬스터의 피를 이은 추가타 직업입니다. 3차부터는 숨은 단계입니다.' },
+    { id: 'krakenkin', name: '은월 계보', tree: 'physical', summary: '정령과 함께 싸우는 계보입니다. 패시브의 정령이 기본 공격을 포함한 모든 공격에 추가타를 붙입니다. 3차부터는 숨은 단계입니다.' },
     { id: 'ronin', name: '낭인 계보', tree: 'physical', summary: '검술의 연타·관통·돌격을 거쳐 5차 용사에 이르는 계보입니다.' },
     { id: 'martialArtist', name: '무투가 계보', tree: 'physical', summary: '다단 연타와 기절·감속 제어를 잇는 격투 계보입니다.' },
     independent('physical'),
