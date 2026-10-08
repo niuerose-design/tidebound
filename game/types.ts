@@ -550,7 +550,7 @@ export type State = {
     recovery: number;
     lastTick: number;
     skills: string[];
-    /** v3.86 추가 판정 단계(편성에서 켬, 단계마다 장착 AP). 세계석 연구 ‘연계의 기억’ 단계까지만 효과가 납니다. */
+    /** v3.86 추가 판정 단계(편성에서 켬, 단계마다 장착 AP). 세계석 연구 ‘시스템 파괴 I’ 단계까지만 효과가 납니다. */
     extraRolls?: number;
     cooldowns: Record<string, number>;
     book: Record<string, number>;
@@ -559,7 +559,7 @@ export type State = {
     permanent: Record<string, number>;
     /** 세계석 연구 재분배의 계정당 첫 1회 무료 반환을 썼는지. 없으면 false. */
     researchResetUsed?: boolean;
-    /** v27.31 무료로 받은 세계석 연구 단계(재분배 때 반환하지 않음). limitBreak: 이미 한 한계돌파만큼 ‘한계의 문’을 무료로 받음. */
+    /** v27.31 무료로 받은 세계석 연구 단계(재분배 때 반환하지 않음). limitBreak: 이미 한 한계돌파만큼 ‘리미터 해제’를 무료로 받음. */
     researchGranted?: Record<string, number>;
     /** v3.42 가격 인상(RESEARCH_GROWTH) 전에 이미 산 연구 단계. 재분배 때 이 단계까지는 전 가격으로 돌려줍니다. 승천·재분배하면 비웁니다. */
     researchLegacy?: Record<string, number>;
@@ -577,7 +577,7 @@ export type State = {
     relicRule?: boolean;
     /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
     plainCodex?: boolean;
-    /** 숙련의 기억으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
+    /** 끝없는 수련으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
     masteryCarry?: number;
     /** 자동 정리 · 분해 방식(설정). v3.23부터 정수로 분해. */
     autoSell?: boolean;

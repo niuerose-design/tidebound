@@ -439,14 +439,14 @@ test('v27.28 limit break raises level-table passives (+10%/stage), applies stage
     const before = stats(s).attack; s.limitBreaks = { [knack.id]: 1 }; s.permanent.limitBreak = 1; const after = stats(s).attack;
     assert.ok(after > before, `count passive grows with limit break: ${before} → ${after}`); assert.ok(kmax > 0);
 });
-test('v27.31 limit break needs the pearl research "한계의 문"; old breaks get it free, and a reset keeps free ranks without refunding them', async () => {
+test('v27.31 limit break needs the pearl research "리미터 해제"; old breaks get it free, and a reset keeps free ranks without refunding them', async () => {
     const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const P = await G.load('systems/progression'), M = await G.load('systems/migrations'), C = await G.load('systems/commerce');
     const sk = SKILLS.find(x => x.id === 'hook'), last = P.masteryMilestonesFor(sk).at(-1);
     const s = newState(0); s.sp = 20; s.pearls = 100; s.learned.hook = 1; s.skillPractice.hook = last * 8;
-    assert.match(P.limitBreakNext(s, 'hook').reason, /한계의 문.*1단계/);
+    assert.match(P.limitBreakNext(s, 'hook').reason, /리미터 해제.*1단계/);
     act(s, { type: 'permanent', id: 'limitBreak' }, 0); act(s, { type: 'limitBreak', id: 'hook' }, 0); assert.equal(s.limitBreaks.hook, 1);
-    assert.match(P.limitBreakNext(s, 'hook').reason, /한계의 문.*2단계/, 'research rank caps the next stage');
+    assert.match(P.limitBreakNext(s, 'hook').reason, /리미터 해제.*2단계/, 'research rank caps the next stage');
     // 연구를 재분배하면 효과는 멈추고 기록은 남습니다(다시 사면 돌아옴).
     const withBreak = P.skillMastery(s, 'hook'); s.permanent.limitBreak = 0; assert.equal(P.skillMastery(s, 'hook'), withBreak - 1); assert.equal(P.limitBreakOwned(s, 'hook'), 1);
     // 이미 2단계를 한 옛 세이브: 연구 2단계를 무료로 받고, 재분배해도 무료 단계는 남고 세계석으로 돌려받지 않습니다.
