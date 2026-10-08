@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { PLACES as STAGES, PLAIN_DUNGEONS as DUNGEONS, DUNGEONS as ALL_DUNGEONS, FISH } from './world';
+import { PLACES as STAGES, PLAIN_DUNGEONS as DUNGEONS, DUNGEONS as ALL_DUNGEONS, MONSTERS } from './world';
 import { JOBS } from './classes';
 import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedRegions, extremeBroken } from '../systems/progression';
 import { MIMIC } from './mimic';
@@ -29,10 +29,10 @@ export type Achievement = { /** v3.38 명예 업적: 업적 보너스(능력치)
 const kills = (s: State) => s.kills || 0;
 /** 도감 업적 대상. v27.58 경험의 누리는 빼서 '도감 전체' 업적 id(codex:종 수)가 바뀌지 않게 합니다. */
 // v3.161 정수의 슬라임 · 대왕 3종도 도감 수에서 뺍니다(codex:N id가 흔들리지 않도록 까미는 그대로 셉니다).
-const CODEX_FISH = FISH.filter(f => f.id !== EXP_NURI.id && f.id !== ESSENCE_SLIME.id && !KING_IDS.includes(f.id));
-const codex = (s: State) => CODEX_FISH.filter(f => (s.book?.[f.id] || 0) > 0).length;
+const CODEX_MONSTERS = MONSTERS.filter(f => f.id !== EXP_NURI.id && f.id !== ESSENCE_SLIME.id && !KING_IDS.includes(f.id));
+const codex = (s: State) => CODEX_MONSTERS.filter(f => (s.book?.[f.id] || 0) > 0).length;
 const clears = (s: State) => Object.values(s.clears || {}).reduce((a, b) => a + (b || 0), 0);
-const bosses = (s: State) => FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
+const bosses = (s: State) => MONSTERS.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
 const masteredSkills = (s: State) => Object.values(s.skillPractice || {}).filter(n => n >= 8000).length;
 const tideBest = (s: State) => Math.max(0, ...Object.values(s.tideBest || {}));
 const playHours = (s: State) => Math.floor((s.playMs || 0) / 3_600_000);
@@ -69,7 +69,7 @@ let reading: StatsRead | null = null;
 const readStats = (s: State) => reading?.s === s ? (reading.a ??= stats(s)) : stats(s);
 export const ACHIEVEMENTS: Achievement[] = [
     ...series('kills', '사냥', n => `처치 ${n.toLocaleString()}마리`, n => `누적 ${n.toLocaleString()}마리를 처치합니다.`, [100, 1000, 5000, 20000, 100000, 500000], kills, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 4 }, { pearls: 8 }, { pearls: 15, ap: 1 }, { pearls: 30, sp: 1 }][i]),
-    ...series('codex', '모험', n => `도감 ${n}종`, n => `서로 다른 몬스터 ${n}종을 발견합니다.`, [10, 20, 30, 47, CODEX_FISH.length], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 15, sp: 1 }][i]),
+    ...series('codex', '모험', n => `도감 ${n}종`, n => `서로 다른 몬스터 ${n}종을 발견합니다.`, [10, 20, 30, 47, CODEX_MONSTERS.length], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 15, sp: 1 }][i]),
     ...series('stages', '모험', n => `사냥터 ${n}곳`, n => `사냥터 ${n}곳에서 사냥합니다.`, [3, 6, 9, STAGES.length], s => STAGES.filter(st => s.voyage?.[`stage:${st.id}`] !== undefined).length, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6 }, { pearls: 10, ap: 1 }][i]),
     ...series('clears', '던전', n => `던전 정복 ${n}회`, n => `던전을 ${n}회 정복합니다(무릉도장 포함).`, [1, 10, 50, 200, 1000], clears, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 5 }, { pearls: 8 }, { pearls: 15, ap: 1 }][i]),
     ...series('bosses', '던전', n => `보스 ${n.toLocaleString()}마리`, n => `던전 보스를 ${n.toLocaleString()}마리 처치합니다.`, [10, 100, 500, 2000], bosses, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }, { pearls: 20, sp: 1 }][i]),

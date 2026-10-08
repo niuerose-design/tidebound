@@ -8,7 +8,7 @@ const {stats}=await moduleAt('systems/stats');
 const {strike,fighterSpeed}=await moduleAt('systems/combat');
 const {SKILLS}=await moduleAt('data/skills');
 const {JOBS}=await moduleAt('data/classes');
-const {FISH}=await moduleAt('data/world');
+const {MONSTERS}=await moduleAt('data/world');
 const {scaledEnemyStats,profile}=await moduleAt('data/encounters');
 const {canUse,validLoadout,skillMasteryRanks}=await moduleAt('systems/progression');
 
@@ -40,7 +40,7 @@ for(const L of LEVELS)for(const [label,attributes,skills] of builds(L)){
  const agg={L,build:label,skills:s.skills.join('/'),hp:Math.round(st.hp),atk:Math.round(st.attack),mag:Math.round(st.magic),def:Math.round(st.defense),res:Math.round(st.resist),harmony:Math.round(st.harmony),win:0,turns:0,hpLeft:0,dmgPerAction:0,taken:0,n:0};
  const per=[];
  for(const [id,tier] of foes){
-  const fish=FISH.find(f=>f.id===id),boss=!!fish.boss;const foe=scaledEnemyStats(fish,{boss,tier,...(boss?{wave:4}:{})});let wins=0,turns=0,remaining=0,dealt=0,actions=0,taken=0;
+  const monster=MONSTERS.find(f=>f.id===id),boss=!!monster.boss;const foe=scaledEnemyStats(monster,{boss,tier,...(boss?{wave:4}:{})});let wins=0,turns=0,remaining=0,dealt=0,actions=0,taken=0;
   for(let seed=1;seed<=120;seed++){
    const a={name:'player',stats:st,hp:st.hp,mana:st.mana,skills:s.skills,cooldowns:{},stun:0,effects:{},ranks:s.learned,mastery:skillMasteryRanks(s),practice:s.skillPractice};
    const b={name:'foe',stats:foe,hp:foe.hp,mana:100,skills:profile(id).skills,cooldowns:{},stun:0,effects:{}};const rng=random(seed);let n=0;

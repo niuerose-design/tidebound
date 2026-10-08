@@ -14,7 +14,7 @@ const game = loadGame(), { load } = game;
 const { stats, snapshot } = await load('systems/stats');
 const { strike, fighterSpeed } = await load('systems/combat');
 const { jobById } = await load('data/classes');
-const { FISH, STAGES, DUNGEONS, STAGE_FIT, tideLiftFish } = await load('data/world');
+const { MONSTERS, STAGES, DUNGEONS, STAGE_FIT, tideLiftMonster } = await load('data/world');
 const { scaledEnemyStats, abyssEnemyStats, profile, foeSkills } = await load('data/encounters');
 const { dungeonModeTier, ABYSS_TUNING } = await load('data/balance');
 const { ONYX, onyxBossFor } = await load('data/onyx');
@@ -53,7 +53,7 @@ function fight(a, b, rng, cap = MAX_TURNS) {
 }
 const avg = xs => xs.reduce((a, x) => a + x, 0) / Math.max(1, xs.length);
 const pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : n >= 1e4 ? `${Math.round(n / 1e4)}만` : `${Math.round(n)}`;
-const fishOf = id => FISH.find(f => f.id === id);
+const monsterOf = id => MONSTERS.find(f => f.id === id);
 const out = { bodies: {}, dungeon: [], onyx: [], raid: [] };
 
 // ── 던전 ──────────────────────────────────────────────────────────────────────────────────────
@@ -62,8 +62,8 @@ function dungeonRun(s, st, d, tier, seed, depth = 1) {
     const rng = random(seed * 977 + d.id.length), cd = {}; let hp = st.hp, mana = st.mana, ok = true, w = 0, turns = 0, bossTurns = 0, bossHpLeft = 0;
     const level = d.id === 'abyss' ? d.level : d.level;
     for (; w < WAVES && ok; w++) {
-        const last = w === WAVES - 1, id = last && d.bossFish ? d.bossFish : d.fish[w], f0 = fishOf(id);
-        const f = d.id === 'abyss' ? f0 : tideLiftFish(f0, tier, s.level);
+        const last = w === WAVES - 1, id = last && d.bossMonster ? d.bossMonster : d.monsters[w], f0 = monsterOf(id);
+        const f = d.id === 'abyss' ? f0 : tideLiftMonster(f0, tier, s.level);
         const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), depth, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: w });
         if (last && d.id !== 'abyss' && BOSS_HP !== 1) est.hp = Math.round(est.hp * BOSS_HP);
         const a = player(s, st, hp, mana, cd), b = foeOf({ ...f, level: f.level }, est, { boss: last }), r = fight(a, b, rng);
@@ -75,7 +75,7 @@ function dungeonRun(s, st, d, tier, seed, depth = 1) {
 }
 function measureDungeons() {
     const rows = [];
-    for (const d of DUNGEONS.filter(d => d.bossFish)) {
+    for (const d of DUNGEONS.filter(d => d.bossMonster)) {
         // 몸: 입장 환생 · 적정 환생(그 던전 지역의 최상위 사냥터 fit) · 헬은 환생 50 · 나이트메어는 환생 100.
         const stage = STAGES.filter(st => !st.habitat).sort((a, b) => Math.abs(a.level - d.level) - Math.abs(b.level - d.level))[0];
         const fit = Math.max(d.rebirth, STAGE_FIT[stage.id] ?? d.rebirth);
@@ -95,8 +95,8 @@ function measureDungeons() {
 // ── 칠흑 ──────────────────────────────────────────────────────────────────────────────────────
 function onyxFoe(habitat, tier, playerLevel) {
     // 게임 규칙 그대로(systems/encounter.ts spawn): 서식지 최강(난이도만큼 레벨 상승) × hpMul · 공격 ×3, 난이도 배율은 √(onyxEnemyStats). --onyx-hp는 hpMul 실험.
-    const def = onyxBossFor(habitat.region), top = tideLiftFish([...habitat.fish].map(x => fishOf(x)).sort((a, b) => b.level - a.level)[0], tier, playerLevel);
-    const f = { ...fishOf(def.id), level: top.level, hp: Math.round(top.hp * (ONYX_HP[def.id] ?? def.hpMul)), attack: Math.round(top.attack * ONYX.attack), defense: top.defense };
+    const def = onyxBossFor(habitat.region), top = tideLiftMonster([...habitat.monsters].map(x => monsterOf(x)).sort((a, b) => b.level - a.level)[0], tier, playerLevel);
+    const f = { ...monsterOf(def.id), level: top.level, hp: Math.round(top.hp * (ONYX_HP[def.id] ?? def.hpMul)), attack: Math.round(top.attack * ONYX.attack), defense: top.defense };
     return { def, f, st: onyxEnemyStats(f, tier) };
 }
 function measureOnyx() {

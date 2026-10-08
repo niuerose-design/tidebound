@@ -2,11 +2,11 @@
 import { assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 
-const { load } = loadGame(), { FOE_FX } = await load('game/data/foe-fx.js'), enc = await load('game/data/encounters.js'), { skillById } = await load('game/data/skills.js'), { FISH } = await load('game/data/world.js');
+const { load } = loadGame(), { FOE_FX } = await load('game/data/foe-fx.js'), enc = await load('game/data/encounters.js'), { skillById } = await load('game/data/skills.js'), { MONSTERS } = await load('game/data/world.js');
 
 test('Foe fx: every enemy skill a boss can use has a scene effect', () => {
     const used = new Set();
-    for (const f of FISH) for (const sk of enc.foeSkills(f.id, 200, true)) used.add(sk);
+    for (const f of MONSTERS) for (const sk of enc.foeSkills(f.id, 200, true)) used.add(sk);
     for (const sk of enc.ENEMY_SKILLS) used.add(sk.id);
     assert(used.size >= 20, `boss skills collected: ${used.size}`);
     for (const id of used) assert(FOE_FX[id], `missing foe fx for ${id}`);

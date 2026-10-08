@@ -19,7 +19,7 @@ const status = await load('game/systems/combat-status.js');
 const mastery = await load('game/systems/mastery.js');
 const { SKILLS } = await load('game/data/skills.js');
 const { JOBS } = await load('game/data/classes.js');
-const { STAGES, DUNGEONS, FISH, setClosures } = await load('game/data/world.js');
+const { STAGES, DUNGEONS, MONSTERS, setClosures } = await load('game/data/world.js');
 // 라이브에서 닫힌 곳(기본: 무릉도장)도 검증하도록 모두 엽니다.
 setClosures({ dungeons: [], stages: [] });
 const { RESEARCH, SHOP, RELICS, GAMBLE_CATEGORIES } = await load('game/data/economy.js');
@@ -40,8 +40,8 @@ function pickAction(s, r) {
         () => ({ type: 'dungeon', id: pick(DUNGEONS.filter(d => !d.random)).id, value: pick(['once', '3', 'fail', 'deeper:3']) }), () => ({ type: 'leaveDungeon' }),
         () => ({ type: 'job', id: pick(JOBS).id }), () => ({ type: 'skill', id: pick(skillIds) }), () => ({ type: 'learn', id: pick(skillIds) }),
         () => ({ type: 'inheritSkill', id: pick(skillIds) }), () => ({ type: 'skillUp', id: pick(skillIds) }), () => ({ type: 'resetSkills' }),
-        () => ({ type: 'attribute', id: pick(ATTRS) }), () => ({ type: 'resetAttributes' }), () => ({ type: 'claimBook', id: pick(FISH).id }),
-        () => ({ type: 'registerItem', id: pick(inv) }), () => ({ type: 'target', id: pick(FISH).id }), () => ({ type: 'savePreset', id: String(Math.floor(r() * 3)) }),
+        () => ({ type: 'attribute', id: pick(ATTRS) }), () => ({ type: 'resetAttributes' }), () => ({ type: 'claimBook', id: pick(MONSTERS).id }),
+        () => ({ type: 'registerItem', id: pick(inv) }), () => ({ type: 'target', id: pick(MONSTERS).id }), () => ({ type: 'savePreset', id: String(Math.floor(r() * 3)) }),
         () => ({ type: 'loadPreset', id: String(Math.floor(r() * 3)) }), () => ({ type: 'equip', id: pick(inv) }), () => ({ type: 'unequip', id: pick(['rod', 'coat', 'charm']) }),
         () => ({ type: 'sell', id: pick(inv) }), () => ({ type: 'rebirth' }),
         () => ({ type: 'offlineDismiss' }),
@@ -109,9 +109,9 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
         display.push(prog.apCapacity(s), prog.apUsed(s), meta.rebirthReward(s, 2), meta.rebirthLevel(s), commerceM.gambleCost(s), commerceM.imprintGambleCost(s), commerceM.pityLeft(s));
         for (const j of JOBS) display.push(prog.jobRequirements(s, j), prog.canChangeJob(s, j.id));
         for (const x of SHOP) display.push(commerceM.shopPreview(s, x.id));
-        for (const f of FISH) display.push(prog.bookReward(s, f.id));
+        for (const f of MONSTERS) display.push(prog.bookReward(s, f.id));
     }
-    for (const f of FISH) for (const tier of [0, 5, 25, 60]) display.push(scaledEnemyStats(f, { tier }), scaledEnemyStats(f, { boss: true, tier, wave: 4 }));
+    for (const f of MONSTERS) for (const tier of [0, 5, 25, 60]) display.push(scaledEnemyStats(f, { tier }), scaledEnemyStats(f, { boss: true, tier, wave: 4 }));
     const s = samples[2], game = seeded(9); for (let i = 0; i < 20; i++) { try { engine.act(s, { type: 'gamble', id: 'all' }, 0, game); } catch { } }
     for (const it of s.inventory) display.push(equipment.itemStats(it), equipment.enhanceCost(it), equipment.reforgeCost(it), equipment.saleValue(it), equipment.itemDescription(it));
     const fighter = { name: 'A', stats: statsM.stats(s), hp: 100, skills: [], cooldowns: {}, stun: 0 };

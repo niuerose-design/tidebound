@@ -15,7 +15,7 @@ export const newState=(...a)=>{const s=engine.newState(...a);delete s.tutorial;r
 export const encounterSource=await readFile('game/systems/encounter.ts','utf8');
 export const {stats,snapshot,expMultiplier,normalizeStats}=await load('game/systems/stats.js');
 export const {victoryMastery}=await load('game/systems/mastery.js');
-export const {FISH_SHAPES,fishShape,unmappedFish}=await load('game/data/art.js');
+export const {MONSTER_SHAPES,monsterShape,unmappedMonsters}=await load('game/data/art.js');
 export const {SKILL_FX}=await load('game/data/skill-fx.js');
 export const equipment=await load('game/systems/equipment.js');
 export const migrations=await load('game/systems/migrations.js');
@@ -35,14 +35,14 @@ export const {skillGrowthStages,skillExtraNotes}=await load('game/systems/skill-
 export const {SKILLS}=await load('game/data/skills.js');
 const WORLD=await load('game/data/world.js');
 // v27.86 테스트의 DUNGEONS는 일반 던전(랜덤게임 제외)입니다.
-export const {STAGES,FISH,setClosures,closuresSnapshot}=WORLD, DUNGEONS=WORLD.PLAIN_DUNGEONS;
+export const {STAGES,MONSTERS,setClosures,closuresSnapshot}=WORLD, DUNGEONS=WORLD.PLAIN_DUNGEONS;
 // v27.25·v27.31 닫힌 사냥터·던전(기본: 무한 심연)은 라이브에서만 닫습니다. 테스트는 모두 엽니다(닫힘 자체는 content.test에서 따로 확인).
 setClosures({dungeons:[],stages:[]});
 export const {profile}=await load('game/data/encounters.js');
 export const bookMod=await load('game/systems/book.js');
 export const economy=await load('game/data/economy.js');
 export const {researchRefund}=await load('game/systems/commerce.js');
-export const {weightedFishId,victoryHealRate,drop,reward,spawn,enemyLabel}=await load('game/systems/encounter.js');
+export const {weightedMonsterId,victoryHealRate,drop,reward,spawn,enemyLabel}=await load('game/systems/encounter.js');
 export const vowsMod=await load('game/systems/vows.js');
 export const {researchMastery}=await load('game/systems/mastery.js');
 export const {gambleCost,shopPreview}=await load('game/systems/commerce.js');
