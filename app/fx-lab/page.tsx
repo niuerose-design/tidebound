@@ -47,7 +47,8 @@ function FxLabInner() {
                 {/* 실제 화면처럼 연출층(z-index -1)이 배경 위 · 몹 아래에 오도록 배경을 -2로 둡니다. */}
                 <div className="ocean-art" style={{ position: 'absolute', inset: 0, zIndex: -2, background: 'linear-gradient(180deg,#132a3a 0%,#0d1f2b 55%,#0a1418 100%)' }}/>
                 <div className="scene-shade"/>
-                <div aria-hidden style={{ position: 'absolute', left: '62%', top: '48%', width: 96, height: 96, translate: '-50% -50%', borderRadius: '50%', background: 'radial-gradient(circle at 40% 35%,#e8f0ea,#7f9a90 70%,#3c5a55)', boxShadow: '0 10px 24px #0008', display: 'grid', placeItems: 'center', fontSize: 34 }}>👾</div>
+                {/* 실제 화면처럼 몹은 오른쪽 가장자리(.scene-foe: right 28px · z-index 1), 연출 중심(62% · 48%)은 그 왼쪽입니다. */}
+                <div className="scene-foe" aria-hidden style={{ display: 'grid', placeItems: 'center', fontSize: 40, borderRadius: '50%', background: 'radial-gradient(circle at 40% 35%,#e8f0ea,#7f9a90 70%,#3c5a55)' }}>👾</div>
                 <SceneFx effect={effect}/>
             </section>
         </div>
