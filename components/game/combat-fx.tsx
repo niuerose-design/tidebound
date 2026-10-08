@@ -87,11 +87,14 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
 }
 
 const SEAL_GLYPHS = ['無', '虛', '斬', '血', '縛', '刹', '魂'];
-/** v27.24 5차 궁극기 전용 장면 연출. kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. v3.47 title이 없으면 스킬 이름(비밀 직업 스킬은 카탈로그로 받은 이름). */
+/** v27.24 5차 궁극기 전용 장면 연출(v3.195 비숍 4차 엔젤레이도 씀). kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. v3.47 title이 없으면 스킬 이름(비밀 직업 스킬은 카탈로그로 받은 이름). */
 const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[] }> = {
     braveSlash: { kind: 'slash', title: '소드 오브 버닝 소울', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
     oceanWrath: { kind: 'wave', title: '썬더 브레이크', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
-    genesis: { kind: 'light', title: '인피니티 플레임 서클', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
+    // v3.195 인피니티 플레임 서클: 불덩이 8개(파편)가 불 고리 위를 공전하다 조여들어 터집니다. 파편 글자는 CSS가 숨기고 불덩이로 그립니다.
+    genesis: { kind: 'flamecircle', title: '인피니티 플레임 서클', glyphs: ['●', '●', '●', '●', '●', '●', '●', '●'] },
+    // v3.195 엔젤레이(비숍 4차): 전에 인피니티 플레임 서클이 쓰던 빛기둥 + 수평 섬광 + 별 파편 장면을 그대로 받습니다.
+    tidalBlessing: { kind: 'light', title: '엔젤레이', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
     // v3.132 중독 + 화상을 함께 거는 포이즌 노바: 독 고리와 불 고리가 겹쳐 터집니다.
     doomMark: { kind: 'nova', title: '포이즌 노바', glyphs: ['●', '✹', '◌', '▴', '●', '✹', '◌', '▴'] },
     redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
