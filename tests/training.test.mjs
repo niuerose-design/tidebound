@@ -367,7 +367,7 @@ test('v3.148 Adele burns current mana into damage; Flame Wizard Genesis detonate
     assert.ok(Math.abs(e[0].total / e0[0].total - 1740 / 300) < .02, `burned mana adds to the base: ${e[0].total} vs ${e0[0].total}`);
     assert.equal(SKILL_FORMULA.manaBurnScale, 6);
     // 창세의 빛: 화상 3중첩이면 ×(1 + 3 × .35), 화상은 사라짐. 화상이 없으면 그대로.
-    assert.equal(pub('genesis').burnConsume, .35); assert.equal(pub('genesis').scaling, undefined); assert.equal(pub('starfall').effect, undefined);
+    assert.equal(pub('genesis').burnConsume, .35); assert.equal(pub('genesis').scaling, undefined); assert.equal(pub('starfall').effect, 'burn');
     const forced = { id: 'genesis', index: 0, count: 1, kind: 'awaken' };
     const plain = target(); strike(fighter(['genesis']), plain, () => 0, [], false, false, forced); const d0 = 1e6 - plain.hp;
     const burning = target({ burn: { perStack: 10, stacks: 3, turns: 5 } }); strike(fighter(['genesis']), burning, () => 0, [], false, false, forced); const d3 = 1e6 - burning.hp;
