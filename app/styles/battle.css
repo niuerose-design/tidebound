@@ -261,11 +261,13 @@
 }
 
 /* 전투 재생 템포: 밀린 타격 카운터와 회복 대기 카운트다운. */
-.tide-fx-combo{position:absolute;right:14px;top:62px;display:flex;align-items:baseline;gap:5px;padding:5px 11px;border-radius:4px;background:#102127dd;border-bottom:1px solid #efd28a66;color:#d9d3b8;font-size:13px;animation:tideCombo 1.6s ease-out both}
-.tide-fx-combo strong{font:700 20px/1 ui-monospace,monospace;color:#efd28a;font-variant-numeric:tabular-nums}
+.tide-fx-combo{position:absolute;right:14px;top:62px;display:flex;align-items:baseline;gap:5px;padding:5px 11px;border-radius:4px;background:#102127dd;border-bottom:1px solid #efd28a66;color:#d9d3b8;font-size:13px;animation:tideCombo .25s ease-out both}
+.tide-fx-combo strong{display:inline-block;font:700 20px/1 ui-monospace,monospace;color:#efd28a;font-variant-numeric:tabular-nums;animation:tideComboTick .3s ease-out both}
 .combatant-name .recovery-countdown{color:#9ce8b4;font-variant-numeric:tabular-nums}
-@keyframes tideCombo{0%{opacity:0;scale:.8}12%{opacity:1;scale:1.08}24%,80%{opacity:1;scale:1}100%{opacity:0}}
-@media(prefers-reduced-motion:reduce){.tide-fx-combo{animation-name:tideReduced}}
+/* v3.195 배지는 한 번만 부드럽게 나타나고(사라질 때까지 그대로), 숫자가 바뀔 때만 숫자가 살짝 튑니다. */
+@keyframes tideCombo{from{opacity:0;translate:0 4px}to{opacity:1;translate:0 0}}
+@keyframes tideComboTick{0%{scale:1.18}100%{scale:1}}
+@media(prefers-reduced-motion:reduce){.tide-fx-combo,.tide-fx-combo strong{animation:none}}
 
 /* 일반 낚시터도 던전처럼 체력바 카드 위에서 스킬 연출을 보여 줍니다. */
 .battle-fx-host{position:relative;isolation:isolate}
@@ -714,12 +716,12 @@
 .ult-wave .ult-a,.ult-wave .ult-b{left:-30%;width:160%;height:90%;top:100%;border-radius:50% 50% 0 0/100% 100% 0 0;background:linear-gradient(180deg,#d9fbff,#8ce4ed 18%,#1f8aa6 45%,#06303f);box-shadow:0 -14px 50px #8ce4ed,inset 0 20px 40px rgba(255,255,255,.35);animation:ultWaveRise 2.4s cubic-bezier(.3,.8,.3,1) var(--fx-delay) both}
 .ult-wave .ult-b{animation-delay:calc(var(--fx-delay) + .35s);opacity:.7;height:70%}
 @keyframes ultWaveRise{0%{translate:0 0;opacity:1}40%{translate:0 -95%;opacity:1}70%{translate:0 -100%;opacity:1}100%{translate:0 -10%;opacity:0}}
-/* 빛기둥: 중앙 빛기둥과 수평 섬광. v3.195 엔젤레이(비숍 4차)와 전용 연출이 없는 각성기의 기본 장면 */
+/* 빛기둥: 중앙 빛기둥과 수평 섬광. v3.196 엔젤레이(비숍 4차)와 전용 연출이 없는 각성기의 기본 장면 */
 .ult-light{--fx:#fff1a8}
 .ult-light .ult-a{left:50%;top:-20%;width:90px;height:140%;translate:-50% 0;background:linear-gradient(90deg,transparent,#fff7d6 30%,#fff 50%,#fff7d6 70%,transparent);filter:blur(2px);animation:ultBeam 2.4s ease-out var(--fx-delay) both}
 .ult-light .ult-b{left:-10%;top:50%;width:120%;height:3px;background:linear-gradient(90deg,transparent,#fff,transparent);box-shadow:0 0 30px #fff1a8;animation:ultSlashLine 2.4s ease-out calc(var(--fx-delay) + .3s) both}
 @keyframes ultBeam{0%{opacity:0;scale:.1 1}18%{opacity:1;scale:1 1}60%{opacity:1}100%{opacity:0;scale:3 1}}
-/* v3.195 인피니티 플레임 서클(대마도사): 같은 DOM으로 불 연출. ult-a = 돌아가는 불 고리(conic 불꽃 띠), ult-b = 중심 화구 + 흔들리는 불꽃 혀 둘,
+/* v3.196 인피니티 플레임 서클(대마도사): 같은 DOM으로 불 연출. ult-a = 돌아가는 불 고리(conic 불꽃 띠), ult-b = 중심 화구 + 흔들리는 불꽃 혀 둘,
    파편 8개 = 꼬리 달린 불덩이가 고리 위를 두 바퀴 공전한 뒤 안으로 조여들었다가 사방으로 터짐, ::after = 떠오르는 불티. 파편의 i*70ms 시차는 공전 간격이 틀어지지 않게 되돌립니다. */
 .ult-flamecircle{--fx:#ff8a3c}.ult-flamecircle .scene-fx-dark{background:#140502}
 .ult-flamecircle .scene-fx-flash{background:radial-gradient(ellipse at 62% 48%,#fff1c4 0%,#ff9a3c88 24%,#ff3b1a33 46%,transparent 64%);animation-name:ultFlameFlash}

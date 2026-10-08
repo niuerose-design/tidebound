@@ -76,9 +76,10 @@ const STATUS_GLYPHS: Partial<Record<CombatFxKind, string[]>> = {
 };
 /** 4차는 9개, 5차는 12개 파편(바깥 고리 추가). 상태이상 피격은 상태별 파편을 씁니다. */
 const fragmentsFor = (fx: CombatFx) => { const base = STATUS_GLYPHS[fx.kind] ?? glyphs[fx.variant]; const n = (fx.tier || 0) >= 5 ? 12 : (fx.tier || 0) >= 4 ? 9 : 6; return Array.from({ length: n }, (_, i) => base[i % base.length]); };
-/** 상대 카드 위의 연출. 기본 공격은 체력바 숫자만, 스킬은 궤적·충격파·파편·섬광, 天은 일곱 글자 고리까지 띄웁니다. ‘×N 연속’은 연속으로 행동한 쪽 카드에 붙습니다. */
+/** 상대 카드 위의 연출. 기본 공격은 체력바 숫자만, 스킬은 궤적·충격파·파편·섬광, 天은 일곱 글자 고리까지 띄웁니다. ‘×N 연속’은 연속으로 행동한 쪽 카드에 붙습니다.
+ * v3.195 연속 배지는 행동한 쪽이 같으면 타격마다 다시 만들지 않고 그대로 두며, 숫자가 바뀔 때만 숫자가 살짝 튑니다(전에는 묶음마다 깜박였습니다). */
 export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; combo?: CombatCombo | null }) {
-    return <div className="tide-fx-layer" aria-hidden="true">{combo && <div key={`combo-${effect[0]?.id}`} className={`tide-fx-combo tide-fx-combo-${combo.actor}`}><small>{combo.actor === 'player' ? '내 연속 행동' : '상대 연속 행동'}</small><strong>×{combo.count.toLocaleString()}</strong> 연속</div>}{effect.filter(fx => !fx.basic && fx.status !== '행동 불가').map(fx => fx.actor === 'enemy' ? <div key={fx.id} className={`monster-skill-cue monster-skill-${fx.kind}`} style={fxStyle(fx.delay)}><small>몬스터 스킬</small><strong>{fx.title}</strong></div> : <div key={fx.id} className={`tide-fx tide-fx-${fx.kind} tide-fx-${fx.variant} tide-fx-target-${fx.target} ${fx.critical ? 'critical' : ''} ${fx.finale ? 'finale' : ''} ${(fx.tier || 0) >= 4 ? `tier-${Math.min(5, fx.tier!)}` : ''}`} style={fxStyle(fx.delay)}>
+    return <div className="tide-fx-layer" aria-hidden="true">{combo && <div key={`combo-${combo.actor}`} className={`tide-fx-combo tide-fx-combo-${combo.actor}`}><small>{combo.actor === 'player' ? '내 연속 행동' : '상대 연속 행동'}</small><strong key={combo.count}>×{combo.count.toLocaleString()}</strong></div>}{effect.filter(fx => !fx.basic && fx.status !== '행동 불가').map(fx => fx.actor === 'enemy' ? <div key={fx.id} className={`monster-skill-cue monster-skill-${fx.kind}`} style={fxStyle(fx.delay)}><small>몬스터 스킬</small><strong>{fx.title}</strong></div> : <div key={fx.id} className={`tide-fx tide-fx-${fx.kind} tide-fx-${fx.variant} tide-fx-target-${fx.target} ${fx.critical ? 'critical' : ''} ${fx.finale ? 'finale' : ''} ${(fx.tier || 0) >= 4 ? `tier-${Math.min(5, fx.tier!)}` : ''}`} style={fxStyle(fx.delay)}>
         <i className="tide-fx-flash"/>{(fx.tier || 0) >= 4 && <i className="tide-fx-big"/>}<i className="tide-fx-trail"/>{fx.gamble === undefined && <><i className="tide-fx-ring"/><i className="tide-fx-ring tide-fx-shock"/></>}
         {fx.kind !== 'miss' && fragmentsFor(fx).map((glyph, i, all) => <i key={i} className="tide-fx-fragment" style={fxStyle(fx.delay + (i >= 6 ? 90 : 0), { '--fx-x': `${Math.cos(i * 2 * Math.PI / all.length) * (i >= 6 ? 128 : 88)}px`, '--fx-y': `${Math.sin(i * 2 * Math.PI / all.length) * (i >= 6 ? 72 : 52)}px`, '--fx-rotate': `${i * 41}deg` })}>{glyph}</i>)}
         {fx.finale && <i className="tide-fx-heaven">天</i>}
@@ -87,13 +88,13 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
 }
 
 const SEAL_GLYPHS = ['無', '虛', '斬', '血', '縛', '刹', '魂'];
-/** v27.24 5차 궁극기 전용 장면 연출(v3.195 비숍 4차 엔젤레이도 씀). kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. v3.47 title이 없으면 스킬 이름(비밀 직업 스킬은 카탈로그로 받은 이름). */
+/** v27.24 5차 궁극기 전용 장면 연출(v3.196 비숍 4차 엔젤레이도 씀). kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. v3.47 title이 없으면 스킬 이름(비밀 직업 스킬은 카탈로그로 받은 이름). */
 const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[] }> = {
     braveSlash: { kind: 'slash', title: '소드 오브 버닝 소울', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
     oceanWrath: { kind: 'wave', title: '썬더 브레이크', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
-    // v3.195 인피니티 플레임 서클: 불덩이 8개(파편)가 불 고리 위를 공전하다 조여들어 터집니다. 파편 글자는 CSS가 숨기고 불덩이로 그립니다.
+    // v3.196 인피니티 플레임 서클: 불덩이 8개(파편)가 불 고리 위를 공전하다 조여들어 터집니다. 파편 글자는 CSS가 숨기고 불덩이로 그립니다.
     genesis: { kind: 'flamecircle', title: '인피니티 플레임 서클', glyphs: ['●', '●', '●', '●', '●', '●', '●', '●'] },
-    // v3.195 엔젤레이(비숍 4차): 전에 인피니티 플레임 서클이 쓰던 빛기둥 + 수평 섬광 + 별 파편 장면을 그대로 받습니다.
+    // v3.196 엔젤레이(비숍 4차): 전에 인피니티 플레임 서클이 쓰던 빛기둥 + 수평 섬광 + 별 파편 장면을 그대로 받습니다.
     tidalBlessing: { kind: 'light', title: '엔젤레이', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
     // v3.132 중독 + 화상을 함께 거는 포이즌 노바: 독 고리와 불 고리가 겹쳐 터집니다.
     doomMark: { kind: 'nova', title: '포이즌 노바', glyphs: ['●', '✹', '◌', '▴', '●', '✹', '◌', '▴'] },
