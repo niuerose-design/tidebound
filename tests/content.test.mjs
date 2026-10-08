@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { xpNeeded, bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, canChangeJob, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
+import { xpNeeded, bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
 const inventoryCapOf=()=>economy.inventoryCap(); // v3.154 가방은 연구와 무관하게 100칸
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -77,25 +77,14 @@ test('Dungeon repeat runs until its stop condition, then resumes idle fishing',(
  assert.throws(()=>act(strong(),{type:'dungeon',id:first.id,value:'0'},0));
 });
 
-test('All-rounder: allocated-point harmony damage, split mitigation and allocation-only unlock',()=>{
+test('Harmony stat: allocated-point formula and per-job passive scaling (all-rounder removed in v3.160)',()=>{
  const s=newState(0);s.level=40;s.attributes={str:20,dex:20,int:20,vit:20,wis:20,luk:15};
  const rawHarmony=40+115*.8+15*12;assert.equal(stats(s).harmony,Math.floor(rawHarmony*SKILL_FORMULA.harmonyScale));
  // 서로 다른 직업의 능력치 패시브를 장착할수록 조화가 강해지고, 같은 직업의 패시브는 한 번만 셉니다.
  for(const id of ['axeArm','bookwise','innerBreath']){s.skillInheritances[id]=true;s.learned[id]=1;}
  s.skills=['axeArm','bookwise','innerBreath'];assert.equal(stats(s).harmony,Math.floor(rawHarmony*SKILL_FORMULA.harmonyScale*(1+3*SKILL_FORMULA.harmonyPerJob)));
  s.skills=[];
- const j=JOBS.find(x=>x.id==='allRounder');assert.equal(j.parent,'wanderer');
- s.jobMastery.wanderer=2400;s.unlockedJobs=['fisher','wanderer'];assert.equal(canChangeJob(s,'allRounder'),true);
- s.attributes.luk=14;s.level=100;assert.equal(canChangeJob(s,'allRounder'),false,'level growth does not count as allocated points');
- s.attributes.luk=15;s.jobMastery.wanderer=2399;assert.equal(canChangeJob(s,'allRounder'),false);
- const base={hp:1e6,attack:1,magic:1,defense:0,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:1000,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5,harmony:1000};
- const fighter=(st)=>({name:'A',stats:st,hp:st.hp,mana:st.mana,skills:['harmonicWeight'],cooldowns:{},stun:0,effects:{},ranks:{harmonicWeight:1},mastery:{},practice:{}});
- const target=(def,res)=>({name:'B',stats:{...base,defense:def,resist:res,harmony:0},hp:1e6,skills:[],cooldowns:{},stun:0,effects:{}});
- const sk=SKILLS.find(x=>x.id==='harmonicWeight');const raw=1000*sk.multiplier;
- let b=target(0,0);strike(fighter(base),b,()=>0);assert.equal(1e6-b.hp,Math.round(raw*.5)*2);
- b=target(50,0);strike(fighter(base),b,()=>0);assert.equal(1e6-b.hp,Math.round(raw*.5*100/200)+Math.round(raw*.5));
- b=target(0,50);let log=strike(fighter({...base,attack:99999,magic:99999}),b,()=>0);assert.equal(1e6-b.hp,Math.round(raw*.5)+Math.round(raw*.5*100/200),'attack/magic are not added');assert.match(log,/복합 피해/);
- let calls=0;strike(fighter(base),target(0,0),()=>{calls++;return 0;});let normal=0;strike({...fighter(base),skills:['arcane'],ranks:{arcane:1}},target(0,0),()=>{normal++;return 0;});assert.equal(calls,normal,'one hit roll and one crit roll');
+ // v3.160 올라운더는 지웠습니다(조화 비례는 제논 본줄기의 조화 보너스로). 조화 기준값 식만 남겨 검사합니다.
 });
 
 test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; giant/abyssal/starlit change stats and rewards',()=>{

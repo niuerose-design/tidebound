@@ -137,6 +137,15 @@ export function grantBuff(effects: StatusEffects, buff: { id: string; name?: str
     const buffs = (effects.buffs ??= {}), cur = buffs[buff.id];
     buffs[buff.id] = { turns: Math.max(buff.turns, cur?.turns || 0), ...(buff.name ? { name: buff.name } : {}), ...(buff.stats ? { stats: buff.stats } : {}), ...(buff.speedMultiplier ? { speedMultiplier: buff.speedMultiplier } : {}), ...(buff.damageMultiplier ? { damageMultiplier: buff.damageMultiplier } : {}) };
 }
+/** v3.158 접신(아크) · v3.160 파이널 피규레이션(카이저): 장착한 패시브 중 가장 센 변신의 need에 충전이 닿으면 충전을 비우고 자기 버프에 들어갑니다. */
+function triggerSpectre(f: Fighter, notes: string[], ev: CombatEvent) {
+    const spectre = f.skills.map(id => skillById(id)?.spectre).filter((x): x is NonNullable<Skill['spectre']> => !!x).sort((x, y) => y.damageMultiplier - x.damageMultiplier)[0];
+    const effects = (f.effects ??= {});
+    if (!spectre || (effects.charge || 0) < spectre.need) return;
+    const name = spectre.name ?? '접신';
+    grantBuff(effects, { id: 'spectre', name, turns: spectre.turns, damageMultiplier: spectre.damageMultiplier, speedMultiplier: spectre.speedMultiplier, stats: spectre.stats });
+    effects.charge = 0; notes.push(`${name} ${spectre.turns}턴`); ev.statuses.push({ id: 'spectre', turns: spectre.turns, onSelf: true });
+}
 /** 자기 행동마다 버프 턴을 하나씩 줄이고 끝난 버프를 지웁니다. */
 function tickBuffs(effects: StatusEffects) {
     for (const [id, b] of buffsOf(effects)) { b.turns -= 1; if (b.turns <= 0) delete effects.buffs![id]; }
@@ -509,6 +518,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         if (chosen.allIn.heal && spentMana > 0) { const h = Math.min(sa.hp - a.hp, Math.floor(spentMana * chosen.allIn.heal)); a.hp += h; healed += h; }
         notes.push(`올인 · 체력 ${spentHp} · 마나 ${Math.floor(spentMana)}`);
     }
+    // v3.160 흡혈 축적 폭발(제논 메가 스매셔): 이 전투에서 흡혈로 회복한 체력을 태워 기준값에 더합니다.
+    if (chosen?.siphonBurst && (a.effects.siphon || 0) > 0) { const burst = Math.floor(a.effects.siphon! * chosen.siphonBurst.scale); allInBonus += burst; notes.push(`흡혈 축적 ${a.effects.siphon!.toLocaleString()} 방출`); a.effects.siphon = 0; }
     // v24.2 골드 투척: 보유 골드 일부를 던져 피해에 더합니다.
     if (chosen?.goldSpend && (a.gold || 0) > 0) {
         // v3.157 상한: 절대값 cap과 기준 공격력 × capAttack 중 작은 쪽. 골드가 아무리 많아도 공격력에 맞는 만큼만 태우고, 새 생의 저레벨에서도 수십 배가 되지 않습니다.
@@ -593,9 +604,13 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v3.155 웨폰 버라이어티(카데나): 살아 있는 자기 버프 1개마다 피해 +varietyBonus.
     const varietyCount = sa.varietyBonus ? buffsOf(a.effects).length : 0, varietyBoost = 1 + varietyCount * (sa.varietyBonus || 0);
     if (varietyCount) notes.push(`버라이어티 ${varietyCount}`);
+    // v3.160 조화 보너스(제논): 배분한 여섯 능력치의 최저 ÷ 최고 비율 × balanceBonus.
+    const attrs = [sa.attrStr, sa.attrDex, sa.attrInt, sa.attrVit, sa.attrWis, sa.attrLuk].map(x => x || 0), attrTop = Math.max(...attrs), balanceRatio = attrTop > 0 ? Math.min(...attrs) / attrTop : 0;
+    const balanceBoost = chosen?.balanceBonus ? 1 + chosen.balanceBonus * balanceRatio : 1;
+    if (chosen?.balanceBonus) notes.push(`조화 ${Math.round(balanceRatio * 100)}%`);
     // v3.158 자기 버프의 피해 배율(접신): 살아 있는 버프의 damageMultiplier를 곱합니다.
     const buffDamage = buffsOf(a.effects).reduce((m, [, bf]) => m * (bf.damageMultiplier || 1), 1);
-    const linkMultiplier = buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
+    const linkMultiplier = balanceBoost * buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push(chosen?.damageBonusCondition === 'statuses' ? `헥스 ${statusCount}` : '연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly || healOnly;
@@ -606,6 +621,11 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - actual);
+    // v3.160 피격 충전(카이저): 피해를 입는 공격을 맞으면 맞은 쪽의 충전이 쌓이고(치명타 +1), 가득 차면 변신합니다.
+    if (actual > 0 && b.hp > 0) {
+        const onHit = Math.max(0, ...b.skills.map(id => skillById(id)?.chargeOnHit || 0));
+        if (onHit) { b.effects.charge = Math.min(SKILL_FORMULA.charge.max, (b.effects.charge || 0) + onHit + (crit ? 1 : 0)); notes.push(`${b.name} 충전 ${b.effects.charge}`); triggerSpectre(b, notes, ev); }
+    }
     // v25 無: 쓰러질 피해를 받은 쪽이 無를 장착했으면 체력 1로 버티고, 이 행동의 남은 추가타는 멈춥니다.
     let stood = endure(b, sb, notes, ev);
     if (consumedBurn > 0) delete b.effects.burn;
@@ -614,12 +634,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const before = Math.min(SKILL_FORMULA.charge.max, a.effects.charge || 0);
         a.effects.charge = Math.min(SKILL_FORMULA.charge.max, before + chosen.charge + (targetWeakened ? SKILL_FORMULA.charge.weakenedExtra : 0));
         if (a.effects.charge > before) notes.push(`충전 ${a.effects.charge}`);
-        // v3.158 접신(아크): 장착한 패시브 중 가장 센 접신의 need에 충전이 닿으면 충전을 비우고 자기 버프에 들어갑니다.
-        const spectre = a.skills.map(id => skillById(id)?.spectre).filter((x): x is NonNullable<Skill['spectre']> => !!x).sort((x, y) => y.damageMultiplier - x.damageMultiplier)[0];
-        if (spectre && a.effects.charge >= spectre.need) {
-            grantBuff(a.effects, { id: 'spectre', name: '접신', turns: spectre.turns, damageMultiplier: spectre.damageMultiplier, speedMultiplier: spectre.speedMultiplier });
-            a.effects.charge = 0; notes.push(`접신 ${spectre.turns}턴`); ev.statuses.push({ id: 'spectre', turns: spectre.turns, onSelf: true });
-        }
+        triggerSpectre(a, notes, ev);
     }
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
     if (landed && !statusOnly && sb.thorns > 0) {
@@ -760,6 +775,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const recovery = Math.min(sa.hp - a.hp, drain);
         a.hp += recovery;
         ev.drained += recovery;
+        // v3.160 흡혈 축적(제논): 회복한 만큼 쌓아 두고 메가 스매셔가 태웁니다(최대 체력까지).
+        if (recovery > 0 && a.skills.some(id => skillById(id)?.siphonBurst)) a.effects.siphon = Math.min(Math.round(sa.hp), (a.effects.siphon || 0) + recovery);
     }
     // Follow-up hits are part of the same action. They use the same hit chance,
     // cannot recursively trigger another follow-up, and are capped in balance.ts.

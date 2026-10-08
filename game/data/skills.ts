@@ -68,14 +68,12 @@ SKILLS.push(
     { id: 'tidalFate', name: '조류의 운명', desc: '마법 방어 +25, 턴당 마나 회복 +3.', type: 'passive', level: 40, job: 'lunarOracle', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { resist: 25, manaRegen: 3 } },
     { id: 'reefPulse', name: '암초 맥박', desc: '체력 24% 회복 후 마법 공격 160% 피해. 체력 70% 이하에서만 시도.', type: 'active', level: 25, job: 'reefMedic', chance: .5, cooldown: 3, multiplier: 1.6, effect: 'heal', damageType: 'magic', condition: 'wounded', cost: 3, manaCost: 7 },
     { id: 'symbioticCoral', name: '공생 산호', desc: '최대 체력 +60, 흡혈 +4%p.', type: 'passive', level: 25, job: 'reefMedic', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { hp: 60, lifesteal: .04 } },
-    { id: 'bellCrash', name: '종소리 충돌', desc: '현재 체력 2.5%를 실어 물리 공격 190% 피해와 1턴 기절.', type: 'active', level: 25, job: 'bellTurtle', chance: .4, cooldown: 4, multiplier: 1.9, effect: 'stun', scaling: 'hp', scalingRatio: .025, cost: 4, manaCost: 5 },
-    { id: 'shellEcho', name: '껍질의 메아리', desc: '물리 방어 +45, 회피 +3%p, 방어 비례 반격.', type: 'passive', level: 25, job: 'bellTurtle', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { defense: 45, evasion: .03, thorns: .25 , swarmFind: 0.5, resist: 15 } },
+    { id: 'bellCrash', name: '종소리 충돌', desc: '현재 체력을 실어 물리 피해를 줍니다.', type: 'active', level: 25, job: 'bellTurtle', chance: .4, cooldown: 4, multiplier: 1.9, scaling: 'hp', scalingRatio: .025, cost: 4, manaCost: 5 },
+    { id: 'shellEcho', name: '껍질의 메아리', desc: '물리 방어 +45, 회피 +3%p. 맞을 때마다 충전이 쌓이고, 충전 8에 파이널 피규레이션(피해 ×1.3 · 흡혈 +10%p, 4턴)으로 변신합니다.', type: 'passive', level: 25, job: 'bellTurtle', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { defense: 45, evasion: .03, swarmFind: 0.5, resist: 15 }, chargeOnHit: 1, spectre: { need: 8, turns: 4, damageMultiplier: 1.3, name: '파이널 피규레이션', stats: { lifesteal: .1 } } },
     { id: 'sanctuaryShell', name: '성역의 껍질', desc: '최대 체력 +180, 마법 방어 +35, 턴당 체력 회복 +4. 액티브 없이도 유지되는 성역.', type: 'passive', level: 40, job: 'coralSaint', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { hp: 180, resist: 35, hpRegen: 4 } },
     { id: 'saintTide', name: '성인의 조류', desc: '마법 공격 +30, 턴당 마나 회복 +3, 흡혈 +6%p. 두 패시브를 조합해 스스로 버팁니다.', type: 'passive', level: 40, job: 'coralSaint', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { magic: 30, manaRegen: 3, lifesteal: .06 } },
     { id: 'thornCounter', name: '가시 반류', desc: '물리 방어 비례 피해와 3턴 출혈. 이미 출혈 중인 적에게 직접 피해 +25%.', type: 'active', level: 40, job: 'brineThorn', chance: .42, cooldown: 4, multiplier: 2.3, effect: 'bleed', damageBonusCondition: 'bleeding', conditionalDamageBonus: .25, cost: 5, manaCost: 8 },
     { id: 'reefFortress', name: '가시 성채', desc: '물리 방어 +55, 방어 비례 반격.', type: 'passive', level: 40, job: 'brineThorn', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { defense: 55, thorns: .35 , swarmFind: 0.8, resist: 20 } },
-    { id: 'windupCast', name: '태엽 방출', desc: 'HP와 MP 일부를 함께 태워 복합 피해 190%를 입힙니다.', type: 'active', level: 25, job: 'clockworkAngler', chance: .5, cooldown: 3, multiplier: 1.9, scaling: 'hybrid', scalingRatio: .04, cost: 4, manaCost: 6 },
-    { id: 'springLoaded', name: '감긴 태엽', desc: '속도 +25, 명중 +8%p.', type: 'passive', level: 25, job: 'clockworkAngler', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { speed: 25, accuracy: .08 } },
     { id: 'loadedHook', name: '밑장 챔질', desc: '물리 공격 120% 피해. 높은 확률로 작게 회복하며 자주 발동합니다.', type: 'active', level: 25, job: 'gambler', chance: .7, cooldown: 1, multiplier: 1.2, effect: 'drain', cost: 2, manaCost: 2 },
     { id: 'riskDividend', name: '위험 배당', desc: '치명 피해 +25%p, 골드 획득 +15%.', type: 'passive', level: 25, job: 'gambler', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { critDamage: .25, goldBonus: .15 } },
     { id: 'redWake', name: '붉은 조류', desc: '현재 체력 12%를 추가한 물리 공격 220% 피해와 흡혈.', type: 'active', level: 40, job: 'bloodTide', chance: .35, cooldown: 4, multiplier: 2.2, effect: 'drain', scaling: 'hp', scalingRatio: .12, cost: 5, manaCost: 5 },
@@ -132,7 +130,6 @@ SKILLS.push(
 // 각 숫자가 성장 Lv.1, 2, ...의 목표입니다. SP와 숙련이 같은 단계를 엽니다.
 // 올라운더: 원시 피해 = 40 + 직접 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12 (장비·버프 제외), 스킬 배율 2.2.
 // 물리 50%·마법 50%로 나눠 각각 방어를 적용하며, 일반 공격력은 더하지 않습니다. 수치는 검증 초안입니다.
-SKILLS.push({ id: 'harmonicWeight', name: '육중 조화', desc: '직접 배분한 여섯 능력치로 원시 피해를 만들고 물리·마법 절반씩 복합 피해를 입힙니다. 가장 낮은 능력치가 높을수록 강해집니다.', type: 'active', level: 40, job: 'allRounder', chance: .5, cooldown: 3, damageType: 'split', scaling: 'harmony', cost: 4, manaCost: 16, multiplier: 2.2 });
 
 // v21 직업 확장 기술. 직업 레벨·숙련 곡선·밸런스 표는 아래 공통 처리에서 적용됩니다.
 SKILLS.push(...EXPANSION_SKILLS);
@@ -180,7 +177,7 @@ const rankEffects: Record<string, Skill['rankEffects']> = {
     thunderPsalm: { chanceIncrease: .04, manaReduction: 2 }, overcast: { bonusScale: .3 }, moonTide: { chanceIncrease: .05, manaReduction: 1 }, tidalFate: { bonusScale: .3 },
     reefPulse: { chanceIncrease: .05, manaReduction: 1 }, symbioticCoral: { bonusScale: .3 }, bellCrash: { apReduction: 1 }, shellEcho: { bonusScale: .3 },
     sanctuaryShell: { bonusScale: .3 }, saintTide: { bonusScale: .3 }, thornCounter: { chanceIncrease: .05 }, reefFortress: { bonusScale: .3 },
-    windupCast: { chanceIncrease: .04, manaReduction: 1 }, springLoaded: { bonusScale: .3 }, loadedHook: { chanceIncrease: .04, cooldownReduction: 1 }, riskDividend: { bonusScale: .3 },
+    loadedHook: { chanceIncrease: .04, cooldownReduction: 1 }, riskDividend: { bonusScale: .3 },
     redWake: { chanceIncrease: .04 }, bloodEngine: { bonusScale: .3 },
     netWeave: { bonusScale: .3 }, fishWhisper: { bonusScale: .3 }, driftwoodGuard: { bonusScale: .3 }, salvageSense: { bonusScale: .3 },
     twinHook: { chanceIncrease: .04, cooldownReduction: 1 }, chartedCurrents: { bonusScale: .3 }, pearlLedger: { bonusScale: .3 }, salvageContract: { bonusScale: .3 }, rareSense: { bonusScale: .3 }, memoryOfTides: { bonusScale: .3 }, electricBite: { chanceIncrease: .04, manaReduction: 1 }, tentacleBarrage: { chanceIncrease: .03, cooldownReduction: 1 },
@@ -289,7 +286,7 @@ export function costAtMastery(sk: Skill) {
 }
 export const isConstraintSkill = (sk: Skill) => !sk.song && (costAtMastery(sk) <= 0 || !!sk.job && CONSTRAINT_JOBS.has(sk.job));
 /** 예외: 수련 · 능력치 수련 · 해커 스킬 · 역할 경계 직업(제로 · 아이돌 연습생)의 스킬(제약형은 따로 천만 단위). */
-const SKILL_CURVE_EXEMPT = (sk: Skill) => !!sk.job && (/^training/.test(sk.job) || /Training[123]$|[hH]acker$/.test(sk.job) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff'].includes(subRoleOf(JOBS.find(j => j.id === sk.job) ?? { id: sk.job }, '')));
+const SKILL_CURVE_EXEMPT = (sk: Skill) => !!sk.job && (/^training/.test(sk.job) || /Training[123]$|[hH]acker$/.test(sk.job) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff', 'borderHarmony'].includes(subRoleOf(JOBS.find(j => j.id === sk.job) ?? { id: sk.job }, '')));
 export const LEGACY_FIRST_MILESTONE: Record<string, number> = {};
 const round2 = (n: number) => { const p = 10 ** Math.max(0, Math.floor(Math.log10(n)) - 1); return Math.round(n / p) * p; };
 export function normalizeSkillMastery(list: Skill[]) {

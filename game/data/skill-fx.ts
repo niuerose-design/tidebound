@@ -13,7 +13,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
     // 루미너스 (2차): 빛
     oath: 'star', vowStrike: 'star',
     // 독립 물리·복합
-    netThrow: 'wave', oathShout: 'song', runeBurst: 'arcane', harmonicWeight: 'quake', windupCast: 'arcane',
+    netThrow: 'wave', oathShout: 'song', runeBurst: 'arcane',
     // 아처: 관통·베기
     abyssHarpoon: 'pierce', krakenBore: 'pierce', needleStep: 'slash',
     // 경제

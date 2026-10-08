@@ -31,7 +31,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     pearlPrayer: { chance: .6, multiplier: 1.7, manaCost: 16, damageType: 'magic', healRatio: .18 },
     crush: { chance: .22, multiplier: 1.5 },
     oath: { chance: .24, multiplier: 2.1, drainRatio: .15 },
-    vitalSurge: { chance: .23, multiplier: 1.65, scalingRatio: .05, drainRatio: .15 },
+    vitalSurge: { chance: .23, multiplier: 1.65, scalingRatio: .05, drainRatio: .15, balanceBonus: .3 },
     // v27.5 망인 계보 계승 가치: 다크 엘리멘트 AP 4→2·대기 3, 쉐도우 배트 발동 34%·×1.9·AP 3. 같은 차수 기술 중 꼴찌였습니다.
     // v27.4 유리 대포(제약 직업): 240%·빈사 +50%.
     wakeFist: { chance: .26, multiplier: 1.45 },
@@ -47,14 +47,12 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     thunderPsalm: { chance: .55, multiplier: 3.5, scalingRatio: .16, manaCost: 28 },
     moonTide: { chance: .6, multiplier: 2, manaCost: 20, healRatio: .2 },
     reefPulse: { chance: .55, multiplier: 1.25, manaCost: 14, healRatio: .16 },
-    bellCrash: { chance: .24, multiplier: 1.5, scalingRatio: .02 },
+    bellCrash: { chance: .26, multiplier: 1.5, scalingRatio: .02 },
     // v21 수호 계열: 물리 방어 비례 피해(방어 친화도 적용).
     thornCounter: { chance: .26, multiplier: 1.8, scaling: 'defense', scalingRatio: 1.2 },
-    windupCast: { chance: .25, multiplier: 1.5, scalingRatio: .03 },
     loadedHook: { chance: .3, multiplier: 1.05, cooldown: 2, drainRatio: .1 },
-    redWake: { chance: .24, multiplier: 1.65, scalingRatio: .07, drainRatio: .18 },
+    redWake: { chance: .24, multiplier: 1.65, scalingRatio: .07, drainRatio: .18, balanceBonus: .4 },
     // 올라운더: check-all-rounder.mjs 검증값
-    harmonicWeight: { chance: .5, multiplier: 2.2, cooldown: 3, manaCost: 16 },
     twinHook: { chance: .24, multiplier: 1.15, extraAttackMultiplier: .5 },
     electricBite: { chance: .28, multiplier: 1.75, damageType: 'physical' },
     tentacleBarrage: { chance: .22, multiplier: 1.05, extraAttackMultiplier: .45 },
@@ -80,7 +78,7 @@ for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE }
  * - 1~3차 연계 공격기는 상태이상 없이 피해만 줍니다(같은 계보의 보조기로 상태를 겁니다).
  */
 const STATUS_ONLY_SKILLS = ['anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
-    'bellCrash', 'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
+    'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
     'quakeStep', 'sealHex', 'driftwoodShove', 'currentJam', 'netThrow', 'oathShout', 'rottenBait', ...V25_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, poison: 4, burn: 3, weaken: 3, silence: 2, slow: 3, corrode: STATUS_TUNING.corrodeTurns };
@@ -200,7 +198,9 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.burnConsume) sk.desc += ` 명중한 적의 화상 중첩을 모두 터뜨려 중첩당 피해 +${Math.round(sk.burnConsume * 100)}%(화상은 사라짐).`;
         if (sk.selfBuff) sk.desc += ` 쓰면 자기 버프 ${sk.selfBuff.name ?? sk.selfBuff.id} ${sk.selfBuff.turns}턴.`;
         if (sk.extendBuffs) sk.desc += ` 살아 있는 자기 버프를 모두 ${sk.extendBuffs}턴 연장.`;
-        if (sk.requiresBuff) sk.desc += ` ${sk.requiresBuff === 'spectre' ? '접신' : sk.requiresBuff} 중에만 나갑니다.`;
+        if (sk.requiresBuff) sk.desc += ` ${sk.requiresBuff === 'spectre' ? '변신' : sk.requiresBuff} 중에만 나갑니다.`;
+        if (sk.balanceBonus) sk.desc += ` 여섯 능력치가 고를수록(최저 ÷ 최고) 최대 +${Math.round(sk.balanceBonus * 100)}%.`;
+        if (sk.siphonBurst) sk.desc += ` 이 전투에서 흡혈한 체력 × ${sk.siphonBurst.scale}을 피해에 더하고 비웁니다.`;
         sk.desc += progressDesc(sk);
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
