@@ -1,5 +1,6 @@
 'use client';
 import { MasteryBoard } from './mastery-board';
+import { useFxGlowClass } from './skill-fx-setting';
 import type { State } from '@/game/types';
 import { Skills } from './skills-panel';
 import { Classes } from './classes-panel';
@@ -50,6 +51,8 @@ export const navHidden = (s: State | null | undefined, view: string) => { if (!s
 export const NAV: { label: string; items: NavItem[] }[] = [{ label: '모험', items: [{ id: 'battle', name: '자동 사냥', Icon: Swords }, { id: 'stages', name: '사냥터·던전', Icon: Map, views: ['stages', 'dungeons'], hidden: hackerOnly }, { id: 'altar', name: '제단', Icon: Flame, views: ['altar'] }, { id: 'hacker', name: '해킹', Icon: Terminal, views: ['hacker', 'crew'], hidden: (s: State) => !isHackerJob(s.job) && !s.hacker?.crew }] }, { label: '모험가', items: [{ id: 'character', name: '능력치 · 치장', Icon: Target, views: ['character', 'cosmetics'] }, { id: 'shop', name: '상점 · 장비 보관함', Icon: ShoppingBag, views: ['shop', 'inventory'], hidden: hackerOnly }, { id: 'skills', name: '스킬 · 전직', Icon: Zap, views: ['skills', 'classes', 'mastery'] }, { id: 'rebirth', name: '환생 · 분신', Icon: RefreshCw, views: ['rebirth', 'slots'], hidden: hackerOnly }, { id: 'slots', name: '분신', Icon: RefreshCw, views: ['slots'], hidden: (s: State) => !isHackerJob(s.job) }] }, { label: '기록과 명예', items: [{ id: 'book', name: '도감 · 업적', Icon: BookOpen, views: ['book', 'voyage'] }, { id: 'stats', name: '통계 · 기록', Icon: BarChart3, views: ['stats', 'records'] }, { id: 'guild', name: '길드', Icon: Users, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10', hidden: hackerOnly }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10' }, { id: 'help', name: '도움말 · 업데이트', Icon: HelpCircle, views: ['help', 'updates'] }] }];
 
 export default function GameShell() {
+    // v3.171 섬광이 꺼진 기기에서는 <html>에 fx-no-glow를 붙입니다(설정 창의 '섬광 효과').
+    useFxGlowClass();
     const game = useGame();
     const { state: s, error, busy, saved, send, loadRanking } = game;
     // v3.13 실시간 효율: 동기화로 받은 원본 상태만 흘려 넣습니다(브라우저 계산, 서버 요청 없음).
