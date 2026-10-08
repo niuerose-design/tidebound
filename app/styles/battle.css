@@ -1021,12 +1021,12 @@
 /* v3.178 처형 연출(히어로 소드 오브 버닝 소울 등): 빈사 적에게 추가 피해가 붙으면 몬스터 그림이 반으로 갈라지고 HP 바가 베입니다 */
 .scene-foe-cleave{position:absolute;inset:0;z-index:2;pointer-events:none}
 /* v3.180 처형 연출 중에는 소드 오브 버닝 소울 전용 장면의 참격 선(화면을 긋는 두 줄)을 띄우지 않습니다 — 베인 자리는 이미 몬스터 · HP 바 조각이 보여 줍니다. 어둠 · 제목 · 파편은 그대로. */
-.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-a,.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-b{display:none}
+.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-a,.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-b,.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-frag{display:none}
 .battle-scene:has(.scene-foe-cleave) .scene-foe:not(.scene-foe-half){opacity:0;animation:none}
 .scene-foe-half{animation:none}
 .scene-foe-half.upper{clip-path:polygon(0 0,100% 0,100% 38%,0 58%);animation:foeCleaveUpper 1.4s cubic-bezier(.5,0,.3,1) calc(var(--fx-delay) + .3s) both}
 .scene-foe-half.lower{clip-path:polygon(0 58%,100% 38%,100% 100%,0 100%);animation:foeCleaveLower 1.4s cubic-bezier(.5,0,.3,1) calc(var(--fx-delay) + .3s) both}
-.scene-foe-cut{position:absolute;right:-20px;top:50%;width:200px;height:3px;margin-top:-10px;background:linear-gradient(90deg,transparent,#fff,#ffe9a8,#fff,transparent);box-shadow:0 0 14px #fff,0 0 28px #ffb86b;rotate:-11deg;transform-origin:100% 50%;animation:foeCleaveCut .8s cubic-bezier(.8,0,.2,1) var(--fx-delay) both}
+.scene-foe-cut{position:absolute;right:16px;top:50%;width:120px;height:3px;margin-top:-6px;background:linear-gradient(90deg,transparent,#fff,#ffe9a8,#fff,transparent);box-shadow:0 0 10px #fff,0 0 20px #ffb86b;rotate:-11deg;transform-origin:100% 50%;animation:foeCleaveCut .7s cubic-bezier(.8,0,.2,1) var(--fx-delay) both}
 @keyframes foeCleaveUpper{0%{translate:0 0;rotate:0deg;filter:brightness(1)}8%{filter:brightness(3)}40%{translate:14px -22px;rotate:9deg;opacity:1}100%{translate:30px -50px;rotate:16deg;opacity:0}}
 @keyframes foeCleaveLower{0%{translate:0 0;rotate:0deg}8%{filter:brightness(3)}40%{translate:-6px 16px;rotate:-5deg;opacity:1}100%{translate:-12px 46px;rotate:-10deg;opacity:0}}
 @keyframes foeCleaveCut{0%{opacity:0;scale:0 1}30%{opacity:1;scale:1 1}70%{opacity:1}100%{opacity:0;scale:1 2.5}}
@@ -1039,6 +1039,11 @@
 @keyframes barCleaveBlade{0%{opacity:0;scale:0 1}25%{opacity:1;scale:1 1}70%{opacity:1}100%{opacity:0;scale:1 2.4}}
 @keyframes barCleaveKeep{0%{translate:0 0;filter:brightness(1)}6%{translate:-3px -3px;filter:brightness(3)}30%{translate:-3px -3px;filter:brightness(1)}100%{translate:-3px -3px}}
 @keyframes barCleaveFly{0%{opacity:1;translate:0 0;rotate:0deg;filter:brightness(1)}6%{filter:brightness(3)}20%{opacity:1;translate:14px 10px;rotate:5deg}100%{opacity:0;translate:70px 90px;rotate:28deg;filter:brightness(1)}}
+/* v3.180 복구: 빈 채로 두었다가 원본이 눈에 보이게 돌아옵니다(밝게 번쩍이며 제자리로). */
+.scene-foe-restore{animation:foeRestore .45s ease-out both}
+.bar-cleave-piece.restore{animation:barRestore .45s ease-out both}
+@keyframes foeRestore{0%{opacity:0;scale:.85;filter:brightness(2.5)}60%{opacity:1;filter:brightness(1.6)}100%{opacity:1;scale:1;filter:brightness(1)}}
+@keyframes barRestore{0%{opacity:0;translate:0 10px;filter:brightness(2.5)}60%{opacity:1;filter:brightness(1.6)}100%{opacity:1;translate:0 0;filter:brightness(1)}}
 @media(prefers-reduced-motion:reduce){.scene-foe-cleave,.bar-cleave{display:none}.player-hp-anchor:has(.bar-cleave)>.meter{visibility:visible}}
 /* 정지된 시간: 푸르게 멈춘 화면, 도는 시계 테두리, 금 가는 선 */
 .ult-time{--fx:#a9c7ff}.ult-time .scene-fx-dark{background:#020816}
