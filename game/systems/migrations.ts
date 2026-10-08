@@ -164,12 +164,16 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
     /** v3.148 아델 재개편: 곁가지 허공 방랑자(회피 + 마나)는 특색이 약해 지웠습니다. */
     'voidDrifter',
     /** v3.151 일리움 재개편: 곁가지 크리스탈 연성사(마나 비례)는 아델 장치와 겹쳐 지웠습니다. */
-    'crystalCaster'];
+    'crystalCaster',
+    /** v3.152 패스파인더 재개편: 숨은 2차 몬스터 도감 독자(도감 비례)는 섀도어 · 기록 비례 직업과 겹쳐 지웠습니다. */
+    'codexReader'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.138 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */
     'shieldBash', 'shieldWall', 'ironRetort', 'spikedShield', 'bulwarkSlam', 'stoneSkin', 'lastStand', 'undying', 'aegisJudgment', 'divineAegis', 'fortress', 'coralPatience',
     /** v3.140 숨은 2차 주먹 마도사(마법 계수 → 물리 피해)는 루미너스 계보가 그 자리를 맡아 지웠습니다. */
     'arcaneFist', 'manaMuscle',
+    /** v3.152 몬스터 도감 독자의 도감 낭독 · 여백 메모. */
+    'encyclopediaBolt', 'marginNotes',
     /** v3.143 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
     'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind'];
 /**

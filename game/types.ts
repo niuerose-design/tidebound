@@ -68,6 +68,8 @@ export type Stats = {
     /** v24.2 진행도 비례 피해의 기준값(능력치 계산이 채움). 도감 종 수 · log10(누적 처치) · √(던전 클리어+보스 처치) · log10(보유 골드). */
     codexPower?: number;
     catchPower?: number;
+    /** v3.152 렐릭의 힘: 획득 경험치 보너스 중 스킬 · 장비 · 직업 몫(환생 · 연구 몫 제외). 패스파인더의 렐릭 비례 피해 기준값. */
+    relicPower?: number;
     huntPower?: number;
     goldPower?: number;
     /** v25.4 숙달한 직업 수(숙달 비례 피해의 기준값). */
@@ -215,7 +217,7 @@ export type Skill = {
     /** v3.17 장착 패시브: 쓰러진 뒤 회복 대기를 이만큼(턴) 줄입니다(환생 10회 이상). */
     revive?: number;
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. swap: 피해 유형과 반대 공격력을 기준값으로(물리 계수 마법 피해 등). */
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr' | /** v3.151 마력 평타 계수 기준값: 마법 공격 × (arcaneStrikeRatio + 마력 평타 계수 보너스). 일리움. */ 'arcane';
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr' | /** v3.152 렐릭의 힘 비례: 피해 × (1 + relicPower × scalingRatio). 패스파인더. */ 'relic' | /** v3.151 마력 평타 계수 기준값: 마법 공격 × (arcaneStrikeRatio + 마력 평타 계수 보너스). 일리움. */ 'arcane';
     /** v26.2 scaling 'attr'가 비례하는 능력치. 기준값 += 능력치 × scalingRatio. */
     scalingAttribute?: Attribute;
     /** v3.97 scaling 'attr'에 물리 공격 × 이 비율을 더합니다(행운 외길 상위 차수: 장비 · 연구가 쌓여도 기술이 따라 커지도록). */

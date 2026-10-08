@@ -108,6 +108,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         out.push(sk.restoreAll ? '직접 피해 없음. 나와 상대의 체력·마나를 모두 가득 채웁니다(전투당 1회, 쓸 때마다 직업 숙련 +25).' : sk.statusOnly ? '직접 피해 없음.' : `${damage}.`);
         if (sk.scaling === 'codex') out.push(`도감 기록(발견한 몬스터 + 등록한 물건) 1개마다 피해가 ${skillPercent(sk.scalingRatio ?? 0)} 커집니다.`);
         if (sk.scaling === 'catch') out.push(`피해 × (1 + log10(누적 처치 + 1) × ${number(sk.scalingRatio ?? 0)}) · 처치 10배마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
+        if (sk.scaling === 'relic') out.push(`피해 × (1 + 렐릭의 힘 × ${number(sk.scalingRatio ?? 0)}) · 렐릭의 힘 = 획득 경험치 보너스 중 스킬 · 장비 · 직업 몫(환생 · 연구 제외). 경험치 보너스 +100%마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'hunt') out.push(`피해 × (1 + √(던전 클리어 + 보스 처치) × ${number(sk.scalingRatio ?? 0)})`);
         if (sk.scaling === 'variant') out.push(`피해 × (1 + √(변종·황금 처치 수) × ${number(sk.scalingRatio ?? 0)})`);
         if (sk.scaling === 'mastered') out.push(`숙달한 직업 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
