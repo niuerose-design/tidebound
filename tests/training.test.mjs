@@ -352,3 +352,24 @@ test('v3.146 Eunwol: companion passives add spirit follow-up hits to every actio
     // 정령 없는 기본 공격은 추가타 없음.
     const e0 = []; strike(fighter([]), target(), () => 0, e0); assert.equal(e0[0].hits.length, 1);
 });
+
+test('v3.147 Adele burns current mana into damage; Flame Wizard Genesis detonates burn stacks', async () => {
+    const { SECRET_SKILLS } = await load('game/secret/skills.js'); const { SKILL_FORMULA } = await load('game/data/balance.js');
+    const sec = id => SECRET_SKILLS.find(s => s.id === id), pub = id => SKILLS.find(s => s.id === id);
+    for (const id of ['voidLance', 'leviathanEquation', 'abyssDecree', 'voidCollapse']) { assert.equal(sec(id).manaCost, 0, id); assert.ok(sec(id).manaBurn > 0, id); assert.equal(sec(id).scaling, undefined, id); }
+    assert.equal(sec('nullStep'), undefined); assert.equal(JOBS.find(j => j.id === 'voidDrifter'), undefined);
+    const base = { hp: 1000, attack: 0, magic: 300, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 2000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const fighter = (skills, mana = 2000) => ({ name: 'A', stats: { ...base }, hp: 1000, mana, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} });
+    const target = (effects = {}) => ({ name: 'B', stats: { ...base, hp: 1e6 }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects });
+    // 샤드: 현재 마나 2000의 12% = 240을 태우고, 기준값 300 + 240 × 6 = 1740 → 피해 1740 × 배율.
+    const a = fighter(['voidLance']); const e = []; strike(a, target(), () => 0, e); assert.equal(e[0].manaBurned, 240); assert.equal(a.mana, 1760);
+    const t0 = target(); const dry = fighter(['voidLance'], 0); const e0 = []; strike(dry, t0, () => 0, e0); assert.equal(e0[0].skillName, e[0].skillName, 'usable with 0 mana (nothing to burn)');
+    assert.ok(Math.abs(e[0].total / e0[0].total - 1740 / 300) < .02, `burned mana adds to the base: ${e[0].total} vs ${e0[0].total}`);
+    assert.equal(SKILL_FORMULA.manaBurnScale, 6);
+    // 창세의 빛: 화상 3중첩이면 ×(1 + 3 × .35), 화상은 사라짐. 화상이 없으면 그대로.
+    assert.equal(pub('genesis').burnConsume, .35); assert.equal(pub('genesis').scaling, undefined); assert.equal(pub('starfall').effect, undefined);
+    const forced = { id: 'genesis', index: 0, count: 1, kind: 'awaken' };
+    const plain = target(); strike(fighter(['genesis']), plain, () => 0, [], false, false, forced); const d0 = 1e6 - plain.hp;
+    const burning = target({ burn: { perStack: 10, stacks: 3, turns: 5 } }); strike(fighter(['genesis']), burning, () => 0, [], false, false, forced); const d3 = 1e6 - burning.hp;
+    assert.equal(burning.effects.burn, undefined, 'stacks consumed'); assert.ok(Math.abs(d3 / d0 - 2.05 * (1 + SKILL_FORMULA.burnVulnerability)) < .03, `burn detonation ${d0} → ${d3}`);
+});

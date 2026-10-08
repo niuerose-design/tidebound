@@ -121,6 +121,8 @@ export const SKILL_FORMULA = {
     crushDefense: 1.5, weakenedDamage: .75,
     /** v3.143 충전(메카닉): 최대 중첩과, 약화된 적을 충전 기술로 때릴 때 더 쌓이는 중첩. */
     charge: { max: 8, weakenedExtra: 1 },
+    /** v3.147 마나 연소(아델): 태운 마나 1마다 피해 기준값에 더하는 값(기술의 burnScale이 없을 때). */
+    manaBurnScale: 6,
     /**
      * v27.57 지속 피해 셋의 '가득 찬 상태' 이론 증가량을 맞춥니다(턴당, 위력 P 기준):
      *   출혈 0.26P + 받는 피해 +12% ≈ 0.38P · 화상 3중첩 × 0.11P + 받는 피해 +6% ≈ 0.39P · 중독 5중첩 × 0.075P = 0.375P

@@ -31,7 +31,7 @@ test('Growth descriptions expose real bone penalties, negative AP and farming st
  const study=skillGrowthStages(SKILLS.find(sk=>sk.id==='titanFieldNotes'));assert.match(study[0].effects.join(' '),/모든 보스 처치 시 숙련 ×3/);assert.match(study.at(-1).effects.join(' '),/숙련 ×8/);
 });
 test('Active descriptions show maximum-resource scaling, statuses and additional hits',()=>{
- const voidLance=skillGrowthStages(SKILLS.find(sk=>sk.id==='voidLance'));assert.match(voidLance[0].effects.join(' '),/최대 마나 × 0.3/);
+ const voidLance=skillGrowthStages(SKILLS.find(sk=>sk.id==='voidLance'));assert.match(voidLance[0].effects.join(' '),/태운 마나/);
  const oath=skillGrowthStages(SKILLS.find(sk=>sk.id==='oath'));assert.match(oath[0].effects[0],/마법 공격\(물리 피해로 바꿈\)/);
  const hush=skillGrowthStages(SKILLS.find(sk=>sk.id==='hushCurrent'));assert.match(hush[0].effects.join(' '),/침묵 4턴/);assert.match(hush[0].effects[0],/직접 피해 없음/);
  const twin=skillGrowthStages(SKILLS.find(sk=>sk.id==='twinHook'));assert.match(twin[0].effects.join(' '),/추가 공격/);
