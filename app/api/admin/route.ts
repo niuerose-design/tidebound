@@ -1,11 +1,11 @@
 import { checkOrigin, failure, readJson } from '@/game/server/store';
 import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats, resetAltar, setAltarBlessingLevel, adminIncome } from '@/game/server/admin';
 import { readHacks, clearBroadcast, clearHackEffects } from '@/game/server/hacks';
-import { postNewsSample, recentNews } from '@/game/server/news';
+import { postNewsSample, recentNews, clearChatScope } from '@/game/server/news';
 import { secrecyOn, setSecrecy } from '@/game/server/secrecy';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
-/** v27.26 운영자 도구. 헤더 x-admin-key 필요. POST { action: 'search', query } | 'preview' | 'apply' | v27.27 'events' | 'saveEvent' { event } | 'deleteEvent' { id } | 'toggleEvent' { id, disabled } | 'adjust' { id, gold?, pearls? } | v27.31 'closures' | 'setClosed' { kind: 'stages'|'dungeons', id, closed } | v27.32 'stats' | 소식 테스트 'news' | 'newsTest' { kind, name?, text?, tag? }. */
+/** v27.26 운영자 도구. 헤더 x-admin-key 필요. POST { action: 'search', query } | 'preview' | 'apply' | v27.27 'events' | 'saveEvent' { event } | 'deleteEvent' { id } | 'toggleEvent' { id, disabled } | 'adjust' { id, gold?, pearls? } | v27.31 'closures' | 'setClosed' { kind: 'stages'|'dungeons', id, closed } | v27.32 'stats' | 소식 테스트 'news' | 'newsTest' { kind, name?, text?, tag? } | v3.190 'clearChat' { scope: 'news'|'global'|'guild'|'all' }. */
 export async function POST(req: Request) { try {
     checkOrigin(req);
     requireAdmin(req);
@@ -32,6 +32,8 @@ export async function POST(req: Request) { try {
     // 운영 페이지 소식 테스트: 종류별 예시 줄을 실제와 같은 문장·발신자로 올리고 최근 20줄을 돌려줍니다.
     if (body.action === 'news') return Response.json({ rows: await recentNews() }, { headers });
     if (body.action === 'newsTest') return Response.json({ rows: await postNewsSample(String(body.kind ?? ''), { name: typeof body.name === 'string' ? body.name : undefined, text: typeof body.text === 'string' ? body.text : undefined, tag: body.tag !== false }, Date.now()) }, { headers });
+    // v3.190 소식 · 채팅 전체 지우기. 지운 줄 수와 남은 소식 목록을 돌려줍니다.
+    if (body.action === 'clearChat') return Response.json(await clearChatScope(String(body.scope ?? '')), { headers });
     if (body.action === 'closures') return Response.json(await listClosures(), { headers });
     if (body.action === 'setClosed') return Response.json(await setClosed(String(body.kind ?? ''), String(body.id ?? ''), !!body.closed), { headers });
     if (body.action === 'adjust') return Response.json(await adjustCurrency(String(body.id ?? ''), { gold: body.gold, pearls: body.pearls }), { headers });

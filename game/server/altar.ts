@@ -281,7 +281,7 @@ export function applyOffering(s: State, o: Offering, points: number, gauge: Alta
     addLog(s, `제단에 공물을 바쳤습니다 · ${parts} · 기여도 +${points.toLocaleString()} (${gaugeName(gauge)})`, 'system');
 }
 /**
- * 축복 게이지가 한 칸 찰 때마다: 닫혀 있으면 1단계로 열고, 진행 중이면 단계 +1. 올렸으면 소식을 냅니다.
+ * 축복 게이지가 한 칸 찰 때마다: 닫혀 있으면 1단계로 열고, 진행 중이면 단계 +1. 4단계 이상이 되었으면 소식을 냅니다.
  * v3.85 바치기 뒤뿐 아니라 공용 정보를 읽을 때도 부릅니다. 축복이 끝나거나(0단계) 상위 단계가 3단계로 내려와 비용이 바뀌었을 때
  * 이미 쌓인 기여도가 충분하면 누가 1이라도 더 바치지 않아도 바로 열립니다. 조건부 UPDATE라 여러 인스턴스가 동시에 불러도 한 번만 오릅니다.
  */
@@ -301,7 +301,8 @@ async function levelBlessing(b: typeof BLESSINGS[number], now: number, by: strin
         if (!r) { if (reread) break; reread = true; g = (await database.listAltarGauges()).find(x => x.id === b.id); continue; }
         opened++; until = r.until; level = r.level; g = { ...g, ...r };
     }
-    if (opened) { await refreshAltarEvents(now); await announce(`${by} ${josa(b.name, '이가')} ${!wasLive ? `열렸습니다${level > 1 ? `(${level}단계)` : ''}` : level > before ? `${level}단계가 되었습니다` : (level > BLESSING_HIGH_FROM ? `${level}단계가 ${Math.round(blessingLevelMs(b.hours, level) / 60_000)}분 다시 유지됩니다` : `${level}단계로 ${opened}시간 연장되었습니다`)}! ${blessingDesc(b, level)} · ${kstIso(until).slice(11, 16)}까지`, now); }
+    // v3.190 축복 소식은 4단계 이상(BLESSING_HIGH_FROM 초과)에 닿았을 때만 냅니다. 1~3단계 열림·연장은 제단 화면과 알림 줄로만 보입니다.
+    if (opened) { await refreshAltarEvents(now); if (level > BLESSING_HIGH_FROM) await announce(`${by} ${josa(b.name, '이가')} ${!wasLive ? `열렸습니다${level > 1 ? `(${level}단계)` : ''}` : level > before ? `${level}단계가 되었습니다` : (level > BLESSING_HIGH_FROM ? `${level}단계가 ${Math.round(blessingLevelMs(b.hours, level) / 60_000)}분 다시 유지됩니다` : `${level}단계로 ${opened}시간 연장되었습니다`)}! ${blessingDesc(b, level)} · ${kstIso(until).slice(11, 16)}까지`, now); }
     return opened > 0;
 }
 /** 저장이 끝난 뒤 한 번: 기여·합계·게이지를 더하고, 가득 찬 게이지를 처리합니다. */

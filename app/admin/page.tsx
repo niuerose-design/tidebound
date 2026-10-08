@@ -19,7 +19,7 @@ type IncomeData = { at: number; measured: number; recent: number; median: number
 const big = (v: number) => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(2)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
 type NewsRow = { id: number; name: string; text: string; at: number; hacker: boolean };
 /** 운영 페이지 소식 테스트 종류(server/news.ts NEWS_SAMPLES와 같은 순서). */
-const NEWS_KINDS: [string, string][] = [['onyx', '칠흑 장신구'], ['ascend', '승천'], ['tier5', '5차 전직'], ['abyss', '무릉도장 50층'], ['star22', '22성 강화'], ['general', '장성 진급'], ['hacker', '해커 전직(빨간 줄)'], ['god', '제단 · 신 깨어남'], ['raid', '제단 · 월드보스 출현']];
+const NEWS_KINDS: [string, string][] = [['onyx', '칠흑 장신구'], ['ascend', '승천'], ['tier5', '5차 전직'], ['abyss', '무릉도장 50층'], ['star22', '22성 강화'], ['general', '진급(하사)'], ['hacker', '해커 전직(빨간 줄)'], ['god', '제단 · 신 깨어남'], ['raid', '제단 · 월드보스 출현']];
 const BLESS_NAMES: Record<string, string> = { gold: '풍요의 축복', exp: '성장의 축복', mimic: '까미의 축복', nuri: '누리의 축복' };
 type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };
@@ -40,7 +40,7 @@ const HELP: Record<Tab, string> = {
     events: '기간 동안 모든 모험가에게 배율을 겁니다(겹치면 곱함). 배율을 모두 1로 두면 이름만 배너 공지로 뜹니다.',
     closures: '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나옵니다(사냥터는 더 앞의 열린 곳으로). 서버마다 최대 30초 걸립니다.',
     stats: '모든 세이브를 읽어 집계합니다(불러올 때만 계산). 활동은 마지막 저장 시각 기준입니다.',
-    news: '기록판 ‘소식’ 탭에 실제와 같은 줄을 올려 봅니다. 모두에게 보이므로 기본으로 [테스트]를 붙입니다.',
+    news: '기록판 ‘소식’ 탭에 실제와 같은 줄을 올려 봅니다. 모두에게 보이므로 기본으로 [테스트]를 붙입니다. 아래 ‘지우기’로 소식 · 전체 채팅 · 길드 채팅을 통째로 지울 수 있습니다(되돌릴 수 없음).',
     income: '사냥으로 번 골드를 플레이 1시간 단위로 기록합니다. 시간당 골드는 최근 3시간 평균이고, 1시간을 못 채웠으면 추정(≈)합니다. 판매·환불은 빠집니다.',
 };
 const muted = { color: '#9bb3b0' } as const;
@@ -168,6 +168,13 @@ export default function AdminPage() {
     };
     const loadIncome = async (query = incomeQuery) => { const d = await call({ action: 'income', query }); if (d) setIncome(d); };
     const loadNews = async () => { const d = await call({ action: 'news' }); if (d) setNews(d.rows); };
+    // v3.190 소식 · 채팅 전체 지우기. 되돌릴 수 없으므로 확인창을 거칩니다.
+    const CLEAR_SCOPES: [string, string, string][] = [['news', '소식 전체 지우기', '기록판 ‘소식’ 탭의 모든 줄(모험가 소식 · 제단 · 해커 공지 · 운영 공지)'], ['global', '전체 채팅 지우기', '전체 채팅의 모든 줄'], ['guild', '길드 채팅 모두 지우기', '모든 길드의 길드 채팅'], ['all', '소식 · 채팅 모두 지우기', '소식 · 전체 채팅 · 모든 길드 채팅']];
+    const clearChat = async (scope: string, what: string) => {
+        if (!confirm(`${what}을(를) 지울까요?\n되돌릴 수 없습니다. 이미 열려 있는 화면에는 새로고침 전까지 옛 줄이 남을 수 있습니다.`)) return;
+        const d = await call({ action: 'clearChat', scope });
+        if (d) { setNews(d.rows); setDone(`${what}을(를) 지웠습니다 · ${Number(d.removed).toLocaleString('ko-KR')}줄.`); }
+    };
     const postNews = async (kind: string) => { const d = await call({ action: 'newsTest', kind, name: newsName, text: newsText, tag: newsTag }); if (d) { setNews(d.rows); setDone('소식 탭에 올렸습니다. 게임 화면의 기록판 → 소식에서 확인하세요.'); if (kind === 'custom') setNewsText(''); } };
     const TABS: [Tab, string][] = [['life', '모험가 관리'], ['events', '서버 이벤트'], ['closures', '입장 관리'], ['stats', '통계'], ['income', '골드 수입'], ['news', '소식 테스트']];
     const openTab = (id: Tab) => { setTab(id); setError(''); setDone(''); if (!key) return; if (id === 'events') loadEvents(); if (id === 'closures') loadClosures(); if (id === 'stats') loadStats(); if (id === 'news') loadNews(); if (id === 'income') void loadIncome(); };
@@ -325,6 +332,10 @@ export default function AdminPage() {
                         <button className="primary" disabled={busy || !key || !newsText.trim()}>올리기</button>
                     </form>
                 </div>
+            </Fold>
+            <Fold title="지우기" open={false} note="되돌릴 수 없음">
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{CLEAR_SCOPES.map(([scope, label, what]) => <button key={scope} className="secondary" disabled={busy || !key} title={what} onClick={() => void clearChat(scope, what)}>{label}</button>)}</div>
+                <p style={{ ...muted, fontSize: 12, margin: '8px 0 0' }}>소식은 기록판 ‘소식’ 탭, 전체 채팅은 ‘채팅’ 탭의 전체, 길드 채팅은 모든 길드의 ‘길드’ 채널입니다. 지운 뒤 새로 올라오는 줄은 그대로 쌓입니다.</p>
             </Fold>
             {news && <Fold title="최근 소식" note={`${news.length}줄`}>{!news.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>없습니다.</p>}
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 4, fontSize: 13 }}>{[...news].reverse().map(r => <li key={r.id} style={{ color: r.hacker ? '#ff9a9a' : undefined }}><span style={muted}>{kstIso(r.at).slice(5, 16).replace('T', ' ')} · {r.name}</span> {r.text}</li>)}</ul></Fold>}
