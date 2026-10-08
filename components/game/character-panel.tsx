@@ -23,7 +23,7 @@ import { catalogNow } from '@/game/data/catalog';
 function MasteryBreakdown({ s }: { s: State }) {
     const m = masteryMultipliers(s), x = (n: number) => `×${n.toFixed(2)}`, drill = rankPerkLevel(s, 'drill');
     /** v27.85 기본 획득을 구성 요소로 나눠 보여 줍니다. v3.107 계급 특전 숙련 훈련은 배율 밖의 고정값이라 배율을 곱한 뒤에 더합니다. */
-    const rows: [string, string][] = [['기본 획득', `+${m.base - drill}`], ['숙련의 기억 · 계정 몬스터', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as [string, string]] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as [string, string]] : []), ...(drill ? [[`계급 특전 · 숙련 훈련 ${drill}단계 (배율 밖)`, `+${drill}`] as [string, string]] : [])];
+    const rows: [string, string][] = [['기본 획득', `+${m.base - drill}`], ['끝없는 수련 · 계정 몬스터', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as [string, string]] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as [string, string]] : []), ...(drill ? [[`계급 특전 · 숙련 훈련 ${drill}단계 (배율 밖)`, `+${drill}`] as [string, string]] : [])];
     return <details className="stat-breakdown">
         <summary><span>숙련도 획득<ChevronDown size={12} className="stat-breakdown-chevron"/></span><strong>처치당 ≈ {m.perKill.toFixed(1)}</strong></summary>
         <ul>{rows.map(([label, value]) => <li key={label}><span>{label}</span><b>{value}</b></li>)}

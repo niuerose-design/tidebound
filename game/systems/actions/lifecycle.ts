@@ -31,7 +31,7 @@ import { goalText } from '../../data/goals';
 function startLife(s: State, now: number, next: { pearls: number; rebirths: number }) {
     const fresh = newState(now);
     fresh.gold = 100;
-    // v27.60 모험가의 유산: 시작 레벨을 올리고 오른 레벨만큼 능력치 포인트를 줍니다(SP는 최고 레벨을 넘을 때만이라 주지 않음).
+    // v27.60 전생의 기억: 시작 레벨을 올리고 오른 레벨만큼 능력치 포인트를 줍니다(SP는 최고 레벨을 넘을 때만이라 주지 않음).
     const level = startingLevel(s);
     fresh.level = level;
     fresh.statPoints += (level - 1) * PROGRESSION.statPerLevel;

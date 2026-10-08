@@ -362,7 +362,7 @@ export function reward(s: State, rng: () => number) {
         addLog(s, `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} (${byField > byLevel ? `이 사냥터 출현 ${times}회분` : `Lv.${s.level} 필요량의 ${Math.round(t.pct * 100)}%`})`, 'reward');
     }
     addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
-    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 숙련의 기억 +${researched.extra}` : ''})`, 'skill');
+    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 끝없는 수련 +${researched.extra}` : ''})`, 'skill');
     // v3.12 칠흑 보스 처치: drop 확률로 그 보스의 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
     if (e.onyx) {
         const bossDef = onyxById(e.onyx)!; s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1; s.onyxMiss ??= {};

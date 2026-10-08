@@ -27,7 +27,7 @@ export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', '
 export type StatSource = typeof STAT_SOURCES[number];
 const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '세계석 연구', book: '도감', achievement: '업적', account: '계정 보너스', equipment: '장비', limit: '상한·정수 처리' };
 /** 세계석 연구가 올리는 능력치 → 연구 id. 물리·마법 공격과 방어는 각각 다른 연구입니다. */
-const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', mana: 'mana', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', rebirthBonus: 'pearl', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
+const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', mana: 'mana', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
 /** 능력치 분해의 원인 이름. 세계석 연구는 해당 연구 이름까지 붙입니다(예: 세계석 연구 · 마법력 강화 I). */
 export function statSourceLabel(k: keyof CombatStats, source: StatSource) {
     const name = source === 'research' ? RESEARCH.find(r => r.id === RESEARCH_BY_STAT[k])?.name : undefined;
@@ -89,7 +89,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         let running = before;
         for (const [source, n] of parts) { const next = running * n; rec(k, source, next - running, n); running = next; }
     };
-    // v27.80 모험의 기억(연구)을 환생 보너스와 분리해 기록합니다(합은 permanentExpBonus와 같음).
+    // v27.80 노련함(연구)을 환생 보너스와 분리해 기록합니다(합은 permanentExpBonus와 같음).
     set('expBonus', 'rebirth', rebirthExperience(s.rebirths)); add('expBonus', 'research', (s.permanent.exp || 0) * .2); add('expBonus', 'job', j.expBonus || 0);
     for (const k of ['goldBonus', 'dropBonus', 'rebirthBonus', 'dungeonGoldBonus', 'penetration', 'lifesteal'] as const) a[k] = 0;
     set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * E.vit.hp);
@@ -112,10 +112,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     if (a.arcaneStrike > 0) add('arcaneRatioBonus', 'job', SKILL_FORMULA.arcaneRatioByTier[Math.min(j.tier, SKILL_FORMULA.arcaneRatioByTier.length - 1)] || 0);
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
     rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus);
-    // v27.73 장비 드롭 보너스도 여기서 모읍니다(연구 ‘보물의 감각’ 1단계 = 0.01 = 드롭 확률 +10%, 행운, 물건도감). 전에는 dropRate에서만 더해 상세 능력치에 보이지 않았습니다.
+    // v27.73 장비 드롭 보너스도 여기서 모읍니다(연구 ‘보물의 냄새’ 1단계 = 0.01 = 드롭 확률 +10%, 행운, 물건도감). 전에는 dropRate에서만 더해 상세 능력치에 보이지 않았습니다.
     a.dropBonus = researchRank(s, 'drop') * .01 + v.luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus;
     rec('dropBonus', 'research', researchRank(s, 'drop') * .01); rec('dropBonus', 'attributes', v.luk * E.luk.dropBonus); rec('dropBonus', 'book', Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus);
-    set('rebirthBonus', 'research', (s.permanent.pearl || 0) * 2);
     // 세계석 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다(v3.84 관통 단계당 2%, 곱연산).
     add('crit', 'research', researchRank(s, 'crit') * .005); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
     add('penetration', 'research', researchRank(s, 'penetration') * PENETRATION.researchPerRank); add('evasion', 'research', researchRank(s, 'evasion') * .006);
@@ -215,7 +214,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const k of ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'speed', 'harmony', 'hpRegen'] as (keyof CombatStats)[])
         limit(k, Math.max(k === 'hp' || k === 'speed' ? 1 : 0, Math.floor(a[k])));
     // 장비 규칙 옵션은 같은 규칙끼리 상한까지만 합산합니다.
-    // v3.152 렐릭의 힘(패스파인더): 경험치 보너스 중 환생 · 연구 몫을 뺀 나머지(스킬 · 장비 · 직업 · 도감). 고른 유틸 세팅이 그대로 피해 기준값이 됩니다.
+    // v3.153 렐릭의 힘(패스파인더): 경험치 보너스 중 환생 · 연구 몫을 뺀 나머지(스킬 · 장비 · 직업 · 도감). 고른 유틸 세팅이 그대로 피해 기준값이 됩니다.
     set('relicPower', 'skills', Math.max(0, a.expBonus - rebirthExperience(s.rebirths) - (s.permanent.exp || 0) * .2));
     for (const [key, cap] of Object.entries(RULE_CAPS)) if (key !== 'arcaneRatioBonus') limit(key as keyof CombatStats, Math.min(cap!, a[key as keyof CombatStats] || 0));
     // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +1%.
@@ -290,7 +289,7 @@ function harmonyPower(s: Pick<State, 'attributes'>) {
     const total = points.reduce((sum, n) => sum + n, 0), lowest = Math.min(...points);
     return SKILL_FORMULA.harmonyBase + total * SKILL_FORMULA.harmonyPerPoint + lowest * SKILL_FORMULA.harmonyPerLowest;
 }
-/** 환생 횟수와 세계석 연구(모험의 기억)로 얻는 영구 경험치 보너스. 직업 보너스는 제외. */
+/** 환생 횟수와 세계석 연구(노련함)로 얻는 영구 경험치 보너스. 직업 보너스는 제외. */
 export const permanentExpBonus = (s: State) => rebirthExperience(s.rebirths) + (s.permanent.exp || 0) * .2;
 /** 최대치가 바뀐 뒤 현재 체력·마나를 새 최대치 이하로 맞춥니다. */
 export function clampVitals(s: State) {

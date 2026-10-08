@@ -15,7 +15,7 @@ export const LEVEL_GATE_FREE_REBIRTHS = 5;
 export const levelGateOk = (s: Pick<State, 'level' | 'rebirths'>, level: number) => s.rebirths >= LEVEL_GATE_FREE_REBIRTHS || s.level >= level;
 /** v3.23 순풍 기본 경험치 보너스(+50%). 실제 값은 tailwindExp. */
 export const TAILWIND_EXP = .5;
-/** 순풍 경험치 보너스: +50% + 순풍의 깃털 10%p/단계. 정수 연산 뒤 나눠 0단계는 정확히 0.5입니다. */
+/** 순풍 경험치 보너스: +50% + 초심자 보너스 10%p/단계. 정수 연산 뒤 나눠 0단계는 정확히 0.5입니다. */
 export const tailwindExp = (s: Pick<State, 'permanent'>) => (TAILWIND_EXP * 10 + researchRank(s, 'tailwindSail')) / 10;
 /** v3.23 순풍은 조건 없이 환생 뒤 목표 레벨까지 켜지고, 다른 경험치 보너스와 더합니다(전에는 요구 레벨+5 안에 환생해야 다음 생에 켜지고 따로 곱했음). */
 export const tailwindActive = (s: Pick<State, 'rebirths' | 'level'>) => (s.rebirths || 0) > 0 && s.level < rebirthLevel(s);

@@ -13,7 +13,7 @@ test('v24.2 progress passives count codex, catches, hunts, species, gold and reb
     const after = stats(s);
     assert.equal(after.codexPower, 4); assert.ok(Math.abs(after.catchPower - Math.log10(8)) < 1e-9);
     assert.equal(after.attack, before.attack, 'records do not move a rebirth passive'); s.rebirths = 4; assert.ok(stats(s).attack > after.attack && stats(s).magic > after.magic, 'one more rebirth → memoryOfTides step');
-    const sk = SKILLS.find(x => x.id === 'chronicleStudy'); assert.ok(!sk.perCount, 'v3.152 패스파인더 passives grow with mastery, not records (렐릭의 힘)'); assert.equal(sk.bonus.expBonus, .18, 'scribe keeps its EXP bonus (v3.83 ×1.5)');
+    const sk = SKILLS.find(x => x.id === 'chronicleStudy'); assert.ok(!sk.perCount, 'v3.153 패스파인더 passives grow with mastery, not records (렐릭의 힘)'); assert.equal(sk.bonus.expBonus, .18, 'scribe keeps its EXP bonus (v3.83 ×1.5)');
     for (const id of ['salvageSense', 'rareSense', 'deepSalvage', 'kingsHoard', 'legendHoard']) { const b = SKILLS.find(x => x.id === id).bonus || {}; assert.ok(!b.goldBonus && !b.dropBonus, id + ' moved gold/drop to the merchant line'); assert.ok(b.variantFind > 0, id + ' raises variant odds'); }
     for (const id of ['salvageContract', 'goldMemory', 'portLedger', 'tradeWind', 'tradeEmpire', 'goldenEmpire']) assert.ok(SKILLS.find(x => x.id === id).bonus.dropBonus > 0, id);
 });
@@ -188,7 +188,7 @@ test('v27.6 limit break: needs full mastery, practice multiples and SP; pushes g
     const sk = SKILLS.find(x => x.id === 'hook'); const max = maxSkillLevel(sk), last = masteryMilestonesFor(sk).at(-1);
     const s = newState(0); s.sp = 20; s.learned.hook = 1;
     assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /실전 숙련/);
-    s.skillPractice.hook = last; assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /한계의 문/, 'v27.31 needs pearl research'); s.permanent.limitBreak = 3;
+    s.skillPractice.hook = last; assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /리미터 해제/, 'v27.31 needs pearl research'); s.permanent.limitBreak = 3;
     assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /실전 숙련 .* 필요/);
     s.skillPractice.hook = last * 2; const base = effectiveSkill(sk, 1, skillMastery(s, 'hook'));
     act(s, { type: 'limitBreak', id: 'hook' }, 0); assert.equal(s.limitBreaks.hook, 1); assert.equal(s.sp, 18);

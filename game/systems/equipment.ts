@@ -77,7 +77,7 @@ export const saleValue = (item: Item) => {
     for (let e = 0; e < (item.enhance || 0); e++) spent += enhanceCost({ ...item, enhance: e });
     return Math.floor(base + spent * ECONOMY.saleEnhanceRefund);
 };
-/** 대장장이의 기억 할인. 상태를 넘기지 않으면(도감·미리보기) 할인 전 가격입니다. */
+/** 대장장이 고용 할인. 상태를 넘기지 않으면(도감·미리보기) 할인 전 가격입니다. */
 const smith = (cost: number, s?: Pick<State, 'permanent'>) => s ? Math.floor(cost * smithDiscount(s)) : cost;
 // v27.30 강화·옵션 재설정 비용은 Lv.40 위 장비부터 몬스터 골드 곡선(priceScale)만큼 커집니다.
 /** 강화 1회 비용. 12성까지 전 공식, 13성부터 12성 비용 × growth^(성−12)(v27.93 스타포스). */

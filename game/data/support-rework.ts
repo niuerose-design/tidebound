@@ -47,7 +47,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     coinBarrage: { scaling: 'gold', scalingRatio: .06, goldSpend: { ratio: .002, cap: 400, scale: .5 } },
     goldenTempest: { scaling: 'gold', scalingRatio: .07, goldSpend: { ratio: .002, cap: 3000, scale: .15 } },
     goldenStorm: { scaling: 'gold', scalingRatio: .08, goldSpend: { ratio: .002, cap: 12000, scale: .08 } },
-    // ── 패스파인더: 렐릭의 힘(경험치 보너스 비례, v3.152) ──
+    // ── 패스파인더: 렐릭의 힘(경험치 보너스 비례, v3.153) ──
     dispatchDash: { scaling: 'relic', scalingRatio: .08 },
     constellationBolt: { scaling: 'relic', scalingRatio: .1 },
     starBolt: { scaling: 'relic', scalingRatio: .1 },
@@ -81,7 +81,7 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     tradeWind: { desc: '골드·던전 골드 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
     tradeEmpire: { desc: '골드·던전 골드·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
     goldenEmpire: { desc: '골드·던전 골드·장비 드롭·환생 세계석과 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
-    // 패스파인더: 경험치(렐릭의 힘의 재료) + 평평한 능력치. 기록 비례 성장은 와일드헌터 · 섀도어 · 에반과 겹쳐 v3.152에 뺌.
+    // 패스파인더: 경험치(렐릭의 힘의 재료) + 평평한 능력치. 기록 비례 성장은 와일드헌터 · 섀도어 · 에반과 겹쳐 v3.153에 뺌.
     voyageReview: { desc: '획득 경험치 +12%. 경험치 보너스(환생 · 연구 몫 제외)가 렐릭의 힘이 되어 패스파인더 기술의 피해를 올립니다.', bonus: { expBonus: .08 } },
     chronicleStudy: { desc: '획득 경험치 +18%, 두 공격 +16, 최대 체력 +60. 숙련할수록 경험치와 능력치가 더 오릅니다.', bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 } },
     swiftQuill: { desc: '속도와 경험치 획득이 오릅니다.', bonus: { speed: 8, expBonus: .03 } },

@@ -88,7 +88,7 @@ test('v3.86 extra roll: after an active fires, roll the actives below it once mo
 
 test('v3.86 extra roll costs 12 AP, needs the world-stone research and is dropped before skills when AP runs short', () => {
     const s = newState(0); s.rebirths = 30; s.permanent.ap = 12;
-    assert.throws(() => act(s, { type: 'extraRoll', value: '1' }, 0), /연계의 기억/);
+    assert.throws(() => act(s, { type: 'extraRoll', value: '1' }, 0), /시스템 파괴 I/);
     s.permanent.extraRoll = 1;
     const used = apUsed(s);
     act(s, { type: 'extraRoll', value: '1' }, 0);

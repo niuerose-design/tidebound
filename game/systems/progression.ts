@@ -55,7 +55,7 @@ export function maxSkillLevel(sk: Skill) { return masteryMilestonesFor(sk).lengt
 export function limitBreakOwned(s: Pick<State, 'limitBreaks'>, id: string) { return Math.min(PROGRESSION.limitBreak.max, s.limitBreaks?.[id] || 0); }
 /**
  * v27.6 효과가 나는 한계돌파 단계. 숙련 완료가 조건이라 skillMastery()에 더해져 성장 레벨이 최대를 넘습니다.
- * v27.31 세계석 연구 ‘한계의 문’ 단계까지만 적용합니다(연구를 재분배하면 그만큼 효과가 멈추고, 다시 사면 돌아옵니다).
+ * v27.31 세계석 연구 ‘리미터 해제’ 단계까지만 적용합니다(연구를 재분배하면 그만큼 효과가 멈추고, 다시 사면 돌아옵니다).
  */
 export function limitBreakOf(s: Pick<State, 'limitBreaks' | 'permanent'>, id: string) { return Math.min(limitBreakOwned(s, id), researchRank(s, 'limitBreak')); }
 /** 다음 한계돌파 조건. stage는 1부터, ok가 false면 reason에 이유. */
@@ -63,7 +63,7 @@ export function limitBreakNext(s: State, id: string) {
     const sk = skillById(id), stage = limitBreakOwned(s, id) + 1, lb = PROGRESSION.limitBreak;
     if (!sk || stage > lb.max) return { stage, sp: 0, practice: 0, ok: false, reason: stage > lb.max ? '한계돌파 최대 단계입니다.' : '스킬을 찾을 수 없습니다.' };
     const last = masteryMilestonesFor(sk).at(-1)!, practice = last * lb.practiceMultiple[stage - 1], sp = lb.sp[stage - 1], have = refinePractice(s, id);
-    const reason = !(s.learned?.[id] > 0) ? '먼저 습득해야 합니다.' : skillMasteryLevel(have, masteryMilestonesFor(sk)) < maxSkillLevel(sk) ? '실전 숙련을 끝까지 채워야 합니다.' : researchRank(s, 'limitBreak') < stage ? `세계석 연구 ‘한계의 문’ ${stage}단계 필요 (지금 ${researchRank(s, 'limitBreak')}단계)` : have < practice ? `실전 숙련 ${practice.toLocaleString()} 필요 (지금 ${have.toLocaleString()})` : s.sp < sp ? `SP ${sp} 필요` : '';
+    const reason = !(s.learned?.[id] > 0) ? '먼저 습득해야 합니다.' : skillMasteryLevel(have, masteryMilestonesFor(sk)) < maxSkillLevel(sk) ? '실전 숙련을 끝까지 채워야 합니다.' : researchRank(s, 'limitBreak') < stage ? `세계석 연구 ‘리미터 해제’ ${stage}단계 필요 (지금 ${researchRank(s, 'limitBreak')}단계)` : have < practice ? `실전 숙련 ${practice.toLocaleString()} 필요 (지금 ${have.toLocaleString()})` : s.sp < sp ? `SP ${sp} 필요` : '';
     return { stage, sp, practice, ok: !reason, reason };
 }
 /** SP and mastery unlock the SAME stages. Neither locks out the other. v27.6 숙련(한계돌파 포함)이 최대를 넘으면 그만큼 더 올라갑니다. */
@@ -74,7 +74,7 @@ export function apSources(s: State): { id: string; label: string; value: number 
     return [
         { id: 'base', label: '기본', value: PROGRESSION.baseAP },
         { id: 'rebirth', label: '환생 횟수', value: rebirthAP(s) },
-        { id: 'research', label: '세계석 연구 ‘영혼의 그릇’', value: s.permanent.ap || 0 },
+        { id: 'research', label: '세계석 연구 ‘영혼 확장’', value: s.permanent.ap || 0 },
         { id: 'achievement', label: '업적', value: achievementAP(s) },
         { id: 'account', label: '계정(분신 숙달 직업)', value: accountAP(s) },
         { id: 'restraint', label: '절제 서약', value: -restraintAP(s) },
@@ -87,7 +87,7 @@ export const ACHIEVEMENT_AP: Record<string, number> = {};
 export function skillMasteryLevel(practice: number, milestones = PROGRESSION.skillMasteryMilestones) { return milestones.filter(m => practice >= m).length; }
 export function skillMastery(s: State, id: string) { const sk = skillById(id); return skillMasteryLevel(s.skillPractice?.[id] || 0, masteryMilestonesFor(sk)) + limitBreakOf(s, id); }
 export function skillMasteryRanks(s: State) { const out: Record<string, number> = {}; for (const [id, practice] of Object.entries(s.skillPractice || {})) out[id] = skillMasteryLevel(practice, masteryMilestonesFor(skillById(id))) + limitBreakOf(s, id); return out; }
-/** v3.86 효과가 나는 추가 판정 단계: 켠 단계 · 연구 ‘연계의 기억’ 단계 · 규칙 최대 단계 중 가장 낮은 값. */
+/** v3.86 효과가 나는 추가 판정 단계: 켠 단계 · 연구 ‘시스템 파괴 I’ 단계 · 규칙 최대 단계 중 가장 낮은 값. */
 export function extraRollLevel(s: Pick<State, 'extraRolls' | 'permanent'>) { return Math.max(0, Math.min(s.extraRolls || 0, researchRank(s, 'extraRoll'), SKILL_FORMULA.extraRoll.ap.length)); }
 /** v3.86 추가 판정이 쓰는 장착 AP(단계별 합). */
 export function extraRollAP(s: Pick<State, 'extraRolls' | 'permanent'>, level = extraRollLevel(s)) { return SKILL_FORMULA.extraRoll.ap.slice(0, level).reduce((a, n) => a + n, 0); }
