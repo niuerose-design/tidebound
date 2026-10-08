@@ -212,7 +212,9 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
     /** v3.156 섀도어 재개편: 곁가지 보물 사냥꾼(닻 휘두르기 · 잠수복)은 특색이 없어 지웠습니다. */
     'wreckDiver',
     /** v3.158 숨은 3차 시공의 위자드(썬콜 곁가지, ×N 피해 + 약화 하나)는 장치가 없어 지웠습니다. */
-    'eternalNavigator'];
+    'eternalNavigator',
+    /** v3.159 칼리 재개편: 곁가지 부두 인형사(약화 조건 딜)는 특색이 없어 지웠습니다. */
+    'voodooCrafter'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.138 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */
     'shieldBash', 'shieldWall', 'ironRetort', 'spikedShield', 'bulwarkSlam', 'stoneSkin', 'lastStand', 'undying', 'aegisJudgment', 'divineAegis', 'fortress', 'coralPatience',
@@ -226,6 +228,8 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
     'anchorSwing', 'pressureSuit',
     /** v3.158 시공의 위자드의 시공의 파동. */
     'eternalWave',
+    /** v3.159 부두 인형사의 바늘 인형 · 인형의 실. */
+    'pinDoll', 'effigyThread',
     /** v3.143 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
     'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind'];
 /**

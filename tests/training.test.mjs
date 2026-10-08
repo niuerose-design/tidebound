@@ -250,7 +250,7 @@ test('v3.146 Eunwol: Ghost Gate attack +300 with a two-hit spirit, Fist Barrage 
 
 test('v3.123 Kali: Chakram Split curses (bleed-type damage over time, Illium\'s ratio), Queen of Hexes magic +250', () => {
     const sk = id => SKILLS.find(s => s.id === id);
-    assert.deepEqual([sk('calamityRite').effect, sk('calamityRite').dotName, sk('calamityRite').damageBonusCondition], ['bleed', '저주', 'controlled']);
+    assert.deepEqual([sk('calamityRite').effect, sk('calamityRite').dotName, sk('calamityRite').damageBonusCondition], ['bleed', '저주', 'statuses']);
     assert.ok(sk('calamityRite').dotRatio > 0);
     assert.deepEqual([sk('queenOfCurses').bonus.magic, sk('queenOfCurses').bonus.dotBonus], [250, .2]);
 });

@@ -60,9 +60,9 @@ export const EXPANSION_JOBS: NewJob[] = [
     { id: 'apostle', name: '파멸의 사도', title: '모든 것은 끝난다', desc: '중독·화상을 7턴 거는 포이즌 노바와 쌓인 중첩만큼 몰아치는 도트 퍼니셔로 상태이상 계열의 정점에 선 5차 마법 직업입니다.', ...neutral, magic: 1.55, hp: 1.18, crit: .06, tier: 5, ...T5, parent: 'plagueLord', requires: { dex: 65, int: 40, luk: 35 }, requiresSkillMastery: { rotBloom: 3 }, role: '상태이상 최상위', tree: 'status' },
 
     // ── 저주의 길 (마법 제어 분기) ──────────────────────────────
-    { id: 'shaman', name: '주술사', title: '정령에게 묻는다', desc: '약화 보이드 러시와 마법 방어 패시브를 익히는 주술 입문 직업입니다.', ...neutral, bonus: { magic: 4, resist: 1 }, tier: 1, level: 10, requires: { int: 10, wis: 12 }, mastery: 0, role: '약화 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
+    { id: 'shaman', name: '주술사', title: '정령에게 묻는다', desc: '약화 보이드 러시와 마법 방어 패시브를 익히는 헥스 입문 직업입니다. 상태이상을 모아 둘수록 헥스가 세집니다.', ...neutral, bonus: { magic: 4, resist: 1 }, tier: 1, level: 10, requires: { int: 10, wis: 12 }, mastery: 0, role: '약화 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
     { id: 'hexer', name: '저주술사', title: '발을 묶는 속삭임', desc: '오래 지속되는 감속을 거는 아츠: 크레센텀으로 칼리 (3차)의 연계를 준비하는 저주 2차 직업입니다.', ...neutral, bonus: { magic: 36, resist: 4 }, crit: .03, tier: 2, level: 25, parent: 'shaman', requires: { int: 30, wis: 25 }, mastery: 75, requiresSkillMastery: { curseBolt: 2 }, role: '감속·연계', tree: 'status', masteryTarget: 2800, masteryBoost: .18 },
-    { id: 'warlock', name: '흑주술사', title: '영혼을 찢는 계약', desc: '아츠: 플러리로 침묵을 걸고, 기절·침묵·감속 중인 적을 헥스: 판데모니움으로 크게 베는 마법 3차 직업입니다.', ...neutral, hp: 1, bonus: { magic: 83, resist: 8 }, crit: .05, tier: 3, level: 40, parent: 'hexer', requires: { int: 45, wis: 35 }, mastery: 150, requiresSkillMastery: { hexChain: 3 }, role: '침묵·연계', tree: 'status', masteryTarget: 10000, masteryBoost: .3 },
+    { id: 'warlock', name: '흑주술사', title: '영혼을 찢는 계약', desc: '아츠: 플러리로 침묵을 걸고, 적에게 걸린 상태이상 종류 수만큼 세지는 헥스: 판데모니움(1종마다 +15%)으로 베는 마법 3차 직업입니다.', ...neutral, hp: 1, bonus: { magic: 83, resist: 8 }, crit: .05, tier: 3, level: 40, parent: 'hexer', requires: { int: 45, wis: 35 }, mastery: 150, requiresSkillMastery: { hexChain: 3 }, role: '침묵·연계', tree: 'status', masteryTarget: 10000, masteryBoost: .3 },
 
     // ── 노래의 길 (유틸리티) ─────────────────────────────────────
     { id: 'bard', name: '방랑 음유시인', title: '박자가 발을 이끈다', desc: '유틸리티 입문 직업입니다. 노래로 자신을 가속하고, 패시브로 경험치와 속도를 올립니다.', ...neutral, tier: 1, level: 10, requires: { luk: 12, wis: 10 }, mastery: 0, role: '가속·경험치', tree: 'support', masteryTarget: 400, masteryBoost: .08 },
@@ -164,9 +164,9 @@ export const EXPANSION_SKILLS: Skill[] = [
     // 저주의 길
     { ...A, ...magic, id: 'curseBolt', name: '저주탄', desc: '', level: 10, job: 'shaman', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 9, effect: 'weaken' },
     { ...P, id: 'spiritWard', name: '정령의 가호', desc: '마법 방어·최대 마나와 마력 평타 계수가 오릅니다.', level: 10, job: 'shaman', cost: 2, bonus: { resist: 14, mana: 15, arcaneRatioBonus: .5 } },
-    { ...A, ...magic, id: 'hexChain', name: '속박의 저주', desc: '', level: 25, job: 'hexer', chance: .5, cooldown: 3, multiplier: 1.4, cost: 3, manaCost: 13, effect: 'slow', damageBonusCondition: 'controlled', conditionalDamageBonus: .35 },
+    { ...A, ...magic, id: 'hexChain', name: '속박의 저주', desc: '', level: 25, job: 'hexer', chance: .5, cooldown: 3, multiplier: 1.4, cost: 3, manaCost: 13, effect: 'slow' },
     { ...P, id: 'malice', name: '악의', desc: '마법 공격·지속 피해와 마력 평타 계수가 오릅니다.', level: 25, job: 'hexer', cost: 2, bonus: { magic: 18, dotBonus: .1, arcaneRatioBonus: .3 } },
-    { ...A, ...magic, id: 'soulRend', name: '영혼 찢기', desc: '', level: 40, job: 'warlock', chance: .5, cooldown: 4, multiplier: 2.1, cost: 4, manaCost: 20, effect: 'silence', damageBonusCondition: 'controlled', conditionalDamageBonus: .5 },
+    { ...A, ...magic, id: 'soulRend', name: '영혼 찢기', desc: '', level: 40, job: 'warlock', chance: .5, cooldown: 4, multiplier: 2.1, cost: 4, manaCost: 20, damageBonusCondition: 'statuses', conditionalDamageBonus: .15 },
     { ...A, ...magic, id: 'sealHex', name: '봉인의 주문', desc: '', level: 40, job: 'warlock', chance: .5, cooldown: 4, multiplier: 1, cost: 2, manaCost: 8, effect: 'silence' },
     { ...P, id: 'darkPact', name: '어둠의 계약', desc: '마법 공격과 방어 관통이 오릅니다.', level: 40, job: 'warlock', cost: 3, bonus: { magic: 35, penetration: .05 } },
     // 노래의 길

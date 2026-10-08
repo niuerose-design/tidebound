@@ -361,7 +361,7 @@ export const LINEAGES: Lineage[] = [
     ...DEFENSE_LINEAGES,
     independent('defense'),
     { id: 'poisoner', name: '독술사 계보', tree: 'status', summary: '중독·역병을 쌓아 5차 아크메이지(불,독) (5차)에 이르는 계보입니다.' },
-    { id: 'shaman', name: '주술사 계보', tree: 'status', summary: '약화·감속·침묵 저주로 적의 행동을 묶는 계보입니다.' },
+    { id: 'shaman', name: '주술사 계보', tree: 'status', summary: '약화 · 감속 · 침묵 · 저주를 걸어 두고, 적에게 걸린 상태이상 종류 수만큼 세지는 헥스로 베는 계보입니다.' },
     NEW_LINEAGES.bloodAngler,
     NEW_LINEAGES.nerveNeedler,
     independent('status'),

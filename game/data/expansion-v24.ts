@@ -68,7 +68,7 @@ export const V24_JOBS: NewJob[] = [
     { id: 'siren', name: '세이렌', title: '노래 한 소절에 바다가 잠든다', desc: '엔젤릭버스터 계보의 5차 직업입니다. 그랜드 피날레로 상대를 침묵시키고, 패시브로 경험치·드롭·마법 공격을 올려 노래의 정점에 섭니다.', ...neutral, magic: 1.6, hp: 1.12, resist: 1.1, expBonus: .08, ...T5, parent: 'balladKing', requires: { luk: 64, wis: 58 }, requiresSkillMastery: { tideAnthem: 3 }, role: '침묵·성장 보조', tree: 'support' },
 
     // ── 4차에서 끝나던 계보의 5차 ─────────────────────────
-    { id: 'curseQueen', name: '저주의 여왕', title: '모든 저주가 무릎 꿇는다', desc: '침묵을 걸며 제어된 적을 무너뜨리는 보이드 버스트와 마법 공격·지속 피해 패시브로 칼리 계보의 정점에 선 5차 직업입니다.', ...neutral, defense: 1.08, magic: 1.7, hp: 1.2, resist: 1.3, crit: .08, ...T5, parent: 'calamityShrine', requires: { int: 70, wis: 54 }, requiresSkillMastery: { calamityRite: 3 }, role: '저주 최상위', tree: 'status' },
+    { id: 'curseQueen', name: '저주의 여왕', title: '모든 저주가 무릎 꿇는다', desc: '침묵을 걸며 적에게 걸린 상태이상 1종마다 25% 세지는 각성 보이드 버스트와 마법 공격·지속 피해 패시브로 칼리 계보의 정점에 선 5차 직업입니다.', ...neutral, defense: 1.08, magic: 1.7, hp: 1.2, resist: 1.3, crit: .08, ...T5, parent: 'calamityShrine', requires: { int: 70, wis: 54 }, requiresSkillMastery: { calamityRite: 3 }, role: '저주 최상위', tree: 'status' },
     { id: 'seaDragonGod', name: '좀비 루팡신', title: '바다를 감고 하늘에 오른다', desc: '기절을 거는 궁그닐 디센트와, 쓰러질 피해를 한 번 버텨 내는 리인카네이션(다크니스 오라) 패시브로 다크나이트 계보의 정점에 선 5차 직업입니다. 쓰러진 횟수 · 보낸 턴에 비례해 공격과 체력이 오릅니다.', ...neutral, attack: 1.35, magic: 1, hp: 1.4, defense: 1.25, resist: 1.15, crit: .06, ...T5, parent: 'abyssDragonLord', requires: { str: 64, vit: 56 }, requiresSkillMastery: { leviathanCharge: 3 }, role: '경계 최상위·리인카네이션', tree: 'hybrid' },
 ];
 
@@ -188,7 +188,7 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'sirenSong', name: '세이렌의 노래', desc: '', level: 70, job: 'siren', chance: .5, cooldown: 5, multiplier: 3.8, cost: 6, manaCost: 28, effect: 'silence', statusTurns: 3, masteryMilestones: M5 },
     { ...P, id: 'sirenVoice', name: '세이렌의 목소리', desc: '경험치·장비 드롭·마법 공격이 오릅니다.', level: 70, job: 'siren', cost: 3, bonus: { expBonus: .18, dropBonus: .04, magic: 110 }, masteryMilestones: M5 },
     // 4차에서 끝나던 계보의 5차
-    { ...A, ...magic, id: 'doomCurse', name: '파멸의 저주', desc: '', level: 70, job: 'curseQueen', chance: .5, cooldown: 4, multiplier: 3.9, cost: 6, manaCost: 36, effect: 'silence', damageBonusCondition: 'controlled', conditionalDamageBonus: .6, masteryMilestones: M5 },
+    { ...A, ...magic, id: 'doomCurse', name: '파멸의 저주', desc: '', level: 70, job: 'curseQueen', chance: .5, cooldown: 4, multiplier: 3.9, cost: 6, manaCost: 36, effect: 'silence', damageBonusCondition: 'statuses', conditionalDamageBonus: .25, masteryMilestones: M5 },
     // v3.123 칼리 상향: 헥스의 여왕 마법 공격 +110 → +250(숙련 보정 뒤 엔드 마법 약 +10%). 주력 상향은 4차 저주(지속 피해).
     { ...P, id: 'queenOfCurses', name: '저주의 왕관', desc: '마법 공격과 지속 피해가 크게 오릅니다.', level: 70, job: 'curseQueen', cost: 3, bonus: { magic: 250, dotBonus: .2 }, masteryMilestones: M5 },
     // v3.144 다크나이트 재개편: 물리 창술. 비늘(다크니스 오라)은 리인카네이션(lastStand 1회 · 25% 회복) + 쓰러진 횟수 · 보낸 턴 비례 성장.
