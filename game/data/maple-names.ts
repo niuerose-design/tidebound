@@ -29,9 +29,9 @@ const BY_TIER: { cls: string; ids: string[] }[] = [
     { cls: '칼리', ids: ['shaman', 'hexer', 'warlock', 'calamityShrine', 'curseQueen'] },
     { cls: '카데나', ids: ['nerveNeedler', 'nerveSeverer', 'silenceWarden', 'stillLord', 'silenceDeity'] },
     // v27.39 2-2단계: 외길 계보
-    { cls: '아란', ids: ['brawnFisher', 'mightyStrongman', 'colossus'] },
+    { cls: '아란', ids: ['brawnFisher', 'mightyStrongman', 'colossus', 'titanArm'] },
     { cls: '블래스터', ids: ['bulkyFisher', 'hulkingBrute', 'mountainBody', 'ironBastion'] },
-    { cls: '배틀메이지', ids: ['manaDevotee', 'arcaneSeeker', 'pureMagus'] },
+    { cls: '배틀메이지', ids: ['manaDevotee', 'arcaneSeeker', 'pureMagus', 'archMagus'] },
     { cls: '라라', ids: ['stillAngler', 'meditantAdept', 'voidMind', 'voidSage'] },
 ];
 /** 원작 차수별 이름을 그대로 쓰는 직업(모험가)과 허브 1차. */
@@ -58,8 +58,8 @@ const NAMED: Record<string, string> = {
     rareTracker: '시프', treasureDiver: '시프마스터', treasureKing: '섀도어', seaTreasury: '섀도어 (5차)',
     // 나이트로드 (4차 없이 5차로 이어지는 계보)
     luckyAngler: '로그(나이트로드)', fortunate: '어쌔신', fortuneChild: '허밋', fortuneAvatar: '나이트로드',
-    // 듀얼블레이드(3차까지)
-    nimbleAngler: '세미듀어러', galeDancer: '듀어러', shadowRunner: '듀얼마스터',
+    // 듀얼블레이드 (4차 없이 5차로 이어지는 계보)
+    nimbleAngler: '세미듀어러', galeDancer: '듀어러', shadowRunner: '듀얼마스터', phantomBlade: '듀얼블레이드',
     // 바이퍼
     fistMaster: '인파이터', fistKing: '버커니어', tideWarGod: '바이퍼', fistSaint: '바이퍼 (5차)',
     // 캡틴 (인양 상인 1차는 유지)

@@ -207,6 +207,16 @@ export type Skill = {
     recoilGauge?: number;
     /** v3.172 마나 치유(라라): 행동 시작 때 체력이 모자라면 최대 마나 × spend를 써서 최대 체력 × heal을 되찾습니다(마나가 모자라면 안 함, 여러 개면 heal이 큰 것 하나). */
     manaMend?: { spend: number; heal: number };
+    /** v3.176 콤보(아란 패시브): 내 공격(기본 공격 포함, 피해 없는 기술 제외)이 명중할 때마다 충전 +N. 장착한 것 중 가장 큰 값. */
+    hitCharge?: number;
+    /** v3.176 콤보 피해(아란 패시브): 충전 1중첩마다 내 직접 피해 +comboBonus(장착한 것 중 가장 큰 값). 비욘더가 중첩을 소모하면 처음부터. */
+    comboBonus?: number;
+    /** v3.176 회피 반격(듀얼블레이드 패시브): 내게 온 공격이 빗나가면 충전 +N. 장착한 것 중 가장 큰 값. */
+    evadeCharge?: number;
+    /** v3.176 회피 반격 소모(듀얼블레이드 액티브): 명중하면 충전을 모두 소모해 중첩당 추가타 +chargeHits(상한 뒤에 더함). 충전이 없어도 나갑니다. */
+    chargeHits?: number;
+    /** v3.176 마나 방패(배틀메이지 패시브): 받는 피해의 ratio만큼을 마나로 먼저 받습니다(마나 1이 피해 rate를 막음, 마나가 모자라면 그만큼만). 장착한 것 중 ratio가 큰 것 하나. */
+    manaShield?: { ratio: number; rate: number };
     /** v3.164 전류(스트라이커 패시브): 추가타가 명중할 때마다 자기 버프를 1턴 늘립니다(없으면 turns로 시작). 장착한 것 중 속도 배율이 가장 큰 하나. */
     followUpBuff?: { id: string; name?: string; turns: number; speedMultiplier?: number };
     /** v3.164 전류 중 추가타 +N(스트라이커 5차 패시브). followUpBuff의 버프가 살아 있을 때만. */
@@ -418,6 +428,8 @@ export type CombatEvent = {
     regen?: number;
     /** v3.172 마나 치유(라라): 쓴 마나와 되찾은 체력. */
     mend?: { mana: number; value: number };
+    /** v3.176 마나 방패(배틀메이지)가 마나로 받은 피해. */
+    shielded?: number;
     dot?: { name: string; value: number }; /** v3.54 새로 건 지속 피해의 즉시 첫 틱(대상이 받음). */ onset?: { name: string; value: number }; /** v3.54 힐러의 넘친 회복 피해(대상이 받음). */ holy?: number; reflected?: number; /** v25.25 반격 흡혈로 맞은 쪽이 회복한 양. */ reflectHeal?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
     /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
     chain?: number;

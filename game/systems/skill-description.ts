@@ -68,6 +68,10 @@ export function skillBrief(sk: Skill): string {
         if (sk.chargeOnHit) parts.push(`맞을 때마다 충전 +${sk.chargeOnHit}(치명타 +1)`);
         if (sk.recoilGauge) parts.push(`받은 피해 최대 체력 ${skillPercent(sk.recoilGauge)}마다 충전 +1`);
         if (sk.manaMend) parts.push(`행동마다 최대 마나 ${skillPercent(sk.manaMend.spend)} → 최대 체력 ${skillPercent(sk.manaMend.heal)} 회복`);
+        if (sk.hitCharge) parts.push(`명중마다 콤보(충전) +${sk.hitCharge}`);
+        if (sk.comboBonus) parts.push(`콤보 1중첩마다 피해 +${skillPercent(sk.comboBonus)}`);
+        if (sk.evadeCharge) parts.push(`회피마다 충전 +${sk.evadeCharge}`);
+        if (sk.manaShield) parts.push(`받는 피해 ${skillPercent(sk.manaShield.ratio)}를 마나로(마나 1 = 피해 ${number(sk.manaShield.rate)})`);
         if (sk.followUpBuff) parts.push(`추가타 명중마다 ${sk.followUpBuff.name ?? sk.followUpBuff.id} +1턴(속도 ×${number(sk.followUpBuff.speedMultiplier || 1)})`);
         if (sk.followUpExtra) parts.push(`전류 중 추가타 +${sk.followUpExtra.hits}`);
         if (sk.song) parts.unshift('노래 · AP 0');
@@ -85,6 +89,7 @@ export function skillBrief(sk: Skill): string {
     if (sk.dotFinisher) parts.push(`중독·화상 중첩 비례 추가타 최대 ${sk.dotFinisher.maxHits}회 · 기절 ${sk.dotFinisher.partStun}~${sk.dotFinisher.fullStun}턴`);
     if (sk.charge) parts.push(`명중 시 충전 +${sk.charge}(약화 적 +${SKILL_FORMULA.charge.weakenedExtra})`);
     if (sk.chargeNeed) parts.push(`충전 ${sk.chargeNeed}중첩부터 · 중첩당 피해 +${skillPercent(sk.chargeBonus || 0)}`);
+    if (sk.chargeHits) parts.push(`명중 시 충전 모두 소모 · 중첩당 추가타 +${sk.chargeHits}`);
     if (sk.hpCost) parts.push(`현재 체력 ${skillPercent(sk.hpCost)} 소모`);
     if (sk.manaBurn) parts.push(`현재 마나 ${skillPercent(sk.manaBurn)} 연소 · 태운 마나 × ${number(sk.burnScale ?? SKILL_FORMULA.manaBurnScale)} 피해`);
     if (sk.burnConsume) parts.push(`적의 화상 중첩을 모두 터뜨려 중첩당 +${skillPercent(sk.burnConsume)}`);
@@ -135,6 +140,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         // v3.157 통폐합 때 들어온 장치들을 자세히 보기에도 적습니다(전에는 간단히 보기와 설명 문장에만 있었음).
         if (sk.charge) out.push(`명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}, 최대 ${SKILL_FORMULA.charge.max}). 충전은 전투가 끝나도 남습니다.`);
         if (sk.chargeNeed) out.push(`충전 ${sk.chargeNeed}중첩 이상일 때만 나가고, 중첩을 모두 소모해 중첩당 피해 +${skillPercent(sk.chargeBonus || 0)}.`);
+        if (sk.chargeHits) out.push(`명중하면 충전(회피 반격)을 모두 소모해 중첩당 추가타 +${sk.chargeHits}(추가타 상한 뒤에 더함). 충전이 없어도 나갑니다.`);
         if (sk.hpCost) out.push(`마나 대신 현재 체력의 ${skillPercent(sk.hpCost)}를 바칩니다(체력 1은 남김). 빗나가도 소모.`);
         if (sk.manaBurn) out.push(`고정 마나 소모 없이 현재 마나의 ${skillPercent(sk.manaBurn)}를 태우고, 태운 마나 × ${number(sk.burnScale ?? SKILL_FORMULA.manaBurnScale)}를 위 피해식의 기준값에 더합니다.`);
         if (sk.burnConsume) out.push(`명중한 적의 화상 중첩을 모두 터뜨려 중첩당 피해 +${skillPercent(sk.burnConsume)}. 터뜨린 화상은 사라집니다.`);
@@ -186,6 +192,10 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.spectre) out.push(`${sk.spectre.name ?? '접신'}: 충전이 ${sk.spectre.need}에 닿으면 충전을 비우고 ${sk.spectre.turns}턴 동안 내 직접 피해 ×${number(sk.spectre.damageMultiplier)}${sk.spectre.speedMultiplier ? `, 속도 ×${number(sk.spectre.speedMultiplier)}` : ''}${Object.entries(sk.spectre.stats || {}).map(([k, v]) => `, ${skillBonusText(k, v as number)}`).join('')}. 변신 패시브를 여럿 장착하면 가장 센 하나만.${sk.chargeOnHit ? ` 충전은 피해를 입는 공격을 맞을 때 +${sk.chargeOnHit}(치명타로 맞으면 +1 더).` : ' 충전은 충전 기술이 명중할 때 쌓입니다.'}`);
     else if (sk.chargeOnHit) out.push(`피해를 입는 공격을 맞을 때마다 충전 +${sk.chargeOnHit}(치명타로 맞으면 +1 더).`);
     if (sk.recoilGauge) out.push(`반동 게이지: 받은 피해가 최대 체력의 ${skillPercent(sk.recoilGauge)}에 닿을 때마다 충전 +1(최대 ${SKILL_FORMULA.charge.max}, 나머지는 이월). 여러 반동 패시브를 끼면 가장 작은 비율 하나만 씁니다. 충전은 실린더 버스트 · 벙커 버스터가 모두 소모합니다.`);
+    if (sk.hitCharge) out.push(`콤보: 피해를 주는 내 공격(기본 공격 포함)이 명중할 때마다 충전 +${sk.hitCharge}(최대 ${SKILL_FORMULA.charge.max}). 비욘더가 중첩을 모두 방출하면 1부터 다시 쌓습니다.`);
+    if (sk.comboBonus) out.push(`콤보 피해: 충전 1중첩마다 내 직접 피해 +${skillPercent(sk.comboBonus)}(중첩을 방출하는 기술은 대신 중첩당 보너스를 씀).`);
+    if (sk.evadeCharge) out.push(`회피 반격: 내게 온 공격이 빗나갈 때마다 충전 +${sk.evadeCharge}(최대 ${SKILL_FORMULA.charge.max}). 블레이드 퓨리 · 카르마 퓨리가 명중하면 모두 소모해 중첩당 추가타를 더합니다.`);
+    if (sk.manaShield) out.push(`마나 방패: 받는 피해의 ${skillPercent(sk.manaShield.ratio)}를 마나로 먼저 받습니다(마나 1이 피해 ${number(sk.manaShield.rate)}를 막음, 마나가 모자라면 그만큼만). 여러 개면 비율이 큰 것 하나.`);
     if (sk.manaMend) out.push(`마나 치유: 행동을 시작할 때 체력이 모자라면 최대 마나의 ${skillPercent(sk.manaMend.spend)}를 써서 최대 체력의 ${skillPercent(sk.manaMend.heal)}를 되찾습니다(마나가 모자라면 안 함, 여러 개면 회복이 큰 것 하나).`);
     if (sk.followUpBuff) out.push(`전류: 내 추가타가 명중할 때마다 자기 버프 ‘${sk.followUpBuff.name ?? sk.followUpBuff.id}’(속도 ×${number(sk.followUpBuff.speedMultiplier || 1)})가 1턴 길어집니다(없으면 ${sk.followUpBuff.turns}턴으로 시작). 내 행동마다 1턴씩 줄어듭니다. 빨라지면 연속 행동이 늘어 추가타가 늘고, 추가타가 늘면 전류가 이어집니다. 여럿 장착하면 속도 배율이 가장 큰 하나만.`);
     if (sk.followUpExtra) out.push(`전류가 살아 있을 때 추가타가 있는 기술의 추가타가 ${sk.followUpExtra.hits}회 늘어납니다(추가타 상한 뒤에 더함).`);
