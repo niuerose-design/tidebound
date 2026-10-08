@@ -56,6 +56,15 @@ export async function postNewsSample(kind: string, opts: { name?: string; text?:
     await db().postChat({ channel: NEWS_CHANNEL, account_id: row.from, name: row.label, text: tag + row.text, created_at: now });
     return recentNews();
 }
+/** v3.190 운영 페이지: 소식 · 전체 채팅 · 길드 채팅(모든 길드) · 모두를 지웁니다. 지운 줄 수와 남은 소식 목록을 돌려줍니다. 이미 열려 있는 화면은 새로고침 전까지 옛 줄이 남습니다(after 커서). */
+export const CHAT_CLEAR_SCOPES = ['news', 'global', 'guild', 'all'] as const;
+export type ChatClearScope = typeof CHAT_CLEAR_SCOPES[number];
+export async function clearChatScope(scope: string) {
+    if (!(CHAT_CLEAR_SCOPES as readonly string[]).includes(scope)) throw new ApiError('지울 범위를 고르세요(news · global · guild · all).', 400);
+    const database = db();
+    const removed = scope === 'all' ? await database.clearChat() : scope === 'guild' ? await database.clearChat(undefined, 'guild:') : await database.clearChat(scope);
+    return { removed, rows: await recentNews() };
+}
 /** 운영 페이지: 소식 채널 최근 20줄. */
 export async function recentNews() {
     return (await db().listChat(NEWS_CHANNEL, 0, 20)).map(r => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, hacker: r.account_id === 'system-hacker' }));

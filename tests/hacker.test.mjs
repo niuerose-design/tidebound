@@ -243,6 +243,15 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.equal((await database.listAltarRaids()).find(r => r.id === 'balrog').hp, 1000 - Math.floor(1000 * .03 * 4), 'forward: 3%×(n−6) of the remaining hp');
         const sc = veteran(10); act(sc, { type: 'hackRun', id: 'savescum', value: 'balrog|rewind' }, now); await assert.rejects(Hk.applyPendingHack(sc, 'acct_sc', now), /이미/, 'once per boss');
         assert.ok((await database.listChat('news', 0, 300)).some(c => c.account_id === 'system-hacker' && c.text.includes('세이브 스캠')), 'announced');
+        { // v3.190 운영: 소식 · 전체 · 길드 채팅 지우기(채널 하나 · guild: 접두사 · 모두). 지운 줄 수를 돌려주고 다른 채널은 건드리지 않습니다.
+            const Nw = await load('game/server/news.js'), row = (channel, text) => ({ channel, account_id: 'acct_x', name: 'x', text, created_at: now });
+            await database.postChat(row('global', 'g1')); await database.postChat(row('global', 'g2')); await database.postChat(row('guild:1', 'a')); await database.postChat(row('guild:2', 'b')); await database.postChat(row('guildless', 'c'));
+            const newsBefore = (await database.listChat('news', 0, 300)).length; assert.ok(newsBefore > 0);
+            const r1 = await Nw.clearChatScope('news'); assert.equal(r1.removed, newsBefore); assert.deepEqual(r1.rows, []); assert.equal((await database.listChat('news', 0, 300)).length, 0, 'news gone'); assert.equal((await database.listChat('global', 0, 300)).length, 2, 'global untouched');
+            assert.equal((await Nw.clearChatScope('guild')).removed, 2, 'guild: prefix only'); assert.equal((await database.listChat('guildless', 0, 300)).length, 1, 'other channels stay');
+            assert.equal((await Nw.clearChatScope('all')).removed, 3, 'everything left'); assert.equal((await database.listChat('global', 0, 300)).length, 0);
+            await assert.rejects(Nw.clearChatScope('news;drop'), /범위/);
+        }
         assert.equal(await database.shiftAltarRaid('balrog', gen, -1e9), 1, 'save scum never slays');
         await database.hitAltarRaid('balrog', gen, 10); await database.slayAltarRaid('balrog', gen, 'p1', 'x', now);
         const ib = top.hacker.bits; act(top, { type: 'hackRun', id: 'interceptClaim' }, now); await Hk.applyPendingHack(top, 'acct_top', now);
