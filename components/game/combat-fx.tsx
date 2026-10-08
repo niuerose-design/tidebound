@@ -144,6 +144,12 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     bunkerBuster: { kind: 'bunker', glyphs: ['▮', '✦', '▮', '✦', '▮', '✦', '▮', '✦'] },
     // 26: 라라 용맥 폭발. 땅의 기운이 솟구치고 균열이 번지며 꽃잎이 떠오릅니다.
     veinBurst: { kind: 'vein', glyphs: ['❀', '✦', '◇', '❀', '✦', '◇', '❀', '✦'] },
+    // 27: 아란 매하 디스차지. 얼음 창 '마하'가 크게 휘둘러지고 얼음 파편이 튑니다.
+    mahaDischarge: { kind: 'maha', glyphs: ['❄', '✦', '❄', '✧', '❄', '✦', '❄', '✧'] },
+    // 28: 듀얼블레이드 카르마 퓨리. 참격 네 줄이 엇갈려 연달아 그어집니다(추가타 3회).
+    karmaFury: { kind: 'karma', glyphs: ['╱', '╲', '╱', '╲', '╱', '╲', '╱', '╲'] },
+    // 29: 배틀메이지 그림 리퍼. 죽음의 낫이 내리 휘둘러지고 해골 기운이 번집니다.
+    grimReaper: { kind: 'reaper', glyphs: ['☠', '✺', '◌', '☠', '✺', '◌', '☠', '✺'] },
 };
 /** v3.86 전용 연출이 없는 각성기의 기본 장면(스킬 이름을 제목으로). */
 const AWAKEN_FX = { kind: 'light', glyphs: ['✦', '·', '✧', '·', '✦', '·', '✧', '·'] };
