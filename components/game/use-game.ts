@@ -35,6 +35,10 @@ const REPLAY_LAG_MS = SYNC_MS + 500;
 const MAX_BEHIND_TURNS = 2;
 /** v3.178 화면 순서화: 내 각성기(또는 도트 퍼니셔)가 나간 턴 뒤의 턴들은 이만큼 늦게 재생해, 2.4초짜리 전용 연출이 끝난 뒤 다음 타격이 보이게 합니다. 서버 진행과는 무관(화면만). */
 const ULT_HOLD_MS = 1200;
+/** v3.182 각성기 전용 연출의 길이. 같은 턴 안에서 각성기 뒤에 이어지는 타격(연속 행동 · 상대의 반격)은 이 시간이 지난 뒤에 보입니다. */
+const ULT_FX_MS = 2400;
+/** 이 로그가 내 각성기(또는 도트 퍼니셔) 타격인지. */
+const isUltLog = (l: State['logs'][number], name: string) => l.type === 'battle' && l.event?.actor === name && !!(l.event.awaken || l.event.skillId === 'endOfAll');
 type Queued = { turnAt: number; at: number; frame: ReplayFrame };
 /**
  * v27.62 재생 프레임 저장소. 프레임(턴당 여러 번)을 React 상태로 두면 앱 전체가 프레임마다 다시 그려져
@@ -82,11 +86,20 @@ function createReplay(render: (frame: ReplayFrame | null) => void) {
         let hold = 0, lastId = prev.logs.at(-1)?.id ?? 0;
         for (const t of turns) {
             const turnAt = base + t.turn * BALANCE.turnMs + hold;
-            for (const frame of t.frames) queue.push({ turnAt, at: turnAt + frame.offset, frame });
-            // v3.178 이 턴에 내 각성기가 나갔으면 뒤 턴들을 ULT_HOLD_MS 늦춥니다(같은 동기화 묶음 안에서만 누적).
-            const endId = t.frames.at(-1)?.lastLogId ?? lastId;
-            if (next.logs.some(l => l.id > lastId && l.id <= endId && l.type === 'battle' && l.event?.actor === next.name && (l.event.awaken || l.event.skillId === 'endOfAll'))) hold += ULT_HOLD_MS;
-            lastId = endId;
+            // v3.182 같은 턴 안에서 각성기 타격 뒤의 박자(연속 행동 · 상대의 반격)는 전용 연출이 끝난 뒤(ULT_FX_MS)로 밉니다.
+            let shift = 0, ult = false, fromId = lastId;
+            t.frames.forEach((frame, i) => {
+                queue.push({ turnAt, at: turnAt + frame.offset + shift, frame });
+                if (next.logs.some(l => l.id > fromId && l.id <= frame.lastLogId && isUltLog(l, next.name))) {
+                    ult = true;
+                    const after = t.frames[i + 1];
+                    if (after) shift += Math.max(0, ULT_FX_MS - (after.offset - frame.offset));
+                }
+                fromId = frame.lastLogId;
+            });
+            // v3.178 이 턴에 내 각성기가 나갔으면 뒤 턴들을 ULT_HOLD_MS(+ 이 턴에서 민 만큼) 늦춥니다(같은 동기화 묶음 안에서만 누적).
+            hold += shift + (ult ? ULT_HOLD_MS : 0);
+            lastId = t.frames.at(-1)?.lastLogId ?? lastId;
         }
         play();
     };
