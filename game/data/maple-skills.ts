@@ -35,14 +35,13 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     fateRoll: '얼티밋 드라이브', fortuneFavor: '럭 앤 쇼', jackpotStrike: '조커', divineLuck: '럭 오브 데스티니', allOrNothing: '파이널 컷',
 
     // ── 독립 · 히든 (바다 단어만 교체, 세계관 맞춤) ──
-    scales: '기사의 갑옷', vital: '생명의 기운', driftwoodGuard: '나무 방벽', temperedSkin: '담금질한 피부', innerBreath: '내공 호흡',
-    herbWard: '약초 방부', driftwoodShove: '통나무 밀치기',
-    resolve: '맹세의 결의', cut: '갈고리 상처', rushCurrent: '질주', netWeave: '그물 짜기', axeArm: '도끼 팔', breachTools: '공성 도구',
-    keenEye: '매의 눈', showmanship: '관중의 환호', netThrow: '그물 던지기', oathShout: '맹세의 함성', rottenBait: '썩은 덫',
-    arcane: '버블 볼트', hushCurrent: '침묵의 봉인', undertow: '끌어내리는 봉인', insight: '마나 통찰', flow: '마나 순환술',
-    chartedCurrents: '지형 측량', bookwise: '박식', stillMind: '고요한 마음', currentJam: '지형 교란',
-    mercenaryCraft: '용병의 요령', patchwork: '덧댄 솜씨', twoHanded: '양손 무기 숙련',
-    bitterBrew: '쓴 달임약', sporePouch: '포자 주머니', inkSplash: '표창 세례', nimbleStep: '가벼운 발',
+    // v3.169 수련 패시브(계보마다 4개 · 액티브 없음).
+    driftwoodGuard: '나무 방벽', temperedSkin: '담금질한 피부', innerBreath: '내공 호흡', herbWard: '약초 방부',
+    netWeave: '그물 짜기', axeArm: '도끼 팔', breachTools: '공성 도구', keenEye: '매의 눈',
+    insight: '마나 통찰', flow: '마나 순환술', bookwise: '박식', stillMind: '고요한 마음',
+    chartedCurrents: '지형 측량', nimbleStep: '가벼운 발', tideAlmanac: '조석 연감', rangeMark: '거리 표식',
+    mercenaryCraft: '용병의 요령', patchwork: '덧댄 솜씨', twoHanded: '양손 무기 숙련', fieldRations: '야전 식량',
+    bitterBrew: '쓴 달임약', sporePouch: '포자 주머니', inkSplash: '표창 세례', tarredBarbs: '역청 미늘',
 
     // ── 섀도어 계보 · 보물 사냥꾼 ──
     salvageSense: '픽파킷', relicToss: '메소 익스플로전', swarmSense: '무리 감지', rareSense: '메소 마스터리',

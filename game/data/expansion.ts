@@ -179,15 +179,14 @@ export const EXPANSION_SKILLS: Skill[] = [
     // 능력치 패시브 직업
     { ...P, id: 'axeArm', name: '도끼 팔', desc: '물리 공격이 오릅니다.', level: 10, job: 'woodcutter', cost: 2, bonus: { attack: 30 } },
     { ...P, id: 'breachTools', name: '공성 도구', desc: '방어 관통이 오릅니다.', level: 10, job: 'sapper', cost: 2, bonus: { penetration: .08, attack: 10 } },
-    { ...P, id: 'keenEye', name: '매의 눈', desc: '치명타와 명중이 오릅니다.', level: 10, job: 'hunter', cost: 2, bonus: { crit: .07, accuracy: .07 } },
-    { ...P, id: 'showmanship', name: '관중의 환호', desc: '치명 피해가 오르고, 치명타가 터지면 30% 확률로 가장 긴 재사용 대기를 초기화합니다.', level: 10, job: 'gladiator', cost: 2, bonus: { critDamage: .35, crit: .02 }, cooldownReset: { on: 'crit', chance: .3, pick: 'longest' } },
-    { ...P, id: 'bookwise', name: '박식', desc: '마법 공격과 마력 평타 계수가 오릅니다.', level: 10, job: 'scholar', cost: 2, bonus: { magic: 30, arcaneRatioBonus: .3 } },
-    { ...P, id: 'stillMind', name: '고요한 마음', desc: '최대 마나·마나 회복과 마법 공격, 마력 평타 계수가 오릅니다.', level: 10, job: 'meditator', cost: 2, bonus: { mana: 40, manaRegen: 2.5, magic: 16, arcaneRatioBonus: .3 } },
-    { ...P, id: 'temperedSkin', name: '담금질한 피부', desc: '물리 방어가 오릅니다.', level: 10, job: 'blacksmithApprentice', cost: 2, bonus: { defense: 26, hp: 40 } },
+    { ...P, id: 'keenEye', name: '매의 눈', desc: '치명타와 명중이 오릅니다.', level: 10, job: 'hunter', cost: 2, bonus: { crit: .05, accuracy: .05 } },
+    { ...P, id: 'bookwise', name: '박식', desc: '마력 평타 계수와 마법 공격이 오릅니다.', level: 10, job: 'scholar', cost: 2, bonus: { arcaneRatioBonus: .3, magic: 10 } },
+    { ...P, id: 'stillMind', name: '고요한 마음', desc: '마법 방어와 턴당 마나 회복이 오릅니다.', level: 10, job: 'meditator', cost: 2, bonus: { resist: 20, manaRegen: 2 } },
+    { ...P, id: 'temperedSkin', name: '담금질한 피부', desc: '물리 방어와 최대 체력이 오릅니다.', level: 10, job: 'blacksmithApprentice', cost: 2, bonus: { defense: 26, hp: 40 } },
     { ...P, id: 'innerBreath', name: '내공 호흡', desc: '최대 체력과 턴당 체력 회복이 오릅니다.', level: 10, job: 'noviceMonk', cost: 2, bonus: { hp: 180, hpRegen: 2 } },
-    { ...P, id: 'herbWard', name: '약초 방부', desc: '마법 방어와 마나 회복이 오릅니다.', level: 10, job: 'herbalist', cost: 2, bonus: { resist: 26, manaRegen: 1, hp: 40 } },
-    { ...P, id: 'bitterBrew', name: '쓴 달임약', desc: '지속 피해와 명중이 오릅니다.', level: 10, job: 'apothecary', cost: 2, bonus: { dotBonus: .2, accuracy: .03 } },
-    { ...P, id: 'nimbleStep', name: '가벼운 발', desc: '회피와 속도가 오르고, 연속 행동마다 40% 확률로 가장 긴 재사용 대기를 초기화합니다.', level: 10, job: 'acrobat', cost: 2, bonus: { evasion: .06, speed: 8 }, cooldownReset: { on: 'chain', chance: .4, pick: 'longest' } },
+    { ...P, id: 'herbWard', name: '약초 방부', desc: '마법 방어와 최대 체력이 오릅니다.', level: 10, job: 'herbalist', cost: 2, bonus: { resist: 26, hp: 40 } },
+    { ...P, id: 'bitterBrew', name: '쓴 달임약', desc: '지속 피해가 오릅니다.', level: 10, job: 'apothecary', cost: 2, bonus: { dotBonus: .2 } },
+    { ...P, id: 'nimbleStep', name: '가벼운 발', desc: '회피와 속도가 오릅니다.', level: 10, job: 'acrobat', cost: 2, bonus: { evasion: .06, speed: 8 } },
     // 기존 직업 보강 (은월 (3차) 물리 경로)
     // v3.146 은월 재개편: 패시브가 정령을 불러 모든 공격에 추가타를 붙입니다(2차 1회 25% → 3차 35% → 4차 40% → 5차 2회 35%).
     { ...P, id: 'galvanicScales', name: '전류 비늘', desc: '물리 공격과 속도가 오르고, 정령이 모든 공격에 추가타 1회(위력 25%)를 붙입니다.', level: 25, job: 'stormEel', cost: 2, bonus: { attack: 16, speed: 8 }, companion: { hits: 1, power: .25 } },

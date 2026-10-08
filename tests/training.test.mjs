@@ -12,10 +12,10 @@ test('v3.69 training: six training jobs absorb the 27 old independents; every ol
     // v3.80 숙달 목표 = 패시브 마지막 숙련 단계(225,000) × 40%.
     for (const id of ids) assert.equal(P.jobMasteryTarget(job(id)), 90_000, id);
     for (const old of T.RETIRED_TRAINING) { assert.ok(job(old).retired, old); assert.equal(SKILLS.filter(sk => sk.job === old).length, 0, `${old} owns nothing now`); }
-    // 지도 제작자는 둘로: 교란 → 마법 수련, 측량(드롭) → 보조 수련. 척후병의 출혈·중독 → 상태이상 수련.
+    // 지도 제작자의 측량(드롭) → 보조 수련. v3.169 새 수련 패시브는 처음부터 수련 직업 소유.
     const owner = id => SKILLS.find(sk => sk.id === id).job;
-    assert.equal(owner('currentJam'), 'trainingMagic'); assert.equal(owner('chartedCurrents'), 'trainingSupport');
-    assert.equal(owner('cut'), 'trainingStatus'); assert.equal(owner('rottenBait'), 'trainingStatus');
+    assert.equal(owner('chartedCurrents'), 'trainingSupport');
+    assert.equal(owner('bitterBrew'), 'trainingStatus'); assert.equal(owner('tarredBarbs'), 'trainingStatus');
     assert.equal(owner('axeArm'), 'trainingPhysical'); assert.equal(owner('innerBreath'), 'trainingDefense'); assert.equal(owner('twoHanded'), 'trainingHybrid');
     assert.ok(T.RETIRED_TRAINING.every(id => JOBS.some(j => j.id === id)), 'kept in the table for old records');
 });
@@ -42,14 +42,41 @@ test('v3.69 training: a save sitting in an old independent job moves to its trai
 
 test('v3.69 training passives: tier-3 strength from level 1, tier-3 mastery milestones, old inheritance kept once', () => {
     const passives = SKILLS.filter(sk => sk.job?.startsWith('training') && sk.type === 'passive');
-    assert.ok(passives.length >= 20);
+    assert.equal(passives.length, 24, 'v3.169: six training jobs × 4 passives');
     for (const sk of passives) { assert.deepEqual(P.masteryMilestonesFor(sk), [4500, 22500, 84000, 225000], sk.id); if (T.TRAINING_DESC[sk.id]) assert.ok(sk.desc === T.TRAINING_DESC[sk.id] && !/\d/.test(sk.desc), `${sk.id} desc has no stale numbers`); }
-    assert.equal(SKILLS.find(sk => sk.id === 'axeArm').bonus.attack, 45); assert.equal(SKILLS.find(sk => sk.id === 'driftwoodGuard').bonus.swarmFind, .3, 'rule values are not scaled');
+    assert.equal(SKILLS.find(sk => sk.id === 'axeArm').bonus.attack, 45); assert.equal(SKILLS.find(sk => sk.id === 'tarredBarbs').bonus.dotTurnsBonus, 1, 'rule values are not scaled');
     // 예전 기준(250)으로 계승 자격이 있던 세이브는 유지, 새 세이브는 새 기준(4,500).
     const old = newState(0); delete old.trainingRescaled; old.skillPractice.axeArm = 300; old.skillPractice.keenEye = 100;
     migrateState(old); migrateState(old);
     assert.ok(old.legacyInherited.axeArm && !old.legacyInherited?.keenEye && old.trainingRescaled);
     const fresh = newState(0); fresh.skillPractice.axeArm = 300; migrateState(fresh); assert.ok(!fresh.legacyInherited?.axeArm, 'new saves use the new bar');
+});
+
+test('v3.169 training jobs: no actives, exactly 4 passives each with one main and one minor stat and no extra mechanics; the deleted skills are retired without compensation', async () => {
+    const Mig = await load('game/systems/migrations.js');
+    for (const id of Object.keys(T.TRAINING_GROUPS)) {
+        const own = SKILLS.filter(sk => sk.job === id);
+        assert.equal(own.filter(sk => sk.type !== 'passive').length, 0, `${id} has no active`);
+        assert.equal(own.length, 4, `${id} has 4 passives`);
+        for (const sk of own) {
+            const keys = Object.keys(sk.bonus); assert.ok(keys.length >= 1 && keys.length <= 3, `${sk.id}: ${keys}`);
+            assert.ok(!sk.cooldownReset && !sk.revive && !sk.perCount && !sk.levelEffects, `${sk.id} carries no special mechanic`);
+            assert.ok(!/\d/.test(sk.desc), `${sk.id} desc has no digits`); assert.equal(sk.cost, 2, sk.id);
+        }
+    }
+    // 새 패시브도 ×1.5(규칙 값 dotTurnsBonus는 그대로).
+    const bonus = id => SKILLS.find(sk => sk.id === id).bonus;
+    assert.deepEqual(bonus('tarredBarbs'), { dotTurnsBonus: 1, accuracy: .045 }); assert.deepEqual(bonus('fieldRations'), { hpRegen: 3, manaRegen: 3 });
+    assert.deepEqual(bonus('tideAlmanac'), { expBonus: .06, manaRegen: 2 }); assert.deepEqual(bonus('rangeMark'), { accuracy: .075, crit: .03 });
+    assert.deepEqual(bonus('bookwise'), { arcaneRatioBonus: .45, magic: 15 }); assert.deepEqual(bonus('driftwoodGuard'), { hp: 90, defense: 18, resist: 18 });
+    // 지운 스킬 14개: 스킬 표에 없고, 세이브의 기록은 보상 없이 지워집니다.
+    const gone = ['arcane', 'cut', 'hushCurrent', 'undertow', 'rushCurrent', 'netThrow', 'oathShout', 'currentJam', 'driftwoodShove', 'rottenBait', 'resolve', 'showmanship', 'scales', 'vital'];
+    for (const id of gone) { assert.ok(Mig.RETIRED_SKILLS.includes(id), id); assert.ok(!SKILLS.some(sk => sk.id === id), `${id} is gone`); }
+    const s = newState(0); s.learned.cut = 3; s.skillPractice.showmanship = 999; s.skillInheritances.vital = true; s.skills = ['hook', 'cut', 'axeArm'];
+    migrateState(s);
+    assert.ok(!s.learned.cut && !s.skillPractice.showmanship && !s.skillInheritances.vital); assert.deepEqual(s.skills, ['hook', 'axeArm']);
+    const hp = stats({ ...newState(0), level: 20, job: 'trainingHybrid', learned: { fieldRations: 1 }, skills: ['fieldRations'] });
+    assert.ok(hp.hpRegen >= 3 && hp.manaRegen >= 3, 'new passive works in its training job');
 });
 
 test('v3.69 mastered job count: retired independents no longer count, for old saves too', () => {

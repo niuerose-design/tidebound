@@ -17,12 +17,12 @@ const {enemyStats,scaledEnemyStats,profile}=await moduleAt('data/encounters');
 const {canUse,validLoadout,skillMasteryRanks,effectiveSkill}=await moduleAt('systems/progression');
 const builds=[
  ['whaler',{str:80,dex:30,vit:40,wis:10},['breath','pierce','whaleStrike','focus','barb']],
- ['corsair',{dex:70,luk:40,str:30,vit:20},['breath','cut','razor','drift','precision']],
- ['tempest',{int:80,wis:40,vit:30,dex:10},['spring','wave','maelstrom','arcane','abyssMind']],
- ['oracle',{wis:65,int:55,vit:30,dex:10},['pearlPrayer','wave','arcane','soulTide','flow']],
- ['bulwark',{vit:85,str:45,dex:20,wis:10},['crush','anchor','ironWill','scales']],
+ ['corsair',{dex:70,luk:40,str:30,vit:20},['breath','razor','drift','precision']],
+ ['tempest',{int:80,wis:40,vit:30,dex:10},['spring','wave','maelstrom','abyssMind']],
+ ['oracle',{wis:65,int:55,vit:30,dex:10},['pearlPrayer','wave','soulTide','flow']],
+ ['bulwark',{vit:85,str:45,dex:20,wis:10},['crush','anchor','ironWill','temperedSkin']],
  ['krakenSlayer',{str:85,dex:35,vit:30,wis:10},['breath','krakenBore','pierce','deepWeakpoint','barb']],
- ['stormScribe',{int:85,wis:40,vit:25,dex:10},['spring','thunderPsalm','maelstrom','arcane','overcast']],
+ ['stormScribe',{int:85,wis:40,vit:25,dex:10},['spring','thunderPsalm','maelstrom','overcast']],
  ['coralSaint',{vit:70,wis:55,int:25,dex:10},['reefPulse','anchor','saintTide','sanctuaryShell','soulTide']],
 ];
 const summary=[];

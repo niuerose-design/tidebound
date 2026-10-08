@@ -73,8 +73,8 @@ test('v25.3 passive-only and independent jobs fight at tier strength', () => {
     for (const id of ['lifeTender', 'driftwoodHermit', 'chronicleNavigator', 'netWeaver']) { const j = JOBS.find(x => x.id === id); assert.ok(j.attack >= j.magic, id); assert.equal(j.penalties?.attack, undefined, id); }
     const bonus = id => SKILLS.find(x => x.id === id).bonus;
     // v3.69 수련 패시브는 ×1.5(3차 수준).
-    assert.equal(bonus('axeArm').attack, 45); assert.equal(bonus('bookwise').magic, 45); assert.ok(bonus('bookwise').arcaneRatioBonus > 0);
-    assert.equal(bonus('innerBreath').hpRegen, 3); assert.equal(bonus('vital').hpRegen, 3); assert.ok(bonus('flow').arcaneRatioBonus > 0);
+    assert.equal(bonus('axeArm').attack, 45); assert.equal(bonus('bookwise').magic, 15); assert.ok(bonus('bookwise').arcaneRatioBonus > 0);
+    assert.equal(bonus('innerBreath').hpRegen, 3); assert.equal(bonus('flow').mana, 60); assert.equal(bonus('fieldRations').hpRegen, 3);
     assert.ok(bonus('echoReview').magic >= 24 && bonus('chronicleStudy').attack >= 16 && bonus('serpentFolklore').magic >= 24 && bonus('abyssObservation').attack >= 36);
     // 턴당 체력 회복 패시브가 실제 능력치에 더해집니다.
     const s = newState(0); s.level = 15; s.job = 'trainingDefense'; s.learned.innerBreath = 1; s.skills = ['innerBreath'];
@@ -119,7 +119,7 @@ test('v25.3 passive-route returns: the archivist passive scales with rebirths an
 test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint passives, journeyman lineage gates', async () => {
     const { maxSkillLevel } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
     const sk = id => SKILLS.find(x => x.id === id);
-    for (const id of ['axeArm', 'vital', 'lullaby', 'driftwoodGuard']) { const m = maxSkillLevel(sk(id)); assert.equal(effectiveSkill(sk(id), 1, m).cost, (sk(id).cost ?? 2) - 1, id); assert.equal(effectiveSkill(sk(id), 1, m - 1).cost, sk(id).cost ?? 2, `${id} before max`); }
+    for (const id of ['axeArm', 'innerBreath', 'lullaby', 'driftwoodGuard']) { const m = maxSkillLevel(sk(id)); assert.equal(effectiveSkill(sk(id), 1, m).cost, (sk(id).cost ?? 2) - 1, id); assert.equal(effectiveSkill(sk(id), 1, m - 1).cost, sk(id).cost ?? 2, `${id} before max`); }
     assert.equal(effectiveSkill(sk('glyphNothing'), 1, 4).cost, 0, 'floor at 0'); assert.equal(effectiveSkill(sk('glyphCut'), 1, 4).cost, 1, 'actives unchanged');
     for (const [id, last] of [['titanFieldNotes', 0], ['pearlLedger', 0], ['chronicleStudy', -1], ['serpentFolklore', 0], ['abyssObservation', -1]]) { const m = maxSkillLevel(sk(id)); assert.equal(sk(id).levelEffects.length, m + 1, id); assert.equal(effectiveSkill(sk(id), 1, m).cost, last, id); assert.ok(effectiveSkill(sk(id), 1, 0).cost >= 3, `${id} starts expensive`); }
     assert.equal(effectiveSkill(sk('pearlLedger'), 1, 4).bonus.rebirthBonus, 2);
@@ -134,21 +134,24 @@ test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint 
     assert.equal(canChangeJob({ ...s, jobMastery: { ...s.jobMastery, polymath: 12000 } }, 'hundredLives'), false, 'needs 15 mastered');
 });
 
-test('v25.5 reset passives fire on crit, kill and chain (players only); chained actions tick cooldowns normally', () => {
+test('v25.5 reset passives fire on crit, kill and chain (players only); chained actions tick cooldowns normally', async () => {
     const mk = (skills, extra = {}) => ({ name: 'A', job: 'x', stats: { ...base, crit: 0 }, hp: 1000, mana: 200, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {}, ...extra });
     const sk = id => SKILLS.find(x => x.id === id);
+    // v3.169 관중의 환호(치명타 초기화)는 수련 정리로 지웠으므로 같은 모양의 시험용 패시브로 치명타 초기화 틀을 검사합니다.
+    const { registerSkills } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('game/data/skills.js');
+    registerSkills([{ ...sk('roninGrit'), id: 'zzCritReset', name: '시험용 치명 초기화', job: 'zzTest', cooldownReset: { on: 'crit', chance: .3, pick: 'longest' } }]);
     // 연속 행동도 대기는 1씩만 줄어듭니다(공통 가속 없음).
     const p = mk([]); p.cooldowns = { hook: 3 }; strike(p, target(), () => 0, [], false, true); assert.equal(p.cooldowns.hook, 2);
     // 치명타 초기화: 관중의 환호 + 치명타 100% → 가장 긴 대기 하나만 0.
-    const g = mk(['showmanship', 'pierce', 'hook'], { stats: { ...base, crit: 1 } }); g.cooldowns = { pierce: 4, hook: 2 }; const evs = [];
+    const g = mk(['zzCritReset', 'pierce', 'hook'], { stats: { ...base, crit: 1 } }); g.cooldowns = { pierce: 4, hook: 2 }; const evs = [];
     strike(g, target(), () => 0, evs); assert.deepEqual(evs[0].cooldownReset, [sk('pierce').name]); assert.equal(g.cooldowns.pierce, 0); assert.ok(g.cooldowns.hook > 0);
     // 확률 실패(rng 0.99 ≥ 0.3)면 초기화 없음.
-    const g2 = mk(['showmanship'], { stats: { ...base, crit: 1 } }); g2.cooldowns = { pierce: 4 }; let n = 0; strike(g2, target(), () => (n++ ? .99 : 0), []); assert.equal(g2.cooldowns.pierce, 3);
+    const g2 = mk(['zzCritReset'], { stats: { ...base, crit: 1 } }); g2.cooldowns = { pierce: 4 }; let n = 0; strike(g2, target(), () => (n++ ? .99 : 0), []); assert.equal(g2.cooldowns.pierce, 3);
     // 처치 초기화: 전사의 기백은 상대를 쓰러뜨리면 전부.
     const r = mk(['roninGrit', 'iaiDraw', 'pierce']); r.cooldowns = { iaiDraw: 3, pierce: 5 }; const t = target({ hp: 1 }); strike(r, t, () => 0, []); assert.ok(t.hp <= 0); assert.equal(r.cooldowns.iaiDraw, 0); assert.equal(r.cooldowns.pierce, 0);
     // 연속 행동 초기화: 얼티밋 타임은 편성 첫 번째 대기 중인 기술만.
     const c = mk(['chronoSovereign', 'frozenTime', 'precede']); c.cooldowns = { frozenTime: 6, precede: 5 }; strike(c, target(), () => 0, [], false, true); assert.equal(c.cooldowns.frozenTime, 0); assert.equal(c.cooldowns.precede, 4, 'second skill only ticks');
-    for (const id of ['showmanship', 'riskDividend', 'nimbleStep', 'chronoSovereign', 'roninGrit']) assert.ok(sk(id).cooldownReset, id);
+    for (const id of ['riskDividend', 'chronoSovereign', 'roninGrit']) assert.ok(sk(id).cooldownReset, id);
 });
 
 test('v25.5 multicast: chant spells fire together in one action with scaled cooldown and mana; non-multicast loadouts are untouched', () => {
@@ -1048,7 +1051,7 @@ test('v27.89 sprout support: exp ×(1 + 0.2 × (10 − rebirths)) below 10 rebir
     const at = r => { const s = newState(0); s.rebirths = r; return s; };
     // v3.17 환생 10회 미만은 3턴, 10회부터 기본 25턴. 연구 ‘불굴의 의지’ -3턴/단계, 패시브 revive, 최저 10턴. 경험치 손실은 10회부터 필요량의 2%.
     assert.equal(Sp.deathRecoveryTurns(at(4)), Sp.SPROUT.recoveryTurns); assert.equal(Sp.deathRecoveryTurns(at(9)), 3); assert.equal(Sp.deathRecoveryTurns(at(10)), B.BALANCE.recoveryTurns); assert.equal(B.BALANCE.recoveryTurns, 25);
-    { const v = at(20); v.permanent = { revive: 5 }; v.skills = ['vital']; assert.equal(Sp.deathRecoveryTurns(v), Math.max(10, 25 - 15 - 5)); v.permanent = { revive: 2 }; v.skills = []; assert.equal(Sp.deathRecoveryTurns(v), 19); }
+    { const v = at(20); v.permanent = { revive: 5 }; v.skills = []; assert.equal(Sp.deathRecoveryTurns(v), Math.max(10, 25 - 15)); v.permanent = { revive: 2 }; assert.equal(Sp.deathRecoveryTurns(v), 19); }
     { const v = at(9); v.level = 50; v.exp = 1e9; assert.equal(Sp.deathExpLoss(v), 0, 'no exp loss under rebirth 10'); const w = at(10); w.level = 50; w.exp = 1e9; assert.equal(Sp.deathExpLoss(w), Math.floor(B.xpNeeded(50, 10) * .02)); w.exp = 5; assert.equal(Sp.deathExpLoss(w), 5, 'never below 0'); }
     assert.ok(Math.abs(Enc.victoryHealRate(at(4)) - Enc.victoryHealRate(at(5)) - .05) < 1e-9);
     const s = at(2); s.running = true; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 0, gold: 0, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
