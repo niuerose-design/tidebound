@@ -111,7 +111,7 @@ test('v3.139 망인 skills: 무덤파기 only weakens for 5 turns; 죽지않은 
     assert.equal(soul.levelEffects.at(-1).penaltyRelief, 1, 'the real effect is unchanged');
 });
 
-test('v3.64 deaths-count growth (v3.160: the fallen angler is gone, the dark knight keeps the device)', () => {
+test('v3.64 deaths-count growth (v3.161: the fallen angler is gone, the dark knight keeps the device)', () => {
     const sk = SKILLS.find(x => x.id === 'stormRider');
     const s = newState(0); s.deaths = 0; const none = passiveGrowthBonus(s, sk, progressCounts(s)).attack || 0;
     s.deaths = 50; assert.equal(progressCounts(s).deaths, 50); assert.ok((passiveGrowthBonus(s, sk, progressCounts(s)).attack || 0) > none);

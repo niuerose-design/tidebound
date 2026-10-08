@@ -77,14 +77,14 @@ test('Dungeon repeat runs until its stop condition, then resumes idle fishing',(
  assert.throws(()=>act(strong(),{type:'dungeon',id:first.id,value:'0'},0));
 });
 
-test('Harmony stat: allocated-point formula and per-job passive scaling (all-rounder removed in v3.160)',()=>{
+test('Harmony stat: allocated-point formula and per-job passive scaling (all-rounder removed in v3.161)',()=>{
  const s=newState(0);s.level=40;s.attributes={str:20,dex:20,int:20,vit:20,wis:20,luk:15};
  const rawHarmony=40+115*.8+15*12;assert.equal(stats(s).harmony,Math.floor(rawHarmony*SKILL_FORMULA.harmonyScale));
  // 서로 다른 직업의 능력치 패시브를 장착할수록 조화가 강해지고, 같은 직업의 패시브는 한 번만 셉니다.
  for(const id of ['axeArm','bookwise','innerBreath']){s.skillInheritances[id]=true;s.learned[id]=1;}
  s.skills=['axeArm','bookwise','innerBreath'];assert.equal(stats(s).harmony,Math.floor(rawHarmony*SKILL_FORMULA.harmonyScale*(1+3*SKILL_FORMULA.harmonyPerJob)));
  s.skills=[];
- // v3.160 올라운더는 지웠습니다(조화 비례는 제논 본줄기의 조화 보너스로). 조화 기준값 식만 남겨 검사합니다.
+ // v3.161 올라운더는 지웠습니다(조화 비례는 제논 본줄기의 조화 보너스로). 조화 기준값 식만 남겨 검사합니다.
 });
 
 test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; giant/abyssal/starlit change stats and rewards',()=>{

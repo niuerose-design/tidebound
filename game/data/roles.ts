@@ -26,9 +26,9 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     borderStand: { role: 'border', name: '경계: 딜러 · 불굴 탱커' },
     /** v3.155 자기 버프 지원과 물리 딜러 경계(카데나: 체인아츠마다 서로 다른 자기 버프, 살아 있는 버프 수만큼 피해). */
     borderBuff: { role: 'border', name: '경계: 자기 버프 · 물리 딜러' },
-    /** v3.160 흡혈 탱커와 조화 딜러 경계(제논: 여섯 능력치가 고를수록 세지고, 흡혈한 체력을 메가 스매셔로 터뜨림). */
+    /** v3.161 흡혈 탱커와 조화 딜러 경계(제논: 여섯 능력치가 고를수록 세지고, 흡혈한 체력을 메가 스매셔로 터뜨림). */
     borderHarmony: { role: 'border', name: '경계: 흡혈 탱커 · 조화 딜러' },
-    /** v3.160 변신 탱커(카이저: 맞을 때 충전이 쌓여 파이널 피규레이션으로 변신). */
+    /** v3.161 변신 탱커(카이저: 맞을 때 충전이 쌓여 파이널 피규레이션으로 변신). */
     morph: { role: 'tank', name: '변신 탱커' },
     /** 독립 수련(계승 재료). */
     training: { role: 'none', name: '수련' },

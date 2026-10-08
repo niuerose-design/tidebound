@@ -66,7 +66,7 @@ function attributesFor(j) {
     const magic = ownMagic !== ownPhysical ? ownMagic > ownPhysical : jobFactor(j, 'magic') > jobFactor(j, 'attack');
     // v3.84 외길 계열(근력 · 기민 · 지능 · 정신 · 체질 · 행운)은 check-roles처럼 그 능력치에 몰아 배분합니다(행운 비례 나이트로드 등).
     const single = ONE_STAT[lineageOf(j)];
-    // v3.160 조화 경계(제논)는 설계 의도대로 여섯 능력치를 고르게 배분합니다(조화 보너스 = 최저 ÷ 최고).
+    // v3.161 조화 경계(제논)는 설계 의도대로 여섯 능력치를 고르게 배분합니다(조화 보너스 = 최저 ÷ 최고).
     const even = subRoleOf(j, lineageOf(j)) === 'borderHarmony';
     const total = 5 + (LEVEL - 1) * 5, w = single ? { [single]: 100 } : even ? { str: 17, dex: 16, int: 17, vit: 17, wis: 16, luk: 17 } : magic ? { int: 45, wis: 20, vit: 25, dex: 10 } : { str: 45, dex: 20, vit: 25, wis: 10 };
     const out = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; let used = 0;

@@ -131,7 +131,7 @@ export type StatusEffects = {
     lastStand?: number;
     /** v3.143 충전 중첩(메카닉). 충전 기술이 명중하면 쌓이고 전탄발사가 소모합니다. */
     charge?: number;
-    /** v3.160 흡혈로 회복한 체력 누적(최대 체력까지). 제논 메가 스매셔가 태웁니다. */
+    /** v3.161 흡혈로 회복한 체력 누적(최대 체력까지). 제논 메가 스매셔가 태웁니다. */
     siphon?: number;
 };
 export type Item = {
@@ -200,12 +200,12 @@ export type Skill = {
     /** v3.151 자기 버프: 이 기술을 쓰면 시전자가 turns 동안 stats(고정값)와 speedMultiplier를 얻습니다(같은 id면 더 긴 쪽으로 갱신). */
     selfBuff?: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number; damageMultiplier?: number };
     /** v3.158 접신(아크 패시브): 충전이 need에 닿으면 충전을 비우고 자기 버프 ‘접신’(피해 × damageMultiplier · 속도 × speedMultiplier, turns턴)에 들어갑니다. 장착한 것 중 가장 센 하나만. */
-    spectre?: { need: number; turns: number; damageMultiplier: number; speedMultiplier?: number; /** v3.160 버프 이름(기본 접신) · 고정 능력치(카이저 파이널 피규레이션의 흡혈). */ name?: string; stats?: Partial<Stats> };
-    /** v3.160 피격 충전(카이저 패시브): 피해를 입는 공격을 맞을 때마다 충전 +N(치명타로 맞으면 +1 더). 장착한 것 중 가장 큰 값. */
+    spectre?: { need: number; turns: number; damageMultiplier: number; speedMultiplier?: number; /** v3.161 버프 이름(기본 접신) · 고정 능력치(카이저 파이널 피규레이션의 흡혈). */ name?: string; stats?: Partial<Stats> };
+    /** v3.161 피격 충전(카이저 패시브): 피해를 입는 공격을 맞을 때마다 충전 +N(치명타로 맞으면 +1 더). 장착한 것 중 가장 큰 값. */
     chargeOnHit?: number;
-    /** v3.160 조화 보너스(제논): 직접 배분한 여섯 능력치의 (가장 낮은 값 ÷ 가장 높은 값) × 이 값만큼 피해가 커집니다. 고르게 투자할수록 세짐. */
+    /** v3.161 조화 보너스(제논): 직접 배분한 여섯 능력치의 (가장 낮은 값 ÷ 가장 높은 값) × 이 값만큼 피해가 커집니다. 고르게 투자할수록 세짐. */
     balanceBonus?: number;
-    /** v3.160 흡혈 축적 폭발(제논 메가 스매셔): 이 전투에서 흡혈로 회복한 체력(effects.siphon) × scale을 기준값에 더하고 비웁니다. */
+    /** v3.161 흡혈 축적 폭발(제논 메가 스매셔): 이 전투에서 흡혈로 회복한 체력(effects.siphon) × scale을 기준값에 더하고 비웁니다. */
     siphonBurst?: { scale: number };
     /** v3.158 이 자기 버프가 걸려 있을 때만 나가는 액티브(아크 인피니티 스펠: 'spectre'). */
     requiresBuff?: string;
