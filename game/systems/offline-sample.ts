@@ -108,7 +108,7 @@ export function extrapolateOffline(s: State, m: Mark, turns: number, remaining: 
     addGains(g, rareGains, -1);
     g.pearls -= oneTimeRewards.pearls; g.sp -= oneTimeRewards.sp; g.essence -= oneTimeRewards.essence;
     // 측정 구간에 가방에 들어온 새 장비: 늘린 수만큼 가방 남은 칸까지는 분해 정수, 넘치는 몫은 골드(가방이 찼을 때의 자동 판매와 같은 값).
-    const fresh = s.inventory.filter(i => !m.items.has(i.id) && !keepsAcrossLives(i)), items = grow(fresh.length), room = Math.max(0, inventoryCap(s) - s.inventory.length);
+    const fresh = s.inventory.filter(i => !m.items.has(i.id) && !keepsAcrossLives(i)), items = grow(fresh.length), room = Math.max(0, inventoryCap() - s.inventory.length);
     const avg = (f: (i: State['inventory'][number]) => number) => fresh.length ? fresh.reduce((n, i) => n + f(i), 0) / fresh.length : 0;
     const itemEssence = Math.round(avg(i => dismantleEssence(i, s)) * Math.min(items, room)), itemGold = Math.round(avg(i => i.power * 3) * Math.max(0, items - room));
     const exp = grow(g.exp), gold = grow(g.gold) + itemGold, kills = grow(g.kills);

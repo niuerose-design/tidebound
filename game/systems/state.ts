@@ -24,6 +24,8 @@ export function newState(now: number): State {
         masteryAligned: true,
         penetrationBoosted: true,
         rankRescaled: true,
+        // v3.154 새 세이브는 긴 휴식 단계 변환이 필요 없습니다.
+        offlineRescaled: true,
         // v27.31 새 세이브는 무료로 받을 리미터 해제 단계가 없습니다(옛 세이브만 migrations에서 한 번 받음).
         researchGranted: { limitBreak: 0 },
         researchLegacy: {},

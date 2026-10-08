@@ -161,7 +161,7 @@ export function ascend(s: State, now: number) {
         guildMember: s.guildMember, guildStats: s.guildStats, altar: s.altar, daily: s.daily, weekly: s.weekly, duelSeason: s.duelSeason,
         autoSell: s.autoSell, autoVend: s.autoVend, autoSellGrades: s.autoSellGrades, autoVendGrades: s.autoVendGrades, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, skipStatConfirm: s.skipStatConfirm, swarmCap: s.swarmCap,
         account: s.account, hacker: s.hacker, hackFeed: s.hackFeed, doorsOpened: s.doorsOpened, shopSerial: s.shopSerial, logId: s.logId,
-        newsMark: s.newsMark, onyxMilestones: s.onyxMilestones, letterLog: s.letterLog, goldLog: s.goldLog, goldEarned: s.goldEarned, autoRebirth: s.autoRebirth, researchPlan: s.researchPlan, autoFollow: s.autoFollow, rotation: s.rotation, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, plainCodex: s.plainCodex, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled,
+        newsMark: s.newsMark, onyxMilestones: s.onyxMilestones, letterLog: s.letterLog, goldLog: s.goldLog, goldEarned: s.goldEarned, autoRebirth: s.autoRebirth, researchPlan: s.researchPlan, autoFollow: s.autoFollow, rotation: s.rotation, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, plainCodex: s.plainCodex, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled, offlineRescaled: s.offlineRescaled,
         jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, skillPractice: s.skillPractice, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited,
         learned: Object.fromEntries(Object.keys(s.learned || {}).map(id => [id, 1])),
         // 튜토리얼은 건너뜁니다: 모든 단계를 완료로 적어 안내도, 단계 보상도 다시 나오지 않게 합니다.

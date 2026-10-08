@@ -46,7 +46,8 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
     assert.deepEqual(s.book, {}, 'codex reset'); assert.equal(s.abyssBest, 0); assert.deepEqual(s.abyssMilestones, []); assert.equal(s.essence, 0); assert.equal(s.gold, 100, 'gold back to a new character'); assert.equal('skillSpecializations' in s, false, 'deleted content is not carried');
     for (const key of ['vows', 'nextVows', 'variantBook', 'onyxBook', 'abyssWeek']) assert.equal(key in s, false, `${key} reset`);
     assert.equal(s.inventory.length, 0, 'relics reset too');
-    const refund = Lc.achievementRefund(s); assert.equal(refund.pearls, 1 + 3); assert.equal(s.pearls, refund.pearls, 'achievement pearls refunded');
+    // v3.154 승천 무료 지급 ‘자동 수령’이 승천 직후 새로 달성한 업적(승천 1회 등)의 보상까지 바로 받으므로, 받은 업적 합계(환급 1 + 3 + 자동 수령분)와 세계석이 같습니다.
+    const refund = Lc.achievementRefund(s); assert.ok(refund.pearls >= 1 + 3); assert.equal(s.pearls, refund.pearls, 'achievement pearls refunded'); assert.ok(s.logs.some(l => l.text.includes('자동 수령 · 업적 보상')));
     assert.equal(s.permanent.attack || 0, 0, 'combat research reset'); assert.equal(s.permanent.messageBottle || 0, 0, 'lucky letter must be rebought');
     for (const [id, rank] of Object.entries(Asc.ASCENSION_RESEARCH)) assert.equal(s.permanent[id], rank, `auto research ${id}`);
     assert.deepEqual(s.researchGranted, { ...Asc.ASCENSION_RESEARCH, limitBreak: 0 }, 'free ranks are not refunded');
@@ -646,7 +647,7 @@ test('v3.125 primal gauge fills on every exit path, rare foes are never golden, 
     // 고대는 세지 않습니다.
     act(s, { type: 'sell', id: 'a1' }, 0); assert.equal(s.primalGauge, 4, 'ancients do not count');
     // 가방 가득 자동 판매로 사라진 태초도 셉니다.
-    s.permanent.inventory = 0; while (s.inventory.length < Ec.inventoryCap(s)) s.inventory.push(gear(`f${s.inventory.length}`, 0));
+    s.permanent.inventory = 0; while (s.inventory.length < Ec.inventoryCap()) s.inventory.push(gear(`f${s.inventory.length}`, 0));
     const before = s.primalGauge; s.primalDropPity = Ec.PRIMAL_DROP_PITY - 1; E.drop(s, 100, () => .5, true); assert.equal(s.primalGauge, before + 1, 'bag-full auto sale of a primal fills the gauge');
     // 희귀 몬스터는 황금 개체가 되지 않습니다(보통 몬스터는 같은 난수로 황금).
     const r = newState(0); r.level = 100; r.kills = 10000; r.running = true;

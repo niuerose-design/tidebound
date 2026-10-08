@@ -15,7 +15,7 @@ export const BALANCE = {
     // Gear luck, routing and inherited techniques still change the time to rebirth.
     critMultiplier: 1.65, xpBase: 35, xpGrowth: 1.33, jobLevel: 10, rebirthLevel: 30,
     // Legacy display values kept for save/config compatibility. Loadouts are now limited by total AP only.
-    activeSlots: 4, passiveSlots: 3, inventoryCap: 60,
+    activeSlots: 4, passiveSlots: 3, /** v3.154 넓은 가방 연구 삭제: 기본 60 → 100칸. */ inventoryCap: 100,
     // v3.52 기본 확률·상한은 서버 전용(game/secret/odds.ts). dropBonusScale(보너스 → 상대 증가 환산)은 화면 표시에 써서 공개.
     get dropChance() { return ODDS.drop.chance; }, dropBonusScale: 0.1, get dropChanceCap() { return ODDS.drop.cap; },
     /** v27.53 해역 난이도·무릉도장 층으로 올라가는 드롭 장비 레벨 상한: 캐릭터 레벨 + dropLevelOver(그 지역 몬스터보다 낮아지지는 않음). */

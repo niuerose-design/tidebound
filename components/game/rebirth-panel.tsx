@@ -185,7 +185,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
 
 /** v3.78 환생 유물 탭: 규칙은 한 줄 요약 칩으로, 유물은 4열 카드(받기 전에는 Lv.1 수령 수치, 보유 중이면 지금 레벨 · 별 · 이식 옵션). */
 function RelicTab({ s, send, busy }: PanelProps) {
-    const full = s.inventory.length >= inventoryCap(s);
+    const full = s.inventory.length >= inventoryCap();
     const owned = (id: string) => [...s.inventory, ...Object.values(s.equipment)].find(x => x?.relic === id) || null;
     return <>
         <p className="tab-intro">환생을 가로질러 자라는 장비입니다. 세계석 없이 환생 횟수를 채우면 받고, 별과 이식 옵션은 환생해도 남습니다. 강화 · 레벨 올리기 · 옵션 이식은 장비 보관함에서 합니다.</p>

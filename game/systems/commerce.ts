@@ -135,7 +135,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     const id = a.id || '';
     const spend = (cost: number) => { if (!Number.isFinite(cost) || s.gold < cost)
         throw Error('골드가 부족합니다.'); s.gold -= cost; };
-    const room = () => { if (s.inventory.length >= inventoryCap(s))
+    const room = () => { if (s.inventory.length >= inventoryCap())
         throw Error('가방을 비운 뒤 구매하세요.'); };
     const nextId = () => `shop-${++s.shopSerial}`;
     // v3.58 확정 구매는 없앴습니다. 감정(1·5·10개)과 각인 감정은 부위를 고르고, 골드·정수·가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다.
@@ -148,7 +148,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const count = Number(n || 1);
         if (!GAMBLE_COUNTS.includes(count)) throw Error('감정 개수는 1·5·10개 중 하나입니다.');
         const each = affix ? imprintGambleCost(s) : { gold: gambleCost(s), essence: 0 };
-        if (s.inventory.length + count > inventoryCap(s)) throw Error(count > 1 ? `가방에 ${count}칸이 필요합니다. 장비를 정리하세요.` : '가방을 비운 뒤 감정하세요.');
+        if (s.inventory.length + count > inventoryCap()) throw Error(count > 1 ? `가방에 ${count}칸이 필요합니다. 장비를 정리하세요.` : '가방을 비운 뒤 감정하세요.');
         if (s.gold < each.gold * count) throw Error('골드가 부족합니다.');
         if ((s.essence || 0) < each.essence * count) throw Error(`정수가 부족합니다(필요 ${each.essence * count}).`);
         const results: Item[] = [];
@@ -173,7 +173,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (!APPRAISAL.some(r => r.rarity === target)) throw Error('목표 등급을 고르세요.');
         if (!(limit > 0)) throw Error('골드 한도를 정하세요.');
         if (affix && !imprintChoices(category.slot).some(x => x.id === affix)) throw Error('각인할 옵션을 고르세요.');
-        if (s.inventory.length >= inventoryCap(s)) throw Error('가방에 한 칸이 필요합니다. 장비를 정리하세요.');
+        if (s.inventory.length >= inventoryCap()) throw Error('가방에 한 칸이 필요합니다. 장비를 정리하세요.');
         const each = affix ? imprintGambleCost(s) : { gold: gambleCost(s), essence: 0 };
         if (s.gold < each.gold || each.gold > limit) throw Error('골드가 부족합니다.');
         if ((s.essence || 0) < each.essence) throw Error(`정수가 부족합니다(필요 ${each.essence}).`);
@@ -299,8 +299,6 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (refund <= 0)
             throw Error('돌려받을 세계석이 없습니다.');
         const after = { ...s, permanent: { ...s.permanent, ...Object.fromEntries(Object.keys(ranks).map(k => [k, Math.min(ranks[k], s.researchGranted?.[k] || 0)])) } };
-        if (ranks.inventory && s.inventory.length > inventoryCap(after))
-            throw Error(`재분배하면 가방이 ${inventoryCap(after)}칸으로 줄어 ${s.inventory.length - inventoryCap(after)}개가 넘칩니다. 장비를 정리하세요.`);
         if (ranks.ap && apUsed(after) > apCapacity(after))
             throw Error(`재분배하면 장착 AP 한도(${apCapacity(after)})를 넘습니다. 스킬 장착을 ${apUsed(after) - apCapacity(after)} AP 줄인 뒤 다시 시도하세요.`);
         // v27.31 무료로 받은 단계는 남깁니다(반환 세계석에도 들어가지 않음).

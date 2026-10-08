@@ -24,7 +24,7 @@ export function Shop({ s, send, busy }: PanelProps) {
     const [tab, setTab] = useState('gamble');
     // v3.49 정보 비공개가 켜져 있으면 감정 등급 확률을 숨깁니다.
     const secret = catalogNow().secret;
-    const gamble = gambleCost(s), imprint = imprintGambleCost(s), cap = inventoryCap(s), full = s.inventory.length >= cap;
+    const gamble = gambleCost(s), imprint = imprintGambleCost(s), cap = inventoryCap(), full = s.inventory.length >= cap;
     const odds = secret ? '' : `${APPRAISAL.map(r => `${RARITIES[r.rarity].name} ${(Math.round(r.chance * 10000) / 100)}%`).join(' · ')}. `;
     const [slot, setSlot] = useState<string>('rod'), [affix, setAffix] = useState(''), [target, setTarget] = useState(4);
     const choices = imprintChoices(GAMBLE_CATEGORIES.find(c => c.id === slot)!.slot), pick = choices.some(c => c.id === affix) ? affix : choices[0]?.id || '';

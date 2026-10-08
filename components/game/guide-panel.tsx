@@ -175,7 +175,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
                     effect={`처치 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 사냥터 난이도가 오를수록 줄어듭니다: 기본 ÷ (1 + 난이도 ÷ ${BALANCE.healAfterKillTideScale}) — 난이도 10에서 10%, 30에서 5%, 최저 ${percent(BALANCE.healAfterKillMin)}. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}
                     condition={`패배하면 잃는 것 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다. 자리를 비운 시간도 서버가 턴으로 계산합니다.`}
-                    limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}, 가방은 기본 ${BALANCE.inventoryCap}칸${s ? `(지금 ${inventoryCap(s)}칸)` : ''}. 둘 다 세계석 연구로 늘어납니다.`}/>
+                    limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간${s ? `(지금 ${offlineCapSeconds(s) / 3600}시간)` : ''}, 가방은 기본 ${BALANCE.inventoryCap}칸${s ? `(지금 ${inventoryCap()}칸)` : ''}. 둘 다 세계석 연구로 늘어납니다.`}/>
             </div>
         </Topic>
         <Topic icon={<Flame size={19}/>} title="제단 · 난이도 · 특수 몬스터" note="모두가 함께 채우는 제단, 사냥터·던전 난이도, 까미와 누리.">

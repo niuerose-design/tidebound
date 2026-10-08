@@ -17,6 +17,9 @@ function claimBookRewards(s: State, id: string) {
     return true;
 }
 
+/** v3.154 자동 수령: 받을 수 있는 도감 연구 보상을 모두 받습니다. 받은 몬스터 수를 돌려줍니다. */
+export function claimPendingBooks(s: State) { let n = 0; for (const f of FISH) if (claimBookRewards(s, f.id)) n++; return n; }
+
 export const collectionActions: ActionHandlers = {
     claimBook(s, { id }) {
         if (!FISH.some(f => f.id === id))
