@@ -92,7 +92,7 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
     const bad = [];
     for (const sk of SKILLS) {
         const j = job(sk.job); if (!j || j.tier < 1 || j.retired) continue;
-        const exempt = /^training|Training[123]$|[hH]acker$/.test(j.id) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff'].includes(R.subRoleOf(j, lineageOf(j)));
+        const exempt = /^training|Training[123]$|[hH]acker$/.test(j.id) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff', 'borderHarmony'].includes(R.subRoleOf(j, lineageOf(j)));
         if (exempt) continue;
         // 제약형(최대 숙련에서 AP 0 이하 · 제약 직업): 마지막 단계가 천만 단위(AP 반환 5,000만 · 그 밖 1,000만).
         if (Sk.isConstraintSkill(sk)) { const want = Sk.CONSTRAINT_MASTERY_BY_SKILL[sk.id] ?? (Sk.costAtMastery(sk) < 0 ? 5e7 : 1e7); if (P.masteryMilestonesFor(sk).at(-1) !== want) bad.push(`${sk.id} constraint`); continue; }
@@ -103,8 +103,8 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
     assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'emptyPalm')), [600, 3000, 12000, 36000], 'moved 2nd-tier hidden jobs use the 2nd-tier curve');
     assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e6, 4e6, 1e7], 'v3.137 bone legacy (AP 6 → 4 → 2 → −3) in millions, ending at ten million');
     assert.equal(P.jobMasteryTarget(job('undead')), 1e7, 'v3.137 망인 job mastery is ten million');
-    const s = newState(0); delete s.masteryAligned; s.skillPractice.emptyPalm = 300; s.skillPractice.riseAgain = 100;
-    migrateState(s); assert.ok(s.legacyInherited?.emptyPalm && !s.legacyInherited?.riseAgain, 'kept only above the old first stage');
+    const s = newState(0); delete s.masteryAligned; s.skillPractice.emptyPalm = 300; s.skillPractice.wave = 100;
+    migrateState(s); assert.ok(s.legacyInherited?.emptyPalm && !s.legacyInherited?.wave, 'kept only above the old first stage');
 });
 
 test('v3.83 utility gain ×1.5: gold/exp/drop bonuses of utility job skills only, applied once', async () => {

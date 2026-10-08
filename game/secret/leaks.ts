@@ -20,7 +20,7 @@ const pct = (x: number) => `${Math.round(x * 100_000) / 1000}%`;
 /** 숨은 조건의 정확한 문장(정확한 조건은 여기서만). secret/unlocks.ts의 test와 같은 내용입니다. */
 export const UNLOCK_CONDITIONS: Record<string, string> = {
     undead: '10번 쓰러지기', clockmaker: '사냥터에서 10시간 보내기',
-    krakenkin: '보스 10마리 처치', poorMonk: 'Lv.15 이상인데 골드 100 미만', fallenAngler: '30번 쓰러지기', journeyman: '직업 3개 끝까지 숙달',
+    krakenkin: '보스 10마리 처치', poorMonk: 'Lv.15 이상인데 골드 100 미만', journeyman: '직업 3개 끝까지 숙달',
     // 표에 없는 숨은 조건 직업이 생기면 tests/odds.test.mjs가 알려 줍니다.
 };
 

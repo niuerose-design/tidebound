@@ -7,7 +7,7 @@ const ready = (level = 30) => { const s = newState(0); s.level = level; s.rebirt
 const job = id => JOBS.find(j => j.id === id);
 
 test('v3.62 hidden unlocks: record conditions (v3.64 seven); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
-    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'krakenkin', 'poorMonk', 'fallenAngler', 'journeyman']);
+    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'krakenkin', 'poorMonk', 'journeyman']);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead'), false);
     assert.ok(jobRequirements(s, job('undead')).some(r => r.label === '숨은 조건' && !r.met));
@@ -27,9 +27,8 @@ test('v3.62 hidden unlocks count play records', () => {
     // v3.64 숨은 2차(도감 독자·청빈 수도승·칠전팔기)는 기록 조건 + 부모 1차 숙련.
     s.level = 30; s.attributes.int = 30; s.attributes.wis = 30; s.attributes.vit = 30; s.attributes.str = 30;
     s.gold = 50; closed('poorMonk'); s.jobMastery.saltWarden = 75; s.gold = 5000; closed('poorMonk'); s.gold = 50; open('poorMonk');
-    s.jobMastery.wanderer = 75; closed('fallenAngler'); s.deaths = 30; open('fallenAngler');
     for (const id of unlocks.UNLOCK_JOBS) { const j = job(id); assert.ok(j && j.hidden && j.hint && !j.hint.includes(j.name) && !j.hint.includes('문'), id); }
-    for (const [id, parent] of [['poorMonk', 'saltWarden'], ['fallenAngler', 'wanderer']]) { const j = job(id); assert.ok(j.tier === 2 && j.parent === parent && j.tree !== 'mystery', id); }
+    for (const [id, parent] of [['poorMonk', 'saltWarden']]) { const j = job(id); assert.ok(j.tier === 2 && j.parent === parent && j.tree !== 'mystery', id); }
 });
 
 test('v3.62 the rebirth door is gone: no draw at rebirth, the old door jobs keep only their own conditions', () => {
@@ -112,8 +111,8 @@ test('v3.139 망인 skills: 무덤파기 only weakens for 5 turns; 죽지않은 
     assert.equal(soul.levelEffects.at(-1).penaltyRelief, 1, 'the real effect is unchanged');
 });
 
-test('v3.64 the fallen angler grows with deaths', () => {
-    const sk = SKILLS.find(x => x.id === 'scarTissue');
-    const s = newState(0); s.deaths = 0; const none = passiveGrowthBonus(s, sk, progressCounts(s)).hp || 0;
-    s.deaths = 50; assert.equal(progressCounts(s).deaths, 50); assert.ok((passiveGrowthBonus(s, sk, progressCounts(s)).hp || 0) > none);
+test('v3.64 deaths-count growth (v3.163: the fallen angler is gone, the dark knight keeps the device)', () => {
+    const sk = SKILLS.find(x => x.id === 'stormRider');
+    const s = newState(0); s.deaths = 0; const none = passiveGrowthBonus(s, sk, progressCounts(s)).attack || 0;
+    s.deaths = 50; assert.equal(progressCounts(s).deaths, 50); assert.ok((passiveGrowthBonus(s, sk, progressCounts(s)).attack || 0) > none);
 });

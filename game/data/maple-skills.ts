@@ -51,8 +51,8 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
 
     // ── 제논 계보 · 태엽 기계공 · 올라운더 ──
     precision: '서플러스 서플라이', vitalSurge: '핀포인트 로켓', adaptiveCore: '하이브리드 로직', windupCast: '태엽 사출', springLoaded: '감긴 태엽',
-    harmonicWeight: '올라운드 밸런스', redWake: '퍼지롭 매스커레이드', bloodEngine: '듀얼 브리드 디펜시브', lifeTorrent: '메가 스매셔', hybridCore: '멀티래터럴',
-    aberrantSurge: '홀로그램 그래피티', aberrantBody: '하이브리드 디펜시브',
+    harmonicWeight: '올라운드 밸런스', redWake: '퍼지롭 매스커레이드', bloodEngine: '듀얼 브리드 디펜시브', lifeTorrent: '홀로그램 그래피티', hybridCore: '멀티래터럴',
+    aberrantSurge: '메가 스매셔', aberrantBody: '하이브리드 디펜시브',
 
     // ── 루미너스 계보 ──
     oath: '플래시 샤워', balance: '라이트 블레싱', vowStrike: '라이트 리플렉션', twoSeasOath: '이퀄리브리엄',

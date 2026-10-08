@@ -23,7 +23,6 @@ export const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
     { job: 'clockmaker', test: s => (s.playMs || 0) >= 10 * HOUR },
     { job: 'krakenkin', test: s => bossCatches(s) >= 10 },
     { job: 'poorMonk', test: s => s.level >= 15 && (s.gold || 0) < 100 },
-    { job: 'fallenAngler', test: s => (s.deaths || 0) >= 30 },
     { job: 'journeyman', test: s => masteredJobCount(s) >= 3 },
 ] as HiddenUnlock[]);
 /** 숨은 조건이 있는 직업. */

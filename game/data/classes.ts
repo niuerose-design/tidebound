@@ -139,7 +139,7 @@ export const JOBS: Job[] = [
     // v3.140 루미너스 재개편: 마법 공격 계수로 물리 피해를 주는 역전 딜러. 뿌리를 검사 → 조류 술사(매지션)로 옮기고 요구치를 지능 · 정신으로.
     { id: 'paladin', name: '빛결 술사', title: '빛을 작살에 싣는다', desc: '마법 공격 계수로 물리 피해를 주는 역전 딜러 2차. 지능을 올리면 일격이 세지고, 피해의 일부를 흡수합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { magic: 36, hp: 80, resist: 7 }, tier: 2, level: 25, parent: 'tide', requires: { int: 25, wis: 20 }, mastery: 75, role: '역전 딜러·흡수', tree: 'hybrid', lineage: 'paladin' },
     { id: 'wanderer', name: '이형 항해자', title: '어느 깃발에도 속하지 않는 자', desc: '서플러스 서플라이로 명중과 회피를 익히는 복합 입문 직업. 다른 직업에서 계승한 기술의 빈틈을 보완합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 1, magic: 1, hp: 5 }, tier: 1, level: 10, requires: { str: 10, int: 10, vit: 10 }, mastery: 0, role: '복합 입문', tree: 'hybrid' },
-    { id: 'chimera', name: '두 바다 융합자', title: '살과 마나를 한 덩어리로', desc: '최대 체력과 마나를 공격으로 바꾸는 대기만성형 직업.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { attack: 33, magic: 36, hp: 125, defense: 3, resist: 4 }, tier: 2, level: 25, parent: 'wanderer', requires: { str: 25, int: 25, vit: 20 }, mastery: 75, role: 'HP·MP 복합', tree: 'hybrid' },
+    { id: 'chimera', name: '두 바다 융합자', title: '살과 마나를 한 덩어리로', desc: '명중과 회피를 함께 키우는 2차 직업. 여섯 능력치가 고를수록 핀포인트 로켓이 세집니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { attack: 33, magic: 36, hp: 125, defense: 3, resist: 4 }, tier: 2, level: 25, parent: 'wanderer', requires: { str: 25, int: 25, vit: 20 }, mastery: 75, role: 'HP·MP 복합', tree: 'hybrid' },
     // v27.4 제약 직업 틀의 참고 구현: 체력 ×0.01 유리 대포. 선공·최후의 버팀 2회·회피 +30%로 "맞기 전에 끝내는" 직업. PvE 밸런스 대상 아님.
 ];
 
@@ -159,12 +159,11 @@ JOBS.push(
     { id: 'stormScribe', name: '폭풍 필경사', title: '번개를 문장으로 봉인한다', desc: '한 번의 주문에 모든 마나를 태우는 고점형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .08, bonus: { magic: 89, resist: 4 }, tier: 3, level: 40, parent: 'tempest', requires: { int: 50, wis: 34 }, mastery: 150, role: '마나·폭발', tree: 'magic' },
     { id: 'lunarOracle', name: '월광 예언자', title: '달의 조수로 미래를 고친다', desc: '높은 회복력과 저항을 얻지만 물리 공격에 약한 유지형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 55, hp: 175, resist: 16 }, tier: 3, level: 40, parent: 'oracle', requires: { wis: 50, vit: 35 }, mastery: 150, role: '회복·저항', tree: 'magic' },
     { id: 'reefMedic', name: '암초 의무관', title: '상처를 산호로 꿰맨다', desc: '작은 회복을 자주 발동해 자동 전투의 안정성을 높이는 보조 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 2, hp: 65, defense: 4, resist: 3 }, tier: 2, level: 25, parent: 'seagrassKeeper', requires: { vit: 28, wis: 22 }, mastery: 75, role: '회복·흡혈', tree: 'defense' },
-    { id: 'bellTurtle', name: '종거북 수호자', title: '울림으로 적의 박자를 끊는다', desc: '속도를 포기하고 방어와 기절을 챙기는 느린 제어형입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { hp: 100, defense: 6, resist: 1 }, tier: 2, level: 25, parent: 'warden', requires: { vit: 34, luk: 20 }, mastery: 75, role: '기절·방어', tree: 'defense', penalties: { speed: -6 }, lineage: 'bellTurtle' },
+    { id: 'bellTurtle', name: '종거북 수호자', title: '울림으로 적의 박자를 끊는다', desc: '속도를 포기하고 방어를 챙기며, 맞을 때마다 모프 게이지를 채워 변신하는 느린 탱커입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { hp: 100, defense: 6, resist: 1 }, tier: 2, level: 25, parent: 'warden', requires: { vit: 34, luk: 20 }, mastery: 75, role: '기절·방어', tree: 'defense', penalties: { speed: -6 }, lineage: 'bellTurtle' },
     { id: 'coralSaint', name: '산호 성인', title: '스스로 빛나는 방벽', desc: '액티브 없이 두 패시브만으로 파티 없는 자동 전투를 버티는 순수 보조형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 84, hp: 260, defense: 12, resist: 16 }, tier: 3, level: 40, parent: 'oracle', requires: { vit: 50, wis: 38 }, mastery: 150, role: '패시브·유지', tree: 'magic' },
     { id: 'brineThorn', name: '염수 가시성채', title: '다가오는 자를 꿰뚫는다', desc: '높은 생명력과 방어를 얻는 대신 명중을 포기하는 반격형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 9, hp: 215, defense: 26, resist: 6 }, tier: 3, level: 40, parent: 'bulwark', requires: { vit: 52, str: 38 }, mastery: 150, role: '반격·성채', tree: 'defense', penalties: { accuracy: -.04 } },
-    { id: 'clockworkAngler', name: '태엽 낚시꾼', title: '한 턴을 미리 감는다', desc: '속도·명중·HP·MP 비례를 섞어 어느 편성에도 들어가는 복합 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 7, magic: 7, hp: 10 }, tier: 2, level: 25, parent: 'wanderer', requires: { dex: 28, int: 22 }, mastery: 75, role: '속도·복합', tree: 'hybrid' },
     { id: 'gambler', name: '바다 도박사', title: '확률을 이기는 대신 대가를 건다', desc: '치명 피해와 골드가 오르지만 명중이 흔들리는 고위험 직업입니다.', attack: 1, magic: 1, hp: .92, defense: 1, resist: 1, crit: .1, bonus: { attack: 2, magic: 2 }, tier: 2, level: 25, parent: 'squidJester', requires: { luk: 36, dex: 28 }, mastery: 75, role: '치명·경제', tree: 'support', penalties: { accuracy: -.04 } },
-    { id: 'bloodTide', name: '혈조의 군주', title: '피를 조류로 바꾼다', desc: 'HP 비례 피해와 흡혈이 동시에 성장하는 대기만성형 3차 직업입니다.', attack: 1, magic: .9, hp: 1, defense: 1, resist: 1, crit: .1, bonus: { attack: 59, hp: 235, defense: 5 }, tier: 3, level: 40, parent: 'chimera', requires: { str: 45, vit: 35 }, mastery: 150, role: 'HP·흡혈', tree: 'hybrid' },
+    { id: 'bloodTide', name: '혈조의 군주', title: '피를 조류로 바꾼다', desc: '회피와 체력이 자라고, 여섯 능력치가 고를수록 퍼지롭 매스커레이드가 세지는 3차 직업입니다.', attack: 1, magic: .9, hp: 1, defense: 1, resist: 1, crit: .1, bonus: { attack: 59, hp: 235, defense: 5 }, tier: 3, level: 40, parent: 'chimera', requires: { str: 45, vit: 35 }, mastery: 150, role: 'HP·흡혈', tree: 'hybrid' },
     { id: 'netWeaver', name: '그물 직조가', title: '잡은 몬스터를 놓치지 않는다', desc: '상위 전직 없이 수집과 안정성을 택하는 독립 1차 직업입니다. 낮은 확률로 길게 감속시키는 그물 던지기를 함께 익힙니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 6, hp: 20 }, tier: 1, level: 10, requires: { dex: 10, luk: 10 }, mastery: 0, role: '독립·수집', tree: 'physical', branchless: true },
     { id: 'fishWhisperer', name: '물고기 말벗', title: '물결의 의지를 듣는다', desc: '상위 전직 없이 낮은 비용 주문과 마나 회전을 연구하는 독립 1차 직업입니다. 마법 직업이라 마력 평타가 나갑니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 8, resist: 2 }, tier: 1, level: 10, requires: { int: 10, wis: 10 }, mastery: 0, role: '독립·순환', tree: 'magic', branchless: true },
     { id: 'driftwoodHermit', name: '유목 은둔자', title: '혼자서도 버티는 법', desc: '상위 전직 없이 체력과 저항을 차곡차곡 쌓는 독립 1차 직업입니다. 낮은 확률로 길게 기절시키는 통나무 밀치기를 함께 익힙니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { hp: 30, defense: 3, resist: 3 }, tier: 1, level: 10, requires: { vit: 10, wis: 10 }, mastery: 0, role: '독립·생존', tree: 'defense', branchless: true },
@@ -206,7 +205,6 @@ JOBS.push(
 
 // 제논 계열 상위직: 여섯 능력치를 고르게 배분할수록 강해지는 복합 피해 직업. 수치는 검증 초안입니다.
 JOBS.push(
-    { id: 'allRounder', name: '팔방 항해사', title: '여섯 물결을 고르게 다루는 자', desc: '직접 배분한 여섯 능력치가 고를수록 강해지는 복합 피해 직업. 순간 화력 대신 균형 잡힌 생존력과 안정적인 물리·마법 복합 피해로 싸웁니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .03, bonus: { attack: 5, magic: 6, hp: 165, defense: 14, resist: 12 }, tier: 2, level: 40, parent: 'wanderer', requires: {}, requiresAllocated: { str: 15, dex: 15, int: 15, vit: 15, wis: 15, luk: 15 }, mastery: 2400, role: '올스탯·복합', tree: 'hybrid' },
 );
 
 // v21 직업 확장: 계열별 5차 최상위 직업과 능력치 패시브 직업. 자세한 설계는 expansion.ts.
@@ -366,7 +364,7 @@ export const LINEAGES: Lineage[] = [
     NEW_LINEAGES.nerveNeedler,
     independent('status'),
     { id: 'fisher', name: '무직', tree: 'hybrid', summary: '모든 모험의 출발점입니다. 공용 기술로 첫 전직을 준비합니다.' },
-    { id: 'wanderer', name: '이형 항해자 계보', tree: 'hybrid', summary: '체력·마나·속도·올스탯을 섞어 쓰는 복합 계보입니다.' },
+    { id: 'wanderer', name: '이형 항해자 계보', tree: 'hybrid', summary: '여섯 능력치를 고르게 키울수록 세지고, 명중 · 회피로 버티다 회피를 무시하는 고정 피해 레이저(메가 스매셔)를 쏘는 경계 계보입니다.' },
     { id: 'spellbladeNovice', name: '마검 수련생 계보', tree: 'hybrid', summary: '마나 대신 현재 체력의 일부를 바쳐 베는 피의 딜러 계보입니다. 피가 줄수록 피해가 커지고(피의 분노), 흡혈로 바친 피를 되찾습니다.' },
     NEW_LINEAGES.tideLancer,
     NEW_LINEAGES.runesmith,
