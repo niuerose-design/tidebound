@@ -68,6 +68,8 @@ export type CombatFx = {
     dice?: number[];
     /** v25.21 스킬 직업의 차수(공용 0). 4·5차는 더 큰 연출. */
     tier?: number;
+    /** v3.178 처형 연계(빈사 적 추가 피해)가 붙은 내 타격. 화면이 몬스터 · HP 바를 반으로 가르는 연출을 띄웁니다. */
+    execute?: boolean;
 };
 
 export const STATUS_NAMES: Record<string, string> = { stun: '기절', silence: '침묵', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', slow: '감속', haste: '가속', corrode: '부식' };
@@ -92,7 +94,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
         const missed = ev.hits.length > 0 && ev.hits.every(h => h.miss);
         const status = ev.statuses.find(x => !x.onSelf) || ev.statuses[0];
         const kind: CombatFxKind = missed ? 'miss' : status ? status.id === 'bleed' ? 'bleed' : status.id as CombatFxKind : ev.damageType;
-        return { id: log.id, actor, target, skillId: ev.skillId, title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), tier: ev.finale ? 5 : fxTierOf(ev.skillId), gamble: ev.gamble, dice: ev.dice, basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.raw ?? h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
+        return { id: log.id, actor, target, skillId: ev.skillId, ...(ev.linked && actor === 'player' && ev.skillId && skillById(ev.skillId)?.damageBonusCondition === 'lowHp' ? { execute: true } : {}), title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), tier: ev.finale ? 5 : fxTierOf(ev.skillId), gamble: ev.gamble, dice: ev.dice, basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.raw ?? h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}) };
     }
     const text = log.text;
     const actor = text.startsWith(`${playerName} ·`) || text.startsWith(`${playerName}:`) ? 'player' : 'enemy';

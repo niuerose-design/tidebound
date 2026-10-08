@@ -33,6 +33,8 @@ const BACKGROUND_SYNC_SKIP = 3;
 const REPLAY_LAG_MS = SYNC_MS + 500;
 /** 이보다 많은 턴이 밀리면(탭 복귀 등) 밀린 분은 건너뛰고 최신 상태로 맞춥니다. */
 const MAX_BEHIND_TURNS = 2;
+/** v3.178 화면 순서화: 내 각성기(또는 도트 퍼니셔)가 나간 턴 뒤의 턴들은 이만큼 늦게 재생해, 2.4초짜리 전용 연출이 끝난 뒤 다음 타격이 보이게 합니다. 서버 진행과는 무관(화면만). */
+const ULT_HOLD_MS = 1200;
 type Queued = { turnAt: number; at: number; frame: ReplayFrame };
 /**
  * v27.62 재생 프레임 저장소. 프레임(턴당 여러 번)을 React 상태로 두면 앱 전체가 프레임마다 다시 그려져
@@ -77,9 +79,14 @@ function createReplay(render: (frame: ReplayFrame | null) => void) {
         if (!turns) return reset();
         // 재생 중이 아니었다면 첫 턴이 올 때까지 이전 상태를 붙잡아 둡니다(새 상태가 먼저 보였다가 되감기지 않도록).
         if (!current && turns.length) show({ offset: 0, hp: prev.hp, mana: prev.mana, recovery: prev.recovery, enemy: prev.enemy, effects: prev.effects, playerStun: prev.playerStun, lastLogId: prev.logs.at(-1)?.id ?? 0 });
+        let hold = 0, lastId = prev.logs.at(-1)?.id ?? 0;
         for (const t of turns) {
-            const turnAt = base + t.turn * BALANCE.turnMs;
+            const turnAt = base + t.turn * BALANCE.turnMs + hold;
             for (const frame of t.frames) queue.push({ turnAt, at: turnAt + frame.offset, frame });
+            // v3.178 이 턴에 내 각성기가 나갔으면 뒤 턴들을 ULT_HOLD_MS 늦춥니다(같은 동기화 묶음 안에서만 누적).
+            const endId = t.frames.at(-1)?.lastLogId ?? lastId;
+            if (next.logs.some(l => l.id > lastId && l.id <= endId && l.type === 'battle' && l.event?.actor === next.name && (l.event.awaken || l.event.skillId === 'endOfAll'))) hold += ULT_HOLD_MS;
+            lastId = endId;
         }
         play();
     };
