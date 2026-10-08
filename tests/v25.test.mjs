@@ -322,9 +322,9 @@ test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish
     const u = newState(0); u.abyssBest = 29; u.abyssMilestones = []; const ap = apCapacity(u);
     u.dungeon = { id: 'abyss', wave: 4, depth: 30 }; u.enemy = foe('abyssSovereign', true);
     const before = u.pearls; reward(u, rng); assert.equal(u.abyssBest, 30); assert.equal(apCapacity(u), ap, 'v3.38 30F no longer adds AP'); assert.ok(u.pearls - before >= 30 + 12, '30F pays floor pearls (4×3) + bonus 30');
-    assert.ok(AFFIX_POOL.filter(a => a.onlyOrigin === 'abyss').length === 4);
+    assert.ok(AFFIX_POOL.filter(a => a.onlyOrigin === 'abyss').every(a => a.retired) && AFFIX_POOL.filter(a => a.onlyOrigin === 'abyss').length === 4, 'v3.187 the four Mu Lung-only affixes are retired (old lines keep working)');
     for (let i = 0; i < 200; i++) assert.ok(rollAffixes(3, 100, 'temple', rng).every(a => !a.id.startsWith('abyss')), 'abyss-only affixes never roll elsewhere');
-    let found = false; for (let i = 0; i < 200 && !found; i++) found = rollAffixes(3, 100, 'abyss', rng).some(a => a.id.startsWith('abyss')); assert.ok(found, 'abyss drops roll abyss-only affixes');
+    for (let i = 0; i < 200; i++) assert.ok(rollAffixes(3, 100, 'abyss', rng).every(a => !a.id.startsWith('abyss')), 'v3.187 abyss drops no longer roll them either');
 });
 
 test('v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) are wired into profiles, themes, research and logs; rebirth titles', async () => {
