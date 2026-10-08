@@ -291,7 +291,7 @@ export function setHackDown(list: typeof HACK_DOWN, patched: Record<string, numb
 export const placeKey = (kind: 'stage' | 'dungeon', id: string) => `${kind}:${id}`;
 /** 지금 해킹으로 막힌 곳이면 그 기록, 아니면 undefined. */
 export const hackDownOf = (kind: 'stage' | 'dungeon', id: string, now: number) => (HACK_PATCHED[placeKey(kind, id)] || 0) > now ? undefined : HACK_DOWN.find(d => d.kind === kind && d.id === id && d.until > now);
-// v3.185 입장 환생(docs/boss-plan.md §6): 불의 제단 0 → 2 · 마법 사원 1 → 2 · 시계탑 2 → 6. 입장 몸(초보)으로 보스 14 · 22 · 20턴 · 사망 0(전 52 · 51 · 164턴 · 사망 20~80%).
+// v3.186 입장 환생(docs/boss-plan.md §6): 불의 제단 0 → 2 · 마법 사원 1 → 2 · 시계탑 2 → 6. 입장 몸(초보)으로 보스 14 · 22 · 20턴 · 사망 0(전 52 · 51 · 164턴 · 사망 20~80%).
 export const DUNGEONS = [
     /** v27.86 랜덤게임: 웨이브마다 무작위 몬스터(fish는 자리표시). 일반 던전 목록·업적·목표에서는 random으로 빠집니다. */
     { id: 'randomGame', name: '랜덤게임', level: 1, rebirth: 5, fish: ['minnow'], bossFish: undefined as string | undefined, boss: '랜덤게임', gold: 0, pearls: 0, description: '해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브를 깰수록 판돈이 쌓이고, 쓰러지면 모두 잃습니다.', random: true },

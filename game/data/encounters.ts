@@ -97,9 +97,9 @@ export function enemyStats(f: { id: string; hp: number; attack: number; defense:
         speed: Math.round((8 + f.level * .25) * p.speed), mana: 100, manaRegen: 10,
     };
 }
-export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: { boss?: boolean; tier?: number; wave?: number; /** v3.185 던전 보스 체력 배율(bossHpScale)을 건너뜀: 제단의 첫 신처럼 보스 몸을 빌리되 던전이 아닌 것. */ rawBoss?: boolean } = {}): Stats {
+export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: { boss?: boolean; tier?: number; wave?: number; /** v3.186 던전 보스 체력 배율(bossHpScale)을 건너뜀: 제단의 첫 신처럼 보스 몸을 빌리되 던전이 아닌 것. */ rawBoss?: boolean } = {}): Stats {
     const foe = enemyStats(f, options.boss);
-    // v3.185 던전 보스(마지막 판 · 훈련 상대 · 도감 미리보기 · 무릉 보스) 체력 ×bossHpScale(docs/boss-plan.md §6). 월드보스 · 칠흑 · 대왕은 boss 없이 서므로 해당 없음.
+    // v3.186 던전 보스(마지막 판 · 훈련 상대 · 도감 미리보기 · 무릉 보스) 체력 ×bossHpScale(docs/boss-plan.md §6). 월드보스 · 칠흑 · 대왕은 boss 없이 서므로 해당 없음.
     if (options.boss && !options.rawBoss) foe.hp = Math.round(foe.hp * MONSTER_TUNING.bossHpScale);
     const pressure = options.wave === undefined ? { hp: 1, attack: 1, defense: 1 } : dungeonPressure(options.wave);
     foe.hp = Math.round(foe.hp * tierHealth(options.tier || 0) * pressure.hp);

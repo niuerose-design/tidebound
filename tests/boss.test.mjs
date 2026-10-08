@@ -2,7 +2,7 @@
 import { assert, test } from './harness.mjs';
 const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
 
-test('v3.185 boss pass 1: dungeon entry rebirths 2 · 2 · 6, hell 70 · nightmare 260 with notes, boss hp ×0.8 only on boss-scaled foes', async () => {
+test('v3.186 boss pass 1: dungeon entry rebirths 2 · 2 · 6, hell 70 · nightmare 260 with notes, boss hp ×0.8 only on boss-scaled foes', async () => {
     const { DUNGEONS, FISH } = await load('data/world'), { DUNGEON_MODES, MONSTER_TUNING, dungeonModeTier, bossLevelScale } = await load('data/balance'), E = await load('data/encounters');
     const d = id => DUNGEONS.find(x => x.id === id);
     assert.deepEqual([d('caldera').rebirth, d('temple').rebirth, d('starSanctum').rebirth], [2, 2, 6]);
