@@ -113,7 +113,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     </>;
 }
 
-/** v3.162 호루라기: 장면 구석의 작은 버튼. 누르면 부를 몬스터를 고르는 메뉴가 열립니다(SP 5 · 하루 3번). 규칙은 도움말 ‘사냥 규칙’. */
+/** v3.162 호루라기: 장면 구석의 작은 버튼. 누르면 부를 몬스터를 고르는 메뉴가 열립니다(SP 5 · 하루 3번). v3.165 메뉴는 이름만(까미 · 누리 · 정수 슬라임), 설명은 도움말 ‘사냥 규칙’에만. */
 function WhistleButton({ s, send, busy }: { s: State; send: (a: { type: 'whistle'; id: string }) => void; busy: boolean }) {
     const targets = WHISTLE_TARGETS.filter(t => whistleOk(s, t));
     if (!targets.length) return null;
@@ -127,10 +127,9 @@ function WhistleButton({ s, send, busy }: { s: State; send: (a: { type: 'whistle
             </button>
         </PopoverTrigger>
         <PopoverContent className="status-pop game-tooltip whistle-pop" side="top" align="end">
-            <strong>호루라기 · 오늘 {left} / {WHISTLE.perDay} 남음</strong>
+            <strong>호루라기 <small>오늘 {left} / {WHISTLE.perDay}</small></strong>
             {why && <p className="whistle-why">{why}</p>}
-            <div className="whistle-options">{targets.map(t => <button key={t.id} type="button" className="secondary small" disabled={locked} onClick={() => send({ type: 'whistle', id: t.id })}>{t.name}<small>{t.reward}</small></button>)}</div>
-            <small>SP {WHISTLE.sp}를 내고 다음 사냥터 출현을 고른 몬스터로 정합니다. 던전 · 랜덤게임에서는 쓰이지 않습니다. 대왕은 부를 수 없습니다. 규칙은 도움말 → 사냥 규칙.</small>
+            <div className="whistle-options">{targets.map(t => <button key={t.id} type="button" className="secondary small" disabled={locked} title={t.name} onClick={() => send({ type: 'whistle', id: t.id })}>{t.short}</button>)}</div>
         </PopoverContent>
     </Popover>;
 }

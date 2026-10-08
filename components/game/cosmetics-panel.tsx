@@ -6,7 +6,7 @@ import { RANKS, RANK_CUMULATIVE, RANK_PERKS, rankProgress, rankPointsEarned, ran
 import { ConfirmButton } from './confirm-button';
 import { RankInsignia } from './rank-insignia';
 import { Heading, Meter } from './shared';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Medal } from 'lucide-react';
 const FLOW_KEY = 'tidebound.rankFlow';
 
 /** v27.80 치장: 칭호와 계급. 능력치 화면의 ‘기본 능력치 / 최종 전투 능력치’와 같은 두 칸 구성입니다. */
@@ -33,9 +33,11 @@ export function Cosmetics({ s, send, busy }: PanelProps) {
     <div className="rank-head" title={`계급표(각 계급까지 추가 처치 수): ${RANKS.map((r, i) => `${r.name}${i ? ` ${r.need.toLocaleString()}` : ''}`).join(' → ')}`}>
         <RankInsignia index={p.index} size={44} title={p.rank.name} ring={reenlisted}/>
         <div className="rank-head-text"><b>{p.rank.name}{reenlisted ? <small className="rank-reenlist"> ★ 재입대 {reenlisted}회 · 진급 포인트 +{reenlisted * REENLIST_BONUS_POINTS}</small> : null}</b><small>{p.next ? `${p.next.name}까지 ${(p.need - p.have).toLocaleString()}마리` : '최고 계급'} · 누적 처치 {p.exp.toLocaleString()}마리</small>{p.next && <Meter value={p.have} max={p.need} label=""/>}</div>
+        {/* v3.165 재입대 버튼: 계급 옆 빨간 테두리. 중장일 때만 켜집니다(자동 사냥 중 · 던전 안에서는 꺼짐). */}
+        <ConfirmButton className="rank-reenlist-button" label="재입대" icon={<Medal size={15}/>} title="재입대"
+            hint={!top ? `${RANKS[RANKS.length - 1].name}에서만 재입대할 수 있습니다. 계급을 ${RANKS[0].name}으로 되돌리고 진급 포인트를 영구로 +${REENLIST_BONUS_POINTS} 받습니다(지금 +${reenlisted * REENLIST_BONUS_POINTS}).` : s.running || s.dungeon ? '자동 사냥을 멈추고 던전 밖에서 재입대할 수 있습니다.' : `계급을 ${RANKS[0].name}으로 되돌리고 진급 포인트를 영구로 +${REENLIST_BONUS_POINTS} 받습니다(지금 +${reenlisted * REENLIST_BONUS_POINTS}). 특전은 초기화되어 새 계급 기준으로 다시 찍습니다.`}
+            description={`계급 ${p.rank.name} → ${RANKS[0].name}. 특전 초기화 · 진급 포인트 영구 +${REENLIST_BONUS_POINTS}(${reenlisted + 1}회째). 되돌릴 수 없습니다.`} disabled={busy || !top || s.running || !!s.dungeon} onConfirm={() => send({ type: 'reenlist' })} confirmLabel="재입대"/>
     </div>
-    {top && <div className="notice rank-reenlist-notice"><div><strong>재입대</strong><span>계급을 {RANKS[0].name}으로 되돌리고 진급 포인트를 영구로 +{REENLIST_BONUS_POINTS} 받습니다(지금 +{reenlisted * REENLIST_BONUS_POINTS}). 특전은 초기화되어 새 계급 기준으로 다시 찍습니다. 자동 사냥을 멈추고 던전 밖에서만.</span></div>
-        <ConfirmButton label={`재입대 (${reenlisted + 1}회째)`} title="재입대" description={`계급 ${p.rank.name} → ${RANKS[0].name}. 특전 초기화 · 진급 포인트 영구 +${REENLIST_BONUS_POINTS}. 되돌릴 수 없습니다.`} disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'reenlist' })} confirmLabel="재입대"/></div>}
     <div className="title-list">{RANK_PERKS.map(perk => { const level = rankPerkLevel(s, perk.id), maxed = level >= perk.max; return <div key={perk.id} className={`title-row ${level ? 'owned' : 'locked'}`}><span className="title-name"><small className="rebirth-title">{perk.name} {level}/{perk.max}</small></span><span className="title-desc">{perk.desc(Math.max(1, level))}{level ? '' : ' (1단계 기준)'}</span><button type="button" className={maxed ? 'secondary small' : 'primary small'} disabled={busy || maxed || free < perk.cost} onClick={() => send({ type: 'rankPerk', id: perk.id })}>{maxed ? '최대' : '올리기 · 1P'}</button></div>; })}</div>
     <h3 className="rank-flow-title">계급 흐름도 <small>계급 이름 아래는 그 계급에 오르는 누적 처치 수</small><span className="rank-flow-switch" role="tablist" aria-label="흐름도 방향"><button type="button" role="tab" aria-selected={flow === 'column'} className={flow === 'column' ? 'primary small' : 'secondary small'} onClick={() => pickFlow('column')}>세로</button><button type="button" role="tab" aria-selected={flow === 'row'} className={flow === 'row' ? 'primary small' : 'secondary small'} onClick={() => pickFlow('row')}>가로</button></span></h3>
     <ol className={`rank-flow ${flow}`} aria-label="계급 흐름도">{RANKS.map((r, i) => <li key={r.id} className={`rank-step ${i < p.index ? 'passed' : i === p.index ? 'current' : 'locked'} group-${r.group}`} title={`${r.name} · ${r.group} · 진급 포인트 +${r.points}`}>

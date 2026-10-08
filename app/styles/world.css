@@ -427,4 +427,9 @@
 
 /* v3.160 호루라기 카드(사냥터 난이도 아래) · 재입대 표시 */
 .rank-reenlist { display: block; font-weight: 500; opacity: .85; }
-.rank-reenlist-notice { margin-top: 8px; }
+/* v3.165 재입대 버튼: 계급 머리 오른쪽, 빨간 네모 테두리. 중장일 때만 켜집니다. */
+.rank-reenlist-button { margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 2px solid #d9534f; border-radius: 8px; background: rgba(217, 83, 79, .1); color: #ff9e97; font-weight: 700; font-size: 13px; letter-spacing: .06em; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04), 0 0 12px rgba(217, 83, 79, .18); transition: background .15s, box-shadow .15s, transform .1s; }
+.rank-reenlist-button:hover:not(:disabled) { background: rgba(217, 83, 79, .22); box-shadow: 0 0 16px rgba(217, 83, 79, .4); transform: translateY(-1px); }
+.rank-reenlist-button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; background: transparent; }
+.rank-reenlist-button svg { flex: none; }
+@media (max-width: 767px) { .rank-reenlist-button { padding: 6px 10px; font-size: 12px; } }

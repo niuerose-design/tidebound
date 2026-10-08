@@ -970,9 +970,10 @@
 .scene-whistle{position:absolute;right:14px;bottom:12px;z-index:4;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(10,22,20,.55);color:#e3ece5;font-size:11px;letter-spacing:.02em;backdrop-filter:blur(3px);cursor:pointer;transition:background .15s,border-color .15s}
 .scene-whistle:hover{background:rgba(10,22,20,.8);border-color:rgba(255,255,255,.5)}
 .scene-whistle.pending{border-color:var(--gold);color:var(--gold)}
-.whistle-pop{max-width:300px}
-.whistle-pop .whistle-why{margin:0 0 8px;color:var(--gold);font-size:12px}
-.whistle-options{display:grid;gap:6px;margin:6px 0 8px}
-.whistle-options button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left}
-.whistle-options button small{display:block;color:var(--muted);font-size:11px;line-height:1.4;margin:0}
+.whistle-pop{width:auto;max-width:280px;padding:10px 12px}
+.whistle-pop>strong{margin-bottom:6px}
+.whistle-pop>strong small{display:inline;font-weight:400;opacity:.7;margin-left:6px;color:inherit}
+.whistle-pop .whistle-why{margin:0 0 8px;color:var(--gold);font-size:12px;line-height:1.5}
+.whistle-options{display:flex;gap:6px}
+.whistle-options button{flex:1 1 0;white-space:nowrap;padding:7px 10px;text-align:center}
 @media(max-width:767px){.scene-whistle{right:10px;bottom:10px;font-size:10px;padding:4px 8px}}
