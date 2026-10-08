@@ -110,9 +110,9 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'limitlessFist', name: '무극권', desc: '', level: 70, job: 'fistSaint', chance: .26, cooldown: 4, multiplier: 3.4, cost: 6, effect: 'slow', damageBonusCondition: 'controlled', conditionalDamageBonus: .6, masteryMilestones: M5 },
     { ...P, id: 'fistSaintAura', name: '권성의 기세', desc: '물리 공격과 방어 관통이 오릅니다.', level: 70, job: 'fistSaint', cost: 3, bonus: { attack: 70, penetration: .06 }, masteryMilestones: M5 },
     // 마법
-    { ...A, ...magic, id: 'tidalCollapse', name: '해류 붕괴', desc: '', level: 55, job: 'currentLord', chance: .55, cooldown: 4, multiplier: 2.7, cost: 5, manaCost: 28, effect: 'weaken', masteryMilestones: M4 },
+    { ...A, ...magic, id: 'tidalCollapse', name: '해류 붕괴', desc: '', level: 55, job: 'currentLord', chance: .55, cooldown: 4, multiplier: 3, cost: 5, manaCost: 28, effect: 'weaken', masteryMilestones: M4 },
     { ...P, id: 'currentDominion', name: '해류 지배', desc: '마법 공격과 마나 회복이 오릅니다.', level: 55, job: 'currentLord', cost: 3, bonus: { magic: 60, manaRegen: 5 }, masteryMilestones: M4 },
-    { ...A, ...magic, id: 'oceanWrath', name: '대해의 분노', desc: '', level: 70, job: 'oceanWill', chance: .55, cooldown: 5, multiplier: 4.3, cost: 6, manaCost: 38, effect: 'stun', masteryMilestones: M5 },
+    { ...A, ...magic, id: 'oceanWrath', name: '대해의 분노', desc: '', level: 70, job: 'oceanWill', chance: .55, cooldown: 5, multiplier: 4.9, cost: 6, manaCost: 38, effect: 'stun', masteryMilestones: M5 },
     { ...P, id: 'willOfSea', name: '바다의 뜻', desc: '마법 공격과 마법 방어가 크게 오릅니다.', level: 70, job: 'oceanWill', cost: 3, bonus: { magic: 100, resist: 50 }, masteryMilestones: M5 },
     // v3.120 아크메이지(썬,콜) 상향: 익스트림 매직(대기만성) 마법 공격 단계 100 · 240 · 440 → 200 · 700 · 2000(마법 +440은 엔드 마법의 1%도 안 돼 체감이 없었음).
     { ...P, id: 'tideOfAges', name: '세월의 조류', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 마법 공격·마나가 크게 오릅니다.', level: 70, job: 'oceanWill', cost: 8, bonus: { magic: 25 }, masteryMilestones: LATE,
