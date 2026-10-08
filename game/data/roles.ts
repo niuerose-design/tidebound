@@ -6,7 +6,7 @@
 import type { Job } from './classes';
 
 export type RoleId = 'dealer' | 'tank' | 'buffer' | 'border' | 'none';
-export type SubRoleId = 'physical' | 'magic' | 'status' | 'reflect' | 'control' | 'drain' | 'healer' | 'utility' | 'border' | 'borderBuffer' | 'borderReflect' | 'borderStand' | 'training' | 'none';
+export type SubRoleId = 'physical' | 'magic' | 'status' | 'reflect' | 'control' | 'drain' | 'healer' | 'utility' | 'border' | 'borderBuffer' | 'borderReflect' | 'borderStand' | 'borderBuff' | 'training' | 'none';
 export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     physical: { role: 'dealer', name: '물리 딜러' },
     magic: { role: 'dealer', name: '마법 딜러' },
@@ -24,6 +24,8 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     borderReflect: { role: 'border', name: '경계: 반사 탱커 · 마법 딜러' },
     /** v3.144 딜러와 불굴 탱커 경계(다크나이트: 쓰러진 횟수 · 보낸 턴에 비례해 강해지고, 5차 리인카네이션으로 한 번 버팀). */
     borderStand: { role: 'border', name: '경계: 딜러 · 불굴 탱커' },
+    /** v3.155 자기 버프 지원과 물리 딜러 경계(카데나: 체인아츠마다 서로 다른 자기 버프, 살아 있는 버프 수만큼 피해). */
+    borderBuff: { role: 'border', name: '경계: 자기 버프 · 물리 딜러' },
     /** 독립 수련(계승 재료). */
     training: { role: 'none', name: '수련' },
     none: { role: 'none', name: '역할 없음' },
@@ -32,7 +34,7 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
 /** 계보 기본 역할(11.6-1). 독립 수련은 training. */
 export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
     harpoon: 'physical', tidalBrawler: 'physical', krakenkin: 'physical', ronin: 'physical', brawnFisher: 'physical', nimbleAngler: 'physical', luckyAngler: 'physical',
-    squidJester: 'physical', spellbladeNovice: 'physical', brawnMage: 'physical', nerveNeedler: 'physical', tideLancer: 'borderStand',
+    squidJester: 'physical', spellbladeNovice: 'physical', brawnMage: 'physical', nerveNeedler: 'borderBuff', tideLancer: 'borderStand',
     tide: 'magic', chantNovice: 'magic', apprentice: 'magic', manaDevotee: 'magic',
     poisoner: 'status', shaman: 'status', bloodAngler: 'status',
     /** v3.151 일리움: 마력 평타 마법사(부식 디버프를 걸지만 피해의 축은 평타). */

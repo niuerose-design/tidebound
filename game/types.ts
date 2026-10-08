@@ -57,6 +57,8 @@ export type Stats = {
     dotTurnsBonus?: number;
     poisonStackBonus?: number;
     arcaneRatioBonus?: number;
+    /** v3.155 웨폰 버라이어티: 살아 있는 자기 버프 1개마다 피해 +N(카데나 패시브). */
+    varietyBonus?: number;
     followUpBonus?: number;
     healBonus?: number;
     executeBonus?: number;
@@ -195,6 +197,8 @@ export type Skill = {
     effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste' | 'corrode';
     /** v3.151 자기 버프: 이 기술을 쓰면 시전자가 turns 동안 stats(고정값)와 speedMultiplier를 얻습니다(같은 id면 더 긴 쪽으로 갱신). */
     selfBuff?: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number };
+    /** v3.155 쓰면 시전자의 살아 있는 자기 버프를 모두 N턴 연장합니다(카데나 체인아츠: 메일스트롬). */
+    extendBuffs?: number;
     /** v3.151 기본 공격 상태이상(패시브): 장착하면 기본 공격(마력 평타 포함)이 명중할 때 이 상태이상을 겁니다(statusTurns 적용). 일리움 부식. */
     basicEffect?: 'corrode' | 'weaken' | 'slow' | 'silence' | 'stun';
     /** split: 원시 피해를 물리·마법 절반씩 나누어 각각 방어를 적용하는 한 번의 공격. */

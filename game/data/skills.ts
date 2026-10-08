@@ -289,7 +289,7 @@ export function costAtMastery(sk: Skill) {
 }
 export const isConstraintSkill = (sk: Skill) => !sk.song && (costAtMastery(sk) <= 0 || !!sk.job && CONSTRAINT_JOBS.has(sk.job));
 /** 예외: 수련 · 능력치 수련 · 해커 스킬 · 역할 경계 직업(제로 · 아이돌 연습생)의 스킬(제약형은 따로 천만 단위). */
-const SKILL_CURVE_EXEMPT = (sk: Skill) => !!sk.job && (/^training/.test(sk.job) || /Training[123]$|[hH]acker$/.test(sk.job) || ['border', 'borderBuffer', 'borderReflect', 'borderStand'].includes(subRoleOf(JOBS.find(j => j.id === sk.job) ?? { id: sk.job }, '')));
+const SKILL_CURVE_EXEMPT = (sk: Skill) => !!sk.job && (/^training/.test(sk.job) || /Training[123]$|[hH]acker$/.test(sk.job) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff'].includes(subRoleOf(JOBS.find(j => j.id === sk.job) ?? { id: sk.job }, '')));
 export const LEGACY_FIRST_MILESTONE: Record<string, number> = {};
 const round2 = (n: number) => { const p = 10 ** Math.max(0, Math.floor(Math.log10(n)) - 1); return Math.round(n / p) * p; };
 export function normalizeSkillMastery(list: Skill[]) {
