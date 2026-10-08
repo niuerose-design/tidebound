@@ -37,7 +37,7 @@ test('v24.2 gamble rolls the multiplier; all-in spends HP and mana; gold toss sp
     assert.ok(big > calm, 'more mana wagered → more damage');
     // v3.156 골드 투척은 섀도어 메소 익스플로전으로 옮겼습니다(캡틴은 보유 골드 비례만).
     const m = fighter('spoilsStrike', { fields: { gold: 100000 } }); const paid = hit(m, target());
-    assert.equal(m.gold, 100000 - 1000); const free = hit(fighter('spoilsStrike', { fields: { gold: 0 } }), target());
+    assert.equal(m.gold, 100000 - 40 /* v3.157 상한 = 물리 공격 100 × 0.4 */); const free = hit(fighter('spoilsStrike', { fields: { gold: 0 } }), target());
     assert.ok(paid > free);
     for (const id of ['coinToss', 'coinBarrage', 'goldenTempest', 'goldenStorm']) { const sk = SKILLS.find(x => x.id === id); assert.ok(!sk.goldSpend && sk.scaling === 'gold', id + ' captain keeps only gold-holding scaling'); }
 });

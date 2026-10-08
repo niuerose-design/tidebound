@@ -507,7 +507,10 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     }
     // v24.2 골드 투척: 보유 골드 일부를 던져 피해에 더합니다.
     if (chosen?.goldSpend && (a.gold || 0) > 0) {
-        const spent = Math.min(chosen.goldSpend.cap, Math.floor(a.gold! * chosen.goldSpend.ratio));
+        // v3.157 상한: 절대값 cap과 기준 공격력 × capAttack 중 작은 쪽. 골드가 아무리 많아도 공격력에 맞는 만큼만 태우고, 새 생의 저레벨에서도 수십 배가 되지 않습니다.
+        const baseStat = chosen.damageType === 'magic' || chosen.damageType === 'fixed' && chosen.baseStat === 'magic' ? sa.magic : sa.attack;
+        const limit = Math.min(chosen.goldSpend.cap ?? Infinity, chosen.goldSpend.capAttack ? Math.max(1, Math.floor(baseStat * chosen.goldSpend.capAttack)) : Infinity);
+        const spent = Math.min(limit, Math.floor(a.gold! * chosen.goldSpend.ratio));
         if (spent > 0) { a.gold! -= spent; allInBonus += spent * chosen.goldSpend.scale; notes.push(`골드 ${spent.toLocaleString()} 투척`); }
     }
     // v3.140 성해의 빛살(oath)의 '높은 쪽 공격' 특례는 지웠습니다. 루미너스 액티브는 모두 damageType physical · scaling swap(마법 계수 → 물리 피해)으로 선언합니다.

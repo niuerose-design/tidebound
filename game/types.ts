@@ -278,7 +278,8 @@ export type Skill = {
     /** v24.2 노래: 음유시인 계보 직업만 장착할 수 있습니다(AP 0). */
     song?: boolean;
     /** v24.2 골드 투척: 보유 골드의 ratio(최대 cap)를 쓰고, 쓴 골드 × scale을 피해에 더합니다. */
-    goldSpend?: { ratio: number; cap: number; scale: number };
+    /** 골드 투척: 보유 골드 × ratio를 실제로 쓰고 쓴 골드 × scale을 기준값에 더합니다. 상한은 cap(절대값)과 capAttack(기준 공격력 × 배수, v3.157 섀도어: 수백억 골드도 새 생의 Lv.10도 공격력에 맞춘 만큼만) 중 작은 쪽. */
+    goldSpend?: { ratio: number; cap?: number; capAttack?: number; scale: number };
     /** v24.2 사냥감 연구: 보스·지정 몬스터에게 직접 피해 +preyBonus. */
     preyBonus?: number;
     scalingRatio?: number;
