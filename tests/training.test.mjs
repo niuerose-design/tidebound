@@ -270,10 +270,10 @@ test('v3.98 Dark Knight: Dragon Fury ×2.8, Beholder Impact ×2.8 with one extra
     assert.deepEqual([sk('dragonGodScale').bonus.crit, sk('dragonGodScale').bonus.critDamage], [sk('divineLuck').bonus.crit, sk('divineLuck').bonus.critDamage]);
 });
 
-test('v3.100 Luminous: Light Reflection ×2.8, Apocalypse ×3 with one extra hit', () => {
+test('v3.100 Luminous: Light Reflection ×2.8 → v3.178 ×3.8, Apocalypse ×3 → ×4 with one extra hit', () => {
     const sk = id => SKILLS.find(s => s.id === id);
-    assert.equal(sk('vowStrike').multiplier, 2.8);
-    assert.equal(sk('lightHarpoon').multiplier, 3);
+    assert.equal(sk('vowStrike').multiplier, 3.8);
+    assert.equal(sk('lightHarpoon').multiplier, 4);
     assert.equal(sk('lightHarpoon').extraAttacks, 1);
 });
 

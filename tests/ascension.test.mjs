@@ -271,7 +271,7 @@ test('v3.54 DoT: first application in a fight ticks at once (once per fight), po
     const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
     const mk = (skills, extra = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: extra.hp || 1e6, mana: 1e6, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
     const t = mk([]), ev = []; C.strike(mk(['razor']), t, () => 0, ev);
-    assert.ok(ev[0].onset && ev[0].onset.value === t.effects.dot.damage + Math.floor((t.hp + ev[0].onset.value) * t.effects.dot.hpRatio), 'bleed first tick lands immediately (current HP before the tick)');
+    assert.ok(ev[0].onset && ev[0].onset.value === t.effects.dot.damage + Math.min(t.effects.dot.hpCap, Math.floor((t.hp + ev[0].onset.value) * t.effects.dot.hpRatio)), 'bleed first tick lands immediately (current HP before the tick, v3.178 cap)');
     const ev2 = []; t.effects.dot = undefined; C.strike(mk(['razor']), t, () => 0, ev2); assert.equal(ev2[0].onset, undefined, 'only once per fight');
     assert.equal(C.swarmDotShare(1), 1); assert.equal(C.swarmDotShare(100), .1); assert.ok(Math.abs(C.swarmDotShare(500) - 1 / Math.sqrt(500)) < 1e-12);
     const swarm = mk([], { hp: 98e6 }); swarm.swarm = 100; C.strike(mk(['venomDart']), swarm, () => 0);
