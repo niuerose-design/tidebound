@@ -66,7 +66,8 @@ export function skillBrief(sk: Skill): string {
     }
     const parts = [sk.statusOnly ? '피해 없음' : `${sk.damageType === 'magic' ? '마법' : sk.damageType === 'split' ? '복합' : sk.damageType === 'fixed' ? '고정(방어 무시)' : '물리'} 피해 ×${number(sk.multiplier || 1)}`];
     if (sk.effect && STATUS_WORD[sk.effect] && sk.effect !== 'haste') parts.push(`${statusLabel(sk)} ${sk.statusTurns ?? ({ stun: 1, bleed: STATUS_TUNING.bleedTurns, poison: STATUS_TUNING.poisonTurns, burn: STATUS_TUNING.burnTurns, weaken: STATUS_TUNING.weakenTurns, silence: STATUS_TUNING.silenceTurns, slow: STATUS_TUNING.slowTurns, corrode: STATUS_TUNING.corrodeTurns } as Record<string, number>)[sk.effect]}턴`);
-    if (sk.selfBuff) parts.push(`자기 버프 ${sk.selfBuff.name ?? sk.selfBuff.id} ${sk.selfBuff.turns}턴`);
+    if (sk.selfBuff) { const fx = [...Object.entries(sk.selfBuff.stats || {}).map(([k, v]) => skillBonusText(k, v as number)), ...(sk.selfBuff.speedMultiplier ? [`속도 ×${number(sk.selfBuff.speedMultiplier)}`] : [])]; parts.push(`자기 버프 ${sk.selfBuff.name ?? sk.selfBuff.id}${fx.length ? `(${fx.join(' · ')})` : ''} ${sk.selfBuff.turns}턴`); }
+    if (sk.extendBuffs) parts.push(`살아 있는 자기 버프 모두 +${sk.extendBuffs}턴`);
     if (sk.effect === 'haste') parts.push(`자신 가속 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
     if (sk.alsoEffect) parts.push(`${STATUS_WORD[sk.alsoEffect]} ${sk.statusTurns}턴`);
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);

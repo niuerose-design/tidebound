@@ -40,10 +40,9 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'crimsonExecutioner', name: '선혈 처형인', title: '마지막 한 방울까지', desc: '엑시드 블레이드로 걸어 둔 출혈에 엑시드: 엑스큐션으로 큰 연계 피해를 더해 적을 끝내는 3차 직업입니다. 방어가 조금 낮습니다.', ...neutral, bonus: { attack: 80, hp: 30 }, crit: .15, ...T3, parent: 'gashTracker', requires: { str: 46, dex: 36 }, requiresSkillMastery: { openVein: 3 }, role: '출혈·처형', tree: 'status' },
     { id: 'bloodDancer', name: '혈무사', title: '붉은 물결 위의 춤', desc: '오래 가는 출혈을 거는 블러드 왈츠와 속도 패시브로 적을 갉아먹는 2차 직업입니다.', ...neutral, bonus: { attack: 26 }, crit: .08, ...T2, parent: 'bloodAngler', requires: { dex: 32, luk: 20 }, requiresSkillMastery: { gashHook: 2 }, role: '출혈·연타', tree: 'status' },
     // ── 상태이상: 카데나 계보(기절·감속) ───────────────────
-    { id: 'nerveNeedler', name: '마비 침술사', title: '한 점을 찌르면 멈춘다', desc: '적을 잠시 기절시키는 침과 명중·치명 패시브를 익히는 제어 입문 직업입니다.', ...neutral, bonus: { attack: 1, magic: 1 }, ...T1, requires: { dex: 10, int: 12 }, role: '기절 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
-    { id: 'nerveSeverer', name: '처형인', title: '움직임의 줄을 끊는다', desc: '체인아츠: 스트로크로 멈춘 적의 신경을 끊어 큰 피해를 주는 2차 직업입니다.', ...neutral, bonus: { attack: 30 }, crit: .08, ...T2, parent: 'nerveNeedler', requires: { dex: 30, int: 22 }, requiresSkillMastery: { numbNeedle: 2 }, role: '기절·연계', tree: 'status' },
-    { id: 'silenceWarden', name: '정적의 집행자', title: '고요 속에서 끝낸다', desc: '체인아츠: 스트로크로 멈춘 적을 서먼 커팅 시미터로 처형하는 3차 직업입니다.', ...neutral, bonus: { attack: 75, hp: 40 }, crit: .1, ...T3, parent: 'nerveSeverer', requires: { dex: 44, int: 34 }, requiresSkillMastery: { severNerve: 3 }, role: '기절·처형', tree: 'status' },
-    { id: 'frostBinder', name: '빙결 결박사', title: '차가운 물로 발을 묶는다', desc: '서리 안개로 감속을 걸고, 제어된 적에게 서리 족쇄로 마법 피해를 더하는 2차 직업입니다.', ...neutral, bonus: { magic: 44, resist: 6 }, ...T2, parent: 'nerveNeedler', requires: { int: 30, wis: 22 }, requiresSkillMastery: { numbNeedle: 2 }, role: '감속·마법', tree: 'status' },
+    { id: 'nerveNeedler', name: '마비 침술사', title: '한 점을 찌르면 멈춘다', desc: '체인아츠: 스트로크로 때리며 자기 버프(치명타)를 걸고, 패시브 웨폰 버라이어티로 버프 수만큼 세지는 입문 직업입니다.', ...neutral, bonus: { attack: 1, magic: 1 }, ...T1, requires: { dex: 10, int: 12 }, role: '자기 버프 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
+    { id: 'nerveSeverer', name: '처형인', title: '움직임의 줄을 끊는다', desc: '체인아츠: 크러시로 관통 자기 버프를 더 거는 2차 직업입니다. 버프가 겹칠수록 모든 체인아츠가 세집니다.', ...neutral, bonus: { attack: 30 }, crit: .08, ...T2, parent: 'nerveNeedler', requires: { dex: 30, int: 22 }, requiresSkillMastery: { numbNeedle: 2 }, role: '자기 버프 · 연계', tree: 'status' },
+    { id: 'silenceWarden', name: '정적의 집행자', title: '고요 속에서 끝낸다', desc: '서먼 커팅 시미터로 치명 피해 자기 버프를 더 거는 3차 직업입니다. 세 버프를 겹쳐 두고 때립니다.', ...neutral, bonus: { attack: 75, hp: 40 }, crit: .1, ...T3, parent: 'nerveSeverer', requires: { dex: 44, int: 34 }, requiresSkillMastery: { severNerve: 3 }, role: '자기 버프 · 처형', tree: 'status' },
     // ── 상태이상: 독립 수련 ─────────────────────────────────────
     { id: 'toadstoolForager', name: '독버섯 채집가', title: '먹지 말고 쓴다', desc: '지속 피해와 마법 방어 패시브 하나를 익히는 독립 1차 직업입니다.', ...STAT_T1, requires: { int: 10, vit: 10 }, role: '능력치·중독', tree: 'status' },
     { id: 'inkThrower', name: '먹물 투척수', title: '먼저 눈을 가린다', desc: '명중·회피 패시브 하나를 익히는 독립 1차 직업입니다.', ...STAT_T1, requires: { dex: 12, luk: 8 }, role: '능력치·명중', tree: 'status' },
@@ -83,7 +82,7 @@ export const LINEAGE_JOBS: NewJob[] = [
 /** 새 계보. 계열 안의 위치는 classes.ts의 LINEAGES 순서를 따릅니다. */
 export const NEW_LINEAGES = {
     bloodAngler: { id: 'bloodAngler', name: '피낚시꾼 계보', tree: 'status' as const, summary: '출혈을 쌓고 출혈 중인 적을 처형하는 계보입니다.' },
-    nerveNeedler: { id: 'nerveNeedler', name: '마비 침술사 계보', tree: 'status' as const, summary: '기절·감속으로 적을 멈추고 제어된 적을 끝내는 계보입니다.' },
+    nerveNeedler: { id: 'nerveNeedler', name: '마비 침술사 계보', tree: 'status' as const, summary: '체인아츠마다 서로 다른 자기 버프를 걸고, 살아 있는 버프 수만큼 세지는 자기 버프 계보입니다.' },
     tideLancer: { id: 'tideLancer', name: '조류 창기병 계보', tree: 'hybrid' as const, summary: '딜러와 불굴 탱커의 경계에 선 창술 계보입니다. 쓰러진 횟수와 보낸 턴에 비례해 강해지고, 5차에서는 쓰러질 피해를 한 번 버텨 냅니다.' },
     runesmith: { id: 'runesmith', name: '룬 대장장이 계보', tree: 'hybrid' as const, summary: '반사 탱커와 마법 딜러의 경계에 선 계보입니다. 약화를 걸고 물리 방어에 비례한 마법 피해로 때리며 충전을 쌓고, 충전이 차면 전탄발사로 쏟아냅니다.' },
 };
@@ -135,14 +134,12 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'redWaltz', name: '붉은 왈츠', desc: '', level: 25, job: 'bloodDancer', chance: .28, cooldown: 3, multiplier: .95, cost: 3, effect: 'bleed', extraAttacks: 1, extraAttackMultiplier: .6 },
     { ...P, id: 'quickCuts', name: '잔 베기', desc: '속도와 치명타가 오릅니다.', level: 25, job: 'bloodDancer', cost: 2, bonus: { speed: 8, crit: .03 } },
     // 상태이상: 마비
-    { ...A, ...physical, id: 'numbNeedle', name: '마비 침', desc: '', level: 10, job: 'nerveNeedler', chance: .24, cooldown: 4, multiplier: 1.1, cost: 2, effect: 'stun' },
-    { ...P, id: 'pressurePoints', name: '경혈 지식', desc: '명중과 치명타가 오릅니다.', level: 10, job: 'nerveNeedler', cost: 2, bonus: { accuracy: .04, crit: .02 } },
-    { ...A, ...physical, id: 'severNerve', name: '처형', desc: '', level: 25, job: 'nerveSeverer', chance: .25, cooldown: 4, multiplier: 1.5, cost: 3, effect: 'stun', damageBonusCondition: 'controlled', conditionalDamageBonus: .3 },
-    { ...P, id: 'stillHands', name: '흔들리지 않는 손', desc: '물리 공격과 명중이 오릅니다.', level: 25, job: 'nerveSeverer', cost: 2, bonus: { attack: 14, accuracy: .04 } },
-    { ...A, ...physical, id: 'deadCalm', name: '죽은 고요', desc: '', level: 40, job: 'silenceWarden', chance: .26, cooldown: 4, multiplier: 2.1, cost: 4, effect: 'stun', damageBonusCondition: 'controlled', conditionalDamageBonus: .45 },
-    { ...P, id: 'numbingAura', name: '마비의 기운', desc: '물리 공격과 방어 관통이 오릅니다.', level: 40, job: 'silenceWarden', cost: 3, bonus: { attack: 26, penetration: .04 } },
-    { ...A, ...magic, id: 'rimeShackle', name: '서리 족쇄', desc: '', level: 25, job: 'frostBinder', chance: .5, cooldown: 3, multiplier: 1.45, cost: 3, manaCost: 13, effect: 'slow', damageBonusCondition: 'controlled', conditionalDamageBonus: .3 },
-    { ...A, ...magic, id: 'frostMist', name: '서리 안개', desc: '', level: 25, job: 'frostBinder', chance: .5, cooldown: 4, multiplier: 1, cost: 2, manaCost: 8, effect: 'slow' },
+    { ...A, ...physical, id: 'numbNeedle', name: '마비 침', desc: '', level: 10, job: 'nerveNeedler', chance: .26, cooldown: 4, multiplier: .9, cost: 2, selfBuff: { id: 'stroke', name: '스트로크', turns: 4, stats: { crit: .05 } } },
+    { ...P, id: 'pressurePoints', name: '경혈 지식', desc: '명중과 치명타가 오르고, 살아 있는 자기 버프 1개마다 피해가 오릅니다.', level: 10, job: 'nerveNeedler', cost: 2, bonus: { accuracy: .04, crit: .02, varietyBonus: .01 } },
+    { ...A, ...physical, id: 'severNerve', name: '처형', desc: '', level: 25, job: 'nerveSeverer', chance: .26, cooldown: 4, multiplier: 1.2, cost: 3, selfBuff: { id: 'crush', name: '크러시', turns: 4, stats: { penetration: .08 } } },
+    { ...P, id: 'stillHands', name: '흔들리지 않는 손', desc: '물리 공격과 명중이 오르고, 살아 있는 자기 버프 1개마다 피해가 오릅니다.', level: 25, job: 'nerveSeverer', cost: 2, bonus: { attack: 14, accuracy: .04, varietyBonus: .015 } },
+    { ...A, ...physical, id: 'deadCalm', name: '죽은 고요', desc: '', level: 40, job: 'silenceWarden', chance: .26, cooldown: 4, multiplier: 1.5, cost: 4, selfBuff: { id: 'scimitar', name: '시미터', turns: 4, stats: { critDamage: .2 } } },
+    { ...P, id: 'numbingAura', name: '마비의 기운', desc: '물리 공격과 방어 관통이 오르고, 살아 있는 자기 버프 1개마다 피해가 오릅니다.', level: 40, job: 'silenceWarden', cost: 3, bonus: { attack: 26, penetration: .04, varietyBonus: .015 } },
     // 상태이상: 독립
     // v25.25 독립 1차 보조기: 발동률은 낮고(18%) 상태이상은 길게. 계보 밖 연계기(제어·약화·출혈 추가 피해)의 조건을 채우는 용도.
     { ...A, ...physical, id: 'driftwoodShove', name: '유목 밀치기', desc: '', level: 10, job: 'driftwoodHermit', chance: .18, cooldown: 5, multiplier: 1, cost: 2, effect: 'stun', statusTurns: 2 },

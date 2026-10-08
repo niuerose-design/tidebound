@@ -92,7 +92,7 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
     const bad = [];
     for (const sk of SKILLS) {
         const j = job(sk.job); if (!j || j.tier < 1 || j.retired) continue;
-        const exempt = /^training|Training[123]$|[hH]acker$/.test(j.id) || ['border', 'borderBuffer', 'borderReflect', 'borderStand'].includes(R.subRoleOf(j, lineageOf(j)));
+        const exempt = /^training|Training[123]$|[hH]acker$/.test(j.id) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff'].includes(R.subRoleOf(j, lineageOf(j)));
         if (exempt) continue;
         // 제약형(최대 숙련에서 AP 0 이하 · 제약 직업): 마지막 단계가 천만 단위(AP 반환 5,000만 · 그 밖 1,000만).
         if (Sk.isConstraintSkill(sk)) { const want = Sk.CONSTRAINT_MASTERY_BY_SKILL[sk.id] ?? (Sk.costAtMastery(sk) < 0 ? 5e7 : 1e7); if (P.masteryMilestonesFor(sk).at(-1) !== want) bad.push(`${sk.id} constraint`); continue; }
@@ -261,9 +261,12 @@ test('v3.124 Adele: Ruin magic +450 and max mana +1000', async () => {
     assert.deepEqual([sk.bonus.magic, sk.bonus.mana], [450, 1000]);
 });
 
-test('v3.126 Cadena: Mystic Storm attack +450 and crit +10%p (stun extension kept)', () => {
-    const sk = SKILLS.find(s => s.id === 'absoluteStill');
-    assert.deepEqual([sk.bonus.attack, sk.bonus.crit, sk.bonus.stunBonus], [450, .1, 1]);
+test('v3.154 Cadena: Mystic Storm attack +450 and crit +10%p, variety bonus instead of stun extension; chain arts grant distinct self buffs', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.deepEqual([sk('absoluteStill').bonus.attack, sk('absoluteStill').bonus.crit, sk('absoluteStill').bonus.varietyBonus, sk('absoluteStill').bonus.stunBonus], [450, .1, .025, undefined]);
+    assert.deepEqual(['numbNeedle', 'severNerve', 'deadCalm', 'stillVerdict'].map(id => sk(id).selfBuff.id), ['stroke', 'crush', 'scimitar', 'takedown']);
+    for (const id of ['numbNeedle', 'severNerve', 'deadCalm', 'stillVerdict', 'worldStill']) assert.ok(!sk(id).effect && !sk(id).damageBonusCondition && !sk(id).statusOnly, id + ' no control, pure chain art');
+    assert.equal(sk('worldStill').extendBuffs, 2);
 });
 
 test('v3.145 Demon Slayer: actives cost HP instead of mana (floor 1), Blood Rage scales damage by missing HP, Demon Bane still stuns 3 turns', () => {
