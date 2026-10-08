@@ -1,11 +1,11 @@
 import { identity, checkOrigin, db, mutate, failure, ApiError, actionBody, duelSeasonKey, duelRowId, syncDuelSeason } from '@/game/server/store';
-import { monthSeason } from '@/game/data/goals';
 import { recordGoal } from '@/game/systems/progress';
 import { addLog } from '@/game/systems/state';
 import { snapshot } from '@/game/systems/stats';
 import { duel, bossSnapshot, rankedDuelBlock, recordRankedDuel } from '@/game/systems/duel';
 import type { Snapshot } from '@/game/types';
 import { hackerCombatBlock } from '@/game/systems/hacker';
+import { monthSeason } from '@/game/data/time';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
     try {

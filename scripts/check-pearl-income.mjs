@@ -31,7 +31,7 @@ function hunt(r, jobId, stage, seed) {
 }
 const avg = xs => Object.fromEntries(Object.keys(xs[0]).map(k => [k, xs.reduce((a, x) => a + x[k], 0) / xs.length]));
 for (const r of REBIRTHS) {
-    const ONLY = arg('--stages', '') ? arg('--stages', '').split(',') : null; const stages = STAGES.filter(st => st.fish?.length && st.rebirth <= r && (!ONLY || ONLY.includes(st.id)));
+    const ONLY = arg('--stages', '') ? arg('--stages', '').split(',') : null; const stages = STAGES.filter(st => st.monsters?.length && st.rebirth <= r && (!ONLY || ONLY.includes(st.id)));
     const rows = stages.map(st => ({ st, x: avg(JOBS.map(j => hunt(r, j, st, 1))) })).sort((a, b) => b.x.pearls - a.x.pearls);
     console.log(`\nR${r} (시간당 · 보급품 ${SUPPLY}단계 · 난이도 ${TIDE})`);
     for (const { st, x } of rows.slice(0, 6)) console.log(`  ${st.id.padEnd(16)} ${st.region.padEnd(7)} 세계석 ${x.pearls.toFixed(0).padStart(4)}  처치 ${x.fights.toFixed(0).padStart(5)}전/${x.kills.toFixed(0).padStart(6)}마리  별빛 ${x.starlit.toFixed(1).padStart(5)}  사망 ${x.deaths.toFixed(0)}${st.habitat ? '  [서식지]' : ''}`);

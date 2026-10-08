@@ -281,7 +281,7 @@
 .account-rows li { display:grid; gap:4px; padding:12px 14px; border:1px solid var(--border); border-radius:8px; background:#101c20; }
 .account-rows li > div { display:flex; justify-content:space-between; align-items:baseline; gap:8px; } .account-rows strong { font-size:13px; color:#c5d8d2; }
 .account-rows b { font-size:14px; color:#a4e9ba; } .account-rows small { font-size:12px; color:#9bb3b0; }
-.fish-rarity.tier { background:#2b3f55; color:#9fc4ff; }
+.monster-rarity.tier { background:#2b3f55; color:#9fc4ff; }
 .rebirth-title { display:inline-block; margin-right:6px; padding:1px 7px; border-radius:999px; background:#3a2f1a; color:#e8d39a; font-size:11px; font-weight:600; vertical-align:middle; }
 /* v25.12 결투 시즌·티어·추천 상대 */
 .arena-season { font-size:13px; color:#9bb3b0; margin:-6px 0 14px; line-height:1.6; } .arena-season b { color:#e8d39a; }
@@ -330,25 +330,25 @@
 .metric-hint { display: inline-block; width: 15px; height: 15px; line-height: 13px; text-align: center; border: 1px solid rgba(159, 183, 176, .5); border-radius: 999px; font-size: 10px; color: #9fb7b0; margin-left: 4px; cursor: help; }
 
 /* v27.11 어종·직업 그림 자리. 이미지가 없으면 실루엣/아이콘이 남습니다. */
-.fish-art, .job-art { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 12px; overflow: hidden; color: #93c0b4; background: radial-gradient(circle at 50% 40%, rgba(147, 192, 180, .14), rgba(147, 192, 180, 0) 70%); }
-.fish-art img, .job-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .3s ease; }
-.fish-art.ready img, .job-art.ready img { opacity: 1; }
-.fish-art.ready .fish-silhouette, .job-art.ready .job-silhouette { display: none; }
-.fish-art .fish-silhouette { width: 78%; height: 78%; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .35)); }
-.fish-art.boss { color: #f3dca0; }
-.undiscovered .fish-art { color: #536c77; filter: saturate(0); }
-.undiscovered .fish-art img { opacity: 0 !important; }
+.monster-art, .job-art { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 12px; overflow: hidden; color: #93c0b4; background: radial-gradient(circle at 50% 40%, rgba(147, 192, 180, .14), rgba(147, 192, 180, 0) 70%); }
+.monster-art img, .job-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .3s ease; }
+.monster-art.ready img, .job-art.ready img { opacity: 1; }
+.monster-art.ready .monster-silhouette, .job-art.ready .job-silhouette { display: none; }
+.monster-art .monster-silhouette { width: 78%; height: 78%; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .35)); }
+.monster-art.boss { color: #f3dca0; }
+.undiscovered .monster-art { color: #536c77; filter: saturate(0); }
+.undiscovered .monster-art img { opacity: 0 !important; }
 .job-art { color: var(--tree-color, #93c0b4); }
 .scene-foe { position: absolute; right: 28px; top: calc(50% - 44px); width: 96px; height: 96px; z-index: 1; color: rgba(230, 241, 238, .82); background: none; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .55)); animation: foeDrift 4s ease-in-out infinite; pointer-events: none; }
 .scene-foe.boss { width: 120px; height: 120px; top: calc(50% - 56px); color: #f3dca0; }
-.scene-foe .fish-silhouette { width: 100%; height: 100%; }
+.scene-foe .monster-silhouette { width: 100%; height: 100%; }
 @keyframes foeDrift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 @media (max-width: 767px) { .scene-foe { right: 14px; top: calc(50% - 20px); width: 84px; height: 84px; } .scene-foe.boss { width: 104px; height: 104px; top: calc(50% - 30px); } }
 @media (prefers-reduced-motion: reduce) { .scene-foe { animation: none; } }
-.book-icon .fish-art { width: 56px; height: 56px; }
+.book-icon .monster-art { width: 56px; height: 56px; }
 .job-detail-title .job-art { width: 44px; height: 44px; border-radius: 10px; }
 .lineage-item .job-art { width: 30px; height: 30px; border-radius: 8px; margin-right: 8px; vertical-align: middle; }
-.dungeon-wave .fish-art { width: 28px; height: 28px; border-radius: 7px; margin-bottom: 4px; }
+.dungeon-wave .monster-art { width: 28px; height: 28px; border-radius: 7px; margin-bottom: 4px; }
 /* v27.63 환생 기록 */
 .rebirth-history{padding:16px 18px}
 .rebirth-history-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}

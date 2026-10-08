@@ -7,7 +7,7 @@ import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES 
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { Job, JobStatKey, jobById } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
-import { PLACES, FISH } from '../data/world';
+import { BASE_STAGES, MONSTERS } from '../data/world';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
 import { researchRank } from '../data/economy';
 import { STAT_TRAINING_GROWTH } from '../data/stat-training';
@@ -41,9 +41,8 @@ export function refinePractice(s: Pick<State, 'skillPractice' | 'refineBase'>, i
     const last = masteryMilestonesFor(skillById(id)).at(-1)!;
     return Math.max(Math.min(practice, last), practice - Math.max(0, base - last));
 }
-export const refinePractices = (s: Pick<State, 'skillPractice' | 'refineBase'>) => Object.fromEntries(Object.keys(s.skillPractice || {}).map(id => [id, refinePractice(s, id)]));
 /**
- * v3.104 skillMasteryRanks · refinePractices와 같은 값을, 조회한 스킬만 그때 계산하는 표(숙련 기록이 있는 스킬만 값이 있고 나머지는 undefined).
+ * v3.104 skillMasteryRanks와 같은 값을, 조회한 스킬만 그때 계산하는 표(숙련 기록이 있는 스킬만 값이 있고 나머지는 undefined).
  * 턴마다 숙련을 쌓은 모든 스킬(수백 개)을 계산하던 것을 전투가 실제로 보는 몇 개로 줄입니다. 표를 쓰는 동안 숙련 기록이 바뀌지 않을 때만 쓰세요.
  */
 function lazySkillTable(s: Pick<State, 'skillPractice'>, value: (id: string) => number): Record<string, number> {
@@ -51,7 +50,6 @@ function lazySkillTable(s: Pick<State, 'skillPractice'>, value: (id: string) => 
     return new Proxy(cache, { get: (_, id) => { if (typeof id !== 'string' || !Object.prototype.hasOwnProperty.call(practice, id)) return undefined; return cache[id] ??= value(id); } }) as Record<string, number>;
 }
 export const lazySkillMasteryRanks = (s: State) => lazySkillTable(s, id => skillMasteryLevel(s.skillPractice[id], masteryMilestonesFor(skillById(id))) + limitBreakOf(s, id));
-export const lazyRefinePractices = (s: State) => lazySkillTable(s, id => refinePractice(s, id));
 export function maxSkillLevel(sk: Skill) { return masteryMilestonesFor(sk).length; }
 /** 실제로 한 한계돌파 단계(연구 상한 적용 전). 다음 단계 계산에 씁니다. */
 export function limitBreakOwned(s: Pick<State, 'limitBreaks'>, id: string) { return Math.min(PROGRESSION.limitBreak.max, s.limitBreaks?.[id] || 0); }
@@ -70,8 +68,7 @@ export function limitBreakNext(s: State, id: string) {
 }
 /** SP and mastery unlock the SAME stages. Neither locks out the other. v27.6 숙련(한계돌파 포함)이 최대를 넘으면 그만큼 더 올라갑니다. */
 export function skillLevel(sk: Skill, rank = 1, mastery = 0) { const max = maxSkillLevel(sk); return Math.min(max + Math.min(PROGRESSION.limitBreak.max, Math.max(0, mastery - max)), Math.max(0, rank - 1, mastery)); }
-/** 장착 AP 한도. v27.86 절제 서약은 −2·−4·−6(최소 1). */
-/** v3.38 장착 AP 내역(능력치 화면 표시와 apCapacity가 같은 목록을 씁니다). 무릉도장 30·60·90층 AP는 없앴습니다. */
+/** v3.38 장착 AP 내역(능력치 화면 표시와 apCapacity가 같은 목록을 씁니다). */
 export function apSources(s: State): { id: string; label: string; value: number }[] {
     return [
         { id: 'base', label: '기본', value: PROGRESSION.baseAP },
@@ -82,6 +79,7 @@ export function apSources(s: State): { id: string; label: string; value: number 
         { id: 'restraint', label: '절제 서약', value: -restraintAP(s) },
     ];
 }
+/** 장착 AP 한도(최소 1). */
 export function apCapacity(s: State) { return Math.max(1, apSources(s).reduce((a, x) => a + x.value, 0)); }
 /** v25.6 업적 보상으로 늘어난 장착 AP. achievements.ts와 순환 의존을 피하려 여기서 직접 셉니다. */
 function achievementAP(s: Pick<State, 'achievementClaims'>) { let ap = 0; for (const id of Object.keys(s.achievementClaims || {})) ap += ACHIEVEMENT_AP[id] || 0; return ap; }
@@ -111,10 +109,6 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
-/**
- * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
- * codex 발견한 몬스터 + 등록한 물건 · catch 누적 처치 · hunt 던전 클리어 + 보스 처치 · species 지정 몬스터 처치 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수 · v3.64 deaths 쓰러진 횟수.
- */
 /** 변종·황금 개체 처치 수(마리 수가 아니라 조우 횟수). */
 function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
     let n = 0;
@@ -122,12 +116,16 @@ function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
     for (const k of Object.values(s.goldenBook || {})) n += k || 0;
     return n;
 }
+/**
+ * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
+ * codex 발견한 몬스터 + 등록한 물건 · catch 누적 처치 · hunt 던전 클리어 + 보스 처치 · species 지정 몬스터 처치 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수 · v3.64 deaths 쓰러진 횟수.
+ */
 export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs'>>) {
     // v26.4 외길 패시브: 배분 능력치(기본 포함)도 기록처럼 셉니다.
     const attr = attributes(s as State);
     const book = s.book || {};
     let catches = 0, discovered = 0, bosses = 0;
-    for (const f of FISH) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
+    for (const f of MONSTERS) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
     const clears = Object.values(s.clears || {}).reduce((x, n) => x + (n || 0), 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
     return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s) };
@@ -226,15 +224,13 @@ export function passiveGrowthBonus(s: State, sk: Skill, given?: Record<string, n
     if (sk.perRebirth && rebirths > 0) for (const [key, n] of Object.entries(sk.perRebirth)) out[key] = (out[key] || 0) + (n as number) * rebirths * scale;
     return out;
 }
-/** 스킬의 실제 효과. practice(refinePractice)는 v3.74부터 효과에 쓰지 않습니다(옛 연마 삭제). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
+/** 스킬의 실제 효과(강화 레벨 · 숙련 단계 반영). */
 /**
  * v3.104 같은 스킬 · 레벨 · 숙련 단계면 결과가 같으므로 스킬 객체마다 캐시합니다(능력치 계산이 턴마다 장착 스킬 수만큼 부름).
  * 돌려받은 스킬 객체는 고치지 마세요. 고쳐 쓸 때는 복사본({ ...sk })을 만드세요.
  */
 const effectiveCache = new WeakMap<Skill, Map<string, Skill>>();
-export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): Skill {
-    // v3.74 옛 연마 보너스는 없앴습니다(극한돌파는 아직 효과 없음). practice 인자는 호출부 호환을 위해 남깁니다.
-    void practice;
+export function effectiveSkill(sk: Skill, rank = 1, mastery = 0): Skill {
     let byLevel = effectiveCache.get(sk);
     if (!byLevel) effectiveCache.set(sk, byLevel = new Map());
     const key = `${rank}:${mastery}`;
@@ -293,18 +289,18 @@ export function masteryGainBonus(sk: Skill, level: number) {
     const stages = sk.masteryGain?.bonusByLevel;
     return stages?.[Math.min(level, stages.length - 1)] ?? 0;
 }
-export function skillRankDeltas(sk: Skill, rank: number, mastery = 0, practice = 0): SkillRankDelta[] {
+export function skillRankDeltas(sk: Skill, rank: number, mastery = 0): SkillRankDelta[] {
     // v3.169 능력치 수련 패시브는 숙련 단계로만 자랍니다(SP 강화 무관). 다음 숙련 단계의 값을 보여 줍니다.
-    if (sk.attrBonus) return mastery >= 4 ? [] : skillDeltas(effectiveSkill(sk, 1, mastery, practice), effectiveSkill(sk, 1, mastery + 1, practice)).map(d => ({ ...d, label: `${d.label}(숙련 Lv.${mastery} → ${mastery + 1})` }));
+    if (sk.attrBonus) return mastery >= 4 ? [] : skillDeltas(effectiveSkill(sk, 1, mastery), effectiveSkill(sk, 1, mastery + 1)).map(d => ({ ...d, label: `${d.label}(숙련 Lv.${mastery} → ${mastery + 1})` }));
     const level = skillLevel(sk, rank, mastery);
     if (level >= maxSkillLevel(sk))
         return [];
-    const deltas = skillDeltas(effectiveSkill(sk, level + 1, mastery, practice), effectiveSkill(sk, level + 2, mastery, practice));
+    const deltas = skillDeltas(effectiveSkill(sk, level + 1, mastery), effectiveSkill(sk, level + 2, mastery));
     if (sk.masteryGain) deltas.push({ label: '조건 충족 시 추가 숙련', from: `+${masteryGainBonus(sk, level)}`, to: `+${masteryGainBonus(sk, level + 1)}` });
     return deltas;
 }
-export function skillRankHint(sk: Skill, rank: number, mastery = 0, practice = 0) {
-    const rows = skillRankDeltas(sk, Math.max(1, rank), mastery, practice);
+export function skillRankHint(sk: Skill, rank: number, mastery = 0) {
+    const rows = skillRankDeltas(sk, Math.max(1, rank), mastery);
     return rows.length ? rows.map(x => `${x.label} ${x.from} → ${x.to}`).join(' · ') : '최대 강화 레벨입니다.';
 }
 /** 숙달한 직업: 직업 숙련이 목표치에 닿으면 레벨·능력치·숙련·숨은 조건 없이 언제든 다시 전직할 수 있습니다. */
@@ -312,7 +308,7 @@ export function skillRankHint(sk: Skill, rank: number, mastery = 0, practice = 0
 export const jobMastered = (s: Pick<State, 'jobMastery'> & Partial<Pick<State, 'masteryKept'>>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j) || !!s.masteryKept?.includes(j.id);
 /** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. v3.69 옛 수련(retired)은 세지 않습니다(숙달할 직업 21개 감소, 기존 세이브도 같은 기준). */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && !j.retired && jobMastered(s, j); }).length;
-/** 전직 조건 목록. v27.13 문 판정은 플레이 기록만 보므로 시각 인자가 없습니다. */
+/** 전직 조건 목록. */
 export function jobRequirements(s: State, j: Job) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
     /** value·target은 화면의 진행 막대용입니다(판정은 met). */
@@ -344,7 +340,7 @@ export function jobRequirements(s: State, j: Job) {
     }
     return list;
 }
-/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. v3.69 옛 수련(retired)은 전직할 수 없습니다. now는 서버 요청 시각입니다. */
+/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. v3.69 옛 수련(retired)은 전직할 수 없습니다. */
 export function canChangeJob(s: State, id: string) { const j = jobById(id); return !!j && !j.retired && (jobMastered(s, j) || jobRequirements(s, j).every(x => x.met)); }
 /** v27.86 절제: 액티브·패시브를 각각 몇 개까지 장착할 수 있는지 넘었는지. */
 export function overRestraint(s: State, ids: string[]) {
@@ -372,7 +368,7 @@ export function trimLoadout(s: State) {
         s.skills.splice(index < 0 ? s.skills.length - 1 : index, 1);
     }
 }
-export function completedRegions(s: State) { return PLACES.filter(st => st.fish.every(id => (s.book[id] || 0) >= PROGRESSION.fishComplete)); }
+export function completedStages(s: State) { return BASE_STAGES.filter(st => st.monsters.every(id => (s.book[id] || 0) >= PROGRESSION.monsterComplete)); }
 /** v27.80 연구 r단계(0부터)를 넘었는지: 처치 수와, 5단계부터는 그 몬스터를 잡은 최고 난이도 조건. */
 export const bookRankMet = (s: Pick<State, 'book' | 'bookTier'>, id: string, r: number) => r < BALANCE.bookMilestones.length && (s.book[id] || 0) >= BALANCE.bookMilestones[r] && (s.bookTier?.[id] || 0) >= (BALANCE.bookTierReq[r] || 0);
 /** 연구 r단계의 난이도 조건(없으면 0). */

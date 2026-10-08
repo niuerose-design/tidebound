@@ -26,6 +26,9 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'onyxSunfire', name: '태양의 불꽃', desc: '마법 공격 140% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.4, damageType: 'magic', effect: 'burn', manaCost: 0 },
     { id: 'onyxGenesis', name: '창세', desc: '복합 피해 170%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 6, multiplier: 1.7, damageType: 'split', manaCost: 0 },
 ];
+let enemySkillIndex: Map<string, Skill> | undefined;
+/** 몬스터 스킬 id로 찾기. */
+export const enemySkillById = (id: string | undefined) => id === undefined ? undefined : (enemySkillIndex ??= new Map(ENEMY_SKILLS.map(sk => [sk.id, sk]))).get(id);
 const PROFILES: Record<string, {
     name: string;
     hint: string;
@@ -92,8 +95,8 @@ export function enemyStats(f: { id: string; hp: number; attack: number; defense:
         crit: Math.min(MONSTER_TUNING.critCap, MONSTER_TUNING.critBase + f.level * MONSTER_TUNING.critPerLevel) + (boss ? MONSTER_TUNING.critBoss : 0) + (p === PROFILES.swift || p === PROFILES.frenzy ? MONSTER_TUNING.critSwift : 0), accuracy: .95 + f.level * .002,
         penetration: Math.min(MONSTER_TUNING.penCap, f.level * MONSTER_TUNING.penPerLevel) + (boss ? MONSTER_TUNING.penBoss : 0),
         evasion: p.evasion + (p === PROFILES.swift ? Math.min(.2, Math.max(0, f.level - 5) * .004) : 0),
-        // v25.2: 속도 9 + 레벨 × .35 → 8 + 레벨 × .25. 고레벨에서 모든 빌드(특히 기민이 낮은 마법 빌드)가 몬스터보다 느려
-        // 연속 행동을 과하게 허용했습니다(4차 마법 직업 승률 85% → 98%).
+        // v25.2 속도 계수는 낮게 둡니다: 더 가파르면 고레벨에서 모든 빌드(특히 기민이 낮은 마법 빌드)가 몬스터보다 느려
+        // 연속 행동을 과하게 허용합니다.
         speed: Math.round((8 + f.level * .25) * p.speed), mana: 100, manaRegen: 10,
     };
 }

@@ -8,19 +8,21 @@ import { starSound } from './star-catch-setting';
  */
 export const CATCH_SWEEP_MS = 1100, CATCH_ZONE = .2, CATCH_TIMEOUT_MS = 8000;
 export function StarCatch({ onResult, bonus }: { onResult: (caught: boolean) => void; bonus: number }) {
-    const [pos, setPos] = useState(0), [done, setDone] = useState<null | boolean>(null);
-    const start = useRef(0), raf = useRef(0), fired = useRef(false), lastTick = useRef(-1);
+    const [done, setDone] = useState<null | boolean>(null);
+    const start = useRef(0), raf = useRef(0), fired = useRef(false), lastTick = useRef(-1), star = useRef<HTMLSpanElement>(null);
+    // 별 위치는 프레임마다 바뀌므로 React 상태 대신 DOM에 바로 씁니다(프레임마다 다시 그리지 않음).
+    const place = (x: number) => { if (star.current) star.current.style.left = `${x * 100}%`; };
     const where = (now: number) => { const t = ((now - start.current) % (CATCH_SWEEP_MS * 2)) / CATCH_SWEEP_MS; return t <= 1 ? t : 2 - t; }; // 0→1 오른쪽으로, 1→2 왼쪽으로
     const stop = useCallback((hit?: boolean) => {
         if (fired.current) return; fired.current = true; cancelAnimationFrame(raf.current);
         const x = where(performance.now()), caught = hit ?? Math.abs(x - .5) <= CATCH_ZONE / 2;
-        setPos(x); setDone(caught); starSound(caught ? 'catch' : 'miss');
+        place(x); setDone(caught); starSound(caught ? 'catch' : 'miss');
         setTimeout(() => onResult(caught), 450);
     }, [onResult]);
     useEffect(() => {
         start.current = performance.now();
         const loop = (now: number) => {
-            setPos(where(now));
+            place(where(now));
             const edge = Math.floor((now - start.current) / CATCH_SWEEP_MS);
             if (edge !== lastTick.current) { lastTick.current = edge; starSound('tick'); }
             raf.current = requestAnimationFrame(loop);
@@ -31,7 +33,7 @@ export function StarCatch({ onResult, bonus }: { onResult: (caught: boolean) => 
     }, [stop]);
     return <div className={`star-catch${done === null ? '' : done ? ' hit' : ' miss'}`} role="button" tabIndex={0} aria-label="스타캐치: 별이 가운데에 올 때 누르세요"
         onPointerDown={e => { e.preventDefault(); stop(); }} onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); stop(); } }}>
-        <div className="star-catch-track"><span className="star-catch-zone" style={{ left: `${(.5 - CATCH_ZONE / 2) * 100}%`, width: `${CATCH_ZONE * 100}%` }}/><span className="star-catch-star" style={{ left: `${pos * 100}%` }}>★</span></div>
+        <div className="star-catch-track"><span className="star-catch-zone" style={{ left: `${(.5 - CATCH_ZONE / 2) * 100}%`, width: `${CATCH_ZONE * 100}%` }}/><span className="star-catch-star" ref={star} style={{ left: 0 }}>★</span></div>
         <small>{done === null ? `별이 가운데 올 때 누르세요 · 성공 +${Math.round(bonus * 100)}%p` : done ? `캐치! 성공률 +${Math.round(bonus * 100)}%p` : '놓쳤습니다 · 기본 확률로 진행'}</small>
     </div>;
 }

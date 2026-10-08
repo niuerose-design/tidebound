@@ -23,7 +23,7 @@ import { gainLevels, spawn, specialChances, pickSpecial, type ForcedRare } from 
 import { recordIncome } from './income';
 import { oneTimeRewards, offlineTally, resetOfflineTally } from './offline-tally';
 import { ONYX, onyxBossFor, onyxChance } from '../data/onyx';
-import { STAGES } from '../data/world';
+import { stageById } from '../data/world';
 import { KING, isSpecialId } from '../data/king';
 import { variantChances } from '../data/variants';
 
@@ -137,7 +137,7 @@ export function extrapolateOffline(s: State, m: Mark, turns: number, remaining: 
  * 확률은 판정 묶음을 시작할 때 한 번 계산합니다(남은 시간 동안 같은 사냥터 · 같은 조건).
  */
 function rareFights(s: State, rolls: { onyx: number; special: number; variant: number }, rng: () => number, step: () => void) {
-    const region = STAGES.find(st => st.id === s.stage)?.region, onyxBoss = region ? onyxBossFor(region) : undefined;
+    const region = stageById(s.stage)?.region, onyxBoss = region ? onyxBossFor(region) : undefined;
     const found: ForcedRare[] = [];
     if (onyxBoss && region) {
         s.onyxSeen ??= {};

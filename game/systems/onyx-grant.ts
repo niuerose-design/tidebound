@@ -2,7 +2,7 @@ import type { Item, State } from '../types';
 import { rollAffixes } from '../data/gear';
 import { STAGES } from '../data/world';
 import { ONYX, ONYX_BOSSES, onyxAccessory, onyxById, onyxCodexKey, ownedOnyx } from '../data/onyx';
-import { tuneOnyx } from './equipment';
+import { tuneOnyx, ownedItems } from './equipment';
 import { addLog } from './state';
 
 /**
@@ -11,7 +11,7 @@ import { addLog } from './state';
  */
 export function grantOnyx(s: State, bossId: string, level: number, rng: () => number, source: string) {
     const boss = onyxById(bossId)!;
-    const own = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.onyx === bossId);
+    const own = ownedItems(s).find(x => x?.onyx === bossId);
     if (own) {
         const rank = own.onyxRank || 0;
         if (rank < ONYX.awakenMax) {
@@ -21,7 +21,7 @@ export function grantOnyx(s: State, bossId: string, level: number, rng: () => nu
         else { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ ${source} · ${boss.accessory.name}은(는) 각성까지 마쳐 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
         return 'awaken' as const;
     }
-    // v3.122 장신구 레벨은 서식지 레벨과 내 레벨 중 높은 쪽(전에는 서식지 레벨이라 리스항구 칠흑은 Lv.5로 나와 바로 끼기 어려웠음).
+    // v3.122 장신구 레벨은 서식지 레벨과 내 레벨 중 높은 쪽.
     const lv = Math.max(level, s.level || 1), item = onyxAccessory(boss, `onyx-${bossId}-${s.turn}`, lv);
     // v3.77 칠흑 장신구의 무작위 옵션은 최고 굴림입니다. 위력은 (레벨 + 2) × ONYX.power(v3.125 6.37, Lv.100 650)이고 골드로 레벨을 올려 키웁니다.
     item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', lv);
@@ -37,14 +37,14 @@ export function grantOnyx(s: State, bossId: string, level: number, rng: () => nu
  */
 export function receiveOnyx(s: State, item: Item) {
     const boss = onyxById(item.onyx!)!;
-    const own = [...s.inventory, ...Object.values(s.equipment)].find(x => x?.onyx === item.onyx);
+    const own = ownedItems(s).find(x => x?.onyx === item.onyx);
     if (own) {
         const rank = own.onyxRank || 0;
         if (rank < ONYX.awakenMax) { own.onyxRank = rank + 1; addLog(s, `✦ 금고의 ${boss.accessory.name} · 이미 가진 칠흑이라 각성 ${own.onyxRank}/${ONYX.awakenMax}! 고유 옵션 +${Math.round(own.onyxRank * ONYX.awakenStep * 100)}%`, 'reward'); }
         else { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ 금고의 ${boss.accessory.name} · 각성까지 마쳐 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
         return 'awaken' as const;
     }
-    const taken = new Set([...s.inventory, ...Object.values(s.equipment)].map(x => x?.id));
+    const taken = new Set(ownedItems(s).map(x => x?.id));
     const got = { ...item, id: taken.has(item.id) ? `onyx-${item.onyx}-${s.turn}-v` : item.id };
     // v3.125 금고에 들어가 있던 장신구도 지금 위력 계수에 맞춥니다.
     tuneOnyx(got);

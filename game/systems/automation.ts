@@ -8,7 +8,7 @@ import { ASCENSION, ascensionOf, ascensionPerk } from '../data/ascension';
 import { rebirthLevel, tideLimit } from './meta';
 import { rebirthNow } from './actions/lifecycle';
 import { buildActions } from './actions/build';
-import { STAGES, PLACES, stageClosed, hackDownOf } from '../data/world';
+import { STAGES, BASE_STAGES, stageClosed, hackDownOf, stageById } from '../data/world';
 import { MIMIC } from '../data/mimic';
 import { JOBS, jobById } from '../data/classes';
 import { isHackerJob } from '../data/hacker';
@@ -36,7 +36,7 @@ export function followTarget(s: State, rule: FollowRule) {
     // v3.103 입장 조건을 내리면서, 적정 환생(fit)에 닿은 곳 중 가장 높은 곳을 고릅니다(없으면 입장 가능한 가장 높은 곳).
     const fits = (st: typeof STAGES[number]) => (st.fit ?? 0) <= s.rebirths;
     const pick = (list: typeof STAGES) => [...list].reverse().find(st => enterable(s, st) && fits(st)) || [...list].reverse().find(st => enterable(s, st));
-    const top = pick(PLACES), habitat = pick(STAGES.filter(st => st.habitat));
+    const top = pick(BASE_STAGES), habitat = pick(STAGES.filter(st => st.habitat));
     const stage = rule.stage === 'keep' ? s.stage : (rule.stage === 'habitat' ? habitat || top : top)?.id || s.stage;
     const limit = tideLimit(s), tide = rule.tide === 'keep' ? s.tide || 0 : rule.tide === 'mimic' ? Math.min(limit, MIMIC.tierCap) : limit;
     return { stage, tide };
@@ -47,9 +47,9 @@ export function runAutoFollow(s: State) {
     if (!rule?.on || !ascensionPerk(s, 'autoFollow') || s.dungeon || s.enemy || s.recovery > 0) return false;
     const next = followTarget(s, rule), moved = next.stage !== s.stage, tide = next.tide !== (s.tide || 0);
     if (!moved && !tide) return false;
-    if (moved) { const st = STAGES.find(x => x.id === next.stage)!; s.stage = st.id; s.target = null; s.effects = {}; s.playerStun = 0; s.bestStage = Math.max(s.bestStage || 0, STAGES.indexOf(st)); }
+    if (moved) { const st = stageById(next.stage)!; s.stage = st.id; s.target = null; s.effects = {}; s.playerStun = 0; s.bestStage = Math.max(s.bestStage || 0, STAGES.indexOf(st)); }
     s.tide = next.tide;
-    addLog(s, `자동 따라가기 · ${moved ? `${STAGES.find(x => x.id === s.stage)!.name}` : '사냥터 그대로'} · 난이도 ${s.tide}`, 'system');
+    addLog(s, `자동 따라가기 · ${moved ? `${stageById(s.stage)!.name}` : '사냥터 그대로'} · 난이도 ${s.tide}`, 'system');
     return true;
 }
 

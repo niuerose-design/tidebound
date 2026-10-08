@@ -1,9 +1,9 @@
 /** 직업 화면 공용 계산. 게임 판정(progression)을 그대로 쓰고, 화면용 상태 이름만 붙입니다. */
 import type { State } from '@/game/types';
 import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, type Job, type JobTreeId, jobById } from '@/game/data/classes';
-import { unlockFor } from '@/game/data/unlock-info';
 import { catalogRevealed } from '@/game/data/catalog';
 import { jobRequirements, jobMastered, jobCombatMultiplier, jobFlatBonus } from '@/game/systems/progression';
+import { secretJob } from '@/game/systems/reveal';
 import { MONOSTAT_LINEAGES } from '@/game/data/expansion-monostat';
 import { isHackerJob } from '@/game/data/hacker';
 import { percent } from '@/game/data/progression';
@@ -75,8 +75,6 @@ export function jobBonusText(j: Job, key: JobBonusKey, mastered = false) {
     return parts.join(' · ') || '—';
 }
 
-/** 실루엣 대상: 히든 직업과 숨은 조건이 있는 직업(목록은 서버 카탈로그). */
-export const secretJob = (j: Job) => !!j.hidden || unlockFor({}, j.id) !== null;
 /**
  * 실루엣 공개. v3.44 판정(관문 조건)은 비밀이라 서버가 하고(game/systems/reveal.ts), 화면은 카탈로그의 공개 목록만 봅니다.
  * 들어간 적 있는 직업은 카탈로그를 받기 전에도 드러난 것으로 봅니다.

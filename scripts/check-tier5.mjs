@@ -18,7 +18,7 @@ const { strike, fighterSpeed, setDefenseModel } = await load('systems/combat');
 const { tierAttack } = await load('systems/meta');
 const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf } = await load('data/classes');
-const { FISH, swarmHpMultiplier, swarmAttackMultiplier } = await load('data/world');
+const { MONSTERS, swarmHpMultiplier, swarmAttackMultiplier } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
 const { canUse, validLoadout, skillMasteryRanks, lineage, jobFactor, masteryMilestonesFor } = await load('systems/progression');
 const { subRoleOf, SUB_ROLES } = await load('data/roles');
@@ -89,7 +89,7 @@ function loadout(s, j, magic) {
 }
 function body(j) {
     const s = newState(0), { attrs, magic, main } = attributesFor(j);
-    Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH_BY_MAIN[main] }, book: BOOK ? Object.fromEntries(FISH.map(f => [f.id, BOOK])) : {}, ...(BOOK ? { clears: { record: BOOK }, gold: 1e9, variantBook: Object.fromEntries(FISH.map(f => [f.id, { giant: Math.round(BOOK * VARIANT_SHARE) }])) } : {}), unlockedJobs: JOBS.map(x => x.id), deaths: DEATHS, playMs: TURNS * 2000 });
+    Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH_BY_MAIN[main] }, book: BOOK ? Object.fromEntries(MONSTERS.map(f => [f.id, BOOK])) : {}, ...(BOOK ? { clears: { record: BOOK }, gold: 1e9, variantBook: Object.fromEntries(MONSTERS.map(f => [f.id, { giant: Math.round(BOOK * VARIANT_SHARE) }])) } : {}), unlockedJobs: JOBS.map(x => x.id), deaths: DEATHS, playMs: TURNS * 2000 });
     s.equipment = { ...GEAR[magic ? 'magic' : 'physical'] };
     s.jobMastery = { [j.id]: 0 };
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = masteryMilestonesFor(sk).at(-1); }
@@ -101,7 +101,7 @@ function body(j) {
 // v3.86 재사용 대기(각성기 포함)는 게임처럼 사냥 중 다음 몬스터로, 던전은 다음 판으로 이어집니다(cooldowns를 넘겨 공유).
 const player = (st, s, hp = st.hp, mana = st.mana, cooldowns = {}) => ({ name: 'player', stats: st, hp, mana, gold: GOLD, skills: s.skills, cooldowns, extraRolls: EXTRA, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice });
 function foe(id, { swarm = 1, boss = false, wave, tier = TIER } = {}) {
-    const base = monsterDef(scaledEnemyStats(FISH.find(f => f.id === id), { tier, boss, ...(wave !== undefined ? { wave } : {}) }), tier);
+    const base = monsterDef(scaledEnemyStats(MONSTERS.find(f => f.id === id), { tier, boss, ...(wave !== undefined ? { wave } : {}) }), tier);
     const st = swarm > 1 ? { ...base, hp: Math.round(base.hp * swarmHpMultiplier(swarm)), attack: Math.round(base.attack * swarmAttackMultiplier(swarm)), magic: Math.round((base.magic ?? base.attack) * swarmAttackMultiplier(swarm)) } : base;
     return { name: 'foe', foe: true, stats: st, hp: st.hp, mana: 100, skills: profile(id).skills, magicBasic: profile(id).magicBasic, cooldowns: {}, stun: 0, effects: {}, ...(swarm > 1 ? { swarm } : {}) };
 }

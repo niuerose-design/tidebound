@@ -10,7 +10,7 @@ import { SERVER_ODDS } from './odds';
 import { SECRET_JOBS } from './jobs';
 import { RARITIES } from '../data/balance';
 import { VARIANTS } from '../data/variants';
-import { FISH, HABITAT } from '../data/world';
+import { HABITAT, monsterById } from '../data/world';
 import { APPRAISAL } from '../data/economy';
 import { jobById } from '../data/classes';
 import { jobRequirements } from '../systems/progression';
@@ -26,7 +26,7 @@ export const UNLOCK_CONDITIONS: Record<string, string> = {
 
 /** 드롭·확률 조각(고정). */
 function oddsLeaks(): Leak[] {
-    const o = SERVER_ODDS, fish = (id: string) => FISH.find(f => f.id === id)?.name || id;
+    const o = SERVER_ODDS, monsterName = (id: string) => monsterById(id)?.name || id;
     return [
         { id: 'drop:base', text: `장비 드롭 기본 확률은 처치당 ${pct(o.drop.chance)}, 상한 ${pct(o.drop.cap)}입니다(드롭 보너스는 이 확률에 곱해짐).` },
         { id: 'drop:rarity', text: `장비 등급 분포: ${o.drop.rarity.map((w, i) => `${RARITIES[i].name} ${pct(w)}`).join(' · ')}.` },
@@ -44,7 +44,7 @@ function oddsLeaks(): Leak[] {
         { id: 'variant:swarm', text: `무리 규모 가중치 ×5 : ×100 : ×500 = ${o.variant.swarmWeights.join(' : ')}, 무리 서식지의 ×${HABITAT.sizes[1]}은 ${pct(o.variant.habitatBig)}.` },
         ...Object.entries(o.variant.region).map(([region, row]) => ({ id: `variant:region:${region}`, text: `${region}의 변종 배율: ${VARIANTS.map(v => `${v.name} ×${row[v.id] ?? 1}`).join(' · ')}.` })),
         { id: 'appraisal', text: `상점 감정 등급 확률: ${APPRAISAL.map((r, i) => `${RARITIES[r.rarity].name} ${pct(o.appraisal[i])}`).join(' · ')}.` },
-        ...Object.entries(o.spawn).filter(([, w]) => w > 0).map(([id, w]) => ({ id: `spawn:${id}`, text: `희귀 몬스터 ${fish(id)}의 출현 가중치는 ×${w}(보통 몬스터 ×1)입니다.` })),
+        ...Object.entries(o.spawn).filter(([, w]) => w > 0).map(([id, w]) => ({ id: `spawn:${id}`, text: `희귀 몬스터 ${monsterName(id)}의 출현 가중치는 ×${w}(보통 몬스터 ×1)입니다.` })),
     ];
 }
 /** 히든 직업 조각: 숨은 조건 또는 전직 조건. 이미 들어가 본 직업은 뺍니다. */

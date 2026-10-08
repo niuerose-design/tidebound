@@ -1,15 +1,15 @@
 'use client';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Compass, Coins, Droplets, Shield, Sparkles, Swords, Wand2, Atom } from 'lucide-react';
 import type { Job } from '@/game/data/classes';
 import { lineageOf } from '@/game/data/classes';
-import { fishArtSrc, fishShape, jobArtSrc, type FishShape } from '@/game/data/art';
+import { monsterArtSrc, monsterShape, jobArtSrc, type MonsterShape } from '@/game/data/art';
 
 /**
  * 몬스터 실루엣(64×64). 이미지가 없거나 아직 안 왔을 때 그대로 남습니다.
  * v27.42 메이플 몬스터 모양. 조각마다 따로 칠해 겹쳐도 비지 않고, 조각 안의 눈·무늬는 구멍(evenodd)으로 뚫립니다.
  */
-const SHAPES: Record<FishShape, string[]> = {
+const SHAPES: Record<MonsterShape, string[]> = {
     snail: [
         'M4 54c0-5 3-9 8-11V28c0-4 2-6 5-6s5 2 5 6v14h32c4 0 7 5 7 12zM15 30a2 2 0 1 0 4 0 2 2 0 1 0-4 0z',
         'M13 23l-5-11 2-1 5 10zM20 23l4-11 2 1-4 11z',
@@ -135,18 +135,18 @@ const SHAPES: Record<FishShape, string[]> = {
     ],
 };
 
-/** 몬스터 그림. public/art/fish/{id}.png|webp 가 목록(art-manifest)에 있으면 그 그림, 없으면 실루엣. */
-type FishArtProps = { id: string; size?: number; className?: string; boss?: boolean };
+/** 몬스터 그림. public/art/monsters/{id}.png|webp 가 목록(art-manifest)에 있으면 그 그림, 없으면 실루엣. */
+type MonsterArtProps = { id: string; size?: number; className?: string; boss?: boolean };
 /** v3.192 id가 바뀌면 불러오기 상태를 새로 시작합니다(key). 호루라기로 부른 몬스터처럼 장면의 몬스터가 내려가지 않고 바로 바뀌면, 앞 몬스터의 상태(ready · missing)가 남아 그림이 사라지거나 실루엣에 머물렀습니다. */
-export function FishArt(props: FishArtProps) {
-    return <FishArtImage key={props.id} {...props}/>;
+export function MonsterArt(props: MonsterArtProps) {
+    return <MonsterArtImage key={props.id} {...props}/>;
 }
-function FishArtImage({ id, size = 48, className = '', boss = false }: FishArtProps) {
-    const src = fishArtSrc(id);
+function MonsterArtImage({ id, size = 48, className = '', boss = false }: MonsterArtProps) {
+    const src = monsterArtSrc(id);
     const [state, setState] = useState<'pending' | 'ready' | 'missing'>(src ? 'pending' : 'missing');
-    const shape = fishShape(id);
-    return <span className={`fish-art ${state} shape-${shape} ${boss ? 'boss' : ''} ${className}`} style={{ width: size, height: size }} aria-hidden>
-        {state !== 'ready' && <svg viewBox="0 0 64 64" width={size} height={size} className="fish-silhouette">{SHAPES[shape].map((d, i) => <path key={i} d={d} fill="currentColor" fillRule="evenodd"/>)}</svg>}
+    const shape = monsterShape(id);
+    return <span className={`monster-art ${state} shape-${shape} ${boss ? 'boss' : ''} ${className}`} style={{ width: size, height: size }} aria-hidden>
+        {state !== 'ready' && <svg viewBox="0 0 64 64" width={size} height={size} className="monster-silhouette">{SHAPES[shape].map((d, i) => <path key={i} d={d} fill="currentColor" fillRule="evenodd"/>)}</svg>}
         {state !== 'missing' && src && (
             // eslint-disable-next-line @next/next/no-img-element -- 선택적 정적 파일: 없으면 onError로 실루엣에 머무릅니다.
             <img src={src} alt="" width={size} height={size} loading="lazy" decoding="async" onLoad={() => setState('ready')} onError={() => setState('missing')}/>
@@ -173,7 +173,7 @@ export function JobArt({ job, size = 48, className = '' }: { job: Job; size?: nu
  * v27.51 전투 장면 배경(바다 그림 대체). 메이플 필드풍 언덕·숲·버섯 집 실루엣을 사냥터 색(--stage-tone)으로 물들입니다.
  * 그림 파일 없이 SVG라 가볍고, 기존 연출(ocean-art 흔들림)을 그대로 받도록 같은 클래스를 씁니다.
  */
-export function SceneBackdrop() {
+export const SceneBackdrop = memo(function SceneBackdrop() {
     return <svg className="ocean-art scene-backdrop" viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
             <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0c1d2b"/><stop offset=".62" stopColor="var(--stage-tone, #5c9dba)" stopOpacity=".55"/><stop offset="1" stopColor="#0b2029"/></linearGradient>
@@ -198,4 +198,4 @@ export function SceneBackdrop() {
         </g>
         <path d="M0 800 C220 760 420 790 640 810 S1100 770 1300 790 L1536 780 V1024 H0Z" fill="#0b2029"/>
     </svg>;
-}
+});

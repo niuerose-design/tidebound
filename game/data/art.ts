@@ -1,13 +1,13 @@
 /**
  * v27.11 외부 생성 이미지 자리와 실루엣 폴백.
- * 이미지는 public/art/{fish|jobs}/{id}.webp 에 두면 자동으로 쓰이고, 없으면 실루엣이 그대로 남습니다.
+ * 이미지는 public/art/{monsters|jobs}/{id}.webp 에 두면 자동으로 쓰이고, 없으면 실루엣이 그대로 남습니다.
  * 파일 이름은 몬스터 id / 계보 id와 같습니다(docs/art/README.md).
  */
-import { FISH } from './world';
+import { MONSTERS } from './world';
 
-import { FISH_ART, JOB_ART, ONYX_ART } from './art-manifest';
+import { MONSTER_ART, JOB_ART, ONYX_ART } from './art-manifest';
 /** v27.57 그림이 있으면 경로, 없으면 null(요청하지 않고 실루엣·아이콘). 목록은 node scripts/art-manifest.mjs 가 만듭니다. */
-export const fishArtSrc = (id: string) => FISH_ART[id] ? `/art/fish/${id}.${FISH_ART[id]}` : null;
+export const monsterArtSrc = (id: string) => MONSTER_ART[id] ? `/art/monsters/${id}.${MONSTER_ART[id]}` : null;
 export const jobArtSrc = (lineageId: string) => JOB_ART[lineageId] ? `/art/jobs/${lineageId}.${JOB_ART[lineageId]}` : null;
 /** v3.14 칠흑 장신구 그림(public/art/onyx/{보스id}.png|webp). 없으면 null(components/game/onyx-art의 SVG). */
 export const onyxArtSrc = (bossId: string) => ONYX_ART[bossId] ? `/art/onyx/${bossId}.${ONYX_ART[bossId]}` : null;
@@ -15,9 +15,9 @@ export const onyxArtSrc = (bossId: string) => ONYX_ART[bossId] ? `/art/onyx/${bo
 export const skillArtSrc = (skillId: string) => `/art/skills/${skillId}.png`;
 
 /** 실루엣 모양. 몬스터마다 하나를 고정해 두어 이미지가 없어도 책·장면에서 종류를 구분할 수 있게 합니다. */
-export type FishShape = 'snail' | 'mushroom' | 'slime' | 'pig' | 'boar' | 'golem' | 'eye' | 'monkey' | 'drake' | 'ghost' | 'skeleton' | 'octopus' | 'bat' | 'crab' | 'croc' | 'snake' | 'bubble' | 'chest' | 'demon' | 'mage' | 'fighter' | 'statue' | 'clock';
+export type MonsterShape = 'snail' | 'mushroom' | 'slime' | 'pig' | 'boar' | 'golem' | 'eye' | 'monkey' | 'drake' | 'ghost' | 'skeleton' | 'octopus' | 'bat' | 'crab' | 'croc' | 'snake' | 'bubble' | 'chest' | 'demon' | 'mage' | 'fighter' | 'statue' | 'clock';
 /** v27.42 메이플 몬스터 모양으로 다시 짰습니다(maple-monsters.ts 이름 기준). */
-export const FISH_SHAPES: Record<string, FishShape> = {
+export const MONSTER_SHAPES: Record<string, MonsterShape> = {
     // 달팽이 · 버섯 · 슬라임
     minnow: 'snail', carp: 'snail', perch: 'snail', mackerel: 'mushroom', ray: 'slime', puffer: 'mushroom',
     barracuda: 'mushroom', seahorse: 'mushroom', needlefish: 'mushroom', tidejelly: 'mushroom',
@@ -38,6 +38,6 @@ export const FISH_SHAPES: Record<string, FishShape> = {
     onyxDusk: 'ghost', onyxDunkel: 'fighter', onyxWill: 'mage', onyxLucid: 'mage', onyxHilla: 'mage', onyxSeren: 'fighter', onyxBlackMage: 'mage',
     grottoWarden: 'mushroom', kelpHydra: 'slime', anchorWraith: 'mushroom', magmaKraken: 'demon', templeOracle: 'mage', abyssSovereign: 'fighter', ventColossus: 'statue', starfallSeraph: 'clock',
 };
-export const fishShape = (id: string): FishShape => FISH_SHAPES[id] ?? 'slime';
+export const monsterShape = (id: string): MonsterShape => MONSTER_SHAPES[id] ?? 'slime';
 /** 모양 표가 빠뜨린 몬스터(테스트가 비어 있는지 확인합니다). */
-export const unmappedFish = () => FISH.filter(f => !(f.id in FISH_SHAPES)).map(f => f.id);
+export const unmappedMonsters = () => MONSTERS.filter(f => !(f.id in MONSTER_SHAPES)).map(f => f.id);

@@ -1,10 +1,10 @@
 import { trainingFor, TRAINING_PASSIVE } from '../data/training';
-import { jobById } from '../data/classes';
+import { jobById, BASE_JOB } from '../data/classes';
 import type { State } from '../types';
 import { addLog } from './state';
 import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
 import { RELICS, RESEARCH_GROWTH } from '../data/economy';
-import { syncRelicPower, tuneOnyx, fixRelicImprints } from './equipment';
+import { syncRelicPower, tuneOnyx, fixRelicImprints, ownedItems } from './equipment';
 import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
@@ -14,10 +14,6 @@ import { newState } from './engine';
 import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
 import { RANKS, RANK_LEGACY_NEED, rankIndex, rankState } from '../data/rank';
 import { OLD_GEAR_NAMES, RENAMED_GEAR, RENAMED_AFFIX, gearName } from '../data/maple-gear';
-/**
- * v8(게임 v20.5): 골드 훈련 삭제와 함께 이전 버전의 세이브는 이름만 남기고 새로 시작합니다.
- * 이후 버전 변경은 이 함수에 단계별 추가 마이그레이션으로 이어 붙입니다.
- */
 /** v25.23 세계석 연구 ‘황금 개체’(base 8·step 5) 삭제: 투자한 세계석을 전액 돌려줍니다. */
 function refundGoldenResearch(s: State) {
     const rank = (s.permanent as Record<string, number | undefined>)?.goldenFish || 0;
@@ -250,7 +246,7 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
  */
 export function retireHiddenJobs(s: State) {
     const jobs = new Set(RETIRED_JOBS), skills = new Set(RETIRED_SKILLS), drop = (ids?: string[]) => ids?.filter(id => !skills.has(id));
-    if (jobs.has(s.job)) s.job = 'fisher';
+    if (jobs.has(s.job)) s.job = BASE_JOB;
     if (s.jobGoal && jobs.has(s.jobGoal)) delete s.jobGoal;
     s.unlockedJobs = s.unlockedJobs.filter(id => !jobs.has(id));
     if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => !jobs.has(id));
@@ -324,6 +320,10 @@ export function moveToTraining(s: State) {
     if (!s.unlockedJobs.includes(next)) s.unlockedJobs.push(next);
     s.jobMastery[next] ??= 0;
 }
+/**
+ * v8(게임 v20.5): 골드 훈련 삭제와 함께 이전 버전의 세이브는 이름만 남기고 새로 시작합니다.
+ * 이후 버전 변경은 이 함수에 단계별 추가 마이그레이션으로 이어 붙입니다.
+ */
 export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
@@ -347,7 +347,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -356,10 +356,6 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     return s;
 }
 
-/**
- * v27.46 장비 이름 메이플 개편: 가방·착용 장비의 옛 이름(낚싯대·구명조끼·나침반 …)과 옵션 이름(유영)을 새 이름으로 바꿉니다.
- * 옛 이름만 골라 바꾸므로 여러 번 불러도 같고, 바꿀 게 없으면 아무것도 하지 않습니다. 능력치·등급·옵션 값은 그대로입니다.
- */
 /** v3.8 자동 강화 연구 비용 100 → 10: 이미 찍은 세이브에 차액 90을 한 번 돌려줍니다. */
 export const AUTO_STAR_REFUND = 90;
 /** v3.14 이미 가진 칠흑 장신구를 물건 도감에 자동 등록합니다(장비 소모 없음). */
@@ -371,6 +367,10 @@ export function refundAutoStar(s: State) {
     s.pearls += AUTO_STAR_REFUND;
     return AUTO_STAR_REFUND;
 }
+/**
+ * v27.46 장비 이름 메이플 개편: 가방·착용 장비의 옛 이름(낚싯대·구명조끼·나침반 …)과 옵션 이름(유영)을 새 이름으로 바꿉니다.
+ * 옛 이름만 골라 바꾸므로 여러 번 불러도 같고, 바꿀 게 없으면 아무것도 하지 않습니다. 능력치·등급·옵션 값은 그대로입니다.
+ */
 export function renameMapleGear(s: State) {
     let changed = 0;
     for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) {
@@ -395,7 +395,7 @@ export function boostPenetrationAffixes(s: State) {
     if (s.penetrationBoosted) return 0;
     let n = 0;
     const scale = (v: number) => Math.round(v * PENETRATION.gearScale * 10000) / 10000;
-    for (const item of [...s.inventory, ...Object.values(s.equipment)]) for (const x of item?.affixes || []) {
+    for (const item of ownedItems(s)) for (const x of item?.affixes || []) {
         if (x.stat === 'penetration' && x.value > 0) { x.value = scale(x.value); n++; }
         if (x.stat2 === 'penetration' && (x.value2 ?? 0) > 0) { x.value2 = scale(x.value2!); n++; }
     }

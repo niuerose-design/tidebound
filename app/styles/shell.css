@@ -278,10 +278,9 @@
   border:1px solid #759c9a45;
   border-radius:5px;
   color:#d9e6e3;
-  background:#142e346e;
+  background:#142e34d9;
   padding:4px 8px;
-  font-size:11px;
-  backdrop-filter:blur(6px)
+  font-size:11px
 }
 
 .scene-copy {

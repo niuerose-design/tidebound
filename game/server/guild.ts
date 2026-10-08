@@ -1,10 +1,10 @@
 import type { State } from '../types';
 import { db, type GuildRow, type GuildMemberRow } from './db';
 import { ApiError } from './store';
-import { weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { guildStatsFor } from '../systems/progress';
 import { GUILD_MAX_MEMBERS, GUILD_CREATE_COST, GUILD_RENAME_COST, GUILD_DONATIONS, GUILD_CODE_LENGTH, randomInviteCode, normalizeGuildCode, makeGuildGoals, guildGoalProgress, guildPoints, emptyTotals, type GuildTotals } from '../data/guild';
+import { weekKey } from '../data/time';
 
 /**
  * v25.11 공유 길드 서비스. 길드는 계정 단위(캐릭터 슬롯 공통)이고, 세이브에는 소속 캐시(guildMember)와 이번 주 기여(guildStats)만 둡니다.

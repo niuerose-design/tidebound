@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Meter } from './shared';
-import { FishArt } from './art';
+import { MonsterArt } from './art';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
 import type { Log } from '@/game/types';
@@ -12,6 +12,9 @@ import { FOE_FX } from '@/game/data/foe-fx';
 
 /** 연출을 띄워 두는 시간(마지막 타격 뒤). */
 const FX_HOLD_MS = 1500;
+/** 장면 연출(각성기 · 일곱 인 해방 · 보스 스킬 · 도트 퍼니셔)은 2.4~2.6초짜리라 그 길이만큼 붙잡아 둡니다. 이보다 짧으면 애니메이션 도중에 DOM이 지워집니다. */
+const SCENE_HOLD_MS = 2700;
+const holdFor = (fx: CombatFx) => fx.finale || fx.skillId === 'endOfAll' || (fx.actor === 'player' && ultimateOf(fx.skillId)) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
 /** ‘×N 연속’ 카운터: 몇 번째 연속인지와 누가 연속으로 행동했는지. */
 export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
 /**
@@ -45,7 +48,7 @@ export function useCombatFx(logs: Log[], playerName: string, enabled = true) {
             timers.current.delete(timer);
             setEffects(prev => prev.filter(fx => !ids.has(fx.id)));
             if (next) setCombo(v => v === next ? null : v);
-        }, batch.at(-1)!.delay + FX_HOLD_MS);
+        }, batch.at(-1)!.delay + Math.max(...batch.map(holdFor)));
         timers.current.add(timer);
     }, [latest, logs, playerName, enabled]);
     useEffect(() => { const pending = timers.current; return () => pending.forEach(clearTimeout); }, []);
@@ -185,7 +188,7 @@ function FoeFx({ fx }: { fx: CombatFx }) {
     </div>;
 }
 /**
- * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
+ * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편, 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
  * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)이 기본이고, v3.183 보스(boss)의 스킬만 전용 배경 연출(FOE_FX)을 함께 띄웁니다.
  */
 export function SceneFx({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
@@ -239,10 +242,10 @@ export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: 
     const { fx, phase } = held, boss = enemy.boss ? 'boss' : '';
     return <div key={fx.id} className="scene-foe-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
         {phase === 'cut' ? <>
-            <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${boss}`}/>
-            <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half lower ${boss}`}/>
+            <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${boss}`}/>
+            <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half lower ${boss}`}/>
             <i className="scene-foe-cut"/>
-        </> : <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-restore ${boss}`}/>}
+        </> : <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-restore ${boss}`}/>}
     </div>;
 }
 /** 상대 카드 HP 바: 검이 지나간 자리에서 HP 바 UI(라벨 · 숫자 · 막대)가 비스듬히 두 조각으로 잘려, 아래 조각이 튕겨 날아갑니다(원본 바는 CSS가 숨김). */

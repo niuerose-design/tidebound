@@ -19,7 +19,6 @@ const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누
 const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록', relic: '렐릭의 힘(경험치 보너스)' };
 const goldCapText = (g: NonNullable<Skill['goldSpend']>, magic: boolean) => [g.capAttack ? `${magic ? '마법' : '물리'} 공격 × ${number(g.capAttack)}` : '', g.cap ? g.cap.toLocaleString() : ''].filter(Boolean).join(' · ');
 const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속', corrode: '부식' };
-/** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */
 /** v27.15 도감의 적 스킬 한 줄: '물리 150%' · '출혈 5턴' · '물리 110% · 자신 가속 3턴'. 긴 문장은 쓰지 않습니다. */
 export function enemySkillBrief(sk: Skill) {
     const parts: string[] = [];
@@ -29,13 +28,10 @@ export function enemySkillBrief(sk: Skill) {
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
     return parts.join(' · ') || '기본 공격';
 }
+/** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */
 function statusLabel(sk: Skill) {
     return sk.effect === 'bleed' && sk.dotName ? sk.dotName : STATUS_WORD[sk.effect || ''] || '';
 }
-/**
- * 짧은 효과 요약: 직업 상세·비교처럼 한 줄만 보여 줄 때 씁니다. 피해(또는 피해 없음) → 상태이상 → 추가타·회복·흡혈·연계 순서.
- * 자세한 계산식은 skillEffectLines에 있습니다.
- */
 /**
  * v3.5 간단히 보기의 ‘기타’ 칸: 고정 수치 칩으로 다 못 보여 주는 조건·규칙(누적·환생 비례, 조건부 숙련, 특수 규칙).
  * 비어 있으면 기타 칸을 그리지 않습니다.
@@ -50,6 +46,10 @@ export function skillExtraNotes(sk: Skill): string[] {
     if (special && sk.desc) notes.push(sk.desc);
     return notes;
 }
+/**
+ * 짧은 효과 요약: 직업 상세·비교처럼 한 줄만 보여 줄 때 씁니다. 피해(또는 피해 없음) → 상태이상 → 추가타·회복·흡혈·연계 순서.
+ * 자세한 계산식은 skillEffectLines에 있습니다.
+ */
 export function skillBrief(sk: Skill): string {
     if (sk.disguise) return sk.disguise;
     if (sk.type !== 'active') {
@@ -137,7 +137,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.gamble) out.push(`쓸 때마다 ${[sk.gamble.min !== sk.gamble.max ? `피해 ×${number(sk.gamble.min)}~${number(sk.gamble.max)}(평균 ×${number((sk.gamble.min + sk.gamble.max) / 2)})` : '', sk.gamble.accuracy ? `이 기술 명중 ±${skillPercent(sk.gamble.accuracy)}p` : ''].filter(Boolean).join(' · ')} 무작위`);
         if (sk.allIn) out.push(`현재 체력의 ${skillPercent(sk.allIn.hpRatio)}(1은 남김)와 남은 마나 전부를 걸고 (건 체력 × ${number(sk.allIn.hpScale)} + 건 마나 × ${number(sk.allIn.manaScale)})를 피해식에 더합니다 · 빗나가도 소모`);
         if (sk.goldSpend) out.push(`보유 골드의 ${skillPercent(sk.goldSpend.ratio)}(한 번에 최대 ${goldCapText(sk.goldSpend, sk.damageType === 'magic')})를 실제로 쓰고, 쓴 골드 × ${number(sk.goldSpend.scale)}를 피해식에 더합니다. 골드가 0이면 피해만 줍니다.`);
-        // v3.157 통폐합 때 들어온 장치들을 자세히 보기에도 적습니다(전에는 간단히 보기와 설명 문장에만 있었음).
+        // v3.157 통폐합 때 들어온 장치들을 자세히 보기에도 적습니다.
         if (sk.charge) out.push(`명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}, 최대 ${SKILL_FORMULA.charge.max}). 충전은 전투가 끝나도 남습니다.`);
         if (sk.chargeNeed) out.push(`충전 ${sk.chargeNeed}중첩 이상일 때만 나가고, 중첩을 모두 소모해 중첩당 피해 +${skillPercent(sk.chargeBonus || 0)}.`);
         if (sk.chargeHits) out.push(`명중하면 충전(회피 반격)을 모두 소모해 중첩당 추가타 +${sk.chargeHits}(추가타 상한 뒤에 더함). 충전이 없어도 나갑니다.`);
