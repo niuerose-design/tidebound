@@ -123,12 +123,27 @@ export function tuneOnyx(item: Item) {
 export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: number): ItemAffix {
     const ratio = (GEAR_RARITY_SCALE[srcRarity] ?? 1) / (GEAR_RARITY_SCALE[relicRarity] ?? 1);
     const fix = (stat: string | undefined, n: number | undefined) => stat && n && n > 0 && FLAT_GEAR_STATS.has(stat) ? Math.round(n * ratio) : n;
-    return { ...affix, value: fix(affix.stat, affix.value)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2) } : {}), srcRarity };
+    return scaleImprintPercent({ ...affix, value: fix(affix.stat, affix.value)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2) } : {}), srcRarity }, srcRarity, relicRarity);
+}
+/**
+ * v3.140 비율 옵션(초월 · 포식자 · 파멸 · 관통 · 잔혹 · 감각 …)도 이식할 때 유물 등급 품질로 맞춥니다: 태초(품질 2.2)에서 전설 유물(1.6)로 옮기면 ×0.73.
+ * 전에는 비율 줄만 태초 품질 그대로 옮겨져, 최고 굴림 3줄을 모은 유물이 같은 줄을 가진 태초보다도 강했습니다(docs/research-review.md 뒤 장비 점검).
+ * 양날 옵션의 손해 쪽(음수)과 규칙 · 고정 옵션은 그대로. 유물보다 낮은 등급에서 온 줄은 올리지 않습니다. 보정한 줄은 pctFixed로 표시해 다시 손대지 않습니다.
+ */
+export function scaleImprintPercent(affix: ItemAffix, srcRarity: number, relicRarity: number): ItemAffix {
+    const def = affixDef(affix.id);
+    if (!def || affix.rule || def.kind !== 'percent' || def.fixed) return affix;
+    const q = Math.min(1, rarityQuality(relicRarity) / rarityQuality(Math.max(srcRarity, relicRarity)));
+    const pct = (n: number | undefined) => n && n > 0 ? Math.round(n * q * 10000) / 10000 : n;
+    return { ...affix, value: pct(affix.value)!, ...(affix.value2 !== undefined ? { value2: pct(affix.value2) } : {}), pctFixed: true };
 }
 /** v3.82 원래 등급이 기록되지 않은 예전 이식 줄: 그 수치가 나올 수 있는 가장 낮은 등급(Lv.100 · 최고 굴림 기준)으로 봅니다. 실제보다 덜 깎이는 쪽입니다. */
 export function guessImprintRarity(affix: ItemAffix, relicRarity: number) {
     const def = affixDef(affix.id);
-    if (!def || def.kind !== 'flat' || !FLAT_GEAR_STATS.has(affix.stat) || !(affix.value > 0)) return relicRarity;
+    if (!def || affix.rule || def.fixed || !(affix.value > 0)) return relicRarity;
+    // v3.140 비율 옵션: Lv.100 최고 굴림(기본 × 1.4 × 등급 품질)이 그 수치 이상이 되는 가장 낮은 등급.
+    if (def.kind === 'percent') { for (let r = 0; r < RARITIES.length; r++) if (def.base * 1.4 * rarityQuality(r) >= affix.value - 1e-9) return r; return RARITIES.length - 1; }
+    if (def.kind !== 'flat' || !FLAT_GEAR_STATS.has(affix.stat)) return relicRarity;
     for (let r = 0; r < RARITIES.length; r++) if (def.base * 102 * RARITIES[r].factor * 1.4 * rarityQuality(r) >= affix.value) return r;
     return RARITIES.length - 1;
 }
@@ -138,6 +153,8 @@ export function fixRelicImprints(s: Pick<State, 'inventory' | 'equipment'>) {
         if (!item?.relic || !item.affixes?.length) continue;
         // 짐작이 유물 등급보다 낮으면 올리지 않습니다(예전 줄은 깎기만, 잘못 짐작해 키우지 않음).
         item.affixes = item.affixes.map(x => x.srcRarity === undefined ? imprintAffix(x, Math.max(item.rarity, guessImprintRarity(x, item.rarity)), item.rarity) : x);
+        // v3.140 원래 등급이 기록된 줄(v3.82~v3.139 이식)의 비율 옵션을 한 번 유물 품질로 맞춥니다.
+        item.affixes = item.affixes.map(x => x.pctFixed || x.srcRarity === undefined ? x : scaleImprintPercent(x, x.srcRarity, item.rarity));
     }
 }
 /** v3.5 레벨 올리기 목표 레벨: 지금 레벨 + step, 내 레벨까지. 더 올릴 수 없으면 null. */
