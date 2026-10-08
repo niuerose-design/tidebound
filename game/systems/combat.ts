@@ -782,12 +782,15 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const poisonFill = Math.min(1, (b.effects.poison?.stacks || 0) / (STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus)), burnFill = Math.min(1, (b.effects.burn?.stacks || 0) / STATUS_TUNING.burnMaxStacks), fill = (poisonFill + burnFill) / 2;
     const fullFinish = !!finisher && poisonFill >= 1 && burnFill >= 1, finisherHits = !finisher || fill <= 0 ? 0 : fullFinish ? finisher.maxHits : Math.min(finisher.maxHits - 1, Math.max(1, Math.round(finisher.maxHits * (1 + fill) / 2)));
     if (finisher) notes.push(finisherHits ? `퍼니시 ${finisherHits}회` : '퍼니시 없음');
-    const skillFollowUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(chosen?.awaken ? STATUS_TUNING.maxExtraAttacksAwaken : STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0));
+    // v3.164 전류(스트라이커): 살아 있는 전류 버프가 있으면 패시브만큼 추가타가 늘어납니다(상한 뒤에 더함).
+    const currentExtra = statusOnly || finisher || !(chosen?.extraAttacks) ? 0 : Math.max(0, ...a.skills.map(id => { const x = skillById(id)?.followUpExtra; return x && (a.effects?.buffs?.[x.buff]?.turns || 0) > 0 ? x.hits : 0; }));
+    const skillFollowUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(chosen?.awaken ? STATUS_TUNING.maxExtraAttacksAwaken : STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0)) + currentExtra;
     // v3.146 정령(은월): 장착한 패시브의 정령이 모든 공격 행동(기본 공격 포함, 피해 없는 기술 · 순수 회복 · 도트 퍼니셔 제외)에 추가타를 붙입니다.
     const spirits = a.skills.map(id => skillById(id)?.companion).filter((c): c is { hits: number; power: number } => !!c);
     const spirit = spirits.length && !statusOnly && !healOnly && !finisher ? { hits: Math.max(...spirits.map(c => c.hits)), power: Math.max(...spirits.map(c => c.power)) } : null;
     if (spirit) notes.push(`정령 ${spirit.hits}회`);
     const followUps = skillFollowUps + (spirit?.hits || 0);
+    let currentTurns = 0;
     for (let i = 0; i < followUps && b.hp > 0 && a.hp > 0 && !stood; i++) {
         if (rng() >= hit) {
             ev.hits.push({ kind: 'follow', value: 0, critical: false, miss: true });
@@ -800,6 +803,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         b.hp = Math.max(0, b.hp - followDamage);
         if (endure(b, sb, notes, ev)) stood = true;
         ev.hits.push(hitRecord('follow', followActual, followDamage, followCrit, followSuper));
+        // v3.164 전류(스트라이커): 추가타가 명중하면 전류 버프가 1턴 길어집니다(없으면 시작 턴으로).
+        if (i < skillFollowUps) { const fb = a.skills.map(id => skillById(id)?.followUpBuff).filter((x): x is NonNullable<Skill['followUpBuff']> => !!x).sort((x, y) => (y.speedMultiplier || 1) - (x.speedMultiplier || 1))[0]; if (fb) { const cur = a.effects.buffs?.[fb.id]; if (cur && cur.turns > 0) { cur.turns += 1; cur.speedMultiplier = fb.speedMultiplier; } else grantBuff(a.effects, { id: fb.id, name: fb.name, turns: fb.turns, speedMultiplier: fb.speedMultiplier }); currentTurns = a.effects.buffs![fb.id].turns; } }
         const followDrain = Math.min(drainLeft, Math.floor(followActual * drainRate));
         drainLeft -= followDrain;
         if (followDrain) {
@@ -808,6 +813,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
             ev.drained += recovery;
         }
     }
+    if (currentTurns) { notes.push(`전류 ${currentTurns}턴`); ev.statuses.push({ id: 'current', turns: currentTurns, onSelf: true }); }
     // v3.132 도트 퍼니셔 기절: 중독·화상이 모두 최대 중첩이면 fullStun턴, 하나라도 걸려 있으면 partStun턴(+기절 보너스).
     if (finisher && finisherHits && b.hp > 0 && !stood) {
         if (isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }

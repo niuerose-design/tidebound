@@ -25,7 +25,7 @@ export function fxVariantOf(id: string | undefined, magical: boolean, effect?: s
         [/^glyph|^foeSilence$/, 'glyph'],
         // v27.16 독·먹물·뼈·시간 갈래
         [/^foeVenom$|venom|toxic|miasma|rotten|rotBloom|corros|plague|doomMark/i, 'venom'],
-        [/^foeInkBurst$|^ink|smokeVeil/i, 'ink'],
+        [/^foeInkBurst$|^ink/i, 'ink'],
         [/^grave|marrow|^bone|ossuary|skeleton/i, 'bone'],
         [/windUp|slackHand|timeMachine|^precede$|frozenTime|^rewind$|chrono/i, 'time'],
         [/electric|thunder|storm(?!Chant)|spark|shock|lightning|sigil|psalm/i, 'lightning'],

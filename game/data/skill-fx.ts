@@ -28,7 +28,7 @@ export const SKILL_FX: Record<string, SkillFx> = {
     // 매지션(불,독)·부식 연성: 독 갈래
     toxicFang: 'fire', venomDart: 'venom', doomMark: 'venom', miasma: 'venom', rotBloom: 'venom', rottenBait: 'venom', corrosiveBloom: 'venom', transmute: 'venom', grandTransmutation: 'venom',
     // 팬텀 (1차): 먹물 갈래
-    inkTrick: 'ink', smokeVeil: 'ink',
+    inkTrick: 'ink', 
     // 망인 계보: 뼈 갈래
     // 여명·천 번의 삶: 빛
 };
