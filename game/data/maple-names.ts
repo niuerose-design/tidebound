@@ -30,9 +30,9 @@ const BY_TIER: { cls: string; ids: string[] }[] = [
     { cls: '카데나', ids: ['nerveNeedler', 'nerveSeverer', 'silenceWarden', 'stillLord', 'silenceDeity'] },
     // v27.39 2-2단계: 외길 계보
     { cls: '아란', ids: ['brawnFisher', 'mightyStrongman', 'colossus'] },
-    { cls: '블래스터', ids: ['bulkyFisher', 'hulkingBrute', 'mountainBody'] },
+    { cls: '블래스터', ids: ['bulkyFisher', 'hulkingBrute', 'mountainBody', 'ironBastion'] },
     { cls: '배틀메이지', ids: ['manaDevotee', 'arcaneSeeker', 'pureMagus'] },
-    { cls: '라라', ids: ['stillAngler', 'meditantAdept', 'voidMind'] },
+    { cls: '라라', ids: ['stillAngler', 'meditantAdept', 'voidMind', 'voidSage'] },
 ];
 /** 원작 차수별 이름을 그대로 쓰는 직업(모험가)과 허브 1차. */
 const NAMED: Record<string, string> = {

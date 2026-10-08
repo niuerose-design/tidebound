@@ -79,6 +79,44 @@ test('v3.170 training jobs: no actives, exactly 4 passives each with one main an
     assert.ok(hp.hpRegen >= 3 && hp.manaRegen >= 3, 'new passive works in its training job');
 });
 
+test('v3.172 blaster recoil gauge: damage taken fills charge by max-hp share, cylinder burst waits for 3 stacks and spends them all', async () => {
+    const C = await load('game/systems/combat.js'), R = await load('game/data/roles.js');
+    assert.equal(R.subRoleOf(job('bulkyFisher'), lineageOf(job('bulkyFisher'))), 'borderRecoil'); assert.equal(job('ironBastion').tier, 5); assert.equal(job('ironBastion').parent, 'mountainBody');
+    const sk = id => SKILLS.find(x => x.id === id);
+    assert.deepEqual(['thickBuild', 'wallOfFlesh', 'mountainHeart', 'ironShell'].map(id => sk(id).recoilGauge), [.12, .1, .08, .06]);
+    assert.equal(sk('landslide').chargeNeed, 3); assert.equal(sk('bunkerBuster').chargeNeed, 5); assert.ok(['bodySlam', 'massiveCharge', 'landslide', 'bunkerBuster'].every(id => sk(id).scalingAttack > 0));
+    const base = { hp: 1000, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1000, manaRegen: 0 };
+    const mk = (skills, extra = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: extra.hp || 1000, mana: 1000, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
+    // 100 피해 × 2 = 200 ≥ 1000 × 12% → 충전 1, 나머지 80 이월. 두 패시브면 작은 비율(10%)만.
+    const hitter = mk([]), b = mk(['thickBuild']);
+    C.strike(hitter, b, () => 0); assert.ok(!b.effects.charge); C.strike(hitter, b, () => 0); assert.equal(b.effects.charge, 1); assert.equal(Math.round(b.effects.recoilPool), 80);
+    const b2 = mk(['thickBuild', 'wallOfFlesh']); C.strike(hitter, b2, () => 0); assert.equal(b2.effects.charge, 1, '10% unit: one hit of 100 fills a stack');
+    // 실린더 버스트는 충전 3부터 나가고 모두 소모합니다.
+    const a = mk(['landslide']), t = mk([]); assert.match(C.strike(a, t, () => 0), /기본 공격/);
+    a.effects.charge = 3; const log = C.strike(a, t, () => 0); assert.match(log, new RegExp(sk('landslide').name)); assert.equal(a.effects.charge, 0);
+    const D = await load('game/systems/skill-description.js');
+    assert.match(D.skillBrief(sk('thickBuild')), /받은 피해 최대 체력 12%마다 충전 \+1/); assert.ok(D.skillEffectLines(sk('ironShell')).some(l => /반동 게이지/.test(l)));
+});
+
+test('v3.172 lara mana mend: at the start of an action mana (8% of max) becomes hp (3~8% of max); magic attr skills add magic attack', async () => {
+    const C = await load('game/systems/combat.js'), R = await load('game/data/roles.js');
+    assert.equal(R.subRoleOf(job('stillAngler'), lineageOf(job('stillAngler'))), 'absorb'); assert.equal(job('voidSage').tier, 5); assert.equal(job('voidSage').parent, 'voidMind');
+    const sk = id => SKILLS.find(x => x.id === id);
+    assert.deepEqual(['calmMind', 'deepMeditation', 'emptyMind', 'mountainSpirit'].map(id => sk(id).manaMend.heal), [.03, .045, .06, .08]);
+    const base = { hp: 1000, attack: 20, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1000, manaRegen: 0 };
+    const mk = (skills, extra = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: extra.hp || 1000, mana: 1000, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
+    const a = mk(['calmMind']); a.hp = 500; const t = mk([]);
+    C.strike(a, t, () => 0); assert.equal(a.hp, 530); assert.equal(a.mana, 920);
+    const two = mk(['calmMind', 'emptyMind']); two.hp = 500; C.strike(two, t, () => 0); assert.equal(two.hp, 560, 'largest heal only'); assert.equal(two.mana, 920);
+    const dry = mk(['emptyMind']); dry.hp = 500; dry.mana = 50; C.strike(dry, t, () => 0); assert.equal(dry.hp, 500, 'no mana, no heal'); assert.equal(dry.mana, 50);
+    const full = mk(['emptyMind']); C.strike(full, t, () => 0); assert.equal(full.mana, 1000, 'full hp spends nothing');
+    // 정신 비례 마법 기술: 능력치 0인 몸이면 마법 공격 × scalingAttack × 배율.
+    const m = mk(['mindWave']), ev = []; const t2 = mk([]); C.strike(m, t2, () => 0, ev);
+    const w = sk('mindWave'); assert.equal(ev[0].skillId, 'mindWave'); assert.ok(Math.abs((1000 - t2.hp) - 100 * w.scalingAttack * w.multiplier) <= 1, `${1000 - t2.hp}`);
+    const D = await load('game/systems/skill-description.js');
+    assert.match(D.skillBrief(sk('calmMind')), /최대 마나 8% → 최대 체력 3% 회복/); assert.ok(D.skillEffectLines(sk('mountainSpirit')).some(l => /마나 치유/.test(l)));
+});
+
 test('v3.69 mastered job count: retired independents no longer count, for old saves too', () => {
     const s = newState(0); s.jobMastery.woodcutter = 1e9; s.jobMastery.harpoon = 1e9;
     assert.equal(P.masteredJobCount(s), 1);
@@ -119,7 +157,7 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
     const bad = [];
     for (const sk of SKILLS) {
         const j = job(sk.job); if (!j || j.tier < 1 || j.retired) continue;
-        const exempt = /^training|Training[123]$|[hH]acker$/.test(j.id) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff', 'borderHarmony', 'borderTempo'].includes(R.subRoleOf(j, lineageOf(j)));
+        const exempt = /^training|Training[123]$|[hH]acker$/.test(j.id) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff', 'borderHarmony', 'borderTempo', 'borderRecoil'].includes(R.subRoleOf(j, lineageOf(j)));
         if (exempt) continue;
         // 제약형(최대 숙련에서 AP 0 이하 · 제약 직업): 마지막 단계가 천만 단위(AP 반환 5,000만 · 그 밖 1,000만).
         if (Sk.isConstraintSkill(sk)) { const want = Sk.CONSTRAINT_MASTERY_BY_SKILL[sk.id] ?? (Sk.costAtMastery(sk) < 0 ? 5e7 : 1e7); if (P.masteryMilestonesFor(sk).at(-1) !== want) bad.push(`${sk.id} constraint`); continue; }

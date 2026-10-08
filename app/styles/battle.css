@@ -776,7 +776,7 @@
 @keyframes ultSlot{0%{opacity:0;scale:.6}15%{opacity:1;scale:1}85%{opacity:1}100%{opacity:0}}
 @keyframes ultSlotReel{0%{content:'◉ ◌ ●'}15%{content:'● ◉ ◌'}30%{content:'◌ ● ◉'}45%{content:'✦ ◉ ●'}60%{content:'✦ ✦ ◌'}72%,100%{content:'✦ ✦ ✦'}}
 @keyframes ultCoinFall{0%{opacity:0;transform:translate(calc((var(--i) - 3.5) * 28px),-40px) rotate(0deg)}20%{opacity:1}100%{opacity:0;transform:translate(calc((var(--i) - 3.5) * 34px),90px) rotate(540deg)}}
-/* v3.172 싸이킥 토네이도(키네시스): 보랏빛 염력 소용돌이가 솟아 돌고, 바닥 고리가 반대로 돌며, 파편이 나선으로 끌려 올라갑니다 */
+/* v3.173 싸이킥 토네이도(키네시스): 보랏빛 염력 소용돌이가 솟아 돌고, 바닥 고리가 반대로 돌며, 파편이 나선으로 끌려 올라갑니다 */
 .ult-psy{--fx:#d9a0ff}.ult-psy .scene-fx-dark{background:#0c0618}
 .ult-psy .ult-a{left:62%;top:48%;width:170px;height:140px;margin:-132px 0 0 -85px;clip-path:polygon(0 0,100% 0,60% 100%,40% 100%);background:repeating-linear-gradient(172deg,transparent 0 7px,rgba(217,160,255,.9) 7px 12px,#fff 12px 14px,rgba(154,92,255,.75) 14px 18px,transparent 18px 26px);mask-image:linear-gradient(180deg,transparent,#000 18%,#000 80%,rgba(0,0,0,.4));-webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 80%,rgba(0,0,0,.4));filter:blur(.5px);mix-blend-mode:screen;transform-origin:50% 100%;animation:ultPsySpin 2.4s cubic-bezier(.3,.7,.3,1) var(--fx-delay) both,ultPsyStripes .3s linear infinite}
 .ult-psy .ult-b{left:62%;top:48%;width:230px;height:80px;margin:-40px 0 0 -115px;border:3px dashed #d9a0ff;border-radius:50%;box-shadow:0 0 20px #9a5cff,inset 0 0 16px rgba(217,160,255,.4);animation:ultSigil 2.4s ease-out var(--fx-delay) reverse both}
@@ -786,7 +786,7 @@
 @keyframes ultPsyStripes{0%{background-position:0 0}100%{background-position:4px -52px}}
 @keyframes ultPsyLift{0%{opacity:0;transform:rotate(var(--ang)) translateX(110px) rotate(calc(-1 * var(--ang))) translateY(40px) scale(.6)}20%{opacity:1}100%{opacity:0;transform:rotate(calc(var(--ang) + 360deg)) translateX(30px) rotate(calc(-1 * var(--ang) - 360deg)) translateY(-200px) scale(1.2)}}
 @keyframes ultPsyQuake{0%,10%{filter:none;translate:0 0}20%{translate:-3px 1px;filter:hue-rotate(-40deg) saturate(1.4)}30%{translate:3px -1px}40%{translate:-2px 0}50%{translate:2px 1px;filter:hue-rotate(-40deg) saturate(1.4)}60%{translate:0 0}100%{filter:none;translate:0 0}}
-/* v3.172 데몬 베인(데몬슬레이어): 핏빛 대검이 내리꽂히고 바닥 충격 고리가 번집니다 */
+/* v3.173 데몬 베인(데몬슬레이어): 핏빛 대검이 내리꽂히고 바닥 충격 고리가 번집니다 */
 .ult-demon{--fx:#ff7a9a}.ult-demon .scene-fx-dark{background:#180410}
 .ult-demon .ult-a{left:62%;top:48%;width:34px;height:160px;margin:-160px 0 0 -17px;clip-path:polygon(50% 0,100% 12%,78% 100%,22% 100%,0 12%);background:linear-gradient(180deg,#5a0a24,#ff4d7a 30%,#fff 62%,#ffd0dc);box-shadow:0 0 22px #ff4d7a;rotate:-6deg;transform-origin:50% 100%;animation:ultDemonCleave 2.4s cubic-bezier(.7,0,.3,1) var(--fx-delay) both}
 .ult-demon .ult-b{left:62%;top:52%;width:240px;height:84px;margin:-42px 0 0 -120px;border:3px solid #ff7a9a;border-radius:50%;box-shadow:0 0 18px #ff4d7a,inset 0 0 18px rgba(255,77,122,.5);animation:ultDemonShock 2.4s ease-out var(--fx-delay) both}
@@ -794,20 +794,20 @@
 .battle-scene:has(.ult-demon) .ocean-art{animation:punShake .45s steps(2) calc(var(--fx-delay) + .9s) both}
 @keyframes ultDemonCleave{0%{opacity:0;translate:0 -140px;scale:1 .3}25%{opacity:1;translate:0 -120px;scale:1 .6}38%{opacity:1;translate:0 0;scale:1 1}70%{opacity:1}100%{opacity:0;translate:0 10px}}
 @keyframes ultDemonShock{0%,36%{opacity:0;scale:.3}46%{opacity:1;scale:1}100%{opacity:0;scale:1.9}}
-/* v3.172 퀴버 풀버스트(보우마스터): 화살 비가 왼쪽에서 쏟아져 꽂히고 출혈 고리가 번집니다 */
+/* v3.173 퀴버 풀버스트(보우마스터): 화살 비가 왼쪽에서 쏟아져 꽂히고 출혈 고리가 번집니다 */
 .ult-quiver{--fx:#bff0a8}.ult-quiver .scene-fx-dark{background:#071208}
 .ult-quiver .ult-a{left:-10%;top:10%;width:120%;height:70%;background:repeating-linear-gradient(104deg,transparent 0 38px,rgba(191,240,168,.0) 38px 40px,#e8ffd8 40px 43px,rgba(191,240,168,.9) 43px 47px,transparent 47px 86px);mask-image:linear-gradient(90deg,transparent,#000 25%,#000 70%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 25%,#000 70%,transparent);animation:ultQuiverVolley 2.4s cubic-bezier(.2,.8,.3,1) var(--fx-delay) both}
 .ult-quiver .ult-b{left:62%;top:50%;width:220px;height:80px;margin:-40px 0 0 -110px;border:3px dashed #ff8b8b;border-radius:50%;box-shadow:0 0 16px #ff5a5a;animation:ultDemonShock 2.4s ease-out calc(var(--fx-delay) + .25s) both}
 .ult-quiver .ult-frag:nth-of-type(even){color:#ff8b8b;text-shadow:0 0 10px #ff5a5a}
 @keyframes ultQuiverVolley{0%{opacity:0;translate:-45% 0}18%{opacity:1}55%{opacity:1;translate:0 0}100%{opacity:0;translate:28% 0}}
-/* v3.172 교룡연격(스트라이커): 푸른 용의 궤적이 휘감고 충격 고리가 세 번 터집니다 */
+/* v3.173 교룡연격(스트라이커): 푸른 용의 궤적이 휘감고 충격 고리가 세 번 터집니다 */
 .ult-dragonfist{--fx:#8ce4ed}.ult-dragonfist .scene-fx-dark{background:#031a24}
 .ult-dragonfist .ult-a{left:62%;top:48%;width:280px;height:170px;margin:-100px 0 0 -210px;border:7px solid transparent;border-top-color:#8ce4ed;border-right-color:#fff;border-radius:50%;filter:drop-shadow(0 0 10px #8ce4ed);animation:ultDragonArc 2.4s cubic-bezier(.4,0,.2,1) var(--fx-delay) both}
 .ult-dragonfist .ult-b{left:62%;top:48%;width:64px;height:64px;margin:-32px 0 0 -32px;border:3px solid #fff;border-radius:50%;box-shadow:0 0 18px #8ce4ed;animation:ultTripleRing 2.4s ease-out var(--fx-delay) both}
 .battle-scene:has(.ult-dragonfist) .ocean-art{animation:punShake .4s steps(2) calc(var(--fx-delay) + .7s) both}
 @keyframes ultDragonArc{0%{opacity:0;rotate:-70deg;scale:.6}25%{opacity:1;rotate:-10deg;scale:1}60%{opacity:1;rotate:60deg}100%{opacity:0;rotate:110deg;scale:1.3}}
 @keyframes ultTripleRing{0%,22%{opacity:0;scale:.2}30%{opacity:1;scale:1}40%{opacity:0;scale:1.6}44%{opacity:0;scale:.2}52%{opacity:1;scale:1.2}62%{opacity:0;scale:1.9}66%{opacity:0;scale:.2}76%{opacity:1;scale:1.5}100%{opacity:0;scale:2.6}}
-/* v3.172 하울링 피스트(바이퍼): 거대한 주먹이 날아들고 울부짖음의 동심원이 퍼집니다 */
+/* v3.173 하울링 피스트(바이퍼): 거대한 주먹이 날아들고 울부짖음의 동심원이 퍼집니다 */
 .ult-howl{--fx:#ffd27a}.ult-howl .scene-fx-dark{background:#140c02}
 .ult-howl .ult-a{left:62%;top:48%;width:340px;height:340px;margin:-170px 0 0 -170px;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 16px,rgba(255,210,122,.9) 16px 19px,transparent 19px 38px);mask-image:radial-gradient(circle,#000 20%,transparent 70%);-webkit-mask-image:radial-gradient(circle,#000 20%,transparent 70%);animation:ultHowlRings 2.4s ease-out calc(var(--fx-delay) + .35s) both}
 .ult-howl .ult-b{left:62%;top:48%;width:0;height:0}

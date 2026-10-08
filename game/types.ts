@@ -131,6 +131,8 @@ export type StatusEffects = {
     lastStand?: number;
     /** v3.143 충전 중첩(메카닉). 충전 기술이 명중하면 쌓이고 전탄발사가 소모합니다. */
     charge?: number;
+    /** v3.172 반동 게이지(블래스터): 아직 충전 1로 바뀌지 않은 받은 피해의 나머지. */
+    recoilPool?: number;
 };
 export type Item = {
     /** v3.58 각인 감정으로 고른 옵션 id(표시용). */
@@ -201,6 +203,10 @@ export type Skill = {
     spectre?: { need: number; turns: number; damageMultiplier: number; speedMultiplier?: number; /** v3.163 버프 이름(기본 접신) · 고정 능력치(카이저 파이널 피규레이션의 흡혈). */ name?: string; stats?: Partial<Stats> };
     /** v3.163 피격 충전(카이저 패시브): 피해를 입는 공격을 맞을 때마다 충전 +N(치명타로 맞으면 +1 더). 장착한 것 중 가장 큰 값. */
     chargeOnHit?: number;
+    /** v3.172 반동 게이지(블래스터): 받은 피해가 최대 체력 × recoilGauge에 닿을 때마다 내 충전 +1(여러 패시브면 가장 작은 비율 하나). 충전은 chargeNeed 기술이 소모합니다. */
+    recoilGauge?: number;
+    /** v3.172 마나 치유(라라): 행동 시작 때 체력이 모자라면 최대 마나 × spend를 써서 최대 체력 × heal을 되찾습니다(마나가 모자라면 안 함, 여러 개면 heal이 큰 것 하나). */
+    manaMend?: { spend: number; heal: number };
     /** v3.164 전류(스트라이커 패시브): 추가타가 명중할 때마다 자기 버프를 1턴 늘립니다(없으면 turns로 시작). 장착한 것 중 속도 배율이 가장 큰 하나. */
     followUpBuff?: { id: string; name?: string; turns: number; speedMultiplier?: number };
     /** v3.164 전류 중 추가타 +N(스트라이커 5차 패시브). followUpBuff의 버프가 살아 있을 때만. */
@@ -237,7 +243,7 @@ export type Skill = {
     scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr' | /** v3.153 렐릭의 힘 비례: 피해 × (1 + relicPower × scalingRatio). 패스파인더. */ 'relic' | /** v3.151 마력 평타 계수 기준값: 마법 공격 × (arcaneStrikeRatio + 마력 평타 계수 보너스). 일리움. */ 'arcane';
     /** v26.2 scaling 'attr'가 비례하는 능력치. 기준값 += 능력치 × scalingRatio. */
     scalingAttribute?: Attribute;
-    /** v3.97 scaling 'attr'에 물리 공격 × 이 비율을 더합니다(행운 외길 상위 차수: 장비 · 연구가 쌓여도 기술이 따라 커지도록). */
+    /** v3.97 scaling 'attr'에 공격력 × 이 비율을 더합니다(외길 계보: 장비 · 연구가 쌓여도 기술이 따라 커지도록). v3.172 마법 기술이면 마법 공격을 더합니다. */
     scalingAttack?: number;
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
@@ -410,6 +416,8 @@ export type CombatEvent = {
     endured?: { heal: number; self?: boolean };
     /** 행동 시작 때 턴당 체력 회복으로 되찾은 체력(있을 때만). */
     regen?: number;
+    /** v3.172 마나 치유(라라): 쓴 마나와 되찾은 체력. */
+    mend?: { mana: number; value: number };
     dot?: { name: string; value: number }; /** v3.54 새로 건 지속 피해의 즉시 첫 틱(대상이 받음). */ onset?: { name: string; value: number }; /** v3.54 힐러의 넘친 회복 피해(대상이 받음). */ holy?: number; reflected?: number; /** v25.25 반격 흡혈로 맞은 쪽이 회복한 양. */ reflectHeal?: number; stunned?: boolean; defeated?: boolean; silenced?: boolean; cleansed?: boolean; linked?: boolean;
     /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
     chain?: number;

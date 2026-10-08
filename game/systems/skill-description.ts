@@ -66,6 +66,8 @@ export function skillBrief(sk: Skill): string {
         if (sk.lastStand) parts.push(`전투당 ${sk.lastStand.charges}번 체력 1로 버팀${sk.lastStand.heal ? ` · ${skillPercent(sk.lastStand.heal)} 회복` : ''}`);
         if (sk.spectre) parts.push(`충전 ${sk.spectre.need}에 ${sk.spectre.name ?? '접신'} ${sk.spectre.turns}턴(피해 ×${number(sk.spectre.damageMultiplier)}${sk.spectre.speedMultiplier ? ` · 속도 ×${number(sk.spectre.speedMultiplier)}` : ''}${Object.entries(sk.spectre.stats || {}).map(([k, v]) => ` · ${skillBonusText(k, v as number)}`).join('')})`);
         if (sk.chargeOnHit) parts.push(`맞을 때마다 충전 +${sk.chargeOnHit}(치명타 +1)`);
+        if (sk.recoilGauge) parts.push(`받은 피해 최대 체력 ${skillPercent(sk.recoilGauge)}마다 충전 +1`);
+        if (sk.manaMend) parts.push(`행동마다 최대 마나 ${skillPercent(sk.manaMend.spend)} → 최대 체력 ${skillPercent(sk.manaMend.heal)} 회복`);
         if (sk.followUpBuff) parts.push(`추가타 명중마다 ${sk.followUpBuff.name ?? sk.followUpBuff.id} +1턴(속도 ×${number(sk.followUpBuff.speedMultiplier || 1)})`);
         if (sk.followUpExtra) parts.push(`전류 중 추가타 +${sk.followUpExtra.hits}`);
         if (sk.song) parts.unshift('노래 · AP 0');
@@ -183,6 +185,8 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.companion) out.push(`정령: 내 모든 공격(기본 공격 · 액티브 · 추가타 뒤)에 위력 ${skillPercent(sk.companion.power)}의 추가타 ${sk.companion.hits}회가 따라옵니다. 상태이상 전용 · 회복 전용 기술에는 붙지 않고, 여러 정령 패시브는 가장 높은 값만.`);
     if (sk.spectre) out.push(`${sk.spectre.name ?? '접신'}: 충전이 ${sk.spectre.need}에 닿으면 충전을 비우고 ${sk.spectre.turns}턴 동안 내 직접 피해 ×${number(sk.spectre.damageMultiplier)}${sk.spectre.speedMultiplier ? `, 속도 ×${number(sk.spectre.speedMultiplier)}` : ''}${Object.entries(sk.spectre.stats || {}).map(([k, v]) => `, ${skillBonusText(k, v as number)}`).join('')}. 변신 패시브를 여럿 장착하면 가장 센 하나만.${sk.chargeOnHit ? ` 충전은 피해를 입는 공격을 맞을 때 +${sk.chargeOnHit}(치명타로 맞으면 +1 더).` : ' 충전은 충전 기술이 명중할 때 쌓입니다.'}`);
     else if (sk.chargeOnHit) out.push(`피해를 입는 공격을 맞을 때마다 충전 +${sk.chargeOnHit}(치명타로 맞으면 +1 더).`);
+    if (sk.recoilGauge) out.push(`반동 게이지: 받은 피해가 최대 체력의 ${skillPercent(sk.recoilGauge)}에 닿을 때마다 충전 +1(최대 ${SKILL_FORMULA.charge.max}, 나머지는 이월). 여러 반동 패시브를 끼면 가장 작은 비율 하나만 씁니다. 충전은 실린더 버스트 · 벙커 버스터가 모두 소모합니다.`);
+    if (sk.manaMend) out.push(`마나 치유: 행동을 시작할 때 체력이 모자라면 최대 마나의 ${skillPercent(sk.manaMend.spend)}를 써서 최대 체력의 ${skillPercent(sk.manaMend.heal)}를 되찾습니다(마나가 모자라면 안 함, 여러 개면 회복이 큰 것 하나).`);
     if (sk.followUpBuff) out.push(`전류: 내 추가타가 명중할 때마다 자기 버프 ‘${sk.followUpBuff.name ?? sk.followUpBuff.id}’(속도 ×${number(sk.followUpBuff.speedMultiplier || 1)})가 1턴 길어집니다(없으면 ${sk.followUpBuff.turns}턴으로 시작). 내 행동마다 1턴씩 줄어듭니다. 빨라지면 연속 행동이 늘어 추가타가 늘고, 추가타가 늘면 전류가 이어집니다. 여럿 장착하면 속도 배율이 가장 큰 하나만.`);
     if (sk.followUpExtra) out.push(`전류가 살아 있을 때 추가타가 있는 기술의 추가타가 ${sk.followUpExtra.hits}회 늘어납니다(추가타 상한 뒤에 더함).`);
     if (sk.basicEffect) out.push(`장착하면 기본 공격(마력 평타 포함)이 명중할 때 ${STATUS_WORD[sk.basicEffect]} ${sk.statusTurns ?? (sk.basicEffect === 'corrode' ? STATUS_TUNING.corrodeTurns : 1)}턴을 겁니다(저항 · 면역 규칙은 그대로).`);
