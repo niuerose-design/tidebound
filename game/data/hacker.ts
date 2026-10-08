@@ -27,7 +27,6 @@ export const HACKER = {
     brute: { bits: .02, exp: .05 },
     /** 침투 작전. */
     infil: {
-        /** v3.26 3 → 5회. */
         entriesPerDay: 5,
         /** 깊이 d 노드를 뚫으면 쌓이는 보상(뽑아 나가면 전부, 추적되면 traceKeep만). */
         reward: (depth: number) => ({ bits: 4 + 3 * depth, exp: 10 + 6 * depth }),

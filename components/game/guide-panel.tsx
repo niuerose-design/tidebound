@@ -212,7 +212,7 @@ export function Guide({ s }: { s?: State }) {
                     effect={`정수의 슬라임: 사냥터 난이도 ${ESSENCE_SLIME.minTier} 이상 · Lv.${ESSENCE_SLIME.minLevel} 이상 · 누적 ${ESSENCE_SLIME.minKills}마리부터 드물게 나오고(누리와 같은 식으로 난이도가 오를수록 자주), 잡으면 그 난이도의 정수 묶음(1 + ⌊난이도 ÷ ${ESSENCE_SLIME.bundleTiers}⌋)에 ${ESSENCE_SLIME.tiers.map(t => `${t.label} ×${t.mul}`).join(' · ')}을 곱한 정수를 줍니다. 대왕 까미 · 대왕 누리 · 대왕 정수 슬라임: 작은 녀석을 ${KING.minBookKills}마리 잡은 뒤부터 그 녀석이 나올 자리에 드물게 대신 나타나며, 잡으면 ‘대’ 당첨의 ×${KING.rewardMul}이 확정입니다(숙련 ${(100000 * KING.rewardMul).toLocaleString()} · 경험치 ${Math.round(EXP_NURI.tiers[2].pct * KING.rewardMul * 100)}% 또는 출현 ${Math.round(EXP_NURI.tiers[2].pct * KING.rewardMul * EXP_NURI.encountersPerPct)}회분 · 정수 묶음 ×${ESSENCE_SLIME.tiers[2].mul * KING.rewardMul}).`}
                     condition={`대왕은 체력이 작은 녀석의 ×${KING.hp}, 공격이 그 사냥터 최강 몬스터의 ×${KING.attack}이고 ${KING.turns}턴(${Math.round(KING.turns * 2 / 60)}분) 안에 못 잡으면 달아납니다(보상 없음). 난이도를 낮추면 더 잘 잡힙니다. 호루라기로는 부를 수 없습니다.`}
                     limit="특별 도감에 따로 실리고 일반 도감 수에는 들지 않습니다. 황금 개체 · 변종이 되지 않고 던전에서는 나오지 않습니다."/>
-                {/* v3.160 호루라기 · v3.162 정수의 슬라임 추가, 전투 화면 장면 구석 버튼 */}
+                {/* v3.160 호루라기 · v3.162 정수의 슬라임(전투 화면 장면 구석 버튼) */}
                 <Rule icon={<Sparkles size={19}/>} title="호루라기"
                     effect={`전투 화면 장면 오른쪽 아래의 작은 버튼. SP ${WHISTLE.sp}를 내면 다음 사냥터 출현이 고른 특별 몬스터로 정해집니다: ${WHISTLE_TARGETS.map(t => t.name).join(' · ')}. 보상은 자연 등장과 같습니다(${WHISTLE_TARGETS.map(t => `${t.name} ${t.reward}`).join(' / ')}).`}
                     condition={`하루 ${WHISTLE.perDay}번(한국 시간 자정 초기화). 부를 조건은 자연 등장의 레벨 · 누적 처치와 같고(${WHISTLE_TARGETS.map(t => `${t.name} Lv.${t.minLevel} · ${t.minKills.toLocaleString()}마리`).join(', ')}) 사냥터 난이도 조건은 보지 않습니다. 한 번에 하나만 불어 둘 수 있고, 다음 출현에 쓰입니다.`}

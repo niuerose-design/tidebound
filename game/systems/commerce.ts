@@ -8,7 +8,7 @@ import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismant
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
 import { fishGoldAt, PRICE_LEVEL_CAP } from '../data/world';
-/** v27.30 감정 가격: 예전 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 확정 구매를 없애고 환생 배율(v3.68 10^(환생/60)과 1 + 환생 × 0.45 중 낮은 쪽)을 곱합니다. */
+/** v27.30 감정 가격: 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 환생 배율(v3.68 10^(환생/60)과 1 + 환생 × 0.45 중 낮은 쪽)을 곱합니다. */
 const GAMBLE_FISH = 60;
 /** v3.7 자동 강화 한 번에 돌리는 최대 시도 수(렉 방지). */
 const AUTO_STAR_MAX_TRIES = 2000;
@@ -16,7 +16,6 @@ const fishPrice = (s: State, n: number) => fishGoldAt(Math.min(PRICE_LEVEL_CAP, 
 export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, fishPrice(s, GAMBLE_FISH)) * appraisalRebirthFactor(s.rebirths || 0));
 /** v3.58 각인 감정 비용(한 번): 골드 = 감정 × 2, 정수 10. */
 export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
-/** v3.58 각인으로 고를 수 있는 옵션: 그 부위에 붙을 수 있는 일반 옵션(규칙 옵션·출신 전용 옵션 제외). */
 /** 각인 감정으로 고를 수 있는 옵션: 일반 옵션(규칙 · 전용 출처 · v3.71 고대 이상 전용 제외), 부위 제한 맞는 것. */
 export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.junk && !a.rare && !a.onlyOrigin && !a.minRarity && !a.retired && (!a.onlySlot || a.onlySlot === slot));
 const appraisalState = (s: State) => (s.appraisal ??= { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 0, ancient: 0, primal: 0 } });
@@ -85,7 +84,6 @@ export function researchRefund(s: Pick<State, 'permanent' | 'researchResetUsed' 
     const rate = s.researchResetUsed ? RESEARCH_RESET.refund : RESEARCH_RESET.firstRefund;
     return { spent, refund: Math.floor(spent * rate), ranks, first: !s.researchResetUsed };
 }
-/** All spend checks happen before mutations. null means action belongs to another system. */
 /** v27.13 한 번에 감정할 수 있는 개수. */
 export const GAMBLE_COUNTS = [1, 5, 10];
 /** v27.93 스타포스 한 번 시도. 비용을 쓰고 성공·파괴·하락·유지 중 하나를 적용합니다. v3.7 자동 강화도 같은 함수를 돌립니다. */
@@ -131,6 +129,7 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
     }
     return { outcome: 'keep', cost, message: `${item.name} 강화 실패 · ${star}성 유지 · -${cost} G` };
 }
+/** All spend checks happen before mutations. null means action belongs to another system. */
 export function commerce(s: State, a: Action, rng: () => number): string | null {
     const id = a.id || '';
     const spend = (cost: number) => { if (!Number.isFinite(cost) || s.gold < cost)
@@ -138,7 +137,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
     const room = () => { if (s.inventory.length >= inventoryCap())
         throw Error('가방을 비운 뒤 구매하세요.'); };
     const nextId = () => `shop-${++s.shopSerial}`;
-    // v3.58 확정 구매는 없앴습니다. 감정(1·5·10개)과 각인 감정은 부위를 고르고, 골드·정수·가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다.
+    // v3.58 감정(1·5·10개)과 각인 감정은 골드·정수·가방 칸을 먼저 모두 확인한 뒤 하나씩 뽑습니다.
     if (a.type === 'gamble' || a.type === 'imprintGamble') {
         // v3.60 장비 감정은 부위를 고르지 않고(모든 부위가 나오는 감정 하나), 각인 감정은 부위를 고릅니다.
         const imprinting = a.type === 'imprintGamble', category = imprinting ? slotCategory(id) : undefined;
@@ -249,7 +248,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         }
         // v3.3 유물은 이식 옵션(affixes)이 있어도 재설정은 고유 옵션(affix) 한 줄만 굴립니다. 이식 옵션은 다시 이식해 덮어씁니다.
         if (!item.affixes?.length || item.relic) {
-            // v21 이전 장비·상점 장비·유물의 단일 옵션. v27.74 이 경로도 다중 옵션과 같이 골드 + 정수를 받습니다(전에는 골드만).
+            // v21 이전 장비·상점 장비·유물의 단일 옵션.
             const cost = rerollCost(item, s);
             spend(cost.gold);
             item.rerolls = (item.rerolls || 0) + 1;

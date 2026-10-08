@@ -57,7 +57,6 @@ export function rebirthNow(s: State, now: number) {
         throw Error(`환생은 ${ASCENSION.rebirthCap}회까지입니다. 승천할 수 있습니다.`);
     if (s.level < rebirthLevel(s))
         throw Error(`레벨 ${rebirthLevel(s)}부터 환생할 수 있습니다.`);
-    // v3.23 깊은 모험(Lv.100 완주 보너스)은 삭제, 순풍은 조건 없이 매 생 목표 레벨까지 켜집니다.
     const base = rebirthReward(s, stats(s).rebirthBonus || 0);
     // 하드코어: 이번 생에 한 번도 쓰러지지 않고(쓰러지면 서약이 풀림) 환생하면 세계석 보너스.
     const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, pearls = base + breath;
@@ -81,7 +80,6 @@ export function rebirthNow(s: State, now: number) {
     else delete s.vows;
     // v27.86 절제: 새 생의 편성을 AP·장착 개수 상한에 맞춥니다.
     if (s.vows?.restraint) trimLoadout(s);
-    // v3.62 윤회의 문 추첨은 없앴습니다(docs/concept.md 11.7). 옛 세이브의 값은 migrations가 지웁니다.
     addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${breath ? ` · 하드코어 +${breath}` : ''}`);
     addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 필요 경험치가 레벨마다 크게 늘어납니다`, 'reward');
     if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => (LEVELED_VOWS as readonly string[]).includes(id) ? `${VOW_NAMES[id]} ${s.vows![id]}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
@@ -125,7 +123,7 @@ export function restartLife(s: State, now: number) {
     addLog(s, '운영 조치로 이번 생을 처음부터 다시 시작합니다. 환생 횟수·세계석·연구·유물·도감은 그대로입니다.', 'system');
 }
 
-/** v25.7 청산: 다음 생에 남지 않는 보관함·착용 장비 전부를 연구 효율만큼 판매하거나 분해합니다. 연구가 없으면 count 0. v3.66 칠흑·계승 장비도 빼고(전에는 칠흑을 남기면서 값도 셌음), 분해하면 태초가 계승 게이지를 채웁니다. */
+/** v25.7 청산: 다음 생에 남지 않는 보관함·착용 장비 전부를 연구 효율만큼 판매하거나 분해합니다. 연구가 없으면 count 0. v3.66 칠흑·계승 장비도 빼고, 분해하면 태초가 계승 게이지를 채웁니다. */
 export function salvagePreview(s: State) {
     const rate = salvageRate(s), mode = s.salvageMode || 'sell';
     const items = rate ? [...s.inventory, ...Object.values(s.equipment)].filter((i): i is NonNullable<typeof i> => !!i && !keepsAcrossLives(i)) : [];

@@ -70,8 +70,7 @@ export function limitBreakNext(s: State, id: string) {
 }
 /** SP and mastery unlock the SAME stages. Neither locks out the other. v27.6 숙련(한계돌파 포함)이 최대를 넘으면 그만큼 더 올라갑니다. */
 export function skillLevel(sk: Skill, rank = 1, mastery = 0) { const max = maxSkillLevel(sk); return Math.min(max + Math.min(PROGRESSION.limitBreak.max, Math.max(0, mastery - max)), Math.max(0, rank - 1, mastery)); }
-/** 장착 AP 한도. v27.86 절제 서약은 −2·−4·−6(최소 1). */
-/** v3.38 장착 AP 내역(능력치 화면 표시와 apCapacity가 같은 목록을 씁니다). 무릉도장 30·60·90층 AP는 없앴습니다. */
+/** v3.38 장착 AP 내역(능력치 화면 표시와 apCapacity가 같은 목록을 씁니다). */
 export function apSources(s: State): { id: string; label: string; value: number }[] {
     return [
         { id: 'base', label: '기본', value: PROGRESSION.baseAP },
@@ -82,6 +81,7 @@ export function apSources(s: State): { id: string; label: string; value: number 
         { id: 'restraint', label: '절제 서약', value: -restraintAP(s) },
     ];
 }
+/** 장착 AP 한도(최소 1). */
 export function apCapacity(s: State) { return Math.max(1, apSources(s).reduce((a, x) => a + x.value, 0)); }
 /** v25.6 업적 보상으로 늘어난 장착 AP. achievements.ts와 순환 의존을 피하려 여기서 직접 셉니다. */
 function achievementAP(s: Pick<State, 'achievementClaims'>) { let ap = 0; for (const id of Object.keys(s.achievementClaims || {})) ap += ACHIEVEMENT_AP[id] || 0; return ap; }
@@ -111,10 +111,6 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
-/**
- * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
- * codex 발견한 몬스터 + 등록한 물건 · catch 누적 처치 · hunt 던전 클리어 + 보스 처치 · species 지정 몬스터 처치 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수 · v3.64 deaths 쓰러진 횟수.
- */
 /** 변종·황금 개체 처치 수(마리 수가 아니라 조우 횟수). */
 function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
     let n = 0;
@@ -122,6 +118,10 @@ function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
     for (const k of Object.values(s.goldenBook || {})) n += k || 0;
     return n;
 }
+/**
+ * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
+ * codex 발견한 몬스터 + 등록한 물건 · catch 누적 처치 · hunt 던전 클리어 + 보스 처치 · species 지정 몬스터 처치 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수 · v3.64 deaths 쓰러진 횟수.
+ */
 export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs'>>) {
     // v26.4 외길 패시브: 배분 능력치(기본 포함)도 기록처럼 셉니다.
     const attr = attributes(s as State);
@@ -226,14 +226,14 @@ export function passiveGrowthBonus(s: State, sk: Skill, given?: Record<string, n
     if (sk.perRebirth && rebirths > 0) for (const [key, n] of Object.entries(sk.perRebirth)) out[key] = (out[key] || 0) + (n as number) * rebirths * scale;
     return out;
 }
-/** 스킬의 실제 효과. practice(refinePractice)는 v3.74부터 효과에 쓰지 않습니다(옛 연마 삭제). v3.31 효과가 없던 스킬 특화 인자는 지웠습니다. */
+/** 스킬의 실제 효과. practice(refinePractice)는 v3.74부터 효과에 쓰지 않습니다. */
 /**
  * v3.104 같은 스킬 · 레벨 · 숙련 단계면 결과가 같으므로 스킬 객체마다 캐시합니다(능력치 계산이 턴마다 장착 스킬 수만큼 부름).
  * 돌려받은 스킬 객체는 고치지 마세요. 고쳐 쓸 때는 복사본({ ...sk })을 만드세요.
  */
 const effectiveCache = new WeakMap<Skill, Map<string, Skill>>();
 export function effectiveSkill(sk: Skill, rank = 1, mastery = 0, practice = 0): Skill {
-    // v3.74 옛 연마 보너스는 없앴습니다(극한돌파는 아직 효과 없음). practice 인자는 호출부 호환을 위해 남깁니다.
+    // v3.74 practice 인자는 호출부 호환을 위해 남깁니다(효과에 쓰지 않음).
     void practice;
     let byLevel = effectiveCache.get(sk);
     if (!byLevel) effectiveCache.set(sk, byLevel = new Map());
@@ -312,7 +312,7 @@ export function skillRankHint(sk: Skill, rank: number, mastery = 0, practice = 0
 export const jobMastered = (s: Pick<State, 'jobMastery'> & Partial<Pick<State, 'masteryKept'>>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j) || !!s.masteryKept?.includes(j.id);
 /** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. v3.69 옛 수련(retired)은 세지 않습니다(숙달할 직업 21개 감소, 기존 세이브도 같은 기준). */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && !j.retired && jobMastered(s, j); }).length;
-/** 전직 조건 목록. v27.13 문 판정은 플레이 기록만 보므로 시각 인자가 없습니다. */
+/** 전직 조건 목록. */
 export function jobRequirements(s: State, j: Job) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
     /** value·target은 화면의 진행 막대용입니다(판정은 met). */
@@ -344,7 +344,7 @@ export function jobRequirements(s: State, j: Job) {
     }
     return list;
 }
-/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. v3.69 옛 수련(retired)은 전직할 수 없습니다. now는 서버 요청 시각입니다. */
+/** 전직 가능 여부. 숙달한 직업은 모든 조건을 무시합니다. v3.69 옛 수련(retired)은 전직할 수 없습니다. */
 export function canChangeJob(s: State, id: string) { const j = jobById(id); return !!j && !j.retired && (jobMastered(s, j) || jobRequirements(s, j).every(x => x.met)); }
 /** v27.86 절제: 액티브·패시브를 각각 몇 개까지 장착할 수 있는지 넘었는지. */
 export function overRestraint(s: State, ids: string[]) {

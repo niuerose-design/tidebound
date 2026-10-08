@@ -38,7 +38,7 @@ export function BonusList({ item }: {
 /** v22 장비 옵션 목록. 옵션마다 이득·손해 수치와 한 줄 재설정 버튼을 보여줍니다. */
 function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
     const cost = rerollCost(item, s), canPay = s.gold >= cost.gold;
-    // v27.94 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다. v3.118 정수만, 이 장비를 재련할수록 ×1.08.
+    // v27.94 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다. v3.118 정수만, 이 장비를 재련할수록 ×REFINE_GROWTH 복리.
     const refine = refineCost(item, s), canRefine = (s.essence || 0) >= refine.essence;
     // v3.125 원시 고대 · 계승 태초 · 칠흑은 재련 상한이 150%라 수치 표시도 그 위까지 보입니다(refineTopOf).
     const top = refineTopOf(item), quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity, item.level, top); return q === null ? null : Math.round(q * 100); };
@@ -70,7 +70,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     // v25.19 보관함은 PAGE(12)개씩 보여 주고 ‘더 보기’로 늘립니다. 아래 일괄 판매·분해까지 길게 내리지 않아도 됩니다.
     const [limit, setLimit] = useState(PAGE);
     const [open, setOpen] = useState<string | null>(null);
-    // 장비마다 교체 후 최종 능력치와 전투력 변화를 한 번만 계산합니다. v3.93 장비 · 성장 상태가 바뀔 때만 다시(사냥 중 동기화마다 가방 전체를 다시 계산하지 않음).
+    // 장비마다 교체 후 최종 능력치와 전투력 변화를 한 번만 계산합니다. v3.93 장비 · 성장 상태가 바뀔 때만 다시 계산합니다.
     const { current, currentPower, preview } = gearPreview(s);
     const best = (id: Item['slot']) => s.inventory.filter(i => i.slot === id && (preview.get(i.id)?.gain || 0) > 0).sort((a, b) => preview.get(b.id)!.gain - preview.get(a.id)!.gain)[0];
     const upgrades = SLOT_IDS.map(best).filter((i): i is Item => !!i);

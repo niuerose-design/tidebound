@@ -89,7 +89,6 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     {/* v3.18 해커의 방송 탈취: 서명이 고정된 문구를 이벤트 배너 자리에 띄웁니다. */}
     {s.hackFeed?.broadcast && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>[해커 {s.hackFeed.broadcast.by}]</b><span>{s.hackFeed.broadcast.text}</span></div>}
     {s.hackFeed?.root && show('hacker') && <div className="event-banner hack-banner root-banner" role="status"><Sparkles size={15}/><b>ROOT ACCESS</b><span>[해커 {s.hackFeed.root.by}]이(가) 서버의 루트 권한을 얻었습니다.</span></div>}
-    {/* v3.19 새싹의 축복 알림은 뺐습니다(효과는 그대로, 능력치 화면 경험치 내역에 표시). */}
     {show('altar') && <AltarNotice s={s} setView={setView}/>}
     {!s.lastOffline && show('tip') && <div className="voyage-brief"><Leaf size={16}/><span>{tipAt(tip)}</span></div>}
     </NoticeStack>

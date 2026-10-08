@@ -208,7 +208,6 @@ export function judge(run: HackerInfil, guess: string) {
     return { solved: n === a, hint: n === a ? 'OPEN' : a > n ? 'UP' : 'DOWN' };
 }
 
-// ── 신원 조작(옛 애드가드) ──────────────────────────────────────────────
 /** 장착·사용 가능한 신원 조작(옛 애드가드)의 숙련 단계(0 = 꺼짐). v3.26 해커 계열일 때만 씁니다. */
 export function adguardLevel(s: State) {
     return s.skills.includes(ADGUARD_ID) && canUse(s, ADGUARD_ID) ? skillMastery(s, ADGUARD_ID) : 0;

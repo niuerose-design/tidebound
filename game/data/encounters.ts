@@ -92,8 +92,8 @@ export function enemyStats(f: { id: string; hp: number; attack: number; defense:
         crit: Math.min(MONSTER_TUNING.critCap, MONSTER_TUNING.critBase + f.level * MONSTER_TUNING.critPerLevel) + (boss ? MONSTER_TUNING.critBoss : 0) + (p === PROFILES.swift || p === PROFILES.frenzy ? MONSTER_TUNING.critSwift : 0), accuracy: .95 + f.level * .002,
         penetration: Math.min(MONSTER_TUNING.penCap, f.level * MONSTER_TUNING.penPerLevel) + (boss ? MONSTER_TUNING.penBoss : 0),
         evasion: p.evasion + (p === PROFILES.swift ? Math.min(.2, Math.max(0, f.level - 5) * .004) : 0),
-        // v25.2: 속도 9 + 레벨 × .35 → 8 + 레벨 × .25. 고레벨에서 모든 빌드(특히 기민이 낮은 마법 빌드)가 몬스터보다 느려
-        // 연속 행동을 과하게 허용했습니다(4차 마법 직업 승률 85% → 98%).
+        // v25.2 속도 계수는 낮게 둡니다: 더 가파르면 고레벨에서 모든 빌드(특히 기민이 낮은 마법 빌드)가 몬스터보다 느려
+        // 연속 행동을 과하게 허용합니다.
         speed: Math.round((8 + f.level * .25) * p.speed), mana: 100, manaRegen: 10,
     };
 }

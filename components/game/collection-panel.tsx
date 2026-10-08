@@ -42,7 +42,7 @@ function EnemySkillList({ ids, enemy }: { ids: string[]; enemy: Stats }) {
 }
 /**
  * v27.81 연구 효과(예전 이름 '생태 연구'): 이 몬스터 상대 주는 피해·받는 공격 피해. 최대 +50% / -25%.
- * v3.95 '생태 연구 4/5'와 '연구 6/6단계 진행'이 따로 보여 다른 것처럼 읽혔습니다 → 단계는 연구 단계 하나로만 세고, 여기서는 지금 받는 효과만 보입니다.
+ * v3.95 단계는 연구 단계 하나로만 세고, 여기서는 지금 받는 효과만 보입니다(단계 표시가 둘이면 다른 것처럼 읽힘).
  */
 function EcologyLine({ s, id }: { s: State; id: string }) {
     const eco = bookEcology(s, id), pct = (n: number) => Number((n * 100).toFixed(1));

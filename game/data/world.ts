@@ -24,7 +24,7 @@ const BASE_STAGES: StageDef[] = [
 /**
  * v27.80 무리 서식지: 지역마다 하나. 그 지역 몬스터가 전부 무리로만 나옵니다(×100 75% · ×500 25%, 도감·패시브 조건 없음).
  * 처치 한 번에 마리 수만큼 보상·도감이 쌓이는 고위험 고보상 사냥터입니다(v3.42 드롭은 √N번 판정, swarmDropRolls). v3.106부터 까미·누리도 나옵니다(무리가 아닌 한 마리로).
- * 입장: 지역 사냥터의 최고 레벨 · 환생은 HABITAT_REBIRTH 표(v3.103, 그 전에는 지역 사냥터 최고 환생 조건 + 2, 최소 2회).
+ * 입장: 지역 사냥터의 최고 레벨 · 환생은 HABITAT_REBIRTH 표(v3.103).
  */
 // v3.52 ×500 확률(bigChance)은 서버 전용(game/secret/odds.ts).
 export const HABITAT = { sizes: [100, 500] as const, get bigChance() { return ODDS.variant.habitatBig; }, rebirthOver: 2, minRebirth: 2 };
@@ -50,7 +50,7 @@ export const regionFish = (region: string) => { let ids = regionFishCache.get(re
 /**
  * v3.103 사냥터 개편(docs/hunting-ground-plan.md 9절, 기준 몸 '자기 계열 패시브' 측정).
  * 적정 환생: 난이도 0에서 사망 0 · 평균 처치 3턴 이하(서식지는 시간당 사망 5회 이하 · 경험치가 일반 사냥터 이상)가 되는 환생.
- * 서식지 입장 환생은 지역 최고 환생 + 2로 정하던 것을 표로 고정합니다(늦은 지역 사냥터 입장을 내리면서 따로 정함).
+ * 서식지 입장 환생은 지역 사냥터 조건에서 유도하지 않고 표로 따로 정합니다.
  */
 export const STAGE_FIT: Record<string, number> = {
     brook: 0, bay: 0, reef: 0, kelp: 0, wreck: 2, volcanic: 5, trench: 5, moon: 5, starfall: 10, duskVents: 10,
@@ -164,7 +164,7 @@ export function stageStatFish<F extends { level: number; hp: number; attack: num
  */
 /**
  * 난이도가 이 단계에 이르면 모든 사냥터 몬스터가 목표 레벨(내 레벨과 가장 높은 사냥터 수준 중 낮은 쪽)에 닿습니다. 그 전에는 남은 차이를 단계 비율만큼 메웁니다.
- * v27.67 10 → 5: 숙련의 까미가 나오는 난이도(5)부터는 어느 사냥터든 같은 수준이 되게 맞춥니다(난이도 5 리스항구 까미 작업 방지).
+ * v27.67 숙련의 까미가 나오는 난이도(5)부터는 어느 사냥터든 같은 수준이 되게 맞춥니다(난이도 5 리스항구 까미 작업 방지).
  */
 export const TIDE_LIFT_TIERS = 5;
 /** 목표 레벨의 상한: 가장 높은 사냥터 몬스터의 능력치 레벨(입장 레벨 + STAGE_ENEMY_LEVEL_OVER). 상위 사냥터의 난이도는 그대로 두고 낮은 사냥터만 따라 올라옵니다. */
@@ -232,7 +232,7 @@ const specialFish: Array<{
     { id: 'prismRay', name: '옥토퍼스', level: 48, lore: '빛을 일곱 갈래로 쪼개며 헤엄친다.', rarity: 'epic' as const, rewardMultiplier: 1.2 },
     { id: 'voidGuppy', name: '스티지', level: 50, lore: '작은 몸 안에 깊이를 측정할 수 없는 어둠이 있다.', rarity: 'epic' as const, rewardMultiplier: 1.3 },
     // v25.8 차수 변종: 사냥터 난이도 10·20·30 이상에서만 나타나는 희귀 변종. 도감 항목이 따로 있어 차수를 올릴 이유가 됩니다.
-    { id: 'stormBarracuda', name: '아이언 호그', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, rewardMultiplier: 2.4 }, // v26.6 사냥터 난이도 조건(10) 제거: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
+    { id: 'stormBarracuda', name: '아이언 호그', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, rewardMultiplier: 2.4 }, // v26.6 난이도 조건 없음: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
     { id: 'eclipseMoonfish', name: '레이스', level: 44, lore: '달이 가려진 밤, 심연의 빛을 등에 지고 떠오른다.', rarity: 'epic' as const, rewardMultiplier: 2.8, minTier: 20 },
     { id: 'novaManta', name: '와이번', level: 58, lore: '별이 터지는 순간의 빛을 날개에 새긴 외해의 전설.', rarity: 'legendary' as const, rewardMultiplier: 2, minTier: 30 },
     { id: 'cinderAngler', name: '크로코', level: 60, lore: '열수구의 불씨를 등불 삼아 어둠 속에서 입을 벌린다.', rarity: 'rare' as const, rewardMultiplier: 1.5 },
@@ -291,7 +291,7 @@ export function setHackDown(list: typeof HACK_DOWN, patched: Record<string, numb
 export const placeKey = (kind: 'stage' | 'dungeon', id: string) => `${kind}:${id}`;
 /** 지금 해킹으로 막힌 곳이면 그 기록, 아니면 undefined. */
 export const hackDownOf = (kind: 'stage' | 'dungeon', id: string, now: number) => (HACK_PATCHED[placeKey(kind, id)] || 0) > now ? undefined : HACK_DOWN.find(d => d.kind === kind && d.id === id && d.until > now);
-// v3.186 입장 환생(docs/boss-plan.md §6): 불의 제단 0 → 2 · 마법 사원 1 → 2 · 시계탑 2 → 6. 입장 몸(초보)으로 보스 14 · 22 · 20턴 · 사망 0(전 52 · 51 · 164턴 · 사망 20~80%).
+// v3.186 입장 환생(docs/boss-plan.md §6): 입장 몸(초보)으로 보스 14 · 22 · 20턴 · 사망 0이 되는 값.
 export const DUNGEONS = [
     /** v27.86 랜덤게임: 웨이브마다 무작위 몬스터(fish는 자리표시). 일반 던전 목록·업적·목표에서는 random으로 빠집니다. */
     { id: 'randomGame', name: '랜덤게임', level: 1, rebirth: 5, fish: ['minnow'], bossFish: undefined as string | undefined, boss: '랜덤게임', gold: 0, pearls: 0, description: '해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브를 깰수록 판돈이 쌓이고, 쓰러지면 모두 잃습니다.', random: true },

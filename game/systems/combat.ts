@@ -106,11 +106,11 @@ function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number
     effects[key] = Math.max(effects[key] || 0, turns);
 }
 const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합', fixed: '고정' } as const;
-/** v3.54 무리에게 거는 지속 피해의 최대 체력 비례분: 한 마리 체력 × √N(= 무리 전체 체력 ÷ √N). 한 마리면 1. */
 /** v3.54 이 전투에서 처음 거는 지속 피해면 true를 돌려주고 표시합니다(첫 틱 즉시 적용은 전투당 한 번). */
 const opens = (b: Fighter, key: 'bleed' | 'poison' | 'burn') => { const fx = (b.effects ??= {}); if (fx.opened?.[key]) return false; (fx.opened ??= {})[key] = true; return true; };
 /** v3.54 지속 피해의 체력 비례분: 틱 때 현재 체력 × hpRatio. hpRatio가 없는 옛 효과는 저장된 고정값(legacy)을 씁니다. */
 const hpPart = (current: number, hpRatio: number | undefined, legacy: number | undefined) => hpRatio === undefined ? (legacy || 0) : Math.floor(Math.max(0, current) * hpRatio);
+/** v3.54 무리에게 거는 지속 피해의 최대 체력 비례분: 한 마리 체력 × √N(= 무리 전체 체력 ÷ √N). 한 마리면 1. */
 export const swarmDotShare = (swarm?: number) => swarm && swarm > 1 ? 1 / Math.sqrt(swarm) : 1;
 /** v27.75 화면에 보여 주는 타격 수치: 계산된 피해(raw). 남은 체력에 막힌 실제 감소량(value)은 규칙에만 씁니다. */
 export const shownHit = (h: Pick<CombatHit, 'value' | 'raw'>) => h.raw ?? h.value;
@@ -125,7 +125,6 @@ function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageType'>) {
     const part = (h: CombatHit) => h.miss ? '빗나감' : `${shownHit(h)}${h.superCritical ? ' [극 치명타]' : h.critical ? ' [치명타]' : ''}`;
     return [`본타 ${part(ev.hits[0])}`, ...ev.hits.slice(1).map((h, i) => `추가타${ev.hits.length > 2 ? ` ${i + 1}` : ''} ${part(h)}`), `합계 ${ev.total} ${word} 피해`].join(' · ');
 }
-/** 행동 순서·명중 보정·연속 행동 확률에 쓰는 속도. 가속·감속이 반영됩니다. */
 /** v3.151 자기 버프: 옛 세이브의 가속(effects.haste 턴 수)을 buffs.haste로 옮기고, 살아 있는 버프 목록을 돌려줍니다. */
 function buffsOf(effects: StatusEffects | undefined) {
     if (!effects) return [];
@@ -158,6 +157,7 @@ function withBuffs(stats: CombatStats, effects: StatusEffects | undefined): Comb
     for (const [, b] of live) for (const [k, v] of Object.entries(b.stats || {})) if (typeof v === 'number') out[k] = (out[k] || 0) + v;
     return out;
 }
+/** 행동 순서·명중 보정·연속 행동 확률에 쓰는 속도. 가속·감속이 반영됩니다. */
 export function fighterSpeed(f: Fighter) {
     const base = withBuffs(normalizeStats(f.stats), f.effects).speed;
     const slowed = (f.effects?.slow || 0) > 0, corroded = (f.effects?.corrode || 0) > 0;
@@ -383,7 +383,6 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (!forced) tickImmunity(a.effects);
     if (!forced && a.effects.dot) {
         const dot = a.effects.dot;
-        // v3.54 체력 비례분은 틱 때 현재 체력 기준입니다(전에는 걸 때 최대 체력 기준).
         const dotHit = dot.damage + hpPart(a.hp, dot.hpRatio, 0);
         a.hp = Math.max(0, a.hp - dotHit);
         notes.push(`${dot.name} ${dotHit}`);
@@ -535,7 +534,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const spent = Math.min(limit, Math.floor(a.gold! * chosen.goldSpend.ratio));
         if (spent > 0) { a.gold! -= spent; allInBonus += spent * chosen.goldSpend.scale; notes.push(`골드 ${spent.toLocaleString()} 투척`); }
     }
-    // v3.140 성해의 빛살(oath)의 '높은 쪽 공격' 특례는 지웠습니다. 루미너스 액티브는 모두 damageType physical · scaling swap(마법 계수 → 물리 피해)으로 선언합니다.
+    // v3.140 루미너스 액티브는 모두 damageType physical · scaling swap(마법 계수 → 물리 피해)으로 선언합니다.
     const magical = arcane || chosen?.damageType === 'magic' || !chosen && !!a.magicBasic;
     // v3.143 고정 피해: 방어를 전혀 받지 않습니다(메카닉 전탄발사). 명중은 마법처럼(회피 절반 · 속도 페널티 없음), 치명은 그대로 판정합니다.
     const fixed = chosen?.damageType === 'fixed';

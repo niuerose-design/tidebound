@@ -328,14 +328,12 @@ function sameCrew(s: State, victim: State | null) {
 }
 /** v3.28 해킹 공지(세이브 스캠 · DDoS · 루트 권한)를 빨간 줄로 남깁니다(v3.39 소식 채널, 실패해도 해킹은 그대로). */
 async function hackNotice(text: string, now: number) {
-    // v3.39 전체 채팅 대신 소식 채널에 올립니다.
     try { await db().postChat({ channel: 'news', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
 }
-/** v3.26 해커 계열 전직을 전체 채팅에 알립니다(이름은 밝히지 않음). 채팅 화면은 account_id 'system-hacker'를 빨간 줄로 그립니다. */
+/** v3.26 해커 계열 전직을 소식 채널에 알립니다(이름은 밝히지 않음). 채팅 화면은 account_id 'system-hacker'를 빨간 줄로 그립니다. */
 export const hackerJobNews = (job: string) => `누군가가 ${job === 'whiteHacker' ? '화이트 해커' : job === 'blackHacker' ? '블랙 해커' : '해커'}로 전직했습니다.`;
 export async function announceHacker(job: string, now: number) {
     const text = hackerJobNews(job);
-    // v3.39 전체 채팅 대신 소식 채널에 올립니다.
     try { await db().postChat({ channel: 'news', account_id: 'system-hacker', name: '시스템', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
 }
 /** 운영 페이지: 진행 중인 방송 탈취를 지웁니다. */

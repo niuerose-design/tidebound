@@ -60,7 +60,6 @@ export function releaseLegacySeal(s: State) {
     addLog(s, `잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +${seal.exp} EXP`, 'reward');
     return seal.exp;
 }
-/** 처치 후 기본 회복률(응급처치 제외): 필드 8%·던전 4% + 처치 회복 강화 I 1%p/단계. */
 /** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘처치 회복 강화 I’은 1단계마다 +1%p. */
 /** 처치 후 회복 비율. v27.86 힘의 길 회복 봉쇄 ×(1 − 50·75·100%). */
 export const victoryHealRate = (s: State) => ((s.dungeon ? MONSTER_TUNING.dungeonHealAfterKill : Math.max(BALANCE.healAfterKillMin, BALANCE.healAfterKill / (1 + encounterTier(s) / BALANCE.healAfterKillTideScale))) + researchRank(s, 'recovery') * .01 + sproutHeal(s)) * roughHeal(s);
@@ -99,11 +98,11 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
     syncOrnateName(item);
-    // 자동 분해기: v3.23 골드 대신 정수. 유물·장비 도감에 없는 종류는 남깁니다.
+    // 자동 분해기: 유물·장비 도감에 없는 종류는 남깁니다.
     // v3.35 설정에서 고른 등급(여러 개)만 처리합니다. 칠흑·잠금 장비는 어떤 경우에도 처리하지 않습니다.
     const keep = item.locked || keepsAcrossLives(item) || !s.itemBook?.[itemKey(slot, rarity)];
     if (!keep && s.autoSell && autoGrades(s, 'salvage').includes(item.rarity)) {
-        // v3.125 자동 분해도 태초 계승 게이지를 채웁니다(전에는 정수만 주고 게이지를 빠뜨림).
+        // v3.125 자동 분해도 태초 계승 게이지를 채웁니다.
         const got = dismantleInto(s, [item]);
         addLog(s, `자동 정리: ${item.name} 분해 · 정수 +${got.essence}${primalGaugeNote(s, got.gauge)}`, 'reward');
         return;
@@ -139,7 +138,6 @@ export function weightedFishId(ids: string[], rng: () => number, rareBonus = 0, 
     }
     return choices[choices.length - 1]?.id || ids[0];
 }
-/** 무릉도장 1층 기준 능력치(첫 몬스터). 한 번만 계산합니다. */
 /**
  * v3.188 칠흑의 보스 능력치: 몸(서식지 최강 × hpMul · 공격 ×3, 레벨은 난이도만큼 올라간 뒤)에 난이도 배율을 √로 완만하게 얹습니다(체력 √tierHealth · 공격 √tierAttack).
  * 사냥터 몬스터는 난이도 5에서 체력 2.75배가 되지만 칠흑은 1.66배: 체력이 이미 수백 배라 난이도까지 그대로 곱하면 적정 몸으로는 아무도 못 잡았습니다(docs/boss-plan.md §8.1).
@@ -149,6 +147,7 @@ export function onyxEnemyStats(f: Parameters<typeof scaledEnemyStats>[0], tier: 
     if (tier > 0) { const h = Math.sqrt(tierHealth(tier)), a = Math.sqrt(tierAttack(tier)); foe.hp = Math.round(foe.hp * h); foe.attack = Math.round(foe.attack * a); foe.magic = Math.round((foe.magic || 0) * a); }
     return foe;
 }
+/** 무릉도장 1층 기준 능력치(첫 몬스터). 한 번만 계산합니다. */
 let abyssRef: ReturnType<typeof scaledEnemyStats> | undefined;
 export const abyssReference = () => abyssRef ??= scaledEnemyStats(FISH.find(f => f.id === DUNGEONS.find(d => d.id === 'abyss')!.fish[0])!, { tier: 0, wave: 0 });
 /**
@@ -181,9 +180,9 @@ function applyDepth(foe: Stats, base: { exp: number; gold: number }, k: number) 
     foe.hp = Math.round(foe.hp * k); foe.attack = Math.round(foe.attack * k); foe.magic = Math.round((foe.magic || 0) * k);
     base.exp = Math.round(base.exp * k); base.gold = Math.round(base.gold * k);
 }
-/** v3.104 부재중 정산 표본 환산(offline-sample.ts)이 남은 시간의 희귀 출현 판정을 따로 굴린 뒤, 나온 희귀 몬스터를 판정 없이 바로 세울 때 씁니다. */
 /** v3.161 특별 몬스터 종류(정수의 슬라임 · 대왕 3종 포함). */
 export type SpecialKind = 'mimic' | 'nuri' | 'slime' | 'kingMimic' | 'kingNuri' | 'kingSlime';
+/** v3.104 부재중 정산 표본 환산(offline-sample.ts)이 남은 시간의 희귀 출현 판정을 따로 굴린 뒤, 나온 희귀 몬스터를 판정 없이 바로 세울 때 씁니다. */
 export type ForcedRare = 'onyx' | 'starlit' | SpecialKind;
 const SPECIAL_KINDS: readonly SpecialKind[] = ['mimic', 'nuri', 'slime', 'kingMimic', 'kingNuri', 'kingSlime'];
 const isSpecialKind = (k: ForcedRare | undefined): k is SpecialKind => !!k && (SPECIAL_KINDS as readonly string[]).includes(k);
@@ -196,7 +195,7 @@ function specialDef(kind: SpecialKind): { id: string; hp: number; attack: number
 /** v3.104 까미 · 누리 등장 확률(출현 한 번에 난수 하나를 [까미 | 누리] 구간으로 나눠 씀). spawn과 부재중 정산 환산이 같은 식을 씁니다. */
 export function specialChances(s: State) {
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id), st = STAGES.find(x => x.id === s.stage)!, tier = encounterTier(s);
-    // v3.106 무리 서식지에도 까미·누리가 나옵니다(전에는 무리만 확정). 까미의 사냥터 배율은 그 지역의 마지막 일반 사냥터 자리를 씁니다.
+    // v3.106 무리 서식지에도 까미·누리가 나옵니다. 까미의 사냥터 배율은 그 지역의 마지막 일반 사냥터 자리를 씁니다.
     // v3.31 승천한 모험가에게는 까미·누리가 난이도 0부터 나옵니다(난이도 조건만 없앰, 레벨·처치 수 조건은 그대로).
     const asc = ascended(s), mimicOk = !dungeon && (asc || tier >= MIMIC.minTier) && s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = !dungeon && nuriEligible(s, asc ? Math.max(tier, EXP_NURI.minTier) : tier);
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
@@ -233,7 +232,6 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     const tier = encounterTier(s);
     const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
-    // v27.58 경험의 누리: 까미와 같은 난수 하나를 [까미 구간 | 누리 구간]으로 나눠 씁니다(난수 사용 횟수는 그대로).
     const chances = specialChances(s);
     // v3.104 force가 있으면 판정 없이 그 희귀 몬스터를 세웁니다(난수를 쓰지 않음). 판정한 횟수는 부재중 정산 환산이 셉니다(offlineTally).
     // v3.161 [까미 | 누리 | 슬라임] 구간과 대왕 몫은 pickSpecial이 한 난수로 고릅니다.
@@ -314,7 +312,7 @@ export function reward(s: State, rng: () => number) {
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
     const size = e.swarm || 1, vdef = variantById(e.variant), rewardMult = vdef?.reward || 1, expMult = vdef?.expMult || rewardMult, bookPer = vdef?.book || 1;
-    // v25.6 계열 집중 카드 ×2 · v27.14 서버 이벤트. v27.74 사냥터 난이도 배율은 없앴습니다. 정수로 유지하려고 올림 없이 곱한 뒤 연구 보정으로 넘깁니다.
+    // v25.6 계열 집중 카드 ×2 · v27.14 서버 이벤트. 정수로 유지하려고 올림 없이 곱한 뒤 연구 보정으로 넘깁니다.
     const { focus: focusMastery, event: eventMastery } = masteryMultipliers(s);
     // v3.42 ×500 도전 무리는 경험치·골드 ×1.5(swarmRewardMultiplier).
     const big = swarmRewardMultiplier(size);
@@ -442,7 +440,7 @@ export function reward(s: State, rng: () => number) {
     const fish = FISH.find(f => f.id === e.id)!;
     // v3.42 무리는 마리 수 N 대신 √N번만 드롭을 판정하고(×500은 2배), 덜 굴린 판정은 기대 장비 수만큼 정수로 바꿉니다.
     const rolls = swarmDropRolls(size) * (size >= SWARM_BIG.size ? SWARM_BIG.drops : 1);
-    // v3.104 드롭 확률은 판정마다 능력치를 다시 계산하던 것을, 드롭이 바꿀 수 있는 값(골드 자릿수 · 물건 도감 · 가방 · 정수)이 그대로면 재사용합니다.
+    // v3.104 드롭 확률은 드롭이 바꿀 수 있는 값(골드 자릿수 · 물건 도감 · 가방 · 정수)이 그대로면 재사용합니다.
     let rateKey = '', rate = 0;
     for (let i = 0; i < rolls * (vdef?.drops || 1); i++) {
         const key = dropRateKey(s);
@@ -454,7 +452,7 @@ export function reward(s: State, rng: () => number) {
         if (essence > 0) { s.essence = (s.essence || 0) + essence; addLog(s, `무리 전리품 · 정수 +${essence}`, 'reward'); }
     }
     if (vdef?.guaranteed) drop(s, dropLevel(s, fish.level, encounterTier(s)), rng, true);
-    // v27.86 사냥터 난이도 이정표 세계석은 없앴습니다. 사냥터별 최고 난이도 기록(업적용)만 남깁니다.
+    // v27.86 사냥터별 최고 난이도 기록(업적용).
     if (!s.dungeon && !isHabitat(s.stage)) { const tier = encounterTier(s); if (tier > (s.tideBest?.[s.stage] || 0)) (s.tideBest ??= {})[s.stage] = tier; }
     gainLevels(s);
     for (const id of grantJobSkills(s)) {
@@ -484,7 +482,7 @@ export function reward(s: State, rng: () => number) {
                 s.pearls += pearls;
                 addLog(s, `무릉도장 ${depth}층 정복 · 세계석 +${pearls}`, 'reward');
                 s.abyssMilestones ??= [];
-                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 세계석). v3.38 30·60·90층 장착 AP 이정표는 없앴습니다.
+                // v25.8 10층마다 첫 돌파 보너스(층 수만큼 세계석).
                 if (deeper && abyssFloorBonus(depth)) { s.pearls += abyssFloorBonus(depth); addLog(s, `무릉도장 ${depth}층 첫 돌파 · 보너스 세계석 +${abyssFloorBonus(depth)}`, 'reward'); }
                 if (ABYSS_SP_MILESTONES.includes(depth) && !s.abyssMilestones.includes(depth)) {
                     s.abyssMilestones.push(depth);

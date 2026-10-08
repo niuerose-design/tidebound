@@ -21,7 +21,7 @@ export function grantOnyx(s: State, bossId: string, level: number, rng: () => nu
         else { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ ${source} · ${boss.accessory.name}은(는) 각성까지 마쳐 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
         return 'awaken' as const;
     }
-    // v3.122 장신구 레벨은 서식지 레벨과 내 레벨 중 높은 쪽(전에는 서식지 레벨이라 리스항구 칠흑은 Lv.5로 나와 바로 끼기 어려웠음).
+    // v3.122 장신구 레벨은 서식지 레벨과 내 레벨 중 높은 쪽.
     const lv = Math.max(level, s.level || 1), item = onyxAccessory(boss, `onyx-${bossId}-${s.turn}`, lv);
     // v3.77 칠흑 장신구의 무작위 옵션은 최고 굴림입니다. 위력은 (레벨 + 2) × ONYX.power(v3.125 6.37, Lv.100 650)이고 골드로 레벨을 올려 키웁니다.
     item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', lv);

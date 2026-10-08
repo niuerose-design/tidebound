@@ -372,7 +372,7 @@
 /* v27.88 통계 · 서약 예약 표시 */
 .stats-block { margin-bottom: 16px; padding: 14px 16px; }
 .vow-next-label { display: block; margin: 8px 0 4px; color: var(--muted); }
-/* v27.86 무리 서식지 카드의 긴 요약은 한 줄에 못 들어가므로 줄을 나눕니다(전에는 두 줄이 겹쳐 보였음). */
+/* v27.86 무리 서식지 카드의 긴 요약은 한 줄에 못 들어가므로 줄을 나눕니다. */
 .stage-card.habitat .stage-footer { flex-wrap:wrap; }
 .stage-card.habitat .stage-footer > span { min-width:0; }
 /* v27.91 랜덤게임 카드: 머리글(제목 + 상태 칩) / 규칙 세 줄 + 목표 웨이브 칩 선택 */

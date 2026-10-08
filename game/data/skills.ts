@@ -188,14 +188,13 @@ for (const sk of SKILLS) {
     const curve = !job || job.tier === 0 ? [120, 600, 2400, 8000] : job.tier === 1 ? [250, 1200, 4500, 14000] : job.tier === 2 ? [600, 3000, 12000, 36000] : [1500, 7500, 28000, 75000];
     const longTerm = !!sk.scaling || !!sk.rankEffects?.apReduction;
     sk.masteryMilestones = masteryTuning[sk.id] || sk.masteryMilestones || curve.map(n => Math.round(n * (longTerm ? 1.4 : 1)));
-    // v27.95 차수별 요구 숙련 상향(3차 ×3 · 4차 ×10 · 5차 ×25). 공용·1·2차 스킬은 그대로입니다.
+    // v27.95 차수별 요구 숙련 배율(skillMasteryScale: 3차 ×3 · 4차 ×10 · 5차 ×25, 공용·1·2차는 1).
     const scale = skillMasteryScale(sk);
     sk.masteryMilestones = sk.masteryMilestones.map(n => n * scale);
 }
 
-// v27.57 지속 피해 정리. ① 계열 패시브의 '지속 피해 증가'를 그 계열이 실제로 거는 상태이상 하나로 나눕니다
+// v27.57 계열 패시브의 '지속 피해 증가'는 그 계열이 실제로 거는 상태이상 하나로 나눕니다
 // (불·독 마스터리류 → 중독, 이그나이트 → 화상, 데몬어벤져·일리움 → 출혈). 범용(칼리·약재상·독버섯·도트 퍼니셔)은 모든 지속 피해 그대로.
-// ② 기술마다 따로 적은 틱 비율(dotRatio)을 새 기본 비율에 맞춰 같은 비율로 옮깁니다(중독 0.14 → 0.075, 출혈 0.22 → 0.26).
 const DOT_TYPE: Record<string, 'bleedBonus' | 'poisonBonus' | 'burnBonus'> = {
     toxinLore: 'poisonBonus', lethalDose: 'poisonBonus', pestilence: 'poisonBonus', plagueVessel: 'burnBonus',
     bloodScent: 'bleedBonus', trailOfRed: 'bleedBonus', hemorrhage: 'bleedBonus', bloodFrenzy: 'bleedBonus', endlessBleed: 'bleedBonus',

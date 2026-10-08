@@ -136,11 +136,9 @@ export const JOBS: Job[] = [
     { id: 'tempest', name: '난바다 폭풍술사', title: '심연이 답하는 주문', desc: '약화와 폭발 주문을 쓰는 주문사. 마법 공격이 크게 오릅니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { magic: 50, resist: 4 }, tier: 2, level: 25, parent: 'tide', requires: { int: 35, wis: 20 }, mastery: 75, role: '마법 폭발', tree: 'magic' },
     { id: 'oracle', name: '진주 예언자', title: '마르지 않는 생명의 샘', desc: '마법 공격·체력·마법 방어가 함께 오르는 유지형. 회복과 흡수를 씁니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 30, hp: 100, resist: 11 }, tier: 2, level: 25, parent: 'tide', requires: { wis: 35, vit: 20 }, mastery: 75, role: '회복·유지', tree: 'magic' },
     { id: 'bulwark', name: '쇠닻 철벽', title: '가라앉지 않는 요새', desc: '체력과 물리 방어가 크게 오르는 요새. 방어 기반 공격과 기절을 씁니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { attack: 11, hp: 185, defense: 17, resist: 4 }, tier: 2, level: 25, parent: 'warden', requires: { vit: 35, str: 20 }, mastery: 75, role: '방어·제어', tree: 'defense' },
-    // v3.140 루미너스 재개편: 마법 공격 계수로 물리 피해를 주는 역전 딜러. 뿌리를 검사 → 조류 술사(매지션)로 옮기고 요구치를 지능 · 정신으로.
     { id: 'paladin', name: '빛결 술사', title: '빛을 작살에 싣는다', desc: '마법 공격 계수로 물리 피해를 주는 역전 딜러 2차. 지능을 올리면 일격이 세지고, 피해의 일부를 흡수합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { magic: 36, hp: 80, resist: 7 }, tier: 2, level: 25, parent: 'tide', requires: { int: 25, wis: 20 }, mastery: 75, role: '역전 딜러·흡수', tree: 'hybrid', lineage: 'paladin' },
     { id: 'wanderer', name: '이형 항해자', title: '어느 깃발에도 속하지 않는 자', desc: '서플러스 서플라이로 명중과 회피를 익히는 복합 입문 직업. 다른 직업에서 계승한 기술의 빈틈을 보완합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 1, magic: 1, hp: 5 }, tier: 1, level: 10, requires: { str: 10, int: 10, vit: 10 }, mastery: 0, role: '복합 입문', tree: 'hybrid' },
     { id: 'chimera', name: '두 바다 융합자', title: '살과 마나를 한 덩어리로', desc: '명중과 회피를 함께 키우는 2차 직업. 여섯 능력치가 고를수록 핀포인트 로켓이 세집니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { attack: 33, magic: 36, hp: 125, defense: 3, resist: 4 }, tier: 2, level: 25, parent: 'wanderer', requires: { str: 25, int: 25, vit: 20 }, mastery: 75, role: 'HP·MP 복합', tree: 'hybrid' },
-    // v27.4 제약 직업 틀의 참고 구현: 체력 ×0.01 유리 대포. 선공·최후의 버팀 2회·회피 +30%로 "맞기 전에 끝내는" 직업. PvE 밸런스 대상 아님.
 ];
 
 // 직업은 전투 공식과 분리된 데이터입니다. 숫자를 낮추거나 조건을 바꿔도 저장 형식은 변하지 않습니다.
@@ -298,7 +296,7 @@ function finishJobs(list: Job[]) {
         job.masteryTarget ??= tuning.target;
         job.masteryBoost ??= tuning.boost;
     }
-    // v27.95 차수별 요구 숙련 상향(1·2차 그대로). 5차 전직은 선행 직업 숙달(올린 숙달 수치)이 필요합니다.
+    // v27.95 차수별 요구 숙련 배율(PROGRESSION.jobMasteryTierScale). 5차 전직은 선행 직업 숙달(올린 숙달 수치)이 필요합니다.
     for (const job of list) job.masteryTarget = Math.round(job.masteryTarget! * (PROGRESSION.jobMasteryTierScale[job.tier] ?? 1));
     for (const job of list) {
         const parent = job.tier >= 5 && job.parent ? JOBS.find(j => j.id === job.parent) : undefined;
@@ -378,7 +376,6 @@ export const LINEAGES: Lineage[] = [
     { id: 'bossNaturalist', name: '거수 생태학자 계보', tree: 'support', summary: '보스와 지정 몬스터의 숙련을 빠르게 쌓는 계보입니다.' },
     { id: 'bard', name: '방랑 음유시인 계보', tree: 'support', summary: '가속·경험치·보상으로 성장을 보조하는 계보입니다.' },
     independent('support'),
-    /** v3.25 해커 계열: 해커 → 화이트 해커. 싸우지 않고 서버를 건드리는 계보입니다. v3.28 블랙 해커. */
     RESTRAINT_LINEAGE,
     independent('mystery'),
     ...MONOSTAT_LINEAGES,

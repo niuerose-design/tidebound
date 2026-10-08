@@ -8,7 +8,6 @@ import type { Skill } from '../types';
  * - 1차에 가까울수록 단순한 능력치 패시브(공격·방어·체력 등)를 주고, 강함보다 조합 재료가 되도록 합니다.
  * - 2~3차는 기술의 다양성(연타·기절·중독·반격·복합 피해·처형)에 초점을 둡니다.
  * - 강함의 밸런스는 계열별 최상위(5차: 용사·플레임위자드 (5차)·천검·미하일 (5차)·아크메이지(불,독) (5차))끼리 맞춥니다.
- *   수치는 scripts/check-archetypes.mjs의 동일 투자 비교로 검증합니다.
  *
  * 액티브 기술의 발동률·배율·재사용 대기·마나는 여기 선언한 값이 그대로 밸런스 표(skill-balance.ts)에 들어갑니다.
  * 물리 액티브는 기본 발동률 30% 이하(최대 숙련 38% 이하), 마법·복합 액티브는 45% 이상이며 마나를 씁니다.
@@ -159,7 +158,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'pestilence', name: '만연', desc: '지속 피해와 체력이 오릅니다.', level: 55, job: 'plagueLord', cost: 3, bonus: { dotBonus: .15, hp: 250 }, masteryMilestones: M4 },
     // v3.132 포이즌 노바(각성기): 중독과 화상을 함께 7턴(+지속 턴 옵션) 겁니다. 계보 밖에서 계승하면 발동률 절반(outsiderChance). 각성 지속 배율 없이 적힌 턴 그대로.
     { ...A, ...magic, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 4, multiplier: 2.3, cost: 6, manaCost: 22, effect: 'poison', alsoEffect: 'burn', dotRatio: .2, statusTurns: 7, outsiderChance: .5, damageBonusCondition: 'bleeding', conditionalDamageBonus: .6, masteryMilestones: M5 },
-    // v3.132 도트 퍼니셔: 패시브 → 일반 액티브(대기 0 · 비용 6, AP 부담이 대가). 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
+    // v3.132 도트 퍼니셔: 일반 액티브(대기 0 · 비용 6, AP 부담이 대가). 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
     { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 0, multiplier: 2.4, cost: 6, manaCost: 20, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1 }, damageBonusCondition: 'bleeding', conditionalDamageBonus: .5, masteryMilestones: M5 },
     // 저주의 길
     { ...A, ...magic, id: 'curseBolt', name: '저주탄', desc: '', level: 10, job: 'shaman', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 9, effect: 'weaken' },

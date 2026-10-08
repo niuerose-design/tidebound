@@ -138,7 +138,7 @@ export function Skills({ s, send, busy }: PanelProps) {
     }, [s.skillPins, send]);
     const currentJob = jobById(s.job) || JOBS[0], used = apUsed(s), cap = apCapacity(s);
     const line = lineage(s.job);
-    // v27.62 추천 편성은 상태가 바뀔 때만 다시 계산합니다(검색 입력·필터 조작 때마다 계산하지 않음).
+    // v27.62 추천 편성은 상태가 바뀔 때만 다시 계산합니다.
     const recommended = useMemo(() => recommendLoadout(s), [s]);
     const sameLoadout = recommended.length === s.skills.length && recommended.every(id => s.skills.includes(id));
     /** 끌어서 놓기: 액티브끼리만 순서를 바꾸고 패시브는 뒤에 그대로 둡니다. */
@@ -156,8 +156,8 @@ export function Skills({ s, send, busy }: PanelProps) {
     const q = useDeferredValue(query).trim().toLowerCase(), searching = q.length > 0;
     const corpus = useMemo(() => searching ? new Map(SKILLS.map(sk => [sk.id, [sk.name, sk.desc, jobById(sk.job)?.name || '공용', skillVeiled(s, sk) ? '' : skillEffectLines(effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id)), skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id))).join(' ')].join('\n').toLowerCase()])) : null, [s, searching]);
     /**
-     * v3.45 정보 비공개(docs/concept.md 10장)의 ‘만나 본 직업의 스킬만’ 가림은 v3.167에 뺐습니다(운영은 비공개를 끄고 있고, 수련 스킬 같은
-     * 공개 직업의 패시브가 검색에서 통째로 빠지는 문제). 비밀 직업의 스킬은 서버가 카탈로그에 싣지 않으므로(server/secrecy.ts) 여기서 가릴 것이 없습니다.
+     * v3.167 정보 비공개(docs/concept.md 10장)의 ‘만나 본 직업의 스킬만’ 가림은 두지 않습니다(운영은 비공개를 끄고 있고, 수련 스킬 같은
+     * 공개 직업의 패시브가 검색에서 통째로 빠짐). 비밀 직업의 스킬은 서버가 카탈로그에 싣지 않으므로(server/secrecy.ts) 여기서 가릴 것이 없습니다.
      */
     // 검색어가 있으면 범위(현재 직업·해금 등)를 무시하고 모든 기술에서 찾습니다. 이름·설명·직업 이름·효과 설명을 대상으로 합니다.
     const list = SKILLS.filter(sk => {
@@ -178,7 +178,7 @@ export function Skills({ s, send, busy }: PanelProps) {
         if (damage !== 'all' && !skillDamageKind(sk).includes(damage)) return false;
         return filter === 'unlearned' ? !acquired : filter === 'usable' ? canUse(s, sk.id) : true;
     });
-    // v3.93 정렬 키는 스킬마다 한 번만 계산합니다(비교할 때마다 효과를 다시 계산하지 않음). 큰 값이 앞인 정렬은 키를 음수로.
+    // v3.93 정렬 키는 스킬마다 한 번만 계산합니다. 큰 값이 앞인 정렬은 키를 음수로.
     const keyOf = (sk: Skill) => { const fx = () => effectiveSkill(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id), refinePractice(s, sk.id));
         return sort === 'ap' ? fx().cost ?? 2 : sort === 'chance' ? -(fx().chance || 0) : sort === 'level' ? -skillLevel(sk, s.learned[sk.id] || 1, skillMastery(s, sk.id)) : -(s.skillPractice[sk.id] || 0); };
     if (sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name, 'ko'));

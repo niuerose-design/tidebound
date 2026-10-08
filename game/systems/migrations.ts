@@ -14,10 +14,6 @@ import { newState } from './engine';
 import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
 import { RANKS, RANK_LEGACY_NEED, rankIndex, rankState } from '../data/rank';
 import { OLD_GEAR_NAMES, RENAMED_GEAR, RENAMED_AFFIX, gearName } from '../data/maple-gear';
-/**
- * v8(게임 v20.5): 골드 훈련 삭제와 함께 이전 버전의 세이브는 이름만 남기고 새로 시작합니다.
- * 이후 버전 변경은 이 함수에 단계별 추가 마이그레이션으로 이어 붙입니다.
- */
 /** v25.23 세계석 연구 ‘황금 개체’(base 8·step 5) 삭제: 투자한 세계석을 전액 돌려줍니다. */
 function refundGoldenResearch(s: State) {
     const rank = (s.permanent as Record<string, number | undefined>)?.goldenFish || 0;
@@ -324,6 +320,10 @@ export function moveToTraining(s: State) {
     if (!s.unlockedJobs.includes(next)) s.unlockedJobs.push(next);
     s.jobMastery[next] ??= 0;
 }
+/**
+ * v8(게임 v20.5): 골드 훈련 삭제와 함께 이전 버전의 세이브는 이름만 남기고 새로 시작합니다.
+ * 이후 버전 변경은 이 함수에 단계별 추가 마이그레이션으로 이어 붙입니다.
+ */
 export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
@@ -356,10 +356,6 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     return s;
 }
 
-/**
- * v27.46 장비 이름 메이플 개편: 가방·착용 장비의 옛 이름(낚싯대·구명조끼·나침반 …)과 옵션 이름(유영)을 새 이름으로 바꿉니다.
- * 옛 이름만 골라 바꾸므로 여러 번 불러도 같고, 바꿀 게 없으면 아무것도 하지 않습니다. 능력치·등급·옵션 값은 그대로입니다.
- */
 /** v3.8 자동 강화 연구 비용 100 → 10: 이미 찍은 세이브에 차액 90을 한 번 돌려줍니다. */
 export const AUTO_STAR_REFUND = 90;
 /** v3.14 이미 가진 칠흑 장신구를 물건 도감에 자동 등록합니다(장비 소모 없음). */
@@ -371,6 +367,10 @@ export function refundAutoStar(s: State) {
     s.pearls += AUTO_STAR_REFUND;
     return AUTO_STAR_REFUND;
 }
+/**
+ * v27.46 장비 이름 메이플 개편: 가방·착용 장비의 옛 이름(낚싯대·구명조끼·나침반 …)과 옵션 이름(유영)을 새 이름으로 바꿉니다.
+ * 옛 이름만 골라 바꾸므로 여러 번 불러도 같고, 바꿀 게 없으면 아무것도 하지 않습니다. 능력치·등급·옵션 값은 그대로입니다.
+ */
 export function renameMapleGear(s: State) {
     let changed = 0;
     for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) {

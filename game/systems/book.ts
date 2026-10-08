@@ -17,7 +17,7 @@ export function bookEcology(s: Pick<State, 'book' | 'bookTier'>, id: string) {
     return { stages, dealt: sum(BOOK_ECOLOGY.dealt), taken: sum(BOOK_ECOLOGY.taken) };
 }
 /** v27.80 지역 연구 단계(0~3): 지역 몬스터 전부가 연구 REGION_RESEARCH_FROM부터 세 단계(v27.92부터 1·2·3단계) 이상. */
-/** v3.104 능력치 계산이 턴마다 지역 수만큼 부르므로, 결과에 필요한 단계까지만 세고 한 몬스터라도 REGION_RESEARCH_FROM 미만이면 바로 0을 돌려줍니다(값은 전과 같음). */
+/** v3.104 능력치 계산이 턴마다 지역 수만큼 부르므로, 결과에 필요한 단계까지만 세고 한 몬스터라도 REGION_RESEARCH_FROM 미만이면 바로 0을 돌려줍니다. */
 export function regionResearchStage(s: Pick<State, 'book' | 'bookTier'>, region: string) {
     let min = REGION_RESEARCH_FROM - 1 + REGION_RESEARCH_MAX;
     for (const id of regionFish(region)) {

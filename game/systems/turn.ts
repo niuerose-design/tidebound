@@ -160,8 +160,8 @@ export function advance(s: State, now: number, rng = Math.random) {
     const elapsed = now - s.lastTick;
     const continuing = (s.catchUpLeft || 0) > 0;
     // v27.51 이벤트·제단 축복 배율: 접속 중에는 그대로, 부재중 정산에는 절반만(offlineEvent). 정산이 끝난 뒤 원래 배율을 다시 적습니다.
-    // v3.189 부재중 보정(이벤트 절반 · 특별 몬스터 offlineScale)은 1분이 아니라 1시간(offlineAwaySeconds) 넘게 비운 정산만 받습니다(탭을 잠깐 내린 것은 접속 중과 같게).
-    // 나눠 돌리는 정산은 처음 정한 보정을 이어 씁니다(catchUpAway). 계산량은 바뀌지 않습니다(표본 환산 · 분할은 아래 offline 기준 그대로).
+    // v3.189 부재중 보정(이벤트 절반 · 특별 몬스터 offlineScale)은 1시간(offlineAwaySeconds) 넘게 비운 정산만 받습니다(탭을 잠깐 내린 것은 접속 중과 같게).
+    // 나눠 돌리는 정산은 처음 정한 보정을 이어 씁니다(catchUpAway). 표본 환산 · 분할은 아래 offline 기준입니다.
     const away = continuing ? !!s.catchUpAway : awayGap(elapsed);
     const live = activeEvent(now);
     s.event = away ? offlineEvent(live) : live;
@@ -170,7 +170,7 @@ export function advance(s: State, now: number, rng = Math.random) {
     // 정산 상한은 정산을 시작할 때의 긴 휴식 단계로 정합니다(정산 중 연구가 바뀌지 않음).
     const cap = offlineCapSeconds(s);
     // v3.17 긴 부재중 정산은 요청 하나에서 다 돌리지 않고 CATCH_UP_CHUNK턴씩 나눕니다(6~30시간 = 1만~5만 턴을 한 요청에서 돌리면 수십 초가 걸려
-    // 클라이언트 20초 제한에 걸리고 서버가 멈춘 것처럼 보였음). 남은 턴은 catchUpLeft에 적어 다음 동기화가 이어 돌립니다. 총 턴 수는 전과 같습니다.
+    // 클라이언트 20초 제한에 걸리고 서버가 멈춘 것처럼 보였음). 남은 턴은 catchUpLeft에 적어 다음 동기화가 이어 돌립니다.
     const budget = continuing ? Math.min(s.catchUpLeft!, Math.floor(elapsed / BALANCE.turnMs)) : Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
     // 1분 넘게 밀린 정산은 오프라인 정산으로 봅니다(저장하지 않는 임시 표시).
     const offline = elapsed > 60000 || continuing;
