@@ -733,3 +733,15 @@ test('v3.134 combat power weights offense .65 · durability .35, Lv.1 ≈45 (v3.
     }
     assert.ok(drop.rod > drop.coat, `weapon ${drop.rod} should outrank coat ${drop.coat}`); assert.ok(drop.rod > drop.charm && drop.rod > drop.cape);
 });
+
+test('v3.142 research caps are reachable (attack · magic · hp · mana 50, guard · magicGuard 30); ranks above the cap keep their effect and refund, and cannot be bought further', async () => {
+    const Ec = await L.load('data/economy'), C = await L.load('systems/commerce'), { stats } = await L.load('systems/stats');
+    for (const id of ['attack', 'magicAttack', 'hp', 'mana']) assert.equal(Ec.RESEARCH.find(r => r.id === id).max, 50, id);
+    for (const id of ['guard', 'magicGuard']) assert.equal(Ec.RESEARCH.find(r => r.id === id).max, 30, id);
+    assert.ok(Ec.researchSpent('attack', 50) < 25000, `50 ranks cost ${Ec.researchSpent('attack', 50)}`);
+    const s = newState(0); s.pearls = 1e9; s.permanent.guard = 40; // 상한(30)보다 높이 산 세이브
+    const withRanks = stats(s).defense; s.permanent.guard = 30; const atCap = stats(s).defense; assert.ok(withRanks > atCap, 'ranks above the cap still count');
+    s.permanent.guard = 40;
+    assert.throws(() => act(s, { type: 'permanent', id: 'guard' }, 0), /한도/);
+    assert.equal(C.researchRefund(s, 'combat').spent, Ec.researchSpent('guard', 40), 'refund counts every rank bought');
+});
