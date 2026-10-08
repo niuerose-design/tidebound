@@ -26,9 +26,6 @@ import { TAILWIND_EXP, tailwindExp, xpWall, LEVEL_GATE_FREE_REBIRTHS } from '@/g
 import { OVER_TARGET } from '@/game/data/balance';
 import { Heading } from './shared';
 import { JOB_TREES, LINEAGES } from '@/game/data/classes';
-import { ROLES, SUB_ROLES, ROLE_GUIDE, MATCHUP, FOE_STRATEGY, type SubRoleId } from '@/game/data/roles';
-import { PROFILE_KINDS, profileByKind } from '@/game/data/encounters';
-import { Users } from 'lucide-react';
 /** 0.125 → 12.5 */
 const pctOf = (n: number) => Number((n * 100).toFixed(1));
 
@@ -132,21 +129,6 @@ export function Guide({ s }: { s?: State }) {
                 </article>)}</div>
             </div>)}
             <p className="footnote help-status-rules"><b>공통</b> 이미 걸린 상태이상은 다시 걸지 않고 그 기술을 건너뜁니다(중독은 계속 쌓임). 망토의 ‘불굴’ 옵션은 몬스터가 거는 상태이상을 그 확률로 저항합니다(최대 50%). 풀린 뒤 기절 {STATUS_TUNING.immuneTurns.stun}턴, 그 밖 {STATUS_TUNING.immuneTurns.slow}턴은 같은 상태이상에 면역입니다.</p>
-        </Topic>
-        <Topic icon={<Users size={19}/>} title="역할과 상성" note="직업마다 세부 역할이 있고, 몬스터 유형마다 유리한 역할이 있습니다.">
-            <p className="footnote">역할은 직업 상세의 제목 아래와 ‘역할’ 칸에, 몬스터 유형별 유리한 역할은 도감 · 전투 · 던전 화면에 보입니다. 역할은 안내일 뿐 판정에는 쓰지 않습니다.</p>
-            <div className="help-stat-grid help-role-grid">{(['physical', 'magic', 'status', 'reflect', 'control', 'drain', 'morph', 'absorb', 'healer', 'utility'] as SubRoleId[]).map(id => { const g = ROLE_GUIDE[id]!; return <article className={`panel help-stat-card help-role-card role-${SUB_ROLES[id].role}`} key={id}><strong>{SUB_ROLES[id].name} <small>{ROLES[SUB_ROLES[id].role].name}</small></strong><p><b>강점</b> {g.strong}</p><p><b>약점</b> {g.weak}</p><small><b>잘하는 곳</b> {g.place}</small></article>; })}</div>
-            <Rule icon={<Users size={19}/>} title="경계 직업"
-                effect={`${Object.values(SUB_ROLES).filter(r => r.role === 'border').length}개 세부 역할이 두 역할 사이에 일부러 서 있습니다: ${Object.values(SUB_ROLES).filter(r => r.role === 'border').map(r => r.name.replace('경계: ', '')).join(' / ')}.`}
-                condition="고유 장치(충전 · 기록 · 자기 버프 · 반동 게이지 등)가 두 쪽을 잇습니다. 직업 상세의 ‘역할’ 칸에 장치가 적혀 있습니다."
-                limit="어느 한쪽의 최고치는 아닙니다. 수련 직업은 계승 재료라 역할이 없습니다."/>
-            <Rule icon={<Swords size={19}/>} title="상성"
-                effect={MATCHUP.text}
-                condition={MATCHUP.why}
-                limit="몬스터 유형 안내의 기준일 뿐, 결투(PvP) 밸런스 목표는 아닙니다."/>
-            <h3 className="help-matchup-title">몬스터 유형별 유리한 역할</h3>
-            <div className="help-status-grid help-matchup">{PROFILE_KINDS.filter(k => FOE_STRATEGY[k]).map(k => { const p = profileByKind(k), st = FOE_STRATEGY[k]; return <article className="panel help-status-card" key={k}><div className="help-status-top"><strong>{p.name}</strong><span>{st.good.map(id => SUB_ROLES[id].name).join(' · ')}</span></div><p>{st.tip}</p></article>; })}</div>
-            <p className="footnote">보스는 제어(기절 · 감속 · 침묵)에 면역이라 제어 탱커를 추천하지 않습니다. 도감에서 성향이 공개된 몬스터만 유리한 역할이 보입니다.</p>
         </Topic>
         <Topic icon={<Zap size={19}/>} title="스킬" note="발동, 습득·계승, 숙련과 극한돌파.">
             <div className="help-columns">
