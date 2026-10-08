@@ -8,6 +8,7 @@ import type { CSSProperties } from 'react';
 import type { Log } from '@/game/types';
 import { skillById } from '@/game/data/skills';
 import { combatFxBatch, combatFxSkipped, type CombatFx } from '@/game/systems/combat-feedback';
+import { FOE_FX } from '@/game/data/foe-fx';
 
 /** 연출을 띄워 두는 시간(마지막 타격 뒤). */
 const FX_HOLD_MS = 1500;
@@ -171,12 +172,25 @@ function PunisherFx({ fx }: { fx: CombatFx }) {
     </div>;
 }
 /**
- * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
- * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)으로 충분하므로 배경에는 띄우지 않습니다.
+ * v3.183 보스 몬스터 스킬의 배경 연출. 몬스터 자리(오른쪽)에서 왼쪽으로 향하게 그려 내 스킬과 방향이 구분됩니다.
+ * 카드 쪽은 손대지 않습니다(‘몬스터 스킬’ 알림 · HP 바 숫자 그대로). 추가타가 있는 기술은 타격 수만큼 .foe-hit를 HP 바 숫자와 같은 박자(160ms)로 반복합니다.
  */
-export function SceneFx({ effect }: { effect: CombatFx[] }) {
-    const cues = effect.filter(fx => fx.actor === 'player' && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId); return fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+function FoeFx({ fx }: { fx: CombatFx }) {
+    const foe = FOE_FX[fx.skillId!], hits = Math.max(1, fx.hits.filter(h => !h.miss).length);
+    return <div className={`scene-fx scene-fx-foe foe-${foe.kind}`} style={fxStyle(fx.delay, { '--hits': hits })}>
+        <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="foe-a"/><i className="foe-b"/>
+        {foe.perHit && Array.from({ length: hits }, (_, i) => <i key={i} className="foe-hit" style={fxStyle(fx.delay + i * 160, { '--i': i })}/>)}
+        {foe.glyphs.map((g, i) => <b key={i} className="foe-frag" style={fxStyle(fx.delay + i * 60, { '--i': i })}>{g}</b>)}
+        <strong className="foe-title"><small>BOSS</small>{fx.title}</strong>
+    </div>;
+}
+/**
+ * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
+ * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)이 기본이고, v3.183 보스(boss)의 스킬만 전용 배경 연출(FOE_FX)을 함께 띄웁니다.
+ */
+export function SceneFx({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
+    const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId); return fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
         <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>
