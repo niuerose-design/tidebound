@@ -26,7 +26,6 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     // v25.4 떠돌이 계보: 복합 피해 규칙(발동 45% 이상)에 맞춘 숙달 비례 일격.
     // ── 팬텀 (1차): 주사위 ──
     inkTrick: { gamble: { min: 1, max: 1, accuracy: .25 } },
-    smokeVeil: { gamble: { min: 1, max: 1, accuracy: .2 } },
     loadedHook: { multiplier: 1.05, gamble: { min: .3, max: 1.9, accuracy: .1 }, scaling: 'luck', scalingRatio: .4 },
     allIn: { chance: .26, cooldown: 5, multiplier: 1.6, drainRatio: .35, allIn: { hpRatio: .2, hpScale: 1.2, manaScale: 2 }, scaling: 'luck', scalingRatio: .5 },
     fateRoll: { multiplier: 2.5, gamble: { min: .2, max: 1.8, accuracy: .15 }, scaling: 'luck', scalingRatio: .6 },

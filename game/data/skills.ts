@@ -46,7 +46,7 @@ SKILLS.push({ id: 'vitalSurge', name: '생명 쇄도', desc: '물리 피해. 여
 
 // 신규 직업 스킬은 모두 데이터로 선언합니다. 한 직업에 1개만 주거나 패시브 2개만 주는 것도 허용합니다.
 SKILLS.push(
-    { id: 'wakeFist', name: '물살 주먹', desc: '물리 공격 155% 피해. 낮은 비용으로 계속 성장하는 근접 기본기.', type: 'active', level: 10, job: 'tidalBrawler', chance: .4, cooldown: 2, multiplier: 1.55, cost: 2, manaCost: 0 },
+    { id: 'wakeFist', name: '물살 주먹', desc: '물리 피해 뒤 추가타 1회. 전류를 처음 켜는 기본기.', type: 'active', level: 10, job: 'tidalBrawler', chance: .4, cooldown: 2, multiplier: 1.3, extraAttacks: 1, extraAttackMultiplier: .5, cost: 2, manaCost: 0 },
     { id: 'rippleGlyph', name: '잔물결 문양', desc: '마법 공격 150% 피해, 적의 공격을 3턴 약화.', type: 'active', level: 10, job: 'currentScholar', chance: .45, cooldown: 2, multiplier: 1.5, effect: 'weaken', damageType: 'magic', cost: 2, manaCost: 4 }, { id: 'currentNotes', name: '해류 필기', desc: '마법 공격 +6, 마력 평타 계수 +10%p.', type: 'passive', level: 10, job: 'currentScholar', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { magic: 6, arcaneRatioBonus: .1 } },
     { id: 'greenTide', name: '푸른 물결 돌봄', desc: '체력 16% 회복 후 마법 공격 120% 피해. 체력 70% 이하에서만 시도.', type: 'active', level: 10, job: 'seagrassKeeper', chance: .5, cooldown: 4, multiplier: 1.2, effect: 'heal', damageType: 'magic', condition: 'wounded', cost: 2, manaCost: 4 },
     { id: 'inkTrick', name: '먹물 속임수', desc: '물리 공격 125% 피해, 적의 공격을 3턴 약화.', type: 'active', level: 10, job: 'squidJester', chance: .55, cooldown: 3, multiplier: 1.25, effect: 'weaken', cost: 2, manaCost: 3 },
@@ -286,7 +286,7 @@ export function costAtMastery(sk: Skill) {
 }
 export const isConstraintSkill = (sk: Skill) => !sk.song && (costAtMastery(sk) <= 0 || !!sk.job && CONSTRAINT_JOBS.has(sk.job));
 /** 예외: 수련 · 능력치 수련 · 해커 스킬 · 역할 경계 직업(제로 · 아이돌 연습생)의 스킬(제약형은 따로 천만 단위). */
-const SKILL_CURVE_EXEMPT = (sk: Skill) => !!sk.job && (/^training/.test(sk.job) || /Training[123]$|[hH]acker$/.test(sk.job) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff', 'borderHarmony'].includes(subRoleOf(JOBS.find(j => j.id === sk.job) ?? { id: sk.job }, '')));
+const SKILL_CURVE_EXEMPT = (sk: Skill) => !!sk.job && (/^training/.test(sk.job) || /Training[123]$|[hH]acker$/.test(sk.job) || ['border', 'borderBuffer', 'borderReflect', 'borderStand', 'borderBuff', 'borderHarmony', 'borderTempo'].includes(subRoleOf(JOBS.find(j => j.id === sk.job) ?? { id: sk.job }, '')));
 export const LEGACY_FIRST_MILESTONE: Record<string, number> = {};
 const round2 = (n: number) => { const p = 10 ** Math.max(0, Math.floor(Math.log10(n)) - 1); return Math.round(n / p) * p; };
 export function normalizeSkillMastery(list: Skill[]) {

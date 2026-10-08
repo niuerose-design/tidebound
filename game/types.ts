@@ -201,6 +201,10 @@ export type Skill = {
     spectre?: { need: number; turns: number; damageMultiplier: number; speedMultiplier?: number; /** v3.163 버프 이름(기본 접신) · 고정 능력치(카이저 파이널 피규레이션의 흡혈). */ name?: string; stats?: Partial<Stats> };
     /** v3.163 피격 충전(카이저 패시브): 피해를 입는 공격을 맞을 때마다 충전 +N(치명타로 맞으면 +1 더). 장착한 것 중 가장 큰 값. */
     chargeOnHit?: number;
+    /** v3.164 전류(스트라이커 패시브): 추가타가 명중할 때마다 자기 버프를 1턴 늘립니다(없으면 turns로 시작). 장착한 것 중 속도 배율이 가장 큰 하나. */
+    followUpBuff?: { id: string; name?: string; turns: number; speedMultiplier?: number };
+    /** v3.164 전류 중 추가타 +N(스트라이커 5차 패시브). followUpBuff의 버프가 살아 있을 때만. */
+    followUpExtra?: { buff: string; hits: number };
     /** v3.163 조화 보너스(제논): 직접 배분한 여섯 능력치의 (가장 낮은 값 ÷ 가장 높은 값) × 이 값만큼 피해가 커집니다. 고르게 투자할수록 세짐. */
     balanceBonus?: number;
     /** v3.158 이 자기 버프가 걸려 있을 때만 나가는 액티브(아크 인피니티 스펠: 'spectre'). */

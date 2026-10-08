@@ -146,7 +146,7 @@ export const JOBS: Job[] = [
 // 직업은 전투 공식과 분리된 데이터입니다. 숫자를 낮추거나 조건을 바꿔도 저장 형식은 변하지 않습니다.
 // 1차 직업은 거의 중립, 2차는 방향성, 3차는 큰 대가와 뚜렷한 보상을 갖도록 설계했습니다.
 JOBS.push(
-    { id: 'tidalBrawler', name: '조수 투사', title: '주먹으로 물살을 가른다', desc: '아처와 같은 출발선에서 근접 연타를 연구하는 소규모 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 2, defense: 1 }, tier: 1, level: 10, requires: { str: 10, dex: 10 }, mastery: 0, role: '근접 입문', tree: 'physical' },
+    { id: 'tidalBrawler', name: '조수 투사', title: '주먹으로 물살을 가른다', desc: '아처와 같은 출발선에서 근접 연타를 연구하는 분기입니다. 추가타가 전류를 켜고, 전류가 추가타를 늘립니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, bonus: { attack: 2, defense: 1 }, tier: 1, level: 10, requires: { str: 10, dex: 10 }, mastery: 0, role: '근접 입문', tree: 'physical' },
     { id: 'currentScholar', name: '해류 연구자', title: '파도의 문장을 읽는다', desc: '마력 평타(기본 공격)를 주력으로 삼는 마법 입문 직업입니다. 패시브가 평타 계수를 올리고, 약화 주문으로 거듭니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 4, resist: 1 }, tier: 1, level: 10, requires: { int: 10, wis: 10 }, mastery: 0, role: '마력 평타 입문', tree: 'magic' },
     { id: 'seagrassKeeper', name: '해초 돌봄꾼', title: '작은 회복을 반복한다', desc: '강한 탱커 대신 낮은 비용 회복과 지속전을 선택하는 보조 입문 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { hp: 35, defense: 3, resist: 3 }, tier: 1, level: 10, requires: { vit: 10, wis: 10 }, mastery: 0, role: '보조 입문', tree: 'defense' },
     { id: 'squidJester', name: '오징어 광대', title: '웃음 뒤에 먹물을 숨긴다', desc: '정확한 한 방 대신 확률·치명 조합을 노리는 입문 직업입니다. 팬텀 인스팅트와 더블 피어싱을 익힙니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .03, bonus: { attack: 4, magic: 4 }, tier: 1, level: 10, requires: { dex: 10, luk: 10 }, mastery: 0, role: '확률 입문', tree: 'support' },
@@ -342,7 +342,7 @@ export type Lineage = { id: string; name: string; tree: JobTreeId; summary: stri
 const independent = (tree: JobTreeId): Lineage => ({ id: `${tree}-independent`, name: '수련', tree, summary: '그 계열의 기초 패시브를 모은 수련 직업입니다. 직접 사냥하면 약하고, 기술은 다른 직업이 계승해서 씁니다.' });
 export const LINEAGES: Lineage[] = [
     { id: 'harpoon', name: '작살 사냥꾼 계보', tree: 'physical', summary: '관통·치명·출혈로 갈라지는 물리 폭발 계보입니다.' },
-    { id: 'tidalBrawler', name: '조수 투사 계보', tree: 'physical', summary: '근접 연타와 추가타, 관통·감속을 연구하는 계보입니다.' },
+    { id: 'tidalBrawler', name: '조수 투사 계보', tree: 'physical', summary: '추가타가 명중할 때마다 전류(속도) 자기 버프가 길어지고, 빨라진 만큼 추가타가 늘어나는 템포 경계 계보입니다.' },
     /** v3.65 은월 계보 하나로: 스트라이커 1차 → 은월 2차(공개) → 3차 이후 숨은 단계(game/secret). */
     { id: 'krakenkin', name: '은월 계보', tree: 'physical', summary: '정령과 함께 싸우는 계보입니다. 패시브의 정령이 기본 공격을 포함한 모든 공격에 추가타를 붙입니다. 3차부터는 숨은 단계입니다.' },
     { id: 'ronin', name: '낭인 계보', tree: 'physical', summary: '검술의 연타·관통·돌격을 거쳐 5차 용사에 이르는 계보입니다.' },
