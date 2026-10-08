@@ -345,8 +345,9 @@
 .battle-fx-host .tide-fx-combo-player{left:8px;right:auto}.battle-fx-host .tide-fx-combo-enemy{right:8px;left:auto}
 @media(max-width:767px){.battle-fx-host .tide-fx-combo,.dungeon-combat-fx-host .tide-fx-combo{bottom:auto;left:auto;right:8px}.battle-fx-host .tide-fx-combo-player,.dungeon-combat-fx-host .tide-fx-combo-player{top:6px}.battle-fx-host .tide-fx-combo-enemy,.dungeon-combat-fx-host .tide-fx-combo-enemy{top:auto;bottom:6px}}
 
-/* v3.170 설정 '섬광 효과' 꺼짐: 배경 · 카드 섬광만 숨깁니다(투사체 · 파편 · 고리 · 어둠은 그대로). */
-.fx-no-glow .scene-fx-flash,.fx-no-glow .tide-fx-flash{display:none}
+/* v3.170 설정 '섬광 효과' 꺼짐: 배경 · 카드 섬광과 4차 이상 카드 위 큰 원형 폭발광을 숨기고, 퍼니셔 구체의 후광을 뺍니다(투사체 · 파편 · 고리 · 어둠은 그대로). */
+.fx-no-glow .scene-fx-flash,.fx-no-glow .tide-fx-flash,.fx-no-glow .tide-fx-big{display:none}
+.fx-no-glow .pun-core{box-shadow:none}
 /* v25.3 스킬 연출 강화: 카드 전체 섬광 + 이중 충격파 + 더 멀리 튀는 파편. 기본 공격은 그대로 체력바 숫자만. */
 .tide-fx-flash{left:-160px;top:-70px;width:320px;height:140px;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--fx) 55%,transparent),transparent 70%);animation:tideFlash .7s ease-out var(--fx-delay) both;mix-blend-mode:screen}
 .tide-fx-ring{left:-30px;top:-30px;width:60px;height:60px}

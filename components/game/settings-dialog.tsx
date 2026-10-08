@@ -107,7 +107,7 @@ function SkillFxToggle() {
 function FxGlowToggle() {
     const on = useFxGlow(), fx = useSkillFx();
     return <div className="setting-toggle">
-        <div><strong>섬광 효과</strong><p>스킬 연출 중 배경과 상대 카드가 원형으로 밝아졌다 퍼지는 섬광입니다. 눈이 부시면 끄세요. 투사체 · 파편 · 고리 · 어두워지는 연출은 그대로입니다.{fx ? '' : ' 스킬 이펙트가 꺼져 있어 지금은 섬광도 나오지 않습니다.'} 이 기기에만 저장되며, 처음에는 꺼짐입니다.</p></div>
+        <div><strong>섬광 효과</strong><p>스킬 연출 중 배경과 상대 카드가 원형으로 밝아졌다 퍼지는 섬광과, 4차 이상 스킬의 큰 원형 폭발광입니다. 눈이 부시면 끄세요. 투사체 · 파편 · 고리 · 어두워지는 연출은 그대로입니다.{fx ? '' : ' 스킬 이펙트가 꺼져 있어 지금은 섬광도 나오지 않습니다.'} 이 기기에만 저장되며, 처음에는 꺼짐입니다.</p></div>
         <button className={on ? 'primary' : 'secondary'} aria-pressed={on} onClick={() => setFxGlow(!on)}>{on ? '켜짐' : '꺼짐'}</button>
     </div>;
 }
