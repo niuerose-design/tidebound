@@ -901,6 +901,83 @@
 .ult-jaguar .ult-b{rotate:28deg;animation-delay:calc(var(--fx-delay) + .35s)}
 .battle-scene:has(.ult-jaguar) .ocean-art{animation:punShake .5s steps(2) calc(var(--fx-delay) + .3s) both}
 @keyframes ultJaguarClaw{0%{opacity:0;scale:0 1}12%{opacity:1;scale:1 1}30%{opacity:1}50%{opacity:0;scale:1 2}52%{opacity:0;scale:0 1}60%{opacity:1;scale:1 1}80%{opacity:1}100%{opacity:0;scale:1 2.4}}
+/* v3.175 그랜드 피날레(엔젤릭버스터): 무대 조명 두 줄기가 교차하며 쓸고 음표가 떠오릅니다 */
+.ult-finale{--fx:#ffb3d9}.ult-finale .scene-fx-dark{background:#140410}
+.ult-finale .ult-a,.ult-finale .ult-b{left:62%;top:-10%;width:120px;height:130%;margin-left:-60px;background:linear-gradient(90deg,transparent,rgba(255,179,217,.55) 35%,rgba(255,255,255,.85) 50%,rgba(255,179,217,.55) 65%,transparent);clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);filter:blur(1.5px);mix-blend-mode:screen;transform-origin:50% 0;animation:ultFinaleSweep 2.4s ease-in-out var(--fx-delay) both}
+.ult-finale .ult-b{background:linear-gradient(90deg,transparent,rgba(255,226,140,.5) 35%,rgba(255,255,255,.8) 50%,rgba(255,226,140,.5) 65%,transparent);animation-name:ultFinaleSweepB}
+.ult-finale .ult-frag{animation-name:ultPeaceRise;animation-duration:1.9s;color:#ffd3ea;text-shadow:0 0 10px #ff8ac8;font-size:26px}
+@keyframes ultFinaleSweep{0%{opacity:0;rotate:-40deg}15%{opacity:1}50%{rotate:25deg}85%{opacity:1;rotate:-10deg}100%{opacity:0}}
+@keyframes ultFinaleSweepB{0%{opacity:0;rotate:40deg}15%{opacity:1}50%{rotate:-25deg}85%{opacity:1;rotate:10deg}100%{opacity:0}}
+/* v3.175 보이드 버스트(칼리): 검은 공허 구체가 부풀어 터지고 저주 문양 고리가 돕니다 */
+.ult-void{--fx:#c48cff}.ult-void .scene-fx-dark{background:#07030f}
+.ult-void .ult-a{left:62%;top:48%;width:160px;height:160px;margin:-80px 0 0 -80px;border-radius:50%;background:radial-gradient(circle,#000 0 40%,#2a0a4a 58%,#c48cff 66%,transparent 70%);box-shadow:0 0 40px #7a3fd6,inset 0 0 30px #000;animation:ultVoidSwell 2.4s cubic-bezier(.5,0,.3,1) var(--fx-delay) both}
+.ult-void .ult-b{left:62%;top:48%;width:230px;height:230px;margin:-115px 0 0 -115px;border:3px dashed #c48cff;border-radius:50%;box-shadow:0 0 18px #9a5cff;background:repeating-conic-gradient(from 0deg,transparent 0 30deg,rgba(196,140,255,.25) 30deg 36deg);animation:ultSigil 2.4s ease-out var(--fx-delay) reverse both}
+.ult-void .ult-frag{color:#e2ccff;text-shadow:0 0 10px #9a5cff}
+.battle-scene:has(.ult-void) .ocean-art{animation:ultGravityWarp 2.4s ease-in-out both}
+@keyframes ultVoidSwell{0%{opacity:0;scale:.1}30%{opacity:1;scale:.7}55%{opacity:1;scale:1}62%{opacity:1;scale:.5}70%{opacity:1;scale:2.4}100%{opacity:0;scale:3.2}}
+/* v3.175 궁그닐 디센트(다크나이트): 거대한 창이 내리꽂히고 어둠의 충격이 번집니다 */
+.ult-gungnil{--fx:#ff6a7a}.ult-gungnil .scene-fx-dark{background:#120409}
+.ult-gungnil .ult-a{left:62%;top:48%;width:22px;height:190px;margin:-190px 0 0 -11px;clip-path:polygon(50% 0,100% 18%,70% 18%,70% 100%,30% 100%,30% 18%,0 18%);background:linear-gradient(180deg,#fff,#ff6a7a 25%,#5a0a1e 60%,#2a0410);box-shadow:0 0 22px #ff3a5a;rotate:14deg;transform-origin:50% 100%;animation:ultGungnilFall 2.4s cubic-bezier(.75,0,.25,1) var(--fx-delay) both}
+.ult-gungnil .ult-b{left:62%;top:50%;width:260px;height:90px;margin:-45px 0 0 -130px;border:3px solid #ff6a7a;border-radius:50%;box-shadow:0 0 22px #ff3a5a,inset 0 0 22px rgba(255,58,90,.5);animation:ultDemonShock 2.4s ease-out var(--fx-delay) both}
+.ult-gungnil .ult-frag:nth-of-type(even){color:#ff9ab0;text-shadow:0 0 10px #ff3a5a}
+.battle-scene:has(.ult-gungnil) .ocean-art{animation:punShake .5s steps(2) calc(var(--fx-delay) + .85s) both}
+@keyframes ultGungnilFall{0%{opacity:0;translate:60px -200px;scale:1 .5}25%{opacity:1;translate:40px -150px;scale:1 .8}38%{opacity:1;translate:0 0;scale:1 1}70%{opacity:1}100%{opacity:0;translate:0 8px}}
+/* v3.175 파이널 피규레이션(카이저): 용의 날개가 펼쳐지고 내려찍는 일격이 땅을 울립니다 */
+.ult-kaiser{--fx:#ffd27a}.ult-kaiser .scene-fx-dark{background:#140804}
+.ult-kaiser .ult-a,.ult-kaiser .ult-b{left:62%;top:48%;width:170px;height:100px;margin:-115px 0 0 -170px;clip-path:polygon(100% 100%,0 40%,10% 0,45% 28%,60% 0,78% 36%,100% 20%);background:linear-gradient(200deg,#fff2c4,#ffd27a 30%,#ff5a3a 70%,#5a1008);box-shadow:0 0 20px #ff8a3a;transform-origin:100% 100%;animation:ultKaiserWing 2.4s cubic-bezier(.4,0,.3,1) var(--fx-delay) both}
+.ult-kaiser .ult-b{margin-left:0;transform-origin:0 100%;scale:-1 1;animation-name:ultKaiserWing}
+.ult-kaiser .ult-frag{color:#ffe9a8;text-shadow:0 0 10px #ff8a3a}
+.battle-scene:has(.ult-kaiser) .ocean-art{animation:punShake .6s steps(3) calc(var(--fx-delay) + .9s) both}
+@keyframes ultKaiserWing{0%{opacity:0;rotate:30deg;scale:.3 .3}25%{opacity:1;rotate:0deg;scale:1 1}40%{rotate:-8deg}50%{rotate:18deg;scale:1 .8}70%{opacity:1;rotate:0deg;scale:1 1}100%{opacity:0;scale:1.3 1.3}}
+.ult-kaiser .ult-b{animation-name:ultKaiserWingB}
+@keyframes ultKaiserWingB{0%{opacity:0;rotate:-30deg;scale:-.3 .3}25%{opacity:1;rotate:0deg;scale:-1 1}40%{rotate:8deg}50%{rotate:-18deg;scale:-1 .8}70%{opacity:1;rotate:0deg;scale:-1 1}100%{opacity:0;scale:-1.3 1.3}}
+/* v3.175 진리의 문(루미너스): 빛의 문이 열리며 안에서 빛이 쏟아집니다 */
+.ult-gate{--fx:#fff6c8}.ult-gate .scene-fx-dark{background:#0a0a14}
+.ult-gate .ult-a{left:62%;top:48%;width:120px;height:200px;margin:-110px 0 0 -60px;border:4px solid #fff6c8;border-radius:60px 60px 6px 6px;box-shadow:0 0 24px #fff1a8,inset 0 0 30px rgba(255,241,168,.6);background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,246,200,.5) 60%,transparent);animation:ultGateOpen 2.4s ease-out var(--fx-delay) both}
+.ult-gate .ult-b{left:62%;top:38%;width:300px;height:160px;margin:-80px 0 0 -150px;background:radial-gradient(ellipse at 50% 50%,#fff 0,rgba(255,246,200,.8) 20%,transparent 60%);mix-blend-mode:screen;animation:ultGateLight 2.4s ease-out calc(var(--fx-delay) + .4s) both}
+.ult-gate .ult-frag{color:#fff6c8;text-shadow:0 0 12px #ffe38b}
+@keyframes ultGateOpen{0%{opacity:0;scale:.6 .1}20%{opacity:1;scale:1 1}40%{scale:1.04 1}75%{opacity:1}100%{opacity:0;scale:1.2 1.2}}
+@keyframes ultGateLight{0%{opacity:0;scale:.3 1}30%{opacity:1;scale:1 1}70%{opacity:1;scale:1.6 1.1}100%{opacity:0;scale:2.4 1.2}}
+/* v3.175 선기: 분신 둔갑 태을선인(호영): 팔괘 결계가 돌고 부적이 내려옵니다 */
+.ult-sage{--fx:#ffe9a8}.ult-sage .scene-fx-dark{background:#0a0f14}
+.ult-sage .ult-a{left:62%;top:48%;width:230px;height:230px;margin:-115px 0 0 -115px;clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);background:repeating-conic-gradient(from 0deg,rgba(255,233,168,.0) 0 40deg,rgba(255,233,168,.35) 40deg 45deg),radial-gradient(circle,transparent 56%,rgba(120,220,255,.35) 58%,transparent 62%);box-shadow:0 0 20px #7ddcff;animation:ultSageWheel 2.4s linear var(--fx-delay) both}
+.ult-sage .ult-b{left:62%;top:48%;width:44px;height:150px;margin:-180px 0 0 -22px;background:linear-gradient(180deg,#ffe9a8,#ffd27a);border:2px solid #b8862a;box-shadow:0 0 16px #ffe9a8;animation:ultSageTalisman 2.4s cubic-bezier(.6,0,.3,1) calc(var(--fx-delay) + .2s) both}
+.ult-sage .ult-b::before{content:'符';position:absolute;inset:0;display:grid;place-items:center;font:800 30px/1 serif;color:#7a1e0a}
+.ult-sage .ult-frag{color:#7ddcff;text-shadow:0 0 10px #2fb6e0;font-size:22px}
+.ult-sage .ult-frag:nth-of-type(odd){color:#ffe9a8;text-shadow:0 0 10px #ffd27a}
+@keyframes ultSageWheel{0%{opacity:0;rotate:0deg;scale:.3}18%{opacity:1;scale:1}80%{opacity:1;rotate:270deg}100%{opacity:0;rotate:360deg;scale:1.4}}
+@keyframes ultSageTalisman{0%{opacity:0;translate:0 -160px;rotate:-12deg}25%{opacity:1;translate:0 0;rotate:4deg}35%{rotate:-3deg}75%{opacity:1;rotate:0deg}100%{opacity:0;translate:0 20px}}
+/* v3.175 인피니티 스펠(아크): 진홍 무한 문양이 타오르고 두 고리가 교차합니다 */
+.ult-infinity{--fx:#ff5a8a}.ult-infinity .scene-fx-dark{background:#14040a}
+.ult-infinity .ult-a{left:62%;top:48%;width:210px;height:210px;margin:-105px 0 0 -105px;border-radius:50%;border:4px solid transparent;border-top-color:#ff5a8a;border-bottom-color:#ff5a8a;box-shadow:0 0 18px #ff2a6a;animation:ultInfinityRing 2.4s linear var(--fx-delay) both}
+.ult-infinity .ult-b{left:62%;top:48%;width:0;height:0}
+.ult-infinity .ult-b::before{content:'∞';position:absolute;translate:-50% -56%;font:800 120px/1 serif;color:#ff8ab0;text-shadow:0 0 24px #ff2a6a,0 0 48px #ff2a6a;animation:ultInfinityGlyph 2.4s cubic-bezier(.4,0,.3,1) var(--fx-delay) both}
+.ult-infinity .ult-frag{color:#ffb3cc;text-shadow:0 0 10px #ff2a6a}
+.battle-scene:has(.ult-infinity) .ocean-art{animation:ultNovaTint 2.4s ease-out both}
+@keyframes ultInfinityRing{0%{opacity:0;rotate:0deg;scale:.4}20%{opacity:1;scale:1}80%{opacity:1;rotate:420deg}100%{opacity:0;rotate:540deg;scale:1.5}}
+@keyframes ultInfinityGlyph{0%{opacity:0;scale:.3;rotate:-20deg}25%{opacity:1;scale:1.1;rotate:0deg}35%{scale:1}70%{opacity:1}100%{opacity:0;scale:1.6}}
+/* v3.175 인피니트(아델): 에테르 검의 고리가 조여들며 중심에서 터집니다 */
+.ult-aether{--fx:#8ad7ff}.ult-aether .scene-fx-dark{background:#040c16}
+.ult-aether .ult-a{left:62%;top:48%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;background:repeating-conic-gradient(from 0deg,transparent 0 24deg,#8ad7ff 26deg 28deg,#fff 29deg,transparent 31deg 45deg);mask-image:radial-gradient(circle,transparent 30%,#000 36%,#000 64%,transparent 70%);-webkit-mask-image:radial-gradient(circle,transparent 30%,#000 36%,#000 64%,transparent 70%);filter:drop-shadow(0 0 8px #8ad7ff);animation:ultAetherRing 2.4s cubic-bezier(.5,0,.3,1) var(--fx-delay) both}
+.ult-aether .ult-b{left:62%;top:48%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;background:radial-gradient(circle,#fff 0,#8ad7ff 40%,transparent 70%);animation:ultAetherBurst 2.4s ease-out calc(var(--fx-delay) + .9s) both}
+.ult-aether .ult-frag{animation-name:ultGravityPull;animation-duration:1.2s;color:#d6f1ff;text-shadow:0 0 10px #8ad7ff}
+@keyframes ultAetherRing{0%{opacity:0;scale:1.6;rotate:0deg}25%{opacity:1;scale:1}60%{opacity:1;scale:.45;rotate:180deg}68%{opacity:0;scale:.2}100%{opacity:0;scale:.2}}
+@keyframes ultAetherBurst{0%{opacity:0;scale:.2}20%{opacity:1;scale:1.4}100%{opacity:0;scale:4.5}}
+/* v3.175 벙커 버스터(블래스터): 거대한 피스톤 건틀릿이 왼쪽에서 박히고 충격 띠가 퍼집니다 */
+.ult-bunker{--fx:#ff9a4a}.ult-bunker .scene-fx-dark{background:#120904}
+.ult-bunker .ult-a{left:62%;top:48%;width:230px;height:70px;margin:-35px 0 0 -250px;border-radius:10px 24px 24px 10px;background:linear-gradient(180deg,#ffd0a8,#ff9a4a 40%,#8a3a10 80%,#3a1606);box-shadow:0 0 18px #ff7a2a,inset 0 -8px 0 rgba(0,0,0,.35);animation:ultBunkerPunch 2.4s cubic-bezier(.8,0,.2,1) var(--fx-delay) both}
+.ult-bunker .ult-b{left:62%;top:48%;width:300px;height:160px;margin:-80px 0 0 -150px;background:repeating-linear-gradient(90deg,transparent 0 16px,rgba(255,154,74,.8) 16px 19px,transparent 19px 36px);mask-image:radial-gradient(ellipse,#000 20%,transparent 65%);-webkit-mask-image:radial-gradient(ellipse,#000 20%,transparent 65%);animation:ultBunkerShock 2.4s ease-out calc(var(--fx-delay) + .55s) both}
+.ult-bunker .ult-frag{color:#ffd0a8;text-shadow:0 0 10px #ff7a2a}
+.battle-scene:has(.ult-bunker) .ocean-art{animation:punShake .5s steps(2) calc(var(--fx-delay) + .55s) both}
+@keyframes ultBunkerPunch{0%{opacity:0;translate:-180px 0}18%{opacity:1;translate:-120px 0}24%{translate:-130px 0}36%{opacity:1;translate:30px 0}48%{translate:10px 0}75%{opacity:1}100%{opacity:0;translate:-60px 0}}
+@keyframes ultBunkerShock{0%{opacity:0;scale:.2 .6}20%{opacity:1;scale:1 1}100%{opacity:0;scale:1.8 1.3}}
+/* v3.175 용맥 폭발(라라): 땅의 기운이 솟구치고 균열이 번지며 꽃잎이 떠오릅니다 */
+.ult-vein{--fx:#8af0b4}.ult-vein .scene-fx-dark{background:#04120a}
+.ult-vein .ult-a{left:62%;top:48%;width:170px;height:150px;margin:-140px 0 0 -85px;clip-path:polygon(50% 0,64% 22%,84% 10%,78% 40%,100% 48%,80% 62%,92% 100%,8% 100%,20% 62%,0 48%,22% 40%,16% 10%,36% 22%);background:linear-gradient(180deg,#fff,#8af0b4 30%,#2fb06a 70%,transparent);mix-blend-mode:screen;transform-origin:50% 100%;animation:ultVeinErupt 2.4s cubic-bezier(.3,.7,.3,1) var(--fx-delay) both}
+.ult-vein .ult-b{left:62%;top:52%;width:320px;height:4px;margin:-2px 0 0 -160px;background:linear-gradient(90deg,transparent,#8af0b4 20%,#fff 50%,#8af0b4 80%,transparent);box-shadow:0 14px 0 -1px rgba(138,240,180,.6),0 -10px 0 -1px rgba(138,240,180,.6),0 0 14px #2fb06a;rotate:-3deg;animation:ultMjolnirCrack 2.4s ease-out calc(var(--fx-delay) + .25s) both}
+.ult-vein .ult-frag{animation-name:ultPeaceRise;animation-duration:1.9s;color:#d6ffe6;text-shadow:0 0 10px #2fb06a}
+.battle-scene:has(.ult-vein) .ocean-art{animation:punShake .5s steps(2) calc(var(--fx-delay) + .3s) both}
+@keyframes ultVeinErupt{0%{opacity:0;scale:.5 .05}25%{opacity:1;scale:1 1}60%{opacity:1;scale:1.1 1.05}100%{opacity:0;scale:1.4 1.2}}
 /* 정지된 시간: 푸르게 멈춘 화면, 도는 시계 테두리, 금 가는 선 */
 .ult-time{--fx:#a9c7ff}.ult-time .scene-fx-dark{background:#020816}
 .ult-time .ult-a{left:62%;top:48%;width:200px;height:200px;margin:-100px 0 0 -100px;border:3px dashed #a9c7ff;border-radius:50%;box-shadow:0 0 24px #a9c7ff;animation:ultClock 2.4s linear var(--fx-delay) both}
