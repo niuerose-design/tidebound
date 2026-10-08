@@ -9,11 +9,11 @@
 import type { State } from '../types';
 import { db, type CrewRow } from './db';
 import { ApiError } from './store';
-import { dayKey, weekKey } from '../data/goals';
 import { addLog } from '../systems/state';
 import { gainHacker, hackerState, isHacker } from '../systems/hacker';
 import { CREW, CREW_SIDES, cleanCrewName, crewGrade, crewGradeProgress, crewSide, normalizeCrewCode, opGoal, opSteps, sideAllows, crewModule, moduleSlots, upkeepOf, crewScore, type CrewData, type CrewSide, type CrewWeek } from '../data/crew';
 import { randomInviteCode } from '../data/guild';
+import { dayKey, weekKey } from '../data/time';
 
 const CACHE_MS = 30_000, ATTEMPTS = 3;
 const cache = new Map<string, { at: number; row: CrewRow | null }>();

@@ -46,14 +46,14 @@ export type AffixDef = {
     description: string;
 };
 export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean; /** v3.82 유물에 이식한 줄의 원래 장비 등급(감쇠를 맞춘 표시). */ srcRarity?: number; /** v3.141 이식한 비율 옵션(초월 · 포식자 · 관통 등)을 유물 등급 품질로 맞춘 줄. 마이그레이션이 한 번만 손대도록 표시. */ pctFixed?: true };
-/** 장비 옵션 합계 상한. v3.71 흡혈 6%p → 10%p(흡혈 옵션 상향과 함께). */
+/** 장비 옵션 합계 상한. */
 export const GEAR_CAPS: Partial<Record<GearStat, number>> = { lifesteal: .1, statusResist: .5 };
 
 export const RULE_CAPS: Partial<Record<GearStat, number>> = {
     stunBonus: 1, controlBonus: 1, dotTurnsBonus: 2, poisonStackBonus: 3, /** 마력 평타 계수는 장비 몫만 상한(스킬 패시브는 상한 없음, v3.151). */ arcaneRatioBonus: .3, followUpBonus: .3, healBonus: .5, executeBonus: .15,
 };
 
-/** v3.5 불굴(상태이상 저항) 기본값: Lv.100 태초 22성(×1.66) 평균 굴림에서 상한 50%에 닿는 값. v3.71 등급 품질이 1.6 → 2.2가 되어 .188 → .137(같은 지점에서 상한). */
+/** v3.5 불굴(상태이상 저항) 기본값: Lv.100 태초 22성(×1.66) 평균 굴림에서 상한 50%에 닿는 값. */
 export const STATUS_RESIST_BASE = .137, STATUS_RESIST_STAR = .03;
 export const AFFIX_POOL: AffixDef[] = [
     // 능력치 옵션
@@ -68,7 +68,7 @@ export const AFFIX_POOL: AffixDef[] = [
     // v3.73 이중 옵션: 위력(물공+마공) · 수호(물방+마방)는 한쪽 옵션보다 각 수치가 낮은 대신 두 쪽을 함께 올립니다. 마력은 샘물+순환 통합.
     { id: 'force', name: '위력', stat: 'attack', kind: 'flat', base: .2, stat2: 'magic', base2: .2, rollBoth: true, description: '물리 공격과 마법 공격이 함께 오릅니다.' },
     { id: 'guardian', name: '수호', stat: 'defense', kind: 'flat', base: .2, stat2: 'resist', base2: .2, rollBoth: true, description: '물리 방어와 마법 방어가 함께 오릅니다.' },
-    // v3.90 최대 마나 위력 ×0.2 → ×0.225(생명 ×1.5의 15%: 체력 2,000 옵션이 뜨는 장비에서 마나 약 200~400).
+    // v3.90 최대 마나 위력 ×0.225(생명 ×1.5의 15%: 체력 2,000 옵션이 뜨는 장비에서 마나 약 200~400).
     { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .225, stat2: 'manaRegen', base2: .012, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, weight: .4, description: '치명 피해가 오릅니다.' },
@@ -162,7 +162,7 @@ const THEME_WEIGHT = 4;
 /** 드롭 등급 확률(드롭이 일어났을 때). 합 1. */
 /** v3.52 장비 등급 분포는 서버 전용(game/secret/odds.ts, ODDS.drop.rarity). */
 /** 등급별 옵션 수치 배율: 높은 등급일수록 한 옵션도 강합니다. */
-/** 옵션 수치의 등급 품질. v3.71 1 + 0.1 × 등급 → 1 + 0.2 × 등급(신화 1.8 · 고대 2.0 · 태초 2.2): 높은 등급의 한 줄이 확실히 강하도록. 이미 붙은 옵션 수치는 그대로입니다. */
+/** 옵션 수치의 등급 품질: 1 + 0.2 × 등급(신화 1.8 · 고대 2.0 · 태초 2.2), 높은 등급의 한 줄이 확실히 강하도록. */
 export const rarityQuality = (rarity: number) => 1 + rarity * .2;
 /** 분해 시 얻는 정수와 옵션 재설정에 드는 정수. */
 export const ESSENCE_BY_RARITY = [1, 2, 4, 8, 16, 32, 64];
@@ -180,9 +180,9 @@ export const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity)
  * - 원시 고대 · 계승 태초 · 칠흑: 세계석 GEAR_RESET_PEARLS로 재련 · 재설정 횟수를 0으로(비용 초기화). 대신 별 0 · 추가 옵션 새로 굴림(최고 수치).
  */
 /**
- * v3.131 재련 비용 곡선: 성장 1.08 → 1.1, 그리고 systems/equipment refineCost가 환생 배율 10^(환생 ÷ 120)(원시 각성과 같은 식, 난이도 정수 수입을 따라감)을 곱합니다.
+ * v3.131 재련 비용 곡선: 성장 1.1, 그리고 systems/equipment refineCost가 환생 배율 10^(환생 ÷ 120)(원시 각성과 같은 식, 난이도 정수 수입을 따라감)을 곱합니다.
  * 환생 100 태초(처음 48): 40회째 약 2천(난이도 100 정수 수입 20분) · 50회째 5천(1시간) · 60회째 1.4만(2.4시간) · 80회째 9만(16시간) · 100회째 62만(109시간).
- * 60~80회쯤부터 세계석 999 비용 초기화가 눈에 들어오도록 둔 값입니다(전에는 50회 누적 4천 정수라 초기화할 이유가 없었음).
+ * 60~80회쯤부터 세계석 999 비용 초기화가 눈에 들어오도록 둔 값입니다.
  */
 export const REFINE_GROWTH = 1.1, REROLL_GOLD = 20, GEAR_RESET_PEARLS = 999;
 export const refineEssenceAt = (rarity: number, refines = 0, rebirthFactor = 1) => Math.ceil(refineEssence(rarity) * rebirthFactor * Math.pow(REFINE_GROWTH, Math.max(0, Math.floor(refines))));
@@ -195,7 +195,7 @@ export const HEIR_ROLL_TOP = 1.5;
 /**
  * v3.131 100%를 넘는 굴림은 균등이 아닙니다. 한 번 굴릴 때 HEIR_ROLL_TAIL(15%)만 100% 위로 가고, 그 안에서도 위로 갈수록 급히 드물어집니다
  * (100% 위 x만큼을 넘을 확률 = TAIL × (1 − x ÷ 50%)^TAIL_POWER): 110% 위 6.1% · 120% 위 1.9% · 130% 위 0.38% · 140% 위 0.024%. 기대 횟수 110% 16회 · 120% 52회 · 130% 260회.
- * 0~100%는 전처럼 균등(85%). 난수는 한 번만 씁니다. heirRollQuality가 난수 → 수치(0~1.5)를 바꿉니다.
+ * 0~100%는 균등(85%). 난수는 한 번만 씁니다. heirRollQuality가 난수 → 수치(0~1.5)를 바꿉니다.
  */
 export const HEIR_ROLL_TAIL = .15, HEIR_ROLL_TAIL_POWER = 4;
 export function heirRollQuality(u: number, top = HEIR_ROLL_TOP) {
@@ -233,7 +233,7 @@ export function rollOption(def: AffixDef, power: number, rarity: number, rng: ()
     const out: ItemAffix = { id: def.id, name: def.name, stat: def.stat, value: round(def.base * scale * roll) };
     if (def.stat2 && def.base2) {
         // 체력·공격·방어 같은 고정 수치 손해는 위력 비례, 속도·명중 같은 손해는 고정 폭입니다.
-        // v3.119 턴당 마나 회복(마력의 둘째 수치)도 위력 비례입니다(빠져 있어 0.01 남짓 · ‘+0’으로 붙던 버그).
+        // v3.119 턴당 마나 회복(마력의 둘째 수치)도 위력 비례입니다.
         const flatStat = ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'manaRegen'].includes(def.stat2);
         out.stat2 = def.stat2;
         out.value2 = def.rollBoth ? (flatStat ? Math.round(def.base2 * Math.max(1, power) * roll) : Math.round(def.base2 * roll * 10000) / 10000) : flatStat ? Math.round(def.base2 * Math.max(1, power)) : Math.round(def.base2 * 10000) / 10000;

@@ -3,7 +3,7 @@
  *
  * - 한 전투 = 같은 적과 주고받은 타격 줄들 + 끝 줄(처치 · 패배 · 달아남/사라짐).
  * - 적 이름은 전투 로그의 이름(enemyLabel)을 그대로 키로 씁니다. 무리 규모 · 변종 · 보스가 다르면 다른 몹입니다.
- * - 일반 몹은 최근 승리 1회, 무리 · 변종 · 보스는 최근 5회를 남기고, 패배는 어느 몹이든 5회까지 남깁니다.
+ * - 일반 몹은 최근 승리 1회, 무리 · 변종 · 보스는 최근 3회를 남기고, 패배는 어느 몹이든 3회까지 남깁니다(BATTLE_RECORD).
  * - 오프라인 정산처럼 로그가 한꺼번에 잘려 들어오면 그 전투는 ‘일부’로 표시합니다.
  */
 import type { CombatEvent, Log } from '../types';
@@ -40,7 +40,7 @@ export type BattleRecordStore = {
     /** 최근에 싸운 몹 순서(새것 먼저). */
     order: string[];
 };
-/** v3.119 너무 길어지지 않게: 몹 20 → 10종, 무리 · 변종 · 보스 승리와 패배 5 → 3회. */
+/** v3.119 기록 상한(너무 길어지지 않게). */
 export const BATTLE_RECORD = { special: 3, normal: 1, defeats: 3, mobs: 10, lines: 24 } as const;
 
 export const emptyBattleRecords = (): BattleRecordStore => ({ lastId: 0, byMob: {}, order: [] });

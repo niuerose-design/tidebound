@@ -53,7 +53,7 @@ function fight(a, b, rng, cap = MAX_TURNS) {
 }
 const avg = xs => xs.reduce((a, x) => a + x, 0) / Math.max(1, xs.length);
 const pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : n >= 1e4 ? `${Math.round(n / 1e4)}만` : `${Math.round(n)}`;
-const monsterOf = id => MONSTERS.find(f => f.id === id);
+const monsterById = id => MONSTERS.find(f => f.id === id);
 const out = { bodies: {}, dungeon: [], onyx: [], raid: [] };
 
 // ── 던전 ──────────────────────────────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ function dungeonRun(s, st, d, tier, seed, depth = 1) {
     const rng = random(seed * 977 + d.id.length), cd = {}; let hp = st.hp, mana = st.mana, ok = true, w = 0, turns = 0, bossTurns = 0, bossHpLeft = 0;
     const level = d.id === 'abyss' ? d.level : d.level;
     for (; w < WAVES && ok; w++) {
-        const last = w === WAVES - 1, id = last && d.bossMonster ? d.bossMonster : d.monsters[w], f0 = monsterOf(id);
+        const last = w === WAVES - 1, id = last && d.bossMonster ? d.bossMonster : d.monsters[w], f0 = monsterById(id);
         const f = d.id === 'abyss' ? f0 : tideLiftMonster(f0, tier, s.level);
         const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), depth, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: w });
         if (last && d.id !== 'abyss' && BOSS_HP !== 1) est.hp = Math.round(est.hp * BOSS_HP);
@@ -95,8 +95,8 @@ function measureDungeons() {
 // ── 칠흑 ──────────────────────────────────────────────────────────────────────────────────────
 function onyxFoe(habitat, tier, playerLevel) {
     // 게임 규칙 그대로(systems/encounter.ts spawn): 서식지 최강(난이도만큼 레벨 상승) × hpMul · 공격 ×3, 난이도 배율은 √(onyxEnemyStats). --onyx-hp는 hpMul 실험.
-    const def = onyxBossFor(habitat.region), top = tideLiftMonster([...habitat.monsters].map(x => monsterOf(x)).sort((a, b) => b.level - a.level)[0], tier, playerLevel);
-    const f = { ...monsterOf(def.id), level: top.level, hp: Math.round(top.hp * (ONYX_HP[def.id] ?? def.hpMul)), attack: Math.round(top.attack * ONYX.attack), defense: top.defense };
+    const def = onyxBossFor(habitat.region), top = tideLiftMonster([...habitat.monsters].map(x => monsterById(x)).sort((a, b) => b.level - a.level)[0], tier, playerLevel);
+    const f = { ...monsterById(def.id), level: top.level, hp: Math.round(top.hp * (ONYX_HP[def.id] ?? def.hpMul)), attack: Math.round(top.attack * ONYX.attack), defense: top.defense };
     return { def, f, st: onyxEnemyStats(f, tier) };
 }
 function measureOnyx() {

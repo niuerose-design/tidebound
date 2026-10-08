@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Lock, Swords, Gem, Skull } from 'lucide-react';
 import { MonsterArt } from './art';
 import { BALANCE, MONSTER_TUNING, dungeonOverlevel, DUNGEON_MODES, type DungeonMode } from '@/game/data/balance';
-import { MONSTERS, DUNGEONS, PLAIN_DUNGEONS , closedIn, CLOSED_NOTE } from '@/game/data/world';
+import { PLAIN_DUNGEONS, closedIn, CLOSED_NOTE, monsterById, dungeonById } from '@/game/data/world';
 import { SKILLS } from '@/game/data/skills';
 import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
 import { bookRevealed } from '@/game/systems/book';
@@ -23,11 +23,11 @@ import type { PanelProps } from './panel-props';
 import { RANDOM_GAME, randomGameTier, waveStake, stakeUpTo } from '@/game/data/random-game';
 import { randomGameRank, randomGamePayout, randomGameRunsLeft, stakePayout } from '@/game/systems/random-game';
 export function Dungeons({ s, send, busy }: PanelProps) {
-    const activeDungeon = s.dungeon ? DUNGEONS.find(d => d.id === s.dungeon?.id) : undefined;
+    const activeDungeon = s.dungeon ? dungeonById(s.dungeon?.id) : undefined;
     const playerStats = stats(s);
-    const enemyMonster = s.enemy ? MONSTERS.find(f => f.id === s.enemy?.id) : undefined;
-    const revealed = !!enemyMonster && bookRevealed(s, enemyMonster.id);
-    const enemyProfile = enemyMonster && revealed ? profile(enemyMonster.id) : undefined;
+    const enemyDef = s.enemy ? monsterById(s.enemy?.id) : undefined;
+    const revealed = !!enemyDef && bookRevealed(s, enemyDef.id);
+    const enemyProfile = enemyDef && revealed ? profile(enemyDef.id) : undefined;
     const activeWave = s.dungeon?.wave ?? 0;
     const randomRun = activeDungeon?.id === RANDOM_GAME.id;
     const skillFx = useSkillFx(), { effects: combatFx, combo: fxCombo } = useCombatFx(s.logs, s.name, skillFx);
@@ -50,8 +50,8 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             const isDone = s.dungeon!.wave > index;
             const isCurrent = s.dungeon!.wave === index;
             const isBoss = index === activeDungeon.monsters.length - 1;
-            const monster = isBoss && activeDungeon.bossMonster ? MONSTERS.find(f => f.id === activeDungeon.bossMonster) : MONSTERS.find(f => f.id === id);
-            return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><MonsterArt id={monster?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{monster?.name || id}</strong></div>;
+            const def = isBoss && activeDungeon.bossMonster ? monsterById(activeDungeon.bossMonster) : monsterById(id);
+            return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><MonsterArt id={def?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{def?.name || id}</strong></div>;
         })}</div>}
         <div className="dungeon-combat-grid dungeon-combat-fx-host">
         <CombatFxOverlay effect={combatFx} combo={fxCombo}/>

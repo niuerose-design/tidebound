@@ -1,4 +1,5 @@
 import type { Item, State } from '../types';
+import { percent } from './progression';
 
 /**
  * v25.6 캐릭터 슬롯과 계정 보너스.
@@ -6,10 +7,10 @@ import type { Item, State } from '../types';
  * 슬롯 요약은 서버가 저장 전에 올리고(slots 테이블), 합계는 s.account 에 캐시되어 능력치 계산이 저장 상태만 봅니다. 없으면 보너스 0.
  */
 export const SLOT_COUNT = 3;
-/** 슬롯 해금 조건: 2번은 어느 캐릭터든 환생 1회, 3번은 계정 환생 합계 50회(v27.79, 전에는 5회 — 장기 콘텐츠). */
+/** 슬롯 해금 조건: 2번은 어느 캐릭터든 환생 1회, 3번은 계정 환생 합계 50회(v27.79, 장기 콘텐츠). */
 const SLOT_UNLOCK = [0, 1, 50];
 /**
- * v27.79 계정 보너스는 AP를 빼고 모두 낮은 곱연산 배율입니다(전에는 경험치·골드 +10%/회 등 가산). 분신은 장기 콘텐츠이고 캐릭터 스펙은 계급장·연구가 맡습니다.
+ * v27.79 계정 보너스는 AP를 빼고 모두 낮은 곱연산 배율입니다. 분신은 장기 콘텐츠이고 캐릭터 스펙은 계급장·연구가 맡습니다.
  */
 export const ACCOUNT_RULES = {
     /** 계정 환생 합계 1회마다 경험치·골드 ×(1 + 1%)(최대 30회 · ×1.3). */
@@ -60,17 +61,16 @@ export const accountMastery = (s: AccountState) => 1 + accountSpeciesRank(s) * R
 const accountBossRank = (s: AccountState) => Math.min(R.bossCap, Math.floor((s.account?.bossKills || 0) / R.bossPer));
 /** 치명타 확률 배율(1.05 = ×1.05). */
 export const accountCrit = (s: AccountState) => 1 + accountBossRank(s) * R.bossStep;
-export const pct = (n: number, digits = 0) => `${(n * 100).toFixed(digits)}%`;
 /** 환생 화면 계정 보너스 카드의 줄. */
 export function accountBonusRows(s: AccountState) {
     const a = s.account, next = (n: number, per: number, cap: number) => Math.floor(n / per) >= cap ? '최대' : `다음 단계까지 ${per - n % per}`;
     const rebirths = a?.rebirths || 0, mastered = a?.mastered || 0, species = a?.species || 0, boss = a?.bossKills || 0, abyss = a?.abyssBest || 0;
     return [
-        { name: '계정 환생 합계', value: `${rebirths}회`, effect: `경험치·골드 +${pct(accountExpGold(s) - 1)}`, next: rebirths >= R.rebirthCap ? '최대' : `1회마다 +${pct(R.rebirthStep)} · 최대 ${R.rebirthCap}회` },
+        { name: '계정 환생 합계', value: `${rebirths}회`, effect: `경험치·골드 +${percent(accountExpGold(s) - 1)}`, next: rebirths >= R.rebirthCap ? '최대' : `1회마다 +${percent(R.rebirthStep)} · 최대 ${R.rebirthCap}회` },
         { name: '숙달한 직업(합집합)', value: `${mastered}개`, effect: `장착 AP +${accountAP(s)}`, next: `${R.masteredPer}개마다 +1 · ${next(mastered, R.masteredPer, R.masteredCap)}` },
-        { name: '계정 최고 무릉도장 층', value: `${abyss}층`, effect: `두 공격·최대 체력·최대 마나 +${pct(accountPower(s) - 1, 1)}`, next: `${R.abyssPer}층마다 +${pct(R.abyssStep, 1)} · ${next(abyss, R.abyssPer, R.abyssCap)}` },
-        { name: '발견한 어종(합집합)', value: `${species}종`, effect: `직업·스킬 숙련 획득 +${pct(accountMastery(s) - 1)}`, next: `${R.speciesPer}종마다 +${pct(R.speciesStep)} · ${next(species, R.speciesPer, R.speciesCap)}` },
-        { name: '보스 포획 합계', value: `${boss}마리`, effect: `치명타 확률 +${pct(accountCrit(s) - 1)}`, next: `${R.bossPer}마리마다 +${pct(R.bossStep)} · ${next(boss, R.bossPer, R.bossCap)}` },
+        { name: '계정 최고 무릉도장 층', value: `${abyss}층`, effect: `두 공격·최대 체력·최대 마나 +${percent(accountPower(s) - 1, 1)}`, next: `${R.abyssPer}층마다 +${percent(R.abyssStep, 1)} · ${next(abyss, R.abyssPer, R.abyssCap)}` },
+        { name: '발견한 몬스터(합집합)', value: `${species}종`, effect: `직업·스킬 숙련 획득 +${percent(accountMastery(s) - 1)}`, next: `${R.speciesPer}종마다 +${percent(R.speciesStep)} · ${next(species, R.speciesPer, R.speciesCap)}` },
+        { name: '보스 포획 합계', value: `${boss}마리`, effect: `치명타 확률 +${percent(accountCrit(s) - 1)}`, next: `${R.bossPer}마리마다 +${percent(R.bossStep)} · ${next(boss, R.bossPer, R.bossCap)}` },
     ];
 }
 /**

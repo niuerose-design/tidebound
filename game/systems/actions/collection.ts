@@ -1,6 +1,6 @@
 /** 도감·연구 보상 */
 import type { State, Item } from '../../types';
-import { MONSTERS } from '../../data/world';
+import { MONSTERS, monsterById } from '../../data/world';
 import { SLOTS, RARITIES } from '../../data/balance';
 import { bookPending, itemKey } from '../progression';
 import type { ActionHandlers } from './types';
@@ -13,7 +13,7 @@ function claimBookRewards(s: State, id: string) {
         return false;
     s.bookClaims[id] = pending.upTo;
     s.sp += pending.sp;
-    addLog(s, `도감 연구 ${pending.ranks.length > 1 ? `${pending.ranks.length}단계 ` : ''}완료 · ${MONSTERS.find(f => f.id === id)!.name} · SP +${pending.sp}`, 'reward');
+    addLog(s, `도감 연구 ${pending.ranks.length > 1 ? `${pending.ranks.length}단계 ` : ''}완료 · ${monsterById(id)!.name} · SP +${pending.sp}`, 'reward');
     return true;
 }
 
@@ -22,7 +22,7 @@ export function claimPendingBooks(s: State) { let n = 0; for (const f of MONSTER
 
 export const collectionActions: ActionHandlers = {
     claimBook(s, { id }) {
-        if (!MONSTERS.some(f => f.id === id))
+        if (!monsterById(id))
             throw Error('몬스터를 찾을 수 없습니다.');
         if (!claimBookRewards(s, id))
             throw Error('받을 도감 보상이 없습니다.');

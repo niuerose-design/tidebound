@@ -1,13 +1,13 @@
 /**
  * v27.11 외부 생성 이미지 자리와 실루엣 폴백.
- * 이미지는 public/art/{fish|jobs}/{id}.webp 에 두면 자동으로 쓰이고, 없으면 실루엣이 그대로 남습니다.
+ * 이미지는 public/art/{monsters|jobs}/{id}.webp 에 두면 자동으로 쓰이고, 없으면 실루엣이 그대로 남습니다.
  * 파일 이름은 몬스터 id / 계보 id와 같습니다(docs/art/README.md).
  */
 import { MONSTERS } from './world';
 
 import { MONSTER_ART, JOB_ART, ONYX_ART } from './art-manifest';
 /** v27.57 그림이 있으면 경로, 없으면 null(요청하지 않고 실루엣·아이콘). 목록은 node scripts/art-manifest.mjs 가 만듭니다. */
-export const monsterArtSrc = (id: string) => MONSTER_ART[id] ? `/art/fish/${id}.${MONSTER_ART[id]}` : null;
+export const monsterArtSrc = (id: string) => MONSTER_ART[id] ? `/art/monsters/${id}.${MONSTER_ART[id]}` : null;
 export const jobArtSrc = (lineageId: string) => JOB_ART[lineageId] ? `/art/jobs/${lineageId}.${JOB_ART[lineageId]}` : null;
 /** v3.14 칠흑 장신구 그림(public/art/onyx/{보스id}.png|webp). 없으면 null(components/game/onyx-art의 SVG). */
 export const onyxArtSrc = (bossId: string) => ONYX_ART[bossId] ? `/art/onyx/${bossId}.${ONYX_ART[bossId]}` : null;

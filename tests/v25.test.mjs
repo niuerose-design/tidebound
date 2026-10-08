@@ -181,7 +181,7 @@ test('v25.5 multicast: chant spells fire together in one action with scaled cool
 
 test('v25.6 achievements pay out once with permanent bonuses; daily/weekly goals roll over on KST days and reward on completion', async () => {
     const { ACHIEVEMENTS, achievementTotals } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/achievements');
-    const { weekKey, dayKey } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/goals');
+    const { weekKey, dayKey } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/time');
     const { apCapacity } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
     const { syncAchievements, recordGoal } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progress');
     assert.ok(ACHIEVEMENTS.length >= 40 && new Set(ACHIEVEMENTS.map(a => a.id)).size === ACHIEVEMENTS.length);
@@ -278,7 +278,7 @@ test('v27.79 account bonuses are low multiplicative factors (AP unchanged); slot
     const t = newState(0); t.account = merged; t.level = 999; act(t, { type: 'rebirth' }, 0); assert.ok(t.rebirths === 1 && t.account === merged, 'account cache survives rebirth');
 });
 
-test('v25.7 enhance caps: legend+ to 22★, others stop at 15★; sale value follows the fish gold curve and refunds 30% of enhancement', async () => {
+test('v25.7 enhance caps: legend+ to 22★, others stop at 15★; sale value follows the monster gold curve and refunds 30% of enhancement', async () => {
     const { enhanceMaxFor, saleValue, enhanceCost } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
     const { monsterGoldAt } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
     assert.equal(enhanceMaxFor({ rarity: 2 }), 15); assert.equal(enhanceMaxFor({ rarity: 3 }), 22); assert.equal(enhanceMaxFor({ rarity: 6 }), 22);
@@ -305,7 +305,7 @@ test('v25.7 salvage research sells or dismantles all non-relic gear at rebirth w
     act(u, { type: 'salvageMode', value: 'dismantle' }, 0); act(u, { type: 'rebirth' }, 0); assert.equal(u.essence, 3 + dismantleEssence(gear(4)) + 2, 'dismantled at 100% (+ starter rod and coat, 1 essence each)'); assert.equal(u.gold, 100); assert.equal(u.salvageMode, 'dismantle', 'mode survives rebirth');
 });
 
-test('v27.86 tide best is recorded per stage (no milestone pearls), variant fish need the tier, abyss 10-floor bonus and AP milestones, abyss-only affixes', async () => {
+test('v27.86 tide best is recorded per stage (no milestone pearls), variant monster need the tier, abyss 10-floor bonus and AP milestones, abyss-only affixes', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { weightedMonsterId, reward } = await mods.load('systems/encounter'); const { MONSTERS, STAGES } = await mods.load('data/world'); const { rollAffixes, AFFIX_POOL } = await mods.load('data/gear');
     const { apCapacity } = await mods.load('systems/progression'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
@@ -357,7 +357,7 @@ test('v25.11 guild goals scale with members, points formula, weekly stats accumu
 
 test('v25.12 duel season keys, tiers, season pearls, optional duel goals excluded from the all-bonus, duel achievements', async () => {
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
-    const { monthKey, monthSeason, previousMonthKey, weekSeason, makeGoals } = await mods.load('data/goals'); const { duelTier, recommendOpponents } = await mods.load('systems/duel');
+    const { monthKey, monthSeason, previousMonthKey, weekSeason } = await mods.load('data/time'), { makeGoals } = await mods.load('data/goals'); const { duelTier, recommendOpponents } = await mods.load('systems/duel');
     const { recordGoal, syncGoals } = await mods.load('systems/progress'); const { ACHIEVEMENTS } = await mods.load('data/achievements');
     assert.equal(monthKey(Date.UTC(2026, 9, 31, 15, 30)), '2026-11', 'KST month'); assert.equal(previousMonthKey('2026-01'), '2025-12'); assert.ok(monthSeason('2026-10') !== weekSeason('2026-W10') && monthSeason('2026-10') > 10_000_000);
     assert.deepEqual([999, 1000, 1200, 1399, 1600, 2500].map(r => duelTier(r).id), ['shell', 'coral', 'pearl', 'pearl', 'abyss', 'abyss']);
@@ -459,14 +459,14 @@ test('v27.31 limit break needs the pearl research "리미터 해제"; old breaks
     old.pearls = 100; act(old, { type: 'permanent', id: 'limitBreak' }, 0); const paid = 100 - old.pearls; assert.ok(paid > 0);
     old.running = false; act(old, { type: 'resetResearch', id: 'utility' }, 0); assert.equal(old.pearls, 100, 'refunds only the paid rank'); assert.equal(old.permanent.limitBreak, 2, 'free ranks stay');
 });
-test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain fish) and survives rebirth', async () => {
+test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain monster) and survives rebirth', async () => {
     const V = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/variants');
     const s = newState(0); s.book.perch = 10000; s.skills = [];
     const big = () => .999; // 가장 큰 열린 규모(×100, 무리 감지 없음)
     assert.equal(V.rollSwarmSize(s, 'perch', big), 100, 'no cap by default');
     act(s, { type: 'swarmCap', value: '5' }, 0); assert.equal(s.swarmCap, 5); assert.equal(V.rollSwarmSize(s, 'perch', big), 5, 'capped to x5');
     assert.equal(V.rollSwarmSize(s, 'perch', () => 0), 5, 'small rolls stay');
-    act(s, { type: 'swarmCap', value: '0' }, 0); assert.equal(V.rollSwarmSize(s, 'perch', big), 1, 'off → plain fish');
+    act(s, { type: 'swarmCap', value: '0' }, 0); assert.equal(V.rollSwarmSize(s, 'perch', big), 1, 'off → plain monster');
     s.level = 999; act(s, { type: 'rebirth' }, 0); assert.equal(s.swarmCap, 0, 'setting survives rebirth');
     act(s, { type: 'swarmCap', value: '500' }, 0); assert.equal(s.swarmCap, undefined, 'no limit clears the field');
     assert.throws(() => act(s, { type: 'swarmCap', value: '50' }, 0), /무리 최대 규모/);
@@ -476,8 +476,8 @@ test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), B = await L.load('data/balance'), M = await L.load('systems/meta'), C = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), E = await L.load('data/encounters');
     for (const lv of [1, 10, 25, 40]) assert.equal(W.monsterGoldAt(lv), Math.round(7 * Math.pow(1.12, lv - 1)), `Lv.${lv} unchanged`);
-    assert.ok(W.monsterGoldAt(60) < Math.round(7 * Math.pow(1.12, 59)) / 2, 'late fish gold at least halved');
-    const s = newState(0); s.level = 30; assert.ok(C.gambleCost(s) >= W.monsterGoldAt(30) * 60, 'appraisal price follows fish gold');
+    assert.ok(W.monsterGoldAt(60) < Math.round(7 * Math.pow(1.12, 59)) / 2, 'late monster gold at least halved');
+    const s = newState(0); s.level = 30; assert.ok(C.gambleCost(s) >= W.monsterGoldAt(30) * 60, 'appraisal price follows monster gold');
     const item = level => ({ id: 'x', slot: 'rod', rarity: 3, level, power: 100, enhance: 0 });
     assert.equal(Eq.enhanceCost(item(40)), Eq.enhanceCost(item(20)), 'no price scaling up to Lv.40');
     assert.ok(Eq.enhanceCost(item(60)) > Eq.enhanceCost(item(40)) * 3, 'Lv.60 gear costs more to enhance');
@@ -1001,7 +1001,7 @@ test('v27.80 regional variants and swarm habitats: signature variant ×2.5, habi
     const lith = at('brook'), hen = at('reef'), base = V.VARIANTS.find(v => v.id === 'swarm').chance;
     assert.ok(Math.abs(lith.swarm - base * 2.5) < 1e-9 && Math.abs(hen.swarm - base * .8) < 1e-9, 'Lith Harbor favours swarms');
     assert.ok(hen.giant > lith.giant * 3, 'Henesys favours giants');
-    assert.equal(W.REGIONS.length, 9); assert.equal(W.STAGES.filter(st => st.habitat).length, 9); assert.equal(W.PLACES.length, W.STAGES.length - 9);
+    assert.equal(W.REGIONS.length, 9); assert.equal(W.STAGES.filter(st => st.habitat).length, 9); assert.equal(W.BASE_STAGES.length, W.STAGES.length - 9);
     const hab = W.STAGES.find(st => st.id === 'lithSwarm');
     assert.deepEqual(hab.monsters, W.regionMonsters('리스항구')); assert.ok(hab.rebirth >= W.HABITAT.minRebirth);
     const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 20; s.running = true;
@@ -1282,11 +1282,11 @@ test('v3.8 auto enhance research costs 10 pearls; saves that paid 100 get 90 bac
 
 test('v3.9 depth coefficient: later stages/dungeons are +4% per entry-level step in stats and rewards; abyss, random game, mimic and nuri are untouched', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const W = await L.load('data/world'), E = await L.load('systems/encounter');
-    assert.equal(W.stageDepth('brook'), 1); assert.ok(Math.abs(W.stageDepth(W.PLACES[9].id) - (1 + .04 * 9)) < 1e-9, 'tenth place is ×1.36'); assert.ok(Math.abs(W.stageDepth('vanishingJourney') - 1.52) < 1e-9, 'v3.10 fourteenth place is ×1.52');
+    assert.equal(W.stageDepth('brook'), 1); assert.ok(Math.abs(W.stageDepth(W.BASE_STAGES[9].id) - (1 + .04 * 9)) < 1e-9, 'tenth place is ×1.36'); assert.ok(Math.abs(W.stageDepth('vanishingJourney') - 1.52) < 1e-9, 'v3.10 fourteenth place is ×1.52');
     const habitat = W.STAGES.find(s => s.habitat); assert.ok(W.stageDepth(habitat.id) > 1, 'habitats take their level slot');
     assert.equal(W.dungeonDepth('abyss'), 1); assert.equal(W.dungeonDepth('randomGame'), 1); assert.equal(W.dungeonDepth('masteryMimic'), 1); assert.equal(W.dungeonDepth('expNuri'), 1); assert.equal(W.dungeonDepth('grotto'), 1);
     assert.ok(Math.abs(W.dungeonDepth('ventCathedral') - 1.24) < 1e-9);
-    const first = W.PLACES[0], last = W.PLACES[9], s = { level: 200 };
+    const first = W.BASE_STAGES[0], last = W.BASE_STAGES[9], s = { level: 200 };
     const a = E.stageField(s, first.id, first.monsters[0], 50), b = E.stageField(s, last.id, last.monsters[0], 50);
     assert.equal(a.level, b.level, 'difficulty 50 lifts both to the same level'); assert.ok(Math.abs(b.foe.hp / a.foe.hp - 1.36) < .02, `hp ratio ${b.foe.hp / a.foe.hp}`); assert.ok(b.gold > a.gold * 1.15, 'gold rises with the coefficient (stage reward normalization keeps it below the raw ×1.36)');
 });
@@ -1570,7 +1570,7 @@ test('v3.105 altar: after an offering the cached all-time totals are patched (sa
 });
 
 test('v3.106 goal reset times: daily at the next KST midnight, weekly at the next KST Monday 0:00', async () => {
-    const G = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/goals');
+    const G = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/time');
     const kst = (y, mo, d, h = 0, mi = 0) => Date.UTC(y, mo - 1, d, h - 9, mi);
     assert.equal(G.nextDailyReset(kst(2026, 10, 7, 23, 59)), kst(2026, 10, 8));
     assert.equal(G.nextDailyReset(kst(2026, 10, 8)), kst(2026, 10, 9));

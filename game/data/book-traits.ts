@@ -17,7 +17,7 @@ export const BOOK_REVEAL = 50;
  * v27.80 지역 연구: 지역(리스항구 등)의 모든 몬스터가 연구 4·5·6단계 이상이면 지역 연구 1·2·3단계.
  * add는 단계마다 더하는 고정값, scale은 단계마다 더하는 배율(+3%면 .03 → 3단계 ×1.09).
  */
-/** v27.92 지역 연구는 몬스터 연구 1·2·3단계부터(전에는 4·5·6: 효과에 비해 너무 멀었음). */
+/** v27.92 지역 연구는 몬스터 연구 1·2·3단계부터(4·5·6은 효과에 비해 너무 멀었음). */
 export const REGION_RESEARCH_FROM = 1;
 export const REGION_RESEARCH_MAX = 3;
 type RegionBonus = { label: string; add?: StatBonus; scale?: Partial<Record<'hp' | 'attack' | 'magic' | 'defense' | 'resist', number>>; rareSpawn?: number };

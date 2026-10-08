@@ -1,12 +1,12 @@
 import type { Snapshot, DuelResult, CombatEvent, State } from '../types';
-import { dayKey } from '../data/goals';
 import { BALANCE } from '../data/balance';
 import { normalizeStats, hitChance, power } from './stats';
 import { Fighter, fighterSpeed, actTurn, constraintFields } from './combat';
-import { MONSTERS, DUNGEONS } from '../data/world';
+import { MONSTERS, monsterById, dungeonById } from '../data/world';
 import { abyssReference } from './encounter';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ALTAR, raidStageStats, type RaidDef } from '../data/altar';
+import { dayKey } from '../data/time';
 /** 훈련 상대로 쓰는 던전 보스. 던전 마지막 웨이브와 같은 능력치·스킬로 섭니다(레벨 보정 0단계). */
 export const BOSS_OPPONENTS = MONSTERS.filter(f => f.boss);
 export function bossSnapshot(id: string): Snapshot | null {
@@ -17,7 +17,7 @@ export function bossSnapshot(id: string): Snapshot | null {
 }
 /** v27.43 무릉도장 depth층 보스(마지막 웨이브)와 같은 능력치·기술. 제단의 첫 신이 씁니다. */
 export function abyssBossSnapshot(depth: number): Snapshot {
-    const d = DUNGEONS.find(x => x.id === 'abyss')!, f = MONSTERS.find(x => x.id === d.bossMonster)!;
+    const d = dungeonById('abyss')!, f = monsterById(d.bossMonster)!;
     // v3.186 신은 던전 보스 체력 배율(bossHpScale)을 받지 않습니다(제단 설계 체력 9.3억 유지).
     const stats = abyssEnemyStats(f, abyssReference(), depth, { boss: true, wave: d.monsters.length - 1, rawBoss: true });
     return { name: d.boss, level: f.level, job: 'boss', rebirths: 0, stats, skills: foeSkills(f.id, f.level, true), power: power(stats), rating: 1000 + f.level * 10 };
@@ -45,7 +45,7 @@ export const TRAINING: Snapshot[] = [
 ];
 /** maxTurns: 결투는 80턴, v27.43 제단의 신은 무릉도장처럼 길게(ALTAR.godMaxTurns). */
 export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rng = Math.random, maxTurns: number = BALANCE.duelMaxTurns): DuelResult {
-    const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), /* v3.84 월드보스는 보스라 보스 피해(bossDamage)를 받습니다. */ ...(s.job === 'boss' ? { foe: true, prey: true } : {}), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, ...(s.dotHpCap ? { dotHpCap: s.dotHpCap } : {}), skills: s.skills, cooldowns: {}, extraRolls: s.extraRolls, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, practice: s.skillPractice, effects: {} });
+    const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), /* v3.84 월드보스는 보스라 보스 피해(bossDamage)를 받습니다. */ ...(s.job === 'boss' ? { foe: true, prey: true } : {}), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, ...(s.dotHpCap ? { dotHpCap: s.dotHpCap } : {}), skills: s.skills, cooldowns: {}, extraRolls: s.extraRolls, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, effects: {} });
     const a = fighter(player), b = fighter(opponent);
     const logs: string[] = [], rounds: DuelResult['rounds'] = [];
     let turns = 0;

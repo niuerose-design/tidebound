@@ -1,7 +1,7 @@
 'use client';
 import { CheckCircle2, ChevronDown } from 'lucide-react';
 import type { State, Action } from '@/game/types';
-import { MONSTERS, STAGES, SWARM_SIZES, SWARM_UNLOCK } from '@/game/data/world';
+import { MONSTERS, SWARM_SIZES, SWARM_UNLOCK, stageById } from '@/game/data/world';
 import { BALANCE } from '@/game/data/balance';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookPending, bookTierReq } from '@/game/systems/progression';
@@ -10,7 +10,7 @@ import { BOOK_ECOLOGY, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MA
 import { Meter } from './shared';
 
 const MILESTONES = BALANCE.bookMilestones;
-/** 연구 단계를 달성하면 바로 적용되는 전투 보상. v27.81 성향 능력치는 없애고, 2단계부터 연구 효과(예전 이름 생태 연구, 이 몬스터 상대 보정)만 오릅니다. */
+/** 연구 단계를 달성하면 바로 적용되는 전투 보상. v27.81 2단계부터 연구 효과(예전 이름 생태 연구, 이 몬스터 상대 보정)만 오릅니다. */
 function stepEffect(_id: string, rank: number) {
     const i = rank + 1 - BOOK_ECOLOGY.fromStage, pct = (n: number) => Number((n * 100).toFixed(1));
     if (i < 0) return '적 정보 공개';
@@ -20,7 +20,7 @@ function stepEffect(_id: string, rank: number) {
 /** 이 연구 단계 구간(이전 목표 초과 ~ 이번 목표 이하)에서 열리는 무리 사냥 규모. 목표와 해금 수가 다르면 해금 수를 같이 적습니다. */
 const swarmAt = (rank: number, n: number) => SWARM_SIZES.filter(size => size > 1 && SWARM_UNLOCK[size] > (MILESTONES[rank - 1] || 0) && SWARM_UNLOCK[size] <= MILESTONES[rank])
     .map(size => `무리 변종 ×${size} ${SWARM_UNLOCK[size] === MILESTONES[rank] ? '해금' : n >= SWARM_UNLOCK[size] ? `해금(${SWARM_UNLOCK[size].toLocaleString()}회 달성)` : `${SWARM_UNLOCK[size].toLocaleString()}회에 해금`}`);
-/** v27.81 단계 보상: SP(4단계부터)와 무리 해금. 골드는 없앴습니다. */
+/** v27.81 단계 보상: SP(4단계부터)와 무리 해금. */
 const stepReward = (rank: number, n: number, swarm: boolean) => [PROGRESSION.bookSP[rank] ? `SP +${PROGRESSION.bookSP[rank]}` : '', ...(swarm ? swarmAt(rank, n) : [])].filter(Boolean).join(' · ');
 
 /** 연구 진행: 처치 수 → 다음 연구 목표 → 받을 보상 → 수령 여부. 끝난 단계는 접어서 아래에 둡니다. 사냥터 몬스터(swarm)은 단계 보상에 무리 사냥 해금도 같이 적습니다. */
@@ -37,7 +37,7 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
             {next >= 0 && <div><dt>달성하면</dt><dd>{stepReward(next, n, swarm) || '능력치만'}</dd><small>{stepEffect(id, next)}</small></div>}
             {pending.ranks.length > 0 && <div><dt>수령 여부</dt><dd><b className="positive">미수령 SP +{pending.sp}</b></dd></div>}
         </dl>
-        {/* v3.95 막대는 처치 수 그대로(전에는 이전 목표부터의 구간이라 '남은 N회'와 숫자가 어긋나 보였음). */}
+        {/* v3.95 막대는 처치 수 그대로(이전 목표부터의 구간으로 그리면 '남은 N회'와 숫자가 어긋나 보임). */}
         {next >= 0 && <Meter value={Math.min(n, MILESTONES[next])} max={MILESTONES[next]} label={`${next + 1}단계까지`}/>}
         {pending.ranks.length > 0 && <button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimBook', id })}>연구 보상 받기 · SP +{pending.sp}</button>}
         {reached > 0 && <details className="book-done">
@@ -49,7 +49,7 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
 
 /** 한 장소(사냥터)의 연구 진행도와 장소 완성 보상. 사냥터 카드와 도감 장소 제목에서 같이 씁니다. */
 function regionResearch(s: State, stageId: string) {
-    const st = STAGES.find(x => x.id === stageId)!;
+    const st = stageById(stageId)!;
     const done = st.monsters.filter(id => (s.book[id] || 0) >= PROGRESSION.monsterComplete).length;
     const pending = st.monsters.reduce((a, id) => a + bookPending(s, id).ranks.length, 0);
     return { done, total: st.monsters.length, complete: done === st.monsters.length, pending, reward: '업적 장착 AP +1' };

@@ -54,7 +54,6 @@ export const DEFENSE_SKILLS: Skill[] = [
     { ...P, ...lateBloomer, id: 'eonSlumber', name: '만년의 잠', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 체력·두 방어가 크게 오릅니다.', level: 70, job: 'worldTurtle', cost: 8, bonus: { hp: 200, defense: 25, resist: 25 },
         levelEffects: [{ cost: 8, bonus: { hp: 200, defense: 15, resist: 15 } }, { cost: 7, bonus: { hp: 700, defense: 60, resist: 40 } }, { cost: 5, bonus: { hp: 1600, defense: 140, resist: 100 } }, { cost: 2, bonus: { hp: 3200, defense: 260, resist: 180, thorns: .2 } }] },
     // 루미너스 (2차) 갈래
-    // v3.100 루미너스 상향: 라이트 리플렉션 배율 2.25 → 2.8, 아포칼립스 배율 2.4 → 3 · 추가 공격 1회(복합 피해라 기술 한 번이 공격력의 1.5배에 그쳤음).
     // v3.140 재개편: 모두 마법 계수 → 물리 피해(arcaneBlow). 패시브는 마법 공격 고정값 + 물리 방어 관통(지능만 올려도 물리 방어 약한 적을 뚫는 그림).
     { ...A, ...arcaneBlow, id: 'vowStrike', name: '서약의 빛살', desc: '', level: 40, job: 'holyKnight', chance: .5, cooldown: 4, multiplier: 3.8, cost: 4, manaCost: 14, effect: 'drain', drainRatio: .12, masteryMilestones: M3 },
     { ...P, id: 'twoSeasOath', name: '두 바다의 맹세', desc: '마법 공격·체력·흡혈이 오릅니다.', level: 40, job: 'holyKnight', cost: 3, bonus: { magic: 52, hp: 120, lifesteal: .02 }, masteryMilestones: M3 },

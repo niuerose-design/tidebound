@@ -6,10 +6,10 @@
 import type { State } from '../types';
 import { ownedOnyx, onyxById } from '../data/onyx';
 import { RANKS, rankIndex, rankState } from '../data/rank';
-import { JOBS } from '../data/classes';
+import { jobById } from '../data/classes';
 import { isHackerJob } from '../data/hacker';
-import { dayKey } from '../data/goals';
 import { josa } from '../data/altar';
+import { dayKey } from '../data/time';
 
 export type NewsKind = 'onyx' | 'ascend' | 'tier5' | 'abyss' | 'star22' | 'general' | 'reenlist';
 export type NewsMark = { onyx: string[]; ascension: number; tier5: string[]; abyss: number; star: number; rank: number; /** v3.160 재입대 횟수 */ reenlist?: number; day: Partial<Record<NewsKind, string>> };
@@ -22,7 +22,7 @@ const newsRankFrom = RANKS.findIndex(r => r.id === NEWS_RANK_FROM);
 export const rankNewsworthy = (index: number) => index >= newsRankFrom || RANKS[index]?.id === NEWS_RANK_FIRST;
 
 const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
-const tier5Jobs = (s: State) => (s.unlockedJobs || []).filter(id => !isHackerJob(id) && JOBS.find(j => j.id === id)?.tier === 5);
+const tier5Jobs = (s: State) => (s.unlockedJobs || []).filter(id => !isHackerJob(id) && jobById(id)?.tier === 5);
 function markOf(s: State, day: NewsMark['day'] = {}): NewsMark {
     return { onyx: [...ownedOnyx(s)], ascension: s.ascension || 0, tier5: tier5Jobs(s), abyss: Math.floor((s.abyssBest || 0) / NEWS_ABYSS_STEP), star: bestStar(s), rank: rankIndex(rankState(s).exp), reenlist: rankState(s).reenlist || 0, day };
 }
@@ -47,7 +47,7 @@ export function collectNews(s: State, now: number): NewsEvent[] {
     const found: NewsEvent[] = [];
     for (const id of next.onyx.filter(x => !prev.onyx.includes(x) && gift[x] !== 0)) { const name = onyxById(id)?.accessory.name || id; found.push({ kind: 'onyx', text: n => NEWS_TEXT.onyx(n, name, gift[id]) }); }
     if (next.ascension > prev.ascension) found.push({ kind: 'ascend', text: n => NEWS_TEXT.ascend(n, next.ascension) });
-    for (const id of next.tier5.filter(x => !prev.tier5.includes(x))) { const job = JOBS.find(j => j.id === id)!; found.push({ kind: 'tier5', text: n => NEWS_TEXT.tier5(n, job.name) }); }
+    for (const id of next.tier5.filter(x => !prev.tier5.includes(x))) { const job = jobById(id)!; found.push({ kind: 'tier5', text: n => NEWS_TEXT.tier5(n, job.name) }); }
     if (next.abyss > prev.abyss) found.push({ kind: 'abyss', text: n => NEWS_TEXT.abyss(n, next.abyss * NEWS_ABYSS_STEP) });
     if (next.star >= 22 && prev.star < 22) found.push({ kind: 'star22', text: n => NEWS_TEXT.star22(n) });
     // 한 번에 여러 계급을 뛰어넘어도(지나친 계급이 알릴 계급이면) 도착한 계급으로 한 줄 냅니다.

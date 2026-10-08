@@ -13,7 +13,7 @@ const ids = new Set(SKILLS.map(s => s.id));
 const have = files.filter(f => ids.has(f)).sort();
 const stray = files.filter(f => !ids.has(f));
 
-// v27.57 몬스터(public/art/fish)·직업 계보(public/art/jobs) 그림도 목록으로: png·webp 중 있는 것(둘 다면 png).
+// v27.57 몬스터(public/art/monsters)·직업 계보(public/art/jobs) 그림도 목록으로: png·webp 중 있는 것(둘 다면 png).
 const { MONSTERS } = await load('game/data/world.js');
 const scan = (folder, valid) => {
     const out = {};
@@ -22,8 +22,8 @@ const scan = (folder, valid) => {
     return out;
 };
 const { ONYX_BOSSES } = await load('game/data/onyx.js');
-const monsterArt = scan('public/art/fish', new Set(MONSTERS.map(f => f.id))), jobArt = scan('public/art/jobs', new Set(LINEAGES.map(l => l.id))), onyxArt = scan('public/art/onyx', new Set(ONYX_BOSSES.map(b => b.id)));
-writeFileSync('game/data/art-manifest.ts', `// 자동 생성 파일: node scripts/art-manifest.mjs 가 public/art/{skills,fish,jobs,onyx} 를 훑어 다시 씁니다. 손으로 고치지 마세요.
+const monsterArt = scan('public/art/monsters', new Set(MONSTERS.map(f => f.id))), jobArt = scan('public/art/jobs', new Set(LINEAGES.map(l => l.id))), onyxArt = scan('public/art/onyx', new Set(ONYX_BOSSES.map(b => b.id)));
+writeFileSync('game/data/art-manifest.ts', `// 자동 생성 파일: node scripts/art-manifest.mjs 가 public/art/{skills,monsters,jobs,onyx} 를 훑어 다시 씁니다. 손으로 고치지 마세요.
 /** 아이콘 이미지가 있는 스킬 id. 없는 스킬은 기본 아이콘을 씁니다(없는 파일을 요청하지 않음). */
 export const SKILL_ART: ReadonlySet<string> = new Set<string>(${JSON.stringify(have)});
 /** 그림이 있는 몬스터 id → 확장자. 없는 몬스터는 실루엣(없는 파일을 요청하지 않음). */

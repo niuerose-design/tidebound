@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format, formatRemaining } from './shared';
-import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, RAID_STAGE, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary } from '@/game/data/altar';
+import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, RAID_STAGE, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary, raidById } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
@@ -174,7 +174,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                         <TableBody>{raid.board.map(r => <Fragment key={r.rank}><TableRow className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''} <button type="button" className="text-button" aria-expanded={openHit === `${raid.id}:${r.rank}`} onClick={() => setOpenHit(openHit === `${raid.id}:${r.rank}` ? '' : `${raid.id}:${r.rank}`)}>{openHit === `${raid.id}:${r.rank}` ? '접기' : '기록'}</button></TableCell><TableCell><b>{format(r.dealt)}</b></TableCell><TableCell>{r.hits}</TableCell></TableRow>
                             {openHit === `${raid.id}:${r.rank}` && <TableRow><TableCell colSpan={4}><RaidHitLog key={`${raid.gen}:${r.rank}:${r.last?.at || 0}`} raidId={raid.id} rank={r.rank} last={r.last}/></TableCell></TableRow>}</Fragment>)}</TableBody></Table>
                         : <p className="footnote">아직 아무도 때리지 않았습니다. 첫 피해를 넣어 보세요.</p>}
-                </> : <p className="footnote">{RAIDS.find(r => r.id === raidTab)?.name}은(는) 지금 나타나 있지 않습니다. 소환 게이지 {format(raidGauge?.points || 0)} / {format(raidGauge?.cost || 0)} · {raidGauge?.next || ''}. 보스마다 따로 소환되고(발록 6 · 자쿰 12 · 혼테일 24시간 머묾), 여러 보스가 동시에 나타날 수 있습니다. 모든 모험가의 피해가 하나의 체력에 쌓이고, 격파하면 때린 모험가 전원이 보상을 받습니다.</p>}
+                </> : <p className="footnote">{raidById(raidTab)?.name}은(는) 지금 나타나 있지 않습니다. 소환 게이지 {format(raidGauge?.points || 0)} / {format(raidGauge?.cost || 0)} · {raidGauge?.next || ''}. 보스마다 따로 소환되고(발록 6 · 자쿰 12 · 혼테일 24시간 머묾), 여러 보스가 동시에 나타날 수 있습니다. 모든 모험가의 피해가 하나의 체력에 쌓이고, 격파하면 때린 모험가 전원이 보상을 받습니다.</p>}
             </section>
             <section className="panel altar-throne">
                 <div className="section-title"><h2><Crown size={16}/> 신의 자리</h2></div>

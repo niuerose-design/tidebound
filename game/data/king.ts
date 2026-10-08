@@ -27,9 +27,6 @@ export const KING = {
 } as const;
 export const KING_KINDS: readonly KingKind[] = ['mimic', 'nuri', 'slime'];
 export const KING_IDS: readonly string[] = KING_KINDS.map(k => KING[k].id);
-/** 대왕 id → 종류(아니면 undefined). */
-export const kingKindOf = (id: string): KingKind | undefined => KING_KINDS.find(k => KING[k].id === id);
-export const isKingId = (id: string) => KING_IDS.includes(id);
 /** 특별 몬스터(까미 · 누리 · 슬라임 · 대왕 3종) id. 일반 도감 · 황금 개체 · 변종에서 빠집니다. */
 export const SPECIAL_IDS: readonly string[] = [MIMIC.id, EXP_NURI.id, ESSENCE_SLIME.id, ...KING_IDS];
 export const isSpecialId = (id: string) => SPECIAL_IDS.includes(id);

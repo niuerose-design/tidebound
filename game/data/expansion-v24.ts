@@ -9,7 +9,7 @@ import type { Skill } from '../types';
  * - 환생 비례: 에반 계보의 4·5차 패시브는 환생 1회마다 능력치가 쌓입니다(perRebirth).
  * - 대기만성: 5차 일부가 숙련 10,000 / 100,000 / 500,000의 패시브를 갖습니다. 처음에는 AP가 크고 효과가 작지만,
  *   단계마다 AP가 줄고 보상이 크게 오릅니다.
- * - 직업 배율은 4·5차 공통 범위(v24에서 상승분 ×0.7로 낮춘 값)에 맞췄습니다.
+ * - 직업 배율은 4·5차 공통 범위에 맞췄습니다.
  */
 type NewJob = Omit<Job, 'masteryTarget' | 'masteryBoost'> & Partial<Pick<Job, 'masteryTarget' | 'masteryBoost'>>;
 const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0 };
@@ -114,7 +114,6 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'currentDominion', name: '해류 지배', desc: '마법 공격과 마나 회복이 오릅니다.', level: 55, job: 'currentLord', cost: 3, bonus: { magic: 60, manaRegen: 5 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'oceanWrath', name: '대해의 분노', desc: '', level: 70, job: 'oceanWill', chance: .55, cooldown: 5, multiplier: 4.9, cost: 6, manaCost: 38, effect: 'stun', masteryMilestones: M5 },
     { ...P, id: 'willOfSea', name: '바다의 뜻', desc: '마법 공격과 마법 방어가 크게 오릅니다.', level: 70, job: 'oceanWill', cost: 3, bonus: { magic: 100, resist: 50 }, masteryMilestones: M5 },
-    // v3.120 아크메이지(썬,콜) 상향: 익스트림 매직(대기만성) 마법 공격 단계 100 · 240 · 440 → 200 · 700 · 2000(마법 +440은 엔드 마법의 1%도 안 돼 체감이 없었음).
     { ...P, id: 'tideOfAges', name: '세월의 조류', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 마법 공격·마나가 크게 오릅니다.', level: 70, job: 'oceanWill', cost: 8, bonus: { magic: 25 }, masteryMilestones: LATE,
         levelEffects: [{ cost: 8, bonus: { magic: 25 } }, { cost: 7, bonus: { magic: 200, mana: 40 } }, { cost: 5, bonus: { magic: 700, mana: 100, manaRegen: 3 } }, { cost: 2, bonus: { magic: 2000, mana: 180, manaRegen: 6, penetration: .08 } }] },
     { ...A, ...magic, id: 'transmute', name: '소금 연성', desc: '', level: 55, job: 'abyssTransmuter', chance: .52, cooldown: 4, multiplier: 1.4, cost: 5, manaCost: 26, scaling: 'arcane', effect: 'corrode', masteryMilestones: M4 },
@@ -128,7 +127,6 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'aeonsInsight', name: '영겁의 통찰', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 두 공격과 경험치 획득이 크게 오릅니다.', level: 70, job: 'aeonChronicler', cost: 8, bonus: { attack: 15, magic: 15, expBonus: .05 }, masteryMilestones: LATE,
         levelEffects: [{ cost: 8, bonus: { attack: 15, magic: 15, expBonus: .05 } }, { cost: 7, bonus: { attack: 60, magic: 60, expBonus: .1 } }, { cost: 5, bonus: { attack: 150, magic: 150, expBonus: .2 } }, { cost: 2, bonus: { attack: 280, magic: 280, expBonus: .3 } }] },
     // 방어
-    // v3.107 팔라딘 상향(미하일 v3.102와 같은 처방): 생츄어리 방어 비례 1.8 → 2.4, 엘리멘탈 포스 치명타 +8%p · 치명 피해 +0.4(직업 치명 0).
     { ...A, ...physical, id: 'citadelCrash', name: '요새 붕괴', desc: '', level: 55, job: 'coralCitadel', chance: .26, cooldown: 4, multiplier: 1.8, cost: 5, effect: 'stun', scaling: 'defense', scalingRatio: 2.4, masteryMilestones: M4 },
     { ...P, id: 'livingReef', name: '살아 있는 산호', desc: '반격·물리 방어·체력이 오릅니다.', level: 55, job: 'coralCitadel', cost: 3, bonus: { thorns: .4, defense: 80, hp: 200 , swarmFind: 1, resist: 30 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'bastionQuake', name: '성벽 진동', desc: '', level: 70, job: 'abyssBastion', chance: .26, cooldown: 5, multiplier: 2.2, cost: 6, effect: 'weaken', scaling: 'defense', scalingRatio: 3, masteryMilestones: M5 },
@@ -147,14 +145,12 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'stillVerdict', name: '정적의 판결', desc: '', level: 55, job: 'stillLord', chance: .26, cooldown: 4, multiplier: 2.1, cost: 6, selfBuff: { id: 'takedown', name: '테이크다운', turns: 3, speedMultiplier: 1.15 }, masteryMilestones: M4 },
     { ...P, id: 'stillAura', name: '정적의 기운', desc: '물리 공격이 오르고, 살아 있는 자기 버프 1개마다 피해가 더 오릅니다.', level: 55, job: 'stillLord', cost: 3, bonus: { attack: 30, varietyBonus: .03 }, masteryMilestones: M4 },
     { ...A, ...physical, id: 'worldStill', name: '세계의 정적', desc: '', level: 70, job: 'silenceDeity', chance: .26, cooldown: 4, multiplier: 3.2, cost: 7, extendBuffs: 2, masteryMilestones: M5 },
-    // v3.126 미스틱 스톰 물리 공격 +60 → +450(숙련 보정 뒤 엔드 물리 약 +22%), 치명타 +10%p. v3.155 기절 연장 → 웨폰 버라이어티(자기 버프 1개당 피해).
     { ...P, id: 'absoluteStill', name: '절대 정적', desc: '물리 공격과 치명타가 크게 오르고, 살아 있는 자기 버프 1개마다 피해가 더 오릅니다.', level: 70, job: 'silenceDeity', cost: 3, bonus: { attack: 450, crit: .1, varietyBonus: .035 }, masteryMilestones: M5 },
     // 복합
     { ...A, ...physical, id: 'lifeTorrent', name: '생명 급류', desc: '', level: 55, job: 'abyssHybrid', chance: .27, cooldown: 4, multiplier: 2.2, cost: 5, accuracyBonus: .15, balanceBonus: .5, masteryMilestones: M4 },
     { ...P, id: 'hybridCore', name: '섞인 심장', desc: '체력과 두 공격이 오르고, 모든 능력치가 4% 오릅니다.', level: 55, job: 'abyssHybrid', cost: 3, bonus: { hp: 300, attack: 30, magic: 30, allStats: .04 }, masteryMilestones: M4 },
     { ...A, id: 'aberrantSurge', name: '이형 쇄도', desc: '', level: 70, job: 'aberrantKing', chance: .27, cooldown: 4, multiplier: 2.2, cost: 6, manaCost: 0, damageType: 'fixed', baseStat: 'attack', sureHit: true, balanceBonus: .6, masteryMilestones: M5 },
     { ...P, id: 'aberrantBody', name: '이형의 몸', desc: '체력 · 최대 마나 · 회피가 오르고, 모든 능력치가 6% 오릅니다.', level: 70, job: 'aberrantKing', cost: 3, bonus: { hp: 500, mana: 80, evasion: .08, allStats: .06 }, masteryMilestones: M5 },
-    // v3.110 메카닉 상향: 로봇 런처: RM7 배율 2.6 → 3.2 · 추가 공격 1회.
     // v3.143 메카닉 재개편: 방어 비례 마법 피해로 충전, 창세 룬(전탄발사)은 충전 5중첩부터 나가 중첩당 +10%, 고정 피해(방어를 전혀 받지 않아 배율은 2로 낮게).
     { ...A, ...forgeBlast, id: 'resonanceBurst', name: '공명 폭발', desc: '', level: 55, job: 'resonanceMaster', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 16, scalingRatio: .8, effect: 'weaken', charge: 1, masteryMilestones: M4 },
     { ...P, id: 'harmonicPlate', name: '공명 갑판', desc: '마법 공격 · 두 방어 · 반격이 오릅니다.', level: 55, job: 'resonanceMaster', cost: 3, bonus: { magic: 50, defense: 50, resist: 50, thorns: .25 }, masteryMilestones: M4 },
@@ -178,7 +174,6 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'starChart', name: '별의 해도', desc: '경험치 획득과 마법 공격이 오릅니다.', level: 55, job: 'starNavigator', cost: 3, bonus: { expBonus: .15, magic: 60 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'galaxyFall', name: '은하 낙하', desc: '', level: 70, job: 'routeDeity', chance: .5, cooldown: 4, multiplier: 4.2, cost: 6, manaCost: 32, masteryMilestones: M5 },
     { ...P, id: 'cosmicChart', name: '우주의 해도', desc: '경험치 획득과 마법 공격이 오릅니다.', level: 70, job: 'routeDeity', cost: 3, bonus: { expBonus: .25, magic: 110 }, masteryMilestones: M5 },
-    // v3.108 와일드헌터 상향: 소닉 붐 배율 2.3 → 2.8.
     { ...A, ...dual, id: 'weakpointCut', name: '약점 절개', desc: '', level: 55, job: 'titanAnatomist', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 18, damageBonusCondition: 'lowHp', conditionalDamageBonus: .5, masteryMilestones: M4 },
     { ...P, id: 'titanLore', name: '거수학', desc: '치명 피해와 빈사 기준이 오릅니다.', level: 55, job: 'titanAnatomist', cost: 3, bonus: { critDamage: .2, executeBonus: .05 }, masteryMilestones: M4 },
     { ...A, ...dual, id: 'titanFell', name: '거수 쓰러뜨리기', desc: '', level: 70, job: 'beastKing', chance: .5, cooldown: 4, multiplier: 3.3, cost: 6, manaCost: 24, damageBonusCondition: 'lowHp', conditionalDamageBonus: .6, masteryMilestones: M5 },
@@ -189,11 +184,10 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'sirenVoice', name: '세이렌의 목소리', desc: '경험치·장비 드롭·마법 공격이 오릅니다.', level: 70, job: 'siren', cost: 3, bonus: { expBonus: .18, dropBonus: .04, magic: 110 }, masteryMilestones: M5 },
     // 4차에서 끝나던 계보의 5차
     { ...A, ...magic, id: 'doomCurse', name: '파멸의 저주', desc: '', level: 70, job: 'curseQueen', chance: .5, cooldown: 4, multiplier: 3.9, cost: 6, manaCost: 36, effect: 'silence', damageBonusCondition: 'statuses', conditionalDamageBonus: .25, masteryMilestones: M5 },
-    // v3.123 칼리 상향: 헥스의 여왕 마법 공격 +110 → +250(숙련 보정 뒤 엔드 마법 약 +10%). 주력 상향은 4차 저주(지속 피해).
     { ...P, id: 'queenOfCurses', name: '저주의 왕관', desc: '마법 공격과 지속 피해가 크게 오릅니다.', level: 70, job: 'curseQueen', cost: 3, bonus: { magic: 250, dotBonus: .2 }, masteryMilestones: M5 },
     // v3.144 다크나이트 재개편: 물리 창술. 비늘(다크니스 오라)은 리인카네이션(lastStand 1회 · 25% 회복) + 쓰러진 횟수 · 보낸 턴 비례 성장.
     { ...A, ...spear, id: 'dragonGodSpear', name: '좀비 루팡신의 창', desc: '', level: 70, job: 'seaDragonGod', chance: .5, cooldown: 5, multiplier: 3.4, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
-    // v3.98 다크니스 오라: 치명타 +8%p · 치명 피해 +0.45(팬텀 5차 패시브와 같은 값, 다크나이트 치명 75% · ×2.07로 물리 딜러 최하위였음).
+    // v3.98 다크니스 오라의 치명타 · 치명 피해는 팬텀 5차 패시브와 같은 값입니다.
     { ...P, id: 'dragonGodScale', name: '좀비 루팡신의 비늘', desc: '물리 공격과 체력이 크게 오르고 치명타 · 치명 피해가 오릅니다. 쓰러질 피해를 받으면 전투당 한 번 체력 1로 버티고 최대 체력의 25%를 되찾습니다. 쓰러진 횟수마다 물리 공격, 보낸 턴 1,000마다 최대 체력이 오릅니다.', level: 70, job: 'seaDragonGod', cost: 3, bonus: { attack: 70, hp: 300, crit: .08, critDamage: .45 }, lastStand: { charges: 1, heal: .25 }, perCount: [{ source: 'deaths', per: 1, bonus: { attack: 2 }, cap: 100 }, { source: 'turns', per: 1000, bonus: { hp: 6 }, cap: 100 }], masteryMilestones: M5 },
 ];
 

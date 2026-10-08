@@ -10,7 +10,7 @@ import { SERVER_ODDS } from './odds';
 import { SECRET_JOBS } from './jobs';
 import { RARITIES } from '../data/balance';
 import { VARIANTS } from '../data/variants';
-import { MONSTERS, HABITAT } from '../data/world';
+import { HABITAT, monsterById } from '../data/world';
 import { APPRAISAL } from '../data/economy';
 import { jobById } from '../data/classes';
 import { jobRequirements } from '../systems/progression';
@@ -26,7 +26,7 @@ export const UNLOCK_CONDITIONS: Record<string, string> = {
 
 /** 드롭·확률 조각(고정). */
 function oddsLeaks(): Leak[] {
-    const o = SERVER_ODDS, monsterName = (id: string) => MONSTERS.find(f => f.id === id)?.name || id;
+    const o = SERVER_ODDS, monsterName = (id: string) => monsterById(id)?.name || id;
     return [
         { id: 'drop:base', text: `장비 드롭 기본 확률은 처치당 ${pct(o.drop.chance)}, 상한 ${pct(o.drop.cap)}입니다(드롭 보너스는 이 확률에 곱해짐).` },
         { id: 'drop:rarity', text: `장비 등급 분포: ${o.drop.rarity.map((w, i) => `${RARITIES[i].name} ${pct(w)}`).join(' · ')}.` },

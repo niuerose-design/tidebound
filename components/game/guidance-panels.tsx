@@ -1,9 +1,9 @@
 'use client';
 import type { PanelProps } from './panel-props';
 import { Check, ChevronDown, ChevronRight, ChevronUp, Clock, Compass, HelpCircle, RefreshCw, X } from 'lucide-react';
-import { PLACES, DUNGEONS } from '@/game/data/world';
+import { BASE_STAGES, DUNGEONS } from '@/game/data/world';
 import { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, CHALLENGE_GROUP, achievementTotals, achievementMaxTotals, rewardText, ACHIEVEMENT_BONUS_PER, progressReader } from '@/game/data/achievements';
-import { goalText, dayKey, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, nextDailyReset, nextWeeklyReset, type GoalBoard } from '@/game/data/goals';
+import { goalText, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, type GoalBoard } from '@/game/data/goals';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { unclaimedAchievements } from '@/game/systems/progress';
 import { TUTORIAL_STEPS, tutorialProgress, tutorialStepDone, nextTutorialStep } from '@/game/systems/guidance';
@@ -11,6 +11,7 @@ import { Heading, Meter, useNow } from './shared';
 import { useState } from 'react';
 import { useIsMobile } from './use-mobile';
 import type { State } from '@/game/types';
+import { dayKey, nextDailyReset, nextWeeklyReset, KST } from '@/game/data/time';
 
 
 /** 접을 수 있는 짧은 튜토리얼. 새 세이브에만 보이고, 한 번 만족한 단계는 기록으로 남아 되돌아가지 않습니다. 보상은 없습니다. */
@@ -50,7 +51,7 @@ function GoalBoardView({ title, which, board, bonus, today, send, busy }: { titl
     // v3.106 정확한 초기화 시각(한국 시간)과 남은 시간. 1분마다 갱신합니다.
     const now = useNow(60_000);
     if (!board) return null;
-    const done = board.goals.filter(g => g.claimed).length, at = which === 'daily' ? nextDailyReset(now) : nextWeeklyReset(now), left = at - now, day = new Date(at + 9 * 3600_000);
+    const done = board.goals.filter(g => g.claimed).length, at = which === 'daily' ? nextDailyReset(now) : nextWeeklyReset(now), left = at - now, day = new Date(at + KST);
     const d = Math.floor(left / 86400_000), h = Math.floor(left % 86400_000 / 3600_000), m = Math.max(1, Math.ceil(left % 3600_000 / 60_000));
     const leftText = `${d ? `${d}일 ` : ''}${d || h ? `${h}시간 ` : ''}${m === 60 ? '59' : m}분 남음`, resetText = which === 'daily' ? '매일 0시' : '매주 월요일 0시', nextText = which === 'weekly' ? ` · 다음 ${day.getUTCMonth() + 1}월 ${day.getUTCDate()}일(월)` : '';
     return <details className="achievement-group goal-board" open>
@@ -69,7 +70,7 @@ function AchievementGroups({ s, send, busy }: PanelProps) {
     /** 업적 ‘사냥터 N곳’·‘던전 N곳’ 카드에 붙는 방문 기록(이전 ‘모험 기록’ 해금을 여기로 통합). */
     // v3.93 같은 묶음의 단계들은 진행도를 한 번만 계산합니다.
     const progress = progressReader(s);
-    const visited = (a: { id: string }) => a.id.startsWith('stages:') ? PLACES.filter(st => got[`stage:${st.id}`] !== undefined).map(st => st.name) : a.id.startsWith('dungeons:') ? DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).map(d => d.name) : null;
+    const visited = (a: { id: string }) => a.id.startsWith('stages:') ? BASE_STAGES.filter(st => got[`stage:${st.id}`] !== undefined).map(st => st.name) : a.id.startsWith('dungeons:') ? DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).map(d => d.name) : null;
     return <>{ACHIEVEMENT_GROUPS.map(g => { const items = ACHIEVEMENTS.filter(a => a.group === g), doneCount = items.filter(a => feats[a.id] !== undefined).length, claimable = items.filter(a => feats[a.id] !== undefined && !claimed[a.id]).length; return <details key={g} className="achievement-group" open={claimable > 0}><summary><h3>{g}</h3><span>{doneCount} / {items.length}{claimable ? ` · 받을 보상 ${claimable}개` : ''}{g === CHALLENGE_GROUP ? ` · 플레이 ${Math.floor((s.playMs || 0) / 3_600_000).toLocaleString()}시간 · ${(s.turn || 0).toLocaleString()}턴 · 쓰러짐 ${(s.deaths || 0).toLocaleString()}회` : ''}</span><ChevronDown size={15} className="achievement-chevron"/></summary><div className="voyage-list achievement-list">{items.map(a => { const done = feats[a.id] !== undefined, got = !!claimed[a.id], p = Math.min(a.target, progress(a)); return <article key={a.id} className={`panel voyage-entry achievement ${done ? 'done' : ''} ${done && !got ? 'claimable' : ''}`}><div className="achievement-top"><strong>{a.title}</strong>{got ? <Check size={14}/> : done ? <button className="primary small" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: a.id })}>보상 받기</button> : null}</div><p>{a.desc}</p>{(() => { const v = visited(a); return v && v.length ? <small className="achievement-visited">다녀온 곳: {v.join(' · ')}</small> : null; })()}<Meter value={p} max={a.target} label="달성"/><small className="achievement-reward">{rewardText(a.reward)}</small></article>; })}</div></details>; })}</>;
 }
 

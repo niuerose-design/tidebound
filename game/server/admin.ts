@@ -11,7 +11,7 @@ import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
 import { RANKS, RANK_PERKS, rankIndex, rankTitle, rankState, rankPerkLevel, rankPointsFree } from '../data/rank';
 import { FIRST_CLEAR_SP } from '../data/achievements';
-import { DUNGEONS, STAGES } from '../data/world';
+import { DUNGEONS, STAGES, stageById, dungeonById } from '../data/world';
 import { PROGRESSION } from '../data/progression';
 import { skillById } from '../data/skills';
 import type { State } from '../types';
@@ -186,7 +186,7 @@ export async function listClosures() {
 /** 한 곳을 닫거나 엽니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나옵니다. */
 export async function setClosed(kind: string, id: string, closed: boolean) {
     if (kind !== 'stages' && kind !== 'dungeons') throw new ApiError('사냥터나 던전을 고르세요.');
-    if (kind === 'stages' ? !STAGES.some(st => st.id === id) : !DUNGEONS.some(d => d.id === id)) throw new ApiError('없는 곳입니다.');
+    if (kind === 'stages' ? !stageById(id) : !dungeonById(id)) throw new ApiError('없는 곳입니다.');
     if (kind === 'stages' && id === STAGES[0].id) throw new ApiError('첫 사냥터는 닫을 수 없습니다(닫힌 곳에서 나온 모험가가 돌아갈 곳).');
     const c = await readClosures(), set = new Set(c[kind]);
     if (closed) set.add(id); else set.delete(id);
@@ -275,8 +275,8 @@ export async function adminStats(now = Date.now()): Promise<AdminStats> {
         running: list.filter(s => s.running).length, inDungeon: list.filter(s => s.dungeon).length,
         level: { avg: list.length ? Math.round(sum(s => s.level) / list.length * 10) / 10 : 0, max: Math.max(0, ...levels), buckets: bucketize(levels, [1, 10, 20, 30, 40, 50, 60, 80, 100], '') },
         rebirths: { avg: list.length ? Math.round(sum(s => s.rebirths) / list.length * 10) / 10 : 0, max: Math.max(0, ...rebirths), buckets: bucketize(rebirths, [0, 1, 3, 5, 10, 20, 50], '회') },
-        stages: named(countBy(list, s => s.dungeon ? null : s.stage), id => STAGES.find(x => x.id === id)?.name || id),
-        dungeons: named(countBy(list, s => s.dungeon?.id || null), id => DUNGEONS.find(x => x.id === id)?.name || id),
+        stages: named(countBy(list, s => s.dungeon ? null : s.stage), id => stageById(id)?.name || id),
+        dungeons: named(countBy(list, s => s.dungeon?.id || null), id => dungeonById(id)?.name || id),
         jobs: named(countBy(list, s => s.job), id => jobById(id)?.name || id).slice(0, 15),
         ranks: (() => {
             const idx = list.map(s => rankIndex(rankState(s).exp)), by = countBy(idx, i => String(i));
@@ -331,7 +331,7 @@ export async function adminIncome(query = '', now = Date.now()) {
         let s: State; try { s = JSON.parse(row.state); } catch { continue; }
         if (!s || typeof s.level !== 'number') continue;
         const username = accounts.get(row.id.split('#')[0]) || '', rate = incomeRate(s);
-        const place = s.dungeon ? DUNGEONS.find(d => d.id === s.dungeon!.id)?.name || s.dungeon.id : STAGES.find(x => x.id === s.stage)?.name || s.stage;
+        const place = s.dungeon ? dungeonById(s.dungeon!.id)?.name || s.dungeon.id : stageById(s.stage)?.name || s.stage;
         const r: IncomeRow = { id: row.id, name: s.name, username, rebirths: s.rebirths || 0, ascension: s.ascension || 0, level: s.level, place, tide: s.tide || 0, perHour: rate.perHour, hours: rate.hours, estimated: rate.estimated, gold: Math.floor(s.gold || 0), earned: Math.floor(s.goldEarned || 0), running: !!s.running, updatedAt: row.updated_at };
         rows.push(r);
         if (q && (username.toLowerCase() === q || (typeof s.name === 'string' && s.name.toLowerCase().includes(q)))) {

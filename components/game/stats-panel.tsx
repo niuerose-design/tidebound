@@ -1,9 +1,9 @@
 'use client';
 /** v27.88 통계: 세이브에 쌓인 기록을 한 화면에 모아 보여 줍니다(계산만, 상태는 바꾸지 않음). */
 import type { State } from '@/game/types';
-import { Heading, Fold, format } from './shared';
-import { RebirthHistory, formatDuration } from './rebirth-history';
-import { MONSTERS, PLACES, PLAIN_DUNGEONS } from '@/game/data/world';
+import { Heading, Fold, format, formatDuration } from './shared';
+import { RebirthHistory } from './rebirth-history';
+import { MONSTERS, BASE_STAGES, PLAIN_DUNGEONS } from '@/game/data/world';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookStage } from '@/game/systems/book';
 import { BALANCE } from '@/game/data/balance';
@@ -56,7 +56,7 @@ export function Stats({ s }: { s: State }) {
             ['변종 처치', `${format(variants)}마리`],
             ['황금 개체 처치', `${format(sum(s.goldenBook))}마리`],
         ]}/>
-        <Block title="사냥터 최고 난이도" note="사냥터마다 처치한 가장 높은 난이도" rows={PLACES.map(st => [st.name, `${s.tideBest?.[st.id] || 0}`] as Row)}/>
+        <Block title="사냥터 최고 난이도" note="사냥터마다 처치한 가장 높은 난이도" rows={BASE_STAGES.map(st => [st.name, `${s.tideBest?.[st.id] || 0}`] as Row)}/>
         <Block title="결투" rows={[
             ['레이팅', format(s.rating)],
             ['전적', duels ? `${format(s.wins)}승 ${format(s.losses)}패 (승률 ${Math.round(s.wins / duels * 100)}%)` : '기록 없음'],

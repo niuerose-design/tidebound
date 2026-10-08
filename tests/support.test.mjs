@@ -154,7 +154,7 @@ test('v26.6 dice: luck lane rolls more dice with more luck; the highest face map
     const s = newState(0); s.level = 20; s.job = 'fortunate'; s.unlockedJobs.push('luckyAngler', 'fortunate'); s.learned.fingerCutII = 1; s.skills = ['fingerCutII']; assert.ok(canUse(s, 'fingerCutII')); assert.equal(stats(s).diceTrim, 2, 'equipped passive feeds diceTrim');
 });
 
-test('v26.5 focus hunting refuses a fish gated behind a higher sea difficulty instead of silently going random', async () => {
+test('v26.5 focus hunting refuses a monster gated behind a higher sea difficulty instead of silently going random', async () => {
     const { act } = await import('./harness.mjs');
     const s = newState(0); s.level = 40; s.rebirths = 1; act(s, { type: 'stage', id: 'moon' }, 0);
     act(s, { type: 'target', id: 'moonfish' }, 0); assert.equal(s.target, 'moonfish');

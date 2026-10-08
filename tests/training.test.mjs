@@ -2,7 +2,7 @@
 import { newState, act, strike, canChangeJob, migrateState, stats, JOBS, SKILLS, assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 
-const { load } = loadGame(), T = await load('game/data/training.js'), P = await load('game/systems/progression.js'), S = await load('game/systems/stats.js'), { lineageOf } = await load('game/data/classes.js');
+const { load } = loadGame(), T = await load('game/data/training.js'), P = await load('game/systems/progression.js'), S = await load('game/systems/stats.js'), { lineageOf } = await load('game/data/classes.js'), { registerSkills } = await load('game/data/skills.js');
 const job = id => JOBS.find(j => j.id === id);
 
 test('v3.69 training: six training jobs absorb the 27 old independents; every old skill keeps its id under a new owner', () => {
@@ -25,9 +25,9 @@ test('v3.69 training: retired jobs refuse the job change even when mastered; tra
     assert.equal(canChangeJob(s, 'woodcutter'), false); s.jobMastery.woodcutter = 1e9; assert.equal(canChangeJob(s, 'woodcutter'), false, 'retired even when mastered');
     assert.equal(canChangeJob(s, 'trainingPhysical'), true);
     const j = job('trainingPhysical'); assert.ok(j.attack <= .35 && j.magic <= .35 && j.hp <= .4 && j.rewardScale === .35);
-    const base = { ...newState(0), level: 20 }, fisherGold = S.goldMultiplier(base), fisherExp = S.expMultiplier(base);
+    const base = { ...newState(0), level: 20 }, baseGold = S.goldMultiplier(base), baseExp = S.expMultiplier(base);
     const train = { ...base, job: 'trainingPhysical' };
-    assert.ok(Math.abs(S.goldMultiplier(train) - fisherGold * .35) < 1e-9 && Math.abs(S.expMultiplier(train) - fisherExp * .35) < 1e-9);
+    assert.ok(Math.abs(S.goldMultiplier(train) - baseGold * .35) < 1e-9 && Math.abs(S.expMultiplier(train) - baseExp * .35) < 1e-9);
     assert.ok(stats(train).attack < stats(base).attack, 'weaker than the beginner');
 });
 
@@ -506,12 +506,13 @@ test('v3.151 Illium: arcane-ratio scaling, basic attacks corrode, corrosion cuts
     strike(h, target(), () => 0); assert.equal(h.effects.buffs.haste.turns, 1); strike(h, target(), () => 0); assert.equal(h.effects.buffs, undefined);
     // selfBuff 기술: 고정값 버프가 전투 능력치에 더해집니다.
     const bsk = { id: 'zzBuffTest', name: '시험 버프', type: 'active', level: 1, chance: 1, cooldown: 3, multiplier: 1, cost: 1, manaCost: 0, damageType: 'magic', selfBuff: { id: 'test', name: '시험', turns: 2, stats: { magic: 300 } } };
-    SKILLS.push(bsk);
+    // 전투는 id 찾기 캐시(skillById)를 쓰므로 표에 직접 넣지 않고 등록합니다(캐시 비움).
+    registerSkills([bsk]);
     try {
         const bf = fighter(['zzBuffTest']); const tb = target(); const eb = []; strike(bf, tb, () => 0, eb); assert.equal(bf.effects.buffs.test.turns, 2); assert.ok(eb[0].statuses.some(s => s.id === 'test' && s.onSelf));
         const tb2 = target(); bf.cooldowns = { zzBuffTest: 3 }; strike(bf, tb2, () => 0); const boosted = 1e6 - tb2.hp; const tb3 = target(); strike(fighter([]), tb3, () => 0); const normal = 1e6 - tb3.hp;
         assert.ok(Math.abs(boosted / normal - 2) < .05, `buffed magic doubles the arcane strike: ${normal} → ${boosted}`);
-    } finally { SKILLS.splice(SKILLS.indexOf(bsk), 1); }
+    } finally { SKILLS.splice(SKILLS.indexOf(bsk), 1); registerSkills([]); }
 });
 
 // v3.169 능력치 수련 패시브의 자세히 보기: 효과 줄 · 다음 강화 · 성장표가 숙련 단계 배율(+25%, 최대 ×2)을 보여 줍니다(전투 계산은 그대로).

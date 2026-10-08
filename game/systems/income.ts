@@ -3,9 +3,9 @@
  * 부재중 정산도 같은 턴 처리라 함께 셉니다. 판매·환불처럼 턴 밖에서 생긴 골드는 넣지 않습니다(운영 페이지의 ‘사냥 골드 수입’).
  */
 import type { State } from '../types';
+import { HOUR } from '../data/time';
 
 export const INCOME_HOURS = 24;
-const HOUR = 3600_000;
 export type IncomeBucket = { h: number; g: number };
 export const playHour = (s: Pick<State, 'playMs'>) => Math.floor((s.playMs || 0) / HOUR);
 

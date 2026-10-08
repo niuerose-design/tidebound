@@ -29,7 +29,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     loadedHook: { multiplier: 1.05, gamble: { min: .3, max: 1.9, accuracy: .1 }, scaling: 'luck', scalingRatio: .4 },
     allIn: { chance: .26, cooldown: 5, multiplier: 1.6, drainRatio: .35, allIn: { hpRatio: .2, hpScale: 1.2, manaScale: 2 }, scaling: 'luck', scalingRatio: .5 },
     fateRoll: { multiplier: 2.5, gamble: { min: .2, max: 1.8, accuracy: .15 }, scaling: 'luck', scalingRatio: .6 },
-    // v3.89 조커 행운 비례 비율 .8 → .3: 치명 피해 ×4 안팎의 엔드에서 다른 5차 최상위(보우마스터)를 넘지 않게. 파이널 컷(체력 · 마나 올인)은 그대로.
+    // v3.89 조커 행운 비례 비율 .3: 치명 피해 ×4 안팎의 엔드에서 다른 5차 최상위(보우마스터)를 넘지 않게. 파이널 컷(체력 · 마나 올인)은 그대로.
     jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 }, scaling: 'luck', scalingRatio: .3 },
     allOrNothing: { chance: .24, cooldown: 6, multiplier: 2.6, drainRatio: .35, allIn: { hpRatio: .3, hpScale: 1.6, manaScale: 3 }, gamble: { min: .6, max: 1.8 }, scaling: 'luck', scalingRatio: .8 },
     // ── 로그(섀도어): 변종 기록(√변종·황금 처치 수) 비례 ──
@@ -37,7 +37,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     spoilsStrike: { goldSpend: { ratio: .01, capAttack: .4, scale: 1 } },
     treasureStrike: { goldSpend: { ratio: .01, capAttack: .6, scale: 1 } },
     hoardCrush: { goldSpend: { ratio: .02, capAttack: 1.2, scale: 1 } },
-    // ── 와일드헌터 (2차): 도감 기록 비례(로그(섀도어)에서 이관) ──
+    // ── 와일드헌터 (2차): 도감 기록 비례 ──
     sigilShock: { chance: .5, cooldown: 3, multiplier: 1.2, manaCost: 4, preyBonus: .6, scaling: 'codex', scalingRatio: .008 },
     // ── 해적(캡틴): 보유 골드 비례(골드 투척은 v3.156에 섀도어 메소 익스플로전으로 옮김) ──
     coinToss: { chance: .26, cooldown: 3, multiplier: 1.15, scaling: 'gold', scalingRatio: .04 },

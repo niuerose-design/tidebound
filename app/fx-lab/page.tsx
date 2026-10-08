@@ -8,7 +8,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { notFound, useSearchParams } from 'next/navigation';
 import { SKILLS, skillById } from '@/game/data/skills';
-import { ENEMY_SKILLS } from '@/game/data/encounters';
+import { enemySkillById } from '@/game/data/encounters';
 import { FOE_FX } from '@/game/data/foe-fx';
 import { jobById } from '@/game/data/classes';
 import { fxVariantOf, type CombatFx, type CombatFxKind } from '@/game/systems/combat-feedback';
@@ -27,7 +27,7 @@ function FxLabInner() {
     const params = useSearchParams();
     const skillId = params.get('skill') || 'infiniteChant', every = Math.max(800, Number(params.get('every')) || 4000), glow = params.get('glow') !== 'off';
     const asFoe = params.get('actor') === 'foe';
-    const sk = (asFoe ? ENEMY_SKILLS.find(x => x.id === skillId) : undefined) ?? skillById(skillId), foeId = params.get('foe') || MONSTERS[0].id, execute = params.get('execute') === '1';
+    const sk = (asFoe ? enemySkillById(skillId) : undefined) ?? skillById(skillId), foeId = params.get('foe') || MONSTERS[0].id, execute = params.get('execute') === '1';
     const [seq, setSeq] = useState(0);
     useEffect(() => { document.documentElement.classList.toggle('fx-no-glow', !glow); return () => document.documentElement.classList.remove('fx-no-glow'); }, [glow]);
     useEffect(() => { const t = setInterval(() => setSeq(n => n + 1), every); return () => clearInterval(t); }, [every]);

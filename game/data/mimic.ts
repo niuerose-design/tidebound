@@ -15,7 +15,7 @@ export const MIMIC = {
      * 환생 20회 단계에서 확률이 최대가 되어, 그 위의 숙련 속도는 환생 횟수가 아니라 승천이 맡습니다(docs/balance-rebirth.md 6.5). */
     tierCap: 20, stageCap: 'dragonNest',
     /** 오프라인 정산(1분 넘게 쌓인 틱을 한꺼번에 돌릴 때) 중 등장 확률 배율. */
-    /** v3.189 .25 → .5: 숙련의 대부분(약 98%)이 까미에서 나와 부재중 숙련이 접속 중의 약 26%였음 → 약 51%. */
+    /** v3.189 숙련의 대부분(약 98%)이 까미에서 나오므로, 부재중 숙련이 접속 중의 약 절반(51%)이 되는 값. */
     offlineScale: .5,
     minLevel: 10,
     minKills: 100,
@@ -33,7 +33,7 @@ export const MIMIC = {
 /** v3.31 행운의 편지 6~10단계(승천 후) 기능. */
 /** v3.160 호루라기: SP를 내고 다음 사냥터 출현을 숙련의 까미 · 경험의 누리로 정합니다(하루 perDay개, 던전 · 랜덤게임 제외). docs/currency-rank-review.md 1.4절. */
 export const WHISTLE = { sp: 5, perDay: 3 } as const;
-export const LETTER = { offlineRank: 6, /** v3.189 기본 부재중 배율이 .5가 되어 .5 → .75. */ offlineScale: .75, jackpotRank: 8, /** v3.52 값은 서버 전용(odds). */ get jackpotChance() { return ODDS.mimic.letterJackpot; }, recipientRank: 10, recipientShare: .01 } as const;
+export const LETTER = { offlineRank: 6, /** v3.189 기본 부재중 배율(.5)보다 완화. */ offlineScale: .75, jackpotRank: 8, /** v3.52 값은 서버 전용(odds). */ get jackpotChance() { return ODDS.mimic.letterJackpot; }, recipientRank: 10, recipientShare: .01 } as const;
 type LetterState = { permanent?: Record<string, number> };
 export const letterRank = (s?: LetterState) => s?.permanent?.messageBottle || 0;
 /** 까미 로또 표. 행운의 편지 8단계부터 ‘대’ 당첨 확률이 오릅니다(늘어난 몫은 ‘소’에서 뺌). */

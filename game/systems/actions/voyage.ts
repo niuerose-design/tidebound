@@ -1,16 +1,16 @@
 /** 모험 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
 import { tideLimit, encounterTier, levelGateOk } from '../meta';
-import { STAGES, DUNGEONS, MONSTERS , dungeonClosed, stageClosed, hackDownOf } from '../../data/world';
+import { STAGES, dungeonClosed, stageClosed, hackDownOf, monsterById, stageById, dungeonById } from '../../data/world';
 import { SWARM_CAPS } from '../../data/variants';
 import { RANDOM_GAME } from '../../data/random-game';
 import { isHackerJob } from '../../data/hacker';
 import { randomGameRank, randomGameRunsLeft, randomGameUsed, inRandomGame, cashOutRandomGame } from '../random-game';
-import { dayKey } from '../../data/goals';
 import type { ActionHandlers } from './types';
 import { researchRank, salvageRate, autoGrades, autoMaxGrade, AUTO_RESEARCH, type AutoDevice } from '../../data/economy';
 import { RARITIES } from '../../data/balance';
 import { addLog, endRun } from '../state';
 import { parseDungeonValue, enterDungeon } from '../dungeon-run';
+import { dayKey } from '../../data/time';
 
 export const voyageActions: ActionHandlers = {
     sync() {},
@@ -35,7 +35,7 @@ export const voyageActions: ActionHandlers = {
         addLog(s, '사냥을 잠시 멈췄습니다.');
     },
     stage(s, { id, now }) {
-        const st = STAGES.find(x => x.id === id);
+        const st = stageById(id);
         if (!st || !levelGateOk(s, st.level) || s.rebirths < st.rebirth)
             throw Error('아직 진입할 수 없는 사냥터입니다.');
         if (stageClosed(st.id))
@@ -54,7 +54,7 @@ export const voyageActions: ActionHandlers = {
     dungeon(s, { a, id, now }) {
         if (isHackerJob(s.job))
             throw Error('해커는 던전에 들어가지 않습니다. 침투 작전으로 성장하세요.');
-        const d = DUNGEONS.find(x => x.id === id);
+        const d = dungeonById(id);
         if (!d || !levelGateOk(s, d.level) || s.rebirths < d.rebirth)
             throw Error('던전 입장 조건을 충족하지 못했습니다.');
         if (dungeonClosed(d.id))
@@ -86,13 +86,13 @@ export const voyageActions: ActionHandlers = {
     target(s, { id }) {
         if (s.dungeon)
             throw Error('던전에서는 목표를 바꿀 수 없습니다.');
-        const stage = STAGES.find(x => x.id === s.stage)!;
+        const stage = stageById(s.stage)!;
         if (id !== 'all' && !stage.monsters.includes(id))
             throw Error('현재 사냥터의 몬스터를 선택하세요.');
         // v26.5 사냥터 난이도 조건이 있는 몬스터는 그 난이도부터만 집중 사냥할 수 있습니다(조용히 무작위로 빠지지 않도록 막습니다).
-        const need = id === 'all' ? 0 : MONSTERS.find(f => f.id === id)?.minTier || 0;
+        const need = id === 'all' ? 0 : monsterById(id)?.minTier || 0;
         if (need > encounterTier(s))
-            throw Error(`${MONSTERS.find(f => f.id === id)?.name}은(는) 사냥터 난이도 ${need}부터 나타납니다(지금 ${encounterTier(s)}).`);
+            throw Error(`${monsterById(id)?.name}은(는) 사냥터 난이도 ${need}부터 나타납니다(지금 ${encounterTier(s)}).`);
         s.target = id === 'all' ? null : id;
         s.enemy = null;
     },

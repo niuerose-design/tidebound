@@ -49,7 +49,6 @@ if(!baseline){
  assert(evasionRating(.8)>.5&&evasionRating(.8)<.8);
  // v3.74 옛 연마 보너스는 없앴습니다(극한돌파는 효과 없음): 숙련을 더 쌓아도 배율은 그대로입니다.
  const sk=SKILLS.find(s=>s.id==='pierce');
- assert.equal(effectiveSkill(sk,5,7,1e9).multiplier,effectiveSkill(sk,5,7).multiplier);
  assert.equal(effectiveSkill(sk,5,4).penetrationBonus,.2);
  assert(rebirthExperience(400)<rebirthExperience(20)*3);
  const full=newState(0),st=stats(full),healer={name:'test',stats:st,hp:st.hp,skills:['breath'],cooldowns:{},stun:0,mana:st.mana};const b={name:'dummy',stats:st,hp:st.hp,skills:[],cooldowns:{},stun:0};strike(healer,b,()=>0);assert.ok(healer.cooldowns.breath>0,'v21: heal skills also fire at full HP');

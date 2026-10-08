@@ -3,7 +3,8 @@ import { MAPLE_MONSTERS } from './maple-monsters';
 /** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
 /** 사냥터 정의. habitat는 v27.80 무리 서식지(지역마다 하나)입니다. */
 export type StageDef = { id: string; region: string; place: string; name: string; subtitle: string; level: number; rebirth: number; description: string; monsters: string[]; tone: string; habitat?: boolean; /** v3.103 적정 환생(측정, docs/hunting-ground-plan.md 9절). 입장 조건(rebirth)보다 클 때만 따로 보입니다. */ fit?: number };
-const BASE_STAGES: StageDef[] = [
+/** 일반 사냥터(무리 서식지 제외). 사냥터 수·도감·업적처럼 장소를 세는 곳에서 씁니다. */
+export const BASE_STAGES: StageDef[] = [
     { id: 'brook', region: '리스항구', place: '선착장', name: '리스항구 · 선착장', subtitle: 'LITH HARBOR · PIER', level: 1, rebirth: 0, description: '빅토리아 아일랜드의 관문. 선착장 끝에서 첫 몬스터가 찾아온다.', monsters: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
     { id: 'bay', region: '리스항구', place: '조개 해안', name: '리스항구 · 조개 해안', subtitle: 'LITH HARBOR · SHELL COAST', level: 5, rebirth: 0, description: '항구 뒤 조개껍데기가 깔린 해안. 버섯과 슬라임이 파도 소리에 맞춰 통통 튄다.', monsters: ['mackerel', 'ray', 'puffer'], tone: '#68b6ce' },
     { id: 'reef', region: '헤네시스', place: '돼지의 해변', name: '헤네시스 · 돼지의 해변', subtitle: 'HENESYS · PIG BEACH', level: 10, rebirth: 0, description: '헤네시스 남쪽 해변. 돼지 떼가 모래밭을 뛰놀고, 버섯이 그늘에서 덮칠 틈을 노린다.', monsters: ['lionfish', 'eel', 'barracuda', 'stormBarracuda'], tone: '#d49081' },
@@ -24,7 +25,7 @@ const BASE_STAGES: StageDef[] = [
 /**
  * v27.80 무리 서식지: 지역마다 하나. 그 지역 몬스터가 전부 무리로만 나옵니다(×100 75% · ×500 25%, 도감·패시브 조건 없음).
  * 처치 한 번에 마리 수만큼 보상·도감이 쌓이는 고위험 고보상 사냥터입니다(v3.42 드롭은 √N번 판정, swarmDropRolls). v3.106부터 까미·누리도 나옵니다(무리가 아닌 한 마리로).
- * 입장: 지역 사냥터의 최고 레벨 · 환생은 HABITAT_REBIRTH 표(v3.103, 그 전에는 지역 사냥터 최고 환생 조건 + 2, 최소 2회).
+ * 입장: 지역 사냥터의 최고 레벨 · 환생은 HABITAT_REBIRTH 표(v3.103).
  */
 // v3.52 ×500 확률(bigChance)은 서버 전용(game/secret/odds.ts).
 export const HABITAT = { sizes: [100, 500] as const, get bigChance() { return ODDS.variant.habitatBig; }, rebirthOver: 2, minRebirth: 2 };
@@ -44,13 +45,13 @@ export const REGIONS = [...new Set(BASE_STAGES.map(st => st.region))];
 /** 지역의 일반 사냥터(무리 서식지 제외). */
 export const regionPlaces = (region: string) => BASE_STAGES.filter(st => st.region === region);
 /** 지역에 사는 몬스터(중복 없이, 사냥터 순서). */
-const regionMonstersCache = new Map<string, string[]>();
+const regionMonsterCache = new Map<string, string[]>();
 /** v3.104 사냥터 표는 바뀌지 않으므로 지역마다 한 번만 만듭니다(능력치 계산이 턴마다 부름). 돌려받은 배열은 고치지 마세요. */
-export const regionMonsters = (region: string) => { let ids = regionMonstersCache.get(region); if (!ids) regionMonstersCache.set(region, ids = Object.freeze([...new Set(regionPlaces(region).flatMap(st => st.monsters))]) as string[]); return ids; };
+export const regionMonsters = (region: string) => { let ids = regionMonsterCache.get(region); if (!ids) regionMonsterCache.set(region, ids = Object.freeze([...new Set(regionPlaces(region).flatMap(st => st.monsters))]) as string[]); return ids; };
 /**
  * v3.103 사냥터 개편(docs/hunting-ground-plan.md 9절, 기준 몸 '자기 계열 패시브' 측정).
  * 적정 환생: 난이도 0에서 사망 0 · 평균 처치 3턴 이하(서식지는 시간당 사망 5회 이하 · 경험치가 일반 사냥터 이상)가 되는 환생.
- * 서식지 입장 환생은 지역 최고 환생 + 2로 정하던 것을 표로 고정합니다(늦은 지역 사냥터 입장을 내리면서 따로 정함).
+ * 서식지 입장 환생은 지역 사냥터 조건에서 유도하지 않고 표로 따로 정합니다.
  */
 export const STAGE_FIT: Record<string, number> = {
     brook: 0, bay: 0, reef: 0, kelp: 0, wreck: 2, volcanic: 5, trench: 5, moon: 5, starfall: 10, duskVents: 10,
@@ -64,14 +65,15 @@ const HABITATS: StageDef[] = REGIONS.map(region => {
     return { id: meta.id, region, place: '무리 서식지', name: `${region} · 무리 서식지`, subtitle: meta.subtitle, level: Math.max(...places.map(st => st.level)), rebirth: HABITAT_REBIRTH[meta.id] ?? Math.max(HABITAT.minRebirth, Math.max(...places.map(st => st.rebirth)) + HABITAT.rebirthOver), description: meta.description, monsters: regionMonsters(region), tone: meta.tone, habitat: true, fit: STAGE_FIT[meta.id] };
 });
 export const STAGES: StageDef[] = [...BASE_STAGES, ...HABITATS];
-/** 일반 사냥터(무리 서식지 제외). 사냥터 수·도감·업적처럼 장소를 세는 곳에서 씁니다. */
-export const PLACES = BASE_STAGES;
+let stageIndex: Map<string, StageDef> | undefined;
+/** 사냥터 id로 찾기(무리 서식지 포함). */
+export const stageById = (id: string | undefined) => id === undefined ? undefined : (stageIndex ??= new Map(STAGES.map(st => [st.id, st]))).get(id);
 /**
  * v3.9 깊이 계수: 난이도 레벨 보정으로 사냥터가 평준화된 뒤에도 뒤 사냥터가 조금 더 어렵고 조금 더 주도록, 입장 레벨 순서(0부터)마다 +DEPTH_SCALE을 체력·공격·골드·경험치에 곱합니다.
  * 서식지는 자기 레벨 자리, 일반 던전은 지역 던전 순서 기준. 무릉도장·랜덤게임·까미·누리는 1.
  */
 export const DEPTH_SCALE = .04;
-const placeLevels = () => [...new Set(PLACES.map(st => st.level))].sort((a, b) => a - b);
+const placeLevels = () => [...new Set(BASE_STAGES.map(st => st.level))].sort((a, b) => a - b);
 export const stageDepth = (stageId: string) => { const st = STAGES.find(x => x.id === stageId); return st ? 1 + DEPTH_SCALE * placeLevels().filter(l => l < st.level).length : 1; };
 export const isHabitat = (id: string) => !!STAGES.find(st => st.id === id)?.habitat;
 /**
@@ -164,7 +166,7 @@ export function stageStatMonster<F extends { level: number; hp: number; attack: 
  */
 /**
  * 난이도가 이 단계에 이르면 모든 사냥터 몬스터가 목표 레벨(내 레벨과 가장 높은 사냥터 수준 중 낮은 쪽)에 닿습니다. 그 전에는 남은 차이를 단계 비율만큼 메웁니다.
- * v27.67 10 → 5: 숙련의 까미가 나오는 난이도(5)부터는 어느 사냥터든 같은 수준이 되게 맞춥니다(난이도 5 리스항구 까미 작업 방지).
+ * v27.67 숙련의 까미가 나오는 난이도(5)부터는 어느 사냥터든 같은 수준이 되게 맞춥니다(난이도 5 리스항구 까미 작업 방지).
  */
 export const TIDE_LIFT_TIERS = 5;
 /** 목표 레벨의 상한: 가장 높은 사냥터 몬스터의 능력치 레벨(입장 레벨 + STAGE_ENEMY_LEVEL_OVER). 상위 사냥터의 난이도는 그대로 두고 낮은 사냥터만 따라 올라옵니다. */
@@ -232,7 +234,7 @@ const specialMonsters: Array<{
     { id: 'prismRay', name: '옥토퍼스', level: 48, lore: '빛을 일곱 갈래로 쪼개며 헤엄친다.', rarity: 'epic' as const, rewardMultiplier: 1.2 },
     { id: 'voidGuppy', name: '스티지', level: 50, lore: '작은 몸 안에 깊이를 측정할 수 없는 어둠이 있다.', rarity: 'epic' as const, rewardMultiplier: 1.3 },
     // v25.8 차수 변종: 사냥터 난이도 10·20·30 이상에서만 나타나는 희귀 변종. 도감 항목이 따로 있어 차수를 올릴 이유가 됩니다.
-    { id: 'stormBarracuda', name: '아이언 호그', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, rewardMultiplier: 2.4 }, // v26.6 사냥터 난이도 조건(10) 제거: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
+    { id: 'stormBarracuda', name: '아이언 호그', level: 20, lore: '폭풍이 지나간 산호초에만 나타나는 검은 번개의 사냥꾼.', rarity: 'epic' as const, rewardMultiplier: 2.4 }, // v26.6 난이도 조건 없음: 이미 산호초에서 저격해 온 유저가 있어 난이도 0부터 출현
     { id: 'eclipseMoonfish', name: '레이스', level: 44, lore: '달이 가려진 밤, 심연의 빛을 등에 지고 떠오른다.', rarity: 'epic' as const, rewardMultiplier: 2.8, minTier: 20 },
     { id: 'novaManta', name: '와이번', level: 58, lore: '별이 터지는 순간의 빛을 날개에 새긴 외해의 전설.', rarity: 'legendary' as const, rewardMultiplier: 2, minTier: 30 },
     { id: 'cinderAngler', name: '크로코', level: 60, lore: '열수구의 불씨를 등불 삼아 어둠 속에서 입을 벌린다.', rarity: 'rare' as const, rewardMultiplier: 1.5 },
@@ -259,6 +261,9 @@ for (const f of specialMonsters)
     MONSTERS.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: monsterExpAt(f.level), gold: monsterGoldAt(f.level), lore: f.lore, rarity: f.rarity, /** v3.55 출현 가중치는 서버 전용(ODDS.spawn). */ get spawnWeight() { return ODDS.spawn[f.id]; }, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
 // v27.41 메이플 몬스터 이름: maple-monsters.ts 한곳에서 이름·설명을 덮어씁니다(id·능력치는 그대로).
 for (const f of MONSTERS) { const m = MAPLE_MONSTERS[f.id]; if (m) { f.name = m.name; f.lore = m.lore; } }
+let monsterIndex: Map<string, MonsterDef> | undefined;
+/** 몬스터 id로 찾기. */
+export const monsterById = (id: string | undefined) => id === undefined ? undefined : (monsterIndex ??= new Map(MONSTERS.map(f => [f.id, f]))).get(id);
 /**
  * v27.31 운영 페이지에서 닫은 사냥터·던전(입장 불가). 서버가 DB 설정(settings.closures)을 읽어 setClosures로 채웁니다.
  * 설정을 한 번도 저장하지 않았으면 DEFAULT_CLOSURES(무릉도장 닫힘)를 씁니다. 테스트는 harness에서 비웁니다.
@@ -291,7 +296,7 @@ export function setHackDown(list: typeof HACK_DOWN, patched: Record<string, numb
 export const placeKey = (kind: 'stage' | 'dungeon', id: string) => `${kind}:${id}`;
 /** 지금 해킹으로 막힌 곳이면 그 기록, 아니면 undefined. */
 export const hackDownOf = (kind: 'stage' | 'dungeon', id: string, now: number) => (HACK_PATCHED[placeKey(kind, id)] || 0) > now ? undefined : HACK_DOWN.find(d => d.kind === kind && d.id === id && d.until > now);
-// v3.186 입장 환생(docs/boss-plan.md §6): 불의 제단 0 → 2 · 마법 사원 1 → 2 · 시계탑 2 → 6. 입장 몸(초보)으로 보스 14 · 22 · 20턴 · 사망 0(전 52 · 51 · 164턴 · 사망 20~80%).
+// v3.186 입장 환생(docs/boss-plan.md §6): 입장 몸(초보)으로 보스 14 · 22 · 20턴 · 사망 0이 되는 값.
 export const DUNGEONS = [
     /** v27.86 랜덤게임: 웨이브마다 무작위 몬스터(monsters는 자리표시). 일반 던전 목록·업적·목표에서는 random으로 빠집니다. */
     { id: 'randomGame', name: '랜덤게임', level: 1, rebirth: 5, monsters: ['minnow'], bossMonster: undefined as string | undefined, boss: '랜덤게임', gold: 0, pearls: 0, description: '해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브를 깰수록 판돈이 쌓이고, 쓰러지면 모두 잃습니다.', random: true },
@@ -306,6 +311,9 @@ export const DUNGEONS = [
 ];
 /** v27.86 랜덤게임을 뺀 일반 던전(목록·업적·목표·점검용). */
 export const PLAIN_DUNGEONS = DUNGEONS.filter(d => !('random' in d && d.random));
+let dungeonIndex: Map<string, (typeof DUNGEONS)[number]> | undefined;
+/** 던전 id로 찾기. */
+export const dungeonById = (id: string | undefined) => id === undefined ? undefined : (dungeonIndex ??= new Map(DUNGEONS.map(d => [d.id, d]))).get(id);
 /** v3.9 지역 던전(까미·누리·무릉도장·랜덤게임 제외)의 입장 레벨 순서 깊이 계수. */
 const REGION_DUNGEONS = () => PLAIN_DUNGEONS.filter(d => d.id !== 'abyss' && d.id !== 'masteryMimic' && d.id !== 'expNuri');
 export const dungeonDepth = (id: string) => { const d = REGION_DUNGEONS().find(x => x.id === id); return d ? 1 + DEPTH_SCALE * [...new Set(REGION_DUNGEONS().map(x => x.level))].filter(l => l < d.level).length : 1; };

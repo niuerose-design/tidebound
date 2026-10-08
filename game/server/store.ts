@@ -5,7 +5,6 @@ import { snapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
 import { db, ConfigError, type SlotRow } from './db';
 import { ascended, ascensionOf, lifetimeRebirths } from '../data/ascension';
-import { weekKey, weekSeason, monthKey, monthSeason, previousMonthKey } from '../data/goals';
 import type { RankingRow } from './db';
 import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
@@ -17,6 +16,7 @@ import { MONSTERS } from '../data/world';
 import { JOBS } from '../data/classes';
 import { jobMastered } from '../systems/progression';
 import { mergeSlots, slotUnlocked, slotUnlockText, ACCOUNT_RULES, SLOT_COUNT, type SlotSummary } from '../data/account';
+import { weekKey, weekSeason, monthKey, monthSeason, previousMonthKey } from '../data/time';
 export { db };
 export class ApiError extends Error {
     constructor(message: string, public status = 400) { super(message); }
@@ -101,7 +101,7 @@ export async function register(id: string) {
     return state;
 }
 /**
- * 저장 전에 한 번: 시즌(월)이 바뀌었으면 지난 시즌 순위를 기록하고 점수를 1000으로 되돌립니다. v3.106 순위 보상(세계석)은 없앴습니다(점수 · 순위만).
+ * 저장 전에 한 번: 시즌(월)이 바뀌었으면 지난 시즌 순위를 기록하고 점수를 1000으로 되돌립니다.
  * 지난 시즌(또는 v25.11 이전 영구 랭킹)에 방어 정보가 있었으면 같은 정보로 새 시즌 행을 만들어 기록판이 비지 않게 합니다. 같은 시즌이면 질의 0.
  */
 export async function syncDuelSeason(id: string, s: State, now: number) {

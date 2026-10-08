@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { SWARM_SIZES, SWARM_UNLOCK, FIELD_SWARM_MAX, STAGES } from './world';
+import { SWARM_SIZES, SWARM_UNLOCK, FIELD_SWARM_MAX, stageById } from './world';
 import { rareSpawnBonus } from '../systems/book';
 import { stats } from '../systems/stats';
 import { ODDS } from './odds';
@@ -38,7 +38,7 @@ export const REGION_SIGNATURE: Record<string, VariantId[]> = {
     '아쿠아로드': ['swarm'], '리프레': ['giant'], '시간의 신전': ['starlit'], '아케인 리버': ['swarm', 'abyssal'],
 };
 /** 사냥터의 지역 변종 배율(지역 표가 없으면 1). */
-export const regionVariantScale = (stageId: string, id: VariantId) => ODDS.variant.region[STAGES.find(st => st.id === stageId)?.region || '']?.[id] ?? 1;
+export const regionVariantScale = (stageId: string, id: VariantId) => ODDS.variant.region[stageById(stageId)?.region || '']?.[id] ?? 1;
 /** 지역의 대표 변종(배율이 가장 큰 것들). */
 export const regionSignature = (region: string) => { const ids = REGION_SIGNATURE[region] || []; return VARIANTS.filter(v => ids.includes(v.id)); };
 /** 변종 확률 배율: 지역 테마(버섯숲 연못 +10%) × (1 + 변종 조우 확률 증가). 증가분은 섀도어 계보 패시브가 올립니다. 지역 변종 배율(REGION_VARIANTS)은 변종마다 따로 곱합니다. */

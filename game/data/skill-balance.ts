@@ -28,7 +28,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     crush: { chance: .22, multiplier: 1.5 },
     oath: { chance: .24, multiplier: 2.1, drainRatio: .15 },
     vitalSurge: { chance: .25, multiplier: 1.65, balanceBonus: .3 },
-    // v27.5 망인 계보 계승 가치: 다크 엘리멘트 AP 4→2·대기 3, 쉐도우 배트 발동 34%·×1.9·AP 3. 같은 차수 기술 중 꼴찌였습니다.
+    // v27.5 망인 계보(다크 엘리멘트 · 쉐도우 배트)는 계승 가치가 같은 차수 기술 중 꼴찌라 올려 둔 값입니다.
     // v27.4 유리 대포(제약 직업): 240%·빈사 +50%.
     wakeFist: { chance: .26, multiplier: 1.3, extraAttacks: 1, extraAttackMultiplier: .5 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
@@ -65,7 +65,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
 for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE })) ACTIVE_SKILL_BALANCE[id] = { ...ACTIVE_SKILL_BALANCE[id], ...tuning };
 
 /**
- * 상태이상 규칙(v24 → v24.1 혼합 방식)
+ * 상태이상 규칙(v24.1 혼합 방식)
  * - STATUS_ONLY: 배율이 낮은 보조기. 피해 없이 상태이상만 걸고 지속 턴이 늘어납니다(기절 +1, 그 밖 +2).
  * - 그 밖의 기술은 피해와 상태이상을 함께 줄 수 있습니다. 대신 전투에서
  *   ① 상대에게 이미 걸린 상태이상은 다시 걸지 않고(그 기술은 건너뜀, 중첩형 중독 제외)

@@ -49,7 +49,7 @@ export function BattleRail({ s, base, busy, send, setView }: {
 type PlaceProps = { s: State; busy: boolean; send: (a: Action) => void; setView: (v: string) => void };
 /**
  * 사냥터·던전·제단 선택판. 동기화 상태만 받아 전투 재생 프레임마다 다시 그리지 않습니다(v27.62).
- * v3.50 제단 탭을 다시 넣고(v3.37에 뺐던 것), 탭을 바꿔도 판 높이가 그대로이도록 목록 칸 높이를 고정했습니다(battle.css).
+ * v3.50 탭을 바꿔도 판 높이가 그대로이도록 목록 칸 높이를 고정했습니다(battle.css).
  */
 const PlaceSelector = memo(function PlaceSelector({ s, busy, send, setView }: PlaceProps) {
     const dungeons = [...PLAIN_DUNGEONS].sort((a, b) => a.level - b.level);

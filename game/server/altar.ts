@@ -12,8 +12,7 @@ import { db, type AltarRow, type AltarOfferRow, type AltarTotalRow, type AltarRa
 import { ApiError } from './store';
 import { refreshAltarEvents } from './events-config';
 import { allow } from './throttle';
-import { weekKey } from '../data/goals';
-import { kstIso } from '../data/time';
+import { kstIso, weekKey } from '../data/time';
 import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot, raidBreakdown } from '../systems/duel';
@@ -114,8 +113,7 @@ async function shared(now: number, force = false): Promise<Shared> {
 }
 export const invalidateAltar = () => { coreCache = null; boardsCache = null; };
 /**
- * v3.105 바치기 뒤: 전체 누적 기여 캐시를 바친 만큼 고칩니다. v3.91부터 순위를 이 캐시(모든 모험가의 합계)에서 셌는데,
- * 바칠 때마다 캐시를 지워 전체 합계를 처음부터 다시 읽느라 바치기가 느려졌습니다. 다른 인스턴스는 15초 캐시가 지나면 새로 읽습니다.
+ * v3.105 바치기 뒤: 전체 누적 기여 캐시(순위를 세는 모든 모험가의 합계)를 바친 만큼 고칩니다. 다른 인스턴스는 15초 캐시가 지나면 새로 읽습니다.
  */
 function patchTotals(id: string, name: string, anonymous: boolean, points: number) {
     const b = boardsCache;
@@ -145,7 +143,7 @@ export const ALTAR_NEWS = {
     godAwake: (name: string) => `제단에 ${josa(name, '이가')} 깨어났습니다! 가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉습니다.`,
     raidAppear: (name: string, hours: number, stage = 1) => `월드보스 ${josa(name, '이가')} 나타났습니다!${stage > 1 ? ` 오늘 ${stage}단계 — 체력 ×${Math.round(Math.pow(RAID_STAGE.hp, stage - 1))}.` : ''} 모든 모험가의 피해가 하나의 체력에 쌓입니다. ${hours}시간 안에 함께 쓰러뜨리세요.`,
 };
-/** 제단 소식을 남깁니다(실패해도 본 처리는 그대로). v3.39 전체 채팅 대신 소식 채널. */
+/** 제단 소식을 남깁니다(실패해도 본 처리는 그대로). */
 async function announce(text: string, now: number) {
     try { await db().postChat({ channel: 'news', account_id: 'system', name: '제단', text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
 }
@@ -153,7 +151,7 @@ async function announce(text: string, now: number) {
 /** v3.91 많은 순으로 정렬된 누적 기여 목록에서 points보다 큰 사람 수(이진 탐색). */
 const countAbove = (sorted: number[], points: number) => { let lo = 0, hi = sorted.length; while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] > points) lo = m + 1; else hi = m; } return lo; };
 /**
- * 제단 정보. v3.91 DB 왕복을 줄였습니다: 공용 정보(15초 캐시)와 내 이번 주 기여를 함께 읽고, 이번 주 순위와 월드보스 카드를 함께 읽습니다.
+ * 제단 정보. v3.91 공용 정보(15초 캐시)와 내 이번 주 기여를 함께 읽고, 이번 주 순위와 월드보스 카드를 함께 읽습니다.
  * 누적 기여 · 순위는 공용 캐시의 전체 합계에서 셉니다. s가 없으면(조회) me의 세이브 칸은 비워 두고 화면이 자기 세이브를 씁니다.
  */
 export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now: number): Promise<AltarInfo> {
@@ -226,7 +224,7 @@ async function raidInfo(r: AltarRaidRow | undefined, id: string, now: number): P
 export function makeRaid(id: string, raidId: string) {
     let outcome: { result: DuelResult; dealt: number; remaining: number; slain: boolean; slayer: boolean; name: string; gen: number } | null = null;
     return async (s: State, now: number) => {
-        // v3.22 도전 간격은 보스마다 따로입니다(예전 세이브의 raidAt은 그때 떠 있던 보스에만 걸림).
+        // v3.22 도전 간격은 보스마다 따로입니다.
         const last = s.altar?.raidAtBy?.[raidId] ?? 0;
         if (!outcome) {
             const r = (await core(now, true)).raids[raidId], raid = raidById(raidId);
@@ -242,7 +240,7 @@ export function makeRaid(id: string, raidId: string) {
             await database.putRaidLog(r.gen, id, JSON.stringify(summary), JSON.stringify(result.logs.slice(-RAID.logLines)), now);
             const slain = remaining <= 0; let slayer = false;
             if (slain) {
-                slayer = await database.slayAltarRaid(raidId, r.gen, id, s.name, now);
+                slayer = await database.slayAltarRaid(raidId, r.gen, id, now);
                 if (slayer) {
                     // 격파 축복: 보스가 정한 축복을 1단계로 blessingHours만큼 엽니다(진행 중이면 시간만 늘어남).
                     for (const b of raid.blessings) { await database.addAltarGauge(b, 0); await database.extendAltarGauge(b, now, raid.blessingHours * 3600_000, ALTAR.blessingCapMs); }
@@ -279,7 +277,6 @@ export function applyOffering(s: State, o: Offering, points: number, gauge: Alta
     s.gold -= o.gold; s.pearls -= o.pearls; s.essence = (s.essence || 0) - o.essence;
     s.altar = { ...s.altar, anonymous, offers: (s.altar?.offers || 0) + 1 };
     const parts = [o.gold ? `${o.gold.toLocaleString()} G` : '', o.pearls ? `세계석 ${o.pearls.toLocaleString()}` : '', o.essence ? `정수 ${o.essence.toLocaleString()}` : ''].filter(Boolean).join(' · ');
-    // v3.15 월드보스 게이지(발록·자쿰·혼테일)는 축복 목록에 없어 여기서 예외가 나며 503이 됐습니다 → gaugeName으로 통일.
     addLog(s, `제단에 공물을 바쳤습니다 · ${parts} · 기여도 +${points.toLocaleString()} (${gaugeName(gauge)})`, 'system');
 }
 /**
@@ -290,8 +287,8 @@ export function applyOffering(s: State, o: Offering, points: number, gauge: Alta
 async function levelBlessing(b: typeof BLESSINGS[number], now: number, by: string) {
     const database = db();
     let opened = 0, until = 0, level = 0, wasLive = false, before = 0, reread = false;
-    // v3.94 게이지는 처음 한 번만 읽고, 올린 뒤에는 UPDATE가 돌려준 행으로 다음 단계를 셉니다. 공물이 모자라면 쿼리 없이 멈춥니다
-    // (전에는 단계마다 게이지 전체 읽기 + UPDATE, 마지막 실패까지 최악 24번). 다른 인스턴스와 겹쳐 UPDATE가 빗나가면 한 번만 다시 읽습니다.
+    // v3.94 게이지는 처음 한 번만 읽고, 올린 뒤에는 UPDATE가 돌려준 행으로 다음 단계를 셉니다. 공물이 모자라면 쿼리 없이 멈춥니다.
+    // 다른 인스턴스와 겹쳐 UPDATE가 빗나가면 한 번만 다시 읽습니다.
     let g = (await database.listAltarGauges()).find(x => x.id === b.id);
     for (let i = 0; i < 12; i++) {
         const live = effectiveBlessingLevel(g, now), cost = gaugeCost(b.id, live, live > 0);
@@ -315,7 +312,7 @@ export async function commitOffering(account: string, id: string, name: string, 
         database.addAltar(id, { ...o, points }, tithe(o)),
         database.addAltarGauge(gauge, points),
     ]);
-    // v3.105 축복 단계 · 신 소환은 공용 정보를 새로 읽으며 한 번에 처리합니다(전에는 축복 게이지를 따로 한 번 더 읽음).
+    // v3.105 축복 단계 · 신 소환은 공용 정보를 새로 읽으며 한 번에 처리합니다.
     patchTotals(id, name, anonymous, points);
     await core(now, true, `${name}의 공물로`);
 }

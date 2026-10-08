@@ -10,7 +10,6 @@ import type { VaultInfo } from './use-game';
 
 /**
  * v25.13 캐릭터 슬롯 화면: 슬롯 만들기·전환, 해금 조건, 계정 보너스, 계정 금고를 한곳에 모았습니다.
- * (이전에는 설정 다이얼로그와 환생 화면에 흩어져 있어 어디서 슬롯을 만드는지 찾기 어려웠습니다.)
  */
 export function SlotsPanel({ s, busy, onSwitchSlot, vault, vaultError, loadVault, vaultAct }: PanelProps & { onSwitchSlot?: (slot: number) => Promise<void>; vault?: VaultInfo | null; vaultError?: string; loadVault?: () => Promise<void>; vaultAct?: (body: Record<string, unknown>) => Promise<boolean> }) {
     const [error, setError] = useState(''), [switching, setSwitching] = useState(false);

@@ -8,19 +8,17 @@
  * 제단 화면도 인스턴스마다 15초 캐시를 씁니다. 쓰기는 바치기·도전·거두기 버튼에서만 일어납니다.
  */
 export const ALTAR = {
-    /** 기여도 환산: 골드 1,000 = 1, 세계석 1 = 50, 정수 1 = 3. v27.48 정수 5 → 3: 분해로 정수 1개를 얻을 때 포기하는 판매 골드가 Lv.45 전후 약 2,400~6,000이라 그 중간에 맞춤. */
-    /** v3.17 세계석 50 → 500, 정수 3 → 30: 골드 수백억이 도는 시점에서 세계석·정수가 너무 저평가됐음(세계석 1 = 골드 50만, 정수 1 = 골드 3만 상당). */
+    /** 기여도 환산: 골드 1,000 = 1, 세계석 1 = 500, 정수 1 = 30. v3.17 골드 수백억이 도는 시점에서 세계석·정수가 저평가되지 않도록(세계석 1 = 골드 50만, 정수 1 = 골드 3만 상당). */
     goldPerPoint: 1000, pearlPoints: 500, essencePoints: 30,
     /** 한 번에 바칠 수 있는 최소·최대. 최대는 실수와 정수 넘침을 막는 값입니다. */
-    /** v3.16 축복 4~6단계(수천억~조 단위)를 한 번에 바칠 수 있게 골드 상한 1조 → 10조. */
+    /** v3.16 축복 4~6단계(수천억~조 단위)를 한 번에 바칠 수 있게 골드 상한 10조. */
     minPoints: 1, maxGold: 1e13, maxPearls: 100_000, maxEssence: 1_000_000,
     /** 같은 계정의 바치기 간격(서버 메모리 속도 제한). */
     offerCooldownMs: 3000,
     /** 신의 자리 주인이 거두는 몫: 다른 모험가가 바친 재화의 10%. 자리가 바뀌면 거두지 않은 몫은 사라집니다. */
     titheRate: .1,
     /** 신 소환에 드는 기여도, 신이 머무는 시간, 모험가별 도전 간격. */
-    /** v27.48 30,000 → 10,000(골드 1,000만). */
-    /** v27.91 월드보스가 생기면서 신 소환은 훨씬 비싸졌습니다(10,000 → 40,000). */
+    /** v27.91 월드보스가 생기면서 신 소환은 비싸게(40,000 = 골드 4,000만). */
     godCost: 40_000, godLifetimeMs: 24 * 3600_000, challengeCooldownMs: 10 * 60_000,
     /** 신과의 전투 턴 상한. 무릉도장 보스전에는 턴 제한이 없어 결투(80턴)보다 넉넉히 둡니다. */
     godMaxTurns: 1000,
@@ -30,7 +28,7 @@ export const ALTAR = {
     boardSize: 20, cacheMs: 15_000,
     /** 처음 깨어나는 신(자리 주인이 없을 때): 무릉도장 depth층 보스(무공)와 같은 능력치·기술. */
     /** v27.54 신격: 공격·마법 ×attack, 방어 관통 penetration. 보통 모험가(체력 1만대·방어 1천대)는 한 방에 쓰러지고, 방어 특화만 몇 대 버팁니다. */
-    // v3.188 무릉 1층 기준이 10만 · ×4 → 3만 · ×2로 내려가 신의 몸(9.3억 · 공격)을 지키도록 50층 → 59층(1.15^9 ≈ 3.5 · 1.08^9 ≈ 2.0으로 거의 같은 몸).
+    // v3.188 무릉 1층 기준(3만 · ×2)에서 신의 몸(9.3억 · 공격)이 되는 층은 59층(1.15^9 ≈ 3.5 · 1.08^9 ≈ 2.0으로 옛 기준 50층과 거의 같은 몸).
     firstGod: { name: '검은 마법사', depth: 59, attack: 5, penetration: .5 },
     /** v27.69 신의 자리 임기: 앉은 지 이만큼 지나면 자리와 쌓인 몫을 비웁니다(다음 신은 다시 처음 신). 깨어 있는 신은 남은 시간 동안 그대로. */
     throneTermMs: 7 * 24 * 3600_000,
@@ -51,7 +49,7 @@ type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: numb
  * v3.16 축복 4~6단계: 수백억 골드를 굴리는 고레벨 모험가의 싱크. 1~3단계는 그대로(×1.5), 4단계부터는 기여도 절대값
  * BLESSING_HIGH_COSTS(골드 3,000억 · 1조 · 3조 상당)이고 6단계 유지(연장)도 6단계 값입니다.
  */
-/** v3.16 1~3단계 비용 상향: 기본 ×10, 단계 승수 1.5 → 2(4~6단계에 비해 너무 쌌음). */
+/** v3.16 1~3단계 단계 승수 2(4~6단계에 비해 너무 싸지 않게). */
 export const BLESSING_MAX_LEVEL = 6, BLESSING_LEVEL_STEP = 2, BLESSING_HIGH_FROM = 3;
 export const BLESSING_HIGH_COSTS = [300_000_000, 1_000_000_000, 3_000_000_000];
 /**
@@ -132,8 +130,9 @@ export const RAIDS: RaidDef[] = [
     { id: 'horntail', name: '혼테일', monster: 'abyssSovereign', level: 120, cost: 12_000, lifetimeHours: 24, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
         reward: { gold: 5_000_000, pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 }, blessings: ['gold', 'exp', 'mimic', 'nuri'], blessingHours: 3 },
 ];
-export const raidById = (id: string) => RAIDS.find(r => r.id === id);
-export const isRaidGauge = (id: string): id is RaidId => RAIDS.some(r => r.id === id);
+let raidIndex: Map<string, (typeof RAIDS)[number]> | undefined;
+export const raidById = (id: string | undefined) => id === undefined ? undefined : (raidIndex ??= new Map(RAIDS.map(r => [r.id, r]))).get(id);
+export const isRaidGauge = (id: string): id is RaidId => !!raidById(id);
 /** 소환 게이지(신 + 월드보스 셋)와 축복 게이지. 화면의 축복/소환 탭이 이 둘로 나뉩니다. */
 export const SUMMON_GAUGE_IDS: AltarGaugeId[] = ['god', ...RAIDS.map(r => r.id)];
 export const GAUGE_IDS: AltarGaugeId[] = [...BLESSINGS.map(b => b.id), ...SUMMON_GAUGE_IDS];

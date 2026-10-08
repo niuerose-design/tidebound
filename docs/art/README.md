@@ -7,7 +7,7 @@
 
 | 대상 | 경로 | 파일 이름 | 권장 크기 |
 |---|---|---|---|
-| 몬스터·보스 | `public/art/fish/` | `{몬스터 id}.png` 또는 `.webp` (예: `minnow.png`, `magmaKraken.webp`) | 원작 그림 그대로, 또는 512×512 |
+| 몬스터·보스 | `public/art/monsters/` | `{몬스터 id}.png` 또는 `.webp` (예: `minnow.png`, `magmaKraken.webp`) | 원작 그림 그대로, 또는 512×512 |
 | 직업 계보 | `public/art/jobs/` | `{계보 id}.png` 또는 `.webp` | 512×512, 정방형 |
 | 스킬 아이콘 | `public/art/skills/` | `{스킬 id}.png`. 목록은 `docs/art/skill-icons.md` | 원작 도트 아이콘 그대로(32×32 등) |
 

@@ -8,7 +8,7 @@ import type { State, Snapshot, Stats, CombatStats, Skill } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
-import { RESEARCH, researchRank, MANA_RESEARCH_PER } from '../data/economy';
+import { researchRank, MANA_RESEARCH_PER, researchById } from '../data/economy';
 import { roughReward, roughGear, roughHeal, restraintExp, vowBadges } from './vows';
 import { sproutExp, sproutCount } from '../data/sprout';
 import { ascensionEarlyExp } from '../data/ascension';
@@ -17,10 +17,10 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, refinePractices, extraRollLevel } from './progression';
-/** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
+import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, extraRollLevel } from './progression';
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
+/** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, rebirthBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, superCrit: 0, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, bleedBonus: 0, poisonBonus: 0, burnBonus: 0, guardAffinity: 1, wardAffinity: 1, healFocus: 0, arcaneStrike: 0, statusResist: 0, chainBonus: 0, bossDamage: 0, allStats: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, varietyBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, masteryFlat: 0, rankFlat: 0, essenceBonus: 0, ornament: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, relicPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0, ...a }; }
 /** 능력치 증가 원인. 능력치 화면의 상세보기가 이 순서로 보여줍니다. */
 export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', 'research', 'book', 'achievement', 'account', 'equipment', 'limit'] as const;
@@ -30,19 +30,14 @@ const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)',
 const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', mana: 'mana', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
 /** 능력치 분해의 원인 이름. 세계석 연구는 해당 연구 이름까지 붙입니다(예: 세계석 연구 · 마법력 강화 I). */
 export function statSourceLabel(k: keyof CombatStats, source: StatSource) {
-    const name = source === 'research' ? RESEARCH.find(r => r.id === RESEARCH_BY_STAT[k])?.name : undefined;
+    const name = source === 'research' ? researchById(RESEARCH_BY_STAT[k])?.name : undefined;
     return name ? `${STAT_SOURCE_LABELS.research} · ${name}` : STAT_SOURCE_LABELS[source];
 }
 /** 원인별 증감 기록. factor는 배율로 적용된 경우의 배율입니다. */
 export type StatTrace = Partial<Record<keyof CombatStats, { source: StatSource; delta: number; factor?: number }[]>>;
-/**
- * 최종 전투 능력치. trace를 넘기면 각 단계의 증감을 원인별로 기록합니다.
- * 기록 여부와 관계없이 계산 순서와 결과는 같습니다(덧셈·곱셈 순서 유지).
- */
 type UsableSkill = { id: string; sk: Skill; mastery: number };
 /**
- * v3.130 장착 스킬 가운데 쓸 수 있는 것과 그 숙련 단계. 능력치 계산 한 번에 canUse · skillMastery를 스킬마다 한 번만 부릅니다
- * (전에는 수련 패시브 · 보너스 · 한계돌파에서 같은 값을 세 번씩 다시 셌음). 순서는 s.skills 그대로라 더하는 순서도 같습니다.
+ * v3.130 장착 스킬 가운데 쓸 수 있는 것과 그 숙련 단계. 능력치 계산 한 번에 canUse · skillMastery를 스킬마다 한 번만 부릅니다. 순서는 s.skills 그대로라 더하는 순서도 같습니다.
  */
 function usableSkills(s: State): UsableSkill[] {
     const out: UsableSkill[] = [];
@@ -69,6 +64,10 @@ export function trainedAttributes(s: State, usable = usableSkills(s)) {
     }
     return v;
 }
+/**
+ * 최종 전투 능력치. trace를 넘기면 각 단계의 증감을 원인별로 기록합니다.
+ * 기록 여부와 관계없이 계산 순서와 결과는 같습니다(덧셈·곱셈 순서 유지).
+ */
 export function stats(s: State, trace?: StatTrace): CombatStats {
     const j = jobById(s.job) || JOBS[0], usable = usableSkills(s), v = trainedAttributes(s, usable), themes = regionThemes(s);
     const rec = (k: keyof CombatStats, source: StatSource, delta: number, factor?: number) => {
@@ -112,14 +111,14 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     if (a.arcaneStrike > 0) add('arcaneRatioBonus', 'job', SKILL_FORMULA.arcaneRatioByTier[Math.min(j.tier, SKILL_FORMULA.arcaneRatioByTier.length - 1)] || 0);
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
     rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus);
-    // v27.73 장비 드롭 보너스도 여기서 모읍니다(연구 ‘보물의 냄새’ 1단계 = 0.01 = 드롭 확률 +10%, 행운, 물건도감). 전에는 dropRate에서만 더해 상세 능력치에 보이지 않았습니다.
+    // v27.73 장비 드롭 보너스도 여기서 모읍니다(연구 ‘보물의 냄새’ 1단계 = 0.01 = 드롭 확률 +10%, 행운, 물건도감).
     a.dropBonus = researchRank(s, 'drop') * .01 + v.luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus;
     rec('dropBonus', 'research', researchRank(s, 'drop') * .01); rec('dropBonus', 'attributes', v.luk * E.luk.dropBonus); rec('dropBonus', 'book', Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus);
     // 세계석 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다(v3.84 관통 단계당 2%, 곱연산).
     add('crit', 'research', researchRank(s, 'crit') * .005); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
     add('penetration', 'research', researchRank(s, 'penetration') * PENETRATION.researchPerRank); add('evasion', 'research', researchRank(s, 'evasion') * .006);
     add('lifesteal', 'research', researchRank(s, 'lifesteal') * .005);
-    // 도감: 완성 장소의 테마 보너스와 지역 연구(고정값). 배율은 아래에서 따로 적용합니다. v27.81 성향 연구 능력치는 없앴습니다.
+    // 도감: 완성 장소의 테마 보너스와 지역 연구(고정값). 배율은 아래에서 따로 적용합니다.
     for (const t of themes)
         if (t.add) for (const key in t.add) add(key as keyof CombatStats, 'book', t.add[key as keyof typeof t.add] as number);
     const gear: Partial<Record<keyof CombatStats, number>> = {};
@@ -146,7 +145,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         add(key as keyof CombatStats, 'equipment', (Math.min(n - own, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? (key === 'arcaneRatioBonus' ? RULE_CAPS.arcaneRatioBonus! : Infinity)) + own) * roughGear(s));
     }
     // v3.12 칠흑 세트(보유 수 기준, 영구).
-    // v3.38 칠흑 세트는 장비 출처로 표시합니다(전에는 ‘도감’으로 잘못 묶였음).
+    // v3.38 칠흑 세트는 장비 출처로 표시합니다.
     { const b = onyxSetBonus(ownedOnyx(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); if (b.allStats) add('allStats', 'equipment', b.allStats); }
     // v3.113 칠흑 공명: 착용하지 않은 칠흑 장신구의 고유 옵션 × 10%(각성 포함).
     { const res = onyxResonance(s); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
@@ -198,7 +197,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));
     const memory = rebirthMemory(s.rebirths) * (1 + dedication * .04);
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(key, [['rebirth', memory]]);
-    // v3.90 최대 마나도 체력처럼 연구(‘마나 강화 I’) · 계정 · 환생 배율을 받습니다(전에는 배율이 없어 후반에 체력의 1%도 안 됐음).
+    // v3.90 최대 마나도 체력처럼 연구(‘마나 강화 I’) · 계정 · 환생 배율을 받습니다.
     mul('mana', [['research', 1 + researchRank(s, 'mana') * MANA_RESEARCH_PER], ['account', account], ['rebirth', memory]]);
     for (const t of themes)
         if (t.scale) for (const key in t.scale) mul(key as keyof CombatStats, [['book', t.scale[key as keyof typeof t.scale] as number]]);
@@ -249,11 +248,11 @@ export function dropRate(s: State, a = stats(s)) {
  * 방어가 피해를 곱으로 줄이는 것을 반영하지 못했습니다. 기준 몬스터(명중 1.1 · 회피 0.1 · 방어는 관통 계산용 근사)를 상대로 계산합니다.
  *   공격 = 주 공격력(+ 보조 2/7) × 치명타 기대 배율(1 + 치명 × (치명 피해 − 1) + 극 치명 × 치명 피해 × (극 치명 배율 − 1)) × 명중 × 관통 × (1 + 연속 행동 가산) × (1 + 보스 피해 ÷ 2)
  *   버티는 힘 = 체력 × 방어 경감(물리·마법 조화 평균, 피해 = 원래 × 100 ÷ (100 + 방어 × 2)) ÷ (1 − 회피) × (1 + 흡혈)
- * 레벨 1 새 캐릭터가 예전 전투력과 비슷하도록 POWER_SCALE을 맞췄습니다. scripts/check-power.mjs가 실제 전투 판정(strike)과 비교합니다.
+ * scripts/check-power.mjs가 실제 전투 판정(strike)과 비교합니다.
  */
 export const POWER_REF = { accuracy: 1.1, evasion: .1, penetrationWeight: .6 } as const;
 /**
- * v3.134 전투력 = POWER_SCALE × 공격^offense × 버티는 힘^durability. 전에는 √(공격 × 버티는 힘)(둘을 같은 무게)이었습니다.
+ * v3.134 전투력 = POWER_SCALE × 공격^offense × 버티는 힘^durability.
  * 장비 4부위가 공격은 ×4, 버티는 힘은 ×39를 올리는데(공격은 능력치 · 연구 기본값이 커서, 방어 · 마방은 기본값이 작아서) 같은 무게로 곱하면 방어 부위가
  * 전투력을 지배하고(v3.129 전 방어구 하나가 77%), 환생이 쌓이면 버티는 힘은 포화(장비 없이도 마지막 서식지에서 죽기까지 수천 대)라 진행 속도는 공격만 정합니다.
  * 공격 .65 · 버티는 힘 .35로 두면 태초 22성 4부위에서 부위를 빼면 무기 42 · 방어구 39 · 장신구 26 · 망토 29%로 무기가 1등이 됩니다(docs/gear-endgame.md v3.134).
@@ -277,7 +276,7 @@ export function powerParts(v: Stats) {
     return { offense, durability, critFactor, hit, pierce, armor, dodge };
 }
 export function power(v: Stats) { const p = powerParts(v); return Math.round(POWER_SCALE * Math.pow(p.offense, POWER_WEIGHT.offense) * Math.pow(p.durability, POWER_WEIGHT.durability)); }
-export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), skillPractice: refinePractices(s), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
+export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
 /** 마법 직업이면 1(기본 공격이 항상 마력 평타), 아니면 0. */
 export const arcaneStrikeChance = (j: { magic: number; attack: number; tier: number }) => j.magic - j.attack >= .045 ? SKILL_FORMULA.arcaneStrikeChance[Math.min(j.tier, SKILL_FORMULA.arcaneStrikeChance.length - 1)] || 0 : 0;
 /** 직업의 물리 방어 배율로 정하는 방어 친화도(0.2~1). 방어 비례 피해·반격의 효율입니다. */
@@ -296,15 +295,15 @@ export function clampVitals(s: State) {
     s.hp = Math.min(s.hp, stats(s).hp);
     s.mana = Math.min(s.mana, stats(s).mana);
 }
-/** 골드 배율. 힘의 길 서약은 처치·던전 골드를 함께 올립니다(서약이 없거나 난이도 하한 미만이면 ×1). */
 /** v25.6 이번 생의 조건 카드 배율. 사냥터 집중은 그 사냥터에서만, 황금 모험은 생 전체. */
 export const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? 2 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 // v27.79 계정(분신) 보너스는 곱연산 배율입니다(accountExpGold ≤ ×1.3).
 /** v3.69 수련 직업으로 사냥할 때의 처치 보상 배율(data/training.ts). */
 const jobReward = (s: State) => jobById(s.job)?.rewardScale ?? 1;
+/** 골드 배율. 힘의 길 서약은 처치·던전 골드를 함께 올립니다(서약이 없거나 난이도 하한 미만이면 ×1). */
 export const goldMultiplier = (s: State, a = stats(s)) => (1 + a.goldBonus) * jobReward(s) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
-// v3.23 순풍은 다른 경험치 보너스와 더합니다(전에는 따로 곱해 폭증).
+// v3.23 순풍은 다른 경험치 보너스와 더합니다.
 export const expMultiplier = (s: State, a = stats(s)) => Math.max(0, 1 + a.expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 던전 정복 골드. 전투 보상과 던전 화면 표시가 같은 식을 씁니다. */
