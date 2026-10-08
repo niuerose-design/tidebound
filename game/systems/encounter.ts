@@ -12,6 +12,8 @@ import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize,
 import { MIMIC, LETTER, letterRank, rollMimicMastery, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
 import { ascended, ascensionMastery } from '../data/ascension';
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
+import { ESSENCE_SLIME, rollSlimeTier, slimeChance, slimeEligible, slimeBundle } from '../data/essence-slime';
+import { KING, kingReady, isSpecialId, type KingKind } from '../data/king';
 import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue, swarmRankKills, swarmMasteryKills } from '../data/rank';
 import { roughHeal } from './vows';
 import { sproutHeal } from '../data/sprout';
@@ -171,7 +173,17 @@ function applyDepth(foe: Stats, base: { exp: number; gold: number }, k: number) 
     base.exp = Math.round(base.exp * k); base.gold = Math.round(base.gold * k);
 }
 /** v3.104 부재중 정산 표본 환산(offline-sample.ts)이 남은 시간의 희귀 출현 판정을 따로 굴린 뒤, 나온 희귀 몬스터를 판정 없이 바로 세울 때 씁니다. */
-export type ForcedRare = 'onyx' | 'mimic' | 'nuri' | 'starlit';
+/** v3.161 특별 몬스터 종류(정수의 슬라임 · 대왕 3종 포함). */
+export type SpecialKind = 'mimic' | 'nuri' | 'slime' | 'kingMimic' | 'kingNuri' | 'kingSlime';
+export type ForcedRare = 'onyx' | 'starlit' | SpecialKind;
+const SPECIAL_KINDS: readonly SpecialKind[] = ['mimic', 'nuri', 'slime', 'kingMimic', 'kingNuri', 'kingSlime'];
+const isSpecialKind = (k: ForcedRare | undefined): k is SpecialKind => !!k && (SPECIAL_KINDS as readonly string[]).includes(k);
+/** 종류 → 몬스터 id · 몸집 배율(그 사냥터 최강 몬스터 기준). 대왕은 작은 녀석의 체력 ×KING.hp, 공격은 최강 몬스터 ×KING.attack. */
+function specialDef(kind: SpecialKind): { id: string; hp: number; attack: number; king?: KingKind } {
+    const base = kind === 'mimic' || kind === 'kingMimic' ? MIMIC : kind === 'nuri' || kind === 'kingNuri' ? EXP_NURI : ESSENCE_SLIME;
+    const king: KingKind | undefined = kind === 'kingMimic' ? 'mimic' : kind === 'kingNuri' ? 'nuri' : kind === 'kingSlime' ? 'slime' : undefined;
+    return king ? { id: KING[king].id, hp: base.hp * KING.hp, attack: KING.attack, king } : { id: base.id, hp: base.hp, attack: base.attack };
+}
 /** v3.104 까미 · 누리 등장 확률(출현 한 번에 난수 하나를 [까미 | 누리] 구간으로 나눠 씀). spawn과 부재중 정산 환산이 같은 식을 씁니다. */
 export function specialChances(s: State) {
     const dungeon = DUNGEONS.find(d => d.id === s.dungeon?.id), st = STAGES.find(x => x.id === s.stage)!, tier = encounterTier(s);
@@ -183,7 +195,20 @@ export function specialChances(s: State) {
     const place = st.habitat ? Math.max(...STAGES.filter(x => !x.habitat && x.region === st.region).map(x => STAGES.indexOf(x))) : STAGES.indexOf(st);
     const mimicP = mimicOk ? mimicChance(tier, place) * (s.catchingUp ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
     const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
-    return { rolls: mimicOk || nuriOk, mimicP, nuriP };
+    // v3.161 정수의 슬라임: 누리 구간 바로 뒤. 대왕 몫은 각 구간의 앞쪽 share(작은 녀석을 KING.minBookKills마리 잡은 뒤부터).
+    const slimeOk = !dungeon && slimeEligible(s, asc ? Math.max(tier, ESSENCE_SLIME.minTier) : tier);
+    const slimeP = slimeOk ? slimeChance(tier) * (s.catchingUp ? specialOfflineScale(s, ESSENCE_SLIME.offlineScale) : 1) * luck : 0;
+    const king = { mimic: kingReady(s, 'mimic') ? KING.share : 0, nuri: kingReady(s, 'nuri') ? KING.share : 0, slime: kingReady(s, 'slime') ? KING.share : 0 };
+    return { rolls: mimicOk || nuriOk || slimeOk, mimicP, nuriP, slimeP, king };
+}
+/** v3.161 출현 난수 하나를 [까미 | 누리 | 슬라임] 구간으로 나눠 특별 몬스터를 고릅니다(구간 앞쪽 share는 대왕). spawn과 부재중 정산 환산이 같은 식을 씁니다. */
+export function pickSpecial(r: number, c: ReturnType<typeof specialChances>): SpecialKind | undefined {
+    if (r < c.mimicP) return r < c.mimicP * c.king.mimic ? 'kingMimic' : 'mimic';
+    r -= c.mimicP;
+    if (r < c.nuriP) return r < c.nuriP * c.king.nuri ? 'kingNuri' : 'nuri';
+    r -= c.nuriP;
+    if (r < c.slimeP) return r < c.slimeP * c.king.slime ? 'kingSlime' : 'slime';
+    return undefined;
 }
 /** v3.160 호루라기: 사냥터 출현(던전 · 랜덤게임 제외)에 한 번 쓰고 지웁니다. */
 export function takeWhistle(s: State): ForcedRare | undefined {
@@ -200,17 +225,18 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     const targetOk = !!s.target && st.fish.includes(s.target) && (FISH.find(x => x.id === s.target)?.minTier || 0) <= tier;
     // v27.22 숙련의 까미: 사냥터 출현마다 아주 드물게. 그 사냥터에서 가장 강한 몬스터의 몸집을 빌립니다.
     // v27.58 경험의 누리: 까미와 같은 난수 하나를 [까미 구간 | 누리 구간]으로 나눠 씁니다(난수 사용 횟수는 그대로).
-    const chances = specialChances(s), { mimicP, nuriP } = chances;
+    const chances = specialChances(s);
     // v3.104 force가 있으면 판정 없이 그 희귀 몬스터를 세웁니다(난수를 쓰지 않음). 판정한 횟수는 부재중 정산 환산이 셉니다(offlineTally).
-    const special = !force && chances.rolls ? rng() : 1;
+    // v3.161 [까미 | 누리 | 슬라임] 구간과 대왕 몫은 pickSpecial이 한 난수로 고릅니다.
+    const specialKind = isSpecialKind(force) ? force : !force && chances.rolls ? pickSpecial(rng(), chances) : undefined;
     if (!force && chances.rolls) offlineTally.specialRolls++;
-    const mimic = force === 'mimic' || special < mimicP, nuri = force === 'nuri' || (!mimic && special < mimicP + nuriP);
+    const special = specialKind ? specialDef(specialKind) : undefined, king = !!special?.king;
     // v3.12 칠흑의 보스: 무리 서식지 출현마다 아주 드물게(천장 있음). 집중 사냥 대상이 아니며 그 서식지 최강 몬스터의 몸집(×100 무리급 체력, 공격 ×3)을 빌립니다.
     const onyxDef = !dungeon && st.habitat ? onyxBossFor(st.region) : undefined;
     let onyx = false;
     if (onyxDef && force === 'onyx') { s.onyxSeen ??= {}; onyx = true; s.onyxSeen[st.region] = 0; }
     else if (onyxDef && !force) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; offlineTally.onyxRolls++; }
-    const rare = mimic || nuri || onyx, rareId = onyx ? onyxDef!.id : mimic ? MIMIC.id : EXP_NURI.id, rareDef = onyx ? { hp: ONYX.hp, attack: ONYX.attack } : mimic ? MIMIC : EXP_NURI;
+    const rare = !!special || onyx, rareId = onyx ? onyxDef!.id : special?.id ?? '', rareDef = onyx ? { hp: ONYX.hp, attack: ONYX.attack } : special ?? { hp: 1, attack: 1 };
     const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossFish ? dungeon.bossFish : dungeon.fish[s.dungeon!.wave]) : (targetOk ? s.target! : weightedFishId(st.fish, rng, rareSpawnBonus(s), tier));
     // v27.64 사냥터 몬스터는 난이도만큼 레벨이 올라갑니다(내 레벨까지, tideLiftFish). 까미·누리는 올라간 가장 강한 몬스터의 몸집을 빌립니다.
     const top = rare ? tideLiftFish([...st.fish].map(x => FISH.find(y => y.id === x)!).sort((a, b) => b.level - a.level)[0], tier, s.level) : undefined;
@@ -251,7 +277,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
         foe.magic = Math.round((foe.magic || 0) * vdef.attack);
         if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx || king, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : king ? { leavesAt: s.turn + KING.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!FISH.find(x => x.id === f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
 }
 /**
  * v3.99 전투 · 처치 로그에 쓰는 적 이름. 무리는 ‘스포아 ×100’, 변종은 ‘◆ 거대 개체 스포아’,
@@ -293,8 +319,8 @@ export function reward(s: State, rng: () => number) {
     const won = stats(s);
     const perFish = Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
-    // v3.125 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
-    const rareFoe = e.id === MIMIC.id || e.id === EXP_NURI.id || !!e.onyx;
+    // v3.125 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스, v3.161 정수의 슬라임 · 대왕)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
+    const rareFoe = isSpecialId(e.id) || !!e.onyx;
     const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && !rareFoe && rng() < goldenChance;
     const gold = Math.floor(perFish * size * big) + (golden ? perFish * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
@@ -311,6 +337,8 @@ export function reward(s: State, rng: () => number) {
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.30 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
     let mimicBonus = 0;
     if (e.id === MIMIC.id) { const t = rollMimicMastery(rng, s); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
+    // v3.161 대왕 까미: ‘대’ × KING.rewardMul 확정(난수 없음).
+    else if (e.id === KING.mimic.id) { mimicBonus = MIMIC.tiers[2].mastery * KING.rewardMul; addLog(s, `👑 대왕 까미 격파! 직업·장착 스킬 숙련 +${mimicBonus.toLocaleString()} (대 당첨 ×${KING.rewardMul} 확정)`, 'reward'); }
     // v3.31 승천 숙련 배율(1회당 +100%, 5회 ×6)은 까미 당첨분까지 합친 이번 처치 숙련에 곱합니다(v3.107 계급 특전 숙련 훈련은 빼고 뒤에 더함). 다른 배율은 까미에 걸지 않습니다.
     const practiceTotal = Math.floor((researched.total + mimicBonus) * ascensionMastery(s)) + drillMastery;
     // v3.31 행운의 편지 10단계 · 편지 수신인: 까미 당첨 숙련(승천 배율 적용 뒤)의 1%를 해금했지만 숙달하지 않은 다른 직업 하나에 덤으로 줍니다.
@@ -360,11 +388,21 @@ export function reward(s: State, rng: () => number) {
     s.exp += exp;
     // v27.58 경험의 누리: 지금 레벨 필요 경험치의 1~3%. 배율과 무관하게 바로 더합니다.
     // v3.112 이 사냥터 평균 출현 경험치 ×(1% 당 10회분)과 비교해 큰 쪽을 줍니다(고수는 레벨 %가 너무 작아 무리 한 번보다 못했음). Lv.100부터는 출현 몫만.
-    if (e.id === EXP_NURI.id) {
-        const t = rollNuriTier(rng), byLevel = s.level < 100 ? Math.floor(xpNeeded(s.level, s.rebirths, xpWall(s)) * t.pct) : 0;
+    // v3.161 대왕 누리: ‘대’ × KING.rewardMul 확정(레벨 9% 또는 출현 90회분).
+    if (e.id === EXP_NURI.id || e.id === KING.nuri.id) {
+        const king = e.id === KING.nuri.id, t = king ? { pct: EXP_NURI.tiers[2].pct * KING.rewardMul, label: '대왕' } : rollNuriTier(rng);
+        const byLevel = s.level < 100 ? Math.floor(xpNeeded(s.level, s.rebirths, xpWall(s)) * t.pct) : 0;
         const times = Math.round(t.pct * EXP_NURI.encountersPerPct), byField = Math.floor(stageEncounterExp(s, won) * times), bonus = Math.max(1, byLevel, byField);
         s.exp += bonus;
-        addLog(s, `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} (${byField > byLevel ? `이 사냥터 출현 ${times}회분` : `Lv.${s.level} 필요량의 ${Math.round(t.pct * 100)}%`})`, 'reward');
+        const how = byField > byLevel ? `이 사냥터 출현 ${times}회분` : `Lv.${s.level} 필요량의 ${Math.round(t.pct * 100)}%`;
+        addLog(s, king ? `👑 대왕 누리 격파! 경험치 +${bonus.toLocaleString()} (${how} · 대 당첨 ×${KING.rewardMul} 확정)` : `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} (${how})`, 'reward');
+    }
+    // v3.161 정수의 슬라임: 이 난이도의 정수 묶음 × 등급 배수. 대왕은 ‘대’ × KING.rewardMul 확정.
+    if (e.id === ESSENCE_SLIME.id || e.id === KING.slime.id) {
+        const king = e.id === KING.slime.id, bundle = slimeBundle(encounterTier(s)), t = king ? { mul: ESSENCE_SLIME.tiers[2].mul * KING.rewardMul, label: '대왕' } : rollSlimeTier(rng);
+        const got = Math.max(1, bundle * t.mul);
+        s.essence = (s.essence || 0) + got;
+        addLog(s, king ? `👑 대왕 정수 슬라임 격파! 정수 +${got.toLocaleString()} (묶음 ${bundle} × ${t.mul} · 대 당첨 ×${KING.rewardMul} 확정)` : `✦ 정수의 슬라임 · ${t.label}당첨! 정수 +${got.toLocaleString()} (묶음 ${bundle} × ${t.mul})`, 'reward');
     }
     addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 끝없는 수련 +${researched.extra}` : ''})`, 'skill');

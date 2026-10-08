@@ -217,6 +217,10 @@ const specialFish: Array<{
 }> = [
     { id: 'masteryMimic', name: '숙련의 까미', level: 10, lore: '보물상자인 척 입을 벌리고 있다. 잡으면 오래 쌓은 숙련이 한꺼번에 밀려온다.', rarity: 'legendary' as const, rewardMultiplier: 1 },
     { id: 'expNuri', name: '경험의 누리', level: 50, lore: '후광을 두른 하얀 강아지. 금빛 날개로 사냥터 위를 신나게 날아다니다가, 붙잡히면 품고 있던 경험을 한꺼번에 쏟아 낸다.', rarity: 'legendary' as const, rewardMultiplier: 1 },
+    { id: 'essenceSlime', name: '정수의 슬라임', level: 30, lore: '분해된 장비의 정수가 뭉쳐 굳은 보랏빛 슬라임. 말랑한 몸에 반짝이는 가루를 잔뜩 품고 있다가, 터지면 정수가 쏟아진다.', rarity: 'legendary' as const, rewardMultiplier: 1 },
+    { id: 'kingMimic', name: '대왕 까미', level: 10, lore: '수백 개의 상자를 삼켜 몸집을 불린 까미의 우두머리. 입을 벌리면 황금빛 숙련이 넘실대지만, 오래 붙잡아 두면 상자째 달아난다.', rarity: 'legendary' as const, rewardMultiplier: 1 },
+    { id: 'kingNuri', name: '대왕 누리', level: 50, lore: '날개가 하늘을 덮는 누리의 어미. 한 번 짖으면 사냥터가 흔들리고, 품은 경험은 새끼의 세 배. 금세 날아가 버린다.', rarity: 'legendary' as const, rewardMultiplier: 1 },
+    { id: 'kingSlime', name: '대왕 정수 슬라임', level: 30, lore: '작은 슬라임들이 모여 산처럼 굳은 정수 덩어리. 느리지만 한 번 부딪히면 무겁고, 오래 두면 조용히 녹아 사라진다.', rarity: 'legendary' as const, rewardMultiplier: 1 },
     { id: 'seahorse', name: '파란 버섯', level: 15, lore: '투명한 몸 안에서 작은 별빛이 흔들린다.', rarity: 'rare' as const, rewardMultiplier: 1.35 },
     { id: 'needlefish', name: '뿔버섯', level: 16, lore: '해초 사이를 화살처럼 가르는 희귀한 사냥꾼.', rarity: 'rare' as const, rewardMultiplier: 1.45 },
     { id: 'tidejelly', name: '좀비버섯', level: 17, lore: '빛나는 촉수가 물살의 방향을 바꾼다.', rarity: 'epic' as const, rewardMultiplier: 1.75 },

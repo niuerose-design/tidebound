@@ -7,9 +7,7 @@ import { levelGateOk } from '@/game/systems/meta';
 import { ArrowUpRight, ChevronDown, Lock, MapPin } from 'lucide-react';
 import { STAGES, REGIONS, HABITAT, closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { onyxBossFor } from '@/game/data/onyx';
-import { mimicStageMultiplier, MIMIC, WHISTLE } from '@/game/data/mimic';
-import { EXP_NURI } from '@/game/data/exp-nuri';
-import { dayKey } from '@/game/data/goals';
+import { mimicStageMultiplier } from '@/game/data/mimic';
 import { Heading } from './shared';
 import type { PanelProps } from './panel-props';
 import { TideSelector } from './tide-selector';
@@ -23,7 +21,6 @@ export function Stages({ s, send, busy }: PanelProps) {
     return <>
     <Heading eyebrow="WORLD MAP" title="사냥터" description="더 먼 곳, 더 강한 몬스터. 오늘의 사냥터를 선택하세요."/>
     <TideSelector s={s} send={send} busy={busy}/>
-    <WhistleCard s={s} send={send} busy={busy}/>
     {inDungeon && <p className="footnote">던전 탐험 중에는 사냥이 멈춰 있고 사냥터를 바꿀 수 없습니다. 던전에서 귀환하거나 반복이 끝나면 사냥터로 돌아옵니다.</p>}
     {/* v27.34 지역(헤네시스 등)별로 묶어 보여 줍니다. 번호는 전체 순서 그대로입니다. */}
     {/* v27.34 지역(헤네시스 등)별로 묶어 보여 줍니다. v27.80 지역마다 접고 펼 수 있고, 무리 서식지가 지역 끝에 붙습니다. 번호는 전체 순서 그대로입니다. */}
@@ -52,18 +49,3 @@ export function Stages({ s, send, busy }: PanelProps) {
     </>;
 }
 
-/** v3.160 호루라기: SP를 내고 다음 사냥터 출현을 숙련의 까미 · 경험의 누리로 정합니다(하루 WHISTLE.perDay개). */
-function WhistleCard({ s, send, busy }: PanelProps) {
-    const mimicOk = s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills, nuriOk = s.level >= EXP_NURI.minLevel && s.kills >= EXP_NURI.minKills;
-    if (!mimicOk && !nuriOk) return null;
-    const used = s.whistleDay?.key === dayKey(s.lastTick || 0) ? s.whistleDay.used : 0, left = Math.max(0, WHISTLE.perDay - used), pending = s.whistle;
-    const locked = busy || !!s.dungeon || !!pending || left <= 0 || s.sp < WHISTLE.sp;
-    return <section className="panel whistle-card">
-        <div><h3>호루라기 <small>SP {WHISTLE.sp} · 오늘 {left} / {WHISTLE.perDay}</small></h3>
-        <p className="footnote">{pending ? `불었습니다. 다음 사냥터 출현에 ${pending === 'mimic' ? '숙련의 까미' : '경험의 누리'}가 나타납니다.` : '다음 사냥터 출현을 고른 희귀 몬스터로 정합니다. 던전 · 랜덤게임에서는 쓰이지 않고, 던전에서 나온 뒤 사냥터 출현에 씁니다.'}</p></div>
-        <div className="title-actions">
-            <button type="button" className="secondary small" disabled={locked || !mimicOk} title={mimicOk ? `숙련 로또: ${MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()}`).join(' · ')}` : `Lv.${MIMIC.minLevel} · 누적 처치 ${MIMIC.minKills}마리부터`} onClick={() => send({ type: 'whistle', id: 'mimic' })}>숙련의 까미</button>
-            <button type="button" className="secondary small" disabled={locked || !nuriOk} title={nuriOk ? '경험치 로또' : `Lv.${EXP_NURI.minLevel} · 누적 처치 ${EXP_NURI.minKills.toLocaleString()}마리부터`} onClick={() => send({ type: 'whistle', id: 'nuri' })}>경험의 누리</button>
-        </div>
-    </section>;
-}

@@ -137,7 +137,7 @@ export function grantBuff(effects: StatusEffects, buff: { id: string; name?: str
     const buffs = (effects.buffs ??= {}), cur = buffs[buff.id];
     buffs[buff.id] = { turns: Math.max(buff.turns, cur?.turns || 0), ...(buff.name ? { name: buff.name } : {}), ...(buff.stats ? { stats: buff.stats } : {}), ...(buff.speedMultiplier ? { speedMultiplier: buff.speedMultiplier } : {}), ...(buff.damageMultiplier ? { damageMultiplier: buff.damageMultiplier } : {}) };
 }
-/** v3.158 접신(아크) · v3.161 파이널 피규레이션(카이저): 장착한 패시브 중 가장 센 변신의 need에 충전이 닿으면 충전을 비우고 자기 버프에 들어갑니다. */
+/** v3.158 접신(아크) · v3.163 파이널 피규레이션(카이저): 장착한 패시브 중 가장 센 변신의 need에 충전이 닿으면 충전을 비우고 자기 버프에 들어갑니다. */
 function triggerSpectre(f: Fighter, notes: string[], ev: CombatEvent) {
     const spectre = f.skills.map(id => skillById(id)?.spectre).filter((x): x is NonNullable<Skill['spectre']> => !!x).sort((x, y) => y.damageMultiplier - x.damageMultiplier)[0];
     const effects = (f.effects ??= {});
@@ -602,7 +602,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v3.155 웨폰 버라이어티(카데나): 살아 있는 자기 버프 1개마다 피해 +varietyBonus.
     const varietyCount = sa.varietyBonus ? buffsOf(a.effects).length : 0, varietyBoost = 1 + varietyCount * (sa.varietyBonus || 0);
     if (varietyCount) notes.push(`버라이어티 ${varietyCount}`);
-    // v3.161 조화 보너스(제논): 배분한 여섯 능력치의 최저 ÷ 최고 비율 × balanceBonus.
+    // v3.163 조화 보너스(제논): 배분한 여섯 능력치의 최저 ÷ 최고 비율 × balanceBonus.
     const attrs = [sa.attrStr, sa.attrDex, sa.attrInt, sa.attrVit, sa.attrWis, sa.attrLuk].map(x => x || 0), attrTop = Math.max(...attrs), balanceRatio = attrTop > 0 ? Math.min(...attrs) / attrTop : 0;
     const balanceBoost = chosen?.balanceBonus ? 1 + chosen.balanceBonus * balanceRatio : 1;
     if (chosen?.balanceBonus) notes.push(`조화 ${Math.round(balanceRatio * 100)}%`);
@@ -619,7 +619,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
     const actual = Math.min(b.hp, damage);
     b.hp = Math.max(0, b.hp - actual);
-    // v3.161 피격 충전(카이저): 피해를 입는 공격을 맞으면 맞은 쪽의 충전이 쌓이고(치명타 +1), 가득 차면 변신합니다.
+    // v3.163 피격 충전(카이저): 피해를 입는 공격을 맞으면 맞은 쪽의 충전이 쌓이고(치명타 +1), 가득 차면 변신합니다.
     if (actual > 0 && b.hp > 0) {
         const onHit = Math.max(0, ...b.skills.map(id => skillById(id)?.chargeOnHit || 0));
         if (onHit) { b.effects.charge = Math.min(SKILL_FORMULA.charge.max, (b.effects.charge || 0) + onHit + (crit ? 1 : 0)); notes.push(`${b.name} 충전 ${b.effects.charge}`); triggerSpectre(b, notes, ev); }

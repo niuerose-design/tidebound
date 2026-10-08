@@ -198,10 +198,10 @@ export type Skill = {
     /** v3.151 자기 버프: 이 기술을 쓰면 시전자가 turns 동안 stats(고정값)와 speedMultiplier를 얻습니다(같은 id면 더 긴 쪽으로 갱신). */
     selfBuff?: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number; damageMultiplier?: number };
     /** v3.158 접신(아크 패시브): 충전이 need에 닿으면 충전을 비우고 자기 버프 ‘접신’(피해 × damageMultiplier · 속도 × speedMultiplier, turns턴)에 들어갑니다. 장착한 것 중 가장 센 하나만. */
-    spectre?: { need: number; turns: number; damageMultiplier: number; speedMultiplier?: number; /** v3.161 버프 이름(기본 접신) · 고정 능력치(카이저 파이널 피규레이션의 흡혈). */ name?: string; stats?: Partial<Stats> };
-    /** v3.161 피격 충전(카이저 패시브): 피해를 입는 공격을 맞을 때마다 충전 +N(치명타로 맞으면 +1 더). 장착한 것 중 가장 큰 값. */
+    spectre?: { need: number; turns: number; damageMultiplier: number; speedMultiplier?: number; /** v3.163 버프 이름(기본 접신) · 고정 능력치(카이저 파이널 피규레이션의 흡혈). */ name?: string; stats?: Partial<Stats> };
+    /** v3.163 피격 충전(카이저 패시브): 피해를 입는 공격을 맞을 때마다 충전 +N(치명타로 맞으면 +1 더). 장착한 것 중 가장 큰 값. */
     chargeOnHit?: number;
-    /** v3.161 조화 보너스(제논): 직접 배분한 여섯 능력치의 (가장 낮은 값 ÷ 가장 높은 값) × 이 값만큼 피해가 커집니다. 고르게 투자할수록 세짐. */
+    /** v3.163 조화 보너스(제논): 직접 배분한 여섯 능력치의 (가장 낮은 값 ÷ 가장 높은 값) × 이 값만큼 피해가 커집니다. 고르게 투자할수록 세짐. */
     balanceBonus?: number;
     /** v3.158 이 자기 버프가 걸려 있을 때만 나가는 액티브(아크 인피니티 스펠: 'spectre'). */
     requiresBuff?: string;
@@ -340,8 +340,9 @@ export type Skill = {
 export type Enemy = {
     /** v27.16 양쪽 체력이 그대로인 턴 수. 오래 이어지면 몬스터가 달아난 것으로 보고 새 몬스터를 맞이합니다. */
     stale?: number;
-    /** v3.12 칠흑 보스 id와 떠나는 턴(s.turn 기준). */
+    /** v3.12 칠흑 보스 id. */
     onyx?: string;
+    /** v3.12 떠나는 턴(s.turn 기준): 칠흑 보스, v3.161 대왕 시리즈. 지나면 도망(보상 없음). */
     leavesAt?: number;
     /** 무리 규모(N). 무리 전체가 체력 ×N인 한 개체입니다. 없으면 한 마리. */
     swarm?: number;
@@ -548,7 +549,7 @@ export type State = {
     letterLog?: { job: string; gift: number; turn: number }[];
     /** v3.40 자동 환생(승천 1회): 켜짐과 목표 레벨(0 = 요구 레벨). */
     /** v3.160 호루라기: 다음 사냥터 출현을 이 희귀 몬스터로(출현 때 지움). */
-    whistle?: 'mimic' | 'nuri';
+    whistle?: 'mimic' | 'nuri' | 'slime';
     /** v3.160 오늘(한국 시간) 분 호루라기 수. */
     whistleDay?: { key: string; used: number };
     autoRebirth?: { on: boolean; level: number };

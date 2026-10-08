@@ -4,6 +4,8 @@ import { JOBS } from './classes';
 import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedRegions, extremeBroken } from '../systems/progression';
 import { MIMIC } from './mimic';
 import { EXP_NURI } from './exp-nuri';
+import { ESSENCE_SLIME } from './essence-slime';
+import { KING_IDS } from './king';
 import { stats } from '../systems/stats';
 import { DUNGEON_MODES, type DungeonMode } from './balance';
 import { ownedOnyx } from './onyx';
@@ -26,7 +28,8 @@ export type Achievement = { /** v3.38 명예 업적: 업적 보너스(능력치)
 
 const kills = (s: State) => s.kills || 0;
 /** 도감 업적 대상. v27.58 경험의 누리는 빼서 '도감 전체' 업적 id(codex:종 수)가 바뀌지 않게 합니다. */
-const CODEX_FISH = FISH.filter(f => f.id !== EXP_NURI.id);
+// v3.161 정수의 슬라임 · 대왕 3종도 도감 수에서 뺍니다(codex:N id가 흔들리지 않도록 까미는 그대로 셉니다).
+const CODEX_FISH = FISH.filter(f => f.id !== EXP_NURI.id && f.id !== ESSENCE_SLIME.id && !KING_IDS.includes(f.id));
 const codex = (s: State) => CODEX_FISH.filter(f => (s.book?.[f.id] || 0) > 0).length;
 const clears = (s: State) => Object.values(s.clears || {}).reduce((a, b) => a + (b || 0), 0);
 const bosses = (s: State) => FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
@@ -118,6 +121,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('variants', '사냥', n => `변종 ${n.toLocaleString()}마리`, n => `거대·심연·별빛·무리 변종을 ${n.toLocaleString()}번 처치합니다.`, [10, 100, 1000], variants, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('mimic', '사냥', n => `숙련의 까미 ${n}마리`, n => `숙련의 까미를 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[MIMIC.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('nuri', '사냥', n => `경험의 누리 ${n}마리`, n => `경험의 누리를 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[EXP_NURI.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
+    ...series('slime', '사냥', n => `정수의 슬라임 ${n}마리`, n => `정수의 슬라임을 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[ESSENCE_SLIME.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
+    ...series('king', '사냥', n => `대왕 ${n}마리`, n => `대왕 까미 · 대왕 누리 · 대왕 정수 슬라임을 합쳐 ${n}마리 잡습니다(v3.161).`, [1, 10, 30], s => KING_IDS.reduce((a, id) => a + (s.book?.[id] || 0), 0), i => [{ pearls: 5 }, { pearls: 10, sp: 1 }, { pearls: 15, sp: 2 }][i]),
     ...series('jobs', '숙련', n => `직업 ${n}개 해금`, n => `직업 ${n}개를 해금합니다.`, [10, 30, 80], s => (s.unlockedJobs || []).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('learned', '숙련', n => `스킬 ${n}개 습득`, n => `SP로 스킬 ${n}개를 배웁니다.`, [10, 30, 80], s => Object.values(s.learned || {}).filter(n => n > 0).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     // v3.74 극한돌파 달성(보상 없음 · 명예 업적). 달성하면 운영자에게 문의합니다.

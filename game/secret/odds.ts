@@ -48,6 +48,14 @@ export const SERVER_ODDS: Odds = {
         /** 경험치 로또 소 · 중 · 대(기댓값 약 1.35%). */
         tiers: [.70, .25, .05],
     },
+    slime: {
+        /** v3.161 출현마다 정수의 슬라임이 나올 확률. 사냥터 난이도 1단계마다 perTier만큼 더합니다(누리와 같은 식). 예: 난이도 10 → 0.25%, 100 → 1.15%. */
+        chance: .0015, perTier: .0001,
+        /** 정수 로또 소 · 중 · 대(묶음 ×3 · ×10 · ×40, 기댓값 ×6.6). 기준 몸 난이도 정수 수입의 약 +25%(docs/currency-rank-review.md 2.1). */
+        tiers: [.70, .25, .05],
+    },
+    /** v3.161 대왕 시리즈: 작은 녀석 30마리 뒤, 그 특별 몬스터 출현 50번 중 1번. */
+    king: { share: .02 },
     /** v3.12 칠흑의 보스: 무리 서식지 출현마다 chance × (1 + 난이도 × perTier), pity번 못 보면 확정. 장신구 drop, dropPity번째 연속 미획득 격파는 확정. */
     onyx: { chance: .003, perTier: 1 / 50, pity: 2000, drop: .003, dropPity: 400 },
     variant: {
@@ -77,7 +85,7 @@ export const SERVER_ODDS: Odds = {
      * 희귀 몬스터 출현 증가(도감 특성·패시브)는 encounter.ts weightedFishId가 이 위에 곱합니다.
      */
     spawn: {
-        masteryMimic: 0, expNuri: 0,
+        masteryMimic: 0, expNuri: 0, essenceSlime: 0, kingMimic: 0, kingNuri: 0, kingSlime: 0,
         seahorse: .18, needlefish: .12, tidejelly: .07, emberEel: .14, ashRay: .1, magmaPuffer: .06, cinderKoi: .045,
         starKoi: .1, prismRay: .065, voidGuppy: .04, stormBarracuda: .08, eclipseMoonfish: .06, novaManta: .03,
         cinderAngler: .6, ventLeviathan: .3, abyssManta: .018,
