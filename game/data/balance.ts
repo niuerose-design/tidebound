@@ -88,10 +88,10 @@ export function dungeonPressure(wave: number) {
  *   클리어 골드 = clearGoldFish마리분. 일반 웨이브는 몬스터 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
  *   한 번 클리어(전투 5번)가 같은 레벨 사냥 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
  * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(세계석은 층 공식 그대로).
- * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
+ * - v3.187 권장 레벨 초과 감액(클리어 골드·반복 장비 확률)은 없앴습니다. 헬부터는 몬스터 레벨이 내 레벨까지 올라 노말에서만 걸리던 이중 감액이었습니다.
  * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
  */
-export const DUNGEON_TUNING = { bossExpFish: 6, bossGoldFish: 4, clearGoldFish: 6, expLevelOver: 2, rewardTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
+export const DUNGEON_TUNING = { bossExpFish: 6, bossGoldFish: 4, clearGoldFish: 6, expLevelOver: 2, rewardTierCap: 6, tierSpeed: .02 };
 /**
  * v27.35 무릉도장 적: 층마다 가파르게 강해지는 별도 공식(보상은 rewardTierCap에서 멈춤).
  * 1층 일반 몬스터 체력 hp(10만)에서 층마다 ×hpGrowth, 공격은 기준 몬스터의 attack배에서 층마다 ×attackGrowth, 방어는 defense배에서 ×defenseGrowth.
@@ -105,10 +105,6 @@ export const ABYSS_TUNING = { hp: 100000, hpGrowth: 1.15, attack: 4, attackGrowt
 export const DUNGEON_MODES = [{ id: 'normal', name: '노말', tier: 0 }, { id: 'hell', name: '헬', tier: 50 }, { id: 'nightmare', name: '나이트메어', tier: 200 }] as const;
 export type DungeonMode = typeof DUNGEON_MODES[number]['id'];
 export const dungeonModeTier = (mode?: string) => DUNGEON_MODES.find(m => m.id === mode)?.tier ?? 0;
-export const dungeonOverlevel = (playerLevel: number, dungeonLevel: number) => {
-    const over = Math.max(0, playerLevel - dungeonLevel - DUNGEON_TUNING.overlevelGrace);
-    return Math.max(DUNGEON_TUNING.overlevelFloor, 1 - Math.ceil(over / DUNGEON_TUNING.overlevelStep) * DUNGEON_TUNING.overlevelCut);
-};
 // 스킬 공식의 기본값. 전투 계산(combat.ts)과 스킬 설명(skill-description.ts)이 같은 값을 씁니다.
 export const SKILL_FORMULA = {
     /** v3.88 행운 비례 보정(팬텀 계열): 치명 피해 재적용을 없앤 대신 위력의 치명 피해 비례분(scalingRatio)에 곱합니다.

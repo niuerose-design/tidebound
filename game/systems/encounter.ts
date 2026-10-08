@@ -19,7 +19,7 @@ import { roughHeal } from './vows';
 import { sproutHeal } from '../data/sprout';
 import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
 import type { State, Item, Stats, Enemy } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
+import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, DUNGEON_TUNING } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth } from '../data/world';
 import { jobById } from '../data/classes';
 import { HACKER_ID } from '../data/hacker';
@@ -459,9 +459,9 @@ export function reward(s: State, rng: () => number) {
         const d = DUNGEONS.find(x => x.id === s.dungeon!.id)!;
         s.dungeon.wave++;
         if (s.dungeon.wave >= d.fish.length) {
-            // v27.30 권장 레벨보다 크게 높으면 클리어 골드와 반복 장비 확률이 줄어듭니다.
-            const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level), overlevel = dungeonOverlevel(s.level, dLevel);
-            const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel * dungeonDepth(d.id));
+            // v3.187 권장 레벨 초과 감액은 없앴습니다(클리어 골드·반복 장비 확률 그대로).
+            const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level);
+            const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * dungeonDepth(d.id));
             s.gold += bonusGold;
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
@@ -487,7 +487,7 @@ export function reward(s: State, rng: () => number) {
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             if (s.dungeon.mode && s.dungeon.mode !== 'normal') { s.modeClears ??= {}; const row = (s.modeClears[s.dungeon.mode] ??= {}); row[d.id] = (row[d.id] || 0) + 1; }
             // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다, 반복 정복은 낮은 확률.
-            if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop * overlevel)
+            if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop)
                 drop(s, dropLevel(s, dLevel, tier), rng, true);
             addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;
