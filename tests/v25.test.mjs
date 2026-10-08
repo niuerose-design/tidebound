@@ -538,11 +538,11 @@ test('v27.43 altar: offering points, tithe, blessing events skip offline catch-u
     }
     finally { ev.setAltarEvents([]); }
 });
-test('v27.43 altar first god matches the Mu Lung floor-50 boss and fights past the 80-turn duel cap', async () => {
+test('v27.43 altar first god matches the Mu Lung firstGod.depth boss (v3.187 59F) and fights past the 80-turn duel cap', async () => {
     const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const D = await G.load('systems/duel'), engine = await G.load('systems/engine'), enc = await G.load('systems/encounter'), A = await G.load('data/altar');
     const god = D.abyssBossSnapshot(A.ALTAR.firstGod.depth);
-    const s = engine.newState(0); s.level = 70; s.rebirths = 10; s.dungeon = { id: 'abyss', wave: 4, depth: 50 };
+    const s = engine.newState(0); s.level = 70; s.rebirths = 10; s.dungeon = { id: 'abyss', wave: 4, depth: A.ALTAR.firstGod.depth };
     enc.spawn(s, () => .5);
     const { MONSTER_TUNING } = await G.load('data/balance');
     assert.ok(Math.abs(god.stats.hp * MONSTER_TUNING.bossHpScale - s.enemy.maxHp) / s.enemy.maxHp < .01, 'v3.186 the god keeps the raw boss body; the dungeon copy carries bossHpScale'); assert.equal(god.stats.attack, s.enemy.attack); assert.equal(god.stats.defense, s.enemy.defense);

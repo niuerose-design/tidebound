@@ -17,3 +17,15 @@ test('v3.186 boss pass 1: dungeon entry rebirths 2 · 2 · 6, hell 70 · nightma
     const Du = await load('systems/duel'), { ALTAR } = await load('data/altar');
     assert.ok(Du.abyssBossSnapshot(ALTAR.firstGod.depth).stats.hp > 9e8, 'the first god keeps its 9.3억 body');
 });
+
+test('v3.187 boss pass 2: onyx hp multiplier per boss with √ difficulty scaling, Mu Lung floor 1 at 3만 · ×2, the first god keeps its body at floor 59', async () => {
+    const { ONYX, ONYX_BOSSES, onyxBossFor } = await load('data/onyx'), { ABYSS_TUNING } = await load('data/balance'), { ALTAR } = await load('data/altar');
+    const Enc = await load('systems/encounter'), E = await load('data/encounters'), M = await load('systems/meta'), { FISH } = await load('data/world'), Du = await load('systems/duel');
+    assert.deepEqual(ONYX_BOSSES.map(b => b.hpMul), [5000, 1600, 750, 800, 400, 70, 80]); assert.equal(ONYX.hp, undefined); assert.equal(ONYX.attack, 3);
+    const top = FISH.find(f => f.id === 'arTrueErda'), def = onyxBossFor('아케인 리버'), f = { ...FISH.find(x => x.id === def.id), level: top.level, hp: top.hp * def.hpMul, attack: top.attack * 3, defense: top.defense };
+    const flat = Enc.onyxEnemyStats(f, 0), lifted = Enc.onyxEnemyStats(f, 5), plain = E.scaledEnemyStats(f, { tier: 0 });
+    assert.equal(flat.hp, plain.hp, 'difficulty 0: plain body'); assert.equal(lifted.hp, Math.round(plain.hp * Math.sqrt(M.tierHealth(5))), 'hp grows by √tierHealth');
+    assert.equal(lifted.attack, Math.round(plain.attack * Math.sqrt(M.tierAttack(5))), 'attack by √tierAttack'); assert.ok(lifted.hp < Math.round(plain.hp * M.tierHealth(5)), 'gentler than stage monsters');
+    assert.deepEqual([ABYSS_TUNING.hp, ABYSS_TUNING.attack, ABYSS_TUNING.hpGrowth, ABYSS_TUNING.attackGrowth], [30000, 2, 1.15, 1.08]);
+    assert.equal(ALTAR.firstGod.depth, 59); const god = Du.abyssBossSnapshot(ALTAR.firstGod.depth).stats; assert.ok(god.hp > 9e8 && god.hp < 1.05e9, `god hp ${god.hp}`);
+});
