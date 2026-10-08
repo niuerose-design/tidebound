@@ -255,7 +255,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.equal(await database.shiftAltarRaid('balrog', gen, -1e9), 1, 'save scum never slays');
         await database.hitAltarRaid('balrog', gen, 10); await database.slayAltarRaid('balrog', gen, 'p1', 'x', now);
         const ib = top.hacker.bits; act(top, { type: 'hackRun', id: 'interceptClaim' }, now); await Hk.applyPendingHack(top, 'acct_top', now);
-        assert.equal(top.hacker.bits - ib, Math.floor((30 + 2 * 40) * .5), 'tier X: 50% of the reward value'); assert.equal(top.hacker.intercept, null);
+        assert.equal(top.hacker.bits - ib, Math.floor((2 * 40) * .5), 'tier X: 50% of the reward value (v3.194 world bosses give no gold)'); assert.equal(top.hacker.intercept, null);
         const z = await database.summonAltarRaid('zakum', 1000, now + 3600_000, now, A.RAID.respawnMs); await database.hitAltarRaid('zakum', z, 600);
         sc.hacker.used.savescum = 0; delete sc.hacker.pending; act(sc, { type: 'hackRun', id: 'savescum', value: 'zakum|rewind' }, now); await Hk.applyPendingHack(sc, 'acct_sc', now);
         assert.equal((await database.listAltarRaids()).find(r => r.id === 'zakum').hp, 400 + Math.floor(600 * .2), 'rewind: 5%×(n−6) of the damage');

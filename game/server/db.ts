@@ -100,8 +100,6 @@ export interface Storage {
     addAltarGauge(id: string, points: number): Promise<void>;
     /** 게이지에서 cost만큼 뺍니다. 모자라면 false(동시에 둘이 넘겨도 한 번만 성공). */
     spendAltarGauge(id: string, cost: number): Promise<boolean>;
-    /** 축복 시간을 늘립니다: max(지금, 남은 끝) + ms, 단 지금 + cap까지. 새 종료 시각을 돌려줍니다. */
-    extendAltarGauge(id: string, now: number, ms: number, cap: number): Promise<number>;
     /** v27.48 축복 한 칸: 게이지에서 cost를 빼고, 진행 중이면 단계 +1(최대 max)·아니면 1단계로 열고, 시간을 ms만큼 늘립니다(지금부터 cap까지).
      *  expectLevel(진행 중이 아니면 0)이 그대로일 때만 적용해 비용 계산과 동시 바치기가 어긋나지 않게 합니다. 실패하면 null. */
     /** v3.16 highMs > 0이면 상위 단계: high_until = now + highMs, 전체 until은 now + highMs + cap 이상 보장(상위 단계가 끝나면 3단계가 cap 동안 이어짐, ms는 0으로). highFrom 이하가 '기본 단계'. */
@@ -335,7 +333,6 @@ function neonStorage(url: string): Storage {
         },
         async addAltarGauge(id, points) { await q('INSERT INTO altar_gauges (id,points,until) VALUES ($1,$2,0) ON CONFLICT (id) DO UPDATE SET points=altar_gauges.points+EXCLUDED.points', [id, points]); },
         async spendAltarGauge(id, cost) { const r = await q('UPDATE altar_gauges SET points=points-$2 WHERE id=$1 AND points>=$2', [id, cost]); return r.rowCount === 1; },
-        async extendAltarGauge(id, now, ms, cap) { const { rows } = await q<{ until: string }>('UPDATE altar_gauges SET until=LEAST(GREATEST(until,$2)+$3,$2+$4) WHERE id=$1 RETURNING until', [id, now, ms, cap]); return Number(rows[0]?.until || 0); },
         async summonAltarGod(god, until, now) { const r = await q("UPDATE altar SET gen=gen+1, god_state='alive', god=$1, god_until=$2 WHERE id='main' AND (god_state<>'alive' OR god_until<$3)", [god, until, now]); return r.rowCount === 1; },
         async claimAltarThrone(gen, id, name, snapshot, now) { const r = await q("UPDATE altar SET god_state='slain', throne=$2, throne_name=$3, throne_snapshot=$4, throne_since=$5, tithe_gold=0, tithe_pearls=0, tithe_essence=0 WHERE id='main' AND gen=$1 AND god_state='alive' AND god_until>=$5", [gen, id, name, snapshot, now]); return r.rowCount === 1; },
         async resetAltarGauges() { await q('UPDATE altar_gauges SET points=0'); },
@@ -477,7 +474,6 @@ function fileStorage(): Storage {
         listAltarGauges: () => tx(db => Object.values(db.altarGauges || {}).map(g => ({ ...g }))),
         addAltarGauge: (id, points) => tx(db => { const g = (db.altarGauges ??= {})[id] ??= { id, points: 0, until: 0 }; g.points += points; }),
         spendAltarGauge: (id, cost) => tx(db => { const g = db.altarGauges?.[id]; if (!g || g.points < cost) return false; g.points -= cost; return true; }),
-        extendAltarGauge: (id, now, ms, cap) => tx(db => { const g = db.altarGauges?.[id]; if (!g) return 0; g.until = Math.min(Math.max(g.until, now) + ms, now + cap); return g.until; }),
         levelAltarBlessing: (id, cost, expectLevel, now, ms, cap, max, highMs = 0, highFrom = 3) => tx(db => {
             const g = db.altarGauges?.[id]; if (!g || g.points < cost) return null;
             const eff = g.until > now ? ((g.high_until || 0) > now ? g.level || 0 : Math.min(g.level || 0, highFrom)) : 0; if (eff !== expectLevel) return null;

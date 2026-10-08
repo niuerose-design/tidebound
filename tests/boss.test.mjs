@@ -79,3 +79,12 @@ test('v3.191 world boss summon stages: hp ×2 · attack ×1.15 per stage (max 10
         assert.equal(Alt.ALTAR_NEWS.raidAppear('발록', 6, 3).includes('3단계 — 체력 ×4'), true); assert.equal(Alt.ALTAR_NEWS.raidAppear('발록', 6).includes('단계'), false);
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
+
+test('v3.194 world boss kills open no blessing; blessing events use the live level (high tiers fall back to 3 once their time is over)', async () => {
+    const A = await load('data/altar'), fs = await import('node:fs/promises'), H = 3600_000, now = 1_800_000_000_000;
+    assert.ok(A.RAIDS.every(r => !('blessings' in r) && !('blessingHours' in r)), 'raids carry no blessing reward');
+    const server = await fs.readFile('game/server/altar.ts', 'utf8'), db = await fs.readFile('game/server/db.ts', 'utf8'), events = await fs.readFile('game/server/events-config.ts', 'utf8');
+    assert.doesNotMatch(server, /extendAltarGauge|raid\.blessing/, 'the kill path no longer touches blessing gauges'); assert.doesNotMatch(db, /extendAltarGauge/);
+    assert.match(events, /blessingEffect\(b, effectiveBlessingLevel\(g, now\)\)/, 'server event multiplier uses the live level, same as the screen');
+    assert.equal(A.effectiveBlessingLevel({ until: now + 9 * H, level: 6, high_until: now - H }, now), 3, 'stored 6 after its high time reads as 3');
+});

@@ -219,7 +219,7 @@ async function raidInfo(r: AltarRaidRow | undefined, id: string, now: number): P
 }
 /**
  * v27.91 월드보스 도전. 남은 공유 체력을 가진 보스와 RAID.maxTurns 안에서 한 번 겨루고, 깎은 만큼을 서버 체력에서 뺍니다(한 문장 UPDATE라 동시 도전이 겹쳐도 틀어지지 않음).
- * 체력이 0이 되면 격파: 먼저 처리된 한 명만 마지막 일격이 되고, 축복이 열리며, 참여자 보상은 각자 다음 동기화 때 받습니다(syncAltarStatus).
+ * 체력이 0이 되면 격파: 먼저 처리된 한 명만 마지막 일격이 되고, 참여자 보상은 각자 다음 동기화 때 받습니다(syncAltarStatus).
  */
 export function makeRaid(id: string, raidId: string) {
     let outcome: { result: DuelResult; dealt: number; remaining: number; slain: boolean; slayer: boolean; name: string; gen: number } | null = null;
@@ -242,10 +242,7 @@ export function makeRaid(id: string, raidId: string) {
             if (slain) {
                 slayer = await database.slayAltarRaid(raidId, r.gen, id, now);
                 if (slayer) {
-                    // 격파 축복: 보스가 정한 축복을 1단계로 blessingHours만큼 엽니다(진행 중이면 시간만 늘어남).
-                    for (const b of raid.blessings) { await database.addAltarGauge(b, 0); await database.extendAltarGauge(b, now, raid.blessingHours * 3600_000, ALTAR.blessingCapMs); }
-                    await refreshAltarEvents(now);
-                    await announce(`✦ ${josa(s.name, '이가')} 월드보스 ${josa(raid.name, '을를')} 쓰러뜨렸습니다! 함께 싸운 모험가 모두 보상을 받고, ${raid.blessings.map(gaugeName).join('·')}이 ${raid.blessingHours}시간 열립니다.`, now);
+                    await announce(`✦ ${josa(s.name, '이가')} 월드보스 ${josa(raid.name, '을를')} 쓰러뜨렸습니다! 함께 싸운 모험가 모두 보상을 받습니다.`, now);
                 }
             }
             invalidateAltar();
@@ -410,7 +407,7 @@ async function claimRaidReward(s: State, r: AltarRaidRow, id: string) {
     const hit = await db().getRaidHit(r.gen, id);
     if (!hit || hit.dealt <= 0) return;
     const slayer = r.slayer === id;
-    const gold = raid.reward.gold, pearls = raid.reward.pearls + (slayer ? raid.slayer.pearls : 0), sp = raid.reward.sp + (slayer ? raid.slayer.sp : 0);
-    s.gold += gold; s.pearls += pearls; s.sp += sp;
-    addLog(s, `월드보스 ${raid.name} 격파 보상${slayer ? '(마지막 일격 보너스 포함)' : ''} · ${gold.toLocaleString()} G · 세계석 +${pearls}${sp ? ` · SP +${sp}` : ''} · 내 피해 ${hit.dealt.toLocaleString()}`, 'reward');
+    const pearls = raid.reward.pearls + (slayer ? raid.slayer.pearls : 0), sp = raid.reward.sp + (slayer ? raid.slayer.sp : 0);
+    s.pearls += pearls; s.sp += sp;
+    addLog(s, `월드보스 ${raid.name} 격파 보상${slayer ? '(마지막 일격 보너스 포함)' : ''} · 세계석 +${pearls}${sp ? ` · SP +${sp}` : ''} · 내 피해 ${hit.dealt.toLocaleString()}`, 'reward');
 }
