@@ -1,6 +1,7 @@
 import type { Attribute, Skill, Stats } from '../types';
 import { STATUS_TUNING, SKILL_FORMULA, diceMultiplier, diceRange } from '../data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay, PROGRESSION, ATTRIBUTE_NAMES } from '../data/progression';
+import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
 import { jobById } from '../data/classes';
@@ -174,6 +175,8 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.extraAttacks) out.push(`이어서 추가 공격을 ${Math.min(STATUS_TUNING.maxExtraAttacks, sk.extraAttacks)}회 합니다. 각 타격은 위 피해식의 ${skillPercent(sk.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)}입니다.`);
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
+    // v3.169 능력치 수련 패시브: 기본 능력치 자체가 오릅니다(effectiveSkill이 숙련 단계 배율을 적용한 값).
+    for (const [key, n] of Object.entries(sk.attrBonus || {})) out.push(`${ATTRIBUTE_NAMES[key as Attribute]} +${n} · 배분 능력치처럼 모든 파생 수치에 반영. 숙련 단계마다 +${skillPercent(STAT_TRAINING_GROWTH)}(최대 ×2) · SP 강화로는 오르지 않음`);
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     if (sk.song) out.push('노래: AP 0 · 엔젤릭버스터 계보 직업만 장착');
     if (sk.bloodRage) out.push(`피의 분노: 잃은 체력 비율 × ${skillPercent(sk.bloodRage)}만큼 내 직접 피해가 커집니다(체력이 1이면 +${skillPercent(sk.bloodRage)}). 여러 개면 합산.`);
@@ -211,7 +214,8 @@ function buildGrowthStages(sk: Skill) {
     // v27.6 한계돌파 단계(최대 성장 다음 1~max)는 숙련 채널로만 도달하므로 mastery 인자로 흉내 냅니다.
     return Array.from({ length: max + 1 + lb.max }, (_, level) => {
         const broken = Math.max(0, level - max);
-        const effective = broken ? effectiveSkill(sk, 1, level) : effectiveSkill(sk, level + 1);
+        // v3.169 능력치 수련 패시브는 숙련 단계로만 자라므로 모든 줄을 숙련 단계로 만듭니다.
+        const effective = broken || sk.attrBonus ? effectiveSkill(sk, 1, level) : effectiveSkill(sk, level + 1);
         return { level, practice: level ? (broken ? milestones[max - 1] * lb.practiceMultiple[broken - 1] : milestones[level - 1]) : 0, broken, effective, effects: skillEffectLines(effective, level) };
     });
 }
