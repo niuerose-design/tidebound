@@ -18,7 +18,7 @@ import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot, raidBreakdown } from '../systems/duel';
 import { jobById } from '../data/classes';
-import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, type RaidHitSummary, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
+import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, RAID_STAGE, raidStageStats, nextRaidStage, type RaidHitSummary, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
 
 type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[]; allTime: AltarTotalRow[]; raids: Record<string, AltarRaidRow>;
     /** v3.91 모든 모험가의 누적 기여(내 누적 기여 · 순위를 요청마다 전체 합산하지 않고 이 캐시에서 셉니다). totals는 많은 순. */ totals: Map<string, number>; sortedTotals: number[] };
@@ -60,8 +60,10 @@ async function trySummonRaid(raids: Record<string, AltarRaidRow>, gauges: Record
         if (raidAlive(r, now) || raidWaiting(r, now)) continue;
         if ((gauges[raid.id]?.points || 0) < raid.cost) continue;
         if (!await database.spendAltarGauge(raid.id, raid.cost)) continue;
-        if (!await database.summonAltarRaid(raid.id, raid.stats.hp, now + raid.lifetimeHours * 3600_000, now, RAID.respawnMs)) { await database.addAltarGauge(raid.id, raid.cost); continue; }
-        await announce(ALTAR_NEWS.raidAppear(raid.name, raid.lifetimeHours), now);
+        // v3.191 소환 단계: 같은 날 격파된 뒤의 소환은 한 단계 위(체력 ×RAID_STAGE.hp …), 하루가 지나면 1단계.
+        const { stage, dayStart } = nextRaidStage(r, now);
+        if (!await database.summonAltarRaid(raid.id, raidStageStats(raid, stage).hp, now + raid.lifetimeHours * 3600_000, now, RAID.respawnMs, stage, dayStart)) { await database.addAltarGauge(raid.id, raid.cost); continue; }
+        await announce(ALTAR_NEWS.raidAppear(raid.name, raid.lifetimeHours, stage), now);
         return true;
     }
     return false;
@@ -141,7 +143,7 @@ export async function backdoorGauge(gauge: AltarGaugeId, points: number, now: nu
 /** 제단 소식 문장(운영 페이지의 소식 테스트도 씁니다). */
 export const ALTAR_NEWS = {
     godAwake: (name: string) => `제단에 ${josa(name, '이가')} 깨어났습니다! 가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉습니다.`,
-    raidAppear: (name: string, hours: number) => `월드보스 ${josa(name, '이가')} 나타났습니다! 모든 모험가의 피해가 하나의 체력에 쌓입니다. ${hours}시간 안에 함께 쓰러뜨리세요.`,
+    raidAppear: (name: string, hours: number, stage = 1) => `월드보스 ${josa(name, '이가')} 나타났습니다!${stage > 1 ? ` 오늘 ${stage}단계 — 체력 ×${Math.round(Math.pow(RAID_STAGE.hp, stage - 1))}.` : ''} 모든 모험가의 피해가 하나의 체력에 쌓입니다. ${hours}시간 안에 함께 쓰러뜨리세요.`,
 };
 /** 제단 소식을 남깁니다(실패해도 본 처리는 그대로). v3.39 전체 채팅 대신 소식 채널. */
 async function announce(text: string, now: number) {
@@ -209,9 +211,9 @@ async function raidInfo(r: AltarRaidRow | undefined, id: string, now: number): P
     // v3.91 요약과 내 순위를 함께 읽습니다.
     const [summaryRows, rank] = await Promise.all([database.listRaidSummaries(r.gen, hits.map(h => h.player_id)), mine ? database.countRaidAbove(r.gen, mine.dealt).then(n => n + 1) : 0]);
     const summaries = new Map(summaryRows.map(x => [x.player_id, parseSummary(x.summary)]));
-    const snap = raidBossSnapshot(raid);
+    const stage = r.stage || 1, snap = raidBossSnapshot(raid, undefined, stage);
     return {
-        id: raid.id, gen: r.gen, name: raid.name, level: raid.level, alive, slain, hp: Math.max(0, r.hp), hpMax: r.hp_max || raid.stats.hp, attack: raid.stats.attack, defense: raid.stats.defense, power: snap.power, until: r.until,
+        id: raid.id, gen: r.gen, name: raid.name, level: raid.level, alive, slain, hp: Math.max(0, r.hp), hpMax: r.hp_max || snap.stats.hp, attack: snap.stats.attack, defense: snap.stats.defense, power: snap.power, until: r.until, stage,
         participants, slayer: slayerHit?.name || '',
         board: hits.map((h, i) => ({ rank: i + 1, name: h.name, dealt: h.dealt, hits: h.hits, self: h.player_id === id, ...(summaries.get(h.player_id) ? { last: summaries.get(h.player_id)! } : {}) })), me: { dealt: mine?.dealt || 0, hits: mine?.hits || 0, rank },
         reward: raid.reward, slayerBonus: raid.slayer,
@@ -230,7 +232,7 @@ export function makeRaid(id: string, raidId: string) {
             const r = (await core(now, true)).raids[raidId], raid = raidById(raidId);
             if (!r || !raid || !raidAlive(r, now)) throw new ApiError('그 월드보스는 지금 나타나 있지 않습니다.');
             if (now - last < RAID.cooldownMs) throw new ApiError(`월드보스에게는 ${Math.ceil((RAID.cooldownMs - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
-            const me = snapshot(s), boss = raidBossSnapshot(raid, r.hp), result = duel(me, boss, true, Math.random, RAID.maxTurns);
+            const me = snapshot(s), boss = raidBossSnapshot(raid, r.hp, r.stage || 1), result = duel(me, boss, true, Math.random, RAID.maxTurns);
             const dealt = Math.max(0, Math.min(boss.stats.hp, boss.stats.hp - Math.max(0, result.opponentHp)));
             const database = db(), remaining = await database.hitAltarRaid(raidId, r.gen, dealt);
             if (remaining === null) throw new ApiError('월드보스가 방금 떠났거나 쓰러졌습니다.');
@@ -389,7 +391,7 @@ export async function syncAltarStatus(s: State, now: number, id = '') {
         const status: AltarStatus = {
             blessings: BLESSINGS.filter(b => liveLevel(sh.gauges[b.id], now) > 0).map(b => { const level = liveLevel(sh.gauges[b.id], now); return { id: b.id, name: `${b.name} ${level}단계`, desc: blessingDesc(b, level), until: liveUntil(sh.gauges[b.id], now), level }; }),
             god: god && godAlive(a, now) ? { gen: a.gen, name: god.name, until: a.god_until } : null,
-            raids: RAIDS.filter(r => raidAlive(sh.raids[r.id], now)).map(r => { const x = sh.raids[r.id]; return { id: r.id, gen: x.gen, name: r.name, until: x.until, pct: x.hp_max ? Math.max(0, Math.min(1, x.hp / x.hp_max)) : 0 }; }),
+            raids: RAIDS.filter(r => raidAlive(sh.raids[r.id], now)).map(r => { const x = sh.raids[r.id]; return { id: r.id, gen: x.gen, name: r.name, until: x.until, pct: x.hp_max ? Math.max(0, Math.min(1, x.hp / x.hp_max)) : 0, stage: x.stage || 1 }; }),
             throne: a.throne_name,
             gauges: GAUGE_IDS.map(g => { const level = liveLevel(sh.gauges[g], now); return { id: g, name: gaugeName(g), pct: Math.min(100, Math.floor((sh.gauges[g]?.points || 0) / gaugeCost(g, level, level > 0) * 100)) }; }),
         };

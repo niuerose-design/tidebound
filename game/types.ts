@@ -822,6 +822,8 @@ export type Snapshot = {
     skills: string[];
     /** v3.86 추가 판정 단계(결투·제단·월드보스에도 그대로). */
     extraRolls?: number;
+    /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계: 1단계 체력). 없으면 현재 체력 그대로. */
+    dotHpCap?: number;
     power: number;
     rating: number;
     guild?: string;

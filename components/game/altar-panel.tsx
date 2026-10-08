@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format, formatRemaining } from './shared';
-import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary } from '@/game/data/altar';
+import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, RAID_STAGE, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
@@ -156,14 +156,14 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 </div>}
             </section>
             <section className="panel altar-raid">
-                <div className="section-title"><h2><Swords size={16}/> 월드보스</h2>{raid && <span className="micro">{raid.gen}번째 · 참여 {raid.participants}명</span>}</div>
-                <Tabs value={raidTab} onValueChange={setRaidTab}><TabsList className="game-tabs altar-tabs">{RAIDS.map(r => { const x = info.raids.find(y => y.id === r.id); return <TabsTrigger key={r.id} value={r.id}>{r.name}{x?.alive ? ' · 출현' : x?.slain ? ' · 격파' : ''}</TabsTrigger>; })}</TabsList></Tabs>
+                <div className="section-title"><h2><Swords size={16}/> 월드보스</h2>{raid && <span className="micro">오늘 {raid.stage}단계 · 참여 {raid.participants}명</span>}</div>
+                <Tabs value={raidTab} onValueChange={setRaidTab}><TabsList className="game-tabs altar-tabs">{RAIDS.map(r => { const x = info.raids.find(y => y.id === r.id); return <TabsTrigger key={r.id} value={r.id}>{r.name}{x?.alive ? ` · ${x.stage > 1 ? `${x.stage}단계 ` : ''}출현` : x?.slain ? ' · 격파' : ''}</TabsTrigger>; })}</TabsList></Tabs>
                 {raid ? <>
-                    <div className="altar-god-card"><strong>{raid.name}</strong><span>Lv.{raid.level} · 공격 {format(raid.attack)} · 방어 {format(raid.defense)} · 전투력 {format(raid.power)}</span>
+                    <div className="altar-god-card"><strong>{raid.name}{raid.stage > 1 ? ` · ${raid.stage}단계` : ''}</strong><span>Lv.{raid.level} · 공격 {format(raid.attack)} · 방어 {format(raid.defense)} · 전투력 {format(raid.power)}</span>
                         <Meter value={raid.hp} max={raid.hpMax} label={`공유 체력 ${format(raid.hp)} / ${format(raid.hpMax)}`} color={raid.alive ? 'enemy' : 'gold'}/>
                         <small>{raid.alive ? `떠나기까지 ${remaining(raid.until - now)} · 모든 모험가의 피해가 함께 쌓입니다` : `격파! 마지막 일격 ${raid.slayer || '—'} · 참여한 모험가는 다음 동기화 때 보상을 받습니다`}</small></div>
                     {raid.alive && <button className="primary" disabled={busy || raidWait > 0} onClick={() => void act({ action: 'raid', id: raid.id })}>{raidWait > 0 ? `${remaining(raidWait)} 뒤 다시 도전` : '월드보스에게 도전'}</button>}
-                    <p className="footnote">도전은 {RAID.cooldownMs / 60000}분에 한 번, 한 번에 최대 {RAID.maxTurns}턴. 깎은 체력은 그대로 남아 다음 모험가가 이어서 때립니다. 격파 보상 · {format(raid.reward.gold)} G · 세계석 +{raid.reward.pearls}{raid.reward.sp ? ` · SP +${raid.reward.sp}` : ''} (한 번이라도 때린 모험가 전원) · 마지막 일격 세계석 +{raid.slayerBonus.pearls}{raid.slayerBonus.sp ? ` · SP +${raid.slayerBonus.sp}` : ''} 추가 · 서버 전체 축복.</p>
+                    <p className="footnote">도전은 {RAID.cooldownMs / 60000}분에 한 번, 한 번에 최대 {RAID.maxTurns}턴. 깎은 체력은 그대로 남아 다음 모험가가 이어서 때립니다. 같은 날 격파된 뒤 다시 나타나면 한 단계 올라(체력 ×{RAID_STAGE.hp} · 공격 ×{RAID_STAGE.attack}, 최대 {RAID_STAGE.max}단계) 점점 잡기 어려워지고, 첫 소환부터 하루가 지나면 1단계로 돌아갑니다. 지속 피해의 체력 비례분은 1단계 체력 기준입니다. 격파 보상 · {format(raid.reward.gold)} G · 세계석 +{raid.reward.pearls}{raid.reward.sp ? ` · SP +${raid.reward.sp}` : ''} (한 번이라도 때린 모험가 전원) · 마지막 일격 세계석 +{raid.slayerBonus.pearls}{raid.slayerBonus.sp ? ` · SP +${raid.slayerBonus.sp}` : ''} 추가 · 서버 전체 축복.</p>
                     {result && result.dealt !== undefined && <div className={`altar-result ${result.slain ? 'win' : 'lose'}`}>
                         <strong>{result.slain ? result.slayer ? '격파 · 마지막 일격!' : '격파 · 함께 쓰러뜨렸습니다' : `피해 ${format(result.dealt)} · 남은 체력 ${format(result.remaining || 0)}`}</strong>
                         <details><summary>전투 기록 ({result.turns}턴)</summary><ol>{result.logs.map((l, i) => <li key={i}>{l}</li>)}</ol></details>

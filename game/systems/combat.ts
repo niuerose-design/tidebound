@@ -13,6 +13,8 @@ export type Fighter = {
     job?: string;
     stats: Stats;
     hp: number;
+    /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계). 없으면 현재 체력. */
+    dotHpCap?: number;
     skills: string[];
     /** 재사용 대기(행동 단위). v3.86 각성기는 턴 단위로 같은 칸에 두고, '~id' 칸에 실패한 판정 수를 셉니다. */
     cooldowns: Record<string, number>;
@@ -111,6 +113,8 @@ const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합', fixe
 const opens = (b: Fighter, key: 'bleed' | 'poison' | 'burn') => { const fx = (b.effects ??= {}); if (fx.opened?.[key]) return false; (fx.opened ??= {})[key] = true; return true; };
 /** v3.54 지속 피해의 체력 비례분: 틱 때 현재 체력 × hpRatio. hpRatio가 없는 옛 효과는 저장된 고정값(legacy)을 씁니다. */
 const hpPart = (current: number, hpRatio: number | undefined, legacy: number | undefined) => hpRatio === undefined ? (legacy || 0) : Math.floor(Math.max(0, current) * hpRatio);
+/** v3.191 지속 피해 체력 비례분의 기준 체력: 현재 체력, 상한(dotHpCap)이 있으면 그 아래로. 월드보스 소환 단계가 체력을 올려도 지속 피해는 1단계 체력 기준입니다. */
+const dotHp = (f: Pick<Fighter, 'hp' | 'dotHpCap'>) => f.dotHpCap ? Math.min(f.hp, f.dotHpCap) : f.hp;
 export const swarmDotShare = (swarm?: number) => swarm && swarm > 1 ? 1 / Math.sqrt(swarm) : 1;
 /** v27.75 화면에 보여 주는 타격 수치: 계산된 피해(raw). 남은 체력에 막힌 실제 감소량(value)은 규칙에만 씁니다. */
 export const shownHit = (h: Pick<CombatHit, 'value' | 'raw'>) => h.raw ?? h.value;
@@ -384,7 +388,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (!forced && a.effects.dot) {
         const dot = a.effects.dot;
         // v3.54 체력 비례분은 틱 때 현재 체력 기준입니다(전에는 걸 때 최대 체력 기준).
-        const dotHit = dot.damage + hpPart(a.hp, dot.hpRatio, 0);
+        const dotHit = dot.damage + hpPart(dotHp(a), dot.hpRatio, 0);
         a.hp = Math.max(0, a.hp - dotHit);
         notes.push(`${dot.name} ${dotHit}`);
         ev.dot = { name: dot.name, value: dotHit };
@@ -401,7 +405,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v27.19 중독 틱: 중첩 × (중첩당 피해 + 최대 체력 비례). 출혈과 별개로 함께 들어갑니다.
     if (!forced && a.effects.poison && a.hp > 0) {
         const poison = a.effects.poison;
-        const hit = (poison.perStack + hpPart(a.hp, poison.hpRatio, poison.hpTick)) * poison.stacks;
+        const hit = (poison.perStack + hpPart(dotHp(a), poison.hpRatio, poison.hpTick)) * poison.stacks;
         a.hp = Math.max(0, a.hp - hit);
         notes.push(`중독 ×${poison.stacks} ${hit}`);
         ev.dot = ev.dot ? { name: `${ev.dot.name}·중독`, value: ev.dot.value + hit } : { name: `중독 ×${poison.stacks}`, value: hit };
@@ -412,7 +416,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v27.48 화상 틱: 중독과 같은 방식(중첩 × (중첩당 피해 + 최대 체력 비례)). 출혈·중독과 함께 들어갑니다.
     if (!forced && a.effects.burn && a.hp > 0) {
         const burn = a.effects.burn;
-        const hit = (burn.perStack + hpPart(a.hp, burn.hpRatio, burn.hpTick)) * burn.stacks;
+        const hit = (burn.perStack + hpPart(dotHp(a), burn.hpRatio, burn.hpTick)) * burn.stacks;
         a.hp = Math.max(0, a.hp - hit);
         notes.push(`화상 ×${burn.stacks} ${hit}`);
         ev.dot = ev.dot ? { name: `${ev.dot.name}·화상`, value: ev.dot.value + hit } : { name: `화상 ×${burn.stacks}`, value: hit };
@@ -725,7 +729,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const current = b.effects.dot;
         // v3.54 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(지속은 그대로, 전투당 한 번). 원킬·짧은 전투에서도 지속 피해가 몫을 합니다.
         // (지속을 1턴 줄이면 다시 걸기 전에 끝나 면역이 생겨 긴 전투 피해가 줄었고, 매번 주면 출혈만 긴 전투에서 크게 늘었습니다.)
-        if (opens(b, 'bleed')) onset.push({ name, value: tick + hpPart(b.hp, hpRatio, 0) });
+        if (opens(b, 'bleed')) onset.push({ name, value: tick + hpPart(dotHp(b), hpRatio, 0) });
         b.effects.dot = { damage: Math.max(tick, current?.hpRatio === undefined ? 0 : current.damage), hpRatio: Math.max(hpRatio, current?.hpRatio || 0), turns: Math.max(turns, current?.turns || 0), name };
         notes.push(`${name} ${turns}턴`);
         ev.statuses.push({ id: 'bleed', turns });
@@ -741,7 +745,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const current = b.effects.poison;
         // v3.54 처음 걸면 poisonFirstStacks중첩으로 시작합니다. 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'poison'), stacks = Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, current ? current.stacks + 1 : first ? STATUS_TUNING.poisonFirstStacks : 1);
-        if (first) onset.push({ name: '중독', value: (perStack + hpPart(b.hp, hpRatio, 0)) * stacks });
+        if (first) onset.push({ name: '중독', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
         b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`중독 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'poison', turns });
@@ -755,7 +759,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const current = b.effects.burn;
         // v3.54 전투에서 처음 걸면 burnFirstStacks중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'burn'), stacks = Math.min(STATUS_TUNING.burnMaxStacks, current ? current.stacks + 1 : first ? STATUS_TUNING.burnFirstStacks : 1);
-        if (first) onset.push({ name: '화상', value: (perStack + hpPart(b.hp, hpRatio, 0)) * stacks });
+        if (first) onset.push({ name: '화상', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
         b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`화상 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'burn', turns });
