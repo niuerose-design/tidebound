@@ -31,4 +31,6 @@ export const SKILL_FX: Record<string, SkillFx> = {
     inkTrick: 'ink', 
     // 망인 계보: 뼈 갈래
     // 여명·천 번의 삶: 빛
+    // v3.196 인피니티 플레임 서클은 불, 엔젤레이는 빛(id 규칙은 genesis → star, blessing → heal로 잡음)
+    genesis: 'fire', tidalBlessing: 'star',
 };

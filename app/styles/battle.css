@@ -716,11 +716,34 @@
 .ult-wave .ult-a,.ult-wave .ult-b{left:-30%;width:160%;height:90%;top:100%;border-radius:50% 50% 0 0/100% 100% 0 0;background:linear-gradient(180deg,#d9fbff,#8ce4ed 18%,#1f8aa6 45%,#06303f);box-shadow:0 -14px 50px #8ce4ed,inset 0 20px 40px rgba(255,255,255,.35);animation:ultWaveRise 2.4s cubic-bezier(.3,.8,.3,1) var(--fx-delay) both}
 .ult-wave .ult-b{animation-delay:calc(var(--fx-delay) + .35s);opacity:.7;height:70%}
 @keyframes ultWaveRise{0%{translate:0 0;opacity:1}40%{translate:0 -95%;opacity:1}70%{translate:0 -100%;opacity:1}100%{translate:0 -10%;opacity:0}}
-/* 창세의 빛: 중앙 빛기둥과 수평 섬광 */
+/* 빛기둥: 중앙 빛기둥과 수평 섬광. v3.196 엔젤레이(비숍 4차)와 전용 연출이 없는 각성기의 기본 장면 */
 .ult-light{--fx:#fff1a8}
 .ult-light .ult-a{left:50%;top:-20%;width:90px;height:140%;translate:-50% 0;background:linear-gradient(90deg,transparent,#fff7d6 30%,#fff 50%,#fff7d6 70%,transparent);filter:blur(2px);animation:ultBeam 2.4s ease-out var(--fx-delay) both}
 .ult-light .ult-b{left:-10%;top:50%;width:120%;height:3px;background:linear-gradient(90deg,transparent,#fff,transparent);box-shadow:0 0 30px #fff1a8;animation:ultSlashLine 2.4s ease-out calc(var(--fx-delay) + .3s) both}
 @keyframes ultBeam{0%{opacity:0;scale:.1 1}18%{opacity:1;scale:1 1}60%{opacity:1}100%{opacity:0;scale:3 1}}
+/* v3.196 인피니티 플레임 서클(대마도사): 같은 DOM으로 불 연출. ult-a = 돌아가는 불 고리(conic 불꽃 띠), ult-b = 중심 화구 + 흔들리는 불꽃 혀 둘,
+   파편 8개 = 꼬리 달린 불덩이가 고리 위를 두 바퀴 공전한 뒤 안으로 조여들었다가 사방으로 터짐, ::after = 떠오르는 불티. 파편의 i*70ms 시차는 공전 간격이 틀어지지 않게 되돌립니다. */
+.ult-flamecircle{--fx:#ff8a3c}.ult-flamecircle .scene-fx-dark{background:#140502}
+.ult-flamecircle .scene-fx-flash{background:radial-gradient(ellipse at 62% 48%,#fff1c4 0%,#ff9a3c88 24%,#ff3b1a33 46%,transparent 64%);animation-name:ultFlameFlash}
+.ult-flamecircle .ult-a{left:62%;top:48%;width:230px;height:230px;margin:-115px 0 0 -115px;border-radius:50%;background:conic-gradient(from 0deg,#ff3b1a,#ffb347 14%,#fff1c4 22%,#ff6a1f 36%,#ff3b1a 50%,#ffc46a 64%,#fff1c4 72%,#ff5a1f 86%,#ff3b1a);-webkit-mask:radial-gradient(circle closest-side,transparent 66%,#000 71%,#000 86%,transparent 93%);mask:radial-gradient(circle closest-side,transparent 66%,#000 71%,#000 86%,transparent 93%);filter:blur(1.2px) drop-shadow(0 0 16px #ff5a1f);mix-blend-mode:screen;animation:ultFlameRing 2.4s cubic-bezier(.25,.6,.3,1) var(--fx-delay) both}
+.ult-flamecircle .ult-b{left:62%;top:48%;width:92px;height:92px;margin:-46px 0 0 -46px;border-radius:50%;background:radial-gradient(circle at 50% 58%,#fff6d6 0%,#ffd36a 22%,#ff7a1f 46%,rgba(255,42,10,.55) 66%,transparent 74%);filter:blur(.8px);mix-blend-mode:screen;animation:ultFlameCore 2.4s ease-out var(--fx-delay) both}
+.ult-flamecircle .ult-b::before,.ult-flamecircle .ult-b::after{content:'';position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-54px 0 0 -54px;border-radius:0 50% 50% 50%;rotate:45deg;transform-origin:100% 100%;background:linear-gradient(135deg,#ffe9a8 0%,#ffb347 30%,#ff6a1f 62%,rgba(255,42,10,.2) 100%);filter:blur(1.6px);animation:ultFlameTongue .34s ease-in-out infinite alternate}
+.ult-flamecircle .ult-b::after{width:36px;height:36px;margin:-36px 0 0 -22px;opacity:.9;animation-name:ultFlameTongue2;animation-duration:.26s;animation-delay:.09s}
+.ult-flamecircle .ult-frag{font-size:0;color:transparent;text-shadow:none;width:0;height:0;animation:ultFireOrbit 2.2s linear calc(var(--fx-delay) - var(--i) * .07s + .2s) both}
+.ult-flamecircle .ult-frag::before{content:'';position:absolute;left:-13px;top:-13px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 45% 42%,#fff8e0 0%,#ffd36a 28%,#ff7a1f 58%,#ff2a0a 78%,transparent 100%);box-shadow:0 0 14px #ff6a1f,0 0 30px rgba(255,59,26,.55);animation:ultFireFlicker .18s ease-in-out infinite alternate}
+.ult-flamecircle .ult-frag::after{content:'';position:absolute;left:-8px;top:-56px;width:16px;height:58px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:linear-gradient(180deg,transparent 0%,rgba(255,59,26,.35) 35%,#ff7a1f 72%,#ffd36a 100%);filter:blur(2px);opacity:.9}
+.ult-flamecircle::after{content:'';position:absolute;left:62%;top:48%;width:280px;height:280px;margin:-140px 0 0 -140px;background:radial-gradient(circle,#ffe29a 0 1.6px,transparent 2.6px) 12px 30px/64px 86px repeat,radial-gradient(circle,#ff7a1f 0 1.3px,transparent 2.3px) 40px 10px/48px 70px repeat,radial-gradient(circle,#ff3b1a 0 1px,transparent 2px) 5px 50px/84px 58px repeat;-webkit-mask:radial-gradient(circle closest-side,#000 28%,transparent 72%);mask:radial-gradient(circle closest-side,#000 28%,transparent 72%);animation:ultEmbers 2.4s linear var(--fx-delay) both}
+.ult-flamecircle .ult-title{color:#ffe0b8;text-shadow:0 0 16px #ff6a1f,0 0 34px #ff3b1a,0 2px 6px #000}
+.battle-scene:has(.ult-flamecircle) .ocean-art{animation:ultEmberTint 2.4s ease-out both}
+@keyframes ultFlameFlash{0%{opacity:0}9%{opacity:.55}22%{opacity:.12}70%{opacity:.18}80%{opacity:1}100%{opacity:0}}
+@keyframes ultFlameRing{0%{opacity:0;rotate:0deg;scale:.25}12%{opacity:1;scale:1.04}18%{scale:1}74%{opacity:1;rotate:800deg;scale:1}84%{opacity:1;rotate:960deg;scale:.62}100%{opacity:0;rotate:1040deg;scale:2.1}}
+@keyframes ultFlameCore{0%{opacity:0;scale:.2}10%{opacity:1;scale:1.1}22%{scale:.92}40%{scale:1.1}58%{scale:.96}74%{scale:1.08}84%{opacity:1;scale:1.35}100%{opacity:0;scale:2.6}}
+@keyframes ultFlameTongue{from{scale:.86 .78;rotate:38deg}to{scale:1.06 1.18;rotate:52deg}}
+@keyframes ultFlameTongue2{from{scale:.9 .8;rotate:62deg}to{scale:1.1 1.25;rotate:48deg}}
+@keyframes ultFireFlicker{from{scale:.92;filter:brightness(1)}to{scale:1.1;filter:brightness(1.25)}}
+@keyframes ultFireOrbit{0%{opacity:0;transform:rotate(var(--ang)) translateX(0) scale(.3)}10%{opacity:1;transform:rotate(calc(var(--ang) + 36deg)) translateX(104px) scale(1)}72%{opacity:1;transform:rotate(calc(var(--ang) + 756deg)) translateX(104px) scale(1.05)}84%{opacity:1;transform:rotate(calc(var(--ang) + 900deg)) translateX(56px) scale(1.25)}100%{opacity:0;transform:rotate(calc(var(--ang) + 960deg)) translateX(250px) scale(.4)}}
+@keyframes ultEmbers{0%{opacity:0;background-position:12px 30px,40px 10px,5px 50px}14%{opacity:1}78%{opacity:1}100%{opacity:0;background-position:12px -170px,40px -210px,5px -140px}}
+@keyframes ultEmberTint{0%,8%{filter:none}20%,78%{filter:sepia(.55) hue-rotate(-18deg) saturate(1.6) brightness(.82)}100%{filter:none}}
 /* 파멸의 낙인: 바닥의 녹색 낙인과 차오르는 독 안개 */
 .ult-venom{--fx:#9af06a}.ult-venom .scene-fx-dark{background:#04120a}
 .ult-venom .ult-a{left:62%;top:78%;width:260px;height:90px;margin:-45px 0 0 -130px;border:3px dashed #9af06a;border-radius:50%;box-shadow:0 0 24px #9af06a,inset 0 0 24px rgba(154,240,106,.5);animation:ultSigil 2.4s ease-out var(--fx-delay) both}
@@ -1058,7 +1081,7 @@
 @keyframes ultClock{0%{opacity:0;rotate:0deg;scale:.4}20%{opacity:1;scale:1}80%{opacity:1;rotate:300deg}100%{opacity:0;rotate:360deg;scale:1.3}}
 @keyframes ultCrack{0%,10%{opacity:0;scale:1 0}30%{opacity:1;scale:1 1}80%{opacity:1}100%{opacity:0}}
 @keyframes ultFreeze{0%{filter:none}15%,70%{filter:grayscale(.8) sepia(.3) hue-rotate(180deg) brightness(.8)}100%{filter:none}}
-@media(prefers-reduced-motion:reduce){.scene-fx-ult .ult-a,.scene-fx-ult .ult-b,.scene-fx-ult .ult-frag{display:none}.scene-fx-ult .scene-fx-dark,.scene-fx-ult .scene-fx-flash,.ult-title{animation-name:tideReduced;animation-duration:1.4s}.battle-scene:has(.ult-slash) .ocean-art,.battle-scene:has(.ult-time) .ocean-art,.battle-scene:has(.ult-psy) .ocean-art{animation:none}}
+@media(prefers-reduced-motion:reduce){.scene-fx-ult .ult-a,.scene-fx-ult .ult-b,.scene-fx-ult .ult-frag,.ult-flamecircle::after{display:none}.scene-fx-ult .scene-fx-dark,.scene-fx-ult .scene-fx-flash,.ult-title{animation-name:tideReduced;animation-duration:1.4s}.battle-scene:has(.ult-slash) .ocean-art,.battle-scene:has(.ult-time) .ocean-art,.battle-scene:has(.ult-psy) .ocean-art,.battle-scene:has(.ult-flamecircle) .ocean-art{animation:none}}
 .scene-top .scene-label{min-width:0}.scene-top .scene-label svg{flex-shrink:0}.scene-label-text{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.scene-top .scene-actions{flex-shrink:0}
 .tide-fx-burn .tide-fx-fragment{animation-name:tideFragmentUp;animation-duration:.9s;font-size:13px}
 /* v27.47 오른쪽 패널 제단 탭 */
