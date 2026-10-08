@@ -71,7 +71,7 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     wakeFist: '질풍', anchorBreak: '벽력 돌파', roughLine: '라이트닝 매듭', twinHook: '선풍', surgeCombo: '벽력', flowingFists: '연속 공격',
     tsunamiRush: '태풍', stormBody: '뇌성', oceanCombo: '교룡연격', endlessCombo: '해신강림',
 
-    // ── 은월 계보 · 구미호 ──
+    // ── 은월 계보 ──
     electricBite: '귀참', galvanicScales: '여우령', tentacleBarrage: '폭류권',
 
     // ── 일리움 계보 · 크리스탈 연성사 ──

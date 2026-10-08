@@ -233,6 +233,8 @@ export type Skill = {
     hpCost?: number;
     /** v3.145 피의 분노(패시브): 잃은 체력 비율 × bloodRage만큼 모든 피해가 커집니다(장착한 패시브끼리 더함). */
     bloodRage?: number;
+    /** v3.146 정령(은월 패시브): 장착하면 기본 공격을 포함한 모든 공격 행동에 정령의 추가타가 hits회 붙습니다(위력 power, 기술 배율에 곱함). 여러 개를 장착하면 횟수 · 위력 각각 가장 큰 값. */
+    companion?: { hits: number; power: number };
     /** v25 자기 상태이상: 쓰고 나면 자신이 기절·감속·약화됩니다. waivedBy 기술을 장착하면 생략. */
     selfEffect?: { status: 'stun' | 'slow' | 'weaken'; turns: number; waivedBy?: string };
     /** v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다. */

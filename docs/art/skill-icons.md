@@ -327,8 +327,6 @@
 | ⬜ | `abyssalGrip` | 정령의 힘 | 은월 (3차) | 패시브 |
 | ⬜ | `maulingTide` | 파쇄철조 | 은월 (4차) | 액티브 |
 | ⬜ | `abyssHide` | 소혼 장막 | 은월 (4차) | 패시브 |
-| ⬜ | `devour` | 여우불 포식 | 구미호 | 액티브 |
-| ⬜ | `gorgedMaw` | 구미호의 꼬리 | 구미호 | 패시브 |
 | ⬜ | `worldTentacle` | 파쇄 연권 | 은월 (5차) | 액티브 |
 | ⬜ | `primordialBlood` | 귀문진 | 은월 (5차) | 패시브 |
 

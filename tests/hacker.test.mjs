@@ -366,7 +366,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         process.env.TIDEBOUND_SECRECY = 'off'; assert.equal(await Sc.secrecyOn(now + 2), false, 'env wins'); delete process.env.TIDEBOUND_SECRECY;
         await Sc.setSecrecy(false, now); assert.equal((await Sc.buildCatalog(newState(0), now + 3)).secret, false);
         // v3.44 비밀 직업: 비공개가 꺼져 있으면 전체, 켜면 드러난 것만 전체·나머지는 실루엣(이름·설명·조건·능력치 없음). 같은 키면 다시 보내지 않음.
-        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 22); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
+        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 21); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
         assert.equal(await Sc.buildCatalog(newState(0), now + 4, openCat.key), null, 'same key: nothing to send');
         process.env.TIDEBOUND_SECRECY = 'on';
         const veiledCat = await Sc.buildCatalog(newState(0), now + 5), lich = veiledCat.jobs.find(j => j.id === 'voidSovereign');
@@ -375,7 +375,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         const opened = newState(0); opened.doorsOpened = ['voidcaller']; const voidCat = await Sc.buildCatalog(opened, now + 6);
         assert.ok(voidCat.revealed.includes('voidcaller') && !voidCat.jobs.find(j => j.id === 'voidcaller').veiled, 'a recorded reveal (old rebirth door) shows the job in full');
         // v3.47 비밀 직업의 스킬: 꺼져 있으면 67개 전부, 켜면 드러난 직업 것과 내가 배운·장착한 것만(실루엣 직업의 스킬은 없음).
-        assert.equal(openCat.skills.length, 44); assert.ok(veiledCat.skills.every(sk => veiledCat.revealed.includes(sk.job)) && !veiledCat.skills.some(sk => sk.job === 'voidSovereign'), 'only skills of revealed jobs');
+        assert.equal(openCat.skills.length, 42); assert.ok(veiledCat.skills.every(sk => veiledCat.revealed.includes(sk.job)) && !veiledCat.skills.some(sk => sk.job === 'voidSovereign'), 'only skills of revealed jobs');
         assert.ok(voidCat.skills.some(sk => sk.id === 'voidLance') && voidCat.skills.length > veiledCat.skills.length, 'revealing the job sends its skills');
         const holder = newState(0); holder.skills.push('graveHook'); const holderCat = await Sc.buildCatalog(holder, now + 7);
         assert.ok(holderCat.skills.some(sk => sk.id === 'graveHook') && holderCat.jobs.find(j => j.id === 'undead').veiled, 'an equipped secret skill is sent even if its job is still veiled');

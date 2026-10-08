@@ -238,13 +238,14 @@ test('v3.120 Arch Mage (Thunder, Cold): Extreme Magic magic steps 25 · 200 · 7
     assert.deepEqual(SKILLS.find(s => s.id === 'tideOfAges').levelEffects.map(l => l.bonus.magic), [25, 200, 700, 2000]);
 });
 
-test('v3.121 Eunwol: Ghost Gate attack +500, Fist Barrage ×1.5, Shattering Fists base ×2 (extra hits unchanged)', async () => {
+test('v3.146 Eunwol: Ghost Gate attack +300 with a two-hit spirit, Fist Barrage ×1.4 and Shattering Fists ×1.9 keep one extra hit, World Fists ×2.8', async () => {
     const { SECRET_SKILLS } = await load('game/secret/skills.js');
     const sk = id => SECRET_SKILLS.find(s => s.id === id);
-    assert.equal(sk('primordialBlood').bonus.attack, 500);
-    assert.deepEqual([sk('maulingTide').multiplier, sk('maulingTide').extraAttacks], [1.5, 2]);
-    assert.equal(sk('worldTentacle').extraAttacks, 3);
-    assert.ok(sk('worldTentacle').multiplier > 2, 'awakening boost on top of base ×2');
+    assert.equal(sk('primordialBlood').bonus.attack, 300); assert.deepEqual(sk('primordialBlood').companion, { hits: 2, power: .35 });
+    assert.deepEqual([sk('tentacleBarrage').multiplier, sk('tentacleBarrage').extraAttacks], [1.4, 1]);
+    assert.deepEqual([sk('maulingTide').multiplier, sk('maulingTide').extraAttacks], [1.9, 1]);
+    assert.equal(sk('worldTentacle').extraAttacks, 1); assert.ok(sk('worldTentacle').multiplier > 2.8, 'awakening boost on top of base ×2.8');
+    assert.deepEqual([sk('abyssalGrip').companion, sk('abyssHide').companion], [{ hits: 1, power: .35 }, { hits: 1, power: .4 }]);
 });
 
 test('v3.123 Kali: Chakram Split curses (bleed-type damage over time, Illium\'s ratio), Queen of Hexes magic +250', () => {
@@ -335,4 +336,19 @@ test('v3.144 Dark Knight: deaths and turns feed perCount passives; Darkness Aura
     const foe = { name: 'F', stats: { ...base, attack: 100000 }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} };
     const ev = []; strike(foe, knight, () => 0, ev); assert.equal(knight.hp, 251, 'endured at 1 + 25% of 1000'); assert.ok(ev[0].endured);
     knight.hp = 50; strike(foe, knight, () => 0, []); assert.equal(knight.hp, 0, 'only once per battle');
+});
+
+test('v3.146 Eunwol: companion passives add spirit follow-up hits to every action (basic attacks too), best hits and power win; Gumiho removed', () => {
+    const sk = id => SKILLS.find(s => s.id === id);
+    assert.deepEqual(sk('galvanicScales').companion, { hits: 1, power: .25 }); assert.equal(sk('tentacleBarrage').extraAttacks, 1);
+    assert.equal(sk('devour'), undefined); assert.equal(sk('gorgedMaw'), undefined); assert.equal(JOBS.find(j => j.id === 'tideDevourer'), undefined);
+    const base = { hp: 1000, attack: 300, magic: 0, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 100, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const fighter = skills => ({ name: 'A', stats: { ...base }, hp: 1000, mana: 100, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} });
+    const target = () => ({ name: 'B', stats: { ...base, hp: 1e6 }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    // 기본 공격(기술 없음)에도 정령 추가타 1회(위력 25%).
+    const e1 = []; strike(fighter(['galvanicScales']), target(), () => 0, e1); assert.equal(e1[0].hits.length, 2); assert.ok(Math.abs(e1[0].hits[1].value / e1[0].hits[0].value - .25) < .01, `spirit power ${e1[0].hits.map(h => h.value)}`);
+    // 패시브가 여럿이면 횟수 · 위력 각각 최대: 2회 · 35%.
+    const e2 = []; strike(fighter(['galvanicScales', 'primordialBlood']), target(), () => 0, e2); assert.equal(e2[0].hits.length, 3); assert.ok(Math.abs(e2[0].hits[2].value / e2[0].hits[0].value - .35) < .01);
+    // 정령 없는 기본 공격은 추가타 없음.
+    const e0 = []; strike(fighter([]), target(), () => 0, e0); assert.equal(e0[0].hits.length, 1);
 });
