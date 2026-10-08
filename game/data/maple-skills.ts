@@ -35,7 +35,7 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     fateRoll: '얼티밋 드라이브', fortuneFavor: '럭 앤 쇼', jackpotStrike: '조커', divineLuck: '럭 오브 데스티니', allOrNothing: '파이널 컷',
 
     // ── 독립 · 히든 (바다 단어만 교체, 세계관 맞춤) ──
-    // v3.169 수련 패시브(계보마다 4개 · 액티브 없음).
+    // v3.170 수련 패시브(계보마다 4개 · 액티브 없음).
     driftwoodGuard: '나무 방벽', temperedSkin: '담금질한 피부', innerBreath: '내공 호흡', herbWard: '약초 방부',
     netWeave: '그물 짜기', axeArm: '도끼 팔', breachTools: '공성 도구', keenEye: '매의 눈',
     insight: '마나 통찰', flow: '마나 순환술', bookwise: '박식', stillMind: '고요한 마음',

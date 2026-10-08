@@ -10,6 +10,7 @@ import { SKILLS, skillById } from '../data/skills';
 import { PLACES, FISH } from '../data/world';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
 import { researchRank } from '../data/economy';
+import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
 export const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
@@ -254,6 +255,8 @@ function computeEffectiveSkill(sk: Skill, rank: number, mastery: number): Skill 
         cooldown: sk.type === 'passive' ? 0 : Math.max(1, sk.cooldown - Math.floor(steps * (fx.cooldownReduction ?? 0))),
         multiplier: sk.multiplier * factor,
         bonus,
+        // v3.169 능력치 수련 패시브(attrBonus): 화면용 값. 전투(stats.trainedAttributes)와 같은 식(숙련 단계마다 +25%, 최대 ×2 · SP 강화 무관).
+        ...(sk.attrBonus ? { attrBonus: Object.fromEntries(Object.entries(sk.attrBonus).map(([k, n]) => [k, Math.round((n || 0) * (1 + STAT_TRAINING_GROWTH * Math.min(4, mastery)))])) } : {}),
         penaltyRelief: override?.penaltyRelief ?? sk.penaltyRelief,
     };
     return result;
@@ -276,6 +279,11 @@ function skillDeltas(current: Skill, next: Skill): SkillRankDelta[] {
         if (Math.abs(before - after) > .0001)
             out.push({ label: STAT_LABELS[key as keyof Stats] || key, from: `${before < 0 ? '' : '+'}${formatStat(key, before)}`, to: `${after < 0 ? '' : '+'}${formatStat(key, after)}` });
     }
+    // v3.169 능력치 수련 패시브의 기본 능력치 증가.
+    for (const key of Object.keys({ ...(current.attrBonus || {}), ...(next.attrBonus || {}) })) {
+        const before = current.attrBonus?.[key as Attribute] || 0, after = next.attrBonus?.[key as Attribute] || 0;
+        if (before !== after) out.push({ label: ATTRIBUTE_NAMES[key as Attribute] || key, from: `+${before}`, to: `+${after}` });
+    }
     return out;
 }
 export function masteryGainBonus(sk: Skill, level: number) {
@@ -283,6 +291,8 @@ export function masteryGainBonus(sk: Skill, level: number) {
     return stages?.[Math.min(level, stages.length - 1)] ?? 0;
 }
 export function skillRankDeltas(sk: Skill, rank: number, mastery = 0, practice = 0): SkillRankDelta[] {
+    // v3.169 능력치 수련 패시브는 숙련 단계로만 자랍니다(SP 강화 무관). 다음 숙련 단계의 값을 보여 줍니다.
+    if (sk.attrBonus) return mastery >= 4 ? [] : skillDeltas(effectiveSkill(sk, 1, mastery, practice), effectiveSkill(sk, 1, mastery + 1, practice)).map(d => ({ ...d, label: `${d.label}(숙련 Lv.${mastery} → ${mastery + 1})` }));
     const level = skillLevel(sk, rank, mastery);
     if (level >= maxSkillLevel(sk))
         return [];

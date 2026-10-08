@@ -12,7 +12,7 @@ test('v3.69 training: six training jobs absorb the 27 old independents; every ol
     // v3.80 숙달 목표 = 패시브 마지막 숙련 단계(225,000) × 40%.
     for (const id of ids) assert.equal(P.jobMasteryTarget(job(id)), 90_000, id);
     for (const old of T.RETIRED_TRAINING) { assert.ok(job(old).retired, old); assert.equal(SKILLS.filter(sk => sk.job === old).length, 0, `${old} owns nothing now`); }
-    // 지도 제작자의 측량(드롭) → 보조 수련. v3.169 새 수련 패시브는 처음부터 수련 직업 소유.
+    // 지도 제작자의 측량(드롭) → 보조 수련. v3.170 새 수련 패시브는 처음부터 수련 직업 소유.
     const owner = id => SKILLS.find(sk => sk.id === id).job;
     assert.equal(owner('chartedCurrents'), 'trainingSupport');
     assert.equal(owner('bitterBrew'), 'trainingStatus'); assert.equal(owner('tarredBarbs'), 'trainingStatus');
@@ -42,7 +42,7 @@ test('v3.69 training: a save sitting in an old independent job moves to its trai
 
 test('v3.69 training passives: tier-3 strength from level 1, tier-3 mastery milestones, old inheritance kept once', () => {
     const passives = SKILLS.filter(sk => sk.job?.startsWith('training') && sk.type === 'passive');
-    assert.equal(passives.length, 24, 'v3.169: six training jobs × 4 passives');
+    assert.equal(passives.length, 24, 'v3.170: six training jobs × 4 passives');
     for (const sk of passives) { assert.deepEqual(P.masteryMilestonesFor(sk), [4500, 22500, 84000, 225000], sk.id); if (T.TRAINING_DESC[sk.id]) assert.ok(sk.desc === T.TRAINING_DESC[sk.id] && !/\d/.test(sk.desc), `${sk.id} desc has no stale numbers`); }
     assert.equal(SKILLS.find(sk => sk.id === 'axeArm').bonus.attack, 45); assert.equal(SKILLS.find(sk => sk.id === 'tarredBarbs').bonus.dotTurnsBonus, 1, 'rule values are not scaled');
     // 예전 기준(250)으로 계승 자격이 있던 세이브는 유지, 새 세이브는 새 기준(4,500).
@@ -52,7 +52,7 @@ test('v3.69 training passives: tier-3 strength from level 1, tier-3 mastery mile
     const fresh = newState(0); fresh.skillPractice.axeArm = 300; migrateState(fresh); assert.ok(!fresh.legacyInherited?.axeArm, 'new saves use the new bar');
 });
 
-test('v3.169 training jobs: no actives, exactly 4 passives each with one main and one minor stat and no extra mechanics; the deleted skills are retired without compensation', async () => {
+test('v3.170 training jobs: no actives, exactly 4 passives each with one main and one minor stat and no extra mechanics; the deleted skills are retired without compensation', async () => {
     const Mig = await load('game/systems/migrations.js');
     for (const id of Object.keys(T.TRAINING_GROUPS)) {
         const own = SKILLS.filter(sk => sk.job === id);
@@ -436,4 +436,18 @@ test('v3.151 Illium: arcane-ratio scaling, basic attacks corrode, corrosion cuts
         const tb2 = target(); bf.cooldowns = { zzBuffTest: 3 }; strike(bf, tb2, () => 0); const boosted = 1e6 - tb2.hp; const tb3 = target(); strike(fighter([]), tb3, () => 0); const normal = 1e6 - tb3.hp;
         assert.ok(Math.abs(boosted / normal - 2) < .05, `buffed magic doubles the arcane strike: ${normal} → ${boosted}`);
     } finally { SKILLS.splice(SKILLS.indexOf(bsk), 1); }
+});
+
+// v3.169 능력치 수련 패시브의 자세히 보기: 효과 줄 · 다음 강화 · 성장표가 숙련 단계 배율(+25%, 최대 ×2)을 보여 줍니다(전투 계산은 그대로).
+test('v3.169 stat training passives: detail view shows the attribute gain per mastery stage, the next-stage hint, and a growing stage table', async () => {
+    const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const P = await load('game/systems/progression.js'), D = await load('game/systems/skill-description.js');
+    const sk = SKILLS.find(x => x.id === 'dexDrill1');
+    assert.deepEqual([0, 1, 2, 4, 6].map(m => P.effectiveSkill(sk, 1, m).attrBonus.dex), [20, 25, 30, 40, 40], 'display value follows the combat formula, capped at ×2');
+    assert.equal(P.effectiveSkill(sk, 3, 0).attrBonus.dex, 20, 'SP ranks do not raise it');
+    assert.ok(D.skillEffectLines(P.effectiveSkill(sk, 1, 1), 1).some(line => line.startsWith('기민 +25')), 'effect line names the attribute');
+    assert.ok(P.skillRankHint(sk, 1, 0).includes('기민') && P.skillRankHint(sk, 1, 0).includes('+20 → +25'), P.skillRankHint(sk, 1, 0));
+    assert.equal(P.skillRankHint(sk, 1, 4), '최대 강화 레벨입니다.');
+    assert.deepEqual(D.skillGrowthStages(sk).slice(0, 5).map(r => r.effective.attrBonus.dex), [20, 25, 30, 35, 40], 'stage table grows by mastery stage');
+    assert.equal(sk.attrBonus.dex, 20, 'the data itself is untouched');
 });

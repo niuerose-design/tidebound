@@ -137,7 +137,7 @@ test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint 
 test('v25.5 reset passives fire on crit, kill and chain (players only); chained actions tick cooldowns normally', async () => {
     const mk = (skills, extra = {}) => ({ name: 'A', job: 'x', stats: { ...base, crit: 0 }, hp: 1000, mana: 200, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {}, ...extra });
     const sk = id => SKILLS.find(x => x.id === id);
-    // v3.169 관중의 환호(치명타 초기화)는 수련 정리로 지웠으므로 같은 모양의 시험용 패시브로 치명타 초기화 틀을 검사합니다.
+    // v3.170 관중의 환호(치명타 초기화)는 수련 정리로 지웠으므로 같은 모양의 시험용 패시브로 치명타 초기화 틀을 검사합니다.
     const { registerSkills } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('game/data/skills.js');
     registerSkills([{ ...sk('roninGrit'), id: 'zzCritReset', name: '시험용 치명 초기화', job: 'zzTest', cooldownReset: { on: 'crit', chance: .3, pick: 'longest' } }]);
     // 연속 행동도 대기는 1씩만 줄어듭니다(공통 가속 없음).

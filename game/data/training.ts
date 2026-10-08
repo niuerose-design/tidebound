@@ -6,7 +6,7 @@
  * - v3.80 숙달 목표는 다른 직업처럼 패시브 마지막 숙련 단계의 40%입니다(data/skills.ts alignJobMastery).
  * - 옛 수련 직업 27개는 retired: 새로 전직할 수 없고 화면에 보이지 않으며, 숙달 수에도 세지 않습니다(숙달할 직업 수가 21개 줄어든 기준, 기존 세이브도 같음).
  * - 수련 패시브는 1레벨부터 3차 직업 패시브 수준(×TRAINING_PASSIVE.scale)이고, 대신 숙련 요구치도 3차 수준(TRAINING_PASSIVE.milestones)입니다. 계승 자격(첫 단계)도 그만큼 높습니다.
- * - v3.169 수련 액티브 10개를 전부 지우고(수련 직업은 패시브만), 계보마다 패시브 4개 · 같은 폭(주 효과 하나 + 보조 하나, 고유 장치 없음)으로 맞췄습니다.
+ * - v3.170 수련 액티브 10개를 전부 지우고(수련 직업은 패시브만), 계보마다 패시브 4개 · 같은 폭(주 효과 하나 + 보조 하나, 고유 장치 없음)으로 맞췄습니다.
  *   어느 계보의 수련을 돌아도 얻는 것이 비슷해야 여섯 수련을 돌며 숙달할 유인이 생깁니다. 지운 스킬 기록은 보상 없이 사라집니다(migrations.RETIRED_SKILLS).
  */
 import type { JobTreeId } from './classes';
@@ -33,7 +33,7 @@ export const TRAINING_DESC: Record<string, string> = {
     driftwoodGuard: '최대 체력과 두 방어가 오릅니다.',
     chartedCurrents: '장비 드롭 확률과 골드 획득이 오릅니다. 전투력 대신 더 좋은 항로를 찾습니다.',
 };
-/** v3.169 계보마다 패시브 4개를 맞추며 새로 넣은 수련 패시브(옛 직업 없음). 수치는 다른 수련 패시브처럼 skills.ts가 ×TRAINING_PASSIVE.scale 합니다. */
+/** v3.170 계보마다 패시브 4개를 맞추며 새로 넣은 수련 패시브(옛 직업 없음). 수치는 다른 수련 패시브처럼 skills.ts가 ×TRAINING_PASSIVE.scale 합니다. */
 const P = { type: 'passive' as const, level: 10, cost: 2, chance: 0, cooldown: 0, multiplier: 0, rankEffects: { bonusScale: .3 } };
 export const TRAINING_SKILLS: Skill[] = [
     { ...P, id: 'tarredBarbs', name: '역청 미늘', desc: '출혈·중독·화상이 한 턴 더 가고, 명중이 오릅니다.', job: 'trainingStatus', bonus: { dotTurnsBonus: 1, accuracy: .03 } },
