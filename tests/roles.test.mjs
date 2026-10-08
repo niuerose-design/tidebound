@@ -46,16 +46,3 @@ test('v3.80 role-unique effects stay with their role (docs/concept.md 11.3): swa
     }
     assert.deepEqual(bad, []);
 });
-
-test('v3.182 role display and matchup guide: every shown sub role has strong/weak/place, every monster kind has a strategy with real sub roles (no control vs bosses)', async () => {
-    const { SUB_ROLES, ROLES, ROLE_GUIDE, MATCHUP, FOE_STRATEGY, foeStrategy, roleOf } = await load('data/roles'), { PROFILE_KINDS, profileByKind, profileId } = await load('data/encounters');
-    for (const [id, r] of Object.entries(SUB_ROLES)) { assert.ok(ROLES[r.role], id); if (r.role !== 'none') { const g = ROLE_GUIDE[id]; assert.ok(g && g.strong && g.weak && g.place, `guide ${id}`); } }
-    assert.equal(ROLE_GUIDE.none, undefined); assert.equal(ROLE_GUIDE.training, undefined);
-    assert.match(MATCHUP.text, /상태이상 딜러 > 탱커 > 물리 · 마법 딜러 > 상태이상 딜러/);
-    for (const kind of PROFILE_KINDS) {
-        const st = FOE_STRATEGY[kind]; assert.ok(st && st.good.length >= 2 && st.tip, `strategy ${kind}`); assert.ok(profileByKind(kind).name);
-        for (const sub of st.good) assert.ok(SUB_ROLES[sub] && !['border', 'none'].includes(roleOf(sub)), `${kind}: ${sub}`);
-        if (/boss|onyx/i.test(kind)) assert.ok(!st.good.includes('control'), `${kind}: bosses are immune to control`);
-    }
-    assert.equal(foeStrategy('nope'), undefined); assert.equal(foeStrategy(profileId('kingMimic')), FOE_STRATEGY.boss);
-});

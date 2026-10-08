@@ -3,8 +3,7 @@ import { Fragment } from 'react';
 import { JobArt } from '../art';
 import { ArrowDown, Compass, Flag } from 'lucide-react';
 import type { State } from '@/game/types';
-import { JOBS, type Job, type Lineage, lineageOf } from '@/game/data/classes';
-import { SUB_ROLES, subRoleOf } from '@/game/data/roles';
+import { JOBS, type Job, type Lineage } from '@/game/data/classes';
 import { statusReader, crossParent, lineageSummary, tierLabel, jobRevealed, treeName, jobGoalOf } from './job-status';
 
 const tierRange = (tiers: number[]) => { const lo = Math.max(1, tiers[0]), hi = tiers.at(-1)!; return hi <= 0 ? '시작' : lo === hi ? `${hi}차` : `${lo}~${hi}차`; };
@@ -59,9 +58,6 @@ export function RouteMap({ s, lineage, jobs, selectedId, onSelect }: { s: State;
     </section>;
 }
 
-/** v3.182 카드 한 줄: 세부 역할 이름 + 직업 성격(역할 이름이 이미 들어 있으면 성격만). */
-const roleLine = (j: Job) => { const sub = subRoleOf(j, lineageOf(j)), name = SUB_ROLES[sub].name; return sub === 'none' || j.role.includes(name) ? j.role : `${name} · ${j.role}`; };
-
 /** 빠른 찾기·검색 결과: 계열과 상관없이 모은 직업 카드 목록(② 칸 자리). */
 export function JobList({ s, title, jobs, selectedId, onSelect, onClear }: { s: State; title: string; jobs: Job[]; selectedId?: string; onSelect: (id: string) => void; onClear: () => void }) {
     const goalId = jobGoalOf(s)?.id;
@@ -73,7 +69,7 @@ export function JobList({ s, title, jobs, selectedId, onSelect, onClear }: { s: 
             return <button type="button" key={j.id} className={`route-card ${note.cls} ${j.id === selectedId ? 'selected' : ''} ${j.id === goalId ? 'goal' : ''}`} aria-pressed={j.id === selectedId} onClick={() => onSelect(j.id)}>
                 <strong><span className="route-tier">{tierLabel(j.tier)}</span> {note.cls === 'secret' ? '???' : j.name}{j.id === goalId && <GoalFlag/>}</strong>
                 <small className={`route-note ${note.cls}`}>{note.text}</small>
-                <small className="route-from">{treeName(j.tree)}{note.cls === 'secret' ? '' : ` · ${roleLine(j)}`}</small>
+                <small className="route-from">{treeName(j.tree)}{note.cls === 'secret' ? '' : ` · ${j.role}`}</small>
             </button>;
         })}</div> : <p className="footnote">해당하는 직업이 없습니다.</p>}
     </section>;
