@@ -261,11 +261,13 @@
 }
 
 /* 전투 재생 템포: 밀린 타격 카운터와 회복 대기 카운트다운. */
-.tide-fx-combo{position:absolute;right:14px;top:62px;display:flex;align-items:baseline;gap:5px;padding:5px 11px;border-radius:4px;background:#102127dd;border-bottom:1px solid #efd28a66;color:#d9d3b8;font-size:13px;animation:tideCombo 1.6s ease-out both}
-.tide-fx-combo strong{font:700 20px/1 ui-monospace,monospace;color:#efd28a;font-variant-numeric:tabular-nums}
+.tide-fx-combo{position:absolute;right:14px;top:62px;display:flex;align-items:baseline;gap:5px;padding:5px 11px;border-radius:4px;background:#102127dd;border-bottom:1px solid #efd28a66;color:#d9d3b8;font-size:13px;animation:tideCombo .25s ease-out both}
+.tide-fx-combo strong{display:inline-block;font:700 20px/1 ui-monospace,monospace;color:#efd28a;font-variant-numeric:tabular-nums;animation:tideComboTick .3s ease-out both}
 .combatant-name .recovery-countdown{color:#9ce8b4;font-variant-numeric:tabular-nums}
-@keyframes tideCombo{0%{opacity:0;scale:.8}12%{opacity:1;scale:1.08}24%,80%{opacity:1;scale:1}100%{opacity:0}}
-@media(prefers-reduced-motion:reduce){.tide-fx-combo{animation-name:tideReduced}}
+/* v3.195 배지는 한 번만 부드럽게 나타나고(사라질 때까지 그대로), 숫자가 바뀔 때만 숫자가 살짝 튑니다. */
+@keyframes tideCombo{from{opacity:0;translate:0 4px}to{opacity:1;translate:0 0}}
+@keyframes tideComboTick{0%{scale:1.18}100%{scale:1}}
+@media(prefers-reduced-motion:reduce){.tide-fx-combo,.tide-fx-combo strong{animation:none}}
 
 /* 일반 낚시터도 던전처럼 체력바 카드 위에서 스킬 연출을 보여 줍니다. */
 .battle-fx-host{position:relative;isolation:isolate}
