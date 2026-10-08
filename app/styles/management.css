@@ -140,6 +140,16 @@
 .job-current-summary h2 { font-size:22px; margin:3px 0; }
 .job-current-summary p { margin:7px 0 0; font-size:13px; color:#a5bcb0; }
 .job-current-summary>button { margin-left:auto; flex-shrink:0; }
+/* v3.164 목표 직업 줄 · 머리 버튼 묶음(현재 직업 보기 · 목표 보기) · 목표 깃발 */
+.job-current-summary .job-goal-line { display:flex; align-items:center; gap:5px; color:#b9a9d8; }
+.job-current-summary .job-goal-line.ready { color:#b6e0cc; }
+.job-current-summary .job-goal-line b { color:#e8efe9; font-weight:600; }
+.job-summary-buttons { display:flex; flex-direction:column; gap:6px; margin-left:auto; flex-shrink:0; }
+.job-goal-flag { color:#e0b36a; margin-left:5px; vertical-align:-1px; }
+.route-card.goal { border-color:#8a7440; }
+.job-status.goal { color:#e0b36a; border-color:#8a7440; display:inline-flex; align-items:center; gap:3px; }
+.job-goal-button { display:inline-flex; align-items:center; justify-content:center; gap:5px; }
+.job-goal-button.active { color:#e0b36a; border-color:#8a7440; }
 .job-inspector { min-width:0; }
 .job-family-description { font-size:13px; color:#9db5ab; line-height:1.85; margin:0 0 14px; }
 .job-inspector { padding:25px; }
@@ -214,6 +224,7 @@
     .rebirth-reward { border-left:0; border-top:1px solid var(--border); padding:20px 0 0; }
     .job-current-summary { padding:20px; flex-wrap:wrap; gap:12px; }
     .job-current-summary>button { margin-left:38px; }
+    .job-summary-buttons { flex-direction:row; margin-left:38px; }
 
     .skill-grid-detailed .skill-card { padding:20px; }
     .skill-growth-table th,.skill-growth-table td { padding:10px; font-size:12px; }

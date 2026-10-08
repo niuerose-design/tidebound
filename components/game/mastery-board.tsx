@@ -2,18 +2,15 @@
 import { useState } from 'react';
 import { ChevronDown, Mail } from 'lucide-react';
 import type { State } from '@/game/types';
-import { JOBS, JOB_TREES, jobById, type Job } from '@/game/data/classes';
-import { isHackerJob } from '@/game/data/hacker';
+import { JOB_TREES, jobById, type Job } from '@/game/data/classes';
 import { VOCATION_OFFSETS, vocationTargets, thresholdRank } from '@/game/data/long-term';
 import { ascensionMastery, ascensionOf } from '@/game/data/ascension';
 import { jobMastered, jobMasteryTarget } from '@/game/systems/progression';
-import { jobRevealed, tierName } from './jobs/job-status';
+import { jobTally, tierName } from './jobs/job-status';
 import { Heading, Meter, format } from './shared';
 
 type Filter = 'all' | 'todo' | 'done';
 const FILTERS: [Filter, string][] = [['all', '전체'], ['todo', '숙달 전'], ['done', '숙달']];
-/** 해커 계열은 처치 숙련이 없어 진행판에서 뺍니다. */
-const BOARD_JOBS = JOBS.filter(j => !isHackerJob(j.id));
 
 /** 한 직업의 진행: 숙달 전이면 숙달 목표까지, 숙달 뒤면 다음 단련 단계까지. */
 function progressOf(s: State, j: Job) {
@@ -30,16 +27,16 @@ function progressOf(s: State, j: Job) {
 export function MasteryBoard({ s, setView }: { s: State; setView: (v: string) => void }) {
     const [filter, setFilter] = useState<Filter>('todo');
     const unlocked = new Set(s.unlockedJobs || []);
-    // v3.63 드러나지 않은 히든 직업은 진행판에도 나오지 않습니다(개수에도 넣지 않음).
-    const board = BOARD_JOBS.filter(j => jobRevealed(s, j));
-    const mastered = board.filter(j => jobMastered(s, j)), open = board.filter(j => unlocked.has(j.id));
+    // v3.63 드러나지 않은 히든 직업은 진행판에도 나오지 않습니다(개수에도 넣지 않음). 해커 계열은 처치 숙련이 없어 뺍니다.
+    // v3.164 세는 기준은 전직 화면 머리와 같습니다(jobs/job-status.ts jobTally).
+    const tally = jobTally(s), board = tally.jobs;
     const vocation = board.reduce((a, j) => a + thresholdRank(s.jobMastery?.[j.id] || 0, vocationTargets(jobMasteryTarget(j))), 0);
     const shown = (j: Job) => filter === 'all' || (filter === 'done') === jobMastered(s, j);
     return <>
         <Heading eyebrow="MASTERY BOARD" title="숙련 진행판" description="모든 직업을 숙련하는 것이 이 모험의 긴 목표입니다. 숙련은 승천해도 남습니다(연마 단계만 초기화)."/>
         <section className="panel mastery-summary">
-            <div><small>숙달한 직업</small><strong>{mastered.length}<span> / {board.length}</span></strong><Meter value={mastered.length} max={board.length}/></div>
-            <div><small>남은 직업</small><strong>{board.length - mastered.length}<span>개</span></strong><p>해금 {open.length}개 · 아직 못 연 직업 {board.length - open.length}개</p></div>
+            <div><small>숙달한 직업</small><strong>{tally.mastered}<span> / {tally.total}</span></strong><Meter value={tally.mastered} max={tally.total}/></div>
+            <div><small>남은 직업</small><strong>{tally.total - tally.mastered}<span>개</span></strong><p>전직해 본 직업 {tally.unlocked} / {tally.total} · 아직 못 연 직업 {tally.total - tally.unlocked}개</p></div>
             <div><small>단련 단계 합</small><strong>{vocation}<span> / {board.length * VOCATION_OFFSETS.length}</span></strong><p>숙달한 직업마다 단련 {VOCATION_OFFSETS.length}단계</p></div>
             <div><small>숙련 배율 (승천)</small><strong>×{ascensionMastery(s)}</strong><p>{ascensionOf(s) ? `승천 ${ascensionOf(s)}회 · 까미 당첨분 포함` : '승천하면 1회마다 +100%'}</p></div>
         </section>

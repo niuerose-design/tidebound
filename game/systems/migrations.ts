@@ -243,6 +243,7 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
 export function retireHiddenJobs(s: State) {
     const jobs = new Set(RETIRED_JOBS), skills = new Set(RETIRED_SKILLS), drop = (ids?: string[]) => ids?.filter(id => !skills.has(id));
     if (jobs.has(s.job)) s.job = 'fisher';
+    if (s.jobGoal && jobs.has(s.jobGoal)) delete s.jobGoal;
     s.unlockedJobs = s.unlockedJobs.filter(id => !jobs.has(id));
     if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => !jobs.has(id));
     for (const id of jobs) delete s.jobMastery[id];
@@ -262,6 +263,7 @@ export const NIGHT_WALKER_SKILLS = ['marrowGuard', 'ossuaryRite', 'harvestEcho',
 export function retireNightWalker(s: State) {
     const jobs = new Set(NIGHT_WALKER_JOBS), skills = new Set(NIGHT_WALKER_SKILLS), drop = (ids?: string[]) => ids?.filter(id => !skills.has(id));
     if (jobs.has(s.job)) { s.job = 'undead'; addLog(s, '나이트워커 2~5차가 사라져 망인으로 돌아왔습니다.', 'system'); }
+    if (s.jobGoal && jobs.has(s.jobGoal)) delete s.jobGoal;
     s.unlockedJobs = s.unlockedJobs.filter(id => !jobs.has(id));
     if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => !jobs.has(id));
     for (const id of jobs) delete s.jobMastery[id];

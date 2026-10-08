@@ -1,9 +1,11 @@
 /** 직업 화면 공용 계산. 게임 판정(progression)을 그대로 쓰고, 화면용 상태 이름만 붙입니다. */
 import type { State } from '@/game/types';
-import { JOBS, JOB_TREES, lineageOf, jobTags, type Job, jobById } from '@/game/data/classes';
+import { JOBS, JOB_TREES, lineageOf, jobTags, type Job, type JobTreeId, jobById } from '@/game/data/classes';
 import { unlockFor } from '@/game/data/unlock-info';
 import { catalogRevealed } from '@/game/data/catalog';
 import { jobRequirements, jobMastered, jobCombatMultiplier, jobFlatBonus } from '@/game/systems/progression';
+import { MONOSTAT_LINEAGES } from '@/game/data/expansion-monostat';
+import { isHackerJob } from '@/game/data/hacker';
 import { percent } from '@/game/data/progression';
 
 export type JobStatus = 'current' | 'mastered' | 'ready' | 'near' | 'locked';
@@ -92,6 +94,46 @@ export const inMysteryTab = (s: State, l: { id: string; tree: string }) => {
     const jobs = shownLineageJobs(s, l.id);
     return l.tree === 'mystery' ? jobs.length > 0 : jobs.some(secretJob);
 };
+
+/**
+ * v3.164 외길 탭: 능력치 하나만으로 전직하는 외길 계보(expansion-monostat)는 원래 계열 탭에서 빼고 ??? 옆 ‘외길’ 탭에 모읍니다.
+ * 직업의 tree(전투 · 숙련 집중 계열)는 그대로라 숙련 진행판 · 계열 집중 서약에는 영향이 없고, 전직 화면의 묶음만 다릅니다.
+ */
+export type JobTabId = JobTreeId | 'monostat';
+export const MONOSTAT_TAB = { id: 'monostat' as const, name: '외길', subtitle: '능력치 하나', description: '능력치 하나만 키워 전직하는 외길 계보의 모음입니다. 그 능력치 자체가 피해가 되고, 계열은 원래 계열(물리 · 마법 · 방어 · 상태이상 · 보조)을 따릅니다.', accent: '#d6a3c4' };
+export const JOB_TABS: { id: JobTabId; name: string; subtitle: string; description: string; accent: string }[] = [...JOB_TREES, MONOSTAT_TAB];
+const monostatIds = new Set(MONOSTAT_LINEAGES.map(l => l.id));
+export const monostatLineage = (lineageId: string) => monostatIds.has(lineageId);
+/** 계보가 이 탭에 들어가는지: ??? 탭은 드러난 히든 직업 기준, 외길 탭은 외길 계보, 나머지는 자기 계열(외길 제외)에서 보이는 직업이 있을 때. */
+export function lineageInTab(s: State, tab: JobTabId, l: { id: string; tree: string }) {
+    if (tab === 'mystery') return inMysteryTab(s, l);
+    if (tab === 'monostat') return monostatLineage(l.id) && shownLineageJobs(s, l.id).length > 0;
+    return l.tree === tab && !monostatLineage(l.id) && shownLineageJobs(s, l.id).length > 0;
+}
+/** 탭 칩의 직업 수(보이는 직업만). ??? 탭은 다른 계열에 붙은 드러난 히든 직업도 셉니다. */
+export function tabJobCount(s: State, tab: JobTabId) {
+    const shown = shownJobs(s);
+    if (tab === 'mystery') return shown.filter(j => j.tree === 'mystery' || secretJob(j)).length;
+    if (tab === 'monostat') return shown.filter(j => monostatLineage(lineageOf(j))).length;
+    return shown.filter(j => j.tree === tab && !monostatLineage(lineageOf(j))).length;
+}
+/** 직업이 전직 화면에서 들어가는 탭. 외길 계보면 ‘외길’, 그 밖에는 자기 계열. */
+export const tabOf = (j: Job): JobTabId => monostatLineage(lineageOf(j)) ? 'monostat' : j.tree;
+
+/**
+ * v3.164 직업 수 셈을 한곳에: 전직 화면 머리와 숙련 진행판이 같은 기준으로 셉니다.
+ * 세는 직업 = 화면에 보이는 직업(드러난 것 · 옛 수련 제외) 가운데 해커 계열(처치 숙련 없음)을 뺀 것.
+ * ‘전직해 본’은 그 직업 중 unlockedJobs에 있는 것만 셉니다. 통폐합으로 지워진 직업 id가 기록에 남아 있어도 세지 않습니다.
+ */
+export function jobTally(s: State) {
+    const jobs = shownJobs(s).filter(j => !isHackerJob(j.id)), unlocked = new Set(s.unlockedJobs || []);
+    return { jobs, total: jobs.length, unlocked: jobs.filter(j => unlocked.has(j.id)).length, mastered: jobs.filter(j => jobMastered(s, j)).length };
+}
+/** v3.164 목표 직업(직업 상세의 ‘목표로 설정’). 지워진 직업 · 옛 수련 · 지금 직업이면 없는 것으로 봅니다. */
+export function jobGoalOf(s: State) {
+    const j = s.jobGoal ? jobById(s.jobGoal) : undefined;
+    return j && !j.retired && j.id !== s.job ? j : undefined;
+}
 
 /** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 드러나지 않은 히든 직업은 뺍니다. */
 export type Finder = 'ready' | 'mastered' | 'near';

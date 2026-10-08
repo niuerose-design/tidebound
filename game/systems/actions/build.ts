@@ -64,6 +64,20 @@ export const buildActions: ActionHandlers = {
         s.playerStun = 0;
         s.cooldowns = {};
         addLog(s, `${jobById(id)!.name}(으)로 전직했습니다. 숙달 스킬을 계승할 수 있습니다.`);
+        // v3.164 목표로 찍어 둔 직업에 닿으면 목표를 내립니다.
+        if (s.jobGoal === id) { delete s.jobGoal; addLog(s, `목표로 삼았던 ${jobById(id)!.name}에 닿았습니다. 목표를 내립니다.`, 'system'); }
+    },
+    /**
+     * v3.164 목표 직업: 직업 상세의 ‘목표로 설정’. id가 비었거나 지금 목표와 같으면 해제합니다.
+     * 전직 조건과 무관하게 아는 직업이면 어느 것이든 찍을 수 있고(옛 수련 · 현재 직업 제외), 그 직업으로 전직하면 저절로 내려갑니다.
+     */
+    jobGoal(s, { id }) {
+        if (!id || s.jobGoal === id) { delete s.jobGoal; return; }
+        const j = jobById(id);
+        if (!j || j.retired) throw Error('알 수 없는 직업입니다.');
+        if (id === s.job) throw Error('지금 이 직업입니다.');
+        s.jobGoal = id;
+        addLog(s, `${j.name}을(를) 목표로 삼았습니다. 항로도에 깃발이 붙습니다.`, 'system');
     },
     /** v26.1 칭호 장착: id가 'auto'면 자동, 'none'이면 해제, 그 외에는 얻은 칭호만. */
     /** v27.79 계급 특전: id = 특전 id(1단계 올림) 또는 'reset'(전부 돌려받음, 무료). */
