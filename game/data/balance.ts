@@ -128,16 +128,17 @@ export const SKILL_FORMULA = {
      *   출혈 0.26P + 받는 피해 +12% ≈ 0.38P · 화상 3중첩 × 0.11P + 받는 피해 +6% ≈ 0.39P · 중독 5중첩 × 0.075P = 0.375P
      *   최대 체력 비례도 가득 찼을 때 턴당 1.5%로 같게: 출혈 1.5% · 화상 0.5%×3 · 중독 0.3%×5 (이전 중독은 5중첩 5%).
      * 차이는 성격으로만: 출혈은 바로 최대, 화상은 3번, 중독은 5번 걸어야 가득 차는 대신 오래가고(4턴) 포화 옵션으로 더 쌓입니다.
+     * v3.178 무게 이동: 체력 비례분을 절반(가득 찼을 때 턴당 1.5% → 0.75%)으로 내리고 위력분을 ×1.73(0.26P → 0.45P)으로 올렸습니다.
+     *   엔드 몸의 보스 전투에서 지속 피해의 절반이 몬스터 체력이 만든 숫자라 공격력을 올려도 틱이 거의 안 움직였고, 월드보스(체력 20억)에서는 체력분만 억 단위로 치솟았습니다.
+     *   보스 처치 턴은 그대로 두고(위력분이 메움) 틱 숫자가 내 성장에 따라 오르게 합니다. 체력분은 탱커 카운터로 남겨 둡니다(0으로 만들지 않음).
      */
-    bleedRatio: .26, bleedHpRatio: .015,
-    /** v3.178 체력 비례 지속 피해의 틱당 상한(중첩형은 중첩 합계에 한 번) = 걸 때의 기준값(공격력 · 마법 공격) × dotHpCap. 월드보스(체력 20억)에서 도트 직업만 억 단위로 치솟던 것을 막습니다. 사냥터 · 던전 보스(체력 수백만)에서는 상한에 닿지 않습니다. */
-    dotHpCap: 3,
+    bleedRatio: .42, bleedHpRatio: .0075,
     /** v27.17 출혈 중인 대상이 받는 직접 피해 증가. 출혈은 중첩되지 않는 대신 이 보정을 줍니다. */
     bleedVulnerability: .12,
-    /** v27.17 중독 한 중첩의 틱 피해 비율(위력 기준). v27.57 0.14 → 0.075, 최대 체력 비례 1% → 0.3%/중첩. */
-    poisonRatio: .075, poisonHpRatio: .003,
+    /** v27.17 중독 한 중첩의 틱 피해 비율(위력 기준). v27.57 0.14 → 0.075, 최대 체력 비례 1% → 0.3%/중첩. v3.178 0.13 · 0.15%/중첩. */
+    poisonRatio: .12, poisonHpRatio: .0015,
     /** v27.48 화상(중독과 출혈의 중간): 한 중첩의 틱 비율, 받는 직접 피해 증가(출혈의 절반). */
-    burnRatio: .11, burnHpRatio: .005, burnVulnerability: .06,
+    burnRatio: .18, burnHpRatio: .0025, burnVulnerability: .06,
     /** v27.18 극 치명타: 치명타 확률 상한은 100%. 100%를 넘는 몫 100%p마다 극 치명타 확률 +1%(superCritPerHundred). 극 치명타는 치명 피해에 superCritBonus를 더 곱합니다. */
     critCap: 1, superCritPerHundred: .01, superCritBonus: 1.5, drainRatio: .25, extraAttackMultiplier: .65,
     // 올라운드 밸런스: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
@@ -244,9 +245,9 @@ export const STATUS_GUIDE = [
     { id: 'stun', name: '기절', kind: '행동 차단', description: '다음 행동을 건너뜁니다.', detail: '기절 중에도 출혈 같은 지속 피해는 먼저 처리됩니다.' },
     { id: 'silence', name: '침묵', kind: '스킬 차단', description: '지속 중 액티브 스킬을 사용할 수 없습니다.', detail: '기본 공격은 계속하며, 쿨다운·마나를 낭비하지 않습니다.' },
     { id: 'weaken', name: '약화', kind: '피해 감소', description: `주는 직접 피해가 ${Math.round((1 - SKILL_FORMULA.weakenedDamage) * 100)}% 감소합니다.`, detail: '물리·마법 등 다음 공격의 피해 계산에 적용됩니다.' },
-    { id: 'bleed', name: '출혈', kind: '지속 피해', description: `행동할 때마다 고정 피해를 받고, 출혈 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.bleedVulnerability * 100)}% 커집니다. 중첩되지 않습니다.`, detail: `명중한 공격의 위력 + 대상 현재 체력의 ${(SKILL_FORMULA.bleedHpRatio * 100).toFixed(1)}%가 틱 피해가 되고 최대 ${STATUS_TUNING.bleedTurns}턴 지속됩니다. 체력이 큰 탱커일수록 아픕니다. 전투에서 처음 걸면 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
-    { id: 'poison', name: '중독', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받습니다. 걸릴 때마다 한 중첩씩 쌓여 틱 피해가 커집니다(최대 ${STATUS_TUNING.poisonMaxStacks}중첩, 포화 옵션으로 상한 증가).`, detail: `중첩당 (명중한 공격의 위력 × ${SKILL_FORMULA.poisonRatio}) + 대상 현재 체력의 ${(SKILL_FORMULA.poisonHpRatio * 100).toFixed(1)}%가 틱 피해이고, 체력분도 중첩 수만큼 곱합니다. 다시 걸면 지속 ${STATUS_TUNING.poisonTurns}턴이 갱신됩니다. 출혈과 함께 걸릴 수 있습니다. 전투에서 처음 걸면 ${STATUS_TUNING.poisonFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
-    { id: 'burn', name: '화상', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받고, 화상 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.burnVulnerability * 100)}% 커집니다. 걸릴 때마다 한 중첩씩 쌓입니다(최대 ${STATUS_TUNING.burnMaxStacks}중첩).`, detail: `중독과 출혈의 중간입니다. 중첩당 틱 = 위력 × ${SKILL_FORMULA.burnRatio} + 대상 현재 체력 × ${SKILL_FORMULA.burnHpRatio}, ${STATUS_TUNING.burnTurns}턴. 출혈·중독과 함께 걸립니다. 전투에서 처음 걸면 ${STATUS_TUNING.burnFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
+    { id: 'bleed', name: '출혈', kind: '지속 피해', description: `행동할 때마다 고정 피해를 받고, 출혈 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.bleedVulnerability * 100)}% 커집니다. 중첩되지 않습니다.`, detail: `명중한 공격의 위력 + 대상 현재 체력의 ${+(SKILL_FORMULA.bleedHpRatio * 100).toFixed(2)}%가 틱 피해가 되고 최대 ${STATUS_TUNING.bleedTurns}턴 지속됩니다. 체력이 큰 탱커일수록 아픕니다. 전투에서 처음 걸면 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
+    { id: 'poison', name: '중독', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받습니다. 걸릴 때마다 한 중첩씩 쌓여 틱 피해가 커집니다(최대 ${STATUS_TUNING.poisonMaxStacks}중첩, 포화 옵션으로 상한 증가).`, detail: `중첩당 (명중한 공격의 위력 × ${SKILL_FORMULA.poisonRatio}) + 대상 현재 체력의 ${+(SKILL_FORMULA.poisonHpRatio * 100).toFixed(2)}%가 틱 피해이고, 체력분도 중첩 수만큼 곱합니다. 다시 걸면 지속 ${STATUS_TUNING.poisonTurns}턴이 갱신됩니다. 출혈과 함께 걸릴 수 있습니다. 전투에서 처음 걸면 ${STATUS_TUNING.poisonFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
+    { id: 'burn', name: '화상', kind: '지속 피해 · 중첩', description: `행동할 때마다 고정 피해를 받고, 화상 중에는 받는 직접 피해가 ${Math.round(SKILL_FORMULA.burnVulnerability * 100)}% 커집니다. 걸릴 때마다 한 중첩씩 쌓입니다(최대 ${STATUS_TUNING.burnMaxStacks}중첩).`, detail: `중독과 출혈의 중간입니다. 중첩당 틱 = 위력 × ${SKILL_FORMULA.burnRatio} + 대상 현재 체력의 ${+(SKILL_FORMULA.burnHpRatio * 100).toFixed(2)}%, ${STATUS_TUNING.burnTurns}턴. 출혈·중독과 함께 걸립니다. 전투에서 처음 걸면 ${STATUS_TUNING.burnFirstStacks}중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다. 무리에게는 체력분을 한 마리 × √N으로 셉니다.` },
     { id: 'slow', name: '감속', kind: '속도 감소', description: `속도가 ${Math.round(STATUS_TUNING.slowMultiplier * 100)}% 낮아져 선공·명중 보정·연속 행동에 불리해집니다.`, detail: '선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
     { id: 'corrode', name: '부식', kind: '방어 · 속도 감소', description: `물리 방어와 마법 방어가 ${Math.round(STATUS_TUNING.corrodeDefense * 100)}%, 속도가 ${Math.round(STATUS_TUNING.corrodeSpeed * 100)}% 떨어집니다.`, detail: '약화(주는 피해 감소) · 감속과 따로 걸립니다. 일리움의 기본 공격과 연성 기술이 겁니다.' },
     { id: 'haste', name: '가속', kind: '속도 증가', description: `속도가 ${Math.round(STATUS_TUNING.hasteMultiplier * 100)}% 높아져 선공·명중 보정·연속 행동에 유리해집니다.`, detail: '상대보다 빨라지면 연속 행동 확률이 올라갑니다. 선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },

@@ -102,8 +102,6 @@ export type StatusEffects = {
         damage: number;
         /** v3.54 틱마다 대상의 현재 체력 × hpRatio(무리는 swarmDotShare를 곱한 값). */
         hpRatio?: number;
-        /** v3.178 틱당 체력 비례분 상한(걸 때 기준값 × SKILL_FORMULA.dotHpCap). 없으면 상한 없음(옛 세이브). */
-        hpCap?: number;
         turns: number;
         name: string;
         /** 중첩형 지속 피해(중독)의 현재 중첩 수와 한 중첩당 피해. damage = perStack × stacks. */
@@ -111,9 +109,9 @@ export type StatusEffects = {
         perStack?: number;
     };
     /** v27.17 중독: 출혈과 별개 상태이상. 걸릴 때마다 한 중첩씩 쌓이고(상한 STATUS_TUNING.poisonMaxStacks + 포화) 지속이 갱신됩니다. 틱 피해 = (perStack + 체력 비례분) × stacks. v3.54 체력 비례분 = 틱 때 현재 체력 × hpRatio(옛 세이브는 고정값 hpTick). */
-    poison?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number; hpCap?: number };
+    poison?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number };
     /** v27.48 화상: 중독처럼 쌓이지만(최대 STATUS_TUNING.burnMaxStacks) 출혈처럼 받는 직접 피해를 키웁니다(burnVulnerability). */
-    burn?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number; hpCap?: number };
+    burn?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number };
     weaken?: number;
     silence?: number;
     slow?: number;
