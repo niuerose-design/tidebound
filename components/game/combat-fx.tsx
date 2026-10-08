@@ -199,9 +199,24 @@ export function SceneFx({ effect }: { effect: CombatFx[] }) {
 /** v3.178 처형 연출: 빈사(체력 35% 이하) 적에게 추가 피해가 붙은 검 계열 처형기. 배경 몬스터가 반으로 갈라지고 HP 바가 베입니다. */
 const EXECUTE_CLEAVE = new Set(['braveSlash']);
 const cleaveFx = (effect: CombatFx[]) => effect.find(fx => fx.execute && fx.actor === 'player' && !!fx.skillId && EXECUTE_CLEAVE.has(fx.skillId) && fx.hits.some(h => !h.miss));
+/** 처형 연출 길이(ms): 검 0.7초 + 조각이 날아가는 1.5초. 이 동안 조각을 유지하고, 끝나면 원본(몬스터 그림 · HP 바)이 그대로 복구됩니다. */
+const CLEAVE_MS = 1900;
+/** v3.180 처형 연출을 효과 목록의 유지 시간(FX_HOLD_MS)과 상관없이 CLEAVE_MS 동안 붙잡아 둡니다. 연출이 다 끝난 뒤에 원본이 복구됩니다. */
+function useCleave(effect: CombatFx[]) {
+    const found = cleaveFx(effect);
+    const [held, setHeld] = useState<{ fx: CombatFx; until: number } | null>(null);
+    // 새 처형 타격이 오면 렌더 중에 붙잡아 둡니다(이전 값과 비교하는 파생 상태).
+    if (found && held?.fx.id !== found.id) setHeld({ fx: found, until: Date.now() + found.delay + CLEAVE_MS });
+    useEffect(() => {
+        if (!held) return;
+        const timer = window.setTimeout(() => setHeld(cur => cur?.fx.id === held.fx.id ? null : cur), Math.max(0, held.until - Date.now()));
+        return () => clearTimeout(timer);
+    }, [held]);
+    return held?.fx ?? null;
+}
 /** 사냥터 장면 위: 몬스터 그림의 위 · 아래 반쪽이 베인 선을 따라 벌어집니다(원본 몬스터는 CSS가 숨김). */
 export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: string; boss?: boolean } | null }) {
-    const fx = cleaveFx(effect);
+    const fx = useCleave(effect);
     if (!fx || !enemy) return null;
     return <div key={fx.id} className="scene-foe-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
         <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${enemy.boss ? 'boss' : ''}`}/>
@@ -211,7 +226,7 @@ export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: 
 }
 /** 상대 카드 HP 바: 검이 지나간 자리에서 HP 바 UI(라벨 · 숫자 · 막대)가 비스듬히 두 조각으로 잘려, 아래 조각이 튕겨 날아갑니다(원본 바는 CSS가 숨김). */
 export function BarCleave({ effect, value, max, label }: { effect: CombatFx[]; value: number; max: number; label?: string }) {
-    const fx = cleaveFx(effect);
+    const fx = useCleave(effect);
     if (!fx) return null;
     return <span key={fx.id} className="bar-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
         <span className="bar-cleave-piece keep"><Meter value={value} max={max} label={label}/></span>
