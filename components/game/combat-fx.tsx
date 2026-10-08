@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Meter } from './shared';
+import { FishArt } from './art';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
 import type { Log } from '@/game/types';
@@ -192,6 +194,55 @@ export function SceneFx({ effect }: { effect: CombatFx[] }) {
         {(fx.tier || 0) >= 4 && <i className="scene-fx-dark"/>}<i className="scene-fx-flash"/>{(fx.tier || 0) >= 5 && <><i className="scene-fx-slash"/><span className="scene-fx-title">{fx.title}</span></>}
         {glyphs[fx.variant].slice(0, 4).map((g, i) => <b key={i} className="scene-fx-spark" style={fxStyle(fx.delay + i * 40, { '--fx-x': `${Math.cos(i * Math.PI / 2 + .6) * 180}px`, '--fx-y': `${Math.sin(i * Math.PI / 2 + .6) * 90}px` })}>{g}</b>)}
     </div>; })}</div>;
+}
+
+/** v3.178 처형 연출: 빈사(체력 35% 이하) 적에게 추가 피해가 붙은 검 계열 처형기. 배경 몬스터가 반으로 갈라지고 HP 바가 베입니다. */
+const EXECUTE_CLEAVE = new Set(['braveSlash']);
+const cleaveFx = (effect: CombatFx[]) => effect.find(fx => fx.execute && fx.actor === 'player' && !!fx.skillId && EXECUTE_CLEAVE.has(fx.skillId) && fx.hits.some(h => !h.miss));
+/** 처형 연출 길이(ms): 검 0.7초 + 조각이 날아간 뒤 빈 채로 두는 시간까지. 이 동안 원본(몬스터 그림 · HP 바)은 비어 보이고, 끝나면 RESTORE_MS 동안 눈에 보이게 복구됩니다. */
+const CLEAVE_MS = 2400, RESTORE_MS = 450;
+type CleaveHold = { fx: CombatFx; phase: 'cut' | 'restore' };
+/** v3.180 처형 연출을 효과 목록의 유지 시간(FX_HOLD_MS)과 상관없이 붙잡아 둡니다: 베기(cut) → 빈 채로 → 복구(restore) → 원본. */
+function useCleave(effect: CombatFx[]): CleaveHold | null {
+    const found = cleaveFx(effect);
+    const [held, setHeld] = useState<CleaveHold | null>(null), [doneId, setDoneId] = useState<number | null>(null);
+    // 새 처형 타격이 오면 렌더 중에 붙잡아 둡니다(이전 값과 비교하는 파생 상태). 끝난 타격(doneId)은 효과 목록에 남아 있어도 다시 잡지 않습니다. 시각은 effect 안의 타이머가 셈니다.
+    if (found && held?.fx.id !== found.id && doneId !== found.id) setHeld({ fx: found, phase: 'cut' });
+    useEffect(() => {
+        if (!held) return;
+        const timer = window.setTimeout(() => {
+            if (held.phase === 'cut') setHeld(cur => cur?.fx.id === held.fx.id && cur.phase === 'cut' ? { fx: held.fx, phase: 'restore' } : cur);
+            else { setDoneId(held.fx.id); setHeld(cur => cur?.fx.id === held.fx.id ? null : cur); }
+        }, held.phase === 'cut' ? held.fx.delay + CLEAVE_MS : RESTORE_MS);
+        return () => clearTimeout(timer);
+    }, [held]);
+    return held;
+}
+/** 사냥터 장면 위: 몬스터 그림의 위 · 아래 반쪽이 베인 선을 따라 벌어집니다(원본 몬스터는 CSS가 숨김). */
+export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: string; boss?: boolean } | null }) {
+    const held = useCleave(effect);
+    if (!held || !enemy) return null;
+    const { fx, phase } = held, boss = enemy.boss ? 'boss' : '';
+    return <div key={fx.id} className="scene-foe-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
+        {phase === 'cut' ? <>
+            <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${boss}`}/>
+            <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half lower ${boss}`}/>
+            <i className="scene-foe-cut"/>
+        </> : <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-restore ${boss}`}/>}
+    </div>;
+}
+/** 상대 카드 HP 바: 검이 지나간 자리에서 HP 바 UI(라벨 · 숫자 · 막대)가 비스듬히 두 조각으로 잘려, 아래 조각이 튕겨 날아갑니다(원본 바는 CSS가 숨김). */
+export function BarCleave({ effect, value, max, label }: { effect: CombatFx[]; value: number; max: number; label?: string }) {
+    const held = useCleave(effect);
+    if (!held) return null;
+    const { fx, phase } = held;
+    return <span key={fx.id} className="bar-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
+        {phase === 'cut' ? <>
+            <span className="bar-cleave-piece keep"><Meter value={value} max={max} label={label}/></span>
+            <span className="bar-cleave-piece fly"><Meter value={value} max={max} label={label}/></span>
+            <i className="bar-cleave-blade"/>
+        </> : <span className="bar-cleave-piece restore"><Meter value={value} max={max} label={label}/></span>}
+    </span>;
 }
 
 const DAMAGE_ICON = { physical: '⚔', magic: '✦', split: '⚔✦', fixed: '⚡' } as const;

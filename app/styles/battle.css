@@ -1001,14 +1001,50 @@
 .battle-scene:has(.ult-karma) .ocean-art{animation:punShake .9s steps(4) calc(var(--fx-delay) + .3s) both}
 @keyframes ultKarmaSlash{0%,10%{opacity:0}12%,30%{opacity:1;rotate:-35deg}32%,46%{opacity:0}48%,66%{opacity:1;rotate:-70deg}68%,100%{opacity:0}}
 @keyframes ultKarmaSlashB{0%,28%{opacity:0}30%,48%{opacity:1;rotate:35deg}50%,64%{opacity:0}66%,84%{opacity:1;rotate:5deg}86%,100%{opacity:0}}
-/* v3.177 그림 리퍼(배틀메이지): 죽음의 낫이 내리 휘둘러지고 해골 기운이 번집니다 */
-.ult-reaper{--fx:#b48cff}.ult-reaper .scene-fx-dark{background:#070312}
-.ult-reaper .ult-a{left:62%;top:48%;width:230px;height:230px;margin:-180px 0 0 -115px;border-radius:50%;border:16px solid transparent;border-top-color:#e6d8ff;border-left-color:#8a5cf0;filter:drop-shadow(0 0 14px #6a2fd6);transform-origin:50% 100%;animation:ultReaperScythe 2.4s cubic-bezier(.7,0,.2,1) var(--fx-delay) both}
-.ult-reaper .ult-b{left:62%;top:48%;width:14px;height:220px;margin:-50px 0 0 -7px;border-radius:7px;background:linear-gradient(180deg,#e6d8ff,#5a3a8a 40%,#2a1a4a);box-shadow:0 0 10px #6a2fd6;transform-origin:50% 20%;animation:ultReaperHandle 2.4s cubic-bezier(.7,0,.2,1) var(--fx-delay) both}
-.ult-reaper .ult-frag{color:#d8c4ff;text-shadow:0 0 12px #6a2fd6;animation-name:ultPeaceRise;animation-duration:1.8s;animation-delay:calc(var(--fx-delay) + .9s + var(--i) * .06s)}
-.battle-scene:has(.ult-reaper) .ocean-art{animation:ultGravityWarp 2.4s ease-in-out both}
-@keyframes ultReaperScythe{0%{opacity:0;rotate:-150deg;translate:-80px -40px}25%{opacity:1;rotate:-110deg;translate:-60px -30px}42%{opacity:1;rotate:30deg;translate:0 0}55%{rotate:40deg}75%{opacity:1}100%{opacity:0;rotate:60deg;translate:40px 20px}}
-@keyframes ultReaperHandle{0%{opacity:0;rotate:-150deg;translate:-80px -40px}25%{opacity:1;rotate:-110deg;translate:-60px -30px}42%{opacity:1;rotate:30deg;translate:0 0}55%{rotate:40deg}75%{opacity:1}100%{opacity:0;rotate:60deg;translate:40px 20px}}
+/* v3.178 그림 리퍼(배틀메이지): 낫을 든 검은 사신이 나타나 화면을 반으로 긋고, 두 조각이 벌어집니다 */
+.ult-reaper{--fx:#b48cff}.ult-reaper .scene-fx-dark{background:#07030f}
+.ult-reaper .ult-b{left:36%;top:48%;width:120px;height:230px;margin:-150px 0 0 -60px;clip-path:polygon(50% 0,70% 6%,78% 20%,70% 30%,82% 44%,100% 100%,0 100%,18% 44%,30% 30%,22% 20%,30% 6%);background:linear-gradient(180deg,#050208,#120a24 40%,#06030c);box-shadow:0 0 30px #3a1a6a;filter:drop-shadow(0 0 10px #6a2fd6);animation:ultReaperRise 2.4s cubic-bezier(.4,0,.3,1) var(--fx-delay) both}
+.ult-reaper .ult-b::before{content:'';position:absolute;left:38%;top:14%;width:9px;height:9px;border-radius:50%;background:#d8b4ff;box-shadow:24px 0 0 #d8b4ff,0 0 10px #b48cff,24px 0 10px #b48cff;animation:ultReaperEyes 2.4s steps(1) var(--fx-delay) both}
+.ult-reaper .ult-a{left:36%;top:48%;width:170px;height:170px;margin:-215px 0 0 -40px;border-radius:50%;border:14px solid transparent;border-top-color:#f0e8ff;border-right-color:#8a5cf0;filter:drop-shadow(0 0 12px #6a2fd6);transform-origin:10% 110%;animation:ultReaperScythe 2.4s cubic-bezier(.7,0,.2,1) var(--fx-delay) both}
+.ult-reaper .ult-a::before{content:'';position:absolute;left:-120%;top:50%;width:1400px;height:4px;margin-top:-2px;background:linear-gradient(90deg,transparent,#f0e8ff 15%,#fff 50%,#b48cff 85%,transparent);box-shadow:0 0 18px #d8b4ff,0 0 40px #6a2fd6;rotate:-6deg;transform-origin:0 50%;animation:ultReaperCut 2.4s cubic-bezier(.8,0,.2,1) calc(var(--fx-delay) + .95s) both}
+.ult-reaper .ult-frag:nth-of-type(1),.ult-reaper .ult-frag:nth-of-type(2){left:0;top:0;width:100%;height:100%;font-size:0;color:transparent;text-shadow:none;background:rgba(7,3,15,.72);animation:ultReaperSplitTop 2.4s cubic-bezier(.6,0,.3,1) calc(var(--fx-delay) + 1.15s) both;clip-path:polygon(0 0,100% 0,100% 40%,0 56%)}
+.ult-reaper .ult-frag:nth-of-type(2){clip-path:polygon(0 56%,100% 40%,100% 100%,0 100%);animation-name:ultReaperSplitBottom}
+.ult-reaper .ult-frag:nth-of-type(n+3){color:#d8c4ff;text-shadow:0 0 12px #6a2fd6;animation-name:ultPeaceRise;animation-duration:1.6s;animation-delay:calc(var(--fx-delay) + 1.2s + var(--i) * .06s)}
+.battle-scene:has(.ult-reaper) .ocean-art{animation:ultReaperQuake 2.4s steps(2) var(--fx-delay) both}
+@keyframes ultReaperRise{0%{opacity:0;translate:-120px 60px;scale:.6}25%{opacity:1;translate:0 0;scale:1}38%{translate:0 -8px}42%{translate:0 0}80%{opacity:1}100%{opacity:0;translate:40px 0;scale:1.1}}
+@keyframes ultReaperEyes{0%,24%{opacity:0}26%,100%{opacity:1}}
+@keyframes ultReaperScythe{0%{opacity:0;rotate:-60deg;translate:-120px 60px}25%{opacity:1;rotate:-60deg;translate:0 0}36%{rotate:-120deg}40%{rotate:-125deg}46%{rotate:60deg}80%{opacity:1;rotate:70deg}100%{opacity:0;rotate:80deg;translate:40px 0}}
+@keyframes ultReaperCut{0%{opacity:0;scale:0 1}6%{opacity:1;scale:1 1}60%{opacity:1}100%{opacity:0;scale:1 2}}
+@keyframes ultReaperSplitTop{0%{opacity:0;translate:0 0}10%{opacity:1}55%{opacity:1;translate:-16px -20px}100%{opacity:0;translate:-24px -40px}}
+@keyframes ultReaperSplitBottom{0%{opacity:0;translate:0 0}10%{opacity:1}55%{opacity:1;translate:16px 20px}100%{opacity:0;translate:24px 40px}}
+@keyframes ultReaperQuake{0%,38%{translate:0 0}40%{translate:-5px 2px}42%{translate:5px -2px}46%{translate:0 0}100%{translate:0 0}}
+/* v3.178 처형 연출(히어로 소드 오브 버닝 소울 등): 빈사 적에게 추가 피해가 붙으면 몬스터 그림이 반으로 갈라지고 HP 바가 베입니다 */
+.scene-foe-cleave{position:absolute;inset:0;z-index:2;pointer-events:none}
+/* v3.180 처형 연출 중에는 소드 오브 버닝 소울 전용 장면의 참격 선 두 줄과 참격 파편을 보이지 않게 합니다(display가 아니라 visibility: 다시 보일 때 애니메이션이 처음부터 재생되지 않도록). 어둠 · 제목은 그대로. */
+.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-a,.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-b,.battle-scene:has(.scene-foe-cleave) .ult-slash .ult-frag{visibility:hidden}
+.battle-scene:has(.scene-foe-cleave) .scene-foe:not(.scene-foe-half){opacity:0;animation:none}
+.scene-foe-half{animation:none}
+.scene-foe-half.upper{clip-path:polygon(0 0,100% 0,100% 38%,0 58%);animation:foeCleaveUpper 1.4s cubic-bezier(.5,0,.3,1) calc(var(--fx-delay) + .3s) both}
+.scene-foe-half.lower{clip-path:polygon(0 58%,100% 38%,100% 100%,0 100%);animation:foeCleaveLower 1.4s cubic-bezier(.5,0,.3,1) calc(var(--fx-delay) + .3s) both}
+.scene-foe-cut{position:absolute;right:16px;top:50%;width:120px;height:3px;margin-top:-6px;background:linear-gradient(90deg,transparent,#fff,#ffe9a8,#fff,transparent);box-shadow:0 0 10px #fff,0 0 20px #ffb86b;rotate:-11deg;transform-origin:100% 50%;animation:foeCleaveCut .7s cubic-bezier(.8,0,.2,1) var(--fx-delay) both}
+@keyframes foeCleaveUpper{0%{translate:0 0;rotate:0deg;filter:brightness(1)}8%{filter:brightness(3)}40%{translate:14px -22px;rotate:9deg;opacity:1}100%{translate:30px -50px;rotate:16deg;opacity:0}}
+@keyframes foeCleaveLower{0%{translate:0 0;rotate:0deg}8%{filter:brightness(3)}40%{translate:-6px 16px;rotate:-5deg;opacity:1}100%{translate:-12px 46px;rotate:-10deg;opacity:0}}
+@keyframes foeCleaveCut{0%{opacity:0;scale:0 1}30%{opacity:1;scale:1 1}70%{opacity:1}100%{opacity:0;scale:1 2.5}}
+.bar-cleave{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:visible}
+.player-hp-anchor:has(.bar-cleave)>.meter{visibility:hidden}
+.bar-cleave-piece{position:absolute;inset:0}
+.bar-cleave-piece.keep{clip-path:polygon(0 0,100% 0,100% 28%,0 72%);animation:barCleaveKeep 1.5s cubic-bezier(.5,0,.4,1) calc(var(--fx-delay) + .25s) both}
+.bar-cleave-piece.fly{clip-path:polygon(0 72%,100% 28%,100% 100%,0 100%);transform-origin:0 50%;animation:barCleaveFly 1.5s cubic-bezier(.4,0,.6,1) calc(var(--fx-delay) + .25s) both}
+.bar-cleave-blade{position:absolute;left:-8%;top:50%;width:116%;height:3px;margin-top:-1px;background:linear-gradient(90deg,transparent,#fff 20%,#ffe9a8 50%,#fff 80%,transparent);box-shadow:0 0 10px #fff,0 0 22px #ffb86b;rotate:-9deg;transform-origin:0 50%;animation:barCleaveBlade .7s cubic-bezier(.8,0,.2,1) var(--fx-delay) both}
+@keyframes barCleaveBlade{0%{opacity:0;scale:0 1}25%{opacity:1;scale:1 1}70%{opacity:1}100%{opacity:0;scale:1 2.4}}
+@keyframes barCleaveKeep{0%{translate:0 0;filter:brightness(1)}6%{translate:-3px -3px;filter:brightness(3)}30%{translate:-3px -3px;filter:brightness(1)}100%{translate:-3px -3px}}
+@keyframes barCleaveFly{0%{opacity:1;translate:0 0;rotate:0deg;filter:brightness(1)}6%{filter:brightness(3)}20%{opacity:1;translate:14px 10px;rotate:5deg}100%{opacity:0;translate:70px 90px;rotate:28deg;filter:brightness(1)}}
+/* v3.180 복구: 빈 채로 두었다가 원본이 눈에 보이게 돌아옵니다(밝게 번쩍이며 제자리로). */
+.scene-foe-restore{animation:foeRestore .45s ease-out both}
+.bar-cleave-piece.restore{animation:barRestore .45s ease-out both}
+@keyframes foeRestore{0%{opacity:0;scale:.85;filter:brightness(2.5)}60%{opacity:1;filter:brightness(1.6)}100%{opacity:1;scale:1;filter:brightness(1)}}
+@keyframes barRestore{0%{opacity:0;translate:0 10px;filter:brightness(2.5)}60%{opacity:1;filter:brightness(1.6)}100%{opacity:1;translate:0 0;filter:brightness(1)}}
+@media(prefers-reduced-motion:reduce){.scene-foe-cleave,.bar-cleave{display:none}.player-hp-anchor:has(.bar-cleave)>.meter{visibility:visible}}
 /* 정지된 시간: 푸르게 멈춘 화면, 도는 시계 테두리, 금 가는 선 */
 .ult-time{--fx:#a9c7ff}.ult-time .scene-fx-dark{background:#020816}
 .ult-time .ult-a{left:62%;top:48%;width:200px;height:200px;margin:-100px 0 0 -100px;border:3px dashed #a9c7ff;border-radius:50%;box-shadow:0 0 24px #a9c7ff;animation:ultClock 2.4s linear var(--fx-delay) both}
