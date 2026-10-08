@@ -51,7 +51,7 @@ function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
                 {!x.rule && !affixDef(x.id)?.fixed && <ConfirmButton label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다${top > 1 ? `. 이 장비는 수치 ${Math.round(top * 100)}%까지 가능하지만 100% 위는 ${Math.round(HEIR_ROLL_TAIL * 100)}%만 나오고 위로 갈수록 급히 드뭅니다(110% 위 ${(heirRollChanceAbove(1.1) * 100).toFixed(1)}% · 120% 위 ${(heirRollChanceAbove(1.2) * 100).toFixed(1)}% · 130% 위 ${(heirRollChanceAbove(1.3) * 100).toFixed(2)}%)` : ''}. 지금보다 낮아질 수도 있습니다. 정수 ${format(refine.essence)}를 사용합니다(골드 없음). 이 장비를 재련할 때마다 다음 정수가 ×${REFINE_GROWTH}로 오릅니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
             </span>}
         </div>)}
-        <p className="footnote">{item.relic ? '이식 옵션은 환생해도 남고, 같은 칸에 다시 이식하면 덮어씁니다. 위 수치는 장비 기여 수치에 포함됩니다.' : <>옵션 재설정 · {format(cost.gold)} G{item.rerolls ? ` (이 장비 ${item.rerolls}회 재설정 · 1회마다 +${REROLL_STEP_PCT}%)` : ` (재설정할 때마다 +${REROLL_STEP_PCT}%)`} · 수치 재련 · 정수 {format(refine.essence)}{item.refines ? ` (이 장비 ${item.refines}회 재련 · 1회마다 ×${REFINE_GROWTH})` : ` (재련할 때마다 ×${REFINE_GROWTH})`} · 보유 정수 {format(s.essence || 0)}</>}</p>
+        <p className="footnote">{item.relic ? '이식 옵션은 환생해도 남고, 같은 칸에 다시 이식하면 덮어씁니다. 고정 수치 · 비율 옵션 모두 유물 등급 기준으로 맞춰 새겨집니다(태초에서 온 비율 줄 ×0.73). 위 수치는 장비 기여 수치에 포함됩니다.' : <>옵션 재설정 · {format(cost.gold)} G{item.rerolls ? ` (이 장비 ${item.rerolls}회 재설정 · 1회마다 +${REROLL_STEP_PCT}%)` : ` (재설정할 때마다 +${REROLL_STEP_PCT}%)`} · 수치 재련 · 정수 {format(refine.essence)}{item.refines ? ` (이 장비 ${item.refines}회 재련 · 1회마다 ×${REFINE_GROWTH})` : ` (재련할 때마다 ×${REFINE_GROWTH})`} · 보유 정수 {format(s.essence || 0)}</>}</p>
     </div>;
 }
 

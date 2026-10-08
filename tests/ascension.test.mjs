@@ -501,6 +501,28 @@ test('v3.82 relic imprint keeps the source item\'s effective flat bonus (source 
     assert.ok(old.affixes[0].value < glass.value, 'primal-sized line shrinks'); assert.equal(old.affixes[1].value, 20, 'small line is not raised');
     const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'only once');
 });
+test('v3.141 relic imprint scales percent lines to relic rarity quality (primal 2.2 → legendary 1.6), never raises, penalties untouched; v3.82~139 lines corrected once on load', async () => {
+    const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations');
+    const s = newState(0); s.level = 100; s.gold = 1e12;
+    const relic = { id: 'r', name: 'r', slot: 'coat', style: 'balanced', rarity: 3, level: 100, power: 300, relic: 'soulCoat', locked: true, affixes: [] };
+    const trans = G.rollOption(G.affixDef('transcend'), 530, 6, () => 1, 100), gambit = G.rollOption(G.affixDef('gambit'), 530, 6, () => 1, 100);
+    const source = { id: 'p', name: 'p', slot: 'coat', style: 'balanced', rarity: 6, level: 100, power: 530, affixes: [trans] }, source2 = { ...source, id: 'p2', affixes: [{ ...trans }, gambit] };
+    s.inventory = [relic, source, source2];
+    act(s, { type: 'imprintRelic', id: 'r', value: 'p:0:0' }, 0);
+    const line = relic.affixes[0], q = G.rarityQuality(3) / G.rarityQuality(6);
+    assert.ok(Math.abs(line.value - trans.value * q) < 1e-3, `transcend ${trans.value} → ${line.value} (×${q.toFixed(3)})`); assert.equal(line.pctFixed, true); assert.equal(line.srcRarity, 6);
+    const legendMax = G.affixDef('transcend').base * 1.4 * G.rarityQuality(3); assert.ok(line.value <= legendMax + 1e-9, 'no stronger than a legendary max roll');
+    act(s, { type: 'imprintRelic', id: 'r', value: 'p2:1:1' }, 0);
+    const g2 = relic.affixes[1]; assert.ok(Math.abs(g2.value - gambit.value * q) < 1e-3, 'gain side scaled'); assert.equal(g2.value2, gambit.value2, 'accuracy penalty unchanged');
+    // 유물보다 낮은 등급(희귀)에서 온 줄은 그대로.
+    const low = G.rollOption(G.affixDef('lucky'), 100, 1, () => 1, 50); const low2 = Eq.imprintAffix(low, 1, 3); assert.equal(low2.value, low.value);
+    // v3.82~139에 이식한 줄(srcRarity 있음, pctFixed 없음)은 불러올 때 한 번만 보정. 고정 수치 줄은 다시 깎지 않음.
+    const might = Eq.imprintAffix(G.rollOption(G.affixDef('might'), 530, 6, () => 1, 100), 6, 3); delete might.pctFixed;
+    const old = { ...relic, id: 'r2', affixes: [{ ...trans, srcRarity: 6 }, { ...might }] };
+    const t = newState(0); t.inventory = [old]; M.migrateState(t, 0);
+    assert.ok(Math.abs(old.affixes[0].value - trans.value * q) < 1e-3, 'old percent line scaled once'); assert.equal(old.affixes[1].value, might.value, 'flat line untouched');
+    const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'idempotent');
+});
 test('v3.82 removing an imprinted relic line is free and empties that slot', () => {
     const s = newState(0); s.gold = 0;
     const relic = { id: 'r', name: 'r', slot: 'rod', style: 'balanced', rarity: 3, level: 1, power: 10, relic: 'memoryRod', locked: true, affixes: [{ id: 'might', name: '맹공', stat: 'attack', value: 5, srcRarity: 3 }, { id: 'glassCannon', name: '유리 대포', stat: 'magic', value: 9, stat2: 'hp', value2: -20, srcRarity: 3 }] };
@@ -698,11 +720,11 @@ test('v3.133 rule options (◆) draw at weight .25: about 36% of primal items ca
     assert.ok(rule6 / N > .30 && rule6 / N < .43, `primal with a rule option ${rule6 / N}`); assert.ok(rule3 / N > .16 && rule3 / N < .29, `legendary with a rule option ${rule3 / N}`); assert.ok(rare6 / N < .01, `rare ${rare6 / N}`);
     assert.ok(G.rollAffixes(6, 500, undefined, () => 0, [], 'rod', 100).filter(o => o.rule).length <= 1, 'still at most one rule line');
 });
-test('v3.134 combat power weights offense .65 · durability .35, Lv.1 stays ≈453, and the weapon outranks the coat on primal 22★', async () => {
+test('v3.134 combat power weights offense .65 · durability .35, Lv.1 ≈45 (v3.141 display ÷10), and the weapon outranks the coat on primal 22★', async () => {
     const { stats, power, powerParts, POWER_WEIGHT } = await L.load('systems/stats'), { RARITIES } = await L.load('data/balance'), { rollAffixes } = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear');
     assert.deepEqual(POWER_WEIGHT, { offense: .65, durability: .35 });
-    const fresh = stats(newState(0)), p = powerParts(fresh); assert.ok(Math.abs(power(fresh) - 453) <= 5, `Lv.1 power ${power(fresh)}`);
-    assert.ok(Math.abs(power(fresh) - Math.round(8 * p.offense ** .65 * p.durability ** .35)) <= 1);
+    const fresh = stats(newState(0)), p = powerParts(fresh); assert.ok(Math.abs(power(fresh) - 45) <= 1, `Lv.1 power ${power(fresh)}`);
+    assert.ok(Math.abs(power(fresh) - Math.round(.8 * p.offense ** .65 * p.durability ** .35)) <= 1);
     const body = () => { const s = newState(0); s.level = 100; s.rebirths = 200; s.statPoints = 0; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 300 }; Object.assign(s.permanent, { attack: 200, hp: 200, guard: 100, magicGuard: 100 }); s.equipment = { rod: null, coat: null, charm: null, cape: null }; return s; };
     let x = 3; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647); const drop = { rod: 0, coat: 0, charm: 0, cape: 0 }, N = 12;
     for (let k = 0; k < N; k++) {
