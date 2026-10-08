@@ -500,13 +500,13 @@ test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is
     const temple = W.DUNGEONS.find(d => d.id === 'temple'); assert.equal(M.dungeonClearBase(temple), W.fishGoldAt(temple.level) * B.DUNGEON_TUNING.clearGoldFish);
 });
 
-test('mimic appears at a quarter of the rate during offline catch-up', async () => {
+test('mimic appears at a lower rate (v3.189 half) during an away catch-up', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic');
-    const roll = Mi.mimicChance(5, 0) * .5; // 온라인이면 등장, 오프라인(¼)이면 미등장
+    const roll = Mi.mimicChance(5, 0) * .75; // 온라인이면 등장, 부재중(v3.189 ½)이면 미등장
     const make = () => { const s = newState(0); s.level = 20; s.kills = 500; s.stage = 'brook'; s.tide = 5; return s; };
     const on = make(); Enc.spawn(on, () => roll); assert.equal(on.enemy.id, Mi.MIMIC.id);
-    const off = make(); off.catchingUp = true; Enc.spawn(off, () => roll); assert.notEqual(off.enemy.id, Mi.MIMIC.id);
+    const off = make(); off.away = true; Enc.spawn(off, () => roll); assert.notEqual(off.enemy.id, Mi.MIMIC.id);
 });
 
 test('v27.36 high-rarity gear is damped and enhancement gives +10% per level', async () => {
@@ -529,12 +529,16 @@ test('v27.43 altar: offering points, tithe, blessing events skip offline catch-u
         const live = ev.activeEvent(now); assert.equal(live.mimic, 3); assert.equal(live.banner, null, 'altar-only: no event banner');
         const mixed = ev.activeEvent(now, [...ev.currentEvents(), { id: 'x', name: '주말', from: '2026-01-01T00:00:00+09:00', until: '2027-12-31T00:00:00+09:00', exp: 3 }]); assert.equal(mixed.banner.gold, 1); assert.equal(mixed.banner.mimic, 1); assert.ok(mixed.banner.exp >= 3 && mixed.gold === 2); assert.equal(live.gold, 2); assert.match(ev.eventLabel(live), /까미 출현 ×3/);
         assert.equal(ev.activeEvent(now, ev.currentEvents(false)), null, 'altar blessings are not part of the offline settlement list');
-        // 오프라인 정산(1분 초과) 동안에는 축복 없이 돌고, 끝난 뒤 다시 적힙니다.
-        const from = now - 10 * 60_000, s = engine.newState(from); engine.act(s, { type: 'start' }, from); const gold = s.gold;
-        const seen = []; const orig = Math.random; let calls = 0; Math.random = () => { calls++; if (calls % 100 === 0) seen.push(s.event?.gold || 1); return orig(); };
-        try { engine.advance(s, now); } finally { Math.random = orig; }
-        assert.ok(seen.length && seen.every(g => g === 1.5), 'half the altar gold bonus during catch-up (v27.51)');
-        assert.equal(s.event.gold, 2, 'blessing shown again after catch-up'); assert.ok(s.gold > gold);
+        // 부재중 정산(v3.189 1시간 초과) 동안에는 축복이 절반으로 돌고, 끝난 뒤 다시 적힙니다. 1시간 이하로 밀린 정산은 접속 중과 같습니다.
+        const goldSeen = minutes => {
+            const from = now - minutes * 60_000, s = engine.newState(from); engine.act(s, { type: 'start' }, from); const gold = s.gold;
+            const seen = []; const orig = Math.random; let calls = 0; Math.random = () => { calls++; if (calls % 100 === 0) seen.push(s.event?.gold || 1); return orig(); };
+            try { engine.advance(s, now); } finally { Math.random = orig; }
+            assert.equal(s.event.gold, 2, 'blessing shown again after catch-up'); assert.ok(s.gold > gold);
+            return seen;
+        };
+        const short = goldSeen(10); assert.ok(short.length && short.every(g => g === 2), 'v3.189 10 minutes away: full altar bonus');
+        const long = goldSeen(90); assert.ok(long.length && long.every(g => g === 1.5), 'half the altar gold bonus during an away catch-up (v27.51, v3.189 over an hour)');
     }
     finally { ev.setAltarEvents([]); }
 });
@@ -600,13 +604,13 @@ test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlemen
     const now = 1_000_000; assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 6, high_until: now + 1 }, now), 6); assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 6, high_until: now }, now), 3, 'expired high level falls back to 3'); assert.equal(A.effectiveBlessingLevel({ until: now, level: 6, high_until: now + 1 }, now), 0); assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 2 }, now), 2);
     assert.equal(A.blessingEffect(gold, 3).gold, 3); assert.ok(A.BLESSINGS.find(b => b.id === 'mimic').cost > A.BLESSINGS.find(b => b.id === 'exp').cost, 'mimic costs most');
     assert.equal(A.gaugeCost('god'), 40000); assert.equal(A.ALTAR.essencePoints, 30); assert.equal(A.ALTAR.pearlPoints, 500);
-    // 오프라인 정산: 골드 ×10 이벤트는 정산 중 ×5.5(절반)로 적용됩니다.
+    // 부재중 정산: 골드 ×10 이벤트는 1시간 넘게 비운 정산(v3.189) 중 ×5.5(절반)로, 그보다 짧게 밀린 정산은 ×10 그대로 적용됩니다.
     const E = await L.load('systems/engine'), t0 = Date.parse('2030-01-01T00:00:00Z');
-    const run = withEvent => { Ev.setRuntimeEvents(withEvent ? [{ id: 'admin-x', name: 'x', from: '2000-01-01T00:00:00Z', until: '2100-01-01T00:00:00Z', gold: 10 }] : [], []); const s = E.newState(t0); E.act(s, { type: 'start' }, t0); s.hp = 1e9; let n = 7; T.advance(s, t0 + 10 * 60_000, () => ((n = (n * 9301 + 49297) % 233280) / 233280)); return s; };
-    const on = run(true), off = run(false); Ev.setRuntimeEvents([], []);
-    const ratio = (on.gold - 100) / (off.gold - 100); assert.ok(ratio > 5 && ratio < 6, `offline gold x5.5: ${ratio}`); assert.ok(on.kills > 10);
+    const run = (withEvent, minutes) => { Ev.setRuntimeEvents(withEvent ? [{ id: 'admin-x', name: 'x', from: '2000-01-01T00:00:00Z', until: '2100-01-01T00:00:00Z', gold: 10 }] : [], []); const s = E.newState(t0); E.act(s, { type: 'start' }, t0); s.hp = 1e9; let n = 7; const rng = () => ((n = (n * 9301 + 49297) % 233280) / 233280); do T.advance(s, t0 + minutes * 60_000, rng); while (s.catchUpLeft); return s; };
+    const ratioAt = minutes => { const on = run(true, minutes), off = run(false, minutes); Ev.setRuntimeEvents([], []); assert.ok(on.kills > 10); assert.ok(on.event && on.event.gold === 10, 'event is set again after settlement'); return (on.gold - 100) / (off.gold - 100); };
+    { const r = ratioAt(10); assert.ok(r > 9.5 && r < 10.5, `10 minutes away gold x10: ${r}`); }
+    { const r = ratioAt(90); assert.ok(r > 5 && r < 6, `away (over an hour) gold x5.5: ${r}`); }
     assert.equal(Ev.offlineEvent({ id: 'e', name: '', until: 0, exp: 2, gold: 1, drop: 3, mastery: 2 }).exp, 1.5);
-    assert.ok(on.event && on.event.gold === 10, 'event is set again after settlement');
 });
 test('v27.51 every final combat stat equals the sum of its shown breakdown rows', async () => {
     const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
@@ -689,7 +693,7 @@ test('v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% o
     const b = make(); Enc.spawn(b, () => pm + N.nuriChance(10) / 2); assert.equal(b.enemy.id, N.EXP_NURI.id, 'right after the mimic band');
     assert.equal(b.enemy.name, '경험의 누리'); assert.ok(!b.enemy.variant && !b.enemy.swarm, 'no variants');
     const c = make(); Enc.spawn(c, () => pm + N.nuriChance(10) * 1.5); assert.ok(![Mi.MIMIC.id, N.EXP_NURI.id].includes(c.enemy.id), 'past both bands');
-    const off = make(); off.catchingUp = true; Enc.spawn(off, () => pm * Mi.MIMIC.offlineScale + N.nuriChance(10) * .5); assert.notEqual(off.enemy.id, N.EXP_NURI.id, 'quarter rate offline');
+    const off = make(); off.away = true; Enc.spawn(off, () => pm * Mi.MIMIC.offlineScale + N.nuriChance(10) * .5); assert.notEqual(off.enemy.id, N.EXP_NURI.id, 'v3.189 half rate offline');
     { const s = make(N.EXP_NURI.minLevel - 1); Enc.spawn(s, () => pm + N.nuriChance(10) / 2); assert.notEqual(s.enemy.id, N.EXP_NURI.id, 'not below the min level'); }
     { const s = make(100); Enc.spawn(s, () => pm + N.nuriChance(10) / 2); assert.equal(s.enemy.id, N.EXP_NURI.id, 'v3.112 Lv.100+ too'); }
     const flat = make(); flat.tide = 9; Enc.spawn(flat, () => Mi.mimicChance(9, 0) + N.nuriChance(9) / 2); assert.notEqual(flat.enemy.id, N.EXP_NURI.id, 'v27.59 needs stage difficulty 10');
@@ -1417,6 +1421,21 @@ test('v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per
     while (s.catchUpLeft) { T.advance(s, now, () => .5); rounds++; }
     assert.equal(rounds, Math.ceil(total / T.CATCH_UP_CHUNK)); assert.equal(s.lastTick, now, 'caught up to now'); assert.ok(s.lastOffline.kills > firstKills, 'summary accumulates across chunks'); assert.equal(s.lastOffline.seconds, hours * 3600);
     T.advance(s, now + 2000, () => .5); assert.equal(s.catchUpLeft, undefined); assert.equal(s.turn > 0, true);
+    } finally { O.OFFLINE_SAMPLE.turns = sampleTurns; }
+});
+test('v3.189 away penalty (event half · special monsters offlineScale) only after an hour away; chunked catch-up keeps the first decision', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const T = await L.load('systems/turn'), B = await L.load('data/balance'), O = await L.load('systems/offline-sample');
+    assert.equal(B.BALANCE.offlineAwaySeconds, 3600);
+    assert.equal(T.awayGap(61_000), false, 'a briefly hidden tab counts as live'); assert.equal(T.awayGap(3600_000), false); assert.equal(T.awayGap(3600_001), true);
+    const sampleTurns = O.OFFLINE_SAMPLE.turns; O.OFFLINE_SAMPLE.turns = Infinity;
+    try {
+        const make = () => { const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 100; s.stage = 'brook'; s.running = true; s.lastTick = 0; s.hp = 1e9; return s; };
+        const near = make(); T.advance(near, 55 * 60_000, () => .5);
+        assert.ok(near.catchUpLeft > 0 && !near.catchUpAway && !near.away, '55 minutes: chunked, no away penalty');
+        const far = make(), now = 2 * 3600_000; T.advance(far, now, () => .5);
+        assert.ok(far.catchUpLeft > 0 && far.catchUpAway === true && !far.away, '2 hours: chunks remember the away penalty');
+        while (far.catchUpLeft) { T.advance(far, now, () => .5); if (far.catchUpLeft) assert.equal(far.catchUpAway, true); }
+        assert.equal(far.catchUpAway, undefined, 'cleared once caught up');
     } finally { O.OFFLINE_SAMPLE.turns = sampleTurns; }
 });
 test('v3.104 offline sampling: a long absence runs warm-up + sample turn by turn and adds the rest in proportion, in one request; fast-growing characters and dungeons fall back to chunked catch-up', async () => {

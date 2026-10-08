@@ -151,21 +151,26 @@ function tickTurn(s: State, rng: () => number) {
 }
 /** v3.17 요청 하나에서 돌리는 부재중 정산 턴 상한(약 1~2초). */
 export const CATCH_UP_CHUNK = 1500;
+/** v3.189 이만큼 비운 정산이 부재중 보정을 받는지(1시간 초과). */
+export const awayGap = (elapsedMs: number) => elapsedMs > BALANCE.offlineAwaySeconds * 1000;
 export function advance(s: State, now: number, rng = Math.random) {
     repairState(s, now);
     now = Math.max(now, s.lastTick);
     // v26.1 서버 이벤트: 정산 시각 기준으로 적어 두고, 아래 틱들이 이 배율을 씁니다.
     const elapsed = now - s.lastTick;
-    // v27.51 이벤트·제단 축복 배율: 접속 중에는 그대로, 1분 넘게 밀린 정산(오프라인 정산)에는 절반만(offlineEvent). 정산이 끝난 뒤 원래 배율을 다시 적습니다.
+    const continuing = (s.catchUpLeft || 0) > 0;
+    // v27.51 이벤트·제단 축복 배율: 접속 중에는 그대로, 부재중 정산에는 절반만(offlineEvent). 정산이 끝난 뒤 원래 배율을 다시 적습니다.
+    // v3.189 부재중 보정(이벤트 절반 · 특별 몬스터 offlineScale)은 1분이 아니라 1시간(offlineAwaySeconds) 넘게 비운 정산만 받습니다(탭을 잠깐 내린 것은 접속 중과 같게).
+    // 나눠 돌리는 정산은 처음 정한 보정을 이어 씁니다(catchUpAway). 계산량은 바뀌지 않습니다(표본 환산 · 분할은 아래 offline 기준 그대로).
+    const away = continuing ? !!s.catchUpAway : awayGap(elapsed);
     const live = activeEvent(now);
-    s.event = elapsed > 60000 ? offlineEvent(live) : live;
+    s.event = away ? offlineEvent(live) : live;
     // v27.31 닫힌 사냥터·던전 목록도 같이 적어 화면이 잠금 표시를 합니다.
     const closed = closuresSnapshot(); if (closed) s.closed = closed; else delete s.closed;
     // 정산 상한은 정산을 시작할 때의 긴 휴식 단계로 정합니다(정산 중 연구가 바뀌지 않음).
     const cap = offlineCapSeconds(s);
     // v3.17 긴 부재중 정산은 요청 하나에서 다 돌리지 않고 CATCH_UP_CHUNK턴씩 나눕니다(6~30시간 = 1만~5만 턴을 한 요청에서 돌리면 수십 초가 걸려
     // 클라이언트 20초 제한에 걸리고 서버가 멈춘 것처럼 보였음). 남은 턴은 catchUpLeft에 적어 다음 동기화가 이어 돌립니다. 총 턴 수는 전과 같습니다.
-    const continuing = (s.catchUpLeft || 0) > 0;
     const budget = continuing ? Math.min(s.catchUpLeft!, Math.floor(elapsed / BALANCE.turnMs)) : Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
     // 1분 넘게 밀린 정산은 오프라인 정산으로 봅니다(저장하지 않는 임시 표시).
     const offline = elapsed > 60000 || continuing;
@@ -176,6 +181,7 @@ export function advance(s: State, now: number, rng = Math.random) {
     const before = { kills: s.kills, gold: s.gold, exp: s.exp };
     let mark: ReturnType<typeof markOffline> | null = null;
     if (offline) s.catchingUp = true;
+    if (away) s.away = true;
     try {
         for (let i = 0; i < count; i++) {
             // 워밍업이 끝난 때부터 비율을 잽니다.
@@ -185,10 +191,10 @@ export function advance(s: State, now: number, rng = Math.random) {
         // 표본 뒤에도 같은 사냥 중이면 남은 턴을 환산하고, 아니면 전처럼 남은 턴을 이어 돌립니다(catchUpLeft).
         if (mark && sampleStable(s, mark)) { extrapolateOffline(s, mark, count - warmup, budget - count, rng, () => tick(s, rng)); truncated = false; }
     }
-    finally { delete s.catchingUp; }
-    if (offline) s.event = live;
-    if (truncated) { s.catchUpLeft = budget - count; s.lastTick = s.lastTick + count * BALANCE.turnMs; }
-    else { delete s.catchUpLeft; s.lastTick = elapsed > cap * 1000 || continuing ? now : now - (elapsed % BALANCE.turnMs); }
+    finally { delete s.catchingUp; delete s.away; }
+    if (away) s.event = live;
+    if (truncated) { if (away) s.catchUpAway = true; else delete s.catchUpAway; s.catchUpLeft = budget - count; s.lastTick = s.lastTick + count * BALANCE.turnMs; }
+    else { delete s.catchUpLeft; delete s.catchUpAway; s.lastTick = elapsed > cap * 1000 || continuing ? now : now - (elapsed % BALANCE.turnMs); }
     recordUnlocks(s);
     if (offline && s.kills > before.kills) {
         const prev = continuing && s.lastOffline ? s.lastOffline : null;
