@@ -6,7 +6,8 @@ import { STAGES } from '../../data/world';
 import { onyxById } from '../../data/onyx';
 import { grantOnyx } from '../onyx-grant';
 import { drop, dropLevel } from '../encounter';
-import { allItems, hunterBlock, onyxOffer } from '../dungeon-coins';
+import { allItems, hunterBlock, onyxOffer, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
+import type { QualityGood } from '../../data/dungeon-shop';
 import { addLog } from '../state';
 import type { State } from '../../types';
 import type { ActionHandlers } from './types';
@@ -53,6 +54,18 @@ export const dungeonShopActions: ActionHandlers = {
             item.affixes = item.affixes!.map((x, i) => i === index ? next : x);
             syncOrnateName(item);
             addLog(s, `던전 코인샵 · ${item.name} ${target.name} → ${next.name} 각인 · 코인 -${DUNGEON_SHOP.hunterImprint.toLocaleString()}`, 'reward');
+            return;
+        }
+        if (id === 'quality100' || id === 'quality120') {
+            // v3.189 옵션 수치 상품: 고른 줄의 수치를 100%로, 또는 120~150%로(일반 장비도 보통 최고를 넘김).
+            const good = id as QualityGood, [itemId, line] = String(a.value || '').split('|'), index = Number(line);
+            const item = allItems(s).find(x => x.id === itemId);
+            if (!item) throw Error('장비를 찾을 수 없습니다.');
+            if (!Number.isInteger(index) || !qualityLines(item, good).includes(index)) throw Error('수치를 올릴 수 있는 옵션 칸을 고르세요(규칙 · 고정 · 장식 옵션과 이미 목표 이상인 줄은 제외).');
+            const price = QUALITY_PRICE[good], before = Math.round((lineQuality(item, index) || 0) * 100);
+            pay(s, price);
+            const { after } = applyQuality(item, index, good, rng), now = Math.round((lineQuality(item, index) || 0) * 100);
+            addLog(s, `던전 코인샵 · ${item.name} ${after.name} 수치 ${before}% → ${now}% · 코인 -${price.toLocaleString()}`, 'reward');
             return;
         }
         throw Error('없는 상품입니다.');

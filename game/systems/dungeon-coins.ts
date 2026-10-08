@@ -1,8 +1,8 @@
 /** v3.188 던전 코인 지급과 코인샵 판정(화면 · 행동 공용). 규칙과 가격은 data/dungeon-shop.ts. */
 import type { Item, State } from '../types';
-import { DUNGEON_COINS, DUNGEON_SHOP, HUNTER_AFFIX, abyssCoins } from '../data/dungeon-shop';
+import { DUNGEON_COINS, DUNGEON_SHOP, HUNTER_AFFIX, QUALITY_GOODS, abyssCoins, type QualityGood } from '../data/dungeon-shop';
 import { dungeonModeTier, type DungeonMode } from '../data/balance';
-import { affixDef } from '../data/gear';
+import { affixDef, affixQuality, HEIR_ROLL_TOP, optionAtQuality } from '../data/gear';
 import { ONYX, onyxById } from '../data/onyx';
 import { dungeonGoldMultiplier } from './stats';
 
@@ -34,3 +34,24 @@ export function hunterBlock(item: Item) {
     if (item.affixes.some(x => x.id === HUNTER_AFFIX)) return '이미 포식자 옵션이 있습니다.';
     return undefined;
 }
+/** v3.189 옵션 줄의 지금 수치(0 = 최저, 1 = 보통 최고, 계승 최고 1.5까지). 규칙 · 고정 · 장식 옵션은 null. */
+export function lineQuality(item: Item, index: number) {
+    const x = item.affixes?.[index], def = x && affixDef(x.id);
+    if (!x || !def || def.junk) return null;
+    return affixQuality(x, item.power, item.rarity, item.level, HEIR_ROLL_TOP);
+}
+/** v3.189 수치 상품을 쓸 수 있는 줄(지금 수치가 목표 하한보다 낮은 줄). 유물은 이식 옵션이라 제외. */
+export function qualityLines(item: Item, good: QualityGood) {
+    if (item.relic || !item.affixes?.length) return [];
+    const min = QUALITY_GOODS[good].min;
+    return item.affixes.map((_, i) => i).filter(i => { const q = lineQuality(item, i); return q !== null && q < min - 1e-6; });
+}
+/** v3.189 고른 줄의 수치를 [min, max]에서 굴려 바꿉니다(이중 옵션은 두 수치를 함께). 바뀐 줄을 돌려줍니다. */
+export function applyQuality(item: Item, index: number, good: QualityGood, rng: () => number) {
+    const x = item.affixes![index], def = affixDef(x.id)!, { min, max } = QUALITY_GOODS[good];
+    const q = min + (max - min) * rng(), next = optionAtQuality(def, item.power, item.rarity, item.level, q);
+    const line = def.rollBoth ? { ...x, value: next.value, value2: next.value2 } : { ...x, value: next.value };
+    item.affixes = item.affixes!.map((o, i) => i === index ? line : o);
+    return { before: x, after: line };
+}
+export const QUALITY_PRICE: Record<QualityGood, number> = { quality100: DUNGEON_SHOP.quality100, quality120: DUNGEON_SHOP.quality120 };

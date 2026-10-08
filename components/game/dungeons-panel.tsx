@@ -3,7 +3,7 @@ import { AutoRunStatus } from './auto-run';
 import { FIRST_CLEAR_SP } from '@/game/data/achievements';
 import { dungeonGoldMultiplier, stats } from '@/game/systems/stats';
 import { dungeonTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack } from '@/game/systems/meta';
-import { clearCoinBase, onyxOffer, hunterBlock, allItems } from '@/game/systems/dungeon-coins';
+import { clearCoinBase, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
 import { DUNGEON_SHOP } from '@/game/data/dungeon-shop';
 import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
 import { useState } from 'react';
@@ -115,8 +115,28 @@ function DungeonCoinShop({ s, send, busy }: PanelProps) {
                 <select aria-label="바꿀 옵션" value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{lines.map(({ x, i }) => <option key={i} value={i}>{i + 1}. {x.name}</option>)}</select>
                 <button className="secondary small" disabled={busy || index < 0 || coins < DUNGEON_SHOP.hunterImprint} onClick={() => buy('hunter', `${item.id}|${index}`)}>포식자 각인 · {format(DUNGEON_SHOP.hunterImprint)}</button>
             </> : '고대 이상이고 포식자 옵션이 없는 장비가 있어야 합니다.'} <small>고른 옵션 한 줄을 포식자(보스 · 사냥감 피해)로 바꿉니다. 장비당 한 줄.</small></span>
+            <QualityGoods s={s} send={send} busy={busy}/>
         </div>
     </section>;
+}
+
+/** v3.189 옵션 수치 상품: 고른 장비 · 옵션 줄의 수치를 100%로, 또는 120~150%로. 장비는 착용 · 가방 모두. */
+function QualityGoods({ s, send, busy }: PanelProps) {
+    const coins = s.dungeonCoins || 0;
+    const items = allItems(s).filter(x => qualityLines(x, 'quality100').length || qualityLines(x, 'quality120').length);
+    const [pick, setPick] = useState(''), [line, setLine] = useState(-1);
+    const item = items.find(x => x.id === pick) || items[0];
+    if (!item) return <span><b>수치</b>수치를 올릴 수 있는 옵션이 있는 장비가 없습니다.</span>;
+    const rows = (item.affixes || []).map((x, i) => ({ x, i, q: lineQuality(item, i) })).filter(r => r.q !== null && r.q < 1.2 - 1e-6);
+    const index = rows.some(r => r.i === line) ? line : rows[0]?.i ?? -1, q = lineQuality(item, index) ?? 0;
+    const ok100 = qualityLines(item, 'quality100').includes(index), ok120 = qualityLines(item, 'quality120').includes(index);
+    return <span><b>수치</b>
+        <select aria-label="수치 올릴 장비" value={item.id} disabled={busy} onChange={e => { setPick(e.target.value); setLine(-1); }}>{items.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
+        <select aria-label="수치 올릴 옵션" value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{rows.map(r => <option key={r.i} value={r.i}>{r.i + 1}. {r.x.name} · {Math.round(r.q! * 100)}%</option>)}</select>
+        <button className="secondary small" disabled={busy || !ok100 || coins < QUALITY_PRICE.quality100} onClick={() => send({ type: 'dungeonShop', id: 'quality100', value: `${item.id}|${index}` })}>100%로 · {format(QUALITY_PRICE.quality100)}</button>
+        <button className="secondary small" disabled={busy || !ok120 || coins < QUALITY_PRICE.quality120} onClick={() => send({ type: 'dungeonShop', id: 'quality120', value: `${item.id}|${index}` })}>120~150%로 · {format(QUALITY_PRICE.quality120)}</button>
+        <small>지금 {Math.round(q * 100)}%. 100%는 보통 최고 굴림, 120~150%는 보통 최고를 넘습니다(계승 장비 최고까지). 규칙 · 고정 · 장식 옵션은 제외. 재련하면 다시 보통 범위로 굴립니다.</small>
+    </span>;
 }
 
 /** v27.86 랜덤게임 입장 카드. v27.91 두 칸 구성: 왼쪽 규칙 세 줄, 오른쪽 목표 웨이브 칩(받는 판돈 표시)과 시작 버튼. 판돈 표는 목표까지 모두 깼을 때 받는 양(연구 배율 포함). */

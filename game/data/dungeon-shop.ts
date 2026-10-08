@@ -23,6 +23,13 @@ export const DUNGEON_SHOP = {
     gearBox: 100,
     /** ‘포식자’(보스 피해) 옵션 각인: 고대 이상 장비의 옵션 한 줄을 포식자로 바꿉니다(장비당 한 줄). */
     hunterImprint: 2000,
+    /** v3.189 고른 옵션 한 줄의 수치를 100%(보통 최고)로. */
+    quality100: 1000,
+    /** v3.189 고른 옵션 한 줄의 수치를 120~150%(계승 최고까지)로. 일반 장비도 보통 최고를 넘습니다. */
+    quality120: 4000,
 } as const;
+/** v3.189 수치 상품: 목표 수치(하한)와 위로 굴리는 상한. 120%는 [1.2, 1.5]에서 고르게 굴립니다. */
+export const QUALITY_GOODS = { quality100: { min: 1, max: 1 }, quality120: { min: 1.2, max: 1.5 } } as const;
+export type QualityGood = keyof typeof QUALITY_GOODS;
 /** 각인권이 붙이는 옵션. */
 export const HUNTER_AFFIX = 'hunter';

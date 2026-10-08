@@ -311,3 +311,16 @@ test('v3.188 dungeons pay no kill rewards and a fixed dungeon coin per clear; th
  const rule=onyx.affixes.findIndex(a=>a.rule);assert.ok(rule>=0);
  s.dungeonCoins=7;restartLife(s,1000);assert.equal(s.dungeonCoins,7,'coins survive a new life');
 });
+
+test('v3.189 coin shop quality goods: one option line to 100%, or 120–150% even on normal gear',async()=>{
+ const G=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/gear');
+ const s=newState(0);s.level=60;s.dungeonCoins=0;
+ const def=G.AFFIX_POOL.find(a=>a.kind==='percent'&&!a.minRarity&&!a.junk&&!a.onlyOrigin&&!a.onlySlot&&!a.retired&&!a.rollBoth);
+ const low=G.optionAtQuality(def,200,4,60,.1);s.inventory.push({id:'q1',name:'t',slot:'charm',rarity:4,level:60,power:200,affixes:[low]});
+ const q=()=>G.affixQuality(s.inventory.at(-1).affixes[0],200,4,60,G.HEIR_ROLL_TOP);
+ assert.throws(()=>act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0),/코인이 부족/);
+ s.dungeonCoins=1000;act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.ok(Math.abs(q()-1)<.01,`100% (${q()})`);
+ s.dungeonCoins=5000;assert.throws(()=>act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0),/옵션 칸/,'already at 100%');
+ act(s,{type:'dungeonShop',id:'quality120',value:'q1|0'},0,()=>.5);assert.equal(s.dungeonCoins,1000);assert.ok(q()>=1.34&&q()<=1.36,`midpoint 135% (${q()})`);
+ s.dungeonCoins=4000;assert.throws(()=>act(s,{type:'dungeonShop',id:'quality120',value:'q1|0'},0),/옵션 칸/,'already above 120%');
+});
