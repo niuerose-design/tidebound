@@ -249,8 +249,6 @@
 | ⬜ | `currentNotes` | 라이트 오브 레프 | 일리움 (1차) | 패시브 |
 | ⬜ | `saltCatalyst` | 크래프트: 오브 | 일리움 (2차) | 액티브 |
 | ⬜ | `volatileFormula` | 리액션: 디스트럭션 | 일리움 (2차) | 패시브 |
-| ⬜ | `crystalShard` | 크리스탈 파편 | 크리스탈 연성사 | 액티브 |
-| ⬜ | `latticeMind` | 결정 격자 | 크리스탈 연성사 | 패시브 |
 | ⬜ | `corrosiveBloom` | 크래프트: 롱기누스 | 일리움 (3차) | 액티브 |
 | ⬜ | `philosopherSalt` | 소울 오브 크리스탈 | 일리움 (3차) | 패시브 |
 | ⬜ | `transmute` | 크리스탈 스킬: 데우스 | 일리움 (4차) | 액티브 |

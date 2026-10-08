@@ -76,7 +76,7 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
 
     // ── 일리움 계보 · 크리스탈 연성사 ──
     rippleGlyph: '크래프트: 자벨린', currentNotes: '라이트 오브 레프', saltCatalyst: '크래프트: 오브', volatileFormula: '리액션: 디스트럭션',
-    crystalShard: '크리스탈 파편', latticeMind: '결정 격자', corrosiveBloom: '크래프트: 롱기누스', philosopherSalt: '소울 오브 크리스탈',
+    corrosiveBloom: '크래프트: 롱기누스', philosopherSalt: '소울 오브 크리스탈',
     transmute: '크리스탈 스킬: 데우스', philosopherBrine: '글로리 윙', grandTransmutation: '그라비티 코어', elixirOfDepth: '롱기누스 존',
 
     // ── 비숍 계보 · 견습 사제 · 치유사 ──

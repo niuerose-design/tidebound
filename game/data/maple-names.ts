@@ -69,7 +69,7 @@ const NAMED: Record<string, string> = {
     ronin: '검사(히어로)', poisoner: '매지션(불,독)', seagrassKeeper: '매지션(비숍)', relicScavenger: '로그(섀도어)', salvageMerchant: '해적(캡틴)',
     // 곁가지: 그 직업의 세계관으로
     oracle: '요정 사제', lunarOracle: '달빛 사제', coralSaint: '요정 대사제', runeSwell: '룬 위자드', tideMender: '마나 조율사',
-    echoTamer: '미르 조련사', abyssMimic: '오닉스 드래곤 라이더', crystalCaster: '크리스탈 연성사',
+    echoTamer: '미르 조련사', abyssMimic: '오닉스 드래곤 라이더',
     lineBreaker: '썬더 브레이커', grappler: '브롤러', stormHunter: '크로스보우맨', reefBrawler: '근접 아처',
     clockworkAngler: '태엽 기계공', allRounder: '올라운더',
     inkMime: '트릭스터', wreckDiver: '보물 사냥꾼', harborBroker: '무역상', logbookRunner: '길 안내인', beastTracker: '재규어 추적자', tidalSinger: '아이돌 연습생',

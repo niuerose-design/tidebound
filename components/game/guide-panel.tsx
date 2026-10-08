@@ -47,7 +47,7 @@ function Topic({ icon, title, note, open = false, children }: { icon: ReactNode;
 }
 
 const STATUS_GROUPS = [
-    { title: '행동 방해', ids: ['stun', 'silence', 'weaken'] },
+    { title: '행동 방해', ids: ['stun', 'silence', 'weaken', 'corrode'] },
     { title: '지속 피해 · 속도', ids: ['bleed', 'poison', 'burn', 'slow', 'haste'] },
 ] as const;
 

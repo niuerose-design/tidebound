@@ -34,7 +34,9 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
     harpoon: 'physical', tidalBrawler: 'physical', krakenkin: 'physical', ronin: 'physical', brawnFisher: 'physical', nimbleAngler: 'physical', luckyAngler: 'physical',
     squidJester: 'physical', spellbladeNovice: 'physical', brawnMage: 'physical', nerveNeedler: 'physical', tideLancer: 'borderStand',
     tide: 'magic', chantNovice: 'magic', apprentice: 'magic', manaDevotee: 'magic',
-    poisoner: 'status', shaman: 'status', bloodAngler: 'status', currentScholar: 'status',
+    poisoner: 'status', shaman: 'status', bloodAngler: 'status',
+    /** v3.150 일리움: 마력 평타 마법사(부식 디버프를 걸지만 피해의 축은 평타). */
+    currentScholar: 'magic',
     warden: 'reflect', saltWarden: 'reflect', bulkyFisher: 'reflect',
     martialArtist: 'control', bellTurtle: 'control', stillAngler: 'control', runesmith: 'borderReflect',
     wanderer: 'drain',
@@ -49,7 +51,7 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
 /** 계보 기본값과 다른 직업(갈림길·곁가지). */
 export const ROLE_BY_JOB: Record<string, SubRoleId> = {
     oracle: 'healer', lunarOracle: 'healer', coralSaint: 'healer', tideMender: 'healer', tidalSinger: 'borderBuffer',
-    reefBrawler: 'drain', inkMime: 'utility', crystalCaster: 'magic', clockworkAngler: 'physical', allRounder: 'physical',
+    reefBrawler: 'drain', inkMime: 'utility', clockworkAngler: 'physical', allRounder: 'physical',
     glyphMonk: 'physical',
 };
 /** 직업의 세부 역할. 직업 데이터의 subRole(비밀 직업) → 직업별 덮어쓰기 → 계보 기본값 → none. */

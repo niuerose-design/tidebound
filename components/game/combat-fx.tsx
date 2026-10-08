@@ -66,7 +66,7 @@ const glyphs: Record<CombatFxVariant, string[]> = {
 /** v27.22 상태이상 피격 전용 파편: 기절은 별, 출혈은 핏방울, 중독은 거품, 화상은 불티, 침묵은 지워진 음표, 감속은 모래시계, 약화는 아래 화살, 가속은 위 화살. */
 const STATUS_GLYPHS: Partial<Record<CombatFxKind, string[]>> = {
     stun: ['★', '·', '✶', '·', '★', '✶'], bleed: ['▾', '·', '●', '▾', '·', '●'], poison: ['●', '◌', '·', '●', '·', '◌'], burn: ['✹', '·', '▴', '✹', '·', '▴'],
-    silence: ['♪', '✕', '·', '♪', '✕', '·'], slow: ['⧗', '·', '≈', '⧗', '·', '≈'], weaken: ['▽', '·', '▽', '·', '▽', '·'], haste: ['▲', '·', '▲', '·', '▲', '·'],
+    silence: ['♪', '✕', '·', '♪', '✕', '·'], slow: ['⧗', '·', '≈', '⧗', '·', '≈'], weaken: ['▽', '·', '▽', '·', '▽', '·'], haste: ['▲', '·', '▲', '·', '▲', '·'], corrode: ['☣', '·', '◌', '☣', '·', '◌'],
 };
 /** 4차는 9개, 5차는 12개 파편(바깥 고리 추가). 상태이상 피격은 상태별 파편을 씁니다. */
 const fragmentsFor = (fx: CombatFx) => { const base = STATUS_GLYPHS[fx.kind] ?? glyphs[fx.variant]; const n = (fx.tier || 0) >= 5 ? 12 : (fx.tier || 0) >= 4 ? 9 : 6; return Array.from({ length: n }, (_, i) => base[i % base.length]); };

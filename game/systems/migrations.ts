@@ -162,14 +162,16 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
     /** v3.146 은월 재개편: 곁가지 구미호(흡혈)는 제논과 겹쳐 지웠습니다. */
     'tideDevourer',
     /** v3.148 아델 재개편: 곁가지 허공 방랑자(회피 + 마나)는 특색이 약해 지웠습니다. */
-    'voidDrifter'];
+    'voidDrifter',
+    /** v3.150 일리움 재개편: 곁가지 크리스탈 연성사(마나 비례)는 아델 장치와 겹쳐 지웠습니다. */
+    'crystalCaster'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.138 미하일 계보 10개 · 성벽 기사의 리커버리(fortress) · 아이언 바디(coralPatience). */
     'shieldBash', 'shieldWall', 'ironRetort', 'spikedShield', 'bulwarkSlam', 'stoneSkin', 'lastStand', 'undying', 'aegisJudgment', 'divineAegis', 'fortress', 'coralPatience',
     /** v3.140 숨은 2차 주먹 마도사(마법 계수 → 물리 피해)는 루미너스 계보가 그 자리를 맡아 지웠습니다. */
     'arcaneFist', 'manaMuscle',
     /** v3.143 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
-    'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak'];
+    'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind'];
 /**
  * v3.64 히든 직업 재배치 · v3.138 5차 통폐합: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).
  * 지금 그 직업이면 초보자로 돌아갑니다. 여러 번 불러도 같습니다.

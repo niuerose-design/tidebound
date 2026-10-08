@@ -24,8 +24,7 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'grappler', name: '유술가', title: '붙잡으면 놓지 않는다', desc: '해적의 장타로 멈춘 적의 관절을 꺾어, 제어된 적에게 큰 피해를 주는 격투 2차 직업입니다.', ...neutral, bonus: { attack: 27, hp: 50, defense: 2 }, crit: .04, ...T2, parent: 'martialArtist', requires: { str: 26, vit: 26 }, requiresSkillMastery: { palmStrike: 2 }, role: '물리·관절 제어', tree: 'physical' },
 
     // ── 마법: 일리움 계보 보강 ─────────────────────────────
-    { id: 'crystalCaster', name: '마나 결정술사', title: '흐르는 마나를 굳힌다', desc: '최대 마나에 비례하는 크리스탈 파편을 쏘는 주문 2차 직업입니다. 마나를 모을수록 강해집니다.', ...neutral, bonus: { magic: 45, resist: 2 }, crit: .03, ...T2, parent: 'currentScholar', requires: { int: 30, wis: 24 }, requiresSkillMastery: { rippleGlyph: 2 }, role: '마법·마나 비례', tree: 'magic' },
-    { id: 'brineSavant', name: '염해 연금술사', title: '바다를 녹이는 공식', desc: '일리움 (2차)의 크래프트: 오브로 남긴 출혈에 크래프트: 롱기누스로 큰 피해를 더하는 연금 3차 직업입니다.', ...neutral, hp: 1, bonus: { magic: 92, resist: 4 }, crit: .07, ...T3, parent: 'saltAlchemist', requires: { int: 46, luk: 34 }, requiresSkillMastery: { saltCatalyst: 3 }, role: '출혈·연금 폭발', tree: 'magic' },
+    { id: 'brineSavant', name: '염해 연금술사', title: '바다를 녹이는 공식', desc: '마력 평타에 부식을 붙이는 소울 오브 크리스탈과, 평타 계수를 기준값으로 쓰는 크래프트: 롱기누스를 가진 3차 직업입니다.', ...neutral, hp: 1, bonus: { magic: 92, resist: 4 }, crit: .07, ...T3, parent: 'saltAlchemist', requires: { int: 46, luk: 34 }, requiresSkillMastery: { saltCatalyst: 3 }, role: '마력 평타·부식', tree: 'magic' },
 
     // ── 방어: 비숍 계보 보강 ─────────────────────────────
     { id: 'tideHealer', name: '해류 치유사', title: '물결로 상처를 씻는다', desc: '큰 회복 주문과 체력·마법 방어 패시브로 오래 버티는 회복 3차 직업입니다.', ...neutral, bonus: { magic: 37, hp: 185, defense: 9, resist: 10 }, ...T3, parent: 'reefMedic', requires: { vit: 45, wis: 38 }, requiresSkillMastery: { reefPulse: 3 }, role: '회복·지속전', tree: 'defense' },
@@ -111,10 +110,8 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'lifeCurrentFlow', name: '생명의 흐름', desc: '턴마다 체력이 회복되고 회복량이 오릅니다.', level: 25, job: 'tideMender', cost: 2, bonus: { hpRegen: 3, healBonus: .1 } },
     { ...P, id: 'grappleStance', name: '붙잡는 자세', desc: '최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'grappler', cost: 2, bonus: { hp: 90, defense: 15, resist: 5 } },
     // 마법
-    { ...A, ...magic, id: 'crystalShard', name: '결정 파편', desc: '', level: 25, job: 'crystalCaster', chance: .52, cooldown: 3, multiplier: 1.3, cost: 3, manaCost: 12, scaling: 'mana', scalingRatio: .2 },
-    { ...P, id: 'latticeMind', name: '바둑판 사고', desc: '최대 마나와 마법 공격이 오릅니다.', level: 25, job: 'crystalCaster', cost: 2, bonus: { mana: 30, magic: 10 } },
-    { ...A, ...magic, id: 'corrosiveBloom', name: '부식의 개화', desc: '', level: 40, job: 'brineSavant', chance: .52, cooldown: 4, multiplier: 2, cost: 4, manaCost: 20, effect: 'bleed', dotName: '부식', damageBonusCondition: 'bleeding', conditionalDamageBonus: .4 },
-    { ...P, id: 'philosopherSalt', name: '현자의 소금', desc: '마법 공격과 지속 피해가 오릅니다.', level: 40, job: 'brineSavant', cost: 3, bonus: { magic: 30, dotBonus: .12 } },
+    { ...A, ...magic, id: 'corrosiveBloom', name: '부식의 개화', desc: '', level: 40, job: 'brineSavant', chance: .52, cooldown: 4, multiplier: 1.2, cost: 4, manaCost: 20, scaling: 'arcane' },
+    { ...P, id: 'philosopherSalt', name: '현자의 소금', desc: '마법 공격이 오르고, 기본 공격(마력 평타)이 명중하면 부식을 겁니다.', level: 40, job: 'brineSavant', cost: 3, bonus: { magic: 30 }, basicEffect: 'corrode' },
     // 방어
     { ...A, ...magic, id: 'tidalRenewal', name: '조류의 소생', desc: '', level: 40, job: 'tideHealer', chance: .55, cooldown: 4, multiplier: 1.8, cost: 4, manaCost: 18, effect: 'heal' },
     { ...P, id: 'deepCurrentBalm', name: '등대 연고', desc: '최대 체력과 마법 방어가 오릅니다.', level: 40, job: 'tideHealer', cost: 3, bonus: { hp: 200, resist: 18 } },
