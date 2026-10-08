@@ -50,6 +50,10 @@ test('Job UI: a hidden condition reveals its job while it holds and keeps it onc
 test('v25 hidden jobs without gates are shown; the chronarch appears once the clockmaker is mastered', () => {
     const s = newState(0), job = id => JOBS.find(j => j.id === id);
     assert.ok(ui.jobRevealed(s, job('glyphMonk')), '玄 has no door or gate, so it is visible from the start');
+    // v3.172 공개 히든: 히든 표시는 달지만 숨김 대상이 아니라 처음부터 보입니다.
+    for (const id of ['glyphMonk', 'glassHarpooner']) { const j = job(id); assert.ok(j.hidden && j.open && !ui.secretJob(j) && ui.jobRevealed(s, j), id); }
+    assert.deepEqual(JOBS.filter(j => j.open).map(j => j.id).sort(), ['glassHarpooner', 'glyphMonk'], 'only the two public hidden jobs are open');
+    assert.equal(JOBS.filter(j => j.hidden).length, 19, 'hidden jobs: 17 secret + 2 open');
     assert.equal(ui.jobRevealed(s, job('chronarch')), false);
     s.jobMastery.clockmaker = 3000; assert.ok(ui.jobRevealed(s, job('chronarch')));
 });
