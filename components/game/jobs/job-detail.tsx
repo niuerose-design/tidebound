@@ -5,7 +5,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import type { Stats } from '@/game/types';
-import { jobTags, type Job, constraintDeviceLabels } from '@/game/data/classes';
+import { jobTags, type Job, constraintDeviceLabels, lineageOf } from '@/game/data/classes';
+import { SUB_ROLES, ROLES, ROLE_GUIDE, MATCHUP, subRoleOf } from '@/game/data/roles';
 import { SKILLS } from '@/game/data/skills';
 import { hanjaReading } from '@/game/systems/skill-description';
 import { JobArt } from '../art';
@@ -38,11 +39,13 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
     const skills = SKILLS.filter(sk => sk.job === j.id), from = crossParent(j);
     // v3.166 목표 직업: 조건과 무관하게 찍어 두면 항로도 · 목록 · 계보 카드에 깃발이 붙고, 전직하면 저절로 내려갑니다.
     const isGoal = jobGoalOf(s)?.id === j.id;
+    // v3.182 역할 표시(docs/concept.md 11.2): 세부 역할 이름은 제목 아래 줄에, 강점 · 약점 · 잘하는 곳은 개요에.
+    const sub = subRoleOf(j, lineageOf(j)), subRole = SUB_ROLES[sub], guide = ROLE_GUIDE[sub];
     return <article className={`panel job-inspector job-sheet ${current ? 'current' : ''}`} aria-label={`${j.name} 상세`}>
         {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}
         <h2 className="job-column-title"><span>③</span> 직업 상세</h2>
         <div className="job-detail-title"><JobArt job={j} size={44}/><h2 title={hanjaReading(j.name)}>{j.name}</h2><span className={`job-status ${st.status}`}>{STATUS_LABEL(st)}</span>{isGoal && <span className="job-status goal"><Flag size={12}/> 목표</span>}</div>
-        <p className="job-detail-sub">{tierName(j)} · {[treeName(j.tree), ...jobTags(j).filter(t => t !== treeName(j.tree))].join(' · ')}{j.hidden ? ' · 히든' : ''}</p>
+        <p className="job-detail-sub">{tierName(j)} · {[treeName(j.tree), ...jobTags(j).filter(t => t !== treeName(j.tree))].join(' · ')}{j.hidden ? ' · 히든' : ''}{sub !== 'none' && <> · <span className={`job-role-tag role-${subRole.role}`}>{subRole.name}</span></>}</p>
         <p className="job-motto">{j.title}</p>
         <Tabs value={tab} onValueChange={v => setTab(v as Tab)}><TabsList className="game-tabs job-detail-tabs">
             <TabsTrigger value="overview">개요</TabsTrigger><TabsTrigger value="requirements">조건{!current && !ready ? ` ${st.missing.length}` : ''}</TabsTrigger><TabsTrigger value="skills">스킬 {skills.length}</TabsTrigger><TabsTrigger value="mastery">숙달</TabsTrigger>
@@ -52,6 +55,10 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
                 <p>{j.desc}</p>
                 {j.constraint && <section className="job-detail-section job-compact job-constraint"><h3>제약 · {j.constraint.label}</h3><p className="footnote">{j.constraint.desc} PvE 균형 대상이 아닌 계승·결투용 직업입니다.</p><div className="requirements">{constraintDeviceLabels(j.constraint.devices).map(t => <span key={t} className="met">{t}</span>)}</div></section>}
                 {from && <p className="job-cross">{from}에서 이어지는 직업입니다.</p>}
+                {guide && <section className="job-detail-section job-compact job-role"><h3>역할 · {subRole.name} <small>{ROLES[subRole.role].name}</small></h3>
+                    <dl className="job-role-guide"><dt>강점</dt><dd>{guide.strong}</dd><dt>약점</dt><dd>{guide.weak}</dd><dt>잘하는 곳</dt><dd>{guide.place}</dd></dl>
+                    <p className="footnote">상성 {MATCHUP.text}. 몬스터 유형별 유리한 역할은 도감과 전투 화면에 보입니다.</p>
+                </section>}
                 <section className="job-detail-section job-compact"><h3>직업 보정 · {j.role}</h3>
                     <div className="requirements">{bonuses.map(key => <span key={key} className={growsWithMastery(j, key) ? 'met' : 'negative'}>{STAT_LABELS[key]} {jobBonusText(j, key, mastered)}</span>)}{!!j.expBonus && <span className="met">경험치 {percent(j.expBonus, 2, true)}</span>}{j.crit > 0 && <span className="met">치명타 {percent(j.crit, 2, true)}p</span>}{Object.entries(j.penalties || {}).map(([key, n]) => <span className="negative" key={key}>{STAT_LABELS[key as keyof Stats]} {statDeltaDisplay(key, n)}</span>)}{!bonuses.length && !j.expBonus && !j.crit && !j.penalties && <span>보정 없음</span>}</div>
                 </section>
