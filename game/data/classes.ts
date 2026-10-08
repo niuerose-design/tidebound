@@ -354,7 +354,7 @@ export const LINEAGES: Lineage[] = [
     { id: 'currentScholar', name: '해류 연구자 계보', tree: 'magic', summary: '마나와 약화 주문, 출혈·관통 연금을 실험하는 계보입니다.' },
     { id: 'fishWhisperer', name: '물고기 말벗 계보', tree: 'magic', summary: '보스 기술 모사와 환생·기록 경제로 이어지는 계보입니다.' },
     { id: 'chantNovice', name: '겹영창 계보', tree: 'magic', summary: '동시 시전 주문을 겹쳐 한 행동에 쏟아붓는 순수 피해 마법 계보입니다. 함께 나간 주문이 많을수록 대기와 마나가 늘어납니다.' },
-    { id: 'apprentice', name: '견습 마법사 계보', tree: 'magic', summary: '화염·블레이징 익스팅션·연속 주문을 거쳐 5차 플레임위자드에 이르는 계보입니다.' },
+    { id: 'apprentice', name: '견습 마법사 계보', tree: 'magic', summary: '화상을 쌓고 5차 인피니티 플레임 서클로 한 번에 터뜨리는 불꽃 계보입니다.' },
     independent('magic'),
     { id: 'warden', name: '산호 수호자 계보', tree: 'defense', summary: '방어·기절·회복·반격과 복합 흡혈로 갈라지는 수호 계보입니다.' },
     { id: 'seagrassKeeper', name: '해초 돌봄꾼 계보', tree: 'defense', summary: '회복과 흡혈로 편성을 지탱하는 보조 방어 계보입니다.' },

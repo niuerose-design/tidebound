@@ -72,6 +72,8 @@ export function skillBrief(sk: Skill): string {
     if (sk.charge) parts.push(`명중 시 충전 +${sk.charge}(약화 적 +${SKILL_FORMULA.charge.weakenedExtra})`);
     if (sk.chargeNeed) parts.push(`충전 ${sk.chargeNeed}중첩부터 · 중첩당 피해 +${skillPercent(sk.chargeBonus || 0)}`);
     if (sk.hpCost) parts.push(`현재 체력 ${skillPercent(sk.hpCost)} 소모`);
+    if (sk.manaBurn) parts.push(`현재 마나 ${skillPercent(sk.manaBurn)} 연소 · 태운 마나 × ${number(sk.burnScale ?? SKILL_FORMULA.manaBurnScale)} 피해`);
+    if (sk.burnConsume) parts.push(`적의 화상 중첩을 모두 터뜨려 중첩당 +${skillPercent(sk.burnConsume)}`);
     if (sk.effect === 'heal') parts.push(`체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복`);
     if (sk.effect === 'drain') parts.push(`피해의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 흡혈`);
     if (sk.damageBonusCondition) parts.push(`${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 적 +${skillPercent(sk.conditionalDamageBonus || 0)}`);
@@ -94,6 +96,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.scaling === 'resist') base.push(`마법 방어 × ${number(sk.scalingRatio ?? 1)} × 결계 친화도`);
         if (sk.scaling === 'hp') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hpScaling)}`);
         if (sk.scaling === 'mana') base.push(`최대 마나 × ${number(sk.scalingRatio ?? SKILL_FORMULA.manaScaling)}`);
+        if (sk.manaBurn) base.push(`태운 마나(현재 마나의 ${skillPercent(sk.manaBurn)}) × ${number(sk.burnScale ?? SKILL_FORMULA.manaBurnScale)}`);
         if (sk.scaling === 'hybrid') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hybridHpScaling)}`, `최대 마나 × ${number((sk.scalingRatio ?? SKILL_FORMULA.hybridManaScaling) * 2)}`);
         if (sk.healOnly) { out.push(`직접 피해 없음 · 최대 체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복(회복량 보너스 적용)`); return out; }
         // v27.9 문체: 피해식은 '(기준)의 N%로 때립니다' 꼴로. 복합 피해는 유형을 앞에 붙입니다.

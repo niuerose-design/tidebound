@@ -233,6 +233,11 @@ export type Skill = {
     hpCost?: number;
     /** v3.145 피의 분노(패시브): 잃은 체력 비율 × bloodRage만큼 모든 피해가 커집니다(장착한 패시브끼리 더함). */
     bloodRage?: number;
+    /** v3.148 마나 연소(아델): 쓸 때 현재 마나 × manaBurn을 태우고(마나 소모 대신), 태운 마나 × burnScale(기본 SKILL_FORMULA.manaBurnScale)을 피해 기준값에 더합니다. */
+    manaBurn?: number;
+    burnScale?: number;
+    /** v3.148 화상 폭발(플레임위자드): 명중한 적의 화상 중첩을 모두 터뜨려 중첩당 burnConsume만큼 피해가 커집니다(화상은 사라짐). */
+    burnConsume?: number;
     /** v3.146 정령(은월 패시브): 장착하면 기본 공격을 포함한 모든 공격 행동에 정령의 추가타가 hits회 붙습니다(위력 power, 기술 배율에 곱함). 여러 개를 장착하면 횟수 · 위력 각각 가장 큰 값. */
     companion?: { hits: number; power: number };
     /** v25 자기 상태이상: 쓰고 나면 자신이 기절·감속·약화됩니다. waivedBy 기술을 장착하면 생략. */
@@ -347,6 +352,8 @@ export type CombatEvent = {
     statuses: { id: string; turns: number; onSelf?: boolean }[];
     /** v3.145 이 행동에 바친 체력(체력 소모 기술). */
     hpSpent?: number;
+    /** v3.148 이 행동에 태운 마나(마나 연소 기술). */
+    manaBurned?: number;
     /** 면역으로 막힌 상태이상(있을 때만). */
     immune?: string;
     /** v3.5 상태이상 저항으로 막힌 상태이상(있을 때만). */

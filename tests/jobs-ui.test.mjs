@@ -27,7 +27,7 @@ test('Job UI: a silhouette reveals its name when its hidden condition is met or 
     assert.equal(ui.jobRevealed(s, job('undead')), false, 'unmet hidden condition keeps the silhouette');
     s.deaths = 10; assert.equal(ui.jobRevealed(s, job('undead')), true, 'v27.12 ten defeats reveal the undead'); s.deaths = 0;
     const t = newState(0); t.unlockedJobs.push('manaLeviathan'); assert.equal(ui.jobRevealed(t, job('manaLeviathan')), true, 'entered once → shown');
-    const m = newState(0); m.jobMastery.voidDrifter = jobMasteryTarget(job('voidDrifter')); assert.equal(ui.jobRevealed(m, job('voidDrifter')), true, 'mastered → shown');
+    const m = newState(0); m.jobMastery.manaLeviathan = jobMasteryTarget(job('manaLeviathan')); assert.equal(ui.jobRevealed(m, job('manaLeviathan')), true, 'mastered → shown');
 });
 
 test('Job UI: quick finder and search never leak silhouette names', () => {
