@@ -96,7 +96,7 @@ export const inMysteryTab = (s: State, l: { id: string; tree: string }) => {
 };
 
 /**
- * v3.164 외길 탭: 능력치 하나만으로 전직하는 외길 계보(expansion-monostat)는 원래 계열 탭에서 빼고 ??? 옆 ‘외길’ 탭에 모읍니다.
+ * v3.166 외길 탭: 능력치 하나만으로 전직하는 외길 계보(expansion-monostat)는 원래 계열 탭에서 빼고 ??? 옆 ‘외길’ 탭에 모읍니다.
  * 직업의 tree(전투 · 숙련 집중 계열)는 그대로라 숙련 진행판 · 계열 집중 서약에는 영향이 없고, 전직 화면의 묶음만 다릅니다.
  */
 export type JobTabId = JobTreeId | 'monostat';
@@ -121,7 +121,7 @@ export function tabJobCount(s: State, tab: JobTabId) {
 export const tabOf = (j: Job): JobTabId => monostatLineage(lineageOf(j)) ? 'monostat' : j.tree;
 
 /**
- * v3.164 직업 수 셈을 한곳에: 전직 화면 머리와 숙련 진행판이 같은 기준으로 셉니다.
+ * v3.166 직업 수 셈을 한곳에: 전직 화면 머리와 숙련 진행판이 같은 기준으로 셉니다.
  * 세는 직업 = 화면에 보이는 직업(드러난 것 · 옛 수련 제외) 가운데 해커 계열(처치 숙련 없음)을 뺀 것.
  * ‘전직해 본’은 그 직업 중 unlockedJobs에 있는 것만 셉니다. 통폐합으로 지워진 직업 id가 기록에 남아 있어도 세지 않습니다.
  */
@@ -129,7 +129,7 @@ export function jobTally(s: State) {
     const jobs = shownJobs(s).filter(j => !isHackerJob(j.id)), unlocked = new Set(s.unlockedJobs || []);
     return { jobs, total: jobs.length, unlocked: jobs.filter(j => unlocked.has(j.id)).length, mastered: jobs.filter(j => jobMastered(s, j)).length };
 }
-/** v3.164 목표 직업(직업 상세의 ‘목표로 설정’). 지워진 직업 · 옛 수련 · 지금 직업이면 없는 것으로 봅니다. */
+/** v3.166 목표 직업(직업 상세의 ‘목표로 설정’). 지워진 직업 · 옛 수련 · 지금 직업이면 없는 것으로 봅니다. */
 export function jobGoalOf(s: State) {
     const j = s.jobGoal ? jobById(s.jobGoal) : undefined;
     return j && !j.retired && j.id !== s.job ? j : undefined;

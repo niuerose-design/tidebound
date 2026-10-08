@@ -6,7 +6,7 @@
 import type { Job } from './classes';
 
 export type RoleId = 'dealer' | 'tank' | 'buffer' | 'border' | 'none';
-export type SubRoleId = 'physical' | 'magic' | 'status' | 'reflect' | 'control' | 'drain' | 'healer' | 'utility' | 'border' | 'borderBuffer' | 'borderReflect' | 'borderStand' | 'borderBuff' | 'borderHarmony' | 'morph' | 'training' | 'none';
+export type SubRoleId = 'physical' | 'magic' | 'status' | 'reflect' | 'control' | 'drain' | 'healer' | 'utility' | 'border' | 'borderBuffer' | 'borderReflect' | 'borderStand' | 'borderBuff' | 'borderHarmony' | 'borderTempo' | 'morph' | 'training' | 'none';
 export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     physical: { role: 'dealer', name: '물리 딜러' },
     magic: { role: 'dealer', name: '마법 딜러' },
@@ -28,6 +28,8 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     borderBuff: { role: 'border', name: '경계: 자기 버프 · 물리 딜러' },
     /** v3.163 조화 딜러와 회피 탱커 경계(제논: 여섯 능력치가 고를수록 세지고, 명중 · 회피 패시브로 버티며, 메가 스매셔는 회피 무시 고정 피해). */
     borderHarmony: { role: 'border', name: '경계: 조화 딜러 · 회피 탱커' },
+    /** v3.164 추가타 딜러와 가속 지원 경계(스트라이커: 추가타가 명중할 때마다 전류 자기 버프가 길어지고, 전류 중 추가타가 늘어남). */
+    borderTempo: { role: 'border', name: '경계: 추가타 딜러 · 가속 지원' },
     /** v3.163 변신 탱커(카이저: 맞을 때 충전이 쌓여 파이널 피규레이션으로 변신). */
     morph: { role: 'tank', name: '변신 탱커' },
     /** 독립 수련(계승 재료). */
@@ -37,7 +39,7 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
 
 /** 계보 기본 역할(11.6-1). 독립 수련은 training. */
 export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
-    harpoon: 'physical', tidalBrawler: 'physical', krakenkin: 'physical', ronin: 'physical', brawnFisher: 'physical', nimbleAngler: 'physical', luckyAngler: 'physical',
+    harpoon: 'physical', tidalBrawler: 'borderTempo', krakenkin: 'physical', ronin: 'physical', brawnFisher: 'physical', nimbleAngler: 'physical', luckyAngler: 'physical',
     squidJester: 'physical', spellbladeNovice: 'physical', brawnMage: 'physical', nerveNeedler: 'borderBuff', tideLancer: 'borderStand',
     tide: 'magic', chantNovice: 'magic', apprentice: 'magic', manaDevotee: 'magic',
     poisoner: 'status', shaman: 'status', bloodAngler: 'status',
@@ -57,7 +59,7 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
 /** 계보 기본값과 다른 직업(갈림길·곁가지). */
 export const ROLE_BY_JOB: Record<string, SubRoleId> = {
     oracle: 'healer', lunarOracle: 'healer', coralSaint: 'healer', tideMender: 'healer', tidalSinger: 'borderBuffer',
-    reefBrawler: 'drain', inkMime: 'utility',
+    reefBrawler: 'drain',
     glyphMonk: 'physical',
 };
 /** 직업의 세부 역할. 직업 데이터의 subRole(비밀 직업) → 직업별 덮어쓰기 → 계보 기본값 → none. */

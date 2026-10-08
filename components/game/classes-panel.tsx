@@ -18,7 +18,7 @@ const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', mastered:
  * ??? 탭도 다른 계열처럼 계보 카드만 둡니다(v3.62 문 카드 삭제).
  * v3.63 히든 직업은 숨은 조건·관문 조건을 채워 드러나기 전에는 어디에도 보이지 않고(실루엣 없음), 드러나면 ??? 탭에 나타납니다.
  *   다른 계열에 붙은 히든 직업(예: 시공의 위자드)은 드러나면 그 계보째 ??? 탭에도 나타납니다.
- * v3.164 ??? 옆 ‘외길’ 탭: 능력치 하나로 전직하는 외길 계보는 원래 계열 탭에서 빼고 따로 모읍니다(job-status.ts lineageInTab).
+ * v3.166 ??? 옆 ‘외길’ 탭: 능력치 하나로 전직하는 외길 계보는 원래 계열 탭에서 빼고 따로 모읍니다(job-status.ts lineageInTab).
  *   목표 직업(직업 상세의 ‘목표로 설정’)은 머리에 한 줄로 보이고, 항로도 · 목록 · 계보 카드에 깃발이 붙습니다.
  */
 export function Classes({ s, send, busy }: PanelProps) {
@@ -45,7 +45,7 @@ export function Classes({ s, send, busy }: PanelProps) {
     // v3.63 계보는 보이는 직업이 있을 때만 나옵니다. ??? 탭은 드러난 히든 직업이 있는 다른 계열의 계보도 모으고, 외길 탭은 외길 계보만 모읍니다.
     const tabHas = (id: JobTabId, l: { id: string; tree: string }) => lineageInTab(s, id, l);
     const lineages = LINEAGES.filter(l => tabHas(treeId, l));
-    // v3.164 머리의 직업 수는 숙련 진행판과 같은 기준(jobTally)으로 셉니다.
+    // v3.166 머리의 직업 수는 숙련 진행판과 같은 기준(jobTally)으로 셉니다.
     const tally = jobTally(s), goal = jobGoalOf(s), goalStatus = goal ? statusReader(s)(goal) : null;
     const lineage = lineages.find(l => l.id === lineageId) || null;
     const selected = jobById(selectedId) || current;

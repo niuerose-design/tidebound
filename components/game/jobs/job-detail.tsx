@@ -36,7 +36,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
     const dedicationTargets = vocationTargets(target), dedication = thresholdRank(xp, dedicationTargets);
     const bonuses = JOB_BONUS_KEYS.filter(key => hasJobBonus(j, key)), grows = bonuses.some(key => growsWithMastery(j, key)) && jobMasteryBoost(j) > 0;
     const skills = SKILLS.filter(sk => sk.job === j.id), from = crossParent(j);
-    // v3.164 목표 직업: 조건과 무관하게 찍어 두면 항로도 · 목록 · 계보 카드에 깃발이 붙고, 전직하면 저절로 내려갑니다.
+    // v3.166 목표 직업: 조건과 무관하게 찍어 두면 항로도 · 목록 · 계보 카드에 깃발이 붙고, 전직하면 저절로 내려갑니다.
     const isGoal = jobGoalOf(s)?.id === j.id;
     return <article className={`panel job-inspector job-sheet ${current ? 'current' : ''}`} aria-label={`${j.name} 상세`}>
         {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}

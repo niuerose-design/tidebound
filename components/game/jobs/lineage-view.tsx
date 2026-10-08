@@ -8,7 +8,7 @@ import { statusReader, crossParent, lineageSummary, tierLabel, jobRevealed, tree
 
 const tierRange = (tiers: number[]) => { const lo = Math.max(1, tiers[0]), hi = tiers.at(-1)!; return hi <= 0 ? '시작' : lo === hi ? `${hi}차` : `${lo}~${hi}차`; };
 
-/** v3.164 목표 깃발: 직업 상세의 ‘목표로 설정’으로 찍은 직업(s.jobGoal)에 붙습니다. */
+/** v3.166 목표 깃발: 직업 상세의 ‘목표로 설정’으로 찍은 직업(s.jobGoal)에 붙습니다. */
 const GoalFlag = () => <Flag className="job-goal-flag" size={13} aria-label="목표 직업"/>;
 
 /** ① 계보 카드(세로 목록). 계보명 · 차수 점(해금한 차수 채움) · 상태 한 줄. 목표 직업이 든 계보에는 깃발. */

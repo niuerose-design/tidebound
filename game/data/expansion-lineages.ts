@@ -64,7 +64,6 @@ export const LINEAGE_JOBS: NewJob[] = [
 
     // ── 보조: 짧은 계보에 후속 차수와 분기 ──────────────────────
     { id: 'highRoller', name: '도박왕', title: '판돈은 목숨', desc: '도박 계보의 3차 직업입니다. 올인 한 방은 체력과 마나를 걸고 때린 만큼 흡혈합니다. 패시브로 골드와 치명 피해를 올립니다. 위험이 큰 만큼 보상도 큽니다.', ...neutral, hp: 1, bonus: { attack: 33, magic: 37 }, crit: .18, ...T3, parent: 'gambler', requires: { luk: 48, dex: 36 }, requiresSkillMastery: { loadedHook: 3 }, role: '치명·경제', tree: 'support', penalties: { accuracy: -.04 } },
-    { id: 'inkMime', name: '먹물 광대', title: '보이지 않는 손', desc: '광대 계보의 2차 직업입니다. 스모크 스크린으로 상대를 약화시키고, 패시브로 회피와 속도를 올립니다.', ...neutral, bonus: { attack: 22, magic: 12 }, crit: .08, ...T2, parent: 'squidJester', requires: { dex: 30, luk: 24 }, requiresSkillMastery: { inkTrick: 2 }, role: '약화·회피', tree: 'support' },
     { id: 'treasureDiver', name: '보물 잠영가', title: '가장 깊은 상자를 연다', desc: '보유 골드 1%(최대 물리 공격 × 0.4)를 태우는 새비지 블로우와 처치 골드 · 두 방어를 올리는 메소 가드를 가진 3차 직업입니다.', ...neutral, bonus: { attack: 47, hp: 15 }, crit: .1, ...T3, parent: 'rareTracker', requires: { dex: 44, luk: 42 }, requiresSkillMastery: { rareSense: 3 }, role: '골드 연소 · 치명', tree: 'support' },
     { id: 'tradePrince', name: '무역 군주', title: '바다의 모든 항구가 내 장부', desc: '경제 계보의 환생 후 3차 직업입니다. 배틀쉽 봄버 주문을 쓰고, 패시브로 골드와 던전 골드를 올립니다.', ...neutral, bonus: { attack: 17, magic: 65, hp: 75, resist: 3 }, crit: .06, ...T3, rebirth: 1, parent: 'memoryMerchant', requires: { luk: 48, int: 34 }, requiresSkillMastery: { goldMemory: 3 }, role: '골드·경제', tree: 'support' },
     { id: 'harborBroker', name: '항구 중개상', title: '흥정은 싸움이다', desc: '경제 계보의 2차 직업입니다. 흥정 갈고리로 상대를 약화시키고, 패시브로 골드와 명중을 올립니다.', ...neutral, bonus: { attack: 19, magic: 14 }, crit: .05, ...T2, parent: 'salvageMerchant', requires: { luk: 28, int: 22 }, requiresSkillMastery: { salvageContract: 2 }, role: '골드·약화', tree: 'support' },
@@ -172,8 +171,6 @@ export const LINEAGE_SKILLS: Skill[] = [
     // 보조
     { ...A, ...physical, id: 'allIn', name: '올인', desc: '', level: 40, job: 'highRoller', chance: .26, cooldown: 4, multiplier: 2, cost: 4, effect: 'drain', drainRatio: .15 },
     { ...P, id: 'jackpot', name: '한탕', desc: '골드 획득과 치명 피해가 오릅니다.', level: 40, job: 'highRoller', cost: 3, bonus: { goldBonus: .12, critDamage: .15 } },
-    { ...A, ...physical, id: 'smokeVeil', name: '연막 찌르기', desc: '', level: 25, job: 'inkMime', chance: .27, cooldown: 3, multiplier: 1.35, cost: 3, effect: 'weaken' },
-    { ...P, id: 'slipperyStep', name: '미끄러운 발', desc: '회피와 속도가 오릅니다.', level: 25, job: 'inkMime', cost: 2, bonus: { evasion: .06, speed: 5 } },
     { ...A, ...physical, id: 'spoilsStrike', name: '전리품 일격', desc: '', level: 40, job: 'treasureDiver', chance: .26, cooldown: 4, multiplier: 1.9, cost: 4 },
     { ...P, id: 'deepSalvage', name: '난파선 인양', desc: '처치 골드와 두 방어가 오릅니다.', level: 40, job: 'treasureDiver', cost: 3, bonus: { goldBonus: .15, defense: 20, resist: 20 } },
     { ...A, ...magic, id: 'coinBarrage', name: '금화 폭풍', desc: '', level: 40, job: 'tradePrince', chance: .5, cooldown: 4, multiplier: 2.1, cost: 4, manaCost: 18 },

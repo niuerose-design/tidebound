@@ -67,8 +67,8 @@ test('v3.63 hidden jobs stay out of sight until revealed, then show up in the ??
     const t = newState(0); t.unlockedJobs.push('poorMonk'); assert.equal(ui.inMysteryTab(t, { id: 'saltWarden', tree: 'defense' }), true);
 });
 
-// v3.164 외길 탭 · 직업 수 셈 통일 · 목표 직업
-test('Job UI v3.164: monostat lineages sit in the 외길 tab and leave their original tree tab', async () => {
+// v3.166 외길 탭 · 직업 수 셈 통일 · 목표 직업
+test('Job UI v3.166: monostat lineages sit in the 외길 tab and leave their original tree tab', async () => {
     const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
     const { LINEAGES, lineageOf } = await load('game/data/classes.js'), { MONOSTAT_LINEAGES } = await load('game/data/expansion-monostat.js');
     assert.equal(ui.JOB_TABS.at(-1).id, 'monostat', 'the 외길 tab comes right after ???');
@@ -90,7 +90,7 @@ test('Job UI v3.164: monostat lineages sit in the 외길 tab and leave their ori
     assert.ok(ui.tabJobCount(s, 'monostat') >= MONOSTAT_LINEAGES.length * 3);
 });
 
-test('Job UI v3.164: the classes header and the mastery board count jobs from one tally', () => {
+test('Job UI v3.166: the classes header and the mastery board count jobs from one tally', () => {
     const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
     const t0 = ui.jobTally(s);
     assert.ok(t0.total > 100 && t0.jobs.every(j => ui.jobRevealed(s, j)), 'only shown jobs');
@@ -106,7 +106,7 @@ test('Job UI v3.164: the classes header and the mastery board count jobs from on
     assert.equal(t1.mastered, t0.mastered + 1); assert.equal(t1.total, t0.total, 'the denominator is shared');
 });
 
-test('Job UI v3.164: a job goal is set from the detail sheet, flagged, and dropped on arrival', () => {
+test('Job UI v3.166: a job goal is set from the detail sheet, flagged, and dropped on arrival', () => {
     const s = newState(0); s.level = 30; s.lastTick = at(2026, 10, 1, 12);
     assert.equal(ui.jobGoalOf(s), undefined);
     act(s, { type: 'jobGoal', id: 'tide' }, 0);

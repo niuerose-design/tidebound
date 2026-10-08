@@ -34,7 +34,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     vitalSurge: { chance: .25, multiplier: 1.65, balanceBonus: .3 },
     // v27.5 망인 계보 계승 가치: 다크 엘리멘트 AP 4→2·대기 3, 쉐도우 배트 발동 34%·×1.9·AP 3. 같은 차수 기술 중 꼴찌였습니다.
     // v27.4 유리 대포(제약 직업): 240%·빈사 +50%.
-    wakeFist: { chance: .26, multiplier: 1.45 },
+    wakeFist: { chance: .26, multiplier: 1.3, extraAttacks: 1, extraAttackMultiplier: .5 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
     greenTide: { chance: .55, multiplier: 1.3, manaCost: 11, healRatio: .16 },
     inkTrick: { chance: .26, multiplier: 1.1 },
@@ -78,7 +78,7 @@ for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE }
  * - 1~3차 연계 공격기는 상태이상 없이 피해만 줍니다(같은 계보의 보조기로 상태를 겁니다).
  */
 const STATUS_ONLY_SKILLS = ['anchor', 'curseBolt', 'cut', 'gashHook', 'hushCurrent', 'inkTrick', 'palmStrike', 'rippleGlyph', 'runeHammer', 'shieldBash', 'venomDart',
-    'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'smokeVeil', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
+    'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'bulwarkSlam', 'needleStep',
     'quakeStep', 'sealHex', 'driftwoodShove', 'currentJam', 'netThrow', 'oathShout', 'rottenBait', ...V25_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, poison: 4, burn: 3, weaken: 3, silence: 2, slow: 3, corrode: STATUS_TUNING.corrodeTurns };

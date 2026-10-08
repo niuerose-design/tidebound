@@ -28,7 +28,7 @@ export function MasteryBoard({ s, setView }: { s: State; setView: (v: string) =>
     const [filter, setFilter] = useState<Filter>('todo');
     const unlocked = new Set(s.unlockedJobs || []);
     // v3.63 드러나지 않은 히든 직업은 진행판에도 나오지 않습니다(개수에도 넣지 않음). 해커 계열은 처치 숙련이 없어 뺍니다.
-    // v3.164 세는 기준은 전직 화면 머리와 같습니다(jobs/job-status.ts jobTally).
+    // v3.166 세는 기준은 전직 화면 머리와 같습니다(jobs/job-status.ts jobTally).
     const tally = jobTally(s), board = tally.jobs;
     const vocation = board.reduce((a, j) => a + thresholdRank(s.jobMastery?.[j.id] || 0, vocationTargets(jobMasteryTarget(j))), 0);
     const shown = (j: Job) => filter === 'all' || (filter === 'done') === jobMastered(s, j);
