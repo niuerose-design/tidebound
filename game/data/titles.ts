@@ -18,6 +18,7 @@ export const TITLES: TitleDef[] = [
     { id: 'hpmax:200000', name: '거산', desc: '최대 체력 200,000', group: '도전', achievement: 'hpmax:200000' },
     { id: 'manamax:50000', name: '마나의 샘', desc: '최대 마나 50,000', group: '도전', achievement: 'manamax:50000' },
     { id: 'deaths:100', name: '일곱 번 넘어진 자', desc: '쓰러짐 100회', group: '도전', achievement: 'deaths:100' },
+    { id: 'reenlist:1', name: '🎖 다시 입대한 자', desc: '중장에서 재입대', group: '도전', achievement: 'reenlist:1' },
     { id: 'onyx:7', name: '◆ 칠흑보다 어두운 자', desc: '칠흑 장신구 7종 보유', group: '사냥', achievement: 'onyx:7' },
     { id: 'star:22', name: '★ 별을 다 채운 자', desc: '장비 하나를 22성까지 강화', group: '강화', achievement: 'star:22' },
     { id: 'starDestroy:50', name: '☆ 별이 부서져도', desc: '강화로 장비 50개를 잃고도 계속 두드림', group: '강화', achievement: 'starDestroy:50' },

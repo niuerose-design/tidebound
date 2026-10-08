@@ -30,6 +30,8 @@ export const MIMIC = {
     ],
 } as const;
 /** v3.31 행운의 편지 6~10단계(승천 후) 기능. */
+/** v3.160 호루라기: SP를 내고 다음 사냥터 출현을 숙련의 까미 · 경험의 누리로 정합니다(하루 perDay개, 던전 · 랜덤게임 제외). docs/currency-rank-review.md 1.4절. */
+export const WHISTLE = { sp: 5, perDay: 3 } as const;
 export const LETTER = { offlineRank: 6, offlineScale: .5, jackpotRank: 8, /** v3.52 값은 서버 전용(odds). */ get jackpotChance() { return ODDS.mimic.letterJackpot; }, recipientRank: 10, recipientShare: .01 } as const;
 type LetterState = { permanent?: Record<string, number> };
 export const letterRank = (s?: LetterState) => s?.permanent?.messageBottle || 0;

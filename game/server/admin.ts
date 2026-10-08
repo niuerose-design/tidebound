@@ -9,7 +9,7 @@ import { allow, clientIp } from './throttle';
 import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
-import { RANKS, RANK_PERKS, rankIndex, rankOf, rankState, rankPerkLevel, rankPointsFree } from '../data/rank';
+import { RANKS, RANK_PERKS, rankIndex, rankTitle, rankState, rankPerkLevel, rankPointsFree } from '../data/rank';
 import { FIRST_CLEAR_SP } from '../data/achievements';
 import { DUNGEONS, STAGES } from '../data/world';
 import { PROGRESSION } from '../data/progression';
@@ -53,7 +53,7 @@ const lifeView = (s: State, at: number) => {
 };
 const view = (id: string, username: string, revision: number, updatedAt: number, s: State): AdminPlayer => {
     const [, slot] = id.split('#');
-    return { id, username, slot: Number(slot || 1), name: s.name, level: s.level, job: jobById(s.job)?.name || s.job, rank: rankOf(s).name, rebirths: s.rebirths || 0, pearls: s.pearls || 0, gold: Math.floor(s.gold || 0), sp: spView(s), inDungeon: !!s.dungeon, revision, updatedAt, ...lifeView(s, updatedAt) };
+    return { id, username, slot: Number(slot || 1), name: s.name, level: s.level, job: jobById(s.job)?.name || s.job, rank: rankTitle(s), rebirths: s.rebirths || 0, pearls: s.pearls || 0, gold: Math.floor(s.gold || 0), sp: spView(s), inDungeon: !!s.dungeon, revision, updatedAt, ...lifeView(s, updatedAt) };
 };
 
 /** 모험가 이름(부분 일치) 또는 로그인 아이디(정확히)로 찾습니다. 최대 30명. */

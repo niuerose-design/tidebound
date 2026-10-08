@@ -22,7 +22,10 @@ import { jobMastered, canChangeJob, canUse, grantJobSkills, trimLoadout } from '
 import { STAGES } from '../../data/world';
 import { VOW_IDS, VOW_NAMES, LEVELED_VOWS, type VowId, breathBonus, cleanVows, hasVows, vowUnlocked } from '../vows';
 import { claimAchievements, rerollBoardGoal } from '../progress';
-import { goalText } from '../../data/goals';
+import { goalText, dayKey } from '../../data/goals';
+import { MIMIC, WHISTLE } from '../../data/mimic';
+import { EXP_NURI } from '../../data/exp-nuri';
+import { RANKS, isTopRank, reenlistCount, REENLIST_BONUS_POINTS } from '../../data/rank';
 
 /**
  * 새 생을 시작합니다. 환생과 소프트 리셋이 같은 초기화 범위를 씁니다(레벨·골드·일반 장비·직업·능력치 배분).
@@ -189,6 +192,30 @@ export function ascend(s: State, now: number) {
     addLog(s, `승천 · 업적 보상 다시 지급 · 세계석 +${refund.pearls} · SP +${refund.sp} · 편의 연구 자동 해제`, 'reward');
 }
 export const lifecycleActions: ActionHandlers = {
+    /** v3.160 호루라기: SP를 내고 다음 사냥터 출현을 숙련의 까미(mimic) · 경험의 누리(nuri)로 정합니다. 하루 WHISTLE.perDay개, 던전 밖에서만. */
+    whistle(s, { id, now }) {
+        if (id !== 'mimic' && id !== 'nuri') throw Error('숙련의 까미 또는 경험의 누리를 고르세요.');
+        if (s.dungeon) throw Error('던전에서 나온 뒤 불 수 있습니다.');
+        if (s.whistle) throw Error('이미 호루라기를 불었습니다. 다음 출현을 기다리세요.');
+        const day = dayKey(now), used = s.whistleDay?.key === day ? s.whistleDay.used : 0;
+        if (used >= WHISTLE.perDay) throw Error(`호루라기는 하루 ${WHISTLE.perDay}번까지입니다.`);
+        if (id === 'mimic' && !(s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills)) throw Error(`숙련의 까미는 Lv.${MIMIC.minLevel} · 누적 처치 ${MIMIC.minKills.toLocaleString()}마리부터 부를 수 있습니다.`);
+        if (id === 'nuri' && !(s.level >= EXP_NURI.minLevel && s.kills >= EXP_NURI.minKills)) throw Error(`경험의 누리는 Lv.${EXP_NURI.minLevel} · 누적 처치 ${EXP_NURI.minKills.toLocaleString()}마리부터 부를 수 있습니다.`);
+        if (s.sp < WHISTLE.sp) throw Error(`SP가 부족합니다(필요 ${WHISTLE.sp}).`);
+        s.sp -= WHISTLE.sp;
+        s.whistle = id;
+        s.whistleDay = { key: day, used: used + 1 };
+        const name = id === 'mimic' ? '숙련의 까미' : '경험의 누리';
+        addLog(s, `호루라기 · 다음 사냥터 출현에 ${name}이(가) 나타납니다 · SP -${WHISTLE.sp} (오늘 ${used + 1} / ${WHISTLE.perDay})`, 'reward');
+    },
+    /** v3.160 재입대: 중장에서 계급을 이등병으로 되돌리고 재입대 횟수만큼 진급 포인트를 영구로 더 받습니다. 특전은 초기화(포인트는 새 계급 기준으로 다시 찍음). */
+    reenlist(s) {
+        if (!isTopRank(s)) throw Error(`${RANKS.at(-1)!.name}에서만 재입대할 수 있습니다.`);
+        if (s.running || s.dungeon) throw Error('자동 사냥을 멈추고 던전에서 나온 뒤 재입대하세요.');
+        const n = reenlistCount(s) + 1;
+        s.rank = { exp: 0, perks: {}, reenlist: n };
+        addLog(s, `✦ 재입대 ${n}회 · 계급이 ${RANKS[0].name}으로 돌아가고 진급 포인트 +${REENLIST_BONUS_POINTS}(영구, 합계 +${n * REENLIST_BONUS_POINTS}). 특전은 다시 찍으세요.`, 'reward');
+    },
     /** v3.31 승천. */
     ascend(s, { now }) { ascend(s, now); },
     rebirth(s, { now }) { rebirthNow(s, now); },

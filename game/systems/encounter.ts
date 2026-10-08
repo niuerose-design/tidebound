@@ -185,6 +185,11 @@ export function specialChances(s: State) {
     const nuriP = nuriOk ? nuriChance(tier) * (s.catchingUp ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
     return { rolls: mimicOk || nuriOk, mimicP, nuriP };
 }
+/** v3.160 호루라기: 사냥터 출현(던전 · 랜덤게임 제외)에 한 번 쓰고 지웁니다. */
+export function takeWhistle(s: State): ForcedRare | undefined {
+    if (!s.whistle || s.dungeon) return undefined;
+    const kind = s.whistle; delete s.whistle; return kind;
+}
 export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     // v27.86 랜덤게임: 해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다.
     if (inRandomGame(s)) return spawnRandomGame(s, rng);

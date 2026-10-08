@@ -13,7 +13,7 @@ import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
 import { canUse, lazySkillMasteryRanks, lazyRefinePractices, extraRollLevel } from './progression';
 import { addLog, endRun } from './state';
-import { spawn, reward, releaseLegacySeal, gainLevels, enemyLabel } from './encounter';
+import { spawn, takeWhistle, reward, releaseLegacySeal, gainLevels, enemyLabel } from './encounter';
 import { inRandomGame, loseRandomGame } from './random-game';
 import { deathRecoveryTurns, deathExpLoss } from '../data/sprout';
 import { profile } from '../data/encounters';
@@ -89,7 +89,7 @@ function tickTurn(s: State, rng: () => number) {
         return;
     }
     if (!s.enemy)
-        spawn(s, rng);
+        spawn(s, rng, takeWhistle(s));
     const e = s.enemy!;
     const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
