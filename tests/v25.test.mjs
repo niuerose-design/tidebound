@@ -1116,7 +1116,7 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
         await Alt.syncAltarStatus(a, now + 20, 'p1'); assert.equal(a.gold - gold, A.RAIDS[0].reward.gold, 'paid once');
         const bg = b.gold, bp = b.pearls; await Alt.syncAltarStatus(b, now + 10, 'p2'); assert.equal(b.pearls - bp, A.RAIDS[0].reward.pearls + A.RAIDS[0].slayer.pearls, 'slayer bonus'); assert.equal(b.gold - bg, A.RAIDS[0].reward.gold);
         const c = newState(now); const cg = c.gold; await Alt.syncAltarStatus(c, now + 10, 'p3'); assert.equal(c.gold, cg, 'non-participants get nothing'); assert.equal(c.altar.raidClaimedBy.balrog, row.gen);
-        const gauges = await database.listAltarGauges(); assert.ok(gauges.some(g => g.id === 'gold' && g.until > now) && gauges.some(g => g.id === 'exp' && g.until > now), 'kill opens the blessings');
+        const gauges = await database.listAltarGauges(); assert.ok(!gauges.some(g => (g.id === 'gold' || g.id === 'exp') && g.until > now), 'v3.193 a kill opens no blessing');
     } finally { try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
 
