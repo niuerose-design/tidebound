@@ -23,8 +23,7 @@ import { STAGES } from '../../data/world';
 import { VOW_IDS, VOW_NAMES, LEVELED_VOWS, type VowId, breathBonus, cleanVows, hasVows, vowUnlocked } from '../vows';
 import { claimAchievements, rerollBoardGoal } from '../progress';
 import { goalText, dayKey } from '../../data/goals';
-import { MIMIC, WHISTLE } from '../../data/mimic';
-import { EXP_NURI } from '../../data/exp-nuri';
+import { WHISTLE, whistleTarget, whistleOk } from '../../data/whistle';
 import { RANKS, isTopRank, reenlistCount, REENLIST_BONUS_POINTS } from '../../data/rank';
 
 /**
@@ -194,19 +193,19 @@ export function ascend(s: State, now: number) {
 export const lifecycleActions: ActionHandlers = {
     /** v3.160 호루라기: SP를 내고 다음 사냥터 출현을 숙련의 까미(mimic) · 경험의 누리(nuri)로 정합니다. 하루 WHISTLE.perDay개, 던전 밖에서만. */
     whistle(s, { id, now }) {
-        if (id !== 'mimic' && id !== 'nuri') throw Error('숙련의 까미 또는 경험의 누리를 고르세요.');
+        // v3.162 정수의 슬라임 추가. 대상 표는 game/data/whistle.ts.
+        const target = whistleTarget(id);
+        if (!target) throw Error('숙련의 까미 · 경험의 누리 · 정수의 슬라임 중에서 고르세요.');
         if (s.dungeon) throw Error('던전에서 나온 뒤 불 수 있습니다.');
         if (s.whistle) throw Error('이미 호루라기를 불었습니다. 다음 출현을 기다리세요.');
         const day = dayKey(now), used = s.whistleDay?.key === day ? s.whistleDay.used : 0;
         if (used >= WHISTLE.perDay) throw Error(`호루라기는 하루 ${WHISTLE.perDay}번까지입니다.`);
-        if (id === 'mimic' && !(s.level >= MIMIC.minLevel && s.kills >= MIMIC.minKills)) throw Error(`숙련의 까미는 Lv.${MIMIC.minLevel} · 누적 처치 ${MIMIC.minKills.toLocaleString()}마리부터 부를 수 있습니다.`);
-        if (id === 'nuri' && !(s.level >= EXP_NURI.minLevel && s.kills >= EXP_NURI.minKills)) throw Error(`경험의 누리는 Lv.${EXP_NURI.minLevel} · 누적 처치 ${EXP_NURI.minKills.toLocaleString()}마리부터 부를 수 있습니다.`);
+        if (!whistleOk(s, target)) throw Error(`${target.name}은(는) Lv.${target.minLevel} · 누적 처치 ${target.minKills.toLocaleString()}마리부터 부를 수 있습니다.`);
         if (s.sp < WHISTLE.sp) throw Error(`SP가 부족합니다(필요 ${WHISTLE.sp}).`);
         s.sp -= WHISTLE.sp;
-        s.whistle = id;
+        s.whistle = target.id;
         s.whistleDay = { key: day, used: used + 1 };
-        const name = id === 'mimic' ? '숙련의 까미' : '경험의 누리';
-        addLog(s, `호루라기 · 다음 사냥터 출현에 ${name}이(가) 나타납니다 · SP -${WHISTLE.sp} (오늘 ${used + 1} / ${WHISTLE.perDay})`, 'reward');
+        addLog(s, `호루라기 · 다음 사냥터 출현에 ${target.name}이(가) 나타납니다 · SP -${WHISTLE.sp} (오늘 ${used + 1} / ${WHISTLE.perDay})`, 'reward');
     },
     /** v3.160 재입대: 중장에서 계급을 이등병으로 되돌리고 재입대 횟수만큼 진급 포인트를 영구로 더 받습니다. 특전은 초기화(포인트는 새 계급 기준으로 다시 찍음). */
     reenlist(s) {
