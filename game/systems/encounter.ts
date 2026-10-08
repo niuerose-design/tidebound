@@ -20,7 +20,7 @@ import { roughHeal } from './vows';
 import { sproutHeal } from '../data/sprout';
 import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
 import type { State, Item, Stats, Enemy } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, DUNGEON_TUNING } from '../data/balance';
+import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, DUNGEON_TUNING, BOSS_PRESSURE_WAVE } from '../data/balance';
 import { FISH, STAGES, DUNGEONS, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatFish, tideLiftFish, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth } from '../data/world';
 import { jobById } from '../data/classes';
 import { HACKER_ID } from '../data/hacker';
@@ -247,7 +247,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     // v27.67 레벨이 올라간 몬스터는 사냥터 평균 보상 배율로 나눠 사냥터 사이 보상을 맞춥니다(stageRewardNorm). 일반 사냥터는 stageField(도감과 공용).
     const field = !dungeon && !rare ? stageField(s, st.id, f.id, tier).field : normalDungeon ? tideLiftFish(f, tier, s.level) : f;
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
-        : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
+        : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: boss ? BOSS_PRESSURE_WAVE : s.dungeon.wave } : {}) });
     const base = dungeon ? dungeonCatchReward(field, dLevel, tier, boss, dungeon.id) : catchReward(field, tier, boss);
     // v3.9 깊이 계수(뒤 사냥터·던전일수록 조금 더 어렵고 더 줌). 무릉도장·랜덤게임·까미·누리는 1.
     applyDepth(foe, base, dungeon ? dungeonDepth(dungeon.id) : stageDepth(st.id));

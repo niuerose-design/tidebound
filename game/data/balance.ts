@@ -78,6 +78,8 @@ export const stackPenetration = (a: number, b: number) => b >= 0 ? 1 - (1 - a) *
  * 하나하나는 작지만 모을수록 보스전에서 크게 붙습니다. 지속 피해(출혈 · 중독 · 화상)에는 붙지 않습니다(틱은 보정 전 위력 기준).
  */
 export const stackBossDamage = (a: number, b: number) => b >= 0 ? (1 + a) * (1 + b) - 1 : a + b;
+/** v3.190 던전 보스는 웨이브 수와 무관하게 마지막 단계 압박(BOSS_PRESSURE_WAVE)을 받습니다(지역 던전이 2연전으로 줄어도 보스 세기는 그대로). */
+export const BOSS_PRESSURE_WAVE = 4;
 export function dungeonPressure(wave: number) {
     const index = Math.max(0, Math.min(4, wave));
     return { hp: 1.3 + index * .08, attack: 1.12 + index * .05, defense: 1.08 + index * .04 };

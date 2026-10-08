@@ -29,7 +29,7 @@ const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.index
 const ONLY = arg('--only'), SEEDS = Number(arg('--seeds', 2)), BORROW = !process.argv.includes('--own');
 const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion,curseQueen,lifeOcean').split(',');
 const REBIRTHS = arg('--rebirths') ? arg('--rebirths').split(',').map(Number) : null;
-const MAX_TURNS = 400, WAVES = 5;
+const MAX_TURNS = 400;
 // 실험 플래그(게임 데이터는 그대로, 측정에만 적용): --hell-tier N · --nightmare-tier N(던전 난이도), --boss-hp f(일반 던전 보스 체력 배율),
 // --entry '{"caldera":1}'(입장 환생 바꿔 재기), --abyss '{"hp":60000,"attack":3}'(무릉 1층 기준), --onyx-hp '{"onyxDusk":800}'(칠흑 체력 배율), --raid-hp '{"zakum":3e9}'(월드보스 체력).
 const J = (k, d) => arg(k) ? JSON.parse(arg(k)) : d;
@@ -58,21 +58,22 @@ const fishOf = id => FISH.find(f => f.id === id);
 const out = { bodies: {}, dungeon: [], onyx: [], raid: [] };
 
 // ── 던전 ──────────────────────────────────────────────────────────────────────────────────────
-/** 한 몸으로 던전 한 번: 5연전, 체력 · 마나 · 대기 이어짐(check-tier5 규칙). 보스 판은 따로 턴을 셉니다. */
+/** 한 몸으로 던전 한 번: 지역 던전 2연전(v3.190) · 무릉도장 5연전, 체력 · 마나 · 대기 이어짐(check-tier5 규칙). 보스 판은 따로 턴을 셉니다. */
 function dungeonRun(s, st, d, tier, seed) {
     const rng = random(seed * 977 + d.id.length), cd = {}; let hp = st.hp, mana = st.mana, ok = true, w = 0, turns = 0, bossTurns = 0, bossHpLeft = 0;
     const level = d.id === 'abyss' ? d.level : d.level;
-    for (; w < WAVES && ok; w++) {
-        const last = w === WAVES - 1, id = last && d.bossFish ? d.bossFish : d.fish[w], f0 = fishOf(id);
+    const waves = d.fish.length;
+    for (; w < waves && ok; w++) {
+        const last = w === waves - 1, id = last && d.bossFish ? d.bossFish : d.fish[w], f0 = fishOf(id);
         const f = d.id === 'abyss' ? f0 : tideLiftFish(f0, tier, s.level);
-        const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), 1, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: w });
+        const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), 1, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: last ? 4 : w });
         if (last && d.id !== 'abyss' && BOSS_HP !== 1) est.hp = Math.round(est.hp * BOSS_HP);
         const a = player(s, st, hp, mana, cd), b = foeOf({ ...f, level: f.level }, est, { boss: last }), r = fight(a, b, rng);
         ok = r.won; hp = a.hp; mana = a.mana; turns += r.turns;
         if (last) { bossTurns = r.turns; bossHpLeft = Math.max(0, b.hp) / est.hp; }
     }
     void level;
-    return { cleared: ok ? 1 : (w - 1) / WAVES, turns, bossTurns: ok ? bossTurns : null, bossHpLeft, hpLeft: ok ? Math.max(0, hp) / st.hp : 0, died: ok ? 0 : 1 };
+    return { cleared: ok ? 1 : (w - 1) / waves, turns, bossTurns: ok ? bossTurns : null, bossHpLeft, hpLeft: ok ? Math.max(0, hp) / st.hp : 0, died: ok ? 0 : 1 };
 }
 function measureDungeons() {
     const rows = [];

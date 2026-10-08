@@ -296,8 +296,9 @@ test('v27.26 restartLife resets this life only: rebirths, pearls, relics, resear
 });
 
 test('v3.188 dungeons pay no kill rewards and a fixed dungeon coin per clear; the coin shop sells onyx, gear boxes and the hunter imprint',async()=>{
+ const W=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
  const {restartLife}=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/actions/lifecycle');
- const clear=(mode,depth)=>{const s=newState(0);s.level=40;s.rebirths=10;s.running=true;const id=depth?'abyss':'grotto';const len=depth?5:5;s.dungeon={id,wave:len-1,...(depth?{depth}:{}),...(mode?{mode}:{})};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:50,gold:50,boss:true,stun:0};const gold=s.gold,exp=s.exp,inv=s.inventory.length;let g=0;while(s.enemy&&g++<50)tick(s,()=>.5);return {s,gold:s.gold-gold,exp:s.exp-exp,inv:s.inventory.length-inv};};
+ const clear=(mode,depth)=>{const s=newState(0);s.level=40;s.rebirths=10;s.running=true;const id=depth?'abyss':'grotto';const len=W.DUNGEONS.find(d=>d.id===id).fish.length;s.dungeon={id,wave:len-1,...(depth?{depth}:{}),...(mode?{mode}:{})};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:50,gold:50,boss:true,stun:0};const gold=s.gold,exp=s.exp,inv=s.inventory.length;let g=0;while(s.enemy&&g++<50)tick(s,()=>.5);return {s,gold:s.gold-gold,exp:s.exp-exp,inv:s.inventory.length-inv};};
  const n=clear();assert.equal(n.gold,0,'no kill or clear gold');assert.equal(n.exp,0,'no kill exp');assert.equal(n.inv,0,'no repeat drop');assert.equal(n.s.dungeonCoins,1,'normal clear = 1 coin');assert.equal(n.s.clears.grotto,2);
  assert.equal(clear('hell').s.dungeonCoins,3);assert.equal(clear('nightmare').s.dungeonCoins,6);assert.equal(clear(undefined,12).s.dungeonCoins,2,'Mu Lung floor 12 = 1 + 1');
  const s=newState(0);s.level=40;s.dungeonCoins=0;
@@ -323,4 +324,11 @@ test('v3.189 coin shop quality goods: one option line to 100%, or 120–150% eve
  s.dungeonCoins=5000;assert.throws(()=>act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0),/옵션 칸/,'already at 100%');
  act(s,{type:'dungeonShop',id:'quality120',value:'q1|0'},0,()=>.5);assert.equal(s.dungeonCoins,1000);assert.ok(q()>=1.34&&q()<=1.36,`midpoint 135% (${q()})`);
  s.dungeonCoins=4000;assert.throws(()=>act(s,{type:'dungeonShop',id:'quality120',value:'q1|0'},0),/옵션 칸/,'already above 120%');
+});
+
+test('v3.190 regional dungeons are one trash wave + boss; the boss keeps the last-wave pressure; Mu Lung stays five fights',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),W=await L.load('data/world'),E=await L.load('data/encounters'),B=await L.load('data/balance');
+ for(const d of W.PLAIN_DUNGEONS)assert.equal(d.fish.length,d.id==='abyss'?5:2,d.id);
+ const s=newState(0);s.level=30;s.running=true;act(s,{type:'dungeon',id:'grotto'},0);s.recovery=0;s.dungeon.wave=1;s.enemy=null;tick(s,()=>.9999);
+ const boss=W.FISH.find(f=>f.id==='grottoWarden');assert.equal(s.enemy.maxHp,E.scaledEnemyStats(boss,{boss:true,wave:B.BOSS_PRESSURE_WAVE}).hp);
 });
