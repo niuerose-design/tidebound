@@ -6,7 +6,7 @@
 //   던전    사냥터 난이도 × 2에서 쉬지 않고 5연전(마지막 보스, 체력·마나 이어짐, 웨이브마다 압박) — 넘긴 판 · 쓴 턴 · 남은 체력
 //   보스    사냥터 보스(진 에르다, 보스 배율) 1:1 — 처치 턴 · 승률
 //   월드보스 혼테일과 80턴(서버 규칙 그대로) — 깎은 체력
-// 값은 5차 중앙값 = 1.00인 비율(턴은 적을수록 좋아 역수). 사용: node scripts/check-tier5.mjs [--tier N] [--seeds N] [--rarity N] [--star N] [--json 파일]
+// 값은 5차 중앙값 = 1.00인 비율(턴은 적을수록 좋아 역수). 사용: node scripts/check-tier5.mjs [--tier N] [--seeds N] [--rarity N] [--star N] [--gold N] [--json 파일]
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
@@ -33,6 +33,7 @@ const SEEDS = Number(arg('--seeds', 20)), TIER = Number(arg('--tier', 30)), RARI
 // 연구: 그 환생까지의 세계석 예산으로 산 단계(scripts/lib/research-budget.mjs, 직업의 주 공격 종류만 다르고 단계는 같아 직업 사이 공정).
 // 전에는 공격 150 · 체력 150 … 고정표였는데 그 비용(약 1억 개)은 벌 수 없는 양이라 실제 몸보다 공격 ×3 강했습니다(docs/research-review.md).
 // v3.83 --level · --rebirths · --research(예산 배율, 1 = 기준 · 0 = 연구 없음) · --job-tier · --raid로 다른 몸(예: 환생 0 · 50)과 월드보스를 잽니다.
+const GOLD = Number(arg('--gold', 0)); // v3.157 보유 골드(섀도어 메소 익스플로전이 태움). 0이면 전처럼 아무것도 태우지 않음.
 const LEVEL = Number(arg('--level', 100)), REBIRTHS = Number(arg('--rebirths', 100)), JOB_TIER = Number(arg('--job-tier', 5)), RESEARCH_SCALE = Number(arg('--research', 1));
 const { researchByBudget } = await researchBudgetTools({ load });
 const RESEARCH_BY_MAIN = Object.fromEntries(['attack', 'magicAttack', 'both'].map(m => [m, researchByBudget(REBIRTHS, m, undefined, RESEARCH_SCALE)]));
@@ -96,7 +97,7 @@ function body(j) {
     return s;
 }
 // v3.86 재사용 대기(각성기 포함)는 게임처럼 사냥 중 다음 몬스터로, 던전은 다음 판으로 이어집니다(cooldowns를 넘겨 공유).
-const player = (st, s, hp = st.hp, mana = st.mana, cooldowns = {}) => ({ name: 'player', stats: st, hp, mana, skills: s.skills, cooldowns, extraRolls: EXTRA, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice });
+const player = (st, s, hp = st.hp, mana = st.mana, cooldowns = {}) => ({ name: 'player', stats: st, hp, mana, gold: GOLD, skills: s.skills, cooldowns, extraRolls: EXTRA, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice });
 function foe(id, { swarm = 1, boss = false, wave, tier = TIER } = {}) {
     const base = monsterDef(scaledEnemyStats(FISH.find(f => f.id === id), { tier, boss, ...(wave !== undefined ? { wave } : {}) }), tier);
     const st = swarm > 1 ? { ...base, hp: Math.round(base.hp * swarmHpMultiplier(swarm)), attack: Math.round(base.attack * swarmAttackMultiplier(swarm)), magic: Math.round((base.magic ?? base.attack) * swarmAttackMultiplier(swarm)) } : base;

@@ -15,7 +15,8 @@ export function skillBonusText(key: string, value: number) {
     return `${STAT_LABELS[key as keyof Stats] || key} ${statDeltaDisplay(key, value)}`;
 }
 const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '던전 클리어·보스 처치', species: '지정 몬스터 처치', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업', variant: '변종·황금 처치', deaths: '쓰러진 횟수', turns: '보낸 턴', str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
-const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록' };
+const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록', relic: '렐릭의 힘(경험치 보너스)' };
+const goldCapText = (g: NonNullable<Skill['goldSpend']>, magic: boolean) => [g.capAttack ? `${magic ? '마법' : '물리'} 공격 × ${number(g.capAttack)}` : '', g.cap ? g.cap.toLocaleString() : ''].filter(Boolean).join(' · ');
 const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속', corrode: '부식' };
 /** 기술이 거는 상태이상 이름(출혈 계열은 화상·중독 같은 고유 이름). */
 /** v27.15 도감의 적 스킬 한 줄: '물리 150%' · '출혈 5턴' · '물리 110% · 자신 가속 3턴'. 긴 문장은 쓰지 않습니다. */
@@ -61,6 +62,7 @@ export function skillBrief(sk: Skill): string {
         if (sk.bloodRage) parts.push(`잃은 체력 비례 피해 최대 +${skillPercent(sk.bloodRage)}`);
         if (sk.companion) parts.push(`정령 추가타 ${sk.companion.hits}회 · 위력 ${skillPercent(sk.companion.power)}`);
         if (sk.basicEffect) parts.push(`기본 공격에 ${STATUS_WORD[sk.basicEffect]} ${sk.statusTurns ?? STATUS_TUNING.corrodeTurns}턴`);
+        if (sk.lastStand) parts.push(`전투당 ${sk.lastStand.charges}번 체력 1로 버팀${sk.lastStand.heal ? ` · ${skillPercent(sk.lastStand.heal)} 회복` : ''}`);
         if (sk.song) parts.unshift('노래 · AP 0');
         return parts.join(' · ') || '장착 효과';
     }
@@ -81,10 +83,11 @@ export function skillBrief(sk: Skill): string {
     if (sk.effect === 'drain') parts.push(`피해의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 흡혈`);
     if (sk.damageBonusCondition) parts.push(`${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 적 +${skillPercent(sk.conditionalDamageBonus || 0)}`);
     if (sk.scaling && PROGRESS_WORD[sk.scaling]) parts.push(`${PROGRESS_WORD[sk.scaling]} 비례`);
+    if (sk.scaling === 'arcane') parts.push('마력 평타 계수 기준');
     if (sk.dice) parts.push(`주사위 최대 ${sk.dice.max}개`);
     if (sk.gamble) parts.push([sk.gamble.min !== sk.gamble.max ? `주사위 ×${number(sk.gamble.min)}~${number(sk.gamble.max)}` : '', sk.gamble.accuracy ? `명중 ±${skillPercent(sk.gamble.accuracy)}p` : ''].filter(Boolean).join(' · '));
     if (sk.allIn) parts.push(`체력 ${skillPercent(sk.allIn.hpRatio)}·마나 전부 소모`);
-    if (sk.goldSpend) parts.push(`골드 ${skillPercent(sk.goldSpend.ratio)} 투척`);
+    if (sk.goldSpend) parts.push(`골드 ${skillPercent(sk.goldSpend.ratio)} 투척(최대 ${goldCapText(sk.goldSpend, sk.damageType === 'magic')})`);
     if (sk.preyBonus) parts.push(`보스·지정 몬스터 +${skillPercent(sk.preyBonus)}`);
     return parts.join(' · ');
 }
@@ -118,7 +121,15 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.dice) { const d = sk.dice; out.push(`${ATTRIBUTE_NAMES[d.attribute]} ${d.per}마다 주사위를 1개 더 굴립니다(최대 ${d.max}개). 가장 높은 눈이 피해 배율이 됩니다: ${[1, 2, 3, 4, 5, 6].map(f => `${'⚀⚁⚂⚃⚄⚅'[f - 1]}×${diceMultiplier(d, f).toFixed(2)}`).join(' ')}`); out.push(`손가락 자르기를 장착하면 양 끝이 좁아집니다(3단계: ×${diceRange(d, 3).low.toFixed(2)}~×${diceRange(d, 3).high.toFixed(2)}).`); }
         if (sk.gamble) out.push(`쓸 때마다 ${[sk.gamble.min !== sk.gamble.max ? `피해 ×${number(sk.gamble.min)}~${number(sk.gamble.max)}(평균 ×${number((sk.gamble.min + sk.gamble.max) / 2)})` : '', sk.gamble.accuracy ? `이 기술 명중 ±${skillPercent(sk.gamble.accuracy)}p` : ''].filter(Boolean).join(' · ')} 무작위`);
         if (sk.allIn) out.push(`현재 체력의 ${skillPercent(sk.allIn.hpRatio)}(1은 남김)와 남은 마나 전부를 걸고 (건 체력 × ${number(sk.allIn.hpScale)} + 건 마나 × ${number(sk.allIn.manaScale)})를 피해식에 더합니다 · 빗나가도 소모`);
-        if (sk.goldSpend) out.push(`보유 골드의 ${skillPercent(sk.goldSpend.ratio)}(한 번에 최대 ${sk.goldSpend.cap.toLocaleString()})를 실제로 쓰고, 쓴 골드 × ${number(sk.goldSpend.scale)}를 피해식에 더합니다`);
+        if (sk.goldSpend) out.push(`보유 골드의 ${skillPercent(sk.goldSpend.ratio)}(한 번에 최대 ${goldCapText(sk.goldSpend, sk.damageType === 'magic')})를 실제로 쓰고, 쓴 골드 × ${number(sk.goldSpend.scale)}를 피해식에 더합니다. 골드가 0이면 피해만 줍니다.`);
+        // v3.157 통폐합 때 들어온 장치들을 자세히 보기에도 적습니다(전에는 간단히 보기와 설명 문장에만 있었음).
+        if (sk.charge) out.push(`명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}, 최대 ${SKILL_FORMULA.charge.max}). 충전은 전투가 끝나도 남습니다.`);
+        if (sk.chargeNeed) out.push(`충전 ${sk.chargeNeed}중첩 이상일 때만 나가고, 중첩을 모두 소모해 중첩당 피해 +${skillPercent(sk.chargeBonus || 0)}.`);
+        if (sk.hpCost) out.push(`마나 대신 현재 체력의 ${skillPercent(sk.hpCost)}를 바칩니다(체력 1은 남김). 빗나가도 소모.`);
+        if (sk.manaBurn) out.push(`고정 마나 소모 없이 현재 마나의 ${skillPercent(sk.manaBurn)}를 태우고, 태운 마나 × ${number(sk.burnScale ?? SKILL_FORMULA.manaBurnScale)}를 위 피해식의 기준값에 더합니다.`);
+        if (sk.burnConsume) out.push(`명중한 적의 화상 중첩을 모두 터뜨려 중첩당 피해 +${skillPercent(sk.burnConsume)}. 터뜨린 화상은 사라집니다.`);
+        if (sk.selfBuff) { const b = sk.selfBuff, fx = [...Object.entries(b.stats || {}).map(([k, v]) => skillBonusText(k, v as number)), ...(b.speedMultiplier ? [`속도 ×${number(b.speedMultiplier)}`] : [])]; out.push(`쓰면(명중과 무관) 자기 버프 ‘${b.name ?? b.id}’ ${b.turns}턴: ${fx.join(' · ') || '효과 없음'}. 같은 버프가 있으면 더 긴 쪽으로 갱신. 내 행동마다 1턴씩 줄어듭니다.`); }
+        if (sk.extendBuffs) out.push(`쓰면 살아 있는 내 자기 버프를 모두 ${sk.extendBuffs}턴 연장합니다.`);
         if (sk.allIn?.heal) out.push(`건 마나 × ${number(sk.allIn.heal)}만큼 자신 회복`);
         if (sk.recoil) out.push(`준 피해의 ${skillPercent(sk.recoil)}를 자신도 받음 · 반동으로는 체력 1 아래로 내려가지 않음`);
         if (sk.sureHit) out.push('반드시 맞힙니다. 기절 뒤 면역 규칙은 그대로입니다.');
@@ -127,7 +138,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.selfEffect) out.push(`쓰고 나면 자신 ${{ stun: '기절', slow: '감속', weaken: '약화' }[sk.selfEffect.status]} ${sk.selfEffect.turns}턴${sk.selfEffect.waivedBy ? ` · ${skillById(sk.selfEffect.waivedBy)?.name || ''}을 장착하면 생략` : ''}`);
         if (sk.seal) out.push('쓰면 이번 전투의 인(印)을 하나 새깁니다');
         if (sk.preyBonus) out.push(`보스와 지정 몬스터(리본 돼지·파이어보어·머쉬맘)에게는 직접 피해가 ${skillPercent(sk.preyBonus)} 커집니다.`);
-        if (sk.damageType === 'split') out.push(`복합 피해는 물리 ${skillPercent(SKILL_FORMULA.splitPhysical)}·마법 ${skillPercent(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각의 방어를 적용합니다. 명중·치명 판정은 한 번이고, 장비·버프는 원시 피해에 들어가지 않습니다.`);
+        if (sk.damageType === 'split' && !sk.statusOnly) out.push(`복합 피해는 물리 ${skillPercent(SKILL_FORMULA.splitPhysical)}·마법 ${skillPercent(1 - SKILL_FORMULA.splitPhysical)}로 나눠 각각의 방어를 적용합니다. 명중·치명 판정은 한 번이고, 장비·버프는 원시 피해에 들어가지 않습니다.`);
         if (sk.accuracyBonus) out.push(`이 기술은 명중이 ${skillPercent(sk.accuracyBonus)}p 높습니다.`);
         if (sk.penetrationBonus) out.push(`이 기술은 방어 관통이 ${skillPercent(sk.penetrationBonus)}p 높습니다(합계 최대 85%).`);
         if (sk.cleanseSelf) out.push('발동하면 내 출혈·중독·감속이 풀립니다.');
@@ -142,9 +153,10 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.effect === 'weaken') out.push(`맞히면 ${sk.statusTurns ?? STATUS_TUNING.weakenTurns}턴 동안 상대의 직접 피해를 ${skillPercent(1 - SKILL_FORMULA.weakenedDamage)} 줄입니다(약화).`);
         if (sk.effect === 'silence') out.push(`맞히면 침묵 ${sk.statusTurns ?? STATUS_TUNING.silenceTurns}턴. 그동안 상대는 액티브를 쓰지 못합니다.`);
         if (sk.effect === 'slow') out.push(`맞히면 ${sk.statusTurns ?? STATUS_TUNING.slowTurns}턴 동안 상대 속도를 ${skillPercent(STATUS_TUNING.slowMultiplier)} 늦춥니다(감속).`);
+        if (sk.effect === 'corrode') out.push(`맞히면 부식 ${sk.statusTurns ?? STATUS_TUNING.corrodeTurns}턴. 그동안 상대의 물리 · 마법 방어가 ${skillPercent(STATUS_TUNING.corrodeDefense)}, 속도가 ${skillPercent(STATUS_TUNING.corrodeSpeed)} 줄어듭니다(약화 · 감속과 따로 걸림).`);
         if (sk.effect === 'haste') out.push(`맞히면 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴 동안 내 속도가 ${skillPercent(STATUS_TUNING.hasteMultiplier)} 빨라집니다(가속).`);
         if (sk.effect === 'drain') out.push(`깎은 체력의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}를 회복합니다. 한 번에 최대 체력 × (흡혈률 + ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}) × ${skillPercent(SKILL_FORMULA.lifestealHpCap)}까지입니다.`);
-        const statusKey = ({ stun: 'stun', bleed: 'bleed', poison: 'poison', burn: 'burn', weaken: 'weaken', silence: 'silence', slow: 'slow' } as Record<string, keyof typeof STATUS_TUNING.immuneTurns>)[sk.effect || ''];
+        const statusKey = ({ stun: 'stun', bleed: 'bleed', poison: 'poison', burn: 'burn', weaken: 'weaken', silence: 'silence', slow: 'slow', corrode: 'corrode' } as Record<string, keyof typeof STATUS_TUNING.immuneTurns>)[sk.effect || ''];
         if (statusKey) out.push(`${statusKey === 'poison' ? '중첩은 계속 쌓입니다.' : statusKey === 'burn' ? `최대 ${STATUS_TUNING.burnMaxStacks}중첩까지 쌓고, 가득 차 있으면 이 기술은 건너뜁니다.` : '상대에게 이미 걸려 있으면 이 기술은 건너뜁니다.'} 풀린 뒤 ${STATUS_TUNING.immuneTurns[statusKey]}턴은 면역입니다.`);
         if (sk.outsiderChance !== undefined) out.push(`아크메이지(불,독) 계보 밖에서 계승하면 발동률이 ${skillPercent(sk.outsiderChance)}로 줄어듭니다(피해는 다른 5차 기술처럼 계승 효율을 따름).`);
         if (sk.alsoEffect) out.push(`같은 공격으로 ${STATUS_WORD[sk.alsoEffect]}도 한 중첩 겁니다(${sk.statusTurns}턴, 지속 턴 옵션이 그대로 더해집니다).`);
@@ -154,6 +166,9 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     if (sk.song) out.push('노래: AP 0 · 엔젤릭버스터 계보 직업만 장착');
+    if (sk.bloodRage) out.push(`피의 분노: 잃은 체력 비율 × ${skillPercent(sk.bloodRage)}만큼 내 직접 피해가 커집니다(체력이 1이면 +${skillPercent(sk.bloodRage)}). 여러 개면 합산.`);
+    if (sk.companion) out.push(`정령: 내 모든 공격(기본 공격 · 액티브 · 추가타 뒤)에 위력 ${skillPercent(sk.companion.power)}의 추가타 ${sk.companion.hits}회가 따라옵니다. 상태이상 전용 · 회복 전용 기술에는 붙지 않고, 여러 정령 패시브는 가장 높은 값만.`);
+    if (sk.basicEffect) out.push(`장착하면 기본 공격(마력 평타 포함)이 명중할 때 ${STATUS_WORD[sk.basicEffect]} ${sk.statusTurns ?? (sk.basicEffect === 'corrode' ? STATUS_TUNING.corrodeTurns : 1)}턴을 겁니다(저항 · 면역 규칙은 그대로).`);
     // v3.86 각성기: 턴 단위 판정·대기, 실패 보정, 상태이상 지속 배율.
     if (sk.awaken) out.push(`[각성] 행동마다가 아니라 턴마다(연속 행동 제외, 확정 추가 행동 포함) 따로 판정해 다른 액티브와 같은 턴에 함께 나갑니다. 대기 ${sk.cooldown}턴은 ${sk.awaken.start ? `꽉 찬 채로 시작해(결투·제단·월드보스 전투, 던전 입장, 쓰러짐, 전직) ${sk.awaken.start}턴 뒤부터` : '비어 있어 처음부터'} 판정합니다. 실패할 때마다 다음 판정 확률에 기본 발동률을 더합니다(최대 100%). 한 턴에 각성기는 하나만 나가고, 각성기로 쓰러뜨리면 대기가 ${SKILL_FORMULA.awaken.kill}턴만 돕니다. 대기 초기화 효과는 각성기 대기를 ${SKILL_FORMULA.awaken.reset}턴 줄입니다.${sk.awaken.statusScale ? ` 거는 상태이상 지속 ×${sk.awaken.statusScale}(패시브 보너스 포함).` : ''}`);
     if (sk.multicast && !sk.awaken) out.push(`동시 시전: 이 기술이 먼저 성공하면 편성의 다른 동시 시전 기술도 각자 발동률로 한 행동에 함께 나갑니다(최대 ${SKILL_FORMULA.multicast.max}개, 추가 판정 단계마다 +1). 함께 나간 종류 하나마다 재사용 대기 +${SKILL_FORMULA.multicast.cooldownStep}, 마나 +${skillPercent(SKILL_FORMULA.multicast.manaScale)}`);

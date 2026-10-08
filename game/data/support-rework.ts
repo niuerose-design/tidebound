@@ -34,10 +34,10 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 }, scaling: 'luck', scalingRatio: .3 },
     allOrNothing: { chance: .24, cooldown: 6, multiplier: 2.6, drainRatio: .35, allIn: { hpRatio: .3, hpScale: 1.6, manaScale: 3 }, gamble: { min: .6, max: 1.8 }, scaling: 'luck', scalingRatio: .8 },
     // ── 로그(섀도어): 변종 기록(√변종·황금 처치 수) 비례 ──
-    relicToss: { chance: .26, cooldown: 3, multiplier: 1.3, goldSpend: { ratio: .005, cap: 2000, scale: 1 } },
-    spoilsStrike: { goldSpend: { ratio: .01, cap: 6000, scale: 1 } },
-    treasureStrike: { goldSpend: { ratio: .01, cap: 12000, scale: 1 } },
-    hoardCrush: { goldSpend: { ratio: .02, cap: 30000, scale: 1 } },
+    relicToss: { chance: .26, cooldown: 3, multiplier: 1.3, goldSpend: { ratio: .005, capAttack: .25, scale: 1 } },
+    spoilsStrike: { goldSpend: { ratio: .01, capAttack: .4, scale: 1 } },
+    treasureStrike: { goldSpend: { ratio: .01, capAttack: .6, scale: 1 } },
+    hoardCrush: { goldSpend: { ratio: .02, capAttack: 1.2, scale: 1 } },
     // ── 와일드헌터 (2차): 도감 기록 비례(로그(섀도어)에서 이관) ──
     sigilShock: { chance: .5, cooldown: 3, multiplier: 1.2, manaCost: 4, preyBonus: .6, scaling: 'codex', scalingRatio: .008 },
     // ── 해적(캡틴): 보유 골드 비례(골드 투척은 v3.156에 섀도어 메소 익스플로전으로 옮김) ──
@@ -121,9 +121,9 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
     luckDeity: '팬텀 계보의 5차 직업입니다. 조커를 쓰고, 패시브로 치명타·치명 피해·골드를 올려 확률의 정점에 섭니다.',
     relicScavenger: '픽파킷으로 변종 조우 확률과 처치 골드를 올리고, 메소 익스플로전으로 보유 골드를 태워 때리는 1차 직업입니다. 골드를 벌어 터뜨리는 계보의 출발점입니다.',
     rareTracker: '메소 마스터리로 변종 · 황금 개체 확률과 처치 골드를 올리고, Lv.30에 변종 조우 확률을 크게 올리는 무리 감지를 가진 2차 직업입니다.',
-    treasureDiver: '보유 골드 1%(최대 6,000)를 태우는 새비지 블로우와 처치 골드 · 두 방어를 올리는 메소 가드를 가진 3차 직업입니다.',
-    treasureKing: '섀도어 계보의 환생 후 4차 직업입니다. 암살은 보유 골드 1%(최대 12,000)를 태우고, 패시브 섀도우 파트너로 처치 골드와 공격을 올립니다.',
-    seaTreasury: '섀도어 계보의 5차 직업입니다. 각성 소닉 블로우는 보유 골드 2%(최대 30,000)를 한 번에 태우고, 메소 익스플로전 강화로 처치 골드 · 공격 · 체력을 올립니다.',
+    treasureDiver: '보유 골드 1%(최대 물리 공격 × 0.4)를 태우는 새비지 블로우와 처치 골드 · 두 방어를 올리는 메소 가드를 가진 3차 직업입니다.',
+    treasureKing: '섀도어 계보의 환생 후 4차 직업입니다. 암살은 보유 골드 1%(최대 물리 공격 × 0.6)를 태우고, 패시브 섀도우 파트너로 처치 골드와 공격을 올립니다.',
+    seaTreasury: '섀도어 계보의 5차 직업입니다. 각성 소닉 블로우는 보유 골드 2%(최대 물리 공격 × 1.2)를 한 번에 태우고, 메소 익스플로전 강화로 처치 골드 · 공격 · 체력을 올립니다.',
     salvageMerchant: '동전을 던져 싸우고 처치·던전 골드와 장비 드롭을 늘리는 경제 1차 직업입니다.',
     memoryMerchant: '보유 골드에 비례하는 래피드 파이어와 골드·드롭 패시브를 가진 경제형 2차 직업입니다.',
     harborBroker: '경제 계보의 2차 직업입니다. 흥정 갈고리로 상대를 약화시키고, 패시브로 골드와 명중을 올립니다.',

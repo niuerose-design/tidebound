@@ -106,7 +106,7 @@ function applyStatusRules(sk: Skill, tier: number) {
     if (cap !== undefined && tier <= 2) sk.multiplier = Math.min(sk.multiplier, cap);
 }
 
-const PROGRESS_SOURCE: Record<string, string> = { codex: '도감 기록 수', catch: 'log10(누적 처치 + 1)', hunt: '√(던전 클리어 + 보스 처치)', gold: 'log10(보유 골드 + 1)' };
+const PROGRESS_SOURCE: Record<string, string> = { codex: '도감 기록 수', catch: 'log10(누적 처치 + 1)', hunt: '√(던전 클리어 + 보스 처치)', gold: 'log10(보유 골드 + 1)', relic: '렐릭의 힘' };
 /** v24.2 진행도·도박·올인·골드 기술의 한 줄 설명. */
 function progressDesc(sk: Skill) {
     let out = '';
@@ -114,7 +114,7 @@ function progressDesc(sk: Skill) {
     if (sk.dice) out += ` ${ATTRIBUTE_NAMES[sk.dice.attribute]} ${sk.dice.per}마다 주사위 1개(최대 ${sk.dice.max}개)를 굴려 가장 높은 눈으로 피해 ×${sk.dice.low}~×${sk.dice.high}.`;
     if (sk.gamble && sk.gamble.min !== sk.gamble.max) out += ` 쓸 때마다 피해 ×${sk.gamble.min}~${sk.gamble.max}${sk.gamble.accuracy ? ` · 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p` : ''} 무작위.`;
     if (sk.allIn) out += ` 현재 체력 ${Math.round(sk.allIn.hpRatio * 100)}%와 남은 마나를 모두 걸고 (건 체력 × ${sk.allIn.hpScale} + 건 마나 × ${sk.allIn.manaScale})를 피해에 더합니다.`;
-    if (sk.goldSpend) out += ` 보유 골드 ${Math.round(sk.goldSpend.ratio * 1000) / 10}%(최대 ${sk.goldSpend.cap.toLocaleString()})를 던져 × ${sk.goldSpend.scale}만큼 피해에 더합니다.`;
+    if (sk.goldSpend) out += ` 보유 골드 ${Math.round(sk.goldSpend.ratio * 1000) / 10}%(최대 ${[sk.goldSpend.capAttack ? `${sk.damageType === 'magic' ? '마법' : '물리'} 공격 × ${sk.goldSpend.capAttack}` : '', sk.goldSpend.cap ? sk.goldSpend.cap.toLocaleString() : ''].filter(Boolean).join(' · ')})를 던져 × ${sk.goldSpend.scale}만큼 피해에 더합니다.`;
     if (sk.preyBonus) out += ` 보스·지정 몬스터에게 피해 +${Math.round(sk.preyBonus * 100)}%.`;
     if (sk.allIn?.heal) out += ` 건 마나 × ${sk.allIn.heal}만큼 회복.`;
     if (sk.recoil) out += ` 준 피해의 ${Math.round(sk.recoil * 100)}%를 자신도 받습니다(체력 1 아래로는 안 내려감).`;
@@ -197,6 +197,8 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.hpCost) sk.desc += ` 마나 대신 현재 체력의 ${Math.round(sk.hpCost * 100)}%를 바칩니다(체력 1은 남음).`;
         if (sk.manaBurn) sk.desc += ` 고정 마나 소모 없이 현재 마나의 ${Math.round(sk.manaBurn * 100)}%를 태워 그만큼 피해에 더합니다.`;
         if (sk.burnConsume) sk.desc += ` 명중한 적의 화상 중첩을 모두 터뜨려 중첩당 피해 +${Math.round(sk.burnConsume * 100)}%(화상은 사라짐).`;
+        if (sk.selfBuff) sk.desc += ` 쓰면 자기 버프 ${sk.selfBuff.name ?? sk.selfBuff.id} ${sk.selfBuff.turns}턴.`;
+        if (sk.extendBuffs) sk.desc += ` 살아 있는 자기 버프를 모두 ${sk.extendBuffs}턴 연장.`;
         sk.desc += progressDesc(sk);
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
