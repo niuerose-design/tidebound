@@ -20,7 +20,7 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     border: { role: 'border', name: '경계: 딜러 · 제어 탱커' },
     /** v3.80 일부러 힐러와 유틸리티 경계에 선 직업(아이돌 연습생: 회복 + 경험치). */
     borderBuffer: { role: 'border', name: '경계: 힐러 · 유틸리티' },
-    /** v3.141 반사 탱커와 마법 딜러 경계(메카닉: 약화 → 방어 비례 마법 피해로 충전 → 전탄발사). */
+    /** v3.142 반사 탱커와 마법 딜러 경계(메카닉: 약화 → 방어 비례 마법 피해로 충전 → 전탄발사). */
     borderReflect: { role: 'border', name: '경계: 반사 탱커 · 마법 딜러' },
     /** 독립 수련(계승 재료). */
     training: { role: 'none', name: '수련' },

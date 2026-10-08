@@ -164,7 +164,7 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
     'shieldBash', 'shieldWall', 'ironRetort', 'spikedShield', 'bulwarkSlam', 'stoneSkin', 'lastStand', 'undying', 'aegisJudgment', 'divineAegis', 'fortress', 'coralPatience',
     /** v3.140 숨은 2차 주먹 마도사(마법 계수 → 물리 피해)는 루미너스 계보가 그 자리를 맡아 지웠습니다. */
     'arcaneFist', 'manaMuscle',
-    /** v3.141 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
+    /** v3.142 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
     'broadside', 'powderKeg'];
 /**
  * v3.64 히든 직업 재배치 · v3.138 5차 통폐합: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).

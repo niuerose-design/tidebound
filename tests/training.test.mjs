@@ -205,7 +205,7 @@ test('v3.109 Kaiser: Nova Temperance adds crit 8%p and crit damage 0.4 (same as 
     assert.deepEqual([sk('earthShell').bonus.crit, sk('earthShell').bonus.critDamage], [sk('eternalReef').bonus.crit, sk('eternalReef').bonus.critDamage]);
 });
 
-test('v3.141 Mechanic: every active is defense-scaled magic damage that charges; Genesis Rune needs 5 charges and spends them', () => {
+test('v3.142 Mechanic: every active is defense-scaled magic damage that charges; Genesis Rune needs 5 charges and spends them', () => {
     const sk = id => SKILLS.find(s => s.id === id);
     assert.equal(sk('resonantCannon').multiplier, 2.4); assert.equal(sk('resonantCannon').damageBonusCondition, 'weakened');
     assert.equal(sk('resonanceBurst').multiplier, 2.8); assert.equal(sk('resonanceBurst').effect, 'weaken');

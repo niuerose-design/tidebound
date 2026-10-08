@@ -119,7 +119,7 @@ export const SKILL_FORMULA = {
     healThreshold: .8, woundedThreshold: .7, healRatio: .22,
     hpScaling: .08, manaScaling: .45, hybridHpScaling: .05, hybridManaScaling: .25,
     crushDefense: 1.5, weakenedDamage: .75,
-    /** v3.141 충전(메카닉): 최대 중첩과, 약화된 적을 충전 기술로 때릴 때 더 쌓이는 중첩. */
+    /** v3.142 충전(메카닉): 최대 중첩과, 약화된 적을 충전 기술로 때릴 때 더 쌓이는 중첩. */
     charge: { max: 8, weakenedExtra: 1 },
     /**
      * v27.57 지속 피해 셋의 '가득 찬 상태' 이론 증가량을 맞춥니다(턴당, 위력 P 기준):

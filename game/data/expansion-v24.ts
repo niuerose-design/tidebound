@@ -83,7 +83,7 @@ const A = { type: 'active' as const };
 const physical = { damageType: 'physical' as const, manaCost: 0 };
 const magic = { damageType: 'magic' as const };
 const dual = { damageType: 'split' as const, scaling: 'dual' as const };
-/** v3.141 메카닉: 마법 피해 + 물리 방어 비례(방어 친화도 적용). */
+/** v3.142 메카닉: 마법 피해 + 물리 방어 비례(방어 친화도 적용). */
 const forgeBlast = { damageType: 'magic' as const, scaling: 'defense' as const };
 const M4 = [2500, 12000, 40000, 100000], M5 = [4000, 18000, 60000, 150000];
 /** 대기만성: 숙련 10,000 / 100,000 / 500,000(v27.95부터 5차 ×25 = 25만 / 250만 / 1,250만). 단계마다 AP가 줄고 보상이 크게 오릅니다. */
@@ -153,7 +153,7 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'aberrantSurge', name: '이형 쇄도', desc: '', level: 70, job: 'aberrantKing', chance: .25, cooldown: 4, multiplier: 2.4, cost: 6, scaling: 'hybrid', scalingRatio: .05, effect: 'drain', drainRatio: .2, masteryMilestones: M5 },
     { ...P, id: 'aberrantBody', name: '이형의 몸', desc: '체력·최대 마나·흡혈이 오릅니다.', level: 70, job: 'aberrantKing', cost: 3, bonus: { hp: 500, mana: 80, lifesteal: .03 }, masteryMilestones: M5 },
     // v3.110 메카닉 상향: 로봇 런처: RM7 배율 2.6 → 3.2 · 추가 공격 1회.
-    // v3.141 메카닉 재개편: 방어 비례 마법 피해로 충전, 창세 룬(전탄발사)은 충전 5중첩부터 나가 중첩당 +10%, 고정 피해(방어를 전혀 받지 않아 배율은 2로 낮게).
+    // v3.142 메카닉 재개편: 방어 비례 마법 피해로 충전, 창세 룬(전탄발사)은 충전 5중첩부터 나가 중첩당 +10%, 고정 피해(방어를 전혀 받지 않아 배율은 2로 낮게).
     { ...A, ...forgeBlast, id: 'resonanceBurst', name: '공명 폭발', desc: '', level: 55, job: 'resonanceMaster', chance: .5, cooldown: 4, multiplier: 2.8, cost: 5, manaCost: 16, scalingRatio: .8, effect: 'weaken', charge: 1, masteryMilestones: M4 },
     { ...P, id: 'harmonicPlate', name: '공명 갑판', desc: '마법 공격 · 두 방어 · 반격이 오릅니다.', level: 55, job: 'resonanceMaster', cost: 3, bonus: { magic: 50, defense: 50, resist: 50, thorns: .25 }, masteryMilestones: M4 },
     // 전탄발사는 고정 피해(방어 · 마법 방어 무시), 기준값은 마법 공격 + 물리 방어 비례.
