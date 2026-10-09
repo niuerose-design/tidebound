@@ -34,7 +34,7 @@ export async function POST(req: Request) { try {
         // v3.43 정보 비공개 카탈로그(docs/concept.md 10장). 화면은 단계마다 비밀 표 대신 이것을 읽게 됩니다.
         // v3.44 화면이 가진 카탈로그 키(catalogKey)와 같으면 다시 보내지 않습니다(비밀 직업 표가 커서).
         const catalog = await buildCatalog(out.state, Date.now(), (a as { catalogKey?: unknown }).catalogKey);
-        // v3.212 증권거래소(공유 시장): 화면이 거래소를 보고 있을 때만(marketKnown) 가진 틱 뒤의 시세를 얹습니다. 시세는 인스턴스 메모리에서 나눠 쓰고, 새 틱이 없으면 아무것도 붙이지 않습니다.
+        // v3.213 증권거래소(공유 시장): 화면이 거래소를 보고 있을 때만(marketKnown) 가진 틱 뒤의 시세를 얹습니다. 시세는 인스턴스 메모리에서 나눠 쓰고, 새 틱이 없으면 아무것도 붙이지 않습니다.
         const marketKnown = (a as { marketKnown?: unknown }).marketKnown, market = marketKnown !== undefined ? marketFeed(marketKnown, Date.now()) : null;
         const extra = { ...(catalog ? { catalog } : {}), ...(market ? { market } : {}), ...(marketKnown !== undefined ? { marketStatus: marketStatus(Date.now()) } : {}) };
         return Response.json(trimmed ? { ...out, state: { ...out.state, logs: trimmed.logs }, logDelta: trimmed.delta, ...extra } : { ...out, ...extra }, { headers: { 'Cache-Control': 'no-store' } });

@@ -1,6 +1,6 @@
 'use client';
 /**
- * v3.212 주화 증권거래소(공유 시장, docs/stock-market-plan.md): 왼쪽 메뉴의 한 칸(상점과 따로).
+ * v3.213 주화 증권거래소(공유 시장, docs/stock-market-plan.md): 왼쪽 메뉴의 한 칸(상점과 따로).
  * 시세는 모든 모험가가 같고, 서버가 계산해 동기화 응답에 얹어 줍니다. 차트 · 거래 내역은 이 기기에만 남습니다(market-records.ts).
  */
 import { useCallback, useState } from 'react';

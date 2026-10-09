@@ -1,4 +1,4 @@
-// v3.212 주화 증권거래소(공유 시장): 결정론적 시세 · 인스턴스 캐시 · 매수 · 매도 · 한도 · 시세 조각 · 환생/승천.
+// v3.213 주화 증권거래소(공유 시장): 결정론적 시세 · 인스턴스 캐시 · 매수 · 매도 · 한도 · 시세 조각 · 환생/승천.
 import { assert, test, act, newState } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 const { load } = loadGame();
@@ -6,7 +6,7 @@ const market = await load('systems/market'), data = await load('data/market');
 const { MARKET, MARKET_TICK_MS, STOCKS, buyCost, sellGain, marketTick } = data;
 const T = 3_000_000 * MARKET_TICK_MS + 1234;
 
-test('v3.212 market: shared deterministic prices, cached window = direct calculation, hidden behind the server key', () => {
+test('v3.213 market: shared deterministic prices, cached window = direct calculation, hidden behind the server key', () => {
     const t = marketTick(T), w = market.marketWindow(T);
     assert.equal(w.tick, t); assert.equal(w.rows.length, MARKET.history); assert.equal(market.marketWindow(T), w, 'same tick → same cached window');
     for (const [i, d] of STOCKS.entries()) assert.equal(w.rows.at(-1)[i], market.stockSeries(d.id, t, t)[0], `${d.id}: cache = direct`);
@@ -20,7 +20,7 @@ test('v3.212 market: shared deterministic prices, cached window = direct calcula
     for (const d of STOCKS) { const x = market.stockPrice(d.id, t); assert.ok(x >= d.base * MARKET.floor - .1 && x <= d.base * MARKET.ceil + .1, `${d.id} in range`); }
 });
 
-test('v3.212 market: buy/sell settle at the server tick price with fees and realized PnL, no principal cap or daily limit', () => {
+test('v3.213 market: buy/sell settle at the server tick price with fees and realized PnL, no principal cap or daily limit', () => {
     const s = newState(0), p = market.stockPrice('lith', marketTick(T)), c = buyCost(p, 5);
     s.dungeonCoins = 10;
     assert.throws(() => act(s, { type: 'market', id: 'buy:lith', value: '5' }, T), /주화가 부족/);
@@ -45,7 +45,7 @@ test('v3.212 market: buy/sell settle at the server tick price with fees and real
     assert.equal(s.market.holdings.lith, undefined, 'no daily trade limit');
 });
 
-test('v3.212 market feed: only past ticks, full day first, then only new ticks, nothing when up to date', () => {
+test('v3.213 market feed: only past ticks, full day first, then only new ticks, nothing when up to date', () => {
     const t = marketTick(T), f = market.marketFeed('', T);
     assert.equal(f.tick, t); assert.equal(f.from, t - MARKET.history + 1); assert.equal(f.prices.length, MARKET.history); assert.equal(f.prices[0].length, STOCKS.length);
     assert.deepEqual(f.prices.at(-1), STOCKS.map(d => market.stockSeries(d.id, t, t)[0]), 'last row = current prices, no future rows');
@@ -59,7 +59,7 @@ test('v3.212 market feed: only past ticks, full day first, then only new ticks, 
     assert.ok(hit / total > .58 && hit / total < .8, `rumor accuracy ${hit / total}`);
 });
 
-test('v3.212 market: holdings survive rebirth, ascension clears them', () => {
+test('v3.213 market: holdings survive rebirth, ascension clears them', () => {
     const s = newState(0); s.level = 100; s.dungeonCoins = 5000;
     act(s, { type: 'market', id: 'buy:henesys', value: '3' }, T);
     const kept = JSON.parse(JSON.stringify(s.market));
@@ -69,7 +69,7 @@ test('v3.212 market: holdings survive rebirth, ascension clears them', () => {
     assert.equal(s.market, undefined);
 });
 
-test('v3.212 market control: closed market and circuit breaker block trades (prices keep running), then reopen', () => {
+test('v3.213 market control: closed market and circuit breaker block trades (prices keep running), then reopen', () => {
     const s = newState(0); s.dungeonCoins = 5000;
     market.setMarketControl({ closed: true, haltUntil: 0, reason: '점검' });
     assert.throws(() => act(s, { type: 'market', id: 'buy:lith', value: '1' }, T), /폐장 중입니다 \(점검\)/);
@@ -83,7 +83,7 @@ test('v3.212 market control: closed market and circuit breaker block trades (pri
     market.setMarketControl({ closed: false, haltUntil: 0, reason: '' });
 });
 
-test('v3.212 market control: admin switch is stored in server settings and read back by refreshEvents', async () => {
+test('v3.213 market control: admin switch is stored in server settings and read back by refreshEvents', async () => {
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const file = path.join(os.tmpdir(), `tb-market-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
     try {

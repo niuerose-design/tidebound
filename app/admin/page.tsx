@@ -13,7 +13,7 @@ type ClosureRow = { id: string; name: string; closed: boolean; locked: boolean }
 type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
 /** v27.73 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
 type Tab = 'life' | 'events' | 'closures' | 'stats' | 'news' | 'income' | 'market';
-/** v3.212 증권거래소 운영(server/market-config.ts adminMarket). */
+/** v3.213 증권거래소 운영(server/market-config.ts adminMarket). */
 type MarketAdmin = { control: { closed: boolean; haltUntil: number; reason: string }; tick: number; stocks: { id: string; name: string; risk: string; base: number; price: number; change: number }[] };
 /** v3.58 사냥 골드 수입 통계(server/admin.ts adminIncome). */
 type IncomeRate = { perHour: number; hours: number; estimated: boolean; earned: number };
@@ -25,7 +25,7 @@ const INCOME_KINDS = [['gold', '골드', '#e7be71'], ['exp', '경험치', '#8fd0
 const big = (v: number) => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(2)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
 type NewsRow = { id: number; name: string; text: string; at: number; hacker: boolean };
 /** 운영 페이지 소식 테스트 종류(server/news.ts NEWS_SAMPLES와 같은 순서). */
-const NEWS_KINDS: [string, string][] = [['onyx', '칠흑 장신구'], ['ascend', '승천'], ['tier5', '5차 전직'], ['abyss', '무릉도장 50층'], ['star22', '22성 강화'], ['general', '진급(하사)'], ['hacker', '해커 전직(빨간 줄)'], ['god', '제단 · 신 깨어남'], ['raid', '제단 · 월드보스 출현']];
+const NEWS_KINDS: [string, string][] = [['onyx', '칠흑 장신구'], ['ascend', '승천'], ['tier5', '5차 전직'], ['abyss', '무릉도장 50층'], ['star22', '22성 강화'], ['general', '진급(하사)'], ['onyxAwaken', '칠흑 각성'], ['core', '보스 코어'], ['coreAwaken', '코어 완전 각성'], ['hacker', '해커 전직(빨간 줄)'], ['god', '제단 · 신 깨어남'], ['raid', '제단 · 월드보스 출현']];
 const BLESS_NAMES: Record<string, string> = { gold: '풍요의 축복', exp: '성장의 축복', mimic: '까미의 축복', nuri: '누리의 축복' };
 type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };
@@ -170,7 +170,7 @@ export default function AdminPage() {
         const d = await call({ action: 'setClosed', kind, id: row.id, closed: !row.closed });
         if (d) { setClosures(d); setDone(`${row.name}을(를) ${row.closed ? '열었습니다' : '닫았습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
     };
-    /** v3.212 증권거래소: 장 폐쇄 · 서킷브레이커 · 사유. */
+    /** v3.213 증권거래소: 장 폐쇄 · 서킷브레이커 · 사유. */
     const [market, setMarket] = useState<MarketAdmin | null>(null), [haltMin, setHaltMin] = useState('30'), [marketReason, setMarketReason] = useState('');
     const loadMarket = async () => { const d = await call({ action: 'market' }); if (d) { setMarket(d); setMarketReason(d.control.reason || ''); } };
     const setMarketControl = async (change: { closed?: boolean; haltMinutes?: number }, what: string) => {

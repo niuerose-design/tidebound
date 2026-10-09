@@ -1,5 +1,5 @@
 /**
- * v3.212 증권거래소 운영 스위치(settings.market): 장 폐쇄(closed)와 서킷브레이커(haltUntil까지 거래 중단), 유저에게 보일 사유(reason).
+ * v3.213 증권거래소 운영 스위치(settings.market): 장 폐쇄(closed)와 서킷브레이커(haltUntil까지 거래 중단), 유저에게 보일 사유(reason).
  * refreshEvents(events-config.ts)가 다른 서버 설정과 함께 30초 캐시로 읽고, 운영 페이지에서 바꾸면 그 인스턴스는 바로, 다른 인스턴스는 최대 30초 뒤 반영됩니다.
  * 시세는 멈추지 않습니다(계산식이라 계속 흐름). 막는 것은 매수 · 매도입니다.
  */

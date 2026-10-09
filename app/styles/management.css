@@ -542,7 +542,7 @@
 .core-box p { margin:4px 0 0; font-size:13px; color:#a5b7b4; line-height:1.6; }
 .core-box button { flex-shrink:0; }
 @media(max-width:767px){ .core-tiles { grid-template-columns:repeat(5,minmax(0,1fr)); } .core-tile { padding:10px 2px 8px; } .core-tile small { font-size:11px; } .core-tile-badge { top:2px; right:3px; font-size:9px; } .core-detail { padding:18px; } .core-lines { grid-template-columns:minmax(0,1fr); } .core-box { flex-direction:column; align-items:stretch; } }
-/* v3.212 주화 증권거래소: 종목 카드 · 미니 차트 · 소문 줄 · 거래 내역. 한국식으로 오름은 빨강, 내림은 파랑. */
+/* v3.213 주화 증권거래소: 종목 카드 · 미니 차트 · 소문 줄 · 거래 내역. 한국식으로 오름은 빨강, 내림은 파랑. */
 .mkt-up { color:#e8746b; }
 .mkt-down { color:#6fa8e6; }
 .mkt-open { padding:22px; display:grid; gap:12px; margin:14px 0; }

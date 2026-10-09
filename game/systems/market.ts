@@ -1,5 +1,5 @@
 /**
- * v3.212 주화 증권거래소 시세 · 거래(서버 전용 계산). 수치와 종목은 data/market.ts, 기획은 docs/stock-market-plan.md.
+ * v3.213 주화 증권거래소 시세 · 거래(서버 전용 계산). 수치와 종목은 data/market.ts, 기획은 docs/stock-market-plan.md.
  *
  * - 공유 시장: 모든 모험가가 같은 시세를 봅니다. 시세는 서버 키(setMarketKey)로만 만들 수 있어 화면은 미래 시세를 계산하지 못합니다.
  * - 서버 인스턴스마다 지금 틱의 하루치 시세를 한 번 계산해 메모리에 두고(marketWindow) 모든 요청이 나눠 씁니다(10분에 약 3ms).
@@ -13,7 +13,7 @@ import type { ActionHandlers } from './actions/types';
 let marketKey = 'tidebound-local-market-key';
 /** 서버가 시작할 때 한 번 넣습니다(server/hacks.ts의 침투 작전 키에서 만듭니다). */
 export function setMarketKey(key: string) { if (key && key !== marketKey) { marketKey = key; cache = null; } }
-/** v3.212 운영 스위치(server/market-config.ts가 넣음): 장 폐쇄 · 서킷브레이커(haltUntil까지 거래 중단) · 사유. */
+/** v3.213 운영 스위치(server/market-config.ts가 넣음): 장 폐쇄 · 서킷브레이커(haltUntil까지 거래 중단) · 사유. */
 export type MarketControl = { closed: boolean; haltUntil: number; reason: string };
 let control: MarketControl = { closed: false, haltUntil: 0, reason: '' };
 export function setMarketControl(c: MarketControl) { control = { ...c }; }

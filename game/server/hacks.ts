@@ -101,7 +101,7 @@ export async function ensurePuzzleKey(now: number) {
         if (!key) { key = randomBytes(24).toString('hex'); await database.setSetting('puzzleKey', key, now); key = await database.getSetting('puzzleKey') || key; }
     }
     setPuzzleKey(key);
-    // v3.212 증권거래소 시세 키도 같은 비밀에서 만듭니다(따로 저장하지 않음).
+    // v3.213 증권거래소 시세 키도 같은 비밀에서 만듭니다(따로 저장하지 않음).
     setMarketKey(`market:${key}`);
     keyReady = true;
 }

@@ -514,7 +514,7 @@ export type State = {
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
     /**
-     * v3.212 주화 증권거래소 계좌(공유 시장, 첫 매수 때 생김).
+     * v3.213 주화 증권거래소 계좌(공유 시장, 첫 매수 때 생김).
      * holdings는 종목 → 수량 · 원금(수수료 포함 매수 금액), realized는 누적 실현 손익. 환생해도 남고 승천하면 사라집니다.
      */
     market?: { holdings: Record<string, { qty: number; cost: number }>; realized?: number };

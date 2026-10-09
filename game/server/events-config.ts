@@ -32,7 +32,7 @@ const cleanClosures = (c: Closures): Closures => ({ dungeons: [...new Set(c.dung
 export async function refreshEvents(now = Date.now()) {
     if (cached && now - cached.at < TTL) return;
     try {
-        // v3.212 증권거래소 운영 스위치(장 폐쇄 · 서킷브레이커)도 같은 30초 캐시로 읽습니다.
+        // v3.213 증권거래소 운영 스위치(장 폐쇄 · 서킷브레이커)도 같은 30초 캐시로 읽습니다.
         const [config, closures, blessings, market] = await Promise.all([readEventConfig(), readClosures(), altarBlessingEvents(now), readMarketControl()]);
         cached = { at: now, config }; setRuntimeEvents(config.extra, config.disabled); setClosures(closures); setAltarEvents(blessings); setMarketControl(market);
     }

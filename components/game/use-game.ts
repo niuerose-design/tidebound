@@ -142,9 +142,9 @@ export function useGame() {
         logDelta?: LogDelta;
         /** v3.43 정보 비공개 카탈로그(/api/game 응답). */
         catalog?: Catalog;
-        /** v3.212 증권거래소 시세 조각(/api/game 응답, 거래소 화면을 볼 때만). */
+        /** v3.213 증권거래소 시세 조각(/api/game 응답, 거래소 화면을 볼 때만). */
         market?: MarketFeed;
-        /** v3.212 장 상태(폐장 · 서킷브레이커, 거래소 화면을 볼 때만). */
+        /** v3.213 장 상태(폐장 · 서킷브레이커, 거래소 화면을 볼 때만). */
         marketStatus?: MarketStatus;
     }; if (res.status === 401)
         setNeedsLogin(true); if (!res.ok)
@@ -155,7 +155,7 @@ export function useGame() {
         // v27.62 동기화에는 가진 마지막 로그의 키를 붙여, 서버가 그 뒤 로그만 보내게 합니다(응답의 약 절반이 로그). v3.92 게임 행동(/api/game)에도 붙입니다.
         const known = path === '/api/game' ? stateRef.current?.logs.at(-1) : undefined, catalogKey = catalogNow().key;
         // v3.44 가진 카탈로그 키를 붙이면, 서버는 바뀌었을 때만 카탈로그를 보냅니다.
-        // v3.212 증권거래소 화면을 보는 동안만 가진 시세 위치(marketKnown)를 붙여, 서버가 새 틱만 얹게 합니다.
+        // v3.213 증권거래소 화면을 보는 동안만 가진 시세 위치(marketKnown)를 붙여, 서버가 새 틱만 얹게 합니다.
         const market = path === '/api/game' ? marketKnown() : undefined;
         const data = await request(path, { ...a, ...(known ? { logKey: logKey(known) } : {}), ...(catalogKey && path === '/api/game' ? { catalogKey } : {}), ...(market !== undefined ? { marketKnown: market } : {}) });
         if (data.market) ingestMarket(data.market);

@@ -35,7 +35,7 @@ export async function POST(req: Request) { try {
     if (body.action === 'newsTest') return Response.json({ rows: await postNewsSample(String(body.kind ?? ''), { name: typeof body.name === 'string' ? body.name : undefined, text: typeof body.text === 'string' ? body.text : undefined, tag: body.tag !== false }, Date.now()) }, { headers });
     // v3.190 소식 · 채팅 전체 지우기. 지운 줄 수와 남은 소식 목록을 돌려줍니다.
     if (body.action === 'clearChat') return Response.json(await clearChatScope(String(body.scope ?? '')), { headers });
-    // v3.212 증권거래소: 보기 { action: 'market' }, 바꾸기 { action: 'setMarket', closed?, haltMinutes?, reason? }.
+    // v3.213 증권거래소: 보기 { action: 'market' }, 바꾸기 { action: 'setMarket', closed?, haltMinutes?, reason? }.
     if (body.action === 'market') return Response.json(await adminMarket(), { headers });
     if (body.action === 'setMarket') return Response.json(await setAdminMarket(body), { headers });
     if (body.action === 'closures') return Response.json(await listClosures(), { headers });
