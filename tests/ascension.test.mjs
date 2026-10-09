@@ -300,6 +300,18 @@ test('v3.58 gold income is logged per play hour (24 buckets) and survives rebirt
     assert.ok((t.goldEarned || 0) >= t.gold - g0 && t.goldLog?.length >= 1, 'hunting ticks record income');
     t.level = 60; t.goldLog = [{ h: 0, g: 9 }]; act(t, { type: 'rebirth' }, 700_000); assert.deepEqual(t.goldLog, [{ h: 0, g: 9 }], 'kept through rebirth');
 });
+test('v3.207 exp · mastery income is logged per play hour for the admin page; mastery log survives rebirth', async () => {
+    const In = await L.load('systems/income');
+    const s = newState(0); s.playMs = 0;
+    In.recordMasteryIncome(s, 40); In.recordMasteryIncome(s, -5); In.recordExpIncome(s, 70);
+    assert.deepEqual(s.masteryLog, [{ h: 0, g: 40 }]); assert.equal(s.masteryEarned, 40); assert.equal(s.expEarned, 70);
+    s.playMs = 3600_000 * 1.5; In.recordMasteryIncome(s, 1);
+    assert.deepEqual(In.incomeRate(s, s.masteryLog), { perHour: 40, hours: 1, estimated: false });
+    const t = newState(0); act(t, { type: 'start' }, 0); advance(t, 600_000, () => .5);
+    assert.ok(t.masteryLog?.length >= 1 && t.masteryEarned > 0 && t.expEarned > 0, 'hunting ticks record exp and mastery');
+    t.level = 60; t.masteryLog = [{ h: 0, g: 9 }]; t.expEarned = 5; act(t, { type: 'rebirth' }, 700_000);
+    assert.deepEqual(t.masteryLog, [{ h: 0, g: 9 }], 'mastery log kept through rebirth'); assert.equal(t.expEarned, 5);
+});
 test('v3.58 appraisal: price × rebirth factor (v3.68 linear, v3.81 scale 30), pity at 150/1000/3000 kept through rebirth and reset by ascension', async () => {
     const Co = await L.load('systems/commerce'), Ec = await L.load('data/economy');
     const s = newState(0); s.level = 100; const base = Co.gambleCost(s);

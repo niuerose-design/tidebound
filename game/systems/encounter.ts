@@ -5,7 +5,7 @@ import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyss
 import { jobMasteryTarget, extremeBroken } from './progression';
 import { killReward, encounterTier, dungeonKillReward, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
 import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
-import { recordExpIncome } from './income';
+import { recordExpIncome, recordMasteryIncome } from './income';
 import { rollBossLoot } from './boss-loot';
 import { grantDungeonCoins, clearCoinBase, spendDailyBonus, dailyBonusLeft } from './dungeon-coins';
 import { DAILY_BONUS } from '../data/dungeon-shop';
@@ -371,6 +371,7 @@ export function reward(s: State, rng: () => number) {
     const jobTargets = vocationTargets(jobMasteryTarget(jobById(s.job)!));
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
     s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practiceTotal;
+    recordMasteryIncome(s, practiceTotal);
     const newJobRank = thresholdRank(s.jobMastery[s.job], jobTargets);
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·마나·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {

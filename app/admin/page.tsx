@@ -14,8 +14,11 @@ type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
 /** v27.73 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
 type Tab = 'life' | 'events' | 'closures' | 'stats' | 'news' | 'income';
 /** v3.58 사냥 골드 수입 통계(server/admin.ts adminIncome). */
-type IncomeRow = { id: string; name: string; username: string; rebirths: number; ascension: number; level: number; place: string; tide: number; perHour: number; hours: number; estimated: boolean; gold: number; earned: number; running: boolean; updatedAt: number };
-type IncomeData = { at: number; measured: number; recent: number; median: number; byRebirth: { label: string; count: number; median: number; max: number }[]; top: IncomeRow[]; picked: (IncomeRow & { log: { ago: number; gold: number }[] })[] };
+type IncomeRate = { perHour: number; hours: number; estimated: boolean; earned: number };
+type IncomeRow = { id: string; name: string; username: string; rebirths: number; ascension: number; level: number; place: string; tide: number; perHour: number; hours: number; estimated: boolean; gold: number; earned: number; running: boolean; updatedAt: number; exp?: IncomeRate; mastery?: IncomeRate };
+type IncomeData = { at: number; measured: number; recent: number; median: number; byRebirth: { label: string; count: number; median: number; max: number }[]; top: IncomeRow[]; picked: (IncomeRow & { log: { ago: number; gold: number; exp?: number; mastery?: number }[] })[] };
+/** v3.207 특정 모험가 수입 칸: 골드 · 경험치 · 숙련(시간별 막대 색). */
+const INCOME_KINDS = [['gold', '골드', '#e7be71'], ['exp', '경험치', '#8fd0ff'], ['mastery', '숙련', '#b99cff']] as const;
 /** 큰 골드: 1.2조 · 3.4억 · 5.6만. */
 const big = (v: number) => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(2)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
 type NewsRow = { id: number; name: string; text: string; at: number; hacker: boolean };
@@ -39,7 +42,7 @@ const HELP: Record<Tab, string> = {
     closures: '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나옵니다(사냥터는 더 앞의 열린 곳으로). 서버마다 최대 30초 걸립니다.',
     stats: '모든 세이브를 읽어 집계합니다(불러올 때만 계산). 활동은 마지막 저장 시각 기준입니다.',
     news: '기록판 ‘소식’ 탭에 실제와 같은 줄을 올려 봅니다. 모두에게 보이므로 기본으로 [테스트]를 붙입니다. 아래 ‘지우기’로 소식 · 전체 채팅 · 길드 채팅을 통째로 지울 수 있습니다(되돌릴 수 없음).',
-    income: '사냥으로 번 골드를 플레이 1시간 단위로 기록합니다. 시간당 골드는 최근 3시간 평균이고, 1시간을 못 채웠으면 추정(≈)합니다. 판매·환불은 빠집니다.',
+    income: '사냥으로 번 골드 · 처치 경험치 · 현재 직업 숙련을 플레이 1시간 단위로 기록합니다. 시간당 값은 최근 3시간 평균이고, 1시간을 못 채웠으면 추정(≈)합니다. 판매·환불과 누리 보너스 경험치는 빠지고, 경험치 기록은 환생하면 새로 쌓입니다. 모험가를 검색하면 경험치·숙련도 함께 보입니다.',
 };
 const muted = { color: '#9bb3b0' } as const;
 const rowItem = { padding: '8px 10px', display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', borderTop: '1px solid #263f42' } as const;
@@ -174,7 +177,7 @@ export default function AdminPage() {
         if (d) { setNews(d.rows); setDone(`${what}을(를) 지웠습니다 · ${Number(d.removed).toLocaleString('ko-KR')}줄.`); }
     };
     const postNews = async (kind: string) => { const d = await call({ action: 'newsTest', kind, name: newsName, text: newsText, tag: newsTag }); if (d) { setNews(d.rows); setDone('소식 탭에 올렸습니다. 게임 화면의 기록판 → 소식에서 확인하세요.'); if (kind === 'custom') setNewsText(''); } };
-    const TABS: [Tab, string][] = [['life', '모험가 관리'], ['events', '서버 이벤트'], ['closures', '입장 관리'], ['stats', '통계'], ['income', '골드 수입'], ['news', '소식 테스트']];
+    const TABS: [Tab, string][] = [['life', '모험가 관리'], ['events', '서버 이벤트'], ['closures', '입장 관리'], ['stats', '통계'], ['income', '사냥 수입'], ['news', '소식 테스트']];
     const openTab = (id: Tab) => { setTab(id); setError(''); setDone(''); if (!key) return; if (id === 'events') loadEvents(); if (id === 'closures') loadClosures(); if (id === 'stats') loadStats(); if (id === 'news') loadNews(); if (id === 'income') void loadIncome(); };
     const closureList = (kind: keyof ClosureList, title: string, open: boolean) => closures && <Fold title={title} open={open} note={`${closures[kind].length}곳 · 막힘 ${closures[kind].filter(r => r.closed).length}`}>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>{closures[kind].map(r => <li key={r.id} style={rowItem}>
@@ -306,8 +309,15 @@ export default function AdminPage() {
                 </div>
             </Fold>
             {income.picked.map(p => <Fold key={p.id} title={p.name} note={`${p.username || '?'} · 환생 ${p.rebirths}${p.ascension ? ` · 승천 ${p.ascension}` : ''} · Lv.${p.level} · ${p.place} ${p.tide}${p.running ? '' : ' · 멈춤'}`}>
-                <p style={{ margin: '0 0 8px', fontSize: 13 }}>시간당 <b>{p.estimated ? '≈ ' : ''}{big(p.perHour)}</b> · 보유 {big(p.gold)} · 기록 뒤 합계 {big(p.earned)}</p>
-                {!p.log.length ? <p style={{ ...muted, fontSize: 13, margin: 0 }}>아직 기록이 없습니다.</p> : (() => { const top = Math.max(1, ...p.log.map(x => x.gold)); return <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 3, fontSize: 12 }}>{p.log.map(x => <li key={x.ago} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 80px', gap: 8, alignItems: 'center' }}><span style={muted}>{x.ago ? `${x.ago}시간 전` : '지금'}</span><span style={{ height: 8, borderRadius: 4, background: '#2d474a' }}><span style={{ display: 'block', height: 8, borderRadius: 4, width: `${Math.max(2, x.gold / top * 100)}%`, background: '#e7be71' }}/></span><b style={{ textAlign: 'right' }}>{big(x.gold)}</b></li>)}</ul>; })()}
+                <div style={{ ...grid(170), marginBottom: 10 }}>
+                    <Tile label="시간당 골드" value={`${p.estimated ? '≈ ' : ''}${big(p.perHour)}`} note={`보유 ${big(p.gold)} · 기록 뒤 합계 ${big(p.earned)}`}/>
+                    <Tile label="시간당 경험치" value={p.exp ? `${p.exp.estimated ? '≈ ' : ''}${big(p.exp.perHour)}` : '-'} note={p.exp ? `기록 뒤 합계 ${big(p.exp.earned)} · 이번 생 기준` : ''}/>
+                    <Tile label="시간당 숙련" value={p.mastery ? `${p.mastery.estimated ? '≈ ' : ''}${big(p.mastery.perHour)}` : '-'} note={p.mastery ? `기록 뒤 합계 ${big(p.mastery.earned)} · 현재 직업` : ''}/>
+                </div>
+                {!p.log.length ? <p style={{ ...muted, fontSize: 13, margin: 0 }}>아직 기록이 없습니다.</p> : <div style={grid(260)}>{INCOME_KINDS.map(([k, label, color]) => { const top = Math.max(1, ...p.log.map(x => x[k] || 0)); return <div key={k}>
+                    <b style={{ fontSize: 13 }}>{label}</b>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0', display: 'grid', gap: 3, fontSize: 12 }}>{p.log.map(x => <li key={x.ago} style={{ display: 'grid', gridTemplateColumns: '64px 1fr 72px', gap: 8, alignItems: 'center' }}><span style={muted}>{x.ago ? `${x.ago}시간 전` : '지금'}</span><span style={{ height: 8, borderRadius: 4, background: '#2d474a' }}><span style={{ display: 'block', height: 8, borderRadius: 4, width: `${(x[k] || 0) ? Math.max(2, (x[k] || 0) / top * 100) : 0}%`, background: color }}/></span><b style={{ textAlign: 'right' }}>{big(x[k] || 0)}</b></li>)}</ul>
+                </div>; })}</div>}
             </Fold>)}
             {incomeQuery.trim() && !income.picked.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>‘{incomeQuery}’에 맞는 모험가가 없습니다.</p>}
             <Fold title="시간당 골드 상위 30" note="최근 24시간 저장 · 줄을 누르면 시간별 기록">
