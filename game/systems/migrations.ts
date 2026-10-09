@@ -89,6 +89,23 @@ export function refundPearlResearch(s: State) {
     if (spent > 0) { s.pearls = (s.pearls || 0) + spent; addLog(s, `세계석 연구 ‘윤회의 연금술’이 개편 대상이 되어 투자한 세계석 ${spent}개를 돌려받았습니다.`, 'system'); }
     return spent;
 }
+/** v3.208 랜덤게임 삭제: 연구 ‘랜덤게임’(vowAnchor, base 10 · step 10, 최대 3)에 쓴 세계석을 돌려주고(승천 무료 지급분 제외) 기록 · 진행 중 판을 지웁니다. */
+export function retireRandomGame(s: State) {
+    const any = s as Record<string, unknown>;
+    for (const key of ['randomGameRuns', 'randomGameDay', 'randomGameStats']) if (key in any) delete any[key];
+    if (s.dungeon?.id === 'randomGame') { s.dungeon = null; s.enemy = null; s.running = false; }
+    const perm = s.permanent as Record<string, number | undefined> | undefined;
+    if (!perm || !('vowAnchor' in perm)) return 0;
+    const rank = perm.vowAnchor || 0, granted = Math.min(rank, (s.researchGranted as Record<string, number | undefined> | undefined)?.vowAnchor || 0);
+    delete perm.vowAnchor;
+    if (s.researchLegacy && 'vowAnchor' in s.researchLegacy) delete (s.researchLegacy as Record<string, number | undefined>).vowAnchor;
+    if (s.researchGranted && 'vowAnchor' in s.researchGranted) delete (s.researchGranted as Record<string, number | undefined>).vowAnchor;
+    if (s.researchPlan?.items.some(x => x.id === 'vowAnchor')) s.researchPlan.items = s.researchPlan.items.filter(x => x.id !== 'vowAnchor');
+    let spent = 0;
+    for (let i = granted; i < rank; i++) spent += 10 + 10 * i;
+    if (spent > 0) { s.pearls = (s.pearls || 0) + spent; addLog(s, `랜덤게임이 없어져 연구 ‘랜덤게임’에 쓴 세계석 ${spent}개를 돌려받았습니다.`, 'system'); }
+    return spent;
+}
 /**
  * v3.154 편의 연구 개편: 넓은 가방 삭제(기본 100칸, 투자한 세계석 환급), 긴 휴식 12단계 × 2시간 → 3단계 × 6시간(단계 = ⌈옛 단계 ÷ 3⌉, 상한 시간은 줄지 않음 · 새 가격이 더 비싸 환급은 없음).
  * 무료 지급분(researchGranted) · 연구 예약도 같이 맞춥니다. offlineRescaled로 한 번만 변환합니다.
@@ -371,7 +388,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
     // v3.207 무릉도장 코어: 이미 높이 오른 캐릭터에게 최고 층 기준으로 소급 지급 · 각성합니다.
     if (s.version === SAVE_VERSION) syncAbyssCores(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); retireRandomGame(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

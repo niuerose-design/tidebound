@@ -4,7 +4,7 @@ import { newState, act, advance, rebirthLevel, expMultiplier, JOBS, assert, test
 const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
 const Asc = await L.load('data/ascension'), Mi = await L.load('data/mimic'), Lc = await L.load('systems/actions/lifecycle');
 const P = await L.load('systems/progression'), LT = await L.load('data/long-term'), V = await L.load('systems/vows'), Sp = await L.load('data/sprout');
-const E = await L.load('systems/encounter'), Ac = await L.load('data/account'), Ec = await L.load('data/economy'), RG = await L.load('systems/random-game');
+const E = await L.load('systems/encounter'), Ac = await L.load('data/account'), Ec = await L.load('data/economy');
 const W = await L.load('data/world'), AmMod = await L.load('systems/automation'), RpMod = await L.load('systems/research-plan');
 const { skillById } = await L.load('data/skills'), Ac2 = await L.load('data/achievements');
 const SKILL = id => skillById(id);
@@ -78,15 +78,14 @@ test('v3.74 extreme break: active skills only, after all three limit breaks at 1
     assert.ok(P.jobRequirements(newState(0), j).some(r => r.label.endsWith('숙련 1,000,000')), 'parent mastery shown as 1,000,000');
 });
 
-test('v3.31 ascended effects: no sprout, ×2 early exp, vow and random-game bonus ×1.2 per ascension, mastery ×(1+n)', () => {
+test('v3.31 ascended effects: no sprout, ×2 early exp, vow bonus ×1.2 per ascension, mastery ×(1+n)', () => {
     const fresh = newState(0), asc = { ...newState(0), ascension: 1 };
     assert.equal(Sp.sproutCount(fresh), 0); assert.equal(Sp.sproutCount(asc), Infinity);
     assert.ok(Math.abs(expMultiplier(asc) / expMultiplier(fresh) - Asc.ASCENSION.earlyExp / Sp.sproutExp(0)) < 1e-9, 'sprout ×3 replaced by ×2');
     asc.rebirths = 10; assert.equal(Asc.ascensionEarlyExp(asc), 1, 'early boost ends at 10 rebirths');
     assert.equal(Sp.deathRecoveryTurns(asc) > Sp.SPROUT.recoveryTurns, true, 'no sprout recovery help');
-    const vow = { permanent: { vowRough: 3, vowAnchor: 3 }, vows: { rough: 3 } };
+    const vow = { permanent: { vowRough: 3 }, vows: { rough: 3 } };
     assert.equal(V.roughReward(vow, 30), 4); assert.equal(V.roughReward({ ...vow, ascension: 5 }, 30), 7, '×4 → ×7 at five ascensions');
-    assert.equal(RG.randomGamePayout(vow), 2); assert.equal(RG.randomGamePayout({ ...vow, ascension: 5 }), 3);
     assert.equal(Asc.ascensionMastery({}), 1); assert.equal(Asc.ascensionMastery({ ascension: 2 }), 3); assert.equal(Asc.ascensionMastery({ ascension: 9 }), 6, 'capped at 5');
 });
 

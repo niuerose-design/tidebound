@@ -700,16 +700,7 @@ export type State = {
         repeat?: { left: number | null; until?: number };
         /** v27.70 일반 던전 난이도(DUNGEON_MODES). 없으면 노말. 무릉도장은 쓰지 않습니다. */
         mode?: import('./data/balance').DungeonMode;
-        /** v27.86 랜덤게임: 쌓인 판돈(배율 적용 전)과 목표 웨이브(0이면 없음). */
-        stake?: { essence: number };
-        until?: number;
     };
-    /** v27.86 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). v3.24 randomGameDay와 날이 다르면 0으로 봅니다. */
-    randomGameRuns?: number;
-    /** v3.24 randomGameRuns를 센 날(한국 시간 dayKey). */
-    randomGameDay?: string;
-    /** v27.88 랜덤게임 기록: 가장 멀리 간 웨이브·총 입장·받고 나간 횟수(환생해도 유지). */
-    randomGameStats?: { best: number; runs: number; cashed: number };
     /** v3.18 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
     hacker?: HackerState;
     /** v3.26 저장 전에 /api/game이 읽고 지우는 임시 표시: 해커 계열로 전직함(채팅 알림). */

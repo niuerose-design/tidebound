@@ -217,7 +217,7 @@ export function Guide({ s }: { s?: State }) {
                 <Rule icon={<Sparkles size={19}/>} title="호루라기"
                     effect={`전투 화면 장면 오른쪽 아래의 작은 버튼. SP ${WHISTLE.sp}를 내면 다음 사냥터 출현이 고른 특별 몬스터로 정해집니다: ${WHISTLE_TARGETS.map(t => t.name).join(' · ')}. 보상은 자연 등장과 같습니다(${WHISTLE_TARGETS.map(t => `${t.name} ${t.reward}`).join(' / ')}).`}
                     condition={`하루 ${WHISTLE.perDay}번(한국 시간 자정 초기화). 부를 조건은 자연 등장의 레벨 · 누적 처치와 같고(${WHISTLE_TARGETS.map(t => `${t.name} Lv.${t.minLevel} · ${t.minKills.toLocaleString()}마리`).join(', ')}) 사냥터 난이도 조건은 보지 않습니다. 한 번에 하나만 불어 둘 수 있고, 다음 출현에 쓰입니다.`}
-                    limit="던전 · 랜덤게임에서는 불 수 없고 불어 둔 것도 쓰이지 않습니다(던전에서 나온 뒤 사냥터 출현에 씀). 대왕 까미 · 대왕 누리 · 대왕 정수 슬라임은 부를 수 없습니다. 부재중 정산 판정 수에는 들지 않습니다."/>
+                    limit="던전에서는 불 수 없고 불어 둔 것도 쓰이지 않습니다(던전에서 나온 뒤 사냥터 출현에 씀). 대왕 까미 · 대왕 누리 · 대왕 정수 슬라임은 부를 수 없습니다. 부재중 정산 판정 수에는 들지 않습니다."/>
             </div>
         </Topic>
         <Topic icon={<RefreshCw size={19}/>} title="성장 · 재화" note="환생, 세계석 연구, 도감, 상점.">
@@ -228,7 +228,7 @@ export function Guide({ s }: { s?: State }) {
                     limit={`횟수 보상은 20회까지 회당 세계석 1·경험치 +25%, 이후 완만해집니다. 필요 경험치는 환생 20회까지 회당 크게, 그 뒤로도 꾸준히 오르고, 환생 50회와 100회에 벽이 있습니다(그 회차부터 필요 경험치 ×${XP_SCALING.rebirthWalls.map(([, x]) => x).join(' · ×')}). 환생 AP 최대 ${ECONOMY.rebirthAPCap}, 사냥터 난이도 최대 ${ECONOMY.tideCap}. 칭호는 업적(환생 횟수·도전·무릉도장)을 달성하면 얻고, 능력치 화면의 ‘칭호’에서 장착하거나 숨깁니다.`}/>
                 <Rule icon={<Sparkles size={19}/>} title="승천"
                     effect={`환생 ${ASCENSION.requirements[0]}회부터 원할 때 승천할 수 있고, 승천할 때마다 필요한 환생 횟수가 ${ASCENSION.requirements.join(' → ')}로 오릅니다. 승천하면 환생·장비·연구가 처음으로 돌아가고, 직업·스킬 숙련과 업적·계급장·칭호·기록은 남습니다. 승천 1회마다 숙련 획득 +${ASCENSION.masteryPer * 100}%(${ASCENSION.masteryCap}회까지, 숙련의 까미 당첨분 포함) · 서약 보상 ×${1 + ASCENSION.vowPer}씩(${ASCENSION.vowCap}회까지).`}
-                    condition={`승천 직후: 업적 보상 세계석·SP를 다시 받고(영구 효과는 그대로), 편의 연구(지겨운 환생·가방·긴 휴식·청산·자동 정리·자동 강화·불굴의 의지)와 서약·랜덤게임 1단계가 열립니다. 환생 ${ASCENSION.earlyExpUntil}회 전까지 경험치 ×${ASCENSION.earlyExp}(새싹의 축복 대신), 까미·누리는 사냥터 난이도 0부터 나옵니다. 행운의 편지 6~10단계를 살 수 있습니다.`}
+                    condition={`승천 직후: 업적 보상 세계석·SP를 다시 받고(영구 효과는 그대로), 편의 연구(지겨운 환생·가방·긴 휴식·청산·자동 정리·자동 강화·불굴의 의지)와 서약 1단계가 열립니다. 환생 ${ASCENSION.earlyExpUntil}회 전까지 경험치 ×${ASCENSION.earlyExp}(새싹의 축복 대신), 까미·누리는 사냥터 난이도 0부터 나옵니다. 행운의 편지 6~10단계를 살 수 있습니다.`}
                     limit={`지워지는 것: 골드·세계석·연구·SP·정수, 스킬 한계 돌파와 극한돌파, SP로 올린 스킬 단계, 모든 장비(유물·칠흑 포함), 도감, 무릉도장 기록(최고층은 승천 기록에 남음), 계정 금고의 세계석 · 정수(다른 분신 몫 포함)와 이 캐릭터가 금고에 넣은 칠흑(다른 분신이 넣은 칠흑은 남음), 서약. 결투·이번 주 무릉도장 기록판에서 바로 빠집니다. 환생은 ${ASCENSION.rebirthCap}회까지이고 ${ASCENSION.researchLockAt}회부터는 세계석 연구를 살 수 없습니다.`}/>
                 <Rule icon={<Target size={19}/>} title="계급장"
                     effect={`처치한 마릿수로만 오르는 별도 계급(이등병 → 중장, ${RANKS.length}단계). 환생·분신과 무관하게 유지됩니다. 무리는 마리 수 대신 싸운 턴 수 × 규모별 값(×5 1.1 · ×100 1.32 · ×500 1.98, 마리 수가 상한)으로 셉니다. 진급마다 진급 포인트(병 1 · 부사관 2 · 장교 3 · 장성 4, 합계 ${RANK_TOTAL_POINTS})를 받아 특전을 삽니다. 특전은 단계당 1P이고 단계마다 효과가 같은 폭으로 늘어납니다: ${RANK_PERKS.map(p => `${p.name} — 단계당 ${p.id === 'tally' ? '처치 1마리를 계급 경험치 +1마리로 더 셈' : p.id === 'drill' ? '처치 숙련 기본 +1(직업·장착 스킬, 배율과 무관한 고정값)' : p.id === 'medal' ? '사냥터 처치마다 SP 드롭 +0.1%' : '사냥터 처치마다 세계석 드롭 +0.1%'}, 최대 ${p.max}단계(${p.desc(p.max)})`).join(' · ')}.`}

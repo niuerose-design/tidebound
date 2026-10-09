@@ -3,7 +3,7 @@ import type { State, Vows } from '../types';
 import { researchRank } from '../data/economy';
 import { ascensionVow } from '../data/ascension';
 
-/** v27.86 잠든 힘은 서약에서 빠지고 던전 ‘랜덤게임’이 되었습니다(연구 vowAnchor가 입장을 엽니다). 절제(AP 제한)가 새 서약입니다. */
+/** v27.86 잠든 힘은 서약에서 빠졌습니다(던전 ‘랜덤게임’이 되었다가 v3.208에 삭제). 절제(AP 제한)가 새 서약입니다. */
 export const VOW_IDS = ['breath', 'rough', 'restraint'] as const;
 export type VowId = typeof VOW_IDS[number];
 export const VOW_RESEARCH: Record<VowId, string> = { breath: 'vowBreath', rough: 'vowRough', restraint: 'vowRestraint' };

@@ -45,7 +45,7 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
     }
     fresh.abyssBest = s.abyssBest;
     fresh.shopSerial = s.shopSerial;
-    Object.assign(s, { ...fresh, limitBreaks: s.limitBreaks, abyssMilestones: s.abyssMilestones, name: s.name, pearls: next.pearls, essence: s.essence || 0, dungeonCoins: s.dungeonCoins || 0, dungeonCoinFrac: s.dungeonCoinFrac || 0, bossLootMiss: s.bossLootMiss || 0, bossCores: s.bossCores, coreSlot: s.coreSlot, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, researchLegacy: s.researchLegacy, goldLog: s.goldLog, goldEarned: s.goldEarned, appraisal: s.appraisal, primalDropPity: s.primalDropPity, primalGauge: s.primalGauge, plainCodex: s.plainCodex, book: s.book, /** v27.80 변종·황금 개체·난이도 이정표·최고 난이도 기록도 환생 뒤에 남깁니다(전에는 초기화되던 버그). */ variantBook: s.variantBook, goldenBook: s.goldenBook, tideBest: s.tideBest, bookTier: s.bookTier, randomGameStats: s.randomGameStats, clears: s.clears, kills: s.kills, rank: s.rank, badge: s.badge, playMs: s.playMs || 0, lifeStart: s.lifeStart, rebirthLog: s.rebirthLog, deaths: s.deaths, starforce: s.starforce, onyxSeen: s.onyxSeen, onyxBook: s.onyxBook, onyxMiss: s.onyxMiss, onyxMilestones: s.onyxMilestones, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited, hacker: s.hacker, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
+    Object.assign(s, { ...fresh, limitBreaks: s.limitBreaks, abyssMilestones: s.abyssMilestones, name: s.name, pearls: next.pearls, essence: s.essence || 0, dungeonCoins: s.dungeonCoins || 0, dungeonCoinFrac: s.dungeonCoinFrac || 0, bossLootMiss: s.bossLootMiss || 0, bossCores: s.bossCores, coreSlot: s.coreSlot, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, researchLegacy: s.researchLegacy, goldLog: s.goldLog, goldEarned: s.goldEarned, appraisal: s.appraisal, primalDropPity: s.primalDropPity, primalGauge: s.primalGauge, plainCodex: s.plainCodex, book: s.book, /** v27.80 변종·황금 개체·난이도 이정표·최고 난이도 기록도 환생 뒤에 남깁니다(전에는 초기화되던 버그). */ variantBook: s.variantBook, goldenBook: s.goldenBook, tideBest: s.tideBest, bookTier: s.bookTier, clears: s.clears, kills: s.kills, rank: s.rank, badge: s.badge, playMs: s.playMs || 0, lifeStart: s.lifeStart, rebirthLog: s.rebirthLog, deaths: s.deaths, starforce: s.starforce, onyxSeen: s.onyxSeen, onyxBook: s.onyxBook, onyxMiss: s.onyxMiss, onyxMilestones: s.onyxMilestones, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited, hacker: s.hacker, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
     // v3.201 처치 경험치 기록은 레벨이 다시 낮아지는 새 생에 맞지 않아 지웁니다(골드 기록은 운영 통계라 남김).
     delete s.expLog;
     syncRelicPower(s);
@@ -104,10 +104,8 @@ export function rebirthNow(s: State, now: number) {
  * 요구 레벨도 보지 않습니다. 모든 서약이 풀립니다. 자동 사냥 중이었다면 첫 사냥터에서 이어갑니다.
  */
 export function breathReset(s: State, now: number) {
-    const running = s.running, runs = s.randomGameRuns, runDay = s.randomGameDay;
+    const running = s.running;
     startLife(s, now, { pearls: s.pearls, rebirths: s.rebirths });
-    // v27.86 같은 생을 다시 시작하는 것이라 랜덤게임 입장 횟수는 그대로 둡니다.
-    if (runs) { s.randomGameRuns = runs; s.randomGameDay = runDay; }
     delete s.vows;
     s.running = running;
     addLog(s, '하드코어 · 쓰러져 이번 생을 처음부터 다시 시작합니다. 서약이 풀렸습니다.', 'system');
@@ -160,7 +158,7 @@ export function ascend(s: State, now: number) {
     // 남기는 것: 숙련·직업, 업적·계급장·칭호, 기록, 진행이 아닌 것(이름·길드·제단·목표·설정·계정·분신), 해커, 마이그레이션 표시.
     const keep: Partial<State> = {
         name: s.name, rank: s.rank, title: s.title, badge: s.badge, achievements: s.achievements, achievementClaims: s.achievementClaims,
-        rebirthLog: s.rebirthLog, kills: s.kills, deaths: s.deaths, playMs: s.playMs || 0, bestStage: s.bestStage, tideBest: s.tideBest, clears: s.clears, modeClears: s.modeClears, randomGameStats: s.randomGameStats, starforce: s.starforce, rating: s.rating, wins: s.wins, losses: s.losses, duelDay: s.duelDay,
+        rebirthLog: s.rebirthLog, kills: s.kills, deaths: s.deaths, playMs: s.playMs || 0, bestStage: s.bestStage, tideBest: s.tideBest, clears: s.clears, modeClears: s.modeClears, starforce: s.starforce, rating: s.rating, wins: s.wins, losses: s.losses, duelDay: s.duelDay,
         guildMember: s.guildMember, guildStats: s.guildStats, altar: s.altar, daily: s.daily, weekly: s.weekly, duelSeason: s.duelSeason,
         autoSell: s.autoSell, autoVend: s.autoVend, autoSellGrades: s.autoSellGrades, autoVendGrades: s.autoVendGrades, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, skipStatConfirm: s.skipStatConfirm, swarmCap: s.swarmCap,
         account: s.account, hacker: s.hacker, hackFeed: s.hackFeed, doorsOpened: s.doorsOpened, shopSerial: s.shopSerial, logId: s.logId,
@@ -310,6 +308,6 @@ export const lifecycleActions: ActionHandlers = {
         const name = s.name;
         Object.assign(s, newState(now), { name });
         // newState에 없는 선택 필드도 함께 지웁니다(계정당 첫 재분배 사용 여부는 유지).
-        for (const key of ['vows', 'nextVows', 'goldenBook', 'variantBook', 'tideBest', 'bookTier', 'randomGameStats', 'masteryCarry', 'autoSell', 'autoVend', 'autoSellGrades', 'autoVendGrades'] as const) delete s[key];
+        for (const key of ['vows', 'nextVows', 'goldenBook', 'variantBook', 'tideBest', 'bookTier', 'masteryCarry', 'autoSell', 'autoVend', 'autoSellGrades', 'autoVendGrades'] as const) delete s[key];
     },
 };
