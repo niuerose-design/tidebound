@@ -359,7 +359,7 @@ export function upsertJobs(list: Job[]) {
 export type WorldId = 'maple' | 'azeroth';
 export const WORLDS: { id: WorldId; name: string; subtitle: string; description: string; accent: string }[] = [
     { id: 'maple', name: '메이플 월드', subtitle: '모험이 시작된 세계', description: '지금까지의 모든 계열과 계보가 있는 세계입니다.', accent: '#e0a24f' },
-    { id: 'azeroth', name: '아제로스', subtitle: '사냥 기록이 여는 세계', description: '특별한 몬스터와 보스를 오래 사냥한 모험가에게만 길이 열리는 히든 계보의 세계입니다.', accent: '#7f8fd8' },
+    { id: 'azeroth', name: '아제로스', subtitle: '사냥 기록이 여는 세계', description: '특별한 몬스터와 보스를 오래 사냥했거나 계급장을 단 모험가에게 길이 열리는 세계입니다. 히든 계보와 참모 계보가 있습니다.', accent: '#7f8fd8' },
 ];
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
 /** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */
