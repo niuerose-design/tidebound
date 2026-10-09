@@ -508,6 +508,6 @@
 .core-set { display:flex; flex-wrap:wrap; gap:6px; }
 .core-set span { padding:3px 9px; border:1px solid var(--border); border-radius:999px; font-size:11px; color:#7f9596; }
 .core-set span.on { color:#a4e9ba; border-color:#3f6b5e; }
-.dungeon-coin-link { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
+.dungeon-coin-link { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
 .dungeon-coin-link b { color:var(--gold); }
-@media(max-width:767px){ .dshop-grid { grid-template-columns:minmax(0,1fr); } .dshop-card { min-height:0; } .core-slot .gear-slot-upgrade { flex-direction:column; align-items:stretch; } .core-slot .gear-slot-upgrade select { max-width:none; } }
+@media(max-width:767px){ .dungeon-coin-link { padding:12px 14px; } .dungeon-coin-link button { flex:1 1 100%; } .dshop-grid { grid-template-columns:minmax(0,1fr); } .dshop-card { min-height:0; } .core-slot .gear-slot-upgrade { flex-direction:column; align-items:stretch; } .core-slot .gear-slot-upgrade select { max-width:none; } }

@@ -57,7 +57,7 @@ export function DungeonShop({ s, send, busy }: PanelProps) {
             })}</div>
         </section>}
         {tab === 'onyx' && <div className="dshop-grid">{ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id, now); return <Good key={b.id} eyebrow={`칠흑 · ${b.name}`} title={b.accessory.name}
-            desc={`${o.kind === 'awaken' ? `가진 칠흑 장신구를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : '칠흑 장신구를 바로 만듭니다. 그 칠흑 보스를 한 번 이상 처치해야 열립니다.'} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
+            desc={`${o.kind === 'awaken' ? `가진 칠흑 장신구를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : '칠흑 장신구를 바로 만듭니다.'} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
             cost={o.reason || `${format(o.price)} 주화`}>
             <button className="secondary" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button>
         </Good>; })}</div>}
