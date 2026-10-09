@@ -337,7 +337,7 @@ export function reward(s: State, rng: () => number) {
     // v3.46 무리는 마리 수 대신 싸운 턴 × 규모별 턴당 값(swarmRankKills, 마리 수 상한). 소수점은 이월합니다.
     // v3.75 전공 옵션: 처치 수 1마리당 +1(전과 기록 배율 전).
     const valor = 1 + Math.floor(equippedAffixTotal(s, 'rankFlat'));
-    // v3.217 작전참모 인사 기록(다른 분신): 계급 경험치 배율. 소수점은 무리와 같이 이월합니다.
+    // v3.219 작전참모 인사 기록(다른 분신): 계급 경험치 배율. 소수점은 무리와 같이 이월합니다.
     const rankMul = supportMultiplier(s, 'rank');
     if (size > 1 || rankMul > 1) { const raw = (size > 1 ? swarmRankKills(size, swarmTurns) : 1) * valor * (1 + rankPerkLevel(s, 'tally')) * rankMul + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
     else rk.exp += valor * (1 + rankPerkLevel(s, 'tally'));

@@ -375,7 +375,7 @@ export function jobRequirements(s: State, j: Job) {
             const need = RANKS.findIndex(r => r.id === j.requiresRank), now = rankIndex(rankState(s).exp);
             list.push({ label: `계급장 ${RANKS[need]?.name ?? j.requiresRank} 이상`, met: reenlistCount(s) > 0 || now >= need, value: now, target: need });
         }
-        // v3.217 둘 중 하나의 숙련(참모 계보 4차).
+        // v3.219 둘 중 하나의 숙련(참모 계보 4차).
         if (j.requiresAnyJobMastery) {
             const opts = Object.entries(j.requiresAnyJobMastery), best = opts.reduce((m, [id, n]) => Math.max(m, Math.min(1, (s.jobMastery?.[id] || 0) / n)), 0);
             list.push({ label: `${opts.map(([id]) => jobById(id)?.name || id).join(' 또는 ')} 숙련 ${opts[0][1].toLocaleString()}`, met: opts.some(([id, n]) => (s.jobMastery?.[id] || 0) >= n), value: best, target: 1 });

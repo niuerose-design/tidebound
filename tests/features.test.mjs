@@ -65,7 +65,7 @@ test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22
  s.abyssBest=150;assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');s.abyssBest=200;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again');
  s.abyssBest=0;assert.deepEqual(N.collectNews(s,86_400_000*5),[],'a lower best (after ascension) never announces');
 });
-test('v3.217 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; support skills give other slots exp · gold · mastery (max per effect, capped), command boosts self',async()=>{
+test('v3.219 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; support skills give other slots exp · gold · mastery (max per effect, capped), command boosts self',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank'),St=await L.load('systems/stats'),M=await L.load('systems/mastery');
  const j=C.jobById('quartermaster');assert.ok(j&&j.tier===3&&j.lineage==='staff'&&j.requiresRank==='ssg'&&!j.parent);
  const s=newState(0);s.level=40;const req=()=>P.jobRequirements(s,j);
@@ -88,7 +88,7 @@ test('v3.217 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; s
  assert.equal(JSON.stringify(St.snapshot(t).stats),snap0,'duel snapshot unaffected');
  t.level=60;act(t,{type:'rebirth'},1000);assert.deepEqual(t.support,{exp:.05,gold:.04,mastery:.06},'kept through rebirth until the next sync');
 });
-test('v3.217 군의관: hp · mana · regen support (other slots only); duel snapshots drop support, altar (PvE) snapshots keep it',async()=>{
+test('v3.219 군의관: hp · mana · regen support (other slots only); duel snapshots drop support, altar (PvE) snapshots keep it',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),C=await L.load('data/classes');
  const j=C.jobById('fieldMedic');assert.ok(j&&j.tier===3&&j.lineage==='staff'&&j.requiresRank==='ssg');
  const s=newState(0);s.level=40;s.job='fieldMedic';s.unlockedJobs.push('fieldMedic');for(const id of ['bloodSupply','stimulantKit','fieldDressing','triage'])s.learned[id]=1;
@@ -99,7 +99,7 @@ test('v3.217 군의관: hp · mana · regen support (other slots only); duel sna
  assert.ok(a1.hp>a0.hp&&a1.mana>a0.mana,'hp and mana rise');assert.ok(Math.abs(a1.hp/a0.hp-1.05)<.01);
  assert.deepEqual(St.duelSnapshot(t).stats,St.snapshot({...t,support:undefined}).stats);assert.ok(St.snapshot(t).stats.hp>St.duelSnapshot(t).stats.hp,'PvE snapshot keeps support, duel drops it');
 });
-test('v3.217 작전참모 · 화력참모: rank 소위 + either 3rd-tier mastery; AP · boss · rank exp · penetration · crit damage support; duel trims support AP',async()=>{
+test('v3.219 작전참모 · 화력참모: rank 소위 + either 3rd-tier mastery; AP · boss · rank exp · penetration · crit damage support; duel trims support AP',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank');
  for(const id of ['operationsOfficer','fireSupportOfficer']){const j=C.jobById(id);assert.ok(j&&j.tier===4&&j.requiresRank==='lt2');
   const s=newState(0);s.level=55;s.rank={exp:R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id==='lt2')],perks:{}};const any=()=>P.jobRequirements(s,j).find(r=>r.label.includes('보급관 또는 군의관'));

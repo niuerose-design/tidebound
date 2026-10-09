@@ -82,7 +82,7 @@ export function AccountPanel({ s }: { s: State }) {
     return <section className="panel vow-panel account-panel">
         <div className="section-title"><h2>계정 보너스</h2><span>슬롯 {slots.length || 1}/{openSlots} 사용 중 · 모든 슬롯 합산</span></div>
         <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}
-            {/* v3.217 참모 지원: 다른 분신이 주는 지원(받는 값)과, 참모 계보라면 내가 주는 지원. */}
+            {/* v3.219 참모 지원: 다른 분신이 주는 지원(받는 값)과, 참모 계보라면 내가 주는 지원. */}
             {(() => { const got = SUPPORT_EFFECTS.filter(e => s.support?.[e]), mine = isStaff(s) ? supportOf(s) : {}, give = SUPPORT_EFFECTS.filter(e => mine[e]);
                 const text = (m: Partial<Record<(typeof SUPPORT_EFFECTS)[number], number>>, list: (typeof SUPPORT_EFFECTS)[number][]) => list.map(e => supportText(e, m[e] || 0)).join(' · ');
                 return <>{(got.length > 0 || isStaff(s)) && <li key="support-in"><div><strong>분신 지원(받음)</strong><small>참모 계보 분신</small></div><b>{got.length ? text(s.support!, got) : '없음'}</b><small>효과별 가장 높은 지원 하나 · 다른 분신에 반영까지 최대 10분</small></li>}
