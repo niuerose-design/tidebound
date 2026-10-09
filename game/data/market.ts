@@ -10,10 +10,6 @@ export const MARKET_TICK_MS = 10 * 60_000;
 export const MARKET = {
     /** 매수 · 매도 수수료(체결 금액의 비율, 최소 1주화). */
     fee: .01,
-    /** 총 보유 원금(수수료 포함 매수 금액 합)의 상한. 헬 하루 보너스(1,200)의 약 2.5일분. */
-    maxCost: 3000,
-    /** 하루(한국 시간) 거래 수. */
-    tradesPerDay: 20,
     /**
      * 평균 회귀 세기: logP(t) = λ · logP(t-1) + σ · ε(t) − σ²/2. 1에 가까울수록 천천히 기준가로 돌아갑니다(반감기 약 10일).
      * 빨리 돌아가면 '싸게 사서 하루 들기'가 수수료보다 크게 남아 주화를 찍어내는 곳이 됩니다(scripts/check-market.mjs).
@@ -72,8 +68,6 @@ export const buyCost = (price: number, qty: number) => { const gross = Math.ceil
 export const sellGain = (price: number, qty: number) => { const gross = Math.floor(price * qty), fee = Math.min(gross, marketFee(gross)); return { gross, fee, net: gross - fee }; };
 /** 총 보유 원금. */
 export const marketCost = (s: Pick<State, 'market'>) => Object.values(s.market?.holdings || {}).reduce((a, h) => a + h.cost, 0);
-/** 오늘(한국 시간 날짜 키) 거래 수. */
-export const marketTradesToday = (s: Pick<State, 'market'>, day: string) => s.market?.day === day ? s.market.trades || 0 : 0;
 
 /** 서버가 화면에 보내는 시세 조각(/api/game 응답의 market). prices[i]는 from + i 틱의 종목별 가격(STOCKS 순서). */
 export type MarketFeed = {

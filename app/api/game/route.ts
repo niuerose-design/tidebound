@@ -10,7 +10,7 @@ import { postPlayerNews } from '@/game/server/news';
 import { collectNews, type NewsEvent } from '@/game/systems/news';
 import { vaultAfterAscend } from '@/game/server/vault';
 import { addLog } from '@/game/systems/state';
-import { marketFeed } from '@/game/systems/market';
+import { marketFeed, marketStatus } from '@/game/systems/market';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) { try {
     checkOrigin(req);
@@ -36,7 +36,7 @@ export async function POST(req: Request) { try {
         const catalog = await buildCatalog(out.state, Date.now(), (a as { catalogKey?: unknown }).catalogKey);
         // v3.212 증권거래소(공유 시장): 화면이 거래소를 보고 있을 때만(marketKnown) 가진 틱 뒤의 시세를 얹습니다. 시세는 인스턴스 메모리에서 나눠 쓰고, 새 틱이 없으면 아무것도 붙이지 않습니다.
         const marketKnown = (a as { marketKnown?: unknown }).marketKnown, market = marketKnown !== undefined ? marketFeed(marketKnown, Date.now()) : null;
-        const extra = { ...(catalog ? { catalog } : {}), ...(market ? { market } : {}) };
+        const extra = { ...(catalog ? { catalog } : {}), ...(market ? { market } : {}), ...(marketKnown !== undefined ? { marketStatus: marketStatus(Date.now()) } : {}) };
         return Response.json(trimmed ? { ...out, state: { ...out.state, logs: trimmed.logs }, logDelta: trimmed.delta, ...extra } : { ...out, ...extra }, { headers: { 'Cache-Control': 'no-store' } });
     }
     catch (e) {

@@ -548,6 +548,9 @@
 .mkt-open { padding:22px; display:grid; gap:12px; margin:14px 0; }
 .mkt-open button { justify-self:start; }
 .mkt-rules { margin:0; padding-left:18px; display:grid; gap:6px; color:#a8bdb6; font-size:13px; line-height:1.6; }
+.mkt-stop { display:flex; align-items:flex-start; gap:10px; padding:12px 18px; margin:14px 0; font-size:13px; line-height:1.6; color:#f3d2cd; border-color:#7a3b36; background:rgba(122,59,54,.18); }
+.mkt-stop svg { flex:none; color:#e8746b; margin-top:2px; }
+.mkt-stop b { color:#ffb4ab; margin-right:4px; }
 .mkt-rumor { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
 .mkt-rumor b { color:var(--gold); margin-right:4px; }
 .mkt-rumor small { margin-left:auto; color:var(--muted); }

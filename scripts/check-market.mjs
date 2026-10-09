@@ -30,5 +30,5 @@ for (const d of STOCKS) {
     if (mean(hold) > .01 || mean(dip) > .05 || mean(rumor) > 0) bad.push(d.name);
     console.log(`${d.name} | ${pct(sd(daily))} | ${pct(sd(dev))} | ${pct(clamp / n)} | ${pct(mean(hold))} | ${pct(mean(dip))} (${dip.length}) | ${pct(mean(rumor))} (${rumor.length})`);
 }
-console.log(`\n상한: 원금 ${MARKET.maxCost} · 하루 ${MARKET.tradesPerDay}회. '1σ 아래 사서 하루' 수익률 × ${MARKET.maxCost} ≈ 하루 기대 이익(헬 하루 보너스 1,200과 비교).`);
+console.log(`\n원금 상한 · 하루 거래 제한 없음: '1σ 아래 사서 하루' 수익률 × 넣은 주화 ≈ 하루 기대 이익(예: 1만 주화면 그 % × 100).`);
 if (bad.length) { console.error(`기대 수익이 너무 큰 종목: ${bad.join(', ')} (아무 때나 하루 > 1% · 1σ 아래 하루 > 5% · 소문 > 0%)`); process.exit(1); }

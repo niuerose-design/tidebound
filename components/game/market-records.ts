@@ -10,6 +10,8 @@ import type { State } from '@/game/types';
 import { MARKET, STOCKS, type MarketFeed } from '@/game/data/market';
 
 export type MarketTrade = { at: number; stock: string; qty: number; price: number };
+/** 장 상태(서버 응답의 marketStatus, 저장하지 않음): 폐장 · 서킷브레이커 끝 시각 · 사유. */
+export type MarketStatus = { closed: boolean; haltUntil: number; reason: string };
 export type MarketStore = { from: number; tick: number; prices: number[][]; rumor?: MarketFeed['rumor'] };
 type Journal = { held?: Record<string, number>; trades: MarketTrade[] };
 const KEY = 'tidebound.market', JOURNAL_KEY = 'tidebound.marketTrades:', SAVE_MS = 30_000, TRADES_KEEP = 50;
@@ -32,8 +34,9 @@ function loadJournal(name: string) {
     owner = name; journal = { trades: [] };
     try { const raw = localStorage.getItem(JOURNAL_KEY + name), parsed = raw ? JSON.parse(raw) as Journal : null; if (parsed && Array.isArray(parsed.trades)) journal = parsed; } catch { /* 깨진 값: 새로 시작 */ }
 }
-let snapshot: { market: MarketStore | null; journal: Journal } = { market: null, journal };
-const changed = () => { snapshot = { market: store, journal }; subs.forEach(fn => fn()); timer ??= setTimeout(save, SAVE_MS); };
+let status: MarketStatus | null = null;
+let snapshot: { market: MarketStore | null; journal: Journal; status: MarketStatus | null } = { market: null, journal, status };
+const changed = () => { snapshot = { market: store, journal, status }; subs.forEach(fn => fn()); timer ??= setTimeout(save, SAVE_MS); };
 if (typeof window !== 'undefined') { window.addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); }); }
 
 /** 동기화 요청에 붙일 값: 거래소 화면을 볼 때만 가진 마지막 틱(없으면 빈 문자열 = 하루치 요청). 안 볼 때는 undefined라 서버가 시세를 붙이지 않습니다. */
@@ -53,6 +56,11 @@ export function ingestMarket(feed: MarketFeed) {
     store = { prices: prices.slice(cut), from: from + cut, tick: feed.tick, rumor: feed.rumor };
     changed();
 }
+/** 장 상태를 바꿉니다(같으면 그대로). */
+export function ingestMarketStatus(next: MarketStatus) {
+    if (status && status.closed === next.closed && status.haltUntil === next.haltUntil && status.reason === next.reason) return;
+    status = next; snapshot = { market: store, journal, status }; subs.forEach(fn => fn());
+}
 /** 지금 시세(종목 id → 가격). 시세를 아직 못 받았으면 빈 객체. */
 export const currentPrices = (x: MarketStore | null): Record<string, number> => { const row = x?.prices.at(-1); return row ? Object.fromEntries(STOCKS.map((d, i) => [d.id, row[i]])) : {}; };
 /** 보유 수량이 바뀌었으면 이 모험가의 거래 내역에 적습니다(처음 보면 지금 수량만 기억). */
@@ -66,7 +74,7 @@ function noteHoldings(s: State) {
 }
 const subscribe = (fn: () => void) => { subs.add(fn); return () => { subs.delete(fn); }; };
 const read = () => snapshot;
-const EMPTY = { market: null, journal: { trades: [] } };
+const EMPTY = { market: null, journal: { trades: [] }, status: null };
 /** 거래소 화면: 보는 동안 동기화에 시세를 요청하고, 열자마자 한 번 동기화합니다. */
 export function useMarket(s: State, sync: () => void) {
     useEffect(() => { watchers++; loadPrices(); changed(); sync(); return () => { watchers--; }; }, [sync]);

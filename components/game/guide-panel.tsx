@@ -178,8 +178,8 @@ export function Guide({ s }: { s?: State }) {
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                     limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 사냥터로 돌아옵니다.`}/>
                 <Rule icon={<TrendingUp size={19}/>} title="주화 증권거래소"
-                    effect={`상점 메뉴의 증권거래소에서 던전 주화로 가상 종목 ${STOCKS.length}개를 사고팝니다. 시세는 모든 모험가가 같고 ${MARKET_TICK_MS / 60_000}분마다 바뀌고, 길게 보면 기준가 주변으로 돌아옵니다. 시황 소문은 다음 시세의 방향을 자주 맞히지만 틀릴 때도 있습니다.`}
-                    condition={`매수 · 매도마다 수수료 ${MARKET.fee * 100}%(최소 1주화), 총 보유 원금 ${MARKET.maxCost.toLocaleString()}주화 · 하루 ${MARKET.tradesPerDay}번까지.`}
+                    effect={`왼쪽 메뉴의 증권거래소에서 던전 주화로 가상 종목 ${STOCKS.length}개를 사고팝니다. 시세는 모든 모험가가 같고 ${MARKET_TICK_MS / 60_000}분마다 바뀌고, 길게 보면 기준가 주변으로 돌아옵니다. 시황 소문은 다음 시세의 방향을 자주 맞히지만 틀릴 때도 있습니다.`}
+                    condition={`매수 · 매도마다 수수료 ${MARKET.fee * 100}%(최소 1주화), 가진 던전 주화만큼 살 수 있고 거래 횟수 제한은 없습니다.`}
                     limit="잃을 수도 있습니다. 환생해도 보유 주식은 남고, 승천하면 주식도 사라집니다. 차트 · 거래 내역은 이 기기에만 남습니다."/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
                     effect={`처치 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 사냥터 난이도가 오를수록 줄어듭니다: 기본 ÷ (1 + 난이도 ÷ ${BALANCE.healAfterKillTideScale}) — 난이도 10에서 10%, 30에서 5%, 최저 ${percent(BALANCE.healAfterKillMin)}. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}

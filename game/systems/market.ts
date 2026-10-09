@@ -6,15 +6,26 @@
  * - 시세는 저장하지 않습니다. 틱 t의 가격은 t − warm 틱부터 평균에서 시작한 평균 회귀 과정(logP ← λ · logP + σ · ε − σ²/2)을 돌려 구하므로
  *   어느 서버 인스턴스에서 계산해도 같습니다. 화면 코드는 이 파일을 가져가지 않습니다(data/market.ts만).
  */
-import type { State } from '../types';
-import { MARKET, STOCKS, stockById, marketTick, buyCost, sellGain, marketCost, marketTradesToday, type MarketFeed } from '../data/market';
-import { dayKey } from '../data/time';
+import { MARKET, STOCKS, stockById, marketTick, buyCost, sellGain, type MarketFeed } from '../data/market';
 import { addLog } from './state';
 import type { ActionHandlers } from './actions/types';
 
 let marketKey = 'tidebound-local-market-key';
 /** 서버가 시작할 때 한 번 넣습니다(server/hacks.ts의 침투 작전 키에서 만듭니다). */
 export function setMarketKey(key: string) { if (key && key !== marketKey) { marketKey = key; cache = null; } }
+/** v3.212 운영 스위치(server/market-config.ts가 넣음): 장 폐쇄 · 서킷브레이커(haltUntil까지 거래 중단) · 사유. */
+export type MarketControl = { closed: boolean; haltUntil: number; reason: string };
+let control: MarketControl = { closed: false, haltUntil: 0, reason: '' };
+export function setMarketControl(c: MarketControl) { control = { ...c }; }
+/** 화면에 보낼 장 상태(서킷브레이커는 끝나지 않았을 때만). */
+export const marketStatus = (now: number): MarketControl => ({ closed: control.closed, haltUntil: control.haltUntil > now ? control.haltUntil : 0, reason: control.reason });
+/** 지금 거래를 막는 이유. 없으면 undefined. */
+export function marketBlock(now: number) {
+    const why = control.reason ? ` (${control.reason})` : '';
+    if (control.closed) return `증권거래소가 폐장 중입니다${why}.`;
+    if (control.haltUntil > now) { const m = Math.ceil((control.haltUntil - now) / 60_000); return `서킷브레이커 발동으로 거래가 멈췄습니다${why}. 약 ${m}분 뒤 재개됩니다.`; }
+    return undefined;
+}
 
 /** 53비트 문자열 해시(cyrb53). */
 function hash(text: string) {
@@ -95,27 +106,21 @@ export function marketFeed(known: unknown, now: number): MarketFeed | null {
 }
 
 const qtyOf = (value: unknown) => { const n = Number(value); if (!Number.isInteger(n) || n < 1 || n > 1e6) throw Error('수량은 1 이상의 정수로 적으세요.'); return n; };
-function countTrade(m: NonNullable<State['market']>, day: string) {
-    m.trades = (m.day === day ? m.trades || 0 : 0) + 1;
-    m.day = day;
-}
 export const marketActions: ActionHandlers = {
-    /** id: 'buy:<종목>' · 'sell:<종목>', value는 수량. 체결 가격은 서버가 처리하는 순간의 틱 가격입니다. 첫 매수 때 계좌(State.market)가 생깁니다. */
+    /** id: 'buy:<종목>' · 'sell:<종목>', value는 수량. 체결 가격은 서버가 처리하는 순간의 틱 가격입니다. 원금 상한 · 하루 거래 수 제한은 없습니다(가진 던전 주화만큼). 첫 매수 때 계좌(State.market)가 생깁니다. */
     market(s, { a, id, now }) {
         const m = s.market ?? { holdings: {} };
         const [side, stockId] = id.split(':'), def = stockById(stockId || '');
         if ((side !== 'buy' && side !== 'sell') || !def) throw Error('없는 종목입니다.');
-        const day = dayKey(now);
-        if (marketTradesToday(s, day) >= MARKET.tradesPerDay) throw Error(`거래는 하루 ${MARKET.tradesPerDay}번까지입니다(한국 시간 자정에 초기화).`);
+        const blocked = marketBlock(now);
+        if (blocked) throw Error(blocked);
         const qty = qtyOf(a.value), w = marketWindow(now), price = w.rows[w.rows.length - 1][STOCKS.indexOf(def)], held = m.holdings[def.id];
         if (side === 'buy') {
             const c = buyCost(price, qty);
-            if (marketCost(s) + c.total > MARKET.maxCost) throw Error(`총 보유 원금은 ${MARKET.maxCost.toLocaleString()}주화까지입니다(지금 ${marketCost(s).toLocaleString()}).`);
             if ((s.dungeonCoins || 0) < c.total) throw Error(`던전 주화가 부족합니다 (필요 ${c.total.toLocaleString()}).`);
             s.dungeonCoins = (s.dungeonCoins || 0) - c.total;
             s.market = m;
             m.holdings[def.id] = { qty: (held?.qty || 0) + qty, cost: (held?.cost || 0) + c.total };
-            countTrade(m, day);
             addLog(s, `증권거래소 · ${def.name} ${qty.toLocaleString()}주 매수 · ${price.toLocaleString()} · 주화 -${c.total.toLocaleString()} (수수료 ${c.fee})`, 'system');
             return;
         }
@@ -124,7 +129,6 @@ export const marketActions: ActionHandlers = {
         s.dungeonCoins = (s.dungeonCoins || 0) + g.net;
         if (held.qty === qty) delete m.holdings[def.id]; else m.holdings[def.id] = { qty: held.qty - qty, cost: held.cost - part };
         m.realized = (m.realized || 0) + pnl;
-        countTrade(m, day);
         addLog(s, `증권거래소 · ${def.name} ${qty.toLocaleString()}주 매도 · ${price.toLocaleString()} · 주화 +${g.net.toLocaleString()} (수수료 ${g.fee}) · 손익 ${pnl >= 0 ? '+' : ''}${pnl.toLocaleString()}`, pnl >= 0 ? 'reward' : 'system');
     },
 };

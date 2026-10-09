@@ -20,7 +20,7 @@ test('v3.212 market: shared deterministic prices, cached window = direct calcula
     for (const d of STOCKS) { const x = market.stockPrice(d.id, t); assert.ok(x >= d.base * MARKET.floor - .1 && x <= d.base * MARKET.ceil + .1, `${d.id} in range`); }
 });
 
-test('v3.212 market: buy/sell settle at the server tick price with fees, cap, daily limit and realized PnL', () => {
+test('v3.212 market: buy/sell settle at the server tick price with fees and realized PnL, no principal cap or daily limit', () => {
     const s = newState(0), p = market.stockPrice('lith', marketTick(T)), c = buyCost(p, 5);
     s.dungeonCoins = 10;
     assert.throws(() => act(s, { type: 'market', id: 'buy:lith', value: '5' }, T), /주화가 부족/);
@@ -30,19 +30,19 @@ test('v3.212 market: buy/sell settle at the server tick price with fees, cap, da
     assert.throws(() => act(s, { type: 'market', id: 'buy:lith', value: '0' }, T), /정수/);
     assert.throws(() => act(s, { type: 'market', id: 'buy:nope', value: '1' }, T), /없는 종목/);
     act(s, { type: 'market', id: 'buy:lith', value: '5' }, T);
-    assert.equal(s.dungeonCoins, 10000 - c.total); assert.deepEqual(s.market.holdings.lith, { qty: 5, cost: c.total }); assert.equal(s.market.trades, 1);
+    assert.equal(s.dungeonCoins, 10000 - c.total); assert.deepEqual(s.market.holdings.lith, { qty: 5, cost: c.total });
     assert.ok(c.fee >= 1 && c.total === c.gross + c.fee);
-    assert.throws(() => act(s, { type: 'market', id: 'buy:lith', value: String(Math.ceil(MARKET.maxCost / p) + 1) }, T), /총 보유 원금/);
+    const hp = market.stockPrice('henesys', marketTick(T)), big = Math.floor((s.dungeonCoins - 1000) / hp); act(s, { type: 'market', id: 'buy:henesys', value: String(big) }, T);
+    assert.ok(s.market.holdings.henesys.cost > 3000, 'no principal cap: invest as many dungeon coins as you have');
+    act(s, { type: 'market', id: 'sell:henesys', value: String(big) }, T);
     assert.throws(() => act(s, { type: 'market', id: 'sell:lith', value: '6' }, T), /갖고 있지 않/);
     const later = T + 5 * MARKET_TICK_MS, q = market.stockPrice('lith', marketTick(later)), g = sellGain(q, 2), part = Math.round(c.total * 2 / 5);
-    const coins = s.dungeonCoins; act(s, { type: 'market', id: 'sell:lith', value: '2' }, later);
-    assert.equal(s.dungeonCoins, coins + g.net); assert.deepEqual(s.market.holdings.lith, { qty: 3, cost: c.total - part }); assert.equal(s.market.realized, g.net - part);
+    const coins = s.dungeonCoins, realized = s.market.realized || 0; act(s, { type: 'market', id: 'sell:lith', value: '2' }, later);
+    assert.equal(s.dungeonCoins, coins + g.net); assert.deepEqual(s.market.holdings.lith, { qty: 3, cost: c.total - part }); assert.equal(s.market.realized - realized, g.net - part);
     act(s, { type: 'market', id: 'sell:lith', value: '3' }, later);
     assert.equal(s.market.holdings.lith, undefined, 'selling everything clears the line');
-    s.market.trades = MARKET.tradesPerDay;
-    assert.throws(() => act(s, { type: 'market', id: 'buy:lith', value: '1' }, later), /하루/);
-    act(s, { type: 'market', id: 'buy:lith', value: '1' }, later + 86400000);
-    assert.equal(s.market.trades, 1, 'daily trade count resets on the next KST day');
+    for (let i = 0; i < 40; i++) act(s, { type: 'market', id: `${i % 2 ? 'sell' : 'buy'}:lith`, value: '1' }, later);
+    assert.equal(s.market.holdings.lith, undefined, 'no daily trade limit');
 });
 
 test('v3.212 market feed: only past ticks, full day first, then only new ticks, nothing when up to date', () => {
@@ -67,4 +67,38 @@ test('v3.212 market: holdings survive rebirth, ascension clears them', () => {
     assert.deepEqual(s.market, kept);
     s.rebirths = 100; delete s.dungeon; act(s, { type: 'ascend' }, T + 1000);
     assert.equal(s.market, undefined);
+});
+
+test('v3.212 market control: closed market and circuit breaker block trades (prices keep running), then reopen', () => {
+    const s = newState(0); s.dungeonCoins = 5000;
+    market.setMarketControl({ closed: true, haltUntil: 0, reason: '점검' });
+    assert.throws(() => act(s, { type: 'market', id: 'buy:lith', value: '1' }, T), /폐장 중입니다 \(점검\)/);
+    assert.deepEqual(market.marketStatus(T), { closed: true, haltUntil: 0, reason: '점검' });
+    market.setMarketControl({ closed: false, haltUntil: T + 30 * 60_000, reason: '' });
+    assert.throws(() => act(s, { type: 'market', id: 'buy:lith', value: '1' }, T), /서킷브레이커.*30분 뒤/);
+    assert.ok(market.marketFeed('', T).prices.length > 0, 'prices still flow during a halt');
+    assert.equal(market.marketStatus(T + 31 * 60_000).haltUntil, 0, 'halt ends by itself');
+    act(s, { type: 'market', id: 'buy:lith', value: '1' }, T + 31 * 60_000);
+    assert.equal(s.market.holdings.lith.qty, 1);
+    market.setMarketControl({ closed: false, haltUntil: 0, reason: '' });
+});
+
+test('v3.212 market control: admin switch is stored in server settings and read back by refreshEvents', async () => {
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-market-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    try {
+        const cfg = await load('server/market-config'), ev = await load('server/events-config');
+        const now = Date.now();
+        let r = await cfg.setAdminMarket({ haltMinutes: 15, reason: '급등 점검' }, now);
+        assert.equal(r.control.haltUntil, now + 15 * 60_000); assert.equal(r.control.reason, '급등 점검'); assert.equal(r.stocks.length, STOCKS.length);
+        r = await cfg.setAdminMarket({ haltMinutes: 99999999 }, now);
+        assert.equal(r.control.haltUntil, now + 7 * 24 * 60 * 60_000, 'halt clamps to 7 days');
+        r = await cfg.setAdminMarket({ haltMinutes: 0, closed: true }, now);
+        assert.deepEqual(r.control, { closed: true, haltUntil: 0, reason: '급등 점검' });
+        market.setMarketControl({ closed: false, haltUntil: 0, reason: '' });
+        await ev.refreshEvents(now + 10 * 60_000);
+        assert.equal(market.marketStatus(now).closed, true, 'other instances pick it up from settings');
+        await cfg.setAdminMarket({ closed: false, reason: '' }, now);
+        assert.equal(market.marketBlock(now), undefined);
+    } finally { market.setMarketControl({ closed: false, haltUntil: 0, reason: '' }); delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
