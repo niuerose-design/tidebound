@@ -49,6 +49,10 @@ export type Fighter = {
     jobStand?: { charges: number; heal?: number };
     /** v27.4 제약 직업 장치: 모든 공격 반드시 명중. */
     sureHit?: boolean;
+    /** v3.211 극한 단계 최종 피해 배율(스킬 id → 1.02~1.1). 그 스킬의 본타 · 추가타에 곱합니다. */
+    skillFinal?: Record<string, number>;
+    /** v3.211 극한돌파 전용 연출이 열린 스킬 id. */
+    extremeFx?: string[];
 };
 /** v27.4 직업의 제약 장치를 전투 참가자 필드로. 플레이어(PvE)와 결투 스냅샷이 같이 씁니다. */
 export function constraintFields(jobId: string | undefined): Partial<Fighter> {
@@ -632,7 +636,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const tagBonus = chosen?.tag && a.effects.tag && a.effects.tag !== chosen.tag ? Math.max(0, ...a.skills.map(id => skillById(id)?.tagBonus || 0)) : 0;
     if (tagBonus) notes.push(`태그 ${chosen!.tag === 'alpha' ? '알파' : '베타'} +${Math.round(tagBonus * 100)}%`);
     if (chosen?.tag) a.effects.tag = chosen.tag;
-    const linkMultiplier = (1 + tagBonus) * comboBoost * balanceBoost * buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
+    // v3.211 극한 단계: 그 스킬의 최종 피해 배율(방어 경감이 곱셈이라 피해 숫자에 그대로 +2%씩).
+    const extremeFinal = chosen ? a.skillFinal?.[chosen.id] || 1 : 1;
+    const linkMultiplier = extremeFinal * (1 + tagBonus) * comboBoost * balanceBoost * buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push(chosen?.damageBonusCondition === 'statuses' ? `헥스 ${statusCount}` : '연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly || healOnly;
@@ -924,6 +930,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     }
     ev.skillId = chosen?.id;
     ev.skillName = label;
+    if (chosen && a.extremeFx?.includes(chosen.id)) ev.extreme = true;
     ev.damageType = fixed ? 'fixed' : split ? 'split' : magical ? 'magic' : 'physical';
     ev.healed = healed;
     // v27.75 합계도 계산된 피해 기준(표시용). 실제 감소량 합이 필요하면 hits의 value를 더합니다.

@@ -56,6 +56,26 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
 });
 
 
+test('v3.211 extreme stages: 1억·2억·4억·7억·10억 → +2% final damage each on that skill; first break unlocks a permanent effect', async () => {
+    const C = await L.load('systems/combat');
+    assert.deepEqual(LT.EXTREME_STAGES, [1e8, 2e8, 4e8, 7e8, 1e9]); assert.equal(LT.EXTREME_FINAL_DAMAGE, .02);
+    const s = newState(0); s.learned.pierce = 1; s.permanent.limitBreak = 3; s.limitBreaks = { pierce: 3 };
+    for (const [practice, stage] of [[99_999_999, 0], [1e8, 1], [3e8, 2], [4e8, 3], [7e8, 4], [1e9, 5], [5e9, 5]]) { s.skillPractice.pierce = practice; assert.equal(P.extremeStage(s, 'pierce'), stage, String(practice)); }
+    s.limitBreaks.pierce = 2; assert.equal(P.extremeStage(s, 'pierce'), 0, 'needs all three limit breaks'); s.limitBreaks.pierce = 3;
+    assert.deepEqual(P.extremeFinalTable(s, ['pierce', 'hook']), { pierce: 1.1 }); assert.equal(P.extremeFinalTable(s, ['hook']), undefined);
+    // 전투: 그 스킬의 피해 숫자에 그대로 곱해지고(방어 경감이 곱셈), 연출이 열린 스킬이면 이벤트에 표시됩니다.
+    const base = { hp: 1e9, attack: 1e6, magic: 1e6, defense: 5e5, resist: 5e5, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const mk = extra => ({ name: 'A', stats: base, hp: 1e9, mana: 1e6, skills: ['pierce'], cooldowns: {}, stun: 0, effects: {}, ranks: { pierce: 1 }, mastery: {}, ...extra });
+    const foe = () => ({ name: 'F', foe: true, stats: base, hp: 1e9, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 0 });
+    const e1 = [], e2 = []; C.strike(mk({}), foe(), () => 0, e1); C.strike(mk({ skillFinal: { pierce: 1.1 }, extremeFx: ['pierce'] }), foe(), () => 0, e2);
+    assert.equal(e1[0].skillId, 'pierce'); assert.ok(Math.abs(e2[0].hits[0].value / e1[0].hits[0].value - 1.1) < .01, 'main hit ×1.1 (rounding only)'); assert.equal(e2[0].extreme, true); assert.equal(e1[0].extreme, undefined);
+    // 첫 극한돌파: 연출 해금 기록 · 알림, 단계가 오르면 알림. 환생 · 승천해도 연출은 남습니다.
+    const t = newState(0); t.learned.pierce = 1; t.permanent.limitBreak = 3; t.limitBreaks = { pierce: 3 }; t.skillPractice.pierce = 1e8;
+    E.noteExtreme(t, 'pierce', 0); assert.deepEqual(t.extremeFx, { pierce: true }); assert.ok(t.logs.at(-1).text.includes('전용 연출'));
+    t.skillPractice.pierce = 2e8; E.noteExtreme(t, 'pierce', 1); assert.ok(t.logs.at(-1).text.includes('극한 2단계'));
+    const n = t.logs.length; E.noteExtreme(t, 'pierce', 2); assert.equal(t.logs.length, n, 'no repeat');
+    t.level = 60; act(t, { type: 'rebirth' }, 1000); assert.deepEqual(t.extremeFx, { pierce: true }, 'kept through rebirth');
+});
 test('v3.31 extreme-break and limit-break progress restart from the ascension base; growth levels stay', () => {
     const sk = skillById('hook'), last = P.masteryMilestonesFor(sk).at(-1);
     const s = { skillPractice: { hook: last + 40_000 }, refineBase: { hook: last + 40_000 } };
@@ -64,7 +84,7 @@ test('v3.31 extreme-break and limit-break progress restart from the ascension ba
     assert.equal(P.skillMasteryLevel(s.skillPractice.hook, P.masteryMilestonesFor(sk)), P.masteryMilestonesFor(sk).length, 'growth level kept');
 });
 
-test('v3.74 extreme break: active skills only, after all three limit breaks at 100M practice; no effect yet, an honor achievement without reward', () => {
+test('v3.74 extreme break: active skills only, after all three limit breaks at 100M practice; an honor achievement without reward', () => {
     const sk = skillById('hook'), target = P.extremeBreakTarget(sk);
     assert.equal(target, 100_000_000, '1억 for every active skill'); assert.equal(P.extremeBreakTarget(skillById('pierce')), 100_000_000);
     assert.equal(P.extremeBreakTarget(skillById('axeArm')), null, 'passives have no extreme break');
@@ -73,7 +93,7 @@ test('v3.74 extreme break: active skills only, after all three limit breaks at 1
     s.limitBreaks.hook = 3; assert.equal(P.extremeBroken(s, 'hook'), true);
     s.skillPractice.hook = target - 1; assert.equal(P.extremeBroken(s, 'hook'), false);
     const { ACHIEVEMENTS } = Ac2, a = ACHIEVEMENTS.find(x => x.id === 'extremeBreak');
-    assert.ok(a && a.honor && !Object.keys(a.reward).length && a.desc.includes('운영자에게 문의해주세요')); s.skillPractice.hook = target; assert.equal(a.progress(s), 1);
+    assert.ok(a && a.honor && !Object.keys(a.reward).length && a.desc.includes('전용 연출')); s.skillPractice.hook = target; assert.equal(a.progress(s), 1);
     const j = JOBS.find(x => x.id === 'strTraining1');
     assert.ok(P.jobRequirements(newState(0), j).some(r => r.label.endsWith('숙련 1,000,000')), 'parent mastery shown as 1,000,000');
 });

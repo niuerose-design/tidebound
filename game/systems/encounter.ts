@@ -2,7 +2,8 @@
 import { rollAffixes, syncOrnateName } from '../data/gear';
 import { ODDS } from '../data/odds';
 import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
-import { jobMasteryTarget, extremeBroken } from './progression';
+import { jobMasteryTarget, extremeStage, extremeFinalMultiplier } from './progression';
+import { EXTREME_STAGES } from '../data/long-term';
 import { killReward, encounterTier, dungeonKillReward, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
 import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
 import { recordExpIncome, recordMasteryIncome } from './income';
@@ -365,10 +366,10 @@ export function reward(s: State, rng: () => number) {
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·마나·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {
         if (canUse(s, id)) {
-            // v3.74 극한돌파: 달성한 순간 한 번 알립니다(효과는 아직 없음, 운영자 문의).
-            const before = extremeBroken(s, id);
+            // v3.74 극한돌파 · v3.211 극한 단계: 단계가 오른 순간 한 번 알리고, 처음이면 전용 연출을 엽니다.
+            const before = extremeStage(s, id);
             s.skillPractice[id] = (s.skillPractice[id] || 0) + practiceTotal;
-            if (!before && extremeBroken(s, id)) addLog(s, `${skillById(id)!.name} 극한돌파 달성! 운영자에게 문의해 주세요.`, 'reward');
+            noteExtreme(s, id, before);
         }
     }
     s.book[e.id] = (s.book[e.id] || 0) + size * bookPer;
@@ -509,4 +510,18 @@ export function reward(s: State, rng: () => number) {
             else endRun(s, `${d.name} 정복 · 1회 도전 완료로 멈춤`);
         }
     }
+}
+
+/**
+ * v3.211 극한 단계가 before에서 올랐으면 알리고, 극한돌파(1단계)에 닿으면 그 스킬의 전용 연출을 영구로 엽니다(extremeFx).
+ * v3.211 전에 이미 1억을 넘긴 스킬도 다음 처치 때 여기서 연출이 열립니다(단계가 그대로라 알림은 연출 해금 한 줄).
+ */
+export function noteExtreme(s: State, id: string, before: number) {
+    const now = extremeStage(s, id), name = skillById(id)?.name || id;
+    if (now >= 1 && !s.extremeFx?.[id]) {
+        (s.extremeFx ??= {})[id] = true;
+        addLog(s, `✦ ${name} 극한돌파! 전용 연출이 열렸습니다 · 최종 피해 +${Math.round((extremeFinalMultiplier(now) - 1) * 100)}%`, 'reward');
+        return;
+    }
+    if (now > before) addLog(s, `✦ ${name} 극한 ${now}단계 (숙련 ${EXTREME_STAGES[now - 1].toLocaleString()}) · 최종 피해 +${Math.round((extremeFinalMultiplier(now) - 1) * 100)}%`, 'reward');
 }

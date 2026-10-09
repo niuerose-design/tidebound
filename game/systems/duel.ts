@@ -45,7 +45,7 @@ export const TRAINING: Snapshot[] = [
 ];
 /** maxTurns: 결투는 80턴, v27.43 제단의 신은 무릉도장처럼 길게(ALTAR.godMaxTurns). */
 export function duel(player: Snapshot, opponent: Snapshot, training: boolean, rng = Math.random, maxTurns: number = BALANCE.duelMaxTurns): DuelResult {
-    const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), /* v3.84 월드보스는 보스라 보스 피해(bossDamage)를 받습니다. */ ...(s.job === 'boss' ? { foe: true, prey: true } : {}), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, ...(s.dotHpCap ? { dotHpCap: s.dotHpCap } : {}), skills: s.skills, cooldowns: {}, extraRolls: s.extraRolls, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, effects: {} });
+    const fighter = (s: Snapshot): Fighter => ({ ...constraintFields(s.job), /* v3.84 월드보스는 보스라 보스 피해(bossDamage)를 받습니다. */ ...(s.job === 'boss' ? { foe: true, prey: true } : {}), name: s.name, job: s.job, stats: s.stats, hp: s.stats.hp, ...(s.dotHpCap ? { dotHpCap: s.dotHpCap } : {}), skills: s.skills, cooldowns: {}, extraRolls: s.extraRolls, stun: 0, mana: normalizeStats(s.stats).mana, ranks: s.skillRanks || Object.fromEntries(s.skills.map(id => [id, 1])), mastery: s.skillMastery, ...(s.skillFinal ? { skillFinal: s.skillFinal } : {}), effects: {} });
     const a = fighter(player), b = fighter(opponent);
     const logs: string[] = [], rounds: DuelResult['rounds'] = [];
     let turns = 0;

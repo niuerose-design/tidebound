@@ -406,6 +406,8 @@ export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split' | 'fixed';
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
+    /** v3.211 극한돌파 전용 연출이 열린 스킬로 한 행동. */
+    extreme?: boolean;
     /** v3.145 이 행동에 바친 체력(체력 소모 기술). */
     hpSpent?: number;
     /** v3.148 이 행동에 태운 마나(마나 연소 기술). */
@@ -642,6 +644,8 @@ export type State = {
     goldLog?: { h: number; g: number }[];
     /** v3.201 처치 경험치 수입 기록(goldLog와 같은 칸). 환생하면 지웁니다. */
     expLog?: { h: number; g: number }[];
+    /** v3.211 극한돌파 전용 연출이 열린 스킬(처음 극한돌파한 순간 기록). 환생 · 승천해도 남습니다. */
+    extremeFx?: Record<string, true>;
     /** v3.207 기록을 시작한 뒤 처치로 번 경험치 합계(expLog와 달리 환생해도 남음). */
     expEarned?: number;
     /** v3.207 처치 숙련 수입 기록(goldLog와 같은 칸, 현재 직업 숙련). 환생해도 남습니다. */
@@ -839,6 +843,8 @@ export type Snapshot = {
     skillPractice?: Record<string, number>;
     skillRanks?: Record<string, number>;
     skillMastery?: Record<string, number>;
+    /** v3.211 극한 단계 최종 피해 배율(스킬 id → 1.02~1.1). 없으면 없음. */
+    skillFinal?: Record<string, number>;
     name: string;
     level: number;
     job: string;

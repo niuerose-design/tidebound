@@ -379,7 +379,7 @@ export function maskSnapshot<T extends Partial<Snapshot> & { name?: string }>(sn
     if (!show.has('job')) out.job = decoy.job || '';
     if (!show.has('level')) { out.level = decoy.level || 0; out.rebirths = 0; }
     if (!show.has('gear')) { out.stats = {}; out.power = 0; }
-    if (!show.has('skills')) { out.skills = []; out.skillRanks = {}; out.skillMastery = {}; out.skillPractice = {}; }
+    if (!show.has('skills')) { out.skills = []; out.skillRanks = {}; out.skillMastery = {}; out.skillPractice = {}; delete out.skillFinal; }
     if (!show.has('title')) out.title = undefined;
     if (!show.has('guild')) out.guild = '';
     delete out.privacy;

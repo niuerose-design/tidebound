@@ -1,9 +1,13 @@
 /** 실전 누적 수련. SP는 기존 기본 성장에만 사용됩니다. */
 /**
  * v3.74 극한돌파: 한계돌파 3단계를 마친 액티브 스킬의 숙련이 1억에 닿으면 달성합니다(어떤 스킬이든 같은 값).
- * 한 가지 스킬만 파는 모험가를 위한 보상으로 설계 중이라 지금은 효과가 없고, 달성하면 운영자에게 문의합니다(업적은 보상 없음).
+ * v3.211 극한 단계: 1억 · 2억 · 4억 · 7억 · 10억(EXTREME_STAGES)마다 그 스킬의 최종 피해 +2%(최대 +10%). 승천 뒤에는 승천 뒤 쌓은 숙련으로 다시 오릅니다.
+ * 처음 달성하면 그 스킬의 극한돌파 전용 연출(extremeFx)이 영구로 열립니다(환생 · 승천 유지).
  */
-export const EXTREME_BREAK_PRACTICE = 100_000_000;
+export const EXTREME_STAGES = [100_000_000, 200_000_000, 400_000_000, 700_000_000, 1_000_000_000];
+export const EXTREME_BREAK_PRACTICE = EXTREME_STAGES[0];
+/** v3.211 극한 단계 1단계당 그 스킬의 최종 피해 증가율. */
+export const EXTREME_FINAL_DAMAGE = .02;
 export const VOCATION_OFFSETS = [5000, 25000, 100000, 400000, 1500000, 5000000, 15000000];
 export const vocationTargets = (base: number) => VOCATION_OFFSETS.map(n => base + n);
 export const thresholdRank = (practice: number, targets: number[]) => targets.filter(n => practice >= n).length;
