@@ -218,13 +218,12 @@ export function SceneFx({ effect, boss = false }: { effect: CombatFx[]; boss?: b
 }
 /**
  * v3.208 극한돌파 전용 연출: 극한돌파한 스킬을 쓸 때 원래 연출 위에 겹칩니다. 진홍 · 금빛 빛기둥 세 줄이 내리꽂히고,
- * 두 줄 참격이 엇갈리며 가운데에 ‘極’ 문장과 ‘極限突破’ 띠가 찍힙니다. 섬광을 끈 기기는 빛기둥 후광만 빠집니다.
+ * 퍼지는 고리와 가운데 ‘極’ 문장이 찍힙니다. 섬광을 끈 기기는 빛기둥이 빠집니다.
  */
 function ExtremeFx({ fx }: { fx: CombatFx }) {
     return <div className="scene-fx scene-fx-extreme" style={fxStyle(fx.delay)}>
         {[0, 1, 2].map(i => <i key={i} className="ext-pillar" style={fxStyle(fx.delay + i * 70, { '--i': i })}/>)}
-        <i className="ext-slash"/><i className="ext-slash late"/><i className="ext-ring"/>
-        <b className="ext-crest">極</b><strong className="ext-band">極限突破</strong>
+        <i className="ext-ring"/><b className="ext-crest">極</b>
     </div>;
 }
 
