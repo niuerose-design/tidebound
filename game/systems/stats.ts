@@ -200,7 +200,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     mul('hp', [['job', mult(j.hp)], ['research', 1 + (s.permanent.hp || 0) * .08], ['achievement', 1 + feats.hp], ['account', account]]);
     mul('attack', [['job', mult(j.attack)], ['research', 1 + (s.permanent.attack || 0) * .05], ['achievement', 1 + feats.attack], ['account', account]]);
     mul('magic', [['job', mult(j.magic)], ['research', 1 + (s.permanent.magicAttack || 0) * .05], ['achievement', 1 + feats.magic], ['account', account]]);
-    // v3.215 참모 계보 지휘 체계: 장착한 지원 스킬 수만큼 두 공격 배율.
+    // v3.217 참모 계보 지휘 체계: 장착한 지원 스킬 수만큼 두 공격 배율.
     const command = commandBonus(s);
     if (command > 0) { mul('attack', [['skills', 1 + command]]); mul('magic', [['skills', 1 + command]]); }
     mul('defense', [['job', mult(j.defense)], ['achievement', 1 + feats.defense]]);
@@ -210,7 +210,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(key, [['rebirth', memory]]);
     // v3.90 최대 마나도 체력처럼 연구(‘마나 강화 I’) · 계정 · 환생 배율을 받습니다.
     mul('mana', [['research', 1 + researchRank(s, 'mana') * MANA_RESEARCH_PER], ['account', account], ['rebirth', memory]]);
-    // v3.216 군의관 지원(다른 분신): 최대 체력 · 최대 마나 · 턴당 체력 회복 배율. 결투 등록 스냅샷은 s.support를 빼고 만듭니다.
+    // v3.217 군의관 지원(다른 분신): 최대 체력 · 최대 마나 · 턴당 체력 회복 배율. 결투 등록 스냅샷은 s.support를 빼고 만듭니다.
     if (s.support) for (const [k, e] of [['hp', 'hp'], ['mana', 'mana'], ['hpRegen', 'hpRegen']] as const) if (s.support[e]) mul(k, [['support', supportMultiplier(s, e)]]);
     // v3.217 작전참모 · 화력참모 지원: 보스 피해 · 방어 관통(기존 겹침 규칙과 상한 그대로) · 치명 피해.
     if (s.support) for (const [k, e] of [['bossDamage', 'boss'], ['penetration', 'penetration'], ['critDamage', 'critDamage']] as const) if (s.support[e]) add(k, 'support', supportAmount(s, e));
@@ -294,7 +294,7 @@ export function powerParts(v: Stats) {
 }
 export function power(v: Stats) { const p = powerParts(v); return Math.round(POWER_SCALE * Math.pow(p.offense, POWER_WEIGHT.offense) * Math.pow(p.durability, POWER_WEIGHT.durability)); }
 export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), ...(() => { const f = extremeFinalTable(s, s.skills.filter(id => canUse(s, id))); return f ? { skillFinal: f } : {}; })(), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
-/** v3.216 결투용 스냅샷: 분신 지원(참모 계보, s.support)을 빼고 만듭니다. 제단 신 · 월드보스(PvE)는 snapshot을 그대로 씁니다. v3.217 지원 AP로 늘어난 장착은 지원 없는 AP 안으로 줄입니다. */
+/** v3.217 결투용 스냅샷: 분신 지원(참모 계보, s.support)을 빼고 만듭니다. 제단 신 · 월드보스(PvE)는 snapshot을 그대로 씁니다. v3.217 지원 AP로 늘어난 장착은 지원 없는 AP 안으로 줄입니다. */
 export const duelSnapshot = (s: State) => { const bare = { ...s, support: undefined, skills: [...(s.skills || [])] }; if (s.support?.ap) trimLoadout(bare); return snapshot(bare); };
 /** 마법 직업이면 1(기본 공격이 항상 마력 평타), 아니면 0. */
 export const arcaneStrikeChance = (j: { magic: number; attack: number; tier: number }) => j.magic - j.attack >= .045 ? SKILL_FORMULA.arcaneStrikeChance[Math.min(j.tier, SKILL_FORMULA.arcaneStrikeChance.length - 1)] || 0 : 0;

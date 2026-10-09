@@ -19,7 +19,7 @@ export function masteryConditionText(sk: Skill) {
 
 /** 처치당 숙련 획득량. base는 기본 획득(보통 1), bonus는 조건부 보너스. 스킬 설명과 실제 지급이 같은 식을 씁니다. */
 export const masteryPerVictory = (bonus: number, base = 1) => Math.min(PROGRESSION.maxMasteryPerVictory + base - 1, base + Math.max(0, Math.floor(bonus)));
-/** 연구(+3%/단계)와 계정 어종 배율(×1.01/단계), v3.215 참모 지원(야전 교범)을 곱한 뒤 1/100 단위 정수로. */
+/** 연구(+3%/단계)와 계정 어종 배율(×1.01/단계), v3.217 참모 지원(야전 교범)을 곱한 뒤 1/100 단위 정수로. */
 export const masteryResearchHundredths = (s: State) => Math.round(((1 + researchRank(s, 'mastery') * .03) * accountMastery(s) * supportMultiplier(s, 'mastery') - 1) * 100);
 /**
  * 끝없는 수련: 숙련 획득 +3%/단계(v27.73) × 계정 어종 배율(v27.79, 1%/단계 곱연산). 숙련은 정수라 소수점은 s.masteryCarry에 1/100 단위 정수로 누적합니다.

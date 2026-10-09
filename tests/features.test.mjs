@@ -65,7 +65,7 @@ test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22
  s.abyssBest=150;assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');s.abyssBest=200;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again');
  s.abyssBest=0;assert.deepEqual(N.collectNews(s,86_400_000*5),[],'a lower best (after ascension) never announces');
 });
-test('v3.215 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; support skills give other slots exp · gold · mastery (max per effect, capped), command boosts self',async()=>{
+test('v3.217 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; support skills give other slots exp · gold · mastery (max per effect, capped), command boosts self',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank'),St=await L.load('systems/stats'),M=await L.load('systems/mastery');
  const j=C.jobById('quartermaster');assert.ok(j&&j.tier===3&&j.lineage==='staff'&&j.requiresRank==='ssg'&&!j.parent);
  const s=newState(0);s.level=40;const req=()=>P.jobRequirements(s,j);
@@ -88,7 +88,7 @@ test('v3.215 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; s
  assert.equal(JSON.stringify(St.snapshot(t).stats),snap0,'duel snapshot unaffected');
  t.level=60;act(t,{type:'rebirth'},1000);assert.deepEqual(t.support,{exp:.05,gold:.04,mastery:.06},'kept through rebirth until the next sync');
 });
-test('v3.216 군의관: hp · mana · regen support (other slots only); duel snapshots drop support, altar (PvE) snapshots keep it',async()=>{
+test('v3.217 군의관: hp · mana · regen support (other slots only); duel snapshots drop support, altar (PvE) snapshots keep it',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),C=await L.load('data/classes');
  const j=C.jobById('fieldMedic');assert.ok(j&&j.tier===3&&j.lineage==='staff'&&j.requiresRank==='ssg');
  const s=newState(0);s.level=40;s.job='fieldMedic';s.unlockedJobs.push('fieldMedic');for(const id of ['bloodSupply','stimulantKit','fieldDressing','triage'])s.learned[id]=1;
