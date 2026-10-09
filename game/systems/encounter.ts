@@ -6,6 +6,7 @@ import { jobMasteryTarget, extremeBroken } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
 import { recordExpIncome } from './income';
+import { rollBossLoot } from './boss-loot';
 import { grantDungeonCoins, clearCoinBase, spendDailyBonus, dailyBonusLeft } from './dungeon-coins';
 import { DAILY_BONUS } from '../data/dungeon-shop';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
@@ -473,6 +474,8 @@ export function reward(s: State, rng: () => number) {
             const depth = s.dungeon.depth || 1;
             // v3.191 지역 던전은 하루 처음 DAILY_BONUS.clears회가 보너스 코인(던전 공용, 이월 없음). 무릉도장은 층 코인만.
             const bonus = spendDailyBonus(s, d.id, s.lastTick), coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth, bonus));
+            // v3.195 보스 전리품은 하루 보너스 정복에서만 굴립니다(무릉도장은 보너스가 없어 제외).
+            if (bonus) rollBossLoot(s, d.id, rng);
             recordGoal(s, 'dungeon', d.id, 1, text => addLog(s, text, 'reward'));
             if (d.id === 'abyss') {
                 const deeper = depth > s.abyssBest;

@@ -503,6 +503,8 @@ export type State = {
     dungeonCoinFrac?: number;
     /** v3.191 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
     dungeonBonus?: { day: string; used: number };
+    /** v3.195 보스 전리품 연속 미획득 수(보너스 정복마다 +1, 받으면 0). 환생해도 남습니다. */
+    bossLootMiss?: number;
     /** v3.193 코인샵 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.194 성장권). */
     dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number };
     attributes: Record<Attribute, number>;

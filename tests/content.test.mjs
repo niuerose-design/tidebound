@@ -370,3 +370,15 @@ test('v3.194 growth tickets: best full hour of the last 24 (gold and kill exp) x
  const u=newState(0);u.rebirths=1;u.dungeonCoins=10000;assert.throws(()=>act(u,{type:'dungeonShop',id:'growth1'},0),/사냥 기록이 없습니다/);
  const {restartLife}=await L.load('systems/actions/lifecycle');s.expLog=[{h:1,g:5}];restartLife(s,1000);assert.equal(s.expLog,undefined,'exp log does not survive a new life');
 });
+
+test('v3.195 boss loot: only on daily-bonus regional clears, ancient/primal with the boss-only rule (boss damage + theme), pity, never rolled by drops',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),W=await L.load('data/world'),G=await L.load('data/gear'),O=await L.load('data/odds'),BL=await L.load('systems/boss-loot');
+ for(const d of W.PLAIN_DUNGEONS.filter(d=>d.id!=='abyss')){const a=BL.bossLootAffix(d.id);assert.ok(a,d.id);assert.equal(a.kind,'rule');assert.equal(a.stat,'bossDamage');assert.ok(a.stat2);}
+ for(let i=0;i<200;i++)assert.ok(G.rollAffixes(6,500,'grotto',Math.random,[],'charm',100).every(x=>!x.id.startsWith('loot')),'drops never roll loot rules');
+ assert.ok(O.ODDS.bossLoot.chance>0&&O.ODDS.bossLoot.pity>1);
+ const clear=(s,id,rng)=>{s.running=true;s.dungeon={id,wave:W.DUNGEONS.find(d=>d.id===id).fish.length-1};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};let g=0;while(s.enemy&&g++<50)tick(s,rng);};
+ const s=newState(0);s.level=60;s.rebirths=10;const n=s.inventory.length;clear(s,'caldera',()=>0);
+ const it=s.inventory.at(-1);assert.equal(s.inventory.length,n+1);assert.ok(it.rarity>=5);assert.equal(it.locked,true);assert.ok(it.affixes.some(x=>x.id==='lootCaldera'&&x.rule&&x.stat2==='burnBonus'));assert.equal(it.affixes.filter(x=>x.rule).length,1,'one rule per item');assert.equal(s.bossLootMiss,0);
+ const t=newState(0);t.level=60;t.bossLootMiss=O.ODDS.bossLoot.pity-1;const m=t.inventory.length;clear(t,'grotto',()=>.5);assert.equal(t.inventory.length,m+1,'pity');assert.ok(t.inventory.at(-1).affixes.some(x=>x.id==='lootGrotto'));
+ const u=newState(0);u.level=60;u.dungeonBonus={day:'1970-01-01',used:30};clear(u,'grotto',()=>0);assert.ok(!u.inventory.some(x=>x.affixes?.some(a=>a.id.startsWith('loot'))),'no loot after the daily bonus');assert.equal(u.bossLootMiss,undefined);
+});
