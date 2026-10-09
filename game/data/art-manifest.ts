@@ -4,7 +4,7 @@ export const SKILL_ART: ReadonlySet<string> = new Set<string>([]);
 /** 그림이 있는 몬스터 id → 확장자. 없는 몬스터는 실루엣(없는 파일을 요청하지 않음). */
 export const MONSTER_ART: Readonly<Record<string, 'png' | 'webp'>> = {"expNuri":"webp","masteryMimic":"webp"};
 /** 그림이 있는 직업 계보 id → 확장자. 없으면 계열 아이콘. */
-export const JOB_ART: Readonly<Record<string, 'png' | 'webp'>> = {};
+export const JOB_ART: Readonly<Record<string, 'png' | 'webp'>> = {"darkFollower":"webp","kkamiHunter":"webp","nuriTracker":"webp","onyxAvatar":"webp"};
 /** v3.14 그림이 있는 칠흑 장신구(보스 id) → 확장자. 없으면 SVG 그림. */
 export const ONYX_ART: Readonly<Record<string, 'png' | 'webp'>> = {"onyxBlackMage":"png","onyxDunkel":"png","onyxDusk":"png","onyxHilla":"png","onyxLucid":"png","onyxSeren":"png","onyxWill":"png"};
 /** v3.216 그림이 있는 스토리 삽화(장 배너 chapter-N · 장면 id) → 확장자. 없으면 장 배너는 SVG, 장면은 그림 없이. */
