@@ -234,7 +234,9 @@ test('v3.221 칠흑의 화신: 칠흑 일식은 물리 · 마법 중 높은 쪽 
     assert.equal(cast(me({}, 'onyxBlackMage')).a.effects.buffs.genesis.damageMultiplier, 1.3, '검은 마법사: damage buff');
     assert.equal(cast(me({}, 'onyxDunkel')).a.effects.buffs.commanderBeat.stats.chainBonus, 0.3, '듄켈: chain buff');
     assert.equal(cast(me({}, 'onyxDusk')).a.effects.buffs.duskFear.stats.thorns, 0.3, '더스크: thorns buff');
-    { const a = me({}, 'onyxHilla'); a.hp = 1e5; const r = cast(a); assert.ok(r.ev.drained > 0 && a.hp > 1e5, '진 힐라: drain'); }
+    // v3.223 진 힐라: 힐러 규칙의 예외로 최대 체력 20% 회복, 체력이 가득해도 피해가 줄지 않습니다.
+    { const a = me({}, 'onyxHilla'); a.hp = 1e5; cast(a); assert.equal(a.hp, 1e5 + 2e6, '진 힐라: heals 20% of max hp'); }
+    assert.equal(cast(me({}, 'onyxHilla')).ev.total, cast(me({})).ev.total, '진 힐라: no idle-heal damage cut at full hp');
     assert.ok(cast(me({}, 'onyxSeren')).ev.total > cast(me({})).ev.total * 1.4, '세렌: +50% to bosses');
     assert.equal(job('onyxAvatar').onyxFind, 0.5); assert.equal(job('onyxAvatar').onyxTurns, 120);
     // 패시브: 칠흑 각성을 올려도 체력은 그대로, 공격은 오릅니다.
