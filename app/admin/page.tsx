@@ -23,7 +23,7 @@ const INCOME_KINDS = [['gold', '골드', '#e7be71'], ['exp', '경험치', '#8fd0
 const big = (v: number) => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(2)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
 type NewsRow = { id: number; name: string; text: string; at: number; hacker: boolean };
 /** 운영 페이지 소식 테스트 종류(server/news.ts NEWS_SAMPLES와 같은 순서). */
-const NEWS_KINDS: [string, string][] = [['onyx', '칠흑 장신구'], ['ascend', '승천'], ['tier5', '5차 전직'], ['abyss', '무릉도장 50층'], ['star22', '22성 강화'], ['general', '진급(하사)'], ['hacker', '해커 전직(빨간 줄)'], ['god', '제단 · 신 깨어남'], ['raid', '제단 · 월드보스 출현']];
+const NEWS_KINDS: [string, string][] = [['onyx', '칠흑 장신구'], ['ascend', '승천'], ['tier5', '5차 전직'], ['abyss', '무릉도장 50층'], ['star22', '22성 강화'], ['general', '진급(하사)'], ['onyxAwaken', '칠흑 각성'], ['core', '보스 코어'], ['coreAwaken', '코어 완전 각성'], ['hacker', '해커 전직(빨간 줄)'], ['god', '제단 · 신 깨어남'], ['raid', '제단 · 월드보스 출현']];
 const BLESS_NAMES: Record<string, string> = { gold: '풍요의 축복', exp: '성장의 축복', mimic: '까미의 축복', nuri: '누리의 축복' };
 type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };

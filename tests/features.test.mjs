@@ -65,6 +65,25 @@ test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22
  s.abyssBest=150;assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');s.abyssBest=200;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again');
  s.abyssBest=0;assert.deepEqual(N.collectNews(s,86_400_000*5),[],'a lower best (after ascension) never announces');
 });
+test('v3.212 boss core news: a new core and a full awakening (rank 5) announce once a day; saves marked before v3.212 stay quiet',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),B=await L.load('data/boss-core');
+ const s=newState(0);s.bossCores={grotto:{rank:0,attrs:[]}};N.collectNews(s,0);delete s.newsMark.cores;delete s.newsMark.coreFull;
+ s.bossCores.cemetery={rank:5,attrs:[]};assert.deepEqual(N.collectNews(s,0),[],'old mark: only fills in the cores');assert.deepEqual(s.newsMark.cores.sort(),['cemetery','grotto']);
+ s.bossCores.temple={rank:0,attrs:[]};let ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['core']);
+ assert.equal(ev[0].text('영희'),`영희가 보스 코어 ‘${B.BOSS_CORES.temple.name}’를 얻었습니다. (보유 3/${Object.keys(B.BOSS_CORES).length}종)`);
+ s.bossCores.grotto.rank=4;assert.deepEqual(N.collectNews(s,0),[],'awaken below max is quiet');
+ s.bossCores.grotto.rank=5;ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['coreAwaken']);assert.ok(ev[0].text('철수').endsWith('완전 각성(5단계)했습니다.'));
+ s.bossCores.caldera={rank:0,attrs:[]};assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');
+ s.bossCores.starSanctum=3;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again (old number entry too)');
+});
+test('v3.212 onyx awakening news: every awakening announces (no daily cap); vault merges and old marks stay quiet',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),O=await L.load('data/onyx');
+ const boss=O.ONYX_BOSSES[0],s=newState(0),item={id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.accessory.name,onyx:boss.id};s.inventory.push(item);N.collectNews(s,0);
+ item.onyxRank=1;let ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['onyxAwaken']);assert.equal(ev[0].text('영희'),`영희가 칠흑 장신구 ‘${boss.accessory.name}’${/[가-힣]/.test(boss.accessory.name.at(-1))&&(boss.accessory.name.at(-1).charCodeAt(0)-0xac00)%28?'을':'를'} 각성 1단계로 올렸습니다.`);
+ item.onyxRank=2;assert.equal(N.collectNews(s,0).length,1,'same day again');
+ item.onyxRank=3;s.onyxGift={[boss.id]:0};assert.deepEqual(N.collectNews(s,0),[],'vault merge is quiet');
+ delete s.newsMark.onyxRanks;item.onyxRank=4;assert.deepEqual(N.collectNews(s,0),[],'old mark only fills in');
+});
 test('v3.190 rank news: 하사 and 소위 and every rank after 소위 announce, other ranks stay quiet, no once-a-day cap, skipped ranks still count',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),R=await L.load('data/rank'),T=await L.load('data/titles');
  const at=id=>R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id===id)],s=newState(0);N.collectNews(s,0);
