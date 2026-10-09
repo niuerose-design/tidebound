@@ -156,6 +156,9 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.allIn?.heal) out.push(`건 마나 × ${number(sk.allIn.heal)}만큼 자신 회복`);
         if (sk.recoil) out.push(`준 피해의 ${skillPercent(sk.recoil)}를 자신도 받음 · 반동으로는 체력 1 아래로 내려가지 않음`);
         if (sk.sureHit) out.push('반드시 맞힙니다. 기절 뒤 면역 규칙은 그대로입니다.');
+        if (sk.condition === 'kkami' || sk.condition === 'nuri') out.push(`${sk.condition === 'kkami' ? '숙련의 까미 · 대왕 까미' : '경험의 누리 · 대왕 누리'}에게만 나갑니다(다른 몬스터에게는 발동 판정을 굴리지 않음).`);
+        if (sk.maxHpDamage) out.push(`대상 최대 체력의 ${skillPercent(sk.maxHpDamage)} 고정 피해. 방어 · 치명타 · 피해 배율을 받지 않습니다.`);
+        if (sk.jackpotUp) { const [foe, prize] = sk.condition === 'nuri' ? ['누리', '경험치'] : ['까미', '숙련']; out.push(`명중한 ${foe}에 표식: 그 ${foe}를 잡으면 ${skillPercent(sk.jackpotUp)} 확률로 ${prize} 로또가 한 단계 위로(소 → 중, 중 → 대).`); }
         if (sk.tag) out.push(`태그: ${sk.tag === 'alpha' ? '알파' : '베타'} 기술. 바로 앞에 쓴 태그 기술이 ${sk.tag === 'alpha' ? '베타' : '알파'}였으면 태그 전환 패시브(타임 홀딩 · 얼티밋 타임)만큼 피해가 커집니다. 같은 쪽을 이어 쓰면 보너스가 없습니다.`);
         if (sk.extraTurn) out.push('이 행동 뒤 곧바로 한 번 더 행동합니다. 연속 행동과 별개이고, 추가 행동에서는 다시 생기지 않습니다.');
         if (sk.sealPower) out.push(`이번 전투에 새긴 인 1개마다 피해 +${skillPercent(sk.sealPower)}`);
@@ -194,6 +197,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     if (sk.song) out.push('노래: 장착 AP 0.');
     if (sk.exclusiveLineage) out.push(`${skillExclusiveLabel(sk)}: 이 계보 직업일 때만 장착할 수 있고 효과도 그때만 납니다. 다른 계보 직업은 숙련 · SP 계승을 마쳐도 쓸 수 없고, 계보를 벗어나 전직하면 효과가 사라집니다. 계보 안에서도 지금 직업이 아닌 차수의 기술은 숙련 · SP 계승을 마쳐야 씁니다.`);
+    if (sk.exclusiveLineage && sk.exclusiveUltimate) out.push('예외: 궁극의 모험가는 계승을 마치면 이 기술을 씁니다.');
     if (sk.bloodRage) out.push(`피의 분노: 잃은 체력 비율 × ${skillPercent(sk.bloodRage)}만큼 내 직접 피해가 커집니다(체력이 1이면 +${skillPercent(sk.bloodRage)}). 여러 개면 합산.`);
     if (sk.companion) out.push(`정령: 내 모든 공격(기본 공격 · 액티브 · 추가타 뒤)에 위력 ${skillPercent(sk.companion.power)}의 추가타 ${sk.companion.hits}회가 따라옵니다. 상태이상 전용 · 회복 전용 기술에는 붙지 않고, 여러 정령 패시브는 가장 높은 값만.`);
     if (sk.spectre) out.push(`${sk.spectre.name ?? '접신'}: 충전이 ${sk.spectre.need}에 닿으면 충전을 비우고 ${sk.spectre.turns}턴 동안 내 직접 피해 ×${number(sk.spectre.damageMultiplier)}${sk.spectre.speedMultiplier ? `, 속도 ×${number(sk.spectre.speedMultiplier)}` : ''}${Object.entries(sk.spectre.stats || {}).map(([k, v]) => `, ${skillBonusText(k, v as number)}`).join('')}. 변신 패시브를 여럿 장착하면 가장 센 하나만.${sk.chargeOnHit ? ` 충전은 피해를 입는 공격을 맞을 때 +${sk.chargeOnHit}(치명타로 맞으면 +1 더).` : ' 충전은 충전 기술이 명중할 때 쌓입니다.'}`);

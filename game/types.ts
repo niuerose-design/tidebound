@@ -95,6 +95,8 @@ export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
 export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
+    /** v3.221 황금 올가미 · 하얀 발자국 표식: 이 까미 · 누리를 잡을 때 로또 한 단계 상향 확률. */
+    jackpotUp?: number;
     /** v3.54 이번 전투에서 첫 틱을 이미 바로 준 지속 피해(전투당 한 번). */
     opened?: Partial<Record<'bleed' | 'poison' | 'burn', true>>;
     dot?: {
@@ -249,7 +251,12 @@ export type Skill = {
     cleanseSelf?: boolean;
     healRatio?: number;
     drainRatio?: number;
-    condition?: 'wounded' | 'healthyTarget' | 'afflicted';
+    /** v3.221 'kkami': 숙련의 까미 · 대왕 까미에게만, 'nuri': 경험의 누리 · 대왕 누리에게만 발동합니다(까미 사냥꾼 · 누리 추적자). */
+    condition?: 'wounded' | 'healthyTarget' | 'afflicted' | 'kkami' | 'nuri';
+    /** v3.221 대상 최대 체력의 이 비율만큼 고정 피해(방어 · 치명 · 피해 배율 무시). 황금 올가미. */
+    maxHpDamage?: number;
+    /** v3.221 명중하면 대상에 표식: 그 까미 · 누리를 잡을 때 이 확률로 숙련 · 경험치 로또가 한 단계 위로 굴러갑니다(소 → 중, 중 → 대). */
+    jackpotUp?: number;
     /** v27.69 사용하면 이만큼의 턴 동안 모든 상태이상 면역(몬스터 각성). */
     wardTurns?: number;
     /** v3.17 장착 패시브: 쓰러진 뒤 회복 대기를 이만큼(턴) 줄입니다(환생 10회 이상). */
@@ -323,6 +330,8 @@ export type Skill = {
     song?: boolean;
     /** v3.187 계보 전용: 이 직업 id가 지금 직업의 계보(자신 + 선행 직업)에 있어야 장착하고 효과가 납니다. 숙련 · SP 계승으로도 계보 밖에서는 못 씁니다. */
     exclusiveLineage?: string;
+    /** v3.221 계보 전용이지만 궁극의 모험가(signatureFree)는 예외로 씁니다(황금 올가미). */
+    exclusiveUltimate?: boolean;
     /** v24.2 골드 투척: 보유 골드의 ratio(최대 cap)를 쓰고, 쓴 골드 × scale을 피해에 더합니다. */
     /** 골드 투척: 보유 골드 × ratio를 실제로 쓰고 쓴 골드 × scale을 기준값에 더합니다. 상한은 cap(절대값)과 capAttack(기준 공격력 × 배수, v3.157 섀도어: 수백억 골드도 새 생의 Lv.10도 공격력에 맞춘 만큼만) 중 작은 쪽. */
     goldSpend?: { ratio: number; cap?: number; capAttack?: number; scale: number };
