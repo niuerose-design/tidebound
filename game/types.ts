@@ -526,6 +526,8 @@ export type State = {
      * v3.213 주화 증권거래소 계좌(공유 시장, 첫 매수 때 생김).
      * holdings는 종목 → 수량 · 원금(수수료 포함 매수 금액), realized는 누적 실현 손익. 환생해도 남고 승천하면 사라집니다.
      */
+    /** v3.215 모험 일지(스토리): 열린 장면 id → 열린 시각(ms). 환생 · 승천해도 남습니다. 장면 표는 data/story.ts. */
+    story?: Record<string, number>;
     market?: { holdings: Record<string, { qty: number; cost: number }>; realized?: number };
     /** v3.201 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
     dungeonBonus?: { day: string; used: number };

@@ -10,6 +10,7 @@
 | 몬스터·보스 | `public/art/monsters/` | `{몬스터 id}.png` 또는 `.webp` (예: `minnow.png`, `magmaKraken.webp`) | 원작 그림 그대로, 또는 512×512 |
 | 직업 계보 | `public/art/jobs/` | `{계보 id}.png` 또는 `.webp` | 512×512, 정방형 |
 | 스킬 아이콘 | `public/art/skills/` | `{스킬 id}.png`. 목록은 `docs/art/skill-icons.md` | 원작 도트 아이콘 그대로(32×32 등) |
+| 스토리 삽화 | `public/art/story/` | 장 배너 `chapter-{0~5}`, 장면 `{장면 id}` (.png/.webp). 프롬프트 · 목록은 `docs/art/story-prompts.md` | 배너 1600×400, 장면 1280×720 |
 
 - 몬스터 id는 `game/data/maple-monsters.ts`(원작 이름과 함께), 직업 계보 id는 `game/data/maple-names.ts`에 있습니다. 대소문자를 그대로 지킵니다.
 - 같은 id에 png·webp가 둘 다 있으면 png를 씁니다.
