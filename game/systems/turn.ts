@@ -14,7 +14,6 @@ import { offlineCapSeconds } from '../data/economy';
 import { canUse, lazySkillMasteryRanks, extraRollLevel, extremeFinalTable, extremeFxTable } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, takeWhistle, reward, releaseLegacySeal, gainLevels, enemyLabel } from './encounter';
-import { inRandomGame, loseRandomGame } from './random-game';
 import { deathRecoveryTurns, deathExpLoss } from '../data/sprout';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
@@ -140,8 +139,7 @@ function tickTurn(s: State, rng: () => number) {
         s.effects = {};
         s.playerStun = 0;
         addLog(s, `몬스터를 놓쳤습니다. ${Math.round(s.recovery * BALANCE.turnMs / 1000)}초 동안 회복합니다.${lost > 0 ? ` 경험치 -${lost.toLocaleString()}` : ''}`);
-        if (inRandomGame(s)) loseRandomGame(s);
-        else if (s.dungeon) {
+        if (s.dungeon) {
             const repeating = !!s.dungeon.repeat;
             endRun(s, `${dungeonById(s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 사냥으로 전환' : ' · 멈춤'}`);
             s.dungeon = null;

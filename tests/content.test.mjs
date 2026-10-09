@@ -225,7 +225,7 @@ test('v27.18 charm crit is uncapped and crit above 60% becomes super crit (x1.5 
  assert.ok(mk(100,5).crit>mk(100,0).crit,'enhancing keeps raising charm crit');
  // v27.36 장신구 치명타는 등급 고정값: 위력(레벨)과 무관하고 전설 +10은 15%.
  assert.equal(mk(100,0).crit,mk(900,0).crit);assert.ok(Math.abs(mk(100,10).crit-.15)<1e-9);assert.ok(mk(100,0,6).crit>mk(100,0,3).crit);
- const s=newState(0);s.attributes.luk=400;const a=stats(s);assert.equal(a.crit,SKILL_FORMULA.critCap);assert.ok(a.superCrit>0&&a.superCrit<.02,'overflow goes to super crit at 1% per 100%p: '+a.superCrit);
+ const s=newState(0);s.attributes.luk=400;const a=stats(s);assert.equal(a.crit,SKILL_FORMULA.critCap);assert.ok(a.superCrit>0&&a.superCrit<.1&&Math.abs(a.superCrit-(400*.003+stats(newState(0)).crit-1)*SKILL_FORMULA.superCritPerHundred)<.05,'overflow goes to super crit at 5% per 100%p (v3.210): '+a.superCrit);
  const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:1,superCrit:.5,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:2};
  const f=(extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills:[],cooldowns:{},stun:0,effects:{},ranks:{},mastery:{},practice:{}});
  const plain=f({crit:0,superCrit:0}),t1=f({});strike(plain,t1,()=>.4);const normal=1e6-t1.hp;
@@ -443,4 +443,30 @@ test('v3.205 boss core honor achievements (no reward) unlock dungeon titles',asy
  const owned=T.unlockedTitles(s).map(t=>t.id);assert.ok(owned.includes('bossCore:4')&&owned.includes('coreAwaken:1')&&!owned.includes('bossCore:7'));
  assert.ok(s.achievementClaims['bossCore:4']&&s.achievementClaims['coreAwaken:1'],'rewardless achievements complete at once');assert.ok(!P.unclaimedAchievements(s).some(id=>id.startsWith('bossCore')||id.startsWith('coreAwaken')),'nothing to claim');
  const old=newState(0);old.achievements={'reenlist:1':1,'regions:2':1};old.achievementClaims={};P.syncAchievements(old,()=>{});assert.ok(!old.achievementClaims['regions:2'],'AP honor steps still claimed by hand');assert.ok(old.achievementClaims['reenlist:1'],'old unclaimed honor achievements are tidied');
+});
+
+test('v3.208 abyss cores: gained/awakened by first clearing floors (best record), never from the box; retro grant on load',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),BL=await L.load('systems/boss-loot'),D=await L.load('data/dungeon-shop'),M=await L.load('systems/migrations');
+ assert.deepEqual(C.ABYSS_CORE_IDS,['abyssTrainee','abyssMaster','abyssMugong']);assert.equal(C.REGION_CORE_IDS.length,7);
+ assert.equal(C.BOSS_CORES.abyssMugong.bonus.bossDamage,.08);assert.equal(C.BOSS_CORES.abyssMugong.bonus.penetration,.15);
+ const s=newState(0);s.abyssBest=24;BL.syncAbyssCores(s);assert.equal(s.bossCores,undefined);
+ s.abyssBest=25;BL.syncAbyssCores(s);assert.equal(s.bossCores.abyssTrainee.rank,0);assert.equal(s.bossCores.abyssTrainee.attrs.length,2);
+ s.abyssBest=34;BL.syncAbyssCores(s);assert.equal(s.bossCores.abyssTrainee.rank,3);assert.equal(s.bossCores.abyssMaster,undefined);
+ s.abyssBest=99;BL.syncAbyssCores(s);assert.equal(s.bossCores.abyssTrainee.rank,5);assert.equal(s.bossCores.abyssMaster.rank,5);assert.equal(s.bossCores.abyssMugong.rank,5);
+ const u=newState(0);u.dungeonCoins=D.DUNGEON_SHOP.coreBox*30;for(let d=0;d<30;d++)act(u,{type:'dungeonShop',id:'coreBox'},d*86400000,()=>.999);assert.ok(Object.keys(u.bossCores).every(id=>C.REGION_CORE_IDS.includes(id)),'box never gives abyss cores');
+ const old=newState(0);old.abyssBest=41;const m=M.migrateState(JSON.parse(JSON.stringify(old)));assert.equal(m.bossCores.abyssTrainee.rank,5);assert.equal(m.bossCores.abyssMaster.rank,0);
+});
+
+test('v3.210 LV1 adventurer vow (test): start now at Lv.1, no exp/levels, level gates ignored, no rebirth, exclusive, quit restores, best abyss floor recorded and kept',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame();
+ const s=newState(0);s.level=60;s.exp=1234;s.rebirths=0;s.attributes={...s.attributes,str:80};s.statPoints=7;s.running=false;
+ act(s,{type:'lv1Vow',id:'start'},0);assert.equal(s.level,1);assert.equal(s.exp,0);assert.equal(s.attributes.str,newState(0).attributes.str);assert.ok(s.vows.lv1);
+ assert.throws(()=>act(s,{type:'lv1Vow',id:'start'},0),/이미/);
+ const E=await L.load('systems/encounter');s.exp=99999;E.gainLevels(s);assert.equal(s.level,1);assert.equal(s.exp,0);
+ assert.equal(expMultiplier(s),0);
+ const M=await L.load('systems/meta');assert.equal(M.levelGateOk(s,90),true,'level gates ignored');
+ assert.throws(()=>act(s,{type:'rebirth'},0),/LV1 모험가/);
+ act(s,{type:'lv1Vow',id:'quit'},0);assert.equal(s.level,60);assert.equal(s.exp,1234);assert.equal(s.attributes.str,80);assert.equal(s.statPoints,7);assert.equal(s.vows,undefined);
+ const t=newState(0);t.vows={rough:1};assert.throws(()=>act(t,{type:'lv1Vow',id:'start'},0),/다른 서약/);
+ const u=newState(0);act(u,{type:'lv1Vow',id:'start'},0);u.lv1AbyssBest=7;const {restartLife}=await L.load('systems/actions/lifecycle');act(u,{type:'lv1Vow',id:'quit'},0);restartLife(u,10);assert.equal(u.lv1AbyssBest,7,'record kept across lives');
 });

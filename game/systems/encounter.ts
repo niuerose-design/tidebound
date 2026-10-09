@@ -7,7 +7,7 @@ import { EXTREME_STAGES } from '../data/long-term';
 import { killReward, encounterTier, dungeonKillReward, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
 import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
 import { recordExpIncome, recordMasteryIncome } from './income';
-import { rollBossLoot } from './boss-loot';
+import { rollBossLoot, syncAbyssCores } from './boss-loot';
 import { grantDungeonCoins, clearCoinBase, spendDailyBonus, dailyBonusLeft } from './dungeon-coins';
 import { DAILY_BONUS } from '../data/dungeon-shop';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
@@ -20,9 +20,8 @@ import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nu
 import { ESSENCE_SLIME, rollSlimeTier, slimeChance, slimeEligible, slimeBundle } from '../data/essence-slime';
 import { KING, kingReady, isSpecialId, type KingKind } from '../data/king';
 import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue, swarmRankKills, swarmMasteryKills } from '../data/rank';
-import { roughHeal } from './vows';
+import { roughHeal, lv1Active } from './vows';
 import { sproutHeal } from '../data/sprout';
-import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
 import type { State, Item, Stats, Enemy } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, DUNGEON_TUNING, BOSS_PRESSURE_WAVE } from '../data/balance';
 import { MONSTERS, STAGES, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatMonster, tideLiftMonster, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth, monsterById, stageById, dungeonById } from '../data/world';
@@ -46,6 +45,8 @@ export function victoryHeal(s: State, a = stats(s)) {
 }
 /** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
 export function gainLevels(s: State) {
+    // v3.210 LV1 모험가: 레벨이 오르지 않고 경험치도 쌓지 않습니다.
+    if (lv1Active(s)) { s.exp = 0; return; }
     while (s.exp >= xpNeeded(s.level, s.rebirths, xpWall(s)) && s.level < 100) {
         s.exp -= xpNeeded(s.level, s.rebirths, xpWall(s));
         s.level++;
@@ -57,13 +58,13 @@ export function gainLevels(s: State) {
         addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
     }
 }
-/** v27.86 옛 ‘잠든 힘’ 봉인이 남은 세이브: 쌓인 경험치를 그대로 지급하고 봉인을 지웁니다(서약은 던전 랜덤게임으로 바뀜). 레벨은 호출한 쪽에서 올립니다. */
+/** v27.86 옛 ‘잠든 힘’ 봉인이 남은 세이브: 쌓인 경험치를 그대로 지급하고 봉인을 지웁니다(서약은 v27.86에 없어짐). 레벨은 호출한 쪽에서 올립니다. */
 export function releaseLegacySeal(s: State) {
     const seal = s.vows?.seal;
     if (!seal) return 0;
     s.exp += seal.exp;
     delete s.vows!.seal; delete s.vows!.anchor;
-    addLog(s, `잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +${seal.exp} EXP`, 'reward');
+    addLog(s, `잠든 힘 서약이 없어져 봉인을 풀었습니다 · 쌓인 경험치 +${seal.exp} EXP`, 'reward');
     return seal.exp;
 }
 /** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘처치 회복 강화 I’은 1단계마다 +1%p. */
@@ -231,8 +232,6 @@ export function takeWhistle(s: State): ForcedRare | undefined {
     const kind = s.whistle; delete s.whistle; return kind;
 }
 export function spawn(s: State, rng: () => number, force?: ForcedRare) {
-    // v27.86 랜덤게임: 해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다.
-    if (inRandomGame(s)) return spawnRandomGame(s, rng);
     const dungeon = dungeonById(s.dungeon?.id);
     const st = stageById(s.stage)!;
     const finalWave = !!dungeon && s.dungeon!.wave === dungeon.monsters.length - 1;
@@ -306,16 +305,6 @@ export function enemyLabel(e: Pick<Enemy, 'id' | 'name' | 'swarm' | 'variant' | 
 const monsterLevelOf = (id: string) => monsterById(id)?.level || 1;
 export function reward(s: State, rng: () => number) {
     const e = s.enemy!;
-    // v27.86 랜덤게임: 처치 경험치·골드·드롭·숙련 없이 처치 수·도감만 세고, 판돈을 쌓아 다음 웨이브로 갑니다.
-    if (inRandomGame(s)) {
-        s.kills += 1;
-        s.book[e.id] = (s.book[e.id] || 0) + 1;
-        { const t = encounterTier(s); if (t > (s.bookTier?.[e.id] || 0)) (s.bookTier ??= {})[e.id] = t; }
-        { const max = stats(s).hp; s.hp = Math.min(max, s.hp + Math.floor(max * victoryHealRate(s))); }
-        s.enemy = null; s.effects = {}; s.playerStun = 0;
-        clearRandomWave(s);
-        return;
-    }
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
     const size = e.swarm || 1, vdef = variantById(e.variant), rewardMult = vdef?.reward || 1, expMult = vdef?.expMult || rewardMult, bookPer = vdef?.book || 1;
@@ -377,7 +366,7 @@ export function reward(s: State, rng: () => number) {
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·마나·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {
         if (canUse(s, id)) {
-            // v3.74 극한돌파 · v3.208 극한 단계: 단계가 오른 순간 한 번 알리고, 처음이면 전용 연출을 엽니다.
+            // v3.74 극한돌파 · v3.211 극한 단계: 단계가 오른 순간 한 번 알리고, 처음이면 전용 연출을 엽니다.
             const before = extremeStage(s, id);
             s.skillPractice[id] = (s.skillPractice[id] || 0) + practiceTotal;
             noteExtreme(s, id, before);
@@ -492,6 +481,8 @@ export function reward(s: State, rng: () => number) {
                 const deeper = depth > s.abyssBest;
                 s.abyssBest = Math.max(s.abyssBest, depth);
                 recordAbyssDepth(s, depth, s.lastTick);
+                if (deeper) syncAbyssCores(s);
+                if (lv1Active(s) && depth > (s.lv1AbyssBest || 0)) { s.lv1AbyssBest = depth; addLog(s, `LV1 모험가 기록 · 무릉도장 ${depth}층`, 'reward'); }
                 const pearls = abyssPearls(depth);
                 s.pearls += pearls;
                 addLog(s, `무릉도장 ${depth}층 정복 · 세계석 +${pearls}`, 'reward');
@@ -522,8 +513,8 @@ export function reward(s: State, rng: () => number) {
 }
 
 /**
- * v3.208 극한 단계가 before에서 올랐으면 알리고, 극한돌파(1단계)에 닿으면 그 스킬의 전용 연출을 영구로 엽니다(extremeFx).
- * v3.208 전에 이미 1억을 넘긴 스킬도 다음 처치 때 여기서 연출이 열립니다(단계가 그대로라 알림은 연출 해금 한 줄).
+ * v3.211 극한 단계가 before에서 올랐으면 알리고, 극한돌파(1단계)에 닿으면 그 스킬의 전용 연출을 영구로 엽니다(extremeFx).
+ * v3.211 전에 이미 1억을 넘긴 스킬도 다음 처치 때 여기서 연출이 열립니다(단계가 그대로라 알림은 연출 해금 한 줄).
  */
 export function noteExtreme(s: State, id: string, before: number) {
     const now = extremeStage(s, id), name = skillById(id)?.name || id;

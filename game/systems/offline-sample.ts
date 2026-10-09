@@ -122,7 +122,7 @@ export function extrapolateOffline(s: State, m: Mark, turns: number, remaining: 
     s.deaths += grow(g.deaths);
     { const rk = rankState(s); rk.exp += grow(g.rankExp); s.rank = rk; }
     const apply = (target: Record<string, number>, gains: Record<string, number>) => { for (const [id, d] of Object.entries(gains)) { const n = grow(d); if (n > 0) target[id] = (target[id] || 0) + n; } };
-    // v3.208 부재중 정산으로 오른 극한 단계도 알립니다(전용 연출 해금 포함).
+    // v3.211 부재중 정산으로 오른 극한 단계도 알립니다(전용 연출 해금 포함).
     const extremeBefore = Object.fromEntries(Object.keys(g.skillPractice).map(id => [id, extremeStage(s, id)]));
     apply(s.jobMastery, g.jobMastery); apply(s.skillPractice, g.skillPractice); apply(s.book, g.book);
     for (const [id, before] of Object.entries(extremeBefore)) noteExtreme(s, id, before);

@@ -71,7 +71,7 @@ export type CombatFx = {
     tier?: number;
     /** v3.178 처형 연계(빈사 적 추가 피해)가 붙은 내 타격. 화면이 몬스터 · HP 바를 반으로 가르는 연출을 띄웁니다. */
     execute?: boolean;
-    /** v3.208 극한돌파 전용 연출이 열린 내 스킬. */
+    /** v3.211 극한돌파 전용 연출이 열린 내 스킬. */
     extreme?: boolean;
 };
 

@@ -27,7 +27,7 @@ export function attributes(s: State) {
 export function masteryMilestonesFor(sk?: Skill) { return sk?.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones; }
 /** v3.74 극한돌파 목표 숙련: 모든 액티브 스킬이 같은 1억(EXTREME_BREAK_PRACTICE). 패시브는 극한돌파가 없습니다(null). */
 export function extremeBreakTarget(sk: Skill) { return sk.type === 'active' ? EXTREME_BREAK_PRACTICE : null; }
-/** v3.208 극한 단계(0~5): 액티브 스킬이 한계돌파 3단계(연구 적용분)를 마친 뒤 숙련이 EXTREME_STAGES의 몇 칸을 넘었는지. */
+/** v3.211 극한 단계(0~5): 액티브 스킬이 한계돌파 3단계(연구 적용분)를 마친 뒤 숙련이 EXTREME_STAGES의 몇 칸을 넘었는지. */
 export function extremeStage(s: State, id: string) {
     const sk = skillById(id);
     if (!sk || !extremeBreakTarget(sk) || limitBreakOf(s, id) < PROGRESSION.limitBreak.max) return 0;
@@ -36,15 +36,15 @@ export function extremeStage(s: State, id: string) {
 }
 /** v3.74 극한돌파 달성: 극한 단계 1 이상(숙련 1억). */
 export function extremeBroken(s: State, id: string) { return extremeStage(s, id) >= 1; }
-/** v3.208 극한 단계의 최종 피해 배율(1 + 단계 × 2%). */
+/** v3.211 극한 단계의 최종 피해 배율(1 + 단계 × 2%). */
 export const extremeFinalMultiplier = (stage: number) => 1 + stage * EXTREME_FINAL_DAMAGE;
-/** v3.208 장착한 스킬 가운데 극한 단계가 있는 것의 최종 피해 배율 표(전투원 skillFinal). 없으면 undefined. */
+/** v3.211 장착한 스킬 가운데 극한 단계가 있는 것의 최종 피해 배율 표(전투원 skillFinal). 없으면 undefined. */
 export function extremeFinalTable(s: State, skills: string[]) {
     const out: Record<string, number> = {};
     for (const id of skills) { const n = extremeStage(s, id); if (n) out[id] = extremeFinalMultiplier(n); }
     return Object.keys(out).length ? out : undefined;
 }
-/** v3.208 극한돌파 전용 연출이 열린 장착 스킬(전투원 extremeFx). 없으면 undefined. */
+/** v3.211 극한돌파 전용 연출이 열린 장착 스킬(전투원 extremeFx). 없으면 undefined. */
 export function extremeFxTable(s: State, skills: string[]) {
     const out = skills.filter(id => s.extremeFx?.[id]);
     return out.length ? out : undefined;
@@ -202,7 +202,7 @@ export function skillUnlockReady(s: State, sk: Skill) { return (!sk.unlockJobMas
 /** v25 숙련 Lv.1 전에는 효과를 감추는 기술인지. */
 export function skillVeiled(s: State, sk: Skill) { return !!sk.veiled && skillMastery(s, sk.id) < 1; }
 /** 계승한 스킬은 환생 뒤 레벨이 낮아도 쓸 수 있습니다(레벨 조건 면제). 환생 횟수·직업 숙련 해금 조건은 그대로입니다. */
-function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id)) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
+function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id) || !!s.vows?.lv1) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
 /** 스킬을 장착할 수 없는 이유. 쓸 수 있으면 빈 문자열입니다. */
 export function skillBlockReason(s: State, id: string) {
     const sk = skillById(id);

@@ -34,9 +34,9 @@ export function AscensionPanel({ s, send, busy }: PanelProps) {
         <div className="rebirth-records rebirth-three">
             <article className="panel ledger-gain"><h2>받는 보상</h2><ul>
                 <li><b>숙련 획득 ×{ascensionMastery(s)} → ×{ascensionMastery(next)}</b><small>승천 1회당 +{ASCENSION.masteryPer * 100}%, {ASCENSION.masteryCap}회까지. 숙련의 까미 당첨분에도 곱합니다.</small></li>
-                <li><b>서약 보상 ×{ascensionVow(s).toFixed(1)} → ×{ascensionVow(next).toFixed(1)}</b><small>하드코어·힘의 길·절제·랜덤게임 보상의 보너스 부분에 곱합니다({ASCENSION.vowCap}회까지).</small></li>
+                <li><b>서약 보상 ×{ascensionVow(s).toFixed(1)} → ×{ascensionVow(next).toFixed(1)}</b><small>하드코어·힘의 길·절제 보상의 보너스 부분에 곱합니다({ASCENSION.vowCap}회까지).</small></li>
                 <li><b>업적 보상 다시 지급 · 세계석 {format(refund.pearls)} · SP {refund.sp}</b><small>받은 업적의 영구 효과(능력치·AP)는 그대로 남습니다.</small></li>
-                <li><b>편의 연구 자동 해제</b><small>{auto}. 서약·랜덤게임은 1단계가 바로 열립니다.</small></li>
+                <li><b>편의 연구 자동 해제</b><small>{auto}. 서약은 1단계가 바로 열립니다.</small></li>
                 <li><b>초반 가속 · 까미·누리</b><small>환생 {ASCENSION.earlyExpUntil}회 전까지 경험치 ×{ASCENSION.earlyExp}(새싹의 축복 대신). 까미·누리가 사냥터 난이도 0부터 나옵니다.</small></li>
                 {!n && <li><b>행운의 편지 6~10단계</b><small>오프라인 확률 ×0.75 · 까미 ‘대’ {oddsPercent(ODDS.mimic.letterJackpot, '당첨 확률 상승')} · 편지 수신인.</small></li>}
             </ul></article>

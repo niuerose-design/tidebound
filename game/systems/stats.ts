@@ -10,7 +10,7 @@ import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, st
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
 import { researchRank, MANA_RESEARCH_PER, researchById } from '../data/economy';
-import { roughReward, roughGear, roughHeal, restraintExp, vowBadges } from './vows';
+import { roughReward, roughGear, roughHeal, restraintExp, vowBadges, lv1Active } from './vows';
 import { sproutExp, sproutCount } from '../data/sprout';
 import { ascensionEarlyExp } from '../data/ascension';
 import { skillById } from '../data/skills';
@@ -223,7 +223,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v3.153 렐릭의 힘(패스파인더): 경험치 보너스 중 환생 · 연구 몫을 뺀 나머지(스킬 · 장비 · 직업 · 도감). 고른 유틸 세팅이 그대로 피해 기준값이 됩니다.
     set('relicPower', 'skills', Math.max(0, a.expBonus - rebirthExperience(s.rebirths) - (s.permanent.exp || 0) * .2));
     for (const [key, cap] of Object.entries(RULE_CAPS)) if (key !== 'arcaneRatioBonus') limit(key as keyof CombatStats, Math.min(cap!, a[key as keyof CombatStats] || 0));
-    // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +1%.
+    // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +5%(v3.210, 전에는 +1%).
     // v3.75 장비 극치명 옵션의 극 치명타 확률은 상한을 넘은 치명타 몫에 더합니다.
     a.superCrit = Math.min(1, (a.superCrit || 0) + Math.max(0, a.crit - SKILL_FORMULA.critCap) * SKILL_FORMULA.superCritPerHundred); rec('superCrit', 'limit', a.superCrit);
     // v27.79 계정 보스 보너스는 치명타 확률 배율(곱연산).
@@ -313,7 +313,8 @@ const jobReward = (s: State) => jobById(s.job)?.rewardScale ?? 1;
 /** 골드 배율. 힘의 길 서약은 처치 골드를 함께 올립니다(서약이 없거나 난이도 하한 미만이면 ×1). */
 export const goldMultiplier = (s: State, a = stats(s)) => (1 + a.goldBonus) * jobReward(s) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
 // v3.23 순풍은 다른 경험치 보너스와 더합니다.
-export const expMultiplier = (s: State, a = stats(s)) => Math.max(0, 1 + a.expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
+/** v3.210 LV1 모험가는 경험치 ×0. */
+export const expMultiplier = (s: State, a = stats(s)) => lv1Active(s) ? 0 : Math.max(0, 1 + a.expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 실제 적중률 = 명중 − 상대 회피 + 속도 보정(±6%p). v26.7 magical이면 회피를 magicEvasionScale만 적용하고 속도 보정은 플러스만 받습니다. */
 export const hitChance = (a: Stats, b: Stats, magical = false) => {

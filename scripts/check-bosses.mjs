@@ -158,6 +158,18 @@ if (ABYSS_CURVE) {
     }
     process.exit(0);
 }
+// --abyss-max: 몸(환생)마다 직업별로 무릉도장을 어느 층까지 깨는지(시드 모두 클리어하는 최고 층, 체력 · 마나는 층마다 새로) 찾습니다. 무릉 코어 층 정하기용(v3.208).
+if (process.argv.includes('--abyss-max')) {
+    const d = DUNGEONS.find(x => x.id === 'abyss');
+    const ok = (s, st, depth) => Array.from({ length: SEEDS }, (_, k) => dungeonRun(s, st, d, 0, k + 1, depth)).every(x => x.cleared >= 1);
+    console.log('## 무릉도장 최고 층(직업별 · 시드 모두 클리어)');
+    for (const r of REBIRTHS || [3, 5, 10, 20, 30, 50, 70, 100]) {
+        const per = JOB_IDS.map(jobId => { const s = bodyFor(r, jobId), st = stats(s); let lo = 0, hi = 1; while (hi <= 2000 && ok(s, st, hi)) { lo = hi; hi *= 2; } while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (ok(s, st, mid)) lo = mid; else hi = mid; } return lo; });
+        const sorted = [...per].sort((a, b) => a - b);
+        console.log(`R${String(r).padEnd(4)} 중앙 ${sorted[sorted.length >> 1]}층 · 최저 ${sorted[0]} · 최고 ${sorted[sorted.length - 1]} | ${per.map((n, i) => `${jobById(JOB_IDS[i]).name.replace(' (5차)', '')} ${n}`).join(' · ')}`);
+    }
+    process.exit(0);
+}
 if (process.argv.includes('--body')) for (const r of REBIRTHS || [0, 5, 10, 20, 50, 100]) for (const jobId of JOB_IDS) console.log(r, jobId, JSON.stringify(bodyReport(bodyFor(r, jobId))));
 if (want('dungeon')) { console.log('## 던전 (노말 5연전 · 입장 환생 몸, 헬 R50, 나이트메어 R100)'); measureDungeons(); }
 if (want('onyx')) { console.log('## 칠흑 (서식지 적정 환생 몸 · 80턴)'); measureOnyx(); }

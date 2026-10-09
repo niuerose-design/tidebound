@@ -136,8 +136,8 @@ export const SKILL_FORMULA = {
     poisonRatio: .12, poisonHpRatio: .0015,
     /** v27.48 화상(중독과 출혈의 중간): 한 중첩의 틱 비율, 받는 직접 피해 증가(출혈의 절반). */
     burnRatio: .18, burnHpRatio: .0025, burnVulnerability: .06,
-    /** v27.18 극 치명타: 치명타 확률 상한은 100%. 100%를 넘는 몫 100%p마다 극 치명타 확률 +1%(superCritPerHundred). 극 치명타는 치명 피해에 superCritBonus를 더 곱합니다. */
-    critCap: 1, superCritPerHundred: .01, superCritBonus: 1.5, drainRatio: .25, extraAttackMultiplier: .65,
+    /** v27.18 극 치명타: 치명타 확률 상한은 100%. 100%를 넘는 몫 100%p마다 극 치명타 확률 +5%(superCritPerHundred, v3.210 +1% → +5%). 극 치명타는 치명 피해에 superCritBonus를 더 곱합니다. */
+    critCap: 1, superCritPerHundred: .05, superCritBonus: 1.5, drainRatio: .25, extraAttackMultiplier: .65,
     // 올라운드 밸런스: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
     // 편중 배분보다 균형 배분이 강하도록 check-all-rounder.mjs 결과로 맞춘 값입니다.
     harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,

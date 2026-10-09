@@ -2,15 +2,12 @@
 import { tideLimit, encounterTier, levelGateOk } from '../meta';
 import { STAGES, dungeonClosed, stageClosed, hackDownOf, monsterById, stageById, dungeonById } from '../../data/world';
 import { SWARM_CAPS } from '../../data/variants';
-import { RANDOM_GAME } from '../../data/random-game';
 import { isHackerJob } from '../../data/hacker';
-import { randomGameRank, randomGameRunsLeft, randomGameUsed, inRandomGame, cashOutRandomGame } from '../random-game';
 import type { ActionHandlers } from './types';
 import { researchRank, salvageRate, autoGrades, autoMaxGrade, AUTO_RESEARCH, type AutoDevice } from '../../data/economy';
 import { RARITIES } from '../../data/balance';
 import { addLog, endRun } from '../state';
 import { parseDungeonValue, enterDungeon } from '../dungeon-run';
-import { dayKey } from '../../data/time';
 
 export const voyageActions: ActionHandlers = {
     sync() {},
@@ -60,23 +57,11 @@ export const voyageActions: ActionHandlers = {
         if (dungeonClosed(d.id))
             throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);
         { const down = hackDownOf('dungeon', d.id, now); if (down) throw Error(`${d.name}은(는) ${down.by}의 해킹으로 서버가 다운되어 ${Math.ceil((down.until - now) / 60000)}분 동안 입장할 수 없습니다.`); }
-        // v27.86 랜덤게임: 연구 단계만큼 생마다 입장(v3.24 하루가 바뀌어도 다시 채워짐). 값 'until:N'은 목표 웨이브(0이면 받고 나가기·쓰러짐까지).
-        if (d.id === RANDOM_GAME.id) {
-            if (!randomGameRank(s)) throw Error('세계석 연구 ‘랜덤게임’이 필요합니다.');
-            if (!randomGameRunsLeft(s, now)) throw Error('오늘(이번 생)의 랜덤게임 입장 횟수를 모두 썼습니다. 하루가 지나거나 환생하면 다시 채워집니다.');
-            const until = Math.max(0, Math.min(999, Math.floor(Number(String(a.value || 'until:0').replace('until:', '')) || 0)));
-            enterDungeon(s, d.id);
-            s.dungeon = { ...s.dungeon!, stake: { essence: 0 }, ...(until ? { until } : {}) };
-            s.randomGameRuns = randomGameUsed(s, now) + 1; s.randomGameDay = dayKey(now);
-            s.randomGameStats ??= { best: 0, runs: 0, cashed: 0 }; s.randomGameStats.runs++;
-        }
-        else { const { mode, repeat } = parseDungeonValue(s, d.id, a.value); enterDungeon(s, d.id, repeat, mode); }
+        { const { mode, repeat } = parseDungeonValue(s, d.id, a.value); enterDungeon(s, d.id, repeat, mode); }
         s.running = true;
         s.lastTick = now;
     },
     leaveDungeon(s) {
-        // v27.86 랜덤게임에서 나가면 지금까지의 판돈을 받습니다.
-        if (inRandomGame(s)) { cashOutRandomGame(s); return; }
         s.dungeon = null;
         s.enemy = null;
         s.running = false;

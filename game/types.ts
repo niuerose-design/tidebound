@@ -406,7 +406,7 @@ export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split' | 'fixed';
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
-    /** v3.208 극한돌파 전용 연출이 열린 스킬로 한 행동. */
+    /** v3.211 극한돌파 전용 연출이 열린 스킬로 한 행동. */
     extreme?: boolean;
     /** v3.145 이 행동에 바친 체력(체력 소모 기술). */
     hpSpent?: number;
@@ -520,6 +520,8 @@ export type State = {
     /** v3.202 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
     bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[]; forges?: number }>;
     coreSlot?: string;
+    /** v3.210 LV1 모험가 서약으로 오른 최고 무릉도장 층(환생 · 승천해도 남음). */
+    lv1AbyssBest?: number;
     /** v3.201 주화 상점 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.201 성장권). */
     dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number; coreBox?: number };
     attributes: Record<Attribute, number>;
@@ -642,7 +644,7 @@ export type State = {
     goldLog?: { h: number; g: number }[];
     /** v3.201 처치 경험치 수입 기록(goldLog와 같은 칸). 환생하면 지웁니다. */
     expLog?: { h: number; g: number }[];
-    /** v3.208 극한돌파 전용 연출이 열린 스킬(처음 극한돌파한 순간 기록). 환생 · 승천해도 남습니다. */
+    /** v3.211 극한돌파 전용 연출이 열린 스킬(처음 극한돌파한 순간 기록). 환생 · 승천해도 남습니다. */
     extremeFx?: Record<string, true>;
     /** v3.207 기록을 시작한 뒤 처치로 번 경험치 합계(expLog와 달리 환생해도 남음). */
     expEarned?: number;
@@ -710,16 +712,7 @@ export type State = {
         repeat?: { left: number | null; until?: number };
         /** v27.70 일반 던전 난이도(DUNGEON_MODES). 없으면 노말. 무릉도장은 쓰지 않습니다. */
         mode?: import('./data/balance').DungeonMode;
-        /** v27.86 랜덤게임: 쌓인 판돈(배율 적용 전)과 목표 웨이브(0이면 없음). */
-        stake?: { essence: number };
-        until?: number;
     };
-    /** v27.86 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). v3.24 randomGameDay와 날이 다르면 0으로 봅니다. */
-    randomGameRuns?: number;
-    /** v3.24 randomGameRuns를 센 날(한국 시간 dayKey). */
-    randomGameDay?: string;
-    /** v27.88 랜덤게임 기록: 가장 멀리 간 웨이브·총 입장·받고 나간 횟수(환생해도 유지). */
-    randomGameStats?: { best: number; runs: number; cashed: number };
     /** v3.18 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
     hacker?: HackerState;
     /** v3.26 저장 전에 /api/game이 읽고 지우는 임시 표시: 해커 계열로 전직함(채팅 알림). */
@@ -771,7 +764,9 @@ export type State = {
 /** 서약. breath는 걸었는지, rough는 힘의 길 선택 단계. v27.86 anchor·seal은 옛 ‘잠든 힘’(지금은 던전 랜덤게임) 세이브 호환용으로만 남깁니다. restraint는 절제(1~3단계). */
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
-    focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };
+    focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string };
+    /** v3.210 LV1 모험가(테스트용): 거는 순간의 레벨 · 경험치 · 배분 능력치를 보관하고 Lv.1로 고정합니다. 포기하면 되돌립니다. */
+    lv1?: { level: number; exp: number; attributes: Record<Attribute, number>; statPoints: number } };
 /** v3.18 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
 export type HackerInfil = {
     seed: number;
@@ -848,7 +843,7 @@ export type Snapshot = {
     skillPractice?: Record<string, number>;
     skillRanks?: Record<string, number>;
     skillMastery?: Record<string, number>;
-    /** v3.208 극한 단계 최종 피해 배율(스킬 id → 1.02~1.1). 없으면 없음. */
+    /** v3.211 극한 단계 최종 피해 배율(스킬 id → 1.02~1.1). 없으면 없음. */
     skillFinal?: Record<string, number>;
     name: string;
     level: number;

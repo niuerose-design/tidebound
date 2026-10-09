@@ -1383,7 +1383,7 @@ test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/m
 test('v3.30 recent kill: mastery on the kill line (mimic jackpot included), nuri exp folded in, no double count on EXP lines', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const R = await L.load('systems/live-rates');
-    assert.equal(R.gainsOf({ id: 1, type: 'reward', text: '잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +500 EXP' }, '나').exp, 500, 'not counted twice');
+    assert.equal(R.gainsOf({ id: 1, type: 'reward', text: '잠든 힘 서약이 없어져 봉인을 풀었습니다 · 쌓인 경험치 +500 EXP' }, '나').exp, 500, 'not counted twice');
     assert.equal(R.gainsOf({ id: 2, type: 'reward', text: '✦ 경험의 누리 · 대박당첨! 경험치 +1,500 (Lv.50 필요량의 3%)' }, '나').exp, 1500);
     assert.equal(R.recentKill([], '나'), null);
     const logs = [

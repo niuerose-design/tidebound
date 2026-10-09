@@ -366,8 +366,6 @@
   min-width:0
 }
 
-/* v27.86 랜덤게임 */
-.random-game-stake { margin: 6px 0 12px; font-size: 13px; color: var(--gold); }
 
 /* v27.88 통계 · 서약 예약 표시 */
 .stats-block { margin-bottom: 16px; padding: 14px 16px; }
@@ -376,29 +374,6 @@
 .stage-card.habitat .stage-footer { flex-wrap:wrap; }
 .stage-card.habitat .stage-footer > span { min-width:0; }
 /* v27.91 랜덤게임 카드: 머리글(제목 + 상태 칩) / 규칙 세 줄 + 목표 웨이브 칩 선택 */
-.random-game { margin-bottom: 18px; padding: 20px 22px; }
-.random-game.locked { opacity: .75; }
-.random-game-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-.random-game-head h2 { margin: 2px 0 0; font-size: 20px; }
-.random-game-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.random-game-chips .chip { padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px; background: #0f2227; color: #a9c5bd; font-size: 12px; white-space: nowrap; }
-.random-game-chips .chip.on { color: #a4e9ba; border-color: #3f6b5e; } .random-game-chips .chip.gold { color: var(--gold); border-color: #6b6236; }
-.random-game-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 18px; align-items: start; }
-.random-game-rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.random-game-rules li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.6; color: #a9bdb8; }
-.random-game-rules li svg { flex: none; margin-top: 4px; color: #9bc8b5; } .random-game-rules b { color: #e8c7a2; }
-.random-game-pick { display: grid; gap: 10px; }
-.random-game-pick-title { font-size: 13px; font-weight: 600; color: #dbe9e3; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.random-game-pick-title small { font-weight: 400; font-size: 11px; color: #7f9c98; }
-.random-game-targets { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px; }
-.random-game-target { display: grid; gap: 2px; padding: 8px 6px; border: 1px solid var(--border); border-radius: 8px; background: #0f2227; color: #c5d8d2; text-align: center; cursor: pointer; }
-.random-game-target b { font-size: 16px; line-height: 1.1; } .random-game-target b::after { content: ' 웨이브'; font-size: 10px; font-weight: 400; color: #8ea7a4; }
-.random-game-target small { font-size: 11px; color: #9bb3b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.random-game-target.on { border-color: #d5b36c; background: #223329; color: #fff; } .random-game-target.on small { color: var(--gold); }
-.random-game-target:disabled { cursor: default; }
-.random-game-go { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid #9ab4b522; font-size: 13px; color: #a9c5bd; }
-.random-game-go .gold-button { white-space: nowrap; }
-@media (max-width: 767px) { .random-game { padding: 16px; } .random-game-body { grid-template-columns: 1fr; gap: 14px; } .random-game-targets { grid-template-columns: repeat(4, minmax(0, 1fr)); } .random-game-go .gold-button { width: 100%; } }
 
 /* v3.12 칠흑 장신구 그림 */
 .onyx-icon{background:radial-gradient(circle at 50% 40%,#2a1b3d,#0b0a12)}

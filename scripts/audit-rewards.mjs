@@ -64,7 +64,7 @@ for (const p of PROFILES.filter(x => x.name.includes(PICK))) {
         console.log(row(`${st.name} (Lv.${st.level}) 난이도 ${t}`, r));
     }
     const ONLY_D = (process.env.AUDIT_DUNGEONS || '').split(',').filter(Boolean);
-    if (!process.env.AUDIT_NO_DUNGEONS) for (const d of DUNGEONS.filter(x => !x.random && x.rebirth <= p.rebirths && levelGateOk(base, x.level) && (!ONLY_D.length || ONLY_D.includes(x.id)))) {
+    if (!process.env.AUDIT_NO_DUNGEONS) for (const d of DUNGEONS.filter(x => x.rebirth <= p.rebirths && levelGateOk(base, x.level) && (!ONLY_D.length || ONLY_D.includes(x.id)))) {
         // v27.70 일반 던전은 난이도(노말·헬·나이트메어)별로 잽니다(무릉도장은 층 공식이라 한 번).
         for (const m of d.id === 'abyss' ? [null] : DUNGEON_MODES) {
             const r = run(base, s => { s.tide = 0; s.enemy = null; act(s, { type: 'dungeon', id: d.id, value: d.id === 'abyss' ? 'deeper:999' : `${m.id}@fail` }, s.lastTick, random(3)); });

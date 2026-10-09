@@ -217,7 +217,7 @@ export function SceneFx({ effect, boss = false }: { effect: CombatFx[]; boss?: b
     </div>; return fx.extreme ? <Fragment key={fx.id}>{scene}<ExtremeFx fx={fx}/></Fragment> : scene; })}</div>;
 }
 /**
- * v3.208 극한돌파 전용 연출: 극한돌파한 스킬을 쓸 때 원래 연출 위에 겹칩니다. 진홍 · 금빛 빛기둥 세 줄이 내리꽂히고,
+ * v3.211 극한돌파 전용 연출: 극한돌파한 스킬을 쓸 때 원래 연출 위에 겹칩니다. 진홍 · 금빛 빛기둥 세 줄이 내리꽂히고,
  * 퍼지는 고리와 가운데 ‘極’ 문장이 찍힙니다. 섬광을 끈 기기는 빛기둥이 빠집니다.
  */
 function ExtremeFx({ fx }: { fx: CombatFx }) {
