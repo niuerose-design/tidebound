@@ -21,6 +21,7 @@ const pct = (x: number) => `${Math.round(x * 100_000) / 1000}%`;
 export const UNLOCK_CONDITIONS: Record<string, string> = {
     undead: '100번 쓰러지기', clockmaker: '사냥터에서 100시간 보내기',
     journeyman: '직업 5개 끝까지 숙달', rebirthFisher: '5차 직업 3개 끝까지 숙달',
+    kkamiHunter: '숙련의 까미 100번 처치', nuriTracker: '경험의 누리 100번 처치', darkFollower: '지역 던전마다 100번 정복', onyxAvatar: '칠흑 보스 100번 처치',
     // 표에 없는 숨은 조건 직업이 생기면 tests/odds.test.mjs가 알려 줍니다.
 };
 
