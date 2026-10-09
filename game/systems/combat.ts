@@ -749,7 +749,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v27.48 화상: 걸릴 때마다 한 중첩(최대 burnMaxStacks), 지속 갱신, 중첩당 피해는 더 강한 쪽.
     if (landed && chosen && (effect === 'burn' || also === 'burn') && isImmune(b, 'burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
     else if (landed && chosen && (effect === 'burn' || also === 'burn')) {
-        const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus);
+        const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus + (sa.burnTurnsBonus || 0));
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
         const hpRatio = SKILL_FORMULA.burnHpRatio * swarmDotShare(b.swarm);
         const current = b.effects.burn;

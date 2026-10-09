@@ -52,6 +52,10 @@ export type Stats = {
     bossDamage?: number;
     /** v3.12 체력·물리/마법 공격·물리/마법 방어 배율 가산(0.05 = +5%). */
     allStats?: number;
+    /** v3.199 최대 체력 · 마나 배율(보스 코어). */
+    vitalPct?: number;
+    /** v3.199 화상 지속 턴 추가(보스 코어). */
+    burnTurnsBonus?: number;
     stunBonus?: number;
     controlBonus?: number;
     dotTurnsBonus?: number;
@@ -159,10 +163,6 @@ export type Item = {
     onyx?: string;
     /** v3.113 칠흑 각성 단계(0~5): 이미 가진 칠흑 장신구를 다시 얻으면 오르고, 고유 옵션이 단계당 +10%입니다. */
     onyxRank?: number;
-    /** v3.196 던전 보스 전리품(던전 id). 종당 1개, 환생해도 남고 전용 옵션은 재설정 · 이식 불가(칠흑과 같은 규칙). */
-    bossLoot?: string;
-    /** v3.196 보스 전리품 각성 단계(0~5): 같은 전리품을 다시 얻으면 오르고, 전용 옵션이 단계당 +10%입니다. */
-    lootRank?: number;
     /** v3.77 칠흑 장신구 무작위 옵션을 최고 굴림으로 맞췄는지(한 번만). */
     onyxTuned?: boolean;
     /** v21 이전 장비와 유물의 단일 옵션. */
@@ -509,6 +509,9 @@ export type State = {
     dungeonBonus?: { day: string; used: number };
     /** v3.195 보스 전리품 연속 미획득 수(보너스 정복마다 +1, 받으면 0). 환생해도 남습니다. */
     bossLootMiss?: number;
+    /** v3.199 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
+    bossCores?: Record<string, number>;
+    coreSlot?: string;
     /** v3.193 코인샵 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.194 성장권). */
     dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number };
     attributes: Record<Attribute, number>;

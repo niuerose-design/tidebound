@@ -6,7 +6,7 @@ import { dungeonTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack } from
 import { clearCoinBase, dailyBonusLeft, growthOffer, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
 import { DUNGEON_SHOP, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood } from '@/game/data/dungeon-shop';
 import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
-import { BOSS_LOOT_SET, BOSS_LOOT_SLOTS, ownedLoot } from '@/game/data/boss-loot';
+import { BOSS_CORES, BOSS_CORE_SET, BOSS_CORE_RULES, ownedCores } from '@/game/data/boss-core';
 import { useState } from 'react';
 import { Lock, Swords, Gem, Skull } from 'lucide-react';
 import { FishArt } from './art';
@@ -107,9 +107,10 @@ function DungeonCoinShop({ s, send, busy }: PanelProps) {
     const buy = (id: string, value?: string) => send({ type: 'dungeonShop', id, ...(value ? { value } : {}) });
     return <section className="panel dungeon-coin-shop">
         <div className="section-title"><h3>던전 코인샵</h3><span>보유 {format(coins)} 코인 · 오늘 보너스 정복 {left}/{DAILY_BONUS.clears}회 남음{bonus > 0 ? ` · 코인 보너스 +${Math.round(bonus * 100)}%` : ''}</span></div>
-        <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 코인을 받습니다. 지역 던전은 하루(한국 시간 자정 기준) 처음 {DAILY_BONUS.clears}번의 정복이 보너스라 코인을 더 받습니다(노말 {DAILY_BONUS.coins.normal} · 헬 {DAILY_BONUS.coins.hell} · 나이트메어 {DAILY_BONUS.coins.nightmare}, 던전 공용, 다음 날로 넘어가지 않음, 무릉도장 제외). 보너스 정복에서는 드물게 그 던전 보스의 전용 옵션(◆)이 붙은 태초 전리품이 나옵니다(칠흑처럼 환생해도 남고, 다시 얻으면 각성). 코인은 환생해도 남습니다.</p>
+        <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 코인을 받습니다. 지역 던전은 하루(한국 시간 자정 기준) 처음 {DAILY_BONUS.clears}번의 정복이 보너스라 코인을 더 받습니다(노말 {DAILY_BONUS.coins.normal} · 헬 {DAILY_BONUS.coins.hell} · 나이트메어 {DAILY_BONUS.coins.nightmare}, 던전 공용, 다음 날로 넘어가지 않음, 무릉도장 제외). 보너스 정복에서는 드물게 그 던전 보스의 기술을 이어받는 보스 코어가 나옵니다(환생 · 승천해도 남고, 다시 얻으면 각성). 코인은 환생해도 남습니다.</p>
         <div className="dungeon-reward-lines">
-            <span><b>전리품</b>보스 전리품 {ownedLoot(s).size}/{Object.keys(BOSS_LOOT_SLOTS).length}종 · 세트 {BOSS_LOOT_SET.map(b => `${ownedLoot(s).size >= b.count ? '✓' : '·'}${b.count}개 ${b.label}`).join(' / ')}</span>
+            <span><b>코어</b>보스 코어 {ownedCores(s).length}/{Object.keys(BOSS_CORES).length}종 · 칸에 낀 코어는 효과 100%, 나머지는 {Math.round(BOSS_CORE_RULES.resonance * 100)}%(턴 연장 제외) · 세트 {BOSS_CORE_SET.map(b => `${ownedCores(s).length >= b.count ? '✓' : '·'}${b.count}개 ${b.label}`).join(' / ')}</span>
+            {Object.entries(BOSS_CORES).map(([id, c]) => { const rank = s.bossCores?.[id], own = rank !== undefined, worn = s.coreSlot === id; return <span key={id}><b>{worn ? '장착' : own ? '보유' : '미획득'}</b>{c.name}{own ? ` · 각성 ${rank}/${BOSS_CORE_RULES.awakenMax}` : ''} · {c.desc} {own && <button className="secondary small" disabled={busy} onClick={() => send({ type: 'equipCore', id: worn ? '' : id })}>{worn ? '빼기' : '장착'}</button>}</span>; })}
             {ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id, now); return <span key={b.id}><b>칠흑</b>{b.name} · {b.accessory.name} {o.kind === 'awaken' ? `각성 ${o.rank}/${ONYX.awakenMax}` : '제작'}{o.reason ? ` · ${o.reason}` : ''} <button className="secondary small" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button></span>; })}
             <span><b>성장</b>최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치 × 시간(환생 {GROWTH_MAX_REBIRTHS}회 미만){(Object.keys(GROWTH_GOODS) as GrowthGood[]).map(g => { const o = growthOffer(s, g, now); return <button key={g} className="secondary small" title={o.reason || `골드 +${format(o.gold)} · 경험치 +${format(o.exp)}`} disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(g)}>{o.hours}시간 · {format(o.price)} (오늘 {o.left}회)</button>; })} <small>{hour.reason || `1시간 = 골드 +${format(hour.gold)} · 경험치 +${format(hour.exp)}`}</small></span>
             <span><b>장비</b>전설 이상 확정 장비 상자(내 레벨 · 고대 · 태초는 일반 드롭 하나와 비슷한 확률) <button className="secondary small" disabled={busy || coins < DUNGEON_SHOP.gearBox} onClick={() => buy('gearBox')}>구매 · {format(DUNGEON_SHOP.gearBox)}</button></span>

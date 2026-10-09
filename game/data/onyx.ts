@@ -35,7 +35,7 @@ export const onyxBossFor = (region: string) => ONYX_BOSSES.find(b => b.region ==
 /** v3.113 각성 배율: 1 + 단계 × awakenStep. */
 export const onyxAwaken = (item: Pick<Item, 'onyxRank'>) => 1 + Math.min(ONYX.awakenMax, Math.max(0, item.onyxRank || 0)) * ONYX.awakenStep;
 /** v3.113 칠흑 고유 옵션의 각성 적용 값. 제어 연장(controlBonus, 턴)은 정수라 각성 · 공명을 받지 않습니다. */
-export const onyxScaledStat = (stat: string, value: number, mult: number) => stat === 'controlBonus' || stat === 'stunBonus' ? value : value * mult;
+export const onyxScaledStat = (stat: string, value: number, mult: number) => stat === 'controlBonus' ? value : value * mult;
 /** v3.113 이 칠흑 장신구의 고유 옵션(보스별 1줄)인지. */
 export const isOnyxUnique = (item: Pick<Item, 'onyx'>, affixId: string) => !!item.onyx && ONYX_BOSSES.some(b => b.id === item.onyx && b.accessory.affix.id === affixId);
 /** v3.113 공명: 착용하지 않은 칠흑 장신구마다 고유 옵션(각성 포함) × resonance. 제어 연장은 빠집니다. */

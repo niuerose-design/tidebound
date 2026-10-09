@@ -9,6 +9,7 @@ import { drop, dropLevel, gainLevels } from '../encounter';
 import { allItems, hunterBlock, onyxOffer, countBought, growthOffer, rollGearBoxRarity, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
 import type { QualityGood } from '../../data/dungeon-shop';
 import { addLog } from '../state';
+import { BOSS_CORES } from '../../data/boss-core';
 import { RARITIES } from '../../data/balance';
 import type { State } from '../../types';
 import type { ActionHandlers } from './types';
@@ -83,5 +84,12 @@ export const dungeonShopActions: ActionHandlers = {
             return;
         }
         throw Error('없는 상품입니다.');
+    },
+    /** v3.199 보스 코어 칸: id = 가진 코어의 던전 id(빈 값이면 빼기). */
+    equipCore(s, { id }) {
+        if (!id) { s.coreSlot = undefined; addLog(s, '보스 코어를 칸에서 뺐습니다.'); return; }
+        if (!BOSS_CORES[id] || !(id in (s.bossCores || {}))) throw Error('가진 보스 코어만 낄 수 있습니다.');
+        s.coreSlot = id;
+        addLog(s, `보스 코어 칸 · ${BOSS_CORES[id].name} 장착`);
     },
 };
