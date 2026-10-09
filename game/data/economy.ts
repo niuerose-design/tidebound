@@ -68,7 +68,9 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'recovery', name: '처치 회복 강화 I', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
     { id: 'evasion', name: '회피 강화 I', desc: '회피 +0.6%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .006, unit: 'pp', label: '회피' },
     { id: 'lifesteal', name: '흡혈 강화 I', desc: '흡혈 +0.5%p (연구분은 전체 상한 30% 밖에 더함)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },
-    { id: 'ap', name: '영혼 확장', desc: '스킬 장착 한도 AP +1', max: 12, base: 4, step: 3, tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
+    { id: 'ap', name: '영혼 확장 I', desc: '스킬 장착 한도 AP +1', max: 12, base: 4, step: 3, tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
+    /** v3.214 영혼 확장 II: I(12단계, 환생 12회 무렵 다 찍음) 뒤의 장기 목표. 환생 20회부터, 12단계 합계 3,840 세계석(100 + 40/단계). */
+    { id: 'ap2', name: '영혼 확장 II', desc: '스킬 장착 한도 AP +1 (영혼 확장 I과 합산)', max: 12, base: 100, step: 40, tab: 'utility', group: 'basic', rebirth: 20, per: 1, unit: 'flat', label: '장착 AP' },
     { id: 'exp', name: '노련함', desc: '처치 경험치 +20%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', per: .2, unit: 'percent', label: '처치 경험치' },
     // v27.60 모험가의 유산: 시작 골드 +500 → 시작 레벨 +2. id는 그대로라 찍어 둔 단계가 이어집니다.
     { id: 'starting', name: '전생의 기억', desc: '환생 직후 시작 레벨 +2 (오른 레벨만큼 능력치 포인트도 받음)', max: 10, base: 3, step: 2, tab: 'utility', group: 'basic', per: 2, unit: 'flat', label: '시작 레벨', suffix: '레벨' },

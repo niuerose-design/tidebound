@@ -298,7 +298,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (refund <= 0)
             throw Error('돌려받을 세계석이 없습니다.');
         const after = { ...s, permanent: { ...s.permanent, ...Object.fromEntries(Object.keys(ranks).map(k => [k, Math.min(ranks[k], s.researchGranted?.[k] || 0)])) } };
-        if (ranks.ap && apUsed(after) > apCapacity(after))
+        if ((ranks.ap || ranks.ap2) && apUsed(after) > apCapacity(after))
             throw Error(`재분배하면 장착 AP 한도(${apCapacity(after)})를 넘습니다. 스킬 장착을 ${apUsed(after) - apCapacity(after)} AP 줄인 뒤 다시 시도하세요.`);
         // v27.31 무료로 받은 단계는 남깁니다(반환 세계석에도 들어가지 않음).
         for (const k of Object.keys(ranks)) {

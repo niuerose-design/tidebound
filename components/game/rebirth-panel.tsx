@@ -15,7 +15,7 @@ import { SLOTS } from '@/game/data/balance';
 import { researchRefund } from '@/game/systems/commerce';
 import { rebirthRewardParts, tailwindActive, tailwindExp, xpWall, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
 import { stats, permanentExpBonus } from '@/game/systems/stats';
-import { apCapacity } from '@/game/systems/progression';
+import { apCapacity, researchAP } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
@@ -155,7 +155,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             <div><RefreshCw size={22}/><span>누적 환생<strong>{format(s.rebirths)} <small>회</small></strong></span></div>
             <div><Sparkles size={22}/><span>보유 세계석<strong><Num n={s.pearls}/> <small>개</small></strong></span></div>
             <div><span>영구 경험치 배율<strong>×{permanentExp.toFixed(2)}</strong></span></div>
-            <div><span>현재 장착 AP<strong>{apCapacity(s)} <small>환생 +{rebirthAP(s)} · 연구 +{s.permanent.ap || 0}</small></strong></span></div>
+            <div><span>현재 장착 AP<strong>{apCapacity(s)} <small>환생 +{rebirthAP(s)} · 연구 +{researchAP(s)}</small></strong></span></div>
         </section>
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="prepare">환생 준비</TabsTrigger><TabsTrigger value="research">세계석 연구</TabsTrigger><TabsTrigger value="relics">환생 유물</TabsTrigger><TabsTrigger value="history">환생 기록</TabsTrigger></TabsList></Tabs>
         {tab === 'history' && <RebirthHistory s={s}/>}
