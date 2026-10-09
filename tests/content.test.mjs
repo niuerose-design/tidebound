@@ -433,3 +433,13 @@ test('v3.203 boss core attribute reroll (essence or coins) and refine (essence, 
  const o=newState(0);o.bossCores={cemetery:2};o.essence=1e6;assert.throws(()=>act(o,{type:'coreForge',id:'cemetery',value:'refine|0'},0),/빈 줄/);
  act(o,{type:'coreForge',id:'cemetery',value:'reroll|0'},0,()=>.5);assert.equal(o.bossCores.cemetery.attrs.length,1);assert.equal(o.bossCores.cemetery.rank,2,'old saves fill empty lines by reroll');
 });
+
+test('v3.205 boss core honor achievements (no reward) unlock dungeon titles',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progress'),A=await L.load('data/achievements'),T=await L.load('data/titles');
+ for(const id of ['bossCore:1','bossCore:4','bossCore:7','coreAwaken:1','coreAwaken:7']){const a=A.achievementById(id);assert.ok(a&&a.honor,id);assert.deepEqual(a.reward,{});assert.ok(T.titleById(id)?.achievement===id,id);}
+ const s=newState(0);s.bossCores={grotto:{rank:5,attrs:[]},temple:{rank:0,attrs:[]},caldera:3,cemetery:{rank:1,attrs:[]}};P.syncAchievements(s,()=>{});
+ for(const id of ['bossCore:1','bossCore:4','coreAwaken:1'])assert.ok(s.achievements[id]!==undefined,id);
+ for(const id of ['bossCore:7','coreAwaken:7'])assert.equal(s.achievements[id],undefined,id);
+ const owned=T.unlockedTitles(s).map(t=>t.id);assert.ok(owned.includes('bossCore:4')&&owned.includes('coreAwaken:1')&&!owned.includes('bossCore:7'));
+ const before={...s};P.claimAchievements(s,'bossCore:4');assert.equal(s.pearls,before.pearls,'honor gives nothing');assert.equal(s.sp,before.sp);
+});

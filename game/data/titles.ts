@@ -6,7 +6,7 @@
 import type { State } from '../types';
 import { REBIRTH_TITLES } from './long-term';
 
-export type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
+export type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
 export const TITLES: TitleDef[] = [
     // v3.190 모든 칭호는 이름 앞에 어울리는 그림(이모지)을 둡니다.
@@ -24,6 +24,12 @@ export const TITLES: TitleDef[] = [
     { id: 'onyx:7', name: '◆ 칠흑보다 어두운 자', desc: '칠흑 장신구 7종 보유', group: '사냥', achievement: 'onyx:7' },
     { id: 'star:22', name: '★ 별을 다 채운 자', desc: '장비 하나를 22성까지 강화', group: '강화', achievement: 'star:22' },
     { id: 'starDestroy:50', name: '☆ 별이 부서져도', desc: '강화로 장비 50개를 잃고도 계속 두드림', group: '강화', achievement: 'starDestroy:50' },
+    // v3.205 보스 코어 칭호(명예 업적).
+    { id: 'bossCore:1', name: '💠 코어의 계승자', desc: '보스 코어 첫 획득', group: '던전', achievement: 'bossCore:1' },
+    { id: 'bossCore:4', name: '🔷 네 보스의 기억', desc: '보스 코어 4종 보유', group: '던전', achievement: 'bossCore:4' },
+    { id: 'bossCore:7', name: '🌀 일곱 보스를 품은 자', desc: '보스 코어 7종 보유', group: '던전', achievement: 'bossCore:7' },
+    { id: 'coreAwaken:1', name: '✨ 깨어난 코어', desc: '보스 코어 하나를 각성 5단계까지', group: '던전', achievement: 'coreAwaken:1' },
+    { id: 'coreAwaken:7', name: '👁 모든 보스를 깨운 자', desc: '보스 코어 7종 모두 각성 5단계', group: '던전', achievement: 'coreAwaken:7' },
     { id: 'abyss:25', name: '🥋 무릉 수련자', desc: '무릉도장 25층', group: '무릉도장', achievement: 'abyss:25' },
     { id: 'abyss:100', name: '🏯 무릉의 주인', desc: '무릉도장 100층', group: '무릉도장', achievement: 'abyss:100' },
     { id: 'hacker:root', name: '💻 root', desc: '해킹 X 루트 권한', group: '도전', achievement: 'hacker:root' },
