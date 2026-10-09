@@ -5,19 +5,24 @@ import { makeGoals, rerollGoal, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, goalText, typ
 import { noteOneTimeReward } from './offline-tally';
 import { dayKey, weekKey } from '../data/time';
 
+/** v3.205 보상이 없는 업적(명예 업적 등)은 받을 것이 없으므로 달성하는 순간 완료(받음)로 둡니다. */
+const rewardless = (id: string) => { const r = achievementById(id)?.reward; return !!r && !r.pearls && !r.sp && !r.ap; };
 /** 새로 달성한 업적을 해금합니다. 보상은 기록 화면에서 받습니다(claimAchievement). 기록이 없던 세이브는 이미 달성한 업적을 조용히 채웁니다. */
 export function syncAchievements(s: State, log: (text: string) => void) {
     const first = !s.achievements;
     s.achievements ??= {};
-    const got: string[] = [], progress = progressReader(s);
+    const got: string[] = [], honor: string[] = [], progress = progressReader(s);
     for (const a of ACHIEVEMENTS) {
         if (s.achievements[a.id] !== undefined || progress(a) < a.target) continue;
         s.achievements[a.id] = s.turn;
-        got.push(a.title);
+        (rewardless(a.id) ? honor : got).push(a.title);
     }
-    if (!got.length) return;
-    if (first) log(`업적 ${got.length}개 달성 · 모험 기록 화면에서 보상을 받으세요.`);
-    else for (const title of got) log(`업적 달성 · ${title} · 기록 화면에서 보상 받기`);
+    // 보상 없는 업적은 바로 완료. 전에 달성만 하고 받지 않은 것도 여기서 정리합니다.
+    for (const id of Object.keys(s.achievements)) if (!s.achievementClaims?.[id] && rewardless(id)) (s.achievementClaims ??= {})[id] = true;
+    if (!got.length && !honor.length) return;
+    if (first) { log(`업적 ${got.length + honor.length}개 달성 · 모험 기록 화면에서 보상을 받으세요.`); return; }
+    for (const title of got) log(`업적 달성 · ${title} · 기록 화면에서 보상 받기`);
+    for (const title of honor) log(`업적 달성 · ${title}`);
 }
 /** 해금했지만 아직 받지 않은 업적. */
 export const unclaimedAchievements = (s: Pick<State, 'achievements' | 'achievementClaims'>) => Object.keys(s.achievements || {}).filter(id => !s.achievementClaims?.[id] && achievementById(id));

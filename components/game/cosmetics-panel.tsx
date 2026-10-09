@@ -6,10 +6,25 @@ import { RANKS, RANK_CUMULATIVE, RANK_PERKS, rankProgress, rankPointsEarned, ran
 import { ConfirmButton } from './confirm-button';
 import { RankInsignia } from './rank-insignia';
 import { Heading, Meter } from './shared';
-import { ChevronDown, Medal } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Medal } from 'lucide-react';
 const FLOW_KEY = 'tidebound.rankFlow';
 
 /** v27.80 치장: 칭호와 계급. 능력치 화면의 ‘기본 능력치 / 최종 전투 능력치’와 같은 두 칸 구성입니다. */
+/** v3.205 칭호 목록: 한 쪽에 TITLE_PAGE개씩, 왼쪽 · 오른쪽 화살표로 넘깁니다(목록이 길어져 화면을 다 덮던 문제). 처음에는 장착 중인 칭호가 있는 쪽을 엽니다. */
+const TITLE_PAGE = 8;
+function TitlePager({ send, busy, owned, chosenId }: Pick<PanelProps, 's' | 'send' | 'busy'> & { owned: Set<string>; chosenId?: string }) {
+    const pages = Math.max(1, Math.ceil(TITLES.length / TITLE_PAGE)), start = Math.max(0, Math.floor(TITLES.findIndex(t => t.id === chosenId) / TITLE_PAGE));
+    const [page, setPage] = useState(start), at = Math.min(page, pages - 1), rows = TITLES.slice(at * TITLE_PAGE, at * TITLE_PAGE + TITLE_PAGE);
+    return <div className="title-pager">
+        <div className="title-pager-nav">
+            <button type="button" className="secondary small icon-button" aria-label="이전 칭호" disabled={at === 0} onClick={() => setPage(at - 1)}><ChevronLeft size={16}/></button>
+            <span>{at + 1} / {pages}</span>
+            <button type="button" className="secondary small icon-button" aria-label="다음 칭호" disabled={at >= pages - 1} onClick={() => setPage(at + 1)}><ChevronRight size={16}/></button>
+        </div>
+        <div className="title-list">{rows.map(t => { const got = owned.has(t.id), on = chosenId === t.id; return <div key={t.id} className={`title-row ${got ? 'owned' : 'locked'} ${on ? 'on' : ''}`}><span className="title-name"><small className="rebirth-title">{t.name}</small></span><span className="title-desc">{t.group} · {t.desc}</span>{got ? <button type="button" className={on ? 'primary small' : 'secondary small'} disabled={busy || on} onClick={() => send({ type: 'title', id: t.id })}>{on ? '장착 중' : '장착'}</button> : <span className="title-locked">미획득</span>}</div>; })}</div>
+    </div>;
+}
+
 export function Cosmetics({ s, send, busy }: PanelProps) {
     const owned = new Set(unlockedTitles(s).map(t => t.id)), current = displayTitle(s), chosen = titleById(s.title), badge = s.badge || 'title';
     const p = rankProgress(s), earned = rankPointsEarned(s), free = rankPointsFree(s);
@@ -25,7 +40,7 @@ export function Cosmetics({ s, send, busy }: PanelProps) {
     <details className="panel attribute-panel cosmetics-fold" open>
     <summary className="section-title"><h2>칭호</h2><span>{current ? `표시 중 · ${current}` : '표시 안 함'} · {owned.size} / {TITLES.length} 획득</span><ChevronDown size={16} className="achievement-chevron"/></summary>
     <div className="title-actions"><button type="button" className={badge === 'title' ? 'primary small' : 'secondary small'} disabled={busy || badge === 'title'} onClick={() => send({ type: 'badge', id: 'title' })}>이름 옆에 칭호 표시</button><button type="button" className={s.title === undefined ? 'primary small' : 'secondary small'} disabled={busy} onClick={() => send({ type: 'title', id: 'auto' })}>자동(최근 획득)</button><button type="button" className={s.title === null ? 'primary small' : 'secondary small'} disabled={busy} onClick={() => send({ type: 'title', id: 'none' })}>표시 안 함</button></div>
-    <div className="title-list">{TITLES.map(t => { const got = owned.has(t.id), on = chosen?.id === t.id; return <div key={t.id} className={`title-row ${got ? 'owned' : 'locked'} ${on ? 'on' : ''}`}><span className="title-name"><small className="rebirth-title">{t.name}</small></span><span className="title-desc">{t.group} · {t.desc}</span>{got ? <button type="button" className={on ? 'primary small' : 'secondary small'} disabled={busy || on} onClick={() => send({ type: 'title', id: t.id })}>{on ? '장착 중' : '장착'}</button> : <span className="title-locked">미획득</span>}</div>; })}</div>
+    <TitlePager s={s} send={send} busy={busy} owned={owned} chosenId={chosen?.id}/>
     </details>
     <details className="panel derived-panel cosmetics-fold" open>
     <summary className="section-title"><h2>계급</h2><span>{p.rank.name}{reenlisted ? ` ★${reenlisted}` : ''} · 진급 포인트 {free} / {earned}</span><ChevronDown size={16} className="achievement-chevron"/></summary>

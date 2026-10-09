@@ -459,3 +459,9 @@
 
 /* v3.118 비용 초기화 */
 .forge-reset { display:grid; gap:6px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; } .forge-reset small { color:#8ea7a4; font-size:12px; }
+/* v3.205 칭호 쪽 넘기기 */
+.title-pager { display: grid; gap: 8px; }
+.title-pager-nav { display: flex; align-items: center; justify-content: flex-end; gap: 10px; font-size: .85rem; color: #9fb7b0; font-variant-numeric: tabular-nums; }
+.title-pager-nav button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; padding: 0; }
+.title-pager .title-list { min-height: calc(8 * 46px); align-content: start; }
+@media (max-width: 640px) { .title-pager .title-list { min-height: 0; } .title-pager-nav { justify-content: space-between; } }
