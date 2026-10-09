@@ -38,8 +38,8 @@ export function StoryPanel({ s }: { s: State }) {
                 {part.chapters.map(ci => {
                     const chapter = STORY_CHAPTERS[ci], scenes = STORY.filter(x => x.chapter === ci), got = scenes.filter(x => open[x.id]).length;
                     const fresh = seen ? scenes.filter(x => open[x.id] && !seen.has(x.id)).length : 0;
-                    // 접은 상태는 장마다 이 기기에 기억합니다(Fold). 처음에는 열린 장면이 있는 장만 펼칩니다.
-                    return <Fold key={chapter} id={`story:${ci}`} className="story-chapter" defaultOpen={got > 0} title={chapter} note={<>{got} / {scenes.length}{fresh > 0 && <span className="story-badge">NEW {fresh}</span>}</>}>
+                    // 접은 상태는 장마다 이 기기에 기억합니다(Fold). v3.217 처음에는 모든 장이 접혀 있습니다(장 제목의 NEW 수로 새 이야기를 알 수 있음).
+                    return <Fold key={chapter} id={`story:${ci}`} className="story-chapter" defaultOpen={false} title={chapter} note={<>{got} / {scenes.length}{fresh > 0 && <span className="story-badge">NEW {fresh}</span>}</>}>
                         <ChapterBanner chapter={ci} title={chapter} dim={got === 0}/>
                         <div className="story-list">{scenes.map(x => open[x.id]
                             ? <article key={x.id} className="panel story-scene">

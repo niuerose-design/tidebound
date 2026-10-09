@@ -603,8 +603,10 @@
 .story-banner svg, .story-banner img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
 .story-banner::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, transparent 55%, rgba(14,25,31,.55)); pointer-events:none; }
 .story-banner.dim { filter:grayscale(.75) brightness(.55); }
-.story-scene-art { margin:2px 0 4px; aspect-ratio:16 / 9; border-radius:var(--radius-md); overflow:hidden; background:#0b1418; }
+@media(max-width:767px){ .story-scene-art { aspect-ratio:12 / 5; } }
+.story-scene-art { position:relative; margin:2px 0 4px; aspect-ratio:3 / 1; border-radius:var(--radius-md); overflow:hidden; background:#0b1418; }
+.story-scene-art svg { position:absolute; inset:0; width:100%; height:100%; display:block; }
 .story-banner img, .story-scene-art img { opacity:0; transition:opacity .3s ease; }
 .story-banner img.ready, .story-scene-art img.ready { opacity:1; }
-.story-scene-art img { width:100%; height:100%; object-fit:cover; display:block; }
+.story-scene-art img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
 @media(max-width:767px){ .story-banner { aspect-ratio:3 / 1; } }
