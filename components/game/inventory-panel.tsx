@@ -17,6 +17,7 @@ import { stats, power } from '@/game/systems/stats';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 const PAGE = 12;
 import type { PanelProps } from './panel-props';
+import { CoreSlot } from './core-slot';
 /** v3.93 교체 미리보기 캐시: 장비 · 가방 · 성장(레벨 · 직업 · 스킬 · 능력치 · 연구)이 같으면 지난 계산을 씁니다. 화면 하나만 쓰므로 한 칸이면 충분합니다. */
 let previewCache: { key: string; value: { current: CombatStats; currentPower: number; preview: Map<string, { after: Stats; gain: number }> } } | null = null;
 function gearPreview(s: State) {
@@ -120,6 +121,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
         {worn ? <button type="button" className={`gear-slot-item${open === worn.id ? ' open' : ''}`} onClick={() => { const next = open === worn.id ? null : worn.id; setOpen(next); if (next && window.innerWidth <= 900) requestAnimationFrame(() => document.getElementById('gear-slot-open')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }} aria-expanded={open === worn.id}><strong><span className={worn.onyx ? 'onyx-name' : ''}>{worn.name}</span> <span className="gold-text">{starLabel(worn.enhance || 0, true)}</span></strong><small>{worn.onyx ? '칠흑' : RARITIES[worn.rarity].name} · 위력 {worn.power}</small><span className="gear-row-stats">{topStats(worn)}</span></button> : <p className="gear-slot-empty">비어 있음</p>}
         {up ? <div className="gear-slot-upgrade"><span><ArrowUpRight size={13}/>추천 <b>{up.name}</b> {gainBadge(preview.get(up.id)!.gain)}</span><button className="primary small" disabled={busy} onClick={() => send({ type: 'equip', id: up.id })}>바로 장착</button></div> : <p className="gear-slot-upgrade muted">가방에 더 좋은 {SLOTS[id]} 없음</p>}
     </article>; })}</section>
+    <CoreSlot s={s} send={send} busy={busy}/>
     {(() => { const worn = SLOT_IDS.map(id => s.equipment[id]).find(w => w && w.id === open); return worn && <article id="gear-slot-open" className={`panel gear-slot-open${worn.onyx ? ' onyx-frame' : ''}`} style={{ '--rarity': RARITIES[worn.rarity].color } as React.CSSProperties} aria-label={`${worn.name} 상세 · 강화`}>
         <ForgeHead item={worn} onClose={() => setOpen(null)}/>{detail(worn, true)}</article>; })()}
     {upgrades.length > 1 && <p className="gear-upgrade-all"><ArrowUpRight size={14}/>{upgrades.length}개 칸에 더 좋은 장비가 있습니다. 각 칸의 ‘바로 장착’으로 하나씩 바꾸세요.</p>}
