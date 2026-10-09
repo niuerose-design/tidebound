@@ -4,7 +4,7 @@
  */
 // v3.49 서버 전용 표식: 화면(클라이언트) 번들이 이 파일을 가져가면 빌드가 실패합니다(docs/concept.md 10.2-1).
 import 'server-only';
-import { registerJobs, registerLineages, jobById } from '../data/classes';
+import { registerJobs, registerLineages, jobById, lineageOf, worldOf, AZEROTH_MASTERY_SCALE } from '../data/classes';
 import { registerSkills, alignJobMastery, normalizeSkillMastery, scaleUtilityGain, skillById, SKILLS } from '../data/skills';
 import { SECRET_JOBS, SECRET_LINEAGES } from './jobs';
 import { SECRET_SKILLS } from './skills';
@@ -22,6 +22,13 @@ registerSkills(SECRET_SKILLS);
 // v3.80 비밀 직업 스킬도 숙련 기준(normalizeSkillMastery)에 맞추고, 숙달 목표도 스킬 숙련에 맞춥니다(alignJobMastery).
 normalizeSkillMastery(SECRET_SKILLS.map(sk => skillById(sk.id)!).filter(Boolean));
 alignJobMastery(SECRET_JOBS.map(j => jobById(j.id)!).filter(Boolean));
+// v3.221 아제로스 규칙: 숙련 기준(위)을 맞춘 뒤 직업 숙달 목표와 그 직업 스킬의 숙련 단계를 AZEROTH_MASTERY_SCALE배로.
+for (const raw of SECRET_JOBS) {
+    const job = jobById(raw.id)!;
+    if (worldOf(SECRET_LINEAGES.find(l => l.id === lineageOf(job))) !== 'azeroth') continue;
+    job.masteryTarget = (job.masteryTarget || 0) * AZEROTH_MASTERY_SCALE;
+    for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones) sk.masteryMilestones = sk.masteryMilestones.map(n => n * AZEROTH_MASTERY_SCALE);
+}
 // v3.86 비밀 5차 이상 직업의 액티브도 각성기로(공개 스킬은 tuneActiveSkills에서).
 // v3.199 제로 (5차)의 액티브는 각성기로 바꾸지 않습니다. 태그(알파 ↔ 베타)는 행동마다 번갈아 쓰는 규칙이라, 턴마다 따로 굴리는 각성기와 맞지 않습니다.
 for (const sk of SECRET_SKILLS) if ((jobById(sk.job || '')?.tier ?? 0) >= SKILL_FORMULA.awaken.tier && sk.job !== 'chronarch') awakenSkill(skillById(sk.id)!);

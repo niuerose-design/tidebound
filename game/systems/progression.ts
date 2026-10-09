@@ -204,7 +204,7 @@ export function inherited(s: State, id: string) { const sk = skillById(id); retu
 /** v3.25 해커 스킬(신원 조작)은 해커 계열(화이트 해커 포함)이면 씁니다. */
 function classAccess(s: State, sk: Skill) { return exclusiveAccess(s, sk) && (!sk.job || s.job === sk.job || sk.job === HACKER_ID && isHackerJob(s.job) || inherited(s, sk.id)); }
 /** v3.187 계보 전용 기술(노래 등)은 그 계보 직업만 장착합니다. 계승해도 계보 밖에서는 못 씁니다. */
-export function exclusiveAccess(s: Pick<State, 'job'>, sk: Pick<Skill, 'exclusiveLineage'>) { return !sk.exclusiveLineage || lineage(s.job).includes(sk.exclusiveLineage); }
+export function exclusiveAccess(s: Pick<State, 'job'>, sk: Pick<Skill, 'exclusiveLineage' | 'exclusiveUltimate'>) { return !sk.exclusiveLineage || !!sk.exclusiveUltimate && !!jobById(s.job)?.signatureFree || lineage(s.job).includes(sk.exclusiveLineage); }
 /** 계보 전용 칩 · 안내 문구. 전용이 아니면 빈 문자열. 예: '엔젤릭버스터 계보 전용'. */
 export function skillExclusiveLabel(sk: Pick<Skill, 'exclusiveLineage'>) { return sk.exclusiveLineage ? `${MAPLE_LINEAGE_NAMES[sk.exclusiveLineage] ?? `${jobById(sk.exclusiveLineage)?.name ?? sk.exclusiveLineage} 계보`} 전용` : ''; }
 export function skillUnlockReady(s: State, sk: Skill) { return (!sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery) && (!sk.unlockAfter || skillMastery(s, sk.unlockAfter.skill) >= sk.unlockAfter.level); }

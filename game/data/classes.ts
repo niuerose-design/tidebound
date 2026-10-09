@@ -56,6 +56,10 @@ export type Job = {
     fullKit?: boolean;
     /** v3.200 궁극의 모험가: 다른 계보의 5차 전용 기술을 계승해 써도 효율이 깎이지 않습니다(signatureScale · outsiderChance 면제). */
     signatureFree?: boolean;
+    /** v3.221 이 직업이 현재 직업일 때 숙련의 까미 출현 확률 가산(0.5 = ×1.5). 까미 사냥꾼. */
+    mimicFind?: number;
+    /** v3.221 이 직업이 현재 직업일 때 경험의 누리 출현 확률 가산(0.5 = ×1.5). 누리 추적자. */
+    nuriFind?: number;
     /** v3.200 계급장 조건: 이 계급(data/rank.ts RANKS id) 이상. 재입대한 적이 있으면 이미 넘은 것으로 봅니다. */
     requiresRank?: string;
     /** v3.219 이 직업들 가운데 하나의 숙련이 n 이상(참모 계보 4차: 보급관 또는 군의관). */
@@ -353,6 +357,8 @@ export const WORLDS: { id: WorldId; name: string; subtitle: string; description:
     { id: 'azeroth', name: '아제로스', subtitle: '사냥 기록이 여는 세계', description: '특별한 몬스터와 보스를 오래 사냥했거나 계급장을 단 모험가에게 길이 열리는 세계입니다. 히든 계보와 참모 계보가 있습니다.', accent: '#7f8fd8' },
 ];
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
+/** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */
+export const AZEROTH_MASTERY_SCALE = 10;
 /** 계보가 속한 세계(없으면 메이플 월드). */
 export const worldOf = (l: Pick<Lineage, 'world'> | undefined): WorldId => l?.world ?? 'maple';
 // v3.69 계열마다 수련 직업 하나(data/training.ts). 사냥용이 아니라 계승 재료입니다.

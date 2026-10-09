@@ -30,6 +30,10 @@ export const MIMIC = {
         { mastery: 100000, get chance() { return ODDS.mimic.tiers[2]; }, label: '대' },
     ],
 } as const;
+/** v3.221 까미 사냥꾼의 황금 올가미가 노리는 몬스터: 숙련의 까미와 대왕 까미(data/king.ts KING.mimic.id). */
+export const KKAMI_IDS: ReadonlySet<string> = new Set([MIMIC.id, 'kingMimic']);
+/** v3.221 황금 올가미 표식: 숙련 로또를 한 단계 위로(이미 ‘대’면 그대로). */
+export function upgradeMimicTier(t: (typeof MIMIC.tiers)[number]) { const i = MIMIC.tiers.findIndex(x => x.mastery === t.mastery); return MIMIC.tiers[Math.min(MIMIC.tiers.length - 1, i + 1)]; }
 /** v3.31 행운의 편지 6~10단계(승천 후) 기능. */
 /** v3.160 호루라기: SP를 내고 다음 사냥터 출현을 숙련의 까미 · 경험의 누리로 정합니다(하루 perDay개, 던전 · 랜덤게임 제외). docs/currency-rank-review.md 1.4절. */
 export const WHISTLE = { sp: 5, perDay: 3 } as const;
