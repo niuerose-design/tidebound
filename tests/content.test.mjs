@@ -408,7 +408,7 @@ test('v3.200 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 i
 });
 
 test('v3.202 boss cores roll two random attributes scaled by level (x1~5, awaken, 10% resonance); daily random core box',async()=>{
- const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),D=await L.load('data/dungeon-shop'),BL=await L.load('systems/boss-loot');
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),D=await L.load('data/dungeon-shop');
  const a=C.rollCoreAttrs(()=>.5);assert.equal(a.length,2);assert.notEqual(a[0].k,a[1].k);for(const x of a)assert.ok(x.f>=.2&&x.f<=1);
  const s=newState(0);s.level=40;s.bossCores={grotto:{rank:0,attrs:[{k:'str',f:3},{k:'vit',f:2}]},temple:{rank:2,attrs:[{k:'str',f:5}]}};s.coreSlot='grotto';
  assert.deepEqual(C.coreAttributes(s),{str:120+Math.floor(40*5*1.2*.1),vit:80});
