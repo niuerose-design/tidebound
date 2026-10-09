@@ -507,6 +507,8 @@
 .battle-console>.session-metrics{padding:10px 0;margin-bottom:11px}
 .battle-console>.session-metrics strong{font-size:19px}
 .battle-console .battle-skills{padding:12px 15px;margin-bottom:11px}
+/* v3.219 전투 스킬은 가운데 열의 마지막 칸: 아래 여백을 없애고 남는 높이를 채워 하단을 양옆 열과 맞춥니다. */
+.battle-console>.battle-skills:last-child{margin-bottom:0;flex:1 0 auto}
 .battle-console .battle-skills .section-title{margin-bottom:9px}
 .battle-console .battle-skill{padding:8px 10px}
 .battle-console .scene-copy h2{font-size:28px}
