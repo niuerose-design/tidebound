@@ -1474,3 +1474,22 @@
 .fx-no-glow .ext-pillar,.fx-no-glow .tide-fx-extreme-halo.late{display:none}
 @media(max-width:767px){.ext-crest{font-size:64px}.ext-ring{width:180px;height:180px;margin:-90px 0 0 -90px}.tide-fx-extreme-mark{font-size:34px}}
 @media(prefers-reduced-motion:reduce){.scene-fx-extreme,.tide-fx-extreme-halo{display:none}.tide-fx-extreme-mark{animation-name:tideReduced}}
+
+/* v3.218 메인 화면 정리: 제목 문구 없이 도구 한 줄, 집중 사냥은 사냥터 난이도 카드 안으로, 남은 높이만큼 전투 장면을 키웁니다. */
+.battle-toolbar{display:flex;justify-content:flex-end;align-items:center;margin:-10px 0 12px;min-height:36px}
+.battle-toolbar>.battle-heading-tools{flex:1 1 auto}
+.battle-console>.tide-selector>.tide-extra{flex:1 1 100%;min-width:0;margin-top:2px;padding-top:9px;border-top:1px solid #23383c}
+.battle-target-strip.inline{margin:0;padding:0;border:0;background:none;justify-content:flex-start;flex-wrap:nowrap}
+.battle-target-strip.inline [data-slot=tabs]{flex:1 1 auto;min-width:0}
+.battle-target-strip.inline [data-slot=tabs-list]{display:flex;flex-wrap:wrap;gap:3px;overflow:visible;width:100%;justify-content:flex-start}
+.battle-target-strip.inline [data-slot=tabs-trigger]{flex:0 0 auto;white-space:nowrap;font-size:12px;padding:5px 10px}
+.battle-hud .battle-console .battle-scene{height:340px}
+@media(max-width:767px){
+  .battle-toolbar{margin:0 0 12px;justify-content:stretch}
+  /* 모바일 난이도 카드는 격자(1~4행)라 집중 사냥 줄을 맨 아래 5행에 둡니다. */
+  .battle-console>.tide-selector>.tide-extra{grid-column:1/-1;grid-row:5;margin-top:6px}
+  .battle-target-strip.inline{flex-direction:column;align-items:stretch;gap:7px}
+  .battle-target-strip.inline [data-slot=tabs]{width:100%}
+  .battle-target-strip.inline [data-slot=tabs-trigger]{font-size:11px;padding:5px 8px}
+  .battle-hud .battle-console>.battle-scene{height:320px}
+}
