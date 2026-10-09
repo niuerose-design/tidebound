@@ -183,7 +183,7 @@ export type Item = {
     level: number;
 };
 /** v3.219 참모 지원 효과 종류. */
-export type SupportEffect = 'exp' | 'gold' | 'mastery' | 'hp' | 'mana' | 'hpRegen' | 'ap' | 'boss' | 'rank' | 'penetration' | 'critDamage';
+export type SupportEffect = 'exp' | 'gold' | 'mastery' | 'hp' | 'mana' | 'hpRegen' | 'ap' | 'boss' | 'rank' | 'penetration' | 'critDamage' | 'power';
 export type SupportMap = Partial<Record<SupportEffect, number>>;
 export type Skill = {
     /** v3.47 연출 갈래(skill-fx.ts SKILL_FX와 같은 값). 서버 전용 비밀 스킬은 공개 표 대신 여기에 둡니다. */
@@ -306,6 +306,10 @@ export type Skill = {
     support?: { effect: SupportEffect; min: number; max: number };
     /** v3.219 지휘 체계: 장착한 지원 스킬 1개마다 자기 두 공격 +commandPer. */
     commandPer?: number;
+    /** v3.224 총사령관 지휘 계통: 이 분신이 주는 다른 지원(AP 제외)을 숙련 단계에 따라 ×min → ×max. */
+    supportAmp?: { min: number; max: number };
+    /** v3.224 군수사령관 경량 편제: 참모 계보일 때 장착한 지원 스킬의 장착 AP -n(최소 1). */
+    supportCostCut?: number;
     /** v25 자기 상태이상: 쓰고 나면 자신이 기절·감속·약화됩니다. waivedBy 기술을 장착하면 생략. */
     selfEffect?: { status: 'stun' | 'slow' | 'weaken'; turns: number; waivedBy?: string };
     /** v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다. */

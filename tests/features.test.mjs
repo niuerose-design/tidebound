@@ -75,12 +75,12 @@ test('v3.219 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; s
  s.job='quartermaster';s.unlockedJobs.push('quartermaster');for(const id of ['supplyConvoy','militaryProcurement','fieldManual','commandStructure'])s.learned[id]=1;
  s.skills=['supplyConvoy','militaryProcurement','commandStructure'];
  assert.deepEqual(Su.supportOf(s),{exp:.03,gold:.03});
- s.skillPractice.supplyConvoy=2250000;assert.equal(Su.supportOf(s).exp,.08);s.skillPractice.supplyConvoy=225000;assert.equal(Su.supportOf(s).exp,.055); // v3.222 아제로스 규칙: 숙련 단계 ×10
+ s.skillPractice.supplyConvoy=2250000;assert.equal(Su.supportOf(s).exp,.08);s.skillPractice.supplyConvoy=225000;assert.equal(Su.supportOf(s).exp,.055); // v3.223 아제로스 규칙: 숙련 단계 ×10
  assert.ok(Math.abs(Su.commandBonus(s)-.08)<1e-9,'two support skills x 4%');
  const atk=St.stats(s).attack;s.skills=['commandStructure'];assert.ok(St.stats(s).attack<atk,'command raises own attack');
  s.skills=['supplyConvoy'];s.job='fisher';assert.deepEqual(Su.supportOf(s),{},'other lineage gives nothing');assert.equal(Su.commandBonus(s),0);
  // 합치기: 효과별 최고값, 상한 8%.
- assert.deepEqual(Su.mergeSupport([{exp:.05,gold:.03},{exp:.07},undefined,{mastery:.5}]),{exp:.07,gold:.03,mastery:.08});
+ assert.deepEqual(Su.mergeSupport([{exp:.05,gold:.03},{exp:.07},undefined,{mastery:.5}]),{exp:.07,gold:.03,mastery:.1}); // 상한 8% × 지휘 계통 1.25
  // 받는 쪽: 경험치 · 골드 · 숙련 배율에 곱하고, 결투 스냅샷 능력치는 그대로입니다.
  const t=newState(0),e0=St.expMultiplier(t),g0=St.goldMultiplier(t),m0=M.masteryResearchHundredths(t),snap0=JSON.stringify(St.snapshot(t).stats);
  t.support={exp:.05,gold:.04,mastery:.06};
@@ -94,7 +94,7 @@ test('v3.219 군의관: hp · mana · regen support (other slots only); duel sna
  const s=newState(0);s.level=40;s.job='fieldMedic';s.unlockedJobs.push('fieldMedic');for(const id of ['bloodSupply','stimulantKit','fieldDressing','triage'])s.learned[id]=1;
  s.skills=['bloodSupply','stimulantKit','fieldDressing','triage'];assert.deepEqual(Su.supportOf(s),{hp:.02,mana:.02,hpRegen:.05});assert.ok(Math.abs(Su.commandBonus(s)-.12)<1e-9);
  s.skillPractice.bloodSupply=2250000;assert.equal(Su.supportOf(s).hp,.05);
- assert.deepEqual(Su.mergeSupport([{hp:.2,hpRegen:.5}]),{hp:.05,hpRegen:.15},'capped per effect');
+ assert.deepEqual(Su.mergeSupport([{hp:.2,hpRegen:.5}]),{hp:.0625,hpRegen:.1875},'capped per effect (× 1.25 headroom)');
  const t=newState(0);t.level=30;t.hpRegen=0;const a0=St.stats(t);t.support={hp:.05,mana:.05,hpRegen:.15};const a1=St.stats(t);
  assert.ok(a1.hp>a0.hp&&a1.mana>a0.mana,'hp and mana rise');assert.ok(Math.abs(a1.hp/a0.hp-1.05)<.01);
  assert.deepEqual(St.duelSnapshot(t).stats,St.snapshot({...t,support:undefined}).stats);assert.ok(St.snapshot(t).stats.hp>St.duelSnapshot(t).stats.hp,'PvE snapshot keeps support, duel drops it');
@@ -118,6 +118,30 @@ test('v3.219 작전참모 · 화력참모: rank 소위 + either 3rd-tier mastery
  // 계급 경험치 지원: 같은 난수로 사냥하면 계급 경험치가 더 쌓입니다.
  const run=sup=>{const h=newState(0);if(sup)h.support={rank:.06};act(h,{type:'start'},0);advance(h,1_800_000,()=>.5);return h.rank?.exp||0;};
  const base=run(false),boosted=run(true);assert.ok(boosted>base&&boosted<=Math.ceil(base*1.06)+1,`${base} → ${boosted}`);
+});
+test('v3.224 5th tier: 총사령관 amplifies its other support (not AP) and gives power; 군수사령관 gives AP up to 3 and cuts its own support AP',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank');
+ for(const id of ['commanderInChief','logisticsCommander']){const j=C.jobById(id);assert.ok(j&&j.tier===5&&j.requiresRank==='col'&&j.rebirth===10&&j.lineage==='staff');
+  const s=newState(0);s.level=70;s.rebirths=10;s.rank={exp:R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id==='col')],perks:{}};const any=()=>P.jobRequirements(s,j).find(r=>r.label.includes('작전참모 또는 화력참모'));
+  assert.ok(any()&&!any().met);s.jobMastery.fireSupportOfficer=300;assert.ok(any().met);}
+ // 총사령관: 계승한 3·4차 지원 + 총동원령, 지휘 계통이 AP를 뺀 전부를 증폭.
+ const c=newState(0);c.level=70;c.job='commanderInChief';c.unlockedJobs.push('commanderInChief');
+ for(const id of ['supplyConvoy','tacticalMap','generalMobilization','chainOfCommand','marshalCommand'])c.learned[id]=1;c.skillInheritances={supplyConvoy:true,tacticalMap:true};
+ c.skills=['supplyConvoy','tacticalMap','generalMobilization','chainOfCommand','marshalCommand'];
+ const usable=c.skills.filter(id=>P.canUse(c,id));assert.ok(usable.includes('generalMobilization')&&usable.includes('chainOfCommand'));
+ assert.equal(Su.supportAmp(c),1.1);c.skillPractice.chainOfCommand=1e9;assert.equal(Su.supportAmp(c),1.25);
+ let out=Su.supportOf(c);assert.equal(out.power,.025,'2% x 1.25');assert.equal(out.exp,.0375,'3% x 1.25');assert.equal(out.ap,1,'AP is never amplified');
+ c.skillPractice.generalMobilization=1e9;c.skillPractice.supplyConvoy=1e9;out=Su.supportOf(c);assert.equal(out.power,.05);assert.equal(out.exp,.1);
+ assert.ok(Math.abs(Su.commandBonus(c)-.2)<1e-9,'four support skills (amp counts) x 5%');
+ const t=newState(0);t.level=30;const a0=St.stats(t);t.support={power:.05};const a1=St.stats(t);assert.ok(Math.abs(a1.attack/a0.attack-1.05)<.01&&a1.hp>a0.hp);
+ assert.deepEqual(St.duelSnapshot(t).stats,St.snapshot({...t,support:undefined}).stats,'duel drops power');
+ // 군수사령관: 전군 편제 AP +2 → +3(상한 3, 작전참모 2보다 큼), 경량 편제로 자기 지원 스킬 AP -1.
+ const g=newState(0);g.level=70;g.job='logisticsCommander';g.unlockedJobs.push('logisticsCommander');for(const id of ['forceRestructure','lightEstablishment','supplyConvoy'])g.learned[id]=1;g.skillInheritances={supplyConvoy:true};
+ assert.equal(P.loadoutSkillAP(g,'supplyConvoy',['supplyConvoy']),2);assert.equal(P.loadoutSkillAP(g,'supplyConvoy',['supplyConvoy','lightEstablishment']),1,'cut to the floor of 1');
+ assert.equal(P.loadoutSkillAP(g,'forceRestructure',['forceRestructure','lightEstablishment']),3,'4 - 1');
+ g.skills=['forceRestructure'];assert.equal(Su.supportOf(g).ap,2);g.skillPractice.forceRestructure=1e9;assert.equal(Su.supportOf(g).ap,3);
+ assert.deepEqual(Su.mergeSupport([{ap:2},{ap:3},{ap:9}]),{ap:3});t.support={ap:3};const cap0=P.apCapacity({...t,support:undefined});assert.equal(P.apCapacity(t),cap0+3);
+ g.job='fisher';assert.equal(P.loadoutSkillAP(g,'supplyConvoy',['supplyConvoy','lightEstablishment']),2,'cut only while the current job is staff');
 });
 test('v3.212 boss core news: a new core and a full awakening (rank 5) announce once a day; saves marked before v3.212 stay quiet',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),B=await L.load('data/boss-core');

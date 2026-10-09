@@ -121,18 +121,25 @@ function borrowedDiscount(s: State, ids: string[]) {
     return n;
 }
 /** 스킬 하나의 장착 AP. v3.198 떠돌이의 요령이 들면 다른 계보 직업의 스킬은 discount만큼 싸집니다(최소 1, 1 이하는 그대로). */
-export function skillAP(s: State, id: string, discount = 0) {
+export function skillAP(s: State, id: string, discount = 0, supportCut = 0) {
     const sk = skillById(id);
     if (!sk) return 2;
-    const cost = effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost!;
+    const raw = effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost!;
+    // v3.224 군수사령관 경량 편제: 지원 스킬의 장착 AP -supportCut(최소 1).
+    const cost = supportCut > 0 && sk.support && raw > 1 ? Math.max(1, raw - supportCut) : raw;
     if (!(discount > 0 && cost > 1 && sk.job)) return cost;
     const owner = jobById(sk.job), job = jobById(s.job);
     return owner && job && lineageOf(owner) !== lineageOf(job) ? Math.max(1, cost - discount) : cost;
 }
+/** v3.224 경량 편제: 참모 계보가 장착한 supportCostCut 가운데 가장 큰 값(없으면 0). */
+function supportCostCut(s: State, ids: string[]) {
+    if (jobById(s.job)?.lineage !== 'staff') return 0;
+    return Math.max(0, ...ids.map(id => skillById(id)?.supportCostCut || 0));
+}
 /** 편성 ids에 넣었을 때 이 스킬의 장착 AP(화면 표시용, apUsed와 같은 값). */
-export function loadoutSkillAP(s: State, id: string, ids = s.skills) { return skillAP(s, id, borrowedDiscount(s, ids)); }
+export function loadoutSkillAP(s: State, id: string, ids = s.skills) { return skillAP(s, id, borrowedDiscount(s, ids), supportCostCut(s, ids)); }
 /** 장착 AP 사용량: 스킬 AP 합 + v3.86 추가 판정 AP. */
-export function apUsed(s: State, ids = s.skills) { const discount = borrowedDiscount(s, ids); return extraRollAP(s) + ids.reduce((sum, id) => sum + skillAP(s, id, discount), 0); }
+export function apUsed(s: State, ids = s.skills) { const discount = borrowedDiscount(s, ids), cut = supportCostCut(s, ids); return extraRollAP(s) + ids.reduce((sum, id) => sum + skillAP(s, id, discount, cut), 0); }
 /** v3.130 직업 객체별로 한 번만 만듭니다(능력치 계산이 장착 스킬마다 시그니처 · 노래 판정에 부르므로). 돌려준 배열은 읽기만 하세요. 비밀 직업 등록은 새 객체를 넣으므로 캐시가 어긋나지 않습니다. */
 const lineageCache = new WeakMap<Job, string[]>();
 export function lineage(job: string): string[] {
