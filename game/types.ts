@@ -95,7 +95,7 @@ export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
 export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
-    /** v3.221 황금 올가미 표식: 이 까미를 잡을 때 숙련 로또 한 단계 상향 확률. */
+    /** v3.221 황금 올가미 · 하얀 발자국 표식: 이 까미 · 누리를 잡을 때 로또 한 단계 상향 확률. */
     jackpotUp?: number;
     /** v3.54 이번 전투에서 첫 틱을 이미 바로 준 지속 피해(전투당 한 번). */
     opened?: Partial<Record<'bleed' | 'poison' | 'burn', true>>;
@@ -251,11 +251,11 @@ export type Skill = {
     cleanseSelf?: boolean;
     healRatio?: number;
     drainRatio?: number;
-    /** v3.221 'kkami': 숙련의 까미 · 대왕 까미에게만 발동합니다(까미 사냥꾼). */
-    condition?: 'wounded' | 'healthyTarget' | 'afflicted' | 'kkami';
+    /** v3.221 'kkami': 숙련의 까미 · 대왕 까미에게만, 'nuri': 경험의 누리 · 대왕 누리에게만 발동합니다(까미 사냥꾼 · 누리 추적자). */
+    condition?: 'wounded' | 'healthyTarget' | 'afflicted' | 'kkami' | 'nuri';
     /** v3.221 대상 최대 체력의 이 비율만큼 고정 피해(방어 · 치명 · 피해 배율 무시). 황금 올가미. */
     maxHpDamage?: number;
-    /** v3.221 명중하면 대상에 표식: 그 까미를 잡을 때 이 확률로 숙련 로또가 한 단계 위로 굴러갑니다(소 → 중, 중 → 대). */
+    /** v3.221 명중하면 대상에 표식: 그 까미 · 누리를 잡을 때 이 확률로 숙련 · 경험치 로또가 한 단계 위로 굴러갑니다(소 → 중, 중 → 대). */
     jackpotUp?: number;
     /** v27.69 사용하면 이만큼의 턴 동안 모든 상태이상 면역(몬스터 각성). */
     wardTurns?: number;

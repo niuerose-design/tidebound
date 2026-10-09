@@ -58,6 +58,8 @@ export type Job = {
     signatureFree?: boolean;
     /** v3.221 이 직업이 현재 직업일 때 숙련의 까미 출현 확률 가산(0.5 = ×1.5). 까미 사냥꾼. */
     mimicFind?: number;
+    /** v3.221 이 직업이 현재 직업일 때 경험의 누리 출현 확률 가산(0.5 = ×1.5). 누리 추적자. */
+    nuriFind?: number;
     /** v3.200 계급장 조건: 이 계급(data/rank.ts RANKS id) 이상. 재입대한 적이 있으면 이미 넘은 것으로 봅니다. */
     requiresRank?: string;
     /** v3.219 이 직업들 가운데 하나의 숙련이 n 이상(참모 계보 4차: 보급관 또는 군의관). */

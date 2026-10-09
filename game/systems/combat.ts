@@ -7,6 +7,7 @@ const ATTR_KEY: Record<Attribute, 'attrStr' | 'attrDex' | 'attrInt' | 'attrVit' 
 export type { CombatEvent, CombatHit } from '../types';
 import { normalizeStats, hitChance } from './stats';
 import { KKAMI_IDS } from '../data/mimic';
+import { NURI_IDS } from '../data/exp-nuri';
 import { effectiveSkill, signatureScale } from './progression';
 export type Fighter = {
     name: string;
@@ -282,7 +283,7 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
             continue;
         if (candidate.condition === 'healthyTarget' && b.hp < sb.hp * .6)
             continue;
-        if (candidate.condition === 'kkami' && !KKAMI_IDS.has(b.foeId || ''))
+        if (candidate.condition === 'kkami' && !KKAMI_IDS.has(b.foeId || '') || candidate.condition === 'nuri' && !NURI_IDS.has(b.foeId || ''))
             continue;
         if (candidate.condition === 'afflicted' && !(a.effects?.dot || a.effects?.poison || a.effects?.burn || a.effects?.slow || a.effects?.weaken || a.effects?.corrode))
             continue;
@@ -649,11 +650,11 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const statusOnly = !!chosen?.statusOnly || healOnly;
     // v27.18 극 치명타: 같은 난수로 판정합니다(치명타 확률 상한을 넘은 몫 = superCrit). 치명 피해에 superCritBonus를 더 곱합니다.
     const critRoll = landed && !statusOnly ? rng() : 1;
-    // v3.221 최대 체력 비례 고정 피해(황금 올가미)는 치명타를 판정하지 않습니다.
+    // v3.221 최대 체력 비례 고정 피해(황금 올가미 · 하얀 발자국)는 치명타를 판정하지 않습니다.
     const crit = !chosen?.maxHpDamage && critRoll < sa.crit, superCrit = crit && critRoll < (sa.superCrit || 0);
     // v3.88 행운 비례(scaling 'luck', 팬텀 계열)는 위력에 이미 치명 피해를 넣으므로, 치명타가 터져도 치명 피해를 다시 곱하지 않습니다(제곱 방지).
     let damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
-    // v3.221 황금 올가미: 대상 최대 체력 비례 고정 피해(방어 · 피해 배율 무시, multiplier는 계보 밖 효율만 담음), 명중하면 숙련 로또 상향 표식.
+    // v3.221 황금 올가미 · 하얀 발자국: 대상 최대 체력 비례 고정 피해(방어 · 피해 배율 무시, multiplier는 계보 밖 효율만 담음), 명중하면 숙련 로또 상향 표식.
     if (landed && !statusOnly && chosen?.maxHpDamage) damage = Math.max(1, Math.round(sb.hp * chosen.maxHpDamage * (chosen.multiplier || 1)));
     if (landed && chosen?.jackpotUp) b.effects.jackpotUp = Math.max(b.effects.jackpotUp || 0, chosen.jackpotUp);
     // v3.176 마나 방패(배틀메이지): 받는 피해의 ratio만큼을 마나로 먼저 받습니다(마나 1이 피해 rate를 막음).

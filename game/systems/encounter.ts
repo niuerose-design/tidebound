@@ -17,7 +17,7 @@ import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
 import { MIMIC, LETTER, letterRank, rollMimicMastery, upgradeMimicTier, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
 import { ascended, ascensionMastery } from '../data/ascension';
-import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
+import { EXP_NURI, rollNuriTier, upgradeNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import { ESSENCE_SLIME, rollSlimeTier, slimeChance, slimeEligible, slimeBundle } from '../data/essence-slime';
 import { KING, kingReady, isSpecialId, type KingKind } from '../data/king';
 import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue, swarmRankKills, swarmMasteryKills } from '../data/rank';
@@ -220,7 +220,7 @@ export function specialChances(s: State) {
     const luck = specialLuck(s);
     const place = st.habitat ? Math.max(...STAGES.filter(x => !x.habitat && x.region === st.region).map(x => STAGES.indexOf(x))) : STAGES.indexOf(st);
     const mimicP = mimicOk ? mimicChance(tier, place) * (s.away ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck * (1 + (jobById(s.job)?.mimicFind || 0)) : 0;
-    const nuriP = nuriOk ? nuriChance(tier) * (s.away ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
+    const nuriP = nuriOk ? nuriChance(tier) * (s.away ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck * (1 + (jobById(s.job)?.nuriFind || 0)) : 0;
     // v3.161 정수의 슬라임: 누리 구간 바로 뒤. 대왕 몫은 각 구간의 앞쪽 share(작은 녀석을 KING.minBookKills마리 잡은 뒤부터).
     const slimeOk = !dungeon && slimeEligible(s, asc ? Math.max(tier, ESSENCE_SLIME.minTier) : tier);
     const slimeP = slimeOk ? slimeChance(tier) * (s.away ? specialOfflineScale(s, ESSENCE_SLIME.offlineScale) : 1) * luck : 0;
@@ -411,7 +411,10 @@ export function reward(s: State, rng: () => number) {
     // v3.112 이 사냥터 평균 출현 경험치 ×(1% 당 10회분)과 비교해 큰 쪽을 줍니다(고수는 레벨 %가 너무 작아 무리 한 번보다 못했음). Lv.100부터는 출현 몫만.
     // v3.161 대왕 누리: ‘대’ × KING.rewardMul 확정(레벨 9% 또는 출현 90회분).
     if (e.id === EXP_NURI.id || e.id === KING.nuri.id) {
-        const king = e.id === KING.nuri.id, t = king ? { pct: EXP_NURI.tiers[2].pct * KING.rewardMul, label: '대왕' } : rollNuriTier(rng);
+        // v3.221 하얀 발자국 표식이 남은 누리는 그 확률로 로또가 한 단계 위로 굴러갑니다(대왕은 확정이라 그대로).
+        const king = e.id === KING.nuri.id, rolled = king ? undefined : rollNuriTier(rng), up = !!rolled && (e.effects?.jackpotUp || 0) > 0 && rng() < e.effects!.jackpotUp! && upgradeNuriTier(rolled) !== rolled;
+        const t = king ? { pct: EXP_NURI.tiers[2].pct * KING.rewardMul, label: '대왕' } : up ? upgradeNuriTier(rolled!) : rolled!;
+        if (up) addLog(s, `✦ 하얀 발자국 · 경험치 로또 ${rolled!.label} → ${t.label}`, 'reward');
         const byLevel = s.level < 100 ? Math.floor(xpNeeded(s.level, s.rebirths, xpWall(s)) * t.pct) : 0;
         const times = Math.round(t.pct * EXP_NURI.encountersPerPct), byField = Math.floor(stageEncounterExp(s, won) * times), bonus = Math.max(1, byLevel, byField);
         s.exp += bonus;

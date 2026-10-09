@@ -173,3 +173,24 @@ test('v3.221 Azeroth rules: rank badge required (4th tier 하사 · 칠흑의 �
         assert.equal(last(id), last(ref) * 10, `${id} skill milestones`);
     }
 });
+
+test('v3.221 누리 추적자: 하얀 발자국은 누리(대왕 포함)에게만 · 최대 체력 40% 고정 피해 · 경험치 로또 상향 표식 · 계보 전용(궁극의 모험가 예외); 직업이면 누리 ×1.5; 패시브 관통 300회 +30%p', () => {
+    const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 500, crit: 0, accuracy: 0, evasion: 0.9, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const tracker = () => ({ name: 'A', job: 'nuriTracker', stats: { ...base }, hp: 1e6, mana: 1000, skills: ['whiteTrail'], cooldowns: {}, stun: 0, effects: {}, ranks: { whiteTrail: 1 }, mastery: {}, practice: {} });
+    const foe = foeId => ({ name: 'B', foe: true, foeId, stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    for (const id of ['masteryMimic', 'grotto']) { const ev = []; strike(tracker(), foe(id), () => 0, ev); assert.ok(!ev.some(e => e.skillId === 'whiteTrail'), `${id}: not fired`); }
+    for (const id of ['expNuri', 'kingNuri']) {
+        const b = foe(id), ev = []; strike(tracker(), b, () => 0.99, ev);
+        assert.equal(ev.find(e => e.skillId === 'whiteTrail')?.total, 400000, `${id}: 40% fixed, sure hit`); assert.equal(b.effects.jackpotUp, 0.25);
+    }
+    const o = ready(70); o.skillInheritances = { whiteTrail: 1 }; o.learned.whiteTrail = 1;
+    o.job = 'fisher'; assert.equal(canUse(o, 'whiteTrail'), false); o.job = 'rebirthFisher'; assert.equal(canUse(o, 'whiteTrail'), true);
+    // 발자국이 남은 누리: 로또 소(rng 0) → 중.
+    const s = ready(60); s.enemy = { id: 'expNuri', name: '경험의 누리', hp: 0, maxHp: 1, attack: 1, defense: 0, level: 60, exp: 1, gold: 1, effects: { jackpotUp: 1 } };
+    reward(s, () => 0);
+    assert.ok(s.logs.some(l => l.text.includes('하얀 발자국 · 경험치 로또 소 → 중')) && s.logs.some(l => l.text.includes('경험의 누리 · 중당첨')), 'exp jackpot moved up a tier');
+    assert.equal(job('nuriTracker').nuriFind, 0.5);
+    const p = ready(70); Object.assign(p.attributes, { int: 80, wis: 60 }); p.job = 'nuriTracker'; p.unlockedJobs.push('nuriTracker'); p.skills = ['nuriChronicle']; p.learned.nuriChronicle = 1;
+    const pen0 = stats(p).penetration; p.book.expNuri = 300; const pen300 = stats(p).penetration;
+    assert.ok(pen300 - pen0 > 0.25 && pen300 - pen0 <= 0.3 + 1e-9, `penetration ${pen0} → ${pen300}`);
+});

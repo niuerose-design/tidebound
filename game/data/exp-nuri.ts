@@ -33,6 +33,10 @@ export function rollNuriTier(rng: () => number) {
     for (const t of EXP_NURI.tiers) { roll -= t.chance; if (roll < 0) return t; }
     return EXP_NURI.tiers[EXP_NURI.tiers.length - 1];
 }
+/** v3.221 누리 추적자의 하얀 발자국이 노리는 몬스터: 경험의 누리와 대왕 누리(data/king.ts KING.nuri.id). */
+export const NURI_IDS: ReadonlySet<string> = new Set([EXP_NURI.id, 'kingNuri']);
+/** v3.221 하얀 발자국 표식: 경험치 로또를 한 단계 위로(이미 ‘대’면 그대로). */
+export function upgradeNuriTier(t: (typeof EXP_NURI.tiers)[number]) { const i = EXP_NURI.tiers.findIndex(x => x.pct === t.pct); return EXP_NURI.tiers[Math.min(EXP_NURI.tiers.length - 1, i + 1)]; }
 /** 등장 확률 = 기본 + 사냥터 난이도 × 단계당. */
 export const nuriChance = (tier: number) => EXP_NURI.chance + tier * EXP_NURI.chancePerTier;
 /** 누리가 나올 수 있는지(사냥터 난이도·레벨·누적 처치). */
