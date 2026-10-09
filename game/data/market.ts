@@ -1,6 +1,6 @@
 /**
  * v3.212 주화 증권거래소(docs/stock-market-plan.md): 던전 주화로 가상 종목을 사고팔아 손해 · 이익을 봅니다.
- * 개인 시장: 종목은 모두 같고 시세는 모험가(계좌 시드)마다 다르게 흐릅니다. 시세는 저장하지 않고 서버가 계산식으로 구합니다(systems/market.ts).
+ * 공유 시장: 모든 모험가가 같은 시세를 봅니다. 시세는 저장하지 않고 서버가 계산식으로 구합니다(systems/market.ts).
  * 화면은 이 파일(종목 · 수치 · 수수료 계산)만 씁니다. 시세 계산(서버 키)은 가져가지 않습니다.
  */
 import type { State } from '../types';
@@ -77,7 +77,6 @@ export const marketTradesToday = (s: Pick<State, 'market'>, day: string) => s.ma
 
 /** 서버가 화면에 보내는 시세 조각(/api/game 응답의 market). prices[i]는 from + i 틱의 종목별 가격(STOCKS 순서). */
 export type MarketFeed = {
-    seed: number;
     tick: number;
     from: number;
     prices: number[][];

@@ -1,14 +1,14 @@
 'use client';
 /**
- * v3.212 주화 증권거래소(개인 시장, docs/stock-market-plan.md): 상점 메뉴의 한 탭.
- * 시세는 이 모험가만의 것이고 서버가 계산해 동기화 응답에 얹어 줍니다. 차트 · 거래 내역은 이 기기에만 남습니다(market-records.ts).
+ * v3.212 주화 증권거래소(공유 시장, docs/stock-market-plan.md): 상점 메뉴의 한 탭.
+ * 시세는 모든 모험가가 같고, 서버가 계산해 동기화 응답에 얹어 줍니다. 차트 · 거래 내역은 이 기기에만 남습니다(market-records.ts).
  */
 import { useCallback, useState } from 'react';
 import { Coins, Landmark, Newspaper, Repeat, TrendingUp } from 'lucide-react';
 import { MARKET, MARKET_TICK_MS, STOCKS, buyCost, sellGain, marketCost, marketTradesToday, rumorText, stockById, type StockDef } from '@/game/data/market';
 import { dayKey } from '@/game/data/time';
 import { Heading, format, useNow } from './shared';
-import { useMarket, currentPrices, clearMarketTrades, type MarketStore } from './market-records';
+import { useMarket, currentPrices, clearMarketTrades, type MarketStore, type MarketTrade } from './market-records';
 import type { PanelProps } from './panel-props';
 
 const signed = (n: number) => `${n > 0 ? '+' : ''}${format(Math.round(n))}`;
@@ -28,27 +28,16 @@ function Spark({ values }: { values: number[] }) {
 
 export function MarketPanel({ s, send, busy }: PanelProps) {
     const sync = useCallback(() => send({ type: 'sync' }), [send]);
-    const x = useMarket(s, sync), now = useNow(1000), m = s.market;
-    const heading = <Heading eyebrow="COIN STOCK EXCHANGE" title="주화 증권거래소" description="던전 주화로 가상 종목을 사고팝니다. 시세는 이 모험가만의 것으로 10분마다 바뀌고, 다른 모험가와 겹치지 않습니다."/>;
-    if (!m) return <>{heading}
-        <section className="panel mkt-open">
-            <p>계좌를 열면 이 모험가만의 시세가 흐르기 시작합니다. 열어 두기만 하면 비용은 없습니다.</p>
-            <ul className="mkt-rules">
-                <li>종목 {STOCKS.length}개(안정 · 보통 · 고위험). 시세는 {MARKET_TICK_MS / 60_000}분마다 바뀌고, 길게 보면 기준가 주변으로 돌아옵니다.</li>
-                <li>매수 · 매도마다 수수료 {MARKET.fee * 100}%(최소 1주화). 총 보유 원금 {format(MARKET.maxCost)}주화 · 하루 {MARKET.tradesPerDay}번까지.</li>
-                <li>잃을 수도 있습니다. 환생해도 보유 주식은 남고, 승천하면 계좌가 닫히며 주식도 사라집니다.</li>
-            </ul>
-            <button disabled={busy} onClick={() => send({ type: 'market', id: 'open' })}>계좌 열기</button>
-        </section>
-    </>;
+    const { market: x, journal } = useMarket(s, sync), now = useNow(1000), m = s.market;
+    const heading = <Heading eyebrow="COIN STOCK EXCHANGE" title="주화 증권거래소" description="던전 주화로 가상 종목을 사고팝니다. 시세는 모든 모험가가 같고 10분마다 바뀝니다."/>;
     const price = currentPrices(x), cost = marketCost(s), trades = marketTradesToday(s, dayKey(now));
-    const value = STOCKS.reduce((a, d) => a + (m.holdings[d.id]?.qty || 0) * (price[d.id] || 0), 0), held = Object.keys(m.holdings).length;
+    const holdings = m?.holdings || {}, value = STOCKS.reduce((a, d) => a + (holdings[d.id]?.qty || 0) * (price[d.id] || 0), 0), held = Object.keys(holdings).length;
     const next = x ? (x.tick + 1) * MARKET_TICK_MS - now : 0;
     return <>{heading}
         <section className="panel port-resource-bar" aria-label="계좌">
             <div><Coins size={22}/><span>보유 던전 주화<strong>{format(s.dungeonCoins || 0)}</strong></span></div>
             <div><Landmark size={22}/><span>투자 원금<strong>{format(cost)} <small>/ {format(MARKET.maxCost)}</small></strong></span></div>
-            <div><TrendingUp size={22}/><span>평가 손익<strong className={tone(value - cost)}>{held > 0 && x ? signed(value - cost) : '-'}<small> 실현 {signed(m.realized || 0)}</small></strong></span></div>
+            <div><TrendingUp size={22}/><span>평가 손익<strong className={tone(value - cost)}>{held > 0 && x ? signed(value - cost) : '-'}<small> 실현 {signed(m?.realized || 0)}</small></strong></span></div>
             <div><Repeat size={22}/><span>오늘 거래<strong>{trades} <small>/ {MARKET.tradesPerDay}회</small></strong></span></div>
         </section>
         <section className="panel mkt-rumor">
@@ -57,7 +46,14 @@ export function MarketPanel({ s, send, busy }: PanelProps) {
             {x && <small>다음 시세까지 {clock(next)}</small>}
         </section>
         <div className="dshop-grid">{STOCKS.map((d, i) => <StockCard key={d.id} d={d} column={i} x={x} s={s} busy={busy} trades={trades} send={send}/>)}</div>
-        <Journal x={x}/>
+        <section className="panel mkt-open">
+            <ul className="mkt-rules">
+                <li>종목 {STOCKS.length}개(안정 · 보통 · 고위험). 시세는 {MARKET_TICK_MS / 60_000}분마다 바뀌고, 길게 보면 기준가 주변으로 돌아옵니다.</li>
+                <li>매수 · 매도마다 수수료 {MARKET.fee * 100}%(최소 1주화). 총 보유 원금 {format(MARKET.maxCost)}주화 · 하루 {MARKET.tradesPerDay}번까지. 체결은 서버가 받는 순간의 시세입니다.</li>
+                <li>잃을 수도 있습니다. 환생해도 보유 주식은 남고, 승천하면 주식도 사라집니다.</li>
+            </ul>
+        </section>
+        <Journal trades={journal.trades}/>
     </>;
 }
 
@@ -85,11 +81,11 @@ function StockCard({ d, column, x, s, busy, trades, send }: Pick<PanelProps, 's'
     </article>;
 }
 
-function Journal({ x }: { x: MarketStore | null }) {
-    if (!x?.trades.length) return null;
+function Journal({ trades }: { trades: MarketTrade[] }) {
+    if (!trades.length) return null;
     return <section className="panel mkt-journal">
         <header><h3>거래 내역</h3><button className="secondary small" onClick={clearMarketTrades}>지우기</button></header>
-        <ul>{x.trades.map((t, i) => <li key={`${t.at}-${i}`}><span>{new Date(t.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+        <ul>{trades.map((t, i) => <li key={`${t.at}-${i}`}><span>{new Date(t.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
             <b className={t.qty > 0 ? 'mkt-up' : 'mkt-down'}>{t.qty > 0 ? '매수' : '매도'}</b> {stockById(t.stock)?.name} {format(Math.abs(t.qty))}주 · 약 {format(t.price)}</li>)}</ul>
         <p className="muted">이 기기에만 남는 기록입니다(전투 기록처럼). 정확한 체결 금액은 전투 화면 기록판의 시스템 줄에 있습니다.</p>
     </section>;

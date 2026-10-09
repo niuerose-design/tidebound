@@ -514,10 +514,10 @@ export type State = {
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
     /**
-     * v3.212 주화 증권거래소 계좌(개인 시장). seed는 계좌를 열 때 정한 시세 시드(서버 키와 섞어 이 모험가만의 시세를 만듭니다).
+     * v3.212 주화 증권거래소 계좌(공유 시장, 첫 매수 때 생김).
      * holdings는 종목 → 수량 · 원금(수수료 포함 매수 금액), day · trades는 오늘(한국 시간) 거래 수, realized는 누적 실현 손익. 환생해도 남고 승천하면 사라집니다.
      */
-    market?: { seed: number; holdings: Record<string, { qty: number; cost: number }>; day?: string; trades?: number; realized?: number };
+    market?: { holdings: Record<string, { qty: number; cost: number }>; day?: string; trades?: number; realized?: number };
     /** v3.201 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
     dungeonBonus?: { day: string; used: number };
     /** v3.202 보스 전리품 연속 미획득 수(보너스 정복마다 +1, 받으면 0). 환생해도 남습니다. */
