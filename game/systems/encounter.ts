@@ -5,6 +5,7 @@ import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyss
 import { jobMasteryTarget, extremeBroken } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
+import { recordExpIncome } from './income';
 import { grantDungeonCoins, clearCoinBase, spendDailyBonus, dailyBonusLeft } from './dungeon-coins';
 import { DAILY_BONUS } from '../data/dungeon-shop';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
@@ -391,6 +392,7 @@ export function reward(s: State, rng: () => number) {
     if (e.boss) recordGoal(s, 'boss', undefined, 1, text => addLog(s, text, 'reward'));
     if (size > 1) recordGoal(s, 'swarm', undefined, 1, text => addLog(s, text, 'reward'));
     s.exp += exp;
+    recordExpIncome(s, exp);
     // v27.58 경험의 누리: 지금 레벨 필요 경험치의 1~3%. 배율과 무관하게 바로 더합니다.
     // v3.112 이 사냥터 평균 출현 경험치 ×(1% 당 10회분)과 비교해 큰 쪽을 줍니다(고수는 레벨 %가 너무 작아 무리 한 번보다 못했음). Lv.100부터는 출현 몫만.
     // v3.161 대왕 누리: ‘대’ × KING.rewardMul 확정(레벨 9% 또는 출현 90회분).

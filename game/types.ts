@@ -503,8 +503,8 @@ export type State = {
     dungeonCoinFrac?: number;
     /** v3.191 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
     dungeonBonus?: { day: string; used: number };
-    /** v3.193 코인샵 칠흑 상품을 산 날(한국 시간)과 그날 산 횟수. */
-    dungeonShopDay?: { day: string; onyx: number };
+    /** v3.193 코인샵 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.194 성장권). */
+    dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number };
     attributes: Record<Attribute, number>;
     statPoints: number;
     sp: number;
@@ -621,6 +621,8 @@ export type State = {
     researchLegacy?: Record<string, number>;
     /** v3.58 사냥 골드 수입: 플레이 시간 1시간 칸(h = playMs ÷ 1시간)마다 번 골드. 최근 24칸(systems/income.ts). */
     goldLog?: { h: number; g: number }[];
+    /** v3.194 처치 경험치 수입 기록(goldLog와 같은 칸). 환생하면 지웁니다. */
+    expLog?: { h: number; g: number }[];
     /** v3.58 기록을 시작한 뒤 사냥으로 번 골드 합계. */
     goldEarned?: number;
     /** v3.58 감정 기록: 총 횟수, 등급별 횟수(0~6), 천장 카운트(그 등급 이상이 마지막으로 나온 뒤 감정 수). 환생해도 남고 승천하면 초기화. */

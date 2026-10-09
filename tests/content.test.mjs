@@ -355,3 +355,18 @@ test('v3.193 legendary+ gear box: legendary or better at my level; ancient/prima
  assert.equal(C.rollGearBoxRarity(()=>0),3);assert.equal(C.rollGearBoxRarity(()=>.9999999),6);
  const s=newState(0);s.level=70;s.dungeonCoins=D.DUNGEON_SHOP.gearBox;s.primalDropPity=7;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);const it=s.inventory.at(-1);assert.ok(it.rarity>=3);assert.ok(it.level>=70,'my level');assert.equal(s.primalDropPity,7,'pity untouched');
 });
+
+test('v3.194 growth tickets: best full hour of the last 24 (gold and kill exp) x hours, rebirths < 50, daily limits; exp log resets on rebirth',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),I=await L.load('systems/income'),D=await L.load('data/dungeon-shop');
+ const H=3600000,s=newState(0);s.level=30;s.rebirths=10;s.playMs=5*H+60000;
+ s.goldLog=[{h:2,g:1000},{h:3,g:5000},{h:4,g:2000},{h:5,g:10}];s.expLog=[{h:3,g:300},{h:4,g:900}];
+ assert.equal(I.bestHourly(s.goldLog,s.playMs),5000,'max of full hours, current hour excluded');assert.equal(I.bestHourly(s.expLog,s.playMs),900);
+ s.dungeonCoins=10000;const gold=s.gold;act(s,{type:'dungeonShop',id:'growth4'},0);
+ assert.equal(s.gold-gold,20000);assert.equal(s.dungeonCoins,10000-D.GROWTH_GOODS.growth4.price);
+ assert.throws(()=>act(s,{type:'dungeonShop',id:'growth4'},0),/하루 1번/);
+ act(s,{type:'dungeonShop',id:'growth1'},0);act(s,{type:'dungeonShop',id:'growth1'},0);assert.throws(()=>act(s,{type:'dungeonShop',id:'growth1'},0),/하루 2번/);
+ act(s,{type:'dungeonShop',id:'growth1'},86400000);
+ const t=newState(0);t.rebirths=50;t.dungeonCoins=10000;t.goldLog=[{h:0,g:1}];t.playMs=2*H;assert.throws(()=>act(t,{type:'dungeonShop',id:'growth1'},0),/환생 50회 미만/);
+ const u=newState(0);u.rebirths=1;u.dungeonCoins=10000;assert.throws(()=>act(u,{type:'dungeonShop',id:'growth1'},0),/사냥 기록이 없습니다/);
+ const {restartLife}=await L.load('systems/actions/lifecycle');s.expLog=[{h:1,g:5}];restartLife(s,1000);assert.equal(s.expLog,undefined,'exp log does not survive a new life');
+});

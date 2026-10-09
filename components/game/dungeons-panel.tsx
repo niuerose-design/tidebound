@@ -3,8 +3,8 @@ import { AutoRunStatus } from './auto-run';
 import { FIRST_CLEAR_SP } from '@/game/data/achievements';
 import { dungeonGoldMultiplier, stats } from '@/game/systems/stats';
 import { dungeonTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack } from '@/game/systems/meta';
-import { clearCoinBase, dailyBonusLeft, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
-import { DUNGEON_SHOP, DAILY_BONUS } from '@/game/data/dungeon-shop';
+import { clearCoinBase, dailyBonusLeft, growthOffer, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
+import { DUNGEON_SHOP, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood } from '@/game/data/dungeon-shop';
 import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
 import { useState } from 'react';
 import { Lock, Swords, Gem, Skull } from 'lucide-react';
@@ -98,7 +98,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
 
 /** v3.188 던전 코인샵: 정복으로 모은 던전 코인을 칠흑 장신구 제작 · 각성, 장비 상자, 포식자 각인으로 바꿉니다. */
 function DungeonCoinShop({ s, send, busy }: PanelProps) {
-    const now = useNow(60_000), coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1, left = dailyBonusLeft(s, now);
+    const now = useNow(60_000), hour = growthOffer(s, 'growth1', now), coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1, left = dailyBonusLeft(s, now);
     const eligible = allItems(s).filter(x => !hunterBlock(x));
     const [pick, setPick] = useState(''), [line, setLine] = useState(-1);
     const item = eligible.find(x => x.id === pick) || eligible[0], lines = (item?.affixes || []).map((x, i) => ({ x, i })).filter(({ x }) => !x.rule);
@@ -109,6 +109,7 @@ function DungeonCoinShop({ s, send, busy }: PanelProps) {
         <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 코인을 받습니다. 지역 던전은 하루(한국 시간 자정 기준) 처음 {DAILY_BONUS.clears}번의 정복이 보너스라 코인을 더 받습니다(노말 {DAILY_BONUS.coins.normal} · 헬 {DAILY_BONUS.coins.hell} · 나이트메어 {DAILY_BONUS.coins.nightmare}, 던전 공용, 다음 날로 넘어가지 않음, 무릉도장 제외). 코인은 환생해도 남습니다.</p>
         <div className="dungeon-reward-lines">
             {ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id, now); return <span key={b.id}><b>칠흑</b>{b.name} · {b.accessory.name} {o.kind === 'awaken' ? `각성 ${o.rank}/${ONYX.awakenMax}` : '제작'}{o.reason ? ` · ${o.reason}` : ''} <button className="secondary small" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button></span>; })}
+            <span><b>성장</b>최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치 × 시간(환생 {GROWTH_MAX_REBIRTHS}회 미만){(Object.keys(GROWTH_GOODS) as GrowthGood[]).map(g => { const o = growthOffer(s, g, now); return <button key={g} className="secondary small" title={o.reason || `골드 +${format(o.gold)} · 경험치 +${format(o.exp)}`} disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(g)}>{o.hours}시간 · {format(o.price)} (오늘 {o.left}회)</button>; })} <small>{hour.reason || `1시간 = 골드 +${format(hour.gold)} · 경험치 +${format(hour.exp)}`}</small></span>
             <span><b>장비</b>전설 이상 확정 장비 상자(내 레벨 · 고대 · 태초는 일반 드롭 하나와 비슷한 확률) <button className="secondary small" disabled={busy || coins < DUNGEON_SHOP.gearBox} onClick={() => buy('gearBox')}>구매 · {format(DUNGEON_SHOP.gearBox)}</button></span>
             <span><b>각인</b>{item ? <>
                 <select aria-label="포식자 각인 장비" value={item.id} disabled={busy} onChange={e => { setPick(e.target.value); setLine(-1); }}>{eligible.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select>

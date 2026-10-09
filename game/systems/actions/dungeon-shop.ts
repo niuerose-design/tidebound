@@ -5,11 +5,10 @@ import { inventoryCap } from '../../data/economy';
 import { STAGES } from '../../data/world';
 import { onyxById } from '../../data/onyx';
 import { grantOnyx } from '../onyx-grant';
-import { drop, dropLevel } from '../encounter';
-import { allItems, hunterBlock, onyxOffer, onyxBoughtToday, rollGearBoxRarity, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
+import { drop, dropLevel, gainLevels } from '../encounter';
+import { allItems, hunterBlock, onyxOffer, countBought, growthOffer, rollGearBoxRarity, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
 import type { QualityGood } from '../../data/dungeon-shop';
 import { addLog } from '../state';
-import { dayKey } from '../../data/goals';
 import { RARITIES } from '../../data/balance';
 import type { State } from '../../types';
 import type { ActionHandlers } from './types';
@@ -30,7 +29,7 @@ export const dungeonShopActions: ActionHandlers = {
             if (offer.reason) throw Error(offer.reason);
             if (offer.kind === 'craft') room(s);
             pay(s, offer.price);
-            s.dungeonShopDay = { day: dayKey(now), onyx: onyxBoughtToday(s, now) + 1 };
+            countBought(s, 'onyx', now);
             const habitat = STAGES.find(st => st.habitat && st.region === onyxById(bossId)!.region)?.level || 1;
             grantOnyx(s, bossId, habitat, rng, `던전 코인샵 · 코인 -${offer.price.toLocaleString()}`);
             return;
@@ -70,6 +69,17 @@ export const dungeonShopActions: ActionHandlers = {
             pay(s, price);
             const { after } = applyQuality(item, index, good, rng), now = Math.round((lineQuality(item, index) || 0) * 100);
             addLog(s, `던전 코인샵 · ${item.name} ${after.name} 수치 ${before}% → ${now}% · 코인 -${price.toLocaleString()}`, 'reward');
+            return;
+        }
+        if (id === 'growth1' || id === 'growth4') {
+            // v3.194 성장권: 최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치 × 시간. 환생 50회 미만, 하루 한도.
+            const offer = growthOffer(s, id, now);
+            if (offer.reason) throw Error(offer.reason);
+            pay(s, offer.price);
+            countBought(s, id, now);
+            s.gold += offer.gold; s.exp += offer.exp;
+            gainLevels(s);
+            addLog(s, `던전 코인샵 · 성장권 ${offer.hours}시간 · 골드 +${offer.gold.toLocaleString()} · 경험치 +${offer.exp.toLocaleString()} · 코인 -${offer.price.toLocaleString()}`, 'reward');
             return;
         }
         throw Error('없는 상품입니다.');

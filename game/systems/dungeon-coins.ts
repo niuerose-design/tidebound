@@ -1,12 +1,13 @@
 /** v3.188 던전 코인 지급과 코인샵 판정(화면 · 행동 공용). 규칙과 가격은 data/dungeon-shop.ts. */
 import type { Item, State } from '../types';
-import { DUNGEON_COINS, DUNGEON_SHOP, DAILY_BONUS, DUNGEON_SHOP_DAILY, GEAR_BOX, HUNTER_AFFIX, QUALITY_GOODS, abyssCoins, type QualityGood } from '../data/dungeon-shop';
+import { DUNGEON_COINS, DUNGEON_SHOP, DAILY_BONUS, DUNGEON_SHOP_DAILY, GEAR_BOX, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood, HUNTER_AFFIX, QUALITY_GOODS, abyssCoins, type QualityGood } from '../data/dungeon-shop';
 import { ODDS } from '../data/odds';
 import { dayKey } from '../data/goals';
 import { dungeonModeTier, type DungeonMode } from '../data/balance';
 import { affixDef, affixQuality, HEIR_ROLL_TOP, optionAtQuality } from '../data/gear';
 import { ONYX, onyxById } from '../data/onyx';
 import { dungeonGoldMultiplier } from './stats';
+import { bestHourly } from './income';
 
 const modeOf = (mode: DungeonMode | undefined): DungeonMode => mode && dungeonModeTier(mode) ? mode : 'normal';
 /** 이 정복 한 번의 기본 코인(코인 보너스 전). 무릉도장은 층, 지역 던전은 난이도와 하루 보너스 여부(bonus)로 정합니다. */
@@ -29,7 +30,24 @@ export function grantDungeonCoins(s: State, base: number) {
 }
 export const allItems = (s: Pick<State, 'inventory' | 'equipment'>) => [...s.inventory, ...Object.values(s.equipment)].filter((x): x is Item => !!x);
 /** v3.193 오늘 산 칠흑 상품 수(제작 · 각성 합산). */
-export const onyxBoughtToday = (s: Pick<State, 'dungeonShopDay'>, now: number) => s.dungeonShopDay?.day === dayKey(now) ? s.dungeonShopDay.onyx : 0;
+export const onyxBoughtToday = (s: Pick<State, 'dungeonShopDay'>, now: number) => boughtToday(s, 'onyx', now);
+type DailyKey = 'onyx' | GrowthGood;
+/** v3.193 오늘(한국 시간) 산 하루 한도 상품 수. */
+export const boughtToday = (s: Pick<State, 'dungeonShopDay'>, key: DailyKey, now: number) => s.dungeonShopDay?.day === dayKey(now) ? s.dungeonShopDay[key] || 0 : 0;
+/** 하루 한도 상품 구매를 하나 셉니다(날짜가 바뀌었으면 새로 시작). */
+export function countBought(s: State, key: DailyKey, now: number) {
+    const day = dayKey(now), row = s.dungeonShopDay?.day === day ? { ...s.dungeonShopDay } : { day };
+    row[key] = (row[key] || 0) + 1;
+    s.dungeonShopDay = row;
+}
+/** v3.194 성장권: 지금 사면 받는 골드 · 경험치(최근 24시간 중 최고 1시간 × 시간)와 못 사는 이유. */
+export function growthOffer(s: State, good: GrowthGood, now: number) {
+    const g = GROWTH_GOODS[good], gold = bestHourly(s.goldLog, s.playMs) * g.hours, exp = bestHourly(s.expLog, s.playMs) * g.hours;
+    const reason = (s.rebirths || 0) >= GROWTH_MAX_REBIRTHS ? `환생 ${GROWTH_MAX_REBIRTHS}회 미만만 살 수 있습니다.`
+        : boughtToday(s, good, now) >= g.perDay ? `하루 ${g.perDay}번까지입니다(한국 시간 자정에 초기화).`
+        : gold <= 0 && exp <= 0 ? '최근 24시간 사냥 기록이 없습니다. 사냥터에서 잠시 사냥한 뒤 사세요.' : undefined;
+    return { gold, exp, price: g.price, hours: g.hours, left: Math.max(0, g.perDay - boughtToday(s, good, now)), reason };
+}
 /** v3.193 전설 이상 장비 상자의 등급 가중치(전설 · 신화 · 고대 · 태초 순서가 아닌 등급 번호 그대로, 전설 미만은 0). */
 export const gearBoxWeights = () => ODDS.drop.rarity.map((w, i) => i < GEAR_BOX.minRarity ? 0 : i >= GEAR_BOX.highFrom ? w * GEAR_BOX.highScale : w);
 export function rollGearBoxRarity(rng: () => number) {

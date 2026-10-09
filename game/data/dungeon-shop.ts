@@ -49,3 +49,10 @@ export const HUNTER_AFFIX = 'hunter';
 export const GEAR_BOX = { minRarity: 3, highFrom: 5, highScale: .25 };
 /** v3.193 칠흑 상품(제작 · 각성 합쳐서)은 하루(한국 시간) onyxPerDay번까지. */
 export const DUNGEON_SHOP_DAILY = { onyxPerDay: 1 };
+/**
+ * v3.194 성장권: 내 최근 사냥 수입(최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치) × hours를 바로 받습니다. 숙련 · 장비 · 처치 수는 없습니다.
+ * 환생 maxRebirths회 미만만 살 수 있고, 하루(한국 시간) perDay번까지. 둘 다 사면 하루 1,100코인으로 헬 하루 보너스(1,200)를 거의 다 씁니다.
+ */
+export const GROWTH_GOODS = { growth1: { hours: 1, price: 200, perDay: 2 }, growth4: { hours: 4, price: 700, perDay: 1 } } as const;
+export type GrowthGood = keyof typeof GROWTH_GOODS;
+export const GROWTH_MAX_REBIRTHS = 50;
