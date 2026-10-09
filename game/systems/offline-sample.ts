@@ -19,7 +19,8 @@ import { encounterTier, xpWall } from './meta';
 import { isHacker } from './hacker';
 import { dismantleEssence, keepsAcrossLives } from './equipment';
 import { rankState } from '../data/rank';
-import { gainLevels, spawn, specialChances, pickSpecial, type ForcedRare } from './encounter';
+import { gainLevels, spawn, specialChances, pickSpecial, noteExtreme, type ForcedRare } from './encounter';
+import { extremeStage } from './progression';
 import { recordIncome, recordExpIncome, recordMasteryIncome } from './income';
 import { oneTimeRewards, offlineTally, resetOfflineTally } from './offline-tally';
 import { ONYX, onyxBossFor, onyxChance } from '../data/onyx';
@@ -121,7 +122,10 @@ export function extrapolateOffline(s: State, m: Mark, turns: number, remaining: 
     s.deaths += grow(g.deaths);
     { const rk = rankState(s); rk.exp += grow(g.rankExp); s.rank = rk; }
     const apply = (target: Record<string, number>, gains: Record<string, number>) => { for (const [id, d] of Object.entries(gains)) { const n = grow(d); if (n > 0) target[id] = (target[id] || 0) + n; } };
+    // v3.208 부재중 정산으로 오른 극한 단계도 알립니다(전용 연출 해금 포함).
+    const extremeBefore = Object.fromEntries(Object.keys(g.skillPractice).map(id => [id, extremeStage(s, id)]));
     apply(s.jobMastery, g.jobMastery); apply(s.skillPractice, g.skillPractice); apply(s.book, g.book);
+    for (const [id, before] of Object.entries(extremeBefore)) noteExtreme(s, id, before);
     recordMasteryIncome(s, grow(g.jobMastery[s.job] || 0));
     // 태초 천장: 측정 구간의 드롭 수(천장 카운터 증가분)를 비례해 쌓되, 다음 실제 드롭이 천장이 되도록 한 칸은 남깁니다.
     const pityGain = (s.primalDropPity || 0) >= m.pity ? (s.primalDropPity || 0) - m.pity : 0;
