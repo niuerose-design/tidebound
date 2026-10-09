@@ -214,6 +214,8 @@ export type Skill = {
      */
     /** v3.221 물리 · 마법 공격 중 높은 쪽으로 피해(그 종류로 방어 적용). 칠흑 일식. */
     bestOf?: boolean;
+    /** v3.223 회복 효과(effect 'heal')를 힐러가 아니어도 피해 감소(idleHealDamage) 없이 씁니다. 칠흑 일식 진 힐라 형태만의 예외(역할 규칙 예외). */
+    healNoPenalty?: boolean;
     /** v3.221 끼고 있는 칠흑 장신구(보스 id)에 따라 덧붙는 효과(칠흑 일식). */
     onyxForms?: Record<string, Partial<Skill>>;
     coreBuff?: { id: string; name: string; turns: number; damage: number; stats: Partial<Stats>; steps: { at: number; turns?: number; wardTurns?: number; extraTurn?: boolean }[] };

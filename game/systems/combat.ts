@@ -499,7 +499,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const arcane = !chosen && sa.arcaneStrike > 0;
     let healed = 0, overheal = 0;
     // 체력이 충분한데 쓴 회복 기술: 회복 직업이 아니면 이번 공격 피해가 줄어듭니다.
-    const idleHeal = chosen?.effect === 'heal' && a.hp >= sa.hp * SKILL_FORMULA.healThreshold && !sa.healFocus;
+    const idleHeal = chosen?.effect === 'heal' && a.hp >= sa.hp * SKILL_FORMULA.healThreshold && !sa.healFocus && !chosen.healNoPenalty;
     let burned = 0;
     if (chosen) {
         a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
