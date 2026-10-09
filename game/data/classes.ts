@@ -218,7 +218,7 @@ JOBS.push(...(V24_JOBS as Job[]));
 
 // v24.2 ??? 문 직업과 보조 계열 소개 갱신. 자세한 설계는 support-rework.ts.
 JOBS.push(...(SUPPORT_JOBS as Job[]));
-// v25 ??? 특수 직업: 제로 (1차)·제로 (4차)·玄. 자세한 설계는 expansion-v25.ts.
+// v25 ??? 특수 직업: 제로 (1차)·제로 (5차, v3.198 4차 → 5차)·玄. 자세한 설계는 expansion-v25.ts.
 JOBS.push(...(V25_JOBS as Job[]));
 // v25.14 방어 계열 보강: 종거북·루미너스 (2차) 갈래 5차까지, 새 호영 (1차)(마법 방어) 계보. 자세한 설계는 expansion-defense.ts.
 JOBS.push(...(DEFENSE_JOBS as Job[]));

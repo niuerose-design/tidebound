@@ -13,9 +13,13 @@ test('v3.197 clockmaker: time rewind restores only me (hp · mana · cooldowns) 
     const text = strike(a, b, () => 0); assert.match(text, /타임 리와인드/); assert.equal(a.hp, 1000); assert.equal(a.mana, 200); assert.equal(a.cooldowns.windUp, 0, 'my cooldowns are rewound');
     assert.equal(b.hp, 5, 'the foe is not rewound'); assert.ok(a.effects.timeUsed);
     a.hp = 10; a.cooldowns = { windUp: 9 }; strike(a, b, () => 0); assert.equal(a.hp, 10, 'only once per battle');
-    const s = newState(0); s.level = 10; s.attributes.dex = 30; s.attributes.int = 30;
-    assert.equal(canChangeJob(s, 'chronarch'), false); s.jobMastery.clockmaker = 3000; assert.equal(canChangeJob(s, 'chronarch'), true, 'mastery alone opens the chronarch');
-    assert.equal(JOBS.find(j => j.id === 'chronarch').tier, 4);
+    // v3.198 제로 (5차): 제로 (1차) 숙달 + Lv.70 · 환생 4회 · 기민 60 · 지능 50 · 1차 시간 기술 셋 숙련 4.
+    const s = newState(0); s.level = 70; s.rebirths = 4; s.attributes.dex = 60; s.attributes.int = 50;
+    assert.equal(canChangeJob(s, 'chronarch'), false); s.jobMastery.clockmaker = 3000; assert.equal(canChangeJob(s, 'chronarch'), false, 'mastery alone no longer opens the chronarch');
+    for (const id of ['windUp', 'slackHand', 'timeMachine']) s.skillPractice[id] = SKILLS.find(x => x.id === id).masteryMilestones.at(-1);
+    assert.equal(canChangeJob(s, 'chronarch'), true, 'every gate met');
+    s.rebirths = 3; assert.equal(canChangeJob(s, 'chronarch'), false, 'rebirth 4 is required');
+    assert.equal(JOBS.find(j => j.id === 'chronarch').tier, 5);
 });
 
 test('v3.197 zero tag: switching alpha ↔ beta adds the largest equipped tagBonus; the same side twice adds nothing', () => {
@@ -114,13 +118,14 @@ test('v25.3 passive-route returns: the archivist passive scales with rebirths an
     assert.ok(gain(5, 'attack') - gain(0, 'attack') >= 25 && gain(5, 'attack') - gain(0, 'attack') <= 30, `+5 per rebirth before job scaling (${gain(5, 'attack') - gain(0, 'attack')})`);
     assert.ok(gain(12, 'hp') - gain(0, 'hp') >= 12 * 18); assert.equal(SKILLS.find(x => x.id === 'memoryOfTides').perCount[0].cap, 12, 'rebirth scaling caps at 12');
     assert.equal(stats({ ...s, rebirths: 3 }).rebirthBonus, 1);
-    // 떠돌이 모험가: 숙달 직업 3개에서 발견의 문이 열리고, 패시브는 숙달 직업 수에 비례합니다.
+    // 떠돌이 모험가: v3.198 숙달 직업 5개(전에는 3개)에서 숨은 조건이 열리고, 패시브는 숙달 직업 수에 비례합니다.
     const j = newState(0); j.level = 10; j.attributes = { str: 10, int: 10, vit: 10, dex: 0, wis: 0, luk: 0 };
     assert.equal(canChangeJob(j, 'journeyman'), false);
-    for (const id of ['harpoon', 'tide', 'warden']) j.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
-    assert.equal(masteredJobCount(j), 3); assert.equal(canChangeJob(j, 'journeyman'), true);
+    for (const id of ['harpoon', 'tide', 'warden', 'whaler']) j.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
+    assert.equal(masteredJobCount(j), 4); assert.equal(canChangeJob(j, 'journeyman'), false, 'four is not enough');
+    j.jobMastery.corsair = jobMasteryTarget(JOBS.find(x => x.id === 'corsair')); assert.equal(canChangeJob(j, 'journeyman'), true);
     act(j, { type: 'job', id: 'journeyman' }, 0); j.skills = ['thousandHands', 'wayfarerKnack'];
-    const three = stats(j); j.jobMastery.whaler = jobMasteryTarget(JOBS.find(x => x.id === 'whaler')); j.jobMastery.corsair = jobMasteryTarget(JOBS.find(x => x.id === 'corsair'));
+    const three = stats(j); j.jobMastery.tempest = jobMasteryTarget(JOBS.find(x => x.id === 'tempest')); j.jobMastery.oracle = jobMasteryTarget(JOBS.find(x => x.id === 'oracle'));
     const five = stats(j); assert.equal(five.attack - three.attack, 6); assert.equal(five.hp - three.hp, 24); assert.ok(five.speed - three.speed === 1);
     // setSkills: 끌어서 바꾼 순서와 추천 편성을 한 번에 적용. 사용 불가·AP 초과는 거부.
     const k = newState(0); k.level = 10; k.job = 'harpoon'; k.unlockedJobs.push('harpoon'); for (const sk of SKILLS) k.learned[sk.id] = 1;
@@ -138,13 +143,15 @@ test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint 
     assert.equal(effectiveSkill(sk('pearlLedger'), 1, 4).bonus.rebirthBonus, 2);
     // 떠돌이 계보: 숙달 직업 수 관문과 숙달 비례 피해.
     const s = newState(0); s.level = 40; s.attributes = { str: 30, int: 30, vit: 30, dex: 0, wis: 0, luk: 0 }; s.jobMastery.journeyman = jobMasteryTarget(JOBS.find(x => x.id === 'journeyman')); s.unlockedJobs.push('journeyman');
-    for (const id of ['harpoon', 'tide', 'warden', 'whaler', 'corsair', 'tempest']) s.jobMastery[id] = jobMasteryTarget(JOBS.find(x => x.id === id));
-    assert.equal(canChangeJob(s, 'polymath'), false, '6 mastered + journeyman = 7 < 8');
-    s.jobMastery.oracle = jobMasteryTarget(JOBS.find(x => x.id === 'oracle')); assert.equal(canChangeJob(s, 'polymath'), true);
+    // v3.198 만능 모험가는 숙달 12개(전에는 8개), 백수는 20개(전에는 15개).
+    const others = JOBS.filter(x => x.tier >= 1 && !x.hidden && !x.retired).slice(0, 10);
+    for (const x of others) s.jobMastery[x.id] = jobMasteryTarget(x);
+    assert.equal(canChangeJob(s, 'polymath'), false, '10 mastered + journeyman = 11 < 12');
+    const next = JOBS.find(x => x.tier >= 1 && !x.hidden && !x.retired && !(x.id in s.jobMastery)); s.jobMastery[next.id] = jobMasteryTarget(next); assert.equal(canChangeJob(s, 'polymath'), true);
     act(s, { type: 'job', id: 'polymath' }, 0); assert.equal(s.job, 'polymath');
     const dmg = mastered => { const a = { name: 'A', job: 'polymath', stats: { ...base, masteredPower: mastered }, hp: 1000, mana: 200, skills: ['borrowedForm'], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} }, t = target(); strike(a, t, () => 0); return 1e6 - t.hp; };
     assert.ok(dmg(20) > dmg(0) * 1.5 && dmg(20) < dmg(0) * 1.7, `mastered scaling +3% each (${dmg(0)} → ${dmg(20)})`);
-    assert.equal(canChangeJob({ ...s, jobMastery: { ...s.jobMastery, polymath: 12000 } }, 'hundredLives'), false, 'needs 15 mastered');
+    assert.equal(canChangeJob({ ...s, jobMastery: { ...s.jobMastery, polymath: 12000 } }, 'hundredLives'), false, 'needs 20 mastered');
 });
 
 test('v25.5 reset passives fire on crit, kill and chain (players only); chained actions tick cooldowns normally', async () => {
@@ -1652,13 +1659,4 @@ test('v3.197 wanderer knack: in the wander lineage, skills from other lineages c
     assert.equal(P.apUsed(s, ['wayfarerKnack', borrowed.id, 'borrowedForm']), knack + cost - 1 + own, 'knack: only the other-lineage skill gets cheaper');
     assert.equal(P.loadoutSkillAP(s, borrowed.id, ['wayfarerKnack', borrowed.id]), cost - 1);
     const hero = { ...s, job: borrowed.job }; assert.equal(P.apUsed(hero, ['wayfarerKnack', borrowed.id]), knack + cost, 'inherited outside the wander lineage: no discount');
-});
-
-test('v3.197 vow of poverty: fewer gold digits, sturdier monk (poverty = 10 − gold digits, floored at 0)', async () => {
-    const P = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
-    const s = newState(0);
-    for (const [gold, want] of [[0, 10], [99, 8], [1e9, 1], [1e10, 0], [1e15, 0]]) { s.gold = gold; assert.equal(P.progressCounts(s).poverty, want, `${gold}`); }
-    const vow = SKILLS.find(x => x.id === 'vowOfPoverty'); assert.equal(vow.perCount[0].source, 'poverty');
-    s.gold = 0; const poor = P.passiveGrowthBonus(s, vow).hp; s.gold = 1e12; const rich = P.passiveGrowthBonus(s, vow).hp || 0;
-    assert.ok(poor > 0 && rich === 0, `poor ${poor} > rich ${rich}`);
 });

@@ -214,7 +214,9 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
     /** v3.163 제논 재개편: 곁가지 태엽 기계공 · 올라운더(조화는 본줄기가 가져감) · 숨은 칠전팔기 모험가(쓰러진 횟수 비례는 다크나이트가 맡음)를 지웠습니다. */
     'clockworkAngler', 'allRounder', 'fallenAngler',
     /** v3.164 팬텀 곁가지 트릭스터(약화 · 회피 패시브)는 장치가 없어 지웠습니다. */
-    'inkMime'];
+    'inkMime',
+    /** v3.198 히든 정리: 숨은 2차 청빈 수도승(호영 가지)을 지웠습니다. */
+    'poorMonk'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.170 수련 액티브 10개 · 패시브 4개(맹세의 결의 · 관중의 환호 · 기사의 갑옷 · 생명의 기운): 계보마다 패시브 4개로 맞추며 삭제. */
     'arcane', 'cut', 'hushCurrent', 'undertow', 'rushCurrent', 'netThrow', 'oathShout', 'currentJam', 'driftwoodShove', 'rottenBait', 'resolve', 'showmanship', 'scales', 'vital',
@@ -239,7 +241,9 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
     /** v3.164 트릭스터의 스모크 스크린 · 팬텀 섀도우. */
     'smokeVeil', 'slipperyStep',
     /** v3.143 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
-    'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind'];
+    'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind',
+    /** v3.198 청빈 수도승의 빈손 장타 · 청빈 서약. */
+    'emptyPalm', 'vowOfPoverty'];
 /**
  * v3.64 히든 직업 재배치 · v3.138 5차 통폐합: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).
  * 지금 그 직업이면 초보자로 돌아갑니다. 여러 번 불러도 같습니다.

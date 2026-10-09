@@ -23,7 +23,8 @@ registerSkills(SECRET_SKILLS);
 normalizeSkillMastery(SECRET_SKILLS.map(sk => skillById(sk.id)!).filter(Boolean));
 alignJobMastery(SECRET_JOBS.map(j => jobById(j.id)!).filter(Boolean));
 // v3.86 비밀 5차 이상 직업의 액티브도 각성기로(공개 스킬은 tuneActiveSkills에서).
-for (const sk of SECRET_SKILLS) if ((jobById(sk.job || '')?.tier ?? 0) >= SKILL_FORMULA.awaken.tier) awakenSkill(skillById(sk.id)!);
+// v3.198 제로 (5차)의 액티브는 각성기로 바꾸지 않습니다. 태그(알파 ↔ 베타)는 행동마다 번갈아 쓰는 규칙이라, 턴마다 따로 굴리는 각성기와 맞지 않습니다.
+for (const sk of SECRET_SKILLS) if ((jobById(sk.job || '')?.tier ?? 0) >= SKILL_FORMULA.awaken.tier && sk.job !== 'chronarch') awakenSkill(skillById(sk.id)!);
 // v3.83 비밀 직업이 더해진 뒤 한 번 더: 비밀 유틸리티 직업의 스킬도 획득 보너스 ×1.5(scaleUtilityGain, 이미 곱한 객체는 건너뜀).
 scaleUtilityGain(SKILLS);
 // v3.52 드롭·확률 수치.
