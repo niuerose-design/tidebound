@@ -56,6 +56,8 @@ export type Job = {
     fullKit?: boolean;
     /** v3.199 궁극의 모험가: 다른 계보의 5차 전용 기술을 계승해 써도 효율이 깎이지 않습니다(signatureScale · outsiderChance 면제). */
     signatureFree?: boolean;
+    /** v3.199 계급장 조건: 이 계급(data/rank.ts RANKS id) 이상. 재입대한 적이 있으면 이미 넘은 것으로 봅니다. */
+    requiresRank?: string;
     /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않고, v3.54부터 넘친 회복량 × overhealDamage를 적에게 피해로 줍니다. */
     healer?: boolean;
     /** v3.69 옛 독립 수련(data/training.ts): 새로 전직할 수 없고 화면에 보이지 않습니다. 숙달 기록은 숙달 수에 셉니다. */

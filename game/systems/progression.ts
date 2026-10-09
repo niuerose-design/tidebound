@@ -13,6 +13,7 @@ import { researchRank } from '../data/economy';
 import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 import { MAPLE_LINEAGE_NAMES } from '../data/maple-names';
+import { RANKS, rankIndex, rankState, reenlistCount } from '../data/rank';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
 export const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
 export const plainCodexBook = () => Object.fromEntries(PLAIN_CODEX_SLOTS.map(slot => [`${slot}:0`, true]));
@@ -347,6 +348,11 @@ export function jobRequirements(s: State, j: Job) {
             // 선행 직업과 같은 조건이면 한 번만 표시합니다(판정은 같음).
             if (!(jobId === j.parent && mastery === j.mastery))
                 list.push({ label: `${job?.name || jobId} 숙련 ${mastery.toLocaleString()}`, met: (s.jobMastery?.[jobId] || 0) >= mastery, value: s.jobMastery?.[jobId] || 0, target: mastery });
+        }
+        // v3.199 계급장 조건(궁극의 모험가: 하사 이상). 재입대(★)했다면 이미 넘은 계급입니다.
+        if (j.requiresRank) {
+            const need = RANKS.findIndex(r => r.id === j.requiresRank), now = rankIndex(rankState(s).exp);
+            list.push({ label: `계급장 ${RANKS[need]?.name ?? j.requiresRank} 이상`, met: reenlistCount(s) > 0 || now >= need, value: now, target: need });
         }
         if (j.requiresMastered)
             list.push({ label: `숙달한 직업 ${j.requiresMastered}개`, met: masteredJobCount(s) >= j.requiresMastered, value: masteredJobCount(s), target: j.requiresMastered });

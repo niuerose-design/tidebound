@@ -1669,8 +1669,9 @@ test('v3.199 ultimate adventurer: other lineages’ 5th-tier signature skills ke
     assert.ok(P.signatureScale(sig, other.id) < 1, 'outsiders are scaled down');
     assert.equal(P.signatureScale(sig, 'rebirthFisher'), 1, 'the ultimate adventurer is not');
     const old = newState(0); delete old.ultimateRemade; old.job = 'rebirthFisher'; old.unlockedJobs.push('rebirthFisher'); old.jobMastery.rebirthFisher = 500; old.learned.soulHook = 2; old.skillPractice.soulHook = 900; old.skills.push('soulHook');
-    M.remakeRebirthFisher(old);
+    M.remakeRebirthFisher(old); M.retireHiddenJobs(old);
     assert.equal(old.job, 'fisher'); assert.ok(!old.unlockedJobs.includes('rebirthFisher') && !('rebirthFisher' in old.jobMastery) && !('soulHook' in old.learned) && !old.skills.includes('soulHook'));
+    assert.equal(SKILLS.find(x => x.id === 'soulHook'), undefined, 'no own awakening skill'); assert.deepEqual(SKILLS.filter(x => x.job === 'rebirthFisher').map(x => x.id), ['ultimateLegacy']);
     old.job = 'rebirthFisher'; M.remakeRebirthFisher(old); assert.equal(old.job, 'rebirthFisher', 'only once');
     const fresh = newState(0); assert.equal(fresh.ultimateRemade, true, 'new saves skip it');
 });

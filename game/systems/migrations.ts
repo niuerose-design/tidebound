@@ -243,7 +243,9 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
     /** v3.143 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
     'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind',
     /** v3.198 청빈 수도승의 빈손 장타 · 청빈 서약. */
-    'emptyPalm', 'vowOfPoverty'];
+    'emptyPalm', 'vowOfPoverty',
+    /** v3.199 궁극의 모험가는 자체 각성기를 두지 않아 옛 윤회의 나그네의 윤회의 일격을 지웠습니다. */
+    'soulHook'];
 /**
  * v3.64 히든 직업 재배치 · v3.138 5차 통폐합: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).
  * 지금 그 직업이면 초보자로 돌아갑니다. 여러 번 불러도 같습니다.
@@ -264,23 +266,18 @@ export function retireHiddenJobs(s: State) {
 }
 /**
  * v3.199 윤회의 나그네(1차, 공개) → 궁극의 모험가(히든 5차, id 그대로): 옛 1차 기록으로 5차 직업에 머물지 않도록 한 번만 정리합니다.
- * 지금 그 직업이면 초보자로 돌아가고, 직업 숙련 · 전직 기록과 옛 윤회의 일격 기록(습득 · 숙련 · 계승 · 편성)을 보상 없이 지웁니다.
+ * 지금 그 직업이면 초보자로 돌아가고, 직업 숙련 · 전직 기록을 보상 없이 지웁니다(윤회의 일격 기록은 RETIRED_SKILLS가 지움).
  */
 export function remakeRebirthFisher(s: State) {
     if (s.ultimateRemade) return;
     s.ultimateRemade = true;
-    const job = 'rebirthFisher', skill = 'soulHook';
+    const job = 'rebirthFisher';
     if (s.job === job) { s.job = BASE_JOB; addLog(s, '윤회의 나그네가 히든 5차 직업으로 바뀌어 초보자로 돌아왔습니다.', 'system'); }
     if (s.jobGoal === job) delete s.jobGoal;
     s.unlockedJobs = s.unlockedJobs.filter(id => id !== job);
     if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => id !== job);
     delete s.jobMastery[job];
     if (s.masteryKept) s.masteryKept = s.masteryKept.filter(id => id !== job);
-    for (const rec of [s.learned, s.skillSpent, s.skillPractice, s.skillInheritances, s.refineBase, s.limitBreaks, s.legacyInherited, s.cooldowns]) if (rec) delete (rec as Record<string, unknown>)[skill];
-    s.skills = s.skills.filter(id => id !== skill);
-    if (s.skillPins) s.skillPins = s.skillPins.filter(id => id !== skill);
-    if (s.skillHidden) s.skillHidden = s.skillHidden.filter(id => id !== skill);
-    for (const p of Object.values(s.presets || {})) p.skills = p.skills.filter(id => id !== skill);
 }
 /** v3.135 나이트워커 2~5차 · 골령술사와 그 스킬을 지우고 1차 망인(undead)만 남깁니다. */
 export const NIGHT_WALKER_JOBS = ['skeleton', 'bonecaster', 'soulHarvester', 'lichKing', 'deathEmperor'];
