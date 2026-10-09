@@ -6,8 +6,8 @@ const { progressCounts } = await loadGame().load('game/systems/progression.js');
 const ready = (level = 30) => { const s = newState(0); s.level = level; s.rebirths = 1; Object.assign(s.attributes, { str: 30, dex: 30, int: 30, vit: 30, wis: 30, luk: 30 }); return s; };
 const job = id => JOBS.find(j => j.id === id);
 
-test('v3.62 hidden unlocks: record conditions (v3.198 three); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
-    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman']);
+test('v3.62 hidden unlocks: record conditions (v3.199 four); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
+    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman', 'rebirthFisher']);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead'), false);
     assert.ok(jobRequirements(s, job('undead')).some(r => r.label === '숨은 조건' && !r.met));
@@ -33,9 +33,10 @@ test('v3.62 the rebirth door is gone: no draw at rebirth, the old door jobs keep
     const s = newState(0); s.level = 60; s.rebirths = 3;
     act(s, { type: 'rebirth' }, 0, () => { throw Error('rebirth draws no random number for a door'); });
     assert.equal(s.rebirthDoor, undefined);
-    for (const id of ['rebirthFisher', 'voidcaller']) { assert.equal(unlocks.unlockMet({}, id), null, id); assert.ok(!job(id).hint.includes('문'), `${id} hint`); }
-    const o = ready(); o.attributes.str = 10; o.attributes.wis = 12; assert.equal(canChangeJob(o, 'rebirthFisher'), true, 'rebirth 1 + stats is enough');
-    o.rebirths = 0; assert.equal(canChangeJob(o, 'rebirthFisher'), false);
+    for (const id of ['voidcaller']) { assert.equal(unlocks.unlockMet({}, id), null, id); assert.ok(!job(id).hint.includes('문'), `${id} hint`); }
+    // v3.199 윤회의 나그네는 히든 5차 궁극의 모험가가 되어 숨은 조건(5차 직업 3개 숙달)이 생겼습니다.
+    const o = ready(); o.attributes.str = 10; o.attributes.wis = 12; assert.equal(canChangeJob(o, 'rebirthFisher'), false, 'rebirth 1 + stats is no longer enough');
+    assert.equal(unlocks.unlockMet({}, 'rebirthFisher'), false); assert.ok(job('rebirthFisher').hidden && job('rebirthFisher').tier === 5 && job('rebirthFisher').signatureFree);
 });
 
 test('v3.62 save migration: the open rebirth door becomes a revealed record; admin-opened doors are dropped', () => {

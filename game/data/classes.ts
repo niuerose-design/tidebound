@@ -54,6 +54,8 @@ export type Job = {
     branchless?: boolean;
     /** v25: 1·2차여도 전용 기술을 3개 이상 가진 특수 직업(제로 (1차)·玄). */
     fullKit?: boolean;
+    /** v3.199 궁극의 모험가: 다른 계보의 5차 전용 기술을 계승해 써도 효율이 깎이지 않습니다(signatureScale · outsiderChance 면제). */
+    signatureFree?: boolean;
     /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않고, v3.54부터 넘친 회복량 × overhealDamage를 적에게 피해로 줍니다. */
     healer?: boolean;
     /** v3.69 옛 독립 수련(data/training.ts): 새로 전직할 수 없고 화면에 보이지 않습니다. 숙달 기록은 숙달 수에 셉니다. */
@@ -416,7 +418,7 @@ export function jobById(id: string | undefined) {
     if (!jobByIdMap) { jobByIdMap = new Map(); for (const x of JOBS) if (!jobByIdMap.has(x.id)) jobByIdMap.set(x.id, x); }
     return id === undefined ? undefined : jobByIdMap.get(id);
 }
-// v3.65 공개 특수 직업(유리 대포 · 윤회의 나그네, data/specials.ts).
+// v3.65 공개 특수 직업(유리 대포 · v3.198 은월 3~5차, data/specials.ts).
 registerJobs(SPECIAL_JOBS, true);
 // v3.70 능력치 수련 I~III(data/stat-training.ts, 완성된 모양).
 registerJobs(STAT_TRAINING_JOBS, true);

@@ -22,6 +22,7 @@ export function newState(now: number): State {
         version: SAVE_VERSION,
         relicRefunded: true, autoStarRefunded: true, placeApMoved: true, plainCodex: true, relicRule: true,
         masteryRescaled: true,
+        ultimateRemade: true,
         trainingRescaled: true,
         masteryAligned: true,
         penetrationBoosted: true,

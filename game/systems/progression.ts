@@ -125,6 +125,8 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (!sk.job || !userJob) return 1;
     const owner = jobById(sk.job);
     if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
+    // v3.199 궁극의 모험가는 모든 계보의 전용 기술을 온전히 씁니다.
+    if (jobById(userJob)?.signatureFree) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
 /** 변종·황금 개체 처치 수(마리 수가 아니라 조우 횟수). */

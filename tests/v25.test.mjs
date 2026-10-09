@@ -1660,3 +1660,17 @@ test('v3.197 wanderer knack: in the wander lineage, skills from other lineages c
     assert.equal(P.loadoutSkillAP(s, borrowed.id, ['wayfarerKnack', borrowed.id]), cost - 1);
     const hero = { ...s, job: borrowed.job }; assert.equal(P.apUsed(hero, ['wayfarerKnack', borrowed.id]), knack + cost, 'inherited outside the wander lineage: no discount');
 });
+
+test('v3.199 ultimate adventurer: other lineages’ 5th-tier signature skills keep full power; old 윤회의 나그네 records are cleared once', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const P = await L.load('systems/progression'), M = await L.load('systems/migrations');
+    const sig = SKILLS.find(sk => sk.job && JOBS.find(j => j.id === sk.job)?.tier === 5 && !JOBS.find(j => j.id === sk.job)?.hidden);
+    const other = JOBS.find(j => j.tier === 5 && !j.hidden && !P.lineage(j.id).includes(sig.job) && !P.lineage(sig.job).includes(j.id));
+    assert.ok(P.signatureScale(sig, other.id) < 1, 'outsiders are scaled down');
+    assert.equal(P.signatureScale(sig, 'rebirthFisher'), 1, 'the ultimate adventurer is not');
+    const old = newState(0); delete old.ultimateRemade; old.job = 'rebirthFisher'; old.unlockedJobs.push('rebirthFisher'); old.jobMastery.rebirthFisher = 500; old.learned.soulHook = 2; old.skillPractice.soulHook = 900; old.skills.push('soulHook');
+    M.remakeRebirthFisher(old);
+    assert.equal(old.job, 'fisher'); assert.ok(!old.unlockedJobs.includes('rebirthFisher') && !('rebirthFisher' in old.jobMastery) && !('soulHook' in old.learned) && !old.skills.includes('soulHook'));
+    old.job = 'rebirthFisher'; M.remakeRebirthFisher(old); assert.equal(old.job, 'rebirthFisher', 'only once');
+    const fresh = newState(0); assert.equal(fresh.ultimateRemade, true, 'new saves skip it');
+});
