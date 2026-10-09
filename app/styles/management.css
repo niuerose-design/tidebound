@@ -489,3 +489,25 @@
 
 /* v3.186 던전 난이도 안내(헬 · 나이트메어가 누구를 위한 난이도인지) */
 .dungeon-mode-note { display:block; font-size:12px; color:#98b1b1; margin-top:6px; line-height:1.6; }
+/* v3.204 던전 주화 상점 · 보스 코어 칸 */
+.dshop-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px; margin:14px 0; }
+.dshop-card { padding:22px; display:flex; flex-direction:column; gap:12px; }
+.dshop-card .draw-cost { margin-top:auto; }
+.dshop-card .draw-actions { min-height:0; }
+.dshop-card h2 { font-size:18px; }
+.dshop-card .draw-desc { min-height:0; }
+.dshop-card .draw-controls { min-height:0; }
+.dshop-card .gamble-count-row { grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); }
+.dshop-cores { grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
+.dshop-cores .gear-slot.locked { opacity:.55; }
+.core-slot { margin-bottom:14px; }
+.core-slot-body { display:grid; gap:4px; min-width:0; }
+.core-slot-body strong { font-size:15px; color:var(--rarity); }
+.core-slot-body small { font-size:12px; color:#8fa6a4; line-height:1.6; }
+.core-slot .gear-slot-upgrade select { min-height:30px; max-width:220px; }
+.core-set { display:flex; flex-wrap:wrap; gap:6px; }
+.core-set span { padding:3px 9px; border:1px solid var(--border); border-radius:999px; font-size:11px; color:#7f9596; }
+.core-set span.on { color:#a4e9ba; border-color:#3f6b5e; }
+.dungeon-coin-link { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
+.dungeon-coin-link b { color:var(--gold); }
+@media(max-width:767px){ .dshop-grid { grid-template-columns:minmax(0,1fr); } .dshop-card { min-height:0; } .core-slot .gear-slot-upgrade { flex-direction:column; align-items:stretch; } .core-slot .gear-slot-upgrade select { max-width:none; } }

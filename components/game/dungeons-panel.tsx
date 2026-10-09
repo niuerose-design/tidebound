@@ -2,14 +2,9 @@
 import { AutoRunStatus } from './auto-run';
 import { FIRST_CLEAR_SP } from '@/game/data/achievements';
 import { dungeonGoldMultiplier, stats } from '@/game/systems/stats';
-import { dungeonTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack } from '@/game/systems/meta';
-import { clearCoinBase, dailyBonusLeft, growthOffer, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
-import { DUNGEON_SHOP, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood } from '@/game/data/dungeon-shop';
-import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
-import { BOSS_CORES, BOSS_CORE_SET, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
-import { coreForgeCost } from '@/game/systems/boss-loot';
-import { ATTRIBUTES } from '@/game/data/progression';
-import { dayKey } from '@/game/data/time';
+import { levelGateOk } from '@/game/systems/meta';
+import { clearCoinBase, dailyBonusLeft } from '@/game/systems/dungeon-coins';
+import { DAILY_BONUS } from '@/game/data/dungeon-shop';
 import { useState } from 'react';
 import { Lock, Swords, Gem, Skull } from 'lucide-react';
 import { MonsterArt } from './art';
@@ -29,7 +24,7 @@ import { abyssPearls, nextAbyssMilestone } from '@/game/data/long-term';
 import type { PanelProps } from './panel-props';
 import { RANDOM_GAME, randomGameTier, waveStake, stakeUpTo } from '@/game/data/random-game';
 import { randomGameRank, randomGamePayout, randomGameRunsLeft, stakePayout } from '@/game/systems/random-game';
-export function Dungeons({ s, send, busy }: PanelProps) {
+export function Dungeons({ s, send, busy, setView }: PanelProps) {
     const activeDungeon = s.dungeon ? dungeonById(s.dungeon?.id) : undefined;
     const playerStats = stats(s);
     const enemyDef = s.enemy ? monsterById(s.enemy?.id) : undefined;
@@ -70,10 +65,11 @@ export function Dungeons({ s, send, busy }: PanelProps) {
         <div className="dungeon-combat-log"><div className="section-title"><h3>최근 전투 로그</h3><span>자동 갱신</span></div>{s.logs.filter(log => log.type === 'battle').slice(-6).reverse().map(log => <BattleLogLine key={log.id} log={log} playerName={s.name}/>)}</div>
     </section>}
     {!activeDungeon && <RandomGameCard s={s} send={send} busy={busy}/>}
-    <DungeonCoinShop s={s} send={send} busy={busy}/>
+    {/* v3.204 던전 주화 상점은 상점 메뉴의 탭으로 옮겼습니다. 여기는 보유 주화와 바로 가기만. */}
+    <section className="panel dungeon-coin-link"><span>던전 주화 <b>{format(s.dungeonCoins || 0)}</b> · 오늘 보너스 정복 {bonusLeft}/{DAILY_BONUS.clears}회 남음</span>{setView && <button className="secondary small" onClick={() => setView('dungeonShop')}>던전 주화 상점</button>}</section>
     <div className="stage-grid dungeon-grid">{[...PLAIN_DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
             const closed = closedIn(s, 'dungeons', d.id), locked = closed || !levelGateOk(s, d.level) || s.rebirths < d.rebirth;
-            const mode = modeChoice[d.id] || 'normal', modeDef = DUNGEON_MODES.find(m => m.id === mode)!, tier = dungeonTier(d.id, s.abyssBest + 1, mode), dLevel = dungeonLevelAt(d, tier, s.level);
+            const mode = modeChoice[d.id] || 'normal', modeDef = DUNGEON_MODES.find(m => m.id === mode)!;
             const research = FIRST_CLEAR_SP[d.id], claimed = !!s.achievementClaims?.[`firstClear:${d.id}`], active = s.dungeon?.id === d.id;
             return <article className={`stage-card dungeon-stage-card ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} key={d.id}>
             <div className="stage-top"><span className="stage-num">{String(i + 1).padStart(2, '0')}</span>{locked ? <Lock size={20}/> : active ? <span className="badge">탐험 중</span> : d.id === 'abyss' ? <span className="badge">최고 {s.abyssBest}층</span> : s.clears[d.id] ? <span className="badge">{s.clears[d.id]}회 정복</span> : <span className="badge muted">미탐험</span>}</div>
@@ -83,7 +79,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">
                 <span><b>최초</b>{d.id === 'abyss' ? `${s.abyssBest + 1}층 세계석 ${abyssPearls(s.abyssBest + 1)} · 10층마다 보너스 세계석(층 수만큼)${nextAbyssMilestone(s.abyssBest) ? ` · ${nextAbyssMilestone(s.abyssBest)}층 SP 1` : ''}` : `세계석 ${d.pearls}${research ? ` · 업적 SP ${research}` : ''}`}{d.id !== 'abyss' && s.clears[d.id] && (!research || claimed) ? ' · 받음' : ''}</span>
-                <span><b>정복</b>던전 주화 {d.id === 'abyss' ? format(Math.floor(clearCoinBase(d.id, mode, s.abyssBest + 1) * coinMult)) : `${format(Math.floor(clearCoinBase(d.id, mode, 1, true) * coinMult))} (오늘 보너스 ${bonusLeft}/${DAILY_BONUS.clears}회 남음) · 보너스 뒤 ${format(Math.floor(clearCoinBase(d.id, mode) * coinMult))}`}{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)}` : ''}{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''} · 처치 골드 · 경험치 · 숙련 · 장비 없음</span>
+                <span><b>정복</b>던전 주화 {format(Math.floor(clearCoinBase(d.id, mode, d.id === 'abyss' ? s.abyssBest + 1 : 1, d.id !== 'abyss' && bonusLeft > 0) * coinMult))}{d.id !== 'abyss' ? ` · 오늘 보너스 ${bonusLeft}/${DAILY_BONUS.clears}회` : ''}</span>
             </div>
             <div className="stage-footer dungeon-actions">
                 <span>Lv. {d.level}+{d.rebirth ? ` · 환생 ${d.rebirth}회` : ''}</span>
@@ -99,73 +95,6 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             </article>;
         })}</div>
     </>;
-}
-
-/** v3.201 던전 주화 상점: 정복으로 모은 던전 주화를 칠흑 장신구 제작 · 각성, 장비 상자, 포식자 각인으로 바꿉니다. */
-function DungeonCoinShop({ s, send, busy }: PanelProps) {
-    const now = useNow(60_000), hour = growthOffer(s, 'growth1', now), coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1, left = dailyBonusLeft(s, now);
-    const eligible = allItems(s).filter(x => !hunterBlock(x));
-    const [pick, setPick] = useState(''), [line, setLine] = useState(-1);
-    const item = eligible.find(x => x.id === pick) || eligible[0], lines = (item?.affixes || []).map((x, i) => ({ x, i })).filter(({ x }) => !x.rule);
-    const index = lines.some(l => l.i === line) ? line : lines[0]?.i ?? -1;
-    const buy = (id: string, value?: string) => send({ type: 'dungeonShop', id, ...(value ? { value } : {}) });
-    return <section className="panel dungeon-coin-shop">
-        <div className="section-title"><h3>던전 주화 상점</h3><span>보유 {format(coins)} 주화 · 오늘 보너스 정복 {left}/{DAILY_BONUS.clears}회 남음{bonus > 0 ? ` · 주화 보너스 +${Math.round(bonus * 100)}%` : ''}</span></div>
-        <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 주화를 받습니다. 지역 던전은 하루(한국 시간 자정 기준) 처음 {DAILY_BONUS.clears}번의 정복이 보너스라 주화를 더 받습니다(노말 {DAILY_BONUS.coins.normal} · 헬 {DAILY_BONUS.coins.hell} · 나이트메어 {DAILY_BONUS.coins.nightmare}, 던전 공용, 다음 날로 넘어가지 않음, 무릉도장 제외). 보너스 정복에서는 드물게 그 던전 보스의 기술을 이어받는 보스 코어가 나옵니다(환생 · 승천해도 남고, 다시 얻으면 각성). 주화는 환생해도 남습니다.</p>
-        <div className="dungeon-reward-lines">
-            <span><b>코어</b>보스 코어 {ownedCores(s).length}/{Object.keys(BOSS_CORES).length}종 · 칸에 낀 코어는 효과 100%, 나머지는 {Math.round(BOSS_CORE_RULES.resonance * 100)}%(턴 연장 제외) · 세트 {BOSS_CORE_SET.map(b => `${ownedCores(s).length >= b.count ? '✓' : '·'}${b.count}개 ${b.label}`).join(' / ')}</span>
-            {Object.entries(BOSS_CORES).map(([id, c]) => { const e = coreEntry(s.bossCores?.[id]), own = !!e, worn = s.coreSlot === id; const attrs = e?.attrs.map(x => `${ATTRIBUTES.find(t => t.id === x.k)?.name} +${Math.floor(Math.max(1, s.level) * x.f * coreAwaken(e.rank) * (worn ? 1 : BOSS_CORE_RULES.resonance))}(레벨 ×${x.f})`).join(' · '); return <span key={id}><b>{worn ? '장착' : own ? '보유' : '미획득'}</b>{c.name}{own ? ` · 각성 ${e.rank}/${BOSS_CORE_RULES.awakenMax}` : ''} · {c.desc}{attrs ? ` · ${attrs}` : ''} {own && <button className="secondary small" disabled={busy} onClick={() => send({ type: 'equipCore', id: worn ? '' : id })}>{worn ? '빼기' : '장착'}</button>}</span>; })}
-            <CoreForge s={s} send={send} busy={busy}/>
-            {ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id, now); return <span key={b.id}><b>칠흑</b>{b.name} · {b.accessory.name} {o.kind === 'awaken' ? `각성 ${o.rank}/${ONYX.awakenMax}` : '제작'}{o.reason ? ` · ${o.reason}` : ''} <button className="secondary small" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button></span>; })}
-            <span><b>성장</b>최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치 × 시간(환생 {GROWTH_MAX_REBIRTHS}회 미만){(Object.keys(GROWTH_GOODS) as GrowthGood[]).map(g => { const o = growthOffer(s, g, now); return <button key={g} className="secondary small" title={o.reason || `골드 +${format(o.gold)} · 경험치 +${format(o.exp)}`} disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(g)}>{o.hours}시간 · {format(o.price)} (오늘 {o.left}회)</button>; })} <small>{hour.reason || `1시간 = 골드 +${format(hour.gold)} · 경험치 +${format(hour.exp)}`}</small></span>
-            <span><b>코어</b>랜덤 보스 코어 상자(7종 중 하나 · 있으면 각성) <button className="secondary small" disabled={busy || coins < DUNGEON_SHOP.coreBox || (s.dungeonShopDay?.day === dayKey(now) && (s.dungeonShopDay.coreBox || 0) >= 1)} onClick={() => buy('coreBox')}>구매 · {format(DUNGEON_SHOP.coreBox)} (하루 1번)</button></span>
-            <span><b>장비</b>전설 이상 확정 장비 상자(내 레벨 · 고대 · 태초는 일반 드롭 하나와 비슷한 확률) <button className="secondary small" disabled={busy || coins < DUNGEON_SHOP.gearBox} onClick={() => buy('gearBox')}>구매 · {format(DUNGEON_SHOP.gearBox)}</button></span>
-            <span><b>각인</b>{item ? <>
-                <select aria-label="포식자 각인 장비" value={item.id} disabled={busy} onChange={e => { setPick(e.target.value); setLine(-1); }}>{eligible.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
-                <select aria-label="바꿀 옵션" value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{lines.map(({ x, i }) => <option key={i} value={i}>{i + 1}. {x.name}</option>)}</select>
-                <button className="secondary small" disabled={busy || index < 0 || coins < DUNGEON_SHOP.hunterImprint} onClick={() => buy('hunter', `${item.id}|${index}`)}>포식자 각인 · {format(DUNGEON_SHOP.hunterImprint)}</button>
-            </> : '고대 이상이고 포식자 옵션이 없는 장비가 있어야 합니다.'} <small>고른 옵션 한 줄을 포식자(보스 · 사냥감 피해)로 바꿉니다. 장비당 한 줄.</small></span>
-            <QualityGoods s={s} send={send} busy={busy}/>
-        </div>
-    </section>;
-}
-
-/** v3.203 보스 코어 능력치 손보기: 정수로 재설정(종류 · 배율) · 재련(배율만), 또는 주화로 재설정. */
-function CoreForge({ s, send, busy }: PanelProps) {
-    const owned = ownedCores(s), [pick, setPick] = useState(''), [line, setLine] = useState(0);
-    const id = owned.includes(pick) ? pick : s.coreSlot && owned.includes(s.coreSlot) ? s.coreSlot : owned[0];
-    if (!id) return null;
-    const e = coreEntry(s.bossCores?.[id])!, index = Math.min(line, CORE_ATTRS.count - 1), cur = e.attrs[index], essence = s.essence || 0;
-    const cost = coreForgeCost(s, id);
-    const forge = (mode: 'reroll' | 'refine') => send({ type: 'coreForge', id, value: `${mode}|${index}` });
-    return <span><b>손보기</b>
-        <select aria-label="손볼 보스 코어" value={id} disabled={busy} onChange={e => setPick(e.target.value)}>{owned.map(c => <option key={c} value={c}>{BOSS_CORES[c].name}</option>)}</select>
-        <select aria-label="손볼 능력치 줄" value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{Array.from({ length: CORE_ATTRS.count }, (_, i) => { const a = e.attrs[i]; return <option key={i} value={i}>{i + 1}. {a ? `${ATTRIBUTES.find(t => t.id === a.k)?.name} 레벨 ×${a.f}` : '빈 줄'}</option>; })}</select>
-        <button className="secondary small" disabled={busy || essence < cost} onClick={() => forge('reroll')}>재설정 · 정수 {format(cost)}</button>
-        <button className="secondary small" disabled={busy || !cur || essence < cost} onClick={() => forge('refine')}>재련 · 정수 {format(cost)}</button>
-        <button className="secondary small" disabled={busy || (s.dungeonCoins || 0) < DUNGEON_SHOP.coreReroll} onClick={() => send({ type: 'dungeonShop', id: 'coreReroll', value: `${id}|${index}` })}>재설정 · 주화 {format(DUNGEON_SHOP.coreReroll)}</button>
-        {e.forges ? <button className="secondary small" disabled={busy || s.pearls < CORE_FORGE.resetPearls} onClick={() => send({ type: 'coreForgeReset', id })}>비용 초기화 · 세계석 {CORE_FORGE.resetPearls}</button> : null}
-        <small>재설정은 능력치 종류와 배율(레벨 ×{CORE_ATTRS.min}~{CORE_ATTRS.max})을 새로 굴리고(다른 줄과 겹치지 않음), 재련은 종류는 그대로 배율만 다시 굴립니다. 낮아질 수도 있습니다. 정수 비용은 기본 {CORE_FORGE.base}이고 이 코어를 정수로 손볼 때마다 ×{CORE_FORGE.growth}씩 오르며, 세계석 {CORE_FORGE.resetPearls}로 처음 비용으로 되돌릴 수 있습니다(능력치는 그대로). 주화 재설정은 비용을 올리지 않습니다. 보유 정수 {format(essence)}{e.forges ? ` · 이 코어 ${e.forges}회 손봄` : ''}</small>
-    </span>;
-}
-
-/** v3.201 옵션 수치 상품: 고른 장비 · 옵션 줄의 수치를 100%로, 또는 120~150%로. 장비는 착용 · 가방 모두. */
-function QualityGoods({ s, send, busy }: PanelProps) {
-    const coins = s.dungeonCoins || 0;
-    const items = allItems(s).filter(x => qualityLines(x, 'quality100').length || qualityLines(x, 'quality120').length);
-    const [pick, setPick] = useState(''), [line, setLine] = useState(-1);
-    const item = items.find(x => x.id === pick) || items[0];
-    if (!item) return <span><b>수치</b>수치를 올릴 수 있는 옵션이 있는 장비가 없습니다.</span>;
-    const rows = (item.affixes || []).map((x, i) => ({ x, i, q: lineQuality(item, i) })).filter(r => r.q !== null && r.q < 1.2 - 1e-6);
-    const index = rows.some(r => r.i === line) ? line : rows[0]?.i ?? -1, q = lineQuality(item, index) ?? 0;
-    const ok100 = qualityLines(item, 'quality100').includes(index), ok120 = qualityLines(item, 'quality120').includes(index);
-    return <span><b>수치</b>
-        <select aria-label="수치 올릴 장비" value={item.id} disabled={busy} onChange={e => { setPick(e.target.value); setLine(-1); }}>{items.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
-        <select aria-label="수치 올릴 옵션" value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{rows.map(r => <option key={r.i} value={r.i}>{r.i + 1}. {r.x.name} · {Math.round(r.q! * 100)}%</option>)}</select>
-        <button className="secondary small" disabled={busy || !ok100 || coins < QUALITY_PRICE.quality100} onClick={() => send({ type: 'dungeonShop', id: 'quality100', value: `${item.id}|${index}` })}>100%로 · {format(QUALITY_PRICE.quality100)}</button>
-        <button className="secondary small" disabled={busy || !ok120 || coins < QUALITY_PRICE.quality120} onClick={() => send({ type: 'dungeonShop', id: 'quality120', value: `${item.id}|${index}` })}>120~150%로 · {format(QUALITY_PRICE.quality120)}</button>
-        <small>지금 {Math.round(q * 100)}%. 100%는 보통 최고 굴림, 120~150%는 보통 최고를 넘습니다(계승 장비 최고까지). 규칙 · 고정 · 장식 옵션은 제외. 재련하면 다시 보통 범위로 굴립니다.</small>
-    </span>;
 }
 
 /** v27.86 랜덤게임 입장 카드. v27.91 두 칸 구성: 왼쪽 규칙 세 줄, 오른쪽 목표 웨이브 칩(받는 판돈 표시)과 시작 버튼. 판돈 표는 목표까지 모두 깼을 때 받는 양(연구 배율 포함). */
