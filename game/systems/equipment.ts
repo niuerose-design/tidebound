@@ -119,7 +119,7 @@ export function tuneOnyx(item: Item) {
  * v3.82 유물 옵션 이식: 고정 수치(공격 · 체력 · 방어 · 마나)의 이득 쪽은 장비 등급 감쇠를 받는데, 이식 줄은 유물(전설)의 감쇠 .85를 받아
  * 태초 · 고대에서 옮긴 이득이 원래보다 1.4~1.5배 커졌습니다. 이식할 때 '원래 장비 감쇠 ÷ 유물 감쇠'를 곱해 원래 장비에서와 같은 실효 수치로 맞춥니다.
  * 손해 쪽(음수)은 감쇠를 받지 않아 그대로입니다. srcRarity는 원래 장비 등급(맞춘 표시).
- * v3.215 레벨 환산: 유물 레벨보다 높은 장비에서 옮긴 고정 수치 줄은 (유물 레벨 + 2) ÷ (원래 레벨 + 2)로 낮춰 새깁니다(손해 쪽도 같이).
+ * v3.217 레벨 환산: 유물 레벨보다 높은 장비에서 옮긴 고정 수치 줄은 (유물 레벨 + 2) ÷ (원래 레벨 + 2)로 낮춰 새깁니다(손해 쪽도 같이).
  * 레벨 올리기가 이식 줄도 (새 레벨 + 2) ÷ (옛 레벨 + 2)배 하므로, 전에는 낮은 레벨 유물에 Lv.100 줄을 옮긴 뒤 유물 레벨을 올리면 수치가 수십 배로 부풀었습니다.
  */
 export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: number, srcLevel?: number, relicLevel?: number): ItemAffix {
@@ -134,7 +134,7 @@ export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: n
     return scaleImprintPercent({ ...affix, value: fix(affix.stat, affix.value, true)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2, FLAT_GEAR_STATS.has(affix.stat2 || '')) } : {}), srcRarity }, srcRarity, relicRarity);
 }
 /**
- * v3.215 유물 이식 줄 상한: 원래 등급 장비가 유물과 같은 레벨에서 낼 수 있는 가장 큰 고정 수치(위력 굴림 ×1.2 · 수치 굴림 최고 HEIR_ROLL_TOP)를 이식 환산한 값.
+ * v3.217 유물 이식 줄 상한: 원래 등급 장비가 유물과 같은 레벨에서 낼 수 있는 가장 큰 고정 수치(위력 굴림 ×1.2 · 수치 굴림 최고 HEIR_ROLL_TOP)를 이식 환산한 값.
  * 레벨 환산이 없던 때 낮은 레벨 유물에 높은 레벨 줄을 옮기고 유물 레벨을 올려 부푼 줄을 불러올 때 이 값으로 줄입니다. 늘리지는 않습니다.
  */
 export function capRelicImprint(x: ItemAffix, relic: Pick<Item, 'rarity' | 'level'>): ItemAffix {
@@ -177,12 +177,12 @@ export function fixRelicImprints(s: Pick<State, 'inventory' | 'equipment'>) {
         item.affixes = item.affixes.map(x => x.srcRarity === undefined ? imprintAffix(x, Math.max(item.rarity, guessImprintRarity(x, item.rarity)), item.rarity) : x);
         // v3.141 원래 등급이 기록된 줄(v3.82~v3.139 이식)의 비율 옵션을 한 번 유물 품질로 맞춥니다.
         item.affixes = item.affixes.map(x => x.pctFixed || x.srcRarity === undefined ? x : scaleImprintPercent(x, x.srcRarity, item.rarity));
-        // v3.215 레벨 올리기로 부푼 고정 수치 줄을 지금 유물 레벨의 최대치로 줄입니다(넘는 줄만, 여러 번 불러도 같음).
+        // v3.217 레벨 올리기로 부푼 고정 수치 줄을 지금 유물 레벨의 최대치로 줄입니다(넘는 줄만, 여러 번 불러도 같음).
         item.affixes = item.affixes.map(x => capRelicImprint(x, item));
     }
 }
 /**
- * v3.66 계승(원시 각성 · 태초 계승 · v3.215 계승 드롭): 옵션은 최고 굴림으로 고정, 환생해도 남고 위력이 환생마다 오릅니다.
+ * v3.66 계승(원시 각성 · 태초 계승 · v3.217 계승 드롭): 옵션은 최고 굴림으로 고정, 환생해도 남고 위력이 환생마다 오릅니다.
  * 부위마다 종류별 1개: 같은 부위의 예전 계승 장비는 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐). 돌아간 장비를 돌려줍니다.
  * item은 가방이나 장착 칸에 있어야 위력이 맞춰집니다(syncRelicPower).
  */

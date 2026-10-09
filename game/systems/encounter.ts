@@ -106,7 +106,7 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
     syncOrnateName(item);
-    // v3.215 계승 드롭: 고대 · 태초가 아주 낮은 확률로 원시 고대 · 계승 태초인 채로 나옵니다. 그 부위에 같은 종류가 이미 있으면 판정하지 않습니다.
+    // v3.217 계승 드롭: 고대 · 태초가 아주 낮은 확률로 원시 고대 · 계승 태초인 채로 나옵니다. 그 부위에 같은 종류가 이미 있으면 판정하지 않습니다.
     // 계승 장비는 자동 정리 · 가방 가득 참 판매를 받지 않고 늘 가방에 들어갑니다.
     const heir = rarity === 5 ? 'ancient' as const : rarity === 6 ? 'primal' as const : null;
     if (heir && ODDS.drop.heir[heir] > 0 && !ownedItems(s).some(x => x?.heir === heir && x.slot === slot) && rng() < ODDS.drop.heir[heir]) {

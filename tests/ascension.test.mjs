@@ -770,7 +770,7 @@ test('v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3
     }
     assert.ok(drop.rod > drop.coat, `weapon ${drop.rod} should outrank coat ${drop.coat}`); assert.ok(drop.rod > drop.charm && drop.rod > drop.cape);
 });
-test('v3.215 relic imprint: lines from higher-level gear are scaled to the relic level, so levelling the relic cannot inflate them; inflated old lines are capped on load', async () => {
+test('v3.217 relic imprint: lines from higher-level gear are scaled to the relic level, so levelling the relic cannot inflate them; inflated old lines are capped on load', async () => {
     const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations'), Bal = await L.load('data/balance');
     const s = newState(0); s.level = 100; s.gold = 1e15;
     const relic = { id: 'r', name: 'r', slot: 'coat', style: 'balanced', rarity: 3, level: 1, power: 8, relic: 'soulCoat', locked: true, affixes: [] };
@@ -794,7 +794,7 @@ test('v3.215 relic imprint: lines from higher-level gear are scaled to the relic
     assert.deepEqual(old.affixes[1], fine, 'normal line untouched');
     const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'idempotent');
 });
-test('v3.215 heir drops: ancient/primal drops can come pre-inherited (rare), never replacing an heir already in that slot', async () => {
+test('v3.217 heir drops: ancient/primal drops can come pre-inherited (rare), never replacing an heir already in that slot', async () => {
     const Enc = await L.load('systems/encounter'), Od = await L.load('data/odds'), { SERVER_ODDS } = await L.load('secret/odds');
     assert.ok(SERVER_ODDS.drop.heir.ancient > 0 && SERVER_ODDS.drop.heir.ancient <= .01 && SERVER_ODDS.drop.heir.primal > 0 && SERVER_ODDS.drop.heir.primal <= .02);
     const s = newState(0); s.level = 100; s.rebirths = 10; s.permanent.inventory = 8; s.inventory = []; s.primalDropPity = Ec.PRIMAL_DROP_PITY - 1;

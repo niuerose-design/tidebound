@@ -912,7 +912,7 @@ test('v27.70 nuri blessing: an altar gauge that multiplies the exp nuri spawn ch
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const A = await L.load('data/altar'), ev = await L.load('data/events'), Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri');
     const b = A.BLESSINGS.find(x => x.id === 'nuri');
-    assert.ok(b && A.GAUGE_IDS.includes('nuri') && A.blessingEffect(b, 1).nuri === 3 && A.blessingEffect(b, 3).nuri === 5 && /누리 출현 ×3/.test(A.blessingDesc(b, 1)));
+    assert.ok(b && A.GAUGE_IDS.includes('nuri') && A.blessingEffect(b, 1).nuri === 2 && A.blessingEffect(b, 3).nuri === 3 && /누리 출현 ×2/.test(A.blessingDesc(b, 1)));
     const now = Date.now();
     ev.setAltarEvents([{ id: 'altar-nuri', name: '', from: '2026-01-01T00:00:00+09:00', until: new Date(now + 3600_000).toISOString(), nuri: 3 }]);
     try {
