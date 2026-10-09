@@ -2,7 +2,7 @@ import { tuneActiveSkills, awakenSkill } from './skill-balance';
 import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
 import { SKILL_FORMULA } from './balance';
-import { JOBS, lineageOf, type Job } from './classes';
+import { JOBS, LINEAGES, lineageOf, worldOf, AZEROTH_MASTERY_SCALE, type Job } from './classes';
 import { subRoleOf } from './roles';
 import { PROGRESSION } from './progression';
 import { EXPANSION_SKILLS } from './expansion';
@@ -349,3 +349,11 @@ export function alignJobMastery(jobs: Job[]) {
     }
 }
 alignJobMastery(JOBS);
+// v3.222 공개 아제로스 계보(참모 계보)도 아제로스 규칙: 숙련 기준을 맞춘 뒤 직업 숙달 목표 · 그 직업 스킬의 숙련 단계를 AZEROTH_MASTERY_SCALE배로.
+// 비밀 아제로스 계보는 서버가 game/secret/register.ts에서 같은 일을 합니다.
+for (const job of JOBS) {
+    if (worldOf(LINEAGES.find(l => l.id === lineageOf(job))) !== 'azeroth') continue;
+    job.masteryTarget = (job.masteryTarget || 0) * AZEROTH_MASTERY_SCALE;
+    // 제약형(최대 숙련에서 AP 0 이하, 지휘 체계 계열)은 이미 천만 단위라 그대로 둡니다.
+    for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones && !isConstraintSkill(sk)) sk.masteryMilestones = sk.masteryMilestones.map(n => n * AZEROTH_MASTERY_SCALE);
+}

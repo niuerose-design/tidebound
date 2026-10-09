@@ -65,6 +65,6 @@ export const SPECIAL_SKILLS: Skill[] = [
     {id: 'tentacleBarrage', name: '폭류권', desc: '(물리 공격) × 1.4 피해. 45% 위력으로 추가 공격 1회.', type: 'active', level: 40, job: 'krakenkin', chance: 0.22, cooldown: 6, multiplier: 1.4, extraAttacks: 1, extraAttackMultiplier: 0.45, cost: 6, manaCost: 0, rankEffects: {chanceIncrease: 0.02, cooldownReduction: 0, multiplierScale: 0.05, manaReduction: 0}, masteryMilestones: [4500, 22500, 84000, 225000]},
 ];
 /** 제약 계보(공개). 玄(glyphMonk)도 이 계보입니다. v3.135 히든 망인(undead, game/secret)도 이 계보로 돌아왔습니다. */
-/** v3.219 참모 계보(공개): 계급장으로 들어오는 교차 계보. v3.222 세계 아제로스로 옮겼습니다(전직 화면의 아제로스 장). */
+/** v3.219 참모 계보(공개): 계급장으로 들어오는 교차 계보. v3.222 세계 아제로스로 옮겼습니다(전직 화면의 아제로스 장). 숙련 ×10 아제로스 규칙은 data/skills.ts가 적용합니다. */
 export const STAFF_LINEAGE: Lineage = { id: 'staff', name: '참모 계보', tree: 'support', world: 'azeroth', summary: '계급장으로 들어와 지원 스킬로 같은 계정의 다른 분신을 강하게 하는 계보입니다.' };
 export const RESTRAINT_LINEAGE: Lineage = { id: 'restraint', name: '제약 계보', tree: 'mystery', summary: '일부러 큰 제약을 걸고 그 대가로 강해지는 특수 직업입니다.' };

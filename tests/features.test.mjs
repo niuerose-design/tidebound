@@ -75,7 +75,7 @@ test('v3.219 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; s
  s.job='quartermaster';s.unlockedJobs.push('quartermaster');for(const id of ['supplyConvoy','militaryProcurement','fieldManual','commandStructure'])s.learned[id]=1;
  s.skills=['supplyConvoy','militaryProcurement','commandStructure'];
  assert.deepEqual(Su.supportOf(s),{exp:.03,gold:.03});
- s.skillPractice.supplyConvoy=225000;assert.equal(Su.supportOf(s).exp,.08);s.skillPractice.supplyConvoy=22500;assert.equal(Su.supportOf(s).exp,.055);
+ s.skillPractice.supplyConvoy=2250000;assert.equal(Su.supportOf(s).exp,.08);s.skillPractice.supplyConvoy=225000;assert.equal(Su.supportOf(s).exp,.055); // v3.222 아제로스 규칙: 숙련 단계 ×10
  assert.ok(Math.abs(Su.commandBonus(s)-.08)<1e-9,'two support skills x 4%');
  const atk=St.stats(s).attack;s.skills=['commandStructure'];assert.ok(St.stats(s).attack<atk,'command raises own attack');
  s.skills=['supplyConvoy'];s.job='fisher';assert.deepEqual(Su.supportOf(s),{},'other lineage gives nothing');assert.equal(Su.commandBonus(s),0);
@@ -93,7 +93,7 @@ test('v3.219 군의관: hp · mana · regen support (other slots only); duel sna
  const j=C.jobById('fieldMedic');assert.ok(j&&j.tier===3&&j.lineage==='staff'&&j.requiresRank==='ssg');
  const s=newState(0);s.level=40;s.job='fieldMedic';s.unlockedJobs.push('fieldMedic');for(const id of ['bloodSupply','stimulantKit','fieldDressing','triage'])s.learned[id]=1;
  s.skills=['bloodSupply','stimulantKit','fieldDressing','triage'];assert.deepEqual(Su.supportOf(s),{hp:.02,mana:.02,hpRegen:.05});assert.ok(Math.abs(Su.commandBonus(s)-.12)<1e-9);
- s.skillPractice.bloodSupply=225000;assert.equal(Su.supportOf(s).hp,.05);
+ s.skillPractice.bloodSupply=2250000;assert.equal(Su.supportOf(s).hp,.05);
  assert.deepEqual(Su.mergeSupport([{hp:.2,hpRegen:.5}]),{hp:.05,hpRegen:.15},'capped per effect');
  const t=newState(0);t.level=30;t.hpRegen=0;const a0=St.stats(t);t.support={hp:.05,mana:.05,hpRegen:.15};const a1=St.stats(t);
  assert.ok(a1.hp>a0.hp&&a1.mana>a0.mana,'hp and mana rise');assert.ok(Math.abs(a1.hp/a0.hp-1.05)<.01);
@@ -105,7 +105,7 @@ test('v3.219 작전참모 · 화력참모: rank 소위 + either 3rd-tier mastery
   const s=newState(0);s.level=55;s.rank={exp:R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id==='lt2')],perks:{}};const any=()=>P.jobRequirements(s,j).find(r=>r.label.includes('보급관 또는 군의관'));
   assert.ok(any()&&!any().met);s.jobMastery.fieldMedic=300;assert.ok(any().met,'either branch counts');}
  const o=newState(0);o.level=55;o.job='operationsOfficer';o.unlockedJobs.push('operationsOfficer');for(const id of ['tacticalMap','operationPlan','personnelRecord'])o.learned[id]=1;o.skills=['tacticalMap','operationPlan','personnelRecord'];
- assert.deepEqual(Su.supportOf(o),{ap:1,boss:.02,rank:.03});o.skillPractice.tacticalMap=1e6;assert.equal(Su.supportOf(o).ap,2);
+ assert.deepEqual(Su.supportOf(o),{ap:1,boss:.02,rank:.03});o.skillPractice.tacticalMap=1e7;assert.equal(Su.supportOf(o).ap,2);
  const f=newState(0);f.level=55;f.job='fireSupportOfficer';f.unlockedJobs.push('fireSupportOfficer');for(const id of ['armorPiercingDoctrine','concentratedFire'])f.learned[id]=1;f.skills=['armorPiercingDoctrine','concentratedFire'];
  assert.deepEqual(Su.supportOf(f),{penetration:.02,critDamage:.05});
  // 받는 쪽: AP · 보스 · 관통 · 치명 피해, 결투 스냅샷에서는 빠집니다.
