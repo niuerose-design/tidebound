@@ -65,6 +65,29 @@ test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22
  s.abyssBest=150;assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');s.abyssBest=200;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again');
  s.abyssBest=0;assert.deepEqual(N.collectNews(s,86_400_000*5),[],'a lower best (after ascension) never announces');
 });
+test('v3.215 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; support skills give other slots exp · gold · mastery (max per effect, capped), command boosts self',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank'),St=await L.load('systems/stats'),M=await L.load('systems/mastery');
+ const j=C.jobById('quartermaster');assert.ok(j&&j.tier===3&&j.lineage==='staff'&&j.requiresRank==='ssg'&&!j.parent);
+ const s=newState(0);s.level=40;const req=()=>P.jobRequirements(s,j);
+ assert.ok(req().some(r=>r.label.includes('하사')&&!r.met));s.rank={exp:R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id==='ssg')],perks:{}};assert.ok(req().find(r=>r.label.includes('하사')).met);
+ assert.ok(req().some(r=>r.label.includes('숙달한 직업 3개')));
+ // 장착한 지원 스킬: 숙련 0단계 3% → 마지막 단계 8%, 참모 계보가 아니면 지원 없음.
+ s.job='quartermaster';s.unlockedJobs.push('quartermaster');for(const id of ['supplyConvoy','militaryProcurement','fieldManual','commandStructure'])s.learned[id]=1;
+ s.skills=['supplyConvoy','militaryProcurement','commandStructure'];
+ assert.deepEqual(Su.supportOf(s),{exp:.03,gold:.03});
+ s.skillPractice.supplyConvoy=225000;assert.equal(Su.supportOf(s).exp,.08);s.skillPractice.supplyConvoy=22500;assert.equal(Su.supportOf(s).exp,.055);
+ assert.ok(Math.abs(Su.commandBonus(s)-.08)<1e-9,'two support skills x 4%');
+ const atk=St.stats(s).attack;s.skills=['commandStructure'];assert.ok(St.stats(s).attack<atk,'command raises own attack');
+ s.skills=['supplyConvoy'];s.job='fisher';assert.deepEqual(Su.supportOf(s),{},'other lineage gives nothing');assert.equal(Su.commandBonus(s),0);
+ // 합치기: 효과별 최고값, 상한 8%.
+ assert.deepEqual(Su.mergeSupport([{exp:.05,gold:.03},{exp:.07},undefined,{mastery:.5}]),{exp:.07,gold:.03,mastery:.08});
+ // 받는 쪽: 경험치 · 골드 · 숙련 배율에 곱하고, 결투 스냅샷 능력치는 그대로입니다.
+ const t=newState(0),e0=St.expMultiplier(t),g0=St.goldMultiplier(t),m0=M.masteryResearchHundredths(t),snap0=JSON.stringify(St.snapshot(t).stats);
+ t.support={exp:.05,gold:.04,mastery:.06};
+ assert.ok(Math.abs(St.expMultiplier(t)/e0-1.05)<1e-9);assert.ok(Math.abs(St.goldMultiplier(t)/g0-1.04)<1e-9);assert.equal(M.masteryResearchHundredths(t),Math.round(((1+m0/100)*1.06-1)*100));
+ assert.equal(JSON.stringify(St.snapshot(t).stats),snap0,'duel snapshot unaffected');
+ t.level=60;act(t,{type:'rebirth'},1000);assert.deepEqual(t.support,{exp:.05,gold:.04,mastery:.06},'kept through rebirth until the next sync');
+});
 test('v3.212 boss core news: a new core and a full awakening (rank 5) announce once a day; saves marked before v3.212 stay quiet',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),B=await L.load('data/boss-core');
  const s=newState(0);s.bossCores={grotto:{rank:0,attrs:[]}};N.collectNews(s,0);delete s.newsMark.cores;delete s.newsMark.coreFull;

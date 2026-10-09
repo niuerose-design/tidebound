@@ -3,16 +3,16 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 259); assert.equal(new Set(JOBS.map(j => j.id)).size, 259);
+    assert.equal(JOBS.length, 260); assert.equal(new Set(JOBS.map(j => j.id)).size, 260); // v3.215 참모 계보 보급관 +1
     // v3.135 나이트워커 2~5차 · 골령술사(5개)를 지우고 1차 망인만 남겼습니다. v3.138 미하일 계보 5개 · 성벽 기사를 지웠습니다. v3.153 몬스터 도감 독자 · v3.155 빙결 결박사 · v3.156 보물 사냥꾼 · v3.199 청빈 수도승을 지웠습니다.
     // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
-    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 232);
+    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 233);
     // v3.70 능력치 수련 I~III 18개(계열마다 3개, 수련 계보).
     assert.equal(JOBS.filter(j => /^(str|dex|int|vit|wis|luk)Training[123]$/.test(j.id)).length, 18);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 50, magic: 46, defense: 35, status: 32, hybrid: 37, support: 43, mystery: 16 });
+    assert.deepEqual(count, { physical: 50, magic: 46, defense: 35, status: 32, hybrid: 37, support: 44, mystery: 16 }); // v3.215 보급관(support)
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {
@@ -52,8 +52,8 @@ test('Job counts stay close: trees within 1.6× of each other (??? 14 or more), 
     assert.ok(Math.max(...sizes) <= Math.min(...sizes) * 1.6, sizes.join(','));
     assert.ok(JOBS.filter(j => j.tree === 'mystery').length >= 14);
     // v3.25 해커 계보는 단계적으로 늘리는 중이라(해커 → 화이트 해커, 3단계에 블랙 해커) 직업 수 검사에서 뺍니다.
-    // v3.65 특수 계보(제약 · 방랑 · 제로)는 일부러 짧습니다.
-    for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent') && !['fisher', 'hacker', 'restraint', 'wander', 'zero'].includes(l.id))) {
+    // v3.65 특수 계보(제약 · 방랑 · 제로)는 일부러 짧습니다. v3.215 참모 계보(staff)는 3차부터 단계적으로 늘립니다.
+    for (const l of LINEAGES.filter(l => !l.id.endsWith('-independent') && !['fisher', 'hacker', 'restraint', 'wander', 'zero', 'staff'].includes(l.id))) {
         const jobs = JOBS.filter(j => lineageOf(j) === l.id);
         // v25.26 외길 계보는 의도적으로 1~3차 세 직업입니다.
         if (jobs.every(j => j.role?.startsWith('외길'))) { assert.ok(jobs.length === 3 || jobs.length === 4, l.id); assert.ok([3, 5].includes(Math.max(...jobs.map(j => j.tier))), `${l.id} ends at tier 3 or 5`); continue; }

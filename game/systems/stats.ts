@@ -18,6 +18,7 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
+import { supportMultiplier, commandBonus } from './support';
 import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable } from './progression';
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
@@ -199,6 +200,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     mul('hp', [['job', mult(j.hp)], ['research', 1 + (s.permanent.hp || 0) * .08], ['achievement', 1 + feats.hp], ['account', account]]);
     mul('attack', [['job', mult(j.attack)], ['research', 1 + (s.permanent.attack || 0) * .05], ['achievement', 1 + feats.attack], ['account', account]]);
     mul('magic', [['job', mult(j.magic)], ['research', 1 + (s.permanent.magicAttack || 0) * .05], ['achievement', 1 + feats.magic], ['account', account]]);
+    // v3.215 참모 계보 지휘 체계: 장착한 지원 스킬 수만큼 두 공격 배율.
+    const command = commandBonus(s);
+    if (command > 0) { mul('attack', [['skills', 1 + command]]); mul('magic', [['skills', 1 + command]]); }
     mul('defense', [['job', mult(j.defense)], ['achievement', 1 + feats.defense]]);
     mul('resist', [['job', mult(j.resist)], ['achievement', 1 + feats.resist]]);
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));
@@ -311,10 +315,10 @@ export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows
 /** v3.69 수련 직업으로 사냥할 때의 처치 보상 배율(data/training.ts). */
 const jobReward = (s: State) => jobById(s.job)?.rewardScale ?? 1;
 /** 골드 배율. 힘의 길 서약은 처치 골드를 함께 올립니다(서약이 없거나 난이도 하한 미만이면 ×1). */
-export const goldMultiplier = (s: State, a = stats(s)) => (1 + a.goldBonus) * jobReward(s) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
+export const goldMultiplier = (s: State, a = stats(s)) => (1 + a.goldBonus) * jobReward(s) * accountExpGold(s) * supportMultiplier(s, 'gold') * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
 // v3.23 순풍은 다른 경험치 보너스와 더합니다.
 /** v3.210 LV1 모험가는 경험치 ×0. */
-export const expMultiplier = (s: State, a = stats(s)) => lv1Active(s) ? 0 : Math.max(0, 1 + a.expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
+export const expMultiplier = (s: State, a = stats(s)) => lv1Active(s) ? 0 : Math.max(0, 1 + a.expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * supportMultiplier(s, 'exp') * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 실제 적중률 = 명중 − 상대 회피 + 속도 보정(±6%p). v26.7 magical이면 회피를 magicEvasionScale만 적용하고 속도 보정은 플러스만 받습니다. */
 export const hitChance = (a: Stats, b: Stats, magical = false) => {

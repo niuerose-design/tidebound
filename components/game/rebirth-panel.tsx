@@ -21,6 +21,7 @@ import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
 import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, ROUGH, RESTRAINT, hasVows } from '@/game/systems/vows';
 import { BonusList } from './inventory-panel';
+import { SUPPORT_EFFECTS, SUPPORT_LABELS, supportOf, isStaff } from '@/game/systems/support';
 import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, VAULT_ONYX_CAP, type VaultInfo } from '@/game/data/account';
 import { ownedOnyx } from '@/game/data/onyx';
 import { useEffect, useState as useLocalState } from 'react';
@@ -80,7 +81,13 @@ export function AccountPanel({ s }: { s: State }) {
     const rows = accountBonusRows(s), slots = s.account?.slots || [], openSlots = Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).filter(n => slotUnlocked(s.account, n)).length;
     return <section className="panel vow-panel account-panel">
         <div className="section-title"><h2>계정 보너스</h2><span>슬롯 {slots.length || 1}/{openSlots} 사용 중 · 모든 슬롯 합산</span></div>
-        <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}</ul>
+        <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}
+            {/* v3.215 참모 지원: 다른 분신이 주는 지원(받는 값)과, 참모 계보라면 내가 주는 지원. */}
+            {(() => { const got = SUPPORT_EFFECTS.filter(e => s.support?.[e]), mine = isStaff(s) ? supportOf(s) : {}, give = SUPPORT_EFFECTS.filter(e => mine[e]);
+                const text = (m: Partial<Record<string, number>>, list: string[]) => list.map(e => `${SUPPORT_LABELS[e as keyof typeof SUPPORT_LABELS]} +${Math.round((m[e] || 0) * 1000) / 10}%`).join(' · ');
+                return <>{(got.length > 0 || isStaff(s)) && <li key="support-in"><div><strong>분신 지원(받음)</strong><small>참모 계보 분신</small></div><b>{got.length ? text(s.support!, got) : '없음'}</b><small>효과별 가장 높은 지원 하나 · 다른 분신에 반영까지 최대 10분</small></li>}
+                    {isStaff(s) && <li key="support-out"><div><strong>분신 지원(줌)</strong><small>이 캐릭터의 지원 스킬</small></div><b>{give.length ? text(mine, give) : '장착한 지원 스킬 없음'}</b><small>다른 분신에게만 · 자신은 지휘 체계로 강해짐</small></li>}</>; })()}
+        </ul>
     </section>;
 }
 /** v25.13 계정 공유 금고: 슬롯 사이에서 세계석·정수를 옮깁니다. 2번 슬롯이 열린 뒤에 보입니다. */

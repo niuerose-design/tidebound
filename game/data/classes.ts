@@ -10,7 +10,7 @@ import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
 import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
 import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
 import { MAPLE_JOB_FLAVOR, MAPLE_LINEAGE_SUMMARY } from './maple-flavor';
-import { SPECIAL_JOBS, RESTRAINT_LINEAGE } from './specials';
+import { SPECIAL_JOBS, RESTRAINT_LINEAGE, STAFF_LINEAGE } from './specials';
 import { TRAINING_JOBS, RETIRED_TRAINING } from './training';
 import { STAT_TRAINING_JOBS } from './stat-training';
 /** 전직 전 기본 직업(무직) id. 세이브에 저장되는 값이라 바꾸지 않습니다. */
@@ -381,6 +381,7 @@ export const LINEAGES: Lineage[] = [
     { id: 'voyageScribe', name: '견습 기록사 계보', tree: 'support', summary: '경험치 보너스가 곧 피해가 되는(렐릭의 힘) 경험치 유틸 계보입니다.' },
     { id: 'bossNaturalist', name: '거수 생태학자 계보', tree: 'support', summary: '보스와 지정 몬스터의 숙련을 빠르게 쌓는 계보입니다.' },
     { id: 'bard', name: '방랑 음유시인 계보', tree: 'support', summary: '가속·경험치·보상으로 성장을 보조하는 계보입니다.' },
+    STAFF_LINEAGE,
     independent('support'),
     RESTRAINT_LINEAGE,
     independent('mystery'),
