@@ -456,3 +456,17 @@ test('v3.207 abyss cores: gained/awakened by first clearing floors (best record)
  const u=newState(0);u.dungeonCoins=D.DUNGEON_SHOP.coreBox*30;for(let d=0;d<30;d++)act(u,{type:'dungeonShop',id:'coreBox'},d*86400000,()=>.999);assert.ok(Object.keys(u.bossCores).every(id=>C.REGION_CORE_IDS.includes(id)),'box never gives abyss cores');
  const old=newState(0);old.abyssBest=41;const m=M.migrateState(JSON.parse(JSON.stringify(old)));assert.equal(m.bossCores.abyssTrainee.rank,5);assert.equal(m.bossCores.abyssMaster.rank,0);
 });
+
+test('v3.209 LV1 adventurer vow (test): start now at Lv.1, no exp/levels, level gates ignored, no rebirth, exclusive, quit restores, best abyss floor recorded and kept',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame();
+ const s=newState(0);s.level=60;s.exp=1234;s.rebirths=0;s.attributes={...s.attributes,str:80};s.statPoints=7;s.running=false;
+ act(s,{type:'lv1Vow',id:'start'},0);assert.equal(s.level,1);assert.equal(s.exp,0);assert.equal(s.attributes.str,newState(0).attributes.str);assert.ok(s.vows.lv1);
+ assert.throws(()=>act(s,{type:'lv1Vow',id:'start'},0),/이미/);
+ const E=await L.load('systems/encounter');s.exp=99999;E.gainLevels(s);assert.equal(s.level,1);assert.equal(s.exp,0);
+ assert.equal(expMultiplier(s),0);
+ const M=await L.load('systems/meta');assert.equal(M.levelGateOk(s,90),true,'level gates ignored');
+ assert.throws(()=>act(s,{type:'rebirth'},0),/LV1 모험가/);
+ act(s,{type:'lv1Vow',id:'quit'},0);assert.equal(s.level,60);assert.equal(s.exp,1234);assert.equal(s.attributes.str,80);assert.equal(s.statPoints,7);assert.equal(s.vows,undefined);
+ const t=newState(0);t.vows={rough:1};assert.throws(()=>act(t,{type:'lv1Vow',id:'start'},0),/다른 서약/);
+ const u=newState(0);act(u,{type:'lv1Vow',id:'start'},0);u.lv1AbyssBest=7;const {restartLife}=await L.load('systems/actions/lifecycle');act(u,{type:'lv1Vow',id:'quit'},0);restartLife(u,10);assert.equal(u.lv1AbyssBest,7,'record kept across lives');
+});

@@ -11,7 +11,8 @@ export const rebirthLevel = (s: Pick<State, 'rebirths'>) => {
 };
 /** v27.55 환생 이 횟수부터 사냥터·던전의 레벨 제한이 없습니다(환생 횟수 조건은 그대로). */
 export const LEVEL_GATE_FREE_REBIRTHS = 5;
-export const levelGateOk = (s: Pick<State, 'level' | 'rebirths'>, level: number) => s.rebirths >= LEVEL_GATE_FREE_REBIRTHS || s.level >= level;
+/** v3.209 LV1 모험가 서약 중에는 레벨 제한을 보지 않습니다. */
+export const levelGateOk = (s: Pick<State, 'level' | 'rebirths'> & Partial<Pick<State, 'vows'>>, level: number) => s.rebirths >= LEVEL_GATE_FREE_REBIRTHS || s.level >= level || !!s.vows?.lv1;
 /** v3.23 순풍 기본 경험치 보너스(+50%). 실제 값은 tailwindExp. */
 export const TAILWIND_EXP = .5;
 /** 순풍 경험치 보너스: +50% + 초심자 보너스 10%p/단계. 정수 연산 뒤 나눠 0단계는 정확히 0.5입니다. */

@@ -185,7 +185,7 @@ export function skillUnlockReady(s: State, sk: Skill) { return (!sk.unlockJobMas
 /** v25 숙련 Lv.1 전에는 효과를 감추는 기술인지. */
 export function skillVeiled(s: State, sk: Skill) { return !!sk.veiled && skillMastery(s, sk.id) < 1; }
 /** 계승한 스킬은 환생 뒤 레벨이 낮아도 쓸 수 있습니다(레벨 조건 면제). 환생 횟수·직업 숙련 해금 조건은 그대로입니다. */
-function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id)) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
+function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id) || !!s.vows?.lv1) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
 /** 스킬을 장착할 수 없는 이유. 쓸 수 있으면 빈 문자열입니다. */
 export function skillBlockReason(s: State, id: string) {
     const sk = skillById(id);

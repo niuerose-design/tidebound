@@ -10,7 +10,7 @@ import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, st
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
 import { researchRank, MANA_RESEARCH_PER, researchById } from '../data/economy';
-import { roughReward, roughGear, roughHeal, restraintExp, vowBadges } from './vows';
+import { roughReward, roughGear, roughHeal, restraintExp, vowBadges, lv1Active } from './vows';
 import { sproutExp, sproutCount } from '../data/sprout';
 import { ascensionEarlyExp } from '../data/ascension';
 import { skillById } from '../data/skills';
@@ -313,7 +313,8 @@ const jobReward = (s: State) => jobById(s.job)?.rewardScale ?? 1;
 /** 골드 배율. 힘의 길 서약은 처치 골드를 함께 올립니다(서약이 없거나 난이도 하한 미만이면 ×1). */
 export const goldMultiplier = (s: State, a = stats(s)) => (1 + a.goldBonus) * jobReward(s) * accountExpGold(s) * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
 // v3.23 순풍은 다른 경험치 보너스와 더합니다.
-export const expMultiplier = (s: State, a = stats(s)) => Math.max(0, 1 + a.expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
+/** v3.209 LV1 모험가는 경험치 ×0. */
+export const expMultiplier = (s: State, a = stats(s)) => lv1Active(s) ? 0 : Math.max(0, 1 + a.expBonus + (tailwindActive(s) ? tailwindExp(s) : 0)) * jobReward(s) * accountExpGold(s) * focusExp(s) * (1 + restraintExp(s)) * sproutExp(sproutCount(s)) * ascensionEarlyExp(s) * (s.event?.exp || 1);
 export const dungeonGoldMultiplier = (s: State) => 1 + (stats(s).dungeonGoldBonus || 0);
 /** 실제 적중률 = 명중 − 상대 회피 + 속도 보정(±6%p). v26.7 magical이면 회피를 magicEvasionScale만 적용하고 속도 보정은 플러스만 받습니다. */
 export const hitChance = (a: Stats, b: Stats, magical = false) => {

@@ -44,6 +44,7 @@ export function Stats({ s }: { s: State }) {
         <Block title="던전" rows={[
             ['던전 정복 합계', `${format(clears.reduce((a, [, n]) => a + n, 0))}회`],
             ['무릉도장 최고 층', `${format(s.abyssBest || 0)}층`],
+            ['LV1 모험가 최고 무릉 층', s.lv1AbyssBest ? `${format(s.lv1AbyssBest)}층` : '기록 없음'],
             ...clears.map(([name, n]) => [name, `${format(n)}회`] as Row),
         ]}/>
         <Block title="도감 · 변종" rows={[
