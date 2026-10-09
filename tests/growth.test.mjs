@@ -153,7 +153,7 @@ test('v24 late-bloomer passives start expensive and pay off at three stages (v3.
 
 const STATUS_TUNING_CAPS = (await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/balance')).STATUS_TUNING.earlyStatusMultiplierCap;
 test('v24.1 status rules: support skills are status-only; early damage+stun/silence skills are multiplier-capped', () => {
- for (const sk of SKILLS.filter(x => x.statusOnly && !x.restoreAll)) assert.ok(sk.statusTurns > 0 && sk.chance <= .3 && sk.cooldown >= sk.statusTurns, sk.id);
+ for (const sk of SKILLS.filter(x => x.statusOnly && !x.timeRewind)) assert.ok(sk.statusTurns > 0 && sk.chance <= .3 && sk.cooldown >= sk.statusTurns, sk.id);
  const caps = STATUS_TUNING_CAPS;
  for (const sk of SKILLS.filter(x => x.type === 'active' && !x.statusOnly && caps[x.effect] !== undefined)) {
   const tier = JOBS.find(j => j.id === sk.job)?.tier ?? 0;

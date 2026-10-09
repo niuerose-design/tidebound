@@ -5,7 +5,7 @@ import { accountAP } from '../data/account';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
-import { Job, JobStatKey, jobById } from '../data/classes';
+import { Job, JobStatKey, jobById, lineageOf } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { BASE_STAGES, MONSTERS } from '../data/world';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
@@ -13,6 +13,7 @@ import { researchRank } from '../data/economy';
 import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 import { MAPLE_LINEAGE_NAMES } from '../data/maple-names';
+import { RANKS, rankIndex, rankState, reenlistCount } from '../data/rank';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
 export const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
 export const plainCodexBook = () => Object.fromEntries(PLAIN_CODEX_SLOTS.map(slot => [`${slot}:0`, true]));
@@ -91,8 +92,26 @@ export function skillMasteryRanks(s: State) { const out: Record<string, number> 
 export function extraRollLevel(s: Pick<State, 'extraRolls' | 'permanent'>) { return Math.max(0, Math.min(s.extraRolls || 0, researchRank(s, 'extraRoll'), SKILL_FORMULA.extraRoll.ap.length)); }
 /** v3.86 추가 판정이 쓰는 장착 AP(단계별 합). */
 export function extraRollAP(s: Pick<State, 'extraRolls' | 'permanent'>, level = extraRollLevel(s)) { return SKILL_FORMULA.extraRoll.ap.slice(0, level).reduce((a, n) => a + n, 0); }
+/** v3.198 떠돌이의 요령(방랑): 장착한 것 중 가장 큰 borrowedDiscount. 요령의 계보(방랑) 직업일 때만 듭니다(다른 계보가 계승해도 효과 없음). */
+function borrowedDiscount(s: State, ids: string[]) {
+    const job = jobById(s.job), home = job ? lineageOf(job) : '';
+    let n = 0;
+    for (const id of ids) { const sk = skillById(id), owner = sk?.borrowedDiscount && sk.job ? jobById(sk.job) : undefined; if (owner && lineageOf(owner) === home) n = Math.max(n, sk!.borrowedDiscount!); }
+    return n;
+}
+/** 스킬 하나의 장착 AP. v3.198 떠돌이의 요령이 들면 다른 계보 직업의 스킬은 discount만큼 싸집니다(최소 1, 1 이하는 그대로). */
+export function skillAP(s: State, id: string, discount = 0) {
+    const sk = skillById(id);
+    if (!sk) return 2;
+    const cost = effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost!;
+    if (!(discount > 0 && cost > 1 && sk.job)) return cost;
+    const owner = jobById(sk.job), job = jobById(s.job);
+    return owner && job && lineageOf(owner) !== lineageOf(job) ? Math.max(1, cost - discount) : cost;
+}
+/** 편성 ids에 넣었을 때 이 스킬의 장착 AP(화면 표시용, apUsed와 같은 값). */
+export function loadoutSkillAP(s: State, id: string, ids = s.skills) { return skillAP(s, id, borrowedDiscount(s, ids)); }
 /** 장착 AP 사용량: 스킬 AP 합 + v3.86 추가 판정 AP. */
-export function apUsed(s: State, ids = s.skills) { return extraRollAP(s) + ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
+export function apUsed(s: State, ids = s.skills) { const discount = borrowedDiscount(s, ids); return extraRollAP(s) + ids.reduce((sum, id) => sum + skillAP(s, id, discount), 0); }
 /** v3.130 직업 객체별로 한 번만 만듭니다(능력치 계산이 장착 스킬마다 시그니처 · 노래 판정에 부르므로). 돌려준 배열은 읽기만 하세요. 비밀 직업 등록은 새 객체를 넣으므로 캐시가 어긋나지 않습니다. */
 const lineageCache = new WeakMap<Job, string[]>();
 export function lineage(job: string): string[] {
@@ -107,6 +126,8 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (!sk.job || !userJob) return 1;
     const owner = jobById(sk.job);
     if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
+    // v3.200 궁극의 모험가는 모든 계보의 전용 기술을 온전히 씁니다.
+    if (jobById(userJob)?.signatureFree) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
 /** 변종·황금 개체 처치 수(마리 수가 아니라 조우 횟수). */
@@ -327,6 +348,11 @@ export function jobRequirements(s: State, j: Job) {
             // 선행 직업과 같은 조건이면 한 번만 표시합니다(판정은 같음).
             if (!(jobId === j.parent && mastery === j.mastery))
                 list.push({ label: `${job?.name || jobId} 숙련 ${mastery.toLocaleString()}`, met: (s.jobMastery?.[jobId] || 0) >= mastery, value: s.jobMastery?.[jobId] || 0, target: mastery });
+        }
+        // v3.200 계급장 조건(궁극의 모험가: 하사 이상). 재입대(★)했다면 이미 넘은 계급입니다.
+        if (j.requiresRank) {
+            const need = RANKS.findIndex(r => r.id === j.requiresRank), now = rankIndex(rankState(s).exp);
+            list.push({ label: `계급장 ${RANKS[need]?.name ?? j.requiresRank} 이상`, met: reenlistCount(s) > 0 || now >= need, value: now, target: need });
         }
         if (j.requiresMastered)
             list.push({ label: `숙달한 직업 ${j.requiresMastered}개`, met: masteredJobCount(s) >= j.requiresMastered, value: masteredJobCount(s), target: j.requiresMastered });

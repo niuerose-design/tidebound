@@ -28,8 +28,8 @@ const canaries = {
     '히든 직업 설명': secretJobs.map(j => text(j.desc)).filter(Boolean),
     '히든 직업 스킬 이름(하한)': SKILLS.filter(sk => sk.job && secretIds.has(sk.job)).map(sk => named(sk.name)),
     // v3.47 이름이 실행 중에 덮어써져(메이플 이름) name:"…" 모양이 아니어도 잡도록 따옴표 이름 그대로 찾습니다.
-    // 보스도 쓰는 tentacleBarrage와 해킹 이름과 같은 adGuard(‘신원 조작’)는 공개 글이라 뺍니다.
-    '히든 직업 스킬 이름(따옴표)': SKILLS.filter(sk => sk.job && secretIds.has(sk.job) && !['tentacleBarrage', 'adGuard'].includes(sk.id)).map(sk => JSON.stringify(sk.name)),
+    // 해킹 이름과 같은 adGuard(‘신원 조작’)는 공개 글이라 뺍니다(v3.199 폭류권은 은월이 공개로 가며 비밀이 아님).
+    '히든 직업 스킬 이름(따옴표)': SKILLS.filter(sk => sk.job && secretIds.has(sk.job) && sk.id !== 'adGuard').map(sk => JSON.stringify(sk.name)),
     // v3.44 숨은 조건(옛 발견의 문, 압축된 모양). secret/unlocks.ts는 서버 전용이라 0이어야 합니다.
     '숨은 조건': ['deaths||0)>=10', 'deaths||0)>=30', 'wins||0)>=3', 'kills||0)>=500', 'gold||0)<100', 'bestStage||0)>=4'],
     // v3.52 드롭·확률 수치(서버 전용 game/secret/odds.ts). 압축기가 쓰는 모양(0.5 → .5, 쉼표 뒤 공백 없음)으로 표와 키:값을 찾습니다(하한).

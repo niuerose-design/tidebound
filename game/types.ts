@@ -127,6 +127,8 @@ export type StatusEffects = {
     seals?: string[];
     /** v25 타임 리와인드를 이번 전투에 썼는지. */
     timeUsed?: boolean;
+    /** v3.198 태그(제로): 이번 전투에 마지막으로 쓴 태그 기술의 쪽(알파 · 베타). */
+    tag?: 'alpha' | 'beta';
     /** v25 이번 전투에 無로 막은 횟수. */
     lastStand?: number;
     /** v3.143 충전 중첩(메카닉). 충전 기술이 명중하면 쌓이고 전탄발사가 소모합니다. */
@@ -269,8 +271,14 @@ export type Skill = {
     sureHit?: boolean;
     /** v25 시간: 이 행동 뒤 곧바로 한 번 더 행동합니다(연속 행동 횟수와 별개). */
     extraTurn?: boolean;
-    /** v25 타임 리와인드: 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회. */
-    restoreAll?: boolean;
+    /** v3.198 타임 리와인드(제로): 내 체력·마나를 가득 채우고 내 재사용 대기를 모두 되돌립니다(상대는 그대로). 전투당 1회. v25의 restoreAll(나와 상대 모두)을 바꿨습니다. */
+    timeRewind?: boolean;
+    /** v3.198 태그(제로): 알파 · 베타 기술. 쪽을 바꿔 쓰면(알파 다음 베타, 베타 다음 알파) 장착 패시브의 tagBonus만큼 피해가 커집니다. */
+    tag?: 'alpha' | 'beta';
+    /** v3.198 태그 전환 피해(제로 패시브): 장착한 것 중 가장 큰 값. */
+    tagBonus?: number;
+    /** v3.198 떠돌이의 요령(방랑 패시브): 장착하면 다른 직업에서 가져온 스킬의 AP가 이만큼 줄어듭니다(최소 1, 장착한 것 중 가장 큰 값). */
+    borrowedDiscount?: number;
     /** v25 반동: 준 피해 × recoil만큼 자신도 받습니다(반동으로는 체력 1 아래로 내려가지 않음). */
     recoil?: number;
     /** v3.145 체력 소모(데몬슬레이어): 쓸 때 현재 체력 × hpCost를 냅니다(체력 1 아래로는 내려가지 않음). 마나 대신 쓰는 비용. 피가 줄수록 비용도 줄어 스스로 말라 죽지 않습니다. */
@@ -422,7 +430,7 @@ export type CombatEvent = {
     awaken?: boolean;
     /** v3.86 추가 판정으로 함께 나간 줄(몇 번째 추가 판정인지, 1부터)과 위력 배율. */
     followUp?: { index: number; power: number };
-    /** v25: 타임 리와인드로 모두 회복. */
+    /** v25: 타임 리와인드. v3.198부터 나만 처음 상태로(상대는 그대로). */
     restored?: boolean;
     /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */
     endured?: { heal: number; self?: boolean };
@@ -527,6 +535,8 @@ export type State = {
     legacyInherited?: Record<string, true>;
     /** v27.95 숙련 요구치 상향의 계승 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     masteryRescaled?: boolean;
+    /** v3.200 윤회의 나그네(1차) → 궁극의 모험가(히든 5차) 리메이크를 처리한 세이브(새 세이브는 처음부터 true). */
+    ultimateRemade?: boolean;
     /** v3.154 긴 휴식 12단계 × 2시간 → 3단계 × 6시간으로 한 번 변환했는지. */
     offlineRescaled?: boolean;
     /** v3.69 수련 패시브 숙련 요구치 상향의 계승 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */

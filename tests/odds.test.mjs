@@ -53,7 +53,7 @@ test('v3.57 info hacking: leaks are built from the data, skip known ones and ent
     const { leakPool, UNLOCK_CONDITIONS } = await load('secret/leaks'), { UNLOCK_JOBS } = await load('secret/unlocks'), { newState: fresh } = await load('systems/state');
     assert.deepEqual(Object.keys(UNLOCK_CONDITIONS).sort(), [...UNLOCK_JOBS].sort());
     const s = fresh(0), all = leakPool(s, new Set());
-    assert.ok(all.some(l => l.id === 'drop:base' && l.text.includes('0.25%')) && all.some(l => l.id === 'job:undead' && l.text.includes('10번 쓰러지기')) && all.some(l => l.id === 'spawn:abyssManta'));
+    assert.ok(all.some(l => l.id === 'drop:base' && l.text.includes('0.25%')) && all.some(l => l.id === 'job:undead' && l.text.includes('100번 쓰러지기')) && all.some(l => l.id === 'spawn:abyssManta'));
     assert.equal(new Set(all.map(l => l.id)).size, all.length, 'leak ids are unique');
     assert.ok(!leakPool(s, new Set(['drop:base'])).some(l => l.id === 'drop:base'), 'known leaks are skipped');
     s.unlockedJobs.push('undead'); assert.ok(!leakPool(s, new Set()).some(l => l.id === 'job:undead'), 'jobs already entered are skipped');

@@ -1,5 +1,5 @@
 // 직업 개편 3단계: 실루엣 공개 규칙 · 힌트 · 빠른 찾기 · 검색(화면 계산만, 게임 규칙은 그대로)
-import { newState, jobMasteryTarget, jobUi, JOBS, assert, test, act, migrations } from './harness.mjs';
+import { newState, jobMasteryTarget, jobUi, JOBS, SKILLS, assert, test, act, migrations } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 
 // v3.44 공개 판정은 서버(game/systems/reveal.ts)가 하고 화면은 카탈로그를 봅니다. 화면 함수를 부르기 전에 그 상태로 만든 카탈로그를 적용합니다.
@@ -20,12 +20,12 @@ test('Job UI: every hidden or hidden-unlock job has a one-line hint', () => {
 test('Job UI: a silhouette reveals its name when its hidden condition is met or all gate conditions are met', () => {
     const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
     assert.equal(ui.jobRevealed(s, job('voidcaller')), false);
-    s.rebirths = 1; assert.equal(ui.jobRevealed(s, job('voidcaller')), false, 'v3.62 the parent mastery gate still hides it');
+    s.rebirths = 2; assert.equal(ui.jobRevealed(s, job('voidcaller')), false, 'v3.62 the parent mastery gate still hides it (v3.199 rebirth 2)');
     s.jobMastery.wanderer = 75; assert.equal(ui.jobRevealed(s, job('voidcaller')), true, 'v3.62 no rebirth door: its own gates reveal it');
     s.rebirths = 0; s.jobMastery.wanderer = 0; s.doorsOpened = ['voidcaller']; assert.equal(ui.jobRevealed(s, job('voidcaller')), true, 'a recorded reveal (old rebirth door) keeps it shown');
     s.doorsOpened = undefined; assert.equal(ui.jobRevealed(s, job('voidSovereign')), false, 'hidden job without a hidden condition still needs its gates');
     assert.equal(ui.jobRevealed(s, job('undead')), false, 'unmet hidden condition keeps the silhouette');
-    s.deaths = 10; assert.equal(ui.jobRevealed(s, job('undead')), true, 'v27.12 ten defeats reveal the undead'); s.deaths = 0;
+    s.deaths = 99; assert.equal(ui.jobRevealed(s, job('undead')), false); s.deaths = 100; assert.equal(ui.jobRevealed(s, job('undead')), true, 'v3.199 a hundred defeats reveal the undead'); s.deaths = 0;
     const t = newState(0); t.unlockedJobs.push('manaLeviathan'); assert.equal(ui.jobRevealed(t, job('manaLeviathan')), true, 'entered once → shown');
     const m = newState(0); m.jobMastery.manaLeviathan = jobMasteryTarget(job('manaLeviathan')); assert.equal(ui.jobRevealed(m, job('manaLeviathan')), true, 'mastered → shown');
 });
@@ -42,29 +42,31 @@ test('Job UI: quick finder and search never leak silhouette names', () => {
 
 test('Job UI: a hidden condition reveals its job while it holds and keeps it once recorded', () => {
     const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
-    assert.equal(ui.jobRevealed(s, job('poorMonk')), false, 'condition unmet → hidden');
-    s.level = 15; s.gold = 50; assert.equal(ui.jobRevealed(s, job('poorMonk')), true, 'condition met → name shown');
-    s.gold = 5000; assert.equal(ui.jobRevealed(s, job('poorMonk')), false); s.doorsOpened = ['poorMonk']; assert.equal(ui.jobRevealed(s, job('poorMonk')), true, 'recorded condition stays met');
+    assert.equal(ui.jobRevealed(s, job('journeyman')), false, 'condition unmet → hidden');
+    const done = id => { s.jobMastery[id] = jobMasteryTarget(job(id)); };
+    for (const id of ['corsair', 'harpoon', 'tide', 'warden']) done(id); assert.equal(ui.jobRevealed(s, job('journeyman')), false, 'v3.199 four mastered is not enough');
+    done('whaler'); assert.equal(ui.jobRevealed(s, job('journeyman')), true, 'condition met → name shown');
+    s.jobMastery = {}; assert.equal(ui.jobRevealed(s, job('journeyman')), false); s.doorsOpened = ['journeyman']; assert.equal(ui.jobRevealed(s, job('journeyman')), true, 'recorded condition stays met');
 });
 
-test('v25 hidden jobs without gates are shown; the chronarch appears once the clockmaker is mastered', () => {
+test('v25 hidden jobs without gates are shown; v3.199 the 5th-tier chronarch appears only once every gate is met', () => {
     const s = newState(0), job = id => JOBS.find(j => j.id === id);
     assert.ok(ui.jobRevealed(s, job('glyphMonk')), '玄 has no door or gate, so it is visible from the start');
     assert.equal(ui.jobRevealed(s, job('chronarch')), false);
-    s.jobMastery.clockmaker = 3000; assert.ok(ui.jobRevealed(s, job('chronarch')));
+    s.jobMastery.clockmaker = 3000; assert.equal(ui.jobRevealed(s, job('chronarch')), false, 'clockmaker mastery alone is not enough any more');
+    s.level = 70; s.rebirths = 4; Object.assign(s.attributes, { dex: 60, int: 50 });
+    for (const id of ['windUp', 'slackHand', 'timeMachine']) s.skillPractice[id] = SKILLS.find(x => x.id === id).masteryMilestones.at(-1);
+    assert.ok(ui.jobRevealed(s, job('chronarch')));
 });
 
 test('v3.63 hidden jobs stay out of sight until revealed, then show up in the ??? tab (other-tree hidden jobs bring their lineage along)', () => {
     const s = newState(0), shown = () => ui.shownJobs(s).map(j => j.id);
-    assert.ok(!shown().includes('undead') && !shown().includes('poorMonk'), 'no silhouettes: unrevealed hidden jobs are not listed');
+    assert.ok(!shown().includes('undead') && !shown().includes('clockmaker'), 'no silhouettes: unrevealed hidden jobs are not listed');
     assert.ok(!ui.shownLineageJobs(s, 'voidcaller').length && !ui.inMysteryTab(s, { id: 'voidcaller', tree: 'mystery' }), 'an unrevealed ??? lineage is not shown');
     assert.ok(!ui.shownLineageJobs(s, 'restraint').some(j => j.id === 'undead'), 'v3.135 the hidden 망인 is left out of the 제약 lineage until revealed');
-    assert.ok(!ui.shownLineageJobs(s, 'saltWarden').some(j => j.id === 'poorMonk'), 'the hidden branch is left out of its own lineage too');
-    s.deaths = 10; assert.ok(ui.inMysteryTab(s, { id: 'restraint', tree: 'mystery' }) && ui.shownLineageJobs(s, 'restraint').map(j => j.id).includes('undead'), 'condition met → appears in the ??? tab');
-    s.jobMastery.wanderer = 75; s.rebirths = 1; assert.ok(ui.shownLineageJobs(s, 'voidcaller').map(j => j.id).includes('voidcaller') && !ui.shownLineageJobs(s, 'voidcaller').map(j => j.id).includes('manaLeviathan'), 'later hidden jobs wait for their own gates');
+    s.deaths = 100; assert.ok(ui.inMysteryTab(s, { id: 'restraint', tree: 'mystery' }) && ui.shownLineageJobs(s, 'restraint').map(j => j.id).includes('undead'), 'condition met → appears in the ??? tab');
+    s.jobMastery.wanderer = 75; s.rebirths = 2; assert.ok(ui.shownLineageJobs(s, 'voidcaller').map(j => j.id).includes('voidcaller') && !ui.shownLineageJobs(s, 'voidcaller').map(j => j.id).includes('manaLeviathan'), 'later hidden jobs wait for their own gates');
     s.jobMastery.wanderer = 0; s.rebirths = 0;
-    assert.equal(ui.inMysteryTab(s, { id: 'saltWarden', tree: 'defense' }), false, 'a public lineage joins the ??? tab only with a revealed hidden job');
-    const t = newState(0); t.unlockedJobs.push('poorMonk'); assert.equal(ui.inMysteryTab(t, { id: 'saltWarden', tree: 'defense' }), true);
 });
 
 // v3.166 외길 탭 · 직업 수 셈 통일 · 목표 직업

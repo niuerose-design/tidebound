@@ -70,6 +70,8 @@ function evaluate(j, T) {
     const { attrs, magic } = attributesFor(j, T.level);
     Object.assign(s, { level: T.level, rebirths: 10, job: j.id, attributes: attrs, equipment: {}, inventory: [], permanent: {}, book: {}, unlockedJobs: JOBS.map(x => x.id) });
     s.jobMastery = { [j.id]: MASTERED ? jobMasteryTarget(j) : 0 };
+    // v3.198 숙달 수가 전직 조건인 직업(방랑 계보의 만능 · 백수)은 그만큼 다른 직업을 숙달한 몸으로 잽니다(0개로 재면 들어갈 수 없는 몸이라 크게 약하게 나옴).
+    for (const x of JOBS.filter(x => x.id !== j.id).slice(0, j.requiresMastered || 0)) s.jobMastery[x.id] = jobMasteryTarget(x);
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = SKILL_MASTERED ? masteryMilestonesFor(sk).at(-1) : 0; }
     loadout(s, j, magic);
     const st = stats(s), res = T.foes.map(id => fight(st, s, id, T.tier));

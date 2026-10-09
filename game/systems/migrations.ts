@@ -214,7 +214,9 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
     /** v3.163 제논 재개편: 곁가지 태엽 기계공 · 올라운더(조화는 본줄기가 가져감) · 숨은 칠전팔기 모험가(쓰러진 횟수 비례는 다크나이트가 맡음)를 지웠습니다. */
     'clockworkAngler', 'allRounder', 'fallenAngler',
     /** v3.164 팬텀 곁가지 트릭스터(약화 · 회피 패시브)는 장치가 없어 지웠습니다. */
-    'inkMime'];
+    'inkMime',
+    /** v3.199 히든 정리: 숨은 2차 청빈 수도승(호영 가지)을 지웠습니다. */
+    'poorMonk'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.170 수련 액티브 10개 · 패시브 4개(맹세의 결의 · 관중의 환호 · 기사의 갑옷 · 생명의 기운): 계보마다 패시브 4개로 맞추며 삭제. */
     'arcane', 'cut', 'hushCurrent', 'undertow', 'rushCurrent', 'netThrow', 'oathShout', 'currentJam', 'driftwoodShove', 'rottenBait', 'resolve', 'showmanship', 'scales', 'vital',
@@ -239,7 +241,11 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
     /** v3.164 트릭스터의 스모크 스크린 · 팬텀 섀도우. */
     'smokeVeil', 'slipperyStep',
     /** v3.143 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
-    'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind'];
+    'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind',
+    /** v3.199 청빈 수도승의 빈손 장타 · 청빈 서약. */
+    'emptyPalm', 'vowOfPoverty',
+    /** v3.200 궁극의 모험가는 자체 각성기를 두지 않아 옛 윤회의 나그네의 윤회의 일격을 지웠습니다. */
+    'soulHook'];
 /**
  * v3.64 히든 직업 재배치 · v3.138 5차 통폐합: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).
  * 지금 그 직업이면 초보자로 돌아갑니다. 여러 번 불러도 같습니다.
@@ -257,6 +263,21 @@ export function retireHiddenJobs(s: State) {
     if (s.skillPins) s.skillPins = drop(s.skillPins);
     if (s.skillHidden) s.skillHidden = drop(s.skillHidden);
     for (const p of Object.values(s.presets || {})) p.skills = drop(p.skills)!;
+}
+/**
+ * v3.200 윤회의 나그네(1차, 공개) → 궁극의 모험가(히든 5차, id 그대로): 옛 1차 기록으로 5차 직업에 머물지 않도록 한 번만 정리합니다.
+ * 지금 그 직업이면 초보자로 돌아가고, 직업 숙련 · 전직 기록을 보상 없이 지웁니다(윤회의 일격 기록은 RETIRED_SKILLS가 지움).
+ */
+export function remakeRebirthFisher(s: State) {
+    if (s.ultimateRemade) return;
+    s.ultimateRemade = true;
+    const job = 'rebirthFisher';
+    if (s.job === job) { s.job = BASE_JOB; addLog(s, '윤회의 나그네가 히든 5차 직업으로 바뀌어 초보자로 돌아왔습니다.', 'system'); }
+    if (s.jobGoal === job) delete s.jobGoal;
+    s.unlockedJobs = s.unlockedJobs.filter(id => id !== job);
+    if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => id !== job);
+    delete s.jobMastery[job];
+    if (s.masteryKept) s.masteryKept = s.masteryKept.filter(id => id !== job);
 }
 /** v3.135 나이트워커 2~5차 · 골령술사와 그 스킬을 지우고 1차 망인(undead)만 남깁니다. */
 export const NIGHT_WALKER_JOBS = ['skeleton', 'bonecaster', 'soulHarvester', 'lichKing', 'deathEmperor'];
@@ -347,7 +368,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

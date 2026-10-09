@@ -7,21 +7,22 @@
 // 서버 전용 표식: 화면(클라이언트) 번들이 이 파일을 가져가면 빌드가 실패합니다(docs/concept.md 10.2-1).
 import 'server-only';
 import type { State } from '../types';
-import { MONSTERS } from '../data/world';
 import { HOUR } from '../data/time';
-import { masteredJobCount } from '../systems/progression';
+import { masteredJobCount, jobMasteryTarget } from '../systems/progression';
+import { jobById } from '../data/classes';
 import { setUnlockSource } from '../data/unlock-info';
 
-const bossCatches = (s: State) => MONSTERS.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
+
+const masteredTier5 = (s: State) => Object.entries(s.jobMastery || {}).filter(([id, n]) => { const j = jobById(id); return !!j && !j.retired && j.tier >= 5 && n >= jobMasteryTarget(j); }).length;
 
 /** 숨은 조건. 정확한 조건 문장은 해커 정보 해킹 조각(leaks.ts UNLOCK_CONDITIONS)에만 있습니다. */
 export type HiddenUnlock = { job: string; test: (s: State) => boolean };
 export const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
-    { job: 'undead', test: s => (s.deaths || 0) >= 10 },
-    { job: 'clockmaker', test: s => (s.playMs || 0) >= 10 * HOUR },
-    { job: 'krakenkin', test: s => bossCatches(s) >= 10 },
-    { job: 'poorMonk', test: s => s.level >= 15 && (s.gold || 0) < 100 },
-    { job: 'journeyman', test: s => masteredJobCount(s) >= 3 },
+    { job: 'undead', test: s => (s.deaths || 0) >= 100 },
+    { job: 'clockmaker', test: s => (s.playMs || 0) >= 100 * HOUR },
+    { job: 'journeyman', test: s => masteredJobCount(s) >= 5 },
+    // v3.200 궁극의 모험가: 5차 직업 3개 숙달.
+    { job: 'rebirthFisher', test: s => masteredTier5(s) >= 3 },
 ] as HiddenUnlock[]);
 /** 숨은 조건이 있는 직업. */
 export const UNLOCK_JOBS = HIDDEN_UNLOCKS.map(u => u.job);
