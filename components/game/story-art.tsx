@@ -2,10 +2,11 @@
 /**
  * v3.216 스토리 삽화: 장 배너와 장면 그림.
  * public/art/story/{chapter-N | 장면 id}.png|webp 가 있으면 그 그림을 쓰고(목록은 art-manifest.ts), 장 배너는 그림이 없거나 못 불러오면 아래 SVG 풍경을 씁니다.
- * 장면 그림은 파일이 있을 때만 그립니다. 그림 만들기 안내 · 프롬프트는 docs/art/story-prompts.md.
+ * v3.217 장면 그림도 파일이 없으면 장면마다 그린 SVG(story-scenes.tsx)를 씁니다. 그림 만들기 안내 · 프롬프트는 docs/art/story-prompts.md.
  */
 import { useState, type ReactNode } from 'react';
 import { storyArtSrc } from '@/game/data/art';
+import { SCENE_ART } from './story-scenes';
 
 /** 장 배너 SVG(640×160). 원작 그림은 쓰지 않고 장마다 상징 풍경을 실루엣으로 그렸습니다. */
 const BANNERS: ReactNode[] = [
@@ -100,9 +101,12 @@ export function ChapterBanner({ chapter, title, dim = false }: { chapter: number
         {src && !failed && <Img src={src} alt="" onMissing={() => setFailed(true)}/>}
     </figure>;
 }
-/** 장면 삽화: 그림 파일(장면 id)이 있을 때만. */
+/** 장면 삽화: 그림 파일(장면 id)이 있으면 그 그림, 없거나 실패하면 장면 SVG(없는 장면은 그림 없이). */
 export function SceneArt({ id, title }: { id: string; title: string }) {
-    const src = storyArtSrc(id), [failed, setFailed] = useState(false);
-    if (!src || failed) return null;
-    return <figure className="story-scene-art"><Img src={src} alt={`${title} 삽화`} onMissing={() => setFailed(true)}/></figure>;
+    const src = storyArtSrc(id), [failed, setFailed] = useState(false), svg = SCENE_ART[id];
+    if ((!src || failed) && !svg) return null;
+    return <figure className="story-scene-art" aria-label={`${title} 삽화`}>
+        {(!src || failed) && svg && <svg viewBox="0 0 480 160" preserveAspectRatio="xMidYMid slice" role="img" aria-hidden="true">{svg(id)}</svg>}
+        {src && !failed && <Img src={src} alt="" onMissing={() => setFailed(true)}/>}
+    </figure>;
 }

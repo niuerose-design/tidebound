@@ -64,3 +64,11 @@ test('v3.216 story art: every chapter has an SVG banner fallback, image paths on
     const banners = src.slice(src.indexOf('const BANNERS'), src.indexOf('];', src.indexOf('const BANNERS')));
     assert.equal((banners.match(/\/\/ 제\d장/g) || []).length, STORY_CHAPTERS.length, 'one SVG banner per chapter');
 });
+
+test('v3.217 story art: every scene has its own SVG illustration and chapters start folded', async () => {
+    const fs = await import('node:fs');
+    const src = fs.readFileSync('components/game/story-scenes.tsx', 'utf8');
+    const ids = [...src.slice(src.indexOf('export const SCENE_ART')).matchAll(/^ {4}(\w+): id =>/gm)].map(m => m[1]);
+    assert.deepEqual([...ids].sort(), STORY.map(x => x.id).sort(), 'one SVG per scene, no strays');
+    assert.match(fs.readFileSync('components/game/story-panel.tsx', 'utf8'), /defaultOpen=\{false\}/, 'chapters start folded');
+});
