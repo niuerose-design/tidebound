@@ -40,6 +40,7 @@ export function receiveOnyx(s: State, item: Item) {
     const own = ownedItems(s).find(x => x?.onyx === item.onyx);
     if (own) {
         const rank = own.onyxRank || 0;
+        (s.onyxGift ??= {})[item.onyx!] = 0;
         if (rank < ONYX.awakenMax) { own.onyxRank = rank + 1; addLog(s, `✦ 금고의 ${boss.accessory.name} · 이미 가진 칠흑이라 각성 ${own.onyxRank}/${ONYX.awakenMax}! 고유 옵션 +${Math.round(own.onyxRank * ONYX.awakenStep * 100)}%`, 'reward'); }
         else { s.pearls += ONYX.duplicatePearls; addLog(s, `✦ 금고의 ${boss.accessory.name} · 각성까지 마쳐 세계석 +${ONYX.duplicatePearls}`, 'reward'); }
         return 'awaken' as const;
