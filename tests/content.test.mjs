@@ -389,3 +389,12 @@ test('v3.195-196 boss loot: daily-bonus regional clears only, fixed-slot primal 
  const u=newState(0);u.level=60;u.dungeonBonus={day:'1970-01-01',used:30};clear(u,'grotto',()=>0);assert.ok(!u.inventory.some(x=>x.bossLoot),'no loot after the daily bonus');assert.equal(u.bossLootMiss,undefined);
  const {restartLife}=await L.load('systems/actions/lifecycle');restartLife(s,1000);assert.ok(s.inventory.some(x=>x.bossLoot==='caldera'&&x.lootRank===5),'kept across lives');
 });
+
+test('v3.198 Zakum and Papulatus have their own kits (no longer the Mu Gong ancient-boss set); loot rules are inherit-style',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),E=await L.load('data/encounters'),F=await L.load('data/foe-fx'),BL=await L.load('data/boss-loot');
+ const z=E.foeSkills('ventColossus',66,true),p=E.foeSkills('starfallSeraph',62,true),m=E.foeSkills('abyssSovereign',52,true);
+ assert.ok(z.includes('zakumArms')&&z.includes('zakumFlame'));assert.ok(p.includes('papTimeStop')&&p.includes('papRift')&&p.includes('papAlarm'));assert.ok(m.includes('tentacleBarrage'));
+ assert.notDeepEqual(z,p);assert.notDeepEqual(z,m);assert.ok(E.profile('starfallSeraph').splitBasic);
+ for(const id of [...z,...p])assert.ok(F.FOE_FX[id],`${id} has a background effect`);
+ assert.equal(BL.bossLootAffix('grotto').stat2,'arcaneStrike');assert.equal(BL.bossLootAffix('cemetery').stat2,'stunBonus');
+});

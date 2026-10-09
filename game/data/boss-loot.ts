@@ -22,14 +22,14 @@ export const lootAwaken = (item: Pick<Item, 'lootRank'>) => 1 + Math.min(BOSS_LO
 /** 보유한 전리품의 던전 id 집합(가방 · 착용). */
 export const ownedLoot = (s: Pick<State, 'inventory' | 'equipment'>) => new Set([...s.inventory, ...Object.values(s.equipment)].map(i => i?.bossLoot).filter((x): x is string => !!x));
 /** 세트 효과(보유 수 기준, 가안). */
-export const BOSS_LOOT_SET: { count: number; label: string; bossDamage?: number; dungeonGoldBonus?: number; statusResist?: number }[] = [
+export const BOSS_LOOT_SET: { count: number; label: string; bossDamage?: number; dungeonGoldBonus?: number; dotBonus?: number }[] = [
     { count: 2, label: '보스·사냥감 피해 +3%', bossDamage: .03 },
     { count: 4, label: '던전 코인 보너스 +10%', dungeonGoldBonus: .1 },
-    { count: 6, label: '상태이상 저항 +5%p', statusResist: .05 },
+    { count: 6, label: '지속 피해 +5%', dotBonus: .05 },
     { count: 7, label: '보스·사냥감 피해 +5%', bossDamage: .05 },
 ];
-export const bossLootSetBonus = (owned: number) => BOSS_LOOT_SET.filter(b => owned >= b.count).reduce((a, b) => ({ bossDamage: a.bossDamage + (b.bossDamage || 0), dungeonGoldBonus: a.dungeonGoldBonus + (b.dungeonGoldBonus || 0), statusResist: a.statusResist + (b.statusResist || 0) }), { bossDamage: 0, dungeonGoldBonus: 0, statusResist: 0 });
-/** v3.197 공명: 착용하지 않은 전리품마다 전용 옵션(각성 포함) × resonance. 제어 연장(controlBonus)은 정수라 빠집니다. */
+export const bossLootSetBonus = (owned: number) => BOSS_LOOT_SET.filter(b => owned >= b.count).reduce((a, b) => ({ bossDamage: a.bossDamage + (b.bossDamage || 0), dungeonGoldBonus: a.dungeonGoldBonus + (b.dungeonGoldBonus || 0), dotBonus: a.dotBonus + (b.dotBonus || 0) }), { bossDamage: 0, dungeonGoldBonus: 0, dotBonus: 0 });
+/** v3.197 공명: 착용하지 않은 전리품마다 전용 옵션(각성 포함) × resonance. 턴 연장(controlBonus · stunBonus)은 정수라 빠집니다. */
 export function lootResonance(s: Pick<State, 'inventory' | 'equipment'>) {
     const worn = new Set(Object.values(s.equipment).map(i => i?.id).filter(Boolean)), out: Record<string, number> = {};
     for (const item of s.inventory) {
@@ -37,8 +37,9 @@ export function lootResonance(s: Pick<State, 'inventory' | 'equipment'>) {
         const a = bossLootAffix(item.bossLoot);
         if (!a) continue;
         const m = lootAwaken(item) * BOSS_LOOT_RULES.resonance;
-        if (a.stat !== 'controlBonus') out[a.stat] = (out[a.stat] || 0) + a.base * m;
-        if (a.stat2 && a.base2 && a.stat2 !== 'controlBonus') out[a.stat2] = (out[a.stat2] || 0) + a.base2 * m;
+        const turns = (k: string) => k === 'controlBonus' || k === 'stunBonus';
+        if (!turns(a.stat)) out[a.stat] = (out[a.stat] || 0) + a.base * m;
+        if (a.stat2 && a.base2 && !turns(a.stat2)) out[a.stat2] = (out[a.stat2] || 0) + a.base2 * m;
     }
     return out;
 }

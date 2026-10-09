@@ -150,7 +150,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v3.38 칠흑 세트는 장비 출처로 표시합니다(전에는 ‘도감’으로 잘못 묶였음).
     { const b = onyxSetBonus(ownedOnyx(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); if (b.allStats) add('allStats', 'equipment', b.allStats); }
     // v3.196 보스 전리품 세트(보유 수 기준, 영구).
-    { const b = bossLootSetBonus(ownedLoot(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.dungeonGoldBonus) add('dungeonGoldBonus', 'equipment', b.dungeonGoldBonus); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); }
+    { const b = bossLootSetBonus(ownedLoot(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.dungeonGoldBonus) add('dungeonGoldBonus', 'equipment', b.dungeonGoldBonus); if (b.dotBonus) add('dotBonus', 'equipment', b.dotBonus); }
     // v3.113 칠흑 공명: 착용하지 않은 칠흑 장신구의 고유 옵션 × 10%(각성 포함).
     { const res = onyxResonance(s); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
     // v3.197 보스 전리품 공명: 착용하지 않은 전리품의 전용 옵션 × 10%(각성 포함).

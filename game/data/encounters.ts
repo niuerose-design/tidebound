@@ -24,6 +24,12 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'onyxNightmare', name: '악몽', desc: '마법 공격 135% 피해 + 4턴 침묵.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.35, damageType: 'magic', effect: 'silence', statusTurns: 4, manaCost: 0 },
     { id: 'onyxSoulDrain', name: '사령 흡수', desc: '마법 공격 120% 피해, 깎은 체력의 60%를 흡혈.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.2, damageType: 'magic', effect: 'drain', drainRatio: .6, manaCost: 0 },
     { id: 'onyxSunfire', name: '태양의 불꽃', desc: '마법 공격 140% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.4, damageType: 'magic', effect: 'burn', manaCost: 0 },
+    // v3.198 자쿰 · 파풀라투스 고유 기술: 전에는 무공과 같은 '고대 보스' 기술 묶음이었습니다.
+    { id: 'zakumArms', name: '여덟 팔 난타', desc: '물리 공격 90% 피해 후 3회의 추가타(각 50%).', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: .9, extraAttacks: 3, extraAttackMultiplier: .5, manaCost: 0 },
+    { id: 'zakumFlame', name: '불꽃 기둥', desc: '마법 공격 130% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.3, damageType: 'magic', effect: 'burn', manaCost: 0 },
+    { id: 'papTimeStop', name: '시간 정지', desc: '피해 없이 3턴 기절.', type: 'active', level: 1, chance: .2, cooldown: 7, multiplier: 1, effect: 'stun', statusTurns: 3, statusOnly: true, manaCost: 0 },
+    { id: 'papRift', name: '차원의 균열', desc: '마법 공격 140% 피해 + 3턴 약화.', type: 'active', level: 1, chance: .28, cooldown: 4, multiplier: 1.4, damageType: 'magic', effect: 'weaken', statusTurns: 3, manaCost: 0 },
+    { id: 'papAlarm', name: '알람 폭발', desc: '복합 피해 160%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .26, cooldown: 6, multiplier: 1.6, damageType: 'split', manaCost: 0 },
     { id: 'onyxGenesis', name: '창세', desc: '복합 피해 170%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 6, multiplier: 1.7, damageType: 'split', manaCost: 0 },
 ];
 const PROFILES: Record<string, {
@@ -53,6 +59,10 @@ const PROFILES: Record<string, {
     venomBoss: { name: '독성 보스', hint: '중독과 감속을 번갈아 사용합니다.', skills: ['foeVenom', 'foeSlow'], defense: 1.25, resist: 1.05, evasion: .06, speed: 1.05 },
     arcaneBoss: { name: '신탁 보스', hint: '마법 공격과 침묵으로 편성을 흔듭니다.', skills: ['foeShock', 'foeSilence'], magicBasic: true, defense: .95, resist: 1.45, evasion: .05, speed: 1.1 },
     boss: { name: '고대 보스', hint: '침묵·감속·추가타·복합 강타를 모두 사용합니다.', skills: ['foeSilence', 'foeSlow', 'foeFrenzy', 'tentacleBarrage', 'foeTideSlam'], defense: 1.35, resist: 1.35, evasion: .08, speed: 1.05 },
+    // v3.198 자쿰: 따로 움직이는 여러 팔의 석상. 연타 · 불기둥 · 짓누르기(기절), 단단하고 느립니다.
+    zakum: { name: '불꽃의 석상', hint: '여러 팔로 연달아 때리고 불기둥으로 화상을 겁니다. 짓누르면 기절. 단단하니 방어 관통과 회복을 챙기세요.', skills: ['zakumArms', 'zakumFlame', 'foeCrush'], defense: 1.6, resist: 1.1, evasion: .02, speed: .9 },
+    // v3.198 파풀라투스: 시간을 멈춘 차원의 침략자. 기본 공격부터 복합 피해, 시간 정지(긴 기절) · 차원의 균열(약화) · 알람 폭발.
+    papulatus: { name: '시간의 침략자', hint: '기본 공격부터 복합 피해. 시간 정지로 3턴 기절시키고, 균열로 약화를 겁니다. 상태이상 저항과 고른 방어를 챙기세요.', skills: ['papTimeStop', 'papRift', 'papAlarm'], splitBasic: true, defense: 1.2, resist: 1.4, evasion: .1, speed: 1.2 },
     // v27 혼돈 생물: 기본 공격부터 복합 피해. 물리·마법 방어 중 하나만 높은 빌드에 부담을 줍니다.
     tidal: { name: '혼돈 생물', hint: '기본 공격이 복합 피해라 물리·마법 방어를 고루 갖춰야 합니다. 마법 공격으로 약화도 겁니다.', skills: ['foeTideSlam', 'foeInkBurst'], splitBasic: true, defense: .9, resist: .9, evasion: .04, speed: 1 },
     stormEel: { name: '전격 짐승', hint: '기본 공격부터 마법(전격) 피해. 플레이어도 배울 수 있는 감속 물리기(귀참)와 침묵을 사용합니다.', skills: ['electricBite', 'foeSilence'], magicBasic: true, power: .82, defense: .85, resist: 1.1, evasion: .04, speed: 1.05 },
@@ -70,7 +80,7 @@ const profileIds: Record<string, string> = {
     seahorse: 'silencer', needlefish: 'swift', tidejelly: 'tidal', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venom', cinderKoi: 'blaze', starKoi: 'arcane', prismRay: 'tidal', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored',
     aqSeaco: 'swift', aqShark: 'frenzy', aqSquid: 'arcane', aqFlower: 'venom', aqGuard: 'armored', lfBlueTurtle: 'armored', lfRedTurtle: 'blaze', lfWyvern: 'swift', lfSkelegon: 'controller', lfManticore: 'venom', ttMonitor: 'silencer', ttGuardian: 'armored', ttChimera: 'tidal', ttDodo: 'swift', ttLyka: 'frenzy', arErdaSpirit: 'arcane', arMemoryGuard: 'controller', arMysticErda: 'stormEel', arVanishSoul: 'silencer', arTrueErda: 'tidal',
     onyxDusk: 'onyxDusk', onyxDunkel: 'onyxDunkel', onyxWill: 'onyxWill', onyxLucid: 'onyxLucid', onyxHilla: 'onyxHilla', onyxSeren: 'onyxSeren', onyxBlackMage: 'onyxBlackMage',
-    ventColossus: 'boss', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'blaze', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'boss'
+    ventColossus: 'zakum', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'blaze', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'papulatus'
 };
 export const profileId = (id: string) => profileIds[id] || 'armored';
 export function profile(id: string) { return PROFILES[profileId(id)]; }
