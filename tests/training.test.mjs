@@ -189,7 +189,7 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
         if (r < .5 || r > 1.5) bad.push(`${sk.id} ×${r.toFixed(2)}`);
     }
     assert.deepEqual(bad, []);
-    // v3.198 청빈 수도승(빈손 장타)을 지워 2차 히든은 만능 모험가의 백 가지 요령으로 봅니다.
+    // v3.199 청빈 수도승(빈손 장타)을 지워 2차 히든은 만능 모험가의 백 가지 요령으로 봅니다.
     assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'hundredKnacks')), [600, 3000, 12000, 36000], '2nd-tier hidden jobs use the 2nd-tier curve');
     assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e6, 4e6, 1e7], 'v3.137 bone legacy (AP 6 → 4 → 2 → −3) in millions, ending at ten million');
     assert.equal(P.jobMasteryTarget(job('undead')), 1e7, 'v3.137 망인 job mastery is ten million');
@@ -342,14 +342,14 @@ test('v3.120 Arch Mage (Thunder, Cold): Extreme Magic magic steps 25 · 200 · 7
     assert.deepEqual(SKILLS.find(s => s.id === 'tideOfAges').levelEffects.map(l => l.bonus.magic), [25, 200, 700, 2000]);
 });
 
-test('v3.146 Eunwol: Ghost Gate attack +300 with a two-hit spirit, Fist Barrage ×1.4 and Shattering Fists ×1.9 keep one extra hit, World Fists ×2.5 (v3.198 public)', async () => {
-    // v3.198 은월 3~5차는 공개 표(data/specials.ts)에 있습니다.
+test('v3.146 Eunwol: Ghost Gate attack +300 with a two-hit spirit, Fist Barrage ×1.4 and Shattering Fists ×1.9 keep one extra hit, World Fists ×2.5 (v3.199 public)', async () => {
+    // v3.199 은월 3~5차는 공개 표(data/specials.ts)에 있습니다.
     const { SPECIAL_SKILLS } = await load('game/data/specials.js');
     const sk = id => SPECIAL_SKILLS.find(s => s.id === id);
     assert.equal(sk('primordialBlood').bonus.attack, 300); assert.deepEqual(sk('primordialBlood').companion, { hits: 2, power: .35 });
     assert.deepEqual([sk('tentacleBarrage').multiplier, sk('tentacleBarrage').extraAttacks], [1.4, 1]);
     assert.deepEqual([sk('maulingTide').multiplier, sk('maulingTide').extraAttacks], [1.9, 1]);
-    assert.equal(sk('worldTentacle').extraAttacks, 1); assert.ok(sk('worldTentacle').multiplier > 2.5, 'awakening boost on top of base ×2.5 (v3.197 2.8 → 2.5)');
+    assert.equal(sk('worldTentacle').extraAttacks, 1); assert.ok(sk('worldTentacle').multiplier > 2.5, 'awakening boost on top of base ×2.5 (v3.198 2.8 → 2.5)');
     assert.deepEqual([sk('abyssalGrip').companion, sk('abyssHide').companion], [{ hits: 1, power: .35 }, { hits: 1, power: .4 }]);
 });
 

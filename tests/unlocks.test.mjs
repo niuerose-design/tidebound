@@ -6,26 +6,26 @@ const { progressCounts } = await loadGame().load('game/systems/progression.js');
 const ready = (level = 30) => { const s = newState(0); s.level = level; s.rebirths = 1; Object.assign(s.attributes, { str: 30, dex: 30, int: 30, vit: 30, wis: 30, luk: 30 }); return s; };
 const job = id => JOBS.find(j => j.id === id);
 
-test('v3.62 hidden unlocks: record conditions (v3.199 four); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
+test('v3.62 hidden unlocks: record conditions (v3.200 four); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
     assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman', 'rebirthFisher']);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead'), false);
     assert.ok(jobRequirements(s, job('undead')).some(r => r.label === '숨은 조건' && !r.met));
     assert.throws(() => act(s, { type: 'job', id: 'undead' }, 0), /숨은 조건/);
-    s.deaths = 99; assert.equal(canChangeJob(s, 'undead'), false, 'v3.198 99 deaths is not enough');
+    s.deaths = 99; assert.equal(canChangeJob(s, 'undead'), false, 'v3.199 99 deaths is not enough');
     s.deaths = 100; act(s, { type: 'job', id: 'undead' }, 0); assert.equal(s.job, 'undead');
     act(s, { type: 'job', id: 'fisher' }, 0); s.deaths = 0;
     assert.equal(canChangeJob(s, 'undead'), true, 'a job once entered ignores its hidden condition');
     assert.equal(unlocks.unlockMet({}, 'manaLeviathan'), null, 'later jobs in a ??? lineage have no hidden condition');
 });
 
-test('v3.62 hidden unlocks count play records (v3.198 100 hours · 5 mastered)', () => {
+test('v3.62 hidden unlocks count play records (v3.199 100 hours · 5 mastered)', () => {
     const s = ready();
     const closed = id => assert.equal(canChangeJob(s, id), false, `${id} closed`), open = id => assert.equal(canChangeJob(s, id), true, `${id} open`);
     closed('clockmaker'); s.playMs = 99 * 3600_000; closed('clockmaker'); s.playMs = 100 * 3600_000; open('clockmaker');
-    // v3.198 은월 3차는 히든이 아니라 보스 처치 기록 없이 은월 (2차) 숙련만으로 이어집니다.
+    // v3.199 은월 3차는 히든이 아니라 보스 처치 기록 없이 은월 (2차) 숙련만으로 이어집니다.
     assert.equal(unlocks.unlockMet(s, 'krakenkin'), null); assert.ok(!job('krakenkin').hidden && !job('deepHorror').hidden && !job('leviathanAvatar').hidden);
-    assert.equal(job('poorMonk'), undefined, 'v3.198 청빈 수도승 is gone');
+    assert.equal(job('poorMonk'), undefined, 'v3.199 청빈 수도승 is gone');
     for (const id of unlocks.UNLOCK_JOBS) { const j = job(id); assert.ok(j && j.hidden && j.hint && !j.hint.includes(j.name) && !j.hint.includes('문'), id); }
 });
 
@@ -34,7 +34,7 @@ test('v3.62 the rebirth door is gone: no draw at rebirth, the old door jobs keep
     act(s, { type: 'rebirth' }, 0, () => { throw Error('rebirth draws no random number for a door'); });
     assert.equal(s.rebirthDoor, undefined);
     for (const id of ['voidcaller']) { assert.equal(unlocks.unlockMet({}, id), null, id); assert.ok(!job(id).hint.includes('문'), `${id} hint`); }
-    // v3.199 윤회의 나그네는 히든 5차 궁극의 모험가가 되어 숨은 조건(5차 직업 3개 숙달)이 생겼습니다.
+    // v3.200 윤회의 나그네는 히든 5차 궁극의 모험가가 되어 숨은 조건(5차 직업 3개 숙달)이 생겼습니다.
     const o = ready(); o.attributes.str = 10; o.attributes.wis = 12; assert.equal(canChangeJob(o, 'rebirthFisher'), false, 'rebirth 1 + stats is no longer enough');
     assert.equal(unlocks.unlockMet({}, 'rebirthFisher'), false); assert.ok(job('rebirthFisher').hidden && job('rebirthFisher').tier === 5 && job('rebirthFisher').signatureFree);
 });
@@ -99,7 +99,7 @@ test('v3.137 망인: job mastery ten million; 죽지않은 영혼 AP 6 → 4 →
     assert.equal(effectiveSkill(sk, 1, 3).penaltyRelief, 1, 'the last stage relieves every penalty');
 });
 
-test('v3.197 망인 skills: 무덤파기 hits and drains; 죽지않은 영혼 shows only 쓸모없음 but keeps its real effect', async () => {
+test('v3.198 망인 skills: 무덤파기 hits and drains; 죽지않은 영혼 shows only 쓸모없음 but keeps its real effect', async () => {
     const { strike } = await import('./harness.mjs'), D = await loadGame().load('game/systems/skill-description.js');
     const grave = SKILLS.find(x => x.id === 'graveHook'); assert.equal(grave.name, '무덤파기'); assert.ok(!grave.statusOnly && grave.effect === 'drain' && grave.damageType === 'physical');
     const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };

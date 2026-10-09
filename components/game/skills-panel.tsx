@@ -37,7 +37,7 @@ const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned 
     const practice = s.skillPractice[sk.id] || 0, mastery = skillMastery(s, sk.id);
     const level = skillLevel(sk, rank || 1, mastery), max = maxSkillLevel(sk), milestones = masteryMilestonesFor(sk);
     const nextMastery = milestones[mastery], nextGrowth = milestones[level];
-    // v3.197 AP는 떠돌이의 요령 할인까지 편성 기준으로(장착하면 그 편성에서의 값).
+    // v3.198 AP는 떠돌이의 요령 할인까지 편성 기준으로(장착하면 그 편성에서의 값).
     const effective = effectiveSkill(sk, rank || 1, mastery), cost = loadoutSkillAP(s, sk.id, s.skills.includes(sk.id) ? s.skills : [...s.skills, sk.id]);
     const equipped = s.skills.includes(sk.id), usable = canUse(s, sk.id), isInherited = inherited(s, sk.id);
     const paidInheritance = !!s.skillInheritances[sk.id];

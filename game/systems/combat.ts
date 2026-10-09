@@ -497,7 +497,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
             // v3.54 힐러(회복 직업)는 넘친 회복량을 적에게 피해로 돌려줍니다(아래에서 overhealDamage 배율로 적용).
             if (sa.healFocus) overheal = intended - healed;
         }
-        // v3.197 타임 리와인드: 나만 처음 상태로(체력 · 마나 가득, 재사용 대기 초기화). 상대는 그대로. 전투당 1회.
+        // v3.198 타임 리와인드: 나만 처음 상태로(체력 · 마나 가득, 재사용 대기 초기화). 상대는 그대로. 전투당 1회.
         if (chosen.timeRewind) {
             a.effects.timeUsed = true;
             a.hp = sa.hp; a.mana = sa.mana;
@@ -628,7 +628,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (chosen?.balanceBonus) notes.push(`조화 ${Math.round(balanceRatio * 100)}%`);
     // v3.158 자기 버프의 피해 배율(접신): 살아 있는 버프의 damageMultiplier를 곱합니다.
     const buffDamage = buffsOf(a.effects).reduce((m, [, bf]) => m * (bf.damageMultiplier || 1), 1);
-    // v3.197 태그(제로): 알파 ↔ 베타로 쪽을 바꿔 쓰면 장착 패시브의 tagBonus(가장 큰 값)만큼 피해가 커집니다. 쓴 쪽을 기억합니다.
+    // v3.198 태그(제로): 알파 ↔ 베타로 쪽을 바꿔 쓰면 장착 패시브의 tagBonus(가장 큰 값)만큼 피해가 커집니다. 쓴 쪽을 기억합니다.
     const tagBonus = chosen?.tag && a.effects.tag && a.effects.tag !== chosen.tag ? Math.max(0, ...a.skills.map(id => skillById(id)?.tagBonus || 0)) : 0;
     if (tagBonus) notes.push(`태그 ${chosen!.tag === 'alpha' ? '알파' : '베타'} +${Math.round(tagBonus * 100)}%`);
     if (chosen?.tag) a.effects.tag = chosen.tag;

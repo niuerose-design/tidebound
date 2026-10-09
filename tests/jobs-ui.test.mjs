@@ -20,12 +20,12 @@ test('Job UI: every hidden or hidden-unlock job has a one-line hint', () => {
 test('Job UI: a silhouette reveals its name when its hidden condition is met or all gate conditions are met', () => {
     const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
     assert.equal(ui.jobRevealed(s, job('voidcaller')), false);
-    s.rebirths = 2; assert.equal(ui.jobRevealed(s, job('voidcaller')), false, 'v3.62 the parent mastery gate still hides it (v3.198 rebirth 2)');
+    s.rebirths = 2; assert.equal(ui.jobRevealed(s, job('voidcaller')), false, 'v3.62 the parent mastery gate still hides it (v3.199 rebirth 2)');
     s.jobMastery.wanderer = 75; assert.equal(ui.jobRevealed(s, job('voidcaller')), true, 'v3.62 no rebirth door: its own gates reveal it');
     s.rebirths = 0; s.jobMastery.wanderer = 0; s.doorsOpened = ['voidcaller']; assert.equal(ui.jobRevealed(s, job('voidcaller')), true, 'a recorded reveal (old rebirth door) keeps it shown');
     s.doorsOpened = undefined; assert.equal(ui.jobRevealed(s, job('voidSovereign')), false, 'hidden job without a hidden condition still needs its gates');
     assert.equal(ui.jobRevealed(s, job('undead')), false, 'unmet hidden condition keeps the silhouette');
-    s.deaths = 99; assert.equal(ui.jobRevealed(s, job('undead')), false); s.deaths = 100; assert.equal(ui.jobRevealed(s, job('undead')), true, 'v3.198 a hundred defeats reveal the undead'); s.deaths = 0;
+    s.deaths = 99; assert.equal(ui.jobRevealed(s, job('undead')), false); s.deaths = 100; assert.equal(ui.jobRevealed(s, job('undead')), true, 'v3.199 a hundred defeats reveal the undead'); s.deaths = 0;
     const t = newState(0); t.unlockedJobs.push('manaLeviathan'); assert.equal(ui.jobRevealed(t, job('manaLeviathan')), true, 'entered once → shown');
     const m = newState(0); m.jobMastery.manaLeviathan = jobMasteryTarget(job('manaLeviathan')); assert.equal(ui.jobRevealed(m, job('manaLeviathan')), true, 'mastered → shown');
 });
@@ -44,12 +44,12 @@ test('Job UI: a hidden condition reveals its job while it holds and keeps it onc
     const s = newState(0); s.lastTick = at(2026, 10, 1, 12);
     assert.equal(ui.jobRevealed(s, job('journeyman')), false, 'condition unmet → hidden');
     const done = id => { s.jobMastery[id] = jobMasteryTarget(job(id)); };
-    for (const id of ['corsair', 'harpoon', 'tide', 'warden']) done(id); assert.equal(ui.jobRevealed(s, job('journeyman')), false, 'v3.198 four mastered is not enough');
+    for (const id of ['corsair', 'harpoon', 'tide', 'warden']) done(id); assert.equal(ui.jobRevealed(s, job('journeyman')), false, 'v3.199 four mastered is not enough');
     done('whaler'); assert.equal(ui.jobRevealed(s, job('journeyman')), true, 'condition met → name shown');
     s.jobMastery = {}; assert.equal(ui.jobRevealed(s, job('journeyman')), false); s.doorsOpened = ['journeyman']; assert.equal(ui.jobRevealed(s, job('journeyman')), true, 'recorded condition stays met');
 });
 
-test('v25 hidden jobs without gates are shown; v3.198 the 5th-tier chronarch appears only once every gate is met', () => {
+test('v25 hidden jobs without gates are shown; v3.199 the 5th-tier chronarch appears only once every gate is met', () => {
     const s = newState(0), job = id => JOBS.find(j => j.id === id);
     assert.ok(ui.jobRevealed(s, job('glyphMonk')), '玄 has no door or gate, so it is visible from the start');
     assert.equal(ui.jobRevealed(s, job('chronarch')), false);

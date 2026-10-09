@@ -92,14 +92,14 @@ export function skillMasteryRanks(s: State) { const out: Record<string, number> 
 export function extraRollLevel(s: Pick<State, 'extraRolls' | 'permanent'>) { return Math.max(0, Math.min(s.extraRolls || 0, researchRank(s, 'extraRoll'), SKILL_FORMULA.extraRoll.ap.length)); }
 /** v3.86 추가 판정이 쓰는 장착 AP(단계별 합). */
 export function extraRollAP(s: Pick<State, 'extraRolls' | 'permanent'>, level = extraRollLevel(s)) { return SKILL_FORMULA.extraRoll.ap.slice(0, level).reduce((a, n) => a + n, 0); }
-/** v3.197 떠돌이의 요령(방랑): 장착한 것 중 가장 큰 borrowedDiscount. 요령의 계보(방랑) 직업일 때만 듭니다(다른 계보가 계승해도 효과 없음). */
+/** v3.198 떠돌이의 요령(방랑): 장착한 것 중 가장 큰 borrowedDiscount. 요령의 계보(방랑) 직업일 때만 듭니다(다른 계보가 계승해도 효과 없음). */
 function borrowedDiscount(s: State, ids: string[]) {
     const job = jobById(s.job), home = job ? lineageOf(job) : '';
     let n = 0;
     for (const id of ids) { const sk = skillById(id), owner = sk?.borrowedDiscount && sk.job ? jobById(sk.job) : undefined; if (owner && lineageOf(owner) === home) n = Math.max(n, sk!.borrowedDiscount!); }
     return n;
 }
-/** 스킬 하나의 장착 AP. v3.197 떠돌이의 요령이 들면 다른 계보 직업의 스킬은 discount만큼 싸집니다(최소 1, 1 이하는 그대로). */
+/** 스킬 하나의 장착 AP. v3.198 떠돌이의 요령이 들면 다른 계보 직업의 스킬은 discount만큼 싸집니다(최소 1, 1 이하는 그대로). */
 export function skillAP(s: State, id: string, discount = 0) {
     const sk = skillById(id);
     if (!sk) return 2;
@@ -126,7 +126,7 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (!sk.job || !userJob) return 1;
     const owner = jobById(sk.job);
     if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
-    // v3.199 궁극의 모험가는 모든 계보의 전용 기술을 온전히 씁니다.
+    // v3.200 궁극의 모험가는 모든 계보의 전용 기술을 온전히 씁니다.
     if (jobById(userJob)?.signatureFree) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
@@ -349,7 +349,7 @@ export function jobRequirements(s: State, j: Job) {
             if (!(jobId === j.parent && mastery === j.mastery))
                 list.push({ label: `${job?.name || jobId} 숙련 ${mastery.toLocaleString()}`, met: (s.jobMastery?.[jobId] || 0) >= mastery, value: s.jobMastery?.[jobId] || 0, target: mastery });
         }
-        // v3.199 계급장 조건(궁극의 모험가: 하사 이상). 재입대(★)했다면 이미 넘은 계급입니다.
+        // v3.200 계급장 조건(궁극의 모험가: 하사 이상). 재입대(★)했다면 이미 넘은 계급입니다.
         if (j.requiresRank) {
             const need = RANKS.findIndex(r => r.id === j.requiresRank), now = rankIndex(rankState(s).exp);
             list.push({ label: `계급장 ${RANKS[need]?.name ?? j.requiresRank} 이상`, met: reenlistCount(s) > 0 || now >= need, value: now, target: need });

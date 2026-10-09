@@ -240,7 +240,7 @@ export function skillMasteryScale(sk: Pick<Skill, 'job'>) {
 }
 // v3.65 공개 특수 직업의 스킬(data/specials.ts, 완성된 모양).
 registerSkills(SPECIAL_SKILLS);
-// v3.198 공개 특수 직업의 5차 액티브(은월 (5차) 파쇄 연권)도 각성기로(비밀 표는 secret/register.ts에서 같은 일을 함).
+// v3.199 공개 특수 직업의 5차 액티브(은월 (5차) 파쇄 연권)도 각성기로(비밀 표는 secret/register.ts에서 같은 일을 함).
 for (const sk of SPECIAL_SKILLS) if (sk.type === 'active' && !sk.awaken && (JOBS.find(j => j.id === sk.job)?.tier ?? 0) >= SKILL_FORMULA.awaken.tier) awakenSkill(sk);
 // v3.69 옛 독립 수련의 스킬은 id 그대로 새 수련 직업이 가집니다(data/training.ts). v3.170 새 수련 패시브는 처음부터 수련 직업 소유입니다.
 registerSkills(TRAINING_SKILLS);

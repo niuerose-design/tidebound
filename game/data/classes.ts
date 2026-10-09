@@ -54,9 +54,9 @@ export type Job = {
     branchless?: boolean;
     /** v25: 1·2차여도 전용 기술을 3개 이상 가진 특수 직업(제로 (1차)·玄). */
     fullKit?: boolean;
-    /** v3.199 궁극의 모험가: 다른 계보의 5차 전용 기술을 계승해 써도 효율이 깎이지 않습니다(signatureScale · outsiderChance 면제). */
+    /** v3.200 궁극의 모험가: 다른 계보의 5차 전용 기술을 계승해 써도 효율이 깎이지 않습니다(signatureScale · outsiderChance 면제). */
     signatureFree?: boolean;
-    /** v3.199 계급장 조건: 이 계급(data/rank.ts RANKS id) 이상. 재입대한 적이 있으면 이미 넘은 것으로 봅니다. */
+    /** v3.200 계급장 조건: 이 계급(data/rank.ts RANKS id) 이상. 재입대한 적이 있으면 이미 넘은 것으로 봅니다. */
     requiresRank?: string;
     /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않고, v3.54부터 넘친 회복량 × overhealDamage를 적에게 피해로 줍니다. */
     healer?: boolean;
@@ -222,7 +222,7 @@ JOBS.push(...(V24_JOBS as Job[]));
 
 // v24.2 ??? 문 직업과 보조 계열 소개 갱신. 자세한 설계는 support-rework.ts.
 JOBS.push(...(SUPPORT_JOBS as Job[]));
-// v25 ??? 특수 직업: 제로 (1차)·제로 (5차, v3.198 4차 → 5차)·玄. 자세한 설계는 expansion-v25.ts.
+// v25 ??? 특수 직업: 제로 (1차)·제로 (5차, v3.199 4차 → 5차)·玄. 자세한 설계는 expansion-v25.ts.
 JOBS.push(...(V25_JOBS as Job[]));
 // v25.14 방어 계열 보강: 종거북·루미너스 (2차) 갈래 5차까지, 새 호영 (1차)(마법 방어) 계보. 자세한 설계는 expansion-defense.ts.
 JOBS.push(...(DEFENSE_JOBS as Job[]));
@@ -420,7 +420,7 @@ export function jobById(id: string | undefined) {
     if (!jobByIdMap) { jobByIdMap = new Map(); for (const x of JOBS) if (!jobByIdMap.has(x.id)) jobByIdMap.set(x.id, x); }
     return id === undefined ? undefined : jobByIdMap.get(id);
 }
-// v3.65 공개 특수 직업(유리 대포 · v3.198 은월 3~5차, data/specials.ts).
+// v3.65 공개 특수 직업(유리 대포 · v3.199 은월 3~5차, data/specials.ts).
 registerJobs(SPECIAL_JOBS, true);
 // v3.70 능력치 수련 I~III(data/stat-training.ts, 완성된 모양).
 registerJobs(STAT_TRAINING_JOBS, true);

@@ -1,8 +1,8 @@
 /**
  * v3.65 공개 특수 직업(docs/concept.md 11.7-2). 비밀(game/secret)에서 공개로 옮긴 직업과 그 스킬을 완성된 모양 그대로 둡니다.
  * - 유리 대포: 玄과 함께 ‘제약’ 계보(공개 특수 직업).
- * - (v3.199 윤회의 나그네는 히든 5차 궁극의 모험가로 바뀌어 game/secret으로 옮겼습니다.)
- * - v3.198 은월 3~5차: 은월 (2차)에 이어지는 공개 전직(전에는 보스 처치 기록으로 드러나는 히든).
+ * - (v3.200 윤회의 나그네는 히든 5차 궁극의 모험가로 바뀌어 game/secret으로 옮겼습니다.)
+ * - v3.199 은월 3~5차: 은월 (2차)에 이어지는 공개 전직(전에는 보스 처치 기록으로 드러나는 히든).
  * classes.ts·skills.ts가 표를 만든 뒤 registerJobs·registerSkills로 더합니다(화면·서버 모두).
  */
 import type { Job, Lineage } from './classes';
@@ -10,7 +10,7 @@ import type { Skill } from '../types';
 
 export const SPECIAL_JOBS: Job[] = [
     {id: 'glassHarpooner', subRole: 'physical', name: '유리 대포', title: '한 번 맞으면 깨지는 몸', desc: '최대 체력이 1%뿐인 제약 직업입니다. 항상 먼저 움직이고, 쓰러질 피해를 전투당 두 번 체력 1로 버티며, 회피 +30%p로 피합니다. 물리 공격 ×2.2·치명타 +15%로 맞기 전에 끝내는 결투·계승용 직업입니다.', attack: 2.2, magic: 1, hp: 0.01, defense: 1, resist: 1, crit: 0.15, tier: 1, level: 10, requires: {dex: 14, luk: 14}, mastery: 0, role: '제약·유리 대포', tree: 'mystery', lineage: 'restraint', hint: '한 대도 맞을 수 없는 몸으로 먼저 찌르는 모험가.', constraint: {label: '유리 몸', desc: '최대 체력 1%. 선공·최후의 버팀·회피로만 살아남습니다.', devices: {firstStrike: true, lastStand: {charges: 2}, evasion: 0.3}}, masteryTarget: 300, masteryBoost: 0.08},
-    // v3.198 은월 3~5차(krakenkin 계보)는 히든에서 빼고 은월 (2차)에 이어지는 공개 전직으로 옮겼습니다(비밀 표 game/secret에서 그대로 옮김).
+    // v3.199 은월 3~5차(krakenkin 계보)는 히든에서 빼고 은월 (2차)에 이어지는 공개 전직으로 옮겼습니다(비밀 표 game/secret에서 그대로 옮김).
     {id: 'krakenkin', subRole: 'physical', name: '은월 (3차)', title: '보스의 혼을 정령으로 묶는다', desc: '보스를 숱하게 쓰러뜨린 은월이 그 혼을 정령으로 거둔 물리 3차 히든 직업입니다. 정령이 모든 공격에 추가타를 붙이고, 폭류권으로 연타합니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0.08, bonus: {attack: 70, hp: 90, defense: 1}, tier: 3, level: 40, parent: 'stormEel', requires: {str: 38, dex: 30}, mastery: 150, role: '정령·추가타', tree: 'physical', lineage: 'krakenkin', penalties: {accuracy: -0.04}, requiresSkillMastery: {electricBite: 4}, requiresJobMastery: {stormEel: 150}, masteryTarget: 300000, masteryBoost: 0.42},
     {id: 'deepHorror', subRole: 'physical', name: '은월 (4차)', title: '그림자가 빛을 삼킨다', desc: '은월 계보의 4차 히든 직업입니다. 파쇄철조로 두 번 후려치고, 소혼 장막이 정령을 키우며 체력과 방어를 받칩니다.', attack: 1.42, magic: 1, hp: 1.18, defense: 1.04, resist: 1, crit: 0.1, tier: 4, level: 55, mastery: 300, masteryTarget: 300000, masteryBoost: 0.32, parent: 'krakenkin', requires: {str: 52, dex: 38}, requiresSkillMastery: {tentacleBarrage: 3}, role: '정령·추가타', tree: 'physical', lineage: 'krakenkin', penalties: {accuracy: -0.04}},
     {id: 'leviathanAvatar', subRole: 'physical', name: '은월 (5차)', title: '두 정령이 함께 깨어난다', desc: '정령 둘을 거느리고 파쇄 연권으로 세계를 휘감는, 은월 계보의 정점에 선 5차 히든 직업입니다.', attack: 1.56, magic: 1, hp: 1.25, defense: 1.08, resist: 1.06, crit: 0.12, tier: 5, level: 70, rebirth: 2, mastery: 300000, masteryTarget: 1500000, masteryBoost: 0.35, parent: 'deepHorror', requires: {str: 66, dex: 44, vit: 40}, requiresSkillMastery: {maulingTide: 3}, role: '정령·최상위', tree: 'physical', lineage: 'krakenkin', penalties: {accuracy: -0.04}},
@@ -18,9 +18,9 @@ export const SPECIAL_JOBS: Job[] = [
 export const SPECIAL_SKILLS: Skill[] = [
     {id: 'glassLance', name: '유리 창', desc: '(물리 공격) × 2.4 피해. 빈사 상태의 적에게 피해 +50%.', type: 'active', level: 10, job: 'glassHarpooner', chance: 0.3, cooldown: 4, multiplier: 2.4, cost: 3, damageBonusCondition: 'lowHp', conditionalDamageBonus: 0.5, rankEffects: {multiplierScale: 0.05, chanceIncrease: 0.02, manaReduction: 0, cooldownReduction: 0}, masteryMilestones: [250, 1200, 4500, 14000], manaCost: 0},
     {id: 'glassHeart', name: '유리 심장', desc: '치명타 +10%p, 치명 피해 +30%p. 계승하면 어느 직업이든 한 방이 매워집니다.', type: 'passive', level: 10, job: 'glassHarpooner', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: {crit: 0.1, critDamage: 0.3}, rankEffects: undefined, masteryMilestones: [250, 1200, 4500, 14000]},
-    // v3.198 은월 3~5차 스킬(공개로 옮김). 폭류권은 보스도 쓰는 공개 기술이라 skills.ts에도 있고, 여기 값이 덮어씁니다.
+    // v3.199 은월 3~5차 스킬(공개로 옮김). 폭류권은 보스도 쓰는 공개 기술이라 skills.ts에도 있고, 여기 값이 덮어씁니다.
     // v3.121 은월 상향: 귀문진 물리 공격 +40 → +500(숙련 보정 뒤 엔드 물리 공격 약 +26%), 파쇄철조 배율 1.3 → 1.5, 파쇄 연권 1.5 → 2(추가타 위주라 기본 배율이 낮아 5차 물리 딜러 최하위였음).
-    // v3.197 은월 하향: 파쇄 연권 2.8 → 2.5(5차 사냥터 1.69배).
+    // v3.198 은월 하향: 파쇄 연권 2.8 → 2.5(5차 사냥터 1.69배).
     {type: 'passive', chance: 0, cooldown: 0, multiplier: 0, rankEffects: {bonusScale: 0.3}, id: 'abyssalGrip', name: '정령의 힘', desc: '물리 공격과 방어 관통이 오르고, 정령의 추가타 위력이 35%가 됩니다.', level: 40, job: 'krakenkin', cost: 3, bonus: {attack: 28, penetration: 0.04}, companion: {hits: 1, power: 0.35}, masteryMilestones: [4500, 22500, 84000, 225000]},
     {type: 'active', damageType: 'physical', manaCost: 0, id: 'maulingTide', name: '파쇄철조', desc: '(물리 공격) × 1.9 피해. 60% 위력으로 추가 공격 1회.', level: 55, job: 'deepHorror', chance: 0.24, cooldown: 4, multiplier: 1.9, cost: 5, extraAttacks: 1, extraAttackMultiplier: 0.6, masteryMilestones: [25000, 120000, 400000, 1000000], rankEffects: {multiplierScale: 0.05, chanceIncrease: 0.02, manaReduction: 0, cooldownReduction: 0}},
     {type: 'passive', chance: 0, cooldown: 0, multiplier: 0, rankEffects: {bonusScale: 0.3}, id: 'abyssHide', name: '소혼 장막', desc: '최대 체력과 물리 방어가 오르고, 정령의 추가타 위력이 40%가 됩니다.', level: 55, job: 'deepHorror', cost: 3, bonus: {hp: 220, defense: 20}, companion: {hits: 1, power: 0.4}, masteryMilestones: [25000, 120000, 400000, 1000000]},

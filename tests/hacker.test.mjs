@@ -8,7 +8,7 @@ const hacker = () => { const s = newState(0); s.level = 40; s.rebirths = 5; s.sp
 
 test('v3.18 hacker job: hidden mystery tier-1 job without stat penalties (combat is blocked by rule), adguard as its only skill', () => {
     const j = JOBS.find(x => x.id === 'hacker');
-    assert.ok(j && j.hidden && j.tree === 'mystery' && j.tier === 1 && j.rebirth === 5, 'v3.198 rebirth 3 → 5');
+    assert.ok(j && j.hidden && j.tree === 'mystery' && j.tier === 1 && j.rebirth === 5, 'v3.199 rebirth 3 → 5');
     // v3.18 몹을 만나지 않으니 능력치 보정은 없고, 전투 참여를 규칙으로 막습니다.
     assert.deepEqual([j.attack, j.magic, j.hp, j.defense, j.resist], [1, 1, 1, 1, 1]); assert.ok(!j.constraint);
     assert.ok(H.hackerCombatBlock({ job: 'hacker' }) && !H.hackerCombatBlock({ job: 'fisher' }));
@@ -375,7 +375,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         process.env.TIDEBOUND_SECRECY = 'off'; assert.equal(await Sc.secrecyOn(now + 2), false, 'env wins'); delete process.env.TIDEBOUND_SECRECY;
         await Sc.setSecrecy(false, now); assert.equal((await Sc.buildCatalog(newState(0), now + 3)).secret, false);
         // v3.44 비밀 직업: 비공개가 꺼져 있으면 전체, 켜면 드러난 것만 전체·나머지는 실루엣(이름·설명·조건·능력치 없음). 같은 키면 다시 보내지 않음.
-        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 14, 'v3.198 은월 3~5차는 공개 · 청빈 수도승 삭제 · v3.199 궁극의 모험가 추가'); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
+        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 14, 'v3.199 은월 3~5차는 공개 · 청빈 수도승 삭제 · v3.200 궁극의 모험가 추가'); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
         assert.equal(await Sc.buildCatalog(newState(0), now + 4, openCat.key), null, 'same key: nothing to send');
         process.env.TIDEBOUND_SECRECY = 'on';
         const veiledCat = await Sc.buildCatalog(newState(0), now + 5), lich = veiledCat.jobs.find(j => j.id === 'voidSovereign');
