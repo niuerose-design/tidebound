@@ -330,6 +330,8 @@ export type Skill = {
     song?: boolean;
     /** v3.187 계보 전용: 이 직업 id가 지금 직업의 계보(자신 + 선행 직업)에 있어야 장착하고 효과가 납니다. 숙련 · SP 계승으로도 계보 밖에서는 못 씁니다. */
     exclusiveLineage?: string;
+    /** v3.221 계보 전용이지만 궁극의 모험가(signatureFree)는 예외로 씁니다(황금 올가미). */
+    exclusiveUltimate?: boolean;
     /** v24.2 골드 투척: 보유 골드의 ratio(최대 cap)를 쓰고, 쓴 골드 × scale을 피해에 더합니다. */
     /** 골드 투척: 보유 골드 × ratio를 실제로 쓰고 쓴 골드 × scale을 기준값에 더합니다. 상한은 cap(절대값)과 capAttack(기준 공격력 × 배수, v3.157 섀도어: 수백억 골드도 새 생의 Lv.10도 공격력에 맞춘 만큼만) 중 작은 쪽. */
     goldSpend?: { ratio: number; cap?: number; capAttack?: number; scale: number };

@@ -1,5 +1,5 @@
 // 직업 개편 2단계: ??? 계열의 숨은 조건과 숙달 규칙. v3.62 문(윤회의 문·발견의 문·운영 문 열기)을 없애고 숨은 조건만 남겼습니다(docs/concept.md 11.7).
-import { newState, act, advance, strike, stats, reward, MIMIC_DATA, canChangeJob, jobRequirements, jobMastered, jobMasteryTarget, migrateState, unlocksMod as unlocks, JOBS, SKILLS, lineageOf, passiveGrowthBonus, assert, test } from './harness.mjs';
+import { newState, act, advance, strike, stats, reward, canUse, MIMIC_DATA, canChangeJob, jobRequirements, jobMastered, jobMasteryTarget, migrateState, unlocksMod as unlocks, JOBS, SKILLS, lineageOf, passiveGrowthBonus, assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 const { progressCounts } = await loadGame().load('game/systems/progression.js');
 
@@ -143,7 +143,11 @@ test('v3.221 까미 사냥꾼: 황금 올가미는 까미(대왕 포함)에게�
         assert.ok(hit && hit.total === 400000 && !hit.hits[0].critical, `${id}: 40% of max hp, fixed, no crit, sure hit through 90% evasion`);
         assert.equal(b.effects.jackpotUp, 0.25, `${id}: marked`);
     }
-    { const ev = []; strike(hunter('fisher'), foe('masteryMimic'), () => 0.99, ev); assert.equal(ev.find(e => e.skillId === 'goldenSnare').total, 400000, 'a 4th-tier skill is whole when inherited (signature rule is tier 5+)'); }
+    // 까미 사냥꾼 계보 전용(궁극의 모험가는 예외): 다른 직업은 계승을 마쳐도 장착 · 사용할 수 없습니다.
+    { const o = ready(70); o.skillInheritances = { goldenSnare: 1 }; o.learned.goldenSnare = 1;
+      o.job = 'fisher'; assert.equal(canUse(o, 'goldenSnare'), false, 'another job cannot use it even inherited');
+      o.job = 'rebirthFisher'; assert.equal(canUse(o, 'goldenSnare'), true, '궁극의 모험가 is the exception');
+      o.job = 'kkamiHunter'; assert.equal(canUse(o, 'goldenSnare'), true); }
     // 표식이 남은 까미: 로또 소(rng 0) → 중으로 상향.
     const s = ready(70); s.enemy = { id: MIMIC_DATA.id, name: '숙련의 까미', hp: 0, maxHp: 1, attack: 1, defense: 0, level: 70, exp: 1, gold: 1, effects: { jackpotUp: 1 } };
     reward(s, () => 0);

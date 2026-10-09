@@ -197,6 +197,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     if (sk.song) out.push('노래: 장착 AP 0.');
     if (sk.exclusiveLineage) out.push(`${skillExclusiveLabel(sk)}: 이 계보 직업일 때만 장착할 수 있고 효과도 그때만 납니다. 다른 계보 직업은 숙련 · SP 계승을 마쳐도 쓸 수 없고, 계보를 벗어나 전직하면 효과가 사라집니다. 계보 안에서도 지금 직업이 아닌 차수의 기술은 숙련 · SP 계승을 마쳐야 씁니다.`);
+    if (sk.exclusiveLineage && sk.exclusiveUltimate) out.push('예외: 궁극의 모험가는 계승을 마치면 이 기술을 씁니다.');
     if (sk.bloodRage) out.push(`피의 분노: 잃은 체력 비율 × ${skillPercent(sk.bloodRage)}만큼 내 직접 피해가 커집니다(체력이 1이면 +${skillPercent(sk.bloodRage)}). 여러 개면 합산.`);
     if (sk.companion) out.push(`정령: 내 모든 공격(기본 공격 · 액티브 · 추가타 뒤)에 위력 ${skillPercent(sk.companion.power)}의 추가타 ${sk.companion.hits}회가 따라옵니다. 상태이상 전용 · 회복 전용 기술에는 붙지 않고, 여러 정령 패시브는 가장 높은 값만.`);
     if (sk.spectre) out.push(`${sk.spectre.name ?? '접신'}: 충전이 ${sk.spectre.need}에 닿으면 충전을 비우고 ${sk.spectre.turns}턴 동안 내 직접 피해 ×${number(sk.spectre.damageMultiplier)}${sk.spectre.speedMultiplier ? `, 속도 ×${number(sk.spectre.speedMultiplier)}` : ''}${Object.entries(sk.spectre.stats || {}).map(([k, v]) => `, ${skillBonusText(k, v as number)}`).join('')}. 변신 패시브를 여럿 장착하면 가장 센 하나만.${sk.chargeOnHit ? ` 충전은 피해를 입는 공격을 맞을 때 +${sk.chargeOnHit}(치명타로 맞으면 +1 더).` : ' 충전은 충전 기술이 명중할 때 쌓입니다.'}`);
