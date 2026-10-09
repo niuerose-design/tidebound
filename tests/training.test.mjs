@@ -177,7 +177,7 @@ test('v3.80 job mastery targets follow skill milestones (40% of the last); jobs 
 });
 
 test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom ones within ±50%, constraint skills in tens of millions; old inheritance kept when the first stage went up', async () => {
-    const Sk = await load('game/data/skills.js'), R = await load('game/data/roles.js');
+    const Sk = await load('game/data/skills.js'), R = await load('game/data/roles.js'), C = await load('game/data/classes.js');
     const bad = [];
     for (const sk of SKILLS) {
         const j = job(sk.job); if (!j || j.tier < 1 || j.retired) continue;
@@ -185,7 +185,9 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
         if (exempt) continue;
         // 제약형(최대 숙련에서 AP 0 이하 · 제약 직업): 마지막 단계가 천만 단위(AP 반환 5,000만 · 그 밖 1,000만).
         if (Sk.isConstraintSkill(sk)) { const want = Sk.CONSTRAINT_MASTERY_BY_SKILL[sk.id] ?? (Sk.costAtMastery(sk) < 0 ? 5e7 : 1e7); if (P.masteryMilestonesFor(sk).at(-1) !== want) bad.push(`${sk.id} constraint`); continue; }
-        const r = P.masteryMilestonesFor(sk).at(-1) / Sk.SKILL_TIER_CURVE[Math.min(5, j.tier)].at(-1);
+        // v3.221 아제로스 계보는 메이플 월드 곡선의 AZEROTH_MASTERY_SCALE배.
+        const world = C.worldOf(C.LINEAGES.find(l => l.id === lineageOf(j))) === 'azeroth' ? C.AZEROTH_MASTERY_SCALE : 1;
+        const r = P.masteryMilestonesFor(sk).at(-1) / (Sk.SKILL_TIER_CURVE[Math.min(5, j.tier)].at(-1) * world);
         if (r < .5 || r > 1.5) bad.push(`${sk.id} ×${r.toFixed(2)}`);
     }
     assert.deepEqual(bad, []);

@@ -156,6 +156,9 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.allIn?.heal) out.push(`건 마나 × ${number(sk.allIn.heal)}만큼 자신 회복`);
         if (sk.recoil) out.push(`준 피해의 ${skillPercent(sk.recoil)}를 자신도 받음 · 반동으로는 체력 1 아래로 내려가지 않음`);
         if (sk.sureHit) out.push('반드시 맞힙니다. 기절 뒤 면역 규칙은 그대로입니다.');
+        if (sk.condition === 'kkami') out.push('숙련의 까미 · 대왕 까미에게만 나갑니다(다른 몬스터에게는 발동 판정을 굴리지 않음).');
+        if (sk.maxHpDamage) out.push(`대상 최대 체력의 ${skillPercent(sk.maxHpDamage)} 고정 피해. 방어 · 치명타 · 피해 배율을 받지 않습니다.`);
+        if (sk.jackpotUp) out.push(`명중한 까미에 표식: 그 까미를 잡으면 ${skillPercent(sk.jackpotUp)} 확률로 숙련 로또가 한 단계 위로(소 → 중, 중 → 대).`);
         if (sk.tag) out.push(`태그: ${sk.tag === 'alpha' ? '알파' : '베타'} 기술. 바로 앞에 쓴 태그 기술이 ${sk.tag === 'alpha' ? '베타' : '알파'}였으면 태그 전환 패시브(타임 홀딩 · 얼티밋 타임)만큼 피해가 커집니다. 같은 쪽을 이어 쓰면 보너스가 없습니다.`);
         if (sk.extraTurn) out.push('이 행동 뒤 곧바로 한 번 더 행동합니다. 연속 행동과 별개이고, 추가 행동에서는 다시 생기지 않습니다.');
         if (sk.sealPower) out.push(`이번 전투에 새긴 인 1개마다 피해 +${skillPercent(sk.sealPower)}`);

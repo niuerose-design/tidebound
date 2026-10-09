@@ -1,5 +1,5 @@
 // 직업 개편 2단계: ??? 계열의 숨은 조건과 숙달 규칙. v3.62 문(윤회의 문·발견의 문·운영 문 열기)을 없애고 숨은 조건만 남겼습니다(docs/concept.md 11.7).
-import { newState, act, advance, canChangeJob, jobRequirements, jobMastered, jobMasteryTarget, migrateState, unlocksMod as unlocks, JOBS, SKILLS, lineageOf, passiveGrowthBonus, assert, test } from './harness.mjs';
+import { newState, act, advance, strike, stats, reward, MIMIC_DATA, canChangeJob, jobRequirements, jobMastered, jobMasteryTarget, migrateState, unlocksMod as unlocks, JOBS, SKILLS, lineageOf, passiveGrowthBonus, assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 const { progressCounts } = await loadGame().load('game/systems/progression.js');
 
@@ -130,4 +130,42 @@ test('v3.220 Azeroth hidden lineages: kkami 100 · nuri 100 · every region dung
     assert.deepEqual([c.kkami, c.nuri, c.dungeonBoss, c.onyx], [100, 100, 700, 100]);
     s.clears.abyss = 50; assert.equal(progressCounts(s).dungeonBoss, 700, 'Mu Lung floors are not region clears');
     for (const id of unlocks.UNLOCK_JOBS.slice(-4)) { assert.equal(lineageOf(job(id)), id, `${id} is its own lineage`); assert.ok(SKILLS.some(sk => sk.job === id && sk.perCount?.length), `${id} has a record passive`); }
+});
+
+test('v3.221 까미 사냥꾼: 황금 올가미는 까미(대왕 포함)에게만 · 최대 체력 40% 고정 피해 · 반드시 명중 · 로또 상향 표식; 직업이면 까미 ×1.5; 패시브 치명타 300회 +300%p', () => {
+    const base = { hp: 1e6, attack: 100, magic: 100, defense: 500, resist: 0, crit: 0, accuracy: 0, evasion: 0.9, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const hunter = (job = 'kkamiHunter') => ({ name: 'A', job, stats: { ...base }, hp: 1e6, mana: 1000, skills: ['goldenSnare'], cooldowns: {}, stun: 0, effects: {}, ranks: { goldenSnare: 1 }, mastery: {}, practice: {} });
+    const foe = foeId => ({ name: 'B', foe: true, foeId, stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    for (const id of ['grotto', undefined]) { const ev = []; strike(hunter(), foe(id), () => 0, ev); assert.ok(!ev.some(e => e.skillId === 'goldenSnare'), `${id}: not fired on other foes`); }
+    for (const id of ['masteryMimic', 'kingMimic']) {
+        const b = foe(id), ev = []; strike(hunter(), b, () => 0.99, ev);
+        const hit = ev.find(e => e.skillId === 'goldenSnare');
+        assert.ok(hit && hit.total === 400000 && !hit.hits[0].critical, `${id}: 40% of max hp, fixed, no crit, sure hit through 90% evasion`);
+        assert.equal(b.effects.jackpotUp, 0.25, `${id}: marked`);
+    }
+    { const ev = []; strike(hunter('fisher'), foe('masteryMimic'), () => 0.99, ev); assert.equal(ev.find(e => e.skillId === 'goldenSnare').total, 400000, 'a 4th-tier skill is whole when inherited (signature rule is tier 5+)'); }
+    // 표식이 남은 까미: 로또 소(rng 0) → 중으로 상향.
+    const s = ready(70); s.enemy = { id: MIMIC_DATA.id, name: '숙련의 까미', hp: 0, maxHp: 1, attack: 1, defense: 0, level: 70, exp: 1, gold: 1, effects: { jackpotUp: 1 } };
+    reward(s, () => 0);
+    assert.ok(s.logs.some(l => l.text.includes('황금 올가미 · 숙련 로또 소 → 중')), 'jackpot moved up a tier');
+    assert.equal(job('kkamiHunter').mimicFind, 0.5);
+    // 패시브: 까미 300회면 치명타 +300%p → 100%를 넘은 몫이 극 치명타로(100%p마다 +5%).
+    const p = ready(70); Object.assign(p.attributes, { dex: 80, luk: 60 }); p.job = 'kkamiHunter'; p.unlockedJobs.push('kkamiHunter'); p.skills = ['kkamiLedger']; p.learned.kkamiLedger = 1;
+    const sc0 = stats(p).superCrit; p.book.masteryMimic = 300; const sc300 = stats(p).superCrit;
+    assert.ok(stats(p).crit === 1 && sc300 - sc0 >= 0.1 && sc300 - sc0 <= 0.15 + 1e-9, `superCrit ${sc0} → ${sc300}`);
+});
+
+test('v3.221 Azeroth rules: rank badge required (4th tier 하사 · 칠흑의 화신 상사) and mastery ×10 over the Maple World curve', () => {
+    const want = { kkamiHunter: '하사', nuriTracker: '하사', darkFollower: '하사', onyxAvatar: '상사' };
+    for (const [id, rank] of Object.entries(want)) {
+        const s = ready(70); s.book.masteryMimic = 100; s.book.expNuri = 100; s.onyxBook = { a: 100 };
+        for (const d of ['grotto', 'kelpCatacomb', 'cemetery', 'caldera', 'temple', 'ventCathedral', 'starSanctum']) s.clears[d] = 100;
+        assert.ok(jobRequirements(s, job(id)).some(r => r.label === `계급장 ${rank} 이상` && !r.met), `${id} needs ${rank}`);
+    }
+    // 같은 차수 메이플 월드 직업(아델 4차 · 5차)의 숙달 목표 · 스킬 마지막 숙련 단계의 10배.
+    for (const [id, ref] of [['kkamiHunter', 'voidSovereign'], ['onyxAvatar', 'voidIncarnate']]) {
+        assert.equal(job(id).masteryTarget, job(ref).masteryTarget * 10, `${id} mastery target`);
+        const last = j => Math.max(...SKILLS.filter(sk => sk.job === j).map(sk => sk.masteryMilestones.at(-1)));
+        assert.equal(last(id), last(ref) * 10, `${id} skill milestones`);
+    }
 });

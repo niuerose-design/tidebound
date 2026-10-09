@@ -15,7 +15,7 @@ import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
-import { MIMIC, LETTER, letterRank, rollMimicMastery, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
+import { MIMIC, LETTER, letterRank, rollMimicMastery, upgradeMimicTier, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
 import { ascended, ascensionMastery } from '../data/ascension';
 import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import { ESSENCE_SLIME, rollSlimeTier, slimeChance, slimeEligible, slimeBundle } from '../data/essence-slime';
@@ -219,7 +219,7 @@ export function specialChances(s: State) {
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
     const place = st.habitat ? Math.max(...STAGES.filter(x => !x.habitat && x.region === st.region).map(x => STAGES.indexOf(x))) : STAGES.indexOf(st);
-    const mimicP = mimicOk ? mimicChance(tier, place) * (s.away ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
+    const mimicP = mimicOk ? mimicChance(tier, place) * (s.away ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck * (1 + (jobById(s.job)?.mimicFind || 0)) : 0;
     const nuriP = nuriOk ? nuriChance(tier) * (s.away ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
     // v3.161 정수의 슬라임: 누리 구간 바로 뒤. 대왕 몫은 각 구간의 앞쪽 share(작은 녀석을 KING.minBookKills마리 잡은 뒤부터).
     const slimeOk = !dungeon && slimeEligible(s, asc ? Math.max(tier, ESSENCE_SLIME.minTier) : tier);
@@ -354,7 +354,8 @@ export function reward(s: State, rng: () => number) {
     if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 빌드 화면의 계급에서 사용)`, 'reward'); }
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.30 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
     let mimicBonus = 0;
-    if (e.id === MIMIC.id) { const t = rollMimicMastery(rng, s); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
+    // v3.221 황금 올가미 표식이 남은 까미는 그 확률로 로또가 한 단계 위로 굴러갑니다.
+    if (e.id === MIMIC.id) { const rolled = rollMimicMastery(rng, s), up = (e.effects?.jackpotUp || 0) > 0 && rng() < e.effects!.jackpotUp! && upgradeMimicTier(rolled) !== rolled, t = up ? upgradeMimicTier(rolled) : rolled; if (up) addLog(s, `✦ 황금 올가미 · 숙련 로또 ${rolled.label} → ${t.label}`, 'reward'); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
     // v3.161 대왕 까미: ‘대’ × KING.rewardMul 확정(난수 없음).
     else if (e.id === KING.mimic.id) { mimicBonus = MIMIC.tiers[2].mastery * KING.rewardMul; addLog(s, `👑 대왕 까미 격파! 직업·장착 스킬 숙련 +${mimicBonus.toLocaleString()} (대 당첨 ×${KING.rewardMul} 확정)`, 'reward'); }
     // v3.31 승천 숙련 배율(1회당 +100%, 5회 ×6)은 까미 당첨분까지 합친 이번 처치 숙련에 곱합니다(v3.107 계급 특전 숙련 훈련은 빼고 뒤에 더함). 다른 배율은 까미에 걸지 않습니다.
