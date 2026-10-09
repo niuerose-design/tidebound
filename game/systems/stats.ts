@@ -258,9 +258,11 @@ export const POWER_REF = { accuracy: 1.1, evasion: .1, penetrationWeight: .6 } a
  * 공격 .65 · 버티는 힘 .35로 두면 태초 22성 4부위에서 부위를 빼면 무기 42 · 방어구 39 · 장신구 26 · 망토 29%로 무기가 1등이 됩니다(docs/gear-endgame.md v3.134).
  * POWER_SCALE 8은 Lv.1 새 캐릭터의 전투력(약 453)이 전과 같게 맞춘 값이었고, v3.141에 0.8로 내려 모든 전투력 표시를 1/10로 줄였습니다(엔드 유저가 수억을 넘어 읽기 어려워서, Lv.1 약 45).
  * 비율 · 순위 · 장비 비교는 그대로입니다. 전투력은 표시 · 장비 미리보기 · 결투 상대 · 제단 신 위력에 쓰이고 전투 판정에는 쓰지 않습니다. 랭킹은 저장값이 아니라 스냅샷 능력치로 다시 계산해 보여 줍니다(v3.66).
+ * v3.197 고대 이상 전용 옵션(초월 등)이 덜 붙자 무기 · 방어구 차이가 거의 사라져(무기 38 · 방어구 38~40%) 공격 .7 · 버티는 힘 .3으로 올렸습니다.
+ * 태초 22성 4부위에서 부위를 빼면 무기 42 · 방어구 35 · 장신구 24 · 망토 26%(scripts/check-gear-ladder). POWER_SCALE .88은 Lv.1 전투력을 약 45로 맞춘 값입니다.
  */
-export const POWER_WEIGHT = { offense: .65, durability: .35 } as const;
-const POWER_SCALE = .8;
+export const POWER_WEIGHT = { offense: .7, durability: .3 } as const;
+const POWER_SCALE = .88;
 export function powerParts(v: Stats) {
     const a = normalizeStats(v);
     const main = Math.max(a.attack, a.magic) + Math.min(a.attack, a.magic) * 2 / 7;
