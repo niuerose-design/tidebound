@@ -37,7 +37,7 @@ function pickAction(s, r) {
     const options = [
         () => ({ type: 'start' }), () => ({ type: 'pause' }), () => ({ type: 'sync' }),
         () => ({ type: 'stage', id: pick(STAGES).id }), () => ({ type: 'tide', id: String(Math.floor(r() * 4)) }),
-        () => ({ type: 'dungeon', id: pick(DUNGEONS.filter(d => !d.random)).id, value: pick(['once', '3', 'fail', 'deeper:3']) }), () => ({ type: 'leaveDungeon' }),
+        () => ({ type: 'dungeon', id: pick(DUNGEONS).id, value: pick(['once', '3', 'fail', 'deeper:3']) }), () => ({ type: 'leaveDungeon' }),
         () => ({ type: 'job', id: pick(JOBS).id }), () => ({ type: 'skill', id: pick(skillIds) }), () => ({ type: 'learn', id: pick(skillIds) }),
         () => ({ type: 'inheritSkill', id: pick(skillIds) }), () => ({ type: 'skillUp', id: pick(skillIds) }), () => ({ type: 'resetSkills' }),
         () => ({ type: 'attribute', id: pick(ATTRS) }), () => ({ type: 'resetAttributes' }), () => ({ type: 'claimBook', id: pick(MONSTERS).id }),
@@ -82,7 +82,7 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
 {
     const s = engine.newState(0), game = seeded(5); s.level = 60; s.rebirths = Math.max(...DUNGEONS.map(d => d.rebirth)); s.permanent.attack = 200; s.permanent.hp = 200; s.permanent.guard = 50; s.hp = statsM.stats(s).hp;
     let now = 0; const trace = [];
-    for (const d of DUNGEONS.filter(d => !d.random)) { engine.act(s, { type: 'dungeon', id: d.id, value: d.id === 'abyss' ? 'deeper:6' : '3' }, now, game); for (let i = 0; i < 6000 && s.dungeon; i++) { now += 2000; engine.advance(s, now, game); } trace.push(hash(s)); }
+    for (const d of DUNGEONS) { engine.act(s, { type: 'dungeon', id: d.id, value: d.id === 'abyss' ? 'deeper:6' : '3' }, now, game); for (let i = 0; i < 6000 && s.dungeon; i++) { now += 2000; engine.advance(s, now, game); } trace.push(hash(s)); }
     for (let life = 0; life < 4; life++) { now += 8 * 3600_000; engine.advance(s, now, game); try { engine.act(s, { type: 'rebirth' }, now, game); } catch (e) { trace.push(String(e.message)); } engine.act(s, { type: 'start' }, now, game); trace.push(hash(s)); }
     result.dungeonRebirth = { rngCalls: game.calls, trace: hash(trace), state: hash(s), rebirths: s.rebirths, pearls: s.pearls, abyssBest: s.abyssBest };
 }

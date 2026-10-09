@@ -3,7 +3,7 @@ import type { State, Vows } from '../types';
 import { researchRank } from '../data/economy';
 import { ascensionVow } from '../data/ascension';
 
-/** v27.86 잠든 힘은 서약에서 빠지고 던전 ‘랜덤게임’이 되었습니다(연구 vowAnchor가 입장을 엽니다). 절제(AP 제한)가 새 서약입니다. */
+/** v27.86 잠든 힘은 서약에서 빠졌습니다(던전 ‘랜덤게임’이 되었다가 v3.209에 삭제). 절제(AP 제한)가 새 서약입니다. */
 export const VOW_IDS = ['breath', 'rough', 'restraint'] as const;
 export type VowId = typeof VOW_IDS[number];
 export const VOW_RESEARCH: Record<VowId, string> = { breath: 'vowBreath', rough: 'vowRough', restraint: 'vowRestraint' };
@@ -49,6 +49,9 @@ export function cleanVows(s: Pick<State, 'permanent'>, v?: Vows): Vows {
     if (v?.focus && FOCUS_KINDS.includes(v.focus.kind)) out.focus = { kind: v.focus.kind, ...(v.focus.id ? { id: v.focus.id } : {}) };
     return out;
 }
+/** v3.210 LV1 모험가(테스트용 서약): 레벨 1 고정 · 환생 불가 · 레벨 제한 무시 · 다른 서약과 함께 걸 수 없음 · 언제든 포기. 보상은 최고 무릉 층 기록뿐. */
+export const lv1Active = (s: Partial<Pick<State, 'vows'>>) => !!s.vows?.lv1;
+export const LV1_NAME = 'LV1 모험가';
 export const hasVows = (v?: Vows) => !!(v && (v.breath || v.rough || v.restraint || v.focus));
 /** v25.6 이번 생의 조건 카드. 연구 없이 환생 1회부터 고를 수 있고, 한 생에 하나입니다. */
 const FOCUS_KINDS = ['stage', 'tree', 'gold'] as const;

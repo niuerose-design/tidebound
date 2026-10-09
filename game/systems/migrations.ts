@@ -8,6 +8,7 @@ import { syncRelicPower, tuneOnyx, fixRelicImprints, ownedItems } from './equipm
 import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
+import { syncAbyssCores } from './boss-loot';
 import { affixDef } from '../data/gear';
 import { SAVE_VERSION, PENETRATION } from '../data/balance';
 import { newState } from './engine';
@@ -86,6 +87,23 @@ export function refundPearlResearch(s: State) {
     let spent = 0;
     for (let i = 0; i < rank; i++) spent += 6 + 5 * i;
     if (spent > 0) { s.pearls = (s.pearls || 0) + spent; addLog(s, `세계석 연구 ‘윤회의 연금술’이 개편 대상이 되어 투자한 세계석 ${spent}개를 돌려받았습니다.`, 'system'); }
+    return spent;
+}
+/** v3.209 랜덤게임 삭제: 연구 ‘랜덤게임’(vowAnchor, base 10 · step 10, 최대 3)에 쓴 세계석을 돌려주고(승천 무료 지급분 제외) 기록 · 진행 중 판을 지웁니다. */
+export function retireRandomGame(s: State) {
+    const any = s as Record<string, unknown>;
+    for (const key of ['randomGameRuns', 'randomGameDay', 'randomGameStats']) if (key in any) delete any[key];
+    if (s.dungeon?.id === 'randomGame') { s.dungeon = null; s.enemy = null; s.running = false; }
+    const perm = s.permanent as Record<string, number | undefined> | undefined;
+    if (!perm || !('vowAnchor' in perm)) return 0;
+    const rank = perm.vowAnchor || 0, granted = Math.min(rank, (s.researchGranted as Record<string, number | undefined> | undefined)?.vowAnchor || 0);
+    delete perm.vowAnchor;
+    if (s.researchLegacy && 'vowAnchor' in s.researchLegacy) delete (s.researchLegacy as Record<string, number | undefined>).vowAnchor;
+    if (s.researchGranted && 'vowAnchor' in s.researchGranted) delete (s.researchGranted as Record<string, number | undefined>).vowAnchor;
+    if (s.researchPlan?.items.some(x => x.id === 'vowAnchor')) s.researchPlan.items = s.researchPlan.items.filter(x => x.id !== 'vowAnchor');
+    let spent = 0;
+    for (let i = granted; i < rank; i++) spent += 10 + 10 * i;
+    if (spent > 0) { s.pearls = (s.pearls || 0) + spent; addLog(s, `랜덤게임이 없어져 연구 ‘랜덤게임’에 쓴 세계석 ${spent}개를 돌려받았습니다.`, 'system'); }
     return spent;
 }
 /**
@@ -368,7 +386,9 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    // v3.208 무릉도장 코어: 이미 높이 오른 캐릭터에게 최고 층 기준으로 소급 지급 · 각성합니다.
+    if (s.version === SAVE_VERSION) syncAbyssCores(s);
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); retireRandomGame(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;

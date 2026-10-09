@@ -17,7 +17,7 @@ for(const [name,[normal,dungeon]] of Object.entries(configs))for(const noHeal of
   for(let n=0;n<TURNS;n++){
    if(n%30===0&&!s.dungeon)manage(s,{magic,rng,skillFilter:sk=>!(noHeal&&(['heal','drain'].includes(sk.effect)||(sk.bonus?.lifesteal)))});
    if(n%300===0&&!s.dungeon)chooseStage(s,seed+n);
-   if(n%900===450&&!s.dungeon){const d=[...DUNGEONS].filter(x=>x.id!=='abyss'&&!x.random&&s.level>=x.level+6&&s.rebirths>=x.rebirth).sort((a,b)=>b.level-a.level)[0];if(d){const before=s.clears[d.id]||0;act(s,{type:'dungeon',id:d.id},s.turn*2000,rng);tries++;let k=0;while(s.dungeon&&k++<600)tick(s,rng);if(process.env.DEBUG_DUNGEON&&tries<3)console.log('dungeon',d.id,'lv',s.level,'k',k,'inDungeon',!!s.dungeon,'wave',s.dungeon?.wave,'running',s.running,'last',s.logs.slice(-3).map(l=>l.text).join(' | '));if((s.clears[d.id]||0)>before)clears++;act(s,{type:'start'},s.turn*2000,rng);}}
+   if(n%900===450&&!s.dungeon){const d=[...DUNGEONS].filter(x=>x.id!=='abyss'&&s.level>=x.level+6&&s.rebirths>=x.rebirth).sort((a,b)=>b.level-a.level)[0];if(d){const before=s.clears[d.id]||0;act(s,{type:'dungeon',id:d.id},s.turn*2000,rng);tries++;let k=0;while(s.dungeon&&k++<600)tick(s,rng);if(process.env.DEBUG_DUNGEON&&tries<3)console.log('dungeon',d.id,'lv',s.level,'k',k,'inDungeon',!!s.dungeon,'wave',s.dungeon?.wave,'running',s.running,'last',s.logs.slice(-3).map(l=>l.text).join(' | '));if((s.clears[d.id]||0)>before)clears++;act(s,{type:'start'},s.turn*2000,rng);}}
    tick(s,rng);
    if(s.level>=30&&lv30===null)lv30=s.turn/1800;
   }

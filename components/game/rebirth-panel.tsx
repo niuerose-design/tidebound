@@ -19,7 +19,7 @@ import { apCapacity } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
-import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, ROUGH, RESTRAINT } from '@/game/systems/vows';
+import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, ROUGH, RESTRAINT, hasVows } from '@/game/systems/vows';
 import { BonusList } from './inventory-panel';
 import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, VAULT_ONYX_CAP, type VaultInfo } from '@/game/data/account';
 import { ownedOnyx } from '@/game/data/onyx';
@@ -109,13 +109,24 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
         </ul>
     </section>;
 }
+/** v3.210 LV1 모험가(테스트용): 생 도중 바로 걸고 언제든 포기. 다른 서약과 함께 걸 수 없고, 서약 중에는 환생할 수 없습니다. */
+function Lv1VowCard({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
+    const on = !!s.vows?.lv1, blocked = !on && hasVows(s.vows);
+    return <article className={`vow-card vow-lv1${on ? ' on' : ''}`}>
+        <h3>LV1 모험가 <small className="vow-test">테스트용</small></h3>
+        <p>지금 바로 걸면 레벨이 1로 고정됩니다(경험치 · 레벨로 받은 능력치 포인트 없음, 레벨 비례 수치도 Lv.1). 장비 · 연구 · 숙련 · 보스 코어는 그대로이고, 사냥터 · 던전 · 스킬의 레벨 제한은 무시합니다. 서약 중에는 환생 · 승천할 수 없고, 언제든 포기하면 원래 레벨로 돌아갑니다. 성장 보상은 없고 최고 무릉도장 층만 기록합니다.</p>
+        <small>최고 기록 · 무릉도장 {s.lv1AbyssBest || 0}층{on && s.vows?.lv1 ? ` · 포기하면 Lv.${s.vows.lv1.level}로` : ''}{blocked ? ' · 다른 서약이 걸린 생에는 걸 수 없음' : ''}</small>
+        {on ? <ConfirmButton label="LV1 모험가 포기" title="LV1 모험가 서약을 포기할까요?" description={`Lv.${s.vows!.lv1!.level}과 그때의 경험치 · 능력치 배분으로 돌아갑니다. 기록(무릉도장 ${s.lv1AbyssBest || 0}층)은 남습니다.`} disabled={busy} onConfirm={() => send({ type: 'lv1Vow', id: 'quit' })}/>
+            : <ConfirmButton label="지금 바로 걸기" title="LV1 모험가(테스트용)를 걸까요?" description="테스트용 서약입니다. 성장 보상은 없고 최고 무릉도장 층만 기록됩니다. 지금 레벨 · 경험치 · 능력치 배분은 보관되고 Lv.1이 됩니다. 서약 중에는 환생할 수 없고, 포기하면 보관한 상태로 돌아갑니다." disabled={busy || blocked || !!s.dungeon} onConfirm={() => send({ type: 'lv1Vow', id: 'start' })}/>}
+    </article>;
+}
 /** 환생 화면의 서약: 이번 생 서약, 다음 생 서약 예약. */
 function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
-    const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), now = s.vows, next = s.nextVows || {}, leveled = (id: VowId) => (LEVELED_VOWS as readonly string[]).includes(id);
-    if (!unlocked.length && !now) return null;
+    const now = s.vows, next = s.nextVows || {}, leveled = (id: VowId) => (LEVELED_VOWS as readonly string[]).includes(id);
     return <section className="panel vow-panel">
         <div className="section-title"><h2>서약</h2><span>제약을 걸고 고유 보상을 받습니다. 모든 서약은 다음 생에 걸리고(환생할 때 적용), 이번 생 도중에는 바꿀 수 없습니다. 세계석 연구 유틸 탭에서 해금합니다.</span></div>
         {now && VOW_IDS.some(id => now[id]) && <div className="vow-current"><strong>이번 생 서약</strong><span>{VOW_IDS.filter(id => now[id]).map(id => leveled(id) ? `${VOW_NAMES[id]} ${now[id]}단계` : VOW_NAMES[id]).join(' · ')}</span></div>}
+        <Lv1VowCard s={s} send={send} busy={busy}/>
         <div className="vow-grid">{VOW_IDS.map(id => {
             const open = vowUnlocked(s, id);
             return <article className={`vow-card ${open ? '' : 'locked'}`} key={id}>

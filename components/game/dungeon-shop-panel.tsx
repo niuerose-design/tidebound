@@ -72,7 +72,7 @@ function OnyxGood({ s, busy, buy, now }: Pick<PanelProps, 's' | 'busy'> & { buy:
 }
 
 /**
- * v3.206 보스 코어 탭: 위에 7종 타일(고르기), 아래에 고른 코어 한 칸(효과 · 기본 능력치 줄 · 장착 · 재설정 · 재련), 맨 아래 상자 한 줄.
+ * v3.206 보스 코어 탭: 위에 코어 타일(고르기, v3.208 무릉 코어 3종 포함), 아래에 고른 코어 한 칸(효과 · 기본 능력치 줄 · 장착 · 재설정 · 재련), 맨 아래 상자 한 줄.
  * 전에는 코어 칸 · 상자 · 손보기 카드 · 코어 카드 7장이 따로 있어 같은 정보가 여러 번 보였습니다.
  */
 function CoreTab({ s, send, busy, buy, now }: Pick<PanelProps, 's' | 'send' | 'busy'> & { buy: Buy; now: number }) {
@@ -85,7 +85,7 @@ function CoreTab({ s, send, busy, buy, now }: Pick<PanelProps, 's' | 'send' | 'b
     const pips = (rank: number) => <span className="core-pips" aria-label={`각성 ${rank}/${BOSS_CORE_RULES.awakenMax}`}>{Array.from({ length: BOSS_CORE_RULES.awakenMax }, (_, i) => <i key={i} className={i < rank ? 'on' : ''}/>)}</span>;
     return <section aria-label="보스 코어" className="core-tab">
         <div className="core-tiles" role="tablist" aria-label="보스 코어 고르기">{ids.map(x => { const xe = coreEntry(s.bossCores?.[x]); return <button key={x} type="button" role="tab" aria-selected={x === id} className={`core-tile${x === id ? ' on' : ''}${xe ? '' : ' locked'}${s.coreSlot === x ? ' worn' : ''}`} onClick={() => { setPick(x); setLine(0); }}>
-            <Hexagon size={22}/><small>{BOSS_CORES[x].boss}</small>{xe ? pips(xe.rank) : <em>미획득</em>}{s.coreSlot === x && <b className="core-tile-badge">장착</b>}
+            <Hexagon size={22}/><small>{BOSS_CORES[x].floors ? `무릉 ${BOSS_CORES[x].floors![0]}층` : BOSS_CORES[x].boss}</small>{xe ? pips(xe.rank) : <em>미획득</em>}{s.coreSlot === x && <b className="core-tile-badge">장착</b>}
         </button>; })}</div>
         <article className={`panel core-detail${worn ? ' worn' : ''}${e ? '' : ' locked'}`}>
             <header><div><span className="eyebrow">{c.boss} · {e ? (worn ? '장착 중' : `보유 · 공명 ${Math.round(BOSS_CORE_RULES.resonance * 100)}%`) : '미획득'}</span><h2>{c.name}</h2></div>
@@ -103,10 +103,11 @@ function CoreTab({ s, send, busy, buy, now }: Pick<PanelProps, 's' | 'send' | 'b
                     {e.forges ? <button className="secondary" disabled={busy || s.pearls < CORE_FORGE.resetPearls} onClick={() => send({ type: 'coreForgeReset', id })}>비용 초기화 · 세계석 {CORE_FORGE.resetPearls}</button> : null}
                 </div>
                 <small className="muted">고른 줄을 재설정(종류 · 배율 레벨 ×{CORE_ATTRS.min}~{CORE_ATTRS.max}) 또는 재련(배율만)합니다. 낮아질 수도 있습니다. 정수는 기본 {CORE_FORGE.base}, 손볼 때마다 ×{CORE_FORGE.growth}{e.forges ? `(지금 ${e.forges}회)` : ''} · 주화 재설정은 비용을 올리지 않습니다.</small>
-            </> : <p className="muted">지역 던전 하루 보너스 정복에서 드물게 나오거나, 아래 랜덤 보스 코어 상자로 얻습니다. 얻으면 기본 능력치 2종이 무작위로 붙습니다.</p>}
+            </> : <p className="muted">{c.floors ? `무릉도장 ${c.floors[0]}층을 처음 돌파하면 얻습니다(지금 최고 ${s.abyssBest}층). 랜덤 상자에서는 나오지 않습니다.` : '지역 던전 하루 보너스 정복에서 드물게 나오거나, 아래 랜덤 보스 코어 상자로 얻습니다.'} 얻으면 기본 능력치 2종이 무작위로 붙습니다.</p>}
+            {c.floors && <p className="muted core-floors">무릉도장 층: 획득 {c.floors[0]}층 · 각성 {c.floors.slice(1).join(' · ')}층(최고 기록 기준){e && e.rank < BOSS_CORE_RULES.awakenMax ? ` · 다음 각성 ${c.floors[e.rank + 1]}층` : ''}</p>}
         </article>
         <div className="panel core-box">
-            <div><span className="eyebrow">랜덤 보스 코어 상자</span><p>7종 중 하나. 없던 코어면 얻고, 있던 코어면 각성합니다(각성을 마쳤으면 세계석 +{BOSS_CORE_RULES.duplicatePearls}). 하루 {DUNGEON_SHOP_DAILY.coreBoxPerDay}번 · 오늘 {boxLeft}회 남음</p></div>
+            <div><span className="eyebrow">랜덤 보스 코어 상자</span><p>지역 던전 코어 7종 중 하나(무릉도장 코어는 층으로만). 없던 코어면 얻고, 있던 코어면 각성합니다(각성을 마쳤으면 세계석 +{BOSS_CORE_RULES.duplicatePearls}). 하루 {DUNGEON_SHOP_DAILY.coreBoxPerDay}번 · 오늘 {boxLeft}회 남음</p></div>
             <button className="secondary" disabled={busy || !boxLeft || coins < DUNGEON_SHOP.coreBox} onClick={() => buy('coreBox')}>구매 · {format(DUNGEON_SHOP.coreBox)} 주화</button>
         </div>
     </section>;

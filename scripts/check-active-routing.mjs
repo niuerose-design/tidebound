@@ -31,7 +31,7 @@ function enter(s,route,rng){
 }
 function choose(s,seed){
  const candidates=STAGES.filter(x=>x.level<=s.level&&x.rebirth<=s.rebirths).flatMap(st=>st.monsters.map(target=>({stage:st.id,target})));
- candidates.push(...DUNGEONS.filter(d=>!d.random&&d.level<=s.level&&d.rebirth<=s.rebirths).map(d=>({dungeon:d.id})));
+ candidates.push(...DUNGEONS.filter(d=>d.level<=s.level&&d.rebirth<=s.rebirths).map(d=>({dungeon:d.id})));
  let best=candidates[0],rate=-1,firstClear=null,firstRate=-1;
  for(const route of candidates){
   const t=structuredClone(s),rng=random(seed),start=totalXP(t);enter(t,route,rng);
