@@ -116,7 +116,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'abyssalMend', name: '등대 봉합', desc: '', level: 40, job: 'deepCaretaker', chance: .55, cooldown: 4, multiplier: 1.9, cost: 4, manaCost: 18, effect: 'drain', drainRatio: .3 },
     { ...P, id: 'stillWaterVigil', name: '고요한 물의 간병', desc: '물리·마법 방어가 오릅니다.', level: 40, job: 'deepCaretaker', cost: 3, bonus: { defense: 20, resist: 20 } },
     // 상태이상: 칼리 (1차)
-    // v3.123 칼리 지속 피해: 헥스: 차크람 스플릿의 침묵을 저주(출혈, 비율 0.2 · 일리움 4차 크리스탈 스킬: 데우스와 같음)로 바꿉니다. 제어 연계는 아츠: 플러리 · 보이드 버스트의 침묵이 받칩니다.
+    // v3.123 칼리 지속 피해: 헥스: 차크람 스플릿은 저주(출혈, 비율 0.2 · 일리움 4차 크리스탈 스킬: 데우스와 같음). 제어 연계는 아츠: 플러리 · 보이드 버스트의 침묵이 받칩니다.
     { ...A, ...magic, id: 'calamityRite', name: '재앙의 의식', desc: '', level: 55, job: 'calamityShrine', chance: .5, cooldown: 4, multiplier: 2.9, cost: 5, manaCost: 26, effect: 'bleed', dotName: '저주', dotRatio: .2, damageBonusCondition: 'statuses', conditionalDamageBonus: .2, masteryMilestones: M4 },
     { ...P, id: 'omenVeil', name: '흉조의 장막', desc: '마법 공격과 마법 방어가 오릅니다.', level: 55, job: 'calamityShrine', cost: 3, bonus: { magic: 40, resist: 25 }, masteryMilestones: M4 },
     // 상태이상: 출혈
@@ -144,7 +144,6 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'lancerPoise', name: '창기병의 균형', desc: '최대 체력과 최대 마나가 오릅니다.', level: 10, job: 'tideLancer', cost: 2, bonus: { hp: 60, mana: 10 } },
     { ...A, ...spear, id: 'dragonDive', name: '좀비 루팡 급강하', desc: '', level: 25, job: 'seaDragoon', chance: .5, cooldown: 3, multiplier: 1.3, cost: 3, manaCost: 13, effect: 'weaken' },
     { ...P, id: 'wyrmScale', name: '용린', desc: '최대 체력과 물리 방어가 오르고, 보낸 턴 1,000마다 최대 체력이 오릅니다.', level: 25, job: 'seaDragoon', cost: 2, bonus: { hp: 120, defense: 10 }, perCount: [{ source: 'turns', per: 1000, bonus: { hp: 3 }, cap: 100 }] },
-    // v3.98 다크나이트 상향: 드래곤 퓨리 배율 2.1 → 2.8, 비홀더 임팩트 배율 2.5 → 2.8 · 추가 공격 1회(비홀더가 함께 때림).
     { ...A, ...spear, id: 'thunderLance', name: '뇌창', desc: '', level: 40, job: 'stormDragoon', chance: .5, cooldown: 4, multiplier: 2.1, cost: 4, manaCost: 20, penetrationBonus: .15 },
     { ...P, id: 'stormRider', name: '폭풍 기수', desc: '물리 공격과 속도가 오르고, 쓰러진 횟수마다 물리 공격이 오릅니다.', level: 40, job: 'stormDragoon', cost: 3, bonus: { attack: 24, speed: 6 }, perCount: [{ source: 'deaths', per: 1, bonus: { attack: 1 }, cap: 100 }] },
     { ...A, ...spear, id: 'leviathanCharge', name: '용왕 대돌격', desc: '', level: 55, job: 'abyssDragonLord', chance: .5, cooldown: 4, multiplier: 2.1, cost: 5, manaCost: 26, effect: 'stun', extraAttacks: 1, masteryMilestones: M4 },
@@ -155,7 +154,6 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'forgeRune', name: '대장간 룬', desc: '물리·마법 방어와 반격이 오릅니다.', level: 10, job: 'runesmith', cost: 2, bonus: { defense: 12, resist: 12, thorns: .1 } },
     { ...A, ...forgeBlast, id: 'plateSurge', name: '갑주 충격', desc: '', level: 25, job: 'arcArtificer', chance: .4, cooldown: 3, multiplier: 1.4, cost: 3, manaCost: 8, scalingRatio: .6, charge: 1 },
     { ...P, id: 'arcaneArmor', name: '마력 갑주', desc: '물리·마법 방어와 반격이 오릅니다.', level: 25, job: 'arcArtificer', cost: 2, bonus: { defense: 25, resist: 25, thorns: .15 } },
-    // v3.110 메카닉 상향: 마그네틱 필드 배율 2 → 2.8(복합 피해라 기술 한 번이 공격력의 1.5배에 그쳤음).
     { ...A, ...forgeBlast, id: 'resonantCannon', name: '공명포', desc: '', level: 40, job: 'resonanceEngineer', chance: .5, cooldown: 4, multiplier: 2.4, cost: 4, manaCost: 20, scalingRatio: .7, penetrationBonus: .1, charge: 1, damageBonusCondition: 'weakened', conditionalDamageBonus: .3 },
     { ...P, id: 'tunedFrame', name: '조율된 골격', desc: '최대 체력 · 물리 방어 · 반격이 오릅니다.', level: 40, job: 'resonanceEngineer', cost: 3, bonus: { hp: 180, defense: 30, resist: 12, thorns: .2 } },
     // 복합: 독립
@@ -175,7 +173,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...P, id: 'starLog', name: '별의 항해일지', desc: '경험치 획득과 마법 공격이 오릅니다.', level: 40, job: 'starCartographer', cost: 3, bonus: { expBonus: .06, magic: 16 } },
     { ...A, ...physical, id: 'dispatchDash', name: '전령 질주', desc: '', level: 25, job: 'logbookRunner', chance: .28, cooldown: 3, multiplier: 1.35, cost: 3, effect: 'haste' },
     { ...P, id: 'swiftQuill', name: '빠른 펜', desc: '속도와 경험치 획득이 오릅니다.', level: 25, job: 'logbookRunner', cost: 2, bonus: { speed: 6, expBonus: .03 } },
-    // v3.108 와일드헌터 상향: 와일드 발칸 배율 1.9 → 2.4(중간 몸에서 복합 피해가 낮은 관통에 크게 깎임).
+    // v3.108 와일드 발칸 배율은 중간 몸에서 복합 피해가 낮은 관통에 크게 깎이는 것을 감안해 높게 둡니다.
     { ...A, ...dual, id: 'weakpointThesis', name: '약점 논증', desc: '', level: 40, job: 'titanScholar', chance: .5, cooldown: 4, multiplier: 2.4, cost: 4, manaCost: 18, penetrationBonus: .1 },
     { ...P, id: 'titanAnatomy', name: '거수 해부학', desc: '치명 피해와 방어 관통이 오릅니다.', level: 40, job: 'titanScholar', cost: 3, bonus: { critDamage: .12, penetration: .04 } },
     { ...A, ...physical, id: 'trackersSpear', name: '추적자의 창', desc: '', level: 25, job: 'beastTracker', chance: .26, cooldown: 3, multiplier: 1.5, cost: 3, penetrationBonus: .1 },

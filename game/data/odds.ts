@@ -26,7 +26,7 @@ export type Odds = {
     spawn: Record<string, number>;
     /** v3.75 장비 옵션: 태초 · 칠흑 전용 희귀 옵션의 뽑힐 가중치(일반 옵션 1) · 꽝 옵션이 한 줄에 끼어들 확률. */
     affix: { rare: number; junk: number };
-    /** v3.195 던전 보스 전리품: 하루 보너스 정복마다 확률 · 연속 미획득 천장. */
+    /** v3.202 던전 보스 전리품: 하루 보너스 정복마다 확률 · 연속 미획득 천장. */
     bossLoot: { chance: number; pity: number };
 };
 const empty = (): Odds => ({

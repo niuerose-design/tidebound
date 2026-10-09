@@ -1,5 +1,5 @@
 // 상태 표시·설명 생성·심연·환생 시점·반복·팔방 항해사·무리 사냥·추가타
-import { xpNeeded, bookMod, weightedFishId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,FISH_SHAPES,fishShape,unmappedFish,FISH,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
+import { xpNeeded, bookMod, weightedMonsterId, spawn, STAGES, economy, researchRefund, apUsed, apCapacity, newState, act, advance, tick, stats, expMultiplier, victoryMastery, visibleStatuses, strike, combatFxFromLog, maxSkillLevel, jobMasteryTarget, jobCombatMultiplier, skillGrowthStages, SKILLS, DUNGEONS, gambleCost, goldMultiplier, metaMod, longTerm, JOBS, assert, rng, test, SKILL_FORMULA ,MONSTER_SHAPES,monsterShape,unmappedMonsters,MONSTERS,SKILL_FX,fxVariantOf,variantChances,equipment,migrations,reward,mimicChanceOf,MIMIC_DATA,setClosures,closuresSnapshot} from './harness.mjs';
 const inventoryCapOf=()=>economy.inventoryCap(); // v3.154 가방은 연구와 무관하게 100칸
 test('Name statuses include bleed, show consumed stun and target haste at its actor',()=>{
  const stun=combatFxFromLog({id:1,type:'battle',text:'나: 기절로 행동 불가.'},'나');
@@ -64,16 +64,16 @@ test('v3.23 Rebirth: tailwind adds +50% to the exp bonus until the target, then 
  for(const [lv,x] of [[w.target,1.6],[w.target+1,1.6**2],[w.target+4,1.6**5]])assert.ok(Math.abs(xpNeeded(lv,f.rebirths,w)/xpNeeded(lv,f.rebirths)-x)/x<1e-3,`Lv.${lv}`);
 });
 
-test('Dungeon repeat runs until its stop condition, then resumes idle fishing',()=>{
+test('Dungeon repeat runs until its stop condition, then resumes idle hunting',()=>{
  const strong=()=>{const s=newState(0);s.level=60;s.rebirths=3;s.permanent.attack=3000000;s.permanent.hp=3000000;s.permanent.guard=1000000;s.hp=stats(s).hp;s.mana=stats(s).mana;return s;};
  const run=(s,limit=20000)=>{let t=s.lastTick;for(let i=0;i<limit&&s.dungeon;i++){t+=2000;advance(s,t,rng);}};
  const first=[...DUNGEONS].sort((a,b)=>a.level-b.level)[0];
  const s=strong();act(s,{type:'dungeon',id:first.id,value:'5'},0);assert.equal(s.dungeon.repeat.left,4);run(s);
- assert.equal(s.clears[first.id],5);assert.equal(s.dungeon,null);assert.equal(s.running,true,'idle fishing resumes');
+ assert.equal(s.clears[first.id],5);assert.equal(s.dungeon,null);assert.equal(s.running,true,'idle hunting resumes');
  const once=strong();act(once,{type:'dungeon',id:first.id},0);assert.equal(once.dungeon.repeat,undefined);run(once);assert.equal(once.clears[first.id],1);assert.equal(once.running,false,'single run keeps old behaviour');
  const a=strong();a.abyssBest=3;act(a,{type:'dungeon',id:'abyss',value:'deeper:5'},0);assert.equal(a.dungeon.repeat.until,8);run(a);assert.equal(a.abyssBest,8);assert.equal(a.running,true);
  const w=newState(0);w.level=60;w.rebirths=3;w.abyssBest=40;w.hp=stats(w).hp;act(w,{type:'dungeon',id:'abyss',value:'fail'},0);run(w,100000);
- assert.equal(w.dungeon,null);assert.equal(w.abyssBest,40);assert.equal(w.running,true,'failure falls back to fishing');
+ assert.equal(w.dungeon,null);assert.equal(w.abyssBest,40);assert.equal(w.running,true,'failure falls back to hunting');
  assert.throws(()=>act(strong(),{type:'dungeon',id:first.id,value:'0'},0));
 });
 
@@ -92,8 +92,8 @@ test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; 
  // v27.80 지역별 변종 배율이 있어 고정 난수 대신 이 사냥터의 실제 확률 구간 가운데를 씁니다(순서: 무리·거대·심연·별빛).
  const ch=variantChances(base()),band=k=>{const o=['swarm','giant','abyssal','starlit'];let lo=0;for(const id of o){if(id===k)return lo+ch[id]/2;lo+=ch[id];}};
  const plain=base();plain.book.minnow=9;spawn(plain,()=>0);assert.equal(plain.enemy.variant,undefined,'no variant before 10 catches');assert.equal(plain.enemy.swarm,undefined);
- const sw=base();sw.book.minnow=10;spawn(sw,()=>0);assert.equal(sw.enemy.variant,'swarm');assert.equal(sw.enemy.swarm,5,'x5 only until 500 catches');assert.equal(sw.enemy.maxHp,plain.enemy.maxHp*5);assert.equal(sw.enemy.combatStats.attack,plain.enemy.combatStats.attack,'swarm attack stays at one fish');
- const mid=base();mid.book.minnow=5000;spawn(mid,()=>0.999);assert.equal(mid.enemy.variant,undefined,'roll above total chance is a normal fish');
+ const sw=base();sw.book.minnow=10;spawn(sw,()=>0);assert.equal(sw.enemy.variant,'swarm');assert.equal(sw.enemy.swarm,5,'x5 only until 500 catches');assert.equal(sw.enemy.maxHp,plain.enemy.maxHp*5);assert.equal(sw.enemy.combatStats.attack,plain.enemy.combatStats.attack,'swarm attack stays at one monster');
+ const mid=base();mid.book.minnow=5000;spawn(mid,()=>0.999);assert.equal(mid.enemy.variant,undefined,'roll above total chance is a normal monster');
  let calls=0;spawn(mid,()=>calls++===0?0:.999);assert.equal(mid.enemy.swarm,100,'x100 from 500 catches');
  // v3.87 일반 사냥터 무리는 ×100까지: 도감 5,000회 · 무리 감지를 갖춰도 ×500은 나오지 않습니다(×500은 무리 서식지에서만).
  const big=base();big.book.minnow=5000;big.job='rareTracker';big.learned.swarmSense=1;big.skills.push('swarmSense');calls=0;spawn(big,()=>calls++===0?0:.999);assert.equal(big.enemy.swarm,100,'no x500 outside habitats');
@@ -129,13 +129,13 @@ test('v27.81 codex: research stages grant no flat trait stats (ecology only); v3
  const bookDelta=(s,k)=>{const t={};stats(s,t);return (t[k]||[]).filter(x=>x.source==='book'&&x.factor===undefined).reduce((a,x)=>a+x.delta,0);};
  const s=newState(0);s.book.minnow=10000;s.book.eel=10000;s.book.grottoWarden=10000;
  for(const k of ['attack','magic','accuracy','resist','hp','defense'])assert.equal(bookDelta(s,k),0,`no ${k} from traits`);
- const r=newState(0),exp=stats(r).expBonus;for(const id of STAGES[0].fish)r.book[id]=50;
+ const r=newState(0),exp=stats(r).expBonus;for(const id of STAGES[0].monsters)r.book[id]=50;
  assert.ok(Math.abs(stats(r).expBonus-exp)<1e-9,'one place alone gives no theme bonus now');
- for(const id of STAGES[1].fish)r.book[id]=50;
+ for(const id of STAGES[1].monsters)r.book[id]=50;
  assert.ok(Math.abs(stats(r).expBonus-exp-.05)<1e-9,'리스항구 tier 1: first +3% and tier +2%');assert.equal(bookDelta(r,'hp'),0);
- const k=newState(0);assert.equal(bookMod.rareSpawnBonus(k),0);for(const id of STAGES.find(x=>x.id==='kelp').fish)k.book[id]=50;assert.equal(bookMod.rareSpawnBonus(k),0);
- for(const id of STAGES.find(x=>x.id==='reef').fish)k.book[id]=50;assert.equal(bookMod.rareSpawnBonus(k),.1,'헤네시스 tier 1 brings the old kelp rare-spawn bonus');
- assert.equal(weightedFishId(['minnow','seahorse'],()=>.84),'minnow');assert.equal(weightedFishId(['minnow','seahorse'],()=>.84,.1),'seahorse');
+ const k=newState(0);assert.equal(bookMod.rareSpawnBonus(k),0);for(const id of STAGES.find(x=>x.id==='kelp').monsters)k.book[id]=50;assert.equal(bookMod.rareSpawnBonus(k),0);
+ for(const id of STAGES.find(x=>x.id==='reef').monsters)k.book[id]=50;assert.equal(bookMod.rareSpawnBonus(k),.1,'헤네시스 tier 1 brings the old kelp rare-spawn bonus');
+ assert.equal(weightedMonsterId(['minnow','seahorse'],()=>.84),'minnow');assert.equal(weightedMonsterId(['minnow','seahorse'],()=>.84,.1),'seahorse');
  const v=newState(0);v.book.minnow=49;assert.equal(bookMod.bookRevealed(v,'minnow'),false);v.book.minnow=50;assert.equal(bookMod.bookRevealed(v,'minnow'),true);
 });
 test('v27.81 ecology research: from stage 2 only against that species, 3·3·4·15·25% dealt / 1.5·1.5·2·7.5·12.5% taken, max +50% / -25%',()=>{
@@ -177,10 +177,10 @@ test('Pearl research reset: per-tab refund, always free (v27.29), refusal condit
  assert.throws(()=>act(a,{type:'resetResearch',id:'utility'},0),/AP/);assert.equal(a.permanent.ap,4);assert.equal(a.pearls,p);assert.equal(a.researchResetUsed,undefined);
 });
 
-test('v27.11 art: every fish has a silhouette shape and the shape table has no stale ids',()=>{
- assert.deepEqual(unmappedFish(),[],'fish without a silhouette shape');
- for(const id of Object.keys(FISH_SHAPES)) assert.ok(FISH.some(f=>f.id===id),`stale shape id ${id}`);
- assert.equal(fishShape('magmaKraken'),'demon');assert.equal(fishShape('nope'),'slime');
+test('v27.11 art: every monster has a silhouette shape and the shape table has no stale ids',()=>{
+ assert.deepEqual(unmappedMonsters(),[],'monster without a silhouette shape');
+ for(const id of Object.keys(MONSTER_SHAPES)) assert.ok(MONSTERS.some(f=>f.id===id),`stale shape id ${id}`);
+ assert.equal(monsterShape('magmaKraken'),'demon');assert.equal(monsterShape('nope'),'slime');
 });
 
 test('v27.13 batch appraisal: 5 or 10 at once, all-or-nothing on gold and bag room, same rolls as singles',()=>{
@@ -211,9 +211,9 @@ test('v27.14 mastery x2 event doubles victory practice',()=>{
 });
 
 test('v27.16 stuck-state repair: NaN hp, dead enemy left over, unknown stage, and stalemates all recover',()=>{
- const s=newState(0);s.running=true;s.hp=NaN;s.mana=NaN;s.recovery=NaN;s.stage='nowhere';s.enemy={id:'ghost-fish',name:'x',hp:NaN,maxHp:1,attack:1,defense:1,exp:1,gold:1,boss:false,stun:0};
+ const s=newState(0);s.running=true;s.hp=NaN;s.mana=NaN;s.recovery=NaN;s.stage='nowhere';s.enemy={id:'ghost-monster',name:'x',hp:NaN,maxHp:1,attack:1,defense:1,exp:1,gold:1,boss:false,stun:0};
  tick(s,()=>.5);assert.ok(Number.isFinite(s.hp)&&Number.isFinite(s.mana)&&s.recovery>=0&&s.stage===STAGES[0].id,'repaired');assert.ok(s.logs.some(l=>l.text.includes('전투 상태를 복구')));
- assert.ok(!s.enemy||s.enemy.id!=='ghost-fish','bad enemy discarded');
+ assert.ok(!s.enemy||s.enemy.id!=='ghost-monster','bad enemy discarded');
  const t=newState(0);t.lastTick=NaN;advance(t,5000);assert.ok(Number.isFinite(t.lastTick));
  const u=newState(0);u.running=true;u.enemy={id:'minnow',name:'돌',hp:10,maxHp:10,attack:0,defense:0,exp:1,gold:1,boss:false,stun:99999,combatStats:{hp:10,attack:0,magic:0,defense:1e9,resist:1e9,crit:0,speed:1,evasion:0,accuracy:0}};
  u.hp=1;for(let i=0;i<130&&u.enemy&&u.enemy.id==='minnow';i++)tick(u,()=>.5);
@@ -247,16 +247,16 @@ test('v3.58 plain (white) codex entries start registered now that the plain purc
  assert.throws(()=>act(s,{type:'buy',id:'charm',value:'plain'},0));
 });
 
-test('v27.74 catch mastery ignores stage tide (the tide mastery multiplier is gone); v3.188 dungeons give none',()=>{
+test('v27.74 catch mastery ignores stage tide (the tide mastery multiplier is gone); v3.201 dungeons give none',()=>{
  const run=(tide,dungeon)=>{const s=newState(0);s.running=true;s.rebirths=10;s.tide=tide;if(dungeon){s.dungeon=dungeon==='abyss'?{id:'abyss',wave:0,depth:1}:{id:'grotto',wave:0,...(dungeon==='hell'?{mode:'hell'}:{})};}s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};let g=0;while(s.enemy&&s.enemy.hp>0&&g++<50)tick(s,()=>.5);return s.jobMastery.fisher||0;};
- const base=run(0,false);assert.ok(base>0);assert.equal(run(10,false),base,'tide 10 gives the same catch mastery');assert.equal(run(10,true),0,'v3.188 dungeons give no catch mastery');assert.equal(run(0,'hell'),0,'hell dungeon neither');assert.equal(run(10,'abyss'),0,'Mu Lung neither');
+ const base=run(0,false);assert.ok(base>0);assert.equal(run(10,false),base,'tide 10 gives the same catch mastery');assert.equal(run(10,true),0,'v3.201 dungeons give no catch mastery');assert.equal(run(0,'hell'),0,'hell dungeon neither');assert.equal(run(10,'abyss'),0,'Mu Lung neither');
 });
 
 test('v27.22 mastery mimic: rare stage-only spawn with the strongest local body, pays lottery mastery to job and equipped skills',()=>{
  const s=newState(0);s.level=20;s.kills=100;s.stage='reef';s.running=true;s.skills=['hook'];
  const flat=newState(0);flat.level=20;flat.kills=100;flat.stage='reef';flat.tide=MIMIC_DATA.minTier-1;spawn(flat,()=>0);assert.notEqual(flat.enemy.id,'masteryMimic','v27.59 needs stage difficulty 5');
  s.tide=MIMIC_DATA.minTier;spawn(s,()=>0);assert.equal(s.enemy.id,'masteryMimic','roll 0 spawns the mimic');assert.equal(s.enemy.name,'숙련의 까미');assert.equal(mimicChanceOf(10,0),MIMIC_DATA.chance+10*MIMIC_DATA.chancePerTier,'tide raises the chance');assert.ok(Math.abs(mimicChanceOf(0,4)-MIMIC_DATA.chance*(1+4*MIMIC_DATA.stageStep))<1e-12,'later stages raise the chance');
- const top=FISH.filter(f=>['lionfish','eel','barracuda','stormBarracuda'].includes(f.id)).sort((a,b)=>b.level-a.level)[0];assert.ok(s.enemy.maxHp>top.hp*2,'borrows the strongest local body');
+ const top=MONSTERS.filter(f=>['lionfish','eel','barracuda','stormBarracuda'].includes(f.id)).sort((a,b)=>b.level-a.level)[0];assert.ok(s.enemy.maxHp>top.hp*2,'borrows the strongest local body');
  const low=newState(0);low.level=5;low.kills=500;low.stage='reef';low.tide=5;spawn(low,()=>0);assert.notEqual(low.enemy.id,'masteryMimic','not before Lv.10');
  const d=newState(0);d.level=20;d.kills=500;d.dungeon={id:'grotto',wave:0};spawn(d,()=>0);assert.notEqual(d.enemy.id,'masteryMimic','never in dungeons');
  s.enemy.hp=0;reward(s,()=>.99);
@@ -276,9 +276,9 @@ test('v27.25·v27.31 closed dungeons/stages refuse entry, evict saves inside, an
   const s=newState(0);s.level=60;s.rebirths=3;assert.throws(()=>act(s,{type:'dungeon',id:'abyss'},0),/점검 중/);
   assert.throws(()=>act(s,{type:'stage',id:'reef'},0),/점검 중/);
   const inside=newState(0);inside.level=60;inside.rebirths=3;inside.running=true;inside.dungeon={id:'abyss',wave:1,depth:5};inside.enemy={id:'dragon',name:'x',hp:10,maxHp:10,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};
-  tick(inside,()=>.5);assert.equal(inside.dungeon,null,'evicted');assert.ok(inside.running,'keeps fishing');assert.ok(inside.logs.some(l=>l.text.includes('점검으로 닫혀')));
-  const fishing=newState(0);fishing.level=60;fishing.rebirths=3;fishing.stage='reef';fishing.running=true;tick(fishing,()=>.5);
-  assert.notEqual(fishing.stage,'reef','moved off a closed stage');assert.ok(STAGES.findIndex(x=>x.id===fishing.stage)<STAGES.findIndex(x=>x.id==='reef'),'moved to an earlier stage');
+  tick(inside,()=>.5);assert.equal(inside.dungeon,null,'evicted');assert.ok(inside.running,'keeps hunting');assert.ok(inside.logs.some(l=>l.text.includes('점검으로 닫혀')));
+  const hunting=newState(0);hunting.level=60;hunting.rebirths=3;hunting.stage='reef';hunting.running=true;tick(hunting,()=>.5);
+  assert.notEqual(hunting.stage,'reef','moved off a closed stage');assert.ok(STAGES.findIndex(x=>x.id===hunting.stage)<STAGES.findIndex(x=>x.id==='reef'),'moved to an earlier stage');
   const g=newState(0);g.level=60;g.rebirths=3;act(g,{type:'dungeon',id:'grotto'},0);assert.equal(g.dungeon.id,'grotto','other dungeons stay open');
   const synced=newState(0);advance(synced,1000);assert.deepEqual(synced.closed,{dungeons:['abyss'],stages:['reef']},'advance writes the list for the UI');
  } finally { setClosures({dungeons:[],stages:[]}); }
@@ -295,19 +295,19 @@ test('v27.26 restartLife resets this life only: rebirths, pearls, relics, resear
  assert.deepEqual(s.inventory.map(i=>i.id),['r'],'only relics survive');assert.ok(s.logs.some(l=>l.text.includes('운영 조치')));
 });
 
-test('v3.188 dungeons pay no kill rewards and a fixed dungeon coin per clear; the coin shop sells onyx, gear boxes and the hunter imprint',async()=>{
+test('v3.201 dungeons pay no kill rewards and a fixed dungeon coin per clear; the coin shop sells onyx, gear boxes and the hunter imprint',async()=>{
  const W=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
  const {restartLife}=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/actions/lifecycle');
- const clear=(mode,depth)=>{const s=newState(0);s.level=40;s.rebirths=10;s.running=true;const id=depth?'abyss':'grotto';const len=W.DUNGEONS.find(d=>d.id===id).fish.length;s.dungeon={id,wave:len-1,...(depth?{depth}:{}),...(mode?{mode}:{})};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:50,gold:50,boss:true,stun:0};const gold=s.gold,exp=s.exp,inv=s.inventory.length;let g=0;while(s.enemy&&g++<50)tick(s,()=>.5);return {s,gold:s.gold-gold,exp:s.exp-exp,inv:s.inventory.length-inv};};
- const n=clear();assert.equal(n.gold,0,'no kill or clear gold');assert.equal(n.exp,0,'no kill exp');assert.equal(n.inv,0,'no repeat drop');assert.equal(n.s.dungeonCoins,20,'v3.191 first normal clear of the day = 20 bonus coins');assert.equal(n.s.clears.grotto,2);
+ const clear=(mode,depth)=>{const s=newState(0);s.level=40;s.rebirths=10;s.running=true;const id=depth?'abyss':'grotto';const len=W.DUNGEONS.find(d=>d.id===id).monsters.length;s.dungeon={id,wave:len-1,...(depth?{depth}:{}),...(mode?{mode}:{})};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:50,gold:50,boss:true,stun:0};const gold=s.gold,exp=s.exp,inv=s.inventory.length;let g=0;while(s.enemy&&g++<50)tick(s,()=>.5);return {s,gold:s.gold-gold,exp:s.exp-exp,inv:s.inventory.length-inv};};
+ const n=clear();assert.equal(n.gold,0,'no kill or clear gold');assert.equal(n.exp,0,'no kill exp');assert.equal(n.inv,0,'no repeat drop');assert.equal(n.s.dungeonCoins,20,'v3.201 first normal clear of the day = 20 bonus coins');assert.equal(n.s.clears.grotto,2);
  assert.equal(clear('hell').s.dungeonCoins,40);assert.equal(clear('nightmare').s.dungeonCoins,60);const mu=clear(undefined,12).s;assert.equal(mu.dungeonCoins,2,'Mu Lung floor 12 = 1 + 1, no daily bonus');assert.equal(mu.dungeonBonus,undefined,'Mu Lung does not spend the daily bonus');
  const s=newState(0);s.level=40;s.dungeonCoins=0;
  assert.throws(()=>act(s,{type:'dungeonShop',id:'gearBox'},0),/주화가 부족/);
- s.dungeonCoins=100;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.inventory.at(-1).rarity>=3,true,'v3.193 legendary or better');
- const P=(await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/dungeon-shop')).DUNGEON_SHOP;assert.deepEqual([P.gearBox,P.quality100,P.hunterImprint,P.quality120,P.onyxAwaken,P.onyxCraft],[100,300,2400,3600,12000,24000],'v3.192 price ladder');
+ s.dungeonCoins=100;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.inventory.at(-1).rarity>=3,true,'v3.201 legendary or better');
+ const P=(await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/dungeon-shop')).DUNGEON_SHOP;assert.deepEqual([P.gearBox,P.quality100,P.hunterImprint,P.quality120,P.onyxAwaken,P.onyxCraft],[100,300,2400,3600,12000,24000],'v3.201 price ladder');
  s.dungeonCoins=P.onyxCraft+P.onyxAwaken+P.hunterImprint;assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0),/처치해야/);
  s.onyxBook={onyxDusk:1};act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,P.onyxAwaken+P.hunterImprint);const onyx=s.inventory.find(i=>i.onyx==='onyxDusk');assert.ok(onyx,'crafted');
- assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5),/하루 1번/,'v3.193 onyx goods once per KST day');
+ assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5),/하루 1번/,'v3.201 onyx goods once per KST day');
  act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},86400000,()=>.5);assert.equal(s.dungeonCoins,P.hunterImprint);assert.equal(onyx.onyxRank,1,'second purchase awakens');
  const line=onyx.affixes.findIndex(a=>!a.rule);act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(onyx.affixes[line].id,'hunter');
  s.dungeonCoins=5000;assert.throws(()=>act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0),/이미 포식자/);
@@ -315,7 +315,7 @@ test('v3.188 dungeons pay no kill rewards and a fixed dungeon coin per clear; th
  s.dungeonCoins=7;restartLife(s,1000);assert.equal(s.dungeonCoins,7,'coins survive a new life');
 });
 
-test('v3.189 coin shop quality goods: one option line to 100%, or 120–150% even on normal gear',async()=>{
+test('v3.201 coin shop quality goods: one option line to 100%, or 120–150% even on normal gear',async()=>{
  const G=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/gear');
  const s=newState(0);s.level=60;s.dungeonCoins=0;
  const def=G.AFFIX_POOL.find(a=>a.kind==='percent'&&!a.minRarity&&!a.junk&&!a.onlyOrigin&&!a.onlySlot&&!a.retired&&!a.rollBoth);
@@ -328,17 +328,17 @@ test('v3.189 coin shop quality goods: one option line to 100%, or 120–150% eve
  s.dungeonCoins=4000;assert.throws(()=>act(s,{type:'dungeonShop',id:'quality120',value:'q1|0'},0),/옵션 칸/,'already above 120%');
 });
 
-test('v3.190 regional dungeons are one trash wave + boss; the boss keeps the last-wave pressure; Mu Lung stays five fights',async()=>{
+test('v3.201 regional dungeons are one trash wave + boss; the boss keeps the last-wave pressure; Mu Lung stays five fights',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),W=await L.load('data/world'),E=await L.load('data/encounters'),B=await L.load('data/balance');
- for(const d of W.PLAIN_DUNGEONS)assert.equal(d.fish.length,d.id==='abyss'?5:2,d.id);
+ for(const d of W.PLAIN_DUNGEONS)assert.equal(d.monsters.length,d.id==='abyss'?5:2,d.id);
  const s=newState(0);s.level=30;s.running=true;act(s,{type:'dungeon',id:'grotto'},0);s.recovery=0;s.dungeon.wave=1;s.enemy=null;tick(s,()=>.9999);
- const boss=W.FISH.find(f=>f.id==='grottoWarden');assert.equal(s.enemy.maxHp,E.scaledEnemyStats(boss,{boss:true,wave:B.BOSS_PRESSURE_WAVE}).hp);
+ const boss=W.MONSTERS.find(f=>f.id==='grottoWarden');assert.equal(s.enemy.maxHp,E.scaledEnemyStats(boss,{boss:true,wave:B.BOSS_PRESSURE_WAVE}).hp);
 });
 
-test('v3.191 daily bonus clears: the first 30 regional clears of a KST day pay the bonus, shared across dungeons, no carry-over',async()=>{
+test('v3.201 daily bonus clears: the first 30 regional clears of a KST day pay the bonus, shared across dungeons, no carry-over',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),W=await L.load('data/world'),D=await L.load('data/dungeon-shop');
  const s=newState(0);s.level=40;s.rebirths=10;
- const clear=(id,mode)=>{s.running=true;s.dungeon={id,wave:W.DUNGEONS.find(d=>d.id===id).fish.length-1,...(mode?{mode}:{})};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};const before=s.dungeonCoins||0;let g=0;while(s.enemy&&g++<50)tick(s,()=>.5);return (s.dungeonCoins||0)-before;};
+ const clear=(id,mode)=>{s.running=true;s.dungeon={id,wave:W.DUNGEONS.find(d=>d.id===id).monsters.length-1,...(mode?{mode}:{})};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};const before=s.dungeonCoins||0;let g=0;while(s.enemy&&g++<50)tick(s,()=>.5);return (s.dungeonCoins||0)-before;};
  assert.equal(D.DAILY_BONUS.clears,30);
  for(let i=0;i<29;i++)clear(i%2?'grotto':'temple','hell');
  assert.equal(s.dungeonBonus.used,29,'shared across dungeons');
@@ -348,7 +348,7 @@ test('v3.191 daily bonus clears: the first 30 regional clears of a KST day pay t
  s.lastTick+=86400000;assert.equal(clear('grotto','hell'),40,'a new KST day refills 30, unused clears do not carry over');assert.equal(s.dungeonBonus.used,1);
 });
 
-test('v3.193 legendary+ gear box: legendary or better at my level; ancient/primal weights x0.25 (about one normal drop); primal pity untouched',async()=>{
+test('v3.201 legendary+ gear box: legendary or better at my level; ancient/primal weights x0.25 (about one normal drop); primal pity untouched',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('systems/dungeon-coins'),O=await L.load('data/odds'),D=await L.load('data/dungeon-shop');
  const w=C.gearBoxWeights(),r=O.ODDS.drop.rarity;assert.deepEqual(w.slice(0,3),[0,0,0]);assert.equal(w[3],r[3]);assert.equal(w[4],r[4]);assert.equal(w[5],r[5]*D.GEAR_BOX.highScale);assert.equal(w[6],r[6]*D.GEAR_BOX.highScale);
  const t=w.reduce((a,b)=>a+b,0),plain=r.slice(1).reduce((a,b)=>a+b,0);assert.ok(Math.abs(w[5]/t-r[5]/plain)<.01,'ancient share close to a normal drop');
@@ -356,7 +356,7 @@ test('v3.193 legendary+ gear box: legendary or better at my level; ancient/prima
  const s=newState(0);s.level=70;s.dungeonCoins=D.DUNGEON_SHOP.gearBox;s.primalDropPity=7;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);const it=s.inventory.at(-1);assert.ok(it.rarity>=3);assert.ok(it.level>=70,'my level');assert.equal(s.primalDropPity,7,'pity untouched');
 });
 
-test('v3.194 growth tickets: best full hour of the last 24 (gold and kill exp) x hours, rebirths < 50, daily limits; exp log resets on rebirth',async()=>{
+test('v3.201 growth tickets: best full hour of the last 24 (gold and kill exp) x hours, rebirths < 50, daily limits; exp log resets on rebirth',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),I=await L.load('systems/income'),D=await L.load('data/dungeon-shop');
  const H=3600000,s=newState(0);s.level=30;s.rebirths=10;s.playMs=5*H+60000;
  s.goldLog=[{h:2,g:1000},{h:3,g:5000},{h:4,g:2000},{h:5,g:10}];s.expLog=[{h:3,g:300},{h:4,g:900}];
@@ -371,11 +371,11 @@ test('v3.194 growth tickets: best full hour of the last 24 (gold and kill exp) x
  const {restartLife}=await L.load('systems/actions/lifecycle');s.expLog=[{h:1,g:5}];restartLife(s,1000);assert.equal(s.expLog,undefined,'exp log does not survive a new life');
 });
 
-test('v3.195-199 boss cores: daily-bonus regional clears only; duplicates awaken; one core slot (100%), others resonate 10%; set bonus; kept across lives',async()=>{
+test('v3.202-199 boss cores: daily-bonus regional clears only; duplicates awaken; one core slot (100%), others resonate 10%; set bonus; kept across lives',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),W=await L.load('data/world'),O=await L.load('data/odds'),BL=await L.load('systems/boss-loot'),C=await L.load('data/boss-core');
  for(const d of W.PLAIN_DUNGEONS.filter(d=>d.id!=='abyss')){const c=C.BOSS_CORES[d.id];assert.ok(c,d.id);assert.equal(c.bonus.bossDamage,.05);}
  assert.ok(O.ODDS.bossLoot.chance>0&&O.ODDS.bossLoot.pity>1);
- const clear=(s,id,rng)=>{s.running=true;s.dungeon={id,wave:W.DUNGEONS.find(d=>d.id===id).fish.length-1};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};let g=0;while(s.enemy&&g++<50)tick(s,rng);};
+ const clear=(s,id,rng)=>{s.running=true;s.dungeon={id,wave:W.DUNGEONS.find(d=>d.id===id).monsters.length-1};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};let g=0;while(s.enemy&&g++<50)tick(s,rng);};
  const s=newState(0);s.level=60;s.rebirths=10;const inv=s.inventory.length;const hp0=stats(s).hp,mp0=stats(s).mana;clear(s,'grotto',()=>0);
  assert.equal(s.bossCores.grotto.rank,0);assert.equal(s.bossCores.grotto.attrs.length,2);assert.equal(s.coreSlot,'grotto','first core goes into the empty slot');assert.equal(s.inventory.length,inv,'cores are not items');
  const g1=stats(s).hp-hp0;assert.ok(g1>=2000,'Mushmom core: max HP +2,000 flat (then the usual HP multipliers)');assert.ok(stats(s).mana-mp0>=300);
@@ -391,7 +391,7 @@ test('v3.195-199 boss cores: daily-bonus regional clears only; duplicates awaken
  s.rebirths=999;ascend(s,2000);assert.equal(s.bossCores.grotto.rank,5,'kept across ascension');assert.equal(s.coreSlot,undefined);
 });
 
-test('v3.198 Zakum and Papulatus have their own kits (no longer the Mu Gong ancient-boss set); loot rules are inherit-style',async()=>{
+test('v3.202 Zakum and Papulatus have their own kits (no longer the Mu Gong ancient-boss set); loot rules are inherit-style',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),E=await L.load('data/encounters'),F=await L.load('data/foe-fx'),BL=await L.load('data/boss-core');
  const z=E.foeSkills('ventColossus',66,true),p=E.foeSkills('starfallSeraph',62,true),m=E.foeSkills('abyssSovereign',52,true);
  assert.ok(z.includes('zakumArms')&&z.includes('zakumFlame'));assert.ok(p.includes('papTimeStop')&&p.includes('papRift')&&p.includes('papAlarm'));assert.ok(m.includes('tentacleBarrage'));
@@ -400,7 +400,7 @@ test('v3.198 Zakum and Papulatus have their own kits (no longer the Mu Gong anci
  assert.equal(BL.BOSS_CORES.cemetery.bonus.stunBonus,1);assert.equal(BL.BOSS_CORES.caldera.bonus.dotTurnsBonus,1);assert.equal(BL.BOSS_CORES.temple.bonus.penetration,.1);
 });
 
-test('v3.200 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 is gold only',async()=>{
+test('v3.202 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 is gold only',async()=>{
  const E=(await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/economy'));
  const r=E.RESEARCH.find(x=>x.id==='dungeon');assert.equal(r.name,'던전 탐험 I');assert.equal(r.tab,'gold');
  const s=newState(0);const base=stats(s).dungeonGoldBonus||0;s.permanent.dungeon=3;assert.ok(Math.abs((stats(s).dungeonGoldBonus||0)-base-.3)<1e-9);
@@ -418,7 +418,7 @@ test('v3.202 boss cores roll two random attributes scaled by level (x1~5, awaken
  assert.throws(()=>act(u,{type:'dungeonShop',id:'coreBox'},0,()=>.1),/하루 1번/);act(u,{type:'dungeonShop',id:'coreBox'},86400000,()=>.1);assert.equal(Object.values(u.bossCores)[0].rank,1,'same core again awakens');
 });
 
-test('v3.203 boss core attribute reroll (essence or coins) and refine (essence, factor only); v3.204 cost 50 x1.2, pearl reset',async()=>{
+test('v3.203 boss core attribute reroll (essence or coins) and refine (essence, factor only); v3.203 cost 50 x1.2, pearl reset',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),B=await L.load('systems/boss-loot'),D=await L.load('data/dungeon-shop');
  const s=newState(0);s.bossCores={grotto:{rank:1,attrs:[{k:'str',f:.3},{k:'vit',f:.5}]}};s.essence=1e6;
  const c0=B.coreForgeCost(s,'grotto');assert.equal(c0,50);s.rebirths=80;assert.equal(B.coreForgeCost(s,'grotto'),50,'no rebirth scaling');

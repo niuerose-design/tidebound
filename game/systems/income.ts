@@ -3,9 +3,9 @@
  * 부재중 정산도 같은 턴 처리라 함께 셉니다. 판매·환불처럼 턴 밖에서 생긴 골드는 넣지 않습니다(운영 페이지의 ‘사냥 골드 수입’).
  */
 import type { State } from '../types';
+import { HOUR } from '../data/time';
 
 export const INCOME_HOURS = 24;
-const HOUR = 3600_000;
 export type IncomeBucket = { h: number; g: number };
 export const playHour = (s: Pick<State, 'playMs'>) => Math.floor((s.playMs || 0) / HOUR);
 
@@ -31,7 +31,7 @@ export function incomeRate(s: Pick<State, 'goldLog' | 'playMs'>) {
 }
 
 /**
- * v3.194 처치 경험치 수입 기록(주화 상점 성장권 기준): 일반 처치 경험치를 플레이 시간 1시간 칸에 쌓습니다(누리 보너스 제외, 부재중 정산 포함).
+ * v3.201 처치 경험치 수입 기록(주화 상점 성장권 기준): 일반 처치 경험치를 플레이 시간 1시간 칸에 쌓습니다(누리 보너스 제외, 부재중 정산 포함).
  * 레벨이 낮아지는 환생에서는 지난 생의 기록이 맞지 않아 지웁니다(lifecycle의 환생 유지 목록에 넣지 않음).
  */
 export function recordExpIncome(s: State, exp: number) {
@@ -41,7 +41,7 @@ export function recordExpIncome(s: State, exp: number) {
     else { log.push({ h, g: exp }); if (log.length > INCOME_HOURS) log.splice(0, log.length - INCOME_HOURS); }
 }
 /**
- * v3.194 최근 24시간 중 가장 많이 번 1시간(다 채운 칸). 다 채운 칸이 없으면 지금 칸을 경과 시간으로 나눠 추정합니다.
+ * v3.201 최근 24시간 중 가장 많이 번 1시간(다 채운 칸). 다 채운 칸이 없으면 지금 칸을 경과 시간으로 나눠 추정합니다.
  * 던전(처치 보상 없음)에 오래 있던 유저도 직전 사냥 수준으로 받도록 평균이 아니라 최댓값을 씁니다.
  */
 export function bestHourly(log: IncomeBucket[] | undefined, playMs = 0) {

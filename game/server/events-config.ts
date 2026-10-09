@@ -5,8 +5,8 @@
  */
 import { db } from './db';
 import { setRuntimeEvents, setAltarEvents, SERVER_EVENTS, type ServerEvent } from '../data/events';
-import { BLESSINGS, blessingEffect } from '../data/altar';
-import { DEFAULT_CLOSURES, DUNGEONS, STAGES, setClosures, type Closures } from '../data/world';
+import { BLESSINGS, blessingEffect, effectiveBlessingLevel } from '../data/altar';
+import { DEFAULT_CLOSURES, STAGES, setClosures, type Closures, stageById, dungeonById } from '../data/world';
 
 export type EventConfig = { extra: ServerEvent[]; disabled: string[] };
 const KEY = 'events', TTL = 30_000;
@@ -25,7 +25,7 @@ export async function readClosures(): Promise<Closures> {
     try { const v = JSON.parse(raw); return cleanClosures({ dungeons: Array.isArray(v?.dungeons) ? v.dungeons : [], stages: Array.isArray(v?.stages) ? v.stages : [] }); }
     catch { return { dungeons: [...DEFAULT_CLOSURES.dungeons], stages: [...DEFAULT_CLOSURES.stages] }; }
 }
-const cleanClosures = (c: Closures): Closures => ({ dungeons: [...new Set(c.dungeons)].filter(id => DUNGEONS.some(d => d.id === id)), stages: [...new Set(c.stages)].filter(id => id !== STAGES[0].id && STAGES.some(st => st.id === id)) });
+const cleanClosures = (c: Closures): Closures => ({ dungeons: [...new Set(c.dungeons)].filter(id => !!dungeonById(id)), stages: [...new Set(c.stages)].filter(id => id !== STAGES[0].id && !!stageById(id)) });
 /** 동기화·정산 전에 부릅니다. 30초 안에는 DB를 다시 읽지 않습니다. 읽기에 실패하면 지난 값(없으면 코드 기본값)을 씁니다. */
 export async function refreshEvents(now = Date.now()) {
     if (cached && now - cached.at < TTL) return;
@@ -52,8 +52,8 @@ export async function altarBlessingEvents(now: number): Promise<ServerEvent[]> {
     const gauges = await db().listAltarGauges();
     return BLESSINGS.flatMap(b => {
         const g = gauges.find(x => x.id === b.id), until = g?.until || 0;
-        // v27.48 축복 단계별 효과(단계가 없던 옛 행은 1단계).
-        return until > now ? [{ id: `altar-${b.id}`, name: '', from: '2026-01-01T00:00:00+09:00', until: new Date(until).toISOString(), ...blessingEffect(b, Math.max(1, g?.level || 1)) }] : [];
+        // v27.48 축복 단계별 효과(단계가 없던 옛 행은 1단계). v3.194 화면과 같은 살아 있는 단계(4~6단계 시간이 지나면 3단계).
+        return until > now ? [{ id: `altar-${b.id}`, name: '', from: '2026-01-01T00:00:00+09:00', until: new Date(until).toISOString(), ...blessingEffect(b, effectiveBlessingLevel(g, now)) }] : [];
     });
 }
 /** 축복이 막 열렸을 때 이 인스턴스는 30초를 기다리지 않고 바로 반영합니다. */

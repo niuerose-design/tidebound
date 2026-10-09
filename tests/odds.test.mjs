@@ -38,12 +38,12 @@ test('v3.52 odds: the catalog carries the odds only while secrecy is off', async
 
 test('v3.55 spawn weights: server-only, and the per-stage average table reproduces the server reward norm for the screen', async () => {
     const W = await load('data/world'), { SERVER_ODDS } = await load('secret/odds');
-    assert.equal(W.FISH.find(f => f.id === 'abyssManta').spawnWeight, SERVER_ODDS.spawn.abyssManta);
-    assert.equal(W.FISH.find(f => f.id === 'masteryMimic').spawnWeight, 0);
+    assert.equal(W.MONSTERS.find(f => f.id === 'abyssManta').spawnWeight, SERVER_ODDS.spawn.abyssManta);
+    assert.equal(W.MONSTERS.find(f => f.id === 'masteryMimic').spawnWeight, 0);
     const table = W.stageRewardAvgTable();
     for (const st of W.STAGES) for (const tier of [0, 1, 5, 10, 20, 35, 60, 100, 200]) {
         const fromTable = 1 / Math.pow(Math.max(1, W.stageAvgAt(table[st.id], tier)), Math.min(1, tier / W.TIDE_LIFT_TIERS));
-        assert.ok(Math.abs(fromTable - W.stageRewardNorm(st.fish, tier)) < 1e-12, `${st.id} t${tier}`);
+        assert.ok(Math.abs(fromTable - W.stageRewardNorm(st.monsters, tier)) < 1e-12, `${st.id} t${tier}`);
     }
     const src = fs.readFileSync('game/data/world.ts', 'utf8');
     assert.ok(!/spawnWeight: \.\d/.test(src), 'no weight literals left in world.ts');
@@ -53,7 +53,7 @@ test('v3.57 info hacking: leaks are built from the data, skip known ones and ent
     const { leakPool, UNLOCK_CONDITIONS } = await load('secret/leaks'), { UNLOCK_JOBS } = await load('secret/unlocks'), { newState: fresh } = await load('systems/state');
     assert.deepEqual(Object.keys(UNLOCK_CONDITIONS).sort(), [...UNLOCK_JOBS].sort());
     const s = fresh(0), all = leakPool(s, new Set());
-    assert.ok(all.some(l => l.id === 'drop:base' && l.text.includes('0.25%')) && all.some(l => l.id === 'job:undead' && l.text.includes('10번 쓰러지기')) && all.some(l => l.id === 'spawn:abyssManta'));
+    assert.ok(all.some(l => l.id === 'drop:base' && l.text.includes('0.25%')) && all.some(l => l.id === 'job:undead' && l.text.includes('100번 쓰러지기')) && all.some(l => l.id === 'spawn:abyssManta'));
     assert.equal(new Set(all.map(l => l.id)).size, all.length, 'leak ids are unique');
     assert.ok(!leakPool(s, new Set(['drop:base'])).some(l => l.id === 'drop:base'), 'known leaks are skipped');
     s.unlockedJobs.push('undead'); assert.ok(!leakPool(s, new Set()).some(l => l.id === 'job:undead'), 'jobs already entered are skipped');

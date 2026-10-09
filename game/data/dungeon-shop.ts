@@ -1,5 +1,5 @@
 /**
- * v3.188 던전 주화 · 주화 상점 (docs 던전 개편 기획안 2-1).
+ * v3.201 던전 주화 · 주화 상점 (docs 던전 개편 기획안 2-1).
  * 던전(지역 던전 · 무릉도장)은 처치마다 골드 · 경험치 · 숙련 · 장비를 주지 않고, 정복하는 순간 던전 주화를 한 번에 줍니다.
  * 주화는 처치 턴과 무관한 정복당 고정량이라, 보스를 빨리 잡는 빌드일수록 시간당 주화가 많습니다.
  * 첫 정복 보상(세계석 · 확정 장비), 무릉도장 층 세계석 · SP 이정표 · 5층마다 확정 장비는 그대로입니다.
@@ -7,10 +7,10 @@
  */
 import type { DungeonMode } from './balance';
 
-/** 지역 던전 정복 1회의 주화(난이도별). v3.191 하루 보너스를 다 쓴 뒤의 값(보너스의 1/20). */
+/** 지역 던전 정복 1회의 주화(난이도별). v3.201 하루 보너스를 다 쓴 뒤의 값(보너스의 1/20). */
 export const DUNGEON_COINS: Record<DungeonMode, number> = { normal: 1, hell: 2, nightmare: 3 };
 /**
- * v3.191 하루 보너스 정복: 지역 던전 정복은 하루(한국 시간 자정 기준) 처음 clears회까지 coins만큼 받습니다. 던전 공용 · 이월 없음 · 무릉도장 제외.
+ * v3.201 하루 보너스 정복: 지역 던전 정복은 하루(한국 시간 자정 기준) 처음 clears회까지 coins만큼 받습니다. 던전 공용 · 이월 없음 · 무릉도장 제외.
  * 하루 10~25분이면 다 쓰는 양이라 던전은 '매일 들르는 곳'이 되고, 종일 돌려도 수입이 크게 앞서지 않습니다(기획안 2차안 A).
  */
 export const DAILY_BONUS: { clears: number; coins: Record<DungeonMode, number> } = { clears: 30, coins: { normal: 20, hell: 40, nightmare: 60 } };
@@ -19,7 +19,7 @@ export const ABYSS_COINS = { base: 1, abyssEvery: 10 };
 export const abyssCoins = (depth: number) => ABYSS_COINS.base + Math.floor(Math.max(1, depth) / ABYSS_COINS.abyssEvery);
 
 /**
- * 주화 상점 가격. v3.192 헬 유저의 하루 보너스 수입(30회 × 40 = 1,200)을 기준으로 매일 · 며칠 · 몇 주 단위로 나눕니다(기획안 2차안 C).
+ * 주화 상점 가격. v3.201 헬 유저의 하루 보너스 수입(30회 × 40 = 1,200)을 기준으로 매일 · 며칠 · 몇 주 단위로 나눕니다(기획안 2차안 C).
  * 매일: 장비 상자 · 수치 100% / 며칠: 포식자 각인 2일 · 수치 120%+ 3일 / 몇 주: 칠흑 각성 10일 · 제작 20일. 구매 한도는 없습니다.
  */
 export const DUNGEON_SHOP = {
@@ -27,34 +27,34 @@ export const DUNGEON_SHOP = {
     onyxCraft: 24000,
     /** 가진 칠흑 장신구 각성 +1(최대 ONYX.awakenMax). */
     onyxAwaken: 12000,
-    /** v3.193 전설 이상 확정 장비 상자(내 레벨 기준). 고대 · 태초는 GEAR_BOX.highScale만큼 더 희박합니다. */
+    /** v3.201 전설 이상 확정 장비 상자(내 레벨 기준). 고대 · 태초는 GEAR_BOX.highScale만큼 더 희박합니다. */
     gearBox: 100,
     /** ‘포식자’(보스 피해) 옵션 각인: 고대 이상 장비의 옵션 한 줄을 포식자로 바꿉니다(장비당 한 줄). */
     hunterImprint: 2400,
-    /** v3.189 고른 옵션 한 줄의 수치를 100%(보통 최고)로. */
+    /** v3.201 고른 옵션 한 줄의 수치를 100%(보통 최고)로. */
     quality100: 300,
-    /** v3.189 고른 옵션 한 줄의 수치를 120~150%(계승 최고까지)로. 일반 장비도 보통 최고를 넘습니다. */
+    /** v3.201 고른 옵션 한 줄의 수치를 120~150%(계승 최고까지)로. 일반 장비도 보통 최고를 넘습니다. */
     quality120: 3600,
     /** v3.202 랜덤 보스 코어 상자: 7종 중 하나(없으면 획득, 있으면 각성). 하루 1번(DUNGEON_SHOP_DAILY.coreBoxPerDay). */
     coreBox: 3600,
     /** v3.203 보스 코어 능력치 한 줄 재설정(종류 · 배율 새로 굴림). 한도 없음, 정수 재설정 비용을 올리지 않습니다. */
     coreReroll: 600,
 } as const;
-/** v3.189 수치 상품: 목표 수치(하한)와 위로 굴리는 상한. 120%는 [1.2, 1.5]에서 고르게 굴립니다. */
+/** v3.201 수치 상품: 목표 수치(하한)와 위로 굴리는 상한. 120%는 [1.2, 1.5]에서 고르게 굴립니다. */
 export const QUALITY_GOODS = { quality100: { min: 1, max: 1 }, quality120: { min: 1.2, max: 1.5 } } as const;
 export type QualityGood = keyof typeof QUALITY_GOODS;
 /** 각인권이 붙이는 옵션. */
 export const HUNTER_AFFIX = 'hunter';
 /**
- * v3.193 전설 이상 장비 상자: 드롭 등급표(난이도 0)에서 전설 이상만 남기고 고대 · 태초 가중치에 highScale을 곱합니다.
+ * v3.201 전설 이상 장비 상자: 드롭 등급표(난이도 0)에서 전설 이상만 남기고 고대 · 태초 가중치에 highScale을 곱합니다.
  * ×0.25면 전설 약 65% · 신화 약 32% · 고대 약 2.8% · 태초 약 0.06%로, 고대 · 태초가 나올 확률은 일반 드롭 하나(2.4% · 0.05%)와 비슷합니다.
  * 태초 드롭 천장(primalDropPity)은 세지 않습니다.
  */
 export const GEAR_BOX = { minRarity: 3, highFrom: 5, highScale: .25 };
-/** v3.193 칠흑 상품(제작 · 각성 합쳐서)은 하루(한국 시간) onyxPerDay번까지. */
+/** v3.201 칠흑 상품(제작 · 각성 합쳐서)은 하루(한국 시간) onyxPerDay번까지. */
 export const DUNGEON_SHOP_DAILY = { onyxPerDay: 1, coreBoxPerDay: 1 };
 /**
- * v3.194 성장권: 내 최근 사냥 수입(최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치) × hours를 바로 받습니다. 숙련 · 장비 · 처치 수는 없습니다.
+ * v3.201 성장권: 내 최근 사냥 수입(최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치) × hours를 바로 받습니다. 숙련 · 장비 · 처치 수는 없습니다.
  * 환생 maxRebirths회 미만만 살 수 있고, 하루(한국 시간) perDay번까지. 둘 다 사면 하루 1,100주화로 헬 하루 보너스(1,200)를 거의 다 씁니다.
  */
 export const GROWTH_GOODS = { growth1: { hours: 1, price: 200, perDay: 2 }, growth4: { hours: 4, price: 700, perDay: 1 } } as const;

@@ -6,38 +6,37 @@ const { progressCounts } = await loadGame().load('game/systems/progression.js');
 const ready = (level = 30) => { const s = newState(0); s.level = level; s.rebirths = 1; Object.assign(s.attributes, { str: 30, dex: 30, int: 30, vit: 30, wis: 30, luk: 30 }); return s; };
 const job = id => JOBS.find(j => j.id === id);
 
-test('v3.62 hidden unlocks: record conditions (v3.64 seven); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
-    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'krakenkin', 'poorMonk', 'journeyman']);
+test('v3.62 hidden unlocks: record conditions (v3.200 four); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
+    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman', 'rebirthFisher']);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead'), false);
     assert.ok(jobRequirements(s, job('undead')).some(r => r.label === '숨은 조건' && !r.met));
     assert.throws(() => act(s, { type: 'job', id: 'undead' }, 0), /숨은 조건/);
-    s.deaths = 10; act(s, { type: 'job', id: 'undead' }, 0); assert.equal(s.job, 'undead');
+    s.deaths = 99; assert.equal(canChangeJob(s, 'undead'), false, 'v3.199 99 deaths is not enough');
+    s.deaths = 100; act(s, { type: 'job', id: 'undead' }, 0); assert.equal(s.job, 'undead');
     act(s, { type: 'job', id: 'fisher' }, 0); s.deaths = 0;
     assert.equal(canChangeJob(s, 'undead'), true, 'a job once entered ignores its hidden condition');
     assert.equal(unlocks.unlockMet({}, 'manaLeviathan'), null, 'later jobs in a ??? lineage have no hidden condition');
 });
 
-test('v3.62 hidden unlocks count play records', () => {
+test('v3.62 hidden unlocks count play records (v3.199 100 hours · 5 mastered)', () => {
     const s = ready();
     const closed = id => assert.equal(canChangeJob(s, id), false, `${id} closed`), open = id => assert.equal(canChangeJob(s, id), true, `${id} open`);
-    closed('clockmaker'); s.playMs = 10 * 3600_000; open('clockmaker');
-    s.attributes.str = 60; s.attributes.dex = 60; s.attributes.vit = 60; s.jobMastery.stormEel = 999999; s.unlockedJobs.push('stormEel');
-    closed('krakenkin'); s.book.grottoWarden = 6; s.book.kelpHydra = 4; assert.equal(unlocks.unlockMet(s, 'krakenkin'), true);
-    // v3.64 숨은 2차(도감 독자·청빈 수도승·칠전팔기)는 기록 조건 + 부모 1차 숙련.
-    s.level = 30; s.attributes.int = 30; s.attributes.wis = 30; s.attributes.vit = 30; s.attributes.str = 30;
-    s.gold = 50; closed('poorMonk'); s.jobMastery.saltWarden = 75; s.gold = 5000; closed('poorMonk'); s.gold = 50; open('poorMonk');
+    closed('clockmaker'); s.playMs = 99 * 3600_000; closed('clockmaker'); s.playMs = 100 * 3600_000; open('clockmaker');
+    // v3.199 은월 3차는 히든이 아니라 보스 처치 기록 없이 은월 (2차) 숙련만으로 이어집니다.
+    assert.equal(unlocks.unlockMet(s, 'krakenkin'), null); assert.ok(!job('krakenkin').hidden && !job('deepHorror').hidden && !job('leviathanAvatar').hidden);
+    assert.equal(job('poorMonk'), undefined, 'v3.199 청빈 수도승 is gone');
     for (const id of unlocks.UNLOCK_JOBS) { const j = job(id); assert.ok(j && j.hidden && j.hint && !j.hint.includes(j.name) && !j.hint.includes('문'), id); }
-    for (const [id, parent] of [['poorMonk', 'saltWarden']]) { const j = job(id); assert.ok(j.tier === 2 && j.parent === parent && j.tree !== 'mystery', id); }
 });
 
 test('v3.62 the rebirth door is gone: no draw at rebirth, the old door jobs keep only their own conditions', () => {
     const s = newState(0); s.level = 60; s.rebirths = 3;
     act(s, { type: 'rebirth' }, 0, () => { throw Error('rebirth draws no random number for a door'); });
     assert.equal(s.rebirthDoor, undefined);
-    for (const id of ['rebirthFisher', 'voidcaller']) { assert.equal(unlocks.unlockMet({}, id), null, id); assert.ok(!job(id).hint.includes('문'), `${id} hint`); }
-    const o = ready(); o.attributes.str = 10; o.attributes.wis = 12; assert.equal(canChangeJob(o, 'rebirthFisher'), true, 'rebirth 1 + stats is enough');
-    o.rebirths = 0; assert.equal(canChangeJob(o, 'rebirthFisher'), false);
+    for (const id of ['voidcaller']) { assert.equal(unlocks.unlockMet({}, id), null, id); assert.ok(!job(id).hint.includes('문'), `${id} hint`); }
+    // v3.200 윤회의 나그네는 히든 5차 궁극의 모험가가 되어 숨은 조건(5차 직업 3개 숙달)이 생겼습니다.
+    const o = ready(); o.attributes.str = 10; o.attributes.wis = 12; assert.equal(canChangeJob(o, 'rebirthFisher'), false, 'rebirth 1 + stats is no longer enough');
+    assert.equal(unlocks.unlockMet({}, 'rebirthFisher'), false); assert.ok(job('rebirthFisher').hidden && job('rebirthFisher').tier === 5 && job('rebirthFisher').signatureFree);
 });
 
 test('v3.62 save migration: the open rebirth door becomes a revealed record; admin-opened doors are dropped', () => {
@@ -58,12 +57,12 @@ test('Mastery rule: a mastered job can be re-entered at level 1, ignoring level,
 });
 
 test('v25.23 a met hidden condition stays met: the settlement records it and unlockMet honors it after the condition breaks', () => {
-    const t = { unlockedJobs: [], deaths: 10 }; const fresh = unlocks.recordUnlocks(t);
+    const t = { unlockedJobs: [], deaths: 100 }; const fresh = unlocks.recordUnlocks(t);
     assert.ok(fresh.includes('undead')); assert.ok(t.doorsOpened.includes('undead'));
     t.deaths = 0; assert.equal(unlocks.unlockMet(t, 'undead'), true);
     assert.deepEqual(unlocks.recordUnlocks(t), [], 'already recorded');
     assert.equal(unlocks.unlockMet({ unlockedJobs: [] }, 'undead'), false);
-    const s = ready(); s.deaths = 10; advance(s, 1000); assert.ok(s.doorsOpened.includes('undead'), 'advance records it');
+    const s = ready(); s.deaths = 100; advance(s, 1000); assert.ok(s.doorsOpened.includes('undead'), 'advance records it');
 });
 
 test('v3.64 retired hidden jobs: the six jobs and their skills are gone, and old saves lose their records without compensation', () => {
@@ -100,12 +99,12 @@ test('v3.137 망인: job mastery ten million; 죽지않은 영혼 AP 6 → 4 →
     assert.equal(effectiveSkill(sk, 1, 3).penaltyRelief, 1, 'the last stage relieves every penalty');
 });
 
-test('v3.139 망인 skills: 무덤파기 only weakens for 5 turns; 죽지않은 영혼 shows only 쓸모없음 but keeps its real effect', async () => {
+test('v3.198 망인 skills: 무덤파기 hits and drains; 죽지않은 영혼 shows only 쓸모없음 but keeps its real effect', async () => {
     const { strike } = await import('./harness.mjs'), D = await loadGame().load('game/systems/skill-description.js');
-    const grave = SKILLS.find(x => x.id === 'graveHook'); assert.equal(grave.name, '무덤파기'); assert.ok(grave.statusOnly && grave.effect === 'weaken' && grave.statusTurns === 5);
+    const grave = SKILLS.find(x => x.id === 'graveHook'); assert.equal(grave.name, '무덤파기'); assert.ok(!grave.statusOnly && grave.effect === 'drain' && grave.damageType === 'physical');
     const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
-    const a = { name: 'A', stats: { ...base }, hp: 1e6, mana: 1000, skills: ['graveHook'], cooldowns: {}, stun: 0, effects: {}, ranks: { graveHook: 1 }, mastery: {}, practice: {} }, b = { name: 'B', stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} };
-    strike(a, b, () => 0); assert.equal(b.hp, 1e6, 'no damage'); assert.equal(b.effects.weaken, 5);
+    const a = { name: 'A', stats: { ...base }, hp: 5e5, mana: 1000, skills: ['graveHook'], cooldowns: {}, stun: 0, effects: {}, ranks: { graveHook: 1 }, mastery: {}, practice: {} }, b = { name: 'B', stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} };
+    strike(a, b, () => 0); assert.ok(b.hp < 1e6, 'it hits'); assert.ok(a.hp > 5e5, 'and drains back');
     const soul = SKILLS.find(x => x.id === 'boneLegacy'); assert.equal(soul.name, '죽지않은 영혼');
     assert.deepEqual(D.skillEffectLines(soul, 3), ['쓸모없음']); assert.equal(D.skillBrief(soul), '쓸모없음'); assert.ok(D.skillGrowthStages(soul).every(r => r.effects.join() === '쓸모없음'));
     assert.equal(soul.levelEffects.at(-1).penaltyRelief, 1, 'the real effect is unchanged');

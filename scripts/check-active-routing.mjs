@@ -7,7 +7,7 @@ const {load:moduleAt}=loadGame();
 const {newState,tick,act}=await moduleAt('systems/engine');
 const {canChangeJob,canUse,validLoadout,attributes,skillLevel,skillMastery,maxSkillLevel,bookReward}=await moduleAt('systems/progression');
 const {itemStats}=await moduleAt('systems/equipment');
-const {STAGES,DUNGEONS,FISH}=await moduleAt('data/world');
+const {STAGES,DUNGEONS,MONSTERS}=await moduleAt('data/world');
 const {SKILLS}=await moduleAt('data/skills');
 const gearScore=(item,magic)=>{const v=itemStats(item);return (v[magic?'magic':'attack']||0)*4+(v.hp||0)*.22+(v.defense||0)*1.5+(v.resist||0)*1.2+(v.accuracy||0)*150+(v.crit||0)*150;};
 function manage(s,magic,gear,rng){
@@ -15,7 +15,7 @@ function manage(s,magic,gear,rng){
  while(s.statPoints){const v=attributes(s),goal=s.level<10?12:35;action({type:'attribute',id:magic?(v.int<goal?'int':v.wis<(s.level<10?10:20)?'wis':s.statPoints%4===0?'vit':'int'):(v.str<goal?'str':v.dex<(s.level<10?10:20)?'dex':s.statPoints%4===0?'vit':'str')});}
  // Keep dungeon progress intact; change job at the next expedition boundary.
  if(!s.dungeon)for(const id of magic?['tide','tempest']:['harpoon','whaler'])if(s.job!==id&&!s.unlockedJobs.includes(id)&&canChangeJob(s,id))action({type:'job',id});
- for(const f of FISH){const reward=bookReward(s,f.id);if(reward.ready)action({type:'claimBook',id:f.id});}
+ for(const f of MONSTERS){const reward=bookReward(s,f.id);if(reward.ready)action({type:'claimBook',id:f.id});}
  for(const d of DUNGEONS)if(s.achievements?.[`firstClear:${d.id}`]!==undefined&&!s.achievementClaims?.[`firstClear:${d.id}`])action({type:'claimAchievement',id:`firstClear:${d.id}`});
  const order=magic?['maelstrom','wave','spring','abyssMind','insight','flow','hook','breath']:['whaleStrike','pierce','barb','focus','hook','breath','temperedSkin'];
  s.skills=[];for(const id of order)if(canUse(s,id)&&validLoadout(s,[...s.skills,id]))s.skills.push(id);
@@ -30,7 +30,7 @@ function enter(s,route,rng){
  else {if(s.dungeon||s.stage!==route.stage)act(s,{type:'stage',id:route.stage},s.turn*2000,rng);if(s.target!==route.target)act(s,{type:'target',id:route.target},s.turn*2000,rng);s.running=true;}
 }
 function choose(s,seed){
- const candidates=STAGES.filter(x=>x.level<=s.level&&x.rebirth<=s.rebirths).flatMap(st=>st.fish.map(target=>({stage:st.id,target})));
+ const candidates=STAGES.filter(x=>x.level<=s.level&&x.rebirth<=s.rebirths).flatMap(st=>st.monsters.map(target=>({stage:st.id,target})));
  candidates.push(...DUNGEONS.filter(d=>!d.random&&d.level<=s.level&&d.rebirth<=s.rebirths).map(d=>({dungeon:d.id})));
  let best=candidates[0],rate=-1,firstClear=null,firstRate=-1;
  for(const route of candidates){

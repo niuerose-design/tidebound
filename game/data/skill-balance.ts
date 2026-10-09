@@ -28,7 +28,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     crush: { chance: .22, multiplier: 1.5 },
     oath: { chance: .24, multiplier: 2.1, drainRatio: .15 },
     vitalSurge: { chance: .25, multiplier: 1.65, balanceBonus: .3 },
-    // v27.5 망인 계보 계승 가치: 다크 엘리멘트 AP 4→2·대기 3, 쉐도우 배트 발동 34%·×1.9·AP 3. 같은 차수 기술 중 꼴찌였습니다.
+    // v27.5 망인 계보(다크 엘리멘트 · 쉐도우 배트)는 계승 가치가 같은 차수 기술 중 꼴찌라 올려 둔 값입니다.
     // v27.4 유리 대포(제약 직업): 240%·빈사 +50%.
     wakeFist: { chance: .26, multiplier: 1.3, extraAttacks: 1, extraAttackMultiplier: .5 },
     rippleGlyph: { chance: .55, multiplier: 1.2, manaCost: 11, cooldown: 3 },
@@ -65,7 +65,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
 for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE })) ACTIVE_SKILL_BALANCE[id] = { ...ACTIVE_SKILL_BALANCE[id], ...tuning };
 
 /**
- * 상태이상 규칙(v24 → v24.1 혼합 방식)
+ * 상태이상 규칙(v24.1 혼합 방식)
  * - STATUS_ONLY: 배율이 낮은 보조기. 피해 없이 상태이상만 걸고 지속 턴이 늘어납니다(기절 +1, 그 밖 +2).
  * - 그 밖의 기술은 피해와 상태이상을 함께 줄 수 있습니다. 대신 전투에서
  *   ① 상대에게 이미 걸린 상태이상은 다시 걸지 않고(그 기술은 건너뜀, 중첩형 중독 제외)
@@ -164,7 +164,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}${sk.scalingAttack ? ` + 물리 공격 × ${sk.scalingAttack}` : ''}` : sk.scaling === 'harmony' ? '올라운드 밸런스 원시 피해' : sk.scaling === 'arcane' ? '마력 평타 계수 기준값' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해)' : '마법 공격(물리 피해)') : sk.damageType === 'fixed' ? `${sk.baseStat === 'magic' ? '마법' : '물리'} 공격(고정 피해 · 방어 무시)` : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
         const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'resist' ? ` + 마법 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 결계 친화도` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : sk.manaBurn ? ` + 태운 마나(현재 마나 ${Math.round(sk.manaBurn * 100)}%) × ${sk.burnScale ?? SKILL_FORMULA.manaBurnScale}` : '';
         const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName : { stun: '기절', bleed: '출혈', poison: '중독(중첩)', burn: '화상(중첩)', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속', corrode: '부식' }[sk.effect as 'stun'];
-        if (sk.restoreAll) { sk.desc = '피해 없이 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회.'; continue; }
+        if (sk.timeRewind) { sk.desc = '피해 없이 내 체력·마나를 가득 채우고 대기 중인 내 기술을 되돌립니다. 전투당 1회.'; continue; }
         if (sk.statusOnly) {
             sk.desc = `피해 없이 ${statusName} ${sk.statusTurns}턴.${sk.effect === 'bleed' ? ` 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.bleedRatio} 피해(방어 무시).` : sk.effect === 'poison' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.poisonRatio} 피해(방어 무시).` : sk.effect === 'burn' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.burnRatio} 피해(방어 무시).` : ''}`;
             if (sk.gamble?.accuracy) sk.desc += ` 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p 무작위.`;

@@ -1,6 +1,6 @@
 /**
- * v3.195 던전 보스 전리품: 지역 던전의 하루 보너스 정복마다 ODDS.bossLoot.chance로 그 던전 보스의 코어. 연속 미획득이 ODDS.bossLoot.pity번째면 확정.
- * 보너스 뒤 정복과 무릉도장은 굴리지 않습니다. v3.199 전리품은 장비가 아니라 보스 코어(data/boss-core.ts): 처음이면 획득, 있으면 각성 +1(다 찼으면 세계석).
+ * v3.202 던전 보스 전리품: 지역 던전의 하루 보너스 정복마다 ODDS.bossLoot.chance로 그 던전 보스의 코어. 연속 미획득이 ODDS.bossLoot.pity번째면 확정.
+ * 보너스 뒤 정복과 무릉도장은 굴리지 않습니다. v3.202 전리품은 장비가 아니라 보스 코어(data/boss-core.ts): 처음이면 획득, 있으면 각성 +1(다 찼으면 세계석).
  */
 import type { State } from '../types';
 import { ODDS } from '../data/odds';
@@ -10,7 +10,7 @@ import { addLog } from './state';
 
 const attrName = (a: CoreAttr) => `${ATTRIBUTES.find(x => x.id === a.k)!.name} 레벨 ×${a.f}`;
 export type CoreForge = 'reroll' | 'refine';
-/** v3.204 코어 능력치 손보기의 정수 비용(재설정 · 재련 같음, 이 코어를 정수로 손본 횟수만큼 ×1.2). */
+/** v3.203 코어 능력치 손보기의 정수 비용(재설정 · 재련 같음, 이 코어를 정수로 손본 횟수만큼 ×1.2). */
 export const coreForgeCost = (s: Pick<State, 'bossCores'>, id: string) => coreForgeEssence(coreEntry(s.bossCores?.[id])?.forges || 0);
 /** 손볼 수 있는 줄인지. 못 하면 이유. 예전 코어(능력치 없음)는 빈 줄을 재설정으로 채웁니다. */
 export function coreForgeBlock(s: Pick<State, 'bossCores'>, id: string, line: number, kind: CoreForge) {

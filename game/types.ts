@@ -127,6 +127,8 @@ export type StatusEffects = {
     seals?: string[];
     /** v25 타임 리와인드를 이번 전투에 썼는지. */
     timeUsed?: boolean;
+    /** v3.198 태그(제로): 이번 전투에 마지막으로 쓴 태그 기술의 쪽(알파 · 베타). */
+    tag?: 'alpha' | 'beta';
     /** v25 이번 전투에 無로 막은 횟수. */
     lastStand?: number;
     /** v3.143 충전 중첩(메카닉). 충전 기술이 명중하면 쌓이고 전탄발사가 소모합니다. */
@@ -269,8 +271,14 @@ export type Skill = {
     sureHit?: boolean;
     /** v25 시간: 이 행동 뒤 곧바로 한 번 더 행동합니다(연속 행동 횟수와 별개). */
     extraTurn?: boolean;
-    /** v25 타임 리와인드: 나와 상대의 체력·마나를 모두 가득 채웁니다. 전투당 1회. */
-    restoreAll?: boolean;
+    /** v3.198 타임 리와인드(제로): 내 체력·마나를 가득 채우고 내 재사용 대기를 모두 되돌립니다(상대는 그대로). 전투당 1회. v25의 restoreAll(나와 상대 모두)을 바꿨습니다. */
+    timeRewind?: boolean;
+    /** v3.198 태그(제로): 알파 · 베타 기술. 쪽을 바꿔 쓰면(알파 다음 베타, 베타 다음 알파) 장착 패시브의 tagBonus만큼 피해가 커집니다. */
+    tag?: 'alpha' | 'beta';
+    /** v3.198 태그 전환 피해(제로 패시브): 장착한 것 중 가장 큰 값. */
+    tagBonus?: number;
+    /** v3.198 떠돌이의 요령(방랑 패시브): 장착하면 다른 직업에서 가져온 스킬의 AP가 이만큼 줄어듭니다(최소 1, 장착한 것 중 가장 큰 값). */
+    borrowedDiscount?: number;
     /** v25 반동: 준 피해 × recoil만큼 자신도 받습니다(반동으로는 체력 1 아래로 내려가지 않음). */
     recoil?: number;
     /** v3.145 체력 소모(데몬슬레이어): 쓸 때 현재 체력 × hpCost를 냅니다(체력 1 아래로는 내려가지 않음). 마나 대신 쓰는 비용. 피가 줄수록 비용도 줄어 스스로 말라 죽지 않습니다. */
@@ -304,8 +312,10 @@ export type Skill = {
     unlockAfter?: { skill: string; level: number };
     /** v25 숙련 Lv.1 전에는 효과를 ???로 감춥니다. */
     veiled?: boolean;
-    /** v24.2 노래: 음유시인 계보 직업만 장착할 수 있습니다(AP 0). */
+    /** v24.2 노래: 장착 AP 0. 엔젤릭버스터 계보 전용(exclusiveLineage 'bard')입니다. */
     song?: boolean;
+    /** v3.187 계보 전용: 이 직업 id가 지금 직업의 계보(자신 + 선행 직업)에 있어야 장착하고 효과가 납니다. 숙련 · SP 계승으로도 계보 밖에서는 못 씁니다. */
+    exclusiveLineage?: string;
     /** v24.2 골드 투척: 보유 골드의 ratio(최대 cap)를 쓰고, 쓴 골드 × scale을 피해에 더합니다. */
     /** 골드 투척: 보유 골드 × ratio를 실제로 쓰고 쓴 골드 × scale을 기준값에 더합니다. 상한은 cap(절대값)과 capAttack(기준 공격력 × 배수, v3.157 섀도어: 수백억 골드도 새 생의 Lv.10도 공격력에 맞춘 만큼만) 중 작은 쪽. */
     goldSpend?: { ratio: number; cap?: number; capAttack?: number; scale: number };
@@ -420,7 +430,7 @@ export type CombatEvent = {
     awaken?: boolean;
     /** v3.86 추가 판정으로 함께 나간 줄(몇 번째 추가 판정인지, 1부터)과 위력 배율. */
     followUp?: { index: number; power: number };
-    /** v25: 타임 리와인드로 모두 회복. */
+    /** v25: 타임 리와인드. v3.198부터 나만 처음 상태로(상대는 그대로). */
     restored?: boolean;
     /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */
     endured?: { heal: number; self?: boolean };
@@ -498,17 +508,17 @@ export type State = {
     shopSerial: number;
     /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
     essence?: number;
-    /** v3.188 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
+    /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
-    /** v3.191 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
+    /** v3.201 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
     dungeonBonus?: { day: string; used: number };
-    /** v3.195 보스 전리품 연속 미획득 수(보너스 정복마다 +1, 받으면 0). 환생해도 남습니다. */
+    /** v3.202 보스 전리품 연속 미획득 수(보너스 정복마다 +1, 받으면 0). 환생해도 남습니다. */
     bossLootMiss?: number;
-    /** v3.199 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
+    /** v3.202 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
     bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[]; forges?: number }>;
     coreSlot?: string;
-    /** v3.193 주화 상점 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.194 성장권). */
+    /** v3.201 주화 상점 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.201 성장권). */
     dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number; coreBox?: number };
     attributes: Record<Attribute, number>;
     statPoints: number;
@@ -537,6 +547,8 @@ export type State = {
     legacyInherited?: Record<string, true>;
     /** v27.95 숙련 요구치 상향의 계승 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
     masteryRescaled?: boolean;
+    /** v3.200 윤회의 나그네(1차) → 궁극의 모험가(히든 5차) 리메이크를 처리한 세이브(새 세이브는 처음부터 true). */
+    ultimateRemade?: boolean;
     /** v3.154 긴 휴식 12단계 × 2시간 → 3단계 × 6시간으로 한 번 변환했는지. */
     offlineRescaled?: boolean;
     /** v3.69 수련 패시브 숙련 요구치 상향의 계승 보존을 이미 처리한 세이브(새 세이브는 처음부터 true). */
@@ -626,7 +638,7 @@ export type State = {
     researchLegacy?: Record<string, number>;
     /** v3.58 사냥 골드 수입: 플레이 시간 1시간 칸(h = playMs ÷ 1시간)마다 번 골드. 최근 24칸(systems/income.ts). */
     goldLog?: { h: number; g: number }[];
-    /** v3.194 처치 경험치 수입 기록(goldLog와 같은 칸). 환생하면 지웁니다. */
+    /** v3.201 처치 경험치 수입 기록(goldLog와 같은 칸). 환생하면 지웁니다. */
     expLog?: { h: number; g: number }[];
     /** v3.58 기록을 시작한 뒤 사냥으로 번 골드 합계. */
     goldEarned?: number;
@@ -733,6 +745,10 @@ export type State = {
     bestStage: number;
     /** 오프라인 정산 중에만 true인 임시 표시(저장 전에 지웁니다). */
     catchingUp?: boolean;
+    /** v3.189 부재중 보정(이벤트 절반 · 특별 몬스터 offlineScale)을 받는 정산 중에만 true인 임시 표시. 1시간(BALANCE.offlineAwaySeconds) 넘게 비웠을 때. */
+    away?: boolean;
+    /** v3.189 나눠 돌리는 정산(catchUpLeft)이 부재중 보정을 받는 정산인지. 이어 돌릴 때 같은 보정을 씁니다. */
+    catchUpAway?: boolean;
     /** v3.17 부재중 정산을 요청당 CATCH_UP_CHUNK턴씩 나눠 돌릴 때 남은 턴. 0이거나 없으면 밀린 정산이 없습니다. */
     catchUpLeft?: number;
     lastOffline: null | {
@@ -830,6 +846,8 @@ export type Snapshot = {
     skills: string[];
     /** v3.86 추가 판정 단계(결투·제단·월드보스에도 그대로). */
     extraRolls?: number;
+    /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계: 1단계 체력). 없으면 현재 체력 그대로. */
+    dotHpCap?: number;
     power: number;
     rating: number;
     guild?: string;

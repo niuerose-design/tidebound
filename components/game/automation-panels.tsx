@@ -2,19 +2,19 @@
 import { useState } from 'react';
 import { ArrowDown, ArrowUp, Compass, ListOrdered, RefreshCw, Repeat, X } from 'lucide-react';
 import type { Action, State } from '@/game/types';
-import { RESEARCH, RESEARCH_TABS } from '@/game/data/economy';
+import { RESEARCH, RESEARCH_TABS, researchById } from '@/game/data/economy';
 import { ASCENSION, ASCENSION_PERKS, ascended, ascensionPerk } from '@/game/data/ascension';
 import { AUTO_REBIRTH_LEVELS, RESEARCH_PLAN_MAX } from '@/game/systems/research-plan';
 import { rebirthLevel } from '@/game/systems/meta';
 import { FOLLOW_STAGE, FOLLOW_TIDE, followTarget, nextRotationJob, rotationChoices, type FollowRule } from '@/game/systems/automation';
-import { STAGES } from '@/game/data/world';
+import { stageById } from '@/game/data/world';
 import { MIMIC } from '@/game/data/mimic';
 import { jobById } from '@/game/data/classes';
 
 type Props = { s: State; send: (a: Action) => void; busy: boolean };
 /** 승천 편의 패널을 보여 줄지: 승천했거나 승천 패널이 보이는 환생 50회부터(잠긴 채 미리 보기). */
 export const showAutomation = (s: State) => ascended(s) || s.rebirths >= 50;
-const researchName = (id: string) => RESEARCH.find(r => r.id === id)?.name || id;
+const researchName = (id: string) => researchById(id)?.name || id;
 
 /** v3.40 자동 환생(승천 1회): 목표 레벨에 닿으면 정해 둔 서약으로 환생하고 사냥을 이어 갑니다. */
 export function AutoRebirthPanel({ s, send, busy }: Props) {
@@ -32,7 +32,7 @@ export function AutoRebirthPanel({ s, send, busy }: Props) {
 /** v3.40 연구 구매 예약(승천 1회): 순서와 목표 단계를 정해 두면 세계석이 모일 때마다 그 순서대로 삽니다. 승천해도 남습니다. */
 export function ResearchPlanPanel({ s, send, busy }: Props) {
     const open = ascensionPerk(s, 'researchPlan'), plan = s.researchPlan || { on: false, items: [] };
-    const [pick, setPick] = useState(RESEARCH[0].id), r = RESEARCH.find(x => x.id === pick)!, [to, setTo] = useState(0);
+    const [pick, setPick] = useState(RESEARCH[0].id), r = researchById(pick)!, [to, setTo] = useState(0);
     const target = to && to <= r.max ? to : r.max;
     return <section className={`panel automation-panel research-plan ${open ? '' : 'locked'}`}>
         <div className="section-title"><h2><ListOrdered size={16}/> 연구 구매 예약</h2><span>{open ? `${plan.items.length} / ${RESEARCH_PLAN_MAX}칸 · ${plan.on ? '켜짐' : '꺼짐'}` : `승천 ${ASCENSION_PERKS.researchPlan}회부터`}</span>{open && <button type="button" className={plan.on ? 'primary small' : 'secondary small'} disabled={busy} aria-pressed={plan.on} onClick={() => send({ type: 'researchPlan', id: plan.on ? 'off' : 'on' })}>{plan.on ? '켜짐' : '꺼짐'}</button>}</div>
@@ -66,7 +66,7 @@ export function AutoFollowPanel({ s, send, busy }: Props) {
             <select value={rule.stage} disabled={busy} aria-label="사냥터 규칙" onChange={e => set({ stage: e.target.value as FollowRule['stage'] })}>{FOLLOW_STAGE.map(id => <option key={id} value={id}>{STAGE_RULE[id]}</option>)}</select>
             <select value={rule.tide} disabled={busy} aria-label="난이도 규칙" onChange={e => set({ tide: e.target.value as FollowRule['tide'] })}>{FOLLOW_TIDE.map(id => <option key={id} value={id}>{TIDE_RULE[id]}</option>)}</select>
             <button type="button" className={rule.on ? 'primary' : 'secondary'} disabled={busy} aria-pressed={rule.on} onClick={() => set({ on: !rule.on })}>{rule.on ? '켜짐' : '꺼짐'}</button>
-        </div>{target && <p className="automation-note">지금 규칙이면: {STAGES.find(x => x.id === target.stage)?.name} · 난이도 {target.tide}</p>}</>}
+        </div>{target && <p className="automation-note">지금 규칙이면: {stageById(target.stage)?.name} · 난이도 {target.tide}</p>}</>}
     </section>;
 }
 

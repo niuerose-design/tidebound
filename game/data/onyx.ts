@@ -11,25 +11,25 @@ import { ODDS } from './odds';
  * 엔드 콘텐츠 기준: 서식지 방치 시 출현 약 180회/시간 → 보스 약 13회/일(난이도 0). drop .003 · 천장 400이면 장신구 1개에 기대 약 18일, 최장 약 31일(난이도 50에서는 절반). 7종 완성은 반년 남짓.
  * 보스마다 고유 성향·기술이 있습니다(data/encounters PROFILES onyx*).
  * v3.77 무작위 옵션은 얻을 때 최고 굴림(systems/equipment tuneOnyx), 강화 파괴 시 12성으로 돌아갑니다. 위력은 (레벨 + 2) × power(onyxPower)이고 골드로 레벨을 올려 키웁니다(환생으로 저절로 오르지 않음).
- * v3.125 power 5.2 → 6.37(Lv.100 530 → 650). 이미 가진 장신구는 불러올 때 위력과 고정 수치 옵션을 함께 맞춥니다(tuneOnyx).
+ * v3.125 power 6.37(Lv.100 650). 이미 가진 장신구는 불러올 때 위력과 고정 수치 옵션을 함께 맞춥니다(tuneOnyx).
  */
 // v3.52 출현·드롭 확률과 천장은 서버 전용(game/secret/odds.ts). 체력·공격·머무는 턴·옵션 수는 공개.
-export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, hp: 100, attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5,
-    /** v3.125 위력 계수: Lv.100에서 650(환생 60 계승 태초 606과 환생 200 계승 태초 788 사이). 전에는 일반 태초와 같은 5.2(530)라 파밍 동기가 약했습니다. 각성 · 7종 세트까지 모으면 환생 200 계승 태초 장신구를 넘도록 둔 값입니다. */
+export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, /** v3.188 체력 배율은 보스마다(ONYX_BOSSES[].hpMul). 공격은 서식지 최강 ×3 그대로. */ attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5,
+    /** v3.125 위력 계수: Lv.100에서 650(환생 60 계승 태초 606과 환생 200 계승 태초 788 사이). 각성 · 7종 세트까지 모으면 환생 200 계승 태초 장신구를 넘도록 둔 값입니다. */
     power: 6.37, affixes: 5,
     /** v3.113 각성: 이미 가진 칠흑을 다시 얻으면(같은 드롭 확률 · 천장) 고유 옵션 +awakenStep씩, 최대 awakenMax단계. 세계석은 그대로 받습니다. */
     awakenMax: 5, awakenStep: .1,
     /** v3.113 공명: 착용하지 않은 칠흑 장신구의 고유 옵션을 이 비율만큼 받습니다(각성 포함, 강화 · 별 보정 없음). */
     resonance: .1 };
-export type OnyxBoss = { id: string; name: string; region: string; accessory: { name: string; desc: string; affix: ItemAffix } };
+export type OnyxBoss = { id: string; name: string; region: string; /** v3.188 몸 = 서식지 최강 몬스터 체력 × hpMul(docs/boss-plan.md §8.1 C안, 빌림 기준: 적정 환생 빌림 몸 9~16턴 · 자기 계열은 환생 50부터). 앞 지역은 최강 몬스터가 약해 배율이 크고 뒤 지역은 작습니다. */ hpMul: number; accessory: { name: string; desc: string; affix: ItemAffix } };
 export const ONYX_BOSSES: OnyxBoss[] = [
-    { id: 'onyxDusk', name: '더스크', region: '리스항구', accessory: { name: '거대한 공포', desc: '더스크를 쓰러뜨린 증표. 가시 반격이 크게 오릅니다.', affix: { id: 'onyxThorns', name: '공포의 가시', stat: 'thorns', value: .1, rule: true } } },
-    { id: 'onyxDunkel', name: '듄켈', region: '헤네시스', accessory: { name: '커맨더 포스 이어링', desc: '듄켈의 귀걸이. 연속 행동 확률이 오릅니다.', affix: { id: 'onyxChain', name: '지휘관의 박자', stat: 'chainBonus', value: .1, rule: true } } },
-    { id: 'onyxWill', name: '윌', region: '페리온', accessory: { name: '루즈 컨트롤 머신 마크', desc: '윌의 장치. 상태이상 저항이 오르고 내 기절·침묵·감속이 1턴 길어집니다.', affix: { id: 'onyxControl', name: '거미의 실', stat: 'statusResist', value: .15, stat2: 'controlBonus', value2: 1, rule: true } } },
-    { id: 'onyxLucid', name: '루시드', region: '엘리니아', accessory: { name: '몽환의 벨트', desc: '루시드의 벨트. 마력 평타 확률과 마력 평타 배율이 오릅니다.', affix: { id: 'onyxArcane', name: '몽환의 마력', stat: 'arcaneStrike', value: .1, stat2: 'arcaneRatioBonus', value2: .1, rule: true } } },
-    { id: 'onyxHilla', name: '진 힐라', region: '커닝시티', accessory: { name: '마력이 깃든 안대', desc: '진 힐라의 안대. 상태이상 저항이 크게 오르고 턴마다 체력을 회복합니다.', affix: { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', value: .2, stat2: 'hpRegen', value2: 15, rule: true } } },
-    { id: 'onyxSeren', name: '세렌', region: '시간의 신전', accessory: { name: '미트라의 분노', desc: '세렌의 증표. 보스·사냥감에게 주는 피해가 오릅니다.', affix: { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', value: .15, rule: true } } },
-    { id: 'onyxBlackMage', name: '검은 마법사', region: '아케인 리버', accessory: { name: '창세의 뱃지', desc: '검은 마법사의 뱃지. 체력·마나·공격·방어가 모두 오릅니다.', affix: { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', value: .05, rule: true } } },
+    { id: 'onyxDusk', hpMul: 5000, name: '더스크', region: '리스항구', accessory: { name: '거대한 공포', desc: '더스크를 쓰러뜨린 증표. 가시 반격이 크게 오릅니다.', affix: { id: 'onyxThorns', name: '공포의 가시', stat: 'thorns', value: .1, rule: true } } },
+    { id: 'onyxDunkel', hpMul: 1600, name: '듄켈', region: '헤네시스', accessory: { name: '커맨더 포스 이어링', desc: '듄켈의 귀걸이. 연속 행동 확률이 오릅니다.', affix: { id: 'onyxChain', name: '지휘관의 박자', stat: 'chainBonus', value: .1, rule: true } } },
+    { id: 'onyxWill', hpMul: 750, name: '윌', region: '페리온', accessory: { name: '루즈 컨트롤 머신 마크', desc: '윌의 장치. 상태이상 저항이 오르고 내 기절·침묵·감속이 1턴 길어집니다.', affix: { id: 'onyxControl', name: '거미의 실', stat: 'statusResist', value: .15, stat2: 'controlBonus', value2: 1, rule: true } } },
+    { id: 'onyxLucid', hpMul: 800, name: '루시드', region: '엘리니아', accessory: { name: '몽환의 벨트', desc: '루시드의 벨트. 마력 평타 확률과 마력 평타 배율이 오릅니다.', affix: { id: 'onyxArcane', name: '몽환의 마력', stat: 'arcaneStrike', value: .1, stat2: 'arcaneRatioBonus', value2: .1, rule: true } } },
+    { id: 'onyxHilla', hpMul: 400, name: '진 힐라', region: '커닝시티', accessory: { name: '마력이 깃든 안대', desc: '진 힐라의 안대. 상태이상 저항이 크게 오르고 턴마다 체력을 회복합니다.', affix: { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', value: .2, stat2: 'hpRegen', value2: 15, rule: true } } },
+    { id: 'onyxSeren', hpMul: 70, name: '세렌', region: '시간의 신전', accessory: { name: '미트라의 분노', desc: '세렌의 증표. 보스·사냥감에게 주는 피해가 오릅니다.', affix: { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', value: .15, rule: true } } },
+    { id: 'onyxBlackMage', hpMul: 80, name: '검은 마법사', region: '아케인 리버', accessory: { name: '창세의 뱃지', desc: '검은 마법사의 뱃지. 체력·마나·공격·방어가 모두 오릅니다.', affix: { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', value: .05, rule: true } } },
 ];
 export const onyxBossFor = (region: string) => ONYX_BOSSES.find(b => b.region === region);
 /** v3.113 각성 배율: 1 + 단계 × awakenStep. */

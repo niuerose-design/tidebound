@@ -72,7 +72,6 @@ test('v3.74 extreme break: active skills only, after all three limit breaks at 1
     assert.equal(P.extremeBroken(s, 'hook'), false, 'two limit breaks are not enough');
     s.limitBreaks.hook = 3; assert.equal(P.extremeBroken(s, 'hook'), true);
     s.skillPractice.hook = target - 1; assert.equal(P.extremeBroken(s, 'hook'), false);
-    const max = P.maxSkillLevel(sk); assert.equal(P.effectiveSkill(sk, 1, max + 3, target * 2).multiplier, P.effectiveSkill(sk, 1, max + 3, 0).multiplier, 'no old refinement bonus');
     const { ACHIEVEMENTS } = Ac2, a = ACHIEVEMENTS.find(x => x.id === 'extremeBreak');
     assert.ok(a && a.honor && !Object.keys(a.reward).length && a.desc.includes('운영자에게 문의해주세요')); s.skillPractice.hook = target; assert.equal(a.progress(s), 1);
     const j = JOBS.find(x => x.id === 'strTraining1');
@@ -101,12 +100,12 @@ test('v3.31 ascended hunters meet the mimic at difficulty 0 and its jackpot gets
     assert.ok((s.jobMastery[s.job] || 0) - before >= 2 * 1000, 'jackpot 1,000 × 2');
 });
 
-test('v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.5, jackpot 7.5%, letter recipient 1%', () => {
+test('v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.75 (v3.189), jackpot 7.5%, letter recipient 1%', () => {
     const s = newState(0); s.rebirths = 10; s.pearls = 1e6; s.permanent.messageBottle = 5;
     assert.throws(() => act(s, { type: 'permanent', id: 'messageBottle' }, 0), /승천한 뒤/);
     s.ascension = 1; act(s, { type: 'permanent', id: 'messageBottle' }, 0); assert.equal(s.permanent.messageBottle, 6);
     assert.equal(Ec.researchMaxFor({}, Ec.RESEARCH.find(r => r.id === 'messageBottle')), 5);
-    assert.equal(Mi.specialOfflineScale(s, .25), .5); assert.equal(Mi.specialOfflineScale({ permanent: { messageBottle: 5 } }, .25), .25);
+    assert.equal(Mi.MIMIC.offlineScale, .5, 'v3.189 base offline rate'); assert.equal(Mi.specialOfflineScale(s, .5), .75); assert.equal(Mi.specialOfflineScale({ permanent: { messageBottle: 5 } }, .5), .5);
     const tiers = Mi.mimicTiers({ permanent: { messageBottle: 8 } });
     assert.equal(tiers[2].chance, .075); assert.ok(Math.abs(tiers.reduce((a, t) => a + t.chance, 0) - 1) < 1e-12);
     const r = newState(0); r.ascension = 1; r.permanent.messageBottle = 10; r.level = 20; r.kills = 500; r.stage = 'brook'; r.unlockedJobs = ['fisher', 'wanderer']; r.jobMastery = {};
@@ -166,7 +165,7 @@ test('v3.41 auto follow (ascension 2): highest stage that fits the level, tide b
     assert.throws(() => act(s, { type: 'autoFollow', id: 'on', value: 'top:max' }, 0), /승천 2회/);
     s.ascension = 2; act(s, { type: 'autoFollow', id: 'on', value: 'top:mimic' }, 0);
     assert.throws(() => act(s, { type: 'autoFollow', id: 'on', value: 'nope:max' }, 0), /규칙/);
-    const want = [...W.PLACES].reverse().find(st => st.level <= 40 && s.rebirths >= st.rebirth);
+    const want = [...W.BASE_STAGES].reverse().find(st => st.level <= 40 && s.rebirths >= st.rebirth);
     s.enemy = { id: 'x' }; assert.equal(AmMod.runAutoFollow(s), false, 'waits while fighting'); s.enemy = null;
     assert.equal(AmMod.runAutoFollow(s), true); assert.equal(s.stage, want.id); assert.equal(s.tide, Math.min(20, Mi.MIMIC.tierCap));
     assert.equal(AmMod.runAutoFollow(s), false, 'nothing to change');
@@ -207,8 +206,8 @@ test('v3.42 ×500 swarms pay exp · gold ×1.5 on top of the head count', () => 
     const hundred = swarmKill(100), big = swarmKill(500);
     assert.ok(Math.abs(big.exp / hundred.exp - 7.5) < .05, `exp ratio ${big.exp / hundred.exp}`);
     // 난수 0이면 황금 개체(한 마리 골드 10배)도 뜨므로 그 몫(+9마리분)은 빼고 비교합니다.
-    const golden = hundred.logs.some(t => t.includes('황금 개체 골드 10배')), perFish = hundred.gold / (100 + (golden ? 9 : 0));
-    assert.equal(big.gold, Math.floor(perFish * 500 * 1.5) + (golden ? perFish * 9 : 0), 'gold ×500 × 1.5');
+    const golden = hundred.logs.some(t => t.includes('황금 개체 골드 10배')), perMonster = hundred.gold / (100 + (golden ? 9 : 0));
+    assert.equal(big.gold, Math.floor(perMonster * 500 * 1.5) + (golden ? perMonster * 9 : 0), 'gold ×500 × 1.5');
     assert.ok(big.logs.some(t => t.includes('큰 무리 보상 ×1.5')));
     assert.equal(W.swarmRewardMultiplier(100), 1); assert.equal(W.swarmRewardMultiplier(500), 1.5);
 });
@@ -727,13 +726,13 @@ test('v3.133 rule options (◆) draw at weight .25: about 36% of primal items ca
     assert.ok(rule6 / N > .30 && rule6 / N < .43, `primal with a rule option ${rule6 / N}`); assert.ok(rule3 / N > .16 && rule3 / N < .29, `legendary with a rule option ${rule3 / N}`); assert.ok(rare6 / N < .01, `rare ${rare6 / N}`);
     assert.ok(G.rollAffixes(6, 500, undefined, () => 0, [], 'rod', 100).filter(o => o.rule).length <= 1, 'still at most one rule line');
 });
-test('v3.134 combat power weights offense .65 · durability .35, Lv.1 ≈45 (v3.141 display ÷10), and the weapon outranks the coat on primal 22★', async () => {
+test('v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3), Lv.1 ≈45 (v3.141 display ÷10), and the weapon outranks the coat on primal 22★', async () => {
     const { stats, power, powerParts, POWER_WEIGHT } = await L.load('systems/stats'), { RARITIES } = await L.load('data/balance'), { rollAffixes } = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear');
-    assert.deepEqual(POWER_WEIGHT, { offense: .65, durability: .35 });
+    assert.deepEqual(POWER_WEIGHT, { offense: .7, durability: .3 });
     const fresh = stats(newState(0)), p = powerParts(fresh); assert.ok(Math.abs(power(fresh) - 45) <= 1, `Lv.1 power ${power(fresh)}`);
-    assert.ok(Math.abs(power(fresh) - Math.round(.8 * p.offense ** .65 * p.durability ** .35)) <= 1);
+    assert.ok(Math.abs(power(fresh) - Math.round(.88 * p.offense ** .7 * p.durability ** .3)) <= 1);
     const body = () => { const s = newState(0); s.level = 100; s.rebirths = 200; s.statPoints = 0; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 300 }; Object.assign(s.permanent, { attack: 200, hp: 200, guard: 100, magicGuard: 100 }); s.equipment = { rod: null, coat: null, charm: null, cape: null }; return s; };
-    let x = 3; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647); const drop = { rod: 0, coat: 0, charm: 0, cape: 0 }, N = 12;
+    let x = 3; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647); const drop = { rod: 0, coat: 0, charm: 0, cape: 0 }, N = 40;
     for (let k = 0; k < N; k++) {
         const s = body(); for (const slot of Object.keys(drop)) { const pw = Math.round(102 * RARITIES[6].factor), style = slot === 'rod' ? 'physical' : 'balanced'; s.equipment[slot] = { id: slot, slot, style, rarity: 6, power: pw, level: 100, enhance: 22, name: gearName(slot, 6, style), affixes: rollAffixes(6, pw, undefined, rng, [], slot, 100) }; }
         const full = power(stats(s)); for (const slot of Object.keys(drop)) { const it = s.equipment[slot]; s.equipment[slot] = null; drop[slot] += (1 - power(stats(s)) / full) / N; s.equipment[slot] = it; }

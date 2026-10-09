@@ -1,4 +1,4 @@
-/** v3.188 던전 주화 상점: 칠흑 장신구 제작 · 각성, 희귀 이상 장비 상자, 포식자 각인. 가격은 data/dungeon-shop.ts. */
+/** v3.201 던전 주화 상점: 칠흑 장신구 제작 · 각성, 희귀 이상 장비 상자, 포식자 각인. 가격은 data/dungeon-shop.ts. */
 import { DUNGEON_SHOP, DUNGEON_SHOP_DAILY, HUNTER_AFFIX } from '../../data/dungeon-shop';
 import { affixDef, rollOption, syncOrnateName } from '../../data/gear';
 import { inventoryCap } from '../../data/economy';
@@ -59,7 +59,7 @@ export const dungeonShopActions: ActionHandlers = {
         if (id === 'gearBox') {
             room(s);
             pay(s, DUNGEON_SHOP.gearBox);
-            // v3.193 전설 이상 확정, 내 레벨 기준. 고대 · 태초는 일반 드롭 하나와 비슷한 확률(GEAR_BOX).
+            // v3.201 전설 이상 확정, 내 레벨 기준. 고대 · 태초는 일반 드롭 하나와 비슷한 확률(GEAR_BOX).
             const before = s.inventory.length, rarity = rollGearBoxRarity(rng);
             drop(s, dropLevel(s, s.level, 0), rng, true, undefined, rarity);
             addLog(s, `던전 주화 상점 · 전설 이상 장비 상자 개봉 · ${RARITIES[rarity].name} · 주화 -${DUNGEON_SHOP.gearBox.toLocaleString()}${s.inventory.length > before ? '' : ' (자동 판매 · 분해 설정으로 처리됨)'}`, 'reward');
@@ -82,7 +82,7 @@ export const dungeonShopActions: ActionHandlers = {
             return;
         }
         if (id === 'quality100' || id === 'quality120') {
-            // v3.189 옵션 수치 상품: 고른 줄의 수치를 100%로, 또는 120~150%로(일반 장비도 보통 최고를 넘김).
+            // v3.201 옵션 수치 상품: 고른 줄의 수치를 100%로, 또는 120~150%로(일반 장비도 보통 최고를 넘김).
             const good = id as QualityGood, [itemId, line] = String(a.value || '').split('|'), index = Number(line);
             const item = allItems(s).find(x => x.id === itemId);
             if (!item) throw Error('장비를 찾을 수 없습니다.');
@@ -94,7 +94,7 @@ export const dungeonShopActions: ActionHandlers = {
             return;
         }
         if (id === 'growth1' || id === 'growth4') {
-            // v3.194 성장권: 최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치 × 시간. 환생 50회 미만, 하루 한도.
+            // v3.201 성장권: 최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치 × 시간. 환생 50회 미만, 하루 한도.
             const offer = growthOffer(s, id, now);
             if (offer.reason) throw Error(offer.reason);
             pay(s, offer.price);
@@ -118,7 +118,7 @@ export const dungeonShopActions: ActionHandlers = {
         const r = forgeCore(s, id, index, kind, rng, true);
         addLog(s, `보스 코어 칸 · ${BOSS_CORES[id].name} 능력치 ${kind === 'reroll' ? '재설정' : '재련'} · ${r.before} → ${r.after} · 정수 -${cost.toLocaleString()}`, 'reward');
     },
-    /** v3.204 보스 코어 비용 초기화: 세계석 CORE_FORGE.resetPearls로 정수 손보기 횟수를 0으로(능력치는 그대로). */
+    /** v3.203 보스 코어 비용 초기화: 세계석 CORE_FORGE.resetPearls로 정수 손보기 횟수를 0으로(능력치는 그대로). */
     coreForgeReset(s, { id }) {
         const e = coreEntry(s.bossCores?.[id]);
         if (!BOSS_CORES[id] || !e) throw Error('가진 보스 코어만 초기화할 수 있습니다.');
@@ -128,7 +128,7 @@ export const dungeonShopActions: ActionHandlers = {
         s.bossCores![id] = { rank: e.rank, attrs: e.attrs };
         addLog(s, `보스 코어 칸 · ${BOSS_CORES[id].name} 비용 초기화 · ${e.forges}회 → 0 · 세계석 -${CORE_FORGE.resetPearls}`, 'reward');
     },
-    /** v3.199 보스 코어 칸: id = 가진 코어의 던전 id(빈 값이면 빼기). */
+    /** v3.202 보스 코어 칸: id = 가진 코어의 던전 id(빈 값이면 빼기). */
     equipCore(s, { id }) {
         if (!id) { s.coreSlot = undefined; addLog(s, '보스 코어를 칸에서 뺐습니다.'); return; }
         if (!BOSS_CORES[id] || s.bossCores?.[id] === undefined) throw Error('가진 보스 코어만 낄 수 있습니다.');

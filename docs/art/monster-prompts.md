@@ -1,6 +1,6 @@
 # 어종·보스 이미지 프롬프트 (46)
 
-파일: `public/art/fish/{id}.webp`. 각 줄의 영문을 `docs/art/README.md`의 어종 공통 스타일 뒤에 붙여 넣습니다. 보스는 `, imposing scale, faint golden glow` 추가.
+파일: `public/art/monsters/{id}.webp`. 각 줄의 영문을 `docs/art/README.md`의 어종 공통 스타일 뒤에 붙여 넣습니다. 보스는 `, imposing scale, faint golden glow` 추가.
 
 | id | 이름 | 서식지 | 프롬프트(주제) |
 |---|---|---|---|

@@ -12,7 +12,7 @@ test('Job skills are free and SP cannot buy an unvisited job skill',()=>{
  act(s,{type:'job',id:'fisher'},0);assert.equal(canUse(s,'pierce'),false);assert.ok(!s.skills.includes('pierce'));
  const target=masteryMilestonesFor(SKILLS.find(x=>x.id==='pierce'))[0];s.skillPractice.pierce=target-1;assert.equal(canUse(s,'pierce'),false);
  s.skillPractice.pierce=target;assert.equal(canUse(s,'pierce'),true);act(s,{type:'skill',id:'pierce'},0);
- for(const id of STAGES[0].fish)s.book[id]=PROGRESSION.fishComplete;assert.equal(apCapacity(s),6,"v3.38 place AP comes from the achievement");act(s,{type:"sync"},0);act(s,{type:"claimAchievement",id:"regions:1"},0);assert.equal(apCapacity(s),7);
+ for(const id of STAGES[0].monsters)s.book[id]=PROGRESSION.monsterComplete;assert.equal(apCapacity(s),6,"v3.38 place AP comes from the achievement");act(s,{type:"sync"},0);act(s,{type:"claimAchievement",id:"regions:1"},0);assert.equal(apCapacity(s),7);
 });
 test('Advanced jobs require attributes and predecessor mastery, with safe combat transition',()=>{const s=newState(0);s.level=25;s.attributes.str=30;s.attributes.dex=15;assert.equal(canChangeJob(s,'whaler'),false);s.jobMastery.harpoon=75;assert.equal(canChangeJob(s,'whaler'),true);act(s,{type:'job',id:'whaler'},0);act(s,{type:'resetAttributes'},0);assert.equal(canChangeJob(s,'whaler'),true);s.running=true;s.enemy={id:'minnow',name:'출현',hp:20,maxHp:20,attack:1,defense:1,exp:1,gold:1,boss:false,stun:0};act(s,{type:'job',id:'fisher'},1234);assert.equal(s.job,'fisher');assert.equal(s.running,false);assert.equal(s.enemy,null);assert.equal(s.lastTick,1234);});
 test('SP levels do not replace real mastery in advanced job requirements',()=>{

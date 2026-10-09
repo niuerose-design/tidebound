@@ -1,12 +1,7 @@
 'use client';
 import type { State, RebirthRecord } from '@/game/types';
-import { format } from './shared';
+import { format, formatDuration } from './shared';
 
-/** 걸린 시간 표시: 2일 3시간 · 5시간 12분 · 37분. */
-export function formatDuration(ms: number) {
-    const m = Math.max(0, Math.floor(ms / 60_000)), h = Math.floor(m / 60), d = Math.floor(h / 24);
-    return d ? `${d}일 ${h % 24}시간` : h ? `${h}시간 ${m % 60}분` : `${m}분`;
-}
 const when = (at: number) => new Date(at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 /** partial(업데이트 이전에 시작한 생)을 뺀 기록의 평균·최단. */
 export function rebirthPace(log: RebirthRecord[] = []) {

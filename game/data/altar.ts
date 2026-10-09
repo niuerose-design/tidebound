@@ -8,19 +8,17 @@
  * 제단 화면도 인스턴스마다 15초 캐시를 씁니다. 쓰기는 바치기·도전·거두기 버튼에서만 일어납니다.
  */
 export const ALTAR = {
-    /** 기여도 환산: 골드 1,000 = 1, 세계석 1 = 50, 정수 1 = 3. v27.48 정수 5 → 3: 분해로 정수 1개를 얻을 때 포기하는 판매 골드가 Lv.45 전후 약 2,400~6,000이라 그 중간에 맞춤. */
-    /** v3.17 세계석 50 → 500, 정수 3 → 30: 골드 수백억이 도는 시점에서 세계석·정수가 너무 저평가됐음(세계석 1 = 골드 50만, 정수 1 = 골드 3만 상당). */
+    /** 기여도 환산: 골드 1,000 = 1, 세계석 1 = 500, 정수 1 = 30. v3.17 골드 수백억이 도는 시점에서 세계석·정수가 저평가되지 않도록(세계석 1 = 골드 50만, 정수 1 = 골드 3만 상당). */
     goldPerPoint: 1000, pearlPoints: 500, essencePoints: 30,
     /** 한 번에 바칠 수 있는 최소·최대. 최대는 실수와 정수 넘침을 막는 값입니다. */
-    /** v3.16 축복 4~6단계(수천억~조 단위)를 한 번에 바칠 수 있게 골드 상한 1조 → 10조. */
+    /** v3.16 축복 4~6단계(수천억~조 단위)를 한 번에 바칠 수 있게 골드 상한 10조. */
     minPoints: 1, maxGold: 1e13, maxPearls: 100_000, maxEssence: 1_000_000,
     /** 같은 계정의 바치기 간격(서버 메모리 속도 제한). */
     offerCooldownMs: 3000,
     /** 신의 자리 주인이 거두는 몫: 다른 모험가가 바친 재화의 10%. 자리가 바뀌면 거두지 않은 몫은 사라집니다. */
     titheRate: .1,
     /** 신 소환에 드는 기여도, 신이 머무는 시간, 모험가별 도전 간격. */
-    /** v27.48 30,000 → 10,000(골드 1,000만). */
-    /** v27.91 월드보스가 생기면서 신 소환은 훨씬 비싸졌습니다(10,000 → 40,000). */
+    /** v27.91 월드보스가 생기면서 신 소환은 비싸게(40,000 = 골드 4,000만). */
     godCost: 40_000, godLifetimeMs: 24 * 3600_000, challengeCooldownMs: 10 * 60_000,
     /** 신과의 전투 턴 상한. 무릉도장 보스전에는 턴 제한이 없어 결투(80턴)보다 넉넉히 둡니다. */
     godMaxTurns: 1000,
@@ -30,7 +28,8 @@ export const ALTAR = {
     boardSize: 20, cacheMs: 15_000,
     /** 처음 깨어나는 신(자리 주인이 없을 때): 무릉도장 depth층 보스(무공)와 같은 능력치·기술. */
     /** v27.54 신격: 공격·마법 ×attack, 방어 관통 penetration. 보통 모험가(체력 1만대·방어 1천대)는 한 방에 쓰러지고, 방어 특화만 몇 대 버팁니다. */
-    firstGod: { name: '검은 마법사', depth: 50, attack: 5, penetration: .5 },
+    // v3.188 무릉 1층 기준(3만 · ×2)에서 신의 몸(9.3억 · 공격)이 되는 층은 59층(1.15^9 ≈ 3.5 · 1.08^9 ≈ 2.0으로 옛 기준 50층과 거의 같은 몸).
+    firstGod: { name: '검은 마법사', depth: 59, attack: 5, penetration: .5 },
     /** v27.69 신의 자리 임기: 앉은 지 이만큼 지나면 자리와 쌓인 몫을 비웁니다(다음 신은 다시 처음 신). 깨어 있는 신은 남은 시간 동안 그대로. */
     throneTermMs: 7 * 24 * 3600_000,
 } as const;
@@ -50,7 +49,7 @@ type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: numb
  * v3.16 축복 4~6단계: 수백억 골드를 굴리는 고레벨 모험가의 싱크. 1~3단계는 그대로(×1.5), 4단계부터는 기여도 절대값
  * BLESSING_HIGH_COSTS(골드 3,000억 · 1조 · 3조 상당)이고 6단계 유지(연장)도 6단계 값입니다.
  */
-/** v3.16 1~3단계 비용 상향: 기본 ×10, 단계 승수 1.5 → 2(4~6단계에 비해 너무 쌌음). */
+/** v3.16 1~3단계 단계 승수 2(4~6단계에 비해 너무 싸지 않게). */
 export const BLESSING_MAX_LEVEL = 6, BLESSING_LEVEL_STEP = 2, BLESSING_HIGH_FROM = 3;
 export const BLESSING_HIGH_COSTS = [300_000_000, 1_000_000_000, 3_000_000_000];
 /**
@@ -85,34 +84,55 @@ export const blessingCost = (b: Blessing, level: number, active: boolean) => {
 /**
  * v27.91 월드보스. 소환 게이지가 차면 서버 전체에 한 마리가 lifetimeHours 동안 나타나고(v27.93 발록 6 · 자쿰 12 · 혼테일 24시간, 격파 뒤 2시간 대기), 모든 모험가의 피해가 체력 하나에 누적됩니다(공유 체력).
  * 도전은 결투 엔진으로 maxTurns 안에서 한 번 계산하고(부하·렉 방지), 모험가마다 cooldown 간격으로 다시 때립니다.
- * 격파하면 그 보스를 한 번이라도 때린 모험가 전원이 다음 동기화 때 보상을 받고, 서버 전체에 축복이 열립니다. 마지막 일격을 넣은 모험가는 보너스를 더 받습니다.
+ * 격파하면 그 보스를 한 번이라도 때린 모험가 전원이 다음 동기화 때 보상을 받고, 마지막 일격을 넣은 모험가는 보너스를 더 받습니다(v3.194 격파 축복은 없앴습니다).
  * 셋은 입문(0환생도 기여 가능) · 중급 · 상급 순으로 체력이 크게 뜁니다. 공격·방어는 완만하고 체력은 공유를 감안해 큽니다(수치는 밸런스용이라 화면에는 기준을 적지 않음).
  */
 export type RaidDef = {
-    id: RaidId; name: string; /** 전투 기술·외형을 빌리는 몬스터 id */ fish: string; level: number; cost: number; /** 머무는 시간 */ lifetimeHours: number;
+    id: RaidId; name: string; /** 전투 기술·외형을 빌리는 몬스터 id */ monster: string; level: number; cost: number; /** 머무는 시간 */ lifetimeHours: number;
     stats: { hp: number; attack: number; magic: number; defense: number; resist: number; speed: number; crit: number; accuracy: number; penetration: number; evasion: number };
-    /** 참여자 보상(격파 뒤 다음 동기화 때) · 마지막 일격 보너스 · 축복 시간. */
-    reward: { gold: number; pearls: number; sp: number }; slayer: { pearls: number; sp: number }; blessings: BlessingId[]; blessingHours: number;
+    /** 참여자 보상(격파 뒤 다음 동기화 때) · 마지막 일격 보너스. v3.194 격파 축복 · 골드는 없앴습니다(보상은 추후 검토). */
+    reward: { pearls: number; sp: number }; slayer: { pearls: number; sp: number };
 };
 /** v27.93 머무는 시간은 보스마다(lifetimeHours), 격파 뒤 다음 소환까지 respawnMs 대기. */
 export const RAID = { cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10, respawnMs: 2 * 3600_000, /** v3.84 순위에서 보는 최근 도전 전투 기록 줄 수(끝에서부터). */ logLines: 160 } as const;
+/**
+ * v3.191 소환 단계(docs/boss-plan.md §8.3). 센 모험가가 잡는 것은 의도이지만, 같은 날 다시 소환될 때마다 단계가 올라 센 모험가 기준으로도 점점 잡기 힘들어지고,
+ * 첫 소환부터 dayMs가 지나면 1단계로 돌아갑니다. 단계 k: 체력 ×hp^(k-1) · 공격/마력 ×attack^(k-1) · 방어/저항 ×defense^(k-1), 최대 max단계.
+ * 지속 피해의 체력 비례분은 1단계 체력을 기준으로 셉니다(Snapshot.dotHpCap) — 체력만 올리면 체력 비례 지속 피해가 함께 커져 직접 피해 직업만 벌을 받기 때문입니다.
+ * 격파된 뒤의 소환만 단계가 오르고, 못 잡고 떠난 뒤의 소환은 같은 단계입니다.
+ */
+export const RAID_STAGE = { hp: 2, attack: 1.15, defense: 1, max: 10, dayMs: 24 * 3600_000 } as const;
+/** 단계 k 월드보스의 능력치(체력은 최대 체력). */
+export function raidStageStats(raid: RaidDef, stage: number): RaidDef['stats'] {
+    const k = Math.max(1, Math.min(RAID_STAGE.max, Math.floor(stage || 1))) - 1, m = (x: number) => Math.pow(x, k);
+    return { ...raid.stats, hp: Math.round(raid.stats.hp * m(RAID_STAGE.hp)), attack: Math.round(raid.stats.attack * m(RAID_STAGE.attack)), magic: Math.round(raid.stats.magic * m(RAID_STAGE.attack)), defense: Math.round(raid.stats.defense * m(RAID_STAGE.defense)), resist: Math.round(raid.stats.resist * m(RAID_STAGE.defense)) };
+}
+/** 다음 소환의 단계와 그날의 시작 시각. 이전 보스가 그날(day_start부터 dayMs) 안에 격파됐으면 +1(최대 max), 못 잡고 떠났으면 같은 단계, 하루가 지났거나 기록이 없으면 1단계. */
+export function nextRaidStage(prev: { stage?: number; day_start?: number; state: string } | undefined, now: number): { stage: number; dayStart: number } {
+    if (!prev || !prev.day_start || now - prev.day_start >= RAID_STAGE.dayMs) return { stage: 1, dayStart: now };
+    const cur = Math.max(1, prev.stage || 1);
+    return { stage: prev.state === 'slain' ? Math.min(RAID_STAGE.max, cur + 1) : cur, dayStart: prev.day_start };
+}
 /** v3.84 월드보스 도전 한 번의 요약. 피해 순위에서 다른 모험가도 이 모험가가 얼마나 · 어떻게 넣었는지 봅니다. */
 export type RaidHitSummary = { at: number; dealt: number; turns: number; died: boolean; job: string; power: number; sources: { label: string; value: number }[] };
 /**
  * v3.83 방어 재조정: 체력은 그대로 두고, 목표 몸의 중앙 직업이 한 번 도전(80턴)에 깎는 양으로 필요한 도전 횟수를 맞춥니다
  * (scripts/check-tier5.mjs --only raid): 발록 환생 0급 약 10번 · 자쿰 환생 50급 약 100번 · 혼테일 환생 100급 약 1,500번(방어 1,000, 운영 결정).
  * 예전 혼테일 방어 15,000은 엔드 몬스터(100~150)의 100배라 직접 피해가 거의 들어가지 않았습니다. 지속 피해(체력 비례)는 그대로입니다.
+ * (v3.191, docs/boss-plan.md §8.3) 1단계 수치는 그대로입니다. 센 모험가가 잡는 것은 의도(발록 R10 · 자쿰 R50 빌림 몸 1번)이고, 같은 날 다시 소환될 때마다 소환 단계(RAID_STAGE)가 올라 점점 잡기 힘들어집니다.
+ * 혼테일은 환생 100 몸이 8~17번이라 아직 그만한 모험가가 없어 그대로. 기준 몸 실측은 scripts/check-bosses.mjs --only raid [--raid-stage k].
  */
 export const RAIDS: RaidDef[] = [
-    { id: 'balrog', name: '발록', fish: 'magmaKraken', level: 30, cost: 2_000, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
-        reward: { gold: 30_000, pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 }, blessings: ['gold', 'exp'], blessingHours: 1 },
-    { id: 'zakum', name: '자쿰', fish: 'ventColossus', level: 70, cost: 5_000, lifetimeHours: 12, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
-        reward: { gold: 500_000, pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 }, blessings: ['gold', 'exp'], blessingHours: 2 },
-    { id: 'horntail', name: '혼테일', fish: 'abyssSovereign', level: 120, cost: 12_000, lifetimeHours: 24, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
-        reward: { gold: 5_000_000, pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 }, blessings: ['gold', 'exp', 'mimic', 'nuri'], blessingHours: 3 },
+    { id: 'balrog', name: '발록', monster: 'magmaKraken', level: 30, cost: 2_000, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
+        reward: { pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 } },
+    { id: 'zakum', name: '자쿰', monster: 'ventColossus', level: 70, cost: 5_000, lifetimeHours: 12, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
+        reward: { pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 } },
+    { id: 'horntail', name: '혼테일', monster: 'abyssSovereign', level: 120, cost: 12_000, lifetimeHours: 24, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
+        reward: { pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 } },
 ];
-export const raidById = (id: string) => RAIDS.find(r => r.id === id);
-export const isRaidGauge = (id: string): id is RaidId => RAIDS.some(r => r.id === id);
+let raidIndex: Map<string, (typeof RAIDS)[number]> | undefined;
+export const raidById = (id: string | undefined) => id === undefined ? undefined : (raidIndex ??= new Map(RAIDS.map(r => [r.id, r]))).get(id);
+export const isRaidGauge = (id: string): id is RaidId => !!raidById(id);
 /** 소환 게이지(신 + 월드보스 셋)와 축복 게이지. 화면의 축복/소환 탭이 이 둘로 나뉩니다. */
 export const SUMMON_GAUGE_IDS: AltarGaugeId[] = ['god', ...RAIDS.map(r => r.id)];
 export const GAUGE_IDS: AltarGaugeId[] = [...BLESSINGS.map(b => b.id), ...SUMMON_GAUGE_IDS];
@@ -150,6 +170,7 @@ export type AltarRaidInfo = {
     /** 참여자 수와 마지막 일격 */ participants: number; slayer: string;
     /** 피해 순위(상위 RAID.boardSize)와 내 기록 */ board: { rank: number; name: string; dealt: number; hits: number; self: boolean; /** v3.84 가장 최근 도전 요약 */ last?: RaidHitSummary }[]; me: { dealt: number; hits: number; rank: number };
     reward: RaidDef['reward']; slayerBonus: RaidDef['slayer'];
+    /** v3.191 소환 단계(1부터, RAID_STAGE). */ stage: number;
 };
 
 /** 받침에 맞는 조사(이/가, 을/를, 은/는, 과/와). 한글이 아니면 받침 없음으로 봅니다. */
@@ -163,7 +184,7 @@ export type AltarStatus = {
     blessings: { id: BlessingId; name: string; desc: string; until: number; level: number }[];
     god: { gen: number; name: string; until: number } | null;
     /** v3.22 살아 있는 월드보스들(알림용, 체력 비율 pct 0~1). 이 값이 없는 옛 요약은 다음 동기화 때 서버가 새로 적습니다. */
-    raids?: { id: string; gen: number; name: string; until: number; pct: number }[];
+    raids?: { id: string; gen: number; name: string; until: number; pct: number; /** v3.191 소환 단계(없으면 1). */ stage?: number }[];
     throne: string;
     gauges: { id: AltarGaugeId; name: string; pct: number }[];
 };

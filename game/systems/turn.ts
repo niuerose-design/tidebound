@@ -7,11 +7,11 @@ import { stats } from './stats';
 import type { State } from '../types';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { TIME_MACHINE_MASTERY } from '../data/expansion-v25';
-import { DUNGEONS, FISH, STAGES, dungeonClosed, stageClosed, closuresSnapshot } from '../data/world';
+import { STAGES, dungeonClosed, stageClosed, closuresSnapshot, monsterById, stageById, dungeonById } from '../data/world';
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
-import { canUse, lazySkillMasteryRanks, lazyRefinePractices, extraRollLevel } from './progression';
+import { canUse, lazySkillMasteryRanks, extraRollLevel } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, takeWhistle, reward, releaseLegacySeal, gainLevels, enemyLabel } from './encounter';
 import { inRandomGame, loseRandomGame } from './random-game';
@@ -60,8 +60,8 @@ function repairState(s: State, now?: number) {
     if (s.vows?.seal || s.vows?.anchor) { releaseLegacySeal(s); if (s.vows) { delete s.vows.anchor; delete s.vows.seal; } gainLevels(s); }
     if (now !== undefined && !Number.isFinite(s.lastTick)) { s.lastTick = now; fixed.push('시각'); }
     if (!Number.isFinite(s.recovery) || s.recovery < 0) { s.recovery = 0; fixed.push('회복 대기'); }
-    if (!STAGES.some(x => x.id === s.stage)) { s.stage = STAGES[0].id; s.target = null; fixed.push('사냥터'); }
-    if (s.enemy && (!Number.isFinite(s.enemy.hp) || s.enemy.hp <= 0 || !Number.isFinite(s.enemy.maxHp) || !FISH.some(f => f.id === s.enemy!.id))) { s.enemy = null; fixed.push('몬스터'); }
+    if (!stageById(s.stage)) { s.stage = STAGES[0].id; s.target = null; fixed.push('사냥터'); }
+    if (s.enemy && (!Number.isFinite(s.enemy.hp) || s.enemy.hp <= 0 || !Number.isFinite(s.enemy.maxHp) || !monsterById(s.enemy!.id))) { s.enemy = null; fixed.push('몬스터'); }
     if (!Number.isFinite(s.hp) || !Number.isFinite(s.mana)) { const a = stats(s); if (!Number.isFinite(s.hp)) s.hp = a.hp; if (!Number.isFinite(s.mana)) s.mana = a.mana; fixed.push('체력·마나'); }
     if (fixed.length) addLog(s, `전투 상태를 복구했습니다 (${fixed.join('·')}).`, 'system');
     return fixed;
@@ -71,7 +71,7 @@ function tickTurn(s: State, rng: () => number) {
     s.playMs = (s.playMs || 0) + BALANCE.turnMs;
     repairState(s);
     // v27.25·v27.31 운영 페이지에서 닫은 던전·사냥터에 있던 세이브는 보상 없이 나와 열린 사냥터에서 자동 사냥을 잇습니다.
-    if (s.dungeon && dungeonClosed(s.dungeon.id)) { const name = DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'; s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${name}이(가) 점검으로 닫혀 사냥터로 돌아왔습니다. 점검이 끝나면 다시 열립니다.`, 'system'); }
+    if (s.dungeon && dungeonClosed(s.dungeon.id)) { const name = dungeonById(s.dungeon!.id)?.name || '던전'; s.dungeon = null; s.enemy = null; s.effects = {}; s.playerStun = 0; addLog(s, `${name}이(가) 점검으로 닫혀 사냥터로 돌아왔습니다. 점검이 끝나면 다시 열립니다.`, 'system'); }
     if (!s.dungeon && stageClosed(s.stage)) {
         const from = STAGES.findIndex(x => x.id === s.stage), name = STAGES[from]?.name || '사냥터';
         const to = [...STAGES.slice(0, Math.max(0, from))].reverse().find(x => !stageClosed(x.id) && s.level >= x.level && s.rebirths >= x.rebirth) || STAGES[0];
@@ -93,7 +93,7 @@ function tickTurn(s: State, rng: () => number) {
     const e = s.enemy!;
     const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
-    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), practice: lazyRefinePractices(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
+    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
     const enemy: Fighter = { foe: true, name: enemyLabel(e), stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
@@ -142,7 +142,7 @@ function tickTurn(s: State, rng: () => number) {
         if (inRandomGame(s)) loseRandomGame(s);
         else if (s.dungeon) {
             const repeating = !!s.dungeon.repeat;
-            endRun(s, `${DUNGEONS.find(x => x.id === s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 사냥으로 전환' : ' · 멈춤'}`);
+            endRun(s, `${dungeonById(s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 사냥으로 전환' : ' · 멈춤'}`);
             s.dungeon = null;
             s.running = repeating;
             addLog(s, repeating ? '던전 도전에 실패했습니다. 반복 도전을 멈추고 사냥터에서 자동 사냥을 이어갑니다.' : '던전 도전에 실패했습니다. 손실 없이 다시 도전할 수 있습니다.');
@@ -151,21 +151,26 @@ function tickTurn(s: State, rng: () => number) {
 }
 /** v3.17 요청 하나에서 돌리는 부재중 정산 턴 상한(약 1~2초). */
 export const CATCH_UP_CHUNK = 1500;
+/** v3.189 이만큼 비운 정산이 부재중 보정을 받는지(1시간 초과). */
+export const awayGap = (elapsedMs: number) => elapsedMs > BALANCE.offlineAwaySeconds * 1000;
 export function advance(s: State, now: number, rng = Math.random) {
     repairState(s, now);
     now = Math.max(now, s.lastTick);
     // v26.1 서버 이벤트: 정산 시각 기준으로 적어 두고, 아래 틱들이 이 배율을 씁니다.
     const elapsed = now - s.lastTick;
-    // v27.51 이벤트·제단 축복 배율: 접속 중에는 그대로, 1분 넘게 밀린 정산(오프라인 정산)에는 절반만(offlineEvent). 정산이 끝난 뒤 원래 배율을 다시 적습니다.
+    const continuing = (s.catchUpLeft || 0) > 0;
+    // v27.51 이벤트·제단 축복 배율: 접속 중에는 그대로, 부재중 정산에는 절반만(offlineEvent). 정산이 끝난 뒤 원래 배율을 다시 적습니다.
+    // v3.189 부재중 보정(이벤트 절반 · 특별 몬스터 offlineScale)은 1시간(offlineAwaySeconds) 넘게 비운 정산만 받습니다(탭을 잠깐 내린 것은 접속 중과 같게).
+    // 나눠 돌리는 정산은 처음 정한 보정을 이어 씁니다(catchUpAway). 표본 환산 · 분할은 아래 offline 기준입니다.
+    const away = continuing ? !!s.catchUpAway : awayGap(elapsed);
     const live = activeEvent(now);
-    s.event = elapsed > 60000 ? offlineEvent(live) : live;
+    s.event = away ? offlineEvent(live) : live;
     // v27.31 닫힌 사냥터·던전 목록도 같이 적어 화면이 잠금 표시를 합니다.
     const closed = closuresSnapshot(); if (closed) s.closed = closed; else delete s.closed;
     // 정산 상한은 정산을 시작할 때의 긴 휴식 단계로 정합니다(정산 중 연구가 바뀌지 않음).
     const cap = offlineCapSeconds(s);
     // v3.17 긴 부재중 정산은 요청 하나에서 다 돌리지 않고 CATCH_UP_CHUNK턴씩 나눕니다(6~30시간 = 1만~5만 턴을 한 요청에서 돌리면 수십 초가 걸려
-    // 클라이언트 20초 제한에 걸리고 서버가 멈춘 것처럼 보였음). 남은 턴은 catchUpLeft에 적어 다음 동기화가 이어 돌립니다. 총 턴 수는 전과 같습니다.
-    const continuing = (s.catchUpLeft || 0) > 0;
+    // 클라이언트 20초 제한에 걸리고 서버가 멈춘 것처럼 보였음). 남은 턴은 catchUpLeft에 적어 다음 동기화가 이어 돌립니다.
     const budget = continuing ? Math.min(s.catchUpLeft!, Math.floor(elapsed / BALANCE.turnMs)) : Math.min(Math.floor(elapsed / BALANCE.turnMs), cap * 1000 / BALANCE.turnMs);
     // 1분 넘게 밀린 정산은 오프라인 정산으로 봅니다(저장하지 않는 임시 표시).
     const offline = elapsed > 60000 || continuing;
@@ -176,6 +181,7 @@ export function advance(s: State, now: number, rng = Math.random) {
     const before = { kills: s.kills, gold: s.gold, exp: s.exp };
     let mark: ReturnType<typeof markOffline> | null = null;
     if (offline) s.catchingUp = true;
+    if (away) s.away = true;
     try {
         for (let i = 0; i < count; i++) {
             // 워밍업이 끝난 때부터 비율을 잽니다.
@@ -185,10 +191,10 @@ export function advance(s: State, now: number, rng = Math.random) {
         // 표본 뒤에도 같은 사냥 중이면 남은 턴을 환산하고, 아니면 전처럼 남은 턴을 이어 돌립니다(catchUpLeft).
         if (mark && sampleStable(s, mark)) { extrapolateOffline(s, mark, count - warmup, budget - count, rng, () => tick(s, rng)); truncated = false; }
     }
-    finally { delete s.catchingUp; }
-    if (offline) s.event = live;
-    if (truncated) { s.catchUpLeft = budget - count; s.lastTick = s.lastTick + count * BALANCE.turnMs; }
-    else { delete s.catchUpLeft; s.lastTick = elapsed > cap * 1000 || continuing ? now : now - (elapsed % BALANCE.turnMs); }
+    finally { delete s.catchingUp; delete s.away; }
+    if (away) s.event = live;
+    if (truncated) { if (away) s.catchUpAway = true; else delete s.catchUpAway; s.catchUpLeft = budget - count; s.lastTick = s.lastTick + count * BALANCE.turnMs; }
+    else { delete s.catchUpLeft; delete s.catchUpAway; s.lastTick = elapsed > cap * 1000 || continuing ? now : now - (elapsed % BALANCE.turnMs); }
     recordUnlocks(s);
     if (offline && s.kills > before.kills) {
         const prev = continuing && s.lastOffline ? s.lastOffline : null;

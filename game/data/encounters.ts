@@ -24,7 +24,7 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'onyxNightmare', name: '악몽', desc: '마법 공격 135% 피해 + 4턴 침묵.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.35, damageType: 'magic', effect: 'silence', statusTurns: 4, manaCost: 0 },
     { id: 'onyxSoulDrain', name: '사령 흡수', desc: '마법 공격 120% 피해, 깎은 체력의 60%를 흡혈.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.2, damageType: 'magic', effect: 'drain', drainRatio: .6, manaCost: 0 },
     { id: 'onyxSunfire', name: '태양의 불꽃', desc: '마법 공격 140% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.4, damageType: 'magic', effect: 'burn', manaCost: 0 },
-    // v3.198 자쿰 · 파풀라투스 고유 기술: 전에는 무공과 같은 '고대 보스' 기술 묶음이었습니다.
+    // v3.202 자쿰 · 파풀라투스 고유 기술: 전에는 무공과 같은 '고대 보스' 기술 묶음이었습니다.
     { id: 'zakumArms', name: '여덟 팔 난타', desc: '물리 공격 90% 피해 후 3회의 추가타(각 50%).', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: .9, extraAttacks: 3, extraAttackMultiplier: .5, manaCost: 0 },
     { id: 'zakumFlame', name: '불꽃 기둥', desc: '마법 공격 130% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.3, damageType: 'magic', effect: 'burn', manaCost: 0 },
     { id: 'papTimeStop', name: '시간 정지', desc: '피해 없이 3턴 기절.', type: 'active', level: 1, chance: .2, cooldown: 7, multiplier: 1, effect: 'stun', statusTurns: 3, statusOnly: true, manaCost: 0 },
@@ -32,6 +32,9 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'papAlarm', name: '알람 폭발', desc: '복합 피해 160%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .26, cooldown: 6, multiplier: 1.6, damageType: 'split', manaCost: 0 },
     { id: 'onyxGenesis', name: '창세', desc: '복합 피해 170%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 6, multiplier: 1.7, damageType: 'split', manaCost: 0 },
 ];
+let enemySkillIndex: Map<string, Skill> | undefined;
+/** 몬스터 스킬 id로 찾기. */
+export const enemySkillById = (id: string | undefined) => id === undefined ? undefined : (enemySkillIndex ??= new Map(ENEMY_SKILLS.map(sk => [sk.id, sk]))).get(id);
 const PROFILES: Record<string, {
     name: string;
     hint: string;
@@ -59,9 +62,9 @@ const PROFILES: Record<string, {
     venomBoss: { name: '독성 보스', hint: '중독과 감속을 번갈아 사용합니다.', skills: ['foeVenom', 'foeSlow'], defense: 1.25, resist: 1.05, evasion: .06, speed: 1.05 },
     arcaneBoss: { name: '신탁 보스', hint: '마법 공격과 침묵으로 편성을 흔듭니다.', skills: ['foeShock', 'foeSilence'], magicBasic: true, defense: .95, resist: 1.45, evasion: .05, speed: 1.1 },
     boss: { name: '고대 보스', hint: '침묵·감속·추가타·복합 강타를 모두 사용합니다.', skills: ['foeSilence', 'foeSlow', 'foeFrenzy', 'tentacleBarrage', 'foeTideSlam'], defense: 1.35, resist: 1.35, evasion: .08, speed: 1.05 },
-    // v3.198 자쿰: 따로 움직이는 여러 팔의 석상. 연타 · 불기둥 · 짓누르기(기절), 단단하고 느립니다.
+    // v3.202 자쿰: 따로 움직이는 여러 팔의 석상. 연타 · 불기둥 · 짓누르기(기절), 단단하고 느립니다.
     zakum: { name: '불꽃의 석상', hint: '여러 팔로 연달아 때리고 불기둥으로 화상을 겁니다. 짓누르면 기절. 단단하니 방어 관통과 회복을 챙기세요.', skills: ['zakumArms', 'zakumFlame', 'foeCrush'], defense: 1.6, resist: 1.1, evasion: .02, speed: .9 },
-    // v3.198 파풀라투스: 시간을 멈춘 차원의 침략자. 기본 공격부터 복합 피해, 시간 정지(긴 기절) · 차원의 균열(약화) · 알람 폭발.
+    // v3.202 파풀라투스: 시간을 멈춘 차원의 침략자. 기본 공격부터 복합 피해, 시간 정지(긴 기절) · 차원의 균열(약화) · 알람 폭발.
     papulatus: { name: '시간의 침략자', hint: '기본 공격부터 복합 피해. 시간 정지로 3턴 기절시키고, 균열로 약화를 겁니다. 상태이상 저항과 고른 방어를 챙기세요.', skills: ['papTimeStop', 'papRift', 'papAlarm'], splitBasic: true, defense: 1.2, resist: 1.4, evasion: .1, speed: 1.2 },
     // v27 혼돈 생물: 기본 공격부터 복합 피해. 물리·마법 방어 중 하나만 높은 빌드에 부담을 줍니다.
     tidal: { name: '혼돈 생물', hint: '기본 공격이 복합 피해라 물리·마법 방어를 고루 갖춰야 합니다. 마법 공격으로 약화도 겁니다.', skills: ['foeTideSlam', 'foeInkBurst'], splitBasic: true, defense: .9, resist: .9, evasion: .04, speed: 1 },
@@ -102,13 +105,15 @@ export function enemyStats(f: { id: string; hp: number; attack: number; defense:
         crit: Math.min(MONSTER_TUNING.critCap, MONSTER_TUNING.critBase + f.level * MONSTER_TUNING.critPerLevel) + (boss ? MONSTER_TUNING.critBoss : 0) + (p === PROFILES.swift || p === PROFILES.frenzy ? MONSTER_TUNING.critSwift : 0), accuracy: .95 + f.level * .002,
         penetration: Math.min(MONSTER_TUNING.penCap, f.level * MONSTER_TUNING.penPerLevel) + (boss ? MONSTER_TUNING.penBoss : 0),
         evasion: p.evasion + (p === PROFILES.swift ? Math.min(.2, Math.max(0, f.level - 5) * .004) : 0),
-        // v25.2: 속도 9 + 레벨 × .35 → 8 + 레벨 × .25. 고레벨에서 모든 빌드(특히 기민이 낮은 마법 빌드)가 몬스터보다 느려
-        // 연속 행동을 과하게 허용했습니다(4차 마법 직업 승률 85% → 98%).
+        // v25.2 속도 계수는 낮게 둡니다: 더 가파르면 고레벨에서 모든 빌드(특히 기민이 낮은 마법 빌드)가 몬스터보다 느려
+        // 연속 행동을 과하게 허용합니다.
         speed: Math.round((8 + f.level * .25) * p.speed), mana: 100, manaRegen: 10,
     };
 }
-export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: { boss?: boolean; tier?: number; wave?: number } = {}): Stats {
+export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: { boss?: boolean; tier?: number; wave?: number; /** v3.186 던전 보스 체력 배율(bossHpScale)을 건너뜀: 제단의 첫 신처럼 보스 몸을 빌리되 던전이 아닌 것. */ rawBoss?: boolean } = {}): Stats {
     const foe = enemyStats(f, options.boss);
+    // v3.186 던전 보스(마지막 판 · 훈련 상대 · 도감 미리보기 · 무릉 보스) 체력 ×bossHpScale(docs/boss-plan.md §6). 월드보스 · 칠흑 · 대왕은 boss 없이 서므로 해당 없음.
+    if (options.boss && !options.rawBoss) foe.hp = Math.round(foe.hp * MONSTER_TUNING.bossHpScale);
     const pressure = options.wave === undefined ? { hp: 1, attack: 1, defense: 1 } : dungeonPressure(options.wave);
     foe.hp = Math.round(foe.hp * tierHealth(options.tier || 0) * pressure.hp);
     foe.attack = Math.round(foe.attack * tierAttack(options.tier || 0) * pressure.attack);
@@ -123,8 +128,8 @@ export function scaledEnemyStats(f: Parameters<typeof enemyStats>[0], options: {
  * v27.35 무릉도장 적 능력치. 층 배율(tier) 대신 ABYSS_TUNING 공식을 씁니다.
  * ref는 심연 첫 몬스터의 1층 기준 능력치이고, 모든 몬스터에 같은 배수를 곱해 몬스터·보스 사이의 차이를 유지합니다.
  */
-export function abyssEnemyStats(f: Parameters<typeof enemyStats>[0], ref: Stats, depth: number, options: { boss?: boolean; wave?: number } = {}): Stats {
-    const foe = scaledEnemyStats(f, { boss: options.boss, tier: 0, wave: options.wave ?? 0 });
+export function abyssEnemyStats(f: Parameters<typeof enemyStats>[0], ref: Stats, depth: number, options: { boss?: boolean; wave?: number; rawBoss?: boolean } = {}): Stats {
+    const foe = scaledEnemyStats(f, { boss: options.boss, tier: 0, wave: options.wave ?? 0, rawBoss: options.rawBoss });
     const k = Math.max(0, depth - 1), hp = ABYSS_TUNING.hp * Math.pow(ABYSS_TUNING.hpGrowth, k) / Math.max(1, ref.hp);
     const attack = ABYSS_TUNING.attack * Math.pow(ABYSS_TUNING.attackGrowth, k), defense = ABYSS_TUNING.defense * Math.pow(ABYSS_TUNING.defenseGrowth, k);
     foe.hp = Math.round(foe.hp * hp);

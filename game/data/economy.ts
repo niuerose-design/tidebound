@@ -14,11 +14,9 @@ export const APPRAISAL_PITY = [{ rarity: 4, key: 'myth', count: 150 }, { rarity:
 export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];
 /**
  * 감정 가격의 환생 배율(현재 환생 횟수 기준이라 승천하면 다시 낮아집니다).
- * v3.58 10^(환생 / 60)은 환생 200에서 ×2,150으로 골드 수입(환생 30 → 200에 약 12배)을 크게 앞질러 후반 감정이 사실상 막혔습니다.
- * v3.68 예전 배율과 직선 1 + 환생 × perRebirth 중 낮은 쪽: 환생 100까지는 예전 그대로(어느 구간도 비싸지지 않음), 그 위로는 직선(환생 200 ×91).
- * 감정 태초 기대 비용이 환생 100 이상에서도 그 구간 시간당 골드의 약 5일분(사냥 태초와 비슷)으로 남습니다.
- * v3.81 예전 배율의 scale 60 → 30: 환생 30~100 구간이 수입보다 싸서(환생 60 태초 기대가 수입 약 1일분) 뽑기 태초로 계승 태초를 빨리 만들 수 있었습니다.
- * 이제 약 환생 38부터 직선(환생 30 ×10 · 60 ×28 · 100 ×46 · 200 ×91)이라 환생 60~200에서 태초 기대가 수입의 약 5일분입니다. 환생 100 이상은 그대로입니다.
+ * v3.68 지수 10^(환생 / scale)과 직선 1 + 환생 × perRebirth 중 낮은 쪽: 지수만 쓰면 골드 수입을 크게 앞질러 후반 감정이 막힙니다.
+ * v3.81 scale 30: 환생 30~100 구간이 수입보다 싸면 뽑기 태초로 계승 태초를 빨리 만들 수 있어, 약 환생 38부터 직선(환생 30 ×10 · 60 ×28 · 100 ×46 · 200 ×91)이 되게 해
+ * 환생 60~200에서 감정 태초 기대 비용이 그 구간 시간당 골드의 약 5일분(사냥 태초와 비슷)으로 남습니다.
  */
 export const APPRAISAL_REBIRTH = { scale: 30, perRebirth: .45 };
 export const appraisalRebirthFactor = (rebirths: number) => { const r = Math.max(0, rebirths); return Math.min(Math.pow(10, r / APPRAISAL_REBIRTH.scale), 1 + r * APPRAISAL_REBIRTH.perRebirth); };
@@ -50,11 +48,9 @@ export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격'
 export const MANA_RESEARCH_PER = .08;
 /**
  * v3.150 훈련 탭(전 전투 탭)의 능력치 연구 13개는 '○○ 강화 I'로 통일(세계석 연구 테마 · docs/research-review.md 4절 · 권고 6).
- * 치명 피해 강화 가격 절반(기본 4 · 증가 3 → 2 · 2, 총 1,096 → 722) · 체력 강화 가격 절반(2 · 2 → 1 · 1, 30단계 1,386 → 812) · 흡혈 강화는 연구분을 30% 상한 밖에(권고 4 · 5).
- * 윤회의 연금술은 골드 탭 → 유틸 탭 기본 묶음.
- * v3.152 유틸 · 특별 · 골드 탭 이름 정리(영혼 확장 · 노련함 · 전생의 기억 · 끝없는 수련 · 초심자 보너스 · 시스템 파괴 I · 리미터 해제 · 보물의 냄새 · 대장장이 고용).
+ * 흡혈 강화는 연구분을 30% 상한 밖에 둡니다(권고 4 · 5).
  * 윤회의 연금술(환생 세계석 +2)은 삭제 · 개편 대상(migrations.ts refundPearlResearch가 투자한 세계석을 돌려줌).
- * v3.154 넓은 가방 삭제(기본 가방 100칸 · 투자분 환급) · 긴 휴식 12단계 × 2시간 → 3단계 × 6시간(30 · 60 · 90) · 자동 수령(업적 · 도감 보상) 추가. 셋 다 migrations.ts rescaleConvenienceResearch.
+ * v3.154 넓은 가방 삭제(기본 가방 100칸 · 투자분 환급) · 긴 휴식 3단계 × 6시간(30 · 60 · 90) · 자동 수령(업적 · 도감 보상) 추가. 셋 다 migrations.ts rescaleConvenienceResearch.
  */
 export const RESEARCH: ResearchDef[] = [
     // The first purchase is reachable after a normal first rebirth, but later
@@ -84,7 +80,7 @@ export const RESEARCH: ResearchDef[] = [
     // v3.38 자동 분해기 + 자동 판매기 연구를 ‘자동 정리’ 하나로 합쳤습니다(id는 sortingNet). 두 장치는 그대로 따로 켜고 등급을 나눠 고릅니다(v3.35).
     { id: 'sortingNet', name: '자동 정리', desc: '자동 분해기(정수)와 자동 판매기(골드)를 함께 엽니다. 설정에서 장치마다 등급을 여러 개 고름(1단계 희귀~전설, 2단계 신화·고대까지). 같은 등급은 한 장치에만, 태초·칠흑·잠금·유물·도감 미등록 종류는 처리하지 않음', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 정리 등급', suffix: '단계', levels: ['자동 정리 없음', '희귀 ~ 전설', '신화 · 고대까지'] },
     // v27.60 병 속의 편지(오프라인 편지병) → 행운의 편지. id는 그대로라 찍어 둔 단계가 이어집니다.
-    { id: 'messageBottle', name: '행운의 편지', /** v3.56 ‘대’ 당첨 확률 수치는 서버 전용(비공개가 켜져 있으면 ‘확률 상승’). */ get desc() { return `숙련의 까미·경험의 누리 등장 확률 +15%. 6~10단계는 승천 후: 6단계 부재중 정산 중 확률 ×0.25 → ×0.5, 8단계 까미 ‘대’ 당첨 ${oddsKnown() ? `${oddsPercent(ODDS.mimic.tiers[2], '')} → ${oddsPercent(ODDS.mimic.letterJackpot, '')}` : '확률 상승'}, 10단계 편지 수신인(까미 당첨 숙련의 1%를 해금한 미숙달 직업 하나에 덤)`; }, max: 10, ascendAbove: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
+    { id: 'messageBottle', name: '행운의 편지', /** v3.56 ‘대’ 당첨 확률 수치는 서버 전용(비공개가 켜져 있으면 ‘확률 상승’). */ get desc() { return `숙련의 까미·경험의 누리 등장 확률 +15%. 6~10단계는 승천 후: 6단계 부재중 정산 중 확률 ×0.5 → ×0.75, 8단계 까미 ‘대’ 당첨 ${oddsKnown() ? `${oddsPercent(ODDS.mimic.tiers[2], '')} → ${oddsPercent(ODDS.mimic.letterJackpot, '')}` : '확률 상승'}, 10단계 편지 수신인(까미 당첨 숙련의 1%를 해금한 미숙달 직업 하나에 덤)`; }, max: 10, ascendAbove: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
     /** v3.86 추가 판정(docs/combat-rework.md B): 해금 단계까지 스킬 편성에서 장착 AP를 내고 켭니다. 지금은 1단계까지(최대 4단계 = 액티브 5개 동시 판정 예정). */
     { id: 'extraRoll', name: '시스템 파괴 I', desc: '추가 판정 해금. 액티브가 발동한 행동에서 편성 순서상 그 아래 액티브로 발동 판정을 한 번 더 굴려, 성공하면 60% 위력으로 함께 씁니다. 동시 시전 묶음으로 나간 행동에서는 묶음 최대 개수가 1 늘어납니다. 스킬 편성에서 장착 AP 12를 내고 켭니다', max: 1, base: 1000, step: 1000, tab: 'utility', group: 'special', rebirth: 10, per: 1, unit: 'flat', label: '추가 판정', suffix: '단계', levels: ['잠김', '추가 판정 1단계(AP 12)'] },
     { id: 'limitBreak', name: '리미터 해제', desc: '스킬 한계돌파 해금. 연구 단계까지만 한계돌파할 수 있고, 이미 한 한계돌파도 연구 단계까지만 효과가 납니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '한계돌파 상한', suffix: '단계', levels: ['잠김 · 한계돌파 불가', '한계돌파 1단계까지', '한계돌파 2단계까지', '한계돌파 3단계까지'] },
@@ -100,21 +96,23 @@ export const RESEARCH: ResearchDef[] = [
     /** v3.17 불굴의 의지: 쓰러진 뒤 회복 대기 -3턴/단계(기본 25턴, 최저 10턴). 환생 10회부터. */
     { id: 'revive', name: '불굴의 의지', desc: '쓰러진 뒤 회복 대기 -3턴(6초) (기본 25턴 = 50초, 최저 10턴)', max: 5, base: 4, step: 3, tab: 'utility', group: 'basic', rebirth: 10, per: 3, unit: 'flat', label: '회복 대기 단축', suffix: '턴' },
     { id: 'mastery', name: '끝없는 수련', desc: '스킬·직업 숙련 획득 +3%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .03, unit: 'percent', label: '숙련 획득' },
-    { id: 'gold', name: '황금 비', desc: '골드 획득 +10%(v3.188부터 던전은 골드 대신 주화를 줌)', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '골드 획득' },
-    /** v3.200 던전 탐험 I: 던전 주화 보너스 +10%/단계(하루 보너스 · 보너스 뒤 · 무릉도장 모두). */
+    { id: 'gold', name: '황금 비', desc: '골드 획득 +10%(v3.201부터 던전은 골드 대신 주화를 줌)', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '골드 획득' },
+    /** v3.202 던전 탐험 I: 던전 주화 보너스 +10%/단계(하루 보너스 · 보너스 뒤 · 무릉도장 모두). */
     { id: 'dungeon', name: '던전 탐험 I', desc: '던전 주화 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '던전 주화' },
     { id: 'drop', name: '보물의 냄새', desc: '장비 드롭 확률 +10%', max: 10, base: 3, step: 3, tab: 'gold', per: .1, unit: 'percent', label: '장비 드롭 확률' },
     { id: 'enhance', name: '대장장이 고용', desc: '강화·옵션 재설정 골드 비용 -2%', max: 15, base: 3, step: 2, tab: 'gold', rebirth: 5, per: .02, unit: 'percent', label: '강화·재설정 비용', negative: true },
 ];
+let researchIndex: Map<string, ResearchDef> | undefined;
+/** 연구 id로 찾기. */
+export const researchById = (id: string | undefined) => id === undefined ? undefined : (researchIndex ??= new Map(RESEARCH.map(r => [r.id, r]))).get(id);
 /**
  * v3.42 21번째 단계(rank 20)부터 가격이 단계마다 ×1.06 복리로 오릅니다. 효과는 그대로입니다.
  * v3.147 46번째 단계(rank 45)부터는 제곱 항 · ×1.06 복리 대신 45단계 가격 × 1.03^n(docs/research-review.md 2.1 · 2.2절, A안).
  * 하루 종일 사냥하면 세계석이 하루 약 2,400개 들어오는데 옛 곡선은 60단계 8,657 · 80단계 57,695라 60단계 언저리에서 구매가 멈췄습니다.
- * 44단계까지 가격 · 효과 · 상한은 그대로. 공격 누적 50단계 22,158 → 19,547 · 80단계 576,234 → 102,429 · 100단계 353만 → 216,053.
  */
 export const RESEARCH_GROWTH = { from: 20, rate: 1.06, lateFrom: 45, lateRate: 1.03 } as const;
 /** v3.42 전 가격(기본 + 단계 × 증가분 + 20단계 뒤 제곱 항). 그때 산 단계(researchLegacy)를 재분배할 때 이 가격으로 돌려줍니다. */
-export const researchLegacyCost = (id: string, rank: number) => { const r = RESEARCH.find(x => x.id === id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
+export const researchLegacyCost = (id: string, rank: number) => { const r = researchById(id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
 export const researchCost = (id: string, rank: number): number => {
     const g = RESEARCH_GROWTH;
     if (rank >= g.lateFrom) return Math.round(researchCost(id, g.lateFrom - 1) * Math.pow(g.lateRate, rank - g.lateFrom + 1));
@@ -134,16 +132,13 @@ export function researchEffect(r: ResearchDef, rank: number) {
 }
 /** 연구 단계. 없는 연구는 0. */
 export const researchRank = (s: Pick<State, 'permanent'>, id: string) => s.permanent?.[id] || 0;
-/** 가방 칸 수: 60 + 넓은 가방 5칸/단계. */
-/** v3.154 넓은 가방 연구 삭제: 가방은 기본 100칸 고정. */
+/** 가방 칸 수. v3.154 넓은 가방 연구 삭제: 기본 100칸 고정. */
 export const inventoryCap = () => BALANCE.inventoryCap;
-/** 오프라인 정산 상한(초): v27.43 기본 6시간(24 → 6, 인플레·서버 부하 완화) + 긴 휴식 2시간/단계(최대 12단계 = 30시간). */
-/** v3.154 긴 휴식 3단계 × 6시간(전에는 12단계 × 2시간). */
+/** 오프라인 정산 상한(초): v27.43 기본 6시간(인플레·서버 부하 완화) + v3.154 긴 휴식 6시간/단계(3단계 = 24시간). */
 export const offlineCapSeconds = (s: Pick<State, 'permanent'>) => BALANCE.offlineCapSeconds + researchRank(s, 'offline') * 21600;
 /** 대장장이의 기억: 강화·옵션 재설정 골드 비용 배율. */
 export const smithDiscount = (s: Pick<State, 'permanent'>) => 1 - researchRank(s, 'enhance') * .02;
-/** 재분배 반환 비율: 계정당 첫 1회 100%, 이후 90%(내림). */
-/** v27.29 재분배는 언제나 100% 반환(무료). */
+/** 재분배 반환 비율. v27.29 언제나 100% 반환(무료). */
 export const RESEARCH_RESET = { firstRefund: 1, refund: 1 };
 export const AFFIXES: {
     stat: NonNullable<Item['affix']>['stat'];

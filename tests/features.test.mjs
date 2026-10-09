@@ -45,14 +45,14 @@ test('v3.38 AP sources: the breakdown sums to the cap and abyss floors no longer
 });
 test('v3.38 place AP moves to region achievements once: old saves keep their AP; honor steps give titles and skip the achievement bonus',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),A=await L.load('data/achievements'),T=await L.load('data/titles'),W=await L.load('data/world');
- const o=newState(0);o.version=8;delete o.placeApMoved;for(const st of W.PLACES.slice(0,5))for(const id of st.fish)o.book[id]=50;
+ const o=newState(0);o.version=8;delete o.placeApMoved;for(const st of W.BASE_STAGES.slice(0,5))for(const id of st.monsters)o.book[id]=50;
  migrateState(o,0);assert.equal(o.placeApMoved,true);for(const n of [1,2,3,4,5])assert.equal(o.achievementClaims[`regions:${n}`],true);
  assert.equal(P.apSources(o).find(x=>x.id==='achievement').value>=5,true);assert.equal(P.apSources(o).some(x=>x.id==='places'),false);
  const before=JSON.stringify(o.achievementClaims);migrateState(o,0);assert.equal(JSON.stringify(o.achievementClaims),before,'once');
  assert.equal(A.achievementById('regions:2').honor,true);assert.equal(A.achievementById('regions:4').honor,undefined);
  assert.equal(A.achievementTotals({achievementClaims:{'regions:2':true,'regions:3':true}}).count,0,'honor steps do not raise the bonus');
  assert.ok(T.TITLES.some(t=>t.achievement==='regions:13'));
- const v=newState(0);v.version=8;delete v.placeApMoved;v.rebirths=5;v.achievements={'rebirths:5':50};for(const st of W.PLACES.slice(0,3))for(const id of st.fish)v.book[id]=50;migrateState(v,0);assert.equal(T.displayTitle({...v,title:undefined}),T.displayTitle({achievements:{'rebirths:5':50},rebirths:5,title:undefined}),'auto title is not replaced by the backfilled honor titles');
+ const v=newState(0);v.version=8;delete v.placeApMoved;v.rebirths=5;v.achievements={'rebirths:5':50};for(const st of W.BASE_STAGES.slice(0,3))for(const id of st.monsters)v.book[id]=50;migrateState(v,0);assert.equal(T.displayTitle({...v,title:undefined}),T.displayTitle({achievements:{'rebirths:5':50},rebirths:5,title:undefined}),'auto title is not replaced by the backfilled honor titles');
 });
 test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22-star/general rank make one line each, once a day per kind',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),R=await L.load('data/rank'),C=await L.load('data/classes'),O=await L.load('data/onyx');
@@ -64,6 +64,18 @@ test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22
  assert.ok(ev.find(e=>e.kind==='abyss').text('철수').includes('무릉도장 100층'));assert.ok(ev.find(e=>e.kind==='onyx').text('영희').startsWith('영희가 칠흑 장신구'));
  s.abyssBest=150;assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');s.abyssBest=200;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again');
  s.abyssBest=0;assert.deepEqual(N.collectNews(s,86_400_000*5),[],'a lower best (after ascension) never announces');
+});
+test('v3.190 rank news: 하사 and 소위 and every rank after 소위 announce, other ranks stay quiet, no once-a-day cap, skipped ranks still count',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),R=await L.load('data/rank'),T=await L.load('data/titles');
+ const at=id=>R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id===id)],s=newState(0);N.collectNews(s,0);
+ const promote=(id,t=0)=>{s.rank={exp:at(id),perks:{}};return N.collectNews(s,t).filter(e=>e.kind==='general').map(e=>e.text('철수'));};
+ assert.deepEqual(promote('pvt1'),[],'일병 is quiet');assert.deepEqual(promote('sgt'),[],'병장 is quiet');
+ assert.deepEqual(promote('ssg'),['철수가 하사(으)로 진급했습니다.']);assert.deepEqual(promote('sfc'),[],'중사 is quiet');assert.deepEqual(promote('smaj'),[],'원사 is quiet');
+ assert.deepEqual(promote('lt2'),['철수가 소위(으)로 진급했습니다.']);assert.deepEqual(promote('lt1'),['철수가 중위(으)로 진급했습니다.'],'same day, second promotion still announces');
+ for(const id of ['cpt','maj','ltc','col','bg','mg','ltg'])assert.equal(promote(id).length,1,id+' announces');
+ const j=newState(0);N.collectNews(j,0);j.rank={exp:at('sfc'),perks:{}};assert.deepEqual(N.collectNews(j,0).filter(e=>e.kind==='general').map(e=>e.text('영희')),['영희가 중사(으)로 진급했습니다.'],'jumping past 하사 announces the rank reached');
+ const k=newState(0);N.collectNews(k,0);k.rank={exp:at('cpl'),perks:{}};assert.deepEqual(N.collectNews(k,0).filter(e=>e.kind==='general'),[],'jumping 이등병→상병 stays quiet');
+ for(const t of T.TITLES)assert.ok(!/^[\p{L}\p{N}]/u.test(t.name),'every title starts with a picture: '+t.name);
 });
 test('v3.38 first-clear SP is an achievement; old boss-research claims move over as claimed (no double SP)',()=>{
  const s=newState(0);s.clears.grotto=1;act(s,{type:'sync'},0);assert.ok(s.achievements['firstClear:grotto']!==undefined);const sp=s.sp;act(s,{type:'claimAchievement',id:'firstClear:grotto'},0);assert.equal(s.sp,sp+1);

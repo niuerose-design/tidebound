@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Meter } from './shared';
-import { FishArt } from './art';
+import { MonsterArt } from './art';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
 import type { Log } from '@/game/types';
@@ -12,6 +12,9 @@ import { FOE_FX } from '@/game/data/foe-fx';
 
 /** 연출을 띄워 두는 시간(마지막 타격 뒤). */
 const FX_HOLD_MS = 1500;
+/** 장면 연출(각성기 · 일곱 인 해방 · 보스 스킬 · 도트 퍼니셔)은 2.4~2.6초짜리라 그 길이만큼 붙잡아 둡니다. 이보다 짧으면 애니메이션 도중에 DOM이 지워집니다. */
+const SCENE_HOLD_MS = 2700;
+const holdFor = (fx: CombatFx) => fx.finale || fx.skillId === 'endOfAll' || (fx.actor === 'player' && ultimateOf(fx.skillId)) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
 /** ‘×N 연속’ 카운터: 몇 번째 연속인지와 누가 연속으로 행동했는지. */
 export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
 /**
@@ -45,7 +48,7 @@ export function useCombatFx(logs: Log[], playerName: string, enabled = true) {
             timers.current.delete(timer);
             setEffects(prev => prev.filter(fx => !ids.has(fx.id)));
             if (next) setCombo(v => v === next ? null : v);
-        }, batch.at(-1)!.delay + FX_HOLD_MS);
+        }, batch.at(-1)!.delay + Math.max(...batch.map(holdFor)));
         timers.current.add(timer);
     }, [latest, logs, playerName, enabled]);
     useEffect(() => { const pending = timers.current; return () => pending.forEach(clearTimeout); }, []);
@@ -73,9 +76,10 @@ const STATUS_GLYPHS: Partial<Record<CombatFxKind, string[]>> = {
 };
 /** 4차는 9개, 5차는 12개 파편(바깥 고리 추가). 상태이상 피격은 상태별 파편을 씁니다. */
 const fragmentsFor = (fx: CombatFx) => { const base = STATUS_GLYPHS[fx.kind] ?? glyphs[fx.variant]; const n = (fx.tier || 0) >= 5 ? 12 : (fx.tier || 0) >= 4 ? 9 : 6; return Array.from({ length: n }, (_, i) => base[i % base.length]); };
-/** 상대 카드 위의 연출. 기본 공격은 체력바 숫자만, 스킬은 궤적·충격파·파편·섬광, 天은 일곱 글자 고리까지 띄웁니다. ‘×N 연속’은 연속으로 행동한 쪽 카드에 붙습니다. */
+/** 상대 카드 위의 연출. 기본 공격은 체력바 숫자만, 스킬은 궤적·충격파·파편·섬광, 天은 일곱 글자 고리까지 띄웁니다. ‘×N 연속’은 연속으로 행동한 쪽 카드에 붙습니다.
+ * v3.195 연속 배지는 행동한 쪽이 같으면 타격마다 다시 만들지 않고 그대로 두며, 숫자가 바뀔 때만 숫자가 살짝 튑니다(전에는 묶음마다 깜박였습니다). */
 export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; combo?: CombatCombo | null }) {
-    return <div className="tide-fx-layer" aria-hidden="true">{combo && <div key={`combo-${effect[0]?.id}`} className={`tide-fx-combo tide-fx-combo-${combo.actor}`}><small>{combo.actor === 'player' ? '내 연속 행동' : '상대 연속 행동'}</small><strong>×{combo.count.toLocaleString()}</strong> 연속</div>}{effect.filter(fx => !fx.basic && fx.status !== '행동 불가').map(fx => fx.actor === 'enemy' ? <div key={fx.id} className={`monster-skill-cue monster-skill-${fx.kind}`} style={fxStyle(fx.delay)}><small>몬스터 스킬</small><strong>{fx.title}</strong></div> : <div key={fx.id} className={`tide-fx tide-fx-${fx.kind} tide-fx-${fx.variant} tide-fx-target-${fx.target} ${fx.critical ? 'critical' : ''} ${fx.finale ? 'finale' : ''} ${(fx.tier || 0) >= 4 ? `tier-${Math.min(5, fx.tier!)}` : ''}`} style={fxStyle(fx.delay)}>
+    return <div className="tide-fx-layer" aria-hidden="true">{combo && <div key={`combo-${combo.actor}`} className={`tide-fx-combo tide-fx-combo-${combo.actor}`}><small>{combo.actor === 'player' ? '내 연속 행동' : '상대 연속 행동'}</small><strong key={combo.count}>×{combo.count.toLocaleString()}</strong></div>}{effect.filter(fx => !fx.basic && fx.status !== '행동 불가').map(fx => fx.actor === 'enemy' ? <div key={fx.id} className={`monster-skill-cue monster-skill-${fx.kind}`} style={fxStyle(fx.delay)}><small>몬스터 스킬</small><strong>{fx.title}</strong></div> : <div key={fx.id} className={`tide-fx tide-fx-${fx.kind} tide-fx-${fx.variant} tide-fx-target-${fx.target} ${fx.critical ? 'critical' : ''} ${fx.finale ? 'finale' : ''} ${(fx.tier || 0) >= 4 ? `tier-${Math.min(5, fx.tier!)}` : ''}`} style={fxStyle(fx.delay)}>
         <i className="tide-fx-flash"/>{(fx.tier || 0) >= 4 && <i className="tide-fx-big"/>}<i className="tide-fx-trail"/>{fx.gamble === undefined && <><i className="tide-fx-ring"/><i className="tide-fx-ring tide-fx-shock"/></>}
         {fx.kind !== 'miss' && fragmentsFor(fx).map((glyph, i, all) => <i key={i} className="tide-fx-fragment" style={fxStyle(fx.delay + (i >= 6 ? 90 : 0), { '--fx-x': `${Math.cos(i * 2 * Math.PI / all.length) * (i >= 6 ? 128 : 88)}px`, '--fx-y': `${Math.sin(i * 2 * Math.PI / all.length) * (i >= 6 ? 72 : 52)}px`, '--fx-rotate': `${i * 41}deg` })}>{glyph}</i>)}
         {fx.finale && <i className="tide-fx-heaven">天</i>}
@@ -84,11 +88,14 @@ export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; 
 }
 
 const SEAL_GLYPHS = ['無', '虛', '斬', '血', '縛', '刹', '魂'];
-/** v27.24 5차 궁극기 전용 장면 연출. kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. v3.47 title이 없으면 스킬 이름(비밀 직업 스킬은 카탈로그로 받은 이름). */
+/** v27.24 5차 궁극기 전용 장면 연출(v3.196 비숍 4차 엔젤레이도 씀). kind는 battle.css의 .ult-<kind>, glyphs는 파편 글자. v3.47 title이 없으면 스킬 이름(비밀 직업 스킬은 카탈로그로 받은 이름). */
 const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[] }> = {
     braveSlash: { kind: 'slash', title: '소드 오브 버닝 소울', glyphs: ['╱', '·', '╱', '·', '╱', '·', '╱', '·'] },
     oceanWrath: { kind: 'wave', title: '썬더 브레이크', glyphs: ['≈', '∿', '≈', '∿', '≈', '∿', '≈', '∿'] },
-    genesis: { kind: 'light', title: '인피니티 플레임 서클', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
+    // v3.196 인피니티 플레임 서클: 불덩이 8개(파편)가 불 고리 위를 공전하다 조여들어 터집니다. 파편 글자는 CSS가 숨기고 불덩이로 그립니다.
+    genesis: { kind: 'flamecircle', title: '인피니티 플레임 서클', glyphs: ['●', '●', '●', '●', '●', '●', '●', '●'] },
+    // v3.196 엔젤레이(비숍 4차): 전에 인피니티 플레임 서클이 쓰던 빛기둥 + 수평 섬광 + 별 파편 장면을 그대로 받습니다.
+    tidalBlessing: { kind: 'light', title: '엔젤레이', glyphs: ['✦', '✧', '★', '✦', '✧', '★', '✦', '✧'] },
     // v3.132 중독 + 화상을 함께 거는 포이즌 노바: 독 고리와 불 고리가 겹쳐 터집니다.
     doomMark: { kind: 'nova', title: '포이즌 노바', glyphs: ['●', '✹', '◌', '▴', '●', '✹', '◌', '▴'] },
     redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
@@ -185,7 +192,7 @@ function FoeFx({ fx }: { fx: CombatFx }) {
     </div>;
 }
 /**
- * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편(v25.21 타원 고리 제거), 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
+ * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편, 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
  * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)이 기본이고, v3.183 보스(boss)의 스킬만 전용 배경 연출(FOE_FX)을 함께 띄웁니다.
  */
 export function SceneFx({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
@@ -239,10 +246,10 @@ export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: 
     const { fx, phase } = held, boss = enemy.boss ? 'boss' : '';
     return <div key={fx.id} className="scene-foe-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
         {phase === 'cut' ? <>
-            <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${boss}`}/>
-            <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half lower ${boss}`}/>
+            <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${boss}`}/>
+            <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half lower ${boss}`}/>
             <i className="scene-foe-cut"/>
-        </> : <FishArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-restore ${boss}`}/>}
+        </> : <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-restore ${boss}`}/>}
     </div>;
 }
 /** 상대 카드 HP 바: 검이 지나간 자리에서 HP 바 UI(라벨 · 숫자 · 막대)가 비스듬히 두 조각으로 잘려, 아래 조각이 튕겨 날아갑니다(원본 바는 CSS가 숨김). */

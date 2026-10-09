@@ -36,7 +36,7 @@ export const FOE_FX: Record<string, FoeFx> = {
     tentacleBarrage: { kind: 'tentacle', glyphs: ['✦', '◠', '✦', '◠', '✦', '◠', '✦', '◠'], perHit: true },
     // 귀참(동굴 수호자): 창백한 유령이 울렁이며 덮쳐 오고 전격이 튑니다.
     electricBite: { kind: 'bite', glyphs: ['ϟ', '〰', 'ϟ', '◌', 'ϟ', '〰', 'ϟ', '◌'] },
-    // ── v3.198 자쿰 · 파풀라투스 고유 기술(연출은 기존 갈래를 재사용) ──
+    // ── v3.202 자쿰 · 파풀라투스 고유 기술(연출은 기존 갈래를 재사용) ──
     // 여덟 팔 난타: 주먹이 타격 수만큼 연달아 날아갑니다(폭류권 연출).
     zakumArms: { kind: 'tentacle', glyphs: ['✊', '✦', '✊', '✦', '✊', '✦', '✊', '✦'], perHit: true },
     // 불꽃 기둥: 불기둥이 내리꽂힙니다(태양의 불꽃 연출).

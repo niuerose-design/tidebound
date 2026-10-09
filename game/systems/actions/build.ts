@@ -21,7 +21,6 @@ const skillIdList = (value: string) => [...new Set(value.split(',').map(x => x.t
 
 export const buildActions: ActionHandlers = {
     job(s, { id, now }) {
-        // 문 시간 판정은 요청 시각(서버 now)으로 합니다.
         if (!canChangeJob(s, id))
             throw Error('레벨·능력치·선행 직업 숙련·숨은 조건을 확인하세요.');
         // A class change is a safe combat boundary. Discard only the
@@ -79,7 +78,6 @@ export const buildActions: ActionHandlers = {
         s.jobGoal = id;
         addLog(s, `${j.name}을(를) 목표로 삼았습니다. 항로도에 깃발이 붙습니다.`, 'system');
     },
-    /** v26.1 칭호 장착: id가 'auto'면 자동, 'none'이면 해제, 그 외에는 얻은 칭호만. */
     /** v27.79 계급 특전: id = 특전 id(1단계 올림) 또는 'reset'(전부 돌려받음, 무료). */
     rankPerk(s, { id }) {
         const rk = rankState(s);
@@ -95,6 +93,7 @@ export const buildActions: ActionHandlers = {
         if (id !== 'title' && id !== 'rank') throw Error('칭호 또는 계급장만 고를 수 있습니다.');
         if (id === 'title') delete s.badge; else s.badge = 'rank';
     },
+    /** v26.1 칭호 장착: id가 'auto'면 자동, 'none'이면 해제, 그 외에는 얻은 칭호만. */
     title(s, { id }) {
         if (id === 'auto') { delete s.title; return; }
         if (id === 'none') { s.title = null; return; }

@@ -1,5 +1,5 @@
 import { SKILLS, skillById } from '../data/skills';
-import { ENEMY_SKILLS } from '../data/encounters';
+import { enemySkillById } from '../data/encounters';
 import { jobById } from '../data/classes';
 import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier, PENETRATION } from '../data/balance';
 import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute, Skill } from '../types';
@@ -13,6 +13,8 @@ export type Fighter = {
     job?: string;
     stats: Stats;
     hp: number;
+    /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계). 없으면 현재 체력. */
+    dotHpCap?: number;
     skills: string[];
     /** 재사용 대기(행동 단위). v3.86 각성기는 턴 단위로 같은 칸에 두고, '~id' 칸에 실패한 판정 수를 셉니다. */
     cooldowns: Record<string, number>;
@@ -24,7 +26,6 @@ export type Fighter = {
     mana?: number;
     ranks?: Record<string, number>;
     mastery?: Record<string, number>;
-    practice?: Record<string, number>;
     effects?: StatusEffects;
     /** 무리 사냥 개체의 규모. 자기 최대 체력 비례 공격은 한 마리 체력 기준으로 계산합니다. */
     swarm?: number;
@@ -106,11 +107,12 @@ function extendStatus(effects: StatusEffects, key: DurationStatus, turns: number
     effects[key] = Math.max(effects[key] || 0, turns);
 }
 const DAMAGE_WORD = { physical: '물리', magic: '마법', split: '복합', fixed: '고정' } as const;
-/** v3.54 무리에게 거는 지속 피해의 최대 체력 비례분: 한 마리 체력 × √N(= 무리 전체 체력 ÷ √N). 한 마리면 1. */
 /** v3.54 이 전투에서 처음 거는 지속 피해면 true를 돌려주고 표시합니다(첫 틱 즉시 적용은 전투당 한 번). */
 const opens = (b: Fighter, key: 'bleed' | 'poison' | 'burn') => { const fx = (b.effects ??= {}); if (fx.opened?.[key]) return false; (fx.opened ??= {})[key] = true; return true; };
 /** v3.54 지속 피해의 체력 비례분: 틱 때 현재 체력 × hpRatio. hpRatio가 없는 옛 효과는 저장된 고정값(legacy)을 씁니다. */
 const hpPart = (current: number, hpRatio: number | undefined, legacy: number | undefined) => hpRatio === undefined ? (legacy || 0) : Math.floor(Math.max(0, current) * hpRatio);
+/** v3.191 지속 피해 체력 비례분의 기준 체력: 현재 체력, 상한(dotHpCap)이 있으면 그 아래로. 월드보스 소환 단계가 체력을 올려도 지속 피해는 1단계 체력 기준입니다. */
+const dotHp = (f: Pick<Fighter, 'hp' | 'dotHpCap'>) => f.dotHpCap ? Math.min(f.hp, f.dotHpCap) : f.hp;
 export const swarmDotShare = (swarm?: number) => swarm && swarm > 1 ? 1 / Math.sqrt(swarm) : 1;
 /** v27.75 화면에 보여 주는 타격 수치: 계산된 피해(raw). 남은 체력에 막힌 실제 감소량(value)은 규칙에만 씁니다. */
 export const shownHit = (h: Pick<CombatHit, 'value' | 'raw'>) => h.raw ?? h.value;
@@ -125,7 +127,6 @@ function describeHits(ev: Pick<CombatEvent, 'hits' | 'total' | 'damageType'>) {
     const part = (h: CombatHit) => h.miss ? '빗나감' : `${shownHit(h)}${h.superCritical ? ' [극 치명타]' : h.critical ? ' [치명타]' : ''}`;
     return [`본타 ${part(ev.hits[0])}`, ...ev.hits.slice(1).map((h, i) => `추가타${ev.hits.length > 2 ? ` ${i + 1}` : ''} ${part(h)}`), `합계 ${ev.total} ${word} 피해`].join(' · ');
 }
-/** 행동 순서·명중 보정·연속 행동 확률에 쓰는 속도. 가속·감속이 반영됩니다. */
 /** v3.151 자기 버프: 옛 세이브의 가속(effects.haste 턴 수)을 buffs.haste로 옮기고, 살아 있는 버프 목록을 돌려줍니다. */
 function buffsOf(effects: StatusEffects | undefined) {
     if (!effects) return [];
@@ -158,6 +159,7 @@ function withBuffs(stats: CombatStats, effects: StatusEffects | undefined): Comb
     for (const [, b] of live) for (const [k, v] of Object.entries(b.stats || {})) if (typeof v === 'number') out[k] = (out[k] || 0) + v;
     return out;
 }
+/** 행동 순서·명중 보정·연속 행동 확률에 쓰는 속도. 가속·감속이 반영됩니다. */
 export function fighterSpeed(f: Fighter) {
     const base = withBuffs(normalizeStats(f.stats), f.effects).speed;
     const slowed = (f.effects?.slow || 0) > 0, corroded = (f.effects?.corrode || 0) > 0;
@@ -244,12 +246,14 @@ export function mitigate(raw: number, defense: number, attackStat: number) {
 /** v3.86 각성기의 실패한 판정 수를 적는 재사용 대기 칸: '~' + 기술 id. */
 const AWAKEN_PITY = '~';
 const isAwaken = (id: string) => id.startsWith(AWAKEN_PITY) || !!skillById(id)?.awaken;
+/** 모험가 스킬 또는 몬스터 스킬. */
+const anySkillById = (id: string) => skillById(id) ?? enemySkillById(id);
 /** 기술의 실제 효과(숙련·계보 밖 효율 반영). */
 function skillOf(a: Fighter, id: string) {
-    const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
+    const base = anySkillById(id);
     if (!base) return undefined;
     // v3.104 effectiveSkill은 캐시된 객체를 돌려주므로 복사본에 배율을 곱합니다.
-    const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0);
+    const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0);
     return outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) });
 }
 /** v3.132 계보 밖에서 쓰는 5차 기술: outsiderChance가 있으면 발동률을 그만큼 낮춥니다(포이즌 노바). */
@@ -262,10 +266,10 @@ function outsider(base: Skill, a: Fighter, sk: Skill): Skill {
  */
 function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rng: () => number, blocked: Set<string>, bonusAction: boolean, from = 0) {
     for (const id of a.skills.slice(from)) {
-        const base = [...SKILLS, ...ENEMY_SKILLS].find(x => x.id === id);
+        const base = anySkillById(id);
         if (!base || base.type !== 'active' || base.awaken || blocked.has(id))
             continue;
-        const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0, a.practice?.[id] || 0), candidate = outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) });
+        const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0), candidate = outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) });
         // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
         if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)
             continue;
@@ -284,7 +288,7 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
         // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
         if (alreadyAfflicted(b, candidate))
             continue;
-        if (candidate.restoreAll && a.effects?.timeUsed)
+        if (candidate.timeRewind && a.effects?.timeUsed)
             continue;
         if (bonusAction && candidate.extraTurn)
             continue;
@@ -383,8 +387,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (!forced) tickImmunity(a.effects);
     if (!forced && a.effects.dot) {
         const dot = a.effects.dot;
-        // v3.54 체력 비례분은 틱 때 현재 체력 기준입니다(전에는 걸 때 최대 체력 기준).
-        const dotHit = dot.damage + hpPart(a.hp, dot.hpRatio, 0);
+        const dotHit = dot.damage + hpPart(dotHp(a), dot.hpRatio, 0);
         a.hp = Math.max(0, a.hp - dotHit);
         notes.push(`${dot.name} ${dotHit}`);
         ev.dot = { name: dot.name, value: dotHit };
@@ -401,7 +404,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v27.19 중독 틱: 중첩 × (중첩당 피해 + 최대 체력 비례). 출혈과 별개로 함께 들어갑니다.
     if (!forced && a.effects.poison && a.hp > 0) {
         const poison = a.effects.poison;
-        const hit = (poison.perStack + hpPart(a.hp, poison.hpRatio, poison.hpTick)) * poison.stacks;
+        const hit = (poison.perStack + hpPart(dotHp(a), poison.hpRatio, poison.hpTick)) * poison.stacks;
         a.hp = Math.max(0, a.hp - hit);
         notes.push(`중독 ×${poison.stacks} ${hit}`);
         ev.dot = ev.dot ? { name: `${ev.dot.name}·중독`, value: ev.dot.value + hit } : { name: `중독 ×${poison.stacks}`, value: hit };
@@ -412,7 +415,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v27.48 화상 틱: 중독과 같은 방식(중첩 × (중첩당 피해 + 최대 체력 비례)). 출혈·중독과 함께 들어갑니다.
     if (!forced && a.effects.burn && a.hp > 0) {
         const burn = a.effects.burn;
-        const hit = (burn.perStack + hpPart(a.hp, burn.hpRatio, burn.hpTick)) * burn.stacks;
+        const hit = (burn.perStack + hpPart(dotHp(a), burn.hpRatio, burn.hpTick)) * burn.stacks;
         a.hp = Math.max(0, a.hp - hit);
         notes.push(`화상 ×${burn.stacks} ${hit}`);
         ev.dot = ev.dot ? { name: `${ev.dot.name}·화상`, value: ev.dot.value + hit } : { name: `화상 ×${burn.stacks}`, value: hit };
@@ -494,11 +497,12 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
             // v3.54 힐러(회복 직업)는 넘친 회복량을 적에게 피해로 돌려줍니다(아래에서 overhealDamage 배율로 적용).
             if (sa.healFocus) overheal = intended - healed;
         }
-        // v25 타임 리와인드: 둘 다 처음 상태로. 전투당 1회.
-        if (chosen.restoreAll) {
+        // v3.198 타임 리와인드: 나만 처음 상태로(체력 · 마나 가득, 재사용 대기 초기화). 상대는 그대로. 전투당 1회.
+        if (chosen.timeRewind) {
             a.effects.timeUsed = true;
-            a.hp = sa.hp; a.mana = sa.mana; b.hp = sb.hp; if (b.mana !== undefined) b.mana = sb.mana;
-            notes.push('타임 리와인드 · 모두 처음 상태로');
+            a.hp = sa.hp; a.mana = sa.mana;
+            for (const k of Object.keys(a.cooldowns)) if (k !== chosen.id && !isAwaken(k)) a.cooldowns[k] = 0;
+            notes.push('타임 리와인드 · 나의 시간을 처음으로');
             ev.restored = true;
         }
     }
@@ -535,7 +539,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const spent = Math.min(limit, Math.floor(a.gold! * chosen.goldSpend.ratio));
         if (spent > 0) { a.gold! -= spent; allInBonus += spent * chosen.goldSpend.scale; notes.push(`골드 ${spent.toLocaleString()} 투척`); }
     }
-    // v3.140 성해의 빛살(oath)의 '높은 쪽 공격' 특례는 지웠습니다. 루미너스 액티브는 모두 damageType physical · scaling swap(마법 계수 → 물리 피해)으로 선언합니다.
+    // v3.140 루미너스 액티브는 모두 damageType physical · scaling swap(마법 계수 → 물리 피해)으로 선언합니다.
     const magical = arcane || chosen?.damageType === 'magic' || !chosen && !!a.magicBasic;
     // v3.143 고정 피해: 방어를 전혀 받지 않습니다(메카닉 전탄발사). 명중은 마법처럼(회피 절반 · 속도 페널티 없음), 치명은 그대로 판정합니다.
     const fixed = chosen?.damageType === 'fixed';
@@ -624,7 +628,11 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (chosen?.balanceBonus) notes.push(`조화 ${Math.round(balanceRatio * 100)}%`);
     // v3.158 자기 버프의 피해 배율(접신): 살아 있는 버프의 damageMultiplier를 곱합니다.
     const buffDamage = buffsOf(a.effects).reduce((m, [, bf]) => m * (bf.damageMultiplier || 1), 1);
-    const linkMultiplier = comboBoost * balanceBoost * buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
+    // v3.198 태그(제로): 알파 ↔ 베타로 쪽을 바꿔 쓰면 장착 패시브의 tagBonus(가장 큰 값)만큼 피해가 커집니다. 쓴 쪽을 기억합니다.
+    const tagBonus = chosen?.tag && a.effects.tag && a.effects.tag !== chosen.tag ? Math.max(0, ...a.skills.map(id => skillById(id)?.tagBonus || 0)) : 0;
+    if (tagBonus) notes.push(`태그 ${chosen!.tag === 'alpha' ? '알파' : '베타'} +${Math.round(tagBonus * 100)}%`);
+    if (chosen?.tag) a.effects.tag = chosen.tag;
+    const linkMultiplier = (1 + tagBonus) * comboBoost * balanceBoost * buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push(chosen?.damageBonusCondition === 'statuses' ? `헥스 ${statusCount}` : '연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
     const statusOnly = !!chosen?.statusOnly || healOnly;
@@ -725,7 +733,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const current = b.effects.dot;
         // v3.54 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(지속은 그대로, 전투당 한 번). 원킬·짧은 전투에서도 지속 피해가 몫을 합니다.
         // (지속을 1턴 줄이면 다시 걸기 전에 끝나 면역이 생겨 긴 전투 피해가 줄었고, 매번 주면 출혈만 긴 전투에서 크게 늘었습니다.)
-        if (opens(b, 'bleed')) onset.push({ name, value: tick + hpPart(b.hp, hpRatio, 0) });
+        if (opens(b, 'bleed')) onset.push({ name, value: tick + hpPart(dotHp(b), hpRatio, 0) });
         b.effects.dot = { damage: Math.max(tick, current?.hpRatio === undefined ? 0 : current.damage), hpRatio: Math.max(hpRatio, current?.hpRatio || 0), turns: Math.max(turns, current?.turns || 0), name };
         notes.push(`${name} ${turns}턴`);
         ev.statuses.push({ id: 'bleed', turns });
@@ -741,7 +749,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const current = b.effects.poison;
         // v3.54 처음 걸면 poisonFirstStacks중첩으로 시작합니다. 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'poison'), stacks = Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, current ? current.stacks + 1 : first ? STATUS_TUNING.poisonFirstStacks : 1);
-        if (first) onset.push({ name: '중독', value: (perStack + hpPart(b.hp, hpRatio, 0)) * stacks });
+        if (first) onset.push({ name: '중독', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
         b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`중독 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'poison', turns });
@@ -755,7 +763,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const current = b.effects.burn;
         // v3.54 전투에서 처음 걸면 burnFirstStacks중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'burn'), stacks = Math.min(STATUS_TUNING.burnMaxStacks, current ? current.stacks + 1 : first ? STATUS_TUNING.burnFirstStacks : 1);
-        if (first) onset.push({ name: '화상', value: (perStack + hpPart(b.hp, hpRatio, 0)) * stacks });
+        if (first) onset.push({ name: '화상', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
         b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`화상 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'burn', turns });

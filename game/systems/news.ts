@@ -1,26 +1,28 @@
 /**
  * v3.39 소식: 저장할 때 이전 표시(State.newsMark)와 비교해 모두에게 알릴 일을 찾습니다. 난수를 쓰지 않는 순수 계산이고,
  * 서버(/api/game)가 결과를 소식 채널에 올립니다. 표시가 없던 세이브는 지금 상태로 표시만 하고 소식을 내지 않습니다.
- * 같은 모험가의 같은 종류 소식은 하루(한국 시간)에 한 번만 냅니다. 해커 전직·제단(신·월드보스) 소식은 서버가 따로 올립니다.
+ * 같은 모험가의 같은 종류 소식은 하루(한국 시간)에 한 번만 냅니다(진급은 예외). 해커 전직·제단(신·월드보스) 소식은 서버가 따로 올립니다.
  */
 import type { State } from '../types';
 import { ownedOnyx, onyxById } from '../data/onyx';
 import { RANKS, rankIndex, rankState } from '../data/rank';
-import { JOBS } from '../data/classes';
+import { jobById } from '../data/classes';
 import { isHackerJob } from '../data/hacker';
-import { dayKey } from '../data/goals';
 import { josa } from '../data/altar';
+import { dayKey } from '../data/time';
 
 export type NewsKind = 'onyx' | 'ascend' | 'tier5' | 'abyss' | 'star22' | 'general' | 'reenlist';
 export type NewsMark = { onyx: string[]; ascension: number; tier5: string[]; abyss: number; star: number; rank: number; /** v3.160 재입대 횟수 */ reenlist?: number; day: Partial<Record<NewsKind, string>> };
 export type NewsEvent = { kind: NewsKind; text: (name: string) => string };
 /** 무릉도장은 이 층 단위로 새로 넘을 때 알립니다. */
 export const NEWS_ABYSS_STEP = 50;
-/** 진급은 이 무리(장성)부터 알립니다. */
-export const NEWS_RANK_GROUP = '장성';
+/** v3.190 진급 소식: 하사(첫 부사관) · 소위(첫 장교)에 올랐을 때, 그리고 소위 이후로는 진급할 때마다 알립니다(전에는 장성만). */
+export const NEWS_RANK_FIRST = 'ssg', NEWS_RANK_FROM = 'lt2';
+const newsRankFrom = RANKS.findIndex(r => r.id === NEWS_RANK_FROM);
+export const rankNewsworthy = (index: number) => index >= newsRankFrom || RANKS[index]?.id === NEWS_RANK_FIRST;
 
 const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
-const tier5Jobs = (s: State) => (s.unlockedJobs || []).filter(id => !isHackerJob(id) && JOBS.find(j => j.id === id)?.tier === 5);
+const tier5Jobs = (s: State) => (s.unlockedJobs || []).filter(id => !isHackerJob(id) && jobById(id)?.tier === 5);
 function markOf(s: State, day: NewsMark['day'] = {}): NewsMark {
     return { onyx: [...ownedOnyx(s)], ascension: s.ascension || 0, tier5: tier5Jobs(s), abyss: Math.floor((s.abyssBest || 0) / NEWS_ABYSS_STEP), star: bestStar(s), rank: rankIndex(rankState(s).exp), reenlist: rankState(s).reenlist || 0, day };
 }
@@ -45,13 +47,15 @@ export function collectNews(s: State, now: number): NewsEvent[] {
     const found: NewsEvent[] = [];
     for (const id of next.onyx.filter(x => !prev.onyx.includes(x) && gift[x] !== 0)) { const name = onyxById(id)?.accessory.name || id; found.push({ kind: 'onyx', text: n => NEWS_TEXT.onyx(n, name, gift[id]) }); }
     if (next.ascension > prev.ascension) found.push({ kind: 'ascend', text: n => NEWS_TEXT.ascend(n, next.ascension) });
-    for (const id of next.tier5.filter(x => !prev.tier5.includes(x))) { const job = JOBS.find(j => j.id === id)!; found.push({ kind: 'tier5', text: n => NEWS_TEXT.tier5(n, job.name) }); }
+    for (const id of next.tier5.filter(x => !prev.tier5.includes(x))) { const job = jobById(id)!; found.push({ kind: 'tier5', text: n => NEWS_TEXT.tier5(n, job.name) }); }
     if (next.abyss > prev.abyss) found.push({ kind: 'abyss', text: n => NEWS_TEXT.abyss(n, next.abyss * NEWS_ABYSS_STEP) });
     if (next.star >= 22 && prev.star < 22) found.push({ kind: 'star22', text: n => NEWS_TEXT.star22(n) });
+    // 한 번에 여러 계급을 뛰어넘어도(지나친 계급이 알릴 계급이면) 도착한 계급으로 한 줄 냅니다.
     const rank = RANKS[next.rank];
-    if (next.rank > prev.rank && rank?.group === NEWS_RANK_GROUP) found.push({ kind: 'general', text: n => NEWS_TEXT.general(n, rank.name) });
+    if (rank && next.rank > prev.rank && Array.from({ length: next.rank - prev.rank }, (_, i) => prev.rank + 1 + i).some(rankNewsworthy)) found.push({ kind: 'general', text: n => NEWS_TEXT.general(n, rank.name) });
     if ((next.reenlist || 0) > (prev.reenlist || 0)) found.push({ kind: 'reenlist', text: n => NEWS_TEXT.reenlist(n, next.reenlist || 0) });
     const today = dayKey(now), out: NewsEvent[] = [];
-    for (const e of found) { if (next.day[e.kind] === today) continue; next.day[e.kind] = today; out.push(e); }
+    // v3.190 진급은 계급이 한 방향으로만 오르므로 하루 한 번 제한을 두지 않습니다(같은 날 두 번 진급해도 둘 다 알림).
+    for (const e of found) { if (e.kind !== 'general') { if (next.day[e.kind] === today) continue; next.day[e.kind] = today; } out.push(e); }
     return out;
 }

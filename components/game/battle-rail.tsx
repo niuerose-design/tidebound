@@ -49,7 +49,7 @@ export function BattleRail({ s, base, busy, send, setView }: {
 type PlaceProps = { s: State; busy: boolean; send: (a: Action) => void; setView: (v: string) => void };
 /**
  * 사냥터·던전·제단 선택판. 동기화 상태만 받아 전투 재생 프레임마다 다시 그리지 않습니다(v27.62).
- * v3.50 제단 탭을 다시 넣고(v3.37에 뺐던 것), 탭을 바꿔도 판 높이가 그대로이도록 목록 칸 높이를 고정했습니다(battle.css).
+ * v3.50 탭을 바꿔도 판 높이가 그대로이도록 목록 칸 높이를 고정했습니다(battle.css).
  */
 const PlaceSelector = memo(function PlaceSelector({ s, busy, send, setView }: PlaceProps) {
     const dungeons = [...PLAIN_DUNGEONS].sort((a, b) => a.level - b.level);
@@ -94,7 +94,7 @@ function AltarRail({ s, setView }: { s: State; setView: (v: string) => void }) {
     return <div className="battle-dungeon-list battle-altar-list">
         {a.blessings.map(b => <button type="button" key={b.id} className="battle-dungeon-button selected" onClick={open}><span><strong>{b.name} 진행 중</strong><small>{b.desc} · {formatRemaining(b.until - now)} 남음</small></span><Flame size={13}/></button>)}
         {a.god && <button type="button" className="battle-dungeon-button selected" onClick={open}><span><strong>{a.god.name} 깨어남</strong><small>쓰러뜨리면 신의 자리 · {formatRemaining(a.god.until - now)} 뒤 떠남</small></span><Swords size={13}/></button>}
-        {(a.raids ?? []).map(r => <button type="button" key={r.id} className="battle-dungeon-button selected battle-altar-gauge" onClick={open}><span><strong>{r.name} 출현</strong><small>남은 체력 {Math.round(r.pct * 100)}% · {formatRemaining(r.until - now)} 뒤 떠남</small><Meter value={Math.round(r.pct * 100)} max={100}/></span></button>)}
+        {(a.raids ?? []).map(r => <button type="button" key={r.id} className="battle-dungeon-button selected battle-altar-gauge" onClick={open}><span><strong>{r.name}{(r.stage || 1) > 1 ? ` ${r.stage}단계` : ''} 출현</strong><small>남은 체력 {Math.round(r.pct * 100)}% · {formatRemaining(r.until - now)} 뒤 떠남</small><Meter value={Math.round(r.pct * 100)} max={100}/></span></button>)}
         {a.gauges.map(g => <button type="button" key={g.id} className="battle-dungeon-button battle-altar-gauge" onClick={open}><span><strong>{g.name}</strong><small>게이지 {g.pct}%</small><Meter value={g.pct} max={100}/></span></button>)}
         <p className="battle-altar-throne">신의 자리 · {a.throne || '비어 있음'}</p>
     </div>;

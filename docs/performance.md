@@ -27,7 +27,7 @@
 - **스킬 화면**: 성장표(`skillGrowthStages`)를 스킬 객체로 캐시(WeakMap). 검색은 `useDeferredValue` + 검색 중일 때만 만드는 검색 문구 Map, 정렬 키는 스킬마다 한 번. `SkillCard`는 `memo`, 성장표는 자세히 볼 때만. 누적 비례 패시브만 진행도 집계(`passiveGrowthBonus`에 집계를 넘길 수 있음).
 - **장비 보관함**: 교체 미리보기(장비마다 `stats()`)를 모듈 캐시 한 칸에 두고, 장비 · 가방 · 레벨 · 직업 · 스킬 · 능력치 · 연구 지문이 같으면 다시 쓰지 않음.
 - **업적 · 목표**: `progressReader(s)`로 같은 진행도 함수는 상태마다 한 번(`syncAchievements`도 사용). `achievementById`는 Map.
-- **도감**: 지역 묶음을 `LazyDetails`로(펼칠 때만 그림). `FISH.find` · `[...ENEMY_SKILLS, ...SKILLS].find` → Map.
+- **도감**: 지역 묶음을 `LazyDetails`로(펼칠 때만 그림). `MONSTERS.find` · `[...ENEMY_SKILLS, ...SKILLS].find` → Map.
 - **랭킹**: 시계를 결투 대기 중 1초 · 평소 10초로, 정렬은 `useMemo([rows, sort])`.
 - **직업 화면**: `statusReader(s)`(상태 객체별 WeakMap)로 직업마다 조건 판정 한 번. 빠른 찾기 · 계보 요약 · 상세 · 비교가 함께 씀. 검색 결과 메모. 서버 · 시험처럼 상태를 고쳐 쓰는 곳은 그대로 `jobStatus`.
 - **잔손질**: `format()` · `short()`는 공용 `Intl.NumberFormat`, 전투 기록 해석(`combatFxFromLog`)의 스킬 이름 찾기는 Map.
@@ -64,10 +64,10 @@
 ### 바꾼 것(전투 결과는 같음)
 같은 난수로 기준 몸 14가지 · 825턴을 돌린 최종 세이브 해시가 전후 모두 같은지 확인했습니다(63초 → 24초, 약 −61%).
 - `effectiveSkill`: 스킬 객체 · 레벨 · 숙련 단계별 캐시(WeakMap). 캐시한 객체는 동결(freeze)합니다. 고쳐 쓰던 `combat.ts`의 두 곳(`skillOf` · `pickActive`)은 복사본에 배율을 곱합니다.
-- `regionThemes`: 지역 · 단계별 효과 객체를 한 번만 만듦. `regionFish`: 지역별 배열 캐시. `regionResearchStage`: 할당 없이, 결과가 정해지면 바로 끝냄.
+- `regionThemes`: 지역 · 단계별 효과 객체를 한 번만 만듦. `regionMonsters`: 지역별 배열 캐시. `regionResearchStage`: 할당 없이, 결과가 정해지면 바로 끝냄.
 - 같은 상태의 `stats()` 재사용: 처치 보상의 골드 · 경험치 배율과 황금 개체 확률, 처치 후 회복, 변종 확률(`variantChances`), 업적 진행도 읽기(`progressReader` 한 번 동안 최대 체력 · 마나 업적).
 - 무리 드롭 판정: 판정마다 `dropRate`(= `stats()`)를 다시 계산하던 것을, 드롭이 바꿀 수 있는 값(골드 자릿수 · 물건 도감 수 · 가방 · 정수)이 그대로면 재사용.
-- 전투용 캐릭터의 숙련 단계 · 연마 숙련 표: 턴마다 숙련 기록이 있는 모든 스킬(수백 개)을 계산하던 것을, 전투가 조회한 스킬만 계산(`lazySkillMasteryRanks` · `lazyRefinePractices`).
+- 전투용 캐릭터의 숙련 단계 표: 턴마다 숙련 기록이 있는 모든 스킬(수백 개)을 계산하던 것을, 전투가 조회한 스킬만 계산(`lazySkillMasteryRanks`. 연마 숙련 표 `lazyRefinePractices`는 v3.193에서 효과 없는 인자와 함께 삭제).
 
 ### 부재중 정산 표본 환산(게임 규칙 변경, `systems/offline-sample.ts`)
 - 1,200턴(40분)이 넘는 부재중 정산은 워밍업 300턴 + 측정 900턴을 실제로 돌리고, 남은 턴은 측정 900턴의 증가분을 비례해 더합니다.
@@ -136,3 +136,35 @@
 검증: `scripts/check-equivalence.mjs` 지문 동일, `scripts/check-turn-hash.mjs`로 기준 몸 90가지(환생 3 · 12 · 30 · 60 · 90 × 5차 직업 18종) × 400턴을 고정 난수 · 고정 시각으로 돌린 최종 세이브 해시와 중간 능력치 해시 360개가 전후 동일, 게임 테스트 395개 통과.
 효과: 턴 하나 2.35ms → 1.58ms(−32%, 기준 몸 평균, 같은 조건에서 앞뒤로 측정). 요청 고정 비용은 그대로라 전체 CPU로는 약 −20%.
 남은 것: `stats()`의 나머지 비용은 80칸짜리 결과 객체 · 장비 옵션 합산 · 업적 수령 합계 등 고르게 퍼져 있어, 더 줄이려면 호출 자리를 합치는 쪽(위험)뿐입니다.
+
+## 8단계 (v3.193): 전투 화면 다시 그리기 · 연출 CSS · 서버 할당
+
+코드를 읽고 추정한 값이 대부분이며, 서버 쪽은 `scripts/check-turn-hash.mjs`(기준 몸 90가지 × 400턴)로 결과 해시가 같은지와 턴 시간을 확인했습니다(1.70 → 1.66 ms/turn, 오차 범위).
+
+### 전투 화면(클라이언트)
+- **타격마다 화면 전체 3번 렌더**: `useReplayView`로 `BattleView`가 프레임 저장소를 구독하는 데다, `useCombatFx`의 `setEffects` · `setCombo`와 1.5초 뒤 제거 타이머가 모두 `BattleView` 상태여서, 타격 하나에 머리글(설정 다이얼로그) · 알림 묶음 · 슬롯 칩 · 지표 · 집중 사냥 탭 · 전투 스킬 줄(스킬마다 `effectiveSkill`) · 배경 SVG까지 세 번씩 다시 그렸습니다.
+  - 동기화 때만 바뀌는 구간(`BattleHeading` · `BattleNotices` · `SessionMetrics` · `TargetStrip` · `BattleSkills` · `WhistleButton`)은 `base`를 받는 `memo` 컴포넌트로 떼어 프레임 · 연출 갱신에는 그리지 않습니다. 14초 팁 타이머도 `BattleNotices` 안으로.
+  - 연출 상태(`useCombatFx`)는 상대 카드 · 장면을 담은 `BattleArena`에만 있어 타격 연출은 그 안만 다시 그립니다. `SceneBackdrop`(SVG 25노드)은 `memo`.
+  - 능력치(`stats(base)`)는 재생 버퍼와 화면이 따로 계산하던 것을 상태 객체별 WeakMap(`cachedStats`)으로 한 번.
+- **전투를 보지 않는 화면**: 15초 동기화는 밀린 턴이 2턴을 넘어 어차피 재생을 버리므로(`MAX_BEHIND_TURNS`), `live`가 아니면 `buildCombatReplay` · `stats`를 돌리지 않고 바로 버립니다.
+- **최근 전투 기록 저장**: 5초마다 `JSON.stringify` + `localStorage.setItem`(수백 KB, 동기) → 60초마다, 탭을 숨기거나 떠날 때는 바로.
+- **스타캐치**: 프레임마다 `setState`로 별 위치를 바꿔 React 렌더를 60fps로 돌리던 것을 ref로 DOM에 바로 씁니다.
+- **전투 기록 턴 구분선 key**: 최신순 목록이라 `turn-${turn}-${index}`는 새 줄마다 모든 구분선을 다시 마운트 → `turn-${turn}`.
+
+### 연출 CSS(`app/styles/battle.css`)
+- `clip-path: polygon(…)`이 있는 요소의 바깥 `box-shadow`는 다각형 밖이라 전부 잘려 보이지 않는데 매 프레임 블러를 계산했습니다(10곳). 배경이 불투명한 네 곳(`.foe-ward .foe-b` · `.ult-mjolnir .ult-a` · `.ult-reaper .ult-b` · `.foe-slam` 파편)의 `drop-shadow`도 같은 이유로 보이지 않아 지웠습니다. 보이는 결과는 같습니다.
+- 궁극기 · 일곱 인 해방이 배경(`.ocean-art`, 1536×1024 SVG)의 `filter`를 2.4초 애니메이션하는 동안만 `will-change: filter`로 합성 레이어에 올립니다(평소에는 레이어 없음).
+
+### 서버
+- `combat.ts`의 `skillOf` · `pickActive`: 조회마다 `[...SKILLS, ...ENEMY_SKILLS].find`로 스킬 수백 개를 새 배열에 복사하던 것(행동마다 장착 스킬 수만큼, 턴당 수만 번의 복사 · 비교)을 `skillById ?? enemySkillById`(지연 생성 Map)로.
+- id 조회 헬퍼 통일: `fishById` · `stageById` · `dungeonById` · `researchById` · `enemySkillById`(모두 지연 생성 Map). 턴마다 돌던 `FISH.find` · `STAGES.some`(`repairState` · `enemyLabel` · 출현 · 보상)이 선형 탐색에서 Map 조회로.
+- `combat-feedback.ts` `fxVariantOf`: 로그 줄마다 정규식 20개와 규칙 배열을 새로 만들던 것을 모듈에 한 번(`VARIANT_RULES`).
+- `encounter.ts` 레벨 업: 레벨마다 `stats()` 2번 → 1번.
+- `secrecy.ts` 카탈로그 키: 요청마다 30KB 본문을 `JSON.stringify` + SHA-1 하던 것을, 본문을 정하는 입력(비공개 여부 · 숨은 조건 · 드러난 직업 · 보낼 스킬 id)과 한 번만 만든 표 지문으로. 키 형식이 바뀌어 배포 뒤 첫 동기화에 카탈로그를 한 번 다시 받습니다.
+
+### 보고 넘긴 것(바꾸지 않음)
+- `.scene-link` · `.scene-whistle`의 `backdrop-filter`는 연출마다 뒤 장면을 다시 블러합니다. 반투명 배경으로 바꾸면 가볍지만 보이는 모양이 달라져 두었습니다.
+- 몬스터 연출의 움직이는 `blur`(`.foe-venom` · `.foe-nightmare` · `.foe-genesis`)와 `letter-spacing`을 애니메이션하는 제목(`foeTitle` 등)은 레이아웃 · 래스터 비용이 있지만 모양이 바뀌어 두었습니다.
+- 멈춰 있을 때의 `scene-start-pulse`, 자동 반복 표시의 `auto-run-pulse`, 까미의 `kkamiGlow`는 작은 영역을 계속 다시 그립니다(버튼 · 점 · 112px 그림 크기라 비용은 작음).
+- 효과 유지 시간 `FX_HOLD_MS`(1.5초)가 2.4초짜리 궁극기 · 보스 장면보다 짧아 보일 수 있는지는 브라우저에서 확인이 필요합니다(마지막 타격 delay 뒤 1.5초에 DOM이 지워짐).
+- 전투 안의 행동마다 `a.skills.map(id => skillById(id)?.x)`를 10번가량 돌리는 것(행동당 수백 번의 Map 조회)은 비용이 작아 두었습니다.

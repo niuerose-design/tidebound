@@ -15,7 +15,7 @@ const { stats, goldMultiplier, expMultiplier } = await load('systems/stats');
 const { strike, fighterSpeed } = await load('systems/combat');
 const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf } = await load('data/classes');
-const { FISH, swarmHpMultiplier } = await load('data/world');
+const { MONSTERS, swarmHpMultiplier } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
 const { canUse, validLoadout, skillMasteryRanks, lineage, jobFactor, masteryMilestonesFor } = await load('systems/progression');
 const { subRoleOf, roleOf, SUB_ROLES } = await load('data/roles');
@@ -52,7 +52,7 @@ function loadout(s, j, magic) {
 }
 const player = (st, s, hp = st.hp, mana = st.mana) => ({ name: 'player', stats: st, hp, mana, skills: s.skills, cooldowns: {}, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice });
 function foe(id, tier, swarm = 1) {
-    const base = scaledEnemyStats(FISH.find(f => f.id === id), { tier });
+    const base = scaledEnemyStats(MONSTERS.find(f => f.id === id), { tier });
     const st = swarm > 1 ? { ...base, hp: Math.round(base.hp * swarmHpMultiplier(swarm)) } : base;
     return { name: 'foe', stats: st, hp: st.hp, mana: 100, skills: profile(id).skills, magicBasic: profile(id).magicBasic, cooldowns: {}, stun: 0, effects: {}, ...(swarm > 1 ? { swarm } : {}) };
 }

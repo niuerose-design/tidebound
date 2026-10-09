@@ -8,12 +8,12 @@ const hacker = () => { const s = newState(0); s.level = 40; s.rebirths = 5; s.sp
 
 test('v3.18 hacker job: hidden mystery tier-1 job without stat penalties (combat is blocked by rule), adguard as its only skill', () => {
     const j = JOBS.find(x => x.id === 'hacker');
-    assert.ok(j && j.hidden && j.tree === 'mystery' && j.tier === 1 && j.rebirth === 3);
+    assert.ok(j && j.hidden && j.tree === 'mystery' && j.tier === 1 && j.rebirth === 5, 'v3.199 rebirth 3 → 5');
     // v3.18 몹을 만나지 않으니 능력치 보정은 없고, 전투 참여를 규칙으로 막습니다.
     assert.deepEqual([j.attack, j.magic, j.hp, j.defense, j.resist], [1, 1, 1, 1, 1]); assert.ok(!j.constraint);
     assert.ok(H.hackerCombatBlock({ job: 'hacker' }) && !H.hackerCombatBlock({ job: 'fisher' }));
     assert.deepEqual(SKILLS.filter(sk => sk.job === 'hacker').map(sk => sk.id), ['adGuard']);
-    const s = newState(0); s.level = 40; s.rebirths = 2; assert.throws(() => act(s, { type: 'job', id: 'hacker' }, 0));
+    const s = newState(0); s.level = 40; s.rebirths = 4; assert.throws(() => act(s, { type: 'job', id: 'hacker' }, 0));
 });
 
 test('v3.18 hacker constraints: no stat allocation, no dungeons, loadout parked and restored, no combat or exp while idle', () => {
@@ -243,10 +243,19 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         assert.equal((await database.listAltarRaids()).find(r => r.id === 'balrog').hp, 1000 - Math.floor(1000 * .03 * 4), 'forward: 3%×(n−6) of the remaining hp');
         const sc = veteran(10); act(sc, { type: 'hackRun', id: 'savescum', value: 'balrog|rewind' }, now); await assert.rejects(Hk.applyPendingHack(sc, 'acct_sc', now), /이미/, 'once per boss');
         assert.ok((await database.listChat('news', 0, 300)).some(c => c.account_id === 'system-hacker' && c.text.includes('세이브 스캠')), 'announced');
+        { // v3.190 운영: 소식 · 전체 · 길드 채팅 지우기(채널 하나 · guild: 접두사 · 모두). 지운 줄 수를 돌려주고 다른 채널은 건드리지 않습니다.
+            const Nw = await load('game/server/news.js'), row = (channel, text) => ({ channel, account_id: 'acct_x', name: 'x', text, created_at: now });
+            await database.postChat(row('global', 'g1')); await database.postChat(row('global', 'g2')); await database.postChat(row('guild:1', 'a')); await database.postChat(row('guild:2', 'b')); await database.postChat(row('guildless', 'c'));
+            const newsBefore = (await database.listChat('news', 0, 300)).length; assert.ok(newsBefore > 0);
+            const r1 = await Nw.clearChatScope('news'); assert.equal(r1.removed, newsBefore); assert.deepEqual(r1.rows, []); assert.equal((await database.listChat('news', 0, 300)).length, 0, 'news gone'); assert.equal((await database.listChat('global', 0, 300)).length, 2, 'global untouched');
+            assert.equal((await Nw.clearChatScope('guild')).removed, 2, 'guild: prefix only'); assert.equal((await database.listChat('guildless', 0, 300)).length, 1, 'other channels stay');
+            assert.equal((await Nw.clearChatScope('all')).removed, 3, 'everything left'); assert.equal((await database.listChat('global', 0, 300)).length, 0);
+            await assert.rejects(Nw.clearChatScope('news;drop'), /범위/);
+        }
         assert.equal(await database.shiftAltarRaid('balrog', gen, -1e9), 1, 'save scum never slays');
         await database.hitAltarRaid('balrog', gen, 10); await database.slayAltarRaid('balrog', gen, 'p1', 'x', now);
         const ib = top.hacker.bits; act(top, { type: 'hackRun', id: 'interceptClaim' }, now); await Hk.applyPendingHack(top, 'acct_top', now);
-        assert.equal(top.hacker.bits - ib, Math.floor((30 + 2 * 40) * .5), 'tier X: 50% of the reward value'); assert.equal(top.hacker.intercept, null);
+        assert.equal(top.hacker.bits - ib, Math.floor((2 * 40) * .5), 'tier X: 50% of the reward value (v3.194 world bosses give no gold)'); assert.equal(top.hacker.intercept, null);
         const z = await database.summonAltarRaid('zakum', 1000, now + 3600_000, now, A.RAID.respawnMs); await database.hitAltarRaid('zakum', z, 600);
         sc.hacker.used.savescum = 0; delete sc.hacker.pending; act(sc, { type: 'hackRun', id: 'savescum', value: 'zakum|rewind' }, now); await Hk.applyPendingHack(sc, 'acct_sc', now);
         assert.equal((await database.listAltarRaids()).find(r => r.id === 'zakum').hp, 400 + Math.floor(600 * .2), 'rewind: 5%×(n−6) of the damage');
@@ -361,12 +370,12 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         for (const [mid, m] of [['b_a', ba], ['b_b', bb]]) (await Cr.leaveCrew(mid, m, now))(m);
         // v3.43 정보 비공개 스위치: 서버 설정(30초 캐시)으로 켜고 끄고, 환경 변수 TIDEBOUND_SECRECY가 있으면 그것이 우선. 카탈로그에 실립니다.
         const Sc = await load('game/server/secrecy.js');
-        assert.equal(await Sc.secrecyOn(now), false, 'off by default (open beta)'); const cat0 = await Sc.buildCatalog(newState(0), now); assert.equal(cat0.secret, false); assert.ok(Object.keys(cat0.unlocks).length >= 5 && Object.values(cat0.unlocks).every(v => v === false), 'v3.62 hidden unlocks judged on the server (met or not, no conditions)'); assert.ok(Array.isArray(cat0.revealed));
+        assert.equal(await Sc.secrecyOn(now), false, 'off by default (open beta)'); const cat0 = await Sc.buildCatalog(newState(0), now); assert.equal(cat0.secret, false); assert.ok(Object.keys(cat0.unlocks).length >= 3 && Object.values(cat0.unlocks).every(v => v === false), 'v3.62 hidden unlocks judged on the server (met or not, no conditions)'); assert.ok(Array.isArray(cat0.revealed));
         await Sc.setSecrecy(true, now); assert.equal(await Sc.secrecyOn(now + 1), true); assert.equal(await database.getSetting('secrecy'), 'on');
         process.env.TIDEBOUND_SECRECY = 'off'; assert.equal(await Sc.secrecyOn(now + 2), false, 'env wins'); delete process.env.TIDEBOUND_SECRECY;
         await Sc.setSecrecy(false, now); assert.equal((await Sc.buildCatalog(newState(0), now + 3)).secret, false);
         // v3.44 비밀 직업: 비공개가 꺼져 있으면 전체, 켜면 드러난 것만 전체·나머지는 실루엣(이름·설명·조건·능력치 없음). 같은 키면 다시 보내지 않음.
-        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 17); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
+        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 14, 'v3.199 은월 3~5차는 공개 · 청빈 수도승 삭제 · v3.200 궁극의 모험가 추가'); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
         assert.equal(await Sc.buildCatalog(newState(0), now + 4, openCat.key), null, 'same key: nothing to send');
         process.env.TIDEBOUND_SECRECY = 'on';
         const veiledCat = await Sc.buildCatalog(newState(0), now + 5), lich = veiledCat.jobs.find(j => j.id === 'voidSovereign');
@@ -375,7 +384,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         const opened = newState(0); opened.doorsOpened = ['voidcaller']; const voidCat = await Sc.buildCatalog(opened, now + 6);
         assert.ok(voidCat.revealed.includes('voidcaller') && !voidCat.jobs.find(j => j.id === 'voidcaller').veiled, 'a recorded reveal (old rebirth door) shows the job in full');
         // v3.47 비밀 직업의 스킬: 꺼져 있으면 67개 전부, 켜면 드러난 직업 것과 내가 배운·장착한 것만(실루엣 직업의 스킬은 없음).
-        assert.equal(openCat.skills.length, 35); assert.ok(veiledCat.skills.every(sk => veiledCat.revealed.includes(sk.job)) && !veiledCat.skills.some(sk => sk.job === 'voidSovereign'), 'only skills of revealed jobs');
+        assert.equal(openCat.skills.length, 28); assert.ok(veiledCat.skills.every(sk => veiledCat.revealed.includes(sk.job)) && !veiledCat.skills.some(sk => sk.job === 'voidSovereign'), 'only skills of revealed jobs');
         assert.ok(voidCat.skills.some(sk => sk.id === 'voidLance') && voidCat.skills.length > veiledCat.skills.length, 'revealing the job sends its skills');
         const holder = newState(0); holder.skills.push('graveHook'); const holderCat = await Sc.buildCatalog(holder, now + 7);
         assert.ok(holderCat.skills.some(sk => sk.id === 'graveHook') && holderCat.jobs.find(j => j.id === 'undead').veiled, 'an equipped secret skill is sent even if its job is still veiled');
@@ -437,7 +446,7 @@ test('v3.28 hacks VI–X in the save: intercept/savescum/ddos leave pending writ
     assert.deepEqual(s.hacker.used, { root: 1 }, 'daily counts reset'); act(s, { type: 'hackRun', id: 'botnet' }, 0);
     assert.throws(() => act(s, { type: 'hackRun', id: 'ddos', value: 'exp' }, 0), /이번 주/, 'weekly DDoS is not reset');
     assert.throws(() => act(s, { type: 'hackRun', id: 'root' }, 0), /횟수/); tick(s, () => .5);
-    assert.ok(s.achievements['hacker:root'] !== undefined, 'root achievement'); assert.ok(TITLES.some(t => t.id === 'hacker:root' && t.name === 'root'));
+    assert.ok(s.achievements['hacker:root'] !== undefined, 'root achievement'); assert.ok(TITLES.some(t => t.id === 'hacker:root' && t.name === '💻 root'));
 });
 
 test('v3.28 black hacker: needs hacker mastery, double caps and costs, failures trace (no effect, 6h lockout, 3h with wipe trace)', () => {

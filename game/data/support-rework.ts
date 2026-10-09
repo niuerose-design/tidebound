@@ -9,7 +9,7 @@ import type { Skill } from '../types';
  * - 해적(캡틴): 골드·던전 주화에 수집가의 드롭을 넘겨받고, 보유 골드 비례(scaling 'gold')·골드 투척(goldSpend) 기술을 씁니다.
  * - 패스파인더 (1차): 경험치는 그대로, 누적 처치(scaling 'catch')과 환생 횟수(perCount rebirth)에 비례합니다.
  * - 와일드헌터 (1차): 던전 클리어 + 보스 처치(scaling 'hunt', perCount hunt)과 지정 몬스터 처치(perCount species), 사냥감 추가 피해(preyBonus).
- * - 엔젤릭버스터 (1차): 직업마다 AP 0 노래 패시브(song). 음유시인 계보만 장착합니다.
+ * - 엔젤릭버스터 (1차): 직업마다 AP 0 노래 패시브(song). 엔젤릭버스터 계보 전용(exclusiveLineage)입니다.
  * - ??? 계열: 숨은 조건(secret/unlocks.ts, v3.62 옛 문)으로 드러나는 독립 1차 직업을 더합니다.
  *
  * 액티브 수치(SUPPORT_BALANCE)는 skill-balance.ts의 ACTIVE_SKILL_BALANCE에 합쳐져 상태이상 규칙·마나 배율·설명을 함께 거칩니다.
@@ -29,7 +29,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     loadedHook: { multiplier: 1.05, gamble: { min: .3, max: 1.9, accuracy: .1 }, scaling: 'luck', scalingRatio: .4 },
     allIn: { chance: .26, cooldown: 5, multiplier: 1.6, drainRatio: .35, allIn: { hpRatio: .2, hpScale: 1.2, manaScale: 2 }, scaling: 'luck', scalingRatio: .5 },
     fateRoll: { multiplier: 2.5, gamble: { min: .2, max: 1.8, accuracy: .15 }, scaling: 'luck', scalingRatio: .6 },
-    // v3.89 조커 행운 비례 비율 .8 → .3: 치명 피해 ×4 안팎의 엔드에서 다른 5차 최상위(보우마스터)를 넘지 않게. 파이널 컷(체력 · 마나 올인)은 그대로.
+    // v3.89 조커 행운 비례 비율 .3: 치명 피해 ×4 안팎의 엔드에서 다른 5차 최상위(보우마스터)를 넘지 않게. 파이널 컷(체력 · 마나 올인)은 그대로.
     jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 }, scaling: 'luck', scalingRatio: .3 },
     allOrNothing: { chance: .24, cooldown: 6, multiplier: 2.6, drainRatio: .35, allIn: { hpRatio: .3, hpScale: 1.6, manaScale: 3 }, gamble: { min: .6, max: 1.8 }, scaling: 'luck', scalingRatio: .8 },
     // ── 로그(섀도어): 변종 기록(√변종·황금 처치 수) 비례 ──
@@ -37,7 +37,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     spoilsStrike: { goldSpend: { ratio: .01, capAttack: .4, scale: 1 } },
     treasureStrike: { goldSpend: { ratio: .01, capAttack: .6, scale: 1 } },
     hoardCrush: { goldSpend: { ratio: .02, capAttack: 1.2, scale: 1 } },
-    // ── 와일드헌터 (2차): 도감 기록 비례(로그(섀도어)에서 이관) ──
+    // ── 와일드헌터 (2차): 도감 기록 비례 ──
     sigilShock: { chance: .5, cooldown: 3, multiplier: 1.2, manaCost: 4, preyBonus: .6, scaling: 'codex', scalingRatio: .008 },
     // ── 해적(캡틴): 보유 골드 비례(골드 투척은 v3.156에 섀도어 메소 익스플로전으로 옮김) ──
     coinToss: { chance: .26, cooldown: 3, multiplier: 1.15, scaling: 'gold', scalingRatio: .04 },
@@ -102,12 +102,12 @@ export const SUPPORT_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'ledgerStrike', name: '장부 일격', desc: '', level: 25, job: 'memoryMerchant', cost: 3 },
     { ...A, ...magic, id: 'sigilShock', name: '문양 전격', desc: '', level: 25, job: 'speciesChronicler', cost: 3 },
     // 노래: AP 0, 음유시인 계보 전용. 여섯 능력치를 고르게 올립니다.
-    { ...P, id: 'roadSong', name: '길손의 노래', desc: '여섯 능력치가 고르게 오르는 노래.', level: 10, job: 'bard', song: true, bonus: { hp: 30, attack: 3, magic: 3, defense: 1, resist: 1, speed: 1 } },
-    { ...P, id: 'courtSerenade', name: '궁정 세레나데', desc: '여섯 능력치와 명중이 오르는 노래.', level: 25, job: 'minstrel', song: true, bonus: { hp: 60, attack: 8, magic: 8, defense: 3, resist: 3, accuracy: .02 } },
-    { ...P, id: 'tideHarmony', name: '물결 화음', desc: '여섯 능력치와 마나 회복이 오르는 노래.', level: 25, job: 'tidalSinger', song: true, bonus: { hp: 70, attack: 6, magic: 10, defense: 3, resist: 4, manaRegen: .5 } },
-    { ...P, id: 'heroicVerse', name: '영웅의 시', desc: '여섯 능력치와 치명·회피가 오르는 노래.', level: 40, job: 'legendBard', song: true, bonus: { hp: 140, attack: 18, magic: 18, defense: 6, resist: 6, crit: .02, evasion: .01 } },
-    { ...P, id: 'oceanOde', name: '바다의 송가', desc: '여섯 능력치와 속도가 크게 오르는 노래.', level: 55, job: 'balladKing', song: true, bonus: { hp: 320, attack: 45, magic: 45, defense: 14, resist: 14, speed: 3 }, masteryMilestones: [2500, 12000, 40000, 100000] },
-    { ...P, id: 'sirenAria', name: '세이렌의 아리아', desc: '여섯 능력치와 치명·회피가 크게 오르는 노래.', level: 70, job: 'siren', song: true, bonus: { hp: 520, attack: 75, magic: 75, defense: 22, resist: 22, crit: .03, evasion: .02 }, masteryMilestones: [4000, 18000, 60000, 150000] },
+    { ...P, id: 'roadSong', name: '길손의 노래', desc: '여섯 능력치가 고르게 오르는 노래.', level: 10, job: 'bard', song: true, exclusiveLineage: 'bard', bonus: { hp: 30, attack: 3, magic: 3, defense: 1, resist: 1, speed: 1 } },
+    { ...P, id: 'courtSerenade', name: '궁정 세레나데', desc: '여섯 능력치와 명중이 오르는 노래.', level: 25, job: 'minstrel', song: true, exclusiveLineage: 'bard', bonus: { hp: 60, attack: 8, magic: 8, defense: 3, resist: 3, accuracy: .02 } },
+    { ...P, id: 'tideHarmony', name: '물결 화음', desc: '여섯 능력치와 마나 회복이 오르는 노래.', level: 25, job: 'tidalSinger', song: true, exclusiveLineage: 'bard', bonus: { hp: 70, attack: 6, magic: 10, defense: 3, resist: 4, manaRegen: .5 } },
+    { ...P, id: 'heroicVerse', name: '영웅의 시', desc: '여섯 능력치와 치명·회피가 오르는 노래.', level: 40, job: 'legendBard', song: true, exclusiveLineage: 'bard', bonus: { hp: 140, attack: 18, magic: 18, defense: 6, resist: 6, crit: .02, evasion: .01 } },
+    { ...P, id: 'oceanOde', name: '바다의 송가', desc: '여섯 능력치와 속도가 크게 오르는 노래.', level: 55, job: 'balladKing', song: true, exclusiveLineage: 'bard', bonus: { hp: 320, attack: 45, magic: 45, defense: 14, resist: 14, speed: 3 }, masteryMilestones: [2500, 12000, 40000, 100000] },
+    { ...P, id: 'sirenAria', name: '세이렌의 아리아', desc: '여섯 능력치와 치명·회피가 크게 오르는 노래.', level: 70, job: 'siren', song: true, exclusiveLineage: 'bard', bonus: { hp: 520, attack: 75, magic: 75, defense: 22, resist: 22, crit: .03, evasion: .02 }, masteryMilestones: [4000, 18000, 60000, 150000] },
 ];
 
 /** 직업 소개 갱신. */

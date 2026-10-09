@@ -7,11 +7,11 @@
 import { ODDS } from './odds';
 export const EXP_NURI = {
     id: 'expNuri',
-    /** 출현마다 누리가 나올 확률(사냥터 난이도 10 이상, Lv.50 이상, 누적 처치 1,000마리 이상. v3.112 Lv.100 미만 조건 삭제) · 난이도당. v3.52 값은 서버 전용(odds). 사냥터 난이도 1단계마다 chancePerTier만큼 더합니다. */
+    /** 출현마다 누리가 나올 확률(사냥터 난이도 10 이상, Lv.50 이상, 누적 처치 1,000마리 이상) · 난이도당. v3.52 값은 서버 전용(odds). 사냥터 난이도 1단계마다 chancePerTier만큼 더합니다. */
     get chance() { return ODDS.nuri.chance; },
     get chancePerTier() { return ODDS.nuri.perTier; },
     /** 오프라인 정산 중 등장 확률 배율(까미와 같음). */
-    offlineScale: .25,
+    offlineScale: .5,
     minLevel: 50,
     minKills: 1000,
     /** v27.59 사냥터 난이도 이 값 이상에서만 등장(확률은 그대로). */

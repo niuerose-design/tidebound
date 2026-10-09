@@ -23,7 +23,7 @@ import type { PanelProps } from './panel-props';
 import { isHackerJob } from '@/game/data/hacker';
 import { adguardLevel, canAttack, hackCost, hackCap } from '@/game/systems/hacker';
 import { HACKER } from '@/game/data/hacker';
-import { dayKey } from '@/game/data/goals';
+import { dayKey } from '@/game/data/time';
 
 /** 랭킹 줄과 상세보기에 보여 주는 주요 능력치. */
 const MAIN_STATS = ['hp', 'attack', 'magic', 'defense', 'resist', 'speed'] as const;

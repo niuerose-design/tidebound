@@ -10,7 +10,7 @@ import { SERVER_ODDS } from './odds';
 import { SECRET_JOBS } from './jobs';
 import { RARITIES } from '../data/balance';
 import { VARIANTS } from '../data/variants';
-import { FISH, HABITAT } from '../data/world';
+import { HABITAT, monsterById } from '../data/world';
 import { APPRAISAL } from '../data/economy';
 import { jobById } from '../data/classes';
 import { jobRequirements } from '../systems/progression';
@@ -19,20 +19,20 @@ export type Leak = { id: string; text: string };
 const pct = (x: number) => `${Math.round(x * 100_000) / 1000}%`;
 /** 숨은 조건의 정확한 문장(정확한 조건은 여기서만). secret/unlocks.ts의 test와 같은 내용입니다. */
 export const UNLOCK_CONDITIONS: Record<string, string> = {
-    undead: '10번 쓰러지기', clockmaker: '사냥터에서 10시간 보내기',
-    krakenkin: '보스 10마리 처치', poorMonk: 'Lv.15 이상인데 골드 100 미만', journeyman: '직업 3개 끝까지 숙달',
+    undead: '100번 쓰러지기', clockmaker: '사냥터에서 100시간 보내기',
+    journeyman: '직업 5개 끝까지 숙달', rebirthFisher: '5차 직업 3개 끝까지 숙달',
     // 표에 없는 숨은 조건 직업이 생기면 tests/odds.test.mjs가 알려 줍니다.
 };
 
 /** 드롭·확률 조각(고정). */
 function oddsLeaks(): Leak[] {
-    const o = SERVER_ODDS, fish = (id: string) => FISH.find(f => f.id === id)?.name || id;
+    const o = SERVER_ODDS, monsterName = (id: string) => monsterById(id)?.name || id;
     return [
         { id: 'drop:base', text: `장비 드롭 기본 확률은 처치당 ${pct(o.drop.chance)}, 상한 ${pct(o.drop.cap)}입니다(드롭 보너스는 이 확률에 곱해짐).` },
         { id: 'drop:rarity', text: `장비 등급 분포: ${o.drop.rarity.map((w, i) => `${RARITIES[i].name} ${pct(w)}`).join(' · ')}.` },
         { id: 'drop:tide', text: `사냥터 난이도 1마다 희귀 이상 등급 가중치가 (1 + ${o.drop.tideRarityPerTier})^(등급−1)로 늘어납니다.` },
         { id: 'drop:essence', text: `정수는 처치마다 난이도 × ${pct(o.drop.essenceChancePerTier)} 확률로, 양은 1 + 난이도 ÷ ${o.drop.essenceEveryTiers}입니다.` },
-        { id: 'drop:dungeon', text: `던전 반복 정복의 확률 장비(예전 ${pct(o.drop.dungeonRepeat)})는 v3.188에 없어졌고, 던전 주화 상점의 희귀 이상 장비 상자가 대신합니다.` },
+        { id: 'drop:dungeon', text: `던전 반복 정복의 확률 장비(예전 ${pct(o.drop.dungeonRepeat)})는 v3.201에 없어졌고, 던전 주화 상점의 희귀 이상 장비 상자가 대신합니다.` },
         { id: 'drop:golden', text: `황금 개체 기본 확률은 처치마다 ${pct(o.drop.goldenBase)}입니다.` },
         { id: 'mimic:chance', text: `숙련의 까미: 출현마다 ${pct(o.mimic.chance)} + 난이도 1당 ${pct(o.mimic.perTier)}p, 사냥터 순서마다 ×${o.mimic.stageStep}씩 더 곱합니다.` },
         { id: 'mimic:tiers', text: `까미 당첨: 소 ${pct(o.mimic.tiers[0])} · 중 ${pct(o.mimic.tiers[1])} · 대 ${pct(o.mimic.tiers[2])}(행운의 편지 8단계부터 대 ${pct(o.mimic.letterJackpot)}).` },
@@ -45,7 +45,7 @@ function oddsLeaks(): Leak[] {
         { id: 'variant:swarm', text: `무리 규모 가중치 ×5 : ×100 : ×500 = ${o.variant.swarmWeights.join(' : ')}, 무리 서식지의 ×${HABITAT.sizes[1]}은 ${pct(o.variant.habitatBig)}.` },
         ...Object.entries(o.variant.region).map(([region, row]) => ({ id: `variant:region:${region}`, text: `${region}의 변종 배율: ${VARIANTS.map(v => `${v.name} ×${row[v.id] ?? 1}`).join(' · ')}.` })),
         { id: 'appraisal', text: `상점 감정 등급 확률: ${APPRAISAL.map((r, i) => `${RARITIES[r.rarity].name} ${pct(o.appraisal[i])}`).join(' · ')}.` },
-        ...Object.entries(o.spawn).filter(([, w]) => w > 0).map(([id, w]) => ({ id: `spawn:${id}`, text: `희귀 몬스터 ${fish(id)}의 출현 가중치는 ×${w}(보통 몬스터 ×1)입니다.` })),
+        ...Object.entries(o.spawn).filter(([, w]) => w > 0).map(([id, w]) => ({ id: `spawn:${id}`, text: `희귀 몬스터 ${monsterName(id)}의 출현 가중치는 ×${w}(보통 몬스터 ×1)입니다.` })),
     ];
 }
 /** 히든 직업 조각: 숨은 조건 또는 전직 조건. 이미 들어가 본 직업은 뺍니다. */

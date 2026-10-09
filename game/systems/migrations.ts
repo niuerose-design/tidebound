@@ -1,10 +1,10 @@
 import { trainingFor, TRAINING_PASSIVE } from '../data/training';
-import { jobById } from '../data/classes';
+import { jobById, BASE_JOB } from '../data/classes';
 import type { State } from '../types';
 import { addLog } from './state';
 import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
 import { RELICS, RESEARCH_GROWTH } from '../data/economy';
-import { syncRelicPower, tuneOnyx, fixRelicImprints } from './equipment';
+import { syncRelicPower, tuneOnyx, fixRelicImprints, ownedItems } from './equipment';
 import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
@@ -14,10 +14,6 @@ import { newState } from './engine';
 import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
 import { RANKS, RANK_LEGACY_NEED, rankIndex, rankState } from '../data/rank';
 import { OLD_GEAR_NAMES, RENAMED_GEAR, RENAMED_AFFIX, gearName } from '../data/maple-gear';
-/**
- * v8(게임 v20.5): 골드 훈련 삭제와 함께 이전 버전의 세이브는 이름만 남기고 새로 시작합니다.
- * 이후 버전 변경은 이 함수에 단계별 추가 마이그레이션으로 이어 붙입니다.
- */
 /** v25.23 세계석 연구 ‘황금 개체’(base 8·step 5) 삭제: 투자한 세계석을 전액 돌려줍니다. */
 function refundGoldenResearch(s: State) {
     const rank = (s.permanent as Record<string, number | undefined>)?.goldenFish || 0;
@@ -218,7 +214,9 @@ export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor'
     /** v3.163 제논 재개편: 곁가지 태엽 기계공 · 올라운더(조화는 본줄기가 가져감) · 숨은 칠전팔기 모험가(쓰러진 횟수 비례는 다크나이트가 맡음)를 지웠습니다. */
     'clockworkAngler', 'allRounder', 'fallenAngler',
     /** v3.164 팬텀 곁가지 트릭스터(약화 · 회피 패시브)는 장치가 없어 지웠습니다. */
-    'inkMime'];
+    'inkMime',
+    /** v3.199 히든 정리: 숨은 2차 청빈 수도승(호영 가지)을 지웠습니다. */
+    'poorMonk'];
 export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', 'headwindTack', 'galeLegs', 'dawnFlare', 'morningCalm', 'sunDive', 'brineLungs', 'heronStill', 'nightEyes',
     /** v3.170 수련 액티브 10개 · 패시브 4개(맹세의 결의 · 관중의 환호 · 기사의 갑옷 · 생명의 기운): 계보마다 패시브 4개로 맞추며 삭제. */
     'arcane', 'cut', 'hushCurrent', 'undertow', 'rushCurrent', 'netThrow', 'oathShout', 'currentJam', 'driftwoodShove', 'rottenBait', 'resolve', 'showmanship', 'scales', 'vital',
@@ -243,14 +241,18 @@ export const RETIRED_SKILLS = ['bareGrab', 'ironGrip', 'mistSlash', 'fogVeil', '
     /** v3.164 트릭스터의 스모크 스크린 · 팬텀 섀도우. */
     'smokeVeil', 'slipperyStep',
     /** v3.143 숨은 2차 캐논슈터(복합 연타)는 메카닉 재개편에서 지웠습니다. */
-    'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind'];
+    'broadside', 'powderKeg', 'devour', 'gorgedMaw', 'nullStep', 'phaseCloak', 'crystalShard', 'latticeMind',
+    /** v3.199 청빈 수도승의 빈손 장타 · 청빈 서약. */
+    'emptyPalm', 'vowOfPoverty',
+    /** v3.200 궁극의 모험가는 자체 각성기를 두지 않아 옛 윤회의 나그네의 윤회의 일격을 지웠습니다. */
+    'soulHook'];
 /**
  * v3.64 히든 직업 재배치 · v3.138 5차 통폐합: 삭제한 직업·스킬의 기록(숙련·숙달·습득·계승·SP·한계돌파·편성)을 보상 없이 지웁니다(오픈 베타 결정).
  * 지금 그 직업이면 초보자로 돌아갑니다. 여러 번 불러도 같습니다.
  */
 export function retireHiddenJobs(s: State) {
     const jobs = new Set(RETIRED_JOBS), skills = new Set(RETIRED_SKILLS), drop = (ids?: string[]) => ids?.filter(id => !skills.has(id));
-    if (jobs.has(s.job)) s.job = 'fisher';
+    if (jobs.has(s.job)) s.job = BASE_JOB;
     if (s.jobGoal && jobs.has(s.jobGoal)) delete s.jobGoal;
     s.unlockedJobs = s.unlockedJobs.filter(id => !jobs.has(id));
     if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => !jobs.has(id));
@@ -261,6 +263,21 @@ export function retireHiddenJobs(s: State) {
     if (s.skillPins) s.skillPins = drop(s.skillPins);
     if (s.skillHidden) s.skillHidden = drop(s.skillHidden);
     for (const p of Object.values(s.presets || {})) p.skills = drop(p.skills)!;
+}
+/**
+ * v3.200 윤회의 나그네(1차, 공개) → 궁극의 모험가(히든 5차, id 그대로): 옛 1차 기록으로 5차 직업에 머물지 않도록 한 번만 정리합니다.
+ * 지금 그 직업이면 초보자로 돌아가고, 직업 숙련 · 전직 기록을 보상 없이 지웁니다(윤회의 일격 기록은 RETIRED_SKILLS가 지움).
+ */
+export function remakeRebirthFisher(s: State) {
+    if (s.ultimateRemade) return;
+    s.ultimateRemade = true;
+    const job = 'rebirthFisher';
+    if (s.job === job) { s.job = BASE_JOB; addLog(s, '윤회의 나그네가 히든 5차 직업으로 바뀌어 초보자로 돌아왔습니다.', 'system'); }
+    if (s.jobGoal === job) delete s.jobGoal;
+    s.unlockedJobs = s.unlockedJobs.filter(id => id !== job);
+    if (s.doorsOpened) s.doorsOpened = s.doorsOpened.filter(id => id !== job);
+    delete s.jobMastery[job];
+    if (s.masteryKept) s.masteryKept = s.masteryKept.filter(id => id !== job);
 }
 /** v3.135 나이트워커 2~5차 · 골령술사와 그 스킬을 지우고 1차 망인(undead)만 남깁니다. */
 export const NIGHT_WALKER_JOBS = ['skeleton', 'bonecaster', 'soulHarvester', 'lichKing', 'deathEmperor'];
@@ -324,6 +341,10 @@ export function moveToTraining(s: State) {
     if (!s.unlockedJobs.includes(next)) s.unlockedJobs.push(next);
     s.jobMastery[next] ??= 0;
 }
+/**
+ * v8(게임 v20.5): 골드 훈련 삭제와 함께 이전 버전의 세이브는 이름만 남기고 새로 시작합니다.
+ * 이후 버전 변경은 이 함수에 단계별 추가 마이그레이션으로 이어 붙입니다.
+ */
 export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.31 효과가 없던 스킬 특화(skillSpecializations)는 세이브에서 지웁니다.
     if ('skillSpecializations' in s) delete (s as Record<string, unknown>).skillSpecializations;
@@ -347,7 +368,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of [...s.inventory, ...Object.values(s.equipment)]) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -356,10 +377,6 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     return s;
 }
 
-/**
- * v27.46 장비 이름 메이플 개편: 가방·착용 장비의 옛 이름(낚싯대·구명조끼·나침반 …)과 옵션 이름(유영)을 새 이름으로 바꿉니다.
- * 옛 이름만 골라 바꾸므로 여러 번 불러도 같고, 바꿀 게 없으면 아무것도 하지 않습니다. 능력치·등급·옵션 값은 그대로입니다.
- */
 /** v3.8 자동 강화 연구 비용 100 → 10: 이미 찍은 세이브에 차액 90을 한 번 돌려줍니다. */
 export const AUTO_STAR_REFUND = 90;
 /** v3.14 이미 가진 칠흑 장신구를 물건 도감에 자동 등록합니다(장비 소모 없음). */
@@ -371,6 +388,10 @@ export function refundAutoStar(s: State) {
     s.pearls += AUTO_STAR_REFUND;
     return AUTO_STAR_REFUND;
 }
+/**
+ * v27.46 장비 이름 메이플 개편: 가방·착용 장비의 옛 이름(낚싯대·구명조끼·나침반 …)과 옵션 이름(유영)을 새 이름으로 바꿉니다.
+ * 옛 이름만 골라 바꾸므로 여러 번 불러도 같고, 바꿀 게 없으면 아무것도 하지 않습니다. 능력치·등급·옵션 값은 그대로입니다.
+ */
 export function renameMapleGear(s: State) {
     let changed = 0;
     for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) {
@@ -395,7 +416,7 @@ export function boostPenetrationAffixes(s: State) {
     if (s.penetrationBoosted) return 0;
     let n = 0;
     const scale = (v: number) => Math.round(v * PENETRATION.gearScale * 10000) / 10000;
-    for (const item of [...s.inventory, ...Object.values(s.equipment)]) for (const x of item?.affixes || []) {
+    for (const item of ownedItems(s)) for (const x of item?.affixes || []) {
         if (x.stat === 'penetration' && x.value > 0) { x.value = scale(x.value); n++; }
         if (x.stat2 === 'penetration' && (x.value2 ?? 0) > 0) { x.value2 = scale(x.value2!); n++; }
     }

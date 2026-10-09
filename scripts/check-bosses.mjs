@@ -14,14 +14,13 @@ const game = loadGame(), { load } = game;
 const { stats, snapshot } = await load('systems/stats');
 const { strike, fighterSpeed } = await load('systems/combat');
 const { jobById } = await load('data/classes');
-const { FISH, STAGES, DUNGEONS, STAGE_FIT, tideLiftFish } = await load('data/world');
+const { MONSTERS, STAGES, DUNGEONS, STAGE_FIT, tideLiftMonster } = await load('data/world');
 const { scaledEnemyStats, abyssEnemyStats, profile, foeSkills } = await load('data/encounters');
 const { dungeonModeTier, ABYSS_TUNING } = await load('data/balance');
-const { tierHealth, tierAttack } = await load('systems/meta');
 const { ONYX, onyxBossFor } = await load('data/onyx');
 const { RAIDS, RAID } = await load('data/altar');
 const { skillMasteryRanks } = await load('systems/progression');
-const { abyssReference } = await load('systems/encounter');
+const { abyssReference, onyxEnemyStats } = await load('systems/encounter');
 const { duel, raidBossSnapshot } = await load('systems/duel');
 const { referenceBody, bodyReport } = await referenceBodies(game);
 
@@ -31,12 +30,12 @@ const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion,curseQueen,lifeOcean
 const REBIRTHS = arg('--rebirths') ? arg('--rebirths').split(',').map(Number) : null;
 const MAX_TURNS = 400;
 // 실험 플래그(게임 데이터는 그대로, 측정에만 적용): --hell-tier N · --nightmare-tier N(던전 난이도), --boss-hp f(일반 던전 보스 체력 배율),
-// --entry '{"caldera":1}'(입장 환생 바꿔 재기), --abyss '{"hp":60000,"attack":3}'(무릉 1층 기준), --onyx-hp '{"onyxDusk":800}'(칠흑 체력 배율), --raid-hp '{"zakum":3e9}'(월드보스 체력).
+// --entry '{"caldera":1}'(입장 환생 바꿔 재기), --abyss '{"hp":60000,"attack":3}'(무릉 1층 기준), --onyx-hp '{"onyxDusk":800}'(칠흑 체력 배율 hpMul), --raid-hp '{"zakum":3e9}'(월드보스 체력).
 const J = (k, d) => arg(k) ? JSON.parse(arg(k)) : d;
 const HELL_TIER = Number(arg('--hell-tier', dungeonModeTier('hell'))), NIGHTMARE_TIER = Number(arg('--nightmare-tier', dungeonModeTier('nightmare'))), BOSS_HP = Number(arg('--boss-hp', 1));
 const ENTRY = J('--entry', {}), ONYX_HP = J('--onyx-hp', {}), RAID_HP = J('--raid-hp', {});
-// --onyx-tier-sqrt: 칠흑에만 난이도 배율을 √로 완만하게(체력 √tierHealth · 공격 √tierAttack) 실험.
-const ONYX_TIER_SQRT = process.argv.includes('--onyx-tier-sqrt');
+// --abyss-curve: 무릉도장만 층(1 · 5 · 10 · 20 · 30 · 50) × 몸(R5 · 20 · 50 · 100)으로 오르기 곡선을 잽니다(--abyss 조정과 함께).
+const ABYSS_CURVE = process.argv.includes('--abyss-curve');
 Object.assign(ABYSS_TUNING, J('--abyss', {}));
 
 const bodies = new Map();
@@ -54,19 +53,19 @@ function fight(a, b, rng, cap = MAX_TURNS) {
 }
 const avg = xs => xs.reduce((a, x) => a + x, 0) / Math.max(1, xs.length);
 const pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : n >= 1e4 ? `${Math.round(n / 1e4)}만` : `${Math.round(n)}`;
-const fishOf = id => FISH.find(f => f.id === id);
+const monsterById = id => MONSTERS.find(f => f.id === id);
 const out = { bodies: {}, dungeon: [], onyx: [], raid: [] };
 
 // ── 던전 ──────────────────────────────────────────────────────────────────────────────────────
-/** 한 몸으로 던전 한 번: 지역 던전 2연전(v3.190) · 무릉도장 5연전, 체력 · 마나 · 대기 이어짐(check-tier5 규칙). 보스 판은 따로 턴을 셉니다. */
-function dungeonRun(s, st, d, tier, seed) {
+/** 한 몸으로 던전 한 번: 지역 던전 2연전(v3.201) · 무릉도장 5연전, 체력 · 마나 · 대기 이어짐(check-tier5 규칙). 보스 판은 따로 턴을 셉니다. */
+function dungeonRun(s, st, d, tier, seed, depth = 1) {
     const rng = random(seed * 977 + d.id.length), cd = {}; let hp = st.hp, mana = st.mana, ok = true, w = 0, turns = 0, bossTurns = 0, bossHpLeft = 0;
     const level = d.id === 'abyss' ? d.level : d.level;
-    const waves = d.fish.length;
+    const waves = d.monsters.length;
     for (; w < waves && ok; w++) {
-        const last = w === waves - 1, id = last && d.bossFish ? d.bossFish : d.fish[w], f0 = fishOf(id);
-        const f = d.id === 'abyss' ? f0 : tideLiftFish(f0, tier, s.level);
-        const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), 1, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: last ? 4 : w });
+        const last = w === waves - 1, id = last && d.bossMonster ? d.bossMonster : d.monsters[w], f0 = monsterById(id);
+        const f = d.id === 'abyss' ? f0 : tideLiftMonster(f0, tier, s.level);
+        const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), depth, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: last ? 4 : w });
         if (last && d.id !== 'abyss' && BOSS_HP !== 1) est.hp = Math.round(est.hp * BOSS_HP);
         const a = player(s, st, hp, mana, cd), b = foeOf({ ...f, level: f.level }, est, { boss: last }), r = fight(a, b, rng);
         ok = r.won; hp = a.hp; mana = a.mana; turns += r.turns;
@@ -77,7 +76,7 @@ function dungeonRun(s, st, d, tier, seed) {
 }
 function measureDungeons() {
     const rows = [];
-    for (const d of DUNGEONS.filter(d => d.bossFish)) {
+    for (const d of DUNGEONS.filter(d => d.bossMonster)) {
         // 몸: 입장 환생 · 적정 환생(그 던전 지역의 최상위 사냥터 fit) · 헬은 환생 50 · 나이트메어는 환생 100.
         const stage = STAGES.filter(st => !st.habitat).sort((a, b) => Math.abs(a.level - d.level) - Math.abs(b.level - d.level))[0];
         const fit = Math.max(d.rebirth, STAGE_FIT[stage.id] ?? d.rebirth);
@@ -96,11 +95,10 @@ function measureDungeons() {
 
 // ── 칠흑 ──────────────────────────────────────────────────────────────────────────────────────
 function onyxFoe(habitat, tier, playerLevel) {
-    const def = onyxBossFor(habitat.region), top = tideLiftFish([...habitat.fish].map(x => fishOf(x)).sort((a, b) => b.level - a.level)[0], tier, playerLevel);
-    const f = { ...fishOf(def.id), level: top.level, hp: Math.round(top.hp * (ONYX_HP[def.id] ?? ONYX.hp)), attack: Math.round(top.attack * ONYX.attack), defense: top.defense };
-    const st = scaledEnemyStats(f, { boss: false, tier: ONYX_TIER_SQRT ? 0 : tier });
-    if (ONYX_TIER_SQRT && tier > 0) { st.hp = Math.round(st.hp * Math.sqrt(tierHealth(tier))); st.attack = Math.round(st.attack * Math.sqrt(tierAttack(tier))); st.magic = Math.round((st.magic || 0) * Math.sqrt(tierAttack(tier))); }
-    return { def, f, st };
+    // 게임 규칙 그대로(systems/encounter.ts spawn): 서식지 최강(난이도만큼 레벨 상승) × hpMul · 공격 ×3, 난이도 배율은 √(onyxEnemyStats). --onyx-hp는 hpMul 실험.
+    const def = onyxBossFor(habitat.region), top = tideLiftMonster([...habitat.monsters].map(x => monsterById(x)).sort((a, b) => b.level - a.level)[0], tier, playerLevel);
+    const f = { ...monsterById(def.id), level: top.level, hp: Math.round(top.hp * (ONYX_HP[def.id] ?? def.hpMul)), attack: Math.round(top.attack * ONYX.attack), defense: top.defense };
+    return { def, f, st: onyxEnemyStats(f, tier) };
 }
 function measureOnyx() {
     const rows = [];
@@ -123,28 +121,43 @@ function measureOnyx() {
 }
 
 // ── 월드보스 ───────────────────────────────────────────────────────────────────────────────────
-const RAID_TARGET = { balrog: { rebirth: 0, kills: 10 }, zakum: { rebirth: 50, kills: 100 }, horntail: { rebirth: 100, kills: 550 } };
+// 월드보스 목표(docs/boss-plan.md §8.3, v3.191): 1단계는 센 모험가가 잡는 것이 의도(발록 R10 · 자쿰 R50 1번). 같은 날 다시 소환되면 단계가 올라(RAID_STAGE) 점점 어려워집니다.
+// 처치까지 횟수는 '한 몸이 혼자 다 깎을 때'의 셈. --raid-stage 1,3,5 로 단계별 측정(지속 피해는 1단계 체력 기준 dotHpCap 포함).
+const RAID_TARGET = { balrog: { rebirth: 0, kills: 10 }, zakum: { rebirth: 50, kills: 1 }, horntail: { rebirth: 100, kills: 10 } };
+const RAID_STAGES = (arg('--raid-stage') || '1').split(',').map(Number);
 function measureRaids() {
     const rows = [];
     for (const raid0 of RAIDS) {
         const raid = RAID_HP[raid0.id] ? { ...raid0, stats: { ...raid0.stats, hp: RAID_HP[raid0.id] } } : raid0;
         const t = RAID_TARGET[raid.id], plans = [['목표 몸', t.rebirth], ['한 단계 아래', raid.id === 'balrog' ? 0 : raid.id === 'zakum' ? 20 : 50], ['한 단계 위', raid.id === 'balrog' ? 10 : raid.id === 'zakum' ? 100 : 100]];
+        for (const stage of RAID_STAGES) {
+        const staged = raidBossSnapshot(raid, undefined, stage), hpMax = staged.stats.hp;
         for (const [label, r] of plans) {
             if (REBIRTHS && !REBIRTHS.includes(r)) continue;
             const perJob = JOB_IDS.map(jobId => {
                 const s = bodyFor(r, jobId);
-                const runs = Array.from({ length: SEEDS }, (_, k) => { const rr = duel(snapshot(s), raidBossSnapshot(raid), true, random(k * 53 + r + 1), RAID.maxTurns); return { dealt: raid.stats.hp - Math.max(0, rr.opponentHp), died: rr.playerHp <= 0 ? 1 : 0, turns: rr.turns }; });
+                const runs = Array.from({ length: SEEDS }, (_, k) => { const rr = duel(snapshot(s), raidBossSnapshot(raid, undefined, stage), true, random(k * 53 + r + 1), RAID.maxTurns); return { dealt: hpMax - Math.max(0, rr.opponentHp), died: rr.playerHp <= 0 ? 1 : 0, turns: rr.turns }; });
                 return { jobId, dealt: avg(runs.map(x => x.dealt)), died: avg(runs.map(x => x.died)), turns: avg(runs.map(x => x.turns)) };
             });
-            const dealt = avg(perJob.map(x => x.dealt)), row = { raid: raid.id, name: raid.name, label, rebirth: r, target: t, dealt, kills: raid.stats.hp / Math.max(1, dealt), died: avg(perJob.map(x => x.died)), turns: avg(perJob.map(x => x.turns)), perJob };
+            const dealt = avg(perJob.map(x => x.dealt)), row = { raid: raid.id, name: raid.name, label, rebirth: r, stage, target: t, dealt, kills: hpMax / Math.max(1, dealt), died: avg(perJob.map(x => x.died)), turns: avg(perJob.map(x => x.turns)), perJob };
             rows.push(row);
-            console.log(`${raid.name.padEnd(6, '　')} ${label.padEnd(8, '　')} R${String(r).padEnd(3)} 한 도전 ${big(dealt)} · 처치까지 ${row.kills >= 1e4 ? '1만+' : row.kills.toFixed(row.kills < 10 ? 1 : 0)}번(목표 ${t.kills}, R${t.rebirth}) · 사망 ${pct(row.died)} · ${row.turns.toFixed(0)}턴 | ${perJob.map(x => `${jobById(x.jobId).name.replace(' (5차)', '')} ${big(x.dealt)}`).join(' · ')}`);
+            console.log(`${raid.name.padEnd(6, '　')}${stage > 1 ? ` ${stage}단계` : ''} ${label.padEnd(8, '　')} R${String(r).padEnd(3)} 한 도전 ${big(dealt)} · 처치까지 ${row.kills >= 1e4 ? '1만+' : row.kills.toFixed(row.kills < 10 ? 1 : 0)}번(목표 ${t.kills}, R${t.rebirth}) · 사망 ${pct(row.died)} · ${row.turns.toFixed(0)}턴 | ${perJob.map(x => `${jobById(x.jobId).name.replace(' (5차)', '')} ${(hpMax / Math.max(1, x.dealt)).toFixed(1)}번`).join(' · ')}`);
+        }
         }
     }
     out.raid = rows;
 }
 
 const want = k => !ONLY || ONLY === k;
+if (ABYSS_CURVE) {
+    const d = DUNGEONS.find(x => x.id === 'abyss');
+    console.log(`## 무릉도장 층 곡선 (1층 기준 체력 ${ABYSS_TUNING.hp} · 공격 ×${ABYSS_TUNING.attack}, 층마다 ×${ABYSS_TUNING.hpGrowth} · ×${ABYSS_TUNING.attackGrowth})`);
+    for (const r of REBIRTHS || [5, 20, 50, 100]) for (const depth of [1, 5, 10, 20, 30, 50]) {
+        const perJob = JOB_IDS.map(jobId => { const s = bodyFor(r, jobId), st = stats(s); const runs = Array.from({ length: SEEDS }, (_, k) => dungeonRun(s, st, d, 0, k + 1, depth)); return { cleared: avg(runs.map(x => x.cleared)), turns: avg(runs.map(x => x.turns)), hpLeft: avg(runs.map(x => x.hpLeft)) }; });
+        console.log(`R${String(r).padEnd(3)} ${String(depth).padStart(2)}층  클리어 ${pct(avg(perJob.map(x => x.cleared)))} · 턴 ${avg(perJob.map(x => x.turns)).toFixed(0)} · 남은 체력 ${pct(avg(perJob.map(x => x.hpLeft)))} | ${perJob.map((x, i) => `${jobById(JOB_IDS[i]).name.replace(' (5차)', '')} ${pct(x.cleared)}`).join(' · ')}`);
+    }
+    process.exit(0);
+}
 if (process.argv.includes('--body')) for (const r of REBIRTHS || [0, 5, 10, 20, 50, 100]) for (const jobId of JOB_IDS) console.log(r, jobId, JSON.stringify(bodyReport(bodyFor(r, jobId))));
 if (want('dungeon')) { console.log('## 던전 (노말 5연전 · 입장 환생 몸, 헬 R50, 나이트메어 R100)'); measureDungeons(); }
 if (want('onyx')) { console.log('## 칠흑 (서식지 적정 환생 몸 · 80턴)'); measureOnyx(); }

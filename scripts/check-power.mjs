@@ -1,6 +1,6 @@
 // 전투력 점검(v3.66): stats.power의 공식이 실제 전투 판정(strike)과 같은 방향·크기로 움직이는지 봅니다.
 // 기준 캐릭터에서 능력치 하나씩(치명타 피해·치명타·관통·공격·체력·방어·회피) 또는 장비 세트를 바꿔, 기준 몬스터를 때린 평균 피해(공격)와
-// 기준 몬스터에게 맞은 평균 피해로 나눈 체력(버티는 힘)을 실제로 굴려 공격^.65 × 버티는 힘^.35(v3.134 전투력과 같은 가중) 비율을 구하고, 전투력 비율과 비교합니다.
+// 기준 몬스터에게 맞은 평균 피해로 나눈 체력(버티는 힘)을 실제로 굴려 공격^.7 × 버티는 힘^.3(v3.197 전투력과 같은 가중) 비율을 구하고, 전투력 비율과 비교합니다.
 // 사용: node scripts/check-power.mjs
 import assert from 'node:assert/strict';
 import { loadGame } from './lib/game-modules.mjs';
@@ -17,7 +17,7 @@ function simulated(st) {
     for (let i = 0; i < N; i++) { const me = fighter({ ...st, speed: 10 }, 'me'), mob = fighter(MOB, 'mob'); strike(me, mob, rng); dealt += 1e15 - mob.hp; }
     for (let i = 0; i < N; i++) { const me = fighter({ ...st, speed: 10, thorns: 0 }, 'me'), mob = fighter(MOB, 'mob'); strike(mob, me, rng); taken += 1e15 - me.hp; }
     const offense = dealt / N, durability = st.hp / Math.max(1e-9, taken / N) * (1 + (st.lifesteal || 0));
-    // v3.134 전투력과 같은 가중(공격 .65 · 버티는 힘 .35)으로 묶습니다.
+    // v3.134 전투력과 같은 가중(v3.197 공격 .7 · 버티는 힘 .3)으로 묶습니다.
     return Math.pow(offense, POWER_WEIGHT.offense) * Math.pow(durability, POWER_WEIGHT.durability);
 }
 const s = newState(0); s.level = 100; s.rebirths = 100; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 0 };

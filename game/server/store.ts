@@ -5,7 +5,6 @@ import { snapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
 import { db, ConfigError, type SlotRow } from './db';
 import { ascended, ascensionOf, lifetimeRebirths } from '../data/ascension';
-import { weekKey, weekSeason, monthKey, monthSeason, previousMonthKey } from '../data/goals';
 import type { RankingRow } from './db';
 import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
@@ -13,10 +12,11 @@ import { refreshEvents } from './events-config';
 import { ensurePuzzleKey, readHacks, syncHackerBoard } from './hacks';
 import { isHacker } from '../systems/hacker';
 import { accountFromRequest, AuthError, readSlot } from './auth';
-import { FISH } from '../data/world';
+import { MONSTERS } from '../data/world';
 import { JOBS } from '../data/classes';
 import { jobMastered } from '../systems/progression';
 import { mergeSlots, slotUnlocked, slotUnlockText, ACCOUNT_RULES, SLOT_COUNT, type SlotSummary } from '../data/account';
+import { weekKey, weekSeason, monthKey, monthSeason, previousMonthKey } from '../data/time';
 export { db };
 export class ApiError extends Error {
     constructor(message: string, public status = 400) { super(message); }
@@ -34,8 +34,8 @@ export async function identity(req: Request) { return (await session(req)).id; }
 const ACCOUNT_REFRESH_MS = 10 * 60_000;
 /** 슬롯 요약: 계정 보너스에 쓰는 기록만 담습니다. */
 function slotSummary(s: State, slot: number, now: number): SlotSummary {
-    const bosses = FISH.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
-    return { slot, name: s.name, job: s.job, level: s.level, rebirths: s.rebirths || 0, lifetimeRebirths: lifetimeRebirths(s), ascension: ascensionOf(s), mastered: JOBS.filter(j => jobMastered(s, j)).map(j => j.id), species: FISH.filter(f => (s.book?.[f.id] || 0) > 0).map(f => f.id), bossKills: bosses, abyssBest: s.abyssBest || 0, updatedAt: now };
+    const bosses = MONSTERS.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
+    return { slot, name: s.name, job: s.job, level: s.level, rebirths: s.rebirths || 0, lifetimeRebirths: lifetimeRebirths(s), ascension: ascensionOf(s), mastered: JOBS.filter(j => jobMastered(s, j)).map(j => j.id), species: MONSTERS.filter(f => (s.book?.[f.id] || 0) > 0).map(f => f.id), bossKills: bosses, abyssBest: s.abyssBest || 0, updatedAt: now };
 }
 /** 보너스 단계가 바뀌는 값만 비교해, 레벨업·처치마다 올리지 않습니다. */
 const summaryKey = (x: SlotSummary) => `${x.lifetimeRebirths ?? x.rebirths}|${x.ascension || 0}|${x.rebirths}|${x.mastered.join(',')}|${x.species.length}|${Math.floor(x.bossKills / ACCOUNT_RULES.bossPer)}|${Math.floor(x.abyssBest / ACCOUNT_RULES.abyssPer)}`;
@@ -101,7 +101,7 @@ export async function register(id: string) {
     return state;
 }
 /**
- * 저장 전에 한 번: 시즌(월)이 바뀌었으면 지난 시즌 순위를 기록하고 점수를 1000으로 되돌립니다. v3.106 순위 보상(세계석)은 없앴습니다(점수 · 순위만).
+ * 저장 전에 한 번: 시즌(월)이 바뀌었으면 지난 시즌 순위를 기록하고 점수를 1000으로 되돌립니다.
  * 지난 시즌(또는 v25.11 이전 영구 랭킹)에 방어 정보가 있었으면 같은 정보로 새 시즌 행을 만들어 기록판이 비지 않게 합니다. 같은 시즌이면 질의 0.
  */
 export async function syncDuelSeason(id: string, s: State, now: number) {

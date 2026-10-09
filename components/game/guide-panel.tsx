@@ -194,7 +194,7 @@ export function Guide({ s }: { s?: State }) {
                     limit={`임기는 ${ALTAR.throneTermMs / 86_400_000}일. 자리가 비면 다음 신은 다시 ${ALTAR.firstGod.name}이고, 앉으려면 그 신을 쓰러뜨려야 합니다.`}/>
                 <Rule icon={<Swords size={19}/>} title="월드보스"
                     effect={`소환 탭의 월드보스 게이지(${RAIDS.map(r => `${r.name} ${r.cost.toLocaleString()}`).join(' · ')})가 차면 그 보스가 나타납니다(${RAIDS.map(r => `${r.name} ${r.lifetimeHours}시간`).join(' · ')}, 격파 뒤 ${RAID.respawnMs / 3600_000}시간 대기). 체력은 서버가 함께 쓰는 하나의 값이라 모든 모험가의 피해가 누적되고, 0이 되면 격파입니다.`}
-                    condition={`도전은 ${RAID.cooldownMs / 60_000}분에 한 번, 한 번에 최대 ${RAID.maxTurns}턴. 격파하면 한 번이라도 때린 모험가 전원이 골드·세계석(·SP)을 다음 동기화 때 받고, 마지막 일격은 보너스를 더 받으며, 서버 전체에 축복이 열립니다. 피해 순위는 제단의 월드보스 카드에서 봅니다.`}
+                    condition={`도전은 ${RAID.cooldownMs / 60_000}분에 한 번, 한 번에 최대 ${RAID.maxTurns}턴. 격파하면 한 번이라도 때린 모험가 전원이 세계석(·SP)을 다음 동기화 때 받고, 마지막 일격은 보너스를 더 받습니다. 피해 순위는 제단의 월드보스 카드에서 봅니다.`}
                     limit="한 번에 한 마리만 나타납니다. 시간 안에 못 잡으면 떠나고 게이지는 다시 채워야 합니다. 신 소환과는 별개입니다."/>
                 {/* v3.103 사냥터 개편: 입장 환생 · 적정 환생 */}
                 <Rule icon={<Target size={19}/>} title="사냥터 입장 · 적정 환생"
@@ -213,7 +213,7 @@ export function Guide({ s }: { s?: State }) {
                     effect={`정수의 슬라임: 사냥터 난이도 ${ESSENCE_SLIME.minTier} 이상 · Lv.${ESSENCE_SLIME.minLevel} 이상 · 누적 ${ESSENCE_SLIME.minKills}마리부터 드물게 나오고(누리와 같은 식으로 난이도가 오를수록 자주), 잡으면 그 난이도의 정수 묶음(1 + ⌊난이도 ÷ ${ESSENCE_SLIME.bundleTiers}⌋)에 ${ESSENCE_SLIME.tiers.map(t => `${t.label} ×${t.mul}`).join(' · ')}을 곱한 정수를 줍니다. 대왕 까미 · 대왕 누리 · 대왕 정수 슬라임: 작은 녀석을 ${KING.minBookKills}마리 잡은 뒤부터 그 녀석이 나올 자리에 드물게 대신 나타나며, 잡으면 ‘대’ 당첨의 ×${KING.rewardMul}이 확정입니다(숙련 ${(100000 * KING.rewardMul).toLocaleString()} · 경험치 ${Math.round(EXP_NURI.tiers[2].pct * KING.rewardMul * 100)}% 또는 출현 ${Math.round(EXP_NURI.tiers[2].pct * KING.rewardMul * EXP_NURI.encountersPerPct)}회분 · 정수 묶음 ×${ESSENCE_SLIME.tiers[2].mul * KING.rewardMul}).`}
                     condition={`대왕은 체력이 작은 녀석의 ×${KING.hp}, 공격이 그 사냥터 최강 몬스터의 ×${KING.attack}이고 ${KING.turns}턴(${Math.round(KING.turns * 2 / 60)}분) 안에 못 잡으면 달아납니다(보상 없음). 난이도를 낮추면 더 잘 잡힙니다. 호루라기로는 부를 수 없습니다.`}
                     limit="특별 도감에 따로 실리고 일반 도감 수에는 들지 않습니다. 황금 개체 · 변종이 되지 않고 던전에서는 나오지 않습니다."/>
-                {/* v3.160 호루라기 · v3.162 정수의 슬라임 추가, 전투 화면 장면 구석 버튼 */}
+                {/* v3.160 호루라기 · v3.162 정수의 슬라임(전투 화면 장면 구석 버튼) */}
                 <Rule icon={<Sparkles size={19}/>} title="호루라기"
                     effect={`전투 화면 장면 오른쪽 아래의 작은 버튼. SP ${WHISTLE.sp}를 내면 다음 사냥터 출현이 고른 특별 몬스터로 정해집니다: ${WHISTLE_TARGETS.map(t => t.name).join(' · ')}. 보상은 자연 등장과 같습니다(${WHISTLE_TARGETS.map(t => `${t.name} ${t.reward}`).join(' / ')}).`}
                     condition={`하루 ${WHISTLE.perDay}번(한국 시간 자정 초기화). 부를 조건은 자연 등장의 레벨 · 누적 처치와 같고(${WHISTLE_TARGETS.map(t => `${t.name} Lv.${t.minLevel} · ${t.minKills.toLocaleString()}마리`).join(', ')}) 사냥터 난이도 조건은 보지 않습니다. 한 번에 하나만 불어 둘 수 있고, 다음 출현에 쓰입니다.`}
@@ -240,7 +240,7 @@ export function Guide({ s }: { s?: State }) {
                     limit={`탭별 재분배는 언제나 무료이며 쓴 세계석의 ${RESEARCH_RESET.refund * 100}%를 돌려받습니다. 자동 사냥·던전 중에는 할 수 없습니다.`}/>
                 <Rule icon={<BookOpen size={19}/>} title="몬스터 도감"
                     effect={`종별 연구 ${BALANCE.bookMilestones.map(n => n.toLocaleString()).join(' · ')}회 처치. 4·5·6단계에 SP. 6단계는 그 몬스터를 난이도 ${BALANCE.bookTierReq[5]} 이상에서 처치해야 열립니다. 2단계부터 연구 효과가 붙습니다(아래 ‘몬스터 연구 효과’). 지역의 모든 몬스터가 연구 1·2·3단계면 지역 연구 1·2·3단계입니다. 1단계에 지역 첫 보너스(예전 장소 테마)가 붙고, 단계마다 지역 효과가 쌓입니다. 지역마다 자주 나오는 변종이 다르고, 지역 끝의 무리 서식지에서는 몬스터가 전부 ×100·×500 무리로 나옵니다.`}
-                    condition={`${PROGRESSION.fishComplete}회 처치하면 완성이고 적 정보가 열립니다. 사냥터(장소)의 모든 종을 완성하면 업적 ‘지역 연구 N곳 완성’에서 장착 AP +1.`}
+                    condition={`${PROGRESSION.monsterComplete}회 처치하면 완성이고 적 정보가 열립니다. 사냥터(장소)의 모든 종을 완성하면 업적 ‘지역 연구 N곳 완성’에서 장착 AP +1.`}
                     limit={`보상은 도감에서 직접 받고 각 단계는 한 번만 줍니다. 합계는 도감 ‘연구 보너스’ 탭에서 봅니다. 칠흑의 보스(v3.12): 무리 서식지 출현마다 ${secret ? '드물게' : `${Math.round(ONYX.chance * 1000) / 10}%로`} 지역 보스가 나오고(${ONYX.turns}턴 안에 못 잡으면 떠남), 처치하면 ${secret ? '낮은 확률(오래 못 얻으면 확정)' : `${Math.round(ONYX.drop * 1000) / 10}%(${ONYX.dropPity}번째 연속 미획득은 확정)`}로 환생해도 남는 칠흑 장신구를 받습니다(레벨은 그 서식지 레벨과 내 레벨 중 높은 쪽). 이미 가진 칠흑을 같은 확률로 다시 얻으면 각성(최대 ${ONYX.awakenMax}단계, 고유 옵션 단계당 +${Math.round(ONYX.awakenStep * 100)}%)하고, 착용하지 않은 칠흑도 고유 옵션의 ${Math.round(ONYX.resonance * 100)}%를 공명으로 줍니다. 환생 50 · 100회에 닿으면 무작위 칠흑을 하나씩 받습니다(캐릭터마다 한 번, 승천 뒤 다시 받지 않음, 가진 종이면 각성). 도감 ‘칠흑의 보스’에서 세트 보너스와 각성 · 공명을 봅니다.`}/>
                 {/* v3.96 도감 카드 · 보너스 탭은 한 줄 요약만 보이고, 단계별 수치는 여기서 봅니다. */}
                 <Rule icon={<BookOpen size={19}/>} title="몬스터 연구 효과"

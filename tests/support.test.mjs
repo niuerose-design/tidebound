@@ -1,5 +1,5 @@
 // v24.2 보조 계열 개편: 진행도 비례·도박·올인·골드 투척·사냥감·노래
-import { newState, stats, strike, canUse, effectiveSkill, apUsed, SKILLS, FISH, JOBS, assert, test, diceMultiplier, diceRange } from './harness.mjs';
+import { newState, stats, strike, canUse, effectiveSkill, apUsed, SKILLS, MONSTERS, JOBS, assert, test, diceMultiplier, diceRange } from './harness.mjs';
 
 const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0 };
 const fighter = (id, extra = {}) => ({ name: 'A', stats: { ...base, ...(extra.stats || {}) }, hp: extra.hp ?? 1000, mana: 200, skills: [id], cooldowns: {}, stun: 0, effects: {}, ranks: { [id]: 1 }, mastery: {}, practice: {}, ...extra.fields });
@@ -9,7 +9,7 @@ const hit = (a, b, roll) => { const seq = roll === undefined ? [] : [0, roll, .5
 test('v24.2 progress passives count codex, catches, hunts, species, gold and rebirths', () => {
     const s = newState(0); s.level = 70; s.rebirths = 3; s.job = 'abyssArchivist'; s.learned.memoryOfTides = 1; s.skills = ['memoryOfTides'];
     const before = stats(s);
-    s.book[FISH[0].id] = 5; s.book[FISH[1].id] = 2; s.itemBook = { a: 1, b: 1 };
+    s.book[MONSTERS[0].id] = 5; s.book[MONSTERS[1].id] = 2; s.itemBook = { a: 1, b: 1 };
     const after = stats(s);
     assert.equal(after.codexPower, 4); assert.ok(Math.abs(after.catchPower - Math.log10(8)) < 1e-9);
     assert.equal(after.attack, before.attack, 'records do not move a rebirth passive'); s.rebirths = 4; assert.ok(stats(s).attack > after.attack && stats(s).magic > after.magic, 'one more rebirth → memoryOfTides step');
@@ -55,6 +55,9 @@ test('v24.2 songs cost 0 AP and only bard-lineage jobs may equip them', () => {
     const s = newState(0); s.level = 70; s.rebirths = 3; s.job = 'legendBard'; s.learned.roadSong = 1; s.skillInheritances = { roadSong: true }; s.learned.heroicVerse = 1;
     assert.ok(canUse(s, 'roadSong') && canUse(s, 'heroicVerse')); assert.equal(apUsed(s, ['roadSong', 'heroicVerse']), 0);
     s.job = 'whaler'; assert.equal(canUse(s, 'roadSong'), false, 'inherited songs still need a bard-lineage job');
+    for (const sk of songs) assert.equal(sk.exclusiveLineage, 'bard', sk.id + ' v3.187 songs are Angelic Buster lineage exclusives');
+    s.job = 'legendBard'; s.skills = ['roadSong']; const sung = stats(s).hp; s.job = 'whaler'; const unsung = stats(s).hp; s.job = 'legendBard'; s.skills = []; assert.ok(sung > stats(s).hp, 'song adds HP in lineage');
+    s.job = 'whaler'; s.skills = []; assert.equal(unsung, stats(s).hp, 'an equipped song gives nothing outside the lineage');
     assert.ok(JOBS.find(j => j.id === 'siren'));
 });
 
@@ -83,12 +86,12 @@ test('v26.1 titles come from achievements; equip, hide and auto all resolve thro
     const { TITLES, unlockedTitles, displayTitle, autoTitle } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/titles');
     const { act } = await import('./harness.mjs');
     const s = newState(0); assert.equal(displayTitle(s), '🌱 초심자', 'everyone starts with the sprout title'); assert.equal(unlockedTitles(s).length, 1);
-    s.rebirths = 5; assert.equal(displayTitle(s), '되돌아온 모험가', 'rebirth titles count by rebirth number even before the achievement syncs');
+    s.rebirths = 5; assert.equal(displayTitle(s), '🔁 되돌아온 모험가', 'rebirth titles count by rebirth number even before the achievement syncs');
     s.achievements = { 'rebirths:5': 100, 'playtime:100': 500 }; assert.equal(autoTitle(s).id, 'playtime:100', 'auto = most recently achieved');
     assert.throws(() => act(s, { type: 'title', id: 'abyss:100' }, 0), /얻지 못한/);
-    act(s, { type: 'title', id: 'rebirth:5' }, 0); assert.equal(displayTitle(s), '되돌아온 모험가');
+    act(s, { type: 'title', id: 'rebirth:5' }, 0); assert.equal(displayTitle(s), '🔁 되돌아온 모험가');
     act(s, { type: 'title', id: 'none' }, 0); assert.equal(s.title, null); assert.equal(displayTitle(s), '');
-    act(s, { type: 'title', id: 'auto' }, 0); assert.equal(s.title, undefined); assert.equal(displayTitle(s), '메이플 월드에 사는 자');
+    act(s, { type: 'title', id: 'auto' }, 0); assert.equal(s.title, undefined); assert.equal(displayTitle(s), '🍁 메이플 월드에 사는 자');
     assert.ok(TITLES.every(t => t.achievement || t.id === 'novice'), 'every earned title names its achievement');
 });
 
@@ -151,7 +154,7 @@ test('v26.6 dice: luck lane rolls more dice with more luck; the highest face map
     const s = newState(0); s.level = 20; s.job = 'fortunate'; s.unlockedJobs.push('luckyAngler', 'fortunate'); s.learned.fingerCutII = 1; s.skills = ['fingerCutII']; assert.ok(canUse(s, 'fingerCutII')); assert.equal(stats(s).diceTrim, 2, 'equipped passive feeds diceTrim');
 });
 
-test('v26.5 focus hunting refuses a fish gated behind a higher sea difficulty instead of silently going random', async () => {
+test('v26.5 focus hunting refuses a monster gated behind a higher sea difficulty instead of silently going random', async () => {
     const { act } = await import('./harness.mjs');
     const s = newState(0); s.level = 40; s.rebirths = 1; act(s, { type: 'stage', id: 'moon' }, 0);
     act(s, { type: 'target', id: 'moonfish' }, 0); assert.equal(s.target, 'moonfish');

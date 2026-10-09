@@ -14,7 +14,7 @@ const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf } = await load('data/classes');
 /** v3.61 외길 계보 → 몰아 주는 능력치. */
 const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
-const { FISH } = await load('data/world');
+const { MONSTERS } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
 const { canUse, validLoadout, skillMasteryRanks, lineage, jobMasteryTarget, jobFactor, masteryMilestonesFor } = await load('systems/progression');
 
@@ -53,7 +53,7 @@ function loadout(s, j, magic) {
     for (const sk of pool) if (validLoadout(s, [...s.skills, sk.id])) s.skills.push(sk.id);
 }
 function fight(st, s, foeId, tier) {
-    const fish = FISH.find(f => f.id === foeId), foe = scaledEnemyStats(fish, { tier });
+    const monster = MONSTERS.find(f => f.id === foeId), foe = scaledEnemyStats(monster, { tier });
     let wins = 0, turns = 0, hpLeft = 0;
     for (let seed = 1; seed <= SEEDS; seed++) {
         const a = { name: 'player', stats: st, hp: st.hp, mana: st.mana, skills: s.skills, cooldowns: {}, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice };
@@ -70,6 +70,8 @@ function evaluate(j, T) {
     const { attrs, magic } = attributesFor(j, T.level);
     Object.assign(s, { level: T.level, rebirths: 10, job: j.id, attributes: attrs, equipment: {}, inventory: [], permanent: {}, book: {}, unlockedJobs: JOBS.map(x => x.id) });
     s.jobMastery = { [j.id]: MASTERED ? jobMasteryTarget(j) : 0 };
+    // v3.198 숙달 수가 전직 조건인 직업(방랑 계보의 만능 · 백수)은 그만큼 다른 직업을 숙달한 몸으로 잽니다(0개로 재면 들어갈 수 없는 몸이라 크게 약하게 나옴).
+    for (const x of JOBS.filter(x => x.id !== j.id).slice(0, j.requiresMastered || 0)) s.jobMastery[x.id] = jobMasteryTarget(x);
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = SKILL_MASTERED ? masteryMilestonesFor(sk).at(-1) : 0; }
     loadout(s, j, magic);
     const st = stats(s), res = T.foes.map(id => fight(st, s, id, T.tier));

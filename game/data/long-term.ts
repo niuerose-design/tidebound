@@ -1,7 +1,4 @@
 /** 실전 누적 수련. SP는 기존 기본 성장에만 사용됩니다. */
-// 6단계(+4%)를 30단계(+0.8%)로 분할. 최종 목표(+3,000만)와 총량(+24%)은 동일하며,
-// 어느 숙련 수치에서도 이전 6단계보다 누적 보너스가 낮아지지 않습니다.
-export const REFINEMENT_OFFSETS = [5000, 11000, 20000, 30000, 44000, 61000, 83000, 111000, 148000, 194000, 254000, 330000, 427000, 553000, 713000, 918000, 1181000, 1519000, 1950000, 2504000, 3212000, 4120000, 5283000, 6773000, 8682000, 11127000, 14260000, 18273000, 23414000, 30000000];
 /**
  * v3.74 극한돌파: 한계돌파 3단계를 마친 액티브 스킬의 숙련이 1억에 닿으면 달성합니다(어떤 스킬이든 같은 값).
  * 한 가지 스킬만 파는 모험가를 위한 보상으로 설계 중이라 지금은 효과가 없고, 달성하면 운영자에게 문의합니다(업적은 보상 없음).
@@ -25,10 +22,11 @@ export const abyssPearls = (depth: number) => (1 + Math.floor(depth / 10)) * (de
 export const ABYSS_SP_MILESTONES = [10, 25, 50, 100];
 export const nextAbyssMilestone = (best: number) => ABYSS_SP_MILESTONES.find(n => n > best);
 
-/** v25.8 무릉도장 10층마다 첫 돌파 보너스 세계석(층 수만큼). v3.38 장착 AP 이정표는 없앴습니다. */
+/** v25.8 무릉도장 10층마다 첫 돌파 보너스 세계석(층 수만큼). */
 export const abyssFloorBonus = (depth: number) => depth % 10 === 0 ? depth : 0;
 /** v25.8 윤회 칭호: 환생 횟수로 얻는 영구 칭호. 랭킹·채팅·전투 화면에 이름과 함께 표시됩니다. */
 export const REBIRTH_TITLES: { rebirths: number; title: string }[] = [
-    { rebirths: 5, title: '되돌아온 모험가' }, { rebirths: 10, title: '윤회의 여행자' }, { rebirths: 20, title: '운명을 거스른 자' }, { rebirths: 30, title: '심연을 건넌 자' }, { rebirths: 50, title: '영원의 모험가' },
+    // v3.190 칭호마다 이름에 어울리는 그림(이모지)을 앞에 둡니다(치장 화면 · 이름 옆 · 순위표 모두 같은 글자).
+    { rebirths: 5, title: '🔁 되돌아온 모험가' }, { rebirths: 10, title: '🌀 윤회의 여행자' }, { rebirths: 20, title: '⚡ 운명을 거스른 자' }, { rebirths: 30, title: '🌊 심연을 건넌 자' }, { rebirths: 50, title: '♾ 영원의 모험가' },
 ];
 export const rebirthTitle = (rebirths: number) => [...REBIRTH_TITLES].reverse().find(x => rebirths >= x.rebirths)?.title || '';

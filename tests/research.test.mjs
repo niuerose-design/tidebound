@@ -127,7 +127,7 @@ test('Research v3: sorting net dismantles only known, low-rarity drops into esse
     act(s, { type: 'autoSell', value: 'off' }, 0); drop(s, 5, () => 0); assert.equal(s.inventory.length, 3, 'off keeps everything');
 });
 
-test('v25.23 golden fish: multiplies one catch by ten and is recorded; v27.44 everyone rolls a 0.2% base, thief passives add to it', () => {
+test('v25.23 golden monsters: multiplies one catch by ten and is recorded; v27.44 everyone rolls a 0.2% base, thief passives add to it', () => {
     const fight = rank => { const s = newState(0); if (rank) { s.level = 40; s.job = 'rareTracker'; s.learned.rareSense = 1; s.skills = ['rareSense']; } s.enemy = { id: 'minnow', name: '달팽이', hp: 0, maxHp: 10, attack: 1, defense: 0, exp: 1, gold: 10, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0 }; return s; };
     const plain = fight(0), rngPlain = counting(); reward(plain, rngPlain);
     const lucky = fight(1), rngLucky = counting(); reward(lucky, rngLucky);
@@ -396,7 +396,7 @@ test('v3.161 essence slime: shares the special roll right after the nuri band, p
     assert.equal(s.essence, Sl.slimeBundle(10) * Sl.ESSENCE_SLIME.tiers[2].mul, 'jackpot: bundle 2 × 40'); assert.equal(s.book.essenceSlime, 1); assert.ok(s.logs.some(l => l.text.includes('정수의 슬라임 · 대당첨')));
     { const t = make(Sl.ESSENCE_SLIME.minLevel - 1); assert.equal(Enc.specialChances(t).slimeP, 0, 'not below Lv.30'); }
     { const t = make(); t.tide = Sl.ESSENCE_SLIME.minTier - 1; assert.equal(Enc.specialChances(t).slimeP, 0, 'not below difficulty 10'); }
-    { const t = make(); t.catchingUp = true; assert.ok(Math.abs(Enc.specialChances(t).slimeP - c.slimeP * Sl.ESSENCE_SLIME.offlineScale) < 1e-12, 'quarter rate offline'); }
+    { const t = make(); t.away = true; assert.ok(Math.abs(Enc.specialChances(t).slimeP - c.slimeP * Sl.ESSENCE_SLIME.offlineScale) < 1e-12, 'v3.189 half rate offline'); }
     assert.equal(Sl.slimeBundle(100), 11); assert.equal(Sl.slimeBundle(0), 1);
 });
 

@@ -1,5 +1,5 @@
 import type { State } from '../types';
-import { PLACES } from '../data/world';
+import { BASE_STAGES } from '../data/world';
 import { noteOneTimeReward } from './offline-tally';
 
 export type TutorialStep = { id: string; title: string; hint: string; view: string; done: (s: State) => boolean; /** v3.17 보상 조건(없으면 done). 환생으로 자동 완료되는 단계는 실제로 해냈을 때만 보상합니다. */ earned?: (s: State) => boolean; /** v3.17 완료 보상(완료되는 순간 자동 지급, 한 번). */ reward?: { pearls?: number; sp?: number } };
@@ -7,7 +7,7 @@ export type TutorialStep = { id: string; title: string; hint: string; view: stri
  * 짧은 튜토리얼 단계. 조건은 저장 상태에서 판정하고, 한 번 만족한 단계는 tutorial.done에 기록해 되돌아가지 않습니다
  * (v27.72: 강화한 장비를 팔거나 녹여도 ‘장비 강화’가 미완료로 돌아가지 않음). v3.17 단계마다 완료 보상(세계석·SP)을 자동 지급합니다(강제 없음).
  * 환생 전에 할 수 있는 단계는 환생하면 자동 완료, 환생 뒤 단계(사냥터 난이도)는 환생 1회부터 열립니다.
- * v3.38 환생 전 12단계 + 사냥터 난이도까지만 둡니다. 중후반 안내 8단계(서식지·스타포스·유물·무릉도장·치장·결투·길드·월드보스)는 안내 팁으로 옮겼습니다.
+ * v3.38 환생 전 12단계 + 사냥터 난이도까지만 둡니다(중후반 안내는 안내 팁에).
  */
 export const TUTORIAL_STEPS: TutorialStep[] = [
     { id: 'catch', title: '첫 처치', hint: '자동 사냥 화면의 ‘자동 사냥 시작’을 누르면 알아서 싸웁니다. 몬스터를 한 마리 잡아 보세요.', view: 'battle', done: s => s.kills > 0 || s.rebirths > 0, earned: s => s.kills > 0, reward: { pearls: 1 } },
@@ -55,11 +55,11 @@ export function syncTutorial(s: State, log?: (text: string) => void) {
 
 /**
  * 사냥한 일반 사냥터를 기록합니다(업적 ‘사냥터 N곳’과 그 방문 목록). 알림 없이 조용히 남고 환생 후에도 유지됩니다.
- * v3.36 쓰이지 않던 던전·환생·무릉도장 기록과 항해 일지 본문은 없앴습니다(던전 업적은 s.clears로 셉니다).
+ * 던전 업적은 s.clears로 셉니다.
  */
 export function syncVoyage(s: State, log?: (text: string) => void) {
     syncTutorial(s, log);
     s.voyage ??= {};
     const key = `stage:${s.stage}`;
-    if (s.running && !s.dungeon && s.voyage[key] === undefined && PLACES.some(st => st.id === s.stage)) s.voyage[key] = s.turn;
+    if (s.running && !s.dungeon && s.voyage[key] === undefined && BASE_STAGES.some(st => st.id === s.stage)) s.voyage[key] = s.turn;
 }
