@@ -4,9 +4,9 @@ import { RARITIES } from '../data/balance';
 import { ASCENSION } from '../data/ascension';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap, researchById } from '../data/economy';
 import { apCapacity, apUsed, itemKey } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix, ownedItems } from './equipment';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix, ownedItems, inheritGear } from './equipment';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
-import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
+import { rollAffixes, refineOption, rollOption, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
 import { monsterGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** v27.30 감정 가격: 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 환생 배율(v3.68 10^(환생/60)과 1 + 환생 × 0.45 중 낮은 쪽)을 곱합니다. */
 const GAMBLE_MONSTERS = 60;
@@ -391,7 +391,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const cost = imprintCost(source, s);
         spend(cost);
         const before = lines[slot];
-        lines[slot] = imprintAffix(affix, source.rarity, relic.rarity);
+        lines[slot] = imprintAffix(affix, source.rarity, relic.rarity, source.level, relic.level);
         relic.affixes = lines.filter(Boolean);
         s.inventory = s.inventory.filter(x => x.id !== source.id);
         const gauge = primalGaugeGain(s, [source]);
@@ -449,12 +449,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error(`태초 계승 게이지가 부족합니다(${s.primalGauge || 0}/${PRIMAL_INHERIT.gauge}). 태초 장비를 분해 · 판매하거나 강화 중 파괴되면 찹니다.`);
             s.primalGauge = (s.primalGauge || 0) - PRIMAL_INHERIT.gauge;
         }
-        // 부위마다 종류별 1개: 같은 부위의 예전 계승 장비는 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐).
-        const old = ownedItems(s).find(x => x && x !== item && x.heir === kind && x.slot === item.slot);
-        if (old) { delete old.heir; const was = old.power; old.power = Math.round((old.level + 2) * RARITIES[old.rarity].factor); if (old.affixes && was > 0) old.affixes = old.affixes.map(x => rescaleAffix(x, old.power / was, old.level, old.level)); }
-        item.heir = kind; item.locked = true;
-        if (item.affixes) item.affixes = item.affixes.map(x => refineOption(x, item.power, item.rarity, () => 1, item.level));
-        syncRelicPower(s);
+        const old = inheritGear(s, item, kind);
         const what = kind === 'ancient' ? `원시 각성 · 정수 -${awakenEssence(s.rebirths).toLocaleString()}` : `태초 계승 · 게이지 -${PRIMAL_INHERIT.gauge}`;
         return `${item.name} ${what} · 위력 ${item.power} · 옵션 최고 수치로 고정 · 환생해도 남습니다${old ? ` · 예전 ${old.name}은 이번 생 장비로 돌아갑니다` : ''}`;
     }
